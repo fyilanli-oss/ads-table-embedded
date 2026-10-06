@@ -281,7 +281,7 @@ begin
     p_source_hash,
     statement_timestamp()
   )
-  on conflict (workspace_id, install_generation) do update
+  on conflict on constraint workspace_subscriptions_pkey do update
     set provider_status = excluded.provider_status,
         billing_period = excluded.billing_period,
         cancel_at_end_of_cycle = excluded.cancel_at_end_of_cycle,
@@ -315,7 +315,7 @@ begin
     p_source_hash,
     statement_timestamp()
   )
-  on conflict (workspace_id, install_generation) do update
+  on conflict on constraint workspace_entitlements_pkey do update
     set entitlement_status = excluded.entitlement_status,
         reporting_store_limit = 1,
         candidate_detection_billed = false,
@@ -340,7 +340,7 @@ begin
       p_observed_at,
       p_source_hash
     )
-    on conflict (workspace_id, install_generation, source_hash) do nothing;
+    on conflict on constraint trial_ledger_snapshot_unique do nothing;
   end if;
 
   return query

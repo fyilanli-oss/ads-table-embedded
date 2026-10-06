@@ -39,8 +39,8 @@ Aynı anda yalnız bir parent paket aktiftir. Executable paket tablosu `contract
 - **EO-01-C — Accepted:** Polaris 2.0 RC üç-route truthful preview shell ürün sahibi tarafından görsel olarak kabul edildi ve merge edildi. Kabul commit'i: `76ea38a474c701d69871f73ba713376e3a7d623e`.
 - **EO-02-A — Accepted:** Ayrı Frankfurt Supabase projesinde private schema, owner/migrator/runtime rol sınırı ve temiz migration zinciri canlı olarak doğrulandı; PR #4 merge commit'i: `2ac00f969eb35ac632ead57017753ed495e7b66f`.
 - **EO-02-B — Accepted:** Workspace, installation ve generation authority migration zinciri canlı Supabase'de PASS oldu; self-cleaning bootstrap/idempotency/stale/domain-change probe sonrası business row sıfır, Security ve Performance Advisor temizdir. PR #6 merge commit'i: `edc9e21588f5a32bea139b754ea0108c9809cf27`.
-- **EO-02-C — Ready:** EO-02-B kabul kapısı geçti; sonraki iş paketi analist brief'i ve executable contract kapısıyla başlatılabilir.
-- **EO-02-D — Not started:** EO-02-C sırası ve kendi kabul kapıları tamamlanmadan başlamaz.
+- **EO-02-C — Verification:** Shopify App Pricing + Partner API authority modeli donduruldu; server resolver, forced-RLS billing projection ve self-cleaning Supabase probe PASS oldu. Partner Dashboard'da 14 günlük plan/trial ayarı, Partner API client secret aktivasyonu ve gerçek trial/active/null kabulü açık insan kapısıdır.
+- **EO-02-D — Not started:** EO-02-C canlı Partner API kabulü tamamlanmadan başlamaz.
 
 EO-02-A business tablo veya veri kurmaz, runtime credential'ı etkinleştirmez, canlı token/veri taşımaz, Vercel environment değiştirmez ve legacy Supabase projesine dokunmaz.
 
@@ -66,3 +66,14 @@ EO-01-B dependency pinlemeden ve EO-07 UI implementasyonundan önce resmî sür�
 - Runtime şema kullanabilir fakat schema oluşturamaz ve henüz hiçbir tablo yetkisi yoktur.
 - Runtime/migrator parolaları NULL'dır; Vercel bağlantısı bu paketin kapsamı değildir.
 - Security ve performance advisor bulgusu sıfırdır.
+
+## Current Shopify billing baseline
+
+6 Ekim 2026 tarihinde Shopify'ın resmî Shopify App Pricing ve Partner API belgeleri kontrol edildi:
+
+- Yeni public app için desteklenen fiyat modelinde varsayılan otorite Shopify App Pricing'dir; Manual Billing API legacy'dir.
+- Plan, fiyat ve 14 günlük trial Shopify tarafında yaşar; AdsTable `appSubscriptionCreate` veya local trial grant üretmez.
+- Canonical subscription read modeli Partner API `2026-07` `activeSubscription(appId, shopId)` sorgusudur.
+- Trial kullanımı Shopify tarafından 180 günlük dönem boyunca izlenir; reinstall trial'ı sıfırlamaz.
+- Shopify App Pricing billing webhook'u göndermez; redirect, app entry ve entitlement-korumalı işlerde kontrollü Partner API reconciliation gerekir.
+- Bir aktif Reporting Store dahildir; aday tespiti ve aktif store değişimi ücret oluşturmaz.

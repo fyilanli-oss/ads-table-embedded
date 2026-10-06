@@ -1,0 +1,135 @@
+{
+  "contract_id": "eo-02c-shopify-app-pricing-entitlement-v1",
+  "version": "1.0.0",
+  "status": "implementation_ready_live_acceptance_pending",
+  "checked_at": "2026-10-06",
+  "authoritative_sources": {
+    "shopify_app_pricing": "https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing",
+    "shopify_app_pricing_trials": "https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing/subscription-billing/offer-free-trials",
+    "partner_api": "https://shopify.dev/docs/api/partner/latest",
+    "active_subscription": "https://shopify.dev/docs/api/partner/latest/active-subscription"
+  },
+  "decision": {
+    "billing_authority": "shopify_app_pricing",
+    "subscription_authority": "partner_api_activeSubscription",
+    "partner_api_version": "2026-07",
+    "manual_billing_api": "forbidden_for_new_ads_table_subscription_creation",
+    "appSubscriptionCreate": false,
+    "framework_billing_request": false,
+    "hosted_plan_selection": true,
+    "plan_price_and_publication": "partner_dashboard_human_gate",
+    "trial_days": 14,
+    "shopify_trial_lookback_days": 180,
+    "local_trial_grant_authority": false
+  },
+  "identity": {
+    "app_id": "server_configured_shopify_app_gid",
+    "shop_id": "verified_shopify_shop_gid",
+    "shop_domain": "verified_canonical_myshopify_domain",
+    "workspace_id": "derived_from_active_installation_generation",
+    "caller_supplied_workspace_authority": false
+  },
+  "state_matrix": [
+    {
+      "provider_result": "activeSubscription_with_future_trialEndsAt_and_no_current_cycle",
+      "entitlement": "trial",
+      "access": "allowed"
+    },
+    {
+      "provider_result": "activeSubscription_with_current_cycle",
+      "entitlement": "active",
+      "access": "allowed"
+    },
+    {
+      "provider_result": "activeSubscription_null",
+      "entitlement": "subscription_required",
+      "access": "denied"
+    },
+    {
+      "provider_result": "graphql_error_http_error_or_malformed_response",
+      "entitlement": "unknown",
+      "access": "fail_closed_without_overwriting_last_verified_projection"
+    },
+    {
+      "provider_result": "shop_identity_mismatch",
+      "entitlement": "unknown",
+      "access": "fail_closed_no_write"
+    },
+    {
+      "provider_result": "stale_snapshot",
+      "entitlement": "unchanged",
+      "access": "reject_no_write"
+    }
+  ],
+  "reconciliation": {
+    "billing_webhook": false,
+    "reason": "Shopify App Pricing does not send billing lifecycle webhooks after the April 2026 model change.",
+    "verify_on": [
+      "hosted_plan_return",
+      "embedded_app_entry_when_projection_is_not_fresh",
+      "before_entitlement_protected_background_work",
+      "controlled_reconciliation"
+    ],
+    "freshness_threshold_owner": "caller_policy_not_database_constant",
+    "partner_api_rate_limit_requests_per_second_per_client": 4,
+    "unknown_or_unavailable_becomes_zero_or_active": false
+  },
+  "database": {
+    "tables": [
+      "billing.workspace_subscriptions",
+      "billing.workspace_entitlements",
+      "billing.trial_ledger"
+    ],
+    "rls": "enabled_and_forced",
+    "browser_roles": "no_schema_or_object_access",
+    "runtime_table_dml": "none",
+    "runtime_functions": [
+      "billing.apply_shopify_app_pricing_snapshot",
+      "billing.resolve_workspace_entitlement"
+    ],
+    "projection_is_authority": false,
+    "trial_ledger_role": "immutable_observation_not_local_trial_grant",
+    "migration_chain": [
+      "supabase/migrations/20261006170000_eo02c_shopify_app_pricing_entitlement.sql",
+      "supabase/migrations/20261006171500_eo02c_acceptance_probe.sql"
+    ]
+  },
+  "reporting_store_entitlement": {
+    "included_active_reporting_stores": 1,
+    "candidate_detection_billed": false,
+    "active_reporting_store_switch_billed": false,
+    "simultaneous_multi_store_reporting": "future_separate_entitlement_outside_first_review_slice"
+  },
+  "secrets": {
+    "partner_organization_id": "server_environment_only",
+    "partner_api_access_token": "server_secret_only",
+    "required_partner_permission": "Manage apps",
+    "database_storage": false,
+    "browser_or_log_exposure": false,
+    "activation_owner": "explicit_human_configuration_gate"
+  },
+  "ui": {
+    "visible_change_in_this_package": false,
+    "billing_surface_owner": "EO-07-A Settings",
+    "hosted_plan_page_owner": "Shopify"
+  },
+  "out_of_scope": [
+    "Partner Dashboard plan creation or publication",
+    "production price selection",
+    "Partner API secret creation or Vercel activation",
+    "billing Settings UI",
+    "uninstall deletion and clean reinstall lifecycle",
+    "provider OAuth or reporting store selection implementation"
+  ],
+  "acceptance": [
+    "Shopify App Pricing is the only new-subscription authority.",
+    "A 14-day trial is configured in Shopify and never minted or reset by AdsTable.",
+    "Partner API activeSubscription is checked with verified app and shop GIDs.",
+    "Null, error, malformed, stale and identity-mismatch outcomes fail closed.",
+    "Local records are projections and cannot independently grant access.",
+    "One active Reporting Store is included and candidate discovery or switching never creates a charge.",
+    "Runtime has function-only database access and browser roles have none.",
+    "Repository tests, build, required CI and live self-cleaning database probe pass.",
+    "Partner Dashboard configuration and live Partner API acceptance require an explicit human gate."
+  ]
+}

@@ -1,6 +1,8 @@
 begin;
 
 do $roles$
+declare
+  role_record record;
 begin
   if not exists (select 1 from pg_roles where rolname = 'adstable_owner') then
     create role adstable_owner
@@ -11,6 +13,17 @@ begin
       nocreaterole
       noreplication
       nobypassrls;
+  else
+    select * into role_record from pg_roles where rolname = 'adstable_owner';
+    if role_record.rolcanlogin
+       or role_record.rolinherit
+       or role_record.rolsuper
+       or role_record.rolcreatedb
+       or role_record.rolcreaterole
+       or role_record.rolreplication
+       or role_record.rolbypassrls then
+      raise exception 'adstable_owner exists with unsafe attributes';
+    end if;
   end if;
 
   if not exists (select 1 from pg_roles where rolname = 'adstable_migrator') then
@@ -23,6 +36,17 @@ begin
       nocreaterole
       noreplication
       nobypassrls;
+  else
+    select * into role_record from pg_roles where rolname = 'adstable_migrator';
+    if not role_record.rolcanlogin
+       or role_record.rolinherit
+       or role_record.rolsuper
+       or role_record.rolcreatedb
+       or role_record.rolcreaterole
+       or role_record.rolreplication
+       or role_record.rolbypassrls then
+      raise exception 'adstable_migrator exists with unsafe attributes';
+    end if;
   end if;
 
   if not exists (select 1 from pg_roles where rolname = 'adstable_runtime') then
@@ -35,16 +59,20 @@ begin
       nocreaterole
       noreplication
       nobypassrls;
+  else
+    select * into role_record from pg_roles where rolname = 'adstable_runtime';
+    if not role_record.rolcanlogin
+       or role_record.rolinherit
+       or role_record.rolsuper
+       or role_record.rolcreatedb
+       or role_record.rolcreaterole
+       or role_record.rolreplication
+       or role_record.rolbypassrls then
+      raise exception 'adstable_runtime exists with unsafe attributes';
+    end if;
   end if;
 end
 $roles$;
-
-alter role adstable_owner
-  nologin noinherit nosuperuser nocreatedb nocreaterole noreplication nobypassrls;
-alter role adstable_migrator
-  login password null noinherit nosuperuser nocreatedb nocreaterole noreplication nobypassrls;
-alter role adstable_runtime
-  login password null noinherit nosuperuser nocreatedb nocreaterole noreplication nobypassrls;
 
 grant adstable_owner to adstable_migrator with inherit false, set true;
 

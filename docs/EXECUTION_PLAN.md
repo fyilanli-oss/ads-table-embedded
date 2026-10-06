@@ -38,8 +38,9 @@ Aynı anda yalnız bir parent paket aktiftir. Executable paket tablosu `contract
 - **EO-01-B — Accepted:** Güncel resmî Shopify stack, temiz dependency manifest/lockfile ve negatif CI kapıları merge edildi. Kabul commit'i: `111e7dec66c84c48be43930f3496ea5b0f918949`.
 - **EO-01-C — Accepted:** Polaris 2.0 RC üç-route truthful preview shell ürün sahibi tarafından görsel olarak kabul edildi ve merge edildi. Kabul commit'i: `76ea38a474c701d69871f73ba713376e3a7d623e`.
 - **EO-02-A — Accepted:** Ayrı Frankfurt Supabase projesinde private schema, owner/migrator/runtime rol sınırı ve temiz migration zinciri canlı olarak doğrulandı; PR #4 merge commit'i: `2ac00f969eb35ac632ead57017753ed495e7b66f`.
-- **EO-02-B — Database live accepted / merge pending:** Workspace, installation ve generation authority migration zinciri canlı Supabase'de PASS oldu; self-cleaning bootstrap/idempotency/stale/domain-change probe sonrası business row sıfır, Security ve Performance Advisor temizdir. PR #6 CI ve açık merge onayı bekliyor.
-- **EO-02-C/D — Not started:** EO-02-B kabulünden önce başlamaz.
+- **EO-02-B — Accepted:** Workspace, installation ve generation authority migration zinciri canlı Supabase'de PASS oldu; self-cleaning bootstrap/idempotency/stale/domain-change probe sonrası business row sıfır, Security ve Performance Advisor temizdir. PR #6 merge commit'i: `edc9e21588f5a32bea139b754ea0108c9809cf27`.
+- **EO-02-C — Ready:** EO-02-B kabul kapısı geçti; sonraki iş paketi analist brief'i ve executable contract kapısıyla başlatılabilir.
+- **EO-02-D — Not started:** EO-02-C sırası ve kendi kabul kapıları tamamlanmadan başlamaz.
 
 EO-02-A business tablo veya veri kurmaz, runtime credential'ı etkinleştirmez, canlı token/veri taşımaz, Vercel environment değiştirmez ve legacy Supabase projesine dokunmaz.
 

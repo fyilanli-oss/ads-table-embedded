@@ -8,7 +8,7 @@ declare
   probe_installation_id bigint;
   probe_shop_id text := 'gid://shopify/Shop/920261006170001';
   probe_domain text := 'eo02c-probe.myshopify.com';
-  trial_observed timestamptz := statement_timestamp() - interval '1 hour';
+  trial_observed timestamptz := statement_timestamp() - interval '2 hours';
 begin
   insert into app.workspaces (id, status)
   values (probe_workspace, 'active');
@@ -85,8 +85,8 @@ begin
         'EVERY_30_DAYS',
         false,
         null,
-        trial_observed,
-        trial_observed + interval '30 days',
+        trial_observed - interval '1 day',
+        trial_observed + interval '29 days',
         array['ads_table_monthly'],
         '{}'::text[],
         trial_observed - interval '1 second',
@@ -110,11 +110,11 @@ begin
       'EVERY_30_DAYS',
       false,
       null,
-      trial_observed + interval '14 days',
-      trial_observed + interval '44 days',
+      trial_observed - interval '1 day',
+      trial_observed + interval '29 days',
       array['ads_table_monthly'],
       '{}'::text[],
-      trial_observed + interval '14 days',
+      trial_observed + interval '1 hour',
       repeat('c', 64)
     );
 
@@ -124,7 +124,7 @@ begin
         probe_shop_id,
         probe_domain,
         1,
-        trial_observed + interval '13 days'
+        trial_observed + interval '30 minutes'
       )
      where entitlement_status = 'active'
        and reporting_store_limit = 1
@@ -138,7 +138,7 @@ begin
         probe_shop_id,
         probe_domain,
         1,
-        trial_observed + interval '15 days'
+        trial_observed + interval '90 minutes'
       )
   ) then
     raise exception 'EO02C_STALE_ENTITLEMENT_DID_NOT_FAIL_CLOSED';
@@ -158,7 +158,7 @@ begin
       null,
       '{}'::text[],
       '{}'::text[],
-      trial_observed + interval '15 days',
+      trial_observed + interval '90 minutes',
       repeat('d', 64)
     );
 

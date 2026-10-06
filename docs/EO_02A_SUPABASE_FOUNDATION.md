@@ -1,7 +1,7 @@
 # EO-02-A — Supabase private schema, role ve migration foundation
 
 **Kontrol tarihi:** 6 Ekim 2026  
-**Durum:** Uygulama ve canlı kabul bekliyor  
+**Durum:** Canlı kabul PASS; CI ve merge bekliyor  
 **Hedef:** `podpwkrpmjiksskxhwsu` / Frankfurt (`eu-central-1`)
 
 ## Analist sonucu
@@ -63,6 +63,29 @@ Runtime credential'ı bu pakette oluşturulmaz veya Vercel'e verilmez. Credentia
 - Vercel environment credential'ları
 - Production cutover
 - Legacy Supabase değişikliği
+
+## Uygulama notu
+
+İlk üç uygulama denemesi Supabase'in yönetilen rol sınırlarında transaction içinde reddedildi ve migration history, rol veya şema bırakmadan geri döndü. Kabul edilen zincir iki immutable migration'dan oluşur:
+
+1. `20261006133830 — eo02a_private_schema_roles`
+2. `20261006134013 — eo02a_runtime_schema_usage`
+
+İkinci migration, runtime schema `USAGE` yetkisini nesne sahibi bağlamında açıkça verir. Runtime'a `CREATE`, tablo veya DDL yetkisi vermez.
+
+## Canlı kabul sonucu
+
+- Private schema: 7/7, owner `adstable_owner`
+- `anon` / `authenticated` / `service_role` private schema usage: 0
+- `adstable_runtime` schema usage: 7/7
+- `adstable_runtime` schema create: 0
+- Runtime table privilege: 0
+- Business table: 0
+- Üç özel rolde unsafe attribute: 0
+- Login rollerinde password: NULL
+- Security advisor bulgusu: 0
+- Performance advisor bulgusu: 0
+- Legacy project mutation: 0
 
 ## Kabul
 

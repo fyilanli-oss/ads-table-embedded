@@ -1,0 +1,56 @@
+{
+  "evidence_id": "eo-02b-live-acceptance-2026-10-06",
+  "checked_at": "2026-10-06",
+  "project_id": "podpwkrpmjiksskxhwsu",
+  "package": "EO-02-B",
+  "result": "pass",
+  "migrations": [
+    {
+      "version": "20261006140517",
+      "name": "eo02b_workspace_installation_authority"
+    },
+    {
+      "version": "20261006140629",
+      "name": "eo02b_remove_redundant_indexes"
+    },
+    {
+      "version": "20261006140828",
+      "name": "eo02b_acceptance_probe"
+    }
+  ],
+  "catalog": {
+    "authority_tables": 3,
+    "rls_enabled": 3,
+    "rls_forced": 3,
+    "workspace_rows_after_probe": 0,
+    "installation_rows_after_probe": 0,
+    "domain_history_rows_after_probe": 0,
+    "redundant_index_count": 0
+  },
+  "runtime_acl": {
+    "direct_workspace_select": false,
+    "direct_installation_insert": false,
+    "direct_installation_update": false,
+    "direct_installation_delete": false,
+    "bootstrap_execute": true,
+    "resolve_execute": true,
+    "anon_bootstrap_execute": false,
+    "authenticated_bootstrap_execute": false,
+    "service_role_bootstrap_execute": false
+  },
+  "behavioral_probe": {
+    "first_verified_install": "pass",
+    "repeated_active_install_idempotency": "pass",
+    "stale_verification_rejection": "pass",
+    "same_shop_gid_domain_change_preserves_workspace_and_generation": "pass",
+    "cleanup": "pass"
+  },
+  "advisors": {
+    "security_lints": 0,
+    "performance_lints": 0
+  },
+  "managed_connection_note": "Supabase management execute connection cannot SET ROLE adstable_runtime and has no function EXECUTE. Runtime ACL was verified through has_*_privilege catalog checks; behavior ran under adstable_owner inside the immutable self-cleaning acceptance migration.",
+  "legacy_project_mutation": 0,
+  "production_application_mutation": 0,
+  "merge_status": "pending_explicit_user_approval"
+}

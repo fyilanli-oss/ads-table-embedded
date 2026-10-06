@@ -8,7 +8,7 @@ import {bootstrapWorkspaceInstallation, normalizeShopDomain} from "../app/lib/sh
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 const contract = JSON.parse(read("contracts/eo-02b-workspace-installation-authority-v1.json"));
-const migration = read(contract.database.migration).toLowerCase();
+const migration = contract.database.migration_chain.map(read).join("\n").toLowerCase();
 
 const session = {
   authority: "shopify_id_token_verified",
@@ -111,7 +111,7 @@ test("generation creation is serialized and lifecycle transitions fail closed", 
   assert.match(migration, /installations_single_live_shop_idx/);
   assert.match(migration, /installation_lifecycle_requires_eo02d/);
   assert.match(migration, /new_generation_requires_eo02d/);
-  assert.equal(contract.lifecycle_boundary.deferred_to_eo02d.includes("terminal deletion"), true);
+  assert.match(migration, /drop index if exists shopify\.installations_shop_domain_idx/);\n  assert.match(migration, /drop index if exists shopify\.installation_domain_history_installation_idx/);\n  assert.equal(contract.lifecycle_boundary.deferred_to_eo02d.includes("terminal deletion"), true);
 });
 
 test("EO-02-B persists no token material", () => {

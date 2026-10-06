@@ -1,0 +1,117 @@
+{
+  "contract_id": "eo-02b-workspace-installation-authority-v1",
+  "version": "1.0.0",
+  "status": "implementation_in_review_live_acceptance_pending",
+  "checked_at": "2026-10-06",
+  "authoritative_sources": {
+    "shopify_api_versioning": "https://shopify.dev/docs/api/usage/versioning",
+    "shopify_id_tokens": "https://shopify.dev/docs/apps/build/authentication-authorization/id-tokens",
+    "shopify_token_exchange": "https://shopify.dev/docs/apps/build/authentication-authorization/implement-token-exchange?lang=node",
+    "shopify_access_tokens": "https://shopify.dev/docs/apps/build/authentication-authorization/access-tokens",
+    "shop_query": "https://shopify.dev/docs/api/admin-graphql/2026-10/queries/shop",
+    "supabase_rls": "https://supabase.com/docs/guides/database/postgres/row-level-security"
+  },
+  "api_baseline": {
+    "admin_graphql": "2026-10",
+    "app_bridge_identity_credential": "ID token",
+    "background_access": "expiring offline access token"
+  },
+  "authority": {
+    "tenant_key": "workspace_id",
+    "installation_identity": "Shop GID from verified Admin GraphQL shop query",
+    "routing_identity": "canonical myshopifyDomain from the same verified response",
+    "forbidden_authority": [
+      "query.workspace_id",
+      "body.workspace_id",
+      "header.workspace_id",
+      "query.shop",
+      "email",
+      "provider account similarity"
+    ],
+    "first_release_cardinality": "one Shopify installation generation to one workspace"
+  },
+  "state_matrix": [
+    {
+      "state": "missing_or_invalid_id_token",
+      "result": "fail_closed_no_write"
+    },
+    {
+      "state": "id_token_and_admin_shop_mismatch",
+      "result": "fail_closed_no_write"
+    },
+    {
+      "state": "first_verified_install",
+      "result": "atomically_create_workspace_and_generation_1"
+    },
+    {
+      "state": "repeat_verified_active_install",
+      "result": "return_same_workspace_and_generation"
+    },
+    {
+      "state": "stale_verification",
+      "result": "reject_no_write"
+    },
+    {
+      "state": "uninstall_or_deletion_pending",
+      "result": "block_until_eo02d_lifecycle_rule"
+    },
+    {
+      "state": "deleted_history_exists",
+      "result": "new_generation_requires_eo02d"
+    }
+  ],
+  "database": {
+    "migration": "supabase/migrations/20261006152000_eo02b_workspace_installation_authority.sql",
+    "tables": [
+      "app.workspaces",
+      "shopify.installations",
+      "shopify.installation_domain_history"
+    ],
+    "rls": "enabled_and_forced",
+    "browser_roles": "no_schema_or_object_access",
+    "runtime_table_dml": "none",
+    "runtime_functions": [
+      "shopify.bootstrap_installation",
+      "shopify.resolve_active_installation"
+    ],
+    "concurrency": "transaction-scoped advisory lock per verified Shop GID",
+    "delete_privilege": false
+  },
+  "lifecycle_boundary": {
+    "implemented_here": [
+      "first_generation_creation",
+      "active_generation_idempotency",
+      "domain_change_history",
+      "stale_verification_rejection"
+    ],
+    "deferred_to_eo02d": [
+      "uninstall transition",
+      "48_hour_reinstall behavior",
+      "terminal deletion",
+      "new generation after completed deletion",
+      "privacy webhook claims"
+    ]
+  },
+  "token_boundary": {
+    "plaintext_storage": false,
+    "token_columns_in_this_package": false,
+    "token_exchange_and_envelope_owner": "EO-03-B",
+    "note": "Official Shopify authentication adapter supplies verified session/shop facts; EO-02-B does not hand-roll JWT or token storage."
+  },
+  "ui": {
+    "visible_change": false,
+    "polaris_component_mapping": "not_applicable"
+  },
+  "acceptance": [
+    "First verified install creates exactly one workspace and generation 1.",
+    "Repeated and concurrent bootstrap cannot create duplicate live authority.",
+    "Caller-supplied tenant identity is absent from the application service interface.",
+    "A verified ID-token domain and Admin shop identity must agree.",
+    "A Shop GID is authoritative; domain changes are audited and never create a second workspace.",
+    "Lifecycle states cannot be silently reactivated before EO-02-D.",
+    "RLS is enabled and forced and runtime has function-only access.",
+    "No plaintext or placeholder token material is persisted.",
+    "Repository tests, build and required CI pass.",
+    "Live Supabase migration and merge require separate explicit user approval."
+  ]
+}

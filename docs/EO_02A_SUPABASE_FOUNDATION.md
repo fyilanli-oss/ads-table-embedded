@@ -1,7 +1,7 @@
 # EO-02-A — Supabase private schema, role ve migration foundation
 
 **Kontrol tarihi:** 6 Ekim 2026  
-**Durum:** Canlı kabul ve CI PASS; açık merge onayı bekliyor  
+**Durum:** Accepted  
 **Hedef:** `podpwkrpmjiksskxhwsu` / Frankfurt (`eu-central-1`)
 
 ## Analist sonucu
@@ -86,7 +86,8 @@ Runtime credential'ı bu pakette oluşturulmaz veya Vercel'e verilmez. Credentia
 - Security advisor bulgusu: 0
 - Performance advisor bulgusu: 0
 - Legacy project mutation: 0
-- Repository Governance CI: PASS (run `37473375975`)
+- Repository Governance CI: PASS (runs `37473375975`, `37473569772`)
+- Merge: PR #4 / `2ac00f969eb35ac632ead57017753ed495e7b66f`
 
 ## Kabul
 
@@ -98,3 +99,7 @@ Runtime credential'ı bu pakette oluşturulmaz veya Vercel'e verilmez. Credentia
 6. Security ve performance advisor sonuçları yeniden temizdir.
 7. Repository test/build/CI PASS olur.
 8. Merge yalnız açık kullanıcı onayıyla yapılır.
+
+## Kapanış
+
+EO-02-A açık ürün sahibi onayıyla merge edildi. Merge sonrası Supabase katalog ve advisor kontrolleri tekrar PASS oldu. Sıradaki tek child **EO-02-B — Workspace, installation and generation authority**; ayrı başlangıç brief'i olmadan başlanmaz.

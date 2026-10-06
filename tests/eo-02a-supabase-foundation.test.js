@@ -24,16 +24,26 @@ test("all seven private schemas are created under the owner role", () => {
   assert.doesNotMatch(migration, /create\s+table\s+public\./);
 });
 
-test("owner, migrator and runtime roles are fail-closed", () => {
-  for (const role of ["adstable_owner","adstable_migrator","adstable_runtime"]) {
-    assert.match(migration, new RegExp(`alter role ${role}`));
-    for (const capability of ["nosuperuser","nocreatedb","nocreaterole","noreplication","nobypassrls"]) {
-      assert.match(migration, new RegExp(`alter role ${role}[\\s\\S]*?${capability}`));
+test("owner, migrator and runtime roles are created fail-closed", () => {
+  const ownerBlock = migration.match(/create role adstable_owner[\s\S]*?nobypassrls;/)?.[0] ?? "";
+  const migratorBlock = migration.match(/create role adstable_migrator[\s\S]*?nobypassrls;/)?.[0] ?? "";
+  const runtimeBlock = migration.match(/create role adstable_runtime[\s\S]*?nobypassrls;/)?.[0] ?? "";
+  for (const block of [ownerBlock, migratorBlock, runtimeBlock]) {
+    for (const capability of ["noinherit","nosuperuser","nocreatedb","nocreaterole","noreplication","nobypassrls"]) {
+      assert.match(block, new RegExp(capability));
     }
   }
-  assert.match(migration, /alter role adstable_migrator[\s\S]*?password null/);
-  assert.match(migration, /alter role adstable_runtime[\s\S]*?password null/);
+  assert.match(ownerBlock, /nologin/);
+  assert.match(migratorBlock, /login[\s\S]*?password null/);
+  assert.match(runtimeBlock, /login[\s\S]*?password null/);
   assert.doesNotMatch(migration, /password\s+'[^']+'/);
+  assert.doesNotMatch(migration, /alter role/);
+});
+
+test("pre-existing role drift fails closed instead of being silently rewritten", () => {
+  for (const role of ["adstable_owner","adstable_migrator","adstable_runtime"]) {
+    assert.match(migration, new RegExp(`${role} exists with unsafe attributes`));
+  }
 });
 
 test("Data API roles receive no private schema or default object grants", () => {

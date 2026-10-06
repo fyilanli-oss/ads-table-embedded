@@ -8,6 +8,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const readJson = (relativePath) => JSON.parse(fs.readFileSync(path.join(root, relativePath), "utf8"));
 const manifest = readJson("package.json");
 const registry = readJson("contracts/eo-01b-dependency-registry-v1.json");
+const dependencyAddenda = [readJson("contracts/eo-01c-dependency-addendum-v1.json")];
 const controls = readJson("contracts/eo-01b-negative-controls-v1.json");
 
 function walk(directory) {
@@ -20,8 +21,10 @@ function walk(directory) {
 
 test("direct dependencies exactly match the approved registry", () => {
   const actual = {...manifest.dependencies, ...manifest.devDependencies};
-  const approved = Object.fromEntries(registry.packages.map(({name, version}) => [name, version]));
+  const decisions = [registry, ...dependencyAddenda].flatMap(({packages}) => packages);
+  const approved = Object.fromEntries(decisions.map(({name, version}) => [name, version]));
   assert.equal(registry.packages.length, 16);
+  assert.equal(decisions.length, 17);
   assert.deepEqual(actual, approved);
   for (const blocked of controls.forbiddenDirectDependencies) assert.equal(actual[blocked], undefined, blocked);
   for (const version of Object.values(actual)) assert.match(version, /^\d+\.\d+\.\d+$/);
@@ -29,7 +32,7 @@ test("direct dependencies exactly match the approved registry", () => {
 
 test("every direct dependency decision has all mandatory fields", () => {
   const required = ["name", "version", "ownedCapability", "nativeAlternativeRationale", "scope", "execution", "secretAndTenantEffect", "license", "maintenance", "removalAndRollback"];
-  for (const decision of registry.packages) {
+  for (const decision of [registry, ...dependencyAddenda].flatMap(({packages}) => packages)) {
     for (const field of required) assert.ok(decision[field], `${decision.name}: missing ${field}`);
   }
 });
@@ -66,4 +69,3 @@ test("stable Polaris contract is the only active baseline", () => {
   assert.equal(ui.approved_runtime.polaris_script, "https://cdn.shopify.com/shopifycloud/polaris-1.js");
   assert.equal(ui.approved_runtime.polaris_types, "1.1.0");
 });
-

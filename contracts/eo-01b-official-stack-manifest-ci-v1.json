@@ -2,7 +2,8 @@
   "schemaVersion": 1,
   "contractId": "eo-01b-official-stack-manifest-ci-v1",
   "package": "A6-EO-01-B",
-  "status": "merge_pending",
+  "status": "accepted",
+  "acceptedAtCommit": "111e7dec66c84c48be43930f3496ea5b0f918949",
   "directDependencyCount": 16,
   "checkedAt": "2026-10-06",
   "officialTemplate": {
@@ -53,4 +54,3 @@
   ],
   "liveEffect": "none"
 }
-

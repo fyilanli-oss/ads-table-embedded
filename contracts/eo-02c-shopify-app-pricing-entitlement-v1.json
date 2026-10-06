@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-02c-shopify-app-pricing-entitlement-v1",
   "version": "1.0.0",
-  "status": "implementation_ready_live_acceptance_pending",
+  "status": "database_live_accepted_partner_configuration_pending",
   "checked_at": "2026-10-06",
   "authoritative_sources": {
     "shopify_app_pricing": "https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing",
@@ -132,5 +132,14 @@
     "Runtime has function-only database access and browser roles have none.",
     "Repository tests, build, required CI and live self-cleaning database probe pass.",
     "Partner Dashboard configuration and live Partner API acceptance require an explicit human gate."
-  ]
+  ],
+  "live_acceptance": {
+    "project_id": "podpwkrpmjiksskxhwsu",
+    "evidence": "docs/evidence/EO_02C_DATABASE_ACCEPTANCE_2026-10-06.json",
+    "database_result": "pass",
+    "partner_api_result": "pending_explicit_human_configuration_gate",
+    "residual_business_rows": 0,
+    "security_advisor_lints": 0,
+    "performance_advisor_lints": 0
+  }
 }

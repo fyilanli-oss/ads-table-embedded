@@ -8,7 +8,7 @@ declare
   probe_installation_id bigint;
   probe_shop_id text := 'gid://shopify/Shop/920261006170001';
   probe_domain text := 'eo02c-probe.myshopify.com';
-  trial_observed timestamptz := '2026-10-06T17:20:00Z';
+  trial_observed timestamptz := statement_timestamp() - interval '1 hour';
 begin
   insert into app.workspaces (id, status)
   values (probe_workspace, 'active');

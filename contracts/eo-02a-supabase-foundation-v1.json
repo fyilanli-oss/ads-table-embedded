@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "contract_id": "eo-02a-supabase-foundation-v1",
-  "status": "live_verified_ci_and_merge_pending",
+  "status": "merge_approval_pending",
   "evidence_date": "2026-10-06",
   "authority": {
     "package": "A6-EO-02-A",
@@ -107,7 +107,13 @@
     "login_role_passwords_null": true,
     "security_advisors_after": 0,
     "performance_advisors_after": 0,
-    "legacy_project_mutations": 0
+    "legacy_project_mutations": 0,
+    "repository_ci": {
+      "result": "PASS",
+      "workflow": "Repository Governance",
+      "run_id": 37473375975,
+      "verified_commit": "f19a24bff68781f9bc27711d79ebccd0e8cde834"
+    }
   },
   "out_of_scope": [
     "business_tables",

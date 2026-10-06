@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "contractId": "eo-01c-three-route-preview-shell-v1",
   "package": "A6-EO-01-C",
-  "status": "in_progress",
+  "status": "visual_accepted_merge_pending",
   "checkedAt": "2026-10-06",
   "polarisRuntime": {
     "script": "https://cdn.shopify.com/shopifycloud/polaris-2.0-rc.js",
@@ -43,6 +43,17 @@
     "productionDomainAuthorized": false,
     "gitIntegrationRequired": false,
     "databaseOrEnvironmentRequired": false
+  },
+  "evidence": {
+    "sourceCommit": "622fcc8ebdef8df852ec4c345143335126144f9f",
+    "previewDeploymentId": "dpl_BiCqUCRDcYD3kUifEw7wztgufTsm",
+    "previewUrl": "https://ads-table-embedded-5g9t5unxn-firats-projects-d22284db.vercel.app",
+    "routesHttp200": ["/", "/ad-analysis", "/settings"],
+    "polarisRuntimeObserved": "https://cdn.shopify.com/shopifycloud/polaris-2.0-rc.js",
+    "desktopEvidence": "pass",
+    "mobile320Evidence": "pass",
+    "productOwnerVisualAcceptance": "received_2026-10-06",
+    "githubCi": "pass"
   },
   "outOfScope": [
     "Shopify OAuth and session authority",

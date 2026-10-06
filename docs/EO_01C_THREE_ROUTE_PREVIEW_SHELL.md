@@ -30,6 +30,16 @@ Kontrol tarihi: **6 Ekim 2026**. Ürün sahibinin açık kararıyla runtime `pol
 
 `2.0.0-rc.2` 5 Ekim 2026'da yayımlandığı için pnpm'in 24 saatlik minimum release-age kapısında yalnız bu resmî Shopify paketi için dar bir istisna kayıtlıdır. Diğer supply-chain kontrolleri değişmez.
 
+## Görsel kabul kanıtı — 6 Ekim 2026
+
+- Kaynak commit: `622fcc8ebdef8df852ec4c345143335126144f9f`
+- Vercel Preview deployment: `dpl_BiCqUCRDcYD3kUifEw7wztgufTsm`
+- `/`, `/ad-analysis`, `/settings`: HTTP 200
+- Canlı yanıtta tek Polaris runtime: `polaris-2.0-rc.js`; `polaris-1.js`: yok
+- Desktop ve 320 px mobil teknik görünüm kontrolü: PASS
+- Ürün sahibi görsel kabulü: 6 Ekim 2026 tarihinde alındı
+- Merge: ayrı açık kullanıcı onayı bekliyor
+
 ### Vercel eşlemesi
 
 Vercel'in resmî React Router preset'i `@vercel/react-router@1.3.7` ile SSR build hazırlanır. Yeni proje Git entegrasyonu ve production promotion olmadan oluşturulur; yalnız görev dalı commit'inden Preview deployment üretilir.

@@ -1,0 +1,309 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "a6-eo-f4-schema-data-carry-map-v1",
+  "title": "A6 EO-F4 schema, data carry and Supabase data-plane decision",
+  "evidence_date": "2026-10-04",
+  "status": "eo_f4_complete_eo_f5_pending",
+  "authority": {
+    "execution_plan": "codex-input/AdsTable_EXECUTION_PLAN_V4_2026-08-17_TR.md",
+    "eo_master": "contracts/a6-eo-00-embedded-only-reestablishment-v1.json",
+    "analyst_evidence": "docs/A6_EO_F4_SCHEMA_DATA_CARRY_MAP.md",
+    "source_main_sha": "1872b7b763eb0306b252a2337012bd7212902012",
+    "source_supabase_project_ref": "xnstrzhavqkztvmlwsrx"
+  },
+  "scope": {
+    "mode": "read_only_decision",
+    "secrets_read": false,
+    "pii_read": false,
+    "provider_calls": false,
+    "production_mutation": false,
+    "database_mutation": false,
+    "deployment_mutation": false,
+    "new_project_created": false
+  },
+  "data_plane_decision": {
+    "selected": "separate_standard_supabase_postgres_project",
+    "rejected": "existing_mixed_project_with_private_schema_and_custom_role",
+    "score": {
+      "existing_project_boundary": 27,
+      "separate_project": 35,
+      "maximum": 40
+    },
+    "orioledb": false,
+    "rationale": [
+      "physical_legacy_privilege_isolation",
+      "clean_migration_history",
+      "zero_legacy_object_boundary",
+      "independent_backup_failure_and_rollback_boundary",
+      "small_controlled_business_row_carry"
+    ],
+    "source_project_role": "rollback_and_read_only_migration_source_until_consumer_zero",
+    "project_creation_waits_for": "EO-F7_human_GO"
+  },
+  "runtime_access": {
+    "path": "vercel_server_to_supavisor_transaction_mode",
+    "ssl_required": true,
+    "prepared_statements": false,
+    "role": "adstable_runtime",
+    "role_requirements": [
+      "LOGIN",
+      "NOINHERIT",
+      "NOSUPERUSER",
+      "NOCREATEDB",
+      "NOCREATEROLE",
+      "NOREPLICATION",
+      "NOBYPASSRLS"
+    ],
+    "grant_model": "schema_and_object_allowlist",
+    "migration_owner_separate": true,
+    "data_api_runtime": false,
+    "browser_database_client": false,
+    "service_role": false,
+    "publishable_or_anon_runtime": false,
+    "caller_supplied_workspace": false
+  },
+  "target_schemas": {
+    "app": [
+      "workspaces",
+      "workspace_settings"
+    ],
+    "shopify": [
+      "installations"
+    ],
+    "integrations": [
+      "provider_connections",
+      "oauth_transactions"
+    ],
+    "analytics": [
+      "performance_rows",
+      "email_spend_history",
+      "fx_rates"
+    ],
+    "operations": [
+      "refresh_runs",
+      "refresh_leases",
+      "provider_checkpoints",
+      "reconciliation_ledger"
+    ],
+    "privacy": [
+      "webhook_claims",
+      "deletion_runs",
+      "deletion_manifests"
+    ],
+    "billing": [
+      "workspace_subscriptions",
+      "workspace_entitlements",
+      "trial_ledger"
+    ]
+  },
+  "exact_carry": [
+    {
+      "source": "public.workspaces",
+      "target": "app.workspaces",
+      "rows": 1,
+      "mode": "identity_and_state"
+    },
+    {
+      "source": "public.workspace_settings",
+      "target": "app.workspace_settings",
+      "rows": 1,
+      "mode": "business_setting"
+    },
+    {
+      "source": "public.shopify_installations",
+      "target": "shopify.installations",
+      "rows": 1,
+      "mode": "identity_state_and_sealed_tokens"
+    },
+    {
+      "source": "public.workspace_provider_connections",
+      "target": "integrations.provider_connections",
+      "rows": 3,
+      "mode": "grant_account_binding_and_sealed_tokens"
+    },
+    {
+      "source": "public.workspace_provider_email_spend_history",
+      "target": "analytics.email_spend_history",
+      "rows": 4,
+      "mode": "immutable_history"
+    }
+  ],
+  "exact_carry_total_rows": 10,
+  "sealed_token_carry": {
+    "plaintext_export": false,
+    "preserve_AAD_identity": [
+      "workspace_id",
+      "shop_id",
+      "provider",
+      "token_type"
+    ],
+    "temporary_new_preview_keyring": [
+      "legacy_decrypt_key",
+      "new_active_key"
+    ],
+    "canary_output": [
+      "success_or_failure",
+      "envelope_identity_hash"
+    ],
+    "canary_forbidden_output": [
+      "plaintext_token",
+      "ciphertext",
+      "key_material"
+    ],
+    "rotate_after_decrypt": true,
+    "old_key_envelopes_target_count": 0,
+    "remove_old_key_from_new_runtime_after_rotation": true,
+    "keep_old_key_only_in_legacy_rollback_environment": true,
+    "provider_or_shopify_validation_failure": "reauthorization_required",
+    "continuity_requires": [
+      "decrypt_success",
+      "refresh_or_official_token_renewal",
+      "read_only_identity_probe"
+    ]
+  },
+  "dataset_source_snapshot": {
+    "source": "public.performance_dataset_rows_v2",
+    "total_rows": 5,
+    "providers": {
+      "klaviyo": 4,
+      "meta": 1,
+      "google_ads": 0
+    },
+    "source_confidence": {
+      "real": 2,
+      "partial": 3
+    },
+    "workspace_null": 0,
+    "user_id_non_null": 0,
+    "ga4_property_non_null": 0,
+    "source_job_id_non_null": 0,
+    "synthetic_true": 0,
+    "raw_nonempty": 5,
+    "direct_canonical_copy_rows": 0,
+    "disposition": "restricted_quarantine_manifest_and_provider_refetch",
+    "refetch_bootstrap": [
+      "yesterday",
+      "today"
+    ],
+    "manifest_fields": [
+      "business_date",
+      "provider",
+      "entity_key_hash",
+      "metric_support_hash",
+      "raw_hash",
+      "canonical_contract_version",
+      "adapter_version"
+    ],
+    "mismatch_behavior": "durable_provider_date_entity_reconciliation_record"
+  },
+  "fx_source_snapshot": {
+    "source": "public.fx_rates_daily",
+    "rows": 10478,
+    "total_bytes": 8101888,
+    "provider": "frankfurter_v1",
+    "min_date": "2026-07-03",
+    "max_date": "2026-10-02",
+    "direct_bulk_copy_rows": 0,
+    "disposition": "refetch_only_required_currency_pair_dates",
+    "historical_exception": "exact_carry_only_when_required_and_refetch_unavailable_with_source_hash_and_provenance",
+    "mismatch_behavior": "cutover_stop"
+  },
+  "zero_row_or_no_authority_carry": [
+    "oauth_transactions",
+    "users",
+    "user_settings",
+    "subscriptions",
+    "platform_connections",
+    "platform_connection_tokens",
+    "shopify_workspace_provider_connections",
+    "legacy_user_workspace_bindings",
+    "dashboard_snapshots",
+    "performance_dataset_rows",
+    "snapshot_jobs",
+    "snapshot_schedules",
+    "inactive_provider_and_account_inventory",
+    "test_and_loadtest_tables"
+  ],
+  "source_schema_defects_not_carried": [
+    "performance_dataset_rows_v2.user_id_and_users_FK",
+    "GA4_and_organic_source_semantics",
+    "TikTok_platform_and_hierarchy",
+    "legacy_source_job_id",
+    "missing_durable_maturity_finality_reconciliation_authority",
+    "service_role_CUD_runtime_pattern",
+    "public_schema_business_functions",
+    "unreviewed_SECURITY_DEFINER_cost_functions"
+  ],
+  "reconciliation_acceptance": {
+    "exact": [
+      "source_count_equals_export_count_equals_import_count",
+      "nonsecret_canonical_hash_equal",
+      "orphan_FK_zero",
+      "duplicate_canonical_key_zero",
+      "unknown_workspace_zero",
+      "plaintext_token_zero",
+      "legacy_object_zero",
+      "runtime_forbidden_privilege_zero"
+    ],
+    "refetch": [
+      "active_provider_identity_probe_PASS",
+      "requested_date_coverage_complete",
+      "raw_response_evidence_present",
+      "truthful_metric_support_state",
+      "mismatch_durable_and_countable",
+      "finality_state_and_source_watermark_written"
+    ]
+  },
+  "rollback": {
+    "source_project_mutation_during_migration": false,
+    "source_project_retained_until": [
+      "consumer_zero",
+      "retention_decision",
+      "privacy_decision",
+      "legal_decision"
+    ],
+    "mechanism": [
+      "revoke_new_runtime_credential",
+      "restore_legacy_deployment_and_domain_route"
+    ],
+    "target_delta_manifest_required": true,
+    "silent_data_loss_allowed": false
+  },
+  "changelog_review": {
+    "checked_at": "2026-10-04",
+    "postgresql_17_11_breaking_change_reviewed": true,
+    "target_dependencies": {
+      "ltree": false,
+      "legacy_pgcrypto_cipher": false,
+      "btree_gist_float_nan": false,
+      "custom_operator": false,
+      "orioledb": false
+    }
+  },
+  "transferred_to": {
+    "EO-F5": "product_route_and_database_consumer_map",
+    "EO-F6": "separate_supabase_setup_migration_and_rehearsal_effort",
+    "EO-F7": "project_creation_GO_NO_GO",
+    "EO-01": "clean_migrations_roles_CI_advisors_negative_schema_tests",
+    "EO-02": "workspace_install_billing_privacy_foundations",
+    "EO-03": "provider_connection_token_renewal_and_adapter_acceptance",
+    "EO-04": "clean_dataset_formula_query_schema",
+    "EO-05": "refresh_lease_checkpoint_finality_deletion",
+    "EO-07_EO-08": "parity_migration_rehearsal_canary_cutover_rollback"
+  },
+  "acceptance": {
+    "result": "PASS",
+    "exact_business_rows": 10,
+    "dataset_direct_canonical_copy_rows": 0,
+    "fx_direct_bulk_copy_rows": 0,
+    "expired_oauth_transaction_rows": 0,
+    "plaintext_token_exposure": 0,
+    "next_gate": "EO-F5"
+  },
+  "implementation_authorized": false,
+  "project_creation_authorized": false,
+  "schema_creation_authorized": false,
+  "data_migration_authorized": false,
+  "cutover_authorized": false,
+  "legacy_deletion_authorized": false
+}

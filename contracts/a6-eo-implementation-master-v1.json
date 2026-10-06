@@ -1,0 +1,662 @@
+{
+  "schema_version": "1.3.0",
+  "contract_id": "a6-eo-implementation-master-v1",
+  "title": "A6 EO single-track execution rule and integrated implementation package table",
+  "effective_date": "2026-10-04",
+  "status": "baseline_frozen_EO-01_ready",
+  "authority": {
+    "execution_plan": "codex-input/AdsTable_EXECUTION_PLAN_V4_2026-08-17_TR.md",
+    "EO_GO": "contracts/a6-eo-f7-go-decision-v1.json",
+    "analyst_master": "docs/A6_EO_IMPLEMENTATION_MASTER_TABLE.md"
+  },
+  "single_track_rules": {
+    "only_active_program": "A6-EO",
+    "maximum_active_parent_packages": 1,
+    "parent_sequence": [
+      "A6-EO-01",
+      "A6-EO-02",
+      "A6-EO-03",
+      "A6-EO-04",
+      "A6-EO-05",
+      "A6-EO-06",
+      "A6-EO-07",
+      "A6-EO-08",
+      "A6-EO-09",
+      "A6-EO-10"
+    ],
+    "new_E_R_RM_implementation_packages_allowed": false,
+    "legacy_packages_role": "reference_requirement_risk_and_evidence_only",
+    "maximum_named_child_depth": 1,
+    "deeper_work_items": "checklist_or_test_not_package",
+    "merge_requires_explicit_user_approval": true,
+    "code_merge_or_deploy_alone_is_done": false,
+    "every_child_requires_one_sentence_scope_summary": true
+  },
+  "cross_cutting_decisions": {
+    "reporting_store_scope_v1": {
+      "decided_at": "2026-10-06",
+      "shopify_workspace_role": "installation_session_billing_and_privacy_authority",
+      "reporting_store_role": "analytical_scope_within_selected_provider_reporting_accounts",
+      "creates_additional_shopify_workspace": false,
+      "maximum_active_reporting_stores_per_workspace": 1,
+      "single_verified_candidate_auto_selected": true,
+      "multiple_candidates_require_settings_selection_before_dataset_write": true,
+      "new_candidate_never_silently_changes_selection": true,
+      "continue_selected_store_only_when_provider_isolation_is_proven": true,
+      "ambiguous_provider_write_state": "store_scope_review_required_fail_closed",
+      "existing_history_preserved_on_pause_or_switch": true,
+      "selection_is_effective_dated": true,
+      "switch_relabels_history": false,
+      "new_scope_bootstrap": "yesterday_and_today_only",
+      "candidate_detection_or_single_active_switch_changes_price": false,
+      "simultaneous_multi_store_reporting": "future_separate_entitlement_outside_first_review_slice",
+      "charge_by_detected_candidate_count": false,
+      "package_owners": [
+        "A6-EO-02-C",
+        "A6-EO-03-C",
+        "A6-EO-04-A",
+        "A6-EO-05-A",
+        "A6-EO-05-B",
+        "A6-EO-07-A"
+      ]
+    },
+    "product_cross_sell_acceptance_v1": {
+      "decided_at": "2026-10-06",
+      "status": "decision_frozen_live_acceptance_pending",
+      "owner_package": "A6-EO-07-C",
+      "common_setup": {
+        "advertised_or_messaged_products": ["earring_1", "earring_2", "earring_3"],
+        "clicked_product": "earring_1",
+        "non_advertised_store_product": "necklace_1",
+        "record_catalog_ids_and_unit_prices_before_order": true
+      },
+      "fixtures": [
+        {
+          "id": "S2-A",
+          "description": "clicked product is not purchased",
+          "order_quantities": {
+            "earring_1": 0,
+            "earring_2": 2,
+            "earring_3": 1,
+            "necklace_1": 1
+          },
+          "expected_business_truth": {
+            "total_units": 4,
+            "clicked_direct_units": 0,
+            "other_cross_sell_units": 4
+          }
+        },
+        {
+          "id": "S2-B",
+          "description": "clicked product is purchased with other products",
+          "order_quantities": {
+            "earring_1": 1,
+            "earring_2": 2,
+            "earring_3": 1,
+            "necklace_1": 1
+          },
+          "expected_business_truth": {
+            "total_units": 5,
+            "clicked_direct_units": 1,
+            "other_cross_sell_units": 4
+          }
+        }
+      ],
+      "required_per_provider_evidence": [
+        "exact_api_version_and_query",
+        "account_and_analytical_leaf_identity",
+        "date_and_attribution_configuration",
+        "redacted_raw_response",
+        "returned_product_ids_quantities_and_values",
+        "non_advertised_necklace_1_behavior",
+        "clicked_or_promoted_vs_other_sold_product_separation"
+      ],
+      "capability_states": [
+        "verified_native_direct_and_cross_sell",
+        "partial_native_no_cross_sell",
+        "api_supported_runtime_unverified",
+        "unsupported",
+        "not_applicable"
+      ],
+      "verified_native_requires_both_fixtures": true,
+      "provider_results_are_independent": true,
+      "only_verified_provider_dataset_and_ui_leaf_may_activate": true,
+      "standard_search_without_native_clicked_or_promoted_product_identity": "not_applicable",
+      "forbidden_inference_sources": ["shopify_order_join", "url", "utm", "fbclid", "fbc"]
+    }
+  },
+  "exception": {
+    "legacy_production_containment_allowed": true,
+    "conditions": [
+      "active_production_risk",
+      "minimum_scope",
+      "reversible",
+      "explicit_human_decision",
+      "does_not_expand_legacy_product"
+    ],
+    "creates_parallel_product_track": false
+  },
+  "counts": {
+    "parent_packages": 10,
+    "stable_child_packages": 43,
+    "review_critical_parents": 8,
+    "post_review_parents": 2
+  },
+  "packages": [
+    {
+      "id": "A6-EO-01",
+      "title": "Clean runtime shell, CI and dependency boundary",
+      "phase": "review_critical",
+      "status": "Ready",
+      "depends_on": [
+        "EO-F7_GO",
+        "EO_implementation_master_merged"
+      ],
+      "children": [
+        {
+          "id": "A6-EO-01-A",
+          "title": "Repository and physical boundary",
+          "objective": "Create the clean repository boundary; no fork or bulk copy."
+        },
+        {
+          "id": "A6-EO-01-B",
+          "title": "Official stack, manifest and CI",
+          "objective": "Select the current official Shopify stack; pin clean dependencies and negative build controls."
+        },
+        {
+          "id": "A6-EO-01-C",
+          "title": "Three-route truthful preview shell",
+          "objective": "Create /, /ad-analysis and /settings shells; preview-only deployment and no product-data claims."
+        }
+      ],
+      "outputs": [
+        "clean_repository",
+        "preview_only_vercel_project",
+        "clean_manifest_lockfile",
+        "branch_protection_CI",
+        "three_route_shell"
+      ],
+      "references": [
+        "A6-RM-01",
+        "E3 architecture lessons",
+        "Shopify Embedded UI Constitution"
+      ],
+      "reference_closure_rule": "not_closed_until_exact_EO_acceptance_evidence_and_explicit_closure_record"
+    },
+    {
+      "id": "A6-EO-02",
+      "title": "Workspace, installation, billing/trial and privacy foundations",
+      "phase": "review_critical",
+      "status": "Not started",
+      "depends_on": [
+        "A6-EO-01"
+      ],
+      "children": [
+        {
+          "id": "A6-EO-02-A",
+          "title": "Private schemas, roles and migrations",
+          "objective": "Provision clean Standard Supabase and least-privilege migration/runtime roles."
+        },
+        {
+          "id": "A6-EO-02-B",
+          "title": "Workspace, installation and generation authority",
+          "objective": "Build workspace-bound install/session/bootstrap and generation state."
+        },
+        {
+          "id": "A6-EO-02-C",
+          "title": "Fourteen-day trial, subscription and entitlement",
+          "objective": "Make Shopify billing the merchant entitlement authority with one active Reporting Store included and no fee for candidate detection or switching."
+        },
+        {
+          "id": "A6-EO-02-D",
+          "title": "Privacy, uninstall, deletion and clean reinstall",
+          "objective": "Build HMAC ingress, durable claims, deletion executor/manifest and generation-safe reinstall."
+        }
+      ],
+      "outputs": [
+        "clean_data_foundation",
+        "workspace_install_authority",
+        "billing_entitlement",
+        "privacy_lifecycle"
+      ],
+      "references": [
+        "A6-RM-03",
+        "A6-RM-04",
+        "A6-RM-05",
+        "E10-T4",
+        "E10-T7",
+        "R2"
+      ],
+      "reference_closure_rule": "not_closed_until_exact_EO_acceptance_evidence_and_explicit_closure_record"
+    },
+    {
+      "id": "A6-EO-03",
+      "title": "Canonical OAuth, connection and token vault",
+      "phase": "review_critical",
+      "status": "Not started",
+      "depends_on": [
+        "A6-EO-02"
+      ],
+      "children": [
+        {
+          "id": "A6-EO-03-A",
+          "title": "OAuth transaction boundary",
+          "objective": "Workspace-owned state/PKCE/nonce/TTL and callback allowlist."
+        },
+        {
+          "id": "A6-EO-03-B",
+          "title": "Token envelope and startup guard",
+          "objective": "Server-only encryption, key versioning and fail-closed runtime."
+        },
+        {
+          "id": "A6-EO-03-C",
+          "title": "Connection and reporting-account authority",
+          "objective": "Establish verified ownership, selected Reporting Accounts and one effective-dated active Reporting Store binding per workspace."
+        },
+        {
+          "id": "A6-EO-03-D",
+          "title": "Reconnect, disconnect and renewal lifecycle",
+          "objective": "Idempotent renewal and truthful reauthorization without unsafe revoke."
+        }
+      ],
+      "outputs": [
+        "canonical_connection_store",
+        "token_vault",
+        "provider_account_authority"
+      ],
+      "references": [
+        "A6-RM-01",
+        "R0",
+        "R5",
+        "R6",
+        "E7"
+      ],
+      "reference_closure_rule": "not_closed_until_exact_EO_acceptance_evidence_and_explicit_closure_record"
+    },
+    {
+      "id": "A6-EO-04",
+      "title": "Meta, Google Ads and Klaviyo adapters",
+      "phase": "review_critical",
+      "status": "Not started",
+      "depends_on": [
+        "A6-EO-03"
+      ],
+      "children": [
+        {
+          "id": "A6-EO-04-A",
+          "title": "Common adapter contract",
+          "objective": "Build the shared request, raw evidence, support-state, store discovery/filter, quota and error envelope."
+        },
+        {
+          "id": "A6-EO-04-B",
+          "title": "Meta adapter",
+          "objective": "Account, campaign/ad hierarchy, actions/action_values and truthful missing behavior."
+        },
+        {
+          "id": "A6-EO-04-C",
+          "title": "Google Ads adapter",
+          "objective": "Standard Ad and Performance Max Asset Group hierarchy with raw structure evidence."
+        },
+        {
+          "id": "A6-EO-04-D",
+          "title": "Klaviyo adapter",
+          "objective": "Campaign/Message, Flow/Message, metrics, cost inputs and 15 October revalidation."
+        },
+        {
+          "id": "A6-EO-04-E",
+          "title": "Integrated three-provider acceptance",
+          "objective": "Provider-isolated and combined non-fabricated acceptance evidence."
+        }
+      ],
+      "outputs": [
+        "three_provider_adapters",
+        "raw_response_evidence",
+        "normalized_fact_contracts"
+      ],
+      "references": [
+        "R6",
+        "R7",
+        "R7-B5",
+        "E10-T5-C2-C"
+      ],
+      "reference_closure_rule": "not_closed_until_exact_EO_acceptance_evidence_and_explicit_closure_record"
+    },
+    {
+      "id": "A6-EO-05",
+      "title": "Scheduler, Dataset V2, FX, maturity and reconciliation",
+      "phase": "review_critical",
+      "status": "Not started",
+      "depends_on": [
+        "A6-EO-04"
+      ],
+      "children": [
+        {
+          "id": "A6-EO-05-A",
+          "title": "Hourly scheduler, shard, lease and checkpoint",
+          "objective": "Build the AdsTable-owned single-flight recurring control plane with Reporting Store topology-drift detection."
+        },
+        {
+          "id": "A6-EO-05-B",
+          "title": "Dataset V2, FX and provenance",
+          "objective": "Persist Reporting Store scope-bound canonical facts, source currency and exact FX lineage within the workspace."
+        },
+        {
+          "id": "A6-EO-05-C",
+          "title": "Maturity, attribution windows and finality",
+          "objective": "Provider-specific rolling correction windows and truthful freshness."
+        },
+        {
+          "id": "A6-EO-05-D",
+          "title": "Bootstrap, idempotent upsert and reconciliation",
+          "objective": "Yesterday+today bootstrap, replay and raw-to-canonical mismatch ledger."
+        },
+        {
+          "id": "A6-EO-05-E",
+          "title": "Operational observability",
+          "objective": "Safe status, alerts and no-secret/no-PII evidence."
+        }
+      ],
+      "outputs": [
+        "hourly_control_plane",
+        "canonical_dataset",
+        "finality_ledger",
+        "reconciliation_evidence"
+      ],
+      "references": [
+        "A6-RM-06",
+        "A6-RM-07",
+        "E9-T8",
+        "R3",
+        "R4",
+        "R7"
+      ],
+      "reference_closure_rule": "not_closed_until_exact_EO_acceptance_evidence_and_explicit_closure_record"
+    },
+    {
+      "id": "A6-EO-06",
+      "title": "Formula, Query and same-origin BFF/API",
+      "phase": "review_critical",
+      "status": "Not started",
+      "depends_on": [
+        "A6-EO-05"
+      ],
+      "children": [
+        {
+          "id": "A6-EO-06-A",
+          "title": "Formula engine",
+          "objective": "Aggregate-first KPI math, cost allocation and currency-safe calculations."
+        },
+        {
+          "id": "A6-EO-06-B",
+          "title": "Query, filters and comparison semantics",
+          "objective": "Date/entity filters, supported grain and comparison rules."
+        },
+        {
+          "id": "A6-EO-06-C",
+          "title": "BFF routes and DTO envelope",
+          "objective": "Session-derived workspace and stable three-surface API contracts."
+        },
+        {
+          "id": "A6-EO-06-D",
+          "title": "Support/null/freshness semantics",
+          "objective": "Unknown, unsupported, stale, partial and real zero remain distinct."
+        },
+        {
+          "id": "A6-EO-06-E",
+          "title": "Contract and security acceptance",
+          "objective": "Tenant tamper, formula, query and API characterization evidence."
+        }
+      ],
+      "outputs": [
+        "formula_engine",
+        "query_layer",
+        "truthful_BFF_API"
+      ],
+      "references": [
+        "A6-RM-08",
+        "A6-RM-09",
+        "E11",
+        "Dataset V2 contracts"
+      ],
+      "reference_closure_rule": "not_closed_until_exact_EO_acceptance_evidence_and_explicit_closure_record"
+    },
+    {
+      "id": "A6-EO-07",
+      "title": "Shopify-native three-surface UI",
+      "phase": "review_critical",
+      "status": "Not started",
+      "depends_on": [
+        "A6-EO-06"
+      ],
+      "children": [
+        {
+          "id": "A6-EO-07-A",
+          "title": "Settings surface",
+          "objective": "Build currency, provider connections, one active Reporting Store selection/review, Klaviyo cost, billing and privacy."
+        },
+        {
+          "id": "A6-EO-07-B",
+          "title": "Funnel App Home",
+          "objective": "Funnel/Table and contextual dashboard charts."
+        },
+        {
+          "id": "A6-EO-07-C",
+          "title": "Cross-platform deepest-grain discovery",
+          "objective": "Freeze comparable provider leafs before Ad Analysis and Attribution Differences implementation."
+        },
+        {
+          "id": "A6-EO-07-D",
+          "title": "Ad Analysis surface",
+          "objective": "Implement provider deepest-grain analysis and contextual charts only after A6-EO-07-C passes."
+        },
+        {
+          "id": "A6-EO-07-E",
+          "title": "Attribution Differences nested view",
+          "objective": "Implement inside Ad Analysis only after A6-EO-07-C and A6-EO-07-D pass."
+        },
+        {
+          "id": "A6-EO-07-F",
+          "title": "Desktop, real-mobile and accessibility acceptance",
+          "objective": "Exact component mapping and explicit product-owner visual acceptance."
+        }
+      ],
+      "outputs": [
+        "settings_UI",
+        "funnel_app_home",
+        "ad_analysis_UI",
+        "nested_attribution_view_when_supported"
+      ],
+      "references": [
+        "A6-RM-09",
+        "E10-T5",
+        "E12",
+        "Shopify Embedded UI Constitution"
+      ],
+      "reference_closure_rule": "not_closed_until_exact_EO_acceptance_evidence_and_explicit_closure_record"
+    },
+    {
+      "id": "A6-EO-08",
+      "title": "Carry rehearsal, parity, canary and rollback",
+      "phase": "review_critical",
+      "status": "Not started",
+      "depends_on": [
+        "A6-EO-07"
+      ],
+      "children": [
+        {
+          "id": "A6-EO-08-A",
+          "title": "Restricted data and sealed-token carry rehearsal",
+          "objective": "Apply EO-F4 manifest in disposable/preview boundary."
+        },
+        {
+          "id": "A6-EO-08-B",
+          "title": "Provider, Dataset, API and UI parity",
+          "objective": "Compare source/provider facts without false-zero masking."
+        },
+        {
+          "id": "A6-EO-08-C",
+          "title": "Failure injection and rollback rehearsal",
+          "objective": "Prove safe fallback for auth, provider, DB, job and UI failures."
+        },
+        {
+          "id": "A6-EO-08-D",
+          "title": "Review evidence and review-ready decision",
+          "objective": "Assemble Shopify lifecycle/product evidence; explicit human gate."
+        }
+      ],
+      "outputs": [
+        "carry_rehearsal",
+        "side_by_side_parity",
+        "rollback_proof",
+        "review_ready_decision"
+      ],
+      "references": [
+        "A6-RM-10",
+        "R8",
+        "R9",
+        "E13"
+      ],
+      "reference_closure_rule": "not_closed_until_exact_EO_acceptance_evidence_and_explicit_closure_record"
+    },
+    {
+      "id": "A6-EO-09",
+      "title": "Authority cutover stabilization and consumer-zero",
+      "phase": "post_review_cutover",
+      "status": "Not started",
+      "depends_on": [
+        "A6-EO-08",
+        "separate_cutover_GO"
+      ],
+      "children": [
+        {
+          "id": "A6-EO-09-A",
+          "title": "Production cutover plan and freeze",
+          "objective": "Exact domain/App configuration/data watermark and rollback window."
+        },
+        {
+          "id": "A6-EO-09-B",
+          "title": "Canary authority switch",
+          "objective": "Small controlled production authority transition."
+        },
+        {
+          "id": "A6-EO-09-C",
+          "title": "Stabilization and consumer-zero observation",
+          "objective": "Prove new authority stability and zero legacy consumers."
+        }
+      ],
+      "outputs": [
+        "controlled_cutover",
+        "stabilization_evidence",
+        "consumer_zero"
+      ],
+      "references": [
+        "A6-RM-10",
+        "A6-RM-11",
+        "R9",
+        "E13"
+      ],
+      "reference_closure_rule": "not_closed_until_exact_EO_acceptance_evidence_and_explicit_closure_record"
+    },
+    {
+      "id": "A6-EO-10",
+      "title": "Legacy archive, retention and controlled retirement",
+      "phase": "post_consumer_zero",
+      "status": "Not started",
+      "depends_on": [
+        "A6-EO-09",
+        "consumer_zero_PASS",
+        "separate_destructive_approval"
+      ],
+      "children": [
+        {
+          "id": "A6-EO-10-A",
+          "title": "Archive and retention manifest",
+          "objective": "Recoverable source/code/data evidence and legal/privacy retention map."
+        },
+        {
+          "id": "A6-EO-10-B",
+          "title": "Legacy route, deployment and environment retirement",
+          "objective": "Disable only proven-zero consumers; no broad deletion."
+        },
+        {
+          "id": "A6-EO-10-C",
+          "title": "Legacy database retirement",
+          "objective": "Table/function/credential cleanup with restore point and exact manifest."
+        },
+        {
+          "id": "A6-EO-10-D",
+          "title": "Final restore and closure evidence",
+          "objective": "Prove restoration boundary and close mapped obligations explicitly."
+        }
+      ],
+      "outputs": [
+        "recoverable_archive",
+        "legacy_retirement",
+        "final_closure_evidence"
+      ],
+      "references": [
+        "A6-RM-11",
+        "E14",
+        "R10"
+      ],
+      "reference_closure_rule": "not_closed_until_exact_EO_acceptance_evidence_and_explicit_closure_record"
+    }
+  ],
+  "new_finding_routing": {
+    "repository_dependency_build_shopify_stack": "A6-EO-01",
+    "workspace_install_billing_privacy_deletion": "A6-EO-02",
+    "oauth_token_account_ownership": "A6-EO-03",
+    "provider_request_normalization_hierarchy": "A6-EO-04",
+    "scheduler_dataset_fx_finality": "A6-EO-05",
+    "formula_query_api_semantics": "A6-EO-06",
+    "UX_component_mobile_three_surface": "A6-EO-07",
+    "migration_parity_canary_rollback": "A6-EO-08",
+    "cutover_consumer_zero": "A6-EO-09",
+    "archive_retirement": "A6-EO-10"
+  },
+  "package_start_brief_required": [
+    "business_output",
+    "business_value",
+    "scope",
+    "out_of_scope",
+    "dependencies",
+    "live_effect",
+    "acceptance",
+    "rollback",
+    "reference_obligations"
+  ],
+  "package_close_record_required": [
+    "actual_output",
+    "acceptance_evidence",
+    "reference_obligations_satisfied_or_open",
+    "single_next_parent"
+  ],
+  "review_boundary": {
+    "review_critical": [
+      "A6-EO-01",
+      "A6-EO-02",
+      "A6-EO-03",
+      "A6-EO-04",
+      "A6-EO-05",
+      "A6-EO-06",
+      "A6-EO-07",
+      "A6-EO-08"
+    ],
+    "post_review": [
+      "A6-EO-09",
+      "A6-EO-10"
+    ],
+    "review_ready_requires": "A6-EO-08-D_and_explicit_human_decision",
+    "legacy_retirement_requires": [
+      "A6-EO-09_consumer_zero_PASS",
+      "separate_destructive_approval"
+    ]
+  },
+  "first_active_parent_after_merge": "A6-EO-01",
+  "technical_provisioning_before_merge": false,
+  "production_mutation_authorized": false,
+  "provider_mutation_authorized": false,
+  "live_data_carry_authorized": false,
+  "cutover_authorized": false,
+  "legacy_deletion_authorized": false
+}

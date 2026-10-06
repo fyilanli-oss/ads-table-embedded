@@ -1,0 +1,254 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "a6-eo-f3-code-dependency-carry-allowlist-v1",
+  "title": "A6 EO-F3 code and dependency carry allowlist",
+  "evidence_date": "2026-10-04",
+  "status": "eo_f3_complete_eo_f4_pending",
+  "source": {
+    "repository": "fyilanli-oss/ads-table-dev",
+    "main_sha": "01e2a253531b0c2c078eca11228c55b468a2b5a4",
+    "analyst_evidence": "docs/A6_EO_F3_CODE_DEPENDENCY_CARRY_ALLOWLIST.md"
+  },
+  "scope": {
+    "mode": "read_only_architecture_decision",
+    "production_mutation": false,
+    "database_mutation": false,
+    "provider_mutation": false,
+    "deployment_mutation": false,
+    "new_project_created": false
+  },
+  "classification_policy": {
+    "application_modules_carry_as_is": [],
+    "application_modules_carry_as_is_count": 0,
+    "seed_artifacts_as_is": [
+      "approved_EO_decisions_and_executable_contracts",
+      "shopify_embedded_ui_constitution",
+      "accepted_schema_metric_formula_contracts",
+      "provider_raw_evidence_and_reconciliation_evidence",
+      "secret_and_pii_free_independent_test_fixtures"
+    ],
+    "extract_and_rewrite": [
+      {
+        "capability": "shopify_tenant_install_session",
+        "sources": [
+          "src/shopify/tenant-model.js",
+          "src/shopify/embedded-auth*",
+          "src/shopify/managed-installation*"
+        ],
+        "requirements": [
+          "workspace_id_only",
+          "clean_reinstall_generation",
+          "billing_and_lifecycle_gates"
+        ]
+      },
+      {
+        "capability": "canonical_provider_connection",
+        "sources": [
+          "src/providers/workspace-provider-connection-store.js"
+        ],
+        "requirements": [
+          "no_legacy_shim",
+          "no_user_id",
+          "EO_F4_least_privilege_data_plane"
+        ]
+      },
+      {
+        "capability": "provider_token_crypto",
+        "sources": [
+          "security/provider-token-vault.js"
+        ],
+        "requirements": [
+          "workspace_and_install_generation_AAD",
+          "startup_fail_closed",
+          "no_legacy_token_store"
+        ]
+      },
+      {
+        "capability": "meta_adapter",
+        "sources": [
+          "src/providers/meta/client.js",
+          "src/providers/meta/*capabilit*",
+          "src/providers/meta/*normaliz*",
+          "src/providers/meta/*mapper*"
+        ],
+        "requirements": [
+          "exclude_historical_acceptance_operator",
+          "raw_response_provenance"
+        ]
+      },
+      {
+        "capability": "google_ads_adapter",
+        "sources": [
+          "src/providers/google-ads/search-client.js",
+          "src/providers/google-ads/*conversion*",
+          "src/providers/google-ads/*mapper*"
+        ],
+        "requirements": [
+          "no_google_sheets",
+          "no_googleapis_transitive_dependency",
+          "raw_response_provenance"
+        ]
+      },
+      {
+        "capability": "klaviyo_adapter",
+        "sources": [
+          "src/providers/klaviyo/provider-client.js",
+          "src/providers/klaviyo/*metric*",
+          "src/providers/klaviyo/*mapper*"
+        ],
+        "requirements": [
+          "exclude_historical_inventory_and_acceptance",
+          "raw_response_provenance"
+        ]
+      },
+      {
+        "capability": "dataset_v2",
+        "sources": [
+          "funnel-core/workspace-*",
+          "active_provider_mappers"
+        ],
+        "requirements": [
+          "workspace_id_only",
+          "EO_F4_schema",
+          "maturity_finality_reconciliation"
+        ]
+      },
+      {
+        "capability": "time_fx_hierarchy",
+        "sources": [
+          "funnel-core/*time*",
+          "funnel-core/*fx*",
+          "funnel-core/*hierarchy*"
+        ],
+        "requirements": [
+          "characterization_against_final_contract"
+        ]
+      },
+      {
+        "capability": "formula_query",
+        "sources": [
+          "funnel-core/*formula*",
+          "funnel-core/*query*"
+        ],
+        "requirements": [
+          "resolve_A4_findings",
+          "canonical_names",
+          "truthful_null_unknown",
+          "cost_allocation"
+        ]
+      },
+      {
+        "capability": "oauth_transaction",
+        "sources": [
+          "security/oauth-transaction-store.js"
+        ],
+        "requirements": [
+          "do_not_copy_rows",
+          "workspace_install_generation",
+          "TTL_cleanup_replay_protection"
+        ]
+      },
+      {
+        "capability": "scheduler_finality",
+        "sources": [
+          "existing_hourly_cron_and_provider_finality_behaviors"
+        ],
+        "requirements": [
+          "single_authority",
+          "lease_checkpoint",
+          "idempotent_rolling_reconciliation"
+        ]
+      }
+    ],
+    "contract_only": [
+      "shopify_embedded_UI_and_component_mapping",
+      "formula_compare_intent_API_semantics",
+      "dataset_provenance_maturity_finality",
+      "privacy_webhook_claim_workspace_deletion_clean_reinstall",
+      "shopify_billing_14_day_trial_entitlement",
+      "scheduler_lease_checkpoint",
+      "oauth_state_TTL_replay_security",
+      "side_by_side_parity_canary_rollback_consumer_zero",
+      "controlled_acceptance_expected_behavior"
+    ],
+    "retire_from_target_build": [
+      "server.js",
+      "public_legacy_standalone_product",
+      "legacy_user_settings_subscription_authority",
+      "legacy_platform_connection_and_token_runtime",
+      "V1_snapshot_dataset_jobs_schedules_and_user_scoped_backfill",
+      "GA4_Google_Sheets_TikTok_Pinterest_Organic_runtime",
+      "shopify_workspace_provider_connections_authority",
+      "dual_write_live_shadow_legacy_primary_or_fallback",
+      "debug_test_operator_diagnostic_acceptance_historical_routes",
+      "current_package_manifest_lockfile_and_vercel_build_globs",
+      "bulk_copy_of_embedded_UI_or_custom_shopify_look_CSS"
+    ]
+  },
+  "dependency_policy": {
+    "new_manifest_from_scratch": true,
+    "old_manifest_is_not_seed": true,
+    "allowed_categories": [
+      "official_current_shopify_app_stack_selected_in_EO_01",
+      "official_app_bridge_and_polaris_web_components_delivery",
+      "single_database_client_or_driver_selected_after_EO_F4",
+      "platform_native_fetch_web_crypto_or_node_crypto_when_sufficient",
+      "used_test_lint_typecheck_and_build_tools"
+    ],
+    "existing_dependencies_not_automatically_carried": {
+      "express": "framework_choice_waits_for_EO_01",
+      "googleapis": "forbidden_as_google_ads_transitive_dependency",
+      "@supabase/supabase-js": "data_plane_choice_waits_for_EO_F4"
+    },
+    "direct_dependency_record_fields": [
+      "owned_capability",
+      "native_alternative_rationale",
+      "runtime_or_dev_only",
+      "browser_or_server",
+      "secret_and_tenant_effect",
+      "license_and_maintenance",
+      "version_policy",
+      "removal_and_rollback"
+    ],
+    "provider_SDK_default": "not_allowed_without_evidence"
+  },
+  "target_build_negative_controls": {
+    "forbidden_provider_or_legacy_imports": 0,
+    "user_id_tenant_authority_uses": 0,
+    "legacy_table_name_uses": 0,
+    "debug_operator_acceptance_routes": 0,
+    "root_monolith_or_legacy_public_assets": 0,
+    "server_secret_clients_in_browser_bundle": 0,
+    "undeclared_environment_reads": 0,
+    "unused_direct_dependencies": 0
+  },
+  "ci_required": [
+    "allowlist_import_graph",
+    "forbidden_string_table_route_scan",
+    "dependency_inventory",
+    "secret_scan",
+    "production_bundle_inspection"
+  ],
+  "transferred_to": {
+    "EO-F4": "exact_schema_data_carry_data_plane_and_credentials",
+    "EO-F5": "product_route_map_and_nonproduction_surface_separation",
+    "EO-F6": "rewrite_unit_effort_and_risk",
+    "EO-F7": "human_GO_NO_GO",
+    "EO-01": "clean_repository_build_CI_and_official_shopify_stack",
+    "EO-02": "workspace_install_billing_lifecycle_foundations",
+    "EO-03": "provider_adapter_rewrite",
+    "EO-04": "dataset_formula_query_rewrite",
+    "EO-05": "scheduler_finality_deletion",
+    "EO-06_plus": "UI_parity_canary_cutover_consumer_zero"
+  },
+  "acceptance": {
+    "result": "PASS",
+    "application_modules_carried_as_is": 0,
+    "forbidden_provider_legacy_target_build_inclusion_target": 0,
+    "next_gate": "EO-F4"
+  },
+  "implementation_authorized": false,
+  "project_creation_authorized": false,
+  "cutover_authorized": false,
+  "legacy_deletion_authorized": false
+}

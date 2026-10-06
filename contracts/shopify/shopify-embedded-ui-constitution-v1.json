@@ -1,0 +1,83 @@
+{
+  "contract": "shopify-embedded-ui-constitution-v1",
+  "status": "binding",
+  "effective_date": "2026-09-30",
+  "authority": "execution_plan_and_explicit_product_decisions",
+  "applies_to": [
+    "shopify_embedded_pages",
+    "app_navigation",
+    "settings",
+    "oauth_return_and_resume",
+    "modals",
+    "forms",
+    "status_and_actions",
+    "desktop_and_mobile"
+  ],
+  "required_technology": [
+    "shopify_app_bridge",
+    "shopify_app_home_polaris_web_components"
+  ],
+  "approved_runtime": {
+    "decision_date": "2026-09-30",
+    "environment": "development",
+    "polaris_script": "https://cdn.shopify.com/shopifycloud/polaris-2.0-rc.js",
+    "reason": "match_the_current_shopify_admin_design_without_custom_visual_imitation",
+    "stable_transition": "requires_separate_validation_when_polaris_2_stable_is_published"
+  },
+  "forbidden": [
+    "raw_html_form_or_action_controls",
+    "custom_button_card_badge_modal_form_or_navigation",
+    "inline_css",
+    "style_blocks",
+    "literal_colors",
+    "custom_visual_classes",
+    "shopify_component_css_imitation",
+    "clickable_used_as_standard_button",
+    "desktop_only_acceptance",
+    "unverified_done_or_pass"
+  ],
+  "required_before_implementation": [
+    "analyst_brief",
+    "state_matrix",
+    "exact_copy",
+    "official_component_mapping",
+    "official_source_links_and_check_date",
+    "desktop_mobile_acceptance_plan",
+    "unchanged_backend_scope",
+    "out_of_scope"
+  ],
+  "required_before_merge": [
+    "constitution_guard_pass",
+    "ui_contract_test_pass",
+    "desktop_real_shopify_admin_pass",
+    "mobile_320px_real_shopify_admin_pass",
+    "loading_empty_error_cancel_success_states_pass",
+    "explicit_product_owner_acceptance",
+    "execution_plan_evidence_update"
+  ],
+  "official_sources": [
+    "https://shopify.dev/docs/api/app-home/latest",
+    "https://shopify.dev/docs/api/app-home/latest/web-components",
+    "https://shopify.dev/docs/api/app-home/latest/web-components/actions/button",
+    "https://shopify.dev/docs/api/app-home-ui-extension/latest/web-components/feedback-and-status-indicators/badge",
+    "https://shopify.dev/docs/api/app-home/latest/app-bridge-web-components",
+    "https://shopify.dev/docs/api/polaris/using-polaris-web-components",
+    "https://shopify.dev/docs/apps/build/app-home/polaris2",
+    "https://shopify.dev/docs/api/app-home/v2.0-rc/web-components/versioning"
+  ],
+  "known_noncompliance": [],
+  "resolved_noncompliance": [
+    {
+      "id": "R7-B6-SETTINGS-VISUAL-001",
+      "status": "implementation_corrected_acceptance_pending",
+      "file": "src/shopify/embedded-app-home.js",
+      "baseline_commit": "e9cd2490f1e9a9c70213baf3f47feba8c264380f",
+      "required_zero_counts": {
+        "inline_style_count": 0,
+        "literal_color_count": 0,
+        "clickable_action_count": 0
+      },
+      "acceptance": "desktop_and_real_mobile_product_owner_acceptance_required_before_merge"
+    }
+  ]
+}

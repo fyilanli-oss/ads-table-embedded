@@ -1,0 +1,140 @@
+{
+  "schema_version": "1.1.0",
+  "contract_id": "a6-eo-f7-go-decision-v1",
+  "title": "A6 EO-F7 embedded-only clean re-establishment GO decision",
+  "decision_date": "2026-10-04",
+  "status": "GO_frozen_EO-01_authorized",
+  "authority": {
+    "decision_owner": "product_owner_user",
+    "explicit_decision": "Kesinlikle embedded-only temiz yeni kuruluş",
+    "execution_plan": "codex-input/AdsTable_EXECUTION_PLAN_V4_2026-08-17_TR.md",
+    "eo_master": "contracts/a6-eo-00-embedded-only-reestablishment-v1.json",
+    "analyst_decision": "docs/A6_EO_F7_GO_DECISION.md",
+    "source_main_sha": "c1033d1efaa81b1e3d77414f89d806c4106ee056"
+  },
+  "feasibility_gates": {
+    "EO-F1": "complete",
+    "EO-F2": "complete_separate_repository_and_vercel_selected",
+    "EO-F3": "complete_zero_application_modules_carry_as_is",
+    "EO-F4": "complete_separate_standard_supabase_selected",
+    "EO-F5": "complete_three_surface_product_map",
+    "EO-F6": "complete_reestablishment_recommended"
+  },
+  "selected_path": "embedded_only_clean_reestablishment",
+  "rejected_target_development_path": "repair_and_extend_existing_monolith",
+  "target": {
+    "product_surface": "shopify_embedded_only",
+    "top_level_routes": [
+      "/",
+      "/ad-analysis",
+      "/settings"
+    ],
+    "active_providers": [
+      "meta",
+      "google_ads",
+      "klaviyo"
+    ],
+    "github_repository_candidate": "fyilanli-oss/ads-table-embedded",
+    "vercel_project_candidate": "ads-table-embedded",
+    "supabase_project_display_name_candidate": "adstable-embedded",
+    "repository_is_fork": false,
+    "bulk_history_or_tree_copy": false,
+    "preview_only_initial_deployment": true
+  },
+  "authorized_after_merge": {
+    "overall_program_implementation": true,
+    "next_package": "A6-EO-01",
+    "clean_github_repository_provisioning": true,
+    "preview_only_vercel_project_provisioning": true,
+    "separate_standard_supabase_project_provisioning": true,
+    "approved_contract_and_constitution_seed": true,
+    "clean_manifest_ci_and_runtime_shell": true
+  },
+  "package_sequence": [
+    "A6-EO-01",
+    "A6-EO-02",
+    "A6-EO-03",
+    "A6-EO-04",
+    "A6-EO-05",
+    "A6-EO-06",
+    "A6-EO-07",
+    "A6-EO-08",
+    "A6-EO-09",
+    "A6-EO-10"
+  ],
+  "current_package_mutation": {
+    "github_repository_created": false,
+    "vercel_project_created": false,
+    "supabase_project_created": false,
+    "production_mutation": false,
+    "provider_mutation": false,
+    "database_mutation": false,
+    "shopify_configuration_mutation": false,
+    "deployment_mutation": false
+  },
+  "not_authorized": [
+    "production_domain_switch",
+    "shopify_app_url_or_redirect_production_change",
+    "legacy_production_shutdown",
+    "live_provider_call_or_oauth_token_mutation",
+    "live_exact_row_data_or_token_carry",
+    "production_dataset_backfill",
+    "source_supabase_delete_update_or_privilege_reduction",
+    "legacy_delete_before_consumer_zero",
+    "review_ready_or_cutover_ready_claim",
+    "audit_finding_auto_close",
+    "destructive_cleanup_or_retirement"
+  ],
+  "clean_seed_allowlist": [
+    "execution_plan_summary",
+    "EO_contracts_and_decisions",
+    "shopify_embedded_ui_constitution",
+    "accepted_schema_metric_formula_contracts",
+    "secret_and_pii_free_test_fixtures"
+  ],
+  "clean_seed_denylist": [
+    "legacy_repository_fork_or_bulk_tree",
+    "root_server_js",
+    "legacy_public_tree",
+    "old_package_manifest_or_lockfile",
+    "legacy_provider_and_standalone_runtime",
+    "old_supabase_service_role_or_mixed_project_credential",
+    "production_domain_binding"
+  ],
+  "EO_01_acceptance": [
+    "separate_repository_exists",
+    "clean_manifest_and_lockfile",
+    "official_shopify_stack_decision",
+    "branch_protection_and_CI",
+    "zero_legacy_import_route_table_env_negative_tests",
+    "app_bridge_and_polaris_web_components_shell",
+    "three_truthful_empty_route_shells",
+    "server_only_fail_closed_config",
+    "preview_only_vercel_deployment",
+    "production_and_shopify_configuration_mutation_zero"
+  ],
+  "preserved_gates": [
+    "privacy_deletion_uninstall_clean_reinstall",
+    "billing_trial_entitlement",
+    "provider_identity_ownership_and_token_security",
+    "scheduler_lease_checkpoint",
+    "dataset_provenance_maturity_reconciliation_finality",
+    "truthful_formula_query_api_ui",
+    "desktop_and_real_mobile_acceptance",
+    "side_by_side_parity_canary_and_rollback",
+    "consumer_zero_before_retirement"
+  ],
+  "cutover_authorized": false,
+  "live_data_carry_authorized": false,
+  "provider_mutation_authorized": false,
+  "production_mutation_authorized": false,
+  "legacy_deletion_authorized": false,
+  "next_gate": "A6-EO-01_clean_runtime_shell_CI_dependency_boundary",
+  "execution_governance": {
+    "contract": "contracts/a6-eo-implementation-master-v1.json",
+    "analyst_table": "docs/A6_EO_IMPLEMENTATION_MASTER_TABLE.md",
+    "required_before_EO_01_execution": true,
+    "single_active_parent": true,
+    "legacy_packages_reference_only": true
+  }
+}

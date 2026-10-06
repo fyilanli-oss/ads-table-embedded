@@ -212,3 +212,4 @@ EO-01 başlamadan önce verilecek analist brief:
 - rollback.
 
 Başka hiçbir EO parent paralel başlatılmaz.
+

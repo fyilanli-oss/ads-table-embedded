@@ -8,7 +8,7 @@
 
 AdsTable bir Shopify Public Embedded App'tir. Shopify Admin içindeki arayüz ikinci bir AdsTable tasarım sistemi değildir. UI yalnız Shopify App Bridge ve ürün sahibi tarafından açıkça onaylanmış güncel App Home Polaris web component sürümü ile kurulur.
 
-**Onaylı runtime kararı — 30 Eylül 2026:** Development ortamı, Shopify'ın 24 Eylül 2026'da yayımladığı `polaris-2.0-rc.js` sürümünü kullanır. Amaç, 15 Eylül 2026'da dağıtıma başlayan yeni Shopify Admin görünümünü özel CSS veya component taklidi olmadan resmî Shopify runtime'ıyla izlemektir. Polaris 2 stable yayımlandığında geçiş ayrı bir doğrulama kapısıyla `polaris-2.0.js` adresine yapılır.
+**Temiz runtime kararı — 6 Ekim 2026:** Yeni embedded-only uygulamanın production ve preview baseline'ı Shopify'ın önerdiği stable kanal `polaris-1.js` ve onunla eşleşen `@shopify/polaris-types@1.1.0` paketidir. Polaris 2.0 halen release candidate olduğu için temiz ürün baseline'ına alınmaz. Stable `polaris-2.0.js` yayımlandığında geçiş; resmî doküman, type/runtime eşleşmesi, desktop ve gerçek mobil kabul ile ayrı bir karar kapısından geçer.
 
 Shopify iframe uygulamanın teknik taşıyıcısıdır; özel görünüm üretme izni değildir. Merchant, AdsTable'ı Shopify'dan kopuk bir web sitesi gibi görmemelidir.
 
@@ -102,3 +102,10 @@ Bu durum **kabul edilmiş tasarım değildir** ve R7-B6 görsel kabulü `FAIL / 
 ## 8. Değişiklik yönetimi
 
 Bu anayasa ancak açık kullanıcı/ürün kararı, Execution Plan kaydı ve executable contract/test güncellemesiyle değiştirilebilir. Bir task veya ajan kendi başına istisna üretemez.
+
+## 9. Karar geçmişi
+
+- 30 Eylül 2026 development RC kararı legacy repository bağlamında alınmıştı.
+- 6 Ekim 2026 EO-01-B temiz yeniden kuruluşunda, daha yeni Execution Plan ve Shopify'ın production için stable kanal tavsiyesi uyarınca RC kararı supersede edildi.
+- Bu değişiklik legacy uygulamanın runtime'ını değiştirmez; yalnız yeni `ads-table-embedded` repository'sinin baseline'ını belirler.
+

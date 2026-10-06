@@ -221,3 +221,4 @@ Bu sonuç henüz uygulama GO değildir. EO-F7'de kullanıcı, bu efor/risk sözl
 - EO-08 parity, deletion, billing, scheduler veya rollback kapısı başarısızsa cutover durur.
 - Consumer-zero yoksa legacy retirement yapılmaz.
 - Tahmin “deadline” veya eksik kabul kapısını atlama gerekçesi olarak kullanılamaz.
+

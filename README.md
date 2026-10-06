@@ -14,3 +14,4 @@ Clean Shopify embedded-only application for AdsTable.
 - Legacy application/runtime carry-as-is: zero modules
 
 Implementation is governed by the A6-EO Execution Plan, the executable EO master contract, and the Shopify Embedded UI Constitution.
+

@@ -1,0 +1,34 @@
+name: Repository Governance
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - "codex/**"
+
+permissions:
+  contents: read
+
+jobs:
+  governance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Install pnpm
+        uses: pnpm/action-setup@0609f0983b7a228f052f81ef4c3d6510cae254ad
+        with:
+          version: 11.25.0
+      - name: Use Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Verify frozen dependency graph
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Run repository governance tests
+        run: pnpm test
+

@@ -23,3 +23,4 @@ Application scaffold, package manifest, lockfile, runtime route, provider adapte
 3. `src`, `app`, `public`, legacy server, package/lockfile ve environment dosyaları yoktur.
 4. Kabul testi PASS olur.
 5. PR/CI sonucu kullanıcıya sunulur; açık merge onayı olmadan merge edilmez.
+

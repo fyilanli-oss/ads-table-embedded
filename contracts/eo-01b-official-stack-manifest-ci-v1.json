@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "contractId": "eo-01b-official-stack-manifest-ci-v1",
+  "package": "A6-EO-01-B",
+  "status": "merge_pending",
+  "directDependencyCount": 16,
+  "checkedAt": "2026-10-06",
+  "officialTemplate": {
+    "repository": "Shopify/shopify-app-template-react-router",
+    "branch": "main",
+    "packageJsonBlobSha": "04cae87ee4c267fc4d7e6e3278b42838ac28a13a"
+  },
+  "stack": {
+    "applicationModel": "developer_hosted_shopify_app_home_iframe",
+    "framework": "shopify_react_router_template_family",
+    "nodeEngine": ">=22.12",
+    "packageManager": "pnpm@11.25.0",
+    "polarisRuntime": "https://cdn.shopify.com/shopifycloud/polaris-1.js",
+    "polarisTypes": "1.1.0",
+    "polaris2RcSelected": false
+  },
+  "deferred": [
+    "application_routes_and_UI",
+    "shopify_authentication_and_session_authority",
+    "database_client_and_schema",
+    "vercel_project_and_environment",
+    "provider_adapters",
+    "live_tokens_or_data"
+  ],
+  "forbiddenDirectDependencies": [
+    "express",
+    "googleapis",
+    "@supabase/supabase-js",
+    "@prisma/client",
+    "prisma",
+    "@shopify/shopify-app-session-storage-prisma"
+  ],
+  "supplyChain": {
+    "allowedLifecycleBuildPackages": ["esbuild"],
+    "allOtherLifecycleBuildPackages": "denied_by_pnpm_11_allowBuilds",
+    "ciInstall": "pnpm install --frozen-lockfile --ignore-scripts",
+    "minimumReleaseAgePolicy": "pnpm_11_default_1440_minutes"
+  },
+  "acceptance": [
+    "clean_manifest_from_scratch",
+    "clean_lockfile_from_scratch",
+    "exact_direct_dependency_registry",
+    "stable_polaris_1_1_baseline",
+    "frozen_install_without_lifecycle_scripts_pass",
+    "negative_controls_pass",
+    "github_ci_pass",
+    "explicit_user_merge_approval_required"
+  ],
+  "liveEffect": "none"
+}
+

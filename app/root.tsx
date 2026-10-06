@@ -8,7 +8,7 @@ import {
   useRouteError,
 } from "react-router";
 
-const POLARIS_STABLE_URL = "https://cdn.shopify.com/shopifycloud/polaris-1.js";
+const POLARIS_RUNTIME_URL = "https://cdn.shopify.com/shopifycloud/polaris-2.0-rc.js";
 
 export default function App() {
   return (
@@ -17,7 +17,7 @@ export default function App() {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         <link rel="preconnect" href="https://cdn.shopify.com/" />
-        <script src={POLARIS_STABLE_URL} />
+        <script src={POLARIS_RUNTIME_URL} />
         <Meta />
         <Links />
       </head>

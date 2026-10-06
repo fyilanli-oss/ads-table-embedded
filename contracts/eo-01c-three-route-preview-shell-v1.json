@@ -4,6 +4,12 @@
   "package": "A6-EO-01-C",
   "status": "in_progress",
   "checkedAt": "2026-10-06",
+  "polarisRuntime": {
+    "script": "https://cdn.shopify.com/shopifycloud/polaris-2.0-rc.js",
+    "types": "2.0.0-rc.2",
+    "decisionAuthority": "explicit_product_owner_instruction_2026-10-06",
+    "automaticFallbackToStable1": false
+  },
   "routes": [
     {"path": "/", "heading": "Funnel", "state": "truthful_empty_preview"},
     {"path": "/ad-analysis", "heading": "Ad Analysis", "state": "truthful_empty_preview"},

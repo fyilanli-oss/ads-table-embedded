@@ -8,7 +8,7 @@
 
 AdsTable bir Shopify Public Embedded App'tir. Shopify Admin içindeki arayüz ikinci bir AdsTable tasarım sistemi değildir. UI yalnız Shopify App Bridge ve ürün sahibi tarafından açıkça onaylanmış güncel App Home Polaris web component sürümü ile kurulur.
 
-**Temiz runtime kararı — 6 Ekim 2026:** Yeni embedded-only uygulamanın production ve preview baseline'ı Shopify'ın önerdiği stable kanal `polaris-1.js` ve onunla eşleşen `@shopify/polaris-types@1.1.0` paketidir. Polaris 2.0 halen release candidate olduğu için temiz ürün baseline'ına alınmaz. Stable `polaris-2.0.js` yayımlandığında geçiş; resmî doküman, type/runtime eşleşmesi, desktop ve gerçek mobil kabul ile ayrı bir karar kapısından geçer.
+**Ürün sahibi runtime kararı — 6 Ekim 2026:** Yeni embedded-only uygulamanın preview ve hedef production baseline'ı `polaris-2.0-rc.js` ve onunla eşleşen exact `@shopify/polaris-types@2.0.0-rc.2` paketidir. Shopify bu hattın release candidate olduğunu ve soak döneminde değişebileceğini bildirir. Bu bilinçli ürün kararı otomatik olarak stable 1.x'e geri çevrilemez. Stable `polaris-2.0.js` yayımlandığında geçiş; güncel resmî doküman, type/runtime eşleşmesi, desktop ve gerçek mobil kabul ve açık ürün sahibi kararıyla yapılır.
 
 Shopify iframe uygulamanın teknik taşıyıcısıdır; özel görünüm üretme izni değildir. Merchant, AdsTable'ı Shopify'dan kopuk bir web sitesi gibi görmemelidir.
 
@@ -106,6 +106,5 @@ Bu anayasa ancak açık kullanıcı/ürün kararı, Execution Plan kaydı ve exe
 ## 9. Karar geçmişi
 
 - 30 Eylül 2026 development RC kararı legacy repository bağlamında alınmıştı.
-- 6 Ekim 2026 EO-01-B temiz yeniden kuruluşunda, daha yeni Execution Plan ve Shopify'ın production için stable kanal tavsiyesi uyarınca RC kararı supersede edildi.
+- 6 Ekim 2026 EO-01-B'deki stable 1.1 seçimi, aynı gün ürün sahibinin açık kararıyla EO-01-C kapsamında supersede edildi; aktif baseline Polaris 2.0 RC'dir.
 - Bu değişiklik legacy uygulamanın runtime'ını değiştirmez; yalnız yeni `ads-table-embedded` repository'sinin baseline'ını belirler.
-

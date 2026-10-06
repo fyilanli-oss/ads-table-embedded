@@ -26,7 +26,9 @@ Bu pakette async işlem ve mutation yoktur. Loading, cancel ve success durumlar�
 | Preview route sırası | `s-stack` | `direction=inline`, `gap=base` | https://shopify.dev/docs/api/app-home/latest/web-components |
 | Route bağlantısı | `s-link` | `href` | https://shopify.dev/docs/api/app-home/latest/web-components |
 
-Kontrol tarihi: **6 Ekim 2026**. Runtime stable `polaris-1.js`; özel CSS, raw action control ve literal renk kullanılmaz.
+Kontrol tarihi: **6 Ekim 2026**. Ürün sahibinin açık kararıyla runtime `polaris-2.0-rc.js`, exact type paketi `@shopify/polaris-types@2.0.0-rc.2` olarak eşlenir; özel CSS, raw action control ve literal renk kullanılmaz. Shopify'ın RC değişim riski kabul edilir, stable 1.x'e otomatik geri dönüş yapılmaz.
+
+`2.0.0-rc.2` 5 Ekim 2026'da yayımlandığı için pnpm'in 24 saatlik minimum release-age kapısında yalnız bu resmî Shopify paketi için dar bir istisna kayıtlıdır. Diğer supply-chain kontrolleri değişmez.
 
 ### Vercel eşlemesi
 

@@ -46,7 +46,7 @@ EO-01 ürün verisi çekmez, live token taşımaz, business database schema kurm
 
 - Public App Store backend uygulaması developer-hosted iframe App Home modelini kullanır.
 - Temiz başlangıç için resmî React Router template temel alınır.
-- App Bridge ve stable Polaris web components ürün shell'inin zorunlu arayüz katmanıdır.
-- Polaris web components 1.1 stable; 2.0 release candidate olduğu için baseline seçilmemiştir.
+- App Bridge ve Shopify Polaris web components ürün shell'inin zorunlu arayüz katmanıdır.
+- Ürün sahibinin 6 Ekim 2026 tarihli açık kararıyla aktif baseline `polaris-2.0-rc.js` ve exact `@shopify/polaris-types@2.0.0-rc.2`'dir; RC riski kabul edilmiştir ve stable 1.x'e otomatik dönüş yapılamaz.
 
 EO-01-B dependency pinlemeden ve EO-07 UI implementasyonundan önce resmî sürümler tekrar doğrulanır.

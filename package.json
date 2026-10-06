@@ -28,7 +28,7 @@
   "devDependencies": {
     "@react-router/dev": "7.18.2",
     "@react-router/fs-routes": "7.18.2",
-    "@shopify/polaris-types": "1.1.0",
+    "@shopify/polaris-types": "2.0.0-rc.2",
     "@types/node": "25.5.2",
     "@types/react": "18.3.25",
     "@types/react-dom": "18.3.7",

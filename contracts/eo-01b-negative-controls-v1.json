@@ -6,8 +6,8 @@
   "forbiddenRouteTokens": ["debug", "operator", "diagnostic", "acceptance"],
   "forbiddenPaths": ["public", "server.js"],
   "allowedEnvironmentKeys": [],
-  "forbiddenActivePolarisRuntime": "polaris-2.0-rc.js",
+  "requiredActivePolarisRuntime": "polaris-2.0-rc.js",
+  "forbiddenObsoletePolarisRuntime": "polaris-1.js",
   "allowedProductRoutes": ["/", "/ad-analysis", "/settings"],
   "reservedSystemRoutePrefixes": ["/auth", "/webhooks"]
 }
-

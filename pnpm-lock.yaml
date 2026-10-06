@@ -40,8 +40,8 @@ importers:
         specifier: 7.18.2
         version: 7.18.2(@react-router/dev@7.18.2(@react-router/serve@7.18.2(react-router@7.18.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3))(@types/node@25.5.2)(react-router@7.18.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)(vite@7.3.1(@types/node@25.5.2)))(typescript@5.9.3)
       '@shopify/polaris-types':
-        specifier: 1.1.0
-        version: 1.1.0
+        specifier: 2.0.0-rc.2
+        version: 2.0.0-rc.2
       '@types/node':
         specifier: 25.5.2
         version: 25.5.2
@@ -750,8 +750,8 @@ packages:
   '@shopify/graphql-client@2.0.0':
     resolution: {integrity: sha512-SfIZa6J9Px4ZSMIVdPLNupeSyqznovV6pDVxwC1rmbi0JTVj2q/CCsOf9hLQvsMdBiyJDHVnoVHGpBzlhpwO2Q==}
 
-  '@shopify/polaris-types@1.1.0':
-    resolution: {integrity: sha512-hqd+58XbpsShQmTiMakiUraLL9yjeqcFkaEfiajdxAArQJGREsnNBxY1+cN0egWHFQ7/1Xsqjx0RObd3V0Fy1w==}
+  '@shopify/polaris-types@2.0.0-rc.2':
+    resolution: {integrity: sha512-jodWlFh8QA+fF1fBEoGRDeFBlcW3BPY82k0ah64BFWDFB4N2pbbTZ7GVEruu06s9BpJ/q6JEA1laxo7swGp6mA==}
 
   '@shopify/shopify-api@15.0.0':
     resolution: {integrity: sha512-u6PWWulYVJ1/bxDiKWg5g/GqcfunDm2Wcn37E1oZEs10bkkZ1nxV6T9jX6jGFCdLOBSw685+e6fxyeyjWEvUYA==}
@@ -2109,7 +2109,7 @@ snapshots:
 
   '@shopify/graphql-client@2.0.0': {}
 
-  '@shopify/polaris-types@1.1.0': {}
+  '@shopify/polaris-types@2.0.0-rc.2': {}
 
   '@shopify/shopify-api@15.0.0':
     dependencies:

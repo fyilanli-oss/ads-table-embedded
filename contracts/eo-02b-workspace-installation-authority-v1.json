@@ -77,8 +77,10 @@
     "delete_privilege": false,
     "migration_chain": [
       "supabase/migrations/20261006152000_eo02b_workspace_installation_authority.sql",
-      "supabase/migrations/20261006153500_eo02b_remove_redundant_indexes.sql"
-    ]
+      "supabase/migrations/20261006153500_eo02b_remove_redundant_indexes.sql",
+      "supabase/migrations/20261006154500_eo02b_acceptance_probe.sql"
+    ],
+    "live_acceptance_probe": "self_cleaning_transactional_probe"
   },
   "lifecycle_boundary": {
     "implemented_here": [

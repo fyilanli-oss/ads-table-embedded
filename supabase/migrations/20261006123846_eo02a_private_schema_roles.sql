@@ -74,6 +74,7 @@ begin
 end
 $roles$;
 
+grant adstable_owner to postgres with inherit false, set true;
 grant adstable_owner to adstable_migrator with inherit false, set true;
 
 create schema if not exists app authorization adstable_owner;

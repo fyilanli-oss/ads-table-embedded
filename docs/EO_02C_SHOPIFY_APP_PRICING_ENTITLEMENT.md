@@ -1,7 +1,7 @@
 # EO-02-C — Shopify App Pricing trial, subscription and entitlement
 
 **Kontrol tarihi:** 6 Ekim 2026  
-**Durum:** Implementation ready; database and live Partner API acceptance pending
+**Durum:** Database live accepted; Partner configuration and live Partner API acceptance pending
 
 ## Analist sonucu
 
@@ -92,4 +92,6 @@ Bu dış kapsam maddeleri uygulanmış sayılmaz. Plan/secret aktivasyonu ve can
 - Bir aktif Reporting Store hakkı DB constraint ile sabittir.
 - Candidate detection ve store switch billing event değildir.
 - Repository test/build/CI PASS olmalıdır.
-- Supabase migration, self-cleaning behavioral probe ve advisor sonuçları ayrıca canlı doğrulanmalıdır.
+- Supabase migration ve self-cleaning behavioral probe canlı PASS oldu; üç billing tablosunun RLS/forced RLS sonucu 3/3, runtime direct DML sonucu 0, runtime function access sonucu 2/2, Security ve Performance Advisor sonucu 0/0 ve kalan probe satırı 0'dır.
+- Evidence: `docs/evidence/EO_02C_DATABASE_ACCEPTANCE_2026-10-06.json`.
+- Partner Dashboard plan/trial ayarı, Partner API client secret aktivasyonu ve gerçek trial/active/null acceptance hâlâ açık insan kapısıdır.

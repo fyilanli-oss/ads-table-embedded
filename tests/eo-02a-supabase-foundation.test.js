@@ -7,7 +7,7 @@ import {fileURLToPath} from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 const contract = JSON.parse(read("contracts/eo-02a-supabase-foundation-v1.json"));
-const migration = read(contract.migration).toLowerCase();
+const migration = contract.migration_chain.map(read).join("\n").toLowerCase();
 
 test("EO-02-A target is the isolated Frankfurt Supabase project", () => {
   assert.equal(contract.target.project_id, "podpwkrpmjiksskxhwsu");
@@ -48,7 +48,7 @@ test("pre-existing role drift fails closed instead of being silently rewritten",
 
 test("managed migration authority can SET ROLE without inheriting owner privileges", () => {
   assert.match(migration, /grant adstable_owner to postgres with inherit false, set true;/);
-  assert.match(migration, /grant adstable_owner to adstable_migrator with inherit false, set true;/);
+  assert.match(migration, /grant adstable_owner to adstable_migrator with inherit false, set true;/);\n  assert.match(migration, /set local role adstable_owner;[\\s\\S]*?grant usage on schema app, shopify, integrations, analytics, operations, privacy, billing[\\s\\S]*?to adstable_runtime;/);
 });
 
 test("Data API roles receive no private schema or default object grants", () => {

@@ -110,7 +110,10 @@ test("current billing cycle becomes active entitlement", async () => {
               endTime: "2026-10-31T00:00:00.000Z",
             },
             items: [{handle: "ads_table_monthly", price: {active: true}}],
-            pendingUpdate: {items: [{handle: "ads_table_annual"}]},
+            pendingUpdate: {
+              billingPeriod: "ANNUAL",
+              items: [{handle: "ads_table_annual"}],
+            },
           },
         },
       }),

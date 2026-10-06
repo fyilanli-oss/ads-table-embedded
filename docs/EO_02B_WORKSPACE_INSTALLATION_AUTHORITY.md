@@ -1,7 +1,7 @@
 # EO-02-B — Workspace, installation and generation authority
 
 **Kontrol tarihi:** 6 Ekim 2026  
-**Durum:** Implementation in review; live Supabase acceptance and merge pending
+**Durum:** Database live accepted; PR CI and merge pending
 
 ## Analist sonucu
 
@@ -67,6 +67,19 @@ Bu pakette görünür UI değişikliği yoktur. Raw HTML veya Polaris kararı ü
 
 Token plaintext'i, sahte token kolonu veya geçici token deposu kurulmaz. Expiring offline token refresh/rotation ve encrypted envelope EO-03-B'de uygulanır. EO-02-D'den önce uninstall, deletion ya da clean-reinstall davranışı uygulanmış sayılmaz.
 
+## Canlı kabul sonucu
+
+- Migration history: 3/3 EO-02-B migration mevcut
+- Authority tabloları: 3; RLS enabled + forced: 3/3
+- Runtime direct table DML: 0
+- Runtime function execute: 2/2
+- Data API function execute: 0
+- Self-cleaning bootstrap/idempotency/stale/domain-change probe: PASS
+- Probe sonrası business row: 0
+- Security Advisor: 0
+- Performance Advisor: 0
+- Evidence: 'docs/evidence/EO_02B_LIVE_ACCEPTANCE_2026-10-06.json'
+
 ## Kabul
 
 - Migration, domain service ve contract aynı state matrisini uygular.
@@ -75,4 +88,4 @@ Token plaintext'i, sahte token kolonu veya geçici token deposu kurulmaz. Expiri
 - Shop GID kalıcı kimliktir; domain değişimi audit edilir.
 - Runtime function-only erişim taşır; doğrudan table DML taşımaz.
 - Test, build ve Governance CI PASS olur.
-- Supabase'e canlı uygulama ve merge ayrı açık kullanıcı onayı olmadan yapılmaz.
+- Supabase canlı uygulaması açık kullanıcı onayıyla PASS oldu; merge ayrı açık kullanıcı onayı olmadan yapılmaz.

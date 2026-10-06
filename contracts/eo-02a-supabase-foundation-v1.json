@@ -1,0 +1,131 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "eo-02a-supabase-foundation-v1",
+  "status": "merge_approval_pending",
+  "evidence_date": "2026-10-06",
+  "authority": {
+    "package": "A6-EO-02-A",
+    "source_main_sha": "76ea38a474c701d69871f73ba713376e3a7d623e",
+    "carry_map": "contracts/a6-eo-f4-schema-data-carry-map-v1.json"
+  },
+  "official_sources": [
+    "https://supabase.com/docs/guides/api/securing-your-api",
+    "https://supabase.com/docs/guides/database/postgres/roles",
+    "https://supabase.com/docs/guides/database/postgres/row-level-security",
+    "https://supabase.com/docs/guides/database/connecting-to-postgres",
+    "https://supabase.com/changelog/45329-breaking-change-tables-not-exposed-to-data-and-graphql-api-automatically"
+  ],
+  "target": {
+    "organization_id": "yhjptscehrplfviwwxyo",
+    "project_id": "podpwkrpmjiksskxhwsu",
+    "project_name": "ads-table-embedded",
+    "region": "eu-central-1",
+    "postgres_engine": "17",
+    "observed_version": "17.11",
+    "plan_cost": {
+      "amount_usd": 0,
+      "recurrence": "monthly"
+    }
+  },
+  "schemas": [
+    "app",
+    "shopify",
+    "integrations",
+    "analytics",
+    "operations",
+    "privacy",
+    "billing"
+  ],
+  "roles": {
+    "adstable_owner": [
+      "NOLOGIN",
+      "NOINHERIT",
+      "NOSUPERUSER",
+      "NOCREATEDB",
+      "NOCREATEROLE",
+      "NOREPLICATION",
+      "NOBYPASSRLS"
+    ],
+    "adstable_migrator": [
+      "LOGIN",
+      "PASSWORD_NULL",
+      "NOINHERIT",
+      "NOSUPERUSER",
+      "NOCREATEDB",
+      "NOCREATEROLE",
+      "NOREPLICATION",
+      "NOBYPASSRLS"
+    ],
+    "adstable_runtime": [
+      "LOGIN",
+      "PASSWORD_NULL",
+      "NOINHERIT",
+      "NOSUPERUSER",
+      "NOCREATEDB",
+      "NOCREATEROLE",
+      "NOREPLICATION",
+      "NOBYPASSRLS"
+    ]
+  },
+  "runtime_boundary": {
+    "data_api_runtime": false,
+    "browser_database_client": false,
+    "service_role_runtime": false,
+    "credential_activation": "deferred_until_server_runtime_connection_package",
+    "object_access": "explicit_allowlist_only",
+    "private_schema_rls": "required_and_forced_when_tables_are_created"
+  },
+  "forbidden": [
+    "business_table_in_public",
+    "legacy_schema_or_object",
+    "plaintext_secret",
+    "runtime_ddl",
+    "runtime_truncate",
+    "runtime_owner_change",
+    "anon_or_authenticated_private_schema_access",
+    "service_role_private_schema_access"
+  ],
+  "live_acceptance": {
+    "clean_start_tables": 0,
+    "clean_start_migrations": 0,
+    "security_advisors_before": 0,
+    "performance_advisors_before": 0,
+    "applied": true,
+    "migration_versions": [
+      "20261006133830",
+      "20261006134013"
+    ],
+    "failed_attempts_rolled_back": 3,
+    "schemas_verified": 7,
+    "schema_owner": "adstable_owner",
+    "data_api_private_schema_usage": 0,
+    "runtime_schema_usage": 7,
+    "runtime_schema_create_privileges": 0,
+    "runtime_table_privileges": 0,
+    "business_tables": 0,
+    "unsafe_role_attributes": 0,
+    "login_role_passwords_null": true,
+    "security_advisors_after": 0,
+    "performance_advisors_after": 0,
+    "legacy_project_mutations": 0,
+    "repository_ci": {
+      "result": "PASS",
+      "workflow": "Repository Governance",
+      "run_id": 37473375975,
+      "verified_commit": "f19a24bff68781f9bc27711d79ebccd0e8cde834"
+    }
+  },
+  "out_of_scope": [
+    "business_tables",
+    "live_data_carry",
+    "token_carry",
+    "dataset_or_fx_rebuild",
+    "vercel_database_credentials",
+    "production_cutover",
+    "legacy_project_mutation"
+  ],
+  "migration_chain": [
+    "supabase/migrations/20261006123846_eo02a_private_schema_roles.sql",
+    "supabase/migrations/20261006134000_eo02a_runtime_schema_usage.sql"
+  ]
+}

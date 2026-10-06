@@ -65,7 +65,11 @@
       "status": "decision_frozen_live_acceptance_pending",
       "owner_package": "A6-EO-07-C",
       "common_setup": {
-        "advertised_or_messaged_products": ["earring_1", "earring_2", "earring_3"],
+        "advertised_or_messaged_products": [
+          "earring_1",
+          "earring_2",
+          "earring_3"
+        ],
         "clicked_product": "earring_1",
         "non_advertised_store_product": "necklace_1",
         "record_catalog_ids_and_unit_prices_before_order": true
@@ -122,7 +126,13 @@
       "provider_results_are_independent": true,
       "only_verified_provider_dataset_and_ui_leaf_may_activate": true,
       "standard_search_without_native_clicked_or_promoted_product_identity": "not_applicable",
-      "forbidden_inference_sources": ["shopify_order_join", "url", "utm", "fbclid", "fbc"]
+      "forbidden_inference_sources": [
+        "shopify_order_join",
+        "url",
+        "utm",
+        "fbclid",
+        "fbc"
+      ]
     }
   },
   "exception": {
@@ -147,7 +157,7 @@
       "id": "A6-EO-01",
       "title": "Clean runtime shell, CI and dependency boundary",
       "phase": "review_critical",
-      "status": "Ready",
+      "status": "Done",
       "depends_on": [
         "EO-F7_GO",
         "EO_implementation_master_merged"
@@ -181,13 +191,18 @@
         "E3 architecture lessons",
         "Shopify Embedded UI Constitution"
       ],
-      "reference_closure_rule": "not_closed_until_exact_EO_acceptance_evidence_and_explicit_closure_record"
+      "reference_closure_rule": "not_closed_until_exact_EO_acceptance_evidence_and_explicit_closure_record",
+      "acceptance_commits": [
+        "cb02ef7c2e9236ab50da792f21d667fae91cbccd",
+        "111e7dec66c84c48be43930f3496ea5b0f918949",
+        "76ea38a474c701d69871f73ba713376e3a7d623e"
+      ]
     },
     {
       "id": "A6-EO-02",
       "title": "Workspace, installation, billing/trial and privacy foundations",
       "phase": "review_critical",
-      "status": "Not started",
+      "status": "In progress",
       "depends_on": [
         "A6-EO-01"
       ],
@@ -195,7 +210,8 @@
         {
           "id": "A6-EO-02-A",
           "title": "Private schemas, roles and migrations",
-          "objective": "Provision clean Standard Supabase and least-privilege migration/runtime roles."
+          "objective": "Provision clean Standard Supabase and least-privilege migration/runtime roles.",
+          "status": "Merge approval pending"
         },
         {
           "id": "A6-EO-02-B",
@@ -658,6 +674,8 @@
   "provider_mutation_authorized": false,
   "live_data_carry_authorized": false,
   "cutover_authorized": false,
-  "legacy_deletion_authorized": false
+  "legacy_deletion_authorized": false,
+  "current_active_parent": "A6-EO-02",
+  "current_active_child": "A6-EO-02-A",
+  "current_gate": "explicit_merge_approval"
 }
-

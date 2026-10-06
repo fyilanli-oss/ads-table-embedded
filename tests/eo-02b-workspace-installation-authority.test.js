@@ -110,8 +110,12 @@ test("generation creation is serialized and lifecycle transitions fail closed", 
   assert.match(migration, /pg_advisory_xact_lock/);
   assert.match(migration, /installations_single_live_shop_idx/);
   assert.match(migration, /installation_lifecycle_requires_eo02d/);
-  assert.match(migration, /new_generation_requires_eo02d/);\n  assert.match(migration, /eo02b_idempotency_assertion_failed/);\n  assert.match(migration, /eo02b_acceptance_probe_cleanup_failed/);
-  assert.match(migration, /drop index if exists shopify\.installations_shop_domain_idx/);\n  assert.match(migration, /drop index if exists shopify\.installation_domain_history_installation_idx/);\n  assert.equal(contract.lifecycle_boundary.deferred_to_eo02d.includes("terminal deletion"), true);
+  assert.match(migration, /new_generation_requires_eo02d/);
+  assert.match(migration, /eo02b_idempotency_assertion_failed/);
+  assert.match(migration, /eo02b_acceptance_probe_cleanup_failed/);
+  assert.match(migration, /drop index if exists shopify\.installations_shop_domain_idx/);
+  assert.match(migration, /drop index if exists shopify\.installation_domain_history_installation_idx/);
+  assert.equal(contract.lifecycle_boundary.deferred_to_eo02d.includes("terminal deletion"), true);
 });
 
 test("EO-02-B persists no token material", () => {

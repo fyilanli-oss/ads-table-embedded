@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-02b-workspace-installation-authority-v1",
   "version": "1.0.0",
-  "status": "database_live_accepted_merge_pending",
+  "status": "accepted",
   "checked_at": "2026-10-06",
   "authoritative_sources": {
     "shopify_api_versioning": "https://shopify.dev/docs/api/usage/versioning",
@@ -126,5 +126,11 @@
     "security_advisor_lints": 0,
     "performance_advisor_lints": 0,
     "residual_probe_rows": 0
+  },
+  "merge_acceptance": {
+    "pull_request": "https://github.com/fyilanli-oss/ads-table-embedded/pull/6",
+    "merge_commit": "edc9e21588f5a32bea139b754ea0108c9809cf27",
+    "merged_at": "2026-10-06T14:14:11Z",
+    "result": "pass"
   }
 }

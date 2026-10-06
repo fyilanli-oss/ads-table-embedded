@@ -1,7 +1,7 @@
 # EO-02-B — Workspace, installation and generation authority
 
 **Kontrol tarihi:** 6 Ekim 2026  
-**Durum:** Database live accepted; PR CI and merge pending
+**Durum:** Accepted
 
 ## Analist sonucu
 
@@ -88,4 +88,6 @@ Token plaintext'i, sahte token kolonu veya geçici token deposu kurulmaz. Expiri
 - Shop GID kalıcı kimliktir; domain değişimi audit edilir.
 - Runtime function-only erişim taşır; doğrudan table DML taşımaz.
 - Test, build ve Governance CI PASS olur.
-- Supabase canlı uygulaması açık kullanıcı onayıyla PASS oldu; merge ayrı açık kullanıcı onayı olmadan yapılmaz.
+- Supabase canlı uygulaması açık kullanıcı onayıyla PASS oldu.
+- PR #6 Governance CI PASS sonrası açık kullanıcı onayıyla merge edildi.
+- Kabul merge commit'i: `edc9e21588f5a32bea139b754ea0108c9809cf27`.

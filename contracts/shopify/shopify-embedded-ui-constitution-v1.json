@@ -20,11 +20,13 @@
   "approved_runtime": {
     "decision_date": "2026-10-06",
     "environment": "preview_and_production_baseline",
-    "polaris_script": "https://cdn.shopify.com/shopifycloud/polaris-1.js",
-    "polaris_types": "1.1.0",
-    "reason": "shopify_recommends_the_stable_channel_for_production",
-    "polaris_2_rc_selected": false,
-    "stable_2_transition": "requires_separate_official_docs_type_runtime_desktop_and_real_mobile_validation"
+    "polaris_script": "https://cdn.shopify.com/shopifycloud/polaris-2.0-rc.js",
+    "polaris_types": "2.0.0-rc.2",
+    "reason": "product_owner_explicitly_selected_shopify_current_admin_compatible_release_candidate",
+    "polaris_2_rc_selected": true,
+    "decision_authority": "explicit_product_owner_instruction_2026-10-06",
+    "rc_risk": "release_candidate_can_change_during_soak_period",
+    "stable_2_transition": "requires_official_release_verification_and_explicit_product_owner_decision"
   },
   "forbidden": [
     "raw_html_form_or_action_controls",
@@ -83,4 +85,3 @@
     }
   ]
 }
-

@@ -35,6 +35,8 @@ Resmî kaynaklar:
 - Polaris runtime: stable `polaris-1.js`
 - Polaris types: `@shopify/polaris-types@1.1.0`
 
+> Tarihsel karar notu: Bu EO-01-B baseline'ı 6 Ekim 2026'da kabul edildi; aynı gün ürün sahibinin açık talimatıyla EO-01-C altında Polaris 2.0 RC runtime ve matching RC types tarafından supersede edildi. Aktif karar için UI Constitution ve EO-01-C contract'ı esastır.
+
 ## Bilinçli olarak eklenmeyenler
 
 - Prisma, SQLite ve `@shopify/shopify-app-session-storage-prisma`
@@ -72,4 +74,3 @@ Session/data plane EO-02'de least-privilege Supabase kararıyla kurulacaktır. B
 ## Rollback
 
 PR merge edilmeden branch bırakılabilir. Merge sonrası sorun çıkarsa EO-01-B merge commit'i revert edilir; EO-01-A temiz repository sınırı korunur.
-

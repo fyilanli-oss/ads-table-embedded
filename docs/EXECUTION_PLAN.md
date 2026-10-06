@@ -35,8 +35,8 @@ Aynı anda yalnız bir parent paket aktiftir. Executable paket tablosu `contract
 ## Active package: EO-01
 
 - **EO-01-A — Accepted:** Fork veya bulk copy olmadan ayrı temiz repository ve fiziksel sınır kuruldu. Kabul commit'i: `cb02ef7c2e9236ab50da792f21d667fae91cbccd`.
-- **EO-01-B — Active:** Güncel resmî Shopify stack seçilir; temiz dependency manifest/lockfile ile forbidden import/route/table/environment CI kontrolleri kurulur.
-- **EO-01-C:** `/`, `/ad-analysis`, `/settings` için truthful empty shell hazırlanır ve preview-only deploy edilir.
+- **EO-01-B — Accepted:** Güncel resmî Shopify stack, temiz dependency manifest/lockfile ve negatif CI kapıları merge edildi. Kabul commit'i: `111e7dec66c84c48be43930f3496ea5b0f918949`.
+- **EO-01-C — Active:** `/`, `/ad-analysis`, `/settings` için truthful empty shell hazırlanır ve preview-only deploy edilir.
 
 EO-01 ürün verisi çekmez, live token taşımaz, business database schema kurmaz, production routing değiştirmez ve review-ready iddiasında bulunmaz.
 
@@ -46,8 +46,7 @@ EO-01 ürün verisi çekmez, live token taşımaz, business database schema kurm
 
 - Public App Store backend uygulaması developer-hosted iframe App Home modelini kullanır.
 - Temiz başlangıç için resmî React Router template temel alınır.
-- App Bridge ve stable Polaris web components ürün shell'inin zorunlu arayüz katmanıdır.
-- Polaris web components 1.1 stable; 2.0 release candidate olduğu için baseline seçilmemiştir.
+- App Bridge ve Shopify Polaris web components ürün shell'inin zorunlu arayüz katmanıdır.
+- Ürün sahibinin 6 Ekim 2026 tarihli açık kararıyla aktif baseline `polaris-2.0-rc.js` ve exact `@shopify/polaris-types@2.0.0-rc.2`'dir; RC riski kabul edilmiştir ve stable 1.x'e otomatik dönüş yapılamaz.
 
 EO-01-B dependency pinlemeden ve EO-07 UI implementasyonundan önce resmî sürümler tekrar doğrulanır.
-

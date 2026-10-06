@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "contractId": "eo-01c-three-route-preview-shell-v1",
+  "package": "A6-EO-01-C",
+  "status": "visual_accepted_merge_pending",
+  "checkedAt": "2026-10-06",
+  "polarisRuntime": {
+    "script": "https://cdn.shopify.com/shopifycloud/polaris-2.0-rc.js",
+    "types": "2.0.0-rc.2",
+    "decisionAuthority": "explicit_product_owner_instruction_2026-10-06",
+    "automaticFallbackToStable1": false
+  },
+  "routes": [
+    {"path": "/", "heading": "Funnel", "state": "truthful_empty_preview"},
+    {"path": "/ad-analysis", "heading": "Ad Analysis", "state": "truthful_empty_preview"},
+    {"path": "/settings", "heading": "Settings", "state": "truthful_empty_preview"}
+  ],
+  "stateMatrix": {
+    "loading": "not_applicable_no_async_work",
+    "empty": "rendered_with_explicit_no_data_or_configuration_copy",
+    "resumeRequired": "not_applicable_auth_deferred_to_EO_02_and_EO_03",
+    "connected": "not_claimed",
+    "error": "root_error_boundary_states_no_data_was_modified",
+    "cancel": "not_applicable_no_mutating_action",
+    "success": "not_claimed"
+  },
+  "componentMapping": [
+    {"purpose": "page", "component": "s-page", "properties": ["heading"]},
+    {"purpose": "content_group", "component": "s-section", "properties": ["heading"]},
+    {"purpose": "copy", "component": "s-paragraph", "properties": []},
+    {"purpose": "preview_navigation", "component": "s-stack", "properties": ["direction=inline", "gap=base"]},
+    {"purpose": "route_link", "component": "s-link", "properties": ["href"]}
+  ],
+  "exactCopy": {
+    "funnel": "No reporting data is available in this preview. Connections and data loading will be added in later EO packages.",
+    "adAnalysis": "No advertising analysis is available in this preview. No provider data has been requested or inferred.",
+    "settings": "Connections and configuration are not available in this preview. Existing accounts, tokens, and settings remain unchanged."
+  },
+  "deployment": {
+    "provider": "Vercel",
+    "target": "preview_only",
+    "productionDeploymentAuthorized": false,
+    "productionDomainAuthorized": false,
+    "gitIntegrationRequired": false,
+    "databaseOrEnvironmentRequired": false
+  },
+  "evidence": {
+    "sourceCommit": "622fcc8ebdef8df852ec4c345143335126144f9f",
+    "previewDeploymentId": "dpl_BiCqUCRDcYD3kUifEw7wztgufTsm",
+    "previewUrl": "https://ads-table-embedded-5g9t5unxn-firats-projects-d22284db.vercel.app",
+    "routesHttp200": ["/", "/ad-analysis", "/settings"],
+    "polarisRuntimeObserved": "https://cdn.shopify.com/shopifycloud/polaris-2.0-rc.js",
+    "desktopEvidence": "pass",
+    "mobile320Evidence": "pass",
+    "productOwnerVisualAcceptance": "received_2026-10-06",
+    "githubCi": "pass"
+  },
+  "outOfScope": [
+    "Shopify OAuth and session authority",
+    "App Bridge authenticated navigation",
+    "database schema or data",
+    "provider connections or API calls",
+    "production deployment or domain",
+    "final EO-07 product UI"
+  ],
+  "acceptance": [
+    "constitution_guard_pass",
+    "route_contract_pass",
+    "typecheck_pass",
+    "build_pass",
+    "three_preview_routes_HTTP_200",
+    "desktop_preview_evidence",
+    "mobile_320px_preview_evidence",
+    "explicit_product_owner_visual_acceptance",
+    "GitHub_CI_pass",
+    "explicit_user_merge_approval_required"
+  ]
+}

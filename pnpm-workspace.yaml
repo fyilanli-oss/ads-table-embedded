@@ -1,3 +1,4 @@
 allowBuilds:
   esbuild: true
-
+minimumReleaseAgeExclude:
+  - '@shopify/polaris-types@2.0.0-rc.2'

@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "contract_id": "eo-02a-supabase-foundation-v1",
-  "status": "merge_approval_pending",
+  "status": "accepted",
   "evidence_date": "2026-10-06",
   "authority": {
     "package": "A6-EO-02-A",
@@ -127,5 +127,19 @@
   "migration_chain": [
     "supabase/migrations/20261006123846_eo02a_private_schema_roles.sql",
     "supabase/migrations/20261006134000_eo02a_runtime_schema_usage.sql"
-  ]
+  ],
+  "acceptance": {
+    "merged_pr": "https://github.com/fyilanli-oss/ads-table-embedded/pull/4",
+    "merge_commit": "2ac00f969eb35ac632ead57017753ed495e7b66f",
+    "merged_at": "2026-10-06T13:49:09Z",
+    "explicit_product_owner_approval": true,
+    "live_reverification": {
+      "schemas": 7,
+      "runtime_schema_usage": 7,
+      "runtime_schema_create": 0,
+      "business_tables": 0,
+      "security_advisors": 0,
+      "performance_advisors": 0
+    }
+  }
 }

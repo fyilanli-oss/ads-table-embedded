@@ -102,26 +102,42 @@ alter default privileges for role postgres in schema public
   revoke execute on functions
   from public, anon, authenticated, service_role;
 
-alter default privileges for role adstable_owner in schema app
+set local role adstable_owner;
+
+alter default privileges in schema app
   revoke all on tables from public, anon, authenticated, service_role;
-alter default privileges for role adstable_owner in schema shopify
+set local role adstable_owner;
+
+alter default privileges in schema shopify
   revoke all on tables from public, anon, authenticated, service_role;
-alter default privileges for role adstable_owner in schema integrations
+set local role adstable_owner;
+
+alter default privileges in schema integrations
   revoke all on tables from public, anon, authenticated, service_role;
-alter default privileges for role adstable_owner in schema analytics
+set local role adstable_owner;
+
+alter default privileges in schema analytics
   revoke all on tables from public, anon, authenticated, service_role;
-alter default privileges for role adstable_owner in schema operations
+set local role adstable_owner;
+
+alter default privileges in schema operations
   revoke all on tables from public, anon, authenticated, service_role;
-alter default privileges for role adstable_owner in schema privacy
+set local role adstable_owner;
+
+alter default privileges in schema privacy
   revoke all on tables from public, anon, authenticated, service_role;
-alter default privileges for role adstable_owner in schema billing
+set local role adstable_owner;
+
+alter default privileges in schema billing
   revoke all on tables from public, anon, authenticated, service_role;
 
-alter default privileges for role adstable_owner
+alter default privileges
   revoke execute on functions from public, anon, authenticated, service_role;
-alter default privileges for role adstable_owner
+alter default privileges
   revoke usage, select, update on sequences from public, anon, authenticated, service_role;
-alter default privileges for role adstable_owner
+alter default privileges
   revoke usage on types from public, anon, authenticated, service_role;
+
+reset role;
 
 commit;

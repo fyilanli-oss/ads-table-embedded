@@ -1,0 +1,77 @@
+{
+  "evidence_id": "EO_02C_DATABASE_ACCEPTANCE_2026-10-06",
+  "checked_at": "2026-10-06",
+  "project_id": "podpwkrpmjiksskxhwsu",
+  "scope": "preview_supabase_database_only",
+  "result": "PASS",
+  "migrations": [
+    {
+      "version": "20261006142841",
+      "name": "eo02c_shopify_app_pricing_entitlement",
+      "result": "applied"
+    },
+    {
+      "version": "20261006142953",
+      "name": "eo02c_disambiguate_upserts",
+      "result": "applied"
+    },
+    {
+      "version": "20261006143039",
+      "name": "eo02c_acceptance_probe",
+      "result": "applied"
+    }
+  ],
+  "behavioral_probe": {
+    "trial_projection": "PASS",
+    "same_snapshot_idempotency": "PASS",
+    "stale_snapshot_rejection": "PASS",
+    "trial_to_active_transition": "PASS",
+    "fresh_entitlement_resolution": "PASS",
+    "stale_entitlement_fail_closed": "PASS",
+    "active_to_subscription_required_transition": "PASS",
+    "reporting_store_limit_one": "PASS",
+    "candidate_detection_not_billed": "PASS",
+    "reporting_store_switch_not_billed": "PASS",
+    "self_cleaning": "PASS"
+  },
+  "security": {
+    "billing_tables": 3,
+    "rls_enabled": 3,
+    "rls_forced": 3,
+    "runtime_direct_table_dml": 0,
+    "runtime_function_execute": 2,
+    "anon_function_execute": 0,
+    "authenticated_function_execute": 0,
+    "service_role_function_execute": 0,
+    "security_advisor_lints": 0,
+    "performance_advisor_lints": 0
+  },
+  "residual_rows": {
+    "billing.workspace_subscriptions": 0,
+    "billing.workspace_entitlements": 0,
+    "billing.trial_ledger": 0
+  },
+  "recovered_probe_findings": [
+    {
+      "finding": "fixed probe timestamp was ahead of database time",
+      "impact": "transaction_rolled_back_no_rows_created",
+      "correction": "relative observation timeline"
+    },
+    {
+      "finding": "RETURNS TABLE output names made column-list ON CONFLICT ambiguous",
+      "impact": "transaction_rolled_back_no_rows_created",
+      "correction": "explicit named constraints plus live repair migration"
+    }
+  ],
+  "not_yet_accepted": [
+    "Partner Dashboard Shopify App Pricing plan configuration",
+    "14-day trial configuration read-back",
+    "Partner API client and server secret activation",
+    "live activeSubscription trial, active and null responses",
+    "hosted plan selection and redirect flow"
+  ],
+  "production_mutation": false,
+  "partner_dashboard_mutation": false,
+  "vercel_environment_mutation": false,
+  "legacy_database_mutation": false
+}

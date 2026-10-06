@@ -201,6 +201,8 @@ EO-09 ve EO-10 review sonrasında yürütülür. Bununla birlikte review sonras�
 
 Tek aktif parent **EO-02**'dir.
 
-- **EO-02-A — Verification:** Ayrı Frankfurt Supabase projesi, private schema'lar, owner/migrator/runtime rol sınırı ve migration history canlı olarak doğrulandı; CI ve merge bekliyor.
-- EO-02-A kabul edilmeden EO-02-B başlamaz.
+- **EO-02-A — Accepted:** Private schema ve least-privilege Supabase foundation kabul edildi.
+- **EO-02-B — Accepted:** Workspace, installation ve generation authority kabul edildi.
+- **EO-02-C — Verification:** Shopify App Pricing + Partner API authority, server resolver ve canlı database projection/probe hazırdır; Partner Dashboard plan/trial ayarı ile canlı Partner API kabulü beklenir.
+- **EO-02-D — Not started:** EO-02-C kabul edilmeden başlamaz.
 - EO-03 ve sonraki parent'lar paralel başlatılmaz.

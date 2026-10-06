@@ -48,8 +48,8 @@ Bu ana tablo merge edilmeden EO-01 teknik kurulumu başlamaz.
 
 | Parent | Doğal amacı | Faz | Başlangıç bağımlılığı | Stable child sayısı | Durum |
 |---|---|---|---|---:|---|
-| EO-01 | Temiz runtime/repository/CI sınırı | Review-critical | EO-F7 + bu master | 3 | Ready |
-| EO-02 | Workspace/install/billing/privacy foundation | Review-critical | EO-01 | 4 | Not started |
+| EO-01 | Temiz runtime/repository/CI sınırı | Review-critical | EO-F7 + bu master | 3 | Done |
+| EO-02 | Workspace/install/billing/privacy foundation | Review-critical | EO-01 | 4 | In progress |
 | EO-03 | OAuth/connection/token authority | Review-critical | EO-02 | 4 | Not started |
 | EO-04 | Üç provider adapterı | Review-critical | EO-03 | 5 | Not started |
 | EO-05 | Scheduler/Dataset/finality | Review-critical | EO-04 | 5 | Not started |
@@ -197,19 +197,10 @@ EO-01–EO-08 review-critical hattır. EO-08-D sonunda ayrıca açık insan revi
 
 EO-09 ve EO-10 review sonrasında yürütülür. Bununla birlikte review sonrasında yapılmaları, erken legacy deletion yetkisi vermez; consumer-zero ve destructive approval korunur.
 
-## İlk aktif iş
+## Güncel aktif iş
 
-Bu master merge edildikten sonra tek aktif parent **EO-01** olacaktır.
+Tek aktif parent **EO-02**'dir.
 
-EO-01 başlamadan önce verilecek analist brief:
-
-- hangi resmî Shopify stack ve neden;
-- repository/Vercel provisioning yolu;
-- dependency allowlist;
-- CI/negative test seti;
-- üç route'un yalnız shell kapsamı;
-- production/Shopify configuration mutation sayısının neden sıfır kaldığı;
-- rollback.
-
-Başka hiçbir EO parent paralel başlatılmaz.
-
+- **EO-02-A — Verification:** Ayrı Frankfurt Supabase projesi, private schema'lar, owner/migrator/runtime rol sınırı ve migration history canlı olarak doğrulandı; CI ve merge bekliyor.
+- EO-02-A kabul edilmeden EO-02-B başlamaz.
+- EO-03 ve sonraki parent'lar paralel başlatılmaz.

@@ -91,6 +91,7 @@
     "trial_ledger_role": "immutable_observation_not_local_trial_grant",
     "migration_chain": [
       "supabase/migrations/20261006170000_eo02c_shopify_app_pricing_entitlement.sql",
+      "supabase/migrations/20261006171000_eo02c_disambiguate_upserts.sql",
       "supabase/migrations/20261006171500_eo02c_acceptance_probe.sql"
     ]
   },

@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "package": "EO-01-A",
+  "generatedAt": "2026-10-06",
+  "sourceRepository": "fyilanli-oss/ads-table-dev",
+  "sourceCommit": "3416ee736fc3c53910e5e6571a7b8f445c4ce3cd",
+  "policy": "governance-and-contract-evidence-only",
+  "applicationRuntimeModulesCarriedAsIs": 0,
+  "files": [
+    {
+      "path": "docs/A6_EO_F1_F2_AUTHORITY_AND_PROJECT_BOUNDARY.md",
+      "sourceBlobSha": "d7ce81bbcda760f647e6c1a818bdd31bd49db52b"
+    },
+    {
+      "path": "docs/A6_EO_F3_CODE_DEPENDENCY_CARRY_ALLOWLIST.md",
+      "sourceBlobSha": "af3dc472bd1a7a6a6b2586c68a2585235f45cec4"
+    },
+    {
+      "path": "docs/A6_EO_F4_SCHEMA_DATA_CARRY_MAP.md",
+      "sourceBlobSha": "4d6acd3593a8d9f8c2d66e5729ed7e3ed9a944a9"
+    },
+    {
+      "path": "docs/A6_EO_F5_PRODUCT_ROUTE_MAP.md",
+      "sourceBlobSha": "1ead783f327de0662a1b39f476df40782b126d0d"
+    },
+    {
+      "path": "docs/A6_EO_F6_EFFORT_RISK_COMPARISON.md",
+      "sourceBlobSha": "a445fccfe4236d5aa2d655f2df252b5bc595672b"
+    },
+    {
+      "path": "docs/A6_EO_F7_GO_DECISION.md",
+      "sourceBlobSha": "9bf1e280ed1f77ee3c03ec84297f3da9c8faadf1"
+    },
+    {
+      "path": "docs/A6_EO_IMPLEMENTATION_MASTER_TABLE.md",
+      "sourceBlobSha": "5627340b3c1d467e0ff4bd689778cadd52e83c94"
+    },
+    {
+      "path": "docs/SHOPIFY_EMBEDDED_UI_CONSTITUTION.md",
+      "sourceBlobSha": "00648433780de3abca1f9dfa850024f962fb4c80"
+    },
+    {
+      "path": "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md",
+      "sourceBlobSha": "d96ce0331cb0af81e6b70ea503cef426aa5af9b6"
+    },
+    {
+      "path": "contracts/a6-eo-f1-f2-authority-project-boundary-v1.json",
+      "sourceBlobSha": "9bfd50429e51ea77a226aec23218960acff539f4"
+    },
+    {
+      "path": "contracts/a6-eo-f3-code-dependency-carry-allowlist-v1.json",
+      "sourceBlobSha": "21a8ce6fdbfa6585644e8a7712e86706f4b2f797"
+    },
+    {
+      "path": "contracts/a6-eo-f4-schema-data-carry-map-v1.json",
+      "sourceBlobSha": "7de454210eb8feb9de8dc4b8f93720d21b1181dc"
+    },
+    {
+      "path": "contracts/a6-eo-f5-product-route-map-v1.json",
+      "sourceBlobSha": "e6bf68fe1d8613303152a330b7111b255c32a752"
+    },
+    {
+      "path": "contracts/a6-eo-f6-effort-risk-comparison-v1.json",
+      "sourceBlobSha": "8794de7a55f5ce778b1d6dc815724e59265b2db8"
+    },
+    {
+      "path": "contracts/a6-eo-f7-go-decision-v1.json",
+      "sourceBlobSha": "6900dac78808d421251c130fa72e582929710b48"
+    },
+    {
+      "path": "contracts/a6-eo-implementation-master-v1.json",
+      "sourceBlobSha": "f0b1739c85d8209d0aaf9b9fdd94b8f49c8e73ef"
+    },
+    {
+      "path": "contracts/shopify/shopify-embedded-ui-constitution-v1.json",
+      "sourceBlobSha": "6fe9f540c4fa1e3b3d7e4347f125d11c553f36b3"
+    },
+    {
+      "path": "contracts/repository-delivery-workflow-v1.json",
+      "sourceBlobSha": "719b11d2c5ed4003cdc99f1e7fed0dbf5c82e279"
+    }
+  ]
+}

@@ -1,0 +1,334 @@
+{
+  "schema_version": "1.1.0",
+  "contract_id": "a6-eo-f5-product-route-map-v1",
+  "title": "A6 EO-F5 embedded-only product, route and consumer map",
+  "evidence_date": "2026-10-04",
+  "status": "eo_f5_complete_eo_f6_pending",
+  "authority": {
+    "execution_plan": "codex-input/AdsTable_EXECUTION_PLAN_V4_2026-08-17_TR.md",
+    "eo_master": "contracts/a6-eo-00-embedded-only-reestablishment-v1.json",
+    "analyst_evidence": "docs/A6_EO_F5_PRODUCT_ROUTE_MAP.md",
+    "ui_constitution": "contracts/shopify/shopify-embedded-ui-constitution-v1.json",
+    "source_main_sha": "53020ad471af4ec769b8f54af27088598a5d7d59",
+    "official_shopify_docs_checked_on": "2026-10-04"
+  },
+  "scope": {
+    "mode": "read_only_product_route_decision",
+    "code_change": false,
+    "production_mutation": false,
+    "provider_calls": false,
+    "database_mutation": false,
+    "deployment_mutation": false,
+    "shopify_configuration_mutation": false,
+    "new_project_created": false
+  },
+  "product": {
+    "surface": "shopify_embedded_only",
+    "active_providers": [
+      "meta",
+      "google_ads",
+      "klaviyo"
+    ],
+    "canonical_home": {
+      "route": "/",
+      "surface": "funnel",
+      "duplicate_app_nav_link": false
+    },
+    "global_logical_order": [
+      "funnel",
+      "ad_analysis",
+      "settings"
+    ],
+    "rendered_app_nav": [
+      "ad_analysis",
+      "settings"
+    ],
+    "funnel_table_same_route": true,
+    "standalone_login": false,
+    "manual_refresh": false,
+    "nested_surfaces": {
+      "funnel": [
+        "funnel_core",
+        "dashboard_charts"
+      ],
+      "ad_analysis": [
+        "deepest_grain_analysis",
+        "dashboard_charts",
+        "attribution_differences_after_E10-T5-C2-C"
+      ],
+      "settings": [
+        "reporting_currency",
+        "provider_connections",
+        "klaviyo_cost",
+        "trial_and_billing",
+        "privacy_and_delete_my_data"
+      ]
+    }
+  },
+  "ui_routes": [
+    {
+      "path": "/",
+      "surface": "funnel_app_home",
+      "review_critical": true,
+      "nested_views": [
+        "funnel",
+        "dashboard_charts"
+      ]
+    },
+    {
+      "path": "/ad-analysis",
+      "surface": "ad_analysis",
+      "review_critical": true,
+      "nested_views": [
+        "deepest_grain_analysis",
+        "dashboard_charts",
+        "attribution_differences_after_discovery"
+      ]
+    },
+    {
+      "path": "/settings",
+      "surface": "settings",
+      "review_critical": true,
+      "nested_views": [
+        "currency",
+        "platforms",
+        "billing",
+        "privacy"
+      ]
+    }
+  ],
+  "onboarding_resolver": [
+    "verified_shopify_session",
+    "managed_installation_bootstrap",
+    "active_trial_or_subscription_entitlement",
+    "merchant_selected_reporting_currency_in_settings",
+    "at_least_one_verified_active_provider_account_in_settings",
+    "klaviyo_email_monthly_plan_cost_in_settings_when_klaviyo_selected",
+    "funnel_home"
+  ],
+  "authenticated_api_routes": [
+    "GET /api/app/context",
+    "GET /api/workspace/settings",
+    "PATCH /api/workspace/settings/reporting-currency",
+    "GET /api/providers",
+    "GET /api/providers/:provider/accounts",
+    "PUT /api/providers/:provider/active-account",
+    "POST /api/providers/:provider/disconnect",
+    "GET /api/providers/klaviyo/email-spend-history",
+    "POST /api/providers/klaviyo/email-spend-history",
+    "GET /api/reports/funnel",
+    "GET /api/reports/dashboard",
+    "GET /api/reports/ad-analysis",
+    "GET /api/reports/attribution-differences",
+    "GET /api/refresh/status",
+    "GET /api/billing/entitlement",
+    "POST /api/billing/subscribe",
+    "POST /api/privacy/deletion-requests",
+    "GET /api/privacy/deletion-requests/:requestId"
+  ],
+  "oauth": {
+    "routes": [
+      "POST /api/providers/:provider/oauth/start",
+      "GET /api/providers/:provider/oauth/callback"
+    ],
+    "provider_allowlist": [
+      "meta",
+      "google-ads",
+      "klaviyo"
+    ],
+    "callback_return_allowlist": [
+      "/settings"
+    ],
+    "requirements": [
+      "verified_shopify_session_on_start",
+      "workspace_owned_transaction",
+      "state_nonce_pkce_and_ttl_validation",
+      "no_token_write_before_validation"
+    ]
+  },
+  "shopify_webhook": {
+    "route": "POST /webhooks/shopify",
+    "raw_body_hmac_before_parse": true,
+    "known_topic_allowlist": true,
+    "topics": [
+      "customers/data_request",
+      "customers/redact",
+      "shop/redact",
+      "app/uninstalled"
+    ],
+    "billing_topic": "exact_official_topic_to_be_frozen_in_EO-02",
+    "idempotent_claim": true,
+    "invalid_hmac_status": 401
+  },
+  "internal_routes": [
+    {
+      "route": "POST /internal/jobs/hourly-refresh",
+      "caller": "vercel_cron_or_internal_signed_caller",
+      "browser_allowed": false
+    },
+    {
+      "route": "GET /healthz",
+      "caller": "platform_probe",
+      "tenant_or_secret_detail": false
+    }
+  ],
+  "route_guard": {
+    "tenant_source": "server_verified_shopify_session",
+    "caller_supplied_workspace": false,
+    "caller_supplied_shop_authority": false,
+    "deep_links_run_guard": true,
+    "safe_return_target_allowlist": true,
+    "external_return_url": false
+  },
+  "truth_states": [
+    "loading",
+    "empty",
+    "partial",
+    "stale",
+    "final",
+    "unsupported",
+    "unknown",
+    "reauthorization_required",
+    "capability_unavailable",
+    "forbidden",
+    "not_found",
+    "error"
+  ],
+  "provider_data_rules": {
+    "missing_becomes_zero": false,
+    "attribution_differences_mutates_dataset": false,
+    "report_routes_are_read_only": true,
+    "first_bootstrap_dates": [
+      "yesterday",
+      "today"
+    ],
+    "hourly_scheduler_authority": "adstable_owned",
+    "page_open_starts_refresh": false
+  },
+  "forbidden_production_route_classes": [
+    "legacy_shopify_app_tree",
+    "standalone_login_signup_auth_dashboard",
+    "api_e10_acceptance_preflight_probe",
+    "runtime_preflight_or_acceptance",
+    "historical_inventory_or_manual_historical_fetch",
+    "controlled_reset_or_journey_diagnostic",
+    "raw_provider_response_or_metric_discovery",
+    "test_debug_synthetic_secret_inspection",
+    "browser_triggered_manual_refresh",
+    "generic_proxy_or_caller_supplied_tenant"
+  ],
+  "retired_or_non_target_routes": [
+    "/shopify/app",
+    "/shopify/app/settings",
+    "/shopify/app/platforms",
+    "/shopify/app/funnel",
+    "/shopify/app/analysis",
+    "/funnel",
+    "/dashboard",
+    "/ad-analysis/attribution-differences",
+    "/attribution-differences",
+    "/platforms",
+    "/analysis",
+    "/login",
+    "/signup",
+    "/auth/*"
+  ],
+  "data_consumers": {
+    "session_guard": [
+      "shopify.installations",
+      "app.workspaces",
+      "app.workspace_settings",
+      "billing.workspace_entitlements",
+      "integrations.provider_connections"
+    ],
+    "settings": [
+      "app.workspace_settings",
+      "billing.workspace_subscriptions",
+      "billing.workspace_entitlements",
+      "privacy.deletion_runs"
+    ],
+    "platforms": [
+      "integrations.provider_connections",
+      "integrations.oauth_transactions",
+      "analytics.email_spend_history"
+    ],
+    "reports": [
+      "analytics.performance_rows",
+      "analytics.fx_rates",
+      "analytics.email_spend_history",
+      "operations.reconciliation_ledger"
+    ],
+    "refresh": [
+      "integrations.provider_connections",
+      "app.workspace_settings",
+      "analytics.*",
+      "operations.*"
+    ],
+    "lifecycle": [
+      "shopify.installations",
+      "privacy.*",
+      "billing.*"
+    ]
+  },
+  "contract_precedence": {
+    "active_provider_override": "EO active provider list overrides E10-T5C4 TikTok-active presentation",
+    "navigation_amendment": "Funnel is root App Home; only Ad Analysis and Settings render as peer navigation surfaces",
+    "analysis_route": "/ad-analysis replaces /analysis",
+    "billing_surface": "settings_not_global_nav",
+    "manual_refresh": "forbidden",
+    "dashboard_surface": "nested_chart_panels_under_funnel_and_ad_analysis",
+    "platforms_surface": "settings_provider_connections_section",
+    "attribution_surface": "nested_under_ad_analysis_after_E10-T5-C2-C"
+  },
+  "ui_implementation_gate": {
+    "code_written_in_this_package": false,
+    "analyst_brief_required": true,
+    "state_copy_matrix_required": true,
+    "exact_official_component_mapping_required": true,
+    "raw_html_action_controls": false,
+    "custom_shopify_look_css": false,
+    "desktop_shopify_admin_evidence": true,
+    "real_mobile_320px_shopify_admin_evidence": true,
+    "explicit_product_owner_acceptance": true,
+    "polaris_version_revalidation_at_EO_07": true
+  },
+  "acceptance": {
+    "result": "PASS",
+    "canonical_ui_route_count": 3,
+    "canonical_report_surface_count": 2,
+    "active_provider_count": 3,
+    "standalone_ui_or_auth_route_count": 0,
+    "production_debug_operator_acceptance_route_count": 0,
+    "browser_triggered_refresh_route_count": 0,
+    "direct_browser_database_access_count": 0,
+    "next_gate": "EO-F6",
+    "top_level_product_surface_count": 3
+  },
+  "implementation_authorized": false,
+  "project_creation_authorized": false,
+  "shopify_configuration_change_authorized": false,
+  "cutover_authorized": false,
+  "legacy_deletion_authorized": false,
+  "attribution_differences": {
+    "top_level_route": false,
+    "host_surface": "/ad-analysis",
+    "activation_after": "E10-T5-C2-C_cross_platform_deepest_grain_discovery",
+    "behavior": "nested_analysis_view",
+    "missing_capability_state": "capability_unavailable"
+  },
+  "dashboard": {
+    "top_level_route": false,
+    "standalone_surface": false,
+    "host_surfaces": [
+      "/",
+      "/ad-analysis"
+    ],
+    "behavior": "contextual_chart_panels"
+  },
+  "platforms": {
+    "top_level_route": false,
+    "standalone_surface": false,
+    "host_surface": "/settings",
+    "behavior": "provider_connections_section"
+  }
+}

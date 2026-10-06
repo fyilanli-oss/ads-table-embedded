@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "contractId": "eo-01a-repository-boundary-v1",
+  "package": "EO-01-A",
+  "title": "Clean repository and physical boundary",
+  "status": "merge_pending",
+  "repository": "fyilanli-oss/ads-table-embedded",
+  "baseBranch": "main",
+  "deliveryBranch": "codex/eo01a-repository-boundary",
+  "source": {
+    "repository": "fyilanli-oss/ads-table-dev",
+    "commit": "3416ee736fc3c53910e5e6571a7b8f445c4ce3cd"
+  },
+  "boundaries": {
+    "applicationRuntimeModulesCarriedAsIs": 0,
+    "providerMutation": false,
+    "databaseProvisioning": false,
+    "liveTokenOrDataCarry": false,
+    "productionMutation": false,
+    "vercelProvisioning": false,
+    "supabaseProvisioning": false
+  },
+  "allowedRoots": [
+    ".github",
+    "docs",
+    "contracts",
+    "governance",
+    "tests"
+  ],
+  "allowedRootFiles": [
+    "README.md",
+    "AGENTS.md",
+    ".gitignore",
+    ".gitattributes"
+  ],
+  "forbiddenAtThisGate": [
+    "src",
+    "app",
+    "public",
+    "server.js",
+    "package.json",
+    "package-lock.json",
+    "pnpm-lock.yaml",
+    "yarn.lock",
+    ".env",
+    "vercel.json",
+    "shopify.app.toml"
+  ],
+  "acceptance": [
+    "connector_write_pass",
+    "source_provenance_complete",
+    "legacy_runtime_carry_zero",
+    "repository_boundary_test_pass",
+    "pull_request_open",
+    "required_ci_pass",
+    "explicit_user_merge_approval_required"
+  ]
+}

@@ -1,0 +1,293 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "a6-eo-f6-effort-risk-comparison-v1",
+  "title": "A6 EO-F6 repair versus embedded-only re-establishment effort and risk comparison",
+  "evidence_date": "2026-10-04",
+  "status": "eo_f6_complete_eo_f7_human_decision_pending",
+  "authority": {
+    "execution_plan": "codex-input/AdsTable_EXECUTION_PLAN_V4_2026-08-17_TR.md",
+    "eo_master": "contracts/a6-eo-00-embedded-only-reestablishment-v1.json",
+    "analyst_evidence": "docs/A6_EO_F6_EFFORT_RISK_COMPARISON.md",
+    "source_main_sha": "4f0a78d46cd5e7d0ed43c4dc8cf0b819342a3a57"
+  },
+  "scope": {
+    "mode": "read_only_feasibility_comparison",
+    "code_change": false,
+    "production_mutation": false,
+    "provider_calls": false,
+    "database_mutation": false,
+    "deployment_mutation": false,
+    "shopify_configuration_mutation": false,
+    "new_project_created": false
+  },
+  "estimation_unit": {
+    "name": "focused_engineering_day",
+    "definition": "one uninterrupted full day of implementation and verification by one active delivery line",
+    "excludes": [
+      "provider_waiting_windows",
+      "merchant_acceptance_scheduling",
+      "klaviyo_2026_10_15_revalidation_wait",
+      "shopify_app_review_queue"
+    ],
+    "confidence": "medium",
+    "calendar_commitment": false
+  },
+  "equal_scope_requirements": [
+    "shopify_installation_session_workspace_authority",
+    "fourteen_day_trial_subscription_entitlement",
+    "mandatory_privacy_webhooks",
+    "delete_my_data_executor_and_terminal_manifest",
+    "uninstall_access_and_scheduler_stop",
+    "clean_reinstall_generation_safety",
+    "meta_google_ads_klaviyo_oauth_account_token_lifecycle",
+    "hourly_scheduler_lease_checkpoint",
+    "yesterday_today_bootstrap",
+    "dataset_v2_provenance_maturity_reconciliation_finality",
+    "truthful_formula_query_api",
+    "three_surface_shopify_native_ui",
+    "provider_api_ui_parity",
+    "canary_rollback_restore_rehearsal",
+    "explicit_desktop_mobile_product_owner_acceptance"
+  ],
+  "source_measurements": {
+    "repository_files": 819,
+    "root_server_bytes": 305537,
+    "legacy_public_bytes": 1530539,
+    "src_files": 120,
+    "test_files": 203,
+    "supabase_public_tables": 24,
+    "vercel_environment_keys": 40,
+    "deduplicated_p0": 4,
+    "deduplicated_p1": 7,
+    "carry_as_is_application_modules": 0,
+    "exact_business_rows_to_carry": 10,
+    "target_top_level_surfaces": 3,
+    "target_active_providers": 3
+  },
+  "monolith_repair": {
+    "review_critical_focused_days": {
+      "minimum": 59,
+      "maximum": 92
+    },
+    "units": [
+      {
+        "id": "legacy_containment",
+        "minimum": 4,
+        "maximum": 6
+      },
+      {
+        "id": "lifecycle_privacy_deletion_reinstall",
+        "minimum": 10,
+        "maximum": 15
+      },
+      {
+        "id": "billing_trial_install",
+        "minimum": 5,
+        "maximum": 8
+      },
+      {
+        "id": "canonical_three_provider_rewire",
+        "minimum": 10,
+        "maximum": 15
+      },
+      {
+        "id": "scheduler_dataset_reconciliation_finality",
+        "minimum": 8,
+        "maximum": 12
+      },
+      {
+        "id": "formula_api_ui_truth",
+        "minimum": 7,
+        "maximum": 11
+      },
+      {
+        "id": "cutover_rollback_restore",
+        "minimum": 7,
+        "maximum": 11
+      },
+      {
+        "id": "monolith_regression_hidden_consumers",
+        "minimum": 8,
+        "maximum": 14
+      }
+    ],
+    "external_evidence_calendar_days": {
+      "minimum": 10,
+      "maximum": 20
+    },
+    "working_weeks_at_five_focused_days": {
+      "minimum": 11.8,
+      "maximum": 18.4
+    }
+  },
+  "reestablishment": {
+    "review_critical_focused_days": {
+      "minimum": 42,
+      "maximum": 63
+    },
+    "packages": [
+      {
+        "id": "EO-01",
+        "minimum": 2,
+        "maximum": 3
+      },
+      {
+        "id": "EO-02",
+        "minimum": 6,
+        "maximum": 9
+      },
+      {
+        "id": "EO-03",
+        "minimum": 4,
+        "maximum": 6
+      },
+      {
+        "id": "EO-04",
+        "minimum": 8,
+        "maximum": 12
+      },
+      {
+        "id": "EO-05",
+        "minimum": 7,
+        "maximum": 10
+      },
+      {
+        "id": "EO-06",
+        "minimum": 4,
+        "maximum": 6
+      },
+      {
+        "id": "EO-07",
+        "minimum": 5,
+        "maximum": 8
+      },
+      {
+        "id": "EO-08",
+        "minimum": 6,
+        "maximum": 9
+      }
+    ],
+    "post_review_consumer_zero_retirement": [
+      {
+        "id": "EO-09",
+        "minimum": 4,
+        "maximum": 6
+      },
+      {
+        "id": "EO-10",
+        "minimum": 3,
+        "maximum": 5
+      }
+    ],
+    "full_program_focused_days": {
+      "minimum": 49,
+      "maximum": 74
+    },
+    "external_evidence_calendar_days": {
+      "minimum": 7,
+      "maximum": 15
+    },
+    "working_weeks_at_five_focused_days": {
+      "minimum": 8.4,
+      "maximum": 12.6
+    }
+  },
+  "comparison": {
+    "selected": "embedded_only_reestablishment",
+    "focused_days_saved": {
+      "minimum": 17,
+      "maximum": 29
+    },
+    "percent_saved": {
+      "minimum": 29,
+      "maximum": 32
+    },
+    "review_scope_reduced": false,
+    "acceptance_gates_reduced": false,
+    "legacy_retirement_before_consumer_zero": false
+  },
+  "readiness_score": {
+    "scale": "1_weak_to_5_strong",
+    "weighted_total_out_of_100": {
+      "monolith_repair": 45,
+      "embedded_only_reestablishment": 88
+    },
+    "criteria": [
+      {
+        "id": "authority_privilege_isolation",
+        "weight": 20,
+        "monolith": 2,
+        "reestablishment": 5
+      },
+      {
+        "id": "review_evidence_clarity",
+        "weight": 15,
+        "monolith": 2,
+        "reestablishment": 5
+      },
+      {
+        "id": "schedule_predictability",
+        "weight": 15,
+        "monolith": 2,
+        "reestablishment": 4
+      },
+      {
+        "id": "cutover_rollback_control",
+        "weight": 15,
+        "monolith": 3,
+        "reestablishment": 4
+      },
+      {
+        "id": "live_data_continuity",
+        "weight": 15,
+        "monolith": 4,
+        "reestablishment": 3
+      },
+      {
+        "id": "regression_surface",
+        "weight": 10,
+        "monolith": 1,
+        "reestablishment": 5
+      },
+      {
+        "id": "long_term_maintenance",
+        "weight": 10,
+        "monolith": 1,
+        "reestablishment": 5
+      }
+    ]
+  },
+  "critical_path": [
+    "EO-01",
+    "EO-02",
+    "EO-03",
+    "EO-04",
+    "EO-05",
+    "EO-06",
+    "EO-07",
+    "EO-08",
+    "review_ready_decision"
+  ],
+  "external_gates": [
+    "klaviyo_official_contract_revalidation_on_2026_10_15",
+    "provider_attribution_and_finality_windows",
+    "google_ads_non_empty_or_truthful_verified_empty_acceptance",
+    "desktop_and_real_mobile_shopify_admin_acceptance",
+    "shopify_app_review_queue_excluded_from_estimate"
+  ],
+  "decision": {
+    "result": "PASS_reestablishment_recommended",
+    "rationale": [
+      "same_review_scope_with_smaller_physical_and_regression_boundary",
+      "evidence_backed_product_and_data_discovery_already_complete",
+      "legacy_authorities_and_inactive_providers_not_reimplemented",
+      "separate_repository_vercel_and_supabase_reduce_hidden_coupling",
+      "controlled_data_carry_and_legacy_rollback_preserve_continuity"
+    ],
+    "next_gate": "EO-F7_human_GO_NO_GO"
+  },
+  "implementation_authorized": false,
+  "project_creation_authorized": false,
+  "cutover_authorized": false,
+  "legacy_deletion_authorized": false
+}

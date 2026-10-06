@@ -1,0 +1,113 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "a6-eo-f1-f2-authority-project-boundary-v1",
+  "title": "A6 EO-F1/F2 authority inventory and physical project boundary",
+  "evidence_date": "2026-10-04",
+  "status": "f1_complete_f2_decision_frozen_f3_f7_pending",
+  "evidence_scope": {
+    "mode": "read_only",
+    "secrets_read": false,
+    "pii_read": false,
+    "provider_calls": false,
+    "production_mutation": false,
+    "database_mutation": false,
+    "deployment_mutation": false
+  },
+  "sources": {
+    "github_main_sha": "11c3228a6648ccf0a485ae37ab880ba11ca325c5",
+    "supabase_project_ref": "xnstrzhavqkztvmlwsrx",
+    "vercel_project_id": "prj_hFCqpqBSlV0fgIdFOtDcuaKrmqvq",
+    "vercel_team_id": "team_Rl3EGl1rI43g4DgWXRQQppL0",
+    "analyst_evidence": "docs/A6_EO_F1_F2_AUTHORITY_AND_PROJECT_BOUNDARY.md"
+  },
+  "eo_f1": {
+    "result": "complete_with_blocking_gaps_transferred",
+    "canonical_authorities": {
+      "tenant": "public.workspaces",
+      "settings": "public.workspace_settings",
+      "shopify_installation": "public.shopify_installations",
+      "provider_grants_and_tokens": "public.workspace_provider_connections",
+      "dataset": "public.performance_dataset_rows_v2",
+      "klaviyo_cost_history": "public.workspace_provider_email_spend_history"
+    },
+    "live_counts": {
+      "canonical_workspaces": 1,
+      "shopify_installations": 1,
+      "canonical_provider_connections": 3,
+      "dataset_v2_rows": 5,
+      "legacy_users": 8,
+      "legacy_provider_connections": 8,
+      "legacy_provider_token_rows": 6,
+      "legacy_dashboard_snapshots": 2185,
+      "legacy_dataset_rows": 4947,
+      "legacy_job_rows": 2392,
+      "legacy_schedule_rows": 10,
+      "active_legacy_schedules": 0,
+      "expired_oauth_transactions": 12
+    },
+    "blocking_gaps": [
+      "workspace_scoped_shopify_billing_and_entitlement_authority_missing",
+      "workspace_scoped_job_lease_checkpoint_and_scheduler_authority_missing",
+      "durable_privacy_webhook_claim_and_deletion_execution_authority_missing",
+      "clean_reinstall_generation_authority_missing"
+    ],
+    "legacy_runtime_tables_forbidden": [
+      "users",
+      "user_settings",
+      "subscriptions",
+      "platform_connections",
+      "platform_connection_tokens",
+      "platform_ad_accounts",
+      "platform_businesses",
+      "platform_account_ownerships",
+      "dashboard_snapshots",
+      "snapshot_jobs",
+      "snapshot_schedules",
+      "performance_dataset_rows"
+    ],
+    "transitional_not_runtime_authority": [
+      "shopify_workspace_provider_connections",
+      "legacy_user_workspace_bindings"
+    ]
+  },
+  "eo_f2": {
+    "result": "separate_repository_and_separate_vercel_project_selected",
+    "score": {
+      "same_repository_separate_root": 21,
+      "separate_repository_separate_vercel": 31,
+      "maximum": 35
+    },
+    "rules": [
+      "new_repository_is_not_a_fork_or_bulk_copy",
+      "new_vercel_project_starts_preview_only",
+      "dev_adstable_app_remains_on_legacy_until_cutover",
+      "legacy_project_remains_containment_and_rollback",
+      "secrets_are_allowlisted_not_bulk_copied",
+      "shopify_identity_redirect_and_domain_cutover_wait_for_EO_F5_and_EO_08"
+    ],
+    "not_created_yet": true
+  },
+  "data_plane_gate": {
+    "status": "blocked_until_EO_F4",
+    "forbidden": "mixed_legacy_supabase_service_role_in_new_runtime",
+    "rationale": "Supabase service_role bypasses RLS; a separate Vercel project alone does not isolate the mixed schema.",
+    "candidates": [
+      "existing_supabase_with_dedicated_least_privilege_role_and_private_boundary",
+      "separate_supabase_project_with_reconciled_canonical_carry"
+    ]
+  },
+  "environment_denylist_prefixes": [
+    "TIKTOK_",
+    "PINTEREST_",
+    "GA4_"
+  ],
+  "environment_denylist_exact": [
+    "PROVIDER_TOKEN_LEGACY_READ_ENABLED",
+    "ADSTABLE_CODEX_READONLY_TOKEN"
+  ],
+  "next_gate": "EO-F3",
+  "implementation_authorized": false,
+  "project_creation_authorized": false,
+  "cutover_authorized": false,
+  "deletion_authorized": false
+}

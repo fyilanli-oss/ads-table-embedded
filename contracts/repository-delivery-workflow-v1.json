@@ -1,0 +1,69 @@
+{
+  "contract_version": "repository-delivery-workflow-v1",
+  "status": "PASS_GOVERNANCE_ACTIVE",
+  "effective_date": "2026-10-02",
+  "scope": "codex_windows_repository_delivery",
+  "source_of_truth": {
+    "product_branch": "main",
+    "authority": "github_remote",
+    "current_main_must_be_verified_before_implementation": true
+  },
+  "workspace_model": {
+    "primary_local_checkout_role": "repository_anchor_and_read_only_inventory",
+    "primary_local_checkout": "C:\\Users\\dev\\Documents\\Codex\\ads-table-dev",
+    "implementation_workspace": "task_scoped_codex_managed_worktree",
+    "local_source_edits_allowed_in_task_worktree": true,
+    "local_only_delivery_allowed": false,
+    "shared_git_metadata_may_be_deleted_with_attached_worktrees": false
+  },
+  "github_delivery": {
+    "primary_transport": "github_connector",
+    "required_branch_prefix": "codex/",
+    "branch_base": "verified_current_main",
+    "explicit_file_scope_only": true,
+    "reread_remote_content_after_write": true,
+    "pull_request_required": true,
+    "required_ci_must_pass": true,
+    "merge_requires_explicit_user_approval": true
+  },
+  "forbidden_automatic_fallbacks": [
+    "github_web_editor_without_explicit_user_request",
+    "local_git_metadata_repair",
+    "gcm_reconfiguration",
+    "acl_or_ownership_mutation",
+    "elevated_or_unelevated_context_switching",
+    "process_termination",
+    "service_restart",
+    "server_or_vm_restart"
+  ],
+  "startup_gate": [
+    "read_current_official_provider_documentation_when_applicable",
+    "inventory_status_head_branch_and_git_common_dir",
+    "inventory_staged_tracked_untracked_stashes_worktrees_and_ahead_refs",
+    "verify_github_connector_access",
+    "verify_current_remote_main_commit",
+    "stop_before_implementation_if_any_required_gate_fails"
+  ],
+  "delivery_gate": [
+    "create_codex_branch_from_verified_current_main",
+    "write_only_explicit_task_files",
+    "verify_remote_exact_content_or_hash",
+    "open_pull_request",
+    "wait_for_required_ci_pass",
+    "obtain_explicit_merge_approval"
+  ],
+  "shutdown_gate": [
+    "verify_no_meaningful_local_only_content",
+    "record_remote_branch_pr_commit_and_ci",
+    "merge_only_after_explicit_user_approval",
+    "archive_managed_worktree_after_merge",
+    "classify_cache_dependencies_and_build_outputs_as_disposable",
+    "preserve_local_backup_files_until_separately_authorized"
+  ],
+  "failure_policy": {
+    "github_connector_unavailable": "STOP_AND_REPORT_SINGLE_BLOCKER",
+    "web_editor_fallback": false,
+    "local_git_fallback": false,
+    "system_mutation_fallback": false
+  }
+}

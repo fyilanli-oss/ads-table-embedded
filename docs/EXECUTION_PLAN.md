@@ -32,13 +32,15 @@ Bu repository onaylı A6-EO embedded-only temiz yeniden kuruluş programını uy
 
 Aynı anda yalnız bir parent paket aktiftir. Executable paket tablosu `contracts/a6-eo-implementation-master-v1.json` dosyasındadır.
 
-## Active package: EO-01
+## Active package: EO-02
 
 - **EO-01-A — Accepted:** Fork veya bulk copy olmadan ayrı temiz repository ve fiziksel sınır kuruldu. Kabul commit'i: `cb02ef7c2e9236ab50da792f21d667fae91cbccd`.
 - **EO-01-B — Accepted:** Güncel resmî Shopify stack, temiz dependency manifest/lockfile ve negatif CI kapıları merge edildi. Kabul commit'i: `111e7dec66c84c48be43930f3496ea5b0f918949`.
-- **EO-01-C — Active:** `/`, `/ad-analysis`, `/settings` için truthful empty shell hazırlanır ve preview-only deploy edilir.
+- **EO-01-C — Accepted:** Polaris 2.0 RC üç-route truthful preview shell ürün sahibi tarafından görsel olarak kabul edildi ve merge edildi. Kabul commit'i: `76ea38a474c701d69871f73ba713376e3a7d623e`.
+- **EO-02-A — Verification:** Ayrı Frankfurt Supabase projesinde private schema, owner/migrator/runtime rol sınırı ve temiz migration zinciri canlı olarak doğrulandı; CI ve merge bekliyor.
+- **EO-02-B/C/D — Not started:** EO-02-A merge kabulünden önce başlamaz.
 
-EO-01 ürün verisi çekmez, live token taşımaz, business database schema kurmaz, production routing değiştirmez ve review-ready iddiasında bulunmaz.
+EO-02-A business tablo veya veri kurmaz, runtime credential'ı etkinleştirmez, canlı token/veri taşımaz, Vercel environment değiştirmez ve legacy Supabase projesine dokunmaz.
 
 ## Current official baseline
 
@@ -50,3 +52,15 @@ EO-01 ürün verisi çekmez, live token taşımaz, business database schema kurm
 - Ürün sahibinin 6 Ekim 2026 tarihli açık kararıyla aktif baseline `polaris-2.0-rc.js` ve exact `@shopify/polaris-types@2.0.0-rc.2`'dir; RC riski kabul edilmiştir ve stable 1.x'e otomatik dönüş yapılamaz.
 
 EO-01-B dependency pinlemeden ve EO-07 UI implementasyonundan önce resmî sürümler tekrar doğrulanır.
+
+
+## Current Supabase baseline
+
+6 Ekim 2026 tarihinde Supabase'in resmî API security, Postgres roles, RLS, connection ve breaking-change belgeleri kontrol edildi.
+
+- Yeni project: `podpwkrpmjiksskxhwsu`, Frankfurt, PostgreSQL 17.11 GA.
+- Private schema: `app`, `shopify`, `integrations`, `analytics`, `operations`, `privacy`, `billing`.
+- Data API rolleri private schema'lara erişemez.
+- Runtime şema kullanabilir fakat schema oluşturamaz ve henüz hiçbir tablo yetkisi yoktur.
+- Runtime/migrator parolaları NULL'dır; Vercel bağlantısı bu paketin kapsamı değildir.
+- Security ve performance advisor bulgusu sıfırdır.

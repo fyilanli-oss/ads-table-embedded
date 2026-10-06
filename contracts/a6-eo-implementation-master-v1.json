@@ -211,12 +211,15 @@
           "id": "A6-EO-02-A",
           "title": "Private schemas, roles and migrations",
           "objective": "Provision clean Standard Supabase and least-privilege migration/runtime roles.",
-          "status": "Merge approval pending"
+          "status": "Accepted",
+          "acceptance_pr": "https://github.com/fyilanli-oss/ads-table-embedded/pull/4",
+          "acceptance_commit": "2ac00f969eb35ac632ead57017753ed495e7b66f"
         },
         {
           "id": "A6-EO-02-B",
           "title": "Workspace, installation and generation authority",
-          "objective": "Build workspace-bound install/session/bootstrap and generation state."
+          "objective": "Build workspace-bound install/session/bootstrap and generation state.",
+          "status": "Ready"
         },
         {
           "id": "A6-EO-02-C",
@@ -676,6 +679,7 @@
   "cutover_authorized": false,
   "legacy_deletion_authorized": false,
   "current_active_parent": "A6-EO-02",
-  "current_active_child": "A6-EO-02-A",
-  "current_gate": "explicit_merge_approval"
+  "current_active_child": null,
+  "current_gate": "EO-02-B_package_start_brief",
+  "next_ready_child": "A6-EO-02-B"
 }

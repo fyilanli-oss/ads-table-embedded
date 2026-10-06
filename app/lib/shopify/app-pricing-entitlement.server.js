@@ -114,6 +114,12 @@ function normalizeActiveSubscription(payload, installation, observedAt) {
     throw new Error("PARTNER_SUBSCRIPTION_SHOP_MISMATCH");
   }
 
+  if (typeof subscription.billingPeriod !== "string" || subscription.billingPeriod.length === 0) {
+    throw new Error("INVALID_BILLING_PERIOD");
+  }
+  if (typeof subscription.cancelAtEndOfCycle !== "boolean") {
+    throw new Error("INVALID_CANCEL_AT_END_OF_CYCLE");
+  }
   if (!Array.isArray(subscription.items) || subscription.items.length === 0) {
     throw new Error("ACTIVE_SUBSCRIPTION_ITEMS_REQUIRED");
   }
@@ -150,6 +156,13 @@ function normalizeActiveSubscription(payload, installation, observedAt) {
     throw new Error("INCONSISTENT_ACTIVE_SUBSCRIPTION");
   }
 
+  if (
+    subscription.pendingUpdate != null &&
+    (!Array.isArray(subscription.pendingUpdate.items) ||
+      typeof subscription.pendingUpdate.billingPeriod !== "string")
+  ) {
+    throw new Error("INVALID_PENDING_SUBSCRIPTION");
+  }
   const pendingItems = subscription.pendingUpdate?.items ?? [];
   const pendingItemHandles = pendingItems.map((item) => {
     if (!ITEM_HANDLE_PATTERN.test(item?.handle || "")) {
@@ -164,7 +177,7 @@ function normalizeActiveSubscription(payload, installation, observedAt) {
     active: true,
     entitlementStatus: isTrial ? "trial" : "active",
     billingPeriod: subscription.billingPeriod,
-    cancelAtEndOfCycle: subscription.cancelAtEndOfCycle === true,
+    cancelAtEndOfCycle: subscription.cancelAtEndOfCycle,
     trialEndsAt,
     currentCycleStart,
     currentCycleEnd,

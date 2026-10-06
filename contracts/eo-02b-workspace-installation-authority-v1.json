@@ -61,7 +61,6 @@
     }
   ],
   "database": {
-    "migration": "supabase/migrations/20261006152000_eo02b_workspace_installation_authority.sql",
     "tables": [
       "app.workspaces",
       "shopify.installations",
@@ -75,7 +74,11 @@
       "shopify.resolve_active_installation"
     ],
     "concurrency": "transaction-scoped advisory lock per verified Shop GID",
-    "delete_privilege": false
+    "delete_privilege": false,
+    "migration_chain": [
+      "supabase/migrations/20261006152000_eo02b_workspace_installation_authority.sql",
+      "supabase/migrations/20261006153500_eo02b_remove_redundant_indexes.sql"
+    ]
   },
   "lifecycle_boundary": {
     "implemented_here": [

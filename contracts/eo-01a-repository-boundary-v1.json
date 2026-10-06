@@ -21,8 +21,10 @@
     "supabaseProvisioning": false
   },
   "allowedRoots": [
+    ".github",
     "docs",
     "contracts",
+    "governance",
     "tests"
   ],
   "allowedRootFiles": [
@@ -50,6 +52,7 @@
     "legacy_runtime_carry_zero",
     "repository_boundary_test_pass",
     "pull_request_open",
+    "required_ci_pass",
     "explicit_user_merge_approval_required"
   ]
 }

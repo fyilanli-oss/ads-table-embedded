@@ -211,7 +211,7 @@
           "id": "A6-EO-02-A",
           "title": "Private schemas, roles and migrations",
           "objective": "Provision clean Standard Supabase and least-privilege migration/runtime roles.",
-          "status": "Verification"
+          "status": "Merge approval pending"
         },
         {
           "id": "A6-EO-02-B",
@@ -677,5 +677,5 @@
   "legacy_deletion_authorized": false,
   "current_active_parent": "A6-EO-02",
   "current_active_child": "A6-EO-02-A",
-  "current_gate": "CI_and_explicit_merge_approval"
+  "current_gate": "explicit_merge_approval"
 }

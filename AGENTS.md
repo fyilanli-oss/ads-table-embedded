@@ -42,3 +42,4 @@ Görsel ve etkileşimli UI yalnız güncel Shopify App Bridge ve stable Polaris 
 ## Güvenlik sınırı
 
 Production domain, Shopify app config, provider mutation, live token/data carry, database provisioning, cutover ve legacy deletion yalnız kendi ileriki kapılarında ve açık yetkiyle yapılır. Missing, unknown, unsupported, partial, stale ve gerçek zero ayrı durumlardır.
+

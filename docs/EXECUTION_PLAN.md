@@ -34,8 +34,8 @@ Aynı anda yalnız bir parent paket aktiftir. Executable paket tablosu `contract
 
 ## Active package: EO-01
 
-- **EO-01-A:** Fork veya bulk copy olmadan ayrı temiz repository ve fiziksel sınır kurulur.
-- **EO-01-B:** Güncel resmî Shopify stack seçilir; temiz dependency manifest/lockfile ile forbidden import/route/table/environment CI kontrolleri kurulur.
+- **EO-01-A — Accepted:** Fork veya bulk copy olmadan ayrı temiz repository ve fiziksel sınır kuruldu. Kabul commit'i: `cb02ef7c2e9236ab50da792f21d667fae91cbccd`.
+- **EO-01-B — Active:** Güncel resmî Shopify stack seçilir; temiz dependency manifest/lockfile ile forbidden import/route/table/environment CI kontrolleri kurulur.
 - **EO-01-C:** `/`, `/ad-analysis`, `/settings` için truthful empty shell hazırlanır ve preview-only deploy edilir.
 
 EO-01 ürün verisi çekmez, live token taşımaz, business database schema kurmaz, production routing değiştirmez ve review-ready iddiasında bulunmaz.
@@ -50,3 +50,4 @@ EO-01 ürün verisi çekmez, live token taşımaz, business database schema kurm
 - Polaris web components 1.1 stable; 2.0 release candidate olduğu için baseline seçilmemiştir.
 
 EO-01-B dependency pinlemeden ve EO-07 UI implementasyonundan önce resmî sürümler tekrar doğrulanır.
+

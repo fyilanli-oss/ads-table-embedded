@@ -334,3 +334,4 @@ EO-F4 **PASS**:
 - plaintext token exposure: 0
 - yeni project/schema/data mutation: 0
 - sıradaki kapı: **EO-F5 — Product and route map**
+

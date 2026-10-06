@@ -228,3 +228,4 @@ EO-F3 — Kod/dependency carry allowlist:
 - clean package manifest ve CI sınırı.
 
 EO-F3 tamamlanmadan yeni repository oluşturulmaz.
+

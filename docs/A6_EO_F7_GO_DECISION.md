@@ -169,3 +169,4 @@ EO programı ancak aşağıdaki durumlarda review-ready olabilir:
 - provider mutation: kapalı
 - legacy deletion/retirement: kapalı
 - sıradaki paket: **A6-EO-01 — Clean runtime shell, CI and dependency boundary**
+

@@ -232,3 +232,4 @@ EO-F5 **PASS**:
 - sıradaki kapı: **EO-F6 — Repair vs re-establishment effort and risk comparison**
 
 Bu paket EO-F7 GO vermez, yeni repository/project oluşturmaz, Shopify app URL'sini değiştirmez, webhook kaydetmez ve mevcut runtime'ı kapatmaz.
+

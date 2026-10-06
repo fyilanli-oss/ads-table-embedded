@@ -3,7 +3,8 @@
   "contractId": "eo-01a-repository-boundary-v1",
   "package": "EO-01-A",
   "title": "Clean repository and physical boundary",
-  "status": "merge_pending",
+  "status": "accepted",
+  "acceptedAtCommit": "cb02ef7c2e9236ab50da792f21d667fae91cbccd",
   "repository": "fyilanli-oss/ads-table-embedded",
   "baseBranch": "main",
   "deliveryBranch": "codex/eo01a-repository-boundary",
@@ -33,7 +34,7 @@
     ".gitignore",
     ".gitattributes"
   ],
-  "forbiddenAtThisGate": [
+  "historicalGateForbidden": [
     "src",
     "app",
     "public",
@@ -53,6 +54,8 @@
     "repository_boundary_test_pass",
     "pull_request_open",
     "required_ci_pass",
-    "explicit_user_merge_approval_required"
-  ]
+    "explicit_user_merge_approval_received"
+  ],
+  "evolutionRule": "Later EO packages may add clean app, manifest, lockfile and deployment files; EO-01-A remains proven by its accepted commit and provenance record."
 }
+

@@ -49,3 +49,4 @@ Bu şablon doldurulmadan Shopify embedded UI kodu yazılmaz.
 
 Bu kutuların tamamı kanıtlanmadan task `Done`, `PASS` veya `Accepted` olamaz.
 
+

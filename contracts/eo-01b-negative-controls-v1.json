@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "scanRoots": ["app", "src", "server", "scripts"],
+  "forbiddenDirectDependencies": ["express", "googleapis", "@supabase/supabase-js", "@prisma/client", "prisma", "@shopify/shopify-app-session-storage-prisma"],
+  "forbiddenRuntimeTokens": ["ga4", "google_sheets", "tiktok", "pinterest", "organic_provider", "platform_connection_tokens", "shopify_workspace_provider_connections", "user_id", "dual_write", "live_shadow", "controlled_acceptance", "historical_inventory"],
+  "forbiddenRouteTokens": ["debug", "operator", "diagnostic", "acceptance"],
+  "forbiddenPaths": ["public", "server.js"],
+  "allowedEnvironmentKeys": [],
+  "forbiddenActivePolarisRuntime": "polaris-2.0-rc.js",
+  "allowedProductRoutes": ["/", "/ad-analysis", "/settings"],
+  "reservedSystemRoutePrefixes": ["/auth", "/webhooks"]
+}
+

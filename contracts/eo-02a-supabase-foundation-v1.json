@@ -85,13 +85,17 @@
     "anon_or_authenticated_private_schema_access",
     "service_role_private_schema_access"
   ],
-  "migration": "supabase/migrations/20261006123846_eo02a_private_schema_roles.sql",
   "live_acceptance": {
     "clean_start_tables": 0,
     "clean_start_migrations": 0,
     "security_advisors_before": 0,
     "performance_advisors_before": 0,
-    "applied": false
+    "applied": true,
+    "migration_versions": [
+      "20261006133830"
+    ],
+    "corrective_migration_pending": true,
+    "failed_attempts_rolled_back": 3
   },
   "out_of_scope": [
     "business_tables",
@@ -101,5 +105,9 @@
     "vercel_database_credentials",
     "production_cutover",
     "legacy_project_mutation"
+  ],
+  "migration_chain": [
+    "supabase/migrations/20261006123846_eo02a_private_schema_roles.sql",
+    "supabase/migrations/20261006134000_eo02a_runtime_schema_usage.sql"
   ]
 }

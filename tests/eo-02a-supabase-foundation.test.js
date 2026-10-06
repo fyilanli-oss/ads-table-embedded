@@ -46,6 +46,11 @@ test("pre-existing role drift fails closed instead of being silently rewritten",
   }
 });
 
+test("managed migration authority can SET ROLE without inheriting owner privileges", () => {
+  assert.match(migration, /grant adstable_owner to postgres with inherit false, set true;/);
+  assert.match(migration, /grant adstable_owner to adstable_migrator with inherit false, set true;/);
+});
+
 test("Data API roles receive no private schema or default object grants", () => {
   assert.match(migration, /revoke all on schema app, shopify, integrations, analytics, operations, privacy, billing[\s\S]*?from public, anon, authenticated, service_role/);
   assert.doesNotMatch(migration, /grant\s+[^;]+\s+to\s+(?:anon|authenticated|service_role)/);

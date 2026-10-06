@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-02b-workspace-installation-authority-v1",
   "version": "1.0.0",
-  "status": "implementation_in_review_live_acceptance_pending",
+  "status": "database_live_accepted_merge_pending",
   "checked_at": "2026-10-06",
   "authoritative_sources": {
     "shopify_api_versioning": "https://shopify.dev/docs/api/usage/versioning",
@@ -118,5 +118,13 @@
     "No plaintext or placeholder token material is persisted.",
     "Repository tests, build and required CI pass.",
     "Live Supabase migration and merge require separate explicit user approval."
-  ]
+  ],
+  "live_acceptance": {
+    "project_id": "podpwkrpmjiksskxhwsu",
+    "evidence": "docs/evidence/EO_02B_LIVE_ACCEPTANCE_2026-10-06.json",
+    "result": "pass",
+    "security_advisor_lints": 0,
+    "performance_advisor_lints": 0,
+    "residual_probe_rows": 0
+  }
 }

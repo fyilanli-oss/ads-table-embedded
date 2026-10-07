@@ -1,6 +1,6 @@
 {
   "contract_id": "a6-eo-07-three-surface-ui-product-freeze-v1",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "status": "product_decision_frozen_implementation_pending",
   "decision_date": "2026-10-07",
   "surfaces": [
@@ -95,8 +95,24 @@
     },
     "visualization": {
       "model": "relationship_oriented_graphs",
-      "product_owner_reference_package": "pending",
+      "product_owner_reference_package": "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json",
+      "reference_status": "accepted_product_intent_implementation_pending",
+      "performance_primary_series": [
+        "sales",
+        "revenue",
+        "spend"
+      ],
+      "intent_primary_series": [
+        "add_to_cart",
+        "checkout",
+        "abandoned",
+        "purchase"
+      ],
+      "ui_label_map": {
+        "sales_value": "Sales"
+      },
       "classic_unrelated_chart_assumption": false,
+      "same_data_authority_required": true,
       "implementation_authorized": false
     }
   },
@@ -168,6 +184,9 @@
       "requires_both_earring_cross_sell_fixtures_per_provider": true,
       "inferred_product_chart_forbidden": true,
       "implementation_authorized": false
+    },
+    "ui_label_map": {
+      "sales_value": "Sales"
     }
   },
   "settings": {
@@ -247,7 +266,16 @@
       "s-text"
     ],
     "official_components_only": true,
-    "implementation_day_revalidation_required": true
+    "implementation_day_revalidation_required": true,
+    "official_components_only_outside_chart_data_plane": true,
+    "chart_data_plane_exception": {
+      "allowed_renderers": [
+        "svg",
+        "canvas"
+      ],
+      "scope": "axes_series_marks_guides_legends_direct_data_labels_only",
+      "surrounding_ui_requires_official_components": true
+    }
   },
   "sequence": [
     "A6-EO-07-A",

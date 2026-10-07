@@ -15,6 +15,8 @@ Shopify App Pricing planını, Partner API Production secret sınırını ve Ads
 - https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing/redirect-plan-selection-page
 - https://shopify.dev/docs/api/partner/latest/active-subscription
 - https://shopify.dev/docs/apps/launch/app-store-review/pass-app-review
+- https://shopify.dev/docs/apps/launch/distribution/revenue-share
+- https://help.shopify.com/en/manual/checkout-settings/troubleshooting-checkout-payments
 - https://vercel.com/docs/environment-variables
 - https://vercel.com/docs/environment-variables/sensitive-environment-variables
 
@@ -24,7 +26,7 @@ Shopify aynı Partner organizasyonundaki development store'un kullanılabilir ü
 
 Aşağıdaki işlemler kullanıcı görünür onayı olmadan yapılmaz:
 
-1. App Store registration kart doğrulaması ve tek seferlik ücret.
+1. App Store registration kart doğrulaması ve tek seferlik USD 19 ücret.
 2. Public planın kaydedilmesi veya yayımlanması.
 3. Partner API access tokenının Vercel Production Secret olarak girilmesi.
 4. Production deployment.
@@ -55,7 +57,32 @@ Private test plan yalnız `active` durum şeklinin canlı kabulü içindir; merc
 
 Başarısızlıkta hiçbir mutation yapılmaz.
 
-## Aşama 1 — Null kabulü
+## Aşama 1 — Shopify App Store registration
+
+1. Partner hesabının tek seferlik USD 19 App Store registration işlemi tamamlanır.
+2. Shopify kesin bir 24 saatlik retry süresi yayımlamadığı için `Too many attempts` devam ederken farklı kart veya tarayıcıyla ardışık deneme yapılmaz.
+3. Yeni denemeden önce bankada uluslararası internet alışverişi ve 3D Secure açık, kart sahibi/adres bilgileri bankadaki kayıtla uyumlu olmalıdır.
+4. Tek kontrollü deneme başarısızsa tekrar zinciri başlatılmaz: önce bankada işlemin ulaşıp ulaşmadığı doğrulanır; bankaya hiç ulaşmadıysa Shopify Support'a gidilir.
+
+Registration tamamlanmadan plan oluşturma veya subscription-state kabulüne geçilmez.
+
+## Aşama 2 — Vercel Production aktivasyonu
+
+| Anahtar | Vercel türü | Scope |
+|---|---|---|
+| `SHOPIFY_PARTNER_ORG_ID` | Config | Production |
+| `SHOPIFY_PARTNER_API_ACCESS_TOKEN` | Secret | Production |
+| `SHOPIFY_APP_GID` | Config | Production |
+
+Kurallar:
+
+- Exact Config değerleri contract'tan alınır.
+- Token kullanıcı tarafından doğrudan Vercel Secret alanına girilir; chat, terminal argümanı, local env dosyası veya clipboard kanıtına yazılmaz.
+- Preview ve Development production tokenı almaz.
+- Env değişikliği sonrası yeni production deployment zorunludur.
+- Deployment source SHA, env key metadata ve health sonucu kaydedilir; değerler kaydedilmez.
+
+## Aşama 3 — Null kabulü
 
 Plan seçilmeden önce `activeSubscription` sorgulanır.
 
@@ -69,7 +96,7 @@ Beklenen:
 
 API/GraphQL hata `null` sayılmaz ve aşama PASS olamaz.
 
-## Aşama 2 — Intended public plan ve trial kabulü
+## Aşama 4 — Intended public plan ve trial kabulü
 
 1. Public plan `USD 24.99 / month`, `14-day trial`, welcome link `/` olarak kaydedilir.
 2. Development store hosted plan selection sayfasından bu planı seçer.
@@ -86,7 +113,7 @@ Beklenen:
 
 Bu development store için trial tekrarına güvenilmez; Shopify 180 günlük trial kullanımını izler.
 
-## Aşama 3 — Active kabulü
+## Aşama 5 — Active kabulü
 
 Trial kanıtı alındıktan sonra aynı development store, trial içermeyen Shopify `$0 private test plan`ına geçirilir. Bu plan gerçek merchant teklifi değildir ve ücret oluşturmaz.
 
@@ -100,23 +127,7 @@ Beklenen canlı sonuç:
 
 Shopify farklı bir response şekli döndürürse yorum yapılmaz; ham redacted response kaydedilir ve contract güncellemesi için durulur.
 
-## Aşama 4 — Vercel Production aktivasyonu
-
-| Anahtar | Vercel türü | Scope |
-|---|---|---|
-| `SHOPIFY_PARTNER_ORG_ID` | Config | Production |
-| `SHOPIFY_PARTNER_API_ACCESS_TOKEN` | Secret | Production |
-| `SHOPIFY_APP_GID` | Config | Production |
-
-Kurallar:
-
-- Exact Config değerleri contract'tan alınır.
-- Token kullanıcı tarafından doğrudan Vercel Secret alanına girilir; chat, terminal argümanı, local env dosyası veya clipboard kanıtına yazılmaz.
-- Preview ve Development production tokenı almaz.
-- Env değişikliği sonrası yeni production deployment zorunludur.
-- Deployment source SHA, env key metadata ve health sonucu kaydedilir; değerler kaydedilmez.
-
-## Aşama 5 — Sızıntı ve persistence kabulü
+## Aşama 6 — Sızıntı ve persistence kabulü
 
 - Browser bundle ve response'larda üç server-only değerin hiçbirinin bulunmadığı doğrulanır.
 - Application ve platform loglarında token veya authorization header bulunmadığı doğrulanır.

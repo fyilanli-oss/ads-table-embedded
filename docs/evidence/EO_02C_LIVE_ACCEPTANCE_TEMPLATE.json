@@ -80,5 +80,14 @@
     "result": null
   },
   "final_result": "pending",
-  "explicit_product_owner_acceptance": false
+  "explicit_product_owner_acceptance": false,
+  "execution_sequence": [
+    "shopify_app_store_registration",
+    "vercel_production_environment_activation",
+    "new_production_deployment",
+    "null",
+    "trial",
+    "active",
+    "leak_and_persistence_acceptance"
+  ]
 }

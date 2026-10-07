@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.3.0",
+  "schema_version": "1.3.1",
   "contract_id": "a6-eo-implementation-master-v1",
   "title": "A6 EO single-track execution rule and integrated implementation package table",
   "effective_date": "2026-10-04",
@@ -232,7 +232,11 @@
           "subscription_read_authority": "Partner API 2026-07 activeSubscription",
           "database_acceptance": "PASS",
           "acceptance_evidence": "docs/evidence/EO_02C_DATABASE_ACCEPTANCE_2026-10-06.json",
-          "remaining_gate": "Partner Dashboard plan/trial configuration, Partner API secret activation and live trial/active/null acceptance"
+          "remaining_gate": "Partner Dashboard plan/trial configuration, Vercel secret activation under a frozen runtime environment contract, and live trial/active/null acceptance",
+          "partner_api_client_authentication": "PASS",
+          "partner_api_client_id": "38724",
+          "partner_api_client_permission": "manage_apps_only",
+          "partner_api_client_evidence_date": "2026-10-07"
         },
         {
           "id": "A6-EO-02-D",

@@ -125,15 +125,17 @@ Referans: A6-RM-08/09, E11 ve Dataset V2 sözleşmeleri.
 
 ## EO-07 — Shopify-native three-surface UI
 
-- **EO-07-A — Settings surface:** Reporting Currency, provider bağlantıları/hesap seçimleri, tek aktif Reporting Store seçimi ve yeni-store review uyarısı, Klaviyo Estimated 30-Day Email Spend, billing ve privacy işlemleri Shopify-native Settings içinde kurulacak.
-- **EO-07-B — Funnel App Home:** Funnel/Table ve bağlamsal dashboard grafikleri uygulamanın ana Shopify App Home yüzeyi olarak kurulacak.
-- **EO-07-C — Cross-platform deepest-grain discovery:** Meta, Google Ads ve Klaviyo için gerçek en alt analiz seviyeleri ile clicked-product satın alınmayan/alınan iki exact cross-sell fixture sonucu Ad Analysis tasarlanmadan önce dondurulacak.
-- **EO-07-D — Ad Analysis surface:** Ad Analysis tablo, filtre ve bağlamsal grafikleri yalnız EO-07-C discovery sonucu üzerinde uygulanacak.
+- **EO-07-A — Settings surface:** Eski çalışan Settings kullanıcı akışı referans alınarak Reporting Currency, provider bağlantıları/hesap seçimleri, bunlardan sonra atomik doğrulanan tek aktif Reporting Store seçimi, Klaviyo Email Monthly Plan Cost, Shopify subscription ve iki aşamalı Delete my data Shopify-native Settings içinde kurulacak; Settings'te grafik olmayacak ve legacy UI kodu aynen taşınmayacak.
+- **EO-07-B — Funnel App Home:** Bağımsız Funnel/Table ve Summary/Daily boyutları, provider-native hiyerarşi ve kontrollü compare uygulanacak; bağlamsal dashboard yalnız ürün sahibinin beklenen ilişkilendirilmiş grafik paketi kabul edildikten sonra tasarlanacak.
+- **EO-07-C — Cross-platform deepest-grain discovery:** Meta, Google Ads ve Klaviyo için gerçek en alt analiz seviyeleri ile clicked-product satın alınmayan/alınan iki exact küpe/cross-sell fixture sonucu Ad Analysis tasarlanmadan önce dondurulacak.
+- **EO-07-D — Ad Analysis surface:** Ad Analysis sıralama tablosu, tek details modalı ve kanıtlı ürün görünümü yalnız EO-07-C discovery sonucu üzerinde uygulanacak; grafik katmanı EO-07-C kapanana kadar blokludur ve bütün provider leafleri yapay olarak Ad diye etiketlenemez.
 - **EO-07-E — Attribution Differences nested view:** Attribution Differences, discovery ve Ad Analysis kabulünden sonra ayrı yüzey açmadan Ad Analysis içine yerleştirilecek.
 - **EO-07-F — Desktop, real-mobile and accessibility acceptance:** Üç yüzey resmî component eşlemesi, gerçek desktop/mobil Shopify Admin ve erişilebilirlik kabulünden geçirilecek.
 
-Çıktı: Funnel, Ad Analysis ve Settings. Dashboard grafikleri bağlamsal; Platforms Settings içinde.  
+Çıktı: Funnel, Ad Analysis ve Settings. Funnel grafikleri ilişkilendirilmiş grafik girdisini bekler; Ad Analysis grafikleri EO-07-C kanıtını bekler; Settings'te grafik yoktur. Platforms Settings içinde.  
 Referans: A6-RM-09, E10-T5, E12 ve UI Constitution.
+
+Bağlayıcı ürün davranışı ve bekleme kapıları `docs/A6_EO_07_THREE_SURFACE_UI_PRODUCT_FREEZE.md` ile `contracts/shopify/a6-eo-07-three-surface-ui-product-freeze-v1.json` içinde dondurulmuştur. Bu pre-freeze EO-07 implementasyonunu veya kabulünü erkene çekmez.
 
 ## EO-08 — Carry rehearsal, parity, canary and rollback
 

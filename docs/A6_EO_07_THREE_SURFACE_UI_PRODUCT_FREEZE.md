@@ -53,7 +53,7 @@ Only official Shopify App Bridge and Polaris web components may render controls,
 
 ### 3.1 Visualization decision state
 
-- Funnel dashboard visualizations will use relationship-oriented charts rather than assuming a set of unrelated classic charts. Exact relationships, chart forms and metric bindings remain pending the product-owner reference package. No chart UI or data contract is authorized before that analyst input is accepted.
+- Funnel dashboard visualizations use the accepted relationship-oriented reference in `docs/A6_EO_07_FUNNEL_VISUALIZATION_REFERENCE.md`: Performance relates Sales, Revenue and Spend; Intent relates Add to Cart, Checkout, Abandoned and Purchase. The reference freezes product intent and renderer boundary, but does not authorize implementation or advance A6-EO-07-B.
 - Ad Analysis visualization design and implementation are blocked until A6-EO-07-C verifies the deepest available analytical leaf and the two exact earring/cross-sell fixtures independently for Meta, Google Ads and Klaviyo. A provider with no verified product-level capability must not receive an inferred product chart.
 - Settings has no dashboard or analytical chart surface.
 - These waiting states do not block the already frozen non-chart table, control and workflow decisions, and do not advance A6-EO-07 status.
@@ -131,11 +131,11 @@ Each row carries provider, entity type, canonical ID and parent path. Same names
 Primary ranking choices are:
 
 - Purchase
-- Sales Value
+- Sales
 - Revenue
 - Revenue Margin
 
-The exact distinction and formulas for Sales Value, Revenue, Revenue Margin Value and Revenue Margin % belong to A6-EO-06. No UI label may precede that formula contract.
+The canonical user-facing label is `Sales`; an internal key may remain `sales_value`. The exact distinction and formulas for Sales, Revenue, Revenue Margin Value and Revenue Margin % belong to A6-EO-06. No UI label may contradict that formula contract.
 
 The merchant can choose descending or ascending order. Verified numeric values rank first; `partial`, `unknown` and `unsupported` are not coerced to zero and are ordered in separate state groups. The total row is not rankable. Ties use a stable canonical identity order.
 
@@ -277,3 +277,17 @@ Uninstall remains an access-stop event. Shopify compliance webhooks and the appr
 - Deployment or production mutation
 - A6-EO-07 status advancement
 - Legacy retirement
+
+
+## 9. Accepted Funnel visualization reference
+
+The binding reference is `docs/A6_EO_07_FUNNEL_VISUALIZATION_REFERENCE.md` with executable contract `contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json`.
+
+- Performance relationship: Sales, Revenue and Spend.
+- Intent relationship: Add to Cart, Checkout, Abandoned and Purchase; count and value remain separate fields.
+- Current series are solid; comparison series are dashed.
+- Directional color/arrow meaning comes from the A6-EO-06 metric contract, never numeric sign alone. Spend is neutral without outcome context; lower CPC, CPS and Abandoned metrics are favorable.
+- Chart, selected-point detail, KPI summary and table share one BFF/query/formula authority.
+- Only the graph data plane may use SVG or Canvas. Every surrounding UI element remains official Polaris/App Bridge.
+- Ad Analysis graph work remains blocked by A6-EO-07-C and its provider-specific product/cross-sell evidence.
+- This reference creates no new package, changes no package status and authorizes no implementation or live mutation.

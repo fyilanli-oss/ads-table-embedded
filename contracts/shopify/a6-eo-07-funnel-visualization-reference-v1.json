@@ -1,0 +1,161 @@
+{
+  "contract_id": "a6-eo-07-funnel-visualization-reference-v1",
+  "version": "1.0.0",
+  "status": "product_intent_accepted_implementation_pending",
+  "decision_date": "2026-10-07",
+  "owner_package": "A6-EO-07-B",
+  "creates_new_package": false,
+  "advances_package_status": false,
+  "implementation_authorized": false,
+  "live_mutation_authorized": false,
+  "canonical_ui_labels": {
+    "sales_value": "Sales"
+  },
+  "performance": {
+    "primary_series": [
+      "sales",
+      "revenue",
+      "spend"
+    ],
+    "supporting_metrics": [
+      "impressions",
+      "clicks",
+      "spend",
+      "ctr",
+      "cpc",
+      "sales",
+      "roas",
+      "cps",
+      "revenue",
+      "revenue_margin"
+    ]
+  },
+  "intent": {
+    "primary_count_series": [
+      "add_to_cart",
+      "checkout",
+      "abandoned",
+      "purchase"
+    ],
+    "count_and_value_are_distinct": true,
+    "supporting_context": [
+      "clicks",
+      "spend",
+      "sales"
+    ]
+  },
+  "compare": {
+    "current_style": "solid",
+    "previous_style": "dashed",
+    "equal_calendar_day_count": true,
+    "overlap_forbidden": true,
+    "same_timezone_and_currency_rules": true,
+    "daily_max_days": 31,
+    "direction_authority": "A6-EO-06_metric_contract",
+    "favorable_increase_candidates": [
+      "sales",
+      "revenue",
+      "roas",
+      "revenue_margin",
+      "ctr",
+      "purchase",
+      "add_to_cart",
+      "checkout"
+    ],
+    "favorable_decrease": [
+      "cpc",
+      "cps",
+      "abandoned",
+      "abandoned_value"
+    ],
+    "neutral_without_outcome_context": [
+      "spend"
+    ],
+    "unavailable_denominator_never_invented": true
+  },
+  "state_semantics": [
+    "zero",
+    "unknown",
+    "unsupported",
+    "partial",
+    "stale",
+    "provisional"
+  ],
+  "same_data_authority": {
+    "projections": [
+      "chart",
+      "selected_point_detail",
+      "kpi_summary",
+      "funnel_table"
+    ],
+    "source": "same_BFF_query_result_and_formula_authority",
+    "parity_dimensions": [
+      "filters",
+      "dates",
+      "timezone",
+      "currency",
+      "support_state",
+      "freshness_lineage"
+    ],
+    "mismatch_is_acceptance_failure": true
+  },
+  "renderer_boundary": {
+    "allowed_renderers": [
+      "svg",
+      "canvas"
+    ],
+    "allowed_scope": "chart_data_plane_only",
+    "allowed_elements": [
+      "axes",
+      "series",
+      "marks",
+      "guides",
+      "chart_legends",
+      "direct_data_labels",
+      "accessible_selection_targets"
+    ],
+    "official_polaris_required_outside_data_plane": true,
+    "forbidden_custom_elements": [
+      "page_shell",
+      "controls",
+      "kpi_summaries",
+      "sections_cards",
+      "tables",
+      "filters",
+      "modal_popover",
+      "buttons",
+      "forms",
+      "status_freshness",
+      "navigation",
+      "loading_empty_error"
+    ],
+    "shopify_chrome_imitation_forbidden": true
+  },
+  "accessibility": {
+    "hover_only_essential_information_forbidden": true,
+    "required": [
+      "keyboard",
+      "touch",
+      "screen_reader_title_and_description_or_tabular_equivalent",
+      "non_color_series_encoding",
+      "reduced_motion",
+      "real_shopify_admin_320px"
+    ]
+  },
+  "ad_analysis": {
+    "chart_status": "blocked_by_A6-EO-07-C",
+    "requires": [
+      "deepest_leaf_evidence",
+      "both_cross_sell_fixtures_per_provider",
+      "separate_accepted_chart_brief"
+    ],
+    "inferred_product_chart_forbidden": true
+  },
+  "official_sources_checked_date": "2026-10-07",
+  "official_sources": [
+    "https://shopify.dev/docs/api/app-home/latest",
+    "https://shopify.dev/docs/api/app-home/latest/web-components",
+    "https://shopify.dev/docs/apps/build/app-home/polaris2",
+    "https://shopify.dev/docs/api/app-home/latest/web-components/feedback-and-status-indicators/tooltip"
+  ]
+}

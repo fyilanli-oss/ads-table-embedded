@@ -116,3 +116,15 @@ EO-01-B dependency pinlemeden ve EO-07 UI implementasyonundan önce resmî sür�
 - Trial kullanımı Shopify tarafından 180 günlük dönem boyunca izlenir; reinstall trial'ı sıfırlamaz.
 - Shopify App Pricing billing webhook'u göndermez; redirect, app entry ve entitlement-korumalı işlerde kontrollü Partner API reconciliation gerekir.
 - Bir aktif Reporting Store dahildir; aday tespiti ve aktif store değişimi ücret oluşturmaz.
+
+
+## A6-EO-07-B Funnel visualization reference — 7 October 2026
+
+- Product-owner graph reference is accepted and bound by `docs/A6_EO_07_FUNNEL_VISUALIZATION_REFERENCE.md` and `contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json`.
+- Performance relates Sales, Revenue and Spend. Intent relates Add to Cart, Checkout, Abandoned and Purchase.
+- User-facing terminology is `Sales`; internal `sales_value` may remain an implementation key.
+- Current period uses solid and comparison uses dashed encoding; meaning of favorable/unfavorable change comes from the metric contract.
+- Chart, selected-point detail, KPI summary and table must use one BFF/query/formula authority.
+- SVG/Canvas is permitted only within the chart data plane. All surrounding UI remains exact official Polaris/App Bridge.
+- Ad Analysis charts remain blocked until A6-EO-07-C evidence and a separate accepted graph brief.
+- No new package was opened; A6-EO-07 status did not advance and implementation/live mutation remains unauthorized.

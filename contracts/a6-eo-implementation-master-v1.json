@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.5.0",
+  "schema_version": "1.6.0",
   "contract_id": "a6-eo-implementation-master-v1",
   "title": "A6 EO single-track execution rule and integrated implementation package table",
   "effective_date": "2026-10-04",
@@ -222,6 +222,34 @@
       ],
       "advances_package_status": false,
       "authorizes_mutation": false
+    },
+    "funnel_visualization_reference_v1": {
+      "decided_at": "2026-10-07",
+      "status": "product_intent_accepted_implementation_pending",
+      "document": "docs/A6_EO_07_FUNNEL_VISUALIZATION_REFERENCE.md",
+      "contract": "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json",
+      "owner_package": "A6-EO-07-B",
+      "performance_primary_series": [
+        "sales",
+        "revenue",
+        "spend"
+      ],
+      "intent_primary_series": [
+        "add_to_cart",
+        "checkout",
+        "abandoned",
+        "purchase"
+      ],
+      "canonical_ui_label": {
+        "sales_value": "Sales"
+      },
+      "chart_renderer_scope": "svg_or_canvas_chart_data_plane_only",
+      "official_polaris_required_outside_chart_data_plane": true,
+      "ad_analysis_chart_status": "blocked_until_A6_EO_07_C_and_separate_accepted_brief",
+      "creates_new_package": false,
+      "advances_package_status": false,
+      "authorizes_ui_implementation": false,
+      "authorizes_live_mutation": false
     }
   },
   "exception": {
@@ -557,7 +585,7 @@
         {
           "id": "A6-EO-07-B",
           "title": "Funnel App Home",
-          "objective": "Build Funnel/Table and Summary/Daily with provider-native hierarchy and synthetic fixture acceptance; relationship charts wait for approved product-owner graph input."
+          "objective": "Build Funnel/Table and Summary/Daily with provider-native hierarchy and synthetic fixture acceptance; implement the accepted Performance/Intent relationship-chart reference with the narrow chart data-plane renderer boundary only when this package starts."
         },
         {
           "id": "A6-EO-07-C",

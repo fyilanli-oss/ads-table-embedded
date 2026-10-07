@@ -68,12 +68,16 @@ test("billing and privacy remain Shopify-authoritative and explicitly confirmed"
 
 test("visualization scope remains truthful and explicitly gated", () => {
   assert.equal(contract.funnel.visualization.model, "relationship_oriented_graphs");
-  assert.equal(contract.funnel.visualization.product_owner_reference_package, "pending");
+  assert.equal(contract.funnel.visualization.reference_status, "accepted_product_intent_implementation_pending");
+  assert.deepEqual(contract.funnel.visualization.performance_primary_series, ["sales", "revenue", "spend"]);
+  assert.equal(contract.funnel.visualization.ui_label_map.sales_value, "Sales");
   assert.equal(contract.funnel.visualization.implementation_authorized, false);
   assert.equal(contract.ad_analysis.visualization.status, "blocked_by_A6_EO_07_C");
   assert.equal(contract.ad_analysis.visualization.requires_both_earring_cross_sell_fixtures_per_provider, true);
   assert.equal(contract.ad_analysis.visualization.inferred_product_chart_forbidden, true);
   assert.equal(contract.settings.visualization.charts, false);
+  assert.equal(contract.shopify_components.official_components_only_outside_chart_data_plane, true);
+  assert.deepEqual(contract.shopify_components.chart_data_plane_exception.allowed_renderers, ["svg", "canvas"]);
 });
 
 test("freeze records official components but authorizes no implementation or acceptance", () => {

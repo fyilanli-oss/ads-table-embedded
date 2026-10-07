@@ -1,0 +1,263 @@
+{
+  "contract_id": "a6-eo-07-three-surface-ui-product-freeze-v1",
+  "version": "1.1.0",
+  "status": "product_decision_frozen_implementation_pending",
+  "decision_date": "2026-10-07",
+  "surfaces": [
+    {
+      "route": "/",
+      "name": "funnel_app_home"
+    },
+    {
+      "route": "/ad-analysis",
+      "name": "ad_analysis"
+    },
+    {
+      "route": "/settings",
+      "name": "settings"
+    }
+  ],
+  "active_providers": [
+    "meta",
+    "google_ads",
+    "klaviyo"
+  ],
+  "shared": {
+    "same_origin_bff_only": true,
+    "system_owned_hourly_refresh": true,
+    "manual_or_page_open_refresh": false,
+    "distinct_states": [
+      "zero",
+      "unknown",
+      "unsupported",
+      "partial",
+      "stale",
+      "provisional"
+    ],
+    "aggregate_first_ratios": true,
+    "provider_specific_hierarchy": true,
+    "desktop_and_real_mobile_required": true,
+    "minimum_mobile_width_px": 320
+  },
+  "funnel": {
+    "route": "/",
+    "controls": [
+      "time_range",
+      "compare_time_range",
+      "filters",
+      "presentation",
+      "view"
+    ],
+    "presentation": [
+      "summary",
+      "daily"
+    ],
+    "view": [
+      "funnel",
+      "table"
+    ],
+    "dimensions_are_independent": true,
+    "hierarchy": {
+      "meta": [
+        "campaign",
+        "ad_set",
+        "ad"
+      ],
+      "google_search": [
+        "campaign",
+        "ad_group",
+        "ad"
+      ],
+      "google_performance_max": [
+        "campaign",
+        "asset_group",
+        "verified_deeper_leaf_only"
+      ],
+      "klaviyo_campaign": [
+        "campaign",
+        "campaign_message",
+        "verified_variation_only"
+      ],
+      "klaviyo_flow": [
+        "flow",
+        "flow_message",
+        "verified_variation_only"
+      ]
+    },
+    "compare": {
+      "custom_allowed": true,
+      "equal_calendar_day_count": true,
+      "overlap_forbidden": true,
+      "same_timezone_and_currency_rules": true,
+      "table_expands_explicit_metrics_only": true,
+      "default_expanded_metrics": 1,
+      "mobile_maximum_expanded_metrics": 1
+    },
+    "visualization": {
+      "model": "relationship_oriented_graphs",
+      "product_owner_reference_package": "pending",
+      "classic_unrelated_chart_assumption": false,
+      "implementation_authorized": false
+    }
+  },
+  "ad_analysis": {
+    "route": "/ad-analysis",
+    "single_aggregate_table": true,
+    "funnel_table_switch": false,
+    "summary_daily_switch": false,
+    "universal_ad_label_forbidden": true,
+    "item_label": "Analysis item",
+    "leaf_authority": "A6-EO-07-C_verified_capability",
+    "required_row_identity": [
+      "provider",
+      "entity_type",
+      "canonical_id",
+      "parent_path"
+    ],
+    "ranking_choices": [
+      "purchase",
+      "sales_value",
+      "revenue",
+      "revenue_margin"
+    ],
+    "ranking_directions": [
+      "descending",
+      "ascending"
+    ],
+    "unsupported_or_unknown_is_zero": false,
+    "detail": {
+      "one_modal": true,
+      "simultaneous_modals": false,
+      "sections": [
+        "intent",
+        "performance",
+        "products"
+      ],
+      "intent_candidates": [
+        "add_to_cart_rate",
+        "checkout_rate",
+        "abandoned_rate",
+        "purchase_rate"
+      ],
+      "performance_candidates": [
+        "ctr",
+        "cpc",
+        "roas",
+        "cps"
+      ]
+    },
+    "products": {
+      "creative_and_sold_product_are_distinct": true,
+      "requires_provider_returned_identity": true,
+      "requires_deterministic_active_store_mapping": true,
+      "shopify_image_does_not_create_attribution": true,
+      "forbidden_inference": [
+        "ad_name",
+        "destination_url",
+        "utm",
+        "fbclid",
+        "fbc",
+        "arbitrary_shopify_order_join"
+      ],
+      "cross_sell_requires_native_provider_evidence": true,
+      "unsupported_is_not_zero": true
+    },
+    "visualization": {
+      "status": "blocked_by_A6_EO_07_C",
+      "requires_deepest_leaf_verification": true,
+      "requires_both_earring_cross_sell_fixtures_per_provider": true,
+      "inferred_product_chart_forbidden": true,
+      "implementation_authorized": false
+    }
+  },
+  "settings": {
+    "route": "/settings",
+    "legacy_working_flow_is_interaction_reference": true,
+    "legacy_source_code_carry_as_is": false,
+    "preserve_behaviors": [
+      "connect_explanation",
+      "oauth_return_to_settings",
+      "resume_setup",
+      "verified_account_selection",
+      "connected_reconnect_disconnect",
+      "reporting_account_selection",
+      "klaviyo_email_monthly_plan_cost_history_and_correction"
+    ],
+    "section_order": [
+      "reporting_currency",
+      "provider_connections_and_reporting_accounts",
+      "reporting_store",
+      "subscription",
+      "data_and_privacy"
+    ],
+    "reporting_store_above_provider_accounts": false,
+    "reporting_account_change": {
+      "staged_until_store_topology_verified": true,
+      "account_and_store_activation_atomic": true,
+      "current_store_verified_keeps_store": true,
+      "different_candidates_require_explicit_selection": true,
+      "multiple_candidates_require_explicit_selection": true,
+      "no_candidate_keeps_previous_active_pair": true,
+      "proposed_account_may_remain_connected_but_not_reporting_authority": true,
+      "dataset_write_before_activation": false,
+      "snapshot_job_before_activation": false,
+      "history_relabelled": false
+    },
+    "subscription": {
+      "authority": "shopify_app_pricing",
+      "public_price_usd_monthly": 24.99,
+      "trial_days": 14,
+      "included_active_reporting_stores": 1,
+      "candidate_detection_or_switch_fee": false,
+      "custom_checkout_forbidden": true,
+      "manage_on_shopify_hosted_surface": true
+    },
+    "delete_my_data": {
+      "available_while_installed": true,
+      "separate_from_disconnect_and_uninstall": true,
+      "sequential_explicit_confirmations": 2,
+      "simultaneous_modals": false,
+      "server_verified_workspace": true,
+      "stop_provider_operations_and_jobs_before_execution": true,
+      "asynchronous_manifest": true,
+      "merchant_visible_progress_and_completion": true
+    },
+    "visualization": {
+      "charts": false
+    }
+  },
+  "shopify_components": {
+    "page": "s-page",
+    "section_layout": [
+      "s-section",
+      "s-stack",
+      "s-grid"
+    ],
+    "actions": [
+      "s-button",
+      "s-button-group"
+    ],
+    "table": "s-table",
+    "modal": "s-modal",
+    "date_range": "s-date-picker",
+    "select": "s-select",
+    "status": [
+      "s-badge",
+      "s-banner",
+      "s-text"
+    ],
+    "official_components_only": true,
+    "implementation_day_revalidation_required": true
+  },
+  "sequence": [
+    "A6-EO-07-A",
+    "A6-EO-07-B",
+    "A6-EO-07-C",
+    "A6-EO-07-D",
+    "A6-EO-07-E",
+    "A6-EO-07-F"
+  ],
+  "implementation_authorized_by_this_contract": false,
+  "live_mutation_authorized": false,
+  "acceptance_requires_explicit_product_owner": true
+}

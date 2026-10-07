@@ -32,6 +32,18 @@ Bu repository onaylı A6-EO embedded-only temiz yeniden kuruluş programını uy
 
 Aynı anda yalnız bir parent paket aktiftir. Executable paket tablosu `contracts/a6-eo-implementation-master-v1.json` dosyasındadır.
 
+
+## A6-EO-07 three-surface UI product freeze — 7 October 2026
+
+Binding analyst brief: `docs/A6_EO_07_THREE_SURFACE_UI_PRODUCT_FREEZE.md`  
+Executable contract: `contracts/shopify/a6-eo-07-three-surface-ui-product-freeze-v1.json`
+
+- Funnel App Home, Ad Analysis and Settings table/control/workflow behavior is frozen without advancing EO-07 or authorizing UI implementation.
+- Funnel contextual dashboard work is waiting for the product-owner relationship-graph reference package; unrelated classic-chart assumptions are forbidden.
+- Ad Analysis charts remain blocked until EO-07-C verifies the deepest analytical leaf and both exact earring/cross-sell fixtures independently for Meta, Google Ads and Klaviyo.
+- Settings has no chart surface.
+- The working legacy Settings flow is interaction evidence only; legacy source, styling and retired-provider UI are not copied.
+
 ## Active package: EO-02
 
 - **EO-01-A — Accepted:** Fork veya bulk copy olmadan ayrı temiz repository ve fiziksel sınır kuruldu. Kabul commit'i: `cb02ef7c2e9236ab50da792f21d667fae91cbccd`.

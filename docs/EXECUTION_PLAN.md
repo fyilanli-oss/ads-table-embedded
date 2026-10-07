@@ -47,6 +47,19 @@ Executable contract: `contracts/a6-eo-cross-cutting-safety-capacity-v1.json`
 - Export is outside the first review slice; when introduced it must be asynchronous and isolated from the interactive query pool.
 - This cross-cutting decision changes no package status and authorizes no live infrastructure mutation.
 
+## Demo fixture, export reference and Shopify dev-store boundary — 7 October 2026
+
+Binding analyst brief: `docs/A6_EO_DEMO_FIXTURE_EXPORT_REFERENCE.md`  
+Executable contract: `contracts/a6-eo-demo-fixture-export-reference-v1.json`
+
+- The legacy dashboard HTML is reference and fixture raw material only; no HTML/JavaScript is copied into the new runtime.
+- Its 1,000-row, 50-day synthetic dataset is routed to EO-05/06/07/08 as a clean Dataset V2 fixture, UI acceptance source, Shopify dev-store demo and deterministic capacity-generator seed.
+- Every normalized row is marked synthetic and non-provider truth. It cannot prove provider capability, native attribution, finality, real zero, product attribution or cross-sell.
+- Export behavior is captured as post-review reference only; export implementation remains outside the first review slice.
+- A dedicated Shopify dev store/workspace may later demonstrate embedded UI truthfully without fake provider connections.
+- The source fixture is insufficient for product/cross-sell acceptance; EO-07-C retains that separate live-evidence gate.
+- This decision changes no package status and authorizes no dev-store, provider, production or database mutation.
+
 ## A6-EO-07 three-surface UI product freeze — 7 October 2026
 
 Binding analyst brief: `docs/A6_EO_07_THREE_SURFACE_UI_PRODUCT_FREEZE.md`  

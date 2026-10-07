@@ -1,0 +1,285 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "a6-eo-demo-fixture-export-reference-v1",
+  "title": "Legacy dashboard demo fixture, export reference and Shopify dev-store acceptance boundary",
+  "effective_date": "2026-10-07",
+  "status": "decision_frozen_extraction_and_implementation_pending",
+  "source_evidence": {
+    "repository": "fyilanli-oss/ads-table-dev",
+    "ref": "main",
+    "path": "codex-input/adstable_one_funnel_compare_all_v2_75_safe_clean_pass8_markup_cleanup-1.html",
+    "git_blob_sha": "87413af1318cbdb3efbe1104e283d7294bc0c219",
+    "sha256": "fece0e65ac8c2d20c440d0f98cd510449bd170cf5beccf33e4a6c2cab4db9c35",
+    "file_bytes": 751960,
+    "role": "reference_and_fixture_raw_material_only",
+    "source_code_carry_as_is": false,
+    "html_runtime_dependency_allowed": false
+  },
+  "inspected_inventory": {
+    "source_rows": 1000,
+    "source_json_bytes": 458500,
+    "calendar_days": 50,
+    "first_date": "2026-06-01",
+    "last_date": "2026-07-20",
+    "source_currency_values": [
+      "USD"
+    ],
+    "platform_row_counts": {
+      "Direct": 50,
+      "Google": 250,
+      "Klaviyo": 150,
+      "Meta": 250,
+      "Others": 50,
+      "TikTok": 250
+    },
+    "traffic_type_row_counts": {
+      "organic": 300,
+      "paid": 700
+    },
+    "dimension_fields": [
+      "date",
+      "platform",
+      "traffic_type",
+      "currency",
+      "campaign",
+      "adgroup",
+      "ad"
+    ],
+    "raw_metric_fields": [
+      "session",
+      "add_to_cart",
+      "checkout",
+      "purchase",
+      "purchase_value",
+      "spend_value",
+      "add_to_cart_value",
+      "checkout_value",
+      "impression",
+      "ad_click"
+    ],
+    "calculated_metric_fields": [
+      "abandoned",
+      "profit",
+      "abandoned_value",
+      "ctr",
+      "cpc",
+      "cps",
+      "roas"
+    ],
+    "export_reference_families": [
+      "funnel_long_raw_CSV",
+      "funnel_current_view_XLSX",
+      "funnel_table_CSV_and_XLSX",
+      "intent_analysis_long_CSV_and_wide_XLSX",
+      "top_selling_ads_CSV_and_XLSX"
+    ]
+  },
+  "allowed_uses": [
+    "Dataset_V2_demo_fixture_raw_material",
+    "Funnel_UI_acceptance_fixture",
+    "Ad_Analysis_UI_acceptance_fixture",
+    "export_behavior_and_schema_reference",
+    "Shopify_dev_store_demo_workspace",
+    "deterministic_capacity_generator_seed"
+  ],
+  "forbidden_uses": [
+    "provider_native_capability_acceptance",
+    "provider_raw_response_evidence",
+    "attribution_or_finality_evidence",
+    "production_merchant_dataset",
+    "real_zero_evidence",
+    "Shopify_review_claim_of_live_provider_data",
+    "cross_sell_or_product_attribution_acceptance",
+    "direct_HTML_or_JavaScript_copy_into_new_runtime"
+  ],
+  "extraction_and_normalization": {
+    "target_repository": "fyilanli-oss/ads-table-embedded",
+    "generated_fixture_must_be_reviewable_JSON": true,
+    "generator_and_schema_validator_required": true,
+    "original_values_preserved_in_immutable_golden_fixture": true,
+    "calculated_metrics_recomputed_by_A6_EO_06_formula_engine": true,
+    "legacy_calculated_values_are_expected_results_only": true,
+    "active_provider_projection": [
+      "meta",
+      "google_ads",
+      "klaviyo"
+    ],
+    "excluded_from_active_provider_projection": [
+      "tiktok",
+      "direct",
+      "others",
+      "provider_labeled_organic"
+    ],
+    "excluded_rows_may_be_retained_in_source_archive": true,
+    "universal_campaign_adgroup_ad_mapping_forbidden": true,
+    "provider_native_hierarchy_required": {
+      "meta": [
+        "platform",
+        "campaign",
+        "ad_set",
+        "ad"
+      ],
+      "google_standard": [
+        "platform",
+        "campaign",
+        "ad_group",
+        "ad"
+      ],
+      "google_performance_max": [
+        "platform",
+        "campaign",
+        "asset_group",
+        "verified_leaf_if_supported"
+      ],
+      "klaviyo_campaign": [
+        "platform",
+        "campaign",
+        "campaign_message",
+        "variation_if_verified"
+      ],
+      "klaviyo_flow": [
+        "platform",
+        "flow",
+        "flow_message"
+      ]
+    },
+    "required_canonical_fields": [
+      "fixture_version",
+      "workspace_id",
+      "reporting_store_id",
+      "provider",
+      "provider_account_id",
+      "provider_business_date",
+      "reporting_store_timezone",
+      "source_currency",
+      "reporting_currency",
+      "metric_support_state",
+      "freshness_state",
+      "data_origin",
+      "provider_truth"
+    ],
+    "synthetic_labels": {
+      "data_origin": "synthetic_demo",
+      "provider_truth": false,
+      "workspace_kind": "demo"
+    },
+    "zero_null_support_rule": "zero_only_when_fixture_explicitly_asserts_supported_zero_otherwise_unknown_or_unsupported",
+    "fx_rule": "no_implicit_one_to_one_currency_conversion",
+    "fake_identifiers_namespaced_by_fixture_workspace_and_provider": true
+  },
+  "fixture_modes": {
+    "golden": {
+      "dates": "fixed_2026-06-01_through_2026-07-20",
+      "purpose": [
+        "contract_tests",
+        "formula_golden_tests",
+        "export_snapshots",
+        "UI_regression"
+      ],
+      "deterministic": true,
+      "date_mutation": false
+    },
+    "rolling_demo": {
+      "source": "golden_fixture",
+      "date_projection": "deterministic_relative_to_demo_clock",
+      "purpose": [
+        "Shopify_dev_store_visual_demo"
+      ],
+      "preserves_relative_intervals_and_compare_relationships": true,
+      "never_changes_golden_fixture": true,
+      "visible_demo_label_required": true
+    }
+  },
+  "export_reference": {
+    "first_review_implementation_in_scope": false,
+    "reference_capture_in_scope": true,
+    "implementation_requires_future_explicit_package_and_approval": true,
+    "legacy_code_reuse": false,
+    "CSV_candidate_semantics": "machine_readable_long_rows_with_explicit_period_entity_metric_previous_current_and_delta",
+    "XLSX_candidate_semantics": "human_readable_current_view_or_wide_analysis_matrix",
+    "table_CSV_XLSX_candidate_semantics": "same_visible_table_matrix",
+    "final_schema_not_frozen_by_this_contract": true,
+    "required_future_controls": [
+      "formula_and_value_parity_with_UI",
+      "locale_independent_numeric_cells",
+      "UTF_8_CSV_with_injection_protection",
+      "real_XLSX_typed_numeric_cells",
+      "workspace_and_date_authorization",
+      "asynchronous_bounded_generation",
+      "audit_and_expiry",
+      "no_secret_or_hidden_provider_payload"
+    ]
+  },
+  "shopify_dev_store": {
+    "official_environment": "Shopify_dev_store",
+    "same_partner_organization_install_supported": true,
+    "demo_data_store_creation_supported": true,
+    "dedicated_demo_shop_and_workspace_required": true,
+    "real_merchant_workspace_reuse": false,
+    "real_provider_tokens_required": false,
+    "fake_connected_provider_state_forbidden": true,
+    "UI_must_label_synthetic_demo_data": true,
+    "settings_must_distinguish_demo_fixture_from_real_connections": true,
+    "seed_and_reset_are_idempotent": true,
+    "protected_real_customer_data_allowed": false,
+    "production_domain_or_cutover_authorized": false,
+    "review_evidence_use": "embedded_UI_and_lifecycle_demonstration_only_not_live_provider_accuracy"
+  },
+  "product_and_cross_sell": {
+    "source_fixture_contains_product_identity": false,
+    "source_fixture_contains_product_images": false,
+    "source_fixture_contains_order_line_quantities": false,
+    "source_fixture_proves_cross_sell": false,
+    "owner_package": "A6-EO-07-C",
+    "separate_evidence_bound_product_fixture_required": true,
+    "synthetic_product_fixture_can_test_UI_only": true,
+    "provider_native_acceptance_still_requires_live_redacted_raw_evidence": true
+  },
+  "capacity_generation": {
+    "source_fixture_is_seed_not_full_capacity_test": true,
+    "deterministic_generator_required": true,
+    "generator_dimensions_to_namespace": [
+      "workspace_id",
+      "reporting_store_id",
+      "provider_account_id",
+      "campaign_id",
+      "group_or_message_id",
+      "leaf_id"
+    ],
+    "distribution_characteristics_to_preserve": [
+      "rows_per_refresh",
+      "date_density",
+      "hierarchy_width",
+      "metric_sparsity",
+      "value_ranges"
+    ],
+    "cross_tenant_identifier_collision_allowed": false,
+    "target_workspaces": 2000,
+    "stress_workspaces": 4000,
+    "workload_budget_and_threshold_authority": "contracts/a6-eo-cross-cutting-safety-capacity-v1.json"
+  },
+  "package_routing": {
+    "A6-EO-05-B": "extract_validate_and_normalize_golden_and_rolling_Dataset_V2_demo_fixtures",
+    "A6-EO-06-A": "recompute_and_assert_formula_results_from_raw_fixture_metrics",
+    "A6-EO-06-B": "exercise_date_filter_compare_and_query_semantics",
+    "A6-EO-07-B": "Funnel_UI_fixture_acceptance",
+    "A6-EO-07-C": "separate_product_and_cross_sell_fixture",
+    "A6-EO-07-D": "Ad_Analysis_UI_fixture_acceptance",
+    "A6-EO-08-C": "2000_4000_workspace_capacity_generation_and_restore_load_rehearsal",
+    "A6-EO-08-D": "Shopify_dev_store_embedded_end_to_end_acceptance",
+    "post_review_export": "future_explicitly_approved_package"
+  },
+  "official_sources_checked_at": "2026-10-07",
+  "official_sources": {
+    "shopify_dev_stores": "https://shopify.dev/docs/apps/build/stores/development-stores",
+    "shopify_generated_test_data": "https://shopify.dev/docs/storefronts/themes/tools/development-stores/generated-data",
+    "shopify_app_review_dev_store_install": "https://shopify.dev/docs/apps/launch/app-store-review/pass-app-review",
+    "shopify_deployment_dev_store_test": "https://shopify.dev/docs/apps/launch/deployment/deploy-to-hosting-service"
+  },
+  "advances_package_status": false,
+  "authorizes_fixture_extraction_now": false,
+  "authorizes_UI_implementation": false,
+  "authorizes_export_implementation": false,
+  "authorizes_dev_store_creation_or_install": false,
+  "authorizes_live_data_or_provider_mutation": false
+}

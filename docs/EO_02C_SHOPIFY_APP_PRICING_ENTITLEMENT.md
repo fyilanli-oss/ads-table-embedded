@@ -1,7 +1,7 @@
 # EO-02-C — Shopify App Pricing trial, subscription and entitlement
 
-**Kontrol tarihi:** 6 Ekim 2026  
-**Durum:** Database live accepted; Partner configuration and live Partner API acceptance pending
+**Kontrol tarihi:** 7 Ekim 2026  
+**Durum:** Database live accepted; Partner API client authentication PASS; plan/trial, Vercel secret activation and live subscription-state acceptance pending
 
 ## Analist sonucu
 
@@ -29,6 +29,19 @@ Kaynaklar:
 - https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing/subscription-billing/offer-free-trials
 - https://shopify.dev/docs/api/partner/latest
 - https://shopify.dev/docs/api/partner/latest/active-subscription
+
+## 7 Ekim 2026 Partner API canlı yetki kanıtı
+
+- Shopify Partner API client: `AdsTable Entitlement Runtime`
+- Client ID: `38724`
+- Yetki: yalnız `Manage apps`
+- Kapalı yetkiler: `View financials`, `Manage app subscriptions`, `Manage themes`
+- API sürümü: `2026-07`
+- Salt-okunur GraphiQL sorgusu: `app(id: "gid://partners/App/432251994113") { id name }`
+- Doğrulanan sonuç: `gid://partners/App/432251994113` / `AdsTable`
+- Access token repository'ye, kanıt dosyasına, sohbete veya loga yazılmadı.
+- Bu kanıt yalnız organization-scoped client authentication ve `Manage apps` erişimini doğrular. Plan oluşturulmadan ve mağaza uygulamayı seçmeden `activeSubscription` trial/active/null kabulü tamamlanmış sayılmaz.
+- Vercel secret aktivasyonu, exact runtime environment adları ve tüketici startup guard'ı dondurulmadan yapılmaz.
 
 ## Yetki ve durum akışı
 
@@ -94,4 +107,4 @@ Bu dış kapsam maddeleri uygulanmış sayılmaz. Plan/secret aktivasyonu ve can
 - Repository test/build/CI PASS olmalıdır.
 - Supabase migration ve self-cleaning behavioral probe canlı PASS oldu; üç billing tablosunun RLS/forced RLS sonucu 3/3, runtime direct DML sonucu 0, runtime function access sonucu 2/2, Security ve Performance Advisor sonucu 0/0 ve kalan probe satırı 0'dır.
 - Evidence: `docs/evidence/EO_02C_DATABASE_ACCEPTANCE_2026-10-06.json`.
-- Partner Dashboard plan/trial ayarı, Partner API client secret aktivasyonu ve gerçek trial/active/null acceptance hâlâ açık insan kapısıdır.
+- Partner Dashboard plan/trial ayarı, exact Vercel runtime secret aktivasyonu ve gerçek trial/active/null acceptance hâlâ açık insan kapısıdır. Partner API client oluşturma ve `Manage apps` authentication kapısı 7 Ekim 2026'da PASS olmuştur.

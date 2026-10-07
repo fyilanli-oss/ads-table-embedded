@@ -1,0 +1,113 @@
+{
+  "contract_id": "a6-ops-local-01-safe-cleanup-v1",
+  "version": "1.0.0",
+  "status": "ready_execution_not_started",
+  "opened_date": "2026-10-07",
+  "type": "independent_one_time_operational_package",
+  "eo_dependency_effect": "none",
+  "owner": "repository_delivery_governance",
+  "objective": "Eliminate historical meaningful local-only AdsTable project risk through inventory, remote-equivalence proof, recoverable cleanup and closure evidence.",
+  "scope": {
+    "legacy_anchor": "C:\\Users\\dev\\Documents\\Codex\\ads-table-dev",
+    "includes": [
+      "adstable_repository_roots",
+      "registered_and_codex_managed_worktrees",
+      "staged_tracked_untracked_ignored_project_files",
+      "stashes",
+      "detached_upstreamless_or_ahead_branch_tips",
+      "stale_worktree_metadata",
+      "reproducible_cache_dependency_build_outputs",
+      "conscious_local_exceptions_without_secret_values"
+    ],
+    "excludes": [
+      "unrelated_user_folders",
+      "unrelated_repositories",
+      "github_remote_history_mutation",
+      "provider_mutation",
+      "database_mutation",
+      "vercel_mutation",
+      "supabase_mutation"
+    ]
+  },
+  "steps": [
+    {
+      "id": "A6-OPS-LOCAL-01-A",
+      "title": "Read-only inventory and freeze",
+      "mutation_authorized": false
+    },
+    {
+      "id": "A6-OPS-LOCAL-01-B",
+      "title": "Classification and remote-equivalence proof",
+      "mutation_authorized": false
+    },
+    {
+      "id": "A6-OPS-LOCAL-01-C",
+      "title": "Recoverable cleanup execution",
+      "mutation_authorized_only_after_separate_explicit_user_approval": true
+    },
+    {
+      "id": "A6-OPS-LOCAL-01-D",
+      "title": "Closure evidence",
+      "mutation_authorized": false
+    }
+  ],
+  "classifications": [
+    "meaningful_project_work",
+    "secret",
+    "intentional_backup",
+    "reproducible_cache_dependency_or_build_output",
+    "active_worktree",
+    "archived_recoverable_worktree",
+    "stale_metadata",
+    "unknown_fail_closed"
+  ],
+  "mandatory_inventory": [
+    "repository_root",
+    "head",
+    "branch_and_upstream",
+    "git_common_dir",
+    "staged_tracked_untracked_and_ignored_classification",
+    "stashes",
+    "local_branch_remote_reachability",
+    "linked_worktrees_and_lock_state"
+  ],
+  "safety": {
+    "exact_validated_roots_only": true,
+    "remote_equivalence_before_removal": true,
+    "preserve_anchor_and_shared_git_while_linked_worktrees_exist": true,
+    "force_worktree_remove_forbidden": true,
+    "dry_run_before_stale_metadata_prune": true,
+    "codex_recoverable_archive_preferred": true,
+    "secrets_never_printed_or_committed": true,
+    "unknown_ownership_fails_closed": true,
+    "forbidden_mutations": [
+      "local_git_repair",
+      "acl_or_ownership_change",
+      "gcm_reconfiguration",
+      "process_termination",
+      "service_restart",
+      "server_or_vm_restart",
+      "broad_recursive_delete"
+    ]
+  },
+  "closure_requires": [
+    "all_four_steps_pass",
+    "zero_meaningful_local_only_project_work",
+    "no_active_worktree_damage",
+    "anchor_and_common_git_intact",
+    "remote_equivalents_reread",
+    "no_secret_uploaded",
+    "conscious_local_exceptions_recorded",
+    "repository_governance_CI_PASS",
+    "explicit_user_acceptance"
+  ],
+  "recurrence_control": "contracts/repository-delivery-workflow-v1.json.package_end_gate",
+  "opens_cleanup_execution_authority": false,
+  "advances_eo_status": false,
+  "official_sources_checked_date": "2026-10-07",
+  "official_sources": [
+    "https://developers.openai.com/blog/mastering-codex-remote-for-engineering",
+    "https://git-scm.com/docs/git-worktree",
+    "https://git-scm.com/docs/git-status"
+  ]
+}

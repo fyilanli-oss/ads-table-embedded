@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.6.0",
+  "schema_version": "1.7.0",
   "contract_id": "a6-eo-implementation-master-v1",
   "title": "A6 EO single-track execution rule and integrated implementation package table",
   "effective_date": "2026-10-04",
@@ -267,7 +267,8 @@
     "parent_packages": 10,
     "stable_child_packages": 43,
     "review_critical_parents": 8,
-    "post_review_parents": 2
+    "post_review_parents": 2,
+    "independent_operational_packages": 1
   },
   "packages": [
     {
@@ -810,5 +811,24 @@
   "current_active_parent": "A6-EO-02",
   "current_active_child": "A6-EO-02-C",
   "current_gate": "EO-02-C_partner_configuration_and_live_partner_api_acceptance",
-  "next_ready_child": null
+  "next_ready_child": null,
+  "independent_packages": [
+    {
+      "id": "A6-OPS-LOCAL-01",
+      "title": "One-time local safety cleanup",
+      "status": "Ready; execution not started",
+      "objective": "Inventory historical AdsTable local state, prove remote equivalence, perform only separately approved recoverable cleanup, and close with zero meaningful local-only project work.",
+      "document": "docs/A6_OPS_LOCAL_01_SAFE_CLEANUP.md",
+      "contract": "contracts/a6-ops-local-01-safe-cleanup-v1.json",
+      "steps": [
+        "A6-OPS-LOCAL-01-A",
+        "A6-OPS-LOCAL-01-B",
+        "A6-OPS-LOCAL-01-C",
+        "A6-OPS-LOCAL-01-D"
+      ],
+      "eo_dependency_effect": "none",
+      "advances_eo_status": false,
+      "cleanup_execution_authorized": false
+    }
+  ]
 }

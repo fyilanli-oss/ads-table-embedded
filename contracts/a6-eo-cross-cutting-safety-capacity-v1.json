@@ -1,0 +1,317 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "a6-eo-cross-cutting-safety-capacity-v1",
+  "title": "Cross-cutting authority, lifecycle, reconciliation, query, restore, capacity and portability decisions",
+  "effective_date": "2026-10-07",
+  "status": "decision_frozen_implementation_pending",
+  "active_authority": {
+    "repository": "fyilanli-oss/ads-table-embedded",
+    "execution_plan": "docs/EXECUTION_PLAN.md",
+    "legacy_repository": "fyilanli-oss/ads-table-dev",
+    "legacy_role": "initial_provenance_reference_evidence_and_containment_only",
+    "legacy_is_active_decision_authority": false
+  },
+  "first_review_scope": {
+    "export": false,
+    "data_sources_top_control": false,
+    "connection_authority_surface": "settings",
+    "user_refresh_toggle": false,
+    "refresh_ownership": "AdsTable_system",
+    "refresh_status_fields": [
+      "last_updated_at",
+      "next_scheduled_refresh_at"
+    ]
+  },
+  "subscription_behavior": {
+    "full_product_states": [
+      "trial",
+      "active"
+    ],
+    "non_entitled_states": [
+      "pending",
+      "frozen",
+      "cancelled",
+      "declined",
+      "expired",
+      "missing"
+    ],
+    "settings_and_privacy_remain_accessible": true,
+    "provider_jobs_run_when_non_entitled": false,
+    "funnel_and_ad_analysis_when_non_entitled": "subscription_required_no_metrics",
+    "data_immediately_deleted_on_subscription_loss": false,
+    "deletion_authorities": [
+      "confirmed_delete_my_data",
+      "verified_shop_redact",
+      "approved_retention_expiry"
+    ]
+  },
+  "privacy_and_deletion": {
+    "shopify_webhook_hmac_required": true,
+    "shop_redact_expected_after_uninstall_hours": 48,
+    "legal_completion_deadline_days": 30,
+    "product_delete_my_data": "two_explicit_confirmations_then_durable_manifest",
+    "operational_business_data_default_after_confirmed_deletion": "delete",
+    "blanket_legal_retention_exception": false,
+    "retention_exception_requires": [
+      "data_class",
+      "legal_basis",
+      "owner",
+      "expiry"
+    ],
+    "backup_restore_requires_deletion_ledger_replay_before_service": true,
+    "exact_shopify_role_authority_must_be_verified_before": "A6-EO-02-D"
+  },
+  "reconciliation": {
+    "hourly_hot_window_provider_business_dates": [
+      "today",
+      "yesterday"
+    ],
+    "hourly_full_history_fetch": false,
+    "hourly_runs_staggered": true,
+    "deep_reconciliation_frequency_hours": 24,
+    "deep_reconciliation_scope": "full_effective_provider_attribution_horizon",
+    "meta_horizon": "maximum_verified_current_account_campaign_or_adset_attribution_setting_used_for_reporting",
+    "meta_unverified_state": "provisional_finality_unknown",
+    "google_ads_horizon": "maximum_active_conversion_action_click_or_view_lookback_window",
+    "google_ads_documented_general_caps_days": {
+      "click": 90,
+      "view": 30
+    },
+    "klaviyo_horizon": "maximum_verified_current_message_attribution_window_for_included_metrics",
+    "klaviyo_current_test_account_email_days": 5,
+    "klaviyo_global_five_day_constant_forbidden": true,
+    "finality_rule": "effective_horizon_plus_one_full_provider_business_day_and_successful_post_window_reconciliation",
+    "failed_partial_or_quota_limited_run_advances_finality": false,
+    "attribution_configuration_change_reopens_affected_horizon": true,
+    "raw_setting_and_mismatch_evidence_required": true
+  },
+  "query_time_range": {
+    "timezone_authority": "active_reporting_store_shopify_IANA_timezone",
+    "provider_raw_business_date_and_timezone_retained": true,
+    "default_range": "last_7_calendar_days_including_today",
+    "presets": [
+      "today",
+      "yesterday",
+      "last_7_days",
+      "last_30_days",
+      "this_month",
+      "last_month",
+      "custom"
+    ],
+    "summary_and_table_max_calendar_days": 90,
+    "daily_max_calendar_days": 31,
+    "compare": {
+      "equal_calendar_day_count": true,
+      "overlap_allowed": false,
+      "same_timezone_and_reporting_currency": true,
+      "max_calendar_days_per_range": 90,
+      "daily_max_calendar_days_per_range": 31
+    },
+    "bootstrap_dates": [
+      "yesterday",
+      "today"
+    ],
+    "unavailable_prebootstrap_dates": "not_available_never_synthetic_zero",
+    "current_and_nonfinal_dates_visible_state": "provisional",
+    "untruthful_timezone_remapping_forbidden": true,
+    "timezone_mismatch_state": "partial_timezone_misaligned"
+  },
+  "formula_carry": {
+    "legacy_klaviyo_allocation_and_formula_contract_role": "candidate_evidence_only",
+    "owner_package": "A6-EO-06-A",
+    "blind_copy_forbidden": true,
+    "reauthorization_and_new_tests_required": true
+  },
+  "restore_targets": {
+    "targets_are_product_acceptance_objectives_not_provider_guarantees": true,
+    "code_and_deployment": {
+      "rpo_minutes": 0,
+      "safe_rollback_rto_minutes": 30
+    },
+    "critical_control_plane_database": {
+      "rpo_minutes": 15,
+      "pitr_required_before_production": true
+    },
+    "replayable_dataset_v2": {
+      "rpo_minutes": 60,
+      "provider_replay_and_reconciliation_required": true
+    },
+    "safe_degraded_service_rto_minutes": 60,
+    "full_operational_rto_minutes": 240,
+    "degraded_mode": "settings_and_status_available_provider_jobs_stopped_no_false_metrics",
+    "timed_restore_rehearsal_required_before": "A6-EO-08-D",
+    "failure_to_meet_targets_blocks": [
+      "review_ready",
+      "production_cutover"
+    ],
+    "restore_manifest_must_cover": [
+      "database",
+      "storage_objects_or_explicit_none",
+      "edge_functions_or_explicit_none",
+      "auth_settings",
+      "api_keys_and_secret_rotation",
+      "realtime_settings",
+      "extensions",
+      "read_replicas_or_explicit_none",
+      "Vercel_environment_and_known_good_deployment"
+    ],
+    "deleted_data_must_not_be_resurrected": true
+  },
+  "capacity_envelope": {
+    "platform_has_fixed_workspace_limit": false,
+    "capacity_unit": "measured_workload_envelope_not_workspace_count_alone",
+    "target_certified_active_workspaces": 2000,
+    "stress_test_workspaces": 4000,
+    "two_thousand_workspace_scheduler_math": {
+      "workspace_refresh_starts_per_hour": 2000,
+      "average_workspace_starts_per_second": 0.556,
+      "three_provider_jobs_per_day": 144000,
+      "average_three_provider_job_starts_per_second": 1.667
+    },
+    "mandatory_workload_budget_fields": [
+      "provider_rows_per_refresh",
+      "database_rows_written_per_refresh",
+      "bytes_written_per_refresh",
+      "deep_reconciliation_amplification",
+      "interactive_query_rate",
+      "concurrent_export_rate",
+      "retention_growth_per_workspace"
+    ],
+    "scheduler_rules": {
+      "top_of_hour_fanout_forbidden": true,
+      "uniform_sharding_across_hour": true,
+      "lease_and_single_flight": true,
+      "bounded_provider_and_database_concurrency": true,
+      "backpressure_and_retry_jitter": true,
+      "hourly_cycle_completion_target_minutes": 45,
+      "reserve_before_next_cycle_minutes": 15
+    },
+    "query_and_export_rules": {
+      "workspace_and_date_bounded_queries": true,
+      "composite_indexing_from_measured_query_shapes": true,
+      "aggregate_first_ui_queries": true,
+      "unbounded_scans_forbidden": true,
+      "export_is_async_when_introduced": true,
+      "export_uses_cursor_paging_and_bounded_snapshot": true,
+      "export_competes_with_primary_interactive_pool": false,
+      "large_export_file_has_retention_expiry": true
+    },
+    "acceptance_tests": {
+      "before_A6_EO_05": [
+        "workload_budget_contract",
+        "index_and_query_plan_baseline"
+      ],
+      "A6_EO_05": [
+        "2000_workspace_hourly_scheduler_test",
+        "4000_workspace_compressed_stress_test",
+        "24_hour_2000_workspace_soak"
+      ],
+      "A6_EO_06": [
+        "summary_daily_compare_table_query_characterization",
+        "export_load_characterization_before_export_release"
+      ],
+      "A6_EO_08": [
+        "production_shape_restore_and_load_rehearsal"
+      ]
+    },
+    "pass_thresholds": {
+      "refresh_cycle_p95_minutes_lte": 45,
+      "interactive_read_p95_ms_lte": 2000,
+      "interactive_read_p99_ms_lte": 5000,
+      "job_or_query_error_rate_percent_lt": 0.1,
+      "tenant_isolation_failures": 0,
+      "sustained_cpu_percent_lt": 60,
+      "peak_cpu_percent_lt": 80,
+      "sustained_memory_percent_lt": 70,
+      "database_connection_limit_utilization_percent_lt": 60,
+      "recommended_database_size_utilization_percent_lt": 70,
+      "disk_io_throttling_events": 0,
+      "steady_state_disk_io_budget_use": "none_expected_any_use_triggers_upgrade_review",
+      "capacity_headroom_percent_gte": 30
+    },
+    "certified_capacity_rule": "production_admission_limit_must_not_exceed_latest_passed_capacity_with_required_headroom",
+    "scale_review_trigger_percent_of_certified_capacity": 80,
+    "no_unbounded_onboarding_beyond_certified_capacity": true,
+    "scaling_ladder": [
+      "query_index_batch_and_retention_optimization",
+      "larger_Supabase_compute",
+      "provisioned_disk_IOPS_or_throughput",
+      "read_replica_for_analysis_and_export",
+      "separate_operational_control_plane_from_analytical_fact_workload",
+      "portable_Postgres_migration_only_after_measured_business_and_operational_decision"
+    ],
+    "read_replica_limits": {
+      "purpose": "read_only_analysis_and_export",
+      "asynchronous_replication_lag_must_be_visible": true,
+      "writes_remain_on_primary": true
+    },
+    "monitoring": [
+      "CPU",
+      "memory",
+      "disk_IOPS",
+      "disk_throughput_and_budget",
+      "database_and_pooler_connections",
+      "database_size",
+      "WAL",
+      "query_latency_and_pg_stat_statements",
+      "scheduler_queue_lag",
+      "reconciliation_age",
+      "export_queue_and_bytes",
+      "cost_per_active_workspace"
+    ]
+  },
+  "portability": {
+    "canonical_data_plane": "standard_PostgreSQL_first",
+    "repository_owned_migrations": true,
+    "vendor_specific_features_require_adapter_and_exit_record": true,
+    "primary_keys_foreign_keys_and_portable_types_required": true,
+    "canonical_facts_not_locked_to_Supabase_Storage_or_Auth": true,
+    "periodic_neutral_PostgreSQL_restore_rehearsal_required": true,
+    "migration_decision_is_planned_not_emergency": true,
+    "secret_values_never_committed": true
+  },
+  "package_owners": {
+    "A6-EO-02": [
+      "subscription_behavior",
+      "privacy_and_deletion",
+      "capacity_schema_prerequisites"
+    ],
+    "A6-EO-05": [
+      "reconciliation",
+      "scheduler",
+      "capacity_write_path_and_observability"
+    ],
+    "A6-EO-06": [
+      "formula_carry",
+      "query_time_range",
+      "query_and_export_capacity"
+    ],
+    "A6-EO-07": [
+      "first_review_scope_and_truthful_status"
+    ],
+    "A6-EO-08": [
+      "restore_targets",
+      "load_restore_and_portability_rehearsal"
+    ]
+  },
+  "official_sources_checked_at": "2026-10-07",
+  "official_sources": {
+    "meta_marketing_api": "https://www.postman.com/meta/facebook-marketing-api/documentation/0zr4mes/facebook-marketing-api-mapi",
+    "google_ads_conversion_windows": "https://developers.google.com/google-ads/api/docs/conversions/getting-started",
+    "klaviyo_attribution": "https://help.klaviyo.com/hc/en-us/articles/11118357030555",
+    "shopify_privacy": "https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance",
+    "shopify_subscription_status": "https://shopify.dev/docs/api/admin-graphql/2026-01/enums/AppSubscriptionStatus",
+    "supabase_compute_and_disk": "https://supabase.com/docs/guides/platform/compute-and-disk",
+    "supabase_production_checklist": "https://supabase.com/docs/guides/deployment/going-into-prod",
+    "supabase_read_replicas": "https://supabase.com/docs/guides/platform/read-replicas",
+    "supabase_metrics": "https://supabase.com/docs/guides/observability/metrics",
+    "supabase_restore": "https://supabase.com/docs/guides/platform/clone-project",
+    "vercel_rollback": "https://vercel.com/docs/cli/rollback",
+    "vercel_environment_variables": "https://vercel.com/docs/environment-variables"
+  },
+  "implementation_authorized_by_this_contract": false,
+  "production_mutation_authorized": false,
+  "provider_mutation_authorized": false,
+  "database_resize_or_replica_authorized": false,
+  "migration_away_from_supabase_authorized": false
+}

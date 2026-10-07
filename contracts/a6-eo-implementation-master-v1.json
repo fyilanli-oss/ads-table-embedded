@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.3.2",
+  "schema_version": "1.4.0",
   "contract_id": "a6-eo-implementation-master-v1",
   "title": "A6 EO single-track execution rule and integrated implementation package table",
   "effective_date": "2026-10-04",
@@ -159,6 +159,38 @@
       ],
       "advances_package_status": false,
       "authorizes_ui_implementation": false
+    },
+    "safety_capacity_portability_v1": {
+      "decided_at": "2026-10-07",
+      "status": "decision_frozen_implementation_pending",
+      "document": "docs/A6_EO_CROSS_CUTTING_SAFETY_CAPACITY_FREEZE.md",
+      "contract": "contracts/a6-eo-cross-cutting-safety-capacity-v1.json",
+      "target_certified_active_workspaces": 2000,
+      "stress_test_workspaces": 4000,
+      "reconciliation_hot_window": [
+        "today",
+        "yesterday"
+      ],
+      "deep_reconciliation_hours": 24,
+      "query_limits_days": {
+        "summary_and_table": 90,
+        "daily": 31
+      },
+      "restore_targets_minutes": {
+        "critical_db_rpo": 15,
+        "dataset_v2_rpo": 60,
+        "degraded_rto": 60,
+        "full_rto": 240
+      },
+      "package_owners": [
+        "A6-EO-02",
+        "A6-EO-05",
+        "A6-EO-06",
+        "A6-EO-07",
+        "A6-EO-08"
+      ],
+      "advances_package_status": false,
+      "authorizes_infrastructure_mutation": false
     }
   },
   "exception": {
@@ -390,7 +422,7 @@
         {
           "id": "A6-EO-05-A",
           "title": "Hourly scheduler, shard, lease and checkpoint",
-          "objective": "Build the AdsTable-owned single-flight recurring control plane with Reporting Store topology-drift detection."
+          "objective": "Build the AdsTable-owned staggered single-flight recurring control plane with bounded concurrency, backpressure, capacity evidence and Reporting Store topology-drift detection."
         },
         {
           "id": "A6-EO-05-B",
@@ -400,7 +432,7 @@
         {
           "id": "A6-EO-05-C",
           "title": "Maturity, attribution windows and finality",
-          "objective": "Provider-specific rolling correction windows and truthful freshness."
+          "objective": "Apply provider-config-derived rolling correction windows, post-window reconciliation and truthful provisional/final freshness."
         },
         {
           "id": "A6-EO-05-D",
@@ -410,7 +442,7 @@
         {
           "id": "A6-EO-05-E",
           "title": "Operational observability",
-          "objective": "Safe status, alerts and no-secret/no-PII evidence."
+          "objective": "Monitor job lag, reconciliation age, CPU, memory, connections, disk IO, database growth and cost per active workspace without secrets or PII."
         }
       ],
       "outputs": [
@@ -446,7 +478,7 @@
         {
           "id": "A6-EO-06-B",
           "title": "Query, filters and comparison semantics",
-          "objective": "Date/entity filters, supported grain and comparison rules."
+          "objective": "Apply Reporting Store timezone, bounded date/entity filters, supported grain, 90-day Summary/Table, 31-day Daily and equal-period comparison semantics."
         },
         {
           "id": "A6-EO-06-C",
@@ -553,7 +585,7 @@
         {
           "id": "A6-EO-08-C",
           "title": "Failure injection and rollback rehearsal",
-          "objective": "Prove safe fallback for auth, provider, DB, job and UI failures."
+          "objective": "Prove RPO/RTO, 2,000-workspace certified load with 4,000-workspace stress headroom, portable restore and safe fallback for auth, provider, DB, job and UI failures."
         },
         {
           "id": "A6-EO-08-D",

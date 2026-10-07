@@ -1,6 +1,6 @@
 {
   "contract_id": "eo-02c-shopify-app-pricing-entitlement-v1",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "status": "partner_api_client_authenticated_plan_and_subscription_acceptance_pending",
   "checked_at": "2026-10-07",
   "authoritative_sources": {
@@ -115,7 +115,7 @@
     ],
     "access_token_created": true,
     "access_token_exposed_in_repository_or_evidence": false,
-    "vercel_secret_activation": "pending_runtime_environment_contract"
+    "vercel_secret_activation": "pending_value_injection_and_live_acceptance"
   },
   "ui": {
     "visible_change_in_this_package": false,
@@ -160,5 +160,47 @@
       },
       "access_token_recorded": false
     }
+  },
+  "runtime_environment_contract": {
+    "checked_at": "2026-10-07",
+    "authoritative_sources": [
+      "https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing/redirect-plan-selection-page",
+      "https://vercel.com/docs/environment-variables",
+      "https://vercel.com/docs/environment-variables/sensitive-environment-variables"
+    ],
+    "variables": {
+      "SHOPIFY_PARTNER_ORG_ID": {
+        "classification": "config",
+        "exact_value": "5235756",
+        "vercel_scope": [
+          "production"
+        ]
+      },
+      "SHOPIFY_PARTNER_API_ACCESS_TOKEN": {
+        "classification": "secret",
+        "exact_value_recorded": false,
+        "vercel_scope": [
+          "production"
+        ]
+      },
+      "SHOPIFY_APP_GID": {
+        "classification": "config",
+        "exact_value": "gid://shopify/App/432251994113",
+        "vercel_scope": [
+          "production"
+        ]
+      }
+    },
+    "preview_and_development": {
+      "production_partner_token_allowed": false,
+      "live_partner_api_call_allowed": false,
+      "behavior": "fail_closed_when_runtime_configuration_is_missing"
+    },
+    "endpoint_template": "https://partners.shopify.com/{SHOPIFY_PARTNER_ORG_ID}/api/2026-07/graphql.json",
+    "browser_exposure": false,
+    "log_exposure": false,
+    "repository_value_storage": false,
+    "environment_change_requires_new_deployment": true,
+    "activation_requires_explicit_human_gate": true
   }
 }

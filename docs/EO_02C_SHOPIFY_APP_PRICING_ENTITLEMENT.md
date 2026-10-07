@@ -102,13 +102,21 @@ Bu sözleşmenin dondurulması secret değerinin Vercel'e girildiği anlamına g
 
 - Partner Dashboard'da fiyat/plan oluşturma veya yayınlama
 - Production fiyat kararı
-- Partner API client/token oluşturma
-- Vercel secret aktivasyonu
+- Partner API access tokenının Vercel Production Secret olarak aktive edilmesi
 - Settings billing UI
 - Uninstall, privacy deletion ve clean reinstall
 - Provider OAuth veya Reporting Store seçimi
 
 Bu dış kapsam maddeleri uygulanmış sayılmaz. Plan/secret aktivasyonu ve canlı Partner API acceptance ayrıca açık insan kapısıdır.
+
+## Canlı kabul yürütme planı
+
+Canlı yürütme sırası ve secret-free kanıt şeması aşağıdaki bağlayıcı dosyalarda donduruldu:
+
+- `docs/runbooks/EO_02C_LIVE_ACCEPTANCE_RUNBOOK.md`
+- `docs/evidence/EO_02C_LIVE_ACCEPTANCE_TEMPLATE.json`
+
+Development store kabul sırası `null → intended USD 24.99 / 14-day trial → Shopify $0 private no-trial test plan ile active` şeklindedir. Sıra, Shopify'ın 180 günlük trial kullanım takibi nedeniyle rastgele tekrar edilemez. Bu kayıt planın oluşturulduğu, tokenın Vercel'e girildiği veya canlı kabulün geçtiği anlamına gelmez.
 
 ## Kabul
 

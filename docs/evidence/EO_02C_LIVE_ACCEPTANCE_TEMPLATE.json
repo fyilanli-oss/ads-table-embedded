@@ -1,0 +1,84 @@
+{
+  "evidence_id": "EO_02C_LIVE_ACCEPTANCE",
+  "schema_version": "1.0.0",
+  "status": "template_not_executed",
+  "executed_at": null,
+  "source_commit": null,
+  "production_deployment_id": null,
+  "official_sources_checked_at": "2026-10-07",
+  "secret_policy": {
+    "token_recorded": false,
+    "authorization_header_recorded": false,
+    "cookies_or_sessions_recorded": false,
+    "pii_recorded": false
+  },
+  "runtime_environment": {
+    "project_id": "prj_RVvXZGLuj9ItUAqvMJvb1GOTd8Lr",
+    "scopes": {
+      "SHOPIFY_PARTNER_ORG_ID": "production_config",
+      "SHOPIFY_PARTNER_API_ACCESS_TOKEN": "production_secret",
+      "SHOPIFY_APP_GID": "production_config"
+    },
+    "preview_has_production_token": false,
+    "development_has_production_token": false,
+    "new_deployment_after_change": null
+  },
+  "shopify_plan": {
+    "public_plan_name": "AdsTable Monthly",
+    "monthly_price": {
+      "amount": "24.99",
+      "currency": "USD"
+    },
+    "trial_days": 14,
+    "welcome_link": "/",
+    "private_active_acceptance_plan": "shopify_zero_dollar_private_test_plan_no_trial",
+    "real_charge_expected_on_same_partner_development_store": false
+  },
+  "states": {
+    "null": {
+      "redacted_response_hash": null,
+      "active_subscription_is_null": null,
+      "projected_entitlement": null,
+      "fail_closed": null,
+      "result": "pending"
+    },
+    "trial": {
+      "redacted_response_hash": null,
+      "trial_ends_at": null,
+      "current_billing_cycle_is_null": null,
+      "projected_entitlement": null,
+      "result": "pending"
+    },
+    "active": {
+      "redacted_response_hash": null,
+      "trial_ends_at_is_null": null,
+      "current_cycle_start": null,
+      "current_cycle_end": null,
+      "projected_entitlement": null,
+      "result": "pending"
+    }
+  },
+  "identity_and_persistence": {
+    "app_gid_match": null,
+    "shop_gid_match": null,
+    "canonical_domain_match": null,
+    "install_generation_match": null,
+    "reporting_store_limit_is_one": null,
+    "candidate_detection_billed_false": null,
+    "store_switch_billed_false": null,
+    "stale_snapshot_rejected": null
+  },
+  "leak_checks": {
+    "browser_bundle": "pending",
+    "http_responses": "pending",
+    "application_logs": "pending",
+    "platform_logs": "pending"
+  },
+  "rollback": {
+    "required": null,
+    "action": null,
+    "result": null
+  },
+  "final_result": "pending",
+  "explicit_product_owner_acceptance": false
+}

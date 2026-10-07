@@ -108,3 +108,14 @@ Bu anayasa ancak açık kullanıcı/ürün kararı, Execution Plan kaydı ve exe
 - 30 Eylül 2026 development RC kararı legacy repository bağlamında alınmıştı.
 - 6 Ekim 2026 EO-01-B'deki stable 1.1 seçimi, aynı gün ürün sahibinin açık kararıyla EO-01-C kapsamında supersede edildi; aktif baseline Polaris 2.0 RC'dir.
 - Bu değişiklik legacy uygulamanın runtime'ını değiştirmez; yalnız yeni `ads-table-embedded` repository'sinin baseline'ını belirler.
+
+
+## 10. Analitik grafik çizim düzlemi istisnası
+
+**Ürün sahibi kararı — 7 Ekim 2026:** Funnel ilişki grafiklerinin yalnız veri çizim düzleminde SVG veya Canvas kullanılabilir. Bu dar istisna Shopify görünümünü taklit etme izni değildir.
+
+İzinli çizim düzlemi öğeleri: eksenler, seri çizgileri ve alanları, veri noktaları/işaretleri, kılavuzlar, grafik içi lejant ve doğrudan veri etiketleri ile bunların erişilebilir seçim/hedef mekanikleri.
+
+İstisna dışında kalan ve resmî Polaris/App Bridge bileşeni olmak zorunda olan öğeler: sayfa kabuğu, başlıklar, tarih/compare/filter kontrolleri, butonlar, formlar, KPI özetleri, section/card yapısı, tablolar, modal/popover, durum/freshness, navigation ve loading/empty/error yüzeyleri. Grafik ayrıntısı yalnız hover'a bağlanamaz; klavye ve dokunma desteği, erişilebilir başlık/açıklama veya tablo eşdeğeri, renk dışı seri ayrımı ve reduced-motion davranışı zorunludur.
+
+Grafik, seçili nokta ayrıntısı, KPI özeti ve tablo aynı BFF/query sonucu ile aynı formula otoritesini kullanır. Aralarındaki sayısal veya durum-semantiği farkı kabul hatasıdır. Grafik rengi veri kodlamasıdır; erişilebilirlik ve tema kabulünü geçmeden onaylanamaz. Ad Analysis aynı çizim sınırını ancak A6-EO-07-C kanıtı ve ayrı kabul edilmiş grafik brief'inden sonra kullanabilir.

@@ -128,3 +128,16 @@ EO-01-B dependency pinlemeden ve EO-07 UI implementasyonundan önce resmî sür�
 - SVG/Canvas is permitted only within the chart data plane. All surrounding UI remains exact official Polaris/App Bridge.
 - Ad Analysis charts remain blocked until A6-EO-07-C evidence and a separate accepted graph brief.
 - No new package was opened; A6-EO-07 status did not advance and implementation/live mutation remains unauthorized.
+
+
+## A6-OPS-LOCAL-01 — One-time local safety cleanup
+
+**Status:** Ready; execution not started  
+**Type:** Independent operational package; outside the A6-EO dependency chain
+
+- **A6-OPS-LOCAL-01-A — Read-only inventory and freeze:** Enumerate AdsTable roots, status, branches, stashes, worktrees, common Git metadata and local-only candidates without mutation.
+- **A6-OPS-LOCAL-01-B — Classification and remote-equivalence proof:** Separate meaningful work, secrets/backups, disposable outputs, active/archiveable worktrees and stale metadata; prove GitHub equivalence before cleanup.
+- **A6-OPS-LOCAL-01-C — Recoverable cleanup execution:** Only after a fresh manifest and separate user approval, archive eligible managed worktrees and remove proven disposable material from exact validated roots.
+- **A6-OPS-LOCAL-01-D — Closure evidence:** Prove zero meaningful local-only project work, intact anchor/common metadata, readable remote equivalents and recorded exceptions.
+
+Opening this package authorizes no deletion. It does not change the 10 A6-EO parents, 43 stable EO children, current A6-EO-02-C gate or any product implementation sequence. Recurrence is prevented by the mandatory end-of-package local-only-zero gate.

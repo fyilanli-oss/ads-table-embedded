@@ -43,6 +43,20 @@ Kaynaklar:
 - Bu kanıt yalnız organization-scoped client authentication ve `Manage apps` erişimini doğrular. Plan oluşturulmadan ve mağaza uygulamayı seçmeden `activeSubscription` trial/active/null kabulü tamamlanmış sayılmaz.
 - Vercel secret aktivasyonu, exact runtime environment adları ve tüketici startup guard'ı dondurulmadan yapılmaz.
 
+## Runtime environment sözleşmesi
+
+7 Ekim 2026 tarihinde Shopify'ın resmî plan yönlendirme örneği ve Vercel'in resmî Config/Secret environment belgeleri yeniden kontrol edildi.
+
+| Anahtar | Tür | Vercel kapsamı | Kural |
+|---|---|---|---|
+| `SHOPIFY_PARTNER_ORG_ID` | Config | Production | Exact değer `5235756` |
+| `SHOPIFY_PARTNER_API_ACCESS_TOKEN` | Secret | Production | Değer repository, kanıt, browser ve loglarda bulunmaz |
+| `SHOPIFY_APP_GID` | Config | Production | Exact değer `gid://shopify/App/432251994113` |
+
+Preview ve Development production Partner API tokenını alamaz ve canlı Partner API çağrısı yapamaz. Eksik veya bozuk runtime configuration erişim vermez. Partner API endpoint'i yalnız organization ID ve sabit `2026-07` sürümünden server tarafında üretilir. Environment değişikliği mevcut deployment'ı değiştirmez; yeni deployment gerekir.
+
+Bu sözleşmenin dondurulması secret değerinin Vercel'e girildiği anlamına gelmez. Token aktivasyonu ve gerçek `trial | active | null` kabulü açık insan kapısı olarak bekler.
+
 ## Yetki ve durum akışı
 
 1. Shopify ID token ve Admin shop doğrulamasından geçen aktif installation generation alınır.

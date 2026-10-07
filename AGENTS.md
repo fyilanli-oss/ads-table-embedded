@@ -34,7 +34,7 @@ Görsel ve etkileşimli UI yalnız güncel Shopify App Bridge ve stable Polaris 
 - İş güncel `main`den açılan `codex/*` branch, PR ve zorunlu CI ile teslim edilir.
 - Merge için açık kullanıcı onayı gerekir.
 - Anlamlı kod, test, contract, karar, migration veya kanıt yalnız yerelde bırakılamaz.
-- İş sonunda staged/tracked/untracked, stash, worktree ve upstream'siz/ahead branch envanteri alınır.
+- **Her iş paketinin sonunda zorunlu kapı:** staged/tracked/untracked, stash, worktree ve upstream'siz/ahead branch envanteri alınır; bu kapı geçmeden paket kapanmış sayılamaz.
 - Secret, cache, dependency/build çıktısı GitHub'a yüklenmez.
 - Uzak dosya exact content/blob/commit olarak tekrar doğrulanmadan “GitHub güncel” denmez.
 - Yerel içerik uzak eşdeğeri doğrulanmadan silinmez; merge sonrası görev worktree'si geri alınabilir biçimde arşivlenir.

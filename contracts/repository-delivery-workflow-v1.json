@@ -1,5 +1,5 @@
 {
-  "contract_version": "repository-delivery-workflow-v1",
+  "contract_version": "repository-delivery-workflow-v1.1",
   "status": "PASS_GOVERNANCE_ACTIVE",
   "effective_date": "2026-10-02",
   "scope": "codex_windows_repository_delivery",
@@ -65,6 +65,17 @@
     "web_editor_fallback": false,
     "local_git_fallback": false,
     "system_mutation_fallback": false
+  },
+  "package_end_gate": {
+    "cadence": "mandatory_at_the_end_of_every_work_package",
+    "actions": [
+      "inventory_staged_tracked_untracked_stashes_worktrees_and_ahead_refs",
+      "verify_zero_meaningful_local_only_content",
+      "verify_remote_exact_content_commit_pr_and_required_ci",
+      "classify_secrets_cache_dependencies_and_build_outputs",
+      "archive_merged_managed_worktree_recoverably",
+      "record_any_conscious_local_exception"
+    ],
+    "package_may_close_before_gate_passes": false
   }
 }
-

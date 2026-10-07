@@ -1,6 +1,6 @@
 {
   "contract_id": "eo-02c-shopify-app-pricing-entitlement-v1",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "status": "partner_api_client_authenticated_plan_and_subscription_acceptance_pending",
   "checked_at": "2026-10-07",
   "authoritative_sources": {
@@ -159,6 +159,23 @@
         "name": "AdsTable"
       },
       "access_token_recorded": false
+    },
+    "runbook": "docs/runbooks/EO_02C_LIVE_ACCEPTANCE_RUNBOOK.md",
+    "evidence_template": "docs/evidence/EO_02C_LIVE_ACCEPTANCE_TEMPLATE.json",
+    "required_state_order": [
+      "null",
+      "trial",
+      "active"
+    ],
+    "development_store_testing": {
+      "same_partner_organization": true,
+      "real_charge_expected": false,
+      "intended_public_plan": {
+        "monthly_price_usd": "24.99",
+        "trial_days": 14
+      },
+      "active_state_plan": "shopify_zero_dollar_private_test_plan_without_trial",
+      "do_not_repeat_trial_casually": true
     }
   },
   "runtime_environment_contract": {

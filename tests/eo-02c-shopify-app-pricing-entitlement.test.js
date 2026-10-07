@@ -8,6 +8,11 @@ import {
   SHOPIFY_PARTNER_API_VERSION,
   reconcileShopifyAppPricingEntitlement,
 } from "../app/lib/shopify/app-pricing-entitlement.server.js";
+import {
+  SHOPIFY_PARTNER_RUNTIME_ENV,
+  createShopifyPartnerApi,
+  readShopifyPartnerRuntimeConfig,
+} from "../app/lib/shopify/partner-api.server.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -212,4 +217,76 @@ test("new-subscription code cannot use the legacy Billing API", () => {
   assert.equal(contract.reporting_store_entitlement.included_active_reporting_stores, 1);
   assert.equal(contract.reporting_store_entitlement.candidate_detection_billed, false);
   assert.equal(contract.reporting_store_entitlement.active_reporting_store_switch_billed, false);
+});
+
+
+test("Partner API runtime environment is exact, server-only and fail-closed", async () => {
+  assert.deepEqual(SHOPIFY_PARTNER_RUNTIME_ENV, {
+    organizationId: "SHOPIFY_PARTNER_ORG_ID",
+    accessToken: "SHOPIFY_PARTNER_API_ACCESS_TOKEN",
+    appId: "SHOPIFY_APP_GID",
+  });
+  assert.throws(() => readShopifyPartnerRuntimeConfig({}), /SHOPIFY_PARTNER_ORG_ID_INVALID/);
+
+  const environment = {
+    SHOPIFY_PARTNER_ORG_ID: "5235756",
+    SHOPIFY_PARTNER_API_ACCESS_TOKEN: "test-only-token",
+    SHOPIFY_APP_GID: "gid://shopify/App/432251994113",
+  };
+  let observedRequest;
+  const partnerApi = createShopifyPartnerApi({
+    environment,
+    fetchImpl: async (url, init) => {
+      observedRequest = {url, init};
+      return {
+        ok: true,
+        json: async () => ({data: {activeSubscription: null}}),
+      };
+    },
+  });
+
+  const variables = {appId: partnerApi.appId, shopId: installation.shopId};
+  const payload = await partnerApi.activeSubscription({
+    apiVersion: SHOPIFY_PARTNER_API_VERSION,
+    query: ACTIVE_SUBSCRIPTION_QUERY,
+    variables,
+  });
+
+  assert.equal(
+    observedRequest.url,
+    "https://partners.shopify.com/5235756/api/2026-07/graphql.json",
+  );
+  assert.equal(observedRequest.init.method, "POST");
+  assert.equal(
+    observedRequest.init.headers["X-Shopify-Access-Token"],
+    environment.SHOPIFY_PARTNER_API_ACCESS_TOKEN,
+  );
+  assert.deepEqual(JSON.parse(observedRequest.init.body), {
+    query: ACTIVE_SUBSCRIPTION_QUERY,
+    variables,
+  });
+  assert.deepEqual(payload, {data: {activeSubscription: null}});
+});
+
+test("Partner API transport errors never become a missing subscription", async () => {
+  const partnerApi = createShopifyPartnerApi({
+    environment: {
+      SHOPIFY_PARTNER_ORG_ID: "5235756",
+      SHOPIFY_PARTNER_API_ACCESS_TOKEN: "test-only-token",
+      SHOPIFY_APP_GID: "gid://shopify/App/432251994113",
+    },
+    fetchImpl: async () => ({
+      ok: false,
+      json: async () => ({errors: [{message: "throttled"}]}),
+    }),
+  });
+
+  await assert.rejects(
+    partnerApi.activeSubscription({
+      apiVersion: SHOPIFY_PARTNER_API_VERSION,
+      query: ACTIVE_SUBSCRIPTION_QUERY,
+      variables: {appId: partnerApi.appId, shopId: installation.shopId},
+    }),
+    /SHOPIFY_PARTNER_API_HTTP_ERROR/,
+  );
 });

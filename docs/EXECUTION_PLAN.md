@@ -33,7 +33,7 @@ Bu repository onaylı A6-EO embedded-only temiz yeniden kuruluş programını uy
 Aynı anda yalnız bir parent paket aktiftir. Executable paket tablosu `contracts/a6-eo-implementation-master-v1.json` dosyasındadır.
 
 
-## Frozen product decision: EO-07 three-surface UI — 7 October 2026
+## A6-EO-07 three-surface UI product freeze — 7 October 2026
 
 Binding analyst brief: `docs/A6_EO_07_THREE_SURFACE_UI_PRODUCT_FREEZE.md`  
 Executable contract: `contracts/shopify/a6-eo-07-three-surface-ui-product-freeze-v1.json`

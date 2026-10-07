@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.4.0",
+  "schema_version": "1.5.0",
   "contract_id": "a6-eo-implementation-master-v1",
   "title": "A6 EO single-track execution rule and integrated implementation package table",
   "effective_date": "2026-10-04",
@@ -191,6 +191,37 @@
       ],
       "advances_package_status": false,
       "authorizes_infrastructure_mutation": false
+    },
+    "demo_fixture_export_reference_v1": {
+      "decided_at": "2026-10-07",
+      "status": "decision_frozen_extraction_and_implementation_pending",
+      "document": "docs/A6_EO_DEMO_FIXTURE_EXPORT_REFERENCE.md",
+      "contract": "contracts/a6-eo-demo-fixture-export-reference-v1.json",
+      "source_repository": "fyilanli-oss/ads-table-dev",
+      "source_ref": "main",
+      "source_blob_sha": "87413af1318cbdb3efbe1104e283d7294bc0c219",
+      "source_rows": 1000,
+      "source_calendar_days": 50,
+      "approved_uses": [
+        "UI_acceptance",
+        "export_reference",
+        "Shopify_dev_store_demo",
+        "capacity_generator_seed"
+      ],
+      "provider_truth": false,
+      "export_first_review_in_scope": false,
+      "package_owners": [
+        "A6-EO-05-B",
+        "A6-EO-06-A",
+        "A6-EO-06-B",
+        "A6-EO-07-B",
+        "A6-EO-07-C",
+        "A6-EO-07-D",
+        "A6-EO-08-C",
+        "A6-EO-08-D"
+      ],
+      "advances_package_status": false,
+      "authorizes_mutation": false
     }
   },
   "exception": {
@@ -427,7 +458,7 @@
         {
           "id": "A6-EO-05-B",
           "title": "Dataset V2, FX and provenance",
-          "objective": "Persist Reporting Store scope-bound canonical facts, source currency and exact FX lineage within the workspace."
+          "objective": "Persist Reporting Store scope-bound canonical facts, source currency and exact FX lineage; extract a versioned synthetic demo fixture without presenting it as provider truth."
         },
         {
           "id": "A6-EO-05-C",
@@ -473,12 +504,12 @@
         {
           "id": "A6-EO-06-A",
           "title": "Formula engine",
-          "objective": "Aggregate-first KPI math, cost allocation and currency-safe calculations."
+          "objective": "Apply aggregate-first KPI math, cost allocation and currency-safe calculations; recompute golden demo expectations from raw fixture inputs."
         },
         {
           "id": "A6-EO-06-B",
           "title": "Query, filters and comparison semantics",
-          "objective": "Apply Reporting Store timezone, bounded date/entity filters, supported grain, 90-day Summary/Table, 31-day Daily and equal-period comparison semantics."
+          "objective": "Apply Reporting Store timezone, bounded date/entity filters, supported grain, 90-day Summary/Table, 31-day Daily and equal-period comparison semantics against golden fixtures."
         },
         {
           "id": "A6-EO-06-C",
@@ -526,17 +557,17 @@
         {
           "id": "A6-EO-07-B",
           "title": "Funnel App Home",
-          "objective": "Build Funnel/Table and Summary/Daily with provider-native hierarchy; relationship charts wait for approved product-owner graph input."
+          "objective": "Build Funnel/Table and Summary/Daily with provider-native hierarchy and synthetic fixture acceptance; relationship charts wait for approved product-owner graph input."
         },
         {
           "id": "A6-EO-07-C",
           "title": "Cross-platform deepest-grain discovery",
-          "objective": "Freeze comparable provider leafs before Ad Analysis and Attribution Differences implementation."
+          "objective": "Freeze comparable provider leafs and create a separate evidence-bound product/cross-sell fixture before Ad Analysis and Attribution Differences implementation."
         },
         {
           "id": "A6-EO-07-D",
           "title": "Ad Analysis surface",
-          "objective": "Implement verified-leaf analysis and one details modal only after A6-EO-07-C; chart implementation remains blocked until deepest-grain and both cross-sell fixtures pass."
+          "objective": "Implement verified-leaf analysis and synthetic UI fixture acceptance only after A6-EO-07-C; charts remain blocked until deepest-grain and both cross-sell fixtures pass."
         },
         {
           "id": "A6-EO-07-E",
@@ -585,12 +616,12 @@
         {
           "id": "A6-EO-08-C",
           "title": "Failure injection and rollback rehearsal",
-          "objective": "Prove RPO/RTO, 2,000-workspace certified load with 4,000-workspace stress headroom, portable restore and safe fallback for auth, provider, DB, job and UI failures."
+          "objective": "Prove RPO/RTO, 2,000-workspace certified load with 4,000-workspace generated stress headroom, portable restore and safe failure fallback."
         },
         {
           "id": "A6-EO-08-D",
           "title": "Review evidence and review-ready decision",
-          "objective": "Assemble Shopify lifecycle/product evidence; explicit human gate."
+          "objective": "Prove the embedded app in a dedicated Shopify dev store, assemble truthful lifecycle/product evidence and require an explicit human review-ready gate."
         }
       ],
       "outputs": [

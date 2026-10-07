@@ -102,8 +102,7 @@ Bu sözleşmenin dondurulması secret değerinin Vercel'e girildiği anlamına g
 
 - Partner Dashboard'da fiyat/plan oluşturma veya yayınlama
 - Production fiyat kararı
-- Partner API client/token oluşturma
-- Vercel secret aktivasyonu
+- Partner API access tokenının Vercel Production Secret olarak aktive edilmesi
 - Settings billing UI
 - Uninstall, privacy deletion ve clean reinstall
 - Provider OAuth veya Reporting Store seçimi

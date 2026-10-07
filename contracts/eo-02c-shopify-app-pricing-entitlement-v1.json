@@ -1,8 +1,8 @@
 {
   "contract_id": "eo-02c-shopify-app-pricing-entitlement-v1",
-  "version": "1.0.0",
-  "status": "database_live_accepted_partner_configuration_pending",
-  "checked_at": "2026-10-06",
+  "version": "1.1.0",
+  "status": "partner_api_client_authenticated_plan_and_subscription_acceptance_pending",
+  "checked_at": "2026-10-07",
   "authoritative_sources": {
     "shopify_app_pricing": "https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing",
     "shopify_app_pricing_trials": "https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing/subscription-billing/offer-free-trials",
@@ -107,7 +107,15 @@
     "required_partner_permission": "Manage apps",
     "database_storage": false,
     "browser_or_log_exposure": false,
-    "activation_owner": "explicit_human_configuration_gate"
+    "activation_owner": "explicit_human_configuration_gate",
+    "partner_api_client_id": "38724",
+    "partner_api_client_name": "AdsTable Entitlement Runtime",
+    "configured_permissions": [
+      "manage_apps"
+    ],
+    "access_token_created": true,
+    "access_token_exposed_in_repository_or_evidence": false,
+    "vercel_secret_activation": "pending_runtime_environment_contract"
   },
   "ui": {
     "visible_change_in_this_package": false,
@@ -137,9 +145,20 @@
     "project_id": "podpwkrpmjiksskxhwsu",
     "evidence": "docs/evidence/EO_02C_DATABASE_ACCEPTANCE_2026-10-06.json",
     "database_result": "pass",
-    "partner_api_result": "pending_explicit_human_configuration_gate",
+    "partner_api_result": "manage_apps_authentication_pass_activeSubscription_pending_plan_and_shop_contract",
     "residual_business_rows": 0,
     "security_advisor_lints": 0,
-    "performance_advisor_lints": 0
+    "performance_advisor_lints": 0,
+    "partner_api_authentication_evidence": {
+      "observed_at": "2026-10-07",
+      "api_version": "2026-07",
+      "execution_surface": "Shopify Partner Dashboard GraphiQL Explorer",
+      "query": "app(id: gid://partners/App/432251994113) { id name }",
+      "result": {
+        "id": "gid://partners/App/432251994113",
+        "name": "AdsTable"
+      },
+      "access_token_recorded": false
+    }
   }
 }

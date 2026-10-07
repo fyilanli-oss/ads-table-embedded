@@ -1,11 +1,10 @@
-"use strict";
+import test from "node:test";
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import {fileURLToPath} from "node:url";
 
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const path = require("node:path");
-const test = require("node:test");
-
-const root = path.join(__dirname, "..");
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const contract = JSON.parse(fs.readFileSync(path.join(root, "contracts/shopify/a6-eo-07-three-surface-ui-product-freeze-v1.json"), "utf8"));
 const doc = fs.readFileSync(path.join(root, "docs/A6_EO_07_THREE_SURFACE_UI_PRODUCT_FREEZE.md"), "utf8");
 const plan = fs.readFileSync(path.join(root, "docs/EXECUTION_PLAN.md"), "utf8");

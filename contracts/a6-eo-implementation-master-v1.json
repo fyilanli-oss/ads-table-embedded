@@ -1,11 +1,11 @@
 {
-  "schema_version": "1.3.1",
+  "schema_version": "1.3.2",
   "contract_id": "a6-eo-implementation-master-v1",
   "title": "A6 EO single-track execution rule and integrated implementation package table",
   "effective_date": "2026-10-04",
   "status": "EO-02_in_progress",
   "authority": {
-    "execution_plan": "codex-input/AdsTable_EXECUTION_PLAN_V4_2026-08-17_TR.md",
+    "execution_plan": "docs/EXECUTION_PLAN.md",
     "EO_GO": "contracts/a6-eo-f7-go-decision-v1.json",
     "analyst_master": "docs/A6_EO_IMPLEMENTATION_MASTER_TABLE.md"
   },
@@ -133,6 +133,32 @@
         "fbclid",
         "fbc"
       ]
+    },
+    "three_surface_ui_product_freeze_v1": {
+      "decided_at": "2026-10-07",
+      "status": "product_decision_frozen_implementation_pending",
+      "document": "docs/A6_EO_07_THREE_SURFACE_UI_PRODUCT_FREEZE.md",
+      "contract": "contracts/shopify/a6-eo-07-three-surface-ui-product-freeze-v1.json",
+      "surfaces": [
+        "funnel_app_home",
+        "ad_analysis",
+        "settings"
+      ],
+      "visualization_state": {
+        "funnel": "relationship_graph_reference_pending",
+        "ad_analysis": "blocked_until_A6_EO_07_C_deepest_leaf_and_two_cross_sell_fixtures",
+        "settings": "no_charts"
+      },
+      "package_owners": [
+        "A6-EO-07-A",
+        "A6-EO-07-B",
+        "A6-EO-07-C",
+        "A6-EO-07-D",
+        "A6-EO-07-E",
+        "A6-EO-07-F"
+      ],
+      "advances_package_status": false,
+      "authorizes_ui_implementation": false
     }
   },
   "exception": {
@@ -463,12 +489,12 @@
         {
           "id": "A6-EO-07-A",
           "title": "Settings surface",
-          "objective": "Build currency, provider connections, one active Reporting Store selection/review, Klaviyo cost, billing and privacy."
+          "objective": "Preserve the proven Settings interaction flow while building currency, provider/account authority, atomic Reporting Store selection, Klaviyo cost, billing and privacy; no charts."
         },
         {
           "id": "A6-EO-07-B",
           "title": "Funnel App Home",
-          "objective": "Funnel/Table and contextual dashboard charts."
+          "objective": "Build Funnel/Table and Summary/Daily with provider-native hierarchy; relationship charts wait for approved product-owner graph input."
         },
         {
           "id": "A6-EO-07-C",
@@ -478,7 +504,7 @@
         {
           "id": "A6-EO-07-D",
           "title": "Ad Analysis surface",
-          "objective": "Implement provider deepest-grain analysis and contextual charts only after A6-EO-07-C passes."
+          "objective": "Implement verified-leaf analysis and one details modal only after A6-EO-07-C; chart implementation remains blocked until deepest-grain and both cross-sell fixtures pass."
         },
         {
           "id": "A6-EO-07-E",

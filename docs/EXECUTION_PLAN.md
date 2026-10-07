@@ -4,8 +4,9 @@
 
 Bu repository onaylı A6-EO embedded-only temiz yeniden kuruluş programını uygular.
 
-- Karar kaynağı: `fyilanli-oss/ads-table-dev`
-- Kaynak karar commit'i: `3416ee736fc3c53910e5e6571a7b8f445c4ce3cd`
+- Aktif karar kaynağı: bu repository ve `docs/EXECUTION_PLAN.md`
+- İlk kuruluş provenance/evidence kaynağı: `fyilanli-oss/ads-table-dev` commit `3416ee736fc3c53910e5e6571a7b8f445c4ce3cd`
+- Legacy repository aktif karar otoritesi değildir; yalnız referans, kanıt, containment ve rollback kaynağıdır.
 - Legacy repository'den as-is taşınan application/runtime modülü: **0**
 - Legacy repository EO-09 cutover tamamlanana kadar containment ve rollback hattıdır.
 
@@ -32,6 +33,19 @@ Bu repository onaylı A6-EO embedded-only temiz yeniden kuruluş programını uy
 
 Aynı anda yalnız bir parent paket aktiftir. Executable paket tablosu `contracts/a6-eo-implementation-master-v1.json` dosyasındadır.
 
+
+## Cross-cutting safety, capacity and portability freeze — 7 October 2026
+
+Binding analyst brief: `docs/A6_EO_CROSS_CUTTING_SAFETY_CAPACITY_FREEZE.md`  
+Executable contract: `contracts/a6-eo-cross-cutting-safety-capacity-v1.json`
+
+- Hourly refresh is staggered and limited to today+yesterday; provider-specific deep reconciliation runs every 24 hours and governs truthful finality.
+- Summary/Table custom ranges are limited to 90 days, Daily to 31 days; compare uses equal non-overlapping periods in the Reporting Store timezone.
+- Production acceptance targets are critical DB RPO ≤15 minutes, Dataset V2 RPO ≤60 minutes, degraded RTO ≤60 minutes and full RTO ≤240 minutes.
+- Supabase capacity is measured, not inferred from workspace count. The target is 2,000 certified active workspaces with 4,000-workspace stress evidence and at least 30% headroom.
+- The scale ladder remains inside measured PostgreSQL/Supabase scaling first; a database-platform migration cannot be an outage response.
+- Export is outside the first review slice; when introduced it must be asynchronous and isolated from the interactive query pool.
+- This cross-cutting decision changes no package status and authorizes no live infrastructure mutation.
 
 ## A6-EO-07 three-surface UI product freeze — 7 October 2026
 

@@ -83,5 +83,58 @@
       },
       "acceptance": "desktop_and_real_mobile_product_owner_acceptance_required_before_merge"
     }
-  ]
+  ],
+  "chart_renderer_boundary": {
+    "decision_date": "2026-10-07",
+    "allowed_renderer": [
+      "svg",
+      "canvas"
+    ],
+    "allowed_scope": "chart_data_plane_only",
+    "allowed_elements": [
+      "axes",
+      "series_lines_and_areas",
+      "data_marks",
+      "guides",
+      "chart_legend",
+      "direct_data_labels",
+      "accessible_chart_hit_targets"
+    ],
+    "official_polaris_required_outside_data_plane": true,
+    "forbidden_outside_data_plane": [
+      "page_shell",
+      "headers",
+      "date_compare_filter_controls",
+      "buttons",
+      "forms",
+      "kpi_summaries",
+      "sections_and_cards",
+      "tables",
+      "modal_and_popover",
+      "status_and_freshness",
+      "navigation",
+      "loading_empty_error_states"
+    ],
+    "custom_shopify_chrome_imitation": false,
+    "hover_only_information_forbidden": true,
+    "required_accessibility": [
+      "keyboard",
+      "touch",
+      "screen_reader_title_and_description_or_tabular_equivalent",
+      "non_color_series_encoding",
+      "reduced_motion",
+      "real_mobile_320px"
+    ],
+    "same_data_authority_required": [
+      "chart",
+      "selected_point_detail",
+      "kpi_summary",
+      "table"
+    ],
+    "parity_mismatch_is_acceptance_failure": true,
+    "ad_analysis_requires": [
+      "A6-EO-07-C_evidence",
+      "separate_accepted_chart_brief"
+    ]
+  }
 }

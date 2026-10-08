@@ -371,7 +371,7 @@
           "objective": "Build HMAC ingress, durable claims, deletion executor/manifest and generation-safe reinstall.",
           "status": "Verification",
           "implementation_pr": "https://github.com/fyilanli-oss/ads-table-embedded/pull/27",
-          "repository_governance": "PASS_85_tests_typecheck_build",
+          "repository_governance": "PASS_86_tests_typecheck_build",
           "implementation_contract": "contracts/eo-02d-privacy-lifecycle-v1.json",
           "implementation_document": "docs/EO_02D_PRIVACY_LIFECYCLE.md",
           "database_migration": "PASS_2026-10-08",

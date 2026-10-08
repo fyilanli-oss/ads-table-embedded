@@ -71,6 +71,6 @@ test("product-owner-selected Polaris 2.0 RC runtime and types stay aligned", () 
   assert.equal(manifest.devDependencies["@shopify/polaris-types"], "2.0.0-rc.2");
   assert.equal(ui.approved_runtime.polaris_script, "https://cdn.shopify.com/shopifycloud/polaris-2.0-rc.js");
   assert.equal(ui.approved_runtime.polaris_types, "2.0.0-rc.2");
-  assert.equal(rootSource.match(/polaris-2\.0-rc\.js/g)?.length, 1);
+  assert.equal(providerSource.match(/polaris-2\.0-rc\.js/g)?.length, 1);
   assert.equal(providerSource.includes(controls.forbiddenObsoletePolarisRuntime), false);
 });

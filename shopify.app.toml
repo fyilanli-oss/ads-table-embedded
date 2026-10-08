@@ -1,0 +1,24 @@
+name = "AdsTable"
+client_id = "58c91f39f69ca282a94ba06e9648be9e"
+application_url = "https://embedded.adstable.app/"
+embedded = true
+
+[access_scopes]
+scopes = ""
+
+[auth]
+redirect_urls = [
+  "https://embedded.adstable.app/auth/callback",
+]
+
+[webhooks]
+api_version = "2026-07"
+
+[[webhooks.subscriptions]]
+topics = ["app/uninstalled"]
+compliance_topics = [
+  "customers/data_request",
+  "customers/redact",
+  "shop/redact",
+]
+uri = "/webhooks/shopify"

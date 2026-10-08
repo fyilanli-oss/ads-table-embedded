@@ -374,10 +374,12 @@
           "repository_governance": "PASS_85_tests_typecheck_build",
           "implementation_contract": "contracts/eo-02d-privacy-lifecycle-v1.json",
           "implementation_document": "docs/EO_02D_PRIVACY_LIFECYCLE.md",
-          "database_migration": "PENDING_separate_live_approval",
-          "shopify_webhook_subscription": "PENDING_separate_live_approval",
-          "synthetic_live_acceptance": "PENDING",
-          "explicit_product_owner_closure": "PENDING"
+          "database_migration": "PASS_2026-10-08",
+          "shopify_webhook_subscription": "PENDING_post_deploy",
+          "synthetic_live_acceptance": "PENDING_post_deploy",
+          "explicit_product_owner_closure": "PENDING",
+          "database_acceptance_evidence": "docs/evidence/EO_02D_DATABASE_ACCEPTANCE_2026-10-08.json",
+          "supabase_security_advisor": "PASS_zero_findings"
         }
       ],
       "outputs": [
@@ -828,7 +830,7 @@
   "legacy_deletion_authorized": false,
   "current_active_parent": "A6-EO-02",
   "current_active_child": "A6-EO-02-D",
-  "current_gate": "EO-02-D_live_database_migration_shopify_webhook_subscription_synthetic_acceptance_and_explicit_product_owner_closure",
+  "current_gate": "EO-02-D_explicit_merge_then_production_deploy_runtime_HTTP_Shopify_subscription_synthetic_acceptance_and_explicit_product_owner_closure",
   "next_ready_child": null,
   "independent_packages": [
     {

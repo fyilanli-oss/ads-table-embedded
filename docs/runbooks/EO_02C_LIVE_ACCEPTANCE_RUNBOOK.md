@@ -2,7 +2,7 @@
 
 **Kontrol tarihi:** 8 Ekim 2026  
 **Canlı uygulama tarihi:** 8 Ekim 2026  
-**Durum:** Null, trial ve active provider kabulü PASS; sızıntı kabulü PASS; runtime adapter/internal caller hazır; Production database Secret aktivasyonu ve canlı persistence kanıtı açık
+**Durum:** Null, trial ve active provider kabulü PASS; sızıntı kabulü PASS; Production database Secret, doğrulanmış TLS ve canlı desktop persistence PASS; gerçek mobil Shopify Admin kabulü ve açık ürün sahibi kapanış onayı bekleniyor
 
 ## Amaç
 
@@ -167,7 +167,19 @@ Shopify farklı bir response şekli döndürürse yorum yapılmaz; ham redacted 
 - Runtime repository doğrudan table DML taşımaz; yalnız izinli bootstrap ve snapshot-apply function'larını çağırır.
 - Doğrulanmış internal caller Shopify ID token session ve Admin shop kimliği olmadan provider veya database çağrısı yapmaz.
 - Public test endpoint'i eklenmedi.
-- Production database Secret henüz etkin değildir ve canlı persistence probe henüz çalıştırılmamıştır; bu nedenle Aşama 6 PASS değildir.
+- Bu kayıt uygulama öncesi durumu gösterir. Production database Secret daha sonra etkinleştirildi ve aşağıdaki canlı desktop acceptance sonucu alındı.
+
+## 8 Ekim 2026 canlı desktop persistence sonucu
+
+- PR #23 squash merge commit'i `3b33d4f05a2604c23ec6181c584752a63390d106` Repository Governance, TypeScript ve production build kapılarından geçti.
+- Exact commit Vercel Production deployment `dpl_C8be2uodW3onwMQGYyA9gSwCqCWG` olarak READY oldu ve `embedded.adstable.app` alias'ına bağlandı.
+- Supabase transaction pooler bağlantısı resmî Supabase Root CA 2021 ile `rejectUnauthorized=true` kullanır; URL'deki `sslmode=require` doğrulandıktan sonra node-postgres'e explicit CA config verilir.
+- Shopify Admin desktop içinde AdsTable ilk yüklemede ve tam Admin sayfası yenilemesinden sonra Funnel preview'ını açtı; önceki preview-load hatası tekrarlanmadı.
+- Canlı database sayımı: workspace 1, installation 1, encrypted runtime session 1, workspace subscription 1, workspace entitlement 1, trial ledger 0.
+- Installation generation 1 ve active; subscription projection active; entitlement active, Reporting Store limiti 1, candidate detection ve Reporting Store switch billing bayrakları false.
+- Runtime session satırı ciphertext, 12-byte nonce, 16-byte authentication tag ve key version 1 ile doğrulandı; plaintext token alanı yoktur.
+- Son kontrol penceresinde Vercel Production runtime warning/error kaydı yoktur.
+- Gerçek mobil Shopify Admin kabulü henüz yapılmadığı için EO-02-C final PASS değildir ve EO-02-D başlamaz.
 
 ## Aşama 6 — Sızıntı ve persistence kabulü
 

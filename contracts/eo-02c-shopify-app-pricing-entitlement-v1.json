@@ -1,13 +1,14 @@
 {
   "contract_id": "eo-02c-shopify-app-pricing-entitlement-v1",
-  "version": "1.3.0",
-  "status": "partner_api_client_authenticated_plan_and_subscription_acceptance_pending",
-  "checked_at": "2026-10-07",
+  "version": "1.4.0",
+  "status": "trial_provider_pass_runtime_price_semantics_fix_in_review_active_and_persistence_pending",
+  "checked_at": "2026-10-08",
   "authoritative_sources": {
     "shopify_app_pricing": "https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing",
     "shopify_app_pricing_trials": "https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing/subscription-billing/offer-free-trials",
     "partner_api": "https://shopify.dev/docs/api/partner/latest",
-    "active_subscription": "https://shopify.dev/docs/api/partner/latest/active-subscription"
+    "active_subscription": "https://shopify.dev/docs/api/partner/latest/active-subscription",
+    "flat_rate_price": "https://shopify.dev/docs/api/partner/2026-07/objects/FlatRatePrice"
   },
   "decision": {
     "billing_authority": "shopify_app_pricing",
@@ -20,7 +21,9 @@
     "plan_price_and_publication": "partner_dashboard_human_gate",
     "trial_days": 14,
     "shopify_trial_lookback_days": 180,
-    "local_trial_grant_authority": false
+    "local_trial_grant_authority": false,
+    "price_active_semantics": "catalog_price_version_metadata_not_subscription_entitlement_authority",
+    "active_subscription_entitlement_shape": "activeSubscription_presence_plus_future_trialEndsAt_or_valid_currentBillingCycle"
   },
   "identity": {
     "app_id": "server_configured_shopify_app_gid",
@@ -115,7 +118,7 @@
     ],
     "access_token_created": true,
     "access_token_exposed_in_repository_or_evidence": false,
-    "vercel_secret_activation": "pending_value_injection_and_live_acceptance"
+    "vercel_secret_activation": "production_secret_configured_and_redeployed"
   },
   "ui": {
     "visible_change_in_this_package": false,
@@ -143,9 +146,9 @@
   ],
   "live_acceptance": {
     "project_id": "podpwkrpmjiksskxhwsu",
-    "evidence": "docs/evidence/EO_02C_DATABASE_ACCEPTANCE_2026-10-06.json",
+    "evidence": "docs/evidence/EO_02C_LIVE_ACCEPTANCE_2026-10-08.json",
     "database_result": "pass",
-    "partner_api_result": "manage_apps_authentication_pass_activeSubscription_pending_plan_and_shop_contract",
+    "partner_api_result": "null_and_trial_provider_pass_price_active_runtime_fix_in_review_active_and_persistence_pending",
     "residual_business_rows": 0,
     "security_advisor_lints": 0,
     "performance_advisor_lints": 0,
@@ -168,18 +171,39 @@
       "active"
     ],
     "development_store_testing": {
-      "same_partner_organization": true,
+      "same_partner_organization": false,
       "real_charge_expected": false,
       "intended_public_plan": {
         "monthly_price_usd": "24.99",
         "trial_days": 14
       },
       "active_state_plan": "shopify_zero_dollar_private_test_plan_without_trial",
-      "do_not_repeat_trial_casually": true
+      "do_not_repeat_trial_casually": true,
+      "different_partner_free_testing_enabled": true,
+      "shopify_admin_app_handle": "adstable-1"
+    },
+    "states": {
+      "null": {
+        "provider_result": "pass",
+        "runtime_projection": "not_live_executed"
+      },
+      "trial": {
+        "provider_result": "pass",
+        "trial_ends_at": "2026-10-22T08:02:49Z",
+        "current_billing_cycle": null,
+        "item_handle": "adstable-monthly",
+        "effective_price_amount": "0.0",
+        "price_active": false,
+        "runtime_projection": "pending_price_semantics_fix_and_live_persistence"
+      },
+      "active": {
+        "provider_result": "pending",
+        "runtime_projection": "pending"
+      }
     }
   },
   "runtime_environment_contract": {
-    "checked_at": "2026-10-07",
+    "checked_at": "2026-10-08",
     "authoritative_sources": [
       "https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing/redirect-plan-selection-page",
       "https://vercel.com/docs/environment-variables",

@@ -43,6 +43,8 @@ jobs:
         run: npm install --global @shopify/cli@4.8.5
 
       - name: Validate Shopify app configuration
+        env:
+          SHOPIFY_APP_AUTOMATION_TOKEN: ${{ secrets.SHOPIFY_APP_AUTOMATION_TOKEN }}
         run: shopify app config validate --no-color
 
       - name: Create and release Shopify app version

@@ -9,6 +9,14 @@ Bu repository temiz Shopify embedded-only AdsTable runtime'ıdır. **Execution P
 3. GitHub Connector veya zorunlu yetki geçmiyorsa implementasyon başlamaz; web editörü, yerel Git onarımı, GCM/ACL değişikliği, process/servis/VM restart fallback'i kullanılmaz.
 4. Kanıtlanmamış provider davranışı implementasyon gerçeği kabul edilmez.
 
+## Provider ilk hata durma ve kullanıcıya dönüş kapısı
+
+1. Token, credential, permission, deploy, app configuration veya başka bir dış-provider mutation'ı ilk açık ya da açıklamasız provider hatasında durdurulur.
+2. Aynı işlem ikinci kez denenmez; farklı tarayıcı, CLI, authentication yöntemi, legacy panel veya alternatif teknik rota kullanıcıya açıklanmadan ve açık onayı alınmadan kullanılmaz.
+3. Kullanıcının provider arayüzünde kısa sürede tamamlayabileceği işlem için otomasyon ısrarı yapılmaz. Kullanıcıya yalnız exact ekran, exact alan/aksiyon, exact hedef ve tamamlandığında vereceği kısa dönüş söylenir.
+4. İlk hata sonrasında durum tek cümlede sınıflandırılır: ne oluşmadı, nerede değişiklik yapılmadı ve hangi tek manuel adım gerekiyor. Kanıt olmadan izin, rol, hesap veya platform arızası nedeni uydurulmaz.
+5. Kullanıcı alternatif rota istemedikçe çalışma güvenli biçimde durur; arka planda yeni token, secret, oturum, deploy veya provider değişikliği üretilmez.
+
 ## Governing authority
 
 - `docs/EXECUTION_PLAN.md` ve `contracts/a6-eo-implementation-master-v1.json` bağlayıcıdır.

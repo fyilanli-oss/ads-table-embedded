@@ -357,7 +357,9 @@
           "partner_api_client_evidence_date": "2026-10-07",
           "provider_acceptance": "PASS_null_trial_active",
           "leak_acceptance": "PASS_browser_http_application_and_platform_logs",
-          "persistence_acceptance": "PENDING_missing_server_database_connection_adapter_and_caller"
+          "runtime_adapter": "PASS_function_only_supabase_transaction_pooler",
+          "reconciliation_caller": "PASS_verified_non_public_internal_caller",
+          "persistence_acceptance": "PENDING_production_database_secret_activation_and_live_persistence_evidence"
         },
         {
           "id": "A6-EO-02-D",
@@ -813,7 +815,7 @@
   "legacy_deletion_authorized": false,
   "current_active_parent": "A6-EO-02",
   "current_active_child": "A6-EO-02-C",
-  "current_gate": "EO-02-C_runtime_persistence_connection_adapter_caller_and_live_evidence",
+  "current_gate": "EO-02-C_production_database_secret_activation_live_persistence_and_evidence",
   "next_ready_child": null,
   "independent_packages": [
     {

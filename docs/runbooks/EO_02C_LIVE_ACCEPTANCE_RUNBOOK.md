@@ -2,7 +2,7 @@
 
 **Kontrol tarihi:** 8 Ekim 2026  
 **Canlı uygulama tarihi:** 8 Ekim 2026  
-**Durum:** Null, trial ve active provider kabulü PASS; sızıntı kabulü PASS; runtime persistence eksik server database bağlantısı nedeniyle açık
+**Durum:** Null, trial ve active provider kabulü PASS; sızıntı kabulü PASS; runtime adapter/internal caller hazır; Production database Secret aktivasyonu ve canlı persistence kanıtı açık
 
 ## Amaç
 
@@ -19,6 +19,10 @@ Shopify App Pricing planını, Partner API Production secret sınırını ve Ads
 - https://help.shopify.com/en/manual/checkout-settings/troubleshooting-checkout-payments
 - https://vercel.com/docs/environment-variables
 - https://vercel.com/docs/environment-variables/sensitive-environment-variables
+- https://supabase.com/docs/guides/database/secure-data
+- https://supabase.com/docs/guides/database/connecting-to-postgres
+- https://supabase.com/docs/guides/database/connecting-to-postgres/serverless-drivers
+- https://node-postgres.com/features/pooling
 
 Shopify aynı Partner organizasyonundaki development store'a kullanılabilir tüm planları; farklı Partner organizasyonundaki development store'a ise ücretsiz veya Partner'ın **Free for partners and developers** olarak işaretlediği ücretli planları gerçek ücret olmadan test ettirir. Bu testte effective price sıfır olabilir. Vercel Secret değerleri kaydedildikten sonra okunamaz; environment değişikliği yalnız yeni deployment'a uygulanır.
 
@@ -73,11 +77,13 @@ Registration tamamlanmadan plan oluşturma veya subscription-state kabulüne ge�
 | `SHOPIFY_PARTNER_ORG_ID` | Config | Production |
 | `SHOPIFY_PARTNER_API_ACCESS_TOKEN` | Secret | Production |
 | `SHOPIFY_APP_GID` | Config | Production |
+| `ADSTABLE_RUNTIME_DATABASE_URL` | Secret | Production |
 
 Kurallar:
 
 - Exact Config değerleri contract'tan alınır.
 - Token kullanıcı tarafından doğrudan Vercel Secret alanına girilir; chat, terminal argümanı, local env dosyası veya clipboard kanıtına yazılmaz.
+- Database URL kullanıcı tarafından doğrudan Vercel Secret alanına girilir; yalnız Supabase transaction pooler, `adstable_runtime` rolü, project ref `podpwkrpmjiksskxhwsu`, port `6543`, database `postgres` ve `sslmode=require` kabul edilir.
 - Preview ve Development production tokenı almaz.
 - Env değişikliği sonrası yeni production deployment zorunludur.
 - Deployment source SHA, env key metadata ve health sonucu kaydedilir; değerler kaydedilmez.
@@ -155,6 +161,14 @@ Shopify farklı bir response şekli döndürürse yorum yapılmaz; ham redacted 
 - Bu nedenle persistence PASS sayılamaz. Önce server-only least-privilege bağlantı ve public olmayan doğrulanmış tetikleme uygulanır; ardından generation/stale/reporting-store kontrolleri canlı çalıştırılır.
 - Geçici public test endpoint'i, browser database client'ı veya `service_role` fallback'i yasaktır.
 
+## 8 Ekim 2026 Aşama 6 implementation sonucu
+
+- Server-only transaction-pooler startup guard ve `pg@8.23.0` adapterı eklendi.
+- Runtime repository doğrudan table DML taşımaz; yalnız izinli bootstrap ve snapshot-apply function'larını çağırır.
+- Doğrulanmış internal caller Shopify ID token session ve Admin shop kimliği olmadan provider veya database çağrısı yapmaz.
+- Public test endpoint'i eklenmedi.
+- Production database Secret henüz etkin değildir ve canlı persistence probe henüz çalıştırılmamıştır; bu nedenle Aşama 6 PASS değildir.
+
 ## Aşama 6 — Sızıntı ve persistence kabulü
 
 - Browser bundle ve response'larda üç server-only değerin hiçbirinin bulunmadığı doğrulanır.
@@ -163,6 +177,7 @@ Shopify farklı bir response şekli döndürürse yorum yapılmaz; ham redacted 
 - Stale snapshot reddedilir.
 - Runtime direct table DML taşımaz; yalnız izinli functions kullanılır.
 - `null`, `trial` ve `active` gerçek sıfır/unknown ile karıştırılmaz.
+- Production database Secret yalnız açık insan kapısıyla etkinleştirilir; yeni deployment sonrasında gerçek provider cevabı function-only runtime ile yazılır ve residual row/evidence kontrol edilir.
 
 ## Rollback
 

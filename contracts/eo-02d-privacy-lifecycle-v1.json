@@ -1,0 +1,100 @@
+{
+  "contract_id": "eo-02d-privacy-lifecycle-v1",
+  "version": "1.0.0",
+  "status": "verification",
+  "checked_at": "2026-10-08",
+  "authoritative_sources": {
+    "shopify_privacy": "https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance",
+    "shopify_webhook_verification": "https://shopify.dev/docs/apps/build/webhooks/verify-deliveries",
+    "shopify_webhook_operations": "https://shopify.dev/docs/apps/build/webhooks/troubleshoot",
+    "shopify_webhook_reference": "https://shopify.dev/docs/api/webhooks/2026-07",
+    "shopify_access_tokens": "https://shopify.dev/docs/apps/build/authentication-authorization/access-tokens",
+    "supabase_changelog": "https://supabase.com/changelog?types=breaking-change",
+    "supabase_rls": "https://supabase.com/docs/guides/database/postgres/row-level-security"
+  },
+  "ingress": {
+    "endpoint": "POST /webhooks/shopify",
+    "allowed_topics": [
+      "app/uninstalled",
+      "customers/data_request",
+      "customers/redact",
+      "shop/redact"
+    ],
+    "verification": "HMAC-SHA256 over exact raw body with SHOPIFY_API_SECRET",
+    "invalid_hmac_status": 401,
+    "accepted_status": 202,
+    "duplicate_key": "X-Shopify-Webhook-Id",
+    "correlation_key": "X-Shopify-Event-Id",
+    "raw_payload_persisted": false,
+    "access_token_required": false,
+    "synchronous_executor": false
+  },
+  "database": {
+    "tables": [
+      "privacy.webhook_claims",
+      "privacy.deletion_runs",
+      "privacy.deletion_manifests"
+    ],
+    "migration": "supabase/migrations/20261008190000_eo02d_privacy_lifecycle.sql",
+    "rls": "enabled_and_forced",
+    "browser_roles": "no_schema_or_object_access",
+    "runtime_table_dml": "none",
+    "runtime_functions": [
+      "privacy.claim_shopify_webhook",
+      "privacy.request_workspace_deletion",
+      "privacy.execute_deletion_run",
+      "shopify.bootstrap_installation(text,text,bytea,timestamptz)"
+    ],
+    "plaintext_customer_fields": false,
+    "raw_shop_domain_in_privacy_tables": false
+  },
+  "lifecycle": {
+    "uninstall": "suspend_workspace_delete_sessions_and_wait_for_redaction",
+    "reinstall_before_redaction": "reactivate_same_workspace_and_generation",
+    "shop_redact_after_uninstall": "queue_generation_locked_deletion",
+    "shop_redact_after_reinstall": "record_ignored_reinstalled_and_do_not_delete",
+    "bootstrap_during_deletion": "fail_closed",
+    "completed_deletion": "archive_old_workspace_and_remove_installation_scoped_data",
+    "reinstall_after_deletion": "new_workspace_and_previous_manifest_generation_plus_one",
+    "stale_executor": "cannot_match_replacement_workspace_and_generation"
+  },
+  "deletion": {
+    "deadline_days": 30,
+    "executor": "idempotent_generation_locked_function",
+    "manifest_contains_personal_data": false,
+    "current_deleted_families": [
+      "billing_projection",
+      "shopify_runtime_sessions",
+      "shopify_installation",
+      "shopify_domain_history"
+    ],
+    "current_customer_data_result": "no_customer_data",
+    "future_schema_gate": "every new data family must join deletion registry and regression acceptance before use"
+  },
+  "merchant_delete_my_data": {
+    "requires": "server_verified_admin_shop_and_exact_install_generation",
+    "subscription_cancelled": false,
+    "visible_ui_owner": "A6-EO-07-A"
+  },
+  "live_acceptance": {
+    "status": "database_migration_pass_runtime_pending",
+    "production_data_deletion_authorized": false,
+    "required_sequence": [
+      "repository_ci_pass",
+      "migration_review",
+      "explicit_live_migration_approval",
+      "synthetic_transactional_acceptance",
+      "supabase_advisors_pass",
+      "shopify_app_specific_subscription_acceptance",
+      "explicit_closure"
+    ],
+    "database_migration": "PASS",
+    "database_evidence": "docs/evidence/EO_02D_DATABASE_ACCEPTANCE_2026-10-08.json",
+    "supabase_security_advisor": "PASS_zero_findings",
+    "existing_live_state_changed": false,
+    "synthetic_rows_persisted": false,
+    "runtime_http_acceptance": "PENDING_post_deploy",
+    "shopify_app_specific_subscription_acceptance": "PENDING_post_deploy",
+    "explicit_product_owner_closure": "PENDING"
+  }
+}

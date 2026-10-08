@@ -63,6 +63,10 @@ test("bootstrap forwards only verified shop facts and accepts generation authori
   assert.deepEqual(command, {
     shopId: shop.shopId,
     shopDomain: shop.myshopifyDomain,
+    shopIdentitySha256: Buffer.from(
+      "770df0a40f55c0db99b835748857d12d4a448d06460f676e4a928a6c5d7b31fe",
+      "hex",
+    ),
     verifiedAt: "2026-10-06T15:20:00.000Z",
   });
   assert.deepEqual(result, {

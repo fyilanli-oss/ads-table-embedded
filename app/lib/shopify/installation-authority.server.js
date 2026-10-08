@@ -1,3 +1,5 @@
+import {shopIdentitySha256} from "./shop-identity.server.js";
+
 const SHOP_ID_PATTERN = /^gid:\/\/shopify\/Shop\/[1-9][0-9]*$/;
 const SHOP_DOMAIN_PATTERN = /^[a-z0-9][a-z0-9-]*\.myshopify\.com$/;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -41,7 +43,10 @@ function acceptedResult(value, expectedShop) {
   if (!Number.isSafeInteger(value.installGeneration) || value.installGeneration < 1) {
     throw new Error("INVALID_INSTALL_GENERATION");
   }
-  if (value.status !== "active" || !["created", "existing"].includes(value.disposition)) {
+  if (
+    value.status !== "active"
+    || !["created", "existing", "reactivated", "new_generation"].includes(value.disposition)
+  ) {
     throw new Error("INSTALLATION_NOT_ACTIVE");
   }
   return Object.freeze({
@@ -68,6 +73,7 @@ export async function bootstrapWorkspaceInstallation({session, shop, verifiedAt,
   const persisted = await repository.bootstrap({
     shopId: shopIdentity.shopId,
     shopDomain: shopIdentity.shopDomain,
+    shopIdentitySha256: shopIdentitySha256(shopIdentity.shopId),
     verifiedAt: verifiedAt.toISOString(),
   });
 

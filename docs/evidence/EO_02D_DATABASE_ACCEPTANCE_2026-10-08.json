@@ -1,0 +1,87 @@
+{
+  "evidence_id": "eo-02d-database-acceptance-2026-10-08",
+  "package_id": "A6-EO-02-D",
+  "checked_at": "2026-10-08",
+  "status": "PASS_DATABASE_MIGRATION",
+  "environment": {
+    "provider": "Supabase",
+    "project_id": "podpwkrpmjiksskxhwsu",
+    "project_name": "ads-table-embedded",
+    "region": "eu-central-1",
+    "health": "ACTIVE_HEALTHY",
+    "postgres_version": "17.11"
+  },
+  "migration": {
+    "repository_path": "supabase/migrations/20261008190000_eo02d_privacy_lifecycle.sql",
+    "live_version": "20261008140818",
+    "live_name": "eo02d_privacy_lifecycle",
+    "applied": true
+  },
+  "database_boundary": {
+    "tables": [
+      "privacy.webhook_claims",
+      "privacy.deletion_runs",
+      "privacy.deletion_manifests"
+    ],
+    "row_level_security": "enabled_and_forced",
+    "direct_table_access": {
+      "anon": false,
+      "authenticated": false,
+      "service_role": false,
+      "adstable_runtime": false
+    },
+    "runtime_function_execute": {
+      "privacy.claim_shopify_webhook": true,
+      "privacy.request_workspace_deletion": true,
+      "privacy.execute_deletion_run": true
+    },
+    "public_role_function_execute": {
+      "anon": false,
+      "authenticated": false,
+      "service_role": false
+    },
+    "security_definer_search_path": "empty"
+  },
+  "advisor": {
+    "security_findings": 0,
+    "result": "PASS"
+  },
+  "data_safety": {
+    "pre_migration": {
+      "workspace_count": 1,
+      "installation_count": 1,
+      "active_installation_count": 1,
+      "privacy_tables_present": false
+    },
+    "post_migration": {
+      "workspace_count": 1,
+      "installation_count": 1,
+      "active_installation_count": 1,
+      "webhook_claim_count": 0,
+      "deletion_run_count": 0,
+      "deletion_manifest_count": 0
+    },
+    "existing_live_state_changed": false,
+    "production_data_deleted": false,
+    "synthetic_rows_persisted": false
+  },
+  "runtime_acceptance": {
+    "status": "PENDING_POST_DEPLOY",
+    "reason": "Supabase management connection cannot impersonate adstable_runtime; this correctly preserves the least-privilege boundary. Runtime behavior must be exercised through the deployed application using its scoped credential.",
+    "repeated_management_connection_attempts_prohibited": true
+  },
+  "shopify_subscription_acceptance": {
+    "status": "PENDING_POST_DEPLOY",
+    "reason": "Production does not yet contain POST /webhooks/shopify and the repository has no linked shopify.app.toml configuration. Subscription activation before endpoint deployment is prohibited."
+  },
+  "remaining_gates": [
+    "explicit_merge_approval",
+    "production_application_deploy",
+    "runtime_http_acceptance_invalid_hmac_401_and_valid_claim_202",
+    "exact_shopify_app_configuration_link_and_read",
+    "shopify_app_specific_webhook_subscription_deploy",
+    "synthetic_lifecycle_acceptance",
+    "explicit_product_owner_closure"
+  ],
+  "secrets_in_evidence": false
+}

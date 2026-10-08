@@ -19,7 +19,11 @@ test("opens one independent package without changing the EO plan", () => {
   assert.equal(master.counts.parent_packages, 10);
   assert.equal(master.counts.stable_child_packages, 43);
   assert.equal(master.counts.independent_operational_packages, 1);
-  assert.equal(master.current_active_child, "A6-EO-02-C");
+  const eoChildIds = master.packages
+    .flatMap((parent) => parent.children ?? [])
+    .map((child) => child.id);
+  assert.ok(eoChildIds.includes(master.current_active_child));
+  assert.notEqual(master.current_active_child, cleanup.id);
 });
 
 test("requires inventory and remote equivalence before cleanup", () => {

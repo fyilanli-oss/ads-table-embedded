@@ -103,6 +103,9 @@ test("EO-02-C live evidence preserves the provider/runtime boundary", () => {
   });
   assert.equal(evidence.runtime_live_acceptance.mobile_full_app_close_and_reopen, "pass");
   assert.equal(evidence.runtime_live_acceptance.vercel_runtime_tls_auth_warnings_or_errors, 0);
-  assert.equal(evidence.final_result, "pending");
+  assert.equal(evidence.identity_and_persistence.stale_snapshot_rejected, true);
+  assert.equal(evidence.final_result, "pass");
+  assert.equal(evidence.explicit_product_owner_acceptance, true);
+  assert.equal(evidence.closure.technical_open_items, 0);
   assert.equal(evidence.secret_policy.token_recorded, false);
 });

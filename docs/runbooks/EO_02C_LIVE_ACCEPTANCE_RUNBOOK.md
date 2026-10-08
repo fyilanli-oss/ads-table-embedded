@@ -2,7 +2,7 @@
 
 **Kontrol tarihi:** 8 Ekim 2026  
 **Canlı uygulama tarihi:** 8 Ekim 2026  
-**Durum:** Null, trial ve active provider kabulü PASS; sızıntı, doğrulanmış TLS, canlı desktop persistence ve gerçek mobil Shopify Admin kabulü PASS; açık ürün sahibi kapanış onayı bekleniyor
+**Durum:** Accepted — provider, sızıntı, doğrulanmış TLS, canlı desktop/mobile persistence ve ürün sahibi kapanış kabulü PASS
 
 ## Amaç
 
@@ -210,6 +210,13 @@ Herhangi bir aşama başarısızsa:
 4. Vercel Production Secret kaldırılır/değiştirilir ve yeni deployment alınır; eski deployment'ın env değişikliğinden etkilenmediği kabul edilir.
 5. Public plan veya trial üzerinde ikinci deneme yapılmadan önce başarısızlığın nedeni kayda alınır.
 6. EO-02-C `Verification` durumunda kalır; EO-02-D başlamaz.
+
+## 8 Ekim 2026 ürün sahibi kapanış kabulü
+
+- EO-02-C için açık teknik husus kalmadığı doğrulandı.
+- Stale snapshot rejection aynı Supabase projesindeki `docs/evidence/EO_02C_DATABASE_ACCEPTANCE_2026-10-06.json` kanıtında PASS'tir ve canlı kanıt zincirine bağlandı.
+- Ürün sahibi “EO-02-C kapanışını kabul ediyorum” diyerek açık kapanış onayını verdi.
+- EO-02-C final sonucu PASS ve durum Accepted'tır. EO-02-D ayrı paket olarak başlayabilir.
 
 ## PASS koşulu
 

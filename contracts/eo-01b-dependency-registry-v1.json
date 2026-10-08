@@ -22,4 +22,3 @@
     {"name":"vite","version":"7.3.1","ownedCapability":"Application bundling and development build","nativeAlternativeRationale":"Official React Router template bundler","scope":"development","execution":"build","secretAndTenantEffect":"environment_exposure_guarded_by_CI","license":"MIT","maintenance":"vitejs/vite","removalAndRollback":"Remove with selected framework build replacement"}
   ]
 }
-

@@ -1,7 +1,7 @@
 # EO-02-C — Shopify App Pricing trial, subscription and entitlement
 
 **Kontrol tarihi:** 8 Ekim 2026  
-**Durum:** Database ve null/trial/active provider kabulü PASS; browser/response/log sızıntı kontrolü PASS; runtime persistence eksik server veritabanı bağlantısı nedeniyle açık
+**Durum:** Database ve null/trial/active provider kabulü PASS; browser/response/log sızıntı kontrolü PASS; runtime adapter ve doğrulanmış internal caller hazır; Production database Secret aktivasyonu ve canlı persistence kanıtı açık
 
 ## Analist sonucu
 
@@ -72,19 +72,29 @@ Kaynaklar:
 - Production HTML, altı istemci asset'i ve son 24 saat Vercel runtime logları tarandı. Server-only değişken adı, Partner endpoint kimliği, App GID, access-token header/değeri, authorization header, cookie veya session sızıntısı bulunmadı; dört sızıntı kapısı PASS oldu.
 - EO-02-C kapanmadan önce server-only least-privilege database bağlantısı, gerçek repository adapter'ı ve public olmayan doğrulanmış reconciliation tetikleyicisi branch/CI/live evidence ile tamamlanmalıdır. Geçici public test endpoint'i açılamaz.
 
+## 8 Ekim 2026 runtime persistence implementation sonucu
+
+- Supabase'in güncel resmî serverless bağlantı sözleşmesine göre transaction pooler (`6543`) seçildi; session pooler ve browser Data API kullanılmadı.
+- Server-only `ADSTABLE_RUNTIME_DATABASE_URL`, yalnız `adstable_runtime.podpwkrpmjiksskxhwsu` kullanıcısını, Frankfurt pooler hostunu, `postgres` veritabanını ve `sslmode=require` değerini kabul eden fail-closed startup guard'a bağlandı.
+- `pg@8.23.0` ile function instance başına en fazla bir bağlantılık pool kuruldu; transaction mode nedeniyle prepared statement kullanılmadı.
+- Repository adapter'ı doğrudan tablo DML yapmaz; yalnız `shopify.bootstrap_installation` ve `billing.apply_shopify_app_pricing_snapshot` function'larını parametreli sorgularla çağırır.
+- Internal reconciliation caller, önce Shopify ID token session ve Admin shop kimliğini doğrulayan installation bootstrap'ı çalıştırır; caller-supplied workspace veya public test endpoint'i kabul etmez.
+- Kod, test ve build sonucu canlı aktivasyonun yerine geçmez. Production database Secret henüz girilmedi ve gerçek provider sonucunun Supabase projection'ına yazıldığı henüz kanıtlanmadı; EO-02-C `Verification` kalır.
+
 ## Runtime environment sözleşmesi
 
-7 Ekim 2026 tarihinde Shopify'ın resmî plan yönlendirme örneği ve Vercel'in resmî Config/Secret environment belgeleri yeniden kontrol edildi.
+8 Ekim 2026 tarihinde Shopify'ın resmî plan yönlendirme örneği, Vercel'in Config/Secret environment belgeleri ve Supabase'in secure data/serverless transaction pooler belgeleri yeniden kontrol edildi.
 
 | Anahtar | Tür | Vercel kapsamı | Kural |
 |---|---|---|---|
 | `SHOPIFY_PARTNER_ORG_ID` | Config | Production | Exact değer `5235756` |
 | `SHOPIFY_PARTNER_API_ACCESS_TOKEN` | Secret | Production | Değer repository, kanıt, browser ve loglarda bulunmaz |
 | `SHOPIFY_APP_GID` | Config | Production | Exact değer `gid://shopify/App/432251994113` |
+| `ADSTABLE_RUNTIME_DATABASE_URL` | Secret | Production | Yalnız transaction pooler, `adstable_runtime` rolü, project ref `podpwkrpmjiksskxhwsu`, port `6543`, database `postgres` ve `sslmode=require`; değer hiçbir kanıta yazılmaz |
 
-Preview ve Development production Partner API tokenını alamaz ve canlı Partner API çağrısı yapamaz. Eksik veya bozuk runtime configuration erişim vermez. Partner API endpoint'i yalnız organization ID ve sabit `2026-07` sürümünden server tarafında üretilir. Environment değişikliği mevcut deployment'ı değiştirmez; yeni deployment gerekir.
+Preview ve Development production Partner API tokenını veya Production database Secret'ını alamaz ve canlı Partner API/database çağrısı yapamaz. Eksik veya bozuk runtime configuration erişim vermez. Partner API endpoint'i yalnız organization ID ve sabit `2026-07` sürümünden server tarafında üretilir. Environment değişikliği mevcut deployment'ı değiştirmez; yeni deployment gerekir.
 
-Bu sözleşmenin dondurulması secret değerinin Vercel'e girildiği anlamına gelmez. Token aktivasyonu ve gerçek `trial | active | null` kabulü açık insan kapısı olarak bekler.
+Bu sözleşmenin dondurulması database Secret değerinin Vercel'e girildiği anlamına gelmez. Production database Secret aktivasyonu, yeni deployment ve gerçek `trial | active | null` persistence kabulü açık insan kapısı olarak bekler.
 
 ## Yetki ve durum akışı
 

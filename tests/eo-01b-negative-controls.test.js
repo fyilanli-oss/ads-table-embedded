@@ -8,7 +8,10 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const readJson = (relativePath) => JSON.parse(fs.readFileSync(path.join(root, relativePath), "utf8"));
 const manifest = readJson("package.json");
 const registry = readJson("contracts/eo-01b-dependency-registry-v1.json");
-const dependencyAddenda = [readJson("contracts/eo-01c-dependency-addendum-v1.json")];
+const dependencyAddenda = [
+  readJson("contracts/eo-01c-dependency-addendum-v1.json"),
+  readJson("contracts/eo-02c-dependency-addendum-v1.json"),
+];
 const controls = readJson("contracts/eo-01b-negative-controls-v1.json");
 
 function walk(directory) {
@@ -24,7 +27,7 @@ test("direct dependencies exactly match the approved registry", () => {
   const decisions = [registry, ...dependencyAddenda].flatMap(({packages}) => packages);
   const approved = Object.fromEntries(decisions.map(({name, version}) => [name, version]));
   assert.equal(registry.packages.length, 16);
-  assert.equal(decisions.length, 18);
+  assert.equal(decisions.length, 19);
   assert.deepEqual(actual, approved);
   for (const blocked of controls.forbiddenDirectDependencies) assert.equal(actual[blocked], undefined, blocked);
   for (const version of Object.values(actual)) assert.match(version, /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/);

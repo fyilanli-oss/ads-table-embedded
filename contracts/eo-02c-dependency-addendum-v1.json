@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "package": "A6-EO-02-C",
+  "checkedAt": "2026-10-08",
+  "packages": [
+    {
+      "name": "pg",
+      "version": "8.23.0",
+      "ownedCapability": "Server-only PostgreSQL protocol client for Supabase transaction-pooler function calls",
+      "nativeAlternativeRationale": "Node.js has no native PostgreSQL wire client; direct function-only database access avoids browser Data API and service_role bypasses",
+      "scope": "runtime",
+      "execution": "server",
+      "secretAndTenantEffect": "reads_only_ADSTABLE_RUNTIME_DATABASE_URL_and_connects_as_function_only_adstable_runtime_role",
+      "license": "MIT",
+      "maintenance": "brianc/node-postgres",
+      "removalAndRollback": "Remove after disabling runtime persistence and deleting the Vercel database secret; no schema rollback required"
+    }
+  ]
+}

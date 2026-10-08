@@ -1,14 +1,19 @@
 {
   "contract_id": "eo-02c-shopify-app-pricing-entitlement-v1",
-  "version": "1.5.0",
-  "status": "provider_and_leak_pass_runtime_persistence_blocked_by_missing_server_database_connection",
+  "version": "1.6.0",
+  "status": "provider_leak_and_runtime_code_pass_live_persistence_activation_pending",
   "checked_at": "2026-10-08",
   "authoritative_sources": {
     "shopify_app_pricing": "https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing",
     "shopify_app_pricing_trials": "https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing/subscription-billing/offer-free-trials",
     "partner_api": "https://shopify.dev/docs/api/partner/latest",
     "active_subscription": "https://shopify.dev/docs/api/partner/latest/active-subscription",
-    "flat_rate_price": "https://shopify.dev/docs/api/partner/2026-07/objects/FlatRatePrice"
+    "flat_rate_price": "https://shopify.dev/docs/api/partner/2026-07/objects/FlatRatePrice",
+    "supabase_secure_data": "https://supabase.com/docs/guides/database/secure-data",
+    "supabase_connection_methods": "https://supabase.com/docs/guides/database/connecting-to-postgres",
+    "supabase_serverless_drivers": "https://supabase.com/docs/guides/database/connecting-to-postgres/serverless-drivers",
+    "vercel_environment_variables": "https://vercel.com/docs/environment-variables",
+    "node_postgres_pooling": "https://node-postgres.com/features/pooling"
   },
   "decision": {
     "billing_authority": "shopify_app_pricing",
@@ -98,6 +103,29 @@
       "supabase/migrations/20261006171500_eo02c_acceptance_probe.sql"
     ]
   },
+  "runtime_persistence_implementation": {
+    "checked_at": "2026-10-08",
+    "dependency": "pg@8.23.0",
+    "connection_mode": "supabase_transaction_pooler",
+    "server_environment_key": "ADSTABLE_RUNTIME_DATABASE_URL",
+    "project_ref": "podpwkrpmjiksskxhwsu",
+    "region": "eu-central-1",
+    "database_role": "adstable_runtime",
+    "pool_max_connections_per_function_instance": 1,
+    "prepared_statements": false,
+    "direct_table_dml": false,
+    "permitted_function_calls": [
+      "shopify.bootstrap_installation",
+      "billing.apply_shopify_app_pricing_snapshot"
+    ],
+    "public_route_added": false,
+    "verified_internal_caller": "createVerifiedShopifyEntitlementRuntime",
+    "identity_preconditions": [
+      "verified_shopify_id_token_session",
+      "verified_shopify_admin_shop_identity"
+    ],
+    "activation": "pending_production_secret_and_live_evidence"
+  },
   "reporting_store_entitlement": {
     "included_active_reporting_stores": 1,
     "candidate_detection_billed": false,
@@ -128,7 +156,7 @@
   "out_of_scope": [
     "Partner Dashboard plan creation or publication",
     "production price selection",
-    "Vercel Production secret value injection and live subscription-state acceptance",
+    "Vercel Production database Secret value injection and live persistence acceptance",
     "billing Settings UI",
     "uninstall deletion and clean reinstall lifecycle",
     "provider OAuth or reporting store selection implementation"
@@ -219,6 +247,16 @@
       "production_reconciliation_caller_present": false,
       "browser_http_application_and_platform_log_leak_checks": "PASS",
       "result": "implementation_gap_requires_branch_code_and_separate_live_activation_gate"
+    },
+    "implementation_after_preflight": {
+      "checked_at": "2026-10-08",
+      "server_database_adapter_present": true,
+      "function_only_repositories_present": true,
+      "verified_non_public_reconciliation_caller_present": true,
+      "public_test_endpoint_present": false,
+      "production_database_secret_configured": false,
+      "live_runtime_projection_executed": false,
+      "result": "code_ready_production_secret_activation_and_live_persistence_evidence_pending"
     }
   },
   "runtime_environment_contract": {
@@ -226,7 +264,9 @@
     "authoritative_sources": [
       "https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing/redirect-plan-selection-page",
       "https://vercel.com/docs/environment-variables",
-      "https://vercel.com/docs/environment-variables/sensitive-environment-variables"
+      "https://vercel.com/docs/environment-variables/sensitive-environment-variables",
+      "https://supabase.com/docs/guides/database/secure-data",
+      "https://supabase.com/docs/guides/database/connecting-to-postgres/serverless-drivers"
     ],
     "variables": {
       "SHOPIFY_PARTNER_ORG_ID": {
@@ -249,11 +289,24 @@
         "vercel_scope": [
           "production"
         ]
+      },
+      "ADSTABLE_RUNTIME_DATABASE_URL": {
+        "classification": "secret",
+        "exact_value_recorded": false,
+        "vercel_scope": [
+          "production"
+        ],
+        "connection_mode": "transaction_pooler",
+        "required_role": "adstable_runtime.podpwkrpmjiksskxhwsu",
+        "required_port": 6543,
+        "required_database": "postgres",
+        "required_sslmode": "require"
       }
     },
     "preview_and_development": {
       "production_partner_token_allowed": false,
       "live_partner_api_call_allowed": false,
+      "production_database_secret_allowed": false,
       "behavior": "fail_closed_when_runtime_configuration_is_missing"
     },
     "endpoint_template": "https://partners.shopify.com/{SHOPIFY_PARTNER_ORG_ID}/api/2026-07/graphql.json",

@@ -1,10 +1,10 @@
 {
   "evidence_id": "EO_02C_LIVE_ACCEPTANCE_2026-10-08",
   "schema_version": "1.0.0",
-  "status": "provider_and_leak_pass_runtime_persistence_blocked_by_missing_server_database_connection",
-  "executed_at": "2026-10-08T08:46:00Z",
-  "source_commit": "2afe0083efe269574dc5f1759fe7762fe18a87a2",
-  "production_deployment_id": "dpl_CtweiU8YdzpoAxXKFibrDtwBgxyN",
+  "status": "runtime_desktop_persistence_pass_mobile_shopify_admin_acceptance_pending",
+  "executed_at": "2026-10-08T11:59:00Z",
+  "source_commit": "3b33d4f05a2604c23ec6181c584752a63390d106",
+  "production_deployment_id": "dpl_C8be2uodW3onwMQGYyA9gSwCqCWG",
   "official_sources_checked_at": "2026-10-08",
   "secret_policy": {
     "token_recorded": false,
@@ -28,7 +28,13 @@
     "scopes": {
       "SHOPIFY_PARTNER_ORG_ID": "production_config",
       "SHOPIFY_PARTNER_API_ACCESS_TOKEN": "production_secret",
-      "SHOPIFY_APP_GID": "production_config"
+      "SHOPIFY_APP_GID": "production_config",
+      "SHOPIFY_API_KEY": "production_config",
+      "SHOPIFY_API_SECRET": "production_secret",
+      "SHOPIFY_APP_URL": "production_config",
+      "SCOPES": "production_config",
+      "ADSTABLE_RUNTIME_DATABASE_URL": "production_secret",
+      "ADSTABLE_SESSION_ENCRYPTION_KEY_V1": "production_secret"
     },
     "preview_has_production_token": false,
     "development_has_production_token": false,
@@ -92,7 +98,7 @@
       "pending_update_is_null": true,
       "provider_result": "pass",
       "projected_entitlement": "active",
-      "result": "provider_pass_runtime_persistence_pending"
+      "result": "provider_and_runtime_persistence_pass"
     }
   },
   "price_active_semantics": {
@@ -105,10 +111,10 @@
     "app_gid_match": true,
     "shop_gid_match": true,
     "canonical_domain_match": true,
-    "install_generation_match": null,
-    "reporting_store_limit_is_one": null,
-    "candidate_detection_billed_false": null,
-    "store_switch_billed_false": null,
+    "install_generation_match": true,
+    "reporting_store_limit_is_one": true,
+    "candidate_detection_billed_false": true,
+    "store_switch_billed_false": true,
     "stale_snapshot_rejected": null
   },
   "leak_checks": {
@@ -130,20 +136,34 @@
   "final_result": "pending",
   "explicit_product_owner_acceptance": false,
   "persistence_preflight": {
-    "checked_at": "2026-10-08T09:08:00Z",
-    "production_source_commit": "2afe0083efe269574dc5f1759fe7762fe18a87a2",
-    "production_deployment_id": "dpl_CtweiU8YdzpoAxXKFibrDtwBgxyN",
+    "checked_at": "2026-10-08T11:59:00Z",
+    "production_source_commit": "3b33d4f05a2604c23ec6181c584752a63390d106",
+    "production_deployment_id": "dpl_C8be2uodW3onwMQGYyA9gSwCqCWG",
     "database_counts": {
-      "workspaces": 0,
-      "installations": 0,
-      "workspace_subscriptions": 0,
-      "workspace_entitlements": 0,
+      "workspaces": 1,
+      "installations": 1,
+      "runtime_sessions": 1,
+      "workspace_subscriptions": 1,
+      "workspace_entitlements": 1,
       "trial_ledger": 0
     },
-    "server_database_environment_configured": false,
-    "runtime_repository_adapter_present": false,
-    "production_reconciliation_caller_present": false,
-    "classification": "implementation_gap_not_provider_or_database_failure",
-    "required_next_step": "build_server_only_least_privilege_database_connection_repository_adapter_and_non_public_authenticated_reconciliation_trigger_before_live_persistence"
+    "server_database_environment_configured": true,
+    "runtime_repository_adapter_present": true,
+    "production_reconciliation_caller_present": true,
+    "classification": "live_runtime_persistence_pass_mobile_acceptance_pending",
+    "required_next_step": "complete real mobile Shopify Admin acceptance, record explicit product-owner acceptance, then close EO-02-C"
+  },
+  "runtime_live_acceptance": {
+    "checked_at": "2026-10-08T11:59:00Z",
+    "desktop_shopify_admin_initial_load": "pass",
+    "desktop_shopify_admin_full_reload": "pass",
+    "previous_preview_load_error_resolved": true,
+    "vercel_runtime_tls_auth_warnings_or_errors": 0,
+    "encrypted_runtime_sessions": 1,
+    "active_generation_one_installations": 1,
+    "active_subscription_projections": 1,
+    "active_entitlement_projections": 1,
+    "mobile_shopify_admin": "pending",
+    "note": "Production deployment loaded inside Shopify Admin and loaded again after a full Admin-page reload. The database contains one ciphertext-only runtime session and one generation-bound active entitlement projection. Real mobile Shopify Admin acceptance remains open."
   }
 }

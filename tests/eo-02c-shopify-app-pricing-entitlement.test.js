@@ -59,6 +59,10 @@ test("official Partner API version and query fields are pinned", () => {
   assert.match(ACTIVE_SUBSCRIPTION_QUERY, /currentBillingCycle/);
   assert.equal(contract.decision.billing_authority, "shopify_app_pricing");
   assert.equal(contract.decision.appSubscriptionCreate, false);
+  assert.equal(
+    contract.decision.price_active_semantics,
+    "catalog_price_version_metadata_not_subscription_entitlement_authority",
+  );
 });
 
 test("future Shopify trial becomes a generation-bound trial entitlement", async () => {

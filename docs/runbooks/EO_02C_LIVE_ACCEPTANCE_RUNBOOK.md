@@ -2,7 +2,7 @@
 
 **Kontrol tarihi:** 8 Ekim 2026  
 **Canlı uygulama tarihi:** 8 Ekim 2026  
-**Durum:** Null, trial ve active provider kabulü PASS; sızıntı kabulü PASS; Production database Secret, doğrulanmış TLS ve canlı desktop persistence PASS; gerçek mobil Shopify Admin kabulü ve açık ürün sahibi kapanış onayı bekleniyor
+**Durum:** Null, trial ve active provider kabulü PASS; sızıntı, doğrulanmış TLS, canlı desktop persistence ve gerçek mobil Shopify Admin kabulü PASS; açık ürün sahibi kapanış onayı bekleniyor
 
 ## Amaç
 
@@ -180,6 +180,15 @@ Shopify farklı bir response şekli döndürürse yorum yapılmaz; ham redacted 
 - Runtime session satırı ciphertext, 12-byte nonce, 16-byte authentication tag ve key version 1 ile doğrulandı; plaintext token alanı yoktur.
 - Son kontrol penceresinde Vercel Production runtime warning/error kaydı yoktur.
 - Gerçek mobil Shopify Admin kabulü henüz yapılmadığı için EO-02-C final PASS değildir ve EO-02-D başlamaz.
+
+## 8 Ekim 2026 gerçek mobil Shopify Admin sonucu
+
+- Ürün sahibi gerçek mobil Shopify uygulamasında AdsTable'ı açtı; ilk yükleme PASS oldu.
+- Funnel, Ad Analysis ve Settings route'larının üçü de mobil uygulama içinde açıldı.
+- Shopify mobil uygulaması tamamen kapatılıp yeniden açıldı; AdsTable ve Funnel tekrar yüklendi.
+- Mobil kullanım sonrasında canlı projection sayıları değişmeden tutarlı kaldı: workspace 1, generation-1 active installation 1, encrypted runtime session 1, active subscription projection 1, active entitlement projection 1, trial ledger 0.
+- Aynı production deployment'ın kontrol edilen Vercel runtime penceresinde warning/error kaydı yoktur.
+- Teknik canlı kabul kapıları PASS'tir. EO-02-C yalnız açık ürün sahibi kapanış onayı kaydedildikten sonra kapanır.
 
 ## Aşama 6 — Sızıntı ve persistence kabulü
 

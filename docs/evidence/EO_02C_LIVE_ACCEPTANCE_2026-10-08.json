@@ -1,10 +1,10 @@
 {
   "evidence_id": "EO_02C_LIVE_ACCEPTANCE_2026-10-08",
   "schema_version": "1.0.0",
-  "status": "trial_provider_pass_runtime_price_semantics_fix_in_review_active_pending",
-  "executed_at": "2026-10-08T08:03:00Z",
-  "source_commit": "e05fed1826fa03b86d8f809d19a8098e741819ea",
-  "production_deployment_id": "dpl_EzuuB2a4NqHAH3kGj3EuPihStG8r",
+  "status": "null_trial_and_active_provider_pass_runtime_persistence_and_leak_checks_pending",
+  "executed_at": "2026-10-08T08:46:00Z",
+  "source_commit": "2afe0083efe269574dc5f1759fe7762fe18a87a2",
+  "production_deployment_id": "dpl_CtweiU8YdzpoAxXKFibrDtwBgxyN",
   "official_sources_checked_at": "2026-10-08",
   "secret_policy": {
     "token_recorded": false,
@@ -73,15 +73,26 @@
       },
       "pending_update_is_null": true,
       "provider_result": "pass",
-      "projected_entitlement": "pending_runtime_fix_and_live_persistence",
-      "result": "provider_pass_runtime_pending"
+      "projected_entitlement": "trial",
+      "result": "provider_pass_runtime_persistence_pending"
     },
     "active": {
-      "trial_ends_at_is_null": null,
-      "current_cycle_start": null,
-      "current_cycle_end": null,
-      "projected_entitlement": null,
-      "result": "pending"
+      "trial_ends_at_is_null": true,
+      "billing_period": "EVERY_30_DAYS",
+      "cancel_at_end_of_cycle": false,
+      "current_cycle_start": "2026-10-08T08:45:05Z",
+      "current_cycle_end": "2026-11-07T08:45:05Z",
+      "item_handle": "shopify-test",
+      "price_type": "FlatRatePrice",
+      "price_active": true,
+      "effective_price": {
+        "amount": "0.0",
+        "currency": "USD"
+      },
+      "pending_update_is_null": true,
+      "provider_result": "pass",
+      "projected_entitlement": "active",
+      "result": "provider_pass_runtime_persistence_pending"
     }
   },
   "price_active_semantics": {

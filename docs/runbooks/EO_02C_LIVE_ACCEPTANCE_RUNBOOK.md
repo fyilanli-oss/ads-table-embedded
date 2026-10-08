@@ -2,7 +2,7 @@
 
 **Kontrol tarihi:** 8 Ekim 2026  
 **Canlı uygulama tarihi:** 8 Ekim 2026  
-**Durum:** Null ve trial provider kabulü PASS; runtime price semantiği düzeltmesi, active ve persistence kabulü açık
+**Durum:** Null, trial ve active provider kabulü PASS; runtime persistence ve sızıntı kabulü açık
 
 ## Amaç
 
@@ -136,6 +136,14 @@ Beklenen canlı sonuç:
 - Test contract effective recurring price'ı sıfır olabilir; ürünün public fiyatı yine USD 24.99'dur.
 
 Shopify farklı bir response şekli döndürürse yorum yapılmaz; ham redacted response kaydedilir ve contract güncellemesi için durulur.
+
+## 8 Ekim 2026 canlı active bulgusu
+
+- `adstable-development.myshopify.com` mağazası `shopify-test` private planına yetkilendirildi.
+- Shopify hosted onay ekranı planın ücretsiz olduğunu ve faturalandırma yapılmayacağını gösterdi.
+- Başarılı dönüş `plan_handle=shopify-test` taşıdı.
+- Partner API ham sonucu `trialEndsAt=null`, `currentBillingCycle.startTime=2026-10-08T08:45:05Z`, `currentBillingCycle.endTime=2026-11-07T08:45:05Z`, `handle=shopify-test`, effective `USD 0.0`, `price.active=true` ve `pendingUpdate=null` döndürdü.
+- Active provider kabulü PASS; runtime persistence ve sızıntı kontrolleri pending'dir.
 
 ## Aşama 6 — Sızıntı ve persistence kabulü
 

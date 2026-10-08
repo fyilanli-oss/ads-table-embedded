@@ -95,7 +95,13 @@ test("EO-02-C live evidence preserves the provider/runtime boundary", () => {
   });
   assert.equal(evidence.runtime_live_acceptance.desktop_shopify_admin_initial_load, "pass");
   assert.equal(evidence.runtime_live_acceptance.desktop_shopify_admin_full_reload, "pass");
-  assert.equal(evidence.runtime_live_acceptance.mobile_shopify_admin, "pending");
+  assert.equal(evidence.runtime_live_acceptance.mobile_shopify_admin, "pass");
+  assert.deepEqual(evidence.runtime_live_acceptance.mobile_routes, {
+    funnel: "pass",
+    ad_analysis: "pass",
+    settings: "pass",
+  });
+  assert.equal(evidence.runtime_live_acceptance.mobile_full_app_close_and_reopen, "pass");
   assert.equal(evidence.runtime_live_acceptance.vercel_runtime_tls_auth_warnings_or_errors, 0);
   assert.equal(evidence.final_result, "pending");
   assert.equal(evidence.secret_policy.token_recorded, false);

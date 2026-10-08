@@ -19,10 +19,10 @@ export function createPrivacyLifecycleRepository(database) {
     async claimWebhook(claim) {
       const row = exactlyOneRow(
         await query(
-          \`select * from privacy.claim_shopify_webhook(
+          `select * from privacy.claim_shopify_webhook(
             $1::text, $2::text, $3::text, $4::text, $5::text,
             $6::bytea, $7::text, $8::text, $9::timestamptz, $10::timestamptz
-          )\`,
+          )`,
           [
             claim.webhookId,
             claim.eventId,
@@ -52,9 +52,9 @@ export function createPrivacyLifecycleRepository(database) {
     async requestWorkspaceDeletion(request) {
       const row = exactlyOneRow(
         await query(
-          \`select privacy.request_workspace_deletion(
+          `select privacy.request_workspace_deletion(
             $1::text, $2::text, $3::text, $4::bigint, $5::bytea, $6::timestamptz
-          ) as deletion_run_id\`,
+          ) as deletion_run_id`,
           [
             request.requestKey,
             request.shopId,

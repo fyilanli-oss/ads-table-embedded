@@ -1,0 +1,116 @@
+{
+  "evidence_id": "EO_02C_LIVE_ACCEPTANCE_2026-10-08",
+  "schema_version": "1.0.0",
+  "status": "trial_provider_pass_runtime_price_semantics_fix_in_review_active_pending",
+  "executed_at": "2026-10-08T08:03:00Z",
+  "source_commit": "e05fed1826fa03b86d8f809d19a8098e741819ea",
+  "production_deployment_id": "dpl_EzuuB2a4NqHAH3kGj3EuPihStG8r",
+  "official_sources_checked_at": "2026-10-08",
+  "secret_policy": {
+    "token_recorded": false,
+    "authorization_header_recorded": false,
+    "cookies_or_sessions_recorded": false,
+    "pii_recorded": false
+  },
+  "installation": {
+    "shop_domain": "adstable-development.myshopify.com",
+    "shop_gid": "gid://shopify/Shop/75618484313",
+    "app_gid": "gid://shopify/App/432251994113",
+    "app_client_id": "58c91f39f69ca282a94ba06e9648be9e",
+    "shopify_admin_app_handle": "adstable-1",
+    "application_url": "https://embedded.adstable.app/",
+    "app_and_store_same_dev_dashboard_organization": false,
+    "free_for_partners_and_developers": true,
+    "installed_target_verified": true
+  },
+  "runtime_environment": {
+    "project_id": "prj_RVvXZGLuj9ItUAqvMJvb1GOTd8Lr",
+    "scopes": {
+      "SHOPIFY_PARTNER_ORG_ID": "production_config",
+      "SHOPIFY_PARTNER_API_ACCESS_TOKEN": "production_secret",
+      "SHOPIFY_APP_GID": "production_config"
+    },
+    "preview_has_production_token": false,
+    "development_has_production_token": false,
+    "new_deployment_after_change": true
+  },
+  "shopify_plan": {
+    "public_plan_name": "AdsTable Monthly",
+    "handle": "adstable-monthly",
+    "monthly_price": {
+      "amount": "24.99",
+      "currency": "USD"
+    },
+    "trial_days": 14,
+    "welcome_link": "/",
+    "development_store_effective_price": {
+      "amount": "0.0",
+      "currency": "USD"
+    },
+    "private_active_acceptance_plan": "shopify-test",
+    "real_charge_expected": false
+  },
+  "states": {
+    "null": {
+      "redacted_response_hash": "sha256:2ccde1d8c3fe620699142ec13a1cf38dee6d63c3beaa89a6920859781c7868ea",
+      "active_subscription_is_null": true,
+      "provider_result": "pass",
+      "projected_entitlement": "not_live_executed",
+      "result": "provider_pass"
+    },
+    "trial": {
+      "redacted_response_hash": "sha256:bc9adc93c37933601b7086fcc6b2fb241b37140a0311b73a920eca53f6b99cd0",
+      "billing_period": "EVERY_30_DAYS",
+      "cancel_at_end_of_cycle": false,
+      "trial_ends_at": "2026-10-22T08:02:49Z",
+      "current_billing_cycle_is_null": true,
+      "item_handle": "adstable-monthly",
+      "price_type": "FlatRatePrice",
+      "price_active": false,
+      "effective_price": {
+        "amount": "0.0",
+        "currency": "USD"
+      },
+      "pending_update_is_null": true,
+      "provider_result": "pass",
+      "projected_entitlement": "pending_runtime_fix_and_live_persistence",
+      "result": "provider_pass_runtime_pending"
+    },
+    "active": {
+      "trial_ends_at_is_null": null,
+      "current_cycle_start": null,
+      "current_cycle_end": null,
+      "projected_entitlement": null,
+      "result": "pending"
+    }
+  },
+  "price_active_semantics": {
+    "official_meaning": "whether_this_price_version_is_current_false_if_product_was_updated_to_a_different_price",
+    "entitlement_authority": "activeSubscription_presence_plus_trial_or_current_cycle_shape",
+    "must_not_be_used_as_subscription_active_flag": true,
+    "live_free_test_observation": "effective_zero_dollar_price_returned_active_false"
+  },
+  "identity_and_persistence": {
+    "app_gid_match": true,
+    "shop_gid_match": true,
+    "canonical_domain_match": true,
+    "install_generation_match": null,
+    "reporting_store_limit_is_one": null,
+    "candidate_detection_billed_false": null,
+    "store_switch_billed_false": null,
+    "stale_snapshot_rejected": null
+  },
+  "leak_checks": {
+    "browser_bundle": "pending",
+    "http_responses": "pending",
+    "application_logs": "pending",
+    "platform_logs": "pending"
+  },
+  "rollback": {
+    "required": false,
+    "action": null,
+    "result": null
+  },
+  "final_result": "pending",
+  "explicit_product_owner_acceptance": false
+}

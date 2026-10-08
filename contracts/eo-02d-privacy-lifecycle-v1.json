@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-02d-privacy-lifecycle-v1",
   "version": "1.0.0",
-  "status": "implementation",
+  "status": "verification",
   "checked_at": "2026-10-08",
   "authoritative_sources": {
     "shopify_privacy": "https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance",
@@ -77,7 +77,7 @@
     "visible_ui_owner": "A6-EO-07-A"
   },
   "live_acceptance": {
-    "status": "not_started",
+    "status": "database_migration_pass_runtime_pending",
     "production_data_deletion_authorized": false,
     "required_sequence": [
       "repository_ci_pass",
@@ -87,6 +87,14 @@
       "supabase_advisors_pass",
       "shopify_app_specific_subscription_acceptance",
       "explicit_closure"
-    ]
+    ],
+    "database_migration": "PASS",
+    "database_evidence": "docs/evidence/EO_02D_DATABASE_ACCEPTANCE_2026-10-08.json",
+    "supabase_security_advisor": "PASS_zero_findings",
+    "existing_live_state_changed": false,
+    "synthetic_rows_persisted": false,
+    "runtime_http_acceptance": "PENDING_post_deploy",
+    "shopify_app_specific_subscription_acceptance": "PENDING_post_deploy",
+    "explicit_product_owner_closure": "PENDING"
   }
 }

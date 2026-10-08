@@ -252,7 +252,7 @@ test("Shopify app configuration preserves the active version and declares exact 
     "customers/data_request",
     "customers/redact",
     "shop/redact",
-  ]) assert.match(config, new RegExp("\\"" + topic.replace("/", "\\/") + "\\""));
+  ]) assert.match(config, new RegExp(topic.replace("/", "\\/")));
   assert.match(config, /^uri = "\/webhooks\/shopify"$/m);
   assert.equal((config.match(/\[\[webhooks\.subscriptions\]\]/g) ?? []).length, 1);
 });

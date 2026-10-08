@@ -67,28 +67,36 @@ test("EO-02-C live evidence preserves the provider/runtime boundary", () => {
   assert.match(evidence.states.active.current_cycle_end, /^2026-11-07T/);
   assert.equal(
     evidence.states.active.result,
-    "provider_pass_runtime_persistence_pending",
+    "provider_and_runtime_persistence_pass",
   );
 
   assert.equal(
     evidence.price_active_semantics.must_not_be_used_as_subscription_active_flag,
     true,
   );
-  assert.equal(evidence.identity_and_persistence.install_generation_match, null);
+  assert.equal(evidence.identity_and_persistence.install_generation_match, true);
+  assert.equal(evidence.identity_and_persistence.reporting_store_limit_is_one, true);
+  assert.equal(evidence.identity_and_persistence.candidate_detection_billed_false, true);
+  assert.equal(evidence.identity_and_persistence.store_switch_billed_false, true);
   assert.equal(evidence.leak_checks.browser_bundle, "pass");
   assert.equal(evidence.leak_checks.http_responses, "pass");
   assert.equal(evidence.leak_checks.application_logs, "pass");
   assert.equal(evidence.leak_checks.platform_logs, "pass");
-  assert.equal(evidence.persistence_preflight.server_database_environment_configured, false);
-  assert.equal(evidence.persistence_preflight.runtime_repository_adapter_present, false);
-  assert.equal(evidence.persistence_preflight.production_reconciliation_caller_present, false);
+  assert.equal(evidence.persistence_preflight.server_database_environment_configured, true);
+  assert.equal(evidence.persistence_preflight.runtime_repository_adapter_present, true);
+  assert.equal(evidence.persistence_preflight.production_reconciliation_caller_present, true);
   assert.deepEqual(evidence.persistence_preflight.database_counts, {
-    workspaces: 0,
-    installations: 0,
-    workspace_subscriptions: 0,
-    workspace_entitlements: 0,
+    workspaces: 1,
+    installations: 1,
+    runtime_sessions: 1,
+    workspace_subscriptions: 1,
+    workspace_entitlements: 1,
     trial_ledger: 0,
   });
+  assert.equal(evidence.runtime_live_acceptance.desktop_shopify_admin_initial_load, "pass");
+  assert.equal(evidence.runtime_live_acceptance.desktop_shopify_admin_full_reload, "pass");
+  assert.equal(evidence.runtime_live_acceptance.mobile_shopify_admin, "pending");
+  assert.equal(evidence.runtime_live_acceptance.vercel_runtime_tls_auth_warnings_or_errors, 0);
   assert.equal(evidence.final_result, "pending");
   assert.equal(evidence.secret_policy.token_recorded, false);
 });

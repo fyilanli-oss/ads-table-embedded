@@ -15,9 +15,11 @@ test("Shopify deploy stays manual, scoped and non-destructive", async () => {
   assert.match(workflow, /inputs\.confirmation == 'DEPLOY'/);
   assert.match(workflow, /permissions:\s*\n\s*contents: read/);
   assert.match(workflow, /@shopify\/cli@4\.8\.5/);
-  assert.match(
-    workflow,
-    /SHOPIFY_APP_AUTOMATION_TOKEN: \$\{\{ secrets\.SHOPIFY_APP_AUTOMATION_TOKEN \}\}/,
+  assert.equal(
+    workflow.match(
+      /SHOPIFY_APP_AUTOMATION_TOKEN: \$\{\{ secrets\.SHOPIFY_APP_AUTOMATION_TOKEN \}\}/g,
+    )?.length,
+    2,
   );
   assert.match(workflow, /shopify app config validate --no-color/);
   assert.match(workflow, /shopify app deploy --allow-updates/);

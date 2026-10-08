@@ -205,6 +205,6 @@ Tek aktif parent **EO-02**'dir.
 
 - **EO-02-A — Accepted:** Private schema ve least-privilege Supabase foundation kabul edildi.
 - **EO-02-B — Accepted:** Workspace, installation ve generation authority kabul edildi.
-- **EO-02-C — Verification:** Shopify App Pricing + Partner API authority, server resolver ve canlı database projection/probe hazırdır; Partner Dashboard plan/trial ayarı ile canlı Partner API kabulü beklenir.
+- **EO-02-C — Verification:** Null/trial/active Partner API ve sızıntı kabulü PASS; database schema/functions hazırdır. Production server database bağlantısı, canlı repository adapter'ı, doğrulanmış non-public reconciliation caller'ı ve gerçek persistence evidence açık kalır.
 - **EO-02-D — Not started:** EO-02-C kabul edilmeden başlamaz.
 - EO-03 ve sonraki parent'lar paralel başlatılmaz.

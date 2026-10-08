@@ -2,7 +2,7 @@
 
 **Kontrol tarihi:** 8 Ekim 2026  
 **Canlı uygulama tarihi:** 8 Ekim 2026  
-**Durum:** Null, trial ve active provider kabulü PASS; runtime persistence ve sızıntı kabulü açık
+**Durum:** Null, trial ve active provider kabulü PASS; sızıntı kabulü PASS; runtime persistence eksik server database bağlantısı nedeniyle açık
 
 ## Amaç
 
@@ -144,6 +144,16 @@ Shopify farklı bir response şekli döndürürse yorum yapılmaz; ham redacted 
 - Başarılı dönüş `plan_handle=shopify-test` taşıdı.
 - Partner API ham sonucu `trialEndsAt=null`, `currentBillingCycle.startTime=2026-10-08T08:45:05Z`, `currentBillingCycle.endTime=2026-11-07T08:45:05Z`, `handle=shopify-test`, effective `USD 0.0`, `price.active=true` ve `pendingUpdate=null` döndürdü.
 - Active provider kabulü PASS; runtime persistence ve sızıntı kontrolleri pending'dir.
+
+## 8 Ekim 2026 Aşama 6 preflight bulgusu
+
+- Production HTML ve client asset taraması PASS.
+- Son 24 saat application/platform log taraması PASS.
+- Canlı Supabase business row sayımı 0/0/0/0/0 kaldı.
+- Vercel Production environment'ta database runtime credential'ı yoktur.
+- Repository'de canlı database repository adapter'ı ve production reconciliation caller'ı yoktur.
+- Bu nedenle persistence PASS sayılamaz. Önce server-only least-privilege bağlantı ve public olmayan doğrulanmış tetikleme uygulanır; ardından generation/stale/reporting-store kontrolleri canlı çalıştırılır.
+- Geçici public test endpoint'i, browser database client'ı veya `service_role` fallback'i yasaktır.
 
 ## Aşama 6 — Sızıntı ve persistence kabulü
 

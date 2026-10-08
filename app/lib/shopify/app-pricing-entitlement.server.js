@@ -124,7 +124,10 @@ function normalizeActiveSubscription(payload, installation, observedAt) {
     throw new Error("ACTIVE_SUBSCRIPTION_ITEMS_REQUIRED");
   }
   const itemHandles = subscription.items.map((item) => {
-    if (!ITEM_HANDLE_PATTERN.test(item?.handle || "") || item?.price?.active !== true) {
+    if (
+      !ITEM_HANDLE_PATTERN.test(item?.handle || "") ||
+      typeof item?.price?.active !== "boolean"
+    ) {
       throw new Error("INVALID_ACTIVE_SUBSCRIPTION_ITEM");
     }
     return item.handle;

@@ -350,11 +350,14 @@
           "subscription_read_authority": "Partner API 2026-07 activeSubscription",
           "database_acceptance": "PASS",
           "acceptance_evidence": "docs/evidence/EO_02C_DATABASE_ACCEPTANCE_2026-10-06.json",
-          "remaining_gate": "Partner Dashboard plan/trial configuration, Vercel secret activation under a frozen runtime environment contract, and live trial/active/null acceptance",
+          "remaining_gate": "server-only least-privilege database connection, live repository adapter, non-public authenticated reconciliation caller, runtime persistence evidence and explicit product-owner closure",
           "partner_api_client_authentication": "PASS",
           "partner_api_client_id": "38724",
           "partner_api_client_permission": "manage_apps_only",
-          "partner_api_client_evidence_date": "2026-10-07"
+          "partner_api_client_evidence_date": "2026-10-07",
+          "provider_acceptance": "PASS_null_trial_active",
+          "leak_acceptance": "PASS_browser_http_application_and_platform_logs",
+          "persistence_acceptance": "PENDING_missing_server_database_connection_adapter_and_caller"
         },
         {
           "id": "A6-EO-02-D",
@@ -810,7 +813,7 @@
   "legacy_deletion_authorized": false,
   "current_active_parent": "A6-EO-02",
   "current_active_child": "A6-EO-02-C",
-  "current_gate": "EO-02-C_partner_configuration_and_live_partner_api_acceptance",
+  "current_gate": "EO-02-C_runtime_persistence_connection_adapter_caller_and_live_evidence",
   "next_ready_child": null,
   "independent_packages": [
     {

@@ -75,7 +75,20 @@ test("EO-02-C live evidence preserves the provider/runtime boundary", () => {
     true,
   );
   assert.equal(evidence.identity_and_persistence.install_generation_match, null);
-  assert.equal(evidence.leak_checks.browser_bundle, "pending");
+  assert.equal(evidence.leak_checks.browser_bundle, "pass");
+  assert.equal(evidence.leak_checks.http_responses, "pass");
+  assert.equal(evidence.leak_checks.application_logs, "pass");
+  assert.equal(evidence.leak_checks.platform_logs, "pass");
+  assert.equal(evidence.persistence_preflight.server_database_environment_configured, false);
+  assert.equal(evidence.persistence_preflight.runtime_repository_adapter_present, false);
+  assert.equal(evidence.persistence_preflight.production_reconciliation_caller_present, false);
+  assert.deepEqual(evidence.persistence_preflight.database_counts, {
+    workspaces: 0,
+    installations: 0,
+    workspace_subscriptions: 0,
+    workspace_entitlements: 0,
+    trial_ledger: 0,
+  });
   assert.equal(evidence.final_result, "pending");
   assert.equal(evidence.secret_policy.token_recorded, false);
 });

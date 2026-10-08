@@ -1,7 +1,7 @@
 # EO-02-C — Shopify App Pricing trial, subscription and entitlement
 
 **Kontrol tarihi:** 8 Ekim 2026  
-**Durum:** Database ve Partner API authentication PASS; null/trial/active provider kabulü PASS; runtime persistence ve sızıntı kabulü açık
+**Durum:** Database ve null/trial/active provider kabulü PASS; browser/response/log sızıntı kontrolü PASS; runtime persistence eksik server veritabanı bağlantısı nedeniyle açık
 
 ## Analist sonucu
 
@@ -61,6 +61,16 @@ Kaynaklar:
 - Current billing cycle `2026-10-08T08:45:05Z → 2026-11-07T08:45:05Z` olarak oluştu.
 - Subscription item handle `shopify-test`; effective fiyat `USD 0.0`; `price.active=true` gözlendi.
 - Bu sonuç active provider durumunu PASS yapar. Runtime DB projection/persistence ve secret/log/browser sızıntı kontrolleri tamamlanmadan EO-02-C kapanmaz.
+
+## 8 Ekim 2026 runtime persistence preflight sonucu
+
+- Production deployment `dpl_CtweiU8YdzpoAxXKFibrDtwBgxyN`, source commit `2afe0083efe269574dc5f1759fe7762fe18a87a2` ve Vercel Production environment metadata'sı salt okunur denetlendi.
+- Production'da yalnız üç Shopify Partner anahtarı vardır; Supabase server runtime bağlantısı tanımlı değildir.
+- Repository'de Partner API normalizer/orchestrator ve database functions hazırdır; fakat canlı database repository adapter'ı ve onu çağıran production reconciliation akışı yoktur.
+- Canlı Supabase sayımları: workspace 0, installation 0, subscription 0, entitlement 0, trial ledger 0.
+- Bu durum provider veya Supabase arızası değildir. Eksik implementation nedeniyle provider PASS sonucu database'e kendiliğinden yazılamaz.
+- Production HTML, altı istemci asset'i ve son 24 saat Vercel runtime logları tarandı. Server-only değişken adı, Partner endpoint kimliği, App GID, access-token header/değeri, authorization header, cookie veya session sızıntısı bulunmadı; dört sızıntı kapısı PASS oldu.
+- EO-02-C kapanmadan önce server-only least-privilege database bağlantısı, gerçek repository adapter'ı ve public olmayan doğrulanmış reconciliation tetikleyicisi branch/CI/live evidence ile tamamlanmalıdır. Geçici public test endpoint'i açılamaz.
 
 ## Runtime environment sözleşmesi
 
@@ -148,4 +158,4 @@ Development store kabul sırası `null → intended USD 24.99 / 14-day trial →
 - Repository test/build/CI PASS olmalıdır.
 - Supabase migration ve self-cleaning behavioral probe canlı PASS oldu; üç billing tablosunun RLS/forced RLS sonucu 3/3, runtime direct DML sonucu 0, runtime function access sonucu 2/2, Security ve Performance Advisor sonucu 0/0 ve kalan probe satırı 0'dır.
 - Evidence: `docs/evidence/EO_02C_DATABASE_ACCEPTANCE_2026-10-06.json`.
-- Partner Dashboard plan/trial ayarı, exact Vercel runtime secret aktivasyonu ve gerçek null/trial/active provider kabulü PASS olmuştur. Runtime DB projection/persistence ile secret/log/browser sızıntı kontrolleri hâlâ açık insan kapısıdır; Partner API client oluşturma ve `Manage apps` authentication kapısı 7 Ekim 2026'da PASS olmuştur.
+- Partner Dashboard plan/trial ayarı, exact Vercel runtime secret aktivasyonu ve gerçek null/trial/active provider kabulü PASS olmuştur. Browser/response/application/platform log sızıntı kontrolleri PASS olmuştur. Runtime DB projection/persistence, eksik server database bağlantısı ve repository adapter'ı tamamlanana kadar açık kalır; Partner API client oluşturma ve `Manage apps` authentication kapısı 7 Ekim 2026'da PASS olmuştur.

@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-02c-shopify-app-pricing-entitlement-v1",
-  "version": "1.4.0",
-  "status": "null_trial_and_active_provider_pass_runtime_persistence_and_leak_checks_pending",
+  "version": "1.5.0",
+  "status": "provider_and_leak_pass_runtime_persistence_blocked_by_missing_server_database_connection",
   "checked_at": "2026-10-08",
   "authoritative_sources": {
     "shopify_app_pricing": "https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing",
@@ -148,7 +148,7 @@
     "project_id": "podpwkrpmjiksskxhwsu",
     "evidence": "docs/evidence/EO_02C_LIVE_ACCEPTANCE_2026-10-08.json",
     "database_result": "pass",
-    "partner_api_result": "null_trial_and_active_provider_pass_runtime_persistence_and_leak_checks_pending",
+    "partner_api_result": "null_trial_active_and_leak_checks_pass_runtime_persistence_pending",
     "residual_business_rows": 0,
     "security_advisor_lints": 0,
     "performance_advisor_lints": 0,
@@ -206,8 +206,19 @@
         "item_handle": "shopify-test",
         "effective_price_amount": "0.0",
         "price_active": true,
-        "runtime_projection": "pending_live_persistence"
+        "runtime_projection": "blocked_missing_server_database_connection"
       }
+    },
+    "runtime_persistence_preflight": {
+      "checked_at": "2026-10-08",
+      "production_deployment": "dpl_CtweiU8YdzpoAxXKFibrDtwBgxyN",
+      "production_source_commit": "2afe0083efe269574dc5f1759fe7762fe18a87a2",
+      "database_business_rows": 0,
+      "server_database_environment_configured": false,
+      "runtime_repository_adapter_present": false,
+      "production_reconciliation_caller_present": false,
+      "browser_http_application_and_platform_log_leak_checks": "PASS",
+      "result": "implementation_gap_requires_branch_code_and_separate_live_activation_gate"
     }
   },
   "runtime_environment_contract": {

@@ -25,11 +25,13 @@ export function createShopifyRuntimeRepositories(database) {
 
   return Object.freeze({
     installation: Object.freeze({
-      async bootstrap({shopId, shopDomain, verifiedAt}) {
+      async bootstrap({shopId, shopDomain, shopIdentitySha256, verifiedAt}) {
         const row = exactlyOneRow(
           await query(
-            `select * from shopify.bootstrap_installation($1::text, $2::text, $3::timestamptz)`,
-            [shopId, shopDomain, verifiedAt],
+            `select * from shopify.bootstrap_installation(
+              $1::text, $2::text, $3::bytea, $4::timestamptz
+            )`,
+            [shopId, shopDomain, shopIdentitySha256, verifiedAt],
           ),
           "INSTALLATION_BOOTSTRAP",
         );

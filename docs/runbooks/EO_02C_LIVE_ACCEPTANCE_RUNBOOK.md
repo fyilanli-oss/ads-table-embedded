@@ -1,8 +1,8 @@
 # EO-02-C — Shopify App Pricing canlı kabul runbook'u
 
-**Kontrol tarihi:** 7 Ekim 2026  
-**Canlı uygulama tarihi:** Kart doğrulama bekleme süresi sonrasında  
-**Durum:** Hazır; hiçbir canlı mutation bu belge hazırlanırken yapılmadı
+**Kontrol tarihi:** 8 Ekim 2026  
+**Canlı uygulama tarihi:** 8 Ekim 2026  
+**Durum:** Null ve trial provider kabulü PASS; runtime price semantiği düzeltmesi, active ve persistence kabulü açık
 
 ## Amaç
 
@@ -20,7 +20,7 @@ Shopify App Pricing planını, Partner API Production secret sınırını ve Ads
 - https://vercel.com/docs/environment-variables
 - https://vercel.com/docs/environment-variables/sensitive-environment-variables
 
-Shopify aynı Partner organizasyonundaki development store'un kullanılabilir ücretli planları gerçek ücret olmadan seçmesine izin verir ve effective price'ı sıfır olan subscription contract oluşturur. Vercel Secret değerleri kaydedildikten sonra okunamaz; environment değişikliği yalnız yeni deployment'a uygulanır.
+Shopify aynı Partner organizasyonundaki development store'a kullanılabilir tüm planları; farklı Partner organizasyonundaki development store'a ise ücretsiz veya Partner'ın **Free for partners and developers** olarak işaretlediği ücretli planları gerçek ücret olmadan test ettirir. Bu testte effective price sıfır olabilir. Vercel Secret değerleri kaydedildikten sonra okunamaz; environment değişikliği yalnız yeni deployment'a uygulanır.
 
 ## İnsan kapıları
 
@@ -41,7 +41,7 @@ Aşağıdaki işlemler kullanıcı görünür onayı olmadan yapılmaz:
 | Fiyat | USD 24.99 |
 | Trial | 14 gün |
 | Welcome link | `/` |
-| Development store test | Aynı Partner organizasyonunda ücret yok |
+| Development store test | Farklı Dev Dashboard organizasyonu; `Free for partners and developers` açık, gerçek ücret yok |
 | Private acceptance planı | Shopify'ın `$0 private test plan`ı, trial yok |
 | Aynı anda aktif subscription | Bir |
 
@@ -52,7 +52,7 @@ Private test plan yalnız `active` durum şeklinin canlı kabulü içindir; merc
 - GitHub `main`, production deployment SHA ve mevcut Vercel environment anahtar adları kaydedilir.
 - Vercel değerleri okunmaz veya dışarı aktarılmaz.
 - Partner API client'ın yalnız `Manage apps` yetkisi taşıdığı doğrulanır.
-- Development store'un app ile aynı Partner organizasyonuna ait olduğu doğrulanır.
+- Development store/app organizasyon ilişkisi doğrulanır; farklı organizasyondaysa yalnız `Free for partners and developers` açık plan kullanılır.
 - Kanıt dosyasına token, session, cookie, authorization header, PII veya tam response header yazılamaz.
 
 Başarısızlıkta hiçbir mutation yapılmaz.
@@ -108,10 +108,20 @@ Beklenen:
 - `trialEndsAt` gelecektedir.
 - `currentBillingCycle === null`.
 - Subscription item handle kaydedilir; fiyat yalnız redacted business evidence olarak yazılır.
+- `price.active`, subscription aktiflik bayrağı değildir; yalnız fiyat sürümünün güncel katalog fiyatı olup olmadığını gösterir ve entitlement kapısı yapılamaz.
 - AdsTable projection `trial` olur ve Reporting Store limiti 1 kalır.
 - Candidate detection ve store switch charge üretmez.
 
 Bu development store için trial tekrarına güvenilmez; Shopify 180 günlük trial kullanımını izler.
+
+## 8 Ekim 2026 canlı trial bulgusu
+
+- Yeni uygulama Shopify Admin'de `adstable-1` handle'ıyla ve `embedded.adstable.app` application URL'iyle kuruldu.
+- Public `AdsTable Monthly` planı `USD 24.99 / 30 gün`, 14 gün trial ve `/` welcome link ile seçildi.
+- Farklı Dev Dashboard organizasyonundaki development store için `Free for partners and developers` açık olduğundan Shopify effective fiyatı `USD 0.0` oluşturdu.
+- Partner API `activeSubscription` trial şeklini doğruladı: `trialEndsAt=2026-10-22T08:02:49Z`, `currentBillingCycle=null`, `pendingUpdate=null`.
+- Effective sıfır fiyat nesnesi `price.active=false` döndürdü. Shopify'ın resmî 2026-07 sözleşmesinde bu alan fiyat sürümünün güncelliğidir; active subscription veya entitlement bayrağı değildir.
+- Bu bulgu nedeniyle runtime'ın `price.active === true` şartı kaldırılmadan trial persistence PASS sayılamaz.
 
 ## Aşama 5 — Active kabulü
 
@@ -121,7 +131,7 @@ Beklenen canlı sonuç:
 
 - `trialEndsAt === null`.
 - `currentBillingCycle.startTime` ve `endTime` doludur.
-- Active item `price.active === true`.
+- Subscription item handle doğrulanır; `price.active` değeri entitlement kararı vermez.
 - AdsTable projection `active` olur.
 - Test contract effective recurring price'ı sıfır olabilir; ürünün public fiyatı yine USD 24.99'dur.
 

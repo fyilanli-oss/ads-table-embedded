@@ -28,7 +28,7 @@ test("runtime database config is exact, server-only and transaction-pooled", () 
   assert.equal(config.connectionMode, "transaction_pooler");
   assert.equal(config.ssl.rejectUnauthorized, true);
   assert.match(config.ssl.ca, /^-----BEGIN CERTIFICATE-----/);
-  assert.match(config.ssl.ca, /-----END CERTIFICATE-----\\n$/);
+  assert.match(config.ssl.ca, /-----END CERTIFICATE-----\n$/);
 
   for (const invalid of [
     connectionString.replace("adstable_runtime", "postgres"),

@@ -19,15 +19,16 @@ const connectionString =
 
 test("runtime database config is exact, server-only and transaction-pooled", () => {
   assert.equal(ADSTABLE_RUNTIME_DATABASE_ENV, "ADSTABLE_RUNTIME_DATABASE_URL");
-  assert.deepEqual(
-    readRuntimeDatabaseConfig({ADSTABLE_RUNTIME_DATABASE_URL: connectionString}),
-    {
-      connectionString,
-      projectRef: "podpwkrpmjiksskxhwsu",
-      role: "adstable_runtime",
-      connectionMode: "transaction_pooler",
-    },
-  );
+  const config = readRuntimeDatabaseConfig({
+    ADSTABLE_RUNTIME_DATABASE_URL: connectionString,
+  });
+  assert.equal(config.connectionString, connectionString.replace("?sslmode=require", ""));
+  assert.equal(config.projectRef, "podpwkrpmjiksskxhwsu");
+  assert.equal(config.role, "adstable_runtime");
+  assert.equal(config.connectionMode, "transaction_pooler");
+  assert.equal(config.ssl.rejectUnauthorized, true);
+  assert.match(config.ssl.ca, /^-----BEGIN CERTIFICATE-----/);
+  assert.match(config.ssl.ca, /-----END CERTIFICATE-----\\n$/);
 
   for (const invalid of [
     connectionString.replace("adstable_runtime", "postgres"),
@@ -63,6 +64,8 @@ test("database client creates one bounded serverless pool without logging creden
   assert.equal(observedConfig.max, 1);
   assert.equal(observedConfig.connectionTimeoutMillis, 5_000);
   assert.equal(observedConfig.application_name, "adstable-runtime");
+  assert.equal(observedConfig.connectionString.includes("sslmode="), false);
+  assert.equal(observedConfig.ssl.rejectUnauthorized, true);
   assert.equal("password" in observedConfig, false);
   assert.deepEqual(await client.query("select $1::integer as value", [1]), {rows: [{ok: true}]});
   assert.deepEqual(observedQuery, {text: "select $1::integer as value", values: [1]});

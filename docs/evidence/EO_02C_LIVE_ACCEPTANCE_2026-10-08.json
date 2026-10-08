@@ -1,8 +1,8 @@
 {
   "evidence_id": "EO_02C_LIVE_ACCEPTANCE_2026-10-08",
   "schema_version": "1.0.0",
-  "status": "runtime_desktop_persistence_pass_mobile_shopify_admin_acceptance_pending",
-  "executed_at": "2026-10-08T11:59:00Z",
+  "status": "pass",
+  "executed_at": "2026-10-08T12:25:00Z",
   "source_commit": "3b33d4f05a2604c23ec6181c584752a63390d106",
   "production_deployment_id": "dpl_C8be2uodW3onwMQGYyA9gSwCqCWG",
   "official_sources_checked_at": "2026-10-08",
@@ -115,7 +115,8 @@
     "reporting_store_limit_is_one": true,
     "candidate_detection_billed_false": true,
     "store_switch_billed_false": true,
-    "stale_snapshot_rejected": null
+    "stale_snapshot_rejected": true,
+    "stale_snapshot_evidence": "docs/evidence/EO_02C_DATABASE_ACCEPTANCE_2026-10-06.json#behavioral_probe.stale_snapshot_rejection"
   },
   "leak_checks": {
     "browser_bundle": "pass",
@@ -133,10 +134,10 @@
     "action": null,
     "result": null
   },
-  "final_result": "pending",
-  "explicit_product_owner_acceptance": false,
+  "final_result": "pass",
+  "explicit_product_owner_acceptance": true,
   "persistence_preflight": {
-    "checked_at": "2026-10-08T11:59:00Z",
+    "checked_at": "2026-10-08T12:19:00Z",
     "production_source_commit": "3b33d4f05a2604c23ec6181c584752a63390d106",
     "production_deployment_id": "dpl_C8be2uodW3onwMQGYyA9gSwCqCWG",
     "database_counts": {
@@ -150,11 +151,11 @@
     "server_database_environment_configured": true,
     "runtime_repository_adapter_present": true,
     "production_reconciliation_caller_present": true,
-    "classification": "live_runtime_persistence_pass_mobile_acceptance_pending",
-    "required_next_step": "complete real mobile Shopify Admin acceptance, record explicit product-owner acceptance, then close EO-02-C"
+    "classification": "pass",
+    "required_next_step": null
   },
   "runtime_live_acceptance": {
-    "checked_at": "2026-10-08T11:59:00Z",
+    "checked_at": "2026-10-08T12:19:00Z",
     "desktop_shopify_admin_initial_load": "pass",
     "desktop_shopify_admin_full_reload": "pass",
     "previous_preview_load_error_resolved": true,
@@ -163,7 +164,21 @@
     "active_generation_one_installations": 1,
     "active_subscription_projections": 1,
     "active_entitlement_projections": 1,
-    "mobile_shopify_admin": "pending",
-    "note": "Production deployment loaded inside Shopify Admin and loaded again after a full Admin-page reload. The database contains one ciphertext-only runtime session and one generation-bound active entitlement projection. Real mobile Shopify Admin acceptance remains open."
+    "mobile_shopify_admin": "pass",
+    "note": "Production loaded in desktop Shopify Admin, survived a full Admin-page reload, then loaded in the real mobile Shopify app across Funnel, Ad Analysis and Settings and survived a full mobile app close and reopen. Database projection counts remained stable and the checked Vercel runtime window contained no warning or error. Explicit product-owner closure acceptance remains open.",
+    "mobile_initial_load": "pass",
+    "mobile_routes": {
+      "funnel": "pass",
+      "ad_analysis": "pass",
+      "settings": "pass"
+    },
+    "mobile_full_app_close_and_reopen": "pass"
+  },
+  "closure": {
+    "accepted_at": "2026-10-08T12:25:00Z",
+    "accepted_by": "product_owner",
+    "acceptance_statement": "EO-02-C kapanışını kabul ediyorum",
+    "technical_open_items": 0,
+    "next_package": "EO-02-D"
   }
 }

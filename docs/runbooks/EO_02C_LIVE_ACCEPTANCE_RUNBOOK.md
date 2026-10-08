@@ -2,7 +2,7 @@
 
 **Kontrol tarihi:** 8 Ekim 2026  
 **Canlı uygulama tarihi:** 8 Ekim 2026  
-**Durum:** Null, trial ve active provider kabulü PASS; sızıntı kabulü PASS; Production database Secret, doğrulanmış TLS ve canlı desktop persistence PASS; gerçek mobil Shopify Admin kabulü ve açık ürün sahibi kapanış onayı bekleniyor
+**Durum:** Accepted — provider, sızıntı, doğrulanmış TLS, canlı desktop/mobile persistence ve ürün sahibi kapanış kabulü PASS
 
 ## Amaç
 
@@ -181,6 +181,15 @@ Shopify farklı bir response şekli döndürürse yorum yapılmaz; ham redacted 
 - Son kontrol penceresinde Vercel Production runtime warning/error kaydı yoktur.
 - Gerçek mobil Shopify Admin kabulü henüz yapılmadığı için EO-02-C final PASS değildir ve EO-02-D başlamaz.
 
+## 8 Ekim 2026 gerçek mobil Shopify Admin sonucu
+
+- Ürün sahibi gerçek mobil Shopify uygulamasında AdsTable'ı açtı; ilk yükleme PASS oldu.
+- Funnel, Ad Analysis ve Settings route'larının üçü de mobil uygulama içinde açıldı.
+- Shopify mobil uygulaması tamamen kapatılıp yeniden açıldı; AdsTable ve Funnel tekrar yüklendi.
+- Mobil kullanım sonrasında canlı projection sayıları değişmeden tutarlı kaldı: workspace 1, generation-1 active installation 1, encrypted runtime session 1, active subscription projection 1, active entitlement projection 1, trial ledger 0.
+- Aynı production deployment'ın kontrol edilen Vercel runtime penceresinde warning/error kaydı yoktur.
+- Teknik canlı kabul kapıları PASS'tir. EO-02-C yalnız açık ürün sahibi kapanış onayı kaydedildikten sonra kapanır.
+
 ## Aşama 6 — Sızıntı ve persistence kabulü
 
 - Browser bundle ve response'larda üç server-only değerin hiçbirinin bulunmadığı doğrulanır.
@@ -201,6 +210,13 @@ Herhangi bir aşama başarısızsa:
 4. Vercel Production Secret kaldırılır/değiştirilir ve yeni deployment alınır; eski deployment'ın env değişikliğinden etkilenmediği kabul edilir.
 5. Public plan veya trial üzerinde ikinci deneme yapılmadan önce başarısızlığın nedeni kayda alınır.
 6. EO-02-C `Verification` durumunda kalır; EO-02-D başlamaz.
+
+## 8 Ekim 2026 ürün sahibi kapanış kabulü
+
+- EO-02-C için açık teknik husus kalmadığı doğrulandı.
+- Stale snapshot rejection aynı Supabase projesindeki `docs/evidence/EO_02C_DATABASE_ACCEPTANCE_2026-10-06.json` kanıtında PASS'tir ve canlı kanıt zincirine bağlandı.
+- Ürün sahibi “EO-02-C kapanışını kabul ediyorum” diyerek açık kapanış onayını verdi.
+- EO-02-C final sonucu PASS ve durum Accepted'tır. EO-02-D ayrı paket olarak başlayabilir.
 
 ## PASS koşulu
 

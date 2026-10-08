@@ -43,3 +43,24 @@ test("EO-02-C live acceptance template preserves secret and state boundaries", (
   assert.match(runbook, /EO-02-D başlamaz/);
   assert.doesNotMatch(runbook, /SHOPIFY_PARTNER_API_ACCESS_TOKEN\s*=\s*\S+/);
 });
+
+test("EO-02-C live evidence preserves the provider/runtime boundary", () => {
+  const evidence = JSON.parse(
+    read("docs/evidence/EO_02C_LIVE_ACCEPTANCE_2026-10-08.json"),
+  );
+
+  assert.equal(evidence.installation.shopify_admin_app_handle, "adstable-1");
+  assert.equal(evidence.installation.installed_target_verified, true);
+  assert.equal(evidence.states.null.provider_result, "pass");
+  assert.equal(evidence.states.trial.provider_result, "pass");
+  assert.equal(evidence.states.trial.current_billing_cycle_is_null, true);
+  assert.equal(evidence.states.trial.price_active, false);
+  assert.equal(evidence.states.trial.effective_price.amount, "0.0");
+  assert.equal(
+    evidence.price_active_semantics.must_not_be_used_as_subscription_active_flag,
+    true,
+  );
+  assert.equal(evidence.states.active.result, "pending");
+  assert.equal(evidence.final_result, "pending");
+  assert.equal(evidence.secret_policy.token_recorded, false);
+});

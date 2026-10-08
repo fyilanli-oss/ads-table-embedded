@@ -237,3 +237,22 @@ test("live database evidence proves migration safety without claiming runtime cl
   );
   assert.equal(evidence.secrets_in_evidence, false);
 });
+
+test("Shopify app configuration preserves the active version and declares exact lifecycle subscriptions", () => {
+  const config = read("shopify.app.toml");
+  assert.match(config, /^name = "AdsTable"$/m);
+  assert.match(config, /^client_id = "58c91f39f69ca282a94ba06e9648be9e"$/m);
+  assert.match(config, /^application_url = "https:\/\/embedded\.adstable\.app\/"$/m);
+  assert.match(config, /^embedded = true$/m);
+  assert.match(config, /^scopes = ""$/m);
+  assert.match(config, /"https:\/\/embedded\.adstable\.app\/auth\/callback"/);
+  assert.match(config, /^api_version = "2026-07"$/m);
+  assert.match(config, /^topics = \["app\/uninstalled"\]$/m);
+  for (const topic of [
+    "customers/data_request",
+    "customers/redact",
+    "shop/redact",
+  ]) assert.match(config, new RegExp(topic.replace("/", "\\/")));
+  assert.match(config, /^uri = "\/webhooks\/shopify"$/m);
+  assert.equal((config.match(/\[\[webhooks\.subscriptions\]\]/g) ?? []).length, 1);
+});

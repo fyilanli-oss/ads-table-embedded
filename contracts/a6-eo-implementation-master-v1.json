@@ -350,7 +350,7 @@
           "subscription_read_authority": "Partner API 2026-07 activeSubscription",
           "database_acceptance": "PASS",
           "acceptance_evidence": "docs/evidence/EO_02C_DATABASE_ACCEPTANCE_2026-10-06.json",
-          "remaining_gate": "server-only least-privilege database connection, live repository adapter, non-public authenticated reconciliation caller, runtime persistence evidence and explicit product-owner closure",
+          "remaining_gate": "Production database Secret activation, new deployment, live function-only persistence evidence and explicit product-owner closure",
           "partner_api_client_authentication": "PASS",
           "partner_api_client_id": "38724",
           "partner_api_client_permission": "manage_apps_only",

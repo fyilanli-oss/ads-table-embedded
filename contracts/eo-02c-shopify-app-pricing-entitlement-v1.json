@@ -156,7 +156,7 @@
   "out_of_scope": [
     "Partner Dashboard plan creation or publication",
     "production price selection",
-    "Vercel Production secret value injection and live subscription-state acceptance",
+    "Vercel Production database Secret value injection and live persistence acceptance",
     "billing Settings UI",
     "uninstall deletion and clean reinstall lifecycle",
     "provider OAuth or reporting store selection implementation"

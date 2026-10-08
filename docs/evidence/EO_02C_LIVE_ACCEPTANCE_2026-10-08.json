@@ -1,8 +1,8 @@
 {
   "evidence_id": "EO_02C_LIVE_ACCEPTANCE_2026-10-08",
   "schema_version": "1.0.0",
-  "status": "runtime_desktop_and_mobile_persistence_pass_explicit_product_owner_closure_pending",
-  "executed_at": "2026-10-08T12:19:00Z",
+  "status": "pass",
+  "executed_at": "2026-10-08T12:25:00Z",
   "source_commit": "3b33d4f05a2604c23ec6181c584752a63390d106",
   "production_deployment_id": "dpl_C8be2uodW3onwMQGYyA9gSwCqCWG",
   "official_sources_checked_at": "2026-10-08",
@@ -115,7 +115,8 @@
     "reporting_store_limit_is_one": true,
     "candidate_detection_billed_false": true,
     "store_switch_billed_false": true,
-    "stale_snapshot_rejected": null
+    "stale_snapshot_rejected": true,
+    "stale_snapshot_evidence": "docs/evidence/EO_02C_DATABASE_ACCEPTANCE_2026-10-06.json#behavioral_probe.stale_snapshot_rejection"
   },
   "leak_checks": {
     "browser_bundle": "pass",
@@ -133,8 +134,8 @@
     "action": null,
     "result": null
   },
-  "final_result": "pending",
-  "explicit_product_owner_acceptance": false,
+  "final_result": "pass",
+  "explicit_product_owner_acceptance": true,
   "persistence_preflight": {
     "checked_at": "2026-10-08T12:19:00Z",
     "production_source_commit": "3b33d4f05a2604c23ec6181c584752a63390d106",
@@ -150,8 +151,8 @@
     "server_database_environment_configured": true,
     "runtime_repository_adapter_present": true,
     "production_reconciliation_caller_present": true,
-    "classification": "live_desktop_and_mobile_runtime_persistence_pass_explicit_product_owner_closure_pending",
-    "required_next_step": "record explicit product-owner acceptance, then close EO-02-C and authorize EO-02-D"
+    "classification": "pass",
+    "required_next_step": null
   },
   "runtime_live_acceptance": {
     "checked_at": "2026-10-08T12:19:00Z",
@@ -172,5 +173,12 @@
       "settings": "pass"
     },
     "mobile_full_app_close_and_reopen": "pass"
+  },
+  "closure": {
+    "accepted_at": "2026-10-08T12:25:00Z",
+    "accepted_by": "product_owner",
+    "acceptance_statement": "EO-02-C kapanışını kabul ediyorum",
+    "technical_open_items": 0,
+    "next_package": "EO-02-D"
   }
 }

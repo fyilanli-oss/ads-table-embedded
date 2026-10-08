@@ -16,6 +16,10 @@ import {
   createShopifySessionRepository,
 } from "../app/lib/database/shopify-session-repository.server.js";
 import {
+  createRuntimePostgresClient,
+  readRuntimeDatabaseConfig,
+} from "../app/lib/database/runtime-postgres.server.js";
+import {
   readVerifiedShopifyAdminIdentity,
 } from "../app/lib/shopify/admin-identity.server.js";
 import {
@@ -175,6 +179,49 @@ test("session repository uses only approved security-definer functions", async (
     "shopify.delete_runtime_sessions",
   ]) assert.match(sql, new RegExp(name.replace(".", "\\.")));
   assert.doesNotMatch(sql, /\b(?:insert|update|delete)\s+(?:into|from)?\s*shopify\.runtime_sessions\b/i);
+});
+
+test("runtime Postgres uses the official Supabase CA with full TLS verification", async () => {
+  const environment = {
+    ADSTABLE_RUNTIME_DATABASE_URL:
+      "postgresql://adstable_runtime.podpwkrpmjiksskxhwsu:" +
+      "x".repeat(48) +
+      "@aws-1-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require",
+  };
+  const config = readRuntimeDatabaseConfig(environment);
+  assert.equal(new URL(config.connectionString).search, "");
+  assert.equal(config.ssl.rejectUnauthorized, true);
+  assert.match(config.ssl.ca, /^-----BEGIN CERTIFICATE-----/);
+  assert.match(config.ssl.ca, /-----END CERTIFICATE-----\n$/);
+
+  let poolConfig;
+  const client = createRuntimePostgresClient({
+    environment,
+    poolFactory(received) {
+      poolConfig = received;
+      return {
+        query: async ({text, values}) => ({rows: [{text, values}]}),
+        end: async () => {},
+      };
+    },
+  });
+  assert.equal(poolConfig.max, 1);
+  assert.equal(poolConfig.ssl.rejectUnauthorized, true);
+  assert.equal(new URL(poolConfig.connectionString).search, "");
+  assert.deepEqual(await client.query("select $1::text", ["ok"]), {
+    rows: [{text: "select $1::text", values: ["ok"]}],
+  });
+  await client.close();
+
+  for (const invalid of [
+    environment.ADSTABLE_RUNTIME_DATABASE_URL.replace("sslmode=require", "sslmode=disable"),
+    environment.ADSTABLE_RUNTIME_DATABASE_URL + "&rejectUnauthorized=false",
+  ]) {
+    assert.throws(
+      () => readRuntimeDatabaseConfig({ADSTABLE_RUNTIME_DATABASE_URL: invalid}),
+      /ADSTABLE_RUNTIME_DATABASE_URL_INVALID/,
+    );
+  }
 });
 
 test("verified Admin identity binds ID-token destination to Admin GraphQL shop", async () => {

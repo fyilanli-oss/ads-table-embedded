@@ -1,4 +1,5 @@
 import pg from "pg";
+import {SUPABASE_ROOT_CA_2021} from "./supabase-root-ca-2021.server.js";
 
 const {Pool} = pg;
 
@@ -48,8 +49,15 @@ export function readRuntimeDatabaseConfig(environment = process.env) {
     throw invalidConfiguration();
   }
 
+  const poolUrl = new URL(url);
+  poolUrl.search = "";
+
   return Object.freeze({
-    connectionString: raw,
+    connectionString: poolUrl.toString(),
+    ssl: Object.freeze({
+      ca: SUPABASE_ROOT_CA_2021,
+      rejectUnauthorized: true,
+    }),
     projectRef: PROJECT_REF,
     role: RUNTIME_ROLE,
     connectionMode: "transaction_pooler",
@@ -63,6 +71,7 @@ export function createRuntimePostgresClient({
   const config = readRuntimeDatabaseConfig(environment);
   const pool = poolFactory({
     connectionString: config.connectionString,
+    ssl: config.ssl,
     max: 1,
     idleTimeoutMillis: 10_000,
     connectionTimeoutMillis: 5_000,

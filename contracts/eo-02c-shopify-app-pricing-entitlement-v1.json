@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-02c-shopify-app-pricing-entitlement-v1",
   "version": "1.4.0",
-  "status": "trial_provider_pass_runtime_price_semantics_fix_in_review_active_and_persistence_pending",
+  "status": "null_trial_and_active_provider_pass_runtime_persistence_and_leak_checks_pending",
   "checked_at": "2026-10-08",
   "authoritative_sources": {
     "shopify_app_pricing": "https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing",
@@ -148,7 +148,7 @@
     "project_id": "podpwkrpmjiksskxhwsu",
     "evidence": "docs/evidence/EO_02C_LIVE_ACCEPTANCE_2026-10-08.json",
     "database_result": "pass",
-    "partner_api_result": "null_and_trial_provider_pass_price_active_runtime_fix_in_review_active_and_persistence_pending",
+    "partner_api_result": "null_trial_and_active_provider_pass_runtime_persistence_and_leak_checks_pending",
     "residual_business_rows": 0,
     "security_advisor_lints": 0,
     "performance_advisor_lints": 0,
@@ -194,11 +194,19 @@
         "item_handle": "adstable-monthly",
         "effective_price_amount": "0.0",
         "price_active": false,
-        "runtime_projection": "pending_price_semantics_fix_and_live_persistence"
+        "runtime_projection": "pending_live_persistence"
       },
       "active": {
-        "provider_result": "pending",
-        "runtime_projection": "pending"
+        "provider_result": "pass",
+        "trial_ends_at": null,
+        "current_billing_cycle": {
+          "start_time": "2026-10-08T08:45:05Z",
+          "end_time": "2026-11-07T08:45:05Z"
+        },
+        "item_handle": "shopify-test",
+        "effective_price_amount": "0.0",
+        "price_active": true,
+        "runtime_projection": "pending_live_persistence"
       }
     }
   },

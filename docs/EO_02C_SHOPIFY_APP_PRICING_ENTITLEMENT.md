@@ -1,7 +1,7 @@
 # EO-02-C — Shopify App Pricing trial, subscription and entitlement
 
 **Kontrol tarihi:** 8 Ekim 2026  
-**Durum:** Database ve Partner API authentication PASS; null/trial provider kabulü PASS; runtime price semantiği düzeltmesi, active ve persistence kabulü açık
+**Durum:** Database ve Partner API authentication PASS; null/trial/active provider kabulü PASS; runtime persistence ve sızıntı kabulü açık
 
 ## Analist sonucu
 
@@ -52,6 +52,15 @@ Kaynaklar:
 - Development-store effective fiyatı `USD 0.0`, `price.active=false` geldi. Resmî Partner API sözleşmesine göre `price.active` fiyat sürümünün güncelliğidir; abonelik veya entitlement aktiflik bayrağı değildir.
 - Eski runtime'ın `price.active === true` şartı bu canlı yanıtı yanlış reddediyordu. Kod, contract ve test bu bulguya göre düzeltilmeden trial persistence PASS sayılmaz.
 - Secret içermeyen kısmi kanıt: `docs/evidence/EO_02C_LIVE_ACCEPTANCE_2026-10-08.json`.
+
+## 8 Ekim 2026 canlı active sonucu
+
+- `adstable-development.myshopify.com`, Shopify'ın otomatik oluşturduğu `shopify-test` private planına hedef mağaza olarak eklendi.
+- Shopify onay ekranı planın ücretsiz olduğunu ve faturalandırma yapılmayacağını açıkça gösterdi; dönüş URL'i `plan_handle=shopify-test` taşıdı.
+- Partner API `activeSubscription` sonucu `trialEndsAt=null`, `billingPeriod=EVERY_30_DAYS`, `cancelAtEndOfCycle=false` ve `pendingUpdate=null` döndürdü.
+- Current billing cycle `2026-10-08T08:45:05Z → 2026-11-07T08:45:05Z` olarak oluştu.
+- Subscription item handle `shopify-test`; effective fiyat `USD 0.0`; `price.active=true` gözlendi.
+- Bu sonuç active provider durumunu PASS yapar. Runtime DB projection/persistence ve secret/log/browser sızıntı kontrolleri tamamlanmadan EO-02-C kapanmaz.
 
 ## Runtime environment sözleşmesi
 
@@ -139,4 +148,4 @@ Development store kabul sırası `null → intended USD 24.99 / 14-day trial →
 - Repository test/build/CI PASS olmalıdır.
 - Supabase migration ve self-cleaning behavioral probe canlı PASS oldu; üç billing tablosunun RLS/forced RLS sonucu 3/3, runtime direct DML sonucu 0, runtime function access sonucu 2/2, Security ve Performance Advisor sonucu 0/0 ve kalan probe satırı 0'dır.
 - Evidence: `docs/evidence/EO_02C_DATABASE_ACCEPTANCE_2026-10-06.json`.
-- Partner Dashboard plan/trial ayarı, exact Vercel runtime secret aktivasyonu ve gerçek trial/active/null acceptance hâlâ açık insan kapısıdır. Partner API client oluşturma ve `Manage apps` authentication kapısı 7 Ekim 2026'da PASS olmuştur.
+- Partner Dashboard plan/trial ayarı, exact Vercel runtime secret aktivasyonu ve gerçek null/trial/active provider kabulü PASS olmuştur. Runtime DB projection/persistence ile secret/log/browser sızıntı kontrolleri hâlâ açık insan kapısıdır; Partner API client oluşturma ve `Manage apps` authentication kapısı 7 Ekim 2026'da PASS olmuştur.

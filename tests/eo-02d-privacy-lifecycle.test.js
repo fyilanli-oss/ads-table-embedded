@@ -212,3 +212,28 @@ test("webhook route uses the isolated verifier and never requires a revoked shop
   assert.match(route, /status: 401/);
   assert.doesNotMatch(route, /authenticate\.webhook|accessToken|refreshToken/);
 });
+
+test("live database evidence proves migration safety without claiming runtime closure", () => {
+  const evidence = JSON.parse(read(
+    "docs/evidence/EO_02D_DATABASE_ACCEPTANCE_2026-10-08.json",
+  ));
+  assert.equal(evidence.status, "PASS_DATABASE_MIGRATION");
+  assert.equal(evidence.migration.applied, true);
+  assert.equal(evidence.database_boundary.row_level_security, "enabled_and_forced");
+  assert.deepEqual(evidence.database_boundary.direct_table_access, {
+    anon: false,
+    authenticated: false,
+    service_role: false,
+    adstable_runtime: false,
+  });
+  assert.equal(evidence.advisor.security_findings, 0);
+  assert.equal(evidence.data_safety.existing_live_state_changed, false);
+  assert.equal(evidence.data_safety.production_data_deleted, false);
+  assert.equal(evidence.data_safety.synthetic_rows_persisted, false);
+  assert.equal(evidence.runtime_acceptance.status, "PENDING_POST_DEPLOY");
+  assert.equal(
+    evidence.shopify_subscription_acceptance.status,
+    "PENDING_POST_DEPLOY",
+  );
+  assert.equal(evidence.secrets_in_evidence, false);
+});

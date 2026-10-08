@@ -81,16 +81,22 @@ Bugünkü clean foundation customer-level veri saklamaz. Bu nedenle customers/da
 
 ## Canlı uygulama kapısı
 
-Bu branch canlı Supabase mutation yetkisi vermez:
+8 Ekim 2026'da ayrı açık kullanıcı onayıyla canlı Supabase migration uygulandı. `docs/evidence/EO_02D_DATABASE_ACCEPTANCE_2026-10-08.json` şu kapıları kanıtlar:
 
-1. Test, typecheck, build ve Governance CI PASS.
-2. Migration SQL read-only review.
-3. Ayrı açık kullanıcı onayı.
-4. Canlı migration.
-5. Sentetik acceptance: uninstall, duplicate, reinstall, redaction, executor replay, N+1 reinstall ve stale executor containment.
-6. Security/Performance Advisor PASS.
-7. App-specific webhook configuration ve test delivery acceptance.
-8. Gerçek merchant verisi silmeden ürün sahibi kapanış kabulü.
+1. Repository test, typecheck, build ve Governance CI PASS.
+2. Migration SQL review ve canlı migration PASS.
+3. Üç privacy tablosunda RLS enabled + forced, doğrudan rol erişimleri kapalı ve Security Advisor sıfır bulgu PASS.
+4. Migration öncesi/sonrası mevcut workspace ve installation sayıları aynı; production verisi silinmedi, sentetik satır bırakılmadı.
+5. Supabase yönetim bağlantısının `adstable_runtime` rolünü taklit edememesi beklenen least-privilege sınırıdır; aynı yol yeniden zorlanmayacaktır.
+
+Kalan kapılar:
+
+1. PR #27 için ayrı açık merge onayı.
+2. Merge sonrası production application deploy.
+3. Deployed runtime üzerinden invalid HMAC 401 ve valid claim 202 kabulü.
+4. Exact Shopify app configuration link/read, app-specific webhook subscription deploy ve test delivery.
+5. Sentetik lifecycle acceptance: uninstall, duplicate, reinstall, redaction, executor replay, N+1 reinstall ve stale executor containment.
+6. Gerçek merchant verisi silmeden ürün sahibi kapanış kabulü.
 
 ## Rollback
 

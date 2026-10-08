@@ -1,13 +1,63 @@
 {
   "schemaVersion": 1,
-  "scanRoots": ["app", "src", "server", "scripts"],
-  "forbiddenDirectDependencies": ["express", "googleapis", "@supabase/supabase-js", "@prisma/client", "prisma", "@shopify/shopify-app-session-storage-prisma"],
-  "forbiddenRuntimeTokens": ["ga4", "google_sheets", "tiktok", "pinterest", "organic_provider", "platform_connection_tokens", "shopify_workspace_provider_connections", "user_id", "dual_write", "live_shadow", "controlled_acceptance", "historical_inventory"],
-  "forbiddenRouteTokens": ["debug", "operator", "diagnostic", "acceptance"],
-  "forbiddenPaths": ["public", "server.js"],
-  "allowedEnvironmentKeys": [],
+  "scanRoots": [
+    "app",
+    "src",
+    "server",
+    "scripts"
+  ],
+  "forbiddenDirectDependencies": [
+    "express",
+    "googleapis",
+    "@supabase/supabase-js",
+    "@prisma/client",
+    "prisma",
+    "@shopify/shopify-app-session-storage-prisma"
+  ],
+  "forbiddenRuntimeTokens": [
+    "ga4",
+    "google_sheets",
+    "tiktok",
+    "pinterest",
+    "organic_provider",
+    "platform_connection_tokens",
+    "shopify_workspace_provider_connections",
+    "user_id",
+    "dual_write",
+    "live_shadow",
+    "controlled_acceptance",
+    "historical_inventory"
+  ],
+  "forbiddenRouteTokens": [
+    "debug",
+    "operator",
+    "diagnostic",
+    "acceptance"
+  ],
+  "forbiddenPaths": [
+    "public",
+    "server.js"
+  ],
+  "allowedEnvironmentKeys": [
+    "ADSTABLE_RUNTIME_DATABASE_URL",
+    "ADSTABLE_SESSION_ENCRYPTION_KEY_V1",
+    "SCOPES",
+    "SHOPIFY_API_KEY",
+    "SHOPIFY_API_SECRET",
+    "SHOPIFY_APP_GID",
+    "SHOPIFY_APP_URL",
+    "SHOPIFY_PARTNER_API_ACCESS_TOKEN",
+    "SHOPIFY_PARTNER_ORG_ID"
+  ],
   "requiredActivePolarisRuntime": "polaris-2.0-rc.js",
   "forbiddenObsoletePolarisRuntime": "polaris-1.js",
-  "allowedProductRoutes": ["/", "/ad-analysis", "/settings"],
-  "reservedSystemRoutePrefixes": ["/auth", "/webhooks"]
+  "allowedProductRoutes": [
+    "/",
+    "/ad-analysis",
+    "/settings"
+  ],
+  "reservedSystemRoutePrefixes": [
+    "/auth",
+    "/webhooks"
+  ]
 }

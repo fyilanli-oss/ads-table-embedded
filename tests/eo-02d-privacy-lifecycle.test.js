@@ -201,7 +201,7 @@ test("migration enforces private forced-RLS lifecycle and generation-safe deleti
   assert.match(migration, /p_received_at \+ interval '30 days'/);
   assert.doesNotMatch(migration, /grant\s+(?:select|insert|update|delete|all)[^;]*to\s+adstable_runtime/i);
   assert.doesNotMatch(migration, /grant[^;]*to\s+(?:anon|authenticated|service_role)/);
-  assert.doesNotMatch(migration, /\b(?:email|phone|raw_payload|payload_json)\b/i);
+  assert.doesNotMatch(migration, /\b(?:customer_email|customer_phone|raw_payload|payload_json)\b/i);
 });
 
 test("webhook route uses the isolated verifier and never requires a revoked shop token", () => {

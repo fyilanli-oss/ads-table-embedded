@@ -1,0 +1,92 @@
+{
+  "contract_id": "eo-02c-shopify-runtime-auth-bridge-v1",
+  "version": "1.0.0",
+  "status": "decision_frozen_implementation_pending",
+  "checked_at": "2026-10-08",
+  "package": "A6-EO-02-C",
+  "classification": "corrective_gate_not_new_parent",
+  "finding": {
+    "current_product_routes": [
+      "/",
+      "/ad-analysis",
+      "/settings"
+    ],
+    "authenticated_admin_layout_present": false,
+    "shopify_server_adapter_present": false,
+    "persistent_session_storage_present": false,
+    "production_caller_reachable": false,
+    "database_secret_activation_allowed": false
+  },
+  "official_sources": [
+    "https://shopify.dev/docs/api/shopify-app-react-router/latest",
+    "https://shopify.dev/docs/api/shopify-app-react-router/latest/authenticate/admin",
+    "https://shopify.dev/docs/apps/build/authentication-authorization/id-tokens",
+    "https://shopify.dev/docs/apps/build/authentication-authorization/access-tokens",
+    "https://shopify.dev/docs/apps/build/authentication-authorization/migrate-to-expiring-offline-access-tokens",
+    "https://github.com/Shopify/shopify-app-template-react-router/blob/main/app/shopify.server.ts",
+    "https://github.com/Shopify/shopify-app-template-react-router/blob/main/app/routes/app.tsx"
+  ],
+  "route_contract": {
+    "preserve_urls": [
+      "/",
+      "/ad-analysis",
+      "/settings"
+    ],
+    "layout": "pathless_authenticated_admin_layout",
+    "request_authentication": "authenticate.admin(request)",
+    "provider": "AppProvider",
+    "api_identity": "admin_graphql_shop_id_and_myshopifyDomain",
+    "public_test_endpoint": false,
+    "visible_copy_change": false,
+    "new_visual_component": false
+  },
+  "session_security": {
+    "storage": "supabase_private_schema",
+    "persistence": "ciphertext_only",
+    "cipher": "AES-256-GCM",
+    "key_environment": "ADSTABLE_SESSION_ENCRYPTION_KEY_V1",
+    "key_version": 1,
+    "runtime_direct_table_dml": false,
+    "function_only": true,
+    "expiring_offline_access_tokens": true,
+    "plaintext_session_or_token_storage": false,
+    "browser_access": false,
+    "service_role_fallback": false
+  },
+  "environment": {
+    "production_config": [
+      "SHOPIFY_API_KEY",
+      "SHOPIFY_APP_URL",
+      "SCOPES"
+    ],
+    "production_secrets": [
+      "SHOPIFY_API_SECRET",
+      "ADSTABLE_SESSION_ENCRYPTION_KEY_V1",
+      "ADSTABLE_RUNTIME_DATABASE_URL"
+    ],
+    "preview_production_credentials": false,
+    "development_production_credentials": false
+  },
+  "implementation_order": [
+    "migration_and_function_only_session_repository",
+    "versioned_envelope_crypto",
+    "official_shopify_server_adapter",
+    "pathless_authenticated_layout_without_url_or_copy_change",
+    "verified_admin_shop_identity_adapter",
+    "idempotent_entitlement_reconciliation_on_authenticated_entry",
+    "contract_test_typecheck_build_and_governance",
+    "separately_approved_live_migration_and_secrets",
+    "new_production_deployment",
+    "real_admin_desktop_mobile_and_persistence_evidence"
+  ],
+  "acceptance": {
+    "contract_tests": "pending",
+    "migration": "pending_separate_user_approval",
+    "desktop_admin": "pending",
+    "mobile_320px_admin": "pending",
+    "live_persistence": "pending",
+    "leak_scan": "pending",
+    "ci": "pending",
+    "product_owner_closure": "pending"
+  }
+}

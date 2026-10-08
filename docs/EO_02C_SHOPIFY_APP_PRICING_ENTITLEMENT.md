@@ -169,3 +169,12 @@ Development store kabul sırası `null → intended USD 24.99 / 14-day trial →
 - Supabase migration ve self-cleaning behavioral probe canlı PASS oldu; üç billing tablosunun RLS/forced RLS sonucu 3/3, runtime direct DML sonucu 0, runtime function access sonucu 2/2, Security ve Performance Advisor sonucu 0/0 ve kalan probe satırı 0'dır.
 - Evidence: `docs/evidence/EO_02C_DATABASE_ACCEPTANCE_2026-10-06.json`.
 - Partner Dashboard plan/trial ayarı, exact Vercel runtime secret aktivasyonu ve gerçek null/trial/active provider kabulü PASS olmuştur. Browser/response/application/platform log sızıntı kontrolleri PASS olmuştur. Runtime DB projection/persistence, eksik server database bağlantısı ve repository adapter'ı tamamlanana kadar açık kalır; Partner API client oluşturma ve `Manage apps` authentication kapısı 7 Ekim 2026'da PASS olmuştur.
+
+
+## 8 Ekim 2026 authenticated runtime corrective bulgusu
+
+- Main üzerindeki ürün route'ları yalnız preview yüzeyidir; resmi Shopify server adapterı, `authenticate.admin` Admin layout'u ve kalıcı session storage yoktur.
+- Internal reconciliation caller doğrudan public edilmemiştir; bu doğrudur, ancak çağrılabilir güvenli Production boundary de henüz yoktur.
+- Bu nedenle yalnız database Secret ve yeni deployment canlı persistence üretemez. Secret aktivasyonu güvenli biçimde durduruldu.
+- Düzeltme kararı: `docs/EO_02C_SHOPIFY_RUNTIME_AUTH_BRIDGE.md` ve `contracts/eo-02c-shopify-runtime-auth-bridge-v1.json`.
+- EO-02-C, authenticated runtime bridge, ciphertext-only session persistence ve gerçek canlı projection kanıtı PASS olmadan kapanmaz.

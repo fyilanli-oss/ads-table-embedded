@@ -142,3 +142,8 @@ EO-01-B dependency pinlemeden ve EO-07 UI implementasyonundan önce resmî sür�
 - **A6-OPS-LOCAL-01-D — Closure evidence:** Prove zero meaningful local-only project work, intact anchor/common metadata, readable remote equivalents and recorded exceptions.
 
 Opening this package authorizes no deletion. It does not change the 10 A6-EO parents, 43 stable EO children, current A6-EO-02-C gate or any product implementation sequence. Recurrence is prevented by the mandatory end-of-package local-only-zero gate.
+
+
+### EO-02-C corrective gate — Shopify runtime authentication bridge
+
+EO-02-C internal caller kodu tek başına canlı tetikleyici değildir. `docs/EO_02C_SHOPIFY_RUNTIME_AUTH_BRIDGE.md` ve `contracts/eo-02c-shopify-runtime-auth-bridge-v1.json` PASS olmadan database Secret etkinleştirilemez, EO-02-C kapatılamaz ve EO-02-D başlatılamaz. Ürün URL'leri ve mevcut preview görünümü korunur.

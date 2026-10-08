@@ -350,7 +350,7 @@
           "subscription_read_authority": "Partner API 2026-07 activeSubscription",
           "database_acceptance": "PASS",
           "acceptance_evidence": "docs/evidence/EO_02C_DATABASE_ACCEPTANCE_2026-10-06.json",
-          "remaining_gate": "Production database Secret activation, new deployment, live function-only persistence evidence and explicit product-owner closure",
+          "remaining_gate": "Shopify runtime authentication bridge, encrypted function-only session persistence, Production secrets, new deployment, live function-only entitlement persistence evidence and explicit product-owner closure",
           "partner_api_client_authentication": "PASS",
           "partner_api_client_id": "38724",
           "partner_api_client_permission": "manage_apps_only",
@@ -358,8 +358,10 @@
           "provider_acceptance": "PASS_null_trial_active",
           "leak_acceptance": "PASS_browser_http_application_and_platform_logs",
           "runtime_adapter": "PASS_function_only_supabase_transaction_pooler",
-          "reconciliation_caller": "PASS_verified_non_public_internal_caller",
-          "persistence_acceptance": "PENDING_production_database_secret_activation_and_live_persistence_evidence"
+          "reconciliation_caller": "PASS_internal_caller_not_yet_reachable_from_authenticated_production_route",
+          "persistence_acceptance": "PENDING_authenticated_runtime_bridge_production_activation_and_live_evidence",
+          "runtime_authentication": "PENDING_corrective_gate_contracts/eo-02c-shopify-runtime-auth-bridge-v1.json",
+          "session_persistence": "PENDING_ciphertext_only_function_boundary"
         },
         {
           "id": "A6-EO-02-D",
@@ -815,7 +817,7 @@
   "legacy_deletion_authorized": false,
   "current_active_parent": "A6-EO-02",
   "current_active_child": "A6-EO-02-C",
-  "current_gate": "EO-02-C_production_database_secret_activation_live_persistence_and_evidence",
+  "current_gate": "EO-02-C_shopify_runtime_auth_bridge_encrypted_session_persistence_production_activation_and_live_evidence",
   "next_ready_child": null,
   "independent_packages": [
     {

@@ -3,6 +3,7 @@ import {createReadableStreamFromReadable} from "@react-router/node";
 import {renderToPipeableStream} from "react-dom/server";
 import {ServerRouter, type EntryContext} from "react-router";
 import {isbot} from "isbot";
+import {addDocumentResponseHeaders} from "./shopify.server";
 
 const STREAM_TIMEOUT_MS = 5000;
 
@@ -12,6 +13,7 @@ export default function handleRequest(
   responseHeaders: Headers,
   reactRouterContext: EntryContext,
 ) {
+  addDocumentResponseHeaders(request, responseHeaders);
   const callbackName = isbot(request.headers.get("user-agent") ?? "")
     ? "onAllReady"
     : "onShellReady";

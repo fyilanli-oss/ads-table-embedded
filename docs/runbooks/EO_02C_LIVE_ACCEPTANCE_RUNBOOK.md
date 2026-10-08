@@ -199,3 +199,17 @@ Herhangi bir aşama başarısızsa:
 - Evidence JSON secret içermeden tamamlandı.
 - PR ve zorunlu CI PASS.
 - Ürün sahibi EO-02-C kapanışını açıkça kabul etti.
+
+
+## Aşama 6A — Authenticated runtime corrective gate
+
+Production database Secret girilmeden önce aşağıdakilerin tamamı PASS olmalıdır:
+
+1. Resmî Shopify React Router server adapterı ve `authenticate.admin(request)` kullanan pathless Admin layout.
+2. Mevcut `/`, `/ad-analysis`, `/settings` URL ve görünür metinlerinin korunması.
+3. Supabase private schema üzerinde ciphertext-only, AES-256-GCM ve function-only Shopify session persistence.
+4. ID token domain'i ile Admin GraphQL `shop { id myshopifyDomain }` kimliğinin eşleşmesi.
+5. Authenticated entry üzerinden internal entitlement reconciliation callerının idempotent çağrılması.
+6. Contract test, typecheck, build, Governance CI, gerçek desktop/mobil Shopify Admin ve secret sızıntı kabulü.
+
+Bu kapı PASS olmadan `ADSTABLE_RUNTIME_DATABASE_URL`, session encryption key veya Shopify API secret Production'a aktive edilmez. Public test endpoint'i, plaintext session/token tablosu, browser database client'ı ve `service_role` fallback'i yasaktır.

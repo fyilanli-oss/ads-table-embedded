@@ -7,7 +7,7 @@ import {fileURLToPath} from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 const contract = JSON.parse(read("contracts/eo-01c-three-route-preview-shell-v1.json"));
-const routeFiles = ["app/routes/_index.tsx", "app/routes/ad-analysis.tsx", "app/routes/settings.tsx"];
+const routeFiles = ["app/routes/_admin._index.tsx", "app/routes/_admin.ad-analysis.tsx", "app/routes/_admin.settings.tsx"];
 
 test("EO-01-C exposes exactly the three canonical truthful routes", () => {
   assert.deepEqual(contract.routes.map(({path: routePath}) => routePath), ["/", "/ad-analysis", "/settings"]);

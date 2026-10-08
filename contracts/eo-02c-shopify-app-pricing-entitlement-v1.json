@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-02c-shopify-app-pricing-entitlement-v1",
-  "version": "1.6.0",
-  "status": "provider_leak_and_runtime_code_pass_live_persistence_activation_pending",
+  "version": "1.7.0",
+  "status": "provider_leak_and_internal_runtime_code_pass_authenticated_production_bridge_pending",
   "checked_at": "2026-10-08",
   "authoritative_sources": {
     "shopify_app_pricing": "https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing",
@@ -119,12 +119,12 @@
       "billing.apply_shopify_app_pricing_snapshot"
     ],
     "public_route_added": false,
-    "verified_internal_caller": "createVerifiedShopifyEntitlementRuntime",
+    "verified_internal_caller": "createVerifiedShopifyEntitlementRuntime_internal_only_not_production_reachable",
     "identity_preconditions": [
       "verified_shopify_id_token_session",
       "verified_shopify_admin_shop_identity"
     ],
-    "activation": "pending_production_secret_and_live_evidence"
+    "activation": "blocked_until_shopify_runtime_auth_bridge_pass"
   },
   "reporting_store_entitlement": {
     "included_active_reporting_stores": 1,
@@ -252,11 +252,11 @@
       "checked_at": "2026-10-08",
       "server_database_adapter_present": true,
       "function_only_repositories_present": true,
-      "verified_non_public_reconciliation_caller_present": true,
+      "verified_non_public_reconciliation_caller_present": "internal_only_unreachable_from_production_route",
       "public_test_endpoint_present": false,
       "production_database_secret_configured": false,
       "live_runtime_projection_executed": false,
-      "result": "code_ready_production_secret_activation_and_live_persistence_evidence_pending"
+      "result": "corrective_shopify_runtime_auth_bridge_required_before_secret_activation"
     }
   },
   "runtime_environment_contract": {
@@ -315,5 +315,18 @@
     "repository_value_storage": false,
     "environment_change_requires_new_deployment": true,
     "activation_requires_explicit_human_gate": true
+  },
+  "runtime_authentication_corrective_gate": {
+    "status": "decision_frozen_implementation_pending",
+    "contract": "contracts/eo-02c-shopify-runtime-auth-bridge-v1.json",
+    "document": "docs/EO_02C_SHOPIFY_RUNTIME_AUTH_BRIDGE.md",
+    "finding": "internal_caller_has_no_authenticated_production_route_or_persistent_session_storage",
+    "database_secret_activation_allowed": false,
+    "closure_requires": [
+      "official_shopify_authenticate_admin_boundary",
+      "ciphertext_only_function_only_session_storage",
+      "verified_admin_shop_identity",
+      "real_production_persistence_evidence"
+    ]
   }
 }

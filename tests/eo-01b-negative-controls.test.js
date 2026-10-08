@@ -27,7 +27,7 @@ test("direct dependencies exactly match the approved registry", () => {
   const decisions = [registry, ...dependencyAddenda].flatMap(({packages}) => packages);
   const approved = Object.fromEntries(decisions.map(({name, version}) => [name, version]));
   assert.equal(registry.packages.length, 16);
-  assert.equal(decisions.length, 19);
+  assert.equal(decisions.length, 20);
   assert.deepEqual(actual, approved);
   for (const blocked of controls.forbiddenDirectDependencies) assert.equal(actual[blocked], undefined, blocked);
   for (const version of Object.values(actual)) assert.match(version, /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/);
@@ -67,10 +67,10 @@ test("legacy runtime, unknown env and obsolete Polaris references are rejected",
 
 test("product-owner-selected Polaris 2.0 RC runtime and types stay aligned", () => {
   const ui = readJson("contracts/shopify/shopify-embedded-ui-constitution-v1.json");
-  const rootSource = fs.readFileSync(path.join(root, "app/root.tsx"), "utf8");
+  const providerSource = fs.readFileSync(path.join(root, "app/lib/shopify/shopify-app-runtime.server.js"), "utf8");
   assert.equal(manifest.devDependencies["@shopify/polaris-types"], "2.0.0-rc.2");
   assert.equal(ui.approved_runtime.polaris_script, "https://cdn.shopify.com/shopifycloud/polaris-2.0-rc.js");
   assert.equal(ui.approved_runtime.polaris_types, "2.0.0-rc.2");
-  assert.equal(rootSource.match(/polaris-2\.0-rc\.js/g)?.length, 1);
-  assert.equal(rootSource.includes(controls.forbiddenObsoletePolarisRuntime), false);
+  assert.equal(providerSource.match(/polaris-2\.0-rc\.js/g)?.length, 1);
+  assert.equal(providerSource.includes(controls.forbiddenObsoletePolarisRuntime), false);
 });

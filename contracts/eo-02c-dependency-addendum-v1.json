@@ -14,6 +14,18 @@
       "license": "MIT",
       "maintenance": "brianc/node-postgres",
       "removalAndRollback": "Remove after disabling runtime persistence and deleting the Vercel database secret; no schema rollback required"
+    },
+    {
+      "name": "@shopify/shopify-api",
+      "version": "15.0.0",
+      "ownedCapability": "Official Shopify Session reconstruction for encrypted custom SessionStorage",
+      "nativeAlternativeRationale": "The official React Router authentication package requires the official Session class; Node has no Shopify-compatible native session type",
+      "scope": "runtime",
+      "execution": "server",
+      "secretAndTenantEffect": "reconstructs_only_decrypted_server_side_session_objects_never_browser_or_log",
+      "license": "MIT",
+      "maintenance": "Shopify/shopify-app-js",
+      "removalAndRollback": "Remove only with Shopify React Router authentication replacement"
     }
   ]
 }

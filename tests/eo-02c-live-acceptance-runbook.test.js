@@ -52,15 +52,30 @@ test("EO-02-C live evidence preserves the provider/runtime boundary", () => {
   assert.equal(evidence.installation.shopify_admin_app_handle, "adstable-1");
   assert.equal(evidence.installation.installed_target_verified, true);
   assert.equal(evidence.states.null.provider_result, "pass");
+
   assert.equal(evidence.states.trial.provider_result, "pass");
   assert.equal(evidence.states.trial.current_billing_cycle_is_null, true);
   assert.equal(evidence.states.trial.price_active, false);
   assert.equal(evidence.states.trial.effective_price.amount, "0.0");
+
+  assert.equal(evidence.states.active.provider_result, "pass");
+  assert.equal(evidence.states.active.trial_ends_at_is_null, true);
+  assert.equal(evidence.states.active.item_handle, "shopify-test");
+  assert.equal(evidence.states.active.price_active, true);
+  assert.equal(evidence.states.active.effective_price.amount, "0.0");
+  assert.match(evidence.states.active.current_cycle_start, /^2026-10-08T/);
+  assert.match(evidence.states.active.current_cycle_end, /^2026-11-07T/);
+  assert.equal(
+    evidence.states.active.result,
+    "provider_pass_runtime_persistence_pending",
+  );
+
   assert.equal(
     evidence.price_active_semantics.must_not_be_used_as_subscription_active_flag,
     true,
   );
-  assert.equal(evidence.states.active.result, "pending");
+  assert.equal(evidence.identity_and_persistence.install_generation_match, null);
+  assert.equal(evidence.leak_checks.browser_bundle, "pending");
   assert.equal(evidence.final_result, "pending");
   assert.equal(evidence.secret_policy.token_recorded, false);
 });

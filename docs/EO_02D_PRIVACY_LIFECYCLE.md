@@ -1,7 +1,7 @@
 # EO-02-D — Privacy, uninstall, deletion and clean reinstall
 
 **Kontrol tarihi:** 8 Ekim 2026  
-**Durum:** Implementation; live database acceptance not started
+**Durum:** Verification; live database migration PASS, runtime HTTP ve Shopify subscription acceptance bekliyor
 
 ## Analist sonucu
 

@@ -1,8 +1,8 @@
 {
   "evidence_id": "EO_02C_LIVE_ACCEPTANCE_2026-10-08",
   "schema_version": "1.0.0",
-  "status": "runtime_desktop_persistence_pass_mobile_shopify_admin_acceptance_pending",
-  "executed_at": "2026-10-08T11:59:00Z",
+  "status": "runtime_desktop_and_mobile_persistence_pass_explicit_product_owner_closure_pending",
+  "executed_at": "2026-10-08T12:19:00Z",
   "source_commit": "3b33d4f05a2604c23ec6181c584752a63390d106",
   "production_deployment_id": "dpl_C8be2uodW3onwMQGYyA9gSwCqCWG",
   "official_sources_checked_at": "2026-10-08",
@@ -136,7 +136,7 @@
   "final_result": "pending",
   "explicit_product_owner_acceptance": false,
   "persistence_preflight": {
-    "checked_at": "2026-10-08T11:59:00Z",
+    "checked_at": "2026-10-08T12:19:00Z",
     "production_source_commit": "3b33d4f05a2604c23ec6181c584752a63390d106",
     "production_deployment_id": "dpl_C8be2uodW3onwMQGYyA9gSwCqCWG",
     "database_counts": {
@@ -150,11 +150,11 @@
     "server_database_environment_configured": true,
     "runtime_repository_adapter_present": true,
     "production_reconciliation_caller_present": true,
-    "classification": "live_runtime_persistence_pass_mobile_acceptance_pending",
-    "required_next_step": "complete real mobile Shopify Admin acceptance, record explicit product-owner acceptance, then close EO-02-C"
+    "classification": "live_desktop_and_mobile_runtime_persistence_pass_explicit_product_owner_closure_pending",
+    "required_next_step": "record explicit product-owner acceptance, then close EO-02-C and authorize EO-02-D"
   },
   "runtime_live_acceptance": {
-    "checked_at": "2026-10-08T11:59:00Z",
+    "checked_at": "2026-10-08T12:19:00Z",
     "desktop_shopify_admin_initial_load": "pass",
     "desktop_shopify_admin_full_reload": "pass",
     "previous_preview_load_error_resolved": true,
@@ -163,7 +163,14 @@
     "active_generation_one_installations": 1,
     "active_subscription_projections": 1,
     "active_entitlement_projections": 1,
-    "mobile_shopify_admin": "pending",
-    "note": "Production deployment loaded inside Shopify Admin and loaded again after a full Admin-page reload. The database contains one ciphertext-only runtime session and one generation-bound active entitlement projection. Real mobile Shopify Admin acceptance remains open."
+    "mobile_shopify_admin": "pass",
+    "note": "Production loaded in desktop Shopify Admin, survived a full Admin-page reload, then loaded in the real mobile Shopify app across Funnel, Ad Analysis and Settings and survived a full mobile app close and reopen. Database projection counts remained stable and the checked Vercel runtime window contained no warning or error. Explicit product-owner closure acceptance remains open.",
+    "mobile_initial_load": "pass",
+    "mobile_routes": {
+      "funnel": "pass",
+      "ad_analysis": "pass",
+      "settings": "pass"
+    },
+    "mobile_full_app_close_and_reopen": "pass"
   }
 }

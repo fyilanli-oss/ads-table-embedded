@@ -1,7 +1,7 @@
 # EO-02-C — Shopify App Pricing trial, subscription and entitlement
 
-**Kontrol tarihi:** 7 Ekim 2026  
-**Durum:** Database live accepted; Partner API client authentication PASS; plan/trial, Vercel secret activation and live subscription-state acceptance pending
+**Kontrol tarihi:** 8 Ekim 2026  
+**Durum:** Database ve Partner API authentication PASS; null/trial provider kabulü PASS; runtime price semantiği düzeltmesi, active ve persistence kabulü açık
 
 ## Analist sonucu
 
@@ -42,6 +42,16 @@ Kaynaklar:
 - Access token repository'ye, kanıt dosyasına, sohbete veya loga yazılmadı.
 - Bu kanıt yalnız organization-scoped client authentication ve `Manage apps` erişimini doğrular. Plan oluşturulmadan ve mağaza uygulamayı seçmeden `activeSubscription` trial/active/null kabulü tamamlanmış sayılmaz.
 - Vercel secret aktivasyonu, exact runtime environment adları ve tüketici startup guard'ı dondurulmadan yapılmaz.
+
+## 8 Ekim 2026 canlı trial sonucu
+
+- Shopify App Store registration tamamlandı; public `AdsTable Monthly` planı `USD 24.99 / 30 gün`, 14 günlük trial ve `/` welcome link ile oluşturuldu.
+- Yeni app `adstable-1` Shopify Admin handle'ıyla `adstable-development.myshopify.com` development store'a kuruldu; iframe hedefi `embedded.adstable.app`, client ID `58c91f39f69ca282a94ba06e9648be9e` olarak doğrulandı.
+- Store ve app farklı Dev Dashboard organizasyonlarında olduğu için plan `Free for partners and developers` seçeneğiyle ücret olmadan test edildi.
+- Partner API trial cevabı `trialEndsAt=2026-10-22T08:02:49Z`, `currentBillingCycle=null`, `pendingUpdate=null` ve handle `adstable-monthly` döndürdü.
+- Development-store effective fiyatı `USD 0.0`, `price.active=false` geldi. Resmî Partner API sözleşmesine göre `price.active` fiyat sürümünün güncelliğidir; abonelik veya entitlement aktiflik bayrağı değildir.
+- Eski runtime'ın `price.active === true` şartı bu canlı yanıtı yanlış reddediyordu. Kod, contract ve test bu bulguya göre düzeltilmeden trial persistence PASS sayılmaz.
+- Secret içermeyen kısmi kanıt: `docs/evidence/EO_02C_LIVE_ACCEPTANCE_2026-10-08.json`.
 
 ## Runtime environment sözleşmesi
 

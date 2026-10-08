@@ -78,7 +78,7 @@ Executable contract: `contracts/shopify/a6-eo-07-three-surface-ui-product-freeze
 - **EO-01-C — Accepted:** Polaris 2.0 RC üç-route truthful preview shell ürün sahibi tarafından görsel olarak kabul edildi ve merge edildi. Kabul commit'i: `76ea38a474c701d69871f73ba713376e3a7d623e`.
 - **EO-02-A — Accepted:** Ayrı Frankfurt Supabase projesinde private schema, owner/migrator/runtime rol sınırı ve temiz migration zinciri canlı olarak doğrulandı; PR #4 merge commit'i: `2ac00f969eb35ac632ead57017753ed495e7b66f`.
 - **EO-02-B — Accepted:** Workspace, installation ve generation authority migration zinciri canlı Supabase'de PASS oldu; self-cleaning bootstrap/idempotency/stale/domain-change probe sonrası business row sıfır, Security ve Performance Advisor temizdir. PR #6 merge commit'i: `edc9e21588f5a32bea139b754ea0108c9809cf27`.
-- **EO-02-C — Verification:** Shopify App Pricing + Partner API authority modeli donduruldu; server resolver, forced-RLS billing projection ve self-cleaning Supabase probe PASS oldu. 7 Ekim 2026'da yalnız `Manage apps` yetkili Partner API client oluşturuldu ve `2026-07` GraphiQL üzerinden AdsTable uygulama kimliği canlı PASS oldu; access token kanıta veya repository'ye yazılmadı. Partner Dashboard'da 14 günlük plan/trial ayarı, exact Vercel runtime secret aktivasyonu ve gerçek trial/active/null kabulü açık insan kapısıdır.
+- **EO-02-C — Verification:** Shopify App Pricing + Partner API authority modeli, forced-RLS billing projection ve Supabase probe hazırdır. 8 Ekim 2026'da App Store registration, Production Vercel secret/deployment, `activeSubscription:null` ve gerçek `AdsTable Monthly` 14 günlük trial provider kabulü PASS oldu. Yeni app `adstable-1` handle'ıyla kuruldu; farklı Dev Dashboard organizasyonundaki store için `Free for partners and developers` kullanılarak effective fiyat `USD 0.0` oluştu. Canlı yanıtta `price.active=false` bulunması runtime'ın bu fiyat-sürümü metadata alanını yanlış entitlement kapısı yaptığını ortaya çıkardı; düzeltme/CI, trial persistence, private no-trial active kabulü ve sızıntı kontrolleri tamamlanmadan paket kapanmaz.
 - **EO-02-D — Not started:** EO-02-C canlı Partner API kabulü tamamlanmadan başlamaz.
 
 EO-02-A business tablo veya veri kurmaz, runtime credential'ı etkinleştirmez, canlı token/veri taşımaz, Vercel environment değiştirmez ve legacy Supabase projesine dokunmaz.
@@ -108,11 +108,12 @@ EO-01-B dependency pinlemeden ve EO-07 UI implementasyonundan önce resmî sür�
 
 ## Current Shopify billing baseline
 
-6 Ekim 2026 tarihinde Shopify'ın resmî Shopify App Pricing ve Partner API belgeleri kontrol edildi:
+8 Ekim 2026 tarihinde Shopify'ın resmî Shopify App Pricing ve Partner API belgeleri yeniden kontrol edildi:
 
 - Yeni public app için desteklenen fiyat modelinde varsayılan otorite Shopify App Pricing'dir; Manual Billing API legacy'dir.
 - Plan, fiyat ve 14 günlük trial Shopify tarafında yaşar; AdsTable `appSubscriptionCreate` veya local trial grant üretmez.
 - Canonical subscription read modeli Partner API `2026-07` `activeSubscription(appId, shopId)` sorgusudur.
+- `price.active` yalnız fiyat sürümünün güncel katalog fiyatı olup olmadığını gösterir; subscription veya entitlement aktiflik bayrağı değildir.
 - Trial kullanımı Shopify tarafından 180 günlük dönem boyunca izlenir; reinstall trial'ı sıfırlamaz.
 - Shopify App Pricing billing webhook'u göndermez; redirect, app entry ve entitlement-korumalı işlerde kontrollü Partner API reconciliation gerekir.
 - Bir aktif Reporting Store dahildir; aday tespiti ve aktif store değişimi ücret oluşturmaz.

@@ -59,6 +59,10 @@ test("official Partner API version and query fields are pinned", () => {
   assert.match(ACTIVE_SUBSCRIPTION_QUERY, /currentBillingCycle/);
   assert.equal(contract.decision.billing_authority, "shopify_app_pricing");
   assert.equal(contract.decision.appSubscriptionCreate, false);
+  assert.equal(
+    contract.decision.price_active_semantics,
+    "catalog_price_version_metadata_not_subscription_entitlement_authority",
+  );
 });
 
 test("future Shopify trial becomes a generation-bound trial entitlement", async () => {
@@ -79,7 +83,9 @@ test("future Shopify trial becomes a generation-bound trial entitlement", async 
               cancelAtEndOfCycle: false,
               trialEndsAt: "2026-10-20T18:00:00.000Z",
               currentBillingCycle: null,
-              items: [{handle: "ads_table_monthly", price: {active: true}}],
+              // Shopify development-store free testing can return an effective
+              // zero-dollar price with active=false while activeSubscription is live.
+              items: [{handle: "ads_table_monthly", price: {active: false}}],
               pendingUpdate: null,
             },
           },
@@ -93,6 +99,7 @@ test("future Shopify trial becomes a generation-bound trial entitlement", async 
   assert.equal(state.command.active, true);
   assert.equal(state.command.installGeneration, 1);
   assert.equal(state.command.trialEndsAt, "2026-10-20T18:00:00.000Z");
+  assert.deepEqual(state.command.itemHandles, ["ads_table_monthly"]);
   assert.equal(state.command.sourceHash.length, 64);
 });
 

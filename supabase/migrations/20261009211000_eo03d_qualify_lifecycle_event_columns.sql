@@ -42,10 +42,10 @@ begin
      where event.event_id = p_event_id
        and (
          event.connection_id <> p_connection_id
-         or workspace_id <> p_workspace_id
-         or install_generation <> p_install_generation
-         or provider <> p_provider
-         or event_type <> p_event_type
+         or event.workspace_id <> p_workspace_id
+         or event.install_generation <> p_install_generation
+         or event.provider <> p_provider
+         or event.event_type <> p_event_type
        )
   ) then
     raise exception 'LIFECYCLE_EVENT_ID_REUSE_MISMATCH';
@@ -157,9 +157,9 @@ begin
      where event.event_id = p_event_id
        and (
          event.connection_id <> p_connection_id
-         or workspace_id <> p_workspace_id
-         or install_generation <> p_install_generation
-         or provider <> p_provider
+         or event.workspace_id <> p_workspace_id
+         or event.install_generation <> p_install_generation
+         or event.provider <> p_provider
          or event.event_type <> 'credential_renewed'
        )
   ) then raise exception 'LIFECYCLE_EVENT_ID_REUSE_MISMATCH'; end if;
@@ -406,9 +406,9 @@ begin
      where event.event_id = p_event_id
        and (
          event.connection_id <> p_connection_id
-         or workspace_id <> p_workspace_id
-         or install_generation <> p_install_generation
-         or provider <> p_provider
+         or event.workspace_id <> p_workspace_id
+         or event.install_generation <> p_install_generation
+         or event.provider <> p_provider
          or event.event_type <> 'reconnected'
        )
   ) then raise exception 'LIFECYCLE_EVENT_ID_REUSE_MISMATCH'; end if;

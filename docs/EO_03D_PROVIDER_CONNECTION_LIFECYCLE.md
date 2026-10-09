@@ -103,3 +103,27 @@ Excluded:
 5. Verify all synthetic rows and temporary privileges are removed.
 6. Record durable evidence.
 7. Product owner explicitly closes EO-03-D and A6-EO-03.
+
+## Live database evidence — 9 October 2026
+
+The product owner explicitly approved the live database migration and rollback-scoped synthetic acceptance.
+
+Applied to Supabase project `podpwkrpmjiksskxhwsu`:
+
+- PostgreSQL: `17.11.0.003`;
+- migration record: `20261009141549 / eo03d_provider_connection_lifecycle`;
+- source commit: `3abcac35c31d7eecf75ba10f044a8bd059133df5`;
+- migration blob: `a6e1403345de48d5dbdf8045256bc9a07a63c547`.
+
+Verified live:
+
+- lifecycle columns, event table and six required lifecycle/reporting functions exist;
+- provider authority tables have forced RLS;
+- `anon`, `authenticated`, `service_role` and `adstable_runtime` have no direct table access;
+- all critical functions are `SECURITY DEFINER` with an empty `search_path`;
+- reporting authority requires `connected`, a non-null credential and an active Shopify installation;
+- Supabase security advisor returned zero findings;
+- no provider connection, credential or lifecycle-event test rows exist.
+
+Synthetic runtime acceptance remains **OPEN**. Supabase Connector rejected rollback-scoped synthetic mutation with `INVALID_ARGUMENT` before any synthetic row was written. This is recorded as an execution-channel blocker, not a lifecycle PASS or a database defect. EO-03-D remains `Implementation` until the executable state transitions are run in an approved transactional channel and the product owner explicitly accepts the package.
+

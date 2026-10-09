@@ -1,0 +1,53 @@
+{
+  "evidence_id": "eo-03d-live-database-evidence-2026-10-09",
+  "checked_at": "2026-10-09",
+  "package": "A6-EO-03-D",
+  "status": "PARTIAL_PASS",
+  "project": {
+    "ref": "podpwkrpmjiksskxhwsu",
+    "name": "ads-table-embedded",
+    "region": "eu-central-1",
+    "postgres_version": "17.11.0.003",
+    "health": "ACTIVE_HEALTHY"
+  },
+  "source": {
+    "commit": "3abcac35c31d7eecf75ba10f044a8bd059133df5",
+    "migration_path": "supabase/migrations/20261009210000_eo03d_provider_connection_lifecycle.sql",
+    "migration_blob_sha": "a6e1403345de48d5dbdf8045256bc9a07a63c547"
+  },
+  "applied_migration": {
+    "version": "20261009141549",
+    "name": "eo03d_provider_connection_lifecycle",
+    "result": "PASS"
+  },
+  "readonly_acceptance": {
+    "lifecycle_functions_present": true,
+    "forced_rls": true,
+    "runtime_direct_table_access_revoked": true,
+    "security_definer_empty_search_path": true,
+    "reporting_loader_connected_gate": true,
+    "reporting_loader_credential_gate": true,
+    "security_advisor_findings": 0,
+    "provider_connection_rows": 0,
+    "credential_rows": 0,
+    "lifecycle_event_rows": 0
+  },
+  "performance_advisor": {
+    "new_eo03d_unindexed_foreign_key_findings": 0,
+    "existing_unrelated_info_findings": [
+      "privacy.deletion_manifests.deletion_manifests_workspace_id_fkey",
+      "privacy.deletion_runs.deletion_runs_workspace_id_fkey"
+    ],
+    "unused_index_findings_expected_before_runtime_traffic": true
+  },
+  "synthetic_runtime_acceptance": {
+    "status": "BLOCKED",
+    "channel": "Supabase Connector",
+    "error": "INVALID_ARGUMENT",
+    "mutations_reached_database": false,
+    "persistent_synthetic_rows": 0,
+    "required_before_acceptance": true
+  },
+  "package_acceptance": "OPEN",
+  "product_owner_closure_required": true
+}

@@ -1,7 +1,7 @@
 {
   "evidence_id": "eo-02d-durable-worker-live-2026-10-09",
   "checked_at": "2026-10-09T08:01:00Z",
-  "status": "PASS_LIVE_WORKER_ACCEPTANCE",
+  "status": "PASS_LIVE_WORKER_ACCEPTED",
   "project": {
     "ref": "podpwkrpmjiksskxhwsu",
     "name": "ads-table-embedded",
@@ -95,5 +95,5 @@
   },
   "production_data_deleted": false,
   "secrets_in_evidence": false,
-  "explicit_product_owner_closure": "PENDING"
+  "explicit_product_owner_closure": "PASS_2026-10-09"
 }

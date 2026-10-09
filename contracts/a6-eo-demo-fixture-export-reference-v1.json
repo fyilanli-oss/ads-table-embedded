@@ -146,11 +146,11 @@
     "required_canonical_fields": [
       "fixture_version",
       "workspace_id",
-      "reporting_store_id",
+      "installed_shop_id",
       "provider",
       "provider_account_id",
       "provider_business_date",
-      "reporting_store_timezone",
+      "installed_shop_timezone",
       "source_currency",
       "reporting_currency",
       "metric_support_state",
@@ -240,7 +240,7 @@
     "deterministic_generator_required": true,
     "generator_dimensions_to_namespace": [
       "workspace_id",
-      "reporting_store_id",
+      "installed_shop_id",
       "provider_account_id",
       "campaign_id",
       "group_or_message_id",

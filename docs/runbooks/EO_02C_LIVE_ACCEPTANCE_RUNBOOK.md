@@ -115,8 +115,8 @@ Beklenen:
 - `currentBillingCycle === null`.
 - Subscription item handle kaydedilir; fiyat yalnız redacted business evidence olarak yazılır.
 - `price.active`, subscription aktiflik bayrağı değildir; yalnız fiyat sürümünün güncel katalog fiyatı olup olmadığını gösterir ve entitlement kapısı yapılamaz.
-- AdsTable projection `trial` olur ve Reporting Store limiti 1 kalır.
-- Candidate detection ve store switch charge üretmez.
+- AdsTable projection `trial` olur ve doğrulanmış installation generation'a bağlı kalır.
+- Provider bağlantısı veya hesap değişikliği subscription scope'unu değiştirmez.
 
 Bu development store için trial tekrarına güvenilmez; Shopify 180 günlük trial kullanımını izler.
 
@@ -158,7 +158,7 @@ Shopify farklı bir response şekli döndürürse yorum yapılmaz; ham redacted 
 - Canlı Supabase business row sayımı 0/0/0/0/0 kaldı.
 - Vercel Production environment'ta database runtime credential'ı yoktur.
 - Repository'de canlı database repository adapter'ı ve production reconciliation caller'ı yoktur.
-- Bu nedenle persistence PASS sayılamaz. Önce server-only least-privilege bağlantı ve public olmayan doğrulanmış tetikleme uygulanır; ardından generation/stale/reporting-store kontrolleri canlı çalıştırılır.
+- Bu nedenle persistence PASS sayılamaz. Önce server-only least-privilege bağlantı ve public olmayan doğrulanmış tetikleme uygulanır; ardından generation/stale/installed-shop identity kontrolleri canlı çalıştırılır.
 - Geçici public test endpoint'i, browser database client'ı veya `service_role` fallback'i yasaktır.
 
 ## 8 Ekim 2026 Aşama 6 implementation sonucu
@@ -176,7 +176,7 @@ Shopify farklı bir response şekli döndürürse yorum yapılmaz; ham redacted 
 - Supabase transaction pooler bağlantısı resmî Supabase Root CA 2021 ile `rejectUnauthorized=true` kullanır; URL'deki `sslmode=require` doğrulandıktan sonra node-postgres'e explicit CA config verilir.
 - Shopify Admin desktop içinde AdsTable ilk yüklemede ve tam Admin sayfası yenilemesinden sonra Funnel preview'ını açtı; önceki preview-load hatası tekrarlanmadı.
 - Canlı database sayımı: workspace 1, installation 1, encrypted runtime session 1, workspace subscription 1, workspace entitlement 1, trial ledger 0.
-- Installation generation 1 ve active; subscription projection active; entitlement active, Reporting Store limiti 1, candidate detection ve Reporting Store switch billing bayrakları false.
+- Installation generation 1 ve active; subscription projection active; entitlement active ve doğrulanmış kurulu Shopify mağazasıyla aynı installation generation'a bağlı.
 - Runtime session satırı ciphertext, 12-byte nonce, 16-byte authentication tag ve key version 1 ile doğrulandı; plaintext token alanı yoktur.
 - Son kontrol penceresinde Vercel Production runtime warning/error kaydı yoktur.
 - Gerçek mobil Shopify Admin kabulü henüz yapılmadığı için EO-02-C final PASS değildir ve EO-02-D başlamaz.
@@ -241,3 +241,7 @@ Production database Secret girilmeden önce aşağıdakilerin tamamı PASS olmal
 6. Contract test, typecheck, build, Governance CI, gerçek desktop/mobil Shopify Admin ve secret sızıntı kabulü.
 
 Bu kapı PASS olmadan `ADSTABLE_RUNTIME_DATABASE_URL`, session encryption key veya Shopify API secret Production'a aktive edilmez. Public test endpoint'i, plaintext session/token tablosu, browser database client'ı ve `service_role` fallback'i yasaktır.
+
+## 9 Ekim 2026 düzeltici canlı kapı
+
+Repository düzeltmesi merge edildikten sonra canlı migration ayrı açık onayla uygulanır. Kabul; eski üç entitlement metadata kolonunun yokluğunu, apply/resolve function sonuçlarının sadeleştiğini, runtime identity eşleşmesini, forced RLS ve function-only yetki sınırının korunduğunu doğrular. Tarihsel kabul kanıtları değiştirilmez.

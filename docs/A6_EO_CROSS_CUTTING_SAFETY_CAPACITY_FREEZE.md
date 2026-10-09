@@ -43,7 +43,7 @@ At 2,000 workspaces, uniformly sharded hourly scheduling averages 0.556 workspac
 
 ## Date and compare boundary
 
-- Timezone authority is the active Reporting Store’s Shopify IANA timezone; provider raw dates/timezones remain stored.
+- Timezone authority is the installed Shopify shop’s IANA timezone; provider raw dates/timezones remain stored.
 - Default is the last seven calendar days including today.
 - Summary/Table custom ranges are limited to 90 days; Daily is limited to 31.
 - Compare ranges must have equal day counts, cannot overlap, and use the same timezone and reporting currency.

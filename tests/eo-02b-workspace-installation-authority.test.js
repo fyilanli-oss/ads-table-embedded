@@ -127,3 +127,10 @@ test("EO-02-B persists no token material", () => {
   assert.equal(contract.token_boundary.token_columns_in_this_package, false);
   assert.doesNotMatch(migration, /access_token|refresh_token|token_envelope|ciphertext/);
 });
+
+test("installed Shopify shop is immutable commerce authority", () => {
+  assert.equal(contract.authority.installed_shop_binding.mutable_by_merchant, false);
+  assert.equal(contract.authority.installed_shop_binding.one_workspace_per_installation_shop, true);
+  assert.equal(contract.authority.installed_shop_binding.provider_account_can_change_shop_authority, false);
+  assert.ok(contract.authority.forbidden_authority.includes("cross-commerce account"));
+});

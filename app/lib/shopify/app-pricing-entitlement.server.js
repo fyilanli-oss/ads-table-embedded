@@ -225,10 +225,7 @@ export async function reconcileShopifyAppPricingEntitlement({
     persisted.shopId !== verified.shopId ||
     persisted.shopDomain !== verified.shopDomain ||
     persisted.installGeneration !== verified.installGeneration ||
-    persisted.entitlementStatus !== snapshot.entitlementStatus ||
-    persisted.reportingStoreLimit !== 1 ||
-    persisted.candidateDetectionBilled !== false ||
-    persisted.reportingStoreSwitchBilled !== false
+    persisted.entitlementStatus !== snapshot.entitlementStatus
   ) {
     throw new Error("ENTITLEMENT_PERSISTENCE_MISMATCH");
   }

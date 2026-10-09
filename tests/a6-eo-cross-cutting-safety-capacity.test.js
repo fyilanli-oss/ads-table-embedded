@@ -24,6 +24,7 @@ test("freezes reconciliation and bounded query semantics", () => {
   assert.equal(contract.query_time_range.daily_max_calendar_days, 31);
   assert.equal(contract.query_time_range.compare.equal_calendar_day_count, true);
   assert.equal(contract.query_time_range.compare.overlap_allowed, false);
+  assert.equal(contract.query_time_range.timezone_authority, "installed_shop_shopify_IANA_timezone");
 });
 
 test("freezes restore objectives and prevents deleted-data resurrection", () => {

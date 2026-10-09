@@ -1,8 +1,8 @@
 {
   "contract_id": "a6-eo-07-three-surface-ui-product-freeze-v1",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "status": "product_decision_frozen_implementation_pending",
-  "decision_date": "2026-10-07",
+  "decision_date": "2026-10-09",
   "surfaces": [
     {
       "route": "/",
@@ -165,7 +165,6 @@
     "products": {
       "creative_and_sold_product_are_distinct": true,
       "requires_provider_returned_identity": true,
-      "requires_deterministic_active_store_mapping": true,
       "shopify_image_does_not_create_attribution": true,
       "forbidden_inference": [
         "ad_name",
@@ -176,7 +175,8 @@
         "arbitrary_shopify_order_join"
       ],
       "cross_sell_requires_native_provider_evidence": true,
-      "unsupported_is_not_zero": true
+      "unsupported_is_not_zero": true,
+      "requires_deterministic_installed_shop_mapping": true
     },
     "visualization": {
       "status": "blocked_by_A6_EO_07_C",
@@ -205,18 +205,14 @@
     "section_order": [
       "reporting_currency",
       "provider_connections_and_reporting_accounts",
-      "reporting_store",
       "subscription",
       "data_and_privacy"
     ],
-    "reporting_store_above_provider_accounts": false,
     "reporting_account_change": {
-      "staged_until_store_topology_verified": true,
-      "account_and_store_activation_atomic": true,
-      "current_store_verified_keeps_store": true,
-      "different_candidates_require_explicit_selection": true,
-      "multiple_candidates_require_explicit_selection": true,
-      "no_candidate_keeps_previous_active_pair": true,
+      "staged_until_installed_shop_scope_verified": true,
+      "reporting_account_activation_does_not_change_installed_shop": true,
+      "deterministic_provider_entity_scope_required": true,
+      "absent_or_ambiguous_scope_fails_closed": true,
       "proposed_account_may_remain_connected_but_not_reporting_authority": true,
       "dataset_write_before_activation": false,
       "snapshot_job_before_activation": false,
@@ -226,10 +222,10 @@
       "authority": "shopify_app_pricing",
       "public_price_usd_monthly": 24.99,
       "trial_days": 14,
-      "included_active_reporting_stores": 1,
-      "candidate_detection_or_switch_fee": false,
       "custom_checkout_forbidden": true,
-      "manage_on_shopify_hosted_surface": true
+      "manage_on_shopify_hosted_surface": true,
+      "one_subscription_per_installed_shop": true,
+      "second_shop_requires_separate_installation_and_subscription": true
     },
     "delete_my_data": {
       "available_while_installed": true,
@@ -243,6 +239,15 @@
     },
     "visualization": {
       "charts": false
+    },
+    "installed_shop": {
+      "authority": "verified_shopify_installation",
+      "separate_editable_section": false,
+      "selectable": false,
+      "switchable": false,
+      "optional_read_only_context_label": "Shopify store",
+      "provider_account_can_change_it": false,
+      "another_shop_requires_separate_installation": true
     }
   },
   "shopify_components": {

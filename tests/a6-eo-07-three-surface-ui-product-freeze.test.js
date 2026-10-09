@@ -41,18 +41,18 @@ test("Settings preserves the proven interaction flow but does not carry legacy s
   assert.deepEqual(contract.settings.section_order, [
     "reporting_currency",
     "provider_connections_and_reporting_accounts",
-    "reporting_store",
     "subscription",
     "data_and_privacy",
   ]);
-  assert.equal(contract.settings.reporting_store_above_provider_accounts, false);
+  assert.equal(contract.settings.installed_shop.selectable, false);
+  assert.equal(contract.settings.installed_shop.separate_editable_section, false);
 });
 
-test("Reporting Account and Reporting Store activate atomically and fail closed", () => {
+test("Reporting Account activation cannot replace the installed Shopify shop and fails closed", () => {
   const change = contract.settings.reporting_account_change;
-  assert.equal(change.staged_until_store_topology_verified, true);
-  assert.equal(change.account_and_store_activation_atomic, true);
-  assert.equal(change.no_candidate_keeps_previous_active_pair, true);
+  assert.equal(change.staged_until_installed_shop_scope_verified, true);
+  assert.equal(change.reporting_account_activation_does_not_change_installed_shop, true);
+  assert.equal(change.absent_or_ambiguous_scope_fails_closed, true);
   assert.equal(change.dataset_write_before_activation, false);
   assert.equal(change.snapshot_job_before_activation, false);
 });

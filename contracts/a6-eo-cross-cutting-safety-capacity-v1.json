@@ -86,7 +86,7 @@
     "raw_setting_and_mismatch_evidence_required": true
   },
   "query_time_range": {
-    "timezone_authority": "active_reporting_store_shopify_IANA_timezone",
+    "timezone_authority": "installed_shop_shopify_IANA_timezone",
     "provider_raw_business_date_and_timezone_retained": true,
     "default_range": "last_7_calendar_days_including_today",
     "presets": [
@@ -294,7 +294,7 @@
       "load_restore_and_portability_rehearsal"
     ]
   },
-  "official_sources_checked_at": "2026-10-07",
+  "official_sources_checked_at": "2026-10-09",
   "official_sources": {
     "meta_marketing_api": "https://www.postman.com/meta/facebook-marketing-api/documentation/0zr4mes/facebook-marketing-api-mapi",
     "google_ads_conversion_windows": "https://developers.google.com/google-ads/api/docs/conversions/getting-started",

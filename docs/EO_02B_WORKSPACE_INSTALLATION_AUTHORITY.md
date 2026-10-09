@@ -91,3 +91,16 @@ Token plaintext'i, sahte token kolonu veya geçici token deposu kurulmaz. Expiri
 - Supabase canlı uygulaması açık kullanıcı onayıyla PASS oldu.
 - PR #6 Governance CI PASS sonrası açık kullanıcı onayıyla merge edildi.
 - Kabul merge commit'i: `edc9e21588f5a32bea139b754ea0108c9809cf27`.
+
+## 9 Ekim 2026 — Kurulu mağaza otoritesi düzeltmesi
+
+Shopify embedded workspace'in commerce otoritesi, uygulamanın kurulu olduğu ve ID token + Admin GraphQL `shop` yanıtıyla doğrulanan Shopify mağazasıdır. Kimlik `Shop GID + canonical myshopifyDomain + install generation` üçlüsüdür ve kullanıcı tarafından seçilemez veya değiştirilemez.
+
+- Bir workspace yalnız bir kurulu Shopify mağazasına aittir.
+- Provider Reporting Account seçimi bu mağaza otoritesinin altında kalır; mağazayı değiştiremez.
+- Provider entity'leri kurulu mağazaya deterministik bağlanamıyorsa hesap bağlı kalabilir ancak reporting authority olamaz; Dataset V2 yazımı ve SnapshotJob fail-closed durur.
+- Pixel veya provider domaini mağaza otoritesi değildir.
+- İkinci Shopify mağazası ayrı app installation, workspace ve subscription gerektirir.
+- WooCommerce, BigCommerce ve Magento bu Shopify embedded workspace'e commerce source olarak bağlanamaz.
+
+Bağlayıcı düzeltme: `contracts/eo-02bc-installed-shop-authority-correction-v1.json`.

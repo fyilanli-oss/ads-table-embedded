@@ -33,33 +33,6 @@
     "every_child_requires_one_sentence_scope_summary": true
   },
   "cross_cutting_decisions": {
-    "reporting_store_scope_v1": {
-      "decided_at": "2026-10-06",
-      "shopify_workspace_role": "installation_session_billing_and_privacy_authority",
-      "reporting_store_role": "analytical_scope_within_selected_provider_reporting_accounts",
-      "creates_additional_shopify_workspace": false,
-      "maximum_active_reporting_stores_per_workspace": 1,
-      "single_verified_candidate_auto_selected": true,
-      "multiple_candidates_require_settings_selection_before_dataset_write": true,
-      "new_candidate_never_silently_changes_selection": true,
-      "continue_selected_store_only_when_provider_isolation_is_proven": true,
-      "ambiguous_provider_write_state": "store_scope_review_required_fail_closed",
-      "existing_history_preserved_on_pause_or_switch": true,
-      "selection_is_effective_dated": true,
-      "switch_relabels_history": false,
-      "new_scope_bootstrap": "yesterday_and_today_only",
-      "candidate_detection_or_single_active_switch_changes_price": false,
-      "simultaneous_multi_store_reporting": "future_separate_entitlement_outside_first_review_slice",
-      "charge_by_detected_candidate_count": false,
-      "package_owners": [
-        "A6-EO-02-C",
-        "A6-EO-03-C",
-        "A6-EO-04-A",
-        "A6-EO-05-A",
-        "A6-EO-05-B",
-        "A6-EO-07-A"
-      ]
-    },
     "product_cross_sell_acceptance_v1": {
       "decided_at": "2026-10-06",
       "status": "decision_frozen_live_acceptance_pending",
@@ -250,6 +223,33 @@
       "advances_package_status": false,
       "authorizes_ui_implementation": false,
       "authorizes_live_mutation": false
+    },
+    "installed_shop_authority_v1": {
+      "decided_at": "2026-10-09",
+      "shopify_workspace_role": "installation_session_billing_privacy_and_commerce_authority",
+      "authority_source": "verified_ID_token_plus_Admin_GraphQL_shop",
+      "immutable_within_install_generation": true,
+      "merchant_selectable_store_scope": false,
+      "maximum_shopify_shops_per_workspace": 1,
+      "separate_shop_requires_separate_installation_workspace_and_subscription": true,
+      "provider_account_selection_is_downstream": true,
+      "provider_account_can_change_installed_shop": false,
+      "provider_entities_require_deterministic_installed_shop_scope": true,
+      "ambiguous_or_cross_store_provider_data": "connected_but_not_reporting_authority_fail_closed",
+      "dataset_write_without_installed_shop_scope": false,
+      "snapshot_job_without_installed_shop_scope": false,
+      "non_shopify_commerce_sources_in_embedded_workspace": false,
+      "correction_contract": "contracts/eo-02bc-installed-shop-authority-correction-v1.json",
+      "package_owners": [
+        "A6-EO-02-B",
+        "A6-EO-02-C",
+        "A6-EO-03-C",
+        "A6-EO-04-A",
+        "A6-EO-05-A",
+        "A6-EO-05-B",
+        "A6-EO-06-B",
+        "A6-EO-07-A"
+      ]
     }
   },
   "exception": {
@@ -344,7 +344,7 @@
         {
           "id": "A6-EO-02-C",
           "title": "Fourteen-day trial, subscription and entitlement",
-          "objective": "Make Shopify billing the merchant entitlement authority with one active Reporting Store included and no fee for candidate detection or switching.",
+          "objective": "Make Shopify billing the merchant entitlement authority, bound one-to-one to the verified installed Shopify shop.",
           "status": "Accepted",
           "billing_authority": "Shopify App Pricing",
           "subscription_read_authority": "Partner API 2026-07 activeSubscription",
@@ -420,7 +420,7 @@
         {
           "id": "A6-EO-03-C",
           "title": "Connection and reporting-account authority",
-          "objective": "Establish verified ownership, selected Reporting Accounts and one effective-dated active Reporting Store binding per workspace."
+          "objective": "Establish verified provider ownership and selected Reporting Accounts without allowing them to replace the installed Shopify shop authority."
         },
         {
           "id": "A6-EO-03-D",
@@ -502,12 +502,12 @@
         {
           "id": "A6-EO-05-A",
           "title": "Hourly scheduler, shard, lease and checkpoint",
-          "objective": "Build the AdsTable-owned staggered single-flight recurring control plane with bounded concurrency, backpressure, capacity evidence and Reporting Store topology-drift detection."
+          "objective": "Build the AdsTable-owned staggered single-flight recurring control plane with bounded concurrency, backpressure, capacity evidence and installed-shop scope drift detection."
         },
         {
           "id": "A6-EO-05-B",
           "title": "Dataset V2, FX and provenance",
-          "objective": "Persist Reporting Store scope-bound canonical facts, source currency and exact FX lineage; extract a versioned synthetic demo fixture without presenting it as provider truth."
+          "objective": "Persist installed-shop-bound canonical facts, source currency and exact FX lineage; extract a versioned synthetic demo fixture without presenting it as provider truth."
         },
         {
           "id": "A6-EO-05-C",
@@ -558,7 +558,7 @@
         {
           "id": "A6-EO-06-B",
           "title": "Query, filters and comparison semantics",
-          "objective": "Apply Reporting Store timezone, bounded date/entity filters, supported grain, 90-day Summary/Table, 31-day Daily and equal-period comparison semantics against golden fixtures."
+          "objective": "Apply installed Shopify shop timezone, bounded date/entity filters, supported grain, 90-day Summary/Table, 31-day Daily and equal-period comparison semantics against golden fixtures."
         },
         {
           "id": "A6-EO-06-C",
@@ -601,7 +601,7 @@
         {
           "id": "A6-EO-07-A",
           "title": "Settings surface",
-          "objective": "Preserve the proven Settings interaction flow while building currency, provider/account authority, atomic Reporting Store selection, Klaviyo cost, billing and privacy; no charts."
+          "objective": "Preserve the proven Settings interaction flow while building currency, provider/account authority, read-only installed-shop context, Klaviyo cost, billing and privacy; no charts and no store selector."
         },
         {
           "id": "A6-EO-07-B",

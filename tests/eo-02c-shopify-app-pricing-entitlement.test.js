@@ -42,9 +42,6 @@ function repositoryFor(expectedStatus) {
           shopDomain: value.shopDomain,
           installGeneration: value.installGeneration,
           entitlementStatus: expectedStatus,
-          reportingStoreLimit: 1,
-          candidateDetectionBilled: false,
-          reportingStoreSwitchBilled: false,
           sourceObservedAt: value.observedAt,
         };
       },
@@ -211,9 +208,9 @@ test("database boundary is forced-RLS and runtime function-only", () => {
   assert.match(migration, /grant execute on function billing\.resolve_workspace_entitlement/);
   assert.doesNotMatch(migration, /grant\s+(?:select|insert|update|delete|all)[^;]*to\s+adstable_runtime/);
   assert.doesNotMatch(migration, /grant[^;]*to\s+(?:anon|authenticated|service_role)/);
-  assert.match(migration, /reporting_store_limit smallint not null default 1/);
-  assert.match(migration, /candidate_detection_billed boolean not null default false/);
-  assert.match(migration, /reporting_store_switch_billed boolean not null default false/);
+  assert.match(migration, /drop column if exists reporting_store_limit/);
+  assert.match(migration, /drop column if exists candidate_detection_billed/);
+  assert.match(migration, /drop column if exists reporting_store_switch_billed/);
   assert.match(migration, /eo02c_stale_entitlement_did_not_fail_closed/);
 });
 
@@ -221,9 +218,9 @@ test("new-subscription code cannot use the legacy Billing API", () => {
   const implementation = read("app/lib/shopify/app-pricing-entitlement.server.js");
   assert.doesNotMatch(implementation, /appSubscriptionCreate|billing\.request/);
   assert.equal(contract.reconciliation.billing_webhook, false);
-  assert.equal(contract.reporting_store_entitlement.included_active_reporting_stores, 1);
-  assert.equal(contract.reporting_store_entitlement.candidate_detection_billed, false);
-  assert.equal(contract.reporting_store_entitlement.active_reporting_store_switch_billed, false);
+  assert.equal(contract.installation_bound_subscription.installation_shop_is_billing_scope, true);
+  assert.equal(contract.installation_bound_subscription.merchant_selectable_store_scope, false);
+  assert.equal(contract.installation_bound_subscription.second_shop_requires_separate_installation_workspace_and_subscription, true);
 });
 
 

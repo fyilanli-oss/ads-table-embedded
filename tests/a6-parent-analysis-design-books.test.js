@@ -27,7 +27,7 @@ test("every closed parent has an accepted Analysis-Design Book", async () => {
     const ledger = closure.application_ledger.find(
       (entry) => entry.parent === item.id,
     );
-    assert.ok(ledger, `${item.id} is missing from the closure ledger`);
+    assert.ok(ledger, item.id + " is missing from the closure ledger");
     assert.equal(ledger.status, "PASS_parent_closed");
     assert.equal(item.analysis_design_document, ledger.artifact);
     assert.match(item.analysis_design_status, /^Accepted_/);
@@ -38,45 +38,8 @@ test("every closed parent has an accepted Analysis-Design Book", async () => {
     for (const requiredSection of closure.required_sections) {
       assert.match(
         book,
-        new RegExp(`^\\s*- ${requiredSection}\\s*import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
-import test from "node:test";
-
-const readJson = async (path) => JSON.parse(await readFile(path, "utf8"));
-const masterPath = "contracts/a6-eo-implementation-master-v1.json";
-const closurePath = "contracts/a6-parent-package-analysis-design-closure-v1.json";
-
-test("every closed parent has an accepted Analysis-Design Book", async () => {
-  const master = await readJson(masterPath);
-  const closure = await readJson(closurePath);
-  const closed = master.packages.filter((item) =>
-    closure.closed_parent_statuses.includes(item.status),
-  );
-
-  assert.deepEqual(
-    closed.map((item) => item.id),
-    ["A6-EO-01", "A6-EO-02", "A6-EO-03"],
-  );
-  assert.equal(closure.application_ledger.length, closed.length);
-  assert.equal(
-    master.parent_package_analysis_design_closure.next_required_parent,
-    "A6-EO-04",
-  );
-
-  for (const item of closed) {
-    const ledger = closure.application_ledger.find(
-      (entry) => entry.parent === item.id,
-    );
-    assert.ok(ledger, `${item.id} is missing from the closure ledger`);
-    assert.equal(ledger.status, "PASS_parent_closed");
-    assert.equal(item.analysis_design_document, ledger.artifact);
-    assert.match(item.analysis_design_status, /^Accepted_/);
-
-    const book = await readFile(ledger.artifact, "utf8");
-    assert.match(book, new RegExp(item.id));
-    assert.match(book, /Status:\*\* Accepted/);
-, "m"),
-        `${ledger.artifact} is missing contract section ${requiredSection}`,
+        new RegExp("^\\s*- " + requiredSection + "\\s*$", "m"),
+        ledger.artifact + " is missing contract section " + requiredSection,
       );
     }
   }
@@ -97,6 +60,7 @@ test("Execution Plan exposes the capacity ladder and safe demo-fixture boundary"
     "production-shape restore/load provası",
     "Supabase kapasite koşuları raw HTML'i çalıştırmaz",
   ]) {
-    assert.match(plan, new RegExp(value.replace(/[.*+?^$\{\}()|[\]\\]/g, "\\$&")));
+    const escaped = value.replace(/[.*+?^$\{\}()|[\]\\]/g, "\\$&");
+    assert.match(plan, new RegExp(escaped));
   }
 });

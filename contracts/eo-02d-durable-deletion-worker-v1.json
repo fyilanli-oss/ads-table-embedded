@@ -1,0 +1,68 @@
+{
+  "contract_id": "eo-02d-durable-deletion-worker-v1",
+  "version": "1.0.0",
+  "status": "repository_implementation",
+  "checked_at": "2026-10-09",
+  "package": "EO-02-D internal corrective gate",
+  "authoritative_sources": {
+    "supabase_cron_install": "https://supabase.com/docs/guides/cron/install",
+    "supabase_cron_quickstart": "https://supabase.com/docs/guides/cron/quickstart",
+    "supabase_database_functions": "https://supabase.com/docs/guides/database/functions",
+    "pg_cron_upstream": "https://github.com/citusdata/pg_cron/blob/main/README.md"
+  },
+  "architecture": {
+    "engine": "Supabase Cron / pg_cron",
+    "network_hop": false,
+    "vercel_cron": false,
+    "schedule_utc": "*/5 * * * *",
+    "batch_size": 25,
+    "maximum_batch_size": 100,
+    "overlap_control": [
+      "pg_cron serializes the same named job",
+      "transaction advisory lock rejects concurrent manual or duplicate execution",
+      "FOR UPDATE SKIP LOCKED protects selected runs"
+    ]
+  },
+  "retry": {
+    "retryable_status": "failed",
+    "maximum_attempts": 20,
+    "initial_delay_minutes": 5,
+    "exponential_backoff": true,
+    "maximum_delay_minutes": 320,
+    "terminal_behavior": "remain_failed_and_visible_for_operational_intervention",
+    "persisted_error": "SQLSTATE_classification_only",
+    "raw_error_text_persisted": false
+  },
+  "security": {
+    "scheduler_role": "postgres",
+    "scheduler_function": "privacy.process_deletion_queue(integer)",
+    "scheduler_function_security": "security_definer_empty_search_path",
+    "application_runtime_can_execute_scheduler": false,
+    "application_runtime_can_execute_physical_deletion": false,
+    "browser_or_data_api_access": false,
+    "direct_table_dml": false
+  },
+  "observability": {
+    "queue_authority": "privacy.deletion_runs",
+    "completion_authority": "privacy.deletion_manifests",
+    "cron_history": "cron.job_run_details",
+    "cron_history_retention_days": 30,
+    "exhausted_run_predicate": "status='failed' and attempt_count>=20",
+    "silent_success_for_failure": false
+  },
+  "live_gate": {
+    "pg_cron_currently_installed": false,
+    "repository_change_authorizes_live_mutation": false,
+    "explicit_user_approval_required": true,
+    "required_acceptance": [
+      "apply corrective migration",
+      "verify named cron jobs and five-minute cadence",
+      "synthetic queued run completes through cron without direct executor call",
+      "duplicate and overlapping invocation remain idempotent",
+      "forced failure records bounded retry without raw error text",
+      "exhausted failure remains visible",
+      "Supabase Security and Performance Advisors pass",
+      "remove every synthetic row and record evidence"
+    ]
+  }
+}

@@ -300,19 +300,19 @@ test("migration enforces fail-closed, idempotent and secret-free lifecycle", () 
 
 test("contract preserves provider differences and no live mutation authorization", () => {
   assert.equal(contract.status, "Implementation");
-  assert.equal(contract.authority.connected_is_only_reporting_authority, true);
+  assert.equal(contract.invariants.connected_only_reporting_authority, true);
   assert.equal(contract.live_effect.production_database_mutation, false);
   assert.equal(contract.live_effect.provider_api_call, false);
   assert.equal(
-    contract.provider_rules.google_ads.invalid_grant_state,
-    "reauthorization_required",
+    contract.provider_rules.google_ads.invalid_grant_requires_reauthorization,
+    true,
   );
   assert.equal(
-    contract.provider_rules.klaviyo.token_endpoint_host,
+    contract.provider_rules.klaviyo.token_host,
     "a.klaviyo.com",
   );
   assert.equal(
-    contract.provider_rules.meta.invent_refresh_token_behavior,
+    contract.provider_rules.meta.refresh_grant_invented,
     false,
   );
 });

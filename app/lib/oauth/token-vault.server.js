@@ -155,11 +155,24 @@ export function createTokenVault({
       return envelope ? envelopeCipher.open(envelope) : null;
     },
 
-    async remove(transactionId) {
+    async remove(transactionId, context) {
       if (!UUID_PATTERN.test(transactionId || "")) {
         throw new Error("OAUTH_TRANSACTION_ID_INVALID");
       }
-      await envelopes.deletePkce(transactionId);
+      const selectedProvider = providerName(context?.provider);
+      if (
+        !UUID_PATTERN.test(context?.workspaceId || "")
+        || !Number.isSafeInteger(context?.installGeneration)
+        || context.installGeneration < 1
+      ) {
+        throw new Error("OAUTH_PKCE_AUTHORITY_INVALID");
+      }
+      await envelopes.deletePkce({
+        transactionId,
+        workspaceId: context.workspaceId,
+        installGeneration: context.installGeneration,
+        provider: selectedProvider,
+      });
     },
 
     async storeProviderTokenSet({

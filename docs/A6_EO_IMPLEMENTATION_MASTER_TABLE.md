@@ -205,8 +205,8 @@ Tek aktif parent **EO-03**'tür.
 
 - **EO-03-A — Accepted:** OAuth transaction boundary repository ve live database kanıtlarıyla kabul edildi.
 - **EO-03-B — Accepted:** Ciphertext-only token vault, production Sensitive keyring, live Supabase function boundary, production startup guard ve sentetik store/load/delete kabulü PASS; gerçek provider tokenı veya OAuth kullanılmadı.
-- **EO-03-C — Verification:** Provider tarafından doğrulanmış connected hesaplar ve tek Meta/Google Reporting Account, değiştirilemez kurulu Shopify mağazası altında canonical ve function-only authority olarak kuruldu. İki canlı migration uygulandı; runtime sınırları rollback-scope sentetik kabul ile PASS verdi, kalıcı sentetik satır kalmadı, Security Advisor bulgusu ve EO-03-C kaynaklı yeni eksik-FK-index bulgusu sıfırdır. Provider OAuth/API çağrısı yapılmadı. Teknik kanıt `docs/evidence/EO_03C_LIVE_ACCEPTANCE_2026-10-09.json` içindedir; ürün sahibi kapanışı bekleniyor.
-- **EO-03-D — Not started:** EO-03-C kabul edilmeden başlamaz.
+- **EO-03-C — Accepted:** Provider tarafından doğrulanmış connected hesaplar ve tek Meta/Google Reporting Account, değiştirilemez kurulu Shopify mağazası altında canonical ve function-only authority olarak kuruldu. İki canlı migration, rollback-scope sentetik runtime kabulü, sıfır kalıcı sentetik satır, sıfır Security Advisor bulgusu ve sıfır EO-03-C kaynaklı eksik-FK-index bulgusu PASS oldu. Provider OAuth/API çağrısı yapılmadı. Teknik kanıt `docs/evidence/EO_03C_LIVE_ACCEPTANCE_2026-10-09.json` içindedir; ürün sahibi 9 Ekim 2026'da açık kapanış kabulünü verdi.
+- **EO-03-D — Ready:** EO-03-C kabul edildi; reconnect, disconnect ve renewal lifecycle uygulama ve kabul kapısına sıradaki tek aktif child olarak hazırdır.
 - EO-04 ve sonraki parent'lar paralel başlatılmaz.
 
 ## 9 Ekim 2026 — Kurulu Shopify mağazası otoritesi

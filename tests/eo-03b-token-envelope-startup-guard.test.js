@@ -398,7 +398,7 @@ test("Shopify server cold start awaits the provider-independent vault guard", ()
   assert.match(server, /const runtime = await createShopifyAppRuntime\(\)/);
 });
 
-test("contract and master record EO-03-B acceptance and advance only to EO-03-C", () => {
+test("contract keeps EO-03-B accepted while the single track advances to EO-03-D", () => {
   const eo03 = master.packages.find((entry) => entry.id === "A6-EO-03");
   const eo03b = eo03.children.find((entry) => entry.id === "A6-EO-03-B");
 
@@ -411,6 +411,6 @@ test("contract and master record EO-03-B acceptance and advance only to EO-03-C"
   assert.equal(contract.implementation.startup_guard_wired_to_shopify_runtime, true);
   assert.equal(contract.live_evidence.synthetic_runtime_acceptance, true);
   assert.equal(eo03b.status, "Accepted");
-  assert.equal(master.current_active_child, "A6-EO-03-C");
-  assert.equal(master.next_ready_child, "A6-EO-03-C");
+  assert.equal(master.current_active_child, "A6-EO-03-D");
+  assert.equal(master.next_ready_child, "A6-EO-03-D");
 });

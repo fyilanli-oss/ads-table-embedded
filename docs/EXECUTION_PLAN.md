@@ -87,9 +87,9 @@ EO-02-A business tablo veya veri kurmaz, runtime credential'ı etkinleştirmez, 
 
 - **EO-03-A — Accepted:** Workspace/install-generation-bound OAuth transaction state machine, exact callback allowlist, single-use state claim and live private database boundary passed repository, database and product-owner gates.
 - **EO-03-B — Accepted:** Versioned AES-256-GCM token envelope, ciphertext-only vault, live private database boundary, production startup guard and secret-free synthetic runtime acceptance passed.
-- **EO-03-C — Verification:** Fresh provider-verified connected accounts and one canonical Meta/Google Reporting Account are bound beneath the immutable installed-Shopify-store authority. Klaviyo remains one Connected Account with no Reporting Account control. No merchant-selectable store scope exists.
-- With explicit approval, the EO-03-C base and corrective Supabase migrations were applied on 9 October 2026. Rollback-scoped synthetic runtime acceptance passed, cleanup is zero, Security Advisor findings are zero and EO-03-C introduced no unindexed-foreign-key finding. No provider API call, provider OAuth, Vercel mutation or production deploy occurred. Product-owner closure remains pending; exact evidence is `docs/evidence/EO_03C_LIVE_ACCEPTANCE_2026-10-09.json`.
-- EO-03-D has not started.
+- **EO-03-C — Accepted:** Fresh provider-verified connected accounts and one canonical Meta/Google Reporting Account are bound beneath the immutable installed-Shopify-store authority. Klaviyo remains one Connected Account with no Reporting Account control. No merchant-selectable store scope exists.
+- With explicit approval, the EO-03-C base and corrective Supabase migrations were applied on 9 October 2026. Rollback-scoped synthetic runtime acceptance passed, cleanup is zero, Security Advisor findings are zero and EO-03-C introduced no unindexed-foreign-key finding. No provider API call, provider OAuth, Vercel mutation or production deploy occurred. The product owner explicitly closed EO-03-C on 9 October 2026; exact evidence is `docs/evidence/EO_03C_LIVE_ACCEPTANCE_2026-10-09.json`.
+- **EO-03-D — Ready:** Reconnect, disconnect and renewal lifecycle is the single next active child.
 
 ## EO-03-C official provider baseline — 9 Ekim 2026
 

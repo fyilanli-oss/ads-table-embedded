@@ -463,7 +463,7 @@ test("contract keeps installed Shopify shop authoritative and EO-03-C isolated",
   const eo03 = master.packages.find((entry) => entry.id === "A6-EO-03");
   const eo03c = eo03.children.find((entry) => entry.id === "A6-EO-03-C");
 
-  assert.equal(contract.status, "Verification");
+  assert.equal(contract.status, "Accepted");
   assert.equal(contract.installed_shop_authority.mutable_by_provider, false);
   assert.equal(contract.reporting_store_control_exists, false);
   assert.equal(contract.provider_rules.meta.reporting_account_cardinality, 1);
@@ -473,17 +473,19 @@ test("contract keeps installed Shopify shop authoritative and EO-03-C isolated",
   assert.equal(contract.live_effect.production_database_mutation, true);
   assert.equal(contract.implementation.live_migration_applied, true);
   assert.equal(contract.acceptance_evidence.live_database, "PASS_2026-10-09");
-  assert.equal(contract.acceptance_evidence.product_owner_closure, "PENDING");
+  assert.equal(contract.acceptance_evidence.product_owner_closure, "PASS_2026-10-09");
+  assert.equal(liveAcceptance.status, "ACCEPTED");
+  assert.equal(liveAcceptance.product_owner_closure, "PASS_2026-10-09");
   assert.equal(liveAcceptance.synthetic_runtime_probe.status, "PASS");
   assert.equal(liveAcceptance.cleanup.provider_connection_rows, 0);
   assert.equal(liveAcceptance.cleanup.provider_account_rows, 0);
   assert.equal(liveAcceptance.cleanup.reporting_binding_rows, 0);
   assert.equal(liveAcceptance.advisors.security_findings, 0);
   assert.equal(liveAcceptance.advisors.eo03c_new_unindexed_foreign_key_findings, 0);
-  assert.equal(eo03c.status, "Verification");
-  assert.equal(master.current_active_child, "A6-EO-03-C");
+  assert.equal(eo03c.status, "Accepted");
+  assert.equal(master.current_active_child, "A6-EO-03-D");
   assert.equal(
     master.current_gate,
-    "A6-EO-03-C_product_owner_closure",
+    "A6-EO-03-D_implementation_and_acceptance",
   );
 });

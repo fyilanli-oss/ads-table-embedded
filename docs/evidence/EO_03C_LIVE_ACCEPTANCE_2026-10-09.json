@@ -1,7 +1,7 @@
 {
   "evidence_id": "eo-03c-live-acceptance-2026-10-09",
   "package": "A6-EO-03-C",
-  "status": "TECHNICAL_PASS_PRODUCT_OWNER_CLOSURE_PENDING",
+  "status": "ACCEPTED",
   "checked_at": "2026-10-09",
   "supabase_project_id": "podpwkrpmjiksskxhwsu",
   "repository_delivery": {
@@ -99,5 +99,6 @@
     "vercel_mutation": false,
     "production_deploy": false
   },
-  "product_owner_closure": "PENDING"
+  "product_owner_closure": "PASS_2026-10-09",
+  "product_owner_closure_scope": "A6-EO-03-C connection and reporting-account authority"
 }

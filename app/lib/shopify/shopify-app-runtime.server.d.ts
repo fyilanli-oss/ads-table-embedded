@@ -1,5 +1,15 @@
+export interface TokenVaultStartup {
+  contractVersion: number;
+  activeKeyVersion: number;
+  readableKeyVersions: readonly number[];
+}
+
 export interface ShopifyAppRuntime {
   database: unknown;
+  tokenVault: {
+    assertRuntimeReady: () => Promise<TokenVaultStartup>;
+  };
+  tokenVaultStartup: TokenVaultStartup;
   publicConfig: {
     apiKey: string;
     polarisUrl: string;
@@ -15,4 +25,4 @@ export function createShopifyAppRuntime(args?: {
   environment?: NodeJS.ProcessEnv;
   database?: unknown;
   sessionStorage?: unknown;
-}): ShopifyAppRuntime;
+}): Promise<ShopifyAppRuntime>;

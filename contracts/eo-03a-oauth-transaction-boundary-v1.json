@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-03a-oauth-transaction-boundary-v1",
-  "version": "1.0.0",
-  "status": "analyst_contract_gate",
+  "version": "1.1.0",
+  "status": "implementation_gate",
   "checked_at": "2026-10-09",
   "parent": "A6-EO-03",
   "package": "A6-EO-03-A",
@@ -116,5 +116,31 @@
     "Live authorization remains disabled until A6-EO-03-B startup guard passes.",
     "Repository tests, build and required CI pass.",
     "Product owner explicitly closes A6-EO-03-A."
-  ]
+  ],
+  "implementation": {
+    "migration": "supabase/migrations/20261009170000_eo03a_oauth_transaction_boundary.sql",
+    "schema": "integrations.oauth_transactions",
+    "repository": "app/lib/database/oauth-transaction-repository.server.js",
+    "service": "app/lib/oauth/oauth-transaction.server.js",
+    "tests": "tests/eo-03a-oauth-transaction-boundary.test.js",
+    "runtime_table_access": false,
+    "function_only_runtime_access": true,
+    "forced_rls": true,
+    "installation_delete_cascade": true,
+    "live_routes_wired": false,
+    "live_migration_applied": false
+  },
+  "privacy": {
+    "workspace_associated_security_metadata": true,
+    "raw_provider_error_persisted": false,
+    "installation_delete_cascade": true,
+    "deletion_registry_status": "bound_before_use"
+  },
+  "acceptance_evidence": {
+    "repository_tests": "PENDING_CI",
+    "typecheck": "PENDING_CI",
+    "build": "PENDING_CI",
+    "live_database": "NOT_AUTHORIZED_IN_EO03A",
+    "product_owner_closure": "PENDING"
+  }
 }

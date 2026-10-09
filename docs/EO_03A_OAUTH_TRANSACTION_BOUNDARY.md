@@ -176,7 +176,7 @@ Implementation files:
 - `app/lib/oauth/oauth-transaction.server.js`
 - `tests/eo-03a-oauth-transaction-boundary.test.js`
 
-No route invokes this boundary yet. No provider console, Vercel environment or live Supabase database was changed. Live authorization remains structurally blocked until EO-03-B supplies and proves the encrypted verifier/token vault startup guard.
+No route invokes this boundary yet. No provider console or Vercel environment was changed. The two approved EO-03-A database migrations are live, but live authorization remains structurally blocked until EO-03-B supplies and proves the encrypted verifier/token vault startup guard.
 
 
 ## Repository verification
@@ -231,3 +231,22 @@ Read-only acceptance proved:
 - Supabase Security Advisor findings: zero.
 
 Performance Advisor reported one new informational finding: the installation foreign key lacked a covering index. A separate non-destructive corrective migration adds `oauth_transactions_installation_fk_idx (installation_id)`. Existing privacy-table notices are pre-existing; zero-row unused-index notices are expected before runtime traffic.
+
+
+## Final live database acceptance — 9 October 2026
+
+Corrective migration `20261009092144_eo03a_oauth_installation_fk_index` applied successfully.
+
+Final read-only verification proved:
+
+- `oauth_transactions_installation_fk_idx (installation_id)` exists, is valid and ready;
+- EO-03-A contributes zero unresolved Performance Advisor findings;
+- Supabase Security Advisor remains at zero findings;
+- the table still contains zero rows; no synthetic authorization transaction was created;
+- no secret, token, authorization code, PKCE verifier or personal data was recorded;
+- the two remaining unindexed privacy foreign-key notices pre-date EO-03-A;
+- unused-index notices are expected while the boundary has zero runtime traffic.
+
+Machine-readable evidence: `docs/evidence/EO_03A_DATABASE_ACCEPTANCE_2026-10-09.json`.
+
+EO-03-A therefore has complete repository and live-database technical evidence. Its status remains **Verification** solely because explicit product-owner closure is a separate acceptance gate.

@@ -23,6 +23,9 @@ const installationIndexMigration = read(
 const contract = JSON.parse(
   read("contracts/eo-03a-oauth-transaction-boundary-v1.json"),
 );
+const liveDatabaseEvidence = JSON.parse(
+  read("docs/evidence/EO_03A_DATABASE_ACCEPTANCE_2026-10-09.json"),
+);
 
 const workspaceId = "11111111-1111-4111-8111-111111111111";
 const transactionId = "22222222-2222-4222-8222-222222222222";
@@ -335,4 +338,20 @@ test("corrective migration covers the installation foreign key", () => {
     /create index oauth_transactions_installation_fk_idx[\s\S]*on integrations\.oauth_transactions \(installation_id\)/,
   );
   assert.doesNotMatch(installationIndexMigration, /drop|delete|update|insert/i);
+});
+
+test("live database evidence closes the technical acceptance gate without product-owner closure", () => {
+  assert.equal(contract.status, "verification");
+  assert.equal(contract.acceptance_evidence.live_database, "PASS_2026-10-09");
+  assert.equal(contract.acceptance_evidence.product_owner_closure, "PENDING");
+  assert.equal(liveDatabaseEvidence.table.rows, 0);
+  assert.equal(liveDatabaseEvidence.table.rls_enabled, true);
+  assert.equal(liveDatabaseEvidence.table.rls_forced, true);
+  assert.equal(liveDatabaseEvidence.index.valid, true);
+  assert.equal(liveDatabaseEvidence.index.ready, true);
+  assert.equal(liveDatabaseEvidence.index.advisor_unindexed_fk_finding, false);
+  assert.equal(liveDatabaseEvidence.advisors.security_findings, 0);
+  assert.equal(liveDatabaseEvidence.advisors.eo03a_new_performance_findings, 0);
+  assert.equal(liveDatabaseEvidence.synthetic_oauth_rows_created, false);
+  assert.equal(liveDatabaseEvidence.secrets_tokens_codes_or_pii_recorded, false);
 });

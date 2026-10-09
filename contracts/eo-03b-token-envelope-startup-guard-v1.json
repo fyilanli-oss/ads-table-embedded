@@ -1,0 +1,120 @@
+{
+  "contract_id": "eo-03b-token-envelope-startup-guard-v1",
+  "version": "1.0.0",
+  "status": "Implementation",
+  "checked_at": "2026-10-09",
+  "parent": "A6-EO-03",
+  "package": "A6-EO-03-B",
+  "objective": "Protect recoverable PKCE verifiers and provider token sets with a versioned server-only authenticated-encryption envelope and fail closed before live authorization when the vault contract is not ready.",
+  "authoritative_sources": {
+    "node_crypto": "https://nodejs.org/api/crypto.html",
+    "supabase_database_security": "https://supabase.com/docs/guides/database/database-security",
+    "supabase_vault": "https://supabase.com/docs/guides/database/vault",
+    "supabase_pgcrypto_breaking_change": "https://supabase.com/docs/guides/troubleshooting/pgcrypto-deprecation-and-data-migration-guide",
+    "vercel_environment_variables": "https://vercel.com/docs/environment-variables"
+  },
+  "decision": {
+    "algorithm": "AES-256-GCM",
+    "nonce_bytes": 12,
+    "authentication_tag_bytes": 16,
+    "root_key_location": "server_only_Vercel_sensitive_environment_variable",
+    "database_stores_root_key": false,
+    "supabase_vault_primary_key_store": false,
+    "reason_supabase_vault_not_primary": "public_alpha_and_decrypted_view_surface",
+    "key_family_separate_from_shopify_session_encryption": true,
+    "active_key_environment": "ADSTABLE_PROVIDER_TOKEN_ACTIVE_KEY_VERSION",
+    "versioned_key_environment_prefix": "ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_V",
+    "key_rotation": "write_with_active_version_read_all_stored_versions",
+    "associated_data": [
+      "contract_version",
+      "key_version",
+      "record_id",
+      "workspace_id",
+      "install_generation",
+      "provider",
+      "purpose"
+    ],
+    "plaintext_persisted": false,
+    "plaintext_logged": false
+  },
+  "vault_records": {
+    "oauth_pkce": {
+      "table": "integrations.oauth_pkce_envelopes",
+      "record_id": "oauth_transaction_id",
+      "single_use": true,
+      "atomic_take": "delete_returning_after_claim_and_authority_verification",
+      "expiry_source": "oauth_transaction_expires_at",
+      "delete_cascade": "oauth_transaction_and_shopify_installation"
+    },
+    "provider_token_set": {
+      "table": "integrations.provider_credential_envelopes",
+      "purpose": "provider_token_set",
+      "providers": ["meta", "google_ads", "klaviyo"],
+      "active_installation_required": true,
+      "workspace_and_generation_bound": true,
+      "delete_cascade": "shopify_installation"
+    }
+  },
+  "runtime_boundary": {
+    "direct_table_access": false,
+    "function_only": true,
+    "forced_rls": true,
+    "security_definer_empty_search_path": true,
+    "startup_guard_checks": [
+      "database_contract_version",
+      "every_stored_key_version_is_readable",
+      "active_key_is_available",
+      "provider_key_is_not_shopify_session_key",
+      "authenticated_encryption_self_test"
+    ],
+    "guard_failure_behavior": "fail_closed_no_live_authorization_or_token_use"
+  },
+  "implementation": {
+    "migration": "supabase/migrations/20261009180000_eo03b_token_vault.sql",
+    "cipher": "app/lib/oauth/token-envelope.server.js",
+    "repository": "app/lib/database/token-vault-repository.server.js",
+    "service": "app/lib/oauth/token-vault.server.js",
+    "oauth_boundary": "app/lib/oauth/oauth-transaction.server.js",
+    "tests": "tests/eo-03b-token-envelope-startup-guard.test.js",
+    "live_routes_wired": false,
+    "live_migration_applied": false,
+    "production_key_created": false
+  },
+  "scope": [
+    "versioned provider-token keyring contract",
+    "authenticated encryption and AAD binding",
+    "ciphertext-only PKCE and provider credential persistence",
+    "atomic single-use PKCE take",
+    "function-only database boundary",
+    "startup contract and key-readability guard",
+    "repository tests and documentation"
+  ],
+  "out_of_scope": [
+    "live Supabase migration",
+    "Vercel environment mutation",
+    "provider client secret creation",
+    "live provider OAuth",
+    "token exchange refresh revoke or disconnect",
+    "provider reporting-account selection",
+    "production deployment"
+  ],
+  "live_effect": {
+    "provider_console_mutation": false,
+    "vercel_secret_mutation": false,
+    "live_oauth": false,
+    "production_database_mutation": false,
+    "production_deploy": false
+  },
+  "acceptance": [
+    "AES-GCM roundtrip and tamper tests pass.",
+    "Cross-workspace, cross-generation, cross-provider and cross-purpose substitution fails.",
+    "PKCE take is database-atomic and single-use.",
+    "Database schema contains ciphertext, nonce, authentication tag and key version but no plaintext token or verifier column.",
+    "Runtime has no direct table access and only exact functions are granted.",
+    "Startup refuses an unavailable stored key version or contract mismatch.",
+    "Repository tests, typecheck, build and required CI pass.",
+    "Live migration, production key provisioning and runtime acceptance occur only after separate explicit approval.",
+    "Product owner explicitly closes A6-EO-03-B."
+  ],
+  "next_child_before_acceptance": null
+}

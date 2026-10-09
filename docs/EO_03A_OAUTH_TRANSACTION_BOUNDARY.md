@@ -202,3 +202,12 @@ Read-only Supabase preflight ran before any live DDL:
 - live `shopify.installations.id` is `bigint`.
 
 The preflight found the repository migration had declared `installation_id` as `uuid`. The live database was not changed. The pending migration was corrected to `bigint` and a regression assertion now locks this compatibility before the live migration gate.
+
+
+## First live migration attempt — fail-safe result
+
+The first authorized live migration attempt stopped with PostgreSQL SQLSTATE `42501` before any schema or data change. The whole migration transaction rolled back.
+
+EO-02-A had already created and secured the `integrations` schema under `adstable_owner`. EO-03-A redundantly attempted `CREATE SCHEMA IF NOT EXISTS` after switching to the restricted owner role; PostgreSQL still required database-level create permission for that statement.
+
+Correction: EO-03-A now reuses the constitutional EO-02-A foundation schema and creates no schema. A regression assertion forbids `CREATE SCHEMA` in this child migration. No privilege was broadened and no live workaround was applied.

@@ -289,6 +289,7 @@ test("repository exposes function-only runtime operations", async () => {
 test("migration is private, forced-RLS, exact-callback and generation bound", () => {
   assert.match(migration, /create table integrations\.oauth_transactions/);
   assert.match(migration, /installation_id bigint not null/);
+  assert.doesNotMatch(migration, /create schema/i);
   assert.match(migration, /enable row level security/);
   assert.match(migration, /force row level security/);
   assert.match(

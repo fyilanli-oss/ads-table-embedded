@@ -2,7 +2,6 @@ begin;
 
 set local role adstable_owner;
 
-create schema if not exists integrations authorization adstable_owner;
 
 create table integrations.oauth_transactions (
   id uuid primary key default pg_catalog.gen_random_uuid(),

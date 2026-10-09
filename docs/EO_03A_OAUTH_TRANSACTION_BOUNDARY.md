@@ -1,7 +1,7 @@
 # EO-03-A — OAuth transaction boundary
 
 **Control date:** 9 October 2026  
-**Status:** In progress — technical implementation gate  
+**Status:** Verification — repository CI passed; product-owner closure pending  
 **Parent:** A6-EO-03 — Canonical OAuth, connection and token vault
 
 ## Analyst result
@@ -177,3 +177,15 @@ Implementation files:
 - `tests/eo-03a-oauth-transaction-boundary.test.js`
 
 No route invokes this boundary yet. No provider console, Vercel environment or live Supabase database was changed. Live authorization remains structurally blocked until EO-03-B supplies and proves the encrypted verifier/token vault startup guard.
+
+
+## Repository verification
+
+GitHub Actions run `37907571603` passed the full Repository Governance job on 9 October 2026:
+
+- frozen dependency graph: PASS;
+- repository governance tests: PASS;
+- TypeScript contracts: PASS;
+- preview-shell build: PASS.
+
+This evidence verifies repository behavior only. It does not authorize or claim a live Supabase migration, provider configuration, Vercel secret change or live OAuth connection.

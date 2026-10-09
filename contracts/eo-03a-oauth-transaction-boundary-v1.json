@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-03a-oauth-transaction-boundary-v1",
-  "version": "1.3.0",
-  "status": "verification",
+  "version": "1.4.0",
+  "status": "Accepted",
   "checked_at": "2026-10-09",
   "parent": "A6-EO-03",
   "package": "A6-EO-03-A",
@@ -142,8 +142,10 @@
     "typecheck": "PASS_GITHUB_ACTIONS_37907571603",
     "build": "PASS_GITHUB_ACTIONS_37907571603",
     "live_database": "PASS_2026-10-09",
-    "product_owner_closure": "PENDING",
-    "live_database_evidence": "docs/evidence/EO_03A_DATABASE_ACCEPTANCE_2026-10-09.json"
+    "product_owner_closure": "PASS_2026-10-09",
+    "live_database_evidence": "docs/evidence/EO_03A_DATABASE_ACCEPTANCE_2026-10-09.json",
+    "closure_authority": "explicit_product_owner_approval",
+    "technical_evidence_pr": "https://github.com/fyilanli-oss/ads-table-embedded/pull/44"
   },
   "database_preflight": {
     "checked_at": "2026-10-09",
@@ -193,5 +195,11 @@
     },
     "synthetic_rows_created": false,
     "corrective_migration": "20261009092144_eo03a_oauth_installation_fk_index"
+  },
+  "next_child": {
+    "id": "A6-EO-03-B",
+    "title": "Token envelope and startup guard",
+    "status": "Ready",
+    "live_authorization_remains_disabled": true
   }
 }

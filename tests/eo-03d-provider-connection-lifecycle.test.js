@@ -15,6 +15,9 @@ const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8");
 const migration = read(
   "supabase/migrations/20261009210000_eo03d_provider_connection_lifecycle.sql",
 );
+const lifecycleColumnQualificationMigration = read(
+  "supabase/migrations/20261009211000_eo03d_qualify_lifecycle_event_columns.sql",
+);
 const contract = JSON.parse(
   read("contracts/eo-03d-provider-connection-lifecycle-v1.json"),
 );
@@ -295,6 +298,29 @@ test("migration enforces fail-closed, idempotent and secret-free lifecycle", () 
   assert.doesNotMatch(
     migration,
     /\b(access_token|refresh_token|token)\s+(text|bytea|json|jsonb)\b/i,
+  );
+});
+
+test("corrective migration qualifies lifecycle event columns against output variables", () => {
+  assert.equal(
+    (
+      lifecycleColumnQualificationMigration.match(
+        /provider_connection_lifecycle_events as event/g,
+      ) ?? []
+    ).length,
+    8,
+  );
+  assert.doesNotMatch(
+    lifecycleColumnQualificationMigration,
+    /^\s+connection_id <> p_connection_id/m,
+  );
+  assert.match(
+    lifecycleColumnQualificationMigration,
+    /event\.connection_id <> p_connection_id/,
+  );
+  assert.match(
+    lifecycleColumnQualificationMigration,
+    /event\.event_id = p_event_id/,
   );
 });
 

@@ -1,6 +1,6 @@
 import {createShopifyAppRuntime} from "./lib/shopify/shopify-app-runtime.server.js";
 
-const runtime = createShopifyAppRuntime();
+const runtime = await createShopifyAppRuntime();
 
 export const database = runtime.database;
 export const publicShopifyConfig = runtime.publicConfig;

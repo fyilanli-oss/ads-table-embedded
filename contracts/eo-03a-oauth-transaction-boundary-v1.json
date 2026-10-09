@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-03a-oauth-transaction-boundary-v1",
   "version": "1.1.0",
-  "status": "implementation_gate",
+  "status": "verification",
   "checked_at": "2026-10-09",
   "parent": "A6-EO-03",
   "package": "A6-EO-03-A",
@@ -137,9 +137,9 @@
     "deletion_registry_status": "bound_before_use"
   },
   "acceptance_evidence": {
-    "repository_tests": "PENDING_CI",
-    "typecheck": "PENDING_CI",
-    "build": "PENDING_CI",
+    "repository_tests": "PASS_GITHUB_ACTIONS_37907571603",
+    "typecheck": "PASS_GITHUB_ACTIONS_37907571603",
+    "build": "PASS_GITHUB_ACTIONS_37907571603",
     "live_database": "NOT_AUTHORIZED_IN_EO03A",
     "product_owner_closure": "PENDING"
   }

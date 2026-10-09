@@ -49,7 +49,11 @@
     "provider_token_set": {
       "table": "integrations.provider_credential_envelopes",
       "purpose": "provider_token_set",
-      "providers": ["meta", "google_ads", "klaviyo"],
+      "providers": [
+        "meta",
+        "google_ads",
+        "klaviyo"
+      ],
       "active_installation_required": true,
       "workspace_and_generation_bound": true,
       "delete_cascade": "shopify_installation"
@@ -77,8 +81,9 @@
     "oauth_boundary": "app/lib/oauth/oauth-transaction.server.js",
     "tests": "tests/eo-03b-token-envelope-startup-guard.test.js",
     "live_routes_wired": false,
-    "live_migration_applied": false,
-    "production_key_created": false
+    "live_migration_applied": true,
+    "production_key_created": true,
+    "startup_guard_wired_to_shopify_runtime": true
   },
   "scope": [
     "versioned provider-token keyring contract",
@@ -90,8 +95,6 @@
     "repository tests and documentation"
   ],
   "out_of_scope": [
-    "live Supabase migration",
-    "Vercel environment mutation",
     "provider client secret creation",
     "live provider OAuth",
     "token exchange refresh revoke or disconnect",
@@ -100,9 +103,9 @@
   ],
   "live_effect": {
     "provider_console_mutation": false,
-    "vercel_secret_mutation": false,
+    "vercel_secret_mutation": true,
     "live_oauth": false,
-    "production_database_mutation": false,
+    "production_database_mutation": true,
     "production_deploy": false
   },
   "acceptance": [
@@ -116,5 +119,22 @@
     "Live migration, production key provisioning and runtime acceptance occur only after separate explicit approval.",
     "Product owner explicitly closes A6-EO-03-B."
   ],
-  "next_child_before_acceptance": null
+  "next_child_before_acceptance": null,
+  "live_evidence": {
+    "supabase_migration_version": "20261009113645",
+    "supabase_migration_name": "eo03b_token_vault",
+    "vercel_environment": "production",
+    "vercel_sensitive_key": "ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_V1",
+    "vercel_active_key_version": "1",
+    "secret_value_read_back": false,
+    "rls_enabled_and_forced": true,
+    "runtime_function_execute_grant_verified": true,
+    "synthetic_runtime_acceptance": false,
+    "production_startup_acceptance": false,
+    "pkce_workspace_index_migration_version": "20261009115314",
+    "pkce_workspace_index_migration_name": "eo03b_pkce_workspace_fk_index",
+    "vercel_active_key_version_sensitive": true,
+    "security_advisor_findings": 0,
+    "vault_rows_after_preflight": 0
+  }
 }

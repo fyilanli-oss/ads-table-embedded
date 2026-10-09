@@ -5,6 +5,7 @@ import {
   shopifyApp,
 } from "@shopify/shopify-app-react-router/server";
 import {createRuntimePostgresClient} from "../database/runtime-postgres.server.js";
+import {createTokenVault} from "../oauth/token-vault.server.js";
 import {createEncryptedShopifySessionStorage} from "./encrypted-session-storage.server.js";
 
 const API_KEY_PATTERN = /^[a-f0-9]{32}$/;
@@ -42,7 +43,7 @@ export function readShopifyAppRuntimeConfig(environment = process.env) {
   });
 }
 
-export function createShopifyAppRuntime({
+export async function createShopifyAppRuntime({
   environment = process.env,
   database,
   sessionStorage,
@@ -53,6 +54,11 @@ export function createShopifyAppRuntime({
     database: runtimeDatabase,
     environment,
   });
+  const tokenVault = createTokenVault({
+    database: runtimeDatabase,
+    environment,
+  });
+  const tokenVaultStartup = await tokenVault.assertRuntimeReady();
 
   const shopify = shopifyApp({
     apiKey: config.apiKey,
@@ -71,6 +77,8 @@ export function createShopifyAppRuntime({
   return Object.freeze({
     shopify,
     database: runtimeDatabase,
+    tokenVault,
+    tokenVaultStartup,
     publicConfig: Object.freeze({
       apiKey: config.apiKey,
       polarisUrl: "https://cdn.shopify.com/shopifycloud/polaris-2.0-rc.js",

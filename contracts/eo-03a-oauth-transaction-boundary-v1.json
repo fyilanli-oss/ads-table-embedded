@@ -1,6 +1,6 @@
 {
   "contract_id": "eo-03a-oauth-transaction-boundary-v1",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "status": "verification",
   "checked_at": "2026-10-09",
   "parent": "A6-EO-03",
@@ -153,6 +153,15 @@
     "installation_primary_key_live_type": "bigint",
     "migration_installation_key_type": "bigint",
     "type_compatibility": "PASS_AFTER_PRELIVE_CORRECTION",
-    "live_mutation_performed": false
+    "live_mutation_performed": false,
+    "foundation_integrations_schema": "EXISTS_OWNED_BY_ADSTABLE_OWNER",
+    "migration_creates_schema": false,
+    "first_live_attempt": {
+      "result": "ROLLED_BACK",
+      "sqlstate": "42501",
+      "error_class": "SCHEMA_CREATE_EXECUTED_AFTER_SET_LOCAL_ROLE",
+      "data_or_schema_change": false,
+      "correction": "REUSE_EO02A_FOUNDATION_SCHEMA"
+    }
   }
 }

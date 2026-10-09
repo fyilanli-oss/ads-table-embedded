@@ -14,6 +14,9 @@ import {createTokenVaultRepository} from "../app/lib/database/token-vault-reposi
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 const migration = read("supabase/migrations/20261009180000_eo03b_token_vault.sql");
+const workspaceIndexMigration = read(
+  "supabase/migrations/20261009190000_eo03b_pkce_workspace_fk_index.sql",
+);
 const contract = JSON.parse(
   read("contracts/eo-03b-token-envelope-startup-guard-v1.json"),
 );
@@ -373,6 +376,10 @@ test("migration is ciphertext-only, forced-RLS, function-only and cascade-bound"
     /delete_oauth_pkce_envelope\([\s\S]*p_workspace_id uuid[\s\S]*p_install_generation bigint[\s\S]*p_provider text/,
   );
   assert.match(migration, /installation\.status = 'active'/);
+  assert.match(
+    workspaceIndexMigration,
+    /create index oauth_pkce_envelopes_workspace_fk_idx[\s\S]*workspace_id/,
+  );
   assert.match(migration, /security definer[\s\S]*set search_path = ''/);
   assert.doesNotMatch(
     migration,

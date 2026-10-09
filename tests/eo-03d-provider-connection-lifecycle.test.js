@@ -322,6 +322,10 @@ test("corrective migration qualifies lifecycle event columns against output vari
     lifecycleColumnQualificationMigration,
     /event\.event_id = p_event_id/,
   );
+  assert.doesNotMatch(
+    lifecycleColumnQualificationMigration,
+    /^\s+or\s+(workspace_id|install_generation|provider|event_type)\s*<>/m,
+  );
 });
 
 test("contract preserves provider differences and no live mutation authorization", () => {

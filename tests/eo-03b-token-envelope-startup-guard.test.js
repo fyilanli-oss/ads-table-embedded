@@ -321,6 +321,9 @@ test("repository exposes function-only operations", async () => {
       if (sql.includes("token_vault_runtime_guard")) {
         return {rows: [{contract_version: 1, used_key_versions: [1, 2]}]};
       }
+      if (sql.includes("delete_oauth_pkce_envelope")) {
+        return {rows: [{deleted: true}]};
+      }
       return {rows: []};
     },
   };
@@ -330,6 +333,20 @@ test("repository exposes function-only operations", async () => {
   assert.deepEqual(result.usedKeyVersions, [1, 2]);
   assert.match(queries[0].sql, /integrations\.token_vault_runtime_guard/);
   assert.doesNotMatch(queries[0].sql, /insert\s+into|update\s+|delete\s+from/i);
+
+  assert.equal(await repository.deletePkce({
+    transactionId,
+    workspaceId,
+    installGeneration: 4,
+    provider: "klaviyo",
+  }), true);
+  assert.match(queries[1].sql, /integrations\.delete_oauth_pkce_envelope/);
+  assert.deepEqual(queries[1].values, [
+    transactionId,
+    workspaceId,
+    4,
+    "klaviyo",
+  ]);
 });
 
 test("migration is ciphertext-only, forced-RLS, function-only and cascade-bound", () => {
@@ -351,6 +368,10 @@ test("migration is ciphertext-only, forced-RLS, function-only and cascade-bound"
   assert.match(migration, /references shopify\.installations\(id\)[\s\S]*on delete cascade/);
   assert.match(migration, /delete from integrations\.oauth_pkce_envelopes[\s\S]*returning envelope\.\*/);
   assert.match(migration, /transaction\.status = 'claimed'/);
+  assert.match(
+    migration,
+    /delete_oauth_pkce_envelope\([\s\S]*p_workspace_id uuid[\s\S]*p_install_generation bigint[\s\S]*p_provider text/,
+  );
   assert.match(migration, /installation\.status = 'active'/);
   assert.match(migration, /security definer[\s\S]*set search_path = ''/);
   assert.doesNotMatch(

@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-03c-connection-account-authority-v1",
-  "version": "1.0.1",
-  "status": "Implementation",
+  "version": "1.1.0",
+  "status": "Verification",
   "checked_at": "2026-10-09",
   "parent": "A6-EO-03",
   "package": "A6-EO-03-C",
@@ -96,9 +96,21 @@
     "service": "app/lib/oauth/provider-account-authority.server.js",
     "tests": "tests/eo-03c-connection-account-authority.test.js",
     "live_routes_wired": false,
-    "live_migration_applied": false,
+    "live_migration_applied": true,
     "provider_adapters_implemented": false,
-    "corrective_migration": "supabase/migrations/20261009203000_eo03c_owner_policies_fk_indexes.sql"
+    "corrective_migration": "supabase/migrations/20261009203000_eo03c_owner_policies_fk_indexes.sql",
+    "live_migrations": [
+      {
+        "version": "20261009130713",
+        "name": "eo03c_connection_account_authority",
+        "status": "APPLIED_2026-10-09"
+      },
+      {
+        "version": "20261009131339",
+        "name": "eo03c_owner_policies_fk_indexes",
+        "status": "APPLIED_2026-10-09"
+      }
+    ]
   },
   "scope": [
     "installed-shop-bound provider connection authority",
@@ -112,7 +124,7 @@
   "out_of_scope": [
     "live provider OAuth or token exchange",
     "provider HTTP adapters or account discovery calls",
-    "live Supabase migration",
+    "additional live Supabase mutations beyond the two recorded EO-03-C migrations",
     "Vercel secret or environment mutation",
     "Settings UI",
     "Dataset V2 writes or SnapshotJob",
@@ -124,7 +136,7 @@
     "provider_api_call": false,
     "provider_console_mutation": false,
     "token_or_secret_mutation": false,
-    "production_database_mutation": false,
+    "production_database_mutation": true,
     "production_deploy": false,
     "live_authorization": false
   },
@@ -138,8 +150,18 @@
     "Cross-workspace, cross-generation, cross-provider, stale and merchant-entered account attempts fail closed.",
     "Tables are private, forced-RLS and accessible to runtime only through exact functions.",
     "Repository tests, typecheck, build and required CI pass.",
-    "Live migration and provider authorization require separate explicit approval.",
+    "The two recorded live migrations were applied with explicit approval; live provider authorization remains a separate explicit gate.",
     "Product owner explicitly closes A6-EO-03-C."
   ],
-  "next_child_before_acceptance": null
+  "next_child_before_acceptance": null,
+  "acceptance_evidence": {
+    "repository_governance": "PASS",
+    "live_database": "PASS_2026-10-09",
+    "synthetic_runtime": "PASS_2026-10-09",
+    "security_advisor_findings": 0,
+    "eo03c_new_unindexed_foreign_key_findings": 0,
+    "cleanup_rows": 0,
+    "evidence_document": "docs/evidence/EO_03C_LIVE_ACCEPTANCE_2026-10-09.json",
+    "product_owner_closure": "PENDING"
+  }
 }

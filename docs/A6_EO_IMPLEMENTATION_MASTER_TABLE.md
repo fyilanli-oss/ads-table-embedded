@@ -205,7 +205,7 @@ Tek aktif parent **EO-03**'tür.
 
 - **EO-03-A — Accepted:** OAuth transaction boundary repository ve live database kanıtlarıyla kabul edildi.
 - **EO-03-B — Accepted:** Ciphertext-only token vault, production Sensitive keyring, live Supabase function boundary, production startup guard ve sentetik store/load/delete kabulü PASS; gerçek provider tokenı veya OAuth kullanılmadı.
-- **EO-03-C — In progress:** Provider tarafından doğrulanmış connected hesaplar ve tek Meta/Google Reporting Account, değiştirilemez kurulu Shopify mağazası altında canonical ve function-only authority olarak kuruluyor. Klaviyo tek Connected Account taşır; mağaza kapsamı için kullanıcı kontrolü yoktur. Analist tasarımı `docs/EO_03C_CONNECTION_ACCOUNT_AUTHORITY.md`, executable contract `contracts/eo-03c-connection-account-authority-v1.json` içindedir.
+- **EO-03-C — Verification:** Provider tarafından doğrulanmış connected hesaplar ve tek Meta/Google Reporting Account, değiştirilemez kurulu Shopify mağazası altında canonical ve function-only authority olarak kuruldu. İki canlı migration uygulandı; runtime sınırları rollback-scope sentetik kabul ile PASS verdi, kalıcı sentetik satır kalmadı, Security Advisor bulgusu ve EO-03-C kaynaklı yeni eksik-FK-index bulgusu sıfırdır. Provider OAuth/API çağrısı yapılmadı. Teknik kanıt `docs/evidence/EO_03C_LIVE_ACCEPTANCE_2026-10-09.json` içindedir; ürün sahibi kapanışı bekleniyor.
 - **EO-03-D — Not started:** EO-03-C kabul edilmeden başlamaz.
 - EO-04 ve sonraki parent'lar paralel başlatılmaz.
 

@@ -2,7 +2,7 @@
   "evidence_id": "eo-03d-live-database-evidence-2026-10-09",
   "checked_at": "2026-10-09",
   "package": "A6-EO-03-D",
-  "status": "FAILED_THIRD_FIX_PENDING",
+  "status": "FAILED_FOURTH_FIX_PENDING",
   "project": {
     "ref": "podpwkrpmjiksskxhwsu",
     "name": "ads-table-embedded",
@@ -45,9 +45,9 @@
     "channel": "Supabase SQL Editor under existing adstable_owner role",
     "first_transition_reached": true,
     "error_code": "42702",
-    "error": "column reference connection_id is ambiguous in finalize_provider_disconnect reporting_account_bindings update",
-    "cause": "Remaining unqualified finalize UPDATE predicates conflict with RETURNS TABLE output variables.",
-    "corrective_migration": "supabase/migrations/20261009213000_eo03d_qualify_finalize_update_columns.sql",
+    "error": "column reference connection_id is ambiguous in reconnect_provider_connection ON CONFLICT target",
+    "cause": "Reconnect upsert conflict target names an output variable without disambiguation.",
+    "corrective_migration": "supabase/migrations/20261009214000_eo03d_disambiguate_reconnect_conflict.sql",
     "corrective_migration_live_applied": false,
     "rerun_required": true,
     "persistent_synthetic_rows": 0,
@@ -61,9 +61,13 @@
       "reauthorization_required",
       "transition_idempotency",
       "credential_renewal",
-      "disconnect_pending"
-    ]
+      "disconnect_pending",
+      "disconnect_finalized"
+    ],
+    "third_corrective_migration": "supabase/migrations/20261009213000_eo03d_qualify_finalize_update_columns.sql",
+    "third_corrective_migration_version": "20261009150614",
+    "third_corrective_migration_live_applied": true
   },
-  "package_acceptance": "OPEN_THIRD_FIX_PENDING",
+  "package_acceptance": "OPEN_FOURTH_FIX_PENDING",
   "product_owner_closure_required": true
 }

@@ -103,7 +103,9 @@
     "first_corrective_migration_live_applied": true,
     "second_corrective_migration": "supabase/migrations/20261009212000_eo03d_qualify_lifecycle_update_columns.sql",
     "second_corrective_migration_live_applied": true,
-    "third_corrective_migration": "supabase/migrations/20261009213000_eo03d_qualify_finalize_update_columns.sql"
+    "third_corrective_migration": "supabase/migrations/20261009213000_eo03d_qualify_finalize_update_columns.sql",
+    "third_corrective_migration_live_applied": true,
+    "fourth_corrective_migration": "supabase/migrations/20261009214000_eo03d_disambiguate_reconnect_conflict.sql"
   },
   "live_effect": {
     "provider_api_call": false,
@@ -137,12 +139,14 @@
     "schema_privilege_rls_advisor": "PASS",
     "security_advisor_findings": 0,
     "synthetic_runtime_acceptance": "FAILED",
-    "synthetic_blocker": "Third rollback-scoped acceptance passed reauthorization, idempotency, credential renewal and disconnect-pending, then exposed PostgreSQL 42702: unqualified reporting_account_bindings.connection_id in finalize_provider_disconnect conflicts with the RETURNS TABLE output variable. Static review identified and qualifies both remaining finalize UPDATE predicates; live application and rerun are pending.",
+    "synthetic_blocker": "Fourth rollback-scoped acceptance passed reauthorization, idempotency, credential renewal, disconnect-pending and final disconnect, then exposed PostgreSQL 42702 in reconnect_provider_connection: ON CONFLICT (connection_id, provider_account_id) conflicts with the RETURNS TABLE output variable. The fourth correction uses the existing named unique constraint; live application and rerun are pending.",
     "synthetic_rows_persisted": 0,
-    "package_acceptance": "OPEN_THIRD_FIX_PENDING",
+    "package_acceptance": "OPEN_FOURTH_FIX_PENDING",
     "first_corrective_migration_version": "20261009145154",
     "first_corrective_migration_name": "eo03d_qualify_lifecycle_event_columns",
     "second_corrective_migration_version": "20261009150114",
-    "second_corrective_migration_name": "eo03d_qualify_lifecycle_update_columns"
+    "second_corrective_migration_name": "eo03d_qualify_lifecycle_update_columns",
+    "third_corrective_migration_version": "20261009150614",
+    "third_corrective_migration_name": "eo03d_qualify_finalize_update_columns"
   }
 }

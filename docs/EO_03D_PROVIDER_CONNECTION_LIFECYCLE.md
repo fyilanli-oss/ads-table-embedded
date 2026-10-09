@@ -141,3 +141,9 @@ The entire synthetic transaction rolled back again. Verified residue remains zer
 The second corrective migration was merged and applied as Supabase migration `20261009150114 / eo03d_qualify_lifecycle_update_columns`. The complete rerun passed reauthorization, transition idempotency, atomic credential renewal and disconnect-pending. During final disconnect PostgreSQL raised `42702` because `reporting_account_bindings.connection_id` remained unqualified and collided with the function output variable.
 
 A static review of all four function bodies found the two remaining output-variable collision points in final-disconnect updates: the Reporting Account binding and provider-account predicates. The forward-only migration `20261009213000_eo03d_qualify_finalize_update_columns.sql` aliases and qualifies both together. The failed transaction rolled back and synthetic residue remains zero. EO-03-D remains open pending CI, explicit merge/live approval and a complete passing rerun.
+
+## Fourth rollback-scoped acceptance finding — 9 October 2026
+
+The third corrective migration was merged and applied as Supabase migration `20261009150614 / eo03d_qualify_finalize_update_columns`. The rerun passed reauthorization, transition idempotency, credential renewal, disconnect-pending and final disconnect. Reconnect then raised PostgreSQL `42702` because the upsert target `ON CONFLICT (connection_id, provider_account_id)` contains the function output variable name.
+
+The table already has the named unique constraint `provider_accounts_connection_account_unique`. The forward-only migration `20261009214000_eo03d_disambiguate_reconnect_conflict.sql` uses `ON CONFLICT ON CONSTRAINT provider_accounts_connection_account_unique`, removing the parser ambiguity without changing uniqueness semantics. The transaction rolled back and synthetic residue remains zero.

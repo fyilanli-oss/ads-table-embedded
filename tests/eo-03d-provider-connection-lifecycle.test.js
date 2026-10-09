@@ -24,6 +24,9 @@ const lifecycleUpdateColumnQualificationMigration = read(
 const finalizeColumnQualificationMigration = read(
   "supabase/migrations/20261009213000_eo03d_qualify_finalize_update_columns.sql",
 );
+const reconnectConflictQualificationMigration = read(
+  "supabase/migrations/20261009214000_eo03d_disambiguate_reconnect_conflict.sql",
+);
 const contract = JSON.parse(
   read("contracts/eo-03d-provider-connection-lifecycle-v1.json"),
 );
@@ -381,6 +384,17 @@ test("third corrective migration qualifies every remaining finalize predicate", 
   assert.doesNotMatch(
     finalizeColumnQualificationMigration,
     /\b(connection_version|lifecycle_status|credential_id) = \1 \+/,
+  );
+});
+
+test("fourth corrective migration uses a named reconnect conflict target", () => {
+  assert.match(
+    reconnectConflictQualificationMigration,
+    /on conflict on constraint provider_accounts_connection_account_unique/,
+  );
+  assert.doesNotMatch(
+    reconnectConflictQualificationMigration,
+    /on conflict \(connection_id,\s*provider_account_id\)/,
   );
 });
 

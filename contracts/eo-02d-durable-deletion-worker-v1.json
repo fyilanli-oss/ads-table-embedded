@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-02d-durable-deletion-worker-v1",
-  "version": "1.0.1",
-  "status": "live_acceptance_pass_closure_pending",
+  "version": "1.0.2",
+  "status": "accepted",
   "checked_at": "2026-10-09",
   "package": "EO-02-D internal corrective gate",
   "authoritative_sources": {
@@ -79,6 +79,6 @@
     "synthetic_cleanup": "PASS_zero_remaining",
     "security_advisor": "PASS_zero_findings",
     "performance_advisor": "PASS_no_new_findings_against_preflight",
-    "explicit_product_owner_closure": "PENDING"
+    "explicit_product_owner_closure": "PASS_2026-10-09"
   }
 }

@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.8.0",
+  "schema_version": "1.8.1",
   "contract_id": "a6-eo-implementation-master-v1",
   "title": "A6 EO single-track execution rule and integrated implementation package table",
   "effective_date": "2026-10-04",
@@ -369,17 +369,20 @@
           "id": "A6-EO-02-D",
           "title": "Privacy, uninstall, deletion and clean reinstall",
           "objective": "Build HMAC ingress, durable claims, deletion executor/manifest and generation-safe reinstall.",
-          "status": "Verification",
+          "status": "Accepted",
           "implementation_pr": "https://github.com/fyilanli-oss/ads-table-embedded/pull/27",
-          "repository_governance": "PASS_86_tests_typecheck_build",
+          "repository_governance": "PASS",
           "implementation_contract": "contracts/eo-02d-privacy-lifecycle-v1.json",
           "implementation_document": "docs/EO_02D_PRIVACY_LIFECYCLE.md",
           "database_migration": "PASS_2026-10-08",
-          "shopify_webhook_subscription": "PENDING_post_deploy",
-          "synthetic_live_acceptance": "PENDING_post_deploy",
-          "explicit_product_owner_closure": "PENDING",
+          "shopify_webhook_subscription": "PASS_exact_configuration",
+          "synthetic_live_acceptance": "PASS_ingress_database_cron_replay_cleanup",
+          "explicit_product_owner_closure": "PASS_2026-10-09",
           "database_acceptance_evidence": "docs/evidence/EO_02D_DATABASE_ACCEPTANCE_2026-10-08.json",
-          "supabase_security_advisor": "PASS_zero_findings"
+          "supabase_security_advisor": "PASS_zero_findings",
+          "durable_worker_live_acceptance": "PASS",
+          "durable_worker_live_evidence": "docs/evidence/EO_02D_DURABLE_WORKER_LIVE_2026-10-09.json",
+          "live_evidence_pr": "https://github.com/fyilanli-oss/ads-table-embedded/pull/37"
         }
       ],
       "outputs": [
@@ -830,7 +833,7 @@
   "legacy_deletion_authorized": false,
   "current_active_parent": "A6-EO-02",
   "current_active_child": "A6-EO-02-D",
-  "current_gate": "EO-02-D_explicit_merge_then_production_deploy_runtime_HTTP_Shopify_subscription_synthetic_acceptance_and_explicit_product_owner_closure",
+  "current_gate": "A6-EO-02_parent_closure_analysis_design_rule_pending_product_discussion",
   "next_ready_child": null,
   "independent_packages": [
     {

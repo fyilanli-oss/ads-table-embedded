@@ -1,7 +1,7 @@
 # EO-02-D-C1 — Durable deletion worker corrective gate
 
 **Kontrol tarihi:** 9 Ekim 2026  
-**Durum:** Live acceptance PASS; ürün sahibi kapanış kabulü bekliyor
+**Durum:** Accepted — live acceptance ve ürün sahibi kapanış kabulü PASS
 
 ## Analist sonucu
 
@@ -100,4 +100,4 @@ Düzeltici migration sonrasında 08:00 UTC doğal Cron koşusu sentetik `custome
 
 Kalıcı kanıt: `docs/evidence/EO_02D_DURABLE_WORKER_LIVE_2026-10-09.json`.
 
-Tek kalan kapı ürün sahibinin EO-02-D kapanışını açıkça kabul etmesidir.
+Ürün sahibi 9 Ekim 2026'da EO-02-D kapanışını açıkça kabul etti. Teknik açık kalem sıfırdır.

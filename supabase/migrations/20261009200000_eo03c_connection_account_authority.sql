@@ -49,7 +49,14 @@ create table integrations.provider_accounts (
   account_kind text not null
     check (account_kind in ('advertiser', 'manager', 'account')),
   reporting_eligible boolean not null,
-  provider_status text,
+  provider_status text
+    check (
+      provider_status is null
+      or (
+        provider_status = btrim(provider_status)
+        and length(provider_status) between 1 and 100
+      )
+    ),
   currency_code text
     check (currency_code is null or currency_code ~ '^[A-Z]{3}$'),
   timezone_name text
@@ -178,7 +185,9 @@ begin
      )
      or p_accounts is null
      or jsonb_typeof(p_accounts) <> 'array'
-     or p_verified_at is null then
+     or p_verified_at is null
+     or p_verified_at < statement_timestamp() - interval '10 minutes'
+     or p_verified_at > statement_timestamp() + interval '1 minute' then
     raise exception 'INVALID_PROVIDER_ACCOUNT_AUTHORITY';
   end if;
 
@@ -217,6 +226,14 @@ begin
         or length(btrim(item.value ->> 'name')) < 1
         or length(btrim(item.value ->> 'name')) > 255
         or item.value ->> 'kind' not in ('advertiser', 'manager', 'account')
+        or (
+          item.value ? 'status'
+          and (
+            jsonb_typeof(item.value -> 'status') <> 'string'
+            or item.value ->> 'status' <> btrim(item.value ->> 'status')
+            or length(item.value ->> 'status') not between 1 and 100
+          )
+        )
         or (
           item.value ? 'currency'
           and (
@@ -258,10 +275,28 @@ begin
     raise exception 'KLAVIYO_ACCOUNT_EVIDENCE_INVALID';
   end if;
 
+  if p_provider = 'meta' and exists (
+    select 1
+      from jsonb_array_elements(p_accounts) as item(value)
+     where item.value ->> 'kind' <> 'advertiser'
+  ) then
+    raise exception 'META_AD_ACCOUNT_EVIDENCE_INVALID';
+  end if;
+
+  if p_provider = 'google_ads' and exists (
+    select 1
+      from jsonb_array_elements(p_accounts) as item(value)
+     where item.value ->> 'kind' = 'manager'
+       and (item.value ->> 'reporting_eligible')::boolean
+  ) then
+    raise exception 'GOOGLE_MANAGER_REPORTING_ELIGIBILITY_INVALID';
+  end if;
+
   if p_provider in ('meta', 'google_ads') and not exists (
     select 1
       from jsonb_array_elements(p_accounts) as item(value)
      where item.value ->> 'id' = p_reporting_account_id
+       and item.value ->> 'kind' = 'advertiser'
        and (item.value ->> 'reporting_eligible')::boolean is true
   ) then
     raise exception 'REPORTING_ACCOUNT_NOT_VERIFIED_OR_INELIGIBLE';
@@ -382,7 +417,9 @@ begin
      or p_provider_account_id is null
      or p_provider_account_id <> btrim(p_provider_account_id)
      or length(p_provider_account_id) < 1
-     or p_verified_at is null then
+     or p_verified_at is null
+     or p_verified_at < statement_timestamp() - interval '10 minutes'
+     or p_verified_at > statement_timestamp() + interval '1 minute' then
     raise exception 'INVALID_REPORTING_ACCOUNT_SELECTION';
   end if;
 
@@ -410,6 +447,7 @@ begin
      and account.install_generation = p_install_generation
      and account.provider = p_provider
      and account.provider_account_id = p_provider_account_id
+     and account.account_kind = 'advertiser'
      and account.reporting_eligible
    for update;
 

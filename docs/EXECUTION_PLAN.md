@@ -34,6 +34,19 @@ Bu repository onaylı A6-EO embedded-only temiz yeniden kuruluş programını uy
 Aynı anda yalnız bir parent paket aktiftir. Executable paket tablosu `contracts/a6-eo-implementation-master-v1.json` dosyasındadır.
 
 
+## Parent package Analysis–Design Book closure gate — 9 October 2026
+
+Binding contract: `contracts/a6-parent-package-analysis-design-closure-v1.json`  
+CI enforcement: `tests/a6-parent-analysis-design-books.test.js`
+
+- `Done` veya `Accepted` durumundaki her parent paket, teknik olmayan bir okuyucunun iş akışını anlayabileceği kabul edilmiş bir Analysis–Design Book taşır.
+- EO-01: `docs/EO_01_ANALYSIS_DESIGN_BOOK.md`
+- EO-02: `docs/EO_02_ANALYSIS_DESIGN_BOOK.md`
+- EO-03: `docs/EO_03_ANALYSIS_DESIGN_BOOK.md`
+- EO-04 ve sonraki parent paketler kendi kitapları oluşmadan kapatılamaz; eksik dosya veya ledger kaydı CI'ı düşürür.
+- Kitaplar executable contract ve testlerin yerine geçmez; onları analist diliyle açıklayan operasyonel kütüphane katmanıdır.
+
+
 ## Cross-cutting safety, capacity and portability freeze — 7 October 2026
 
 Binding analyst brief: `docs/A6_EO_CROSS_CUTTING_SAFETY_CAPACITY_FREEZE.md`  
@@ -43,6 +56,7 @@ Executable contract: `contracts/a6-eo-cross-cutting-safety-capacity-v1.json`
 - Summary/Table custom ranges are limited to 90 days, Daily to 31 days; compare uses equal non-overlapping periods in the installed Shopify shop timezone.
 - Production acceptance targets are critical DB RPO ≤15 minutes, Dataset V2 RPO ≤60 minutes, degraded RTO ≤60 minutes and full RTO ≤240 minutes.
 - Supabase capacity is measured, not inferred from workspace count. The target is 2,000 certified active workspaces with 4,000-workspace stress evidence and at least 30% headroom.
+- Zorunlu test merdiveni: EO-05 başlamadan workload budget + index/query-plan baseline; EO-05 içinde 2,000-workspace hourly scheduler, 4,000-workspace compressed stress ve 24 saatlik 2,000-workspace soak; EO-06 içinde Summary/Daily/Compare/Table sorgu karakterizasyonu ve export çıkmadan export yük testi; EO-08 içinde production-shape restore/load provası.
 - The scale ladder remains inside measured PostgreSQL/Supabase scaling first; a database-platform migration cannot be an outage response.
 - Export is outside the first review slice; when introduced it must be asynchronous and isolated from the interactive query pool.
 - This cross-cutting decision changes no package status and authorizes no live infrastructure mutation.
@@ -54,6 +68,7 @@ Executable contract: `contracts/a6-eo-demo-fixture-export-reference-v1.json`
 
 - The legacy dashboard HTML is reference and fixture raw material only; no HTML/JavaScript is copied into the new runtime.
 - Its 1,000-row, 50-day synthetic dataset is routed to EO-05/06/07/08 as a clean Dataset V2 fixture, UI acceptance source, Shopify dev-store demo and deterministic capacity-generator seed.
+- Supabase kapasite koşuları raw HTML'i çalıştırmaz; yalnız normalize edilmiş deterministic generator seed'ini kullanır.
 - Every normalized row is marked synthetic and non-provider truth. It cannot prove provider capability, native attribution, finality, real zero, product attribution or cross-sell.
 - Export behavior is captured as post-review reference only; export implementation remains outside the first review slice.
 - A dedicated Shopify dev store/workspace may later demonstrate embedded UI truthfully without fake provider connections.

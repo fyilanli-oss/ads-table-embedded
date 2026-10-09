@@ -2,7 +2,7 @@
   "evidence_id": "eo-03d-live-database-evidence-2026-10-09",
   "checked_at": "2026-10-09",
   "package": "A6-EO-03-D",
-  "status": "FAILED_FIX_PENDING",
+  "status": "FAILED_SECOND_FIX_PENDING",
   "project": {
     "ref": "podpwkrpmjiksskxhwsu",
     "name": "ads-table-embedded",
@@ -45,13 +45,16 @@
     "channel": "Supabase SQL Editor under existing adstable_owner role",
     "first_transition_reached": true,
     "error_code": "42702",
-    "error": "column reference connection_id is ambiguous in integrations.transition_provider_connection_lifecycle",
-    "cause": "Unqualified lifecycle-event column conflicts with RETURNS TABLE output variable.",
-    "corrective_migration": "supabase/migrations/20261009211000_eo03d_qualify_lifecycle_event_columns.sql",
+    "error": "column reference connection_version is ambiguous in integrations.transition_provider_connection_lifecycle",
+    "cause": "Unqualified provider_connections UPDATE source column conflicts with RETURNS TABLE output variable.",
+    "corrective_migration": "supabase/migrations/20261009212000_eo03d_qualify_lifecycle_update_columns.sql",
     "corrective_migration_live_applied": false,
     "rerun_required": true,
-    "persistent_synthetic_rows": 0
+    "persistent_synthetic_rows": 0,
+    "first_corrective_migration": "supabase/migrations/20261009211000_eo03d_qualify_lifecycle_event_columns.sql",
+    "first_corrective_migration_version": "20261009145154",
+    "first_corrective_migration_live_applied": true
   },
-  "package_acceptance": "OPEN_FIX_PENDING",
+  "package_acceptance": "OPEN_SECOND_FIX_PENDING",
   "product_owner_closure_required": true
 }

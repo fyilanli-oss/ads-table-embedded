@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-02d-durable-deletion-worker-v1",
   "version": "1.0.1",
-  "status": "repository_implementation",
+  "status": "live_acceptance_pass_closure_pending",
   "checked_at": "2026-10-09",
   "package": "EO-02-D internal corrective gate",
   "authoritative_sources": {
@@ -51,7 +51,7 @@
     "silent_success_for_failure": false
   },
   "live_gate": {
-    "pg_cron_currently_installed": false,
+    "pg_cron_currently_installed": true,
     "repository_change_authorizes_live_mutation": false,
     "explicit_user_approval_required": true,
     "required_acceptance": [
@@ -73,6 +73,12 @@
       "corrective_migration": "supabase/migrations/20261009161000_eo02d_worker_conditional_expression_fix.sql",
       "official_reference": "https://www.postgresql.org/docs/17/functions-conditional.html"
     },
-    "corrective_fix_status": "REPOSITORY_IMPLEMENTATION"
+    "corrective_fix_status": "PASS_LIVE",
+    "live_acceptance": "PASS",
+    "live_evidence": "docs/evidence/EO_02D_DURABLE_WORKER_LIVE_2026-10-09.json",
+    "synthetic_cleanup": "PASS_zero_remaining",
+    "security_advisor": "PASS_zero_findings",
+    "performance_advisor": "PASS_no_new_findings_against_preflight",
+    "explicit_product_owner_closure": "PENDING"
   }
 }

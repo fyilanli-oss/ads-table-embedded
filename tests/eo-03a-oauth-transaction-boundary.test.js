@@ -312,7 +312,7 @@ test("migration is private, forced-RLS, exact-callback and generation bound", ()
 });
 
 test("contract binds implementation and keeps live authorization disabled", () => {
-  assert.equal(contract.status, "implementation_gate");
+  assert.equal(contract.status, "verification");
   assert.equal(contract.implementation.schema, "integrations.oauth_transactions");
   assert.equal(contract.implementation.runtime_table_access, false);
   assert.equal(contract.implementation.installation_delete_cascade, true);

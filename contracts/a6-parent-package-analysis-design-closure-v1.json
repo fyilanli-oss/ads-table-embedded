@@ -1,7 +1,7 @@
 {
   "contract_id": "a6-parent-package-analysis-design-closure-v1",
-  "version": "1.0.0",
-  "status": "proposed_for_product_owner_acceptance",
+  "version": "1.1.0",
+  "status": "accepted",
   "decided_at": "2026-10-09",
   "purpose": "Make every accepted parent package understandable, operable and auditable without reconstructing child-package history.",
   "applies_to": [
@@ -47,6 +47,8 @@
   "first_application": {
     "parent": "A6-EO-02",
     "artifact": "docs/EO_02_ANALYSIS_DESIGN_BOOK.md",
-    "next_parent": "A6-EO-03"
-  }
+    "next_parent": "A6-EO-03",
+    "status": "PASS_parent_closed"
+  },
+  "product_owner_acceptance": "PASS_2026-10-09"
 }

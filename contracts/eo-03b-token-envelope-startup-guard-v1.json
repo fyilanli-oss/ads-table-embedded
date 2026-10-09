@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-03b-token-envelope-startup-guard-v1",
   "version": "1.0.0",
-  "status": "Implementation",
+  "status": "Accepted",
   "checked_at": "2026-10-09",
   "parent": "A6-EO-03",
   "package": "A6-EO-03-B",
@@ -118,7 +118,7 @@
     "Live migration, production key provisioning and runtime acceptance occur only after separate explicit approval.",
     "Product owner explicitly closes A6-EO-03-B."
   ],
-  "next_child_before_acceptance": null,
+  "next_child_before_acceptance": "A6-EO-03-C",
   "live_evidence": {
     "supabase_migration_version": "20261009113645",
     "supabase_migration_name": "eo03b_token_vault",
@@ -128,7 +128,7 @@
     "secret_value_read_back": false,
     "rls_enabled_and_forced": true,
     "runtime_function_execute_grant_verified": true,
-    "synthetic_runtime_acceptance": false,
+    "synthetic_runtime_acceptance": true,
     "production_startup_acceptance": true,
     "pkce_workspace_index_migration_version": "20261009115314",
     "pkce_workspace_index_migration_name": "eo03b_pkce_workspace_fk_index",
@@ -144,6 +144,18 @@
     "production_runtime_probe_status": 410,
     "production_runtime_probe_interpretation": "controlled_route_response_after_successful_shopify_runtime_initialization",
     "production_runtime_requests_verified": 2,
-    "production_runtime_errors_last_10m": 0
+    "production_runtime_errors_last_10m": 0,
+    "synthetic_probe_id": "e03b0000-0000-4000-8000-000000000001",
+    "synthetic_probe_store": true,
+    "synthetic_probe_load": true,
+    "synthetic_probe_wrong_provider_rejected": true,
+    "synthetic_probe_delete": true,
+    "synthetic_probe_second_load_empty": true,
+    "synthetic_probe_rows_after": 0,
+    "postgres_runtime_membership_after": false,
+    "security_advisor_findings_after_probe": 0,
+    "production_runtime_errors_after_probe": 0,
+    "product_owner_closure": "PASS_2026-10-09",
+    "acceptance_evidence": "docs/evidence/EO_03B_PRODUCTION_ACCEPTANCE_2026-10-09.json"
   }
 }

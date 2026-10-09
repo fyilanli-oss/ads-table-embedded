@@ -61,9 +61,11 @@ test("cron history is bounded and the plan records verified live acceptance", ()
   assert.equal(contract.security.application_runtime_can_execute_physical_deletion, false);
   assert.equal(contract.live_gate.repository_change_authorizes_live_mutation, false);
   assert.equal(contract.live_gate.explicit_user_approval_required, true);
-  assert.match(plan, /EO-02-D — Verification/);
+  assert.match(plan, /EO-02-D — Accepted/);
   assert.match(plan, /08:00 UTC doğal Cron koşusu/);
   assert.match(plan, /EO_02D_DURABLE_WORKER_LIVE_2026-10-09\.json/);
   assert.match(plan, /Teknik açık kalem sıfırdır/);
-  assert.match(plan, /ürün sahibinin açık EO-02-D kapanış kabulü beklenmektedir/);
+  assert.match(plan, /Ürün sahibi 9 Ekim 2026\'da açık kapanış kabulünü verdi/);
+  assert.equal(contract.status, "accepted");
+  assert.equal(contract.live_gate.explicit_product_owner_closure, "PASS_2026-10-09");
 });

@@ -98,7 +98,8 @@
     "tests": "tests/eo-03d-provider-connection-lifecycle.test.js",
     "live_migration_applied": true,
     "provider_adapters_implemented": false,
-    "live_routes_wired": false
+    "live_routes_wired": false,
+    "corrective_migration": "supabase/migrations/20261009211000_eo03d_qualify_lifecycle_event_columns.sql"
   },
   "live_effect": {
     "provider_api_call": false,
@@ -131,9 +132,9 @@
     "exact_migration_blob_sha": "a6e1403345de48d5dbdf8045256bc9a07a63c547",
     "schema_privilege_rls_advisor": "PASS",
     "security_advisor_findings": 0,
-    "synthetic_runtime_acceptance": "BLOCKED",
-    "synthetic_blocker": "Supabase Connector rejected rollback-scoped synthetic mutation with INVALID_ARGUMENT before any synthetic row was written.",
+    "synthetic_runtime_acceptance": "FAILED",
+    "synthetic_blocker": "Live rollback-scoped acceptance reached transition_provider_connection_lifecycle and exposed PostgreSQL 42702: unqualified connection_id conflicts with the RETURNS TABLE output variable. Corrective migration prepared; live application and rerun are pending.",
     "synthetic_rows_persisted": 0,
-    "package_acceptance": "OPEN"
+    "package_acceptance": "OPEN_FIX_PENDING"
   }
 }

@@ -398,19 +398,19 @@ test("Shopify server cold start awaits the provider-independent vault guard", ()
   assert.match(server, /const runtime = await createShopifyAppRuntime\(\)/);
 });
 
-test("contract and master keep EO-03-B in repository implementation state", () => {
+test("contract and master record EO-03-B acceptance and advance only to EO-03-C", () => {
   const eo03 = master.packages.find((entry) => entry.id === "A6-EO-03");
   const eo03b = eo03.children.find((entry) => entry.id === "A6-EO-03-B");
 
-  assert.equal(contract.status, "Implementation");
+  assert.equal(contract.status, "Accepted");
   assert.equal(contract.decision.algorithm, "AES-256-GCM");
   assert.equal(contract.decision.database_stores_root_key, false);
   assert.equal(contract.runtime_boundary.direct_table_access, false);
   assert.equal(contract.live_effect.production_database_mutation, true);
   assert.equal(contract.live_effect.vercel_secret_mutation, true);
   assert.equal(contract.implementation.startup_guard_wired_to_shopify_runtime, true);
-  assert.equal(contract.live_evidence.synthetic_runtime_acceptance, false);
-  assert.equal(eo03b.status, "In progress");
-  assert.equal(master.current_active_child, "A6-EO-03-B");
-  assert.equal(master.next_ready_child, "A6-EO-03-B");
+  assert.equal(contract.live_evidence.synthetic_runtime_acceptance, true);
+  assert.equal(eo03b.status, "Accepted");
+  assert.equal(master.current_active_child, "A6-EO-03-C");
+  assert.equal(master.next_ready_child, "A6-EO-03-C");
 });

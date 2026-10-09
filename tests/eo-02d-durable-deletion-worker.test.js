@@ -53,7 +53,7 @@ test("application runtime cannot directly execute physical deletion", () => {
   );
 });
 
-test("cron history has bounded retention and the contract keeps live mutation gated", () => {
+test("cron history is bounded and the plan records verified live acceptance", () => {
   assert.match(migration, /'adstable-cron-history-cleanup'/);
   assert.match(migration, /interval '30 days'/);
   assert.equal(contract.architecture.engine, "Supabase Cron / pg_cron");
@@ -61,6 +61,9 @@ test("cron history has bounded retention and the contract keeps live mutation ga
   assert.equal(contract.security.application_runtime_can_execute_physical_deletion, false);
   assert.equal(contract.live_gate.repository_change_authorizes_live_mutation, false);
   assert.equal(contract.live_gate.explicit_user_approval_required, true);
-  assert.match(plan, /EO-02-D-C1 — Durable deletion worker corrective gate/);
-  assert.match(plan, /canlı Supabase mutation'ı ayrı açık kullanıcı onayına bağlıdır/);
+  assert.match(plan, /EO-02-D — Verification/);
+  assert.match(plan, /08:00 UTC doğal Cron koşusu/);
+  assert.match(plan, /EO_02D_DURABLE_WORKER_LIVE_2026-10-09\.json/);
+  assert.match(plan, /Teknik açık kalem sıfırdır/);
+  assert.match(plan, /ürün sahibinin açık EO-02-D kapanış kabulü beklenmektedir/);
 });

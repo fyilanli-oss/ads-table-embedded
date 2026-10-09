@@ -1,7 +1,7 @@
 # EO-02-D-C1 — Durable deletion worker corrective gate
 
 **Kontrol tarihi:** 9 Ekim 2026  
-**Durum:** Repository implementation; canlı Supabase değişikliği yapılmadı
+**Durum:** Live acceptance PASS; ürün sahibi kapanış kabulü bekliyor
 
 ## Analist sonucu
 
@@ -79,3 +79,25 @@ Kanıtlanan güvenlik davranışı:
 Düzeltici migration yalnız iki conditional expression'ı PostgreSQL 17'nin resmî sözdizimine getirir; worker'ın advisory lock, row lock, batch, retry ve least-privilege sınırlarını değiştirmez.
 
 Kaynak: https://www.postgresql.org/docs/17/functions-conditional.html
+
+
+## Canlı kabul sonucu — 9 Ekim 2026
+
+Düzeltici migration sonrasında 08:00 UTC doğal Cron koşusu sentetik `customer_data_request` run'ını doğrudan executor çağrısı olmadan tamamladı.
+
+- Cron status: `succeeded`
+- Run status: `completed`
+- Attempt count: `1`
+- Manifest: `no_customer_data`
+- Customer scoped rows: `0`
+- Replay: seçilen iş `0`; duplicate sonuç yok
+- Runtime worker execute: `false`
+- Runtime physical delete execute: `false`
+- Security Advisor: sıfır bulgu
+- Performance Advisor: preflight'a göre yeni bulgu yok
+- Sentetik workspace/run/manifest: sıfır kalan kayıt
+- Açık pending/failed/running deletion run: `0`
+
+Kalıcı kanıt: `docs/evidence/EO_02D_DURABLE_WORKER_LIVE_2026-10-09.json`.
+
+Tek kalan kapı ürün sahibinin EO-02-D kapanışını açıkça kabul etmesidir.

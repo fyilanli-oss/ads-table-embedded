@@ -1,0 +1,99 @@
+{
+  "evidence_id": "eo-02d-durable-worker-live-2026-10-09",
+  "checked_at": "2026-10-09T08:01:00Z",
+  "status": "PASS_LIVE_WORKER_ACCEPTANCE",
+  "project": {
+    "ref": "podpwkrpmjiksskxhwsu",
+    "name": "ads-table-embedded",
+    "region": "eu-central-1",
+    "postgres": "17.11.0.003",
+    "pg_cron": "1.6.4"
+  },
+  "repository": {
+    "initial_worker_merge_commit": "14050b2e55cefa68931fdd1e4a2549d4ce74a851",
+    "expression_fix_merge_commit": "a3248323cdb0cdd4dd89ac2a59576fcb12fe2c07",
+    "initial_worker_blob_sha": "f3c6e74b751a4aafc1179318730671ee87319a6b",
+    "expression_fix_blob_sha": "30e87c641648104e851a9932c8679568450c000b",
+    "governance_ci": "PASS"
+  },
+  "migrations": [
+    {
+      "version": "20261009074901",
+      "name": "eo02d_durable_deletion_worker",
+      "status": "applied"
+    },
+    {
+      "version": "20261009075721",
+      "name": "eo02d_worker_conditional_expression_fix",
+      "status": "applied"
+    }
+  ],
+  "jobs": [
+    {
+      "name": "adstable-privacy-deletion-worker",
+      "schedule": "*/5 * * * *",
+      "active": true,
+      "role": "postgres"
+    },
+    {
+      "name": "adstable-cron-history-cleanup",
+      "schedule": "17 2 * * *",
+      "active": true,
+      "role": "postgres",
+      "retention_days": 30
+    }
+  ],
+  "first_run": {
+    "at": "2026-10-09T07:50:00Z",
+    "status": "FAILED_SAFE",
+    "cause": "PostgreSQL GREATEST/LEAST conditional expressions were incorrectly schema-qualified",
+    "production_data_deleted": false,
+    "synthetic_run_status": "pending",
+    "synthetic_attempt_count": 0,
+    "raw_error_persisted_in_business_tables": false
+  },
+  "corrected_run": {
+    "at": "2026-10-09T08:00:00Z",
+    "cron_status": "succeeded",
+    "run_status": "completed",
+    "attempt_count": 1,
+    "manifest_result": "no_customer_data",
+    "row_counts": {
+      "customer_scoped_rows": 0
+    },
+    "direct_executor_call": false
+  },
+  "replay": {
+    "lock_acquired": true,
+    "selected_count": 0,
+    "completed_count": 0,
+    "superseded_count": 0,
+    "failed_count": 0,
+    "duplicate_result_created": false
+  },
+  "security": {
+    "worker_owner": "adstable_owner",
+    "security_definer": true,
+    "search_path": "",
+    "postgres_can_execute_worker": true,
+    "adstable_runtime_can_execute_worker": false,
+    "adstable_runtime_can_execute_physical_delete": false,
+    "security_advisor_findings": 0
+  },
+  "performance_advisor": {
+    "status": "PASS_NO_NEW_FINDINGS",
+    "preexisting_unindexed_foreign_key_info": 2,
+    "postchange_unindexed_foreign_key_info": 2,
+    "postchange_unused_index_info": 2,
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys"
+  },
+  "cleanup": {
+    "synthetic_runs_remaining": 0,
+    "synthetic_manifests_remaining": 0,
+    "synthetic_workspaces_remaining": 0,
+    "open_deletion_runs": 0
+  },
+  "production_data_deleted": false,
+  "secrets_in_evidence": false,
+  "explicit_product_owner_closure": "PENDING"
+}

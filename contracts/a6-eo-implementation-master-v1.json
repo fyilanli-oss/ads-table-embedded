@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.8.1",
+  "schema_version": "1.9.0",
   "contract_id": "a6-eo-implementation-master-v1",
   "title": "A6 EO single-track execution rule and integrated implementation package table",
   "effective_date": "2026-10-04",
@@ -399,7 +399,10 @@
         "E10-T7",
         "R2"
       ],
-      "reference_closure_rule": "not_closed_until_exact_EO_acceptance_evidence_and_explicit_closure_record"
+      "reference_closure_rule": "not_closed_until_exact_EO_acceptance_evidence_and_explicit_closure_record",
+      "analysis_design_document": "docs/EO_02_ANALYSIS_DESIGN_BOOK.md",
+      "analysis_design_status": "Pending explicit product-owner acceptance",
+      "single_next_parent": "A6-EO-03"
     },
     {
       "id": "A6-EO-03",
@@ -413,7 +416,11 @@
         {
           "id": "A6-EO-03-A",
           "title": "OAuth transaction boundary",
-          "objective": "Workspace-owned state/PKCE/nonce/TTL and callback allowlist."
+          "objective": "Workspace-owned state/PKCE/nonce/TTL and callback allowlist.",
+          "status": "Prepared; blocked by A6-EO-02 parent closure",
+          "implementation_document": "docs/EO_03A_OAUTH_TRANSACTION_BOUNDARY.md",
+          "implementation_contract": "contracts/eo-03a-oauth-transaction-boundary-v1.json",
+          "official_documentation_checked_at": "2026-10-09"
         },
         {
           "id": "A6-EO-03-B",
@@ -832,8 +839,8 @@
   "cutover_authorized": false,
   "legacy_deletion_authorized": false,
   "current_active_parent": "A6-EO-02",
-  "current_active_child": "A6-EO-02-D",
-  "current_gate": "A6-EO-02_parent_closure_analysis_design_rule_pending_product_discussion",
+  "current_active_child": null,
+  "current_gate": "A6-EO-02_analysis_design_book_explicit_product_owner_acceptance",
   "next_ready_child": null,
   "independent_packages": [
     {
@@ -853,5 +860,11 @@
       "advances_eo_status": false,
       "cleanup_execution_authorized": false
     }
-  ]
+  ],
+  "parent_package_analysis_design_closure": {
+    "contract": "contracts/a6-parent-package-analysis-design-closure-v1.json",
+    "status": "proposed_for_product_owner_acceptance",
+    "required_before_parent_status_accepted": true,
+    "first_application": "A6-EO-02"
+  }
 }

@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.16.0",
+  "schema_version": "1.16.1",
   "contract_id": "a6-eo-implementation-master-v1",
   "title": "A6 EO single-track execution rule and integrated implementation package table",
   "effective_date": "2026-10-04",
@@ -314,7 +314,10 @@
         "cb02ef7c2e9236ab50da792f21d667fae91cbccd",
         "111e7dec66c84c48be43930f3496ea5b0f918949",
         "76ea38a474c701d69871f73ba713376e3a7d623e"
-      ]
+      ],
+      "analysis_design_document": "docs/EO_01_ANALYSIS_DESIGN_BOOK.md",
+      "analysis_design_status": "Accepted_2026-10-09",
+      "single_next_parent": "A6-EO-02"
     },
     {
       "id": "A6-EO-02",
@@ -401,7 +404,7 @@
       ],
       "reference_closure_rule": "not_closed_until_exact_EO_acceptance_evidence_and_explicit_closure_record",
       "analysis_design_document": "docs/EO_02_ANALYSIS_DESIGN_BOOK.md",
-      "analysis_design_status": "Accepted by product owner on 2026-10-09",
+      "analysis_design_status": "Accepted_2026-10-09",
       "single_next_parent": "A6-EO-03",
       "explicit_product_owner_parent_closure": "PASS_2026-10-09"
     },
@@ -521,7 +524,9 @@
       "reference_closure_rule": "not_closed_until_exact_EO_acceptance_evidence_and_explicit_closure_record",
       "acceptance_evidence": "evidence/eo-03d-live-database-evidence-2026-10-09.json",
       "explicit_product_owner_closure": "PASS_2026-10-09",
-      "single_next_parent": "A6-EO-04"
+      "single_next_parent": "A6-EO-04",
+      "analysis_design_document": "docs/EO_03_ANALYSIS_DESIGN_BOOK.md",
+      "analysis_design_status": "Accepted_2026-10-09"
     },
     {
       "id": "A6-EO-04",
@@ -937,6 +942,16 @@
     "contract": "contracts/a6-parent-package-analysis-design-closure-v1.json",
     "status": "Accepted_by_product_owner_2026-10-09",
     "required_before_parent_status_accepted": true,
-    "first_application": "A6-EO-02"
+    "closed_parent_statuses": [
+      "Done",
+      "Accepted"
+    ],
+    "completed_parents": [
+      "A6-EO-01",
+      "A6-EO-02",
+      "A6-EO-03"
+    ],
+    "next_required_parent": "A6-EO-04",
+    "ci_test": "tests/a6-parent-analysis-design-books.test.js"
   }
 }

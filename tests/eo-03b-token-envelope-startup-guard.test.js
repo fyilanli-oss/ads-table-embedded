@@ -412,5 +412,5 @@ test("contract keeps EO-03-B accepted while the single track advances to EO-03-D
   assert.equal(contract.live_evidence.synthetic_runtime_acceptance, true);
   assert.equal(eo03b.status, "Accepted");
   assert.equal(master.current_active_child, "A6-EO-03-D");
-  assert.equal(master.next_ready_child, "A6-EO-03-D");
+  assert.equal(master.next_ready_child, null);
 });

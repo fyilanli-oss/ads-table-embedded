@@ -111,19 +111,19 @@ Bu sözleşmenin dondurulması database Secret değerinin Vercel'e girildiği an
 ## Veri modeli
 
 - `billing.workspace_subscriptions`: Shopify App Pricing active/null sonucunun generation-bound projection'ı.
-- `billing.workspace_entitlements`: `trial | active | subscription_required` erişim kararı ve Reporting Store hakkı.
+- `billing.workspace_entitlements`: `trial | active | subscription_required` erişim kararının installation-generation-bound projection'ı.
 - `billing.trial_ledger`: Shopify-owned trial snapshotlarının immutable, idempotent gözlem izi.
 
 Üç tablo private schema'dadır, RLS enabled + forced'dur. Browser/Data API rolleri ve `service_role` erişemez. `adstable_runtime` doğrudan table DML taşımaz; yalnız snapshot apply ve fresh entitlement resolve function'larını çağırabilir.
 
-## Reporting Store fiyat sınırı
+## Kurulu Shopify mağazasına bağlı abonelik
 
-İlk entitlement aynı anda bir aktif Reporting Store içerir.
+Abonelik, doğrulanmış app installation mağazasına aittir.
 
-- Yeni aday mağaza tespiti ek ücret değildir.
-- Aktif Reporting Store değişimi ek ücret değildir.
-- Geçmiş mağaza verisinin korunması ek ücret değildir.
-- Aynı anda birden fazla aktif mağazayı yenileme ve karşılaştırma ilk review diliminin dışındaki gelecekteki ayrı entitlement'tır.
+- Bir installation generation yalnız kendi Shopify mağazası için entitlement üretir.
+- Provider hesabı, pixel veya domain abonelik kapsamını başka mağazaya taşıyamaz.
+- İkinci Shopify mağazası ayrı installation, workspace ve subscription gerektirir.
+- Merchant-selectable commerce-store kontrolü yoktur.
 
 ## Fail-closed matrisi
 
@@ -144,7 +144,7 @@ Bu sözleşmenin dondurulması database Secret değerinin Vercel'e girildiği an
 - Partner API access tokenının Vercel Production Secret olarak aktive edilmesi
 - Settings billing UI
 - Uninstall, privacy deletion ve clean reinstall
-- Provider OAuth veya Reporting Store seçimi
+- Provider OAuth veya Reporting Account seçimi
 
 Bu dış kapsam maddeleri uygulanmış sayılmaz. Plan/secret aktivasyonu ve canlı Partner API acceptance ayrıca açık insan kapısıdır.
 
@@ -163,8 +163,8 @@ Development store kabul sırası `null → intended USD 24.99 / 14-day trial →
 - Manual Billing API yeni subscription yolu olarak kullanılamaz.
 - Partner API hatası entitlement'a dönüşmez.
 - Trial local olarak yeniden başlatılamaz.
-- Bir aktif Reporting Store hakkı DB constraint ile sabittir.
-- Candidate detection ve store switch billing event değildir.
+- Entitlement doğrulanmış kurulu Shopify mağazasına ve installation generation'a bağlıdır.
+- Provider bağlantısı veya hesap değişikliği billing scope'u değiştiremez.
 - Repository test/build/CI PASS olmalıdır.
 - Supabase migration ve self-cleaning behavioral probe canlı PASS oldu; üç billing tablosunun RLS/forced RLS sonucu 3/3, runtime direct DML sonucu 0, runtime function access sonucu 2/2, Security ve Performance Advisor sonucu 0/0 ve kalan probe satırı 0'dır.
 - Evidence: `docs/evidence/EO_02C_DATABASE_ACCEPTANCE_2026-10-06.json`.
@@ -178,3 +178,7 @@ Development store kabul sırası `null → intended USD 24.99 / 14-day trial →
 - Bu nedenle yalnız database Secret ve yeni deployment canlı persistence üretemez. Secret aktivasyonu güvenli biçimde durduruldu.
 - Düzeltme kararı: `docs/EO_02C_SHOPIFY_RUNTIME_AUTH_BRIDGE.md` ve `contracts/eo-02c-shopify-runtime-auth-bridge-v1.json`.
 - EO-02-C, authenticated runtime bridge, ciphertext-only session persistence ve gerçek canlı projection kanıtı PASS olmadan kapanmaz.
+
+## 9 Ekim 2026 düzeltmesi
+
+Önceki seçilebilir mağaza entitlement varsayımı aktif modelden kaldırıldı. Runtime DTO ve billing projection yalnız Shopify App Pricing erişim durumunu taşır. İleri yönlü düzeltici migration eski üç metadata kolonunu kaldırır; uygulanmış migration ve tarihsel kabul kanıtları değiştirilmez. Canlı migration ayrı açık onay gerektirir. Bağlayıcı contract: `contracts/eo-02bc-installed-shop-authority-correction-v1.json`.

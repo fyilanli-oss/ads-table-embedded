@@ -84,7 +84,7 @@ The header contains:
 - Klaviyo Campaign: Campaign → Campaign Message → only a verified Variation
 - Klaviyo Flow: Flow → Flow Message → only a verified Variation
 
-Filters use the same canonical hierarchy. Reporting Account and Reporting Store are changed only in Settings.
+Filters use the same canonical hierarchy. Reporting Account is changed only in Settings; the installed Shopify shop is not selectable.
 
 ### 4.4 Compare
 
@@ -152,7 +152,7 @@ In compare mode the main table expands only the selected ranking/compare metrics
 Creative preview and attributed/sold products are separate concepts.
 
 - A main-row thumbnail is allowed only from verified provider creative/asset media; otherwise an explicit fallback is shown.
-- A product appears only when A6-EO-07-C proves provider-returned product/catalog identity and it maps deterministically to the active Reporting Store product/variant.
+- A product appears only when A6-EO-07-C proves provider-returned product/catalog identity and it maps deterministically to the installed Shopify shop product/variant.
 - Shopify may supply the image after that verified identity mapping; the image does not create attribution.
 - Product name, destination URL, UTM, `fbclid`, `fbc` or an arbitrary Shopify order join cannot infer the relationship.
 - A non-advertised cross-sell product appears only if the provider natively returns it for that analytical leaf.
@@ -195,29 +195,25 @@ No implementation may redesign, rename or remove a proven step without a separat
 
 1. Reporting Currency
 2. Provider Connections and Reporting Accounts
-3. Reporting Store
-4. Subscription
-5. Data & Privacy
+3. Subscription
+4. Data & Privacy
 
-Reporting Store is not placed above its provider-account dependencies.
+The installed Shopify shop may appear only as read-only context; it is not a section, selector or switch.
 
-### 6.3 Reporting Account and Reporting Store transaction
+### 6.3 Reporting Account activation under installed-shop authority
 
 A Reporting Account change is staged, not immediately activated.
 
-1. Discover and verify store topology under the proposed account.
-2. If the current active Reporting Store is verified, atomically activate the account while preserving the store.
-3. If the current store is absent but verified candidates exist, require explicit store selection and atomically activate account plus effective-dated store binding.
-4. If multiple candidates exist, selection is mandatory.
-5. If no verified candidate exists, keep the old active account/store pair. The new account may remain connected but cannot become reporting authority.
+1. Verify account ownership and discover the provider entities available to the account.
+2. Prove deterministic scope to the installed Shopify shop before the account becomes reporting authority.
+3. If scope is absent, ambiguous or belongs to another store, keep the existing reporting authority. The proposed account may remain connected but cannot write Dataset V2 or receive SnapshotJobs.
+4. Historical data is preserved and never relabelled.
 
-Before atomic activation, the proposed account cannot write Dataset V2 or receive SnapshotJobs. Historical data is preserved and never relabelled. `unknown store` is not a valid silent state.
-
-A read-only reporting-scope summary may appear, but editable Reporting Store controls remain after provider-account controls.
+The installed Shopify shop comes only from the verified app installation. Provider account, pixel, domain or merchant input cannot change it. A second Shopify shop requires a separate app installation, workspace and subscription.
 
 ### 6.4 Subscription
 
-Settings displays the Shopify-authoritative plan, `$24.99/month` public-plan price, 14-day trial state/end, current billing period and entitlement status. One active Reporting Store is included; candidate detection and active-store switching do not create a charge.
+Settings displays the Shopify-authoritative plan, `$24.99/month` public-plan price, 14-day trial state/end, current billing period and entitlement status. The subscription belongs to the installed Shopify shop; a second shop requires a separate installation and subscription.
 
 AdsTable does not imitate Shopify checkout or host a custom pricing transaction. `Manage subscription` navigates to Shopify's hosted plan surface. Subscription state is verified through the current Shopify App Pricing authority; redirect parameters alone are not entitlement authority.
 

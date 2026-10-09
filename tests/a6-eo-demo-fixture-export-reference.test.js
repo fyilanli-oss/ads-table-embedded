@@ -33,6 +33,8 @@ test("keeps synthetic data visibly separate from provider truth", () => {
   assert.ok(contract.forbidden_uses.includes("provider_native_capability_acceptance"));
   assert.ok(contract.forbidden_uses.includes("real_zero_evidence"));
   assert.equal(contract.extraction_and_normalization.universal_campaign_adgroup_ad_mapping_forbidden, true);
+  assert.ok(contract.extraction_and_normalization.required_canonical_fields.includes("installed_shop_id"));
+  assert.ok(contract.extraction_and_normalization.required_canonical_fields.includes("installed_shop_timezone"));
 });
 
 test("separates immutable golden and rolling demo fixture modes", () => {

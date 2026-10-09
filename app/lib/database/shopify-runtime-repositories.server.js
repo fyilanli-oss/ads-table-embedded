@@ -82,9 +82,6 @@ export function createShopifyRuntimeRepositories(database) {
           shopDomain: row.shop_domain,
           installGeneration: positiveInteger(row.install_generation, "ENTITLEMENT_SNAPSHOT"),
           entitlementStatus: row.entitlement_status,
-          reportingStoreLimit: positiveInteger(row.reporting_store_limit, "ENTITLEMENT_SNAPSHOT"),
-          candidateDetectionBilled: row.candidate_detection_billed,
-          reportingStoreSwitchBilled: row.reporting_store_switch_billed,
           sourceObservedAt:
             row.source_observed_at instanceof Date
               ? row.source_observed_at.toISOString()

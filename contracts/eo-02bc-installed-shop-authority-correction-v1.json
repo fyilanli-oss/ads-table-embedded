@@ -1,0 +1,78 @@
+{
+  "contract_id": "eo-02bc-installed-shop-authority-correction-v1",
+  "version": "1.0.0",
+  "status": "decision_frozen_repository_implementation_prepared_live_migration_pending",
+  "decided_at": "2026-10-09",
+  "package_placement": "corrective_amendment_to_A6-EO-02-B_and_A6-EO-02-C_before_A6-EO-02-D_acceptance",
+  "authoritative_sources": {
+    "shopify_id_tokens": "https://shopify.dev/docs/apps/build/authentication-authorization/id-tokens",
+    "shopify_shop_query": "https://shopify.dev/docs/api/admin-graphql/latest/queries/shop",
+    "shopify_authentication": "https://shopify.dev/docs/apps/build/authentication-authorization",
+    "shopify_organization_stores": "https://help.shopify.com/en/manual/organization-settings/expansion-stores",
+    "shopify_app_installation": "https://help.shopify.com/en/manual/apps/installing-apps",
+    "shopify_app_pricing": "https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing",
+    "supabase_safe_object_deletion": "https://supabase.com/docs/guides/database/postgres/data-deletion"
+  },
+  "authority_invariant": {
+    "commerce_authority": "verified_installed_Shopify_shop",
+    "canonical_identity": [
+      "shopify_shop_gid",
+      "canonical_myshopify_domain",
+      "install_generation"
+    ],
+    "merchant_selectable_store": false,
+    "pixel_is_authority": false,
+    "provider_domain_is_authority": false,
+    "provider_account_can_replace_shop": false,
+    "one_workspace_per_installation_shop": true,
+    "one_subscription_per_installation_shop": true,
+    "second_shop_requires_separate_installation_workspace_and_subscription": true
+  },
+  "provider_scope": {
+    "reporting_account_selection_allowed": true,
+    "deterministic_installed_shop_scope_required_before_activation": true,
+    "absent_ambiguous_or_cross_store_scope": "connected_but_not_reporting_authority",
+    "dataset_write_when_scope_unproven": false,
+    "snapshot_job_when_scope_unproven": false,
+    "historical_rows_relabelled": false
+  },
+  "commerce_boundary": {
+    "shopify_organic_source": "installed_shop_only",
+    "woo_commerce_in_shopify_embedded_workspace": false,
+    "big_commerce_in_shopify_embedded_workspace": false,
+    "magento_in_shopify_embedded_workspace": false,
+    "future_non_shopify_product_requires_separate_installation_and_billing_model": true
+  },
+  "database_correction": {
+    "forward_only_migration": "supabase/migrations/20261009120000_eo02bc_installed_shop_authority.sql",
+    "historical_migrations_mutated": false,
+    "historical_acceptance_evidence_mutated": false,
+    "removed_legacy_entitlement_columns": [
+      "reporting_store_limit",
+      "candidate_detection_billed",
+      "reporting_store_switch_billed"
+    ],
+    "runtime_function_boundary_preserved": true,
+    "live_application_requires_separate_explicit_approval": true
+  },
+  "affected_packages": [
+    "A6-EO-02-B",
+    "A6-EO-02-C",
+    "A6-EO-03-C",
+    "A6-EO-04-A",
+    "A6-EO-05-A",
+    "A6-EO-05-B",
+    "A6-EO-06-B",
+    "A6-EO-07-A"
+  ],
+  "acceptance": [
+    "No active product contract or runtime DTO exposes a merchant-selectable store scope.",
+    "Verified Shopify installation identity is the immutable commerce authority.",
+    "Provider reporting accounts fail closed unless their entities are deterministically scoped to the installed shop.",
+    "A second Shopify store requires a separate installation, workspace and subscription.",
+    "Non-Shopify commerce stores cannot enter the Shopify embedded workspace.",
+    "Historical migrations and acceptance evidence remain immutable.",
+    "Repository tests and required CI pass before merge.",
+    "The forward database migration is not applied without separate explicit approval."
+  ]
+}

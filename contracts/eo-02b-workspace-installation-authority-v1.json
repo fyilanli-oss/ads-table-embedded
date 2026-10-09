@@ -1,15 +1,18 @@
 {
   "contract_id": "eo-02b-workspace-installation-authority-v1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "status": "accepted",
-  "checked_at": "2026-10-06",
+  "checked_at": "2026-10-09",
   "authoritative_sources": {
     "shopify_api_versioning": "https://shopify.dev/docs/api/usage/versioning",
     "shopify_id_tokens": "https://shopify.dev/docs/apps/build/authentication-authorization/id-tokens",
     "shopify_token_exchange": "https://shopify.dev/docs/apps/build/authentication-authorization/implement-token-exchange?lang=node",
     "shopify_access_tokens": "https://shopify.dev/docs/apps/build/authentication-authorization/access-tokens",
     "shop_query": "https://shopify.dev/docs/api/admin-graphql/2026-10/queries/shop",
-    "supabase_rls": "https://supabase.com/docs/guides/database/postgres/row-level-security"
+    "supabase_rls": "https://supabase.com/docs/guides/database/postgres/row-level-security",
+    "shopify_shop_query": "https://shopify.dev/docs/api/admin-graphql/latest/queries/shop",
+    "shopify_organization_stores": "https://help.shopify.com/en/manual/organization-settings/expansion-stores",
+    "shopify_app_billing": "https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing"
   },
   "api_baseline": {
     "admin_graphql": "2026-10",
@@ -26,9 +29,20 @@
       "header.workspace_id",
       "query.shop",
       "email",
-      "provider account similarity"
+      "provider account similarity",
+      "merchant-selected commerce store",
+      "pixel-only store inference",
+      "cross-commerce account"
     ],
-    "first_release_cardinality": "one Shopify installation generation to one workspace"
+    "first_release_cardinality": "one Shopify installation generation to one workspace",
+    "installed_shop_binding": {
+      "source": "verified_ID_token_plus_Admin_GraphQL_shop",
+      "canonical_key": "Shop_GID_plus_myshopifyDomain_plus_install_generation",
+      "mutable_by_merchant": false,
+      "one_workspace_per_installation_shop": true,
+      "provider_account_can_change_shop_authority": false,
+      "pixel_or_provider_domain_is_authority": false
+    }
   },
   "state_matrix": [
     {
@@ -113,6 +127,9 @@
     "Caller-supplied tenant identity is absent from the application service interface.",
     "A verified ID-token domain and Admin shop identity must agree.",
     "A Shop GID is authoritative; domain changes are audited and never create a second workspace.",
+    "The installed Shopify shop is the immutable commerce authority for the installation generation.",
+    "No merchant-selectable store scope or cross-commerce store can replace the installed shop.",
+    "A second Shopify store requires its own app installation, workspace and subscription.",
     "Lifecycle states cannot be silently reactivated before EO-02-D.",
     "RLS is enabled and forced and runtime has function-only access.",
     "No plaintext or placeholder token material is persisted.",
@@ -132,5 +149,10 @@
     "merge_commit": "edc9e21588f5a32bea139b754ea0108c9809cf27",
     "merged_at": "2026-10-06T14:14:11Z",
     "result": "pass"
+  },
+  "correction": {
+    "decision_date": "2026-10-09",
+    "contract": "contracts/eo-02bc-installed-shop-authority-correction-v1.json",
+    "document": "docs/EO_02BC_INSTALLED_SHOP_AUTHORITY_CORRECTION.md"
   }
 }

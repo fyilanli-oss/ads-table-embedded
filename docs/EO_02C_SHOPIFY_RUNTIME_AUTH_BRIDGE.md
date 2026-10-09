@@ -43,7 +43,7 @@ Shopify'ın resmî React Router sözleşmesine göre embedded ürün route'ları
 - Başarı: İstek doğrulanır, mevcut Funnel/Ad Analysis/Settings preview yüzeyi değişmeden render edilir ve server-only entitlement reconciliation çalışır.
 - Error: Authentication veya persistence başarısızlığında korunan veri render edilmez; fail-closed error boundary kullanılır.
 - Değişmeyecek UI: Görünen metinler, route URL'leri, Polaris 2.0 RC baseline ve mevcut preview content.
-- Kapsam dışı: Settings ürün davranışı, provider OAuth, Reporting Store seçimi, yeni grafik veya yeni görsel component.
+- Kapsam dışı: Settings ürün davranışı, provider OAuth/Reporting Account seçimi, yeni grafik veya yeni görsel component.
 
 ### Exact Shopify component mapping
 

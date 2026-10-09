@@ -94,9 +94,6 @@ test("repositories call only the function boundary and map exact results", async
           shop_domain: "example-store.myshopify.com",
           install_generation: "1",
           entitlement_status: "active",
-          reporting_store_limit: 1,
-          candidate_detection_billed: false,
-          reporting_store_switch_billed: false,
           source_observed_at: new Date("2026-10-08T10:00:00.000Z"),
         }],
       };
@@ -133,7 +130,6 @@ test("repositories call only the function boundary and map exact results", async
   assert.match(calls[1].text, /billing\.apply_shopify_app_pricing_snapshot/);
   assert.doesNotMatch(calls.map((call) => call.text).join("\n"), /\b(?:insert|update|delete)\b/i);
   assert.equal(entitlement.entitlementStatus, "active");
-  assert.equal(entitlement.reportingStoreLimit, 1);
   assert.equal(entitlement.sourceObservedAt, "2026-10-08T10:00:00.000Z");
 });
 
@@ -160,9 +156,6 @@ test("internal caller requires verified Shopify identities before Partner API or
           shop_domain: "example-store.myshopify.com",
           install_generation: "1",
           entitlement_status: "active",
-          reporting_store_limit: 1,
-          candidate_detection_billed: false,
-          reporting_store_switch_billed: false,
           source_observed_at: observedAt,
         }],
       };

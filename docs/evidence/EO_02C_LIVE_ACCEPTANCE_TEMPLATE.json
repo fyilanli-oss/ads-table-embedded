@@ -63,10 +63,8 @@
     "shop_gid_match": null,
     "canonical_domain_match": null,
     "install_generation_match": null,
-    "reporting_store_limit_is_one": null,
-    "candidate_detection_billed_false": null,
-    "store_switch_billed_false": null,
-    "stale_snapshot_rejected": null
+    "stale_snapshot_rejected": null,
+    "installed_shop_matches_verified_installation": null
   },
   "leak_checks": {
     "browser_bundle": "pending",

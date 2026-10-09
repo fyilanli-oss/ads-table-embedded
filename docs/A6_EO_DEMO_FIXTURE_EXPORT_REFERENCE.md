@@ -51,7 +51,7 @@ The source shape is not Dataset V2:
 - Klaviyo cannot remain forced into generic Campaign/AdGroup/Ad.
 - Google Standard and Performance Max need distinct native hierarchy.
 - Meta needs Campaign/Ad Set/Ad.
-- Workspace, Reporting Store, provider account, timezone, support, freshness, finality, FX and provenance fields must be added.
+- Workspace, installed Shopify shop, provider account, timezone, support, freshness, finality, FX and provenance fields must be added.
 - Legacy calculated metrics are not copied as truth; EO-06 recalculates them from raw fixture inputs.
 - Synthetic zero is forbidden. A value is zero only when the fixture explicitly asserts a supported zero; otherwise it is unknown or unsupported.
 - All identifiers are fixture/workspace/provider namespaced.

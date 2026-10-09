@@ -108,8 +108,7 @@ export function createTokenVault({
     });
   }
 
-  async function assertReady(provider) {
-    providerName(provider);
+  async function assertRuntimeReady() {
     guardPromise ??= runGuard().catch((error) => {
       guardPromise = undefined;
       throw error;
@@ -117,7 +116,13 @@ export function createTokenVault({
     return guardPromise;
   }
 
+  async function assertReady(provider) {
+    providerName(provider);
+    return assertRuntimeReady();
+  }
+
   return Object.freeze({
+    assertRuntimeReady,
     assertReady,
 
     async store(transactionId, verifier, context) {

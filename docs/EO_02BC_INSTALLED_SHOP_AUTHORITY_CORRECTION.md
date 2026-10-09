@@ -29,7 +29,11 @@ Settings'te mağaza seçici veya değiştirici yoktur. Kurulu mağaza kimliği g
 
 Yeni ileri yönlü migration, entitlement projection'daki eski üç metadata kolonunu kaldırır ve `apply_shopify_app_pricing_snapshot` ile `resolve_workspace_entitlement` sonuçlarını yalnız gerçek entitlement verilerine indirger. Uygulanmış migration'lar ve tarihsel kabul kanıtları değiştirilmez.
 
-Repository migration'ının varlığı canlı Supabase değişikliğine yetki vermez. Canlı uygulama, dependency/lock kontrolü, backup doğrulaması, staging veya kontrollü pencere, acceptance probe ve Security/Performance Advisor kontrolleri için ayrı açık onay gerektirir.
+Repository migration'ının varlığı canlı Supabase değişikliğine yetki vermez. Canlı uygulama için ayrı açık ürün sahibi onayı gerekir.
+
+## Canlı uygulama sonucu
+
+9 Ekim 2026'da ayrı açık ürün sahibi onayı alındı. Preflight sırasında bekleyen kilit ve 30 saniyeden uzun transaction bulunmadı; üç eski kolonun yalnız kendi check constraint bağımlılıkları görüldü. Migration Supabase'e `20261009070314 / eo02bc_installed_shop_authority` olarak uygulandı. Postflight doğrulamasında eski kolon sayısı sıfır, entitlement satır sayısı değişmeden bir, iki runtime fonksiyonu `adstable_owner` sahipliğinde `SECURITY DEFINER` ve boş `search_path` ile yeniden kurulmuş, `EXECUTE` yetkisi yalnız `adstable_owner` ve `adstable_runtime` rollerinde bulunmuştur. Security Advisor bulgusu sıfırdır. Kanıt: `docs/evidence/EO_02BC_INSTALLED_SHOP_AUTHORITY_LIVE_2026-10-09.json`.
 
 ## Resmî kaynaklar
 

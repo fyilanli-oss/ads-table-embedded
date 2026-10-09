@@ -25,6 +25,9 @@ const contract = JSON.parse(
 const master = JSON.parse(
   read("contracts/a6-eo-implementation-master-v1.json"),
 );
+const liveAcceptance = JSON.parse(
+  read("docs/evidence/EO_03C_LIVE_ACCEPTANCE_2026-10-09.json"),
+);
 
 const workspaceId = "11111111-1111-4111-8111-111111111111";
 const connectionId = "22222222-2222-4222-8222-222222222222";
@@ -460,18 +463,27 @@ test("contract keeps installed Shopify shop authoritative and EO-03-C isolated",
   const eo03 = master.packages.find((entry) => entry.id === "A6-EO-03");
   const eo03c = eo03.children.find((entry) => entry.id === "A6-EO-03-C");
 
-  assert.equal(contract.status, "Implementation");
+  assert.equal(contract.status, "Verification");
   assert.equal(contract.installed_shop_authority.mutable_by_provider, false);
   assert.equal(contract.reporting_store_control_exists, false);
   assert.equal(contract.provider_rules.meta.reporting_account_cardinality, 1);
   assert.equal(contract.provider_rules.google_ads.reporting_account_cardinality, 1);
   assert.equal(contract.provider_rules.klaviyo.reporting_account_control, false);
   assert.equal(contract.live_effect.provider_api_call, false);
-  assert.equal(contract.live_effect.production_database_mutation, false);
-  assert.equal(eo03c.status, "In progress");
+  assert.equal(contract.live_effect.production_database_mutation, true);
+  assert.equal(contract.implementation.live_migration_applied, true);
+  assert.equal(contract.acceptance_evidence.live_database, "PASS_2026-10-09");
+  assert.equal(contract.acceptance_evidence.product_owner_closure, "PENDING");
+  assert.equal(liveAcceptance.synthetic_runtime_probe.status, "PASS");
+  assert.equal(liveAcceptance.cleanup.provider_connection_rows, 0);
+  assert.equal(liveAcceptance.cleanup.provider_account_rows, 0);
+  assert.equal(liveAcceptance.cleanup.reporting_binding_rows, 0);
+  assert.equal(liveAcceptance.advisors.security_findings, 0);
+  assert.equal(liveAcceptance.advisors.eo03c_new_unindexed_foreign_key_findings, 0);
+  assert.equal(eo03c.status, "Verification");
   assert.equal(master.current_active_child, "A6-EO-03-C");
   assert.equal(
     master.current_gate,
-    "A6-EO-03-C_implementation_and_acceptance",
+    "A6-EO-03-C_product_owner_closure",
   );
 });

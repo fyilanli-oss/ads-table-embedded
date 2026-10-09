@@ -125,5 +125,7 @@ Verified live:
 - Supabase security advisor returned zero findings;
 - no provider connection, credential or lifecycle-event test rows exist.
 
-Synthetic runtime acceptance remains **OPEN**. Supabase Connector rejected rollback-scoped synthetic mutation with `INVALID_ARGUMENT` before any synthetic row was written. This is recorded as an execution-channel blocker, not a lifecycle PASS or a database defect. EO-03-D remains `Implementation` until the executable state transitions are run in an approved transactional channel and the product owner explicitly accepts the package.
+Synthetic runtime acceptance remains **OPEN**. Supabase Connector rejected mutation, so the same rollback-scoped scenario was run through Supabase SQL Editor under the existing `adstable_owner` role without expanding privileges. The first lifecycle transition reached the live function and failed with PostgreSQL `42702`: the unqualified `connection_id` lifecycle-event column conflicts with the function's `RETURNS TABLE` output variable. The transaction rolled back; connection, credential, account and event residue is zero.
+
+The corrective migration `20261009211000_eo03d_qualify_lifecycle_event_columns.sql` qualifies lifecycle-event columns in all four mutation functions. It must pass repository CI, receive explicit merge/live-migration approval, be applied exactly, and complete the rollback-scoped runtime scenario before EO-03-D can be accepted.
 

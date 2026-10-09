@@ -2,7 +2,7 @@
   "evidence_id": "eo-03d-live-database-evidence-2026-10-09",
   "checked_at": "2026-10-09",
   "package": "A6-EO-03-D",
-  "status": "PARTIAL_PASS",
+  "status": "FAILED_FIX_PENDING",
   "project": {
     "ref": "podpwkrpmjiksskxhwsu",
     "name": "ads-table-embedded",
@@ -41,13 +41,17 @@
     "unused_index_findings_expected_before_runtime_traffic": true
   },
   "synthetic_runtime_acceptance": {
-    "status": "BLOCKED",
-    "channel": "Supabase Connector",
-    "error": "INVALID_ARGUMENT",
-    "mutations_reached_database": false,
-    "persistent_synthetic_rows": 0,
-    "required_before_acceptance": true
+    "status": "FAILED",
+    "channel": "Supabase SQL Editor under existing adstable_owner role",
+    "first_transition_reached": true,
+    "error_code": "42702",
+    "error": "column reference connection_id is ambiguous in integrations.transition_provider_connection_lifecycle",
+    "cause": "Unqualified lifecycle-event column conflicts with RETURNS TABLE output variable.",
+    "corrective_migration": "supabase/migrations/20261009211000_eo03d_qualify_lifecycle_event_columns.sql",
+    "corrective_migration_live_applied": false,
+    "rerun_required": true,
+    "persistent_synthetic_rows": 0
   },
-  "package_acceptance": "OPEN",
+  "package_acceptance": "OPEN_FIX_PENDING",
   "product_owner_closure_required": true
 }

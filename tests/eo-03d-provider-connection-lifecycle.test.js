@@ -15,6 +15,9 @@ const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8");
 const migration = read(
   "supabase/migrations/20261009210000_eo03d_provider_connection_lifecycle.sql",
 );
+const lifecycleColumnQualificationMigration = read(
+  "supabase/migrations/20261009211000_eo03d_qualify_lifecycle_event_columns.sql",
+);
 const contract = JSON.parse(
   read("contracts/eo-03d-provider-connection-lifecycle-v1.json"),
 );
@@ -298,13 +301,40 @@ test("migration enforces fail-closed, idempotent and secret-free lifecycle", () 
   );
 });
 
+test("corrective migration qualifies lifecycle event columns against output variables", () => {
+  assert.equal(
+    (
+      lifecycleColumnQualificationMigration.match(
+        /provider_connection_lifecycle_events as event/g,
+      ) ?? []
+    ).length,
+    8,
+  );
+  assert.doesNotMatch(
+    lifecycleColumnQualificationMigration,
+    /^\s+connection_id <> p_connection_id/m,
+  );
+  assert.match(
+    lifecycleColumnQualificationMigration,
+    /event\.connection_id <> p_connection_id/,
+  );
+  assert.match(
+    lifecycleColumnQualificationMigration,
+    /event\.event_id = p_event_id/,
+  );
+  assert.doesNotMatch(
+    lifecycleColumnQualificationMigration,
+    /^\s+or\s+(workspace_id|install_generation|provider|event_type)\s*<>/m,
+  );
+});
+
 test("contract preserves provider differences and no live mutation authorization", () => {
   assert.equal(contract.status, "Implementation");
   assert.equal(contract.invariants.connected_only_reporting_authority, true);
   assert.equal(contract.live_effect.production_database_mutation, true);
   assert.equal(contract.implementation.live_migration_applied, true);
   assert.equal(contract.live_acceptance.schema_privilege_rls_advisor, "PASS");
-  assert.equal(contract.live_acceptance.synthetic_runtime_acceptance, "BLOCKED");
+  assert.equal(contract.live_acceptance.synthetic_runtime_acceptance, "FAILED");
   assert.equal(contract.live_acceptance.synthetic_rows_persisted, 0);
   assert.equal(contract.live_effect.provider_api_call, false);
   assert.equal(

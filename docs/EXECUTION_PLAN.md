@@ -86,9 +86,14 @@ EO-02-A business tablo veya veri kurmaz, runtime credential'ı etkinleştirmez, 
 ## Active package: EO-03
 
 - **EO-03-A — Accepted:** Workspace/install-generation-bound OAuth transaction state machine, exact callback allowlist, single-use state claim and live private database boundary passed repository, database and product-owner gates.
-- **EO-03-B — In progress:** Dedicated versioned AES-256-GCM envelope, ciphertext-only PKCE/provider-token persistence and fail-closed startup guard are being implemented under `docs/EO_03B_TOKEN_ENVELOPE_STARTUP_GUARD.md` and `contracts/eo-03b-token-envelope-startup-guard-v1.json`.
-- EO-03-B repository work does not authorize a live Supabase migration, a Vercel secret, a production deploy or provider OAuth. Each live step requires its later explicit gate.
-- EO-03-C and EO-03-D have not started.
+- **EO-03-B — Accepted:** Versioned AES-256-GCM token envelope, ciphertext-only vault, live private database boundary, production startup guard and secret-free synthetic runtime acceptance passed.
+- **EO-03-C — In progress:** Fresh provider-verified connected accounts and one canonical Meta/Google Reporting Account are being bound beneath the immutable installed-Shopify-store authority. Klaviyo remains one Connected Account with no Reporting Account control. Reporting Store selection does not exist.
+- EO-03-C repository work does not authorize a live Supabase migration, provider API call, provider OAuth, Vercel mutation or production deploy. These remain separate explicit gates.
+- EO-03-D has not started.
+
+## EO-03-C official provider baseline — 9 Ekim 2026
+
+Shopify authentication/access-token authority, Meta official Marketing API collection, Google Ads access model and `ListAccessibleCustomers`, Klaviyo OAuth/Get Account, Supabase changelog/functions/RLS belgeleri kontrol edildi. Provider-specific HTTP discovery remains EO-04; EO-03-C accepts only short-lived verified evidence and fails closed on stale, cross-provider or merchant-entered account identity.
 
 ## Current official baseline
 

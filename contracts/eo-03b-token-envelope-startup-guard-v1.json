@@ -130,6 +130,11 @@
     "rls_enabled_and_forced": true,
     "runtime_function_execute_grant_verified": true,
     "synthetic_runtime_acceptance": false,
-    "production_startup_acceptance": false
+    "production_startup_acceptance": false,
+    "pkce_workspace_index_migration_version": "20261009115314",
+    "pkce_workspace_index_migration_name": "eo03b_pkce_workspace_fk_index",
+    "vercel_active_key_version_sensitive": true,
+    "security_advisor_findings": 0,
+    "vault_rows_after_preflight": 0
   }
 }

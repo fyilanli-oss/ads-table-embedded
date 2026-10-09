@@ -1,7 +1,7 @@
 # EO-02 — Analysis–Design Book: Shopify foundation lifecycle
 
 **Record date:** 9 October 2026  
-**Status:** Product-owner review  
+**Status:** Accepted by product owner on 9 October 2026  
 **Parent package:** A6-EO-02 — Shopify-native data, workspace, billing and privacy foundation
 
 ## 1. What EO-02 gives the product
@@ -125,6 +125,6 @@ Primary package records:
 
 ## 11. EO-02 closure statement
 
-EO-02 is ready to close only when this chapter is explicitly accepted, repository governance is green and the master plan records the single next parent as **A6-EO-03 — Canonical OAuth, connection and token vault**.
+EO-02 closed with explicit product-owner acceptance on 9 October 2026 after repository governance passed. The single next parent is **A6-EO-03 — Canonical OAuth, connection and token vault**.
 
 EO-02 does not claim that provider OAuth, token storage, reporting-account selection, provider adapters or Dataset V2 exist. Those are later packages and remain closed by default.

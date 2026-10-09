@@ -151,7 +151,12 @@ export function createOAuthTransactionBoundary({
 
       try {
         if (verifier) {
-          await verifierVault.store(transaction.transactionId, verifier);
+          await verifierVault.store(transaction.transactionId, verifier, {
+            provider: selectedProvider,
+            workspaceId: owner.workspaceId,
+            installGeneration: owner.installGeneration,
+            expiresAt: transaction.expiresAt,
+          });
         }
         const redirected = await repository.markRedirected(
           transaction.transactionId,
@@ -234,7 +239,11 @@ export function createOAuthTransactionBoundary({
       }
 
       const verifier = claimed.pkceRequired
-        ? await verifierVault.take(claimed.transactionId)
+        ? await verifierVault.take(claimed.transactionId, {
+            provider: selectedProvider,
+            workspaceId: claimed.workspaceId,
+            installGeneration: claimed.installGeneration,
+          })
         : null;
       if (claimed.pkceRequired && !verifier) {
         await repository.complete({

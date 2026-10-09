@@ -459,7 +459,7 @@ test("corrective migration restores owner-only forced-RLS execution and covers c
   );
 });
 
-test("contract keeps installed Shopify shop authoritative and EO-03-C isolated", () => {
+test("contract keeps installed Shopify shop authoritative after EO-03 closure", () => {
   const eo03 = master.packages.find((entry) => entry.id === "A6-EO-03");
   const eo03c = eo03.children.find((entry) => entry.id === "A6-EO-03-C");
 
@@ -482,10 +482,9 @@ test("contract keeps installed Shopify shop authoritative and EO-03-C isolated",
   assert.equal(liveAcceptance.cleanup.reporting_binding_rows, 0);
   assert.equal(liveAcceptance.advisors.security_findings, 0);
   assert.equal(liveAcceptance.advisors.eo03c_new_unindexed_foreign_key_findings, 0);
+  assert.equal(eo03.status, "Accepted");
   assert.equal(eo03c.status, "Accepted");
-  assert.equal(master.current_active_child, "A6-EO-03-D");
-  assert.equal(
-    master.current_gate,
-    "A6-EO-03-D_implementation_and_acceptance",
-  );
+  assert.equal(master.current_active_child, null);
+  assert.equal(master.next_ready_child, "A6-EO-04-A");
+  assert.equal(master.current_gate, "A6-EO-04_start_brief_required");
 });

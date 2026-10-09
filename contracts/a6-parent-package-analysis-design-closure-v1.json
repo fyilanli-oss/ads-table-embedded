@@ -1,0 +1,54 @@
+{
+  "contract_id": "a6-parent-package-analysis-design-closure-v1",
+  "version": "1.1.0",
+  "status": "accepted",
+  "decided_at": "2026-10-09",
+  "purpose": "Make every accepted parent package understandable, operable and auditable without reconstructing child-package history.",
+  "applies_to": [
+    "A6-EO-01",
+    "A6-EO-02",
+    "A6-EO-03",
+    "A6-EO-04",
+    "A6-EO-05",
+    "A6-EO-06",
+    "A6-EO-07",
+    "A6-EO-08",
+    "A6-EO-09",
+    "A6-EO-10"
+  ],
+  "closure_gate": {
+    "artifact_type": "analysis_design_book_chapter",
+    "required_before_parent_status_accepted": true,
+    "separate_named_child_package": false,
+    "product_owner_explicit_acceptance_required": true,
+    "repository_ci_pass_required": true,
+    "local_only_meaningful_work_zero_required": true
+  },
+  "required_sections": [
+    "business_purpose_and_actual_output",
+    "actors_and_authorities",
+    "end_to_end_happy_path",
+    "negative_and_failure_paths",
+    "persistent_state_and_data_ownership",
+    "secret_and_security_boundaries",
+    "operations_retries_and_observability",
+    "rollback_recovery_or_safe_failure",
+    "accepted_evidence_and_known_limits",
+    "single_next_parent"
+  ],
+  "rules": [
+    "The chapter explains why and how the package works in analyst language; it does not replace executable contracts or tests.",
+    "Claims must be backed by accepted child-package evidence and current authoritative provider documentation where applicable.",
+    "Open, deferred or unsupported behavior must be stated explicitly and cannot be described as complete.",
+    "No secret, plaintext token, personal data or raw sensitive provider payload may enter the chapter.",
+    "A parent cannot advance the master plan until the chapter, technical evidence and explicit product-owner closure agree.",
+    "Later corrections are forward-only and preserve historical accepted evidence."
+  ],
+  "first_application": {
+    "parent": "A6-EO-02",
+    "artifact": "docs/EO_02_ANALYSIS_DESIGN_BOOK.md",
+    "next_parent": "A6-EO-03",
+    "status": "PASS_parent_closed"
+  },
+  "product_owner_acceptance": "PASS_2026-10-09"
+}

@@ -1,0 +1,120 @@
+{
+  "contract_id": "eo-03a-oauth-transaction-boundary-v1",
+  "version": "1.0.0",
+  "status": "analyst_contract_gate",
+  "checked_at": "2026-10-09",
+  "parent": "A6-EO-03",
+  "package": "A6-EO-03-A",
+  "authoritative_sources": {
+    "meta_manual_login_flow": "https://developers.facebook.com/documentation/facebook-login/guides/advanced/manual-flow",
+    "google_oauth_web_server": "https://developers.google.com/identity/protocols/oauth2/web-server",
+    "google_oauth_best_practices": "https://developers.google.com/identity/protocols/oauth2/resources/best-practices",
+    "klaviyo_oauth": "https://developers.klaviyo.com/en/v2026-01-15/docs/set_up_oauth",
+    "shopify_id_tokens": "https://shopify.dev/docs/apps/build/authentication-authorization/id-tokens"
+  },
+  "authority": {
+    "initiating_identity": "verified_shopify_admin_identity",
+    "tenant": "server_resolved_workspace",
+    "commerce_scope": "verified_installed_shop_and_generation",
+    "caller_supplied_workspace_allowed": false,
+    "callback_can_select_workspace": false,
+    "provider_account_is_store_authority": false
+  },
+  "transaction": {
+    "providers": [
+      "meta",
+      "google_ads",
+      "klaviyo"
+    ],
+    "state_entropy_bits_min": 256,
+    "persisted_state": "cryptographic_digest_only",
+    "nonce": "unique_per_transaction",
+    "ttl_seconds": 600,
+    "single_use": true,
+    "atomic_claim": true,
+    "installation_generation_bound": true,
+    "callback_allowlist": "static_per_provider_and_environment",
+    "caller_supplied_redirect_allowed": false,
+    "authorization_code_persisted": false,
+    "authorization_code_logged": false,
+    "plaintext_pkce_verifier_persisted": false,
+    "pkce_method": "S256_only",
+    "pkce_required": {
+      "klaviyo": true,
+      "google_ads": "provider_flow_capability_and_current_official_guidance",
+      "meta": "not_asserted_by_current_manual_flow_document"
+    }
+  },
+  "state_machine": {
+    "nonterminal": [
+      "created",
+      "redirected",
+      "claimed"
+    ],
+    "success_terminal": "exchanged",
+    "failure_terminal": [
+      "denied",
+      "expired",
+      "invalidated",
+      "failed"
+    ],
+    "terminal_reuse_allowed": false
+  },
+  "fail_closed": [
+    "missing_or_unknown_state",
+    "expired_state",
+    "already_claimed_state",
+    "provider_mismatch",
+    "workspace_or_install_generation_mismatch",
+    "callback_uri_outside_allowlist",
+    "required_pkce_verifier_unavailable",
+    "token_vault_startup_guard_not_ready",
+    "provider_client_secret_unavailable"
+  ],
+  "provider_rules": {
+    "meta": {
+      "response_type": "code",
+      "csrf": "state_required_and_verified",
+      "exchange": "server_to_server",
+      "app_secret_in_client": false,
+      "token_inspection_required_before_connection_activation": true
+    },
+    "google_ads": {
+      "application_type": "confidential_web_server",
+      "csrf": "state_required_and_verified",
+      "redirect_match": "exact",
+      "offline_access": "only_for_background_refresh",
+      "least_privilege_scopes": true,
+      "encrypted_token_storage_required": true
+    },
+    "klaviyo": {
+      "flow": "authorization_code_with_pkce",
+      "pkce": "S256_required",
+      "authorization_code_lifetime_seconds": 300,
+      "token_endpoint": "https://a.klaviyo.com/oauth/token",
+      "revoke_endpoint": "https://a.klaviyo.com/oauth/revoke",
+      "client_secret_in_browser": false,
+      "expiry_source": "expires_in"
+    }
+  },
+  "eo03b_dependency": {
+    "live_authorization_enabled_before_vault_guard": false,
+    "recoverable_pkce_material_requires_encrypted_envelope": true,
+    "provider_token_persistence_owned_by": "A6-EO-03-B"
+  },
+  "live_effect": {
+    "provider_console_mutation": false,
+    "vercel_secret_mutation": false,
+    "live_oauth": false,
+    "production_database_mutation": false
+  },
+  "acceptance": [
+    "Schema, service and contract implement the same state machine.",
+    "Tamper, replay, expiry, provider-substitution and installation-generation tests pass.",
+    "No secret, authorization code, token or plaintext PKCE verifier is persisted or logged.",
+    "Callback URIs are exact static allowlist entries.",
+    "Live authorization remains disabled until A6-EO-03-B startup guard passes.",
+    "Repository tests, build and required CI pass.",
+    "Product owner explicitly closes A6-EO-03-A."
+  ]
+}

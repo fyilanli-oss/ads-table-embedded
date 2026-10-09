@@ -18,6 +18,9 @@ const migration = read(
 const lifecycleColumnQualificationMigration = read(
   "supabase/migrations/20261009211000_eo03d_qualify_lifecycle_event_columns.sql",
 );
+const lifecycleUpdateColumnQualificationMigration = read(
+  "supabase/migrations/20261009212000_eo03d_qualify_lifecycle_update_columns.sql",
+);
 const contract = JSON.parse(
   read("contracts/eo-03d-provider-connection-lifecycle-v1.json"),
 );
@@ -325,6 +328,29 @@ test("corrective migration qualifies lifecycle event columns against output vari
   assert.doesNotMatch(
     lifecycleColumnQualificationMigration,
     /^\s+or\s+(workspace_id|install_generation|provider|event_type)\s*<>/m,
+  );
+});
+
+test("second corrective migration qualifies UPDATE source columns", () => {
+  assert.equal(
+    (
+      lifecycleUpdateColumnQualificationMigration.match(
+        /update integrations\\.provider_connections as connection/g,
+      ) ?? []
+    ).length,
+    4,
+  );
+  assert.equal(
+    (
+      lifecycleUpdateColumnQualificationMigration.match(
+        /connection_version = connection\\.connection_version \\+ 1/g,
+      ) ?? []
+    ).length,
+    4,
+  );
+  assert.doesNotMatch(
+    lifecycleUpdateColumnQualificationMigration,
+    /connection_version = connection_version \\+ 1/,
   );
 });
 

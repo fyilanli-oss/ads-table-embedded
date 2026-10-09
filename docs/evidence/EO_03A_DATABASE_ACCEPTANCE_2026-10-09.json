@@ -1,0 +1,57 @@
+{
+  "evidence_id": "EO_03A_DATABASE_ACCEPTANCE_2026-10-09",
+  "checked_at": "2026-10-09",
+  "project_ref": "podpwkrpmjiksskxhwsu",
+  "project_name": "ads-table-embedded",
+  "postgres_version": "17.11.0.003",
+  "repository_commit": "5d6997a4c1960544760cb9a94fd80fe4c1ac91fc",
+  "migrations": [
+    {
+      "version": "20261009091622",
+      "name": "eo03a_oauth_transaction_boundary",
+      "result": "PASS"
+    },
+    {
+      "version": "20261009092144",
+      "name": "eo03a_oauth_installation_fk_index",
+      "result": "PASS"
+    }
+  ],
+  "table": {
+    "name": "integrations.oauth_transactions",
+    "rows": 0,
+    "owner": "adstable_owner",
+    "rls_enabled": true,
+    "rls_forced": true,
+    "installation_id_type": "bigint",
+    "installation_fk_delete_action": "cascade"
+  },
+  "access": {
+    "direct_table_access": {
+      "anon": false,
+      "authenticated": false,
+      "service_role": false,
+      "adstable_runtime": false
+    },
+    "runtime_approved_function_execute_count": 5,
+    "public_function_execute_count": 0,
+    "privileged_function_search_path": "empty"
+  },
+  "index": {
+    "name": "oauth_transactions_installation_fk_idx",
+    "definition": "CREATE INDEX oauth_transactions_installation_fk_idx ON integrations.oauth_transactions USING btree (installation_id)",
+    "valid": true,
+    "ready": true,
+    "advisor_unindexed_fk_finding": false
+  },
+  "advisors": {
+    "security_findings": 0,
+    "eo03a_new_performance_findings": 0,
+    "preexisting_unindexed_privacy_foreign_keys": 2,
+    "zero_traffic_unused_index_notices_expected": true
+  },
+  "synthetic_oauth_rows_created": false,
+  "secrets_tokens_codes_or_pii_recorded": false,
+  "live_provider_mutation": false,
+  "live_vercel_mutation": false
+}

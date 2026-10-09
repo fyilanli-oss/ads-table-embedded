@@ -1,0 +1,70 @@
+{
+  "evidence_id": "EO_02BC_INSTALLED_SHOP_AUTHORITY_LIVE_2026-10-09",
+  "schema_version": "1.0.0",
+  "status": "pass",
+  "executed_at": "2026-10-09T07:03:14Z",
+  "source_merge_commit": "ed99f83962a376ac5b787b6d81d72029ad2add04",
+  "source_migration": "supabase/migrations/20261009120000_eo02bc_installed_shop_authority.sql",
+  "supabase_project_ref": "podpwkrpmjiksskxhwsu",
+  "applied_migration": {
+    "version": "20261009070314",
+    "name": "eo02bc_installed_shop_authority"
+  },
+  "authorization": {
+    "separate_explicit_product_owner_approval": true,
+    "approval_date": "2026-10-09"
+  },
+  "preflight": {
+    "migration_already_recorded": false,
+    "entitlement_row_count": 1,
+    "legacy_columns_present": [
+      "reporting_store_limit",
+      "candidate_detection_billed",
+      "reporting_store_switch_billed"
+    ],
+    "dependencies": "only_column_local_check_constraints",
+    "waiting_locks": 0,
+    "transactions_older_than_30_seconds": 0,
+    "security_advisor_findings": 0
+  },
+  "postflight": {
+    "legacy_columns_remaining": 0,
+    "entitlement_row_count": 1,
+    "functions": [
+      {
+        "name": "billing.apply_shopify_app_pricing_snapshot",
+        "owner": "adstable_owner",
+        "security_definer": true,
+        "search_path": "",
+        "execute_roles": [
+          "adstable_owner",
+          "adstable_runtime"
+        ]
+      },
+      {
+        "name": "billing.resolve_workspace_entitlement",
+        "owner": "adstable_owner",
+        "security_definer": true,
+        "search_path": "",
+        "execute_roles": [
+          "adstable_owner",
+          "adstable_runtime"
+        ]
+      }
+    ],
+    "public_execute": false,
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": false,
+    "security_advisor_findings": 0,
+    "performance_advisor": {
+      "new_findings_from_migration": 0,
+      "unchanged_informational_findings": {
+        "unindexed_foreign_keys": 2,
+        "unused_indexes": 4
+      }
+    }
+  },
+  "secrets_or_row_payloads_recorded": false,
+  "final_result": "pass"
+}

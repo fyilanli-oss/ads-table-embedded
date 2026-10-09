@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-02bc-installed-shop-authority-correction-v1",
-  "version": "1.0.0",
-  "status": "decision_frozen_repository_implementation_prepared_live_migration_pending",
+  "version": "1.1.0",
+  "status": "live_migration_applied_verified",
   "decided_at": "2026-10-09",
   "package_placement": "corrective_amendment_to_A6-EO-02-B_and_A6-EO-02-C_before_A6-EO-02-D_acceptance",
   "authoritative_sources": {
@@ -53,7 +53,13 @@
       "reporting_store_switch_billed"
     ],
     "runtime_function_boundary_preserved": true,
-    "live_application_requires_separate_explicit_approval": true
+    "live_application_requires_separate_explicit_approval": true,
+    "live_application_approval_received": true,
+    "live_applied": true,
+    "live_applied_at": "2026-10-09T07:03:14Z",
+    "supabase_migration_version": "20261009070314",
+    "supabase_migration_name": "eo02bc_installed_shop_authority",
+    "live_evidence": "docs/evidence/EO_02BC_INSTALLED_SHOP_AUTHORITY_LIVE_2026-10-09.json"
   },
   "affected_packages": [
     "A6-EO-02-B",
@@ -73,6 +79,6 @@
     "Non-Shopify commerce stores cannot enter the Shopify embedded workspace.",
     "Historical migrations and acceptance evidence remain immutable.",
     "Repository tests and required CI pass before merge.",
-    "The forward database migration is not applied without separate explicit approval."
+    "The forward database migration was applied only after separate explicit product-owner approval and passed post-migration verification."
   ]
 }

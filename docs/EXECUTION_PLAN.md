@@ -83,13 +83,14 @@ Executable contract: `contracts/shopify/a6-eo-07-three-surface-ui-product-freeze
 
 EO-02-A business tablo veya veri kurmaz, runtime credential'ı etkinleştirmez, canlı token/veri taşımaz, Vercel environment değiştirmez ve legacy Supabase projesine dokunmaz.
 
-## Active package: EO-03
+## Closed package: EO-03 / Next ready package: EO-04
 
 - **EO-03-A — Accepted:** Workspace/install-generation-bound OAuth transaction state machine, exact callback allowlist, single-use state claim and live private database boundary passed repository, database and product-owner gates.
 - **EO-03-B — Accepted:** Versioned AES-256-GCM token envelope, ciphertext-only vault, live private database boundary, production startup guard and secret-free synthetic runtime acceptance passed.
 - **EO-03-C — Accepted:** Fresh provider-verified connected accounts and one canonical Meta/Google Reporting Account are bound beneath the immutable installed-Shopify-store authority. Klaviyo remains one Connected Account with no Reporting Account control. No merchant-selectable store scope exists.
 - With explicit approval, the EO-03-C base and corrective Supabase migrations were applied on 9 October 2026. Rollback-scoped synthetic runtime acceptance passed, cleanup is zero, Security Advisor findings are zero and EO-03-C introduced no unindexed-foreign-key finding. No provider API call, provider OAuth, Vercel mutation or production deploy occurred. The product owner explicitly closed EO-03-C on 9 October 2026; exact evidence is `docs/evidence/EO_03C_LIVE_ACCEPTANCE_2026-10-09.json`.
-- **EO-03-D — Ready:** Reconnect, disconnect and renewal lifecycle is the single next active child.
+- **EO-03-D — Accepted:** Reauthorization, atomic credential renewal, two-phase disconnect and same-canonical-connection reconnect passed the complete rollback-scoped live lifecycle scenario. All synthetic rows rolled back to zero, Security Advisor remained at zero, and no provider API/OAuth/Vercel/deploy mutation occurred. Durable evidence: `evidence/eo-03d-live-database-evidence-2026-10-09.json`.
+- **EO-03 — Accepted:** All four children are closed with explicit product-owner acceptance. **EO-04 — Ready only:** its start brief is the next gate; no adapter implementation has started.
 
 ## EO-03-C official provider baseline — 9 Ekim 2026
 
@@ -181,13 +182,14 @@ EO-02-C internal caller kodu tek başına canlı tetikleyici değildir. `docs/EO
 - Repository değişikliği canlı mutation yetkisi değildir; canlı Supabase migration ve sentetik kabul ayrı açık kullanıcı onayı gerektirir.
 
 
-## 9 Ekim 2026 — EO-03-D provider connection lifecycle implementation gate
+## 9 Ekim 2026 — EO-03-D provider connection lifecycle acceptance
 
-- EO-03-D **In progress** durumundadır; EO-03-C kabul kapısı geçilmiştir.
+- EO-03-D **Accepted** durumundadır; rollback-scoped canlı senaryonun tüm aşamaları PASS, sentetik kalıntı sıfır ve EO-03 ana paket kapanışı ürün sahibi onayıyla tamamlanmıştır.
 - Yalnız `connected` lifecycle durumu reporting authority'dir. `reauthorization_required`, `disconnect_pending` ve `disconnected` yeni veri işini fail-closed durdurur.
 - Renewal yeni şifreli credential zarfı hazır olduktan sonra expected-version + unique-event-id ile atomik swap yapar; eski zarf swap sonrasında aynı transaction içinde silinir.
 - Disconnect iki aşamalıdır. Geçici veya belirsiz provider revoke sonucu başarı sayılmaz; bağlantı `disconnect_pending` kalır. Final disconnect geçmiş analitiği silmez.
 - Reconnect aynı canonical connection kimliğini kullanır; yeni credential ve güncel provider hesap kanıtı zorunludur.
 - Meta için uydurma refresh-grant davranışı yoktur. Google Ads ve Klaviyo `invalid_grant` sonucu reauthorization gerektirir; Klaviyo token/revoke host'u `a.klaviyo.com` olarak sabittir.
 - Authority: `docs/EO_03D_PROVIDER_CONNECTION_LIFECYCLE.md` ve `contracts/eo-03d-provider-connection-lifecycle-v1.json`.
-- Repository implementasyonu canlı Supabase migration, provider API çağrısı, deploy veya canlı authorization yetkisi vermez; bunlar ayrı açık onay kapılarıdır.
+- Base migration ile dört ileri-yönlü düzeltme canlı Supabase'de uygulanmış ve doğrulanmıştır. Bu kabul provider API çağrısı, canlı provider OAuth, provider-console mutation, Vercel mutation veya production deploy içermez.
+- EO-04 yalnız **Ready** durumundadır. `A6-EO-04-A` için analist başlangıç brief'i ve güncel resmî provider dokümantasyonu okunmadan implementation başlamaz.

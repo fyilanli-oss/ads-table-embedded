@@ -179,3 +179,15 @@ EO-02-C internal caller kodu tek başına canlı tetikleyici değildir. `docs/EO
 - 20 denemeyi tüketen run sessiz başarı sayılmaz; görünür failed durumda operasyon müdahalesi bekler.
 - Authority: `docs/EO_02D_DURABLE_DELETION_WORKER.md` ve `contracts/eo-02d-durable-deletion-worker-v1.json`.
 - Repository değişikliği canlı mutation yetkisi değildir; canlı Supabase migration ve sentetik kabul ayrı açık kullanıcı onayı gerektirir.
+
+
+## 9 Ekim 2026 — EO-03-D provider connection lifecycle implementation gate
+
+- EO-03-D **In progress** durumundadır; EO-03-C kabul kapısı geçilmiştir.
+- Yalnız `connected` lifecycle durumu reporting authority'dir. `reauthorization_required`, `disconnect_pending` ve `disconnected` yeni veri işini fail-closed durdurur.
+- Renewal yeni şifreli credential zarfı hazır olduktan sonra expected-version + unique-event-id ile atomik swap yapar; eski zarf swap sonrasında aynı transaction içinde silinir.
+- Disconnect iki aşamalıdır. Geçici veya belirsiz provider revoke sonucu başarı sayılmaz; bağlantı `disconnect_pending` kalır. Final disconnect geçmiş analitiği silmez.
+- Reconnect aynı canonical connection kimliğini kullanır; yeni credential ve güncel provider hesap kanıtı zorunludur.
+- Meta için uydurma refresh-grant davranışı yoktur. Google Ads ve Klaviyo `invalid_grant` sonucu reauthorization gerektirir; Klaviyo token/revoke host'u `a.klaviyo.com` olarak sabittir.
+- Authority: `docs/EO_03D_PROVIDER_CONNECTION_LIFECYCLE.md` ve `contracts/eo-03d-provider-connection-lifecycle-v1.json`.
+- Repository implementasyonu canlı Supabase migration, provider API çağrısı, deploy veya canlı authorization yetkisi vermez; bunlar ayrı açık onay kapılarıdır.

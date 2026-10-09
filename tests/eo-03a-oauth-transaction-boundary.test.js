@@ -381,9 +381,9 @@ test("master plan accepts EO-03-C and advances only EO-03-D", () => {
   assert.equal(eo03c.explicit_product_owner_closure, "PASS_2026-10-09");
   assert.equal(eo03c.single_next_child, "A6-EO-03-D");
   const eo03d = eo03.children.find((entry) => entry.id === "A6-EO-03-D");
-  assert.equal(eo03d.status, "Ready");
+  assert.equal(eo03d.status, "In progress");
   assert.equal(eo03d.start_gate, "PASS_A6-EO-03-C_accepted_2026-10-09");
   assert.equal(implementationMaster.current_active_child, "A6-EO-03-D");
-  assert.equal(implementationMaster.next_ready_child, "A6-EO-03-D");
+  assert.equal(implementationMaster.next_ready_child, null);
   assert.equal(contract.next_child.live_authorization_remains_disabled, true);
 });

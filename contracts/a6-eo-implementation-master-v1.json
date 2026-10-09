@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.15.0",
+  "schema_version": "1.15.1",
   "contract_id": "a6-eo-implementation-master-v1",
   "title": "A6 EO single-track execution rule and integrated implementation package table",
   "effective_date": "2026-10-04",
@@ -480,8 +480,16 @@
           "id": "A6-EO-03-D",
           "title": "Reconnect, disconnect and renewal lifecycle",
           "objective": "Idempotent renewal and truthful reauthorization without unsafe revoke.",
-          "status": "Ready",
-          "start_gate": "PASS_A6-EO-03-C_accepted_2026-10-09"
+          "status": "In progress",
+          "start_gate": "PASS_A6-EO-03-C_accepted_2026-10-09",
+          "implementation_document": "docs/EO_03D_PROVIDER_CONNECTION_LIFECYCLE.md",
+          "implementation_contract": "contracts/eo-03d-provider-connection-lifecycle-v1.json",
+          "official_documentation_checked_at": "2026-10-09",
+          "repository_branch": "codex/eo03d-connection-lifecycle",
+          "repository_implementation": "IN_PROGRESS",
+          "database_migration": "supabase/migrations/20261009210000_eo03d_provider_connection_lifecycle.sql",
+          "live_database_migration": "NOT_APPLIED",
+          "live_provider_authorization": false
         }
       ],
       "outputs": [
@@ -887,7 +895,7 @@
   "current_active_parent": "A6-EO-03",
   "current_active_child": "A6-EO-03-D",
   "current_gate": "A6-EO-03-D_implementation_and_acceptance",
-  "next_ready_child": "A6-EO-03-D",
+  "next_ready_child": null,
   "independent_packages": [
     {
       "id": "A6-OPS-LOCAL-01",

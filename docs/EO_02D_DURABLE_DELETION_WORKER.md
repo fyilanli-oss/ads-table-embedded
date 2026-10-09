@@ -63,3 +63,19 @@ Repository merge'i canlı mutation yetkisi değildir. Ayrı açık onaydan önce
 - Sentetik veya gerçek silme yürütülmez.
 
 Canlı kabul; named job ve cadence doğrulaması, yalnız Cron üzerinden sentetik completion, duplicate/overlap idempotency, forced-failure retry görünürlüğü, Advisors PASS ve sentetik temizliği birlikte kanıtlamadan tamamlanmış sayılmaz.
+
+
+## İlk canlı Cron koşusu ve fail-safe düzeltme
+
+9 Ekim 2026 saat 07:50 UTC'deki ilk job, hiçbir run yürütmeden önce PostgreSQL parser hatasıyla durdu. `GREATEST` ve `LEAST`, fonksiyona benzeseler de ordinary function değildir; bu nedenle `pg_catalog.greatest` / `pg_catalog.least` biçiminde schema-qualified kullanılamaz.
+
+Kanıtlanan güvenlik davranışı:
+
+- Gerçek mağaza veya production business verisi silinmedi.
+- Sentetik kabul run'ı `pending`, `attempt_count=0` kaldı.
+- Cron hata ayrıntısını `cron.job_run_details` içinde görünür tuttu.
+- Canlıda yetki genişletme veya ad-hoc function patch yapılmadı.
+
+Düzeltici migration yalnız iki conditional expression'ı PostgreSQL 17'nin resmî sözdizimine getirir; worker'ın advisory lock, row lock, batch, retry ve least-privilege sınırlarını değiştirmez.
+
+Kaynak: https://www.postgresql.org/docs/17/functions-conditional.html

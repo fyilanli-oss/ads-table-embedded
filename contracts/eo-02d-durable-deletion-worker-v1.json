@@ -1,6 +1,6 @@
 {
   "contract_id": "eo-02d-durable-deletion-worker-v1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "status": "repository_implementation",
   "checked_at": "2026-10-09",
   "package": "EO-02-D internal corrective gate",
@@ -63,6 +63,16 @@
       "exhausted failure remains visible",
       "Supabase Security and Performance Advisors pass",
       "remove every synthetic row and record evidence"
-    ]
+    ],
+    "first_cron_run": {
+      "status": "FAILED_SAFE",
+      "observed_at": "2026-10-09T07:50:00Z",
+      "production_data_deleted": false,
+      "synthetic_run_status": "pending",
+      "cause": "PostgreSQL GREATEST and LEAST are conditional expressions and cannot be schema-qualified",
+      "corrective_migration": "supabase/migrations/20261009161000_eo02d_worker_conditional_expression_fix.sql",
+      "official_reference": "https://www.postgresql.org/docs/17/functions-conditional.html"
+    },
+    "corrective_fix_status": "REPOSITORY_IMPLEMENTATION"
   }
 }

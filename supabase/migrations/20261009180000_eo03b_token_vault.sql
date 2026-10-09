@@ -241,7 +241,10 @@ end
 $function$;
 
 create or replace function integrations.delete_oauth_pkce_envelope(
-  p_transaction_id uuid
+  p_transaction_id uuid,
+  p_workspace_id uuid,
+  p_install_generation bigint,
+  p_provider text
 )
 returns table (deleted boolean)
 language sql
@@ -251,6 +254,9 @@ as $function$
   with removed as (
     delete from integrations.oauth_pkce_envelopes
      where transaction_id = p_transaction_id
+       and workspace_id = p_workspace_id
+       and install_generation = p_install_generation
+       and provider = p_provider
     returning 1
   )
   select exists(select 1 from removed);
@@ -396,8 +402,9 @@ revoke all on function integrations.store_oauth_pkce_envelope(
 revoke all on function integrations.take_oauth_pkce_envelope(
   uuid, uuid, bigint, text, timestamptz
 ) from public, anon, authenticated, service_role, adstable_runtime;
-revoke all on function integrations.delete_oauth_pkce_envelope(uuid)
-  from public, anon, authenticated, service_role, adstable_runtime;
+revoke all on function integrations.delete_oauth_pkce_envelope(
+  uuid, uuid, bigint, text
+) from public, anon, authenticated, service_role, adstable_runtime;
 revoke all on function integrations.store_provider_credential_envelope(
   uuid, uuid, bigint, text, text, bytea, bytea, bytea, smallint, timestamptz
 ) from public, anon, authenticated, service_role, adstable_runtime;
@@ -416,8 +423,9 @@ grant execute on function integrations.store_oauth_pkce_envelope(
 grant execute on function integrations.take_oauth_pkce_envelope(
   uuid, uuid, bigint, text, timestamptz
 ) to adstable_runtime;
-grant execute on function integrations.delete_oauth_pkce_envelope(uuid)
-  to adstable_runtime;
+grant execute on function integrations.delete_oauth_pkce_envelope(
+  uuid, uuid, bigint, text
+) to adstable_runtime;
 grant execute on function integrations.store_provider_credential_envelope(
   uuid, uuid, bigint, text, text, bytea, bytea, bytea, smallint, timestamptz
 ) to adstable_runtime;

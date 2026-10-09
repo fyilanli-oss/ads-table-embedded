@@ -1,0 +1,124 @@
+{
+  "contract_id": "eo-03d-provider-connection-lifecycle-v1",
+  "version": "1.0.0",
+  "status": "Implementation",
+  "checked_at": "2026-10-09",
+  "parent": "A6-EO-03",
+  "package": "A6-EO-03-D",
+  "objective": "Provide idempotent credential renewal, truthful reauthorization, provider-aware disconnect and clean reconnect without changing installed-shop authority or deleting historical analytics.",
+  "authoritative_sources": {
+    "shopify_access_tokens": "https://shopify.dev/docs/apps/build/authentication-authorization/access-tokens",
+    "shopify_webhooks": "https://shopify.dev/docs/api/shopify-app-react-router/latest/guide-webhooks",
+    "meta_marketing_api_official_collection": "https://www.postman.com/meta/facebook-marketing-api/collection/0zr4mes/facebook-marketing-api-mapi",
+    "google_ads_credential_management": "https://developers.google.com/google-ads/api/docs/oauth/credential-management",
+    "google_oauth_web_server": "https://developers.google.com/identity/protocols/oauth2/web-server",
+    "klaviyo_oauth": "https://developers.klaviyo.com/en/v2026-01-15/docs/set_up_oauth",
+    "supabase_changelog": "https://supabase.com/changelog",
+    "supabase_rls": "https://supabase.com/docs/guides/database/postgres/row-level-security"
+  },
+  "states": [
+    "connected",
+    "reauthorization_required",
+    "disconnect_pending",
+    "disconnected"
+  ],
+  "invariants": {
+    "provider_independent": true,
+    "installed_shop_immutable": true,
+    "connected_only_reporting_authority": true,
+    "expected_connection_version_required": true,
+    "unique_event_id_required": true,
+    "historical_analytics_deleted_by_disconnect": false,
+    "privacy_deletion_is_separate": true,
+    "plaintext_token_persisted": false,
+    "provider_revoke_implied_by_local_state": false
+  },
+  "renewal": {
+    "new_encrypted_credential_exists_first": true,
+    "atomic_credential_swap": true,
+    "old_ciphertext_deleted_after_swap": true,
+    "missing_refresh_token_overwrites_existing_refresh_token": false,
+    "invalid_grant_result": "reauthorization_required",
+    "provider_retry_limit_owned_by_adapter": "one_refresh_and_one_original_request_retry"
+  },
+  "disconnect": {
+    "request_state": "disconnect_pending",
+    "stops_new_provider_work": true,
+    "final_outcomes": [
+      "revoked",
+      "already_invalid",
+      "not_supported",
+      "local_authority_removed"
+    ],
+    "transient_or_unknown_outcome": "remain_disconnect_pending",
+    "final_state": "disconnected",
+    "credential_reference_after_final": null,
+    "active_accounts_after_final": 0,
+    "active_reporting_binding_after_final": 0,
+    "preserves_reporting_history": true,
+    "preserves_dataset_history": true
+  },
+  "reconnect": {
+    "requires_fresh_provider_account_evidence": true,
+    "requires_new_encrypted_credential": true,
+    "same_canonical_connection_row": true,
+    "increments_connection_version": true,
+    "reopens_only_verified_accounts": true,
+    "reporting_binding_reason": "reauthorization"
+  },
+  "provider_rules": {
+    "meta": {
+      "refresh_grant_invented": false,
+      "verified_reauthorization_supported": true
+    },
+    "google_ads": {
+      "offline_refresh_supported": true,
+      "invalid_grant_requires_reauthorization": true
+    },
+    "klaviyo": {
+      "token_host": "a.klaviyo.com",
+      "invalid_grant_requires_reauthorization": true,
+      "revoke_on_platform_disconnect": true
+    }
+  },
+  "persistence": {
+    "connection_table": "integrations.provider_connections",
+    "account_table": "integrations.provider_accounts",
+    "reporting_history_table": "integrations.reporting_account_bindings",
+    "event_table": "integrations.provider_connection_lifecycle_events",
+    "forced_rls": true,
+    "direct_runtime_table_access": false,
+    "function_only": true,
+    "security_definer_empty_search_path": true
+  },
+  "implementation": {
+    "migration": "supabase/migrations/20261009210000_eo03d_provider_connection_lifecycle.sql",
+    "repository": "app/lib/database/provider-connection-lifecycle-repository.server.js",
+    "service": "app/lib/oauth/provider-connection-lifecycle.server.js",
+    "tests": "tests/eo-03d-provider-connection-lifecycle.test.js",
+    "live_migration_applied": false,
+    "provider_adapters_implemented": false,
+    "live_routes_wired": false
+  },
+  "live_effect": {
+    "provider_api_call": false,
+    "provider_console_mutation": false,
+    "token_or_secret_mutation": false,
+    "production_database_mutation": false,
+    "production_deploy": false,
+    "live_authorization": false
+  },
+  "acceptance": [
+    "Only connected lifecycle state can load reporting authority.",
+    "Renewal and reconnect use expected version plus unique event identity.",
+    "Credential replacement and old-envelope deletion are atomic.",
+    "Invalid grant and lost authorization stop reporting and require reconnect.",
+    "Disconnect pending never claims provider revoke success.",
+    "Final disconnect removes local credential authority but preserves historical analytics.",
+    "Cross-workspace, cross-generation, cross-provider and stale-version attempts fail closed.",
+    "Repository tests, typecheck, build and required CI pass.",
+    "Live migration and provider calls require separate explicit approval.",
+    "Product owner explicitly closes A6-EO-03-D."
+  ],
+  "next_parent_before_acceptance": null
+}

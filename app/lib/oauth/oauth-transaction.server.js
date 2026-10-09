@@ -166,7 +166,11 @@ export function createOAuthTransactionBoundary({
           throw new Error("OAUTH_REDIRECT_TRANSITION_REJECTED");
         }
       } catch (error) {
-        await verifierVault.remove(transaction.transactionId);
+        await verifierVault.remove(transaction.transactionId, {
+          provider: selectedProvider,
+          workspaceId: owner.workspaceId,
+          installGeneration: owner.installGeneration,
+        });
         try {
           await repository.invalidate({
             transactionId: transaction.transactionId,
@@ -214,7 +218,11 @@ export function createOAuthTransactionBoundary({
       }
 
       if (providerError) {
-        await verifierVault.remove(claimed.transactionId);
+        await verifierVault.remove(claimed.transactionId, {
+          provider: selectedProvider,
+          workspaceId: claimed.workspaceId,
+          installGeneration: claimed.installGeneration,
+        });
         await repository.complete({
           transactionId: claimed.transactionId,
           outcome: "denied",
@@ -228,7 +236,11 @@ export function createOAuthTransactionBoundary({
       }
 
       if (typeof code !== "string" || code.length < 1 || code.length > 4096) {
-        await verifierVault.remove(claimed.transactionId);
+        await verifierVault.remove(claimed.transactionId, {
+          provider: selectedProvider,
+          workspaceId: claimed.workspaceId,
+          installGeneration: claimed.installGeneration,
+        });
         await repository.complete({
           transactionId: claimed.transactionId,
           outcome: "failed",
@@ -277,7 +289,6 @@ export function createOAuthTransactionBoundary({
         failureCode: success ? null : "PROVIDER_EXCHANGE_FAILED",
         completedAt: isoNow(now),
       });
-      await verifierVault.remove(transactionId);
       return result;
     },
   });

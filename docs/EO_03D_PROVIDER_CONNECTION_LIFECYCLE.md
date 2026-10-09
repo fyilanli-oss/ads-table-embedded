@@ -1,7 +1,7 @@
 # EO-03-D — Reconnect, disconnect and renewal lifecycle
 
 **Control date:** 9 October 2026  
-**Status:** Implementation  
+**Status:** Accepted  
 **Parent:** A6-EO-03 — Canonical OAuth, connection and token vault
 
 ## Analyst result
@@ -91,7 +91,6 @@ Excluded:
 - live OAuth;
 - Settings UI;
 - SnapshotJob and Dataset V2 implementation;
-- live Supabase migration;
 - production deployment.
 
 ## Acceptance sequence
@@ -125,9 +124,9 @@ Verified live:
 - Supabase security advisor returned zero findings;
 - no provider connection, credential or lifecycle-event test rows exist.
 
-Synthetic runtime acceptance remains **OPEN**. Supabase Connector rejected mutation, so the same rollback-scoped scenario was run through Supabase SQL Editor under the existing `adstable_owner` role without expanding privileges. The first lifecycle transition reached the live function and failed with PostgreSQL `42702`: the unqualified `connection_id` lifecycle-event column conflicts with the function's `RETURNS TABLE` output variable. The transaction rolled back; connection, credential, account and event residue is zero.
+## First rollback-scoped acceptance finding — 9 October 2026
 
-The corrective migration `20261009211000_eo03d_qualify_lifecycle_event_columns.sql` qualifies lifecycle-event columns in all four mutation functions. It must pass repository CI, receive explicit merge/live-migration approval, be applied exactly, and complete the rollback-scoped runtime scenario before EO-03-D can be accepted.
+The first live run reached the lifecycle function and exposed PostgreSQL `42702`: the unqualified `connection_id` lifecycle-event column conflicted with the function's `RETURNS TABLE` output variable. The transaction rolled back and residue was zero. The forward-only correction `20261009211000_eo03d_qualify_lifecycle_event_columns.sql` qualified those event-column references.
 
 
 ## Second rollback-scoped acceptance finding — 9 October 2026
@@ -147,3 +146,22 @@ A static review of all four function bodies found the two remaining output-varia
 The third corrective migration was merged and applied as Supabase migration `20261009150614 / eo03d_qualify_finalize_update_columns`. The rerun passed reauthorization, transition idempotency, credential renewal, disconnect-pending and final disconnect. Reconnect then raised PostgreSQL `42702` because the upsert target `ON CONFLICT (connection_id, provider_account_id)` contains the function output variable name.
 
 The table already has the named unique constraint `provider_accounts_connection_account_unique`. The forward-only migration `20261009214000_eo03d_disambiguate_reconnect_conflict.sql` uses `ON CONFLICT ON CONSTRAINT provider_accounts_connection_account_unique`, removing the parser ambiguity without changing uniqueness semantics. The transaction rolled back and synthetic residue remains zero.
+
+## Final rollback-scoped acceptance — 9 October 2026
+
+The fourth corrective migration was merged at commit `f56be5d91d51b6d7132650accbc820c7a97b3690` and applied as Supabase migration `20261009151123 / eo03d_disambiguate_reconnect_conflict`.
+
+The complete deterministic lifecycle scenario passed:
+
+- transition to `reauthorization_required` and event idempotency;
+- atomic credential renewal and deletion of the replaced credential envelope;
+- `disconnect_pending` and verified final disconnect;
+- reconnect to the same canonical connection and reconnect idempotency;
+- stale-version and cross-workspace fail-closed rejection;
+- final connected version 6, active provider account and active Reporting Account binding.
+
+The test transaction rolled back. Independent live verification found zero synthetic connection, credential, lifecycle-event, provider-account and reporting-binding rows. The four lifecycle mutation functions remain `SECURITY DEFINER` with empty `search_path`; Supabase Security Advisor findings remain zero. EO-03-D introduced no unindexed-foreign-key finding. The only two Performance Advisor unindexed-FK INFO findings are pre-existing and unrelated privacy-schema items.
+
+No provider API request, live provider OAuth, provider-console mutation, Vercel mutation or production deployment occurred. Durable evidence is recorded in `evidence/eo-03d-live-database-evidence-2026-10-09.json`.
+
+EO-03-D and parent A6-EO-03 are accepted by the product owner through the merge approval for the closure pull request. A6-EO-04 becomes Ready only; it is not started by this closure.

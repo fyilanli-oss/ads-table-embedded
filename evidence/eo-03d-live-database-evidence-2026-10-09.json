@@ -2,7 +2,7 @@
   "evidence_id": "eo-03d-live-database-evidence-2026-10-09",
   "checked_at": "2026-10-09",
   "package": "A6-EO-03-D",
-  "status": "FAILED_FOURTH_FIX_PENDING",
+  "status": "PASS",
   "project": {
     "ref": "podpwkrpmjiksskxhwsu",
     "name": "ads-table-embedded",
@@ -13,12 +13,10 @@
   "source": {
     "commit": "3abcac35c31d7eecf75ba10f044a8bd059133df5",
     "migration_path": "supabase/migrations/20261009210000_eo03d_provider_connection_lifecycle.sql",
-    "migration_blob_sha": "a6e1403345de48d5dbdf8045256bc9a07a63c547"
-  },
-  "applied_migration": {
-    "version": "20261009141549",
-    "name": "eo03d_provider_connection_lifecycle",
-    "result": "PASS"
+    "migration_blob_sha": "a6e1403345de48d5dbdf8045256bc9a07a63c547",
+    "final_commit": "f56be5d91d51b6d7132650accbc820c7a97b3690",
+    "final_corrective_migration_path": "supabase/migrations/20261009214000_eo03d_disambiguate_reconnect_conflict.sql",
+    "final_corrective_migration_blob_sha": "8cb24ebf2d549747dfdebfc0f542d7116ca49a8d"
   },
   "readonly_acceptance": {
     "lifecycle_functions_present": true,
@@ -30,7 +28,9 @@
     "security_advisor_findings": 0,
     "provider_connection_rows": 0,
     "credential_rows": 0,
-    "lifecycle_event_rows": 0
+    "lifecycle_event_rows": 0,
+    "provider_account_rows": 0,
+    "reporting_binding_rows": 0
   },
   "performance_advisor": {
     "new_eo03d_unindexed_foreign_key_findings": 0,
@@ -41,33 +41,61 @@
     "unused_index_findings_expected_before_runtime_traffic": true
   },
   "synthetic_runtime_acceptance": {
-    "status": "FAILED",
-    "channel": "Supabase SQL Editor under existing adstable_owner role",
-    "first_transition_reached": true,
-    "error_code": "42702",
-    "error": "column reference connection_id is ambiguous in reconnect_provider_connection ON CONFLICT target",
-    "cause": "Reconnect upsert conflict target names an output variable without disambiguation.",
-    "corrective_migration": "supabase/migrations/20261009214000_eo03d_disambiguate_reconnect_conflict.sql",
-    "corrective_migration_live_applied": false,
-    "rerun_required": true,
-    "persistent_synthetic_rows": 0,
-    "first_corrective_migration": "supabase/migrations/20261009211000_eo03d_qualify_lifecycle_event_columns.sql",
-    "first_corrective_migration_version": "20261009145154",
-    "first_corrective_migration_live_applied": true,
-    "second_corrective_migration": "supabase/migrations/20261009212000_eo03d_qualify_lifecycle_update_columns.sql",
-    "second_corrective_migration_version": "20261009150114",
-    "second_corrective_migration_live_applied": true,
+    "status": "PASS",
+    "channel": "Supabase SQL execution under existing adstable_owner role",
+    "persistence": "ROLLBACK_CONFIRMED",
     "stages_passed": [
       "reauthorization_required",
       "transition_idempotency",
-      "credential_renewal",
+      "credential_renewal_and_old_credential_deletion",
       "disconnect_pending",
-      "disconnect_finalized"
+      "disconnect_finalized",
+      "reconnect_same_canonical_connection",
+      "reconnect_idempotency",
+      "stale_version_rejected",
+      "cross_workspace_rejected",
+      "connected_version_6",
+      "provider_account_active",
+      "reporting_binding_active"
     ],
-    "third_corrective_migration": "supabase/migrations/20261009213000_eo03d_qualify_finalize_update_columns.sql",
-    "third_corrective_migration_version": "20261009150614",
-    "third_corrective_migration_live_applied": true
+    "deterministic_timestamps_used": true,
+    "persistent_synthetic_rows": 0,
+    "temporary_privilege_expansion": false
   },
-  "package_acceptance": "OPEN_FOURTH_FIX_PENDING",
-  "product_owner_closure_required": true
+  "package_acceptance": "PASS",
+  "product_owner_closure_required": false,
+  "applied_migrations": [
+    {
+      "version": "20261009141549",
+      "name": "eo03d_provider_connection_lifecycle",
+      "result": "PASS"
+    },
+    {
+      "version": "20261009145154",
+      "name": "eo03d_qualify_lifecycle_event_columns",
+      "result": "PASS"
+    },
+    {
+      "version": "20261009150114",
+      "name": "eo03d_qualify_lifecycle_update_columns",
+      "result": "PASS"
+    },
+    {
+      "version": "20261009150614",
+      "name": "eo03d_qualify_finalize_update_columns",
+      "result": "PASS"
+    },
+    {
+      "version": "20261009151123",
+      "name": "eo03d_disambiguate_reconnect_conflict",
+      "result": "PASS"
+    }
+  ],
+  "live_effect": {
+    "provider_api_call": false,
+    "live_provider_oauth": false,
+    "provider_console_mutation": false,
+    "vercel_mutation": false,
+    "production_deploy": false
+  }
 }

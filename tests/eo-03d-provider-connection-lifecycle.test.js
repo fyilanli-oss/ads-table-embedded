@@ -30,6 +30,9 @@ const reconnectConflictQualificationMigration = read(
 const contract = JSON.parse(
   read("contracts/eo-03d-provider-connection-lifecycle-v1.json"),
 );
+const liveEvidence = JSON.parse(
+  read("evidence/eo-03d-live-database-evidence-2026-10-09.json"),
+);
 
 const workspaceId = "11111111-1111-4111-8111-111111111111";
 const connectionId = "22222222-2222-4222-8222-222222222222";
@@ -398,14 +401,19 @@ test("fourth corrective migration uses a named reconnect conflict target", () =>
   );
 });
 
-test("contract preserves provider differences and no live mutation authorization", () => {
-  assert.equal(contract.status, "Implementation");
+test("accepted contract preserves provider differences and no provider-side mutation", () => {
+  assert.equal(contract.status, "Accepted");
   assert.equal(contract.invariants.connected_only_reporting_authority, true);
   assert.equal(contract.live_effect.production_database_mutation, true);
   assert.equal(contract.implementation.live_migration_applied, true);
   assert.equal(contract.live_acceptance.schema_privilege_rls_advisor, "PASS");
-  assert.equal(contract.live_acceptance.synthetic_runtime_acceptance, "FAILED");
+  assert.equal(contract.live_acceptance.synthetic_runtime_acceptance, "PASS");
+  assert.equal(contract.live_acceptance.persistence, "ROLLBACK_CONFIRMED");
   assert.equal(contract.live_acceptance.synthetic_rows_persisted, 0);
+  assert.equal(contract.implementation.fourth_corrective_migration_live_applied, true);
+  assert.equal(liveEvidence.status, "PASS");
+  assert.equal(liveEvidence.synthetic_runtime_acceptance.status, "PASS");
+  assert.equal(liveEvidence.synthetic_runtime_acceptance.persistent_synthetic_rows, 0);
   assert.equal(contract.live_effect.provider_api_call, false);
   assert.equal(
     contract.provider_rules.google_ads.invalid_grant_requires_reauthorization,

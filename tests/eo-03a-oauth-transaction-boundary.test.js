@@ -17,6 +17,9 @@ const read = (relativePath) =>
 const migration = read(
   "supabase/migrations/20261009170000_eo03a_oauth_transaction_boundary.sql",
 );
+const installationIndexMigration = read(
+  "supabase/migrations/20261009173000_eo03a_oauth_installation_fk_index.sql",
+);
 const contract = JSON.parse(
   read("contracts/eo-03a-oauth-transaction-boundary-v1.json"),
 );
@@ -323,4 +326,13 @@ test("contract binds implementation and keeps live authorization disabled", () =
     contract.eo03b_dependency.live_authorization_enabled_before_vault_guard,
     false,
   );
+});
+
+
+test("corrective migration covers the installation foreign key", () => {
+  assert.match(
+    installationIndexMigration,
+    /create index oauth_transactions_installation_fk_idx[\s\S]*on integrations\.oauth_transactions \(installation_id\)/,
+  );
+  assert.doesNotMatch(installationIndexMigration, /drop|delete|update|insert/i);
 });

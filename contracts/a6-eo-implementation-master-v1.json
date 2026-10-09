@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.13.0",
+  "schema_version": "1.14.0",
   "contract_id": "a6-eo-implementation-master-v1",
   "title": "A6 EO single-track execution rule and integrated implementation package table",
   "effective_date": "2026-10-04",
@@ -455,16 +455,25 @@
           "id": "A6-EO-03-C",
           "title": "Connection and reporting-account authority",
           "objective": "Establish verified provider ownership and selected Reporting Accounts without allowing them to replace the installed Shopify shop authority.",
-          "status": "In progress",
+          "status": "Verification",
           "start_gate": "PASS_A6-EO-03-B_accepted_2026-10-09",
           "implementation_document": "docs/EO_03C_CONNECTION_ACCOUNT_AUTHORITY.md",
           "implementation_contract": "contracts/eo-03c-connection-account-authority-v1.json",
           "official_documentation_checked_at": "2026-10-09",
           "repository_branch": "codex/eo03c-connection-account-authority",
-          "repository_implementation": "IN_PROGRESS",
-          "live_database_migration": "NOT_APPLIED_REQUIRES_SEPARATE_APPROVAL",
+          "repository_implementation": "PASS",
+          "live_database_migration": "APPLIED_2026-10-09",
           "live_provider_authorization": false,
-          "reporting_store_control_exists": false
+          "reporting_store_control_exists": false,
+          "implementation_pr": "https://github.com/fyilanli-oss/ads-table-embedded/pull/50",
+          "owner_role_correction_pr": "https://github.com/fyilanli-oss/ads-table-embedded/pull/51",
+          "owner_policy_and_index_pr": "https://github.com/fyilanli-oss/ads-table-embedded/pull/52",
+          "corrective_database_migration": "APPLIED_2026-10-09",
+          "synthetic_runtime_acceptance": "PASS_2026-10-09",
+          "security_advisor_findings": 0,
+          "eo03c_new_unindexed_foreign_key_findings": 0,
+          "live_acceptance_evidence": "docs/evidence/EO_03C_LIVE_ACCEPTANCE_2026-10-09.json",
+          "explicit_product_owner_closure": "PENDING"
         },
         {
           "id": "A6-EO-03-D",
@@ -874,7 +883,7 @@
   "legacy_deletion_authorized": false,
   "current_active_parent": "A6-EO-03",
   "current_active_child": "A6-EO-03-C",
-  "current_gate": "A6-EO-03-C_implementation_and_acceptance",
+  "current_gate": "A6-EO-03-C_product_owner_closure",
   "next_ready_child": "A6-EO-03-C",
   "independent_packages": [
     {

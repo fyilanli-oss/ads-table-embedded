@@ -420,6 +420,8 @@ test("migration is private, forced-RLS, function-only and installation bound", (
   assert.match(migration, /KLAVIYO_SINGLE_CONNECTED_ACCOUNT_REQUIRED/);
   assert.match(migration, /REPORTING_ACCOUNT_NOT_VERIFIED_OR_INELIGIBLE/);
   assert.match(migration, /security definer[\s\S]*set search_path = ''/);
+  assert.match(migration, /set local role adstable_owner;/);
+  assert.doesNotMatch(migration, /ads_table_owner/);
   assert.doesNotMatch(
     migration,
     /\b(access_token|refresh_token|token)\s+(text|bytea|json|jsonb)\b/i,

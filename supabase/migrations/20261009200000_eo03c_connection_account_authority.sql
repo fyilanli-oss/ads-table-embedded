@@ -2,7 +2,7 @@ begin;
 
 set local lock_timeout = '5s';
 set local statement_timeout = '30s';
-set local role ads_table_owner;
+set local role adstable_owner;
 
 create table integrations.provider_connections (
   id uuid primary key,

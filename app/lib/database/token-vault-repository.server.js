@@ -106,11 +106,13 @@ export function createTokenVaultRepository(database) {
       return envelope(row, "pkce_verifier");
     },
 
-    async deletePkce(transactionId) {
+    async deletePkce({transactionId, workspaceId, installGeneration, provider}) {
       const row = exactlyOneRow(
         await query(
-          "select * from integrations.delete_oauth_pkce_envelope($1::uuid)",
-          [transactionId],
+          `select * from integrations.delete_oauth_pkce_envelope(
+            $1::uuid, $2::uuid, $3::bigint, $4::text
+          )`,
+          [transactionId, workspaceId, installGeneration, provider],
         ),
         "OAUTH_PKCE_ENVELOPE_DELETE",
       );

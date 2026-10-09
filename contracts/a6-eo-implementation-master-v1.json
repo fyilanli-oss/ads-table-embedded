@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.10.0",
+  "schema_version": "1.11.0",
   "contract_id": "a6-eo-implementation-master-v1",
   "title": "A6 EO single-track execution rule and integrated implementation package table",
   "effective_date": "2026-10-04",
@@ -435,8 +435,16 @@
           "id": "A6-EO-03-B",
           "title": "Token envelope and startup guard",
           "objective": "Server-only encryption, key versioning and fail-closed runtime.",
-          "status": "Ready",
-          "start_gate": "PASS_A6-EO-03-A_accepted_2026-10-09"
+          "status": "In progress",
+          "start_gate": "PASS_A6-EO-03-A_accepted_2026-10-09",
+          "implementation_document": "docs/EO_03B_TOKEN_ENVELOPE_STARTUP_GUARD.md",
+          "implementation_contract": "contracts/eo-03b-token-envelope-startup-guard-v1.json",
+          "official_documentation_checked_at": "2026-10-09",
+          "repository_branch": "codex/eo03b-token-envelope-startup-guard",
+          "repository_implementation": "IN_PROGRESS",
+          "live_database_migration": "NOT_APPLIED_REQUIRES_SEPARATE_APPROVAL",
+          "production_key_provisioning": "NOT_PERFORMED_REQUIRES_SEPARATE_APPROVAL",
+          "live_provider_authorization": false
         },
         {
           "id": "A6-EO-03-C",
@@ -850,9 +858,9 @@
   "cutover_authorized": false,
   "legacy_deletion_authorized": false,
   "current_active_parent": "A6-EO-03",
-  "current_active_child": "A6-EO-03-A",
-  "current_gate": "A6-EO-03-A_implementation_and_acceptance",
-  "next_ready_child": "A6-EO-03-A",
+  "current_active_child": "A6-EO-03-B",
+  "current_gate": "A6-EO-03-B_implementation_and_acceptance",
+  "next_ready_child": "A6-EO-03-B",
   "independent_packages": [
     {
       "id": "A6-OPS-LOCAL-01",

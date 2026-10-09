@@ -1,0 +1,142 @@
+{
+  "contract_id": "eo-03c-connection-account-authority-v1",
+  "version": "1.0.0",
+  "status": "Implementation",
+  "checked_at": "2026-10-09",
+  "parent": "A6-EO-03",
+  "package": "A6-EO-03-C",
+  "objective": "Persist provider-verified connected accounts and one canonical Meta/Google Reporting Account without allowing any provider identity or merchant choice to replace the installed Shopify shop authority.",
+  "authoritative_sources": {
+    "shopify_authentication": "https://shopify.dev/docs/apps/build/authentication-authorization",
+    "shopify_access_tokens": "https://shopify.dev/docs/apps/build/authentication-authorization/access-tokens",
+    "meta_marketing_api_official_collection": "https://www.postman.com/meta/facebook-marketing-api/collection/0zr4mes/facebook-marketing-api-mapi",
+    "google_ads_access_model": "https://developers.google.com/google-ads/api/docs/oauth/access-model",
+    "google_ads_call_structure": "https://developers.google.com/google-ads/api/docs/concepts/call-structure",
+    "klaviyo_oauth": "https://developers.klaviyo.com/en/v2026-01-15/docs/set_up_oauth",
+    "klaviyo_get_account": "https://developers.klaviyo.com/en/reference/get_account",
+    "supabase_changelog": "https://supabase.com/changelog",
+    "supabase_database_functions": "https://supabase.com/docs/guides/database/functions",
+    "supabase_row_level_security": "https://supabase.com/docs/guides/database/postgres/row-level-security"
+  },
+  "installed_shop_authority": {
+    "source": "verified Shopify ID token plus Admin shop identity",
+    "scope": [
+      "workspace_id",
+      "install_generation"
+    ],
+    "mutable_by_provider": false,
+    "mutable_by_reporting_account": false,
+    "second_shop_behavior": "separate Shopify installation, workspace and subscription",
+    "non_shopify_commerce_source_allowed": false
+  },
+  "reporting_store_control_exists": false,
+  "provider_evidence": {
+    "required_authority": "provider_account_access_verified",
+    "maximum_age_minutes": 10,
+    "raw_provider_response_persisted": false,
+    "token_or_credential_persisted_in_account_rows": false,
+    "future_producer": "EO-04 provider adapters",
+    "unverified_or_stale_behavior": "fail_closed"
+  },
+  "provider_rules": {
+    "meta": {
+      "connected_account_cardinality": {
+        "minimum": 1,
+        "maximum": 3
+      },
+      "reporting_account_cardinality": 1,
+      "reporting_account_must_be_connected": true,
+      "reporting_account_must_be_provider_reverified": true
+    },
+    "google_ads": {
+      "connected_account_cardinality": {
+        "minimum": 1,
+        "maximum": 3
+      },
+      "reporting_account_cardinality": 1,
+      "reporting_account_must_be_connected": true,
+      "reporting_account_must_be_provider_reverified": true,
+      "manager_access_path_preserved_as": "login_account_id",
+      "manager_account_reporting_eligible": false
+    },
+    "klaviyo": {
+      "connected_account_cardinality": 1,
+      "control_label": "Connected Account",
+      "reporting_account_control": false,
+      "account_change_requires_reauthorization_lifecycle": true
+    }
+  },
+  "persistence": {
+    "connection_table": "integrations.provider_connections",
+    "connected_accounts_table": "integrations.provider_accounts",
+    "reporting_history_table": "integrations.reporting_account_bindings",
+    "one_connection_per_install_generation_provider": true,
+    "one_active_reporting_binding_per_connection": true,
+    "historical_reporting_binding_preserved": true,
+    "credential_reference_bound_to_exact_installation_generation_provider": true,
+    "forced_rls": true,
+    "direct_table_access": false,
+    "function_only": true,
+    "security_definer_empty_search_path": true
+  },
+  "reporting_account_change": {
+    "provider_reverification_required": true,
+    "oauth_restarted": false,
+    "token_deleted": false,
+    "connected_account_set_deleted": false,
+    "historical_dataset_rewritten": false,
+    "failure_preserves_existing_selection": true,
+    "klaviyo_supported": false
+  },
+  "implementation": {
+    "migration": "supabase/migrations/20261009200000_eo03c_connection_account_authority.sql",
+    "repository": "app/lib/database/provider-account-authority-repository.server.js",
+    "service": "app/lib/oauth/provider-account-authority.server.js",
+    "tests": "tests/eo-03c-connection-account-authority.test.js",
+    "live_routes_wired": false,
+    "live_migration_applied": false,
+    "provider_adapters_implemented": false
+  },
+  "scope": [
+    "installed-shop-bound provider connection authority",
+    "provider-verified connected account persistence",
+    "Meta and Google Reporting Account binding history",
+    "Klaviyo single Connected Account rule",
+    "fresh evidence validation",
+    "function-only private database boundary",
+    "cross-workspace, cross-generation and cross-provider negative controls"
+  ],
+  "out_of_scope": [
+    "live provider OAuth or token exchange",
+    "provider HTTP adapters or account discovery calls",
+    "live Supabase migration",
+    "Vercel secret or environment mutation",
+    "Settings UI",
+    "Dataset V2 writes or SnapshotJob",
+    "reconnect, disconnect, token renewal or revoke lifecycle",
+    "Reporting Store selection",
+    "WooCommerce, BigCommerce or Magento commerce data"
+  ],
+  "live_effect": {
+    "provider_api_call": false,
+    "provider_console_mutation": false,
+    "token_or_secret_mutation": false,
+    "production_database_mutation": false,
+    "production_deploy": false,
+    "live_authorization": false
+  },
+  "acceptance": [
+    "Only fresh provider-verified account evidence can establish authority.",
+    "Connection authority is bound to the verified active Shopify workspace and install generation.",
+    "Credential envelope authority must match workspace, generation and provider.",
+    "Meta and Google persist one to three connected accounts and exactly one eligible Reporting Account.",
+    "Klaviyo persists exactly one Connected Account and exposes no Reporting Account control.",
+    "Reporting Account changes preserve token, connected accounts and historical bindings.",
+    "Cross-workspace, cross-generation, cross-provider, stale and merchant-entered account attempts fail closed.",
+    "Tables are private, forced-RLS and accessible to runtime only through exact functions.",
+    "Repository tests, typecheck, build and required CI pass.",
+    "Live migration and provider authorization require separate explicit approval.",
+    "Product owner explicitly closes A6-EO-03-C."
+  ],
+  "next_child_before_acceptance": null
+}

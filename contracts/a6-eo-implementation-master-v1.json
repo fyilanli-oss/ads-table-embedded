@@ -320,7 +320,7 @@
       "id": "A6-EO-02",
       "title": "Workspace, installation, billing/trial and privacy foundations",
       "phase": "review_critical",
-      "status": "In progress",
+      "status": "Accepted",
       "depends_on": [
         "A6-EO-01"
       ],
@@ -401,14 +401,15 @@
       ],
       "reference_closure_rule": "not_closed_until_exact_EO_acceptance_evidence_and_explicit_closure_record",
       "analysis_design_document": "docs/EO_02_ANALYSIS_DESIGN_BOOK.md",
-      "analysis_design_status": "Pending explicit product-owner acceptance",
-      "single_next_parent": "A6-EO-03"
+      "analysis_design_status": "Accepted by product owner on 2026-10-09",
+      "single_next_parent": "A6-EO-03",
+      "explicit_product_owner_parent_closure": "PASS_2026-10-09"
     },
     {
       "id": "A6-EO-03",
       "title": "Canonical OAuth, connection and token vault",
       "phase": "review_critical",
-      "status": "Not started",
+      "status": "In progress",
       "depends_on": [
         "A6-EO-02"
       ],
@@ -417,10 +418,11 @@
           "id": "A6-EO-03-A",
           "title": "OAuth transaction boundary",
           "objective": "Workspace-owned state/PKCE/nonce/TTL and callback allowlist.",
-          "status": "Prepared; blocked by A6-EO-02 parent closure",
+          "status": "In progress",
           "implementation_document": "docs/EO_03A_OAUTH_TRANSACTION_BOUNDARY.md",
           "implementation_contract": "contracts/eo-03a-oauth-transaction-boundary-v1.json",
-          "official_documentation_checked_at": "2026-10-09"
+          "official_documentation_checked_at": "2026-10-09",
+          "parent_gate": "PASS_A6-EO-02_accepted_2026-10-09"
         },
         {
           "id": "A6-EO-03-B",
@@ -838,10 +840,10 @@
   "live_data_carry_authorized": false,
   "cutover_authorized": false,
   "legacy_deletion_authorized": false,
-  "current_active_parent": "A6-EO-02",
-  "current_active_child": "A6-EO-02-D",
-  "current_gate": "A6-EO-02_analysis_design_book_explicit_product_owner_acceptance",
-  "next_ready_child": null,
+  "current_active_parent": "A6-EO-03",
+  "current_active_child": "A6-EO-03-A",
+  "current_gate": "A6-EO-03-A_implementation_and_acceptance",
+  "next_ready_child": "A6-EO-03-A",
   "independent_packages": [
     {
       "id": "A6-OPS-LOCAL-01",
@@ -863,7 +865,7 @@
   ],
   "parent_package_analysis_design_closure": {
     "contract": "contracts/a6-parent-package-analysis-design-closure-v1.json",
-    "status": "proposed_for_product_owner_acceptance",
+    "status": "Accepted_by_product_owner_2026-10-09",
     "required_before_parent_status_accepted": true,
     "first_application": "A6-EO-02"
   }

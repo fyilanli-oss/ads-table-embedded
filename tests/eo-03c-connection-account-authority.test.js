@@ -16,6 +16,9 @@ const read = (relativePath) =>
 const migration = read(
   "supabase/migrations/20261009200000_eo03c_connection_account_authority.sql",
 );
+const correctiveMigration = read(
+  "supabase/migrations/20261009203000_eo03c_owner_policies_fk_indexes.sql",
+);
 const contract = JSON.parse(
   read("contracts/eo-03c-connection-account-authority-v1.json"),
 );
@@ -425,6 +428,31 @@ test("migration is private, forced-RLS, function-only and installation bound", (
   assert.doesNotMatch(
     migration,
     /\b(access_token|refresh_token|token)\s+(text|bytea|json|jsonb)\b/i,
+  );
+});
+
+test("corrective migration restores owner-only forced-RLS execution and covers composite foreign keys", () => {
+  for (const table of [
+    "provider_connections",
+    "provider_accounts",
+    "reporting_account_bindings",
+  ]) {
+    assert.match(
+      correctiveMigration,
+      new RegExp(`create policy ${table}_owner_all[\\s\\S]*on integrations\\.${table}[\\s\\S]*to adstable_owner[\\s\\S]*using \\(true\\)[\\s\\S]*with check \\(true\\)`),
+    );
+  }
+  assert.match(
+    correctiveMigration,
+    /provider_accounts_connection_authority_fk_idx[\s\S]*connection_id, workspace_id, install_generation, provider/,
+  );
+  assert.match(
+    correctiveMigration,
+    /reporting_account_bindings_account_authority_fk_idx[\s\S]*account_id, connection_id, workspace_id, install_generation, provider/,
+  );
+  assert.doesNotMatch(
+    correctiveMigration,
+    /grant\s+(select|insert|update|delete|all)[\s\S]*adstable_runtime/i,
   );
 });
 

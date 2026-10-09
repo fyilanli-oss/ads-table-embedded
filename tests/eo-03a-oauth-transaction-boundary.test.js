@@ -26,6 +26,9 @@ const contract = JSON.parse(
 const liveDatabaseEvidence = JSON.parse(
   read("docs/evidence/EO_03A_DATABASE_ACCEPTANCE_2026-10-09.json"),
 );
+const implementationMaster = JSON.parse(
+  read("contracts/a6-eo-implementation-master-v1.json"),
+);
 
 const workspaceId = "11111111-1111-4111-8111-111111111111";
 const transactionId = "22222222-2222-4222-8222-222222222222";
@@ -320,7 +323,7 @@ test("migration is private, forced-RLS, exact-callback and generation bound", ()
 });
 
 test("contract binds implementation and keeps live authorization disabled", () => {
-  assert.equal(contract.status, "verification");
+  assert.equal(contract.status, "Accepted");
   assert.equal(contract.implementation.schema, "integrations.oauth_transactions");
   assert.equal(contract.implementation.runtime_table_access, false);
   assert.equal(contract.implementation.installation_delete_cascade, true);
@@ -341,9 +344,9 @@ test("corrective migration covers the installation foreign key", () => {
 });
 
 test("live database evidence closes the technical acceptance gate without product-owner closure", () => {
-  assert.equal(contract.status, "verification");
+  assert.equal(contract.status, "Accepted");
   assert.equal(contract.acceptance_evidence.live_database, "PASS_2026-10-09");
-  assert.equal(contract.acceptance_evidence.product_owner_closure, "PENDING");
+  assert.equal(contract.acceptance_evidence.product_owner_closure, "PASS_2026-10-09");
   assert.equal(liveDatabaseEvidence.table.rows, 0);
   assert.equal(liveDatabaseEvidence.table.rls_enabled, true);
   assert.equal(liveDatabaseEvidence.table.rls_forced, true);
@@ -354,4 +357,21 @@ test("live database evidence closes the technical acceptance gate without produc
   assert.equal(liveDatabaseEvidence.advisors.eo03a_new_performance_findings, 0);
   assert.equal(liveDatabaseEvidence.synthetic_oauth_rows_created, false);
   assert.equal(liveDatabaseEvidence.secrets_tokens_codes_or_pii_recorded, false);
+});
+
+test("master plan closes EO-03-A and opens only EO-03-B as ready", () => {
+  const eo03 = implementationMaster.packages.find(
+    (entry) => entry.id === "A6-EO-03",
+  );
+  const eo03a = eo03.children.find((entry) => entry.id === "A6-EO-03-A");
+  const eo03b = eo03.children.find((entry) => entry.id === "A6-EO-03-B");
+
+  assert.equal(implementationMaster.status, "EO-03_in_progress");
+  assert.equal(eo03.status, "In progress");
+  assert.equal(eo03a.status, "Accepted");
+  assert.equal(eo03a.explicit_product_owner_closure, "PASS_2026-10-09");
+  assert.equal(eo03a.single_next_child, "A6-EO-03-B");
+  assert.equal(eo03b.status, "Ready");
+  assert.equal(eo03b.start_gate, "PASS_A6-EO-03-A_accepted_2026-10-09");
+  assert.equal(contract.next_child.live_authorization_remains_disabled, true);
 });

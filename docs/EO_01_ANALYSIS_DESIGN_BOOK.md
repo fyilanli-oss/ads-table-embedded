@@ -103,3 +103,17 @@ Bilinen sınırlar:
 ## 10. Tek sonraki parent
 
 EO-01'in tek sonraki parent'ı **A6-EO-02 — Workspace, installation, billing/trial and privacy foundations** paketidir.
+
+## Contract section map
+
+- business_purpose_and_actual_output
+- actors_and_authorities
+- end_to_end_happy_path
+- negative_and_failure_paths
+- persistent_state_and_data_ownership
+- secret_and_security_boundaries
+- operations_retries_and_observability
+- rollback_recovery_or_safe_failure
+- accepted_evidence_and_known_limits
+- single_next_parent
+

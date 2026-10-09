@@ -134,3 +134,17 @@ Bilinen sınırlar:
 ## 12. Tek sonraki parent
 
 EO-03'ün tek sonraki parent'ı **A6-EO-04 — Meta, Google Ads and Klaviyo adapters** paketidir.
+
+## Contract section map
+
+- business_purpose_and_actual_output
+- actors_and_authorities
+- end_to_end_happy_path
+- negative_and_failure_paths
+- persistent_state_and_data_ownership
+- secret_and_security_boundaries
+- operations_retries_and_observability
+- rollback_recovery_or_safe_failure
+- accepted_evidence_and_known_limits
+- single_next_parent
+

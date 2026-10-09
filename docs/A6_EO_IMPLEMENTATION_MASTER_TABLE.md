@@ -201,13 +201,13 @@ EO-09 ve EO-10 review sonrasında yürütülür. Bununla birlikte review sonras�
 
 ## Güncel aktif iş
 
-Tek aktif parent **EO-02**'dir.
+Tek aktif parent **EO-03**'tür.
 
-- **EO-02-A — Accepted:** Private schema ve least-privilege Supabase foundation kabul edildi.
-- **EO-02-B — Accepted:** Workspace, installation ve generation authority kabul edildi.
-- **EO-02-C — Verification:** Null/trial/active Partner API ve sızıntı kabulü PASS; database schema/functions ile function-only transaction-pooler adapterı ve doğrulanmış non-public reconciliation callerı kod/test/build seviyesinde hazırdır. Production database Secret aktivasyonu, yeni deployment ve gerçek persistence evidence açık kalır.
-- **EO-02-D — Not started:** EO-02-C kabul edilmeden başlamaz.
-- EO-03 ve sonraki parent'lar paralel başlatılmaz.
+- **EO-03-A — Accepted:** OAuth transaction boundary repository ve live database kanıtlarıyla kabul edildi.
+- **EO-03-B — Accepted:** Ciphertext-only token vault, production Sensitive keyring, live Supabase function boundary, production startup guard ve sentetik store/load/delete kabulü PASS; gerçek provider tokenı veya OAuth kullanılmadı.
+- **EO-03-C — Ready:** Verified provider ownership ve seçili Reporting Account otoritesi, değiştirilemez kurulu Shopify mağazası altında canonical olarak kurulacak.
+- **EO-03-D — Not started:** EO-03-C kabul edilmeden başlamaz.
+- EO-04 ve sonraki parent'lar paralel başlatılmaz.
 
 ## 9 Ekim 2026 — Kurulu Shopify mağazası otoritesi
 

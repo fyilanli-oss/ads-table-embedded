@@ -1,7 +1,7 @@
 # EO-03-A — OAuth transaction boundary
 
 **Control date:** 9 October 2026  
-**Status:** In progress — analyst and executable-contract gate  
+**Status:** In progress — technical implementation gate  
 **Parent:** A6-EO-03 — Canonical OAuth, connection and token vault
 
 ## Analyst result
@@ -152,3 +152,28 @@ EO-03-A can be accepted only when:
 5. live OAuth remains disabled until EO-03-B startup guard passes;
 6. repository tests/build/CI pass;
 7. product owner explicitly closes the child.
+
+
+## Technical implementation — 9 October 2026
+
+Repository implementation now contains:
+
+- private, forced-RLS `integrations.oauth_transactions`;
+- function-only runtime access; browser, service-role and runtime table access are revoked;
+- exact production callback mapping derived by provider, never from request input;
+- 256-bit public state whose SHA-256 digest alone is persisted;
+- independent 256-bit transaction nonce;
+- S256 PKCE for Google Ads and Klaviyo, with recoverable verifier material delegated to the EO-03-B vault interface;
+- atomic single-use callback claim bound to the same active Shopify installation generation;
+- denial, expiry, replay, provider-substitution and installation-change failure semantics;
+- authorization code kept only in the in-memory exchange context;
+- installation foreign key with `ON DELETE CASCADE`, placing this new workspace-associated security family inside the established privacy deletion path before use.
+
+Implementation files:
+
+- `supabase/migrations/20261009170000_eo03a_oauth_transaction_boundary.sql`
+- `app/lib/database/oauth-transaction-repository.server.js`
+- `app/lib/oauth/oauth-transaction.server.js`
+- `tests/eo-03a-oauth-transaction-boundary.test.js`
+
+No route invokes this boundary yet. No provider console, Vercel environment or live Supabase database was changed. Live authorization remains structurally blocked until EO-03-B supplies and proves the encrypted verifier/token vault startup guard.

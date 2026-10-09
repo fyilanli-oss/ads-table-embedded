@@ -1,8 +1,8 @@
 {
   "contract_id": "eo-02d-privacy-lifecycle-v1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "status": "verification",
-  "checked_at": "2026-10-08",
+  "checked_at": "2026-10-09",
   "authoritative_sources": {
     "shopify_privacy": "https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance",
     "shopify_webhook_verification": "https://shopify.dev/docs/apps/build/webhooks/verify-deliveries",
@@ -10,7 +10,11 @@
     "shopify_webhook_reference": "https://shopify.dev/docs/api/webhooks/2026-07",
     "shopify_access_tokens": "https://shopify.dev/docs/apps/build/authentication-authorization/access-tokens",
     "supabase_changelog": "https://supabase.com/changelog?types=breaking-change",
-    "supabase_rls": "https://supabase.com/docs/guides/database/postgres/row-level-security"
+    "supabase_rls": "https://supabase.com/docs/guides/database/postgres/row-level-security",
+    "supabase_cron_install": "https://supabase.com/docs/guides/cron/install",
+    "supabase_cron_quickstart": "https://supabase.com/docs/guides/cron/quickstart",
+    "supabase_database_functions": "https://supabase.com/docs/guides/database/functions",
+    "pg_cron_upstream": "https://github.com/citusdata/pg_cron/blob/main/README.md"
   },
   "ingress": {
     "endpoint": "POST /webhooks/shopify",
@@ -42,11 +46,13 @@
     "runtime_functions": [
       "privacy.claim_shopify_webhook",
       "privacy.request_workspace_deletion",
-      "privacy.execute_deletion_run",
       "shopify.bootstrap_installation(text,text,bytea,timestamptz)"
     ],
     "plaintext_customer_fields": false,
-    "raw_shop_domain_in_privacy_tables": false
+    "raw_shop_domain_in_privacy_tables": false,
+    "corrective_migration": "supabase/migrations/20261009160000_eo02d_durable_deletion_worker.sql",
+    "scheduler_function": "privacy.process_deletion_queue(integer)",
+    "scheduler_role": "postgres"
   },
   "lifecycle": {
     "uninstall": "suspend_workspace_delete_sessions_and_wait_for_redaction",
@@ -69,7 +75,11 @@
       "shopify_domain_history"
     ],
     "current_customer_data_result": "no_customer_data",
-    "future_schema_gate": "every new data family must join deletion registry and regression acceptance before use"
+    "future_schema_gate": "every new data family must join deletion registry and regression acceptance before use",
+    "worker": "Supabase Cron invokes a bounded database queue consumer every five minutes",
+    "runtime_direct_executor": false,
+    "retry_policy": "20 attempts with exponential backoff capped at 320 minutes; exhausted failures remain visible",
+    "corrective_contract": "contracts/eo-02d-durable-deletion-worker-v1.json"
   },
   "merchant_delete_my_data": {
     "requires": "server_verified_admin_shop_and_exact_install_generation",
@@ -77,7 +87,7 @@
     "visible_ui_owner": "A6-EO-07-A"
   },
   "live_acceptance": {
-    "status": "database_migration_pass_runtime_pending",
+    "status": "runtime_ingress_pass_worker_pending",
     "production_data_deletion_authorized": false,
     "required_sequence": [
       "repository_ci_pass",
@@ -93,8 +103,9 @@
     "supabase_security_advisor": "PASS_zero_findings",
     "existing_live_state_changed": false,
     "synthetic_rows_persisted": false,
-    "runtime_http_acceptance": "PENDING_post_deploy",
-    "shopify_app_specific_subscription_acceptance": "PENDING_post_deploy",
-    "explicit_product_owner_closure": "PENDING"
+    "runtime_http_acceptance": "PASS_invalid_hmac_401",
+    "shopify_app_specific_subscription_acceptance": "PASS_active_version_exact_topics",
+    "explicit_product_owner_closure": "PENDING_worker_live_acceptance",
+    "corrective_worker_migration": "PENDING_explicit_live_approval"
   }
 }

@@ -1,7 +1,7 @@
 # EO-02-D — Privacy, uninstall, deletion and clean reinstall
 
-**Kontrol tarihi:** 8 Ekim 2026  
-**Durum:** Verification; live database migration PASS, runtime HTTP ve Shopify subscription acceptance bekliyor
+**Kontrol tarihi:** 9 Ekim 2026  
+**Durum:** Verification; ingress ve Shopify app configuration PASS, durable worker canlı kabulü bekliyor
 
 ## Analist sonucu
 
@@ -101,3 +101,18 @@ Kalan kapılar:
 ## Rollback
 
 Migration additive'dir ve eski üç-parametreli bootstrap overload'unu ilk rollout sırasında korur. Canlı rollout DB-first, application-second ilerler. Endpoint subscription etkinleştirilmeden önce runtime ve migration birlikte doğrulanır. İlk acceptance yalnız sentetik kayıtlarla yapılır.
+
+
+## 9 Ekim 2026 — Durable worker corrective gate
+
+Repository ve production incelemesi, doğrulanmış claim'in `privacy.deletion_runs` kuyruğuna yazıldığını fakat kuyruğu production'da kalıcı olarak tüketen worker/cron bulunmadığını gösterdi. Bu nedenle EO-02-D henüz Accepted değildir.
+
+Bağlayıcı düzeltme:
+
+- `docs/EO_02D_DURABLE_DELETION_WORKER.md`
+- `contracts/eo-02d-durable-deletion-worker-v1.json`
+- `supabase/migrations/20261009160000_eo02d_durable_deletion_worker.sql`
+
+Seçilen yapı Supabase Cron içinde beş dakikalık, 25 run'lık, advisory-lock korumalı database worker'dır. Application runtime'ın doğrudan fiziksel executor yetkisi kaldırılır. Başarısız run kontrollü backoff ile en fazla 20 kez denenir; tükenen run görünür `failed` durumda kalır.
+
+Bu repository değişikliği canlı Supabase mutation yetkisi değildir. `pg_cron` kurulumu, corrective migration, sentetik worker kabulü ve Advisors kontrolü ayrı açık kullanıcı onayı olmadan uygulanamaz.

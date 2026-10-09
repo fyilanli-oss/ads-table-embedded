@@ -48,7 +48,7 @@ alter table integrations.reporting_account_bindings
   drop constraint reporting_account_bindings_change_reason_check,
   add constraint reporting_account_bindings_change_reason_check
     check (change_reason in (
-      'initial_selection', 'merchant_selection', 'reconnect_selection'
+      'initial_selection', 'merchant_selection', 'reauthorization'
     ));
 
 create table integrations.provider_connection_lifecycle_events (
@@ -709,7 +709,7 @@ begin
       effective_from, change_reason, created_at
     ) values (
       p_connection_id, reporting_row_id, p_workspace_id, p_install_generation,
-      p_provider, p_verified_at, 'reconnect_selection', p_verified_at
+      p_provider, p_verified_at, 'reauthorization', p_verified_at
     );
   end if;
 

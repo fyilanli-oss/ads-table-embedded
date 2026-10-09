@@ -359,16 +359,20 @@ test("live database evidence closes the technical acceptance gate without produc
   assert.equal(liveDatabaseEvidence.secrets_tokens_codes_or_pii_recorded, false);
 });
 
-test("master plan accepts EO-03-C and advances only EO-03-D", () => {
+test("master plan closes EO-03 and advances only EO-04-A to ready", () => {
   const eo03 = implementationMaster.packages.find(
     (entry) => entry.id === "A6-EO-03",
+  );
+  const eo04 = implementationMaster.packages.find(
+    (entry) => entry.id === "A6-EO-04",
   );
   const eo03a = eo03.children.find((entry) => entry.id === "A6-EO-03-A");
   const eo03b = eo03.children.find((entry) => entry.id === "A6-EO-03-B");
   const eo03c = eo03.children.find((entry) => entry.id === "A6-EO-03-C");
+  const eo03d = eo03.children.find((entry) => entry.id === "A6-EO-03-D");
 
-  assert.equal(implementationMaster.status, "EO-03_in_progress");
-  assert.equal(eo03.status, "In progress");
+  assert.equal(implementationMaster.status, "EO-03_accepted_EO-04_ready");
+  assert.equal(eo03.status, "Accepted");
   assert.equal(eo03a.status, "Accepted");
   assert.equal(eo03a.explicit_product_owner_closure, "PASS_2026-10-09");
   assert.equal(eo03a.single_next_child, "A6-EO-03-B");
@@ -380,10 +384,10 @@ test("master plan accepts EO-03-C and advances only EO-03-D", () => {
   assert.equal(eo03c.start_gate, "PASS_A6-EO-03-B_accepted_2026-10-09");
   assert.equal(eo03c.explicit_product_owner_closure, "PASS_2026-10-09");
   assert.equal(eo03c.single_next_child, "A6-EO-03-D");
-  const eo03d = eo03.children.find((entry) => entry.id === "A6-EO-03-D");
-  assert.equal(eo03d.status, "In progress");
+  assert.equal(eo03d.status, "Accepted");
   assert.equal(eo03d.start_gate, "PASS_A6-EO-03-C_accepted_2026-10-09");
-  assert.equal(implementationMaster.current_active_child, "A6-EO-03-D");
-  assert.equal(implementationMaster.next_ready_child, null);
+  assert.equal(eo04.status, "Ready");
+  assert.equal(implementationMaster.current_active_child, null);
+  assert.equal(implementationMaster.next_ready_child, "A6-EO-04-A");
   assert.equal(contract.next_child.live_authorization_remains_disabled, true);
 });

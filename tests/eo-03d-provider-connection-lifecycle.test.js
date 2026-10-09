@@ -335,7 +335,7 @@ test("second corrective migration qualifies UPDATE source columns", () => {
   assert.equal(
     (
       lifecycleUpdateColumnQualificationMigration.match(
-        /update integrations\\.provider_connections as connection/g,
+        /update integrations\.provider_connections as connection/g,
       ) ?? []
     ).length,
     4,
@@ -343,14 +343,14 @@ test("second corrective migration qualifies UPDATE source columns", () => {
   assert.equal(
     (
       lifecycleUpdateColumnQualificationMigration.match(
-        /connection_version = connection\\.connection_version \\+ 1/g,
+        /connection_version = connection\.connection_version \+ 1/g,
       ) ?? []
     ).length,
     4,
   );
   assert.doesNotMatch(
     lifecycleUpdateColumnQualificationMigration,
-    /connection_version = connection_version \\+ 1/,
+    /connection_version = connection_version \+ 1/,
   );
 });
 

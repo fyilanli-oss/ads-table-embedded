@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-03c-connection-account-authority-v1",
-  "version": "1.1.0",
-  "status": "Verification",
+  "version": "1.2.0",
+  "status": "Accepted",
   "checked_at": "2026-10-09",
   "parent": "A6-EO-03",
   "package": "A6-EO-03-C",
@@ -153,7 +153,7 @@
     "The two recorded live migrations were applied with explicit approval; live provider authorization remains a separate explicit gate.",
     "Product owner explicitly closes A6-EO-03-C."
   ],
-  "next_child_before_acceptance": null,
+  "next_child_before_acceptance": "A6-EO-03-D",
   "acceptance_evidence": {
     "repository_governance": "PASS",
     "live_database": "PASS_2026-10-09",
@@ -162,6 +162,6 @@
     "eo03c_new_unindexed_foreign_key_findings": 0,
     "cleanup_rows": 0,
     "evidence_document": "docs/evidence/EO_03C_LIVE_ACCEPTANCE_2026-10-09.json",
-    "product_owner_closure": "PENDING"
+    "product_owner_closure": "PASS_2026-10-09"
   }
 }

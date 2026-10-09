@@ -189,3 +189,16 @@ GitHub Actions run `37907571603` passed the full Repository Governance job on 9 
 - preview-shell build: PASS.
 
 This evidence verifies repository behavior only. It does not authorize or claim a live Supabase migration, provider configuration, Vercel secret change or live OAuth connection.
+
+
+## Live-schema preflight — 9 October 2026
+
+Read-only Supabase preflight ran before any live DDL:
+
+- target project `ads-table-embedded` / `podpwkrpmjiksskxhwsu` is `ACTIVE_HEALTHY`;
+- PostgreSQL is `17.11.0.003`;
+- latest live migration is `20261009075721_eo02d_worker_conditional_expression_fix`;
+- no `integrations.oauth_transactions` collision exists;
+- live `shopify.installations.id` is `bigint`.
+
+The preflight found the repository migration had declared `installation_id` as `uuid`. The live database was not changed. The pending migration was corrected to `bigint` and a regression assertion now locks this compatibility before the live migration gate.

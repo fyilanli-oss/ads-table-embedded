@@ -6,7 +6,7 @@ create schema if not exists integrations authorization adstable_owner;
 
 create table integrations.oauth_transactions (
   id uuid primary key default pg_catalog.gen_random_uuid(),
-  installation_id uuid not null
+  installation_id bigint not null
     references shopify.installations(id) on update restrict on delete cascade,
   workspace_id uuid not null
     references app.workspaces(id) on update restrict on delete restrict,

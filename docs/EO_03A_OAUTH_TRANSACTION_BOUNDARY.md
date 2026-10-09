@@ -211,3 +211,23 @@ The first authorized live migration attempt stopped with PostgreSQL SQLSTATE `42
 EO-02-A had already created and secured the `integrations` schema under `adstable_owner`. EO-03-A redundantly attempted `CREATE SCHEMA IF NOT EXISTS` after switching to the restricted owner role; PostgreSQL still required database-level create permission for that statement.
 
 Correction: EO-03-A now reuses the constitutional EO-02-A foundation schema and creates no schema. A regression assertion forbids `CREATE SCHEMA` in this child migration. No privilege was broadened and no live workaround was applied.
+
+
+## Live core migration acceptance — 9 October 2026
+
+Migration `20261009091622_eo03a_oauth_transaction_boundary` applied successfully to project `podpwkrpmjiksskxhwsu`.
+
+Read-only acceptance proved:
+
+- table owner: `adstable_owner`;
+- rows: `0`; no synthetic OAuth transaction was created;
+- `installation_id`: `bigint`;
+- installation foreign key: `ON DELETE CASCADE`;
+- RLS enabled and forced;
+- direct SELECT/INSERT/UPDATE/DELETE denied to `anon`, `authenticated`, `service_role` and `adstable_runtime`;
+- all five approved runtime functions executable by `adstable_runtime`;
+- public execute exposure: zero;
+- every privileged function is `SECURITY DEFINER` with empty `search_path`;
+- Supabase Security Advisor findings: zero.
+
+Performance Advisor reported one new informational finding: the installation foreign key lacked a covering index. A separate non-destructive corrective migration adds `oauth_transactions_installation_fk_idx (installation_id)`. Existing privacy-table notices are pre-existing; zero-row unused-index notices are expected before runtime traffic.

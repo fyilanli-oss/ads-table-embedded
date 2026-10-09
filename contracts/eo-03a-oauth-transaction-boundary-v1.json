@@ -1,6 +1,6 @@
 {
   "contract_id": "eo-03a-oauth-transaction-boundary-v1",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "status": "verification",
   "checked_at": "2026-10-09",
   "parent": "A6-EO-03",
@@ -128,7 +128,8 @@
     "forced_rls": true,
     "installation_delete_cascade": true,
     "live_routes_wired": false,
-    "live_migration_applied": false
+    "live_migration_applied": true,
+    "corrective_migration": "supabase/migrations/20261009173000_eo03a_oauth_installation_fk_index.sql"
   },
   "privacy": {
     "workspace_associated_security_metadata": true,
@@ -140,7 +141,7 @@
     "repository_tests": "PASS_GITHUB_ACTIONS_37907571603",
     "typecheck": "PASS_GITHUB_ACTIONS_37907571603",
     "build": "PASS_GITHUB_ACTIONS_37907571603",
-    "live_database": "NOT_AUTHORIZED_IN_EO03A",
+    "live_database": "CORE_MIGRATION_PASS_CORRECTIVE_INDEX_PENDING",
     "product_owner_closure": "PENDING"
   },
   "database_preflight": {
@@ -163,5 +164,30 @@
       "data_or_schema_change": false,
       "correction": "REUSE_EO02A_FOUNDATION_SCHEMA"
     }
+  },
+  "live_acceptance": {
+    "checked_at": "2026-10-09",
+    "project_ref": "podpwkrpmjiksskxhwsu",
+    "migration": "20261009091622_eo03a_oauth_transaction_boundary",
+    "table_rows": 0,
+    "rls_enabled": true,
+    "rls_forced": true,
+    "table_owner": "adstable_owner",
+    "installation_id_type": "bigint",
+    "installation_fk_delete_action": "cascade",
+    "direct_table_access": {
+      "anon": false,
+      "authenticated": false,
+      "service_role": false,
+      "adstable_runtime": false
+    },
+    "runtime_function_execute_count": 5,
+    "public_function_execute_count": 0,
+    "security_advisor_findings": 0,
+    "performance_advisor": {
+      "new_finding": "oauth_transactions_installation_id_unindexed_foreign_key",
+      "corrective_migration_status": "REPOSITORY_PENDING"
+    },
+    "synthetic_rows_created": false
   }
 }

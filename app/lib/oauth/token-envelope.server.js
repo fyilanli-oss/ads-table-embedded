@@ -126,11 +126,13 @@ export function readProviderTokenKeyring(environment = process.env) {
 export function createTokenEnvelopeCipher({
   keyring,
   randomBytesFn = randomBytes,
+  randomUUIDFn = randomUUID,
 } = {}) {
   if (!keyring || typeof keyring.get !== "function" || typeof keyring.has !== "function") {
     throw new TypeError("keyring is required");
   }
   if (typeof randomBytesFn !== "function") throw new TypeError("randomBytesFn is required");
+  if (typeof randomUUIDFn !== "function") throw new TypeError("randomUUIDFn is required");
 
   return Object.freeze({
     seal({identity, secret}) {
@@ -199,7 +201,7 @@ export function createTokenEnvelopeCipher({
     },
 
     createRecordId() {
-      return randomUUID();
+      return randomUUIDFn();
     },
   });
 }

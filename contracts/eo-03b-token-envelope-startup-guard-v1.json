@@ -98,15 +98,14 @@
     "provider client secret creation",
     "live provider OAuth",
     "token exchange refresh revoke or disconnect",
-    "provider reporting-account selection",
-    "production deployment"
+    "provider reporting-account selection"
   ],
   "live_effect": {
     "provider_console_mutation": false,
     "vercel_secret_mutation": true,
     "live_oauth": false,
     "production_database_mutation": true,
-    "production_deploy": false
+    "production_deploy": true
   },
   "acceptance": [
     "AES-GCM roundtrip and tamper tests pass.",
@@ -130,11 +129,21 @@
     "rls_enabled_and_forced": true,
     "runtime_function_execute_grant_verified": true,
     "synthetic_runtime_acceptance": false,
-    "production_startup_acceptance": false,
+    "production_startup_acceptance": true,
     "pkce_workspace_index_migration_version": "20261009115314",
     "pkce_workspace_index_migration_name": "eo03b_pkce_workspace_fk_index",
     "vercel_active_key_version_sensitive": true,
     "security_advisor_findings": 0,
-    "vault_rows_after_preflight": 0
+    "vault_rows_after_preflight": 0,
+    "production_deployment_id": "dpl_JDGeSSRYZNshT5m5bMHYHS4bBtts",
+    "production_deployment_url": "ads-table-embedded-4t5bt965g-firats-projects-d22284db.vercel.app",
+    "production_alias": "embedded.adstable.app",
+    "production_commit_sha": "07e5396badb839b6d8bac290afa2bf058c193485",
+    "production_build_state": "READY",
+    "production_alias_error": null,
+    "production_runtime_probe_status": 410,
+    "production_runtime_probe_interpretation": "controlled_route_response_after_successful_shopify_runtime_initialization",
+    "production_runtime_requests_verified": 2,
+    "production_runtime_errors_last_10m": 0
   }
 }

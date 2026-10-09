@@ -71,7 +71,7 @@ Executable contract: `contracts/shopify/a6-eo-07-three-surface-ui-product-freeze
 - Settings has no chart surface.
 - The working legacy Settings flow is interaction evidence only; legacy source, styling and retired-provider UI are not copied.
 
-## Active package: EO-02
+## Accepted foundation: EO-02
 
 - **EO-01-A — Accepted:** Fork veya bulk copy olmadan ayrı temiz repository ve fiziksel sınır kuruldu. Kabul commit'i: `cb02ef7c2e9236ab50da792f21d667fae91cbccd`.
 - **EO-01-B — Accepted:** Güncel resmî Shopify stack, temiz dependency manifest/lockfile ve negatif CI kapıları merge edildi. Kabul commit'i: `111e7dec66c84c48be43930f3496ea5b0f918949`.
@@ -82,6 +82,13 @@ Executable contract: `contracts/shopify/a6-eo-07-three-surface-ui-product-freeze
 - **EO-02-D — Accepted:** Privacy/uninstall/deletion/clean-reinstall ingress'i, private forced-RLS queue/manifest modeli, exact Shopify app configuration ve deployed invalid-HMAC 401 kabulü PASS oldu. 9 Ekim 2026'da Supabase Cron worker ve PostgreSQL conditional-expression düzeltmesi canlıya uygulandı. 08:00 UTC doğal Cron koşusu sentetik `customer_data_request` run'ını tek denemede `completed/no_customer_data` manifestiyle tamamladı; replay sıfır iş seçti, application runtime worker ve fiziksel executor çalıştıramıyor, Security Advisor sıfır ve sentetik temizliği sıfır kalan kayıtla PASS oldu. Kalıcı kanıt `docs/evidence/EO_02D_DURABLE_WORKER_LIVE_2026-10-09.json` dosyasındadır. Ürün sahibi 9 Ekim 2026'da açık kapanış kabulünü verdi; teknik açık kalem sıfırdır.
 
 EO-02-A business tablo veya veri kurmaz, runtime credential'ı etkinleştirmez, canlı token/veri taşımaz, Vercel environment değiştirmez ve legacy Supabase projesine dokunmaz.
+
+## Active package: EO-03
+
+- **EO-03-A — Accepted:** Workspace/install-generation-bound OAuth transaction state machine, exact callback allowlist, single-use state claim and live private database boundary passed repository, database and product-owner gates.
+- **EO-03-B — In progress:** Dedicated versioned AES-256-GCM envelope, ciphertext-only PKCE/provider-token persistence and fail-closed startup guard are being implemented under `docs/EO_03B_TOKEN_ENVELOPE_STARTUP_GUARD.md` and `contracts/eo-03b-token-envelope-startup-guard-v1.json`.
+- EO-03-B repository work does not authorize a live Supabase migration, a Vercel secret, a production deploy or provider OAuth. Each live step requires its later explicit gate.
+- EO-03-C and EO-03-D have not started.
 
 ## Current official baseline
 

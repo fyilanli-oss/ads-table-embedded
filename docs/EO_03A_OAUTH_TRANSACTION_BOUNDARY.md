@@ -1,7 +1,7 @@
 # EO-03-A — OAuth transaction boundary
 
 **Control date:** 9 October 2026  
-**Status:** Verification — repository CI passed; product-owner closure pending  
+**Status:** Accepted — repository, live database and explicit product-owner gates passed  
 **Parent:** A6-EO-03 — Canonical OAuth, connection and token vault
 
 ## Analyst result
@@ -249,4 +249,10 @@ Final read-only verification proved:
 
 Machine-readable evidence: `docs/evidence/EO_03A_DATABASE_ACCEPTANCE_2026-10-09.json`.
 
-EO-03-A therefore has complete repository and live-database technical evidence. Its status remains **Verification** solely because explicit product-owner closure is a separate acceptance gate.
+EO-03-A therefore has complete repository and live-database technical evidence.
+
+## Product-owner closure — 9 October 2026
+
+The product owner explicitly accepted EO-03-A after PR #44 was merged and its CI/evidence were reverified. EO-03-A is **Accepted**.
+
+The single next child is EO-03-B — Token envelope and startup guard. EO-03-B is **Ready**, but live provider authorization remains disabled until its encrypted vault and startup-guard acceptance gates pass.

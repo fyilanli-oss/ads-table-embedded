@@ -21,6 +21,9 @@ const lifecycleColumnQualificationMigration = read(
 const lifecycleUpdateColumnQualificationMigration = read(
   "supabase/migrations/20261009212000_eo03d_qualify_lifecycle_update_columns.sql",
 );
+const finalizeColumnQualificationMigration = read(
+  "supabase/migrations/20261009213000_eo03d_qualify_finalize_update_columns.sql",
+);
 const contract = JSON.parse(
   read("contracts/eo-03d-provider-connection-lifecycle-v1.json"),
 );
@@ -351,6 +354,33 @@ test("second corrective migration qualifies UPDATE source columns", () => {
   assert.doesNotMatch(
     lifecycleUpdateColumnQualificationMigration,
     /connection_version = connection_version \+ 1/,
+  );
+});
+
+test("third corrective migration qualifies every remaining finalize predicate", () => {
+  assert.match(
+    finalizeColumnQualificationMigration,
+    /update integrations\.reporting_account_bindings as binding/,
+  );
+  assert.match(
+    finalizeColumnQualificationMigration,
+    /where binding\.connection_id = current_connection\.id/,
+  );
+  assert.match(
+    finalizeColumnQualificationMigration,
+    /update integrations\.provider_accounts as account/,
+  );
+  assert.match(
+    finalizeColumnQualificationMigration,
+    /where account\.connection_id = current_connection\.id/,
+  );
+  assert.doesNotMatch(
+    finalizeColumnQualificationMigration,
+    /\bwhere (connection_id|connection_version|lifecycle_status|credential_id)\b/,
+  );
+  assert.doesNotMatch(
+    finalizeColumnQualificationMigration,
+    /\b(connection_version|lifecycle_status|credential_id) = \1 \+/,
   );
 });
 

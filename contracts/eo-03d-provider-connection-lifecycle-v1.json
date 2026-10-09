@@ -101,7 +101,9 @@
     "live_routes_wired": false,
     "first_corrective_migration": "supabase/migrations/20261009211000_eo03d_qualify_lifecycle_event_columns.sql",
     "first_corrective_migration_live_applied": true,
-    "second_corrective_migration": "supabase/migrations/20261009212000_eo03d_qualify_lifecycle_update_columns.sql"
+    "second_corrective_migration": "supabase/migrations/20261009212000_eo03d_qualify_lifecycle_update_columns.sql",
+    "second_corrective_migration_live_applied": true,
+    "third_corrective_migration": "supabase/migrations/20261009213000_eo03d_qualify_finalize_update_columns.sql"
   },
   "live_effect": {
     "provider_api_call": false,
@@ -135,10 +137,12 @@
     "schema_privilege_rls_advisor": "PASS",
     "security_advisor_findings": 0,
     "synthetic_runtime_acceptance": "FAILED",
-    "synthetic_blocker": "Second rollback-scoped acceptance passed the lifecycle-event query and exposed PostgreSQL 42702: unqualified connection_version in provider_connections UPDATE conflicts with the RETURNS TABLE output variable. A forward-only second corrective migration is prepared; live application and rerun are pending.",
+    "synthetic_blocker": "Third rollback-scoped acceptance passed reauthorization, idempotency, credential renewal and disconnect-pending, then exposed PostgreSQL 42702: unqualified reporting_account_bindings.connection_id in finalize_provider_disconnect conflicts with the RETURNS TABLE output variable. Static review identified and qualifies both remaining finalize UPDATE predicates; live application and rerun are pending.",
     "synthetic_rows_persisted": 0,
-    "package_acceptance": "OPEN_SECOND_FIX_PENDING",
+    "package_acceptance": "OPEN_THIRD_FIX_PENDING",
     "first_corrective_migration_version": "20261009145154",
-    "first_corrective_migration_name": "eo03d_qualify_lifecycle_event_columns"
+    "first_corrective_migration_name": "eo03d_qualify_lifecycle_event_columns",
+    "second_corrective_migration_version": "20261009150114",
+    "second_corrective_migration_name": "eo03d_qualify_lifecycle_update_columns"
   }
 }

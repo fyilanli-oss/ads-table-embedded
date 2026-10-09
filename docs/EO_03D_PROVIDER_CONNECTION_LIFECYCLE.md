@@ -129,3 +129,9 @@ Synthetic runtime acceptance remains **OPEN**. Supabase Connector rejected mutat
 
 The corrective migration `20261009211000_eo03d_qualify_lifecycle_event_columns.sql` qualifies lifecycle-event columns in all four mutation functions. It must pass repository CI, receive explicit merge/live-migration approval, be applied exactly, and complete the rollback-scoped runtime scenario before EO-03-D can be accepted.
 
+
+## Second rollback-scoped acceptance finding — 9 October 2026
+
+The first corrective migration was merged and applied as Supabase migration `20261009145154 / eo03d_qualify_lifecycle_event_columns`. The rerun passed the previously ambiguous lifecycle-event query, then PostgreSQL raised `42702` at the first connection update because the unqualified expression `connection_version = connection_version + 1` conflicts with the function's `RETURNS TABLE` output variable.
+
+The entire synthetic transaction rolled back again. Verified residue remains zero for synthetic connection, credential, account and lifecycle-event rows. The forward-only migration `20261009212000_eo03d_qualify_lifecycle_update_columns.sql` aliases all four `provider_connections` updates and qualifies the source `connection_version`. EO-03-D remains open until this second correction passes CI, receives explicit merge/live approval, and the complete rollback-scoped lifecycle scenario passes.

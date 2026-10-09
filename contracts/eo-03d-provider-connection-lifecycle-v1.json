@@ -99,7 +99,9 @@
     "live_migration_applied": true,
     "provider_adapters_implemented": false,
     "live_routes_wired": false,
-    "corrective_migration": "supabase/migrations/20261009211000_eo03d_qualify_lifecycle_event_columns.sql"
+    "first_corrective_migration": "supabase/migrations/20261009211000_eo03d_qualify_lifecycle_event_columns.sql",
+    "first_corrective_migration_live_applied": true,
+    "second_corrective_migration": "supabase/migrations/20261009212000_eo03d_qualify_lifecycle_update_columns.sql"
   },
   "live_effect": {
     "provider_api_call": false,
@@ -133,8 +135,10 @@
     "schema_privilege_rls_advisor": "PASS",
     "security_advisor_findings": 0,
     "synthetic_runtime_acceptance": "FAILED",
-    "synthetic_blocker": "Live rollback-scoped acceptance reached transition_provider_connection_lifecycle and exposed PostgreSQL 42702: unqualified connection_id conflicts with the RETURNS TABLE output variable. Corrective migration prepared; live application and rerun are pending.",
+    "synthetic_blocker": "Second rollback-scoped acceptance passed the lifecycle-event query and exposed PostgreSQL 42702: unqualified connection_version in provider_connections UPDATE conflicts with the RETURNS TABLE output variable. A forward-only second corrective migration is prepared; live application and rerun are pending.",
     "synthetic_rows_persisted": 0,
-    "package_acceptance": "OPEN_FIX_PENDING"
+    "package_acceptance": "OPEN_SECOND_FIX_PENDING",
+    "first_corrective_migration_version": "20261009145154",
+    "first_corrective_migration_name": "eo03d_qualify_lifecycle_event_columns"
   }
 }

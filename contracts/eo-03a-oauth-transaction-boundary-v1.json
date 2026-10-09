@@ -1,6 +1,6 @@
 {
   "contract_id": "eo-03a-oauth-transaction-boundary-v1",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "status": "verification",
   "checked_at": "2026-10-09",
   "parent": "A6-EO-03",
@@ -141,8 +141,9 @@
     "repository_tests": "PASS_GITHUB_ACTIONS_37907571603",
     "typecheck": "PASS_GITHUB_ACTIONS_37907571603",
     "build": "PASS_GITHUB_ACTIONS_37907571603",
-    "live_database": "CORE_MIGRATION_PASS_CORRECTIVE_INDEX_PENDING",
-    "product_owner_closure": "PENDING"
+    "live_database": "PASS_2026-10-09",
+    "product_owner_closure": "PENDING",
+    "live_database_evidence": "docs/evidence/EO_03A_DATABASE_ACCEPTANCE_2026-10-09.json"
   },
   "database_preflight": {
     "checked_at": "2026-10-09",
@@ -185,9 +186,12 @@
     "public_function_execute_count": 0,
     "security_advisor_findings": 0,
     "performance_advisor": {
-      "new_finding": "oauth_transactions_installation_id_unindexed_foreign_key",
-      "corrective_migration_status": "REPOSITORY_PENDING"
+      "eo03a_new_findings": 0,
+      "installation_fk_covering_index": "PASS_VALID_READY",
+      "preexisting_privacy_unindexed_foreign_keys": 2,
+      "zero_traffic_unused_index_notices_expected": true
     },
-    "synthetic_rows_created": false
+    "synthetic_rows_created": false,
+    "corrective_migration": "20261009092144_eo03a_oauth_installation_fk_index"
   }
 }

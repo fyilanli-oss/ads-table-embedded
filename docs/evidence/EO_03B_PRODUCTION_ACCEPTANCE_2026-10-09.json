@@ -1,0 +1,67 @@
+{
+  "evidence_id": "EO_03B_PRODUCTION_ACCEPTANCE_2026-10-09",
+  "package": "A6-EO-03-B",
+  "checked_at": "2026-10-09",
+  "status": "PASS",
+  "authoritative_sources": {
+    "supabase_database_functions": "https://supabase.com/docs/guides/database/functions",
+    "supabase_database_security": "https://supabase.com/docs/guides/database/database-security",
+    "supabase_changelog": "https://supabase.com/changelog?types=breaking-change",
+    "vercel_deployments": "https://vercel.com/docs/deployments",
+    "node_crypto": "https://nodejs.org/api/crypto.html"
+  },
+  "repository": {
+    "implementation_merge_commit": "07e5396badb839b6d8bac290afa2bf058c193485",
+    "startup_evidence_merge_commit": "a58efcb3c25f657758fb317ca4cddeaf53b6d429",
+    "required_ci": "PASS"
+  },
+  "supabase": {
+    "project_id": "podpwkrpmjiksskxhwsu",
+    "migrations": [
+      {
+        "version": "20261009113645",
+        "name": "eo03b_token_vault"
+      },
+      {
+        "version": "20261009115314",
+        "name": "eo03b_pkce_workspace_fk_index"
+      }
+    ],
+    "synthetic_probe": {
+      "id": "e03b0000-0000-4000-8000-000000000001",
+      "real_provider_token": false,
+      "real_oauth": false,
+      "active_installation_count": 1,
+      "store": true,
+      "correct_context_load_count": 1,
+      "wrong_provider_load_count": 0,
+      "delete": true,
+      "load_after_delete_count": 0
+    },
+    "after_probe": {
+      "postgres_runtime_membership": false,
+      "postgres_can_execute_guard": false,
+      "runtime_can_execute_guard": true,
+      "oauth_pkce_envelope_rows": 0,
+      "provider_credential_envelope_rows": 0,
+      "security_advisor_findings": 0,
+      "inherited_unindexed_privacy_fk_info_findings": 2
+    }
+  },
+  "vercel": {
+    "project": "ads-table-embedded",
+    "environment": "production",
+    "deployment_id": "dpl_JDGeSSRYZNshT5m5bMHYHS4bBtts",
+    "deployment_state": "READY",
+    "production_alias": "embedded.adstable.app",
+    "alias_error": null,
+    "production_startup_acceptance": true,
+    "runtime_errors_in_verification_windows": 0,
+    "secret_value_read_back": false
+  },
+  "product_owner": {
+    "explicit_closure": "PASS",
+    "closed_at": "2026-10-09",
+    "next_child": "A6-EO-03-C"
+  }
+}

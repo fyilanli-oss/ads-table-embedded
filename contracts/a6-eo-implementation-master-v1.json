@@ -832,7 +832,7 @@
   "cutover_authorized": false,
   "legacy_deletion_authorized": false,
   "current_active_parent": "A6-EO-02",
-  "current_active_child": null,
+  "current_active_child": "A6-EO-02-D",
   "current_gate": "A6-EO-02_parent_closure_analysis_design_rule_pending_product_discussion",
   "next_ready_child": null,
   "independent_packages": [

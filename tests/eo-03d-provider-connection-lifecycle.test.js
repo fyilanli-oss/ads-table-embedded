@@ -301,7 +301,11 @@ test("migration enforces fail-closed, idempotent and secret-free lifecycle", () 
 test("contract preserves provider differences and no live mutation authorization", () => {
   assert.equal(contract.status, "Implementation");
   assert.equal(contract.invariants.connected_only_reporting_authority, true);
-  assert.equal(contract.live_effect.production_database_mutation, false);
+  assert.equal(contract.live_effect.production_database_mutation, true);
+  assert.equal(contract.implementation.live_migration_applied, true);
+  assert.equal(contract.live_acceptance.schema_privilege_rls_advisor, "PASS");
+  assert.equal(contract.live_acceptance.synthetic_runtime_acceptance, "BLOCKED");
+  assert.equal(contract.live_acceptance.synthetic_rows_persisted, 0);
   assert.equal(contract.live_effect.provider_api_call, false);
   assert.equal(
     contract.provider_rules.google_ads.invalid_grant_requires_reauthorization,

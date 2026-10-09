@@ -1,0 +1,103 @@
+{
+  "evidence_id": "eo-03c-live-acceptance-2026-10-09",
+  "package": "A6-EO-03-C",
+  "status": "TECHNICAL_PASS_PRODUCT_OWNER_CLOSURE_PENDING",
+  "checked_at": "2026-10-09",
+  "supabase_project_id": "podpwkrpmjiksskxhwsu",
+  "repository_delivery": {
+    "implementation_pr": "https://github.com/fyilanli-oss/ads-table-embedded/pull/50",
+    "implementation_merge_commit": "318aa3421c157d4758c0025245f27903924fa703",
+    "owner_role_correction_pr": "https://github.com/fyilanli-oss/ads-table-embedded/pull/51",
+    "owner_role_correction_merge_commit": "625462f4f77a8fb6ddbe32555edfebe7a9f9b8f1",
+    "owner_policy_and_index_pr": "https://github.com/fyilanli-oss/ads-table-embedded/pull/52",
+    "owner_policy_and_index_merge_commit": "b9053c27955b96ef8998899388a36992e0191ea4"
+  },
+  "migrations": [
+    {
+      "version": "20261009130713",
+      "name": "eo03c_connection_account_authority",
+      "status": "APPLIED"
+    },
+    {
+      "version": "20261009131339",
+      "name": "eo03c_owner_policies_fk_indexes",
+      "status": "APPLIED"
+    }
+  ],
+  "safe_failure_history": {
+    "first_attempt_error": "role \"ads_table_owner\" does not exist",
+    "transaction_rolled_back": true,
+    "partial_objects_created": false,
+    "correction": "The canonical live owner role is adstable_owner; PR 51 corrected the forward migration before the successful application."
+  },
+  "database_boundary": {
+    "tables": [
+      "integrations.provider_connections",
+      "integrations.provider_accounts",
+      "integrations.reporting_account_bindings"
+    ],
+    "owner_role": "adstable_owner",
+    "forced_rls": true,
+    "owner_only_policies": true,
+    "direct_runtime_table_grants": false,
+    "composite_foreign_keys_have_covering_indexes": true,
+    "functions": [
+      "integrations.establish_provider_account_authority",
+      "integrations.select_reporting_account",
+      "integrations.load_provider_account_authority"
+    ],
+    "functions_security_definer": true,
+    "functions_empty_search_path": true,
+    "runtime_execute": true,
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": false,
+    "public_execute": false
+  },
+  "synthetic_runtime_probe": {
+    "status": "PASS",
+    "transaction_rolled_back": true,
+    "provider": "meta",
+    "real_provider_call": false,
+    "real_oauth": false,
+    "real_token_or_secret": false,
+    "checks": [
+      "Stored a synthetic ciphertext-only credential envelope for the exact active installation generation.",
+      "Established two verified synthetic connected accounts and selected account A.",
+      "Loaded the canonical authority and verified the connection, both accounts and account A.",
+      "Changed the Reporting Account to account B using fresh verification evidence.",
+      "Loaded the authority again and verified account B.",
+      "Confirmed direct table access by adstable_runtime fails with insufficient_privilege.",
+      "Confirmed a wrong-workspace request fails closed with ACTIVE_INSTALLATION_AUTHORITY_REQUIRED.",
+      "Confirmed binding history contains two rows and exactly one active row."
+    ],
+    "temporary_role_membership_change": "GRANT adstable_runtime TO postgres WITH SET TRUE inside the rolled-back acceptance transaction",
+    "role_membership_restored": {
+      "admin_option": true,
+      "inherit_option": false,
+      "set_option": false
+    }
+  },
+  "cleanup": {
+    "provider_credential_rows": 0,
+    "provider_connection_rows": 0,
+    "provider_account_rows": 0,
+    "reporting_binding_rows": 0,
+    "synthetic_ids_present": false
+  },
+  "advisors": {
+    "security_findings": 0,
+    "eo03c_new_unindexed_foreign_key_findings": 0,
+    "preexisting_privacy_unindexed_foreign_key_findings": 2,
+    "unused_index_info_expected_on_empty_new_schema": true
+  },
+  "live_effect": {
+    "production_database_mutation": true,
+    "provider_api_call": false,
+    "provider_console_mutation": false,
+    "token_or_secret_mutation": false,
+    "vercel_mutation": false,
+    "production_deploy": false
+  },
+  "product_owner_closure": "PENDING"
+}

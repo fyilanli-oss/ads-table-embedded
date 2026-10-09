@@ -359,7 +359,7 @@ test("live database evidence closes the technical acceptance gate without produc
   assert.equal(liveDatabaseEvidence.secrets_tokens_codes_or_pii_recorded, false);
 });
 
-test("master plan closes EO-03-A and opens only EO-03-B as ready", () => {
+test("master plan keeps EO-03-A accepted while EO-03-B is the active child", () => {
   const eo03 = implementationMaster.packages.find(
     (entry) => entry.id === "A6-EO-03",
   );
@@ -371,7 +371,12 @@ test("master plan closes EO-03-A and opens only EO-03-B as ready", () => {
   assert.equal(eo03a.status, "Accepted");
   assert.equal(eo03a.explicit_product_owner_closure, "PASS_2026-10-09");
   assert.equal(eo03a.single_next_child, "A6-EO-03-B");
-  assert.equal(eo03b.status, "Ready");
+  assert.equal(eo03b.status, "In progress");
   assert.equal(eo03b.start_gate, "PASS_A6-EO-03-A_accepted_2026-10-09");
+  assert.equal(implementationMaster.current_active_child, "A6-EO-03-B");
+  assert.equal(
+    implementationMaster.current_gate,
+    "A6-EO-03-B_implementation_and_acceptance",
+  );
   assert.equal(contract.next_child.live_authorization_remains_disabled, true);
 });

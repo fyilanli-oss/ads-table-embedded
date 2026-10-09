@@ -87,7 +87,7 @@ EO-02-A business tablo veya veri kurmaz, runtime credential'ı etkinleştirmez, 
 
 - **EO-03-A — Accepted:** Workspace/install-generation-bound OAuth transaction state machine, exact callback allowlist, single-use state claim and live private database boundary passed repository, database and product-owner gates.
 - **EO-03-B — Accepted:** Versioned AES-256-GCM token envelope, ciphertext-only vault, live private database boundary, production startup guard and secret-free synthetic runtime acceptance passed.
-- **EO-03-C — In progress:** Fresh provider-verified connected accounts and one canonical Meta/Google Reporting Account are being bound beneath the immutable installed-Shopify-store authority. Klaviyo remains one Connected Account with no Reporting Account control. Reporting Store selection does not exist.
+- **EO-03-C — In progress:** Fresh provider-verified connected accounts and one canonical Meta/Google Reporting Account are being bound beneath the immutable installed-Shopify-store authority. Klaviyo remains one Connected Account with no Reporting Account control. No merchant-selectable store scope exists.
 - EO-03-C repository work does not authorize a live Supabase migration, provider API call, provider OAuth, Vercel mutation or production deploy. These remain separate explicit gates.
 - EO-03-D has not started.
 

@@ -143,7 +143,7 @@ test("startup guard checks database contract and every stored key version", asyn
   ]) repository[name] = async () => null;
 
   const vault = createTokenVault({repository, keyring});
-  const first = await vault.assertReady("meta");
+  const first = await vault.assertRuntimeReady();
   const second = await vault.assertReady("klaviyo");
   assert.equal(first.contractVersion, TOKEN_VAULT_CONTRACT_VERSION);
   assert.equal(first.activeKeyVersion, 2);
@@ -380,6 +380,17 @@ test("migration is ciphertext-only, forced-RLS, function-only and cascade-bound"
   );
 });
 
+test("Shopify server cold start awaits the provider-independent vault guard", () => {
+  const runtime = read("app/lib/shopify/shopify-app-runtime.server.js");
+  const server = read("app/shopify.server.ts");
+
+  assert.match(runtime, /createTokenVault/);
+  assert.match(runtime, /export async function createShopifyAppRuntime/);
+  assert.match(runtime, /await tokenVault\.assertRuntimeReady\(\)/);
+  assert.match(runtime, /tokenVaultStartup/);
+  assert.match(server, /const runtime = await createShopifyAppRuntime\(\)/);
+});
+
 test("contract and master keep EO-03-B in repository implementation state", () => {
   const eo03 = master.packages.find((entry) => entry.id === "A6-EO-03");
   const eo03b = eo03.children.find((entry) => entry.id === "A6-EO-03-B");
@@ -388,8 +399,10 @@ test("contract and master keep EO-03-B in repository implementation state", () =
   assert.equal(contract.decision.algorithm, "AES-256-GCM");
   assert.equal(contract.decision.database_stores_root_key, false);
   assert.equal(contract.runtime_boundary.direct_table_access, false);
-  assert.equal(contract.live_effect.production_database_mutation, false);
-  assert.equal(contract.live_effect.vercel_secret_mutation, false);
+  assert.equal(contract.live_effect.production_database_mutation, true);
+  assert.equal(contract.live_effect.vercel_secret_mutation, true);
+  assert.equal(contract.implementation.startup_guard_wired_to_shopify_runtime, true);
+  assert.equal(contract.live_evidence.synthetic_runtime_acceptance, false);
   assert.equal(eo03b.status, "In progress");
   assert.equal(master.current_active_child, "A6-EO-03-B");
   assert.equal(master.next_ready_child, "A6-EO-03-B");

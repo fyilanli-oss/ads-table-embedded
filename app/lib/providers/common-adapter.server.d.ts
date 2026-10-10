@@ -146,7 +146,6 @@ export interface CanonicalFunnelFact {
     adapter_version: string;
     source_confidence: "real" | "fallback" | "partial";
     synthetic: boolean;
-    ga4_property_id?: string | null;
     raw_reference: Record<string, unknown>;
   };
 }

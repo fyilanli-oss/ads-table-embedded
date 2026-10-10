@@ -413,6 +413,6 @@ test("contract keeps EO-03-B accepted after EO-03 closure", () => {
   assert.equal(eo03b.status, "Accepted");
   assert.equal(eo03.status, "Accepted");
   assert.equal(master.current_active_parent, "A6-EO-04");
-  assert.equal(master.current_active_child, "A6-EO-04-A");
+  assert.equal(master.current_active_child, "A6-EO-04-B");
   assert.equal(master.next_ready_child, null);
 });

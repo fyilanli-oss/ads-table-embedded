@@ -1,7 +1,7 @@
 # EO-04-A — Common adapter contract start brief
 
 **Control date:** 10 October 2026  
-**Status:** Ready for product-owner acceptance; implementation not started  
+**Status:** Accepted — 10 October 2026  
 **Parent:** A6-EO-04 — Meta, Google Ads and Klaviyo adapters  
 **Execution effect:** EO-04-A start only; no provider secret, OAuth, live API, database, Vercel or deployment mutation
 
@@ -302,3 +302,39 @@ EO-04-A cannot close until:
 - Klaviyo API overview/pagination: https://developers.klaviyo.com/en/v2026-01-15/reference/api_overview
 - Vercel Functions limits: https://vercel.com/docs/functions/limitations
 - Supabase changelog: https://supabase.com/changelog
+
+
+## Repository implementation — 10 October 2026
+
+The product owner accepted the start brief before implementation. The provider-neutral boundary is now implemented without reading or creating a provider secret and without any live API, database, Vercel or deployment mutation.
+
+Artifacts:
+
+- `app/lib/providers/common-adapter.server.js`: runtime contract, canonical fact validation, complete-before-publish pagination, bounded retry and sanitized evidence.
+- `app/lib/providers/common-adapter.server.d.ts`: strict public request/result/fact types.
+- `tests/eo-04a-common-adapter.test.js`: deterministic fake-provider acceptance tests.
+
+Implemented behavior:
+
+- The same exact ten canonical raw metrics are demanded for Meta, Google Ads and Klaviyo.
+- Stable capability support and per-attempt observation state are independent.
+- Only an explicit provider numeric zero becomes zero; absence, unsupported state and failure remain null/non-publishable.
+- Cursor values remain opaque. Repeated cursors, conflicting duplicate facts, row/page/time ceilings and incomplete traversal fail closed.
+- Identical page replay is idempotent.
+- Only `rate_limited`, `transient_provider_failure` and `provider_timeout` can be retried, and only when the provider child classifies them as retryable from its official contract.
+- Authentication, authorization, validation and deterministic scope failures are never made retryable by a caller flag.
+- `Retry-After` metadata takes precedence over bounded exponential jitter.
+- Failed attempts return no publishable rows even when earlier pages were staged.
+- Evidence is bounded, content-hashed and recursively redacts credentials, authorization material and email-shaped personal data.
+- Klaviyo retains one platform account with no Ad Account selector. Meta and Google Ads continue to require their verified reporting-account authority from EO-03.
+
+This implementation remains a provider-neutral contract. EO-04-B/C/D must still freeze current official endpoint, field, pagination, quota, account and error mappings before any live provider call.
+
+### Remaining closure gate
+
+GitHub Actions run `38049487145` passed 163/163 tests, TypeScript verification and preview build. The product owner explicitly accepted EO-04-A and authorized PR #65 merge on 10 October 2026. EO-04-B provider implementation is not authorized by this closure; its current official-document and analyst-brief gate must pass first.
+
+
+## Product-owner closure — 10 October 2026
+
+EO-04-A is Accepted. The accepted result is the provider-neutral contract and synthetic runtime only. This closure authorizes advancing to the EO-04-B Meta official-document and analyst-brief gate; it does not authorize a live Meta call, credential change, database mutation, Vercel mutation or deployment.

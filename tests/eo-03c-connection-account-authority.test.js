@@ -485,7 +485,7 @@ test("contract keeps installed Shopify shop authoritative after EO-03 closure", 
   assert.equal(eo03.status, "Accepted");
   assert.equal(eo03c.status, "Accepted");
   assert.equal(master.current_active_parent, "A6-EO-04");
-  assert.equal(master.current_active_child, "A6-EO-04-A");
+  assert.equal(master.current_active_child, "A6-EO-04-B");
   assert.equal(master.next_ready_child, null);
-  assert.equal(master.current_gate, "A6-EO-04-A_start_brief_product_owner_acceptance");
+  assert.equal(master.current_gate, "A6-EO-04-B_current_official_document_and_analyst_brief");
 });

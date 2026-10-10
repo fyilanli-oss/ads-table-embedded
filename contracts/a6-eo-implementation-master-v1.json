@@ -1,9 +1,9 @@
 {
-  "schema_version": "1.18.0",
+  "schema_version": "1.20.0",
   "contract_id": "a6-eo-implementation-master-v1",
   "title": "A6 EO single-track execution rule and integrated implementation package table",
   "effective_date": "2026-10-04",
-  "status": "EO-04_active_EO-04-A_start_brief_pending",
+  "status": "EO-04_active_EO-04-B_start_brief_pending",
   "authority": {
     "execution_plan": "docs/EXECUTION_PLAN.md",
     "EO_GO": "contracts/a6-eo-f7-go-decision-v1.json",
@@ -557,17 +557,27 @@
           "id": "A6-EO-04-A",
           "title": "Common adapter contract",
           "objective": "Build the shared request, raw evidence, support-state, store discovery/filter, quota and error envelope.",
-          "status": "Active_start_brief_acceptance_pending",
-          "implementation_started": false,
+          "status": "Accepted",
+          "implementation_started": true,
           "live_mutation_authorized": false,
           "document": "docs/EO_04A_COMMON_ADAPTER_START_BRIEF.md",
           "contract": "contracts/eo-04a-common-adapter-start-brief-v1.json",
-          "ci_test": "tests/eo-04a-common-adapter-start-brief.test.js"
+          "ci_test": "tests/eo-04a-common-adapter-start-brief.test.js",
+          "implementation_complete": true,
+          "product_owner_start_brief_accepted": true,
+          "final_product_owner_acceptance": true,
+          "runtime": "app/lib/providers/common-adapter.server.js",
+          "types": "app/lib/providers/common-adapter.server.d.ts",
+          "runtime_test": "tests/eo-04a-common-adapter.test.js",
+          "accepted_at": "2026-10-10"
         },
         {
           "id": "A6-EO-04-B",
           "title": "Meta adapter",
-          "objective": "Account, campaign/ad hierarchy, actions/action_values and truthful missing behavior."
+          "objective": "Account, campaign/ad hierarchy, actions/action_values and truthful missing behavior.",
+          "status": "Ready_official_document_and_analyst_brief",
+          "implementation_started": false,
+          "live_mutation_authorized": false
         },
         {
           "id": "A6-EO-04-C",
@@ -940,8 +950,8 @@
   "cutover_authorized": false,
   "legacy_deletion_authorized": false,
   "current_active_parent": "A6-EO-04",
-  "current_active_child": "A6-EO-04-A",
-  "current_gate": "A6-EO-04-A_start_brief_product_owner_acceptance",
+  "current_active_child": "A6-EO-04-B",
+  "current_gate": "A6-EO-04-B_current_official_document_and_analyst_brief",
   "next_ready_child": null,
   "independent_packages": [
     {

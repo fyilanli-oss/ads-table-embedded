@@ -19,6 +19,29 @@ test("EO-04-A start brief freezes truthful common adapter behavior", async () =>
   assert.equal(contract.secret_gate.creates_secret, false);
   assert.equal(contract.mutations_authorized.provider, false);
   assert.equal(contract.mutations_authorized.database, false);
+  assert.equal(contract.account_selection.meta.minimum, 1);
+  assert.equal(contract.account_selection.meta.maximum, 3);
+  assert.equal(contract.account_selection.google_ads.maximum, 3);
+  assert.equal(contract.account_selection.google_ads.manager_account_selectable, false);
+  assert.equal(contract.account_selection.google_ads.manager_account_reporting_eligible, false);
+  assert.equal(contract.account_selection.klaviyo.maximum, 1);
+  assert.equal(contract.account_selection.klaviyo.is_ad_account, false);
+  assert.equal(contract.canonical_funnel_fact_contract.legacy_user_id_forbidden, true);
+  assert.equal(contract.canonical_funnel_fact_contract.raw_metrics.length, 10);
+  assert.deepEqual(contract.canonical_funnel_fact_contract.metric_support_values, [
+    "supported",
+    "unsupported",
+    "unknown",
+  ]);
+  assert.equal(
+    contract.canonical_funnel_fact_contract.fallback_synthetic_partial_or_incomplete_publishable,
+    false,
+  );
+  assert.equal(contract.oauth_to_first_data_sequence.length, 17);
+  assert.equal(
+    contract.oauth_to_first_data_sequence[15],
+    "initial_bootstrap_yesterday_then_today_only",
+  );
 
   for (const state of [
     "zero",

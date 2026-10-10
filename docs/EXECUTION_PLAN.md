@@ -134,6 +134,21 @@ CI enforcement: `tests/eo-04a-common-adapter-start-brief.test.js`
 - Meta-specific implementation remains blocked because its current official Graph rate-limit/error pages returned HTTP 429 during the control check; EO-04-B must re-open them successfully before code.
 
 
+## EO-04-B Meta adapter analyst start brief — 10 October 2026
+
+Binding analyst brief: `docs/EO_04B_META_ADAPTER_START_BRIEF.md`  
+Executable start contract: `contracts/eo-04b-meta-adapter-start-brief-v1.json`  
+CI enforcement: `tests/eo-04b-meta-adapter-start-brief.test.js`
+
+- EO-04-B is waiting for explicit product-owner acceptance of the analyst brief; Meta adapter implementation has not started.
+- Canonical hierarchy is Ad Account → Campaign → Ad Set → Ad → business date.
+- `ad_click` remains `PENDING_LIVE_FIELD_EVIDENCE`: `outbound_clicks` is the leading candidate, but `clicks`, `inline_link_clicks`, `website_clicks` and `outbound_clicks` must be compared on the same real row before final mapping.
+- A missing `actions` type or `action_values: []` is absent/empty, never numeric zero. Standard and omni aliases are never summed.
+- Attribution remains `PENDING_REAL_CONVERSION_EVIDENCE` because current official Meta pages conflict about unified attribution behavior. Exact Ads Manager parity is not claimed without a controlled real-conversion comparison.
+- Meta pagination follows opaque `paging.next`; an empty page with `next` continues, and partial sync/async results never publish.
+- Converted-product quantity/value discovery is preserved for A6-EO-07-C. Generic `product_id` is not purchase proof, Meta `retailer_id` is not presumed Shopify SKU, and deterministic catalog-to-installed-shop mapping plus both exact earring fixtures are mandatory.
+- This brief authorizes no Meta call, secret, OAuth, database, Vercel, deployment or Dataset V2 mutation.
+
 ## Pending cross-cutting decision: official provider documentation watch — 10 October 2026
 
 Binding decision record: `docs/A6_PROVIDER_OFFICIAL_DOCUMENTATION_WATCH_DECISION.md`

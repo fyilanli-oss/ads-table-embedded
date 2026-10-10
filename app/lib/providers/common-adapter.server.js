@@ -473,7 +473,7 @@ function normalizeClassifiedError(classification) {
 
 function retryDelayMs({ classification, retryIndex, baseDelayMs, maxDelayMs, random }) {
   if (classification.retry_after_ms != null) {
-    return Math.min(classification.retry_after_ms, maxDelayMs);
+    return classification.retry_after_ms;
   }
   const exponential = Math.min(baseDelayMs * 2 ** retryIndex, maxDelayMs);
   return Math.min(exponential + Math.floor(random() * baseDelayMs), maxDelayMs);
@@ -634,25 +634,44 @@ export async function runCommonAdapterOperation({
     }
 
     pageNumber += 1;
-    const rawEvidence = sanitizeProviderEvidence(page.raw_evidence ?? {}, {
-      maxBytes: limits.maximum_evidence_bytes ?? 65_536,
-    });
-    pageEvidence.push(
-      Object.freeze({
-        page_number: pageNumber,
-        row_count: page.rows.length,
-        provider_request_id:
-          typeof page.provider_request_id === "string"
-            ? page.provider_request_id
-            : null,
-        cursor_in_hash: sha256(cursorKey),
-        cursor_out_hash:
-          page.next_cursor == null ? null : sha256(String(page.next_cursor)),
-        quota: isRecord(page.quota) ? sanitizeProviderEvidence(page.quota).sanitized : null,
-        raw_evidence_sha256: rawEvidence.sha256,
-        raw_evidence_byte_length: rawEvidence.byte_length,
-      }),
-    );
+    try {
+      const rawEvidence = sanitizeProviderEvidence(page.raw_evidence ?? {}, {
+        maxBytes: limits.maximum_evidence_bytes ?? 65_536,
+      });
+      const quotaEvidence = isRecord(page.quota)
+        ? sanitizeProviderEvidence(page.quota, {
+            maxBytes: limits.maximum_evidence_bytes ?? 65_536,
+          }).sanitized
+        : null;
+      pageEvidence.push(
+        Object.freeze({
+          page_number: pageNumber,
+          row_count: page.rows.length,
+          provider_request_id:
+            typeof page.provider_request_id === "string"
+              ? page.provider_request_id
+              : null,
+          cursor_in_hash: sha256(cursorKey),
+          cursor_out_hash:
+            page.next_cursor == null ? null : sha256(String(page.next_cursor)),
+          quota: quotaEvidence,
+          raw_evidence_sha256: rawEvidence.sha256,
+          raw_evidence_byte_length: rawEvidence.byte_length,
+        }),
+      );
+    } catch (error) {
+      if (error instanceof AdapterContractError) {
+        return failure({
+          class: "internal_adapter_failure",
+          message: "Provider evidence violated the bounded sanitization policy",
+          provider_request_id:
+            typeof page.provider_request_id === "string"
+              ? page.provider_request_id
+              : null,
+        });
+      }
+      throw error;
+    }
 
     try {
       for (const row of page.rows) {

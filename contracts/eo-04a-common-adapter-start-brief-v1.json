@@ -377,9 +377,12 @@
     ]
   },
   "acceptance_state": {
-    "repository_tests": "pending_required_CI",
+    "repository_tests": "PASS_163_of_163",
     "product_owner_final_acceptance": "pending",
     "merge": "pending_explicit_product_owner_approval",
-    "next_provider_child_authorized": false
+    "next_provider_child_authorized": false,
+    "typecheck": "PASS",
+    "preview_build": "PASS",
+    "github_actions_run_id": 38049487145
   }
 }

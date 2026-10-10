@@ -1,7 +1,7 @@
 # EO-04-B — Meta adapter analyst start brief
 
 **Control date:** 10 October 2026  
-**Status:** Ready for product-owner acceptance; implementation not started  
+**Status:** Start brief accepted; repository implementation written and CI pending  
 **Parent:** A6-EO-04 — Meta, Google Ads and Klaviyo adapters  
 **Depends on:** Accepted EO-04-A common adapter contract  
 **Execution effect:** Analyst contract only; no Meta secret, OAuth, live API, database, Vercel, deployment or Dataset V2 mutation
@@ -232,3 +232,28 @@ Required CI passes, evidence is durable on GitHub without secrets/PII, no partia
 - Ads Action Stats reference: https://developers.facebook.com/docs/marketing-api/reference/ads-action-stats/
 - Product Item reference: https://developers.facebook.com/docs/marketing-api/reference/product-item/
 - Graph API pagination: https://developers.facebook.com/docs/graph-api/results/
+
+
+## Product-owner acceptance and repository implementation — 10 October 2026
+
+The product owner explicitly accepted this analyst brief before implementation.
+
+Written artifacts:
+
+- `app/lib/providers/meta-adapter.server.js`
+- `app/lib/providers/meta-adapter.server.d.ts`
+- `tests/eo-04b-meta-adapter.test.js`
+
+Implemented repository behavior:
+
+- Graph/Marketing API version is pinned to `v26.0` and recorded in requests.
+- Daily Ad-level requests ask for all four click candidates, but canonical `ad_click` remains provisional and null until the controlled live field comparison passes.
+- Standard pixel action types take precedence over verified omni fallbacks; aliases are never summed.
+- Explicit zero, empty collection and absent action type remain distinct.
+- `paging.next` remains opaque; an empty page with `next` continues through the common complete-before-publish runner.
+- Meta error mapping retries only documented rate/transient classes and fails closed for permission, invalid request and schema/account mismatches.
+- Currency remains in Meta account currency with identity conversion; EO-05 owns FX.
+- Raw evidence contains bounded field/action summaries and hashes, not access tokens or full bodies.
+- Converted-product capability remains an EO-07-C evidence route and does not activate product UI.
+
+No live Meta call, secret, OAuth, database, Vercel, deployment or Dataset V2 mutation occurred. Repository implementation remains pending CI and later separately authorized controlled live evidence.

@@ -47,6 +47,22 @@ CI enforcement: `tests/a6-parent-analysis-design-books.test.js`
 - Kitaplar executable contract ve testlerin yerine geçmez; onları analist diliyle açıklayan operasyonel kütüphane katmanıdır.
 
 
+
+## Secret inventory, custody and recovery gate — 10 October 2026
+
+Binding analyst brief: `docs/A6_EO_SECRET_INVENTORY_AND_RECOVERY.md`  
+Executable contract: `contracts/a6-eo-secret-inventory-recovery-v1.json`  
+CI enforcement: `tests/a6-eo-secret-inventory-recovery.test.js`
+
+- Current baseline is eleven Production Vercel entries and one GitHub Actions secret; the repository stores names and procedures, never values.
+- Vercel/GitHub masking is expected write-only behavior and does not mean a value was deleted.
+- Secret mutation requires exact-key product-owner approval, impact map, rollback, approved encrypted recovery-vault capture, redeploy/workflow verification and secret-free evidence.
+- Existing independent recovery copies are not assumed. A generated encryption key cannot be recreated to decrypt old ciphertext.
+- Before the first real provider authorization, the provider-token key recovery gate and the provider-specific inventory extension must pass.
+- Production credentials are never copied to Preview or Development; non-production environments require isolated credentials.
+- This decision authorizes no secret, provider, database, environment or deployment mutation.
+
+
 ## Cross-cutting safety, capacity and portability freeze — 7 October 2026
 
 Binding analyst brief: `docs/A6_EO_CROSS_CUTTING_SAFETY_CAPACITY_FREEZE.md`  

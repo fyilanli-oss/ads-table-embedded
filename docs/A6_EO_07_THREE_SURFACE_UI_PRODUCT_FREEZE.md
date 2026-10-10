@@ -160,6 +160,32 @@ Creative preview and attributed/sold products are separate concepts.
 
 Products live in the single details modal as a compact list with image, product/variant identity, quantity, value, source and support state. They do not expand every table row inline.
 
+
+#### Meta converted-product discovery input — 10 October 2026
+
+Meta's current v26.0 official references establish a conditional native route from an ad-attributed purchase to purchased product quantity and value:
+
+1. request the converted-product-ID breakdown with `converted_product_quantity` and `converted_product_value`;
+2. preserve the returned provider product identity at the ad analytical leaf;
+3. resolve that identity through Meta Catalog Product Item;
+4. read catalog attributes such as `retailer_id`, `name`, `image_url`, `url` and product-group identity;
+5. map the catalog item deterministically to the installed Shopify shop product/variant before displaying Shopify SKU, name or image.
+
+Binding cautions:
+
+- Generic `product_id` means a product involved in an impression, click or action and is not sufficient proof of a purchased product.
+- `retailer_id` may identify a catalog item or variant but is not assumed to equal Shopify SKU.
+- Meta marks `action_converted_product_id` as limited availability for Collaborative Ads; availability cannot be generalized to all campaigns.
+- Pixel/app-SDK purchase content, quantities and values must be complete. Missing basket product IDs cannot be reconstructed from destination URL, UTM, click ID, order name or product-name similarity.
+- Both earring fixtures require independent live evidence: clicked product not purchased and clicked product purchased, including non-advertised cross-sell basket items.
+- Until those checks pass, Meta product evidence remains pending and no Ad Analysis product row or graph is authorized.
+
+Official references checked 10 October 2026:
+
+- https://developers.facebook.com/documentation/ads-commerce/marketing-api/insights/breakdowns
+- https://developers.facebook.com/docs/marketing-api/reference/ad-account/insights/
+- https://developers.facebook.com/docs/marketing-api/reference/product-item/
+
 ### 5.6 Component mapping
 
 | Visible element | Shopify component/API | Binding |

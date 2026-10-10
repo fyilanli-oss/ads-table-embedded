@@ -1,9 +1,9 @@
 {
-  "schema_version": "1.20.0",
+  "schema_version": "1.23.0",
   "contract_id": "a6-eo-implementation-master-v1",
   "title": "A6 EO single-track execution rule and integrated implementation package table",
   "effective_date": "2026-10-04",
-  "status": "EO-04_active_EO-04-B_start_brief_pending",
+  "status": "EO-04_active_three_provider_start_briefs_accepted_repository_implementation_pending",
   "authority": {
     "execution_plan": "docs/EXECUTION_PLAN.md",
     "EO_GO": "contracts/a6-eo-f7-go-decision-v1.json",
@@ -266,6 +266,60 @@
       "mutation_authorized": false,
       "owner_package_for_future_provider_secrets": "A6-EO-04",
       "first_real_provider_authorization_blocked_until_recovery_and_provider_extension_gate": true
+    },
+    "official_provider_documentation_watch_v1": {
+      "decided_at": "2026-10-10",
+      "status": "approved_product_direction_scheduling_and_implementation_pending",
+      "document": "docs/A6_PROVIDER_OFFICIAL_DOCUMENTATION_WATCH_DECISION.md",
+      "proposed_identifier": "EO-GOV-01",
+      "active_parallel_package": false,
+      "providers": [
+        "meta",
+        "google_ads",
+        "klaviyo",
+        "shopify"
+      ],
+      "no_change_repository_churn": false,
+      "autonomous_production_mutation": false,
+      "advances_package_status": false
+    },
+    "meta_converted_product_discovery_v1": {
+      "decided_at": "2026-10-10",
+      "status": "official_document_discovery_live_acceptance_pending",
+      "owner_package": "A6-EO-07-C",
+      "source_package": "A6-EO-04-B",
+      "converted_metrics": [
+        "converted_product_quantity",
+        "converted_product_value"
+      ],
+      "generic_product_id_is_purchase_proof": false,
+      "catalog_product_item_resolution_required": true,
+      "retailer_id_assumed_shopify_sku": false,
+      "deterministic_installed_shop_mapping_required": true,
+      "exact_fixture_count": 2,
+      "product_ui_authorized": false,
+      "advances_package_status": false
+    },
+    "klaviyo_attributed_sold_product_discovery_v1": {
+      "decided_at": "2026-10-10",
+      "status": "official_document_decision_live_acceptance_pending",
+      "owner_package": "A6-EO-07-C",
+      "source_package": "A6-EO-04-D",
+      "target_fields": [
+        "product_id",
+        "sku",
+        "product_name",
+        "purchase_quantity",
+        "sales"
+      ],
+      "attribution_scope": "campaign_message_or_flow_message_and_supported_variation_identity",
+      "clicked_product_classification_required": false,
+      "clicked_product_inference_forbidden": true,
+      "same_event_line_items_and_attribution_relationship_required": true,
+      "reporting_api_remains_canonical_conversion_total": true,
+      "events_api_product_enrichment_must_not_double_count": true,
+      "product_ui_authorized": false,
+      "advances_package_status": false
     }
   },
   "exception": {
@@ -575,19 +629,70 @@
           "id": "A6-EO-04-B",
           "title": "Meta adapter",
           "objective": "Account, campaign/ad hierarchy, actions/action_values and truthful missing behavior.",
-          "status": "Ready_official_document_and_analyst_brief",
-          "implementation_started": false,
-          "live_mutation_authorized": false
+          "status": "Repository_CI_PASS_controlled_live_evidence_pending",
+          "implementation_started": true,
+          "live_mutation_authorized": false,
+          "document": "docs/EO_04B_META_ADAPTER_START_BRIEF.md",
+          "contract": "contracts/eo-04b-meta-adapter-start-brief-v1.json",
+          "ci_test": "tests/eo-04b-meta-adapter-start-brief.test.js",
+          "official_documentation_checked_at": "2026-10-10",
+          "product_owner_start_brief_accepted": true,
+          "click_mapping_status": "PENDING_LIVE_FIELD_EVIDENCE",
+          "attribution_status": "PENDING_REAL_CONVERSION_EVIDENCE",
+          "converted_product_discovery_owner": "A6-EO-07-C",
+          "accepted_start_brief_at": "2026-10-10",
+          "runtime": "app/lib/providers/meta-adapter.server.js",
+          "types": "app/lib/providers/meta-adapter.server.d.ts",
+          "runtime_test": "tests/eo-04b-meta-adapter.test.js",
+          "repository_implementation": "PASS",
+          "repository_ci": "PASS_run_38063777629",
+          "repository_tests": "PASS_174_of_174",
+          "typecheck": "PASS",
+          "preview_build": "PASS",
+          "live_evidence_authorized": false
         },
         {
           "id": "A6-EO-04-C",
           "title": "Google Ads adapter",
-          "objective": "Standard Ad and Performance Max Asset Group hierarchy with raw structure evidence."
+          "objective": "Standard Ad and Performance Max Asset Group hierarchy with raw structure evidence.",
+          "status": "Start_brief_accepted_repository_implementation_pending",
+          "implementation_started": false,
+          "live_mutation_authorized": false,
+          "document": "docs/EO_04C_GOOGLE_ADS_ADAPTER_START_BRIEF.md",
+          "contract": "contracts/eo-04c-google-ads-adapter-start-brief-v1.json",
+          "ci_test": "tests/eo-04c-google-ads-adapter-start-brief.test.js",
+          "official_documentation_checked_at": "2026-10-10",
+          "product_owner_start_brief_accepted": true,
+          "accepted_start_brief_at": "2026-10-10",
+          "api_baseline": "v25",
+          "developer_token_required": false,
+          "standard_leaf": "ad",
+          "performance_max_leaf": "asset_group",
+          "cart_data_deepest_grain_status": "campaign_or_ad_group_documented_ad_level_requires_deeper_official_and_live_evidence",
+          "repository_implementation": "not_started",
+          "live_evidence_authorized": false
         },
         {
           "id": "A6-EO-04-D",
           "title": "Klaviyo adapter",
-          "objective": "Campaign/Message, Flow/Message, metrics, cost inputs and 15 October revalidation."
+          "objective": "Campaign/Message, Flow/Message, metrics, cost inputs and 15 October revalidation.",
+          "status": "Start_brief_accepted_repository_implementation_pending",
+          "implementation_started": false,
+          "live_mutation_authorized": false,
+          "official_documentation_checked_at": "2026-10-10",
+          "document": "docs/EO_04D_KLAVIYO_ADAPTER_START_BRIEF.md",
+          "contract": "contracts/eo-04d-klaviyo-adapter-start-brief-v1.json",
+          "ci_test": "tests/eo-04d-klaviyo-adapter-start-brief.test.js",
+          "product_owner_start_brief_accepted": true,
+          "accepted_start_brief_at": "2026-10-10",
+          "stable_api_revision": "2026-07-15",
+          "campaign_leaf": "campaign_message",
+          "flow_leaf": "flow_message",
+          "product_sales_scope": "attributed_order_line_items_product_id_sku_name_quantity_and_sales",
+          "clicked_product_inference": false,
+          "campaign_variation_gate": "revalidate_2026-10-15_GA",
+          "flow_variation_gate": "identity_and_persistence_live_evidence",
+          "repository_implementation": "not_started"
         },
         {
           "id": "A6-EO-04-E",
@@ -950,8 +1055,8 @@
   "cutover_authorized": false,
   "legacy_deletion_authorized": false,
   "current_active_parent": "A6-EO-04",
-  "current_active_child": "A6-EO-04-B",
-  "current_gate": "A6-EO-04-B_current_official_document_and_analyst_brief",
+  "current_active_child": "A6-EO-04-D",
+  "current_gate": "A6-EO-04-D_start_brief_accepted_repository_implementation_pending",
   "next_ready_child": null,
   "independent_packages": [
     {

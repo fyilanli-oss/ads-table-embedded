@@ -1,0 +1,276 @@
+{
+  "contract_id": "eo-04d-klaviyo-adapter-start-brief-v1",
+  "version": "1.0.0",
+  "status": "Start_brief_accepted_repository_implementation_pending",
+  "checked_at": "2026-10-10",
+  "stable_api_revision": "2026-07-15",
+  "parent": "A6-EO-04",
+  "package": "A6-EO-04-D",
+  "objective": "Freeze the current official Klaviyo reporting, event attribution, product-line, cost, quota, missing-value and finality behavior before adapter implementation.",
+  "authority": {
+    "commerce_scope": "verified_installed_shopify_store_and_active_installation_generation",
+    "reporting_accounts": {
+      "minimum": 1,
+      "maximum": 3,
+      "type": "provider_verified_klaviyo_account"
+    },
+    "organization_or_group_is_reporting_account": false,
+    "merchant_selectable_reporting_store": false,
+    "provider_account_can_change_installed_shop": false,
+    "ambiguous_cross_store_rows_publishable": false
+  },
+  "account_context": {
+    "sources": [
+      "account_id",
+      "timezone",
+      "preferred_currency",
+      "locale",
+      "test_account"
+    ],
+    "provider_business_date_uses_account_timezone": true,
+    "custom_timeframe_offsets_ignored_by_reporting_api": true,
+    "test_account_is_not_separate_engineering_sandbox": true
+  },
+  "canonical_reporting_source": {
+    "funnel_totals": "Klaviyo Reporting API",
+    "ui_parity_reason": "Reporting API groups attributed conversions by message send date like Klaviyo UI",
+    "query_metric_aggregates_is_ui_parity_source": false,
+    "query_metric_aggregates_event_time_difference_must_not_be_hidden": true,
+    "one_report_per_conversion_metric_id": true
+  },
+  "hierarchy": {
+    "campaign": [
+      "account",
+      "campaign",
+      "campaign_message",
+      "business_date"
+    ],
+    "flow_structure": [
+      "account",
+      "flow",
+      "flow_action",
+      "flow_message",
+      "business_date"
+    ],
+    "flow_action_is_performance_leaf": false,
+    "campaign_performance_leaf": "campaign_message",
+    "flow_performance_leaf": "flow_message",
+    "reporting_group_candidates": [
+      "variation",
+      "variation_name"
+    ],
+    "campaign_variation": {
+      "status": "PENDING_2026-10-15_GA_REVALIDATION_AND_IDENTITY_PROOF",
+      "production_beta_forbidden": true
+    },
+    "flow_variation": {
+      "status": "PENDING_IDENTITY_PERSISTENCE_AND_LIVE_EVIDENCE",
+      "synthetic_leaf_forbidden": true
+    }
+  },
+  "mapped_metrics": {
+    "discovery_source": "GET /api/mapped-metrics",
+    "name_only_matching_forbidden": true,
+    "add_to_cart": "added_to_cart",
+    "checkout": "started_checkout",
+    "purchase": "revenue_or_verified_Placed_Order_metric",
+    "installed_shopify_integration_provenance_required": true
+  },
+  "canonical_mapping": {
+    "impression": {
+      "source": "delivered",
+      "status": "supported_when_returned"
+    },
+    "ad_click": {
+      "source": "clicks_unique",
+      "status": "supported_when_returned"
+    },
+    "session": {
+      "source": null,
+      "status": "unsupported"
+    },
+    "spend_value": {
+      "email": "daily_email_plan_cost_recipient_weighted_across_campaign_and_flow_messages",
+      "sms": "text_message_spend_when_provider_returns_supported_numeric_value",
+      "mms": "not_invented_without_official_provider_evidence",
+      "whatsapp": "not_invented_without_official_provider_evidence"
+    },
+    "add_to_cart": {
+      "source": "conversions",
+      "conversion_metric": "mapped_added_to_cart"
+    },
+    "add_to_cart_value": {
+      "source": "conversion_value",
+      "conversion_metric": "mapped_added_to_cart"
+    },
+    "checkout": {
+      "source": "conversions",
+      "conversion_metric": "mapped_started_checkout"
+    },
+    "checkout_value": {
+      "source": "conversion_value",
+      "conversion_metric": "mapped_started_checkout"
+    },
+    "purchase": {
+      "source": "conversions",
+      "conversion_metric": "mapped_revenue_or_Placed_Order"
+    },
+    "purchase_value": {
+      "source": "conversion_value",
+      "conversion_metric": "mapped_revenue_or_Placed_Order"
+    }
+  },
+  "diagnostic_metrics": {
+    "retained": [
+      "recipients",
+      "opens",
+      "opens_unique",
+      "delivered",
+      "bounced",
+      "failures",
+      "spam_complaints",
+      "unsubscribes",
+      "message_segment_count"
+    ],
+    "recipients_is_impression": false,
+    "opens_are_canonical_ad_click": false,
+    "diagnostics_do_not_replace_funnel_metrics": true
+  },
+  "sold_product_enrichment": {
+    "owner_package": "A6-EO-07-C",
+    "source": "Events API event_properties plus attribution relationships",
+    "target_fields": [
+      "product_id",
+      "sku",
+      "product_name",
+      "purchase_quantity",
+      "sales"
+    ],
+    "attribution_relationships": [
+      "campaign",
+      "campaign_message",
+      "flow",
+      "flow_message",
+      "flow_message_variation_when_identity_proven"
+    ],
+    "same_event_line_items_and_attribution_required": true,
+    "clicked_product_identification_required": false,
+    "clicked_product_inference_forbidden": true,
+    "advertised_vs_cross_sell_classification_required": false,
+    "reporting_api_is_canonical_conversion_total": true,
+    "events_api_enrichment_must_not_double_count": true,
+    "live_acceptance_required": true,
+    "product_ui_authorized": false
+  },
+  "attribution_and_finality": {
+    "hardcoded_five_days_forbidden": true,
+    "account_configured_windows_are_authority": true,
+    "documented_defaults_are_not_runtime_configuration": true,
+    "conversion_attribution_latency_hours_approximately": 3,
+    "late_message_interactions_can_update_within_window": true,
+    "attribution_setting_change_recalculation_hours_up_to": 36,
+    "attributed_conversion_owned_by_message_send_date": true,
+    "reconciliation_owned_by": "A6-EO-05",
+    "exact_window_retrieval_or_explicit_safe_configuration_required": true
+  },
+  "zero_and_missing": {
+    "explicit_numeric_zero": "zero",
+    "missing_report_row": "absent",
+    "provider_null": "null",
+    "absent_or_null_becomes_numeric_zero": false,
+    "failed_or_partial_attempt_publishable": false
+  },
+  "quota_and_execution": {
+    "campaign_values_report_limit_observed": {
+      "per_second": 1,
+      "per_minute": 2,
+      "per_day": 225
+    },
+    "request_per_message_forbidden": true,
+    "bulk_grouped_reports_required": true,
+    "campaign_series_available": false,
+    "flow_series_available": true,
+    "custom_timeframe_max_days": 366,
+    "pagination_complete_before_publish": true,
+    "retry_429_honors_retry_after": true,
+    "bounded_backoff_and_quota_planner_required": true
+  },
+  "cost": {
+    "email_contract_reference": "legacy R7-B5 accepted allocation decision, to be re-expressed in clean runtime implementation",
+    "email_daily_cost_formula": "estimated_30_day_email_spend / 30",
+    "email_allocation_weight": "daily_campaign_message_and_flow_message_recipients",
+    "sms_native_fields": [
+      "text_message_spend",
+      "text_message_credit_usage_amount",
+      "text_message_roi"
+    ],
+    "sms_null_before_supported_period_or_contracted_plan_is_not_zero": true,
+    "unsupported_channel_cost_is_not_zero": true
+  },
+  "raw_evidence": {
+    "private": true,
+    "bounded": true,
+    "sanitized": true,
+    "content_hashed": true,
+    "reporting_request_identity_required": true,
+    "event_product_enrichment_reference_required": true,
+    "excluded": [
+      "tokens",
+      "authorization_headers",
+      "secrets",
+      "emails",
+      "phone_numbers",
+      "profile_person_data",
+      "unbounded_response_bodies"
+    ]
+  },
+  "live_evidence_gate": [
+    "provider_verified_account_discovery",
+    "campaign_to_campaign_message_structure",
+    "flow_to_flow_action_to_flow_message_structure",
+    "mapped_metric_ids_and_shopify_provenance",
+    "reporting_values_for_delivered_unique_click_and_three_conversion_metrics",
+    "explicit_zero_vs_missing_vs_null",
+    "same_event_attribution_and_product_line_items_for_product_id_sku_name_quantity_and_sales",
+    "campaign_variation_GA_identity_after_2026-10-15",
+    "flow_variation_identity_and_persistence",
+    "quota_headers_or_429_retry_after_behavior",
+    "sanitized_raw_reference_hash_and_no_leakage"
+  ],
+  "mutations_authorized": {
+    "implementation": true,
+    "provider": false,
+    "oauth": false,
+    "secrets": false,
+    "database": false,
+    "vercel": false,
+    "deployment": false,
+    "dataset": false
+  },
+  "authoritative_sources": {
+    "reporting_overview": "https://developers.klaviyo.com/en/reference/reporting_api_overview",
+    "campaign_values": "https://developers.klaviyo.com/en/reference/query_campaign_values",
+    "flow_values": "https://developers.klaviyo.com/en/reference/query_flow_values",
+    "flow_series": "https://developers.klaviyo.com/en/reference/query_flow_series",
+    "mapped_metrics": "https://developers.klaviyo.com/en/reference/get_mapped_metrics",
+    "events": "https://developers.klaviyo.com/en/reference/get_events",
+    "account": "https://developers.klaviyo.com/en/reference/get_account",
+    "shopify_event_data": "https://help.klaviyo.com/hc/en-us/articles/115005080447",
+    "event_variables": "https://help.klaviyo.com/hc/en-us/articles/115002779071",
+    "attribution": "https://help.klaviyo.com/hc/en-us/articles/1260804504250",
+    "conversion_attribution": "https://help.klaviyo.com/hc/en-us/articles/115005248128",
+    "campaign_variations_beta": "https://developers.klaviyo.com/en/reference/get_variations_for_campaign_message_beta"
+  },
+  "product_owner_start_brief_acceptance": {
+    "status": "accepted",
+    "accepted_at": "2026-10-10",
+    "evidence": "chat_explicit_acceptance"
+  },
+  "implementation": {
+    "status": "not_started",
+    "live_provider_calls": false,
+    "secrets_read_or_created": false,
+    "database_mutation": false,
+    "vercel_or_deployment_mutation": false
+  }
+}

@@ -1,0 +1,288 @@
+{
+  "contract_id": "eo-04c-google-ads-adapter-start-brief-v1",
+  "version": "1.0.0",
+  "status": "Start_brief_accepted_repository_implementation_pending",
+  "checked_at": "2026-10-10",
+  "parent": "A6-EO-04",
+  "package": "A6-EO-04-C",
+  "objective": "Freeze the current official Google Ads account authority, Standard and Performance Max hierarchy, ten canonical Funnel metric mappings, conversion semantics, time/currency, paging, quota, error and product/cart-data evidence boundaries before repository implementation.",
+  "depends_on": {
+    "package": "A6-EO-04-A",
+    "status": "Accepted"
+  },
+  "authority": {
+    "commerce_scope": "verified_installed_shopify_store_and_active_installation_generation",
+    "reporting_accounts": {
+      "minimum": 1,
+      "maximum": 3,
+      "type": "provider_verified_advertiser_serving_account",
+      "customer_manager_must_be_false": true
+    },
+    "manager_account_selectable": false,
+    "manager_account_reporting_eligible": false,
+    "manager_access_path_may_be_retained_as": "login_customer_id_only",
+    "browser_account_identity_is_authority": false,
+    "merchant_selectable_reporting_store": false,
+    "provider_account_can_change_installed_shop": false,
+    "ambiguous_cross_store_rows_publishable": false
+  },
+  "api": {
+    "implementation_baseline": "v25",
+    "v26_recheck_required_before_repository_or_live_implementation_if_released": true,
+    "official_node_client_available": false,
+    "planned_transport": "direct_REST_with_strict_contract",
+    "oauth_scope": "https://www.googleapis.com/auth/adwords",
+    "offline_access_required": true,
+    "developer_token_required": false,
+    "developer_token_sunset_date": "2026-09-09",
+    "access_level_authority": "Google_Cloud_project_owning_OAuth_credentials"
+  },
+  "hierarchy": {
+    "standard": [
+      "advertiser_account",
+      "campaign",
+      "ad_group",
+      "ad",
+      "source_date"
+    ],
+    "performance_max": [
+      "advertiser_account",
+      "campaign",
+      "asset_group",
+      "source_date"
+    ],
+    "performance_max_individual_ad_performance_available": false,
+    "synthetic_ad_leaf_for_performance_max_forbidden": true
+  },
+  "canonical_mapping": {
+    "impression": {
+      "source": "metrics.impressions",
+      "status": "supported_when_returned"
+    },
+    "ad_click": {
+      "source": "metrics.clicks",
+      "status": "supported_when_returned",
+      "session_equivalent": false
+    },
+    "session": {
+      "source": null,
+      "status": "unsupported"
+    },
+    "spend_value": {
+      "source": "metrics.cost_micros",
+      "transform": "divide_by_1000000",
+      "status": "supported_when_returned"
+    },
+    "add_to_cart": {
+      "category": "ADD_TO_CART",
+      "metric": "metrics.all_conversions"
+    },
+    "add_to_cart_value": {
+      "category": "ADD_TO_CART",
+      "metric": "metrics.all_conversions_value"
+    },
+    "checkout": {
+      "category": "BEGIN_CHECKOUT",
+      "metric": "metrics.all_conversions"
+    },
+    "checkout_value": {
+      "category": "BEGIN_CHECKOUT",
+      "metric": "metrics.all_conversions_value"
+    },
+    "purchase": {
+      "category": "PURCHASE",
+      "metric": "metrics.all_conversions"
+    },
+    "purchase_value": {
+      "category": "PURCHASE",
+      "metric": "metrics.all_conversions_value"
+    }
+  },
+  "conversion_semantics": {
+    "primary_only_metrics": [
+      "metrics.conversions",
+      "metrics.conversions_value"
+    ],
+    "canonical_funnel_metrics": [
+      "metrics.all_conversions",
+      "metrics.all_conversions_value"
+    ],
+    "reason": "Funnel actions may be secondary and therefore absent from the primary Conversions column.",
+    "blind_all_conversions_sum_forbidden": true,
+    "required_segments": [
+      "segments.conversion_action",
+      "segments.conversion_action_category",
+      "segments.conversion_action_name",
+      "segments.conversion_attribution_event_type"
+    ],
+    "attribution_event_types": [
+      "INTERACTION",
+      "ENGAGED_VIEW",
+      "IMPRESSION",
+      "UNKNOWN",
+      "UNSPECIFIED"
+    ],
+    "action_identity_and_attribution_type_preserved": true
+  },
+  "zero_and_missing": {
+    "explicit_provider_numeric_zero": "zero",
+    "successful_segmented_response_without_row": "absent_until_query_completeness_and_scope_prove_real_zero",
+    "unsupported_field": "unsupported",
+    "missing_conversion_configuration": "account_configuration_missing",
+    "all_selected_metrics_zero_rows_may_be_omitted": true,
+    "absent_or_empty_becomes_numeric_zero": false,
+    "failed_or_partial_attempt_publishable": false
+  },
+  "time_currency": {
+    "source_timezone": "customer.time_zone",
+    "source_currency": "customer.currency_code",
+    "source_date": "segments.date_in_customer_timezone",
+    "default_conversion_reporting_date": "ad_interaction_date",
+    "conversion_occurrence_evidence": [
+      "metrics.all_conversions_by_conversion_date",
+      "metrics.all_conversions_value_by_conversion_date"
+    ],
+    "dataset_primary_date_semantics": "interaction_date_for_Google_Ads_Manager_comparability",
+    "installed_shop_business_date_normalization_owner": "A6-EO-05",
+    "adapter_fx_allowed": false
+  },
+  "paging_quota_error": {
+    "search_page_size_max": 10000,
+    "next_page_token_opaque": true,
+    "same_exact_query_required_for_next_page": true,
+    "page_token_approximate_ttl_hours": 2,
+    "valid_next_page_requests_additional_operation_cost": false,
+    "large_result_transport": "SearchStream",
+    "grpc_response_limit_mb": 64,
+    "request_id_evidence_required": true,
+    "bounded_retry_statuses": [
+      "UNAVAILABLE",
+      "DEADLINE_EXCEEDED",
+      "INTERNAL",
+      "UNKNOWN",
+      "ABORTED"
+    ],
+    "resource_exhausted_behavior": "wait_reduce_rate_and_apply_bounded_retry_policy",
+    "never_blind_retry": [
+      "authentication",
+      "revoked_token",
+      "permission",
+      "validation",
+      "unsupported_field",
+      "malformed_query",
+      "deterministic_account_scope_failure"
+    ]
+  },
+  "freshness_finality": {
+    "click_impression_cost_slo": "approximately_1_hour",
+    "google_ads_last_click_conversion_typical_delay": "approximately_3_hours",
+    "google_ads_non_last_click_conversion_typical_delay": "up_to_15_hours",
+    "ga_imported_last_click_typical_delay": "approximately_12_hours",
+    "ga_imported_other_models_typical_delay": "approximately_24_hours",
+    "conversion_window": "per_conversion_action_1_to_90_days_depending_on_source",
+    "single_fixed_google_finality_window_allowed": false,
+    "reconciliation_owner": "A6-EO-05"
+  },
+  "product_cart_data": {
+    "owner_package": "A6-EO-07-C",
+    "capability_prerequisite": "conversions_with_cart_data_implemented",
+    "sold_product_fields": [
+      "segments.product_sold_item_id",
+      "segments.product_sold_title"
+    ],
+    "purchased_cart_metrics": [
+      "metrics.units_sold",
+      "metrics.revenue_micros",
+      "metrics.gross_profit_micros"
+    ],
+    "cross_sell_metrics": [
+      "metrics.cross_sell_units_sold",
+      "metrics.cross_sell_revenue_micros",
+      "metrics.cross_sell_gross_profit_micros"
+    ],
+    "clicked_and_sold_product_dimensions_together_for_shopping_click_attribution": true,
+    "documented_cart_data_segmenting_resources": [
+      "campaign",
+      "ad_group"
+    ],
+    "individual_standard_ad_sold_product_mapping_guaranteed": false,
+    "performance_max_individual_ad_exists": false,
+    "performance_max_advertised_product_routes": [
+      "shopping_performance_view",
+      "asset_group_product_group_view"
+    ],
+    "advertised_product_performance_is_not_sold_basket_cross_sell_proof": true,
+    "merchant_item_id_assumed_shopify_sku_or_variant": false,
+    "deterministic_merchant_item_to_installed_shop_product_variant_mapping_required": true,
+    "deeper_official_field_compatibility_and_live_query_required": true,
+    "exact_live_fixtures": [
+      "clicked_product_not_purchased_with_cross_sell",
+      "clicked_product_purchased_with_cross_sell"
+    ],
+    "product_ui_authorized": false
+  },
+  "live_evidence_gate": [
+    "provider_verified_account_discovery_and_manager_exclusion",
+    "one_to_three_advertiser_account_authority",
+    "standard_structure_to_ad",
+    "performance_max_structure_to_asset_group_without_fake_ad",
+    "ten_metric_query_shapes_and_conversion_action_categories",
+    "zero_absent_and_missing_configuration_behavior",
+    "customer_timezone_currency_and_interaction_date_behavior",
+    "complete_or_explicitly_single_page_response",
+    "cart_data_field_compatibility_and_deepest_grain_if_available",
+    "sanitized_raw_reference_hash_and_no_leakage"
+  ],
+  "mutations_authorized": {
+    "documentation": true,
+    "implementation": false,
+    "provider": false,
+    "oauth": false,
+    "secrets": false,
+    "database": false,
+    "vercel": false,
+    "deployment": false,
+    "dataset": false
+  },
+  "out_of_scope": [
+    "live_Google_Ads_calls",
+    "OAuth_or_secret_mutation",
+    "Dataset_V2_persistence",
+    "scheduler_reconciliation_and_finality",
+    "FX_conversion",
+    "Ad_Analysis_product_UI",
+    "product_cross_sell_acceptance",
+    "provider_review_submission"
+  ],
+  "authoritative_sources": {
+    "account_types": "https://developers.google.com/google-ads/api/docs/concepts/account-types",
+    "account_hierarchy": "https://developers.google.com/google-ads/api/docs/account-management/get-account-hierarchy",
+    "call_structure": "https://developers.google.com/google-ads/api/docs/concepts/call-structure",
+    "paging": "https://developers.google.com/google-ads/api/docs/reporting/paging",
+    "segmentation": "https://developers.google.com/google-ads/api/docs/reporting/segmentation",
+    "zero_metrics": "https://developers.google.com/google-ads/api/docs/reporting/zero-metrics",
+    "conversion_reporting": "https://developers.google.com/google-ads/api/docs/conversions/reporting",
+    "conversion_categories": "https://developers.google.com/google-ads/api/reference/rpc/v25/ConversionActionCategoryEnum.ConversionActionCategory",
+    "pmax_reporting": "https://developers.google.com/google-ads/api/performance-max/asset-group-reporting",
+    "cart_data_sales_view": "https://developers.google.com/google-ads/api/fields/v25/cart_data_sales_view",
+    "pmax_retail_reporting": "https://developers.google.com/google-ads/api/performance-max/retail-reporting",
+    "quota": "https://developers.google.com/google-ads/api/docs/best-practices/quotas",
+    "errors": "https://developers.google.com/google-ads/api/docs/best-practices/understand-api-errors",
+    "data_freshness": "https://support.google.com/google-ads/answer/2544985",
+    "conversion_windows": "https://support.google.com/google-ads/answer/3123169",
+    "developer_token_sunset": "https://developers.google.com/google-ads/api/docs/api-policy/developer-token",
+    "versioning": "https://developers.google.com/google-ads/api/docs/concepts/versioning"
+  },
+  "product_owner_start_brief_acceptance": {
+    "status": "accepted",
+    "accepted_at": "2026-10-10",
+    "evidence": "chat_explicit_instruction_to_record_and_start_Klaviyo"
+  },
+  "acceptance": [
+    "repository_implementation_matches_contract",
+    "deterministic_fixtures_pass",
+    "separately_authorized_live_evidence_passes",
+    "required_CI_passes",
+    "explicit_product_owner_closure"
+  ]
+}

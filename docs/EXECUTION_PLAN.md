@@ -134,6 +134,45 @@ CI enforcement: `tests/eo-04a-common-adapter-start-brief.test.js`
 - Meta-specific implementation remains blocked because its current official Graph rate-limit/error pages returned HTTP 429 during the control check; EO-04-B must re-open them successfully before code.
 
 
+## EO-04-B Meta adapter analyst start brief — 10 October 2026
+
+Binding analyst brief: `docs/EO_04B_META_ADAPTER_START_BRIEF.md`  
+Executable start contract: `contracts/eo-04b-meta-adapter-start-brief-v1.json`  
+CI enforcement: `tests/eo-04b-meta-adapter-start-brief.test.js`
+
+- The product owner accepted the EO-04-B analyst brief on 10 October 2026. Repository implementation passed GitHub Actions run `38063777629` with 174/174 tests, TypeScript verification and preview build. Controlled live evidence remains separately gated and unauthorized.
+- Canonical hierarchy is Ad Account → Campaign → Ad Set → Ad → business date.
+- `ad_click` remains `PENDING_LIVE_FIELD_EVIDENCE`: `outbound_clicks` is the leading candidate, but `clicks`, `inline_link_clicks`, `website_clicks` and `outbound_clicks` must be compared on the same real row before final mapping.
+- A missing `actions` type or `action_values: []` is absent/empty, never numeric zero. Standard and omni aliases are never summed.
+- Attribution remains `PENDING_REAL_CONVERSION_EVIDENCE` because current official Meta pages conflict about unified attribution behavior. Exact Ads Manager parity is not claimed without a controlled real-conversion comparison.
+- Meta pagination follows opaque `paging.next`; an empty page with `next` continues, and partial sync/async results never publish.
+- Converted-product quantity/value discovery is preserved for A6-EO-07-C. Generic `product_id` is not purchase proof, Meta `retailer_id` is not presumed Shopify SKU, and deterministic catalog-to-installed-shop mapping plus both exact earring fixtures are mandatory.
+- Repository implementation: `app/lib/providers/meta-adapter.server.js`, its type boundary and deterministic tests. No Meta call, secret, OAuth, database, Vercel, deployment or Dataset V2 mutation was performed.
+
+## Pending cross-cutting decision: official provider documentation watch — 10 October 2026
+
+Binding decision record: `docs/A6_PROVIDER_OFFICIAL_DOCUMENTATION_WATCH_DECISION.md`
+
+- Meta, Google Ads, Klaviyo and Shopify official developer sources will receive a future registry and change-watch capability.
+- The existing mandatory current-document gate remains binding before every provider implementation.
+- A future scheduled monitor will stay silent on no-change runs and will emit only meaningful, impact-classified findings; it cannot autonomously change code, contracts, schemas, provider requests or production.
+- `EO-GOV-01` is a proposed identifier only. It is not an active parallel package and does not change the A6-EO single-line execution rule or interrupt EO-04-B.
+- Exact scheduling and implementation placement require a later explicit product-owner planning decision.
+
+
+## Pending EO-07-C finding: Meta converted-product evidence — 10 October 2026
+
+Official Meta v26.0 sources checked on 10 October 2026:
+
+- `converted_product_quantity` and `converted_product_value` are ad-driven purchased-product quantity/value metrics recorded by the merchant pixel or app SDK for a given converted product ID.
+- The required converted-product-ID breakdown is not equivalent to generic `product_id`; generic `product_id` may describe a product involved in an impression, click or action.
+- Insights does not directly provide a trustworthy Shopify SKU or display name with these metrics. A verified converted product ID must be resolved through Meta Catalog Product Item, where `retailer_id`, `name`, `image_url`, `url` and group identity may be available, and then deterministically mapped to the installed Shopify shop product/variant.
+- `retailer_id` is a merchant/catalog item identifier and must not be presumed to equal Shopify SKU without live mapping evidence.
+- Meta documents `action_converted_product_id` as limited availability for Collaborative Ads. Therefore product/cross-sell support remains provider/campaign-specific and pending live proof.
+- EO-07-C must test both exact earring fixtures: clicked product not purchased, and clicked product purchased, including non-advertised basket products. Product rows remain unsupported/unknown unless the provider returns the relationship and the catalog-to-Shopify mapping is deterministic.
+- This finding authorizes no EO-07 implementation and does not advance package status.
+
+
 ## Closed package: EO-03 / Next ready package: EO-04
 
 - **EO-03-A — Accepted:** Workspace/install-generation-bound OAuth transaction state machine, exact callback allowlist, single-use state claim and live private database boundary passed repository, database and product-owner gates.
@@ -267,3 +306,40 @@ EO-02-C internal caller kodu tek başına canlı tetikleyici değildir. `docs/EO
 - Product-owner acceptance and PR #65 merge authorization were explicit.
 - EO-04-B is now the active start gate: current official Meta documentation and an analyst brief must be accepted before provider-specific code.
 - No provider secret, live API call, database mutation, Vercel mutation or deployment is authorized by this closure.
+
+
+## EO-04-C Google Ads official-document decision — 10 October 2026
+
+Binding analyst brief: `docs/EO_04C_GOOGLE_ADS_ADAPTER_START_BRIEF.md`  
+Executable contract: `contracts/eo-04c-google-ads-adapter-start-brief-v1.json`  
+CI enforcement: `tests/eo-04c-google-ads-adapter-start-brief.test.js`
+
+- The product owner accepted the Google documentation decision. Repository adapter implementation, OAuth, secrets and live API access have not started.
+- Selectable Google Reporting Accounts are one to three provider-verified advertiser/serving accounts with `customer.manager=false`. MCC/Manager accounts are access paths only and cannot be selected.
+- Standard campaigns stop truthfully at Ad; Performance Max stops at Asset Group. A synthetic PMax Ad leaf is forbidden.
+- Funnel conversion categories use action-segmented `all_conversions` and `all_conversions_value` so secondary Add to Cart/Checkout actions do not disappear; attribution-event type remains explicit.
+- Missing segmented rows are not automatically zero. Google can omit all-zero rows.
+- Source date, timezone and currency come from the Google Ads customer. Interaction-date reporting is primary for Ads Manager comparability; EO-05 owns normalization, FX, maturity and reconciliation.
+- Google retired the developer-token requirement on 9 September 2026. `GOOGLE_ADS_DEVELOPER_TOKEN` is not introduced as a required clean-repository secret.
+- Cart data can expose sold products and cross-sell evidence when implemented, but the documented `cart_data_sales_view` segmenting grain is Campaign/Ad Group. **Ad-level sold-product attribution remains a deeper official-field-compatibility and controlled-live-query gate.** PMax advertised-product reporting is not automatically sold-basket cross-sell proof.
+- EO-04-C remains open at repository implementation and separately authorized live evidence. EO-04-B also remains open at its controlled-live-evidence gate.
+- In accordance with the accepted read-all-providers-first sequence, EO-04-D Klaviyo official-document discovery is now active. No Klaviyo mutation is authorized by this status change.
+
+
+## EO-04-D Klaviyo official-document decision — 10 October 2026
+
+Binding analyst brief: `docs/EO_04D_KLAVIYO_ADAPTER_START_BRIEF.md`  
+Executable contract: `contracts/eo-04d-klaviyo-adapter-start-brief-v1.json`  
+CI enforcement: `tests/eo-04d-klaviyo-adapter-start-brief.test.js`
+
+- The product owner accepted the current official-document decision. Repository adapter implementation, OAuth, secrets and live API access have not started.
+- Klaviyo Reporting API is canonical for Funnel/UI parity; Query Metric Aggregates cannot silently replace it because its event-time grouping differs from message-send-date attribution.
+- Campaign performance stops at Campaign Message and Flow performance stops at Flow Message. Flow Action is structural metadata, not a synthetic performance row.
+- Campaign Variation waits for the scheduled 15 October 2026 GA and stable identity revalidation. Flow Variation waits for identity, persistence and controlled-live evidence.
+- Funnel mapping is delivered → impression, unique clicks → ad_click, mapped Added to Cart/Started Checkout/Revenue conversions → count and value. Missing rows and nulls are not zero.
+- EO-07-C may show product ID, SKU, product name, purchase quantity and Sales under an attributed message/accepted variation only after the same event proves line items and attribution. Identifying the clicked product or classifying cross-sell is not required and must not be inferred.
+- Reporting totals remain canonical; Events API product enrichment cannot create duplicate purchase facts.
+- A five-day attribution window is never hardcoded. EO-05 owns configurable reconciliation/finality, including late attribution and attribution-setting recalculation behavior.
+- Email cost keeps the accepted daily recipient-weighted Campaign Message + Flow Message allocation. Native SMS spend is used only when supported; unsupported/null MMS, WhatsApp or contracted-plan cost is not zero.
+- Reporting quotas require grouped bulk calls and a quota planner; one request per message is forbidden.
+- No provider, OAuth, secret, database, Vercel, deployment, Dataset V2 or product-UI mutation is authorized by this decision.

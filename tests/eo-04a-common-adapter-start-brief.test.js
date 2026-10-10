@@ -79,7 +79,10 @@ test("EO-04-A exposes complete synthetic acceptance and secret gates", async () 
 
   assert.equal(contract.secret_gate.inventory_acceptance_required_before_provider_secret, true);
   assert.equal(contract.secret_gate.provider_key_recovery_required_before_first_real_provider_authorization, true);
-  assert.equal(contract.secret_gate.production_credentials_reused_in_nonproduction, false);\n  assert.equal(contract.product_owner_start_brief_acceptance.status, "accepted");\n  assert.equal(contract.implementation.status, "complete_acceptance_pending");\n  assert.equal(contract.acceptance_state.next_provider_child_authorized, false);
+  assert.equal(contract.secret_gate.production_credentials_reused_in_nonproduction, false);
+  assert.equal(contract.product_owner_start_brief_acceptance.status, "accepted");
+  assert.equal(contract.implementation.status, "complete_acceptance_pending");
+  assert.equal(contract.acceptance_state.next_provider_child_authorized, false);
 });
 
 test("Execution Plan and master contract activate only the EO-04-A brief gate", async () => {
@@ -103,5 +106,7 @@ test("Execution Plan and master contract activate only the EO-04-A brief gate", 
   assert.equal(master.current_gate, "A6-EO-04-A_implementation_CI_and_product_owner_acceptance");
   assert.equal(eo04.status, "Active");
   assert.equal(eo04a.status, "Active_implementation_complete_acceptance_pending");
-  assert.equal(eo04a.implementation_started, true);\n  assert.equal(eo04a.implementation_complete, true);\n  assert.equal(eo04a.final_product_owner_acceptance, false);
+  assert.equal(eo04a.implementation_started, true);
+  assert.equal(eo04a.implementation_complete, true);
+  assert.equal(eo04a.final_product_owner_acceptance, false);
 });

@@ -324,3 +324,22 @@ CI enforcement: `tests/eo-04c-google-ads-adapter-start-brief.test.js`
 - Cart data can expose sold products and cross-sell evidence when implemented, but the documented `cart_data_sales_view` segmenting grain is Campaign/Ad Group. **Ad-level sold-product attribution remains a deeper official-field-compatibility and controlled-live-query gate.** PMax advertised-product reporting is not automatically sold-basket cross-sell proof.
 - EO-04-C remains open at repository implementation and separately authorized live evidence. EO-04-B also remains open at its controlled-live-evidence gate.
 - In accordance with the accepted read-all-providers-first sequence, EO-04-D Klaviyo official-document discovery is now active. No Klaviyo mutation is authorized by this status change.
+
+
+## EO-04-D Klaviyo official-document decision — 10 October 2026
+
+Binding analyst brief: `docs/EO_04D_KLAVIYO_ADAPTER_START_BRIEF.md`  
+Executable contract: `contracts/eo-04d-klaviyo-adapter-start-brief-v1.json`  
+CI enforcement: `tests/eo-04d-klaviyo-adapter-start-brief.test.js`
+
+- The product owner accepted the current official-document decision. Repository adapter implementation, OAuth, secrets and live API access have not started.
+- Klaviyo Reporting API is canonical for Funnel/UI parity; Query Metric Aggregates cannot silently replace it because its event-time grouping differs from message-send-date attribution.
+- Campaign performance stops at Campaign Message and Flow performance stops at Flow Message. Flow Action is structural metadata, not a synthetic performance row.
+- Campaign Variation waits for the scheduled 15 October 2026 GA and stable identity revalidation. Flow Variation waits for identity, persistence and controlled-live evidence.
+- Funnel mapping is delivered → impression, unique clicks → ad_click, mapped Added to Cart/Started Checkout/Revenue conversions → count and value. Missing rows and nulls are not zero.
+- EO-07-C may show product ID, SKU, product name, purchase quantity and Sales under an attributed message/accepted variation only after the same event proves line items and attribution. Identifying the clicked product or classifying cross-sell is not required and must not be inferred.
+- Reporting totals remain canonical; Events API product enrichment cannot create duplicate purchase facts.
+- A five-day attribution window is never hardcoded. EO-05 owns configurable reconciliation/finality, including late attribution and attribution-setting recalculation behavior.
+- Email cost keeps the accepted daily recipient-weighted Campaign Message + Flow Message allocation. Native SMS spend is used only when supported; unsupported/null MMS, WhatsApp or contracted-plan cost is not zero.
+- Reporting quotas require grouped bulk calls and a quota planner; one request per message is forbidden.
+- No provider, OAuth, secret, database, Vercel, deployment, Dataset V2 or product-UI mutation is authorized by this decision.

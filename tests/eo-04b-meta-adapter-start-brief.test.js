@@ -60,7 +60,7 @@ test("Execution Plan and master retain EO-04-B live gate while documentation dis
 
   assert.equal(master.current_active_parent, "A6-EO-04");
   assert.equal(master.current_active_child, "A6-EO-04-D");
-  assert.equal(master.current_gate, "A6-EO-04-D_current_official_documentation_and_start_brief");
+  assert.equal(master.current_gate, "A6-EO-04-D_start_brief_accepted_repository_implementation_pending");
   assert.equal(eo04.status, "Active");
   assert.equal(eo04b.status, "Repository_CI_PASS_controlled_live_evidence_pending");
   assert.equal(eo04b.implementation_started, true);

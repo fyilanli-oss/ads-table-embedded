@@ -1,0 +1,84 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import test from "node:test";
+
+const readJson = async (path) => JSON.parse(await readFile(path, "utf8"));
+
+test("EO-04-A start brief freezes truthful common adapter behavior", async () => {
+  const contract = await readJson("contracts/eo-04a-common-adapter-start-brief-v1.json");
+
+  assert.equal(contract.status, "Ready_for_product_owner_acceptance");
+  assert.equal(contract.authority.merchant_selectable_reporting_store, false);
+  assert.equal(contract.authority.provider_account_can_change_workspace, false);
+  assert.equal(contract.zero_rule, "only_explicit_provider_numeric_zero_becomes_zero");
+  assert.equal(contract.pagination.partial_publish_as_complete, false);
+  assert.equal(contract.pagination.provider_cursor_is_opaque, true);
+  assert.equal(contract.retry.retry_only_documented_transient_conditions, true);
+  assert.equal(contract.raw_evidence.stored_in_application_logs, false);
+  assert.equal(contract.store_scope.silent_cross_store_mix_forbidden, true);
+  assert.equal(contract.secret_gate.creates_secret, false);
+  assert.equal(contract.mutations_authorized.provider, false);
+  assert.equal(contract.mutations_authorized.database, false);
+
+  for (const state of [
+    "zero",
+    "absent",
+    "unsupported",
+    "ambiguous_store_scope",
+    "partial",
+    "failed",
+  ]) {
+    assert.ok(contract.support_states.includes(state));
+  }
+
+  assert.equal(
+    contract.provider_baseline.meta.provider_implementation_blocked_until_current_official_docs_readable,
+    true,
+  );
+});
+
+test("EO-04-A exposes complete synthetic acceptance and secret gates", async () => {
+  const contract = await readJson("contracts/eo-04a-common-adapter-start-brief-v1.json");
+
+  for (const scenario of [
+    "explicit_zero",
+    "absent_field",
+    "multi_page_complete",
+    "cursor_loop",
+    "rate_limit_then_success",
+    "authentication_failure_no_retry",
+    "partial_page_failure_not_publishable",
+    "ambiguous_store_scope",
+    "secret_redaction",
+  ]) {
+    assert.ok(contract.synthetic_acceptance_cases.includes(scenario));
+  }
+
+  assert.equal(contract.secret_gate.inventory_acceptance_required_before_provider_secret, true);
+  assert.equal(contract.secret_gate.provider_key_recovery_required_before_first_real_provider_authorization, true);
+  assert.equal(contract.secret_gate.production_credentials_reused_in_nonproduction, false);
+});
+
+test("Execution Plan and master contract activate only the EO-04-A brief gate", async () => {
+  const plan = await readFile("docs/EXECUTION_PLAN.md", "utf8");
+  const master = await readJson("contracts/a6-eo-implementation-master-v1.json");
+  const eo04 = master.packages.find((item) => item.id === "A6-EO-04");
+  const eo04a = eo04.children.find((item) => item.id === "A6-EO-04-A");
+
+  for (const value of [
+    "docs/EO_04A_COMMON_ADAPTER_START_BRIEF.md",
+    "contracts/eo-04a-common-adapter-start-brief-v1.json",
+    "tests/eo-04a-common-adapter-start-brief.test.js",
+    "Only an explicit provider zero becomes zero",
+  ]) {
+    assert.match(plan, new RegExp(value.replace(/[.*+?^$\{\}()|[\]\\]/g, "\\$&")));
+  }
+
+  assert.equal(master.schema_version, "1.18.0");
+  assert.equal(master.current_active_parent, "A6-EO-04");
+  assert.equal(master.current_active_child, "A6-EO-04-A");
+  assert.equal(master.current_gate, "A6-EO-04-A_start_brief_product_owner_acceptance");
+  assert.equal(eo04.status, "Active");
+  assert.equal(eo04a.status, "Active_start_brief_acceptance_pending");
+  assert.equal(eo04a.implementation_started, false);
+});

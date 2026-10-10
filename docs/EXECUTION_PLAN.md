@@ -114,6 +114,23 @@ Executable contract: `contracts/shopify/a6-eo-07-three-surface-ui-product-freeze
 
 EO-02-A business tablo veya veri kurmaz, runtime credential'ı etkinleştirmez, canlı token/veri taşımaz, Vercel environment değiştirmez ve legacy Supabase projesine dokunmaz.
 
+
+## EO-04-A common adapter start brief — 10 October 2026
+
+Binding analyst brief: `docs/EO_04A_COMMON_ADAPTER_START_BRIEF.md`  
+Executable start contract: `contracts/eo-04a-common-adapter-start-brief-v1.json`  
+CI enforcement: `tests/eo-04a-common-adapter-start-brief.test.js`
+
+- EO-04 is active only at the EO-04-A start-brief gate; common-adapter implementation has not started.
+- Installed Shopify Store remains immutable commerce authority. Provider account, domain, pixel, URL, UTM, click ID or campaign name cannot create or switch workspace/store scope.
+- Only an explicit provider zero becomes zero. Empty, absent, unsupported, permission-denied, ambiguous, provisional, partial and failed remain distinct states.
+- Pagination is opaque, bounded, idempotent and complete-before-publish; a missing page cannot become a complete snapshot.
+- Retry is bounded and limited to documented transient failures; rate-limit recovery metadata wins over guessed delays.
+- Raw evidence is private, bounded, sanitized and content-hashed; tokens, credentials and profile-level personal data are forbidden.
+- EO-04-A creates no provider secret and makes no live provider/API, database, Vercel or deployment mutation.
+- Meta-specific implementation remains blocked because its current official Graph rate-limit/error pages returned HTTP 429 during the control check; EO-04-B must re-open them successfully before code.
+
+
 ## Closed package: EO-03 / Next ready package: EO-04
 
 - **EO-03-A — Accepted:** Workspace/install-generation-bound OAuth transaction state machine, exact callback allowlist, single-use state claim and live private database boundary passed repository, database and product-owner gates.

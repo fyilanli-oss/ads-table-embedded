@@ -141,7 +141,7 @@ CI enforcement: `tests/eo-04a-common-adapter-start-brief.test.js`
 - **EO-03-C — Accepted:** Fresh provider-verified connected accounts and one canonical Meta/Google Reporting Account are bound beneath the immutable installed-Shopify-store authority. Klaviyo remains one Connected Account with no Reporting Account control. No merchant-selectable store scope exists.
 - With explicit approval, the EO-03-C base and corrective Supabase migrations were applied on 9 October 2026. Rollback-scoped synthetic runtime acceptance passed, cleanup is zero, Security Advisor findings are zero and EO-03-C introduced no unindexed-foreign-key finding. No provider API call, provider OAuth, Vercel mutation or production deploy occurred. The product owner explicitly closed EO-03-C on 9 October 2026; exact evidence is `docs/evidence/EO_03C_LIVE_ACCEPTANCE_2026-10-09.json`.
 - **EO-03-D — Accepted:** Reauthorization, atomic credential renewal, two-phase disconnect and same-canonical-connection reconnect passed the complete rollback-scoped live lifecycle scenario. All synthetic rows rolled back to zero, Security Advisor remained at zero, and no provider API/OAuth/Vercel/deploy mutation occurred. Durable evidence: `evidence/eo-03d-live-database-evidence-2026-10-09.json`.
-- **EO-03 — Accepted:** All four children are closed with explicit product-owner acceptance. **EO-04 — Active:** EO-04-A provider-neutral implementation and required CI are complete; explicit final product-owner acceptance remains open. No provider-specific or live API implementation has started.
+- **EO-03 — Accepted:** All four children are closed with explicit product-owner acceptance. **EO-04 — Active:** EO-04-A is Accepted. EO-04-B is at the current official-document and analyst-brief gate; no provider-specific or live API implementation has started.
 
 ## EO-03-C official provider baseline — 9 Ekim 2026
 
@@ -257,4 +257,13 @@ EO-02-C internal caller kodu tek başına canlı tetikleyici değildir. `docs/EO
 - Provider evidence is bounded, sanitized and content-hashed; secret and personal-data patterns are redacted.
 - Deterministic synthetic behavior is covered by `tests/eo-04a-common-adapter.test.js`.
 - No live provider call, secret read/write, database mutation, Vercel mutation or deployment occurs in EO-04-A.
-- GitHub Actions run `38049487145` passed 163/163 tests, TypeScript verification and preview build. Status is **implementation and CI complete; explicit final product-owner acceptance pending**. EO-04-B remains unauthorized until this gate closes.
+- GitHub Actions run `38049487145` passed 163/163 tests, TypeScript verification and preview build. The product owner explicitly accepted EO-04-A and authorized PR #65 merge on 10 October 2026. EO-04-B may begin only with its current official-document and analyst-brief gate; provider implementation and live mutation remain unauthorized.
+
+
+## 10 October 2026 — EO-04-A product-owner closure
+
+- EO-04-A common adapter contract is **Accepted**.
+- Closure covers the provider-neutral runtime, strict types, deterministic fake-provider acceptance and secret-free evidence policy.
+- Product-owner acceptance and PR #65 merge authorization were explicit.
+- EO-04-B is now the active start gate: current official Meta documentation and an analyst brief must be accepted before provider-specific code.
+- No provider secret, live API call, database mutation, Vercel mutation or deployment is authorized by this closure.

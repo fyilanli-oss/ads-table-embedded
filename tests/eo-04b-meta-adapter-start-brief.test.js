@@ -7,7 +7,7 @@ const readJson = async (path) => JSON.parse(await readFile(path, "utf8"));
 test("EO-04-B brief freezes truthful Meta mapping without authorizing implementation", async () => {
   const contract = await readJson("contracts/eo-04b-meta-adapter-start-brief-v1.json");
 
-  assert.equal(contract.status, "Ready_for_product_owner_acceptance");
+  assert.equal(contract.status, "Accepted_start_brief_repository_implementation_pending_CI");
   assert.equal(contract.authority.reporting_accounts.minimum, 1);
   assert.equal(contract.authority.reporting_accounts.maximum, 3);
   assert.equal(contract.authority.merchant_selectable_reporting_store, false);
@@ -20,7 +20,7 @@ test("EO-04-B brief freezes truthful Meta mapping without authorizing implementa
   assert.equal(contract.zero_and_missing.empty_action_values_array, "empty");
   assert.equal(contract.zero_and_missing.absent_or_empty_becomes_numeric_zero, false);
   assert.equal(contract.zero_and_missing.failed_or_partial_attempt_publishable, false);
-  assert.equal(contract.mutations_authorized.implementation, false);
+  assert.equal(contract.mutations_authorized.implementation, true);
   assert.equal(contract.mutations_authorized.provider, false);
   assert.equal(contract.mutations_authorized.database, false);
 });
@@ -60,9 +60,9 @@ test("Execution Plan and master keep EO-04-B at the analyst acceptance gate", as
 
   assert.equal(master.current_active_parent, "A6-EO-04");
   assert.equal(master.current_active_child, "A6-EO-04-B");
-  assert.equal(master.current_gate, "A6-EO-04-B_product_owner_analyst_brief_acceptance");
+  assert.equal(master.current_gate, "A6-EO-04-B_repository_CI");
   assert.equal(eo04.status, "Active");
-  assert.equal(eo04b.status, "Ready_product_owner_analyst_brief_acceptance");
-  assert.equal(eo04b.implementation_started, false);
+  assert.equal(eo04b.status, "Implementation_pending_CI");
+  assert.equal(eo04b.implementation_started, true);
   assert.equal(eo04b.live_mutation_authorized, false);
 });

@@ -306,3 +306,21 @@ EO-02-C internal caller kodu tek başına canlı tetikleyici değildir. `docs/EO
 - Product-owner acceptance and PR #65 merge authorization were explicit.
 - EO-04-B is now the active start gate: current official Meta documentation and an analyst brief must be accepted before provider-specific code.
 - No provider secret, live API call, database mutation, Vercel mutation or deployment is authorized by this closure.
+
+
+## EO-04-C Google Ads official-document decision — 10 October 2026
+
+Binding analyst brief: `docs/EO_04C_GOOGLE_ADS_ADAPTER_START_BRIEF.md`  
+Executable contract: `contracts/eo-04c-google-ads-adapter-start-brief-v1.json`  
+CI enforcement: `tests/eo-04c-google-ads-adapter-start-brief.test.js`
+
+- The product owner accepted the Google documentation decision. Repository adapter implementation, OAuth, secrets and live API access have not started.
+- Selectable Google Reporting Accounts are one to three provider-verified advertiser/serving accounts with `customer.manager=false`. MCC/Manager accounts are access paths only and cannot be selected.
+- Standard campaigns stop truthfully at Ad; Performance Max stops at Asset Group. A synthetic PMax Ad leaf is forbidden.
+- Funnel conversion categories use action-segmented `all_conversions` and `all_conversions_value` so secondary Add to Cart/Checkout actions do not disappear; attribution-event type remains explicit.
+- Missing segmented rows are not automatically zero. Google can omit all-zero rows.
+- Source date, timezone and currency come from the Google Ads customer. Interaction-date reporting is primary for Ads Manager comparability; EO-05 owns normalization, FX, maturity and reconciliation.
+- Google retired the developer-token requirement on 9 September 2026. `GOOGLE_ADS_DEVELOPER_TOKEN` is not introduced as a required clean-repository secret.
+- Cart data can expose sold products and cross-sell evidence when implemented, but the documented `cart_data_sales_view` segmenting grain is Campaign/Ad Group. **Ad-level sold-product attribution remains a deeper official-field-compatibility and controlled-live-query gate.** PMax advertised-product reporting is not automatically sold-basket cross-sell proof.
+- EO-04-C remains open at repository implementation and separately authorized live evidence. EO-04-B also remains open at its controlled-live-evidence gate.
+- In accordance with the accepted read-all-providers-first sequence, EO-04-D Klaviyo official-document discovery is now active. No Klaviyo mutation is authorized by this status change.

@@ -1,9 +1,9 @@
 {
-  "schema_version": "1.22.0",
+  "schema_version": "1.23.0",
   "contract_id": "a6-eo-implementation-master-v1",
   "title": "A6 EO single-track execution rule and integrated implementation package table",
   "effective_date": "2026-10-04",
-  "status": "EO-04_active_EO-04-B_repository_CI_PASS_live_evidence_pending",
+  "status": "EO-04_active_EO-04-C_start_brief_accepted_implementation_pending_EO-04-D_official_docs_active",
   "authority": {
     "execution_plan": "docs/EXECUTION_PLAN.md",
     "EO_GO": "contracts/a6-eo-f7-go-decision-v1.json",
@@ -633,12 +633,32 @@
         {
           "id": "A6-EO-04-C",
           "title": "Google Ads adapter",
-          "objective": "Standard Ad and Performance Max Asset Group hierarchy with raw structure evidence."
+          "objective": "Standard Ad and Performance Max Asset Group hierarchy with raw structure evidence.",
+          "status": "Start_brief_accepted_repository_implementation_pending",
+          "implementation_started": false,
+          "live_mutation_authorized": false,
+          "document": "docs/EO_04C_GOOGLE_ADS_ADAPTER_START_BRIEF.md",
+          "contract": "contracts/eo-04c-google-ads-adapter-start-brief-v1.json",
+          "ci_test": "tests/eo-04c-google-ads-adapter-start-brief.test.js",
+          "official_documentation_checked_at": "2026-10-10",
+          "product_owner_start_brief_accepted": true,
+          "accepted_start_brief_at": "2026-10-10",
+          "api_baseline": "v25",
+          "developer_token_required": false,
+          "standard_leaf": "ad",
+          "performance_max_leaf": "asset_group",
+          "cart_data_deepest_grain_status": "campaign_or_ad_group_documented_ad_level_requires_deeper_official_and_live_evidence",
+          "repository_implementation": "not_started",
+          "live_evidence_authorized": false
         },
         {
           "id": "A6-EO-04-D",
           "title": "Klaviyo adapter",
-          "objective": "Campaign/Message, Flow/Message, metrics, cost inputs and 15 October revalidation."
+          "objective": "Campaign/Message, Flow/Message, metrics, cost inputs and 15 October revalidation.",
+          "status": "Official_documentation_and_start_brief_active",
+          "implementation_started": false,
+          "live_mutation_authorized": false,
+          "official_documentation_checked_at": null
         },
         {
           "id": "A6-EO-04-E",
@@ -1001,8 +1021,8 @@
   "cutover_authorized": false,
   "legacy_deletion_authorized": false,
   "current_active_parent": "A6-EO-04",
-  "current_active_child": "A6-EO-04-B",
-  "current_gate": "A6-EO-04-B_controlled_live_evidence_authorization",
+  "current_active_child": "A6-EO-04-D",
+  "current_gate": "A6-EO-04-D_current_official_documentation_and_start_brief",
   "next_ready_child": null,
   "independent_packages": [
     {

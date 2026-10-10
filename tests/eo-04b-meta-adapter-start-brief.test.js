@@ -42,7 +42,7 @@ test("EO-04-B freezes completeness, attribution and converted-product gates", as
   assert.equal(contract.converted_product_route.exact_live_fixtures.length, 2);
 });
 
-test("Execution Plan and master keep EO-04-B at the analyst acceptance gate", async () => {
+test("Execution Plan and master retain EO-04-B live gate while documentation discovery advances", async () => {
   const plan = await readFile("docs/EXECUTION_PLAN.md", "utf8");
   const master = await readJson("contracts/a6-eo-implementation-master-v1.json");
   const eo04 = master.packages.find((item) => item.id === "A6-EO-04");
@@ -59,8 +59,8 @@ test("Execution Plan and master keep EO-04-B at the analyst acceptance gate", as
   }
 
   assert.equal(master.current_active_parent, "A6-EO-04");
-  assert.equal(master.current_active_child, "A6-EO-04-B");
-  assert.equal(master.current_gate, "A6-EO-04-B_controlled_live_evidence_authorization");
+  assert.equal(master.current_active_child, "A6-EO-04-D");
+  assert.equal(master.current_gate, "A6-EO-04-D_current_official_documentation_and_start_brief");
   assert.equal(eo04.status, "Active");
   assert.equal(eo04b.status, "Repository_CI_PASS_controlled_live_evidence_pending");
   assert.equal(eo04b.implementation_started, true);

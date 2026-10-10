@@ -140,7 +140,7 @@ Binding analyst brief: `docs/EO_04B_META_ADAPTER_START_BRIEF.md`
 Executable start contract: `contracts/eo-04b-meta-adapter-start-brief-v1.json`  
 CI enforcement: `tests/eo-04b-meta-adapter-start-brief.test.js`
 
-- The product owner accepted the EO-04-B analyst brief on 10 October 2026. Repository implementation is written and pending CI; controlled live evidence remains separately gated.
+- The product owner accepted the EO-04-B analyst brief on 10 October 2026. Repository implementation passed GitHub Actions run `38063777629` with 174/174 tests, TypeScript verification and preview build. Controlled live evidence remains separately gated and unauthorized.
 - Canonical hierarchy is Ad Account → Campaign → Ad Set → Ad → business date.
 - `ad_click` remains `PENDING_LIVE_FIELD_EVIDENCE`: `outbound_clicks` is the leading candidate, but `clicks`, `inline_link_clicks`, `website_clicks` and `outbound_clicks` must be compared on the same real row before final mapping.
 - A missing `actions` type or `action_values: []` is absent/empty, never numeric zero. Standard and omni aliases are never summed.

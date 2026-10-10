@@ -22,10 +22,11 @@ test("opens one independent package without changing the EO plan", () => {
   const eoChildIds = master.packages
     .flatMap((parent) => parent.children ?? [])
     .map((child) => child.id);
-  assert.equal(master.current_active_child, null);
-  assert.ok(eoChildIds.includes(master.next_ready_child));
-  assert.equal(master.next_ready_child, "A6-EO-04-A");
-  assert.notEqual(master.next_ready_child, cleanup.id);
+  assert.equal(master.current_active_parent, "A6-EO-04");
+  assert.equal(master.current_active_child, "A6-EO-04-A");
+  assert.ok(eoChildIds.includes(master.current_active_child));
+  assert.equal(master.next_ready_child, null);
+  assert.notEqual(master.current_active_child, cleanup.id);
 });
 
 test("requires inventory and remote equivalence before cleanup", () => {

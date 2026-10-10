@@ -371,7 +371,7 @@ test("master plan closes EO-03 and advances only EO-04-A to ready", () => {
   const eo03c = eo03.children.find((entry) => entry.id === "A6-EO-03-C");
   const eo03d = eo03.children.find((entry) => entry.id === "A6-EO-03-D");
 
-  assert.equal(implementationMaster.status, "EO-03_accepted_EO-04_ready");
+  assert.equal(implementationMaster.status, "EO-04_active_EO-04-A_start_brief_pending");
   assert.equal(eo03.status, "Accepted");
   assert.equal(eo03a.status, "Accepted");
   assert.equal(eo03a.explicit_product_owner_closure, "PASS_2026-10-09");
@@ -386,8 +386,9 @@ test("master plan closes EO-03 and advances only EO-04-A to ready", () => {
   assert.equal(eo03c.single_next_child, "A6-EO-03-D");
   assert.equal(eo03d.status, "Accepted");
   assert.equal(eo03d.start_gate, "PASS_A6-EO-03-C_accepted_2026-10-09");
-  assert.equal(eo04.status, "Ready");
-  assert.equal(implementationMaster.current_active_child, null);
-  assert.equal(implementationMaster.next_ready_child, "A6-EO-04-A");
+  assert.equal(eo04.status, "Active");
+  assert.equal(implementationMaster.current_active_parent, "A6-EO-04");
+  assert.equal(implementationMaster.current_active_child, "A6-EO-04-A");
+  assert.equal(implementationMaster.next_ready_child, null);
   assert.equal(contract.next_child.live_authorization_remains_disabled, true);
 });

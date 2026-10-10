@@ -1,0 +1,352 @@
+{
+  "contract_id": "eo-04a-common-adapter-start-brief-v1",
+  "version": "1.1.0",
+  "status": "Ready_for_product_owner_acceptance",
+  "checked_at": "2026-10-10",
+  "parent": "A6-EO-04",
+  "package": "A6-EO-04-A",
+  "objective": "Freeze the provider-neutral request, support-state, pagination, retry, quota, store-scope and raw-evidence behavior before any Meta, Google Ads or Klaviyo adapter implementation.",
+  "authority": {
+    "tenant": "server_resolved_workspace",
+    "commerce_scope": "verified_installed_shopify_store_and_active_installation_generation",
+    "provider_connection": "EO_03_connection_authority",
+    "canonical_reporting_account_required": {
+      "meta": true,
+      "google_ads": true,
+      "klaviyo": false
+    },
+    "merchant_selectable_reporting_store": false,
+    "provider_account_can_change_workspace": false,
+    "url_utm_click_id_or_name_is_store_proof": false
+  },
+  "operations": [
+    "inspect_connection",
+    "discover_scope_evidence",
+    "fetch_structure",
+    "fetch_facts",
+    "describe_capability"
+  ],
+  "request_envelope": [
+    "workspace_id",
+    "install_generation",
+    "provider_connection_id",
+    "canonical_reporting_account_id_when_applicable",
+    "operation",
+    "adapter_contract_version",
+    "provider_api_or_revision_version",
+    "installed_shop_timezone",
+    "date_window",
+    "requested_fields_levels_and_breakdowns",
+    "query_fingerprint",
+    "attempt_id",
+    "job_or_run_id_when_scheduled"
+  ],
+  "support_states": [
+    "present",
+    "zero",
+    "empty",
+    "absent",
+    "unsupported",
+    "not_requested",
+    "permission_denied",
+    "account_configuration_missing",
+    "ambiguous_store_scope",
+    "provisional",
+    "partial",
+    "failed"
+  ],
+  "zero_rule": "only_explicit_provider_numeric_zero_becomes_zero",
+  "response_evidence": [
+    "provider",
+    "operation",
+    "contract_and_api_version",
+    "query_fingerprint",
+    "sanitized_provider_request_or_trace_id",
+    "timestamps",
+    "requested_and_returned_date_coverage",
+    "requested_fields_and_support_states",
+    "page_partition_and_row_counts",
+    "completeness",
+    "official_rate_limit_or_quota_metadata_when_returned",
+    "normalized_error_class",
+    "private_bounded_raw_evidence_reference_and_hash"
+  ],
+  "forbidden_evidence": [
+    "tokens",
+    "authorization_codes",
+    "PKCE_verifiers",
+    "client_secrets",
+    "database_URLs",
+    "authorization_headers",
+    "customer_emails",
+    "profile_level_personal_data"
+  ],
+  "pagination": {
+    "provider_cursor_is_opaque": true,
+    "stable_query_fingerprint_required": true,
+    "cursor_loop_detection": true,
+    "maximum_pages_rows_and_elapsed_time_required": true,
+    "partial_publish_as_complete": false,
+    "attempt_staging_before_publish": true,
+    "duplicate_replay_idempotent": true,
+    "google_ads": "fixed_10000_row_Search_pages_v19_plus_identical_query_short_lived_page_token",
+    "klaviyo": "follow_top_level_cursor_links_and_endpoint_page_limits",
+    "meta": "provider_specific_rule_blocked_until_EO_04B_current_official_docs_readable"
+  },
+  "retry": {
+    "bounded_attempts_and_total_elapsed_time": true,
+    "retry_only_documented_transient_conditions": true,
+    "honor_retry_after_or_provider_recovery_metadata": true,
+    "fallback": "exponential_backoff_with_randomized_jitter",
+    "quota_scope": "provider_and_canonical_account",
+    "runtime_budget_aware": true,
+    "never_blind_retry": [
+      "authentication",
+      "revoked_token",
+      "permission",
+      "validation",
+      "unsupported_field",
+      "malformed_query",
+      "deterministic_account_scope_failure"
+    ]
+  },
+  "normalized_error_classes": [
+    "reauthorization_required",
+    "permission_or_scope_missing",
+    "reporting_account_inaccessible",
+    "request_contract_invalid",
+    "provider_schema_changed",
+    "rate_limited",
+    "quota_exhausted",
+    "transient_provider_failure",
+    "provider_timeout",
+    "data_not_ready",
+    "ambiguous_store_scope",
+    "partial_result",
+    "internal_adapter_failure"
+  ],
+  "raw_evidence": {
+    "private": true,
+    "bounded": true,
+    "content_hashed": true,
+    "sanitized": true,
+    "stored_in_application_logs": false,
+    "unlimited_data_lake": false,
+    "provider_child_must_define_retention_and_deletion_before_live_calls": true,
+    "person_profile_endpoints_in_scope": false
+  },
+  "store_scope": {
+    "installed_shop_is_immutable_authority": true,
+    "second_shop_requires_separate_installation_and_subscription": true,
+    "provider_scope_evidence_is_descriptive_not_workspace_authority": true,
+    "deterministic_official_mapping_required_to_filter_or_attribute": true,
+    "ambiguous_scope_state": "ambiguous_store_scope",
+    "silent_cross_store_mix_forbidden": true
+  },
+  "secret_gate": {
+    "creates_secret": false,
+    "live_oauth": false,
+    "inventory_contract": "contracts/a6-eo-secret-inventory-recovery-v1.json",
+    "inventory_acceptance_required_before_provider_secret": true,
+    "provider_key_recovery_required_before_first_real_provider_authorization": true,
+    "provider_entry_extension_required_in_same_change": true,
+    "production_credentials_reused_in_nonproduction": false
+  },
+  "provider_baseline": {
+    "google_ads": {
+      "official_docs_readable": true,
+      "retry_only_transient_classes": true,
+      "request_id_evidence": true,
+      "pagination": "Search_fixed_10000_rows_v19_plus"
+    },
+    "klaviyo": {
+      "official_docs_readable": true,
+      "pagination": "cursor_links",
+      "quota": "endpoint_burst_and_steady_windows",
+      "oauth_quota_scope": "per_installed_app_instance",
+      "rate_limit_retry": "HTTP_429_Retry_After",
+      "revision_header_evidenced": true
+    },
+    "meta": {
+      "official_access_tier_announcement_readable": true,
+      "graph_rate_limit_page_status": "HTTP_429_2026-10-10",
+      "graph_error_page_status": "HTTP_429_2026-10-10",
+      "numeric_quota_or_retry_codes_frozen": false,
+      "provider_implementation_blocked_until_current_official_docs_readable": true
+    }
+  },
+  "implementation_after_acceptance": [
+    "TypeScript_contracts",
+    "provider_neutral_pagination_retry_quota_runner",
+    "sanitized_evidence_builder_and_redaction_guards",
+    "deterministic_fake_provider_fixtures",
+    "repository_tests"
+  ],
+  "synthetic_acceptance_cases": [
+    "success",
+    "explicit_zero",
+    "explicit_empty",
+    "absent_field",
+    "unsupported_field",
+    "multi_page_complete",
+    "cursor_loop",
+    "rate_limit_then_success",
+    "transient_retry_exhausted",
+    "authentication_failure_no_retry",
+    "partial_page_failure_not_publishable",
+    "ambiguous_store_scope",
+    "secret_redaction"
+  ],
+  "mutations_authorized": {
+    "provider": false,
+    "oauth": false,
+    "secrets": false,
+    "database": false,
+    "vercel": false,
+    "deployment": false
+  },
+  "out_of_scope": [
+    "provider_endpoint_and_field_implementation",
+    "live_provider_calls",
+    "Dataset_V2_persistence",
+    "scheduler_and_reconciliation",
+    "formulas_and_query_API",
+    "UI",
+    "product_cross_sell_acceptance",
+    "provider_reviews"
+  ],
+  "acceptance": [
+    "product_owner_accepts_start_brief",
+    "repository_implementation_matches_contract",
+    "all_synthetic_acceptance_cases_pass",
+    "no_real_provider_secret_or_token",
+    "required_CI_passes",
+    "explicit_product_owner_closure"
+  ],
+  "next_children_after_acceptance": [
+    "A6-EO-04-B",
+    "A6-EO-04-C",
+    "A6-EO-04-D"
+  ],
+  "authoritative_sources": {
+    "meta_access_tier": "https://developers.meta.com/blog/updates-to-ads-management-standard-access-feature/",
+    "meta_rate_limit_url": "https://developers.facebook.com/docs/graph-api/overview/rate-limiting/",
+    "meta_error_url": "https://developers.facebook.com/docs/graph-api/guides/error-handling/",
+    "google_ads_error_types": "https://developers.google.com/google-ads/api/docs/best-practices/error-types",
+    "google_ads_error_model": "https://developers.google.com/google-ads/api/docs/best-practices/understand-api-errors",
+    "google_ads_pagination": "https://developers.google.com/google-ads/api/docs/reporting/paging",
+    "klaviyo_rate_limits": "https://developers.klaviyo.com/en/docs/rate_limits_and_error_handling",
+    "klaviyo_api_overview": "https://developers.klaviyo.com/en/v2026-01-15/reference/api_overview",
+    "vercel_function_limits": "https://vercel.com/docs/functions/limitations",
+    "supabase_changelog": "https://supabase.com/changelog",
+    "google_ads_account_types": "https://developers.google.com/google-ads/api/docs/concepts/account-types",
+    "google_ads_auth_headers": "https://developers.google.com/google-ads/api/rest/auth"
+  },
+  "account_selection": {
+    "meta": {
+      "minimum": 1,
+      "maximum": 3,
+      "selectable_type": "provider_verified_ad_account",
+      "browser_identity_is_authority": false
+    },
+    "google_ads": {
+      "minimum": 1,
+      "maximum": 3,
+      "selectable_type": "provider_verified_advertiser_serving_account",
+      "manager_account_selectable": false,
+      "manager_account_reporting_eligible": false,
+      "manager_access_path_may_be_retained_as": "login_customer_id_only"
+    },
+    "klaviyo": {
+      "minimum": 1,
+      "maximum": 1,
+      "selectable_type": "provider_verified_klaviyo_account",
+      "is_ad_account": false
+    }
+  },
+  "canonical_funnel_fact_contract": {
+    "active_platforms": [
+      "meta",
+      "google_ads",
+      "klaviyo"
+    ],
+    "legacy_user_id_forbidden": true,
+    "authority_identity": [
+      "workspace_id",
+      "installation_id",
+      "installation_generation",
+      "provider_connection_id",
+      "platform_account_id",
+      "canonical_reporting_account_id_when_applicable",
+      "business_date"
+    ],
+    "raw_metrics": [
+      "impression",
+      "ad_click",
+      "session",
+      "spend_value",
+      "add_to_cart",
+      "add_to_cart_value",
+      "checkout",
+      "checkout_value",
+      "purchase",
+      "purchase_value"
+    ],
+    "metric_support_values": [
+      "supported",
+      "unsupported",
+      "unknown"
+    ],
+    "observation_states": [
+      "present",
+      "zero",
+      "empty",
+      "absent",
+      "not_requested",
+      "permission_denied",
+      "account_configuration_missing",
+      "ambiguous_store_scope",
+      "provisional",
+      "partial",
+      "failed"
+    ],
+    "unsupported_or_unknown_value": "null",
+    "explicit_provider_zero_required_for_numeric_zero": true,
+    "formula_engine_only": [
+      "ctr",
+      "cpc",
+      "roas",
+      "cps",
+      "revenue",
+      "revenue_margin",
+      "abandoned",
+      "abandoned_value",
+      "add_to_cart_rate",
+      "checkout_rate",
+      "abandoned_rate",
+      "purchase_rate"
+    ],
+    "fallback_synthetic_partial_or_incomplete_publishable": false,
+    "shopify_organic_is_separate_source_boundary": true,
+    "tiktok_or_ga4_reactivated_by_this_contract": false
+  },
+  "oauth_to_first_data_sequence": [
+    "verify_oauth_callback",
+    "encrypt_and_persist_token_without_plaintext",
+    "reverify_installed_shopify_store_and_active_installation_generation",
+    "discover_accounts_from_live_provider_API",
+    "merchant_selects_one_to_three_verified_meta_or_google_advertiser_accounts",
+    "bind_exactly_one_verified_klaviyo_account_not_ad_account",
+    "provider_reread_and_workspace_installation_binding_for_each_selected_account",
+    "fail_closed_on_ambiguous_or_conflicting_installed_store_scope",
+    "resolve_timezone_currency_API_revision_and_metric_capabilities",
+    "fetch_truthful_campaign_or_flow_hierarchy_to_verified_leaf",
+    "request_complete_canonical_funnel_fact_demand_through_native_fields",
+    "complete_all_required_pages_or_partitions_before_publishable",
+    "translate_native_response_to_canonical_identity_entity_raw_metric_envelope",
+    "validate_support_observation_zero_null_business_date_single_FX_and_provenance",
+    "persist_only_complete_validated_result_idempotently_through_later_Dataset_V2_writer",
+    "initial_bootstrap_yesterday_then_today_only",
+    "EO_05_owns_hourly_refresh_and_backward_reconciliation"
+  ]
+}

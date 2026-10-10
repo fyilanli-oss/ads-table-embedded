@@ -1,7 +1,7 @@
 # EO-04-A — Common adapter contract start brief
 
 **Control date:** 10 October 2026  
-**Status:** Implementation complete; CI and final product-owner acceptance pending  
+**Status:** Implementation and CI complete; final product-owner acceptance pending  
 **Parent:** A6-EO-04 — Meta, Google Ads and Klaviyo adapters  
 **Execution effect:** EO-04-A start only; no provider secret, OAuth, live API, database, Vercel or deployment mutation
 
@@ -332,4 +332,4 @@ This implementation remains a provider-neutral contract. EO-04-B/C/D must still 
 
 ### Remaining closure gate
 
-EO-04-A is not yet Accepted. Required repository CI and explicit final product-owner acceptance remain open. EO-04-B is not authorized by this implementation alone.
+EO-04-A is not yet Accepted. GitHub Actions run `38049487145` passed 163/163 tests, TypeScript verification and preview build. Explicit final product-owner acceptance and merge approval remain open. EO-04-B is not authorized by this implementation alone.

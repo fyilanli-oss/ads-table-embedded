@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-04a-common-adapter-start-brief-v1",
-  "version": "1.2.0",
-  "status": "Implementation_complete_acceptance_pending",
+  "version": "1.3.0",
+  "status": "Accepted",
   "checked_at": "2026-10-10",
   "parent": "A6-EO-04",
   "package": "A6-EO-04-A",
@@ -378,11 +378,18 @@
   },
   "acceptance_state": {
     "repository_tests": "PASS_163_of_163",
-    "product_owner_final_acceptance": "pending",
-    "merge": "pending_explicit_product_owner_approval",
+    "product_owner_final_acceptance": "PASS_2026-10-10",
+    "merge": "authorized_2026-10-10_pending_execution",
     "next_provider_child_authorized": false,
     "typecheck": "PASS",
     "preview_build": "PASS",
-    "github_actions_run_id": 38049487145
+    "github_actions_run_id": 38049617297,
+    "next_provider_child_start_gate": "A6-EO-04-B_current_official_document_and_analyst_brief"
+  },
+  "closure": {
+    "accepted_at": "2026-10-10",
+    "accepted_by": "product_owner_explicit_chat_approval",
+    "provider_specific_implementation_authorized": false,
+    "live_mutation_authorized": false
   }
 }

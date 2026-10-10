@@ -43,6 +43,69 @@ Rules:
 - A URL, UTM, click ID, campaign name or operator guess is not enough to attribute a provider row to the installed store.
 - Ambiguous multi-store scope becomes an explicit support state; it is never silently mixed into organic or paid results.
 
+## Provider account selection cardinality
+
+Provider account selection is not generalized across all three providers:
+
+- **Meta:** the merchant selects between one and three provider-verified Ad Accounts. Zero or more than three cannot become Connected.
+- **Google Ads:** the merchant selects between one and three provider-verified advertiser/serving accounts where `customer.manager=false`. A Manager/MCC account is never selectable, never a Reporting Account and never a Funnel entity. When official Google access requires it, the manager ID may be retained privately only as the `login_customer_id` access path to a selected advertiser account.
+- **Klaviyo:** a Klaviyo account is not an Ad Account. Exactly one server-verified Klaviyo Account is bound to the connection; the Meta/Google one-to-three rule does not apply.
+
+Browser-supplied account IDs or names are never authority. Every selected account is re-read from the provider before persistence.
+
+## Canonical Funnel fact demand contract
+
+Meta, Google Ads and Klaviyo use different native endpoints and field names, but every provider adapter must answer the same canonical fact demand. Provider-specific children may not omit a canonical question merely because the native field is absent.
+
+The adapter output carries the installed-workspace authority, provider identity, truthful hierarchy, daily leaf identity, raw facts, stable capability support and per-attempt observation state.
+
+Canonical raw facts are exactly:
+
+```text
+impression
+ad_click
+session
+spend_value
+add_to_cart
+add_to_cart_value
+checkout
+checkout_value
+purchase
+purchase_value
+```
+
+Stable `metric_support` is limited to `supported | unsupported | unknown`. Per-attempt `observation_state` carries `present | zero | empty | absent | not_requested | permission_denied | account_configuration_missing | ambiguous_store_scope | provisional | partial | failed`. A supported metric may therefore be absent in one response without becoming unsupported, and an unsupported metric remains `null`, never numeric zero.
+
+The old `user_id` identity is forbidden. The new authority uses `workspace_id`, `installation_id`, `installation_generation`, `provider_connection_id`, `platform_account_id` and, where applicable, the verified Reporting Account ID. Active EO scope is Meta, Google Ads and Klaviyo only; TikTok and GA4 are not silently reactivated. Shopify organic ingestion is a separate source boundary and is not manufactured by these paid-provider adapters.
+
+Provider-native calculated fields do not become Dataset truth merely because the provider returns them. CTR, CPC, ROAS, CPS, revenue, revenue margin, abandoned counts/values and rates remain Formula Engine outputs. A verified provider conversion value maps to `purchase_value`; it does not bypass the canonical formula contract.
+
+Fallback, synthetic, partial or incomplete results cannot be published as canonical facts. Raw evidence is represented only by a bounded sanitized reference, content hash and request metadata.
+
+## OAuth-to-first-data analyst sequence
+
+Every provider connection follows this order:
+
+1. Verify the OAuth callback.
+2. Encrypt and persist the token; never persist plaintext.
+3. Re-verify the Installed Shopify Store and active installation generation.
+4. Discover provider accounts from the live provider API.
+5. Let the merchant select one to three verified Meta/Google advertiser accounts.
+6. Bind exactly one verified Klaviyo Account without calling it an Ad Account.
+7. Re-read every selected account from the provider and bind it to the workspace/installation generation.
+8. Fail closed when installed-store scope is ambiguous or conflicts with the connection authority.
+9. Resolve account timezone, currency, API revision and metric capabilities.
+10. Fetch the truthful Campaign/Flow hierarchy down to the currently verified provider leaf.
+11. Request the complete canonical Funnel fact demand through provider-native fields.
+12. Finish every required page/partition before making the attempt publishable.
+13. Translate the native response into the canonical identity/entity/raw-metric envelope.
+14. Validate support versus observation state, zero/null semantics, business date, single FX conversion and provenance.
+15. Persist only the complete validated result idempotently through the later Dataset V2 writer boundary.
+16. Initial bootstrap requests only yesterday and today, in that order; it is not a 14-day backfill.
+17. Hand subsequent hourly refresh and backward reconciliation to EO-05.
+
+OAuth success alone is not Connected. Account binding and all applicable authority gates must pass before first data is eligible for ingestion.
+
 ## Common adapter operations
 
 EO-04-A will define provider-neutral operations; each provider child maps them to current official endpoints.

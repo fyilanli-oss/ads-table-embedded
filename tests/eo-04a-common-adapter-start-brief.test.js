@@ -103,7 +103,7 @@ test("Execution Plan and master contract activate only the EO-04-A brief gate", 
   assert.equal(master.schema_version, "1.22.0");
   assert.equal(master.current_active_parent, "A6-EO-04");
   assert.equal(master.current_active_child, "A6-EO-04-B");
-  assert.equal(master.current_gate, "A6-EO-04-B_repository_CI");
+  assert.equal(master.current_gate, "A6-EO-04-B_controlled_live_evidence_authorization");
   assert.equal(eo04.status, "Active");
   assert.equal(eo04a.status, "Accepted");
   assert.equal(eo04a.implementation_started, true);

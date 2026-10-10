@@ -7,7 +7,7 @@ const readJson = async (path) => JSON.parse(await readFile(path, "utf8"));
 test("EO-04-B brief freezes truthful Meta mapping without authorizing implementation", async () => {
   const contract = await readJson("contracts/eo-04b-meta-adapter-start-brief-v1.json");
 
-  assert.equal(contract.status, "Accepted_start_brief_repository_implementation_pending_CI");
+  assert.equal(contract.status, "Repository_CI_PASS_controlled_live_evidence_pending");
   assert.equal(contract.authority.reporting_accounts.minimum, 1);
   assert.equal(contract.authority.reporting_accounts.maximum, 3);
   assert.equal(contract.authority.merchant_selectable_reporting_store, false);
@@ -60,9 +60,9 @@ test("Execution Plan and master keep EO-04-B at the analyst acceptance gate", as
 
   assert.equal(master.current_active_parent, "A6-EO-04");
   assert.equal(master.current_active_child, "A6-EO-04-B");
-  assert.equal(master.current_gate, "A6-EO-04-B_repository_CI");
+  assert.equal(master.current_gate, "A6-EO-04-B_controlled_live_evidence_authorization");
   assert.equal(eo04.status, "Active");
-  assert.equal(eo04b.status, "Implementation_pending_CI");
+  assert.equal(eo04b.status, "Repository_CI_PASS_controlled_live_evidence_pending");
   assert.equal(eo04b.implementation_started, true);
   assert.equal(eo04b.live_mutation_authorized, false);
 });

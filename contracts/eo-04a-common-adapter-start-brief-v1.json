@@ -1,6 +1,6 @@
 {
   "contract_id": "eo-04a-common-adapter-start-brief-v1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "status": "Ready_for_product_owner_acceptance",
   "checked_at": "2026-10-10",
   "parent": "A6-EO-04",
@@ -238,6 +238,115 @@
     "klaviyo_rate_limits": "https://developers.klaviyo.com/en/docs/rate_limits_and_error_handling",
     "klaviyo_api_overview": "https://developers.klaviyo.com/en/v2026-01-15/reference/api_overview",
     "vercel_function_limits": "https://vercel.com/docs/functions/limitations",
-    "supabase_changelog": "https://supabase.com/changelog"
-  }
+    "supabase_changelog": "https://supabase.com/changelog",
+    "google_ads_account_types": "https://developers.google.com/google-ads/api/docs/concepts/account-types",
+    "google_ads_auth_headers": "https://developers.google.com/google-ads/api/rest/auth"
+  },
+  "account_selection": {
+    "meta": {
+      "minimum": 1,
+      "maximum": 3,
+      "selectable_type": "provider_verified_ad_account",
+      "browser_identity_is_authority": false
+    },
+    "google_ads": {
+      "minimum": 1,
+      "maximum": 3,
+      "selectable_type": "provider_verified_advertiser_serving_account",
+      "manager_account_selectable": false,
+      "manager_account_reporting_eligible": false,
+      "manager_access_path_may_be_retained_as": "login_customer_id_only"
+    },
+    "klaviyo": {
+      "minimum": 1,
+      "maximum": 1,
+      "selectable_type": "provider_verified_klaviyo_account",
+      "is_ad_account": false
+    }
+  },
+  "canonical_funnel_fact_contract": {
+    "active_platforms": [
+      "meta",
+      "google_ads",
+      "klaviyo"
+    ],
+    "legacy_user_id_forbidden": true,
+    "authority_identity": [
+      "workspace_id",
+      "installation_id",
+      "installation_generation",
+      "provider_connection_id",
+      "platform_account_id",
+      "canonical_reporting_account_id_when_applicable",
+      "business_date"
+    ],
+    "raw_metrics": [
+      "impression",
+      "ad_click",
+      "session",
+      "spend_value",
+      "add_to_cart",
+      "add_to_cart_value",
+      "checkout",
+      "checkout_value",
+      "purchase",
+      "purchase_value"
+    ],
+    "metric_support_values": [
+      "supported",
+      "unsupported",
+      "unknown"
+    ],
+    "observation_states": [
+      "present",
+      "zero",
+      "empty",
+      "absent",
+      "not_requested",
+      "permission_denied",
+      "account_configuration_missing",
+      "ambiguous_store_scope",
+      "provisional",
+      "partial",
+      "failed"
+    ],
+    "unsupported_or_unknown_value": "null",
+    "explicit_provider_zero_required_for_numeric_zero": true,
+    "formula_engine_only": [
+      "ctr",
+      "cpc",
+      "roas",
+      "cps",
+      "revenue",
+      "revenue_margin",
+      "abandoned",
+      "abandoned_value",
+      "add_to_cart_rate",
+      "checkout_rate",
+      "abandoned_rate",
+      "purchase_rate"
+    ],
+    "fallback_synthetic_partial_or_incomplete_publishable": false,
+    "shopify_organic_is_separate_source_boundary": true,
+    "tiktok_or_ga4_reactivated_by_this_contract": false
+  },
+  "oauth_to_first_data_sequence": [
+    "verify_oauth_callback",
+    "encrypt_and_persist_token_without_plaintext",
+    "reverify_installed_shopify_store_and_active_installation_generation",
+    "discover_accounts_from_live_provider_API",
+    "merchant_selects_one_to_three_verified_meta_or_google_advertiser_accounts",
+    "bind_exactly_one_verified_klaviyo_account_not_ad_account",
+    "provider_reread_and_workspace_installation_binding_for_each_selected_account",
+    "fail_closed_on_ambiguous_or_conflicting_installed_store_scope",
+    "resolve_timezone_currency_API_revision_and_metric_capabilities",
+    "fetch_truthful_campaign_or_flow_hierarchy_to_verified_leaf",
+    "request_complete_canonical_funnel_fact_demand_through_native_fields",
+    "complete_all_required_pages_or_partitions_before_publishable",
+    "translate_native_response_to_canonical_identity_entity_raw_metric_envelope",
+    "validate_support_observation_zero_null_business_date_single_FX_and_provenance",
+    "persist_only_complete_validated_result_idempotently_through_later_Dataset_V2_writer",
+    "initial_bootstrap_yesterday_then_today_only",
+    "EO_05_owns_hourly_refresh_and_backward_reconciliation"
+  ]
 }

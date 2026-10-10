@@ -140,14 +140,14 @@ Binding analyst brief: `docs/EO_04B_META_ADAPTER_START_BRIEF.md`
 Executable start contract: `contracts/eo-04b-meta-adapter-start-brief-v1.json`  
 CI enforcement: `tests/eo-04b-meta-adapter-start-brief.test.js`
 
-- EO-04-B is waiting for explicit product-owner acceptance of the analyst brief; Meta adapter implementation has not started.
+- The product owner accepted the EO-04-B analyst brief on 10 October 2026. Repository implementation is written and pending CI; controlled live evidence remains separately gated.
 - Canonical hierarchy is Ad Account → Campaign → Ad Set → Ad → business date.
 - `ad_click` remains `PENDING_LIVE_FIELD_EVIDENCE`: `outbound_clicks` is the leading candidate, but `clicks`, `inline_link_clicks`, `website_clicks` and `outbound_clicks` must be compared on the same real row before final mapping.
 - A missing `actions` type or `action_values: []` is absent/empty, never numeric zero. Standard and omni aliases are never summed.
 - Attribution remains `PENDING_REAL_CONVERSION_EVIDENCE` because current official Meta pages conflict about unified attribution behavior. Exact Ads Manager parity is not claimed without a controlled real-conversion comparison.
 - Meta pagination follows opaque `paging.next`; an empty page with `next` continues, and partial sync/async results never publish.
 - Converted-product quantity/value discovery is preserved for A6-EO-07-C. Generic `product_id` is not purchase proof, Meta `retailer_id` is not presumed Shopify SKU, and deterministic catalog-to-installed-shop mapping plus both exact earring fixtures are mandatory.
-- This brief authorizes no Meta call, secret, OAuth, database, Vercel, deployment or Dataset V2 mutation.
+- Repository implementation: `app/lib/providers/meta-adapter.server.js`, its type boundary and deterministic tests. No Meta call, secret, OAuth, database, Vercel, deployment or Dataset V2 mutation was performed.
 
 ## Pending cross-cutting decision: official provider documentation watch — 10 October 2026
 

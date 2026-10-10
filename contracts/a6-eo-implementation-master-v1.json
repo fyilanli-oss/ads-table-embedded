@@ -3,7 +3,7 @@
   "contract_id": "a6-eo-implementation-master-v1",
   "title": "A6 EO single-track execution rule and integrated implementation package table",
   "effective_date": "2026-10-04",
-  "status": "EO-04_active_EO-04-A_start_brief_pending",
+  "status": "EO-04_active_EO-04-B_start_brief_pending",
   "authority": {
     "execution_plan": "docs/EXECUTION_PLAN.md",
     "EO_GO": "contracts/a6-eo-f7-go-decision-v1.json",

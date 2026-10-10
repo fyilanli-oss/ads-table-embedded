@@ -7,7 +7,7 @@ const readJson = async (path) => JSON.parse(await readFile(path, "utf8"));
 test("EO-04-A start brief freezes truthful common adapter behavior", async () => {
   const contract = await readJson("contracts/eo-04a-common-adapter-start-brief-v1.json");
 
-  assert.equal(contract.status, "Implementation_complete_acceptance_pending");
+  assert.equal(contract.status, "Accepted");
   assert.equal(contract.authority.merchant_selectable_reporting_store, false);
   assert.equal(contract.authority.provider_account_can_change_workspace, false);
   assert.equal(contract.zero_rule, "only_explicit_provider_numeric_zero_becomes_zero");
@@ -100,13 +100,13 @@ test("Execution Plan and master contract activate only the EO-04-A brief gate", 
     assert.match(plan, new RegExp(value.replace(/[.*+?^$\{\}()|[\]\\]/g, "\\$&")));
   }
 
-  assert.equal(master.schema_version, "1.19.0");
+  assert.equal(master.schema_version, "1.20.0");
   assert.equal(master.current_active_parent, "A6-EO-04");
-  assert.equal(master.current_active_child, "A6-EO-04-A");
-  assert.equal(master.current_gate, "A6-EO-04-A_implementation_CI_and_product_owner_acceptance");
+  assert.equal(master.current_active_child, "A6-EO-04-B");
+  assert.equal(master.current_gate, "A6-EO-04-B_current_official_document_and_analyst_brief");
   assert.equal(eo04.status, "Active");
-  assert.equal(eo04a.status, "Active_implementation_complete_acceptance_pending");
+  assert.equal(eo04a.status, "Accepted");
   assert.equal(eo04a.implementation_started, true);
   assert.equal(eo04a.implementation_complete, true);
-  assert.equal(eo04a.final_product_owner_acceptance, false);
+  assert.equal(eo04a.final_product_owner_acceptance, true);
 });

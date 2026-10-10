@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-04a-common-adapter-start-brief-v1",
-  "version": "1.1.0",
-  "status": "Ready_for_product_owner_acceptance",
+  "version": "1.2.0",
+  "status": "Implementation_complete_acceptance_pending",
   "checked_at": "2026-10-10",
   "parent": "A6-EO-04",
   "package": "A6-EO-04-A",
@@ -348,5 +348,38 @@
     "persist_only_complete_validated_result_idempotently_through_later_Dataset_V2_writer",
     "initial_bootstrap_yesterday_then_today_only",
     "EO_05_owns_hourly_refresh_and_backward_reconciliation"
-  ]
+  ],
+  "product_owner_start_brief_acceptance": {
+    "status": "accepted",
+    "accepted_at": "2026-10-10",
+    "evidence": "chat_explicit_approval_before_implementation"
+  },
+  "implementation": {
+    "status": "complete_acceptance_pending",
+    "runtime": "app/lib/providers/common-adapter.server.js",
+    "types": "app/lib/providers/common-adapter.server.d.ts",
+    "tests": "tests/eo-04a-common-adapter.test.js",
+    "live_provider_calls": false,
+    "secrets_created_or_read": false,
+    "database_mutation": false,
+    "vercel_or_deployment_mutation": false,
+    "invariants": [
+      "same_canonical_ten_raw_metric_demand_for_all_active_providers",
+      "support_and_observation_are_distinct",
+      "only_explicit_provider_zero_becomes_zero",
+      "all_pages_complete_before_publishable",
+      "partial_or_conflicting_replay_fails_closed",
+      "only_normalized_documented_transient_classes_are_retryable",
+      "retry_after_wins_over_fallback_backoff",
+      "authentication_permission_validation_and_scope_failures_are_not_retried",
+      "raw_evidence_is_bounded_sanitized_and_content_hashed",
+      "installed_shop_authority_is_required"
+    ]
+  },
+  "acceptance_state": {
+    "repository_tests": "pending_required_CI",
+    "product_owner_final_acceptance": "pending",
+    "merge": "pending_explicit_product_owner_approval",
+    "next_provider_child_authorized": false
+  }
 }

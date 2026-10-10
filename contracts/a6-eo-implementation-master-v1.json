@@ -3,7 +3,7 @@
   "contract_id": "a6-eo-implementation-master-v1",
   "title": "A6 EO single-track execution rule and integrated implementation package table",
   "effective_date": "2026-10-04",
-  "status": "EO-04_active_EO-04-B_repository_implementation_pending_CI",
+  "status": "EO-04_active_EO-04-B_repository_CI_PASS_live_evidence_pending",
   "authority": {
     "execution_plan": "docs/EXECUTION_PLAN.md",
     "EO_GO": "contracts/a6-eo-f7-go-decision-v1.json",
@@ -608,7 +608,7 @@
           "id": "A6-EO-04-B",
           "title": "Meta adapter",
           "objective": "Account, campaign/ad hierarchy, actions/action_values and truthful missing behavior.",
-          "status": "Implementation_pending_CI",
+          "status": "Repository_CI_PASS_controlled_live_evidence_pending",
           "implementation_started": true,
           "live_mutation_authorized": false,
           "document": "docs/EO_04B_META_ADAPTER_START_BRIEF.md",
@@ -623,7 +623,12 @@
           "runtime": "app/lib/providers/meta-adapter.server.js",
           "types": "app/lib/providers/meta-adapter.server.d.ts",
           "runtime_test": "tests/eo-04b-meta-adapter.test.js",
-          "repository_implementation": "WRITTEN_PENDING_CI"
+          "repository_implementation": "PASS",
+          "repository_ci": "PASS_run_38063777629",
+          "repository_tests": "PASS_174_of_174",
+          "typecheck": "PASS",
+          "preview_build": "PASS",
+          "live_evidence_authorized": false
         },
         {
           "id": "A6-EO-04-C",
@@ -997,7 +1002,7 @@
   "legacy_deletion_authorized": false,
   "current_active_parent": "A6-EO-04",
   "current_active_child": "A6-EO-04-B",
-  "current_gate": "A6-EO-04-B_repository_CI",
+  "current_gate": "A6-EO-04-B_controlled_live_evidence_authorization",
   "next_ready_child": null,
   "independent_packages": [
     {

@@ -124,6 +124,9 @@ CI enforcement: `tests/eo-04a-common-adapter-start-brief.test.js`
 - EO-04 is active only at the EO-04-A start-brief gate; common-adapter implementation has not started.
 - Installed Shopify Store remains immutable commerce authority. Provider account, domain, pixel, URL, UTM, click ID or campaign name cannot create or switch workspace/store scope.
 - Only an explicit provider zero becomes zero. Empty, absent, unsupported, permission-denied, ambiguous, provisional, partial and failed remain distinct states.
+- Canonical Funnel demand is fixed to ten raw facts: impression, ad click, session, spend, ATC count/value, checkout count/value and purchase count/value; provider-native field names cannot change this contract.
+- Meta and Google Ads allow one to three provider-verified advertiser accounts. Google Manager/MCC accounts are access paths only and are never selectable Reporting Accounts or Funnel entities. Klaviyo binds exactly one verified account and is never labelled an Ad Account.
+- The binding analyst brief records the exact 17-step OAuth-to-first-data order; initial bootstrap remains yesterday then today, while hourly refresh and reconciliation remain EO-05 responsibilities.
 - Pagination is opaque, bounded, idempotent and complete-before-publish; a missing page cannot become a complete snapshot.
 - Retry is bounded and limited to documented transient failures; rate-limit recovery metadata wins over guessed delays.
 - Raw evidence is private, bounded, sanitized and content-hashed; tokens, credentials and profile-level personal data are forbidden.

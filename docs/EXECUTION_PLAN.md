@@ -134,6 +134,30 @@ CI enforcement: `tests/eo-04a-common-adapter-start-brief.test.js`
 - Meta-specific implementation remains blocked because its current official Graph rate-limit/error pages returned HTTP 429 during the control check; EO-04-B must re-open them successfully before code.
 
 
+## Pending cross-cutting decision: official provider documentation watch — 10 October 2026
+
+Binding decision record: `docs/A6_PROVIDER_OFFICIAL_DOCUMENTATION_WATCH_DECISION.md`
+
+- Meta, Google Ads, Klaviyo and Shopify official developer sources will receive a future registry and change-watch capability.
+- The existing mandatory current-document gate remains binding before every provider implementation.
+- A future scheduled monitor will stay silent on no-change runs and will emit only meaningful, impact-classified findings; it cannot autonomously change code, contracts, schemas, provider requests or production.
+- `EO-GOV-01` is a proposed identifier only. It is not an active parallel package and does not change the A6-EO single-line execution rule or interrupt EO-04-B.
+- Exact scheduling and implementation placement require a later explicit product-owner planning decision.
+
+
+## Pending EO-07-C finding: Meta converted-product evidence — 10 October 2026
+
+Official Meta v26.0 sources checked on 10 October 2026:
+
+- `converted_product_quantity` and `converted_product_value` are ad-driven purchased-product quantity/value metrics recorded by the merchant pixel or app SDK for a given converted product ID.
+- The required converted-product-ID breakdown is not equivalent to generic `product_id`; generic `product_id` may describe a product involved in an impression, click or action.
+- Insights does not directly provide a trustworthy Shopify SKU or display name with these metrics. A verified converted product ID must be resolved through Meta Catalog Product Item, where `retailer_id`, `name`, `image_url`, `url` and group identity may be available, and then deterministically mapped to the installed Shopify shop product/variant.
+- `retailer_id` is a merchant/catalog item identifier and must not be presumed to equal Shopify SKU without live mapping evidence.
+- Meta documents `action_converted_product_id` as limited availability for Collaborative Ads. Therefore product/cross-sell support remains provider/campaign-specific and pending live proof.
+- EO-07-C must test both exact earring fixtures: clicked product not purchased, and clicked product purchased, including non-advertised basket products. Product rows remain unsupported/unknown unless the provider returns the relationship and the catalog-to-Shopify mapping is deterministic.
+- This finding authorizes no EO-07 implementation and does not advance package status.
+
+
 ## Closed package: EO-03 / Next ready package: EO-04
 
 - **EO-03-A — Accepted:** Workspace/install-generation-bound OAuth transaction state machine, exact callback allowlist, single-use state claim and live private database boundary passed repository, database and product-owner gates.

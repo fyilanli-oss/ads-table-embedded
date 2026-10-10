@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-04b-meta-adapter-start-brief-v1",
-  "version": "1.0.0",
-  "status": "Ready_for_product_owner_acceptance",
+  "version": "1.1.0",
+  "status": "Accepted_start_brief_repository_implementation_pending_CI",
   "checked_at": "2026-10-10",
   "parent": "A6-EO-04",
   "package": "A6-EO-04-B",
@@ -253,7 +253,7 @@
     "sanitized_raw_reference_hash_and_no_leakage"
   ],
   "mutations_authorized": {
-    "implementation": false,
+    "implementation": true,
     "provider": false,
     "oauth": false,
     "secrets": false,
@@ -279,5 +279,23 @@
     "ads_action_stats": "https://developers.facebook.com/docs/marketing-api/reference/ads-action-stats/",
     "product_item": "https://developers.facebook.com/docs/marketing-api/reference/product-item/",
     "pagination": "https://developers.facebook.com/docs/graph-api/results/"
+  },
+  "product_owner_start_brief_acceptance": {
+    "status": "accepted",
+    "accepted_at": "2026-10-10",
+    "evidence": "chat_explicit_acceptance"
+  },
+  "implementation": {
+    "status": "written_pending_CI",
+    "runtime": "app/lib/providers/meta-adapter.server.js",
+    "types": "app/lib/providers/meta-adapter.server.d.ts",
+    "tests": "tests/eo-04b-meta-adapter.test.js",
+    "live_provider_calls": false,
+    "secrets_read_or_created": false,
+    "database_mutation": false,
+    "vercel_or_deployment_mutation": false,
+    "graph_version": "v26.0",
+    "click_mapping": "PENDING_LIVE_FIELD_EVIDENCE",
+    "attribution": "PENDING_REAL_CONVERSION_EVIDENCE"
   }
 }

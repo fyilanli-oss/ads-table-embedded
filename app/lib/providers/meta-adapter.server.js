@@ -427,7 +427,6 @@ export function translateMetaInsightRow(row, context) {
       adapter_version: META_ADAPTER_VERSION,
       source_confidence: "real",
       synthetic: context.synthetic === true,
-      ga4_property_id: null,
       raw_reference: rawReference,
     },
   });

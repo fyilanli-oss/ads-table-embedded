@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-04b-meta-adapter-start-brief-v1",
-  "version": "1.1.0",
-  "status": "Accepted_start_brief_repository_implementation_pending_CI",
+  "version": "1.2.0",
+  "status": "Repository_CI_PASS_controlled_live_evidence_pending",
   "checked_at": "2026-10-10",
   "parent": "A6-EO-04",
   "package": "A6-EO-04-B",
@@ -286,7 +286,7 @@
     "evidence": "chat_explicit_acceptance"
   },
   "implementation": {
-    "status": "written_pending_CI",
+    "status": "PASS",
     "runtime": "app/lib/providers/meta-adapter.server.js",
     "types": "app/lib/providers/meta-adapter.server.d.ts",
     "tests": "tests/eo-04b-meta-adapter.test.js",
@@ -297,5 +297,14 @@
     "graph_version": "v26.0",
     "click_mapping": "PENDING_LIVE_FIELD_EVIDENCE",
     "attribution": "PENDING_REAL_CONVERSION_EVIDENCE"
+  },
+  "acceptance_state": {
+    "repository_tests": "PASS_174_of_174",
+    "typecheck": "PASS",
+    "preview_build": "PASS",
+    "github_actions_run_id": 38063777629,
+    "live_evidence_authorized": false,
+    "live_evidence_status": "pending_explicit_authorization",
+    "final_product_owner_acceptance": false
   }
 }

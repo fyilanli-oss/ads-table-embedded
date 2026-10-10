@@ -141,7 +141,7 @@ CI enforcement: `tests/eo-04a-common-adapter-start-brief.test.js`
 - **EO-03-C — Accepted:** Fresh provider-verified connected accounts and one canonical Meta/Google Reporting Account are bound beneath the immutable installed-Shopify-store authority. Klaviyo remains one Connected Account with no Reporting Account control. No merchant-selectable store scope exists.
 - With explicit approval, the EO-03-C base and corrective Supabase migrations were applied on 9 October 2026. Rollback-scoped synthetic runtime acceptance passed, cleanup is zero, Security Advisor findings are zero and EO-03-C introduced no unindexed-foreign-key finding. No provider API call, provider OAuth, Vercel mutation or production deploy occurred. The product owner explicitly closed EO-03-C on 9 October 2026; exact evidence is `docs/evidence/EO_03C_LIVE_ACCEPTANCE_2026-10-09.json`.
 - **EO-03-D — Accepted:** Reauthorization, atomic credential renewal, two-phase disconnect and same-canonical-connection reconnect passed the complete rollback-scoped live lifecycle scenario. All synthetic rows rolled back to zero, Security Advisor remained at zero, and no provider API/OAuth/Vercel/deploy mutation occurred. Durable evidence: `evidence/eo-03d-live-database-evidence-2026-10-09.json`.
-- **EO-03 — Accepted:** All four children are closed with explicit product-owner acceptance. **EO-04 — Ready only:** its start brief is the next gate; no adapter implementation has started.
+- **EO-03 — Accepted:** All four children are closed with explicit product-owner acceptance. **EO-04 — Active:** EO-04-A provider-neutral implementation is complete; required CI and explicit final product-owner acceptance remain open. No provider-specific or live API implementation has started.
 
 ## EO-03-C official provider baseline — 9 Ekim 2026
 
@@ -243,4 +243,18 @@ EO-02-C internal caller kodu tek başına canlı tetikleyici değildir. `docs/EO
 - Meta için uydurma refresh-grant davranışı yoktur. Google Ads ve Klaviyo `invalid_grant` sonucu reauthorization gerektirir; Klaviyo token/revoke host'u `a.klaviyo.com` olarak sabittir.
 - Authority: `docs/EO_03D_PROVIDER_CONNECTION_LIFECYCLE.md` ve `contracts/eo-03d-provider-connection-lifecycle-v1.json`.
 - Base migration ile dört ileri-yönlü düzeltme canlı Supabase'de uygulanmış ve doğrulanmıştır. Bu kabul provider API çağrısı, canlı provider OAuth, provider-console mutation, Vercel mutation veya production deploy içermez.
-- EO-04 yalnız **Ready** durumundadır. `A6-EO-04-A` için analist başlangıç brief'i ve güncel resmî provider dokümantasyonu okunmadan implementation başlamaz.
+- EO-04 **Active** durumundadır. `A6-EO-04-A` başlangıç brief'i ürün sahibi tarafından kabul edilmiş ve provider-neutral implementation hazırlanmıştır; CI ve final ürün sahibi kabulü tamamlanmadan EO-04-B başlatılmaz.
+
+
+## 10 October 2026 — EO-04-A common adapter implementation gate
+
+- Product owner accepted the EO-04-A analyst brief before implementation.
+- Common runtime and strict types are now `app/lib/providers/common-adapter.server.js` and `app/lib/providers/common-adapter.server.d.ts`.
+- Meta, Google Ads and Klaviyo answer the same ten canonical raw-metric questions; their native request shapes remain provider-specific children.
+- Support capability and observation result are separate. Only explicit provider numeric zero becomes zero.
+- Pagination is complete-before-publish. Cursor loops, conflicting replay, missing pages, schema failures and exhausted budgets publish no rows.
+- Retry is bounded and restricted to normalized documented transient classes. Auth, permission, validation and deterministic scope failures are not retried.
+- Provider evidence is bounded, sanitized and content-hashed; secret and personal-data patterns are redacted.
+- Deterministic synthetic behavior is covered by `tests/eo-04a-common-adapter.test.js`.
+- No live provider call, secret read/write, database mutation, Vercel mutation or deployment occurs in EO-04-A.
+- Status is **implementation complete, CI and explicit final product-owner acceptance pending**. EO-04-B remains unauthorized until this gate closes.

@@ -391,3 +391,52 @@ test("evidence byte ceiling is enforced", () => {
       error instanceof AdapterContractError && error.code === "EVIDENCE_TOO_LARGE",
   );
 });
+
+
+test("provider Retry-After is never shortened to the fallback delay ceiling", async () => {
+  let slept = false;
+  const result = await runCommonAdapterOperation({
+    request: makeRequest(),
+    fetchPage: async () => {
+      throw new Error("429");
+    },
+    classifyError: () => ({
+      class: "rate_limited",
+      retryable: true,
+      retry_after_ms: 5_000,
+      message: "rate limited",
+    }),
+    sleep: async () => {
+      slept = true;
+    },
+    now: () => 0,
+    limits: {
+      maximum_elapsed_ms: 1_000,
+      maximum_delay_ms: 10,
+    },
+  });
+
+  assert.equal(result.publishable, false);
+  assert.equal(result.error.class, "rate_limited");
+  assert.match(result.error.message, /elapsed-time budget/i);
+  assert.equal(slept, false);
+});
+
+test("oversized provider evidence fails closed instead of escaping the runner", async () => {
+  const result = await runCommonAdapterOperation({
+    request: makeRequest(),
+    fetchPage: async () => ({
+      rows: [makeRow()],
+      next_cursor: null,
+      provider_request_id: "req-large-evidence",
+      raw_evidence: { payload: "x".repeat(100) },
+    }),
+    classifyError: noRetryClassifier,
+    limits: { maximum_evidence_bytes: 10 },
+  });
+
+  assert.equal(result.publishable, false);
+  assert.deepEqual(result.rows, []);
+  assert.equal(result.error.class, "internal_adapter_failure");
+  assert.match(result.error.message, /evidence/i);
+});

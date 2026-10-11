@@ -319,17 +319,9 @@ export function createGoogleAdsRestClient({
       });
     },
 
-    async search({ customerId: selectedCustomerId, query, pageToken = null, pageSize = 10000 }) {
-      const size = Number(pageSize);
-      if (!Number.isSafeInteger(size) || size < 1 || size > 10000) {
-        throw new GoogleAdsRestError(
-          "GOOGLE_ADS_PAGE_SIZE_INVALID",
-          "Google Ads page size must be between 1 and 10000",
-        );
-      }
+    async search({ customerId: selectedCustomerId, query, pageToken = null }) {
       const body = {
         query: nonEmpty(query, "GOOGLE_ADS_QUERY_REQUIRED", 100000),
-        pageSize: size,
       };
       if (pageToken !== null) {
         body.pageToken = nonEmpty(pageToken, "GOOGLE_ADS_PAGE_TOKEN_INVALID", 4096);

@@ -121,7 +121,7 @@ export const loader = async ({request}: LoaderFunctionArgs): Promise<SettingsSta
       });
       const advertisers = result.accounts
         .filter((account: Record<string, unknown>) =>
-          account.kind === "advertiser" && account.reportingEligible === true
+          account.kind === "advertiser"
         )
         .map(advertiserView);
       if (advertisers.length === 0) {
@@ -290,6 +290,7 @@ export default function Settings() {
   const navigation = useNavigation();
   const connectedChoices = useRef<any>(null);
   const reportingChoice = useRef<any>(null);
+  const selectionModal = useRef<any>(null);
   const pending = navigation.state !== "idle";
 
   useEffect(() => {
@@ -303,6 +304,11 @@ export default function Settings() {
     }
     globalThis.open(authorizationUrl.toString(), "_top");
   }, [actionData]);
+
+  useEffect(() => {
+    if (state.view !== "resume" || state.advertisers.length === 0) return;
+    selectionModal.current?.showOverlay?.();
+  }, [state]);
 
   const begin = () => {
     const form = new FormData();
@@ -352,7 +358,11 @@ export default function Settings() {
                 accounts. Manager accounts are used only when Google requires an
                 access path.
               </s-paragraph>
-              <s-button variant="primary" onClick={begin}>
+              <s-button
+                variant="primary"
+                commandFor="google-connect-modal"
+                command="--show"
+              >
                 Connect Google Ads
               </s-button>
             </>
@@ -364,7 +374,13 @@ export default function Settings() {
               <s-paragraph>
                 Google Ads connection was cancelled. No reporting account was connected.
               </s-paragraph>
-              <s-button variant="primary" onClick={begin}>Try again</s-button>
+              <s-button
+                variant="primary"
+                commandFor="google-connect-modal"
+                command="--show"
+              >
+                Try again
+              </s-button>
             </>
           ) : null}
 
@@ -375,14 +391,26 @@ export default function Settings() {
                 This Google Ads setup session expired. Start again to load a fresh
                 account list.
               </s-paragraph>
-              <s-button variant="primary" onClick={begin}>Start again</s-button>
+              <s-button
+                variant="primary"
+                commandFor="google-connect-modal"
+                command="--show"
+              >
+                Start again
+              </s-button>
             </>
           ) : null}
 
           {!pending && state.view === "error" ? (
             <>
               <SafeError code={state.code} />
-              <s-button variant="primary" onClick={begin}>Try again</s-button>
+              <s-button
+                variant="primary"
+                commandFor="google-connect-modal"
+                command="--show"
+              >
+                Try again
+              </s-button>
             </>
           ) : null}
 
@@ -393,7 +421,9 @@ export default function Settings() {
                 Google Ads connected. {state.count} advertiser account(s) connected.
                 {" "}{state.reportingAccountName} is used for reporting.
               </s-paragraph>
-              <s-button onClick={begin}>Manage Google Ads connection</s-button>
+              <s-button commandFor="google-connect-modal" command="--show">
+                Manage Google Ads connection
+              </s-button>
             </>
           ) : null}
 
@@ -405,7 +435,13 @@ export default function Settings() {
                 be reporting accounts.
               </s-paragraph>
               <s-stack direction="inline" gap="base">
-                <s-button variant="primary" onClick={begin}>Try Google Ads again</s-button>
+                <s-button
+                  variant="primary"
+                  commandFor="google-connect-modal"
+                  command="--show"
+                >
+                  Try Google Ads again
+                </s-button>
                 <s-button onClick={() => cancel(state.transactionId)}>
                   Cancel setup
                 </s-button>
@@ -417,46 +453,98 @@ export default function Settings() {
             <>
               <s-badge tone="info">Choose accounts</s-badge>
               <s-paragraph>
-                Choose Google Ads accounts. Select up to three advertiser accounts,
-                then choose which account AdsTable uses for reporting.
+                Google authorization succeeded. Choose one to three advertiser
+                accounts. Manager accounts are not shown and do not count toward
+                the limit.
               </s-paragraph>
-              <s-choice-list
-                ref={connectedChoices}
-                label="Connected advertiser accounts"
-                name="connectedAccountIds"
-                multiple
+              <s-button
+                variant="primary"
+                commandFor="google-account-selection-modal"
+                command="--show"
               >
-                {state.advertisers.map((account) => (
-                  <s-choice key={account.id} value={account.id}>
-                    {account.name} ({account.id})
-                  </s-choice>
-                ))}
-              </s-choice-list>
-              <s-choice-list
-                ref={reportingChoice}
-                label="Reporting account"
-                name="reportingAccountId"
+                Choose Google Ads accounts
+              </s-button>
+              <s-modal
+                ref={selectionModal}
+                id="google-account-selection-modal"
+                heading="Choose Google Ads accounts"
               >
-                {state.advertisers.map((account) => (
-                  <s-choice key={account.id} value={account.id}>
-                    {account.name} ({account.id})
-                  </s-choice>
-                ))}
-              </s-choice-list>
-              <s-stack direction="inline" gap="base">
+                <s-stack direction="block" gap="base">
+                  <s-paragraph>
+                    Select up to three advertiser accounts, then choose which
+                    selected account AdsTable uses for reporting.
+                  </s-paragraph>
+                  <s-choice-list
+                    ref={connectedChoices}
+                    label="Connected advertiser accounts"
+                    name="connectedAccountIds"
+                    multiple
+                  >
+                    {state.advertisers.map((account) => (
+                      <s-choice key={account.id} value={account.id}>
+                        {account.name} ({account.id})
+                      </s-choice>
+                    ))}
+                  </s-choice-list>
+                  <s-choice-list
+                    ref={reportingChoice}
+                    label="Reporting account"
+                    name="reportingAccountId"
+                  >
+                    {state.advertisers.map((account) => (
+                      <s-choice key={account.id} value={account.id}>
+                        {account.name} ({account.id})
+                      </s-choice>
+                    ))}
+                  </s-choice-list>
+                </s-stack>
                 <s-button
+                  slot="primary-action"
                   variant="primary"
                   onClick={() => select(state.transactionId)}
                 >
                   Connect selected accounts
                 </s-button>
-                <s-button onClick={() => cancel(state.transactionId)}>
+                <s-button
+                  slot="secondary-actions"
+                  onClick={() => cancel(state.transactionId)}
+                >
                   Cancel setup
                 </s-button>
-              </s-stack>
+              </s-modal>
             </>
           ) : null}
         </s-stack>
+        <s-modal id="google-connect-modal" heading="Connect Google Ads">
+          <s-stack direction="block" gap="base">
+            <s-paragraph>
+              Continue with a Google account that can access the Google Ads
+              advertiser accounts you intend to connect. AdsTable uses this
+              connection only to read approved Google Ads reporting data.
+            </s-paragraph>
+            <s-paragraph>
+              Authorization does not complete the connection. After Google
+              authorization, choose one to three advertiser accounts. Manager
+              accounts are never selectable.
+            </s-paragraph>
+          </s-stack>
+          <s-button
+            slot="primary-action"
+            variant="primary"
+            commandFor="google-connect-modal"
+            command="--hide"
+            onClick={begin}
+          >
+            Continue to Google
+          </s-button>
+          <s-button
+            slot="secondary-actions"
+            commandFor="google-connect-modal"
+            command="--hide"
+          >
+            Cancel
+          </s-button>
+        </s-modal>
       </s-section>
     </s-page>
   );

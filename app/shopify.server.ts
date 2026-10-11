@@ -3,6 +3,7 @@ import {createShopifyAppRuntime} from "./lib/shopify/shopify-app-runtime.server.
 const runtime = await createShopifyAppRuntime();
 
 export const database = runtime.database;
+export const providerTokenVault = runtime.tokenVault;
 export const publicShopifyConfig = runtime.publicConfig;
 export const addDocumentResponseHeaders = runtime.shopify.addDocumentResponseHeaders;
 export const authenticate = runtime.shopify.authenticate;

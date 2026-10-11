@@ -30,6 +30,8 @@ export declare function createGoogleAuthorizationHandoff(options: {
     load(value: object): Promise<Record<string, unknown> | null>;
     consume(value: object): Promise<Record<string, unknown>>;
     expire(value: object): Promise<number>;
+    resolveCallbackReturn?(value: object): Promise<{shopDomain: string}>;
+    cancel?(value: object): Promise<{cancelled: true}>;
   };
   exchangeAuthorizationCode(value: object): Promise<Record<string, unknown>>;
   refreshAccessToken(value: object): Promise<Record<string, unknown>>;
@@ -44,5 +46,7 @@ export declare function createGoogleAuthorizationHandoff(options: {
   completeCallback(value: object): Promise<Record<string, unknown>>;
   discover(value: object): Promise<Record<string, unknown>>;
   select(value: object): Promise<Record<string, unknown>>;
+  resolveCallbackReturn(value: object): Promise<{shopDomain: string}>;
+  cancel(value: object): Promise<{cancelled: true}>;
   expire(value?: {limit?: number}): Promise<number>;
 };

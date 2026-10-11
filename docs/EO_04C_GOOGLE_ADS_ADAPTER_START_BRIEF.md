@@ -182,3 +182,9 @@ Additional product-reporting references checked 11 October 2026:
 - `app/lib/providers/google-ads-rest.server.js` now provides the tested server-only boundary for PKCE authorization, offline code exchange, refresh, `ListAccessibleCustomers` and direct v25 REST search. It never adds a developer-token header.
 - GitHub Actions run `38131663609` passed 201/201 tests, TypeScript verification and production build.
 - No Google authorization, provider request, account selection, database credential write, redeploy or Dataset V2 write occurred. The next gate is route wiring, encrypted refresh-token persistence, deployment and controlled read-only live evidence.
+
+## 11 October 2026 — Pending authorization handoff finding
+
+Route review found a critical fail-closed gap: after code exchange, the encrypted credential envelope is not yet linked to the claimed OAuth transaction through a short-lived server-side handoff while the merchant selects one to three accounts. A credential UUID through a URL, browser form or ordinary cookie cannot become authority.
+
+Binding proposal: `docs/EO_04C_GOOGLE_OAUTH_SELECTION_HANDOFF_GATE.md` and `contracts/eo-04c-google-oauth-selection-handoff-gate-v1.json`. Route, database and live implementation stop until explicit product-owner acceptance.

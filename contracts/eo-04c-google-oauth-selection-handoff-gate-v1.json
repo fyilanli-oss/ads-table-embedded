@@ -1,0 +1,108 @@
+{
+  "contract_id": "eo-04c-google-oauth-selection-handoff-gate-v1",
+  "version": "1.0.0",
+  "status": "Proposed_product_owner_acceptance_required_before_route_or_database_implementation",
+  "checked_at": "2026-10-11",
+  "parent": "A6-EO-04-C",
+  "objective": "Bridge Google OAuth exchange to one-to-three advertiser-account selection without exposing credential identity, trusting browser evidence, orphaning refresh tokens or inventing a cross-request authority channel.",
+  "finding": {
+    "severity": "critical_fail_closed",
+    "discovered_during": "Google_begin_callback_route_wiring_review",
+    "current_gap": "The encrypted credential envelope has no server-side pending authorization record linking it to the claimed OAuth transaction before provider-account selection.",
+    "forbidden_shortcuts": [
+      "credential_id_in_URL_query_or_browser_form_as_authority",
+      "refresh_token_access_token_or_provider_evidence_in_cookie_URL_or_client_state",
+      "browser_supplied_account_evidence_without_fresh_provider_reverification",
+      "permanent_provider_connection_before_user_selects_one_to_three_eligible_advertiser_accounts",
+      "route_or_redeploy_before_this_gate_is_accepted_and_implemented"
+    ]
+  },
+  "flow": [
+    "authenticated_Shopify_Admin_POST_begins_server_side_OAuth_transaction",
+    "Google_callback_claims_state_and_PKCE_then_exchanges_code",
+    "refresh_token_is_stored_only_as_versioned_encrypted_credential_envelope",
+    "server_creates_short_lived_pending_authorization_handoff_bound_to_oauth_transaction_workspace_install_generation_provider_and_credential",
+    "callback_redirects_with_transaction_id_only_which_is_correlation_not_authority",
+    "authenticated_Settings_loader resolves handoff under verified_installed_shop_authority_and_requeries_Google_accounts",
+    "user_selects_one_to_three_provider_verified_non_manager_advertiser_accounts_and_one_reporting_account",
+    "server_requeries_or_uses_unexpired_server_evidence_then_atomically_establishes_connection_and_consumes_handoff",
+    "expired_failed_or_abandoned_handoff_removes_unreferenced_credential_ciphertext"
+  ],
+  "database_design": {
+    "private_schema": "integrations",
+    "proposed_table": "provider_authorization_handoffs",
+    "primary_key": "oauth_transaction_id",
+    "unique_credential_id": true,
+    "authority_columns": [
+      "workspace_id",
+      "install_generation",
+      "provider",
+      "credential_id"
+    ],
+    "statuses": [
+      "awaiting_selection",
+      "consumed",
+      "expired",
+      "failed"
+    ],
+    "expiry_minutes": 10,
+    "provider_account_payload_persisted": false,
+    "browser_access": false,
+    "rls": "enabled_and_forced_defense_in_depth",
+    "direct_table_grants": [
+      "adstable_owner_only"
+    ],
+    "runtime_access": "narrow_security_definer_functions_only",
+    "function_requirements": [
+      "empty_search_path_and_schema_qualified_relations",
+      "PUBLIC_anon_authenticated_service_role_execute_revoked",
+      "adstable_runtime_execute_granted_only_to_exact_functions",
+      "row_lock_and_expected_status_transition",
+      "active_installation_generation_reverified",
+      "transaction_provider_workspace_generation_credential_consistency",
+      "bounded_expiry_cleanup_and_orphan_credential_removal"
+    ],
+    "required_indexes": [
+      "unique_credential_id",
+      "workspace_install_generation_provider_status",
+      "expires_at_where_status_awaiting_selection"
+    ]
+  },
+  "runtime_design": {
+    "begin_method": "POST_only_authenticated_Shopify_Admin",
+    "callback_method": "GET_provider_callback_state_and_code_only",
+    "selection_method": "POST_only_authenticated_Shopify_Admin",
+    "csrf_and_session_authority": "Shopify_verified_ID_token_and_Admin_shop_identity",
+    "account_discovery": "ListAccessibleCustomers_then_customer_customer_client_queries",
+    "manager_reporting_eligible": false,
+    "selection_cardinality": {
+      "minimum": 1,
+      "maximum": 3
+    },
+    "global_login_customer_id": false,
+    "credential_storage": "encrypted_database_ciphertext_only",
+    "access_token_storage": "memory_only",
+    "error_output": "bounded_secret_safe_codes_and_request_id_only"
+  },
+  "mutation_authority": {
+    "repository_design_and_tests": true,
+    "repository_migration": false,
+    "live_supabase": false,
+    "vercel_redeploy": false,
+    "live_google_oauth": false,
+    "live_google_api": false
+  },
+  "acceptance": [
+    "explicit_product_owner_acceptance_of_this_gate",
+    "repository_migration_and_runtime_orchestration_tests_PASS",
+    "security_and_performance_advisors_zero_new_findings_after_separately_approved_live_migration",
+    "controlled_callback_selection_expiry_and_cleanup_evidence",
+    "no_secret_or_personal_data_in_repository_logs_URLs_or_evidence"
+  ],
+  "official_sources": {
+    "supabase_rls": "https://supabase.com/docs/guides/database/postgres/row-level-security",
+    "supabase_functions": "https://supabase.com/docs/guides/database/functions",
+    "google_oauth_web_server": "https://developers.google.com/identity/protocols/oauth2/web-server",
+    "google_ads_credential_management": "https://developers.google.com/google-ads/api/docs/oauth/credential-management"
+  }
+}

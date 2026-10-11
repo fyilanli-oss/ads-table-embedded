@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.24.0",
+  "schema_version": "1.25.0",
   "contract_id": "a6-eo-implementation-master-v1",
   "title": "A6 EO single-track execution rule and integrated implementation package table",
   "effective_date": "2026-10-04",
@@ -670,7 +670,7 @@
           "id": "A6-EO-04-C",
           "title": "Google Ads adapter",
           "objective": "Standard Ad and Performance Max Asset Group hierarchy with raw structure evidence.",
-          "status": "Repository_CI_PASS_controlled_live_evidence_ready",
+          "status": "Repository_CI_PASS_pending_authorization_handoff_acceptance",
           "implementation_started": true,
           "live_mutation_authorized": false,
           "document": "docs/EO_04C_GOOGLE_ADS_ADAPTER_START_BRIEF.md",
@@ -700,10 +700,15 @@
           "repository_tests": "PASS_201_of_201",
           "typecheck": "PASS",
           "preview_build": "PASS",
-          "live_evidence_preflight": "READY_credentials_present_provider_key_recovery_confirmed_route_wiring_pending",
+          "live_evidence_preflight": "BLOCKED_pending_server_side_authorization_handoff_acceptance",
           "oauth_rest_runtime": "app/lib/providers/google-ads-rest.server.js",
           "oauth_rest_types": "app/lib/providers/google-ads-rest.server.d.ts",
-          "oauth_rest_test": "tests/eo-04c-google-ads-rest.test.js"
+          "oauth_rest_test": "tests/eo-04c-google-ads-rest.test.js",
+          "pending_authorization_handoff_gate": {
+            "document": "docs/EO_04C_GOOGLE_OAUTH_SELECTION_HANDOFF_GATE.md",
+            "contract": "contracts/eo-04c-google-oauth-selection-handoff-gate-v1.json",
+            "status": "Proposed_product_owner_acceptance_required"
+          }
         },
         {
           "id": "A6-EO-04-D",

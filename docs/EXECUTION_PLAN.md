@@ -321,7 +321,7 @@ CI enforcement: `tests/eo-04c-google-ads-adapter-start-brief.test.js`
 - Missing segmented rows are not automatically zero. Google can omit all-zero rows.
 - Source date, timezone and currency come from the Google Ads customer. Interaction-date reporting is primary for Ads Manager comparability; EO-05 owns normalization, FX, maturity and reconciliation.
 - Google retired the developer-token requirement on 9 September 2026. `GOOGLE_ADS_DEVELOPER_TOKEN` is not introduced as a required clean-repository secret.
-- Cart data can expose sold products and cross-sell evidence when implemented, but the documented `cart_data_sales_view` segmenting grain is Campaign/Ad Group. **Ad-level sold-product attribution remains a deeper official-field-compatibility and controlled-live-query gate.** PMax advertised-product reporting is not automatically sold-basket cross-sell proof.
+- Cart data can expose sold products and cross-sell evidence when implemented, but the documented `cart_data_sales_view` segmenting grain is Campaign/Ad Group. **Search Ad-level sold-product linkage is unsupported by the current native Google reporting contract; no inferred join may replace it.** PMax advertised-product reporting is not automatically sold-basket cross-sell proof.
 - EO-04-C remains open at repository implementation and separately authorized live evidence. EO-04-B also remains open at its controlled-live-evidence gate.
 - In accordance with the accepted read-all-providers-first sequence, EO-04-D Klaviyo official-document discovery is now active. No Klaviyo mutation is authorized by this status change.
 

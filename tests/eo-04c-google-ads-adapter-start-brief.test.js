@@ -45,7 +45,7 @@ test("EO-04-C freezes canonical Funnel, zero and attribution semantics", async (
   assert.equal(contract.freshness_finality.single_fixed_google_finality_window_allowed, false);
 });
 
-test("EO-04-C leaves sold-product Ad grain and cross-sell at evidence gates", async () => {
+test("EO-04-C freezes sold-product grain and live capability gates", async () => {
   const contract = await readJson("contracts/eo-04c-google-ads-adapter-start-brief-v1.json");
 
   assert.deepEqual(contract.product_cart_data.documented_cart_data_segmenting_resources, [
@@ -56,7 +56,9 @@ test("EO-04-C leaves sold-product Ad grain and cross-sell at evidence gates", as
   assert.equal(contract.product_cart_data.performance_max_individual_ad_exists, false);
   assert.equal(contract.product_cart_data.advertised_product_performance_is_not_sold_basket_cross_sell_proof, true);
   assert.equal(contract.product_cart_data.merchant_item_id_assumed_shopify_sku_or_variant, false);
-  assert.equal(contract.product_cart_data.deeper_official_field_compatibility_and_live_query_required, true);
+  assert.equal(contract.product_cart_data.deeper_official_field_compatibility_and_live_query_required, false);
+  assert.equal(contract.product_cart_data.official_field_compatibility_investigation_completed_at, "2026-10-11");
+  assert.equal(contract.product_cart_data.live_account_availability_and_identity_mapping_required, true);
   assert.equal(contract.product_cart_data.owner_package, "A6-EO-07-C");
   assert.equal(contract.product_cart_data.product_ui_authorized, false);
   assert.equal(contract.product_cart_data.exact_live_fixtures.length, 2);
@@ -73,7 +75,7 @@ test("Execution Plan and master advance documentation discovery to EO-04-D witho
   for (const value of [
     "docs/EO_04C_GOOGLE_ADS_ADAPTER_START_BRIEF.md",
     "contracts/eo-04c-google-ads-adapter-start-brief-v1.json",
-    "Ad-level sold-product attribution remains",
+    "Search Ad-level sold-product linkage is unsupported",
     "GOOGLE_ADS_DEVELOPER_TOKEN",
   ]) {
     assert.match(plan, new RegExp(value.replace(/[.*+?^$\\{\\}()|[\\]\\\\]/g, "\\$&")));

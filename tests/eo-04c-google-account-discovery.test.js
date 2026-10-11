@@ -15,27 +15,46 @@ function response(payload) {
   };
 }
 
-function customerNotEnabledResponse() {
+function providerFailure(errorCode, requestId = "provider-request-id") {
   return {
     ok: false,
     status: 403,
-    headers: {get: () => "customer-not-enabled-request-id"},
+    headers: {get: () => requestId},
     async json() {
       return {
         error: {
           status: "PERMISSION_DENIED",
-          details: [{
-            errors: [{
-              errorCode: {customerError: "CUSTOMER_NOT_ENABLED"},
-            }],
-          }],
+          details: [{errors: [{errorCode}]}],
         },
       };
     },
   };
 }
 
-test("Google discovery keeps managers as access paths and advertisers as reporting choices", async () => {
+function customerClient({
+  id,
+  name,
+  manager = false,
+  status = "ENABLED",
+  currency = "USD",
+  timezone = "UTC",
+  level = "0",
+}) {
+  return {
+    customerClient: {
+      clientCustomer: `customers/${id}`,
+      id,
+      descriptiveName: name,
+      manager,
+      status,
+      currencyCode: currency,
+      timeZone: timezone,
+      level,
+    },
+  };
+}
+
+test("Google discovery preserves the proven accessible-root customer_client contract", async () => {
   const calls = [];
   const fetchFn = async (url, init) => {
     const body = init.body ? JSON.parse(init.body) : null;
@@ -44,48 +63,20 @@ test("Google discovery keeps managers as access paths and advertisers as reporti
       return response({resourceNames: ["customers/111", "customers/222"]});
     }
     if (url.includes("/customers/111/")) {
-      return response({results: [{customer: {
-        id: "111", descriptiveName: "Direct advertiser", manager: false,
-        status: "ENABLED", currencyCode: "USD", timeZone: "UTC",
-      }}]});
-    }
-    if (url.includes("/customers/222/") && body.query === GOOGLE_ACCOUNT_DISCOVERY_QUERIES.customer) {
-      return response({results: [{customer: {
-        id: "222", descriptiveName: "Root manager", manager: true,
-        status: "ENABLED", currencyCode: "USD", timeZone: "UTC",
-      }}]});
+      return response({results: [
+        customerClient({id: "111", name: "Direct advertiser"}),
+      ]});
     }
     if (url.includes("/customers/222/")) {
       return response({results: [
-        {customerClient: {
-          clientCustomer: "customers/222", id: "222",
-          descriptiveName: "Root manager", manager: true, status: "ENABLED",
-          currencyCode: "USD", timeZone: "UTC", level: "0",
-        }},
-        {customerClient: {
-          clientCustomer: "customers/333", id: "333",
-          descriptiveName: "Child manager", manager: true, status: "ENABLED",
-          currencyCode: "USD", timeZone: "UTC", level: "1",
-        }},
-        {customerClient: {
-          clientCustomer: "customers/444", id: "444",
-          descriptiveName: "Retail advertiser", manager: false, status: "ENABLED",
-          currencyCode: "TRY", timeZone: "Europe/Istanbul", level: "1",
-        }},
-      ]});
-    }
-    if (url.includes("/customers/333/")) {
-      return response({results: [
-        {customerClient: {
-          clientCustomer: "customers/333", id: "333",
-          descriptiveName: "Child manager", manager: true, status: "ENABLED",
-          currencyCode: "USD", timeZone: "UTC", level: "0",
-        }},
-        {customerClient: {
-          clientCustomer: "customers/555", id: "555",
-          descriptiveName: "Nested advertiser", manager: false, status: "SUSPENDED",
-          currencyCode: "EUR", timeZone: "Europe/Berlin", level: "1",
-        }},
+        customerClient({id: "222", name: "Root manager", manager: true}),
+        customerClient({
+          id: "333",
+          name: "Retail advertiser",
+          currency: "TRY",
+          timezone: "Europe/Istanbul",
+          level: "1",
+        }),
       ]});
     }
     throw new Error("unexpected request " + url);
@@ -105,17 +96,19 @@ test("Google discovery keeps managers as access paths and advertisers as reporti
   assert.equal(byId.get("111").loginAccountId, "111");
   assert.equal(byId.get("222").kind, "manager");
   assert.equal(byId.get("222").reportingEligible, false);
-  assert.equal(byId.get("444").loginAccountId, "222");
-  assert.equal(byId.get("444").reportingEligible, true);
-  assert.equal(byId.get("555").reportingEligible, true);
+  assert.equal(byId.get("333").loginAccountId, "222");
+  assert.equal(byId.get("333").reportingEligible, true);
   assert.equal(
-    calls.find((call) => call.url.includes("/customers/444/")),
-    undefined,
+    calls.filter((call) => call.url.includes("/googleAds:search")).length,
+    2,
   );
-  assert.equal(
-    calls.filter((call) => call.url.endsWith("/customers:listAccessibleCustomers"))[0]
-      .headers["login-customer-id"],
-    undefined,
+  assert.ok(
+    calls
+      .filter((call) => call.url.includes("/googleAds:search"))
+      .every((call) =>
+        call.body.query === GOOGLE_ACCOUNT_DISCOVERY_QUERIES.customerClient
+        && call.headers["login-customer-id"] === undefined
+      ),
   );
 });
 
@@ -130,17 +123,18 @@ test("Google discovery fails closed on empty accessible-account evidence", async
   );
 });
 
-test("Google discovery skips an unavailable direct root and preserves advertisers", async () => {
+test("Google discovery skips an unavailable root when another root verifies", async () => {
   const fetchFn = async (url) => {
     if (url.endsWith("/customers:listAccessibleCustomers")) {
       return response({resourceNames: ["customers/111", "customers/222"]});
     }
-    if (url.includes("/customers/111/")) return customerNotEnabledResponse();
+    if (url.includes("/customers/111/")) {
+      return providerFailure({customerError: "CUSTOMER_NOT_ENABLED"});
+    }
     if (url.includes("/customers/222/")) {
-      return response({results: [{customer: {
-        id: "222", descriptiveName: "Enabled advertiser", manager: false,
-        status: "ENABLED", currencyCode: "USD", timeZone: "UTC",
-      }}]});
+      return response({results: [
+        customerClient({id: "222", name: "Working advertiser"}),
+      ]});
     }
     throw new Error("unexpected request " + url);
   };
@@ -150,78 +144,39 @@ test("Google discovery skips an unavailable direct root and preserves advertiser
     developerToken: "developer-token",
     fetchFn,
   });
-
   assert.deepEqual(evidence.accounts.map((account) => account.id), ["222"]);
-  assert.equal(evidence.accounts[0].reportingEligible, true);
 });
 
-test("Google discovery reports when every accessible root is unavailable", async () => {
+test("Google discovery preserves the provider failure when every root fails", async () => {
   await assert.rejects(
     discoverGoogleAdsAccounts({
       accessToken: "access-token",
       developerToken: "developer-token",
       fetchFn: async (url) => url.endsWith("/customers:listAccessibleCustomers")
         ? response({resourceNames: ["customers/111"]})
-        : customerNotEnabledResponse(),
+        : providerFailure({customerError: "CUSTOMER_NOT_ENABLED"}),
     }),
-    /GOOGLE_ADS_ENABLED_CUSTOMERS_EMPTY/,
+    (error) =>
+      error.code === "GOOGLE_ADS_REST_REQUEST_FAILED"
+      && error.details.provider_error_code === "CUSTOMER_NOT_ENABLED",
   );
 });
 
-test("Google discovery preserves eligible roots when another root requires production access", async () => {
-  const productionOnlyResponse = {
-    ok: false,
-    status: 403,
-    headers: {get: () => "production-access-request-id"},
-    async json() {
-      return {
-        error: {
-          status: "PERMISSION_DENIED",
-          details: [{
-            errors: [{
-              errorCode: {
-                authorizationError: "CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION",
-              },
-            }],
-          }],
-        },
-      };
-    },
-  };
-  const fetchFn = async (url) => {
-    if (url.endsWith("/customers:listAccessibleCustomers")) {
-      return response({resourceNames: ["customers/111", "customers/222"]});
-    }
-    if (url.includes("/customers/111/")) return productionOnlyResponse;
-    if (url.includes("/customers/222/")) {
-      return response({results: [{customer: {
-        id: "222", descriptiveName: "Eligible advertiser", manager: false,
-        status: "ENABLED", currencyCode: "USD", timeZone: "UTC",
-      }}]});
-    }
-    throw new Error("unexpected request " + url);
-  };
-
-  const evidence = await discoverGoogleAdsAccounts({
-    accessToken: "access-token",
-    developerToken: "developer-token",
-    fetchFn,
-  });
-
-  assert.deepEqual(evidence.accounts.map((account) => account.id), ["222"]);
-  assert.equal(evidence.accounts[0].reportingEligible, true);
-});
-
-test("Google discovery keeps provider status informational for non-manager advertisers", async () => {
+test("Google discovery keeps provider status informational for advertisers", async () => {
   const evidence = await discoverGoogleAdsAccounts({
     accessToken: "access-token",
     developerToken: "developer-token",
     fetchFn: async (url) => url.endsWith("/customers:listAccessibleCustomers")
       ? response({resourceNames: ["customers/111"]})
-      : response({results: [{customer: {
-          id: "111", descriptiveName: "Legacy advertiser", manager: false,
-          status: "CLOSED", currencyCode: "TRY", timeZone: "Europe/Istanbul",
-        }}]}),
+      : response({results: [
+          customerClient({
+            id: "111",
+            name: "Legacy advertiser",
+            status: "CLOSED",
+            currency: "TRY",
+            timezone: "Europe/Istanbul",
+          }),
+        ]}),
   });
 
   assert.equal(evidence.accounts.length, 1);

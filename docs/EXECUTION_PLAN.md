@@ -405,3 +405,14 @@ Executable contract: `contracts/a6-channel-reporting-terminology-v1.json`
 - Repository Governance run `38142931704` passed 223/223 tests, TypeScript and production build at commit `93aa1b8901b639933ffa9feed5acc4ccfb4b70de`.
 - Durable evidence: `docs/evidence/EO_04C_GOOGLE_ROUTE_REPOSITORY_2026-10-11.json`.
 - Status is `Repository_implementation_PASS_deployment_pending`. Vercel deployment, live Google OAuth/API calls, real desktop/mobile Shopify Admin acceptance and package closure remain separately gated.
+
+## 11 October 2026 — EO-04-C Google lifecycle parity corrective gate
+
+- End-to-end comparison with the former working implementation found a new-design regression: the OAuth transaction lifetime and the post-OAuth account-selection state had been collapsed into one ten-minute handoff. No Google, Shopify or former AdsTable rule requires that selection timeout.
+- Binding correction: OAuth state/PKCE remains independently bounded; after successful exchange the encrypted refresh credential and pending account-selection authority remain resumable until selection is consumed, the merchant explicitly cancels, Google authorization becomes invalid, or the Shopify installation is removed.
+- Resume setup performs fresh Google discovery and opens only the account-selection modal. It never restarts OAuth. The merchant selects one to three non-manager advertisers; the first selected advertiser becomes the initial reporting account.
+- Settings may render Connected only after a server-side refresh-token validation. Google `invalid_grant` or an already revoked credential closes local active connection authority, removes encrypted credential material and renders Reauthorization required.
+- Reporting-account change requires fresh Google account evidence. Disconnect revokes the Google grant, closes active account/reporting bindings, removes ciphertext and preserves historical analytics.
+- Reauthorization must atomically reconnect the existing disconnected canonical connection; duplicate provider connections are forbidden.
+- Corrective contract: `contracts/eo-04c-google-oauth-route-wiring-v1.json`; corrective migration: `supabase/migrations/20261011180000_eo04c_durable_selection_and_reconnect.sql`; lifecycle runtime: `app/lib/oauth/google-connection-runtime.server.js`.
+- Status: repository implementation and CI verification in progress. Production Supabase migration, Vercel deployment and controlled desktop/mobile acceptance have not yet been performed for this correction.

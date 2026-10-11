@@ -1,0 +1,67 @@
+{
+  "evidence_id": "EO_04C_AUTHORIZATION_HANDOFF_LIVE_2026-10-11",
+  "checked_at": "2026-10-11",
+  "project_ref": "podpwkrpmjiksskxhwsu",
+  "project_name": "ads-table-embedded",
+  "region": "eu-central-1",
+  "postgres": "17.11",
+  "scope": "Google OAuth-to-account-selection server-only authorization handoff database boundary",
+  "approvals": {
+    "base_migration": "explicit_product_owner_approval_in_chat",
+    "corrective_index_migration": "explicit_product_owner_approval_in_chat"
+  },
+  "live_migrations": [
+    {
+      "database_version": "20261011114438",
+      "name": "eo04c_provider_authorization_handoff",
+      "repository_file": "supabase/migrations/20261011120000_eo04c_provider_authorization_handoff.sql",
+      "result": "APPLIED"
+    },
+    {
+      "database_version": "20261011114809",
+      "name": "eo04c_handoff_installation_fk_index",
+      "repository_file": "supabase/migrations/20261011123000_eo04c_handoff_installation_fk_index.sql",
+      "result": "APPLIED"
+    }
+  ],
+  "postflight": {
+    "table": "integrations.provider_authorization_handoffs",
+    "row_count": 0,
+    "owner": "adstable_owner",
+    "rls": "enabled_and_forced",
+    "owner_policy_count": 1,
+    "runtime_direct_table_privileges": {
+      "select": false,
+      "insert": false,
+      "update": false,
+      "delete": false
+    },
+    "runtime_security_definer_function_count": 4,
+    "browser_data_api_function_execute": false,
+    "installation_foreign_key_index": "PASS",
+    "security_advisor": "PASS_zero_findings",
+    "performance_advisor": {
+      "new_actionable_findings": 0,
+      "unindexed_foreign_keys_before": 2,
+      "unindexed_foreign_keys_after": 2,
+      "existing_unrelated_findings": [
+        "privacy.deletion_manifests.workspace_id",
+        "privacy.deletion_runs.workspace_id"
+      ],
+      "new_indexes_reported_unused": "expected_on_zero-row_new-table_until_runtime_traffic"
+    }
+  },
+  "boundaries": {
+    "routes_wired": false,
+    "vercel_redeployed": false,
+    "live_google_oauth_request": false,
+    "live_google_ads_request": false,
+    "dataset_v2_write": false,
+    "secret_values_recorded": false
+  },
+  "repository": {
+    "pull_request": "https://github.com/fyilanli-oss/ads-table-embedded/pull/66",
+    "corrective_migration_commit": "96a6f88fdfb890de6c69c350e1ba7e313780bc26",
+    "corrective_migration_ci": "PASS_run_38136789525"
+  }
+}

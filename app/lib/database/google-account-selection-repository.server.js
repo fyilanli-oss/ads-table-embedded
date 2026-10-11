@@ -36,7 +36,6 @@ function record(row) {
     connectedAccountCount: row.connected_account_count == null
       ? null
       : integer(row.connected_account_count, "GOOGLE_ACCOUNT_COUNT_INVALID"),
-    reportingAccountId: row.reporting_account_id ?? null,
   });
 }
 
@@ -69,12 +68,12 @@ export function createGoogleAccountSelectionRepository(database) {
       return record(one(await query(
         `select * from integrations.complete_pending_provider_account_selection(
           $1::uuid, $2::uuid, $3::bigint, 'google_ads', $4::bigint,
-          $5::jsonb, $6::text, $7::timestamptz
+          $5::jsonb, $6::timestamptz
         )`,
         [
           value.connectionId, value.workspaceId, value.installGeneration,
           value.expectedVersion, JSON.stringify(value.accounts),
-          value.reportingAccountId, value.verifiedAt,
+          value.verifiedAt,
         ],
       ), "GOOGLE_ACCOUNT_SELECTION_COMPLETE"));
     },

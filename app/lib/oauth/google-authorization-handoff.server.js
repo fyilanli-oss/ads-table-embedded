@@ -292,6 +292,30 @@ export function createGoogleAuthorizationHandoff({
       });
     },
 
+    async resolveCallbackReturn({installationAuthority: authority}) {
+      const owner = installationAuthority(authority);
+      requiredMethod(repository, "resolveCallbackReturn", "repository");
+      return repository.resolveCallbackReturn({
+        workspaceId: owner.workspaceId,
+        installGeneration: owner.installGeneration,
+      });
+    },
+
+    async cancel({transactionId, installationAuthority: authority}) {
+      const owner = installationAuthority(authority);
+      if (!UUID_PATTERN.test(transactionId || "")) {
+        throw new Error("GOOGLE_AUTHORIZATION_HANDOFF_TRANSACTION_INVALID");
+      }
+      requiredMethod(repository, "cancel", "repository");
+      return repository.cancel({
+        transactionId,
+        workspaceId: owner.workspaceId,
+        installGeneration: owner.installGeneration,
+        provider: PROVIDER,
+        cancelledAt: isoNow(now),
+      });
+    },
+
     async expire({limit = 100} = {}) {
       return repository.expire({observedAt: isoNow(now), limit});
     },

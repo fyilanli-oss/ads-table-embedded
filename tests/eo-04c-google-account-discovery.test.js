@@ -167,3 +167,47 @@ test("Google discovery reports when every accessible root is disabled", async ()
     /GOOGLE_ADS_ENABLED_CUSTOMERS_EMPTY/,
   );
 });
+
+test("Google discovery preserves eligible roots when another root requires production access", async () => {
+  const productionOnlyResponse = {
+    ok: false,
+    status: 403,
+    headers: {get: () => "production-access-request-id"},
+    async json() {
+      return {
+        error: {
+          status: "PERMISSION_DENIED",
+          details: [{
+            errors: [{
+              errorCode: {
+                authorizationError: "CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION",
+              },
+            }],
+          }],
+        },
+      };
+    },
+  };
+  const fetchFn = async (url) => {
+    if (url.endsWith("/customers:listAccessibleCustomers")) {
+      return response({resourceNames: ["customers/111", "customers/222"]});
+    }
+    if (url.includes("/customers/111/")) return productionOnlyResponse;
+    if (url.includes("/customers/222/")) {
+      return response({results: [{customer: {
+        id: "222", descriptiveName: "Eligible advertiser", manager: false,
+        status: "ENABLED", currencyCode: "USD", timeZone: "UTC",
+      }}]});
+    }
+    throw new Error("unexpected request " + url);
+  };
+
+  const evidence = await discoverGoogleAdsAccounts({
+    accessToken: "access-token",
+    developerToken: "developer-token",
+    fetchFn,
+  });
+
+  assert.deepEqual(evidence.accounts.map((account) => account.id), ["222"]);
+  assert.equal(evidence.accounts[0].reportingEligible, true);
+});

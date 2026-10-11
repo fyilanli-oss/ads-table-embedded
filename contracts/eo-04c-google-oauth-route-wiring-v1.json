@@ -1,10 +1,10 @@
 {
   "contract_id": "eo-04c-google-oauth-route-wiring-v1",
-  "version": "1.3.0",
-  "status": "Repository_implementation_PASS_deployment_pending",
+  "version": "1.4.0",
+  "status": "Corrective_lifecycle_parity_in_progress",
   "checked_at": "2026-10-11",
   "parent": "A6-EO-04-C",
-  "objective": "Wire Google OAuth begin, callback, account discovery, selection and cancellation without weakening installed-shop, OAuth, token-vault or provider-evidence authority.",
+  "objective": "Restore legacy-proven Google lifecycle parity end to end: secure OAuth, durable pending account selection, resume without OAuth restart, one-to-three advertiser selection, first-selected initial reporting account, fresh reporting-account verification, truthful revoked state, disconnect and clean reconnect.",
   "callback_return_authority": {
     "source": "claimed_oauth_transaction_workspace_and_install_generation",
     "browser_shop_input_trusted": false,
@@ -44,6 +44,12 @@
       "name": "cancel_setup",
       "method": "POST",
       "shopify_admin_authenticated": true
+    },
+    {
+      "name": "disconnect",
+      "method": "POST",
+      "shopify_admin_authenticated": true,
+      "authority": "fresh_google_revoke_or_already_invalid_evidence_plus_connection_version"
     }
   ],
   "browser_forbidden": [
@@ -74,7 +80,9 @@
   "storage": {
     "refresh_token": "versioned_encrypted_database_ciphertext",
     "access_token": "memory_only",
-    "handoff_minutes": 10
+    "oauth_transaction_max_minutes": 30,
+    "pending_account_selection": "durable_until_consumed_explicitly_cancelled_revoked_or_installation_removed",
+    "arbitrary_selection_timeout": false
   },
   "ui": {
     "runtime": "polaris-2.0-rc.js",
@@ -100,13 +108,17 @@
     "desktop_and_real_mobile_acceptance_required": true,
     "pre_oauth_confirmation_modal_required": true,
     "post_oauth_account_selection_modal_required": true,
-    "account_selection_modal_cancel": "hide_only_pending_handoff_preserved",
+    "account_selection_modal_cancel": "hide_only_pending_selection_preserved",
     "resume_setup": "fresh_discovery_then_open_account_selection_modal_without_new_oauth",
-    "oauth_restart_on_resume": false
+    "oauth_restart_on_resume": false,
+    "disconnect_confirmation_modal_required": true,
+    "reauthorization_required_state": true
   },
   "additional_database_functions": [
     "resolve_active_installation_callback_return",
-    "cancel_provider_authorization_handoff"
+    "cancel_provider_authorization_handoff",
+    "durable_provider_authorization_handoff",
+    "consume_provider_authorization_handoff_reconnect"
   ],
   "mutation_authority": {
     "repository_brief_and_contract": true,
@@ -169,5 +181,25 @@
     },
     "defect": "new_status_enabled_gate_hid_all_three_advertisers",
     "accepted_correction": "restore_non_manager_only_legacy_selection_rule"
+  },
+  "lifecycle": {
+    "settings_connected_truth": "refresh_token_is_validated_server_side_before_connected_is_rendered",
+    "revoked_or_invalid_refresh_token": "finalize_local_disconnect_with_already_invalid_evidence_then_show_reauthorization_required",
+    "disconnect": "revoke_google_grant_then_atomically_close_local_accounts_and_reporting_binding_and_delete_ciphertext",
+    "reconnect": "reuse_existing_disconnected_connection_authority_and_consume_pending_selection_atomically",
+    "resume": "fresh_account_discovery_without_new_oauth",
+    "reporting_account_change": "fresh_google_account_evidence_required_before_binding_change",
+    "historical_analytics_preserved": true
+  },
+  "corrective_finding": {
+    "observed_at": "2026-10-11",
+    "defects": [
+      "oauth_exchange_and_account_selection_were_incorrectly_collapsed_into_one_ten_minute_handoff",
+      "settings_rendered_local_account_authority_as_connected_without_refresh_token_validation",
+      "google_disconnect_and_reconnect_were_not_wired_to_the_existing_provider_connection_lifecycle",
+      "reporting_account_change_did_not_refresh_provider_evidence"
+    ],
+    "source": "legacy_end_to_end_behavior_comparison",
+    "ten_minute_rule_authority": "none_it_was_an_internal_new_contract_regression"
   }
 }

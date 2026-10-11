@@ -110,6 +110,19 @@ function advertiserView(account: Record<string, unknown>): Advertiser {
   };
 }
 
+function resumeView(result: {
+  transactionId: string;
+  accounts: Array<Record<string, unknown>>;
+}): SettingsState {
+  return {
+    view: "resume",
+    transactionId: result.transactionId,
+    advertisers: result.accounts
+      .filter((account) => account.kind === "advertiser")
+      .map(advertiserView),
+  };
+}
+
 export const loader = async ({request}: LoaderFunctionArgs): Promise<SettingsState> => {
   const verified = await authority(request);
   const runtime = createGoogleOAuthRuntime({
@@ -129,32 +142,10 @@ export const loader = async ({request}: LoaderFunctionArgs): Promise<SettingsSta
         transactionId,
         installationAuthority: verified.installationAuthority,
       });
-      const advertisers = result.accounts
-        .filter((account: Record<string, unknown>) =>
-          account.kind === "advertiser"
-        )
-        .map(advertiserView);
-      if (advertisers.length === 0) {
-        const statusCounts: Record<string, number> = {};
-        for (const account of result.accounts as Array<Record<string, unknown>>) {
-          const status = safeLogValue(account.status) ?? "missing";
-          statusCounts[status] = (statusCounts[status] ?? 0) + 1;
-        }
-        console.warn("[google-ads-no-eligible-advertiser]", {
-          account_count: result.accounts.length,
-          manager_count: result.accounts.filter(
-            (account: Record<string, unknown>) => account.kind === "manager"
-          ).length,
-          advertiser_count: result.accounts.filter(
-            (account: Record<string, unknown>) => account.kind === "advertiser"
-          ).length,
-          reporting_eligible_count: result.accounts.filter(
-            (account: Record<string, unknown>) => account.reportingEligible === true
-          ).length,
-          status_counts: statusCounts,
-        });
-      }
-      return {view: "resume", transactionId, advertisers};
+      return resumeView({
+        transactionId,
+        accounts: result.accounts as Array<Record<string, unknown>>,
+      });
     } catch (error) {
       const providerStatus =
         error && typeof error === "object" && "details" in error
@@ -210,6 +201,31 @@ export const loader = async ({request}: LoaderFunctionArgs): Promise<SettingsSta
           ? reporting.name
           : String(connected.reportingAccountId),
     };
+  }
+  try {
+    const resumable = await runtime.handoff.resume({
+      installationAuthority: verified.installationAuthority,
+    });
+    if (resumable) {
+      return resumeView({
+        transactionId: resumable.transactionId,
+        accounts: resumable.accounts as Array<Record<string, unknown>>,
+      });
+    }
+  } catch (error) {
+    const providerStatus =
+      error && typeof error === "object" && "details" in error
+        ? safeLogValue(
+            (error as {details?: Record<string, unknown>}).details?.provider_status,
+          )
+        : null;
+    if (providerStatus === "invalid_grant") {
+      return {view: "reauthorization"};
+    }
+    console.error("[google-ads-pending-setup-resume-failed]", {
+      code: publicErrorCode(error),
+    });
+    return {view: "error", code: publicErrorCode(error)};
   }
   if (status === "cancelled") return {view: "cancelled"};
   if (status === "expired") return {view: "expired"};

@@ -670,7 +670,7 @@
           "id": "A6-EO-04-C",
           "title": "Google Ads adapter",
           "objective": "Standard Ad and Performance Max Asset Group hierarchy with raw structure evidence.",
-          "status": "Repository_CI_PASS_authorization_handoff_implemented_live_migration_pending",
+          "status": "Repository_CI_PASS_authorization_handoff_live_database_accepted_routes_pending",
           "implementation_started": true,
           "live_mutation_authorized": false,
           "document": "docs/EO_04C_GOOGLE_ADS_ADAPTER_START_BRIEF.md",
@@ -700,7 +700,7 @@
           "repository_tests": "PASS_211_of_211",
           "typecheck": "PASS",
           "preview_build": "PASS",
-          "live_evidence_preflight": "BLOCKED_pending_server_side_authorization_handoff_acceptance",
+          "live_evidence_preflight": "LIVE_DATABASE_ACCEPTED_route_wiring_pending",
           "oauth_rest_runtime": "app/lib/providers/google-ads-rest.server.js",
           "oauth_rest_types": "app/lib/providers/google-ads-rest.server.d.ts",
           "oauth_rest_test": "tests/eo-04c-google-ads-rest.test.js",
@@ -708,8 +708,10 @@
             "document": "docs/EO_04C_GOOGLE_OAUTH_SELECTION_HANDOFF_GATE.md",
             "contract": "contracts/eo-04c-google-oauth-selection-handoff-gate-v1.json",
             "migration": "supabase/migrations/20261011120000_eo04c_provider_authorization_handoff.sql",
-            "status": "Repository_CI_PASS_live_migration_pending",
-            "live_supabase_mutated": false
+            "status": "Live_database_accepted_routes_pending",
+            "live_supabase_mutated": true,
+            "corrective_migration": "supabase/migrations/20261011123000_eo04c_handoff_installation_fk_index.sql",
+            "live_evidence": "docs/evidence/EO_04C_AUTHORIZATION_HANDOFF_LIVE_2026-10-11.json"
           }
         },
         {

@@ -8,6 +8,7 @@ export type GoogleAdsOAuthConfig = Readonly<{
   clientId: string;
   clientSecret: string;
   redirectUri: string;
+  developerToken: string;
 }>;
 
 export class GoogleAdsRestError extends Error {
@@ -50,6 +51,7 @@ export function refreshGoogleAdsAccessToken(input: {
 
 export function createGoogleAdsRestClient(input: {
   accessToken: string;
+  developerToken: string;
   loginCustomerId?: string | null;
   fetchFn?: typeof fetch;
 }): Readonly<{

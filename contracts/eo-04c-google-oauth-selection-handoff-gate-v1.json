@@ -8,7 +8,7 @@
   "finding": {
     "severity": "critical_fail_closed",
     "discovered_during": "Google_begin_callback_route_wiring_review",
-    "current_gap": "The encrypted credential envelope has no server-side pending authorization record linking it to the claimed OAuth transaction before provider-account selection.",
+    "current_gap": "Resolved: one durable server-side pending authorization links encrypted credential authority to the claimed OAuth transaction and exactly one pending setup is permitted per workspace/install-generation/provider.",
     "forbidden_shortcuts": [
       "credential_id_in_URL_query_or_browser_form_as_authority",
       "refresh_token_access_token_or_provider_evidence_in_cookie_URL_or_client_state",
@@ -16,7 +16,7 @@
       "permanent_provider_connection_before_user_selects_one_to_three_eligible_advertiser_accounts",
       "route_or_redeploy_before_this_gate_is_accepted_and_implemented"
     ],
-    "resolution": "Accepted by the product owner, implemented in the repository, applied to live Supabase through two separately approved migrations, and postflight verified; routes, deployment and live Google activity remain unchanged."
+    "resolution": "Accepted, implemented, migrated, deployed and postflight verified; controlled Google and desktop/mobile acceptance remain open."
   },
   "flow": [
     "authenticated_Shopify_Admin_POST_begins_server_side_OAuth_transaction",

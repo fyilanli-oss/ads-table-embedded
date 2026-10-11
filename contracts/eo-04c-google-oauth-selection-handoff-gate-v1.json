@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-04c-google-oauth-selection-handoff-gate-v1",
-  "version": "1.2.0",
-  "status": "Live_database_accepted_routes_pending",
+  "version": "1.3.0",
+  "status": "Corrective_durable_selection_repository_implementation_in_progress",
   "checked_at": "2026-10-11",
   "parent": "A6-EO-04-C",
   "objective": "Bridge Google OAuth exchange to one-to-three advertiser-account selection without exposing credential identity, trusting browser evidence, orphaning refresh tokens or inventing a cross-request authority channel.",
@@ -22,12 +22,12 @@
     "authenticated_Shopify_Admin_POST_begins_server_side_OAuth_transaction",
     "Google_callback_claims_state_and_PKCE_then_exchanges_code",
     "refresh_token_is_stored_only_as_versioned_encrypted_credential_envelope",
-    "server_creates_short_lived_pending_authorization_handoff_bound_to_oauth_transaction_workspace_install_generation_provider_and_credential",
+    "server_creates_durable_pending_account_selection_authority_bound_to_oauth_transaction_workspace_install_generation_provider_and_credential",
     "callback_redirects_with_transaction_id_only_which_is_correlation_not_authority",
     "authenticated_Settings_loader resolves handoff under verified_installed_shop_authority_and_requeries_Google_accounts",
-    "user_selects_one_to_three_provider_verified_non_manager_advertiser_accounts_and_one_reporting_account",
-    "server_requeries_or_uses_unexpired_server_evidence_then_atomically_establishes_connection_and_consumes_handoff",
-    "expired_failed_or_abandoned_handoff_removes_unreferenced_credential_ciphertext"
+    "user_selects_one_to_three_provider_verified_non_manager_advertiser_accounts_and_first_selected_becomes_initial_reporting_account",
+    "server_requeries_Google_then_atomically_establishes_or_reconnects_the_canonical_connection_and_consumes_pending_selection",
+    "explicitly_cancelled_revoked_or_installation_removed_pending_selection_removes_unreferenced_credential_ciphertext"
   ],
   "database_design": {
     "private_schema": "integrations",
@@ -46,7 +46,7 @@
       "expired",
       "failed"
     ],
-    "expiry_minutes": 10,
+    "expiry_minutes": null,
     "provider_account_payload_persisted": false,
     "browser_access": false,
     "rls": "enabled_and_forced_defense_in_depth",
@@ -61,15 +61,16 @@
       "row_lock_and_expected_status_transition",
       "active_installation_generation_reverified",
       "transaction_provider_workspace_generation_credential_consistency",
-      "bounded_expiry_cleanup_and_orphan_credential_removal"
+      "atomic_first_establishment_or_existing_disconnected_connection_reconnect"
     ],
     "required_indexes": [
       "unique_credential_id",
       "workspace_install_generation_provider_status",
-      "expires_at_where_status_awaiting_selection",
       "installation_id_foreign_key"
     ],
-    "table": "provider_authorization_handoffs"
+    "table": "provider_authorization_handoffs",
+    "pending_selection_lifetime": "until_consumed_explicitly_cancelled_revoked_or_installation_removed",
+    "oauth_transaction_expiry_separate": true
   },
   "runtime_design": {
     "begin_method": "POST_only_authenticated_Shopify_Admin",
@@ -85,7 +86,8 @@
     "global_login_customer_id": false,
     "credential_storage": "encrypted_database_ciphertext_only",
     "access_token_storage": "memory_only",
-    "error_output": "bounded_secret_safe_codes_and_request_id_only"
+    "error_output": "bounded_secret_safe_codes_and_request_id_only",
+    "initial_reporting_account": "first_selected_advertiser"
   },
   "mutation_authority": {
     "repository_design_and_tests": true,
@@ -128,7 +130,7 @@
     "routes_wired": false,
     "redeployed": false,
     "live_google_request_sent": false,
-    "corrective_migration": "supabase/migrations/20261011123000_eo04c_handoff_installation_fk_index.sql",
+    "corrective_migration": "supabase/migrations/20261011180000_eo04c_durable_selection_and_reconnect.sql",
     "live_migration_versions": [
       "20261011114438_eo04c_provider_authorization_handoff",
       "20261011114809_eo04c_handoff_installation_fk_index"
@@ -140,5 +142,11 @@
   "next_gate": [
     "wire_authenticated_routes_and_redeploy_only_after_live_database_acceptance",
     "run_controlled_read_only_Google_account_discovery_and_selection_evidence"
-  ]
+  ],
+  "corrective_decision": {
+    "cause": "new_design_regression_not_provider_rule",
+    "old_behavior": "oauth_transaction_short_lived_pending_account_selection_durable",
+    "ten_minute_selection_timeout_removed": true,
+    "decided_at": "2026-10-11"
+  }
 }

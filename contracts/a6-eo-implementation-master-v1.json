@@ -320,6 +320,18 @@
       "events_api_product_enrichment_must_not_double_count": true,
       "product_ui_authorized": false,
       "advances_package_status": false
+    },
+    "channel_reporting_terminology_v1": {
+      "decided_at": "2026-10-11",
+      "status": "boundary_accepted_reporting_sheet_design_pending",
+      "contract": "contracts/a6-channel-reporting-terminology-v1.json",
+      "document": "docs/A6_CHANNEL_REPORTING_TERMINOLOGY_DECISION.md",
+      "user_facing_label": "Channel",
+      "technical_delivery_medium_key": "delivery_channel",
+      "channel_is_provider_or_dataset_entity": false,
+      "synthetic_leaf_forbidden": true,
+      "final_reporting_design_pending_product_owner_Excel_sheets": true,
+      "advances_package_status": false
     }
   },
   "exception": {
@@ -661,16 +673,23 @@
           "document": "docs/EO_04C_GOOGLE_ADS_ADAPTER_START_BRIEF.md",
           "contract": "contracts/eo-04c-google-ads-adapter-start-brief-v1.json",
           "ci_test": "tests/eo-04c-google-ads-adapter-start-brief.test.js",
-          "official_documentation_checked_at": "2026-10-10",
+          "official_documentation_checked_at": "2026-10-11",
           "product_owner_start_brief_accepted": true,
           "accepted_start_brief_at": "2026-10-10",
           "api_baseline": "v25",
           "developer_token_required": false,
           "standard_leaf": "ad",
           "performance_max_leaf": "asset_group",
-          "cart_data_deepest_grain_status": "campaign_or_ad_group_documented_ad_level_requires_deeper_official_and_live_evidence",
+          "cart_data_deepest_grain_status": "campaign_or_ad_group_sold_product_native;_Search_ad_product_relation_unsupported",
           "repository_implementation": "not_started",
-          "live_evidence_authorized": false
+          "live_evidence_authorized": false,
+          "google_product_request_families": [
+            "canonical_ad_performance",
+            "shopping_product_performance",
+            "performance_max_retail_product_performance",
+            "sold_product_cart"
+          ],
+          "synthetic_google_ad_or_ad_product_relation_forbidden": true
         },
         {
           "id": "A6-EO-04-D",

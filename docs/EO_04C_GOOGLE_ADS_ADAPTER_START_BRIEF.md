@@ -1,6 +1,6 @@
 # EO-04-C — Google Ads adapter analyst start brief
 
-**Control date:** 10 October 2026  
+**Control date:** 11 October 2026  
 **Status:** Start brief accepted; repository implementation not started  
 **Parent:** A6-EO-04 — Meta, Google Ads and Klaviyo adapters  
 **Depends on:** Accepted EO-04-A common adapter contract  
@@ -107,30 +107,25 @@ Google finality is not one fixed number. Click/impression/cost commonly have an 
 - Only documented transient classes receive bounded exponential backoff with jitter.
 - Authentication, revoked token, permission, validation, unsupported-field, malformed-query and deterministic account-scope failures are not blindly retried.
 
-## Sold products, cart data and cross-sell
+## Four separate Google reporting request families
 
-When conversions with cart data are implemented, Google can expose sold-product identity/title, units, revenue, gross profit and cross-sell metrics. For Shopping-click attribution, clicked and sold product dimensions may be examined together.
+Google data must not be forced through one universal query or one fabricated Ad grain. The adapter has four independent request families:
 
-The current truthful boundary is:
+1. **Canonical performance:** Standard campaigns remain Campaign → Ad Group → Ad; Performance Max remains Campaign → Asset Group. These rows produce the common canonical metrics at the real provider leaf.
+2. **Shopping product performance:** `shopping_performance_view` produces Campaign → Ad Group → Product Item performance, including product identity/title and compatible impression, click, cost, conversion, order, unit and revenue metrics. A Product Item is not renamed or persisted as a Google Ad.
+3. **PMax retail product performance:** `asset_group_product_group_view` plus `asset_group_listing_group_filter` may produce Campaign → Asset Group → Product Item only when the account's real listing tree contains an item-ID partition. “All products”, brand, category or custom-label grouping is not item identity and cannot be expanded synthetically.
+4. **Sold-product cart data:** `cart_data_sales_view` produces sold-product identity/title, units and revenue at Campaign or Ad Group segmentation. It accepts neither Standard Ad ID nor PMax Asset Group ID in the validated sold-product query shape.
 
-```text
-Campaign
-└── Ad Group
-    └── sold products and cart/cross-sell metrics
-```
+Binding consequences:
 
-The official `cart_data_sales_view` documents Campaign and Ad Group as its segmenting resources. It does not currently guarantee that every sold-product row can be attached to one Standard Ad ID. Performance Max has no individual Ad leaf at all.
-
-For retail PMax, `shopping_performance_view` and `asset_group_product_group_view` can report advertised/listing-product performance. That is not automatically proof of which other basket products were sold.
-
-Therefore:
-
-- sold products exist as native Google evidence only when cart data is implemented;
-- Ad-level sold-product attribution remains a mandatory deeper field-compatibility and live-query investigation;
-- `product_sold_item_id` is a Merchant Center item ID, not presumed Shopify SKU or variant ID;
-- deterministic Merchant item → Installed Shopify Store product/variant mapping is required;
-- the exact two earring/cross-sell fixtures remain owned by EO-07-C;
-- no product row or chart is activated from this documentation alone.
+- Google Search keeps truthful Ad performance, but its sold products cannot be attached to one Ad through the current native reporting contract; product linkage is **unsupported**, not inferred.
+- `units_sold` is quantity, not purchase/order count. It must never be relabelled `purchase`.
+- Shopping Product Item and PMax Asset Group Product Item are native product-reporting grains, not invented Ads.
+- Advertised-product performance and sold-basket evidence remain separate unless one native Google query returns a compatible relationship.
+- `product_item_id` and `product_sold_item_id` are Merchant Center identities, not presumed Shopify SKU or variant IDs.
+- Deterministic Merchant item → Installed Shopify Store product/variant mapping remains mandatory.
+- Live evidence is still required for account capability, actual item partitions and identity mapping, but the official field-compatibility investigation is complete.
+- The exact product/basket fixtures remain owned by EO-07-C; no product UI is activated by this documentation alone.
 
 ## Acceptance sequence
 
@@ -150,7 +145,7 @@ Live evidence must prove account discovery, Standard Ad structure, PMax Asset Gr
 
 Repository CI, durable sanitized evidence and explicit product-owner acceptance are required before EO-04-C closes.
 
-## Official sources checked 10 October 2026
+## Official sources checked 11 October 2026
 
 - Account types: https://developers.google.com/google-ads/api/docs/concepts/account-types
 - Account hierarchy: https://developers.google.com/google-ads/api/docs/account-management/get-account-hierarchy
@@ -169,3 +164,10 @@ Repository CI, durable sanitized evidence and explicit product-owner acceptance 
 - Conversion windows: https://support.google.com/google-ads/answer/3123169
 - Developer-token sunset: https://developers.google.com/google-ads/api/docs/api-policy/developer-token
 - Versioning: https://developers.google.com/google-ads/api/docs/concepts/versioning
+
+
+Additional product-reporting references checked 11 October 2026:
+
+- Shopping performance view: https://developers.google.com/google-ads/api/fields/v25/shopping_performance_view
+- Asset Group product-group view: https://developers.google.com/google-ads/api/fields/v25/asset_group_product_group_view
+- Asset Group listing-group filter: https://developers.google.com/google-ads/api/fields/v25/asset_group_listing_group_filter

@@ -58,6 +58,16 @@ Only official Shopify App Bridge and Polaris web components may render controls,
 - Settings has no dashboard or analytical chart surface.
 - These waiting states do not block the already frozen non-chart table, control and workflow decisions, and do not advance A6-EO-07 status.
 
+
+### 3.2 Channel terminology boundary — 11 October 2026
+
+- The merchant-facing label **Channel** means a derived display path built only from real provider-native entities; it is not a provider entity and not a canonical Dataset V2 entity type.
+- The technical delivery-medium key is `delivery_channel` (email, SMS, MMS, WhatsApp or null). A canonical identity field named only `channel` is forbidden.
+- Shopping Product Item and PMax Asset Group Product Item may appear in a Channel path only at their real native grain; neither may be renamed or persisted as a Google Ad.
+- Missing hierarchy nodes are never manufactured to make providers visually equal.
+- Final Channel columns, filters, ranking and product-cost/basket layout remain pending the product owner's Excel reporting sheets. This terminology boundary does not authorize UI implementation or alter A6-EO-07 status.
+- Binding record: `docs/A6_CHANNEL_REPORTING_TERMINOLOGY_DECISION.md` and `contracts/a6-channel-reporting-terminology-v1.json`.
+
 ## 4. Funnel App Home analyst brief
 
 ### 4.1 User result

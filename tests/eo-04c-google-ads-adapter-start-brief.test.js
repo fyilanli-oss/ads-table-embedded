@@ -88,3 +88,27 @@ test("Execution Plan and master advance documentation discovery to EO-04-D witho
   assert.equal(eo04d.status, "Start_brief_accepted_repository_implementation_pending");
   assert.equal(eo04d.implementation_started, false);
 });
+
+
+test("EO-04-C separates Google performance and product request families without fake Ads", async () => {
+  const contract = await readJson("contracts/eo-04c-google-ads-adapter-start-brief-v1.json");
+  const product = contract.product_cart_data;
+  const families = product.request_families;
+
+  assert.equal(contract.version, "1.1.0");
+  assert.equal(contract.checked_at, "2026-10-11");
+  assert.equal(product.search_ad_to_sold_product_relation, "unsupported_by_current_native_Google_Ads_reporting");
+  assert.equal(product.synthetic_ad_or_ad_product_relation_forbidden, true);
+  assert.equal(product.units_sold_is_purchase_count, false);
+  assert.equal(families.shopping_product_performance.product_item_is_not_a_Google_ad, true);
+  assert.equal(
+    families.performance_max_retail_product_performance.item_row_requires_actual_item_id_partition,
+    true,
+  );
+  assert.equal(families.performance_max_retail_product_performance.product_item_is_not_a_Google_ad, true);
+  assert.equal(families.sold_product_cart.ad_id_compatible, false);
+  assert.equal(families.sold_product_cart.asset_group_id_compatible, false);
+  assert.equal(families.sold_product_cart.units_sold_must_not_be_relabelled_purchase, true);
+  assert.equal(product.presentation_boundary.Channel_is_provider_entity, false);
+  assert.equal(product.presentation_boundary.Channel_is_canonical_Dataset_entity_type, false);
+});

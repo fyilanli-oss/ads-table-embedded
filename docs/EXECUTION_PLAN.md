@@ -343,3 +343,18 @@ CI enforcement: `tests/eo-04d-klaviyo-adapter-start-brief.test.js`
 - Email cost keeps the accepted daily recipient-weighted Campaign Message + Flow Message allocation. Native SMS spend is used only when supported; unsupported/null MMS, WhatsApp or contracted-plan cost is not zero.
 - Reporting quotas require grouped bulk calls and a quota planner; one request per message is forbidden.
 - No provider, OAuth, secret, database, Vercel, deployment, Dataset V2 or product-UI mutation is authorized by this decision.
+
+
+## Channel terminology and Google product-request clarification — 11 October 2026
+
+Binding terminology record: `docs/A6_CHANNEL_REPORTING_TERMINOLOGY_DECISION.md`  
+Executable contract: `contracts/a6-channel-reporting-terminology-v1.json`
+
+- User-facing **Channel** is a derived provider-native reporting path, not a new provider object or Dataset V2 entity.
+- Delivery medium uses the distinct technical key `delivery_channel`; a canonical identity field named only `channel` is forbidden.
+- Google extraction is split into four non-interchangeable request families: canonical Ad/Asset Group performance, Shopping product performance, conditional PMax retail Asset Group-product performance, and Campaign/Ad Group sold-product cart data.
+- Shopping and PMax Product Item rows are native product grains and are never renamed or persisted as Google Ads.
+- Search Ad-level sold-product linkage is unsupported by the current native reporting contract; URL, UTM, GCLID or inferred joins cannot replace it.
+- `units_sold` is quantity and is never relabelled purchase/order count.
+- Final Channel report layout, columns, filters, ranking and product-cost/basket presentation remain pending the product owner's Excel reporting sheets.
+- This clarification advances no package status and authorizes no provider, OAuth, secret, Dataset, UI, deployment or live mutation.

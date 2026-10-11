@@ -1,11 +1,11 @@
 {
   "contract_id": "eo-04c-google-ads-adapter-start-brief-v1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "status": "Start_brief_accepted_repository_implementation_pending",
-  "checked_at": "2026-10-10",
+  "checked_at": "2026-10-11",
   "parent": "A6-EO-04",
   "package": "A6-EO-04-C",
-  "objective": "Freeze the current official Google Ads account authority, Standard and Performance Max hierarchy, ten canonical Funnel metric mappings, conversion semantics, time/currency, paging, quota, error and product/cart-data evidence boundaries before repository implementation.",
+  "objective": "Freeze the current official Google Ads account authority, native hierarchy, ten canonical fact mappings, conversion semantics, time/currency, paging, quota, error and four distinct product-reporting request families without manufacturing a universal Ad or Ad-product join.",
   "depends_on": {
     "package": "A6-EO-04-A",
     "status": "Accepted"
@@ -214,12 +214,109 @@
     "advertised_product_performance_is_not_sold_basket_cross_sell_proof": true,
     "merchant_item_id_assumed_shopify_sku_or_variant": false,
     "deterministic_merchant_item_to_installed_shop_product_variant_mapping_required": true,
-    "deeper_official_field_compatibility_and_live_query_required": true,
+    "deeper_official_field_compatibility_and_live_query_required": false,
     "exact_live_fixtures": [
       "clicked_product_not_purchased_with_cross_sell",
       "clicked_product_purchased_with_cross_sell"
     ],
-    "product_ui_authorized": false
+    "product_ui_authorized": false,
+    "official_field_compatibility_investigation_completed_at": "2026-10-11",
+    "search_ad_to_sold_product_relation": "unsupported_by_current_native_Google_Ads_reporting",
+    "synthetic_ad_or_ad_product_relation_forbidden": true,
+    "units_sold_is_purchase_count": false,
+    "sold_product_purchase_count": "not_available_in_the_validated_cart_data_sales_view_query_shape",
+    "live_account_availability_and_identity_mapping_required": true,
+    "request_families": {
+      "canonical_ad_performance": {
+        "purpose": "canonical_metrics_at_the_real_campaign_type_leaf",
+        "standard_grain": [
+          "campaign",
+          "ad_group",
+          "ad",
+          "source_date"
+        ],
+        "performance_max_grain": [
+          "campaign",
+          "asset_group",
+          "source_date"
+        ],
+        "product_relation": "none_unless_a_separate_native_product_query_proves_it"
+      },
+      "shopping_product_performance": {
+        "resource": "shopping_performance_view",
+        "native_grain": [
+          "campaign",
+          "ad_group",
+          "product_item",
+          "source_date"
+        ],
+        "identity_fields": [
+          "segments.product_item_id",
+          "segments.product_title"
+        ],
+        "performance_metrics": [
+          "metrics.impressions",
+          "metrics.clicks",
+          "metrics.cost_micros",
+          "metrics.conversions",
+          "metrics.conversions_value",
+          "metrics.orders",
+          "metrics.units_sold",
+          "metrics.revenue_micros"
+        ],
+        "product_item_is_not_a_Google_ad": true
+      },
+      "performance_max_retail_product_performance": {
+        "resources": [
+          "asset_group_product_group_view",
+          "asset_group_listing_group_filter"
+        ],
+        "native_grain_when_item_partition_exists": [
+          "campaign",
+          "asset_group",
+          "product_item",
+          "source_date"
+        ],
+        "item_identity_field": "asset_group_listing_group_filter.case_value.product_item_id.value",
+        "item_row_requires_actual_item_id_partition": true,
+        "all_products_brand_category_or_custom_label_group_is_not_item_identity": true,
+        "product_item_is_not_a_Google_ad": true
+      },
+      "sold_product_cart": {
+        "resource": "cart_data_sales_view",
+        "native_grain": [
+          "campaign_or_ad_group",
+          "sold_product",
+          "source_date"
+        ],
+        "sold_identity_fields": [
+          "segments.product_sold_item_id",
+          "segments.product_sold_title"
+        ],
+        "advertised_identity_fields_when_applicable": [
+          "segments.product_item_id",
+          "segments.product_title"
+        ],
+        "supported_quantity_and_value_metrics": [
+          "metrics.units_sold",
+          "metrics.revenue_micros",
+          "metrics.lead_units_sold",
+          "metrics.lead_revenue_micros",
+          "metrics.cross_sell_units_sold",
+          "metrics.cross_sell_revenue_micros"
+        ],
+        "ad_id_compatible": false,
+        "asset_group_id_compatible": false,
+        "units_sold_must_not_be_relabelled_purchase": true
+      }
+    },
+    "presentation_boundary": {
+      "user_facing_Channel_may_render_native_path": true,
+      "Channel_is_provider_entity": false,
+      "Channel_is_canonical_Dataset_entity_type": false,
+      "source_nodes_must_keep_provider_native_type_id_and_name": true,
+      "google_product_item_must_not_be_relabelled_ad": true
+    }
   },
   "live_evidence_gate": [
     "provider_verified_account_discovery_and_manager_exclusion",
@@ -271,7 +368,10 @@
     "data_freshness": "https://support.google.com/google-ads/answer/2544985",
     "conversion_windows": "https://support.google.com/google-ads/answer/3123169",
     "developer_token_sunset": "https://developers.google.com/google-ads/api/docs/api-policy/developer-token",
-    "versioning": "https://developers.google.com/google-ads/api/docs/concepts/versioning"
+    "versioning": "https://developers.google.com/google-ads/api/docs/concepts/versioning",
+    "shopping_performance_view": "https://developers.google.com/google-ads/api/fields/v25/shopping_performance_view",
+    "asset_group_product_group_view": "https://developers.google.com/google-ads/api/fields/v25/asset_group_product_group_view",
+    "asset_group_listing_group_filter": "https://developers.google.com/google-ads/api/fields/v25/asset_group_listing_group_filter"
   },
   "product_owner_start_brief_acceptance": {
     "status": "accepted",

@@ -107,6 +107,43 @@ export function createProviderAuthorizationHandoffRepository(database) {
       });
     },
 
+    async resolveCallbackReturn({workspaceId, installGeneration}) {
+      const row = exactlyOneRow(
+        await query(
+          "select * from shopify.resolve_active_installation_callback_return($1::uuid, $2::bigint)",
+          [workspaceId, installGeneration],
+        ),
+        "ACTIVE_INSTALLATION_CALLBACK_RETURN",
+      );
+      if (
+        typeof row.shop_domain !== "string"
+        || !/^[a-z0-9][a-z0-9-]*[.]myshopify[.]com$/.test(row.shop_domain)
+      ) {
+        throw new Error("ACTIVE_INSTALLATION_CALLBACK_RETURN_RESULT_INVALID");
+      }
+      return Object.freeze({shopDomain: row.shop_domain});
+    },
+
+    async cancel(value) {
+      const row = exactlyOneRow(
+        await query(
+          "select * from integrations.cancel_provider_authorization_handoff($1::uuid, $2::uuid, $3::bigint, $4::text, $5::timestamptz)",
+          [
+            value.transactionId,
+            value.workspaceId,
+            value.installGeneration,
+            value.provider,
+            value.cancelledAt,
+          ],
+        ),
+        "PROVIDER_AUTHORIZATION_HANDOFF_CANCEL",
+      );
+      if (row.cancelled !== true) {
+        throw new Error("PROVIDER_AUTHORIZATION_HANDOFF_CANCEL_RESULT_INVALID");
+      }
+      return Object.freeze({cancelled: true});
+    },
+
     async expire({observedAt, limit = 100}) {
       const row = exactlyOneRow(
         await query(

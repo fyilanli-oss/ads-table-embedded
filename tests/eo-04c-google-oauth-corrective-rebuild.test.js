@@ -43,7 +43,7 @@ test("Settings exposes only advertiser selection and clean disconnect", () => {
   assert.match(settings, /Manager accounts are never selectable/);
   assert.doesNotMatch(settings, /Connected advertiser account/);
   assert.doesNotMatch(settings, /Reporting account/);
-  assert.match(settings, /intent", "disconnect"/);
+  assert.match(settings, /send\("disconnect"\)/);
 });
 
 test("Google authorization URL is offline, consented and PKCE-bound", () => {

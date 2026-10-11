@@ -1,7 +1,7 @@
 # EO-04-C — Google OAuth route wiring and Shopify UI brief
 
 **Control date:** 11 October 2026  
-**Status:** Corrective lifecycle parity in progress; previous route implementation is not accepted  
+**Status:** Corrective lifecycle deployed; controlled Google and visual acceptance pending  
 **Parent:** A6-EO-04-C
 
 ## Analyst result
@@ -135,14 +135,17 @@ The complete binding flow is:
 - [x] Repository route/runtime and constitution tests pass — CI run 38142931704
 - [x] Private migration passes repository tests
 - [x] Separate live migration approval and postflight passed on 11 October 2026
-- [ ] Separate deployment approval
+- [x] Corrective Supabase migration and postflight PASS — `20261011163811`
+- [x] Production deployment READY — `dpl_J7Vb9w7mvcgffpUKrRJSUPxT1SLY`
 - [ ] Controlled begin/callback/resume/selection/cancel evidence
 - [ ] Real desktop and minimum-320px mobile Shopify Admin pass
 - [ ] Explicit visual and package closure acceptance
 
 
-## Repository implementation result — 11 October 2026
+## Corrective implementation and deployment result — 11 October 2026
 
-The accepted HTTP/UI slice is implemented at commit `93aa1b8901b639933ffa9feed5acc4ccfb4b70de`. Direct Google accounts are discovered with `listAccessibleCustomers`; manager descendants are resolved recursively through `customer_client`. The Settings route never accepts shop, workspace, install generation, credential ID or provider evidence as browser authority. Repository Governance run `38142931704` passed 223 tests, TypeScript and production build.
+The legacy-proven lifecycle is restored at commit `142414c1bbfc83fba10df150817c507a939054d8`. Google discovery now follows the former working contract exactly: `listAccessibleCustomers`, followed by one `customer_client` query for every directly accessible root without a `login-customer-id` header. Manager rows remain internal access paths and Settings renders only non-manager advertisers. The unproven customer pre-query and recursive traversal were removed.
 
-No Vercel deployment, live Google OAuth/API request, Dataset V2 write or visual acceptance was performed by this repository result.
+A successful OAuth exchange leaves exactly one durable pending setup per workspace/install-generation/provider. Settings can find that canonical pending setup from a clean URL, so **Resume setup** opens account selection without restarting OAuth. Repository Governance run `38156170711` passed 233 tests, TypeScript and production build.
+
+Corrective migration `20261011163811_eo04c_durable_selection_and_reconnect` is live with one pending Google setup, zero duplicate pending groups and zero Security Advisor findings. Production deployment `dpl_J7Vb9w7mvcgffpUKrRJSUPxT1SLY` is READY on `embedded.adstable.app`. Controlled Google OAuth/account-selection and desktop/mobile visual acceptance remain open; Dataset V2 was not mutated by this correction.

@@ -204,6 +204,50 @@ as $function$
     and installation.status = 'active';
 $function$;
 
+create or replace function integrations.load_current_provider_authorization_handoff(
+  p_workspace_id uuid,
+  p_install_generation bigint,
+  p_provider text,
+  p_observed_at timestamptz
+)
+returns table (
+  oauth_transaction_id uuid,
+  credential_id uuid,
+  handoff_status text,
+  expires_at timestamptz
+)
+language sql
+security definer
+set search_path = ''
+as $function$
+  select
+    handoff.oauth_transaction_id,
+    handoff.credential_id,
+    handoff.status,
+    handoff.expires_at
+  from integrations.provider_authorization_handoffs as handoff
+  join integrations.oauth_transactions as transaction
+    on transaction.id = handoff.oauth_transaction_id
+  join shopify.installations as installation
+    on installation.id = handoff.installation_id
+  where handoff.workspace_id = p_workspace_id
+    and handoff.install_generation = p_install_generation
+    and handoff.provider = p_provider
+    and handoff.status = 'awaiting_selection'
+    and handoff.credential_id is not null
+    and p_observed_at is not null
+    and p_observed_at >= handoff.created_at
+    and transaction.status = 'exchanged'
+    and transaction.workspace_id = handoff.workspace_id
+    and transaction.install_generation = handoff.install_generation
+    and transaction.provider = handoff.provider
+    and installation.workspace_id = handoff.workspace_id
+    and installation.install_generation = handoff.install_generation
+    and installation.status = 'active'
+  order by handoff.created_at desc, handoff.oauth_transaction_id desc
+  limit 1;
+$function$;
+
 create or replace function integrations.consume_provider_authorization_handoff(
   p_oauth_transaction_id uuid,
   p_connection_id uuid,
@@ -375,6 +419,13 @@ begin
   return query select affected_count;
 end
 $function$;
+
+revoke all on function integrations.load_current_provider_authorization_handoff(
+  uuid, bigint, text, timestamptz
+) from public, anon, authenticated, service_role, adstable_runtime;
+grant execute on function integrations.load_current_provider_authorization_handoff(
+  uuid, bigint, text, timestamptz
+) to adstable_runtime;
 
 comment on table integrations.provider_authorization_handoffs is
   'Server-only durable OAuth-to-account-selection authority. OAuth state remains separately time-bounded; one pending selection exists per workspace/provider and ends only by consumption, superseding authorization, explicit cancellation, revocation or installation cleanup.';

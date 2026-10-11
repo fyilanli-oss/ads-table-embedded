@@ -295,11 +295,19 @@ export function createGoogleOAuthRuntime({
         provider: PROVIDER,
       });
       if (!connected) return Object.freeze({status: "disconnected"});
+      const current = await lifecycle.load({
+        installationAuthority,
+        provider: PROVIDER,
+        connectionId: connected.connectionId,
+      });
+      if (!current || current.status !== "connected") {
+        throw new Error("CONNECTED_GOOGLE_CONNECTION_REQUIRED");
+      }
       const requested = await lifecycle.requestDisconnect({
         installationAuthority,
         provider: PROVIDER,
         connectionId: connected.connectionId,
-        expectedVersion: 1,
+        expectedVersion: current.version,
         reason: "merchant_requested_google_disconnect",
       });
       return lifecycle.finalizeDisconnect({

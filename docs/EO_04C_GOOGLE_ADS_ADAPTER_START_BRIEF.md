@@ -1,7 +1,7 @@
 # EO-04-C — Google Ads adapter analyst start brief
 
 **Control date:** 11 October 2026  
-**Status:** Start brief accepted; repository implementation not started  
+**Status:** Repository adapter and OAuth/REST boundary CI PASS; controlled live evidence ready, route wiring pending  
 **Parent:** A6-EO-04 — Meta, Google Ads and Klaviyo adapters  
 **Depends on:** Accepted EO-04-A common adapter contract  
 **Execution effect:** Documentation decision only; no Google OAuth, secret, live API, database, Vercel, deployment or Dataset V2 mutation
@@ -173,3 +173,12 @@ Additional product-reporting references checked 11 October 2026:
 - Shopping performance view: https://developers.google.com/google-ads/api/fields/v25/shopping_performance_view
 - Asset Group product-group view: https://developers.google.com/google-ads/api/fields/v25/asset_group_product_group_view
 - Asset Group listing-group filter: https://developers.google.com/google-ads/api/fields/v25/asset_group_listing_group_filter
+
+## 11 October 2026 — Production credential and OAuth/REST preflight
+
+- The clean Vercel project contains `GOOGLE_ADS_OAUTH_CLIENT_ID`, `GOOGLE_ADS_OAUTH_CLIENT_SECRET` and `GOOGLE_ADS_OAUTH_REDIRECT_URI` in Production only. Vercel returned names and masked metadata only; no value was read into repository evidence.
+- The redirect contract is exactly `https://embedded.adstable.app/auth/google-ads/callback`.
+- `ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_V1` was replaced only after read-only Supabase evidence proved zero provider credential and PKCE envelopes. The product owner confirmed an independent encrypted recovery-vault copy.
+- `app/lib/providers/google-ads-rest.server.js` now provides the tested server-only boundary for PKCE authorization, offline code exchange, refresh, `ListAccessibleCustomers` and direct v25 REST search. It never adds a developer-token header.
+- GitHub Actions run `38131663609` passed 201/201 tests, TypeScript verification and production build.
+- No Google authorization, provider request, account selection, database credential write, redeploy or Dataset V2 write occurred. The next gate is route wiring, encrypted refresh-token persistence, deployment and controlled read-only live evidence.

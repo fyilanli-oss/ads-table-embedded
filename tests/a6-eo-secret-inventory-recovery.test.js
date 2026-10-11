@@ -77,8 +77,8 @@ test("Execution Plan and master contract expose the EO-04 secret gate", async ()
     assert.match(plan, new RegExp(value.replace(/[.*+?^$\{\}()|[\]\\]/g, "\\$&")));
   }
 
-  assert.equal(master.schema_version, "1.23.0");
-  assert.equal(gate.status, "Accepted_name_only_inventory_extended_for_Google");
+  assert.equal(master.schema_version, "1.24.0");
+  assert.equal(gate.status, "Accepted_Google_Production_credentials_present_provider_key_recovery_confirmed");
   assert.equal(gate.inventory_count, 15);
   assert.equal(gate.mutation_authorized, false);
   assert.equal(gate.owner_package_for_future_provider_secrets, "A6-EO-04");
@@ -89,13 +89,13 @@ test("Google Ads credentials are name-only, production-scoped and keep tokens ou
   const byKey = new Map(contract.inventory.map((item) => [item.key, item]));
   const google = contract.google_ads_provider_credentials;
 
-  assert.equal(contract.version, "1.1.0");
-  assert.equal(contract.status, "Accepted_name_only_inventory_extended_for_Google");
+  assert.equal(contract.version, "1.2.0");
+  assert.equal(contract.status, "Accepted_name_only_inventory_Google_Production_configured");
   assert.equal(contract.current_inventory_count, 15);
   assert.equal(contract.vercel_inventory_count, 14);
-  assert.equal(byKey.get("GOOGLE_ADS_OAUTH_CLIENT_ID").storage_type, "config");
+  assert.equal(byKey.get("GOOGLE_ADS_OAUTH_CLIENT_ID").storage_type, "sensitive");
   assert.equal(byKey.get("GOOGLE_ADS_OAUTH_CLIENT_SECRET").storage_type, "secret");
-  assert.equal(byKey.get("GOOGLE_ADS_OAUTH_REDIRECT_URI").storage_type, "config");
+  assert.equal(byKey.get("GOOGLE_ADS_OAUTH_REDIRECT_URI").storage_type, "sensitive");
   assert.equal(google.scope, "https://www.googleapis.com/auth/adwords");
   assert.equal(google.developer_token_required, false);
   assert.match(google.refresh_token_storage, /encrypted/);
@@ -103,4 +103,15 @@ test("Google Ads credentials are name-only, production-scoped and keep tokens ou
   assert.equal(google.global_refresh_token_forbidden, true);
   assert.equal(google.legacy_secret_values_readable_or_transferable, false);
   assert.equal(google.secret_mutation_authorized, false);
+  assert.deepEqual(google.current_new_project_presence, {
+    GOOGLE_ADS_OAUTH_CLIENT_ID: true,
+    GOOGLE_ADS_OAUTH_CLIENT_SECRET: true,
+    GOOGLE_ADS_OAUTH_REDIRECT_URI: true,
+    observed_at: "2026-10-11",
+    environment: "production_only",
+    values_masked: true,
+    actual_vercel_type: "sensitive_for_all_three_by_operator_choice",
+  });
+  assert.equal(google.provider_token_encryption_key_recovery_custody_evidenced, true);
+  assert.equal(google.repository_oauth_rest_boundary.ci, "PASS_run_38131663609");
 });

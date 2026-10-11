@@ -358,3 +358,11 @@ Executable contract: `contracts/a6-channel-reporting-terminology-v1.json`
 - `units_sold` is quantity and is never relabelled purchase/order count.
 - Final Channel report layout, columns, filters, ranking and product-cost/basket presentation remain pending the product owner's Excel reporting sheets.
 - This clarification advances no package status and authorizes no provider, OAuth, secret, Dataset, UI, deployment or live mutation.
+
+## 11 October 2026 — EO-04-C Google Production preflight and OAuth/REST boundary
+
+- The clean Vercel project has the three Google Web OAuth names in Production only; values were not read or copied into evidence. All three are stored as Sensitive by product-owner choice.
+- Provider-token key replacement was safe because Supabase contained zero dependent credential/PKCE envelopes; independent encrypted recovery custody was confirmed.
+- The tested server-only Google boundary now covers exact callback, PKCE/state, offline exchange, refresh-token retention, accessible-customer listing, verified manager access path and direct v25 REST search with secret-safe errors.
+- GitHub Actions run `38131663609` passed 201/201 tests, TypeScript and build.
+- Status is `Repository_CI_PASS_controlled_live_evidence_ready`. Route wiring, encrypted credential persistence, redeploy and controlled live account/query evidence remain open; no live Google request or Dataset V2 write occurred.

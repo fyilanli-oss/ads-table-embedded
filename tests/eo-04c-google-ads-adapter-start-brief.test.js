@@ -7,7 +7,7 @@ const readJson = async (path) => JSON.parse(await readFile(path, "utf8"));
 test("EO-04-C freezes truthful Google account and hierarchy boundaries", async () => {
   const contract = await readJson("contracts/eo-04c-google-ads-adapter-start-brief-v1.json");
 
-  assert.equal(contract.status, "Repository_CI_PASS_controlled_live_evidence_preflight_blocked");
+  assert.equal(contract.status, "Repository_CI_PASS_controlled_live_evidence_ready");
   assert.equal(contract.authority.reporting_accounts.minimum, 1);
   assert.equal(contract.authority.reporting_accounts.maximum, 3);
   assert.equal(contract.authority.reporting_accounts.customer_manager_must_be_false, true);
@@ -85,7 +85,7 @@ test("Execution Plan and master advance documentation discovery to EO-04-D witho
   assert.equal(master.current_active_child, "A6-EO-04-D");
   assert.equal(master.current_gate, "A6-EO-04-D_start_brief_accepted_repository_implementation_pending");
   assert.equal(eo04b.status, "Repository_CI_PASS_controlled_live_evidence_pending");
-  assert.equal(eo04c.status, "Repository_CI_PASS_controlled_live_evidence_preflight_blocked");
+  assert.equal(eo04c.status, "Repository_CI_PASS_controlled_live_evidence_ready");
   assert.equal(eo04c.live_mutation_authorized, false);
   assert.equal(eo04d.status, "Start_brief_accepted_repository_implementation_pending");
   assert.equal(eo04d.implementation_started, false);
@@ -97,7 +97,7 @@ test("EO-04-C separates Google performance and product request families without 
   const product = contract.product_cart_data;
   const families = product.request_families;
 
-  assert.equal(contract.version, "1.2.1");
+  assert.equal(contract.version, "1.3.0");
   assert.equal(contract.checked_at, "2026-10-11");
   assert.equal(product.search_ad_to_sold_product_relation, "unsupported_by_current_native_Google_Ads_reporting");
   assert.equal(product.synthetic_ad_or_ad_product_relation_forbidden, true);
@@ -115,18 +115,23 @@ test("EO-04-C separates Google performance and product request families without 
   assert.equal(product.presentation_boundary.Channel_is_canonical_Dataset_entity_type, false);
 });
 
-test("EO-04-C live preflight stops before OAuth when clean credentials and recovery custody are missing", async () => {
+test("EO-04-C live preflight is ready after Production credentials and provider-key custody evidence", async () => {
   const contract = await readJson("contracts/eo-04c-google-ads-adapter-start-brief-v1.json");
   const preflight = contract.live_evidence_preflight;
 
-  assert.equal(contract.status, "Repository_CI_PASS_controlled_live_evidence_preflight_blocked");
+  assert.equal(contract.status, "Repository_CI_PASS_controlled_live_evidence_ready");
   assert.equal(preflight.authorization, "accepted_by_product_owner_continue_instruction");
-  assert.equal(preflight.clean_vercel_project_credentials_present, false);
+  assert.equal(preflight.clean_vercel_project_credentials_present, true);
   assert.equal(preflight.legacy_values_readable_or_transferable, false);
-  assert.equal(preflight.provider_token_encryption_key_recovery_custody_evidenced, false);
-  assert.equal(preflight.result, "BLOCKED_before_OAuth_or_live_call");
+  assert.equal(preflight.provider_token_encryption_key_recovery_custody_evidenced, true);
+  assert.equal(preflight.result, "READY_for_route_wiring_redeploy_and_controlled_live_evidence");
   assert.equal(preflight.no_live_request_sent, true);
-  assert.equal(preflight.no_secret_mutation_performed, true);
+  assert.equal(preflight.no_secret_mutation_performed, false);
+  assert.equal(preflight.secret_values_read_or_persisted_in_repository_evidence, false);
+  assert.equal(preflight.vercel_evidence.environment, "production_only");
+  assert.equal(preflight.vercel_evidence.values_masked, true);
+  assert.equal(contract.repository_implementation.oauth_rest_runtime, "app/lib/providers/google-ads-rest.server.js");
+  assert.equal(contract.repository_implementation.repository_ci, "PASS_run_38131663609");
   assert.equal(preflight.database_key_usage_evidence.provider_credential_envelopes, 0);
   assert.equal(preflight.database_key_usage_evidence.oauth_pkce_envelopes, 0);
   assert.deepEqual(preflight.database_key_usage_evidence.used_key_versions, []);

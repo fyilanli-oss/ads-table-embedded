@@ -143,3 +143,11 @@ Google Ads additions checked 11 October 2026:
 - Credential management: https://developers.google.com/google-ads/api/docs/oauth/credential-management
 - OAuth Web server flow: https://developers.google.com/identity/protocols/oauth2/web-server
 - Developer-token sunset: https://developers.google.com/google-ads/api/docs/api-policy/developer-token
+
+## 11 October 2026 — Google Production credential presence
+
+The clean Vercel project now contains the three name-only Google Web OAuth entries in Production only. All three were saved as Vercel Sensitive values by product-owner choice; this is stricter than the minimum classification for the client ID and redirect URI. Values remain unread and are not repository evidence.
+
+The provider-token encryption key was generated independently after Supabase read-only counts proved zero dependent ciphertext. The product owner confirmed a copy in the encrypted recovery vault. Loss of the Google client secret recovery copy remains recoverable through controlled provider rotation; its independent vault custody is not claimed without evidence.
+
+Repository OAuth/REST consumer boundary: `app/lib/providers/google-ads-rest.server.js`. CI run `38131663609` passed 201/201 tests, TypeScript and build. This evidence does not authorize or claim a live Google authorization or deployment.

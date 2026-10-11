@@ -91,6 +91,10 @@ function dependencies(overrides = {}) {
         calls.push(["load", value]);
         return pending;
       },
+      async loadCurrent(value) {
+        calls.push(["loadCurrent", value]);
+        return pending;
+      },
       async consume(value) {
         calls.push(["consume", value]);
         return {
@@ -177,6 +181,18 @@ test("corrective migration separates OAuth expiry from durable selection and sup
   assert.match(correctiveMigration, /integrations[.]reconnect_provider_connection/);
   assert.match(correctiveMigration, /lifecycle_status <> 'disconnected'/);
   assert.match(correctiveMigration, /expires_at is not null/);
+  assert.match(
+    correctiveMigration,
+    /provider_authorization_handoffs_one_pending_idx/,
+  );
+  assert.match(
+    correctiveMigration,
+    /SUPERSEDED_BY_NEW_AUTHORIZATION/,
+  );
+  assert.match(
+    correctiveMigration,
+    /load_current_provider_authorization_handoff/,
+  );
 });
 
 test("repository maps create, load, atomic consume and legacy bounded expiry compatibility", async () => {
@@ -289,6 +305,23 @@ test("discovery reloads encrypted credential and never returns token material", 
   );
 });
 
+test("resume discovers the canonical pending setup without restarting OAuth", async () => {
+  const deps = dependencies();
+  const handoff = createGoogleAuthorizationHandoff({
+    ...deps,
+    now: fixedNow,
+    randomUUIDFn: () => connectionId,
+  });
+  const result = await handoff.resume({
+    installationAuthority: owner,
+  });
+  assert.equal(result.transactionId, transactionId);
+  assert.equal(result.expiresAt, null);
+  assert.equal(result.accounts[1].id, "200");
+  assert.ok(deps.calls.some(([name]) => name === "loadCurrent"));
+  assert.equal(deps.calls.some(([name]) => name === "exchange"), false);
+});
+
 test("selection uses fresh provider evidence and atomically consumes only advertisers", async () => {
   const deps = dependencies();
   const handoff = createGoogleAuthorizationHandoff({
@@ -325,6 +358,9 @@ test("failed handoff creation deletes the orphan credential ciphertext", async (
         throw new Error("database unavailable");
       },
       async load() {
+        return null;
+      },
+      async loadCurrent() {
         return null;
       },
       async consume() {

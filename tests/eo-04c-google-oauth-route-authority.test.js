@@ -95,6 +95,7 @@ test("handoff orchestration binds return and cancel to verified installation aut
   const repository = {
     async create() { return {}; },
     async load() { return null; },
+    async loadCurrent() { return null; },
     async consume() { return {}; },
     async expire() { return 0; },
     async resolveCallbackReturn(value) {

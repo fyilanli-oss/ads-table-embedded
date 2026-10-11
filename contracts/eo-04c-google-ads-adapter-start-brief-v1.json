@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-04c-google-ads-adapter-start-brief-v1",
   "version": "1.2.0",
-  "status": "Repository_implementation_CI_pending_controlled_live_evidence_pending",
+  "status": "Repository_CI_PASS_controlled_live_evidence_pending",
   "checked_at": "2026-10-11",
   "parent": "A6-EO-04",
   "package": "A6-EO-04-C",
@@ -406,6 +406,10 @@
       ]
     },
     "complete_before_publish_runner": "A6-EO-04-A_common_adapter",
-    "status": "CI_pending"
+    "status": "PASS",
+    "repository_ci": "PASS_run_38127917558",
+    "repository_tests": "PASS_192_of_192",
+    "typecheck": "PASS",
+    "preview_build": "PASS"
   }
 }

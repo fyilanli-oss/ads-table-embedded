@@ -7,7 +7,7 @@ const readJson = async (path) => JSON.parse(await readFile(path, "utf8"));
 test("EO-04-C freezes truthful Google account and hierarchy boundaries", async () => {
   const contract = await readJson("contracts/eo-04c-google-ads-adapter-start-brief-v1.json");
 
-  assert.equal(contract.status, "Repository_implementation_CI_pending_controlled_live_evidence_pending");
+  assert.equal(contract.status, "Repository_CI_PASS_controlled_live_evidence_pending");
   assert.equal(contract.authority.reporting_accounts.minimum, 1);
   assert.equal(contract.authority.reporting_accounts.maximum, 3);
   assert.equal(contract.authority.reporting_accounts.customer_manager_must_be_false, true);
@@ -85,7 +85,7 @@ test("Execution Plan and master advance documentation discovery to EO-04-D witho
   assert.equal(master.current_active_child, "A6-EO-04-D");
   assert.equal(master.current_gate, "A6-EO-04-D_start_brief_accepted_repository_implementation_pending");
   assert.equal(eo04b.status, "Repository_CI_PASS_controlled_live_evidence_pending");
-  assert.equal(eo04c.status, "Repository_implementation_CI_pending_controlled_live_evidence_pending");
+  assert.equal(eo04c.status, "Repository_CI_PASS_controlled_live_evidence_pending");
   assert.equal(eo04c.live_mutation_authorized, false);
   assert.equal(eo04d.status, "Start_brief_accepted_repository_implementation_pending");
   assert.equal(eo04d.implementation_started, false);

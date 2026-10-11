@@ -314,7 +314,7 @@ Binding analyst brief: `docs/EO_04C_GOOGLE_ADS_ADAPTER_START_BRIEF.md`
 Executable contract: `contracts/eo-04c-google-ads-adapter-start-brief-v1.json`  
 CI enforcement: `tests/eo-04c-google-ads-adapter-start-brief.test.js`
 
-- The product owner accepted the Google documentation decision. The secret-free repository adapter implementation is now CI-pending; OAuth, secrets and live API access have not started.
+- The product owner accepted the Google documentation decision. The secret-free repository adapter implementation is CI-PASS (run 38127917558; 192/192 tests, typecheck and production build); OAuth, secrets and live API access have not started.
 - Selectable Google Reporting Accounts are one to three provider-verified advertiser/serving accounts with `customer.manager=false`. MCC/Manager accounts are access paths only and cannot be selected.
 - Standard campaigns stop truthfully at Ad; Performance Max stops at Asset Group. A synthetic PMax Ad leaf is forbidden.
 - Funnel conversion categories use action-segmented `all_conversions` and `all_conversions_value` so secondary Add to Cart/Checkout actions do not disappear; attribution-event type remains explicit.
@@ -322,7 +322,7 @@ CI enforcement: `tests/eo-04c-google-ads-adapter-start-brief.test.js`
 - Source date, timezone and currency come from the Google Ads customer. Interaction-date reporting is primary for Ads Manager comparability; EO-05 owns normalization, FX, maturity and reconciliation.
 - Google retired the developer-token requirement on 9 September 2026. `GOOGLE_ADS_DEVELOPER_TOKEN` is not introduced as a required clean-repository secret.
 - Cart data can expose sold products and cross-sell evidence when implemented, but the documented `cart_data_sales_view` segmenting grain is Campaign/Ad Group. **Search Ad-level sold-product linkage is unsupported by the current native Google reporting contract; no inferred join may replace it.** PMax advertised-product reporting is not automatically sold-basket cross-sell proof.
-- EO-04-C now contains the typed Google adapter core, four native query families, Standard Ad and PMax Asset Group translation, explicit conversion-action evidence, fail-closed pagination and deterministic tests. It remains open at CI and separately authorized controlled-live-evidence gates; EO-04-B also remains open at its controlled-live-evidence gate.
+- EO-04-C now contains the typed Google adapter core, four native query families, Standard Ad and PMax Asset Group translation, explicit conversion-action evidence, fail-closed pagination and deterministic tests. It remains open only at its separately authorized controlled-live-evidence gate; EO-04-B also remains open at its controlled-live-evidence gate.
 - Google repository implementation uses an injected transport boundary: no live HTTP call, OAuth value, secret, database write, Vercel mutation, deploy or Dataset V2 persistence is included. The previously accepted EO-04-D Klaviyo documentation remains durable and its repository implementation stays pending.
 
 

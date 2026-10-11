@@ -667,7 +667,7 @@
           "id": "A6-EO-04-C",
           "title": "Google Ads adapter",
           "objective": "Standard Ad and Performance Max Asset Group hierarchy with raw structure evidence.",
-          "status": "Repository_implementation_CI_pending_controlled_live_evidence_pending",
+          "status": "Repository_CI_PASS_controlled_live_evidence_pending",
           "implementation_started": true,
           "live_mutation_authorized": false,
           "document": "docs/EO_04C_GOOGLE_ADS_ADAPTER_START_BRIEF.md",
@@ -681,7 +681,7 @@
           "standard_leaf": "ad",
           "performance_max_leaf": "asset_group",
           "cart_data_deepest_grain_status": "campaign_or_ad_group_sold_product_native;_Search_ad_product_relation_unsupported",
-          "repository_implementation": "CI_pending",
+          "repository_implementation": "PASS",
           "live_evidence_authorized": false,
           "google_product_request_families": [
             "canonical_ad_performance",
@@ -692,7 +692,11 @@
           "synthetic_google_ad_or_ad_product_relation_forbidden": true,
           "runtime": "app/lib/providers/google-ads-adapter.server.js",
           "types": "app/lib/providers/google-ads-adapter.server.d.ts",
-          "runtime_test": "tests/eo-04c-google-ads-adapter.test.js"
+          "runtime_test": "tests/eo-04c-google-ads-adapter.test.js",
+          "repository_ci": "PASS_run_38127917558",
+          "repository_tests": "PASS_192_of_192",
+          "typecheck": "PASS",
+          "preview_build": "PASS"
         },
         {
           "id": "A6-EO-04-D",

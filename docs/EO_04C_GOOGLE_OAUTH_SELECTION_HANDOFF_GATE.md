@@ -1,7 +1,7 @@
 # EO-04-C — Google OAuth account-selection handoff gate
 
 **Control date:** 11 October 2026  
-**Status:** Accepted; repository implementation and CI PASS, live migration pending separate approval  
+**Status:** Live database accepted; route wiring, deployment and controlled Google evidence pending  
 **Parent:** A6-EO-04-C
 
 ## Why this gate exists
@@ -36,4 +36,4 @@ GitHub Actions run `38132951111` passed 211/211 tests, TypeScript verification a
 
 ## Current authority
 
-The migration file is durable in GitHub but has **not** been applied to live Supabase. Routes are not wired, Vercel was not redeployed and no live Google OAuth or Ads request was sent. Live migration requires a separate explicit approval, followed by Supabase security/performance advisor evidence before route wiring.
+With separate explicit product-owner approvals, the base handoff migration and the corrective `installation_id` foreign-key index migration were applied to live Supabase on 11 October 2026. Forced RLS, owner-only policy, zero runtime table privileges, four narrow runtime functions and zero Security Advisor findings were verified. The corrective index returned unindexed-foreign-key findings to the preflight baseline; newly created zero-row indexes are expected to remain informationally unused until runtime traffic. Durable evidence: `docs/evidence/EO_04C_AUTHORIZATION_HANDOFF_LIVE_2026-10-11.json`. Routes are not wired, Vercel was not redeployed and no live Google OAuth or Ads request was sent.

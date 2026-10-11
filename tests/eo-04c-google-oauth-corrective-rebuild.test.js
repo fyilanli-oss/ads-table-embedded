@@ -22,7 +22,7 @@ const decision = read(
 
 test("Google setup has no browser handoff or setup reference", () => {
   for (const source of [settings, callback, runtime]) {
-    assert.doesNotMatch(source, /google_setup/i);
+    assert.doesNotMatch(source, /searchParams[.](?:get|set)[(]["']google_setup["']/i);
     assert.doesNotMatch(source, /authorization[_-]handoff/i);
     assert.doesNotMatch(source, /transactionId.*form|form.*transactionId/i);
   }

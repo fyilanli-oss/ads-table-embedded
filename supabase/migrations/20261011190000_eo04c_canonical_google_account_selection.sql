@@ -244,6 +244,10 @@ begin
   if exists (
     select 1 from jsonb_array_elements(p_accounts) as item(value)
      where jsonb_typeof(item.value) <> 'object'
+        or not (item.value ? 'id')
+        or not (item.value ? 'name')
+        or not (item.value ? 'kind')
+        or not (item.value ? 'reporting_eligible')
         or item.value ?| array[
           'credential_id', 'workspace_id', 'install_generation',
           'access_token', 'refresh_token', 'token'
@@ -384,6 +388,14 @@ as $function$
 declare
   current_connection integrations.provider_connections%rowtype;
 begin
+  if p_connection_id is null or p_workspace_id is null
+     or p_install_generation is null or p_install_generation < 1
+     or p_provider not in ('meta', 'google_ads')
+     or p_expected_version is null or p_expected_version < 1
+     or p_cancelled_at is null then
+    raise exception 'INVALID_PENDING_ACCOUNT_SELECTION_CANCEL';
+  end if;
+
   select connection.* into current_connection
     from integrations.provider_connections as connection
    where connection.id = p_connection_id

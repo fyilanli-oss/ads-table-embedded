@@ -102,7 +102,7 @@ test("Settings and callback routes preserve the accepted Shopify UI and authorit
   const callback = await readFile("app/routes/auth.google-ads.callback.ts", "utf8");
 
   for (const component of [
-    "s-page", "s-section", "s-choice-list", "s-choice", "s-button", "s-banner",
+    "s-page", "s-section", "s-modal", "s-choice-list", "s-choice", "s-button", "s-banner",
   ]) {
     assert.match(settings, new RegExp("<" + component));
   }
@@ -110,6 +110,13 @@ test("Settings and callback routes preserve the accepted Shopify UI and authorit
   assert.doesNotMatch(settings, /style=|className=|#[0-9a-f]{3,8}/i);
   assert.match(settings, /authenticateAdmin: authenticate[.]admin/);
   assert.match(settings, /getAll\("connectedAccountIds"\)/);
+  assert.match(settings, /id="google-connect-modal"/);
+  assert.match(settings, /id="google-account-selection-modal"/);
+  assert.match(settings, /account[.]kind === "advertiser"/);
+  assert.doesNotMatch(
+    settings,
+    /account[.]kind === "advertiser"\\s*&&\\s*account[.]reportingEligible/,
+  );
   assert.match(settings, /reportingAccountId/);
   assert.match(settings, /error instanceof Response/);
   assert.match(settings, /globalThis[.]open\(authorizationUrl[.]toString\(\), "_top"\)/);

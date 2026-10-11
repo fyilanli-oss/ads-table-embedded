@@ -1,0 +1,54 @@
+{
+  "evidence_id": "eo-04c-google-developer-token-vercel-2026-10-11",
+  "recorded_at": "2026-10-11",
+  "provider": "google_ads",
+  "vercel": {
+    "team_slug": "firats-projects-d22284db",
+    "project_id": "prj_RVvXZGLuj9ItUAqvMJvb1GOTd8Lr",
+    "project_name": "ads-table-embedded",
+    "key": "GOOGLE_ADS_DEVELOPER_TOKEN",
+    "target": [
+      "production"
+    ],
+    "visibility": "secret",
+    "value_decrypted_or_read": false,
+    "security_issues": [],
+    "product_owner_added_directly": true
+  },
+  "redeploy": {
+    "deployment_id": "dpl_J95Swd8i4gxJsJxwkRk7AomZXh9T",
+    "state": "READY",
+    "target": "production",
+    "source": "redeploy",
+    "source_commit": "07e5396badb839b6d8bac290afa2bf058c193485",
+    "source_commit_changed": false,
+    "aliases": [
+      "embedded.adstable.app",
+      "ads-table-embedded.vercel.app",
+      "ads-table-embedded-firats-projects-d22284db.vercel.app",
+      "ads-table-embedded-git-main-firats-projects-d22284db.vercel.app"
+    ],
+    "alias_error": null
+  },
+  "probe": {
+    "url": "https://embedded.adstable.app/",
+    "embedded_shopify_context_present": false,
+    "status": 410,
+    "expected_fail_closed": true,
+    "server": "Vercel",
+    "runtime_5xx": false
+  },
+  "excluded": {
+    "google_oauth_executed": false,
+    "google_ads_api_called": false,
+    "google_account_discovery_executed": false,
+    "dataset_v2_written": false,
+    "route_activation_completed": false,
+    "future_secret_mutation_authorized": false
+  },
+  "authoritative_sources": {
+    "google_ads_rest_auth": "https://developers.google.com/google-ads/api/rest/auth",
+    "vercel_environment_variables": "https://vercel.com/docs/environment-variables",
+    "checked_at": "2026-10-11"
+  }
+}

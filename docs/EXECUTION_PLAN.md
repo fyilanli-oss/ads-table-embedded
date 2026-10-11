@@ -54,13 +54,13 @@ Binding analyst brief: `docs/A6_EO_SECRET_INVENTORY_AND_RECOVERY.md`
 Executable contract: `contracts/a6-eo-secret-inventory-recovery-v1.json`  
 CI enforcement: `tests/a6-eo-secret-inventory-recovery.test.js`
 
-- Current baseline is eleven Production Vercel entries and one GitHub Actions secret; the repository stores names and procedures, never values.
+- The accepted name-only baseline is fifteen Production Vercel entries and one GitHub Actions secret, including the unprovisioned Google Ads OAuth client ID, client secret and redirect URI; the repository stores names and procedures, never values.
 - Vercel/GitHub masking is expected write-only behavior and does not mean a value was deleted.
 - Secret mutation requires exact-key product-owner approval, impact map, rollback, approved encrypted recovery-vault capture, redeploy/workflow verification and secret-free evidence.
 - Existing independent recovery copies are not assumed. A generated encryption key cannot be recreated to decrypt old ciphertext.
-- Before the first real provider authorization, the provider-token key recovery gate and the provider-specific inventory extension must pass.
+- Before the first real provider authorization, the provider-token key recovery gate and provider-specific inventory extension must pass. Google names are now inventoried, but the clean Vercel project still lacks all three Google OAuth entries and recovery custody is not evidenced.
 - Production credentials are never copied to Preview or Development; non-production environments require isolated credentials.
-- This decision authorizes no secret, provider, database, environment or deployment mutation.
+- This decision and its Google extension authorize no secret, provider, database, environment or deployment mutation.
 
 
 ## Cross-cutting safety, capacity and portability freeze — 7 October 2026
@@ -132,6 +132,45 @@ CI enforcement: `tests/eo-04a-common-adapter-start-brief.test.js`
 - Raw evidence is private, bounded, sanitized and content-hashed; tokens, credentials and profile-level personal data are forbidden.
 - EO-04-A creates no provider secret and makes no live provider/API, database, Vercel or deployment mutation.
 - Meta-specific implementation remains blocked because its current official Graph rate-limit/error pages returned HTTP 429 during the control check; EO-04-B must re-open them successfully before code.
+
+
+## EO-04-B Meta adapter analyst start brief — 10 October 2026
+
+Binding analyst brief: `docs/EO_04B_META_ADAPTER_START_BRIEF.md`  
+Executable start contract: `contracts/eo-04b-meta-adapter-start-brief-v1.json`  
+CI enforcement: `tests/eo-04b-meta-adapter-start-brief.test.js`
+
+- The product owner accepted the EO-04-B analyst brief on 10 October 2026. Repository implementation passed GitHub Actions run `38063777629` with 174/174 tests, TypeScript verification and preview build. Controlled live evidence remains separately gated and unauthorized.
+- Canonical hierarchy is Ad Account → Campaign → Ad Set → Ad → business date.
+- `ad_click` remains `PENDING_LIVE_FIELD_EVIDENCE`: `outbound_clicks` is the leading candidate, but `clicks`, `inline_link_clicks`, `website_clicks` and `outbound_clicks` must be compared on the same real row before final mapping.
+- A missing `actions` type or `action_values: []` is absent/empty, never numeric zero. Standard and omni aliases are never summed.
+- Attribution remains `PENDING_REAL_CONVERSION_EVIDENCE` because current official Meta pages conflict about unified attribution behavior. Exact Ads Manager parity is not claimed without a controlled real-conversion comparison.
+- Meta pagination follows opaque `paging.next`; an empty page with `next` continues, and partial sync/async results never publish.
+- Converted-product quantity/value discovery is preserved for A6-EO-07-C. Generic `product_id` is not purchase proof, Meta `retailer_id` is not presumed Shopify SKU, and deterministic catalog-to-installed-shop mapping plus both exact earring fixtures are mandatory.
+- Repository implementation: `app/lib/providers/meta-adapter.server.js`, its type boundary and deterministic tests. No Meta call, secret, OAuth, database, Vercel, deployment or Dataset V2 mutation was performed.
+
+## Pending cross-cutting decision: official provider documentation watch — 10 October 2026
+
+Binding decision record: `docs/A6_PROVIDER_OFFICIAL_DOCUMENTATION_WATCH_DECISION.md`
+
+- Meta, Google Ads, Klaviyo and Shopify official developer sources will receive a future registry and change-watch capability.
+- The existing mandatory current-document gate remains binding before every provider implementation.
+- A future scheduled monitor will stay silent on no-change runs and will emit only meaningful, impact-classified findings; it cannot autonomously change code, contracts, schemas, provider requests or production.
+- `EO-GOV-01` is a proposed identifier only. It is not an active parallel package and does not change the A6-EO single-line execution rule or interrupt EO-04-B.
+- Exact scheduling and implementation placement require a later explicit product-owner planning decision.
+
+
+## Pending EO-07-C finding: Meta converted-product evidence — 10 October 2026
+
+Official Meta v26.0 sources checked on 10 October 2026:
+
+- `converted_product_quantity` and `converted_product_value` are ad-driven purchased-product quantity/value metrics recorded by the merchant pixel or app SDK for a given converted product ID.
+- The required converted-product-ID breakdown is not equivalent to generic `product_id`; generic `product_id` may describe a product involved in an impression, click or action.
+- Insights does not directly provide a trustworthy Shopify SKU or display name with these metrics. A verified converted product ID must be resolved through Meta Catalog Product Item, where `retailer_id`, `name`, `image_url`, `url` and group identity may be available, and then deterministically mapped to the installed Shopify shop product/variant.
+- `retailer_id` is a merchant/catalog item identifier and must not be presumed to equal Shopify SKU without live mapping evidence.
+- Meta documents `action_converted_product_id` as limited availability for Collaborative Ads. Therefore product/cross-sell support remains provider/campaign-specific and pending live proof.
+- EO-07-C must test both exact earring fixtures: clicked product not purchased, and clicked product purchased, including non-advertised basket products. Product rows remain unsupported/unknown unless the provider returns the relationship and the catalog-to-Shopify mapping is deterministic.
+- This finding authorizes no EO-07 implementation and does not advance package status.
 
 
 ## Closed package: EO-03 / Next ready package: EO-04
@@ -267,3 +306,113 @@ EO-02-C internal caller kodu tek başına canlı tetikleyici değildir. `docs/EO
 - Product-owner acceptance and PR #65 merge authorization were explicit.
 - EO-04-B is now the active start gate: current official Meta documentation and an analyst brief must be accepted before provider-specific code.
 - No provider secret, live API call, database mutation, Vercel mutation or deployment is authorized by this closure.
+
+
+## EO-04-C Google Ads official-document decision — 10 October 2026
+
+Binding analyst brief: `docs/EO_04C_GOOGLE_ADS_ADAPTER_START_BRIEF.md`  
+Executable contract: `contracts/eo-04c-google-ads-adapter-start-brief-v1.json`  
+CI enforcement: `tests/eo-04c-google-ads-adapter-start-brief.test.js`
+
+- The product owner accepted the Google documentation decision. The secret-free repository adapter implementation is CI-PASS (run 38127917558; 192/192 tests, typecheck and production build); OAuth, secrets and live API access have not started.
+- Selectable Google Reporting Accounts are one to three provider-verified advertiser/serving accounts with `customer.manager=false`. MCC/Manager accounts are access paths only and cannot be selected.
+- Standard campaigns stop truthfully at Ad; Performance Max stops at Asset Group. A synthetic PMax Ad leaf is forbidden.
+- Funnel conversion categories use action-segmented `all_conversions` and `all_conversions_value` so secondary Add to Cart/Checkout actions do not disappear; attribution-event type remains explicit.
+- Missing segmented rows are not automatically zero. Google can omit all-zero rows.
+- Source date, timezone and currency come from the Google Ads customer. Interaction-date reporting is primary for Ads Manager comparability; EO-05 owns normalization, FX, maturity and reconciliation.
+- **Corrective official-contract finding — 11 October 2026:** Google Ads REST requires `GOOGLE_ADS_DEVELOPER_TOKEN` in the `developer-token` header for every API call. It is a separate Production Vercel secret; its name, Production scope and Secret type are now verified without value disclosure, and the unchanged accepted production commit was redeployed successfully. OAuth client credentials alone are insufficient. Route activation and controlled live account discovery remain separate acceptance gates.
+- Cart data can expose sold products and cross-sell evidence when implemented, but the documented `cart_data_sales_view` segmenting grain is Campaign/Ad Group. **Search Ad-level sold-product linkage is unsupported by the current native Google reporting contract; no inferred join may replace it.** PMax advertised-product reporting is not automatically sold-basket cross-sell proof.
+- EO-04-C now contains the typed Google adapter core, four native query families, Standard Ad and PMax Asset Group translation, explicit conversion-action evidence, fail-closed pagination and deterministic tests. Controlled live evidence was authorized, but its 11 October preflight stopped before OAuth or any live request because the clean Vercel project has no Google OAuth credentials and provider-key recovery custody is not evidenced; EO-04-B also remains open at its controlled-live-evidence gate.
+- Google repository implementation uses an injected transport boundary: no live HTTP call, OAuth value, secret, database write, Vercel mutation, deploy or Dataset V2 persistence is included. The previously accepted EO-04-D Klaviyo documentation remains durable and its repository implementation stays pending.
+
+
+## EO-04-D Klaviyo official-document decision — 10 October 2026
+
+Binding analyst brief: `docs/EO_04D_KLAVIYO_ADAPTER_START_BRIEF.md`  
+Executable contract: `contracts/eo-04d-klaviyo-adapter-start-brief-v1.json`  
+CI enforcement: `tests/eo-04d-klaviyo-adapter-start-brief.test.js`
+
+- The product owner accepted the current official-document decision. Repository adapter implementation, OAuth, secrets and live API access have not started.
+- Klaviyo Reporting API is canonical for Funnel/UI parity; Query Metric Aggregates cannot silently replace it because its event-time grouping differs from message-send-date attribution.
+- Campaign performance stops at Campaign Message and Flow performance stops at Flow Message. Flow Action is structural metadata, not a synthetic performance row.
+- Campaign Variation waits for the scheduled 15 October 2026 GA and stable identity revalidation. Flow Variation waits for identity, persistence and controlled-live evidence.
+- Funnel mapping is delivered → impression, unique clicks → ad_click, mapped Added to Cart/Started Checkout/Revenue conversions → count and value. Missing rows and nulls are not zero.
+- EO-07-C may show product ID, SKU, product name, purchase quantity and Sales under an attributed message/accepted variation only after the same event proves line items and attribution. Identifying the clicked product or classifying cross-sell is not required and must not be inferred.
+- Reporting totals remain canonical; Events API product enrichment cannot create duplicate purchase facts.
+- A five-day attribution window is never hardcoded. EO-05 owns configurable reconciliation/finality, including late attribution and attribution-setting recalculation behavior.
+- Email cost keeps the accepted daily recipient-weighted Campaign Message + Flow Message allocation. Native SMS spend is used only when supported; unsupported/null MMS, WhatsApp or contracted-plan cost is not zero.
+- Reporting quotas require grouped bulk calls and a quota planner; one request per message is forbidden.
+- No provider, OAuth, secret, database, Vercel, deployment, Dataset V2 or product-UI mutation is authorized by this decision.
+
+
+## Channel terminology and Google product-request clarification — 11 October 2026
+
+Binding terminology record: `docs/A6_CHANNEL_REPORTING_TERMINOLOGY_DECISION.md`  
+Executable contract: `contracts/a6-channel-reporting-terminology-v1.json`
+
+- User-facing **Channel** is a derived provider-native reporting path, not a new provider object or Dataset V2 entity.
+- Delivery medium uses the distinct technical key `delivery_channel`; a canonical identity field named only `channel` is forbidden.
+- Google extraction is split into four non-interchangeable request families: canonical Ad/Asset Group performance, Shopping product performance, conditional PMax retail Asset Group-product performance, and Campaign/Ad Group sold-product cart data.
+- Shopping and PMax Product Item rows are native product grains and are never renamed or persisted as Google Ads.
+- Search Ad-level sold-product linkage is unsupported by the current native reporting contract; URL, UTM, GCLID or inferred joins cannot replace it.
+- `units_sold` is quantity and is never relabelled purchase/order count.
+- Final Channel report layout, columns, filters, ranking and product-cost/basket presentation remain pending the product owner's Excel reporting sheets.
+- This clarification advances no package status and authorizes no provider, OAuth, secret, Dataset, UI, deployment or live mutation.
+
+## 11 October 2026 — EO-04-C Google Production preflight and OAuth/REST boundary
+
+- The clean Vercel project has the three Google Web OAuth names in Production only; values were not read or copied into evidence. All three are stored as Sensitive by product-owner choice.
+- Provider-token key replacement was safe because Supabase contained zero dependent credential/PKCE envelopes; independent encrypted recovery custody was confirmed.
+- The tested server-only Google boundary now covers exact callback, PKCE/state, offline exchange, refresh-token retention, accessible-customer listing, verified manager access path and direct v25 REST search with secret-safe errors.
+- GitHub Actions run `38131663609` passed 201/201 tests, TypeScript and build.
+- Status is `Repository_CI_PASS_controlled_live_evidence_ready`. Route wiring, encrypted credential persistence, redeploy and controlled live account/query evidence remain open; no live Google request or Dataset V2 write occurred.
+
+## 11 October 2026 — EO-04-C pending authorization handoff gate
+
+- Route review found that the encrypted credential envelope has no short-lived server-side link to the claimed OAuth transaction before the merchant selects one to three Google advertiser accounts.
+- Passing a credential UUID through a URL, browser form or ordinary cookie as authority is forbidden; browser account evidence is never trusted.
+- Proposed gate: `docs/EO_04C_GOOGLE_OAUTH_SELECTION_HANDOFF_GATE.md`, contract: `contracts/eo-04c-google-oauth-selection-handoff-gate-v1.json`.
+- This is an EO-04-C checklist/corrective gate, not a new parent or child package. Database migration, route implementation, redeploy and live Google activity require the stated acceptance sequence.
+
+
+## 11 October 2026 — EO-04-C authorization handoff accepted and implemented in repository
+
+- The product owner accepted the short-lived server-side OAuth-to-account-selection handoff.
+- Repository implementation: `supabase/migrations/20261011120000_eo04c_provider_authorization_handoff.sql`, `app/lib/database/provider-authorization-handoff-repository.server.js` and `app/lib/oauth/google-authorization-handoff.server.js`.
+- The browser receives only the OAuth transaction identifier as correlation. Credential identity, refresh/access tokens and provider account evidence never become browser authority.
+- Google account evidence is refreshed server-side; only one to three verified non-manager advertiser accounts may be selected, and connection creation consumes the handoff atomically.
+- Expired handoffs use bounded `FOR UPDATE SKIP LOCKED` cleanup and delete only unreferenced encrypted credential envelopes.
+- GitHub Actions run `38132951111` passed 211/211 tests, TypeScript and build.
+- With separate explicit product-owner approvals, the handoff migration and corrective `installation_id` foreign-key index migration were applied to live Supabase on 11 October 2026. Forced RLS, owner-only policy, zero runtime table privileges, four narrow runtime functions and zero Security Advisor findings were verified; unindexed-FK findings returned to the preflight baseline of two unrelated privacy findings. Durable evidence: `docs/evidence/EO_04C_AUTHORIZATION_HANDOFF_LIVE_2026-10-11.json`. Routes were not wired, Vercel was not redeployed and no live Google request occurred; those remain separate gates.
+
+
+## 11 October 2026 — Google Ads developer-token Production gate
+
+- Product owner added `GOOGLE_ADS_DEVELOPER_TOKEN` directly to Vercel Production from the approved recovery source; the value was never sent to chat, read by the agent or stored in repository evidence.
+- Vercel verification confirmed the exact key, Production-only target, Secret visibility and zero reported security issues.
+- The prior accepted Production commit `07e5396badb839b6d8bac290afa2bf058c193485` was redeployed without source-code change. Deployment `dpl_J95Swd8i4gxJsJxwkRk7AomZXh9T` reached READY and owns the production aliases.
+- An unauthenticated request without Shopify embedded context returned the expected fail-closed `410 Gone`, not a runtime `5xx`.
+- This gate does not activate Google routes, execute OAuth, call Google Ads, write Dataset V2 or authorize future secret mutation.
+- Durable secret-free evidence: `docs/evidence/EO_04C_GOOGLE_DEVELOPER_TOKEN_VERCEL_2026-10-11.json`.
+
+
+## 11 October 2026 — EO-04-C Google OAuth route/runtime repository PASS
+
+- Shopify Admin Settings now authenticates every GET/POST with verified ID-token/Admin shop identity and re-resolves the active installed-shop generation.
+- Google begin, callback, fresh account discovery, one-to-three advertiser selection, reporting-account selection and cancel paths are wired. The callback return shop is resolved only from claimed server authority.
+- Google account discovery follows the official hierarchy contract: direct accounts come from `listAccessibleCustomers`; manager descendants come from recursive `customer_client` queries. Managers remain non-reporting access paths and only enabled advertisers are selectable.
+- The UI uses only accepted Polaris 2.0 RC web components. Raw HTML form/action controls, custom CSS and browser-carried credential/workspace/install authority remain absent.
+- Repository Governance run `38142931704` passed 223/223 tests, TypeScript and production build at commit `93aa1b8901b639933ffa9feed5acc4ccfb4b70de`.
+- Durable evidence: `docs/evidence/EO_04C_GOOGLE_ROUTE_REPOSITORY_2026-10-11.json`.
+- Status is `Repository_implementation_PASS_deployment_pending`. Vercel deployment, live Google OAuth/API calls, real desktop/mobile Shopify Admin acceptance and package closure remain separately gated.
+
+## 11 October 2026 — EO-04-C Google lifecycle parity corrective gate
+
+- End-to-end comparison with the former working implementation found a new-design regression: the OAuth transaction lifetime and the post-OAuth account-selection state had been collapsed into one ten-minute handoff. No Google, Shopify or former AdsTable rule requires that selection timeout.
+- Binding correction: OAuth state/PKCE remains independently bounded; after successful exchange the encrypted refresh credential and pending account-selection authority remain resumable until selection is consumed, the merchant explicitly cancels, Google authorization becomes invalid, or the Shopify installation is removed.
+- Resume setup performs fresh Google discovery and opens only the account-selection modal. It never restarts OAuth. The merchant selects one to three non-manager advertisers; the first selected advertiser becomes the initial reporting account.
+- Settings may render Connected only after a server-side refresh-token validation. Google `invalid_grant` or an already revoked credential closes local active connection authority, removes encrypted credential material and renders Reauthorization required.
+- Reporting-account change requires fresh Google account evidence. Disconnect revokes the Google grant, closes active account/reporting bindings, removes ciphertext and preserves historical analytics.
+- Reauthorization must atomically reconnect the existing disconnected canonical connection; duplicate provider connections are forbidden.
+- Corrective contract: `contracts/eo-04c-google-oauth-route-wiring-v1.json`; corrective migration: `supabase/migrations/20261011180000_eo04c_durable_selection_and_reconnect.sql`; lifecycle runtime: `app/lib/oauth/google-connection-runtime.server.js`.
+- Status: repository implementation and CI verification in progress. Production Supabase migration, Vercel deployment and controlled desktop/mobile acceptance have not yet been performed for this correction.

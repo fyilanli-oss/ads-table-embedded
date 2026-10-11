@@ -1,0 +1,96 @@
+{
+  "contract_id": "a6-channel-reporting-terminology-v1",
+  "version": "1.0.0",
+  "status": "Boundary_accepted_reporting_sheet_design_pending",
+  "decided_at": "2026-10-11",
+  "owners": [
+    "A6-EO-04",
+    "A6-EO-05",
+    "A6-EO-06",
+    "A6-EO-07"
+  ],
+  "product_intent": "Give a Shopify merchant a fast Platform-to-Channel path for cost, sold products, product burden and additional basket products while preserving provider-native truth.",
+  "user_facing_term": {
+    "label": "Channel",
+    "meaning": "a derived display path composed only from real provider-native entities",
+    "provider_entity": false,
+    "canonical_dataset_entity_type": false,
+    "independently_persisted_source_fact": false,
+    "synthetic_id_allowed": false
+  },
+  "collision_prevention": {
+    "delivery_medium_key": "delivery_channel",
+    "delivery_medium_examples": [
+      "email",
+      "sms",
+      "mms",
+      "whatsapp",
+      null
+    ],
+    "canonical_identity_field_named_channel_forbidden": true,
+    "UI_Channel_must_not_overwrite_delivery_channel": true,
+    "provider_native_channel_fields_remain_namespaced_raw_evidence": true
+  },
+  "source_path_contract": {
+    "every_node_requires_provider_native_type_id_and_name": true,
+    "unsupported_or_missing_node_must_not_be_created": true,
+    "one_common_leaf_type_required": false,
+    "same_display_name_never_collapses_identity": true,
+    "derived_label_recomputable_from_native_nodes": true
+  },
+  "provider_examples": {
+    "meta": [
+      "campaign",
+      "adset",
+      "ad"
+    ],
+    "google_search": [
+      "campaign",
+      "ad_group",
+      "ad"
+    ],
+    "google_shopping_product_reporting": [
+      "campaign",
+      "ad_group",
+      "product_item"
+    ],
+    "google_performance_max": [
+      "campaign",
+      "asset_group"
+    ],
+    "google_performance_max_retail_product_reporting_when_item_partition_exists": [
+      "campaign",
+      "asset_group",
+      "product_item"
+    ],
+    "klaviyo_campaign": [
+      "campaign",
+      "campaign_message",
+      "variation_only_when_verified"
+    ],
+    "klaviyo_flow": [
+      "flow",
+      "flow_message",
+      "variation_only_when_verified"
+    ]
+  },
+  "forbidden": [
+    "synthetic_Google_ad_for_Shopping_or_Performance_Max",
+    "renaming_product_item_as_ad",
+    "forcing_Meta_Google_and_Klaviyo_to_one_fake_leaf",
+    "joining_sold_product_to_ad_without_provider_native_evidence",
+    "using_destination_URL_UTM_or_click_ID_as_product_attribution_proof"
+  ],
+  "pending_product_design": [
+    "product_owner_Excel_reporting_sheets",
+    "final_three_surface_information_architecture",
+    "Channel_column_and_filter_behavior",
+    "Sales_Revenue_product_cost_and_basket_presentation"
+  ],
+  "non_effect": {
+    "dataset_migration_authorized": false,
+    "provider_implementation_authorized": false,
+    "UI_implementation_authorized": false,
+    "current_package_status_advanced": false
+  }
+}

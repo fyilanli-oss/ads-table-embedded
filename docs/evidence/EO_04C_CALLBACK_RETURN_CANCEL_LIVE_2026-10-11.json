@@ -1,0 +1,58 @@
+{
+  "evidence_id": "EO_04C_CALLBACK_RETURN_CANCEL_LIVE_2026_10_11",
+  "captured_at": "2026-10-11T12:35:22Z",
+  "project_ref": "podpwkrpmjiksskxhwsu",
+  "repository_migration": "supabase/migrations/20261011143000_eo04c_callback_return_and_handoff_cancel.sql",
+  "applied_migration": {
+    "version": "20261011123503",
+    "name": "eo04c_callback_return_and_handoff_cancel",
+    "success": true
+  },
+  "functions": [
+    {
+      "name": "shopify.resolve_active_installation_callback_return(uuid,bigint)",
+      "security_definer": true,
+      "search_path": "",
+      "execute_roles": [
+        "adstable_runtime"
+      ],
+      "denied_roles": [
+        "public",
+        "anon",
+        "authenticated",
+        "service_role"
+      ]
+    },
+    {
+      "name": "integrations.cancel_provider_authorization_handoff(uuid,uuid,bigint,text,timestamptz)",
+      "security_definer": true,
+      "search_path": "",
+      "execute_roles": [
+        "adstable_runtime"
+      ],
+      "denied_roles": [
+        "public",
+        "anon",
+        "authenticated",
+        "service_role"
+      ]
+    }
+  ],
+  "postflight": {
+    "handoff_rows": 0,
+    "credential_rows": 0,
+    "security_advisor_findings": 0,
+    "performance_advisor": {
+      "unindexed_foreign_keys": 2,
+      "unused_indexes": 17,
+      "classification": "pre_existing_informational_baseline_no_new_finding_from_this_migration",
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys"
+    }
+  },
+  "not_performed": [
+    "vercel_deploy",
+    "live_google_oauth",
+    "live_google_ads_api",
+    "dataset_v2_write"
+  ]
+}

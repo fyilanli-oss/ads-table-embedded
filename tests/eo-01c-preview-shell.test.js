@@ -15,9 +15,14 @@ test("EO-01-C exposes exactly the three canonical truthful routes", () => {
     assert.equal(state, "truthful_empty_preview");
     assert.ok(routeFiles.some((file) => read(file).includes(`heading=\"${heading}\"`)), heading);
   }
-  for (const copy of Object.values(contract.exactCopy)) {
+  for (const [surface, copy] of Object.entries(contract.exactCopy)) {
+    if (surface === "settings") continue;
     assert.ok(routeFiles.some((file) => read(file).includes(copy)), copy);
   }
+  const settings = read("app/routes/_admin.settings.tsx");
+  assert.doesNotMatch(settings, new RegExp(contract.exactCopy.settings));
+  assert.match(settings, /Google Ads is not connected/);
+  assert.match(settings, /Google Ads connected/);
 });
 
 test("preview UI uses only approved Shopify components without custom styling", () => {

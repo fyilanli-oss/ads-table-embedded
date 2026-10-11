@@ -1,0 +1,215 @@
+{
+  "contract_id": "eo-04c-google-oauth-route-wiring-v1",
+  "version": "1.5.0",
+  "status": "Deployed_controlled_acceptance_pending",
+  "checked_at": "2026-10-11",
+  "parent": "A6-EO-04-C",
+  "objective": "Restore legacy-proven Google lifecycle parity end to end: secure OAuth, durable pending account selection, resume without OAuth restart, one-to-three advertiser selection, first-selected initial reporting account, fresh reporting-account verification, truthful revoked state, disconnect and clean reconnect.",
+  "callback_return_authority": {
+    "source": "claimed_oauth_transaction_workspace_and_install_generation",
+    "browser_shop_input_trusted": false,
+    "cookie_as_shop_authority": false,
+    "referrer_as_shop_authority": false,
+    "required_server_resolution": "narrow_function_returns_active_canonical_myshopify_domain",
+    "app_handle_source": "exact_deployed_configuration_not_request_input"
+  },
+  "routes": [
+    {
+      "name": "settings_state",
+      "method": "GET",
+      "shopify_admin_authenticated": true
+    },
+    {
+      "name": "google_begin",
+      "method": "POST",
+      "shopify_admin_authenticated": true
+    },
+    {
+      "name": "google_callback",
+      "method": "GET",
+      "shopify_admin_authenticated": false,
+      "authority": "one_time_provider_state_claim"
+    },
+    {
+      "name": "account_discovery_resume",
+      "method": "GET",
+      "shopify_admin_authenticated": true
+    },
+    {
+      "name": "account_selection",
+      "method": "POST",
+      "shopify_admin_authenticated": true
+    },
+    {
+      "name": "cancel_setup",
+      "method": "POST",
+      "shopify_admin_authenticated": true
+    },
+    {
+      "name": "disconnect",
+      "method": "POST",
+      "shopify_admin_authenticated": true,
+      "authority": "fresh_google_revoke_or_already_invalid_evidence_plus_connection_version"
+    }
+  ],
+  "browser_forbidden": [
+    "credential_id",
+    "refresh_token",
+    "access_token",
+    "provider_account_evidence",
+    "workspace_id_as_authority",
+    "install_generation_as_authority",
+    "shop_domain_as_authority"
+  ],
+  "selection": {
+    "minimum_advertisers": 1,
+    "maximum_advertisers": 3,
+    "selectable_account_type": "provider_verified_non_manager_advertiser",
+    "provider_status_is_selection_gate": false,
+    "manager_visible_in_selection": false,
+    "manager_counts_toward_limit": false,
+    "manager_reporting_eligible": false,
+    "manager_role": "login_customer_id_access_path_only",
+    "direct_advertiser_login_context": "self_customer_id",
+    "reporting_account_must_be_selected_advertiser": true,
+    "initial_setup_ui": "single_1_to_3_advertiser_selection",
+    "initial_reporting_account": "first_selected_advertiser_server_assigned",
+    "initial_reporting_account_second_prompt": false,
+    "reporting_account_change": "separate_post_connection_settings_action",
+    "account_discovery": "listAccessibleCustomers_then_each_accessible_root_customer_client_without_login_customer_id",
+    "single_pending_setup_per_workspace_provider": true
+  },
+  "storage": {
+    "refresh_token": "versioned_encrypted_database_ciphertext",
+    "access_token": "memory_only",
+    "oauth_transaction_max_minutes": 30,
+    "pending_account_selection": "durable_until_consumed_explicitly_cancelled_revoked_or_installation_removed",
+    "arbitrary_selection_timeout": false
+  },
+  "ui": {
+    "runtime": "polaris-2.0-rc.js",
+    "types": "2.0.0-rc.2",
+    "raw_html_action_or_form_controls": false,
+    "custom_css": false,
+    "clickable_as_button": false,
+    "components": [
+      "s-page",
+      "s-section",
+      "s-stack",
+      "s-badge",
+      "s-paragraph",
+      "s-text",
+      "s-choice-list",
+      "s-choice",
+      "s-button",
+      "s-banner",
+      "s-spinner",
+      "s-modal"
+    ],
+    "react_18_controlled_custom_elements": false,
+    "desktop_and_real_mobile_acceptance_required": true,
+    "pre_oauth_confirmation_modal_required": true,
+    "post_oauth_account_selection_modal_required": true,
+    "account_selection_modal_cancel": "hide_only_pending_selection_preserved",
+    "resume_setup": "fresh_discovery_then_open_account_selection_modal_without_new_oauth",
+    "oauth_restart_on_resume": false,
+    "disconnect_confirmation_modal_required": true,
+    "reauthorization_required_state": true
+  },
+  "additional_database_functions": [
+    "resolve_active_installation_callback_return",
+    "cancel_provider_authorization_handoff",
+    "durable_provider_authorization_handoff",
+    "consume_provider_authorization_handoff_reconnect"
+  ],
+  "mutation_authority": {
+    "repository_brief_and_contract": true,
+    "route_or_UI_implementation": true,
+    "live_supabase": true,
+    "vercel_deploy": true,
+    "live_google_oauth": false,
+    "live_google_api": false,
+    "dataset_v2": false
+  },
+  "exact_copy_document": "docs/EO_04C_GOOGLE_OAUTH_ROUTE_WIRING_BRIEF.md",
+  "official_sources": {
+    "shopify_react_router": "https://shopify.dev/docs/api/shopify-app-react-router/latest",
+    "shopify_authenticate_admin": "https://shopify.dev/docs/api/shopify-app-react-router/latest/authenticate/admin",
+    "shopify_app_home_rc": "https://shopify.dev/docs/api/app-home/v2.0-rc",
+    "shopify_choice_list": "https://shopify.dev/docs/api/app-home/v2.0-rc/web-components/forms/choice-list",
+    "shopify_button": "https://shopify.dev/docs/api/app-home/v2.0-rc/web-components/actions/button",
+    "google_oauth_web_server": "https://developers.google.com/identity/protocols/oauth2/web-server",
+    "google_list_accessible_accounts": "https://developers.google.com/google-ads/api/docs/account-management/listing-accounts",
+    "supabase_functions": "https://supabase.com/docs/guides/database/functions",
+    "google_account_hierarchy": "https://developers.google.com/google-ads/api/docs/account-management/get-account-hierarchy"
+  },
+  "acceptance": [
+    "explicit_product_owner_acceptance",
+    "repository_tests_typecheck_build_PASS",
+    "separate_live_migration_approval_and_postflight",
+    "separate_deployment_approval",
+    "controlled_Google_evidence",
+    "real_desktop_and_mobile_visual_acceptance"
+  ],
+  "product_owner_acceptance": {
+    "accepted_at": "2026-10-11",
+    "accepted_scope": "flow_copy_component_mapping_and_repository_route_UI_implementation",
+    "legacy_settings_reference": "behavior_only_no_legacy_code_carryover"
+  },
+  "live_migration_evidence": {
+    "applied_at": "2026-10-11",
+    "migration_version": "20261011123503",
+    "migration_name": "eo04c_callback_return_and_handoff_cancel",
+    "security_advisor": "PASS_zero_findings",
+    "evidence": "docs/evidence/EO_04C_CALLBACK_RETURN_CANCEL_LIVE_2026-10-11.json",
+    "corrective_migration_version": "20261011163811",
+    "corrective_migration_name": "eo04c_durable_selection_and_reconnect",
+    "pending_setup_rows_after_migration": 1,
+    "duplicate_pending_groups_after_migration": 0
+  },
+  "repository_implementation": {
+    "commit": "142414c1bbfc83fba10df150817c507a939054d8",
+    "github_actions_run": 38156170711,
+    "tests": "PASS_233_of_233",
+    "typecheck": "PASS",
+    "build": "PASS",
+    "deployment_performed": true,
+    "live_google_request_performed": false,
+    "evidence": "docs/evidence/EO_04C_GOOGLE_ROUTE_REPOSITORY_2026-10-11.json",
+    "deployment_id": "dpl_J7Vb9w7mvcgffpUKrRJSUPxT1SLY",
+    "production_alias": "embedded.adstable.app"
+  },
+  "controlled_live_finding": {
+    "observed_at": "2026-10-11",
+    "accessible_accounts": 5,
+    "managers": 2,
+    "advertisers": 3,
+    "provider_status_counts": {
+      "CLOSED": 5
+    },
+    "defect": "new_status_enabled_gate_hid_all_three_advertisers",
+    "accepted_correction": "restore_non_manager_only_legacy_selection_rule"
+  },
+  "lifecycle": {
+    "settings_connected_truth": "refresh_token_is_validated_server_side_before_connected_is_rendered",
+    "revoked_or_invalid_refresh_token": "finalize_local_disconnect_with_already_invalid_evidence_then_show_reauthorization_required",
+    "disconnect": "revoke_google_grant_then_atomically_close_local_accounts_and_reporting_binding_and_delete_ciphertext",
+    "reconnect": "reuse_existing_disconnected_connection_authority_and_consume_pending_selection_atomically",
+    "resume": "fresh_account_discovery_without_new_oauth",
+    "reporting_account_change": "fresh_google_account_evidence_required_before_binding_change",
+    "historical_analytics_preserved": true
+  },
+  "corrective_finding": {
+    "observed_at": "2026-10-11",
+    "defects": [
+      "oauth_exchange_and_account_selection_were_incorrectly_collapsed_into_one_ten_minute_handoff",
+      "settings_rendered_local_account_authority_as_connected_without_refresh_token_validation",
+      "google_disconnect_and_reconnect_were_not_wired_to_the_existing_provider_connection_lifecycle",
+      "reporting_account_change_did_not_refresh_provider_evidence",
+      "new_discovery_added_unproven_customer_prefetch_and_recursive_traversal_instead_of_legacy_accessible_root_customer_client_flow",
+      "settings_clean_URL_could_not_resume_the_canonical_pending_setup"
+    ],
+    "source": "legacy_end_to_end_behavior_comparison",
+    "ten_minute_rule_authority": "none_it_was_an_internal_new_contract_regression"
+  }
+}

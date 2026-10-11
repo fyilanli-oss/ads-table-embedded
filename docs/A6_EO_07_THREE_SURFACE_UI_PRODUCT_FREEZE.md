@@ -58,6 +58,16 @@ Only official Shopify App Bridge and Polaris web components may render controls,
 - Settings has no dashboard or analytical chart surface.
 - These waiting states do not block the already frozen non-chart table, control and workflow decisions, and do not advance A6-EO-07 status.
 
+
+### 3.2 Channel terminology boundary — 11 October 2026
+
+- The merchant-facing label **Channel** means a derived display path built only from real provider-native entities; it is not a provider entity and not a canonical Dataset V2 entity type.
+- The technical delivery-medium key is `delivery_channel` (email, SMS, MMS, WhatsApp or null). A canonical identity field named only `channel` is forbidden.
+- Shopping Product Item and PMax Asset Group Product Item may appear in a Channel path only at their real native grain; neither may be renamed or persisted as a Google Ad.
+- Missing hierarchy nodes are never manufactured to make providers visually equal.
+- Final Channel columns, filters, ranking and product-cost/basket layout remain pending the product owner's Excel reporting sheets. This terminology boundary does not authorize UI implementation or alter A6-EO-07 status.
+- Binding record: `docs/A6_CHANNEL_REPORTING_TERMINOLOGY_DECISION.md` and `contracts/a6-channel-reporting-terminology-v1.json`.
+
 ## 4. Funnel App Home analyst brief
 
 ### 4.1 User result
@@ -159,6 +169,32 @@ Creative preview and attributed/sold products are separate concepts.
 - Unsupported product evidence is labelled unsupported, never hidden as zero.
 
 Products live in the single details modal as a compact list with image, product/variant identity, quantity, value, source and support state. They do not expand every table row inline.
+
+
+#### Meta converted-product discovery input — 10 October 2026
+
+Meta's current v26.0 official references establish a conditional native route from an ad-attributed purchase to purchased product quantity and value:
+
+1. request the converted-product-ID breakdown with `converted_product_quantity` and `converted_product_value`;
+2. preserve the returned provider product identity at the ad analytical leaf;
+3. resolve that identity through Meta Catalog Product Item;
+4. read catalog attributes such as `retailer_id`, `name`, `image_url`, `url` and product-group identity;
+5. map the catalog item deterministically to the installed Shopify shop product/variant before displaying Shopify SKU, name or image.
+
+Binding cautions:
+
+- Generic `product_id` means a product involved in an impression, click or action and is not sufficient proof of a purchased product.
+- `retailer_id` may identify a catalog item or variant but is not assumed to equal Shopify SKU.
+- Meta marks `action_converted_product_id` as limited availability for Collaborative Ads; availability cannot be generalized to all campaigns.
+- Pixel/app-SDK purchase content, quantities and values must be complete. Missing basket product IDs cannot be reconstructed from destination URL, UTM, click ID, order name or product-name similarity.
+- Both earring fixtures require independent live evidence: clicked product not purchased and clicked product purchased, including non-advertised cross-sell basket items.
+- Until those checks pass, Meta product evidence remains pending and no Ad Analysis product row or graph is authorized.
+
+Official references checked 10 October 2026:
+
+- https://developers.facebook.com/documentation/ads-commerce/marketing-api/insights/breakdowns
+- https://developers.facebook.com/docs/marketing-api/reference/ad-account/insights/
+- https://developers.facebook.com/docs/marketing-api/reference/product-item/
 
 ### 5.6 Component mapping
 

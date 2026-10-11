@@ -1,0 +1,310 @@
+{
+  "contract_id": "eo-04b-meta-adapter-start-brief-v1",
+  "version": "1.2.0",
+  "status": "Repository_CI_PASS_controlled_live_evidence_pending",
+  "checked_at": "2026-10-10",
+  "parent": "A6-EO-04",
+  "package": "A6-EO-04-B",
+  "objective": "Freeze the current official Meta hierarchy, field mapping, missing/zero, attribution, pagination, retry, store-scope and evidence behavior before Meta adapter implementation.",
+  "depends_on": {
+    "package": "A6-EO-04-A",
+    "status": "Accepted"
+  },
+  "authority": {
+    "commerce_scope": "verified_installed_shopify_store_and_active_installation_generation",
+    "reporting_accounts": {
+      "minimum": 1,
+      "maximum": 3,
+      "type": "provider_verified_meta_ad_account"
+    },
+    "browser_account_identity_is_authority": false,
+    "merchant_selectable_reporting_store": false,
+    "provider_account_can_change_installed_shop": false,
+    "ambiguous_cross_store_rows_publishable": false
+  },
+  "graph_version": {
+    "implementation_must_pin_supported_version": true,
+    "version_recorded_per_request": true,
+    "silent_cross_version_schema_mix_forbidden": true,
+    "documentation_observation": "v26 Ads Action Stats and Product Item references; one generated Ad Account Insights surface exposed v25-style material",
+    "implementation_version": "pending_repository_implementation_proof"
+  },
+  "hierarchy": [
+    "ad_account",
+    "campaign",
+    "ad_set",
+    "ad",
+    "business_date"
+  ],
+  "native_field_families": {
+    "identity": [
+      "account_id",
+      "campaign_id",
+      "campaign_name",
+      "adset_id",
+      "adset_name",
+      "ad_id",
+      "ad_name",
+      "date_start",
+      "date_stop"
+    ],
+    "base": [
+      "impressions",
+      "spend"
+    ],
+    "click_candidates": [
+      "clicks",
+      "inline_link_clicks",
+      "website_clicks",
+      "outbound_clicks"
+    ],
+    "conversion_collections": [
+      "actions",
+      "action_values"
+    ],
+    "attribution": [
+      "exact_request_parameters",
+      "effective_ad_set_attribution_setting_when_readable"
+    ],
+    "evidence": [
+      "paging",
+      "provider_request_id",
+      "usage_or_rate_headers_when_returned"
+    ]
+  },
+  "canonical_mapping": {
+    "impression": {
+      "source": "impressions",
+      "status": "supported_when_returned"
+    },
+    "ad_click": {
+      "candidate": "outbound_clicks",
+      "status": "PENDING_LIVE_FIELD_EVIDENCE",
+      "never_sum_aliases": true
+    },
+    "session": {
+      "source": null,
+      "status": "unsupported"
+    },
+    "spend_value": {
+      "source": "spend",
+      "currency": "meta_account_currency",
+      "adapter_fx": false
+    },
+    "add_to_cart": {
+      "source": "actions",
+      "rule": "standard_first_verified_omni_fallback_never_sum"
+    },
+    "add_to_cart_value": {
+      "source": "action_values",
+      "rule": "standard_first_verified_omni_fallback_never_sum"
+    },
+    "checkout": {
+      "source": "actions",
+      "rule": "standard_first_verified_omni_fallback_never_sum"
+    },
+    "checkout_value": {
+      "source": "action_values",
+      "rule": "standard_first_verified_omni_fallback_never_sum"
+    },
+    "purchase": {
+      "source": "actions",
+      "rule": "standard_first_verified_omni_fallback_never_sum"
+    },
+    "purchase_value": {
+      "source": "action_values",
+      "rule": "standard_first_verified_omni_fallback_never_sum"
+    }
+  },
+  "zero_and_missing": {
+    "explicit_matching_numeric_zero": "zero",
+    "successful_response_without_matching_action_type": "absent",
+    "empty_action_values_array": "empty",
+    "absent_or_empty_becomes_numeric_zero": false,
+    "failed_or_partial_attempt_publishable": false
+  },
+  "click_live_gate": {
+    "same_account_ad_date_level_and_attribution_context": true,
+    "request_all": [
+      "clicks",
+      "inline_link_clicks",
+      "website_clicks",
+      "outbound_clicks"
+    ],
+    "existing_actions_link_click_evidence_sufficient": false,
+    "canonical_choice_before_gate": "pending"
+  },
+  "attribution": {
+    "status": "PENDING_REAL_CONVERSION_EVIDENCE",
+    "exact_ads_manager_parity_claim_allowed": false,
+    "official_documentation_contradiction_recorded": true,
+    "preserve": [
+      "request_parameters",
+      "api_version",
+      "level",
+      "breakdowns",
+      "effective_ad_set_attribution_setting",
+      "account_timezone",
+      "business_date",
+      "returned_action_types"
+    ],
+    "real_conversion_comparison_required": true
+  },
+  "pagination": {
+    "follow": "paging.next",
+    "cursor_is_opaque": true,
+    "cursor_persisted": false,
+    "empty_page_with_next_continues": true,
+    "stop_only_when_next_absent": true,
+    "stable_query_fingerprint": true,
+    "repeated_cursor_detection": true,
+    "bounded_pages_rows_and_elapsed_time": true,
+    "stage_before_publish": true,
+    "partial_publish": false,
+    "initial_mode": "narrow_daily_sync_ad_level",
+    "fallback": "documented_async_insights_when_size_or_timeout_requires",
+    "async_poll_bounded": true
+  },
+  "retry": {
+    "documented_transient_only": true,
+    "honor_recovery_metadata": true,
+    "fallback": "bounded_exponential_backoff_with_jitter",
+    "blind_retry_forbidden": [
+      "authentication",
+      "permission",
+      "invalid_breakdown",
+      "invalid_field",
+      "validation",
+      "deterministic_scope_failure",
+      "same_oversized_async_job"
+    ],
+    "timeout_response": "narrow_or_async",
+    "oversized_async_response": "deterministic_split"
+  },
+  "store_currency_time": {
+    "deterministic_official_store_mapping_required": true,
+    "url_utm_fbclid_fbc_or_name_is_store_proof": false,
+    "source_currency_preserved": true,
+    "adapter_fx": false,
+    "account_timezone_and_explicit_dates_required": true,
+    "reconciliation_owned_by": "A6-EO-05"
+  },
+  "raw_evidence": {
+    "private": true,
+    "bounded": true,
+    "sanitized": true,
+    "content_hashed": true,
+    "application_logs_are_evidence_store": false,
+    "retention_and_deletion_required_before_live_call": true,
+    "excluded": [
+      "tokens",
+      "authorization_headers",
+      "secrets",
+      "emails",
+      "profile_person_data",
+      "unbounded_response_bodies"
+    ]
+  },
+  "converted_product_route": {
+    "owner_package": "A6-EO-07-C",
+    "metrics": [
+      "converted_product_quantity",
+      "converted_product_value"
+    ],
+    "generic_product_id_is_purchase_proof": false,
+    "catalog_resolution_required": true,
+    "catalog_fields": [
+      "retailer_id",
+      "name",
+      "image_url",
+      "url",
+      "retailer_product_group_id"
+    ],
+    "retailer_id_assumed_shopify_sku": false,
+    "deterministic_installed_shop_product_variant_mapping_required": true,
+    "action_converted_product_id_availability": "limited_collaborative_ads",
+    "exact_live_fixtures": [
+      "clicked_product_not_purchased_with_cross_sell",
+      "clicked_product_purchased_with_cross_sell"
+    ],
+    "product_ui_authorized": false
+  },
+  "repository_acceptance_fixtures": [
+    "hierarchy_to_ad",
+    "explicit_zero",
+    "missing_action_type",
+    "empty_action_values",
+    "multi_page_complete",
+    "empty_page_with_next",
+    "repeated_cursor",
+    "transient_then_success",
+    "permission_error_no_retry",
+    "sync_timeout_to_async",
+    "partial_failure_not_publishable",
+    "ambiguous_store_scope"
+  ],
+  "live_evidence_gate": [
+    "provider_verified_account_discovery",
+    "structure_to_ad",
+    "same_scope_four_click_candidate_comparison",
+    "actions_and_action_values_shapes_and_alias_precedence",
+    "real_conversion_attribution_comparison",
+    "complete_or_explicitly_single_page_response",
+    "sanitized_raw_reference_hash_and_no_leakage"
+  ],
+  "mutations_authorized": {
+    "implementation": true,
+    "provider": false,
+    "oauth": false,
+    "secrets": false,
+    "database": false,
+    "vercel": false,
+    "deployment": false,
+    "dataset": false
+  },
+  "acceptance": [
+    "product_owner_accepts_analyst_brief",
+    "repository_implementation_matches_contract",
+    "deterministic_fixtures_pass",
+    "separately_authorized_live_evidence_passes",
+    "required_CI_passes",
+    "explicit_product_owner_closure"
+  ],
+  "authoritative_sources": {
+    "insights": "https://developers.facebook.com/documentation/ads-commerce/marketing-api/insights",
+    "best_practices": "https://developers.facebook.com/documentation/ads-commerce/marketing-api/insights/best-practices",
+    "breakdowns": "https://developers.facebook.com/documentation/ads-commerce/marketing-api/insights/breakdowns",
+    "error_codes": "https://developers.facebook.com/documentation/ads-commerce/marketing-api/insights/error-codes",
+    "ad_account_insights": "https://developers.facebook.com/docs/marketing-api/reference/ad-account/insights/",
+    "ads_action_stats": "https://developers.facebook.com/docs/marketing-api/reference/ads-action-stats/",
+    "product_item": "https://developers.facebook.com/docs/marketing-api/reference/product-item/",
+    "pagination": "https://developers.facebook.com/docs/graph-api/results/"
+  },
+  "product_owner_start_brief_acceptance": {
+    "status": "accepted",
+    "accepted_at": "2026-10-10",
+    "evidence": "chat_explicit_acceptance"
+  },
+  "implementation": {
+    "status": "PASS",
+    "runtime": "app/lib/providers/meta-adapter.server.js",
+    "types": "app/lib/providers/meta-adapter.server.d.ts",
+    "tests": "tests/eo-04b-meta-adapter.test.js",
+    "live_provider_calls": false,
+    "secrets_read_or_created": false,
+    "database_mutation": false,
+    "vercel_or_deployment_mutation": false,
+    "graph_version": "v26.0",
+    "click_mapping": "PENDING_LIVE_FIELD_EVIDENCE",
+    "attribution": "PENDING_REAL_CONVERSION_EVIDENCE"
+  },
+  "acceptance_state": {
+    "repository_tests": "PASS_174_of_174",
+    "typecheck": "PASS",
+    "preview_build": "PASS",
+    "github_actions_run_id": 38063777629,
+    "live_evidence_authorized": false,
+    "live_evidence_status": "pending_explicit_authorization",
+    "final_product_owner_acceptance": false
+  }
+}

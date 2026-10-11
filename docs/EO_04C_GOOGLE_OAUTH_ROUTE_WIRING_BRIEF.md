@@ -1,0 +1,151 @@
+# EO-04-C — Google OAuth route wiring and Shopify UI brief
+
+**Control date:** 11 October 2026  
+**Status:** Corrective lifecycle deployed; controlled Google and visual acceptance pending  
+**Parent:** A6-EO-04-C
+
+## Analyst result
+
+The secure OAuth transaction, encrypted provider credential and provider connection lifecycle already exist. Account selection after a successful OAuth exchange is a durable pending connection state, not a second short OAuth timeout. The corrective slice wires the complete lifecycle end to end. It must not invent a browser authority channel, trust client account evidence, expose a credential ID, or enable live Google activity before controlled acceptance.
+
+The Google callback has no Shopify Admin ID token. It cannot safely infer the installed shop from browser state, request parameters, cookies or the current Admin tab. After state is claimed, the server must resolve the active installed-shop return target from the claimed workspace and install generation through one narrow server-side database function. The callback then redirects to that verified installation's exact Shopify Admin app URL. The transaction ID in the return URL is correlation only.
+
+## User result
+
+A merchant starts Google Ads connection from Settings, completes Google consent, returns to the same installed Shopify store, chooses one to three eligible advertiser accounts, and sees a truthful connected result. The first selected advertiser becomes the initial reporting account; no second reporting prompt appears during setup. Manager accounts may be retained only as Google access paths; they are never selectable reporting accounts.
+
+## Route contract
+
+| Route | Method | Authority | Result |
+|---|---|---|---|
+| Settings connection state | GET | authenticate.admin, verified ID-token destination, verified Admin shop, active install generation | Existing connection, pending selection or not-connected |
+| Google begin | POST | Same Shopify authority | Creates state + PKCE and redirects to Google's exact authorization URL |
+| Google callback | GET | One-time provider state claim | Handles denial or code exchange, stores the encrypted refresh token, creates durable pending account-selection state, resolves installed-shop return target and redirects into Shopify Admin |
+| Account discovery / resume | GET | Fresh Shopify Admin and installed-shop authority; transaction ID is correlation only | Re-resolves handoff and obtains fresh Google account evidence |
+| Account selection | POST | Fresh Shopify authority and fresh Google evidence | Atomically creates or reconnects the canonical connection, stores one-to-three advertiser accounts, assigns the first selected advertiser as initial reporting account, then consumes pending selection |
+| Cancel setup | POST | Fresh Shopify authority and matching handoff | Immediately invalidates the handoff and deletes its unreferenced encrypted credential |
+| Disconnect | POST | Fresh Shopify authority, current connection version and Google revoke/already-invalid evidence | Closes active account/reporting bindings, deletes encrypted credential and preserves historical analytics |
+
+## Non-negotiable server rules
+
+1. Begin, selection and cancellation are POST-only.
+2. Callback accepts only bounded state, code and provider error parameters. Raw provider error text is never persisted or shown.
+3. Browser input never carries or authorizes credential ID, tokens, provider evidence, workspace ID or install generation.
+4. Callback return store comes from claimed server-side authority, never query input, cookie or referrer.
+5. Shopify app handle is exact deployed configuration, never request input.
+6. Settings always re-authenticates through Shopify and re-resolves the active installation generation.
+7. Discovery is fresh on resume and again before selection. Managers are non-reporting access paths.
+8. One to three advertisers may be connected; reporting account must be among them.
+9. Access tokens stay memory-only. Only the refresh-token subset is encrypted at rest.
+10. Errors expose bounded AdsTable codes and Google request ID only.
+11. Explicit cancellation, Google revocation, invalid refresh credentials and installation removal deterministically remove abandoned credential ciphertext.
+12. OAuth transaction expiry remains bounded independently; successful OAuth account selection is not assigned an arbitrary timeout.
+
+## Accepted legacy parity correction — 11 October 2026
+
+Controlled production evidence found five accessible Google accounts: two managers and three advertisers. Google returned `CLOSED` as the customer status for all five. The former accepted AdsTable flow still presented the three non-manager advertisers; therefore provider status is informational evidence, not a selection gate.
+
+The binding selection rule is account kind only: a provider-verified non-manager advertiser may be selected. Manager accounts remain internal `login-customer-id` access paths; they never appear in the merchant selection list, never count toward the one-to-three limit and can never be the reporting account. A directly accessible advertiser uses its own customer ID as the login account context. The pre-OAuth confirmation modal and the post-OAuth account-selection modal are both required legacy behavior.
+
+## Corrected legacy UI flow — 11 October 2026
+
+The initial post-OAuth step has one account selection only. The merchant selects one to three provider-verified advertiser accounts and chooses **Save and connect**. AdsTable atomically uses the first selected advertiser as the initial reporting account; it does not ask for a second reporting-account choice during setup.
+
+After connection, Settings exposes reporting-account change as a separate action limited to the already connected advertiser accounts. Closing the account-selection modal does not cancel, invalidate or restart OAuth. It leaves the handoff pending. **Resume setup** reloads fresh provider evidence for that pending handoff and opens only the account-selection modal; it never starts a new OAuth transaction.
+
+## State matrix and exact copy
+
+| State | Exact merchant copy | Actions |
+|---|---|---|
+| Loading | **Loading Google Ads connection…** | None |
+| Empty | **Google Ads is not connected.** Connect one to three advertiser accounts. Manager accounts are used only when Google requires an access path. | **Connect Google Ads** |
+| In progress | **Connecting to Google Ads…** | Disabled/loading primary action |
+| Resume | **Choose Google Ads accounts.** Select between one and three advertiser accounts. The first selected account will be used for reporting. | **Save and connect**, **Cancel** |
+| No advertiser | **No eligible advertiser account was found.** Manager accounts cannot be reporting accounts. | **Try Google Ads again**, **Cancel setup** |
+| Connected | **Google Ads connected.** {count} advertiser account(s) connected. {reportingAccountName} is used for reporting. | **Reporting account**, **Disconnect** |
+| Denied/cancelled | **Google Ads connection was cancelled.** No reporting account was connected. | **Try again** |
+| Reauthorization required | **Google Ads authorization is no longer valid.** Reconnect Google Ads to continue reporting. | **Reconnect Google Ads**, **Disconnect** |
+| Validation | **Choose between one and three advertiser accounts.** | Correct and retry |
+| Safe error | **Google Ads could not be connected.** Try again. If the problem continues, share error code {code}. | **Try again** |
+
+## Exact Polaris 2.0 RC mapping
+
+No raw HTML action/form control, custom CSS, literal color, custom card/modal or s-clickable is authorized.
+
+| Visible element | Exact component and property | Official source checked 11 Oct 2026 |
+|---|---|---|
+| Page | s-page, heading Settings | https://shopify.dev/docs/api/app-home/v2.0-rc |
+| Group | s-section, heading Google Ads | https://shopify.dev/docs/api/app-home/v2.0-rc/web-components/layout-and-structure/section |
+| Layout | s-stack, direction block, documented gap tokens | https://shopify.dev/docs/api/app-home/v2.0-rc/web-components/layout-and-structure/stack |
+| Status | s-badge; success connected, info progressing, warning expired, critical failure | https://shopify.dev/docs/api/app-home/v2.0-rc/web-components/feedback-and-status-indicators/badge |
+| Explanation | s-paragraph and s-text | https://shopify.dev/docs/api/app-home/v2.0-rc/web-components |
+| Advertisers | s-choice-list plus s-choice; name connectedAccountIds, multiple | https://shopify.dev/docs/api/app-home/v2.0-rc/web-components/forms/choice-list |
+| Reporting account | s-choice-list plus s-choice; name reportingAccountId, single | https://shopify.dev/docs/api/app-home/v2.0-rc/web-components/forms/choice-list |
+| Actions | s-button; primary, secondary, loading and disabled semantics | https://shopify.dev/docs/api/app-home/v2.0-rc/web-components/actions/button |
+| Feedback | s-banner with semantic tone and safe copy | https://shopify.dev/docs/api/app-home/v2.0-rc/web-components/feedback-and-status-indicators/banner |
+| Loading | s-spinner or s-button loading | https://shopify.dev/docs/api/app-home/v2.0-rc/web-components |
+| Navigation | Existing App Bridge navigation only | https://shopify.dev/docs/api/app-home/latest/app-bridge-web-components |
+
+The repository is on React 18. Account fields therefore remain uncontrolled Polaris components, using defaultSelected only when needed. Values are read from the web-component API at action time. Submission uses authenticated App Bridge resource fetching triggered by documented s-button actions; no raw HTML form is introduced.
+
+## Desktop and mobile
+
+Desktop uses one Settings section and vertical choices. Mobile at minimum 320 px keeps the same information order and native responsive behavior. Account names may wrap; IDs remain visible to distinguish duplicate names. Nothing is hover-only. Managers never render as eligible reporting choices.
+
+## Additional private database boundary
+
+Before route activation, repository implementation requires a separately approved live migration with two narrow functions:
+
+1. Resolve callback return authority from claimed workspace ID plus install generation to the active canonical myshopify.com domain.
+2. Cancel a matching pending selection immediately and delete its unreferenced encrypted credential.
+3. Consume pending selection through either first connection establishment or an atomic reconnect of the existing disconnected canonical connection.
+
+Both functions use SECURITY DEFINER with empty search path, fully qualified relations, row locking and active-generation verification. PUBLIC, anon, authenticated and service-role execution is revoked; only exact runtime execution is granted. No direct table grant is allowed.
+
+## Legacy Settings reference boundary
+
+The former Settings surface is a behavior reference only. The new implementation preserves one canonical Settings surface, one provider section, truthful Connect / Resume setup / Connected states, connected-account count and reporting-account summary. It does not copy legacy code, single-account limits, deprecated provider inventory, callback aliases, custom styling or known visual violations.
+
+## Unchanged and out of scope
+
+Installed Shopify Store remains immutable commerce authority. Google keeps one-to-three advertiser accounts, one reporting account and non-reporting manager access paths. OAuth, PKCE, encryption and handoff contracts remain authoritative.
+
+Out of scope: Dataset V2, reporting jobs, reconciliation and any visual acceptance claim before real desktop/mobile evidence. Disconnect, revoked-state truth and clean reconnect are now mandatory parts of EO-04-C.
+
+## Corrective end-to-end lifecycle decision — 11 October 2026
+
+The former working system kept OAuth transaction expiry separate from account selection. OAuth state/PKCE remained short-lived, while a successful exchange moved the canonical provider connection to `pending_account_selection` until the merchant selected accounts, explicitly cancelled, revoked authorization or removed the installation. The new ten-minute account-selection handoff had no Google, Shopify or legacy authority; it was a regression introduced by the new EO-04-C design and is removed.
+
+The complete binding flow is:
+
+1. **Connect Google Ads** opens the native pre-OAuth modal.
+2. Google OAuth completes once and returns to the exact installed Shopify store.
+3. AdsTable stores the refresh-token subset encrypted and enters durable pending account selection.
+4. **Resume setup** performs fresh Google discovery and opens only the account-selection modal; it never restarts OAuth.
+5. The merchant selects one to three non-manager advertisers; **Save and connect** assigns the first selected advertiser as initial reporting account.
+6. Connected Settings validates the stored refresh credential server-side before rendering **Connected**. A revoked/invalid credential closes local active authority and renders **Reauthorization required**.
+7. Reporting-account change requires fresh Google evidence and is limited to the already connected non-manager advertisers.
+8. **Disconnect** first obtains Google revoke or already-invalid evidence, then closes active account/reporting bindings, deletes encrypted credential and preserves historical analytics.
+9. Reauthorization creates a new pending credential and atomically reconnects the existing disconnected canonical connection; it never creates a duplicate connection.
+
+
+## Acceptance plan
+
+- [x] Product owner accepted flow, copy and component mapping on 11 October 2026
+- [x] Repository route/runtime and constitution tests pass — CI run 38142931704
+- [x] Private migration passes repository tests
+- [x] Separate live migration approval and postflight passed on 11 October 2026
+- [x] Corrective Supabase migration and postflight PASS — `20261011163811`
+- [x] Production deployment READY — `dpl_J7Vb9w7mvcgffpUKrRJSUPxT1SLY`
+- [ ] Controlled begin/callback/resume/selection/cancel evidence
+- [ ] Real desktop and minimum-320px mobile Shopify Admin pass
+- [ ] Explicit visual and package closure acceptance
+
+
+## Corrective implementation and deployment result — 11 October 2026
+
+The legacy-proven lifecycle is restored at commit `142414c1bbfc83fba10df150817c507a939054d8`. Google discovery now follows the former working contract exactly: `listAccessibleCustomers`, followed by one `customer_client` query for every directly accessible root without a `login-customer-id` header. Manager rows remain internal access paths and Settings renders only non-manager advertisers. The unproven customer pre-query and recursive traversal were removed.
+
+A successful OAuth exchange leaves exactly one durable pending setup per workspace/install-generation/provider. Settings can find that canonical pending setup from a clean URL, so **Resume setup** opens account selection without restarting OAuth. Repository Governance run `38156170711` passed 233 tests, TypeScript and production build.
+
+Corrective migration `20261011163811_eo04c_durable_selection_and_reconnect` is live with one pending Google setup, zero duplicate pending groups and zero Security Advisor findings. Production deployment `dpl_J7Vb9w7mvcgffpUKrRJSUPxT1SLY` is READY on `embedded.adstable.app`. Controlled Google OAuth/account-selection and desktop/mobile visual acceptance remain open; Dataset V2 was not mutated by this correction.

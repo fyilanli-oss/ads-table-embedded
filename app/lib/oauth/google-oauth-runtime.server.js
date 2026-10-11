@@ -1,5 +1,6 @@
 import {
   createOAuthTransactionBoundary,
+  oauthInstallationAuthority,
 } from "./oauth-transaction.server.js";
 import {
   createGoogleAuthorizationHandoff,
@@ -58,6 +59,7 @@ export function createGoogleOAuthRuntime({
   return Object.freeze({
     config,
     oauthBoundary,
+    installationAuthority: oauthInstallationAuthority,
     handoff,
     accountAuthority: createProviderAccountAuthorityRepository(database),
   });

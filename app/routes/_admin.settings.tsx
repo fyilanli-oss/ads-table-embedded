@@ -229,8 +229,8 @@ export default function Settings() {
   const actionData = useActionData<typeof action>() as ActionData;
   const submit = useSubmit();
   const navigation = useNavigation();
-  const connectedChoices = useRef<HTMLElement & {values?: string[]}>(null);
-  const reportingChoice = useRef<HTMLElement & {values?: string[]}>(null);
+  const connectedChoices = useRef<any>(null);
+  const reportingChoice = useRef<any>(null);
   const pending = navigation.state !== "idle";
 
   const begin = () => {

@@ -8,9 +8,6 @@ import {
   createGoogleOAuthRuntime,
 } from "../lib/oauth/google-oauth-runtime.server.js";
 import {
-  oauthInstallationAuthority,
-} from "../lib/oauth/oauth-transaction.server.js";
-import {
   installedShopifySettingsUrl,
 } from "../lib/shopify/installed-app-return.server.js";
 
@@ -47,7 +44,7 @@ export const loader = async ({request}: LoaderFunctionArgs) => {
     tokenVault: providerTokenVault,
   });
   const url = new URL(request.url);
-  let owner: ReturnType<typeof oauthInstallationAuthority> | null = null;
+  let owner: any = null;
 
   try {
     const state = boundedParameter(url, "state", 128, true);
@@ -59,7 +56,7 @@ export const loader = async ({request}: LoaderFunctionArgs) => {
       code,
       providerError,
     });
-    owner = oauthInstallationAuthority({
+    owner = runtime.installationAuthority({
       workspaceId: claimed.workspaceId,
       installGeneration: claimed.installGeneration,
       status: "active",

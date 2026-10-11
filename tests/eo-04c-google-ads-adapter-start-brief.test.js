@@ -7,7 +7,7 @@ const readJson = async (path) => JSON.parse(await readFile(path, "utf8"));
 test("EO-04-C freezes truthful Google account and hierarchy boundaries", async () => {
   const contract = await readJson("contracts/eo-04c-google-ads-adapter-start-brief-v1.json");
 
-  assert.equal(contract.status, "Start_brief_accepted_repository_implementation_pending");
+  assert.equal(contract.status, "Repository_implementation_CI_pending_controlled_live_evidence_pending");
   assert.equal(contract.authority.reporting_accounts.minimum, 1);
   assert.equal(contract.authority.reporting_accounts.maximum, 3);
   assert.equal(contract.authority.reporting_accounts.customer_manager_must_be_false, true);
@@ -27,7 +27,7 @@ test("EO-04-C freezes truthful Google account and hierarchy boundaries", async (
   ]);
   assert.equal(contract.hierarchy.synthetic_ad_leaf_for_performance_max_forbidden, true);
   assert.equal(contract.api.developer_token_required, false);
-  assert.equal(contract.mutations_authorized.implementation, false);
+  assert.equal(contract.mutations_authorized.implementation, true);
   assert.equal(contract.mutations_authorized.provider, false);
 });
 
@@ -82,10 +82,10 @@ test("Execution Plan and master advance documentation discovery to EO-04-D witho
   }
 
   assert.equal(master.current_active_parent, "A6-EO-04");
-  assert.equal(master.current_active_child, "A6-EO-04-D");
-  assert.equal(master.current_gate, "A6-EO-04-D_start_brief_accepted_repository_implementation_pending");
+  assert.equal(master.current_active_child, "A6-EO-04-C");
+  assert.equal(master.current_gate, "A6-EO-04-C_repository_implementation_CI_pending_controlled_live_evidence_pending");
   assert.equal(eo04b.status, "Repository_CI_PASS_controlled_live_evidence_pending");
-  assert.equal(eo04c.status, "Start_brief_accepted_repository_implementation_pending");
+  assert.equal(eo04c.status, "Repository_implementation_CI_pending_controlled_live_evidence_pending");
   assert.equal(eo04c.live_mutation_authorized, false);
   assert.equal(eo04d.status, "Start_brief_accepted_repository_implementation_pending");
   assert.equal(eo04d.implementation_started, false);
@@ -97,7 +97,7 @@ test("EO-04-C separates Google performance and product request families without 
   const product = contract.product_cart_data;
   const families = product.request_families;
 
-  assert.equal(contract.version, "1.1.0");
+  assert.equal(contract.version, "1.2.0");
   assert.equal(contract.checked_at, "2026-10-11");
   assert.equal(product.search_ad_to_sold_product_relation, "unsupported_by_current_native_Google_Ads_reporting");
   assert.equal(product.synthetic_ad_or_ad_product_relation_forbidden, true);

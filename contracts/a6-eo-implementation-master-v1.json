@@ -667,8 +667,8 @@
           "id": "A6-EO-04-C",
           "title": "Google Ads adapter",
           "objective": "Standard Ad and Performance Max Asset Group hierarchy with raw structure evidence.",
-          "status": "Start_brief_accepted_repository_implementation_pending",
-          "implementation_started": false,
+          "status": "Repository_implementation_CI_pending_controlled_live_evidence_pending",
+          "implementation_started": true,
           "live_mutation_authorized": false,
           "document": "docs/EO_04C_GOOGLE_ADS_ADAPTER_START_BRIEF.md",
           "contract": "contracts/eo-04c-google-ads-adapter-start-brief-v1.json",
@@ -681,7 +681,7 @@
           "standard_leaf": "ad",
           "performance_max_leaf": "asset_group",
           "cart_data_deepest_grain_status": "campaign_or_ad_group_sold_product_native;_Search_ad_product_relation_unsupported",
-          "repository_implementation": "not_started",
+          "repository_implementation": "CI_pending",
           "live_evidence_authorized": false,
           "google_product_request_families": [
             "canonical_ad_performance",
@@ -689,7 +689,10 @@
             "performance_max_retail_product_performance",
             "sold_product_cart"
           ],
-          "synthetic_google_ad_or_ad_product_relation_forbidden": true
+          "synthetic_google_ad_or_ad_product_relation_forbidden": true,
+          "runtime": "app/lib/providers/google-ads-adapter.server.js",
+          "types": "app/lib/providers/google-ads-adapter.server.d.ts",
+          "runtime_test": "tests/eo-04c-google-ads-adapter.test.js"
         },
         {
           "id": "A6-EO-04-D",
@@ -1074,8 +1077,8 @@
   "cutover_authorized": false,
   "legacy_deletion_authorized": false,
   "current_active_parent": "A6-EO-04",
-  "current_active_child": "A6-EO-04-D",
-  "current_gate": "A6-EO-04-D_start_brief_accepted_repository_implementation_pending",
+  "current_active_child": "A6-EO-04-C",
+  "current_gate": "A6-EO-04-C_repository_implementation_CI_pending_controlled_live_evidence_pending",
   "next_ready_child": null,
   "independent_packages": [
     {

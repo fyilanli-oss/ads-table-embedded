@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-04c-google-ads-adapter-start-brief-v1",
-  "version": "1.1.0",
-  "status": "Start_brief_accepted_repository_implementation_pending",
+  "version": "1.2.0",
+  "status": "Repository_implementation_CI_pending_controlled_live_evidence_pending",
   "checked_at": "2026-10-11",
   "parent": "A6-EO-04",
   "package": "A6-EO-04-C",
@@ -332,7 +332,7 @@
   ],
   "mutations_authorized": {
     "documentation": true,
-    "implementation": false,
+    "implementation": true,
     "provider": false,
     "oauth": false,
     "secrets": false,
@@ -384,5 +384,28 @@
     "separately_authorized_live_evidence_passes",
     "required_CI_passes",
     "explicit_product_owner_closure"
-  ]
+  ],
+  "repository_implementation": {
+    "runtime": "app/lib/providers/google-ads-adapter.server.js",
+    "types": "app/lib/providers/google-ads-adapter.server.d.ts",
+    "runtime_test": "tests/eo-04c-google-ads-adapter.test.js",
+    "transport_boundary": "injected_bundle_transport_no_live_HTTP_credentials_or_tokens",
+    "query_plan_partitions": {
+      "canonical_ad_performance": [
+        "base_performance",
+        "conversion_actions"
+      ],
+      "shopping_product_performance": [
+        "shopping_product_performance"
+      ],
+      "performance_max_retail_product_performance": [
+        "performance_max_retail_product_performance"
+      ],
+      "sold_product_cart": [
+        "sold_product_cart"
+      ]
+    },
+    "complete_before_publish_runner": "A6-EO-04-A_common_adapter",
+    "status": "CI_pending"
+  }
 }

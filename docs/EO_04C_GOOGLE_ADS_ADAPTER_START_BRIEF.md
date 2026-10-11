@@ -135,7 +135,7 @@ This brief and executable contract are accepted. This authorizes durable documen
 
 ### Gate 2 — repository implementation
 
-After Google and Klaviyo documentation discovery is complete, implement the adapter with deterministic fixtures for account discovery, manager exclusion, both hierarchies, conversion categories, zero/absence, pagination, retry and fail-closed scope.
+Implementation is present and CI-pending at `app/lib/providers/google-ads-adapter.server.js`, with strict types and deterministic fixtures. It freezes the two-part canonical query plan (base performance plus conversion actions), the four native request families, serving-account enforcement, Standard Ad and PMax Asset Group leaves, explicit zero/absence, opaque pagination, bounded retry and fail-closed scope. The transport remains injected; this gate performs no live Google call.
 
 ### Gate 3 — separately authorized live evidence
 

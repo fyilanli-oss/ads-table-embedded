@@ -31,7 +31,8 @@ type Advertiser = {
 type State =
   | {view: "disconnected"; notice: "cancelled" | "disconnected" | null}
   | {view: "pending"; accounts: Advertiser[]}
-  | {view: "connected"; accounts: Advertiser[]}
+  | {view: "pending_reporting"; accounts: Advertiser[]}
+  | {view: "connected"; accounts: Advertiser[]; reportingAccountId: string}
   | {view: "reauthorization"}
   | {view: "error"; code: string; retry: "oauth" | "reload"};
 
@@ -87,9 +88,19 @@ export const loader = async ({request}: LoaderFunctionArgs): Promise<State> => {
       installationAuthority: verified.installationAuthority,
     });
     if (inspected.state === "connected") {
+      if (!inspected.connection.reportingAccountId) {
+        throw new Error("GOOGLE_REPORTING_ACCOUNT_REQUIRED");
+      }
       return {
         view: "connected",
         accounts: inspected.connection.accounts.map(view),
+        reportingAccountId: inspected.connection.reportingAccountId,
+      };
+    }
+    if (inspected.state === "pending_reporting_account_selection") {
+      return {
+        view: "pending_reporting",
+        accounts: inspected.accounts.map(view),
       };
     }
     if (inspected.state === "pending_account_selection") {
@@ -162,6 +173,28 @@ export const action = async ({request}: ActionFunctionArgs) => {
       return verified.context.redirect("/settings");
     }
 
+    if (intent === "finish_reporting") {
+      const reportingAccountId = form.get("reportingAccountId");
+      await runtime.finishReporting({
+        installationAuthority: verified.installationAuthority,
+        reportingAccountId: typeof reportingAccountId === "string"
+          ? reportingAccountId
+          : "",
+      });
+      return verified.context.redirect("/settings");
+    }
+
+    if (intent === "change_reporting") {
+      const reportingAccountId = form.get("reportingAccountId");
+      await runtime.changeReporting({
+        installationAuthority: verified.installationAuthority,
+        reportingAccountId: typeof reportingAccountId === "string"
+          ? reportingAccountId
+          : "",
+      });
+      return verified.context.redirect("/settings");
+    }
+
     if (intent === "disconnect") {
       await runtime.disconnect({
         installationAuthority: verified.installationAuthority,
@@ -204,8 +237,10 @@ export default function Settings() {
   const navigation = useNavigation();
   const revalidator = useRevalidator();
   const choices = useRef<any>(null);
+  const reportingChoice = useRef<any>(null);
   const accountModal = useRef<any>(null);
-  const pendingModalOpened = useRef(false);
+  const reportingModal = useRef<any>(null);
+  const openedSetupView = useRef<"pending" | "pending_reporting" | null>(null);
   const resumeRequested = useRef(false);
   const pending = navigation.state !== "idle";
   const working = pending || revalidator.state !== "idle";
@@ -220,16 +255,20 @@ export default function Settings() {
   }, [actionData]);
 
   useEffect(() => {
-    if (state.view !== "pending") {
-      pendingModalOpened.current = false;
+    const setupView = state.view === "pending" || state.view === "pending_reporting"
+      ? state.view
+      : null;
+    if (!setupView) {
+      openedSetupView.current = null;
       resumeRequested.current = false;
       return;
     }
     if (working) return;
-    if (pendingModalOpened.current && !resumeRequested.current) return;
-    pendingModalOpened.current = true;
+    if (openedSetupView.current === setupView && !resumeRequested.current) return;
+    openedSetupView.current = setupView;
     resumeRequested.current = false;
-    accountModal.current?.showOverlay?.();
+    if (setupView === "pending") accountModal.current?.showOverlay?.();
+    else reportingModal.current?.showOverlay?.();
   }, [state.view, working]);
 
   const send = (intent: string) => {
@@ -249,6 +288,14 @@ export default function Settings() {
     for (const id of choices.current?.values ?? []) {
       form.append("accountIds", id);
     }
+    submit(form, {method: "post"});
+  };
+
+  const saveReporting = (intent: "finish_reporting" | "change_reporting") => {
+    const [reportingAccountId] = reportingChoice.current?.values ?? [];
+    const form = new FormData();
+    form.set("intent", intent);
+    if (reportingAccountId) form.set("reportingAccountId", reportingAccountId);
     submit(form, {method: "post"});
   };
 
@@ -368,11 +415,65 @@ export default function Settings() {
             </>
           ) : null}
 
+          {!working && state.view === "pending_reporting" ? (
+            <>
+              <s-badge tone="info">Choose Reporting Account</s-badge>
+              <s-paragraph>
+                Choose the single connected advertiser account AdsTable will use
+                in reporting.
+              </s-paragraph>
+              <s-button variant="primary" onClick={resumeAccountSelection}>
+                Resume setup
+              </s-button>
+              <s-modal
+                ref={reportingModal}
+                id="google-reporting-modal"
+                heading="Google Ads Reporting Account"
+              >
+                <s-stack direction="block" gap="base">
+                  <s-paragraph>
+                    Select exactly one account from the connected account set.
+                  </s-paragraph>
+                  <s-choice-list
+                    ref={reportingChoice}
+                    label="Reporting Account"
+                    name="reportingAccountId"
+                  >
+                    {state.accounts.map((account) => (
+                      <s-choice key={account.id} value={account.id}>
+                        {account.name} ({account.id})
+                      </s-choice>
+                    ))}
+                  </s-choice-list>
+                </s-stack>
+                <s-button
+                  slot="primary-action"
+                  variant="primary"
+                  onClick={() => saveReporting("finish_reporting")}
+                >
+                  Save and finish
+                </s-button>
+                <s-button
+                  slot="secondary-actions"
+                  commandFor="google-reporting-modal"
+                  command="--hide"
+                >
+                  Cancel
+                </s-button>
+              </s-modal>
+            </>
+          ) : null}
+
           {!working && state.view === "connected" ? (
             <>
               <s-badge tone="success">Connected</s-badge>
               <s-paragraph>
                 {state.accounts.length} Google Ads advertiser account(s) connected.
+              </s-paragraph>
+              <s-paragraph>
+                Reporting Account: {state.accounts.find(
+                  (account) => account.id === state.reportingAccountId,
+                )?.name ?? state.reportingAccountId}
               </s-paragraph>
               <s-stack direction="block" gap="small">
                 {state.accounts.map((account) => (
@@ -382,12 +483,55 @@ export default function Settings() {
                 ))}
               </s-stack>
               <s-button
+                commandFor="google-reporting-modal"
+                command="--show"
+              >
+                Reporting Account
+              </s-button>
+              <s-button
                 tone="critical"
                 commandFor="google-disconnect-modal"
                 command="--show"
               >
                 Disconnect
               </s-button>
+              <s-modal
+                ref={reportingModal}
+                id="google-reporting-modal"
+                heading="Google Ads Reporting Account"
+              >
+                <s-stack direction="block" gap="base">
+                  <s-paragraph>
+                    Choose the single connected account AdsTable will show in
+                    reporting. Google OAuth will not restart.
+                  </s-paragraph>
+                  <s-choice-list
+                    ref={reportingChoice}
+                    label="Reporting Account"
+                    name="reportingAccountId"
+                  >
+                    {state.accounts.map((account) => (
+                      <s-choice key={account.id} value={account.id}>
+                        {account.name} ({account.id})
+                      </s-choice>
+                    ))}
+                  </s-choice-list>
+                </s-stack>
+                <s-button
+                  slot="primary-action"
+                  variant="primary"
+                  onClick={() => saveReporting("change_reporting")}
+                >
+                  Save Reporting Account
+                </s-button>
+                <s-button
+                  slot="secondary-actions"
+                  commandFor="google-reporting-modal"
+                  command="--hide"
+                >
+                  Cancel
+                </s-button>
+              </s-modal>
               <s-modal id="google-disconnect-modal" heading="Disconnect Google Ads?">
                 <s-paragraph>
                   AdsTable will remove Google reporting authority, selected

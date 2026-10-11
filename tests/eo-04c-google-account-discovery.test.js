@@ -102,12 +102,12 @@ test("Google discovery keeps managers as access paths and advertisers as reporti
   assert.deepEqual(evidence.scopes, ["https://www.googleapis.com/auth/adwords"]);
   const byId = new Map(evidence.accounts.map((account) => [account.id, account]));
   assert.equal(byId.get("111").reportingEligible, true);
-  assert.equal(byId.get("111").loginAccountId, null);
+  assert.equal(byId.get("111").loginAccountId, "111");
   assert.equal(byId.get("222").kind, "manager");
   assert.equal(byId.get("222").reportingEligible, false);
   assert.equal(byId.get("444").loginAccountId, "222");
   assert.equal(byId.get("444").reportingEligible, true);
-  assert.equal(byId.get("555").reportingEligible, false);
+  assert.equal(byId.get("555").reportingEligible, true);
   assert.equal(
     calls.find((call) => call.url.includes("/customers/444/")),
     undefined,
@@ -130,7 +130,7 @@ test("Google discovery fails closed on empty accessible-account evidence", async
   );
 });
 
-test("Google discovery skips a disabled direct root and preserves enabled advertisers", async () => {
+test("Google discovery skips an unavailable direct root and preserves advertisers", async () => {
   const fetchFn = async (url) => {
     if (url.endsWith("/customers:listAccessibleCustomers")) {
       return response({resourceNames: ["customers/111", "customers/222"]});
@@ -155,7 +155,7 @@ test("Google discovery skips a disabled direct root and preserves enabled advert
   assert.equal(evidence.accounts[0].reportingEligible, true);
 });
 
-test("Google discovery reports when every accessible root is disabled", async () => {
+test("Google discovery reports when every accessible root is unavailable", async () => {
   await assert.rejects(
     discoverGoogleAdsAccounts({
       accessToken: "access-token",
@@ -210,4 +210,23 @@ test("Google discovery preserves eligible roots when another root requires produ
 
   assert.deepEqual(evidence.accounts.map((account) => account.id), ["222"]);
   assert.equal(evidence.accounts[0].reportingEligible, true);
+});
+
+test("Google discovery keeps provider status informational for non-manager advertisers", async () => {
+  const evidence = await discoverGoogleAdsAccounts({
+    accessToken: "access-token",
+    developerToken: "developer-token",
+    fetchFn: async (url) => url.endsWith("/customers:listAccessibleCustomers")
+      ? response({resourceNames: ["customers/111"]})
+      : response({results: [{customer: {
+          id: "111", descriptiveName: "Legacy advertiser", manager: false,
+          status: "CLOSED", currencyCode: "TRY", timeZone: "Europe/Istanbul",
+        }}]}),
+  });
+
+  assert.equal(evidence.accounts.length, 1);
+  assert.equal(evidence.accounts[0].kind, "advertiser");
+  assert.equal(evidence.accounts[0].status, "CLOSED");
+  assert.equal(evidence.accounts[0].reportingEligible, true);
+  assert.equal(evidence.accounts[0].loginAccountId, "111");
 });

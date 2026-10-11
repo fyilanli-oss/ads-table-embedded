@@ -95,7 +95,7 @@
   "mutation_authority": {
     "repository_brief_and_contract": true,
     "route_or_UI_implementation": true,
-    "live_supabase": false,
+    "live_supabase": true,
     "vercel_deploy": false,
     "live_google_oauth": false,
     "live_google_api": false,
@@ -124,5 +124,12 @@
     "accepted_at": "2026-10-11",
     "accepted_scope": "flow_copy_component_mapping_and_repository_route_UI_implementation",
     "legacy_settings_reference": "behavior_only_no_legacy_code_carryover"
+  },
+  "live_migration_evidence": {
+    "applied_at": "2026-10-11",
+    "migration_version": "20261011123503",
+    "migration_name": "eo04c_callback_return_and_handoff_cancel",
+    "security_advisor": "PASS_zero_findings",
+    "evidence": "docs/evidence/EO_04C_CALLBACK_RETURN_CANCEL_LIVE_2026-10-11.json"
   }
 }

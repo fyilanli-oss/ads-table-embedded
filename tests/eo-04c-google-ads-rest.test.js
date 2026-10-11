@@ -14,6 +14,7 @@ const config = Object.freeze({
   clientId: "client-id.apps.googleusercontent.com",
   clientSecret: "client-secret",
   redirectUri: "https://embedded.adstable.app/auth/google-ads/callback",
+  developerToken: "developer-token-value",
 });
 
 function response(status, payload, headers = {}) {
@@ -33,6 +34,7 @@ test("Google OAuth config fails closed and requires the exact accepted callback"
       GOOGLE_ADS_OAUTH_CLIENT_ID: config.clientId,
       GOOGLE_ADS_OAUTH_CLIENT_SECRET: config.clientSecret,
       GOOGLE_ADS_OAUTH_REDIRECT_URI: config.redirectUri,
+      GOOGLE_ADS_DEVELOPER_TOKEN: config.developerToken,
     }),
     config,
   );
@@ -44,7 +46,16 @@ test("Google OAuth config fails closed and requires the exact accepted callback"
     () => readGoogleAdsOAuthConfig({
       GOOGLE_ADS_OAUTH_CLIENT_ID: config.clientId,
       GOOGLE_ADS_OAUTH_CLIENT_SECRET: config.clientSecret,
+      GOOGLE_ADS_OAUTH_REDIRECT_URI: config.redirectUri,
+    }),
+    /GOOGLE_ADS_DEVELOPER_TOKEN_REQUIRED/,
+  );
+  assert.throws(
+    () => readGoogleAdsOAuthConfig({
+      GOOGLE_ADS_OAUTH_CLIENT_ID: config.clientId,
+      GOOGLE_ADS_OAUTH_CLIENT_SECRET: config.clientSecret,
       GOOGLE_ADS_OAUTH_REDIRECT_URI: "https://wrong.example/callback",
+      GOOGLE_ADS_DEVELOPER_TOKEN: config.developerToken,
     }),
     /redirect URI does not match/,
   );
@@ -124,6 +135,7 @@ test("REST client lists accessible customers without manager header", async () =
   let captured;
   const client = createGoogleAdsRestClient({
     accessToken: "access-token",
+    developerToken: config.developerToken,
     loginCustomerId: "999-888-7777",
     fetchFn: async (url, init) => {
       captured = { url, init };
@@ -142,13 +154,14 @@ test("REST client lists accessible customers without manager header", async () =
   assert.equal(result.request_id, "request-1");
   assert.equal(captured.init.headers["login-customer-id"], undefined);
   assert.equal(captured.init.headers.authorization, "Bearer access-token");
-  assert.equal(captured.init.headers["developer-token"], undefined);
+  assert.equal(captured.init.headers["developer-token"], config.developerToken);
 });
 
 test("REST search sends verified access path, preserves opaque pagination and request id", async () => {
   let captured;
   const client = createGoogleAdsRestClient({
     accessToken: "access-token",
+    developerToken: config.developerToken,
     loginCustomerId: "999-888-7777",
     fetchFn: async (url, init) => {
       captured = { url, init };
@@ -170,6 +183,7 @@ test("REST search sends verified access path, preserves opaque pagination and re
   });
   assert.match(captured.url, /customers\/1234567890\/googleAds:search$/);
   assert.equal(captured.init.headers["login-customer-id"], "9998887777");
+  assert.equal(captured.init.headers["developer-token"], config.developerToken);
   assert.equal(JSON.parse(captured.init.body).pageToken, "opaque-current");
   assert.equal(result.next_page_token, "opaque-next");
   assert.equal(result.total_results_count, 1);
@@ -179,6 +193,7 @@ test("REST search sends verified access path, preserves opaque pagination and re
 test("provider errors never include access or refresh token material", async () => {
   const client = createGoogleAdsRestClient({
     accessToken: "super-secret-access-token",
+    developerToken: config.developerToken,
     fetchFn: async () => response(
       401,
       { error: { status: "UNAUTHENTICATED", message: "provider raw message" } },

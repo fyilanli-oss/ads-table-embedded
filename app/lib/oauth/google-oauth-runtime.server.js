@@ -191,7 +191,7 @@ export function createGoogleOAuthRuntime({
       });
       return Object.freeze({
         state: "pending_account_selection",
-        pending: discovered.pending,
+        pending: discovered.pending ?? pending,
         accounts: discovered.advertisers,
       });
     },
@@ -283,10 +283,10 @@ export function createGoogleOAuthRuntime({
         throw new Error("REPORTING_ACCOUNT_NOT_SELECTED");
       }
       return selections.complete({
-        connectionId: discovered.pending.connectionId,
+        connectionId: (discovered.pending ?? pending).connectionId,
         workspaceId: installationAuthority.workspaceId,
         installGeneration: installationAuthority.installGeneration,
-        expectedVersion: discovered.pending.version,
+        expectedVersion: (discovered.pending ?? pending).version,
         accounts: chosen.map((account) => ({
           id: account.id,
           name: account.name,

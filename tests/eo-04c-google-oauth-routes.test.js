@@ -120,6 +120,11 @@ test("Settings and callback routes preserve the accepted Shopify UI and authorit
   assert.match(settings, /id="google-disconnect-modal"/);
   assert.match(settings, /intent", "disconnect"/);
   assert.match(settings, /runtime[.]googleConnection[.]inspect/);
+  assert.ok(
+    settings.indexOf("runtime.googleConnection.inspect")
+      < settings.indexOf("if (transactionId !== null)"),
+    "connected provider authority must win over a stale google_setup URL",
+  );
   assert.match(settings, /runtime[.]googleConnection[.]changeReportingAccount/);
   assert.match(settings, /runtime[.]googleConnection[.]disconnect/);
   assert.match(settings, />\s*Reconnect Google Ads\s*</);

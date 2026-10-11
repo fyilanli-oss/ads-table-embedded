@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-04c-google-ads-adapter-start-brief-v1",
-  "version": "1.3.2",
-  "status": "Repository_CI_PASS_authorization_handoff_implemented_live_migration_pending",
+  "version": "1.3.3",
+  "status": "Repository_CI_PASS_authorization_handoff_live_database_accepted_routes_pending",
   "checked_at": "2026-10-11",
   "parent": "A6-EO-04",
   "package": "A6-EO-04-C",
@@ -432,7 +432,10 @@
       "test": "tests/eo-04c-google-authorization-handoff.test.js",
       "repository_commit": "7f5ee54d4e501864827773146e180efbb0d93983",
       "repository_ci": "PASS_run_38132951111",
-      "repository_tests": "PASS_211_of_211"
+      "repository_tests": "PASS_211_of_211",
+      "corrective_migration": "supabase/migrations/20261011123000_eo04c_handoff_installation_fk_index.sql",
+      "live_migration_applied": true,
+      "live_evidence": "docs/evidence/EO_04C_AUTHORIZATION_HANDOFF_LIVE_2026-10-11.json"
     }
   },
   "live_evidence_preflight": {
@@ -448,7 +451,7 @@
     ],
     "legacy_values_readable_or_transferable": false,
     "provider_token_encryption_key_recovery_custody_evidenced": true,
-    "result": "BLOCKED_pending_separately_authorized_live_migration_and_route_wiring",
+    "result": "LIVE_DATABASE_ACCEPTED_route_wiring_pending",
     "no_live_request_sent": true,
     "no_secret_mutation_performed": false,
     "database_key_usage_evidence": {
@@ -461,8 +464,6 @@
       "existing_key_can_be_replaced_without_ciphertext_loss": true
     },
     "next_gate": [
-      "obtain_separate_explicit_approval_before_live_Supabase_migration",
-      "apply_migration_and_require_security_and_performance_advisors_zero_new_findings",
       "wire_authenticated_begin_callback_discovery_and_selection_routes",
       "redeploy_then_run_controlled_read_only_account_discovery_manager_exclusion_and_query_evidence"
     ],
@@ -482,12 +483,14 @@
       "provider_key_independent_encrypted_recovery_copy_confirmed_by_product_owner": true
     },
     "pending_authorization_handoff": {
-      "status": "Repository_CI_PASS_live_migration_pending",
+      "status": "Live_database_accepted_routes_pending",
       "document": "docs/EO_04C_GOOGLE_OAUTH_SELECTION_HANDOFF_GATE.md",
       "contract": "contracts/eo-04c-google-oauth-selection-handoff-gate-v1.json",
       "migration": "supabase/migrations/20261011120000_eo04c_provider_authorization_handoff.sql",
-      "live_migration_applied": false,
-      "route_wiring_started": false
+      "live_migration_applied": true,
+      "route_wiring_started": false,
+      "corrective_migration": "supabase/migrations/20261011123000_eo04c_handoff_installation_fk_index.sql",
+      "live_evidence": "docs/evidence/EO_04C_AUTHORIZATION_HANDOFF_LIVE_2026-10-11.json"
     }
   }
 }

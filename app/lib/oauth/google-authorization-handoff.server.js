@@ -131,7 +131,7 @@ export function createGoogleAuthorizationHandoff({
   ]) {
     requiredMethod(tokenVault, method, "tokenVault");
   }
-  for (const method of ["create", "load", "consume", "expire"]) {
+  for (const method of ["create", "load", "loadCurrent", "consume", "expire"]) {
     requiredMethod(repository, method, "repository");
   }
   if (typeof exchangeAuthorizationCode !== "function") {
@@ -144,18 +144,7 @@ export function createGoogleAuthorizationHandoff({
     throw new TypeError("discoverAccounts is required");
   }
 
-  async function resolveFreshEvidence(transactionId, owner) {
-    const observedAt = isoNow(now);
-    const pending = await repository.load({
-      transactionId,
-      workspaceId: owner.workspaceId,
-      installGeneration: owner.installGeneration,
-      provider: PROVIDER,
-      observedAt,
-    });
-    if (!pending || pending.status !== "awaiting_selection") {
-      throw new Error("GOOGLE_AUTHORIZATION_HANDOFF_UNAVAILABLE");
-    }
+  async function evidenceForPending(pending, owner, observedAt) {
     const stored = await tokenVault.loadProviderTokenSet({
       credentialId: pending.credentialId,
       installationAuthority: owner,
@@ -173,6 +162,36 @@ export function createGoogleAuthorizationHandoff({
       pending,
       evidence: normalizeEvidence(discovered, observedAt),
     };
+  }
+
+  async function resolveFreshEvidence(transactionId, owner) {
+    const observedAt = isoNow(now);
+    const pending = await repository.load({
+      transactionId,
+      workspaceId: owner.workspaceId,
+      installGeneration: owner.installGeneration,
+      provider: PROVIDER,
+      observedAt,
+    });
+    if (!pending || pending.status !== "awaiting_selection") {
+      throw new Error("GOOGLE_AUTHORIZATION_HANDOFF_UNAVAILABLE");
+    }
+    return evidenceForPending(pending, owner, observedAt);
+  }
+
+  async function resolveCurrentFreshEvidence(owner) {
+    const observedAt = isoNow(now);
+    const pending = await repository.loadCurrent({
+      workspaceId: owner.workspaceId,
+      installGeneration: owner.installGeneration,
+      provider: PROVIDER,
+      observedAt,
+    });
+    if (!pending) return null;
+    if (pending.status !== "awaiting_selection") {
+      throw new Error("GOOGLE_AUTHORIZATION_HANDOFF_UNAVAILABLE");
+    }
+    return evidenceForPending(pending, owner, observedAt);
   }
 
   return Object.freeze({
@@ -249,6 +268,17 @@ export function createGoogleAuthorizationHandoff({
         }
         throw error;
       }
+    },
+
+    async resume({installationAuthority: authority}) {
+      const owner = installationAuthority(authority);
+      const resolved = await resolveCurrentFreshEvidence(owner);
+      if (!resolved) return null;
+      return Object.freeze({
+        transactionId: resolved.pending.transactionId,
+        expiresAt: resolved.pending.expiresAt,
+        accounts: resolved.evidence.accounts,
+      });
     },
 
     async discover({transactionId, installationAuthority: authority}) {

@@ -27,7 +27,7 @@ The old working product flow is the behavioral reference:
 4. Settings reads that status and opens the advertiser-account selector.
 5. The merchant selects one to three eligible advertiser accounts. Every selected account is equally authorized for AdsTable reporting; there is no second or hidden reporting-account choice.
 6. **Save and connect** re-verifies the selected advertisers and changes the canonical connection to `connected`.
-7. **Resume setup** opens only the account selector. It MUST NOT restart OAuth while the pending credential is valid.
+7. On callback return, `pending_account_selection` automatically loads verified advertiser accounts and opens the account-selection modal. Dismissing the modal preserves the pending credential and exposes **Resume setup**. Resume revalidates the existing account list and reopens the same modal; it MUST NOT restart OAuth.
 8. **Disconnect** first revokes the Google OAuth grant with the encrypted refresh token. Only a provider `revoked` or `already_invalid` result permits removal of reporting authority, account bindings and the credential. A provider/network failure preserves the connected state and fails closed.
 9. Reconnect starts a fresh OAuth transaction from `disconnected`.
 
@@ -41,7 +41,7 @@ Only `connected` grants reporting authority. Every other state fails closed.
 | --- | --- | --- | --- |
 | no connection / `disconnected` | Google Ads, Not connected | Connect Google Ads | Loading accounts without OAuth |
 | OAuth transaction in progress | Leaving AdsTable for Google | Cancel at Google / return | Creating reporting authority |
-| `pending_account_selection` | Advertiser account selector | Save and connect, Cancel setup | Restarting OAuth from Resume setup |
+| `pending_account_selection` | Account selector opens automatically; after modal dismissal, Resume setup remains | Save and connect, dismiss modal, Resume setup | Restarting OAuth or deleting the pending credential from Cancel/Resume |
 | `connected` | Connected advertiser accounts | Change selection, Disconnect | Treating a manager or a hidden first account as reportable authority |
 | `reauthorization_required` | Reauthorization required | Reconnect | Reusing invalid credential |
 | disconnect confirmation | Shopify modal | Confirm disconnect, Cancel | URL-bound setup validation |
@@ -67,7 +67,7 @@ No raw HTML form control, custom button/card/modal imitation, inline CSS, litera
 
 - No `google_setup`, handoff ID or equivalent browser query parameter exists.
 - OAuth callback cannot bind to a workspace supplied by the browser; it consumes a server-owned transaction.
-- A valid pending credential survives a Settings reload and resumes at account selection.
+- A valid pending credential survives a Settings reload and automatically opens account selection.\n- Modal Cancel only dismisses the selector; it does not delete the pending credential or restart OAuth.\n- Resume setup revalidates the existing pending account list and reopens the selector without OAuth.
 - Manager accounts are absent from selectable choices.
 - Selection accepts one to three unique eligible advertiser accounts and grants equal reporting authority to all selected accounts.
 - Repeating Save and connect is idempotent or returns a stable conflict; it never loops.

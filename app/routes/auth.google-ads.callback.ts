@@ -53,14 +53,15 @@ export const loader = async ({request}: LoaderFunctionArgs) => {
       code: parameter(url, "code", 4096),
       providerError: parameter(url, "error", 128),
     });
-    callbackReturn = await runtime.callbackReturn({
+    const target = await runtime.callbackReturn({
       workspaceId: claimed.workspaceId,
       installGeneration: claimed.installGeneration,
     });
+    callbackReturn = target;
     const completed = await runtime.completeCallback({claimed});
 
     return redirect(
-      installedShopifySettingsUrl(callbackReturn.shopDomain, {
+      installedShopifySettingsUrl(target.shopDomain, {
         googleStatus:
           completed.outcome === "denied" ? "cancelled" : "pending",
       }),

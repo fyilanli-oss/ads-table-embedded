@@ -41,6 +41,12 @@ A merchant starts Google Ads connection from Settings, completes Google consent,
 11. Cancel and expiry deterministically remove abandoned credential ciphertext.
 12. No Dataset V2 write, reporting fetch, deploy or live Google request belongs to this repository-only slice.
 
+## Accepted legacy parity correction — 11 October 2026
+
+Controlled production evidence found five accessible Google accounts: two managers and three advertisers. Google returned `CLOSED` as the customer status for all five. The former accepted AdsTable flow still presented the three non-manager advertisers; therefore provider status is informational evidence, not a selection gate.
+
+The binding selection rule is account kind only: a provider-verified non-manager advertiser may be selected. Manager accounts remain internal `login-customer-id` access paths; they never appear in the merchant selection list, never count toward the one-to-three limit and can never be the reporting account. A directly accessible advertiser uses its own customer ID as the login account context. The pre-OAuth confirmation modal and the post-OAuth account-selection modal are both required legacy behavior.
+
 ## State matrix and exact copy
 
 | State | Exact merchant copy | Actions |

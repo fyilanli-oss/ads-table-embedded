@@ -50,7 +50,8 @@ test("route implementation is accepted while live mutation remains separately ga
   assert.equal(contract.mutation_authority.repository_brief_and_contract, true);
   assert.equal(contract.mutation_authority.route_or_UI_implementation, true);
   assert.equal(contract.product_owner_acceptance.accepted_at, "2026-10-11");
-  assert.equal(contract.mutation_authority.live_supabase, false);
+  assert.equal(contract.mutation_authority.live_supabase, true);
+  assert.equal(contract.live_migration_evidence.security_advisor, "PASS_zero_findings");
   assert.equal(contract.mutation_authority.vercel_deploy, false);
   assert.equal(contract.mutation_authority.live_google_oauth, false);
   assert.equal(contract.mutation_authority.live_google_api, false);

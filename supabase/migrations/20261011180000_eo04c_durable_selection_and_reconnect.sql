@@ -230,6 +230,9 @@ declare
   current_connection integrations.provider_connections%rowtype;
   established record;
   reconnected record;
+  result_connection_id uuid;
+  result_connected_account_count smallint;
+  result_reporting_account_id text;
 begin
   if p_consumed_at is null then
     raise exception 'INVALID_PROVIDER_AUTHORIZATION_HANDOFF_CONSUMPTION';
@@ -278,9 +281,9 @@ begin
         p_verified_at
       );
 
-    established.connection_id := reconnected.connection_id;
-    established.reporting_account_id := p_reporting_account_id;
-    established.connected_account_count := jsonb_array_length(p_accounts)::smallint;
+    result_connection_id := reconnected.connection_id;
+    result_reporting_account_id := p_reporting_account_id;
+    result_connected_account_count := jsonb_array_length(p_accounts)::smallint;
   else
     select * into established
       from integrations.establish_provider_account_authority(
@@ -294,6 +297,10 @@ begin
         p_reporting_account_id,
         p_verified_at
       );
+
+    result_connection_id := established.connection_id;
+    result_connected_account_count := established.connected_account_count;
+    result_reporting_account_id := established.reporting_account_id;
   end if;
 
   update integrations.provider_authorization_handoffs as handoff
@@ -308,9 +315,9 @@ begin
   end if;
 
   return query select
-    established.connection_id,
-    established.connected_account_count,
-    established.reporting_account_id;
+    result_connection_id,
+    result_connected_account_count,
+    result_reporting_account_id;
 end
 $function$;
 

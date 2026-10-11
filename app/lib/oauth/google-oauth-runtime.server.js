@@ -299,21 +299,6 @@ export function createGoogleOAuthRuntime({
       });
     },
 
-    async cancel({installationAuthority}) {
-      const pending = await selections.loadPending({
-        workspaceId: installationAuthority.workspaceId,
-        installGeneration: installationAuthority.installGeneration,
-      });
-      if (!pending) return Object.freeze({status: "disconnected"});
-      return selections.cancel({
-        connectionId: pending.connectionId,
-        workspaceId: installationAuthority.workspaceId,
-        installGeneration: installationAuthority.installGeneration,
-        expectedVersion: pending.version,
-        cancelledAt: nowIso(now),
-      });
-    },
-
     async disconnect({installationAuthority}) {
       const connected = await accountAuthority.load({
         workspaceId: installationAuthority.workspaceId,

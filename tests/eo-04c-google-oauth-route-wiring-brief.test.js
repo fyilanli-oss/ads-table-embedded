@@ -9,7 +9,7 @@ test("Google route brief refuses browser and manager authority", async () => {
 
   assert.equal(
     contract.status,
-    "Proposed_product_owner_acceptance_required_before_UI_implementation",
+    "Accepted_repository_implementation_active",
   );
   assert.equal(contract.callback_return_authority.browser_shop_input_trusted, false);
   assert.equal(contract.callback_return_authority.cookie_as_shop_authority, false);
@@ -40,7 +40,7 @@ test("Google route brief preserves Polaris 2 RC constitution", async () => {
   }
 });
 
-test("route implementation remains blocked until explicit acceptance", async () => {
+test("route implementation is accepted while live mutation remains separately gated", async () => {
   const contract = await readJson("contracts/eo-04c-google-oauth-route-wiring-v1.json");
   const brief = await readFile(
     "docs/EO_04C_GOOGLE_OAUTH_ROUTE_WIRING_BRIEF.md",
@@ -48,7 +48,8 @@ test("route implementation remains blocked until explicit acceptance", async () 
   );
 
   assert.equal(contract.mutation_authority.repository_brief_and_contract, true);
-  assert.equal(contract.mutation_authority.route_or_UI_implementation, false);
+  assert.equal(contract.mutation_authority.route_or_UI_implementation, true);
+  assert.equal(contract.product_owner_acceptance.accepted_at, "2026-10-11");
   assert.equal(contract.mutation_authority.live_supabase, false);
   assert.equal(contract.mutation_authority.vercel_deploy, false);
   assert.equal(contract.mutation_authority.live_google_oauth, false);

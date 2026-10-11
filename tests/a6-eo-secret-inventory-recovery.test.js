@@ -50,6 +50,7 @@ test("non-reconstructible secrets require controlled recovery and no blind repla
     "ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_V1",
     "SHOPIFY_APP_AUTOMATION_TOKEN",
     "GOOGLE_ADS_OAUTH_CLIENT_SECRET",
+    "GOOGLE_ADS_DEVELOPER_TOKEN",
   ]) {
     assert.equal(byKey.get(key).product_owner_encrypted_recovery_copy, "required");
     assert.equal(byKey.get(key).plaintext_readback, false);
@@ -77,9 +78,9 @@ test("Execution Plan and master contract expose the EO-04 secret gate", async ()
     assert.match(plan, new RegExp(value.replace(/[.*+?^$\{\}()|[\]\\]/g, "\\$&")));
   }
 
-  assert.equal(master.schema_version, "1.25.0");
-  assert.equal(gate.status, "Accepted_Google_Production_credentials_present_provider_key_recovery_confirmed");
-  assert.equal(gate.inventory_count, 15);
+  assert.equal(master.schema_version, "1.26.0");
+  assert.equal(gate.status, "Corrective_Google_developer_token_required_provision_pending");
+  assert.equal(gate.inventory_count, 16);
   assert.equal(gate.mutation_authorized, false);
   assert.equal(gate.owner_package_for_future_provider_secrets, "A6-EO-04");
 });
@@ -89,15 +90,17 @@ test("Google Ads credentials are name-only, production-scoped and keep tokens ou
   const byKey = new Map(contract.inventory.map((item) => [item.key, item]));
   const google = contract.google_ads_provider_credentials;
 
-  assert.equal(contract.version, "1.2.0");
-  assert.equal(contract.status, "Accepted_name_only_inventory_Google_Production_configured");
-  assert.equal(contract.current_inventory_count, 15);
-  assert.equal(contract.vercel_inventory_count, 14);
+  assert.equal(contract.version, "1.3.0");
+  assert.equal(contract.status, "Corrective_developer_token_required_provision_pending");
+  assert.equal(contract.current_inventory_count, 16);
+  assert.equal(contract.vercel_inventory_count, 15);
   assert.equal(byKey.get("GOOGLE_ADS_OAUTH_CLIENT_ID").storage_type, "sensitive");
   assert.equal(byKey.get("GOOGLE_ADS_OAUTH_CLIENT_SECRET").storage_type, "secret");
   assert.equal(byKey.get("GOOGLE_ADS_OAUTH_REDIRECT_URI").storage_type, "sensitive");
+  assert.equal(byKey.get("GOOGLE_ADS_DEVELOPER_TOKEN").storage_type, "secret");
+  assert.equal(byKey.get("GOOGLE_ADS_DEVELOPER_TOKEN").current_presence, false);
   assert.equal(google.scope, "https://www.googleapis.com/auth/adwords");
-  assert.equal(google.developer_token_required, false);
+  assert.equal(google.developer_token_required, true);
   assert.match(google.refresh_token_storage, /encrypted/);
   assert.equal(google.access_token_storage, "memory_only_with_expiry");
   assert.equal(google.global_refresh_token_forbidden, true);
@@ -107,6 +110,7 @@ test("Google Ads credentials are name-only, production-scoped and keep tokens ou
     GOOGLE_ADS_OAUTH_CLIENT_ID: true,
     GOOGLE_ADS_OAUTH_CLIENT_SECRET: true,
     GOOGLE_ADS_OAUTH_REDIRECT_URI: true,
+    GOOGLE_ADS_DEVELOPER_TOKEN: false,
     observed_at: "2026-10-11",
     environment: "production_only",
     values_masked: true,

@@ -1,0 +1,39 @@
+{
+  "evidence_id": "EO_04C_GOOGLE_ROUTE_REPOSITORY_2026-10-11",
+  "recorded_at": "2026-10-11",
+  "package": "A6-EO-04-C",
+  "status": "PASS_repository_only",
+  "repository": "fyilanli-oss/ads-table-embedded",
+  "pull_request": "https://github.com/fyilanli-oss/ads-table-embedded/pull/66",
+  "commit": "93aa1b8901b639933ffa9feed5acc4ccfb4b70de",
+  "github_actions": {
+    "run_id": 38142931704,
+    "conclusion": "success",
+    "tests": {
+      "passed": 223,
+      "failed": 0
+    },
+    "typecheck": "PASS",
+    "build": "PASS"
+  },
+  "implemented": {
+    "shopify_admin_authority": "verified_id_token_admin_shop_active_install_generation",
+    "callback_return_authority": "claimed_workspace_and_install_generation_only",
+    "google_discovery": "listAccessibleCustomers_plus_recursive_customer_client",
+    "manager_reporting_eligible": false,
+    "advertiser_selection": {
+      "minimum": 1,
+      "maximum": 3
+    },
+    "browser_credential_authority": false,
+    "polaris_runtime": "2.0-rc"
+  },
+  "not_performed": {
+    "vercel_deploy": true,
+    "live_google_oauth": true,
+    "live_google_api": true,
+    "dataset_v2_write": true,
+    "desktop_mobile_visual_acceptance": true
+  },
+  "official_sources_checked_at": "2026-10-11"
+}

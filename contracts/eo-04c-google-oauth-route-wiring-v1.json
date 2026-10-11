@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-04c-google-oauth-route-wiring-v1",
-  "version": "1.0.0",
-  "status": "Accepted_repository_implementation_active",
+  "version": "1.1.0",
+  "status": "Repository_implementation_PASS_deployment_pending",
   "checked_at": "2026-10-11",
   "parent": "A6-EO-04-C",
   "objective": "Wire Google OAuth begin, callback, account discovery, selection and cancellation without weakening installed-shop, OAuth, token-vault or provider-evidence authority.",
@@ -110,7 +110,8 @@
     "shopify_button": "https://shopify.dev/docs/api/app-home/v2.0-rc/web-components/actions/button",
     "google_oauth_web_server": "https://developers.google.com/identity/protocols/oauth2/web-server",
     "google_list_accessible_accounts": "https://developers.google.com/google-ads/api/docs/account-management/listing-accounts",
-    "supabase_functions": "https://supabase.com/docs/guides/database/functions"
+    "supabase_functions": "https://supabase.com/docs/guides/database/functions",
+    "google_account_hierarchy": "https://developers.google.com/google-ads/api/docs/account-management/get-account-hierarchy"
   },
   "acceptance": [
     "explicit_product_owner_acceptance",
@@ -131,5 +132,15 @@
     "migration_name": "eo04c_callback_return_and_handoff_cancel",
     "security_advisor": "PASS_zero_findings",
     "evidence": "docs/evidence/EO_04C_CALLBACK_RETURN_CANCEL_LIVE_2026-10-11.json"
+  },
+  "repository_implementation": {
+    "commit": "93aa1b8901b639933ffa9feed5acc4ccfb4b70de",
+    "github_actions_run": 38142931704,
+    "tests": "PASS_223_of_223",
+    "typecheck": "PASS",
+    "build": "PASS",
+    "deployment_performed": false,
+    "live_google_request_performed": false,
+    "evidence": "docs/evidence/EO_04C_GOOGLE_ROUTE_REPOSITORY_2026-10-11.json"
   }
 }

@@ -1,7 +1,7 @@
 # EO-04-C — Google OAuth route wiring and Shopify UI brief
 
 **Control date:** 11 October 2026  
-**Status:** Product-owner accepted; repository implementation active; callback-return/cancel live migration accepted. Deployment and provider calls remain pending  
+**Status:** Repository implementation PASS; callback-return/cancel live migration accepted. Deployment, live Google evidence and visual acceptance remain pending  
 **Parent:** A6-EO-04-C
 
 ## Analyst result
@@ -102,10 +102,17 @@ Out of scope: live Supabase mutation, Vercel deploy, live Google activity, Datas
 ## Acceptance plan
 
 - [x] Product owner accepted flow, copy and component mapping on 11 October 2026
-- [ ] Repository route/runtime and constitution tests pass
-- [ ] Private migration passes repository tests
+- [x] Repository route/runtime and constitution tests pass — CI run 38142931704
+- [x] Private migration passes repository tests
 - [x] Separate live migration approval and postflight passed on 11 October 2026
 - [ ] Separate deployment approval
 - [ ] Controlled begin/callback/resume/selection/cancel evidence
 - [ ] Real desktop and minimum-320px mobile Shopify Admin pass
 - [ ] Explicit visual and package closure acceptance
+
+
+## Repository implementation result — 11 October 2026
+
+The accepted HTTP/UI slice is implemented at commit `93aa1b8901b639933ffa9feed5acc4ccfb4b70de`. Direct Google accounts are discovered with `listAccessibleCustomers`; manager descendants are resolved recursively through `customer_client`. The Settings route never accepts shop, workspace, install generation, credential ID or provider evidence as browser authority. Repository Governance run `38142931704` passed 223 tests, TypeScript and production build.
+
+No Vercel deployment, live Google OAuth/API request, Dataset V2 write or visual acceptance was performed by this repository result.

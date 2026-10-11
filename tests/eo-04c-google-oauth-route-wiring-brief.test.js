@@ -9,7 +9,7 @@ test("Google route brief refuses browser and manager authority", async () => {
 
   assert.equal(
     contract.status,
-    "Accepted_repository_implementation_active",
+    "Repository_implementation_PASS_deployment_pending",
   );
   assert.equal(contract.callback_return_authority.browser_shop_input_trusted, false);
   assert.equal(contract.callback_return_authority.cookie_as_shop_authority, false);
@@ -55,6 +55,9 @@ test("route implementation is accepted while live mutation remains separately ga
   assert.equal(contract.mutation_authority.vercel_deploy, false);
   assert.equal(contract.mutation_authority.live_google_oauth, false);
   assert.equal(contract.mutation_authority.live_google_api, false);
+  assert.equal(contract.repository_implementation.github_actions_run, 38142931704);
+  assert.equal(contract.repository_implementation.tests, "PASS_223_of_223");
+  assert.equal(contract.repository_implementation.deployment_performed, false);
   assert.match(brief, /transaction ID in the return URL is correlation only/i);
   assert.match(brief, /React 18/);
   assert.match(brief, /minimum 320 px/i);

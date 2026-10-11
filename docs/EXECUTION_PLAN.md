@@ -394,3 +394,14 @@ Executable contract: `contracts/a6-channel-reporting-terminology-v1.json`
 - An unauthenticated request without Shopify embedded context returned the expected fail-closed `410 Gone`, not a runtime `5xx`.
 - This gate does not activate Google routes, execute OAuth, call Google Ads, write Dataset V2 or authorize future secret mutation.
 - Durable secret-free evidence: `docs/evidence/EO_04C_GOOGLE_DEVELOPER_TOKEN_VERCEL_2026-10-11.json`.
+
+
+## 11 October 2026 — EO-04-C Google OAuth route/runtime repository PASS
+
+- Shopify Admin Settings now authenticates every GET/POST with verified ID-token/Admin shop identity and re-resolves the active installed-shop generation.
+- Google begin, callback, fresh account discovery, one-to-three advertiser selection, reporting-account selection and cancel paths are wired. The callback return shop is resolved only from claimed server authority.
+- Google account discovery follows the official hierarchy contract: direct accounts come from `listAccessibleCustomers`; manager descendants come from recursive `customer_client` queries. Managers remain non-reporting access paths and only enabled advertisers are selectable.
+- The UI uses only accepted Polaris 2.0 RC web components. Raw HTML form/action controls, custom CSS and browser-carried credential/workspace/install authority remain absent.
+- Repository Governance run `38142931704` passed 223/223 tests, TypeScript and production build at commit `93aa1b8901b639933ffa9feed5acc4ccfb4b70de`.
+- Durable evidence: `docs/evidence/EO_04C_GOOGLE_ROUTE_REPOSITORY_2026-10-11.json`.
+- Status is `Repository_implementation_PASS_deployment_pending`. Vercel deployment, live Google OAuth/API calls, real desktop/mobile Shopify Admin acceptance and package closure remain separately gated.

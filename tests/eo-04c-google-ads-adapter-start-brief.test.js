@@ -97,7 +97,7 @@ test("EO-04-C separates Google performance and product request families without 
   const product = contract.product_cart_data;
   const families = product.request_families;
 
-  assert.equal(contract.version, "1.3.2");
+  assert.equal(contract.version, "1.3.3");
   assert.equal(contract.checked_at, "2026-10-11");
   assert.equal(product.search_ad_to_sold_product_relation, "unsupported_by_current_native_Google_Ads_reporting");
   assert.equal(product.synthetic_ad_or_ad_product_relation_forbidden, true);
@@ -115,7 +115,7 @@ test("EO-04-C separates Google performance and product request families without 
   assert.equal(product.presentation_boundary.Channel_is_canonical_Dataset_entity_type, false);
 });
 
-test("EO-04-C has a CI-PASS handoff and blocks live work until the migration gate", async () => {
+test("EO-04-C has a CI-PASS handoff and keeps route work blocked after live database acceptance", async () => {
   const contract = await readJson("contracts/eo-04c-google-ads-adapter-start-brief-v1.json");
   const preflight = contract.live_evidence_preflight;
 
@@ -124,7 +124,7 @@ test("EO-04-C has a CI-PASS handoff and blocks live work until the migration gat
   assert.equal(preflight.clean_vercel_project_credentials_present, true);
   assert.equal(preflight.legacy_values_readable_or_transferable, false);
   assert.equal(preflight.provider_token_encryption_key_recovery_custody_evidenced, true);
-  assert.equal(preflight.result, "BLOCKED_pending_separately_authorized_live_migration_and_route_wiring");
+  assert.equal(preflight.result, "LIVE_DATABASE_ACCEPTED_route_wiring_pending");
   assert.equal(preflight.pending_authorization_handoff.status, "Live_database_accepted_routes_pending");
   assert.equal(preflight.no_live_request_sent, true);
   assert.equal(preflight.no_secret_mutation_performed, false);

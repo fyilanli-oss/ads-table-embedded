@@ -1,18 +1,18 @@
 # EO-04-C — Google OAuth route wiring and Shopify UI brief
 
 **Control date:** 11 October 2026  
-**Status:** Repository implementation PASS; callback-return/cancel live migration accepted. Deployment, live Google evidence and visual acceptance remain pending  
+**Status:** Corrective lifecycle parity in progress; previous route implementation is not accepted  
 **Parent:** A6-EO-04-C
 
 ## Analyst result
 
-The secure OAuth transaction, encrypted provider credential and short-lived account-selection handoff already exist. The next slice is HTTP orchestration only. It must not invent a browser authority channel, trust client account evidence, expose a credential ID, or enable live Google activity before controlled acceptance.
+The secure OAuth transaction, encrypted provider credential and provider connection lifecycle already exist. Account selection after a successful OAuth exchange is a durable pending connection state, not a second short OAuth timeout. The corrective slice wires the complete lifecycle end to end. It must not invent a browser authority channel, trust client account evidence, expose a credential ID, or enable live Google activity before controlled acceptance.
 
 The Google callback has no Shopify Admin ID token. It cannot safely infer the installed shop from browser state, request parameters, cookies or the current Admin tab. After state is claimed, the server must resolve the active installed-shop return target from the claimed workspace and install generation through one narrow server-side database function. The callback then redirects to that verified installation's exact Shopify Admin app URL. The transaction ID in the return URL is correlation only.
 
 ## User result
 
-A merchant starts Google Ads connection from Settings, completes Google consent, returns to the same installed Shopify store, chooses one to three eligible advertiser accounts, selects one of those as the reporting account, and sees a truthful connected result. Manager accounts may be retained only as Google access paths; they are never selectable reporting accounts.
+A merchant starts Google Ads connection from Settings, completes Google consent, returns to the same installed Shopify store, chooses one to three eligible advertiser accounts, and sees a truthful connected result. The first selected advertiser becomes the initial reporting account; no second reporting prompt appears during setup. Manager accounts may be retained only as Google access paths; they are never selectable reporting accounts.
 
 ## Route contract
 
@@ -20,11 +20,11 @@ A merchant starts Google Ads connection from Settings, completes Google consent,
 |---|---|---|---|
 | Settings connection state | GET | authenticate.admin, verified ID-token destination, verified Admin shop, active install generation | Existing connection, pending selection or not-connected |
 | Google begin | POST | Same Shopify authority | Creates state + PKCE and redirects to Google's exact authorization URL |
-| Google callback | GET | One-time provider state claim | Handles denial or code exchange, stores encrypted refresh token, creates ten-minute handoff, resolves installed-shop return target and redirects into Shopify Admin |
+| Google callback | GET | One-time provider state claim | Handles denial or code exchange, stores the encrypted refresh token, creates durable pending account-selection state, resolves installed-shop return target and redirects into Shopify Admin |
 | Account discovery / resume | GET | Fresh Shopify Admin and installed-shop authority; transaction ID is correlation only | Re-resolves handoff and obtains fresh Google account evidence |
-| Account selection | POST | Fresh Shopify authority and fresh Google evidence | Atomically creates connection, one-to-three advertiser accounts and one reporting account, then consumes handoff |
+| Account selection | POST | Fresh Shopify authority and fresh Google evidence | Atomically creates or reconnects the canonical connection, stores one-to-three advertiser accounts, assigns the first selected advertiser as initial reporting account, then consumes pending selection |
 | Cancel setup | POST | Fresh Shopify authority and matching handoff | Immediately invalidates the handoff and deletes its unreferenced encrypted credential |
-| Expiry cleanup | Bounded server job | Runtime function only | Expires abandoned handoffs and deletes orphan ciphertext |
+| Disconnect | POST | Fresh Shopify authority, current connection version and Google revoke/already-invalid evidence | Closes active account/reporting bindings, deletes encrypted credential and preserves historical analytics |
 
 ## Non-negotiable server rules
 
@@ -38,8 +38,8 @@ A merchant starts Google Ads connection from Settings, completes Google consent,
 8. One to three advertisers may be connected; reporting account must be among them.
 9. Access tokens stay memory-only. Only the refresh-token subset is encrypted at rest.
 10. Errors expose bounded AdsTable codes and Google request ID only.
-11. Cancel and expiry deterministically remove abandoned credential ciphertext.
-12. No Dataset V2 write, reporting fetch, deploy or live Google request belongs to this repository-only slice.
+11. Explicit cancellation, Google revocation, invalid refresh credentials and installation removal deterministically remove abandoned credential ciphertext.
+12. OAuth transaction expiry remains bounded independently; successful OAuth account selection is not assigned an arbitrary timeout.
 
 ## Accepted legacy parity correction — 11 October 2026
 
@@ -60,12 +60,12 @@ After connection, Settings exposes reporting-account change as a separate action
 | Loading | **Loading Google Ads connection…** | None |
 | Empty | **Google Ads is not connected.** Connect one to three advertiser accounts. Manager accounts are used only when Google requires an access path. | **Connect Google Ads** |
 | In progress | **Connecting to Google Ads…** | Disabled/loading primary action |
-| Resume | **Choose Google Ads accounts.** Select up to three advertiser accounts, then choose which account AdsTable uses for reporting. | **Connect selected accounts**, **Cancel setup** |
+| Resume | **Choose Google Ads accounts.** Select between one and three advertiser accounts. The first selected account will be used for reporting. | **Save and connect**, **Cancel** |
 | No advertiser | **No eligible advertiser account was found.** Manager accounts cannot be reporting accounts. | **Try Google Ads again**, **Cancel setup** |
-| Connected | **Google Ads connected.** {count} advertiser account(s) connected. {reportingAccountName} is used for reporting. | **Manage Google Ads connection** |
+| Connected | **Google Ads connected.** {count} advertiser account(s) connected. {reportingAccountName} is used for reporting. | **Reporting account**, **Disconnect** |
 | Denied/cancelled | **Google Ads connection was cancelled.** No reporting account was connected. | **Try again** |
-| Expired | **This Google Ads setup session expired.** Start again to load a fresh account list. | **Start again** |
-| Validation | **Choose one to three advertiser accounts and one reporting account from your selection.** | Correct and retry |
+| Reauthorization required | **Google Ads authorization is no longer valid.** Reconnect Google Ads to continue reporting. | **Reconnect Google Ads**, **Disconnect** |
+| Validation | **Choose between one and three advertiser accounts.** | Correct and retry |
 | Safe error | **Google Ads could not be connected.** Try again. If the problem continues, share error code {code}. | **Try again** |
 
 ## Exact Polaris 2.0 RC mapping
@@ -97,7 +97,8 @@ Desktop uses one Settings section and vertical choices. Mobile at minimum 320 px
 Before route activation, repository implementation requires a separately approved live migration with two narrow functions:
 
 1. Resolve callback return authority from claimed workspace ID plus install generation to the active canonical myshopify.com domain.
-2. Cancel a matching pending handoff immediately and delete its unreferenced encrypted credential.
+2. Cancel a matching pending selection immediately and delete its unreferenced encrypted credential.
+3. Consume pending selection through either first connection establishment or an atomic reconnect of the existing disconnected canonical connection.
 
 Both functions use SECURITY DEFINER with empty search path, fully qualified relations, row locking and active-generation verification. PUBLIC, anon, authenticated and service-role execution is revoked; only exact runtime execution is granted. No direct table grant is allowed.
 
@@ -109,7 +110,24 @@ The former Settings surface is a behavior reference only. The new implementation
 
 Installed Shopify Store remains immutable commerce authority. Google keeps one-to-three advertiser accounts, one reporting account and non-reporting manager access paths. OAuth, PKCE, encryption and handoff contracts remain authoritative.
 
-Out of scope: live Supabase mutation, Vercel deploy, live Google activity, Dataset V2, reporting jobs, reconciliation, disconnect UX and any visual acceptance claim before real desktop/mobile evidence.
+Out of scope: Dataset V2, reporting jobs, reconciliation and any visual acceptance claim before real desktop/mobile evidence. Disconnect, revoked-state truth and clean reconnect are now mandatory parts of EO-04-C.
+
+## Corrective end-to-end lifecycle decision — 11 October 2026
+
+The former working system kept OAuth transaction expiry separate from account selection. OAuth state/PKCE remained short-lived, while a successful exchange moved the canonical provider connection to `pending_account_selection` until the merchant selected accounts, explicitly cancelled, revoked authorization or removed the installation. The new ten-minute account-selection handoff had no Google, Shopify or legacy authority; it was a regression introduced by the new EO-04-C design and is removed.
+
+The complete binding flow is:
+
+1. **Connect Google Ads** opens the native pre-OAuth modal.
+2. Google OAuth completes once and returns to the exact installed Shopify store.
+3. AdsTable stores the refresh-token subset encrypted and enters durable pending account selection.
+4. **Resume setup** performs fresh Google discovery and opens only the account-selection modal; it never restarts OAuth.
+5. The merchant selects one to three non-manager advertisers; **Save and connect** assigns the first selected advertiser as initial reporting account.
+6. Connected Settings validates the stored refresh credential server-side before rendering **Connected**. A revoked/invalid credential closes local active authority and renders **Reauthorization required**.
+7. Reporting-account change requires fresh Google evidence and is limited to the already connected non-manager advertisers.
+8. **Disconnect** first obtains Google revoke or already-invalid evidence, then closes active account/reporting bindings, deletes encrypted credential and preserves historical analytics.
+9. Reauthorization creates a new pending credential and atomically reconnects the existing disconnected canonical connection; it never creates a duplicate connection.
+
 
 ## Acceptance plan
 

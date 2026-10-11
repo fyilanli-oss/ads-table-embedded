@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-04c-google-oauth-selection-handoff-gate-v1",
-  "version": "1.1.0",
-  "status": "Repository_CI_PASS_live_migration_pending",
+  "version": "1.2.0",
+  "status": "Live_database_accepted_routes_pending",
   "checked_at": "2026-10-11",
   "parent": "A6-EO-04-C",
   "objective": "Bridge Google OAuth exchange to one-to-three advertiser-account selection without exposing credential identity, trusting browser evidence, orphaning refresh tokens or inventing a cross-request authority channel.",
@@ -16,7 +16,7 @@
       "permanent_provider_connection_before_user_selects_one_to_three_eligible_advertiser_accounts",
       "route_or_redeploy_before_this_gate_is_accepted_and_implemented"
     ],
-    "resolution": "Accepted by the product owner and implemented as a repository-only migration plus server runtime; live Supabase remains unchanged."
+    "resolution": "Accepted by the product owner, implemented in the repository, applied to live Supabase through two separately approved migrations, and postflight verified; routes, deployment and live Google activity remain unchanged."
   },
   "flow": [
     "authenticated_Shopify_Admin_POST_begins_server_side_OAuth_transaction",
@@ -66,7 +66,8 @@
     "required_indexes": [
       "unique_credential_id",
       "workspace_install_generation_provider_status",
-      "expires_at_where_status_awaiting_selection"
+      "expires_at_where_status_awaiting_selection",
+      "installation_id_foreign_key"
     ],
     "table": "provider_authorization_handoffs"
   },
@@ -89,7 +90,7 @@
   "mutation_authority": {
     "repository_design_and_tests": true,
     "repository_migration": true,
-    "live_supabase": false,
+    "live_supabase": true,
     "vercel_redeploy": false,
     "live_google_oauth": false,
     "live_google_api": false
@@ -97,7 +98,7 @@
   "acceptance": [
     "explicit_product_owner_acceptance_of_this_gate",
     "repository_migration_and_runtime_orchestration_tests_PASS",
-    "security_and_performance_advisors_zero_new_findings_after_separately_approved_live_migration",
+    "security_advisor_zero_and_performance_advisor_zero_new_actionable_findings_after_separately_approved_live_migrations",
     "controlled_callback_selection_expiry_and_cleanup_evidence",
     "no_secret_or_personal_data_in_repository_logs_URLs_or_evidence"
   ],
@@ -123,14 +124,20 @@
     "repository_tests": "PASS_211_of_211",
     "typecheck": "PASS",
     "preview_build": "PASS",
-    "live_migration_applied": false,
+    "live_migration_applied": true,
     "routes_wired": false,
     "redeployed": false,
-    "live_google_request_sent": false
+    "live_google_request_sent": false,
+    "corrective_migration": "supabase/migrations/20261011123000_eo04c_handoff_installation_fk_index.sql",
+    "live_migration_versions": [
+      "20261011114438_eo04c_provider_authorization_handoff",
+      "20261011114809_eo04c_handoff_installation_fk_index"
+    ],
+    "live_evidence": "docs/evidence/EO_04C_AUTHORIZATION_HANDOFF_LIVE_2026-10-11.json",
+    "live_security_advisor": "PASS_zero_findings",
+    "live_performance_advisor": "PASS_zero_new_actionable_findings_unindexed_fk_returned_to_preflight_baseline_2"
   },
   "next_gate": [
-    "obtain_separate_explicit_approval_before_live_Supabase_migration",
-    "apply_migration_then_require_security_and_performance_advisors_zero_new_findings",
     "wire_authenticated_routes_and_redeploy_only_after_live_database_acceptance",
     "run_controlled_read_only_Google_account_discovery_and_selection_evidence"
   ]

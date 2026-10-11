@@ -117,6 +117,12 @@ test("Settings and callback routes preserve the accepted Shopify UI and authorit
   assert.match(settings, /reportingAccountId: selectedAccountIds\[0\]/);
   assert.match(settings, /intent", "reporting"/);
   assert.match(settings, /id="google-reporting-account-modal"/);
+  assert.match(settings, /id="google-disconnect-modal"/);
+  assert.match(settings, /intent", "disconnect"/);
+  assert.match(settings, /runtime[.]googleConnection[.]inspect/);
+  assert.match(settings, /runtime[.]googleConnection[.]changeReportingAccount/);
+  assert.match(settings, /runtime[.]googleConnection[.]disconnect/);
+  assert.match(settings, />\s*Reconnect Google Ads\s*</);
   assert.doesNotMatch(settings, /label="Connected advertiser accounts"/);
   assert.doesNotMatch(
     settings,

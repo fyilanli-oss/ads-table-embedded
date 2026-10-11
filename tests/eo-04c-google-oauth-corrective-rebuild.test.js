@@ -43,7 +43,7 @@ test("canonical pending selection is resumable and fails closed", () => {
 });
 
 test("Settings exposes only advertiser selection and clean disconnect", () => {
-  assert.match(settings, />Resume setup</);
+  assert.match(settings, />\\s*Resume setup\\s*</);
   assert.doesNotMatch(settings, /Select advertiser accounts/);
   assert.match(settings, /Manager accounts are never selectable/);
   assert.doesNotMatch(settings, /Connected advertiser account/);

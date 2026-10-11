@@ -38,19 +38,40 @@ test("canonical pending selection is resumable and fails closed", () => {
   assert.match(migration, /pending_account_selection/);
   assert.match(migration, /stage_provider_account_selection/);
   assert.match(migration, /complete_pending_provider_account_selection/);
-  assert.match(migration, /cancel_pending_provider_account_selection/);
   assert.match(migration, /Only connected grants reporting authority/);
   assert.match(runtime, /state: "pending_account_selection"/);
 });
 
 test("Settings exposes only advertiser selection and clean disconnect", () => {
-  assert.match(settings, /Select advertiser accounts/);
+  assert.match(settings, />Resume setup</);\n  assert.doesNotMatch(settings, /Select advertiser accounts/);
   assert.match(settings, /Manager accounts are never selectable/);
   assert.doesNotMatch(settings, /Connected advertiser account/);
   assert.doesNotMatch(settings, /Reporting account/);
   assert.doesNotMatch(runtime, /reportingAccountId/);
   assert.doesNotMatch(migration, /p_reporting_account_id/);
   assert.match(settings, /send\("disconnect"\)/);
+});
+
+test("pending Google setup auto-opens selection and Cancel preserves Resume setup", () => {
+  assert.match(settings, /const accountModal = useRef<any>\(null\)/);
+  assert.match(settings, /accountModal[.]current[?][.]showOverlay[?][.]\(\)/);
+  assert.match(settings, /const resumeAccountSelection = \(\) =>/);
+  assert.match(settings, /revalidator[.]revalidate\(\)/);
+  assert.match(
+    settings,
+    /commandFor="google-account-modal"[\s\S]*command="--hide"[\s\S]*>\s*Cancel/,
+  );
+  assert.doesNotMatch(settings, /send\("cancel"\)/);
+  assert.doesNotMatch(runtime, /async cancel\(/);
+});
+
+test("Resume setup cannot restart Google OAuth", () => {
+  const resumeStart = settings.indexOf("const resumeAccountSelection");
+  const resumeEnd = settings.indexOf("\n  };", resumeStart);
+  assert.ok(resumeStart >= 0 && resumeEnd > resumeStart);
+  const resumeSource = settings.slice(resumeStart, resumeEnd);
+  assert.match(resumeSource, /revalidator[.]revalidate\(\)/);
+  assert.doesNotMatch(resumeSource, /send\("begin"\)|oauthBoundary[.]begin/);
 });
 
 test("callback errors remain visible and account-loading retry does not restart OAuth", () => {

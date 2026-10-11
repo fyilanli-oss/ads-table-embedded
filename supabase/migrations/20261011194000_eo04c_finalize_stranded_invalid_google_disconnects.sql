@@ -2,6 +2,31 @@ begin;
 
 set local role adstable_owner;
 
+alter table integrations.provider_authorization_handoffs
+  drop constraint provider_authorization_handoff_status_shape;
+
+alter table integrations.provider_authorization_handoffs
+  add constraint provider_authorization_handoff_status_shape
+  check (
+    (
+      status = 'awaiting_selection'
+      and credential_id is not null
+      and consumed_at is null
+      and failure_code is null
+    )
+    or (
+      status = 'consumed'
+      and consumed_at is not null
+      and failure_code is null
+    )
+    or (
+      status in ('expired', 'failed')
+      and credential_id is null
+      and consumed_at is null
+      and failure_code is not null
+    )
+  );
+
 do $block$
 declare
   stranded record;
@@ -35,6 +60,10 @@ begin
   end loop;
 end
 $block$;
+
+comment on constraint provider_authorization_handoff_status_shape
+  on integrations.provider_authorization_handoffs is
+  'Pending selection requires a live credential. Consumed handoff history may release its credential reference after verified disconnect; failed and expired handoffs never retain credentials.';
 
 reset role;
 

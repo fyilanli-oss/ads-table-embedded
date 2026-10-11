@@ -97,42 +97,67 @@ export function createGoogleOAuthRuntime({
       installationAuthority,
       provider: PROVIDER,
     });
-    if (!stored?.refresh_token) {
+    if (!stored?.access_token || !stored?.refresh_token) {
       throw new Error("GOOGLE_ADS_REFRESH_TOKEN_UNAVAILABLE");
     }
-    const refreshed = await refreshGoogleAdsAccessToken({
-      config,
-      refreshToken: stored.refresh_token,
-      fetchFn,
-    });
-    const evidence = await discoverGoogleAdsAccounts({
-      accessToken: refreshed.access_token,
-      developerToken: config.developerToken,
-      fetchFn,
-      now,
-    });
+
+    let evidence;
+    let pending = null;
+    try {
+      evidence = await discoverGoogleAdsAccounts({
+        accessToken: stored.access_token,
+        developerToken: config.developerToken,
+        fetchFn,
+        now,
+      });
+    } catch (error) {
+      const status = error && typeof error === "object" && "details" in error
+        ? error.details?.status
+        : null;
+      if (status !== 401) throw error;
+
+      const refreshed = await refreshGoogleAdsAccessToken({
+        config,
+        refreshToken: stored.refresh_token,
+        fetchFn,
+      });
+      evidence = await discoverGoogleAdsAccounts({
+        accessToken: refreshed.access_token,
+        developerToken: config.developerToken,
+        fetchFn,
+        now,
+      });
+      if (connectionId && scopes) {
+        const replacement = await tokenVault.storeProviderTokenSet({
+          installationAuthority,
+          provider: PROVIDER,
+          tokenSet: refreshed,
+        });
+        try {
+          pending = await selections.stage({
+            connectionId,
+            workspaceId: installationAuthority.workspaceId,
+            installGeneration: installationAuthority.installGeneration,
+            credentialId: replacement.credentialId,
+            scopes,
+            verifiedAt: evidence.verifiedAt,
+          });
+        } catch (stageError) {
+          await tokenVault.deleteProviderTokenSet({
+            credentialId: replacement.credentialId,
+            installationAuthority,
+            provider: PROVIDER,
+          }).catch(() => undefined);
+          throw stageError;
+        }
+      }
+    }
+
     const advertisers = advertiserAccounts(evidence);
     if (advertisers.length < 1) {
       throw new Error("GOOGLE_ADS_ENABLED_CUSTOMERS_EMPTY");
     }
-
-    if (connectionId && scopes) {
-      const replacement = await tokenVault.storeProviderTokenSet({
-        installationAuthority,
-        provider: PROVIDER,
-        tokenSet: refreshed,
-      });
-      const staged = await selections.stage({
-        connectionId,
-        workspaceId: installationAuthority.workspaceId,
-        installGeneration: installationAuthority.installGeneration,
-        credentialId: replacement.credentialId,
-        scopes,
-        verifiedAt: evidence.verifiedAt,
-      });
-      return Object.freeze({evidence, advertisers, pending: staged});
-    }
-    return Object.freeze({evidence, advertisers});
+    return Object.freeze({evidence, advertisers, pending});
   }
 
   return Object.freeze({

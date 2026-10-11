@@ -64,7 +64,7 @@ function normalizedAccount(value, loginAccountId) {
     id,
     name: accountName(value?.descriptiveName, id),
     kind: manager ? "manager" : "advertiser",
-    reportingEligible: !manager && status === "ENABLED",
+    reportingEligible: !manager,
     status,
     currency:
       typeof value?.currencyCode === "string" && /^[A-Z]{3}$/.test(value.currencyCode)
@@ -138,7 +138,7 @@ export async function discoverGoogleAdsAccounts({
     }
     const rootValue = rootResult.results[0]?.customer;
     if (!rootValue) throw new Error("GOOGLE_CUSTOMER_SCHEMA_CHANGED");
-    const root = normalizedAccount(rootValue, rootValue.manager === true ? rootId : null);
+    const root = normalizedAccount(rootValue, rootId);
     remember(root);
     if (root.kind !== "manager") continue;
 

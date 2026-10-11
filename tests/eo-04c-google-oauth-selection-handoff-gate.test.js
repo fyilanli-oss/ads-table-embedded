@@ -6,14 +6,16 @@ const readJson = async (path) => JSON.parse(await readFile(path, "utf8"));
 
 test("Google OAuth selection handoff gate blocks unsafe cross-request shortcuts", async () => {
   const contract = await readJson("contracts/eo-04c-google-oauth-selection-handoff-gate-v1.json");
-  assert.equal(contract.status, "Corrective_durable_selection_repository_implementation_in_progress");
+  assert.equal(contract.status, "Deployed_controlled_acceptance_pending");
   assert.equal(contract.finding.severity, "critical_fail_closed");
-  assert.match(contract.finding.current_gap, /pending authorization/);
+  assert.match(contract.finding.current_gap, /Resolved: one durable server-side pending authorization/);
   assert.ok(contract.finding.forbidden_shortcuts.includes("credential_id_in_URL_query_or_browser_form_as_authority"));
   assert.equal(contract.mutation_authority.repository_migration, true);
   assert.equal(contract.mutation_authority.live_supabase, true);
   assert.equal(contract.mutation_authority.live_google_oauth, false);
-  assert.equal(contract.repository_implementation.repository_ci, "PASS_run_38132951111");
+  assert.equal(contract.repository_implementation.repository_ci, "PASS_run_38156170711");
+  assert.equal(contract.repository_implementation.redeployed, true);
+  assert.equal(contract.mutation_authority.vercel_redeploy, true);
   assert.equal(contract.repository_implementation.live_migration_applied, true);
 });
 

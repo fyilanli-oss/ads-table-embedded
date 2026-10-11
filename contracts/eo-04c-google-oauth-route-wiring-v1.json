@@ -1,6 +1,6 @@
 {
   "contract_id": "eo-04c-google-oauth-route-wiring-v1",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "status": "Repository_implementation_PASS_deployment_pending",
   "checked_at": "2026-10-11",
   "parent": "A6-EO-04-C",
@@ -65,7 +65,11 @@
     "manager_reporting_eligible": false,
     "manager_role": "login_customer_id_access_path_only",
     "direct_advertiser_login_context": "self_customer_id",
-    "reporting_account_must_be_selected_advertiser": true
+    "reporting_account_must_be_selected_advertiser": true,
+    "initial_setup_ui": "single_1_to_3_advertiser_selection",
+    "initial_reporting_account": "first_selected_advertiser_server_assigned",
+    "initial_reporting_account_second_prompt": false,
+    "reporting_account_change": "separate_post_connection_settings_action"
   },
   "storage": {
     "refresh_token": "versioned_encrypted_database_ciphertext",
@@ -95,7 +99,10 @@
     "react_18_controlled_custom_elements": false,
     "desktop_and_real_mobile_acceptance_required": true,
     "pre_oauth_confirmation_modal_required": true,
-    "post_oauth_account_selection_modal_required": true
+    "post_oauth_account_selection_modal_required": true,
+    "account_selection_modal_cancel": "hide_only_pending_handoff_preserved",
+    "resume_setup": "fresh_discovery_then_open_account_selection_modal_without_new_oauth",
+    "oauth_restart_on_resume": false
   },
   "additional_database_functions": [
     "resolve_active_installation_callback_return",

@@ -15,7 +15,7 @@ Today the encrypted credential envelope is bound to workspace, installation gene
 1. The authenticated Shopify Admin begins OAuth with POST. The server creates state, PKCE and the transaction.
 2. Google callback claims the one-time transaction and exchanges the code.
 3. The refresh token is written only as versioned encrypted database ciphertext.
-4. A ten-minute server-side handoff links OAuth transaction, workspace, active installation generation, provider and credential envelope.
+4. A durable server-side handoff links OAuth transaction, workspace, active installation generation, provider and credential envelope.
 5. The browser receives only the transaction ID. It is correlation, never authorization.
 6. Settings re-authenticates the Shopify Admin, resolves the handoff under the verified installed-shop authority and obtains a fresh provider account list.
 7. The merchant selects one to three non-manager advertiser accounts and one reporting account.
@@ -37,3 +37,7 @@ GitHub Actions run `38132951111` passed 211/211 tests, TypeScript verification a
 ## Current authority
 
 With separate explicit product-owner approvals, the base handoff migration and the corrective `installation_id` foreign-key index migration were applied to live Supabase on 11 October 2026. Forced RLS, owner-only policy, zero runtime table privileges, four narrow runtime functions and zero Security Advisor findings were verified. The corrective index returned unindexed-foreign-key findings to the preflight baseline; newly created zero-row indexes are expected to remain informationally unused until runtime traffic. Durable evidence: `docs/evidence/EO_04C_AUTHORIZATION_HANDOFF_LIVE_2026-10-11.json`. Routes are not wired, Vercel was not redeployed and no live Google OAuth or Ads request was sent.
+
+## Corrective parity decision — 11 October 2026
+
+The successful OAuth exchange and the merchant's later account selection are separate states. OAuth state/PKCE keeps its bounded transaction lifetime. Pending account selection has no arbitrary ten-minute timeout; it persists until consumed, explicitly cancelled, revoked or removed with the Shopify installation. This restores the former working behavior while preserving encrypted-at-rest credentials, server-only authority and fresh Google discovery on every resume and save.

@@ -56,11 +56,32 @@ export function createGoogleOAuthRuntime({
     now,
   });
 
+  const accountAuthority = createProviderAccountAuthorityRepository(database);
+  const connectionLifecycle = createProviderConnectionLifecycle({database, now});
+  const googleConnection = createGoogleConnectionRuntime({
+    accountAuthority,
+    connectionLifecycle,
+    tokenVault,
+    refreshAccessToken: (value) =>
+      refreshGoogleAdsAccessToken({...value, config, fetchFn}),
+    discoverAccounts: ({accessToken}) =>
+      discoverGoogleAdsAccounts({
+        accessToken,
+        developerToken: config.developerToken,
+        fetchFn,
+        now,
+      }),
+    fetchFn,
+    now,
+  });
+
   return Object.freeze({
     config,
     oauthBoundary,
     installationAuthority: oauthInstallationAuthority,
     handoff,
-    accountAuthority: createProviderAccountAuthorityRepository(database),
+    accountAuthority,
+    connectionLifecycle,
+    googleConnection,
   });
 }

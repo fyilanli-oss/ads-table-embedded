@@ -53,6 +53,11 @@ export function readGoogleAdsOAuthConfig(environment = process.env) {
       "GOOGLE_ADS_OAUTH_CLIENT_SECRET_REQUIRED",
     ),
     redirectUri: exactRedirect(environment?.GOOGLE_ADS_OAUTH_REDIRECT_URI),
+    developerToken: nonEmpty(
+      environment?.GOOGLE_ADS_DEVELOPER_TOKEN,
+      "GOOGLE_ADS_DEVELOPER_TOKEN_REQUIRED",
+      256,
+    ),
   });
 }
 
@@ -210,9 +215,14 @@ function customerId(value, code = "GOOGLE_ADS_CUSTOMER_ID_INVALID") {
   return normalized;
 }
 
-function googleHeaders({ accessToken, loginCustomerId = null }) {
+function googleHeaders({ accessToken, developerToken, loginCustomerId = null }) {
   const headers = {
     authorization: `Bearer ${nonEmpty(accessToken, "GOOGLE_ADS_ACCESS_TOKEN_REQUIRED")}`,
+    "developer-token": nonEmpty(
+      developerToken,
+      "GOOGLE_ADS_DEVELOPER_TOKEN_REQUIRED",
+      256,
+    ),
     "content-type": "application/json",
   };
   if (loginCustomerId !== null) {
@@ -250,18 +260,19 @@ async function googleJson({ url, method, headers, body, fetchFn }) {
 
 export function createGoogleAdsRestClient({
   accessToken,
+  developerToken,
   loginCustomerId = null,
   fetchFn = fetch,
 } = {}) {
   if (typeof fetchFn !== "function") throw new TypeError("fetchFn is required");
-  const headers = googleHeaders({ accessToken, loginCustomerId });
+  const headers = googleHeaders({accessToken, developerToken, loginCustomerId});
 
   return Object.freeze({
     async listAccessibleCustomers() {
       const result = await googleJson({
         url: `${GOOGLE_ADS_REST_ORIGIN}/${GOOGLE_ADS_REST_VERSION}/customers:listAccessibleCustomers`,
         method: "GET",
-        headers: googleHeaders({ accessToken, loginCustomerId: null }),
+        headers: googleHeaders({accessToken, developerToken, loginCustomerId: null}),
         fetchFn,
       });
       const names = result.payload?.resourceNames;

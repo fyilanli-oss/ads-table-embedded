@@ -19,6 +19,7 @@ import {
   exchangeGoogleAdsAuthorizationCode,
   readGoogleAdsOAuthConfig,
   refreshGoogleAdsAccessToken,
+  revokeGoogleAdsAuthorization,
 } from "../providers/google-ads-rest.server.js";
 import {discoverGoogleAdsAccounts} from "../providers/google-account-discovery.server.js";
 
@@ -328,6 +329,19 @@ export function createGoogleOAuthRuntime({
       if (!current || current.status !== "connected") {
         throw new Error("CONNECTED_GOOGLE_CONNECTION_REQUIRED");
       }
+      const stored = await tokenVault.loadProviderTokenSet({
+        credentialId: connected.credentialId,
+        installationAuthority,
+        provider: PROVIDER,
+      });
+      const revocationToken = stored?.refresh_token ?? stored?.access_token ?? null;
+      if (!revocationToken) {
+        throw new Error("GOOGLE_ADS_OAUTH_REVOCATION_TOKEN_UNAVAILABLE");
+      }
+      const revoked = await revokeGoogleAdsAuthorization({
+        token: revocationToken,
+        fetchFn,
+      });
       const requested = await lifecycle.requestDisconnect({
         installationAuthority,
         provider: PROVIDER,
@@ -344,7 +358,7 @@ export function createGoogleOAuthRuntime({
         providerEvidence: {
           authority: "provider_disconnect_verified",
           provider: PROVIDER,
-          outcome: "local_authority_removed",
+          outcome: revoked.outcome,
           verifiedAt: nowIso(now),
           expiresAt: new Date(now().valueOf() + 60_000).toISOString(),
         },

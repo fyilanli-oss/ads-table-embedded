@@ -15,6 +15,26 @@ function response(payload) {
   };
 }
 
+function customerNotEnabledResponse() {
+  return {
+    ok: false,
+    status: 403,
+    headers: {get: () => "customer-not-enabled-request-id"},
+    async json() {
+      return {
+        error: {
+          status: "PERMISSION_DENIED",
+          details: [{
+            errors: [{
+              errorCode: {customerError: "CUSTOMER_NOT_ENABLED"},
+            }],
+          }],
+        },
+      };
+    },
+  };
+}
+
 test("Google discovery keeps managers as access paths and advertisers as reporting choices", async () => {
   const calls = [];
   const fetchFn = async (url, init) => {
@@ -107,5 +127,43 @@ test("Google discovery fails closed on empty accessible-account evidence", async
       fetchFn: async () => response({resourceNames: []}),
     }),
     /GOOGLE_ACCESSIBLE_CUSTOMERS_EMPTY/,
+  );
+});
+
+test("Google discovery skips a disabled direct root and preserves enabled advertisers", async () => {
+  const fetchFn = async (url) => {
+    if (url.endsWith("/customers:listAccessibleCustomers")) {
+      return response({resourceNames: ["customers/111", "customers/222"]});
+    }
+    if (url.includes("/customers/111/")) return customerNotEnabledResponse();
+    if (url.includes("/customers/222/")) {
+      return response({results: [{customer: {
+        id: "222", descriptiveName: "Enabled advertiser", manager: false,
+        status: "ENABLED", currencyCode: "USD", timeZone: "UTC",
+      }}]});
+    }
+    throw new Error("unexpected request " + url);
+  };
+
+  const evidence = await discoverGoogleAdsAccounts({
+    accessToken: "access-token",
+    developerToken: "developer-token",
+    fetchFn,
+  });
+
+  assert.deepEqual(evidence.accounts.map((account) => account.id), ["222"]);
+  assert.equal(evidence.accounts[0].reportingEligible, true);
+});
+
+test("Google discovery reports when every accessible root is disabled", async () => {
+  await assert.rejects(
+    discoverGoogleAdsAccounts({
+      accessToken: "access-token",
+      developerToken: "developer-token",
+      fetchFn: async (url) => url.endsWith("/customers:listAccessibleCustomers")
+        ? response({resourceNames: ["customers/111"]})
+        : customerNotEnabledResponse(),
+    }),
+    /GOOGLE_ADS_ENABLED_CUSTOMERS_EMPTY/,
   );
 });

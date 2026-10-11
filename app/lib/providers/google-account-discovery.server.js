@@ -126,7 +126,6 @@ export async function discoverGoogleAdsAccounts({
       rootResult = await directClient.search({
         customerId: rootId,
         query: CUSTOMER_QUERY,
-        pageSize: 1,
       });
     } catch (error) {
       if (providerFailureCode(error) === "CUSTOMER_NOT_ENABLED") continue;
@@ -153,7 +152,6 @@ export async function discoverGoogleAdsAccounts({
       const result = await hierarchyClient.search({
         customerId: managerId,
         query: CHILD_QUERY,
-        pageSize: 10000,
       });
       for (const row of result.results) {
         const value = row?.customerClient;

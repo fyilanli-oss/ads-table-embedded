@@ -373,3 +373,14 @@ Executable contract: `contracts/a6-channel-reporting-terminology-v1.json`
 - Passing a credential UUID through a URL, browser form or ordinary cookie as authority is forbidden; browser account evidence is never trusted.
 - Proposed gate: `docs/EO_04C_GOOGLE_OAUTH_SELECTION_HANDOFF_GATE.md`, contract: `contracts/eo-04c-google-oauth-selection-handoff-gate-v1.json`.
 - This is an EO-04-C checklist/corrective gate, not a new parent or child package. Database migration, route implementation, redeploy and live Google activity require the stated acceptance sequence.
+
+
+## 11 October 2026 — EO-04-C authorization handoff accepted and implemented in repository
+
+- The product owner accepted the short-lived server-side OAuth-to-account-selection handoff.
+- Repository implementation: `supabase/migrations/20261011120000_eo04c_provider_authorization_handoff.sql`, `app/lib/database/provider-authorization-handoff-repository.server.js` and `app/lib/oauth/google-authorization-handoff.server.js`.
+- The browser receives only the OAuth transaction identifier as correlation. Credential identity, refresh/access tokens and provider account evidence never become browser authority.
+- Google account evidence is refreshed server-side; only one to three verified non-manager advertiser accounts may be selected, and connection creation consumes the handoff atomically.
+- Expired handoffs use bounded `FOR UPDATE SKIP LOCKED` cleanup and delete only unreferenced encrypted credential envelopes.
+- GitHub Actions run `38132951111` passed 211/211 tests, TypeScript and build.
+- The migration is repository-only. Live Supabase was not changed, routes were not wired, Vercel was not redeployed and no live Google request occurred. Those remain separate approval gates.

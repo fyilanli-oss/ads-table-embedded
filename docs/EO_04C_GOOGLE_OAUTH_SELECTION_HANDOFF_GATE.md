@@ -1,7 +1,7 @@
 # EO-04-C — Google OAuth account-selection handoff gate
 
 **Control date:** 11 October 2026  
-**Status:** Proposed; product-owner acceptance required before route or database implementation  
+**Status:** Accepted; repository implementation and CI PASS, live migration pending separate approval  
 **Parent:** A6-EO-04-C
 
 ## Why this gate exists
@@ -10,7 +10,7 @@ The tested OAuth/REST client can exchange the callback code, encrypt the refresh
 
 Today the encrypted credential envelope is bound to workspace, installation generation and provider, but it is not bound to the claimed OAuth transaction through a short-lived pending-authorization record. Passing the credential UUID through a URL, browser form or ordinary cookie would turn correlation data into authority and would leave abandoned refresh-token ciphertext without a deterministic cleanup owner. Route wiring therefore stops here.
 
-## Accepted design candidate
+## Accepted design
 
 1. The authenticated Shopify Admin begins OAuth with POST. The server creates state, PKCE and the transaction.
 2. Google callback claims the one-time transaction and exchanges the code.
@@ -28,6 +28,12 @@ No provider account evidence, refresh token, access token or credential ID is tr
 
 The proposed table lives in private `integrations`, has forced RLS, no Data API/browser grant and is reachable by `adstable_runtime` only through narrow security-definer functions with an empty search path, fully qualified relations, row locks, expiry checks and explicit execute grants. Required indexes cover the unique credential link, workspace/generation/provider/status lookup and pending expiry cleanup.
 
+## Repository implementation result
+
+The product owner accepted this gate on 11 October 2026. The repository now contains the private forced-RLS table migration, narrow SECURITY DEFINER functions, bounded orphan cleanup, database repository and server-only Google orchestration. Callback persistence keeps only the encrypted refresh-token payload; access tokens remain memory-only. Account discovery is repeated from Google and manager accounts cannot be selected as reporting accounts. Selection and connection establishment share one database transaction.
+
+GitHub Actions run `38132951111` passed 211/211 tests, TypeScript verification and production build.
+
 ## Current authority
 
-This record authorizes documentation and executable contract tests only. It does not authorize a migration, live Supabase change, route implementation, redeploy, Google OAuth or Google Ads request. Those actions begin only after explicit product-owner acceptance of this gate.
+The migration file is durable in GitHub but has **not** been applied to live Supabase. Routes are not wired, Vercel was not redeployed and no live Google OAuth or Ads request was sent. Live migration requires a separate explicit approval, followed by Supabase security/performance advisor evidence before route wiring.

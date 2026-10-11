@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-04c-google-oauth-selection-handoff-gate-v1",
-  "version": "1.0.0",
-  "status": "Proposed_product_owner_acceptance_required_before_route_or_database_implementation",
+  "version": "1.1.0",
+  "status": "Repository_CI_PASS_live_migration_pending",
   "checked_at": "2026-10-11",
   "parent": "A6-EO-04-C",
   "objective": "Bridge Google OAuth exchange to one-to-three advertiser-account selection without exposing credential identity, trusting browser evidence, orphaning refresh tokens or inventing a cross-request authority channel.",
@@ -15,7 +15,8 @@
       "browser_supplied_account_evidence_without_fresh_provider_reverification",
       "permanent_provider_connection_before_user_selects_one_to_three_eligible_advertiser_accounts",
       "route_or_redeploy_before_this_gate_is_accepted_and_implemented"
-    ]
+    ],
+    "resolution": "Accepted by the product owner and implemented as a repository-only migration plus server runtime; live Supabase remains unchanged."
   },
   "flow": [
     "authenticated_Shopify_Admin_POST_begins_server_side_OAuth_transaction",
@@ -66,7 +67,8 @@
       "unique_credential_id",
       "workspace_install_generation_provider_status",
       "expires_at_where_status_awaiting_selection"
-    ]
+    ],
+    "table": "provider_authorization_handoffs"
   },
   "runtime_design": {
     "begin_method": "POST_only_authenticated_Shopify_Admin",
@@ -86,7 +88,7 @@
   },
   "mutation_authority": {
     "repository_design_and_tests": true,
-    "repository_migration": false,
+    "repository_migration": true,
     "live_supabase": false,
     "vercel_redeploy": false,
     "live_google_oauth": false,
@@ -104,5 +106,32 @@
     "supabase_functions": "https://supabase.com/docs/guides/database/functions",
     "google_oauth_web_server": "https://developers.google.com/identity/protocols/oauth2/web-server",
     "google_ads_credential_management": "https://developers.google.com/google-ads/api/docs/oauth/credential-management"
-  }
+  },
+  "product_owner_acceptance": {
+    "status": "accepted",
+    "accepted_at": "2026-10-11",
+    "evidence": "chat_explicit_acceptance_and_instruction_to_continue"
+  },
+  "repository_implementation": {
+    "migration": "supabase/migrations/20261011120000_eo04c_provider_authorization_handoff.sql",
+    "repository": "app/lib/database/provider-authorization-handoff-repository.server.js",
+    "runtime": "app/lib/oauth/google-authorization-handoff.server.js",
+    "types": "app/lib/oauth/google-authorization-handoff.server.d.ts",
+    "tests": "tests/eo-04c-google-authorization-handoff.test.js",
+    "repository_commit": "7f5ee54d4e501864827773146e180efbb0d93983",
+    "repository_ci": "PASS_run_38132951111",
+    "repository_tests": "PASS_211_of_211",
+    "typecheck": "PASS",
+    "preview_build": "PASS",
+    "live_migration_applied": false,
+    "routes_wired": false,
+    "redeployed": false,
+    "live_google_request_sent": false
+  },
+  "next_gate": [
+    "obtain_separate_explicit_approval_before_live_Supabase_migration",
+    "apply_migration_then_require_security_and_performance_advisors_zero_new_findings",
+    "wire_authenticated_routes_and_redeploy_only_after_live_database_acceptance",
+    "run_controlled_read_only_Google_account_discovery_and_selection_evidence"
+  ]
 }

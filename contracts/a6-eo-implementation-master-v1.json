@@ -670,7 +670,7 @@
           "id": "A6-EO-04-C",
           "title": "Google Ads adapter",
           "objective": "Standard Ad and Performance Max Asset Group hierarchy with raw structure evidence.",
-          "status": "Repository_CI_PASS_pending_authorization_handoff_acceptance",
+          "status": "Repository_CI_PASS_authorization_handoff_implemented_live_migration_pending",
           "implementation_started": true,
           "live_mutation_authorized": false,
           "document": "docs/EO_04C_GOOGLE_ADS_ADAPTER_START_BRIEF.md",
@@ -697,7 +697,7 @@
           "types": "app/lib/providers/google-ads-adapter.server.d.ts",
           "runtime_test": "tests/eo-04c-google-ads-adapter.test.js",
           "repository_ci": "PASS_run_38131663609",
-          "repository_tests": "PASS_201_of_201",
+          "repository_tests": "PASS_211_of_211",
           "typecheck": "PASS",
           "preview_build": "PASS",
           "live_evidence_preflight": "BLOCKED_pending_server_side_authorization_handoff_acceptance",
@@ -707,7 +707,9 @@
           "pending_authorization_handoff_gate": {
             "document": "docs/EO_04C_GOOGLE_OAUTH_SELECTION_HANDOFF_GATE.md",
             "contract": "contracts/eo-04c-google-oauth-selection-handoff-gate-v1.json",
-            "status": "Proposed_product_owner_acceptance_required"
+            "migration": "supabase/migrations/20261011120000_eo04c_provider_authorization_handoff.sql",
+            "status": "Repository_CI_PASS_live_migration_pending",
+            "live_supabase_mutated": false
           }
         },
         {

@@ -7,7 +7,7 @@ const readJson = async (path) => JSON.parse(await readFile(path, "utf8"));
 test("EO-04-C freezes truthful Google account and hierarchy boundaries", async () => {
   const contract = await readJson("contracts/eo-04c-google-ads-adapter-start-brief-v1.json");
 
-  assert.equal(contract.status, "Repository_CI_PASS_pending_authorization_handoff_acceptance");
+  assert.equal(contract.status, "Repository_CI_PASS_authorization_handoff_implemented_live_migration_pending");
   assert.equal(contract.authority.reporting_accounts.minimum, 1);
   assert.equal(contract.authority.reporting_accounts.maximum, 3);
   assert.equal(contract.authority.reporting_accounts.customer_manager_must_be_false, true);
@@ -85,7 +85,7 @@ test("Execution Plan and master advance documentation discovery to EO-04-D witho
   assert.equal(master.current_active_child, "A6-EO-04-D");
   assert.equal(master.current_gate, "A6-EO-04-D_start_brief_accepted_repository_implementation_pending");
   assert.equal(eo04b.status, "Repository_CI_PASS_controlled_live_evidence_pending");
-  assert.equal(eo04c.status, "Repository_CI_PASS_pending_authorization_handoff_acceptance");
+  assert.equal(eo04c.status, "Repository_CI_PASS_authorization_handoff_implemented_live_migration_pending");
   assert.equal(eo04c.live_mutation_authorized, false);
   assert.equal(eo04d.status, "Start_brief_accepted_repository_implementation_pending");
   assert.equal(eo04d.implementation_started, false);
@@ -97,7 +97,7 @@ test("EO-04-C separates Google performance and product request families without 
   const product = contract.product_cart_data;
   const families = product.request_families;
 
-  assert.equal(contract.version, "1.3.1");
+  assert.equal(contract.version, "1.3.2");
   assert.equal(contract.checked_at, "2026-10-11");
   assert.equal(product.search_ad_to_sold_product_relation, "unsupported_by_current_native_Google_Ads_reporting");
   assert.equal(product.synthetic_ad_or_ad_product_relation_forbidden, true);
@@ -115,17 +115,17 @@ test("EO-04-C separates Google performance and product request families without 
   assert.equal(product.presentation_boundary.Channel_is_canonical_Dataset_entity_type, false);
 });
 
-test("EO-04-C has credentials but blocks route wiring until the server-side handoff is accepted", async () => {
+test("EO-04-C has a CI-PASS handoff and blocks live work until the migration gate", async () => {
   const contract = await readJson("contracts/eo-04c-google-ads-adapter-start-brief-v1.json");
   const preflight = contract.live_evidence_preflight;
 
-  assert.equal(contract.status, "Repository_CI_PASS_pending_authorization_handoff_acceptance");
+  assert.equal(contract.status, "Repository_CI_PASS_authorization_handoff_implemented_live_migration_pending");
   assert.equal(preflight.authorization, "accepted_by_product_owner_continue_instruction");
   assert.equal(preflight.clean_vercel_project_credentials_present, true);
   assert.equal(preflight.legacy_values_readable_or_transferable, false);
   assert.equal(preflight.provider_token_encryption_key_recovery_custody_evidenced, true);
-  assert.equal(preflight.result, "BLOCKED_before_route_wiring_by_pending_authorization_handoff_gate");
-  assert.equal(preflight.pending_authorization_handoff.status, "Proposed_product_owner_acceptance_required");
+  assert.equal(preflight.result, "BLOCKED_pending_separately_authorized_live_migration_and_route_wiring");
+  assert.equal(preflight.pending_authorization_handoff.status, "Repository_CI_PASS_live_migration_pending");
   assert.equal(preflight.no_live_request_sent, true);
   assert.equal(preflight.no_secret_mutation_performed, false);
   assert.equal(preflight.secret_values_read_or_persisted_in_repository_evidence, false);
@@ -133,6 +133,8 @@ test("EO-04-C has credentials but blocks route wiring until the server-side hand
   assert.equal(preflight.vercel_evidence.values_masked, true);
   assert.equal(contract.repository_implementation.oauth_rest_runtime, "app/lib/providers/google-ads-rest.server.js");
   assert.equal(contract.repository_implementation.repository_ci, "PASS_run_38131663609");
+  assert.equal(contract.repository_implementation.authorization_handoff.repository_ci, "PASS_run_38132951111");
+  assert.equal(contract.repository_implementation.authorization_handoff.repository_tests, "PASS_211_of_211");
   assert.equal(preflight.database_key_usage_evidence.provider_credential_envelopes, 0);
   assert.equal(preflight.database_key_usage_evidence.oauth_pkce_envelopes, 0);
   assert.deepEqual(preflight.database_key_usage_evidence.used_key_versions, []);

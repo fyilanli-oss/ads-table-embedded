@@ -6,13 +6,15 @@ const readJson = async (path) => JSON.parse(await readFile(path, "utf8"));
 
 test("Google OAuth selection handoff gate blocks unsafe cross-request shortcuts", async () => {
   const contract = await readJson("contracts/eo-04c-google-oauth-selection-handoff-gate-v1.json");
-  assert.equal(contract.status, "Proposed_product_owner_acceptance_required_before_route_or_database_implementation");
+  assert.equal(contract.status, "Repository_CI_PASS_live_migration_pending");
   assert.equal(contract.finding.severity, "critical_fail_closed");
   assert.match(contract.finding.current_gap, /pending authorization/);
   assert.ok(contract.finding.forbidden_shortcuts.includes("credential_id_in_URL_query_or_browser_form_as_authority"));
-  assert.equal(contract.mutation_authority.repository_migration, false);
+  assert.equal(contract.mutation_authority.repository_migration, true);
   assert.equal(contract.mutation_authority.live_supabase, false);
   assert.equal(contract.mutation_authority.live_google_oauth, false);
+  assert.equal(contract.repository_implementation.repository_ci, "PASS_run_38132951111");
+  assert.equal(contract.repository_implementation.live_migration_applied, false);
 });
 
 test("handoff design keeps Shopify installation and fresh provider evidence authoritative", async () => {
@@ -27,7 +29,7 @@ test("handoff design keeps Shopify installation and fresh provider evidence auth
   assert.equal(contract.runtime_design.access_token_storage, "memory_only");
 });
 
-test("Execution Plan and Google brief expose the handoff gate before route wiring", async () => {
+test("Execution Plan and Google brief expose the implemented handoff before live migration", async () => {
   const plan = await readFile("docs/EXECUTION_PLAN.md", "utf8");
   const brief = await readFile("docs/EO_04C_GOOGLE_ADS_ADAPTER_START_BRIEF.md", "utf8");
   for (const value of [

@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-04c-google-ads-adapter-start-brief-v1",
-  "version": "1.3.1",
-  "status": "Repository_CI_PASS_pending_authorization_handoff_acceptance",
+  "version": "1.3.2",
+  "status": "Repository_CI_PASS_authorization_handoff_implemented_live_migration_pending",
   "checked_at": "2026-10-11",
   "parent": "A6-EO-04",
   "package": "A6-EO-04-C",
@@ -423,7 +423,17 @@
       "verified_login_customer_id_only_for_manager_access_path",
       "direct_v25_REST_search",
       "request_id_and_secret_safe_errors"
-    ]
+    ],
+    "authorization_handoff": {
+      "migration": "supabase/migrations/20261011120000_eo04c_provider_authorization_handoff.sql",
+      "repository": "app/lib/database/provider-authorization-handoff-repository.server.js",
+      "runtime": "app/lib/oauth/google-authorization-handoff.server.js",
+      "types": "app/lib/oauth/google-authorization-handoff.server.d.ts",
+      "test": "tests/eo-04c-google-authorization-handoff.test.js",
+      "repository_commit": "7f5ee54d4e501864827773146e180efbb0d93983",
+      "repository_ci": "PASS_run_38132951111",
+      "repository_tests": "PASS_211_of_211"
+    }
   },
   "live_evidence_preflight": {
     "checked_at": "2026-10-11",
@@ -438,7 +448,7 @@
     ],
     "legacy_values_readable_or_transferable": false,
     "provider_token_encryption_key_recovery_custody_evidenced": true,
-    "result": "BLOCKED_before_route_wiring_by_pending_authorization_handoff_gate",
+    "result": "BLOCKED_pending_separately_authorized_live_migration_and_route_wiring",
     "no_live_request_sent": true,
     "no_secret_mutation_performed": false,
     "database_key_usage_evidence": {
@@ -451,10 +461,10 @@
       "existing_key_can_be_replaced_without_ciphertext_loss": true
     },
     "next_gate": [
-      "obtain_explicit_product_owner_acceptance_of_pending_authorization_handoff_gate",
-      "implement_repository_migration_and_runtime_orchestration_without_live_mutation",
-      "apply_live_Supabase_migration_only_with_separate_explicit_approval",
-      "wire_routes_redeploy_and_run_controlled_read_only_evidence"
+      "obtain_separate_explicit_approval_before_live_Supabase_migration",
+      "apply_migration_and_require_security_and_performance_advisors_zero_new_findings",
+      "wire_authenticated_begin_callback_discovery_and_selection_routes",
+      "redeploy_then_run_controlled_read_only_account_discovery_manager_exclusion_and_query_evidence"
     ],
     "secret_values_read_or_persisted_in_repository_evidence": false,
     "vercel_evidence": {
@@ -472,10 +482,12 @@
       "provider_key_independent_encrypted_recovery_copy_confirmed_by_product_owner": true
     },
     "pending_authorization_handoff": {
-      "status": "Proposed_product_owner_acceptance_required",
+      "status": "Repository_CI_PASS_live_migration_pending",
       "document": "docs/EO_04C_GOOGLE_OAUTH_SELECTION_HANDOFF_GATE.md",
       "contract": "contracts/eo-04c-google-oauth-selection-handoff-gate-v1.json",
-      "reason": "No server-side cross-request binding currently links claimed OAuth transaction to encrypted credential before account selection."
+      "migration": "supabase/migrations/20261011120000_eo04c_provider_authorization_handoff.sql",
+      "live_migration_applied": false,
+      "route_wiring_started": false
     }
   }
 }

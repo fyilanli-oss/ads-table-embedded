@@ -97,7 +97,7 @@ test("EO-04-C separates Google performance and product request families without 
   const product = contract.product_cart_data;
   const families = product.request_families;
 
-  assert.equal(contract.version, "1.2.0");
+  assert.equal(contract.version, "1.2.1");
   assert.equal(contract.checked_at, "2026-10-11");
   assert.equal(product.search_ad_to_sold_product_relation, "unsupported_by_current_native_Google_Ads_reporting");
   assert.equal(product.synthetic_ad_or_ad_product_relation_forbidden, true);

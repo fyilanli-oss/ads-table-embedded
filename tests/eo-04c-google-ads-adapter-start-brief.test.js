@@ -82,8 +82,8 @@ test("Execution Plan and master advance documentation discovery to EO-04-D witho
   }
 
   assert.equal(master.current_active_parent, "A6-EO-04");
-  assert.equal(master.current_active_child, "A6-EO-04-C");
-  assert.equal(master.current_gate, "A6-EO-04-C_repository_implementation_CI_pending_controlled_live_evidence_pending");
+  assert.equal(master.current_active_child, "A6-EO-04-D");
+  assert.equal(master.current_gate, "A6-EO-04-D_start_brief_accepted_repository_implementation_pending");
   assert.equal(eo04b.status, "Repository_CI_PASS_controlled_live_evidence_pending");
   assert.equal(eo04c.status, "Repository_implementation_CI_pending_controlled_live_evidence_pending");
   assert.equal(eo04c.live_mutation_authorized, false);

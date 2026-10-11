@@ -1077,8 +1077,8 @@
   "cutover_authorized": false,
   "legacy_deletion_authorized": false,
   "current_active_parent": "A6-EO-04",
-  "current_active_child": "A6-EO-04-C",
-  "current_gate": "A6-EO-04-C_repository_implementation_CI_pending_controlled_live_evidence_pending",
+  "current_active_child": "A6-EO-04-D",
+  "current_gate": "A6-EO-04-D_start_brief_accepted_repository_implementation_pending",
   "next_ready_child": null,
   "independent_packages": [
     {

@@ -8,12 +8,46 @@ alter table integrations.provider_authorization_handoffs
 alter table integrations.provider_authorization_handoffs
   alter column expires_at drop not null;
 
+with ranked as (
+  select
+    oauth_transaction_id,
+    credential_id,
+    row_number() over (
+      partition by workspace_id, install_generation, provider
+      order by created_at desc, oauth_transaction_id desc
+    ) as position
+  from integrations.provider_authorization_handoffs
+  where status = 'awaiting_selection'
+), superseded as (
+  update integrations.provider_authorization_handoffs as handoff
+     set status = 'failed',
+         credential_id = null,
+         failure_code = 'SUPERSEDED_BY_NEW_AUTHORIZATION',
+         updated_at = statement_timestamp()
+    from ranked
+   where ranked.position > 1
+     and handoff.oauth_transaction_id = ranked.oauth_transaction_id
+  returning ranked.credential_id
+)
+delete from integrations.provider_credential_envelopes as credential
+ where credential.id in (select credential_id from superseded)
+   and not exists (
+     select 1 from integrations.provider_connections as connection
+      where connection.credential_id = credential.id
+   );
+
 update integrations.provider_authorization_handoffs
    set expires_at = null,
        updated_at = statement_timestamp()
  where status = 'awaiting_selection';
 
 drop index if exists integrations.provider_authorization_handoffs_expiry_idx;
+
+create unique index if not exists provider_authorization_handoffs_one_pending_idx
+  on integrations.provider_authorization_handoffs (
+    workspace_id, install_generation, provider
+  )
+  where status = 'awaiting_selection';
 
 create or replace function integrations.create_provider_authorization_handoff(
   p_oauth_transaction_id uuid,
@@ -36,6 +70,7 @@ declare
   source_transaction integrations.oauth_transactions%rowtype;
   current_installation shopify.installations%rowtype;
   created_handoff integrations.provider_authorization_handoffs%rowtype;
+  superseded_credential_ids uuid[];
 begin
   if p_oauth_transaction_id is null
      or p_workspace_id is null
@@ -85,6 +120,29 @@ begin
   ) then
     raise exception 'PROVIDER_CREDENTIAL_AUTHORITY_MISMATCH';
   end if;
+
+  with superseded as (
+    update integrations.provider_authorization_handoffs as handoff
+       set status = 'failed',
+           credential_id = null,
+           failure_code = 'SUPERSEDED_BY_NEW_AUTHORIZATION',
+           updated_at = statement_timestamp()
+     where handoff.workspace_id = p_workspace_id
+       and handoff.install_generation = p_install_generation
+       and handoff.provider = p_provider
+       and handoff.status = 'awaiting_selection'
+    returning handoff.credential_id
+  )
+  select coalesce(array_agg(credential_id), '{}'::uuid[])
+    into superseded_credential_ids
+    from superseded;
+
+  delete from integrations.provider_credential_envelopes as credential
+   where credential.id = any(superseded_credential_ids)
+     and not exists (
+       select 1 from integrations.provider_connections as connection
+        where connection.credential_id = credential.id
+     );
 
   insert into integrations.provider_authorization_handoffs (
     oauth_transaction_id, installation_id, workspace_id, install_generation,
@@ -312,7 +370,7 @@ end
 $function$;
 
 comment on table integrations.provider_authorization_handoffs is
-  'Server-only durable OAuth-to-account-selection authority. OAuth state remains separately time-bounded; pending selection ends only by consumption, explicit cancellation, revocation or installation cleanup.';
+  'Server-only durable OAuth-to-account-selection authority. OAuth state remains separately time-bounded; one pending selection exists per workspace/provider and ends only by consumption, superseding authorization, explicit cancellation, revocation or installation cleanup.';
 
 reset role;
 

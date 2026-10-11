@@ -41,6 +41,8 @@ type SettingsState =
   | {
       view: "connected";
       count: number;
+      accounts: Advertiser[];
+      reportingAccountId: string;
       reportingAccountName: string;
     };
 
@@ -178,6 +180,8 @@ export const loader = async ({request}: LoaderFunctionArgs): Promise<SettingsSta
     return {
       view: "connected",
       count: connected.accounts.length,
+      accounts: connected.accounts.map(advertiserView),
+      reportingAccountId: String(connected.reportingAccountId),
       reportingAccountName:
         typeof reporting?.name === "string"
           ? reporting.name
@@ -218,6 +222,34 @@ export const action = async ({request}: ActionFunctionArgs) => {
       return {ok: true, intent: "begin", authorizationUrl} satisfies ActionData;
     }
 
+    if (intent === "reporting") {
+      const providerAccountId = form.get("reportingAccountId");
+      const connected = await runtime.accountAuthority.load({
+        workspaceId: verified.installationAuthority.workspaceId,
+        installGeneration: verified.installationAuthority.installGeneration,
+        provider: "google_ads",
+      });
+      if (
+        !connected
+        || typeof providerAccountId !== "string"
+        || !connected.accounts.some(
+          (account: Record<string, unknown>) =>
+            account.kind === "advertiser" && account.id === providerAccountId
+        )
+      ) {
+        return {ok: false, code: "GOOGLE_REPORTING_ACCOUNT_INVALID"} satisfies ActionData;
+      }
+      await runtime.accountAuthority.selectReportingAccount({
+        connectionId: connected.connectionId,
+        workspaceId: verified.installationAuthority.workspaceId,
+        installGeneration: verified.installationAuthority.installGeneration,
+        provider: "google_ads",
+        providerAccountId,
+        verifiedAt: new Date().toISOString(),
+      });
+      return verified.context.redirect("/settings?google_status=connected");
+    }
+
     const transactionId = form.get("transactionId");
     if (typeof transactionId !== "string" || !UUID_PATTERN.test(transactionId)) {
       return {ok: false, code: "GOOGLE_SETUP_REFERENCE_INVALID"} satisfies ActionData;
@@ -235,13 +267,11 @@ export const action = async ({request}: ActionFunctionArgs) => {
       const selectedAccountIds = form
         .getAll("connectedAccountIds")
         .filter((value): value is string => typeof value === "string");
-      const reportingAccountId = form.get("reportingAccountId");
       await runtime.handoff.select({
         transactionId,
         installationAuthority: verified.installationAuthority,
         selectedAccountIds,
-        reportingAccountId:
-          typeof reportingAccountId === "string" ? reportingAccountId : "",
+        reportingAccountId: selectedAccountIds[0] ?? "",
       });
       return verified.context.redirect("/settings?google_status=connected");
     }
@@ -328,6 +358,11 @@ export default function Settings() {
     for (const value of connectedChoices.current?.values ?? []) {
       form.append("connectedAccountIds", value);
     }
+    submit(form, {method: "post"});
+  };
+  const updateReporting = () => {
+    const form = new FormData();
+    form.set("intent", "reporting");
     const reporting = reportingChoice.current?.values?.[0];
     if (reporting) form.set("reportingAccountId", reporting);
     submit(form, {method: "post"});
@@ -421,9 +456,52 @@ export default function Settings() {
                 Google Ads connected. {state.count} advertiser account(s) connected.
                 {" "}{state.reportingAccountName} is used for reporting.
               </s-paragraph>
-              <s-button commandFor="google-connect-modal" command="--show">
-                Manage Google Ads connection
+              <s-button
+                commandFor="google-reporting-account-modal"
+                command="--show"
+              >
+                Reporting account
               </s-button>
+              <s-modal
+                id="google-reporting-account-modal"
+                heading="Google Ads reporting account"
+              >
+                <s-stack direction="block" gap="base">
+                  <s-paragraph>
+                    Choose the single connected account AdsTable will use for
+                    reporting. This does not reconnect Google Ads.
+                  </s-paragraph>
+                  <s-choice-list
+                    ref={reportingChoice}
+                    label="Reporting account"
+                    name="reportingAccountId"
+                  >
+                    {state.accounts.map((account) => (
+                      <s-choice
+                        key={account.id}
+                        value={account.id}
+                        defaultSelected={account.id === state.reportingAccountId}
+                      >
+                        {account.name} ({account.id})
+                      </s-choice>
+                    ))}
+                  </s-choice-list>
+                </s-stack>
+                <s-button
+                  slot="primary-action"
+                  variant="primary"
+                  onClick={updateReporting}
+                >
+                  Save reporting account
+                </s-button>
+                <s-button
+                  slot="secondary-actions"
+                  commandFor="google-reporting-account-modal"
+                  command="--hide"
+                >
+                  Cancel
+                </s-button>
+              </s-modal>
             </>
           ) : null}
 
@@ -451,45 +529,33 @@ export default function Settings() {
 
           {!pending && state.view === "resume" && state.advertisers.length > 0 ? (
             <>
-              <s-badge tone="info">Choose accounts</s-badge>
+              <s-badge tone="info">Setup pending</s-badge>
               <s-paragraph>
-                Google authorization succeeded. Choose one to three advertiser
-                accounts. Manager accounts are not shown and do not count toward
-                the limit.
+                Google authorization is complete. Resume setup to select between
+                one and three advertiser accounts.
               </s-paragraph>
               <s-button
                 variant="primary"
                 commandFor="google-account-selection-modal"
                 command="--show"
               >
-                Choose Google Ads accounts
+                Resume setup
               </s-button>
               <s-modal
                 ref={selectionModal}
                 id="google-account-selection-modal"
-                heading="Choose Google Ads accounts"
+                heading="Select Google Ads account"
               >
                 <s-stack direction="block" gap="base">
                   <s-paragraph>
-                    Select up to three advertiser accounts, then choose which
-                    selected account AdsTable uses for reporting.
+                    Select between 1 and 3 accounts returned by Google Ads.
                   </s-paragraph>
+                  <s-paragraph>You can connect up to 3 accounts.</s-paragraph>
                   <s-choice-list
                     ref={connectedChoices}
-                    label="Connected advertiser accounts"
+                    label="Google Ads accounts"
                     name="connectedAccountIds"
                     multiple
-                  >
-                    {state.advertisers.map((account) => (
-                      <s-choice key={account.id} value={account.id}>
-                        {account.name} ({account.id})
-                      </s-choice>
-                    ))}
-                  </s-choice-list>
-                  <s-choice-list
-                    ref={reportingChoice}
-                    label="Reporting account"
-                    name="reportingAccountId"
                   >
                     {state.advertisers.map((account) => (
                       <s-choice key={account.id} value={account.id}>
@@ -503,13 +569,14 @@ export default function Settings() {
                   variant="primary"
                   onClick={() => select(state.transactionId)}
                 >
-                  Connect selected accounts
+                  Save and connect
                 </s-button>
                 <s-button
                   slot="secondary-actions"
-                  onClick={() => cancel(state.transactionId)}
+                  commandFor="google-account-selection-modal"
+                  command="--hide"
                 >
-                  Cancel setup
+                  Cancel
                 </s-button>
               </s-modal>
             </>

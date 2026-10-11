@@ -49,7 +49,7 @@ type ActionData =
   | {ok: true; intent: "begin"; authorizationUrl: string}
   | undefined;
 
-function safeDiagnosticValue(value: unknown, maximum = 120) {
+function safeLogValue(value: unknown, maximum = 120) {
   return typeof value === "string"
     && value.length > 0
     && value.length <= maximum
@@ -62,7 +62,7 @@ function publicErrorCode(error: unknown) {
   const source = error && typeof error === "object"
     ? error as {code?: unknown; details?: Record<string, unknown>}
     : null;
-  const providerCode = safeDiagnosticValue(source?.details?.provider_error_code);
+  const providerCode = safeLogValue(source?.details?.provider_error_code);
   if (providerCode && /^[A-Z0-9_]{1,100}$/.test(providerCode)) {
     return `GOOGLE_ADS_PROVIDER_${providerCode}`;
   }
@@ -135,10 +135,10 @@ export const loader = async ({request}: LoaderFunctionArgs): Promise<SettingsSta
         ? error as {code?: unknown; details?: Record<string, unknown>}
         : null;
       console.error("[google-ads-account-discovery-failed]", {
-        code: safeDiagnosticValue(source?.code),
-        provider_status: safeDiagnosticValue(source?.details?.provider_status),
-        provider_error_code: safeDiagnosticValue(source?.details?.provider_error_code),
-        request_id: safeDiagnosticValue(source?.details?.request_id, 256),
+        code: safeLogValue(source?.code),
+        provider_status: safeLogValue(source?.details?.provider_status),
+        provider_error_code: safeLogValue(source?.details?.provider_error_code),
+        request_id: safeLogValue(source?.details?.request_id, 256),
       });
       return {view: "error", code: publicErrorCode(error)};
     }

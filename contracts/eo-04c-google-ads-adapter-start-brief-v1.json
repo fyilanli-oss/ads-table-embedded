@@ -1,6 +1,6 @@
 {
   "contract_id": "eo-04c-google-ads-adapter-start-brief-v1",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "status": "Repository_CI_PASS_controlled_live_evidence_preflight_blocked",
   "checked_at": "2026-10-11",
   "parent": "A6-EO-04",
@@ -431,6 +431,20 @@
     "provider_token_encryption_key_recovery_custody_evidenced": false,
     "result": "BLOCKED_before_OAuth_or_live_call",
     "no_live_request_sent": true,
-    "no_secret_mutation_performed": true
+    "no_secret_mutation_performed": true,
+    "database_key_usage_evidence": {
+      "checked_at": "2026-10-11",
+      "query_mode": "read_only_counts_only",
+      "provider_credential_envelopes": 0,
+      "oauth_pkce_envelopes": 0,
+      "used_key_versions": [],
+      "existing_ciphertext_dependency": false,
+      "existing_key_can_be_replaced_without_ciphertext_loss": true
+    },
+    "next_gate": [
+      "create_or_rotate_ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_V1_only_with_independent_recovery_copy",
+      "configure_clean_project_Google_Web_OAuth_credentials",
+      "implement_and_test_provider_specific_Google_OAuth_and_REST_transport_before_live_call"
+    ]
   }
 }

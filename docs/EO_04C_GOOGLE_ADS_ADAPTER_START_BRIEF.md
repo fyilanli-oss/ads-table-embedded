@@ -141,6 +141,8 @@ Implementation is CI-PASS (run `38127917558`, 192/192 tests, typecheck and produ
 
 Live evidence must prove account discovery, Standard Ad structure, PMax Asset Group structure, metric response shapes, conversion categories, time/currency, complete pagination and—when cart data exists—the deepest sold-product grain. The product owner authorized this read-only gate on 11 October 2026, but preflight stopped before OAuth or a live request: the clean Vercel project lacks the three inventoried Google OAuth entries and provider-token-key recovery custody is not evidenced. Legacy masked entries are neither readable nor transferable.
 
+A read-only Supabase count on 11 October 2026 proved that both `integrations.provider_credential_envelopes` and `integrations.oauth_pkce_envelopes` contain zero rows and no key version is in use. Therefore the provider-token key can be replaced without ciphertext loss, but only together with an independent recovery copy. This evidence does not authorize a secret mutation.
+
 ### Gate 4 — closure
 
 Repository CI, durable sanitized evidence and explicit product-owner acceptance are required before EO-04-C closes.

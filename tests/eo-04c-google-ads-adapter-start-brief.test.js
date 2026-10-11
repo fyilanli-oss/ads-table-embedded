@@ -127,4 +127,12 @@ test("EO-04-C live preflight stops before OAuth when clean credentials and recov
   assert.equal(preflight.result, "BLOCKED_before_OAuth_or_live_call");
   assert.equal(preflight.no_live_request_sent, true);
   assert.equal(preflight.no_secret_mutation_performed, true);
+  assert.equal(preflight.database_key_usage_evidence.provider_credential_envelopes, 0);
+  assert.equal(preflight.database_key_usage_evidence.oauth_pkce_envelopes, 0);
+  assert.deepEqual(preflight.database_key_usage_evidence.used_key_versions, []);
+  assert.equal(preflight.database_key_usage_evidence.existing_ciphertext_dependency, false);
+  assert.equal(
+    preflight.database_key_usage_evidence.existing_key_can_be_replaced_without_ciphertext_loss,
+    true,
+  );
 });

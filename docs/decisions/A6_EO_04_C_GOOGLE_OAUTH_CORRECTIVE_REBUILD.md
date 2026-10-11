@@ -25,7 +25,7 @@ The old working product flow is the behavioral reference:
 2. Google OAuth opens through Shopify-supported navigation.
 3. The callback stores the encrypted credential on the canonical connection with status `pending_account_selection`.
 4. Settings reads that status and opens the advertiser-account selector.
-5. The merchant selects one to three eligible advertiser accounts and selects the reporting account when more than one is connected.
+5. The merchant selects one to three eligible advertiser accounts. Every selected account is equally authorized for AdsTable reporting; there is no second or hidden reporting-account choice.
 6. **Save and connect** re-verifies the selected advertisers and changes the canonical connection to `connected`.
 7. **Resume setup** opens only the account selector. It MUST NOT restart OAuth while the pending credential is valid.
 8. **Disconnect** removes reporting authority, account bindings and the credential, then returns to a clean Settings URL.
@@ -42,7 +42,7 @@ Only `connected` grants reporting authority. Every other state fails closed.
 | no connection / `disconnected` | Google Ads, Not connected | Connect Google Ads | Loading accounts without OAuth |
 | OAuth transaction in progress | Leaving AdsTable for Google | Cancel at Google / return | Creating reporting authority |
 | `pending_account_selection` | Advertiser account selector | Save and connect, Cancel setup | Restarting OAuth from Resume setup |
-| `connected` | Connected advertisers and reporting account | Change selection, Disconnect | Treating manager as reportable |
+| `connected` | Connected advertiser accounts | Change selection, Disconnect | Treating a manager or a hidden first account as reportable authority |
 | `reauthorization_required` | Reauthorization required | Reconnect | Reusing invalid credential |
 | disconnect confirmation | Shopify modal | Confirm disconnect, Cancel | URL-bound setup validation |
 | `disconnected` after confirmation | Not connected | Connect Google Ads | Retaining credential or active bindings |
@@ -69,7 +69,7 @@ No raw HTML form control, custom button/card/modal imitation, inline CSS, litera
 - OAuth callback cannot bind to a workspace supplied by the browser; it consumes a server-owned transaction.
 - A valid pending credential survives a Settings reload and resumes at account selection.
 - Manager accounts are absent from selectable choices.
-- Selection accepts one to three unique eligible advertiser accounts.
+- Selection accepts one to three unique eligible advertiser accounts and grants equal reporting authority to all selected accounts.
 - Repeating Save and connect is idempotent or returns a stable conflict; it never loops.
 - Disconnect succeeds once, clears credential/accounts/binding and redirects to clean Settings.
 - Refresh after disconnect remains disconnected and produces no setup-reference error.

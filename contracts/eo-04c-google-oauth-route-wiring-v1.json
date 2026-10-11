@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-04c-google-oauth-route-wiring-v1",
-  "version": "1.4.0",
-  "status": "Corrective_lifecycle_parity_in_progress",
+  "version": "1.5.0",
+  "status": "Deployed_controlled_acceptance_pending",
   "checked_at": "2026-10-11",
   "parent": "A6-EO-04-C",
   "objective": "Restore legacy-proven Google lifecycle parity end to end: secure OAuth, durable pending account selection, resume without OAuth restart, one-to-three advertiser selection, first-selected initial reporting account, fresh reporting-account verification, truthful revoked state, disconnect and clean reconnect.",
@@ -75,7 +75,9 @@
     "initial_setup_ui": "single_1_to_3_advertiser_selection",
     "initial_reporting_account": "first_selected_advertiser_server_assigned",
     "initial_reporting_account_second_prompt": false,
-    "reporting_account_change": "separate_post_connection_settings_action"
+    "reporting_account_change": "separate_post_connection_settings_action",
+    "account_discovery": "listAccessibleCustomers_then_each_accessible_root_customer_client_without_login_customer_id",
+    "single_pending_setup_per_workspace_provider": true
   },
   "storage": {
     "refresh_token": "versioned_encrypted_database_ciphertext",
@@ -124,7 +126,7 @@
     "repository_brief_and_contract": true,
     "route_or_UI_implementation": true,
     "live_supabase": true,
-    "vercel_deploy": false,
+    "vercel_deploy": true,
     "live_google_oauth": false,
     "live_google_api": false,
     "dataset_v2": false
@@ -159,17 +161,23 @@
     "migration_version": "20261011123503",
     "migration_name": "eo04c_callback_return_and_handoff_cancel",
     "security_advisor": "PASS_zero_findings",
-    "evidence": "docs/evidence/EO_04C_CALLBACK_RETURN_CANCEL_LIVE_2026-10-11.json"
+    "evidence": "docs/evidence/EO_04C_CALLBACK_RETURN_CANCEL_LIVE_2026-10-11.json",
+    "corrective_migration_version": "20261011163811",
+    "corrective_migration_name": "eo04c_durable_selection_and_reconnect",
+    "pending_setup_rows_after_migration": 1,
+    "duplicate_pending_groups_after_migration": 0
   },
   "repository_implementation": {
-    "commit": "93aa1b8901b639933ffa9feed5acc4ccfb4b70de",
-    "github_actions_run": 38142931704,
-    "tests": "PASS_223_of_223",
+    "commit": "142414c1bbfc83fba10df150817c507a939054d8",
+    "github_actions_run": 38156170711,
+    "tests": "PASS_233_of_233",
     "typecheck": "PASS",
     "build": "PASS",
-    "deployment_performed": false,
+    "deployment_performed": true,
     "live_google_request_performed": false,
-    "evidence": "docs/evidence/EO_04C_GOOGLE_ROUTE_REPOSITORY_2026-10-11.json"
+    "evidence": "docs/evidence/EO_04C_GOOGLE_ROUTE_REPOSITORY_2026-10-11.json",
+    "deployment_id": "dpl_J7Vb9w7mvcgffpUKrRJSUPxT1SLY",
+    "production_alias": "embedded.adstable.app"
   },
   "controlled_live_finding": {
     "observed_at": "2026-10-11",
@@ -197,7 +205,9 @@
       "oauth_exchange_and_account_selection_were_incorrectly_collapsed_into_one_ten_minute_handoff",
       "settings_rendered_local_account_authority_as_connected_without_refresh_token_validation",
       "google_disconnect_and_reconnect_were_not_wired_to_the_existing_provider_connection_lifecycle",
-      "reporting_account_change_did_not_refresh_provider_evidence"
+      "reporting_account_change_did_not_refresh_provider_evidence",
+      "new_discovery_added_unproven_customer_prefetch_and_recursive_traversal_instead_of_legacy_accessible_root_customer_client_flow",
+      "settings_clean_URL_could_not_resume_the_canonical_pending_setup"
     ],
     "source": "legacy_end_to_end_behavior_comparison",
     "ten_minute_rule_authority": "none_it_was_an_internal_new_contract_regression"

@@ -6,6 +6,8 @@ import {fileURLToPath} from "node:url";
 import {
   buildGoogleAdsAuthorizationUrl,
   GOOGLE_ADS_OAUTH_SCOPE,
+  GOOGLE_ADS_REVOCATION_ENDPOINT,
+  revokeGoogleAdsAuthorization,
 } from "../app/lib/providers/google-ads-rest.server.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -104,4 +106,66 @@ test("provider account selection SQL qualifies output-column collisions", () => 
     ambiguityFix,
     /connection_version = connection_version [+] 1/,
   );
+});
+
+
+test("Google disconnect revokes the provider grant with the refresh token", async () => {
+  const requests = [];
+  const result = await revokeGoogleAdsAuthorization({
+    token: "refresh-secret",
+    fetchFn: async (url, options) => {
+      requests.push({url, options});
+      return {
+        ok: true,
+        status: 200,
+        headers: {get: () => null},
+        json: async () => null,
+      };
+    },
+  });
+  assert.deepEqual(result, {outcome: "revoked"});
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0].url, GOOGLE_ADS_REVOCATION_ENDPOINT);
+  assert.equal(requests[0].options.method, "POST");
+  assert.equal(
+    requests[0].options.headers["content-type"],
+    "application/x-www-form-urlencoded",
+  );
+  assert.equal(
+    new URLSearchParams(requests[0].options.body).get("token"),
+    "refresh-secret",
+  );
+});
+
+test("already invalid Google authorization remains idempotently disconnectable", async () => {
+  const result = await revokeGoogleAdsAuthorization({
+    token: "already-invalid-secret",
+    fetchFn: async () => ({
+      ok: false,
+      status: 400,
+      headers: {get: () => null},
+      json: async () => ({error: "invalid_token"}),
+    }),
+  });
+  assert.deepEqual(result, {outcome: "already_invalid"});
+});
+
+test("failed Google revoke fails closed before local disconnect", async () => {
+  await assert.rejects(
+    revokeGoogleAdsAuthorization({
+      token: "live-secret",
+      fetchFn: async () => ({
+        ok: false,
+        status: 503,
+        headers: {get: () => "provider-request"},
+        json: async () => ({error: "temporarily_unavailable"}),
+      }),
+    }),
+    (error) => error.code === "GOOGLE_ADS_OAUTH_REVOKE_FAILED",
+  );
+  const revoke = runtime.indexOf("await revokeGoogleAdsAuthorization");
+  const request = runtime.indexOf("await lifecycle.requestDisconnect");
+  const finalize = runtime.indexOf("return lifecycle.finalizeDisconnect");
+  assert.ok(revoke >= 0 && request > revoke && finalize > request);
+  assert.doesNotMatch(runtime, /outcome: "local_authority_removed"/);
 });

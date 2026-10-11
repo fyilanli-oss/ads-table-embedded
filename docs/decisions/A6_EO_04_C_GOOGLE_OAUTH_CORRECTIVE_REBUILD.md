@@ -28,7 +28,7 @@ The old working product flow is the behavioral reference:
 5. The merchant selects one to three eligible advertiser accounts. Every selected account is equally authorized for AdsTable reporting; there is no second or hidden reporting-account choice.
 6. **Save and connect** re-verifies the selected advertisers and changes the canonical connection to `connected`.
 7. **Resume setup** opens only the account selector. It MUST NOT restart OAuth while the pending credential is valid.
-8. **Disconnect** removes reporting authority, account bindings and the credential, then returns to a clean Settings URL.
+8. **Disconnect** first revokes the Google OAuth grant with the encrypted refresh token. Only a provider `revoked` or `already_invalid` result permits removal of reporting authority, account bindings and the credential. A provider/network failure preserves the connected state and fails closed.
 9. Reconnect starts a fresh OAuth transaction from `disconnected`.
 
 Manager accounts are traversal/login context only. They are never selectable reporting accounts and never appear as advertiser choices.
@@ -71,7 +71,7 @@ No raw HTML form control, custom button/card/modal imitation, inline CSS, litera
 - Manager accounts are absent from selectable choices.
 - Selection accepts one to three unique eligible advertiser accounts and grants equal reporting authority to all selected accounts.
 - Repeating Save and connect is idempotent or returns a stable conflict; it never loops.
-- Disconnect succeeds once, clears credential/accounts/binding and redirects to clean Settings.
+- Disconnect sends the refresh token to Google’s official revocation endpoint before any local lifecycle mutation.\n- Provider `revoked` or `already_invalid` evidence permits local cleanup; every other revoke failure preserves credential/accounts/binding and returns a stable error.\n- Successful disconnect clears credential/accounts/binding and redirects to clean Settings.
 - Refresh after disconnect remains disconnected and produces no setup-reference error.
 - Reconnect requires a fresh OAuth transaction.
 - Desktop and real mobile Shopify Admin acceptance remain mandatory before merge.

@@ -124,6 +124,26 @@ export const loader = async ({request}: LoaderFunctionArgs): Promise<SettingsSta
           account.kind === "advertiser" && account.reportingEligible === true
         )
         .map(advertiserView);
+      if (advertisers.length === 0) {
+        const statusCounts: Record<string, number> = {};
+        for (const account of result.accounts as Array<Record<string, unknown>>) {
+          const status = safeLogValue(account.status) ?? "missing";
+          statusCounts[status] = (statusCounts[status] ?? 0) + 1;
+        }
+        console.warn("[google-ads-no-eligible-advertiser]", {
+          account_count: result.accounts.length,
+          manager_count: result.accounts.filter(
+            (account: Record<string, unknown>) => account.kind === "manager"
+          ).length,
+          advertiser_count: result.accounts.filter(
+            (account: Record<string, unknown>) => account.kind === "advertiser"
+          ).length,
+          reporting_eligible_count: result.accounts.filter(
+            (account: Record<string, unknown>) => account.reportingEligible === true
+          ).length,
+          status_counts: statusCounts,
+        });
+      }
       return {view: "resume", transactionId, advertisers};
     } catch (error) {
       if (

@@ -78,6 +78,13 @@ function normalizedAccount(value, loginAccountId) {
   });
 }
 
+function providerFailureCode(error) {
+  return error && typeof error === "object"
+    && typeof error.details?.provider_error_code === "string"
+      ? error.details.provider_error_code
+      : null;
+}
+
 function client({accessToken, developerToken, loginCustomerId = null, fetchFn}) {
   return createGoogleAdsRestClient({
     accessToken,
@@ -114,11 +121,17 @@ export async function discoverGoogleAdsAccounts({
 
   for (const accessibleCustomer of accessible.customers) {
     const rootId = customerId(accessibleCustomer.customer_id);
-    const rootResult = await directClient.search({
-      customerId: rootId,
-      query: CUSTOMER_QUERY,
-      pageSize: 1,
-    });
+    let rootResult;
+    try {
+      rootResult = await directClient.search({
+        customerId: rootId,
+        query: CUSTOMER_QUERY,
+        pageSize: 1,
+      });
+    } catch (error) {
+      if (providerFailureCode(error) === "CUSTOMER_NOT_ENABLED") continue;
+      throw error;
+    }
     const rootValue = rootResult.results[0]?.customer;
     if (!rootValue) throw new Error("GOOGLE_CUSTOMER_SCHEMA_CHANGED");
     const root = normalizedAccount(rootValue, rootValue.manager === true ? rootId : null);
@@ -160,6 +173,10 @@ export async function discoverGoogleAdsAccounts({
         }
       }
     }
+  }
+
+  if (accounts.size < 1) {
+    throw new Error("GOOGLE_ADS_ENABLED_CUSTOMERS_EMPTY");
   }
 
   return Object.freeze({

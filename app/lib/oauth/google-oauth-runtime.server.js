@@ -139,6 +139,10 @@ export function createGoogleOAuthRuntime({
     config,
     oauthBoundary,
 
+    async callbackReturn({workspaceId, installGeneration}) {
+      return selections.callbackReturn({workspaceId, installGeneration});
+    },
+
     async inspect({installationAuthority}) {
       const connected = await accountAuthority.load({
         workspaceId: installationAuthority.workspaceId,

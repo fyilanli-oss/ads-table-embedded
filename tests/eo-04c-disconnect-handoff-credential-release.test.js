@@ -2,13 +2,17 @@ import assert from "node:assert/strict";
 import {readFile} from "node:fs/promises";
 import test from "node:test";
 
-const migrationUrl = new URL(
+const releaseMigrationUrl = new URL(
   "../supabase/migrations/20261011193000_eo04c_disconnect_handoff_credential_release.sql",
+  import.meta.url,
+);
+const repairMigrationUrl = new URL(
+  "../supabase/migrations/20261011194000_eo04c_finalize_stranded_invalid_google_disconnects.sql",
   import.meta.url,
 );
 
 test("disconnect finalization releases handoff credential references before deleting the credential", async () => {
-  const sql = await readFile(migrationUrl, "utf8");
+  const sql = await readFile(releaseMigrationUrl, "utf8");
   const release = sql.indexOf(
     "update integrations.provider_authorization_handoffs as handoff",
   );
@@ -32,5 +36,26 @@ test("disconnect finalization releases handoff credential references before dele
   assert.doesNotMatch(
     sql,
     /delete from integrations\.provider_authorization_handoffs/,
+  );
+});
+
+test("consumed handoff history may release credentials while pending selection cannot", async () => {
+  const sql = await readFile(repairMigrationUrl, "utf8");
+
+  assert.match(
+    sql,
+    /status = 'awaiting_selection'[\s\S]*credential_id is not null/,
+  );
+  assert.match(
+    sql,
+    /status = 'consumed'[\s\S]*consumed_at is not null[\s\S]*failure_code is null/,
+  );
+  assert.doesNotMatch(
+    sql,
+    /status = 'consumed'[\s\S]{0,120}credential_id is not null/,
+  );
+  assert.match(
+    sql,
+    /lifecycle_status = 'disconnect_pending'[\s\S]*google_refresh_token_invalid_or_revoked/,
   );
 });

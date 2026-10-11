@@ -114,6 +114,9 @@ test("Settings and callback routes preserve the accepted Shopify UI and authorit
   assert.match(settings, /error instanceof Response/);
   assert.match(settings, /globalThis[.]open\(authorizationUrl[.]toString\(\), "_top"\)/);
   assert.match(settings, /authorizationUrl[.]origin !== "https:\/\/accounts[.]google[.]com"/);
+  assert.match(settings, /google-ads-account-discovery-failed/);
+  assert.match(settings, /GOOGLE_ADS_PROVIDER_/);
+  assert.match(settings, /provider_error_code/);
   assert.match(callback, /claimCallback/);
   assert.match(callback, /installedShopifySettingsUrl/);
   assert.doesNotMatch(callback, /searchParams[.]get\("(?:shop|workspace|credential)/);

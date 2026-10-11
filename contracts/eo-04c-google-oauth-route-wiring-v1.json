@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-04c-google-oauth-route-wiring-v1",
   "version": "1.2.0",
-  "status": "Legacy_parity_correction_documented_implementation_pending",
+  "status": "Repository_implementation_PASS_deployment_pending",
   "checked_at": "2026-10-11",
   "parent": "A6-EO-04-C",
   "objective": "Wire Google OAuth begin, callback, account discovery, selection and cancellation without weakening installed-shop, OAuth, token-vault or provider-evidence authority.",

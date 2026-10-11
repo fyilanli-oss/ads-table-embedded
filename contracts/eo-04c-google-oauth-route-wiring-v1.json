@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-04c-google-oauth-route-wiring-v1",
   "version": "1.0.0",
-  "status": "Proposed_product_owner_acceptance_required_before_UI_implementation",
+  "status": "Accepted_repository_implementation_active",
   "checked_at": "2026-10-11",
   "parent": "A6-EO-04-C",
   "objective": "Wire Google OAuth begin, callback, account discovery, selection and cancellation without weakening installed-shop, OAuth, token-vault or provider-evidence authority.",
@@ -94,7 +94,7 @@
   ],
   "mutation_authority": {
     "repository_brief_and_contract": true,
-    "route_or_UI_implementation": false,
+    "route_or_UI_implementation": true,
     "live_supabase": false,
     "vercel_deploy": false,
     "live_google_oauth": false,
@@ -119,5 +119,10 @@
     "separate_deployment_approval",
     "controlled_Google_evidence",
     "real_desktop_and_mobile_visual_acceptance"
-  ]
+  ],
+  "product_owner_acceptance": {
+    "accepted_at": "2026-10-11",
+    "accepted_scope": "flow_copy_component_mapping_and_repository_route_UI_implementation",
+    "legacy_settings_reference": "behavior_only_no_legacy_code_carryover"
+  }
 }

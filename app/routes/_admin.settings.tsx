@@ -123,6 +123,28 @@ function resumeView(result: {
   };
 }
 
+function connectedView(
+  connected: {
+    accounts: Array<Record<string, unknown>>;
+    reportingAccountId: unknown;
+  },
+): SettingsState {
+  const reporting = connected.accounts.find(
+    (account: Record<string, unknown>) =>
+      account.id === connected.reportingAccountId,
+  );
+  return {
+    view: "connected",
+    count: connected.accounts.length,
+    accounts: connected.accounts.map(advertiserView),
+    reportingAccountId: String(connected.reportingAccountId),
+    reportingAccountName:
+      typeof reporting?.name === "string"
+        ? reporting.name
+        : String(connected.reportingAccountId),
+  };
+}
+
 export const loader = async ({request}: LoaderFunctionArgs): Promise<SettingsState> => {
   const verified = await authority(request);
   const runtime = createGoogleOAuthRuntime({
@@ -132,6 +154,16 @@ export const loader = async ({request}: LoaderFunctionArgs): Promise<SettingsSta
   const url = new URL(request.url);
   const transactionId = url.searchParams.get("google_setup");
   const status = url.searchParams.get("google_status");
+
+  const inspected = await runtime.googleConnection.inspect({
+    installationAuthority: verified.installationAuthority,
+  });
+  if (inspected.status === "reauthorization_required") {
+    return {view: "reauthorization"};
+  }
+  if (inspected.status === "connected") {
+    return connectedView(inspected.connection);
+  }
 
   if (transactionId !== null) {
     if (!UUID_PATTERN.test(transactionId)) {
@@ -179,29 +211,6 @@ export const loader = async ({request}: LoaderFunctionArgs): Promise<SettingsSta
     }
   }
 
-  const inspected = await runtime.googleConnection.inspect({
-    installationAuthority: verified.installationAuthority,
-  });
-  if (inspected.status === "reauthorization_required") {
-    return {view: "reauthorization"};
-  }
-  if (inspected.status === "connected") {
-    const connected = inspected.connection;
-    const reporting = connected.accounts.find(
-      (account: Record<string, unknown>) =>
-        account.id === connected.reportingAccountId
-    );
-    return {
-      view: "connected",
-      count: connected.accounts.length,
-      accounts: connected.accounts.map(advertiserView),
-      reportingAccountId: String(connected.reportingAccountId),
-      reportingAccountName:
-        typeof reporting?.name === "string"
-          ? reporting.name
-          : String(connected.reportingAccountId),
-    };
-  }
   try {
     const resumable = await runtime.handoff.resume({
       installationAuthority: verified.installationAuthority,

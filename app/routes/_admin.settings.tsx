@@ -36,6 +36,7 @@ type SettingsState =
   | {view: "empty"}
   | {view: "cancelled"}
   | {view: "expired"}
+  | {view: "reauthorization"}
   | {view: "error"; code: string}
   | {view: "resume"; transactionId: string; advertisers: Advertiser[]}
   | {
@@ -65,8 +66,12 @@ function publicErrorCode(error: unknown) {
     ? error as {code?: unknown; details?: Record<string, unknown>}
     : null;
   const providerCode = safeLogValue(source?.details?.provider_error_code);
+  const providerStatus = safeLogValue(source?.details?.provider_status);
   if (providerCode && /^[A-Z0-9_]{1,100}$/.test(providerCode)) {
     return `GOOGLE_ADS_PROVIDER_${providerCode}`;
+  }
+  if (providerStatus === "invalid_grant") {
+    return "GOOGLE_REAUTHORIZATION_REQUIRED";
   }
   const candidate =
     source && "code" in source
@@ -80,6 +85,9 @@ function publicErrorCode(error: unknown) {
     "GOOGLE_ACCESSIBLE_CUSTOMERS_EMPTY",
     "GOOGLE_ADS_ENABLED_CUSTOMERS_EMPTY",
     "GOOGLE_ADS_DEVELOPER_TOKEN_REQUIRED",
+    "GOOGLE_REAUTHORIZATION_REQUIRED",
+    "GOOGLE_REVOKE_FAILED",
+    "GOOGLE_REPORTING_ACCOUNT_NOT_VERIFIED",
   ]);
   return allowed.has(candidate) ? candidate : "GOOGLE_SETUP_FAILED";
 }
@@ -148,11 +156,24 @@ export const loader = async ({request}: LoaderFunctionArgs): Promise<SettingsSta
       }
       return {view: "resume", transactionId, advertisers};
     } catch (error) {
+      const providerStatus =
+        error && typeof error === "object" && "details" in error
+          ? safeLogValue(
+              (error as {details?: Record<string, unknown>}).details?.provider_status,
+            )
+          : null;
+      if (providerStatus === "invalid_grant") {
+        await runtime.handoff.cancel({
+          transactionId,
+          installationAuthority: verified.installationAuthority,
+        }).catch(() => undefined);
+        return {view: "reauthorization"};
+      }
       if (
         error instanceof Error
         && /HANDOFF_UNAVAILABLE|TRANSACTION_EXPIRED/.test(error.message)
       ) {
-        return {view: "expired"};
+        return {view: "error", code: "GOOGLE_SETUP_REFERENCE_INVALID"};
       }
       const source = error && typeof error === "object"
         ? error as {code?: unknown; details?: Record<string, unknown>}
@@ -167,12 +188,14 @@ export const loader = async ({request}: LoaderFunctionArgs): Promise<SettingsSta
     }
   }
 
-  const connected = await runtime.accountAuthority.load({
-    workspaceId: verified.installationAuthority.workspaceId,
-    installGeneration: verified.installationAuthority.installGeneration,
-    provider: "google_ads",
+  const inspected = await runtime.googleConnection.inspect({
+    installationAuthority: verified.installationAuthority,
   });
-  if (connected) {
+  if (inspected.status === "reauthorization_required") {
+    return {view: "reauthorization"};
+  }
+  if (inspected.status === "connected") {
+    const connected = inspected.connection;
     const reporting = connected.accounts.find(
       (account: Record<string, unknown>) =>
         account.id === connected.reportingAccountId
@@ -224,30 +247,21 @@ export const action = async ({request}: ActionFunctionArgs) => {
 
     if (intent === "reporting") {
       const providerAccountId = form.get("reportingAccountId");
-      const connected = await runtime.accountAuthority.load({
-        workspaceId: verified.installationAuthority.workspaceId,
-        installGeneration: verified.installationAuthority.installGeneration,
-        provider: "google_ads",
-      });
-      if (
-        !connected
-        || typeof providerAccountId !== "string"
-        || !connected.accounts.some(
-          (account: Record<string, unknown>) =>
-            account.kind === "advertiser" && account.id === providerAccountId
-        )
-      ) {
+      if (typeof providerAccountId !== "string") {
         return {ok: false, code: "GOOGLE_REPORTING_ACCOUNT_INVALID"} satisfies ActionData;
       }
-      await runtime.accountAuthority.selectReportingAccount({
-        connectionId: connected.connectionId,
-        workspaceId: verified.installationAuthority.workspaceId,
-        installGeneration: verified.installationAuthority.installGeneration,
-        provider: "google_ads",
+      await runtime.googleConnection.changeReportingAccount({
+        installationAuthority: verified.installationAuthority,
         providerAccountId,
-        verifiedAt: new Date().toISOString(),
       });
       return verified.context.redirect("/settings?google_status=connected");
+    }
+
+    if (intent === "disconnect") {
+      await runtime.googleConnection.disconnect({
+        installationAuthority: verified.installationAuthority,
+      });
+      return verified.context.redirect("/settings?google_status=disconnected");
     }
 
     const transactionId = form.get("transactionId");
@@ -299,9 +313,9 @@ function SafeError({code}: {code: string}) {
   if (code === "GOOGLE_ADS_ENABLED_CUSTOMERS_EMPTY") {
     return (
       <s-banner tone="warning">
-        Google authorization succeeded, but no enabled Google Ads advertiser
-        account was found. Complete account setup or reactivate the account in
-        Google Ads, then try again.
+        Google authorization succeeded, but no Google Ads advertiser account was
+        found. Manager accounts cannot be selected. Check account access in Google
+        Ads, then try again.
       </s-banner>
     );
   }
@@ -367,6 +381,11 @@ export default function Settings() {
     if (reporting) form.set("reportingAccountId", reporting);
     submit(form, {method: "post"});
   };
+  const disconnect = () => {
+    const form = new FormData();
+    form.set("intent", "disconnect");
+    submit(form, {method: "post"});
+  };
 
   return (
     <s-page heading="Settings">
@@ -419,6 +438,23 @@ export default function Settings() {
             </>
           ) : null}
 
+          {!pending && state.view === "reauthorization" ? (
+            <>
+              <s-badge tone="warning">Reauthorization required</s-badge>
+              <s-paragraph>
+                Google Ads authorization is no longer valid. Reconnect Google Ads
+                to continue reporting.
+              </s-paragraph>
+              <s-button
+                variant="primary"
+                commandFor="google-connect-modal"
+                command="--show"
+              >
+                Reconnect Google Ads
+              </s-button>
+            </>
+          ) : null}
+
           {!pending && state.view === "expired" ? (
             <>
               <s-badge tone="warning">Expired</s-badge>
@@ -462,6 +498,39 @@ export default function Settings() {
               >
                 Reporting account
               </s-button>
+              <s-button
+                tone="critical"
+                commandFor="google-disconnect-modal"
+                command="--show"
+              >
+                Disconnect
+              </s-button>
+              <s-modal
+                id="google-disconnect-modal"
+                heading="Disconnect Google Ads?"
+              >
+                <s-stack direction="block" gap="base">
+                  <s-paragraph>
+                    AdsTable will revoke Google authorization, remove the encrypted
+                    credential and stop future Google Ads refreshes. Historical
+                    reporting data will be preserved.
+                  </s-paragraph>
+                </s-stack>
+                <s-button
+                  slot="primary-action"
+                  tone="critical"
+                  onClick={disconnect}
+                >
+                  Disconnect Google Ads
+                </s-button>
+                <s-button
+                  slot="secondary-actions"
+                  commandFor="google-disconnect-modal"
+                  command="--hide"
+                >
+                  Keep connected
+                </s-button>
+              </s-modal>
               <s-modal
                 id="google-reporting-account-modal"
                 heading="Google Ads reporting account"

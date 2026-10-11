@@ -4,6 +4,8 @@ export const GOOGLE_ADS_OAUTH_SCOPE = "https://www.googleapis.com/auth/adwords";
 export const GOOGLE_ADS_AUTHORIZATION_ENDPOINT =
   "https://accounts.google.com/o/oauth2/v2/auth";
 export const GOOGLE_ADS_TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
+export const GOOGLE_ADS_REVOCATION_ENDPOINT =
+  "https://oauth2.googleapis.com/revoke";
 export const GOOGLE_ADS_REST_ORIGIN = "https://googleads.googleapis.com";
 export const GOOGLE_ADS_REST_VERSION = "v25";
 
@@ -198,6 +200,36 @@ export async function exchangeGoogleAdsAuthorizationCode({
     },
   });
   return normalizedTokenSet(payload, { requireRefreshToken: true });
+}
+
+export async function revokeGoogleAdsAuthorization({
+  token,
+  fetchFn = fetch,
+}) {
+  if (typeof fetchFn !== "function") throw new TypeError("fetchFn is required");
+  const response = await fetchFn(GOOGLE_ADS_REVOCATION_ENDPOINT, {
+    method: "POST",
+    headers: {"content-type": "application/x-www-form-urlencoded"},
+    body: new URLSearchParams({
+      token: nonEmpty(token, "GOOGLE_ADS_OAUTH_REVOCATION_TOKEN_REQUIRED"),
+    }).toString(),
+  });
+  if (response.ok) {
+    return Object.freeze({outcome: "revoked"});
+  }
+  const payload = await jsonResponse(response);
+  if (response.status === 400 && payload?.error === "invalid_token") {
+    return Object.freeze({outcome: "already_invalid"});
+  }
+  throw new GoogleAdsRestError(
+    "GOOGLE_ADS_OAUTH_REVOKE_FAILED",
+    "Google OAuth revocation endpoint rejected the request",
+    {
+      status: response.status,
+      provider_status: publicProviderError(payload),
+      request_id: responseHeader(response, "x-guploader-uploadid"),
+    },
+  );
 }
 
 export async function refreshGoogleAdsAccessToken({

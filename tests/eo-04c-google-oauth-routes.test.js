@@ -112,6 +112,16 @@ test("Settings and callback routes preserve the accepted Shopify UI and authorit
   assert.match(settings, /getAll\("connectedAccountIds"\)/);
   assert.match(settings, /id="google-connect-modal"/);
   assert.match(settings, /id="google-account-selection-modal"/);
+  assert.match(settings, />\s*Resume setup\s*</);
+  assert.match(settings, />\s*Save and connect\s*</);
+  assert.match(settings, /reportingAccountId: selectedAccountIds\[0\]/);
+  assert.match(settings, /intent", "reporting"/);
+  assert.match(settings, /id="google-reporting-account-modal"/);
+  assert.doesNotMatch(settings, /label="Connected advertiser accounts"/);
+  assert.doesNotMatch(
+    settings,
+    /slot="secondary-actions"\s+onClick=\{\(\) => cancel\(state[.]transactionId\)\}/,
+  );
   assert.match(settings, /account[.]kind === "advertiser"/);
   assert.doesNotMatch(
     settings,

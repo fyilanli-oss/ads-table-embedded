@@ -343,13 +343,13 @@ export default function Settings() {
               <s-paragraph>
                 {state.accounts.length} Google Ads advertiser account(s) connected.
               </s-paragraph>
-              <s-unordered-list>
+              <s-stack direction="block" gap="small">
                 {state.accounts.map((account) => (
-                  <s-list-item key={account.id}>
+                  <s-paragraph key={account.id}>
                     {account.name} ({account.id})
-                  </s-list-item>
+                  </s-paragraph>
                 ))}
-              </s-unordered-list>
+              </s-stack>
               <s-button
                 tone="critical"
                 commandFor="google-disconnect-modal"

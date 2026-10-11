@@ -1,7 +1,7 @@
 # EO-04-C — Google OAuth route wiring and Shopify UI brief
 
 **Control date:** 11 October 2026  
-**Status:** Proposed route/UI contract; implementation, live migration, deployment and provider calls pending  
+**Status:** Product-owner accepted; repository implementation active. Live migration, deployment and provider calls remain pending  
 **Parent:** A6-EO-04-C
 
 ## Analyst result
@@ -89,6 +89,10 @@ Before route activation, repository implementation requires a separately approve
 
 Both functions use SECURITY DEFINER with empty search path, fully qualified relations, row locking and active-generation verification. PUBLIC, anon, authenticated and service-role execution is revoked; only exact runtime execution is granted. No direct table grant is allowed.
 
+## Legacy Settings reference boundary
+
+The former Settings surface is a behavior reference only. The new implementation preserves one canonical Settings surface, one provider section, truthful Connect / Resume setup / Connected states, connected-account count and reporting-account summary. It does not copy legacy code, single-account limits, deprecated provider inventory, callback aliases, custom styling or known visual violations.
+
 ## Unchanged and out of scope
 
 Installed Shopify Store remains immutable commerce authority. Google keeps one-to-three advertiser accounts, one reporting account and non-reporting manager access paths. OAuth, PKCE, encryption and handoff contracts remain authoritative.
@@ -97,7 +101,7 @@ Out of scope: live Supabase mutation, Vercel deploy, live Google activity, Datas
 
 ## Acceptance plan
 
-- [ ] Product owner accepts flow, copy and component mapping
+- [x] Product owner accepted flow, copy and component mapping on 11 October 2026
 - [ ] Repository route/runtime and constitution tests pass
 - [ ] Private migration passes repository tests
 - [ ] Separate live migration approval and postflight pass

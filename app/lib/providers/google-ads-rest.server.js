@@ -105,6 +105,24 @@ function publicProviderError(payload) {
   return typeof status === "string" && status.length <= 100 ? status : null;
 }
 
+function publicProviderFailureCode(payload) {
+  const details = payload?.error?.details;
+  if (!Array.isArray(details)) return null;
+  for (const detail of details) {
+    if (!Array.isArray(detail?.errors)) continue;
+    for (const providerError of detail.errors) {
+      const errorCode = providerError?.errorCode;
+      if (!errorCode || typeof errorCode !== "object") continue;
+      for (const value of Object.values(errorCode)) {
+        if (typeof value === "string" && /^[A-Z0-9_]{1,100}$/.test(value)) {
+          return value;
+        }
+      }
+    }
+  }
+  return null;
+}
+
 async function postTokenForm({ form, fetchFn }) {
   const response = await fetchFn(GOOGLE_ADS_TOKEN_ENDPOINT, {
     method: "POST",
@@ -251,6 +269,7 @@ async function googleJson({ url, method, headers, body, fetchFn }) {
       {
         status: response.status,
         provider_status: publicProviderError(payload),
+        provider_error_code: publicProviderFailureCode(payload),
         request_id: requestId,
       },
     );

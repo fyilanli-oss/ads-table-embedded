@@ -3,6 +3,7 @@ import {
   useActionData,
   useLoaderData,
   useNavigation,
+  useRevalidator,
   useSubmit,
 } from "react-router";
 import {useEffect, useRef} from "react";
@@ -32,7 +33,7 @@ type State =
   | {view: "pending"; accounts: Advertiser[]}
   | {view: "connected"; accounts: Advertiser[]}
   | {view: "reauthorization"}
-  | {view: "error"; code: string};
+  | {view: "error"; code: string; retry: "oauth" | "reload"};
 
 type ActionData =
   | {ok: true; intent: "begin"; authorizationUrl: string}
@@ -98,6 +99,16 @@ export const loader = async ({request}: LoaderFunctionArgs): Promise<State> => {
       };
     }
     const status = url.searchParams.get("google_status");
+    if (status === "error") {
+      const callbackCode = url.searchParams.get("google_error");
+      return {
+        view: "error",
+        code: callbackCode && /^[A-Z0-9_]{1,80}$/.test(callbackCode)
+          ? callbackCode
+          : "GOOGLE_CALLBACK_FAILED",
+        retry: "oauth",
+      };
+    }
     return {
       view: "disconnected",
       notice: status === "cancelled"
@@ -111,7 +122,7 @@ export const loader = async ({request}: LoaderFunctionArgs): Promise<State> => {
     if (code === "GOOGLE_REAUTHORIZATION_REQUIRED") {
       return {view: "reauthorization"};
     }
-    return {view: "error", code};
+    return {view: "error", code, retry: "reload"};
   }
 };
 
@@ -147,7 +158,6 @@ export const action = async ({request}: ActionFunctionArgs) => {
       await runtime.select({
         installationAuthority: verified.installationAuthority,
         selectedAccountIds: selected,
-        reportingAccountId: selected[0] ?? "",
       });
       return verified.context.redirect("/settings");
     }
@@ -199,6 +209,7 @@ export default function Settings() {
   const actionData = useActionData<typeof action>() as ActionData;
   const submit = useSubmit();
   const navigation = useNavigation();
+  const revalidator = useRevalidator();
   const choices = useRef<any>(null);
   const pending = navigation.state !== "idle";
 
@@ -243,8 +254,14 @@ export default function Settings() {
           {!pending && state.view === "error" ? (
             <>
               <ErrorBanner code={state.code} />
-              <s-button variant="primary" onClick={() => send("begin")}>
-                Try again
+              <s-button
+                variant="primary"
+                onClick={() => {
+                  if (state.retry === "oauth") send("begin");
+                  else revalidator.revalidate();
+                }}
+              >
+                {state.retry === "oauth" ? "Restart Google Ads setup" : "Try loading accounts again"}
               </s-button>
             </>
           ) : null}

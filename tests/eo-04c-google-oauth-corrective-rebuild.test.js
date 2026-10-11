@@ -16,6 +16,9 @@ const runtime = read("app/lib/oauth/google-oauth-runtime.server.js");
 const migration = read(
   "supabase/migrations/20261011190000_eo04c_canonical_google_account_selection.sql",
 );
+const ambiguityFix = read(
+  "supabase/migrations/20261011191000_eo04c_qualify_account_selection_columns.sql",
+);
 const decision = read(
   "docs/decisions/A6_EO_04_C_GOOGLE_OAUTH_CORRECTIVE_REBUILD.md",
 );
@@ -78,4 +81,27 @@ test("manager accounts are access paths, never selected evidence", () => {
   );
   assert.match(runtime, /account.kind === "advertiser"/);
   assert.match(migration, /item.value ->> 'kind' <> 'advertiser'/);
+});
+
+test("provider account selection SQL qualifies output-column collisions", () => {
+  assert.match(
+    ambiguityFix,
+    /connection_version = target_connection[.]connection_version [+] 1/,
+  );
+  assert.match(
+    ambiguityFix,
+    /where binding[.]connection_id = p_connection_id/,
+  );
+  assert.match(
+    ambiguityFix,
+    /where account[.]connection_id = p_connection_id/,
+  );
+  assert.match(
+    ambiguityFix,
+    /on conflict on constraint provider_accounts_connection_account_unique/,
+  );
+  assert.doesNotMatch(
+    ambiguityFix,
+    /connection_version = connection_version [+] 1/,
+  );
 });

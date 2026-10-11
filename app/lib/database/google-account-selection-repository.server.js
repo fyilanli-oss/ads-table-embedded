@@ -25,6 +25,12 @@ function integer(value, code) {
   return parsed;
 }
 
+function accountsOf(value, code) {
+  const accounts = typeof value === "string" ? JSON.parse(value) : value;
+  if (!Array.isArray(accounts)) throw new Error(code);
+  return Object.freeze(accounts.map((account) => Object.freeze({...account})));
+}
+
 function record(row) {
   if (!row) return null;
   return Object.freeze({
@@ -36,6 +42,18 @@ function record(row) {
     connectedAccountCount: row.connected_account_count == null
       ? null
       : integer(row.connected_account_count, "GOOGLE_ACCOUNT_COUNT_INVALID"),
+    reportingAccountId: row.reporting_account_id ?? null,
+  });
+}
+
+function pendingReportingRecord(row) {
+  if (!row) return null;
+  return Object.freeze({
+    ...record(row),
+    accounts: accountsOf(
+      row.accounts,
+      "GOOGLE_PENDING_REPORTING_ACCOUNTS_INVALID",
+    ),
   });
 }
 
@@ -64,6 +82,15 @@ export function createGoogleAccountSelectionRepository(database) {
       ), "GOOGLE_ACCOUNT_SELECTION_LOAD"));
     },
 
+    async loadPendingReporting(value) {
+      return pendingReportingRecord(optional(await query(
+        `select * from integrations.load_pending_reporting_account_selection(
+          $1::uuid, $2::bigint, 'google_ads'
+        )`,
+        [value.workspaceId, value.installGeneration],
+      ), "GOOGLE_REPORTING_ACCOUNT_SELECTION_LOAD"));
+    },
+
     async complete(value) {
       return record(one(await query(
         `select * from integrations.complete_pending_provider_account_selection(
@@ -76,6 +103,19 @@ export function createGoogleAccountSelectionRepository(database) {
           value.verifiedAt,
         ],
       ), "GOOGLE_ACCOUNT_SELECTION_COMPLETE"));
+    },
+
+    async completeReporting(value) {
+      return record(one(await query(
+        `select * from integrations.complete_pending_reporting_account_selection(
+          $1::uuid, $2::uuid, $3::bigint, 'google_ads', $4::bigint,
+          $5::text, $6::timestamptz
+        )`,
+        [
+          value.connectionId, value.workspaceId, value.installGeneration,
+          value.expectedVersion, value.providerAccountId, value.verifiedAt,
+        ],
+      ), "GOOGLE_REPORTING_ACCOUNT_SELECTION_COMPLETE"));
     },
 
     async cancel(value) {

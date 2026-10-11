@@ -184,7 +184,9 @@ test("REST search sends verified access path, preserves opaque pagination and re
   assert.match(captured.url, /customers\/1234567890\/googleAds:search$/);
   assert.equal(captured.init.headers["login-customer-id"], "9998887777");
   assert.equal(captured.init.headers["developer-token"], config.developerToken);
-  assert.equal(JSON.parse(captured.init.body).pageToken, "opaque-current");
+  const requestBody = JSON.parse(captured.init.body);
+  assert.equal(requestBody.pageToken, "opaque-current");
+  assert.equal("pageSize" in requestBody, false);
   assert.equal(result.next_page_token, "opaque-next");
   assert.equal(result.total_results_count, 1);
   assert.equal(result.request_id, "request-2");

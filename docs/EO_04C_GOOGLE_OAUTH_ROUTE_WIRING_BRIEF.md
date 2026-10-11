@@ -47,6 +47,12 @@ Controlled production evidence found five accessible Google accounts: two manage
 
 The binding selection rule is account kind only: a provider-verified non-manager advertiser may be selected. Manager accounts remain internal `login-customer-id` access paths; they never appear in the merchant selection list, never count toward the one-to-three limit and can never be the reporting account. A directly accessible advertiser uses its own customer ID as the login account context. The pre-OAuth confirmation modal and the post-OAuth account-selection modal are both required legacy behavior.
 
+## Corrected legacy UI flow — 11 October 2026
+
+The initial post-OAuth step has one account selection only. The merchant selects one to three provider-verified advertiser accounts and chooses **Save and connect**. AdsTable atomically uses the first selected advertiser as the initial reporting account; it does not ask for a second reporting-account choice during setup.
+
+After connection, Settings exposes reporting-account change as a separate action limited to the already connected advertiser accounts. Closing the account-selection modal does not cancel, invalidate or restart OAuth. It leaves the handoff pending. **Resume setup** reloads fresh provider evidence for that pending handoff and opens only the account-selection modal; it never starts a new OAuth transaction.
+
 ## State matrix and exact copy
 
 | State | Exact merchant copy | Actions |

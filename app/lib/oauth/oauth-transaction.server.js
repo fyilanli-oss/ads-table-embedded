@@ -231,6 +231,10 @@ export function createOAuthTransactionBoundary({
         });
         return Object.freeze({
           transactionId: claimed.transactionId,
+          workspaceId: claimed.workspaceId,
+          installGeneration: claimed.installGeneration,
+          provider: selectedProvider,
+          callbackUri: claimed.callbackUri,
           status: "denied",
         });
       }

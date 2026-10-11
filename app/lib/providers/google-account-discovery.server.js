@@ -128,7 +128,12 @@ export async function discoverGoogleAdsAccounts({
         query: CUSTOMER_QUERY,
       });
     } catch (error) {
-      if (providerFailureCode(error) === "CUSTOMER_NOT_ENABLED") continue;
+      if ([
+        "CUSTOMER_NOT_ENABLED",
+        "CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION",
+      ].includes(providerFailureCode(error))) {
+        continue;
+      }
       throw error;
     }
     const rootValue = rootResult.results[0]?.customer;

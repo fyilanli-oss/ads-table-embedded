@@ -76,6 +76,7 @@ function publicErrorCode(error: unknown) {
     "GOOGLE_ACCOUNT_SELECTION_INVALID",
     "GOOGLE_ACCOUNT_SELECTION_NOT_VERIFIED_OR_INELIGIBLE",
     "GOOGLE_ACCESSIBLE_CUSTOMERS_EMPTY",
+    "GOOGLE_ADS_ENABLED_CUSTOMERS_EMPTY",
     "GOOGLE_ADS_DEVELOPER_TOKEN_REQUIRED",
   ]);
   return allowed.has(candidate) ? candidate : "GOOGLE_SETUP_FAILED";
@@ -245,6 +246,15 @@ function Navigation() {
 }
 
 function SafeError({code}: {code: string}) {
+  if (code === "GOOGLE_ADS_ENABLED_CUSTOMERS_EMPTY") {
+    return (
+      <s-banner tone="warning">
+        Google authorization succeeded, but no enabled Google Ads advertiser
+        account was found. Complete account setup or reactivate the account in
+        Google Ads, then try again.
+      </s-banner>
+    );
+  }
   return (
     <s-banner tone="critical">
       Google Ads could not be connected. Try again. If the problem continues,

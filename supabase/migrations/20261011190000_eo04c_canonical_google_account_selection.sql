@@ -204,15 +204,13 @@ create or replace function integrations.complete_pending_provider_account_select
   p_provider text,
   p_expected_version bigint,
   p_accounts jsonb,
-  p_reporting_account_id text,
   p_verified_at timestamptz
 )
 returns table (
   connection_id uuid,
   lifecycle_status text,
   connection_version bigint,
-  connected_account_count smallint,
-  reporting_account_id text
+  connected_account_count smallint
 )
 language plpgsql
 security definer
@@ -221,15 +219,12 @@ as $function$
 declare
   current_connection integrations.provider_connections%rowtype;
   selected_count integer;
-  reporting_row_id bigint;
 begin
   if p_connection_id is null or p_workspace_id is null
      or p_install_generation is null or p_install_generation < 1
      or p_provider not in ('meta', 'google_ads')
      or p_expected_version is null or p_expected_version < 1
      or p_accounts is null or jsonb_typeof(p_accounts) <> 'array'
-     or p_reporting_account_id is null
-     or p_reporting_account_id <> btrim(p_reporting_account_id)
      or p_verified_at is null
      or p_verified_at < statement_timestamp() - interval '10 minutes'
      or p_verified_at > statement_timestamp() + interval '1 minute' then
@@ -252,16 +247,22 @@ begin
           'credential_id', 'workspace_id', 'install_generation',
           'access_token', 'refresh_token', 'token'
         ]
+        or jsonb_typeof(item.value -> 'id') <> 'string'
+        or jsonb_typeof(item.value -> 'name') <> 'string'
+        or jsonb_typeof(item.value -> 'kind') <> 'string'
+        or jsonb_typeof(item.value -> 'reporting_eligible') <> 'boolean'
         or length(btrim(item.value ->> 'id')) not between 1 and 255
         or length(btrim(item.value ->> 'name')) not between 1 and 255
         or item.value ->> 'kind' <> 'advertiser'
-        or coalesce((item.value ->> 'reporting_eligible')::boolean, false) is not true
+        or (item.value ->> 'reporting_eligible')::boolean is not true
   ) then raise exception 'ADVERTISER_ACCOUNT_EVIDENCE_INVALID'; end if;
 
-  if not exists (
-    select 1 from jsonb_array_elements(p_accounts) as item(value)
-     where item.value ->> 'id' = p_reporting_account_id
-  ) then raise exception 'REPORTING_ACCOUNT_NOT_SELECTED'; end if;
+  if (
+    select count(distinct item.value ->> 'id')
+      from jsonb_array_elements(p_accounts) as item(value)
+  ) <> selected_count then
+    raise exception 'ADVERTISER_ACCOUNT_DUPLICATE';
+  end if;
 
   select connection.* into current_connection
     from integrations.provider_connections as connection
@@ -318,25 +319,6 @@ begin
         active = true,
         disconnected_at = null;
 
-  select account.id into reporting_row_id
-    from integrations.provider_accounts as account
-   where account.connection_id = p_connection_id
-     and account.provider_account_id = p_reporting_account_id
-     and account.account_kind = 'advertiser'
-     and account.reporting_eligible and account.active;
-
-  if reporting_row_id is null then
-    raise exception 'REPORTING_ACCOUNT_NOT_VERIFIED_OR_INELIGIBLE';
-  end if;
-
-  insert into integrations.reporting_account_bindings (
-    connection_id, account_id, workspace_id, install_generation, provider,
-    effective_from, change_reason, created_at
-  ) values (
-    p_connection_id, reporting_row_id, p_workspace_id, p_install_generation,
-    p_provider, p_verified_at, 'initial_selection', p_verified_at
-  );
-
   update integrations.provider_connections
      set lifecycle_status = 'connected',
          connection_version = connection_version + 1,
@@ -361,8 +343,7 @@ begin
 
   return query
     select connection.id, connection.lifecycle_status,
-           connection.connection_version, selected_count::smallint,
-           p_reporting_account_id
+           connection.connection_version, selected_count::smallint
       from integrations.provider_connections as connection
      where connection.id = p_connection_id;
 end
@@ -466,7 +447,7 @@ revoke all on function integrations.load_pending_provider_account_selection(
   uuid, bigint, text
 ) from public, anon, authenticated, service_role, adstable_runtime;
 revoke all on function integrations.complete_pending_provider_account_selection(
-  uuid, uuid, bigint, text, bigint, jsonb, text, timestamptz
+  uuid, uuid, bigint, text, bigint, jsonb, timestamptz
 ) from public, anon, authenticated, service_role, adstable_runtime;
 revoke all on function integrations.cancel_pending_provider_account_selection(
   uuid, uuid, bigint, text, bigint, timestamptz
@@ -482,7 +463,7 @@ grant execute on function integrations.load_pending_provider_account_selection(
   uuid, bigint, text
 ) to adstable_runtime;
 grant execute on function integrations.complete_pending_provider_account_selection(
-  uuid, uuid, bigint, text, bigint, jsonb, text, timestamptz
+  uuid, uuid, bigint, text, bigint, jsonb, timestamptz
 ) to adstable_runtime;
 grant execute on function integrations.cancel_pending_provider_account_selection(
   uuid, uuid, bigint, text, bigint, timestamptz
@@ -496,6 +477,9 @@ comment on function integrations.stage_provider_account_selection(
 ) is 'Stages a provider credential on the one canonical connection without granting reporting authority.';
 comment on column integrations.provider_connections.lifecycle_status is
   'Only connected grants reporting authority. pending_account_selection stores resumable server-side setup state.';
+comment on function integrations.complete_pending_provider_account_selection(
+  uuid, uuid, bigint, text, bigint, jsonb, timestamptz
+) is 'Completes Google account selection. Every selected eligible advertiser account has equal reporting authority; no hidden primary account exists.';
 
 reset role;
 

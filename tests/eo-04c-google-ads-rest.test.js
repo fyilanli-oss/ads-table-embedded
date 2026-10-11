@@ -196,7 +196,20 @@ test("provider errors never include access or refresh token material", async () 
     developerToken: config.developerToken,
     fetchFn: async () => response(
       401,
-      { error: { status: "UNAUTHENTICATED", message: "provider raw message" } },
+      {
+        error: {
+          status: "PERMISSION_DENIED",
+          message: "provider raw message",
+          details: [{
+            errors: [{
+              errorCode: {
+                authorizationError: "CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION",
+              },
+              message: "provider nested raw message",
+            }],
+          }],
+        },
+      },
       { "request-id": "request-3" },
     ),
   });
@@ -205,9 +218,16 @@ test("provider errors never include access or refresh token material", async () 
     (error) => {
       assert.ok(error instanceof GoogleAdsRestError);
       assert.equal(error.code, "GOOGLE_ADS_REST_REQUEST_FAILED");
-      assert.equal(error.details.provider_status, "UNAUTHENTICATED");
+      assert.equal(error.details.provider_status, "PERMISSION_DENIED");
+      assert.equal(
+        error.details.provider_error_code,
+        "CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION",
+      );
       assert.equal(error.details.request_id, "request-3");
-      assert.doesNotMatch(JSON.stringify(error), /super-secret-access-token|provider raw message/);
+      assert.doesNotMatch(
+        JSON.stringify(error),
+        /super-secret-access-token|provider raw message|provider nested raw message/,
+      );
       return true;
     },
   );

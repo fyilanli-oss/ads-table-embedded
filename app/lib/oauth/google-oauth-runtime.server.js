@@ -263,7 +263,7 @@ export function createGoogleOAuthRuntime({
       }
     },
 
-    async select({installationAuthority, selectedAccountIds, reportingAccountId}) {
+    async select({installationAuthority, selectedAccountIds}) {
       const pending = await selections.loadPending({
         workspaceId: installationAuthority.workspaceId,
         installGeneration: installationAuthority.installGeneration,
@@ -279,9 +279,6 @@ export function createGoogleOAuthRuntime({
         discovered.advertisers,
         selectedAccountIds,
       );
-      if (!chosen.some((account) => account.id === reportingAccountId)) {
-        throw new Error("REPORTING_ACCOUNT_NOT_SELECTED");
-      }
       return selections.complete({
         connectionId: (discovered.pending ?? pending).connectionId,
         workspaceId: installationAuthority.workspaceId,
@@ -297,7 +294,6 @@ export function createGoogleOAuthRuntime({
           timezone: account.timezone,
           login_account_id: account.loginAccountId,
         })),
-        reportingAccountId,
         verifiedAt: discovered.evidence.verifiedAt,
       });
     },

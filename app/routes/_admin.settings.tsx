@@ -162,13 +162,6 @@ export const action = async ({request}: ActionFunctionArgs) => {
       return verified.context.redirect("/settings");
     }
 
-    if (intent === "cancel") {
-      await runtime.cancel({
-        installationAuthority: verified.installationAuthority,
-      });
-      return verified.context.redirect("/settings?google_status=cancelled");
-    }
-
     if (intent === "disconnect") {
       await runtime.disconnect({
         installationAuthority: verified.installationAuthority,
@@ -211,7 +204,11 @@ export default function Settings() {
   const navigation = useNavigation();
   const revalidator = useRevalidator();
   const choices = useRef<any>(null);
+  const accountModal = useRef<any>(null);
+  const pendingModalOpened = useRef(false);
+  const resumeRequested = useRef(false);
   const pending = navigation.state !== "idle";
+  const working = pending || revalidator.state !== "idle";
 
   useEffect(() => {
     if (actionData?.ok !== true || actionData.intent !== "begin") return;
@@ -222,10 +219,28 @@ export default function Settings() {
     ) globalThis.open(target.toString(), "_top");
   }, [actionData]);
 
+  useEffect(() => {
+    if (state.view !== "pending") {
+      pendingModalOpened.current = false;
+      resumeRequested.current = false;
+      return;
+    }
+    if (working) return;
+    if (pendingModalOpened.current && !resumeRequested.current) return;
+    pendingModalOpened.current = true;
+    resumeRequested.current = false;
+    accountModal.current?.showOverlay?.();
+  }, [state.view, working]);
+
   const send = (intent: string) => {
     const form = new FormData();
     form.set("intent", intent);
     submit(form, {method: "post"});
+  };
+
+  const resumeAccountSelection = () => {
+    resumeRequested.current = true;
+    revalidator.revalidate();
   };
 
   const select = () => {
@@ -244,14 +259,14 @@ export default function Settings() {
         <s-stack direction="block" gap="base">
           {actionData?.ok === false ? <ErrorBanner code={actionData.code} /> : null}
 
-          {pending ? (
+          {working ? (
             <>
               <s-badge tone="info">Working</s-badge>
               <s-paragraph>Google Ads setup is being updated…</s-paragraph>
             </>
           ) : null}
 
-          {!pending && state.view === "error" ? (
+          {!working && state.view === "error" ? (
             <>
               <ErrorBanner code={state.code} />
               <s-button
@@ -266,7 +281,7 @@ export default function Settings() {
             </>
           ) : null}
 
-          {!pending && state.view === "reauthorization" ? (
+          {!working && state.view === "reauthorization" ? (
             <>
               <s-badge tone="warning">Reauthorization required</s-badge>
               <s-paragraph>
@@ -278,7 +293,7 @@ export default function Settings() {
             </>
           ) : null}
 
-          {!pending && state.view === "disconnected" ? (
+          {!working && state.view === "disconnected" ? (
             <>
               <s-badge>Not connected</s-badge>
               {state.notice === "cancelled" ? (
@@ -303,22 +318,21 @@ export default function Settings() {
             </>
           ) : null}
 
-          {!pending && state.view === "pending" ? (
+          {!working && state.view === "pending" ? (
             <>
               <s-badge tone="info">Select accounts</s-badge>
               <s-paragraph>
                 Google authorization is complete. Select one to three advertiser
                 accounts to finish setup.
               </s-paragraph>
-              <s-button
-                variant="primary"
-                commandFor="google-account-modal"
-                command="--show"
-              >
-                Select advertiser accounts
+              <s-button variant="primary" onClick={resumeAccountSelection}>
+                Resume setup
               </s-button>
-              <s-button onClick={() => send("cancel")}>Cancel setup</s-button>
-              <s-modal id="google-account-modal" heading="Google Ads accounts">
+              <s-modal
+                ref={accountModal}
+                id="google-account-modal"
+                heading="Google Ads accounts"
+              >
                 <s-stack direction="block" gap="base">
                   <s-paragraph>
                     Choose between one and three advertiser accounts.
@@ -354,7 +368,7 @@ export default function Settings() {
             </>
           ) : null}
 
-          {!pending && state.view === "connected" ? (
+          {!working && state.view === "connected" ? (
             <>
               <s-badge tone="success">Connected</s-badge>
               <s-paragraph>

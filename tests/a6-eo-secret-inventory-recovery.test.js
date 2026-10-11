@@ -49,6 +49,7 @@ test("non-reconstructible secrets require controlled recovery and no blind repla
     "ADSTABLE_SESSION_ENCRYPTION_KEY_V1",
     "ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_V1",
     "SHOPIFY_APP_AUTOMATION_TOKEN",
+    "GOOGLE_ADS_OAUTH_CLIENT_SECRET",
   ]) {
     assert.equal(byKey.get(key).product_owner_encrypted_recovery_copy, "required");
     assert.equal(byKey.get(key).plaintext_readback, false);
@@ -77,8 +78,29 @@ test("Execution Plan and master contract expose the EO-04 secret gate", async ()
   }
 
   assert.equal(master.schema_version, "1.23.0");
-  assert.equal(gate.status, "Ready_for_product_owner_acceptance");
-  assert.equal(gate.inventory_count, 12);
+  assert.equal(gate.status, "Accepted_name_only_inventory_extended_for_Google");
+  assert.equal(gate.inventory_count, 15);
   assert.equal(gate.mutation_authorized, false);
   assert.equal(gate.owner_package_for_future_provider_secrets, "A6-EO-04");
+});
+
+test("Google Ads credentials are name-only, production-scoped and keep tokens out of Vercel", async () => {
+  const contract = await readJson("contracts/a6-eo-secret-inventory-recovery-v1.json");
+  const byKey = new Map(contract.inventory.map((item) => [item.key, item]));
+  const google = contract.google_ads_provider_credentials;
+
+  assert.equal(contract.version, "1.1.0");
+  assert.equal(contract.status, "Accepted_name_only_inventory_extended_for_Google");
+  assert.equal(contract.current_inventory_count, 15);
+  assert.equal(contract.vercel_inventory_count, 14);
+  assert.equal(byKey.get("GOOGLE_ADS_OAUTH_CLIENT_ID").storage_type, "config");
+  assert.equal(byKey.get("GOOGLE_ADS_OAUTH_CLIENT_SECRET").storage_type, "secret");
+  assert.equal(byKey.get("GOOGLE_ADS_OAUTH_REDIRECT_URI").storage_type, "config");
+  assert.equal(google.scope, "https://www.googleapis.com/auth/adwords");
+  assert.equal(google.developer_token_required, false);
+  assert.match(google.refresh_token_storage, /encrypted/);
+  assert.equal(google.access_token_storage, "memory_only_with_expiry");
+  assert.equal(google.global_refresh_token_forbidden, true);
+  assert.equal(google.legacy_secret_values_readable_or_transferable, false);
+  assert.equal(google.secret_mutation_authorized, false);
 });

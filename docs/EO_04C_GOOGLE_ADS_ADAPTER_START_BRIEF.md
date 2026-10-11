@@ -139,7 +139,7 @@ Implementation is CI-PASS (run `38127917558`, 192/192 tests, typecheck and produ
 
 ### Gate 3 — separately authorized live evidence
 
-Live evidence must prove account discovery, Standard Ad structure, PMax Asset Group structure, metric response shapes, conversion categories, time/currency, complete pagination and—when cart data exists—the deepest sold-product grain. Secrets, OAuth and live provider calls require their own accepted gate.
+Live evidence must prove account discovery, Standard Ad structure, PMax Asset Group structure, metric response shapes, conversion categories, time/currency, complete pagination and—when cart data exists—the deepest sold-product grain. The product owner authorized this read-only gate on 11 October 2026, but preflight stopped before OAuth or a live request: the clean Vercel project lacks the three inventoried Google OAuth entries and provider-token-key recovery custody is not evidenced. Legacy masked entries are neither readable nor transferable.
 
 ### Gate 4 — closure
 

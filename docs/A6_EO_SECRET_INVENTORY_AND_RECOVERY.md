@@ -1,14 +1,14 @@
 # A6-EO Secret inventory, custody and recovery
 
-**Control date:** 10 October 2026  
-**Status:** Ready for product-owner acceptance  
+**Control date:** 11 October 2026  
+**Status:** Accepted name-only inventory; Google Ads extension recorded without secret mutation  
 **Scope:** Current Production Vercel environment and GitHub Actions secret inventory  
 **Binding contract:** `contracts/a6-eo-secret-inventory-recovery-v1.json`  
 **CI enforcement:** `tests/a6-eo-secret-inventory-recovery.test.js`
 
 ## Analyst result
 
-AdsTable currently has eleven Vercel environment entries and one GitHub Actions secret. Vercel stores six entries as Secret, but one of those is the non-confidential active-key version selector; the other five Vercel entries and the GitHub token are confidential credentials or key material. Five Vercel entries are reconstructible Config. No secret value is stored in this document, the repository, chat evidence or a local project file.
+AdsTable's accepted inventory now has fourteen Vercel environment entries and one GitHub Actions secret. The three added Google Ads names are not yet provisioned in the clean Vercel project. Vercel stores six entries as Secret, but one of those is the non-confidential active-key version selector; the other five Vercel entries and the GitHub token are confidential credentials or key material. Five Vercel entries are reconstructible Config. No secret value is stored in this document, the repository, chat evidence or a local project file.
 
 A masked value in Vercel or GitHub is not deleted. Both systems deliberately prevent plaintext read-back. The canonical runtime copy remains in the provider secret store. A second copy is allowed only in one product-owner-controlled encrypted recovery vault. A browser download, note, screenshot, repository file, chat message, desktop text file or machine backup is not an approved recovery vault.
 
@@ -29,7 +29,7 @@ This contract inventories names and recovery procedures. It authorizes no rotati
 | `ADSTABLE_SESSION_ENCRYPTION_KEY_V1` | Vercel Production / Secret | AES-256-GCM Shopify session encryption key | Encrypted recovery copy required; current external copy is not proven | The same key cannot be regenerated. Without it, old session ciphertext is unreadable; use an approved session-reset/reinstallation plan. Blind replacement is forbidden |
 | `ADSTABLE_PROVIDER_TOKEN_ACTIVE_KEY_VERSION` | Vercel Production / Secret (classification debt) | Selects the provider-token write key; current logical value is version 1 | No plaintext secret backup needed; contract is authority | Restore the accepted version number. Reclassifying it as Config is a separately approved cleanup |
 | `ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_V1` | Vercel Production / Secret | AES-256-GCM provider token/PKCE envelope key | Encrypted recovery copy required before the first real provider authorization | The same key cannot be regenerated. Add a new version, keep all referenced old versions readable, rotate envelopes, verify zero references, then remove an old key |
-| `SHOPIFY_APP_AUTOMATION_TOKEN` | GitHub repository Actions Secret | App-scoped Shopify CLI validation/deployment token | Encrypted recovery copy and exact expiry record required | Generate a replacement in Shopify Dev Dashboard, update GitHub Actions Secret and validate through the approved workflow before expiry |
+| `GOOGLE_ADS_OAUTH_CLIENT_ID` | Vercel Production / Config | Google Cloud Web application OAuth client ID | Plaintext backup unnecessary; reconstruct from the owning Google Cloud project | Copy the identifier again; no rotation |\n| `GOOGLE_ADS_OAUTH_CLIENT_SECRET` | Vercel Production / Secret | Google Cloud Web application OAuth client secret | Encrypted recovery copy required before first authorization | Create or rotate the credential, update Production Vercel, redeploy and reconnect the controlled account before retiring the old credential |\n| `GOOGLE_ADS_OAUTH_REDIRECT_URI` | Vercel Production / Config | Exact AdsTable callback registered in Google Cloud | Contract/provider record is sufficient | Reconstruct from the accepted callback route and make both sides identical |\n| `SHOPIFY_APP_AUTOMATION_TOKEN` | GitHub repository Actions Secret | App-scoped Shopify CLI validation/deployment token | Encrypted recovery copy and exact expiry record required | Generate a replacement in Shopify Dev Dashboard, update GitHub Actions Secret and validate through the approved workflow before expiry |
 
 ## What remains under product-owner control
 
@@ -95,6 +95,16 @@ The current application consumes only `ADSTABLE_SESSION_ENCRYPTION_KEY_V1`; it d
 
 This key family is versioned. New writes use the active version and reads must retain every version referenced by ciphertext rows. The safe order is add V2, deploy/read V1+V2, switch the active version, rotate envelopes, prove no row references V1, and only then remove V1. A newly generated value can never decrypt ciphertext created with a lost value.
 
+### Google Ads credential boundary — 11 October 2026
+
+- The clean project uses a Google Cloud **Web application** OAuth client with the `https://www.googleapis.com/auth/adwords` scope and offline access.
+- Vercel stores only the client ID, client secret and exact redirect URI. The client secret is Production-only and write-only.
+- Each merchant refresh token is encrypted per provider connection in the forced-RLS database with the versioned provider-token keyring. Access tokens remain memory-only.
+- `login_customer_id` is verified account-access-path evidence, not one global environment variable.
+- The developer token is not introduced: the current official contract assigns access level to the Google Cloud project.
+- The old project's masked names are evidence of prior configuration, not readable or transferable credentials.
+- This extension authorizes no Vercel write, Google credential creation, OAuth authorization or live provider call.
+
 ## EO-04 extension gate
 
 EO-04 must not invent or provision Meta, Google Ads or Klaviyo client secrets from memory. Before each provider child creates a credential, its current official documentation must define:
@@ -108,7 +118,11 @@ EO-04 must not invent or provision Meta, Google Ads or Klaviyo client secrets fr
 
 The machine-readable inventory and its test must be extended in the same change that introduces a new credential.
 
-## Official sources checked on 10 October 2026
+### Google Ads OAuth client secret
+
+Create or rotate the Web application OAuth credential only in the Google Cloud project that owns Ads API access. Capture the secret once in the approved encrypted recovery vault, store it only as the Production Vercel Secret, deploy the exact callback consumer, and prove a controlled reconnect before retiring an older credential. Refresh tokens remain database ciphertext and are revoked/deleted when the user disconnects.
+
+## Official sources checked on 11 October 2026
 
 - Shopify app credentials: https://shopify.dev/docs/apps/build/authentication-authorization/manage-credentials
 - Shopify App Automation Tokens: https://shopify.dev/docs/apps/build/dev-dashboard/app-automation-tokens
@@ -122,3 +136,10 @@ The machine-readable inventory and its test must be extended in the same change 
 - Supabase pool limits: https://supabase.com/docs/guides/database/connecting-to-postgres/pooling-and-limits
 - Supabase password-rotation cache behavior: https://supabase.com/docs/guides/troubleshooting/supavisor-error-password-authentication-failed-after-password-rotation
 - Supabase changelog: https://supabase.com/changelog
+
+
+Google Ads additions checked 11 October 2026:
+
+- Credential management: https://developers.google.com/google-ads/api/docs/oauth/credential-management
+- OAuth Web server flow: https://developers.google.com/identity/protocols/oauth2/web-server
+- Developer-token sunset: https://developers.google.com/google-ads/api/docs/api-policy/developer-token

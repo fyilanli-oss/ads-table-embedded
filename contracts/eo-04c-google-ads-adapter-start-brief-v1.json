@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-04c-google-ads-adapter-start-brief-v1",
   "version": "1.2.0",
-  "status": "Repository_CI_PASS_controlled_live_evidence_pending",
+  "status": "Repository_CI_PASS_controlled_live_evidence_preflight_blocked",
   "checked_at": "2026-10-11",
   "parent": "A6-EO-04",
   "package": "A6-EO-04-C",
@@ -333,7 +333,7 @@
   "mutations_authorized": {
     "documentation": true,
     "implementation": true,
-    "provider": false,
+    "provider": true,
     "oauth": false,
     "secrets": false,
     "database": false,
@@ -411,5 +411,26 @@
     "repository_tests": "PASS_192_of_192",
     "typecheck": "PASS",
     "preview_build": "PASS"
+  },
+  "live_evidence_preflight": {
+    "checked_at": "2026-10-11",
+    "authorization": "accepted_by_product_owner_continue_instruction",
+    "mode": "read_only_controlled_Google_Ads_evidence",
+    "clean_vercel_project_credentials_present": false,
+    "missing_names": [
+      "GOOGLE_ADS_OAUTH_CLIENT_ID",
+      "GOOGLE_ADS_OAUTH_CLIENT_SECRET",
+      "GOOGLE_ADS_OAUTH_REDIRECT_URI"
+    ],
+    "legacy_project_name_only_evidence": [
+      "GOOGLE_CLIENT_ID",
+      "GOOGLE_CLIENT_SECRET",
+      "GOOGLE_REDIRECT_URI"
+    ],
+    "legacy_values_readable_or_transferable": false,
+    "provider_token_encryption_key_recovery_custody_evidenced": false,
+    "result": "BLOCKED_before_OAuth_or_live_call",
+    "no_live_request_sent": true,
+    "no_secret_mutation_performed": true
   }
 }

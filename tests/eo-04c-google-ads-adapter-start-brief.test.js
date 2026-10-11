@@ -7,7 +7,7 @@ const readJson = async (path) => JSON.parse(await readFile(path, "utf8"));
 test("EO-04-C freezes truthful Google account and hierarchy boundaries", async () => {
   const contract = await readJson("contracts/eo-04c-google-ads-adapter-start-brief-v1.json");
 
-  assert.equal(contract.status, "Repository_CI_PASS_controlled_live_evidence_pending");
+  assert.equal(contract.status, "Repository_CI_PASS_controlled_live_evidence_preflight_blocked");
   assert.equal(contract.authority.reporting_accounts.minimum, 1);
   assert.equal(contract.authority.reporting_accounts.maximum, 3);
   assert.equal(contract.authority.reporting_accounts.customer_manager_must_be_false, true);
@@ -28,7 +28,7 @@ test("EO-04-C freezes truthful Google account and hierarchy boundaries", async (
   assert.equal(contract.hierarchy.synthetic_ad_leaf_for_performance_max_forbidden, true);
   assert.equal(contract.api.developer_token_required, false);
   assert.equal(contract.mutations_authorized.implementation, true);
-  assert.equal(contract.mutations_authorized.provider, false);
+  assert.equal(contract.mutations_authorized.provider, true);
 });
 
 test("EO-04-C freezes canonical Funnel, zero and attribution semantics", async () => {
@@ -85,7 +85,7 @@ test("Execution Plan and master advance documentation discovery to EO-04-D witho
   assert.equal(master.current_active_child, "A6-EO-04-D");
   assert.equal(master.current_gate, "A6-EO-04-D_start_brief_accepted_repository_implementation_pending");
   assert.equal(eo04b.status, "Repository_CI_PASS_controlled_live_evidence_pending");
-  assert.equal(eo04c.status, "Repository_CI_PASS_controlled_live_evidence_pending");
+  assert.equal(eo04c.status, "Repository_CI_PASS_controlled_live_evidence_preflight_blocked");
   assert.equal(eo04c.live_mutation_authorized, false);
   assert.equal(eo04d.status, "Start_brief_accepted_repository_implementation_pending");
   assert.equal(eo04d.implementation_started, false);
@@ -113,4 +113,18 @@ test("EO-04-C separates Google performance and product request families without 
   assert.equal(families.sold_product_cart.units_sold_must_not_be_relabelled_purchase, true);
   assert.equal(product.presentation_boundary.Channel_is_provider_entity, false);
   assert.equal(product.presentation_boundary.Channel_is_canonical_Dataset_entity_type, false);
+});
+
+test("EO-04-C live preflight stops before OAuth when clean credentials and recovery custody are missing", async () => {
+  const contract = await readJson("contracts/eo-04c-google-ads-adapter-start-brief-v1.json");
+  const preflight = contract.live_evidence_preflight;
+
+  assert.equal(contract.status, "Repository_CI_PASS_controlled_live_evidence_preflight_blocked");
+  assert.equal(preflight.authorization, "accepted_by_product_owner_continue_instruction");
+  assert.equal(preflight.clean_vercel_project_credentials_present, false);
+  assert.equal(preflight.legacy_values_readable_or_transferable, false);
+  assert.equal(preflight.provider_token_encryption_key_recovery_custody_evidenced, false);
+  assert.equal(preflight.result, "BLOCKED_before_OAuth_or_live_call");
+  assert.equal(preflight.no_live_request_sent, true);
+  assert.equal(preflight.no_secret_mutation_performed, true);
 });

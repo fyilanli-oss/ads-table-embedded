@@ -253,19 +253,22 @@
     },
     "secret_inventory_recovery_v1": {
       "decided_at": "2026-10-10",
-      "status": "Ready_for_product_owner_acceptance",
+      "status": "Accepted_name_only_inventory_extended_for_Google",
       "document": "docs/A6_EO_SECRET_INVENTORY_AND_RECOVERY.md",
       "contract": "contracts/a6-eo-secret-inventory-recovery-v1.json",
       "ci_test": "tests/a6-eo-secret-inventory-recovery.test.js",
-      "inventory_count": 12,
-      "current_vercel_entries": 11,
+      "inventory_count": 15,
+      "current_vercel_entries": 14,
       "current_github_actions_secrets": 1,
       "values_persisted_in_repository": false,
       "product_owner_encrypted_recovery_vault_is_only_approved_secondary_plaintext_location": true,
       "existing_secondary_copy_assumed": false,
       "mutation_authorized": false,
       "owner_package_for_future_provider_secrets": "A6-EO-04",
-      "first_real_provider_authorization_blocked_until_recovery_and_provider_extension_gate": true
+      "first_real_provider_authorization_blocked_until_recovery_and_provider_extension_gate": true,
+      "google_ads_extension_checked_at": "2026-10-11",
+      "google_ads_clean_project_credentials_present": false,
+      "google_ads_secret_mutation_authorized": false
     },
     "official_provider_documentation_watch_v1": {
       "decided_at": "2026-10-10",
@@ -667,7 +670,7 @@
           "id": "A6-EO-04-C",
           "title": "Google Ads adapter",
           "objective": "Standard Ad and Performance Max Asset Group hierarchy with raw structure evidence.",
-          "status": "Repository_CI_PASS_controlled_live_evidence_pending",
+          "status": "Repository_CI_PASS_controlled_live_evidence_preflight_blocked",
           "implementation_started": true,
           "live_mutation_authorized": false,
           "document": "docs/EO_04C_GOOGLE_ADS_ADAPTER_START_BRIEF.md",
@@ -682,7 +685,7 @@
           "performance_max_leaf": "asset_group",
           "cart_data_deepest_grain_status": "campaign_or_ad_group_sold_product_native;_Search_ad_product_relation_unsupported",
           "repository_implementation": "PASS",
-          "live_evidence_authorized": false,
+          "live_evidence_authorized": true,
           "google_product_request_families": [
             "canonical_ad_performance",
             "shopping_product_performance",
@@ -696,7 +699,8 @@
           "repository_ci": "PASS_run_38127917558",
           "repository_tests": "PASS_192_of_192",
           "typecheck": "PASS",
-          "preview_build": "PASS"
+          "preview_build": "PASS",
+          "live_evidence_preflight": "BLOCKED_missing_clean_project_Google_OAuth_credentials_and_provider_key_recovery_custody"
         },
         {
           "id": "A6-EO-04-D",

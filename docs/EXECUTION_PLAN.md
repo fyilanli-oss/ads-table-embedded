@@ -54,13 +54,13 @@ Binding analyst brief: `docs/A6_EO_SECRET_INVENTORY_AND_RECOVERY.md`
 Executable contract: `contracts/a6-eo-secret-inventory-recovery-v1.json`  
 CI enforcement: `tests/a6-eo-secret-inventory-recovery.test.js`
 
-- Current baseline is eleven Production Vercel entries and one GitHub Actions secret; the repository stores names and procedures, never values.
+- The accepted name-only baseline is fourteen Production Vercel entries and one GitHub Actions secret, including the unprovisioned Google Ads OAuth client ID, client secret and redirect URI; the repository stores names and procedures, never values.
 - Vercel/GitHub masking is expected write-only behavior and does not mean a value was deleted.
 - Secret mutation requires exact-key product-owner approval, impact map, rollback, approved encrypted recovery-vault capture, redeploy/workflow verification and secret-free evidence.
 - Existing independent recovery copies are not assumed. A generated encryption key cannot be recreated to decrypt old ciphertext.
-- Before the first real provider authorization, the provider-token key recovery gate and the provider-specific inventory extension must pass.
+- Before the first real provider authorization, the provider-token key recovery gate and provider-specific inventory extension must pass. Google names are now inventoried, but the clean Vercel project still lacks all three Google OAuth entries and recovery custody is not evidenced.
 - Production credentials are never copied to Preview or Development; non-production environments require isolated credentials.
-- This decision authorizes no secret, provider, database, environment or deployment mutation.
+- This decision and its Google extension authorize no secret, provider, database, environment or deployment mutation.
 
 
 ## Cross-cutting safety, capacity and portability freeze — 7 October 2026
@@ -322,7 +322,7 @@ CI enforcement: `tests/eo-04c-google-ads-adapter-start-brief.test.js`
 - Source date, timezone and currency come from the Google Ads customer. Interaction-date reporting is primary for Ads Manager comparability; EO-05 owns normalization, FX, maturity and reconciliation.
 - Google retired the developer-token requirement on 9 September 2026. `GOOGLE_ADS_DEVELOPER_TOKEN` is not introduced as a required clean-repository secret.
 - Cart data can expose sold products and cross-sell evidence when implemented, but the documented `cart_data_sales_view` segmenting grain is Campaign/Ad Group. **Search Ad-level sold-product linkage is unsupported by the current native Google reporting contract; no inferred join may replace it.** PMax advertised-product reporting is not automatically sold-basket cross-sell proof.
-- EO-04-C now contains the typed Google adapter core, four native query families, Standard Ad and PMax Asset Group translation, explicit conversion-action evidence, fail-closed pagination and deterministic tests. It remains open only at its separately authorized controlled-live-evidence gate; EO-04-B also remains open at its controlled-live-evidence gate.
+- EO-04-C now contains the typed Google adapter core, four native query families, Standard Ad and PMax Asset Group translation, explicit conversion-action evidence, fail-closed pagination and deterministic tests. Controlled live evidence was authorized, but its 11 October preflight stopped before OAuth or any live request because the clean Vercel project has no Google OAuth credentials and provider-key recovery custody is not evidenced; EO-04-B also remains open at its controlled-live-evidence gate.
 - Google repository implementation uses an injected transport boundary: no live HTTP call, OAuth value, secret, database write, Vercel mutation, deploy or Dataset V2 persistence is included. The previously accepted EO-04-D Klaviyo documentation remains durable and its repository implementation stays pending.
 
 

@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-04c-google-oauth-route-wiring-v1",
-  "version": "1.1.0",
-  "status": "Repository_implementation_PASS_deployment_pending",
+  "version": "1.2.0",
+  "status": "Legacy_parity_correction_documented_implementation_pending",
   "checked_at": "2026-10-11",
   "parent": "A6-EO-04-C",
   "objective": "Wire Google OAuth begin, callback, account discovery, selection and cancellation without weakening installed-shop, OAuth, token-vault or provider-evidence authority.",
@@ -58,8 +58,14 @@
   "selection": {
     "minimum_advertisers": 1,
     "maximum_advertisers": 3,
-    "reporting_account_must_be_selected_advertiser": true,
-    "manager_reporting_eligible": false
+    "selectable_account_type": "provider_verified_non_manager_advertiser",
+    "provider_status_is_selection_gate": false,
+    "manager_visible_in_selection": false,
+    "manager_counts_toward_limit": false,
+    "manager_reporting_eligible": false,
+    "manager_role": "login_customer_id_access_path_only",
+    "direct_advertiser_login_context": "self_customer_id",
+    "reporting_account_must_be_selected_advertiser": true
   },
   "storage": {
     "refresh_token": "versioned_encrypted_database_ciphertext",
@@ -83,10 +89,13 @@
       "s-choice",
       "s-button",
       "s-banner",
-      "s-spinner"
+      "s-spinner",
+      "s-modal"
     ],
     "react_18_controlled_custom_elements": false,
-    "desktop_and_real_mobile_acceptance_required": true
+    "desktop_and_real_mobile_acceptance_required": true,
+    "pre_oauth_confirmation_modal_required": true,
+    "post_oauth_account_selection_modal_required": true
   },
   "additional_database_functions": [
     "resolve_active_installation_callback_return",
@@ -142,5 +151,16 @@
     "deployment_performed": false,
     "live_google_request_performed": false,
     "evidence": "docs/evidence/EO_04C_GOOGLE_ROUTE_REPOSITORY_2026-10-11.json"
+  },
+  "controlled_live_finding": {
+    "observed_at": "2026-10-11",
+    "accessible_accounts": 5,
+    "managers": 2,
+    "advertisers": 3,
+    "provider_status_counts": {
+      "CLOSED": 5
+    },
+    "defect": "new_status_enabled_gate_hid_all_three_advertisers",
+    "accepted_correction": "restore_non_manager_only_legacy_selection_rule"
   }
 }

@@ -178,6 +178,18 @@ export function createGoogleOAuthRuntime({
       if (connected) {
         return Object.freeze({state: "connected", connection: connected});
       }
+      const pendingReporting = await selections.loadPendingReporting({
+        workspaceId: installationAuthority.workspaceId,
+        installGeneration: installationAuthority.installGeneration,
+      });
+      if (pendingReporting) {
+        return Object.freeze({
+          state: "pending_reporting_account_selection",
+          pending: pendingReporting,
+          accounts: pendingReporting.accounts,
+        });
+      }
+
       const pending = await selections.loadPending({
         workspaceId: installationAuthority.workspaceId,
         installGeneration: installationAuthority.installGeneration,
@@ -295,6 +307,72 @@ export function createGoogleOAuthRuntime({
           timezone: account.timezone,
           login_account_id: account.loginAccountId,
         })),
+        verifiedAt: discovered.evidence.verifiedAt,
+      });
+    },
+
+    async finishReporting({installationAuthority, reportingAccountId}) {
+      const pending = await selections.loadPendingReporting({
+        workspaceId: installationAuthority.workspaceId,
+        installGeneration: installationAuthority.installGeneration,
+      });
+      if (!pending) {
+        throw new Error("PENDING_REPORTING_ACCOUNT_SELECTION_REQUIRED");
+      }
+      const stagedIds = new Set(pending.accounts.map((account) => account.id));
+      if (!stagedIds.has(reportingAccountId)) {
+        throw new Error("REPORTING_ACCOUNT_NOT_SELECTED");
+      }
+      const discovered = await discoverWithCredential({
+        installationAuthority,
+        credentialId: pending.credentialId,
+        connectionId: pending.connectionId,
+        scopes: pending.scopes,
+      });
+      const verified = discovered.advertisers.find(
+        (account) => account.id === reportingAccountId,
+      );
+      if (!verified) {
+        throw new Error("REPORTING_ACCOUNT_NOT_PROVIDER_VERIFIED");
+      }
+      const current = discovered.pending ?? pending;
+      return selections.completeReporting({
+        connectionId: current.connectionId,
+        workspaceId: installationAuthority.workspaceId,
+        installGeneration: installationAuthority.installGeneration,
+        expectedVersion: current.version,
+        providerAccountId: verified.id,
+        verifiedAt: discovered.evidence.verifiedAt,
+      });
+    },
+
+    async changeReporting({installationAuthority, reportingAccountId}) {
+      const connected = await accountAuthority.load({
+        workspaceId: installationAuthority.workspaceId,
+        installGeneration: installationAuthority.installGeneration,
+        provider: PROVIDER,
+      });
+      if (!connected) throw new Error("CONNECTED_GOOGLE_CONNECTION_REQUIRED");
+      const selectedIds = new Set(connected.accounts.map((account) => account.id));
+      if (!selectedIds.has(reportingAccountId)) {
+        throw new Error("REPORTING_ACCOUNT_NOT_SELECTED");
+      }
+      const discovered = await discoverWithCredential({
+        installationAuthority,
+        credentialId: connected.credentialId,
+      });
+      const verified = discovered.advertisers.find(
+        (account) => account.id === reportingAccountId,
+      );
+      if (!verified) {
+        throw new Error("REPORTING_ACCOUNT_NOT_PROVIDER_VERIFIED");
+      }
+      return accountAuthority.selectReportingAccount({
+        connectionId: connected.connectionId,
+        workspaceId: installationAuthority.workspaceId,
+        installGeneration: installationAuthority.installGeneration,
+        provider: PROVIDER,
+        providerAccountId: verified.id,
         verifiedAt: discovered.evidence.verifiedAt,
       });
     },

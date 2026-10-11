@@ -20,6 +20,14 @@ const migration = fs.readFileSync(
   "utf8",
 );
 
+const correctiveMigration = fs.readFileSync(
+  path.join(
+    root,
+    "supabase/migrations/20261011180000_eo04c_durable_selection_and_reconnect.sql",
+  ),
+  "utf8",
+);
+
 const workspaceId = "11111111-1111-4111-8111-111111111111";
 const transactionId = "22222222-2222-4222-8222-222222222222";
 const credentialId = "33333333-3333-4333-8333-333333333333";
@@ -50,7 +58,7 @@ function dependencies(overrides = {}) {
     transactionId,
     credentialId,
     status: "awaiting_selection",
-    expiresAt: "2026-10-11T12:10:00.000Z",
+    expiresAt: null,
   };
   return {
     calls,
@@ -162,7 +170,16 @@ test("migration creates a private forced-RLS handoff and narrow runtime function
   );
 });
 
-test("repository maps create, load, atomic consume and bounded expiry functions", async () => {
+test("corrective migration separates OAuth expiry from durable selection and supports reconnect", () => {
+  assert.match(correctiveMigration, /alter column expires_at drop not null/);
+  assert.match(correctiveMigration, /set expires_at = null/);
+  assert.match(correctiveMigration, /p_created_at, null/);
+  assert.match(correctiveMigration, /integrations[.]reconnect_provider_connection/);
+  assert.match(correctiveMigration, /lifecycle_status <> 'disconnected'/);
+  assert.match(correctiveMigration, /expires_at is not null/);
+});
+
+test("repository maps create, load, atomic consume and legacy bounded expiry compatibility", async () => {
   const calls = [];
   const database = {
     async query(sql, values) {
@@ -172,7 +189,7 @@ test("repository maps create, load, atomic consume and bounded expiry functions"
           oauth_transaction_id: transactionId,
           credential_id: credentialId,
           handoff_status: "awaiting_selection",
-          expires_at: new Date("2026-10-11T12:10:00.000Z"),
+          expires_at: null,
         }]};
       }
       if (sql.includes("load_provider_authorization_handoff")) {
@@ -239,7 +256,7 @@ test("callback stores refresh token only and exposes transaction correlation onl
   assert.deepEqual(result, {
     transactionId,
     status: "awaiting_selection",
-    expiresAt: "2026-10-11T12:10:00.000Z",
+    expiresAt: null,
   });
   assert.equal("credentialId" in result, false);
   const stored = deps.calls.find(([name]) => name === "storeToken")[1].tokenSet;

@@ -5,7 +5,7 @@ import {
   useNavigation,
   useSubmit,
 } from "react-router";
-import {useRef} from "react";
+import {useEffect, useRef} from "react";
 import {
   authenticate,
   database,
@@ -44,7 +44,10 @@ type SettingsState =
       reportingAccountName: string;
     };
 
-type ActionData = {ok: false; code: string} | undefined;
+type ActionData =
+  | {ok: false; code: string}
+  | {ok: true; intent: "begin"; authorizationUrl: string}
+  | undefined;
 
 function publicErrorCode(error: unknown) {
   const candidate =
@@ -166,7 +169,7 @@ export const action = async ({request}: ActionFunctionArgs) => {
         state: started.state,
         pkceChallenge: started.pkceChallenge,
       });
-      return verified.context.redirect(authorizationUrl, {target: "_top"});
+      return {ok: true, intent: "begin", authorizationUrl} satisfies ActionData;
     }
 
     const transactionId = form.get("transactionId");
@@ -233,6 +236,18 @@ export default function Settings() {
   const connectedChoices = useRef<any>(null);
   const reportingChoice = useRef<any>(null);
   const pending = navigation.state !== "idle";
+
+  useEffect(() => {
+    if (actionData?.ok !== true || actionData.intent !== "begin") return;
+    const authorizationUrl = new URL(actionData.authorizationUrl);
+    if (
+      authorizationUrl.origin !== "https://accounts.google.com"
+      || authorizationUrl.pathname !== "/o/oauth2/v2/auth"
+    ) {
+      return;
+    }
+    globalThis.open(authorizationUrl.toString(), "_top");
+  }, [actionData]);
 
   const begin = () => {
     const form = new FormData();

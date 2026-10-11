@@ -187,4 +187,4 @@ Additional product-reporting references checked 11 October 2026:
 
 Route review found a critical fail-closed gap: after code exchange, the encrypted credential envelope is not yet linked to the claimed OAuth transaction through a short-lived server-side handoff while the merchant selects one to three accounts. A credential UUID through a URL, browser form or ordinary cookie cannot become authority.
 
-Binding proposal: `docs/EO_04C_GOOGLE_OAUTH_SELECTION_HANDOFF_GATE.md` and `contracts/eo-04c-google-oauth-selection-handoff-gate-v1.json`. Route, database and live implementation stop until explicit product-owner acceptance.
+Binding gate: `docs/EO_04C_GOOGLE_OAUTH_SELECTION_HANDOFF_GATE.md` and `contracts/eo-04c-google-oauth-selection-handoff-gate-v1.json`. The product owner accepted the gate; repository implementation, CI and separately approved live Supabase migrations passed on 11 October 2026. Route wiring, deployment and controlled Google evidence remain separate gates.

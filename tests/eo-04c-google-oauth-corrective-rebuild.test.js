@@ -21,6 +21,9 @@ const migration = read(
 const ambiguityFix = read(
   "supabase/migrations/20261011191000_eo04c_qualify_account_selection_columns.sql",
 );
+const reportingMigration = read(
+  "supabase/migrations/20261011203000_eo04c_reporting_account_completion.sql",
+);
 const decision = read(
   "docs/decisions/A6_EO_04_C_GOOGLE_OAUTH_CORRECTIVE_REBUILD.md",
 );
@@ -42,25 +45,46 @@ test("canonical pending selection is resumable and fails closed", () => {
   assert.match(runtime, /state: "pending_account_selection"/);
 });
 
-test("Settings exposes only advertiser selection and clean disconnect", () => {
+test("connected accounts and the single Reporting Account stay distinct", () => {
   assert.match(settings, />\s*Resume setup\s*</);
-  assert.doesNotMatch(settings, /Select advertiser accounts/);
   assert.match(settings, /Manager accounts are never selectable/);
-  assert.doesNotMatch(settings, /Connected advertiser account/);
-  assert.doesNotMatch(settings, /Reporting account/);
-  assert.doesNotMatch(runtime, /reportingAccountId/);
-  assert.doesNotMatch(migration, /p_reporting_account_id/);
+  assert.match(settings, /Save and connect/);
+  assert.match(settings, /Save and finish/);
+  assert.match(settings, /Reporting Account/);
+  assert.match(runtime, /reportingAccountId/);
+  assert.match(reportingMigration, /p_provider_account_id text/);
+  assert.match(decision, /connected-account set and the single Reporting Account are distinct/);
   assert.match(settings, /send\("disconnect"\)/);
 });
 
-test("pending Google setup auto-opens selection and Cancel preserves Resume setup", () => {
+test("one account auto-binds; two or three require explicit Reporting Account", () => {
+  assert.match(reportingMigration, /if selected_count = 1 then/);
+  assert.match(reportingMigration, /'initial_selection'/);
+  assert.match(reportingMigration, /reporting_account_selection_required/);
+  assert.match(reportingMigration, /complete_pending_reporting_account_selection/);
+  assert.match(
+    reportingMigration,
+    /having count\(account[.]id\) between 2 and 3/,
+  );
+  assert.match(runtime, /state: "pending_reporting_account_selection"/);
+  assert.match(runtime, /async finishReporting\(/);
+  assert.match(runtime, /async changeReporting\(/);
+});
+
+test("pending Google setup auto-opens the correct step and Cancel preserves it", () => {
   assert.match(settings, /const accountModal = useRef<any>\(null\)/);
+  assert.match(settings, /const reportingModal = useRef<any>\(null\)/);
   assert.match(settings, /accountModal[.]current[?][.]showOverlay[?][.]\(\)/);
+  assert.match(settings, /reportingModal[.]current[?][.]showOverlay[?][.]\(\)/);
   assert.match(settings, /const resumeAccountSelection = \(\) =>/);
   assert.match(settings, /revalidator[.]revalidate\(\)/);
   assert.match(
     settings,
     /commandFor="google-account-modal"[\s\S]*command="--hide"[\s\S]*>\s*Cancel/,
+  );
+  assert.match(
+    settings,
+    /commandFor="google-reporting-modal"[\s\S]*command="--hide"[\s\S]*>\s*Cancel/,
   );
   assert.doesNotMatch(settings, /send\("cancel"\)/);
   assert.doesNotMatch(runtime, /async cancel\(/);
@@ -73,6 +97,26 @@ test("Resume setup cannot restart Google OAuth", () => {
   const resumeSource = settings.slice(resumeStart, resumeEnd);
   assert.match(resumeSource, /revalidator[.]revalidate\(\)/);
   assert.doesNotMatch(resumeSource, /send\("begin"\)|oauthBoundary[.]begin/);
+});
+
+test("Reporting Account selection is provider-revalidated before binding", () => {
+  const finishStart = runtime.indexOf("async finishReporting(");
+  const finishEnd = runtime.indexOf("\n    async changeReporting(", finishStart);
+  assert.ok(finishStart >= 0 && finishEnd > finishStart);
+  const finish = runtime.slice(finishStart, finishEnd);
+  assert.ok(
+    finish.indexOf("discoverWithCredential") >= 0
+      && finish.indexOf("completeReporting") > finish.indexOf("discoverWithCredential"),
+  );
+
+  const changeStart = runtime.indexOf("async changeReporting(");
+  const changeEnd = runtime.indexOf("\n    async disconnect(", changeStart);
+  assert.ok(changeStart >= 0 && changeEnd > changeStart);
+  const change = runtime.slice(changeStart, changeEnd);
+  assert.ok(
+    change.indexOf("discoverWithCredential") >= 0
+      && change.indexOf("selectReportingAccount") > change.indexOf("discoverWithCredential"),
+  );
 });
 
 test("callback errors remain visible and account-loading retry does not restart OAuth", () => {
@@ -105,6 +149,7 @@ test("manager accounts are access paths, never selected evidence", () => {
   );
   assert.match(runtime, /account.kind === "advertiser"/);
   assert.match(migration, /item.value ->> 'kind' <> 'advertiser'/);
+  assert.match(reportingMigration, /account_kind = 'advertiser'/);
 });
 
 test("provider account selection SQL qualifies output-column collisions", () => {
@@ -129,7 +174,6 @@ test("provider account selection SQL qualifies output-column collisions", () => 
     /connection_version = connection_version [+] 1/,
   );
 });
-
 
 test("Google disconnect revokes the provider grant with the refresh token", async () => {
   const requests = [];

@@ -1,0 +1,123 @@
+{
+  "contract_id": "eo-04c-google-oauth-route-wiring-v1",
+  "version": "1.0.0",
+  "status": "Proposed_product_owner_acceptance_required_before_UI_implementation",
+  "checked_at": "2026-10-11",
+  "parent": "A6-EO-04-C",
+  "objective": "Wire Google OAuth begin, callback, account discovery, selection and cancellation without weakening installed-shop, OAuth, token-vault or provider-evidence authority.",
+  "callback_return_authority": {
+    "source": "claimed_oauth_transaction_workspace_and_install_generation",
+    "browser_shop_input_trusted": false,
+    "cookie_as_shop_authority": false,
+    "referrer_as_shop_authority": false,
+    "required_server_resolution": "narrow_function_returns_active_canonical_myshopify_domain",
+    "app_handle_source": "exact_deployed_configuration_not_request_input"
+  },
+  "routes": [
+    {
+      "name": "settings_state",
+      "method": "GET",
+      "shopify_admin_authenticated": true
+    },
+    {
+      "name": "google_begin",
+      "method": "POST",
+      "shopify_admin_authenticated": true
+    },
+    {
+      "name": "google_callback",
+      "method": "GET",
+      "shopify_admin_authenticated": false,
+      "authority": "one_time_provider_state_claim"
+    },
+    {
+      "name": "account_discovery_resume",
+      "method": "GET",
+      "shopify_admin_authenticated": true
+    },
+    {
+      "name": "account_selection",
+      "method": "POST",
+      "shopify_admin_authenticated": true
+    },
+    {
+      "name": "cancel_setup",
+      "method": "POST",
+      "shopify_admin_authenticated": true
+    }
+  ],
+  "browser_forbidden": [
+    "credential_id",
+    "refresh_token",
+    "access_token",
+    "provider_account_evidence",
+    "workspace_id_as_authority",
+    "install_generation_as_authority",
+    "shop_domain_as_authority"
+  ],
+  "selection": {
+    "minimum_advertisers": 1,
+    "maximum_advertisers": 3,
+    "reporting_account_must_be_selected_advertiser": true,
+    "manager_reporting_eligible": false
+  },
+  "storage": {
+    "refresh_token": "versioned_encrypted_database_ciphertext",
+    "access_token": "memory_only",
+    "handoff_minutes": 10
+  },
+  "ui": {
+    "runtime": "polaris-2.0-rc.js",
+    "types": "2.0.0-rc.2",
+    "raw_html_action_or_form_controls": false,
+    "custom_css": false,
+    "clickable_as_button": false,
+    "components": [
+      "s-page",
+      "s-section",
+      "s-stack",
+      "s-badge",
+      "s-paragraph",
+      "s-text",
+      "s-choice-list",
+      "s-choice",
+      "s-button",
+      "s-banner",
+      "s-spinner"
+    ],
+    "react_18_controlled_custom_elements": false,
+    "desktop_and_real_mobile_acceptance_required": true
+  },
+  "additional_database_functions": [
+    "resolve_active_installation_callback_return",
+    "cancel_provider_authorization_handoff"
+  ],
+  "mutation_authority": {
+    "repository_brief_and_contract": true,
+    "route_or_UI_implementation": false,
+    "live_supabase": false,
+    "vercel_deploy": false,
+    "live_google_oauth": false,
+    "live_google_api": false,
+    "dataset_v2": false
+  },
+  "exact_copy_document": "docs/EO_04C_GOOGLE_OAUTH_ROUTE_WIRING_BRIEF.md",
+  "official_sources": {
+    "shopify_react_router": "https://shopify.dev/docs/api/shopify-app-react-router/latest",
+    "shopify_authenticate_admin": "https://shopify.dev/docs/api/shopify-app-react-router/latest/authenticate/admin",
+    "shopify_app_home_rc": "https://shopify.dev/docs/api/app-home/v2.0-rc",
+    "shopify_choice_list": "https://shopify.dev/docs/api/app-home/v2.0-rc/web-components/forms/choice-list",
+    "shopify_button": "https://shopify.dev/docs/api/app-home/v2.0-rc/web-components/actions/button",
+    "google_oauth_web_server": "https://developers.google.com/identity/protocols/oauth2/web-server",
+    "google_list_accessible_accounts": "https://developers.google.com/google-ads/api/docs/account-management/listing-accounts",
+    "supabase_functions": "https://supabase.com/docs/guides/database/functions"
+  },
+  "acceptance": [
+    "explicit_product_owner_acceptance",
+    "repository_tests_typecheck_build_PASS",
+    "separate_live_migration_approval_and_postflight",
+    "separate_deployment_approval",
+    "controlled_Google_evidence",
+    "real_desktop_and_mobile_visual_acceptance"
+  ]
+}

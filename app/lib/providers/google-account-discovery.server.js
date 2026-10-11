@@ -4,26 +4,15 @@ import {
 } from "./google-ads-rest.server.js";
 
 const MAX_DISCOVERED_ACCOUNTS = 1000;
-const CUSTOMER_QUERY = [
-  "SELECT",
-  "customer.id,",
-  "customer.descriptive_name,",
-  "customer.manager,",
-  "customer.status,",
-  "customer.currency_code,",
-  "customer.time_zone",
-  "FROM customer",
-  "LIMIT 1",
-].join(" ");
-const CHILD_QUERY = [
+const CUSTOMER_CLIENT_QUERY = [
   "SELECT",
   "customer_client.client_customer,",
   "customer_client.id,",
   "customer_client.descriptive_name,",
-  "customer_client.manager,",
-  "customer_client.status,",
   "customer_client.currency_code,",
   "customer_client.time_zone,",
+  "customer_client.manager,",
+  "customer_client.status,",
   "customer_client.level",
   "FROM customer_client",
   "WHERE customer_client.level <= 1",
@@ -74,22 +63,15 @@ function normalizedAccount(value, loginAccountId) {
       typeof value?.timeZone === "string" && value.timeZone.length <= 100
         ? value.timeZone
         : null,
-    loginAccountId: loginAccountId === null ? null : customerId(loginAccountId),
+    loginAccountId: customerId(loginAccountId),
   });
 }
 
-function providerFailureCode(error) {
-  return error && typeof error === "object"
-    && typeof error.details?.provider_error_code === "string"
-      ? error.details.provider_error_code
-      : null;
-}
-
-function client({accessToken, developerToken, loginCustomerId = null, fetchFn}) {
+function directClient({accessToken, developerToken, fetchFn}) {
   return createGoogleAdsRestClient({
     accessToken,
     developerToken,
-    loginCustomerId,
+    loginCustomerId: null,
     fetchFn,
   });
 }
@@ -100,84 +82,52 @@ export async function discoverGoogleAdsAccounts({
   fetchFn = fetch,
   now = () => new Date(),
 } = {}) {
-  const directClient = client({accessToken, developerToken, fetchFn});
-  const accessible = await directClient.listAccessibleCustomers();
+  const googleAds = directClient({accessToken, developerToken, fetchFn});
+  const accessible = await googleAds.listAccessibleCustomers();
   if (accessible.customers.length < 1) {
     throw new Error("GOOGLE_ACCESSIBLE_CUSTOMERS_EMPTY");
   }
 
   const accounts = new Map();
-  const traversedManagers = new Set();
-
-  function remember(account) {
-    const existing = accounts.get(account.id);
-    if (!existing || (existing.loginAccountId === null && account.loginAccountId !== null)) {
-      accounts.set(account.id, account);
-    }
-    if (accounts.size > MAX_DISCOVERED_ACCOUNTS) {
-      throw new Error("GOOGLE_ACCOUNT_DISCOVERY_LIMIT_EXCEEDED");
-    }
-  }
+  let queriedRootCount = 0;
+  let lastFailure = null;
 
   for (const accessibleCustomer of accessible.customers) {
     const rootId = customerId(accessibleCustomer.customer_id);
-    let rootResult;
+    let result;
     try {
-      rootResult = await directClient.search({
+      // Preserve the proven legacy discovery contract: every directly accessible
+      // root is queried without login-customer-id, and customer_client returns the
+      // root plus its immediate children. Managers remain access paths only.
+      result = await googleAds.search({
         customerId: rootId,
-        query: CUSTOMER_QUERY,
+        query: CUSTOMER_CLIENT_QUERY,
       });
+      queriedRootCount += 1;
     } catch (error) {
-      if ([
-        "CUSTOMER_NOT_ENABLED",
-        "CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION",
-      ].includes(providerFailureCode(error))) {
-        continue;
-      }
-      throw error;
+      lastFailure = error;
+      continue;
     }
-    const rootValue = rootResult.results[0]?.customer;
-    if (!rootValue) throw new Error("GOOGLE_CUSTOMER_SCHEMA_CHANGED");
-    const root = normalizedAccount(rootValue, rootId);
-    remember(root);
-    if (root.kind !== "manager") continue;
 
-    const hierarchyClient = client({
-      accessToken,
-      developerToken,
-      loginCustomerId: rootId,
-      fetchFn,
-    });
-    const queue = [rootId];
-    while (queue.length > 0) {
-      const managerId = queue.shift();
-      if (traversedManagers.has(managerId)) continue;
-      traversedManagers.add(managerId);
-
-      const result = await hierarchyClient.search({
-        customerId: managerId,
-        query: CHILD_QUERY,
-      });
-      for (const row of result.results) {
-        const value = row?.customerClient;
-        if (!value) throw new Error("GOOGLE_CUSTOMER_CLIENT_SCHEMA_CHANGED");
-        const level = Number(value.level);
-        if (!Number.isSafeInteger(level) || level < 0 || level > 1) {
-          throw new Error("GOOGLE_CUSTOMER_CLIENT_LEVEL_INVALID");
-        }
-        const discovered = normalizedAccount(value, rootId);
-        remember(discovered);
-        if (
-          discovered.kind === "manager"
-          && level === 1
-          && !traversedManagers.has(discovered.id)
-        ) {
-          queue.push(discovered.id);
-        }
+    for (const row of result.results) {
+      const value = row?.customerClient;
+      if (!value) throw new Error("GOOGLE_CUSTOMER_CLIENT_SCHEMA_CHANGED");
+      const level = Number(value.level);
+      if (!Number.isSafeInteger(level) || level < 0 || level > 1) {
+        throw new Error("GOOGLE_CUSTOMER_CLIENT_LEVEL_INVALID");
+      }
+      const account = normalizedAccount(value, rootId);
+      const existing = accounts.get(account.id);
+      if (!existing || existing.loginAccountId === null) {
+        accounts.set(account.id, account);
+      }
+      if (accounts.size > MAX_DISCOVERED_ACCOUNTS) {
+        throw new Error("GOOGLE_ACCOUNT_DISCOVERY_LIMIT_EXCEEDED");
       }
     }
   }
 
+  if (queriedRootCount === 0 && lastFailure) throw lastFailure;
   if (accounts.size < 1) {
     throw new Error("GOOGLE_ADS_ENABLED_CUSTOMERS_EMPTY");
   }
@@ -195,6 +145,5 @@ export async function discoverGoogleAdsAccounts({
 }
 
 export const GOOGLE_ACCOUNT_DISCOVERY_QUERIES = Object.freeze({
-  customer: CUSTOMER_QUERY,
-  customerClient: CHILD_QUERY,
+  customerClient: CUSTOMER_CLIENT_QUERY,
 });

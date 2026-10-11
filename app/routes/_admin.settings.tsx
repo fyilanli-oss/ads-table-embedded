@@ -199,6 +199,7 @@ export const action = async ({request}: ActionFunctionArgs) => {
 
     return {ok: false, code: "GOOGLE_SETUP_ACTION_INVALID"} satisfies ActionData;
   } catch (error) {
+    if (error instanceof Response) throw error;
     return {ok: false, code: publicErrorCode(error)} satisfies ActionData;
   }
 };

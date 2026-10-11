@@ -78,6 +78,21 @@ export function createProviderAuthorizationHandoffRepository(database) {
       ));
     },
 
+    async loadCurrent(value) {
+      return handoff(optionalOneRow(
+        await query(
+          "select * from integrations.load_current_provider_authorization_handoff($1::uuid, $2::bigint, $3::text, $4::timestamptz)",
+          [
+            value.workspaceId,
+            value.installGeneration,
+            value.provider,
+            value.observedAt,
+          ],
+        ),
+        "PROVIDER_AUTHORIZATION_HANDOFF_LOAD_CURRENT",
+      ));
+    },
+
     async consume(value) {
       const row = exactlyOneRow(
         await query(

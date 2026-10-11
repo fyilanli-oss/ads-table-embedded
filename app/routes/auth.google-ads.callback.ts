@@ -53,8 +53,11 @@ export const loader = async ({request}: LoaderFunctionArgs) => {
       code: parameter(url, "code", 4096),
       providerError: parameter(url, "error", 128),
     });
+    callbackReturn = await runtime.callbackReturn({
+      workspaceId: claimed.workspaceId,
+      installGeneration: claimed.installGeneration,
+    });
     const completed = await runtime.completeCallback({claimed});
-    callbackReturn = completed.callbackReturn;
 
     return redirect(
       installedShopifySettingsUrl(callbackReturn.shopDomain, {

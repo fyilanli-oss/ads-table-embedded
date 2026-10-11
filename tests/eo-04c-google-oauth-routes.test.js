@@ -111,6 +111,7 @@ test("Settings and callback routes preserve the accepted Shopify UI and authorit
   assert.match(settings, /authenticateAdmin: authenticate[.]admin/);
   assert.match(settings, /getAll\("connectedAccountIds"\)/);
   assert.match(settings, /reportingAccountId/);
+  assert.match(settings, /error instanceof Response/);
   assert.match(callback, /claimCallback/);
   assert.match(callback, /installedShopifySettingsUrl/);
   assert.doesNotMatch(callback, /searchParams[.]get\("(?:shop|workspace|credential)/);

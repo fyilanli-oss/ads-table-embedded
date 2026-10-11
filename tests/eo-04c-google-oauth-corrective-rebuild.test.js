@@ -43,7 +43,16 @@ test("Settings exposes only advertiser selection and clean disconnect", () => {
   assert.match(settings, /Manager accounts are never selectable/);
   assert.doesNotMatch(settings, /Connected advertiser account/);
   assert.doesNotMatch(settings, /Reporting account/);
+  assert.doesNotMatch(runtime, /reportingAccountId/);
+  assert.doesNotMatch(migration, /p_reporting_account_id/);
   assert.match(settings, /send\("disconnect"\)/);
+});
+
+test("callback errors remain visible and account-loading retry does not restart OAuth", () => {
+  assert.match(settings, /google_error/);
+  assert.match(settings, /retry: "oauth"/);
+  assert.match(settings, /retry: "reload"/);
+  assert.match(settings, /revalidator[.]revalidate/);
 });
 
 test("Google authorization URL is offline, consented and PKCE-bound", () => {

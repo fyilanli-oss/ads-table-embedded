@@ -93,7 +93,7 @@ Referans: A6-RM-01, R0/R5/R6, E7.
 ## EO-04 — Meta, Google Ads and Klaviyo adapters
 
 - **EO-04-A — Common adapter contract:** Üç provider için ortak request, ham kanıt, support-state, store-candidate discovery/filter, kota ve hata envelope sözleşmesi kurulacak.
-- **EO-04-B — Meta adapter:** Meta account/campaign/ad hiyerarşisi, actions/action_values ve missing/unsupported davranışı ham yanıtla doğrulanacak.
+- **EO-04-B — Meta adapter — Accepted / merge pending:** Meta OAuth, 1–3 gerçek reklamveren hesabı ve tek Reporting Account akışı kabul edildi. Tam Windows akışı ve iOS temiz-oturum OAuth başlangıcı PASS'tir; role sahip olmayan Windows hesabı Android ile aynı beklenen Meta review-öncesi kısıtını üretmiştir. Android tekrarı opsiyonel regresyon kontrolüdür. Meta veri sözleşmesi ve runtime uygulaması başlamamıştır; merge ayrı kapıdır.
 - **EO-04-C — Google Ads adapter:** Standard Ad ve Performance Max Asset Group hiyerarşisi en alt doğrulanabilir grain ve ham structure kanıtıyla kurulacak.
 - **EO-04-D — Klaviyo adapter:** Campaign/Message, Flow/Message, metrik ve maliyet girdileri kurulacak; 15 Ekim sözleşmesi resmî kaynakla yeniden doğrulanacak.
 - **EO-04-E — Integrated three-provider acceptance:** Meta, Google Ads ve Klaviyo hem ayrı hem birlikte sentetik veri üretmeden kabul testinden geçirilecek.
@@ -212,3 +212,4 @@ Tek aktif parent **EO-03**'tür.
 ## 9 Ekim 2026 — Kurulu Shopify mağazası otoritesi
 
 EO-02-B/EO-02-C düzeltmesiyle workspace, billing, organic commerce verisi ve Dataset V2 scope'u uygulamanın kurulu olduğu doğrulanmış Shopify mağazasına kilitlendi. Reporting Account seçimi downstream'dir; kurulu mağazayı değiştiremez. Belirsiz veya başka mağazaya ait provider entity'leri Dataset V2 yazamaz ve SnapshotJob alamaz. İkinci Shopify mağazası ayrı installation, workspace ve subscription gerektirir. Bağlayıcı contract: `contracts/eo-02bc-installed-shop-authority-correction-v1.json`.
+

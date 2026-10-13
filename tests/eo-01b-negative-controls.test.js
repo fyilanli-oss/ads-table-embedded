@@ -56,8 +56,14 @@ test("legacy runtime, unknown env and obsolete Polaris references are rejected",
   const files = controls.scanRoots.flatMap((scanRoot) => walk(path.join(root, scanRoot))).filter((file) => /\.(?:[cm]?[jt]sx?|json|toml|ya?ml)$/i.test(file));
   for (const file of files) {
     const source = fs.readFileSync(file, "utf8").toLowerCase();
+    const relative = path.relative(root, file).replaceAll("\\", "/");
     for (const token of controls.forbiddenRuntimeTokens) assert.equal(source.includes(token.toLowerCase()), false, `${file}: ${token}`);
-    for (const token of controls.forbiddenRouteTokens) assert.equal(source.includes(token.toLowerCase()), false, `${file}: route ${token}`);
+    for (const token of controls.forbiddenRouteTokens) {
+      const allowed = controls.allowedProviderProtocolTokenOccurrences?.some(
+        (entry) => entry.file === relative && entry.token === token,
+      );
+      if (!allowed) assert.equal(source.includes(token.toLowerCase()), false, `${file}: route ${token}`);
+    }
     assert.equal(source.includes(controls.forbiddenObsoletePolarisRuntime), false, `${file}: obsolete Polaris runtime`);
     for (const match of source.matchAll(/process\.env\.([a-z0-9_]+)/gi)) {
       assert.equal(controls.allowedEnvironmentKeys.includes(match[1].toUpperCase()), true, `${file}: unknown env ${match[1]}`);

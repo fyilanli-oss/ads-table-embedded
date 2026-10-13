@@ -131,7 +131,7 @@ CI enforcement: `tests/eo-04a-common-adapter-start-brief.test.js`
 - Retry is bounded and limited to documented transient failures; rate-limit recovery metadata wins over guessed delays.
 - Raw evidence is private, bounded, sanitized and content-hashed; tokens, credentials and profile-level personal data are forbidden.
 - EO-04-A creates no provider secret and makes no live provider/API, database, Vercel or deployment mutation.
-- Meta-specific implementation remains blocked because its current official Graph rate-limit/error pages returned HTTP 429 during the control check; EO-04-B must re-open them successfully before code.
+- Meta's current official Graph/Login/version/account sources were rechecked on 13 October 2026. Production configuration, deployment and desktop Shopify Admin OAuth acceptance passed under separate explicit product-owner authorization. Mobile clean-session acceptance remains open because the attempted browser identity was not an authorized app-role identity; this is not classified as an AdsTable code failure.
 
 
 ## Closed package: EO-03 / Next ready package: EO-04
@@ -141,7 +141,7 @@ CI enforcement: `tests/eo-04a-common-adapter-start-brief.test.js`
 - **EO-03-C — Accepted:** Fresh provider-verified connected accounts and one canonical Meta/Google Reporting Account are bound beneath the immutable installed-Shopify-store authority. Klaviyo remains one Connected Account with no Reporting Account control. No merchant-selectable store scope exists.
 - With explicit approval, the EO-03-C base and corrective Supabase migrations were applied on 9 October 2026. Rollback-scoped synthetic runtime acceptance passed, cleanup is zero, Security Advisor findings are zero and EO-03-C introduced no unindexed-foreign-key finding. No provider API call, provider OAuth, Vercel mutation or production deploy occurred. The product owner explicitly closed EO-03-C on 9 October 2026; exact evidence is `docs/evidence/EO_03C_LIVE_ACCEPTANCE_2026-10-09.json`.
 - **EO-03-D — Accepted:** Reauthorization, atomic credential renewal, two-phase disconnect and same-canonical-connection reconnect passed the complete rollback-scoped live lifecycle scenario. All synthetic rows rolled back to zero, Security Advisor remained at zero, and no provider API/OAuth/Vercel/deploy mutation occurred. Durable evidence: `evidence/eo-03d-live-database-evidence-2026-10-09.json`.
-- **EO-03 — Accepted:** All four children are closed with explicit product-owner acceptance. **EO-04 — Active:** EO-04-A is Accepted. EO-04-B is at the current official-document and analyst-brief gate; no provider-specific or live API implementation has started.
+- **EO-03 — Accepted:** All four children are closed with explicit product-owner acceptance. **EO-04 — Active:** EO-04-A and EO-04-B are Accepted. EO-04-B Production OAuth passed the complete Windows flow and truthful iOS clean-session entry. A non-role Windows account reproduced Android's expected Meta pre-review restriction, so Android is only an optional regression check. Meta provider-data implementation has not started; PR merge remains a separate explicit gate.
 
 ## EO-03-C official provider baseline — 9 Ekim 2026
 
@@ -243,7 +243,7 @@ EO-02-C internal caller kodu tek başına canlı tetikleyici değildir. `docs/EO
 - Meta için uydurma refresh-grant davranışı yoktur. Google Ads ve Klaviyo `invalid_grant` sonucu reauthorization gerektirir; Klaviyo token/revoke host'u `a.klaviyo.com` olarak sabittir.
 - Authority: `docs/EO_03D_PROVIDER_CONNECTION_LIFECYCLE.md` ve `contracts/eo-03d-provider-connection-lifecycle-v1.json`.
 - Base migration ile dört ileri-yönlü düzeltme canlı Supabase'de uygulanmış ve doğrulanmıştır. Bu kabul provider API çağrısı, canlı provider OAuth, provider-console mutation, Vercel mutation veya production deploy içermez.
-- EO-04 **Active** durumundadır. `A6-EO-04-A` başlangıç brief'i ürün sahibi tarafından kabul edilmiş ve provider-neutral implementation hazırlanmıştır; CI ve final ürün sahibi kabulü tamamlanmadan EO-04-B başlatılmaz.
+- EO-04 **Active** durumundadır. `A6-EO-04-A` kabul edilmiştir. EO-04-B'nin resmî doküman ve ürün sahibi brief kapısı 13 Ekim 2026'da geçilmiş; Meta OAuth/account-selection repository uygulaması başlamıştır. Live mutation ve final kabul ayrı kapılardır.
 
 
 ## 10 October 2026 — EO-04-A common adapter implementation gate
@@ -257,7 +257,7 @@ EO-02-C internal caller kodu tek başına canlı tetikleyici değildir. `docs/EO
 - Provider evidence is bounded, sanitized and content-hashed; secret and personal-data patterns are redacted.
 - Deterministic synthetic behavior is covered by `tests/eo-04a-common-adapter.test.js`.
 - No live provider call, secret read/write, database mutation, Vercel mutation or deployment occurs in EO-04-A.
-- GitHub Actions run `38049487145` passed 163/163 tests, TypeScript verification and preview build. The product owner explicitly accepted EO-04-A and authorized PR #65 merge on 10 October 2026. EO-04-B may begin only with its current official-document and analyst-brief gate; provider implementation and live mutation remain unauthorized.
+- GitHub Actions run `38049487145` passed 163/163 tests, TypeScript verification and preview build. The product owner explicitly accepted EO-04-A and authorized PR #65 merge on 10 October 2026. EO-04-B'nin OAuth official-document ve analyst-brief kapısı 13 Ekim 2026'da geçildi. Production configuration/deployment, tam Windows akışı ve iOS temiz-oturum OAuth başlangıcı kabul edildi. Role sahip olmayan Windows hesabı Android ile aynı beklenen Meta review-öncesi kısıtını üretti; ürün sahibi EO-04-B'ye direct PASS verdi. Meta provider-data sözleşmesi ve runtime uygulaması başlamamıştır.
 
 
 ## 10 October 2026 — EO-04-A product-owner closure
@@ -265,5 +265,25 @@ EO-02-C internal caller kodu tek başına canlı tetikleyici değildir. `docs/EO
 - EO-04-A common adapter contract is **Accepted**.
 - Closure covers the provider-neutral runtime, strict types, deterministic fake-provider acceptance and secret-free evidence policy.
 - Product-owner acceptance and PR #65 merge authorization were explicit.
-- EO-04-B is now the active start gate: current official Meta documentation and an analyst brief must be accepted before provider-specific code.
+- EO-04-B is active. Current official Meta documentation and the OAuth/account-selection analyst brief were accepted on 13 October 2026; repository implementation and CI are the current gate.
 - No provider secret, live API call, database mutation, Vercel mutation or deployment is authorized by this closure.
+
+
+## 13 October 2026 — EO-04-B Meta OAuth/account-selection implementation gate
+
+Binding analyst brief: `docs/EO_04B_META_OAUTH_ACCOUNT_SELECTION.md`
+Executable contract: `contracts/eo-04b-meta-oauth-account-selection-v1.json`
+CI enforcement: `tests/eo-04b-meta-oauth-account-selection.test.js`
+
+- Meta Graph/Login is pinned to `v26.0`; OAuth requests exactly `ads_read` and returns through the exact embedded callback.
+- The working Google behavior is isolated. Meta uses the same accepted product flow: OAuth, automatic advertiser selector, one-to-three selected accounts and exactly one Reporting Account.
+- One selected advertiser auto-binds. Two or three require an explicit second Reporting Account choice. Cancel preserves pending state; Resume setup never restarts OAuth.
+- Meta token acceptance requires short-to-long-lived exchange, `/debug_token` app/scope/expiry verification and ciphertext-only EO-03-B vault storage.
+- `/me/adaccounts` is opaque-cursor paginated with page/account ceilings. Invalid authorization is reauthorization, while an empty list is not fabricated success.
+- Disconnect is revoke-first; provider failure preserves local reporting authority.
+- OAuth/account selection does not start provider-data collection, scheduling or backfill. Meta provider-data behavior is outside this accepted OAuth slice and has not been authorized or implemented.
+- Four Meta environment names are stored only in the name-only inventory; no value is committed or read back.
+- Production deployment `dpl_GxV2DQiXYaer24W1247iPAn9N6gR` at commit `f3f0516b5b938b683d10cd14b75947cd805120e0` is READY. Desktop OAuth, account selection, Reporting Account, Cancel/Resume, Disconnect and reconnect are PASS.
+- The complete Windows flow passes with the developer-role account. A fresh iPhone Connect transaction correctly opened Meta password authentication. A controlled Windows attempt with a different, non-role Facebook account reproduced Android's exact **App not active** response, proving a Meta pre-review/development-mode user restriction rather than a device or AdsTable code defect. Android fresh-device repetition is optional and no copied OAuth URL/state may be reused.
+- Durable evidence: `docs/evidence/EO_04B_META_OAUTH_LIVE_ACCEPTANCE_2026-10-13.json`. OAuth live acceptance and EO-04-B product-owner acceptance are PASS; merge remains false until explicit authorization.
+

@@ -6,7 +6,12 @@ const STATUS = new Set(["pending", "cancelled", "error"]);
 
 export function installedShopifySettingsUrl(
   shopDomain,
-  {googleStatus = null, googleError = null} = {},
+  {
+    googleStatus = null,
+    googleError = null,
+    metaStatus = null,
+    metaError = null,
+  } = {},
 ) {
   const canonical = normalizeShopDomain(shopDomain);
   const storeHandle = canonical.slice(0, -".myshopify.com".length);
@@ -29,6 +34,19 @@ export function installedShopifySettingsUrl(
       || !/^[A-Z0-9_]{1,80}$/.test(googleError)
     ) throw new Error("GOOGLE_RETURN_ERROR_INVALID");
     url.searchParams.set("google_error", googleError);
+  }
+  if (metaStatus !== null) {
+    if (!STATUS.has(metaStatus)) {
+      throw new Error("META_RETURN_STATUS_INVALID");
+    }
+    url.searchParams.set("meta_status", metaStatus);
+  }
+  if (metaError !== null) {
+    if (
+      typeof metaError !== "string"
+      || !/^[A-Z0-9_]{1,80}$/.test(metaError)
+    ) throw new Error("META_RETURN_ERROR_INVALID");
+    url.searchParams.set("meta_error", metaError);
   }
   return url.toString();
 }

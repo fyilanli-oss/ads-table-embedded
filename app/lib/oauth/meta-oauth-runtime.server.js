@@ -1,0 +1,336 @@
+import {randomUUID} from "node:crypto";
+import {
+  createOAuthTransactionBoundary,
+  oauthInstallationAuthority,
+} from "./oauth-transaction.server.js";
+import {
+  createOAuthTransactionRepository,
+} from "../database/oauth-transaction-repository.server.js";
+import {
+  createMetaAccountSelectionRepository,
+} from "../database/meta-account-selection-repository.server.js";
+import {
+  createProviderAccountAuthorityRepository,
+} from "../database/provider-account-authority-repository.server.js";
+import {
+  createProviderConnectionLifecycle,
+} from "./provider-connection-lifecycle.server.js";
+import {
+  discoverMetaAdAccounts,
+  exchangeAndValidateMetaAuthorizationCode,
+  readMetaOAuthConfig,
+  revokeMetaAuthorization,
+} from "../providers/meta-graph.server.js";
+
+const PROVIDER = "meta";
+const MAX_SELECTION = 3;
+
+function authority(value) {
+  return oauthInstallationAuthority({
+    workspaceId: value.workspaceId,
+    installGeneration: value.installGeneration,
+    status: "active",
+  });
+}
+
+function nowIso(now) {
+  const value = now();
+  if (!(value instanceof Date) || Number.isNaN(value.valueOf())) {
+    throw new TypeError("now must return a valid Date");
+  }
+  return value.toISOString();
+}
+
+function selectedAdvertisers(accounts, selectedIds) {
+  if (
+    !Array.isArray(selectedIds)
+    || selectedIds.length < 1
+    || selectedIds.length > MAX_SELECTION
+  ) throw new Error("CONNECTED_ACCOUNT_CARDINALITY_INVALID");
+  if (new Set(selectedIds).size !== selectedIds.length) {
+    throw new Error("CONNECTED_ACCOUNT_DUPLICATE");
+  }
+  const available = new Map(accounts.map((account) => [account.id, account]));
+  return Object.freeze(selectedIds.map((id) => {
+    const account = available.get(id);
+    if (!account || account.kind !== "advertiser" || account.reportingEligible !== true) {
+      throw new Error("CONNECTED_ACCOUNT_NOT_PROVIDER_VERIFIED");
+    }
+    return account;
+  }));
+}
+
+export function createMetaOAuthRuntime({
+  database,
+  tokenVault,
+  environment = process.env,
+  fetchFn = fetch,
+  now = () => new Date(),
+  randomUUIDFn = randomUUID,
+} = {}) {
+  const config = readMetaOAuthConfig(environment);
+  const oauthBoundary = createOAuthTransactionBoundary({
+    repository: createOAuthTransactionRepository(database),
+    verifierVault: tokenVault,
+    now,
+  });
+  const selections = createMetaAccountSelectionRepository(database);
+  const accountAuthority = createProviderAccountAuthorityRepository(database);
+  const lifecycle = createProviderConnectionLifecycle({database, now});
+
+  async function discoverWithCredential({installationAuthority, credentialId}) {
+    const stored = await tokenVault.loadProviderTokenSet({
+      credentialId,
+      installationAuthority,
+      provider: PROVIDER,
+    });
+    if (!stored?.access_token) throw new Error("META_ACCESS_TOKEN_UNAVAILABLE");
+    return discoverMetaAdAccounts({
+      accessToken: stored.access_token,
+      scopes: stored.scopes,
+      graphVersion: config.graphVersion,
+      fetchFn,
+      now,
+    });
+  }
+
+  return Object.freeze({
+    config,
+    oauthBoundary,
+
+    async callbackReturn({workspaceId, installGeneration}) {
+      return selections.callbackReturn({workspaceId, installGeneration});
+    },
+
+    async inspect({installationAuthority}) {
+      const connected = await accountAuthority.load({
+        workspaceId: installationAuthority.workspaceId,
+        installGeneration: installationAuthority.installGeneration,
+        provider: PROVIDER,
+      });
+      if (connected) return Object.freeze({state: "connected", connection: connected});
+
+      const pendingReporting = await selections.loadPendingReporting({
+        workspaceId: installationAuthority.workspaceId,
+        installGeneration: installationAuthority.installGeneration,
+      });
+      if (pendingReporting) {
+        return Object.freeze({
+          state: "pending_reporting_account_selection",
+          pending: pendingReporting,
+          accounts: pendingReporting.accounts,
+        });
+      }
+
+      const pending = await selections.loadPending({
+        workspaceId: installationAuthority.workspaceId,
+        installGeneration: installationAuthority.installGeneration,
+      });
+      if (!pending) return Object.freeze({state: "disconnected"});
+      const evidence = await discoverWithCredential({
+        installationAuthority,
+        credentialId: pending.credentialId,
+      });
+      return Object.freeze({
+        state: "pending_account_selection",
+        pending,
+        accounts: evidence.accounts,
+      });
+    },
+
+    async completeCallback({claimed}) {
+      const owner = authority(claimed);
+      if (claimed.status === "denied") {
+        return Object.freeze({
+          outcome: "denied",
+          owner,
+          callbackReturn: await selections.callbackReturn(owner),
+        });
+      }
+
+      let credential = null;
+      try {
+        const exchanged = await exchangeAndValidateMetaAuthorizationCode({
+          config,
+          authorizationCode: claimed.authorizationCode,
+          fetchFn,
+          now,
+        });
+        credential = await tokenVault.storeProviderTokenSet({
+          installationAuthority: owner,
+          provider: PROVIDER,
+          tokenSet: exchanged.tokenSet,
+          expiresAt: exchanged.expiresAt,
+        });
+        const evidence = await discoverMetaAdAccounts({
+          accessToken: exchanged.tokenSet.access_token,
+          scopes: exchanged.scopes,
+          graphVersion: config.graphVersion,
+          fetchFn,
+          now,
+        });
+        const staged = await selections.stage({
+          connectionId: randomUUIDFn(),
+          workspaceId: owner.workspaceId,
+          installGeneration: owner.installGeneration,
+          credentialId: credential.credentialId,
+          scopes: evidence.scopes,
+          verifiedAt: evidence.verifiedAt,
+        });
+        await oauthBoundary.finalizeExchange({
+          transactionId: claimed.transactionId,
+          success: true,
+        });
+        return Object.freeze({
+          outcome: "pending_account_selection",
+          owner,
+          pending: staged,
+          callbackReturn: await selections.callbackReturn(owner),
+        });
+      } catch (error) {
+        if (credential?.credentialId) {
+          await tokenVault.deleteProviderTokenSet({
+            credentialId: credential.credentialId,
+            installationAuthority: owner,
+            provider: PROVIDER,
+          }).catch(() => undefined);
+        }
+        await oauthBoundary.finalizeExchange({
+          transactionId: claimed.transactionId,
+          success: false,
+        }).catch(() => undefined);
+        throw error;
+      }
+    },
+
+    async select({installationAuthority, selectedAccountIds}) {
+      const pending = await selections.loadPending({
+        workspaceId: installationAuthority.workspaceId,
+        installGeneration: installationAuthority.installGeneration,
+      });
+      if (!pending) throw new Error("PENDING_ACCOUNT_SELECTION_REQUIRED");
+      const evidence = await discoverWithCredential({
+        installationAuthority,
+        credentialId: pending.credentialId,
+      });
+      const chosen = selectedAdvertisers(evidence.accounts, selectedAccountIds);
+      return selections.complete({
+        connectionId: pending.connectionId,
+        workspaceId: installationAuthority.workspaceId,
+        installGeneration: installationAuthority.installGeneration,
+        expectedVersion: pending.version,
+        accounts: chosen.map((account) => ({
+          id: account.id,
+          name: account.name,
+          kind: "advertiser",
+          reporting_eligible: true,
+          status: account.status,
+          currency: account.currency,
+          timezone: account.timezone,
+          login_account_id: null,
+        })),
+        verifiedAt: evidence.verifiedAt,
+      });
+    },
+
+    async finishReporting({installationAuthority, reportingAccountId}) {
+      const pending = await selections.loadPendingReporting({
+        workspaceId: installationAuthority.workspaceId,
+        installGeneration: installationAuthority.installGeneration,
+      });
+      if (!pending) throw new Error("PENDING_REPORTING_ACCOUNT_SELECTION_REQUIRED");
+      if (!pending.accounts.some((account) => account.id === reportingAccountId)) {
+        throw new Error("REPORTING_ACCOUNT_NOT_SELECTED");
+      }
+      const evidence = await discoverWithCredential({
+        installationAuthority,
+        credentialId: pending.credentialId,
+      });
+      const verified = evidence.accounts.find((account) => account.id === reportingAccountId);
+      if (!verified) throw new Error("REPORTING_ACCOUNT_NOT_PROVIDER_VERIFIED");
+      return selections.completeReporting({
+        connectionId: pending.connectionId,
+        workspaceId: installationAuthority.workspaceId,
+        installGeneration: installationAuthority.installGeneration,
+        expectedVersion: pending.version,
+        providerAccountId: verified.id,
+        verifiedAt: evidence.verifiedAt,
+      });
+    },
+
+    async changeReporting({installationAuthority, reportingAccountId}) {
+      const connected = await accountAuthority.load({
+        workspaceId: installationAuthority.workspaceId,
+        installGeneration: installationAuthority.installGeneration,
+        provider: PROVIDER,
+      });
+      if (!connected) throw new Error("CONNECTED_META_CONNECTION_REQUIRED");
+      if (!connected.accounts.some((account) => account.id === reportingAccountId)) {
+        throw new Error("REPORTING_ACCOUNT_NOT_SELECTED");
+      }
+      const evidence = await discoverWithCredential({
+        installationAuthority,
+        credentialId: connected.credentialId,
+      });
+      const verified = evidence.accounts.find((account) => account.id === reportingAccountId);
+      if (!verified) throw new Error("REPORTING_ACCOUNT_NOT_PROVIDER_VERIFIED");
+      return accountAuthority.selectReportingAccount({
+        connectionId: connected.connectionId,
+        workspaceId: installationAuthority.workspaceId,
+        installGeneration: installationAuthority.installGeneration,
+        provider: PROVIDER,
+        providerAccountId: verified.id,
+        verifiedAt: evidence.verifiedAt,
+      });
+    },
+
+    async disconnect({installationAuthority}) {
+      const connected = await accountAuthority.load({
+        workspaceId: installationAuthority.workspaceId,
+        installGeneration: installationAuthority.installGeneration,
+        provider: PROVIDER,
+      });
+      if (!connected) return Object.freeze({status: "disconnected"});
+      const current = await lifecycle.load({
+        installationAuthority,
+        provider: PROVIDER,
+        connectionId: connected.connectionId,
+      });
+      if (!current || current.status !== "connected") {
+        throw new Error("CONNECTED_META_CONNECTION_REQUIRED");
+      }
+      const stored = await tokenVault.loadProviderTokenSet({
+        credentialId: connected.credentialId,
+        installationAuthority,
+        provider: PROVIDER,
+      });
+      if (!stored?.access_token) throw new Error("META_REVOCATION_TOKEN_UNAVAILABLE");
+      const revoked = await revokeMetaAuthorization({
+        accessToken: stored.access_token,
+        graphVersion: config.graphVersion,
+        fetchFn,
+      });
+      const requested = await lifecycle.requestDisconnect({
+        installationAuthority,
+        provider: PROVIDER,
+        connectionId: connected.connectionId,
+        expectedVersion: current.version,
+        reason: "merchant_requested_meta_disconnect",
+      });
+      return lifecycle.finalizeDisconnect({
+        installationAuthority,
+        provider: PROVIDER,
+        connectionId: connected.connectionId,
+        expectedVersion: requested.version,
+        reason: "merchant_requested_meta_disconnect",
+        providerEvidence: {
+          authority: "provider_disconnect_verified",
+          provider: PROVIDER,
+          outcome: revoked.outcome,
+          verifiedAt: nowIso(now),
+          expiresAt: new Date(now().valueOf() + 60_000).toISOString(),
+        },
+      });
+    },
+  });
+}

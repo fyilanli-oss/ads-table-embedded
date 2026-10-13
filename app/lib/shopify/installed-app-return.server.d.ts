@@ -4,5 +4,7 @@ export function installedShopifySettingsUrl(
   input?: {
     googleStatus?: "pending" | "cancelled" | "error" | null;
     googleError?: string | null;
+    metaStatus?: "pending" | "cancelled" | "error" | null;
+    metaError?: string | null;
   },
 ): string;

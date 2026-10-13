@@ -103,10 +103,11 @@ test("Execution Plan and master contract preserve EO-04-A while Meta is the acti
   assert.equal(master.schema_version, "1.21.0");
   assert.equal(master.current_active_parent, "A6-EO-04");
   assert.equal(master.current_active_child, "A6-EO-04-B");
-  assert.equal(master.current_gate, "A6-EO-04-B_repository_implementation_and_CI");
+  assert.equal(master.current_gate, "A6-EO-04-B_Meta_Channel_contract_and_mobile_clean_session_acceptance");
   assert.equal(eo04.status, "Active");
   assert.equal(eo04a.status, "Accepted");
   assert.equal(eo04a.implementation_started, true);
   assert.equal(eo04a.implementation_complete, true);
   assert.equal(eo04a.final_product_owner_acceptance, true);
 });
+

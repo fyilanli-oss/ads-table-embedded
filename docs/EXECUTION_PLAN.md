@@ -287,3 +287,22 @@ CI enforcement: `tests/eo-04b-meta-oauth-account-selection.test.js`
 - The attempted mobile flow used the Facebook identity already signed in to mobile Chrome. Because that identity is not an authorized app-role identity, mobile acceptance remains `PENDING_EXTERNAL_ACCOUNT_ACCESS`; it is not an application-code failure. A fresh Connect transaction will be tested later with the authorized identity and no copied OAuth URL/state.
 - Durable evidence: `docs/evidence/EO_04B_META_OAUTH_PARTIAL_LIVE_2026-10-13.json`. OAuth final acceptance, EO-04-B final acceptance and merge remain false.
 
+## 13 October 2026 — EO-04-B Meta Channel repository implementation gate
+
+Binding analyst contract: `docs/EO_04B_META_CHANNEL.md`
+
+Executable contract: `contracts/eo-04b-meta-channel-v1.json`
+
+Runtime and types: `app/lib/providers/meta-channel.server.js`, `app/lib/providers/meta-channel.server.d.ts`
+
+CI enforcement: `tests/eo-04b-meta-channel.test.js`
+
+- The real Meta Ad is the product-facing Channel under `Campaign / Ad Set / Ad`; no common fake entity is created.
+- Facts are read only from the one canonical Reporting Account. Every returned `account_id` must match that account, and selected non-reporting accounts are not aggregated into it.
+- The base Insights request is `level=ad`, daily and breakdown-free. It requests the ten canonical questions through Meta-native fields and completes opaque cursor pagination before publication.
+- Canonical ad click is `actions.link_click`. Standard conversion aliases win; omni aliases are fallback only and aliases are never summed.
+- Missing action types and empty `actions` or `action_values` collections remain `null/unknown`; only an explicit provider numeric zero becomes zero.
+- Meta Ad Account timezone is the source-time authority for provider rows. Installed Shopify Store timezone cannot silently replace it.
+- No attribution option is guessed without real conversion evidence. Product breakdown remains `api_supported_runtime_unverified` and is excluded from the base query.
+- This repository slice performs no Dataset V2 write, schedule, backfill or live provider query. The next live gate is one bounded, salt-okunur raw response from the Reporting Account under separate explicit authorization.
+

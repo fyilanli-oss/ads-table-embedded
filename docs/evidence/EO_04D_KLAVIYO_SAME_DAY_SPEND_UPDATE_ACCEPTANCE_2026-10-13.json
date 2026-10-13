@@ -1,0 +1,33 @@
+{
+  "package": "A6-EO-04-D",
+  "checked_at": "2026-10-13T19:53:32.5764166Z",
+  "project_id": "podpwkrpmjiksskxhwsu",
+  "migration": {
+    "repository_file": "supabase/migrations/20261013223000_eo04d_klaviyo_same_day_spend_updates.sql",
+    "remote_version": "20261013195248",
+    "remote_name": "eo04d_klaviyo_same_day_spend_updates",
+    "applied": true
+  },
+  "acceptance": {
+    "duplicate_date_constraint_removed": true,
+    "id_correction_function_present": true,
+    "runtime_can_correct_by_id": true,
+    "runtime_direct_table_dml_denied": true,
+    "security_advisor_findings": 0,
+    "new_performance_findings": 0
+  },
+  "behavior": {
+    "same_business_date_update": "append_distinct_immutable_event",
+    "current_value_order": [
+      "effective_from desc",
+      "created_at desc",
+      "id desc"
+    ],
+    "change_value_selector": "spend_period_id"
+  },
+  "notes": [
+    "No synthetic merchant or provider data was inserted for this corrective acceptance.",
+    "The two performance advisor foreign-key findings predate this migration and are outside A6-EO-04-D.",
+    "Unused-index information immediately after a migration is not treated as a defect or removal instruction."
+  ]
+}

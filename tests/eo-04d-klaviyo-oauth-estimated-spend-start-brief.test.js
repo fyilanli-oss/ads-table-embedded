@@ -1,0 +1,168 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import {fileURLToPath} from "node:url";
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8");
+const decision = read("docs/EO_04D_KLAVIYO_OAUTH_ESTIMATED_SPEND_START_BRIEF.md");
+const contract = JSON.parse(read("contracts/eo-04d-klaviyo-oauth-estimated-spend-v1.json"));
+const databaseEvidence = JSON.parse(read(
+  "docs/evidence/EO_04D_KLAVIYO_SPEND_LIVE_DATABASE_ACCEPTANCE_2026-10-13.json",
+));
+const sameDayEvidence = JSON.parse(read(
+  "docs/evidence/EO_04D_KLAVIYO_SAME_DAY_SPEND_UPDATE_ACCEPTANCE_2026-10-13.json",
+));
+const reconnectEvidence = JSON.parse(read(
+  "docs/evidence/EO_04D_KLAVIYO_RECONNECT_SAME_DAY_SPEND_ACCEPTANCE_2026-10-13.json",
+));
+const reconnectTimestampEvidence = JSON.parse(read(
+  "docs/evidence/EO_04D_KLAVIYO_RECONNECT_TIMESTAMP_ORDER_ACCEPTANCE_2026-10-13.json",
+));
+
+test("EO-04-D records explicit product-owner start-brief acceptance", () => {
+  assert.equal(contract.status, "accepted_implementation_in_progress");
+  assert.equal(contract.product_owner_start_brief.status, "accepted");
+  assert.equal(contract.product_owner_start_brief.accepted_at, "2026-10-13");
+  assert.equal(contract.mutations_authorized_by_this_contract.database_schema, true);
+  assert.equal(contract.mutations_authorized_by_this_contract.live_oauth, false);
+});
+
+test("EO-04-D records the separately approved live database gate", () => {
+  assert.equal(contract.repository_implementation.live_database_applied, true);
+  assert.equal(contract.repository_implementation.live_database_acceptance, "PASS_2026-10-13");
+  assert.equal(databaseEvidence.migration.applied, true);
+  assert.equal(databaseEvidence.rollback_scoped_synthetic_acceptance.status, "PASS");
+  assert.equal(databaseEvidence.rollback_scoped_synthetic_acceptance.transaction_rolled_back, true);
+  assert.deepEqual(databaseEvidence.rollback_scoped_synthetic_acceptance.synthetic_residue, {
+    workspaces: 0,
+    installations: 0,
+    credentials: 0,
+    connections: 0,
+    accounts: 0,
+    lifecycle_events: 0,
+    spend_periods: 0,
+  });
+  assert.equal(databaseEvidence.advisors.security_findings_after, 0);
+  assert.equal(databaseEvidence.advisors.new_unindexed_foreign_key_findings, 0);
+  assert.equal(databaseEvidence.authorization.new_secret, false);
+  assert.equal(databaseEvidence.authorization.provider_oauth, false);
+  assert.equal(databaseEvidence.authorization.deployment, false);
+});
+
+test("same-day spend correction preserves private function-only authority", () => {
+  assert.equal(contract.repository_implementation.same_day_update_correction_applied, true);
+  assert.equal(sameDayEvidence.migration.applied, true);
+  assert.equal(sameDayEvidence.acceptance.duplicate_date_constraint_removed, true);
+  assert.equal(sameDayEvidence.acceptance.id_correction_function_present, true);
+  assert.equal(sameDayEvidence.acceptance.runtime_can_correct_by_id, true);
+  assert.equal(sameDayEvidence.acceptance.runtime_direct_table_dml_denied, true);
+  assert.equal(sameDayEvidence.acceptance.security_advisor_findings, 0);
+  assert.equal(sameDayEvidence.acceptance.new_performance_findings, 0);
+});
+
+test("same-day reconnect correction is live without changing OAuth or history", () => {
+  assert.equal(contract.repository_implementation.same_day_reconnect_correction_applied, true);
+  assert.equal(reconnectEvidence.root_cause.database_message, "DUPLICATE_EFFECTIVE_START");
+  assert.equal(reconnectEvidence.migration.applied, true);
+  assert.equal(reconnectEvidence.acceptance.duplicate_rejection_absent, true);
+  assert.equal(reconnectEvidence.acceptance.distinct_history_append_present, true);
+  assert.equal(reconnectEvidence.acceptance.runtime_execute_allowed, true);
+  assert.equal(reconnectEvidence.acceptance.runtime_direct_table_dml_denied, true);
+  assert.equal(reconnectEvidence.scope.oauth_changed, false);
+  assert.equal(reconnectEvidence.scope.historical_rows_changed_or_deleted, false);
+});
+
+test("reconnect timestamp ordering is corrected without changing provider flow", () => {
+  assert.equal(contract.repository_implementation.reconnect_timestamp_order_correction_applied, true);
+  assert.equal(reconnectTimestampEvidence.root_cause.sqlstate, "23514");
+  assert.equal(reconnectTimestampEvidence.root_cause.constraint, "provider_connections_timestamp_order");
+  assert.equal(reconnectTimestampEvidence.migration.applied, true);
+  assert.equal(reconnectTimestampEvidence.acceptance.connected_uses_provider_verified_at, true);
+  assert.equal(reconnectTimestampEvidence.acceptance.last_verified_uses_provider_verified_at, true);
+  assert.equal(reconnectTimestampEvidence.acceptance.same_day_rejection_absent, true);
+  assert.equal(reconnectTimestampEvidence.scope.oauth_changed, false);
+  assert.equal(reconnectTimestampEvidence.scope.account_selection_changed, false);
+  assert.equal(reconnectTimestampEvidence.scope.disconnect_changed, false);
+  assert.equal(reconnectTimestampEvidence.scope.historical_rows_changed_or_deleted, false);
+  assert.equal(reconnectTimestampEvidence.live_product_owner_retest.status, "PASS");
+  assert.equal(contract.repository_implementation.reconnect_timestamp_order_live_retest, "PASS_2026-10-13");
+});
+
+test("Klaviyo uses the official PKCE and token hosts with one Connected Account", () => {
+  assert.equal(contract.provider.pkce_method, "S256");
+  assert.equal(contract.provider.authorization_url, "https://www.klaviyo.com/oauth/authorize");
+  assert.equal(contract.provider.token_url, "https://a.klaviyo.com/oauth/token");
+  assert.equal(contract.provider.revoke_url, "https://a.klaviyo.com/oauth/revoke");
+  assert.equal(contract.provider.account_endpoint, "https://a.klaviyo.com/api/accounts/");
+  assert.equal(contract.provider.account_cardinality, 1);
+  assert.equal(contract.provider.reporting_account_control, false);
+  assert.equal(contract.invariants.resume_restarts_oauth, false);
+  assert.equal(contract.invariants.resume_starts_at_account_selection, true);
+  assert.equal(contract.invariants.account_is_silently_assigned, false);
+  assert.equal(contract.invariants.selected_account_is_revalidated_on_completion, true);
+});
+
+test("estimated spend has one private effective-dated authority", () => {
+  assert.equal(contract.spend_ledger.table, "integrations.klaviyo_email_spend_periods");
+  assert.equal(contract.spend_ledger.access_role, "adstable_runtime");
+  assert.equal(contract.spend_ledger.browser_access, false);
+  assert.equal(contract.spend_ledger.rls_enabled, true);
+  assert.equal(contract.spend_ledger.rls_forced, true);
+  assert.equal(contract.spend_ledger.minimum, "0.00");
+  assert.equal(contract.spend_ledger.maximum, "99999999.99");
+  assert.equal(contract.spend_ledger.second_mutable_current_cost_authority, false);
+  assert.deepEqual(contract.spend_ledger.unique_period_key, [
+    "id",
+  ]);
+  assert.equal(
+    contract.spend_ledger.same_business_date_updates,
+    "append_distinct_immutable_events",
+  );
+  assert.equal(
+    contract.spend_ledger.same_business_date_reconnect_completion,
+    "append_distinct_immutable_event",
+  );
+});
+
+test("Update spend and Change value remain different operations", () => {
+  assert.equal(contract.update_spend.creates_new_period, true);
+  assert.equal(contract.update_spend.provider_revalidation_required, true);
+  assert.equal(contract.update_spend.allows_multiple_updates_on_same_business_date, true);
+  assert.equal(contract.change_value.updates_existing_period_only, true);
+  assert.equal(contract.change_value.selection_key, "immutable_spend_period_id");
+  assert.equal(contract.change_value.changes_effective_date, false);
+  assert.equal(contract.change_value.changes_account_or_currency, false);
+  assert.equal(contract.change_value.increments_correction_version, true);
+});
+
+test("the start brief excludes reporting and allocation behavior", () => {
+  for (const value of [
+    "provider_reporting_requests",
+    "channel_hierarchy",
+    "cost_allocation",
+    "formula_engine",
+    "reporting_fact_persistence",
+    "scheduler_or_backfill",
+  ]) assert.ok(contract.out_of_scope.includes(value));
+
+  assert.match(decision, /Campaign, Flow, Message or Variation reporting requests/);
+  assert.match(decision, /Channel hierarchy and presentation rules/);
+  assert.doesNotMatch(decision, /Dataset V2/);
+  assert.doesNotMatch(JSON.stringify(contract), /dataset[_ -]?v2/i);
+});
+
+test("Shopify mapping preserves the accepted staged account and spend flow", () => {
+  assert.ok(contract.ui.components.includes("s-number-field"));
+  assert.ok(contract.ui.components.includes("s-modal"));
+  assert.ok(contract.ui.components.includes("s-choice-list"));
+  assert.ok(contract.ui.components.includes("s-choice"));
+  assert.equal(contract.ui.oauth_return_opens_account_selection_like_meta_and_google, true);
+  assert.equal(contract.ui.resume_setup_opens_account_selection_by_user_interaction, true);
+  assert.equal(contract.ui.account_and_spend_share_one_screen, false);
+  assert.equal(contract.ui.nested_modal, false);
+  assert.equal(contract.ui.raw_html_controls, false);
+  assert.equal(contract.ui.custom_css, false);
+  assert.equal(contract.ui.clickable_action_substitute, false);
+});

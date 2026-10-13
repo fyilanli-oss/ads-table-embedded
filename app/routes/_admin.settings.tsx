@@ -6,7 +6,7 @@ import {
   useRevalidator,
   useSubmit,
 } from "react-router";
-import {useEffect, useRef} from "react";
+import {useEffect, useRef, useState} from "react";
 import {
   authenticate,
   database,
@@ -17,10 +17,12 @@ import {
 } from "../lib/shopify/shopify-route-authority.server.js";
 import {createGoogleOAuthRuntime} from "../lib/oauth/google-oauth-runtime.server.js";
 import {createMetaOAuthRuntime} from "../lib/oauth/meta-oauth-runtime.server.js";
+import {createKlaviyoOAuthRuntime} from "../lib/oauth/klaviyo-oauth-runtime.server.js";
 import {
   buildGoogleAdsAuthorizationUrl,
 } from "../lib/providers/google-ads-rest.server.js";
 import {buildMetaAuthorizationUrl} from "../lib/providers/meta-graph.server.js";
+import {buildKlaviyoAuthorizationUrl} from "../lib/providers/klaviyo-api.server.js";
 
 type Advertiser = {
   id: string;
@@ -43,13 +45,43 @@ type ActionData =
   | {ok: false; provider: Provider; code: string}
   | undefined;
 
-type Provider = "google_ads" | "meta";
-type LoaderData = State & {meta: State};
+type Provider = "google_ads" | "meta" | "klaviyo";
+
+type KlaviyoAccount = {
+  id: string;
+  name: string;
+  currency: string;
+  timezone: string;
+};
+
+type KlaviyoSpendPeriod = {
+  id: string;
+  amount: string;
+  currency: string;
+  effectiveFrom: string;
+  correctionVersion: number;
+};
+
+type KlaviyoState =
+  | {view: "disconnected"; notice: "cancelled" | "disconnected" | null}
+  | {view: "pending"; accounts: KlaviyoAccount[]}
+  | {
+      view: "connected";
+      account: KlaviyoAccount;
+      current: KlaviyoSpendPeriod;
+      periods: KlaviyoSpendPeriod[];
+    }
+  | {view: "reauthorization"}
+  | {view: "error"; code: string; retry: "oauth" | "reload"};
+
+type LoaderData = State & {meta: State; klaviyo: KlaviyoState};
 
 function providerCodeOf(provider: Provider, error: unknown) {
-  const prefix = provider === "meta" ? "META" : "GOOGLE_ADS";
+  const prefix = provider === "meta"
+    ? "META"
+    : provider === "klaviyo" ? "KLAVIYO" : "GOOGLE_ADS";
   const source = error && typeof error === "object"
-    ? error as {code?: unknown; details?: Record<string, unknown>}
+    ? error as {code?: unknown; message?: unknown; details?: Record<string, unknown>}
     : null;
   const providerCode = source?.details?.provider_error_code;
   if (
@@ -58,10 +90,36 @@ function providerCodeOf(provider: Provider, error: unknown) {
   ) return prefix + "_PROVIDER_" + providerCode;
   const status = source?.details?.provider_status;
   if (status === "invalid_grant") return prefix + "_REAUTHORIZATION_REQUIRED";
-  const candidate = source?.code ?? (error instanceof Error ? error.message : "");
-  return typeof candidate === "string" && /^[A-Z0-9_]{1,80}$/.test(candidate)
+  const semanticMessage = source?.message ?? (error instanceof Error ? error.message : "");
+  if (
+    typeof semanticMessage === "string"
+    && /^[A-Z][A-Z0-9_]{2,79}$/.test(semanticMessage)
+  ) return semanticMessage;
+  const candidate = source?.code;
+  return typeof candidate === "string"
+    && /^[A-Z0-9_]{1,80}$/.test(candidate)
+    && !/^[0-9A-Z]{5}$/.test(candidate)
     ? candidate
     : prefix + "_SETUP_FAILED";
+}
+
+function klaviyoAccount(value: Record<string, unknown>): KlaviyoAccount {
+  return {
+    id: String(value.id),
+    name: String(value.name),
+    currency: String(value.currency),
+    timezone: String(value.timezone),
+  };
+}
+
+function klaviyoPeriod(value: Record<string, unknown>): KlaviyoSpendPeriod {
+  return {
+    id: String(value.id),
+    amount: String(value.amount),
+    currency: String(value.currency),
+    effectiveFrom: String(value.effectiveFrom),
+    correctionVersion: Number(value.correctionVersion),
+  };
 }
 
 function view(account: Record<string, unknown>): Advertiser {
@@ -207,26 +265,84 @@ async function loadMetaState(
   }
 }
 
+async function loadKlaviyoState(
+  verified: Awaited<ReturnType<typeof routeAuthority>>,
+  url: URL,
+): Promise<KlaviyoState> {
+  try {
+    const runtime = createKlaviyoOAuthRuntime({
+      database,
+      tokenVault: providerTokenVault,
+    });
+    const inspected = await runtime.inspect({
+      installationAuthority: verified.installationAuthority,
+    });
+    if (inspected.state === "connected") {
+      return {
+        view: "connected",
+        account: klaviyoAccount(inspected.spend.account),
+        current: klaviyoPeriod(inspected.spend.current),
+        periods: inspected.spend.periods.map(klaviyoPeriod),
+      };
+    }
+    if (inspected.state === "pending_account_selection") {
+      return {
+        view: "pending",
+        accounts: inspected.accounts.map(klaviyoAccount),
+      };
+    }
+    const status = url.searchParams.get("klaviyo_status");
+    if (status === "error") {
+      const callbackCode = url.searchParams.get("klaviyo_error");
+      return {
+        view: "error",
+        code: callbackCode && /^[A-Z0-9_]{1,80}$/.test(callbackCode)
+          ? callbackCode
+          : "KLAVIYO_CALLBACK_FAILED",
+        retry: "oauth",
+      };
+    }
+    return {
+      view: "disconnected",
+      notice: status === "cancelled"
+        ? "cancelled"
+        : status === "disconnected" ? "disconnected" : null,
+    };
+  } catch (error) {
+    const code = providerCodeOf("klaviyo", error);
+    if (code === "KLAVIYO_REAUTHORIZATION_REQUIRED") {
+      return {view: "reauthorization"};
+    }
+    return {view: "error", code, retry: "reload"};
+  }
+}
+
 export const loader = async ({request}: LoaderFunctionArgs): Promise<LoaderData> => {
   const verified = await routeAuthority(request);
   const url = new URL(request.url);
-  const [google, meta] = await Promise.all([
+  const [google, meta, klaviyo] = await Promise.all([
     loadGoogleState(verified, url),
     loadMetaState(verified, url),
+    loadKlaviyoState(verified, url),
   ]);
-  return {...google, meta};
+  return {...google, meta, klaviyo};
 };
 
 export const action = async ({request}: ActionFunctionArgs) => {
   const verified = await routeAuthority(request);
   const form = await request.formData();
   const intent = form.get("intent");
-  const provider: Provider = form.get("provider") === "meta" ? "meta" : "google_ads";
+  const providerValue = form.get("provider");
+  const provider: Provider = providerValue === "meta" || providerValue === "klaviyo"
+    ? providerValue
+    : "google_ads";
 
   try {
     const runtime = provider === "meta"
       ? createMetaOAuthRuntime({database, tokenVault: providerTokenVault})
-      : createGoogleOAuthRuntime({database, tokenVault: providerTokenVault});
+      : provider === "klaviyo"
+        ? createKlaviyoOAuthRuntime({database, tokenVault: providerTokenVault})
+        : createGoogleOAuthRuntime({database, tokenVault: providerTokenVault});
     if (intent === "begin") {
       const started = await runtime.oauthBoundary.begin({
         installationAuthority: verified.installationAuthority,
@@ -241,12 +357,45 @@ export const action = async ({request}: ActionFunctionArgs) => {
             config: runtime.config,
             state: started.state,
           })
+          : provider === "klaviyo"
+            ? buildKlaviyoAuthorizationUrl({
+              config: runtime.config,
+              state: started.state,
+              pkceChallenge: started.pkceChallenge,
+            })
           : buildGoogleAdsAuthorizationUrl({
             config: runtime.config,
             state: started.state,
             pkceChallenge: started.pkceChallenge,
           }),
       } satisfies ActionData;
+    }
+
+    if (provider === "klaviyo" && intent === "complete_klaviyo") {
+      await runtime.complete({
+        installationAuthority: verified.installationAuthority,
+        accountId: String(form.get("accountId") ?? ""),
+        estimatedSpend: String(form.get("estimatedSpend") ?? ""),
+      });
+      return verified.context.redirect("/settings");
+    }
+
+    if (provider === "klaviyo" && intent === "update_klaviyo_spend") {
+      await runtime.updateSpend({
+        installationAuthority: verified.installationAuthority,
+        estimatedSpend: String(form.get("estimatedSpend") ?? ""),
+      });
+      return verified.context.redirect("/settings");
+    }
+
+    if (provider === "klaviyo" && intent === "change_klaviyo_value") {
+      await runtime.changeValue({
+        installationAuthority: verified.installationAuthority,
+        periodId: String(form.get("periodId") ?? ""),
+        expectedCorrectionVersion: Number(form.get("correctionVersion")),
+        estimatedSpend: String(form.get("estimatedSpend") ?? ""),
+      });
+      return verified.context.redirect("/settings");
     }
 
     if (intent === "select") {
@@ -288,6 +437,8 @@ export const action = async ({request}: ActionFunctionArgs) => {
       return verified.context.redirect(
         provider === "meta"
           ? "/settings?meta_status=disconnected"
+          : provider === "klaviyo"
+            ? "/settings?klaviyo_status=disconnected"
           : "/settings?google_status=disconnected",
       );
     }
@@ -297,6 +448,8 @@ export const action = async ({request}: ActionFunctionArgs) => {
       provider,
       code: provider === "meta"
         ? "META_SETUP_ACTION_INVALID"
+        : provider === "klaviyo"
+          ? "KLAVIYO_SETUP_ACTION_INVALID"
         : "GOOGLE_SETUP_ACTION_INVALID",
     } satisfies ActionData;
   } catch (error) {
@@ -306,7 +459,9 @@ export const action = async ({request}: ActionFunctionArgs) => {
 };
 
 function ErrorBanner({provider, code}: {provider: Provider; code: string}) {
-  const label = provider === "meta" ? "Meta" : "Google Ads";
+  const label = provider === "meta"
+    ? "Meta"
+    : provider === "klaviyo" ? "Klaviyo" : "Google Ads";
   return (
     <s-banner tone="critical">
       {label} could not be connected. Try again. If the problem continues,
@@ -345,11 +500,29 @@ export default function Settings() {
   const metaReportingModal = useRef<any>(null);
   const openedMetaSetupView = useRef<"pending" | "pending_reporting" | null>(null);
   const metaResumeRequested = useRef(false);
+  const klaviyoInitialSpend = useRef<any>(null);
+  const klaviyoAccountChoice = useRef<any>(null);
+  const klaviyoSetupModal = useRef<any>(null);
+  const openedKlaviyoSetup = useRef(false);
+  const klaviyoResumeRequested = useRef(false);
+  const [klaviyoSetupStep, setKlaviyoSetupStep] =
+    useState<"account" | "spend">("account");
+  const [selectedKlaviyoAccountId, setSelectedKlaviyoAccountId] =
+    useState<string | null>(null);
+  const klaviyoUpdatedSpend = useRef<any>(null);
+  const klaviyoCorrectedSpend = useRef<any>(null);
+  const klaviyoSpendHistoryChoice = useRef<any>(null);
+  const [selectedKlaviyoPeriod, setSelectedKlaviyoPeriod] =
+    useState<KlaviyoSpendPeriod | null>(null);
   const pending = navigation.state !== "idle";
   const actionProvider = navigation.formData?.get("provider");
   const revalidating = revalidator.state !== "idle";
-  const googleWorking = revalidating || (pending && actionProvider !== "meta");
+  const googleWorking = revalidating || (pending && actionProvider === "google_ads");
   const metaWorking = revalidating || (pending && actionProvider === "meta");
+  const klaviyoWorking = revalidating || (pending && actionProvider === "klaviyo");
+  const klaviyoPeriods = state.klaviyo.view === "connected"
+    ? state.klaviyo.periods
+    : [];
 
   useEffect(() => {
     const url = new URL(globalThis.location.href);
@@ -369,6 +542,20 @@ export default function Settings() {
   }, []);
 
   useEffect(() => {
+    const url = new URL(globalThis.location.href);
+    const hasKlaviyoCallbackState = url.searchParams.has("klaviyo_status")
+      || url.searchParams.has("klaviyo_error");
+    if (!hasKlaviyoCallbackState) return;
+    url.searchParams.delete("klaviyo_status");
+    url.searchParams.delete("klaviyo_error");
+    globalThis.history.replaceState(
+      globalThis.history.state,
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    );
+  }, []);
+
+  useEffect(() => {
     if (actionData?.ok !== true || actionData.intent !== "begin") return;
     const target = new URL(actionData.authorizationUrl);
     const googleTarget =
@@ -377,7 +564,12 @@ export default function Settings() {
     const metaTarget =
       target.origin === "https://www.facebook.com"
       && target.pathname === "/v26.0/dialog/oauth";
-    if (googleTarget || metaTarget) globalThis.open(target.toString(), "_top");
+    const klaviyoTarget =
+      target.origin === "https://www.klaviyo.com"
+      && target.pathname === "/oauth/authorize";
+    if (googleTarget || metaTarget || klaviyoTarget) {
+      globalThis.open(target.toString(), "_top");
+    }
   }, [actionData]);
 
   useEffect(() => {
@@ -413,6 +605,23 @@ export default function Settings() {
     if (setupView === "pending") metaAccountModal.current?.showOverlay?.();
     else metaReportingModal.current?.showOverlay?.();
   }, [state.meta.view, metaWorking]);
+
+  useEffect(() => {
+    if (state.klaviyo.view !== "pending") {
+      openedKlaviyoSetup.current = false;
+      klaviyoResumeRequested.current = false;
+      setKlaviyoSetupStep("account");
+      setSelectedKlaviyoAccountId(null);
+      return;
+    }
+    if (klaviyoWorking) return;
+    if (openedKlaviyoSetup.current && !klaviyoResumeRequested.current) return;
+    openedKlaviyoSetup.current = true;
+    klaviyoResumeRequested.current = false;
+    setKlaviyoSetupStep("account");
+    setSelectedKlaviyoAccountId(null);
+    klaviyoSetupModal.current?.showOverlay?.();
+  }, [state.klaviyo.view, klaviyoWorking]);
 
   const send = (intent: string, provider: Provider = "google_ads") => {
     const form = new FormData();
@@ -467,6 +676,65 @@ export default function Settings() {
     form.set("provider", "meta");
     if (reportingAccountId) form.set("reportingAccountId", reportingAccountId);
     submit(form, {method: "post"});
+  };
+
+  const submitKlaviyoSpend = (
+    intent: "complete_klaviyo" | "update_klaviyo_spend",
+  ) => {
+    const input = intent === "complete_klaviyo"
+      ? klaviyoInitialSpend.current
+      : klaviyoUpdatedSpend.current;
+    const form = new FormData();
+    form.set("intent", intent);
+    form.set("provider", "klaviyo");
+    if (intent === "complete_klaviyo" && selectedKlaviyoAccountId) {
+      form.set("accountId", selectedKlaviyoAccountId);
+    }
+    form.set("estimatedSpend", String(input?.value ?? ""));
+    submit(form, {method: "post"});
+  };
+
+  const resumeKlaviyoSetup = () => {
+    klaviyoResumeRequested.current = true;
+    revalidator.revalidate();
+  };
+
+  const continueKlaviyoSetup = () => {
+    const [accountId] = klaviyoAccountChoice.current?.values ?? [];
+    if (!accountId) return;
+    setSelectedKlaviyoAccountId(accountId);
+    setKlaviyoSetupStep("spend");
+  };
+
+  const correctKlaviyoSpend = () => {
+    const form = new FormData();
+    form.set("intent", "change_klaviyo_value");
+    form.set("provider", "klaviyo");
+    form.set("periodId", selectedKlaviyoPeriod?.id ?? "");
+    form.set(
+      "correctionVersion",
+      String(selectedKlaviyoPeriod?.correctionVersion ?? ""),
+    );
+    form.set("estimatedSpend", String(klaviyoCorrectedSpend.current?.value ?? ""));
+    submit(form, {method: "post"});
+  };
+
+  const selectKlaviyoPeriod = (periodId: string) => {
+    if (state.klaviyo.view !== "connected") return;
+    const period = state.klaviyo.periods.find(
+      (candidate) => candidate.id === periodId,
+    ) ?? null;
+    setSelectedKlaviyoPeriod(period);
+    globalThis.queueMicrotask(() => {
+      if (klaviyoCorrectedSpend.current) {
+        klaviyoCorrectedSpend.current.value = period?.amount ?? "";
+      }
+    });
+  };
+
+  const prepareKlaviyoCorrection = () => {
+    const [period] = klaviyoPeriods;
+    if (period) selectKlaviyoPeriod(period.id);
   };
 
   return (
@@ -1031,6 +1299,354 @@ export default function Settings() {
           <s-button
             slot="secondary-actions"
             commandFor="google-connect-modal"
+            command="--hide"
+          >
+            Cancel
+          </s-button>
+        </s-modal>
+      </s-section>
+      <s-section heading="Klaviyo">
+        <s-stack direction="block" gap="base">
+          {actionData?.ok === false && actionData.provider === "klaviyo"
+            ? <ErrorBanner provider="klaviyo" code={actionData.code} />
+            : null}
+
+          {klaviyoWorking ? (
+            <>
+              <s-badge tone="info">Working</s-badge>
+              <s-paragraph>Klaviyo setup is being updated…</s-paragraph>
+            </>
+          ) : null}
+
+          {!klaviyoWorking && state.klaviyo.view === "error" ? (
+            <>
+              <ErrorBanner provider="klaviyo" code={state.klaviyo.code} />
+              <s-button
+                variant="primary"
+                onClick={() => {
+                  if (state.klaviyo.view === "error" && state.klaviyo.retry === "oauth") {
+                    send("begin", "klaviyo");
+                  } else {
+                    revalidator.revalidate();
+                  }
+                }}
+              >
+                {state.klaviyo.retry === "oauth"
+                  ? "Restart Klaviyo setup"
+                  : "Try loading Klaviyo again"}
+              </s-button>
+            </>
+          ) : null}
+
+          {!klaviyoWorking && state.klaviyo.view === "reauthorization" ? (
+            <>
+              <s-badge tone="warning">Reauthorization required</s-badge>
+              <s-paragraph>
+                Klaviyo authorization is no longer valid. Reconnect to continue.
+              </s-paragraph>
+              <s-button variant="primary" onClick={() => send("begin", "klaviyo")}>
+                Reconnect Klaviyo
+              </s-button>
+            </>
+          ) : null}
+
+          {!klaviyoWorking && state.klaviyo.view === "disconnected" ? (
+            <>
+              <s-badge>Not connected</s-badge>
+              {state.klaviyo.notice === "cancelled" ? (
+                <s-banner tone="warning">
+                  Klaviyo setup was cancelled. No account was connected.
+                </s-banner>
+              ) : null}
+              {state.klaviyo.notice === "disconnected" ? (
+                <s-banner tone="success">Klaviyo was disconnected.</s-banner>
+              ) : null}
+              <s-paragraph>
+                Connect one Klaviyo account and enter its estimated 30-day
+                email spend.
+              </s-paragraph>
+              <s-button
+                variant="primary"
+                commandFor="klaviyo-connect-modal"
+                command="--show"
+              >
+                Connect Klaviyo
+              </s-button>
+            </>
+          ) : null}
+
+          {!klaviyoWorking && state.klaviyo.view === "pending" ? (
+            <>
+              <s-badge tone="info">Account selection required</s-badge>
+              <s-paragraph>
+                Klaviyo authorization is complete. Select the account, then add
+                its estimated 30-day email spend to finish setup.
+              </s-paragraph>
+              <s-button variant="primary" onClick={resumeKlaviyoSetup}>
+                Resume setup
+              </s-button>
+              <s-modal
+                ref={klaviyoSetupModal}
+                id="klaviyo-setup-modal"
+                heading={klaviyoSetupStep === "account"
+                  ? "Select Klaviyo account"
+                  : "Add estimated email spend"}
+              >
+                {klaviyoSetupStep === "account" ? (
+                  <s-stack direction="block" gap="base">
+                    <s-paragraph>
+                      Select the Klaviyo account to connect.
+                    </s-paragraph>
+                    <s-choice-list
+                      ref={klaviyoAccountChoice}
+                      label="Klaviyo accounts"
+                      name="klaviyoAccountId"
+                    >
+                      {state.klaviyo.accounts.map((account) => (
+                        <s-choice key={account.id} value={account.id}>
+                          {account.name} ({account.id})
+                        </s-choice>
+                      ))}
+                    </s-choice-list>
+                  </s-stack>
+                ) : (() => {
+                  const account = state.klaviyo.accounts.find(
+                    (candidate) => candidate.id === selectedKlaviyoAccountId,
+                  );
+                  return account ? (
+                    <s-stack direction="block" gap="base">
+                      <s-paragraph>
+                        Account: {account.name} ({account.id})
+                      </s-paragraph>
+                      <s-paragraph>
+                        Currency: {account.currency} · Timezone: {account.timezone}
+                      </s-paragraph>
+                      <s-number-field
+                        ref={klaviyoInitialSpend}
+                        label="Estimated 30-day Klaviyo email spend"
+                        min={0}
+                        max={99999999.99}
+                        step={0.01}
+                        suffix={account.currency}
+                        required
+                      />
+                    </s-stack>
+                  ) : null;
+                })()}
+                {klaviyoSetupStep === "account" ? (
+                  <s-button
+                    slot="primary-action"
+                    variant="primary"
+                    onClick={continueKlaviyoSetup}
+                  >
+                    Continue
+                  </s-button>
+                ) : (
+                  <s-button
+                    slot="primary-action"
+                    variant="primary"
+                    onClick={() => submitKlaviyoSpend("complete_klaviyo")}
+                  >
+                    Save and connect
+                  </s-button>
+                )}
+                <s-button
+                  slot="secondary-actions"
+                  commandFor="klaviyo-setup-modal"
+                  command="--hide"
+                >
+                  Cancel
+                </s-button>
+              </s-modal>
+            </>
+          ) : null}
+
+          {!klaviyoWorking && state.klaviyo.view === "connected" ? (
+            <>
+              <s-badge tone="success">Connected</s-badge>
+              <s-paragraph>
+                {state.klaviyo.account.name} ({state.klaviyo.account.id})
+              </s-paragraph>
+              <s-paragraph>
+                Current estimated 30-day email spend: {state.klaviyo.current.amount}
+                {" "}{state.klaviyo.current.currency} · Effective {state.klaviyo.current.effectiveFrom}
+              </s-paragraph>
+              <s-paragraph>
+                Currency: {state.klaviyo.account.currency} · Timezone: {state.klaviyo.account.timezone}
+              </s-paragraph>
+              <s-stack direction="inline" gap="base">
+                <s-button
+                  variant="secondary"
+                  tone="critical"
+                  commandFor="klaviyo-disconnect-modal"
+                  command="--show"
+                >
+                  Disconnect
+                </s-button>
+                <s-button
+                  variant="secondary"
+                  commandFor="klaviyo-update-spend-modal"
+                  command="--show"
+                >
+                  Update spend
+                </s-button>
+                <s-button
+                  variant="secondary"
+                  commandFor="klaviyo-change-value-modal"
+                  command="--show"
+                  onClick={prepareKlaviyoCorrection}
+                  disabled={klaviyoPeriods.length === 0}
+                >
+                  Change value
+                </s-button>
+              </s-stack>
+
+              <s-modal
+                id="klaviyo-update-spend-modal"
+                heading="Update Klaviyo email spend"
+                size="small-100"
+              >
+                <s-stack direction="block" gap="base">
+                  <s-paragraph>
+                    Enter the new estimated Klaviyo email cost for the next 30-day
+                    period starting today. SMS costs are not included.
+                  </s-paragraph>
+                  <s-number-field
+                    ref={klaviyoUpdatedSpend}
+                    label="Estimated 30-Day Klaviyo Email Spend"
+                    min={0}
+                    max={99999999.99}
+                    step={0.01}
+                    required
+                  />
+                </s-stack>
+                <s-button
+                  slot="primary-action"
+                  variant="primary"
+                  onClick={() => submitKlaviyoSpend("update_klaviyo_spend")}
+                >
+                  Save new value
+                </s-button>
+                <s-button
+                  slot="secondary-actions"
+                  commandFor="klaviyo-update-spend-modal"
+                  command="--hide"
+                >
+                  Cancel
+                </s-button>
+              </s-modal>
+
+              <s-modal
+                id="klaviyo-change-value-modal"
+                heading="Change Klaviyo email spend"
+                size="small-100"
+              >
+                <s-stack direction="block" gap="base">
+                  <s-paragraph>
+                    Change a previously saved amount. Its original start date will
+                    not change.
+                  </s-paragraph>
+                  <s-select
+                    ref={klaviyoSpendHistoryChoice}
+                    label="Saved period"
+                    value={selectedKlaviyoPeriod?.id ?? ""}
+                    onChange={(event: any) => selectKlaviyoPeriod(event.currentTarget.value)}
+                  >
+                    {klaviyoPeriods.map((period, index) => {
+                      const sameDateWasSuperseded = klaviyoPeriods
+                        .slice(0, index)
+                        .some((candidate) => candidate.effectiveFrom === period.effectiveFrom);
+                      const nextPeriod = klaviyoPeriods
+                        .slice(0, index)
+                        .find((candidate) => candidate.effectiveFrom > period.effectiveFrom) ?? null;
+                      const effectiveTo = nextPeriod
+                        ? new Date(`${nextPeriod.effectiveFrom}T00:00:00.000Z`)
+                        : null;
+                      if (effectiveTo) effectiveTo.setUTCDate(effectiveTo.getUTCDate() - 1);
+                      return (
+                        <s-option key={period.id} value={period.id}>
+                          {period.effectiveFrom} / {sameDateWasSuperseded
+                            ? "Superseded same day"
+                            : effectiveTo
+                            ? effectiveTo.toISOString().slice(0, 10)
+                            : "Present"} · {period.amount} {period.currency}
+                        </s-option>
+                      );
+                    })}
+                  </s-select>
+                  <s-number-field
+                    ref={klaviyoCorrectedSpend}
+                    label="Updated 30-Day Klaviyo Email Spend"
+                    min={0}
+                    max={99999999.99}
+                    step={0.01}
+                    required
+                  />
+                </s-stack>
+                <s-button
+                  slot="primary-action"
+                  variant="primary"
+                  onClick={correctKlaviyoSpend}
+                  disabled={!selectedKlaviyoPeriod}
+                >
+                  Save change
+                </s-button>
+                <s-button
+                  slot="secondary-actions"
+                  commandFor="klaviyo-change-value-modal"
+                  command="--hide"
+                >
+                  Cancel
+                </s-button>
+              </s-modal>
+
+              <s-modal id="klaviyo-disconnect-modal" heading="Disconnect Klaviyo?">
+                <s-paragraph>
+                  AdsTable will revoke Klaviyo authorization and remove the
+                  encrypted credential. Historical spend periods remain.
+                </s-paragraph>
+                <s-button
+                  slot="primary-action"
+                  tone="critical"
+                  onClick={() => send("disconnect", "klaviyo")}
+                >
+                  Disconnect Klaviyo
+                </s-button>
+                <s-button
+                  slot="secondary-actions"
+                  commandFor="klaviyo-disconnect-modal"
+                  command="--hide"
+                >
+                  Keep connected
+                </s-button>
+              </s-modal>
+            </>
+          ) : null}
+        </s-stack>
+
+        <s-modal id="klaviyo-connect-modal" heading="Connect Klaviyo">
+          <s-stack direction="block" gap="base">
+            <s-paragraph>
+              Continue to Klaviyo to authorize one account. AdsTable requests
+              the read-only scopes required for account and reporting access.
+            </s-paragraph>
+            <s-paragraph>
+              After authorization, AdsTable will ask for the estimated 30-day
+              email spend before the connection is completed.
+            </s-paragraph>
+          </s-stack>
+          <s-button
+            slot="primary-action"
+            variant="primary"
+            commandFor="klaviyo-connect-modal"
+            command="--hide"
+            onClick={() => send("begin", "klaviyo")}
+          >
+            Continue to Klaviyo
+          </s-button>
+          <s-button
+            slot="secondary-actions"
+            commandFor="klaviyo-connect-modal"
             command="--hide"
           >
             Cancel

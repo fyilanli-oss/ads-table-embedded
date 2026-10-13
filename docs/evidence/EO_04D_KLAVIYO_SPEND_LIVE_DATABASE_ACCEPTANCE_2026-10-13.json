@@ -1,0 +1,96 @@
+{
+  "evidence_id": "eo-04d-klaviyo-spend-live-database-acceptance-2026-10-13",
+  "package": "A6-EO-04-D",
+  "checked_at": "2026-10-13",
+  "project": {
+    "name": "ads-table-embedded",
+    "ref": "podpwkrpmjiksskxhwsu",
+    "status": "ACTIVE_HEALTHY"
+  },
+  "authorization": {
+    "database_schema_mutation": "explicit_product_owner_approval",
+    "new_secret": false,
+    "provider_oauth": false,
+    "provider_api_call": false,
+    "vercel_environment_mutation": false,
+    "deployment": false
+  },
+  "official_sources_checked": [
+    "https://supabase.com/docs/guides/database/postgres/row-level-security",
+    "https://supabase.com/docs/guides/troubleshooting/how-can-i-revoke-execution-of-a-postgresql-function-2GYb0A",
+    "https://supabase.com/docs/guides/security/product-security"
+  ],
+  "migration": {
+    "repository_file": "supabase/migrations/20261013170000_eo04d_klaviyo_spend_ledger.sql",
+    "remote_version": "20261013173301",
+    "remote_name": "eo04d_klaviyo_spend_ledger",
+    "applied": true
+  },
+  "structural_verification": {
+    "table": "integrations.klaviyo_email_spend_periods",
+    "owner": "adstable_owner",
+    "rls_enabled": true,
+    "rls_forced": true,
+    "direct_table_access": {
+      "public": false,
+      "anon": false,
+      "authenticated": false,
+      "service_role": false,
+      "adstable_runtime": false
+    },
+    "runtime_function_only_access": true,
+    "security_definer_functions": [
+      "integrations.complete_klaviyo_setup_with_spend",
+      "integrations.append_klaviyo_spend_period",
+      "integrations.correct_klaviyo_spend_period",
+      "integrations.load_klaviyo_spend_configuration"
+    ],
+    "runtime_execute_granted": true,
+    "public_anon_authenticated_service_role_execute_revoked": true
+  },
+  "rollback_scoped_synthetic_acceptance": {
+    "status": "PASS",
+    "real_provider_token_used": false,
+    "real_provider_call_made": false,
+    "cases": {
+      "atomic_complete_with_initial_spend": "PASS",
+      "load_initial_configuration": "PASS",
+      "append_new_effective_period": "PASS",
+      "duplicate_effective_start_rejected": "PASS",
+      "change_value_preserves_effective_date": "PASS",
+      "change_value_increments_correction_version": "PASS",
+      "load_corrected_configuration": "PASS",
+      "disconnect_lifecycle": "PASS",
+      "history_preserved_after_disconnect": "PASS"
+    },
+    "transaction_rolled_back": true,
+    "synthetic_residue": {
+      "workspaces": 0,
+      "installations": 0,
+      "credentials": 0,
+      "connections": 0,
+      "accounts": 0,
+      "lifecycle_events": 0,
+      "spend_periods": 0
+    }
+  },
+  "advisors": {
+    "security_findings_after": 0,
+    "new_unindexed_foreign_key_findings": 0,
+    "pre_existing_unindexed_foreign_key_findings": [
+      "privacy.deletion_manifests.workspace_id",
+      "privacy.deletion_runs.workspace_id"
+    ],
+    "new_empty_table_indexes_reported_unused": true,
+    "unused_index_interpretation": "Expected immediately after creation; not a removal authorization."
+  },
+  "remaining_gates": [
+    "Klaviyo environment values with separate exact-key approval",
+    "production deployment",
+    "live Klaviyo OAuth and verified account acceptance",
+    "desktop Shopify Admin product acceptance",
+    "real-mobile Shopify Admin product acceptance",
+    "explicit final product-owner acceptance",
+    "merge approval"
+  ]
+}

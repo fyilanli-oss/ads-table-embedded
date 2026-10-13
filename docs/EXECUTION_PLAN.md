@@ -300,6 +300,12 @@ this start slice. Product-owner start acceptance was received on 13 October
 2026. The repository implementation now contains the OAuth/single-account
 foundation plus the private spend-ledger migration, atomic Save and connect,
 Update spend, Change value and revoke-first Disconnect code paths. This is
-repository evidence only: live OAuth, provider-console, Vercel, deployment and
-database-schema mutations remain separate approval gates; Shopify desktop and
-real-mobile product acceptance are still open.
+repository evidence plus an explicitly approved live database gate. Migration
+`eo04d_klaviyo_spend_ledger` is applied; rollback-scoped synthetic acceptance,
+zero residue, zero Security Advisor findings and no new unindexed-FK finding are
+recorded in
+`docs/evidence/EO_04D_KLAVIYO_SPEND_LIVE_DATABASE_ACCEPTANCE_2026-10-13.json`.
+Live OAuth, provider-console, Vercel and deployment mutations remain separate
+approval gates; Shopify desktop and real-mobile product acceptance are still
+open.
+

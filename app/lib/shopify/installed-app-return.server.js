@@ -11,6 +11,8 @@ export function installedShopifySettingsUrl(
     googleError = null,
     metaStatus = null,
     metaError = null,
+    klaviyoStatus = null,
+    klaviyoError = null,
   } = {},
 ) {
   const canonical = normalizeShopDomain(shopDomain);
@@ -47,6 +49,19 @@ export function installedShopifySettingsUrl(
       || !/^[A-Z0-9_]{1,80}$/.test(metaError)
     ) throw new Error("META_RETURN_ERROR_INVALID");
     url.searchParams.set("meta_error", metaError);
+  }
+  if (klaviyoStatus !== null) {
+    if (!STATUS.has(klaviyoStatus)) {
+      throw new Error("KLAVIYO_RETURN_STATUS_INVALID");
+    }
+    url.searchParams.set("klaviyo_status", klaviyoStatus);
+  }
+  if (klaviyoError !== null) {
+    if (
+      typeof klaviyoError !== "string"
+      || !/^[A-Z0-9_]{1,80}$/.test(klaviyoError)
+    ) throw new Error("KLAVIYO_RETURN_ERROR_INVALID");
+    url.searchParams.set("klaviyo_error", klaviyoError);
   }
   return url.toString();
 }

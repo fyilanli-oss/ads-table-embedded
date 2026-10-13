@@ -9,9 +9,10 @@ const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8");
 const decision = read("docs/EO_04D_KLAVIYO_OAUTH_ESTIMATED_SPEND_START_BRIEF.md");
 const contract = JSON.parse(read("contracts/eo-04d-klaviyo-oauth-estimated-spend-v1.json"));
 
-test("EO-04-D remains a proposed start brief until explicit product-owner acceptance", () => {
-  assert.equal(contract.status, "proposed_product_owner_acceptance_required");
-  assert.equal(contract.product_owner_start_brief.status, "awaiting_explicit_acceptance");
+test("EO-04-D records explicit product-owner start-brief acceptance", () => {
+  assert.equal(contract.status, "accepted_implementation_in_progress");
+  assert.equal(contract.product_owner_start_brief.status, "accepted");
+  assert.equal(contract.product_owner_start_brief.accepted_at, "2026-10-13");
   assert.equal(contract.mutations_authorized_by_this_contract.database_schema, false);
   assert.equal(contract.mutations_authorized_by_this_contract.live_oauth, false);
 });
@@ -78,4 +79,3 @@ test("Shopify mapping uses only accepted components and user-triggered completio
   assert.equal(contract.ui.custom_css, false);
   assert.equal(contract.ui.clickable_action_substitute, false);
 });
-

@@ -141,7 +141,7 @@ CI enforcement: `tests/eo-04a-common-adapter-start-brief.test.js`
 - **EO-03-C — Accepted:** Fresh provider-verified connected accounts and one canonical Meta/Google Reporting Account are bound beneath the immutable installed-Shopify-store authority. Klaviyo remains one Connected Account with no Reporting Account control. No merchant-selectable store scope exists.
 - With explicit approval, the EO-03-C base and corrective Supabase migrations were applied on 9 October 2026. Rollback-scoped synthetic runtime acceptance passed, cleanup is zero, Security Advisor findings are zero and EO-03-C introduced no unindexed-foreign-key finding. No provider API call, provider OAuth, Vercel mutation or production deploy occurred. The product owner explicitly closed EO-03-C on 9 October 2026; exact evidence is `docs/evidence/EO_03C_LIVE_ACCEPTANCE_2026-10-09.json`.
 - **EO-03-D — Accepted:** Reauthorization, atomic credential renewal, two-phase disconnect and same-canonical-connection reconnect passed the complete rollback-scoped live lifecycle scenario. All synthetic rows rolled back to zero, Security Advisor remained at zero, and no provider API/OAuth/Vercel/deploy mutation occurred. Durable evidence: `evidence/eo-03d-live-database-evidence-2026-10-09.json`.
-- **EO-03 — Accepted:** All four children are closed with explicit product-owner acceptance. **EO-04 — Active:** EO-04-A and EO-04-B are Accepted. EO-04-B Production OAuth passed the complete Windows flow and truthful iOS clean-session entry. A non-role Windows account reproduced Android's expected Meta pre-review restriction, so Android is only an optional regression check. PR #68 was squash-merged as `23911ffd565f385c02693ed7a1f3a07f017c30f5`; Meta provider-data implementation has not started. EO-04-D Klaviyo is the active start gate.
+- **EO-03 — Accepted:** All four children are closed with explicit product-owner acceptance. **EO-04 — Active:** EO-04-A and EO-04-B are Accepted. EO-04-B Production OAuth passed the complete Windows flow and truthful iOS clean-session entry. A non-role Windows account reproduced Android's expected Meta pre-review restriction, so Android is only an optional regression check. PR #68 was squash-merged as `23911ffd565f385c02693ed7a1f3a07f017c30f5`; Meta provider-data implementation has not started. EO-04-D Klaviyo is active; its accepted first implementation slice is the OAuth and single-account foundation.
 
 ## EO-03-C official provider baseline — 9 Ekim 2026
 
@@ -289,13 +289,15 @@ CI enforcement: `tests/eo-04b-meta-oauth-account-selection.test.js`
 
 ### EO-04-D Klaviyo start gate
 
-The current proposal is recorded in
+The accepted start brief is recorded in
 `docs/EO_04D_KLAVIYO_OAUTH_ESTIMATED_SPEND_START_BRIEF.md` and
 `contracts/eo-04d-klaviyo-oauth-estimated-spend-v1.json`. It preserves the
 working OAuth → one verified Connected Account → initial estimated spend →
 Update spend / Change value → revoke-first Disconnect behavior on the new EO-03
 authority model. Estimated spend uses its own private effective-dated ledger;
 provider reporting requests, Channel decisions and cost allocation are outside
-this start slice. No runtime, Settings, live OAuth or database-schema mutation
-is authorized until explicit product-owner acceptance.
-
+this start slice. Product-owner start acceptance was received on 13 October
+2026. The first repository implementation slice is limited to OAuth, encrypted
+credential staging and exactly-one-account verification. Live OAuth,
+provider-console, Vercel, deployment and database-schema mutations remain
+separate approval gates.

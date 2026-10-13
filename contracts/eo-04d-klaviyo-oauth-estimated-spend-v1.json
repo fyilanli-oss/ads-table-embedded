@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-04d-klaviyo-oauth-estimated-spend-v1",
   "version": "1.0.0",
-  "status": "proposed_product_owner_acceptance_required",
+  "status": "accepted_implementation_in_progress",
   "checked_at": "2026-10-13",
   "parent": "A6-EO-04",
   "package": "A6-EO-04-D",
@@ -143,9 +143,8 @@
     "shopify_button": "https://shopify.dev/docs/api/app-home/latest/web-components/actions/button"
   },
   "product_owner_start_brief": {
-    "status": "awaiting_explicit_acceptance",
-    "accepted_at": null,
-    "evidence": null
+    "status": "accepted",
+    "accepted_at": "2026-10-13",
+    "evidence": "User explicitly authorized implementation after the start brief and confirmed: Tamam devam edelim."
   }
 }
-

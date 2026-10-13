@@ -6,5 +6,7 @@ export function installedShopifySettingsUrl(
     googleError?: string | null;
     metaStatus?: "pending" | "cancelled" | "error" | null;
     metaError?: string | null;
+    klaviyoStatus?: "pending" | "cancelled" | "error" | null;
+    klaviyoError?: string | null;
   },
 ): string;

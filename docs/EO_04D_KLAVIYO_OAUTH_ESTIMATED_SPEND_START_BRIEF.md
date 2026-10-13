@@ -1,7 +1,12 @@
 # A6-EO-04-D Klaviyo OAuth and Estimated Email Spend Start Brief
 
-Status: Proposed — product-owner acceptance required before implementation  
+Status: Accepted — implementation in progress  
 Checked: 13 October 2026
+
+Product-owner acceptance was received on 13 October 2026 after the OAuth,
+single-account and effective-dated spend boundaries below were reviewed. This
+acceptance authorizes repository implementation only; live provider-console,
+Vercel, deployment and database-schema mutations remain separate gates.
 
 ## Official sources
 
@@ -188,5 +193,4 @@ Shopify Admin evidence; and explicit final product-owner acceptance.
 Before live schema use, the migration must pass Supabase security and performance
 advisors. Rollback disables the new Klaviyo actions and preserves the private
 ledger and encrypted credentials; it does not delete auditable history.
-
 

@@ -49,6 +49,7 @@ test("non-reconstructible secrets require controlled recovery and no blind repla
     "ADSTABLE_SESSION_ENCRYPTION_KEY_V1",
     "ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_V1",
     "META_APP_SECRET",
+    "KLAVIYO_CLIENT_SECRET",
     "SHOPIFY_APP_AUTOMATION_TOKEN",
   ]) {
     assert.equal(byKey.get(key).product_owner_encrypted_recovery_copy, "required");
@@ -58,6 +59,7 @@ test("non-reconstructible secrets require controlled recovery and no blind repla
   assert.equal(byKey.get("ADSTABLE_SESSION_ENCRYPTION_KEY_V1").blind_replacement_forbidden, true);
   assert.equal(byKey.get("ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_V1").blind_replacement_forbidden, true);
   assert.equal(byKey.get("META_APP_SECRET").blind_replacement_forbidden, true);
+  assert.equal(byKey.get("KLAVIYO_CLIENT_SECRET").blind_replacement_forbidden, true);
   assert.match(contract.rotation_rules.provider_key, /add_new_version/);
   assert.equal(contract.invariants.secret_values_in_repository, false);
   assert.equal(contract.invariants.production_credentials_reused_in_nonproduction, false);

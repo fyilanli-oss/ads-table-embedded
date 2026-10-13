@@ -601,8 +601,8 @@
           "id": "A6-EO-04-D",
           "title": "Klaviyo adapter",
           "objective": "Campaign/Message, Flow/Message, metrics, cost inputs and 15 October revalidation.",
-          "status": "Start_brief_proposed_product_owner_acceptance_required",
-          "implementation_started": false,
+          "status": "OAuth_foundation_in_progress",
+          "implementation_started": true,
           "document": "docs/EO_04D_KLAVIYO_OAUTH_ESTIMATED_SPEND_START_BRIEF.md",
           "contract": "contracts/eo-04d-klaviyo-oauth-estimated-spend-v1.json",
           "ci_test": "tests/eo-04d-klaviyo-oauth-estimated-spend-start-brief.test.js",
@@ -1009,4 +1009,3 @@
     "ci_test": "tests/a6-parent-analysis-design-books.test.js"
   }
 }
-

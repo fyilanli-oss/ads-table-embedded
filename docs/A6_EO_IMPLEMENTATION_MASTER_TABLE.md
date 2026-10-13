@@ -95,7 +95,7 @@ Referans: A6-RM-01, R0/R5/R6, E7.
 - **EO-04-A — Common adapter contract:** Üç provider için ortak request, ham kanıt, support-state, store-candidate discovery/filter, kota ve hata envelope sözleşmesi kurulacak.
 - **EO-04-B — Meta adapter — Accepted:** Meta OAuth, 1–3 gerçek reklamveren hesabı ve tek Reporting Account akışı kabul edildi. Tam Windows akışı ve iOS temiz-oturum OAuth başlangıcı PASS'tir; role sahip olmayan Windows hesabı Android ile aynı beklenen Meta review-öncesi kısıtını üretmiştir. Android tekrarı opsiyonel regresyon kontrolüdür. Meta veri sözleşmesi ve runtime uygulaması başlamamıştır. PR #68 merge commit'i: `23911ffd565f385c02693ed7a1f3a07f017c30f5`.
 - **EO-04-C — Google Ads adapter:** Standard Ad ve Performance Max Asset Group hiyerarşisi en alt doğrulanabilir grain ve ham structure kanıtıyla kurulacak.
-- **EO-04-D — Klaviyo adapter — Start brief proposed:** OAuth, tek Connected Account ve bağımsız effective-dated Estimated 30-Day Email Spend defteri için güncel resmî kaynaklara dayalı brief/contract hazırlandı. Ürün sahibi brief'i açıkça kabul etmeden runtime, Settings veya canlı database değişikliği başlamaz; provider reporting ve maliyet dağıtımı bu başlangıç diliminin dışındadır.
+- **EO-04-D — Klaviyo adapter — OAuth foundation in progress:** OAuth, tek Connected Account ve bağımsız effective-dated Estimated 30-Day Email Spend defteri için brief/contract ürün sahibi tarafından 13 Ekim 2026'da kabul edildi. İlk uygulama dilimi yalnız OAuth, şifreli credential ve tek hesap doğrulama temelidir; canlı environment/database, provider reporting ve maliyet dağıtımı kapsam dışıdır.
 - **EO-04-E — Integrated three-provider acceptance:** Meta, Google Ads ve Klaviyo hem ayrı hem birlikte sentetik veri üretmeden kabul testinden geçirilecek.
 
 Çıktı: raw evidence + normalize edilmiş truthful provider facts.  
@@ -212,4 +212,3 @@ Tek aktif parent **EO-03**'tür.
 ## 9 Ekim 2026 — Kurulu Shopify mağazası otoritesi
 
 EO-02-B/EO-02-C düzeltmesiyle workspace, billing, organic commerce verisi ve Dataset V2 scope'u uygulamanın kurulu olduğu doğrulanmış Shopify mağazasına kilitlendi. Reporting Account seçimi downstream'dir; kurulu mağazayı değiştiremez. Belirsiz veya başka mağazaya ait provider entity'leri Dataset V2 yazamaz ve SnapshotJob alamaz. İkinci Shopify mağazası ayrı installation, workspace ve subscription gerektirir. Bağlayıcı contract: `contracts/eo-02bc-installed-shop-authority-correction-v1.json`.
-

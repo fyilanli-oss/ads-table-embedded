@@ -274,6 +274,7 @@ test("Meta live evidence records Windows and iOS scope without falsely closing m
   assert.equal(liveEvidence.closure.oauth_final_acceptance, true);
   assert.equal(liveEvidence.closure.package_final_acceptance, false);
   assert.equal(liveEvidence.closure.merge_authorized, false);
+  assert.equal(liveEvidence.closure.android_retest_blocks_progress, false);
   assert.equal(contract.live_execution.desktop_shopify_admin, "PASS");
   assert.equal(contract.live_execution.mobile_shopify_admin, "PASS_IOS_OAUTH_ENTRY");
   assert.equal(contract.live_execution.android_shopify_admin, "FOLLOW_UP_NON_BLOCKING");

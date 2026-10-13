@@ -371,7 +371,7 @@ test("master plan keeps EO-03 closed after EO-04-A acceptance", () => {
   const eo03c = eo03.children.find((entry) => entry.id === "A6-EO-03-C");
   const eo03d = eo03.children.find((entry) => entry.id === "A6-EO-03-D");
 
-  assert.equal(implementationMaster.status, "EO-04_active_EO-04-B_repository_implementation_in_progress");
+  assert.equal(implementationMaster.status, "EO-04_active_EO-04-B_desktop_live_pass_mobile_and_channel_open");
   assert.equal(eo03.status, "Accepted");
   assert.equal(eo03a.status, "Accepted");
   assert.equal(eo03a.explicit_product_owner_closure, "PASS_2026-10-09");
@@ -392,3 +392,4 @@ test("master plan keeps EO-03 closed after EO-04-A acceptance", () => {
   assert.equal(implementationMaster.next_ready_child, null);
   assert.equal(contract.next_child.live_authorization_remains_disabled, true);
 });
+

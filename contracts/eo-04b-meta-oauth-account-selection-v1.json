@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-04b-meta-oauth-account-selection-v1",
-  "version": "1.0.0",
-  "status": "Product_owner_start_brief_accepted_repository_implementation_in_progress",
+  "version": "1.1.0",
+  "status": "Partial_live_pass_mobile_external_identity_access_pending",
   "checked_at": "2026-10-13",
   "parent": "A6-EO-04",
   "package": "A6-EO-04-B",
@@ -100,6 +100,18 @@
     "database_schema": false,
     "dataset_v2": false
   },
+  "live_execution": {
+    "separate_product_owner_authorization_received": true,
+    "production_configuration": "PASS",
+    "production_deployment": "READY",
+    "desktop_shopify_admin": "PASS",
+    "mobile_shopify_admin": "PENDING_EXTERNAL_ACCOUNT_ACCESS",
+    "mobile_failure_is_application_code_failure": false,
+    "oauth_final_acceptance": false,
+    "package_final_acceptance": false,
+    "merge_authorized": false,
+    "evidence": "docs/evidence/EO_04B_META_OAUTH_PARTIAL_LIVE_2026-10-13.json"
+  },
   "authoritative_sources": {
     "graph_changelog": "https://developers.facebook.com/docs/graph-api/changelog",
     "graph_versions": "https://developers.facebook.com/docs/graph-api/changelog/versions/",
@@ -115,3 +127,4 @@
     "evidence": "explicit_chat_approval"
   }
 }
+

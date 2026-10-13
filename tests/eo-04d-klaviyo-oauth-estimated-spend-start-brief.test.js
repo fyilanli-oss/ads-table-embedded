@@ -11,6 +11,9 @@ const contract = JSON.parse(read("contracts/eo-04d-klaviyo-oauth-estimated-spend
 const databaseEvidence = JSON.parse(read(
   "docs/evidence/EO_04D_KLAVIYO_SPEND_LIVE_DATABASE_ACCEPTANCE_2026-10-13.json",
 ));
+const sameDayEvidence = JSON.parse(read(
+  "docs/evidence/EO_04D_KLAVIYO_SAME_DAY_SPEND_UPDATE_ACCEPTANCE_2026-10-13.json",
+));
 
 test("EO-04-D records explicit product-owner start-brief acceptance", () => {
   assert.equal(contract.status, "accepted_implementation_in_progress");
@@ -40,6 +43,17 @@ test("EO-04-D records the separately approved live database gate", () => {
   assert.equal(databaseEvidence.authorization.new_secret, false);
   assert.equal(databaseEvidence.authorization.provider_oauth, false);
   assert.equal(databaseEvidence.authorization.deployment, false);
+});
+
+test("same-day spend correction preserves private function-only authority", () => {
+  assert.equal(contract.repository_implementation.same_day_update_correction_applied, true);
+  assert.equal(sameDayEvidence.migration.applied, true);
+  assert.equal(sameDayEvidence.acceptance.duplicate_date_constraint_removed, true);
+  assert.equal(sameDayEvidence.acceptance.id_correction_function_present, true);
+  assert.equal(sameDayEvidence.acceptance.runtime_can_correct_by_id, true);
+  assert.equal(sameDayEvidence.acceptance.runtime_direct_table_dml_denied, true);
+  assert.equal(sameDayEvidence.acceptance.security_advisor_findings, 0);
+  assert.equal(sameDayEvidence.acceptance.new_performance_findings, 0);
 });
 
 test("Klaviyo uses the official PKCE and token hosts with one Connected Account", () => {

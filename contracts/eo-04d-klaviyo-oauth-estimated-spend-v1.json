@@ -166,6 +166,8 @@
     "live_database_applied": true,
     "live_database_acceptance": "PASS_2026-10-13",
     "live_database_evidence": "docs/evidence/EO_04D_KLAVIYO_SPEND_LIVE_DATABASE_ACCEPTANCE_2026-10-13.json",
+    "same_day_update_correction_applied": true,
+    "same_day_update_correction_evidence": "docs/evidence/EO_04D_KLAVIYO_SAME_DAY_SPEND_UPDATE_ACCEPTANCE_2026-10-13.json",
     "synthetic_residue_zero": true,
     "security_advisor_findings": 0,
     "new_unindexed_foreign_key_findings": 0,

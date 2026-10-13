@@ -113,6 +113,11 @@ Disconnect preserves historical spend. A later reconnect completed on the same
 business date also appends a distinct immutable event; it must not collide with,
 overwrite or delete the earlier connection history.
 
+Reconnect completion uses the fresh provider verification timestamp for both
+`connected_at` and `last_verified_at`. This preserves the existing
+`last_verified_at >= connected_at` invariant without changing OAuth, account
+selection, Disconnect or historical spend rows.
+
 ### Change value
 
 - Target one existing ledger row by its immutable spend-period UUID. A date is
@@ -251,4 +256,8 @@ event and spend period. Durable evidence is
 This passes the database gate only. Environment values, deployment, live
 Klaviyo OAuth, desktop/mobile Shopify acceptance, final product-owner acceptance
 and merge remain open.
+
+The live reconnect timestamp-order correction is recorded in
+`docs/evidence/EO_04D_KLAVIYO_RECONNECT_TIMESTAMP_ORDER_ACCEPTANCE_2026-10-13.json`.
+Its database and security checks pass; live product-owner retest remains open.
 

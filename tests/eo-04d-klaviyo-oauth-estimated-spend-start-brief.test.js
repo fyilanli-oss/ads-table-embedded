@@ -17,6 +17,9 @@ const sameDayEvidence = JSON.parse(read(
 const reconnectEvidence = JSON.parse(read(
   "docs/evidence/EO_04D_KLAVIYO_RECONNECT_SAME_DAY_SPEND_ACCEPTANCE_2026-10-13.json",
 ));
+const reconnectTimestampEvidence = JSON.parse(read(
+  "docs/evidence/EO_04D_KLAVIYO_RECONNECT_TIMESTAMP_ORDER_ACCEPTANCE_2026-10-13.json",
+));
 
 test("EO-04-D records explicit product-owner start-brief acceptance", () => {
   assert.equal(contract.status, "accepted_implementation_in_progress");
@@ -69,6 +72,20 @@ test("same-day reconnect correction is live without changing OAuth or history", 
   assert.equal(reconnectEvidence.acceptance.runtime_direct_table_dml_denied, true);
   assert.equal(reconnectEvidence.scope.oauth_changed, false);
   assert.equal(reconnectEvidence.scope.historical_rows_changed_or_deleted, false);
+});
+
+test("reconnect timestamp ordering is corrected without changing provider flow", () => {
+  assert.equal(contract.repository_implementation.reconnect_timestamp_order_correction_applied, true);
+  assert.equal(reconnectTimestampEvidence.root_cause.sqlstate, "23514");
+  assert.equal(reconnectTimestampEvidence.root_cause.constraint, "provider_connections_timestamp_order");
+  assert.equal(reconnectTimestampEvidence.migration.applied, true);
+  assert.equal(reconnectTimestampEvidence.acceptance.connected_uses_provider_verified_at, true);
+  assert.equal(reconnectTimestampEvidence.acceptance.last_verified_uses_provider_verified_at, true);
+  assert.equal(reconnectTimestampEvidence.acceptance.same_day_rejection_absent, true);
+  assert.equal(reconnectTimestampEvidence.scope.oauth_changed, false);
+  assert.equal(reconnectTimestampEvidence.scope.account_selection_changed, false);
+  assert.equal(reconnectTimestampEvidence.scope.disconnect_changed, false);
+  assert.equal(reconnectTimestampEvidence.scope.historical_rows_changed_or_deleted, false);
 });
 
 test("Klaviyo uses the official PKCE and token hosts with one Connected Account", () => {

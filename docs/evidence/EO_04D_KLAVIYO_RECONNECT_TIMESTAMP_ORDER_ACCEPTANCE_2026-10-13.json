@@ -1,0 +1,35 @@
+{
+  "evidence_id": "eo-04d-klaviyo-reconnect-timestamp-order-acceptance-2026-10-13",
+  "checked_at": "2026-10-13",
+  "project_id": "podpwkrpmjiksskxhwsu",
+  "root_cause": {
+    "observed_at_utc": "2026-10-13T20:17:21.681Z",
+    "sqlstate": "23514",
+    "constraint": "provider_connections_timestamp_order",
+    "database_message": "new row for relation provider_connections violates check constraint provider_connections_timestamp_order",
+    "function": "integrations.complete_klaviyo_setup_with_spend",
+    "regression": "connected_at used statement_timestamp while last_verified_at used the earlier provider verification timestamp"
+  },
+  "migration": {
+    "name": "eo04d_klaviyo_reconnect_timestamp_order",
+    "file": "supabase/migrations/20261013232500_eo04d_klaviyo_reconnect_timestamp_order.sql",
+    "applied": true
+  },
+  "acceptance": {
+    "connected_uses_provider_verified_at": true,
+    "last_verified_uses_provider_verified_at": true,
+    "recorded_at_regression_absent": true,
+    "same_day_rejection_absent": true,
+    "distinct_history_append_present": true,
+    "runtime_execute_allowed": true,
+    "security_advisor_findings": 0
+  },
+  "scope": {
+    "oauth_changed": false,
+    "account_selection_changed": false,
+    "disconnect_changed": false,
+    "historical_rows_changed_or_deleted": false,
+    "failed_transaction_left_partial_rows": false
+  },
+  "live_product_owner_retest": "pending"
+}

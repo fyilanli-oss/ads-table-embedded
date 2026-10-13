@@ -11,6 +11,7 @@ const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8");
 const originalMigration = "supabase/migrations/20261013170000_eo04d_klaviyo_spend_ledger.sql";
 const sameDayMigration = "supabase/migrations/20261013223000_eo04d_klaviyo_same_day_spend_updates.sql";
 const reconnectMigration = "supabase/migrations/20261013231500_eo04d_klaviyo_reconnect_same_day_spend.sql";
+const reconnectTimestampMigration = "supabase/migrations/20261013232500_eo04d_klaviyo_reconnect_timestamp_order.sql";
 
 test("Klaviyo spend accepts explicit zero and exact bounded decimals only", () => {
   assert.equal(normalizeKlaviyoEstimatedSpend("0"), "0.00");
@@ -119,6 +120,19 @@ test("same-day reconnect completion appends history instead of rejecting it", ()
   assert.match(sql, /insert into integrations\.klaviyo_email_spend_periods/);
   assert.doesNotMatch(sql, /DUPLICATE_EFFECTIVE_START/);
   assert.match(sql, /target_effective_from, recorded_at, recorded_at/);
+  assert.match(sql, /grant execute on function integrations\.complete_klaviyo_setup_with_spend/);
+});
+
+test("reconnect completion preserves provider verification timestamp ordering", () => {
+  const sql = read(reconnectTimestampMigration);
+  assert.match(sql, /create or replace function integrations\.complete_klaviyo_setup_with_spend/);
+  assert.match(sql, /insert into integrations\.klaviyo_email_spend_periods/);
+  assert.doesNotMatch(sql, /DUPLICATE_EFFECTIVE_START/);
+  assert.match(sql, /lifecycle_changed_at = p_verified_at/);
+  assert.match(sql, /connected_at = p_verified_at/);
+  assert.match(sql, /last_verified_at = p_verified_at/);
+  assert.match(sql, /updated_at = p_verified_at/);
+  assert.doesNotMatch(sql, /connected_at = recorded_at/);
   assert.match(sql, /grant execute on function integrations\.complete_klaviyo_setup_with_spend/);
 });
 

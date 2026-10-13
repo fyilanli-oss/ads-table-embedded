@@ -1,6 +1,6 @@
 {
   "contract_id": "eo-04d-klaviyo-oauth-estimated-spend-v1",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "status": "accepted_implementation_in_progress",
   "checked_at": "2026-10-13",
   "parent": "A6-EO-04",
@@ -171,6 +171,8 @@
     "same_day_update_correction_evidence": "docs/evidence/EO_04D_KLAVIYO_SAME_DAY_SPEND_UPDATE_ACCEPTANCE_2026-10-13.json",
     "same_day_reconnect_correction_applied": true,
     "same_day_reconnect_correction_evidence": "docs/evidence/EO_04D_KLAVIYO_RECONNECT_SAME_DAY_SPEND_ACCEPTANCE_2026-10-13.json",
+    "reconnect_timestamp_order_correction_applied": true,
+    "reconnect_timestamp_order_correction_evidence": "docs/evidence/EO_04D_KLAVIYO_RECONNECT_TIMESTAMP_ORDER_ACCEPTANCE_2026-10-13.json",
     "synthetic_residue_zero": true,
     "security_advisor_findings": 0,
     "new_unindexed_foreign_key_findings": 0,

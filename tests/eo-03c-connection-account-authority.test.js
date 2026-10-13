@@ -487,6 +487,5 @@ test("contract keeps installed Shopify shop authoritative after EO-03 closure", 
   assert.equal(master.current_active_parent, "A6-EO-04");
   assert.equal(master.current_active_child, "A6-EO-04-B");
   assert.equal(master.next_ready_child, null);
-  assert.equal(master.current_gate, "A6-EO-04-B_Meta_Channel_contract_and_mobile_clean_session_acceptance");
+  assert.equal(master.current_gate, "A6-EO-04-B_Meta_OAuth_mobile_clean_session_acceptance");
 });
-

@@ -141,7 +141,7 @@ CI enforcement: `tests/eo-04a-common-adapter-start-brief.test.js`
 - **EO-03-C — Accepted:** Fresh provider-verified connected accounts and one canonical Meta/Google Reporting Account are bound beneath the immutable installed-Shopify-store authority. Klaviyo remains one Connected Account with no Reporting Account control. No merchant-selectable store scope exists.
 - With explicit approval, the EO-03-C base and corrective Supabase migrations were applied on 9 October 2026. Rollback-scoped synthetic runtime acceptance passed, cleanup is zero, Security Advisor findings are zero and EO-03-C introduced no unindexed-foreign-key finding. No provider API call, provider OAuth, Vercel mutation or production deploy occurred. The product owner explicitly closed EO-03-C on 9 October 2026; exact evidence is `docs/evidence/EO_03C_LIVE_ACCEPTANCE_2026-10-09.json`.
 - **EO-03-D — Accepted:** Reauthorization, atomic credential renewal, two-phase disconnect and same-canonical-connection reconnect passed the complete rollback-scoped live lifecycle scenario. All synthetic rows rolled back to zero, Security Advisor remained at zero, and no provider API/OAuth/Vercel/deploy mutation occurred. Durable evidence: `evidence/eo-03d-live-database-evidence-2026-10-09.json`.
-- **EO-03 — Accepted:** All four children are closed with explicit product-owner acceptance. **EO-04 — Active:** EO-04-A is Accepted. EO-04-B Production desktop OAuth/account selection is partial-live PASS. Mobile clean-session acceptance and Meta Channel data work remain open; final acceptance and merge are false.
+- **EO-03 — Accepted:** All four children are closed with explicit product-owner acceptance. **EO-04 — Active:** EO-04-A is Accepted. EO-04-B Production desktop OAuth/account selection is partial-live PASS. Mobile clean-session acceptance remains open; Meta provider-data implementation has not started; final acceptance and merge are false.
 
 ## EO-03-C official provider baseline — 9 Ekim 2026
 
@@ -257,7 +257,7 @@ EO-02-C internal caller kodu tek başına canlı tetikleyici değildir. `docs/EO
 - Provider evidence is bounded, sanitized and content-hashed; secret and personal-data patterns are redacted.
 - Deterministic synthetic behavior is covered by `tests/eo-04a-common-adapter.test.js`.
 - No live provider call, secret read/write, database mutation, Vercel mutation or deployment occurs in EO-04-A.
-- GitHub Actions run `38049487145` passed 163/163 tests, TypeScript verification and preview build. The product owner explicitly accepted EO-04-A and authorized PR #65 merge on 10 October 2026. EO-04-B'nin official-document ve analyst-brief kapısı 13 Ekim 2026'da geçildi. Ayrı açık onaylarla Production configuration/deployment ve desktop OAuth kabulü çalıştırıldı; mobil temiz-oturum ve Meta Channel kapıları açıktır.
+- GitHub Actions run `38049487145` passed 163/163 tests, TypeScript verification and preview build. The product owner explicitly accepted EO-04-A and authorized PR #65 merge on 10 October 2026. EO-04-B'nin OAuth official-document ve analyst-brief kapısı 13 Ekim 2026'da geçildi. Ayrı açık onaylarla Production configuration/deployment ve desktop OAuth kabulü çalıştırıldı; mobil temiz-oturum kapısı açıktır. Meta provider-data sözleşmesi ve runtime uygulaması başlamamıştır.
 
 
 ## 10 October 2026 — EO-04-A product-owner closure
@@ -281,28 +281,8 @@ CI enforcement: `tests/eo-04b-meta-oauth-account-selection.test.js`
 - Meta token acceptance requires short-to-long-lived exchange, `/debug_token` app/scope/expiry verification and ciphertext-only EO-03-B vault storage.
 - `/me/adaccounts` is opaque-cursor paginated with page/account ceilings. Invalid authorization is reauthorization, while an empty list is not fabricated success.
 - Disconnect is revoke-first; provider failure preserves local reporting authority.
-- OAuth/account selection does not write Dataset V2, start scheduling or backfill. Meta Channel data remains the next EO-04-B slice: `Campaign / Ad Set / Ad`, with the real Ad as Channel and no fabricated entity.
+- OAuth/account selection does not start provider-data collection, scheduling or backfill. Meta provider-data behavior is outside this accepted OAuth slice and has not been authorized or implemented.
 - Four Meta environment names are stored only in the name-only inventory; no value is committed or read back.
 - Production deployment `dpl_GxV2DQiXYaer24W1247iPAn9N6gR` at commit `f3f0516b5b938b683d10cd14b75947cd805120e0` is READY. Desktop OAuth, account selection, Reporting Account, Cancel/Resume, Disconnect and reconnect are PASS.
 - The attempted mobile flow used the Facebook identity already signed in to mobile Chrome. Because that identity is not an authorized app-role identity, mobile acceptance remains `PENDING_EXTERNAL_ACCOUNT_ACCESS`; it is not an application-code failure. A fresh Connect transaction will be tested later with the authorized identity and no copied OAuth URL/state.
 - Durable evidence: `docs/evidence/EO_04B_META_OAUTH_PARTIAL_LIVE_2026-10-13.json`. OAuth final acceptance, EO-04-B final acceptance and merge remain false.
-
-## 13 October 2026 — EO-04-B Meta Channel repository implementation gate
-
-Binding analyst contract: `docs/EO_04B_META_CHANNEL.md`
-
-Executable contract: `contracts/eo-04b-meta-channel-v1.json`
-
-Runtime and types: `app/lib/providers/meta-channel.server.js`, `app/lib/providers/meta-channel.server.d.ts`
-
-CI enforcement: `tests/eo-04b-meta-channel.test.js`
-
-- The real Meta Ad is the product-facing Channel under `Campaign / Ad Set / Ad`; no common fake entity is created.
-- Facts are read only from the one canonical Reporting Account. Every returned `account_id` must match that account, and selected non-reporting accounts are not aggregated into it.
-- The base Insights request is `level=ad`, daily and breakdown-free. It requests the ten canonical questions through Meta-native fields and completes opaque cursor pagination before publication.
-- Canonical ad click is `actions.link_click`. Standard conversion aliases win; omni aliases are fallback only and aliases are never summed.
-- Missing action types and empty `actions` or `action_values` collections remain `null/unknown`; only an explicit provider numeric zero becomes zero.
-- Meta Ad Account timezone is the source-time authority for provider rows. Installed Shopify Store timezone cannot silently replace it.
-- No attribution option is guessed without real conversion evidence. Product breakdown remains `api_supported_runtime_unverified` and is excluded from the base query.
-- This repository slice performs no Dataset V2 write, schedule, backfill or live provider query. The next live gate is one bounded, salt-okunur raw response from the Reporting Account under separate explicit authorization.
-

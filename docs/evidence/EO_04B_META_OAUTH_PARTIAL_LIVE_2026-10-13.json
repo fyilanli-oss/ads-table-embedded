@@ -53,8 +53,6 @@
     "oauth_final_acceptance": false,
     "package_final_acceptance": false,
     "merge_authorized": false,
-    "remaining_oauth_gate": "real_mobile_no_existing_facebook_session",
-    "next_parallel_slice": "Meta_Channel_contract"
+    "remaining_oauth_gate": "real_mobile_no_existing_facebook_session"
   }
 }
-

@@ -75,19 +75,6 @@ write Dataset V2, start backfill or schedule data jobs.
 No raw form controls, custom component imitation, inline CSS or literal visual
 tokens are introduced.
 
-## Meta Channel boundary
-
-OAuth acceptance proves authority only. The next A6-EO-04-B slice defines and
-tests Meta's data contract separately:
-
-- `Meta / Campaign / Ad Set / Ad`
-- product-facing **Channel** is the real Ad leaf
-- `actions` and `action_values` retain present, zero, empty and absent truth
-- product breakdown fields are activated only where current official contracts
-  and later live evidence support them
-- no fabricated entity, Shopify-order attribution, URL, UTM, `fbclid` or `fbc`
-  inference
-
 ## Acceptance and mutation gates
 
 Repository acceptance requires deterministic tests, TypeScript, build and CI.
@@ -109,4 +96,3 @@ Durable partial evidence is
 final acceptance, package acceptance and merge remain false.
 
 Product owner accepted this exact start brief in chat on 13 October 2026.
-

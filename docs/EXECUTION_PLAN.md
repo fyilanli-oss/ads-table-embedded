@@ -131,7 +131,7 @@ CI enforcement: `tests/eo-04a-common-adapter-start-brief.test.js`
 - Retry is bounded and limited to documented transient failures; rate-limit recovery metadata wins over guessed delays.
 - Raw evidence is private, bounded, sanitized and content-hashed; tokens, credentials and profile-level personal data are forbidden.
 - EO-04-A creates no provider secret and makes no live provider/API, database, Vercel or deployment mutation.
-- Meta's current official Graph/Login/version/account sources were rechecked on 13 October 2026. The product owner accepted the EO-04-B OAuth/account-selection brief, and the repository implementation is active; live Meta configuration, OAuth and deployment remain separate unauthorized gates.
+- Meta's current official Graph/Login/version/account sources were rechecked on 13 October 2026. Production configuration, deployment and desktop Shopify Admin OAuth acceptance passed under separate explicit product-owner authorization. Mobile clean-session acceptance remains open because the attempted browser identity was not an authorized app-role identity; this is not classified as an AdsTable code failure.
 
 
 ## Closed package: EO-03 / Next ready package: EO-04
@@ -141,7 +141,7 @@ CI enforcement: `tests/eo-04a-common-adapter-start-brief.test.js`
 - **EO-03-C — Accepted:** Fresh provider-verified connected accounts and one canonical Meta/Google Reporting Account are bound beneath the immutable installed-Shopify-store authority. Klaviyo remains one Connected Account with no Reporting Account control. No merchant-selectable store scope exists.
 - With explicit approval, the EO-03-C base and corrective Supabase migrations were applied on 9 October 2026. Rollback-scoped synthetic runtime acceptance passed, cleanup is zero, Security Advisor findings are zero and EO-03-C introduced no unindexed-foreign-key finding. No provider API call, provider OAuth, Vercel mutation or production deploy occurred. The product owner explicitly closed EO-03-C on 9 October 2026; exact evidence is `docs/evidence/EO_03C_LIVE_ACCEPTANCE_2026-10-09.json`.
 - **EO-03-D — Accepted:** Reauthorization, atomic credential renewal, two-phase disconnect and same-canonical-connection reconnect passed the complete rollback-scoped live lifecycle scenario. All synthetic rows rolled back to zero, Security Advisor remained at zero, and no provider API/OAuth/Vercel/deploy mutation occurred. Durable evidence: `evidence/eo-03d-live-database-evidence-2026-10-09.json`.
-- **EO-03 — Accepted:** All four children are closed with explicit product-owner acceptance. **EO-04 — Active:** EO-04-A is Accepted. EO-04-B's Meta OAuth/account-selection brief is accepted and repository implementation is in progress; Meta Channel data work, live configuration, live OAuth and final acceptance remain open.
+- **EO-03 — Accepted:** All four children are closed with explicit product-owner acceptance. **EO-04 — Active:** EO-04-A is Accepted. EO-04-B Production desktop OAuth/account selection is partial-live PASS. Mobile clean-session acceptance and Meta Channel data work remain open; final acceptance and merge are false.
 
 ## EO-03-C official provider baseline — 9 Ekim 2026
 
@@ -257,7 +257,7 @@ EO-02-C internal caller kodu tek başına canlı tetikleyici değildir. `docs/EO
 - Provider evidence is bounded, sanitized and content-hashed; secret and personal-data patterns are redacted.
 - Deterministic synthetic behavior is covered by `tests/eo-04a-common-adapter.test.js`.
 - No live provider call, secret read/write, database mutation, Vercel mutation or deployment occurs in EO-04-A.
-- GitHub Actions run `38049487145` passed 163/163 tests, TypeScript verification and preview build. The product owner explicitly accepted EO-04-A and authorized PR #65 merge on 10 October 2026. EO-04-B'nin official-document ve analyst-brief kapısı 13 Ekim 2026'da geçildi; repository implementation yetkilidir, live mutation yetkili değildir.
+- GitHub Actions run `38049487145` passed 163/163 tests, TypeScript verification and preview build. The product owner explicitly accepted EO-04-A and authorized PR #65 merge on 10 October 2026. EO-04-B'nin official-document ve analyst-brief kapısı 13 Ekim 2026'da geçildi. Ayrı açık onaylarla Production configuration/deployment ve desktop OAuth kabulü çalıştırıldı; mobil temiz-oturum ve Meta Channel kapıları açıktır.
 
 
 ## 10 October 2026 — EO-04-A product-owner closure
@@ -282,5 +282,8 @@ CI enforcement: `tests/eo-04b-meta-oauth-account-selection.test.js`
 - `/me/adaccounts` is opaque-cursor paginated with page/account ceilings. Invalid authorization is reauthorization, while an empty list is not fabricated success.
 - Disconnect is revoke-first; provider failure preserves local reporting authority.
 - OAuth/account selection does not write Dataset V2, start scheduling or backfill. Meta Channel data remains the next EO-04-B slice: `Campaign / Ad Set / Ad`, with the real Ad as Channel and no fabricated entity.
-- Four Meta environment names are added to the name-only secret inventory, but this repository change authorizes no secret value, Vercel mutation, deployment or live OAuth.
-- Desktop and real-mobile Shopify Admin, including a mobile browser with no existing Facebook session, remain mandatory live acceptance gates before EO-04-B OAuth closure.
+- Four Meta environment names are stored only in the name-only inventory; no value is committed or read back.
+- Production deployment `dpl_GxV2DQiXYaer24W1247iPAn9N6gR` at commit `f3f0516b5b938b683d10cd14b75947cd805120e0` is READY. Desktop OAuth, account selection, Reporting Account, Cancel/Resume, Disconnect and reconnect are PASS.
+- The attempted mobile flow used the Facebook identity already signed in to mobile Chrome. Because that identity is not an authorized app-role identity, mobile acceptance remains `PENDING_EXTERNAL_ACCOUNT_ACCESS`; it is not an application-code failure. A fresh Connect transaction will be tested later with the authorized identity and no copied OAuth URL/state.
+- Durable evidence: `docs/evidence/EO_04B_META_OAUTH_PARTIAL_LIVE_2026-10-13.json`. OAuth final acceptance, EO-04-B final acceptance and merge remain false.
+

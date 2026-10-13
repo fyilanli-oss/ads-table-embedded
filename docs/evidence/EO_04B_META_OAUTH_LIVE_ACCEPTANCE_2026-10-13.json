@@ -60,6 +60,7 @@
     "oauth_final_acceptance": true,
     "package_final_acceptance": false,
     "merge_authorized": false,
+    "android_retest_blocks_progress": false,
     "non_blocking_follow_up": "android_fresh_device_oauth"
   }
 }

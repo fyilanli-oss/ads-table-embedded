@@ -308,3 +308,17 @@ recorded in
 Live OAuth, provider-console, Vercel and deployment mutations remain separate
 approval gates; Shopify desktop and real-mobile product acceptance are still
 open.
+
+
+## EO-04-D Klaviyo reporting capability baseline — 13 October 2026
+
+Official capability record: `docs/decisions/A6_EO_04_D_KLAVIYO_REPORTING_CAPABILITY_BASELINE.md`
+
+- Klaviyo was raised to the same research/decision readiness level as Meta and Google Ads; no provider reporting implementation was started.
+- Stable Reporting API documentation establishes Campaign + Campaign Message and Flow + Flow Message as required provider grouping pairs.
+- Variation is a documented Reporting API dimension, but it is not yet an accepted AdsTable entity or Channel. The separate Campaign Variation resource remains beta until the documented 15 October 2026 revalidation point.
+- Conversion counts and values depend on an explicitly selected `conversion_metric_id`; no Klaviyo statistic is silently renamed to an AdsTable canonical fact.
+- Events API documents product ID, SKU, product name, quantity and value capabilities. A stable product-to-message/variation attribution join is not proven and remains `unknown_requires_live_evidence`.
+- Estimated Email Spend allocation, Channel hierarchy, Dataset mapping, reporting requests and runtime remain undecided and unimplemented.
+- Product-owner wording and explicit acceptance of the shared Channel contract are mandatory before any Meta, Google Ads or Klaviyo provider-reporting runtime work.
+- This record authorizes no API call, live data read, code, migration, secret, environment or deployment mutation.

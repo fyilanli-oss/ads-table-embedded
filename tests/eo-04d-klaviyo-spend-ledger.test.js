@@ -10,6 +10,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8");
 const originalMigration = "supabase/migrations/20261013170000_eo04d_klaviyo_spend_ledger.sql";
 const sameDayMigration = "supabase/migrations/20261013223000_eo04d_klaviyo_same_day_spend_updates.sql";
+const reconnectMigration = "supabase/migrations/20261013231500_eo04d_klaviyo_reconnect_same_day_spend.sql";
 
 test("Klaviyo spend accepts explicit zero and exact bounded decimals only", () => {
   assert.equal(normalizeKlaviyoEstimatedSpend("0"), "0.00");
@@ -110,6 +111,15 @@ test("same-day Update spend entries remain separate and Change value targets an 
   assert.doesNotMatch(correction, /set effective_from =/);
   assert.doesNotMatch(correction, /set source_currency =/);
   assert.doesNotMatch(correction, /set account_id =/);
+});
+
+test("same-day reconnect completion appends history instead of rejecting it", () => {
+  const sql = read(reconnectMigration);
+  assert.match(sql, /create or replace function integrations\.complete_klaviyo_setup_with_spend/);
+  assert.match(sql, /insert into integrations\.klaviyo_email_spend_periods/);
+  assert.doesNotMatch(sql, /DUPLICATE_EFFECTIVE_START/);
+  assert.match(sql, /target_effective_from, recorded_at, recorded_at/);
+  assert.match(sql, /grant execute on function integrations\.complete_klaviyo_setup_with_spend/);
 });
 
 test("repository corrects the exact selected spend event instead of a shared date", async () => {

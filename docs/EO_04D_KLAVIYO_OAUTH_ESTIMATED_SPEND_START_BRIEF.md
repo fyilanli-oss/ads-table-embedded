@@ -109,6 +109,10 @@ is reachable only through narrowly granted `adstable_runtime` functions.
   field label is **Estimated 30-Day Klaviyo Email Spend**; and the primary
   action is **Save new value**.
 
+Disconnect preserves historical spend. A later reconnect completed on the same
+business date also appends a distinct immutable event; it must not collide with,
+overwrite or delete the earlier connection history.
+
 ### Change value
 
 - Target one existing ledger row by its immutable spend-period UUID. A date is

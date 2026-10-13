@@ -14,6 +14,9 @@ const databaseEvidence = JSON.parse(read(
 const sameDayEvidence = JSON.parse(read(
   "docs/evidence/EO_04D_KLAVIYO_SAME_DAY_SPEND_UPDATE_ACCEPTANCE_2026-10-13.json",
 ));
+const reconnectEvidence = JSON.parse(read(
+  "docs/evidence/EO_04D_KLAVIYO_RECONNECT_SAME_DAY_SPEND_ACCEPTANCE_2026-10-13.json",
+));
 
 test("EO-04-D records explicit product-owner start-brief acceptance", () => {
   assert.equal(contract.status, "accepted_implementation_in_progress");
@@ -56,6 +59,18 @@ test("same-day spend correction preserves private function-only authority", () =
   assert.equal(sameDayEvidence.acceptance.new_performance_findings, 0);
 });
 
+test("same-day reconnect correction is live without changing OAuth or history", () => {
+  assert.equal(contract.repository_implementation.same_day_reconnect_correction_applied, true);
+  assert.equal(reconnectEvidence.root_cause.database_message, "DUPLICATE_EFFECTIVE_START");
+  assert.equal(reconnectEvidence.migration.applied, true);
+  assert.equal(reconnectEvidence.acceptance.duplicate_rejection_absent, true);
+  assert.equal(reconnectEvidence.acceptance.distinct_history_append_present, true);
+  assert.equal(reconnectEvidence.acceptance.runtime_execute_allowed, true);
+  assert.equal(reconnectEvidence.acceptance.runtime_direct_table_dml_denied, true);
+  assert.equal(reconnectEvidence.scope.oauth_changed, false);
+  assert.equal(reconnectEvidence.scope.historical_rows_changed_or_deleted, false);
+});
+
 test("Klaviyo uses the official PKCE and token hosts with one Connected Account", () => {
   assert.equal(contract.provider.pkce_method, "S256");
   assert.equal(contract.provider.authorization_url, "https://www.klaviyo.com/oauth/authorize");
@@ -85,6 +100,10 @@ test("estimated spend has one private effective-dated authority", () => {
   assert.equal(
     contract.spend_ledger.same_business_date_updates,
     "append_distinct_immutable_events",
+  );
+  assert.equal(
+    contract.spend_ledger.same_business_date_reconnect_completion,
+    "append_distinct_immutable_event",
   );
 });
 

@@ -1,0 +1,29 @@
+{
+  "package": "A6-EO-04-D",
+  "checked_at": "2026-10-13T20:11:17.1551058Z",
+  "project_id": "podpwkrpmjiksskxhwsu",
+  "root_cause": {
+    "observed_at": "2026-10-13T20:02:57.093000Z",
+    "sqlstate": "P0001",
+    "database_message": "DUPLICATE_EFFECTIVE_START",
+    "function": "integrations.complete_klaviyo_setup_with_spend",
+    "explanation": "The first corrective migration removed the same-day rejection from Update spend but not from disconnect-then-reconnect completion."
+  },
+  "migration": {
+    "repository_file": "supabase/migrations/20261013231500_eo04d_klaviyo_reconnect_same_day_spend.sql",
+    "remote_name": "eo04d_klaviyo_reconnect_same_day_spend",
+    "applied": true
+  },
+  "acceptance": {
+    "duplicate_rejection_absent": true,
+    "distinct_history_append_present": true,
+    "runtime_execute_allowed": true,
+    "runtime_direct_table_dml_denied": true
+  },
+  "scope": {
+    "oauth_changed": false,
+    "account_selection_changed": false,
+    "disconnect_changed": false,
+    "historical_rows_changed_or_deleted": false
+  }
+}

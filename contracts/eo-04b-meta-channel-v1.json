@@ -1,0 +1,104 @@
+{
+  "contract_id": "eo-04b-meta-channel-v1",
+  "version": "1.0.0",
+  "status": "Product_owner_analyst_contract_accepted_repository_implementation_in_progress",
+  "checked_at": "2026-10-13",
+  "package": "A6-EO-04-B",
+  "provider": "meta",
+  "hierarchy": ["campaign", "ad_set", "ad"],
+  "product_term": "Channel",
+  "channel_entity": "real_provider_ad",
+  "authority": {
+    "exactly_one_reporting_account": true,
+    "selected_non_reporting_accounts_ingested": false,
+    "browser_supplied_account_allowed": false,
+    "installed_shopify_store_remains_immutable": true,
+    "every_response_account_id_must_match_reporting_account": true,
+    "source_timezone": "provider_verified_meta_ad_account_timezone",
+    "installed_shop_timezone_is_not_substituted_for_meta_account_timezone": true
+  },
+  "query": {
+    "api_version": "v26.0",
+    "endpoint": "/{canonical_reporting_account_id}/insights",
+    "level": "ad",
+    "time_increment": 1,
+    "pagination": "opaque_cursor_complete_before_publish",
+    "base_breakdowns": [],
+    "attribution_parameter_guessing": false,
+    "fields": [
+      "account_id",
+      "account_currency",
+      "campaign_id",
+      "campaign_name",
+      "adset_id",
+      "adset_name",
+      "ad_id",
+      "ad_name",
+      "date_start",
+      "date_stop",
+      "impressions",
+      "clicks",
+      "outbound_clicks",
+      "spend",
+      "actions",
+      "action_values"
+    ]
+  },
+  "metric_mapping": {
+    "impression": "impressions",
+    "ad_click": "actions.link_click",
+    "session": "unsupported",
+    "spend_value": "spend",
+    "add_to_cart": ["actions.add_to_cart", "actions.omni_add_to_cart"],
+    "add_to_cart_value": ["action_values.add_to_cart", "action_values.omni_add_to_cart"],
+    "checkout": ["actions.initiate_checkout", "actions.checkout", "actions.omni_initiated_checkout"],
+    "checkout_value": ["action_values.initiate_checkout", "action_values.checkout", "action_values.omni_initiated_checkout"],
+    "purchase": ["actions.purchase", "actions.omni_purchase"],
+    "purchase_value": ["action_values.purchase", "action_values.omni_purchase"]
+  },
+  "semantics": {
+    "first_supported_alias_wins": true,
+    "aliases_are_never_summed": true,
+    "missing_action_is_zero": false,
+    "empty_actions_is_zero": false,
+    "empty_action_values_is_zero": false,
+    "explicit_provider_zero_required_for_zero": true,
+    "clicks_and_outbound_clicks_are_evidence_only": true,
+    "provider_native_calculated_metrics_are_formula_truth": false
+  },
+  "product_breakdown": {
+    "status": "api_supported_runtime_unverified",
+    "base_query_enabled": false,
+    "candidate_breakdown": "product_id",
+    "candidate_fields": [
+      "converted_product_quantity",
+      "converted_product_value",
+      "converted_promoted_product_quantity",
+      "converted_promoted_product_value"
+    ],
+    "requires_real_catalog_pixel_or_capi_purchase_evidence": true,
+    "sku_or_product_name_guaranteed_by_current_contract": false
+  },
+  "forbidden": [
+    "fabricated_channel_or_ad",
+    "selected_accounts_aggregated_into_one_reporting_account",
+    "shopify_order_attribution_inference",
+    "url_utm_fbclid_or_fbc_inference",
+    "missing_metric_coerced_to_zero",
+    "dataset_v2_write",
+    "scheduler_or_backfill",
+    "unverified_product_breakdown_activation"
+  ],
+  "runtime": {
+    "implementation": "app/lib/providers/meta-channel.server.js",
+    "types": "app/lib/providers/meta-channel.server.d.ts",
+    "test": "tests/eo-04b-meta-channel.test.js"
+  },
+  "authoritative_sources": {
+    "meta_insights": "https://developers.facebook.com/docs/marketing-api/insights",
+    "meta_official_postman_ad_insights": "https://www.postman.com/meta/facebook-marketing-api/request/u07tack/get-ad-insights-l1",
+    "meta_official_postman_collection": "https://www.postman.com/meta/facebook-marketing-api/documentation/0zr4mes/facebook-marketing-api-mapi"
+  },
+  "next_live_gate": "bounded_read_only_raw_response_before_any_dataset_write"
+}
+

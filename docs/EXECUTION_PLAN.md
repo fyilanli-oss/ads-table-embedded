@@ -308,4 +308,3 @@ recorded in
 Live OAuth, provider-console, Vercel and deployment mutations remain separate
 approval gates; Shopify desktop and real-mobile product acceptance are still
 open.
-

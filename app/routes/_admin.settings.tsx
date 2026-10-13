@@ -6,7 +6,7 @@ import {
   useRevalidator,
   useSubmit,
 } from "react-router";
-import {useEffect, useRef} from "react";
+import {useEffect, useRef, useState} from "react";
 import {
   authenticate,
   database,
@@ -492,7 +492,9 @@ export default function Settings() {
   const klaviyoInitialSpend = useRef<any>(null);
   const klaviyoUpdatedSpend = useRef<any>(null);
   const klaviyoCorrectedSpend = useRef<any>(null);
-  const klaviyoPeriodChoice = useRef<any>(null);
+  const klaviyoChangeValueModal = useRef<any>(null);
+  const [selectedKlaviyoPeriod, setSelectedKlaviyoPeriod] =
+    useState<KlaviyoSpendPeriod | null>(null);
   const pending = navigation.state !== "idle";
   const actionProvider = navigation.formData?.get("provider");
   const revalidating = revalidator.state !== "idle";
@@ -651,17 +653,21 @@ export default function Settings() {
   };
 
   const correctKlaviyoSpend = () => {
-    const [effectiveFrom] = klaviyoPeriodChoice.current?.values ?? [];
-    const selected = state.klaviyo.view === "connected"
-      ? state.klaviyo.periods.find((period) => period.effectiveFrom === effectiveFrom)
-      : null;
     const form = new FormData();
     form.set("intent", "change_klaviyo_value");
     form.set("provider", "klaviyo");
-    form.set("effectiveFrom", effectiveFrom ?? "");
-    form.set("correctionVersion", String(selected?.correctionVersion ?? ""));
+    form.set("effectiveFrom", selectedKlaviyoPeriod?.effectiveFrom ?? "");
+    form.set(
+      "correctionVersion",
+      String(selectedKlaviyoPeriod?.correctionVersion ?? ""),
+    );
     form.set("estimatedSpend", String(klaviyoCorrectedSpend.current?.value ?? ""));
     submit(form, {method: "post"});
+  };
+
+  const openKlaviyoCorrection = (period: KlaviyoSpendPeriod) => {
+    setSelectedKlaviyoPeriod(period);
+    klaviyoChangeValueModal.current?.showOverlay?.();
   };
 
   return (
@@ -1369,9 +1375,6 @@ export default function Settings() {
                 <s-button commandFor="klaviyo-update-spend-modal" command="--show">
                   Update spend
                 </s-button>
-                <s-button commandFor="klaviyo-change-value-modal" command="--show">
-                  Change value
-                </s-button>
                 <s-button
                   tone="critical"
                   commandFor="klaviyo-disconnect-modal"
@@ -1412,23 +1415,35 @@ export default function Settings() {
                 </s-button>
               </s-modal>
 
-              <s-modal id="klaviyo-change-value-modal" heading="Change Klaviyo value">
+              <s-paragraph>
+                Spend history — choose Change value beside the period that needs correction.
+              </s-paragraph>
+              <s-stack direction="block" gap="small">
+                {state.klaviyo.periods.map((period) => (
+                  <s-stack key={period.id} direction="inline" gap="base">
+                    <s-paragraph>
+                      {period.effectiveFrom}: {period.amount} {period.currency}
+                    </s-paragraph>
+                    <s-button onClick={() => openKlaviyoCorrection(period)}>
+                      Change value
+                    </s-button>
+                  </s-stack>
+                ))}
+              </s-stack>
+
+              <s-modal
+                ref={klaviyoChangeValueModal}
+                id="klaviyo-change-value-modal"
+                heading="Change Klaviyo value"
+              >
                 <s-stack direction="block" gap="base">
                   <s-paragraph>
                     Correct the amount on one existing period. Its date, account
                     and currency will not change.
                   </s-paragraph>
-                  <s-choice-list
-                    ref={klaviyoPeriodChoice}
-                    label="Spend period"
-                    name="klaviyoSpendPeriod"
-                  >
-                    {state.klaviyo.periods.map((period) => (
-                      <s-choice key={period.id} value={period.effectiveFrom}>
-                        {period.effectiveFrom}: {period.amount} {period.currency}
-                      </s-choice>
-                    ))}
-                  </s-choice-list>
+                  <s-paragraph>
+                    Period: {selectedKlaviyoPeriod?.effectiveFrom ?? "Not selected"}
+                  </s-paragraph>
                   <s-number-field
                     ref={klaviyoCorrectedSpend}
                     label="Corrected estimated 30-day email spend"
@@ -1443,6 +1458,7 @@ export default function Settings() {
                   slot="primary-action"
                   variant="primary"
                   onClick={correctKlaviyoSpend}
+                  disabled={!selectedKlaviyoPeriod}
                 >
                   Change value
                 </s-button>

@@ -109,7 +109,8 @@ test("Settings uses accepted Shopify components and keeps Resume separate from O
   assert.match(klaviyo, /Update spend/);
   assert.match(klaviyo, /Change value/);
   assert.doesNotMatch(klaviyo, /<input|<button|<style|style=/i);
-  assert.doesNotMatch(klaviyo, /showOverlay/);
+  assert.doesNotMatch(klaviyo, /<s-choice-list/);
+  assert.match(klaviyo, /onClick=\{\(\) => openKlaviyoCorrection\(period\)\}/);
   assert.doesNotMatch(klaviyo, /Reporting Account|Ad Account/);
 });
 

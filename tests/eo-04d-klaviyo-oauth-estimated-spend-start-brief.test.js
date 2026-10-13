@@ -104,4 +104,3 @@ test("Shopify mapping uses only accepted components and user-triggered completio
   assert.equal(contract.ui.custom_css, false);
   assert.equal(contract.ui.clickable_action_substitute, false);
 });
-

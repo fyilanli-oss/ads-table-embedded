@@ -297,7 +297,9 @@ Update spend / Change value → revoke-first Disconnect behavior on the new EO-0
 authority model. Estimated spend uses its own private effective-dated ledger;
 provider reporting requests, Channel decisions and cost allocation are outside
 this start slice. Product-owner start acceptance was received on 13 October
-2026. The first repository implementation slice is limited to OAuth, encrypted
-credential staging and exactly-one-account verification. Live OAuth,
-provider-console, Vercel, deployment and database-schema mutations remain
-separate approval gates.
+2026. The repository implementation now contains the OAuth/single-account
+foundation plus the private spend-ledger migration, atomic Save and connect,
+Update spend, Change value and revoke-first Disconnect code paths. This is
+repository evidence only: live OAuth, provider-console, Vercel, deployment and
+database-schema mutations remain separate approval gates; Shopify desktop and
+real-mobile product acceptance are still open.

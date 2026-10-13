@@ -146,5 +146,18 @@
     "status": "accepted",
     "accepted_at": "2026-10-13",
     "evidence": "User explicitly authorized implementation after the start brief and confirmed: Tamam devam edelim."
+  },
+  "repository_implementation": {
+    "status": "in_progress",
+    "oauth_foundation": true,
+    "private_spend_ledger_migration": true,
+    "atomic_save_and_connect": true,
+    "update_spend": true,
+    "change_value": true,
+    "revoke_first_disconnect": true,
+    "live_database_applied": false,
+    "desktop_acceptance": false,
+    "real_mobile_acceptance": false,
+    "final_product_owner_acceptance": false
   }
 }

@@ -1,0 +1,151 @@
+{
+  "contract_id": "eo-04d-klaviyo-oauth-estimated-spend-v1",
+  "version": "1.0.0",
+  "status": "proposed_product_owner_acceptance_required",
+  "checked_at": "2026-10-13",
+  "parent": "A6-EO-04",
+  "package": "A6-EO-04-D",
+  "scope": "klaviyo_oauth_single_account_and_effective_dated_estimated_email_spend",
+  "flow": [
+    "connect_confirmation",
+    "oauth_transaction_with_s256_pkce",
+    "callback_and_encrypted_token_storage",
+    "pending_completion",
+    "single_verified_account_confirmation",
+    "initial_estimated_spend",
+    "atomic_save_and_connect",
+    "connected",
+    "update_spend_or_change_value",
+    "revoke_first_disconnect"
+  ],
+  "provider": {
+    "authorization_url": "https://www.klaviyo.com/oauth/authorize",
+    "token_url": "https://a.klaviyo.com/oauth/token",
+    "revoke_url": "https://a.klaviyo.com/oauth/revoke",
+    "account_endpoint": "https://a.klaviyo.com/api/accounts/",
+    "api_revision": "2026-07-15",
+    "pkce_method": "S256",
+    "account_cardinality": 1,
+    "account_label": "Connected Account",
+    "reporting_account_control": false,
+    "requested_scopes": [
+      "accounts:read",
+      "campaigns:read",
+      "flows:read",
+      "events:read",
+      "metrics:read"
+    ],
+    "scope_activation": {
+      "accounts:read": "required_by_this_slice",
+      "campaigns:read": "provisional_until_reporting_contract",
+      "flows:read": "provisional_until_reporting_contract",
+      "events:read": "provisional_until_reporting_contract",
+      "metrics:read": "provisional_until_reporting_contract"
+    }
+  },
+  "invariants": {
+    "installed_shopify_store_is_immutable_authority": true,
+    "merchant_selects_store": false,
+    "resume_restarts_oauth": false,
+    "single_provider_verified_account_required": true,
+    "merchant_controls_account_currency_timezone_or_effective_date": false,
+    "initial_account_and_spend_completion_is_atomic": true,
+    "only_connected_grants_reporting_authority": true,
+    "disconnect_is_revoke_first": true,
+    "provider_failure_clears_local_authority": false,
+    "historical_spend_deleted_on_disconnect": false,
+    "provider_write_scope_requested": false
+  },
+  "spend_ledger": {
+    "table": "integrations.klaviyo_email_spend_periods",
+    "access_role": "adstable_runtime",
+    "browser_access": false,
+    "rls_enabled": true,
+    "rls_forced": true,
+    "amount_type": "numeric(10,2)",
+    "minimum": "0.00",
+    "maximum": "99999999.99",
+    "currency_source": "verified_klaviyo_account",
+    "effective_date_source": "server_business_date_in_verified_account_timezone",
+    "provenance": "user_estimated",
+    "unique_period_key": [
+      "connection_id",
+      "account_id",
+      "effective_from"
+    ],
+    "current_value_rule": "derive_from_latest_effective_period",
+    "second_mutable_current_cost_authority": false
+  },
+  "update_spend": {
+    "creates_new_period": true,
+    "provider_revalidation_required": true,
+    "duplicate_effective_start_error": "DUPLICATE_EFFECTIVE_START",
+    "optimistic_connection_version_required": true
+  },
+  "change_value": {
+    "updates_existing_period_only": true,
+    "changes_effective_date": false,
+    "changes_account_or_currency": false,
+    "increments_correction_version": true,
+    "missing_entry_error": "SPEND_HISTORY_ENTRY_NOT_FOUND"
+  },
+  "excluded_cost_channels": [
+    "sms",
+    "mms",
+    "whatsapp"
+  ],
+  "ui": {
+    "baseline": "polaris_2_0_rc_product_decision",
+    "components": [
+      "s-page",
+      "s-section",
+      "s-stack",
+      "s-badge",
+      "s-banner",
+      "s-button",
+      "s-modal",
+      "s-number-field"
+    ],
+    "automatic_modal_open_on_page_load": false,
+    "resume_setup_opens_completion_by_user_interaction": true,
+    "raw_html_controls": false,
+    "custom_css": false,
+    "clickable_action_substitute": false
+  },
+  "out_of_scope": [
+    "provider_reporting_requests",
+    "channel_hierarchy",
+    "cost_allocation",
+    "formula_engine",
+    "reporting_fact_persistence",
+    "scheduler_or_backfill",
+    "export_or_charts",
+    "provider_write_operations",
+    "legacy_record_carry",
+    "automatic_variation_activation"
+  ],
+  "mutations_authorized_by_this_contract": {
+    "provider_console": false,
+    "vercel_environment": false,
+    "deployment": false,
+    "live_oauth": false,
+    "database_schema": false
+  },
+  "authoritative_sources": {
+    "klaviyo_oauth": "https://developers.klaviyo.com/en/docs/set_up_oauth",
+    "klaviyo_accounts": "https://developers.klaviyo.com/en/reference/get_accounts",
+    "klaviyo_api_overview": "https://developers.klaviyo.com/en/v2026-07-15/reference/api_overview",
+    "supabase_rls": "https://supabase.com/docs/guides/database/postgres/row-level-security",
+    "supabase_changelog": "https://supabase.com/changelog",
+    "shopify_app_home_rc": "https://shopify.dev/docs/api/app-home/v2.0-rc",
+    "shopify_number_field": "https://shopify.dev/docs/api/app-home/latest/web-components/forms/number-field",
+    "shopify_modal": "https://shopify.dev/docs/api/app-home/latest/web-components/overlays/modal",
+    "shopify_button": "https://shopify.dev/docs/api/app-home/latest/web-components/actions/button"
+  },
+  "product_owner_start_brief": {
+    "status": "awaiting_explicit_acceptance",
+    "accepted_at": null,
+    "evidence": null
+  }
+}
+

@@ -40,20 +40,27 @@ patterns are not copied.
    an S256 PKCE verifier/challenge and navigates at the top level.
 3. The callback consumes the one-time transaction, exchanges the code at
    `https://a.klaviyo.com/oauth/token`, encrypts the returned token set and moves
-   the connection to pending completion.
+   the connection to pending account selection.
 4. AdsTable calls `GET https://a.klaviyo.com/api/accounts/` with
    `accounts:read`. Exactly one valid account object is required.
-5. The completion modal shows the provider-returned account name, currency and
-   timezone. The merchant confirms the account; there is no Ad Account or
-   Reporting Account concept for Klaviyo.
-6. The same completion flow collects **Estimated 30-Day Klaviyo Email Spend**.
+5. OAuth return follows the accepted Meta/Google setup behavior: the account
+   selection modal opens, and **Resume setup** reopens that same account step
+   without restarting OAuth. The merchant must explicitly select the
+   provider-returned account; AdsTable never silently assigns it.
+6. **Continue** advances the same modal to a separate estimated-spend step. The
+   account name, currency and timezone are then read-only. There is no Ad
+   Account or Reporting Account concept for Klaviyo.
+7. The second step collects **Estimated 30-Day Klaviyo Email Spend**.
    Currency is read-only and provider-authoritative. The initial effective date
    is the server-calculated business date in the verified account timezone.
-7. **Save and connect** atomically persists the verified account, the initial
+8. **Save and connect** submits both the selected account ID and spend. The
+   server reloads the pending credential, re-fetches the account list and rejects
+   a missing or stale selection before it atomically persists the verified
+   account, the initial
    spend period and the connected lifecycle state. Partial success is forbidden.
-8. Dismissing the completion modal preserves pending state. **Resume setup**
-   reopens completion and does not restart OAuth.
-9. Connected state exposes **Update spend**, **Change value** and
+9. Dismissing either modal step preserves pending state. The next **Resume
+   setup** always begins again at account selection.
+10. Connected state exposes **Update spend**, **Change value** and
    revoke-first **Disconnect**.
 
 ## Estimated-spend ledger
@@ -149,8 +156,9 @@ contract proves each one necessary. No write scope is requested.
 | Loading | Klaviyo status is loading | none | duplicate actions disabled |
 | Not connected | Klaviyo · Not connected | Connect | confirmation modal |
 | Authorization | Continue to Klaviyo | Continue / Cancel | OAuth or unchanged state |
-| Completion required | Verified account plus estimated spend field | Save and connect / Cancel | connected atomically or pending |
-| Resume required | Setup incomplete | Resume setup | completion modal; no OAuth restart |
+| Account selection required | Provider-returned Klaviyo account list | Continue / Cancel | separate spend step or pending |
+| Estimated spend required | Selected account summary plus estimated spend field | Save and connect / Cancel | connected atomically or pending |
+| Resume required | Setup incomplete | Resume setup | account selection modal; no OAuth restart |
 | Connected | Connected account and `amount currency / 30 days` | Update spend / Change value / Disconnect | focused action |
 | Reauthorization | Klaviyo authorization expired | Reconnect | fresh OAuth transaction |
 | Provider error | Clear retryable provider message | Retry | no fabricated empty/success state |
@@ -163,13 +171,16 @@ contract proves each one necessary. No write scope is requested.
 | Status and errors | `s-badge`, `s-banner` |
 | Actions | `s-button`; `loading` and `disabled` during submission |
 | Confirmation/completion/history correction | `s-modal` |
+| Explicit single-account selection | `s-choice-list`, `s-choice` |
 | Estimated spend | `s-number-field`, `min=0`, `max=99999999.99`, `step=0.01`, `required`, currency `suffix` |
 | Read-only account/currency/timezone | Shopify typography components inside the modal |
 
 No raw form controls, custom CSS, literal visual tokens or `s-clickable` action
-substitutes are permitted. Shopify documents that a modal cannot be opened
-programmatically on page load; therefore the callback returns with a truthful
-pending status and the merchant's **Resume setup** interaction opens the modal.
+substitutes are permitted. Klaviyo uses the already accepted Meta/Google setup
+pattern: callback state causes the account-selection modal to open, while
+**Resume setup** is the user-triggered recovery path after dismissal. Account
+selection and estimated spend are separate sequential views of the same modal;
+they are never combined on one screen and no nested modal is introduced.
 
 ## Out of scope
 

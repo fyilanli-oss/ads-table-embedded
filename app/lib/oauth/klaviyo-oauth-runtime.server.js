@@ -30,6 +30,15 @@ export function normalizeKlaviyoEstimatedSpend(value) {
   return amount.toFixed(2);
 }
 
+export function selectKlaviyoAccount(accounts, accountId) {
+  if (!Array.isArray(accounts) || typeof accountId !== "string" || accountId.length < 1) {
+    throw new Error("KLAVIYO_ACCOUNT_SELECTION_INVALID");
+  }
+  const selected = accounts.find((account) => account?.id === accountId);
+  if (!selected) throw new Error("KLAVIYO_ACCOUNT_SELECTION_INVALID");
+  return selected;
+}
+
 function accountForPersistence(account) {
   return Object.freeze({
     id: account.id,
@@ -244,9 +253,9 @@ export function createKlaviyoOAuthRuntime({
         scopes: pending.scopes,
       });
       return Object.freeze({
-        state: "pending_completion",
+        state: "pending_account_selection",
         pending: evidence.pending ?? pending,
-        account: evidence.accounts[0],
+        accounts: evidence.accounts,
       });
     },
 
@@ -294,10 +303,10 @@ export function createKlaviyoOAuthRuntime({
           success: true,
         });
         return Object.freeze({
-          outcome: "pending_completion",
+          outcome: "pending_account_selection",
           owner,
           pending: staged,
-          account: evidence.accounts[0],
+          accounts: evidence.accounts,
           callbackReturn: await setup.callbackReturn(owner),
         });
       } catch (error) {
@@ -316,7 +325,7 @@ export function createKlaviyoOAuthRuntime({
       }
     },
 
-    async complete({installationAuthority, estimatedSpend}) {
+    async complete({installationAuthority, accountId, estimatedSpend}) {
       const pending = await setup.loadPending({
         workspaceId: installationAuthority.workspaceId,
         installGeneration: installationAuthority.installGeneration,
@@ -329,12 +338,13 @@ export function createKlaviyoOAuthRuntime({
         scopes: pending.scopes,
       });
       const current = evidence.pending ?? pending;
+      const selected = selectKlaviyoAccount(evidence.accounts, accountId);
       return spend.complete({
         connectionId: current.connectionId,
         workspaceId: installationAuthority.workspaceId,
         installGeneration: installationAuthority.installGeneration,
         expectedVersion: current.version,
-        account: accountForPersistence(evidence.accounts[0]),
+        account: accountForPersistence(selected),
         amount: normalizeKlaviyoEstimatedSpend(estimatedSpend),
         verifiedAt: evidence.verifiedAt,
       });

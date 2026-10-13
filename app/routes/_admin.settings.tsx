@@ -64,7 +64,7 @@ type KlaviyoSpendPeriod = {
 
 type KlaviyoState =
   | {view: "disconnected"; notice: "cancelled" | "disconnected" | null}
-  | {view: "pending"; account: KlaviyoAccount}
+  | {view: "pending"; accounts: KlaviyoAccount[]}
   | {
       view: "connected";
       account: KlaviyoAccount;
@@ -278,8 +278,11 @@ async function loadKlaviyoState(
         periods: inspected.spend.periods.map(klaviyoPeriod),
       };
     }
-    if (inspected.state === "pending_completion") {
-      return {view: "pending", account: klaviyoAccount(inspected.account)};
+    if (inspected.state === "pending_account_selection") {
+      return {
+        view: "pending",
+        accounts: inspected.accounts.map(klaviyoAccount),
+      };
     }
     const status = url.searchParams.get("klaviyo_status");
     if (status === "error") {
@@ -364,6 +367,7 @@ export const action = async ({request}: ActionFunctionArgs) => {
     if (provider === "klaviyo" && intent === "complete_klaviyo") {
       await runtime.complete({
         installationAuthority: verified.installationAuthority,
+        accountId: String(form.get("accountId") ?? ""),
         estimatedSpend: String(form.get("estimatedSpend") ?? ""),
       });
       return verified.context.redirect("/settings");
@@ -490,6 +494,14 @@ export default function Settings() {
   const openedMetaSetupView = useRef<"pending" | "pending_reporting" | null>(null);
   const metaResumeRequested = useRef(false);
   const klaviyoInitialSpend = useRef<any>(null);
+  const klaviyoAccountChoice = useRef<any>(null);
+  const klaviyoSetupModal = useRef<any>(null);
+  const openedKlaviyoSetup = useRef(false);
+  const klaviyoResumeRequested = useRef(false);
+  const [klaviyoSetupStep, setKlaviyoSetupStep] =
+    useState<"account" | "spend">("account");
+  const [selectedKlaviyoAccountId, setSelectedKlaviyoAccountId] =
+    useState<string | null>(null);
   const klaviyoUpdatedSpend = useRef<any>(null);
   const klaviyoCorrectedSpend = useRef<any>(null);
   const klaviyoChangeValueModal = useRef<any>(null);
@@ -584,6 +596,23 @@ export default function Settings() {
     else metaReportingModal.current?.showOverlay?.();
   }, [state.meta.view, metaWorking]);
 
+  useEffect(() => {
+    if (state.klaviyo.view !== "pending") {
+      openedKlaviyoSetup.current = false;
+      klaviyoResumeRequested.current = false;
+      setKlaviyoSetupStep("account");
+      setSelectedKlaviyoAccountId(null);
+      return;
+    }
+    if (klaviyoWorking) return;
+    if (openedKlaviyoSetup.current && !klaviyoResumeRequested.current) return;
+    openedKlaviyoSetup.current = true;
+    klaviyoResumeRequested.current = false;
+    setKlaviyoSetupStep("account");
+    setSelectedKlaviyoAccountId(null);
+    klaviyoSetupModal.current?.showOverlay?.();
+  }, [state.klaviyo.view, klaviyoWorking]);
+
   const send = (intent: string, provider: Provider = "google_ads") => {
     const form = new FormData();
     form.set("intent", intent);
@@ -648,8 +677,23 @@ export default function Settings() {
     const form = new FormData();
     form.set("intent", intent);
     form.set("provider", "klaviyo");
+    if (intent === "complete_klaviyo" && selectedKlaviyoAccountId) {
+      form.set("accountId", selectedKlaviyoAccountId);
+    }
     form.set("estimatedSpend", String(input?.value ?? ""));
     submit(form, {method: "post"});
+  };
+
+  const resumeKlaviyoSetup = () => {
+    klaviyoResumeRequested.current = true;
+    revalidator.revalidate();
+  };
+
+  const continueKlaviyoSetup = () => {
+    const [accountId] = klaviyoAccountChoice.current?.values ?? [];
+    if (!accountId) return;
+    setSelectedKlaviyoAccountId(accountId);
+    setKlaviyoSetupStep("spend");
   };
 
   const correctKlaviyoSpend = () => {
@@ -1310,46 +1354,82 @@ export default function Settings() {
 
           {!klaviyoWorking && state.klaviyo.view === "pending" ? (
             <>
-              <s-badge tone="info">Estimated spend required</s-badge>
+              <s-badge tone="info">Account selection required</s-badge>
               <s-paragraph>
-                Klaviyo authorization is complete. Confirm the verified account
-                and add its estimated 30-day email spend to finish setup.
+                Klaviyo authorization is complete. Select the account, then add
+                its estimated 30-day email spend to finish setup.
               </s-paragraph>
-              <s-button
-                variant="primary"
-                commandFor="klaviyo-complete-modal"
-                command="--show"
-              >
+              <s-button variant="primary" onClick={resumeKlaviyoSetup}>
                 Resume setup
               </s-button>
-              <s-modal id="klaviyo-complete-modal" heading="Finish Klaviyo setup">
-                <s-stack direction="block" gap="base">
-                  <s-paragraph>
-                    Account: {state.klaviyo.account.name} ({state.klaviyo.account.id})
-                  </s-paragraph>
-                  <s-paragraph>
-                    Currency: {state.klaviyo.account.currency} · Timezone: {state.klaviyo.account.timezone}
-                  </s-paragraph>
-                  <s-number-field
-                    ref={klaviyoInitialSpend}
-                    label="Estimated 30-day Klaviyo email spend"
-                    min={0}
-                    max={99999999.99}
-                    step={0.01}
-                    suffix={state.klaviyo.account.currency}
-                    required
-                  />
-                </s-stack>
-                <s-button
-                  slot="primary-action"
-                  variant="primary"
-                  onClick={() => submitKlaviyoSpend("complete_klaviyo")}
-                >
-                  Save and connect
-                </s-button>
+              <s-modal
+                ref={klaviyoSetupModal}
+                id="klaviyo-setup-modal"
+                heading={klaviyoSetupStep === "account"
+                  ? "Select Klaviyo account"
+                  : "Add estimated email spend"}
+              >
+                {klaviyoSetupStep === "account" ? (
+                  <s-stack direction="block" gap="base">
+                    <s-paragraph>
+                      Select the Klaviyo account to connect.
+                    </s-paragraph>
+                    <s-choice-list
+                      ref={klaviyoAccountChoice}
+                      label="Klaviyo accounts"
+                      name="klaviyoAccountId"
+                    >
+                      {state.klaviyo.accounts.map((account) => (
+                        <s-choice key={account.id} value={account.id}>
+                          {account.name} ({account.id})
+                        </s-choice>
+                      ))}
+                    </s-choice-list>
+                  </s-stack>
+                ) : (() => {
+                  const account = state.klaviyo.accounts.find(
+                    (candidate) => candidate.id === selectedKlaviyoAccountId,
+                  );
+                  return account ? (
+                    <s-stack direction="block" gap="base">
+                      <s-paragraph>
+                        Account: {account.name} ({account.id})
+                      </s-paragraph>
+                      <s-paragraph>
+                        Currency: {account.currency} · Timezone: {account.timezone}
+                      </s-paragraph>
+                      <s-number-field
+                        ref={klaviyoInitialSpend}
+                        label="Estimated 30-day Klaviyo email spend"
+                        min={0}
+                        max={99999999.99}
+                        step={0.01}
+                        suffix={account.currency}
+                        required
+                      />
+                    </s-stack>
+                  ) : null;
+                })()}
+                {klaviyoSetupStep === "account" ? (
+                  <s-button
+                    slot="primary-action"
+                    variant="primary"
+                    onClick={continueKlaviyoSetup}
+                  >
+                    Continue
+                  </s-button>
+                ) : (
+                  <s-button
+                    slot="primary-action"
+                    variant="primary"
+                    onClick={() => submitKlaviyoSpend("complete_klaviyo")}
+                  >
+                    Save and connect
+                  </s-button>
+                )}
                 <s-button
                   slot="secondary-actions"
-                  commandFor="klaviyo-complete-modal"
+                  commandFor="klaviyo-setup-modal"
                   command="--hide"
                 >
                   Cancel

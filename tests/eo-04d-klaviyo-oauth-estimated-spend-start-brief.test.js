@@ -51,6 +51,9 @@ test("Klaviyo uses the official PKCE and token hosts with one Connected Account"
   assert.equal(contract.provider.account_cardinality, 1);
   assert.equal(contract.provider.reporting_account_control, false);
   assert.equal(contract.invariants.resume_restarts_oauth, false);
+  assert.equal(contract.invariants.resume_starts_at_account_selection, true);
+  assert.equal(contract.invariants.account_is_silently_assigned, false);
+  assert.equal(contract.invariants.selected_account_is_revalidated_on_completion, true);
 });
 
 test("estimated spend has one private effective-dated authority", () => {
@@ -95,11 +98,15 @@ test("the start brief excludes reporting and allocation behavior", () => {
   assert.doesNotMatch(JSON.stringify(contract), /dataset[_ -]?v2/i);
 });
 
-test("Shopify mapping uses only accepted components and user-triggered completion", () => {
+test("Shopify mapping preserves the accepted staged account and spend flow", () => {
   assert.ok(contract.ui.components.includes("s-number-field"));
   assert.ok(contract.ui.components.includes("s-modal"));
-  assert.equal(contract.ui.automatic_modal_open_on_page_load, false);
-  assert.equal(contract.ui.resume_setup_opens_completion_by_user_interaction, true);
+  assert.ok(contract.ui.components.includes("s-choice-list"));
+  assert.ok(contract.ui.components.includes("s-choice"));
+  assert.equal(contract.ui.oauth_return_opens_account_selection_like_meta_and_google, true);
+  assert.equal(contract.ui.resume_setup_opens_account_selection_by_user_interaction, true);
+  assert.equal(contract.ui.account_and_spend_share_one_screen, false);
+  assert.equal(contract.ui.nested_modal, false);
   assert.equal(contract.ui.raw_html_controls, false);
   assert.equal(contract.ui.custom_css, false);
   assert.equal(contract.ui.clickable_action_substitute, false);

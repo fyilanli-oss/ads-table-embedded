@@ -6,3 +6,5 @@ export function createKlaviyoOAuthRuntime(input: {
   now?: () => Date;
   randomUUIDFn?: () => string;
 }): any;
+
+export function selectKlaviyoAccount(accounts: any[], accountId: string): any;

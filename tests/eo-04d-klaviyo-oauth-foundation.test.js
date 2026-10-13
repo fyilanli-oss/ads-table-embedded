@@ -17,6 +17,7 @@ import {
   revokeKlaviyoAuthorization,
 } from "../app/lib/providers/klaviyo-api.server.js";
 import {installedShopifySettingsUrl} from "../app/lib/shopify/installed-app-return.server.js";
+import {selectKlaviyoAccount} from "../app/lib/oauth/klaviyo-oauth-runtime.server.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8");
@@ -237,11 +238,25 @@ test("callback return carries only bounded Klaviyo status and public error codes
   );
 });
 
-test("foundation stages pending completion without inventing reporting or data contracts", () => {
+test("Klaviyo completion requires an explicit account still present in fresh provider evidence", () => {
+  const accounts = [{id: "account-1", name: "AdsTable Demo"}];
+  assert.equal(selectKlaviyoAccount(accounts, "account-1"), accounts[0]);
+  for (const accountId of ["", "missing-account"]) {
+    assert.throws(
+      () => selectKlaviyoAccount(accounts, accountId),
+      /KLAVIYO_ACCOUNT_SELECTION_INVALID/,
+    );
+  }
+});
+
+test("foundation stages pending account selection without inventing reporting or data contracts", () => {
   const runtime = read("app/lib/oauth/klaviyo-oauth-runtime.server.js");
   const repository = read("app/lib/database/klaviyo-setup-repository.server.js");
   const callback = read("app/routes/auth.klaviyo.callback.ts");
-  assert.match(runtime, /outcome: "pending_completion"/);
+  assert.match(runtime, /outcome: "pending_account_selection"/);
+  assert.match(runtime, /accounts: evidence\.accounts/);
+  assert.match(runtime, /selectKlaviyoAccount\(evidence\.accounts, accountId\)/);
+  assert.doesNotMatch(runtime, /account: evidence\.accounts\[0\]/);
   assert.match(repository, /stage_provider_account_selection/);
   assert.match(repository, /'klaviyo'/);
   assert.match(callback, /provider: "klaviyo"/);

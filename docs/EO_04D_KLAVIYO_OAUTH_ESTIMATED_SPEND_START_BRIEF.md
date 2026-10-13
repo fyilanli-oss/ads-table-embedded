@@ -218,4 +218,3 @@ This passes the database gate only. Environment values, deployment, live
 Klaviyo OAuth, desktop/mobile Shopify acceptance, final product-owner acceptance
 and merge remain open.
 
-

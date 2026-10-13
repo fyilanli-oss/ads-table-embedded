@@ -34,6 +34,13 @@
     "diagnostic",
     "acceptance"
   ],
+  "allowedProviderProtocolTokenOccurrences": [
+    {
+      "file": "app/lib/providers/meta-graph.server.js",
+      "token": "debug",
+      "reason": "official_Meta_debug_token_protocol_endpoint_not_a_product_or_operator_route"
+    }
+  ],
   "forbiddenPaths": [
     "public",
     "server.js"
@@ -41,6 +48,10 @@
   "allowedEnvironmentKeys": [
     "ADSTABLE_RUNTIME_DATABASE_URL",
     "ADSTABLE_SESSION_ENCRYPTION_KEY_V1",
+    "META_APP_ID",
+    "META_APP_SECRET",
+    "META_GRAPH_VERSION",
+    "META_OAUTH_REDIRECT_URI",
     "SCOPES",
     "SHOPIFY_API_KEY",
     "SHOPIFY_API_SECRET",

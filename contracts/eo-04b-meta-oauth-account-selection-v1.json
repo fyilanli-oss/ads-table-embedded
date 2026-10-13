@@ -1,0 +1,117 @@
+{
+  "contract_id": "eo-04b-meta-oauth-account-selection-v1",
+  "version": "1.0.0",
+  "status": "Product_owner_start_brief_accepted_repository_implementation_in_progress",
+  "checked_at": "2026-10-13",
+  "parent": "A6-EO-04",
+  "package": "A6-EO-04-B",
+  "scope": "meta_oauth_account_selection_and_reporting_account_authority",
+  "provider": {
+    "name": "meta",
+    "graph_version": "v26.0",
+    "scope": ["ads_read"],
+    "callback": "https://embedded.adstable.app/auth/meta/callback",
+    "minimum_selected_advertisers": 1,
+    "maximum_selected_advertisers": 3,
+    "exactly_one_reporting_account": true
+  },
+  "state_flow": [
+    "disconnected",
+    "oauth_transaction",
+    "pending_account_selection",
+    "pending_reporting_account_selection_when_multiple",
+    "connected",
+    "reauthorization_required",
+    "disconnect_pending",
+    "disconnected"
+  ],
+  "invariants": {
+    "installed_shopify_store_is_immutable_authority": true,
+    "meta_identity_or_account_can_select_store": false,
+    "only_connected_grants_reporting_authority": true,
+    "one_selected_account_auto_becomes_reporting_account": true,
+    "multiple_selected_accounts_require_explicit_reporting_choice": true,
+    "cancel_preserves_pending_state": true,
+    "resume_restarts_oauth": false,
+    "reporting_change_restarts_oauth": false,
+    "disconnect_is_revoke_first": true,
+    "provider_failure_clears_local_authority": false,
+    "oauth_writes_dataset_v2": false,
+    "oauth_starts_backfill_or_scheduler": false,
+    "google_behavior_changed_by_this_contract": false
+  },
+  "account_discovery": {
+    "endpoint": "/me/adaccounts",
+    "fields": ["id", "name", "currency", "account_status", "timezone_name"],
+    "maximum_pages": 20,
+    "maximum_accounts": 1000,
+    "opaque_cursor": true,
+    "cursor_loop_rejected": true,
+    "empty_is_failure": true
+  },
+  "token_acceptance": {
+    "short_to_long_lived_exchange": true,
+    "debug_token_required": true,
+    "exact_app_id_required": true,
+    "ads_read_required": true,
+    "bounded_expiry_required": true,
+    "plaintext_persistence_forbidden": true,
+    "vault": "EO_03B_provider_token_vault"
+  },
+  "ui": {
+    "baseline": "polaris_2_0_rc_product_decision",
+    "components": [
+      "s-page",
+      "s-section",
+      "s-stack",
+      "s-badge",
+      "s-banner",
+      "s-button",
+      "s-modal",
+      "s-choice-list",
+      "s-choice"
+    ],
+    "raw_html_controls": false,
+    "custom_css": false,
+    "top_level_provider_navigation": true
+  },
+  "channel_next_slice": {
+    "hierarchy": ["campaign", "ad_set", "ad"],
+    "product_term": "Channel",
+    "channel_entity": "ad",
+    "fake_entity_forbidden": true,
+    "dataset_activation_requires_live_evidence": true
+  },
+  "required_live_acceptance": [
+    "desktop_shopify_admin",
+    "real_mobile_shopify_admin",
+    "mobile_without_existing_facebook_browser_session",
+    "single_account_auto_reporting",
+    "multiple_account_explicit_reporting",
+    "cancel_and_resume_without_oauth_restart",
+    "reporting_account_change_without_oauth",
+    "revoke_first_disconnect_and_clean_reconnect"
+  ],
+  "mutations_authorized_by_this_contract": {
+    "provider_console": false,
+    "vercel_environment": false,
+    "deployment": false,
+    "live_oauth": false,
+    "database_schema": false,
+    "dataset_v2": false
+  },
+  "authoritative_sources": {
+    "graph_changelog": "https://developers.facebook.com/docs/graph-api/changelog",
+    "graph_versions": "https://developers.facebook.com/docs/graph-api/changelog/versions/",
+    "app_versions": "https://developers.facebook.com/docs/apps/versions",
+    "facebook_login": "https://developers.facebook.com/docs/facebook-login",
+    "marketing_api_collection": "https://www.postman.com/meta/facebook-marketing-api/collection/0zr4mes/facebook-marketing-api-mapi",
+    "ad_account": "https://developers.facebook.com/docs/marketing-api/reference/ad-account",
+    "shopify_components": "https://shopify.dev/docs/api/app-home/latest/web-components"
+  },
+  "product_owner_start_brief": {
+    "status": "accepted",
+    "accepted_at": "2026-10-13",
+    "evidence": "explicit_chat_approval"
+  }
+}

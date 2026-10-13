@@ -16,9 +16,11 @@ import {
   resolveShopifyRouteAuthority,
 } from "../lib/shopify/shopify-route-authority.server.js";
 import {createGoogleOAuthRuntime} from "../lib/oauth/google-oauth-runtime.server.js";
+import {createMetaOAuthRuntime} from "../lib/oauth/meta-oauth-runtime.server.js";
 import {
   buildGoogleAdsAuthorizationUrl,
 } from "../lib/providers/google-ads-rest.server.js";
+import {buildMetaAuthorizationUrl} from "../lib/providers/meta-graph.server.js";
 
 type Advertiser = {
   id: string;
@@ -37,11 +39,15 @@ type State =
   | {view: "error"; code: string; retry: "oauth" | "reload"};
 
 type ActionData =
-  | {ok: true; intent: "begin"; authorizationUrl: string}
-  | {ok: false; code: string}
+  | {ok: true; intent: "begin"; provider: Provider; authorizationUrl: string}
+  | {ok: false; provider: Provider; code: string}
   | undefined;
 
-function codeOf(error: unknown) {
+type Provider = "google_ads" | "meta";
+type LoaderData = State & {meta: State};
+
+function providerCodeOf(provider: Provider, error: unknown) {
+  const prefix = provider === "meta" ? "META" : "GOOGLE_ADS";
   const source = error && typeof error === "object"
     ? error as {code?: unknown; details?: Record<string, unknown>}
     : null;
@@ -49,13 +55,13 @@ function codeOf(error: unknown) {
   if (
     typeof providerCode === "string"
     && /^[A-Z0-9_]{1,80}$/.test(providerCode)
-  ) return "GOOGLE_ADS_PROVIDER_" + providerCode;
+  ) return prefix + "_PROVIDER_" + providerCode;
   const status = source?.details?.provider_status;
-  if (status === "invalid_grant") return "GOOGLE_REAUTHORIZATION_REQUIRED";
+  if (status === "invalid_grant") return prefix + "_REAUTHORIZATION_REQUIRED";
   const candidate = source?.code ?? (error instanceof Error ? error.message : "");
   return typeof candidate === "string" && /^[A-Z0-9_]{1,80}$/.test(candidate)
     ? candidate
-    : "GOOGLE_SETUP_FAILED";
+    : prefix + "_SETUP_FAILED";
 }
 
 function view(account: Record<string, unknown>): Advertiser {
@@ -68,6 +74,13 @@ function view(account: Record<string, unknown>): Advertiser {
   };
 }
 
+function reportingAccountName(state: State) {
+  if (state.view !== "connected") return "";
+  return state.accounts.find(
+    (account) => account.id === state.reportingAccountId,
+  )?.name ?? state.reportingAccountId;
+}
+
 async function routeAuthority(request: Request) {
   return resolveShopifyRouteAuthority({
     request,
@@ -76,13 +89,14 @@ async function routeAuthority(request: Request) {
   });
 }
 
-export const loader = async ({request}: LoaderFunctionArgs): Promise<State> => {
-  const verified = await routeAuthority(request);
+async function loadGoogleState(
+  verified: Awaited<ReturnType<typeof routeAuthority>>,
+  url: URL,
+): Promise<State> {
   const runtime = createGoogleOAuthRuntime({
     database,
     tokenVault: providerTokenVault,
   });
-  const url = new URL(request.url);
   try {
     const inspected = await runtime.inspect({
       installationAuthority: verified.installationAuthority,
@@ -129,37 +143,109 @@ export const loader = async ({request}: LoaderFunctionArgs): Promise<State> => {
           : null,
     };
   } catch (error) {
-    const code = codeOf(error);
+    const code = providerCodeOf("google_ads", error);
     if (code === "GOOGLE_REAUTHORIZATION_REQUIRED") {
       return {view: "reauthorization"};
     }
     return {view: "error", code, retry: "reload"};
   }
+}
+
+async function loadMetaState(
+  verified: Awaited<ReturnType<typeof routeAuthority>>,
+  url: URL,
+): Promise<State> {
+  try {
+    const runtime = createMetaOAuthRuntime({
+      database,
+      tokenVault: providerTokenVault,
+    });
+    const inspected = await runtime.inspect({
+      installationAuthority: verified.installationAuthority,
+    });
+    if (inspected.state === "connected") {
+      if (!inspected.connection.reportingAccountId) {
+        throw new Error("META_REPORTING_ACCOUNT_REQUIRED");
+      }
+      return {
+        view: "connected",
+        accounts: inspected.connection.accounts.map(view),
+        reportingAccountId: inspected.connection.reportingAccountId,
+      };
+    }
+    if (inspected.state === "pending_reporting_account_selection") {
+      return {view: "pending_reporting", accounts: inspected.accounts.map(view)};
+    }
+    if (inspected.state === "pending_account_selection") {
+      return {view: "pending", accounts: inspected.accounts.map(view)};
+    }
+    const status = url.searchParams.get("meta_status");
+    if (status === "error") {
+      const callbackCode = url.searchParams.get("meta_error");
+      return {
+        view: "error",
+        code: callbackCode && /^[A-Z0-9_]{1,80}$/.test(callbackCode)
+          ? callbackCode
+          : "META_CALLBACK_FAILED",
+        retry: "oauth",
+      };
+    }
+    return {
+      view: "disconnected",
+      notice: status === "cancelled"
+        ? "cancelled"
+        : status === "disconnected"
+          ? "disconnected"
+          : null,
+    };
+  } catch (error) {
+    const code = providerCodeOf("meta", error);
+    if (code === "META_REAUTHORIZATION_REQUIRED") {
+      return {view: "reauthorization"};
+    }
+    return {view: "error", code, retry: "reload"};
+  }
+}
+
+export const loader = async ({request}: LoaderFunctionArgs): Promise<LoaderData> => {
+  const verified = await routeAuthority(request);
+  const url = new URL(request.url);
+  const [google, meta] = await Promise.all([
+    loadGoogleState(verified, url),
+    loadMetaState(verified, url),
+  ]);
+  return {...google, meta};
 };
 
 export const action = async ({request}: ActionFunctionArgs) => {
   const verified = await routeAuthority(request);
-  const runtime = createGoogleOAuthRuntime({
-    database,
-    tokenVault: providerTokenVault,
-  });
   const form = await request.formData();
   const intent = form.get("intent");
+  const provider: Provider = form.get("provider") === "meta" ? "meta" : "google_ads";
 
   try {
+    const runtime = provider === "meta"
+      ? createMetaOAuthRuntime({database, tokenVault: providerTokenVault})
+      : createGoogleOAuthRuntime({database, tokenVault: providerTokenVault});
     if (intent === "begin") {
       const started = await runtime.oauthBoundary.begin({
         installationAuthority: verified.installationAuthority,
-        provider: "google_ads",
+        provider,
       });
       return {
         ok: true,
         intent: "begin",
-        authorizationUrl: buildGoogleAdsAuthorizationUrl({
-          config: runtime.config,
-          state: started.state,
-          pkceChallenge: started.pkceChallenge,
-        }),
+        provider,
+        authorizationUrl: provider === "meta"
+          ? buildMetaAuthorizationUrl({
+            config: runtime.config,
+            state: started.state,
+          })
+          : buildGoogleAdsAuthorizationUrl({
+            config: runtime.config,
+            state: started.state,
+            pkceChallenge: started.pkceChallenge,
+          }),
       } satisfies ActionData;
     }
 
@@ -199,20 +285,31 @@ export const action = async ({request}: ActionFunctionArgs) => {
       await runtime.disconnect({
         installationAuthority: verified.installationAuthority,
       });
-      return verified.context.redirect("/settings?google_status=disconnected");
+      return verified.context.redirect(
+        provider === "meta"
+          ? "/settings?meta_status=disconnected"
+          : "/settings?google_status=disconnected",
+      );
     }
 
-    return {ok: false, code: "GOOGLE_SETUP_ACTION_INVALID"} satisfies ActionData;
+    return {
+      ok: false,
+      provider,
+      code: provider === "meta"
+        ? "META_SETUP_ACTION_INVALID"
+        : "GOOGLE_SETUP_ACTION_INVALID",
+    } satisfies ActionData;
   } catch (error) {
     if (error instanceof Response) throw error;
-    return {ok: false, code: codeOf(error)} satisfies ActionData;
+    return {ok: false, provider, code: providerCodeOf(provider, error)} satisfies ActionData;
   }
 };
 
-function ErrorBanner({code}: {code: string}) {
+function ErrorBanner({provider, code}: {provider: Provider; code: string}) {
+  const label = provider === "meta" ? "Meta" : "Google Ads";
   return (
     <s-banner tone="critical">
-      Google Ads could not be connected. Try again. If the problem continues,
+      {label} could not be connected. Try again. If the problem continues,
       share error code {code}.
     </s-banner>
   );
@@ -242,16 +339,28 @@ export default function Settings() {
   const reportingModal = useRef<any>(null);
   const openedSetupView = useRef<"pending" | "pending_reporting" | null>(null);
   const resumeRequested = useRef(false);
+  const metaChoices = useRef<any>(null);
+  const metaReportingChoice = useRef<any>(null);
+  const metaAccountModal = useRef<any>(null);
+  const metaReportingModal = useRef<any>(null);
+  const openedMetaSetupView = useRef<"pending" | "pending_reporting" | null>(null);
+  const metaResumeRequested = useRef(false);
   const pending = navigation.state !== "idle";
-  const working = pending || revalidator.state !== "idle";
+  const actionProvider = navigation.formData?.get("provider");
+  const revalidating = revalidator.state !== "idle";
+  const googleWorking = revalidating || (pending && actionProvider !== "meta");
+  const metaWorking = revalidating || (pending && actionProvider === "meta");
 
   useEffect(() => {
     if (actionData?.ok !== true || actionData.intent !== "begin") return;
     const target = new URL(actionData.authorizationUrl);
-    if (
+    const googleTarget =
       target.origin === "https://accounts.google.com"
-      && target.pathname === "/o/oauth2/v2/auth"
-    ) globalThis.open(target.toString(), "_top");
+      && target.pathname === "/o/oauth2/v2/auth";
+    const metaTarget =
+      target.origin === "https://www.facebook.com"
+      && target.pathname === "/v26.0/dialog/oauth";
+    if (googleTarget || metaTarget) globalThis.open(target.toString(), "_top");
   }, [actionData]);
 
   useEffect(() => {
@@ -263,17 +372,35 @@ export default function Settings() {
       resumeRequested.current = false;
       return;
     }
-    if (working) return;
+    if (googleWorking) return;
     if (openedSetupView.current === setupView && !resumeRequested.current) return;
     openedSetupView.current = setupView;
     resumeRequested.current = false;
     if (setupView === "pending") accountModal.current?.showOverlay?.();
     else reportingModal.current?.showOverlay?.();
-  }, [state.view, working]);
+  }, [state.view, googleWorking]);
 
-  const send = (intent: string) => {
+  useEffect(() => {
+    const setupView = state.meta.view === "pending" || state.meta.view === "pending_reporting"
+      ? state.meta.view
+      : null;
+    if (!setupView) {
+      openedMetaSetupView.current = null;
+      metaResumeRequested.current = false;
+      return;
+    }
+    if (metaWorking) return;
+    if (openedMetaSetupView.current === setupView && !metaResumeRequested.current) return;
+    openedMetaSetupView.current = setupView;
+    metaResumeRequested.current = false;
+    if (setupView === "pending") metaAccountModal.current?.showOverlay?.();
+    else metaReportingModal.current?.showOverlay?.();
+  }, [state.meta.view, metaWorking]);
+
+  const send = (intent: string, provider: Provider = "google_ads") => {
     const form = new FormData();
     form.set("intent", intent);
+    form.set("provider", provider);
     submit(form, {method: "post"});
   };
 
@@ -285,6 +412,7 @@ export default function Settings() {
   const select = () => {
     const form = new FormData();
     form.set("intent", "select");
+    form.set("provider", "google_ads");
     for (const id of choices.current?.values ?? []) {
       form.append("accountIds", id);
     }
@@ -295,6 +423,31 @@ export default function Settings() {
     const [reportingAccountId] = reportingChoice.current?.values ?? [];
     const form = new FormData();
     form.set("intent", intent);
+    form.set("provider", "google_ads");
+    if (reportingAccountId) form.set("reportingAccountId", reportingAccountId);
+    submit(form, {method: "post"});
+  };
+
+  const resumeMetaAccountSelection = () => {
+    metaResumeRequested.current = true;
+    revalidator.revalidate();
+  };
+
+  const selectMeta = () => {
+    const form = new FormData();
+    form.set("intent", "select");
+    form.set("provider", "meta");
+    for (const id of metaChoices.current?.values ?? []) {
+      form.append("accountIds", id);
+    }
+    submit(form, {method: "post"});
+  };
+
+  const saveMetaReporting = (intent: "finish_reporting" | "change_reporting") => {
+    const [reportingAccountId] = metaReportingChoice.current?.values ?? [];
+    const form = new FormData();
+    form.set("intent", intent);
+    form.set("provider", "meta");
     if (reportingAccountId) form.set("reportingAccountId", reportingAccountId);
     submit(form, {method: "post"});
   };
@@ -302,20 +455,302 @@ export default function Settings() {
   return (
     <s-page heading="Settings">
       <Navigation />
+      <s-section heading="Meta">
+        <s-stack direction="block" gap="base">
+          {actionData?.ok === false && actionData.provider === "meta"
+            ? <ErrorBanner provider="meta" code={actionData.code} />
+            : null}
+
+          {metaWorking ? (
+            <>
+              <s-badge tone="info">Working</s-badge>
+              <s-paragraph>Meta setup is being updated…</s-paragraph>
+            </>
+          ) : null}
+
+          {!metaWorking && state.meta.view === "error" ? (
+            <>
+              <ErrorBanner provider="meta" code={state.meta.code} />
+              <s-button
+                variant="primary"
+                onClick={() => {
+                  if (state.meta.view === "error" && state.meta.retry === "oauth") {
+                    send("begin", "meta");
+                  } else {
+                    revalidator.revalidate();
+                  }
+                }}
+              >
+                {state.meta.retry === "oauth" ? "Restart Meta setup" : "Try loading accounts again"}
+              </s-button>
+            </>
+          ) : null}
+
+          {!metaWorking && state.meta.view === "reauthorization" ? (
+            <>
+              <s-badge tone="warning">Reauthorization required</s-badge>
+              <s-paragraph>
+                Meta authorization is no longer valid. Reconnect to continue.
+              </s-paragraph>
+              <s-button variant="primary" onClick={() => send("begin", "meta")}>
+                Reconnect Meta
+              </s-button>
+            </>
+          ) : null}
+
+          {!metaWorking && state.meta.view === "disconnected" ? (
+            <>
+              <s-badge>Not connected</s-badge>
+              {state.meta.notice === "cancelled" ? (
+                <s-banner tone="warning">
+                  Meta setup was cancelled. No advertiser account was connected.
+                </s-banner>
+              ) : null}
+              {state.meta.notice === "disconnected" ? (
+                <s-banner tone="success">Meta was disconnected.</s-banner>
+              ) : null}
+              <s-paragraph>
+                Connect Meta, then select one to three advertiser accounts.
+              </s-paragraph>
+              <s-button
+                variant="primary"
+                commandFor="meta-connect-modal"
+                command="--show"
+              >
+                Connect Meta
+              </s-button>
+            </>
+          ) : null}
+
+          {!metaWorking && state.meta.view === "pending" ? (
+            <>
+              <s-badge tone="info">Select accounts</s-badge>
+              <s-paragraph>
+                Meta authorization is complete. Select one to three advertiser
+                accounts to finish setup.
+              </s-paragraph>
+              <s-button variant="primary" onClick={resumeMetaAccountSelection}>
+                Resume setup
+              </s-button>
+              <s-modal
+                ref={metaAccountModal}
+                id="meta-account-modal"
+                heading="Meta advertiser accounts"
+              >
+                <s-stack direction="block" gap="base">
+                  <s-paragraph>
+                    Choose between one and three advertiser accounts.
+                  </s-paragraph>
+                  <s-choice-list
+                    ref={metaChoices}
+                    label="Advertiser accounts"
+                    name="accountIds"
+                    multiple
+                  >
+                    {state.meta.accounts.map((account) => (
+                      <s-choice key={account.id} value={account.id}>
+                        {account.name} ({account.id})
+                      </s-choice>
+                    ))}
+                  </s-choice-list>
+                </s-stack>
+                <s-button slot="primary-action" variant="primary" onClick={selectMeta}>
+                  Save and connect
+                </s-button>
+                <s-button
+                  slot="secondary-actions"
+                  commandFor="meta-account-modal"
+                  command="--hide"
+                >
+                  Cancel
+                </s-button>
+              </s-modal>
+            </>
+          ) : null}
+
+          {!metaWorking && state.meta.view === "pending_reporting" ? (
+            <>
+              <s-badge tone="info">Choose Reporting Account</s-badge>
+              <s-paragraph>
+                Choose the single connected advertiser account AdsTable will use
+                in reporting.
+              </s-paragraph>
+              <s-button variant="primary" onClick={resumeMetaAccountSelection}>
+                Resume setup
+              </s-button>
+              <s-modal
+                ref={metaReportingModal}
+                id="meta-reporting-modal"
+                heading="Meta Reporting Account"
+              >
+                <s-stack direction="block" gap="base">
+                  <s-paragraph>
+                    Select exactly one account from the connected account set.
+                  </s-paragraph>
+                  <s-choice-list
+                    ref={metaReportingChoice}
+                    label="Reporting Account"
+                    name="reportingAccountId"
+                  >
+                    {state.meta.accounts.map((account) => (
+                      <s-choice key={account.id} value={account.id}>
+                        {account.name} ({account.id})
+                      </s-choice>
+                    ))}
+                  </s-choice-list>
+                </s-stack>
+                <s-button
+                  slot="primary-action"
+                  variant="primary"
+                  onClick={() => saveMetaReporting("finish_reporting")}
+                >
+                  Save and finish
+                </s-button>
+                <s-button
+                  slot="secondary-actions"
+                  commandFor="meta-reporting-modal"
+                  command="--hide"
+                >
+                  Cancel
+                </s-button>
+              </s-modal>
+            </>
+          ) : null}
+
+          {!metaWorking && state.meta.view === "connected" ? (
+            <>
+              <s-badge tone="success">Connected</s-badge>
+              <s-paragraph>
+                {state.meta.accounts.length} Meta advertiser account(s) connected.
+              </s-paragraph>
+              <s-paragraph>
+                Reporting Account: {reportingAccountName(state.meta)}
+              </s-paragraph>
+              <s-stack direction="block" gap="small">
+                {state.meta.accounts.map((account) => (
+                  <s-paragraph key={account.id}>
+                    {account.name} ({account.id})
+                  </s-paragraph>
+                ))}
+              </s-stack>
+              <s-button commandFor="meta-reporting-modal" command="--show">
+                Reporting Account
+              </s-button>
+              <s-button
+                tone="critical"
+                commandFor="meta-disconnect-modal"
+                command="--show"
+              >
+                Disconnect
+              </s-button>
+              <s-modal
+                ref={metaReportingModal}
+                id="meta-reporting-modal"
+                heading="Meta Reporting Account"
+              >
+                <s-stack direction="block" gap="base">
+                  <s-paragraph>
+                    Choose the single connected account AdsTable will show in
+                    reporting. Meta OAuth will not restart.
+                  </s-paragraph>
+                  <s-choice-list
+                    ref={metaReportingChoice}
+                    label="Reporting Account"
+                    name="reportingAccountId"
+                  >
+                    {state.meta.accounts.map((account) => (
+                      <s-choice key={account.id} value={account.id}>
+                        {account.name} ({account.id})
+                      </s-choice>
+                    ))}
+                  </s-choice-list>
+                </s-stack>
+                <s-button
+                  slot="primary-action"
+                  variant="primary"
+                  onClick={() => saveMetaReporting("change_reporting")}
+                >
+                  Save Reporting Account
+                </s-button>
+                <s-button
+                  slot="secondary-actions"
+                  commandFor="meta-reporting-modal"
+                  command="--hide"
+                >
+                  Cancel
+                </s-button>
+              </s-modal>
+              <s-modal id="meta-disconnect-modal" heading="Disconnect Meta?">
+                <s-paragraph>
+                  AdsTable will revoke Meta authorization and remove Meta
+                  reporting authority, selected accounts and the encrypted
+                  credential. Historical data remains.
+                </s-paragraph>
+                <s-button
+                  slot="primary-action"
+                  tone="critical"
+                  onClick={() => send("disconnect", "meta")}
+                >
+                  Disconnect Meta
+                </s-button>
+                <s-button
+                  slot="secondary-actions"
+                  commandFor="meta-disconnect-modal"
+                  command="--hide"
+                >
+                  Keep connected
+                </s-button>
+              </s-modal>
+            </>
+          ) : null}
+        </s-stack>
+
+        <s-modal id="meta-connect-modal" heading="Connect Meta">
+          <s-stack direction="block" gap="base">
+            <s-paragraph>
+              Continue with a Facebook account that can access the Meta
+              advertiser accounts you want to report. AdsTable requests read-only
+              advertising access.
+            </s-paragraph>
+            <s-paragraph>
+              If this browser is not signed in, Meta will ask you to sign in and
+              complete any required verification before returning to AdsTable.
+            </s-paragraph>
+          </s-stack>
+          <s-button
+            slot="primary-action"
+            variant="primary"
+            commandFor="meta-connect-modal"
+            command="--hide"
+            onClick={() => send("begin", "meta")}
+          >
+            Continue to Meta
+          </s-button>
+          <s-button
+            slot="secondary-actions"
+            commandFor="meta-connect-modal"
+            command="--hide"
+          >
+            Cancel
+          </s-button>
+        </s-modal>
+      </s-section>
       <s-section heading="Google Ads">
         <s-stack direction="block" gap="base">
-          {actionData?.ok === false ? <ErrorBanner code={actionData.code} /> : null}
+          {actionData?.ok === false && actionData.provider === "google_ads"
+            ? <ErrorBanner provider="google_ads" code={actionData.code} />
+            : null}
 
-          {working ? (
+          {googleWorking ? (
             <>
               <s-badge tone="info">Working</s-badge>
               <s-paragraph>Google Ads setup is being updated…</s-paragraph>
             </>
           ) : null}
 
-          {!working && state.view === "error" ? (
+          {!googleWorking && state.view === "error" ? (
             <>
-              <ErrorBanner code={state.code} />
+              <ErrorBanner provider="google_ads" code={state.code} />
               <s-button
                 variant="primary"
                 onClick={() => {
@@ -328,7 +763,7 @@ export default function Settings() {
             </>
           ) : null}
 
-          {!working && state.view === "reauthorization" ? (
+          {!googleWorking && state.view === "reauthorization" ? (
             <>
               <s-badge tone="warning">Reauthorization required</s-badge>
               <s-paragraph>
@@ -340,7 +775,7 @@ export default function Settings() {
             </>
           ) : null}
 
-          {!working && state.view === "disconnected" ? (
+          {!googleWorking && state.view === "disconnected" ? (
             <>
               <s-badge>Not connected</s-badge>
               {state.notice === "cancelled" ? (
@@ -365,7 +800,7 @@ export default function Settings() {
             </>
           ) : null}
 
-          {!working && state.view === "pending" ? (
+          {!googleWorking && state.view === "pending" ? (
             <>
               <s-badge tone="info">Select accounts</s-badge>
               <s-paragraph>
@@ -415,7 +850,7 @@ export default function Settings() {
             </>
           ) : null}
 
-          {!working && state.view === "pending_reporting" ? (
+          {!googleWorking && state.view === "pending_reporting" ? (
             <>
               <s-badge tone="info">Choose Reporting Account</s-badge>
               <s-paragraph>
@@ -464,7 +899,7 @@ export default function Settings() {
             </>
           ) : null}
 
-          {!working && state.view === "connected" ? (
+          {!googleWorking && state.view === "connected" ? (
             <>
               <s-badge tone="success">Connected</s-badge>
               <s-paragraph>

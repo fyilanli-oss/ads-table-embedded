@@ -80,7 +80,12 @@
     "product_term": "Channel",
     "channel_entity": "ad",
     "fake_entity_forbidden": true,
-    "dataset_activation_requires_live_evidence": true
+    "dataset_activation_requires_live_evidence": true,
+    "status": "repository_implementation_in_progress",
+    "document": "docs/EO_04B_META_CHANNEL.md",
+    "contract": "contracts/eo-04b-meta-channel-v1.json",
+    "runtime": "app/lib/providers/meta-channel.server.js",
+    "test": "tests/eo-04b-meta-channel.test.js"
   },
   "required_live_acceptance": [
     "desktop_shopify_admin",

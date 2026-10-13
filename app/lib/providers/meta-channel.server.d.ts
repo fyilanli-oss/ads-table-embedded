@@ -1,0 +1,38 @@
+import type {
+  ClassifiedProviderError,
+  CommonAdapterRequest,
+  ProviderPage,
+} from "./common-adapter.server.js";
+
+export const META_CHANNEL_ADAPTER_VERSION: "1.0.0";
+export const META_CHANNEL_FIELDS: readonly string[];
+
+export interface MetaCurrencyContext {
+  targetCurrency: string;
+  fxRate: number;
+  fxProvider: string;
+  fxEngineVersion: string;
+  accountTimezone: string;
+  timeEngineVersion: string;
+}
+
+export function buildMetaChannelInsightsUrl(input: {
+  request: CommonAdapterRequest;
+  cursor?: string | null;
+}): string;
+
+export function mapMetaInsightToCanonicalFact(input: {
+  insight: Record<string, unknown>;
+  request: CommonAdapterRequest;
+} & MetaCurrencyContext): any;
+
+export function fetchMetaChannelFactsPage(input: {
+  request: CommonAdapterRequest;
+  accessToken: string;
+  cursor?: string | null;
+  currency: MetaCurrencyContext;
+  fetchFn?: typeof fetch;
+}): Promise<ProviderPage>;
+
+export function classifyMetaChannelError(error: unknown): ClassifiedProviderError;
+

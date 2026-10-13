@@ -92,13 +92,36 @@
   "runtime": {
     "implementation": "app/lib/providers/meta-channel.server.js",
     "types": "app/lib/providers/meta-channel.server.d.ts",
+    "read_only_live_gate": "app/lib/providers/meta-channel-live-gate.server.js",
+    "read_only_live_gate_types": "app/lib/providers/meta-channel-live-gate.server.d.ts",
     "test": "tests/eo-04b-meta-channel.test.js"
+  },
+  "live_read_only_acceptance": {
+    "operator_surface": "/settings?gate=eo04b-meta-channel",
+    "browser_supplied_account": false,
+    "browser_supplied_date": false,
+    "lookback_closed_provider_days": 31,
+    "exact_latest_non_empty_date_reread": true,
+    "page_and_row_limits": true,
+    "provider_identifiers_exposed": false,
+    "actions_and_action_values_inventory_exposed": true,
+    "dataset_v2_writes": 0,
+    "scheduler_started": false,
+    "backfill_started": false,
+    "status": "repository_ready_live_execution_pending"
+  },
+  "known_contract_correction": {
+    "code": "EO04A_INSTALLATION_ID_TYPE_MISMATCH",
+    "common_adapter_current_type": "uuid_string",
+    "canonical_shopify_schema_type": "bigint",
+    "fabricated_uuid_forbidden": true,
+    "blocks_first_dataset_v2_write": true,
+    "blocks_raw_read_only_acceptance": false
   },
   "authoritative_sources": {
     "meta_insights": "https://developers.facebook.com/docs/marketing-api/insights",
     "meta_official_postman_ad_insights": "https://www.postman.com/meta/facebook-marketing-api/request/u07tack/get-ad-insights-l1",
     "meta_official_postman_collection": "https://www.postman.com/meta/facebook-marketing-api/documentation/0zr4mes/facebook-marketing-api-mapi"
   },
-  "next_live_gate": "bounded_read_only_raw_response_before_any_dataset_write"
+  "next_live_gate": "run_operator_surface_and_obtain_product_owner_raw_response_acceptance"
 }
-

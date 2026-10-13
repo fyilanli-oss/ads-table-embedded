@@ -1,6 +1,6 @@
 # A6-EO-04-B Meta Channel Data Contract
 
-Status: product-owner analyst contract accepted; repository implementation in progress  
+Status: product-owner analyst contract accepted; repository implementation and live read-only gate in progress  
 Checked: 13 October 2026
 
 ## Analyst outcome
@@ -56,9 +56,51 @@ V2, start a scheduler/backfill, infer orders from Shopify/URL/UTM/click IDs, or
 activate product analysis. The next live gate is a bounded raw-response read
 from the Reporting Account, followed by explicit product-owner review.
 
+## Live read-only acceptance surface
+
+The operator-only Settings surface is enabled only with
+`?gate=eo04b-meta-channel`. It never accepts an account or date from the
+browser. The server re-resolves the active Installed Shopify Store, loads the
+single persisted Meta Reporting Account, opens that connection's encrypted
+token and derives the previous closed day from the provider-verified Meta Ad
+Account timezone.
+
+The check scans at most 31 closed provider days to locate the most recent
+non-empty performance date, then reads that exact day again. Both scans use
+bounded cursor/page and row limits. The result removes provider identifiers and
+shows Campaign, Ad Set and Ad counts, impressions, canonical `link_click`, spend
+and the provider-returned `actions` and `action_values` type/value inventory.
+An empty result remains verified-empty; absent actions are not shown as zero.
+
+### State and component contract
+
+| State | Exact user outcome | Shopify component |
+| --- | --- | --- |
+| Ready | Explains the 31-day read-only boundary and zero writes | `s-section`, `s-stack`, `s-paragraph`, `s-button variant="secondary"` |
+| Loading | Existing Meta working state; duplicate action unavailable | `s-badge tone="info"`, `s-paragraph` |
+| Empty | PASS with scan dates and Dataset V2 writes 0 | `s-banner tone="success"`, `s-paragraph` |
+| Non-empty | PASS with hierarchy/metric totals and raw action inventories | `s-banner tone="success"`, `s-stack`, `s-paragraph` |
+| Error | Safe `META_*` code; no raw provider error | existing `s-banner tone="critical"` |
+
+No raw HTML action control, custom CSS, literal color or custom component is
+introduced. The exact component check used Shopify's current App Home Web
+Components, Section and Text documentation on 13 October 2026.
+
+## EO-04A identity correction found before live execution
+
+The common adapter validator and TypeScript declaration currently model
+`authority.installation_id` as a UUID/string. The canonical Shopify schema and
+EO-03A evidence define `shopify.installations.id` as `bigint`. No fabricated UUID
+will be used to force canonical publication. This live acceptance therefore
+stops at raw, read-only provider evidence and performs no canonical Dataset row
+publication. The type alignment must be corrected and regression-tested before
+the first Dataset V2 write gate.
+
 ## Official sources
 
 - Meta Insights: https://developers.facebook.com/docs/marketing-api/insights
 - Meta official Ad Insights request: https://www.postman.com/meta/facebook-marketing-api/request/u07tack/get-ad-insights-l1
 - Meta official Marketing API collection: https://www.postman.com/meta/facebook-marketing-api/documentation/0zr4mes/facebook-marketing-api-mapi
-
+- Shopify Polaris web components: https://shopify.dev/docs/api/polaris/using-polaris-web-components
+- Shopify App Home Section: https://shopify.dev/docs/api/app-home/latest/web-components/layout-and-structure/section
+- Shopify App Home Text: https://shopify.dev/docs/api/app-home-ui-extension/latest/web-components/typography-and-content/text

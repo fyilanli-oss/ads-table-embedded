@@ -229,9 +229,11 @@ test("Meta callback status and provider fragment are consumed from the URL", () 
 });
 
 test("Meta OAuth cannot write Dataset V2 or start scheduling", () => {
-  for (const source of [settings, callback, runtime]) {
+  for (const source of [callback, runtime]) {
     assert.doesNotMatch(source, /dataset[_ -]?v2|snapshotjob|backfill|scheduler/i);
   }
+  assert.doesNotMatch(settings, /insert\s+into|upsert|startScheduler|startBackfill/i);
+  assert.match(settings, /dataset_v2_writes: 0/);
   assert.equal(contract.invariants.oauth_writes_dataset_v2, false);
   assert.equal(contract.invariants.oauth_starts_backfill_or_scheduler, false);
   assert.match(decision, /do not\s+write Dataset V2, start backfill or schedule data jobs/);
@@ -276,4 +278,3 @@ test("Meta partial live evidence records desktop PASS without falsely closing mo
   assert.equal(contract.live_execution.mobile_shopify_admin, "PENDING_EXTERNAL_ACCOUNT_ACCESS");
   assert.equal(contract.live_execution.oauth_final_acceptance, false);
 });
-

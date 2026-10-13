@@ -17,6 +17,11 @@ import {
   fetchMetaChannelFactsPage,
   mapMetaInsightToCanonicalFact,
 } from "../app/lib/providers/meta-channel.server.js";
+import {
+  createMetaChannelReadOnlyGate,
+  previousClosedMetaDate,
+  providerMetricEvidence,
+} from "../app/lib/providers/meta-channel-live-gate.server.js";
 import {MetaGraphError} from "../app/lib/providers/meta-graph.server.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -25,6 +30,11 @@ const contract = JSON.parse(fs.readFileSync(
   "utf8",
 ));
 const decision = fs.readFileSync(path.join(root, "docs/EO_04B_META_CHANNEL.md"), "utf8");
+const settings = fs.readFileSync(path.join(root, "app/routes/_admin.settings.tsx"), "utf8");
+const liveGateRuntime = fs.readFileSync(
+  path.join(root, "app/lib/providers/meta-channel-live-gate.server.js"),
+  "utf8",
+);
 
 const IDS = {
   workspace: "11111111-1111-4111-8111-111111111111",
@@ -123,6 +133,146 @@ test("Meta Channel query is ad-level, daily, reporting-account-only and breakdow
     }),
     /canonical Reporting Account/,
   );
+});
+
+test("Meta read-only acceptance derives the previous closed account day", () => {
+  assert.equal(
+    previousClosedMetaDate(new Date("2026-10-13T21:30:00.000Z"), "Europe/Istanbul"),
+    "2026-10-13",
+  );
+  assert.equal(
+    previousClosedMetaDate(new Date("2026-10-13T20:30:00.000Z"), "Europe/Istanbul"),
+    "2026-10-12",
+  );
+});
+
+test("Meta raw evidence keeps returned action types and values without inventing zero", () => {
+  assert.deepEqual(providerMetricEvidence([
+    {actions: [{action_type: "link_click", value: "8"}]},
+    {actions: [{action_type: "landing_page_view", value: "8"}]},
+    {actions: []},
+  ], "actions"), {
+    source_field: "actions",
+    source_row_count: 3,
+    entry_count: 2,
+    malformed_entry_count: 0,
+    entries: [
+      {action_type: "landing_page_view", value: "8", entry_count: 1},
+      {action_type: "link_click", value: "8", entry_count: 1},
+    ],
+  });
+  assert.deepEqual(providerMetricEvidence([{action_values: []}], "action_values").entries, []);
+});
+
+test("Meta live acceptance reads only the Reporting Account token and never writes Dataset V2", async () => {
+  const requests = [];
+  const database = {
+    async query(sql, values) {
+      assert.match(sql, /load_provider_account_authority/);
+      assert.deepEqual(values, [IDS.workspace, 1, "meta"]);
+      return {rows: [{
+        connection_id: IDS.connection,
+        credential_id: "55555555-5555-4555-8555-555555555555",
+        granted_scopes: ["ads_read"],
+        connected_at: "2026-10-13T00:00:00.000Z",
+        last_verified_at: "2026-10-13T00:00:00.000Z",
+        reporting_account_id: "act_123",
+        accounts: [{
+          id: "act_123",
+          name: "Reporting",
+          currency: "TRY",
+          timezone: "Europe/Istanbul",
+        }, {
+          id: "act_999",
+          name: "Connected only",
+          currency: "USD",
+          timezone: "UTC",
+        }],
+      }]};
+    },
+  };
+  const tokenVault = {
+    async loadProviderTokenSet(input) {
+      assert.equal(input.credentialId, "55555555-5555-4555-8555-555555555555");
+      assert.equal(input.provider, "meta");
+      return {access_token: "server-only-token"};
+    },
+  };
+  const payloads = [
+    {data: [insight({date_start: "2026-10-01", date_stop: "2026-10-01"})], paging: {}},
+    {data: [insight({date_start: "2026-10-01", date_stop: "2026-10-01"})], paging: {}},
+  ];
+  const liveGate = createMetaChannelReadOnlyGate({
+    database,
+    tokenVault,
+    now: () => new Date("2026-10-13T10:00:00.000Z"),
+    fetchFn: async (url, options) => {
+      requests.push({url: new URL(url), options});
+      return new Response(JSON.stringify(payloads.shift()), {
+        status: 200,
+        headers: {"content-type": "application/json"},
+      });
+    },
+  });
+  const result = await liveGate.execute({
+    installationAuthority: {
+      authority: "shopify_installation_verified",
+      workspaceId: IDS.workspace,
+      installGeneration: 1,
+      status: "active",
+    },
+  });
+  assert.equal(requests.length, 2);
+  assert.ok(requests.every(({url}) => url.pathname.includes("/act_123/insights")));
+  assert.ok(requests.every(({url}) => !url.pathname.includes("act_999")));
+  assert.ok(requests.every(({options}) => options.headers.authorization === "Bearer server-only-token"));
+  assert.equal(result.provider_date, "2026-10-01");
+  assert.equal(result.row_count, 1);
+  assert.equal(result.link_click_total, 8);
+  assert.equal(result.dataset_v2_writes, 0);
+  assert.equal(result.scheduler_started, false);
+  assert.equal(result.backfill_started, false);
+  assert.deepEqual(result.action_values.entries, insight().action_values.map((entry) => ({
+    ...entry,
+    entry_count: 1,
+  })).sort((left, right) => left.action_type.localeCompare(right.action_type)));
+});
+
+test("Meta live acceptance reports a bounded verified-empty result truthfully", async () => {
+  const liveGate = createMetaChannelReadOnlyGate({
+    database: {query: async () => ({rows: [{
+      connection_id: IDS.connection,
+      credential_id: "55555555-5555-4555-8555-555555555555",
+      granted_scopes: ["ads_read"],
+      connected_at: "2026-10-13T00:00:00.000Z",
+      last_verified_at: "2026-10-13T00:00:00.000Z",
+      reporting_account_id: "act_123",
+      accounts: [{
+        id: "act_123",
+        name: "Reporting",
+        currency: "TRY",
+        timezone: "Europe/Istanbul",
+      }],
+    }]})},
+    tokenVault: {loadProviderTokenSet: async () => ({access_token: "token"})},
+    now: () => new Date("2026-10-13T10:00:00.000Z"),
+    fetchFn: async () => new Response(JSON.stringify({data: [], paging: {}}), {
+      status: 200,
+      headers: {"content-type": "application/json"},
+    }),
+  });
+  const result = await liveGate.execute({
+    installationAuthority: {
+      authority: "shopify_installation_verified",
+      workspaceId: IDS.workspace,
+      installGeneration: 1,
+      status: "active",
+    },
+  });
+  assert.equal(result.provider_result_status, "empty");
+  assert.equal(result.dataset_v2_writes, 0);
+  assert.equal(result.scan_start, "2026-09-12");
+  assert.equal(result.scan_end, "2026-10-12");
 });
 
 test("Meta Channel maps standard actions first and never sums omni aliases", () => {
@@ -292,3 +442,29 @@ test("Meta product breakdown stays runtime-unverified and this slice cannot writ
   assert.doesNotMatch(runtime, /insert\s+into|dataset[_ -]?v2|snapshotjob|backfill/i);
 });
 
+test("Meta live raw-response surface is operator-only, Polaris-native and read-only", () => {
+  assert.equal(
+    contract.live_read_only_acceptance.operator_surface,
+    "/settings?gate=eo04b-meta-channel",
+  );
+  assert.equal(contract.live_read_only_acceptance.browser_supplied_account, false);
+  assert.equal(contract.live_read_only_acceptance.browser_supplied_date, false);
+  assert.equal(contract.live_read_only_acceptance.dataset_v2_writes, 0);
+  assert.match(settings, /gate[^\n]+eo04b-meta-channel/);
+  assert.match(settings, /<s-section heading="Meta Channel read-only check">/);
+  assert.match(settings, /<s-button[\s\S]*variant="secondary"[\s\S]*Run read-only check/);
+  assert.match(settings, /actions: \[/);
+  assert.match(settings, /action_values: \[/);
+  assert.doesNotMatch(settings, /<button|<style|style=|className=/);
+  assert.doesNotMatch(liveGateRuntime, /insert\s+into|update\s+|delete\s+from|upsert/i);
+});
+
+test("EO-04A installation identity mismatch is fail-closed before Dataset publication", () => {
+  assert.equal(
+    contract.known_contract_correction.code,
+    "EO04A_INSTALLATION_ID_TYPE_MISMATCH",
+  );
+  assert.equal(contract.known_contract_correction.fabricated_uuid_forbidden, true);
+  assert.equal(contract.known_contract_correction.blocks_first_dataset_v2_write, true);
+  assert.match(decision, /shopify[.]installations[.]id` as `bigint/);
+});

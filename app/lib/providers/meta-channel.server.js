@@ -41,6 +41,8 @@ const ACTION_ALIASES = Object.freeze({
   purchase: Object.freeze(["purchase", "omni_purchase"]),
 });
 
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
 function fail(code, message, details = null) {
   throw new MetaGraphError(code, message, details);
 }
@@ -148,20 +150,96 @@ function requireMetaFactRequest(request) {
 
 export function buildMetaChannelInsightsUrl({request, cursor = null}) {
   requireMetaFactRequest(request);
+  return buildMetaRawInsightsUrl({
+    reportingAccountId: request.platform_account_id,
+    start: request.date_window.start,
+    end: request.date_window.end,
+    cursor,
+  });
+}
+
+export function buildMetaRawInsightsUrl({
+  reportingAccountId,
+  start,
+  end,
+  cursor = null,
+}) {
+  if (typeof reportingAccountId !== "string" || !/^act_[0-9]+$/.test(reportingAccountId)) {
+    fail("META_CHANNEL_REPORTING_ACCOUNT_INVALID", "Meta Reporting Account is invalid");
+  }
+  if (
+    typeof start !== "string"
+    || typeof end !== "string"
+    || !DATE_PATTERN.test(start)
+    || !DATE_PATTERN.test(end)
+    || start > end
+  ) fail("META_CHANNEL_DATE_WINDOW_INVALID", "Meta date window is invalid");
   const url = new URL(
-    `/${META_GRAPH_VERSION}/${request.platform_account_id}/insights`,
+    `/${META_GRAPH_VERSION}/${reportingAccountId}/insights`,
     META_GRAPH_ORIGIN,
   );
   url.searchParams.set("level", "ad");
   url.searchParams.set("time_increment", "1");
   url.searchParams.set("time_range", JSON.stringify({
-    since: request.date_window.start,
-    until: request.date_window.end,
+    since: start,
+    until: end,
   }));
   url.searchParams.set("fields", META_CHANNEL_FIELDS.join(","));
   url.searchParams.set("limit", "100");
   if (cursor !== null) url.searchParams.set("after", exactText(cursor, "cursor"));
   return url.toString();
+}
+
+export async function fetchMetaRawInsightsPage({
+  reportingAccountId,
+  start,
+  end,
+  accessToken,
+  cursor = null,
+  fetchFn = fetch,
+}) {
+  const url = buildMetaRawInsightsUrl({reportingAccountId, start, end, cursor});
+  const response = await fetchFn(url, {
+    method: "GET",
+    headers: {
+      accept: "application/json",
+      authorization: `Bearer ${exactText(accessToken, "accessToken", 8192)}`,
+    },
+  });
+  const payload = await responseJson(response);
+  const requestId = header(response, "x-fb-trace-id") ?? header(response, "x-fb-request-id");
+  if (!response.ok || !payload || typeof payload !== "object") {
+    fail("META_CHANNEL_REQUEST_FAILED", "Meta Insights request failed", {
+      status: response.status,
+      provider_error_code: Number.isSafeInteger(Number(payload?.error?.code))
+        ? Number(payload.error.code)
+        : null,
+      request_id: requestId,
+      retry_after: header(response, "retry-after"),
+    });
+  }
+  if (!Array.isArray(payload.data)) {
+    fail("META_CHANNEL_SCHEMA_CHANGED", "Meta Insights data is not an array");
+  }
+  for (const row of payload.data) {
+    const returnedAccount = String(row?.account_id ?? "").replace(/^act_/, "");
+    if (`act_${returnedAccount}` !== reportingAccountId) {
+      fail(
+        "META_CHANNEL_REPORTING_ACCOUNT_MISMATCH",
+        "Meta returned a row for a different Reporting Account",
+      );
+    }
+  }
+  const hasNext = typeof payload?.paging?.next === "string" && payload.paging.next.length > 0;
+  const nextCursor = payload?.paging?.cursors?.after;
+  if (hasNext && (typeof nextCursor !== "string" || nextCursor.length < 1)) {
+    fail("META_CHANNEL_PAGINATION_INVALID", "Meta returned next without an opaque cursor");
+  }
+  return Object.freeze({
+    rows: Object.freeze(payload.data.map((row) => Object.freeze({...row}))),
+    next_cursor: hasNext ? nextCursor : null,
+    provider_request_id: requestId,
+  });
 }
 
 function assignMetric(target, name, result) {
@@ -326,50 +404,30 @@ export async function fetchMetaChannelFactsPage({
   currency,
   fetchFn = fetch,
 }) {
-  const url = buildMetaChannelInsightsUrl({request, cursor});
-  const response = await fetchFn(url, {
-    method: "GET",
-    headers: {
-      accept: "application/json",
-      authorization: `Bearer ${exactText(accessToken, "accessToken", 8192)}`,
-    },
+  const page = await fetchMetaRawInsightsPage({
+    reportingAccountId: request.platform_account_id,
+    start: request.date_window.start,
+    end: request.date_window.end,
+    accessToken,
+    cursor,
+    fetchFn,
   });
-  const payload = await responseJson(response);
-  const requestId = header(response, "x-fb-trace-id") ?? header(response, "x-fb-request-id");
-  if (!response.ok || !payload || typeof payload !== "object") {
-    fail("META_CHANNEL_REQUEST_FAILED", "Meta Insights request failed", {
-      status: response.status,
-      provider_error_code: Number.isSafeInteger(Number(payload?.error?.code))
-        ? Number(payload.error.code)
-        : null,
-      request_id: requestId,
-      retry_after: header(response, "retry-after"),
-    });
-  }
-  if (!Array.isArray(payload.data)) {
-    fail("META_CHANNEL_SCHEMA_CHANGED", "Meta Insights data is not an array");
-  }
-  const hasNext = typeof payload?.paging?.next === "string" && payload.paging.next.length > 0;
-  const nextCursor = payload?.paging?.cursors?.after;
-  if (hasNext && (typeof nextCursor !== "string" || nextCursor.length < 1)) {
-    fail("META_CHANNEL_PAGINATION_INVALID", "Meta returned next without an opaque cursor");
-  }
   return Object.freeze({
-    rows: Object.freeze(payload.data.map((insight) => mapMetaInsightToCanonicalFact({
+    rows: Object.freeze(page.rows.map((insight) => mapMetaInsightToCanonicalFact({
       insight,
       request,
       ...currency,
     }))),
-    next_cursor: hasNext ? nextCursor : null,
-    provider_request_id: requestId,
+    next_cursor: page.next_cursor,
+    provider_request_id: page.provider_request_id,
     quota: null,
     raw_evidence: {
-      returned_row_count: payload.data.length,
+      returned_row_count: page.rows.length,
       fields: META_CHANNEL_FIELDS,
-      actions: payload.data.map((row) => row.actions ?? null),
-      action_values: payload.data.map((row) => row.action_values ?? null),
-      clicks: payload.data.map((row) => row.clicks ?? null),
-      outbound_clicks: payload.data.map((row) => row.outbound_clicks ?? null),
+      actions: page.rows.map((row) => row.actions ?? null),
+      action_values: page.rows.map((row) => row.action_values ?? null),
+      clicks: page.rows.map((row) => row.clicks ?? null),
+      outbound_clicks: page.rows.map((row) => row.outbound_clicks ?? null),
     },
   });
 }
@@ -403,4 +461,3 @@ export function classifyMetaChannelError(error) {
   }
   return {class: "internal_adapter_failure", retryable: false, provider_request_id: requestId};
 }
-

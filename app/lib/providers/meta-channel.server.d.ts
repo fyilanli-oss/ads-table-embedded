@@ -21,26 +21,6 @@ export function buildMetaChannelInsightsUrl(input: {
   cursor?: string | null;
 }): string;
 
-export function buildMetaRawInsightsUrl(input: {
-  reportingAccountId: string;
-  start: string;
-  end: string;
-  cursor?: string | null;
-}): string;
-
-export function fetchMetaRawInsightsPage(input: {
-  reportingAccountId: string;
-  start: string;
-  end: string;
-  accessToken: string;
-  cursor?: string | null;
-  fetchFn?: typeof fetch;
-}): Promise<{
-  rows: readonly Readonly<Record<string, unknown>>[];
-  next_cursor: string | null;
-  provider_request_id: string | null;
-}>;
-
 export function mapMetaInsightToCanonicalFact(input: {
   insight: Record<string, unknown>;
   request: CommonAdapterRequest;
@@ -55,3 +35,4 @@ export function fetchMetaChannelFactsPage(input: {
 }): Promise<ProviderPage>;
 
 export function classifyMetaChannelError(error: unknown): ClassifiedProviderError;
+

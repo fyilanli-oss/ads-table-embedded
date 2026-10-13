@@ -21,10 +21,6 @@ import {
   buildGoogleAdsAuthorizationUrl,
 } from "../lib/providers/google-ads-rest.server.js";
 import {buildMetaAuthorizationUrl} from "../lib/providers/meta-graph.server.js";
-import {classifyMetaChannelError} from "../lib/providers/meta-channel.server.js";
-import {
-  createMetaChannelReadOnlyGate,
-} from "../lib/providers/meta-channel-live-gate.server.js";
 
 type Advertiser = {
   id: string;
@@ -44,31 +40,11 @@ type State =
 
 type ActionData =
   | {ok: true; intent: "begin"; provider: Provider; authorizationUrl: string}
-  | {ok: true; intent: "probe_channel"; provider: "meta"; result: MetaChannelEvidence}
-  | {ok: false; provider: Provider; code: string; intent?: string}
+  | {ok: false; provider: Provider; code: string}
   | undefined;
 
 type Provider = "google_ads" | "meta";
-type MetaActionEntry = {action_type: string; value: string; entry_count: number};
-type MetaChannelEvidence = {
-  status: "PASS_META_CHANNEL_READ_ONLY";
-  provider_result_status: "empty" | "non_empty";
-  scan_start: string;
-  scan_end: string;
-  provider_date?: string;
-  row_count?: number;
-  campaign_count?: number;
-  adset_count?: number;
-  ad_count?: number;
-  impression_total?: number;
-  link_click_total?: number;
-  spend_total?: number;
-  source_currency?: string;
-  actions?: {entries: MetaActionEntry[]; malformed_entry_count: number};
-  action_values?: {entries: MetaActionEntry[]; malformed_entry_count: number};
-  dataset_v2_writes: 0;
-};
-type LoaderData = State & {meta: State; metaChannelLiveGateEnabled: boolean};
+type LoaderData = State & {meta: State};
 
 function providerCodeOf(provider: Provider, error: unknown) {
   const prefix = provider === "meta" ? "META" : "GOOGLE_ADS";
@@ -238,12 +214,7 @@ export const loader = async ({request}: LoaderFunctionArgs): Promise<LoaderData>
     loadGoogleState(verified, url),
     loadMetaState(verified, url),
   ]);
-  return {
-    ...google,
-    meta,
-    metaChannelLiveGateEnabled:
-      url.searchParams.get("gate") === "eo04b-meta-channel",
-  };
+  return {...google, meta};
 };
 
 export const action = async ({request}: ActionFunctionArgs) => {
@@ -256,23 +227,6 @@ export const action = async ({request}: ActionFunctionArgs) => {
     const runtime = provider === "meta"
       ? createMetaOAuthRuntime({database, tokenVault: providerTokenVault})
       : createGoogleOAuthRuntime({database, tokenVault: providerTokenVault});
-    if (intent === "probe_channel") {
-      const url = new URL(request.url);
-      if (
-        provider !== "meta"
-        || url.searchParams.get("gate") !== "eo04b-meta-channel"
-      ) throw new Error("META_CHANNEL_LIVE_GATE_NOT_ENABLED");
-      const result = await createMetaChannelReadOnlyGate({
-        database,
-        tokenVault: providerTokenVault,
-      }).execute({installationAuthority: verified.installationAuthority});
-      return {
-        ok: true,
-        intent: "probe_channel",
-        provider: "meta",
-        result,
-      } satisfies ActionData;
-    }
     if (intent === "begin") {
       const started = await runtime.oauthBoundary.begin({
         installationAuthority: verified.installationAuthority,
@@ -347,19 +301,7 @@ export const action = async ({request}: ActionFunctionArgs) => {
     } satisfies ActionData;
   } catch (error) {
     if (error instanceof Response) throw error;
-    if (intent === "probe_channel" && provider === "meta") {
-      const classification = classifyMetaChannelError(error);
-      const code = classification.class === "reauthorization_required"
-        ? "META_REAUTHORIZATION_REQUIRED"
-        : `META_CHANNEL_${classification.class.toUpperCase()}`;
-      return {ok: false, provider, intent: "probe_channel", code} satisfies ActionData;
-    }
-    return {
-      ok: false,
-      provider,
-      intent: typeof intent === "string" ? intent : undefined,
-      code: providerCodeOf(provider, error),
-    } satisfies ActionData;
+    return {ok: false, provider, code: providerCodeOf(provider, error)} satisfies ActionData;
   }
 };
 
@@ -383,13 +325,6 @@ function Navigation() {
       </s-stack>
     </s-section>
   );
-}
-
-function actionEntriesText(entries: MetaActionEntry[] | undefined) {
-  if (!entries || entries.length === 0) return "none";
-  return entries.map(
-    (entry) => `${entry.action_type}=${entry.value} ×${entry.entry_count}`,
-  ).join(", ");
 }
 
 export default function Settings() {
@@ -539,43 +474,9 @@ export default function Settings() {
       <Navigation />
       <s-section heading="Meta">
         <s-stack direction="block" gap="base">
-          {actionData?.ok === false
-            && actionData.provider === "meta"
-            && actionData.intent !== "probe_channel"
+          {actionData?.ok === false && actionData.provider === "meta"
             ? <ErrorBanner provider="meta" code={actionData.code} />
             : null}
-
-          {actionData?.ok === true && actionData.intent === "probe_channel" ? (
-            <s-banner tone="success">
-              {actionData.result.provider_result_status === "empty" ? (
-                <s-paragraph>
-                  PASS — Meta returned no rows between {actionData.result.scan_start} and{" "}
-                  {actionData.result.scan_end}. Dataset V2 writes: 0.
-                </s-paragraph>
-              ) : (
-                <s-stack direction="block" gap="small">
-                  <s-paragraph>
-                    PASS — {actionData.result.provider_date}: {actionData.result.campaign_count}{" "}
-                    Campaign, {actionData.result.adset_count} Ad Set, {actionData.result.ad_count}{" "}
-                    Ad; impressions {actionData.result.impression_total}, link clicks{" "}
-                    {actionData.result.link_click_total}, spend {actionData.result.spend_total}{" "}
-                    {actionData.result.source_currency}. Dataset V2 writes: 0.
-                  </s-paragraph>
-                  <s-paragraph>
-                    actions: [{actionEntriesText(actionData.result.actions?.entries)}]
-                  </s-paragraph>
-                  <s-paragraph>
-                    action_values: [{actionEntriesText(actionData.result.action_values?.entries)}]
-                  </s-paragraph>
-                  <s-paragraph>
-                    Malformed provider entries — actions{" "}
-                    {actionData.result.actions?.malformed_entry_count ?? 0}, action_values{" "}
-                    {actionData.result.action_values?.malformed_entry_count ?? 0}.
-                  </s-paragraph>
-                </s-stack>
-              )}
-            </s-banner>
-          ) : null}
 
           {metaWorking ? (
             <>
@@ -819,35 +720,6 @@ export default function Settings() {
               </s-modal>
             </>
           ) : null}
-
-
-          {!metaWorking
-            && state.meta.view === "connected"
-            && state.metaChannelLiveGateEnabled ? (
-              <s-section heading="Meta Channel read-only check">
-                <s-stack direction="block" gap="base">
-                  {actionData?.ok === false
-                    && actionData.provider === "meta"
-                    && actionData.intent === "probe_channel" ? (
-                      <s-banner tone="critical">
-                        Meta Channel read-only check failed. No data was written.
-                        Share error code {actionData.code}.
-                      </s-banner>
-                    ) : null}
-                  <s-paragraph>
-                    Finds the latest Meta performance date in the last 31 closed
-                    Reporting Account days and shows provider-returned actions and
-                    action_values. This does not write Dataset V2 or start jobs.
-                  </s-paragraph>
-                  <s-button
-                    variant="secondary"
-                    onClick={() => send("probe_channel", "meta")}
-                  >
-                    Run read-only check
-                  </s-button>
-                </s-stack>
-              </s-section>
-            ) : null}
         </s-stack>
 
         <s-modal id="meta-connect-modal" heading="Connect Meta">
@@ -1168,3 +1040,4 @@ export default function Settings() {
     </s-page>
   );
 }
+

@@ -219,6 +219,14 @@ test("Meta Settings reproduces the accepted resumable Reporting Account flow", (
   assert.match(callback, /provider: "meta"/);
 });
 
+test("Meta callback status and provider fragment are consumed from the URL", () => {
+  assert.match(settings, /searchParams[.]delete\("meta_status"\)/);
+  assert.match(settings, /searchParams[.]delete\("meta_error"\)/);
+  assert.match(settings, /url[.]hash === "#_=_"/);
+  assert.match(settings, /history[.]replaceState\(/);
+  assert.doesNotMatch(settings, /searchParams[.]delete\("google_status"\)/);
+});
+
 test("Meta OAuth cannot write Dataset V2 or start scheduling", () => {
   for (const source of [settings, callback, runtime]) {
     assert.doesNotMatch(source, /dataset[_ -]?v2|snapshotjob|backfill|scheduler/i);
@@ -251,3 +259,4 @@ test("Meta credentials are name-only inventory entries with no committed values"
   assert.equal(contract.mutations_authorized_by_this_contract.vercel_environment, false);
   assert.equal(contract.mutations_authorized_by_this_contract.live_oauth, false);
 });
+

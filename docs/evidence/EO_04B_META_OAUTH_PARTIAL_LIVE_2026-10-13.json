@@ -1,0 +1,60 @@
+{
+  "evidence_id": "EO_04B_META_OAUTH_PARTIAL_LIVE_2026-10-13",
+  "package": "A6-EO-04-B",
+  "checked_at": "2026-10-13",
+  "status": "PARTIAL_PASS_MOBILE_EXTERNAL_IDENTITY_ACCESS_PENDING",
+  "provider": "meta",
+  "repository": {
+    "pull_request": 68,
+    "branch": "codex/eo04b-meta-oauth",
+    "deployed_commit": "f3f0516b5b938b683d10cd14b75947cd805120e0",
+    "required_ci_run": 38377914926,
+    "required_ci": "PASS",
+    "merged": false
+  },
+  "vercel": {
+    "project": "ads-table-embedded",
+    "environment": "production",
+    "deployment_id": "dpl_GxV2DQiXYaer24W1247iPAn9N6gR",
+    "deployment_state": "READY",
+    "production_alias": "embedded.adstable.app",
+    "configured_names": [
+      "META_APP_ID",
+      "META_APP_SECRET",
+      "META_GRAPH_VERSION",
+      "META_OAUTH_REDIRECT_URI"
+    ],
+    "secret_value_read_back": false
+  },
+  "desktop_shopify_admin": {
+    "status": "PASS",
+    "oauth_callback": "PASS",
+    "advertiser_selector_auto_open": "PASS",
+    "single_account_auto_reporting_account": "PASS",
+    "cancel_preserves_pending": "PASS",
+    "resume_reopens_selector_without_oauth": "PASS",
+    "disconnect_revoke_first": "PASS",
+    "clean_reconnect": "PASS"
+  },
+  "mobile_shopify_admin": {
+    "status": "PENDING_EXTERNAL_ACCOUNT_ACCESS",
+    "observed_behavior": "The OAuth page used the Facebook identity already signed in to mobile Chrome.",
+    "classification": "EXTERNAL_BROWSER_IDENTITY_NOT_APPLICATION_CODE_FAILURE",
+    "blocked_reason": "The signed-in identity is not an app-role identity while the Meta app is not live for arbitrary users.",
+    "required_retest": "Start a fresh AdsTable Connect flow in a mobile browser session authenticated as the authorized app-role identity; do not reuse an earlier OAuth URL or state.",
+    "credential_recorded": false
+  },
+  "data_side_effects": {
+    "dataset_v2_writes": 0,
+    "scheduler_started": false,
+    "backfill_started": false
+  },
+  "closure": {
+    "oauth_final_acceptance": false,
+    "package_final_acceptance": false,
+    "merge_authorized": false,
+    "remaining_oauth_gate": "real_mobile_no_existing_facebook_session",
+    "next_parallel_slice": "Meta_Channel_contract"
+  }
+}
+

@@ -155,9 +155,15 @@
     "update_spend": true,
     "change_value": true,
     "revoke_first_disconnect": true,
-    "live_database_applied": false,
+    "live_database_applied": true,
+    "live_database_acceptance": "PASS_2026-10-13",
+    "live_database_evidence": "docs/evidence/EO_04D_KLAVIYO_SPEND_LIVE_DATABASE_ACCEPTANCE_2026-10-13.json",
+    "synthetic_residue_zero": true,
+    "security_advisor_findings": 0,
+    "new_unindexed_foreign_key_findings": 0,
     "desktop_acceptance": false,
     "real_mobile_acceptance": false,
     "final_product_owner_acceptance": false
   }
 }
+

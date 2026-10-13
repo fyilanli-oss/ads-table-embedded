@@ -1,6 +1,6 @@
 # A6-EO-04-B Meta OAuth and Account Selection
 
-Status: Accepted; merge pending  
+Status: Accepted; merged  
 Checked: 13 October 2026
 
 ## Official sources
@@ -98,10 +98,10 @@ behavior is claimed.
 
 Durable evidence is
 `docs/evidence/EO_04B_META_OAUTH_LIVE_ACCEPTANCE_2026-10-13.json`. OAuth live
-acceptance and EO-04-B product-owner acceptance are PASS. Merge remains false
-until its separate explicit authorization.
+acceptance and EO-04-B product-owner acceptance are PASS. Product-owner merge
+authorization was explicit; PR #68 was squash-merged as
+`23911ffd565f385c02693ed7a1f3a07f017c30f5`.
 
 Product owner gave EO-04-B direct final acceptance in chat on 13 October 2026.
 
 Product owner accepted this exact start brief in chat on 13 October 2026.
-

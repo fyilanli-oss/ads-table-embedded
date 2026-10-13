@@ -2,15 +2,16 @@
   "evidence_id": "EO_04B_META_OAUTH_LIVE_ACCEPTANCE_2026-10-13",
   "package": "A6-EO-04-B",
   "checked_at": "2026-10-13",
-  "status": "ACCEPTED_MERGE_PENDING",
+  "status": "ACCEPTED_MERGED",
   "provider": "meta",
   "repository": {
     "pull_request": 68,
     "branch": "codex/eo04b-meta-oauth",
     "deployed_commit": "f3f0516b5b938b683d10cd14b75947cd805120e0",
-    "required_ci_run": 38377914926,
+    "required_ci_run": 38418037578,
     "required_ci": "PASS",
-    "merged": false
+    "merged": true,
+    "merge_commit": "23911ffd565f385c02693ed7a1f3a07f017c30f5"
   },
   "vercel": {
     "project": "ads-table-embedded",
@@ -66,10 +67,11 @@
   "closure": {
     "oauth_final_acceptance": true,
     "package_final_acceptance": true,
-    "merge_authorized": false,
+    "merge_authorized": true,
+    "merged": true,
+    "merge_commit": "23911ffd565f385c02693ed7a1f3a07f017c30f5",
     "android_retest_blocks_progress": false,
     "optional_follow_up": "android_fresh_device_oauth",
     "product_owner_acceptance": "explicit_chat_direct_pass_2026-10-13"
   }
 }
-

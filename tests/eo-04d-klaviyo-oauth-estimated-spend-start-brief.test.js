@@ -8,6 +8,9 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8");
 const decision = read("docs/EO_04D_KLAVIYO_OAUTH_ESTIMATED_SPEND_START_BRIEF.md");
 const contract = JSON.parse(read("contracts/eo-04d-klaviyo-oauth-estimated-spend-v1.json"));
+const databaseEvidence = JSON.parse(read(
+  "docs/evidence/EO_04D_KLAVIYO_SPEND_LIVE_DATABASE_ACCEPTANCE_2026-10-13.json",
+));
 
 test("EO-04-D records explicit product-owner start-brief acceptance", () => {
   assert.equal(contract.status, "accepted_implementation_in_progress");
@@ -15,6 +18,28 @@ test("EO-04-D records explicit product-owner start-brief acceptance", () => {
   assert.equal(contract.product_owner_start_brief.accepted_at, "2026-10-13");
   assert.equal(contract.mutations_authorized_by_this_contract.database_schema, false);
   assert.equal(contract.mutations_authorized_by_this_contract.live_oauth, false);
+});
+
+test("EO-04-D records the separately approved live database gate", () => {
+  assert.equal(contract.repository_implementation.live_database_applied, true);
+  assert.equal(contract.repository_implementation.live_database_acceptance, "PASS_2026-10-13");
+  assert.equal(databaseEvidence.migration.applied, true);
+  assert.equal(databaseEvidence.rollback_scoped_synthetic_acceptance.status, "PASS");
+  assert.equal(databaseEvidence.rollback_scoped_synthetic_acceptance.transaction_rolled_back, true);
+  assert.deepEqual(databaseEvidence.rollback_scoped_synthetic_acceptance.synthetic_residue, {
+    workspaces: 0,
+    installations: 0,
+    credentials: 0,
+    connections: 0,
+    accounts: 0,
+    lifecycle_events: 0,
+    spend_periods: 0,
+  });
+  assert.equal(databaseEvidence.advisors.security_findings_after, 0);
+  assert.equal(databaseEvidence.advisors.new_unindexed_foreign_key_findings, 0);
+  assert.equal(databaseEvidence.authorization.new_secret, false);
+  assert.equal(databaseEvidence.authorization.provider_oauth, false);
+  assert.equal(databaseEvidence.authorization.deployment, false);
 });
 
 test("Klaviyo uses the official PKCE and token hosts with one Connected Account", () => {
@@ -79,3 +104,4 @@ test("Shopify mapping uses only accepted components and user-triggered completio
   assert.equal(contract.ui.custom_css, false);
   assert.equal(contract.ui.clickable_action_substitute, false);
 });
+

@@ -352,6 +352,23 @@ export default function Settings() {
   const metaWorking = revalidating || (pending && actionProvider === "meta");
 
   useEffect(() => {
+    const url = new URL(globalThis.location.href);
+    const hasMetaCallbackState = url.searchParams.has("meta_status")
+      || url.searchParams.has("meta_error");
+    const hasMetaCallbackFragment = url.hash === "#_=_";
+    if (!hasMetaCallbackState && !hasMetaCallbackFragment) return;
+
+    url.searchParams.delete("meta_status");
+    url.searchParams.delete("meta_error");
+    if (hasMetaCallbackFragment) url.hash = "";
+    globalThis.history.replaceState(
+      globalThis.history.state,
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    );
+  }, []);
+
+  useEffect(() => {
     if (actionData?.ok !== true || actionData.intent !== "begin") return;
     const target = new URL(actionData.authorizationUrl);
     const googleTarget =
@@ -1023,3 +1040,4 @@ export default function Settings() {
     </s-page>
   );
 }
+

@@ -1,0 +1,192 @@
+# A6-EO-04-D Klaviyo OAuth and Estimated Email Spend Start Brief
+
+Status: Proposed — product-owner acceptance required before implementation  
+Checked: 13 October 2026
+
+## Official sources
+
+- Klaviyo OAuth: https://developers.klaviyo.com/en/docs/set_up_oauth
+- Klaviyo Get Accounts: https://developers.klaviyo.com/en/reference/get_accounts
+- Klaviyo API overview and revisions: https://developers.klaviyo.com/en/v2026-07-15/reference/api_overview
+- Supabase Row Level Security: https://supabase.com/docs/guides/database/postgres/row-level-security
+- Supabase changelog: https://supabase.com/changelog
+- Shopify App Home 2.0 RC: https://shopify.dev/docs/api/app-home/v2.0-rc
+- Shopify number field: https://shopify.dev/docs/api/app-home/latest/web-components/forms/number-field
+- Shopify modal: https://shopify.dev/docs/api/app-home/latest/web-components/overlays/modal
+- Shopify button: https://shopify.dev/docs/api/app-home/latest/web-components/actions/button
+
+## Business outcome
+
+The merchant connects exactly one provider-verified Klaviyo Account beneath the
+immutable installed Shopify Store, confirms that account and records an
+Estimated 30-Day Klaviyo Email Spend in the account's provider currency. The
+merchant can later start a new effective spend period or correct the value of an
+existing period without changing its date.
+
+This package preserves the proven legacy product behavior while rebuilding it on
+the new repository's EO-03 transaction, encrypted-token, provider-account and
+connection-lifecycle foundations. Legacy source code and public-schema access
+patterns are not copied.
+
+## Accepted implementation boundary proposed by this brief
+
+1. **Connect Klaviyo** opens a Shopify confirmation modal.
+2. **Continue to Klaviyo** creates the server-owned OAuth transaction, generates
+   an S256 PKCE verifier/challenge and navigates at the top level.
+3. The callback consumes the one-time transaction, exchanges the code at
+   `https://a.klaviyo.com/oauth/token`, encrypts the returned token set and moves
+   the connection to pending completion.
+4. AdsTable calls `GET https://a.klaviyo.com/api/accounts/` with
+   `accounts:read`. Exactly one valid account object is required.
+5. The completion modal shows the provider-returned account name, currency and
+   timezone. The merchant confirms the account; there is no Ad Account or
+   Reporting Account concept for Klaviyo.
+6. The same completion flow collects **Estimated 30-Day Klaviyo Email Spend**.
+   Currency is read-only and provider-authoritative. The initial effective date
+   is the server-calculated business date in the verified account timezone.
+7. **Save and connect** atomically persists the verified account, the initial
+   spend period and the connected lifecycle state. Partial success is forbidden.
+8. Dismissing the completion modal preserves pending state. **Resume setup**
+   reopens completion and does not restart OAuth.
+9. Connected state exposes **Update spend**, **Change value** and
+   revoke-first **Disconnect**.
+
+## Estimated-spend ledger
+
+Estimated spend is operational merchant configuration with its own effective-
+dated ledger. It is not stored inside provider tokens or a reporting fact row.
+
+The proposed private table is
+`integrations.klaviyo_email_spend_periods` with these authoritative fields:
+
+- `id`: immutable UUID primary key.
+- `connection_id`: EO-03 provider connection foreign key.
+- `account_id`: verified `integrations.provider_accounts` foreign key.
+- `workspace_id` and `install_generation`: installed-shop authority boundary.
+- `provider_account_id`: server-verified Klaviyo account identity.
+- `source_currency`: verified three-letter Klaviyo account currency.
+- `estimated_30_day_email_spend`: `numeric(10,2)`, from `0.00` through
+  `99999999.99`.
+- `effective_from`: verified-account-timezone business date.
+- `provenance`: exact value `user_estimated`.
+- `correction_version`: positive integer beginning at 1.
+- `created_at` and `updated_at`: server timestamps.
+
+There is exactly one entry per connection/account/effective start date. The
+table lives in the private `integrations` schema, has RLS enabled and forced,
+grants no browser, `anon`, `authenticated` or generic `service_role` access, and
+is reachable only through narrowly granted `adstable_runtime` functions.
+
+### Update spend
+
+- Revalidate the current Klaviyo account, currency and timezone first.
+- Compute the new effective date on the server from the account timezone.
+- Insert a new ledger row; do not overwrite a previous period.
+- Reject a duplicate effective start with `DUPLICATE_EFFECTIVE_START`.
+- Use optimistic connection-version locking so reconnect/disconnect races fail
+  closed.
+
+### Change value
+
+- Target one existing ledger row by its immutable effective date.
+- Change the amount only.
+- Preserve account, currency and effective date.
+- Increment `correction_version` and update the server timestamp.
+- Reject a missing entry with `SPEND_HISTORY_ENTRY_NOT_FOUND`.
+- The displayed current value is derived from the latest effective period; no
+  second mutable current-cost authority is created.
+
+## Input and authority rules
+
+- Accepted textual amount: `0` or a non-negative decimal with at most eight
+  integer digits and two fractional digits.
+- Scientific notation, signs, commas, NaN, Infinity and more than two decimal
+  places are rejected.
+- `0.00` explicitly supports Klaviyo's free plan.
+- Account ID, account name, currency, timezone and effective date are never
+  accepted from merchant-authored hidden fields as authority.
+- Currency and timezone must be freshly revalidated for initial completion and
+  Update spend. Change value may only correct an existing server-owned period.
+- SMS, MMS and WhatsApp cost are outside this email-spend input.
+
+## Token and disconnect rules
+
+- Authorization URL: `https://www.klaviyo.com/oauth/authorize`.
+- Token and refresh URL: `https://a.klaviyo.com/oauth/token`.
+- Revoke URL: `https://a.klaviyo.com/oauth/revoke`.
+- PKCE method: exact `S256`.
+- Authorization codes are treated as five-minute credentials.
+- Token expiry follows `expires_in`; no fixed access-token lifetime is assumed.
+- `invalid_grant` becomes reauthorization required.
+- Refresh is bounded and never loops.
+- Disconnect revokes the refresh token before clearing local active authority.
+  Provider or network failure preserves the local connection and fails closed.
+- Historical spend periods remain auditable after disconnect.
+
+## Requested scopes
+
+The proposed legacy-compatible scope set is:
+
+- `accounts:read`
+- `campaigns:read`
+- `flows:read`
+- `events:read`
+- `metrics:read`
+
+Only `accounts:read` is exercised by this OAuth/account/spend slice. The other
+read scopes remain provisional until the subsequent Klaviyo reporting endpoint
+contract proves each one necessary. No write scope is requested.
+
+## User-visible state matrix
+
+| State | Visible result | Action | Result |
+| --- | --- | --- | --- |
+| Loading | Klaviyo status is loading | none | duplicate actions disabled |
+| Not connected | Klaviyo · Not connected | Connect | confirmation modal |
+| Authorization | Continue to Klaviyo | Continue / Cancel | OAuth or unchanged state |
+| Completion required | Verified account plus estimated spend field | Save and connect / Cancel | connected atomically or pending |
+| Resume required | Setup incomplete | Resume setup | completion modal; no OAuth restart |
+| Connected | Connected account and `amount currency / 30 days` | Update spend / Change value / Disconnect | focused action |
+| Reauthorization | Klaviyo authorization expired | Reconnect | fresh OAuth transaction |
+| Provider error | Clear retryable provider message | Retry | no fabricated empty/success state |
+
+## Shopify component mapping
+
+| Need | Exact component and property |
+| --- | --- |
+| Page/provider section | `s-page`, `s-section`, `s-stack` |
+| Status and errors | `s-badge`, `s-banner` |
+| Actions | `s-button`; `loading` and `disabled` during submission |
+| Confirmation/completion/history correction | `s-modal` |
+| Estimated spend | `s-number-field`, `min=0`, `max=99999999.99`, `step=0.01`, `required`, currency `suffix` |
+| Read-only account/currency/timezone | Shopify typography components inside the modal |
+
+No raw form controls, custom CSS, literal visual tokens or `s-clickable` action
+substitutes are permitted. Shopify documents that a modal cannot be opened
+programmatically on page load; therefore the callback returns with a truthful
+pending status and the merchant's **Resume setup** interaction opens the modal.
+
+## Out of scope
+
+- Campaign, Flow, Message or Variation reporting requests.
+- Channel hierarchy and presentation rules.
+- Recipient-weighted cost allocation or formula calculations.
+- Reporting facts, backfill, scheduling, export or charts.
+- Provider write operations.
+- SMS, MMS or WhatsApp cost.
+- Historical legacy-record carry or controlled reset tooling.
+- Automatic activation of any 15 October Variation behavior.
+
+## Acceptance and rollback
+
+Implementation may start only after explicit product-owner acceptance of this
+brief. Repository acceptance then requires deterministic OAuth, validation,
+ledger, concurrency, revoke-first and UI-contract tests; typecheck; build; CI;
+controlled database verification; desktop Shopify Admin evidence; real-mobile
+Shopify Admin evidence; and explicit final product-owner acceptance.
+
+Before live schema use, the migration must pass Supabase security and performance
+advisors. Rollback disables the new Klaviyo actions and preserves the private
+ledger and encrypted credentials; it does not delete auditable history.
+
+

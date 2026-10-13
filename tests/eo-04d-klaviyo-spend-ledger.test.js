@@ -112,11 +112,24 @@ test("Settings uses accepted Shopify components and keeps Resume separate from O
   assert.match(klaviyo, /Save and connect/);
   assert.match(klaviyo, /Update spend/);
   assert.match(klaviyo, /Change value/);
+  assert.match(klaviyo, /heading="Update Klaviyo email spend"/);
+  assert.match(klaviyo, /Save new value/);
+  assert.match(klaviyo, /heading="Change Klaviyo email spend"/);
+  assert.match(klaviyo, /label="Saved period"/);
+  assert.match(klaviyo, /Updated 30-Day Klaviyo Email Spend/);
+  assert.match(klaviyo, /Save change/);
+  assert.doesNotMatch(
+    klaviyo,
+    /Spend history — choose Change value beside the period/,
+  );
   assert.doesNotMatch(klaviyo, /<input|<button|<style|style=/i);
   assert.match(klaviyo, /onClick=\{resumeKlaviyoSetup\}/);
   assert.match(route, /setKlaviyoSetupStep\("account"\)/);
   assert.match(route, /form\.set\("accountId", selectedKlaviyoAccountId\)/);
-  assert.match(klaviyo, /onClick=\{\(\) => openKlaviyoCorrection\(period\)\}/);
+  assert.match(
+    klaviyo,
+    /commandFor="klaviyo-change-value-modal"[\s\S]*onClick=\{prepareKlaviyoCorrection\}/,
+  );
   assert.doesNotMatch(klaviyo, /Reporting Account|Ad Account/);
 });
 
@@ -136,3 +149,4 @@ test("Klaviyo spend slice does not invent reporting facts or Channel behavior", 
   ].map(read).join("\n");
   assert.doesNotMatch(files, /channel_hierarchy|dataset_v2|reporting_fact|allocated_spend/i);
 });
+

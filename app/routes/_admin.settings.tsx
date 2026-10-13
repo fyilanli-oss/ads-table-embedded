@@ -504,7 +504,7 @@ export default function Settings() {
     useState<string | null>(null);
   const klaviyoUpdatedSpend = useRef<any>(null);
   const klaviyoCorrectedSpend = useRef<any>(null);
-  const klaviyoChangeValueModal = useRef<any>(null);
+  const klaviyoSpendHistoryChoice = useRef<any>(null);
   const [selectedKlaviyoPeriod, setSelectedKlaviyoPeriod] =
     useState<KlaviyoSpendPeriod | null>(null);
   const pending = navigation.state !== "idle";
@@ -513,6 +513,9 @@ export default function Settings() {
   const googleWorking = revalidating || (pending && actionProvider === "google_ads");
   const metaWorking = revalidating || (pending && actionProvider === "meta");
   const klaviyoWorking = revalidating || (pending && actionProvider === "klaviyo");
+  const klaviyoPeriods = state.klaviyo.view === "connected"
+    ? state.klaviyo.periods
+    : [];
 
   useEffect(() => {
     const url = new URL(globalThis.location.href);
@@ -709,9 +712,22 @@ export default function Settings() {
     submit(form, {method: "post"});
   };
 
-  const openKlaviyoCorrection = (period: KlaviyoSpendPeriod) => {
+  const selectKlaviyoPeriod = (effectiveFrom: string) => {
+    if (state.klaviyo.view !== "connected") return;
+    const period = state.klaviyo.periods.find(
+      (candidate) => candidate.effectiveFrom === effectiveFrom,
+    ) ?? null;
     setSelectedKlaviyoPeriod(period);
-    klaviyoChangeValueModal.current?.showOverlay?.();
+    globalThis.queueMicrotask(() => {
+      if (klaviyoCorrectedSpend.current) {
+        klaviyoCorrectedSpend.current.value = period?.amount ?? "";
+      }
+    });
+  };
+
+  const prepareKlaviyoCorrection = () => {
+    const [period] = klaviyoPeriods;
+    if (period) selectKlaviyoPeriod(period.effectiveFrom);
   };
 
   return (
@@ -1452,30 +1468,48 @@ export default function Settings() {
                 Currency: {state.klaviyo.account.currency} · Timezone: {state.klaviyo.account.timezone}
               </s-paragraph>
               <s-stack direction="inline" gap="base">
-                <s-button commandFor="klaviyo-update-spend-modal" command="--show">
-                  Update spend
-                </s-button>
                 <s-button
+                  variant="secondary"
                   tone="critical"
                   commandFor="klaviyo-disconnect-modal"
                   command="--show"
                 >
                   Disconnect
                 </s-button>
+                <s-button
+                  variant="secondary"
+                  commandFor="klaviyo-update-spend-modal"
+                  command="--show"
+                >
+                  Update spend
+                </s-button>
+                <s-button
+                  variant="secondary"
+                  commandFor="klaviyo-change-value-modal"
+                  command="--show"
+                  onClick={prepareKlaviyoCorrection}
+                  disabled={klaviyoPeriods.length === 0}
+                >
+                  Change value
+                </s-button>
               </s-stack>
 
-              <s-modal id="klaviyo-update-spend-modal" heading="Update Klaviyo spend">
+              <s-modal
+                id="klaviyo-update-spend-modal"
+                heading="Update Klaviyo email spend"
+                size="small-100"
+              >
                 <s-stack direction="block" gap="base">
                   <s-paragraph>
-                    Create a new effective-dated estimate. Earlier periods remain unchanged.
+                    Enter the new estimated Klaviyo email cost for the next 30-day
+                    period starting today. SMS costs are not included.
                   </s-paragraph>
                   <s-number-field
                     ref={klaviyoUpdatedSpend}
-                    label="New estimated 30-day email spend"
+                    label="Estimated 30-Day Klaviyo Email Spend"
                     min={0}
                     max={99999999.99}
                     step={0.01}
-                    suffix={state.klaviyo.account.currency}
                     required
                   />
                 </s-stack>
@@ -1484,7 +1518,7 @@ export default function Settings() {
                   variant="primary"
                   onClick={() => submitKlaviyoSpend("update_klaviyo_spend")}
                 >
-                  Update spend
+                  Save new value
                 </s-button>
                 <s-button
                   slot="secondary-actions"
@@ -1495,42 +1529,45 @@ export default function Settings() {
                 </s-button>
               </s-modal>
 
-              <s-paragraph>
-                Spend history — choose Change value beside the period that needs correction.
-              </s-paragraph>
-              <s-stack direction="block" gap="small">
-                {state.klaviyo.periods.map((period) => (
-                  <s-stack key={period.id} direction="inline" gap="base">
-                    <s-paragraph>
-                      {period.effectiveFrom}: {period.amount} {period.currency}
-                    </s-paragraph>
-                    <s-button onClick={() => openKlaviyoCorrection(period)}>
-                      Change value
-                    </s-button>
-                  </s-stack>
-                ))}
-              </s-stack>
-
               <s-modal
-                ref={klaviyoChangeValueModal}
                 id="klaviyo-change-value-modal"
-                heading="Change Klaviyo value"
+                heading="Change Klaviyo email spend"
+                size="small-100"
               >
                 <s-stack direction="block" gap="base">
                   <s-paragraph>
-                    Correct the amount on one existing period. Its date, account
-                    and currency will not change.
+                    Change a previously saved amount. Its original start date will
+                    not change.
                   </s-paragraph>
-                  <s-paragraph>
-                    Period: {selectedKlaviyoPeriod?.effectiveFrom ?? "Not selected"}
-                  </s-paragraph>
+                  <s-select
+                    ref={klaviyoSpendHistoryChoice}
+                    label="Saved period"
+                    value={selectedKlaviyoPeriod?.effectiveFrom ?? ""}
+                    onChange={(event: any) => selectKlaviyoPeriod(event.currentTarget.value)}
+                  >
+                    {klaviyoPeriods.map((period, index) => {
+                      const nextPeriod = index > 0
+                        ? klaviyoPeriods[index - 1]
+                        : null;
+                      const effectiveTo = nextPeriod
+                        ? new Date(`${nextPeriod.effectiveFrom}T00:00:00.000Z`)
+                        : null;
+                      if (effectiveTo) effectiveTo.setUTCDate(effectiveTo.getUTCDate() - 1);
+                      return (
+                        <s-option key={period.id} value={period.effectiveFrom}>
+                          {period.effectiveFrom} / {effectiveTo
+                            ? effectiveTo.toISOString().slice(0, 10)
+                            : "Present"} · {period.amount} {period.currency}
+                        </s-option>
+                      );
+                    })}
+                  </s-select>
                   <s-number-field
                     ref={klaviyoCorrectedSpend}
-                    label="Corrected estimated 30-day email spend"
+                    label="Updated 30-Day Klaviyo Email Spend"
                     min={0}
                     max={99999999.99}
                     step={0.01}
-                    suffix={state.klaviyo.account.currency}
                     required
                   />
                 </s-stack>
@@ -1540,7 +1577,7 @@ export default function Settings() {
                   onClick={correctKlaviyoSpend}
                   disabled={!selectedKlaviyoPeriod}
                 >
-                  Change value
+                  Save change
                 </s-button>
                 <s-button
                   slot="secondary-actions"
@@ -1607,4 +1644,5 @@ export default function Settings() {
     </s-page>
   );
 }
+
 

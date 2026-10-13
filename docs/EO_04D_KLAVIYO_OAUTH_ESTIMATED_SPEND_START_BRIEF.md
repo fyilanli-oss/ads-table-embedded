@@ -97,6 +97,12 @@ is reachable only through narrowly granted `adstable_runtime` functions.
 - Reject a duplicate effective start with `DUPLICATE_EFFECTIVE_START`.
 - Use optimistic connection-version locking so reconnect/disconnect races fail
   closed.
+- Preserve the accepted legacy Settings presentation exactly: the connected
+  action is **Update spend**; the modal heading is **Update Klaviyo email
+  spend**; its explanation is **Enter the new estimated Klaviyo email cost for
+  the next 30-day period starting today. SMS costs are not included.**; the
+  field label is **Estimated 30-Day Klaviyo Email Spend**; and the primary
+  action is **Save new value**.
 
 ### Change value
 
@@ -107,6 +113,13 @@ is reachable only through narrowly granted `adstable_runtime` functions.
 - Reject a missing entry with `SPEND_HISTORY_ENTRY_NOT_FOUND`.
 - The displayed current value is derived from the latest effective period; no
   second mutable current-cost authority is created.
+- Preserve the accepted legacy Settings presentation exactly: **Change value**
+  is one connected-state action rather than one action repeated beside every
+  history row. Its modal heading is **Change Klaviyo email spend**; its
+  explanation is **Change a previously saved amount. Its original start date
+  will not change.**; the merchant chooses one **Saved period**; the selected
+  period's amount pre-fills **Updated 30-Day Klaviyo Email Spend**; and the
+  primary action is **Save change**.
 
 ## Input and authority rules
 
@@ -228,4 +241,5 @@ event and spend period. Durable evidence is
 This passes the database gate only. Environment values, deployment, live
 Klaviyo OAuth, desktop/mobile Shopify acceptance, final product-owner acceptance
 and merge remain open.
+
 

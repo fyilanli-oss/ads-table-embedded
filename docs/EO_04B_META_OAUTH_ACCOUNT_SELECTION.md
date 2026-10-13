@@ -1,6 +1,6 @@
 # A6-EO-04-B Meta OAuth and Account Selection
 
-Status: product-owner start brief accepted; repository implementation in progress  
+Status: production desktop partial PASS; mobile clean-session acceptance pending external account access  
 Checked: 13 October 2026
 
 ## Official sources
@@ -91,9 +91,22 @@ tests Meta's data contract separately:
 ## Acceptance and mutation gates
 
 Repository acceptance requires deterministic tests, TypeScript, build and CI.
-Live acceptance additionally requires product-owner-controlled Meta app
-configuration, desktop Shopify Admin, real mobile Shopify Admin and the explicit
-no-existing-mobile-browser-session scenario. Production secret/config mutation,
-deployment, live OAuth and final package closure each remain separate gates.
+Product-owner-controlled Meta app configuration, Production deployment and the
+desktop Shopify Admin flow have passed. The desktop evidence covers callback,
+automatic account selection, single-account Reporting Account assignment,
+Cancel/Resume without OAuth restart, revoke-first Disconnect and clean reconnect.
+
+The mobile attempt used the Facebook identity already signed in to mobile Chrome.
+That identity is not an app-role identity while the Meta app is unavailable to
+arbitrary users, so the result is classified as an external browser-identity
+precondition rather than an AdsTable code failure. The mandatory mobile gate
+remains open until a fresh Connect transaction is started in a mobile browser
+session authenticated as the authorized app-role identity. A previously copied
+OAuth URL or `state` must never be reused.
+
+Durable partial evidence is
+`docs/evidence/EO_04B_META_OAUTH_PARTIAL_LIVE_2026-10-13.json`. EO-04-B OAuth
+final acceptance, package acceptance and merge remain false.
 
 Product owner accepted this exact start brief in chat on 13 October 2026.
+

@@ -601,7 +601,13 @@
           "id": "A6-EO-04-D",
           "title": "Klaviyo adapter",
           "objective": "Campaign/Message, Flow/Message, metrics, cost inputs and 15 October revalidation.",
-          "status": "Ready_for_official_document_and_analyst_brief_gate"
+          "status": "Start_brief_proposed_product_owner_acceptance_required",
+          "implementation_started": false,
+          "document": "docs/EO_04D_KLAVIYO_OAUTH_ESTIMATED_SPEND_START_BRIEF.md",
+          "contract": "contracts/eo-04d-klaviyo-oauth-estimated-spend-v1.json",
+          "ci_test": "tests/eo-04d-klaviyo-oauth-estimated-spend-start-brief.test.js",
+          "database_schema_mutation_authorized": false,
+          "live_oauth_authorized": false
         },
         {
           "id": "A6-EO-04-E",
@@ -965,7 +971,7 @@
   "legacy_deletion_authorized": false,
   "current_active_parent": "A6-EO-04",
   "current_active_child": "A6-EO-04-D",
-  "current_gate": "A6-EO-04-D_current_official_documentation_and_analyst_brief",
+  "current_gate": "A6-EO-04-D_product_owner_start_brief_acceptance",
   "next_ready_child": null,
   "independent_packages": [
     {
@@ -1003,3 +1009,4 @@
     "ci_test": "tests/a6-parent-analysis-design-books.test.js"
   }
 }
+

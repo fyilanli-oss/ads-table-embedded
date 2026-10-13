@@ -1,6 +1,6 @@
 # A6-EO-04-B Meta OAuth and Account Selection
 
-Status: production desktop partial PASS; mobile clean-session acceptance pending external account access  
+Status: production OAuth acceptance PASS; merge pending  
 Checked: 13 October 2026
 
 ## Official sources
@@ -83,16 +83,19 @@ desktop Shopify Admin flow have passed. The desktop evidence covers callback,
 automatic account selection, single-account Reporting Account assignment,
 Cancel/Resume without OAuth restart, revoke-first Disconnect and clean reconnect.
 
-The mobile attempt used the Facebook identity already signed in to mobile Chrome.
-That identity is not an app-role identity while the Meta app is unavailable to
-arbitrary users, so the result is classified as an external browser-identity
-precondition rather than an AdsTable code failure. The mandatory mobile gate
-remains open until a fresh Connect transaction is started in a mobile browser
-session authenticated as the authorized app-role identity. A previously copied
-OAuth URL or `state` must never be reused.
+The original Android attempt inherited a different Facebook identity already
+signed in to mobile Chrome. That result is an external browser-identity
+precondition, not an AdsTable code failure. A fresh Connect transaction on the
+product owner's iPhone had no usable Facebook session and correctly opened
+Meta's password authentication screen. Together with the complete Windows flow,
+this passes the OAuth acceptance gate without claiming an unobserved iOS
+callback or account-selection result. A separate Android-device retest remains
+a non-blocking follow-up; copied OAuth URLs or `state` must never be reused.
 
-Durable partial evidence is
-`docs/evidence/EO_04B_META_OAUTH_PARTIAL_LIVE_2026-10-13.json`. EO-04-B OAuth
-final acceptance, package acceptance and merge remain false.
+Durable evidence is
+`docs/evidence/EO_04B_META_OAUTH_LIVE_ACCEPTANCE_2026-10-13.json`. OAuth live
+acceptance is PASS. Package acceptance and merge remain false until their
+separate explicit gates.
 
 Product owner accepted this exact start brief in chat on 13 October 2026.
+

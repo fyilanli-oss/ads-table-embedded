@@ -1,8 +1,8 @@
 {
-  "evidence_id": "EO_04B_META_OAUTH_PARTIAL_LIVE_2026-10-13",
+  "evidence_id": "EO_04B_META_OAUTH_LIVE_ACCEPTANCE_2026-10-13",
   "package": "A6-EO-04-B",
   "checked_at": "2026-10-13",
-  "status": "PARTIAL_PASS_MOBILE_EXTERNAL_IDENTITY_ACCESS_PENDING",
+  "status": "OAUTH_LIVE_ACCEPTANCE_PASS_ANDROID_FOLLOW_UP",
   "provider": "meta",
   "repository": {
     "pull_request": 68,
@@ -37,11 +37,18 @@
     "clean_reconnect": "PASS"
   },
   "mobile_shopify_admin": {
-    "status": "PENDING_EXTERNAL_ACCOUNT_ACCESS",
-    "observed_behavior": "The OAuth page used the Facebook identity already signed in to mobile Chrome.",
-    "classification": "EXTERNAL_BROWSER_IDENTITY_NOT_APPLICATION_CODE_FAILURE",
-    "blocked_reason": "The signed-in identity is not an app-role identity while the Meta app is not live for arbitrary users.",
-    "required_retest": "Start a fresh AdsTable Connect flow in a mobile browser session authenticated as the authorized app-role identity; do not reuse an earlier OAuth URL or state.",
+    "ios": {
+      "status": "PASS_OAUTH_ENTRY",
+      "observed_behavior": "A fresh Connect transaction with no usable Facebook session opened Meta password authentication.",
+      "callback_observed": false,
+      "scope_note": "No unobserved iOS callback or account-selection behavior is claimed."
+    },
+    "android": {
+      "status": "FOLLOW_UP_NON_BLOCKING",
+      "observed_behavior": "The earlier attempt inherited a different Facebook identity already signed in to mobile Chrome.",
+      "classification": "EXTERNAL_BROWSER_IDENTITY_NOT_APPLICATION_CODE_FAILURE",
+      "required_retest": "Start a fresh AdsTable Connect transaction on another Android device; never reuse an earlier OAuth URL or state."
+    },
     "credential_recorded": false
   },
   "data_side_effects": {
@@ -50,9 +57,10 @@
     "backfill_started": false
   },
   "closure": {
-    "oauth_final_acceptance": false,
+    "oauth_final_acceptance": true,
     "package_final_acceptance": false,
     "merge_authorized": false,
-    "remaining_oauth_gate": "real_mobile_no_existing_facebook_session"
+    "non_blocking_follow_up": "android_fresh_device_oauth"
   }
 }
+

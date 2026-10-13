@@ -20,7 +20,7 @@ const callback = read("app/routes/auth.meta.callback.ts");
 const runtime = read("app/lib/oauth/meta-oauth-runtime.server.js");
 const decision = read("docs/EO_04B_META_OAUTH_ACCOUNT_SELECTION.md");
 const contract = JSON.parse(read("contracts/eo-04b-meta-oauth-account-selection-v1.json"));
-const liveEvidence = JSON.parse(read("docs/evidence/EO_04B_META_OAUTH_PARTIAL_LIVE_2026-10-13.json"));
+const liveEvidence = JSON.parse(read("docs/evidence/EO_04B_META_OAUTH_LIVE_ACCEPTANCE_2026-10-13.json"));
 
 const json = (payload, status = 200, headers = {}) => new Response(
   JSON.stringify(payload),
@@ -261,19 +261,24 @@ test("Meta credentials are name-only inventory entries with no committed values"
   assert.equal(contract.mutations_authorized_by_this_contract.live_oauth, false);
 });
 
-test("Meta partial live evidence records desktop PASS without falsely closing mobile or merge", () => {
+test("Meta live evidence records Windows and iOS scope without falsely closing merge", () => {
   assert.equal(liveEvidence.desktop_shopify_admin.status, "PASS");
-  assert.equal(liveEvidence.mobile_shopify_admin.status, "PENDING_EXTERNAL_ACCOUNT_ACCESS");
+  assert.equal(liveEvidence.mobile_shopify_admin.ios.status, "PASS_OAUTH_ENTRY");
+  assert.equal(liveEvidence.mobile_shopify_admin.ios.callback_observed, false);
+  assert.equal(liveEvidence.mobile_shopify_admin.android.status, "FOLLOW_UP_NON_BLOCKING");
   assert.equal(
-    liveEvidence.mobile_shopify_admin.classification,
+    liveEvidence.mobile_shopify_admin.android.classification,
     "EXTERNAL_BROWSER_IDENTITY_NOT_APPLICATION_CODE_FAILURE",
   );
   assert.equal(liveEvidence.data_side_effects.dataset_v2_writes, 0);
-  assert.equal(liveEvidence.closure.oauth_final_acceptance, false);
+  assert.equal(liveEvidence.closure.oauth_final_acceptance, true);
   assert.equal(liveEvidence.closure.package_final_acceptance, false);
   assert.equal(liveEvidence.closure.merge_authorized, false);
   assert.equal(contract.live_execution.desktop_shopify_admin, "PASS");
-  assert.equal(contract.live_execution.mobile_shopify_admin, "PENDING_EXTERNAL_ACCOUNT_ACCESS");
-  assert.equal(contract.live_execution.oauth_final_acceptance, false);
+  assert.equal(contract.live_execution.mobile_shopify_admin, "PASS_IOS_OAUTH_ENTRY");
+  assert.equal(contract.live_execution.android_shopify_admin, "FOLLOW_UP_NON_BLOCKING");
+  assert.equal(contract.live_execution.oauth_final_acceptance, true);
 });
+
+
 

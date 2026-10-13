@@ -141,7 +141,7 @@ CI enforcement: `tests/eo-04a-common-adapter-start-brief.test.js`
 - **EO-03-C — Accepted:** Fresh provider-verified connected accounts and one canonical Meta/Google Reporting Account are bound beneath the immutable installed-Shopify-store authority. Klaviyo remains one Connected Account with no Reporting Account control. No merchant-selectable store scope exists.
 - With explicit approval, the EO-03-C base and corrective Supabase migrations were applied on 9 October 2026. Rollback-scoped synthetic runtime acceptance passed, cleanup is zero, Security Advisor findings are zero and EO-03-C introduced no unindexed-foreign-key finding. No provider API call, provider OAuth, Vercel mutation or production deploy occurred. The product owner explicitly closed EO-03-C on 9 October 2026; exact evidence is `docs/evidence/EO_03C_LIVE_ACCEPTANCE_2026-10-09.json`.
 - **EO-03-D — Accepted:** Reauthorization, atomic credential renewal, two-phase disconnect and same-canonical-connection reconnect passed the complete rollback-scoped live lifecycle scenario. All synthetic rows rolled back to zero, Security Advisor remained at zero, and no provider API/OAuth/Vercel/deploy mutation occurred. Durable evidence: `evidence/eo-03d-live-database-evidence-2026-10-09.json`.
-- **EO-03 — Accepted:** All four children are closed with explicit product-owner acceptance. **EO-04 — Active:** EO-04-A is Accepted. EO-04-B Production desktop OAuth/account selection is partial-live PASS. Mobile clean-session acceptance remains open; Meta provider-data implementation has not started; final acceptance and merge are false.
+- **EO-03 — Accepted:** All four children are closed with explicit product-owner acceptance. **EO-04 — Active:** EO-04-A is Accepted. EO-04-B Production OAuth acceptance is PASS on the complete Windows flow plus truthful iOS clean-session OAuth entry. Android device verification is a non-blocking follow-up; Meta provider-data implementation has not started; package acceptance and merge remain separate gates.
 
 ## EO-03-C official provider baseline — 9 Ekim 2026
 
@@ -257,7 +257,7 @@ EO-02-C internal caller kodu tek başına canlı tetikleyici değildir. `docs/EO
 - Provider evidence is bounded, sanitized and content-hashed; secret and personal-data patterns are redacted.
 - Deterministic synthetic behavior is covered by `tests/eo-04a-common-adapter.test.js`.
 - No live provider call, secret read/write, database mutation, Vercel mutation or deployment occurs in EO-04-A.
-- GitHub Actions run `38049487145` passed 163/163 tests, TypeScript verification and preview build. The product owner explicitly accepted EO-04-A and authorized PR #65 merge on 10 October 2026. EO-04-B'nin OAuth official-document ve analyst-brief kapısı 13 Ekim 2026'da geçildi. Ayrı açık onaylarla Production configuration/deployment ve desktop OAuth kabulü çalıştırıldı; mobil temiz-oturum kapısı açıktır. Meta provider-data sözleşmesi ve runtime uygulaması başlamamıştır.
+- GitHub Actions run `38049487145` passed 163/163 tests, TypeScript verification and preview build. The product owner explicitly accepted EO-04-A and authorized PR #65 merge on 10 October 2026. EO-04-B'nin OAuth official-document ve analyst-brief kapısı 13 Ekim 2026'da geçildi. Ayrı açık onaylarla Production configuration/deployment, tam Windows akışı ve iOS temiz-oturum OAuth başlangıcı kabul edildi. Android cihaz doğrulaması ilerlemeyi durdurmayan takip kalemidir. Meta provider-data sözleşmesi ve runtime uygulaması başlamamıştır.
 
 
 ## 10 October 2026 — EO-04-A product-owner closure
@@ -284,5 +284,6 @@ CI enforcement: `tests/eo-04b-meta-oauth-account-selection.test.js`
 - OAuth/account selection does not start provider-data collection, scheduling or backfill. Meta provider-data behavior is outside this accepted OAuth slice and has not been authorized or implemented.
 - Four Meta environment names are stored only in the name-only inventory; no value is committed or read back.
 - Production deployment `dpl_GxV2DQiXYaer24W1247iPAn9N6gR` at commit `f3f0516b5b938b683d10cd14b75947cd805120e0` is READY. Desktop OAuth, account selection, Reporting Account, Cancel/Resume, Disconnect and reconnect are PASS.
-- The attempted mobile flow used the Facebook identity already signed in to mobile Chrome. Because that identity is not an authorized app-role identity, mobile acceptance remains `PENDING_EXTERNAL_ACCOUNT_ACCESS`; it is not an application-code failure. A fresh Connect transaction will be tested later with the authorized identity and no copied OAuth URL/state.
-- Durable evidence: `docs/evidence/EO_04B_META_OAUTH_PARTIAL_LIVE_2026-10-13.json`. OAuth final acceptance, EO-04-B final acceptance and merge remain false.
+- The original Android flow inherited the unrelated Facebook identity already signed in to mobile Chrome; this is not an application-code failure. A fresh iPhone Connect transaction with no usable Facebook session correctly opened Meta password authentication. This passes the real-mobile OAuth entry gate without claiming an unobserved iOS callback. Android remains a non-blocking fresh-device follow-up, and no copied OAuth URL/state may be reused.
+- Durable evidence: `docs/evidence/EO_04B_META_OAUTH_LIVE_ACCEPTANCE_2026-10-13.json`. OAuth live acceptance is PASS; EO-04-B package acceptance and merge remain false until their explicit gates.
+

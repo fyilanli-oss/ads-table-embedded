@@ -575,17 +575,18 @@
           "id": "A6-EO-04-B",
           "title": "Meta adapter",
           "objective": "Meta Campaign, Ad Set and Ad hierarchy with deepest verified grain and raw structure evidence.",
-          "status": "OAuth_desktop_live_pass_mobile_external_identity_access_pending_data_contract_not_started",
+          "status": "OAuth_live_acceptance_pass_android_follow_up_data_contract_not_started",
           "implementation_started": true,
           "live_mutation_authorized": true,
           "start_brief_accepted": true,
           "oauth_document": "docs/EO_04B_META_OAUTH_ACCOUNT_SELECTION.md",
           "oauth_contract": "contracts/eo-04b-meta-oauth-account-selection-v1.json",
           "oauth_test": "tests/eo-04b-meta-oauth-account-selection.test.js",
-          "oauth_partial_live_evidence": "docs/evidence/EO_04B_META_OAUTH_PARTIAL_LIVE_2026-10-13.json",
+          "oauth_live_evidence": "docs/evidence/EO_04B_META_OAUTH_LIVE_ACCEPTANCE_2026-10-13.json",
           "oauth_desktop_live_acceptance": true,
-          "oauth_mobile_live_acceptance": false,
-          "oauth_mobile_blocker": "external_browser_identity_access",
+          "oauth_mobile_live_acceptance": true,
+          "oauth_mobile_acceptance_scope": "ios_clean_session_oauth_entry",
+          "oauth_android_follow_up": "non_blocking_fresh_device_oauth",
           "final_product_owner_acceptance": false
         },
         {
@@ -998,3 +999,4 @@
     "ci_test": "tests/a6-parent-analysis-design-books.test.js"
   }
 }
+

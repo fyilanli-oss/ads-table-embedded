@@ -259,5 +259,7 @@ and merge remain open.
 
 The live reconnect timestamp-order correction is recorded in
 `docs/evidence/EO_04D_KLAVIYO_RECONNECT_TIMESTAMP_ORDER_ACCEPTANCE_2026-10-13.json`.
-Its database and security checks pass; live product-owner retest remains open.
+Its database and security checks pass. The product owner then repeated the full
+live reconnect process and explicitly confirmed that the complete flow works.
+Merge remains a separate explicit gate.
 

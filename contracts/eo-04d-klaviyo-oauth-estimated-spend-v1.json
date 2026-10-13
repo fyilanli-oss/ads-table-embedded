@@ -173,6 +173,7 @@
     "same_day_reconnect_correction_evidence": "docs/evidence/EO_04D_KLAVIYO_RECONNECT_SAME_DAY_SPEND_ACCEPTANCE_2026-10-13.json",
     "reconnect_timestamp_order_correction_applied": true,
     "reconnect_timestamp_order_correction_evidence": "docs/evidence/EO_04D_KLAVIYO_RECONNECT_TIMESTAMP_ORDER_ACCEPTANCE_2026-10-13.json",
+    "reconnect_timestamp_order_live_retest": "PASS_2026-10-13",
     "synthetic_residue_zero": true,
     "security_advisor_findings": 0,
     "new_unindexed_foreign_key_findings": 0,

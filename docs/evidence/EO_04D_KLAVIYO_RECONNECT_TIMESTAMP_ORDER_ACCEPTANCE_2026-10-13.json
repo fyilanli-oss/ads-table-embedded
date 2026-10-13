@@ -31,5 +31,9 @@
     "historical_rows_changed_or_deleted": false,
     "failed_transaction_left_partial_rows": false
   },
-  "live_product_owner_retest": "pending"
+  "live_product_owner_retest": {
+    "status": "PASS",
+    "accepted_at": "2026-10-13",
+    "evidence": "Product owner confirmed in chat that the complete reconnect process works."
+  }
 }

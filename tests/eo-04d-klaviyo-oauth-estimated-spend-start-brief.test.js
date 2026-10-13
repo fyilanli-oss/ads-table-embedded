@@ -86,6 +86,8 @@ test("reconnect timestamp ordering is corrected without changing provider flow",
   assert.equal(reconnectTimestampEvidence.scope.account_selection_changed, false);
   assert.equal(reconnectTimestampEvidence.scope.disconnect_changed, false);
   assert.equal(reconnectTimestampEvidence.scope.historical_rows_changed_or_deleted, false);
+  assert.equal(reconnectTimestampEvidence.live_product_owner_retest.status, "PASS");
+  assert.equal(contract.repository_implementation.reconnect_timestamp_order_live_retest, "PASS_2026-10-13");
 });
 
 test("Klaviyo uses the official PKCE and token hosts with one Connected Account", () => {

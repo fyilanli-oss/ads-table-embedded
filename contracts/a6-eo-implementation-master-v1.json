@@ -971,7 +971,7 @@
   "legacy_deletion_authorized": false,
   "current_active_parent": "A6-EO-04",
   "current_active_child": "A6-EO-04-D",
-  "current_gate": "A6-EO-04-D_product_owner_start_brief_acceptance",
+  "current_gate": "A6-EO-04-D_current_official_documentation_and_analyst_brief",
   "next_ready_child": null,
   "independent_packages": [
     {

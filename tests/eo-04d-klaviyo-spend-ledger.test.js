@@ -8,6 +8,8 @@ import {normalizeKlaviyoEstimatedSpend} from "../app/lib/oauth/klaviyo-oauth-run
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8");
+const originalMigration = "supabase/migrations/20261013170000_eo04d_klaviyo_spend_ledger.sql";
+const sameDayMigration = "supabase/migrations/20261013223000_eo04d_klaviyo_same_day_spend_updates.sql";
 
 test("Klaviyo spend accepts explicit zero and exact bounded decimals only", () => {
   assert.equal(normalizeKlaviyoEstimatedSpend("0"), "0.00");
@@ -25,7 +27,8 @@ test("Klaviyo spend accepts explicit zero and exact bounded decimals only", () =
 });
 
 test("private spend ledger is forced-RLS and runtime function-only", () => {
-  const sql = read("supabase/migrations/20261013170000_eo04d_klaviyo_spend_ledger.sql");
+  const sql = read(originalMigration);
+  const correctiveSql = read(sameDayMigration);
   assert.match(sql, /create table integrations\.klaviyo_email_spend_periods/);
   assert.match(sql, /numeric\(10, 2\)/);
   assert.match(sql, /enable row level security/);
@@ -37,6 +40,14 @@ test("private spend ledger is forced-RLS and runtime function-only", () => {
   assert.match(sql, /grant execute on function integrations\.load_klaviyo_spend_configuration/);
   assert.doesNotMatch(sql, /grant (select|insert|update|delete).*adstable_runtime/i);
   assert.doesNotMatch(sql, /grant .*service_role/i);
+  assert.match(
+    correctiveSql,
+    /revoke all on function integrations\.correct_klaviyo_spend_period\(\s*uuid, uuid, bigint, uuid, bigint, numeric/,
+  );
+  assert.match(
+    correctiveSql,
+    /grant execute on function integrations\.correct_klaviyo_spend_period\(\s*uuid, uuid, bigint, uuid, bigint, numeric\s*\) to adstable_runtime/,
+  );
 });
 
 test("Save and connect is one database function with provider-owned account fields", async () => {
@@ -84,19 +95,47 @@ test("Save and connect is one database function with provider-owned account fiel
   assert.equal(result.spendPeriod.currency, "USD");
 });
 
-test("Update spend and Change value remain separate effective-dated operations", () => {
-  const sql = read("supabase/migrations/20261013170000_eo04d_klaviyo_spend_ledger.sql");
-  assert.match(sql, /constraint klaviyo_email_spend_periods_effective_start_unique/);
-  assert.match(sql, /raise exception 'DUPLICATE_EFFECTIVE_START'/);
+test("same-day Update spend entries remain separate and Change value targets an immutable id", () => {
+  const sql = read(sameDayMigration);
+  assert.match(sql, /drop constraint if exists klaviyo_email_spend_periods_effective_start_unique/);
+  assert.doesNotMatch(sql, /raise exception 'DUPLICATE_EFFECTIVE_START'/);
   assert.match(sql, /create or replace function integrations\.append_klaviyo_spend_period/);
   assert.match(sql, /create or replace function integrations\.correct_klaviyo_spend_period/);
-  assert.match(sql, /and period\.effective_from = p_effective_from/);
+  assert.match(sql, /p_spend_period_id uuid/);
+  assert.match(sql, /where period\.id = p_spend_period_id/);
+  assert.match(sql, /order by period\.effective_from desc, period\.created_at desc, period\.id desc/);
   assert.match(sql, /set estimated_30_day_email_spend = p_estimated_spend,/);
   assert.match(sql, /correction_version = period\.correction_version \+ 1/);
   const correction = sql.slice(sql.indexOf("create or replace function integrations.correct_klaviyo_spend_period"));
   assert.doesNotMatch(correction, /set effective_from =/);
   assert.doesNotMatch(correction, /set source_currency =/);
   assert.doesNotMatch(correction, /set account_id =/);
+});
+
+test("repository corrects the exact selected spend event instead of a shared date", async () => {
+  const calls = [];
+  const repository = createKlaviyoSpendRepository({
+    query: async (sql, values) => {
+      calls.push({sql, values});
+      return {rows: [{
+        spend_period_id: "00000000-0000-4000-8000-000000000010",
+        effective_from: "2026-10-13",
+        correction_version: 2,
+        amount: "32.00",
+        currency: "USD",
+      }]};
+    },
+  });
+  await repository.correct({
+    connectionId: "00000000-0000-4000-8000-000000000001",
+    workspaceId: "00000000-0000-4000-8000-000000000003",
+    installGeneration: 1,
+    periodId: "00000000-0000-4000-8000-000000000010",
+    expectedCorrectionVersion: 1,
+    amount: "32.00",
+  });
+  assert.match(calls[0].sql, /\$4::uuid/);
+  assert.equal(calls[0].values[3], "00000000-0000-4000-8000-000000000010");
 });
 
 test("Settings uses accepted Shopify components and keeps Resume separate from OAuth", () => {
@@ -118,6 +157,8 @@ test("Settings uses accepted Shopify components and keeps Resume separate from O
   assert.match(klaviyo, /label="Saved period"/);
   assert.match(klaviyo, /Updated 30-Day Klaviyo Email Spend/);
   assert.match(klaviyo, /Save change/);
+  assert.match(klaviyo, /value=\{period\.id\}/);
+  assert.match(klaviyo, /Superseded same day/);
   assert.doesNotMatch(
     klaviyo,
     /Spend history — choose Change value beside the period/,
@@ -149,4 +190,3 @@ test("Klaviyo spend slice does not invent reporting facts or Channel behavior", 
   ].map(read).join("\n");
   assert.doesNotMatch(files, /channel_hierarchy|dataset_v2|reporting_fact|allocated_spend/i);
 });
-

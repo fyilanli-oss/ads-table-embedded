@@ -81,7 +81,7 @@ function providerCodeOf(provider: Provider, error: unknown) {
     ? "META"
     : provider === "klaviyo" ? "KLAVIYO" : "GOOGLE_ADS";
   const source = error && typeof error === "object"
-    ? error as {code?: unknown; details?: Record<string, unknown>}
+    ? error as {code?: unknown; message?: unknown; details?: Record<string, unknown>}
     : null;
   const providerCode = source?.details?.provider_error_code;
   if (
@@ -90,8 +90,15 @@ function providerCodeOf(provider: Provider, error: unknown) {
   ) return prefix + "_PROVIDER_" + providerCode;
   const status = source?.details?.provider_status;
   if (status === "invalid_grant") return prefix + "_REAUTHORIZATION_REQUIRED";
-  const candidate = source?.code ?? (error instanceof Error ? error.message : "");
-  return typeof candidate === "string" && /^[A-Z0-9_]{1,80}$/.test(candidate)
+  const semanticMessage = source?.message ?? (error instanceof Error ? error.message : "");
+  if (
+    typeof semanticMessage === "string"
+    && /^[A-Z][A-Z0-9_]{2,79}$/.test(semanticMessage)
+  ) return semanticMessage;
+  const candidate = source?.code;
+  return typeof candidate === "string"
+    && /^[A-Z0-9_]{1,80}$/.test(candidate)
+    && !/^[0-9A-Z]{5}$/.test(candidate)
     ? candidate
     : prefix + "_SETUP_FAILED";
 }
@@ -384,7 +391,7 @@ export const action = async ({request}: ActionFunctionArgs) => {
     if (provider === "klaviyo" && intent === "change_klaviyo_value") {
       await runtime.changeValue({
         installationAuthority: verified.installationAuthority,
-        effectiveFrom: String(form.get("effectiveFrom") ?? ""),
+        periodId: String(form.get("periodId") ?? ""),
         expectedCorrectionVersion: Number(form.get("correctionVersion")),
         estimatedSpend: String(form.get("estimatedSpend") ?? ""),
       });
@@ -703,7 +710,7 @@ export default function Settings() {
     const form = new FormData();
     form.set("intent", "change_klaviyo_value");
     form.set("provider", "klaviyo");
-    form.set("effectiveFrom", selectedKlaviyoPeriod?.effectiveFrom ?? "");
+    form.set("periodId", selectedKlaviyoPeriod?.id ?? "");
     form.set(
       "correctionVersion",
       String(selectedKlaviyoPeriod?.correctionVersion ?? ""),
@@ -712,10 +719,10 @@ export default function Settings() {
     submit(form, {method: "post"});
   };
 
-  const selectKlaviyoPeriod = (effectiveFrom: string) => {
+  const selectKlaviyoPeriod = (periodId: string) => {
     if (state.klaviyo.view !== "connected") return;
     const period = state.klaviyo.periods.find(
-      (candidate) => candidate.effectiveFrom === effectiveFrom,
+      (candidate) => candidate.id === periodId,
     ) ?? null;
     setSelectedKlaviyoPeriod(period);
     globalThis.queueMicrotask(() => {
@@ -727,7 +734,7 @@ export default function Settings() {
 
   const prepareKlaviyoCorrection = () => {
     const [period] = klaviyoPeriods;
-    if (period) selectKlaviyoPeriod(period.effectiveFrom);
+    if (period) selectKlaviyoPeriod(period.id);
   };
 
   return (
@@ -1542,20 +1549,25 @@ export default function Settings() {
                   <s-select
                     ref={klaviyoSpendHistoryChoice}
                     label="Saved period"
-                    value={selectedKlaviyoPeriod?.effectiveFrom ?? ""}
+                    value={selectedKlaviyoPeriod?.id ?? ""}
                     onChange={(event: any) => selectKlaviyoPeriod(event.currentTarget.value)}
                   >
                     {klaviyoPeriods.map((period, index) => {
-                      const nextPeriod = index > 0
-                        ? klaviyoPeriods[index - 1]
-                        : null;
+                      const sameDateWasSuperseded = klaviyoPeriods
+                        .slice(0, index)
+                        .some((candidate) => candidate.effectiveFrom === period.effectiveFrom);
+                      const nextPeriod = klaviyoPeriods
+                        .slice(0, index)
+                        .find((candidate) => candidate.effectiveFrom > period.effectiveFrom) ?? null;
                       const effectiveTo = nextPeriod
                         ? new Date(`${nextPeriod.effectiveFrom}T00:00:00.000Z`)
                         : null;
                       if (effectiveTo) effectiveTo.setUTCDate(effectiveTo.getUTCDate() - 1);
                       return (
-                        <s-option key={period.id} value={period.effectiveFrom}>
-                          {period.effectiveFrom} / {effectiveTo
+                        <s-option key={period.id} value={period.id}>
+                          {period.effectiveFrom} / {sameDateWasSuperseded
+                            ? "Superseded same day"
+                            : effectiveTo
                             ? effectiveTo.toISOString().slice(0, 10)
                             : "Present"} · {period.amount} {period.currency}
                         </s-option>
@@ -1644,5 +1656,4 @@ export default function Settings() {
     </s-page>
   );
 }
-
 

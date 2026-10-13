@@ -5,8 +5,9 @@ Checked: 13 October 2026
 
 Product-owner acceptance was received on 13 October 2026 after the OAuth,
 single-account and effective-dated spend boundaries below were reviewed. This
-acceptance authorizes repository implementation only; live provider-console,
-Vercel, deployment and database-schema mutations remain separate gates.
+acceptance authorizes repository implementation and the corrective spend-ledger
+schema migration only; live provider-console, Vercel and deployment mutations
+remain separate gates.
 
 ## Official sources
 
@@ -84,8 +85,11 @@ The proposed private table is
 - `correction_version`: positive integer beginning at 1.
 - `created_at` and `updated_at`: server timestamps.
 
-There is exactly one entry per connection/account/effective start date. The
-table lives in the private `integrations` schema, has RLS enabled and forced,
+Every **Update spend** submission creates its own immutable ledger event,
+including multiple submissions on the same business date. The newest event is
+ordered by `effective_from`, then `created_at`, then `id`; older same-day events
+remain visible and correctable as audit history. The table lives in the private
+`integrations` schema, has RLS enabled and forced,
 grants no browser, `anon`, `authenticated` or generic `service_role` access, and
 is reachable only through narrowly granted `adstable_runtime` functions.
 
@@ -94,7 +98,8 @@ is reachable only through narrowly granted `adstable_runtime` functions.
 - Revalidate the current Klaviyo account, currency and timezone first.
 - Compute the new effective date on the server from the account timezone.
 - Insert a new ledger row; do not overwrite a previous period.
-- Reject a duplicate effective start with `DUPLICATE_EFFECTIVE_START`.
+- Allow repeated updates on the same business date and preserve each as a
+  separate immutable event. The latest same-day event is current.
 - Use optimistic connection-version locking so reconnect/disconnect races fail
   closed.
 - Preserve the accepted legacy Settings presentation exactly: the connected
@@ -106,7 +111,8 @@ is reachable only through narrowly granted `adstable_runtime` functions.
 
 ### Change value
 
-- Target one existing ledger row by its immutable effective date.
+- Target one existing ledger row by its immutable spend-period UUID. A date is
+  not a unique selector because multiple updates may occur on the same day.
 - Change the amount only.
 - Preserve account, currency and effective date.
 - Increment `correction_version` and update the server timestamp.
@@ -241,5 +247,4 @@ event and spend period. Durable evidence is
 This passes the database gate only. Environment values, deployment, live
 Klaviyo OAuth, desktop/mobile Shopify acceptance, final product-owner acceptance
 and merge remain open.
-
 

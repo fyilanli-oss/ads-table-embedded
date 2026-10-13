@@ -1,6 +1,6 @@
 {
   "contract_id": "eo-04d-klaviyo-oauth-estimated-spend-v1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "status": "accepted_implementation_in_progress",
   "checked_at": "2026-10-13",
   "parent": "A6-EO-04",
@@ -73,21 +73,21 @@
     "effective_date_source": "server_business_date_in_verified_account_timezone",
     "provenance": "user_estimated",
     "unique_period_key": [
-      "connection_id",
-      "account_id",
-      "effective_from"
+      "id"
     ],
-    "current_value_rule": "derive_from_latest_effective_period",
+    "same_business_date_updates": "append_distinct_immutable_events",
+    "current_value_rule": "derive_from_latest_effective_from_then_created_at_then_id",
     "second_mutable_current_cost_authority": false
   },
   "update_spend": {
     "creates_new_period": true,
     "provider_revalidation_required": true,
-    "duplicate_effective_start_error": "DUPLICATE_EFFECTIVE_START",
+    "allows_multiple_updates_on_same_business_date": true,
     "optimistic_connection_version_required": true
   },
   "change_value": {
     "updates_existing_period_only": true,
+    "selection_key": "immutable_spend_period_id",
     "changes_effective_date": false,
     "changes_account_or_currency": false,
     "increments_correction_version": true,
@@ -137,7 +137,7 @@
     "vercel_environment": false,
     "deployment": false,
     "live_oauth": false,
-    "database_schema": false
+    "database_schema": true
   },
   "authoritative_sources": {
     "klaviyo_oauth": "https://developers.klaviyo.com/en/docs/set_up_oauth",

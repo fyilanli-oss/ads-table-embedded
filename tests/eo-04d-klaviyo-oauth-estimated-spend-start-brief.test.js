@@ -16,7 +16,7 @@ test("EO-04-D records explicit product-owner start-brief acceptance", () => {
   assert.equal(contract.status, "accepted_implementation_in_progress");
   assert.equal(contract.product_owner_start_brief.status, "accepted");
   assert.equal(contract.product_owner_start_brief.accepted_at, "2026-10-13");
-  assert.equal(contract.mutations_authorized_by_this_contract.database_schema, false);
+  assert.equal(contract.mutations_authorized_by_this_contract.database_schema, true);
   assert.equal(contract.mutations_authorized_by_this_contract.live_oauth, false);
 });
 
@@ -66,17 +66,20 @@ test("estimated spend has one private effective-dated authority", () => {
   assert.equal(contract.spend_ledger.maximum, "99999999.99");
   assert.equal(contract.spend_ledger.second_mutable_current_cost_authority, false);
   assert.deepEqual(contract.spend_ledger.unique_period_key, [
-    "connection_id",
-    "account_id",
-    "effective_from",
+    "id",
   ]);
+  assert.equal(
+    contract.spend_ledger.same_business_date_updates,
+    "append_distinct_immutable_events",
+  );
 });
 
 test("Update spend and Change value remain different operations", () => {
   assert.equal(contract.update_spend.creates_new_period, true);
   assert.equal(contract.update_spend.provider_revalidation_required, true);
-  assert.equal(contract.update_spend.duplicate_effective_start_error, "DUPLICATE_EFFECTIVE_START");
+  assert.equal(contract.update_spend.allows_multiple_updates_on_same_business_date, true);
   assert.equal(contract.change_value.updates_existing_period_only, true);
+  assert.equal(contract.change_value.selection_key, "immutable_spend_period_id");
   assert.equal(contract.change_value.changes_effective_date, false);
   assert.equal(contract.change_value.changes_account_or_currency, false);
   assert.equal(contract.change_value.increments_correction_version, true);

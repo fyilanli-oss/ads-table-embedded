@@ -112,11 +112,11 @@ export function createKlaviyoSpendRepository(database) {
     async correct(value) {
       return period(one(await query(
         `select * from integrations.correct_klaviyo_spend_period(
-          $1::uuid, $2::uuid, $3::bigint, $4::date, $5::bigint, $6::numeric
+          $1::uuid, $2::uuid, $3::bigint, $4::uuid, $5::bigint, $6::numeric
         )`,
         [
           value.connectionId, value.workspaceId, value.installGeneration,
-          value.effectiveFrom, value.expectedCorrectionVersion, value.amount,
+          value.periodId, value.expectedCorrectionVersion, value.amount,
         ],
       ), "KLAVIYO_SPEND_CORRECT"));
     },

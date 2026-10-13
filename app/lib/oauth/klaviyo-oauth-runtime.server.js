@@ -382,7 +382,7 @@ export function createKlaviyoOAuthRuntime({
 
     async changeValue({
       installationAuthority,
-      effectiveFrom,
+      periodId,
       expectedCorrectionVersion,
       estimatedSpend,
     }) {
@@ -392,7 +392,7 @@ export function createKlaviyoOAuthRuntime({
       });
       if (!configuration) throw new Error("CONNECTED_KLAVIYO_CONNECTION_REQUIRED");
       const selected = configuration.periods.find(
-        (period) => period.effectiveFrom === effectiveFrom,
+        (period) => period.id === periodId,
       );
       if (!selected || selected.correctionVersion !== expectedCorrectionVersion) {
         throw new Error("KLAVIYO_SPEND_PERIOD_SELECTION_INVALID");
@@ -401,7 +401,7 @@ export function createKlaviyoOAuthRuntime({
         connectionId: configuration.connectionId,
         workspaceId: installationAuthority.workspaceId,
         installGeneration: installationAuthority.installGeneration,
-        effectiveFrom: selected.effectiveFrom,
+        periodId: selected.id,
         expectedCorrectionVersion: selected.correctionVersion,
         amount: normalizeKlaviyoEstimatedSpend(estimatedSpend),
       });

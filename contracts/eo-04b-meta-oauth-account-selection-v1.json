@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-04b-meta-oauth-account-selection-v1",
-  "version": "1.2.0",
-  "status": "Live_oauth_acceptance_pass_merge_pending",
+  "version": "1.3.0",
+  "status": "Accepted_merge_pending",
   "checked_at": "2026-10-13",
   "parent": "A6-EO-04",
   "package": "A6-EO-04-B",
@@ -99,10 +99,11 @@
     "production_deployment": "READY",
     "desktop_shopify_admin": "PASS",
     "mobile_shopify_admin": "PASS_IOS_OAUTH_ENTRY",
-    "android_shopify_admin": "FOLLOW_UP_NON_BLOCKING",
+    "non_role_account_control": "PASS_EXPECTED_DEVELOPMENT_MODE_RESTRICTION",
+    "android_shopify_admin": "OPTIONAL_POST_ACCEPTANCE_REGRESSION",
     "mobile_failure_is_application_code_failure": false,
     "oauth_final_acceptance": true,
-    "package_final_acceptance": false,
+    "package_final_acceptance": true,
     "merge_authorized": false,
     "evidence": "docs/evidence/EO_04B_META_OAUTH_LIVE_ACCEPTANCE_2026-10-13.json"
   },
@@ -119,6 +120,12 @@
     "status": "accepted",
     "accepted_at": "2026-10-13",
     "evidence": "explicit_chat_approval"
+  },
+  "product_owner_final_acceptance": {
+    "status": "accepted",
+    "accepted_at": "2026-10-13",
+    "evidence": "explicit_chat_direct_pass",
+    "merge_authorized": false
   }
 }
 

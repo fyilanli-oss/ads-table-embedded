@@ -93,7 +93,7 @@ Referans: A6-RM-01, R0/R5/R6, E7.
 ## EO-04 — Meta, Google Ads and Klaviyo adapters
 
 - **EO-04-A — Common adapter contract:** Üç provider için ortak request, ham kanıt, support-state, store-candidate discovery/filter, kota ve hata envelope sözleşmesi kurulacak.
-- **EO-04-B — Meta adapter:** Meta OAuth, 1–3 gerçek reklamveren hesabı ve tek Reporting Account akışı; ardından Campaign, Ad Set ve Ad hiyerarşisi en alt doğrulanabilir grain ve ham structure kanıtıyla kurulacak. Tam Windows akışı ve iOS temiz-oturum OAuth başlangıcı PASS'tir. Android cihaz doğrulaması ilerlemeyi durdurmayan takip kalemidir. Meta veri sözleşmesi ve runtime uygulaması başlamamıştır. Paket kabulü ve merge ayrı kapılardır.
+- **EO-04-B — Meta adapter — Accepted / merge pending:** Meta OAuth, 1–3 gerçek reklamveren hesabı ve tek Reporting Account akışı kabul edildi. Tam Windows akışı ve iOS temiz-oturum OAuth başlangıcı PASS'tir; role sahip olmayan Windows hesabı Android ile aynı beklenen Meta review-öncesi kısıtını üretmiştir. Android tekrarı opsiyonel regresyon kontrolüdür. Meta veri sözleşmesi ve runtime uygulaması başlamamıştır; merge ayrı kapıdır.
 - **EO-04-C — Google Ads adapter:** Standard Ad ve Performance Max Asset Group hiyerarşisi en alt doğrulanabilir grain ve ham structure kanıtıyla kurulacak.
 - **EO-04-D — Klaviyo adapter:** Campaign/Message, Flow/Message, metrik ve maliyet girdileri kurulacak; 15 Ekim sözleşmesi resmî kaynakla yeniden doğrulanacak.
 - **EO-04-E — Integrated three-provider acceptance:** Meta, Google Ads ve Klaviyo hem ayrı hem birlikte sentetik veri üretmeden kabul testinden geçirilecek.

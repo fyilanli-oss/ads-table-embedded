@@ -2,7 +2,7 @@
   "evidence_id": "EO_04B_META_OAUTH_LIVE_ACCEPTANCE_2026-10-13",
   "package": "A6-EO-04-B",
   "checked_at": "2026-10-13",
-  "status": "OAUTH_LIVE_ACCEPTANCE_PASS_ANDROID_FOLLOW_UP",
+  "status": "ACCEPTED_MERGE_PENDING",
   "provider": "meta",
   "repository": {
     "pull_request": 68,
@@ -43,8 +43,15 @@
       "callback_observed": false,
       "scope_note": "No unobserved iOS callback or account-selection behavior is claimed."
     },
+    "non_role_account_control": {
+      "status": "PASS_EXPECTED_RESTRICTION",
+      "environment": "windows",
+      "observed_behavior": "A different Facebook account without an app role reproduced the same App not active response seen on Android.",
+      "root_cause": "META_PRE_REVIEW_DEVELOPMENT_MODE_USER_RESTRICTION",
+      "application_code_failure": false
+    },
     "android": {
-      "status": "FOLLOW_UP_NON_BLOCKING",
+      "status": "OPTIONAL_POST_ACCEPTANCE_REGRESSION",
       "observed_behavior": "The earlier attempt inherited a different Facebook identity already signed in to mobile Chrome.",
       "classification": "EXTERNAL_BROWSER_IDENTITY_NOT_APPLICATION_CODE_FAILURE",
       "required_retest": "Start a fresh AdsTable Connect transaction on another Android device; never reuse an earlier OAuth URL or state."
@@ -58,10 +65,11 @@
   },
   "closure": {
     "oauth_final_acceptance": true,
-    "package_final_acceptance": false,
+    "package_final_acceptance": true,
     "merge_authorized": false,
     "android_retest_blocks_progress": false,
-    "non_blocking_follow_up": "android_fresh_device_oauth"
+    "optional_follow_up": "android_fresh_device_oauth",
+    "product_owner_acceptance": "explicit_chat_direct_pass_2026-10-13"
   }
 }
 

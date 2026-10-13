@@ -1,6 +1,6 @@
 # A6-EO-04-B Meta OAuth and Account Selection
 
-Status: production OAuth acceptance PASS; merge pending  
+Status: Accepted; merge pending  
 Checked: 13 October 2026
 
 ## Official sources
@@ -83,19 +83,25 @@ desktop Shopify Admin flow have passed. The desktop evidence covers callback,
 automatic account selection, single-account Reporting Account assignment,
 Cancel/Resume without OAuth restart, revoke-first Disconnect and clean reconnect.
 
-The original Android attempt inherited a different Facebook identity already
-signed in to mobile Chrome. That result is an external browser-identity
-precondition, not an AdsTable code failure. A fresh Connect transaction on the
-product owner's iPhone had no usable Facebook session and correctly opened
-Meta's password authentication screen. Together with the complete Windows flow,
-this passes the OAuth acceptance gate without claiming an unobserved iOS
-callback or account-selection result. A separate Android-device retest remains
-a non-blocking follow-up; copied OAuth URLs or `state` must never be reused.
+The complete Windows flow passes with the Meta developer-role account. A fresh
+Connect transaction on the product owner's iPhone had no usable Facebook
+session and correctly opened Meta's password authentication screen. A controlled
+Windows comparison then started OAuth with a different, non-role Facebook
+account and reproduced the exact **App not active** response previously seen on
+Android. This proves that the response follows Meta's pre-review/development-mode
+user restriction rather than device type or AdsTable application code.
+
+The Android result therefore does not block acceptance. Repeating it on another
+Android device is an optional post-acceptance regression check. No copied OAuth
+URL or `state` may be reused, and no unobserved iOS callback or account-selection
+behavior is claimed.
 
 Durable evidence is
 `docs/evidence/EO_04B_META_OAUTH_LIVE_ACCEPTANCE_2026-10-13.json`. OAuth live
-acceptance is PASS. Package acceptance and merge remain false until their
-separate explicit gates.
+acceptance and EO-04-B product-owner acceptance are PASS. Merge remains false
+until its separate explicit authorization.
+
+Product owner gave EO-04-B direct final acceptance in chat on 13 October 2026.
 
 Product owner accepted this exact start brief in chat on 13 October 2026.
 

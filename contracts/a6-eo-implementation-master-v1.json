@@ -3,7 +3,7 @@
   "contract_id": "a6-eo-implementation-master-v1",
   "title": "A6 EO single-track execution rule and integrated implementation package table",
   "effective_date": "2026-10-04",
-  "status": "EO-04_active_EO-04-B_desktop_live_pass_mobile_open",
+  "status": "EO-04_active_EO-04-B_accepted_merge_pending",
   "authority": {
     "execution_plan": "docs/EXECUTION_PLAN.md",
     "EO_GO": "contracts/a6-eo-f7-go-decision-v1.json",
@@ -575,7 +575,7 @@
           "id": "A6-EO-04-B",
           "title": "Meta adapter",
           "objective": "Meta Campaign, Ad Set and Ad hierarchy with deepest verified grain and raw structure evidence.",
-          "status": "OAuth_live_acceptance_pass_android_follow_up_data_contract_not_started",
+          "status": "Accepted_merge_pending_provider_data_not_started",
           "implementation_started": true,
           "live_mutation_authorized": true,
           "start_brief_accepted": true,
@@ -586,8 +586,10 @@
           "oauth_desktop_live_acceptance": true,
           "oauth_mobile_live_acceptance": true,
           "oauth_mobile_acceptance_scope": "ios_clean_session_oauth_entry",
-          "oauth_android_follow_up": "non_blocking_fresh_device_oauth",
-          "final_product_owner_acceptance": false
+          "oauth_non_role_account_control": "expected_development_mode_restriction_confirmed",
+          "oauth_android_follow_up": "optional_post_acceptance_regression",
+          "final_product_owner_acceptance": true,
+          "merge_authorized": false
         },
         {
           "id": "A6-EO-04-C",
@@ -961,7 +963,7 @@
   "legacy_deletion_authorized": false,
   "current_active_parent": "A6-EO-04",
   "current_active_child": "A6-EO-04-B",
-  "current_gate": "A6-EO-04-B_Meta_OAuth_mobile_clean_session_acceptance",
+  "current_gate": "A6-EO-04-B_explicit_merge_authorization",
   "next_ready_child": null,
   "independent_packages": [
     {

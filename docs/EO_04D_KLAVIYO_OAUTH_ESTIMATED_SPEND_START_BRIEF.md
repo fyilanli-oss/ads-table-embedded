@@ -194,3 +194,28 @@ Before live schema use, the migration must pass Supabase security and performanc
 advisors. Rollback disables the new Klaviyo actions and preserves the private
 ledger and encrypted credentials; it does not delete auditable history.
 
+## Live database gate — 13 October 2026
+
+The product owner separately authorized the live Supabase migration. No new
+secret, provider OAuth, provider API call, Vercel environment mutation or
+deployment was included in this gate.
+
+Migration `eo04d_klaviyo_spend_ledger` was applied to the healthy
+`ads-table-embedded` Supabase project. Independent catalog checks verified the
+private table owner, enabled and forced RLS, denied direct table privileges,
+and function-only `adstable_runtime` access. Supabase Security Advisor remained
+at zero findings and the package introduced no unindexed-foreign-key finding.
+
+A rollback-scoped synthetic scenario passed atomic setup with initial spend,
+configuration load, append, duplicate-date rejection, amount-only correction,
+correction-version increment, disconnect and history preservation. The test
+transaction rolled back and independent residue checks returned zero for every
+synthetic workspace, installation, credential, connection, account, lifecycle
+event and spend period. Durable evidence is
+`docs/evidence/EO_04D_KLAVIYO_SPEND_LIVE_DATABASE_ACCEPTANCE_2026-10-13.json`.
+
+This passes the database gate only. Environment values, deployment, live
+Klaviyo OAuth, desktop/mobile Shopify acceptance, final product-owner acceptance
+and merge remain open.
+
+

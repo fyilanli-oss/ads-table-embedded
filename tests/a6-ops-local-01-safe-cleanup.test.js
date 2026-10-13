@@ -23,7 +23,7 @@ test("opens one independent package without changing the EO plan", () => {
     .flatMap((parent) => parent.children ?? [])
     .map((child) => child.id);
   assert.equal(master.current_active_parent, "A6-EO-04");
-  assert.equal(master.current_active_child, "A6-EO-04-B");
+  assert.equal(master.current_active_child, "A6-EO-04-D");
   assert.ok(eoChildIds.includes(master.current_active_child));
   assert.equal(master.next_ready_child, null);
   assert.notEqual(master.current_active_child, cleanup.id);

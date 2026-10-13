@@ -261,7 +261,7 @@ test("Meta credentials are name-only inventory entries with no committed values"
   assert.equal(contract.mutations_authorized_by_this_contract.live_oauth, false);
 });
 
-test("Meta live evidence records the development-mode root cause and keeps merge separate", () => {
+test("Meta live evidence records the development-mode root cause and accepted merge", () => {
   assert.equal(liveEvidence.desktop_shopify_admin.status, "PASS");
   assert.equal(liveEvidence.mobile_shopify_admin.ios.status, "PASS_OAUTH_ENTRY");
   assert.equal(liveEvidence.mobile_shopify_admin.ios.callback_observed, false);
@@ -284,7 +284,12 @@ test("Meta live evidence records the development-mode root cause and keeps merge
   assert.equal(liveEvidence.data_side_effects.dataset_v2_writes, 0);
   assert.equal(liveEvidence.closure.oauth_final_acceptance, true);
   assert.equal(liveEvidence.closure.package_final_acceptance, true);
-  assert.equal(liveEvidence.closure.merge_authorized, false);
+  assert.equal(liveEvidence.closure.merge_authorized, true);
+  assert.equal(liveEvidence.closure.merged, true);
+  assert.equal(
+    liveEvidence.closure.merge_commit,
+    "23911ffd565f385c02693ed7a1f3a07f017c30f5",
+  );
   assert.equal(liveEvidence.closure.android_retest_blocks_progress, false);
   assert.equal(contract.live_execution.desktop_shopify_admin, "PASS");
   assert.equal(contract.live_execution.mobile_shopify_admin, "PASS_IOS_OAUTH_ENTRY");
@@ -295,8 +300,8 @@ test("Meta live evidence records the development-mode root cause and keeps merge
   assert.equal(contract.live_execution.android_shopify_admin, "OPTIONAL_POST_ACCEPTANCE_REGRESSION");
   assert.equal(contract.live_execution.oauth_final_acceptance, true);
   assert.equal(contract.live_execution.package_final_acceptance, true);
+  assert.equal(contract.live_execution.merged, true);
   assert.equal(contract.product_owner_final_acceptance.status, "accepted");
 });
-
 
 

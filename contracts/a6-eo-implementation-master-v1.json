@@ -586,7 +586,11 @@
           "oauth_desktop_live_acceptance": true,
           "oauth_mobile_live_acceptance": false,
           "oauth_mobile_blocker": "external_browser_identity_access",
-          "channel_contract_status": "analyst_contract_preparation",
+          "channel_contract_status": "accepted_repository_implementation_in_progress",
+          "channel_document": "docs/EO_04B_META_CHANNEL.md",
+          "channel_contract": "contracts/eo-04b-meta-channel-v1.json",
+          "channel_runtime": "app/lib/providers/meta-channel.server.js",
+          "channel_test": "tests/eo-04b-meta-channel.test.js",
           "final_product_owner_acceptance": false
         },
         {

@@ -616,7 +616,37 @@
         {
           "id": "A6-EO-04-E",
           "title": "Integrated three-provider acceptance",
-          "objective": "Provider-isolated and combined non-fabricated acceptance evidence."
+          "objective": "Provider-isolated and combined non-fabricated acceptance evidence.",
+          "deferred_acceptance_gates": {
+            "google_shopify_product_identity_round_trip": {
+              "status": "deferred_until_real_shopify_order_is_available",
+              "blocks_current_EO_04E_design_work": false,
+              "blocks_google_product_identity_acceptance": true,
+              "blocks_Dataset_V2_google_product_identity_publication": true,
+              "blocks_Channel_UI_google_SKU_or_product_name_claims": true,
+              "required_evidence": [
+                "controlled_real_order_in_the_installed_Shopify_store",
+                "Google_Ads_product_item_id_or_product_sold_item_id",
+                "Google_and_YouTube_purchase_event_items_id_variant_id_and_sku",
+                "exact_Shopify_variant_id_and_sku",
+                "repeatable_exact_join_without_title_or_name_guessing"
+              ],
+              "failure_rule": "keep_provider_item_id_canonical_and_Shopify_SKU_name_nullable_or_unsupported",
+              "forbidden_fallbacks": [
+                "fuzzy_title_match",
+                "product_name_guess",
+                "silent_SKU_inference",
+                "fabricated_variant_mapping"
+              ],
+              "checked_at": "2026-10-14",
+              "authoritative_sources": [
+                "https://help.shopify.com/en/manual/online-sales-channels/marketplaces/google/getting-setup/syncing-products",
+                "https://developers.google.com/tag-platform/gtagjs/reference/shopify-event-parameters",
+                "https://developers.google.com/google-ads/api/fields/v25/cart_data_sales_view"
+              ],
+              "authorization_effect": "records_a_future_acceptance_gate_only_no_live_order_provider_call_Dataset_Channel_or_runtime_implementation"
+            }
+          }
         }
       ],
       "outputs": [

@@ -18,7 +18,7 @@ const document = fs.readFileSync(
 
 test("keeps EO-04-E at evidence preparation and authorizes no runtime or Dataset mutation", () => {
   assert.equal(contract.owner_package, "A6-EO-04-E");
-  assert.equal(contract.status, "draft_evidence_preparation");
+  assert.equal(contract.status, "product_owner_scope_accepted_evidence_pending");
   assert.equal(contract.provider_runtime_authorized, false);
   assert.equal(contract.live_provider_call_authorized, false);
   assert.equal(contract.database_or_dataset_mutation_authorized, false);
@@ -57,6 +57,16 @@ test("applies the three-provider intersection only to new Channel and product ev
     "unclassified",
   ]);
   assert.ok(contract.product_field_states.includes("provider_extension"));
+  assert.equal(
+    contract.google_product_grain_boundary.retail_performance_max
+      .sold_product_at_asset_group,
+    "supported_aggregate_only",
+  );
+  assert.equal(
+    contract.google_product_grain_boundary.retail_performance_max
+      .allocation_from_campaign_to_asset_group,
+    "forbidden",
+  );
 });
 
 test("requires the 15 October Klaviyo GA revalidation and separate acceptance gates", () => {
@@ -78,7 +88,7 @@ test("binds the draft through the Execution Plan and EO master without advancing
   const eo04 = master.packages.find((item) => item.id === "A6-EO-04");
   const eo04e = eo04.children.find((item) => item.id === "A6-EO-04-E");
 
-  assert.equal(eo04e.status, "analyst_evidence_gate_in_progress");
+  assert.equal(eo04e.status, "product_owner_scope_accepted_evidence_pending");
   assert.equal(eo04e.implementation_started, false);
   assert.equal(eo04e.document, contract.document);
   assert.equal(eo04e.contract, "contracts/eo-04e-channel-readiness-v1.json");

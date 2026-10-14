@@ -67,6 +67,16 @@ test("applies the three-provider intersection only to new Channel and product ev
       .allocation_from_campaign_to_asset_group,
     "forbidden",
   );
+  assert.equal(
+    contract.google_query_proof_candidates
+      .retail_pmax_asset_group_listing_performance.proves_sold_product,
+    false,
+  );
+  assert.equal(
+    contract.google_query_proof_candidates.retail_pmax_sold_product
+      .asset_group_allocation_forbidden,
+    true,
+  );
 });
 
 test("requires the 15 October Klaviyo GA revalidation and separate acceptance gates", () => {

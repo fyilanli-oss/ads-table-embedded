@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-04e-channel-readiness-v1",
-  "version": "0.1.0",
-  "status": "draft_evidence_preparation",
+  "version": "0.2.0",
+  "status": "product_owner_scope_accepted_evidence_pending",
   "control_date": "2026-10-14",
   "owner_package": "A6-EO-04-E",
   "parent_package": "A6-EO-04",
@@ -132,5 +132,25 @@
     "deterministic_contract_tests_pass",
     "required_GitHub_CI_passes",
     "separate_product_owner_merge_approval"
-  ]
+  ],
+  "scope_accepted_at": "2026-10-14",
+  "scope_acceptance_authorizes": "continued_official_documentation_and_evidence_preparation_only",
+  "google_product_grain_boundary": {
+    "standard_shopping": {
+      "channel_candidate": "ad_group",
+      "cart_data_segmenting_grain": "campaign_or_ad_group",
+      "sold_product_at_channel": "pending_exact_query_validation"
+    },
+    "retail_performance_max": {
+      "channel_candidate": "asset_group",
+      "advertised_listing_performance": "supported_by_asset_group_product_group_view",
+      "cart_data_segmenting_grain": "campaign_only_because_Performance_Max_has_no_standard_ad_group",
+      "sold_product_at_asset_group": "supported_aggregate_only",
+      "allocation_from_campaign_to_asset_group": "forbidden"
+    },
+    "search": {
+      "channel_candidate": "ad_group",
+      "sold_product_at_channel": "unsupported_unless_future_official_exact_query_proves_otherwise"
+    }
+  }
 }

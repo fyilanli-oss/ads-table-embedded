@@ -616,7 +616,26 @@
         {
           "id": "A6-EO-04-E",
           "title": "Integrated three-provider acceptance",
-          "objective": "Provider-isolated and combined non-fabricated acceptance evidence."
+          "objective": "Provider-isolated and combined non-fabricated acceptance evidence.",
+          "non_binding_follow_up_notes": {
+            "google_shopify_product_identity_observation": {
+              "status": "parked_for_optional_future_observation",
+              "binding": false,
+              "blocks_package_start_or_closure": false,
+              "blocks_Dataset_V2": false,
+              "blocks_Channel_design_or_UI": false,
+              "requires_external_merchant_or_advertiser_recruitment": false,
+              "deadline": null,
+              "note": "If a suitable real Shopify order and Google Ads environment becomes naturally available later, observe whether Google product identifiers, Shopify variant IDs and SKU values can be matched exactly. Until then this is neither a product claim nor an acceptance requirement.",
+              "prohibited_effect": "must_not_be_promoted_to_a_gate_requirement_or_supported_capability_without_a_separate_product_owner_decision",
+              "checked_at": "2026-10-14",
+              "reference_sources": [
+                "https://help.shopify.com/en/manual/online-sales-channels/marketplaces/google/getting-setup/syncing-products",
+                "https://developers.google.com/tag-platform/gtagjs/reference/shopify-event-parameters",
+                "https://developers.google.com/google-ads/api/fields/v25/cart_data_sales_view"
+              ]
+            }
+          }
         }
       ],
       "outputs": [

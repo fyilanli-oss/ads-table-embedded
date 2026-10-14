@@ -26,6 +26,19 @@ Provider API
 
 EO-04-E may preserve a native entity type such as Meta Ad, Google Ad Group, Google Asset Group, Klaviyo Campaign Message or Klaviyo Campaign Variation. It may not rename those entities to `Channel`, force providers to a common fictional leaf, allocate metrics to an unsupported leaf, or invent product attribution.
 
+## Product-owner-approved investigation sequence
+
+EO-04-E must perform the investigation in this order:
+
+1. classify the truthful native Channel candidates separately for every provider and campaign/report family;
+2. prove whether product rows exist beneath each candidate at the same supported reporting grain;
+3. inventory product identity, quantity and value facts without inferring a product role;
+4. calculate the three-provider semantic intersection;
+5. admit only that intersection into the future Channel Core Contract;
+6. preserve richer provider-only evidence as an extension without changing common UI semantics.
+
+A Channel candidate is selected from the provider's real hierarchy and supported reporting grain. Product availability cannot create or rename an entity. A product row that is available only at a higher aggregate grain cannot be pushed down to a lower Channel candidate.
+
 ## Common raw requirements
 
 Every provider result eligible for EO-04-E acceptance must preserve the following classes of information.
@@ -54,9 +67,9 @@ For every returned reporting row:
 
 Names are display metadata, never identity. Missing IDs are not reconstructed from names.
 
-### Canonical raw fact demand
+### Candidate raw fact inventory and common-core admission
 
-The common adapter continues to ask the provider about:
+The investigation asks every provider about the following candidate facts:
 
 - `impression`
 - `ad_click`
@@ -69,21 +82,44 @@ The common adapter continues to ask the provider about:
 - `purchase`
 - `purchase_value`
 
-A provider-specific source field and its actual reporting grain must accompany every supported mapping. EO-04-E does not calculate CTR, CPC, CPS, ROAS, Revenue, Revenue Margin, Abandoned or rates.
+This list is an investigation inventory, not a claim that every field is part of the common contract. A fact enters the future Channel Core Contract only when Meta, Google Ads and Klaviyo provide it with the same business meaning, compatible time semantics and the accepted Channel grain. A provider-specific source field and its actual reporting grain must accompany every candidate mapping.
 
-### Product evidence
+A richer provider field may be retained as provider-qualified evidence, but it cannot silently become a common metric, alter cross-provider ranking or produce a different shared UI meaning. EO-04-E does not calculate CTR, CPC, CPS, ROAS, Revenue, Revenue Margin, Abandoned or rates.
 
-Where the official API can return product evidence, preserve without inference:
+### Product evidence and semantic intersection
+
+The product investigation begins with candidates, not assumed common fields:
 
 - provider-native product/item ID;
 - title/name where returned;
 - SKU or merchant item ID only where its meaning is officially defined;
-- sold quantity/purchase count at the provider-supported grain;
-- sold value/sales at the provider-supported grain;
+- sold quantity or provider-defined conversion count at the provider-supported grain;
+- sold value or provider-defined conversion value at the provider-supported grain;
 - catalog/feed/store identity needed to interpret the product ID;
-- whether the product describes the advertised item, sold item, or another provider-defined role.
+- provider-declared advertised item, sold item or another provider-defined role.
+
+Each candidate field must be classified independently for Meta, Google Ads and Klaviyo as:
+
+- `supported_exact`: same entity, meaning and Channel grain are officially supported;
+- `supported_aggregate_only`: the field exists only above the candidate Channel;
+- `provider_extension`: useful official evidence exists but no three-provider semantic equivalent exists;
+- `unsupported`;
+- `unknown_pending_proof`.
+
+Only fields that reach `supported_exact` for all three providers may become mandatory Channel Core product fields. SKU, name, quantity and sales are candidates until that proof is complete; none is common merely because Google exposes it.
 
 Product name or SKU must not be recovered by label matching. An aggregate conversion total must not be distributed among products. An unsupported ad-to-sold-product relationship remains unsupported.
+
+### Product relationship and value status
+
+Product relationship and monetary value are separate axes:
+
+- `product_relationship = advertised | cross_sell | unclassified`
+- `sales_value_status = positive_value | zero_value | unknown`
+
+`advertised` and `cross_sell` require explicit provider evidence or a deterministic advertised-versus-sold identity comparison at the same accepted grain. A provider that cannot prove the relationship returns `unclassified`; another provider's richer semantics cannot be copied to it.
+
+A returned product value of exactly zero is labelled only `zero_value`. It is not labelled Promotion, gift, discount or data error. Shopify order-line enrichment, order-ID joining and Promotion classification are deferred; EO-04-E performs no Shopify order retrieval or order-level join.
 
 ### Truth and completeness
 
@@ -100,6 +136,19 @@ Every requested field must retain:
 A partial, fallback, synthetic or malformed provider result cannot become a canonical fact.
 
 ## Provider readiness matrix
+
+### Preliminary Channel candidate and product-proof map
+
+This table records investigation targets, not accepted Channel mappings.
+
+| Provider/report family | Truthful native leaf candidate | Product proof target | Current state |
+|---|---|---|---|
+| Meta paid ads | Ad | Prove `product_id`, quantity/count and value compatibility at ad grain | Product role and common-field eligibility remain unknown |
+| Google Search and other non-feed ads | Ad Group for the product-oriented analysis boundary | No product child is assumed | Product relationship is unsupported unless an exact official query proves otherwise |
+| Google Standard Shopping | Ad Group plus provider-native product report rows | Prove advertised/sold item identities, units and revenue at compatible query grains | Google-rich evidence; common-core eligibility depends on Meta and Klaviyo |
+| Google retail Performance Max | Asset Group plus provider-native product/listing rows | Prove whether sold-product and cart metrics remain exact at Asset Group grain | Candidate pending exact GAQL validation |
+| Klaviyo Campaign | Campaign Variation after the 2026-10-15 GA gate | Prove attributed variation plus product event identity/value at one deterministic grain | Candidate pending GA documentation and controlled evidence |
+| Klaviyo Flow | Flow Message, with variation only where stable identity is proven | Prove attributed message/variation plus product event identity/value | Candidate pending controlled evidence |
 
 ### Meta
 
@@ -229,6 +278,8 @@ For each provider independently:
 - provider-native entity to Channel mapping;
 - Dataset V2 table/schema/index/RLS/migration design;
 - product child-row structure;
+- Shopify order-line enrichment and order-ID joins;
+- Promotion, gift, discount or bundle classification;
 - Klaviyo email-cost allocation;
 - FX persistence and lineage;
 - aggregation and no-double-count rules;

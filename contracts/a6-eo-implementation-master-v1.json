@@ -616,7 +616,21 @@
         {
           "id": "A6-EO-04-E",
           "title": "Integrated three-provider acceptance",
-          "objective": "Provider-isolated and combined non-fabricated acceptance evidence."
+          "objective": "Provider-isolated and combined non-fabricated acceptance evidence.",
+          "status": "analyst_evidence_gate_in_progress",
+          "implementation_started": false,
+          "product_owner_investigation_sequence_accepted": true,
+          "document": "docs/EO_04E_CHANNEL_READINESS_RAW_DATA_REQUIREMENTS.md",
+          "contract": "contracts/eo-04e-channel-readiness-v1.json",
+          "ci_test": "tests/eo-04e-channel-readiness.test.js",
+          "outputs": [
+            "raw_response_evidence",
+            "normalized_fact_contracts"
+          ],
+          "channel_or_dataset_mapping_authorized": false,
+          "provider_runtime_authorized": false,
+          "live_mutation_authorized": false,
+          "next_mandatory_gate": "Klaviyo_2026_10_15_GA_documentation_revalidation"
         }
       ],
       "outputs": [

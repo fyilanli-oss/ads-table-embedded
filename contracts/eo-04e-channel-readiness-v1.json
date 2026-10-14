@@ -1,0 +1,136 @@
+{
+  "contract_id": "eo-04e-channel-readiness-v1",
+  "version": "0.1.0",
+  "status": "draft_evidence_preparation",
+  "control_date": "2026-10-14",
+  "owner_package": "A6-EO-04-E",
+  "parent_package": "A6-EO-04",
+  "document": "docs/EO_04E_CHANNEL_READINESS_RAW_DATA_REQUIREMENTS.md",
+  "objective": "Prepare provider-isolated and combined non-fabricated evidence for the native identities, hierarchy grains, binding ten raw facts, support states and Channel/product candidates required before EO-05-B.",
+  "parent_outputs": [
+    "raw_response_evidence",
+    "normalized_fact_contracts"
+  ],
+  "normalized_fact_contract_boundary": {
+    "means": [
+      "provider_neutral_ten_slot_fact_envelope",
+      "support_and_observation_states",
+      "provider_native_reporting_grain_identity",
+      "evidence_completeness_and_non_fabrication"
+    ],
+    "does_not_mean": [
+      "Dataset_V2_schema_or_rows",
+      "Channel_identity_or_mapping",
+      "formula_or_aggregation",
+      "UI_projection"
+    ]
+  },
+  "binding_raw_fact_slots": [
+    "impression",
+    "ad_click",
+    "session",
+    "spend_value",
+    "add_to_cart",
+    "add_to_cart_value",
+    "checkout",
+    "checkout_value",
+    "purchase",
+    "purchase_value"
+  ],
+  "binding_fact_rules": {
+    "slots_are_not_reopened_by_EO_04_E": true,
+    "provider_outcomes": [
+      "verified_numeric_value",
+      "explicit_zero",
+      "unsupported",
+      "unknown"
+    ],
+    "absent_is_zero": false,
+    "provider_native_source_and_grain_required": true
+  },
+  "channel_product_investigation_order": [
+    "classify_truthful_native_channel_candidates_per_provider_and_report_family",
+    "prove_product_rows_at_the_same_supported_reporting_grain",
+    "inventory_product_identity_quantity_and_value_without_inferred_role",
+    "calculate_three_provider_semantic_intersection",
+    "admit_only_supported_exact_intersection_to_future_channel_core",
+    "preserve_richer_provider_fields_as_provider_extensions"
+  ],
+  "channel_candidate_boundary": {
+    "native_entity_only": true,
+    "fabricated_leaf_forbidden": true,
+    "product_availability_cannot_create_or_rename_entity": true,
+    "metric_allocation_to_unsupported_leaf_forbidden": true
+  },
+  "product_field_states": [
+    "supported_exact",
+    "supported_aggregate_only",
+    "provider_extension",
+    "unsupported",
+    "unknown_pending_proof"
+  ],
+  "product_relationship": {
+    "values": [
+      "advertised",
+      "cross_sell",
+      "unclassified"
+    ],
+    "requires_same_grain_provider_evidence": true,
+    "inferred_from_other_provider": false
+  },
+  "sales_value_status": {
+    "values": [
+      "positive_value",
+      "zero_value",
+      "unknown"
+    ],
+    "zero_does_not_mean": [
+      "promotion",
+      "gift",
+      "discount",
+      "data_error"
+    ]
+  },
+  "prepared_proof_packets": [
+    "meta_ad_product",
+    "google_standard_shopping_ad_group",
+    "google_retail_performance_max_asset_group",
+    "google_search_no_product_control",
+    "klaviyo_post_2026_10_15_GA"
+  ],
+  "mandatory_klaviyo_gate": {
+    "not_before": "2026-10-15",
+    "current_variation_resource_state": "beta_pending_revalidation",
+    "requires_current_official_GA_docs": true,
+    "date_alone_activates_nothing": true
+  },
+  "common_product_fields_admitted_as_of_control_date": [],
+  "provider_runtime_authorized": false,
+  "live_provider_call_authorized": false,
+  "database_or_dataset_mutation_authorized": false,
+  "schema_migration_authorized": false,
+  "secret_or_environment_mutation_authorized": false,
+  "deployment_authorized": false,
+  "channel_mapping_authorized": false,
+  "formula_or_UI_authorized": false,
+  "deferred_to_EO_05_B": [
+    "final_Channel_name_and_user_facing_meaning",
+    "Channel_type_identity_and_provider_mapping",
+    "Dataset_V2_schema_storage_and_security",
+    "product_child_row_structure",
+    "Shopify_order_line_and_order_ID_joins",
+    "promotion_gift_discount_bundle_classification",
+    "Klaviyo_email_cost_allocation",
+    "FX_persistence_and_lineage",
+    "aggregation_no_double_count_and_history"
+  ],
+  "draft_exit_gates": [
+    "Klaviyo_2026_10_15_GA_revalidation_complete",
+    "Meta_and_Google_candidates_resolved_or_assigned_controlled_proof",
+    "product_owner_confirms_preserved_inputs_are_sufficient_for_EO_05_B_Channel_design",
+    "current_authoritative_main_revalidated",
+    "deterministic_contract_tests_pass",
+    "required_GitHub_CI_passes",
+    "separate_product_owner_merge_approval"
+  ]
+}

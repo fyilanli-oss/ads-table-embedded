@@ -7,7 +7,7 @@
 
 ## Analyst result
 
-EO-04-E does not create Channel or Dataset V2. It must prove that each provider adapter can return the provider-native identities, hierarchy links, raw metrics, support state and completeness evidence that EO-05-B will need when the product owner designs Dataset V2 and the Channel analytical layer.
+EO-04-E does not create Channel or Dataset V2. It must prove that each provider adapter can return the provider-native identities, hierarchy links, the already-binding ten canonical raw fact slots, support state and completeness evidence that EO-05-B will need when the product owner designs Dataset V2 and the Channel analytical layer.
 
 The purpose of this inventory is to prevent EO-05-B from discovering that a stable provider ID, parent relationship, campaign type, product identity or metric grain was never requested or preserved.
 
@@ -25,6 +25,8 @@ Provider API
 ```
 
 EO-04-E may preserve a native entity type such as Meta Ad, Google Ad Group, Google Asset Group, Klaviyo Campaign Message or Klaviyo Campaign Variation. It may not rename those entities to `Channel`, force providers to a common fictional leaf, allocate metrics to an unsupported leaf, or invent product attribution.
+
+EO-04-E produces the parent package outputs `raw_response_evidence` and `normalized_fact_contracts`. In this package, `normalized_fact_contracts` means only the provider-neutral ten-slot fact envelope, support/observation states, native-grain identity and evidence completeness rules already established by EO-04-A. It does not mean Dataset V2 rows, Channel mapping, formulas, aggregates or UI projections.
 
 ## Product-owner-approved investigation sequence
 
@@ -67,9 +69,9 @@ For every returned reporting row:
 
 Names are display metadata, never identity. Missing IDs are not reconstructed from names.
 
-### Candidate raw fact inventory and common-core admission
+### Binding ten-slot raw fact envelope
 
-The investigation asks every provider about the following candidate facts:
+EO-04-A and the Execution Plan already require every provider adapter to answer the same ten canonical raw-fact questions:
 
 - `impression`
 - `ad_click`
@@ -82,9 +84,9 @@ The investigation asks every provider about the following candidate facts:
 - `purchase`
 - `purchase_value`
 
-This list is an investigation inventory, not a claim that every field is part of the common contract. A fact enters the future Channel Core Contract only when Meta, Google Ads and Klaviyo provide it with the same business meaning, compatible time semantics and the accepted Channel grain. A provider-specific source field and its actual reporting grain must accompany every candidate mapping.
+These ten slots are not optional Channel candidates and EO-04-E does not reopen them. A provider may return a verified numeric value, explicit zero, `unsupported` or `unknown` according to the accepted support-state contract; absence is never coerced to zero. Every provider-native source field must retain its actual reporting grain, time semantics and evidence.
 
-A richer provider field may be retained as provider-qualified evidence, but it cannot silently become a common metric, alter cross-provider ranking or produce a different shared UI meaning. EO-04-E does not calculate CTR, CPC, CPS, ROAS, Revenue, Revenue Margin, Abandoned or rates.
+The three-provider semantic-intersection gate applies only to new Channel/product fields and relationships beyond this already-binding ten-slot envelope. A richer provider field may be retained as provider-qualified evidence, but it cannot silently become a common metric, alter cross-provider ranking or produce a different shared UI meaning. EO-04-E does not calculate CTR, CPC, CPS, ROAS, Revenue, Revenue Margin, Abandoned or rates.
 
 ### Product evidence and semantic intersection
 

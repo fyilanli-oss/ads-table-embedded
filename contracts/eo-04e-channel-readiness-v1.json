@@ -152,5 +152,27 @@
       "channel_candidate": "ad_group",
       "sold_product_at_channel": "unsupported_unless_future_official_exact_query_proves_otherwise"
     }
+  },
+  "google_query_proof_candidates": {
+    "api_version": "v25",
+    "status": "documentation_derived_pending_query_validator_and_no_live_execution",
+    "standard_shopping_product_performance": {
+      "from": "shopping_performance_view",
+      "expected_grain": "campaign_ad_group_date_advertised_product"
+    },
+    "standard_shopping_sold_product": {
+      "from": "cart_data_sales_view",
+      "expected_grain": "campaign_ad_group_date_advertised_and_sold_product"
+    },
+    "retail_pmax_asset_group_listing_performance": {
+      "from": "asset_group_product_group_view",
+      "expected_grain": "campaign_asset_group_listing_group_date",
+      "proves_sold_product": false
+    },
+    "retail_pmax_sold_product": {
+      "from": "cart_data_sales_view",
+      "expected_grain": "campaign_date_advertised_and_sold_product",
+      "asset_group_allocation_forbidden": true
+    }
   }
 }

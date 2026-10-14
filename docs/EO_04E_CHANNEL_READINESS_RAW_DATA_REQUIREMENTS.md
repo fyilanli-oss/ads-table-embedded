@@ -1,8 +1,9 @@
 # EO-04-E — Channel-readiness raw data requirements
 
 **Control date:** 14 October 2026  
-**Status:** Draft factual inventory — product acceptance and implementation not authorized  
+**Status:** Investigation scope accepted by product owner — provider evidence and implementation still pending  
 **Parent:** A6-EO-04 — Meta, Google Ads and Klaviyo adapters  
+**Scope acceptance:** Product owner accepted the investigation boundary on 14 October 2026  
 **Next mandatory provider gate:** Klaviyo 2026-10-15 GA documentation revalidation
 
 ## Analyst result
@@ -27,6 +28,10 @@ Provider API
 EO-04-E may preserve a native entity type such as Meta Ad, Google Ad Group, Google Asset Group, Klaviyo Campaign Message or Klaviyo Campaign Variation. It may not rename those entities to `Channel`, force providers to a common fictional leaf, allocate metrics to an unsupported leaf, or invent product attribution.
 
 EO-04-E produces the parent package outputs `raw_response_evidence` and `normalized_fact_contracts`. In this package, `normalized_fact_contracts` means only the provider-neutral ten-slot fact envelope, support/observation states, native-grain identity and evidence completeness rules already established by EO-04-A. It does not mean Dataset V2 rows, Channel mapping, formulas, aggregates or UI projections.
+
+## Product-owner scope acceptance
+
+On 14 October 2026 the product owner accepted this investigation boundary and authorized continued evidence preparation. This acceptance does not authorize a live provider request, adapter/runtime implementation, Dataset V2, Channel mapping, database/schema change, secret/environment change, deployment or package closure.
 
 ## Product-owner-approved investigation sequence
 
@@ -148,7 +153,7 @@ This table records investigation targets, not accepted Channel mappings.
 | Meta paid ads | Ad | Prove `product_id`, quantity/count and value compatibility at ad grain | Product role and common-field eligibility remain unknown |
 | Google Search and other non-feed ads | Ad Group for the product-oriented analysis boundary | No product child is assumed | Product relationship is unsupported unless an exact official query proves otherwise |
 | Google Standard Shopping | Ad Group plus provider-native product report rows | Prove advertised/sold item identities, units and revenue at compatible query grains | Google-rich evidence; common-core eligibility depends on Meta and Klaviyo |
-| Google retail Performance Max | Asset Group plus provider-native product/listing rows | Prove whether sold-product and cart metrics remain exact at Asset Group grain | Candidate pending exact GAQL validation |
+| Google retail Performance Max | Asset Group plus provider-native product-group/listing rows | Prove advertised listing-group performance at Asset Group grain; preserve sold-product/cart evidence only at its documented higher grain | Asset Group listing performance is documented; sold-product/cart evidence is `supported_aggregate_only` because `cart_data_sales_view` has no Asset Group segment |
 | Klaviyo Campaign | Campaign Variation after the 2026-10-15 GA gate | Prove attributed variation plus product event identity/value at one deterministic grain | Candidate pending GA documentation and controlled evidence |
 | Klaviyo Flow | Flow Message, with variation only where stable identity is proven | Prove attributed message/variation plus product event identity/value | Candidate pending controlled evidence |
 
@@ -162,7 +167,7 @@ No product field is admitted to the Channel Core Contract on 14 October. The tab
 | Product name/title | Not proven in the same Insights row; a separate catalog lookup and permission model are not accepted | Product and sold-product titles are documented | Ordered Product examples expose integration-defined `ProductName` | `unknown_pending_proof` |
 | SKU/merchant item ID | No accepted same-grain SKU mapping | Merchant item identity is documented but feed semantics must be retained | Ordered Product examples expose integration-defined `SKU` | `unknown_pending_proof` |
 | Product quantity | Sold-product quantity candidate is not re-proven | Cart data exposes units sold and lead/cross-sell units where supported | Ordered Product examples expose integration-defined `Quantity` | `unknown_pending_proof` |
-| Product sales value | Compatibility of product breakdown with accepted purchase value requires controlled evidence | Cart data revenue and conversion value are documented at supported query grains | Event value exists; deterministic Message/Variation linkage remains unproven | `unknown_pending_proof` |
+| Product sales value | Compatibility of product breakdown with accepted purchase value requires controlled evidence | Exact at Standard Shopping Ad Group where the validated cart-data query supports it; PMax Asset Group sold-product value remains campaign-aggregate only | Event value exists; deterministic Message/Variation linkage remains unproven | `unknown_pending_proof` |
 | Advertised versus sold role | Not proven | Google documents advertised, sold, lead and cross-sell semantics | Not proven at product-plus-Variation grain | Provider extension only; no common classification |
 | Explicit zero value | Presence versus absence requires response evidence | Metric zero is queryable where the report returns the row | Event value and ordinary property zero/missing semantics differ | `unknown_pending_proof` |
 
@@ -198,9 +203,9 @@ Google must be classified by campaign/report family. One universal Google leaf i
 |---|---|---|---|---|
 | Search and other standard ad campaigns | Customer -> Campaign -> Ad Group -> Ad | Ad metrics may be requested at `ad_group_ad`; the Channel candidate is not decided here | Sold-product relationship beneath a Search Ad is unsupported unless an official compatible query proves otherwise | Preserve Campaign, Ad Group and Ad identities; EO-05-B decides Channel |
 | Standard Shopping | Customer -> Campaign -> Ad Group plus listing/product reporting resources | Prove compatible campaign/ad-group/product reporting grains separately | `shopping_performance_view`, product/listing fields and cart-data sold-product fields are candidates | Never force product facts onto an Ad identity |
-| Retail Performance Max | Customer -> Campaign -> Asset Group plus product/listing resources | Asset Group and product performance must remain distinct native grains | Product item/sold-item IDs, titles, quantities and values only where the exact query supports them | No synthetic Ad entity |
+| Retail Performance Max | Customer -> Campaign -> Asset Group plus product-group/listing resources | Asset Group product-group performance is supported; campaign-product performance remains a separate native grain | `asset_group_product_group_view` proves advertised listing-group performance, while sold-product/cart rows cannot be segmented by Asset Group | No synthetic Ad; no sold-product allocation below Campaign |
 | Non-retail Performance Max | Customer -> Campaign -> Asset Group and supported asset reporting | Prove only officially queryable asset/asset-group performance | No retail product assumption | Outside product-reporting acceptance unless evidence exists |
-| Cart-data sales | Provider resource/query compatibility controls grain | Preserve campaign/ad-group association exactly as returned | Preserve `product_sold_item_id`, `product_sold_title`, units and revenue fields where query-compatible | Do not claim Ad-level sold-product attribution from field selectability alone |
+| Cart-data sales | Official v25 resource segments only by Campaign and Ad Group | Preserve campaign/ad-group association exactly as returned | Preserve `product_sold_item_id`, `product_sold_title`, units and revenue fields where query-compatible | Standard Shopping may reach Ad Group; PMax has no Ad Group, so sold-product/cart evidence remains Campaign-level |
 
 Required Google-native fields include:
 
@@ -300,7 +305,9 @@ Performance Max has no standard Ad Group or AdGroupAd entity. Asset Group perfor
 1. Asset Group performance from `asset_group`;
 2. Asset Group product/listing evidence from `asset_group_product_group_view`.
 
-The second query must separately prove product item, sold item, units and revenue compatibility. If only listing-group or campaign-level product evidence survives validation, the product relationship is `supported_aggregate_only`; it is not attached to the Asset Group by inference.
+`asset_group_product_group_view` is the official Asset Group product-group performance surface. It can prove the served/listing partition and its impressions, clicks, conversions and cost. It does not create an Asset Group segmentation in `cart_data_sales_view`.
+
+The official v25 `cart_data_sales_view` exposes Campaign and Ad Group as its segmenting resources, not Asset Group. Because retail Performance Max has no standard Ad Group, sold-product IDs, units and revenue remain Campaign-level for PMax. Therefore the PMax Asset Group sold-product relationship is classified `supported_aggregate_only`; it is never attached to the Asset Group by inference. Query validation remains required for the exact selected field combinations, but validation cannot override this documented grain boundary.
 
 ### Google Search packet
 

@@ -322,3 +322,21 @@ Official capability record: `docs/decisions/A6_EO_04_D_KLAVIYO_REPORTING_CAPABIL
 - Estimated Email Spend allocation, Channel hierarchy, Dataset mapping, reporting requests and runtime remain undecided and unimplemented.
 - Product-owner wording and explicit acceptance of the shared Channel contract are mandatory before any Meta, Google Ads or Klaviyo provider-reporting runtime work.
 - This record authorizes no API call, live data read, code, migration, secret, environment or deployment mutation.
+
+## EO-04-E Channel-readiness evidence gate — 14 October 2026
+
+Binding analyst inventory: `docs/EO_04E_CHANNEL_READINESS_RAW_DATA_REQUIREMENTS.md`  
+Executable draft contract: `contracts/eo-04e-channel-readiness-v1.json`  
+CI enforcement: `tests/eo-04e-channel-readiness.test.js`
+
+- EO-04-E is active only at the analyst/evidence-preparation gate. Provider reporting runtime, live provider calls, Dataset V2, schema, migration, Channel mapping, formulas, UI, secrets, environment and deployment changes are not authorized.
+- The package must produce the EO-04 parent outputs `raw_response_evidence` and `normalized_fact_contracts`. Here, normalized fact contract means the provider-neutral ten-slot raw-fact envelope, support/observation states, native reporting grain and non-fabrication/completeness rules; it does not mean Dataset V2 rows or Channel mapping.
+- EO-04-A's ten canonical raw-fact slots remain binding: impression, ad click, session, spend, add-to-cart count/value, checkout count/value and purchase count/value. EO-04-E cannot reopen or make them optional. Providers may answer with verified numeric values, explicit zero, `unsupported` or `unknown`; absence never becomes zero.
+- The three-provider semantic-intersection gate applies only to new Channel/product fields and relationships beyond the binding ten-slot envelope.
+- Native Channel candidates are investigated separately by provider and report family. A product row cannot create a fictional entity, pull a metric below its supported grain or turn aggregate evidence into product attribution.
+- SKU, product name, quantity, sales value and advertised/cross-sell role remain candidates. No common Channel Core product field is admitted as of 14 October 2026.
+- A numeric product value of zero is only `zero_value`. Promotion, gift, discount, bundle and Shopify order-line/order-ID enrichment are deferred to EO-05-B or later.
+- Controlled proof packets are prepared for Meta Ad, Google Standard Shopping Ad Group, Google retail Performance Max Asset Group and Google Search's no-product control. They define required evidence but authorize no request execution.
+- Klaviyo remains behind the mandatory 15 October 2026 current-official-documentation gate. The date alone activates nothing; Variation identity, reporting grouping and product attribution must be revalidated before product-owner acceptance or runtime work.
+- The draft cannot become an accepted EO-04-E input until the Klaviyo gate is complete, unresolved Meta/Google candidates have controlled outcomes, the product owner confirms the preserved inputs are sufficient for EO-05-B, deterministic tests and required GitHub CI pass, and merge receives separate explicit approval.
+

@@ -309,6 +309,104 @@ Performance Max has no standard Ad Group or AdGroupAd entity. Asset Group perfor
 
 The official v25 `cart_data_sales_view` exposes Campaign and Ad Group as its segmenting resources, not Asset Group. Because retail Performance Max has no standard Ad Group, sold-product IDs, units and revenue remain Campaign-level for PMax. Therefore the PMax Asset Group sold-product relationship is classified `supported_aggregate_only`; it is never attached to the Asset Group by inference. Query validation remains required for the exact selected field combinations, but validation cannot override this documented grain boundary.
 
+### Google v25 candidate query family
+
+The following GAQL templates are documentation-derived proof candidates. They have not yet passed Query Validator and have not been executed against a provider account. A validator failure must narrow or split the query; it must not be bypassed by removing grain evidence.
+
+#### Standard Shopping product performance at Ad Group grain
+
+```sql
+SELECT
+  campaign.id,
+  campaign.name,
+  ad_group.id,
+  ad_group.name,
+  segments.date,
+  segments.product_merchant_id,
+  segments.product_item_id,
+  segments.product_title,
+  metrics.impressions,
+  metrics.clicks,
+  metrics.cost_micros,
+  metrics.conversions,
+  metrics.conversions_value
+FROM shopping_performance_view
+WHERE segments.date BETWEEN 'START_DATE' AND 'END_DATE'
+```
+
+#### Standard Shopping sold-product/cart evidence at Ad Group grain
+
+```sql
+SELECT
+  campaign.id,
+  campaign.name,
+  ad_group.id,
+  ad_group.name,
+  segments.date,
+  segments.product_merchant_id,
+  segments.product_item_id,
+  segments.product_title,
+  segments.product_sold_item_id,
+  segments.product_sold_title,
+  metrics.units_sold,
+  metrics.revenue_micros,
+  metrics.lead_units_sold,
+  metrics.lead_revenue_micros,
+  metrics.cross_sell_units_sold,
+  metrics.cross_sell_revenue_micros
+FROM cart_data_sales_view
+WHERE segments.date BETWEEN 'START_DATE' AND 'END_DATE'
+```
+
+#### Retail Performance Max Asset Group product-group performance
+
+This query follows Google's official retail Performance Max Asset Group example. It proves listing/product-group performance, not the sold product.
+
+```sql
+SELECT
+  campaign.id,
+  campaign.name,
+  asset_group.id,
+  asset_group.name,
+  asset_group_listing_group_filter.id,
+  segments.date,
+  metrics.impressions,
+  metrics.clicks,
+  metrics.conversions,
+  metrics.conversions_value,
+  metrics.cost_micros
+FROM asset_group_product_group_view
+WHERE campaign.id = CAMPAIGN_ID
+  AND segments.date BETWEEN 'START_DATE' AND 'END_DATE'
+```
+
+#### Retail Performance Max sold-product/cart evidence at Campaign grain
+
+The same `cart_data_sales_view` sold-product fields are tested without a fabricated Ad Group or Asset Group. For Performance Max, `campaign.id` is the deepest documented hierarchy key in this resource. Any returned sold-product row remains Campaign-qualified.
+
+```sql
+SELECT
+  campaign.id,
+  campaign.name,
+  segments.date,
+  segments.product_merchant_id,
+  segments.product_item_id,
+  segments.product_title,
+  segments.product_sold_item_id,
+  segments.product_sold_title,
+  metrics.units_sold,
+  metrics.revenue_micros,
+  metrics.lead_units_sold,
+  metrics.lead_revenue_micros,
+  metrics.cross_sell_units_sold,
+  metrics.cross_sell_revenue_micros
+FROM cart_data_sales_view
+WHERE campaign.id = CAMPAIGN_ID
+  AND segments.date BETWEEN 'START_DATE' AND 'END_DATE'
+```
+
+Every query records validator version, exact query text/hash, customer ID hash, timezone, currency, completed date window and response completeness. Empty results are valid evidence only after the query itself validates and the account/campaign is proven eligible.
+
 ### Google Search packet
 
 Preserve Campaign, Ad Group and Ad identities plus performance. Do not request or manufacture a product child. Search product support remains `unsupported` unless a future official query proves a sold-product relationship at the accepted grain.

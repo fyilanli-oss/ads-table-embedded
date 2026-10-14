@@ -150,6 +150,22 @@ This table records investigation targets, not accepted Channel mappings.
 | Klaviyo Campaign | Campaign Variation after the 2026-10-15 GA gate | Prove attributed variation plus product event identity/value at one deterministic grain | Candidate pending GA documentation and controlled evidence |
 | Klaviyo Flow | Flow Message, with variation only where stable identity is proven | Prove attributed message/variation plus product event identity/value | Candidate pending controlled evidence |
 
+### Preliminary three-provider product intersection
+
+No product field is admitted to the Channel Core Contract on 14 October. The table records the evidence still required.
+
+| Candidate semantic | Meta | Google Ads | Klaviyo | Common-core state |
+|---|---|---|---|---|
+| Provider-native product ID | Ad-level `product_id` breakdown request exists; returned meaning requires proof | Item and sold-item IDs are documented for product-feed reports | Ordered Product examples expose integration-defined `ProductID`; Channel attribution requires proof | `unknown_pending_proof` |
+| Product name/title | Not proven in the same Insights row; a separate catalog lookup and permission model are not accepted | Product and sold-product titles are documented | Ordered Product examples expose integration-defined `ProductName` | `unknown_pending_proof` |
+| SKU/merchant item ID | No accepted same-grain SKU mapping | Merchant item identity is documented but feed semantics must be retained | Ordered Product examples expose integration-defined `SKU` | `unknown_pending_proof` |
+| Product quantity | Sold-product quantity candidate is not re-proven | Cart data exposes units sold and lead/cross-sell units where supported | Ordered Product examples expose integration-defined `Quantity` | `unknown_pending_proof` |
+| Product sales value | Compatibility of product breakdown with accepted purchase value requires controlled evidence | Cart data revenue and conversion value are documented at supported query grains | Event value exists; deterministic Message/Variation linkage remains unproven | `unknown_pending_proof` |
+| Advertised versus sold role | Not proven | Google documents advertised, sold, lead and cross-sell semantics | Not proven at product-plus-Variation grain | Provider extension only; no common classification |
+| Explicit zero value | Presence versus absence requires response evidence | Metric zero is queryable where the report returns the row | Event value and ordinary property zero/missing semantics differ | `unknown_pending_proof` |
+
+Until a row reaches `supported_exact` across all three providers, the shared product analysis must not depend on it. A provider extension can be retained for later Google-specific analysis but cannot change the common Channel surface.
+
 ### Meta
 
 | Requirement | 14 October status | EO-04-E evidence needed |

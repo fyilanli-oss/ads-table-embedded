@@ -221,6 +221,10 @@ Official sources checked 14 October 2026:
 - https://developers.google.com/google-ads/api/fields/v25/ad_group_ad
 - https://developers.google.com/google-ads/api/fields/v25/asset_group_product_group_view
 - https://developers.google.com/google-ads/api/fields/v25/cart_data_sales_view
+- https://developers.google.com/google-ads/api/performance-max/reporting
+- https://developers.google.com/google-ads/api/performance-max/asset-group-reporting
+- https://developers.google.com/google-ads/api/performance-max/retail-reporting
+- https://developers.google.com/google-ads/api/fields/v25/asset_group_product_group_view
 
 ### Klaviyo
 
@@ -254,6 +258,63 @@ Official sources checked 14 October 2026:
 - https://developers.klaviyo.com/en/reference/events_api_overview
 - https://developers.klaviyo.com/en/docs/using_the_query_metric_aggregates_endpoint
 - https://developers.klaviyo.com/en/v2026-07-15/docs/supported_metrics_and_attributes
+
+## Prepared controlled proof packets
+
+These packets define the smallest evidence needed to resolve the matrix. They are not authorization to execute live requests, persist data or alter an adapter.
+
+### Meta Ad product packet
+
+Use the official Insights request shape with:
+
+- `level=ad`;
+- `breakdowns=product_id`;
+- one bounded completed date window;
+- `time_increment=1`;
+- hierarchy IDs/names, impressions, candidate click fields, spend, `actions` and `action_values`;
+- the account's attribution setting and timezone/currency evidence.
+
+Acceptance requires an actual returned row showing how `product_id`, purchase action count and purchase action value coexist. The response must prove whether the product ID represents the advertised item, converted item or an undocumented provider role. Until then, relationship, quantity and sales remain `unknown_pending_proof`.
+
+### Google Standard Shopping Ad Group packet
+
+Prepare a minimal GAQL family that selects:
+
+- Campaign and Ad Group identity;
+- date;
+- product item ID/title and merchant/feed identity;
+- sold item ID/title where compatible;
+- impressions, clicks and cost;
+- conversions/conversion value;
+- orders, units sold and revenue;
+- lead and cross-sell units/revenue where compatible.
+
+The exact query must pass the current v25 Query Validator and then a bounded read-only eligible-account request. Field-catalog selectability alone is insufficient. A failed combination is split into separate provider-native reports and the join grain is recorded; metrics are never redistributed.
+
+### Google retail Performance Max Asset Group packet
+
+Performance Max has no standard Ad Group or AdGroupAd entity. Asset Group performance is officially reportable, and `asset_group_product_group_view` exposes Asset Group plus product/listing candidates. Prepare two bounded queries:
+
+1. Asset Group performance from `asset_group`;
+2. Asset Group product/listing evidence from `asset_group_product_group_view`.
+
+The second query must separately prove product item, sold item, units and revenue compatibility. If only listing-group or campaign-level product evidence survives validation, the product relationship is `supported_aggregate_only`; it is not attached to the Asset Group by inference.
+
+### Google Search packet
+
+Preserve Campaign, Ad Group and Ad identities plus performance. Do not request or manufacture a product child. Search product support remains `unsupported` unless a future official query proves a sold-product relationship at the accepted grain.
+
+### Klaviyo packet held for the GA gate
+
+After the 2026-10-15 documentation is published, prepare separate minimal evidence for:
+
+1. Campaign -> Campaign Message -> stable Campaign Variation identity;
+2. Campaign Reporting grouped by the final variation identifier;
+3. Flow -> Flow Message and any stable variation identity;
+4. Ordered Product event identity/value fields;
+5. whether product event properties and attributed Message/Variation identity coexist in a deterministic, privacy-safe read result.
+
+A label match, recipient/profile traversal or time-window coincidence is not an accepted product-to-Channel join.
 
 ## Mandatory 15 October Klaviyo gate
 

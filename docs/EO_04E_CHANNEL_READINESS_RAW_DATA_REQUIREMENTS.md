@@ -220,7 +220,9 @@ Klaviyo has two separate evidence families: resource identity/hierarchy and Repo
 | Flow reporting | Values/series report supports flow/message grouping and optional variation labels | Prove whether reporting `variation` is a stable resource identity or only a reporting dimension |
 | Performance statistics | Recipients, delivered, opens, clicks, conversions and conversion value are documented statistics | Preserve raw provider statistics; do not store provider-calculated rates as canonical raw facts |
 | Purchase and sales | `conversions` and `conversion_value` depend on the supplied conversion metric ID | Prove the selected Placed Order metric and exact message/variation grain |
-| Product/SKU/name beneath message or variation | Not frozen by the current Reporting API evidence | Requires an official, privacy-safe and deterministic relationship; otherwise unsupported |
+| Product event identity and value candidates | Official Events API examples expose `ProductID`, `SKU`, `ProductName`, `Quantity` and event `value` for Ordered Product events | Preserve as candidates only; field names can be integration-specific |
+| Product beneath message or variation | Metric Aggregates supports attributed message/variation dimensions, but the current official evidence does not prove a product property and attributed variation can be returned at one deterministic aggregate grain | Requires controlled read-only evidence after the GA gate; otherwise unsupported |
+| Explicit zero product value | Klaviyo documents different missing/zero behavior for event value and ordinary event properties | Prove presence semantics; absent value cannot be converted to `zero_value` |
 | Email cost | Not returned as actual email spend by the provider contract used here | Preserve user-estimated 30-day email spend separately; allocation belongs to EO-05-B |
 | SMS/MMS/WhatsApp | Outside accepted email scope | Must not enter Channel through fallback |
 
@@ -233,6 +235,9 @@ Official sources checked 14 October 2026:
 - https://developers.klaviyo.com/en/reference/get_variations_for_campaign_message_beta
 - https://developers.klaviyo.com/en/reference/get_variation_ids_for_campaign_message_beta
 - https://developers.klaviyo.com/en/reference/get_message_for_campaign_variation_beta
+- https://developers.klaviyo.com/en/reference/events_api_overview
+- https://developers.klaviyo.com/en/docs/using_the_query_metric_aggregates_endpoint
+- https://developers.klaviyo.com/en/v2026-07-15/docs/supported_metrics_and_attributes
 
 ## Mandatory 15 October Klaviyo gate
 

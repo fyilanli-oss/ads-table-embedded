@@ -617,7 +617,7 @@
           "id": "A6-EO-04-E",
           "title": "Integrated three-provider acceptance",
           "objective": "Provider-isolated and combined non-fabricated acceptance evidence.",
-          "status": "analyst_evidence_gate_in_progress",
+          "status": "product_owner_scope_accepted_evidence_pending",
           "implementation_started": false,
           "product_owner_investigation_sequence_accepted": true,
           "document": "docs/EO_04E_CHANNEL_READINESS_RAW_DATA_REQUIREMENTS.md",
@@ -630,7 +630,10 @@
           "channel_or_dataset_mapping_authorized": false,
           "provider_runtime_authorized": false,
           "live_mutation_authorized": false,
-          "next_mandatory_gate": "Klaviyo_2026_10_15_GA_documentation_revalidation"
+          "next_mandatory_gate": "Klaviyo_2026_10_15_GA_documentation_revalidation",
+          "product_owner_scope_accepted": true,
+          "product_owner_scope_accepted_at": "2026-10-14",
+          "google_pmax_asset_group_sold_product_state": "supported_aggregate_only"
         }
       ],
       "outputs": [

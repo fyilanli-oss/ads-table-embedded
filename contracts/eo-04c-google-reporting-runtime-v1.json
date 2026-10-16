@@ -1,8 +1,8 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "contract_id": "eo-04c-google-reporting-runtime-v1",
   "package_id": "A6-EO-04-C",
-  "status": "product_owner_start_brief_accepted_runtime_implementation_not_authorized",
+  "status": "runtime_implemented_product_owner_acceptance_and_merge_pending",
   "checked_at": "2026-10-16",
   "authority": {
     "execution_plan": "docs/EXECUTION_PLAN.md",
@@ -126,8 +126,30 @@
     "partial_multi_query_execution_publishable": false,
     "live_provider_call_authorized": false
   },
+  "test_strategy": {
+    "google_test_account_used_as_performance_evidence": false,
+    "google_test_account_serving_metrics_expected": false,
+    "repository_fixtures_are_provider_evidence": false,
+    "repository_fixtures_verify": [
+      "gaql_shape",
+      "raw_page_preservation",
+      "empty_missing_zero_separation",
+      "sales_role_classification",
+      "pmax_listing_tree_channel_resolution",
+      "historical_listing_tree_safety",
+      "first_error_no_retry"
+    ],
+    "runtime_modules": [
+      "app/lib/providers/google-reporting.server.js",
+      "app/lib/providers/google-reporting-authority.server.js"
+    ],
+    "runtime_tests": [
+      "tests/eo-04c-google-reporting-runtime.test.js",
+      "tests/eo-04c-google-reporting-authority.test.js"
+    ]
+  },
   "mutations": {
-    "runtime_implementation": false,
+    "runtime_implementation": true,
     "live_provider_call": false,
     "dataset_v2": false,
     "database": false,
@@ -140,8 +162,11 @@
   "product_owner_acceptance": {
     "analyst_brief_accepted": true,
     "accepted_at": "2026-10-16",
-    "runtime_implementation_requires_separate_approval": true,
+    "runtime_implementation_authorized": true,
+    "runtime_implementation_authorized_at": "2026-10-16",
+    "runtime_final_acceptance": false,
+    "merge_authorized": false,
     "live_provider_call_requires_separate_approval": true
   },
-  "next_gate": "explicit_product_owner_approval_for_google_reporting_runtime_implementation"
+  "next_gate": "runtime_repository_verification_then_explicit_product_owner_acceptance_and_merge_approval"
 }

@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "contract_id": "eo-04-provider-live-acceptance-v1",
   "package_id": "A6-EO-04-LIVE-ACCEPTANCE",
-  "status": "production_live_response_capture_correction_authorized",
+  "status": "meta_live_shape_evidence_retained_mapping_boundary_accepted",
   "checked_at": "2026-10-16",
   "product_owner_authorization": {
     "analyst_brief": "accepted",
@@ -13,9 +13,11 @@
     "secret_or_environment_mutation": false,
     "merge": true,
     "safe_server_log_repository_implementation": "authorized",
-    "safe_server_log_merge": false,
-    "safe_server_log_deployment": false,
-    "next_live_provider_call": false
+    "safe_server_log_merge": true,
+    "safe_server_log_deployment": true,
+    "next_live_provider_call": false,
+    "evidence_closure_repository_implementation": "authorized",
+    "evidence_closure_merge": true
   },
   "http_trigger": {
     "temporary": true,
@@ -54,7 +56,9 @@
       "direct_evidence_only": ["impressions", "spend"],
       "click_candidates": ["clicks", "inline_link_clicks", "outbound_clicks"],
       "action_evidence": ["actions", "action_values"],
-      "ad_click_session_and_funnel_mapping": "pending_product_owner_acceptance_after_live_action_type_evidence",
+      "ad_click_mapping": "unresolved_clicks_inline_link_clicks_and_outbound_clicks_remain_candidates",
+      "session_mapping": "not_mapped_from_landing_page_view_without_separate_acceptance",
+      "funnel_mapping": "not_evidenced_purchase_checkout_and_add_to_cart_absent",
       "numeric_canonical_rows_published_by_this_trigger": false
     },
     "product_breakdown": {
@@ -68,7 +72,7 @@
         "converted_product_value"
       ],
       "standardized": false,
-      "semantics": "validation_pending_real_catalog_response",
+      "semantics": "not_observed_in_this_execution_not_zero_and_not_global_unsupported",
       "sales_role": false,
       "shopify_identity_mapping": false,
       "product_ad_cost_publication": false
@@ -108,11 +112,24 @@
     "resource_route": "app/routes/settings.provider-live-evidence.ts",
     "temporary_settings_button": "app/routes/_admin.settings.tsx",
     "tests": "tests/eo-04-provider-live-acceptance.test.js",
-    "successful_live_route_executions_observed": 2,
-    "safe_response_payload_retained": false,
+    "successful_live_route_executions_observed": 3,
+    "safe_response_payload_retained": true,
     "live_provider_call_performed": true,
     "deployment_performed": true,
-    "safe_server_log_deployed": false
+    "safe_server_log_deployed": true,
+    "production_commit": "8a7b0ca9645f46080f8fe0e69f18efe5e5638613",
+    "production_deployment": "dpl_Bhxk2Vjpuxj88QSHVvJgYnCXU9A5",
+    "durable_live_evidence": "docs/evidence/EO_04_META_PROVIDER_LIVE_EVIDENCE_2026-10-16.json"
+  },
+  "accepted_live_result": {
+    "channel_row_count": 1,
+    "product_row_count": 0,
+    "product_response_state": "empty_success",
+    "product_canonical_support_state": "not_observed_in_this_execution",
+    "product_real_zero": false,
+    "product_globally_unsupported": false,
+    "same_flow_repeat_required": false,
+    "dataset_v2_publication_authorized": false
   },
   "official_sources": {
     "checked_at": "2026-10-16",

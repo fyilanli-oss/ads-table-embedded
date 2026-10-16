@@ -1,0 +1,102 @@
+{
+  "schema_version": "1.0.0",
+  "evidence_id": "EO-04-META-PROVIDER-LIVE-EVIDENCE-2026-10-16",
+  "package_id": "A6-EO-04-LIVE-ACCEPTANCE",
+  "status": "accepted_live_shape_evidence",
+  "observed_at_utc": "2026-10-16T15:14:07.104Z",
+  "business_date": "2026-10-01",
+  "provider": "meta",
+  "evidence_version": "1.0.0",
+  "repository_commit": "8a7b0ca9645f46080f8fe0e69f18efe5e5638613",
+  "production_deployment": "dpl_Bhxk2Vjpuxj88QSHVvJgYnCXU9A5",
+  "execution": {
+    "status": "complete",
+    "provider_retry_performed": false,
+    "next_provider_started": false,
+    "database_write_performed": false,
+    "runtime_error_observed": false
+  },
+  "retention_boundary": {
+    "source": "allowlisted_server_log",
+    "raw_provider_rows_retained": false,
+    "numeric_commercial_values_retained": false,
+    "raw_names_or_identifiers_retained": false,
+    "identifier_hashes_retained": false,
+    "provider_request_id_retained": false,
+    "cursor_or_cursor_hash_retained": false,
+    "token_or_credential_retained": false,
+    "publishable_to_dataset_v2": false
+  },
+  "channel": {
+    "grain": "ad",
+    "row_count": 1,
+    "next_page_exists": false,
+    "field_state_counts": {
+      "impressions": {"present_numeric": 1},
+      "spend": {"present_numeric": 1},
+      "clicks": {"present_numeric": 1},
+      "inline_link_clicks": {"present_numeric": 1},
+      "outbound_clicks": {"array": 1},
+      "actions": {"array": 1},
+      "action_values": {"absent": 1}
+    },
+    "action_types": [
+      "landing_page_view",
+      "link_click",
+      "omni_landing_page_view",
+      "onsite_conversion.post_net_like",
+      "page_engagement",
+      "post_engagement",
+      "post_interaction_gross",
+      "post_interaction_net",
+      "post_reaction"
+    ],
+    "action_type_inventory_controls": {
+      "malformed_entry_count": 0,
+      "redacted_invalid_action_type_count": 0,
+      "truncated_valid_action_type_count": 0
+    }
+  },
+  "product": {
+    "grain": "ad_product_id",
+    "request_completed": true,
+    "response_state": "empty_success",
+    "row_count": 0,
+    "next_page_exists": false,
+    "accepted_fields": [
+      "product_id",
+      "impressions",
+      "clicks",
+      "spend",
+      "converted_product_quantity",
+      "converted_product_value"
+    ],
+    "field_observation": "no_rows_so_no_field_state_observed",
+    "canonical_support_state": "not_observed_in_this_execution",
+    "real_zero": false,
+    "globally_unsupported": false,
+    "standardized": false,
+    "shopify_product_or_variant_mapping_created": false,
+    "product_ad_cost_published": false
+  },
+  "analyst_decisions": {
+    "impressions": "direct_provider_evidence_accepted",
+    "spend": "direct_provider_evidence_accepted",
+    "ad_click": "unresolved_clicks_inline_link_clicks_and_outbound_clicks_remain_candidates",
+    "session": "not_mapped_from_landing_page_view_without_separate_acceptance",
+    "funnel": "not_evidenced_purchase_checkout_and_add_to_cart_absent",
+    "product_id": "not_observed_for_this_ad_and_date_not_zero_and_not_global_unsupported",
+    "repeat_same_flow": "not_required_without_new_product_linkage_evidence"
+  },
+  "user_supplied_context": {
+    "destination": "amazon_product_page",
+    "provider_authored_evidence": false,
+    "interpretation": "context_is_consistent_with_missing_meta_catalog_product_identity_but_does_not_prove_causation"
+  },
+  "next_product_evidence_gate": {
+    "requires_new_live_call": true,
+    "current_authorization": false,
+    "required_context": "meta_catalog_linked_product_ad_with_provider_authored_product_identity",
+    "same_instagram_to_amazon_flow_expected_to_add_product_identity_evidence": false
+  }
+}

@@ -8,6 +8,7 @@
 - Deployment and real Shopify Admin visual acceptance: **completed 16 October 2026**
 - First live Google Ads request: **authorized and stopped on its first failure 16 October 2026**
 - Safe failure logging correction: **authorized 16 October 2026**
+- Single preflight access-token refresh: **authorized 16 October 2026**
 - Binding runtime contract: `contracts/eo-04c-google-reporting-runtime-v1.json`
 - Trigger contract: `contracts/eo-04c-google-live-evidence-trigger-v1.json`
 
@@ -24,7 +25,13 @@ an empty response as zero or globally unsupported.
 
 ## Exact execution
 
-The button starts these query families sequentially and stops at the first error:
+Before any query family starts, the request uses the stored refresh token exactly
+once to obtain one temporary access token. A refresh failure stops the execution
+with zero Google Ads query calls. A successful refresh is reused in memory for
+every family and page in that execution; it is not persisted. There is no
+refresh-after-401 path.
+
+The button then starts these query families sequentially and stops at the first error:
 
 1. `account_campaign_context`;
 2. `cart_data_product_sales_daily`;
@@ -90,7 +97,8 @@ diagnostic record does not enable retry or start the next query family.
 
 - No Google campaign, account, budget, listing tree or conversion configuration
   mutation.
-- No OAuth, scope, token, secret or environment mutation.
+- No OAuth consent, scope, secret, environment or persisted credential mutation.
+- The authorized preflight access-token refresh is temporary and request-scoped.
 - No database write, Dataset V2 publication, scheduler or product identity mapping.
 - No historical PMax Channel is resolved from the current listing tree.
 - No additional live provider request is authorized by the safe logging correction.
@@ -119,3 +127,5 @@ Checked 16 October 2026:
 - Google Ads API v25 Cart Data Sales View: <https://developers.google.com/google-ads/api/fields/v25/cart_data_sales_view>
 - Google Ads API PMax listing groups: <https://developers.google.com/google-ads/api/performance-max/listing-groups>
 - Google Ads Query Language: <https://developers.google.com/google-ads/api/docs/query/overview>
+- Google Ads credential management: <https://developers.google.com/google-ads/api/docs/oauth/credential-management>
+- Google Ads OAuth internals: <https://developers.google.com/google-ads/api/docs/oauth/internals>

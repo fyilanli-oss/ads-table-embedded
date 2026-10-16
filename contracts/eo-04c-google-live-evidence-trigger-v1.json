@@ -27,6 +27,9 @@
     ],
     "date_window": "last_30_completed_business_dates_in_reporting_account_timezone",
     "pagination_complete_before_success": true,
+    "preflight_access_token_refresh_once": true,
+    "refresh_failure_stops_before_gaql": true,
+    "one_refreshed_access_token_per_execution": true,
     "bounded_page_count": true,
     "first_error_stops_remaining_families": true,
     "automatic_retry": false,
@@ -60,7 +63,8 @@
   },
   "mutations": {
     "google_provider": false,
-    "oauth_or_token": false,
+    "oauth_access_token_refresh": true,
+    "persisted_credential": false,
     "database": false,
     "dataset_v2": false,
     "environment_or_secret": false,
@@ -72,6 +76,7 @@
     "deployment": true,
     "first_live_provider_call": true,
     "safe_failure_logging_fix": true,
+    "preflight_access_token_refresh": true,
     "visual_acceptance": true,
     "merge": false
   },

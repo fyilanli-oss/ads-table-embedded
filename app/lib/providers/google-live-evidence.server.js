@@ -313,6 +313,9 @@ export function createGoogleLiveEvidenceRuntime({googleRuntime, clock = () => ne
   if (!googleRuntime || typeof googleRuntime.readEvidencePage !== "function") {
     throw new TypeError("googleRuntime.readEvidencePage is required");
   }
+  if (typeof googleRuntime.prepareEvidenceExecution !== "function") {
+    throw new TypeError("googleRuntime.prepareEvidenceExecution is required");
+  }
   if (typeof clock !== "function") throw new TypeError("clock must be a function");
 
   return Object.freeze({
@@ -325,6 +328,14 @@ export function createGoogleLiveEvidenceRuntime({googleRuntime, clock = () => ne
           "Evidence clock is invalid",
           502,
         );
+      }
+      try {
+        await googleRuntime.prepareEvidenceExecution({installationAuthority});
+      } catch (error) {
+        throw rememberErrorContext(error, {
+          stage: "credential_refresh",
+          query_family: null,
+        });
       }
       const seedDate = now.toISOString().slice(0, 10);
       const account = await readCompleteFamilyWithContext({
@@ -421,6 +432,20 @@ export function classifyGoogleLiveEvidenceError(error) {
       class: error.status === 401
         ? "reauthorization_required"
         : error.status >= 500 ? "internal_adapter_failure" : "request_contract_invalid",
+      provider_request_id: null,
+    });
+  }
+  const refreshRequiresReauthorization =
+    error?.code === "GOOGLE_ADS_REFRESH_TOKEN_UNAVAILABLE"
+    || (
+      error?.code === "GOOGLE_ADS_OAUTH_TOKEN_EXCHANGE_FAILED"
+      && error?.details?.provider_status === "invalid_grant"
+    );
+  if (refreshRequiresReauthorization) {
+    return Object.freeze({
+      status: 401,
+      code: "GOOGLE_ADS_REAUTHORIZATION_REQUIRED",
+      class: "reauthorization_required",
       provider_request_id: null,
     });
   }

@@ -126,6 +126,7 @@ test("execution reads exact family order, completes pagination, and exposes only
   const runtime = createGoogleLiveEvidenceRuntime({
     clock: () => new Date("2026-10-16T12:00:00Z"),
     googleRuntime: {
+      async prepareEvidenceExecution() {},
       async readEvidencePage(input) {
         calls.push(input);
         if (input.queryFamily === "account_campaign_context") {
@@ -204,6 +205,7 @@ test("first provider error stops every remaining family without retry", async ()
   const runtime = createGoogleLiveEvidenceRuntime({
     clock: () => new Date("2026-10-16T12:00:00Z"),
     googleRuntime: {
+      async prepareEvidenceExecution() {},
       async readEvidencePage(input) {
         calls.push(input.queryFamily);
         if (input.queryFamily === "account_campaign_context") {
@@ -228,6 +230,7 @@ test("a test-account observation stops before performance evidence", async () =>
   const runtime = createGoogleLiveEvidenceRuntime({
     clock: () => new Date("2026-10-16T12:00:00Z"),
     googleRuntime: {
+      async prepareEvidenceExecution() {},
       async readEvidencePage(input) {
         calls.push(input.queryFamily);
         return page([{customer: {testAccount: true}}]);
@@ -270,6 +273,7 @@ test("a failed family emits bounded diagnostic evidence without identifiers", as
   const runtime = createGoogleLiveEvidenceRuntime({
     clock: () => new Date("2026-10-16T12:00:00Z"),
     googleRuntime: {
+      async prepareEvidenceExecution() {},
       async readEvidencePage(input) {
         if (input.queryFamily === "account_campaign_context") {
           return page([{customer: {testAccount: false}}]);
@@ -328,6 +332,45 @@ test("runtime initialization failure proves no provider response without leaking
   assert.equal(safeLog.provider_error_code, null);
 });
 
+test("credential refresh failure stops before every query family", async () => {
+  const failure = new GoogleAdsRestError(
+    "GOOGLE_ADS_OAUTH_TOKEN_EXCHANGE_FAILED",
+    "Google OAuth token endpoint rejected the request",
+    {status: 400, provider_status: "invalid_grant"},
+  );
+  let queryCalls = 0;
+  const runtime = createGoogleLiveEvidenceRuntime({
+    googleRuntime: {
+      async prepareEvidenceExecution() {
+        throw failure;
+      },
+      async readEvidencePage() {
+        queryCalls += 1;
+      },
+    },
+  });
+
+  let caught;
+  try {
+    await runtime.execute({installationAuthority, input: {provider: "google_ads"}});
+  } catch (error) {
+    caught = error;
+  }
+  assert.equal(caught, failure);
+  assert.equal(queryCalls, 0);
+  const safeLog = buildGoogleLiveEvidenceSafeFailureLog(
+    caught,
+    classifyGoogleLiveEvidenceError(caught),
+  );
+  assert.equal(safeLog.code, "GOOGLE_ADS_REAUTHORIZATION_REQUIRED");
+  assert.equal(safeLog.class, "reauthorization_required");
+  assert.equal(safeLog.stage, "credential_refresh");
+  assert.equal(safeLog.query_family, null);
+  assert.equal(safeLog.provider_http_status, 400);
+  assert.equal(safeLog.provider_retry_performed, false);
+  assert.equal(safeLog.next_query_family_started, false);
+});
+
 test("route is read-only, authenticated, safe-logged, and contains no retry path", () => {
   assert.match(route, /resolveReadOnlyShopifyRouteAuthority/);
   assert.match(route, /authenticate[.]admin/);
@@ -358,12 +401,16 @@ test("contracts record completed live gates while preserving retry and merge gat
   assert.deepEqual(contract.execution.query_families_in_order,
     GOOGLE_LIVE_EVIDENCE_QUERY_FAMILIES);
   assert.equal(contract.execution.automatic_retry, false);
+  assert.equal(contract.execution.preflight_access_token_refresh_once, true);
+  assert.equal(contract.execution.refresh_failure_stops_before_gaql, true);
+  assert.equal(contract.execution.one_refreshed_access_token_per_execution, true);
   assert.equal(contract.result.current_listing_tree_resolves_historical_channel, false);
   assert.equal(contract.mutations.database, false);
   assert.equal(contract.product_owner_authorization.repository_implementation, true);
   assert.equal(contract.product_owner_authorization.deployment, true);
   assert.equal(contract.product_owner_authorization.first_live_provider_call, true);
   assert.equal(contract.product_owner_authorization.safe_failure_logging_fix, true);
+  assert.equal(contract.product_owner_authorization.preflight_access_token_refresh, true);
   assert.equal(contract.product_owner_authorization.visual_acceptance, true);
   assert.equal(contract.product_owner_authorization.merge, false);
   assert.equal(contract.failure_evidence.server_log_required, true);

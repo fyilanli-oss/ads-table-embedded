@@ -4,7 +4,9 @@ import {
 } from "../database/provider-account-authority-repository.server.js";
 import {
   createGoogleAdsRestClient,
+  GoogleAdsRestError,
   readGoogleAdsOAuthConfig,
+  refreshGoogleAdsAccessToken,
 } from "./google-ads-rest.server.js";
 import {fetchGoogleReportingPage} from "./google-reporting.server.js";
 
@@ -63,14 +65,11 @@ export function createGoogleReportingAuthorityRuntime({
   if (typeof fetchFn !== "function") throw new TypeError("fetchFn is required");
   const config = readGoogleAdsOAuthConfig(environment);
   const accountAuthority = createProviderAccountAuthorityRepository(database);
+  let preparedAuthorityPromise = null;
 
-  return Object.freeze({
-    async readEvidencePage({
-      installationAuthority,
-      queryFamily,
-      dateWindow,
-      pageToken = null,
-    }) {
+  async function prepareEvidenceExecution({installationAuthority}) {
+    if (preparedAuthorityPromise) return preparedAuthorityPromise;
+    preparedAuthorityPromise = (async () => {
       const installation = owner(installationAuthority);
       const connection = await accountAuthority.load({
         workspaceId: installation.workspaceId,
@@ -84,13 +83,43 @@ export function createGoogleReportingAuthorityRuntime({
         provider: PROVIDER,
       });
       if (
-        typeof stored?.access_token !== "string"
-        || stored.access_token.length < 1
-        || stored.access_token !== stored.access_token.trim()
-      ) throw new Error("GOOGLE_ADS_ACCESS_TOKEN_UNAVAILABLE");
+        typeof stored?.refresh_token !== "string"
+        || stored.refresh_token.length < 1
+        || stored.refresh_token !== stored.refresh_token.trim()
+      ) {
+        throw new GoogleAdsRestError(
+          "GOOGLE_ADS_REFRESH_TOKEN_UNAVAILABLE",
+          "Google Ads refresh token is unavailable",
+        );
+      }
+
+      const refreshed = await refreshGoogleAdsAccessToken({
+        config,
+        refreshToken: stored.refresh_token,
+        fetchFn,
+      });
+      return Object.freeze({
+        connection,
+        reportingAccount,
+        accessToken: refreshed.access_token,
+      });
+    })();
+    return preparedAuthorityPromise;
+  }
+
+  return Object.freeze({
+    prepareEvidenceExecution,
+    async readEvidencePage({
+      installationAuthority,
+      queryFamily,
+      dateWindow,
+      pageToken = null,
+    }) {
+      const {connection, reportingAccount, accessToken} =
+        await prepareEvidenceExecution({installationAuthority});
 
       const client = createGoogleAdsRestClient({
-        accessToken: stored.access_token,
+        accessToken,
         developerToken: config.developerToken,
         loginCustomerId: reportingAccount.loginAccountId,
         fetchFn,

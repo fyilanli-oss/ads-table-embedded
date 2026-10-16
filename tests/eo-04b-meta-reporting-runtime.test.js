@@ -196,4 +196,9 @@ test("Meta first reporting slice cannot mutate Dataset V2 or another provider", 
   assert.match(brief, /No Google or Klaviyo runtime begins/i);
   assert.match(brief, /validation_pending_real_catalog_response/);
   assert.equal(contract.product_breakdown_slice.live_provider_acceptance, false);
+  assert.equal(contract.reporting_authority_slice.installed_shop_authority_required, true);
+  assert.equal(contract.reporting_authority_slice.canonical_reporting_account_required, true);
+  assert.equal(contract.reporting_authority_slice.merchant_supplied_account_id_forbidden, true);
+  assert.equal(contract.reporting_authority_slice.token_in_result_or_evidence, false);
+  assert.equal(contract.reporting_authority_slice.database_write, false);
 });

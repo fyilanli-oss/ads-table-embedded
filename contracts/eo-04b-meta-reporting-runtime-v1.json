@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "contract_id": "eo-04b-meta-reporting-runtime-v1",
   "package_id": "A6-EO-04-B",
-  "status": "runtime_second_slice_implemented_awaiting_acceptance",
+  "status": "runtime_authority_slice_implemented_awaiting_acceptance",
   "checked_at": "2026-10-16",
   "authority": {
     "parent_contract": "contracts/eo-04e-three-provider-channel-product-economics-v1.json",
@@ -43,6 +43,17 @@
     "shopify_identity_verification": false,
     "live_provider_acceptance": false
   },
+  "reporting_authority_slice": {
+    "installed_shop_authority_required": true,
+    "connected_meta_authority_required": true,
+    "canonical_reporting_account_required": true,
+    "merchant_supplied_account_id_forbidden": true,
+    "token_source": "encrypted_provider_token_vault_server_only",
+    "token_in_result_or_evidence": false,
+    "channel_and_product_pages_are_atomic_for_publication": true,
+    "database_write": false,
+    "live_provider_call": false
+  },
   "mutations": {
     "live_provider_call": false,
     "dataset_v2": false,
@@ -53,7 +64,7 @@
     "secret_or_environment": false,
     "deployment": false
   },
-  "next_gate": "repository_ci_and_product_owner_acceptance_before_live_meta_product_breakdown_validation",
+  "next_gate": "product_owner_acceptance_before_separately_authorized_live_meta_product_breakdown_validation",
   "google_runtime_started": false,
   "klaviyo_runtime_started": false
 }

@@ -143,7 +143,7 @@ Kullanıcı-facing nihai terim `Ad Cost` olacaktır. Fakat aşağıdaki üç tek
 | Provider | EO-04'te alınacak maliyet kanıtı | Ürün satırında `Ad Cost` koşulu | EO-05'e bırakılan işlem |
 | --- | --- | --- | --- |
 | Meta | Ad seviyesinde exact spend; product breakdown spend yalnız gerçek katalog cevabıyla doğrulanırsa ayrı provider-product kanıtı | Yalnız product-grain semantiği canlı kabul edilmiş ve Shopify product/variant kimliği doğrulanmışsa | Ad toplamının ürünlere dağıtımı, cross-sell/blended maliyet ve gerçek ürün maliyeti |
-| Google Ads | Ad Group/Asset Group Channel cost ve `shopping_performance_view.metrics.cost_micros` provider-product kanıtı | Google item kimliği resmî Shopify sync yoluyla product/variant'a doğrulanmışsa provider product cost `Ad Cost` girdisi olur | Unknown Channel çözümü dışındaki tahminî dağıtımlar, cross-sell/blended ve gerçek ürün maliyeti |
+| Google Ads | Ad Group/Asset Group Channel cost ve `shopping_performance_view.metrics.cost_micros` provider-product kanıtı | Google item kimliği resmî Shopify sync yoluyla product/variant'a doğrulanmışsa provider product cost `Ad Cost` girdisi olur | Provider product cost bulunmayan satırlara tahminî dağıtım, blended ve gerçek ürün maliyeti |
 | Klaviyo | Effective-dated Estimated 30-Day Email Spend ledger | EO-04'te Campaign/Flow/Variation/product Ad Cost yoktur | Estimated spend'in zaman, Campaign, Flow, Channel veya ürüne dağıtımı |
 
 Bağlayıcı Ad Cost kuralları:
@@ -154,12 +154,16 @@ Bağlayıcı Ad Cost kuralları:
 4. Shopify product/variant kimliği doğrulanamasa bile provider ürün kimliği ve cost kanıtı kaybedilmez; yalnız Shopify SKU/ad/varyant etiketi yayımlanmaz.
 5. Channel cost, product cost satırlarının toplamından yeniden üretilmez. Product satırları impression veya provider attribution nedeniyle üst toplamı aşabilir.
 6. Product cost yoksa Channel cost ürünlere eşit, revenue, click, quantity veya başka oranla dağıtılmaz.
-7. `Unknown Channel` ürününün cost'u bilinen bir Asset Group, Ad Group, Ad veya Variation'a taşınmaz.
-8. Cross-sell, Assisted, Triggered ve Zero Value rolleri/modifier'ları EO-04'te cost dağıtım formülü oluşturmaz.
-9. Klaviyo Update spend ve Change value geçmişi effective-dated ledger'da korunur; EO-05 allocation geçmiş girdiyi sessizce yeniden yazamaz.
-10. Refresh ve reconciliation maliyet kanıtını performans kanıtıyla aynı truthful snapshot ilkelerine göre yeniden okuyabilir; çalışma sıklığı ve kota bütçesi EO-05'tedir.
-11. Vergi, kargo, platform ücreti, attribution overlap ve blended/true cost formülleri EO-05 analist sözleşmesi olmadan `Ad Cost` içine eklenmez.
-12. EO-07 UI, kabul edilmiş maliyet alanını kullanıcıya `Ad Cost` etiketiyle gösterir; source/provenance ayrımı detay yüzeyinde kaybolmaz.
+7. Provider ürün bazında exact Ad Cost veriyorsa bu kanıt; ürünün Sales Role'ü `Cross-sell` veya `Assisted`, modifier'ı `Zero Value` ya da Channel sonucu `Unknown Channel` olsa bile aynı ürün satırında korunur. Sales Role, modifier veya çözülemeyen Channel exact provider cost'u silemez.
+8. Provider ürün bazında cost vermiyorsa Channel toplam cost'u ürünlere eşit, sales, revenue, click, quantity, Sales Role veya başka bir oranla tahminî dağıtılmaz.
+9. `Unknown Channel` ürününün exact provider product cost'u korunur; fakat ürün ve cost bilinen bir Asset Group, Ad Group, Ad veya Variation'a tahminle taşınmaz.
+10. Klaviyo `Triggered` ürünlerinde provider-native product cost bulunmaz. Estimated Spend'den allocation yalnız EO-05'in kabul edilmiş formülüyle üretilebilir.
+11. Klaviyo Update spend ve Change value geçmişi effective-dated ledger'da korunur; EO-05 allocation geçmiş girdiyi sessizce yeniden yazamaz.
+12. Refresh ve reconciliation maliyet kanıtını performans kanıtıyla aynı truthful snapshot ilkelerine göre yeniden okuyabilir; çalışma sıklığı ve kota bütçesi EO-05'tedir.
+13. Vergi, kargo, platform ücreti, attribution overlap ve blended/true cost formülleri EO-05 analist sözleşmesi olmadan `Ad Cost` içine eklenmez.
+14. EO-07 UI, kabul edilmiş maliyet alanını kullanıcıya `Ad Cost` etiketiyle gösterir; source/provenance ayrımı detay yüzeyinde kaybolmaz.
+
+Örnek: Google, Kolye B için exact provider product Ad Cost olarak `₺18` döndürürse bu değer Kolye B satırında korunur. Ürün `Cross-sell` ise `Cross-sell + ₺18`, exact Channel çözülemiyorsa `Unknown Channel + ₺18`, ürünün sales değeri sıfırsa `Zero Value + ₺18` gösterilir. Buna karşılık provider yalnız Ad/Ad Group/Asset Group toplamı olarak `₺500` döndürüyorsa bu tutar ürünlere keyfî olarak bölünmez.
 
 ## Ortak ham kanıt zarfı
 

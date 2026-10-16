@@ -182,7 +182,10 @@
       "product_cost_rows_reconstruct_channel_total": false,
       "missing_product_cost_may_be_ratio_allocated_in_EO04": false,
       "unverified_shopify_identity_drops_provider_cost_evidence": false,
-      "cross_sell_assisted_triggered_or_zero_value_creates_allocation_formula_in_EO04": false,
+      "sales_role_value_modifier_or_unknown_channel_erases_exact_provider_product_cost": false,
+      "exact_provider_product_cost_is_preserved_for_cross_sell_assisted_zero_value_and_unknown_channel": true,
+      "sales_role_or_value_modifier_may_fabricate_product_cost_in_EO04": false,
+      "klaviyo_triggered_native_product_cost": "unavailable_allocation_in_A6_EO_05",
       "cost_provenance_required": [
         "provider_account",
         "business_date_or_time_window",

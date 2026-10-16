@@ -114,4 +114,18 @@ test("Ad Cost layers remain explicit, fail-closed and package-owned", () => {
   assert.equal(contract.ad_cost.rules.product_cost_rows_reconstruct_channel_total, false);
   assert.equal(contract.ad_cost.rules.missing_product_cost_may_be_ratio_allocated_in_EO04, false);
   assert.equal(contract.ad_cost.rules.unverified_shopify_identity_drops_provider_cost_evidence, false);
+  assert.equal(
+    contract.ad_cost.rules.sales_role_value_modifier_or_unknown_channel_erases_exact_provider_product_cost,
+    false,
+  );
+  assert.equal(
+    contract.ad_cost.rules
+      .exact_provider_product_cost_is_preserved_for_cross_sell_assisted_zero_value_and_unknown_channel,
+    true,
+  );
+  assert.equal(contract.ad_cost.rules.sales_role_or_value_modifier_may_fabricate_product_cost_in_EO04, false);
+  assert.equal(
+    contract.ad_cost.rules.klaviyo_triggered_native_product_cost,
+    "unavailable_allocation_in_A6_EO_05",
+  );
 });

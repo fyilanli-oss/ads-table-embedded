@@ -162,12 +162,14 @@
         "channel_cost": "exact_ad_level_spend",
         "product_cost": "validation_pending_real_catalog_product_breakdown_response",
         "shopify_identity_required_for_shopify_product_labels": true,
+        "validated_exact_product_cost_across_sales_roles": "preserve",
         "channel_to_product_distribution": "forbidden_in_EO04"
       },
       "google_ads": {
         "channel_cost": "exact_provider_channel_cost",
         "product_cost": "shopping_performance_view.metrics.cost_micros",
         "shopify_identity_required_for_shopify_product_labels": true,
+        "exact_product_cost_under_unknown_channel": "preserve",
         "unknown_channel_redistribution": "forbidden"
       },
       "klaviyo": {

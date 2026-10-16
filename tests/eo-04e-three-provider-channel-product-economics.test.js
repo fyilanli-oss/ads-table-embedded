@@ -104,7 +104,9 @@ test("Ad Cost layers remain explicit, fail-closed and package-owned", () => {
   );
   assert.equal(contract.ad_cost.technical_layers.allocated_ad_cost, "A6-EO-05_only");
   assert.equal(contract.ad_cost.providers.meta.channel_to_product_distribution, "forbidden_in_EO04");
+  assert.equal(contract.ad_cost.providers.meta.validated_exact_product_cost_across_sales_roles, "preserve");
   assert.equal(contract.ad_cost.providers.google_ads.unknown_channel_redistribution, "forbidden");
+  assert.equal(contract.ad_cost.providers.google_ads.exact_product_cost_under_unknown_channel, "preserve");
   assert.equal(contract.ad_cost.providers.klaviyo.allocation_owner, "A6-EO-05");
   assert.equal(contract.ad_cost.rules.explicit_zero_preserved, true);
   assert.equal(

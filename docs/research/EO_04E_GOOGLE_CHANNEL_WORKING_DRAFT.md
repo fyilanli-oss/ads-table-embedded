@@ -55,6 +55,8 @@ Aşağıdaki üç değer birbirinin yerine kullanılamaz:
 
 Bu nedenle ürün satırları Channel toplamını yeniden üretmek veya finansal maliyet gerçeği sayılmak için toplanmaz. Provider Product Cost, ilerideki açıklanabilir maliyet dağıtım motorunun yalnız bir kanıt girdisidir.
 
+Provider Product Cost exact olarak dönüyorsa `Cross-sell`, `Assisted`, `Zero Value` veya `Unknown Channel` sonucu bu değeri silmez; exact değer ilgili ürün satırında korunur. Provider ürün cost'u vermiyorsa Channel toplamı ürünlere tahminî dağıtılmaz.
+
 ## PMax örneği
 
 ~~~text

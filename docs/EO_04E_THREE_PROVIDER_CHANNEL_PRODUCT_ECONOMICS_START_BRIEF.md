@@ -142,7 +142,7 @@ Kullanıcı-facing nihai terim `Ad Cost` olacaktır. Fakat aşağıdaki üç tek
 
 | Provider | EO-04'te alınacak maliyet kanıtı | Ürün satırında `Ad Cost` koşulu | EO-05'e bırakılan işlem |
 | --- | --- | --- | --- |
-| Meta | Ad seviyesinde exact spend; product breakdown spend yalnız gerçek katalog cevabıyla doğrulanırsa ayrı provider-product kanıtı | Yalnız product-grain semantiği canlı kabul edilmiş ve Shopify product/variant kimliği doğrulanmışsa | Ad toplamının ürünlere dağıtımı, cross-sell/blended maliyet ve gerçek ürün maliyeti |
+| Meta | Ad seviyesinde exact spend; product breakdown spend yalnız gerçek katalog cevabıyla doğrulanırsa ayrı provider-product kanıtı | Yalnız product-grain semantiği canlı kabul edilmiş ve Shopify product/variant kimliği doğrulanmışsa; Sales Role exact değeri değiştirmez | Provider product cost bulunmayan satırlara Ad toplamının tahminî dağıtımı, blended ve gerçek ürün maliyeti |
 | Google Ads | Ad Group/Asset Group Channel cost ve `shopping_performance_view.metrics.cost_micros` provider-product kanıtı | Google item kimliği resmî Shopify sync yoluyla product/variant'a doğrulanmışsa provider product cost `Ad Cost` girdisi olur | Provider product cost bulunmayan satırlara tahminî dağıtım, blended ve gerçek ürün maliyeti |
 | Klaviyo | Effective-dated Estimated 30-Day Email Spend ledger | EO-04'te Campaign/Flow/Variation/product Ad Cost yoktur | Estimated spend'in zaman, Campaign, Flow, Channel veya ürüne dağıtımı |
 
@@ -194,8 +194,9 @@ Provider-isolated ve combined deterministic acceptance aşağıdakileri kanıtla
 8. Provider product cost ile Channel spend ve gelecekteki blended/true cost birbirine dönüştürülmez.
 9. Kimliği doğrulanmamış ürün SKU/name olarak yayımlanmaz; ham provider ID ve provider cost kanıtı kaybedilmez.
 10. Channel Ad Cost, Provider Product Ad Cost ve Allocated Ad Cost birbirine dönüşmeden ayrı kalır.
-11. Product cost yokken Channel cost ürünlere dağıtılmaz; explicit zero dışındaki state'ler sıfır olmaz.
-12. Synthetic fixture yalnız contract davranışını kanıtlar; canlı provider gerçeği olarak sunulmaz.
+11. Exact provider product cost; `Cross-sell`, `Assisted`, `Zero Value` veya `Unknown Channel` altında da aynı ürün satırında korunur.
+12. Product cost yokken Channel cost ürünlere dağıtılmaz; explicit zero dışındaki state'ler sıfır olmaz.
+13. Synthetic fixture yalnız contract davranışını kanıtlar; canlı provider gerçeği olarak sunulmaz.
 
 ## Açık kabul ve uygulama kapıları
 

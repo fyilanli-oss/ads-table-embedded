@@ -152,6 +152,8 @@ Ad seviyesinde product breakdown araştırma hattında:
 
 SKU ve product name bu Meta Insights çekirdeğinin doğrulanmış exact alanları değildir. Desteklenen resmî Shopify Facebook & Instagram kanalında provider kimliği product ID + variant ID adayına dönüştürülür; Shopify Admin API variant'ın product'a ait olduğunu doğrulamadan SKU, ürün adı veya varyant adı yayımlanmaz. Eşleme başarısız olsa da provider product ID ve cost kanıtı kaybedilmez.
 
+Gerçek katalog cevabıyla product-grain olduğu doğrulanan exact provider cost; `Cross-sell`, `Assisted`, `Zero Value` veya çözülemeyen Channel nedeniyle silinmez. Böyle bir exact product cost yoksa Ad toplam spend'i ürünlere tahminî dağıtılmaz.
+
 ## Çalışma sınıfları
 
 İki ayrı eksen korunur:

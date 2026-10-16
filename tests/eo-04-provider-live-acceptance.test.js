@@ -333,7 +333,7 @@ test("contract keeps product fields raw and the temporary route non-visual", () 
   assert.equal(contract.product_owner_authorization.safe_server_log_merge, true);
   assert.equal(contract.product_owner_authorization.safe_server_log_deployment, true);
   assert.equal(contract.product_owner_authorization.next_live_provider_call, false);
-  assert.equal(contract.product_owner_authorization.evidence_closure_merge, false);
+  assert.equal(contract.product_owner_authorization.evidence_closure_merge, true);
   assert.equal(contract.repository_implementation.successful_live_route_executions_observed, 3);
   assert.equal(contract.repository_implementation.safe_response_payload_retained, true);
   assert.equal(contract.repository_implementation.safe_server_log_deployed, true);

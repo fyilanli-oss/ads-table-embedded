@@ -17,7 +17,7 @@
     "safe_server_log_deployment": true,
     "next_live_provider_call": false,
     "evidence_closure_repository_implementation": "authorized",
-    "evidence_closure_merge": false
+    "evidence_closure_merge": true
   },
   "http_trigger": {
     "temporary": true,

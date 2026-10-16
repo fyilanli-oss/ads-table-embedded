@@ -24,6 +24,26 @@ export const META_AD_CHANNEL_INSIGHTS_FIELDS = Object.freeze([
   "action_values",
 ]);
 
+export const META_PRODUCT_BREAKDOWN_INSIGHTS_FIELDS = Object.freeze([
+  "account_id",
+  "account_name",
+  "campaign_id",
+  "campaign_name",
+  "adset_id",
+  "adset_name",
+  "ad_id",
+  "ad_name",
+  "date_start",
+  "date_stop",
+  "impressions",
+  "clicks",
+  "spend",
+  "converted_product_quantity",
+  "converted_product_value",
+]);
+
+export const META_PRODUCT_BREAKDOWN_ID_LIMIT = 100;
+
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const ACCOUNT_PATTERN = /^act_[0-9]+$/;
 const MAX_CURSOR_LENGTH = 4096;
@@ -84,13 +104,7 @@ function boundedCursor(value) {
   return nonEmpty(value, "META_REPORTING_CURSOR_INVALID", MAX_CURSOR_LENGTH);
 }
 
-export function buildMetaAdChannelInsightsUrl({
-  adAccountId,
-  dateWindow,
-  after = null,
-  graphVersion = META_GRAPH_VERSION,
-  limit = 100,
-}) {
+function validatedRequest({adAccountId, dateWindow, graphVersion, limit}) {
   const accountId = nonEmpty(adAccountId, "META_AD_ACCOUNT_ID_REQUIRED", 64);
   if (!ACCOUNT_PATTERN.test(accountId)) {
     throw new MetaGraphError("META_AD_ACCOUNT_ID_INVALID", "Meta ad account id is invalid");
@@ -106,36 +120,36 @@ export function buildMetaAdChannelInsightsUrl({
   if (!Number.isInteger(limit) || limit < 1 || limit > 500) {
     throw new MetaGraphError("META_REPORTING_PAGE_SIZE_INVALID", "Meta page size must be 1-500");
   }
+  return {accountId, start, end, graphVersion: exactVersion(graphVersion)};
+}
 
+function baseInsightsUrl({
+  adAccountId,
+  dateWindow,
+  after,
+  graphVersion,
+  limit,
+  fields,
+}) {
+  const request = validatedRequest({adAccountId, dateWindow, graphVersion, limit});
   const url = new URL(
-    `/${exactVersion(graphVersion)}/${accountId}/insights`,
+    `/${request.graphVersion}/${request.accountId}/insights`,
     META_GRAPH_ORIGIN,
   );
-  url.searchParams.set("fields", META_AD_CHANNEL_INSIGHTS_FIELDS.join(","));
+  url.searchParams.set("fields", fields.join(","));
   url.searchParams.set("level", "ad");
   url.searchParams.set("time_increment", "1");
-  url.searchParams.set("time_range", JSON.stringify({since: start, until: end}));
+  url.searchParams.set(
+    "time_range",
+    JSON.stringify({since: request.start, until: request.end}),
+  );
   url.searchParams.set("limit", String(limit));
   const cursor = boundedCursor(after);
   if (cursor !== null) url.searchParams.set("after", cursor);
-  return url.toString();
+  return url;
 }
 
-export async function fetchMetaAdChannelInsightsPage({
-  accessToken,
-  adAccountId,
-  dateWindow,
-  after = null,
-  graphVersion = META_GRAPH_VERSION,
-  fetchFn = fetch,
-}) {
-  if (typeof fetchFn !== "function") throw new TypeError("fetchFn is required");
-  const url = buildMetaAdChannelInsightsUrl({
-    adAccountId,
-    dateWindow,
-    after,
-    graphVersion,
-  });
+async function fetchMetaInsightsPayload({url, accessToken, fetchFn}) {
   const response = await fetchFn(url, {
     method: "GET",
     headers: {
@@ -177,6 +191,46 @@ export async function fetchMetaAdChannelInsightsPage({
       {request_id: requestId(response)},
     );
   }
+  return {payload, response, nextCursor};
+}
+
+export function buildMetaAdChannelInsightsUrl({
+  adAccountId,
+  dateWindow,
+  after = null,
+  graphVersion = META_GRAPH_VERSION,
+  limit = 100,
+}) {
+  return baseInsightsUrl({
+    adAccountId,
+    dateWindow,
+    after,
+    graphVersion,
+    limit,
+    fields: META_AD_CHANNEL_INSIGHTS_FIELDS,
+  }).toString();
+}
+
+export async function fetchMetaAdChannelInsightsPage({
+  accessToken,
+  adAccountId,
+  dateWindow,
+  after = null,
+  graphVersion = META_GRAPH_VERSION,
+  fetchFn = fetch,
+}) {
+  if (typeof fetchFn !== "function") throw new TypeError("fetchFn is required");
+  const url = buildMetaAdChannelInsightsUrl({
+    adAccountId,
+    dateWindow,
+    after,
+    graphVersion,
+  });
+  const {payload, response, nextCursor} = await fetchMetaInsightsPayload({
+    url,
+    accessToken,
+    fetchFn,
+  });
 
   return Object.freeze({
     provider: "meta",
@@ -192,6 +246,84 @@ export async function fetchMetaAdChannelInsightsPage({
       time_increment: 1,
       requested_fields: META_AD_CHANNEL_INSIGHTS_FIELDS,
       breakdowns: Object.freeze([]),
+    }),
+  });
+}
+
+export function buildMetaProductBreakdownInsightsUrl({
+  adAccountId,
+  dateWindow,
+  after = null,
+  graphVersion = META_GRAPH_VERSION,
+  limit = 100,
+}) {
+  const url = baseInsightsUrl({
+    adAccountId,
+    dateWindow,
+    after,
+    graphVersion,
+    limit,
+    fields: META_PRODUCT_BREAKDOWN_INSIGHTS_FIELDS,
+  });
+  url.searchParams.set("breakdowns", "product_id");
+  url.searchParams.set("product_id_limit", String(META_PRODUCT_BREAKDOWN_ID_LIMIT));
+  return url.toString();
+}
+
+export async function fetchMetaProductBreakdownInsightsPage({
+  accessToken,
+  adAccountId,
+  dateWindow,
+  after = null,
+  graphVersion = META_GRAPH_VERSION,
+  fetchFn = fetch,
+}) {
+  if (typeof fetchFn !== "function") throw new TypeError("fetchFn is required");
+  const url = buildMetaProductBreakdownInsightsUrl({
+    adAccountId,
+    dateWindow,
+    after,
+    graphVersion,
+  });
+  const {payload, response, nextCursor} = await fetchMetaInsightsPayload({
+    url,
+    accessToken,
+    fetchFn,
+  });
+  for (const row of payload.data) {
+    if (
+      !row
+      || typeof row !== "object"
+      || Array.isArray(row)
+      || typeof row.product_id !== "string"
+      || row.product_id.length < 1
+    ) {
+      throw new MetaGraphError(
+        "META_REPORTING_SCHEMA_CHANGED",
+        "Meta product breakdown row is missing product_id",
+        {request_id: requestId(response)},
+      );
+    }
+  }
+
+  return Object.freeze({
+    provider: "meta",
+    fact_family: "ad_product_breakdown_daily_insights",
+    channel_type: "ad",
+    breakdown: "product_id",
+    rows: Object.freeze(payload.data.map((row) => Object.freeze({...row}))),
+    next_cursor: nextCursor,
+    provider_request_id: requestId(response),
+    evidence: Object.freeze({
+      endpoint: "ad_account_insights",
+      graph_version: graphVersion,
+      level: "ad",
+      time_increment: 1,
+      requested_fields: META_PRODUCT_BREAKDOWN_INSIGHTS_FIELDS,
+      breakdowns: Object.freeze(["product_id"]),
+      product_id_limit: META_PRODUCT_BREAKDOWN_ID_LIMIT,
+      product_metric_semantics: "validation_pending_real_catalog_response",
+      provider_product_ad_cost_status: "validation_pending",
     }),
   });
 }

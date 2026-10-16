@@ -5,9 +5,13 @@ import path from "node:path";
 import {fileURLToPath} from "node:url";
 import {
   buildMetaAdChannelInsightsUrl,
+  buildMetaProductBreakdownInsightsUrl,
   classifyMetaReportingError,
   fetchMetaAdChannelInsightsPage,
+  fetchMetaProductBreakdownInsightsPage,
   META_AD_CHANNEL_INSIGHTS_FIELDS,
+  META_PRODUCT_BREAKDOWN_ID_LIMIT,
+  META_PRODUCT_BREAKDOWN_INSIGHTS_FIELDS,
 } from "../app/lib/providers/meta-reporting.server.js";
 import {MetaGraphError} from "../app/lib/providers/meta-graph.server.js";
 
@@ -68,6 +72,73 @@ test("Meta reporting page preserves provider-native rows and opaque cursor evide
   assert.doesNotMatch(JSON.stringify(result.evidence), /secret-token/);
 });
 
+test("Meta second slice requests only raw daily Ad plus product_id breakdown evidence", () => {
+  const url = new URL(buildMetaProductBreakdownInsightsUrl({
+    adAccountId: "act_123456",
+    dateWindow: {start: "2026-10-14", end: "2026-10-15"},
+    after: "product-page-2",
+  }));
+  assert.equal(url.pathname, "/v26.0/act_123456/insights");
+  assert.equal(url.searchParams.get("level"), "ad");
+  assert.equal(url.searchParams.get("breakdowns"), "product_id");
+  assert.equal(url.searchParams.get("product_id_limit"), String(META_PRODUCT_BREAKDOWN_ID_LIMIT));
+  assert.equal(url.searchParams.get("time_increment"), "1");
+  assert.equal(url.searchParams.get("after"), "product-page-2");
+  assert.deepEqual(
+    url.searchParams.get("fields").split(","),
+    META_PRODUCT_BREAKDOWN_INSIGHTS_FIELDS,
+  );
+  assert.equal(url.searchParams.get("fields").includes("creative"), false);
+  assert.equal(contract.product_breakdown_slice.sales_role_classification, false);
+  assert.equal(contract.product_breakdown_slice.shopify_identity_verification, false);
+});
+
+test("Meta product breakdown preserves raw provider rows and validation-pending semantics", async () => {
+  const result = await fetchMetaProductBreakdownInsightsPage({
+    accessToken: "secret-token",
+    adAccountId: "act_123456",
+    dateWindow: {start: "2026-10-14", end: "2026-10-14"},
+    fetchFn: async () => json({
+      data: [{
+        ad_id: "42",
+        product_id: "retailer-7",
+        impressions: "8",
+        spend: "3.50",
+        converted_product_quantity: [{action_type: "purchase", value: "2"}],
+        converted_product_value: [{action_type: "purchase", value: "125.00"}],
+      }],
+      paging: {cursors: {after: "product-cursor"}, next: "https://graph.facebook.com/next"},
+    }, 200, {"x-fb-request-id": "product-request-1"}),
+  });
+  assert.equal(result.fact_family, "ad_product_breakdown_daily_insights");
+  assert.equal(result.channel_type, "ad");
+  assert.equal(result.breakdown, "product_id");
+  assert.equal(result.rows[0].product_id, "retailer-7");
+  assert.deepEqual(result.rows[0].converted_product_quantity, [
+    {action_type: "purchase", value: "2"},
+  ]);
+  assert.equal(result.next_cursor, "product-cursor");
+  assert.equal(result.provider_request_id, "product-request-1");
+  assert.equal(
+    result.evidence.product_metric_semantics,
+    "validation_pending_real_catalog_response",
+  );
+  assert.equal(result.evidence.provider_product_ad_cost_status, "validation_pending");
+  assert.doesNotMatch(JSON.stringify(result.evidence), /secret-token/);
+});
+
+test("Meta product breakdown fails closed when a returned row lacks product_id", async () => {
+  await assert.rejects(
+    fetchMetaProductBreakdownInsightsPage({
+      accessToken: "valid",
+      adAccountId: "act_123456",
+      dateWindow: {start: "2026-10-14", end: "2026-10-14"},
+      fetchFn: async () => json({data: [{ad_id: "42", spend: "3.50"}]}),
+    }),
+    (error) => error.code === "META_REPORTING_SCHEMA_CHANGED",
+  );
+});
+
 test("Meta reporting fails closed on invalid auth, schema and cursor", async () => {
   await assert.rejects(
     fetchMetaAdChannelInsightsPage({
@@ -123,4 +194,6 @@ test("Meta first reporting slice cannot mutate Dataset V2 or another provider", 
   assert.equal(contract.klaviyo_runtime_started, false);
   assert.match(brief, /not Dataset V2/i);
   assert.match(brief, /No Google or Klaviyo runtime begins/i);
+  assert.match(brief, /validation_pending_real_catalog_response/);
+  assert.equal(contract.product_breakdown_slice.live_provider_acceptance, false);
 });

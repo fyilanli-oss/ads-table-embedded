@@ -7,7 +7,9 @@
 
 ## Analyst result
 
-EO-04 needs a narrow way to inspect real provider response shapes before Dataset V2 and EO-05 scheduling exist. The accepted solution is a temporary authenticated HTTP resource beneath the existing Settings URL family. It is not a fourth visual product surface and adds no button or merchant workflow.
+EO-04 needs a narrow way to inspect real provider response shapes before Dataset V2 and EO-05 scheduling exist. The accepted solution is a temporary authenticated HTTP resource beneath the existing Settings URL family. It is not a fourth visual product surface or a merchant workflow.
+
+On 16 October 2026 the product owner authorized one minimal temporary button in the existing connected Meta section because the authenticated resource could not be operated through the available browser control. The button has no modal, date input, new section or custom styling. It submits the fixed accepted evidence date `2026-10-01`, permits one attempt per page load, and becomes non-interactive after either success or failure. It does not authorize deployment or perform a live provider call merely by existing in the repository.
 
 The trigger reuses the permanent Meta reporting runtime at the non-visual resource URL `/settings/provider-live-evidence`. It accepts only `provider` and one `business_date`; it never accepts a store, workspace, account, token, provider URL, cursor, field list or API version from the caller.
 

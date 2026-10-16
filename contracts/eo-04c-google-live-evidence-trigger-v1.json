@@ -2,7 +2,7 @@
   "schema_version": "1.1.0",
   "contract_id": "eo-04c-google-live-evidence-trigger-v1",
   "package_id": "A6-EO-04-C",
-  "status": "complete_empty_live_evidence_recorded_account_context_correction_repository_verified_deployment_pending",
+  "status": "complete_empty_live_evidence_recorded_account_context_correction_deployed_live_call_pending",
   "checked_at": "2026-10-16",
   "authority": {
     "execution_plan": "docs/EXECUTION_PLAN.md",
@@ -82,7 +82,9 @@
     "safe_failure_logging_fix": true,
     "preflight_access_token_refresh": true,
     "account_context_correction_implementation": true,
-    "account_context_correction_deployment": false,
+    "account_context_correction_deployment": true,
+    "account_context_correction_deployment_id": "dpl_GFNme3aUQUJ25723fwU3e7HU235p",
+    "account_context_correction_deployment_commit": "53730bee401c79600570f199bd9967cf2d560c8a",
     "account_context_correction_live_call": false,
     "visual_acceptance": true,
     "merge": false
@@ -96,6 +98,7 @@
     "account_context_correction_required_before_next_call": true,
     "account_context_correction_repository_implemented": true,
     "account_context_correction_repository_verified": true,
+    "account_context_correction_production_deployed": true,
     "additional_live_call_authorized": false
   },
   "acceptance": {

@@ -607,7 +607,7 @@
           "id": "A6-EO-04-C",
           "title": "Google Ads adapter",
           "objective": "Standard Shopping Ad Group, Performance Max Retail Asset Group and Search Ad Group hierarchy with truthful product evidence.",
-          "status": "oauth_and_reporting_runtime_accepted_complete_empty_live_evidence_account_context_correction_repository_verified_deployment_pending",
+          "status": "oauth_and_reporting_runtime_accepted_complete_empty_live_evidence_account_context_correction_deployed_live_call_pending",
           "implementation_started": true,
           "oauth_corrective_decision": "docs/decisions/A6_EO_04_C_GOOGLE_OAUTH_CORRECTIVE_REBUILD.md",
           "oauth_test": "tests/eo-04c-google-oauth-corrective-rebuild.test.js",
@@ -642,7 +642,9 @@
           "account_context_correction_implementation_authorized_at": "2026-10-16",
           "account_context_correction_repository_implemented": true,
           "account_context_correction_repository_verified": true,
-          "account_context_correction_deployment_authorized": false,
+          "account_context_correction_deployment_authorized": true,
+          "account_context_correction_deployment": "dpl_GFNme3aUQUJ25723fwU3e7HU235p",
+          "account_context_correction_deployment_commit": "53730bee401c79600570f199bd9967cf2d560c8a",
           "additional_live_reporting_call_authorized": false
         },
         {
@@ -1040,7 +1042,7 @@
   "legacy_deletion_authorized": false,
   "current_active_parent": "A6-EO-04",
   "current_active_child": "A6-EO-04-E",
-  "current_gate": "A6-EO-04-C_google_account_context_correction_repository_verified_deployment_and_live_call_separately_gated",
+  "current_gate": "A6-EO-04-C_google_account_context_correction_deployed_additional_live_call_separately_gated",
   "next_ready_child": null,
   "independent_packages": [
     {

@@ -11,6 +11,7 @@
 - Single preflight access-token refresh: **authorized 16 October 2026**
 - Successful complete empty live execution: **recorded 16 October 2026**
 - Account/campaign context correction implementation: **authorized 16 October 2026**
+- Account/campaign context correction production deployment: **completed 16 October 2026**
 - Binding runtime contract: `contracts/eo-04c-google-reporting-runtime-v1.json`
 - Trigger contract: `contracts/eo-04c-google-live-evidence-trigger-v1.json`
 
@@ -110,8 +111,11 @@ campaign inventory must remain a separate `FROM campaign` concern.
 The product owner authorized this narrow correction on 16 October 2026. The
 repository now reads account identity before campaign inventory. A successful
 empty campaign inventory can therefore no longer suppress the selected
-account's `customer.test_account` evidence. This correction does not authorize
-another live request or deployment.
+account's `customer.test_account` evidence. Exact commit
+`53730bee401c79600570f199bd9967cf2d560c8a` was deployed to Production as
+`dpl_GFNme3aUQUJ25723fwU3e7HU235p`. The deployment was `READY`, carried the
+`embedded.adstable.app` alias, and its initial error/fatal scan was clean. This
+deployment does not authorize another live request.
 
 ## Unchanged behavior and out of scope
 

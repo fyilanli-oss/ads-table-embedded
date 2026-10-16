@@ -424,7 +424,11 @@ test("contracts record completed live gates while preserving retry and merge gat
   assert.equal(contract.product_owner_authorization.account_context_correction_implementation,
     true);
   assert.equal(contract.product_owner_authorization.account_context_correction_deployment,
-    false);
+    true);
+  assert.equal(contract.product_owner_authorization.account_context_correction_deployment_id,
+    "dpl_GFNme3aUQUJ25723fwU3e7HU235p");
+  assert.equal(contract.product_owner_authorization.account_context_correction_deployment_commit,
+    "53730bee401c79600570f199bd9967cf2d560c8a");
   assert.equal(contract.product_owner_authorization.account_context_correction_live_call,
     false);
   assert.equal(contract.product_owner_authorization.visual_acceptance, true);
@@ -450,7 +454,9 @@ test("contracts record completed live gates while preserving retry and merge gat
   assert.equal(googlePackage.account_context_correction_required, true);
   assert.equal(googlePackage.account_context_correction_implementation_authorized, true);
   assert.equal(googlePackage.account_context_correction_repository_verified, true);
-  assert.equal(googlePackage.account_context_correction_deployment_authorized, false);
+  assert.equal(googlePackage.account_context_correction_deployment_authorized, true);
+  assert.equal(googlePackage.account_context_correction_deployment,
+    "dpl_GFNme3aUQUJ25723fwU3e7HU235p");
 });
 
 test("retained Google live evidence is empty without inventing zero or support", () => {

@@ -32,13 +32,24 @@ The accepted Channel leaves remain:
 2. if exactly one eligible Asset Group matches, use that exact Asset Group as Channel;
 3. if more than one Asset Group matches, retain the product sale under `Unknown Channel`;
 4. never choose Channel from the sold product;
-5. never distribute an ambiguous sale across candidate Asset Groups.
+5. never distribute an ambiguous sale across candidate Asset Groups;
+6. use only listing-tree evidence proven valid for the sale's business-date reporting window.
 
 This applies equally to item-ID, category, brand, product-type, custom-label and `All products` trees:
 
 - one eligible `All products` Asset Group is exact;
 - multiple overlapping `All products` or category trees are `Unknown Channel`;
 - product sale and Sales Role remain available even when Channel is unknown.
+
+### Historical listing-tree safety
+
+A listing tree observed today does not prove the tree that was active on an earlier sale date. A historical product sale may receive an exact Asset Group only when versioned evidence proves that the matching listing-tree state was valid for the complete business-date reporting window in the Reporting Account timezone.
+
+- current listing-tree state cannot be applied retroactively to an earlier sale;
+- a tree change inside the business-date window makes exact daily Channel resolution unavailable;
+- missing, partial or conflicting temporal evidence results in `Unknown Channel`;
+- the product sale, units, revenue and Sales Role are still retained;
+- every exact resolution must retain the sale business date, account timezone, listing-tree evidence version/hash and validity window.
 
 ## Sales Role
 
@@ -94,6 +105,7 @@ Cart Data requires account-side Conversions with Cart Data and Merchant Center c
 - listing-tree node, parent and path;
 - included/excluded and unit/subdivision state;
 - item ID, brand, category, product type, custom attribute/label and `All products` dimensions;
+- listing-tree evidence version/hash, observation time and proven validity window;
 - `asset_group_product_group_view` aggregate evidence retained separately from exact product-sale rows.
 
 Aggregate Asset Group product-group metrics cannot be joined to a sold-product row by arithmetic, proportional allocation or matching totals.

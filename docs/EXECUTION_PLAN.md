@@ -360,6 +360,7 @@ CI enforcement: `tests/eo-04c-google-reporting-runtime-contract.test.js`
 - Standard Shopping and Search preserve Ad Group Channel; Performance Max Retail preserves Asset Group Channel.
 - PMax product sale and Sales Role survive broad listing trees. Exact Asset Group is resolved from the advertised product only when exactly one eligible listing tree matches.
 - One eligible `All products` Asset Group is exact. Multiple overlapping `All products`, category or other broad trees remain `Unknown Channel`; the sale is neither dropped nor distributed.
+- A current listing tree never resolves an earlier sale by itself. Exact historical Channel requires versioned listing-tree evidence valid for the complete sale business-date window; tree changes or incomplete temporal evidence retain the sale under `Unknown Channel`.
 - `cart_data_sales_view` advertised-product, sold-product, units, revenue and lead/cross-sell evidence remains separate from aggregate `asset_group_product_group_view` evidence.
 - Provider Product Ad Cost remains on the advertised product and is never moved to a Cross-sell sold product. Allocation remains EO-05 work.
 - Missing Cart Data configuration, empty success, absent fields, unsupported fields and explicit numeric zero remain separate states.

@@ -29,6 +29,25 @@ test("PMax broad listing resolution preserves sales without inventing Asset Grou
   assert.equal(pmax.aggregate_product_group_metrics_joined_to_exact_sold_product_by_arithmetic, false);
 });
 
+test("a current listing tree can never resolve an earlier sale without date-matched evidence", () => {
+  const temporal = contract.pmax_product_sales.temporal_resolution;
+  assert.equal(temporal.sale_business_date_timezone, "reporting_account_timezone");
+  assert.equal(temporal.exact_requires_listing_tree_valid_for_complete_business_date_window, true);
+  assert.equal(temporal.current_tree_may_resolve_earlier_sale, false);
+  assert.equal(temporal.tree_change_inside_business_date_window, "Unknown Channel");
+  assert.equal(temporal.missing_partial_or_conflicting_temporal_evidence, "Unknown Channel");
+  assert.equal(temporal.unknown_channel_drops_product_sale, false);
+  assert.deepEqual(temporal.required_exact_evidence, [
+    "sale_business_date",
+    "reporting_account_timezone",
+    "listing_tree_evidence_version_or_hash",
+    "listing_tree_valid_from",
+    "listing_tree_valid_to",
+  ]);
+  assert.match(brief, /observed today does not prove/i);
+  assert.match(brief, /cannot be applied retroactively/i);
+});
+
 test("Google product sales use Sales Role and preserve both product identities", () => {
   assert.equal(contract.sales_role.term, "Sales Role");
   assert.match(contract.sales_role.advertised, /match/);

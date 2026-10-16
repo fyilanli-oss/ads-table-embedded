@@ -25,6 +25,9 @@ const settings = read("app/routes/_admin.settings.tsx");
 const liveEvidence = JSON.parse(read(
   "docs/evidence/EO_04C_GOOGLE_PROVIDER_LIVE_EVIDENCE_2026-10-16.json",
 ));
+const testAccountReviewEvidence = JSON.parse(read(
+  "docs/evidence/EO_04C_GOOGLE_TEST_ACCOUNT_REVIEW_EVIDENCE_2026-10-16.json",
+));
 
 const installationAuthority = Object.freeze({
   authority: "shopify_installation_verified",
@@ -456,7 +459,7 @@ test("contracts record completed live gates and the authorized merge without ena
   assert.equal(contract.product_owner_authorization.test_account_review_semantics_deployment_commit,
     "16a54df48e853c282d9c3481fb9e3b7c2b2ca16d");
   assert.equal(contract.status,
-    "accepted_and_merged_test_account_demo_production_evidence_pending");
+    "accepted_merged_and_live_verified_test_account_demo_production_evidence_pending");
   assert.equal(contract.live_evidence.account_type_proven, true);
   assert.equal(contract.live_evidence.account_type_state, "test_observed");
   assert.equal(contract.product_owner_authorization.visual_acceptance, true);
@@ -487,12 +490,39 @@ test("contracts record completed live gates and the authorized merge without ena
   assert.equal(googlePackage.live_evidence_trigger_merge_authorized, true);
   assert.equal(googlePackage.live_evidence_trigger_merge_commit,
     "54c427733cd51ba8600016941ce7afdd24ac2e64");
+  assert.equal(googlePackage.test_account_review_semantics_live_call_completed, true);
+  assert.equal(googlePackage.test_account_review_semantics_query_families_completed, 6);
+  assert.equal(googlePackage.test_account_review_semantics_reporting_rows_observed, false);
   assert.equal(googlePackage.account_context_correction_required, true);
   assert.equal(googlePackage.account_context_correction_implementation_authorized, true);
   assert.equal(googlePackage.account_context_correction_repository_verified, true);
   assert.equal(googlePackage.account_context_correction_deployment_authorized, true);
   assert.equal(googlePackage.account_context_correction_deployment,
     "dpl_GFNme3aUQUJ25723fwU3e7HU235p");
+});
+
+test("retained Google test-account review evidence is complete but never production evidence", () => {
+  assert.equal(testAccountReviewEvidence.execution.status, "complete");
+  assert.equal(testAccountReviewEvidence.execution.account_type_state, "test_observed");
+  assert.equal(testAccountReviewEvidence.execution.query_families_completed, 6);
+  assert.equal(testAccountReviewEvidence.execution.provider_error_observed, false);
+  assert.equal(testAccountReviewEvidence.execution.runtime_error_observed, false);
+  assert.equal(testAccountReviewEvidence.observations.campaign_context_row_count, 0);
+  assert.equal(testAccountReviewEvidence.observations.cart_data_sales_row_count, 0);
+  assert.equal(testAccountReviewEvidence.observations.shopping_product_row_count, 0);
+  assert.equal(testAccountReviewEvidence.observations.current_pmax_listing_tree_row_count, 0);
+  assert.equal(testAccountReviewEvidence.observations.pmax_asset_group_performance_row_count, 0);
+  assert.equal(testAccountReviewEvidence.truth_boundaries.empty_is_real_zero, false);
+  assert.equal(testAccountReviewEvidence.truth_boundaries.product_id_support_proven, false);
+  assert.equal(testAccountReviewEvidence.truth_boundaries.sales_role_support_proven, false);
+  assert.equal(testAccountReviewEvidence.truth_boundaries.production_performance_evidence, false);
+  assert.equal(testAccountReviewEvidence.review_semantics.test_account_disappears_after_access_upgrade,
+    false);
+  assert.equal(testAccountReviewEvidence.review_semantics.same_runtime_supports_test_and_production_accounts,
+    true);
+  assert.equal(testAccountReviewEvidence.next_gate.new_live_provider_call_authorized, false);
+  assert.doesNotMatch(JSON.stringify(testAccountReviewEvidence),
+    /5252399301|5383556660|ya29[.]|vault-refresh|developer-token/i);
 });
 
 test("retained Google live evidence is empty without inventing zero or support", () => {

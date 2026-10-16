@@ -607,7 +607,7 @@
           "id": "A6-EO-04-C",
           "title": "Google Ads adapter",
           "objective": "Standard Shopping Ad Group, Performance Max Retail Asset Group and Search Ad Group hierarchy with truthful product evidence.",
-          "status": "oauth_and_reporting_runtime_accepted_live_evidence_trigger_accepted_and_merged_production_evidence_pending",
+          "status": "oauth_and_reporting_runtime_accepted_live_evidence_trigger_accepted_merged_and_test_account_live_verified_production_evidence_pending",
           "implementation_started": true,
           "oauth_corrective_decision": "docs/decisions/A6_EO_04_C_GOOGLE_OAUTH_CORRECTIVE_REBUILD.md",
           "oauth_test": "tests/eo-04c-google-oauth-corrective-rebuild.test.js",
@@ -659,6 +659,11 @@
           "live_evidence_trigger_merge_authorized": true,
           "live_evidence_trigger_merged_pr": "https://github.com/fyilanli-oss/ads-table-embedded/pull/85",
           "live_evidence_trigger_merge_commit": "54c427733cd51ba8600016941ce7afdd24ac2e64",
+          "test_account_review_evidence": "docs/evidence/EO_04C_GOOGLE_TEST_ACCOUNT_REVIEW_EVIDENCE_2026-10-16.json",
+          "test_account_review_semantics_live_call_authorized": true,
+          "test_account_review_semantics_live_call_completed": true,
+          "test_account_review_semantics_query_families_completed": 6,
+          "test_account_review_semantics_reporting_rows_observed": false,
           "production_evidence_pending_google_ads_api_access": "explorer_or_higher"
         },
         {

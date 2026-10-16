@@ -9,6 +9,7 @@
 - First live Google Ads request: **authorized and stopped on its first failure 16 October 2026**
 - Safe failure logging correction: **authorized 16 October 2026**
 - Single preflight access-token refresh: **authorized 16 October 2026**
+- Successful complete empty live execution: **recorded 16 October 2026**
 - Binding runtime contract: `contracts/eo-04c-google-reporting-runtime-v1.json`
 - Trigger contract: `contracts/eo-04c-google-live-evidence-trigger-v1.json`
 
@@ -92,6 +93,17 @@ evidence. Failure logs must now record only the execution stage, query family,
 safe source/provider code, provider HTTP status and whether a provider response
 was observed. Raw error messages and identifiers remain prohibited. This
 diagnostic record does not enable retry or start the next query family.
+
+The successful production execution is retained at
+`docs/evidence/EO_04C_GOOGLE_PROVIDER_LIVE_EVIDENCE_2026-10-16.json`. All five
+families completed, but no provider rows were observed. This does not prove zero,
+global unsupported behavior, Product ID support or Sales Role support.
+
+The combined account/campaign query uses `FROM campaign`. When it returns no
+campaign rows it also cannot expose `customer.test_account`; therefore the
+selected account remains unclassified as test or production. Before another
+live call, account identity must be read independently from `FROM customer` and
+campaign inventory must remain a separate `FROM campaign` concern.
 
 ## Unchanged behavior and out of scope
 

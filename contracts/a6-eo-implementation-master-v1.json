@@ -607,7 +607,7 @@
           "id": "A6-EO-04-C",
           "title": "Google Ads adapter",
           "objective": "Standard Shopping Ad Group, Performance Max Retail Asset Group and Search Ad Group hierarchy with truthful product evidence.",
-          "status": "oauth_and_reporting_runtime_accepted_google_live_evidence_trigger_in_progress",
+          "status": "oauth_and_reporting_runtime_accepted_complete_empty_live_evidence_account_context_correction_pending",
           "implementation_started": true,
           "oauth_corrective_decision": "docs/decisions/A6_EO_04_C_GOOGLE_OAUTH_CORRECTIVE_REBUILD.md",
           "oauth_test": "tests/eo-04c-google-oauth-corrective-rebuild.test.js",
@@ -632,8 +632,13 @@
           "live_evidence_trigger_brief": "docs/EO_04C_GOOGLE_LIVE_EVIDENCE_TRIGGER_BRIEF.md",
           "live_evidence_trigger_contract": "contracts/eo-04c-google-live-evidence-trigger-v1.json",
           "live_evidence_trigger_implementation_authorized": true,
-          "live_evidence_trigger_deployment_authorized": false,
-          "first_live_reporting_call_authorized": false
+          "live_evidence_trigger_deployment_authorized": true,
+          "live_evidence_trigger_deployment": "dpl_EsUUG8fEiQnPrxSWj7EBT8joPoTX",
+          "first_live_reporting_call_authorized": true,
+          "live_evidence": "docs/evidence/EO_04C_GOOGLE_PROVIDER_LIVE_EVIDENCE_2026-10-16.json",
+          "live_evidence_status": "complete_not_observed_in_this_execution",
+          "account_context_correction_required": true,
+          "additional_live_reporting_call_authorized": false
         },
         {
           "id": "A6-EO-04-D",

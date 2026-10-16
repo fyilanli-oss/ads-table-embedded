@@ -2,12 +2,13 @@
   "schema_version": "1.0.0",
   "contract_id": "eo-04c-google-live-evidence-trigger-v1",
   "package_id": "A6-EO-04-C",
-  "status": "live_failure_observed_safe_failure_logging_fix_authorized",
+  "status": "complete_empty_live_evidence_recorded_account_context_correction_pending",
   "checked_at": "2026-10-16",
   "authority": {
     "execution_plan": "docs/EXECUTION_PLAN.md",
     "analyst_brief": "docs/EO_04C_GOOGLE_LIVE_EVIDENCE_TRIGGER_BRIEF.md",
-    "reporting_runtime_contract": "contracts/eo-04c-google-reporting-runtime-v1.json"
+    "reporting_runtime_contract": "contracts/eo-04c-google-reporting-runtime-v1.json",
+    "live_evidence": "docs/evidence/EO_04C_GOOGLE_PROVIDER_LIVE_EVIDENCE_2026-10-16.json"
   },
   "trigger": {
     "route": "/settings/google-live-evidence",
@@ -79,6 +80,15 @@
     "preflight_access_token_refresh": true,
     "visual_acceptance": true,
     "merge": false
+  },
+  "live_evidence": {
+    "execution_complete": true,
+    "observation_state": "not_observed_in_this_execution",
+    "product_id_support_proven": false,
+    "sales_role_support_proven": false,
+    "account_type_proven": false,
+    "account_context_correction_required_before_next_call": true,
+    "additional_live_call_authorized": false
   },
   "acceptance": {
     "repository_tests_required": true,

@@ -22,6 +22,9 @@ const master = JSON.parse(read("contracts/a6-eo-implementation-master-v1.json"))
 const brief = read("docs/EO_04C_GOOGLE_LIVE_EVIDENCE_TRIGGER_BRIEF.md");
 const route = read("app/routes/settings.google-live-evidence.ts");
 const settings = read("app/routes/_admin.settings.tsx");
+const liveEvidence = JSON.parse(read(
+  "docs/evidence/EO_04C_GOOGLE_PROVIDER_LIVE_EVIDENCE_2026-10-16.json",
+));
 
 const installationAuthority = Object.freeze({
   authority: "shopify_installation_verified",
@@ -428,5 +431,27 @@ test("contracts record completed live gates while preserving retry and merge gat
     .find((child) => child.id === "A6-EO-04-C");
   assert.equal(googlePackage.reporting_runtime_final_product_owner_acceptance, true);
   assert.equal(googlePackage.live_evidence_trigger_implementation_authorized, true);
-  assert.equal(googlePackage.first_live_reporting_call_authorized, false);
+  assert.equal(googlePackage.live_evidence_trigger_deployment_authorized, true);
+  assert.equal(googlePackage.first_live_reporting_call_authorized, true);
+  assert.equal(googlePackage.additional_live_reporting_call_authorized, false);
+  assert.equal(googlePackage.account_context_correction_required, true);
+});
+
+test("retained Google live evidence is empty without inventing zero or support", () => {
+  assert.equal(liveEvidence.repository_commit,
+    "960ad41a7db9446e4be147f18d33d946c8324ae5");
+  assert.equal(liveEvidence.execution.status, "complete");
+  assert.equal(liveEvidence.execution.query_families_completed, 5);
+  assert.equal(liveEvidence.observations.campaign_context_row_count, 0);
+  assert.equal(liveEvidence.observations.cart_data_sales_row_count, 0);
+  assert.equal(liveEvidence.observations.shopping_product_row_count, 0);
+  assert.equal(liveEvidence.observations.current_pmax_listing_tree_row_count, 0);
+  assert.equal(liveEvidence.observations.pmax_asset_group_performance_row_count, 0);
+  assert.equal(liveEvidence.truth_boundaries.empty_is_real_zero, false);
+  assert.equal(liveEvidence.truth_boundaries.product_id_support_proven, false);
+  assert.equal(liveEvidence.truth_boundaries.sales_role_support_proven, false);
+  assert.equal(liveEvidence.next_gate.account_identity_query, "FROM customer");
+  assert.equal(liveEvidence.next_gate.code_change_authorized, false);
+  assert.doesNotMatch(JSON.stringify(liveEvidence),
+    /5252399301|ya29[.]|vault-refresh|developer-token/i);
 });

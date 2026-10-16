@@ -66,6 +66,15 @@ This slice still does **not** establish that product-breakdown impression, click
 
 ## Next gate
 
+Before a live request, the repository authority slice binds both pages to:
+
+1. the verified active Shopify installation;
+2. its connected canonical Meta authority;
+3. exactly one selected Meta Reporting Account;
+4. the server-only encrypted provider-token vault.
+
+The merchant cannot supply or override an account ID, and neither token nor credential ID appears in the result/evidence. The Ad/Channel and product pages are returned together only after both requests succeed; a product-request failure publishes neither page. This slice performs no provider call or database write by itself.
+
 After repository tests and product-owner review, a separately authorized live catalog-response validation may prove or reject the returned product-metric semantics. Only after that evidence may a later Meta-only slice add:
 
 1. Creative/promoted-object exact advertised-product evidence;

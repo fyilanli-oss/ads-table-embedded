@@ -4,8 +4,10 @@ import fs from "node:fs";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
 import {
+  buildProviderLiveEvidenceSafeLog,
   createProviderLiveEvidenceRuntime,
   META_PRODUCT_ACCEPTED_FIELDS,
+  PROVIDER_LIVE_EVIDENCE_SAFE_LOG_PREFIX,
   summarizeMetaLiveEvidence,
   validateProviderLiveEvidenceInput,
 } from "../app/lib/providers/provider-live-evidence.server.js";
@@ -134,6 +136,91 @@ test("Meta acceptance emits shape evidence without raw commercial or authority v
   ]) assert.doesNotMatch(serialized, new RegExp(forbidden.replaceAll(".", "[.]")));
 });
 
+test("server log keeps the required field evidence and excludes identities and hashes", () => {
+  const evidence = summarizeMetaLiveEvidence(metaResult(), "2026-10-15");
+  const safeLog = buildProviderLiveEvidenceSafeLog(evidence);
+
+  assert.equal(PROVIDER_LIVE_EVIDENCE_SAFE_LOG_PREFIX,
+    "[AdsTable provider live evidence safe]");
+  assert.equal(safeLog.channel.row_count, 1);
+  assert.equal(safeLog.product.row_count, 1);
+  assert.deepEqual(safeLog.product.accepted_fields, META_PRODUCT_ACCEPTED_FIELDS);
+  assert.equal(safeLog.product.field_state_counts.product_id.present_string, 1);
+  assert.deepEqual(safeLog.product.converted_product_action_types.quantity.values, [
+    "purchase",
+  ]);
+  assert.equal(safeLog.controls.database_write_performed, false);
+  assert.equal(safeLog.controls.raw_identifiers_or_hashes_logged, false);
+  assert.equal(safeLog.controls.provider_request_id_logged, false);
+  assert.equal(safeLog.controls.cursor_or_cursor_hash_logged, false);
+  assert.ok(serializedLength(safeLog) < 65_536);
+
+  const serialized = JSON.stringify(safeLog);
+  for (const forbidden of [
+    "Secret Merchant Name",
+    "Secret Campaign",
+    "Secret Ad",
+    "shopify_123_456",
+    "act_123456",
+    "22222222-2222-4222-8222-222222222222",
+    "trace-channel",
+    "trace-product",
+    "opaque-channel-cursor",
+    evidence.authority.connection_id_sha256,
+    evidence.channel.row_identity_sha256[0],
+    evidence.product.product_identity_sha256[0],
+  ]) assert.doesNotMatch(serialized, new RegExp(forbidden.replaceAll(".", "[.]")));
+});
+
+function serializedLength(value) {
+  return Buffer.byteLength(JSON.stringify(value), "utf8");
+}
+
+test("server log redacts provider action types outside the bounded log alphabet", () => {
+  const evidence = summarizeMetaLiveEvidence(metaResult(), "2026-10-15");
+  const unsafe = structuredClone(evidence);
+  unsafe.channel.action_type_inventory.actions.values.push("buyer@example.com\nsecret");
+  const safeLog = buildProviderLiveEvidenceSafeLog(unsafe);
+  assert.equal(
+    safeLog.channel.action_type_inventory.actions.redacted_invalid_action_type_count,
+    1,
+  );
+  assert.doesNotMatch(JSON.stringify(safeLog), /buyer@example[.]com|secret/);
+});
+
+test("server log caps valid action-type inventory without inventing zero", () => {
+  const evidence = summarizeMetaLiveEvidence(metaResult(), "2026-10-15");
+  const oversized = structuredClone(evidence);
+  oversized.channel.action_type_inventory.actions.values = Array.from(
+    {length: 60},
+    (_, index) => `valid_action_${index}`,
+  );
+  oversized.channel.row_count = "invalid";
+  oversized.channel.direct_metric_decisions.secret = "must-not-pass";
+  const safeLog = buildProviderLiveEvidenceSafeLog(oversized);
+  assert.equal(safeLog.channel.action_type_inventory.actions.values.length, 50);
+  assert.equal(
+    safeLog.channel.action_type_inventory.actions.truncated_valid_action_type_count,
+    10,
+  );
+  assert.equal(safeLog.channel.row_count, null);
+  assert.doesNotMatch(JSON.stringify(safeLog), /must-not-pass|secret/);
+});
+
+test("server log rejects incomplete, non-Meta, and invalid-date evidence", () => {
+  const evidence = summarizeMetaLiveEvidence(metaResult(), "2026-10-15");
+  for (const [invalid, expectedCode] of [
+    [{...evidence, status: "failed"}, "LIVE_EVIDENCE_SAFE_LOG_RESULT_INVALID"],
+    [{...evidence, provider: "google_ads"}, "LIVE_EVIDENCE_SAFE_LOG_RESULT_INVALID"],
+    [{...evidence, business_date: "2026-02-30"}, "LIVE_EVIDENCE_SAFE_LOG_DATE_INVALID"],
+  ]) {
+    assert.throws(
+      () => buildProviderLiveEvidenceSafeLog(invalid),
+      (error) => error?.code === expectedCode,
+    );
+  }
+});
+
 test("runtime performs one Meta attempt and never starts another provider", async () => {
   const calls = [];
   const runtime = createProviderLiveEvidenceRuntime({
@@ -237,10 +324,21 @@ test("contract keeps product fields raw and the temporary route non-visual", () 
   );
   assert.equal(contract.http_trigger.route, "/settings/provider-live-evidence");
   assert.equal(contract.mutations.database_write, false);
-  assert.equal(contract.product_owner_authorization.live_provider_call, false);
-  assert.equal(contract.product_owner_authorization.deployment, false);
+  assert.equal(contract.product_owner_authorization.live_provider_call, true);
+  assert.equal(contract.product_owner_authorization.deployment, true);
+  assert.equal(contract.product_owner_authorization.merge, true);
+  assert.equal(contract.product_owner_authorization.safe_server_log_merge, false);
+  assert.equal(contract.product_owner_authorization.safe_server_log_deployment, false);
+  assert.equal(contract.product_owner_authorization.next_live_provider_call, false);
+  assert.equal(contract.repository_implementation.successful_live_route_executions_observed, 2);
+  assert.equal(contract.repository_implementation.safe_response_payload_retained, false);
+  assert.equal(contract.repository_implementation.safe_server_log_deployed, false);
   assert.match(route, /resolveReadOnlyShopifyRouteAuthority/);
   assert.match(route, /authenticate\.admin/);
+  assert.match(route, /PROVIDER_LIVE_EVIDENCE_SAFE_LOG_PREFIX/);
+  assert.match(route, /JSON[.]stringify\(buildProviderLiveEvidenceSafeLog\(result\)\)/);
+  assert.equal(route.match(/console[.]info/g)?.length, 1);
+  assert.doesNotMatch(route, /console[.]info\([^\n]*result[^\n]*\)/);
   assert.doesNotMatch(route, /<s-|useSubmit|useFetcher|Form/);
   assert.match(brief, /separate product-owner decision/i);
   assert.match(brief, /does not expose provider rows/i);
@@ -255,6 +353,7 @@ test("connected Meta exposes only the approved one-attempt evidence button", () 
   assert.match(settings, /metaEvidenceAttempted[.]current = true/);
   assert.match(settings, /loading=\{metaEvidenceStatus === "loading"\}/);
   assert.match(settings, /disabled=\{metaEvidenceStatus === "complete" \|\| metaEvidenceStatus === "failed"\}/);
+  assert.doesNotMatch(settings, /console[.](?:info|error)\("\[AdsTable Meta evidence\]/);
   assert.doesNotMatch(settings, /Meta evidence date|meta-evidence-modal/);
   assert.match(brief, /no modal, date input, new section or custom styling/i);
 });

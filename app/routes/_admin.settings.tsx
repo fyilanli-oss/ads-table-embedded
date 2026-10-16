@@ -696,14 +696,11 @@ export default function Settings() {
       });
       const result = await response.json();
       if (!response.ok || result?.status !== "complete") {
-        console.error("[AdsTable Meta evidence]", result);
         setMetaEvidenceStatus("failed");
         return;
       }
-      console.info("[AdsTable Meta evidence]", result);
       setMetaEvidenceStatus("complete");
     } catch {
-      console.error("[AdsTable Meta evidence] request failed");
       setMetaEvidenceStatus("failed");
     }
   };

@@ -500,6 +500,9 @@ export default function Settings() {
   const metaReportingModal = useRef<any>(null);
   const openedMetaSetupView = useRef<"pending" | "pending_reporting" | null>(null);
   const metaResumeRequested = useRef(false);
+  const metaEvidenceAttempted = useRef(false);
+  const [metaEvidenceStatus, setMetaEvidenceStatus] =
+    useState<"idle" | "loading" | "complete" | "failed">("idle");
   const klaviyoInitialSpend = useRef<any>(null);
   const klaviyoAccountChoice = useRef<any>(null);
   const klaviyoSetupModal = useRef<any>(null);
@@ -676,6 +679,33 @@ export default function Settings() {
     form.set("provider", "meta");
     if (reportingAccountId) form.set("reportingAccountId", reportingAccountId);
     submit(form, {method: "post"});
+  };
+
+  const runMetaEvidence = async () => {
+    if (metaEvidenceAttempted.current) return;
+    metaEvidenceAttempted.current = true;
+    setMetaEvidenceStatus("loading");
+    try {
+      const response = await fetch("/settings/provider-live-evidence", {
+        method: "POST",
+        headers: {"content-type": "application/json"},
+        body: JSON.stringify({
+          provider: "meta",
+          business_date: "2026-10-01",
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok || result?.status !== "complete") {
+        console.error("[AdsTable Meta evidence]", result);
+        setMetaEvidenceStatus("failed");
+        return;
+      }
+      console.info("[AdsTable Meta evidence]", result);
+      setMetaEvidenceStatus("complete");
+    } catch {
+      console.error("[AdsTable Meta evidence] request failed");
+      setMetaEvidenceStatus("failed");
+    }
   };
 
   const submitKlaviyoSpend = (
@@ -918,6 +948,17 @@ export default function Settings() {
                   </s-paragraph>
                 ))}
               </s-stack>
+              <s-button
+                loading={metaEvidenceStatus === "loading"}
+                disabled={metaEvidenceStatus === "complete" || metaEvidenceStatus === "failed"}
+                onClick={runMetaEvidence}
+              >
+                {metaEvidenceStatus === "complete"
+                  ? "Meta evidence received"
+                  : metaEvidenceStatus === "failed"
+                    ? "Meta evidence failed"
+                    : "Run Meta evidence"}
+              </s-button>
               <s-button commandFor="meta-reporting-modal" command="--show">
                 Reporting Account
               </s-button>

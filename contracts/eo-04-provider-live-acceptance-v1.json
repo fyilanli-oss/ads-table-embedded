@@ -18,6 +18,9 @@
     "route": "/settings/provider-live-evidence",
     "method": "POST",
     "visual_product_surface": false,
+    "temporary_settings_button": true,
+    "temporary_settings_button_business_date": "2026-10-01",
+    "temporary_settings_button_single_attempt_per_page_load": true,
     "shopify_admin_authentication_required": true,
     "read_only_existing_installation_authority": true,
     "accepted_input_fields": ["provider", "business_date"],
@@ -82,7 +85,7 @@
     "dataset_v2": false,
     "database_write": false,
     "oauth": false,
-    "ui": false,
+    "ui": "existing_meta_section_single_temporary_button_only",
     "scheduler": false,
     "secret_or_environment": false,
     "deployment": false
@@ -91,6 +94,7 @@
     "runtime": "app/lib/providers/provider-live-evidence.server.js",
     "types": "app/lib/providers/provider-live-evidence.server.d.ts",
     "resource_route": "app/routes/settings.provider-live-evidence.ts",
+    "temporary_settings_button": "app/routes/_admin.settings.tsx",
     "tests": "tests/eo-04-provider-live-acceptance.test.js",
     "live_provider_call_performed": false,
     "deployment_performed": false

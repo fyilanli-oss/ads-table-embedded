@@ -21,6 +21,7 @@ const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "u
 const contract = JSON.parse(read("contracts/eo-04-provider-live-acceptance-v1.json"));
 const brief = read("docs/EO_04_PROVIDER_LIVE_ACCEPTANCE_START_BRIEF.md");
 const route = read("app/routes/settings.provider-live-evidence.ts");
+const settings = read("app/routes/_admin.settings.tsx");
 
 const installationAuthority = Object.freeze({
   authority: "shopify_installation_verified",
@@ -225,6 +226,15 @@ test("contract keeps product fields raw and the temporary route non-visual", () 
     (field) => META_PRODUCT_BREAKDOWN_INSIGHTS_FIELDS.includes(field),
   ));
   assert.equal(contract.http_trigger.visual_product_surface, false);
+  assert.equal(contract.http_trigger.temporary_settings_button, true);
+  assert.equal(
+    contract.http_trigger.temporary_settings_button_business_date,
+    "2026-10-01",
+  );
+  assert.equal(
+    contract.http_trigger.temporary_settings_button_single_attempt_per_page_load,
+    true,
+  );
   assert.equal(contract.http_trigger.route, "/settings/provider-live-evidence");
   assert.equal(contract.mutations.database_write, false);
   assert.equal(contract.product_owner_authorization.live_provider_call, false);
@@ -234,4 +244,17 @@ test("contract keeps product fields raw and the temporary route non-visual", () 
   assert.doesNotMatch(route, /<s-|useSubmit|useFetcher|Form/);
   assert.match(brief, /separate product-owner decision/i);
   assert.match(brief, /does not expose provider rows/i);
+});
+
+test("connected Meta exposes only the approved one-attempt evidence button", () => {
+  assert.match(settings, /"Run Meta evidence"/);
+  assert.match(settings, /fetch\("\/settings\/provider-live-evidence"/);
+  assert.match(settings, /provider: "meta"/);
+  assert.match(settings, /business_date: "2026-10-01"/);
+  assert.match(settings, /if \(metaEvidenceAttempted[.]current\) return/);
+  assert.match(settings, /metaEvidenceAttempted[.]current = true/);
+  assert.match(settings, /loading=\{metaEvidenceStatus === "loading"\}/);
+  assert.match(settings, /disabled=\{metaEvidenceStatus === "complete" \|\| metaEvidenceStatus === "failed"\}/);
+  assert.doesNotMatch(settings, /Meta evidence date|meta-evidence-modal/);
+  assert.match(brief, /no modal, date input, new section or custom styling/i);
 });

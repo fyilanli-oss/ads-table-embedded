@@ -3,7 +3,7 @@
   "contract_id": "a6-eo-implementation-master-v1",
   "title": "A6 EO single-track execution rule and integrated implementation package table",
   "effective_date": "2026-10-04",
-  "status": "EO-04_active_EO-04-E_channel_contract_review_gate",
+  "status": "EO-04_active_EO-04-E_contract_accepted_runtime_start_gate",
   "authority": {
     "execution_plan": "docs/EXECUTION_PLAN.md",
     "EO_GO": "contracts/a6-eo-f7-go-decision-v1.json",
@@ -575,7 +575,7 @@
           "id": "A6-EO-04-B",
           "title": "Meta adapter",
           "objective": "Meta Campaign, Ad Set and Ad hierarchy with deepest verified grain and raw structure evidence.",
-          "status": "oauth_accepted_reporting_contract_ready_for_acceptance",
+          "status": "oauth_accepted_reporting_contract_accepted_runtime_not_started",
           "implementation_started": true,
           "live_mutation_authorized": true,
           "start_brief_accepted": true,
@@ -599,7 +599,7 @@
           "id": "A6-EO-04-C",
           "title": "Google Ads adapter",
           "objective": "Standard Shopping Ad Group, Performance Max Retail Asset Group and Search Ad Group hierarchy with truthful product evidence.",
-          "status": "oauth_accepted_reporting_contract_ready_for_acceptance",
+          "status": "oauth_accepted_reporting_contract_accepted_runtime_not_started",
           "implementation_started": true,
           "oauth_corrective_decision": "docs/decisions/A6_EO_04_C_GOOGLE_OAUTH_CORRECTIVE_REBUILD.md",
           "oauth_test": "tests/eo-04c-google-oauth-corrective-rebuild.test.js",
@@ -612,7 +612,7 @@
           "id": "A6-EO-04-D",
           "title": "Klaviyo adapter",
           "objective": "Campaign Variation and Flow Message/Variation reporting, event product evidence and separately governed estimated-spend input.",
-          "status": "oauth_and_estimated_spend_accepted_reporting_contract_ready_for_acceptance",
+          "status": "oauth_and_estimated_spend_accepted_reporting_contract_accepted_runtime_not_started",
           "implementation_started": true,
           "document": "docs/EO_04D_KLAVIYO_OAUTH_ESTIMATED_SPEND_START_BRIEF.md",
           "contract": "contracts/eo-04d-klaviyo-oauth-estimated-spend-v1.json",
@@ -633,13 +633,14 @@
           "id": "A6-EO-04-E",
           "title": "Integrated three-provider acceptance",
           "objective": "Provider-isolated and combined non-fabricated acceptance evidence.",
-          "status": "channel_contract_ready_for_product_owner_acceptance",
+          "status": "channel_contract_accepted_runtime_not_started",
           "analyst_brief": "docs/EO_04E_THREE_PROVIDER_CHANNEL_PRODUCT_ECONOMICS_START_BRIEF.md",
           "contract": "contracts/eo-04e-three-provider-channel-product-economics-v1.json",
           "ci_test": "tests/eo-04e-three-provider-channel-product-economics.test.js",
           "runtime_implementation_started": false,
           "live_provider_acceptance_started": false,
-          "product_owner_contract_acceptance": false
+          "product_owner_contract_acceptance": true,
+          "product_owner_contract_accepted_at": "2026-10-16"
         }
       ],
       "outputs": [
@@ -998,7 +999,7 @@
   "legacy_deletion_authorized": false,
   "current_active_parent": "A6-EO-04",
   "current_active_child": "A6-EO-04-E",
-  "current_gate": "A6-EO-04-E_channel_contract_product_owner_acceptance",
+  "current_gate": "A6-EO-04-E_provider_reporting_runtime_start_approval",
   "next_ready_child": null,
   "independent_packages": [
     {

@@ -9,11 +9,13 @@ const contract = JSON.parse(
   ),
 );
 
-test("EO-04-E remains an acceptance contract and does not authorize runtime or live provider work", () => {
-  assert.equal(contract.status, "ready_for_product_owner_acceptance");
+test("EO-04-E contract is accepted without authorizing runtime or live provider work", () => {
+  assert.equal(contract.status, "accepted_product_owner_runtime_not_authorized");
   assert.equal(contract.acceptance.runtime_implementation_authorized, false);
   assert.equal(contract.acceptance.live_provider_calls_authorized, false);
   assert.equal(contract.acceptance.product_owner_acceptance_required, true);
+  assert.equal(contract.acceptance.product_owner_contract_acceptance, true);
+  assert.equal(contract.acceptance.product_owner_contract_accepted_at, "2026-10-16");
   assert.equal(contract.acceptance.first_provider_error_stops_next_provider, true);
 });
 

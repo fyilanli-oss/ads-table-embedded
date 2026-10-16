@@ -141,7 +141,7 @@ CI enforcement: `tests/eo-04a-common-adapter-start-brief.test.js`
 - **EO-03-C — Accepted:** Fresh provider-verified connected accounts and one canonical Meta/Google Reporting Account are bound beneath the immutable installed-Shopify-store authority. Klaviyo remains one Connected Account with no Reporting Account control. No merchant-selectable store scope exists.
 - With explicit approval, the EO-03-C base and corrective Supabase migrations were applied on 9 October 2026. Rollback-scoped synthetic runtime acceptance passed, cleanup is zero, Security Advisor findings are zero and EO-03-C introduced no unindexed-foreign-key finding. No provider API call, provider OAuth, Vercel mutation or production deploy occurred. The product owner explicitly closed EO-03-C on 9 October 2026; exact evidence is `docs/evidence/EO_03C_LIVE_ACCEPTANCE_2026-10-09.json`.
 - **EO-03-D — Accepted:** Reauthorization, atomic credential renewal, two-phase disconnect and same-canonical-connection reconnect passed the complete rollback-scoped live lifecycle scenario. All synthetic rows rolled back to zero, Security Advisor remained at zero, and no provider API/OAuth/Vercel/deploy mutation occurred. Durable evidence: `evidence/eo-03d-live-database-evidence-2026-10-09.json`.
-- **EO-03 — Accepted:** All four children are closed with explicit product-owner acceptance. **EO-04 — Active:** EO-04-A is Accepted. Meta, Google Ads and Klaviyo connection/setup slices are accepted; provider reporting runtime has not started. EO-04-E common Channel and product-economics contract is the active review gate.
+- **EO-03 — Accepted:** All four children are closed with explicit product-owner acceptance. **EO-04 — Active:** EO-04-A is Accepted. Meta, Google Ads and Klaviyo connection/setup slices are accepted. EO-04-E common Channel and product-economics contract was accepted by the product owner on 16 October 2026; provider reporting runtime has not started and remains a separate approval gate.
 
 ## EO-03-C official provider baseline — 9 Ekim 2026
 
@@ -243,7 +243,7 @@ EO-02-C internal caller kodu tek başına canlı tetikleyici değildir. `docs/EO
 - Meta için uydurma refresh-grant davranışı yoktur. Google Ads ve Klaviyo `invalid_grant` sonucu reauthorization gerektirir; Klaviyo token/revoke host'u `a.klaviyo.com` olarak sabittir.
 - Authority: `docs/EO_03D_PROVIDER_CONNECTION_LIFECYCLE.md` ve `contracts/eo-03d-provider-connection-lifecycle-v1.json`.
 - Base migration ile dört ileri-yönlü düzeltme canlı Supabase'de uygulanmış ve doğrulanmıştır. Bu kabul provider API çağrısı, canlı provider OAuth, provider-console mutation, Vercel mutation veya production deploy içermez.
-- EO-04 **Active** durumundadır. `A6-EO-04-A` kabul edilmiştir. Meta, Google Ads ve Klaviyo connection/setup akışları kabul edilmiştir. Provider reporting runtime başlamamıştır; active gate ortak EO-04-E Channel ve product-economics sözleşmesinin ürün sahibi kabulüdür.
+- EO-04 **Active** durumundadır. `A6-EO-04-A` kabul edilmiştir. Meta, Google Ads ve Klaviyo connection/setup akışları kabul edilmiştir. Ortak EO-04-E Channel ve product-economics sözleşmesi 16 Ekim 2026'da ürün sahibi tarafından kabul edilmiştir. Provider reporting runtime başlamamıştır; active gate ayrı runtime başlangıç onayıdır.
 
 
 ## 10 October 2026 — EO-04-A common adapter implementation gate
@@ -324,18 +324,18 @@ Official capability record: `docs/decisions/A6_EO_04_D_KLAVIYO_REPORTING_CAPABIL
 
 ## EO-04-E common Channel and product-economics contract gate — 16 October 2026
 
-Binding candidate brief: `docs/EO_04E_THREE_PROVIDER_CHANNEL_PRODUCT_ECONOMICS_START_BRIEF.md`
+Binding accepted brief: `docs/EO_04E_THREE_PROVIDER_CHANNEL_PRODUCT_ECONOMICS_START_BRIEF.md`
 
 Executable contract: `contracts/eo-04e-three-provider-channel-product-economics-v1.json`
 
 CI enforcement: `tests/eo-04e-three-provider-channel-product-economics.test.js`
 
 - Meta Channel = Ad; Google Standard Shopping/Search Channel = Ad Group; Google PMax Retail Channel = Asset Group; Klaviyo Campaign Channel = Campaign Variation; Klaviyo Flow Channel = attributed Flow Message Variation veya Flow Message.
-- Sales Role sözlüğü `Advertised`, `Cross-sell`, `Assisted`, `Triggered` ve yalnız gerçek ambiguity için `Unclassified` olarak sabitlenmeye hazırdır.
+- Sales Role sözlüğü `Advertised`, `Cross-sell`, `Assisted`, `Triggered` ve yalnız gerçek ambiguity için `Unclassified` olarak kabul edilmiştir.
 - `Zero Value` bir role değil modifier'dır. `Unknown Channel`, sale kanıtı bulunduğu halde exact Channel çözülemediğini ifade eder.
 - PMax broad/overlapping listing üyeliği aşağıya paylaştırılmaz. Search provider-attributed product sale'i bastırılmaz; `Assisted` olur.
 - Meta Ad spend ürünlere dağıtılmaz. Google provider product cost gerçek/blended maliyet sayılmaz. Klaviyo Estimated Spend dağıtımı EO-05'e bırakılır.
 - `Channel Ad Cost`, `Provider Product Ad Cost` ve EO-05'e ait `Allocated Ad Cost` ayrı kalır. Explicit zero dışındaki eksik/support state'leri sıfır olmaz; product cost satırları Channel toplamını yeniden üretmez.
 - Exact provider ürün Ad Cost'u `Cross-sell`, `Assisted`, `Zero Value` veya `Unknown Channel` nedeniyle silinmez ve ilgili ürün satırında korunur. Exact product cost yoksa Channel toplamı ürünlere tahminî dağıtılmaz; Klaviyo `Triggered` allocation'ı EO-05'e aittir.
 - Desteklenen product identity yolları resmî Shopify-managed Facebook & Instagram, Google & YouTube ve Klaviyo entegrasyonlarıdır. Meta ve Google product/variant adayları Shopify Admin API ile doğrulanmadan SKU, ürün adı veya varyant adı yayımlanmaz; manual/third-party feed/catalog bu sürümde kapsam dışıdır.
-- Bu gate henüz ürün sahibi tarafından bütün olarak kabul edilmemiştir. Provider reporting runtime, canlı provider çağrısı, Dataset V2, migration veya environment/deployment mutation başlatmaz.
+- Bu contract gate ürün sahibi tarafından 16 Ekim 2026'da bütün olarak kabul edilmiştir. Kabul tek başına provider reporting runtime, canlı provider çağrısı, Dataset V2, migration veya environment/deployment mutation başlatmaz; bunlar ayrı onay kapısındadır.

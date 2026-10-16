@@ -3,8 +3,9 @@
 ## Belge durumu
 
 - Paket: `A6-EO-04-E`
-- Durum: `ready_for_product_owner_acceptance`
+- Durum: `accepted_product_owner_runtime_not_authorized`
 - Kontrol tarihi: 16 Ekim 2026
+- Ürün sahibi sözleşme kabulü: 16 Ekim 2026
 - Executable contract: `contracts/eo-04e-three-provider-channel-product-economics-v1.json`
 - CI enforcement: `tests/eo-04e-three-provider-channel-product-economics.test.js`
 - Bu brief kabul edilmeden provider reporting runtime'ı, canlı provider çağrısı, Dataset V2, migration, secret, environment veya deployment değişikliği yapılamaz.
@@ -200,7 +201,7 @@ Provider-isolated ve combined deterministic acceptance aşağıdakileri kanıtla
 
 ## Açık kabul ve uygulama kapıları
 
-1. Ürün sahibi bu brief ve executable contract'ı açıkça kabul eder.
+1. **PASS — 16 Ekim 2026:** Ürün sahibi bu brief ve executable contract'ı açıkça kabul etti.
 2. Meta, Google ve Klaviyo provider-data runtime'ları ayrı child paket sahipliğinde uygulanır; bir provider düzeltmesi diğerini değiştirmez.
 3. İlk provider hatasında durulur; sonraki provider'a ilerlenmez.
 4. Gerçek provider response gerektiren capability alanları `validation_pending` kalır; synthetic test ile `supported` yapılamaz.

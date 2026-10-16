@@ -93,7 +93,7 @@ Desteklenen kimlik yolu resmî Klaviyo Shopify entegrasyonudur. Özel/manual eve
 | Flow Event -> Message Variation | documented_stable | Event attribution relationship |
 | Campaign daily series | unavailable | Campaign Values var; Campaign Series yok |
 | Email cost allocation | EO05_only | Estimated Spend var; dağıtım EO-04 işi değil |
-| AdsTable Channel kararı | ready_for_product_owner_acceptance | Ortak brief/contract hazır |
+| AdsTable Channel kararı | accepted_2026-10-16 | Ortak EO-04-E brief/contract ürün sahibi tarafından kabul edildi; runtime ayrıca onaylanacak |
 | Dataset mapping | not_started | EO-05 sorumluluğu |
 
 ## Uygulama kapısı

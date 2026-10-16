@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "contract_id": "eo-04e-three-provider-channel-product-economics-v1",
   "package_id": "A6-EO-04-E",
-  "status": "ready_for_product_owner_acceptance",
+  "status": "accepted_product_owner_runtime_not_authorized",
   "checked_at": "2026-10-16",
   "authority": {
     "execution_plan": "docs/EXECUTION_PLAN.md",
@@ -222,7 +222,9 @@
     "first_provider_error_stops_next_provider": true,
     "runtime_implementation_authorized": false,
     "live_provider_calls_authorized": false,
-    "product_owner_acceptance_required": true
+    "product_owner_acceptance_required": true,
+    "product_owner_contract_acceptance": true,
+    "product_owner_contract_accepted_at": "2026-10-16"
   }
 }
 

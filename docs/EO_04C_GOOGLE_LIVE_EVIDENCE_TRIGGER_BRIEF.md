@@ -17,6 +17,7 @@
 - Test-account review semantics production deployment: **completed 16 October 2026**
 - Test-account review semantics desktop/mobile visual acceptance: **accepted by product owner 16 October 2026**
 - Live-evidence trigger and review semantics merge: **PR #85 merged as `54c427733cd51ba8600016941ce7afdd24ac2e64` on 16 October 2026**
+- Test-account review demo live verification: **successful 16 October 2026; six query families completed without provider or runtime error**
 - Binding runtime contract: `contracts/eo-04c-google-reporting-runtime-v1.json`
 - Trigger contract: `contracts/eo-04c-google-live-evidence-trigger-v1.json`
 
@@ -151,6 +152,20 @@ The product owner then explicitly authorized merge. PR #85 was merged into
 automatic second Vercel Production deployment was created by the merge.
 Production performance evidence remains pending Google Ads API Explorer-or-higher
 access; another live provider request remains separately gated.
+
+The product owner then separately authorized one live test-account review-demo
+execution. The real Shopify Admin terminal state verified `test_observed` and
+completed all six read-only query families without provider error, runtime error
+or retry. Campaign context, Cart Data sales, Shopping product performance,
+current PMax listing tree and PMax Asset Group performance each returned zero
+rows. Those empty results mean only `not_observed_in_this_execution`; they are
+not numeric zero, global unsupported evidence, Product ID support, Sales Role
+support or Production performance evidence. Durable bounded evidence is
+`docs/evidence/EO_04C_GOOGLE_TEST_ACCOUNT_REVIEW_EVIDENCE_2026-10-16.json`.
+Google's official access-level and test-account documentation was rechecked on
+16 October 2026: Explorer-or-higher adds Production account access and does not
+remove Test account access. The shared runtime therefore remains unchanged;
+the observed account type and returned data change, not the query structure.
 
 ## Unchanged behavior and out of scope
 

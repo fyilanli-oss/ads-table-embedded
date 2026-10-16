@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0.0",
+  "evidence_id": "EO-04C-GOOGLE-TEST-ACCOUNT-REVIEW-EVIDENCE-2026-10-16",
+  "package_id": "A6-EO-04-C",
+  "status": "recorded_successful_test_account_review_demo",
+  "recorded_at_utc": "2026-10-16T19:17:54.9117978Z",
+  "observed_during": "2026-10-16_product_owner_session",
+  "provider": "google_ads",
+  "runtime_version": "1.2.0",
+  "repository_commit": "16a54df48e853c282d9c3481fb9e3b7c2b2ca16d",
+  "production_deployment": "dpl_AQWkrVxdQvVzxPQkeNbhwXXwcXXQ",
+  "evidence_source": "product_owner_transcription_of_real_shopify_admin_terminal_state",
+  "execution": {
+    "status": "complete",
+    "account_type_state": "test_observed",
+    "query_families_completed": 6,
+    "provider_error_observed": false,
+    "runtime_error_observed": false,
+    "provider_retry_performed": false,
+    "database_write_performed": false,
+    "dataset_v2_write_performed": false
+  },
+  "observations": {
+    "overall": "not_observed_in_this_execution",
+    "campaign_context_row_count": 0,
+    "cart_data_sales_row_count": 0,
+    "shopping_product_row_count": 0,
+    "current_pmax_listing_tree_row_count": 0,
+    "pmax_asset_group_performance_row_count": 0
+  },
+  "truth_boundaries": {
+    "test_account_verified": true,
+    "test_account_serving_evidence": false,
+    "empty_is_real_zero": false,
+    "empty_is_global_unsupported": false,
+    "product_id_support_proven": false,
+    "sales_role_support_proven": false,
+    "pmax_listing_tree_shape_proven": false,
+    "publishable_to_dataset_v2": false,
+    "production_performance_evidence": false
+  },
+  "review_semantics": {
+    "review_only_runtime_branch": false,
+    "test_account_disappears_after_access_upgrade": false,
+    "same_runtime_supports_test_and_production_accounts": true,
+    "production_account_access_requires": "explorer_or_higher",
+    "production_account_changes_observed_account_and_data_not_query_structure": true
+  },
+  "retention_boundary": {
+    "raw_provider_rows_retained": false,
+    "numeric_commercial_values_retained": false,
+    "raw_names_or_identifiers_retained": false,
+    "provider_request_id_retained": false,
+    "cursor_or_cursor_hash_retained": false,
+    "token_or_credential_retained": false
+  },
+  "official_evidence": {
+    "checked_at": "2026-10-16",
+    "access_levels": "https://developers.google.com/google-ads/api/docs/api-policy/access-levels",
+    "test_accounts": "https://developers.google.com/google-ads/api/docs/best-practices/test-accounts",
+    "verified_rule": "explorer_or_higher_adds_production_account_access_without_removing_test_account_access"
+  },
+  "next_gate": {
+    "decision": "retain_shared_runtime_and_wait_for_explorer_or_higher_production_access",
+    "new_live_provider_call_authorized": false,
+    "code_change_authorized": false,
+    "production_evidence_complete": false
+  }
+}

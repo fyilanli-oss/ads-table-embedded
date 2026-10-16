@@ -1,14 +1,15 @@
 {
-  "schema_version": "1.2.0",
+  "schema_version": "1.3.0",
   "contract_id": "eo-04c-google-live-evidence-trigger-v1",
   "package_id": "A6-EO-04-C",
-  "status": "accepted_and_merged_test_account_demo_production_evidence_pending",
+  "status": "accepted_merged_and_live_verified_test_account_demo_production_evidence_pending",
   "checked_at": "2026-10-16",
   "authority": {
     "execution_plan": "docs/EXECUTION_PLAN.md",
     "analyst_brief": "docs/EO_04C_GOOGLE_LIVE_EVIDENCE_TRIGGER_BRIEF.md",
     "reporting_runtime_contract": "contracts/eo-04c-google-reporting-runtime-v1.json",
-    "live_evidence": "docs/evidence/EO_04C_GOOGLE_PROVIDER_LIVE_EVIDENCE_2026-10-16.json"
+    "live_evidence": "docs/evidence/EO_04C_GOOGLE_PROVIDER_LIVE_EVIDENCE_2026-10-16.json",
+    "test_account_review_evidence": "docs/evidence/EO_04C_GOOGLE_TEST_ACCOUNT_REVIEW_EVIDENCE_2026-10-16.json"
   },
   "trigger": {
     "route": "/settings/google-live-evidence",
@@ -97,7 +98,8 @@
     "merge": true,
     "merged_pr": "https://github.com/fyilanli-oss/ads-table-embedded/pull/85",
     "merge_commit": "54c427733cd51ba8600016941ce7afdd24ac2e64",
-    "merged_at": "2026-10-16T19:05:19Z"
+    "merged_at": "2026-10-16T19:05:19Z",
+    "test_account_review_semantics_live_call": true
   },
   "live_evidence": {
     "execution_complete": true,
@@ -117,7 +119,12 @@
     "test_account_review_semantics_deployment_commit": "16a54df48e853c282d9c3481fb9e3b7c2b2ca16d",
     "deployment_ready": true,
     "deployment_alias_error": false,
-    "initial_error_fatal_scan": "clean"
+    "initial_error_fatal_scan": "clean",
+    "test_account_demo_execution_complete": true,
+    "test_account_demo_query_families_completed": 6,
+    "test_account_demo_reporting_rows_observed": false,
+    "test_account_demo_provider_error_observed": false,
+    "test_account_demo_runtime_error_observed": false
   },
   "acceptance": {
     "repository_tests_required": true,

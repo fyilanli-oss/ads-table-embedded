@@ -37,3 +37,28 @@ export async function resolveShopifyRouteAuthority({
     installationAuthority: oauthInstallationAuthority(installation),
   });
 }
+
+export async function resolveReadOnlyShopifyRouteAuthority({
+  request,
+  authenticateAdmin,
+  database,
+}) {
+  if (typeof authenticateAdmin !== "function") {
+    throw new TypeError("authenticateAdmin is required");
+  }
+  const context = await authenticateAdmin(request);
+  const identity = await readVerifiedShopifyAdminIdentity({
+    admin: context.admin,
+    sessionToken: context.sessionToken,
+  });
+  const installation = await createShopifyRuntimeRepositories(database).installation.resolveActive({
+    shopId: identity.shop.shopId,
+    shopDomain: identity.shop.myshopifyDomain,
+  });
+  return Object.freeze({
+    context,
+    identity,
+    installation,
+    installationAuthority: oauthInstallationAuthority(installation),
+  });
+}

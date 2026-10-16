@@ -54,6 +54,15 @@
     "database_write": false,
     "live_provider_call": false
   },
+  "temporary_live_acceptance_transport": {
+    "contract": "contracts/eo-04-provider-live-acceptance-v1.json",
+    "brief": "docs/EO_04_PROVIDER_LIVE_ACCEPTANCE_START_BRIEF.md",
+    "repository_implementation_authorized": true,
+    "deployment_authorized": false,
+    "live_provider_call_authorized": false,
+    "ad_click_session_and_funnel_mapping": "pending_live_evidence_and_product_owner_decision",
+    "product_breakdown_standardized": false
+  },
   "mutations": {
     "live_provider_call": false,
     "dataset_v2": false,
@@ -64,7 +73,7 @@
     "secret_or_environment": false,
     "deployment": false
   },
-  "next_gate": "product_owner_acceptance_before_separately_authorized_live_meta_product_breakdown_validation",
+  "next_gate": "repository_acceptance_before_separate_deployment_and_live_meta_call_authorizations",
   "google_runtime_started": false,
   "klaviyo_runtime_started": false
 }

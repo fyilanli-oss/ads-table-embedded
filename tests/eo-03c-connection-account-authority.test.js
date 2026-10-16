@@ -489,6 +489,6 @@ test("contract keeps installed Shopify shop authoritative after EO-03 closure", 
   assert.equal(master.next_ready_child, null);
   assert.equal(
     master.current_gate,
-    "A6-EO-04-C_google_test_account_review_semantics_repository_verified_deployment_separately_gated",
+    "A6-EO-04-C_google_test_account_review_semantics_deployed_visual_acceptance_pending",
   );
 });

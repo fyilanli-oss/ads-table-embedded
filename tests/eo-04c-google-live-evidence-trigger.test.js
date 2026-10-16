@@ -450,12 +450,16 @@ test("contracts record completed live gates while preserving retry and merge gat
   assert.equal(contract.product_owner_authorization.test_account_review_semantics_implementation,
     true);
   assert.equal(contract.product_owner_authorization.test_account_review_semantics_deployment,
-    false);
+    true);
+  assert.equal(contract.product_owner_authorization.test_account_review_semantics_deployment_id,
+    "dpl_AQWkrVxdQvVzxPQkeNbhwXXwcXXQ");
+  assert.equal(contract.product_owner_authorization.test_account_review_semantics_deployment_commit,
+    "16a54df48e853c282d9c3481fb9e3b7c2b2ca16d");
   assert.equal(contract.status,
-    "test_account_observed_review_semantics_repository_verified_deployment_pending");
+    "test_account_observed_review_semantics_deployed_visual_acceptance_pending");
   assert.equal(contract.live_evidence.account_type_proven, true);
   assert.equal(contract.live_evidence.account_type_state, "test_observed");
-  assert.equal(contract.product_owner_authorization.visual_acceptance, true);
+  assert.equal(contract.product_owner_authorization.visual_acceptance, false);
   assert.equal(contract.product_owner_authorization.merge, false);
   assert.equal(contract.failure_evidence.server_log_required, true);
   assert.equal(contract.failure_evidence.provider_request_id_logged, false);
@@ -476,6 +480,8 @@ test("contracts record completed live gates while preserving retry and merge gat
   assert.equal(googlePackage.first_live_reporting_call_authorized, true);
   assert.equal(googlePackage.additional_live_reporting_call_authorized, false);
   assert.equal(googlePackage.test_account_review_semantics_repository_verified, true);
+  assert.equal(googlePackage.test_account_review_semantics_deployment_completed, true);
+  assert.equal(googlePackage.test_account_review_semantics_visual_acceptance, false);
   assert.equal(googlePackage.account_context_correction_required, true);
   assert.equal(googlePackage.account_context_correction_implementation_authorized, true);
   assert.equal(googlePackage.account_context_correction_repository_verified, true);

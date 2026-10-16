@@ -16,6 +16,7 @@
 - Test-account review semantics repository verification: **289/289 tests, typecheck and production build passed 16 October 2026**
 - Test-account review semantics production deployment: **completed 16 October 2026**
 - Test-account review semantics desktop/mobile visual acceptance: **accepted by product owner 16 October 2026**
+- Live-evidence trigger and review semantics merge: **PR #85 merged as `54c427733cd51ba8600016941ce7afdd24ac2e64` on 16 October 2026**
 - Binding runtime contract: `contracts/eo-04c-google-reporting-runtime-v1.json`
 - Trigger contract: `contracts/eo-04c-google-live-evidence-trigger-v1.json`
 
@@ -142,8 +143,14 @@ The product owner separately authorized Production deployment on 16 October
 `dpl_AQWkrVxdQvVzxPQkeNbhwXXwcXXQ`; Vercel reported `READY`, assigned
 `embedded.adstable.app` without alias error, and the initial deployment-scoped
 error/fatal scan was clean. The product owner then accepted the real Shopify
-Admin Settings result on desktop and mobile. This deployment and visual
-acceptance authorize neither another Google request nor merge.
+Admin Settings result on desktop and mobile. That deployment and visual
+acceptance did not themselves authorize another Google request or merge.
+
+The product owner then explicitly authorized merge. PR #85 was merged into
+`main` as `54c427733cd51ba8600016941ce7afdd24ac2e64` on 16 October 2026. No
+automatic second Vercel Production deployment was created by the merge.
+Production performance evidence remains pending Google Ads API Explorer-or-higher
+access; another live provider request remains separately gated.
 
 ## Unchanged behavior and out of scope
 

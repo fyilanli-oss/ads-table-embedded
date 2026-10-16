@@ -2,7 +2,7 @@
   "schema_version": "1.2.0",
   "contract_id": "eo-04c-google-live-evidence-trigger-v1",
   "package_id": "A6-EO-04-C",
-  "status": "test_account_observed_review_semantics_deployed_visual_accepted_merge_pending",
+  "status": "accepted_and_merged_test_account_demo_production_evidence_pending",
   "checked_at": "2026-10-16",
   "authority": {
     "execution_plan": "docs/EXECUTION_PLAN.md",
@@ -94,7 +94,10 @@
     "test_account_review_semantics_deployment_id": "dpl_AQWkrVxdQvVzxPQkeNbhwXXwcXXQ",
     "test_account_review_semantics_deployment_commit": "16a54df48e853c282d9c3481fb9e3b7c2b2ca16d",
     "visual_acceptance": true,
-    "merge": false
+    "merge": true,
+    "merged_pr": "https://github.com/fyilanli-oss/ads-table-embedded/pull/85",
+    "merge_commit": "54c427733cd51ba8600016941ce7afdd24ac2e64",
+    "merged_at": "2026-10-16T19:05:19Z"
   },
   "live_evidence": {
     "execution_complete": true,

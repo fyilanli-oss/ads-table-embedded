@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "eo-04-provider-live-acceptance-v1",
+  "package_id": "A6-EO-04-LIVE-ACCEPTANCE",
+  "status": "repository_implemented_awaiting_product_owner_acceptance",
+  "checked_at": "2026-10-16",
+  "product_owner_authorization": {
+    "analyst_brief": "accepted",
+    "repository_implementation": "authorized",
+    "live_provider_call": false,
+    "deployment": false,
+    "database_mutation": false,
+    "secret_or_environment_mutation": false,
+    "merge": false
+  },
+  "http_trigger": {
+    "temporary": true,
+    "route": "/settings/provider-live-evidence",
+    "method": "POST",
+    "visual_product_surface": false,
+    "shopify_admin_authentication_required": true,
+    "read_only_existing_installation_authority": true,
+    "accepted_input_fields": ["provider", "business_date"],
+    "merchant_supplied_store_account_token_url_cursor_fields_or_version_forbidden": true,
+    "remove_atomically_when_eo05_permanent_execution_path_is_accepted": true
+  },
+  "provider_sequence": {
+    "first": "meta",
+    "google_ads_started": false,
+    "klaviyo_started": false,
+    "next_provider_after_failure": false,
+    "automatic_retry": false
+  },
+  "meta": {
+    "authority_chain": [
+      "shopify_authenticated_admin",
+      "verified_installed_shop",
+      "active_existing_installation_generation",
+      "connected_meta_authority",
+      "canonical_reporting_account",
+      "encrypted_token_vault"
+    ],
+    "date_window": "one_explicit_business_date",
+    "channel": {
+      "grain": "ad",
+      "dataset_status": "standardized_contract_exists_but_live_mapping_is_evidence_gated",
+      "direct_evidence_only": ["impressions", "spend"],
+      "click_candidates": ["clicks", "inline_link_clicks", "outbound_clicks"],
+      "action_evidence": ["actions", "action_values"],
+      "ad_click_session_and_funnel_mapping": "pending_product_owner_acceptance_after_live_action_type_evidence",
+      "numeric_canonical_rows_published_by_this_trigger": false
+    },
+    "product_breakdown": {
+      "breakdown": "product_id",
+      "accepted_fields": [
+        "product_id",
+        "impressions",
+        "clicks",
+        "spend",
+        "converted_product_quantity",
+        "converted_product_value"
+      ],
+      "standardized": false,
+      "semantics": "validation_pending_real_catalog_response",
+      "sales_role": false,
+      "shopify_identity_mapping": false,
+      "product_ad_cost_publication": false
+    }
+  },
+  "response": {
+    "raw_provider_rows_exposed": false,
+    "raw_authority_identifiers_exposed": false,
+    "token_or_credential_exposed": false,
+    "row_identity_hashes": true,
+    "field_state_counts": true,
+    "action_type_inventory": true,
+    "provider_request_id": true,
+    "opaque_cursor_hash_only": true,
+    "dataset_v2_publishable": false
+  },
+  "mutations": {
+    "dataset_v2": false,
+    "database_write": false,
+    "oauth": false,
+    "ui": false,
+    "scheduler": false,
+    "secret_or_environment": false,
+    "deployment": false
+  },
+  "repository_implementation": {
+    "runtime": "app/lib/providers/provider-live-evidence.server.js",
+    "types": "app/lib/providers/provider-live-evidence.server.d.ts",
+    "resource_route": "app/routes/settings.provider-live-evidence.ts",
+    "tests": "tests/eo-04-provider-live-acceptance.test.js",
+    "live_provider_call_performed": false,
+    "deployment_performed": false
+  },
+  "official_sources": {
+    "checked_at": "2026-10-16",
+    "shopify_admin_authentication": "https://shopify.dev/docs/api/shopify-app-react-router/latest/authenticate/admin",
+    "shopify_admin_routes": "https://shopify.dev/docs/api/shopify-app-react-router/latest/guide-admin",
+    "meta_insights_fields": "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adsinsights.py",
+    "meta_insights_request_parameters": "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/ad.py"
+  }
+}

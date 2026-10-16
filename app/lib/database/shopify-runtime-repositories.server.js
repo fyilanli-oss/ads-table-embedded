@@ -25,6 +25,27 @@ export function createShopifyRuntimeRepositories(database) {
 
   return Object.freeze({
     installation: Object.freeze({
+      async resolveActive({shopId, shopDomain}) {
+        const row = exactlyOneRow(
+          await query(
+            `select * from shopify.resolve_active_installation(
+              $1::text, $2::text
+            )`,
+            [shopId, shopDomain],
+          ),
+          "INSTALLATION_RESOLVE_ACTIVE",
+        );
+
+        return {
+          workspaceId: row.workspace_id,
+          installGeneration: positiveInteger(
+            row.install_generation,
+            "INSTALLATION_RESOLVE_ACTIVE",
+          ),
+          status: row.installation_status,
+        };
+      },
+
       async bootstrap({shopId, shopDomain, shopIdentitySha256, verifiedAt}) {
         const row = exactlyOneRow(
           await query(

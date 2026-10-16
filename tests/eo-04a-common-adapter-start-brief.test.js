@@ -105,7 +105,7 @@ test("Execution Plan and master contract preserve EO-04-A at the current EO-04 g
   assert.equal(master.current_active_child, "A6-EO-04-E");
   assert.equal(
     master.current_gate,
-    "A6-EO-04-C_google_live_evidence_trigger_repository_implementation_and_verification",
+    "A6-EO-04-C_google_account_context_correction_repository_verified_deployment_and_live_call_separately_gated",
   );
   assert.equal(eo04.status, "Active");
   assert.equal(eo04a.status, "Accepted");

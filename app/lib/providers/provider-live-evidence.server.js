@@ -2,6 +2,8 @@ import {createHash} from "node:crypto";
 import {classifyMetaReportingError} from "./meta-reporting.server.js";
 
 export const PROVIDER_LIVE_EVIDENCE_VERSION = "1.0.0";
+export const PROVIDER_LIVE_EVIDENCE_SAFE_LOG_PREFIX =
+  "[AdsTable provider live evidence safe]";
 export const META_PRODUCT_ACCEPTED_FIELDS = Object.freeze([
   "product_id",
   "impressions",
@@ -22,6 +24,18 @@ const CHANNEL_EVIDENCE_FIELDS = Object.freeze([
   "actions",
   "action_values",
 ]);
+const FIELD_STATE_KEYS = Object.freeze([
+  "absent",
+  "null",
+  "empty",
+  "array",
+  "zero",
+  "present_numeric",
+  "present_string",
+  "unexpected",
+]);
+const ACTION_TYPE_PATTERN = /^[A-Za-z0-9_.:-]{1,200}$/;
+const ACTION_TYPE_LOG_LIMIT = 50;
 
 export class ProviderLiveEvidenceError extends Error {
   constructor(code, message, status = 400) {
@@ -144,6 +158,111 @@ function requestEvidence(page) {
       : null,
     next_page_exists: page.next_cursor !== null,
     next_cursor_sha256: page.next_cursor === null ? null : digest(page.next_cursor),
+  });
+}
+
+function safeCount(value) {
+  return Number.isSafeInteger(value) && value >= 0 ? value : null;
+}
+
+function safeFieldStateCounts(source, fields) {
+  return Object.freeze(Object.fromEntries(fields.map((field) => [
+    field,
+    Object.freeze(Object.fromEntries(FIELD_STATE_KEYS.flatMap((state) => {
+      const count = source?.[field]?.[state];
+      return Number.isSafeInteger(count) && count >= 0 ? [[state, count]] : [];
+    }))),
+  ])));
+}
+
+function safeActionTypeLog(source) {
+  const sourceValues = Array.isArray(source?.values) ? source.values : [];
+  const acceptedValues = sourceValues.filter(
+    (value) => typeof value === "string" && ACTION_TYPE_PATTERN.test(value),
+  );
+  const values = acceptedValues.slice(0, ACTION_TYPE_LOG_LIMIT);
+  return Object.freeze({
+    values: Object.freeze(values),
+    malformed_entry_count: safeCount(source?.malformed_entry_count),
+    redacted_invalid_action_type_count: sourceValues.length - acceptedValues.length,
+    truncated_valid_action_type_count: acceptedValues.length - values.length,
+  });
+}
+
+export function buildProviderLiveEvidenceSafeLog(result) {
+  if (result?.status !== "complete" || result?.provider !== "meta") {
+    throw new ProviderLiveEvidenceError(
+      "LIVE_EVIDENCE_SAFE_LOG_RESULT_INVALID",
+      "Only completed Meta evidence can be written to the safe evidence log",
+      502,
+    );
+  }
+  if (!validDate(result.business_date)) {
+    throw new ProviderLiveEvidenceError(
+      "LIVE_EVIDENCE_SAFE_LOG_DATE_INVALID",
+      "Safe evidence log requires a valid business date",
+      502,
+    );
+  }
+  return Object.freeze({
+    event: "provider_live_evidence_safe",
+    status: "complete",
+    provider: "meta",
+    business_date: result.business_date,
+    evidence_version: PROVIDER_LIVE_EVIDENCE_VERSION,
+    publishable_to_dataset_v2: false,
+    channel: Object.freeze({
+      grain: "ad",
+      row_count: safeCount(result.channel?.row_count),
+      field_state_counts: safeFieldStateCounts(
+        result.channel?.field_state_counts,
+        CHANNEL_EVIDENCE_FIELDS,
+      ),
+      direct_metric_decisions: Object.freeze({
+        impression: "evidence_supported_pending_numeric_publication",
+        spend_value: "evidence_supported_pending_numeric_publication",
+        ad_click: "mapping_pending_live_click_field_review",
+        session: "mapping_pending_live_action_type_review",
+        funnel: "mapping_pending_live_action_type_review",
+      }),
+      action_type_inventory: Object.freeze({
+        actions: safeActionTypeLog(result.channel?.action_type_inventory?.actions),
+        action_values: safeActionTypeLog(
+          result.channel?.action_type_inventory?.action_values,
+        ),
+      }),
+      next_page_exists: result.channel?.request?.next_page_exists === true,
+    }),
+    product: Object.freeze({
+      status: "raw_provider_evidence_pending_standardization",
+      grain: "ad_product_id",
+      row_count: safeCount(result.product?.row_count),
+      accepted_fields: META_PRODUCT_ACCEPTED_FIELDS,
+      field_state_counts: safeFieldStateCounts(
+        result.product?.field_state_counts,
+        META_PRODUCT_ACCEPTED_FIELDS,
+      ),
+      converted_product_action_types: Object.freeze({
+        quantity: safeActionTypeLog(
+          result.product?.converted_product_action_types?.quantity,
+        ),
+        value: safeActionTypeLog(
+          result.product?.converted_product_action_types?.value,
+        ),
+      }),
+      next_page_exists: result.product?.request?.next_page_exists === true,
+      product_metric_semantics: "validation_pending_real_catalog_response",
+    }),
+    controls: Object.freeze({
+      provider_retry_performed: false,
+      next_provider_started: false,
+      database_write_performed: false,
+      raw_provider_rows_exposed: false,
+      raw_identifiers_or_hashes_logged: false,
+      provider_request_id_logged: false,
+      cursor_or_cursor_hash_logged: false,
+      token_or_credential_exposed: false,
+    }),
   });
 }
 

@@ -1,4 +1,5 @@
 export const PROVIDER_LIVE_EVIDENCE_VERSION: "1.0.0";
+export const PROVIDER_LIVE_EVIDENCE_SAFE_LOG_PREFIX: "[AdsTable provider live evidence safe]";
 export const META_PRODUCT_ACCEPTED_FIELDS: readonly [
   "product_id",
   "impressions",
@@ -21,6 +22,10 @@ export function validateProviderLiveEvidenceInput(value: unknown): Readonly<{
 export function summarizeMetaLiveEvidence(
   result: Record<string, any>,
   businessDate: string,
+): Readonly<Record<string, any>>;
+
+export function buildProviderLiveEvidenceSafeLog(
+  result: Record<string, any>,
 ): Readonly<Record<string, any>>;
 
 export function createProviderLiveEvidenceRuntime(input: {

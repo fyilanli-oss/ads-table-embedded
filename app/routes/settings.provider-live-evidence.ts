@@ -11,8 +11,10 @@ import {
   createMetaReportingAuthorityRuntime,
 } from "../lib/providers/meta-reporting-authority.server.js";
 import {
+  buildProviderLiveEvidenceSafeLog,
   classifyProviderLiveEvidenceError,
   createProviderLiveEvidenceRuntime,
+  PROVIDER_LIVE_EVIDENCE_SAFE_LOG_PREFIX,
 } from "../lib/providers/provider-live-evidence.server.js";
 
 const JSON_HEADERS = {
@@ -74,10 +76,15 @@ export const action = async ({request}: ActionFunctionArgs) => {
         tokenVault: providerTokenVault,
       }),
     });
-    return json(await runtime.execute({
+    const result = await runtime.execute({
       installationAuthority: verified.installationAuthority,
       input,
-    }));
+    });
+    console.info(
+      PROVIDER_LIVE_EVIDENCE_SAFE_LOG_PREFIX,
+      JSON.stringify(buildProviderLiveEvidenceSafeLog(result)),
+    );
+    return json(result);
   } catch (error) {
     if (error instanceof Response) throw error;
     const failure = classifyProviderLiveEvidenceError(error);

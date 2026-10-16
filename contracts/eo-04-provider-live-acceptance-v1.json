@@ -2,16 +2,20 @@
   "schema_version": "1.0.0",
   "contract_id": "eo-04-provider-live-acceptance-v1",
   "package_id": "A6-EO-04-LIVE-ACCEPTANCE",
-  "status": "repository_implemented_awaiting_product_owner_acceptance",
+  "status": "production_live_response_capture_correction_authorized",
   "checked_at": "2026-10-16",
   "product_owner_authorization": {
     "analyst_brief": "accepted",
     "repository_implementation": "authorized",
-    "live_provider_call": false,
-    "deployment": false,
+    "live_provider_call": true,
+    "deployment": true,
     "database_mutation": false,
     "secret_or_environment_mutation": false,
-    "merge": false
+    "merge": true,
+    "safe_server_log_repository_implementation": "authorized",
+    "safe_server_log_merge": false,
+    "safe_server_log_deployment": false,
+    "next_live_provider_call": false
   },
   "http_trigger": {
     "temporary": true,
@@ -79,7 +83,15 @@
     "action_type_inventory": true,
     "provider_request_id": true,
     "opaque_cursor_hash_only": true,
-    "dataset_v2_publishable": false
+    "dataset_v2_publishable": false,
+    "safe_server_log": {
+      "authorized": true,
+      "browser_console_copy_removed": true,
+      "raw_rows_values_names_ids_and_hashes_logged": false,
+      "provider_request_id_logged": false,
+      "cursor_or_cursor_hash_logged": false,
+      "field_names_state_counts_row_counts_action_types_and_controls_logged": true
+    }
   },
   "mutations": {
     "dataset_v2": false,
@@ -88,7 +100,7 @@
     "ui": "existing_meta_section_single_temporary_button_only",
     "scheduler": false,
     "secret_or_environment": false,
-    "deployment": false
+    "deployment": true
   },
   "repository_implementation": {
     "runtime": "app/lib/providers/provider-live-evidence.server.js",
@@ -96,8 +108,11 @@
     "resource_route": "app/routes/settings.provider-live-evidence.ts",
     "temporary_settings_button": "app/routes/_admin.settings.tsx",
     "tests": "tests/eo-04-provider-live-acceptance.test.js",
-    "live_provider_call_performed": false,
-    "deployment_performed": false
+    "successful_live_route_executions_observed": 2,
+    "safe_response_payload_retained": false,
+    "live_provider_call_performed": true,
+    "deployment_performed": true,
+    "safe_server_log_deployed": false
   },
   "official_sources": {
     "checked_at": "2026-10-16",

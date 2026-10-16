@@ -607,7 +607,7 @@
           "id": "A6-EO-04-C",
           "title": "Google Ads adapter",
           "objective": "Standard Shopping Ad Group, Performance Max Retail Asset Group and Search Ad Group hierarchy with truthful product evidence.",
-          "status": "oauth_and_reporting_runtime_accepted_test_account_observed_review_semantics_deployed_visual_accepted_merge_pending",
+          "status": "oauth_and_reporting_runtime_accepted_live_evidence_trigger_accepted_and_merged_production_evidence_pending",
           "implementation_started": true,
           "oauth_corrective_decision": "docs/decisions/A6_EO_04_C_GOOGLE_OAUTH_CORRECTIVE_REBUILD.md",
           "oauth_test": "tests/eo-04c-google-oauth-corrective-rebuild.test.js",
@@ -655,6 +655,10 @@
           "test_account_review_semantics_deployment_id": "dpl_AQWkrVxdQvVzxPQkeNbhwXXwcXXQ",
           "test_account_review_semantics_deployment_commit": "16a54df48e853c282d9c3481fb9e3b7c2b2ca16d",
           "test_account_review_semantics_visual_acceptance": true,
+          "live_evidence_trigger_final_product_owner_acceptance": true,
+          "live_evidence_trigger_merge_authorized": true,
+          "live_evidence_trigger_merged_pr": "https://github.com/fyilanli-oss/ads-table-embedded/pull/85",
+          "live_evidence_trigger_merge_commit": "54c427733cd51ba8600016941ce7afdd24ac2e64",
           "production_evidence_pending_google_ads_api_access": "explorer_or_higher"
         },
         {
@@ -1052,7 +1056,7 @@
   "legacy_deletion_authorized": false,
   "current_active_parent": "A6-EO-04",
   "current_active_child": "A6-EO-04-E",
-  "current_gate": "A6-EO-04-C_google_test_account_review_semantics_deployed_visual_accepted_merge_separately_gated",
+  "current_gate": "A6-EO-04-C_google_review_demo_accepted_and_merged_production_evidence_pending_google_ads_api_access",
   "next_ready_child": null,
   "independent_packages": [
     {

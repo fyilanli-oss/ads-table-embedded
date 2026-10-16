@@ -417,7 +417,7 @@ test("Settings exposes one native Google evidence action with complete terminal 
   assert.doesNotMatch(settings, /google-evidence-modal|Google evidence date/);
 });
 
-test("contracts record completed live gates while preserving retry and merge gates", () => {
+test("contracts record completed live gates and the authorized merge without enabling retry", () => {
   assert.deepEqual(contract.execution.query_families_in_order,
     GOOGLE_LIVE_EVIDENCE_QUERY_FAMILIES);
   assert.equal(contract.execution.automatic_retry, false);
@@ -456,11 +456,13 @@ test("contracts record completed live gates while preserving retry and merge gat
   assert.equal(contract.product_owner_authorization.test_account_review_semantics_deployment_commit,
     "16a54df48e853c282d9c3481fb9e3b7c2b2ca16d");
   assert.equal(contract.status,
-    "test_account_observed_review_semantics_deployed_visual_accepted_merge_pending");
+    "accepted_and_merged_test_account_demo_production_evidence_pending");
   assert.equal(contract.live_evidence.account_type_proven, true);
   assert.equal(contract.live_evidence.account_type_state, "test_observed");
   assert.equal(contract.product_owner_authorization.visual_acceptance, true);
-  assert.equal(contract.product_owner_authorization.merge, false);
+  assert.equal(contract.product_owner_authorization.merge, true);
+  assert.equal(contract.product_owner_authorization.merge_commit,
+    "54c427733cd51ba8600016941ce7afdd24ac2e64");
   assert.equal(contract.failure_evidence.server_log_required, true);
   assert.equal(contract.failure_evidence.provider_request_id_logged, false);
   assert.equal(contract.acceptance.mobile_320px_real_shopify_admin_required, true);
@@ -482,6 +484,9 @@ test("contracts record completed live gates while preserving retry and merge gat
   assert.equal(googlePackage.test_account_review_semantics_repository_verified, true);
   assert.equal(googlePackage.test_account_review_semantics_deployment_completed, true);
   assert.equal(googlePackage.test_account_review_semantics_visual_acceptance, true);
+  assert.equal(googlePackage.live_evidence_trigger_merge_authorized, true);
+  assert.equal(googlePackage.live_evidence_trigger_merge_commit,
+    "54c427733cd51ba8600016941ce7afdd24ac2e64");
   assert.equal(googlePackage.account_context_correction_required, true);
   assert.equal(googlePackage.account_context_correction_implementation_authorized, true);
   assert.equal(googlePackage.account_context_correction_repository_verified, true);

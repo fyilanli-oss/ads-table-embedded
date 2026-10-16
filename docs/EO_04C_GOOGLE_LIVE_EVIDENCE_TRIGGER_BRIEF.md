@@ -5,8 +5,9 @@
 - Package: `A6-EO-04-C`
 - Analyst brief accepted by product owner: **16 October 2026**
 - Repository implementation authorized: **16 October 2026**
-- Deployment: **not authorized**
-- First live Google Ads request: **not authorized**
+- Deployment and real Shopify Admin visual acceptance: **completed 16 October 2026**
+- First live Google Ads request: **authorized and stopped on its first failure 16 October 2026**
+- Safe failure logging correction: **authorized 16 October 2026**
 - Binding runtime contract: `contracts/eo-04c-google-reporting-runtime-v1.json`
 - Trigger contract: `contracts/eo-04c-google-live-evidence-trigger-v1.json`
 
@@ -78,6 +79,13 @@ The browser and server log may receive only bounded summaries:
 Raw provider rows, names, product IDs, campaign IDs, account IDs, tokens,
 credentials, cursors and provider request IDs are not exposed or logged.
 
+The first authorized live request proved an observability gap: the route returned
+`GOOGLE_LIVE_EVIDENCE_FAILED`, while the server log contained no bounded failure
+evidence. Failure logs must now record only the execution stage, query family,
+safe source/provider code, provider HTTP status and whether a provider response
+was observed. Raw error messages and identifiers remain prohibited. This
+diagnostic record does not enable retry or start the next query family.
+
 ## Unchanged behavior and out of scope
 
 - No Google campaign, account, budget, listing tree or conversion configuration
@@ -85,7 +93,7 @@ credentials, cursors and provider request IDs are not exposed or logged.
 - No OAuth, scope, token, secret or environment mutation.
 - No database write, Dataset V2 publication, scheduler or product identity mapping.
 - No historical PMax Channel is resolved from the current listing tree.
-- No deployment and no live provider request under this authorization.
+- No additional live provider request is authorized by the safe logging correction.
 - The existing Meta evidence route and behavior remain unchanged.
 
 ## Acceptance plan
@@ -96,8 +104,8 @@ credentials, cursors and provider request IDs are not exposed or logged.
 - Deployment requires a separate product-owner approval.
 - Desktop Shopify Admin and at least 320 px real mobile evidence are required
   before the UI can be accepted or merged.
-- The first live request requires a separate explicit product-owner approval
-  after deployment and visual acceptance.
+- Any additional live request requires a separate explicit product-owner approval
+  after the safe failure logging correction is deployed.
 
 ## Official sources
 

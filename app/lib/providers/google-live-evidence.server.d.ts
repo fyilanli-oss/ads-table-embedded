@@ -35,3 +35,22 @@ export function classifyGoogleLiveEvidenceError(error: unknown): Readonly<{
   class: string;
   provider_request_id: string | null;
 }>;
+
+export function buildGoogleLiveEvidenceSafeFailureLog(
+  error: unknown,
+  failure?: ReturnType<typeof classifyGoogleLiveEvidenceError>,
+  fallbackStage?: string,
+): Readonly<{
+  event: "google_live_evidence_failed";
+  status: "failed";
+  code: string;
+  class: string;
+  stage: string;
+  query_family: string | null;
+  source_code: string | null;
+  provider_http_status: number | null;
+  provider_error_code: string | null;
+  provider_response_observed: boolean;
+  provider_retry_performed: false;
+  next_query_family_started: false;
+}>;

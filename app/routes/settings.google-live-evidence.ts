@@ -12,6 +12,7 @@ import {
 } from "../lib/providers/google-reporting-authority.server.js";
 import {
   buildGoogleLiveEvidenceSafeLog,
+  buildGoogleLiveEvidenceSafeFailureLog,
   classifyGoogleLiveEvidenceError,
   createGoogleLiveEvidenceRuntime,
   GOOGLE_LIVE_EVIDENCE_SAFE_LOG_PREFIX,
@@ -69,6 +70,7 @@ export const action = async ({request}: ActionFunctionArgs) => {
     }, 400);
   }
 
+  let failureStage = "runtime_initialization";
   try {
     const runtime = createGoogleLiveEvidenceRuntime({
       googleRuntime: createGoogleReportingAuthorityRuntime({
@@ -76,6 +78,7 @@ export const action = async ({request}: ActionFunctionArgs) => {
         tokenVault: providerTokenVault,
       }),
     });
+    failureStage = "execution";
     const result = await runtime.execute({
       installationAuthority: verified.installationAuthority,
       input,
@@ -88,6 +91,10 @@ export const action = async ({request}: ActionFunctionArgs) => {
   } catch (error) {
     if (error instanceof Response) throw error;
     const failure = classifyGoogleLiveEvidenceError(error);
+    console.info(
+      GOOGLE_LIVE_EVIDENCE_SAFE_LOG_PREFIX,
+      JSON.stringify(buildGoogleLiveEvidenceSafeFailureLog(error, failure, failureStage)),
+    );
     return json({
       status: "failed",
       code: failure.code,

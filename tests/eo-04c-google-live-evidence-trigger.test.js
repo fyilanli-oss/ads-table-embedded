@@ -5,6 +5,7 @@ import path from "node:path";
 import {fileURLToPath} from "node:url";
 import {
   buildGoogleLiveEvidenceSafeLog,
+  buildGoogleLiveEvidenceSafeFailureLog,
   classifyGoogleLiveEvidenceError,
   completedThirtyDayWindow,
   createGoogleLiveEvidenceRuntime,
@@ -256,12 +257,84 @@ test("a safe provider error code is preserved without enabling retry", () => {
   assert.equal(Object.hasOwn(failure, "retryable"), false);
 });
 
+test("a failed family emits bounded diagnostic evidence without identifiers", async () => {
+  const providerFailure = new GoogleAdsRestError(
+    "GOOGLE_ADS_REST_REQUEST_FAILED",
+    "Google Ads REST request failed for customer 5252399301",
+    {
+      status: 400,
+      provider_error_code: "QUERY_ERROR",
+      request_id: "provider-trace-secret",
+    },
+  );
+  const runtime = createGoogleLiveEvidenceRuntime({
+    clock: () => new Date("2026-10-16T12:00:00Z"),
+    googleRuntime: {
+      async readEvidencePage(input) {
+        if (input.queryFamily === "account_campaign_context") {
+          return page([{customer: {testAccount: false}}]);
+        }
+        throw providerFailure;
+      },
+    },
+  });
+
+  let caught;
+  try {
+    await runtime.execute({
+      installationAuthority,
+      input: {provider: "google_ads"},
+    });
+  } catch (error) {
+    caught = error;
+  }
+
+  assert.equal(caught, providerFailure);
+  const failure = classifyGoogleLiveEvidenceError(caught);
+  const safeLog = buildGoogleLiveEvidenceSafeFailureLog(caught, failure);
+  assert.deepEqual(safeLog, {
+    event: "google_live_evidence_failed",
+    status: "failed",
+    code: "GOOGLE_PROVIDER_QUERY_ERROR",
+    class: "request_contract_invalid",
+    stage: "query_family_read",
+    query_family: "cart_data_product_sales_daily",
+    source_code: "GOOGLE_ADS_REST_REQUEST_FAILED",
+    provider_http_status: 400,
+    provider_error_code: "QUERY_ERROR",
+    provider_response_observed: true,
+    provider_retry_performed: false,
+    next_query_family_started: false,
+  });
+  const serialized = JSON.stringify(safeLog);
+  assert.doesNotMatch(serialized, /provider-trace-secret|5252399301/);
+  assert.equal(Object.hasOwn(safeLog, "provider_request_id"), false);
+});
+
+test("runtime initialization failure proves no provider response without leaking config", () => {
+  const failure = new GoogleAdsRestError(
+    "GOOGLE_ADS_DEVELOPER_TOKEN_REQUIRED",
+    "GOOGLE_ADS_DEVELOPER_TOKEN_REQUIRED",
+  );
+  const safeLog = buildGoogleLiveEvidenceSafeFailureLog(
+    failure,
+    classifyGoogleLiveEvidenceError(failure),
+    "runtime_initialization",
+  );
+  assert.equal(safeLog.stage, "runtime_initialization");
+  assert.equal(safeLog.source_code, "GOOGLE_ADS_DEVELOPER_TOKEN_REQUIRED");
+  assert.equal(safeLog.provider_response_observed, false);
+  assert.equal(safeLog.provider_http_status, null);
+  assert.equal(safeLog.provider_error_code, null);
+});
+
 test("route is read-only, authenticated, safe-logged, and contains no retry path", () => {
   assert.match(route, /resolveReadOnlyShopifyRouteAuthority/);
   assert.match(route, /authenticate[.]admin/);
   assert.match(route, /createGoogleReportingAuthorityRuntime/);
   assert.match(route, /GOOGLE_LIVE_EVIDENCE_SAFE_LOG_PREFIX/);
-  assert.equal(route.match(/console[.]info/g)?.length, 1);
+  assert.equal(route.match(/console[.]info/g)?.length, 2);
+  assert.match(route, /buildGoogleLiveEvidenceSafeFailureLog/);
   assert.doesNotMatch(route, /database[.](?:query|transaction)|insert|update|delete/i);
   assert.doesNotMatch(route, /setTimeout|refreshGoogleAdsAccessToken/);
   assert.match(route, /provider_retry_performed: false/);
@@ -281,19 +354,23 @@ test("Settings exposes one native Google evidence action with complete terminal 
   assert.doesNotMatch(settings, /google-evidence-modal|Google evidence date/);
 });
 
-test("contracts preserve separate deployment, live-call, visual and merge gates", () => {
+test("contracts record completed live gates while preserving retry and merge gates", () => {
   assert.deepEqual(contract.execution.query_families_in_order,
     GOOGLE_LIVE_EVIDENCE_QUERY_FAMILIES);
   assert.equal(contract.execution.automatic_retry, false);
   assert.equal(contract.result.current_listing_tree_resolves_historical_channel, false);
   assert.equal(contract.mutations.database, false);
   assert.equal(contract.product_owner_authorization.repository_implementation, true);
-  assert.equal(contract.product_owner_authorization.deployment, false);
-  assert.equal(contract.product_owner_authorization.first_live_provider_call, false);
+  assert.equal(contract.product_owner_authorization.deployment, true);
+  assert.equal(contract.product_owner_authorization.first_live_provider_call, true);
+  assert.equal(contract.product_owner_authorization.safe_failure_logging_fix, true);
+  assert.equal(contract.product_owner_authorization.visual_acceptance, true);
   assert.equal(contract.product_owner_authorization.merge, false);
+  assert.equal(contract.failure_evidence.server_log_required, true);
+  assert.equal(contract.failure_evidence.provider_request_id_logged, false);
   assert.equal(contract.acceptance.mobile_320px_real_shopify_admin_required, true);
   assert.match(brief, /modal, date\s+input, new section or `s-clickable`/i);
-  assert.match(brief, /first live request requires a separate explicit product-owner approval/i);
+  assert.match(brief, /additional live request requires a separate explicit product-owner approval/i);
 
   assert.equal(runtimeContract.product_owner_acceptance.runtime_final_acceptance, true);
   assert.equal(runtimeContract.product_owner_acceptance.merge_authorized, true);

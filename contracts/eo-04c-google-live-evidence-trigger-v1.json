@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "contract_id": "eo-04c-google-live-evidence-trigger-v1",
   "package_id": "A6-EO-04-C",
-  "status": "repository_implementation_authorized_deployment_and_live_call_pending",
+  "status": "live_failure_observed_safe_failure_logging_fix_authorized",
   "checked_at": "2026-10-16",
   "authority": {
     "execution_plan": "docs/EXECUTION_PLAN.md",
@@ -48,6 +48,16 @@
     "current_listing_tree_resolves_historical_channel": false,
     "publishable_to_dataset_v2": false
   },
+  "failure_evidence": {
+    "server_log_required": true,
+    "stage_and_query_family_allowed": true,
+    "safe_source_and_provider_codes_allowed": true,
+    "provider_http_status_allowed": true,
+    "provider_response_observed_state_required": true,
+    "raw_error_message_logged": false,
+    "provider_request_id_logged": false,
+    "account_or_product_identifier_logged": false
+  },
   "mutations": {
     "google_provider": false,
     "oauth_or_token": false,
@@ -59,8 +69,10 @@
   "product_owner_authorization": {
     "analyst_brief": true,
     "repository_implementation": true,
-    "deployment": false,
-    "first_live_provider_call": false,
+    "deployment": true,
+    "first_live_provider_call": true,
+    "safe_failure_logging_fix": true,
+    "visual_acceptance": true,
     "merge": false
   },
   "acceptance": {

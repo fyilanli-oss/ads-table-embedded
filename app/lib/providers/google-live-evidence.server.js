@@ -14,6 +14,8 @@ export const GOOGLE_LIVE_EVIDENCE_QUERY_FAMILIES = Object.freeze([
 const MAX_PAGES_PER_FAMILY = 20;
 const MAX_ROWS_PER_FAMILY = 50_000;
 const INPUT_KEYS = new Set(["provider"]);
+const SAFE_CODE_PATTERN = /^[A-Z0-9_]{1,100}$/;
+const ERROR_CONTEXT = new WeakMap();
 const SALES_ROLES = Object.freeze([
   "Advertised",
   "Cross-sell",
@@ -77,6 +79,24 @@ export class GoogleLiveEvidenceError extends Error {
 
 function isRecord(value) {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function rememberErrorContext(error, context) {
+  if ((typeof error === "object" && error !== null) || typeof error === "function") {
+    ERROR_CONTEXT.set(error, Object.freeze({...context}));
+  }
+  return error;
+}
+
+async function readCompleteFamilyWithContext(input) {
+  try {
+    return await readCompleteFamily(input);
+  } catch (error) {
+    throw rememberErrorContext(error, {
+      stage: "query_family_read",
+      query_family: input.queryFamily,
+    });
+  }
 }
 
 export function validateGoogleLiveEvidenceInput(value) {
@@ -307,7 +327,7 @@ export function createGoogleLiveEvidenceRuntime({googleRuntime, clock = () => ne
         );
       }
       const seedDate = now.toISOString().slice(0, 10);
-      const account = await readCompleteFamily({
+      const account = await readCompleteFamilyWithContext({
         googleRuntime,
         installationAuthority,
         queryFamily: GOOGLE_LIVE_EVIDENCE_QUERY_FAMILIES[0],
@@ -319,7 +339,7 @@ export function createGoogleLiveEvidenceRuntime({googleRuntime, clock = () => ne
       const results = {account_campaign_context: account};
 
       for (const queryFamily of GOOGLE_LIVE_EVIDENCE_QUERY_FAMILIES.slice(1)) {
-        results[queryFamily] = await readCompleteFamily({
+        results[queryFamily] = await readCompleteFamilyWithContext({
           googleRuntime,
           installationAuthority,
           queryFamily,
@@ -407,7 +427,7 @@ export function classifyGoogleLiveEvidenceError(error) {
   const classified = classifyGoogleReportingError(error);
   const providerCode = error?.details?.provider_error_code;
   const publicCode = typeof providerCode === "string"
-    && /^[A-Z0-9_]{1,100}$/.test(providerCode)
+    && SAFE_CODE_PATTERN.test(providerCode)
     ? `GOOGLE_PROVIDER_${providerCode}`
     : "GOOGLE_LIVE_EVIDENCE_FAILED";
   return Object.freeze({
@@ -415,5 +435,41 @@ export function classifyGoogleLiveEvidenceError(error) {
     code: publicCode,
     class: classified.class,
     provider_request_id: classified.provider_request_id,
+  });
+}
+
+export function buildGoogleLiveEvidenceSafeFailureLog(
+  error,
+  failure = classifyGoogleLiveEvidenceError(error),
+  fallbackStage = "runtime_initialization_or_execution",
+) {
+  const context = ERROR_CONTEXT.get(error);
+  const sourceCode = typeof error?.code === "string" && SAFE_CODE_PATTERN.test(error.code)
+    ? error.code
+    : null;
+  const providerStatus = Number(error?.details?.status);
+  const providerErrorCode = typeof error?.details?.provider_error_code === "string"
+    && SAFE_CODE_PATTERN.test(error.details.provider_error_code)
+    ? error.details.provider_error_code
+    : null;
+  return Object.freeze({
+    event: "google_live_evidence_failed",
+    status: "failed",
+    code: failure.code,
+    class: failure.class,
+    stage: context?.stage ?? fallbackStage,
+    query_family: context?.query_family ?? null,
+    source_code: sourceCode,
+    provider_http_status: Number.isInteger(providerStatus)
+      && providerStatus >= 400 && providerStatus <= 599
+      ? providerStatus
+      : null,
+    provider_error_code: providerErrorCode,
+    provider_response_observed: Boolean(
+      providerErrorCode
+      || (Number.isInteger(providerStatus) && providerStatus >= 400 && providerStatus <= 599),
+    ),
+    provider_retry_performed: false,
+    next_query_family_started: false,
   });
 }

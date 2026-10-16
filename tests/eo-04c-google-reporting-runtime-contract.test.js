@@ -77,16 +77,27 @@ test("empty, missing, unsupported and real zero remain distinct", () => {
   assert.equal(contract.support_state.only_explicit_numeric_zero_is_zero, true);
 });
 
-test("accepted brief does not authorize runtime or a live provider call", () => {
+test("accepted brief authorizes only repository runtime, never a live provider call", () => {
   assert.equal(contract.product_owner_acceptance.analyst_brief_accepted, true);
-  assert.equal(contract.product_owner_acceptance.runtime_implementation_requires_separate_approval, true);
+  assert.equal(contract.product_owner_acceptance.runtime_implementation_authorized, true);
+  assert.equal(contract.product_owner_acceptance.runtime_final_acceptance, false);
+  assert.equal(contract.product_owner_acceptance.merge_authorized, false);
   assert.equal(contract.first_evidence_execution.first_provider_error_stops_execution, true);
   assert.equal(contract.first_evidence_execution.automatic_retry, false);
   assert.equal(contract.first_evidence_execution.live_provider_call_authorized, false);
-  assert.equal(contract.mutations.runtime_implementation, false);
+  assert.equal(contract.mutations.runtime_implementation, true);
   assert.equal(contract.mutations.database, false);
   assert.equal(contract.mutations.deployment, false);
   assert.match(brief, /Product-owner analyst-brief acceptance/);
-  assert.match(brief, /Runtime implementation: \*\*not authorized/);
+  assert.match(brief, /Runtime implementation: \*\*authorized/);
   assert.doesNotMatch(brief, /Sales Mode/);
+});
+
+test("synthetic fixtures verify AdsTable logic but never stand in for Google evidence", () => {
+  assert.equal(contract.test_strategy.google_test_account_used_as_performance_evidence, false);
+  assert.equal(contract.test_strategy.google_test_account_serving_metrics_expected, false);
+  assert.equal(contract.test_strategy.repository_fixtures_are_provider_evidence, false);
+  assert.ok(contract.test_strategy.repository_fixtures_verify.includes("sales_role_classification"));
+  assert.match(brief, /do not serve ads/i);
+  assert.match(brief, /Fixture success never proves/i);
 });

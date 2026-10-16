@@ -4,12 +4,12 @@
 
 - Package: `A6-EO-04-C`
 - Product-owner analyst-brief acceptance: **16 October 2026**
-- Runtime implementation: **not authorized by this brief**
+- Runtime implementation: **authorized by product owner on 16 October 2026; final acceptance pending**
 - Live Google Ads request: **not authorized by this brief**
 - Dataset V2, database, scheduler, UI, OAuth, secret, environment and deployment mutation: **forbidden**
 - Parent product contract: `contracts/eo-04e-three-provider-channel-product-economics-v1.json`
 
-This brief freezes what the Google reporting runtime may later request and how it must preserve Google evidence. It does not implement or execute those requests.
+This brief freezes what the Google reporting runtime may request and how it must preserve Google evidence. The repository runtime and synthetic tests are implemented separately from any live request.
 
 ## Business outcome
 
@@ -129,11 +129,30 @@ For Cross-sell:
 - Empty success is not zero and is not global unsupported evidence.
 - Provider rows and support states remain private, bounded and sanitized; no token, credential or unrestricted raw payload enters logs or repository evidence.
 
+## Test-account and synthetic-fixture boundary
+
+Google test accounts do not serve ads and therefore do not generate the performance, cost, conversion or Cart Data sales evidence required by this package. The runtime never treats a test account as product-level reporting acceptance evidence.
+
+Repository fixtures are controlled examples owned by AdsTable. They verify only our implementation:
+
+- exact GAQL family and date-window construction;
+- raw page, request ID and opaque pagination preservation;
+- `Advertised`, `Cross-sell`, `Assisted` and `Unclassified` Sales Role rules;
+- one-versus-many broad listing-tree behavior;
+- advertised-product-only Channel resolution;
+- historical listing-tree validity and fail-closed `Unknown Channel` behavior;
+- empty, missing, unsupported and explicit zero separation;
+- first provider error without automatic retry.
+
+Every runtime page is resolved through the verified active Shopify installation, the connected Google advertiser selected as canonical Reporting Account, its retained manager login path when present, and the encrypted provider-token vault. A manager account can provide the access path but can never become the Reporting Account.
+
+Fixture success never proves that Google returned a field, that an account has Cart Data, or that a real product sale exists. Those questions remain exclusively within a separately approved read-only production evidence execution.
+
 ## Separate next gates
 
 This accepted brief authorizes only the repository contract package. Each of the following requires separate product-owner approval:
 
-1. runtime implementation and repository tests;
+1. product-owner acceptance and merge of the runtime implementation;
 2. deployment or environment change;
 3. the first live Google Ads reporting execution;
 4. Dataset V2 persistence or mapping;
@@ -150,3 +169,5 @@ Checked 16 October 2026:
 - Google Ads API PMax listing groups: <https://developers.google.com/google-ads/api/performance-max/listing-groups>
 - Google Ads API v25 Asset Group Listing Group Filter: <https://developers.google.com/google-ads/api/fields/v25/asset_group_listing_group_filter>
 - Google Ads API deprecation and sunset schedule: <https://developers.google.com/google-ads/api/docs/sunset-dates>
+- Google Ads API test accounts: <https://developers.google.com/google-ads/api/docs/best-practices/test-accounts>
+- Google Ads API testing best practices: <https://developers.google.com/google-ads/api/docs/best-practices/testing>

@@ -364,4 +364,6 @@ CI enforcement: `tests/eo-04c-google-reporting-runtime-contract.test.js`
 - `cart_data_sales_view` advertised-product, sold-product, units, revenue and lead/cross-sell evidence remains separate from aggregate `asset_group_product_group_view` evidence.
 - Provider Product Ad Cost remains on the advertised product and is never moved to a Cross-sell sold product. Allocation remains EO-05 work.
 - Missing Cart Data configuration, empty success, absent fields, unsupported fields and explicit numeric zero remain separate states.
-- The product owner accepted the analyst brief on 16 October 2026. Runtime implementation, live provider calls, Dataset V2, database, deployment, environment and provider mutation remain separately gated.
+- The product owner accepted the analyst brief and separately authorized the bounded repository runtime implementation on 16 October 2026. The runtime now contains eight read-only GAQL families, raw page/evidence preservation, Sales Role classification and temporally safe PMax listing-tree resolution under synthetic repository tests.
+- Google test accounts are not used as reporting evidence because they do not serve ads or generate the required performance and Cart Data sales facts. Repository fixtures prove only AdsTable logic and never provider behavior.
+- Live provider calls, Dataset V2, database, deployment, environment and provider mutation remain separately gated. Runtime final product-owner acceptance and merge approval are pending.

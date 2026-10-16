@@ -1,0 +1,147 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "eo-04c-google-reporting-runtime-v1",
+  "package_id": "A6-EO-04-C",
+  "status": "product_owner_start_brief_accepted_runtime_implementation_not_authorized",
+  "checked_at": "2026-10-16",
+  "authority": {
+    "execution_plan": "docs/EXECUTION_PLAN.md",
+    "parent_contract": "contracts/eo-04e-three-provider-channel-product-economics-v1.json",
+    "brief": "docs/EO_04C_GOOGLE_REPORTING_RUNTIME_START_BRIEF.md"
+  },
+  "provider": {
+    "id": "google_ads",
+    "api_version": "v25",
+    "api_version_sunset": "2027-08",
+    "canonical_reporting_account_required": true,
+    "manager_account_reporting_eligible": false,
+    "token_source": "encrypted_provider_token_vault_server_only"
+  },
+  "channels": {
+    "standard_shopping": "ad_group",
+    "search": "ad_group",
+    "performance_max_retail": "asset_group"
+  },
+  "request_families": [
+    "account_and_campaign_context",
+    "daily_channel_performance",
+    "conversion_action_evidence",
+    "shopping_performance_product_evidence",
+    "cart_data_product_sales_evidence",
+    "pmax_asset_group_listing_tree_evidence",
+    "pmax_asset_group_product_group_aggregate_evidence"
+  ],
+  "pmax_product_sales": {
+    "cart_data_asset_group_segment_available": false,
+    "advertised_product_field": "segments.product_item_id",
+    "sold_product_field": "segments.product_sold_item_id",
+    "channel_resolution_uses": "advertised_product_listing_membership",
+    "channel_resolution_never_uses": "sold_product_listing_membership",
+    "one_eligible_asset_group": "exact_asset_group",
+    "multiple_eligible_asset_groups": "Unknown Channel",
+    "one_all_products_asset_group": "exact_asset_group",
+    "multiple_overlapping_all_products_or_category_asset_groups": "Unknown Channel",
+    "unknown_channel_drops_product_sale": false,
+    "ambiguous_sale_distribution": "forbidden",
+    "aggregate_product_group_metrics_joined_to_exact_sold_product_by_arithmetic": false,
+    "temporal_resolution": {
+      "sale_business_date_timezone": "reporting_account_timezone",
+      "exact_requires_listing_tree_valid_for_complete_business_date_window": true,
+      "current_tree_may_resolve_earlier_sale": false,
+      "tree_change_inside_business_date_window": "Unknown Channel",
+      "missing_partial_or_conflicting_temporal_evidence": "Unknown Channel",
+      "unknown_channel_drops_product_sale": false,
+      "required_exact_evidence": [
+        "sale_business_date",
+        "reporting_account_timezone",
+        "listing_tree_evidence_version_or_hash",
+        "listing_tree_valid_from",
+        "listing_tree_valid_to"
+      ]
+    }
+  },
+  "sales_role": {
+    "term": "Sales Role",
+    "advertised": "advertised_and_sold_product_match_with_lead_evidence",
+    "cross_sell": "advertised_and_sold_product_differ_with_cross_sell_evidence",
+    "assisted": "sold_product_attributed_but_exact_advertised_product_unavailable",
+    "unclassified": "only_genuine_identity_or_native_evidence_conflict",
+    "unknown_channel_is_sales_role": false,
+    "zero_value_is_sales_role": false
+  },
+  "product_sales_fields": {
+    "identity": [
+      "segments.product_merchant_id",
+      "segments.product_feed_label",
+      "segments.product_item_id",
+      "segments.product_sold_item_id"
+    ],
+    "metrics": [
+      "metrics.units_sold",
+      "metrics.revenue_micros",
+      "metrics.lead_units_sold",
+      "metrics.lead_revenue_micros",
+      "metrics.cross_sell_units_sold",
+      "metrics.cross_sell_revenue_micros",
+      "metrics.all_units_sold",
+      "metrics.all_revenue_micros",
+      "metrics.all_lead_units_sold",
+      "metrics.all_lead_revenue_micros",
+      "metrics.all_cross_sell_units_sold",
+      "metrics.all_cross_sell_revenue_micros"
+    ],
+    "requires_conversions_with_cart_data": true,
+    "requires_merchant_center_configuration": true
+  },
+  "cost": {
+    "channel_cost": "metrics.cost_micros_at_real_channel_grain",
+    "provider_product_cost": "shopping_performance_view.metrics.cost_micros",
+    "provider_product_cost_belongs_to": "advertised_product",
+    "cross_sell_cost_moved_to_sold_product": false,
+    "allocated_product_cost_owner": "A6-EO-05",
+    "product_rows_reconstruct_channel_total": false
+  },
+  "identity": {
+    "provider_key": [
+      "merchant_center_id",
+      "feed_label",
+      "item_id"
+    ],
+    "supported_path": "official_shopify_google_and_youtube_automatic_product_sync",
+    "shopify_admin_verification_required_before_shopify_labels": true
+  },
+  "support_state": {
+    "missing_configuration": "account_configuration_missing",
+    "empty_success": "not_observed_in_this_execution",
+    "absent_is_zero": false,
+    "empty_is_zero": false,
+    "unsupported_is_zero": false,
+    "only_explicit_numeric_zero_is_zero": true
+  },
+  "first_evidence_execution": {
+    "first_provider_error_stops_execution": true,
+    "automatic_retry": false,
+    "alternate_endpoint_or_auth_fallback": false,
+    "api_version_fallback": false,
+    "partial_multi_query_execution_publishable": false,
+    "live_provider_call_authorized": false
+  },
+  "mutations": {
+    "runtime_implementation": false,
+    "live_provider_call": false,
+    "dataset_v2": false,
+    "database": false,
+    "scheduler": false,
+    "ui": false,
+    "oauth": false,
+    "secret_or_environment": false,
+    "deployment": false
+  },
+  "product_owner_acceptance": {
+    "analyst_brief_accepted": true,
+    "accepted_at": "2026-10-16",
+    "runtime_implementation_requires_separate_approval": true,
+    "live_provider_call_requires_separate_approval": true
+  },
+  "next_gate": "explicit_product_owner_approval_for_google_reporting_runtime_implementation"
+}

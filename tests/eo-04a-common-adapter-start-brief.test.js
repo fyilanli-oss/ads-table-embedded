@@ -85,7 +85,7 @@ test("EO-04-A exposes complete synthetic acceptance and secret gates", async () 
   assert.equal(contract.acceptance_state.next_provider_child_authorized, false);
 });
 
-test("Execution Plan and master contract preserve EO-04-A at the EO-04-E runtime start gate", async () => {
+test("Execution Plan and master contract preserve EO-04-A at the current EO-04 gate", async () => {
   const plan = await readFile("docs/EXECUTION_PLAN.md", "utf8");
   const master = await readJson("contracts/a6-eo-implementation-master-v1.json");
   const eo04 = master.packages.find((item) => item.id === "A6-EO-04");
@@ -100,12 +100,12 @@ test("Execution Plan and master contract preserve EO-04-A at the EO-04-E runtime
     assert.match(plan, new RegExp(value.replace(/[.*+?^$\{\}()|[\]\\]/g, "\\$&")));
   }
 
-  assert.equal(master.schema_version, "1.23.0");
+  assert.equal(master.schema_version, "1.24.0");
   assert.equal(master.current_active_parent, "A6-EO-04");
   assert.equal(master.current_active_child, "A6-EO-04-E");
   assert.equal(
     master.current_gate,
-    "A6-EO-04-E_meta_live_mapping_boundary_accepted_next_provider_or_product_evidence_separately_gated",
+    "A6-EO-04-C_google_reporting_start_brief_accepted_runtime_implementation_separately_gated",
   );
   assert.equal(eo04.status, "Active");
   assert.equal(eo04a.status, "Accepted");

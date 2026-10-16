@@ -12,6 +12,8 @@
 - Successful complete empty live execution: **recorded 16 October 2026**
 - Account/campaign context correction implementation: **authorized 16 October 2026**
 - Account/campaign context correction production deployment: **completed 16 October 2026**
+- Test-account review semantics: **accepted and repository implementation authorized 16 October 2026**
+- Test-account review semantics repository verification: **289/289 tests, typecheck and production build passed 16 October 2026; deployment pending separate approval**
 - Binding runtime contract: `contracts/eo-04c-google-reporting-runtime-v1.json`
 - Trigger contract: `contracts/eo-04c-google-live-evidence-trigger-v1.json`
 
@@ -56,7 +58,8 @@ authentication fallback.
 | Not connected / setup incomplete | Existing Google connection/setup controls only | None | Evidence action is unavailable |
 | Connected / idle | `Run Google evidence` | Press once | Starts one read-only execution |
 | Loading | `Reading Google evidence…` | No second action | Native loading state prevents duplicate submission |
-| Success with evidence | `Google evidence received.` followed by bounded row and Sales Role counts | None | Button reads `Google evidence received` and stays disabled |
+| Successful test-account demo | `Google test account verified. Read-only reporting queries completed: campaign context {count}; Cart Data {count}; product performance {count}; current listing tree {count}; PMax Asset Group performance {count}. Test accounts do not serve ads, so these results are not production performance evidence. Production validation remains pending Google Ads API Explorer access.` | None | Button reads `Google test account checked` and stays disabled |
+| Success with production evidence | `Google evidence received.` followed by bounded row and Sales Role counts | None | Button reads `Google evidence received` and stays disabled |
 | Successful empty evidence | `Google returned no product or PMax evidence in this execution. This is not zero or unsupported.` | None | Button reads `Google evidence received` and stays disabled |
 | Provider or runtime error | `Google evidence stopped. No retry was performed. Error code: {code}` | None | Button reads `Google evidence stopped` and stays disabled |
 | Reauthorization | Same stopped copy with the returned reauthorization code/class | Existing Google reconnect flow remains separate | No automatic OAuth restart |
@@ -68,7 +71,8 @@ authentication fallback.
 |---|---|---|---|---|
 | Existing Google section and stack | `s-section`, `s-stack` | Existing native layout | App Home web components | 2026-10-16 |
 | Evidence action | `s-button` | `loading`; `disabled` after complete or failure | <https://shopify.dev/docs/api/app-home/latest/web-components/actions/button> | 2026-10-16 |
-| Successful result | `s-banner` | `tone="success"` | <https://shopify.dev/docs/api/app-home/latest/web-components/feedback-and-status-indicators/banner> | 2026-10-16 |
+| Successful test-account result | `s-banner` | `tone="info"` | <https://shopify.dev/docs/api/app-home/latest/web-components/feedback-and-status-indicators/banner> | 2026-10-16 |
+| Successful production result | `s-banner` | `tone="success"` | Same Banner reference | 2026-10-16 |
 | Empty result | `s-banner` | `tone="warning"` | Same Banner reference | 2026-10-16 |
 | Failure result | `s-banner` | `tone="critical"` | Same Banner reference | 2026-10-16 |
 
@@ -117,6 +121,20 @@ account's `customer.test_account` evidence. Exact commit
 `embedded.adstable.app` alias, and its initial error/fatal scan was clean. This
 deployment does not authorize another live request.
 
+The separately authorized follow-up request successfully returned
+`customer.test_account=true` for the selected Reporting Account. Google did not
+return a provider error; the deployed runtime converted that successful account
+classification into the internal
+`GOOGLE_LIVE_EVIDENCE_TEST_ACCOUNT_NOT_ELIGIBLE` failure. The product owner
+accepted a review-aligned correction on 16 October 2026: retain the separate
+account identity query, classify the account as `test_observed`, complete the
+same bounded read-only query families, and present their actual row counts as a
+successful test-account demo result. The result never becomes production
+serving evidence, Product ID support evidence, Sales Role support evidence or
+Dataset V2 authority. The same runtime remains in place after review; connecting
+a production account after Explorer access changes the observed account/data,
+not the implementation path.
+
 ## Unchanged behavior and out of scope
 
 - No Google campaign, account, budget, listing tree or conversion configuration
@@ -127,6 +145,9 @@ deployment does not authorize another live request.
 - No historical PMax Channel is resolved from the current listing tree.
 - No additional live provider request is authorized by the safe logging correction.
 - No additional live provider request is authorized by the account-context correction.
+- No additional live provider request is authorized by the test-account review correction.
+- Test-account rows or empty responses are never promoted to production serving evidence.
+- No review-only branch, fabricated provider row or post-review runtime swap is introduced.
 - The existing Meta evidence route and behavior remain unchanged.
 
 ## Acceptance plan
@@ -154,5 +175,8 @@ Checked 16 October 2026:
 - Google Ads Query Language: <https://developers.google.com/google-ads/api/docs/query/overview>
 - Google Ads API v25 Customer fields: <https://developers.google.com/google-ads/api/fields/v25/customer>
 - Google Ads API v25 Campaign fields: <https://developers.google.com/google-ads/api/fields/v25/campaign>
+- Google Ads API access levels: <https://developers.google.com/google-ads/api/docs/api-policy/access-levels>
+- Google OAuth restricted-scope verification: <https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification>
+- Google Ads API policies and demo-account rule: <https://support.google.com/adspolicy/answer/6169371>
 - Google Ads credential management: <https://developers.google.com/google-ads/api/docs/oauth/credential-management>
 - Google Ads OAuth internals: <https://developers.google.com/google-ads/api/docs/oauth/internals>

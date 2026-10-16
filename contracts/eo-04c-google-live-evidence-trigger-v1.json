@@ -1,8 +1,8 @@
 {
-  "schema_version": "1.1.0",
+  "schema_version": "1.2.0",
   "contract_id": "eo-04c-google-live-evidence-trigger-v1",
   "package_id": "A6-EO-04-C",
-  "status": "complete_empty_live_evidence_recorded_account_context_correction_deployed_live_call_pending",
+  "status": "test_account_observed_review_semantics_repository_verified_deployment_pending",
   "checked_at": "2026-10-16",
   "authority": {
     "execution_plan": "docs/EXECUTION_PLAN.md",
@@ -39,7 +39,9 @@
     "automatic_retry": false,
     "alternate_endpoint_or_auth_fallback": false,
     "api_version_fallback": false,
-    "test_account_is_live_performance_evidence": false
+    "test_account_stops_read_only_query_families": false,
+    "test_account_is_live_performance_evidence": false,
+    "review_only_runtime_branch": false
   },
   "result": {
     "raw_provider_rows_exposed": false,
@@ -50,6 +52,7 @@
     "bounded_field_state_counts": true,
     "sales_role_counts": true,
     "empty_success_state": "not_observed_in_this_execution",
+    "test_account_success_state": "test_observed_demo_only",
     "empty_is_zero": false,
     "empty_is_global_unsupported": false,
     "current_listing_tree_resolves_historical_channel": false,
@@ -85,7 +88,9 @@
     "account_context_correction_deployment": true,
     "account_context_correction_deployment_id": "dpl_GFNme3aUQUJ25723fwU3e7HU235p",
     "account_context_correction_deployment_commit": "53730bee401c79600570f199bd9967cf2d560c8a",
-    "account_context_correction_live_call": false,
+    "account_context_correction_live_call": true,
+    "test_account_review_semantics_implementation": true,
+    "test_account_review_semantics_deployment": false,
     "visual_acceptance": true,
     "merge": false
   },
@@ -94,12 +99,14 @@
     "observation_state": "not_observed_in_this_execution",
     "product_id_support_proven": false,
     "sales_role_support_proven": false,
-    "account_type_proven": false,
+    "account_type_proven": true,
+    "account_type_state": "test_observed",
     "account_context_correction_required_before_next_call": true,
     "account_context_correction_repository_implemented": true,
     "account_context_correction_repository_verified": true,
     "account_context_correction_production_deployed": true,
-    "additional_live_call_authorized": false
+    "additional_live_call_authorized": false,
+    "production_evidence_pending_google_ads_api_access": "explorer_or_higher"
   },
   "acceptance": {
     "repository_tests_required": true,

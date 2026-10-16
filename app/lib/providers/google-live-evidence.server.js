@@ -1,6 +1,6 @@
 import {normalizeGoogleCartDataSale, classifyGoogleReportingError} from "./google-reporting.server.js";
 
-export const GOOGLE_LIVE_EVIDENCE_VERSION = "1.1.0";
+export const GOOGLE_LIVE_EVIDENCE_VERSION = "1.2.0";
 export const GOOGLE_LIVE_EVIDENCE_SAFE_LOG_PREFIX =
   "[AdsTable Google live evidence safe]";
 export const GOOGLE_LIVE_EVIDENCE_QUERY_FAMILIES = Object.freeze([
@@ -300,13 +300,7 @@ function accountTypeState(rows) {
   const values = rows
     .map((row) => row?.customer?.testAccount)
     .filter((value) => typeof value === "boolean");
-  if (values.includes(true)) {
-    throw new GoogleLiveEvidenceError(
-      "GOOGLE_LIVE_EVIDENCE_TEST_ACCOUNT_NOT_ELIGIBLE",
-      "A Google test account cannot provide serving evidence",
-      422,
-    );
-  }
+  if (values.includes(true)) return "test_observed";
   return values.includes(false) ? "production_observed" : "not_observed";
 }
 
@@ -383,6 +377,8 @@ export function createGoogleLiveEvidenceRuntime({googleRuntime, clock = () => ne
         }),
         account: Object.freeze({
           account_type_state: accountType,
+          production_performance_evidence_eligible:
+            accountType === "production_observed",
           account_identity_row_count: accountIdentity.rows.length,
           account_identity_page_count: accountIdentity.page_count,
           campaign_context_row_count: campaign.rows.length,
@@ -408,6 +404,7 @@ export function createGoogleLiveEvidenceRuntime({googleRuntime, clock = () => ne
           provider_request_ids_exposed: false,
           cursors_exposed: false,
           token_or_credential_exposed: false,
+          test_account_result_used_as_production_evidence: false,
         }),
       });
     },

@@ -233,7 +233,7 @@ test("first provider error stops every remaining family without retry", async ()
   ]);
 });
 
-test("a test-account observation stops before performance evidence", async () => {
+test("a test account completes the read-only demo path without becoming production evidence", async () => {
   const calls = [];
   const runtime = createGoogleLiveEvidenceRuntime({
     clock: () => new Date("2026-10-16T12:00:00Z"),
@@ -241,15 +241,23 @@ test("a test-account observation stops before performance evidence", async () =>
       async prepareEvidenceExecution() {},
       async readEvidencePage(input) {
         calls.push(input.queryFamily);
-        return page([{customer: {testAccount: true}}]);
+        if (input.queryFamily === "account_identity") {
+          return page([{customer: {testAccount: true}}]);
+        }
+        return page([]);
       },
     },
   });
-  await assert.rejects(runtime.execute({
+  const result = await runtime.execute({
     installationAuthority,
     input: {provider: "google_ads"},
-  }), (error) => error.code === "GOOGLE_LIVE_EVIDENCE_TEST_ACCOUNT_NOT_ELIGIBLE");
-  assert.deepEqual(calls, ["account_identity"]);
+  });
+  assert.deepEqual(calls, GOOGLE_LIVE_EVIDENCE_QUERY_FAMILIES);
+  assert.equal(result.status, "complete");
+  assert.equal(result.account.account_type_state, "test_observed");
+  assert.equal(result.account.production_performance_evidence_eligible, false);
+  assert.equal(result.observation_state, "not_observed_in_this_execution");
+  assert.equal(result.controls.test_account_result_used_as_production_evidence, false);
 });
 
 test("a safe provider error code is preserved without enabling retry", () => {
@@ -401,6 +409,10 @@ test("Settings exposes one native Google evidence action with complete terminal 
   assert.match(settings, /googleEvidenceAttempted[.]current = true/);
   assert.match(settings, /loading=\{googleEvidenceStatus === "loading"\}/);
   assert.match(settings, /Google evidence stopped[.] No retry was performed/);
+  assert.match(settings, /Google test account checked/);
+  assert.match(settings, /Google test account verified/);
+  assert.match(settings, /pending Google Ads API Explorer access/);
+  assert.match(settings, /<s-banner tone="info">/);
   assert.match(settings, /This is not zero or unsupported/);
   assert.doesNotMatch(settings, /google-evidence-modal|Google evidence date/);
 });
@@ -414,6 +426,10 @@ test("contracts record completed live gates while preserving retry and merge gat
   assert.equal(contract.execution.one_refreshed_access_token_per_execution, true);
   assert.equal(contract.execution.account_identity_query, "FROM customer");
   assert.equal(contract.execution.campaign_inventory_query, "FROM campaign");
+  assert.equal(contract.execution.test_account_stops_read_only_query_families, false);
+  assert.equal(contract.execution.test_account_is_live_performance_evidence, false);
+  assert.equal(contract.execution.review_only_runtime_branch, false);
+  assert.equal(contract.result.test_account_success_state, "test_observed_demo_only");
   assert.equal(contract.result.current_listing_tree_resolves_historical_channel, false);
   assert.equal(contract.mutations.database, false);
   assert.equal(contract.product_owner_authorization.repository_implementation, true);
@@ -430,7 +446,15 @@ test("contracts record completed live gates while preserving retry and merge gat
   assert.equal(contract.product_owner_authorization.account_context_correction_deployment_commit,
     "53730bee401c79600570f199bd9967cf2d560c8a");
   assert.equal(contract.product_owner_authorization.account_context_correction_live_call,
+    true);
+  assert.equal(contract.product_owner_authorization.test_account_review_semantics_implementation,
+    true);
+  assert.equal(contract.product_owner_authorization.test_account_review_semantics_deployment,
     false);
+  assert.equal(contract.status,
+    "test_account_observed_review_semantics_repository_verified_deployment_pending");
+  assert.equal(contract.live_evidence.account_type_proven, true);
+  assert.equal(contract.live_evidence.account_type_state, "test_observed");
   assert.equal(contract.product_owner_authorization.visual_acceptance, true);
   assert.equal(contract.product_owner_authorization.merge, false);
   assert.equal(contract.failure_evidence.server_log_required, true);
@@ -451,6 +475,7 @@ test("contracts record completed live gates while preserving retry and merge gat
   assert.equal(googlePackage.live_evidence_trigger_deployment_authorized, true);
   assert.equal(googlePackage.first_live_reporting_call_authorized, true);
   assert.equal(googlePackage.additional_live_reporting_call_authorized, false);
+  assert.equal(googlePackage.test_account_review_semantics_repository_verified, true);
   assert.equal(googlePackage.account_context_correction_required, true);
   assert.equal(googlePackage.account_context_correction_implementation_authorized, true);
   assert.equal(googlePackage.account_context_correction_repository_verified, true);

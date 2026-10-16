@@ -50,6 +50,11 @@ type Provider = "google_ads" | "meta" | "klaviyo";
 type GoogleEvidenceResult = {
   status: "complete";
   observation_state: "present" | "not_observed_in_this_execution";
+  account: {
+    account_type_state: "test_observed" | "production_observed" | "not_observed";
+    production_performance_evidence_eligible: boolean;
+    campaign_context_row_count: number;
+  };
   cart_data_sales: {
     row_count: number;
     sales_role_counts: Record<"Advertised" | "Cross-sell" | "Assisted" | "Unclassified", number>;
@@ -1294,13 +1299,26 @@ export default function Settings() {
                 {googleEvidenceStatus === "loading"
                   ? "Reading Google evidence…"
                   : googleEvidenceStatus === "complete"
-                    ? "Google evidence received"
+                    ? googleEvidenceResult?.account.account_type_state === "test_observed"
+                      ? "Google test account checked"
+                      : "Google evidence received"
                     : googleEvidenceStatus === "failed"
                       ? "Google evidence stopped"
                       : "Run Google evidence"}
               </s-button>
               {googleEvidenceStatus === "complete" && googleEvidenceResult ? (
-                googleEvidenceResult.observation_state === "present" ? (
+                googleEvidenceResult.account.account_type_state === "test_observed" ? (
+                  <s-banner tone="info">
+                    Google test account verified. Read-only reporting queries completed:
+                    {" campaign context "}{googleEvidenceResult.account.campaign_context_row_count}
+                    {" rows; Cart Data "}{googleEvidenceResult.cart_data_sales.row_count}
+                    {" rows; product performance "}{googleEvidenceResult.product_performance.row_count}
+                    {" rows; current listing tree "}{googleEvidenceResult.current_listing_tree.row_count}
+                    {" rows; PMax Asset Group performance "}
+                    {googleEvidenceResult.pmax_asset_group_performance.row_count}
+                    {" rows. Test accounts do not serve ads, so these results are not production performance evidence. Production validation remains pending Google Ads API Explorer access."}
+                  </s-banner>
+                ) : googleEvidenceResult.observation_state === "present" ? (
                   <s-banner tone="success">
                     Google evidence received. Cart Data: {googleEvidenceResult.cart_data_sales.row_count}
                     {" rows; product performance: "}{googleEvidenceResult.product_performance.row_count}

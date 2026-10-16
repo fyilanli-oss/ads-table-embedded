@@ -91,4 +91,27 @@ test("only official Shopify-managed provider identity paths are in scope", () =>
     contract.providers.klaviyo.supported_identity_path,
     "official_klaviyo_shopify_integration",
   );
+  assert.match(contract.providers.meta.identity_validation, /shopify_product_and_variant/);
+  assert.match(contract.providers.meta.identity_validation, /shopify_admin_api/);
+  assert.match(contract.providers.google_ads.identity_validation, /shopify_admin_api/);
+});
+
+test("Ad Cost layers remain explicit, fail-closed and package-owned", () => {
+  assert.equal(contract.ad_cost.user_facing_label, "Ad Cost");
+  assert.equal(
+    contract.ad_cost.technical_layers.channel_ad_cost,
+    "exact_provider_cost_at_real_channel_grain",
+  );
+  assert.equal(contract.ad_cost.technical_layers.allocated_ad_cost, "A6-EO-05_only");
+  assert.equal(contract.ad_cost.providers.meta.channel_to_product_distribution, "forbidden_in_EO04");
+  assert.equal(contract.ad_cost.providers.google_ads.unknown_channel_redistribution, "forbidden");
+  assert.equal(contract.ad_cost.providers.klaviyo.allocation_owner, "A6-EO-05");
+  assert.equal(contract.ad_cost.rules.explicit_zero_preserved, true);
+  assert.equal(
+    contract.ad_cost.rules.missing_null_unsupported_permission_denied_or_validation_pending_becomes_zero,
+    false,
+  );
+  assert.equal(contract.ad_cost.rules.product_cost_rows_reconstruct_channel_total, false);
+  assert.equal(contract.ad_cost.rules.missing_product_cost_may_be_ratio_allocated_in_EO04, false);
+  assert.equal(contract.ad_cost.rules.unverified_shopify_identity_drops_provider_cost_evidence, false);
 });

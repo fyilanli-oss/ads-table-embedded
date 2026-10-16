@@ -60,6 +60,8 @@
         "product_allocation": "forbidden"
       },
       "supported_identity_path": "official_shopify_facebook_and_instagram_sales_channel",
+      "identity_validation": "derive_candidate_shopify_product_and_variant_from_official_channel_evidence_then_verify_variant_belongs_to_product_via_shopify_admin_api",
+      "identity_failure": "preserve_provider_product_id_and_cost_evidence_but_do_not_publish_shopify_sku_product_or_variant_labels",
       "excluded_identity_paths": [
         "custom_pixel",
         "manual_catalog",
@@ -146,6 +148,53 @@
       "supported_identity_path": "official_klaviyo_shopify_integration",
       "event_product_properties": "capability_check_required_per_account",
       "estimated_spend_allocation": "A6-EO-05_only"
+    }
+  },
+  "ad_cost": {
+    "user_facing_label": "Ad Cost",
+    "technical_layers": {
+      "channel_ad_cost": "exact_provider_cost_at_real_channel_grain",
+      "provider_product_ad_cost": "provider_attributed_product_cost_when_documented_and_observed",
+      "allocated_ad_cost": "A6-EO-05_only"
+    },
+    "providers": {
+      "meta": {
+        "channel_cost": "exact_ad_level_spend",
+        "product_cost": "validation_pending_real_catalog_product_breakdown_response",
+        "shopify_identity_required_for_shopify_product_labels": true,
+        "channel_to_product_distribution": "forbidden_in_EO04"
+      },
+      "google_ads": {
+        "channel_cost": "exact_provider_channel_cost",
+        "product_cost": "shopping_performance_view.metrics.cost_micros",
+        "shopify_identity_required_for_shopify_product_labels": true,
+        "unknown_channel_redistribution": "forbidden"
+      },
+      "klaviyo": {
+        "raw_cost_input": "effective_dated_estimated_30_day_email_spend_ledger",
+        "campaign_flow_variation_or_product_cost_in_EO04": "unavailable",
+        "allocation_owner": "A6-EO-05"
+      }
+    },
+    "rules": {
+      "explicit_zero_preserved": true,
+      "missing_null_unsupported_permission_denied_or_validation_pending_becomes_zero": false,
+      "product_cost_rows_reconstruct_channel_total": false,
+      "missing_product_cost_may_be_ratio_allocated_in_EO04": false,
+      "unverified_shopify_identity_drops_provider_cost_evidence": false,
+      "cross_sell_assisted_triggered_or_zero_value_creates_allocation_formula_in_EO04": false,
+      "cost_provenance_required": [
+        "provider_account",
+        "business_date_or_time_window",
+        "source_currency",
+        "source_timezone",
+        "api_revision",
+        "query",
+        "attribution_context"
+      ],
+      "refresh_and_reconciliation_owner": "A6-EO-05",
+      "tax_shipping_platform_fee_overlap_and_blended_true_cost_owner": "A6-EO-05",
+      "ui_owner": "A6-EO-07"
     }
   },
   "raw_evidence_classes": [

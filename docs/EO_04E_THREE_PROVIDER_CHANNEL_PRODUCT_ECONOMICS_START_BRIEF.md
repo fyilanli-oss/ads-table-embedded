@@ -68,7 +68,8 @@ Bağlayıcı sınırlar:
 4. `product_id` breakdown içinde providerın gerçekten döndürdüğü product metrics ayrı ham kanıt olarak korunur.
 5. Product breakdown içindeki impression/click/spend semantiği gerçek katalog reklamı cevabıyla doğrulanmadan `Ad Cost` veya gerçek ürün maliyeti sayılmaz.
 6. Ad spend ürünlere oranlanmaz veya paylaştırılmaz.
-7. Desteklenen kimlik yolu resmî Shopify `Facebook & Instagram` satış kanalıdır. Özel pixel, manuel katalog ve üçüncü taraf katalog bu sürümün kapsamı dışındadır.
+7. Desteklenen kimlik yolu resmî Shopify `Facebook & Instagram` satış kanalıdır. Provider ürün kimliğinden elde edilen Shopify product ID + variant ID adayları Shopify Admin API ile doğrulanır; variant'ın product'a ait olduğu kanıtlanmadan SKU, ürün adı veya varyant adı yayımlanmaz.
+8. Meta product ID biçimi veya eşlemesi doğrulanamazsa provider ID kaybedilmez fakat Shopify ürünü uydurulmaz. Özel pixel, manuel katalog ve üçüncü taraf katalog bu sürümün kapsamı dışındadır.
 
 ## Google Ads sözleşmesi
 
@@ -131,6 +132,35 @@ Klaviyo `2026-10-15` GA sözleşmesinde Campaign Variation gerçek resource ve r
 - Ordered Product event'inde gerçekten dönen ProductID, SKU, ProductName, Quantity ve value ham kanıt olarak alınır; hesap özel property adları gözlemle doğrulanır.
 - Estimated 30-Day Email Spend defteri EO-04-D'de korunur fakat Campaign/Flow/Message/Variation veya ürüne dağıtılmaz. Dağıtım EO-05 kararıdır.
 
+## Ad Cost yaşam döngüsü
+
+Kullanıcı-facing nihai terim `Ad Cost` olacaktır. Fakat aşağıdaki üç teknik değer birbirinin yerine kullanılamaz:
+
+1. **Channel Ad Cost:** Providerın gerçek Channel grain'inde döndürdüğü spend/cost.
+2. **Provider Product Ad Cost:** Providerın kendi attribution mantığıyla bir ürün satırına yazdığı cost.
+3. **Allocated Ad Cost:** EO-05'in kabul edilmiş formülle Channel veya ürünlere dağıtacağı maliyet. Provider gerçeği değildir ve provenance'ı ayrı kalır.
+
+| Provider | EO-04'te alınacak maliyet kanıtı | Ürün satırında `Ad Cost` koşulu | EO-05'e bırakılan işlem |
+| --- | --- | --- | --- |
+| Meta | Ad seviyesinde exact spend; product breakdown spend yalnız gerçek katalog cevabıyla doğrulanırsa ayrı provider-product kanıtı | Yalnız product-grain semantiği canlı kabul edilmiş ve Shopify product/variant kimliği doğrulanmışsa | Ad toplamının ürünlere dağıtımı, cross-sell/blended maliyet ve gerçek ürün maliyeti |
+| Google Ads | Ad Group/Asset Group Channel cost ve `shopping_performance_view.metrics.cost_micros` provider-product kanıtı | Google item kimliği resmî Shopify sync yoluyla product/variant'a doğrulanmışsa provider product cost `Ad Cost` girdisi olur | Unknown Channel çözümü dışındaki tahminî dağıtımlar, cross-sell/blended ve gerçek ürün maliyeti |
+| Klaviyo | Effective-dated Estimated 30-Day Email Spend ledger | EO-04'te Campaign/Flow/Variation/product Ad Cost yoktur | Estimated spend'in zaman, Campaign, Flow, Channel veya ürüne dağıtımı |
+
+Bağlayıcı Ad Cost kuralları:
+
+1. EO-04 cost üretmez; providerın açıkça döndürdüğü değer veya Klaviyo'nun kullanıcı tarafından girilmiş effective-dated estimated-spend kanıtını alır.
+2. Explicit provider zero `0` olarak korunur. Missing, null, unsupported, permission-denied veya validation-pending değer sıfıra çevrilmez.
+3. Cost her zaman provider account, business date/time window, source currency, source timezone, API revision, query ve attribution provenance'ıyla taşınır.
+4. Shopify product/variant kimliği doğrulanamasa bile provider ürün kimliği ve cost kanıtı kaybedilmez; yalnız Shopify SKU/ad/varyant etiketi yayımlanmaz.
+5. Channel cost, product cost satırlarının toplamından yeniden üretilmez. Product satırları impression veya provider attribution nedeniyle üst toplamı aşabilir.
+6. Product cost yoksa Channel cost ürünlere eşit, revenue, click, quantity veya başka oranla dağıtılmaz.
+7. `Unknown Channel` ürününün cost'u bilinen bir Asset Group, Ad Group, Ad veya Variation'a taşınmaz.
+8. Cross-sell, Assisted, Triggered ve Zero Value rolleri/modifier'ları EO-04'te cost dağıtım formülü oluşturmaz.
+9. Klaviyo Update spend ve Change value geçmişi effective-dated ledger'da korunur; EO-05 allocation geçmiş girdiyi sessizce yeniden yazamaz.
+10. Refresh ve reconciliation maliyet kanıtını performans kanıtıyla aynı truthful snapshot ilkelerine göre yeniden okuyabilir; çalışma sıklığı ve kota bütçesi EO-05'tedir.
+11. Vergi, kargo, platform ücreti, attribution overlap ve blended/true cost formülleri EO-05 analist sözleşmesi olmadan `Ad Cost` içine eklenmez.
+12. EO-07 UI, kabul edilmiş maliyet alanını kullanıcıya `Ad Cost` etiketiyle gösterir; source/provenance ayrımı detay yüzeyinde kaybolmaz.
+
 ## Ortak ham kanıt zarfı
 
 Her provider satırı aşağıdaki sınıfları taşıyabilir; provider-native alan adı ve raw reference kaybedilmez:
@@ -158,8 +188,10 @@ Provider-isolated ve combined deterministic acceptance aşağıdakileri kanıtla
 6. `Advertised`, `Cross-sell`, `Assisted`, `Triggered` ve gerçek ambiguity için `Unclassified` ayrımı çalışır.
 7. `Zero Value` role değildir; modifier'dır.
 8. Provider product cost ile Channel spend ve gelecekteki blended/true cost birbirine dönüştürülmez.
-9. Kimliği doğrulanmamış ürün SKU/name olarak yayımlanmaz; ham provider ID kaybedilmez.
-10. Synthetic fixture yalnız contract davranışını kanıtlar; canlı provider gerçeği olarak sunulmaz.
+9. Kimliği doğrulanmamış ürün SKU/name olarak yayımlanmaz; ham provider ID ve provider cost kanıtı kaybedilmez.
+10. Channel Ad Cost, Provider Product Ad Cost ve Allocated Ad Cost birbirine dönüşmeden ayrı kalır.
+11. Product cost yokken Channel cost ürünlere dağıtılmaz; explicit zero dışındaki state'ler sıfır olmaz.
+12. Synthetic fixture yalnız contract davranışını kanıtlar; canlı provider gerçeği olarak sunulmaz.
 
 ## Açık kabul ve uygulama kapıları
 

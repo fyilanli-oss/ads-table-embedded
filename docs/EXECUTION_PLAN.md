@@ -335,5 +335,6 @@ CI enforcement: `tests/eo-04e-three-provider-channel-product-economics.test.js`
 - `Zero Value` bir role değil modifier'dır. `Unknown Channel`, sale kanıtı bulunduğu halde exact Channel çözülemediğini ifade eder.
 - PMax broad/overlapping listing üyeliği aşağıya paylaştırılmaz. Search provider-attributed product sale'i bastırılmaz; `Assisted` olur.
 - Meta Ad spend ürünlere dağıtılmaz. Google provider product cost gerçek/blended maliyet sayılmaz. Klaviyo Estimated Spend dağıtımı EO-05'e bırakılır.
-- Desteklenen product identity yolları resmî Shopify-managed Meta, Google & YouTube ve Klaviyo entegrasyonlarıdır; manual/third-party feed/catalog bu sürümde kapsam dışıdır.
+- `Channel Ad Cost`, `Provider Product Ad Cost` ve EO-05'e ait `Allocated Ad Cost` ayrı kalır. Explicit zero dışındaki eksik/support state'leri sıfır olmaz; product cost satırları Channel toplamını yeniden üretmez.
+- Desteklenen product identity yolları resmî Shopify-managed Facebook & Instagram, Google & YouTube ve Klaviyo entegrasyonlarıdır. Meta ve Google product/variant adayları Shopify Admin API ile doğrulanmadan SKU, ürün adı veya varyant adı yayımlanmaz; manual/third-party feed/catalog bu sürümde kapsam dışıdır.
 - Bu gate henüz ürün sahibi tarafından bütün olarak kabul edilmemiştir. Provider reporting runtime, canlı provider çağrısı, Dataset V2, migration veya environment/deployment mutation başlatmaz.

@@ -40,7 +40,7 @@ Kampanya etiketi tek başına sınıflandırma üretmez. Belirleyici olan Creati
 8. Exact advertised-product kümesi tam olarak biliniyor ve sold product bu kümenin dışındaysa Cross-sell olur.
 9. Advertised-product kümesi exact değilse Cross-sell tahmin edilmez; provider-attributed sold product `Assisted` olur. `Unclassified` yalnız çelişkili veya gerçekten belirsiz kanıta ayrılır.
 10. Promotion terimi kullanılmaz. Satılan adet pozitif ve satış değeri gerçekten sıfırsa değer durumu `Zero Value` olur.
-11. Meta'nın ürün kimliği SKU veya Shopify ürün adı olarak yeniden adlandırılmaz.
+11. Resmî Shopify Facebook & Instagram satış kanalı kanıtından türetilen product ID + variant ID adayları Shopify Admin API ile doğrulanmadan SKU, ürün adı veya varyant adı yayımlanmaz.
 12. Provider verisi ile ileride hesaplanacak gerçek ürün maliyeti birbirine karıştırılmaz.
 
 ## Yetki sınırı
@@ -150,7 +150,7 @@ Ad seviyesinde product breakdown araştırma hattında:
 - Product breakdown içindeki `spend`
 - Her alan için `returned / null / unsupported / validation_pending` destek durumu
 
-SKU ve product name bu Meta Insights çekirdeğinin doğrulanmış exact alanları değildir; katalog eşlemesi kanıtlanmadan yayımlanmaz.
+SKU ve product name bu Meta Insights çekirdeğinin doğrulanmış exact alanları değildir. Desteklenen resmî Shopify Facebook & Instagram kanalında provider kimliği product ID + variant ID adayına dönüştürülür; Shopify Admin API variant'ın product'a ait olduğunu doğrulamadan SKU, ürün adı veya varyant adı yayımlanmaz. Eşleme başarısız olsa da provider product ID ve cost kanıtı kaybedilmez.
 
 ## Çalışma sınıfları
 

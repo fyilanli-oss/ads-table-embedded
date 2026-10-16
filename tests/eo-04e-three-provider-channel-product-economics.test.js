@@ -9,9 +9,11 @@ const contract = JSON.parse(
   ),
 );
 
-test("EO-04-E contract is accepted without authorizing runtime or live provider work", () => {
-  assert.equal(contract.status, "accepted_product_owner_runtime_not_authorized");
-  assert.equal(contract.acceptance.runtime_implementation_authorized, false);
+test("EO-04-E contract authorizes only the Meta-first repository runtime while live work stays closed", () => {
+  assert.equal(contract.status, "accepted_product_owner_meta_runtime_started");
+  assert.equal(contract.acceptance.runtime_implementation_authorized, true);
+  assert.equal(contract.acceptance.runtime_authorized_at, "2026-10-16");
+  assert.equal(contract.acceptance.runtime_authorization_scope, "meta_provider_first_slice_only");
   assert.equal(contract.acceptance.live_provider_calls_authorized, false);
   assert.equal(contract.acceptance.product_owner_acceptance_required, true);
   assert.equal(contract.acceptance.product_owner_contract_acceptance, true);

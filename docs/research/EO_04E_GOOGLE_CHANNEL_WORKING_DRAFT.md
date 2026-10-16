@@ -2,13 +2,13 @@
 
 ## Belge durumu
 
-- Durum: **Bağlayıcı olmayan araştırma taslağı**
-- Kontrol tarihi: **14 Ekim 2026**
+- Durum: **Araştırma kaydı; 16 Ekim 2026 ortak brief'i tarafından supersede edildi**
+- Kontrol tarihi: **16 Ekim 2026**
 - Sahiplik bağlamı: A6-EO-04-E
 - Bu belge bir executable contract, kabul kapısı veya implementasyon yetkisi değildir.
 - EO-04-E, Dataset V2, Channel UI veya başka bir paketin başlamasını ya da kapanmasını engellemez.
 - Provider çağrısı, runtime kodu, migration, secret, environment veya deployment değişikliği yetkilendirmez.
-- Meta araştırması ve Klaviyo 15 Ekim final API doğrulaması tamamlanmadan ortak Channel sözleşmesi dondurulamaz.
+- Bağlayıcı karar: `docs/EO_04E_THREE_PROVIDER_CHANNEL_PRODUCT_ECONOMICS_START_BRIEF.md`.
 
 ## Amaç
 
@@ -21,7 +21,7 @@ Google Ads tarafında Channel kimliğini, provider ürün performansını, satı
 | Standard Shopping | Ad Group | Tekil veya çoklu Merchant Center ürünleri | Product performance ve Cart Data Ad Group bağlamında korunur. | Kanıtlanan lead/advertised ürün Advertised; farklı sold product Cross-sell. |
 | Performance Max Retail | Asset Group | Listing-tree leaf tekil item ID ve üyelik yalnız bir Asset Group'u exact belirliyor | Product satırı exact Asset Group'a bağlanabilir. | Advertised veya Cross-sell provider kanıtına göre korunur. |
 | Performance Max Retail | Asset Group | All products, kategori, marka, product type, custom label veya birden fazla Asset Group'a uyan ürün | Campaign-product kanıtı vardır; exact Asset Group kanıtı yoktur. | Ürün Unknown Channel altında kalır; ilişki kanıtı varsa korunur, tahmin yapılmaz. |
-| Search | Ad Group | Katalog ürünü/advertised product kanıtı yok | Channel performansı Ad Group'ta kalır; ürün-Channel ilişkisi üretilmez. | Ürün sınıflaması yapılmaz. |
+| Search | Ad Group | Exact advertised product kanıtı yok | Provider-attributed sold product Ad Group bağlamında korunur. | Assisted |
 
 ## Temel çalışma kuralları
 
@@ -33,10 +33,10 @@ Google Ads tarafında Channel kimliğini, provider ürün performansını, satı
 6. PMax'te tıklanan ürünün listing-tree üyeliği yalnız tek bir Asset Group'u exact belirliyorsa o Asset Group Channel adayıdır.
 7. Ürün birden fazla Asset Group listing ağacına uyuyorsa veya exact üyelik kanıtlanamıyorsa Channel `Unknown Channel` olur.
 8. `Unknown Channel`, satış ilişkisinin değil Channel çözümlemesinin durumudur.
-9. Search Ad Group için advertised product kanıtı bulunmadığından ürün ilişkisi tahmin edilmez.
+9. Search Ad Group için exact advertised product kanıtı bulunmadığından provider-attributed sold product bastırılmaz; `Assisted` olur.
 10. Promotion terimi kullanılmaz. Satılan adet pozitif ve ürün satış değeri gerçekten sıfırsa değer durumu `Zero Value` olur.
 11. Google ürün seviyesinde ham olarak `units_sold` ve `revenue_micros` sağlar. `units_sold`, ortak Dataset sözleşmesi kararı olmadan kullanıcıya Purchase diye yeniden adlandırılmaz.
-12. Shopify SKU/variant eşleşmesi bu taslağın kabul şartı değildir. Uygun gerçek ortam doğal olarak oluşursa ayrıca gözlenebilecek bağlayıcı olmayan not olarak kalır.
+12. Desteklenen kimlik yolu Shopify'ın resmî Google & YouTube otomatik ürün senkronudur. Google item ID içindeki Shopify product/variant adayları Shopify Admin API ile doğrulanmadan SKU veya ürün adı yayımlanmaz. Manuel/üçüncü taraf feed kapsam dışıdır.
 
 ## Performans ve maliyet katmanları
 
@@ -158,6 +158,7 @@ Bu alanlar provider-attributed product performance'tır; Channel toplamı veya g
 
 - Advertised
 - Cross-sell
+- Assisted
 - Unclassified
 
 ### Satış değeri durumu
@@ -173,13 +174,11 @@ Channel çözümleme durumu ayrıca tutulur:
 
 ## Açık konular
 
-- Meta'nın gerçek Channel ve ürün/satış ilişki sınırı aynı formatta tamamlanacak.
-- Klaviyo, 15 Ekim final API sürümüyle yeniden doğrulanacak.
-- Üç providerın ortak alan kesişimi çıkarılacak.
+- Meta ve Klaviyo araştırmaları 16 Ekim ortak brief'inde birleştirildi.
 - Provider Product Cost ile gelecekteki Allocated True Product Cost birbirine dönüştürülmeyecek.
 - Vergi, kargo, blended spend ve ürün maliyeti formülleri kullanıcının sağlayacağı analist çalışma sayfaları görülmeden dondurulmayacak.
-- Shopify SKU/variant eşleşmesi uygun gerçek ortam doğal olarak oluşursa gözlenecek; hiçbir paketi engellemeyecek.
-- Bu taslak, ortak Channel sözleşmesi kabul edilmeden implementasyona çevrilmeyecek.
+- Resmî Google & YouTube sync dışındaki kimlik yolları bu sürümde desteklenmeyecek.
+- Runtime ancak ortak Channel sözleşmesinin ürün sahibi kabulünden sonra başlayabilir.
 
 ## Resmî kaynaklar
 
@@ -193,3 +192,4 @@ Channel çözümleme durumu ayrıca tutulur:
 - [Google Ads API v25 — Shopping Performance View](https://developers.google.com/google-ads/api/fields/v25/shopping_performance_view)
 - [Google Ads API v25 — Product Group View](https://developers.google.com/google-ads/api/fields/v25/product_group_view)
 - [Google Ads API — Performance Max asset group reporting](https://developers.google.com/google-ads/api/performance-max/asset-group-reporting)
+

@@ -85,7 +85,7 @@ test("EO-04-A exposes complete synthetic acceptance and secret gates", async () 
   assert.equal(contract.acceptance_state.next_provider_child_authorized, false);
 });
 
-test("Execution Plan and master contract preserve EO-04-A while Meta is the active child", async () => {
+test("Execution Plan and master contract preserve EO-04-A at the EO-04-E review gate", async () => {
   const plan = await readFile("docs/EXECUTION_PLAN.md", "utf8");
   const master = await readJson("contracts/a6-eo-implementation-master-v1.json");
   const eo04 = master.packages.find((item) => item.id === "A6-EO-04");
@@ -100,13 +100,14 @@ test("Execution Plan and master contract preserve EO-04-A while Meta is the acti
     assert.match(plan, new RegExp(value.replace(/[.*+?^$\{\}()|[\]\\]/g, "\\$&")));
   }
 
-  assert.equal(master.schema_version, "1.21.0");
+  assert.equal(master.schema_version, "1.22.0");
   assert.equal(master.current_active_parent, "A6-EO-04");
-  assert.equal(master.current_active_child, "A6-EO-04-D");
-  assert.equal(master.current_gate, "A6-EO-04-D_current_official_documentation_and_analyst_brief");
+  assert.equal(master.current_active_child, "A6-EO-04-E");
+  assert.equal(master.current_gate, "A6-EO-04-E_channel_contract_product_owner_acceptance");
   assert.equal(eo04.status, "Active");
   assert.equal(eo04a.status, "Accepted");
   assert.equal(eo04a.implementation_started, true);
   assert.equal(eo04a.implementation_complete, true);
   assert.equal(eo04a.final_product_owner_acceptance, true);
 });
+

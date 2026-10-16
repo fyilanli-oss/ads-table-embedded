@@ -80,9 +80,10 @@ test("Execution Plan and master contract expose the EO-04 secret gate", async ()
     assert.match(plan, new RegExp(value.replace(/[.*+?^$\{\}()|[\]\\]/g, "\\$&")));
   }
 
-  assert.equal(master.schema_version, "1.21.0");
+  assert.equal(master.schema_version, "1.22.0");
   assert.equal(gate.status, "Ready_for_product_owner_acceptance");
   assert.equal(gate.inventory_count, 16);
   assert.equal(gate.mutation_authorized, false);
   assert.equal(gate.owner_package_for_future_provider_secrets, "A6-EO-04");
 });
+

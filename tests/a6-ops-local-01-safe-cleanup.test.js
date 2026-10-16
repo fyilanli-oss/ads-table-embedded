@@ -23,7 +23,7 @@ test("opens one independent package without changing the EO plan", () => {
     .flatMap((parent) => parent.children ?? [])
     .map((child) => child.id);
   assert.equal(master.current_active_parent, "A6-EO-04");
-  assert.equal(master.current_active_child, "A6-EO-04-D");
+  assert.equal(master.current_active_child, "A6-EO-04-E");
   assert.ok(eoChildIds.includes(master.current_active_child));
   assert.equal(master.next_ready_child, null);
   assert.notEqual(master.current_active_child, cleanup.id);
@@ -52,3 +52,4 @@ test("closes only at zero meaningful local-only work and keeps the recurring gat
   assert.match(doc, /Deletion authority:\*\* None at package opening/);
   assert.match(plan, /A6-OPS-LOCAL-01 — One-time local safety cleanup/);
 });
+

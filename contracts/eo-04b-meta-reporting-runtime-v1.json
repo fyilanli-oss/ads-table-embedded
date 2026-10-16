@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "eo-04b-meta-reporting-runtime-v1",
+  "package_id": "A6-EO-04-B",
+  "status": "runtime_started_first_slice_awaiting_acceptance",
+  "checked_at": "2026-10-16",
+  "authority": {
+    "parent_contract": "contracts/eo-04e-three-provider-channel-product-economics-v1.json",
+    "brief": "docs/EO_04B_META_REPORTING_RUNTIME_START_BRIEF.md"
+  },
+  "slice": {
+    "provider": "meta",
+    "fact_family": "ad_channel_daily_insights",
+    "channel": "ad",
+    "graph_version": "v26.0",
+    "oauth_scope": ["ads_read"],
+    "level": "ad",
+    "time_increment": 1,
+    "product_breakdown": false,
+    "creative_product_evidence": false,
+    "sales_role_classification": false,
+    "shopify_identity_verification": false
+  },
+  "mutations": {
+    "live_provider_call": false,
+    "dataset_v2": false,
+    "database": false,
+    "scheduler": false,
+    "ui": false,
+    "oauth_scope": false,
+    "secret_or_environment": false,
+    "deployment": false
+  },
+  "next_gate": "product_owner_acceptance_before_meta_product_evidence_slice",
+  "google_runtime_started": false,
+  "klaviyo_runtime_started": false
+}

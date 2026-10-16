@@ -2,7 +2,7 @@
   "schema_version": "1.2.0",
   "contract_id": "eo-04c-google-live-evidence-trigger-v1",
   "package_id": "A6-EO-04-C",
-  "status": "test_account_observed_review_semantics_deployed_visual_acceptance_pending",
+  "status": "test_account_observed_review_semantics_deployed_visual_accepted_merge_pending",
   "checked_at": "2026-10-16",
   "authority": {
     "execution_plan": "docs/EXECUTION_PLAN.md",
@@ -93,7 +93,7 @@
     "test_account_review_semantics_deployment": true,
     "test_account_review_semantics_deployment_id": "dpl_AQWkrVxdQvVzxPQkeNbhwXXwcXXQ",
     "test_account_review_semantics_deployment_commit": "16a54df48e853c282d9c3481fb9e3b7c2b2ca16d",
-    "visual_acceptance": false,
+    "visual_acceptance": true,
     "merge": false
   },
   "live_evidence": {

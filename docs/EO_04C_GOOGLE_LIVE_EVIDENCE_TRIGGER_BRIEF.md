@@ -14,7 +14,8 @@
 - Account/campaign context correction production deployment: **completed 16 October 2026**
 - Test-account review semantics: **accepted and repository implementation authorized 16 October 2026**
 - Test-account review semantics repository verification: **289/289 tests, typecheck and production build passed 16 October 2026**
-- Test-account review semantics production deployment: **completed 16 October 2026; desktop/mobile visual acceptance pending**
+- Test-account review semantics production deployment: **completed 16 October 2026**
+- Test-account review semantics desktop/mobile visual acceptance: **accepted by product owner 16 October 2026**
 - Binding runtime contract: `contracts/eo-04c-google-reporting-runtime-v1.json`
 - Trigger contract: `contracts/eo-04c-google-live-evidence-trigger-v1.json`
 
@@ -140,9 +141,9 @@ The product owner separately authorized Production deployment on 16 October
 2026. Exact commit `16a54df48e853c282d9c3481fb9e3b7c2b2ca16d` was deployed as
 `dpl_AQWkrVxdQvVzxPQkeNbhwXXwcXXQ`; Vercel reported `READY`, assigned
 `embedded.adstable.app` without alias error, and the initial deployment-scoped
-error/fatal scan was clean. This deployment authorizes neither another Google
-request nor merge. Real Shopify Admin desktop/mobile visual acceptance remains
-pending.
+error/fatal scan was clean. The product owner then accepted the real Shopify
+Admin Settings result on desktop and mobile. This deployment and visual
+acceptance authorize neither another Google request nor merge.
 
 ## Unchanged behavior and out of scope
 

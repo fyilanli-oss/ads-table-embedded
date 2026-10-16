@@ -1,9 +1,11 @@
-# EO-04-B Meta reporting runtime — first slice
+# EO-04-B Meta reporting runtime — first and second slices
 
 ## Status
 
 - Product-owner runtime start authorization: **recorded 16 October 2026**
-- Scope: **Meta Ad Channel daily raw Insights page only**
+- First slice: **Meta Ad Channel daily raw Insights page**
+- Second-slice authorization: **recorded 16 October 2026**
+- Second slice: **Meta Ad + `product_id` daily raw Insights page**
 - Live Meta request: **not authorized by this slice**
 - Dataset V2, database, scheduler, UI, OAuth scope, secret, environment and deployment mutation: **forbidden**
 
@@ -47,14 +49,29 @@ This is not Dataset V2 and is not persisted.
 - a next page without a valid opaque cursor fails closed.
 - an empty `data` array is a valid empty provider page; it is not fabricated as zero.
 
+## Second slice — raw product breakdown
+
+The second repository-only slice adds a separate Meta request with:
+
+- `level=ad`;
+- `breakdowns=product_id`;
+- `time_increment=1`;
+- a fixed operational `product_id_limit=100`;
+- Ad hierarchy and business-date identity;
+- raw `impressions`, `clicks`, `spend`, `converted_product_quantity` and `converted_product_value` fields.
+
+Each returned product-breakdown row must contain a non-empty provider `product_id`. Other requested metrics remain untouched and may be absent or null. The runtime does not fabricate zeroes and does not normalize or classify those fields.
+
+This slice still does **not** establish that product-breakdown impression, click or spend is exact product `Ad Cost`. Its evidence explicitly remains `validation_pending_real_catalog_response`. It also does not add Creative classification, Sales Role, Shopify identity verification, persistence, Dataset V2, scheduler or UI behavior.
+
 ## Next gate
 
-After repository tests and product-owner review, the next Meta-only slice may add:
+After repository tests and product-owner review, a separately authorized live catalog-response validation may prove or reject the returned product-metric semantics. Only after that evidence may a later Meta-only slice add:
 
-1. `product_id` breakdown raw evidence;
-2. Creative/promoted-object exact advertised-product evidence;
-3. Sales Role classification;
-4. official Shopify Facebook & Instagram identity candidate verification.
+1. Creative/promoted-object exact advertised-product evidence;
+2. Sales Role classification;
+3. official Shopify Facebook & Instagram identity candidate verification;
+4. exact product `Ad Cost` publication, only if the live evidence supports it.
 
 No Google or Klaviyo runtime begins before the Meta provider slice is accepted.
 

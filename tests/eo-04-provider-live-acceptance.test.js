@@ -22,6 +22,9 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 const contract = JSON.parse(read("contracts/eo-04-provider-live-acceptance-v1.json"));
 const brief = read("docs/EO_04_PROVIDER_LIVE_ACCEPTANCE_START_BRIEF.md");
+const liveEvidence = JSON.parse(read(
+  "docs/evidence/EO_04_META_PROVIDER_LIVE_EVIDENCE_2026-10-16.json",
+));
 const route = read("app/routes/settings.provider-live-evidence.ts");
 const settings = read("app/routes/_admin.settings.tsx");
 
@@ -327,12 +330,13 @@ test("contract keeps product fields raw and the temporary route non-visual", () 
   assert.equal(contract.product_owner_authorization.live_provider_call, true);
   assert.equal(contract.product_owner_authorization.deployment, true);
   assert.equal(contract.product_owner_authorization.merge, true);
-  assert.equal(contract.product_owner_authorization.safe_server_log_merge, false);
-  assert.equal(contract.product_owner_authorization.safe_server_log_deployment, false);
+  assert.equal(contract.product_owner_authorization.safe_server_log_merge, true);
+  assert.equal(contract.product_owner_authorization.safe_server_log_deployment, true);
   assert.equal(contract.product_owner_authorization.next_live_provider_call, false);
-  assert.equal(contract.repository_implementation.successful_live_route_executions_observed, 2);
-  assert.equal(contract.repository_implementation.safe_response_payload_retained, false);
-  assert.equal(contract.repository_implementation.safe_server_log_deployed, false);
+  assert.equal(contract.product_owner_authorization.evidence_closure_merge, false);
+  assert.equal(contract.repository_implementation.successful_live_route_executions_observed, 3);
+  assert.equal(contract.repository_implementation.safe_response_payload_retained, true);
+  assert.equal(contract.repository_implementation.safe_server_log_deployed, true);
   assert.match(route, /resolveReadOnlyShopifyRouteAuthority/);
   assert.match(route, /authenticate\.admin/);
   assert.match(route, /PROVIDER_LIVE_EVIDENCE_SAFE_LOG_PREFIX/);
@@ -342,6 +346,31 @@ test("contract keeps product fields raw and the temporary route non-visual", () 
   assert.doesNotMatch(route, /<s-|useSubmit|useFetcher|Form/);
   assert.match(brief, /separate product-owner decision/i);
   assert.match(brief, /does not expose provider rows/i);
+});
+
+test("retained Meta live evidence preserves empty product semantics and mapping boundaries", () => {
+  assert.equal(liveEvidence.execution.status, "complete");
+  assert.equal(liveEvidence.execution.provider_retry_performed, false);
+  assert.equal(liveEvidence.execution.database_write_performed, false);
+  assert.equal(liveEvidence.channel.row_count, 1);
+  assert.deepEqual(liveEvidence.channel.field_state_counts.impressions, {present_numeric: 1});
+  assert.deepEqual(liveEvidence.channel.field_state_counts.outbound_clicks, {array: 1});
+  assert.ok(liveEvidence.channel.action_types.includes("landing_page_view"));
+  assert.ok(!liveEvidence.channel.action_types.some(
+    (type) => /purchase|checkout|add_to_cart/.test(type),
+  ));
+  assert.equal(liveEvidence.product.request_completed, true);
+  assert.equal(liveEvidence.product.response_state, "empty_success");
+  assert.equal(liveEvidence.product.row_count, 0);
+  assert.equal(liveEvidence.product.canonical_support_state, "not_observed_in_this_execution");
+  assert.equal(liveEvidence.product.real_zero, false);
+  assert.equal(liveEvidence.product.globally_unsupported, false);
+  assert.equal(liveEvidence.analyst_decisions.session,
+    "not_mapped_from_landing_page_view_without_separate_acceptance");
+  assert.equal(liveEvidence.user_supplied_context.provider_authored_evidence, false);
+  assert.equal(liveEvidence.next_product_evidence_gate.current_authorization, false);
+  assert.equal(liveEvidence.retention_boundary.numeric_commercial_values_retained, false);
+  assert.equal(liveEvidence.retention_boundary.raw_names_or_identifiers_retained, false);
 });
 
 test("connected Meta exposes only the approved one-attempt evidence button", () => {

@@ -100,10 +100,13 @@ test("Execution Plan and master contract preserve EO-04-A at the EO-04-E runtime
     assert.match(plan, new RegExp(value.replace(/[.*+?^$\{\}()|[\]\\]/g, "\\$&")));
   }
 
-  assert.equal(master.schema_version, "1.22.0");
+  assert.equal(master.schema_version, "1.23.0");
   assert.equal(master.current_active_parent, "A6-EO-04");
   assert.equal(master.current_active_child, "A6-EO-04-E");
-  assert.equal(master.current_gate, "A6-EO-04-E_provider_reporting_runtime_start_approval");
+  assert.equal(
+    master.current_gate,
+    "A6-EO-04-E_meta_live_mapping_boundary_accepted_next_provider_or_product_evidence_separately_gated",
+  );
   assert.equal(eo04.status, "Active");
   assert.equal(eo04a.status, "Accepted");
   assert.equal(eo04a.implementation_started, true);

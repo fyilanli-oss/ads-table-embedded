@@ -487,5 +487,8 @@ test("contract keeps installed Shopify shop authoritative after EO-03 closure", 
   assert.equal(master.current_active_parent, "A6-EO-04");
   assert.equal(master.current_active_child, "A6-EO-04-E");
   assert.equal(master.next_ready_child, null);
-  assert.equal(master.current_gate, "A6-EO-04-E_provider_reporting_runtime_start_approval");
+  assert.equal(
+    master.current_gate,
+    "A6-EO-04-E_meta_live_mapping_boundary_accepted_next_provider_or_product_evidence_separately_gated",
+  );
 });

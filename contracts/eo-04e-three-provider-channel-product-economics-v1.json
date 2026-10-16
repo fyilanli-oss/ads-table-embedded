@@ -1,0 +1,230 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "eo-04e-three-provider-channel-product-economics-v1",
+  "package_id": "A6-EO-04-E",
+  "status": "accepted_product_owner_runtime_not_authorized",
+  "checked_at": "2026-10-16",
+  "authority": {
+    "execution_plan": "docs/EXECUTION_PLAN.md",
+    "analyst_brief": "docs/EO_04E_THREE_PROVIDER_CHANNEL_PRODUCT_ECONOMICS_START_BRIEF.md",
+    "parent_contract": "contracts/a6-eo-implementation-master-v1.json"
+  },
+  "scope": {
+    "eo04": "Fetch and verify provider-native raw facts, identities, metrics and exact relationships.",
+    "eo05": "Build Dataset V2, persistence, calculations, allocation, refresh and reconciliation.",
+    "eo07": "Render the accepted analysis UI.",
+    "forbidden_here": [
+      "dataset_v2_schema_or_migration",
+      "klaviyo_estimated_spend_allocation",
+      "blended_or_true_cost_formula",
+      "live_provider_call_without_separate_approval",
+      "oauth_scope_expansion",
+      "secret_environment_or_deployment_mutation"
+    ]
+  },
+  "common": {
+    "channel_definition": "deepest_provider_verified_reporting_leaf",
+    "sales_roles": [
+      "Advertised",
+      "Cross-sell",
+      "Assisted",
+      "Triggered",
+      "Unclassified"
+    ],
+    "unclassified_rule": "only_for_contradictory_or_ambiguous_evidence",
+    "value_modifier": "Zero Value",
+    "unknown_channel": "sale_is_proven_but_exact_channel_is_not",
+    "null_rule": "missing_null_unsupported_permission_denied_and_explicit_zero_are_distinct",
+    "no_fabrication": true,
+    "no_product_cost_allocation": true
+  },
+  "providers": {
+    "meta": {
+      "channel": "ad",
+      "context": [
+        "campaign",
+        "ad_set"
+      ],
+      "oauth_scope_ceiling": [
+        "ads_read"
+      ],
+      "classification": {
+        "exact_sold_in_advertised_set": "Advertised",
+        "exact_sold_outside_advertised_set": "Cross-sell",
+        "broad_dynamic_product_set_or_generic_creative": "Assisted",
+        "contradictory_or_ambiguous_evidence": "Unclassified"
+      },
+      "cost": {
+        "channel_spend": "exact_ad_level",
+        "product_breakdown_metrics": "validation_pending_real_catalog_response",
+        "product_allocation": "forbidden"
+      },
+      "supported_identity_path": "official_shopify_facebook_and_instagram_sales_channel",
+      "identity_validation": "derive_candidate_shopify_product_and_variant_from_official_channel_evidence_then_verify_variant_belongs_to_product_via_shopify_admin_api",
+      "identity_failure": "preserve_provider_product_id_and_cost_evidence_but_do_not_publish_shopify_sku_product_or_variant_labels",
+      "excluded_identity_paths": [
+        "custom_pixel",
+        "manual_catalog",
+        "third_party_catalog"
+      ]
+    },
+    "google_ads": {
+      "channels": {
+        "standard_shopping": "ad_group",
+        "performance_max_retail": "asset_group",
+        "search": "ad_group"
+      },
+      "classification": {
+        "exact_sold_in_advertised_set": "Advertised",
+        "exact_sold_outside_advertised_set": "Cross-sell",
+        "search_provider_attributed_sale": "Assisted",
+        "contradictory_or_ambiguous_evidence": "Unclassified"
+      },
+      "pmax": {
+        "exact_unique_listing_membership": "exact_asset_group",
+        "broad_or_overlapping_listing_membership": "Unknown Channel",
+        "cart_data_asset_group_segmentation": "unsupported",
+        "downward_distribution": "forbidden"
+      },
+      "product_fields": {
+        "advertised_or_clicked": "segments.product_item_id",
+        "sold": "segments.product_sold_item_id"
+      },
+      "cost": {
+        "provider_product_cost": "metrics.cost_micros",
+        "true_or_blended_cost": "eo05_only"
+      },
+      "supported_identity_path": "official_shopify_google_and_youtube_automatic_product_sync",
+      "identity_validation": "parse_candidate_product_and_variant_then_verify_variant_belongs_to_product_via_shopify_admin_api",
+      "excluded_identity_paths": [
+        "manual_merchant_center_feed",
+        "third_party_feed"
+      ]
+    },
+    "klaviyo": {
+      "api_revision": "2026-10-15",
+      "channels": {
+        "campaign": "campaign_variation",
+        "flow_with_variation_attribution": "flow_message_variation",
+        "flow_without_variation_attribution": "flow_message"
+      },
+      "not_channels": [
+        "flow",
+        "trigger",
+        "split",
+        "delay"
+      ],
+      "campaign_attribution": {
+        "single_variation": "message_attributed_product_may_bind_to_the_only_variation",
+        "multiple_variations": "product_stays_under_unknown_channel_with_message_context",
+        "performance": "variation_exact",
+        "event_relationship_includes_campaign_variation": false
+      },
+      "flow_attribution": {
+        "variation_relationship_present": "Triggered_at_flow_message_variation",
+        "message_relationship_only": "Triggered_at_flow_message"
+      },
+      "classification": {
+        "exact_sold_in_advertised_set": "Advertised",
+        "exact_sold_outside_advertised_set": "Cross-sell",
+        "broad_dynamic_general_or_category_content": "Assisted",
+        "flow_attributed_product": "Triggered",
+        "contradictory_or_ambiguous_evidence": "Unclassified"
+      },
+      "campaign_daily_grain": {
+        "series_endpoint": "unavailable",
+        "method": "one_business_day_per_values_timeframe",
+        "bootstrap_order": [
+          "yesterday",
+          "today"
+        ],
+        "documented_limit": {
+          "burst": "1_per_second",
+          "steady": "2_per_minute",
+          "daily": 225
+        },
+        "hourly_refresh_and_reconciliation_budget_owner": "A6-EO-05"
+      },
+      "supported_identity_path": "official_klaviyo_shopify_integration",
+      "event_product_properties": "capability_check_required_per_account",
+      "estimated_spend_allocation": "A6-EO-05_only"
+    }
+  },
+  "ad_cost": {
+    "user_facing_label": "Ad Cost",
+    "technical_layers": {
+      "channel_ad_cost": "exact_provider_cost_at_real_channel_grain",
+      "provider_product_ad_cost": "provider_attributed_product_cost_when_documented_and_observed",
+      "allocated_ad_cost": "A6-EO-05_only"
+    },
+    "providers": {
+      "meta": {
+        "channel_cost": "exact_ad_level_spend",
+        "product_cost": "validation_pending_real_catalog_product_breakdown_response",
+        "shopify_identity_required_for_shopify_product_labels": true,
+        "validated_exact_product_cost_across_sales_roles": "preserve",
+        "channel_to_product_distribution": "forbidden_in_EO04"
+      },
+      "google_ads": {
+        "channel_cost": "exact_provider_channel_cost",
+        "product_cost": "shopping_performance_view.metrics.cost_micros",
+        "shopify_identity_required_for_shopify_product_labels": true,
+        "exact_product_cost_under_unknown_channel": "preserve",
+        "unknown_channel_redistribution": "forbidden"
+      },
+      "klaviyo": {
+        "raw_cost_input": "effective_dated_estimated_30_day_email_spend_ledger",
+        "campaign_flow_variation_or_product_cost_in_EO04": "unavailable",
+        "allocation_owner": "A6-EO-05"
+      }
+    },
+    "rules": {
+      "explicit_zero_preserved": true,
+      "missing_null_unsupported_permission_denied_or_validation_pending_becomes_zero": false,
+      "product_cost_rows_reconstruct_channel_total": false,
+      "missing_product_cost_may_be_ratio_allocated_in_EO04": false,
+      "unverified_shopify_identity_drops_provider_cost_evidence": false,
+      "sales_role_value_modifier_or_unknown_channel_erases_exact_provider_product_cost": false,
+      "exact_provider_product_cost_is_preserved_for_cross_sell_assisted_zero_value_and_unknown_channel": true,
+      "sales_role_or_value_modifier_may_fabricate_product_cost_in_EO04": false,
+      "klaviyo_triggered_native_product_cost": "unavailable_allocation_in_A6_EO_05",
+      "cost_provenance_required": [
+        "provider_account",
+        "business_date_or_time_window",
+        "source_currency",
+        "source_timezone",
+        "api_revision",
+        "query",
+        "attribution_context"
+      ],
+      "refresh_and_reconciliation_owner": "A6-EO-05",
+      "tax_shipping_platform_fee_overlap_and_blended_true_cost_owner": "A6-EO-05",
+      "ui_owner": "A6-EO-07"
+    }
+  },
+  "raw_evidence_classes": [
+    "installed_shopify_store_and_workspace_authority",
+    "provider_verified_account_and_reporting_account_context",
+    "business_date_timezone_currency_and_request_window",
+    "provider_hierarchy_and_channel_identity",
+    "advertised_product_evidence_and_evidence_completeness",
+    "sold_product_identity_quantity_and_value",
+    "sales_role_and_zero_value_modifier",
+    "separate_channel_and_provider_product_metrics",
+    "support_and_observation_state",
+    "api_revision_adapter_version_query_provenance_and_sanitized_raw_reference"
+  ],
+  "acceptance": {
+    "repository_contract_tests_required": true,
+    "provider_isolated_live_evidence_required": true,
+    "combined_non_fabricated_acceptance_required": true,
+    "synthetic_fixture_is_provider_truth": false,
+    "first_provider_error_stops_next_provider": true,
+    "runtime_implementation_authorized": false,
+    "live_provider_calls_authorized": false,
+    "product_owner_acceptance_required": true,
+    "product_owner_contract_acceptance": true,
+    "product_owner_contract_accepted_at": "2026-10-16"
+  }
+}
+

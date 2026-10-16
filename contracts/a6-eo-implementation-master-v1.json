@@ -1,9 +1,9 @@
 {
-  "schema_version": "1.21.0",
+  "schema_version": "1.22.0",
   "contract_id": "a6-eo-implementation-master-v1",
   "title": "A6 EO single-track execution rule and integrated implementation package table",
   "effective_date": "2026-10-04",
-  "status": "EO-04_active_EO-04-D_start_gate",
+  "status": "EO-04_active_EO-04-E_contract_accepted_runtime_start_gate",
   "authority": {
     "execution_plan": "docs/EXECUTION_PLAN.md",
     "EO_GO": "contracts/a6-eo-f7-go-decision-v1.json",
@@ -575,7 +575,7 @@
           "id": "A6-EO-04-B",
           "title": "Meta adapter",
           "objective": "Meta Campaign, Ad Set and Ad hierarchy with deepest verified grain and raw structure evidence.",
-          "status": "Accepted",
+          "status": "oauth_accepted_reporting_contract_accepted_runtime_not_started",
           "implementation_started": true,
           "live_mutation_authorized": true,
           "start_brief_accepted": true,
@@ -588,20 +588,31 @@
           "oauth_mobile_acceptance_scope": "ios_clean_session_oauth_entry",
           "oauth_non_role_account_control": "expected_development_mode_restriction_confirmed",
           "oauth_android_follow_up": "optional_post_acceptance_regression",
-          "final_product_owner_acceptance": true,
+          "oauth_final_product_owner_acceptance": true,
+          "final_product_owner_acceptance": false,
+          "reporting_contract": "contracts/eo-04e-three-provider-channel-product-economics-v1.json",
+          "reporting_runtime_started": false,
           "merge_authorized": true,
           "merge_commit": "23911ffd565f385c02693ed7a1f3a07f017c30f5"
         },
         {
           "id": "A6-EO-04-C",
           "title": "Google Ads adapter",
-          "objective": "Standard Ad and Performance Max Asset Group hierarchy with raw structure evidence."
+          "objective": "Standard Shopping Ad Group, Performance Max Retail Asset Group and Search Ad Group hierarchy with truthful product evidence.",
+          "status": "oauth_accepted_reporting_contract_accepted_runtime_not_started",
+          "implementation_started": true,
+          "oauth_corrective_decision": "docs/decisions/A6_EO_04_C_GOOGLE_OAUTH_CORRECTIVE_REBUILD.md",
+          "oauth_test": "tests/eo-04c-google-oauth-corrective-rebuild.test.js",
+          "oauth_final_product_owner_acceptance": true,
+          "reporting_contract": "contracts/eo-04e-three-provider-channel-product-economics-v1.json",
+          "reporting_runtime_started": false,
+          "merge_commit": "a518be0"
         },
         {
           "id": "A6-EO-04-D",
           "title": "Klaviyo adapter",
-          "objective": "Campaign/Message, Flow/Message, metrics, cost inputs and 15 October revalidation.",
-          "status": "repository_implementation_in_progress",
+          "objective": "Campaign Variation and Flow Message/Variation reporting, event product evidence and separately governed estimated-spend input.",
+          "status": "oauth_and_estimated_spend_accepted_reporting_contract_accepted_runtime_not_started",
           "implementation_started": true,
           "document": "docs/EO_04D_KLAVIYO_OAUTH_ESTIMATED_SPEND_START_BRIEF.md",
           "contract": "contracts/eo-04d-klaviyo-oauth-estimated-spend-v1.json",
@@ -611,31 +622,25 @@
           "database_schema_applied": true,
           "database_acceptance": "PASS_2026-10-13",
           "database_evidence": "docs/evidence/EO_04D_KLAVIYO_SPEND_LIVE_DATABASE_ACCEPTANCE_2026-10-13.json",
-          "live_oauth_authorized": false
+          "live_oauth_authorized": true,
+          "product_owner_live_flow_acceptance": true,
+          "reporting_capability_baseline": "docs/decisions/A6_EO_04_D_KLAVIYO_REPORTING_CAPABILITY_BASELINE.md",
+          "reporting_contract": "contracts/eo-04e-three-provider-channel-product-economics-v1.json",
+          "reporting_runtime_started": false,
+          "merge_commit": "1ac9c8d"
         },
         {
           "id": "A6-EO-04-E",
           "title": "Integrated three-provider acceptance",
           "objective": "Provider-isolated and combined non-fabricated acceptance evidence.",
-          "non_binding_follow_up_notes": {
-            "google_shopify_product_identity_observation": {
-              "status": "parked_for_optional_future_observation",
-              "binding": false,
-              "blocks_package_start_or_closure": false,
-              "blocks_Dataset_V2": false,
-              "blocks_Channel_design_or_UI": false,
-              "requires_external_merchant_or_advertiser_recruitment": false,
-              "deadline": null,
-              "note": "If a suitable real Shopify order and Google Ads environment becomes naturally available later, observe whether Google product identifiers, Shopify variant IDs and SKU values can be matched exactly. Until then this is neither a product claim nor an acceptance requirement.",
-              "prohibited_effect": "must_not_be_promoted_to_a_gate_requirement_or_supported_capability_without_a_separate_product_owner_decision",
-              "checked_at": "2026-10-14",
-              "reference_sources": [
-                "https://help.shopify.com/en/manual/online-sales-channels/marketplaces/google/getting-setup/syncing-products",
-                "https://developers.google.com/tag-platform/gtagjs/reference/shopify-event-parameters",
-                "https://developers.google.com/google-ads/api/fields/v25/cart_data_sales_view"
-              ]
-            }
-          }
+          "status": "channel_contract_accepted_runtime_not_started",
+          "analyst_brief": "docs/EO_04E_THREE_PROVIDER_CHANNEL_PRODUCT_ECONOMICS_START_BRIEF.md",
+          "contract": "contracts/eo-04e-three-provider-channel-product-economics-v1.json",
+          "ci_test": "tests/eo-04e-three-provider-channel-product-economics.test.js",
+          "runtime_implementation_started": false,
+          "live_provider_acceptance_started": false,
+          "product_owner_contract_acceptance": true,
+          "product_owner_contract_accepted_at": "2026-10-16"
         }
       ],
       "outputs": [
@@ -993,8 +998,8 @@
   "cutover_authorized": false,
   "legacy_deletion_authorized": false,
   "current_active_parent": "A6-EO-04",
-  "current_active_child": "A6-EO-04-D",
-  "current_gate": "A6-EO-04-D_current_official_documentation_and_analyst_brief",
+  "current_active_child": "A6-EO-04-E",
+  "current_gate": "A6-EO-04-E_provider_reporting_runtime_start_approval",
   "next_ready_child": null,
   "independent_packages": [
     {

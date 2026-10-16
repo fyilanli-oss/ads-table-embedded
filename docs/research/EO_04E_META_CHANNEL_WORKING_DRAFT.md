@@ -2,13 +2,13 @@
 
 ## Belge durumu
 
-- Durum: **Bağlayıcı olmayan araştırma taslağı**
-- Kontrol tarihi: **14 Ekim 2026**
+- Durum: **Araştırma kaydı; 16 Ekim 2026 ortak brief'i tarafından supersede edildi**
+- Kontrol tarihi: **16 Ekim 2026**
 - Sahiplik bağlamı: A6-EO-04-E
 - Bu belge bir executable contract, kabul kapısı veya implementasyon yetkisi değildir.
 - Dataset V2, Channel UI, adapter veya maliyet dağıtım motoru oluşturmaz.
 - Provider çağrısı, runtime kodu, migration, OAuth scope, secret, environment veya deployment değişikliği yetkilendirmez.
-- Klaviyo 15 Ekim final API doğrulaması ve üç-provider ortak kesişimi tamamlanmadan ortak Channel sözleşmesi dondurulamaz.
+- Bağlayıcı karar: `docs/EO_04E_THREE_PROVIDER_CHANNEL_PRODUCT_ECONOMICS_START_BRIEF.md`.
 
 ## Amaç
 
@@ -22,9 +22,9 @@ Meta tarafında gerçek Channel'ı Ad olarak korumak; Ad toplam performansını,
 | Catalog / Advantage+ Catalog | Ad | Tekil exact ürün kimliği | Satılan `product_id` reklam ürününden farklıysa exact Ad altında farklı ürün satılmıştır. | Cross-sell |
 | Catalog / Carousel / çoklu ürün Creative | Ad | Exact `retailer_item_ids` veya eşdeğer açık ürün listesi | Satılan ürün exact listede bulunur. | Advertised |
 | Catalog / Carousel / çoklu ürün Creative | Ad | Exact açık ürün listesi | Satılan ürün exact listede bulunmaz. | Cross-sell |
-| Catalog / Advantage+ Catalog | Ad | Yalnız `product_set_id` | Mevcut `ads_read` yetkisiyle set üyeliği açılmadan exact ürün ilişkisi kanıtlanamaz. | Unclassified |
+| Catalog / Advantage+ Catalog | Ad | Yalnız `product_set_id` | Provider-attributed sold product Ad bağlamında korunur; exact advertised-product tahmini yapılmaz. | Assisted |
 | Standard Sales / Advantage+ Sales | Ad | Creative üzerinde exact ürün kimliği bulunur | Satılan ürün exact kimlikle karşılaştırılır. | Eşleşirse Advertised, eşleşmezse Cross-sell |
-| Standard / generic Creative | Ad | Yalnız URL, metin, görsel veya video; exact ürün kimliği yok | Reklam ürünü tahmin edilmez. | Unclassified |
+| Standard / generic Creative | Ad | Yalnız URL, metin, görsel veya video; exact ürün kimliği yok | Provider-attributed sold product Ad bağlamında korunur. | Assisted |
 
 Kampanya etiketi tek başına sınıflandırma üretmez. Belirleyici olan Creative üzerinde exact advertised-product kanıtı ve Insights içindeki sold-product kimliğidir.
 
@@ -38,9 +38,9 @@ Kampanya etiketi tek başına sınıflandırma üretmez. Belirleyici olan Creati
 6. Sold-product kanıtı `level=ad` ve `breakdowns=product_id` araştırma hattından gelir.
 7. Exact advertised-product kümesi ile sold-product kimliği eşleşirse Advertised olur.
 8. Exact advertised-product kümesi tam olarak biliniyor ve sold product bu kümenin dışındaysa Cross-sell olur.
-9. Advertised-product kümesi exact değilse Cross-sell tahmin edilmez; sonuç Unclassified kalır.
+9. Advertised-product kümesi exact değilse Cross-sell tahmin edilmez; provider-attributed sold product `Assisted` olur. `Unclassified` yalnız çelişkili veya gerçekten belirsiz kanıta ayrılır.
 10. Promotion terimi kullanılmaz. Satılan adet pozitif ve satış değeri gerçekten sıfırsa değer durumu `Zero Value` olur.
-11. Meta'nın ürün kimliği SKU veya Shopify ürün adı olarak yeniden adlandırılmaz.
+11. Resmî Shopify Facebook & Instagram satış kanalı kanıtından türetilen product ID + variant ID adayları Shopify Admin API ile doğrulanmadan SKU, ürün adı veya varyant adı yayımlanmaz.
 12. Provider verisi ile ileride hesaplanacak gerçek ürün maliyeti birbirine karıştırılmaz.
 
 ## Yetki sınırı
@@ -150,7 +150,9 @@ Ad seviyesinde product breakdown araştırma hattında:
 - Product breakdown içindeki `spend`
 - Her alan için `returned / null / unsupported / validation_pending` destek durumu
 
-SKU ve product name bu Meta Insights çekirdeğinin doğrulanmış exact alanları değildir; katalog eşlemesi kanıtlanmadan yayımlanmaz.
+SKU ve product name bu Meta Insights çekirdeğinin doğrulanmış exact alanları değildir. Desteklenen resmî Shopify Facebook & Instagram kanalında provider kimliği product ID + variant ID adayına dönüştürülür; Shopify Admin API variant'ın product'a ait olduğunu doğrulamadan SKU, ürün adı veya varyant adı yayımlanmaz. Eşleme başarısız olsa da provider product ID ve cost kanıtı kaybedilmez.
+
+Gerçek katalog cevabıyla product-grain olduğu doğrulanan exact provider cost; `Cross-sell`, `Assisted`, `Zero Value` veya çözülemeyen Channel nedeniyle silinmez. Böyle bir exact product cost yoksa Ad toplam spend'i ürünlere tahminî dağıtılmaz.
 
 ## Çalışma sınıfları
 
@@ -160,6 +162,7 @@ SKU ve product name bu Meta Insights çekirdeğinin doğrulanmış exact alanlar
 
 - Advertised
 - Cross-sell
+- Assisted
 - Unclassified
 
 ### Satış değeri durumu
@@ -173,7 +176,8 @@ SKU ve product name bu Meta Insights çekirdeğinin doğrulanmış exact alanlar
 - Reklamdaki ürün satılmış ve satış değeri sıfır: Advertised + Zero Value
 - Exact reklam listesi dışındaki ürün satılmış ve satış değeri pozitif: Cross-sell + Positive Value
 - Exact reklam listesi dışındaki ürün satılmış ve satış değeri sıfır: Cross-sell + Zero Value
-- Reklam ürünü exact belirlenememiş: Unclassified + ilgili value durumu
+- Reklam ürünü exact belirlenememiş fakat sale Ad'a attributed: Assisted + ilgili value durumu
+- Kanıt çelişkili veya gerçekten belirsiz: Unclassified + ilgili value durumu
 
 ## Açık kabul kapıları
 
@@ -181,9 +185,9 @@ SKU ve product name bu Meta Insights çekirdeğinin doğrulanmış exact alanlar
 - `converted_product_quantity` ve `converted_product_value` alanlarının product breakdown cevap biçimi kaydedilecek.
 - Creative exact ürün kimliklerinin gerçek kampanya/creative ailelerine göre bulunabilirliği gözlenecek.
 - Ek katalog/business izni istenmeden mevcut `ads_read` sınırı korunacak.
-- Klaviyo final araştırmasından sonra üç provider ortak alan kesişimi çıkarılacak.
+- Klaviyo final araştırması ve üç-provider ortak kesişimi 16 Ekim ortak brief'inde tamamlandı.
 - Vergi, kargo, blended spend ve gerçek ürün maliyeti formülleri kullanıcının sağlayacağı analist çalışma sayfaları görülmeden dondurulmayacak.
-- Bu taslak ortak Channel sözleşmesi kabul edilmeden implementasyona çevrilmeyecek.
+- Runtime ancak ortak Channel sözleşmesinin ürün sahibi kabulünden sonra başlayabilir.
 
 ## Resmî kaynaklar
 

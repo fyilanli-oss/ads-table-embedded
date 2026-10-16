@@ -200,4 +200,3 @@ SKU ve product name bu Meta Insights çekirdeğinin doğrulanmış exact alanlar
 - [Meta official Ad Promoted Object SDK object](https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adpromotedobject.py)
 - [Meta official Product Set SDK object and generated examples](https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/test/docs.py)
 - [Meta official catalog/product-set request](https://www.postman.com/meta/facebook-marketing-api/request/0w6p8rh/get-catalog-and-product-set)
-

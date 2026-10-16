@@ -110,4 +110,3 @@ test("Execution Plan and master contract preserve EO-04-A at the EO-04-E review 
   assert.equal(eo04a.implementation_complete, true);
   assert.equal(eo04a.final_product_owner_acceptance, true);
 });
-

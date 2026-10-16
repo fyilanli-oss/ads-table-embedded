@@ -86,4 +86,3 @@ test("Execution Plan and master contract expose the EO-04 secret gate", async ()
   assert.equal(gate.mutation_authorized, false);
   assert.equal(gate.owner_package_for_future_provider_secrets, "A6-EO-04");
 });
-

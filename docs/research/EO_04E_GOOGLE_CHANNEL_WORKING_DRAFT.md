@@ -192,4 +192,3 @@ Channel çözümleme durumu ayrıca tutulur:
 - [Google Ads API v25 — Shopping Performance View](https://developers.google.com/google-ads/api/fields/v25/shopping_performance_view)
 - [Google Ads API v25 — Product Group View](https://developers.google.com/google-ads/api/fields/v25/product_group_view)
 - [Google Ads API — Performance Max asset group reporting](https://developers.google.com/google-ads/api/performance-max/asset-group-reporting)
-

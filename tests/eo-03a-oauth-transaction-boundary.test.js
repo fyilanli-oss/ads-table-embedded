@@ -392,4 +392,3 @@ test("master plan keeps EO-03 closed after EO-04-A acceptance", () => {
   assert.equal(implementationMaster.next_ready_child, null);
   assert.equal(contract.next_child.live_authorization_remains_disabled, true);
 });
-

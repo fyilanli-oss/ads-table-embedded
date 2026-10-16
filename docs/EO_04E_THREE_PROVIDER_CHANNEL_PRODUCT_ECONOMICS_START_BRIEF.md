@@ -183,4 +183,3 @@ Provider-isolated ve combined deterministic acceptance aşağıdakileri kanıtla
 - Meta official Business SDK Ads Insights fields: <https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adsinsights.py>
 - Meta official Business SDK Ad Creative fields: <https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adcreative.py>
 
-

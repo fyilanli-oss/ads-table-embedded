@@ -104,4 +104,3 @@ Bu belge tek başına reporting runtime yetkisi değildir. Ortak brief/contract 
 - canlı reporting çağrısı yapılmaz;
 - Dataset/migration oluşturulmaz;
 - estimated spend Channel veya ürüne dağıtılmaz.
-

@@ -212,4 +212,3 @@ Tek aktif parent **EO-03**'tür.
 ## 9 Ekim 2026 — Kurulu Shopify mağazası otoritesi
 
 EO-02-B/EO-02-C düzeltmesiyle workspace, billing, organic commerce verisi ve Dataset V2 scope'u uygulamanın kurulu olduğu doğrulanmış Shopify mağazasına kilitlendi. Reporting Account seçimi downstream'dir; kurulu mağazayı değiştiremez. Belirsiz veya başka mağazaya ait provider entity'leri Dataset V2 yazamaz ve SnapshotJob alamaz. İkinci Shopify mağazası ayrı installation, workspace ve subscription gerektirir. Bağlayıcı contract: `contracts/eo-02bc-installed-shop-authority-correction-v1.json`.
-

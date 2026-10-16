@@ -92,4 +92,3 @@ test("only official Shopify-managed provider identity paths are in scope", () =>
     "official_klaviyo_shopify_integration",
   );
 });
-

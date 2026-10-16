@@ -52,4 +52,3 @@ test("closes only at zero meaningful local-only work and keeps the recurring gat
   assert.match(doc, /Deletion authority:\*\* None at package opening/);
   assert.match(plan, /A6-OPS-LOCAL-01 — One-time local safety cleanup/);
 });
-

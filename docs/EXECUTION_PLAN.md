@@ -337,4 +337,3 @@ CI enforcement: `tests/eo-04e-three-provider-channel-product-economics.test.js`
 - Meta Ad spend ürünlere dağıtılmaz. Google provider product cost gerçek/blended maliyet sayılmaz. Klaviyo Estimated Spend dağıtımı EO-05'e bırakılır.
 - Desteklenen product identity yolları resmî Shopify-managed Meta, Google & YouTube ve Klaviyo entegrasyonlarıdır; manual/third-party feed/catalog bu sürümde kapsam dışıdır.
 - Bu gate henüz ürün sahibi tarafından bütün olarak kabul edilmemiştir. Provider reporting runtime, canlı provider çağrısı, Dataset V2, migration veya environment/deployment mutation başlatmaz.
-

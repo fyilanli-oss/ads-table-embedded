@@ -1,8 +1,8 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "contract_id": "eo-04c-google-live-evidence-trigger-v1",
   "package_id": "A6-EO-04-C",
-  "status": "complete_empty_live_evidence_recorded_account_context_correction_pending",
+  "status": "complete_empty_live_evidence_recorded_account_context_correction_repository_verified_deployment_pending",
   "checked_at": "2026-10-16",
   "authority": {
     "execution_plan": "docs/EXECUTION_PLAN.md",
@@ -20,12 +20,15 @@
   },
   "execution": {
     "query_families_in_order": [
-      "account_campaign_context",
+      "account_identity",
+      "campaign_context",
       "cart_data_product_sales_daily",
       "shopping_product_daily",
       "pmax_listing_tree_current",
       "pmax_asset_group_channel_daily"
     ],
+    "account_identity_query": "FROM customer",
+    "campaign_inventory_query": "FROM campaign",
     "date_window": "last_30_completed_business_dates_in_reporting_account_timezone",
     "pagination_complete_before_success": true,
     "preflight_access_token_refresh_once": true,
@@ -78,6 +81,9 @@
     "first_live_provider_call": true,
     "safe_failure_logging_fix": true,
     "preflight_access_token_refresh": true,
+    "account_context_correction_implementation": true,
+    "account_context_correction_deployment": false,
+    "account_context_correction_live_call": false,
     "visual_acceptance": true,
     "merge": false
   },
@@ -88,6 +94,8 @@
     "sales_role_support_proven": false,
     "account_type_proven": false,
     "account_context_correction_required_before_next_call": true,
+    "account_context_correction_repository_implemented": true,
+    "account_context_correction_repository_verified": true,
     "additional_live_call_authorized": false
   },
   "acceptance": {

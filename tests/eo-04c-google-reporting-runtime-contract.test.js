@@ -15,6 +15,16 @@ test("Google reporting start package preserves the accepted real Channel leaves"
   assert.equal(contract.provider.manager_account_reporting_eligible, false);
 });
 
+test("account identity is independent from campaign inventory", () => {
+  assert.deepEqual(contract.request_families.slice(0, 2), [
+    "account_identity",
+    "campaign_context",
+  ]);
+  assert.equal(contract.account_context.account_identity_query, "FROM customer");
+  assert.equal(contract.account_context.campaign_inventory_query, "FROM campaign");
+  assert.equal(contract.account_context.empty_campaign_inventory_hides_account_type, false);
+});
+
 test("PMax broad listing resolution preserves sales without inventing Asset Group", () => {
   const pmax = contract.pmax_product_sales;
   assert.equal(pmax.cart_data_asset_group_segment_available, false);

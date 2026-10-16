@@ -9,7 +9,8 @@ const RESOURCE_ID_PATTERN = /\/([0-9]+)$/;
 const NON_NEGATIVE_NUMBER_PATTERN = /^(?:0|[1-9][0-9]*)(?:\.[0-9]+)?$/;
 
 export const GOOGLE_REPORTING_QUERY_FAMILIES = Object.freeze([
-  "account_campaign_context",
+  "account_identity",
+  "campaign_context",
   "ad_group_channel_daily",
   "pmax_asset_group_channel_daily",
   "conversion_action_daily",
@@ -84,13 +85,18 @@ function datedQuery(fields, resource, filter, window) {
 export function buildGoogleReportingQueries({dateWindow: requestedWindow}) {
   const window = dateWindow(requestedWindow);
   return Object.freeze({
-    account_campaign_context: [
+    account_identity: [
       "SELECT",
       "  customer.id,",
       "  customer.descriptive_name,",
       "  customer.currency_code,",
       "  customer.time_zone,",
-      "  customer.test_account,",
+      "  customer.test_account",
+      "FROM customer",
+    ].join("\n"),
+    campaign_context: [
+      "SELECT",
+      "  customer.id,",
       "  campaign.id,",
       "  campaign.name,",
       "  campaign.status,",

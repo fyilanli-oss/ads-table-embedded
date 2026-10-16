@@ -156,7 +156,7 @@ test("Google reporting fails before token or provider access without canonical a
     await assert.rejects(
       runtime.readEvidencePage({
         installationAuthority,
-        queryFamily: "account_campaign_context",
+        queryFamily: "account_identity",
         dateWindow: {start: "2026-10-01", end: "2026-10-01"},
       }),
       (error) => error.message === code,

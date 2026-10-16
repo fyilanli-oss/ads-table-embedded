@@ -10,6 +10,7 @@
 - Safe failure logging correction: **authorized 16 October 2026**
 - Single preflight access-token refresh: **authorized 16 October 2026**
 - Successful complete empty live execution: **recorded 16 October 2026**
+- Account/campaign context correction implementation: **authorized 16 October 2026**
 - Binding runtime contract: `contracts/eo-04c-google-reporting-runtime-v1.json`
 - Trigger contract: `contracts/eo-04c-google-live-evidence-trigger-v1.json`
 
@@ -34,11 +35,12 @@ refresh-after-401 path.
 
 The button then starts these query families sequentially and stops at the first error:
 
-1. `account_campaign_context`;
-2. `cart_data_product_sales_daily`;
-3. `shopping_product_daily`;
-4. `pmax_listing_tree_current`;
-5. `pmax_asset_group_channel_daily`.
+1. `account_identity` (`FROM customer`);
+2. `campaign_context` (`FROM campaign`);
+3. `cart_data_product_sales_daily`;
+4. `shopping_product_daily`;
+5. `pmax_listing_tree_current`;
+6. `pmax_asset_group_channel_daily`.
 
 The dated families use the last 30 completed business dates in the Reporting
 Account timezone. All pages are read before an execution is complete. Pagination
@@ -105,6 +107,12 @@ selected account remains unclassified as test or production. Before another
 live call, account identity must be read independently from `FROM customer` and
 campaign inventory must remain a separate `FROM campaign` concern.
 
+The product owner authorized this narrow correction on 16 October 2026. The
+repository now reads account identity before campaign inventory. A successful
+empty campaign inventory can therefore no longer suppress the selected
+account's `customer.test_account` evidence. This correction does not authorize
+another live request or deployment.
+
 ## Unchanged behavior and out of scope
 
 - No Google campaign, account, budget, listing tree or conversion configuration
@@ -114,6 +122,7 @@ campaign inventory must remain a separate `FROM campaign` concern.
 - No database write, Dataset V2 publication, scheduler or product identity mapping.
 - No historical PMax Channel is resolved from the current listing tree.
 - No additional live provider request is authorized by the safe logging correction.
+- No additional live provider request is authorized by the account-context correction.
 - The existing Meta evidence route and behavior remain unchanged.
 
 ## Acceptance plan
@@ -139,5 +148,7 @@ Checked 16 October 2026:
 - Google Ads API v25 Cart Data Sales View: <https://developers.google.com/google-ads/api/fields/v25/cart_data_sales_view>
 - Google Ads API PMax listing groups: <https://developers.google.com/google-ads/api/performance-max/listing-groups>
 - Google Ads Query Language: <https://developers.google.com/google-ads/api/docs/query/overview>
+- Google Ads API v25 Customer fields: <https://developers.google.com/google-ads/api/fields/v25/customer>
+- Google Ads API v25 Campaign fields: <https://developers.google.com/google-ads/api/fields/v25/campaign>
 - Google Ads credential management: <https://developers.google.com/google-ads/api/docs/oauth/credential-management>
 - Google Ads OAuth internals: <https://developers.google.com/google-ads/api/docs/oauth/internals>

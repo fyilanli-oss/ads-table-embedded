@@ -1,10 +1,11 @@
 import {normalizeGoogleCartDataSale, classifyGoogleReportingError} from "./google-reporting.server.js";
 
-export const GOOGLE_LIVE_EVIDENCE_VERSION = "1.0.0";
+export const GOOGLE_LIVE_EVIDENCE_VERSION = "1.1.0";
 export const GOOGLE_LIVE_EVIDENCE_SAFE_LOG_PREFIX =
   "[AdsTable Google live evidence safe]";
 export const GOOGLE_LIVE_EVIDENCE_QUERY_FAMILIES = Object.freeze([
-  "account_campaign_context",
+  "account_identity",
+  "campaign_context",
   "cart_data_product_sales_daily",
   "shopping_product_daily",
   "pmax_listing_tree_current",
@@ -338,16 +339,16 @@ export function createGoogleLiveEvidenceRuntime({googleRuntime, clock = () => ne
         });
       }
       const seedDate = now.toISOString().slice(0, 10);
-      const account = await readCompleteFamilyWithContext({
+      const accountIdentity = await readCompleteFamilyWithContext({
         googleRuntime,
         installationAuthority,
         queryFamily: GOOGLE_LIVE_EVIDENCE_QUERY_FAMILIES[0],
         dateWindow: {start: seedDate, end: seedDate},
       });
-      const accountType = accountTypeState(account.rows);
-      const timeZone = account.authority.reporting_account_timezone;
+      const accountType = accountTypeState(accountIdentity.rows);
+      const timeZone = accountIdentity.authority.reporting_account_timezone;
       const dateWindow = completedThirtyDayWindow({now, timeZone});
-      const results = {account_campaign_context: account};
+      const results = {account_identity: accountIdentity};
 
       for (const queryFamily of GOOGLE_LIVE_EVIDENCE_QUERY_FAMILIES.slice(1)) {
         results[queryFamily] = await readCompleteFamilyWithContext({
@@ -355,11 +356,12 @@ export function createGoogleLiveEvidenceRuntime({googleRuntime, clock = () => ne
           installationAuthority,
           queryFamily,
           dateWindow,
-          expectedAuthority: account.authority,
+          expectedAuthority: accountIdentity.authority,
         });
       }
 
       const cart = results.cart_data_product_sales_daily;
+      const campaign = results.campaign_context;
       const product = results.shopping_product_daily;
       const listing = results.pmax_listing_tree_current;
       const pmax = results.pmax_asset_group_channel_daily;
@@ -381,8 +383,10 @@ export function createGoogleLiveEvidenceRuntime({googleRuntime, clock = () => ne
         }),
         account: Object.freeze({
           account_type_state: accountType,
-          campaign_context_row_count: account.rows.length,
-          page_count: account.page_count,
+          account_identity_row_count: accountIdentity.rows.length,
+          account_identity_page_count: accountIdentity.page_count,
+          campaign_context_row_count: campaign.rows.length,
+          campaign_context_page_count: campaign.page_count,
         }),
         cart_data_sales: Object.freeze({
           ...familySummary(cart, CART_FIELDS),

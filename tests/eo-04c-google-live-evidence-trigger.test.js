@@ -132,9 +132,10 @@ test("execution reads exact family order, completes pagination, and exposes only
       async prepareEvidenceExecution() {},
       async readEvidencePage(input) {
         calls.push(input);
-        if (input.queryFamily === "account_campaign_context") {
+        if (input.queryFamily === "account_identity") {
           return page([{customer: {id: "1234567890", testAccount: false}}]);
         }
+        if (input.queryFamily === "campaign_context") return page([]);
         if (input.queryFamily === "cart_data_product_sales_daily") {
           return input.pageToken === null
             ? page([advertisedSale()], "opaque-next-page-secret")
@@ -165,18 +166,22 @@ test("execution reads exact family order, completes pagination, and exposes only
   });
 
   assert.deepEqual(calls.map((call) => call.queryFamily), [
-    "account_campaign_context",
+    "account_identity",
+    "campaign_context",
     "cart_data_product_sales_daily",
     "cart_data_product_sales_daily",
     "shopping_product_daily",
     "pmax_listing_tree_current",
     "pmax_asset_group_channel_daily",
   ]);
-  assert.deepEqual(calls.slice(1).map((call) => call.dateWindow), Array(5).fill({
+  assert.deepEqual(calls.slice(1).map((call) => call.dateWindow), Array(6).fill({
     start: "2026-09-16",
     end: "2026-10-15",
   }));
   assert.equal(result.cart_data_sales.page_count, 2);
+  assert.equal(result.account.account_type_state, "production_observed");
+  assert.equal(result.account.account_identity_row_count, 1);
+  assert.equal(result.account.campaign_context_row_count, 0);
   assert.equal(result.cart_data_sales.row_count, 2);
   assert.equal(result.cart_data_sales.sales_role_counts.Advertised, 1);
   assert.equal(result.cart_data_sales.sales_role_counts["Cross-sell"], 1);
@@ -211,7 +216,7 @@ test("first provider error stops every remaining family without retry", async ()
       async prepareEvidenceExecution() {},
       async readEvidencePage(input) {
         calls.push(input.queryFamily);
-        if (input.queryFamily === "account_campaign_context") {
+        if (input.queryFamily === "account_identity") {
           return page([{customer: {testAccount: false}}]);
         }
         throw failure;
@@ -223,8 +228,8 @@ test("first provider error stops every remaining family without retry", async ()
     input: {provider: "google_ads"},
   }), (error) => error === failure);
   assert.deepEqual(calls, [
-    "account_campaign_context",
-    "cart_data_product_sales_daily",
+    "account_identity",
+    "campaign_context",
   ]);
 });
 
@@ -244,7 +249,7 @@ test("a test-account observation stops before performance evidence", async () =>
     installationAuthority,
     input: {provider: "google_ads"},
   }), (error) => error.code === "GOOGLE_LIVE_EVIDENCE_TEST_ACCOUNT_NOT_ELIGIBLE");
-  assert.deepEqual(calls, ["account_campaign_context"]);
+  assert.deepEqual(calls, ["account_identity"]);
 });
 
 test("a safe provider error code is preserved without enabling retry", () => {
@@ -278,7 +283,7 @@ test("a failed family emits bounded diagnostic evidence without identifiers", as
     googleRuntime: {
       async prepareEvidenceExecution() {},
       async readEvidencePage(input) {
-        if (input.queryFamily === "account_campaign_context") {
+        if (input.queryFamily === "account_identity") {
           return page([{customer: {testAccount: false}}]);
         }
         throw providerFailure;
@@ -305,7 +310,7 @@ test("a failed family emits bounded diagnostic evidence without identifiers", as
     code: "GOOGLE_PROVIDER_QUERY_ERROR",
     class: "request_contract_invalid",
     stage: "query_family_read",
-    query_family: "cart_data_product_sales_daily",
+    query_family: "campaign_context",
     source_code: "GOOGLE_ADS_REST_REQUEST_FAILED",
     provider_http_status: 400,
     provider_error_code: "QUERY_ERROR",
@@ -407,6 +412,8 @@ test("contracts record completed live gates while preserving retry and merge gat
   assert.equal(contract.execution.preflight_access_token_refresh_once, true);
   assert.equal(contract.execution.refresh_failure_stops_before_gaql, true);
   assert.equal(contract.execution.one_refreshed_access_token_per_execution, true);
+  assert.equal(contract.execution.account_identity_query, "FROM customer");
+  assert.equal(contract.execution.campaign_inventory_query, "FROM campaign");
   assert.equal(contract.result.current_listing_tree_resolves_historical_channel, false);
   assert.equal(contract.mutations.database, false);
   assert.equal(contract.product_owner_authorization.repository_implementation, true);
@@ -414,6 +421,12 @@ test("contracts record completed live gates while preserving retry and merge gat
   assert.equal(contract.product_owner_authorization.first_live_provider_call, true);
   assert.equal(contract.product_owner_authorization.safe_failure_logging_fix, true);
   assert.equal(contract.product_owner_authorization.preflight_access_token_refresh, true);
+  assert.equal(contract.product_owner_authorization.account_context_correction_implementation,
+    true);
+  assert.equal(contract.product_owner_authorization.account_context_correction_deployment,
+    false);
+  assert.equal(contract.product_owner_authorization.account_context_correction_live_call,
+    false);
   assert.equal(contract.product_owner_authorization.visual_acceptance, true);
   assert.equal(contract.product_owner_authorization.merge, false);
   assert.equal(contract.failure_evidence.server_log_required, true);
@@ -435,6 +448,9 @@ test("contracts record completed live gates while preserving retry and merge gat
   assert.equal(googlePackage.first_live_reporting_call_authorized, true);
   assert.equal(googlePackage.additional_live_reporting_call_authorized, false);
   assert.equal(googlePackage.account_context_correction_required, true);
+  assert.equal(googlePackage.account_context_correction_implementation_authorized, true);
+  assert.equal(googlePackage.account_context_correction_repository_verified, true);
+  assert.equal(googlePackage.account_context_correction_deployment_authorized, false);
 });
 
 test("retained Google live evidence is empty without inventing zero or support", () => {

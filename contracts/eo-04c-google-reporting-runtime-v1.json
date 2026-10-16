@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.2.0",
+  "schema_version": "1.3.0",
   "contract_id": "eo-04c-google-reporting-runtime-v1",
   "package_id": "A6-EO-04-C",
   "status": "runtime_accepted_and_merged_live_evidence_trigger_in_progress",
@@ -23,7 +23,8 @@
     "performance_max_retail": "asset_group"
   },
   "request_families": [
-    "account_and_campaign_context",
+    "account_identity",
+    "campaign_context",
     "daily_channel_performance",
     "conversion_action_evidence",
     "shopping_performance_product_evidence",
@@ -31,6 +32,13 @@
     "pmax_asset_group_listing_tree_evidence",
     "pmax_asset_group_product_group_aggregate_evidence"
   ],
+  "account_context": {
+    "account_identity_query": "FROM customer",
+    "campaign_inventory_query": "FROM campaign",
+    "account_type_field": "customer.test_account",
+    "empty_campaign_inventory_hides_account_type": false,
+    "correction_implementation_authorized_at": "2026-10-16"
+  },
   "pmax_product_sales": {
     "cart_data_asset_group_segment_available": false,
     "advertised_product_field": "segments.product_item_id",

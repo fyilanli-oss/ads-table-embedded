@@ -55,7 +55,7 @@ const json = (payload, status = 200, headers = {}) => new Response(
   {status, headers: {"content-type": "application/json", ...headers}},
 );
 
-test("Google reporting is bound to canonical advertiser, manager path and encrypted token", async () => {
+test("Google reporting refreshes once and reuses one token for canonical advertiser pages", async () => {
   const requests = [];
   const vaultLoads = [];
   const runtime = createGoogleReportingAuthorityRuntime({
@@ -68,7 +68,16 @@ test("Google reporting is bound to canonical advertiser, manager path and encryp
     },
     environment,
     fetchFn: async (url, options) => {
-      requests.push({url: new URL(url), options, body: JSON.parse(options.body)});
+      const request = {url: new URL(url), options, body: options.body};
+      requests.push(request);
+      if (request.url.hostname === "oauth2.googleapis.com") {
+        return json({
+          access_token: "fresh-access-token",
+          expires_in: 3600,
+          token_type: "Bearer",
+          scope: "https://www.googleapis.com/auth/adwords",
+        });
+      }
       return json({results: [], totalResultsCount: "0"}, 200, {"request-id": "req-1"});
     },
   });
@@ -78,13 +87,25 @@ test("Google reporting is bound to canonical advertiser, manager path and encryp
     queryFamily: "cart_data_product_sales_daily",
     dateWindow: {start: "2026-10-01", end: "2026-10-01"},
   });
+  await runtime.readEvidencePage({
+    installationAuthority,
+    queryFamily: "cart_data_product_sales_daily",
+    dateWindow: {start: "2026-10-01", end: "2026-10-01"},
+    pageToken: "next-page",
+  });
 
-  assert.equal(requests.length, 1);
-  assert.equal(requests[0].url.pathname, "/v25/customers/200/googleAds:search");
-  assert.equal(requests[0].options.headers.authorization, "Bearer vault-only-token");
-  assert.equal(requests[0].options.headers["developer-token"], "developer-token");
-  assert.equal(requests[0].options.headers["login-customer-id"], "100");
-  assert.match(requests[0].body.query, /FROM cart_data_sales_view/);
+  assert.equal(requests.length, 3);
+  assert.equal(requests[0].url.pathname, "/token");
+  assert.match(requests[0].body, /grant_type=refresh_token/);
+  assert.match(requests[0].body, /refresh_token=vault-refresh-token/);
+  assert.equal(requests[1].url.pathname, "/v25/customers/200/googleAds:search");
+  assert.equal(requests[1].options.headers.authorization, "Bearer fresh-access-token");
+  assert.equal(requests[1].options.headers["developer-token"], "developer-token");
+  assert.equal(requests[1].options.headers["login-customer-id"], "100");
+  assert.match(JSON.parse(requests[1].body).query, /FROM cart_data_sales_view/);
+  assert.equal(requests[2].url.pathname, "/v25/customers/200/googleAds:search");
+  assert.equal(requests[2].options.headers.authorization, "Bearer fresh-access-token");
+  assert.equal(JSON.parse(requests[2].body).pageToken, "next-page");
   assert.deepEqual(vaultLoads, [{
     credentialId: "33333333-3333-4333-8333-333333333333",
     installationAuthority,
@@ -135,7 +156,7 @@ test("Google reporting fails before token or provider access without canonical a
     await assert.rejects(
       runtime.readEvidencePage({
         installationAuthority,
-        queryFamily: "account_campaign_context",
+        queryFamily: "account_identity",
         dateWindow: {start: "2026-10-01", end: "2026-10-01"},
       }),
       (error) => error.message === code,
@@ -145,17 +166,24 @@ test("Google reporting fails before token or provider access without canonical a
 });
 
 test("first Google provider error stops without automatic retry", async () => {
-  let calls = 0;
+  const calls = [];
   const runtime = createGoogleReportingAuthorityRuntime({
     database: database(),
     tokenVault: {
       async loadProviderTokenSet() {
-        return {access_token: "vault-only-token"};
+        return {access_token: "vault-only-token", refresh_token: "vault-refresh-token"};
       },
     },
     environment,
-    fetchFn: async () => {
-      calls += 1;
+    fetchFn: async (url) => {
+      calls.push(new URL(url).hostname);
+      if (new URL(url).hostname === "oauth2.googleapis.com") {
+        return json({
+          access_token: "fresh-access-token",
+          expires_in: 3600,
+          token_type: "Bearer",
+        });
+      }
       return json({
         error: {
           status: "RESOURCE_EXHAUSTED",
@@ -172,5 +200,32 @@ test("first Google provider error stops without automatic retry", async () => {
     }),
     (error) => error.code === "GOOGLE_ADS_REST_REQUEST_FAILED",
   );
-  assert.equal(calls, 1);
+  assert.deepEqual(calls, ["oauth2.googleapis.com", "googleads.googleapis.com"]);
+});
+
+test("refresh failure stops before the first Google Ads query and is not retried", async () => {
+  const calls = [];
+  const runtime = createGoogleReportingAuthorityRuntime({
+    database: database(),
+    tokenVault: {
+      async loadProviderTokenSet() {
+        return {access_token: "stale-access-token", refresh_token: "vault-refresh-token"};
+      },
+    },
+    environment,
+    fetchFn: async (url) => {
+      calls.push(new URL(url).hostname);
+      return json({error: "invalid_grant"}, 400);
+    },
+  });
+
+  await assert.rejects(
+    runtime.prepareEvidenceExecution({installationAuthority}),
+    (error) => error.code === "GOOGLE_ADS_OAUTH_TOKEN_EXCHANGE_FAILED",
+  );
+  await assert.rejects(
+    runtime.prepareEvidenceExecution({installationAuthority}),
+    (error) => error.code === "GOOGLE_ADS_OAUTH_TOKEN_EXCHANGE_FAILED",
+  );
+  assert.deepEqual(calls, ["oauth2.googleapis.com"]);
 });

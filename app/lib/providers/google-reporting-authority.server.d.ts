@@ -4,6 +4,14 @@ export function createGoogleReportingAuthorityRuntime(input: {
   environment?: NodeJS.ProcessEnv;
   fetchFn?: typeof fetch;
 }): {
+  prepareEvidenceExecution(input: {
+    installationAuthority: {
+      authority: "shopify_installation_verified";
+      workspaceId: string;
+      installGeneration: number;
+      status: "active";
+    };
+  }): Promise<Readonly<Record<string, unknown>>>;
   readEvidencePage(input: {
     installationAuthority: {
       authority: "shopify_installation_verified";

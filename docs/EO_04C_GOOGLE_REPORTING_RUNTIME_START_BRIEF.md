@@ -4,7 +4,7 @@
 
 - Package: `A6-EO-04-C`
 - Product-owner analyst-brief acceptance: **16 October 2026**
-- Runtime implementation: **authorized by product owner on 16 October 2026; final acceptance pending**
+- Runtime implementation: **accepted and merged on 16 October 2026**
 - Live Google Ads request: **not authorized by this brief**
 - Dataset V2, database, scheduler, UI, OAuth, secret, environment and deployment mutation: **forbidden**
 - Parent product contract: `contracts/eo-04e-three-provider-channel-product-economics-v1.json`
@@ -157,6 +157,12 @@ This accepted brief authorizes only the repository contract package. Each of the
 3. the first live Google Ads reporting execution;
 4. Dataset V2 persistence or mapping;
 5. Shopify product identity publication.
+
+The runtime implementation was accepted and squash-merged as
+`752cc1988323c238297d00516e7b7009432032c2`. The separately accepted repository
+implementation scope for the first evidence trigger is governed by
+`docs/EO_04C_GOOGLE_LIVE_EVIDENCE_TRIGGER_BRIEF.md`; that authorization does not
+include deployment or a live Google request.
 
 ## Official sources
 

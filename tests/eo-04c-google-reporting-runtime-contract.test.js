@@ -15,6 +15,16 @@ test("Google reporting start package preserves the accepted real Channel leaves"
   assert.equal(contract.provider.manager_account_reporting_eligible, false);
 });
 
+test("account identity is independent from campaign inventory", () => {
+  assert.deepEqual(contract.request_families.slice(0, 2), [
+    "account_identity",
+    "campaign_context",
+  ]);
+  assert.equal(contract.account_context.account_identity_query, "FROM customer");
+  assert.equal(contract.account_context.campaign_inventory_query, "FROM campaign");
+  assert.equal(contract.account_context.empty_campaign_inventory_hides_account_type, false);
+});
+
 test("PMax broad listing resolution preserves sales without inventing Asset Group", () => {
   const pmax = contract.pmax_product_sales;
   assert.equal(pmax.cart_data_asset_group_segment_available, false);
@@ -77,11 +87,15 @@ test("empty, missing, unsupported and real zero remain distinct", () => {
   assert.equal(contract.support_state.only_explicit_numeric_zero_is_zero, true);
 });
 
-test("accepted brief authorizes only repository runtime, never a live provider call", () => {
+test("accepted and merged runtime never authorizes a live provider call", () => {
   assert.equal(contract.product_owner_acceptance.analyst_brief_accepted, true);
   assert.equal(contract.product_owner_acceptance.runtime_implementation_authorized, true);
-  assert.equal(contract.product_owner_acceptance.runtime_final_acceptance, false);
-  assert.equal(contract.product_owner_acceptance.merge_authorized, false);
+  assert.equal(contract.product_owner_acceptance.runtime_final_acceptance, true);
+  assert.equal(contract.product_owner_acceptance.merge_authorized, true);
+  assert.equal(
+    contract.product_owner_acceptance.merge_commit,
+    "752cc1988323c238297d00516e7b7009432032c2",
+  );
   assert.equal(contract.first_evidence_execution.first_provider_error_stops_execution, true);
   assert.equal(contract.first_evidence_execution.automatic_retry, false);
   assert.equal(contract.first_evidence_execution.live_provider_call_authorized, false);
@@ -89,7 +103,7 @@ test("accepted brief authorizes only repository runtime, never a live provider c
   assert.equal(contract.mutations.database, false);
   assert.equal(contract.mutations.deployment, false);
   assert.match(brief, /Product-owner analyst-brief acceptance/);
-  assert.match(brief, /Runtime implementation: \*\*authorized/);
+  assert.match(brief, /Runtime implementation: \*\*accepted and merged/);
   assert.doesNotMatch(brief, /Sales Mode/);
 });
 

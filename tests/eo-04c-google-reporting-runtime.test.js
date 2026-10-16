@@ -108,9 +108,15 @@ function resolutionInput(overrides = {}) {
   };
 }
 
-test("Google reporting builds eight read-only GAQL families at accepted Channel grains", () => {
+test("Google reporting separates account identity from campaign inventory", () => {
   const queries = buildGoogleReportingQueries({dateWindow: DATE_WINDOW});
   assert.deepEqual(Object.keys(queries), [...GOOGLE_REPORTING_QUERY_FAMILIES]);
+  assert.match(queries.account_identity, /FROM customer$/);
+  assert.match(queries.account_identity, /customer[.]test_account/);
+  assert.doesNotMatch(queries.account_identity, /campaign[.]/);
+  assert.match(queries.campaign_context, /FROM campaign$/);
+  assert.match(queries.campaign_context, /campaign[.]id/);
+  assert.doesNotMatch(queries.campaign_context, /customer[.]test_account/);
   assert.match(queries.ad_group_channel_daily, /FROM ad_group/);
   assert.match(queries.ad_group_channel_daily, /ad_group[.]id/);
   assert.match(queries.ad_group_channel_daily, /IN \('SEARCH', 'SHOPPING'\)/);

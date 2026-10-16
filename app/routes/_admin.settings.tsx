@@ -47,6 +47,23 @@ type ActionData =
 
 type Provider = "google_ads" | "meta" | "klaviyo";
 
+type GoogleEvidenceResult = {
+  status: "complete";
+  observation_state: "present" | "not_observed_in_this_execution";
+  account: {
+    account_type_state: "test_observed" | "production_observed" | "not_observed";
+    production_performance_evidence_eligible: boolean;
+    campaign_context_row_count: number;
+  };
+  cart_data_sales: {
+    row_count: number;
+    sales_role_counts: Record<"Advertised" | "Cross-sell" | "Assisted" | "Unclassified", number>;
+  };
+  product_performance: {row_count: number};
+  current_listing_tree: {row_count: number};
+  pmax_asset_group_performance: {row_count: number};
+};
+
 type KlaviyoAccount = {
   id: string;
   name: string;
@@ -494,6 +511,12 @@ export default function Settings() {
   const reportingModal = useRef<any>(null);
   const openedSetupView = useRef<"pending" | "pending_reporting" | null>(null);
   const resumeRequested = useRef(false);
+  const googleEvidenceAttempted = useRef(false);
+  const [googleEvidenceStatus, setGoogleEvidenceStatus] =
+    useState<"idle" | "loading" | "complete" | "failed">("idle");
+  const [googleEvidenceResult, setGoogleEvidenceResult] =
+    useState<GoogleEvidenceResult | null>(null);
+  const [googleEvidenceError, setGoogleEvidenceError] = useState<string | null>(null);
   const metaChoices = useRef<any>(null);
   const metaReportingChoice = useRef<any>(null);
   const metaAccountModal = useRef<any>(null);
@@ -655,6 +678,34 @@ export default function Settings() {
     form.set("provider", "google_ads");
     if (reportingAccountId) form.set("reportingAccountId", reportingAccountId);
     submit(form, {method: "post"});
+  };
+
+  const runGoogleEvidence = async () => {
+    if (googleEvidenceAttempted.current) return;
+    googleEvidenceAttempted.current = true;
+    setGoogleEvidenceStatus("loading");
+    try {
+      const response = await fetch("/settings/google-live-evidence", {
+        method: "POST",
+        headers: {"content-type": "application/json"},
+        body: JSON.stringify({provider: "google_ads"}),
+      });
+      const result = await response.json();
+      if (!response.ok || result?.status !== "complete") {
+        setGoogleEvidenceError(
+          typeof result?.code === "string" && /^[A-Z0-9_]{1,100}$/.test(result.code)
+            ? result.code
+            : "GOOGLE_LIVE_EVIDENCE_FAILED",
+        );
+        setGoogleEvidenceStatus("failed");
+        return;
+      }
+      setGoogleEvidenceResult(result as GoogleEvidenceResult);
+      setGoogleEvidenceStatus("complete");
+    } catch {
+      setGoogleEvidenceError("GOOGLE_LIVE_EVIDENCE_REQUEST_FAILED");
+      setGoogleEvidenceStatus("failed");
+    }
   };
 
   const resumeMetaAccountSelection = () => {
@@ -1240,6 +1291,58 @@ export default function Settings() {
                   </s-paragraph>
                 ))}
               </s-stack>
+              <s-button
+                loading={googleEvidenceStatus === "loading"}
+                disabled={googleEvidenceStatus === "complete" || googleEvidenceStatus === "failed"}
+                onClick={runGoogleEvidence}
+              >
+                {googleEvidenceStatus === "loading"
+                  ? "Reading Google evidence…"
+                  : googleEvidenceStatus === "complete"
+                    ? googleEvidenceResult?.account.account_type_state === "test_observed"
+                      ? "Google test account checked"
+                      : "Google evidence received"
+                    : googleEvidenceStatus === "failed"
+                      ? "Google evidence stopped"
+                      : "Run Google evidence"}
+              </s-button>
+              {googleEvidenceStatus === "complete" && googleEvidenceResult ? (
+                googleEvidenceResult.account.account_type_state === "test_observed" ? (
+                  <s-banner tone="info">
+                    Google test account verified. Read-only reporting queries completed:
+                    {" campaign context "}{googleEvidenceResult.account.campaign_context_row_count}
+                    {" rows; Cart Data "}{googleEvidenceResult.cart_data_sales.row_count}
+                    {" rows; product performance "}{googleEvidenceResult.product_performance.row_count}
+                    {" rows; current listing tree "}{googleEvidenceResult.current_listing_tree.row_count}
+                    {" rows; PMax Asset Group performance "}
+                    {googleEvidenceResult.pmax_asset_group_performance.row_count}
+                    {" rows. Test accounts do not serve ads, so these results are not production performance evidence. Production validation remains pending Google Ads API Explorer access."}
+                  </s-banner>
+                ) : googleEvidenceResult.observation_state === "present" ? (
+                  <s-banner tone="success">
+                    Google evidence received. Cart Data: {googleEvidenceResult.cart_data_sales.row_count}
+                    {" rows; product performance: "}{googleEvidenceResult.product_performance.row_count}
+                    {" rows; current listing tree: "}{googleEvidenceResult.current_listing_tree.row_count}
+                    {" rows; PMax Asset Group performance: "}
+                    {googleEvidenceResult.pmax_asset_group_performance.row_count}{" rows. Sales Role: Advertised "}
+                    {googleEvidenceResult.cart_data_sales.sales_role_counts.Advertised}
+                    {", Cross-sell "}{googleEvidenceResult.cart_data_sales.sales_role_counts["Cross-sell"]}
+                    {", Assisted "}{googleEvidenceResult.cart_data_sales.sales_role_counts.Assisted}
+                    {", Unclassified "}{googleEvidenceResult.cart_data_sales.sales_role_counts.Unclassified}
+                    {". Historical PMax Channel was not resolved from the current listing tree."}
+                  </s-banner>
+                ) : (
+                  <s-banner tone="warning">
+                    Google returned no product or PMax evidence in this execution.
+                    This is not zero or unsupported.
+                  </s-banner>
+                )
+              ) : null}
+              {googleEvidenceStatus === "failed" ? (
+                <s-banner tone="critical">
+                  Google evidence stopped. No retry was performed. Error code: {googleEvidenceError}.
+                </s-banner>
+              ) : null}
               <s-button
                 commandFor="google-reporting-modal"
                 command="--show"

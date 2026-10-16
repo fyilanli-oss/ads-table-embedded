@@ -1,0 +1,308 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import {fileURLToPath} from "node:url";
+import {
+  buildGoogleLiveEvidenceSafeLog,
+  classifyGoogleLiveEvidenceError,
+  completedThirtyDayWindow,
+  createGoogleLiveEvidenceRuntime,
+  GOOGLE_LIVE_EVIDENCE_QUERY_FAMILIES,
+  validateGoogleLiveEvidenceInput,
+} from "../app/lib/providers/google-live-evidence.server.js";
+import {GoogleAdsRestError} from "../app/lib/providers/google-ads-rest.server.js";
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
+const contract = JSON.parse(read("contracts/eo-04c-google-live-evidence-trigger-v1.json"));
+const runtimeContract = JSON.parse(read("contracts/eo-04c-google-reporting-runtime-v1.json"));
+const master = JSON.parse(read("contracts/a6-eo-implementation-master-v1.json"));
+const brief = read("docs/EO_04C_GOOGLE_LIVE_EVIDENCE_TRIGGER_BRIEF.md");
+const route = read("app/routes/settings.google-live-evidence.ts");
+const settings = read("app/routes/_admin.settings.tsx");
+
+const installationAuthority = Object.freeze({
+  authority: "shopify_installation_verified",
+  workspaceId: "11111111-1111-4111-8111-111111111111",
+  installGeneration: 3,
+  status: "active",
+});
+
+const authority = Object.freeze({
+  connection_id: "22222222-2222-4222-8222-222222222222",
+  reporting_account_id: "1234567890",
+  reporting_account_currency: "USD",
+  reporting_account_timezone: "Atlantic/Reykjavik",
+});
+
+function page(rows, nextCursor = null) {
+  return {
+    provider: "google_ads",
+    authority,
+    page: {
+      rows,
+      next_cursor: nextCursor,
+      provider_request_id: "provider-trace-secret",
+      observation_state: rows.length === 0
+        ? "not_observed_in_this_execution"
+        : "present",
+    },
+  };
+}
+
+function advertisedSale() {
+  return {
+    customer: {id: "1234567890"},
+    campaign: {id: "campaign-secret", advertisingChannelType: "PERFORMANCE_MAX"},
+    segments: {
+      date: "2026-10-01",
+      productMerchantId: "merchant-secret",
+      productFeedLabel: "feed-secret",
+      productItemId: "advertised-secret",
+      productSoldItemId: "advertised-secret",
+      productSoldTitle: "Secret Product",
+    },
+    metrics: {
+      unitsSold: 1,
+      revenueMicros: 1000000,
+      leadUnitsSold: 1,
+      leadRevenueMicros: 1000000,
+      crossSellUnitsSold: 0,
+      crossSellRevenueMicros: 0,
+    },
+  };
+}
+
+function crossSellSale() {
+  return {
+    customer: {id: "1234567890"},
+    campaign: {id: "campaign-secret", advertisingChannelType: "PERFORMANCE_MAX"},
+    segments: {
+      date: "2026-10-02",
+      productMerchantId: "merchant-secret",
+      productFeedLabel: "feed-secret",
+      productItemId: "advertised-secret",
+      productSoldItemId: "sold-secret",
+      productSoldTitle: "Another Secret Product",
+    },
+    metrics: {
+      unitsSold: 1,
+      revenueMicros: 2000000,
+      leadUnitsSold: 0,
+      leadRevenueMicros: 0,
+      crossSellUnitsSold: 1,
+      crossSellRevenueMicros: 2000000,
+    },
+  };
+}
+
+test("trigger input is Google-only and accepts no operator-controlled date or account", () => {
+  assert.deepEqual(validateGoogleLiveEvidenceInput({provider: "google_ads"}), {
+    provider: "google_ads",
+  });
+  for (const input of [
+    {provider: "meta"},
+    {provider: "google_ads", account_id: "999"},
+    {provider: "google_ads", start: "2026-01-01"},
+    null,
+  ]) assert.throws(() => validateGoogleLiveEvidenceInput(input));
+});
+
+test("reporting window is the last 30 completed account business dates", () => {
+  assert.deepEqual(completedThirtyDayWindow({
+    now: new Date("2026-10-16T12:00:00Z"),
+    timeZone: "Atlantic/Reykjavik",
+  }), {start: "2026-09-16", end: "2026-10-15"});
+  assert.deepEqual(completedThirtyDayWindow({
+    now: new Date("2026-10-16T00:30:00Z"),
+    timeZone: "America/Los_Angeles",
+  }), {start: "2026-09-15", end: "2026-10-14"});
+});
+
+test("execution reads exact family order, completes pagination, and exposes only safe summaries", async () => {
+  const calls = [];
+  const runtime = createGoogleLiveEvidenceRuntime({
+    clock: () => new Date("2026-10-16T12:00:00Z"),
+    googleRuntime: {
+      async readEvidencePage(input) {
+        calls.push(input);
+        if (input.queryFamily === "account_campaign_context") {
+          return page([{customer: {id: "1234567890", testAccount: false}}]);
+        }
+        if (input.queryFamily === "cart_data_product_sales_daily") {
+          return input.pageToken === null
+            ? page([advertisedSale()], "opaque-next-page-secret")
+            : page([crossSellSale()]);
+        }
+        if (input.queryFamily === "shopping_product_daily") {
+          return page([{segments: {productItemId: "advertised-secret"}, metrics: {costMicros: "10"}}]);
+        }
+        if (input.queryFamily === "pmax_listing_tree_current") {
+          return page([{
+            assetGroup: {id: "asset-secret"},
+            assetGroupListingGroupFilter: {
+              assetGroup: "customers/123/assetGroups/456",
+              path: {dimensions: []},
+              type: "UNIT_INCLUDED",
+              listingSource: "SHOPPING",
+            },
+          }]);
+        }
+        return page([{assetGroup: {id: "asset-secret"}, metrics: {impressions: "3"}}]);
+      },
+    },
+  });
+
+  const result = await runtime.execute({
+    installationAuthority,
+    input: {provider: "google_ads"},
+  });
+
+  assert.deepEqual(calls.map((call) => call.queryFamily), [
+    "account_campaign_context",
+    "cart_data_product_sales_daily",
+    "cart_data_product_sales_daily",
+    "shopping_product_daily",
+    "pmax_listing_tree_current",
+    "pmax_asset_group_channel_daily",
+  ]);
+  assert.deepEqual(calls.slice(1).map((call) => call.dateWindow), Array(5).fill({
+    start: "2026-09-16",
+    end: "2026-10-15",
+  }));
+  assert.equal(result.cart_data_sales.page_count, 2);
+  assert.equal(result.cart_data_sales.row_count, 2);
+  assert.equal(result.cart_data_sales.sales_role_counts.Advertised, 1);
+  assert.equal(result.cart_data_sales.sales_role_counts["Cross-sell"], 1);
+  assert.equal(result.current_listing_tree.historical_channel_resolution,
+    "not_performed_from_current_tree");
+  assert.equal(result.controls.provider_retry_performed, false);
+  assert.deepEqual(result.controls.query_families_completed,
+    GOOGLE_LIVE_EVIDENCE_QUERY_FAMILIES);
+
+  const safeLog = buildGoogleLiveEvidenceSafeLog(result);
+  const serialized = JSON.stringify({result, safeLog});
+  for (const forbidden of [
+    "provider-trace-secret",
+    "opaque-next-page-secret",
+    "campaign-secret",
+    "merchant-secret",
+    "feed-secret",
+    "advertised-secret",
+    "sold-secret",
+    "Secret Product",
+    "1234567890",
+    authority.connection_id,
+  ]) assert.doesNotMatch(serialized, new RegExp(forbidden));
+});
+
+test("first provider error stops every remaining family without retry", async () => {
+  const calls = [];
+  const failure = new Error("opaque-google-provider-failure");
+  const runtime = createGoogleLiveEvidenceRuntime({
+    clock: () => new Date("2026-10-16T12:00:00Z"),
+    googleRuntime: {
+      async readEvidencePage(input) {
+        calls.push(input.queryFamily);
+        if (input.queryFamily === "account_campaign_context") {
+          return page([{customer: {testAccount: false}}]);
+        }
+        throw failure;
+      },
+    },
+  });
+  await assert.rejects(runtime.execute({
+    installationAuthority,
+    input: {provider: "google_ads"},
+  }), (error) => error === failure);
+  assert.deepEqual(calls, [
+    "account_campaign_context",
+    "cart_data_product_sales_daily",
+  ]);
+});
+
+test("a test-account observation stops before performance evidence", async () => {
+  const calls = [];
+  const runtime = createGoogleLiveEvidenceRuntime({
+    clock: () => new Date("2026-10-16T12:00:00Z"),
+    googleRuntime: {
+      async readEvidencePage(input) {
+        calls.push(input.queryFamily);
+        return page([{customer: {testAccount: true}}]);
+      },
+    },
+  });
+  await assert.rejects(runtime.execute({
+    installationAuthority,
+    input: {provider: "google_ads"},
+  }), (error) => error.code === "GOOGLE_LIVE_EVIDENCE_TEST_ACCOUNT_NOT_ELIGIBLE");
+  assert.deepEqual(calls, ["account_campaign_context"]);
+});
+
+test("a safe provider error code is preserved without enabling retry", () => {
+  const failure = classifyGoogleLiveEvidenceError(new GoogleAdsRestError(
+    "GOOGLE_ADS_REST_REQUEST_FAILED",
+    "Google Ads REST request failed",
+    {
+      status: 400,
+      provider_error_code: "QUERY_ERROR",
+      request_id: "provider-trace-secret",
+    },
+  ));
+  assert.equal(failure.code, "GOOGLE_PROVIDER_QUERY_ERROR");
+  assert.equal(failure.class, "request_contract_invalid");
+  assert.equal(failure.provider_request_id, "provider-trace-secret");
+  assert.equal(Object.hasOwn(failure, "retryable"), false);
+});
+
+test("route is read-only, authenticated, safe-logged, and contains no retry path", () => {
+  assert.match(route, /resolveReadOnlyShopifyRouteAuthority/);
+  assert.match(route, /authenticate[.]admin/);
+  assert.match(route, /createGoogleReportingAuthorityRuntime/);
+  assert.match(route, /GOOGLE_LIVE_EVIDENCE_SAFE_LOG_PREFIX/);
+  assert.equal(route.match(/console[.]info/g)?.length, 1);
+  assert.doesNotMatch(route, /database[.](?:query|transaction)|insert|update|delete/i);
+  assert.doesNotMatch(route, /setTimeout|refreshGoogleAdsAccessToken/);
+  assert.match(route, /provider_retry_performed: false/);
+  assert.doesNotMatch(route, /provider_request_id: failure/);
+  assert.doesNotMatch(route, /<s-|useSubmit|Form/);
+});
+
+test("Settings exposes one native Google evidence action with complete terminal states", () => {
+  assert.match(settings, /"Run Google evidence"/);
+  assert.match(settings, /fetch\("\/settings\/google-live-evidence"/);
+  assert.match(settings, /body: JSON[.]stringify\(\{provider: "google_ads"\}\)/);
+  assert.match(settings, /if \(googleEvidenceAttempted[.]current\) return/);
+  assert.match(settings, /googleEvidenceAttempted[.]current = true/);
+  assert.match(settings, /loading=\{googleEvidenceStatus === "loading"\}/);
+  assert.match(settings, /Google evidence stopped[.] No retry was performed/);
+  assert.match(settings, /This is not zero or unsupported/);
+  assert.doesNotMatch(settings, /google-evidence-modal|Google evidence date/);
+});
+
+test("contracts preserve separate deployment, live-call, visual and merge gates", () => {
+  assert.deepEqual(contract.execution.query_families_in_order,
+    GOOGLE_LIVE_EVIDENCE_QUERY_FAMILIES);
+  assert.equal(contract.execution.automatic_retry, false);
+  assert.equal(contract.result.current_listing_tree_resolves_historical_channel, false);
+  assert.equal(contract.mutations.database, false);
+  assert.equal(contract.product_owner_authorization.repository_implementation, true);
+  assert.equal(contract.product_owner_authorization.deployment, false);
+  assert.equal(contract.product_owner_authorization.first_live_provider_call, false);
+  assert.equal(contract.product_owner_authorization.merge, false);
+  assert.equal(contract.acceptance.mobile_320px_real_shopify_admin_required, true);
+  assert.match(brief, /modal, date\s+input, new section or `s-clickable`/i);
+  assert.match(brief, /first live request requires a separate explicit product-owner approval/i);
+
+  assert.equal(runtimeContract.product_owner_acceptance.runtime_final_acceptance, true);
+  assert.equal(runtimeContract.product_owner_acceptance.merge_authorized, true);
+  assert.equal(runtimeContract.product_owner_acceptance.merge_commit,
+    "752cc1988323c238297d00516e7b7009432032c2");
+  const googlePackage = master.packages
+    .flatMap((parent) => parent.children ?? [])
+    .find((child) => child.id === "A6-EO-04-C");
+  assert.equal(googlePackage.reporting_runtime_final_product_owner_acceptance, true);
+  assert.equal(googlePackage.live_evidence_trigger_implementation_authorized, true);
+  assert.equal(googlePackage.first_live_reporting_call_authorized, false);
+});

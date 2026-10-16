@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.25.0",
+  "schema_version": "1.26.0",
   "contract_id": "a6-eo-implementation-master-v1",
   "title": "A6 EO single-track execution rule and integrated implementation package table",
   "effective_date": "2026-10-04",
@@ -607,7 +607,7 @@
           "id": "A6-EO-04-C",
           "title": "Google Ads adapter",
           "objective": "Standard Shopping Ad Group, Performance Max Retail Asset Group and Search Ad Group hierarchy with truthful product evidence.",
-          "status": "oauth_and_reporting_runtime_implemented_acceptance_pending",
+          "status": "oauth_and_reporting_runtime_accepted_google_live_evidence_trigger_in_progress",
           "implementation_started": true,
           "oauth_corrective_decision": "docs/decisions/A6_EO_04_C_GOOGLE_OAUTH_CORRECTIVE_REBUILD.md",
           "oauth_test": "tests/eo-04c-google-oauth-corrective-rebuild.test.js",
@@ -626,9 +626,14 @@
           "reporting_runtime_authority_module": "app/lib/providers/google-reporting-authority.server.js",
           "reporting_runtime_test": "tests/eo-04c-google-reporting-runtime.test.js",
           "reporting_runtime_authority_test": "tests/eo-04c-google-reporting-authority.test.js",
-          "reporting_runtime_final_product_owner_acceptance": false,
-          "reporting_runtime_merge_authorized": false,
-          "merge_commit": "a518be0"
+          "reporting_runtime_final_product_owner_acceptance": true,
+          "reporting_runtime_merge_authorized": true,
+          "merge_commit": "752cc1988323c238297d00516e7b7009432032c2",
+          "live_evidence_trigger_brief": "docs/EO_04C_GOOGLE_LIVE_EVIDENCE_TRIGGER_BRIEF.md",
+          "live_evidence_trigger_contract": "contracts/eo-04c-google-live-evidence-trigger-v1.json",
+          "live_evidence_trigger_implementation_authorized": true,
+          "live_evidence_trigger_deployment_authorized": false,
+          "first_live_reporting_call_authorized": false
         },
         {
           "id": "A6-EO-04-D",
@@ -1025,7 +1030,7 @@
   "legacy_deletion_authorized": false,
   "current_active_parent": "A6-EO-04",
   "current_active_child": "A6-EO-04-E",
-  "current_gate": "A6-EO-04-C_google_reporting_runtime_implemented_repository_verification_and_product_owner_acceptance_pending",
+  "current_gate": "A6-EO-04-C_google_live_evidence_trigger_repository_implementation_and_verification",
   "next_ready_child": null,
   "independent_packages": [
     {

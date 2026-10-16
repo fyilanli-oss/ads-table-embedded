@@ -77,11 +77,15 @@ test("empty, missing, unsupported and real zero remain distinct", () => {
   assert.equal(contract.support_state.only_explicit_numeric_zero_is_zero, true);
 });
 
-test("accepted brief authorizes only repository runtime, never a live provider call", () => {
+test("accepted and merged runtime never authorizes a live provider call", () => {
   assert.equal(contract.product_owner_acceptance.analyst_brief_accepted, true);
   assert.equal(contract.product_owner_acceptance.runtime_implementation_authorized, true);
-  assert.equal(contract.product_owner_acceptance.runtime_final_acceptance, false);
-  assert.equal(contract.product_owner_acceptance.merge_authorized, false);
+  assert.equal(contract.product_owner_acceptance.runtime_final_acceptance, true);
+  assert.equal(contract.product_owner_acceptance.merge_authorized, true);
+  assert.equal(
+    contract.product_owner_acceptance.merge_commit,
+    "752cc1988323c238297d00516e7b7009432032c2",
+  );
   assert.equal(contract.first_evidence_execution.first_provider_error_stops_execution, true);
   assert.equal(contract.first_evidence_execution.automatic_retry, false);
   assert.equal(contract.first_evidence_execution.live_provider_call_authorized, false);
@@ -89,7 +93,7 @@ test("accepted brief authorizes only repository runtime, never a live provider c
   assert.equal(contract.mutations.database, false);
   assert.equal(contract.mutations.deployment, false);
   assert.match(brief, /Product-owner analyst-brief acceptance/);
-  assert.match(brief, /Runtime implementation: \*\*authorized/);
+  assert.match(brief, /Runtime implementation: \*\*accepted and merged/);
   assert.doesNotMatch(brief, /Sales Mode/);
 });
 

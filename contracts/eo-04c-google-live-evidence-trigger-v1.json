@@ -1,0 +1,74 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "eo-04c-google-live-evidence-trigger-v1",
+  "package_id": "A6-EO-04-C",
+  "status": "repository_implementation_authorized_deployment_and_live_call_pending",
+  "checked_at": "2026-10-16",
+  "authority": {
+    "execution_plan": "docs/EXECUTION_PLAN.md",
+    "analyst_brief": "docs/EO_04C_GOOGLE_LIVE_EVIDENCE_TRIGGER_BRIEF.md",
+    "reporting_runtime_contract": "contracts/eo-04c-google-reporting-runtime-v1.json"
+  },
+  "trigger": {
+    "route": "/settings/google-live-evidence",
+    "button_copy": "Run Google evidence",
+    "single_attempt_per_page_load": true,
+    "connected_reporting_account_required": true,
+    "modal": false,
+    "date_input": false
+  },
+  "execution": {
+    "query_families_in_order": [
+      "account_campaign_context",
+      "cart_data_product_sales_daily",
+      "shopping_product_daily",
+      "pmax_listing_tree_current",
+      "pmax_asset_group_channel_daily"
+    ],
+    "date_window": "last_30_completed_business_dates_in_reporting_account_timezone",
+    "pagination_complete_before_success": true,
+    "bounded_page_count": true,
+    "first_error_stops_remaining_families": true,
+    "automatic_retry": false,
+    "alternate_endpoint_or_auth_fallback": false,
+    "api_version_fallback": false,
+    "test_account_is_live_performance_evidence": false
+  },
+  "result": {
+    "raw_provider_rows_exposed": false,
+    "raw_provider_identifiers_exposed": false,
+    "provider_request_ids_exposed": false,
+    "cursor_or_cursor_hash_exposed": false,
+    "bounded_row_counts": true,
+    "bounded_field_state_counts": true,
+    "sales_role_counts": true,
+    "empty_success_state": "not_observed_in_this_execution",
+    "empty_is_zero": false,
+    "empty_is_global_unsupported": false,
+    "current_listing_tree_resolves_historical_channel": false,
+    "publishable_to_dataset_v2": false
+  },
+  "mutations": {
+    "google_provider": false,
+    "oauth_or_token": false,
+    "database": false,
+    "dataset_v2": false,
+    "environment_or_secret": false,
+    "deployment": false
+  },
+  "product_owner_authorization": {
+    "analyst_brief": true,
+    "repository_implementation": true,
+    "deployment": false,
+    "first_live_provider_call": false,
+    "merge": false
+  },
+  "acceptance": {
+    "repository_tests_required": true,
+    "typecheck_required": true,
+    "build_required": true,
+    "desktop_real_shopify_admin_required": true,
+    "mobile_320px_real_shopify_admin_required": true,
+    "explicit_product_owner_visual_acceptance_required": true
+  }
+}

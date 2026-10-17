@@ -1,8 +1,8 @@
 {
   "contract_id": "eo-04d-klaviyo-oauth-estimated-spend-v1",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "status": "accepted_implementation_in_progress",
-  "checked_at": "2026-10-13",
+  "checked_at": "2026-10-17",
   "parent": "A6-EO-04",
   "package": "A6-EO-04-D",
   "scope": "klaviyo_oauth_single_account_and_effective_dated_estimated_email_spend",
@@ -24,7 +24,7 @@
     "token_url": "https://a.klaviyo.com/oauth/token",
     "revoke_url": "https://a.klaviyo.com/oauth/revoke",
     "account_endpoint": "https://a.klaviyo.com/api/accounts/",
-    "api_revision": "2026-07-15",
+    "api_revision": "2026-10-15",
     "pkce_method": "S256",
     "account_cardinality": 1,
     "account_label": "Connected Account",
@@ -38,10 +38,10 @@
     ],
     "scope_activation": {
       "accounts:read": "required_by_this_slice",
-      "campaigns:read": "provisional_until_reporting_contract",
-      "flows:read": "provisional_until_reporting_contract",
-      "events:read": "provisional_until_reporting_contract",
-      "metrics:read": "provisional_until_reporting_contract"
+      "campaigns:read": "required_by_accepted_reporting_contract",
+      "flows:read": "required_by_accepted_reporting_contract",
+      "events:read": "required_by_accepted_reporting_contract",
+      "metrics:read": "required_by_accepted_reporting_contract"
     }
   },
   "invariants": {
@@ -143,7 +143,7 @@
   "authoritative_sources": {
     "klaviyo_oauth": "https://developers.klaviyo.com/en/docs/set_up_oauth",
     "klaviyo_accounts": "https://developers.klaviyo.com/en/reference/get_accounts",
-    "klaviyo_api_overview": "https://developers.klaviyo.com/en/v2026-07-15/reference/api_overview",
+    "klaviyo_api_overview": "https://developers.klaviyo.com/en/reference/api_overview",
     "supabase_rls": "https://supabase.com/docs/guides/database/postgres/row-level-security",
     "supabase_changelog": "https://supabase.com/changelog",
     "shopify_app_home_rc": "https://shopify.dev/docs/api/app-home/v2.0-rc",
@@ -164,6 +164,7 @@
     "update_spend": true,
     "change_value": true,
     "revoke_first_disconnect": true,
+    "oauth_hardening_contract": "contracts/eo-04d-klaviyo-oauth-hardening-v1.json",
     "live_database_applied": true,
     "live_database_acceptance": "PASS_2026-10-13",
     "live_database_evidence": "docs/evidence/EO_04D_KLAVIYO_SPEND_LIVE_DATABASE_ACCEPTANCE_2026-10-13.json",

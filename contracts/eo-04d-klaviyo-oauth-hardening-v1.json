@@ -1,0 +1,78 @@
+{
+  "contract_id": "eo-04d-klaviyo-oauth-hardening-v1",
+  "version": "1.0.0",
+  "status": "repository_implementation_ready_for_review",
+  "checked_at": "2026-10-17",
+  "parent": "A6-EO-04-D",
+  "scope": "repository_only_klaviyo_oauth_token_and_first_failure_hardening",
+  "provider": {
+    "api_revision": "2026-10-15",
+    "authorization_url": "https://www.klaviyo.com/oauth/authorize",
+    "token_url": "https://a.klaviyo.com/oauth/token",
+    "account_url": "https://a.klaviyo.com/api/accounts/"
+  },
+  "token_policy": {
+    "expires_at_inside_encrypted_token_set": true,
+    "minimum_validity_ms": 60000,
+    "expired_or_near_expiry_refreshes_before_provider_request": true,
+    "legacy_token_without_expiry_refreshes_before_provider_request": true,
+    "successful_refresh_persisted_before_provider_request": true,
+    "connected_credential_renewed_before_provider_request": true,
+    "pending_credential_staged_before_provider_request": true
+  },
+  "failure_policy": {
+    "refresh_after_failed_provider_request": false,
+    "retry_failed_provider_request": false,
+    "partial_success_from_failure": false,
+    "accounts_401": "reauthorization_required",
+    "accounts_403": "permission_denied",
+    "refresh_invalid_grant": "reauthorization_required",
+    "authorization_code_invalid_grant": "oauth_session_expired",
+    "unknown_or_unexplained_provider_failure": "stop_first_failure"
+  },
+  "settings_policy": {
+    "connected_inspection_calls_provider": false,
+    "connected_state_source": "local_verified_connection_authority",
+    "provider_validation_occurs_only_for_explicit_provider_work": true
+  },
+  "test_policy": {
+    "token_and_accounts_http_behavior_executed_with_fakes": true,
+    "refresh_call_order_asserted": true,
+    "single_accounts_request_asserted": true,
+    "reauthorization_transition_asserted": true,
+    "source_text_matching_is_sufficient_for_runtime_behavior": false
+  },
+  "deferred": {
+    "klaviyo_origin_installation_route": true,
+    "reason": "requires_isolated_shopify_preproduction_and_visual_acceptance",
+    "source_pr_mergeable_as_is": false,
+    "source_pr": 91
+  },
+  "authority": {
+    "repository_mutation_authorized": true,
+    "live_provider_call_authorized": false,
+    "provider_console_mutation_authorized": false,
+    "secret_or_environment_mutation_authorized": false,
+    "database_or_migration_authorized": false,
+    "deployment_authorized": false,
+    "ui_mutation_authorized": false
+  },
+  "product_owner_approval": {
+    "status": "accepted",
+    "accepted_at": "2026-10-17",
+    "evidence": "User approved the K-1A backend-only OAuth hardening recommendation with: Onaylıyorum."
+  },
+  "verification": {
+    "repository_tests": "PASS_333_OF_333",
+    "typecheck": "PASS",
+    "production_build": "PASS",
+    "diff_check": "PASS",
+    "live_provider_call_performed": false,
+    "provider_or_infrastructure_mutation_performed": false
+  },
+  "official_sources": {
+    "oauth": "https://developers.klaviyo.com/en/docs/set_up_oauth",
+    "oauth_flow": "https://developers.klaviyo.com/en/docs/handle_your_apps_oauth_flow",
+    "review": "https://developers.klaviyo.com/en/docs/submit_your_app_for_review"
+  }
+}

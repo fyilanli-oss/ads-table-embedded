@@ -64,6 +64,10 @@ function repository() {
   const calls = [];
   return {
     calls,
+    async loadCurrent(value) {
+      calls.push(["loadCurrent", value]);
+      return lifecycle("reauthorization_required", 2);
+    },
     async load(value) {
       calls.push(["load", value]);
       return lifecycle("connected", 1);
@@ -91,6 +95,21 @@ function repository() {
     },
   };
 }
+
+test("current lifecycle is read by installation owner without connection authority", async () => {
+  const records = repository();
+  const service = createProviderConnectionLifecycle({repository: records, now});
+  const result = await service.loadCurrent({
+    installationAuthority,
+    provider: "klaviyo",
+  });
+  assert.equal(result.status, "reauthorization_required");
+  assert.deepEqual(records.calls[0], ["loadCurrent", {
+    workspaceId,
+    installGeneration: 7,
+    provider: "klaviyo",
+  }]);
+});
 
 function fresh(provider, authority, overrides = {}) {
   return {

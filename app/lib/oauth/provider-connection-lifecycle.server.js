@@ -181,6 +181,15 @@ export function createProviderConnectionLifecycle({
     uuid(provided ?? randomUUIDFn(), "LIFECYCLE_EVENT_ID_INVALID");
 
   return Object.freeze({
+    async loadCurrent({installationAuthority, provider: providerValue}) {
+      const owner = authority(installationAuthority);
+      return records.loadCurrent({
+        workspaceId: owner.workspaceId,
+        installGeneration: owner.installGeneration,
+        provider: provider(providerValue),
+      });
+    },
+
     async load({installationAuthority, connectionId, provider: providerValue}) {
       const owner = authority(installationAuthority);
       return records.load({

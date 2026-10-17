@@ -308,6 +308,9 @@ async function loadKlaviyoState(
         accounts: inspected.accounts.map(klaviyoAccount),
       };
     }
+    if (inspected.state === "reauthorization_required") {
+      return {view: "reauthorization"};
+    }
     const status = url.searchParams.get("klaviyo_status");
     if (status === "error") {
       const callbackCode = url.searchParams.get("klaviyo_error");

@@ -525,6 +525,7 @@ test("foundation stages pending account selection without inventing reporting or
   assert.match(runtime, /selectKlaviyoAccount\(evidence\.accounts, accountId\)/);
   assert.doesNotMatch(runtime, /account: evidence\.accounts\[0\]/);
   assert.match(repository, /stage_provider_account_selection/);
+  assert.match(repository, /load_pending_klaviyo_account_selection/);
   assert.match(repository, /'klaviyo'/);
   assert.match(callback, /provider: "klaviyo"/);
   assert.doesNotMatch(runtime + repository + callback, /reportingAccount|channel_hierarchy|Dataset V2/i);

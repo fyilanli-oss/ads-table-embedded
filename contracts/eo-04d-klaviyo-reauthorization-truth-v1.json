@@ -1,0 +1,57 @@
+{
+  "contract_id": "eo-04d-klaviyo-reauthorization-truth-v1",
+  "version": "1.0.0",
+  "status": "repository_implementation_ready_for_visual_acceptance",
+  "checked_at": "2026-10-17",
+  "parent": "A6-EO-04-D",
+  "invariants": {
+    "connected_only_reporting_authority": true,
+    "settings_inspection_provider_call": false,
+    "reauthorization_required_visible_as_disconnected": false,
+    "reauthorization_required_visible_as_reconnect": true,
+    "historical_spend_preserved": true,
+    "reauthorization_pending_setup_resumable_with_historical_account": true,
+    "failed_provider_request_retried": false
+  },
+  "settings": {
+    "badge": "Reauthorization required",
+    "message": "Klaviyo authorization is no longer valid. Reconnect to continue.",
+    "action": "Reconnect Klaviyo"
+  },
+  "eo05_follow_up": {
+    "mandatory": true,
+    "topics": [
+      "missing_business_date_interval",
+      "bounded_backfill_and_reconciliation",
+      "missing_partial_stale_and_recovered_states",
+      "merchant_recovery_visibility",
+      "provisional_and_final_transition",
+      "provider_window_insufficient"
+    ],
+    "invented_zero_for_missing_interval": false
+  },
+  "authority": {
+    "repository_code_test_contract_documentation": true,
+    "database_migration_file": true,
+    "live_database_apply": false,
+    "provider_call": false,
+    "secret_or_environment_mutation": false,
+    "deployment": false,
+    "merge_without_visual_acceptance": false
+  },
+  "product_owner_approval": {
+    "status": "accepted",
+    "accepted_at": "2026-10-17",
+    "evidence": "User approved the reauthorization correction and required EO-05 recovery behavior to be recorded."
+  },
+  "verification": {
+    "repository_tests": "PASS_361_OF_361",
+    "typecheck": "PASS",
+    "production_build": "PASS",
+    "diff_check": "PASS",
+    "live_database_apply": false,
+    "provider_call": false,
+    "deployment": false,
+    "visual_acceptance": "PENDING"
+  }
+}

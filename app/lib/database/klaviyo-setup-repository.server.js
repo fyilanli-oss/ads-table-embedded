@@ -54,8 +54,8 @@ export function createKlaviyoSetupRepository(database) {
 
     async loadPending(value) {
       return record(optional(await query(
-        `select * from integrations.load_pending_provider_account_selection(
-          $1::uuid, $2::bigint, 'klaviyo'
+        `select * from integrations.load_pending_klaviyo_account_selection(
+          $1::uuid, $2::bigint
         )`,
         [value.workspaceId, value.installGeneration],
       ), "KLAVIYO_SETUP_LOAD"));

@@ -31,6 +31,19 @@ function lifecycle(row) {
 export function createProviderConnectionLifecycleRepository(database) {
   const query = requiredQuery(database);
   return Object.freeze({
+    async loadCurrent(value) {
+      const result = await query(
+        `select * from integrations.load_provider_connection_lifecycle_by_owner(
+          $1::uuid, $2::bigint, $3::text
+        )`,
+        [value.workspaceId, value.installGeneration, value.provider],
+      );
+      if (!result || !Array.isArray(result.rows) || result.rows.length > 1) {
+        throw new Error("PROVIDER_CONNECTION_LIFECYCLE_CURRENT_RESULT_INVALID");
+      }
+      return result.rows[0] ? lifecycle(result.rows[0]) : null;
+    },
+
     async load(value) {
       const result = await query(
         `select * from integrations.load_provider_connection_lifecycle(

@@ -441,6 +441,28 @@ and `tests/eo-04d-klaviyo-attribution-resolution.test.js`
   Klaviyo call, database/migration, Dataset V2, secret/environment, deploy or UI
   work is authorized by this package.
 
+## EO-04-D Klaviyo reauthorization truth correction — 17 October 2026
+
+Binding analyst brief: `docs/EO_04D_KLAVIYO_REAUTHORIZATION_TRUTH_BRIEF.md`
+
+Executable contract: `contracts/eo-04d-klaviyo-reauthorization-truth-v1.json`
+
+- A canonical `reauthorization_required` lifecycle state must appear in
+  Settings as `Reauthorization required`, never `Not connected`.
+- Settings inspection remains local-only. It does not refresh credentials,
+  call Klaviyo or retry the failed provider request.
+- Only `connected` remains reporting authority and historical spend periods
+  remain intact.
+- OAuth reauthorization can resume fresh account verification while the prior
+  account and spend history remain preserved; reporting does not reopen until
+  setup completion succeeds.
+- EO-05 must identify the missing business-date interval created while
+  authorization was unavailable, run bounded backfill/reconciliation and keep
+  missing, partial, stale, recovered, provisional and final states distinct.
+  Missing dates can never be silently converted to zero.
+- Repository implementation is authorized. Live database application,
+  deployment, provider calls and merge remain separately gated.
+
 ## EO-04 Meta retained live-shape evidence — 16 October 2026
 
 - Safe production evidence completed against commit `8a7b0ca9645f46080f8fe0e69f18efe5e5638613`; no runtime error, retry, next-provider start or database write was observed.

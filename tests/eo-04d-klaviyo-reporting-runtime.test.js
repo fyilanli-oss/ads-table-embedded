@@ -272,3 +272,30 @@ test("the first provider error stops every remaining family without retry or par
   assert.equal(result.error.code, "KLAVIYO_CAMPAIGN_REPORT_FAILED");
   assert.equal(result.error.message, "Klaviyo reporting family failed");
 });
+
+test("local attribution resolution failure makes the complete provider snapshot non-publishable", async () => {
+  const calls = [];
+  const result = await runKlaviyoReportingFamilies({
+    discoverMetrics: async () => calls.push("metrics"),
+    fetchCampaignValues: async () => calls.push("campaign"),
+    fetchFlowValues: async () => calls.push("flow"),
+    fetchOrderedProductEvents: async () => calls.push("events"),
+    resolveProductSales: async () => {
+      calls.push("resolution");
+      const error = new Error("contradictory attribution");
+      error.code = "KLAVIYO_ATTRIBUTION_RESOLUTION_FAILED";
+      throw error;
+    },
+  });
+  assert.deepEqual(calls, ["metrics", "campaign", "flow", "events", "resolution"]);
+  assert.equal(result.status, "failed");
+  assert.equal(result.publishable, false);
+  assert.equal(result.results, null);
+  assert.deepEqual(result.completed_families, [
+    "metrics",
+    "campaign_values",
+    "flow_values",
+    "ordered_product_events",
+  ]);
+  assert.equal(result.error.code, "KLAVIYO_ATTRIBUTION_RESOLUTION_FAILED");
+});

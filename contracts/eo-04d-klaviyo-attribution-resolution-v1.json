@@ -1,0 +1,76 @@
+{
+  "contract_id": "A6-EO-04-D-KLAVIYO-ATTRIBUTION-RESOLUTION-V1",
+  "status": "accepted_product_owner_repository_implementation_authorized",
+  "accepted_at": "2026-10-17",
+  "api_revision": "2026-10-15",
+  "sale_grain": {
+    "source": "Ordered Product",
+    "one_provider_event_is_one_sale_fact": true,
+    "duplicate_event_id_counted_more_than_once": false,
+    "conflicting_duplicate_event_fails_closed": true,
+    "placed_order_usage": "reporting_conversion_only",
+    "placed_order_counted_as_product_sale": false
+  },
+  "message_resolution": {
+    "authority": "provider_attribution_relationships_only",
+    "timing_or_report_total_inference_allowed": false,
+    "known_campaign_message_is_exact_channel": true,
+    "known_flow_message_is_exact_channel": true,
+    "catalog_name_missing_changes_known_message_to_unknown": false,
+    "multiple_variations_same_message_changes_known_message_to_unknown": false,
+    "unknown_channel_reasons": [
+      "message_attribution_missing",
+      "multiple_distinct_messages",
+      "campaign_flow_conflict",
+      "message_parent_conflict",
+      "message_variation_parent_conflict"
+    ],
+    "unknown_sale_is_preserved_once": true,
+    "unknown_sales_role": "Unclassified"
+  },
+  "medium": {
+    "source": "message_reporting_catalog_send_channel",
+    "exact_when_one_catalog_medium_matches": true,
+    "multiple_or_missing_catalog_media": "unresolved",
+    "unresolved_medium_changes_known_message_to_unknown": false
+  },
+  "variation": {
+    "campaign_event_variation_in_official_schema": false,
+    "campaign_message_exact_variation": "unresolved",
+    "flow_event_variation_relationship_supported": true,
+    "one_flow_variation": "exact",
+    "multiple_flow_variations_same_message": "unresolved",
+    "variation_replaces_channel": false
+  },
+  "sales_role": {
+    "flow_message_attributed": "Triggered",
+    "campaign_content_unavailable": "Assisted",
+    "campaign_exact_content_contains_sold_product": "Advertised",
+    "campaign_exact_content_excludes_sold_product": "Cross-sell",
+    "contradictory_or_unresolvable": "Unclassified",
+    "advertised_or_cross_sell_without_exact_content_evidence": false
+  },
+  "publication": {
+    "resolution_runs_after_all_provider_families": true,
+    "resolution_failure_publishable": false,
+    "partial_provider_rows_publishable": false,
+    "empty_success": "not_observed_in_this_execution",
+    "empty_success_is_numeric_zero": false
+  },
+  "authority_limits": {
+    "live_provider_call_authorized": false,
+    "database_or_migration_authorized": false,
+    "dataset_v2_write_authorized": false,
+    "secret_environment_or_deploy_authorized": false,
+    "ui_authorized": false
+  },
+  "official_sources_checked_at": "2026-10-17",
+  "official_sources": [
+    "https://developers.klaviyo.com/en/reference/get_events",
+    "https://developers.klaviyo.com/en/reference/query_campaign_values",
+    "https://developers.klaviyo.com/en/reference/query_flow_values",
+    "https://raw.githubusercontent.com/klaviyo/openapi/2026-10-15/openapi/stable/apis/get_events.json",
+    "https://raw.githubusercontent.com/klaviyo/openapi/2026-10-15/openapi/stable/apis/query_campaign_values.json",
+    "https://raw.githubusercontent.com/klaviyo/openapi/2026-10-15/openapi/stable/apis/query_flow_values.json"
+  ]
+}

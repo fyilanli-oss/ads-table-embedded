@@ -433,12 +433,14 @@ export async function runKlaviyoReportingFamilies({
   fetchCampaignValues,
   fetchFlowValues,
   fetchOrderedProductEvents,
+  resolveProductSales = null,
 }) {
   const families = [
     ["metrics", discoverMetrics],
     ["campaign_values", fetchCampaignValues],
     ["flow_values", fetchFlowValues],
     ["ordered_product_events", fetchOrderedProductEvents],
+    ...(resolveProductSales == null ? [] : [["resolved_product_sales", resolveProductSales]]),
   ];
   if (families.some(([, operation]) => typeof operation !== "function")) {
     fail("KLAVIYO_REPORTING_FAMILY_INVALID", "Every Klaviyo reporting family must be a function");

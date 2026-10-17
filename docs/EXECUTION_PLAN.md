@@ -419,6 +419,28 @@ CI enforcement: `tests/eo-04d-klaviyo-reporting-authority-contract.test.js` and 
 - No live Klaviyo call, provider mutation, database/migration, Dataset V2,
   secret/environment, deploy or UI work is authorized by this package.
 
+## EO-04-D Klaviyo sales-attribution resolution — 17 October 2026
+
+Binding analyst brief: `docs/EO_04D_KLAVIYO_ATTRIBUTION_RESOLUTION_BRIEF.md`
+
+Executable contract: `contracts/eo-04d-klaviyo-attribution-resolution-v1.json`
+
+CI enforcement: `tests/eo-04d-klaviyo-attribution-resolution-contract.test.js`
+and `tests/eo-04d-klaviyo-attribution-resolution.test.js`
+
+- Product owner accepted the repository-only resolution contract. One Ordered
+  Product event remains one sale fact; Placed Order reporting conversions never
+  create a second product sale.
+- Provider Message attribution is the only Channel authority. A known Message
+  remains exact when catalog name, Medium or Variation is unresolved.
+- Campaign Message sales are Assisted until exact content-product evidence can
+  prove Advertised or Cross-sell. Flow Message sales are Triggered.
+- Missing or conflicting Message evidence preserves the sale once under Unknown
+  Channel and Unclassified; timing or report totals cannot resolve ambiguity.
+- Resolution runs after all provider families and remains atomic. No live
+  Klaviyo call, database/migration, Dataset V2, secret/environment, deploy or UI
+  work is authorized by this package.
+
 ## EO-04 Meta retained live-shape evidence — 16 October 2026
 
 - Safe production evidence completed against commit `8a7b0ca9645f46080f8fe0e69f18efe5e5638613`; no runtime error, retry, next-provider start or database write was observed.

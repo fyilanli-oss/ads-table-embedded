@@ -148,3 +148,38 @@ test("EO-04 scenario book remains draft until explicit package closure", async (
   assert.match(book, /GOOGLE-05/);
   assert.match(book, /KLAVIYO-06/);
 });
+
+test("every provider scenario has a complete human-readable analyst card", async () => {
+  const matrix = await load(matrixPath);
+  const book = await readFile(matrix.analysis_design_book, "utf8");
+  const labels = [
+    "İş sorusu",
+    "Campaign",
+    "Channel adayları",
+    "Provider alt kanıtı",
+    "Advertised/clicked product",
+    "Sold product",
+    "Temporal evidence",
+    "Beklenen Channel",
+    "Beklenen Sales Role",
+    "Medium / Variation",
+    "Cost / fact davranışı",
+    "Neden",
+    "Yasak çıkarım",
+  ];
+
+  for (const {scenario_id: scenarioId} of matrix.scenarios) {
+    const heading = `### ${scenarioId} `;
+    const start = book.indexOf(heading);
+    assert.notEqual(start, -1, `${scenarioId} human-readable heading is missing`);
+    const nextCard = book.indexOf("\n### ", start + heading.length);
+    const nextSection = book.indexOf("\n## ", start + heading.length);
+    const candidates = [nextCard, nextSection].filter((value) => value !== -1);
+    const end = candidates.length === 0 ? book.length : Math.min(...candidates);
+    const card = book.slice(start, end);
+
+    for (const label of labels) {
+      assert.match(card, new RegExp(`\\*\\*${label.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}:\\*\\*`), `${scenarioId} missing ${label}`);
+    }
+  }
+});

@@ -8,5 +8,10 @@ export function readKlaviyoOAuthConfig(environment?: NodeJS.ProcessEnv): any;
 export function buildKlaviyoAuthorizationUrl(input: any): string;
 export function exchangeKlaviyoAuthorizationCode(input: any): Promise<any>;
 export function refreshKlaviyoAccessToken(input: any): Promise<any>;
+export function klaviyoTokenRequiresRefresh(
+  tokenSet: any,
+  now?: () => Date,
+  minimumValidityMs?: number,
+): boolean;
 export function discoverKlaviyoAccount(input: any): Promise<any>;
 export function revokeKlaviyoAuthorization(input: any): Promise<any>;

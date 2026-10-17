@@ -14,9 +14,13 @@ import {
   KLAVIYO_TOKEN_ENDPOINT,
   readKlaviyoOAuthConfig,
   refreshKlaviyoAccessToken,
+  klaviyoTokenRequiresRefresh,
   revokeKlaviyoAuthorization,
 } from "../app/lib/providers/klaviyo-api.server.js";
-import {installedShopifySettingsUrl} from "../app/lib/shopify/installed-app-return.server.js";
+import {
+  installedShopifyKlaviyoStartUrl,
+  installedShopifySettingsUrl,
+} from "../app/lib/shopify/installed-app-return.server.js";
 import {selectKlaviyoAccount} from "../app/lib/oauth/klaviyo-oauth-runtime.server.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -88,8 +92,42 @@ test("authorization-code exchange uses Basic auth, form encoding and provider ex
   assert.equal(body.get("code"), "authorization-code");
   assert.equal(body.get("code_verifier"), "v".repeat(43));
   assert.equal(exchanged.expiresAt, "2026-10-13T11:00:00.000Z");
+  assert.equal(exchanged.tokenSet.expires_at, "2026-10-13T11:00:00.000Z");
   assert.equal(exchanged.tokenSet.refresh_token, "refresh-token");
   assert.ok(exchanged.scopes.includes("accounts:read"));
+});
+
+test("authorization code and refresh invalid_grant have different public meanings", async () => {
+  const rejected = async () => response(400, {error: "invalid_grant"});
+  await assert.rejects(
+    exchangeKlaviyoAuthorizationCode({
+      config,
+      authorizationCode: "expired-code",
+      pkceVerifier: "v".repeat(43),
+      fetchFn: rejected,
+    }),
+    (error) => error?.code === "KLAVIYO_OAUTH_SESSION_EXPIRED",
+  );
+  await assert.rejects(
+    refreshKlaviyoAccessToken({
+      config,
+      refreshToken: "invalid-refresh",
+      scopes: KLAVIYO_OAUTH_SCOPES,
+      fetchFn: rejected,
+    }),
+    (error) => error?.code === "KLAVIYO_REAUTHORIZATION_REQUIRED",
+  );
+});
+
+test("token expiry is decided before provider access and legacy tokens refresh once", () => {
+  const now = () => new Date("2026-10-17T10:00:00.000Z");
+  assert.equal(klaviyoTokenRequiresRefresh({}, now), true);
+  assert.equal(klaviyoTokenRequiresRefresh({
+    expires_at: "2026-10-17T10:00:30.000Z",
+  }, now), true);
+  assert.equal(klaviyoTokenRequiresRefresh({
+    expires_at: "2026-10-17T11:00:00.000Z",
+  }, now), false);
 });
 
 test("token exchange fails closed without refresh token or accounts scope", async () => {
@@ -208,6 +246,22 @@ test("Accounts API fails closed on zero, multiple or incomplete accounts", async
   }]), (error) => error?.code === "KLAVIYO_ACCOUNT_SCHEMA_CHANGED");
 });
 
+test("Accounts 401 requires reauthorization while 403 is permission denied", async () => {
+  const discover = (status) => discoverKlaviyoAccount({
+    accessToken: "access-token",
+    scopes: ["accounts:read"],
+    fetchFn: async () => response(status, {errors: [{code: "provider_status"}]}),
+  });
+  await assert.rejects(
+    discover(401),
+    (error) => error?.code === "KLAVIYO_REAUTHORIZATION_REQUIRED",
+  );
+  await assert.rejects(
+    discover(403),
+    (error) => error?.code === "KLAVIYO_PERMISSION_DENIED",
+  );
+});
+
 test("revocation targets the refresh token before local disconnect authority can change", async () => {
   const calls = [];
   const result = await revokeKlaviyoAuthorization({
@@ -238,6 +292,41 @@ test("callback return carries only bounded Klaviyo status and public error codes
   );
 });
 
+test("Klaviyo-origin transport routes through Shopify Admin without store authority", () => {
+  assert.equal(
+    installedShopifyKlaviyoStartUrl("demo-store.myshopify.com"),
+    "https://admin.shopify.com/store/demo-store/apps/adstable-1/auth/klaviyo/start",
+  );
+  assert.throws(
+    () => installedShopifyKlaviyoStartUrl("https://demo-store.myshopify.com"),
+    /canonical myshopify\.com domain/,
+  );
+
+  const entry = read("app/routes/auth.klaviyo.install.tsx");
+  const start = read("app/routes/auth.klaviyo.start.ts");
+  assert.match(entry, /normalizeShopDomain/);
+  assert.match(entry, /installedShopifyKlaviyoStartUrl/);
+  assert.match(entry, /<s-text-field/);
+  assert.match(entry, /<s-button/);
+  assert.doesNotMatch(entry, /<(?:form|input|button|style)\b/i);
+  assert.doesNotMatch(entry, /<s-clickable\b/i);
+  assert.ok(start.indexOf("resolveShopifyRouteAuthority") < start.indexOf("oauthBoundary.begin"));
+  assert.match(start, /installationAuthority: verified\.installationAuthority/);
+  assert.match(start, /target: "_top"/);
+});
+
+test("Klaviyo runtime refreshes proactively and never retries a failed Accounts request", () => {
+  const runtime = read("app/lib/oauth/klaviyo-oauth-runtime.server.js");
+  assert.match(runtime, /klaviyoTokenRequiresRefresh\(stored, now\)/);
+  assert.match(runtime, /refreshBeforeProviderRequest/);
+  assert.match(runtime, /markConnectedReauthorization/);
+  assert.match(runtime, /pending: refresh\?\.pending \?\? null/);
+  assert.doesNotMatch(
+    runtime,
+    /catch \(error\)[\s\S]{0,300}KLAVIYO_REAUTHORIZATION_REQUIRED[\s\S]{0,300}refreshKlaviyoAccessToken/,
+  );
+});
+
 test("Klaviyo completion requires an explicit account still present in fresh provider evidence", () => {
   const accounts = [{id: "account-1", name: "AdsTable Demo"}];
   assert.equal(selectKlaviyoAccount(accounts, "account-1"), accounts[0]);
@@ -260,6 +349,7 @@ test("foundation stages pending account selection without inventing reporting or
   assert.match(repository, /stage_provider_account_selection/);
   assert.match(repository, /'klaviyo'/);
   assert.match(callback, /provider: "klaviyo"/);
+  assert.equal(KLAVIYO_API_REVISION, "2026-10-15");
   assert.doesNotMatch(runtime + repository + callback, /reportingAccount|channel_hierarchy|Dataset V2/i);
   assert.doesNotMatch(runtime + repository + callback, /complete_pending_provider_account_selection/);
 });

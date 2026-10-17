@@ -330,7 +330,11 @@ async function loadKlaviyoState(
     if (code === "KLAVIYO_REAUTHORIZATION_REQUIRED") {
       return {view: "reauthorization"};
     }
-    return {view: "error", code, retry: "reload"};
+    return {
+      view: "error",
+      code,
+      retry: code === "KLAVIYO_PERMISSION_DENIED" ? "oauth" : "reload",
+    };
   }
 }
 
@@ -479,6 +483,27 @@ function ErrorBanner({provider, code}: {provider: Provider; code: string}) {
   const label = provider === "meta"
     ? "Meta"
     : provider === "klaviyo" ? "Klaviyo" : "Google Ads";
+  if (provider === "klaviyo" && code === "KLAVIYO_OAUTH_SESSION_EXPIRED") {
+    return (
+      <s-banner tone="critical">
+        This Klaviyo setup session expired. Start Klaviyo setup again.
+      </s-banner>
+    );
+  }
+  if (provider === "klaviyo" && code === "KLAVIYO_PERMISSION_DENIED") {
+    return (
+      <s-banner tone="critical">
+        Klaviyo did not grant the required read-only permissions. No connection was changed.
+      </s-banner>
+    );
+  }
+  if (provider === "klaviyo" && code === "KLAVIYO_REAUTHORIZATION_REQUIRED") {
+    return (
+      <s-banner tone="critical">
+        Klaviyo authorization is no longer valid. Reconnect to continue.
+      </s-banner>
+    );
+  }
   return (
     <s-banner tone="critical">
       {label} could not be connected. Try again. If the problem continues,

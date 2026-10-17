@@ -11,6 +11,7 @@ import {createProviderConnectionLifecycle} from "./provider-connection-lifecycle
 import {
   discoverKlaviyoAccount,
   exchangeKlaviyoAuthorizationCode,
+  klaviyoTokenRequiresRefresh,
   readKlaviyoOAuthConfig,
   refreshKlaviyoAccessToken,
   revokeKlaviyoAuthorization,
@@ -76,109 +77,74 @@ export function createKlaviyoOAuthRuntime({
   const spend = createKlaviyoSpendRepository(database);
   const lifecycle = createProviderConnectionLifecycle({database, now, randomUUIDFn});
 
-  async function discoverWithCredential({
-    installationAuthority,
-    credentialId,
-    connectionId,
-    scopes,
-  }) {
-    const stored = await tokenVault.loadProviderTokenSet({
-      credentialId,
+  async function markConnectedReauthorization({installationAuthority, connected, reason}) {
+    const current = await lifecycle.load({
       installationAuthority,
+      connectionId: connected.connectionId,
       provider: PROVIDER,
     });
-    if (!stored?.access_token || !stored?.refresh_token) {
-      throw new Error("KLAVIYO_CREDENTIAL_UNAVAILABLE");
-    }
-    const grantedScopes = stored.scopes ?? scopes ?? stored.scope;
-    try {
-      return await discoverKlaviyoAccount({
-        accessToken: stored.access_token,
-        scopes: grantedScopes,
-        fetchFn,
-        now,
-      });
-    } catch (error) {
-      if (error?.code !== "KLAVIYO_REAUTHORIZATION_REQUIRED") throw error;
-      const refreshed = await refreshKlaviyoAccessToken({
-        config,
-        refreshToken: stored.refresh_token,
-        scopes: grantedScopes,
-        fetchFn,
-        now,
-      });
-      const replacement = await tokenVault.storeProviderTokenSet({
-        installationAuthority,
-        provider: PROVIDER,
-        tokenSet: refreshed.tokenSet,
-        expiresAt: refreshed.expiresAt,
-      });
-      try {
-        const evidence = await discoverKlaviyoAccount({
-          accessToken: refreshed.tokenSet.access_token,
-          scopes: refreshed.scopes,
-          fetchFn,
-          now,
-        });
-        const pending = await setup.stage({
-          connectionId,
-          workspaceId: installationAuthority.workspaceId,
-          installGeneration: installationAuthority.installGeneration,
-          credentialId: replacement.credentialId,
-          scopes: evidence.scopes,
-          verifiedAt: evidence.verifiedAt,
-        });
-        return Object.freeze({...evidence, pending});
-      } catch (refreshError) {
-        await tokenVault.deleteProviderTokenSet({
-          credentialId: replacement.credentialId,
-          installationAuthority,
-          provider: PROVIDER,
-        }).catch(() => undefined);
-        throw refreshError;
-      }
-    }
+    if (!current || current.status !== "connected") return;
+    await lifecycle.markReauthorizationRequired({
+      installationAuthority,
+      connectionId: connected.connectionId,
+      provider: PROVIDER,
+      expectedVersion: current.version,
+      reason,
+    });
   }
 
-  async function discoverConnectedCredential({installationAuthority, connected}) {
-    const stored = await tokenVault.loadProviderTokenSet({
-      credentialId: connected.credentialId,
-      installationAuthority,
+  function renewalEvidence(refreshed) {
+    const verifiedAt = new Date(refreshed.verifiedAt);
+    const tokenExpiry = new Date(refreshed.expiresAt);
+    const evidenceExpiry = new Date(Math.min(
+      tokenExpiry.valueOf(),
+      verifiedAt.valueOf() + 10 * 60 * 1000,
+    ));
+    return Object.freeze({
+      authority: "provider_credential_renewal_verified",
       provider: PROVIDER,
+      scopes: refreshed.scopes,
+      verifiedAt: verifiedAt.toISOString(),
+      expiresAt: evidenceExpiry.toISOString(),
     });
-    if (!stored?.access_token || !stored?.refresh_token) {
-      throw new Error("KLAVIYO_CREDENTIAL_UNAVAILABLE");
-    }
-    const grantedScopes = stored.scopes ?? connected.grantedScopes ?? stored.scope;
+  }
+
+  async function refreshBeforeProviderRequest({
+    installationAuthority,
+    stored,
+    scopes,
+    pending = null,
+    connected = null,
+  }) {
+    let refreshed;
+    let stagedPending = null;
     try {
-      return await discoverKlaviyoAccount({
-        accessToken: stored.access_token,
-        scopes: grantedScopes,
+      refreshed = await refreshKlaviyoAccessToken({
+        config,
+        refreshToken: stored.refresh_token,
+        scopes,
         fetchFn,
         now,
       });
     } catch (error) {
-      if (error?.code !== "KLAVIYO_REAUTHORIZATION_REQUIRED") throw error;
-      const refreshed = await refreshKlaviyoAccessToken({
-        config,
-        refreshToken: stored.refresh_token,
-        scopes: grantedScopes,
-        fetchFn,
-        now,
-      });
-      const replacement = await tokenVault.storeProviderTokenSet({
-        installationAuthority,
-        provider: PROVIDER,
-        tokenSet: refreshed.tokenSet,
-        expiresAt: refreshed.expiresAt,
-      });
-      try {
-        const evidence = await discoverKlaviyoAccount({
-          accessToken: refreshed.tokenSet.access_token,
-          scopes: refreshed.scopes,
-          fetchFn,
-          now,
+      if (error?.code === "KLAVIYO_REAUTHORIZATION_REQUIRED" && connected) {
+        await markConnectedReauthorization({
+          installationAuthority,
+          connected,
+          reason: "klaviyo_refresh_invalid_before_provider_request",
         });
+      }
+      throw error;
+    }
+
+    const replacement = await tokenVault.storeProviderTokenSet({
+      installationAuthority,
+      provider: PROVIDER,
+      tokenSet: refreshed.tokenSet,
+      expiresAt: refreshed.expiresAt,
+    });
+    try {
+      if (connected) {
         const current = await lifecycle.load({
           installationAuthority,
           connectionId: connected.connectionId,
@@ -194,23 +160,99 @@ export function createKlaviyoOAuthRuntime({
           expectedVersion: current.version,
           expectedCredentialId: connected.credentialId,
           newCredentialId: replacement.credentialId,
-          providerEvidence: {
-            authority: "provider_credential_renewal_verified",
-            provider: PROVIDER,
-            scopes: evidence.scopes,
-            verifiedAt: evidence.verifiedAt,
-            expiresAt: evidence.expiresAt,
-          },
+          providerEvidence: renewalEvidence(refreshed),
         });
-        return evidence;
-      } catch (refreshError) {
-        await tokenVault.deleteProviderTokenSet({
+      } else if (pending) {
+        stagedPending = await setup.stage({
+          connectionId: pending.connectionId,
+          workspaceId: installationAuthority.workspaceId,
+          installGeneration: installationAuthority.installGeneration,
           credentialId: replacement.credentialId,
-          installationAuthority,
-          provider: PROVIDER,
-        }).catch(() => undefined);
-        throw refreshError;
+          scopes: refreshed.scopes,
+          verifiedAt: refreshed.verifiedAt,
+        });
+      } else {
+        throw new Error("KLAVIYO_CREDENTIAL_OWNER_REQUIRED");
       }
+    } catch (error) {
+      await tokenVault.deleteProviderTokenSet({
+        credentialId: replacement.credentialId,
+        installationAuthority,
+        provider: PROVIDER,
+      }).catch(() => undefined);
+      throw error;
+    }
+    return Object.freeze({...refreshed, pending: stagedPending});
+  }
+
+  async function discoverWithCredential({
+    installationAuthority,
+    credentialId,
+    connectionId,
+    scopes,
+  }) {
+    const pending = {connectionId};
+    const stored = await tokenVault.loadProviderTokenSet({
+      credentialId,
+      installationAuthority,
+      provider: PROVIDER,
+    });
+    if (!stored?.access_token || !stored?.refresh_token) {
+      throw new Error("KLAVIYO_CREDENTIAL_UNAVAILABLE");
+    }
+    const grantedScopes = stored.scopes ?? scopes ?? stored.scope;
+    const refresh = klaviyoTokenRequiresRefresh(stored, now)
+      ? await refreshBeforeProviderRequest({
+          installationAuthority,
+          stored,
+          scopes: grantedScopes,
+          pending,
+        })
+      : null;
+    const credential = refresh?.tokenSet ?? stored;
+    const evidence = await discoverKlaviyoAccount({
+      accessToken: credential.access_token,
+      scopes: credential.scopes ?? grantedScopes ?? credential.scope,
+      fetchFn,
+      now,
+    });
+    return Object.freeze({...evidence, pending: refresh?.pending ?? null});
+  }
+
+  async function discoverConnectedCredential({installationAuthority, connected}) {
+    const stored = await tokenVault.loadProviderTokenSet({
+      credentialId: connected.credentialId,
+      installationAuthority,
+      provider: PROVIDER,
+    });
+    if (!stored?.access_token || !stored?.refresh_token) {
+      throw new Error("KLAVIYO_CREDENTIAL_UNAVAILABLE");
+    }
+    const grantedScopes = stored.scopes ?? connected.grantedScopes ?? stored.scope;
+    const credential = klaviyoTokenRequiresRefresh(stored, now)
+      ? (await refreshBeforeProviderRequest({
+          installationAuthority,
+          stored,
+          scopes: grantedScopes,
+          connected,
+        })).tokenSet
+      : stored;
+    try {
+      return await discoverKlaviyoAccount({
+        accessToken: credential.access_token,
+        scopes: credential.scopes ?? grantedScopes ?? credential.scope,
+        fetchFn,
+        now,
+      });
+    } catch (error) {
+      if (error?.code === "KLAVIYO_REAUTHORIZATION_REQUIRED") {
+        await markConnectedReauthorization({
+          installationAuthority,
+          connected,
+          reason: "klaviyo_accounts_authorization_invalid",
+        });
+      }
+      throw error;
     }
   }
 
@@ -229,6 +271,7 @@ export function createKlaviyoOAuthRuntime({
         provider: PROVIDER,
       });
       if (connected) {
+        await discoverConnectedCredential({installationAuthority, connected});
         const configuration = await spend.load({
           workspaceId: installationAuthority.workspaceId,
           installGeneration: installationAuthority.installGeneration,

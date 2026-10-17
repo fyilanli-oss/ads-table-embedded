@@ -1,4 +1,5 @@
 export const SHOPIFY_APP_HANDLE: string;
+export function installedShopifyKlaviyoStartUrl(shopDomain: string): string;
 export function installedShopifySettingsUrl(
   shopDomain: string,
   input?: {

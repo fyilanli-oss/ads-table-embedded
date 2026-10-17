@@ -4,6 +4,22 @@ export const SHOPIFY_APP_HANDLE = "adstable-1";
 
 const STATUS = new Set(["pending", "cancelled", "error"]);
 
+function installedShopifyAppUrl(shopDomain, path) {
+  const canonical = normalizeShopDomain(shopDomain);
+  const storeHandle = canonical.slice(0, -".myshopify.com".length);
+  return new URL(
+    "https://admin.shopify.com/store/"
+      + storeHandle
+      + "/apps/"
+      + SHOPIFY_APP_HANDLE
+      + path,
+  );
+}
+
+export function installedShopifyKlaviyoStartUrl(shopDomain) {
+  return installedShopifyAppUrl(shopDomain, "/auth/klaviyo/start").toString();
+}
+
 export function installedShopifySettingsUrl(
   shopDomain,
   {
@@ -15,15 +31,7 @@ export function installedShopifySettingsUrl(
     klaviyoError = null,
   } = {},
 ) {
-  const canonical = normalizeShopDomain(shopDomain);
-  const storeHandle = canonical.slice(0, -".myshopify.com".length);
-  const url = new URL(
-    "https://admin.shopify.com/store/"
-      + storeHandle
-      + "/apps/"
-      + SHOPIFY_APP_HANDLE
-      + "/settings",
-  );
+  const url = installedShopifyAppUrl(shopDomain, "/settings");
   if (googleStatus !== null) {
     if (!STATUS.has(googleStatus)) {
       throw new Error("GOOGLE_RETURN_STATUS_INVALID");

@@ -1,0 +1,103 @@
+{
+  "contract_id": "eo-04d-klaviyo-review-safe-foundation-v1",
+  "version": "1.0.0",
+  "status": "accepted_implementation_authorized",
+  "checked_at": "2026-10-17",
+  "parent": "A6-EO-04-D",
+  "scope": "review_safe_klaviyo_oauth_and_installation_foundation",
+  "provider": {
+    "stable_api_revision": "2026-10-15",
+    "authorization_url": "https://www.klaviyo.com/oauth/authorize",
+    "token_url": "https://a.klaviyo.com/oauth/token",
+    "revoke_url": "https://a.klaviyo.com/oauth/revoke",
+    "pkce_method": "S256",
+    "beta_applications_api_used": false,
+    "requested_scopes": [
+      "accounts:read",
+      "campaigns:read",
+      "flows:read",
+      "events:read",
+      "metrics:read"
+    ]
+  },
+  "installation_entry": {
+    "public_route": "/auth/klaviyo/install",
+    "verified_start_route": "/auth/klaviyo/start",
+    "store_input_is_routing_hint_only": true,
+    "typed_store_can_create_or_switch_workspace": false,
+    "shopify_admin_authentication_required_before_oauth_transaction": true,
+    "verified_active_installation_owns_transaction": true,
+    "direct_oauth_after_shopify_verification": true,
+    "registered_in_klaviyo_console": false
+  },
+  "credential_and_error_policy": {
+    "token_expiry_persisted_inside_encrypted_token_set": true,
+    "refresh_before_provider_request_when_expired_near_expiry_or_legacy_expiry_missing": true,
+    "successful_refresh_persisted_before_account_request": true,
+    "provider_request_retried_after_error": false,
+    "accounts_401": "reauthorization_required_no_retry",
+    "accounts_403": "permission_denied_no_refresh_no_retry",
+    "refresh_invalid_grant": "reauthorization_required_no_retry",
+    "authorization_code_invalid_grant": "oauth_session_expired",
+    "unknown_provider_failure": "stop_first_failure"
+  },
+  "ui": {
+    "entry_heading": "Connect AdsTable to Klaviyo",
+    "entry_instruction": "Enter the .myshopify.com domain of the Shopify store where AdsTable is installed.",
+    "store_label": "Shopify store domain",
+    "store_placeholder": "store-name.myshopify.com",
+    "invalid_store_message": "Enter a valid .myshopify.com store domain.",
+    "continue_action": "Continue to Shopify",
+    "expired_session_message": "This Klaviyo setup session expired. Start Klaviyo setup again.",
+    "permission_message": "Klaviyo did not grant the required read-only permissions. No connection was changed.",
+    "raw_html_action_controls": false,
+    "custom_css": false,
+    "literal_colors": false,
+    "clickable_action_substitute": false,
+    "desktop_and_mobile_acceptance_required": true
+  },
+  "unchanged": [
+    "installed_shopify_store_authority",
+    "single_verified_klaviyo_account",
+    "explicit_account_selection",
+    "estimated_spend_ledger",
+    "revoke_first_disconnect",
+    "historical_spend_preservation",
+    "channel_and_sales_role_contracts"
+  ],
+  "out_of_scope": [
+    "reporting_runtime",
+    "dataset_v2",
+    "scheduler_and_reconciliation",
+    "cost_allocation",
+    "klaviyo_beta_applications_api",
+    "provider_console_mutation",
+    "live_oauth_or_provider_request",
+    "secret_or_environment_mutation",
+    "deployment",
+    "database_schema_mutation",
+    "marketplace_submission"
+  ],
+  "mutations_authorized": {
+    "repository": true,
+    "provider_console": false,
+    "live_provider": false,
+    "database_schema": false,
+    "vercel_environment": false,
+    "deployment": false
+  },
+  "product_owner_approval": {
+    "status": "accepted",
+    "accepted_at": "2026-10-17",
+    "evidence": "User approved the proposed K-1 package with: Onaylıyorum."
+  },
+  "official_sources": {
+    "oauth": "https://developers.klaviyo.com/en/docs/set_up_oauth",
+    "oauth_flow": "https://developers.klaviyo.com/en/docs/handle_your_apps_oauth_flow",
+    "review_submission": "https://developers.klaviyo.com/en/docs/submit_your_app_for_review",
+    "changelog": "https://developers.klaviyo.com/en/docs/changelog_",
+    "shopify_admin_auth": "https://shopify.dev/docs/api/shopify-app-react-router/latest/guide-admin",
+    "shopify_text_field": "https://shopify.dev/docs/api/app-home/latest/web-components/forms/text-field",
+    "shopify_button": "https://shopify.dev/docs/api/app-home/latest/web-components/actions/button"
+  }
+}

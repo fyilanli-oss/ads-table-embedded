@@ -325,6 +325,33 @@ Live OAuth, provider-console, Vercel and deployment mutations remain separate
 approval gates; Shopify desktop and real-mobile product acceptance are still
 open.
 
+### 17 October 2026 — EO-04-D Klaviyo review-safe foundation gate
+
+Binding analyst brief: `docs/EO_04D_KLAVIYO_REVIEW_SAFE_FOUNDATION_BRIEF.md`
+
+Executable contract: `contracts/eo-04d-klaviyo-review-safe-foundation-v1.json`
+
+CI enforcement: `tests/eo-04d-klaviyo-review-safe-foundation.test.js`
+
+- Product owner approved repository implementation before code changes.
+- Klaviyo's stable API revision is pinned to `2026-10-15`; beta Applications
+  API endpoints are not used.
+- Klaviyo-origin installation now has a public transport entry followed by
+  Shopify Admin authentication and active-installation verification. Typed
+  shop text is only a routing hint and can never create or switch workspace
+  authority.
+- Token expiry is retained in the encrypted token set. Expired, near-expiry and
+  legacy tokens refresh before the provider request; a failed Accounts request
+  is never followed by refresh and retry.
+- Authorization-code `invalid_grant`, refresh `invalid_grant`, Accounts `401`
+  and Accounts `403` remain distinct user and lifecycle states. Connected
+  authorization failure moves the lifecycle to `reauthorization_required`.
+- Deterministic tests, the complete repository suite, TypeScript verification
+  and production build pass locally. Desktop and real-mobile visual acceptance,
+  required GitHub CI and explicit merge authorization remain open.
+- This gate performs no Klaviyo console, live provider, database-schema, secret,
+  environment or deployment mutation. Reporting runtime remains not started.
+
 
 ## EO-04-D Klaviyo reporting capability baseline — revalidated 16 October 2026
 

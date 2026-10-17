@@ -22,6 +22,11 @@ test("Google 2026 access contract separates Explorer, OAuth review and runtime c
   assert.equal(contract.mutations.provider, false);
   assert.equal(contract.mutations.secret_or_environment, false);
   assert.equal(contract.mutations.deployment, false);
+  assert.equal(contract.closure.merge_authorized, true);
+  assert.equal(contract.closure.pull_request,
+    "https://github.com/fyilanli-oss/ads-table-embedded/pull/89");
+  assert.equal(contract.closure.merge_commit,
+    "ff54d518b7c93ba576c9943a7c8d66a7ea511de6");
 });
 
 test("Google corrective keeps access, account security, permission and OAuth failures distinct", async () => {

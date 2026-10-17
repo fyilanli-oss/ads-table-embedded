@@ -460,8 +460,11 @@ Executable contract: `contracts/eo-04d-klaviyo-reauthorization-truth-v1.json`
   authorization was unavailable, run bounded backfill/reconciliation and keep
   missing, partial, stale, recovered, provisional and final states distinct.
   Missing dates can never be silently converted to zero.
-- Repository implementation is authorized. Live database application,
-  deployment, provider calls and merge remain separately gated.
+- Repository implementation and the separately approved additive live database
+  migration are complete. Durable acceptance evidence is
+  `docs/evidence/EO_04D_KLAVIYO_REAUTHORIZATION_LIVE_DATABASE_ACCEPTANCE_2026-10-17.json`;
+  Supabase Security Advisor remains at zero findings. Deployment, provider
+  calls and merge remain separately gated.
 
 ## EO-04 Meta retained live-shape evidence — 16 October 2026
 

@@ -5,6 +5,9 @@ import {createKlaviyoOAuthRuntime} from "../app/lib/oauth/klaviyo-oauth-runtime.
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const contract = JSON.parse(read("contracts/eo-04d-klaviyo-reauthorization-truth-v1.json"));
+const liveDatabaseEvidence = JSON.parse(
+  read("docs/evidence/EO_04D_KLAVIYO_REAUTHORIZATION_LIVE_DATABASE_ACCEPTANCE_2026-10-17.json"),
+);
 const migration = read("supabase/migrations/20261017150000_eo04d_klaviyo_reauthorization_state.sql");
 const settings = read("app/routes/_admin.settings.tsx");
 
@@ -111,7 +114,15 @@ test("accepted contract preserves truth now and defers recovery semantics to EO-
   assert.equal(contract.invariants.reauthorization_required_visible_as_reconnect, true);
   assert.equal(contract.eo05_follow_up.mandatory, true);
   assert.equal(contract.eo05_follow_up.invented_zero_for_missing_interval, false);
-  assert.equal(contract.authority.live_database_apply, false);
+  assert.equal(contract.authority.live_database_apply, true);
+  assert.equal(contract.verification.live_database_apply, true);
+  assert.equal(liveDatabaseEvidence.migration.applied, true);
+  assert.equal(liveDatabaseEvidence.advisors.security_findings_after, 0);
+  assert.equal(liveDatabaseEvidence.structural_verification.runtime_execute_granted, true);
+  assert.equal(
+    liveDatabaseEvidence.structural_verification.public_anon_authenticated_service_role_execute_revoked,
+    true,
+  );
   assert.equal(contract.authority.provider_call, false);
   assert.equal(contract.authority.deployment, false);
 });

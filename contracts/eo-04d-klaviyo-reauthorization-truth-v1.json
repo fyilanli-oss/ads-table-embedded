@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-04d-klaviyo-reauthorization-truth-v1",
   "version": "1.0.0",
-  "status": "repository_implementation_ready_for_visual_acceptance",
+  "status": "live_database_accepted_visual_acceptance_pending",
   "checked_at": "2026-10-17",
   "parent": "A6-EO-04-D",
   "invariants": {
@@ -33,7 +33,7 @@
   "authority": {
     "repository_code_test_contract_documentation": true,
     "database_migration_file": true,
-    "live_database_apply": false,
+    "live_database_apply": true,
     "provider_call": false,
     "secret_or_environment_mutation": false,
     "deployment": false,
@@ -49,7 +49,10 @@
     "typecheck": "PASS",
     "production_build": "PASS",
     "diff_check": "PASS",
-    "live_database_apply": false,
+    "live_database_apply": true,
+    "live_database_migration": "20261017135321/eo04d_klaviyo_reauthorization_state",
+    "security_advisor_findings": 0,
+    "evidence": "docs/evidence/EO_04D_KLAVIYO_REAUTHORIZATION_LIVE_DATABASE_ACCEPTANCE_2026-10-17.json",
     "provider_call": false,
     "deployment": false,
     "visual_acceptance": "PENDING"

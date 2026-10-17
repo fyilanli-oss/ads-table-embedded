@@ -1,6 +1,6 @@
 # A6-EO-04-D Klaviyo reauthorization truth brief
 
-**Status:** Repository implementation ready for visual acceptance  
+**Status:** Live database accepted; visual acceptance pending
 **Checked:** 17 October 2026
 
 ## Analyst outcome
@@ -73,6 +73,9 @@ scheduler or Dataset V2 acceptance:
 - No provider request is made by Settings inspection.
 - Connected, pending and disconnected behavior does not regress.
 - Repository tests, typecheck, build and Shopify UI guards pass.
+- The approved additive migration is live on the dedicated
+  `ads-table-embedded` Supabase project. Both private functions retain the
+  expected owner, empty `search_path` and runtime-only execute boundary.
 - Real desktop/mobile visual acceptance remains required before merge because
   Settings behavior is affected, even though the visual components are
   unchanged.
@@ -89,5 +92,12 @@ scheduler or Dataset V2 acceptance:
 - TypeScript verification: PASS
 - Production build: PASS
 - Diff whitespace validation: PASS
-- Live database migration, provider call or deployment: none
+- Live database migration: PASS (`20261017135321 /
+  eo04d_klaviyo_reauthorization_state`)
+- Supabase Security Advisor: 0 findings
+- Performance Advisor: no migration-created finding; two pre-existing privacy
+  foreign-key INFO findings remain unchanged
+- Provider call or deployment: none
+- Durable evidence:
+  `docs/evidence/EO_04D_KLAVIYO_REAUTHORIZATION_LIVE_DATABASE_ACCEPTANCE_2026-10-17.json`
 

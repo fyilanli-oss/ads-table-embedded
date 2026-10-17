@@ -552,6 +552,10 @@
       "depends_on": [
         "A6-EO-03"
       ],
+      "analysis_design_document": "docs/EO_04_ANALYSIS_DESIGN_BOOK.md",
+      "analysis_design_status": "Draft_for_product_owner_closure_review_2026-10-17",
+      "canonical_scenario_contract": "contracts/eo-04-canonical-scenario-matrix-v1.json",
+      "canonical_scenario_test": "tests/eo-04-canonical-scenario-matrix.test.js",
       "children": [
         {
           "id": "A6-EO-04-A",

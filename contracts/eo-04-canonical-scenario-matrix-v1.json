@@ -1,0 +1,581 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "eo-04-canonical-scenario-matrix-v1",
+  "package_id": "A6-EO-04",
+  "status": "draft_for_product_owner_closure_review",
+  "checked_at": "2026-10-17",
+  "analysis_design_book": "docs/EO_04_ANALYSIS_DESIGN_BOOK.md",
+  "authority": [
+    "docs/EXECUTION_PLAN.md",
+    "contracts/eo-04e-three-provider-channel-product-economics-v1.json",
+    "contracts/eo-04c-google-reporting-runtime-v1.json",
+    "contracts/eo-04d-klaviyo-attribution-resolution-v1.json"
+  ],
+  "card_schema": {
+    "required_fields": [
+      "scenario_id",
+      "provider",
+      "campaign_family",
+      "business_question",
+      "campaign",
+      "channel_entities",
+      "provider_subordinate_evidence",
+      "advertised_product_evidence",
+      "sold_product",
+      "temporal_evidence",
+      "expected",
+      "forbidden_inferences",
+      "evidence_level",
+      "next_owner"
+    ],
+    "advertised_product_states": [
+      "exact",
+      "incomplete",
+      "unavailable",
+      "conflicting"
+    ],
+    "channel_resolutions": [
+      "exact",
+      "unknown"
+    ],
+    "sales_roles": [
+      "Advertised",
+      "Cross-sell",
+      "Assisted",
+      "Triggered",
+      "Unclassified"
+    ],
+    "value_modifiers": [
+      "none",
+      "Zero Value"
+    ],
+    "evidence_levels": [
+      "contract_fixture",
+      "live_observed",
+      "not_observed",
+      "validation_pending"
+    ]
+  },
+  "common_rules": {
+    "unknown_channel_is_sales_role": false,
+    "zero_value_is_sales_role": false,
+    "sold_product_may_select_channel": false,
+    "missing_null_unsupported_permission_denied_not_observed_and_explicit_zero_are_distinct": true,
+    "provider_attribution_metric_is_unique_shopify_sale": false,
+    "channel_cost_may_be_allocated_to_products_in_eo04": false,
+    "synthetic_fixture_is_provider_truth": false
+  },
+  "scenarios": [
+    {
+      "scenario_id": "META-01",
+      "provider": "meta",
+      "campaign_family": "sales_or_catalog",
+      "business_question": "Exact advertised product is sold under one Ad",
+      "campaign": "Sonbahar Kampanyası",
+      "channel_entities": [
+        {"type": "Ad", "name": "İnci Küpe Videosu"}
+      ],
+      "provider_subordinate_evidence": "Creative exact product identity",
+      "advertised_product_evidence": {"state": "exact", "products": ["İnci Küpe"]},
+      "sold_product": "İnci Küpe",
+      "temporal_evidence": "provider_business_date_exact",
+      "expected": {
+        "channel_names": ["İnci Küpe Videosu"],
+        "channel_type": "Ad",
+        "channel_resolution": "exact",
+        "sales_role": "Advertised",
+        "medium_state": "not_defined_for_provider_in_eo04",
+        "variation_state": "not_applicable",
+        "value_modifier": "none",
+        "cost_rule": "preserve_ad_spend_without_product_allocation",
+        "fact_rule": "one_provider_ad_fact"
+      },
+      "forbidden_inferences": ["Ad Set as Channel", "Creative as Channel"],
+      "evidence_level": "contract_fixture",
+      "next_owner": "A6-EO-05"
+    },
+    {
+      "scenario_id": "META-02",
+      "provider": "meta",
+      "campaign_family": "sales_or_catalog",
+      "business_question": "Exact advertised product differs from sold product",
+      "campaign": "Sonbahar Kampanyası",
+      "channel_entities": [
+        {"type": "Ad", "name": "İnci Küpe Videosu"}
+      ],
+      "provider_subordinate_evidence": "Creative exact product identity",
+      "advertised_product_evidence": {"state": "exact", "products": ["İnci Küpe"]},
+      "sold_product": "İnci Kolye",
+      "temporal_evidence": "provider_business_date_exact",
+      "expected": {
+        "channel_names": ["İnci Küpe Videosu"],
+        "channel_type": "Ad",
+        "channel_resolution": "exact",
+        "sales_role": "Cross-sell",
+        "medium_state": "not_defined_for_provider_in_eo04",
+        "variation_state": "not_applicable",
+        "value_modifier": "none",
+        "cost_rule": "do_not_move_advertised_product_cost_to_sold_product",
+        "fact_rule": "one_provider_ad_fact"
+      },
+      "forbidden_inferences": ["sold product selects Ad", "Ad spend moves to Cross-sell product"],
+      "evidence_level": "contract_fixture",
+      "next_owner": "A6-EO-05"
+    },
+    {
+      "scenario_id": "META-03",
+      "provider": "meta",
+      "campaign_family": "generic_or_broad_dynamic",
+      "business_question": "Ad is exact but advertised products are not exact",
+      "campaign": "Sonbahar Kampanyası",
+      "channel_entities": [
+        {"type": "Ad", "name": "Yeni Sezon Takıları"}
+      ],
+      "provider_subordinate_evidence": "Generic Creative or product_set_id only",
+      "advertised_product_evidence": {"state": "unavailable", "products": []},
+      "sold_product": "İnci Kolye",
+      "temporal_evidence": "provider_business_date_exact",
+      "expected": {
+        "channel_names": ["Yeni Sezon Takıları"],
+        "channel_type": "Ad",
+        "channel_resolution": "exact",
+        "sales_role": "Assisted",
+        "medium_state": "not_defined_for_provider_in_eo04",
+        "variation_state": "not_applicable",
+        "value_modifier": "none",
+        "cost_rule": "preserve_ad_spend_without_product_allocation",
+        "fact_rule": "one_provider_ad_fact"
+      },
+      "forbidden_inferences": ["image text or URL proves product", "product_set_id is exact product list"],
+      "evidence_level": "contract_fixture",
+      "next_owner": "A6-EO-05"
+    },
+    {
+      "scenario_id": "META-04",
+      "provider": "meta",
+      "campaign_family": "same_product_multiple_ads_single_attribution",
+      "business_question": "One product exists in multiple Ads and Meta attributes to one Ad",
+      "campaign": "Sonbahar Kampanyası",
+      "channel_entities": [
+        {"type": "Ad", "name": "İnci Küpe Videosu"},
+        {"type": "Ad", "name": "Sonbahar Takıları Carousel"}
+      ],
+      "provider_subordinate_evidence": "Both Creatives include İnci Küpe; response ad_id identifies first Ad",
+      "advertised_product_evidence": {"state": "exact", "products": ["İnci Küpe"]},
+      "sold_product": "İnci Küpe",
+      "temporal_evidence": "provider_business_date_exact",
+      "expected": {
+        "channel_names": ["İnci Küpe Videosu"],
+        "channel_type": "Ad",
+        "channel_resolution": "exact",
+        "sales_role": "Advertised",
+        "medium_state": "not_defined_for_provider_in_eo04",
+        "variation_state": "not_applicable",
+        "value_modifier": "none",
+        "cost_rule": "preserve_attributed_ad_spend",
+        "fact_rule": "ad_id_selects_channel_not_product_membership"
+      },
+      "forbidden_inferences": ["multiple Ads containing product creates Unknown Channel", "product membership selects Ad"],
+      "evidence_level": "contract_fixture",
+      "next_owner": "A6-EO-05"
+    },
+    {
+      "scenario_id": "META-05",
+      "provider": "meta",
+      "campaign_family": "same_product_multiple_ads_multiple_provider_attributions",
+      "business_question": "Meta reports product attribution metrics under two Ads",
+      "campaign": "Sonbahar Kampanyası",
+      "channel_entities": [
+        {"type": "Ad", "name": "İnci Küpe Videosu"},
+        {"type": "Ad", "name": "Sonbahar Takıları Carousel"}
+      ],
+      "provider_subordinate_evidence": "Separate level=ad provider rows",
+      "advertised_product_evidence": {"state": "exact", "products": ["İnci Küpe"]},
+      "sold_product": "İnci Küpe",
+      "temporal_evidence": "provider_business_date_exact",
+      "expected": {
+        "channel_names": ["İnci Küpe Videosu", "Sonbahar Takıları Carousel"],
+        "channel_type": "Ad",
+        "channel_resolution": "exact",
+        "sales_role": "Advertised",
+        "medium_state": "not_defined_for_provider_in_eo04",
+        "variation_state": "not_applicable",
+        "value_modifier": "none",
+        "cost_rule": "preserve_each_provider_ad_fact_without_cross_ad_allocation",
+        "fact_rule": "preserve_two_provider_attribution_facts_but_do_not_multiply_shopify_sale"
+      },
+      "forbidden_inferences": ["choose one Ad without evidence", "sum provider facts as unique Shopify orders"],
+      "evidence_level": "validation_pending",
+      "next_owner": "A6-EO-05"
+    },
+    {
+      "scenario_id": "META-06",
+      "provider": "meta",
+      "campaign_family": "conflicting_product_evidence",
+      "business_question": "Ad is exact but advertised-product identities conflict",
+      "campaign": "Sonbahar Kampanyası",
+      "channel_entities": [
+        {"type": "Ad", "name": "İnci Takıları Reklamı"}
+      ],
+      "provider_subordinate_evidence": "Conflicting exact Creative product fields",
+      "advertised_product_evidence": {"state": "conflicting", "products": ["İnci Küpe", "İnci Kolye"]},
+      "sold_product": "İnci Kolye",
+      "temporal_evidence": "provider_business_date_exact",
+      "expected": {
+        "channel_names": ["İnci Takıları Reklamı"],
+        "channel_type": "Ad",
+        "channel_resolution": "exact",
+        "sales_role": "Unclassified",
+        "medium_state": "not_defined_for_provider_in_eo04",
+        "variation_state": "not_applicable",
+        "value_modifier": "none",
+        "cost_rule": "preserve_ad_spend_without_product_allocation",
+        "fact_rule": "preserve_sale_with_conflict_provenance"
+      },
+      "forbidden_inferences": ["pick one conflicting product", "turn product conflict into Unknown Channel"],
+      "evidence_level": "contract_fixture",
+      "next_owner": "A6-EO-05"
+    },
+    {
+      "scenario_id": "GOOGLE-01",
+      "provider": "google_ads",
+      "campaign_family": "standard_shopping",
+      "business_question": "Clicked and sold products are the same",
+      "campaign": "Takı Shopping",
+      "channel_entities": [
+        {"type": "Ad Group", "name": "Küpeler Ad Group"}
+      ],
+      "provider_subordinate_evidence": "Cart Data lead-product evidence",
+      "advertised_product_evidence": {"state": "exact", "products": ["İnci Küpe"]},
+      "sold_product": "İnci Küpe",
+      "temporal_evidence": "provider_business_date_exact",
+      "expected": {
+        "channel_names": ["Küpeler Ad Group"],
+        "channel_type": "Ad Group",
+        "channel_resolution": "exact",
+        "sales_role": "Advertised",
+        "medium_state": "not_defined_for_provider_in_eo04",
+        "variation_state": "not_applicable",
+        "value_modifier": "none",
+        "cost_rule": "preserve_google_provider_product_cost",
+        "fact_rule": "one_provider_cart_data_fact"
+      },
+      "forbidden_inferences": ["product row reconstructs Channel total"],
+      "evidence_level": "contract_fixture",
+      "next_owner": "A6-EO-05"
+    },
+    {
+      "scenario_id": "GOOGLE-02",
+      "provider": "google_ads",
+      "campaign_family": "standard_shopping",
+      "business_question": "Clicked and sold products differ",
+      "campaign": "Takı Shopping",
+      "channel_entities": [
+        {"type": "Ad Group", "name": "Küpeler Ad Group"}
+      ],
+      "provider_subordinate_evidence": "Cart Data cross-sell evidence",
+      "advertised_product_evidence": {"state": "exact", "products": ["İnci Küpe"]},
+      "sold_product": "İnci Kolye",
+      "temporal_evidence": "provider_business_date_exact",
+      "expected": {
+        "channel_names": ["Küpeler Ad Group"],
+        "channel_type": "Ad Group",
+        "channel_resolution": "exact",
+        "sales_role": "Cross-sell",
+        "medium_state": "not_defined_for_provider_in_eo04",
+        "variation_state": "not_applicable",
+        "value_modifier": "none",
+        "cost_rule": "do_not_move_advertised_product_cost_to_sold_product",
+        "fact_rule": "one_provider_cart_data_fact"
+      },
+      "forbidden_inferences": ["sold product selects Ad Group", "move clicked-product cost to sold product"],
+      "evidence_level": "contract_fixture",
+      "next_owner": "A6-EO-05"
+    },
+    {
+      "scenario_id": "GOOGLE-03",
+      "provider": "google_ads",
+      "campaign_family": "performance_max_retail_unique_asset_group",
+      "business_question": "Clicked product is eligible for exactly one Asset Group",
+      "campaign": "Takı Performance Max",
+      "channel_entities": [
+        {"type": "Asset Group", "name": "Küpeler Asset Group"}
+      ],
+      "provider_subordinate_evidence": "Versioned listing tree contains İnci Küpe in one eligible Asset Group",
+      "advertised_product_evidence": {"state": "exact", "products": ["İnci Küpe"]},
+      "sold_product": "İnci Kolye",
+      "temporal_evidence": "complete_sale_business_day_listing_tree",
+      "expected": {
+        "channel_names": ["Küpeler Asset Group"],
+        "channel_type": "Asset Group",
+        "channel_resolution": "exact",
+        "sales_role": "Cross-sell",
+        "medium_state": "not_defined_for_provider_in_eo04",
+        "variation_state": "not_applicable",
+        "value_modifier": "none",
+        "cost_rule": "preserve_provider_product_cost_without_downward_distribution",
+        "fact_rule": "clicked_product_listing_membership_selects_channel"
+      },
+      "forbidden_inferences": ["sold product selects Asset Group", "Asset Group cost is divided across products"],
+      "evidence_level": "contract_fixture",
+      "next_owner": "A6-EO-05"
+    },
+    {
+      "scenario_id": "GOOGLE-04",
+      "provider": "google_ads",
+      "campaign_family": "performance_max_retail_overlapping_asset_groups",
+      "business_question": "Clicked product is eligible for multiple Asset Groups",
+      "campaign": "Takı Performance Max",
+      "channel_entities": [
+        {"type": "Asset Group", "name": "Küpeler Asset Group"},
+        {"type": "Asset Group", "name": "Sonbahar Takıları Asset Group"}
+      ],
+      "provider_subordinate_evidence": "İnci Küpe appears in both listing trees; sold İnci Kolye appears only in second tree",
+      "advertised_product_evidence": {"state": "exact", "products": ["İnci Küpe"]},
+      "sold_product": "İnci Kolye",
+      "temporal_evidence": "complete_sale_business_day_listing_tree",
+      "expected": {
+        "channel_names": [],
+        "channel_type": "Unknown Channel",
+        "channel_resolution": "unknown",
+        "sales_role": "Cross-sell",
+        "medium_state": "not_defined_for_provider_in_eo04",
+        "variation_state": "not_applicable",
+        "value_modifier": "none",
+        "cost_rule": "preserve_exact_provider_product_cost_under_unknown_channel",
+        "fact_rule": "preserve_sale_without_asset_group_distribution"
+      },
+      "forbidden_inferences": ["sold Kolye selects second Asset Group", "split sale between Asset Groups"],
+      "evidence_level": "contract_fixture",
+      "next_owner": "A6-EO-05"
+    },
+    {
+      "scenario_id": "GOOGLE-05",
+      "provider": "google_ads",
+      "campaign_family": "performance_max_retail_historical_snapshot_missing",
+      "business_question": "Historical sale has only a current listing tree",
+      "campaign": "Takı Performance Max",
+      "channel_entities": [
+        {"type": "Asset Group", "name": "Küpeler Asset Group"}
+      ],
+      "provider_subordinate_evidence": "Current tree exists but sale-day versioned tree is missing",
+      "advertised_product_evidence": {"state": "exact", "products": ["İnci Küpe"]},
+      "sold_product": "İnci Küpe",
+      "temporal_evidence": "sale_business_day_listing_tree_missing",
+      "expected": {
+        "channel_names": [],
+        "channel_type": "Unknown Channel",
+        "channel_resolution": "unknown",
+        "sales_role": "Advertised",
+        "medium_state": "not_defined_for_provider_in_eo04",
+        "variation_state": "not_applicable",
+        "value_modifier": "none",
+        "cost_rule": "preserve_exact_provider_product_cost_under_unknown_channel",
+        "fact_rule": "preserve_sale_until_date_matched_evidence_exists"
+      },
+      "forbidden_inferences": ["current tree backfills historical Channel", "missing snapshot becomes zero"],
+      "evidence_level": "contract_fixture",
+      "next_owner": "A6-EO-05-PMAX-HISTORICAL-LISTING-TREE"
+    },
+    {
+      "scenario_id": "GOOGLE-06",
+      "provider": "google_ads",
+      "campaign_family": "search",
+      "business_question": "Search sale has no exact advertised-product evidence",
+      "campaign": "İnci Takılar Search",
+      "channel_entities": [
+        {"type": "Ad Group", "name": "İnci Takılar Ad Group"}
+      ],
+      "provider_subordinate_evidence": "Provider-attributed Search conversion",
+      "advertised_product_evidence": {"state": "unavailable", "products": []},
+      "sold_product": "İnci Kolye",
+      "temporal_evidence": "provider_business_date_exact",
+      "expected": {
+        "channel_names": ["İnci Takılar Ad Group"],
+        "channel_type": "Ad Group",
+        "channel_resolution": "exact",
+        "sales_role": "Assisted",
+        "medium_state": "not_defined_for_provider_in_eo04",
+        "variation_state": "not_applicable",
+        "value_modifier": "none",
+        "cost_rule": "preserve_channel_cost_without_product_allocation",
+        "fact_rule": "preserve_provider_attributed_sale"
+      },
+      "forbidden_inferences": ["search term proves advertised product", "missing advertised product suppresses sale"],
+      "evidence_level": "contract_fixture",
+      "next_owner": "A6-EO-05"
+    },
+    {
+      "scenario_id": "KLAVIYO-01",
+      "provider": "klaviyo",
+      "campaign_family": "campaign_single_variation_catalog",
+      "business_question": "Campaign Message is exact while event lacks Campaign Variation",
+      "campaign": "Sonbahar Kampanyası",
+      "channel_entities": [
+        {"type": "Campaign Message", "name": "Sonbahar Takıları"}
+      ],
+      "provider_subordinate_evidence": "send_channel=Email; one catalog Variation; event relationship identifies Message only",
+      "advertised_product_evidence": {"state": "exact", "products": ["İnci Küpe"]},
+      "sold_product": "İnci Küpe",
+      "temporal_evidence": "provider_business_date_exact",
+      "expected": {
+        "channel_names": ["Sonbahar Takıları"],
+        "channel_type": "Campaign Message",
+        "channel_resolution": "exact",
+        "sales_role": "Advertised",
+        "medium_state": "Email",
+        "variation_state": "unresolved",
+        "value_modifier": "none",
+        "cost_rule": "no_native_campaign_or_product_cost_in_eo04",
+        "fact_rule": "one_ordered_product_event_is_one_sale_fact"
+      },
+      "forbidden_inferences": ["Campaign is Channel", "catalog Variation is event-attributed Variation"],
+      "evidence_level": "contract_fixture",
+      "next_owner": "A6-EO-05"
+    },
+    {
+      "scenario_id": "KLAVIYO-02",
+      "provider": "klaviyo",
+      "campaign_family": "campaign_multiple_variations",
+      "business_question": "Known Message has multiple Variations",
+      "campaign": "Sonbahar Kampanyası",
+      "channel_entities": [
+        {"type": "Campaign Message", "name": "Sonbahar Takıları"}
+      ],
+      "provider_subordinate_evidence": "send_channel=Email; Variations A and B; event relationship identifies Message only",
+      "advertised_product_evidence": {"state": "exact", "products": ["İnci Küpe", "İnci Kolye"]},
+      "sold_product": "İnci Kolye",
+      "temporal_evidence": "provider_business_date_exact",
+      "expected": {
+        "channel_names": ["Sonbahar Takıları"],
+        "channel_type": "Campaign Message",
+        "channel_resolution": "exact",
+        "sales_role": "Advertised",
+        "medium_state": "Email",
+        "variation_state": "unresolved",
+        "value_modifier": "none",
+        "cost_rule": "no_native_campaign_or_product_cost_in_eo04",
+        "fact_rule": "one_ordered_product_event_is_one_sale_fact"
+      },
+      "forbidden_inferences": ["choose Variation A or B", "multiple Variations create Unknown Channel"],
+      "evidence_level": "contract_fixture",
+      "next_owner": "A6-EO-05"
+    },
+    {
+      "scenario_id": "KLAVIYO-03",
+      "provider": "klaviyo",
+      "campaign_family": "campaign_exact_content_cross_sell",
+      "business_question": "Sold product is outside exact Campaign Message content",
+      "campaign": "Sonbahar Kampanyası",
+      "channel_entities": [
+        {"type": "Campaign Message", "name": "Sonbahar Takıları"}
+      ],
+      "provider_subordinate_evidence": "send_channel=Email; exact Message content product set",
+      "advertised_product_evidence": {"state": "exact", "products": ["İnci Küpe"]},
+      "sold_product": "İnci Kolye",
+      "temporal_evidence": "provider_business_date_exact",
+      "expected": {
+        "channel_names": ["Sonbahar Takıları"],
+        "channel_type": "Campaign Message",
+        "channel_resolution": "exact",
+        "sales_role": "Cross-sell",
+        "medium_state": "Email",
+        "variation_state": "unresolved",
+        "value_modifier": "none",
+        "cost_rule": "no_native_campaign_or_product_cost_in_eo04",
+        "fact_rule": "one_ordered_product_event_is_one_sale_fact"
+      },
+      "forbidden_inferences": ["sold product becomes Channel", "estimated spend moves to sold product in EO04"],
+      "evidence_level": "contract_fixture",
+      "next_owner": "A6-EO-05"
+    },
+    {
+      "scenario_id": "KLAVIYO-04",
+      "provider": "klaviyo",
+      "campaign_family": "campaign_content_unavailable",
+      "business_question": "Campaign Message is known but content product set is unavailable",
+      "campaign": "Sonbahar Kampanyası",
+      "channel_entities": [
+        {"type": "Campaign Message", "name": "Sonbahar Takıları"}
+      ],
+      "provider_subordinate_evidence": "send_channel=Email; Message attribution exact",
+      "advertised_product_evidence": {"state": "unavailable", "products": []},
+      "sold_product": "İnci Kolye",
+      "temporal_evidence": "provider_business_date_exact",
+      "expected": {
+        "channel_names": ["Sonbahar Takıları"],
+        "channel_type": "Campaign Message",
+        "channel_resolution": "exact",
+        "sales_role": "Assisted",
+        "medium_state": "Email",
+        "variation_state": "unresolved",
+        "value_modifier": "none",
+        "cost_rule": "no_native_campaign_or_product_cost_in_eo04",
+        "fact_rule": "one_ordered_product_event_is_one_sale_fact"
+      },
+      "forbidden_inferences": ["unavailable content means Cross-sell", "unresolved Variation means Unknown Channel"],
+      "evidence_level": "contract_fixture",
+      "next_owner": "A6-EO-05"
+    },
+    {
+      "scenario_id": "KLAVIYO-05",
+      "provider": "klaviyo",
+      "campaign_family": "flow_message_variation",
+      "business_question": "Flow Variation attribution resolves to parent Flow Message",
+      "campaign": "Sepet Hatırlatma Flow",
+      "channel_entities": [
+        {"type": "Flow Message", "name": "Sepet Hatırlatma"}
+      ],
+      "provider_subordinate_evidence": "send_channel=SMS; exact Flow Message Variation relationship",
+      "advertised_product_evidence": {"state": "unavailable", "products": []},
+      "sold_product": "İnci Küpe",
+      "temporal_evidence": "provider_business_date_exact",
+      "expected": {
+        "channel_names": ["Sepet Hatırlatma"],
+        "channel_type": "Flow Message",
+        "channel_resolution": "exact",
+        "sales_role": "Triggered",
+        "medium_state": "SMS",
+        "variation_state": "exact",
+        "value_modifier": "none",
+        "cost_rule": "no_native_flow_or_product_cost_in_eo04",
+        "fact_rule": "one_ordered_product_event_is_one_sale_fact"
+      },
+      "forbidden_inferences": ["Flow is Channel", "Variation replaces parent Message Channel"],
+      "evidence_level": "contract_fixture",
+      "next_owner": "A6-EO-05"
+    },
+    {
+      "scenario_id": "KLAVIYO-06",
+      "provider": "klaviyo",
+      "campaign_family": "message_attribution_missing_or_conflicting",
+      "business_question": "Message attribution cannot resolve one Channel",
+      "campaign": "Unknown campaign or flow context",
+      "channel_entities": [],
+      "provider_subordinate_evidence": "Missing Message, multiple Messages, Campaign/Flow conflict or parent conflict",
+      "advertised_product_evidence": {"state": "conflicting", "products": []},
+      "sold_product": "İnci Küpe",
+      "temporal_evidence": "provider_business_date_exact",
+      "expected": {
+        "channel_names": [],
+        "channel_type": "Unknown Channel",
+        "channel_resolution": "unknown",
+        "sales_role": "Unclassified",
+        "medium_state": "unresolved",
+        "variation_state": "unresolved",
+        "value_modifier": "none",
+        "cost_rule": "no_native_message_or_product_cost_in_eo04",
+        "fact_rule": "preserve_one_ordered_product_sale_fact"
+      },
+      "forbidden_inferences": ["timing selects Message", "report totals select Message", "drop sale"],
+      "evidence_level": "contract_fixture",
+      "next_owner": "A6-EO-05"
+    }
+  ],
+  "closure": {
+    "book_status": "draft",
+    "product_owner_closure_acceptance_required": true,
+    "package_status_changed_by_this_contract": false,
+    "single_next_parent": "A6-EO-05"
+  }
+}

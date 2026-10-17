@@ -325,6 +325,27 @@ Live OAuth, provider-console, Vercel and deployment mutations remain separate
 approval gates; Shopify desktop and real-mobile product acceptance are still
 open.
 
+### EO-04-D Klaviyo OAuth hardening gate — 17 October 2026
+
+Binding analyst brief: `docs/EO_04D_KLAVIYO_OAUTH_HARDENING_BRIEF.md`
+Executable contract: `contracts/eo-04d-klaviyo-oauth-hardening-v1.json`
+CI enforcement: `tests/eo-04d-klaviyo-oauth-hardening-contract.test.js`
+
+- Product-owner authorization covers repository-only OAuth/token hardening. It
+  does not authorize a live provider call, secret, database, environment,
+  deployment, UI or provider-console mutation.
+- Klaviyo token expiry is retained inside the encrypted token set. Expired,
+  near-expiry and legacy tokens without expiry evidence refresh before the
+  intended provider request.
+- A failed provider request is terminal: it is never followed by token refresh
+  or an automatic repeat. Accounts `401`, Accounts `403`, refresh
+  `invalid_grant` and authorization-code `invalid_grant` remain distinct.
+- Connected Settings inspection remains local and does not call Klaviyo merely
+  because the merchant opened Settings.
+- The Klaviyo-origin installation transport is a valid future review need, but
+  remains deferred until isolated Shopify preproduction and explicit visual
+  acceptance. PR #91 is not merge authority for this backend package.
+
 
 ## EO-04-D Klaviyo reporting capability baseline — revalidated 16 October 2026
 

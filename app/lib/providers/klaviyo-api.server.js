@@ -4,7 +4,7 @@ export const KLAVIYO_AUTHORIZATION_ENDPOINT = "https://www.klaviyo.com/oauth/aut
 export const KLAVIYO_TOKEN_ENDPOINT = "https://a.klaviyo.com/oauth/token";
 export const KLAVIYO_REVOCATION_ENDPOINT = "https://a.klaviyo.com/oauth/revoke";
 export const KLAVIYO_ACCOUNTS_ENDPOINT = "https://a.klaviyo.com/api/accounts/";
-export const KLAVIYO_API_REVISION = "2026-07-15";
+export const KLAVIYO_API_REVISION = "2026-10-15";
 export const KLAVIYO_OAUTH_SCOPES = Object.freeze([
   "accounts:read",
   "campaigns:read",
@@ -114,7 +114,7 @@ export function buildKlaviyoAuthorizationUrl({config, state, pkceChallenge}) {
   return url.toString();
 }
 
-async function tokenRequest({config, form, fetchFn}) {
+async function tokenRequest({config, form, fetchFn, invalidGrantCode}) {
   const response = await fetchFn(KLAVIYO_TOKEN_ENDPOINT, {
     method: "POST",
     headers: {
@@ -126,12 +126,15 @@ async function tokenRequest({config, form, fetchFn}) {
   });
   const payload = await jsonResponse(response);
   if (!response.ok || !payload) {
+    const providerStatus = providerError(payload);
     throw new KlaviyoApiError(
-      "KLAVIYO_OAUTH_TOKEN_REQUEST_FAILED",
+      response.status === 400 && providerStatus === "invalid_grant"
+        ? invalidGrantCode
+        : "KLAVIYO_OAUTH_TOKEN_REQUEST_FAILED",
       "Klaviyo token endpoint rejected the request",
       {
         status: response.status,
-        provider_status: providerError(payload),
+        provider_status: providerStatus,
         request_id: responseHeader(response, "x-request-id"),
       },
     );
@@ -151,19 +154,37 @@ function normalizedTokenSet(payload, now, fallbackScopes = null) {
     throw new KlaviyoApiError("KLAVIYO_TOKEN_EXPIRY_INVALID", "Klaviyo token expiry is invalid");
   }
   const scopes = scopesOf(payload?.scope ?? fallbackScopes);
-  const expiresAt = new Date(validNow(now).valueOf() + expiresIn * 1000).toISOString();
+  const verifiedAt = validNow(now).toISOString();
+  const expiresAt = new Date(new Date(verifiedAt).valueOf() + expiresIn * 1000).toISOString();
   return Object.freeze({
     tokenSet: Object.freeze({
       access_token: accessToken,
       refresh_token: refreshToken,
       token_type: "Bearer",
       expires_in: expiresIn,
+      expires_at: expiresAt,
       scope: scopes.join(" "),
       scopes,
     }),
     scopes,
+    verifiedAt,
     expiresAt,
   });
+}
+
+export function klaviyoTokenRequiresRefresh(
+  tokenSet,
+  now = () => new Date(),
+  minimumValidityMs = 60_000,
+) {
+  if (!Number.isSafeInteger(minimumValidityMs) || minimumValidityMs < 0) {
+    throw new TypeError("minimumValidityMs must be a non-negative safe integer");
+  }
+  const current = validNow(now).valueOf();
+  const expiresAt = typeof tokenSet?.expires_at === "string"
+    ? Date.parse(tokenSet.expires_at)
+    : Number.NaN;
+  return Number.isNaN(expiresAt) || expiresAt <= current + minimumValidityMs;
 }
 
 export async function exchangeKlaviyoAuthorizationCode({
@@ -177,6 +198,7 @@ export async function exchangeKlaviyoAuthorizationCode({
   const payload = await tokenRequest({
     config,
     fetchFn,
+    invalidGrantCode: "KLAVIYO_OAUTH_SESSION_EXPIRED",
     form: {
       grant_type: "authorization_code",
       redirect_uri: exactRedirect(config?.redirectUri),
@@ -198,6 +220,7 @@ export async function refreshKlaviyoAccessToken({
   const payload = await tokenRequest({
     config,
     fetchFn,
+    invalidGrantCode: "KLAVIYO_REAUTHORIZATION_REQUIRED",
     form: {
       grant_type: "refresh_token",
       refresh_token: nonEmpty(refreshToken, "KLAVIYO_REFRESH_TOKEN_REQUIRED", 16384),
@@ -225,9 +248,11 @@ export async function discoverKlaviyoAccount({
   const payload = await jsonResponse(response);
   if (!response.ok || !payload) {
     throw new KlaviyoApiError(
-      response.status === 401 || response.status === 403
+      response.status === 401
         ? "KLAVIYO_REAUTHORIZATION_REQUIRED"
-        : "KLAVIYO_ACCOUNTS_REQUEST_FAILED",
+        : response.status === 403
+          ? "KLAVIYO_PERMISSION_DENIED"
+          : "KLAVIYO_ACCOUNTS_REQUEST_FAILED",
       "Klaviyo Accounts API rejected the request",
       {
         status: response.status,

@@ -12,12 +12,16 @@ import {
   KLAVIYO_OAUTH_SCOPES,
   KLAVIYO_REVOCATION_ENDPOINT,
   KLAVIYO_TOKEN_ENDPOINT,
+  klaviyoTokenRequiresRefresh,
   readKlaviyoOAuthConfig,
   refreshKlaviyoAccessToken,
   revokeKlaviyoAuthorization,
 } from "../app/lib/providers/klaviyo-api.server.js";
 import {installedShopifySettingsUrl} from "../app/lib/shopify/installed-app-return.server.js";
-import {selectKlaviyoAccount} from "../app/lib/oauth/klaviyo-oauth-runtime.server.js";
+import {
+  createKlaviyoCredentialAuthority,
+  selectKlaviyoAccount,
+} from "../app/lib/oauth/klaviyo-oauth-runtime.server.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8");
@@ -88,8 +92,43 @@ test("authorization-code exchange uses Basic auth, form encoding and provider ex
   assert.equal(body.get("code"), "authorization-code");
   assert.equal(body.get("code_verifier"), "v".repeat(43));
   assert.equal(exchanged.expiresAt, "2026-10-13T11:00:00.000Z");
+  assert.equal(exchanged.verifiedAt, "2026-10-13T10:00:00.000Z");
+  assert.equal(exchanged.tokenSet.expires_at, "2026-10-13T11:00:00.000Z");
   assert.equal(exchanged.tokenSet.refresh_token, "refresh-token");
   assert.ok(exchanged.scopes.includes("accounts:read"));
+});
+
+test("authorization code and refresh invalid_grant have distinct terminal meanings", async () => {
+  const rejected = async () => response(400, {error: "invalid_grant"});
+  await assert.rejects(
+    exchangeKlaviyoAuthorizationCode({
+      config,
+      authorizationCode: "expired-code",
+      pkceVerifier: "v".repeat(43),
+      fetchFn: rejected,
+    }),
+    (error) => error?.code === "KLAVIYO_OAUTH_SESSION_EXPIRED",
+  );
+  await assert.rejects(
+    refreshKlaviyoAccessToken({
+      config,
+      refreshToken: "invalid-refresh",
+      scopes: KLAVIYO_OAUTH_SCOPES,
+      fetchFn: rejected,
+    }),
+    (error) => error?.code === "KLAVIYO_REAUTHORIZATION_REQUIRED",
+  );
+});
+
+test("token expiry is decided before provider access and legacy tokens refresh", () => {
+  const now = () => new Date("2026-10-17T10:00:00.000Z");
+  assert.equal(klaviyoTokenRequiresRefresh({}, now), true);
+  assert.equal(klaviyoTokenRequiresRefresh({
+    expires_at: "2026-10-17T10:00:30.000Z",
+  }, now), true);
+  assert.equal(klaviyoTokenRequiresRefresh({
+    expires_at: "2026-10-17T11:00:00.000Z",
+  }, now), false);
 });
 
 test("token exchange fails closed without refresh token or accounts scope", async () => {
@@ -206,6 +245,234 @@ test("Accounts API fails closed on zero, multiple or incomplete accounts", async
     id: "a",
     attributes: {preferred_currency: "USD", timezone: "Europe/Istanbul"},
   }]), (error) => error?.code === "KLAVIYO_ACCOUNT_SCHEMA_CHANGED");
+});
+
+test("Accounts 401 requires reauthorization while 403 stays permission denied", async () => {
+  const discover = (status) => discoverKlaviyoAccount({
+    accessToken: "access-token",
+    scopes: ["accounts:read"],
+    fetchFn: async () => response(status, {errors: [{code: "provider_status"}]}),
+  });
+  await assert.rejects(
+    discover(401),
+    (error) => error?.code === "KLAVIYO_REAUTHORIZATION_REQUIRED",
+  );
+  await assert.rejects(
+    discover(403),
+    (error) => error?.code === "KLAVIYO_PERMISSION_DENIED",
+  );
+});
+
+function accountResponse() {
+  return response(200, {data: [{
+    type: "account",
+    id: "account-1",
+    attributes: {
+      contact_information: {organization_name: "AdsTable Demo"},
+      preferred_currency: "USD",
+      timezone: "Europe/Istanbul",
+    },
+  }]});
+}
+
+function credentialHarness({stored, accountsStatus = 200, refreshStatus = 200} = {}) {
+  const calls = [];
+  const lifecycle = {
+    load: async () => {
+      calls.push("lifecycle.load");
+      return {status: "connected", version: 4};
+    },
+    renewCredential: async () => calls.push("lifecycle.renew"),
+    markReauthorizationRequired: async () => calls.push("lifecycle.reauthorize"),
+  };
+  const setup = {
+    stage: async (input) => {
+      calls.push("setup.stage");
+      return {connectionId: input.connectionId, version: 3};
+    },
+  };
+  const tokenVault = {
+    loadProviderTokenSet: async () => {
+      calls.push("vault.load");
+      return stored;
+    },
+    storeProviderTokenSet: async () => {
+      calls.push("vault.store");
+      return {credentialId: "credential-new"};
+    },
+    deleteProviderTokenSet: async () => calls.push("vault.delete"),
+  };
+  const fetchFn = async (url) => {
+    if (url === KLAVIYO_TOKEN_ENDPOINT) {
+      calls.push("provider.token");
+      return refreshStatus === 200
+        ? response(200, {
+            access_token: "access-new",
+            refresh_token: "refresh-new",
+            token_type: "Bearer",
+            expires_in: 3600,
+          })
+        : response(refreshStatus, {error: "invalid_grant"});
+    }
+    if (url === KLAVIYO_ACCOUNTS_ENDPOINT) {
+      calls.push("provider.accounts");
+      return accountsStatus === 200
+        ? accountResponse()
+        : response(accountsStatus, {errors: [{code: "provider_status"}]});
+    }
+    throw new Error("UNEXPECTED_TEST_URL");
+  };
+  return {
+    calls,
+    authority: createKlaviyoCredentialAuthority({
+      tokenVault,
+      lifecycle,
+      setup,
+      config,
+      fetchFn,
+      now: () => new Date("2026-10-17T10:00:00.000Z"),
+    }),
+  };
+}
+
+const installationAuthority = Object.freeze({
+  authority: "shopify_installation_verified",
+  workspaceId: "00000000-0000-4000-8000-000000000010",
+  installGeneration: 1,
+  status: "active",
+});
+
+test("expired connected credential renews before the single Accounts request", async () => {
+  const {authority: credential, calls} = credentialHarness({stored: {
+    access_token: "access-old",
+    refresh_token: "refresh-old",
+    scopes: KLAVIYO_OAUTH_SCOPES,
+    expires_at: "2026-10-17T09:59:00.000Z",
+  }});
+  await credential.discover({
+    installationAuthority,
+    credentialId: "credential-old",
+    scopes: KLAVIYO_OAUTH_SCOPES,
+    connected: {
+      connectionId: "00000000-0000-4000-8000-000000000011",
+      credentialId: "credential-old",
+    },
+  });
+  assert.deepEqual(calls, [
+    "vault.load",
+    "provider.token",
+    "vault.store",
+    "lifecycle.load",
+    "lifecycle.renew",
+    "provider.accounts",
+  ]);
+});
+
+test("legacy pending credential is persisted and staged before provider access", async () => {
+  const {authority: credential, calls} = credentialHarness({stored: {
+    access_token: "access-old",
+    refresh_token: "refresh-old",
+    scopes: KLAVIYO_OAUTH_SCOPES,
+  }});
+  const evidence = await credential.discover({
+    installationAuthority,
+    credentialId: "credential-old",
+    scopes: KLAVIYO_OAUTH_SCOPES,
+    pendingConnectionId: "00000000-0000-4000-8000-000000000012",
+  });
+  assert.equal(evidence.pending.version, 3);
+  assert.deepEqual(calls, [
+    "vault.load",
+    "provider.token",
+    "vault.store",
+    "setup.stage",
+    "provider.accounts",
+  ]);
+});
+
+test("first Accounts failure is terminal and is never followed by refresh or retry", async () => {
+  const {authority: credential, calls} = credentialHarness({
+    stored: {
+      access_token: "access-current",
+      refresh_token: "refresh-current",
+      scopes: KLAVIYO_OAUTH_SCOPES,
+      expires_at: "2026-10-17T11:00:00.000Z",
+    },
+    accountsStatus: 401,
+  });
+  await assert.rejects(
+    credential.discover({
+      installationAuthority,
+      credentialId: "credential-current",
+      scopes: KLAVIYO_OAUTH_SCOPES,
+      connected: {
+        connectionId: "00000000-0000-4000-8000-000000000013",
+        credentialId: "credential-current",
+      },
+    }),
+    (error) => error?.code === "KLAVIYO_REAUTHORIZATION_REQUIRED",
+  );
+  assert.deepEqual(calls, [
+    "vault.load",
+    "provider.accounts",
+    "lifecycle.load",
+    "lifecycle.reauthorize",
+  ]);
+});
+
+test("Accounts 403 is permission denial without refresh, retry or lifecycle guess", async () => {
+  const {authority: credential, calls} = credentialHarness({
+    stored: {
+      access_token: "access-current",
+      refresh_token: "refresh-current",
+      scopes: KLAVIYO_OAUTH_SCOPES,
+      expires_at: "2026-10-17T11:00:00.000Z",
+    },
+    accountsStatus: 403,
+  });
+  await assert.rejects(
+    credential.discover({
+      installationAuthority,
+      credentialId: "credential-current",
+      scopes: KLAVIYO_OAUTH_SCOPES,
+      connected: {
+        connectionId: "00000000-0000-4000-8000-000000000015",
+        credentialId: "credential-current",
+      },
+    }),
+    (error) => error?.code === "KLAVIYO_PERMISSION_DENIED",
+  );
+  assert.deepEqual(calls, ["vault.load", "provider.accounts"]);
+});
+
+test("refresh invalid_grant marks connected authority unavailable without Accounts call", async () => {
+  const {authority: credential, calls} = credentialHarness({
+    stored: {
+      access_token: "access-old",
+      refresh_token: "refresh-invalid",
+      scopes: KLAVIYO_OAUTH_SCOPES,
+      expires_at: "2026-10-17T09:59:00.000Z",
+    },
+    refreshStatus: 400,
+  });
+  await assert.rejects(
+    credential.discover({
+      installationAuthority,
+      credentialId: "credential-old",
+      scopes: KLAVIYO_OAUTH_SCOPES,
+      connected: {
+        connectionId: "00000000-0000-4000-8000-000000000014",
+        credentialId: "credential-old",
+      },
+    }),
+    (error) => error?.code === "KLAVIYO_REAUTHORIZATION_REQUIRED",
+  );
+  assert.deepEqual(calls, [
+    "vault.load",
+    "provider.token",
+    "lifecycle.load",
+    "lifecycle.reauthorize",
+  ]);
 });
 
 test("revocation targets the refresh token before local disconnect authority can change", async () => {

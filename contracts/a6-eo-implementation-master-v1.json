@@ -702,7 +702,7 @@
           "id": "A6-EO-04-D",
           "title": "Klaviyo adapter",
           "objective": "Campaign/Flow Message Channel reporting with mandatory Medium, subordinate Variation, event product evidence and separately governed estimated-spend input.",
-          "status": "oauth_estimated_spend_and_repository_reporting_runtime_started_live_reporting_closed",
+          "status": "oauth_hardening_and_repository_reporting_runtime_in_progress_live_reporting_closed",
           "implementation_started": true,
           "document": "docs/EO_04D_KLAVIYO_OAUTH_ESTIMATED_SPEND_START_BRIEF.md",
           "contract": "contracts/eo-04d-klaviyo-oauth-estimated-spend-v1.json",
@@ -722,6 +722,13 @@
           "reporting_runtime_started": true,
           "reporting_runtime_started_at": "2026-10-17",
           "reporting_live_provider_call_authorized": false,
+          "oauth_hardening_document": "docs/EO_04D_KLAVIYO_OAUTH_HARDENING_BRIEF.md",
+          "oauth_hardening_contract": "contracts/eo-04d-klaviyo-oauth-hardening-v1.json",
+          "oauth_hardening_test": "tests/eo-04d-klaviyo-oauth-hardening-contract.test.js",
+          "oauth_hardening_implementation_authorized": true,
+          "oauth_hardening_implementation_authorized_at": "2026-10-17",
+          "oauth_hardening_repository_implementation": "ready_for_review",
+          "klaviyo_origin_installation_deferred_to_isolated_preproduction": true,
           "merge_commit": "1ac9c8d"
         },
         {

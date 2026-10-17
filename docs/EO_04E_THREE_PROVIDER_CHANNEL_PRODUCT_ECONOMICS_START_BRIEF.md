@@ -3,12 +3,12 @@
 ## Belge durumu
 
 - Paket: `A6-EO-04-E`
-- Durum: `accepted_product_owner_runtime_not_authorized`
+- Durum: `accepted_product_owner_meta_and_klaviyo_repository_runtime_authorized_live_calls_closed`
 - Kontrol tarihi: 16 Ekim 2026
 - Ürün sahibi sözleşme kabulü: 16 Ekim 2026
 - Executable contract: `contracts/eo-04e-three-provider-channel-product-economics-v1.json`
 - CI enforcement: `tests/eo-04e-three-provider-channel-product-economics.test.js`
-- Bu brief kabul edilmeden provider reporting runtime'ı, canlı provider çağrısı, Dataset V2, migration, secret, environment veya deployment değişikliği yapılamaz.
+- 17 Ekim 2026 itibarıyla Meta ve Klaviyo repository runtime paketleri ayrıca yetkilendirilmiştir. Canlı provider çağrısı, Dataset V2, migration, secret, environment veya deployment değişikliği hâlâ ayrı açık onay gerektirir.
 
 ## İş çıktısı ve paket sınırı
 
@@ -26,14 +26,16 @@ EO-05 Dataset V2; canonical satırları, hesaplamaları, maliyet dağıtımını
 
 ### Channel
 
-Channel, providerın doğrulayabildiği en alt gerçek raporlama leaf'idir:
+Channel, providerın doğruladığı iş raporlama entity'sidir; her provider altındaki en derin teknik dimension otomatik olarak Channel sayılmaz:
 
 - Meta: `Ad`
 - Google Standard Shopping: `Ad Group`
 - Google Performance Max Retail: `Asset Group`
 - Google Search: `Ad Group`
-- Klaviyo Campaign: `Campaign Variation`
-- Klaviyo Flow: attribution varsa `Flow Message Variation`, yoksa `Flow Message`
+- Klaviyo Campaign: `Campaign Message`
+- Klaviyo Flow: `Flow Message`
+
+Klaviyo `send_channel` zorunlu ayrı `Medium` eksenidir (`Email`, `SMS`, `WhatsApp`, `Push`). Variation, Message Channel'ın alt kırılımıdır; Channel'ın yerine geçmez.
 
 Campaign, Ad Set, Flow, trigger, split ve delay tek başına Channel değildir.
 
@@ -96,20 +98,21 @@ Bağlayıcı sınırlar:
 
 ### Campaign
 
-| Campaign yapısı | Channel | Performance | Sold-product attribution | Sonuç |
+| Campaign yapısı | Channel | Medium / Variation | Sold-product attribution | Sonuç |
 | --- | --- | --- | --- | --- |
-| Tek variation | Tek Campaign Variation | Variation performance exact | Event Campaign Message'a bağlı | Tek variation'a exact bağlanabilir |
-| A/B veya çoklu variation | Her Campaign Variation ayrı Channel | Variation performance exact | Event yalnız Campaign Message'a bağlı | Ürün herhangi bir variation'a dağıtılmaz; `Unknown Channel` altında Message bağlamıyla korunur |
+| Tek variation | Campaign Message | `send_channel` zorunlu; Variation ayrı exact kırılım olabilir | Event Campaign Message'a bağlı | Satış exact Message Channel altında korunur |
+| A/B veya çoklu variation | Campaign Message | Medium zorunlu; exact Variation yoksa yalnız Variation unresolved | Event Campaign Message'a bağlı | Satış exact Message Channel altında korunur; `Unknown Channel` oluşmaz |
 
-Klaviyo `2026-10-15` GA sözleşmesinde Campaign Variation gerçek resource ve reporting dimension'dır. Ancak Event attribution ilişkisi Campaign Message'ı içerir, Campaign Variation'ı içermez. Bu asimetri tahminle kapatılamaz.
+Klaviyo `2026-10-15` GA sözleşmesinde Campaign Message reporting'in zorunlu kimliğidir; `send_channel` Medium'dur ve Variation isteğe bağlı alt boyuttur. Event attribution Campaign Message'ı içerir fakat Campaign Variation'ı içermez. Bu asimetri Message Channel'ı bozmaz; yalnız Variation çözünürlüğünü sınırlar.
 
 ### Flow
 
 1. Flow, trigger, split ve delay Channel değildir.
-2. Attribution `Flow Message Variation` döndürürse Channel odur.
-3. Variation attribution yok fakat `Flow Message` attribution varsa Channel Flow Message'dır.
-4. Bu attribution ile gelen sold product `Triggered` olur.
-5. Attribution çelişkiliyse ürün `Unclassified`; exact Channel çözülemiyorsa `Unknown Channel` altında korunur.
+2. Channel her zaman `Flow Message`tır.
+3. Attribution `Flow Message Variation` döndürürse Variation'ın parent Flow Message'ı Channel olarak çözülür; Variation ayrıca exact tutulur.
+4. Variation attribution yok fakat `Flow Message` attribution varsa Channel exact Flow Message, Variation unresolved olur.
+5. Bu attribution ile gelen sold product `Triggered` olur.
+6. Attribution çelişkiliyse ürün `Unclassified`; Message çözülemiyorsa `Unknown Channel` altında korunur.
 
 ### Campaign Sales Role
 
@@ -188,8 +191,8 @@ Provider-isolated ve combined deterministic acceptance aşağıdakileri kanıtla
 1. Meta Channel daima Ad olarak kalır.
 2. Google Standard Shopping, PMax Retail ve Search farklı gerçek Channel leaf'lerini korur.
 3. PMax ambiguous listing membership `Unknown Channel` üretir ve satış dağıtılmaz.
-4. Klaviyo single-variation Campaign exact; multi-variation Campaign ürün attribution'ı `Unknown Channel` davranışı üretir.
-5. Klaviyo Flow Message Variation/Message attribution sırası korunur.
+4. Klaviyo Campaign Message Channel olarak kalır; multi-variation yalnız Variation'ı unresolved bırakır ve Message biliniyorsa `Unknown Channel` üretmez.
+5. Klaviyo Flow Message Channel olarak kalır; Flow Message Variation parent Message'a çözülür ve ayrı Variation kanıtı olarak korunur.
 6. `Advertised`, `Cross-sell`, `Assisted`, `Triggered` ve gerçek ambiguity için `Unclassified` ayrımı çalışır.
 7. `Zero Value` role değildir; modifier'dır.
 8. Provider product cost ile Channel spend ve gelecekteki blended/true cost birbirine dönüştürülmez.

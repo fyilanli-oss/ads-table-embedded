@@ -2,8 +2,8 @@
   "schema_version": "1.0.0",
   "contract_id": "eo-04e-three-provider-channel-product-economics-v1",
   "package_id": "A6-EO-04-E",
-  "status": "accepted_product_owner_meta_runtime_started",
-  "checked_at": "2026-10-16",
+  "status": "accepted_product_owner_meta_and_klaviyo_runtime_started",
+  "checked_at": "2026-10-17",
   "authority": {
     "execution_plan": "docs/EXECUTION_PLAN.md",
     "analyst_brief": "docs/EO_04E_THREE_PROVIDER_CHANNEL_PRODUCT_ECONOMICS_START_BRIEF.md",
@@ -23,7 +23,7 @@
     ]
   },
   "common": {
-    "channel_definition": "deepest_provider_verified_reporting_leaf",
+    "channel_definition": "provider_verified_business_channel_entity_not_automatic_deepest_dimension",
     "sales_roles": [
       "Advertised",
       "Cross-sell",
@@ -104,9 +104,23 @@
     "klaviyo": {
       "api_revision": "2026-10-15",
       "channels": {
-        "campaign": "campaign_variation",
-        "flow_with_variation_attribution": "flow_message_variation",
-        "flow_without_variation_attribution": "flow_message"
+        "campaign": "campaign_message",
+        "flow": "flow_message"
+      },
+      "medium": {
+        "source": "send_channel",
+        "required": true,
+        "values": [
+          "Email",
+          "SMS",
+          "WhatsApp",
+          "Push"
+        ]
+      },
+      "variation": {
+        "relationship": "subordinate_to_message_channel",
+        "replaces_channel": false,
+        "unresolved_when_message_known_creates_unknown_channel": false
       },
       "not_channels": [
         "flow",
@@ -115,13 +129,13 @@
         "delay"
       ],
       "campaign_attribution": {
-        "single_variation": "message_attributed_product_may_bind_to_the_only_variation",
-        "multiple_variations": "product_stays_under_unknown_channel_with_message_context",
-        "performance": "variation_exact",
+        "single_variation": "message_channel_exact_variation_may_be_exact",
+        "multiple_variations": "message_channel_exact_variation_unresolved_when_not_attributed",
+        "performance": "message_channel_with_optional_variation_breakdown",
         "event_relationship_includes_campaign_variation": false
       },
       "flow_attribution": {
-        "variation_relationship_present": "Triggered_at_flow_message_variation",
+        "variation_relationship_present": "Triggered_at_parent_flow_message_with_exact_variation",
         "message_relationship_only": "Triggered_at_flow_message"
       },
       "classification": {
@@ -222,7 +236,8 @@
     "first_provider_error_stops_next_provider": true,
     "runtime_implementation_authorized": true,
     "runtime_authorized_at": "2026-10-16",
-    "runtime_authorization_scope": "meta_provider_first_slice_only",
+    "runtime_authorization_scope": "meta_provider_first_slice_and_klaviyo_repository_reporting_foundation",
+    "klaviyo_runtime_authorized_at": "2026-10-17",
     "live_provider_calls_authorized": false,
     "product_owner_acceptance_required": true,
     "product_owner_contract_acceptance": true,

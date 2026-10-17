@@ -41,7 +41,7 @@ Bu kayıt yalnız Klaviyo'nun güncel resmî API kabiliyetini ve kesin sınırla
 - Events attribution relationship'i `flow-message` ve `flow-message-variation` ilişkilerini açıkça içerebilir.
 - Flow Values ve Flow Series ayrı resmî endpointlerdir.
 
-## Event attribution asimetrisi
+## Event attribution asimetrisi ve 17 Ekim ürün kararı
 
 Klaviyo stable Events OpenAPI şemasında attribution ilişkileri şunları içerir:
 
@@ -53,10 +53,14 @@ Klaviyo stable Events OpenAPI şemasında attribution ilişkileri şunları içe
 
 Aynı şemada `campaign-variation` attribution relationship'i yoktur. Bunun sonucu:
 
-1. Tek variation'lı Campaign'de message-attributed sold product tek mümkün variation'a exact bağlanabilir.
-2. Çoklu variation'lı Campaign'de variation performance exact olmasına rağmen sold product yalnız Message'a bağlıdır.
-3. Çoklu variation ürün satışı A veya B variation'a dağıtılamaz; Message bağlamıyla `Unknown Channel` altında korunur.
-4. Flow event'i variation relationship verirse exact Flow Message Variation; yalnız message verirse Flow Message kullanılır.
+17 Ekim 2026 ürün sahibi kararı provider Message ve Variation seviyelerini ayırmıştır:
+
+1. Campaign Message AdsTable Channel'dır; Campaign Variation Channel değildir.
+2. Flow Message AdsTable Channel'dır; Flow Message Variation Channel değildir.
+3. `send_channel` zorunlu ayrı Medium kanıtıdır.
+4. Message biliniyor fakat Variation bilinmiyorsa Channel exact kalır; yalnız Variation unresolved olur.
+5. Çoklu variation ürün satışı A veya B variation'a dağıtılamaz fakat Message biliniyorsa `Unknown Channel` oluşmaz.
+6. Flow event'i variation relationship verirse parent Flow Message Channel olarak çözülür; Variation ayrıca exact tutulur.
 
 Bu kurallar synthetic çıkarım değil, provider schema sınırıdır.
 
@@ -93,7 +97,7 @@ Desteklenen kimlik yolu resmî Klaviyo Shopify entegrasyonudur. Özel/manual eve
 | Flow Event -> Message Variation | documented_stable | Event attribution relationship |
 | Campaign daily series | unavailable | Campaign Values var; Campaign Series yok |
 | Email cost allocation | EO05_only | Estimated Spend var; dağıtım EO-04 işi değil |
-| AdsTable Channel kararı | accepted_2026-10-16 | Ortak EO-04-E brief/contract ürün sahibi tarafından kabul edildi; runtime ayrıca onaylanacak |
+| AdsTable Channel kararı | corrected_and_accepted_2026-10-17 | Campaign/Flow Message Channel; `send_channel` zorunlu Medium; Variation ayrı alt kırılım |
 | Dataset mapping | not_started | EO-05 sorumluluğu |
 
 ## Uygulama kapısı

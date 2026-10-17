@@ -9,11 +9,15 @@ const contract = JSON.parse(
   ),
 );
 
-test("EO-04-E contract authorizes only the Meta-first repository runtime while live work stays closed", () => {
-  assert.equal(contract.status, "accepted_product_owner_meta_runtime_started");
+test("EO-04-E contract authorizes Meta and Klaviyo repository runtime while live work stays closed", () => {
+  assert.equal(contract.status, "accepted_product_owner_meta_and_klaviyo_runtime_started");
   assert.equal(contract.acceptance.runtime_implementation_authorized, true);
   assert.equal(contract.acceptance.runtime_authorized_at, "2026-10-16");
-  assert.equal(contract.acceptance.runtime_authorization_scope, "meta_provider_first_slice_only");
+  assert.equal(
+    contract.acceptance.runtime_authorization_scope,
+    "meta_provider_first_slice_and_klaviyo_repository_reporting_foundation",
+  );
+  assert.equal(contract.acceptance.klaviyo_runtime_authorized_at, "2026-10-17");
   assert.equal(contract.acceptance.live_provider_calls_authorized, false);
   assert.equal(contract.acceptance.product_owner_acceptance_required, true);
   assert.equal(contract.acceptance.product_owner_contract_acceptance, true);
@@ -26,11 +30,11 @@ test("the three providers preserve their real Channel leaf", () => {
   assert.equal(contract.providers.google_ads.channels.standard_shopping, "ad_group");
   assert.equal(contract.providers.google_ads.channels.performance_max_retail, "asset_group");
   assert.equal(contract.providers.google_ads.channels.search, "ad_group");
-  assert.equal(contract.providers.klaviyo.channels.campaign, "campaign_variation");
-  assert.equal(
-    contract.providers.klaviyo.channels.flow_with_variation_attribution,
-    "flow_message_variation",
-  );
+  assert.equal(contract.providers.klaviyo.channels.campaign, "campaign_message");
+  assert.equal(contract.providers.klaviyo.channels.flow, "flow_message");
+  assert.equal(contract.providers.klaviyo.medium.source, "send_channel");
+  assert.equal(contract.providers.klaviyo.medium.required, true);
+  assert.equal(contract.providers.klaviyo.variation.replaces_channel, false);
 });
 
 test("Sales Role, Zero Value and Unknown Channel are distinct axes", () => {
@@ -46,7 +50,7 @@ test("Sales Role, Zero Value and Unknown Channel are distinct axes", () => {
   assert.equal(contract.common.unknown_channel, "sale_is_proven_but_exact_channel_is_not");
 });
 
-test("PMax ambiguity and Klaviyo multi-variation attribution cannot be guessed", () => {
+test("PMax ambiguity cannot be guessed and Klaviyo preserves Message Channel", () => {
   assert.equal(
     contract.providers.google_ads.pmax.broad_or_overlapping_listing_membership,
     "Unknown Channel",
@@ -54,7 +58,7 @@ test("PMax ambiguity and Klaviyo multi-variation attribution cannot be guessed",
   assert.equal(contract.providers.google_ads.pmax.downward_distribution, "forbidden");
   assert.equal(
     contract.providers.klaviyo.campaign_attribution.multiple_variations,
-    "product_stays_under_unknown_channel_with_message_context",
+    "message_channel_exact_variation_unresolved_when_not_attributed",
   );
   assert.equal(
     contract.providers.klaviyo.campaign_attribution.event_relationship_includes_campaign_variation,

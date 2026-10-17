@@ -208,6 +208,22 @@ EO-01-B dependency pinlemeden ve EO-07 UI implementasyonundan önce resmî sür�
 Opening this package authorizes no deletion. It does not change the 10 A6-EO parents, 43 stable EO children, current A6-EO-02-C gate or any product implementation sequence. Recurrence is prevented by the mandatory end-of-package local-only-zero gate.
 
 
+## A6-OPS-SHOPIFY-01 — Isolated Shopify embedded pre-production
+
+**Status:** Planned; trigger not reached; implementation not started
+**Type:** Independent prerequisite package; outside the A6-EO dependency chain until its activation deadline
+
+Binding analyst brief: `docs/A6_OPS_SHOPIFY_01_ISOLATED_PREPRODUCTION.md`
+Executable contract: `contracts/a6-ops-shopify-01-isolated-preproduction-v1.json`
+
+- The package becomes a hard prerequisite before either a real merchant store is migrated to Shopify for AdsTable use or the first external/non-team user is invited, whichever happens first.
+- It requires a dedicated Shopify development app and dev store, a named non-production Shopify configuration, a stable embedded Preview/Staging URL with exact redirects, Preview-specific credentials and persistence isolated from Production.
+- A merchant production store cannot substitute for the dev store. Production credential values cannot be copied to Preview or Development, and Preview cannot write Production business data.
+- Any real provider-account acceptance remains separately approved, read-only and exact-account-bound. The first explicit or unexplained provider error stops execution; retry or an alternate route requires a new explanation and approval.
+- Evidence may later feed A6-EO-08-D, but this package does not declare the product review-ready or advance the active EO parent.
+- The product owner accepted planning this package on 17 October 2026 and explicitly deferred implementation. No Shopify, Vercel, database, secret, provider, deployment, migration, invitation, review or merge mutation is authorized by this record.
+
+
 ### EO-02-C corrective gate — Shopify runtime authentication bridge
 
 EO-02-C internal caller kodu tek başına canlı tetikleyici değildir. `docs/EO_02C_SHOPIFY_RUNTIME_AUTH_BRIDGE.md` ve `contracts/eo-02c-shopify-runtime-auth-bridge-v1.json` PASS olmadan database Secret etkinleştirilemez, EO-02-C kapatılamaz ve EO-02-D başlatılamaz. Ürün URL'leri ve mevcut preview görünümü korunur.

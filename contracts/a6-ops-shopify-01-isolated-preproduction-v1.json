@@ -1,0 +1,85 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "a6-ops-shopify-01-isolated-preproduction-v1",
+  "id": "A6-OPS-SHOPIFY-01",
+  "title": "Isolated Shopify embedded pre-production",
+  "type": "independent_prerequisite_operational_package",
+  "status": "Planned_trigger_not_reached_implementation_not_started",
+  "decision_date": "2026-10-17",
+  "document": "docs/A6_OPS_SHOPIFY_01_ISOLATED_PREPRODUCTION.md",
+  "official_documentation_checked_at": "2026-10-17",
+  "activation_deadline": {
+    "rule": "before_first_of",
+    "events": [
+      "real_merchant_store_migrated_to_shopify_for_adstable_use",
+      "first_external_or_non_team_user_invited"
+    ]
+  },
+  "purpose": "Test the same repository revision inside Shopify Admin without using a merchant live store or the Production AdsTable app as the development environment.",
+  "boundaries": {
+    "dedicated_shopify_development_app_required": true,
+    "shopify_dev_store_required": true,
+    "named_nonproduction_shopify_config_required": true,
+    "stable_https_preview_or_staging_url_required": true,
+    "exact_redirect_allowlist_required": true,
+    "preview_specific_shopify_credentials_required": true,
+    "production_credentials_may_be_copied": false,
+    "nonproduction_persistence_isolated_from_production": true,
+    "preview_may_write_production_business_data": false,
+    "provider_real_account_use": "separately_approved_read_only_exact_account_bound_only",
+    "merchant_production_store_may_substitute_for_dev_store": false
+  },
+  "steps": [
+    {
+      "id": "A6-OPS-SHOPIFY-01-A",
+      "title": "Revalidation and exact inventory",
+      "mutation_authorized": false
+    },
+    {
+      "id": "A6-OPS-SHOPIFY-01-B",
+      "title": "Isolation design and mutation approvals",
+      "mutation_authorized": false
+    },
+    {
+      "id": "A6-OPS-SHOPIFY-01-C",
+      "title": "Separately approved provisioning and embedded acceptance",
+      "mutation_authorized_only_after_separate_explicit_user_approval": true,
+      "first_provider_error_stops": true,
+      "retry_or_alternate_route_requires_new_approval": true
+    },
+    {
+      "id": "A6-OPS-SHOPIFY-01-D",
+      "title": "Closure and EO-08-D evidence handoff",
+      "mutation_authorized": false
+    }
+  ],
+  "planning_authorizes": {
+    "shopify_app_or_store_creation": false,
+    "vercel_or_database_mutation": false,
+    "secret_creation_read_or_copy": false,
+    "provider_mutation_or_live_call": false,
+    "deployment": false,
+    "real_data_carry": false,
+    "external_user_invitation": false,
+    "merchant_store_migration": false,
+    "review_submission": false,
+    "merge": false
+  },
+  "acceptance_requires": [
+    "current_official_documentation_rechecked",
+    "exact_nonsecret_environment_inventory",
+    "production_unchanged_evidence",
+    "preview_to_production_write_isolation_evidence",
+    "zero_production_credential_copy_evidence",
+    "desktop_shopify_admin_acceptance",
+    "mobile_shopify_admin_acceptance",
+    "rollback_evidence",
+    "repository_and_CI_evidence",
+    "explicit_product_owner_acceptance"
+  ],
+  "eo_dependency_effect": "none_until_activation_deadline_then_hard_prerequisite_for_the_triggering_event",
+  "advances_eo_status": false,
+  "declares_review_ready": false,
+  "handoff_target": "A6-EO-08-D"
+}
+

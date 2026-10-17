@@ -284,7 +284,7 @@
     "stable_child_packages": 43,
     "review_critical_parents": 8,
     "post_review_parents": 2,
-    "independent_operational_packages": 1
+    "independent_operational_packages": 2
   },
   "packages": [
     {
@@ -1088,6 +1088,25 @@
       "eo_dependency_effect": "none",
       "advances_eo_status": false,
       "cleanup_execution_authorized": false
+    },
+    {
+      "id": "A6-OPS-SHOPIFY-01",
+      "title": "Isolated Shopify embedded pre-production",
+      "status": "Planned; trigger not reached; implementation not started",
+      "objective": "Provide a dedicated Shopify development app and dev store with isolated Preview configuration, credentials and persistence before real-store migration or external-user access.",
+      "document": "docs/A6_OPS_SHOPIFY_01_ISOLATED_PREPRODUCTION.md",
+      "contract": "contracts/a6-ops-shopify-01-isolated-preproduction-v1.json",
+      "steps": [
+        "A6-OPS-SHOPIFY-01-A",
+        "A6-OPS-SHOPIFY-01-B",
+        "A6-OPS-SHOPIFY-01-C",
+        "A6-OPS-SHOPIFY-01-D"
+      ],
+      "activation_deadline": "before_real_merchant_store_migration_or_first_external_user_whichever_is_first",
+      "eo_dependency_effect": "none_until_activation_deadline",
+      "advances_eo_status": false,
+      "implementation_authorized": false,
+      "production_mutation_authorized": false
     }
   ],
   "parent_package_analysis_design_closure": {

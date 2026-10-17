@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "contract_id": "eo-04c-google-2026-access-review-corrective-v1",
   "package_id": "A6-EO-04-C",
-  "status": "repository_verified_required_ci_passed_merge_pending_provider_acceptance_pending",
+  "status": "merged_production_access_pending",
   "checked_at": "2026-10-17",
   "authority": {
     "execution_plan": "docs/EXECUTION_PLAN.md",
@@ -69,5 +69,11 @@
     "required_ci_run": 39026656769,
     "required_ci": "passed"
   },
-  "next_gate": "explicit_product_owner_merge_approval_then_explorer_application_plan"
+  "closure": {
+    "merge_authorized": true,
+    "merge_authorized_at": "2026-10-17",
+    "pull_request": "https://github.com/fyilanli-oss/ads-table-embedded/pull/89",
+    "merge_commit": "ff54d518b7c93ba576c9943a7c8d66a7ea511de6"
+  },
+  "next_gate": "explorer_application_plan_then_separately_authorized_first_production_call"
 }

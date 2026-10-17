@@ -19,7 +19,7 @@ test("Meta App Role readiness contract keeps restricted and production stages se
   assert.equal(contract.settings_ui.explicit_product_owner_visual_acceptance, true);
   assert.match(contract.settings_ui.desktop_acceptance, /^PASS_2026-10-17/);
   assert.match(contract.settings_ui.mobile_acceptance, /^PASS_2026-10-17/);
-  assert.equal(contract.merge_authorized, false);
+  assert.equal(contract.merge_authorized, true);
   assert.equal(contract.provider_dependent_gates.sales_role, "pending_separate_slice");
 });
 
@@ -35,7 +35,7 @@ test("Meta App Role visual acceptance evidence preserves the provider boundary",
   assert.equal(evidence.visual_acceptance.desktop_shopify_admin, "PASS");
   assert.equal(evidence.visual_acceptance.mobile_shopify_admin, "PASS");
   assert.equal(evidence.provider_boundaries.meta_live_call, false);
-  assert.equal(evidence.closure.merge_authorized, false);
+  assert.equal(evidence.closure.merge_authorized, true);
   assert.equal(evidence.closure.real_app_role_acceptance_pending, true);
 });
 test("connected Settings does not expose the temporary Meta evidence action", async () => {

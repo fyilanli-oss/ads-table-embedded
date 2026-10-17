@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "contract_id": "eo-04b-meta-app-role-readiness-v1",
   "package_id": "A6-EO-04-B",
-  "status": "production_deployed_visual_accepted_provider_acceptance_pending_merge_pending",
+  "status": "production_deployed_visual_accepted_merge_authorized_provider_acceptance_pending",
   "checked_at": "2026-10-17",
   "authority": {
     "brief": "docs/EO_04B_META_APP_ROLE_READINESS_BRIEF.md",
@@ -73,6 +73,7 @@
     "required_ci_run": 39025127652,
     "required_ci": "passed"
   },
-  "merge_authorized": false,
-  "next_gate": "repository_ci_then_explicit_product_owner_merge_authorization"
+  "merge_authorized": true,
+  "merge_authorized_at": "2026-10-17",
+  "next_gate": "required_ci_then_github_merge"
 }

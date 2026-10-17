@@ -8,7 +8,7 @@
 - Desktop and mobile visual acceptance: **PASS in real Shopify Admin on 17 October 2026**
 - Meta role, account, token, secret or live-call mutation: **not authorized by this package**
 - Real-account acceptance: **pending an accepted App Tester role and a separately approved live call**
-- Merge: **pending separate explicit product-owner authorization**
+- Merge: **explicitly authorized by the product owner on 17 October 2026; required CI and GitHub merge pending**
 
 ## Analyst outcome
 

@@ -456,8 +456,15 @@ export function classifyGoogleLiveEvidenceError(error) {
     && SAFE_CODE_PATTERN.test(providerCode)
     ? `GOOGLE_PROVIDER_${providerCode}`
     : "GOOGLE_LIVE_EVIDENCE_FAILED";
+  const status = classified.class === "reauthorization_required"
+    ? 401
+    : [
+        "provider_access_level_required",
+        "account_security_action_required",
+        "permission_or_scope_missing",
+      ].includes(classified.class) ? 403 : 502;
   return Object.freeze({
-    status: classified.class === "reauthorization_required" ? 401 : 502,
+    status,
     code: publicCode,
     class: classified.class,
     provider_request_id: classified.provider_request_id,

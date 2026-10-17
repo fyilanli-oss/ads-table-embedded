@@ -545,8 +545,16 @@ export function classifyGoogleReportingError(error) {
   if (error instanceof GoogleAdsRestError) {
     const status = Number(error.details?.status);
     const providerCode = error.details?.provider_error_code ?? null;
+    const providerStatus = error.details?.provider_status ?? null;
     let errorClass = "request_contract_invalid";
-    if (status === 401 || status === 403) errorClass = "reauthorization_required";
+    if (providerCode === "CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION") {
+      errorClass = "provider_access_level_required";
+    } else if (providerCode === "TWO_STEP_VERIFICATION_NOT_ENROLLED") {
+      errorClass = "account_security_action_required";
+    } else if (providerCode === "AUTHORIZATION_ERROR" || providerStatus === "AUTHORIZATION_ERROR") {
+      errorClass = "provider_access_incident";
+    } else if (status === 401) errorClass = "reauthorization_required";
+    else if (status === 403) errorClass = "permission_or_scope_missing";
     else if (status === 429 || providerCode === "RESOURCE_EXHAUSTED") errorClass = "rate_limited";
     else if (status >= 500) errorClass = "transient_provider_failure";
     return Object.freeze({

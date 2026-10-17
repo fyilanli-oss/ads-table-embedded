@@ -121,6 +121,45 @@ test("Google reporting refreshes once and reuses one token for canonical adverti
   assert.doesNotMatch(JSON.stringify(result), /vault-only-token|vault-refresh-token|developer-token/);
 });
 
+test("Google v25 reporting works without the sunset developer-token header", async () => {
+  const requests = [];
+  const {GOOGLE_ADS_DEVELOPER_TOKEN: _retired, ...environmentWithoutDeveloperToken} = environment;
+  const runtime = createGoogleReportingAuthorityRuntime({
+    database: database(),
+    tokenVault: {
+      async loadProviderTokenSet() {
+        return {access_token: "vault-only-token", refresh_token: "vault-refresh-token"};
+      },
+    },
+    environment: environmentWithoutDeveloperToken,
+    fetchFn: async (url, options) => {
+      const request = {url: new URL(url), options};
+      requests.push(request);
+      if (request.url.hostname === "oauth2.googleapis.com") {
+        return json({
+          access_token: "fresh-access-token",
+          expires_in: 3600,
+          token_type: "Bearer",
+          scope: "https://www.googleapis.com/auth/adwords",
+        });
+      }
+      return json({results: [], totalResultsCount: "0"}, 200, {"request-id": "req-no-token"});
+    },
+  });
+
+  await runtime.readEvidencePage({
+    installationAuthority,
+    queryFamily: "account_identity",
+    dateWindow: {start: "2026-10-01", end: "2026-10-01"},
+  });
+
+  assert.equal(requests.length, 2);
+  assert.equal(requests[1].url.hostname, "googleads.googleapis.com");
+  assert.equal(requests[1].options.headers.authorization, "Bearer fresh-access-token");
+  assert.equal(Object.hasOwn(requests[1].options.headers, "developer-token"), false);
+  assert.equal(requests[1].options.headers["login-customer-id"], "100");
+});
+
 test("Google reporting fails before token or provider access without canonical authority", async () => {
   for (const [row, code] of [
     [null, "CONNECTED_GOOGLE_CONNECTION_REQUIRED"],

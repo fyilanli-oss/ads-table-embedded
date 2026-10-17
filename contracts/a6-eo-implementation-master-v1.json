@@ -680,7 +680,17 @@
           "test_account_review_semantics_live_call_completed": true,
           "test_account_review_semantics_query_families_completed": 6,
           "test_account_review_semantics_reporting_rows_observed": false,
-          "production_evidence_pending_google_ads_api_access": "explorer_or_higher"
+          "production_evidence_pending_google_ads_api_access": "explorer_or_higher",
+          "access_review_corrective": "contracts/eo-04c-google-2026-access-review-corrective-v1.json",
+          "access_review_corrective_decision": "docs/decisions/A6_EO_04_C_GOOGLE_2026_ACCESS_REVIEW_CORRECTIVE.md",
+          "access_review_corrective_implementation_authorized": true,
+          "access_review_corrective_implementation_authorized_at": "2026-10-17",
+          "access_review_corrective_repository_verified": true,
+          "access_authority": "oauth_client_google_cloud_project",
+          "first_production_access_target": "explorer",
+          "developer_token_runtime_requirement": "optional_compatibility_only",
+          "oauth_public_verification_is_separate": true,
+          "historical_listing_tree_snapshot_persistence_owner": "A6-EO-05"
         },
         {
           "id": "A6-EO-04-D",

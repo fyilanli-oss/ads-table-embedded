@@ -335,4 +335,23 @@ test("Google error classification forbids automatic retry after the first provid
   assert.equal(rateLimit.class, "rate_limited");
   assert.equal(rateLimit.retryable, false);
   assert.equal(rateLimit.provider_request_id, "req-429");
+
+  const cases = [
+    [{status: 401}, "reauthorization_required"],
+    [{status: 403}, "permission_or_scope_missing"],
+    [{status: 403, provider_error_code: "CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION"},
+      "provider_access_level_required"],
+    [{status: 403, provider_error_code: "TWO_STEP_VERIFICATION_NOT_ENROLLED"},
+      "account_security_action_required"],
+    [{status: 403, provider_status: "AUTHORIZATION_ERROR"}, "provider_access_incident"],
+  ];
+  for (const [details, expectedClass] of cases) {
+    const classified = classifyGoogleReportingError(new GoogleAdsRestError(
+      "GOOGLE_ADS_REST_REQUEST_FAILED",
+      "Google Ads REST request failed",
+      details,
+    ));
+    assert.equal(classified.class, expectedClass);
+    assert.equal(classified.retryable, false);
+  }
 });

@@ -350,6 +350,12 @@ CI enforcement: `tests/eo-04d-klaviyo-review-safe-foundation.test.js`
   and production build pass locally. GitHub Actions run `39028208848` passed the
   same required test/typecheck/build gate on PR #91. Desktop and real-mobile
   visual acceptance and explicit merge authorization remain open.
+- The 17 October 2026 K-1 technical audit found zero new application-code
+  defects. A fresh local run passed 315/315 tests, TypeScript verification and
+  the production build. Klaviyo Marketplace review is not required for the
+  current development stage. Visual acceptance is deferred until the isolated
+  Shopify preproduction package is available; it remains mandatory before
+  merge, and PR #91 stays open and unmerged.
 - This gate performs no Klaviyo console, live provider, database-schema, secret,
   environment or deployment mutation. Reporting runtime remains not started.
 

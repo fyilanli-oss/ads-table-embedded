@@ -1,10 +1,24 @@
 # A6-EO-04-D Klaviyo review-safe foundation brief
 
-**Status:** Accepted for repository implementation
+**Status:** Technical audit passed; visual acceptance deferred
 
 **Checked:** 17 October 2026
 
 **Product-owner approval:** “Onaylıyorum” — 17 October 2026
+
+## Technical audit outcome — 17 October 2026
+
+The K-1 application-code audit found no new defect. The complete repository
+suite passed 315/315 tests together with TypeScript verification and the
+production build. Klaviyo Marketplace submission is not required for the
+current development stage, so review status does not block continued product
+work.
+
+Desktop and real-mobile visual acceptance remains mandatory before merge. It
+is deliberately deferred until AdsTable has an isolated Shopify
+preproduction environment; the missing environment is not converted into a
+visual PASS. PR #91 remains open and unmerged. This decision performs no
+Shopify, Klaviyo, Vercel, Supabase, secret, deployment or production mutation.
 
 ## Analyst outcome
 

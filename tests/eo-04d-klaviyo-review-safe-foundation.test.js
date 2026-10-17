@@ -14,7 +14,7 @@ const oauthContract = JSON.parse(read(
 ));
 
 test("K-1 is explicitly accepted and cannot mutate provider, deployment or schema", () => {
-  assert.equal(contract.status, "accepted_implementation_authorized");
+  assert.equal(contract.status, "technical_audit_passed_visual_acceptance_deferred");
   assert.equal(contract.product_owner_approval.status, "accepted");
   assert.equal(contract.product_owner_approval.accepted_at, "2026-10-17");
   assert.equal(contract.mutations_authorized.repository, true);
@@ -22,6 +22,23 @@ test("K-1 is explicitly accepted and cannot mutate provider, deployment or schem
     "provider_console", "live_provider", "database_schema",
     "vercel_environment", "deployment",
   ]) assert.equal(contract.mutations_authorized[boundary], false);
+});
+
+test("K-1 technical audit passes without bypassing visual acceptance or merge", () => {
+  const audit = contract.technical_audit;
+  assert.equal(audit.status, "PASS");
+  assert.equal(audit.application_code_findings, 0);
+  assert.equal(audit.repository_tests, "PASS_315_OF_315");
+  assert.equal(audit.typecheck, "PASS");
+  assert.equal(audit.production_build, "PASS");
+  assert.equal(audit.marketplace_review_required_for_current_development, false);
+  assert.equal(
+    audit.visual_acceptance,
+    "DEFERRED_UNTIL_ISOLATED_SHOPIFY_PREPRODUCTION",
+  );
+  assert.equal(audit.visual_acceptance_required_before_merge, true);
+  assert.equal(audit.merge_authorized, false);
+  assert.equal(audit.provider_or_infrastructure_mutation_performed, false);
 });
 
 test("Klaviyo stable revision and accepted minimum read scopes are exact", () => {

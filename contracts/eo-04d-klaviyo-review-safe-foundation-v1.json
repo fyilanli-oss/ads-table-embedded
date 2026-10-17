@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-04d-klaviyo-review-safe-foundation-v1",
   "version": "1.0.0",
-  "status": "accepted_implementation_authorized",
+  "status": "technical_audit_passed_visual_acceptance_deferred",
   "checked_at": "2026-10-17",
   "parent": "A6-EO-04-D",
   "scope": "review_safe_klaviyo_oauth_and_installation_foundation",
@@ -90,6 +90,20 @@
     "status": "accepted",
     "accepted_at": "2026-10-17",
     "evidence": "User approved the proposed K-1 package with: Onaylıyorum."
+  },
+  "technical_audit": {
+    "audited_at": "2026-10-17",
+    "status": "PASS",
+    "application_code_findings": 0,
+    "repository_tests": "PASS_315_OF_315",
+    "typecheck": "PASS",
+    "production_build": "PASS",
+    "marketplace_review_required_for_current_development": false,
+    "visual_acceptance": "DEFERRED_UNTIL_ISOLATED_SHOPIFY_PREPRODUCTION",
+    "visual_acceptance_required_before_merge": true,
+    "merge_authorized": false,
+    "provider_or_infrastructure_mutation_performed": false,
+    "decision_evidence": "Product owner approved recording the completed technical audit while keeping PR #91 open and unmerged."
   },
   "official_sources": {
     "oauth": "https://developers.klaviyo.com/en/docs/set_up_oauth",

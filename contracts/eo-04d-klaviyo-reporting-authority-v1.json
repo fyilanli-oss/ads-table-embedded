@@ -1,0 +1,89 @@
+{
+  "contract_id": "A6-EO-04-D-KLAVIYO-REPORTING-AUTHORITY-V1",
+  "status": "repository_implementation_ready_for_review",
+  "accepted_at": "2026-10-17",
+  "api_revision": "2026-10-15",
+  "authority": {
+    "shopify_active_installation_required": true,
+    "connected_klaviyo_account_cardinality": 1,
+    "connected_account_timezone_is_day_boundary_authority": true,
+    "encrypted_credential_authority_required": true,
+    "required_scopes": [
+      "campaigns:read",
+      "events:read",
+      "flows:read",
+      "metrics:read"
+    ]
+  },
+  "execution_order": [
+    "metrics",
+    "campaign_values",
+    "flow_values",
+    "ordered_product_events"
+  ],
+  "metric_authority": {
+    "shopify_placed_order_exact_cardinality": 1,
+    "shopify_ordered_product_exact_cardinality": 1,
+    "placed_order_usage": "reporting_conversion_metric",
+    "ordered_product_usage": "product_sale_event_evidence",
+    "double_counting_forbidden": true
+  },
+  "pagination": {
+    "metrics_cursor": "links.next -> page[cursor]",
+    "events_cursor": "links.next -> page[cursor]",
+    "campaign_values_cursor": "optional_links.next -> page_cursor",
+    "flow_values_cursor": "optional_links.next -> page_cursor",
+    "values_response_schema_limitation": "2026-10-15 defines page_cursor input but only links.self in the response schema",
+    "cursor_inference_forbidden": true,
+    "same_origin_and_endpoint_required": true,
+    "maximum_pages_per_family": 100,
+    "maximum_rows_per_family": 100000,
+    "cursor_loop_fails_closed": true
+  },
+  "publication": {
+    "all_families_complete_before_publish": true,
+    "partial_result_publishable": false,
+    "empty_success": "not_observed_in_this_execution",
+    "empty_success_is_numeric_zero": false
+  },
+  "attribution": {
+    "profiles_requested": false,
+    "campaign_message_relationship_preserved": true,
+    "campaign_variation_relationship_in_official_events_schema": false,
+    "flow_message_relationship_preserved": true,
+    "flow_message_variation_relationship_preserved": true,
+    "missing_included_attribution_fails_closed": true
+  },
+  "failure": {
+    "first_provider_error_stops_remaining_families": true,
+    "automatic_retry": false,
+    "refresh_after_failed_provider_request": false,
+    "http_401": "reauthorization_required",
+    "http_403": "permission_denied",
+    "raw_provider_body_exposed": false
+  },
+  "authority_limits": {
+    "live_provider_call_authorized": false,
+    "database_or_migration_authorized": false,
+    "dataset_v2_write_authorized": false,
+    "secret_environment_or_deploy_authorized": false,
+    "ui_authorized": false
+  },
+  "verification": {
+    "repository_tests": "PASS_342_OF_342",
+    "typecheck": "PASS",
+    "production_build": "PASS",
+    "diff_check": "PASS",
+    "live_provider_call_performed": false,
+    "provider_or_infrastructure_mutation_performed": false
+  },
+  "official_sources_checked_at": "2026-10-17",
+  "official_sources": [
+    "https://developers.klaviyo.com/en/reference/query_campaign_values",
+    "https://developers.klaviyo.com/en/reference/query_flow_values",
+    "https://developers.klaviyo.com/en/reference/get_metrics",
+    "https://developers.klaviyo.com/en/reference/get_events",
+    "https://developers.klaviyo.com/en/reference/reporting_api_overview",
+    "https://github.com/klaviyo/openapi"
+  ]
+}

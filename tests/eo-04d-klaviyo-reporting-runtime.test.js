@@ -90,8 +90,8 @@ test("Campaign and Flow reports require Message Channel, Medium and separate Var
     });
     const body = JSON.parse(request.body);
     assert.equal(request.method, "POST");
-    assert.equal(request.headers.accept, "application/json");
-    assert.equal(request.headers["content-type"], "application/json");
+    assert.equal(request.headers.accept, "application/vnd.api+json");
+    assert.equal(request.headers["content-type"], "application/vnd.api+json");
     assert.equal(body.data.type, `${kind}-values-report`);
     assert.deepEqual(body.data.attributes.timeframe, {
       start: "2026-10-17T00:00:00+00:00",

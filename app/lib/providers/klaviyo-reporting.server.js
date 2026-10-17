@@ -204,8 +204,8 @@ function reportRequest(kind, input) {
     url.searchParams.set("page_cursor", text(input.pageCursor, "KLAVIYO_CURSOR_INVALID"));
   }
   return request("POST", url, input.accessToken, reportBody(type, input), {
-    accept: "application/json",
-    contentType: "application/json",
+    accept: "application/vnd.api+json",
+    contentType: "application/vnd.api+json",
   });
 }
 

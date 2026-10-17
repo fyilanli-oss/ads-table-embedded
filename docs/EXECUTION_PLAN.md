@@ -393,6 +393,32 @@ CI enforcement: `tests/eo-04d-klaviyo-reporting-runtime-contract.test.js` and `t
 - Product identifiers remain provider-native observations; Product ID standardization, persistence, scheduler, reconciliation and estimated-spend allocation remain later gates.
 - No live Klaviyo call, provider mutation, database/migration, secret/environment, deploy or UI work is authorized by this package.
 
+## EO-04-D Klaviyo reporting authority — 17 October 2026
+
+Binding analyst brief: `docs/EO_04D_KLAVIYO_REPORTING_AUTHORITY_BRIEF.md`
+
+Executable contract: `contracts/eo-04d-klaviyo-reporting-authority-v1.json`
+
+CI enforcement: `tests/eo-04d-klaviyo-reporting-authority-contract.test.js` and `tests/eo-04d-klaviyo-reporting-authority.test.js`
+
+- Product owner authorized the repository-only authority/coordinator implementation.
+- Active Shopify installation, exactly one canonical Klaviyo Connected Account,
+  encrypted credential authority, required read scopes and connected-account
+  timezone are mandatory before any reporting family can start.
+- Metrics, Campaign Values, Flow Values and Ordered Product Events execute in
+  that order. The first provider error stops all remaining families; successful
+  earlier rows are not publishable partial output.
+- Metrics and Events exhaust official `links.next` cursors. Values accepts only
+  an explicit same-origin/same-endpoint continuation; the runtime never invents
+  a cursor omitted by the 2026-10-15 response schema.
+- Successful empty Campaign, Flow or Event results remain
+  `not_observed_in_this_execution`, never numeric zero.
+- Ordered Product normalization preserves provider-native product fields and
+  Campaign/Flow attribution IDs without requesting profile data. Product ID
+  standardization and Dataset V2 publication remain later gates.
+- No live Klaviyo call, provider mutation, database/migration, Dataset V2,
+  secret/environment, deploy or UI work is authorized by this package.
+
 ## EO-04 Meta retained live-shape evidence — 16 October 2026
 
 - Safe production evidence completed against commit `8a7b0ca9645f46080f8fe0e69f18efe5e5638613`; no runtime error, retry, next-provider start or database write was observed.

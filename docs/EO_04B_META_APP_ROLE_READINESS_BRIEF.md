@@ -3,11 +3,12 @@
 ## Status
 
 - Product-owner implementation authorization: **17 October 2026**
-- Repository implementation: **ready; 295 tests, typecheck and production build passed**
-- Preview deployment for desktop/mobile visual acceptance: **authorized 17 October 2026**
-- Production deployment: **not authorized**
-- Meta role, account, token, secret, Production deployment or live-call mutation: **not authorized by this package**
+- Repository implementation: **ready; 300 tests, typecheck and production build passed**
+- Production deployment: **READY on `ed1b12f`; separately authorized 17 October 2026**
+- Desktop and mobile visual acceptance: **PASS in real Shopify Admin on 17 October 2026**
+- Meta role, account, token, secret or live-call mutation: **not authorized by this package**
 - Real-account acceptance: **pending an accepted App Tester role and a separately approved live call**
+- Merge: **pending separate explicit product-owner authorization**
 
 ## Analyst outcome
 
@@ -57,7 +58,8 @@ If any provider call returns an explicit or unexplained error, the call stops at
 - Removed copy/action: `Run Meta evidence`, `Meta evidence received`, `Meta evidence failed`
 - Remaining visible actions: `Change` for Reporting Account and `Disconnect`
 - Components: existing stable Polaris web components; no raw HTML control, custom CSS, inline style or literal color is introduced.
-- Desktop and mobile visual acceptance: **pending product-owner review on the authorized preview before merge**
+- Desktop and mobile visual acceptance: **PASS in real Shopify Admin on Production, explicitly confirmed by the product owner on 17 October 2026**
+- Visual acceptance evidence: `docs/evidence/EO_04B_META_APP_ROLE_VISUAL_ACCEPTANCE_2026-10-17.json`
 
 ## Acceptance evidence
 

@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "contract_id": "eo-04b-meta-app-role-readiness-v1",
   "package_id": "A6-EO-04-B",
-  "status": "repository_ready_visual_and_provider_acceptance_pending",
+  "status": "production_deployed_visual_accepted_provider_acceptance_pending_merge_pending",
   "checked_at": "2026-10-17",
   "authority": {
     "brief": "docs/EO_04B_META_APP_ROLE_READINESS_BRIEF.md",
@@ -41,8 +41,10 @@
     "temporary_meta_evidence_button": false,
     "connected_actions": ["change_reporting_account", "disconnect"],
     "backend_acceptance_transport_retained": true,
-    "desktop_acceptance": "pending_product_owner_review",
-    "mobile_acceptance": "pending_product_owner_review"
+    "desktop_acceptance": "PASS_2026-10-17_real_shopify_admin",
+    "mobile_acceptance": "PASS_2026-10-17_real_shopify_admin",
+    "explicit_product_owner_visual_acceptance": true,
+    "visual_acceptance_evidence": "docs/evidence/EO_04B_META_APP_ROLE_VISUAL_ACCEPTANCE_2026-10-17.json"
   },
   "provider_dependent_gates": {
     "real_catalog_product_response": "pending",
@@ -58,13 +60,19 @@
     "database_schema": false,
     "preview_deployment": true,
     "preview_deployment_authorized_at": "2026-10-17",
-    "production_deployment": false
+    "production_deployment": true,
+    "production_deployment_authorized_at": "2026-10-17",
+    "production_deployment_id": "dpl_9ZG62uAjmDV3Lown3BWErWBGrNxG",
+    "production_deployed_commit": "ed1b12f35937cffd2e4e173d17ca5624d0dbbfe9"
   },
   "repository_verification": {
-    "tests": "295_passed",
+    "tests": "300_passed",
     "typecheck": "passed",
     "production_build": "passed",
-    "diff_check": "passed"
+    "diff_check": "passed",
+    "required_ci_run": 39025127652,
+    "required_ci": "passed"
   },
-  "next_gate": "repository_tests_and_product_owner_visual_acceptance_before_merge"
+  "merge_authorized": false,
+  "next_gate": "repository_ci_then_explicit_product_owner_merge_authorization"
 }

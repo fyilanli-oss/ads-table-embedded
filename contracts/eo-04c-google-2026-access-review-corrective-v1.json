@@ -1,0 +1,73 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "eo-04c-google-2026-access-review-corrective-v1",
+  "package_id": "A6-EO-04-C",
+  "status": "repository_verified_required_ci_passed_merge_pending_provider_acceptance_pending",
+  "checked_at": "2026-10-17",
+  "authority": {
+    "execution_plan": "docs/EXECUTION_PLAN.md",
+    "decision": "docs/decisions/A6_EO_04_C_GOOGLE_2026_ACCESS_REVIEW_CORRECTIVE.md",
+    "reporting_runtime_contract": "contracts/eo-04c-google-reporting-runtime-v1.json"
+  },
+  "official_access_model": {
+    "access_authority": "oauth_client_google_cloud_project",
+    "developer_token_status": "sunset_optional_compatibility_header_in_v25",
+    "stage_1_target": "explorer",
+    "explorer_production_operations_per_day": 2880,
+    "explorer_test_operations_per_day": 15000,
+    "explorer_allows_read_only_reporting_search": true,
+    "oauth_public_verification_is_separate": true,
+    "standard_access_requires_manual_audit_and_rmf": true
+  },
+  "runtime": {
+    "developer_token_environment_required": false,
+    "developer_token_sent_only_when_configured": true,
+    "existing_secret_mutated_by_this_package": false,
+    "oauth_and_reporting_account_authority_changed": false,
+    "first_provider_error_stops": true,
+    "automatic_retry": false,
+    "automatic_cloud_project_fallback": false
+  },
+  "error_semantics": {
+    "http_401": "reauthorization_required",
+    "CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION": "provider_access_level_required",
+    "TWO_STEP_VERIFICATION_NOT_ENROLLED": "account_security_action_required",
+    "http_403_other": "permission_or_scope_missing",
+    "AUTHORIZATION_ERROR": "provider_access_incident"
+  },
+  "review_readiness": {
+    "cloud_project_access_level_verified": false,
+    "oauth_brand_and_domain_verified": false,
+    "two_step_verification_verified": false,
+    "passkey_if_enforced_verified": false,
+    "real_account_production_evidence": false,
+    "first_production_call_requires_separate_product_owner_approval": true
+  },
+  "listing_tree_boundary": {
+    "current_tree_may_resolve_historical_sale": false,
+    "historical_exact_requires_complete_business_day_snapshot": true,
+    "missing_snapshot_result": "Unknown Channel",
+    "sales_and_sales_role_preserved": true,
+    "versioned_snapshot_persistence_owner": "A6-EO-05",
+    "versioned_snapshot_persistence_implemented": false
+  },
+  "mutations": {
+    "provider": false,
+    "live_call": false,
+    "secret_or_environment": false,
+    "database": false,
+    "dataset_v2": false,
+    "ui": false,
+    "deployment": false
+  },
+  "repository_verification": {
+    "targeted_tests": "34_passed",
+    "full_tests": "304_passed",
+    "typecheck": "passed",
+    "production_build": "passed",
+    "diff_check": "passed",
+    "required_ci_run": 39026656769,
+    "required_ci": "passed"
+  },
+  "next_gate": "explicit_product_owner_merge_approval_then_explorer_application_plan"
+}

@@ -33,6 +33,11 @@ function nonEmpty(value, code, maximum = 4096) {
   return value;
 }
 
+function optionalNonEmpty(value, code, maximum = 4096) {
+  if (value === undefined || value === null || value === "") return null;
+  return nonEmpty(value, code, maximum);
+}
+
 function exactRedirect(value) {
   const redirect = nonEmpty(value, "GOOGLE_ADS_OAUTH_REDIRECT_URI_INVALID", 2048);
   if (redirect !== OAUTH_CALLBACK_URIS.google_ads) {
@@ -55,9 +60,9 @@ export function readGoogleAdsOAuthConfig(environment = process.env) {
       "GOOGLE_ADS_OAUTH_CLIENT_SECRET_REQUIRED",
     ),
     redirectUri: exactRedirect(environment?.GOOGLE_ADS_OAUTH_REDIRECT_URI),
-    developerToken: nonEmpty(
+    developerToken: optionalNonEmpty(
       environment?.GOOGLE_ADS_DEVELOPER_TOKEN,
-      "GOOGLE_ADS_DEVELOPER_TOKEN_REQUIRED",
+      "GOOGLE_ADS_DEVELOPER_TOKEN_INVALID",
       256,
     ),
   });
@@ -268,13 +273,16 @@ function customerId(value, code = "GOOGLE_ADS_CUSTOMER_ID_INVALID") {
 function googleHeaders({ accessToken, developerToken, loginCustomerId = null }) {
   const headers = {
     authorization: `Bearer ${nonEmpty(accessToken, "GOOGLE_ADS_ACCESS_TOKEN_REQUIRED")}`,
-    "developer-token": nonEmpty(
-      developerToken,
-      "GOOGLE_ADS_DEVELOPER_TOKEN_REQUIRED",
-      256,
-    ),
     "content-type": "application/json",
   };
+  const optionalDeveloperToken = optionalNonEmpty(
+    developerToken,
+    "GOOGLE_ADS_DEVELOPER_TOKEN_INVALID",
+    256,
+  );
+  if (optionalDeveloperToken !== null) {
+    headers["developer-token"] = optionalDeveloperToken;
+  }
   if (loginCustomerId !== null) {
     headers["login-customer-id"] = customerId(
       loginCustomerId,

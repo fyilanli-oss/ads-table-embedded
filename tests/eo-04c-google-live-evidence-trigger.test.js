@@ -336,8 +336,8 @@ test("a failed family emits bounded diagnostic evidence without identifiers", as
 
 test("runtime initialization failure proves no provider response without leaking config", () => {
   const failure = new GoogleAdsRestError(
-    "GOOGLE_ADS_DEVELOPER_TOKEN_REQUIRED",
-    "GOOGLE_ADS_DEVELOPER_TOKEN_REQUIRED",
+    "GOOGLE_ADS_OAUTH_CLIENT_SECRET_REQUIRED",
+    "GOOGLE_ADS_OAUTH_CLIENT_SECRET_REQUIRED",
   );
   const safeLog = buildGoogleLiveEvidenceSafeFailureLog(
     failure,
@@ -345,7 +345,7 @@ test("runtime initialization failure proves no provider response without leaking
     "runtime_initialization",
   );
   assert.equal(safeLog.stage, "runtime_initialization");
-  assert.equal(safeLog.source_code, "GOOGLE_ADS_DEVELOPER_TOKEN_REQUIRED");
+  assert.equal(safeLog.source_code, "GOOGLE_ADS_OAUTH_CLIENT_SECRET_REQUIRED");
   assert.equal(safeLog.provider_response_observed, false);
   assert.equal(safeLog.provider_http_status, null);
   assert.equal(safeLog.provider_error_code, null);

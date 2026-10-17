@@ -72,4 +72,3 @@ Prove Production was not changed, Preview cannot write Production data, no Produ
 ## Closure rule
 
 The package closes only with repository/CI evidence, exact non-secret environment inventory, desktop and mobile user acceptance, isolation proof, rollback proof and explicit product-owner acceptance. Code, configuration, deployment or a working URL alone is not Done.
-

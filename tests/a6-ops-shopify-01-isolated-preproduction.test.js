@@ -50,4 +50,3 @@ test("retains first-provider-error stop and EO-08-D handoff", () => {
   assert.equal(contract.handoff_target, "A6-EO-08-D");
   assert.match(plan, /A6-OPS-SHOPIFY-01 — Isolated Shopify embedded pre-production/);
 });
-

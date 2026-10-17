@@ -1,6 +1,6 @@
 # A6-EO-04-D Klaviyo reauthorization truth brief
 
-**Status:** Live database accepted; visual acceptance pending
+**Status:** Production deployed and visually accepted; merge pending
 **Checked:** 17 October 2026
 
 ## Analyst outcome
@@ -76,9 +76,9 @@ scheduler or Dataset V2 acceptance:
 - The approved additive migration is live on the dedicated
   `ads-table-embedded` Supabase project. Both private functions retain the
   expected owner, empty `search_path` and runtime-only execute boundary.
-- Real desktop/mobile visual acceptance remains required before merge because
-  Settings behavior is affected, even though the visual components are
-  unchanged.
+- The product owner accepted the real Shopify Admin Settings result on desktop
+  and mobile after the exact repository commit reached Production. Merge
+  remains a separate explicit gate.
 
 ## Official sources
 
@@ -97,7 +97,15 @@ scheduler or Dataset V2 acceptance:
 - Supabase Security Advisor: 0 findings
 - Performance Advisor: no migration-created finding; two pre-existing privacy
   foreign-key INFO findings remain unchanged
-- Provider call or deployment: none
+- Provider call or secret/environment mutation: none
 - Durable evidence:
   `docs/evidence/EO_04D_KLAVIYO_REAUTHORIZATION_LIVE_DATABASE_ACCEPTANCE_2026-10-17.json`
+- Production deployment: PASS (`dpl_8QgriVfjig4RjxC7hwpwtBJ77n8F`, commit
+  `9bc3108d366a58ce9ff92a293681245a0c380462`, `embedded.adstable.app`)
+- Deployment-scoped error/fatal scan after desktop/mobile inspection: clean
+- Desktop Shopify Admin Settings: PASS
+- Mobile Shopify Admin Settings: PASS
+- Visual evidence:
+  `docs/evidence/EO_04D_KLAVIYO_REAUTHORIZATION_VISUAL_ACCEPTANCE_2026-10-17.json`
+- Merge: pending explicit product-owner approval
 

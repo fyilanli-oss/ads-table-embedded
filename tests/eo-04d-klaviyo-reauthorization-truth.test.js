@@ -8,6 +8,9 @@ const contract = JSON.parse(read("contracts/eo-04d-klaviyo-reauthorization-truth
 const liveDatabaseEvidence = JSON.parse(
   read("docs/evidence/EO_04D_KLAVIYO_REAUTHORIZATION_LIVE_DATABASE_ACCEPTANCE_2026-10-17.json"),
 );
+const visualEvidence = JSON.parse(
+  read("docs/evidence/EO_04D_KLAVIYO_REAUTHORIZATION_VISUAL_ACCEPTANCE_2026-10-17.json"),
+);
 const migration = read("supabase/migrations/20261017150000_eo04d_klaviyo_reauthorization_state.sql");
 const settings = read("app/routes/_admin.settings.tsx");
 
@@ -124,5 +127,12 @@ test("accepted contract preserves truth now and defers recovery semantics to EO-
     true,
   );
   assert.equal(contract.authority.provider_call, false);
-  assert.equal(contract.authority.deployment, false);
+  assert.equal(contract.authority.deployment, true);
+  assert.equal(contract.authority.merge, false);
+  assert.equal(contract.verification.deployment, true);
+  assert.equal(contract.verification.visual_acceptance, "PASS_DESKTOP_AND_MOBILE");
+  assert.equal(visualEvidence.vercel.deployment_state, "READY");
+  assert.equal(visualEvidence.visual_acceptance.desktop_shopify_admin, "PASS");
+  assert.equal(visualEvidence.visual_acceptance.mobile_shopify_admin, "PASS");
+  assert.equal(visualEvidence.closure.merge_authorized, false);
 });

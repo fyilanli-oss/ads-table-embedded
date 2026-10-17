@@ -463,8 +463,14 @@ Executable contract: `contracts/eo-04d-klaviyo-reauthorization-truth-v1.json`
 - Repository implementation and the separately approved additive live database
   migration are complete. Durable acceptance evidence is
   `docs/evidence/EO_04D_KLAVIYO_REAUTHORIZATION_LIVE_DATABASE_ACCEPTANCE_2026-10-17.json`;
-  Supabase Security Advisor remains at zero findings. Deployment, provider
-  calls and merge remain separately gated.
+  Supabase Security Advisor remains at zero findings. Exact commit
+  `9bc3108d366a58ce9ff92a293681245a0c380462` was separately authorized and
+  deployed to Production as `dpl_8QgriVfjig4RjxC7hwpwtBJ77n8F`; Vercel reached
+  `READY`, assigned `embedded.adstable.app` without alias error and returned no
+  deployment-scoped error/fatal log. The product owner accepted real Shopify
+  Admin Settings on desktop and mobile. Provider calls and merge remain
+  separately gated. Visual evidence is
+  `docs/evidence/EO_04D_KLAVIYO_REAUTHORIZATION_VISUAL_ACCEPTANCE_2026-10-17.json`.
 
 ## EO-04 Meta retained live-shape evidence — 16 October 2026
 

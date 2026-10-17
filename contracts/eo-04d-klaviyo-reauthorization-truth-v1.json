@@ -1,7 +1,7 @@
 {
   "contract_id": "eo-04d-klaviyo-reauthorization-truth-v1",
   "version": "1.0.0",
-  "status": "live_database_accepted_visual_acceptance_pending",
+  "status": "production_deployed_visual_accepted_merge_pending",
   "checked_at": "2026-10-17",
   "parent": "A6-EO-04-D",
   "invariants": {
@@ -36,7 +36,8 @@
     "live_database_apply": true,
     "provider_call": false,
     "secret_or_environment_mutation": false,
-    "deployment": false,
+    "deployment": true,
+    "merge": false,
     "merge_without_visual_acceptance": false
   },
   "product_owner_approval": {
@@ -54,7 +55,11 @@
     "security_advisor_findings": 0,
     "evidence": "docs/evidence/EO_04D_KLAVIYO_REAUTHORIZATION_LIVE_DATABASE_ACCEPTANCE_2026-10-17.json",
     "provider_call": false,
-    "deployment": false,
-    "visual_acceptance": "PENDING"
+    "deployment": true,
+    "deployment_id": "dpl_8QgriVfjig4RjxC7hwpwtBJ77n8F",
+    "deployment_commit": "9bc3108d366a58ce9ff92a293681245a0c380462",
+    "visual_acceptance": "PASS_DESKTOP_AND_MOBILE",
+    "visual_evidence": "docs/evidence/EO_04D_KLAVIYO_REAUTHORIZATION_VISUAL_ACCEPTANCE_2026-10-17.json",
+    "merge": false
   }
 }

@@ -1,0 +1,46 @@
+{
+  "evidence_id": "EO_04D_KLAVIYO_REAUTHORIZATION_VISUAL_ACCEPTANCE_2026-10-17",
+  "package": "A6-EO-04-D",
+  "checked_at": "2026-10-17",
+  "status": "VISUAL_ACCEPTED_MERGE_PENDING",
+  "repository": {
+    "pull_request": 96,
+    "branch": "codex/eo04d-klaviyo-reauthorization",
+    "deployed_commit": "9bc3108d366a58ce9ff92a293681245a0c380462",
+    "required_ci_run": 39038592313,
+    "required_ci": "PASS",
+    "merged": false
+  },
+  "vercel": {
+    "project": "ads-table-embedded",
+    "environment": "production",
+    "deployment_id": "dpl_8QgriVfjig4RjxC7hwpwtBJ77n8F",
+    "deployment_state": "READY",
+    "production_alias": "embedded.adstable.app",
+    "alias_error": null,
+    "error_or_fatal_logs_after_inspection": 0,
+    "secret_value_read_back": false
+  },
+  "visual_acceptance": {
+    "surface": "/settings",
+    "desktop_shopify_admin": "PASS",
+    "mobile_shopify_admin": "PASS",
+    "product_owner_evidence": "explicit_chat_confirmation_2026-10-17"
+  },
+  "provider_boundaries": {
+    "klaviyo_live_call": false,
+    "klaviyo_oauth_or_account_mutation": false,
+    "secret_or_environment_mutation": false,
+    "database_schema_mutation_during_deployment": false,
+    "prior_approved_database_migration": true,
+    "dataset_v2_write": false
+  },
+  "closure": {
+    "live_database_acceptance": true,
+    "production_deployment": true,
+    "visual_acceptance": true,
+    "merge_authorized": false,
+    "live_klaviyo_acceptance_pending": true,
+    "next_gate": "explicit_product_owner_merge_approval"
+  }
+}

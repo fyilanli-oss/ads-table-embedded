@@ -33,6 +33,28 @@ Bu repository onaylı A6-EO embedded-only temiz yeniden kuruluş programını uy
 
 Aynı anda yalnız bir parent paket aktiftir. Executable paket tablosu `contracts/a6-eo-implementation-master-v1.json` dosyasındadır.
 
+## EO-05 mandatory first gate — historical PMax listing-tree evidence
+
+EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance
+Max için versioned historical listing-tree snapshot persistence kurulacak ve
+testlerle kilitlenecektir. Bu, EO-05'in ilk zorunlu kapısıdır:
+
+1. Her snapshot verified Reporting Account timezone'u, Campaign ve Asset Group
+   kimliği, complete listing-tree rows, source version/hash, `valid_from`,
+   `valid_to`, observed-at ve query provenance taşır.
+2. Exact historical Asset Group yalnız snapshot satışın tüm provider business-day
+   penceresini kapsıyor ve advertised/clicked ürün için tam olarak bir eligible
+   Asset Group kanıtlıyorsa üretilebilir.
+3. Eksik/partial pencere, gün içi tree değişikliği, çelişkili version/hash veya
+   birden fazla eligible Asset Group satış ve Sales Role'u korur; yalnız Channel
+   `Unknown Channel` kalır. Satılan ürün Channel seçmek için kullanılamaz.
+4. Bugünkü/current listing tree geçmiş tarih için snapshot veya exact Channel
+   üretemez. Snapshot toplama başlamadan önceki günler, provider'dan o güne ait
+   exact tarihsel kanıt alınamadıkça geriye dönük tahminle doldurulamaz.
+5. Scheduler capture, immutable/versioned persistence, retention, gap detection,
+   reconciliation ve resolver'a date-matched evidence delivery birlikte kabul
+   edilmeden bu kapı PASS sayılamaz.
+
 
 ## Parent package Analysis–Design Book closure gate — 9 October 2026
 

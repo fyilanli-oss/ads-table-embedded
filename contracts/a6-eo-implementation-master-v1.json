@@ -789,6 +789,27 @@
       "depends_on": [
         "A6-EO-04"
       ],
+      "mandatory_first_gate": {
+        "id": "A6-EO-05-PMAX-HISTORICAL-LISTING-TREE",
+        "title": "Versioned historical PMax listing-tree evidence",
+        "must_pass_before": [
+          "scheduler_acceptance",
+          "dataset_v2_acceptance"
+        ],
+        "required_outputs": [
+          "reporting_account_timezone_scoped_capture",
+          "campaign_and_asset_group_scoped_complete_listing_tree_rows",
+          "immutable_version_or_hash_and_valid_from_valid_to",
+          "full_business_day_coverage_validation",
+          "gap_change_conflict_and_overlap_detection",
+          "date_matched_evidence_delivery_to_channel_resolver"
+        ],
+        "historical_exact_rule": "one_eligible_asset_group_from_versioned_listing_tree_evidence_covering_the_complete_sale_business_day",
+        "missing_partial_changed_conflicting_or_overlapping_result": "preserve_sale_and_sales_role_with_Unknown_Channel",
+        "sold_product_may_select_channel": false,
+        "current_tree_may_backfill_historical_snapshot_or_channel": false,
+        "acceptance_rule": "capture_persistence_retention_gap_detection_reconciliation_and_resolver_delivery_must_pass_together"
+      },
       "children": [
         {
           "id": "A6-EO-05-A",

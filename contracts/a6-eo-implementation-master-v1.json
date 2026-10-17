@@ -686,6 +686,8 @@
           "access_review_corrective_implementation_authorized": true,
           "access_review_corrective_implementation_authorized_at": "2026-10-17",
           "access_review_corrective_repository_verified": true,
+          "access_review_corrective_required_ci_run": 39026656769,
+          "access_review_corrective_required_ci": "passed",
           "access_authority": "oauth_client_google_cloud_project",
           "first_production_access_target": "explorer",
           "developer_token_runtime_requirement": "optional_compatibility_only",

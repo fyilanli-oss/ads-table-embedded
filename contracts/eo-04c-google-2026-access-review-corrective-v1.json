@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "contract_id": "eo-04c-google-2026-access-review-corrective-v1",
   "package_id": "A6-EO-04-C",
-  "status": "repository_verified_required_ci_and_merge_pending_provider_acceptance_pending",
+  "status": "repository_verified_required_ci_passed_merge_pending_provider_acceptance_pending",
   "checked_at": "2026-10-17",
   "authority": {
     "execution_plan": "docs/EXECUTION_PLAN.md",
@@ -65,7 +65,9 @@
     "full_tests": "304_passed",
     "typecheck": "passed",
     "production_build": "passed",
-    "diff_check": "passed"
+    "diff_check": "passed",
+    "required_ci_run": 39026656769,
+    "required_ci": "passed"
   },
-  "next_gate": "repository_verification_required_ci_and_explicit_merge_approval_then_explorer_application_plan"
+  "next_gate": "explicit_product_owner_merge_approval_then_explorer_application_plan"
 }

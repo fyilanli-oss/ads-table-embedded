@@ -441,6 +441,37 @@ and `tests/eo-04d-klaviyo-attribution-resolution.test.js`
   Klaviyo call, database/migration, Dataset V2, secret/environment, deploy or UI
   work is authorized by this package.
 
+## EO-04-D Klaviyo reauthorization truth correction — 17 October 2026
+
+Binding analyst brief: `docs/EO_04D_KLAVIYO_REAUTHORIZATION_TRUTH_BRIEF.md`
+
+Executable contract: `contracts/eo-04d-klaviyo-reauthorization-truth-v1.json`
+
+- A canonical `reauthorization_required` lifecycle state must appear in
+  Settings as `Reauthorization required`, never `Not connected`.
+- Settings inspection remains local-only. It does not refresh credentials,
+  call Klaviyo or retry the failed provider request.
+- Only `connected` remains reporting authority and historical spend periods
+  remain intact.
+- OAuth reauthorization can resume fresh account verification while the prior
+  account and spend history remain preserved; reporting does not reopen until
+  setup completion succeeds.
+- EO-05 must identify the missing business-date interval created while
+  authorization was unavailable, run bounded backfill/reconciliation and keep
+  missing, partial, stale, recovered, provisional and final states distinct.
+  Missing dates can never be silently converted to zero.
+- Repository implementation and the separately approved additive live database
+  migration are complete. Durable acceptance evidence is
+  `docs/evidence/EO_04D_KLAVIYO_REAUTHORIZATION_LIVE_DATABASE_ACCEPTANCE_2026-10-17.json`;
+  Supabase Security Advisor remains at zero findings. Exact commit
+  `9bc3108d366a58ce9ff92a293681245a0c380462` was separately authorized and
+  deployed to Production as `dpl_8QgriVfjig4RjxC7hwpwtBJ77n8F`; Vercel reached
+  `READY`, assigned `embedded.adstable.app` without alias error and returned no
+  deployment-scoped error/fatal log. The product owner accepted real Shopify
+  Admin Settings on desktop and mobile. Provider calls and merge remain
+  separately gated. Visual evidence is
+  `docs/evidence/EO_04D_KLAVIYO_REAUTHORIZATION_VISUAL_ACCEPTANCE_2026-10-17.json`.
+
 ## EO-04 Meta retained live-shape evidence — 16 October 2026
 
 - Safe production evidence completed against commit `8a7b0ca9645f46080f8fe0e69f18efe5e5638613`; no runtime error, retry, next-provider start or database write was observed.

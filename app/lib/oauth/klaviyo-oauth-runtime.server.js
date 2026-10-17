@@ -302,6 +302,13 @@ export function createKlaviyoOAuthRuntime({
     },
 
     async inspect({installationAuthority}) {
+      const current = await lifecycle.loadCurrent({
+        installationAuthority,
+        provider: PROVIDER,
+      });
+      if (current?.status === "reauthorization_required") {
+        return Object.freeze({state: "reauthorization_required"});
+      }
       const connected = await accountAuthority.load({
         workspaceId: installationAuthority.workspaceId,
         installGeneration: installationAuthority.installGeneration,
@@ -318,6 +325,10 @@ export function createKlaviyoOAuthRuntime({
           connection: connected,
           spend: configuration,
         });
+      }
+
+      if (current?.status === "connected") {
+        throw new Error("KLAVIYO_CONNECTED_AUTHORITY_INCONSISTENT");
       }
 
       const pending = await setup.loadPending({

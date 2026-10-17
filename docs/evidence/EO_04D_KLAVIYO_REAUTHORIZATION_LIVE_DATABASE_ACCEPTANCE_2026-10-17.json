@@ -1,0 +1,65 @@
+{
+  "evidence_id": "eo-04d-klaviyo-reauthorization-live-database-acceptance-2026-10-17",
+  "package": "A6-EO-04-D",
+  "checked_at": "2026-10-17",
+  "project": {
+    "name": "ads-table-embedded",
+    "ref": "podpwkrpmjiksskxhwsu",
+    "region": "eu-central-1",
+    "status": "ACTIVE_HEALTHY"
+  },
+  "authorization": {
+    "database_schema_mutation": "explicit_product_owner_approval",
+    "provider_api_call": false,
+    "secret_or_environment_mutation": false,
+    "deployment": false,
+    "merge": false
+  },
+  "official_sources_checked": {
+    "checked_at": "2026-10-17",
+    "sources": [
+      "https://supabase.com/changelog?types=breaking-change",
+      "https://supabase.com/docs/guides/database/functions",
+      "https://supabase.com/docs/guides/database/postgres/row-level-security"
+    ],
+    "relevant_breaking_change": false
+  },
+  "migration": {
+    "repository_file": "supabase/migrations/20261017150000_eo04d_klaviyo_reauthorization_state.sql",
+    "repository_sha256": "26BF15045BB0CEF00794DED47FFF91F2FE61DE15FDC1BE461F63B466F9274D48",
+    "remote_version": "20261017135321",
+    "remote_name": "eo04d_klaviyo_reauthorization_state",
+    "applied": true
+  },
+  "structural_verification": {
+    "schema": "integrations",
+    "functions": [
+      "load_pending_klaviyo_account_selection(uuid,bigint)",
+      "load_provider_connection_lifecycle_by_owner(uuid,bigint,text)"
+    ],
+    "owner": "adstable_owner",
+    "security_definer": true,
+    "empty_search_path": true,
+    "runtime_execute_granted": true,
+    "public_anon_authenticated_service_role_execute_revoked": true,
+    "business_rows_mutated": false,
+    "provider_called": false
+  },
+  "advisors": {
+    "security_findings_after": 0,
+    "migration_created_performance_findings": 0,
+    "pre_existing_unindexed_foreign_key_findings": [
+      "privacy.deletion_manifests.workspace_id",
+      "privacy.deletion_runs.workspace_id"
+    ],
+    "unused_index_findings_interpretation": "Pre-existing inventory; this function-only migration creates no table or index and authorizes no index removal.",
+    "remediation_reference": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys"
+  },
+  "remaining_gates": [
+    "production deployment",
+    "desktop Shopify Admin visual acceptance",
+    "real-mobile Shopify Admin visual acceptance",
+    "live Klaviyo provider acceptance under separate authorization",
+    "explicit merge approval"
+  ]
+}

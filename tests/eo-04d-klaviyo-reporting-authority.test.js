@@ -169,6 +169,28 @@ test("Klaviyo authority binds one account, uses its timezone, exhausts opaque cu
   assert.equal(result.results.flow_values.observation, "not_observed_in_this_execution");
   assert.equal(result.results.ordered_product_events.page_count, 2);
   assert.equal(result.results.ordered_product_events.rows.length, 2);
+  assert.equal(result.results.resolved_product_sales.rows.length, 2);
+  assert.equal(
+    result.results.resolved_product_sales.rows[0].attribution_resolution.channel_id,
+    "flow-message-1",
+  );
+  assert.equal(result.results.resolved_product_sales.rows[0].attribution_resolution.channel_name, null);
+  assert.equal(
+    result.results.resolved_product_sales.rows[0].attribution_resolution.sales_role,
+    "Triggered",
+  );
+  assert.equal(
+    result.results.resolved_product_sales.rows[1].attribution_resolution.channel_type,
+    "Unknown Channel",
+  );
+  assert.equal(result.results.resolved_product_sales.rows[1].attribution_resolution.sales_role, "Unclassified");
+  assert.deepEqual(result.completed_families, [
+    "metrics",
+    "campaign_values",
+    "flow_values",
+    "ordered_product_events",
+    "resolved_product_sales",
+  ]);
   assert.equal(
     result.results.ordered_product_events.rows[0].provider_attributions[0].flow_message_variation_id,
     "flow-variation-1",

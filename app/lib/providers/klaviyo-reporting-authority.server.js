@@ -15,6 +15,7 @@ import {
   runKlaviyoReportingFamilies,
   selectKlaviyoShopifyMetrics,
 } from "./klaviyo-reporting.server.js";
+import {resolveKlaviyoOrderedProductSales} from "./klaviyo-attribution-resolution.server.js";
 
 const PROVIDER = "klaviyo";
 const API_ORIGIN = "https://a.klaviyo.com";
@@ -407,6 +408,13 @@ export function createKlaviyoReportingAuthorityRuntime({
             request_ids: collected.request_ids,
           });
         },
+        resolveProductSales: async ({campaign_values, flow_values, ordered_product_events}) => (
+          resolveKlaviyoOrderedProductSales({
+            campaignChannels: campaign_values.rows,
+            flowChannels: flow_values.rows,
+            orderedProductEvents: ordered_product_events.rows,
+          })
+        ),
       });
       return Object.freeze({
         provider: PROVIDER,

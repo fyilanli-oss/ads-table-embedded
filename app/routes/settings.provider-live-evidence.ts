@@ -74,6 +74,7 @@ export const action = async ({request}: ActionFunctionArgs) => {
       metaRuntime: createMetaReportingAuthorityRuntime({
         database,
         tokenVault: providerTokenVault,
+        appSecret: process.env.META_APP_SECRET,
       }),
     });
     const result = await runtime.execute({

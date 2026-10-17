@@ -152,12 +152,28 @@ function rowHashes(rows, identityFields) {
 }
 
 function requestEvidence(page) {
+  const rateLimits = Array.isArray(page?.evidence?.rate_limits)
+    ? page.evidence.rate_limits
+    : page?.evidence?.rate_limit ? [page.evidence.rate_limit] : [];
+  const countPresent = (field) => rateLimits.filter((item) => item?.[field] === true).length;
+  const retryAfterValues = rateLimits
+    .map((item) => item?.retry_after_ms)
+    .filter((value) => Number.isSafeInteger(value) && value >= 0);
   return Object.freeze({
     provider_request_id: typeof page.provider_request_id === "string"
       ? page.provider_request_id
       : null,
     next_page_exists: page.next_cursor !== null,
     next_cursor_sha256: page.next_cursor === null ? null : digest(page.next_cursor),
+    page_count: Number.isSafeInteger(page?.evidence?.page_count)
+      ? page.evidence.page_count
+      : 1,
+    rate_limit_evidence: Object.freeze({
+      app_usage_pages: countPresent("app_usage_present"),
+      ad_account_usage_pages: countPresent("ad_account_usage_present"),
+      business_use_case_usage_pages: countPresent("business_use_case_usage_present"),
+      retry_after_ms: retryAfterValues.length > 0 ? Math.max(...retryAfterValues) : null,
+    }),
   });
 }
 
@@ -348,13 +364,13 @@ export function summarizeMetaLiveEvidence(result, businessDate) {
 }
 
 export function createProviderLiveEvidenceRuntime({metaRuntime}) {
-  if (!metaRuntime || typeof metaRuntime.readDailyEvidencePages !== "function") {
-    throw new TypeError("metaRuntime.readDailyEvidencePages is required");
+  if (!metaRuntime || typeof metaRuntime.readDailyEvidenceSnapshot !== "function") {
+    throw new TypeError("metaRuntime.readDailyEvidenceSnapshot is required");
   }
   return Object.freeze({
     async execute({installationAuthority, input}) {
       const accepted = validateProviderLiveEvidenceInput(input);
-      const result = await metaRuntime.readDailyEvidencePages({
+      const result = await metaRuntime.readDailyEvidenceSnapshot({
         installationAuthority,
         dateWindow: {start: accepted.businessDate, end: accepted.businessDate},
       });

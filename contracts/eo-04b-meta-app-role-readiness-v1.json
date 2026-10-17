@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "eo-04b-meta-app-role-readiness-v1",
+  "package_id": "A6-EO-04-B",
+  "status": "repository_ready_visual_and_provider_acceptance_pending",
+  "checked_at": "2026-10-17",
+  "authority": {
+    "brief": "docs/EO_04B_META_APP_ROLE_READINESS_BRIEF.md",
+    "oauth_contract": "contracts/eo-04b-meta-oauth-account-selection-v1.json",
+    "reporting_contract": "contracts/eo-04b-meta-reporting-runtime-v1.json",
+    "live_acceptance_contract": "contracts/eo-04-provider-live-acceptance-v1.json"
+  },
+  "stage_1_restricted_acceptance": {
+    "app_role": "tester",
+    "same_person_requires_target_ad_account_access": true,
+    "oauth_scopes": ["ads_read"],
+    "public_customer_access": false,
+    "real_catalog_activity_required": true,
+    "each_live_call_requires_product_owner_authorization": true,
+    "remove_role_after_restricted_acceptance": true,
+    "provider_acceptance_pending": true
+  },
+  "stage_2_production_access": {
+    "business_verification": "later_gate",
+    "technology_provider_verification": "later_gate_if_required",
+    "advanced_access_or_app_review": "later_gate",
+    "public_customer_operation": false
+  },
+  "runtime_requirements": {
+    "appsecret_proof_on_server_graph_requests": true,
+    "secret_material_in_result_ui_or_logs": false,
+    "expired_or_rejected_authorization_transitions_lifecycle": "reauthorization_required",
+    "bounded_complete_pagination": true,
+    "cursor_loop_fails_closed": true,
+    "channel_and_product_publication_atomic": true,
+    "retry_after_and_identifier_free_usage_evidence": true,
+    "merchant_supplied_reporting_account_id": false,
+    "automatic_provider_retry": false
+  },
+  "settings_ui": {
+    "temporary_meta_evidence_button": false,
+    "connected_actions": ["change_reporting_account", "disconnect"],
+    "backend_acceptance_transport_retained": true,
+    "desktop_acceptance": "pending_product_owner_review",
+    "mobile_acceptance": "pending_product_owner_review"
+  },
+  "provider_dependent_gates": {
+    "real_catalog_product_response": "pending",
+    "product_metric_semantics": "pending",
+    "creative_advertised_product_evidence": "pending_separate_slice",
+    "sales_role": "pending_separate_slice",
+    "shopify_meta_product_identity": "pending_shopify_migration_and_live_evidence"
+  },
+  "mutations": {
+    "meta_role_or_account": false,
+    "live_provider_call": false,
+    "secret_or_environment": false,
+    "database_schema": false,
+    "deployment": false
+  },
+  "repository_verification": {
+    "tests": "295_passed",
+    "typecheck": "passed",
+    "production_build": "passed",
+    "diff_check": "passed"
+  },
+  "next_gate": "repository_tests_and_product_owner_visual_acceptance_before_merge"
+}

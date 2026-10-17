@@ -49,6 +49,7 @@ test("Meta reporting is bound to canonical Reporting Account and encrypted token
   const vaultLoads = [];
   const runtime = createMetaReportingAuthorityRuntime({
     database: database(),
+    appSecret: "test-secret",
     tokenVault: {
       async loadProviderTokenSet(input) {
         vaultLoads.push(input);
@@ -98,6 +99,7 @@ test("Meta reporting fails before token or provider access without canonical aut
     let vaultCalled = false;
     const runtime = createMetaReportingAuthorityRuntime({
       database: database(row),
+      appSecret: "test-secret",
       tokenVault: {
         async loadProviderTokenSet() {
           vaultCalled = true;
@@ -123,6 +125,7 @@ test("Meta reporting publishes neither page when the product request fails", asy
   let calls = 0;
   const runtime = createMetaReportingAuthorityRuntime({
     database: database(),
+    appSecret: "test-secret",
     tokenVault: {
       async loadProviderTokenSet() {
         return {access_token: "vault-only-token"};
@@ -143,4 +146,123 @@ test("Meta reporting publishes neither page when the product request fails", asy
     (error) => error.code === "META_REPORTING_REQUEST_FAILED",
   );
   assert.equal(calls, 2);
+});
+
+test("Meta App Role acceptance snapshot follows every bounded opaque page", async () => {
+  const cursors = [];
+  const responses = [
+    json({data: [{ad_id: "ad-1"}], paging: {cursors: {after: "channel-2"}, next: "next"}}),
+    json({data: [{ad_id: "ad-2"}]}),
+    json({data: [{ad_id: "ad-1", product_id: "product-1"}], paging: {cursors: {after: "product-2"}, next: "next"}}),
+    json({data: [{ad_id: "ad-2", product_id: "product-2"}]}),
+  ];
+  const runtime = createMetaReportingAuthorityRuntime({
+    database: database(),
+    appSecret: "test-secret",
+    tokenVault: {
+      async loadProviderTokenSet() {
+        return {access_token: "vault-only-token"};
+      },
+    },
+    fetchFn: async (url) => {
+      cursors.push(new URL(url).searchParams.get("after"));
+      return responses.shift();
+    },
+  });
+
+  const result = await runtime.readDailyEvidenceSnapshot({
+    installationAuthority,
+    dateWindow: {start: "2026-10-15", end: "2026-10-15"},
+  });
+
+  assert.deepEqual(cursors, [null, "channel-2", null, "product-2"]);
+  assert.deepEqual(result.channel.rows.map((row) => row.ad_id), ["ad-1", "ad-2"]);
+  assert.deepEqual(result.product.rows.map((row) => row.product_id), ["product-1", "product-2"]);
+  assert.equal(result.channel.evidence.page_count, 2);
+  assert.equal(result.product.evidence.page_count, 2);
+});
+
+test("first Meta authorization rejection persists reauthorization_required without retry", async () => {
+  const queries = [];
+  let providerCalls = 0;
+  const runtime = createMetaReportingAuthorityRuntime({
+    database: {
+      async query(sql, values) {
+        queries.push({sql, values});
+        if (/load_provider_account_authority/.test(sql)) return {rows: [databaseRow()]};
+        if (/load_provider_connection_lifecycle/.test(sql)) {
+          return {rows: [{
+            connection_id: databaseRow().connection_id,
+            lifecycle_status: "connected",
+            connection_version: 4,
+            credential_id: databaseRow().credential_id,
+            lifecycle_changed_at: "2026-10-17T00:00:00.000Z",
+            disconnected_at: null,
+            disconnect_reason: null,
+          }]};
+        }
+        if (/transition_provider_connection_lifecycle/.test(sql)) {
+          return {rows: [{
+            connection_id: databaseRow().connection_id,
+            lifecycle_status: "reauthorization_required",
+            connection_version: 5,
+            credential_id: databaseRow().credential_id,
+            lifecycle_changed_at: "2026-10-17T00:00:01.000Z",
+            disconnected_at: null,
+            disconnect_reason: null,
+          }]};
+        }
+        throw new Error("unexpected query");
+      },
+    },
+    appSecret: "test-secret",
+    tokenVault: {
+      async loadProviderTokenSet() {
+        return {access_token: "expired-token"};
+      },
+    },
+    fetchFn: async () => {
+      providerCalls += 1;
+      return json({error: {code: 190}}, 401);
+    },
+  });
+
+  await assert.rejects(
+    runtime.readDailyEvidenceSnapshot({
+      installationAuthority,
+      dateWindow: {start: "2026-10-15", end: "2026-10-15"},
+    }),
+    (error) => error.code === "META_REAUTHORIZATION_REQUIRED",
+  );
+  assert.equal(providerCalls, 1);
+  assert.equal(queries.filter(({sql}) => /transition_provider_connection_lifecycle/.test(sql)).length, 1);
+});
+
+test("Meta App Role acceptance snapshot fails closed on an opaque cursor loop", async () => {
+  let providerCalls = 0;
+  const runtime = createMetaReportingAuthorityRuntime({
+    database: database(),
+    appSecret: "test-secret",
+    tokenVault: {
+      async loadProviderTokenSet() {
+        return {access_token: "vault-only-token"};
+      },
+    },
+    fetchFn: async () => {
+      providerCalls += 1;
+      return json({
+        data: [{ad_id: `ad-${providerCalls}`}],
+        paging: {cursors: {after: "same-cursor"}, next: "next"},
+      });
+    },
+  });
+
+  await assert.rejects(
+    runtime.readDailyEvidenceSnapshot({
+      installationAuthority,
+      dateWindow: {start: "2026-10-15", end: "2026-10-15"},
+    }),
+    (error) => error.code === "META_REPORTING_CURSOR_LOOP",
+  );
+  assert.equal(providerCalls, 2);
 });

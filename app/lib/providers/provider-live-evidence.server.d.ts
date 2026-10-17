@@ -30,7 +30,7 @@ export function buildProviderLiveEvidenceSafeLog(
 
 export function createProviderLiveEvidenceRuntime(input: {
   metaRuntime: {
-    readDailyEvidencePages(input: Record<string, any>): Promise<Record<string, any>>;
+    readDailyEvidenceSnapshot(input: Record<string, any>): Promise<Record<string, any>>;
   };
 }): {
   execute(input: {

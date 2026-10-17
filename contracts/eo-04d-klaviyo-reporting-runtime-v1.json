@@ -1,0 +1,99 @@
+{
+  "contract_id": "A6-EO-04-D-KLAVIYO-REPORTING-RUNTIME-V1",
+  "status": "accepted_product_owner_repository_runtime_authorized",
+  "accepted_at": "2026-10-17",
+  "api_revision": "2026-10-15",
+  "authority": {
+    "repository_runtime_authorized": true,
+    "live_provider_call_authorized": false,
+    "database_or_migration_authorized": false,
+    "secret_environment_or_deploy_authorized": false,
+    "ui_authorized": false
+  },
+  "hierarchy": {
+    "campaign": ["campaign", "campaign_message", "variation"],
+    "flow": ["flow", "flow_message", "variation"],
+    "campaign_channel_entity": "campaign_message",
+    "flow_channel_entity": "flow_message",
+    "variation_replaces_channel": false,
+    "medium_source": "send_channel",
+    "medium_required": true,
+    "supported_media": ["Email", "SMS", "WhatsApp", "Push"]
+  },
+  "channel_resolution": {
+    "message_known_variation_exact": "message_channel_exact_variation_exact",
+    "message_known_variation_unresolved": "message_channel_exact_variation_unresolved",
+    "message_known_multiple_variations": "message_channel_exact_variation_unresolved",
+    "message_missing_or_conflicting": "Unknown Channel",
+    "candidate_variations_in_primary_ui": false,
+    "multi_channel_synthetic_bucket": false
+  },
+  "sales_role": {
+    "campaign_exact_sold_in_content_product_set": "Advertised",
+    "campaign_exact_sold_outside_content_product_set": "Cross-sell",
+    "campaign_content_product_set_unavailable": "Assisted",
+    "campaign_contradictory_evidence": "Unclassified",
+    "flow_attributed_sale": "Triggered",
+    "flow_conflicting_message_variation_relationship": "Unclassified"
+  },
+  "metrics": {
+    "discovery_filter": "equals(integration.name,'Shopify')",
+    "conversion_metric": "Placed Order",
+    "product_sale_metric": "Ordered Product",
+    "both_metrics_must_resolve_exactly_once": true,
+    "placed_order_and_ordered_product_may_both_be_counted_as_sales": false
+  },
+  "performance": {
+    "endpoint_family": "Reporting API Values",
+    "statistics": [
+      "recipients",
+      "delivered",
+      "opens",
+      "opens_unique",
+      "clicks",
+      "clicks_unique",
+      "conversions",
+      "conversion_uniques",
+      "conversion_value"
+    ],
+    "campaign_group_by_required": ["campaign_id", "campaign_message_id"],
+    "flow_group_by_required": ["flow_id", "flow_message_id"],
+    "additional_required_dimensions": ["message_name", "send_channel", "variation", "variation_name"]
+  },
+  "time": {
+    "authority": "connected_klaviyo_account_timezone",
+    "grain": "one_business_day_per_values_timeframe",
+    "boundary": "00:00:00_through_23:59:59_with_actual_zone_offsets",
+    "bootstrap_order": ["yesterday", "today"],
+    "scheduler_and_reconciliation_owner": "A6-EO-05"
+  },
+  "events": {
+    "metric": "Ordered Product",
+    "page_size": 200,
+    "include": ["attributions", "metric"],
+    "include_profile": false,
+    "dedupe_key": "provider_event_id",
+    "product_properties": "provider_native_observation_only",
+    "standardized_product_id": "deferred",
+    "missing_property_becomes_zero_or_empty_string": false
+  },
+  "failure_boundary": {
+    "first_provider_error_stops_all_remaining_families": true,
+    "automatic_retry": false,
+    "partial_result_publishable": false,
+    "empty_success_meaning": "not_observed_in_this_execution",
+    "empty_success_means_numeric_zero": false
+  },
+  "cost": {
+    "provider_native_product_cost": "unavailable",
+    "estimated_spend_allocation": "A6-EO-05_only"
+  },
+  "official_sources_checked_at": "2026-10-17",
+  "official_sources": [
+    "https://developers.klaviyo.com/en/reference/campaigns_omni_api_overview",
+    "https://developers.klaviyo.com/en/reference/reporting_api_overview",
+    "https://developers.klaviyo.com/en/reference/get_metrics",
+    "https://developers.klaviyo.com/en/reference/get_events",
+    "https://help.klaviyo.com/hc/en-us/articles/115005080447"
+  ]
+}

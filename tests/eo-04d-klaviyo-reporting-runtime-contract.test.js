@@ -1,0 +1,50 @@
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+import test from "node:test";
+
+const contract = JSON.parse(readFileSync(
+  new URL("../contracts/eo-04d-klaviyo-reporting-runtime-v1.json", import.meta.url),
+  "utf8",
+));
+
+test("Klaviyo reporting runtime is repository-only and uses the GA revision", () => {
+  assert.equal(contract.api_revision, "2026-10-15");
+  assert.equal(contract.authority.repository_runtime_authorized, true);
+  assert.equal(contract.authority.live_provider_call_authorized, false);
+  assert.equal(contract.authority.database_or_migration_authorized, false);
+  assert.equal(contract.authority.secret_environment_or_deploy_authorized, false);
+});
+
+test("Message is Channel, Medium is mandatory and Variation remains subordinate", () => {
+  assert.equal(contract.hierarchy.campaign_channel_entity, "campaign_message");
+  assert.equal(contract.hierarchy.flow_channel_entity, "flow_message");
+  assert.equal(contract.hierarchy.variation_replaces_channel, false);
+  assert.equal(contract.hierarchy.medium_source, "send_channel");
+  assert.equal(contract.hierarchy.medium_required, true);
+  assert.deepEqual(contract.hierarchy.supported_media, ["Email", "SMS", "WhatsApp", "Push"]);
+});
+
+test("known Message with unresolved Variation is not Unknown Channel", () => {
+  assert.equal(
+    contract.channel_resolution.message_known_multiple_variations,
+    "message_channel_exact_variation_unresolved",
+  );
+  assert.equal(contract.channel_resolution.message_missing_or_conflicting, "Unknown Channel");
+  assert.equal(contract.channel_resolution.multi_channel_synthetic_bucket, false);
+});
+
+test("Shopify order metrics have separate performance and product responsibilities", () => {
+  assert.equal(contract.metrics.conversion_metric, "Placed Order");
+  assert.equal(contract.metrics.product_sale_metric, "Ordered Product");
+  assert.equal(contract.metrics.both_metrics_must_resolve_exactly_once, true);
+  assert.equal(contract.metrics.placed_order_and_ordered_product_may_both_be_counted_as_sales, false);
+  assert.equal(contract.events.include_profile, false);
+  assert.equal(contract.events.standardized_product_id, "deferred");
+});
+
+test("first error and empty-success states remain fail-closed", () => {
+  assert.equal(contract.failure_boundary.first_provider_error_stops_all_remaining_families, true);
+  assert.equal(contract.failure_boundary.automatic_retry, false);
+  assert.equal(contract.failure_boundary.partial_result_publishable, false);
+  assert.equal(contract.failure_boundary.empty_success_means_numeric_zero, false);
+});

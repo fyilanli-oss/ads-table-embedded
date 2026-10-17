@@ -330,9 +330,10 @@ open.
 
 Official capability record: `docs/decisions/A6_EO_04_D_KLAVIYO_REPORTING_CAPABILITY_BASELINE.md`
 
-- `2026-10-15` revision Campaign Variation resource'unu GA yaptı; variation artık Campaign'in gerçek en alt reporting leaf'idir.
-- Events attribution Campaign Message'ı fakat Campaign Variation'ı içermez. Tek-variation Campaign exact bağlanabilir; çoklu-variation Campaign product sale'i Message bağlamıyla `Unknown Channel` altında kalır.
-- Flow attribution `Flow Message Variation` veya `Flow Message` ilişkisini açıkça döndürebilir.
+- `2026-10-15` revision Campaign Message, `send_channel` ve isteğe bağlı Variation reporting boyutlarını GA olarak belgeler.
+- 17 Ekim 2026 ürün sahibi düzeltmesi bağlayıcıdır: Campaign Message ve Flow Message AdsTable Channel'dır; `send_channel` zorunlu Medium, Variation ayrı alt kırılımdır.
+- Events attribution Campaign Message'ı fakat Campaign Variation'ı içermez. Message biliniyorsa Channel exact kalır; çoklu veya çözülemeyen Variation yalnız Variation çözünürlüğünü etkiler ve `Unknown Channel` üretmez.
+- Flow attribution `Flow Message Variation` veya `Flow Message` ilişkisini açıkça döndürebilir; Variation parent Message'a çözülür ve Channel yine Flow Message kalır.
 - Campaign için Values endpoint'i vardır fakat Series endpoint'i yoktur. Günlük grain tek-gün timeframe sorgularıyla korunur; ilk bootstrap yalnız dün ve bugündür. Saatlik refresh/reconciliation kota bütçesi EO-05'e aittir.
 - Estimated Email Spend allocation ve Dataset mapping EO-05'e aittir.
 - Bu kayıt tek başına API çağrısı, runtime, Dataset, migration, secret, environment veya deployment mutation yetkisi vermez.
@@ -346,7 +347,7 @@ Executable contract: `contracts/eo-04e-three-provider-channel-product-economics-
 
 CI enforcement: `tests/eo-04e-three-provider-channel-product-economics.test.js`
 
-- Meta Channel = Ad; Google Standard Shopping/Search Channel = Ad Group; Google PMax Retail Channel = Asset Group; Klaviyo Campaign Channel = Campaign Variation; Klaviyo Flow Channel = attributed Flow Message Variation veya Flow Message.
+- Meta Channel = Ad; Google Standard Shopping/Search Channel = Ad Group; Google PMax Retail Channel = Asset Group; Klaviyo Campaign Channel = Campaign Message; Klaviyo Flow Channel = Flow Message. Klaviyo `send_channel` zorunlu Medium, Variation ayrı alt kırılımdır.
 - Sales Role sözlüğü `Advertised`, `Cross-sell`, `Assisted`, `Triggered` ve yalnız gerçek ambiguity için `Unclassified` olarak kabul edilmiştir.
 - `Zero Value` bir role değil modifier'dır. `Unknown Channel`, sale kanıtı bulunduğu halde exact Channel çözülemediğini ifade eder.
 - PMax broad/overlapping listing üyeliği aşağıya paylaştırılmaz. Search provider-attributed product sale'i bastırılmaz; `Assisted` olur.
@@ -355,6 +356,21 @@ CI enforcement: `tests/eo-04e-three-provider-channel-product-economics.test.js`
 - Exact provider ürün Ad Cost'u `Cross-sell`, `Assisted`, `Zero Value` veya `Unknown Channel` nedeniyle silinmez ve ilgili ürün satırında korunur. Exact product cost yoksa Channel toplamı ürünlere tahminî dağıtılmaz; Klaviyo `Triggered` allocation'ı EO-05'e aittir.
 - Desteklenen product identity yolları resmî Shopify-managed Facebook & Instagram, Google & YouTube ve Klaviyo entegrasyonlarıdır. Meta ve Google product/variant adayları Shopify Admin API ile doğrulanmadan SKU, ürün adı veya varyant adı yayımlanmaz; manual/third-party feed/catalog bu sürümde kapsam dışıdır.
 - Bu contract gate ürün sahibi tarafından 16 Ekim 2026'da bütün olarak kabul edilmiştir. Kabul tek başına provider reporting runtime, canlı provider çağrısı, Dataset V2, migration veya environment/deployment mutation başlatmaz; bunlar ayrı onay kapısındadır.
+
+## EO-04-D Klaviyo reporting runtime foundation — 17 October 2026
+
+Binding analyst brief: `docs/EO_04D_KLAVIYO_REPORTING_RUNTIME_BRIEF.md`
+
+Executable contract: `contracts/eo-04d-klaviyo-reporting-runtime-v1.json`
+
+CI enforcement: `tests/eo-04d-klaviyo-reporting-runtime-contract.test.js` and `tests/eo-04d-klaviyo-reporting-runtime.test.js`
+
+- Product owner authorized the repository-only runtime foundation after Campaign and Flow hierarchy examples were accepted.
+- Campaign/Flow Message is Channel; Message name is Channel name. `send_channel` is mandatory Medium and Variation never replaces Channel.
+- Exact Message with unresolved or multiple Variations remains exact Channel. `Unknown Channel` is restricted to missing, unresolved or conflicting Message evidence.
+- Shopify `Placed Order` is the Reporting API conversion metric; `Ordered Product` is product-sale event evidence. They are never both counted as the same sale.
+- Product identifiers remain provider-native observations; Product ID standardization, persistence, scheduler, reconciliation and estimated-spend allocation remain later gates.
+- No live Klaviyo call, provider mutation, database/migration, secret/environment, deploy or UI work is authorized by this package.
 
 ## EO-04 Meta retained live-shape evidence — 16 October 2026
 

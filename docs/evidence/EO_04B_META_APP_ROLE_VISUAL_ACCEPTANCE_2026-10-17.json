@@ -1,0 +1,44 @@
+{
+  "evidence_id": "EO_04B_META_APP_ROLE_VISUAL_ACCEPTANCE_2026-10-17",
+  "package": "A6-EO-04-B",
+  "checked_at": "2026-10-17",
+  "status": "VISUAL_ACCEPTED_MERGE_AUTHORIZED",
+  "repository": {
+    "pull_request": 88,
+    "branch": "codex/eo04b-meta-app-role-readiness",
+    "deployed_commit": "ed1b12f35937cffd2e4e173d17ca5624d0dbbfe9",
+    "required_ci_run": 39025127652,
+    "required_ci": "PASS",
+    "merged": false
+  },
+  "vercel": {
+    "project": "ads-table-embedded",
+    "environment": "production",
+    "deployment_id": "dpl_9ZG62uAjmDV3Lown3BWErWBGrNxG",
+    "deployment_state": "READY",
+    "production_alias": "embedded.adstable.app",
+    "alias_error": null,
+    "secret_value_read_back": false
+  },
+  "visual_acceptance": {
+    "surface": "/settings",
+    "desktop_shopify_admin": "PASS",
+    "mobile_shopify_admin": "PASS",
+    "product_owner_evidence": "explicit_chat_confirmation_2026-10-17"
+  },
+  "provider_boundaries": {
+    "meta_live_call": false,
+    "meta_role_or_account_mutation": false,
+    "secret_or_environment_mutation": false,
+    "database_schema_mutation": false,
+    "dataset_v2_write": false
+  },
+  "closure": {
+    "visual_acceptance": true,
+    "merge_authorized": true,
+    "merge_authorized_at": "2026-10-17",
+    "real_app_role_acceptance_pending": true,
+    "real_catalog_product_evidence_pending": true,
+    "next_gate": "required_ci_then_github_merge"
+  }
+}

@@ -2,6 +2,7 @@ import {
   META_GRAPH_ORIGIN,
   META_GRAPH_VERSION,
   MetaGraphError,
+  createMetaAppSecretProof,
 } from "./meta-graph.server.js";
 
 export const META_AD_CHANNEL_INSIGHTS_FIELDS = Object.freeze([
@@ -85,6 +86,29 @@ function requestId(response) {
     ?? null;
 }
 
+function retryAfterMs(response) {
+  const raw = response?.headers?.get?.("retry-after");
+  if (typeof raw !== "string" || raw.length < 1) return null;
+  const seconds = Number(raw);
+  if (Number.isFinite(seconds) && seconds >= 0) return Math.ceil(seconds * 1000);
+  const timestamp = Date.parse(raw);
+  return Number.isNaN(timestamp) ? null : Math.max(0, timestamp - Date.now());
+}
+
+function usageEvidence(response) {
+  const names = ["x-app-usage", "x-ad-account-usage", "x-business-use-case-usage"];
+  const present = names.filter((name) => {
+    const value = response?.headers?.get?.(name);
+    return typeof value === "string" && value.length > 0;
+  });
+  return Object.freeze({
+    app_usage_present: present.includes("x-app-usage"),
+    ad_account_usage_present: present.includes("x-ad-account-usage"),
+    business_use_case_usage_present: present.includes("x-business-use-case-usage"),
+    retry_after_ms: retryAfterMs(response),
+  });
+}
+
 async function jsonResponse(response) {
   try {
     const payload = await response.json();
@@ -149,8 +173,13 @@ function baseInsightsUrl({
   return url;
 }
 
-async function fetchMetaInsightsPayload({url, accessToken, fetchFn}) {
-  const response = await fetchFn(url, {
+async function fetchMetaInsightsPayload({url, accessToken, appSecret, fetchFn}) {
+  const requestUrl = new URL(url);
+  requestUrl.searchParams.set(
+    "appsecret_proof",
+    createMetaAppSecretProof({accessToken, appSecret}),
+  );
+  const response = await fetchFn(requestUrl.toString(), {
     method: "GET",
     headers: {
       accept: "application/json",
@@ -161,14 +190,17 @@ async function fetchMetaInsightsPayload({url, accessToken, fetchFn}) {
   if (!response.ok || !payload) {
     const code = providerErrorCode(payload);
     throw new MetaGraphError(
-      code === 190 ? "META_REAUTHORIZATION_REQUIRED" : "META_REPORTING_REQUEST_FAILED",
-      code === 190
+      code === 190 || response.status === 401 || response.status === 403
+        ? "META_REAUTHORIZATION_REQUIRED"
+        : "META_REPORTING_REQUEST_FAILED",
+      code === 190 || response.status === 401 || response.status === 403
         ? "Meta authorization is no longer valid"
         : "Meta reporting request failed",
       {
         status: response.status,
         provider_error_code: code,
         request_id: requestId(response),
+        retry_after_ms: retryAfterMs(response),
       },
     );
   }
@@ -191,7 +223,7 @@ async function fetchMetaInsightsPayload({url, accessToken, fetchFn}) {
       {request_id: requestId(response)},
     );
   }
-  return {payload, response, nextCursor};
+  return {payload, response, nextCursor, rateLimit: usageEvidence(response)};
 }
 
 export function buildMetaAdChannelInsightsUrl({
@@ -213,6 +245,7 @@ export function buildMetaAdChannelInsightsUrl({
 
 export async function fetchMetaAdChannelInsightsPage({
   accessToken,
+  appSecret,
   adAccountId,
   dateWindow,
   after = null,
@@ -226,9 +259,10 @@ export async function fetchMetaAdChannelInsightsPage({
     after,
     graphVersion,
   });
-  const {payload, response, nextCursor} = await fetchMetaInsightsPayload({
+  const {payload, response, nextCursor, rateLimit} = await fetchMetaInsightsPayload({
     url,
     accessToken,
+    appSecret,
     fetchFn,
   });
 
@@ -246,6 +280,7 @@ export async function fetchMetaAdChannelInsightsPage({
       time_increment: 1,
       requested_fields: META_AD_CHANNEL_INSIGHTS_FIELDS,
       breakdowns: Object.freeze([]),
+      rate_limit: rateLimit,
     }),
   });
 }
@@ -272,6 +307,7 @@ export function buildMetaProductBreakdownInsightsUrl({
 
 export async function fetchMetaProductBreakdownInsightsPage({
   accessToken,
+  appSecret,
   adAccountId,
   dateWindow,
   after = null,
@@ -285,9 +321,10 @@ export async function fetchMetaProductBreakdownInsightsPage({
     after,
     graphVersion,
   });
-  const {payload, response, nextCursor} = await fetchMetaInsightsPayload({
+  const {payload, response, nextCursor, rateLimit} = await fetchMetaInsightsPayload({
     url,
     accessToken,
+    appSecret,
     fetchFn,
   });
   for (const row of payload.data) {
@@ -324,6 +361,7 @@ export async function fetchMetaProductBreakdownInsightsPage({
       product_id_limit: META_PRODUCT_BREAKDOWN_ID_LIMIT,
       product_metric_semantics: "validation_pending_real_catalog_response",
       provider_product_ad_cost_status: "validation_pending",
+      rate_limit: rateLimit,
     }),
   });
 }
@@ -344,7 +382,7 @@ export function classifyMetaReportingError(error) {
     return Object.freeze({
       class: "reauthorization_required",
       retryable: false,
-      retry_after_ms: null,
+      retry_after_ms: error.details?.retry_after_ms ?? null,
       provider_request_id: error.details?.request_id ?? null,
       message: error.message,
     });
@@ -353,7 +391,7 @@ export function classifyMetaReportingError(error) {
     return Object.freeze({
       class: "rate_limited",
       retryable: true,
-      retry_after_ms: null,
+      retry_after_ms: error.details?.retry_after_ms ?? null,
       provider_request_id: error.details?.request_id ?? null,
       message: error.message,
     });
@@ -372,7 +410,7 @@ export function classifyMetaReportingError(error) {
       ? "provider_schema_changed"
       : "request_contract_invalid",
     retryable: false,
-    retry_after_ms: null,
+    retry_after_ms: error.details?.retry_after_ms ?? null,
     provider_request_id: error.details?.request_id ?? null,
     message: error.message,
   });

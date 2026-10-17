@@ -141,7 +141,7 @@ CI enforcement: `tests/eo-04a-common-adapter-start-brief.test.js`
 - **EO-03-C — Accepted:** Fresh provider-verified connected accounts and one canonical Meta/Google Reporting Account are bound beneath the immutable installed-Shopify-store authority. Klaviyo remains one Connected Account with no Reporting Account control. No merchant-selectable store scope exists.
 - With explicit approval, the EO-03-C base and corrective Supabase migrations were applied on 9 October 2026. Rollback-scoped synthetic runtime acceptance passed, cleanup is zero, Security Advisor findings are zero and EO-03-C introduced no unindexed-foreign-key finding. No provider API call, provider OAuth, Vercel mutation or production deploy occurred in EO-03-C. The product owner explicitly closed EO-03-C on 9 October 2026; exact evidence is `docs/evidence/EO_03C_LIVE_ACCEPTANCE_2026-10-09.json`.
 - **EO-03-D — Accepted:** Reauthorization, atomic credential renewal, two-phase disconnect and same-canonical-connection reconnect passed the complete rollback-scoped live lifecycle scenario. All synthetic rows rolled back to zero, Security Advisor remained at zero, and no provider API/OAuth/Vercel/deploy mutation occurred. Durable evidence: `evidence/eo-03d-live-database-evidence-2026-10-09.json`.
-- **EO-03 — Accepted:** All four children are closed with explicit product-owner acceptance. **EO-04 — Active:** EO-04-A is Accepted. Meta, Google Ads and Klaviyo connection/setup slices are accepted. EO-04-E common Channel and product-economics contract was accepted by the product owner on 16 October 2026. Meta has separate daily Ad-level and Ad + `product_id` raw request slices bound to verified installation, connected Meta authority, canonical Reporting Account and encrypted token authority. The temporary live-evidence route, one-attempt button and allowlisted server log were merged and deployed with explicit approvals. After two executions proved only route completion, a third separately authorized execution retained safe live shape evidence: one Ad row; numeric presence for `impressions`, `spend`, `clicks` and `inline_link_clicks`; array presence for `outbound_clicks` and `actions`; absent `action_values`; and no purchase, checkout or add-to-cart action type. `impressions` and `spend` are accepted direct evidence. Ad Click remains unresolved among three provider fields, `landing_page_view` is not promoted to Session, and funnel facts are not inferred. The successful `product_id` request returned zero rows and is classified `not_observed_in_this_execution`, not real zero and not global unsupported. No Shopify product mapping, Sales Role, product Ad Cost or Dataset V2 row is authorized. Durable evidence is `docs/evidence/EO_04_META_PROVIDER_LIVE_EVIDENCE_2026-10-16.json`; further live calls remain separately gated.
+- **EO-03 — Accepted:** All four children are closed with explicit product-owner acceptance. **EO-04 — Active:** EO-04-A is Accepted. Meta, Google Ads and Klaviyo connection/setup slices are accepted. EO-04-E common Channel and product-economics contract was accepted by the product owner on 16 October 2026. Meta has separate daily Ad-level and Ad + `product_id` raw request slices bound to verified installation, connected Meta authority, canonical Reporting Account and encrypted token authority. The authenticated live-evidence route and allowlisted server log remain; the temporary Settings evidence button is closed on 17 October 2026. After two executions proved only route completion, a third separately authorized execution retained safe live shape evidence: one Ad row; numeric presence for `impressions`, `spend`, `clicks` and `inline_link_clicks`; array presence for `outbound_clicks` and `actions`; absent `action_values`; and no purchase, checkout or add-to-cart action type. `impressions` and `spend` are accepted direct evidence. Ad Click remains unresolved among three provider fields, `landing_page_view` is not promoted to Session, and funnel facts are not inferred. The successful `product_id` request returned zero rows and is classified `not_observed_in_this_execution`, not real zero and not global unsupported. No Shopify product mapping, Sales Role, product Ad Cost or Dataset V2 row is authorized. Durable evidence is `docs/evidence/EO_04_META_PROVIDER_LIVE_EVIDENCE_2026-10-16.json`; further live calls remain separately gated.
 
 ## EO-03-C official provider baseline — 9 Ekim 2026
 
@@ -206,6 +206,22 @@ EO-01-B dependency pinlemeden ve EO-07 UI implementasyonundan önce resmî sür�
 - **A6-OPS-LOCAL-01-D — Closure evidence:** Prove zero meaningful local-only project work, intact anchor/common metadata, readable remote equivalents and recorded exceptions.
 
 Opening this package authorizes no deletion. It does not change the 10 A6-EO parents, 43 stable EO children, current A6-EO-02-C gate or any product implementation sequence. Recurrence is prevented by the mandatory end-of-package local-only-zero gate.
+
+
+## A6-OPS-SHOPIFY-01 — Isolated Shopify embedded pre-production
+
+**Status:** Planned; trigger not reached; implementation not started
+**Type:** Independent prerequisite package; outside the A6-EO dependency chain until its activation deadline
+
+Binding analyst brief: `docs/A6_OPS_SHOPIFY_01_ISOLATED_PREPRODUCTION.md`
+Executable contract: `contracts/a6-ops-shopify-01-isolated-preproduction-v1.json`
+
+- The package becomes a hard prerequisite before either a real merchant store is migrated to Shopify for AdsTable use or the first external/non-team user is invited, whichever happens first.
+- It requires a dedicated Shopify development app and dev store, a named non-production Shopify configuration, a stable embedded Preview/Staging URL with exact redirects, Preview-specific credentials and persistence isolated from Production.
+- A merchant production store cannot substitute for the dev store. Production credential values cannot be copied to Preview or Development, and Preview cannot write Production business data.
+- Any real provider-account acceptance remains separately approved, read-only and exact-account-bound. The first explicit or unexplained provider error stops execution; retry or an alternate route requires a new explanation and approval.
+- Evidence may later feed A6-EO-08-D, but this package does not declare the product review-ready or advance the active EO parent.
+- The product owner accepted planning this package on 17 October 2026 and explicitly deferred implementation. No Shopify, Vercel, database, secret, provider, deployment, migration, invitation, review or merge mutation is authorized by this record.
 
 
 ### EO-02-C corrective gate — Shopify runtime authentication bridge
@@ -348,6 +364,16 @@ CI enforcement: `tests/eo-04e-three-provider-channel-product-economics.test.js`
 - The successful `product_id` request returned an empty page. Its canonical support state is `not_observed_in_this_execution`; empty is neither a product zero nor a global unsupported verdict.
 - User-supplied Amazon-destination context is recorded separately from provider evidence. A later product gate requires a Meta catalog-linked product ad and separate authorization; repeating the same flow is not required.
 - Durable sanitized evidence: `docs/evidence/EO_04_META_PROVIDER_LIVE_EVIDENCE_2026-10-16.json`.
+
+## EO-04-B Meta App Role readiness gate — 17 October 2026
+
+- Binding analyst brief: `docs/EO_04B_META_APP_ROLE_READINESS_BRIEF.md`; executable contract: `contracts/eo-04b-meta-app-role-readiness-v1.json`.
+- Stage 1 is restricted real-account acceptance by an invited App Tester who separately has legitimate access to the target ad account. It does not broaden `ads_read`, permit public customers or replace later Business Verification/Advanced Access/App Review gates.
+- Server Graph requests require `appsecret_proof`. Expired or rejected authorization moves the canonical connection to `reauthorization_required` without provider retry.
+- Real-account acceptance completes bounded opaque pagination for both Ad/Channel and `product_id` families before returning either result. Cursor loops, page/row ceilings and first provider errors fail closed.
+- The temporary Meta evidence button is removed from Settings. Reporting Account and Disconnect remain; the authenticated non-visual acceptance route stays available for a separately authorized call.
+- Shopify migration, official Facebook & Instagram catalog synchronization, product/variant identity continuity, App Tester/ad-account access and a real delivered catalog-ad date are provider-day prerequisites. Their absence is not silently treated as empty or unsupported evidence.
+- The product owner authorized a preview-only deployment for desktop/mobile Settings visual acceptance on 17 October 2026. Production deployment, Meta role/account, live provider call, secret/environment and database-schema mutation remain unauthorized.
 
 ## EO-04-C Google reporting runtime start gate — 16 October 2026
 

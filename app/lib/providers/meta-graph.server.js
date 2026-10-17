@@ -1,3 +1,4 @@
+import {createHmac} from "node:crypto";
 import {OAUTH_CALLBACK_URIS} from "../oauth/oauth-transaction.server.js";
 
 export const META_GRAPH_VERSION = "v26.0";
@@ -119,6 +120,13 @@ function queryUrl(base, values) {
     url.searchParams.set(key, value);
   }
   return url.toString();
+}
+
+export function createMetaAppSecretProof({accessToken, appSecret}) {
+  return createHmac(
+    "sha256",
+    nonEmpty(appSecret, "META_APP_SECRET_REQUIRED", 512),
+  ).update(nonEmpty(accessToken, "META_ACCESS_TOKEN_REQUIRED", 8192)).digest("hex");
 }
 
 function accessToken(payload, code) {
@@ -248,6 +256,7 @@ function account(value) {
 
 export async function discoverMetaAdAccounts({
   accessToken,
+  appSecret,
   scopes = [META_OAUTH_SCOPE],
   graphVersion = META_GRAPH_VERSION,
   fetchFn = fetch,
@@ -269,6 +278,7 @@ export async function discoverMetaAdAccounts({
     );
     url.searchParams.set("fields", ACCOUNT_FIELDS);
     url.searchParams.set("limit", "100");
+    url.searchParams.set("appsecret_proof", createMetaAppSecretProof({accessToken, appSecret}));
     if (after !== null) url.searchParams.set("after", after);
     let payload;
     try {
@@ -330,12 +340,14 @@ export async function discoverMetaAdAccounts({
 
 export async function revokeMetaAuthorization({
   accessToken,
+  appSecret,
   graphVersion = META_GRAPH_VERSION,
   fetchFn = fetch,
 }) {
   if (typeof fetchFn !== "function") throw new TypeError("fetchFn is required");
-  const url = `${META_GRAPH_ORIGIN}/${exactVersion(graphVersion)}/me/permissions`;
-  const response = await fetchFn(url, {
+  const url = new URL(`${META_GRAPH_ORIGIN}/${exactVersion(graphVersion)}/me/permissions`);
+  url.searchParams.set("appsecret_proof", createMetaAppSecretProof({accessToken, appSecret}));
+  const response = await fetchFn(url.toString(), {
     method: "DELETE",
     headers: {
       accept: "application/json",

@@ -284,7 +284,7 @@
     "stable_child_packages": 43,
     "review_critical_parents": 8,
     "post_review_parents": 2,
-    "independent_operational_packages": 1
+    "independent_operational_packages": 2
   },
   "packages": [
     {
@@ -575,7 +575,7 @@
           "id": "A6-EO-04-B",
           "title": "Meta adapter",
           "objective": "Meta Campaign, Ad Set and Ad hierarchy with deepest verified grain and raw structure evidence.",
-          "status": "oauth_accepted_reporting_contract_accepted_live_shape_evidence_retained",
+          "status": "oauth_accepted_app_role_repository_ready_visual_accepted_merge_authorized_real_catalog_acceptance_pending",
           "implementation_started": true,
           "live_mutation_authorized": true,
           "start_brief_accepted": true,
@@ -597,6 +597,22 @@
           "reporting_runtime_document": "docs/EO_04B_META_REPORTING_RUNTIME_START_BRIEF.md",
           "reporting_runtime_contract": "contracts/eo-04b-meta-reporting-runtime-v1.json",
           "reporting_runtime_test": "tests/eo-04b-meta-reporting-runtime.test.js",
+          "app_role_readiness_document": "docs/EO_04B_META_APP_ROLE_READINESS_BRIEF.md",
+          "app_role_readiness_contract": "contracts/eo-04b-meta-app-role-readiness-v1.json",
+          "app_role_readiness_test": "tests/eo-04b-meta-app-role-readiness.test.js",
+          "temporary_meta_evidence_button": false,
+          "app_role_real_account_acceptance": "pending_separate_provider_role_and_live_call_authorizations",
+          "app_role_preview_deployment_authorized": true,
+          "app_role_preview_deployment_authorized_at": "2026-10-17",
+          "app_role_production_deployment_authorized": true,
+          "app_role_production_deployment_authorized_at": "2026-10-17",
+          "app_role_production_deployment_id": "dpl_9ZG62uAjmDV3Lown3BWErWBGrNxG",
+          "app_role_production_deployed_commit": "ed1b12f35937cffd2e4e173d17ca5624d0dbbfe9",
+          "app_role_desktop_visual_acceptance": true,
+          "app_role_mobile_visual_acceptance": true,
+          "app_role_visual_acceptance_evidence": "docs/evidence/EO_04B_META_APP_ROLE_VISUAL_ACCEPTANCE_2026-10-17.json",
+          "app_role_readiness_merge_authorized": true,
+          "app_role_readiness_merge_authorized_at": "2026-10-17",
           "live_shape_evidence": "docs/evidence/EO_04_META_PROVIDER_LIVE_EVIDENCE_2026-10-16.json",
           "live_shape_evidence_status": "accepted_2026-10-16",
           "product_id_live_result": "not_observed_in_this_execution_not_zero_not_global_unsupported",
@@ -1080,6 +1096,25 @@
       "eo_dependency_effect": "none",
       "advances_eo_status": false,
       "cleanup_execution_authorized": false
+    },
+    {
+      "id": "A6-OPS-SHOPIFY-01",
+      "title": "Isolated Shopify embedded pre-production",
+      "status": "Planned; trigger not reached; implementation not started",
+      "objective": "Provide a dedicated Shopify development app and dev store with isolated Preview configuration, credentials and persistence before real-store migration or external-user access.",
+      "document": "docs/A6_OPS_SHOPIFY_01_ISOLATED_PREPRODUCTION.md",
+      "contract": "contracts/a6-ops-shopify-01-isolated-preproduction-v1.json",
+      "steps": [
+        "A6-OPS-SHOPIFY-01-A",
+        "A6-OPS-SHOPIFY-01-B",
+        "A6-OPS-SHOPIFY-01-C",
+        "A6-OPS-SHOPIFY-01-D"
+      ],
+      "activation_deadline": "before_real_merchant_store_migration_or_first_external_user_whichever_is_first",
+      "eo_dependency_effect": "none_until_activation_deadline",
+      "advances_eo_status": false,
+      "implementation_authorized": false,
+      "production_mutation_authorized": false
     }
   ],
   "parent_package_analysis_design_closure": {

@@ -18,7 +18,7 @@ test("opens one independent package without changing the EO plan", () => {
   assert.equal(cleanup.opens_cleanup_execution_authority, false);
   assert.equal(master.counts.parent_packages, 10);
   assert.equal(master.counts.stable_child_packages, 43);
-  assert.equal(master.counts.independent_operational_packages, 1);
+  assert.equal(master.counts.independent_operational_packages, 2);
   const eoChildIds = master.packages
     .flatMap((parent) => parent.children ?? [])
     .map((child) => child.id);

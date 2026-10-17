@@ -18,6 +18,7 @@ import {
 import {
   discoverMetaAdAccounts,
   exchangeAndValidateMetaAuthorizationCode,
+  MetaGraphError,
   readMetaOAuthConfig,
   revokeMetaAuthorization,
 } from "../providers/meta-graph.server.js";
@@ -87,6 +88,7 @@ export function createMetaOAuthRuntime({
     if (!stored?.access_token) throw new Error("META_ACCESS_TOKEN_UNAVAILABLE");
     return discoverMetaAdAccounts({
       accessToken: stored.access_token,
+      appSecret: config.appSecret,
       scopes: stored.scopes,
       graphVersion: config.graphVersion,
       fetchFn,
@@ -108,7 +110,40 @@ export function createMetaOAuthRuntime({
         installGeneration: installationAuthority.installGeneration,
         provider: PROVIDER,
       });
-      if (connected) return Object.freeze({state: "connected", connection: connected});
+      if (connected) {
+        const stored = await tokenVault.loadProviderTokenSet({
+          credentialId: connected.credentialId,
+          installationAuthority,
+          provider: PROVIDER,
+        });
+        if (typeof stored?.access_token !== "string" || stored.access_token.length < 1) {
+          throw new Error("META_ACCESS_TOKEN_UNAVAILABLE");
+        }
+        const expiresAt = typeof stored?.expires_at === "string"
+          ? Date.parse(stored.expires_at)
+          : Number.NaN;
+        if (!Number.isNaN(expiresAt) && expiresAt <= now().valueOf()) {
+          const current = await lifecycle.load({
+            installationAuthority,
+            provider: PROVIDER,
+            connectionId: connected.connectionId,
+          });
+          if (current?.status === "connected") {
+            await lifecycle.markReauthorizationRequired({
+              installationAuthority,
+              provider: PROVIDER,
+              connectionId: connected.connectionId,
+              expectedVersion: current.version,
+              reason: "meta_token_expired_before_settings_load",
+            });
+          }
+          throw new MetaGraphError(
+            "META_REAUTHORIZATION_REQUIRED",
+            "Meta authorization is expired",
+          );
+        }
+        return Object.freeze({state: "connected", connection: connected});
+      }
 
       const pendingReporting = await selections.loadPendingReporting({
         workspaceId: installationAuthority.workspaceId,
@@ -164,6 +199,7 @@ export function createMetaOAuthRuntime({
         });
         const evidence = await discoverMetaAdAccounts({
           accessToken: exchanged.tokenSet.access_token,
+          appSecret: config.appSecret,
           scopes: exchanged.scopes,
           graphVersion: config.graphVersion,
           fetchFn,
@@ -307,6 +343,7 @@ export function createMetaOAuthRuntime({
       if (!stored?.access_token) throw new Error("META_REVOCATION_TOKEN_UNAVAILABLE");
       const revoked = await revokeMetaAuthorization({
         accessToken: stored.access_token,
+        appSecret: config.appSecret,
         graphVersion: config.graphVersion,
         fetchFn,
       });

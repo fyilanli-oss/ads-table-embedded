@@ -137,6 +137,7 @@ test("Meta advertiser discovery follows bounded opaque cursor pages", async () =
   ];
   const evidence = await discoverMetaAdAccounts({
     accessToken: "long-token",
+    appSecret: "test-secret",
     fetchFn: async (url, options) => {
       requests.push({url: String(url), options});
       return responses.shift();
@@ -144,6 +145,7 @@ test("Meta advertiser discovery follows bounded opaque cursor pages", async () =
     now: () => new Date("2026-10-13T00:00:00.000Z"),
   });
   assert.equal(requests.length, 2);
+  assert.match(new URL(requests[0].url).searchParams.get("appsecret_proof"), /^[0-9a-f]{64}$/);
   assert.equal(new URL(requests[1].url).searchParams.get("after"), "opaque-next");
   assert.equal(requests[0].options.headers.authorization, "Bearer long-token");
   assert.deepEqual(evidence.accounts.map((account) => account.id), ["act_1", "act_2"]);
@@ -154,6 +156,7 @@ test("Meta discovery treats invalid authorization as reauthorization, not empty"
   await assert.rejects(
     discoverMetaAdAccounts({
       accessToken: "invalid-token",
+      appSecret: "test-secret",
       fetchFn: async () => json({error: {code: 190}}, 400),
     }),
     (error) => error.code === "META_REAUTHORIZATION_REQUIRED",
@@ -161,6 +164,7 @@ test("Meta discovery treats invalid authorization as reauthorization, not empty"
   await assert.rejects(
     discoverMetaAdAccounts({
       accessToken: "valid-token",
+      appSecret: "test-secret",
       fetchFn: async () => json({data: [], paging: {}}),
     }),
     (error) => error.code === "META_AD_ACCOUNTS_EMPTY",
@@ -171,6 +175,7 @@ test("Meta disconnect is revoke-first and already-invalid remains idempotent", a
   const requests = [];
   const revoked = await revokeMetaAuthorization({
     accessToken: "long-token",
+    appSecret: "test-secret",
     fetchFn: async (url, options) => {
       requests.push({url: String(url), options});
       return json({success: true});
@@ -178,16 +183,19 @@ test("Meta disconnect is revoke-first and already-invalid remains idempotent", a
   });
   assert.deepEqual(revoked, {outcome: "revoked"});
   assert.equal(requests[0].options.method, "DELETE");
-  assert.match(requests[0].url, /v26[.]0[/]me[/]permissions$/);
+  assert.match(requests[0].url, /v26[.]0[/]me[/]permissions[?]/);
+  assert.match(new URL(requests[0].url).searchParams.get("appsecret_proof"), /^[0-9a-f]{64}$/);
 
   const invalid = await revokeMetaAuthorization({
     accessToken: "expired-token",
+    appSecret: "test-secret",
     fetchFn: async () => json({error: {code: 190}}, 400),
   });
   assert.deepEqual(invalid, {outcome: "already_invalid"});
   await assert.rejects(
     revokeMetaAuthorization({
       accessToken: "live-token",
+      appSecret: "test-secret",
       fetchFn: async () => json({error: {code: 2}}, 503),
     }),
     (error) => error.code === "META_OAUTH_REVOKE_FAILED",

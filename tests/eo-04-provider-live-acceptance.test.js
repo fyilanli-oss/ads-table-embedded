@@ -228,7 +228,7 @@ test("runtime performs one Meta attempt and never starts another provider", asyn
   const calls = [];
   const runtime = createProviderLiveEvidenceRuntime({
     metaRuntime: {
-      async readDailyEvidencePages(input) {
+      async readDailyEvidenceSnapshot(input) {
         calls.push(input);
         return metaResult();
       },
@@ -251,7 +251,7 @@ test("first provider failure is returned without retry", async () => {
   const failure = new Error("opaque-provider-failure");
   const runtime = createProviderLiveEvidenceRuntime({
     metaRuntime: {
-      async readDailyEvidencePages() {
+      async readDailyEvidenceSnapshot() {
         calls += 1;
         throw failure;
       },
@@ -316,14 +316,14 @@ test("contract keeps product fields raw and the temporary route non-visual", () 
     (field) => META_PRODUCT_BREAKDOWN_INSIGHTS_FIELDS.includes(field),
   ));
   assert.equal(contract.http_trigger.visual_product_surface, false);
-  assert.equal(contract.http_trigger.temporary_settings_button, true);
+  assert.equal(contract.http_trigger.temporary_settings_button, false);
   assert.equal(
     contract.http_trigger.temporary_settings_button_business_date,
-    "2026-10-01",
+    null,
   );
   assert.equal(
     contract.http_trigger.temporary_settings_button_single_attempt_per_page_load,
-    true,
+    false,
   );
   assert.equal(contract.http_trigger.route, "/settings/provider-live-evidence");
   assert.equal(contract.mutations.database_write, false);
@@ -373,16 +373,11 @@ test("retained Meta live evidence preserves empty product semantics and mapping 
   assert.equal(liveEvidence.retention_boundary.raw_names_or_identifiers_retained, false);
 });
 
-test("connected Meta exposes only the approved one-attempt evidence button", () => {
-  assert.match(settings, /"Run Meta evidence"/);
-  assert.match(settings, /fetch\("\/settings\/provider-live-evidence"/);
-  assert.match(settings, /provider: "meta"/);
-  assert.match(settings, /business_date: "2026-10-01"/);
-  assert.match(settings, /if \(metaEvidenceAttempted[.]current\) return/);
-  assert.match(settings, /metaEvidenceAttempted[.]current = true/);
-  assert.match(settings, /loading=\{metaEvidenceStatus === "loading"\}/);
-  assert.match(settings, /disabled=\{metaEvidenceStatus === "complete" \|\| metaEvidenceStatus === "failed"\}/);
+test("connected Meta no longer exposes the temporary evidence button", () => {
+  assert.doesNotMatch(settings, /Run Meta evidence/);
+  assert.doesNotMatch(settings, /fetch\("\/settings\/provider-live-evidence"/);
+  assert.doesNotMatch(settings, /business_date: "2026-10-01"/);
+  assert.doesNotMatch(settings, /metaEvidenceAttempted|metaEvidenceStatus/);
   assert.doesNotMatch(settings, /console[.](?:info|error)\("\[AdsTable Meta evidence\]/);
   assert.doesNotMatch(settings, /Meta evidence date|meta-evidence-modal/);
-  assert.match(brief, /no modal, date input, new section or custom styling/i);
 });

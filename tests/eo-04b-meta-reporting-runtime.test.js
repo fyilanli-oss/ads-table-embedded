@@ -50,6 +50,7 @@ test("Meta reporting page preserves provider-native rows and opaque cursor evide
   const requests = [];
   const result = await fetchMetaAdChannelInsightsPage({
     accessToken: "secret-token",
+    appSecret: "test-secret",
     adAccountId: "act_123456",
     dateWindow: {start: "2026-10-14", end: "2026-10-14"},
     fetchFn: async (url, options) => {
@@ -61,6 +62,7 @@ test("Meta reporting page preserves provider-native rows and opaque cursor evide
     },
   });
   assert.equal(requests[0].options.headers.authorization, "Bearer secret-token");
+  assert.match(requests[0].url, /appsecret_proof=[0-9a-f]{64}/);
   assert.equal(result.channel_type, "ad");
   assert.equal(result.fact_family, "ad_channel_daily_insights");
   assert.deepEqual(result.rows, [
@@ -96,6 +98,7 @@ test("Meta second slice requests only raw daily Ad plus product_id breakdown evi
 test("Meta product breakdown preserves raw provider rows and validation-pending semantics", async () => {
   const result = await fetchMetaProductBreakdownInsightsPage({
     accessToken: "secret-token",
+    appSecret: "test-secret",
     adAccountId: "act_123456",
     dateWindow: {start: "2026-10-14", end: "2026-10-14"},
     fetchFn: async () => json({
@@ -131,6 +134,7 @@ test("Meta product breakdown fails closed when a returned row lacks product_id",
   await assert.rejects(
     fetchMetaProductBreakdownInsightsPage({
       accessToken: "valid",
+      appSecret: "test-secret",
       adAccountId: "act_123456",
       dateWindow: {start: "2026-10-14", end: "2026-10-14"},
       fetchFn: async () => json({data: [{ad_id: "42", spend: "3.50"}]}),
@@ -143,6 +147,7 @@ test("Meta reporting fails closed on invalid auth, schema and cursor", async () 
   await assert.rejects(
     fetchMetaAdChannelInsightsPage({
       accessToken: "expired",
+      appSecret: "test-secret",
       adAccountId: "act_123456",
       dateWindow: {start: "2026-10-14", end: "2026-10-14"},
       fetchFn: async () => json({error: {code: 190}}, 400),
@@ -152,6 +157,7 @@ test("Meta reporting fails closed on invalid auth, schema and cursor", async () 
   await assert.rejects(
     fetchMetaAdChannelInsightsPage({
       accessToken: "valid",
+      appSecret: "test-secret",
       adAccountId: "act_123456",
       dateWindow: {start: "2026-10-14", end: "2026-10-14"},
       fetchFn: async () => json({unexpected: []}),
@@ -161,6 +167,7 @@ test("Meta reporting fails closed on invalid auth, schema and cursor", async () 
   await assert.rejects(
     fetchMetaAdChannelInsightsPage({
       accessToken: "valid",
+      appSecret: "test-secret",
       adAccountId: "act_123456",
       dateWindow: {start: "2026-10-14", end: "2026-10-14"},
       fetchFn: async () => json({data: [], paging: {next: "https://graph.facebook.com/next"}}),
@@ -184,6 +191,12 @@ test("Meta reporting error classification keeps auth terminal and quotas retryab
   ));
   assert.equal(quota.class, "rate_limited");
   assert.equal(quota.retryable, true);
+  const retryAfter = classifyMetaReportingError(new MetaGraphError(
+    "META_REPORTING_REQUEST_FAILED",
+    "rate limited",
+    {status: 429, provider_error_code: 4, retry_after_ms: 7000},
+  ));
+  assert.equal(retryAfter.retry_after_ms, 7000);
 });
 
 test("Meta first reporting slice cannot mutate Dataset V2 or another provider", () => {

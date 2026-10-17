@@ -2,11 +2,12 @@
   "schema_version": "1.0.0",
   "contract_id": "eo-04b-meta-reporting-runtime-v1",
   "package_id": "A6-EO-04-B",
-  "status": "runtime_authority_slice_implemented_awaiting_acceptance",
-  "checked_at": "2026-10-16",
+  "status": "repository_accepted_live_shape_observed_real_catalog_validation_pending",
+  "checked_at": "2026-10-17",
   "authority": {
     "parent_contract": "contracts/eo-04e-three-provider-channel-product-economics-v1.json",
-    "brief": "docs/EO_04B_META_REPORTING_RUNTIME_START_BRIEF.md"
+    "brief": "docs/EO_04B_META_REPORTING_RUNTIME_START_BRIEF.md",
+    "app_role_readiness_contract": "contracts/eo-04b-meta-app-role-readiness-v1.json"
   },
   "slice": {
     "provider": "meta",
@@ -51,6 +52,11 @@
     "token_source": "encrypted_provider_token_vault_server_only",
     "token_in_result_or_evidence": false,
     "channel_and_product_pages_are_atomic_for_publication": true,
+    "bounded_complete_pagination_for_acceptance": true,
+    "cursor_loop_fails_closed": true,
+    "appsecret_proof_required": true,
+    "authorization_rejection_persists_reauthorization_required": true,
+    "identifier_free_rate_limit_evidence": true,
     "database_write": false,
     "live_provider_call": false
   },
@@ -73,7 +79,7 @@
     "secret_or_environment": false,
     "deployment": false
   },
-  "next_gate": "repository_acceptance_before_separate_deployment_and_live_meta_call_authorizations",
+  "next_gate": "app_role_repository_ci_and_visual_acceptance_before_separate_deployment_and_real_catalog_call_authorizations",
   "google_runtime_started": false,
   "klaviyo_runtime_started": false
 }

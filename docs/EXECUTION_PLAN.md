@@ -347,8 +347,9 @@ CI enforcement: `tests/eo-04d-klaviyo-review-safe-foundation.test.js`
   and Accounts `403` remain distinct user and lifecycle states. Connected
   authorization failure moves the lifecycle to `reauthorization_required`.
 - Deterministic tests, the complete repository suite, TypeScript verification
-  and production build pass locally. Desktop and real-mobile visual acceptance,
-  required GitHub CI and explicit merge authorization remain open.
+  and production build pass locally. GitHub Actions run `39028208848` passed the
+  same required test/typecheck/build gate on PR #91. Desktop and real-mobile
+  visual acceptance and explicit merge authorization remain open.
 - This gate performs no Klaviyo console, live provider, database-schema, secret,
   environment or deployment mutation. Reporting runtime remains not started.
 

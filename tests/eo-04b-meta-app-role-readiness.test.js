@@ -14,6 +14,8 @@ test("Meta App Role readiness contract keeps restricted and production stages se
   assert.equal(contract.stage_1_restricted_acceptance.public_customer_access, false);
   assert.equal(contract.stage_2_production_access.advanced_access_or_app_review, "later_gate");
   assert.equal(contract.mutations.live_provider_call, false);
+  assert.equal(contract.mutations.preview_deployment, true);
+  assert.equal(contract.mutations.production_deployment, false);
   assert.equal(contract.provider_dependent_gates.sales_role, "pending_separate_slice");
 });
 test("connected Settings does not expose the temporary Meta evidence action", async () => {

@@ -357,7 +357,7 @@ CI enforcement: `tests/eo-04e-three-provider-channel-product-economics.test.js`
 - Real-account acceptance completes bounded opaque pagination for both Ad/Channel and `product_id` families before returning either result. Cursor loops, page/row ceilings and first provider errors fail closed.
 - The temporary Meta evidence button is removed from Settings. Reporting Account and Disconnect remain; the authenticated non-visual acceptance route stays available for a separately authorized call.
 - Shopify migration, official Facebook & Instagram catalog synchronization, product/variant identity continuity, App Tester/ad-account access and a real delivered catalog-ad date are provider-day prerequisites. Their absence is not silently treated as empty or unsupported evidence.
-- No Meta role/account, live provider call, secret/environment, database schema or deployment mutation is authorized by this repository package.
+- The product owner authorized a preview-only deployment for desktop/mobile Settings visual acceptance on 17 October 2026. Production deployment, Meta role/account, live provider call, secret/environment and database-schema mutation remain unauthorized.
 
 ## EO-04-C Google reporting runtime start gate — 16 October 2026
 

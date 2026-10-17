@@ -56,7 +56,9 @@
     "live_provider_call": false,
     "secret_or_environment": false,
     "database_schema": false,
-    "deployment": false
+    "preview_deployment": true,
+    "preview_deployment_authorized_at": "2026-10-17",
+    "production_deployment": false
   },
   "repository_verification": {
     "tests": "295_passed",

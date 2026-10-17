@@ -4,7 +4,9 @@
 
 - Product-owner implementation authorization: **17 October 2026**
 - Repository implementation: **ready; 295 tests, typecheck and production build passed**
-- Meta role, account, token, secret, deployment or live-call mutation: **not authorized by this package**
+- Preview deployment for desktop/mobile visual acceptance: **authorized 17 October 2026**
+- Production deployment: **not authorized**
+- Meta role, account, token, secret, Production deployment or live-call mutation: **not authorized by this package**
 - Real-account acceptance: **pending an accepted App Tester role and a separately approved live call**
 
 ## Analyst outcome
@@ -55,7 +57,7 @@ If any provider call returns an explicit or unexplained error, the call stops at
 - Removed copy/action: `Run Meta evidence`, `Meta evidence received`, `Meta evidence failed`
 - Remaining visible actions: `Change` for Reporting Account and `Disconnect`
 - Components: existing stable Polaris web components; no raw HTML control, custom CSS, inline style or literal color is introduced.
-- Desktop and mobile visual acceptance: **pending product-owner review before merge**
+- Desktop and mobile visual acceptance: **pending product-owner review on the authorized preview before merge**
 
 ## Acceptance evidence
 

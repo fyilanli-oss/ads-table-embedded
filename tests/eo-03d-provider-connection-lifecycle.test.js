@@ -13,19 +13,19 @@ import {
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8");
 const migration = read(
-  "supabase/migrations/20261009210000_eo03d_provider_connection_lifecycle.sql",
+  "supabase/migrations/20261009141549_eo03d_provider_connection_lifecycle.sql",
 );
 const lifecycleColumnQualificationMigration = read(
-  "supabase/migrations/20261009211000_eo03d_qualify_lifecycle_event_columns.sql",
+  "supabase/migrations/20261009145154_eo03d_qualify_lifecycle_event_columns.sql",
 );
 const lifecycleUpdateColumnQualificationMigration = read(
-  "supabase/migrations/20261009212000_eo03d_qualify_lifecycle_update_columns.sql",
+  "supabase/migrations/20261009150114_eo03d_qualify_lifecycle_update_columns.sql",
 );
 const finalizeColumnQualificationMigration = read(
-  "supabase/migrations/20261009213000_eo03d_qualify_finalize_update_columns.sql",
+  "supabase/migrations/20261009150614_eo03d_qualify_finalize_update_columns.sql",
 );
 const reconnectConflictQualificationMigration = read(
-  "supabase/migrations/20261009214000_eo03d_disambiguate_reconnect_conflict.sql",
+  "supabase/migrations/20261009151123_eo03d_disambiguate_reconnect_conflict.sql",
 );
 const contract = JSON.parse(
   read("contracts/eo-03d-provider-connection-lifecycle-v1.json"),

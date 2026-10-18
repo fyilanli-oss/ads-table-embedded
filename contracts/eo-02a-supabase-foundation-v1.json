@@ -125,8 +125,8 @@
     "legacy_project_mutation"
   ],
   "migration_chain": [
-    "supabase/migrations/20261006123846_eo02a_private_schema_roles.sql",
-    "supabase/migrations/20261006134000_eo02a_runtime_schema_usage.sql"
+    "supabase/migrations/20261006133830_eo02a_private_schema_roles.sql",
+    "supabase/migrations/20261006134013_eo02a_runtime_schema_usage.sql"
   ],
   "acceptance": {
     "merged_pr": "https://github.com/fyilanli-oss/ads-table-embedded/pull/4",

@@ -118,7 +118,7 @@
     "Product owner explicitly closes A6-EO-03-A."
   ],
   "implementation": {
-    "migration": "supabase/migrations/20261009170000_eo03a_oauth_transaction_boundary.sql",
+    "migration": "supabase/migrations/20261009091622_eo03a_oauth_transaction_boundary.sql",
     "schema": "integrations.oauth_transactions",
     "repository": "app/lib/database/oauth-transaction-repository.server.js",
     "service": "app/lib/oauth/oauth-transaction.server.js",
@@ -129,7 +129,7 @@
     "installation_delete_cascade": true,
     "live_routes_wired": false,
     "live_migration_applied": true,
-    "corrective_migration": "supabase/migrations/20261009173000_eo03a_oauth_installation_fk_index.sql"
+    "corrective_migration": "supabase/migrations/20261009092144_eo03a_oauth_installation_fk_index.sql"
   },
   "privacy": {
     "workspace_associated_security_metadata": true,

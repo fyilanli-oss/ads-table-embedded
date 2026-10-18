@@ -126,26 +126,26 @@ Verified live:
 
 ## First rollback-scoped acceptance finding — 9 October 2026
 
-The first live run reached the lifecycle function and exposed PostgreSQL `42702`: the unqualified `connection_id` lifecycle-event column conflicted with the function's `RETURNS TABLE` output variable. The transaction rolled back and residue was zero. The forward-only correction `20261009211000_eo03d_qualify_lifecycle_event_columns.sql` qualified those event-column references.
+The first live run reached the lifecycle function and exposed PostgreSQL `42702`: the unqualified `connection_id` lifecycle-event column conflicted with the function's `RETURNS TABLE` output variable. The transaction rolled back and residue was zero. The forward-only correction `20261009145154_eo03d_qualify_lifecycle_event_columns.sql` qualified those event-column references.
 
 
 ## Second rollback-scoped acceptance finding — 9 October 2026
 
 The first corrective migration was merged and applied as Supabase migration `20261009145154 / eo03d_qualify_lifecycle_event_columns`. The rerun passed the previously ambiguous lifecycle-event query, then PostgreSQL raised `42702` at the first connection update because the unqualified expression `connection_version = connection_version + 1` conflicts with the function's `RETURNS TABLE` output variable.
 
-The entire synthetic transaction rolled back again. Verified residue remains zero for synthetic connection, credential, account and lifecycle-event rows. The forward-only migration `20261009212000_eo03d_qualify_lifecycle_update_columns.sql` aliases all four `provider_connections` updates and qualifies the source `connection_version`. EO-03-D remains open until this second correction passes CI, receives explicit merge/live approval, and the complete rollback-scoped lifecycle scenario passes.
+The entire synthetic transaction rolled back again. Verified residue remains zero for synthetic connection, credential, account and lifecycle-event rows. The forward-only migration `20261009150114_eo03d_qualify_lifecycle_update_columns.sql` aliases all four `provider_connections` updates and qualifies the source `connection_version`. EO-03-D remains open until this second correction passes CI, receives explicit merge/live approval, and the complete rollback-scoped lifecycle scenario passes.
 
 ## Third rollback-scoped acceptance finding — 9 October 2026
 
 The second corrective migration was merged and applied as Supabase migration `20261009150114 / eo03d_qualify_lifecycle_update_columns`. The complete rerun passed reauthorization, transition idempotency, atomic credential renewal and disconnect-pending. During final disconnect PostgreSQL raised `42702` because `reporting_account_bindings.connection_id` remained unqualified and collided with the function output variable.
 
-A static review of all four function bodies found the two remaining output-variable collision points in final-disconnect updates: the Reporting Account binding and provider-account predicates. The forward-only migration `20261009213000_eo03d_qualify_finalize_update_columns.sql` aliases and qualifies both together. The failed transaction rolled back and synthetic residue remains zero. EO-03-D remains open pending CI, explicit merge/live approval and a complete passing rerun.
+A static review of all four function bodies found the two remaining output-variable collision points in final-disconnect updates: the Reporting Account binding and provider-account predicates. The forward-only migration `20261009150614_eo03d_qualify_finalize_update_columns.sql` aliases and qualifies both together. The failed transaction rolled back and synthetic residue remains zero. EO-03-D remains open pending CI, explicit merge/live approval and a complete passing rerun.
 
 ## Fourth rollback-scoped acceptance finding — 9 October 2026
 
 The third corrective migration was merged and applied as Supabase migration `20261009150614 / eo03d_qualify_finalize_update_columns`. The rerun passed reauthorization, transition idempotency, credential renewal, disconnect-pending and final disconnect. Reconnect then raised PostgreSQL `42702` because the upsert target `ON CONFLICT (connection_id, provider_account_id)` contains the function output variable name.
 
-The table already has the named unique constraint `provider_accounts_connection_account_unique`. The forward-only migration `20261009214000_eo03d_disambiguate_reconnect_conflict.sql` uses `ON CONFLICT ON CONSTRAINT provider_accounts_connection_account_unique`, removing the parser ambiguity without changing uniqueness semantics. The transaction rolled back and synthetic residue remains zero.
+The table already has the named unique constraint `provider_accounts_connection_account_unique`. The forward-only migration `20261009151123_eo03d_disambiguate_reconnect_conflict.sql` uses `ON CONFLICT ON CONSTRAINT provider_accounts_connection_account_unique`, removing the parser ambiguity without changing uniqueness semantics. The transaction rolled back and synthetic residue remains zero.
 
 ## Final rollback-scoped acceptance — 9 October 2026
 

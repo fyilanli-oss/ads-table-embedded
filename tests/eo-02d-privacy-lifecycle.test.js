@@ -19,7 +19,7 @@ import {shopIdentitySha256} from "../app/lib/shopify/shop-identity.server.js";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 const migration = read(
-  "supabase/migrations/20261008190000_eo02d_privacy_lifecycle.sql",
+  "supabase/migrations/20261008140818_eo02d_privacy_lifecycle.sql",
 );
 const secret = "s".repeat(32);
 const rawBody = JSON.stringify({

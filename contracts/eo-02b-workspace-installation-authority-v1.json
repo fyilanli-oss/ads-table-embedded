@@ -90,9 +90,9 @@
     "concurrency": "transaction-scoped advisory lock per verified Shop GID",
     "delete_privilege": false,
     "migration_chain": [
-      "supabase/migrations/20261006152000_eo02b_workspace_installation_authority.sql",
-      "supabase/migrations/20261006153500_eo02b_remove_redundant_indexes.sql",
-      "supabase/migrations/20261006154500_eo02b_acceptance_probe.sql"
+      "supabase/migrations/20261006140517_eo02b_workspace_installation_authority.sql",
+      "supabase/migrations/20261006140629_eo02b_remove_redundant_indexes.sql",
+      "supabase/migrations/20261006140828_eo02b_acceptance_probe.sql"
     ],
     "live_acceptance_probe": "self_cleaning_transactional_probe"
   },

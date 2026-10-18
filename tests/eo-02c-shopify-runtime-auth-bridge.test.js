@@ -316,7 +316,7 @@ test("pathless Admin layout preserves product URLs and uses official boundaries"
 
 test("migration persists no plaintext token fields and grants only function execution", () => {
   const migration = read(
-    "supabase/migrations/20261008143000_eo02c_encrypted_shopify_runtime_sessions.sql",
+    "supabase/migrations/20261008104511_eo02c_encrypted_shopify_runtime_sessions.sql",
   );
   assert.match(migration, /payload_ciphertext bytea not null/);
   assert.match(migration, /force row level security/);

@@ -11,7 +11,7 @@ const liveDatabaseEvidence = JSON.parse(
 const visualEvidence = JSON.parse(
   read("docs/evidence/EO_04D_KLAVIYO_REAUTHORIZATION_VISUAL_ACCEPTANCE_2026-10-17.json"),
 );
-const migration = read("supabase/migrations/20261017150000_eo04d_klaviyo_reauthorization_state.sql");
+const migration = read("supabase/migrations/20261017135321_eo04d_klaviyo_reauthorization_state.sql");
 const settings = read("app/routes/_admin.settings.tsx");
 
 const installationAuthority = Object.freeze({

@@ -74,7 +74,7 @@
     "guard_failure_behavior": "fail_closed_no_live_authorization_or_token_use"
   },
   "implementation": {
-    "migration": "supabase/migrations/20261009180000_eo03b_token_vault.sql",
+    "migration": "supabase/migrations/20261009113645_eo03b_token_vault.sql",
     "cipher": "app/lib/oauth/token-envelope.server.js",
     "repository": "app/lib/database/token-vault-repository.server.js",
     "service": "app/lib/oauth/token-vault.server.js",

@@ -14,10 +14,10 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) =>
   fs.readFileSync(path.join(root, relativePath), "utf8");
 const migration = read(
-  "supabase/migrations/20261009200000_eo03c_connection_account_authority.sql",
+  "supabase/migrations/20261009130713_eo03c_connection_account_authority.sql",
 );
 const correctiveMigration = read(
-  "supabase/migrations/20261009203000_eo03c_owner_policies_fk_indexes.sql",
+  "supabase/migrations/20261009131339_eo03c_owner_policies_fk_indexes.sql",
 );
 const contract = JSON.parse(
   read("contracts/eo-03c-connection-account-authority-v1.json"),

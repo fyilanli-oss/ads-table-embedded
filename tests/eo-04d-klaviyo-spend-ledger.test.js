@@ -8,10 +8,10 @@ import {normalizeKlaviyoEstimatedSpend} from "../app/lib/oauth/klaviyo-oauth-run
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8");
-const originalMigration = "supabase/migrations/20261013170000_eo04d_klaviyo_spend_ledger.sql";
-const sameDayMigration = "supabase/migrations/20261013223000_eo04d_klaviyo_same_day_spend_updates.sql";
-const reconnectMigration = "supabase/migrations/20261013231500_eo04d_klaviyo_reconnect_same_day_spend.sql";
-const reconnectTimestampMigration = "supabase/migrations/20261013232500_eo04d_klaviyo_reconnect_timestamp_order.sql";
+const originalMigration = "supabase/migrations/20261013173301_eo04d_klaviyo_spend_ledger.sql";
+const sameDayMigration = "supabase/migrations/20261013195248_eo04d_klaviyo_same_day_spend_updates.sql";
+const reconnectMigration = "supabase/migrations/20261013201049_eo04d_klaviyo_reconnect_same_day_spend.sql";
+const reconnectTimestampMigration = "supabase/migrations/20261013203128_eo04d_klaviyo_reconnect_timestamp_order.sql";
 
 test("Klaviyo spend accepts explicit zero and exact bounded decimals only", () => {
   assert.equal(normalizeKlaviyoEstimatedSpend("0"), "0.00");
@@ -210,7 +210,7 @@ test("Klaviyo spend slice does not invent reporting facts or Channel behavior", 
   const files = [
     "app/lib/oauth/klaviyo-oauth-runtime.server.js",
     "app/lib/database/klaviyo-spend-repository.server.js",
-    "supabase/migrations/20261013170000_eo04d_klaviyo_spend_ledger.sql",
+    "supabase/migrations/20261013173301_eo04d_klaviyo_spend_ledger.sql",
   ].map(read).join("\n");
   assert.doesNotMatch(files, /channel_hierarchy|dataset_v2|reporting_fact|allocated_spend/i);
 });

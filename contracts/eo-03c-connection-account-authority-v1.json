@@ -91,14 +91,14 @@
     "klaviyo_supported": false
   },
   "implementation": {
-    "migration": "supabase/migrations/20261009200000_eo03c_connection_account_authority.sql",
+    "migration": "supabase/migrations/20261009130713_eo03c_connection_account_authority.sql",
     "repository": "app/lib/database/provider-account-authority-repository.server.js",
     "service": "app/lib/oauth/provider-account-authority.server.js",
     "tests": "tests/eo-03c-connection-account-authority.test.js",
     "live_routes_wired": false,
     "live_migration_applied": true,
     "provider_adapters_implemented": false,
-    "corrective_migration": "supabase/migrations/20261009203000_eo03c_owner_policies_fk_indexes.sql",
+    "corrective_migration": "supabase/migrations/20261009131339_eo03c_owner_policies_fk_indexes.sql",
     "live_migrations": [
       {
         "version": "20261009130713",

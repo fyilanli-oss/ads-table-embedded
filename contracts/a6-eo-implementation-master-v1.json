@@ -3,7 +3,7 @@
   "contract_id": "a6-eo-implementation-master-v1",
   "title": "A6 EO single-track execution rule and integrated implementation package table",
   "effective_date": "2026-10-04",
-  "status": "EO-04_accepted_A6-TECH-01_ready",
+  "status": "EO-04_accepted_A6-TECH-01_findings_recorded_remediation_required",
   "authority": {
     "execution_plan": "docs/EXECUTION_PLAN.md",
     "EO_GO": "contracts/a6-eo-f7-go-decision-v1.json",
@@ -1210,16 +1210,20 @@
   "legacy_deletion_authorized": false,
   "current_active_parent": null,
   "current_active_child": null,
-  "current_gate": "A6-TECH-01_engineering_integrity_audit_ready",
+  "current_gate": "A6-TECH-01_critical_remediation_and_retest",
   "next_ready_child": null,
   "independent_packages": [
     {
       "id": "A6-TECH-01",
       "title": "End-to-end project integrity audit",
-      "status": "Ready; execution not started",
+      "status": "Findings recorded; critical remediation and retest required",
       "objective": "Audit the complete codebase, Shopify, providers, Supabase, Vercel, GitHub/CI and end-to-end data integrity before EO-05.",
       "document": "docs/A6_QUALITY_AND_ASSURANCE_GATES.md",
       "contract": "contracts/a6-quality-and-assurance-gates-v1.json",
+      "audit_document": "docs/A6_TECH_01_ENGINEERING_INTEGRITY_AUDIT.md",
+      "audit_contract": "contracts/a6-tech-01-engineering-integrity-audit-v1.json",
+      "audited_starting_baseline_commit": "c3faddff97628f372f5cc843f3326fb38de95dfc",
+      "pass_baseline_commit": null,
       "blocks_eo05_until_critical_findings_close": true,
       "external_mutation_authorized": false
     },

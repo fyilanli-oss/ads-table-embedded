@@ -56,6 +56,12 @@ CI enforcement: `tests/a6-quality-and-assurance-gates.test.js`
 - `A6-ASSURE-01` EO-08 sonrasında çalışan pre-review doğrulamasıdır; ilk kod
   sağlamlık denetimi değildir. Hiçbir nihai review başvurusu A6-ASSURE-01 PASS
   ve ürün sahibi GO kararı olmadan yapılamaz.
+- `A6-TECH-01` ilk denetimi 18 Ekim 2026'da
+  `c3faddff97628f372f5cc843f3326fb38de95dfc` başlangıç baseline'ında
+  tamamlanmış ve bulgular
+  `docs/A6_TECH_01_ENGINEERING_INTEGRITY_AUDIT.md` içinde kaydedilmiştir.
+  P0 yoktur; üç P1 ve EO-05'i engelleyen beş P2 açıktır. Aktif kapı
+  `A6-TECH-01_critical_remediation_and_retest`tir; bu kayıt PASS değildir.
 
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 

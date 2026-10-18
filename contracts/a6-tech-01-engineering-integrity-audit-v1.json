@@ -1,0 +1,108 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "a6-tech-01-engineering-integrity-audit-v1",
+  "checked_at": "2026-10-18",
+  "status": "audit_findings_recorded_critical_remediation_required",
+  "document": "docs/A6_TECH_01_ENGINEERING_INTEGRITY_AUDIT.md",
+  "audited_starting_baseline_commit": "c3faddff97628f372f5cc843f3326fb38de95dfc",
+  "pass_baseline_commit": null,
+  "external_mutation_authorized": false,
+  "production_changed_by_audit": false,
+  "data_loss_observed": false,
+  "active_service_breakage_observed": false,
+  "finding_counts": {
+    "P0": 0,
+    "P1": 3,
+    "P2": 5,
+    "P3": 2
+  },
+  "eo05_gate": "blocked",
+  "findings": [
+    {
+      "id": "TECH01-F01",
+      "priority": "P1",
+      "title": "supabase_migration_lineage_and_live_schema_drift",
+      "eo05_blocker": true,
+      "live_mutation_required_to_close": true
+    },
+    {
+      "id": "TECH01-F02",
+      "priority": "P1",
+      "title": "orphan_encrypted_google_credential",
+      "eo05_blocker": true,
+      "live_mutation_required_to_close": true
+    },
+    {
+      "id": "TECH01-F03",
+      "priority": "P1",
+      "title": "vercel_environment_inventory_drift",
+      "eo05_blocker": true,
+      "live_mutation_required_to_close": false
+    },
+    {
+      "id": "TECH01-F04",
+      "priority": "P2",
+      "title": "shopify_polaris_url_mismatch",
+      "eo05_blocker": true,
+      "blocker_reason": "review_and_runtime_performance_integrity"
+    },
+    {
+      "id": "TECH01-F05",
+      "priority": "P2",
+      "title": "github_actions_mutable_action_references",
+      "eo05_blocker": true,
+      "blocker_reason": "security"
+    },
+    {
+      "id": "TECH01-F06",
+      "priority": "P2",
+      "title": "unsanitized_production_error_logging",
+      "eo05_blocker": true,
+      "blocker_reason": "security"
+    },
+    {
+      "id": "TECH01-F07",
+      "priority": "P2",
+      "title": "production_deployment_not_at_main_merge_commit",
+      "eo05_blocker": true,
+      "blocker_reason": "release_lineage"
+    },
+    {
+      "id": "TECH01-F08",
+      "priority": "P2",
+      "title": "privacy_foreign_key_covering_indexes_missing",
+      "eo05_blocker": true,
+      "blocker_reason": "capacity_and_deletion_lifecycle"
+    },
+    {
+      "id": "TECH01-F09",
+      "priority": "P3",
+      "title": "primary_checkout_main_behind_origin_main",
+      "eo05_blocker": false
+    },
+    {
+      "id": "TECH01-F10",
+      "priority": "P3",
+      "title": "react_router_v8_future_warning_debt",
+      "eo05_blocker": false
+    }
+  ],
+  "open_evidence": [
+    "github_branch_protection_or_ruleset_manual_evidence",
+    "supabase_backup_and_pitr_manual_evidence",
+    "meta_current_official_documentation_recheck_after_initial_429"
+  ],
+  "baseline_verification": {
+    "repository_tests": "384_of_384_pass",
+    "typecheck": "pass",
+    "build": "pass_with_five_react_router_future_warnings",
+    "production_dependency_audit": "no_known_vulnerability_reported",
+    "supabase_security_advisor": "zero_findings",
+    "latest_production_deployment_logs": "zero_error_zero_warning",
+    "repository_secret_pattern_scan": "no_obvious_match"
+  },
+  "required_next_gate": "A6-TECH-01_critical_remediation_and_retest",
+  "a6_docs_01_may_start": false,
+  "a6_eo_05_may_start": false
+}
+

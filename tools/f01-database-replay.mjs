@@ -5,12 +5,15 @@ import path from "node:path";
 import {fileURLToPath} from "node:url";
 import pg from "pg";
 import {loadMigrationFiles, validateMigrationLineage, validExecutionContext} from "./check-migration-lineage.mjs";
+import {buildScopedRecovery, definitionHash} from "./f01-scoped-recovery.mjs";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const read = (file) => readFileSync(path.join(root, file), "utf8").replaceAll("\r\n", "\n");
 const manifest = JSON.parse(read("contracts/a6-tech-01-f01-migration-lineage-v1.json"));
 const inventorySql = read("tools/f01-schema-inventory.sql");
 const retirementSql = read(manifest.pending_migrations[0].file);
+const recoverySnapshot = JSON.parse(read("contracts/a6-tech-01-f01c-scoped-recovery-v1.json"));
+const historicalReference = JSON.parse(read("docs/evidence/A6_TECH_01_F01_LIVE_SCHEMA_2026-10-18.json")).inventory;
 // Within rollback-only scenario transactions, preserve the SQL body exactly.
 const retirementBody = retirementSql.replace(/^begin;\s*$/m, "").replace(/^commit;\s*$/m, "");
 
@@ -338,6 +341,60 @@ async function scenarios(client) {
   }
 }
 
+const finalizeMetadata = catalog => catalog.functions.find(fn => fn.schema === "integrations" && fn.name === "finalize_provider_disconnect");
+
+async function dataFingerprint(client) {
+  return (await client.query(`select encode(sha256(convert_to(coalesce(jsonb_agg(to_jsonb(h) order by oauth_transaction_id)::text,'[]'),'UTF8')),'hex') as history_hash,
+    (select count(*) from integrations.provider_connections) as connections,
+    (select count(*) from integrations.provider_credential_envelopes) as credentials
+    from integrations.provider_authorization_handoffs h`)).rows[0];
+}
+
+function recoverySql(retired, transaction = true) {
+  return buildScopedRecovery({snapshot: recoverySnapshot, lineage: manifest, reference: historicalReference,
+    retiredFinalizeHash: finalizeMetadata(retired).definition_sha256, transaction});
+}
+
+function assertRecoveredCatalog(original, recovered) {
+  const expected = structuredClone(original);
+  const retiredNames = manifest.retired_function_signatures.map(signature => signature.split("(")[0].split(".")[1]);
+  for (const fn of expected.functions) {
+    if (fn.schema === "integrations" && retiredNames.includes(fn.name)) fn.acl = "{adstable_owner=X/adstable_owner}";
+  }
+  assert.deepEqual(inventoryDifferences(expected, recovered), [], "only six legacy runtime EXECUTE grants may differ from historical state");
+}
+
+async function scopedRecoveryScenarios(client) {
+  await rollbackScenario(client, "scoped_recovery_terminal_history_and_failure_rollback", async () => {
+    const authority = await fixture(client, ["consumed", "consumed", ...Array(6).fill("failed")]);
+    const original = await inventory(client);
+    const dataBefore = await withReplayRole(client, "adstable_owner", () => dataFingerprint(client));
+    await client.query(retirementBody);
+    const retired = await inventory(client);
+    const body = recoverySql(retired, false);
+    await expectSqlFailure(client, "late_recovery_failure", () => client.query(`${body}\nselect 1/0;`), {code: "22012"});
+    assert.deepEqual(await inventory(client), retired, "late recovery error must undo all recovered DDL/grants");
+    await client.query(body);
+    assertRecoveredCatalog(original, await inventory(client));
+    assert.deepEqual(await withReplayRole(client, "adstable_owner", () => dataFingerprint(client)), dataBefore);
+    await canonicalDisconnectAndPrivacy(client, authority);
+  });
+}
+
+async function committedRecoveryRoundtrip(client, original) {
+  const retired = await inventory(client);
+  // Both statements below are standalone full transactions on the isolated database.
+  const sql = recoverySql(retired);
+  await client.query(sql);
+  assertRecoveredCatalog(original, await inventory(client));
+  await securityProbes(client);
+  await client.query(retirementSql);
+  assert.deepEqual(inventoryDifferences(retired, await inventory(client)), [], "retire/recover/retire must converge exactly");
+  console.log(`F01C_SCOPED_RECOVERY_PASS ${JSON.stringify({recovery_sql_sha256: definitionHash(sql),
+    committed_roundtrip: true, restored_function_count: 7, legacy_runtime_execute_restored: false,
+    database_backup: false, production_mutation: false})}`);
+}
+
 async function main() {
   assertReplayEnvironment(process.env);
   const mode=process.argv[2];
@@ -364,10 +421,12 @@ async function main() {
       console.log("F01B_LIVE_PARITY_PASS");
       await rolePreflight(client);
       await scenarios(client);
+      await scopedRecoveryScenarios(client);
       await rollbackScenario(client, "fixtures_rolled_back", () => withReplayRole(client, "adstable_owner", async () => {
         assert.equal((await client.query("select count(*)::int as n from app.workspaces")).rows[0].n,0,"scenario fixtures must roll back to zero");
       }));
       await client.query(retirementSql);
+      await committedRecoveryRoundtrip(client, before);
     }
     const after=await inventory(client);
     await securityProbes(client);

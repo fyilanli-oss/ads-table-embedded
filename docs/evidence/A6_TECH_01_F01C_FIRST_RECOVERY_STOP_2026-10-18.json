@@ -1,0 +1,23 @@
+{
+  "checked_at": "2026-10-18",
+  "status": "stopped_generated_recovery_SQL_statement_separator",
+  "source_commit": "4cf622ce0aa65d43be4a4e890e0f16a1b7af7397",
+  "workflow_run_id": 39137350657,
+  "job_id": 117704471852,
+  "workflow_url": "https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/39137350657",
+  "historical_migrations": 38,
+  "live_schema_parity": "pass",
+  "existing_F01B_scenarios": "pass_before_recovery",
+  "failure": {
+    "expected_sqlstate": "22012",
+    "actual_sqlstate": "42601",
+    "test": "late_recovery_failure"
+  },
+  "diagnosis": "pg_get_functiondef_capture_has_no_trailing_statement_semicolon_generator_must_add_separator_before_REVOKE",
+  "captured_function_bodies_changed": false,
+  "production_mutation": false,
+  "isolated_cleanup": "success",
+  "local_tests": 415,
+  "next_action": "routine_generator_separator_fix_within_authorized_isolated_recovery_scope",
+  "backup_gate_satisfied": false
+}

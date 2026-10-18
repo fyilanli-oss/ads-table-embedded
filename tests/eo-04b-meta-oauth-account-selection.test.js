@@ -171,6 +171,16 @@ test("Meta discovery treats invalid authorization as reauthorization, not empty"
   );
 });
 
+test("Meta discovery stops on permission 403 without claiming the token expired", async () => {
+  let calls = 0;
+  await assert.rejects(discoverMetaAdAccounts({
+    accessToken: "valid-token", appSecret: "test-secret",
+    fetchFn: async () => {calls++; return json({error: {code: 10}}, 403);},
+  }), error => error.code === "META_GRAPH_REQUEST_FAILED"
+    && error.details.provider_error_code === 10 && error.details.status === 403);
+  assert.equal(calls, 1);
+});
+
 test("Meta disconnect is revoke-first and already-invalid remains idempotent", async () => {
   const requests = [];
   const revoked = await revokeMetaAuthorization({

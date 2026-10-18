@@ -238,6 +238,39 @@ test("first Meta authorization rejection persists reauthorization_required witho
   assert.equal(queries.filter(({sql}) => /transition_provider_connection_lifecycle/.test(sql)).length, 1);
 });
 
+test("Meta permission and BUC failures preserve connection lifecycle and stop partial publication", async () => {
+  for (const method of ["readDailyEvidencePages", "readDailyEvidenceSnapshot"]) {
+    for (const code of [10, 200, 80000, 80004, null]) {
+      for (const failOn of [1, 2]) {
+        let calls = 0;
+        let queries = 0;
+        const runtime = createMetaReportingAuthorityRuntime({
+          database: {async query(sql) {
+            queries++;
+            // Any lifecycle read/transition would fail this test immediately.
+            assert.match(sql, /integrations[.]load_provider_account_authority/);
+            return {rows: [databaseRow()]};
+          }},
+          appSecret: "test-secret",
+          tokenVault: {async loadProviderTokenSet() {return {access_token: "valid-token"};}},
+          fetchFn: async () => {
+            calls++;
+            return calls === failOn
+              ? json({error: code === null ? {} : {code}}, 403)
+              : json({data: [{ad_id: "ad-1"}]});
+          },
+        });
+        await assert.rejects(runtime[method]({
+          installationAuthority, dateWindow: {start: "2026-10-15", end: "2026-10-15"},
+        }), error => error.code === (code === 80000 || code === 80004
+          ? "META_REPORTING_REQUEST_FAILED" : "META_PERMISSION_DENIED"));
+        assert.equal(calls, failOn);
+        assert.equal(queries, 1);
+      }
+    }
+  }
+});
+
 test("Meta App Role acceptance snapshot fails closed on an opaque cursor loop", async () => {
   let providerCalls = 0;
   const runtime = createMetaReportingAuthorityRuntime({

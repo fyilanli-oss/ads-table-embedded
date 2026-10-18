@@ -116,7 +116,6 @@ export function createMetaReportingAuthorityRuntime({
         && (
           error.code === "META_REAUTHORIZATION_REQUIRED"
           || error.details?.status === 401
-          || error.details?.status === 403
           || error.details?.provider_error_code === 190
         )
       ) {

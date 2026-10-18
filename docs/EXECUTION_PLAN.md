@@ -212,6 +212,22 @@ ayrı onaylı güncel release/canlı kabulü kalır. Bilinen Free Plan recovery 
 yeni yedek işi açmaz. F10 açık ertelemedir; genel PASS, A6-DOCS-01 ve EO-05
 başlangıcı verilmez. Bu kayıt canlı işlem yetkisi değildir.
 
+### A6-TECH-01 ek kanıt — 18 Ekim 2026
+
+Ürün sahibinin oluşturduğu `main-protection` ruleset'i Connector ile okundu:
+aktif, yalnız `main`, bypass boş; PR, GitHub Actions `governance`, silme ve
+force-push koruması mevcut. Meta rate-limit ve error-handling metinleri ürün
+sahibi tarafından resmî sayfalardan paylaşıldı ve incelendi; agent'ın HTTP 429
+erişimi giderilmiş veya gerçek hesap testi yapılmış sayılmaz.
+
+Karşılaştırmada iki dar eksik görüldü ve ürün sahibi repository düzeltmesini
+onayladı: izin reddi token geçersizliği değildir; `80000/80004` BUC kota sınıfıdır.
+Kod/test hazırlığı tek kanıt PR'ında teslim edilir. Kaynak ve kapsam:
+`docs/evidence/A6_TECH_01_GITHUB_META_EVIDENCE_2026-10-18.json`.
+CI, kabul ve merge beklenir. Sonrasında yalnız ayrı onaylı exact release/canlı
+kabulü ve genel kapanış kararı kalır. F10 ertelemesi korunur; yeni yedek işi,
+genel PASS, A6-DOCS-01 veya EO-05 başlangıç yetkisi yoktur.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

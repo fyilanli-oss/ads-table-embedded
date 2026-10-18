@@ -1,0 +1,133 @@
+{
+  "checked_at": "2026-10-18",
+  "baseline_commit": "0decc3506b2981ea4b816dfb56c1066f415bf6b1",
+  "status": "github_protection_verified_meta_documentation_reviewed_two_fixes_prepared_acceptance_pending",
+  "approval": "Ürün sahibi GitHub korumasını arayüzden oluşturdu; iki resmî Meta metnini paylaştı ve yalnız izin/yeniden bağlantı ayrımı ile 80000/80004 sınıflandırmasının repository düzeltmesini onayladı.",
+  "github": {
+    "source": "GitHub Connector GET; kullanıcı arayüzünden yapılan ayar agent tarafından değiştirilmedi",
+    "ruleset_url": "https://github.com/fyilanli-oss/ads-table-embedded/rules/25357172",
+    "branch_protected": true,
+    "observed_ruleset": {
+      "id": 25357172,
+      "name": "main-protection",
+      "target": "branch",
+      "source_type": "Repository",
+      "source": "fyilanli-oss/ads-table-embedded",
+      "enforcement": "active",
+      "conditions": {
+        "ref_name": {
+          "exclude": [],
+          "include": [
+            "refs/heads/main"
+          ]
+        }
+      },
+      "rules": [
+        {
+          "type": "deletion"
+        },
+        {
+          "type": "non_fast_forward"
+        },
+        {
+          "type": "pull_request",
+          "parameters": {
+            "required_approving_review_count": 0,
+            "dismiss_stale_reviews_on_push": false,
+            "required_reviewers": [],
+            "require_code_owner_review": false,
+            "require_last_push_approval": false,
+            "required_review_thread_resolution": false,
+            "require_extra_approval_for_unattributed_changes": true,
+            "allowed_merge_methods": [
+              "merge",
+              "squash",
+              "rebase"
+            ]
+          }
+        },
+        {
+          "type": "required_status_checks",
+          "parameters": {
+            "strict_required_status_checks_policy": false,
+            "do_not_enforce_on_create": false,
+            "required_status_checks": [
+              {
+                "context": "governance",
+                "integration_id": 15368
+              }
+            ]
+          }
+        }
+      ],
+      "node_id": "RRS_lACqUmVwb3NpdG9yec5T3-S-zgGC63Q",
+      "created_at": "2026-10-18T20:21:03.844+00:00",
+      "updated_at": "2026-10-18T20:21:03.968+00:00",
+      "bypass_actors": [],
+      "current_user_can_bypass": "never",
+      "_links": {
+        "self": {
+          "href": "https://api.github.com/repos/fyilanli-oss/ads-table-embedded/rulesets/25357172"
+        },
+        "html": {
+          "href": "https://github.com/fyilanli-oss/ads-table-embedded/rules/25357172"
+        }
+      }
+    },
+    "limits": "Bu kayıt aktif konfigürasyonu doğrular; yasak push/silme veya başarısız merge denemesi yapılmadı. Strict up-to-date kapalı, insan reviewer onayı 0; sohbet içindeki ürün sahibi merge onayı ayrıca zorunlu."
+  },
+  "meta_documentation": {
+    "provenance": "İçerik ürün sahibi tarafından resmî sayfalardan sohbete kopyalanarak sağlandı ve okundu; agent'ın bağımsız HTTP erişimi başarılı ilan edilmez.",
+    "rate_limit_url": "https://developers.facebook.com/docs/graph-api/overview/rate-limiting/",
+    "error_handling_url": "https://developers.facebook.com/docs/graph-api/guides/error-handling/",
+    "agent_rate_limit_fetch": "HTTP_429_stop_no_retry_no_alternative",
+    "agent_error_handling_fetch_after_429": "not_attempted",
+    "reviewed_facts": [
+      "Marketing API kotası BUC/ad-account kapsamındadır; call count, CPU ve toplam süre ayrı ölçütlerdir.",
+      "80000 Ads Insights; 80004 Ads Management kota hatalarıdır.",
+      "10 ve 200–299 izin hatalarıdır; tek başına HTTP 403 token geçersizliğini kanıtlamaz.",
+      "190 geçersiz/süresi dolmuş token durumunu temsil eder; mevcut terminal yeniden bağlantı davranışı korunur.",
+      "X-Business-Use-Case-Usage içindeki estimated_time_to_regain_access dakika cinsindedir; bu patch alanı parse etmez ve scheduler eklemez."
+    ],
+    "numeric_quota_frozen": false,
+    "live_account_permission_or_product_evidence_claimed": false
+  },
+  "approved_remediation": {
+    "status": "repository_local_checks_pass_final_CI_and_acceptance_pending",
+    "permission_failure_does_not_mark_reauthorization": true,
+    "discovery_bare_403_does_not_claim_expired_token": true,
+    "buc_rate_limit_codes": [
+      80000,
+      80004
+    ],
+    "explicit_190_still_requires_reauthorization": true,
+    "automatic_retry_added": false,
+    "partial_publication_allowed": false,
+    "targeted_tests_passed": 31,
+    "new_real_provider_calls": 0
+  },
+  "scope": {
+    "app_UI_routes": false,
+    "oauth_scope_or_secret": false,
+    "database_schema_or_new_infrastructure": false,
+    "dependency_or_lockfile": false,
+    "scheduler": false,
+    "live_deployment": false
+  },
+  "fresh_local_checks": {
+    "tests_passed": 457,
+    "tests_failed": 0,
+    "typecheck_exit_code": 0,
+    "build_exit_code": 0,
+    "unchanged_F10_future_warnings": 5,
+    "git_diff_check": "pass"
+  },
+  "historical_evidence_rewritten": false,
+  "F01_through_F09_reopened": false,
+  "F10_closed": false,
+  "new_backup_work_authorized": false,
+  "remaining_gate": "Meta düzeltmesinin CI/kabul/merge teslimi; ardından ayrı onaylı exact release deployment ve fresh uçtan uca canlı kabul. Genel kapanış kararı ayrıca verilir.",
+  "A6_TECH_01_overall_pass": false,
+  "A6_DOCS_01_may_start": false,
+  "EO05_may_start": false
+}

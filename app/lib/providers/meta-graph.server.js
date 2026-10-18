@@ -290,7 +290,7 @@ export async function discoverMetaAdAccounts({
     } catch (error) {
       if (
         error instanceof MetaGraphError
-        && (error.details?.status === 401 || error.details?.status === 403 || error.details?.provider_error_code === 190)
+        && (error.details?.status === 401 || error.details?.provider_error_code === 190)
       ) {
         throw new MetaGraphError("META_REAUTHORIZATION_REQUIRED", "Meta authorization is no longer valid");
       }

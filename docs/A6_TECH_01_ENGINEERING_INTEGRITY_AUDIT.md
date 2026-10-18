@@ -5,9 +5,8 @@
 **Durum:** Bulgular kaydedildi; kritik düzeltme ve yeniden test zorunlu
 **EO-05 kararı:** Kapalı
 
-**Güncel düzeltme durumu:** F01–F07 ürün sahibi kabulüyle kapandı.
-F08 canlı index uygulaması doğrulandı; son CI ve ürün sahibi kapanış/merge kabulü
-beklenir. Genel audit PASS değildir.
+**Güncel düzeltme durumu:** F01–F08 ürün sahibi kabulüyle kapandı.
+F09 başlamadı; genel audit PASS değildir.
 İlk denetim bulguları ve başlangıç sayıları aşağıda
 tarihsel baseline olarak korunur; genel A6-TECH-01 henüz PASS değildir.
 
@@ -368,6 +367,11 @@ mutation onayıyla exact audited `main` commit'i Production'a alınmalı ve depl
 provenance tekrar doğrulanmalıdır.
 
 ### TECH01-F08 — P2 blocker — Privacy foreign-key indexleri
+
+**Kapanış — 18 Ekim 2026:** Ürün sahibi canlı postcheck ve repository eşleme
+sonucunu, F08 kapanışını ve PR #111 merge'ünü açıkça kabul etti.
+Kanıt `docs/evidence/A6_TECH_01_F08_CLOSURE_2026-10-18.json`.
+Yeni canlı işlem/deploy yok; F09 başlamaz. Aşağıdaki önceki kayıtlar tarihseldir.
 
 **Canlı uygulama — 18 Ekim 2026:** Ayrı açık onayla tek migration çağrısı
 başarılı oldu. Supabase version `20261018181906`; hazırlık dosyası bu version'a

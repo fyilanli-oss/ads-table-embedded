@@ -149,6 +149,12 @@ Security Advisor 0, eksik FK index uyarısı 0. Canlı kanıt:
 `docs/evidence/A6_TECH_01_F08_LIVE_ACCEPTANCE_2026-10-18.json`.
 Son CI ve açık kapanış/merge kabulü beklenir; F09 başlamadı.
 
+F08 canlı kabul/eşleme sonrası genel CI (437 test/typecheck/build) ve iki izole
+40-migration replay geçti. Ürün sahibi kapanışı ve PR #111 merge'ünü kabul etti.
+Kanıt `docs/evidence/A6_TECH_01_F08_CLOSURE_2026-10-18.json`.
+Güncel F01–F08 kapalı; F09 başlamadı/yetkili değil, genel audit ve EO-05 kapısı
+ayrı kapanış/retest kararı olmadan PASS/başlangıç sayılmaz.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

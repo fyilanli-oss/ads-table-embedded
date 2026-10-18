@@ -1,0 +1,43 @@
+{
+  "checked_at": "2026-10-18",
+  "finding": "TECH01-F04",
+  "status": "repository_prepared_real_admin_visual_acceptance_pending",
+  "source_main_commit": "791bd9945a03ca110f269e0ebc5dc7701435458b",
+  "analyst_brief": "docs/A6_TECH_01_ENGINEERING_INTEGRITY_AUDIT.md#tech01-f04--p2-blocker--shopify-polaris-url-bütünlüğü",
+  "approved_polaris_url": "https://cdn.shopify.com/shopifycloud/polaris-2.0-rc.js",
+  "polaris_types": "2.0.0-rc.2",
+  "shopify_react_router_version": "3.0.1",
+  "change": "one constant supplied to shopifyApp.polarisUrl and publicConfig.polarisUrl; layout unchanged",
+  "technical_probe": {
+    "real_shopify_sdk_response_headers": "pass_local_synthetic_request",
+    "real_AppProvider_static_render": "pass_local_synthetic_request",
+    "preload_script_exact_url_equality": true,
+    "single_polaris_script": true,
+    "app_bridge_before_polaris": true,
+    "wrong_preload_duplicate_script_unapproved_version_rejected": true,
+    "database": "one_stubbed_startup_guard_read_only_no_real_database",
+    "credentials": "synthetic_only",
+    "real_shopify_or_provider_calls": 0
+  },
+  "scope": {
+    "dependency_change": false,
+    "visible_copy_or_component_change": false,
+    "auth_or_session_or_provider_semantic_change": false,
+    "database_mutation": false,
+    "environment_or_app_configuration_mutation": false,
+    "deployment_authorized": false,
+    "deployment_performed": false
+  },
+  "official_sources_checked": [
+    "https://shopify.dev/docs/apps/build/app-home/polaris2",
+    "https://shopify.dev/docs/api/app-home/v2.0-rc/web-components/versioning"
+  ],
+  "acceptance": {
+    "desktop_real_shopify_admin": "pending_corrected_source_deployment_and_user_acceptance",
+    "mobile_320px_real_shopify_admin": "pending_corrected_source_deployment_and_user_acceptance",
+    "product_owner_visual_acceptance": false,
+    "merge_authorized": false
+  },
+  "F04_closed": false,
+  "F05_may_start": false
+}

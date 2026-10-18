@@ -199,6 +199,35 @@ birleştirilmelidir.
 
 ### TECH01-F04 — P2 blocker — Shopify Polaris URL bütünlüğü
 
+#### F04 uygulama öncesi analist brief'i — 18 Ekim 2026
+
+- Amaç: Browser'ın ön yüklediği Polaris ile AppProvider'ın çalıştırdığı Polaris
+  aynı kabul edilmiş RC adresi olsun; gereksiz/yanlış bundle ön yüklenmesin.
+- Başlangıç: `publicConfig.polarisUrl` RC adresi, server config ise library
+  varsayılanında. Başarı: iki değer tek sabitten gelir ve gerçek SDK response
+  Link header'ı ile render edilen script adresi eşleşir.
+- Exact copy: hiçbir görünür metin, buton veya kullanıcı eylemi değişmez.
+- Durum matrisi: loading, empty/not connected, resume, connected, error,
+  reauthorization, cancel ve success akışları mevcut davranışı aynen korur;
+  bu düzeltme yeni durum veya action eklemez. Auth/OAuth/database/provider
+  çağrıları ve üç ürün URL'i değişmez.
+- Component mapping: mevcut `AppProvider` / `polarisUrl` korunur; server
+  `shopifyApp({polarisUrl})` aynı sabiti alır. Sayfa, section, form, modal,
+  navigation ve action componentleri/propları değişmez. Yeni CSS/control yok.
+- Desktop/mobil beklenti: görünüm ve bilgi mimarisi aynı; mevcut RC sürümü ve
+  `@shopify/polaris-types@2.0.0-rc.2` korunur, yükseltme veya stable fallback yok.
+- Resmî kaynak: `https://shopify.dev/docs/apps/build/app-home/polaris2` ve
+  `https://shopify.dev/docs/api/app-home/v2.0-rc/web-components/versioning`.
+  Kontrol tarihi 18 Ekim 2026; kurulu React Router adapter 3.0.1 destekliyor.
+- Kabul: constitution/test/typecheck/build/CI; tek bundle ve Link/script
+  eşliği; ayrı onaylı exact-source deploy sonrası gerçek Shopify Admin
+  desktop ve en az 320 px gerçek mobil kontrolü, açık ürün sahibi kabulü.
+- Kapsam dışı: yeni özellik, dependency yükseltme, yeni app/secret/config,
+  database/provider mutation, auth/data değişikliği. Deploy henüz yetkili değil.
+- Rollback: uygulama kodundaki dar config değişikliği geri alınabilir; deploy
+  gerekirse ayrı onaylı önceki deployment'a dönüş uygulanır. Mevcut secret ve
+  veritabanı değiştirilmez. Görsel kabul kanıtsız PASS yazılmaz.
+
 `AppProvider` Polaris 2 RC URL'sini alırken server `shopifyApp()` yapılandırması
 aynı `polarisUrl` değerini almamaktadır. Kurulu kütüphanenin varsayılanı stable
 URL'dir. Shopify'ın güncel talimatı React Router uygulamasında iki değerin aynı

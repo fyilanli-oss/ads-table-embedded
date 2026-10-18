@@ -1,0 +1,31 @@
+{
+  "checked_at": "2026-10-18",
+  "finding": "TECH01-F09",
+  "status": "closed_product_owner_accepted",
+  "product_owner_closure_accepted": true,
+  "approval_source": "explicit user approval of F09 closure, PR112 merge and final clean primary checkout fast-forward",
+  "pull_request": "https://github.com/fyilanli-oss/ads-table-embedded/pull/112",
+  "prepared_evidence": "docs/evidence/A6_TECH_01_F09_CHECKOUT_SYNC_2026-10-18.json",
+  "previous_evidence_snapshots_preserved": true,
+  "pre_acceptance_ci_source": "050ed0fe2c3eeba1300ef31a70feb23b5c370739",
+  "pre_acceptance_governance_run_id": 39154826305,
+  "pre_acceptance_tests_passed": 439,
+  "final_acceptance_commit_requires_fresh_ci_before_merge": true,
+  "verified_primary_sync_anchor": "f72c1af273c2271640342051d6a7cb0d47a889d9",
+  "post_merge_final_sync_required": true,
+  "final_delivery_gate": "after passing final CI and merging PR112, recheck primary checkout cleanliness and ancestry, fast-forward only to the exact verified merge commit, verify GitHub commit/tree equality and clean ahead/behind 0/0; stop on local work or divergence",
+  "final_sync_proof_location": "PR112 body: final merge commit, GitHub tree, primary HEAD/tree and clean status; no self-referential follow-up evidence commit",
+  "scope": {
+    "runtime_or_dependency_change": false,
+    "deployment_database_or_provider_change": false,
+    "reset_clean_force_stash_or_auth_repair": false,
+    "user_attachment_preserved": true,
+    "worktrees_preserved": true,
+    "recurring_sync_or_freshness_guarantee": false
+  },
+  "F09_closed": true,
+  "next_finding": "TECH01-F10",
+  "F10_execution_authorized": false,
+  "A6_TECH_01_overall_pass": false,
+  "EO05_may_start": false
+}

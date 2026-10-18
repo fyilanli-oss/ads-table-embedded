@@ -114,6 +114,10 @@
       "id": "TECH01-F09",
       "priority": "P3",
       "title": "primary_checkout_main_behind_origin_main",
+        "remediation_status": "closed_product_owner_accepted",
+      "remediation_evidence": "docs/evidence/A6_TECH_01_F09_CHECKOUT_SYNC_2026-10-18.json",
+        "closure_evidence": "docs/evidence/A6_TECH_01_F09_CLOSURE_2026-10-18.json",
+        "closed": true,
       "eo05_blocker": false
     },
     {

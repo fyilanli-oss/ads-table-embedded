@@ -90,7 +90,11 @@
       "id": "TECH01-F07",
       "priority": "P2",
       "title": "production_deployment_not_at_main_merge_commit",
-      "eo05_blocker": true,
+      "remediation_status": "closed_product_owner_accepted_2026-10-18",
+      "closure_evidence": "docs/evidence/A6_TECH_01_F07_CLOSURE_2026-10-18.json",
+      "remediation_evidence": "docs/evidence/A6_TECH_01_F07_PROVENANCE_2026-10-18.json",
+      "closed": true,
+      "eo05_blocker": false,
       "blocker_reason": "release_lineage"
     },
     {

@@ -98,6 +98,12 @@ etti, PR #106 merge'ünü onayladı. Kapanış kanıtı:
 Güncel durum F01–F04 kapalı, sıradaki F05 başlamadı ve yetkili değil.
 F07 release provenance ve genel EO-05 kapısı açık bulgulara bağlı kalır.
 
+F05 action SHA sabitlemesi ürün sahibi onayıyla repository'de hazırlandı.
+Kanıt `docs/evidence/A6_TECH_01_F05_ACTION_PINS_2026-10-18.json`.
+Kontrollü güncelleme: resmî release/commit doğrulaması → PR → CI → açık merge
+onayı; otomatik merge yoktur. CI ve kabul beklenir, F05 açık ve F06 yetkisizdir.
+Canlı workflow dispatch, secret veya deployment değişikliği yapılmadı.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

@@ -1,0 +1,37 @@
+{
+  "checked_at": "2026-10-18",
+  "finding": "TECH01-F05",
+  "status": "repository_prepared_ci_and_product_owner_acceptance_pending",
+  "source_main_commit": "f5a42f186b31e2cdff129ea1605537d2e7d0d32b",
+  "official_guidance": "https://docs.github.com/en/actions/reference/security/secure-use",
+  "verification_method": "GitHub Connector official repository git/ref/tags endpoints; annotated tags dereferenced through git/tags to commit; current major tag and exact release tag matched before pinning",
+  "pins": [
+    {"action": "actions/checkout", "release": "v6.1.0", "sha": "d23441a48e516b6c34aea4fa41551a30e30af803", "already_pinned_in_database_workflow": true},
+    {"action": "actions/checkout", "release": "v4.4.0", "sha": "11d5960a326750d5838078e36cf38b85af677262"},
+    {"action": "pnpm/action-setup", "release": "v4.3.0", "sha": "b906affcce14559ad1aafd4ab0e942779e9f58b1"},
+    {"action": "actions/setup-node", "release": "v4.4.0", "sha": "49933ea5288caeca8642d1e84afbd3f7d6820020"},
+    {"action": "pnpm/setup", "release": "v3.0.0", "sha": "fbda4c85fc2e1e08721cd8763afea8f48d60f024", "existing_pin_unchanged": true}
+  ],
+  "update_policy": "controlled_manual_PR_official_release_and_commit_verification_CI_and_product_owner_merge_approval_no_auto_merge",
+  "local_verification": {
+    "repository_tests_passed": 425,
+    "final_pin_test_negative_case_extension": "2_of_2_pass_after_multiline_reference_rejection_added",
+    "typecheck": "pass",
+    "build": "pass_existing_five_React_Router_future_warnings_remain_F10",
+    "diff_check": "pass",
+    "github_ci": "pending"
+  },
+  "scope": {
+    "mutable_references_replaced": 4,
+    "major_version_upgrade": false,
+    "workflow_triggers_permissions_commands_inputs_changed": false,
+    "application_code_or_dependency_change": false,
+    "secret_read_or_mutation": false,
+    "shopify_deploy_workflow_dispatched": false,
+    "live_deployment_or_database_mutation": false
+  },
+  "product_owner_closure_accepted": false,
+  "F05_closed": false,
+  "F06_execution_authorized": false,
+  "EO05_may_start": false
+}

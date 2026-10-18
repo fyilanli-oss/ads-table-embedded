@@ -68,6 +68,9 @@
       "id": "TECH01-F05",
       "priority": "P2",
       "title": "github_actions_mutable_action_references",
+      "remediation_status": "repository_prepared_ci_and_product_owner_acceptance_pending",
+      "remediation_evidence": "docs/evidence/A6_TECH_01_F05_ACTION_PINS_2026-10-18.json",
+      "closed": false,
       "eo05_blocker": true,
       "blocker_reason": "security"
     },

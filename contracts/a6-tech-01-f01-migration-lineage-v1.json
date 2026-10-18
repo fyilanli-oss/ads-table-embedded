@@ -409,7 +409,16 @@
       "applied_sql_difference": null
     }
   ],
-  "pending_migrations": [],
+  "pending_migrations": [
+    {
+      "version": "20261018180529",
+      "name": "a6tech01_privacy_workspace_fk_indexes",
+      "file": "supabase/migrations/20261018180529_a6tech01_privacy_workspace_fk_indexes.sql",
+      "created_with": "supabase@2.121.0 migration new a6tech01_privacy_workspace_fk_indexes",
+      "repository_sql_sha256": "828056300ca0f8bc3fe689737a9b9973ce5b73ca07d4ae05bb57dc781113a70a",
+      "applied": false
+    }
+  ],
   "forward_migrations": [
     {
       "version": "20261018152910",

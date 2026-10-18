@@ -6,7 +6,7 @@
 **EO-05 kararı:** Kapalı
 
 **Güncel düzeltme durumu:** F01–F07 ürün sahibi kabulüyle kapandı.
-F08 başlamadı; genel audit PASS değildir.
+F08 index hazırlığı sürüyor; izole CI ve ayrı canlı onay beklenir. Genel audit PASS değildir.
 İlk denetim bulguları ve başlangıç sayıları aşağıda
 tarihsel baseline olarak korunur; genel A6-TECH-01 henüz PASS değildir.
 
@@ -367,6 +367,30 @@ mutation onayıyla exact audited `main` commit'i Production'a alınmalı ve depl
 provenance tekrar doğrulanmalıdır.
 
 ### TECH01-F08 — P2 blocker — Privacy foreign-key indexleri
+
+**Repository hazırlığı — 18 Ekim 2026:** Canlı read-only kontrol iki eksik
+workspace FK index'ini doğruladı. `deletion_runs` ve `deletion_manifests` sıfır
+satır; mevcut owner/RLS/FORCE RLS/ACL ve RESTRICT FK'ler korunacak. İki full,
+non-unique B-tree yalnız `workspace_id` üzerinde hazırlanır; mevcut pending ve
+identity index'leri silinmez. 12 unused-index bildirimi silme gerekçesi değildir.
+Veri silinmez; webhook, worker, retention ve silme kuralları değişmez.
+
+Migration resmî CLI ile üretildi; yalnız iki CREATE INDEX, transaction-local
+owner, 5 sn lock ve 30 sn statement sınırı içerir. Normal CREATE INDEX yazmayı
+geçici bloke edebilir; canlı tabloların boş/küçük olması nedeniyle atomic yol
+seçildi. CONCURRENTLY transaction içinde çalışmaz. Canlı preflight koşulları
+değişirse veya lock timeout olursa durulur; otomatik rota değişimi/tekrar yoktur.
+
+Yeni altyapı yerine mevcut iki izole replay kullanılır. İlkinde rollback-only
+sentetik 2.000 workspace, tablo başına 20.000 completed kayıt üzerinde doğal
+plan öncesi/sonrası ve exact index kullanımı; sonra migration committed clean
+schema'ya uygulanır. İkinci bağımsız replay aynı son schema'yı üretmelidir.
+Fixture gerçek veri/ölçek sertifikası değildir; boş canlı tabloda index scan
+seçilmemesi tek başına hata veya performans kanıtı sayılmaz.
+
+Kanıt `docs/evidence/A6_TECH_01_F08_PRIVACY_INDEXES_2026-10-18.json`.
+İzole CI, ayrı canlı uygulama onayı, postcheck/Advisor ve repository-live ledger
+eşlemesi olmadan F08 kapanmaz. Secret/deploy/provider işlemi yok; F09 başlamaz.
 
 Supabase Performance Advisor, `privacy.deletion_manifests.workspace_id` ve
 `privacy.deletion_runs.workspace_id` için covering index bulunmadığını raporlamıştır.

@@ -6,6 +6,7 @@ import {fileURLToPath} from "node:url";
 import pg from "pg";
 import {loadMigrationFiles, validateMigrationLineage, validExecutionContext} from "./check-migration-lineage.mjs";
 import {buildScopedRecovery, definitionHash} from "./f01-scoped-recovery.mjs";
+import {privacyIndexPlanProbe, assertPrivacyIndexes} from "./f08-privacy-index-probe.mjs";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const read = (file) => readFileSync(path.join(root, file), "utf8").replaceAll("\r\n", "\n");
@@ -455,6 +456,13 @@ async function main() {
       }));
       await client.query(retirementSql);
       await committedRecoveryRoundtrip(client, before);
+      const additionalMigrations = [...manifest.forward_migrations.slice(1), ...manifest.pending_migrations];
+      const privacyIndexes = additionalMigrations.find(entry => entry.name === "a6tech01_privacy_workspace_fk_indexes");
+      if (privacyIndexes) await privacyIndexPlanProbe(client, read(privacyIndexes.file));
+      for (const entry of additionalMigrations) await executeMigration(client, entry, read(entry.file));
+    }
+    if ([...manifest.forward_migrations, ...manifest.pending_migrations].some(entry => entry.name === "a6tech01_privacy_workspace_fk_indexes")) {
+      await assertPrivacyIndexes(client);
     }
     await credentialReplacementRegression(client);
     const after=await inventory(client);
@@ -465,7 +473,7 @@ async function main() {
       const staged=JSON.parse(readFileSync(output,"utf8"));
       assert.deepEqual(inventoryDifferences(staged,after),[],"second clean replay must match staged final schema");
     }
-    console.log(`F01B_EVIDENCE ${JSON.stringify({mode,postgres_version_num:version,migrations_applied:migrations.length+(mode==="staged"?1:0),
+    console.log(`F01B_EVIDENCE ${JSON.stringify({mode,postgres_version_num:version,migrations_applied:migrations.length+(mode==="staged"?manifest.forward_migrations.length+manifest.pending_migrations.length:0),
       schema_sha256:hash(after),live_parity:beforeDifferences.length===0,live_difference_categories:beforeDifferences.map(d=>d.category),
       business_data_source:"synthetic_only",production_mutation:false})}`);
     assert.equal(beforeDifferences.length,0,"historical replay differs from captured live schema; review required");

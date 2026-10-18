@@ -1,0 +1,58 @@
+{
+  "checked_at": "2026-10-18",
+  "finding": "TECH01-F08",
+  "status": "repository_prepared_isolated_ci_and_live_application_pending",
+  "source_main_commit": "854e8d4d2bb9786f4356bb8b556d9fa28e7b9870",
+  "project_id": "podpwkrpmjiksskxhwsu",
+  "project_name": "ads-table-embedded",
+  "postgres_version": "17.11.0.003",
+  "official_sources_checked": [
+    "https://supabase.com/changelog.md",
+    "https://supabase.com/changelog/postgres-15-19-17-11-breaking-changes",
+    "https://supabase.com/docs/guides/database/postgres/indexes",
+    "https://www.postgresql.org/docs/17/sql-createindex.html",
+    "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys"
+  ],
+  "live_read_only_baseline": {
+    "advisor_observed_at": "2026-10-18T18:04:51.518Z",
+    "unindexed_foreign_keys": 2,
+    "security_advisor_findings": 0,
+    "unused_index_notices": 12,
+    "unused_indexes_removed": false,
+    "tables": [
+      {"table": "privacy.deletion_runs", "rows": 0, "bytes": 81920, "owner": "adstable_owner", "rls": true, "force_rls": true, "acl": "{adstable_owner=arwdDxtm/adstable_owner}", "workspace_fk_delete_action": "RESTRICT", "existing_index_count": 4},
+      {"table": "privacy.deletion_manifests", "rows": 0, "bytes": 65536, "owner": "adstable_owner", "rls": true, "force_rls": true, "acl": "{adstable_owner=arwdDxtm/adstable_owner}", "workspace_fk_delete_action": "RESTRICT", "existing_index_count": 3}
+    ],
+    "plans": {"deletion_runs": "Seq Scan", "deletion_manifests": "Seq Scan", "limitation": "no workspace_id index; empty-table plans are not latency benchmarks"},
+    "business_rows_or_credentials_exported": false
+  },
+  "migration": {
+    "version": "20261018180529",
+    "name": "a6tech01_privacy_workspace_fk_indexes",
+    "file": "supabase/migrations/20261018180529_a6tech01_privacy_workspace_fk_indexes.sql",
+    "created_with": "supabase@2.121.0 migration new a6tech01_privacy_workspace_fk_indexes",
+    "sql_sha256": "828056300ca0f8bc3fe689737a9b9973ce5b73ca07d4ae05bb57dc781113a70a",
+    "indexes": ["privacy.deletion_runs_workspace_fk_idx", "privacy.deletion_manifests_workspace_fk_idx"],
+    "keys": "workspace_id, non-unique full B-tree, not partial",
+    "execution_role": "transaction-local adstable_owner",
+    "lock_timeout": "5s",
+    "statement_timeout": "30s",
+    "transactional_create_index": true,
+    "reason_not_concurrent": "Both verified live tables are empty and tiny; bounded transactional DDL is atomic, while CONCURRENTLY cannot run in a transaction. Fresh live preflight and explicit approval required; changed scale or lock conditions stop, not a silent retry.",
+    "live_applied": false
+  },
+  "verification": {
+    "local_targeted_tests_passed": 29,
+    "migration_lineage": "38 historical + 1 applied forward + 1 pending; previous hashes unchanged",
+    "isolated_plan_probe": "pending_existing_GitHub_database_integrity_workflow",
+    "synthetic_fixture": "2000 workspaces, 20000 completed runs and 20000 matching manifests, transaction rollback; no live fixture insertion",
+    "expected_plan_check": "natural Seq Scan before; exact new index referenced after; no forced planner flags",
+    "two_independent_replays_final_schema_parity": "pending",
+    "github_governance": "pending"
+  },
+  "remaining_live_gates": ["explicit approval", "fresh schema_size_history_preflight", "apply exact migration once", "valid_ready_indexes_RLS_ACL_FK_row_and_data_preservation", "read_only_postplan", "security_and_performance_advisor_recheck", "repository_live_version_and_ledger_reconciliation", "product_owner_closure"],
+  "scope": {"live_ddl_or_dml": false, "secret_or_provider_mutation": false, "application_or_delete_policy_change": false, "deployment": false},
+  "F08_closed": false,
+  "F09_execution_authorized": false,
+  "EO05_may_start": false
+}

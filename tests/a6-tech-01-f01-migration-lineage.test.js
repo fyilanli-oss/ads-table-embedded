@@ -86,7 +86,7 @@ test("six recovered files match applied SQL while known historical wrapper diffe
 const retirement = read(manifest.forward_migrations[0].file);
 
 test("applied forward migration cannot disappear from the live ledger or change its hash", () => {
-  assert.equal(manifest.pending_migrations.length, 0);
+  assert.ok(manifest.pending_migrations.every(entry => entry.name === "a6tech01_privacy_workspace_fk_indexes"));
   assert.equal(manifest.forward_migrations[0].applied, true);
   assert.ok(validate({liveLedger: evidence.migrations.slice(0, 38)}).some(error => error.startsWith("LIVE_LEDGER_MISMATCH:")));
   const changed = structuredClone(evidence.migrations);

@@ -131,6 +131,20 @@
       "eo05_blocker": false
     }
   ],
+  "latest_retest_evidence": "docs/evidence/A6_TECH_01_FINAL_RETEST_2026-10-18.json",
+  "latest_retest_status": "repository_checks_pass_dependency_security_review_required",
+  "retest_findings": [
+    {
+      "id": "TECH01-RETEST-SEC01",
+      "priority": "P2",
+      "title": "development_build_dependency_advisories_require_exposure_assessment",
+      "classification": "provisional_security_finding_not_confirmed_exploitation",
+      "closed": false,
+      "eo05_blocker": true,
+      "implementation_authorized": false,
+      "evidence": "docs/evidence/A6_TECH_01_FINAL_RETEST_2026-10-18.json"
+    }
+  ],
   "open_evidence": [
     "github_branch_protection_or_ruleset_manual_evidence",
     "supabase_backup_and_pitr_manual_evidence",

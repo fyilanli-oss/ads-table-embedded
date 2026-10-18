@@ -1,0 +1,89 @@
+{
+  "checked_at": "2026-10-18",
+  "status": "repository_checks_pass_dependency_security_review_required",
+  "baseline_commit": "cddda0fad4803c9212412211495365c69ed2e884",
+  "baseline_tree": "f12d28905ac2241899f2ea07be81e3d0a43ce4c5",
+  "environment": {"os": "Windows", "node": "24.19.0", "pnpm": "11.25.0"},
+  "fresh_local_checks": {
+    "pnpm_test": {"exit_code": 0, "tests": 441, "passed": 441, "failed": 0},
+    "pnpm_typecheck": {"exit_code": 0},
+    "pnpm_build": {"exit_code": 0, "known_F10_future_warnings": 5},
+    "production_audit": {
+      "command": "pnpm audit --prod --json",
+      "exit_code": 0,
+      "vulnerabilities": {"info": 0, "low": 0, "moderate": 0, "high": 0, "critical": 0},
+      "scope": "production dependency graph only, not a deployed bundle or build-chain attestation"
+    },
+    "complete_audit": {
+      "command": "pnpm audit --json",
+      "exit_code": 1,
+      "registry_response_received": true,
+      "vulnerabilities": {"info": 0, "low": 1, "moderate": 3, "high": 4, "critical": 0},
+      "all_reported_findings_marked_dev": true,
+      "fix_ignore_override_or_update_used": false,
+      "registry_retries_configured": 0,
+      "official_command_reference": "https://pnpm.io/cli/audit"
+    }
+  },
+  "advisories_observed": [
+    {"id": "GHSA-2g4f-4pwh-qvx6", "module": "ajv", "installed": "8.6.3", "severity": "moderate", "reported_patched": ">=8.18.0"},
+    {"id": "GHSA-4w7w-66w2-5vf9", "module": "vite", "installed": "7.3.1", "severity": "moderate", "reported_patched": ">=7.3.2"},
+    {"id": "GHSA-v2wj-q39q-566r", "module": "vite", "installed": "7.3.1", "severity": "high", "reported_patched": ">=7.3.2"},
+    {"id": "GHSA-p9ff-h696-f583", "module": "vite", "installed": "7.3.1", "severity": "high", "reported_patched": ">=7.3.2"},
+    {"id": "GHSA-g7r4-m6w7-qqqr", "module": "esbuild", "severity": "low", "reported_patched": ">=0.28.1"},
+    {"id": "GHSA-v6wh-96g9-6wx3", "module": "vite", "installed": "7.3.1", "severity": "moderate", "reported_patched": ">=7.3.5"},
+    {"id": "GHSA-fx2h-pf6j-xcff", "module": "vite", "installed": "7.3.1", "severity": "high", "reported_patched": ">=7.3.5"},
+    {"id": "GHSA-vfj7-8cjw-p6xm", "module": "braces", "installed": "3.0.3", "severity": "high", "reported_patched": null}
+  ],
+  "advisory_limits": "registry observations, not independently verified exploitability or compatibility-safe upgrade recommendations; patched ranges may change and must be checked against primary sources before remediation",
+  "reused_database_evidence": {
+    "workflow_run_id": 39154118503,
+    "source_commit": "c1795bbe76145ca97886163e782e892e61f5f308",
+    "connector_rechecked_conclusion": "success",
+    "all_paths_changed_since_source": [
+      "contracts/a6-eo-implementation-master-v1.json",
+      "contracts/a6-tech-01-engineering-integrity-audit-v1.json",
+      "docs/A6_TECH_01_ENGINEERING_INTEGRITY_AUDIT.md",
+      "docs/EXECUTION_PLAN.md",
+      "docs/evidence/A6_TECH_01_F09_CHECKOUT_SYNC_2026-10-18.json",
+      "docs/evidence/A6_TECH_01_F09_CLOSURE_2026-10-18.json",
+      "docs/evidence/A6_TECH_01_F10_DEFERRED_2026-10-18.json",
+      "tests/a6-tech-01-engineering-integrity-audit.test.js",
+      "tests/a6-tech-01-f09-checkout-sync.test.js"
+    ],
+    "database_inputs_unchanged": true,
+    "fresh_database_replay_performed": false,
+    "live_database_read_or_mutation": false
+  },
+  "runtime_source_comparison": {
+    "previously_accepted_deployment_source": "17e79ae4993860de23c3efda091844aaf88c23e5",
+    "compared_paths": ["app", "react-router.config.ts", "vite.config.ts", "package.json", "pnpm-lock.yaml", "vercel.json", "shopify.app.toml"],
+    "changed_paths": [],
+    "fresh_live_deployment_or_browser_verification": false
+  },
+  "existing_evidence_limits": {
+    "F01_closed_scoped_recovery_evidence": "docs/evidence/A6_TECH_01_F01_CLOSURE_2026-10-18.json",
+    "managed_backup": "known_unavailable_Free_Plan_user_screenshot",
+    "full_data_backup_or_PITR_proven": false,
+    "F01_reopened_or_new_backup_work_authorized": false,
+    "github_active_ruleset_manual_evidence": "not_obtained",
+    "github_ruleset_guide": "access_failed_no_retry_or_alternative",
+    "meta_initial_429_documentation_recheck": "not_performed_no_new_attempt"
+  },
+  "security_finding": {
+    "id": "TECH01-RETEST-SEC01",
+    "priority": "P2",
+    "classification": "provisional_security_finding_not_confirmed_exploitation",
+    "exposure_assessment_complete": false,
+    "production_exploitation_proven": false,
+    "closed": false,
+    "blocks_overall_closure_and_EO05_pending_assessment": true,
+    "implementation_authorized": false
+  },
+  "scope": {"dependency_runtime_workflow_or_migration_change": false, "live_environment_change": false, "new_infrastructure_or_backup_work": false},
+  "F01_through_F09_remain_closed": true,
+  "F10_remains_open_accepted_debt": true,
+  "A6_TECH_01_overall_pass": false,
+  "A6_DOCS_01_may_start": false,
+  "EO05_may_start": false
+}

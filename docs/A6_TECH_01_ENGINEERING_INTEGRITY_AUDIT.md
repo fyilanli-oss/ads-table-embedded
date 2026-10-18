@@ -12,6 +12,13 @@ son eşlik kanıtı PR #112 üzerinde tutulur. F10 ürün sahibi kararıyla ayr�
 İlk denetim bulguları ve başlangıç sayıları aşağıda
 tarihsel baseline olarak korunur; genel A6-TECH-01 henüz PASS değildir.
 
+**Son yeniden test — 18 Ekim 2026:** `cddda0fad4803c9212412211495365c69ed2e884`
+üzerinde 441 test, typecheck ve build geçti. Production bağımlılık taraması
+uyarı bildirmedi; geliştirme/build bağımlılıklarını da içeren tarama ise dört
+yüksek, üç orta, bir düşük advisory bildirdi. Yeni `TECH01-RETEST-SEC01`
+güvenlik değerlendirmesi açık olduğundan genel kapanış ve EO-05 başlangıcı yok.
+Kanıt: `docs/evidence/A6_TECH_01_FINAL_RETEST_2026-10-18.json`.
+
 ## 1. Analist özeti
 
 Çalışan Production uygulamasında veri kaybı veya aktif servis kırılması
@@ -503,6 +510,50 @@ testleri, typecheck/build ve gerekiyorsa Shopify masaüstü/mobil kabulü alın�
 EO-05 öncesi genel yeniden test ve audit kararı bu ertelemeden bağımsızdır.
 
 ## 5. Açık kanıtlar
+
+### Son yeniden testte bulunan güvenlik konusu — TECH01-RETEST-SEC01
+
+Bu kayıt ilk F01–F10 listesini veya o denetimin başlangıç sayılarını değiştirmez.
+F01–F09 kapanışları ve F10'un kabul edilmiş açık teknik borç kararı korunur.
+Yeni konu, tam bağımlılık taramasında görülen geliştirme/build zinciridir:
+
+- Vite `7.3.1`: üç yüksek ve iki orta advisory.
+- Vercel adaptörünün transitif `braces` bağımlılığı: bir yüksek advisory.
+- Aynı zincirde `ajv`: bir orta advisory.
+- `esbuild`: bir düşük advisory.
+
+Tarama başarılı bir registry cevabı aldı ve bulgu nedeniyle exit 1 döndü;
+bu bir bağlantı/izin hatası veya yeniden deneme gerekçesi değildir. Sonuçlar
+advisory eşleşmesidir; uygulamanın ele geçirildiği, canlıda veri sızdığı veya
+her advisory'nin mevcut kullanımda tetiklenebildiği kanıtlanmış değildir.
+Production-only taramanın temiz olması da build zincirini veya yayımlanan
+bundle'ı kendiliğinden güvenli ilan etmez.
+
+**Karar:** Ön değerlendirme P2/güvenlik; etki analizi tamamlanana kadar kapanış
+ve EO-05 engeli. Otomatik `audit --fix`, override, ignore, lockfile veya sürüm
+değişikliği yapılmadı. F10'un v8 geçiş borcuyla birleştirilmez. Sonraki adım,
+ayrı açık onayla advisory'lerin exact sürüm ve gerçek kullanım koşullarını
+inceleyip en küçük güvenli düzeltmeyi önermektir; henüz uygulama yetkisi yoktur.
+
+### Önceden açık kalan kanıtların güncel sınırı
+
+F01'de scoped schema recovery açık ürün sahibi kabulüyle kapandı. Free Plan'da
+managed backup olmadığı biliniyor; bu artık bilinmeyen bir plan sorusu değildir.
+F01 kabulü tam veri yedeği veya genel PITR kanıtı sayılmaz. Bu yeniden test yeni
+yedek işi açmaz, F01'i tekrar açmaz ve genel recovery güvencesi iddia etmez.
+GitHub aktif koruma kuralları ve Meta'nın önceden erişilemeyen iki resmî sayfası
+için yeni kanıt üretilmedi. GitHub ruleset rehberine erişim de başarısız oldu;
+yeniden deneme veya alternatif yetki rotası kullanılmadı.
+
+F08'in başarılı izole veritabanı CI kaydı Connector ile yeniden doğrulandı.
+O kaynağa göre migration, DB araçları, workflow ve bağımlılık girdileri değişmedi;
+eski PASS kanıtı bu sınırla korunur. Bu, bugün yeni bir DB replay, canlı sorgu
+veya canlı state doğrulaması yapıldığı anlamına gelmez. Aynı şekilde F06 kabul
+edilmiş deploy kaynağına göre application/config/dependency dosyaları değişmedi;
+bu taze browser/API/DB uçtan uca kabulünün yerine geçirilmez.
+
+Aşağıdaki tablo ilk denetimin tarihsel açık kanıt listesidir; yukarıdaki sınırlar
+güncel değerlendirmedir. Yeni güvenlik konusu çözülmeden genel PASS verilmez.
 
 | Kanıt | Durum | Tamamlama yolu |
 | --- | --- | --- |

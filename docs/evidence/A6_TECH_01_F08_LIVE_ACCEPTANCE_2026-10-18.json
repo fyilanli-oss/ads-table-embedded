@@ -1,0 +1,77 @@
+{
+  "checked_at": "2026-10-18",
+  "finding": "TECH01-F08",
+  "status": "live_applied_verified_product_owner_closure_pending",
+  "project_id": "podpwkrpmjiksskxhwsu",
+  "pull_request": "https://github.com/fyilanli-oss/ads-table-embedded/pull/111",
+  "approval_source": "explicit user approval to add only the two indexes and perform postchecks; merge/deploy not authorized",
+  "prepared_evidence": "docs/evidence/A6_TECH_01_F08_PRIVACY_INDEXES_2026-10-18.json",
+  "isolated_pass_evidence": "docs/evidence/A6_TECH_01_F08_ISOLATED_PASS_2026-10-18.json",
+  "applied_source_commit": "55e6b4bff5304678bfc301b04b385a14ef516982",
+  "migration": {
+    "prepared_version": "20261018180529",
+    "live_version": "20261018181906",
+    "name": "a6tech01_privacy_workspace_fk_indexes",
+    "sql_sha256": "828056300ca0f8bc3fe689737a9b9973ce5b73ca07d4ae05bb57dc781113a70a",
+    "repository_file": "supabase/migrations/20261018181906_a6tech01_privacy_workspace_fk_indexes.sql",
+    "sql_body_unchanged": true,
+    "apply_calls": 1,
+    "success": true,
+    "retry": false
+  },
+  "postcheck": {
+    "errors": [],
+    "before_counts": {
+      "deletion_runs": 0,
+      "deletion_manifests": 0
+    },
+    "after_counts": {
+      "deletion_runs": 0,
+      "deletion_manifests": 0
+    },
+    "previous_39_migration_hashes_unchanged": true,
+    "total_applied": 40,
+    "pending": 0,
+    "ledger_evidence": "docs/evidence/A6_TECH_01_F08_POST_MIGRATION_LEDGER_2026-10-18.json",
+    "owner_rls_force_rls_acl_constraints_policies_unchanged": true,
+    "existing_indexes_unchanged": true,
+    "privacy_functions_md5_before": "3f36176ff222b4c73c30aa51c0359b51",
+    "privacy_functions_md5_after": "3f36176ff222b4c73c30aa51c0359b51",
+    "new_indexes": [
+      {
+        "name": "deletion_manifests_workspace_fk_idx",
+        "ready": true,
+        "valid": true,
+        "unique": false,
+        "definition": "CREATE INDEX deletion_manifests_workspace_fk_idx ON privacy.deletion_manifests USING btree (workspace_id)"
+      },
+      {
+        "name": "deletion_runs_workspace_fk_idx",
+        "ready": true,
+        "valid": true,
+        "unique": false,
+        "definition": "CREATE INDEX deletion_runs_workspace_fk_idx ON privacy.deletion_runs USING btree (workspace_id)"
+      }
+    ],
+    "security_advisor_findings": 0,
+    "unindexed_foreign_key_notices_before": 2,
+    "unindexed_foreign_key_notices_after": 0,
+    "unused_index_notices_after": 14,
+    "indexes_deleted": 0,
+    "explain": {
+      "deletion_runs": "Index Scan using deletion_runs_workspace_fk_idx",
+      "deletion_manifests": "Index Scan using deletion_manifests_workspace_fk_idx",
+      "limitation": "read-only EXPLAIN on empty live tables; no production ANALYZE/fixture/benchmark or capacity claim"
+    }
+  },
+  "scope": {
+    "data_dml": false,
+    "provider_or_secret_mutation": false,
+    "environment_or_app_configuration_mutation": false,
+    "deployment": false,
+    "merge_authorized": false
+  },
+  "F08_closed": false,
+  "F09_execution_authorized": false,
+  "EO05_may_start": false
+}

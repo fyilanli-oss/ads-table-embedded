@@ -6,6 +6,8 @@ on:
     paths:
       - "supabase/migrations/**"
       - "tools/f01-*"
+      - "tools/f08-*"
+      - "tests/a6-tech-01-f08*"
       - "tools/check-migration-lineage.mjs"
       - "tests/a6-tech-01-f01*"
       - "contracts/a6-tech-01-f01-migration-lineage-v1.json"

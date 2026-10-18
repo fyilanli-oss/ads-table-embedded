@@ -135,6 +135,26 @@ ve yapılmadı. Kapanış kanıtı:
 `docs/evidence/A6_TECH_01_F07_CLOSURE_2026-10-18.json`.
 Güncel F01–F07 kapalıdır; F08 başlamadı/yetkili değil, EO-05 engeli korunur.
 
+F08 iki private privacy tablosunda `workspace_id` FK index hazırlığıdır.
+Kanıt `docs/evidence/A6_TECH_01_F08_PRIVACY_INDEXES_2026-10-18.json`.
+Yeni migration pending; canlı DDL/DML yapılmadı. Mevcut izole DB workflow'u ile
+replay ve sentetik öncesi/sonrası plan kontrolü beklenir. Canlı uygulama ayrı
+açık onay, fresh preflight ve postcheck/Advisor kapısından geçer. F08 açık,
+F09 başlamadı; veri/silme kuralı/runtime/deploy değişikliği yetkilendirilmedi.
+
+F08 iki index'i ayrı açık onayla canlıya ekledi; Supabase version
+`20261018181906` repository'ye SQL içeriği değişmeden eşlendi. 40 applied / 0
+pending; önceki migration hash'leri, veri ve güvenlik sınırları korundu.
+Security Advisor 0, eksik FK index uyarısı 0. Canlı kanıt:
+`docs/evidence/A6_TECH_01_F08_LIVE_ACCEPTANCE_2026-10-18.json`.
+Son CI ve açık kapanış/merge kabulü beklenir; F09 başlamadı.
+
+F08 canlı kabul/eşleme sonrası genel CI (437 test/typecheck/build) ve iki izole
+40-migration replay geçti. Ürün sahibi kapanışı ve PR #111 merge'ünü kabul etti.
+Kanıt `docs/evidence/A6_TECH_01_F08_CLOSURE_2026-10-18.json`.
+Güncel F01–F08 kapalı; F09 başlamadı/yetkili değil, genel audit ve EO-05 kapısı
+ayrı kapanış/retest kararı olmadan PASS/başlangıç sayılmaz.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

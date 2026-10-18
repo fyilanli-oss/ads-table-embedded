@@ -101,7 +101,13 @@
       "id": "TECH01-F08",
       "priority": "P2",
       "title": "privacy_foreign_key_covering_indexes_missing",
-      "eo05_blocker": true,
+      "remediation_status": "closed_product_owner_accepted_2026-10-18",
+      "closure_evidence": "docs/evidence/A6_TECH_01_F08_CLOSURE_2026-10-18.json",
+      "remediation_evidence": "docs/evidence/A6_TECH_01_F08_PRIVACY_INDEXES_2026-10-18.json",
+      "isolated_verification_evidence": "docs/evidence/A6_TECH_01_F08_ISOLATED_PASS_2026-10-18.json",
+      "live_application_evidence": "docs/evidence/A6_TECH_01_F08_LIVE_ACCEPTANCE_2026-10-18.json",
+      "closed": true,
+      "eo05_blocker": false,
       "blocker_reason": "capacity_and_deletion_lifecycle"
     },
     {

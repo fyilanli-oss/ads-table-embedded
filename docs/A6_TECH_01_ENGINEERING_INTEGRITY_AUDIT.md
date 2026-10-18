@@ -5,8 +5,8 @@
 **Durum:** Bulgular kaydedildi; kritik düzeltme ve yeniden test zorunlu
 **EO-05 kararı:** Kapalı
 
-**Güncel düzeltme durumu:** F01–F07 ürün sahibi kabulüyle kapandı.
-F08 başlamadı; genel audit PASS değildir.
+**Güncel düzeltme durumu:** F01–F08 ürün sahibi kabulüyle kapandı.
+F09 başlamadı; genel audit PASS değildir.
 İlk denetim bulguları ve başlangıç sayıları aşağıda
 tarihsel baseline olarak korunur; genel A6-TECH-01 henüz PASS değildir.
 
@@ -367,6 +367,56 @@ mutation onayıyla exact audited `main` commit'i Production'a alınmalı ve depl
 provenance tekrar doğrulanmalıdır.
 
 ### TECH01-F08 — P2 blocker — Privacy foreign-key indexleri
+
+**Kapanış — 18 Ekim 2026:** Ürün sahibi canlı postcheck ve repository eşleme
+sonucunu, F08 kapanışını ve PR #111 merge'ünü açıkça kabul etti.
+Kanıt `docs/evidence/A6_TECH_01_F08_CLOSURE_2026-10-18.json`.
+Yeni canlı işlem/deploy yok; F09 başlamaz. Aşağıdaki önceki kayıtlar tarihseldir.
+
+**Canlı uygulama — 18 Ekim 2026:** Ayrı açık onayla tek migration çağrısı
+başarılı oldu. Supabase version `20261018181906`; hazırlık dosyası bu version'a
+yeniden adlandırıldı, SQL hash'i değişmedi. Önceki 39 migration korunur;
+toplam 40 applied, pending sıfır. İki index valid/ready; eski index, owner,
+RLS/FORCE RLS, ACL, policy, FK/check ve privacy function hash'i aynı; hedef
+tablolar öncesi/sonrası sıfır satır. Canlı EXPLAIN iki exact index'i kullanır;
+boş tablo sonucu latency/kapasite sertifikası değildir. Security Advisor 0;
+unindexed FK 2 → 0. 14 unused-index bildirimi düşük kullanım gözlemidir,
+hiçbir index silinmedi. Kanıt:
+`docs/evidence/A6_TECH_01_F08_LIVE_ACCEPTANCE_2026-10-18.json`.
+Son CI ve açık kapanış/merge kabulü beklenir; F08 henüz kapalı sayılmaz.
+Aşağıdaki hazırlık/teşhis kayıtları tarihsel kanıttır.
+
+**İzole doğrulama PASS:** PR #111 kaynak `b935ed6` üzerinde genel CI 437 test,
+typecheck/build PASS; DB Integrity `39152944207` PASS. Doğal plan iki tabloda
+Seq Scan'den exact yeni index kullanılan Bitmap Heap Scan'e geçti. Fixture'lar
+rollback edildi; iki bağımsız 40-migration replay son şema SHA256'sı
+`74f45de15c47463848809ffd220fddb122775935f46c3f7eead961f116f3dec3` ile aynı.
+Kanıt `docs/evidence/A6_TECH_01_F08_ISOLATED_PASS_2026-10-18.json`.
+Canlı uygulama hâlâ ayrı açık onay bekler; F08 kapanmadı.
+
+**Repository hazırlığı — 18 Ekim 2026:** Canlı read-only kontrol iki eksik
+workspace FK index'ini doğruladı. `deletion_runs` ve `deletion_manifests` sıfır
+satır; mevcut owner/RLS/FORCE RLS/ACL ve RESTRICT FK'ler korunacak. İki full,
+non-unique B-tree yalnız `workspace_id` üzerinde hazırlanır; mevcut pending ve
+identity index'leri silinmez. 12 unused-index bildirimi silme gerekçesi değildir.
+Veri silinmez; webhook, worker, retention ve silme kuralları değişmez.
+
+Migration resmî CLI ile üretildi; yalnız iki CREATE INDEX, transaction-local
+owner, 5 sn lock ve 30 sn statement sınırı içerir. Normal CREATE INDEX yazmayı
+geçici bloke edebilir; canlı tabloların boş/küçük olması nedeniyle atomic yol
+seçildi. CONCURRENTLY transaction içinde çalışmaz. Canlı preflight koşulları
+değişirse veya lock timeout olursa durulur; otomatik rota değişimi/tekrar yoktur.
+
+Yeni altyapı yerine mevcut iki izole replay kullanılır. İlkinde rollback-only
+sentetik 2.000 workspace, tablo başına 20.000 completed kayıt üzerinde doğal
+plan öncesi/sonrası ve exact index kullanımı; sonra migration committed clean
+schema'ya uygulanır. İkinci bağımsız replay aynı son schema'yı üretmelidir.
+Fixture gerçek veri/ölçek sertifikası değildir; boş canlı tabloda index scan
+seçilmemesi tek başına hata veya performans kanıtı sayılmaz.
+
+Kanıt `docs/evidence/A6_TECH_01_F08_PRIVACY_INDEXES_2026-10-18.json`.
+İzole CI, ayrı canlı uygulama onayı, postcheck/Advisor ve repository-live ledger
+eşlemesi olmadan F08 kapanmaz. Secret/deploy/provider işlemi yok; F09 başlamaz.
 
 Supabase Performance Advisor, `privacy.deletion_manifests.workspace_id` ve
 `privacy.deletion_runs.workspace_id` için covering index bulunmadığını raporlamıştır.

@@ -10,7 +10,8 @@
   "live_mutation_authorized": false,
   "f01_closed": false,
   "replay_document": "docs/A6_TECH_01_F01B_DATABASE_REPLAY.md",
-  "replay_status": "runner_prepared_execution_pending",
+  "replay_status": "stopped_at_historical_migration_21_execution_role_context_required",
+  "replay_stop_evidence": "docs/evidence/A6_TECH_01_F01B_FIRST_REPLAY_STOP_2026-10-18.json",
   "replay_workflow": ".github/workflows/database-integrity.yml",
   "next_finding_may_start": false,
   "historical_migrations": [

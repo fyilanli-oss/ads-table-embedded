@@ -2,7 +2,35 @@
 
 **Tarih:** 18 Ekim 2026
 
-**Durum:** Prova düzeneği hazır; gerçek GitHub koşusu sonucu bekleniyor.
+**Durum:** İlk gerçek koşu 21. migration'da durdu; F01 açık, PR draft.
+
+## İlk gerçek koşunun sonucu
+
+[`39132400862` numaralı GitHub koşusu](https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/39132400862),
+`c2070282db244988c41dd564e6e5fa4347b704f4` kaynak commit'ini
+`supabase/postgres:17.11.0.004` üzerinde çalıştırdı. İlk 20 migration geçti.
+`20261009145154_eo03d_qualify_lifecycle_event_columns.sql` dosyasında
+`42501: permission denied for schema integrations` oluştu. Sonraki migration,
+parity, retirement ve ikinci ortam adımları başlamadı. Geçici database temizliği
+başarılıdır. Production'a hiçbir işlem yapılmadı.
+
+F01-A manifest'inde `live_session_role_wrapper_only` olarak kaydedilen dört
+dosyanın çalıştırma bağlamı gerçekten gereklidir. `adstable_owner` rolüne geçiş
+olmadan private schema'ya DDL uygulanamaması beklenen least-privilege davranışıdır.
+Bu sonuç yetki genişletme gerekçesi değildir; repository kurulum prosedürünün
+eksik çalıştırma bağlamını gösterir.
+
+Önerilen dar düzeltme: bu dört manifest kaydına transaction içindeki mevcut
+`adstable_owner` çalıştırma bağlamını açıkça eklemek ve replay aracının yalnız bu
+dört dosyayı o bağlamda yürütmesini sağlamak. Tarihsel SQL gövdeleri/hash'leri,
+NOINHERIT rol modeli ve canlı grant'lar korunur. Bu değişiklik henüz yapılmadı;
+yeniden database koşusu başlatılmadı. Ayrıntılı bounded kanıt
+`docs/evidence/A6_TECH_01_F01B_FIRST_REPLAY_STOP_2026-10-18.json` içindedir.
+
+Normal repository CI'ı ve 399 yerel test başarılıdır; gerçek database kapısı
+başarısızdır. Sonucu kaydeden belge commit'i `[skip ci]` ile gönderilir; aynı
+başarısız database işlemi belge kaydı nedeniyle otomatik tekrar çalıştırılmaz.
+Bu commit için yeni CI PASS iddiası veya merge isteği yoktur.
 
 F01-A migration geçmişini repository'ye bağladı. F01-B aynı dosyaların gerçek
 PostgreSQL 17 üzerinde çalıştığını ve retirement işleminin veri/yetki sınırlarını
@@ -64,7 +92,6 @@ GitHub loglarındaki `F01B_SCENARIO_PASS` kayıtları çalışan SQL senaryolar�
 önce yazıldığı için hata hangi migration'da oluştuğu belirlenebilir.
 
 Yerel Node testlerinin geçmesi database provasının PASS olduğu anlamına gelmez.
-Bu belge gerçek koşunun commit/run kimliği ve sonucu alınınca güncellenecektir.
 Katalog güvenlik testleri Supabase Cloud Advisor servisini çalıştırmış sayılmaz.
 Cloud Advisor ve backup/PITR kanıtı F01-C canlı kapısında ayrıca alınır. F08'de
 kayıtlı index bulguları bu pakette düzeltilmez.

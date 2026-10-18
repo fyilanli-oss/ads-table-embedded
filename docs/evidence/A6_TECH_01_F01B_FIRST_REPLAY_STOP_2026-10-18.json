@@ -1,0 +1,34 @@
+{
+  "checked_at": "2026-10-18",
+  "status": "stopped_on_first_migration_failure",
+  "production_mutation": false,
+  "source_commit": "c2070282db244988c41dd564e6e5fa4347b704f4",
+  "workflow_run_id": 39132400862,
+  "job_id": 117690128936,
+  "workflow_url": "https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/39132400862",
+  "postgres_image": "public.ecr.aws/supabase/postgres:17.11.0.004",
+  "successfully_applied_historical_migrations": 20,
+  "failed_migration": "supabase/migrations/20261009145154_eo03d_qualify_lifecycle_event_columns.sql",
+  "error": {
+    "code": "42501",
+    "message": "permission denied for schema integrations"
+  },
+  "cause": "repository_corrective_file_has_no_execution_role_wrapper_while_captured_applied_sql_has_adstable_owner_wrapper",
+  "remaining_same_execution_context_files": [
+    "supabase/migrations/20261009150114_eo03d_qualify_lifecycle_update_columns.sql",
+    "supabase/migrations/20261009150614_eo03d_qualify_finalize_update_columns.sql",
+    "supabase/migrations/20261009151123_eo03d_disambiguate_reconnect_conflict.sql"
+  ],
+  "live_schema_parity": "not_reached",
+  "retirement_scenarios": "not_reached",
+  "second_clean_replay": "not_started",
+  "isolated_environment_cleanup": "success",
+  "manual_retry_requested": false,
+  "repository_governance": {
+    "run_id": 39132400963,
+    "result": "success",
+    "local_tests": 399
+  },
+  "f01_closed": false,
+  "next_finding_may_start": false
+}

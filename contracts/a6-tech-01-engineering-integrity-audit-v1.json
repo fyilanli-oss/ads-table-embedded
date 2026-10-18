@@ -2,10 +2,12 @@
   "schema_version": "1.0.0",
   "contract_id": "a6-tech-01-engineering-integrity-audit-v1",
   "checked_at": "2026-10-18",
-  "status": "audit_findings_recorded_critical_remediation_required",
+  "status": "pass_product_owner_accepted_2026-10-18",
   "document": "docs/A6_TECH_01_ENGINEERING_INTEGRITY_AUDIT.md",
   "audited_starting_baseline_commit": "c3faddff97628f372f5cc843f3326fb38de95dfc",
-  "pass_baseline_commit": null,
+  "pass_baseline_commit": "bd243fff7200ae6bdb3900ebb7417b3beba53010",
+  "closure_evidence": "docs/evidence/A6_TECH_01_CLOSURE_2026-10-18.json",
+  "current_open_finding_counts": {"P0": 0, "P1": 0, "P2": 0, "P3": 1},
   "external_mutation_authorized": false,
   "production_changed_by_audit": false,
   "data_loss_observed": false,
@@ -132,7 +134,7 @@
     }
   ],
   "latest_retest_evidence": "docs/evidence/A6_TECH_01_FINAL_RETEST_2026-10-18.json",
-  "latest_retest_status": "repository_security_closed_platform_evidence_verified_meta_fix_acceptance_pending",
+  "latest_retest_status": "accepted_source_CI_and_live_acceptance_recorded",
   "retest_findings": [
     {
       "id": "TECH01-RETEST-SEC01",
@@ -155,10 +157,7 @@
     "supabase_backup_and_pitr_manual_evidence",
     "meta_current_official_documentation_recheck_after_initial_429"
   ],
-  "open_evidence": [
-    "meta_two_error_classification_fixes_CI_and_acceptance",
-    "latest_release_deployment_and_fresh_end_to_end_acceptance"
-  ],
+  "open_evidence": [],
   "historical_evidence_limit": "F01 scoped recovery kabulü ve bilinen Free Plan recovery sınırı korunur; tarihsel backup/PITR satırı yeni yedek işi veya yeni kapanış şartı değildir.",
   "baseline_verification": {
     "repository_tests": "384_of_384_pass",
@@ -169,7 +168,7 @@
     "latest_production_deployment_logs": "zero_error_zero_warning",
     "repository_secret_pattern_scan": "no_obvious_match"
   },
-  "required_next_gate": "A6-TECH-01_critical_remediation_and_retest",
-  "a6_docs_01_may_start": false,
+  "required_next_gate": "A6-DOCS-01",
+  "a6_docs_01_may_start": true,
   "a6_eo_05_may_start": false
 }

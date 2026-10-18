@@ -489,6 +489,6 @@ test("contract keeps installed Shopify shop authoritative after EO-03 closure", 
   assert.equal(master.next_ready_child, null);
   assert.equal(
     master.current_gate,
-    "A6-TECH-01_critical_remediation_and_retest",
+    "A6-DOCS-01",
   );
 });

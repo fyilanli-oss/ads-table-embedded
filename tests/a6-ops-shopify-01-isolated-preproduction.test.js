@@ -18,7 +18,7 @@ test("plans the isolated Shopify package without opening implementation", () => 
   assert.equal(contract.planning_authorizes.shopify_app_or_store_creation, false);
   assert.equal(contract.planning_authorizes.provider_mutation_or_live_call, false);
   assert.equal(master.current_active_parent, null);
-  assert.equal(master.current_gate, "A6-TECH-01_critical_remediation_and_retest");
+  assert.equal(master.current_gate, "A6-DOCS-01");
 });
 
 test("blocks real-store migration or external users until isolation exists", () => {

@@ -35,6 +35,13 @@ edilmiştir. Bu kayıt PASS değildir. Aktif kapı kritik düzeltme ve yeniden t
 
 ## 2. Paket sonu delta bütünlük kapısı
 
+18 Ekim 2026 genel kapanış kabulüyle A6-TECH-01 **PASS** oldu. İlk denetimin
+yukarıdaki açık bulgu sayıları tarihseldir. Kabul edilmiş baseline
+`bd243fff7200ae6bdb3900ebb7417b3beba53010`; kapanış ve sınırlar
+`docs/evidence/A6_TECH_01_CLOSURE_2026-10-18.json` içindedir.
+Aktif sonraki kapı A6-DOCS-01'dir; başlamış veya bitmiş sayılmaz. F10 açık
+ertelemedir; EO-05–08 ve final assurance/review sırası değişmez.
+
 EO-05, EO-06, EO-07 ve EO-08 sonunda A6-TECH-01 baseline'ına karşı kısa delta
 denetimi çalışır. Yeni paket önceki güvenlik, veri doğruluğu veya mimari
 kararları bozmuşsa bir sonraki paket başlamaz.

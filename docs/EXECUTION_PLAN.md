@@ -60,8 +60,25 @@ CI enforcement: `tests/a6-quality-and-assurance-gates.test.js`
   `c3faddff97628f372f5cc843f3326fb38de95dfc` başlangıç baseline'ında
   tamamlanmış ve bulgular
   `docs/A6_TECH_01_ENGINEERING_INTEGRITY_AUDIT.md` içinde kaydedilmiştir.
-  P0 yoktur; üç P1 ve EO-05'i engelleyen beş P2 açıktır. Aktif kapı
-  `A6-TECH-01_critical_remediation_and_retest`tir; bu kayıt PASS değildir.
+  İlk kayıtta P0 yoktu; üç P1 ve beş engelleyici P2 açıktı. Bu tarihsel başlangıç
+  kaydıdır. Güncel genel kapanış kararı aşağıdadır.
+
+**A6-TECH-01 genel kapanışı — 18 Ekim 2026:** Ürün sahibi açık kabul verdi.
+Denetlenmiş ve canlı kabul edilmiş PASS baseline:
+`bd243fff7200ae6bdb3900ebb7417b3beba53010`.
+F01–F09 ve sonradan bulunan dependency güvenlik bulgusu kapalı; açık P0/P1/P2
+sıfırdır. F10 kabul edilmiş açık P3 ertelemesidir; düzeltilmiş sayılmaz.
+PR #118 kaynak CI'ı 457 test/typecheck/build PASS; aynı source tree canlıya
+alındı. Gerçek Shopify Admin masaüstü ve mobil normal çalışma kabulü ürün
+sahibi tarafından verildi. Kapanış kanıtı:
+`docs/evidence/A6_TECH_01_CLOSURE_2026-10-18.json`.
+
+Yeni aktif kapı `A6-DOCS-01`dir; uygulaması henüz başlamadı. EO-05 halen
+dokümantasyon kapısını bekler. Provider gerçek veri/review sınırları ve F01
+scoped recovery sınırı korunur; yeni yedek/upgrade/canlı çağrı işi açılmaz.
+Bu kayıt yalnız kapanış metadata'sıdır; yeniden deploy gerekmez. Aşağıdaki
+düzeltme hazırlığı ve ara kapı anlatımları tarihseldir; güncel karar bu paragraf
+ve kapanış kanıtıdır. Kapanış PR'ı da CI'dan geçmeden merge edilmez.
 
 F01 düzeltmesinin repository hazırlığı:
 `docs/A6_TECH_01_F01_MIGRATION_RECONCILIATION.md` ve

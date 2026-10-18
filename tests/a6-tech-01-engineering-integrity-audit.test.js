@@ -16,10 +16,10 @@ const master = JSON.parse(readFileSync(
   "utf8",
 ));
 
-test("A6-TECH-01 records the audited starting baseline without declaring PASS", () => {
-  assert.equal(audit.status, "audit_findings_recorded_critical_remediation_required");
+test("A6-TECH-01 records accepted PASS separately from its historical audited starting baseline", () => {
+  assert.equal(audit.status, "pass_product_owner_accepted_2026-10-18");
   assert.match(audit.audited_starting_baseline_commit, /^[0-9a-f]{40}$/);
-  assert.equal(audit.pass_baseline_commit, null);
+  assert.equal(audit.pass_baseline_commit, "bd243fff7200ae6bdb3900ebb7417b3beba53010");
   assert.equal(audit.production_changed_by_audit, false);
   assert.equal(audit.external_mutation_authorized, false);
 });
@@ -41,24 +41,24 @@ test("open critical findings block EO-05 and accepted closure removes only its o
     assert.equal(closure.finding, finding.id);
   }
   assert.equal(audit.eo05_gate, "blocked");
-  assert.equal(audit.a6_docs_01_may_start, false);
+  assert.equal(audit.a6_docs_01_may_start, true);
   assert.equal(audit.a6_eo_05_may_start, false);
 });
 
 test("quality and master ledgers expose the same active remediation gate", () => {
   assert.equal(
     quality.engineering_integrity.status,
-    "audit_findings_recorded_critical_remediation_required",
+    "pass_product_owner_accepted_2026-10-18",
   );
-  assert.equal(master.current_gate, "A6-TECH-01_critical_remediation_and_retest");
+  assert.equal(master.current_gate, "A6-DOCS-01");
 
   const packageRecord = master.independent_packages.find(
     (item) => item.id === "A6-TECH-01",
   );
-  assert.equal(packageRecord.status, "Findings recorded; critical remediation and retest required");
+  assert.equal(packageRecord.status, "Accepted; scoped integrity baseline recorded");
   assert.equal(packageRecord.audit_contract, "contracts/a6-tech-01-engineering-integrity-audit-v1.json");
   assert.equal(packageRecord.audited_starting_baseline_commit, audit.audited_starting_baseline_commit);
-  assert.equal(packageRecord.pass_baseline_commit, null);
+  assert.equal(packageRecord.pass_baseline_commit, audit.pass_baseline_commit);
 });
 
 test("F10 accepted deferral remains open and cannot authorize an upgrade or EO-05", () => {
@@ -124,7 +124,7 @@ test("historical security retest stays intact while accepted repository remediat
   assert.equal(packageRecord.latest_security_remediation_evidence, finding.remediation_evidence);
 });
 
-test("security closure binds merged source and CI without granting live or overall audit acceptance", () => {
+test("historical security closure did not itself grant the later overall audit acceptance", () => {
   const finding = audit.retest_findings.find(item => item.id === "TECH01-RETEST-SEC01");
   const closure = JSON.parse(readFileSync(new URL(finding.closure_evidence, root), "utf8"));
   const remediation = JSON.parse(readFileSync(new URL(closure.remediation_evidence, root), "utf8"));
@@ -142,6 +142,6 @@ test("security closure binds merged source and CI without granting live or overa
     assert.equal(result.exit_code, 0);
     assert.deepEqual(result.vulnerabilities, {info: 0, low: 0, moderate: 0, high: 0, critical: 0});
   }
-  assert.equal(audit.pass_baseline_commit, null);
+  assert.equal(audit.pass_baseline_commit, "bd243fff7200ae6bdb3900ebb7417b3beba53010");
   assert.equal(audit.eo05_gate, "blocked");
 });

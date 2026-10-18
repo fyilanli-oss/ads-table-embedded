@@ -136,14 +136,15 @@ test("Klaviyo Message stays Channel while Medium and Variation remain separate a
   assert.equal(unknown.expected.sales_role, "Unclassified");
 });
 
-test("EO-04 scenario book remains draft until explicit package closure", async () => {
+test("EO-04 scenario book records explicit package closure", async () => {
   const matrix = await load(matrixPath);
   const book = await readFile(matrix.analysis_design_book, "utf8");
 
-  assert.equal(matrix.closure.book_status, "draft");
+  assert.equal(matrix.closure.book_status, "accepted");
   assert.equal(matrix.closure.product_owner_closure_acceptance_required, true);
+  assert.equal(matrix.closure.product_owner_closure_acceptance, "PASS_2026-10-18");
   assert.equal(matrix.closure.package_status_changed_by_this_contract, false);
-  assert.match(book, /Status:\*\* Draft for product-owner closure review/);
+  assert.match(book, /Status:\*\* Accepted — 2026-10-18/);
   assert.match(book, /META-05/);
   assert.match(book, /GOOGLE-05/);
   assert.match(book, /KLAVIYO-06/);

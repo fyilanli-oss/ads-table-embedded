@@ -412,7 +412,7 @@ test("contract keeps EO-03-B accepted after EO-03 closure", () => {
   assert.equal(contract.live_evidence.synthetic_runtime_acceptance, true);
   assert.equal(eo03b.status, "Accepted");
   assert.equal(eo03.status, "Accepted");
-  assert.equal(master.current_active_parent, "A6-EO-04");
-  assert.equal(master.current_active_child, "A6-EO-04-E");
+  assert.equal(master.current_active_parent, null);
+  assert.equal(master.current_active_child, null);
   assert.equal(master.next_ready_child, null);
 });

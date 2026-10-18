@@ -1,7 +1,7 @@
 # EO-04 Analysis–Design Book
 
-**Parent package:** A6-EO-04 — Meta, Google Ads and Klaviyo adapters  
-**Status:** Draft for product-owner closure review — 2026-10-17  
+**Parent package:** A6-EO-04 — Meta, Google Ads and Klaviyo adapters
+**Status:** Accepted — 2026-10-18
 **Purpose:** Teknik olmayan bir okuyucunun üç providerın hangi ham gerçeği verdiğini, AdsTable'ın Channel ve Sales Role kararını nasıl ürettiğini, hangi çıkarımları kesinlikle yapmadığını ve EO-05'e hangi açık işleri devrettiğini tek belgeden anlayabilmesi.
 
 ## 1. İş amacı ve gerçek çıktı
@@ -534,9 +534,11 @@ Bilinen ve açıkça devredilen sınırlar:
 - Provider overlap reconciliation, Dataset V2, finality ve allocation EO-05'tedir.
 - UI rendering ve kullanıcı-facing explanation EO-07'dedir.
 
-Bu kitap closure review için Draft durumundadır. EO-04 ancak repository CI, paket
-envanteri ve ürün sahibinin ayrıca vereceği açık kapanış kabulüyle `Accepted`
-olabilir.
+Bu kitap ve EO-04 parent paketi, repository doğrulaması ve paket envanteri
+tamamlandıktan sonra ürün sahibinin 18 Ekim 2026 tarihli açık kapanış kabulüyle
+`Accepted` durumuna geçti. Bu kabul, yukarıdaki devredilmiş provider
+doğrulamalarını tamamlanmış saymaz ve EO-05'i başlatmaz; sıradaki zorunlu kapı
+`A6-TECH-01` bütünlük denetimidir.
 
 ## 14. Tek sonraki parent
 

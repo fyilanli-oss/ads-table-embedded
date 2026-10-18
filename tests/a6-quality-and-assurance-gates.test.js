@@ -7,14 +7,23 @@ const contract = JSON.parse(readFileSync(
   new URL("contracts/a6-quality-and-assurance-gates-v1.json", root),
   "utf8",
 ));
+const master = JSON.parse(readFileSync(
+  new URL("contracts/a6-eo-implementation-master-v1.json", root),
+  "utf8",
+));
 
 test("engineering integrity runs before EO-05 and is not reduced to review readiness", () => {
+  assert.equal(contract.engineering_integrity.status, "ready_execution_not_started");
   assert.equal(contract.engineering_integrity.timing, "immediately_after_EO-04_before_EO-05");
   assert.equal(contract.engineering_integrity.review_readiness_program, false);
   assert.equal(contract.engineering_integrity.test_pass_alone_is_sufficient, false);
   assert.ok(contract.engineering_integrity.scope.includes("supabase_schema_security_performance_and_recovery"));
   assert.ok(contract.engineering_integrity.scope.includes("vercel_environment_deployment_runtime_and_rollback"));
   assert.ok(contract.engineering_integrity.scope.includes("github_lineage_pr_ci_and_local_only_inventory"));
+  assert.equal(master.current_active_parent, null);
+  assert.equal(master.current_active_child, null);
+  assert.equal(master.current_gate, "A6-TECH-01_engineering_integrity_audit_ready");
+  assert.equal(master.packages.find((item) => item.id === "A6-EO-04").status, "Accepted");
 });
 
 test("every remaining review-critical parent receives a delta integrity gate", () => {

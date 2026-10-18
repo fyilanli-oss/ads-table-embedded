@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "contract_id": "a6-quality-and-assurance-gates-v1",
   "status": "accepted_product_owner_2026-10-18",
   "document": "docs/A6_QUALITY_AND_ASSURANCE_GATES.md",
@@ -17,6 +17,7 @@
   ],
   "engineering_integrity": {
     "id": "A6-TECH-01",
+    "status": "ready_execution_not_started",
     "timing": "immediately_after_EO-04_before_EO-05",
     "review_readiness_program": false,
     "scope": [

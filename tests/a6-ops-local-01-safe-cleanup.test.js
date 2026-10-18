@@ -19,12 +19,9 @@ test("opens one independent package without changing the EO plan", () => {
   assert.equal(master.counts.parent_packages, 10);
   assert.equal(master.counts.stable_child_packages, 43);
   assert.equal(master.counts.independent_operational_packages, 2);
-  const eoChildIds = master.packages
-    .flatMap((parent) => parent.children ?? [])
-    .map((child) => child.id);
-  assert.equal(master.current_active_parent, "A6-EO-04");
-  assert.equal(master.current_active_child, "A6-EO-04-E");
-  assert.ok(eoChildIds.includes(master.current_active_child));
+  assert.equal(master.current_active_parent, null);
+  assert.equal(master.current_active_child, null);
+  assert.equal(master.current_gate, "A6-TECH-01_engineering_integrity_audit_ready");
   assert.equal(master.next_ready_child, null);
   assert.notEqual(master.current_active_child, cleanup.id);
 });

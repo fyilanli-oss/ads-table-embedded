@@ -85,7 +85,7 @@ test("EO-04-A exposes complete synthetic acceptance and secret gates", async () 
   assert.equal(contract.acceptance_state.next_provider_child_authorized, false);
 });
 
-test("Execution Plan and master contract preserve EO-04-A at the current EO-04 gate", async () => {
+test("Execution Plan and master contract preserve EO-04-A after EO-04 closure", async () => {
   const plan = await readFile("docs/EXECUTION_PLAN.md", "utf8");
   const master = await readJson("contracts/a6-eo-implementation-master-v1.json");
   const eo04 = master.packages.find((item) => item.id === "A6-EO-04");
@@ -100,14 +100,14 @@ test("Execution Plan and master contract preserve EO-04-A at the current EO-04 g
     assert.match(plan, new RegExp(value.replace(/[.*+?^$\{\}()|[\]\\]/g, "\\$&")));
   }
 
-  assert.equal(master.schema_version, "1.27.0");
-  assert.equal(master.current_active_parent, "A6-EO-04");
-  assert.equal(master.current_active_child, "A6-EO-04-E");
+  assert.equal(master.schema_version, "1.28.0");
+  assert.equal(master.current_active_parent, null);
+  assert.equal(master.current_active_child, null);
   assert.equal(
     master.current_gate,
-    "A6-EO-04-C_google_review_demo_accepted_and_merged_production_evidence_pending_google_ads_api_access",
+    "A6-TECH-01_engineering_integrity_audit_ready",
   );
-  assert.equal(eo04.status, "Active");
+  assert.equal(eo04.status, "Accepted");
   assert.equal(eo04a.status, "Accepted");
   assert.equal(eo04a.implementation_started, true);
   assert.equal(eo04a.implementation_complete, true);

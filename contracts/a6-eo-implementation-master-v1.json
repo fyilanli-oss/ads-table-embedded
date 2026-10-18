@@ -1,9 +1,9 @@
 {
-  "schema_version": "1.27.0",
+  "schema_version": "1.28.0",
   "contract_id": "a6-eo-implementation-master-v1",
   "title": "A6 EO single-track execution rule and integrated implementation package table",
   "effective_date": "2026-10-04",
-  "status": "EO-04_active_google_reporting_runtime_acceptance_gate",
+  "status": "EO-04_accepted_A6-TECH-01_ready",
   "authority": {
     "execution_plan": "docs/EXECUTION_PLAN.md",
     "EO_GO": "contracts/a6-eo-f7-go-decision-v1.json",
@@ -548,12 +548,12 @@
       "id": "A6-EO-04",
       "title": "Meta, Google Ads and Klaviyo adapters",
       "phase": "review_critical",
-      "status": "Active",
+      "status": "Accepted",
       "depends_on": [
         "A6-EO-03"
       ],
       "analysis_design_document": "docs/EO_04_ANALYSIS_DESIGN_BOOK.md",
-      "analysis_design_status": "Draft_for_product_owner_closure_review_2026-10-17",
+      "analysis_design_status": "Accepted_2026-10-18",
       "canonical_scenario_contract": "contracts/eo-04-canonical-scenario-matrix-v1.json",
       "canonical_scenario_test": "tests/eo-04-canonical-scenario-matrix.test.js",
       "children": [
@@ -579,7 +579,7 @@
           "id": "A6-EO-04-B",
           "title": "Meta adapter",
           "objective": "Meta Campaign, Ad Set and Ad hierarchy with deepest verified grain and raw structure evidence.",
-          "status": "oauth_accepted_app_role_repository_ready_visual_accepted_merge_authorized_real_catalog_acceptance_pending",
+          "status": "Accepted_repository_and_live_shape_with_real_catalog_validation_deferred",
           "implementation_started": true,
           "live_mutation_authorized": true,
           "start_brief_accepted": true,
@@ -593,7 +593,8 @@
           "oauth_non_role_account_control": "expected_development_mode_restriction_confirmed",
           "oauth_android_follow_up": "optional_post_acceptance_regression",
           "oauth_final_product_owner_acceptance": true,
-          "final_product_owner_acceptance": false,
+          "final_product_owner_acceptance": true,
+          "accepted_at": "2026-10-18",
           "reporting_contract": "contracts/eo-04e-three-provider-channel-product-economics-v1.json",
           "reporting_runtime_started": true,
           "reporting_runtime_started_at": "2026-10-16",
@@ -627,7 +628,7 @@
           "id": "A6-EO-04-C",
           "title": "Google Ads adapter",
           "objective": "Standard Shopping Ad Group, Performance Max Retail Asset Group and Search Ad Group hierarchy with truthful product evidence.",
-          "status": "oauth_and_reporting_runtime_accepted_live_evidence_trigger_accepted_merged_and_test_account_live_verified_production_evidence_pending",
+          "status": "Accepted_repository_and_test_demo_with_production_evidence_deferred",
           "implementation_started": true,
           "oauth_corrective_decision": "docs/decisions/A6_EO_04_C_GOOGLE_OAUTH_CORRECTIVE_REBUILD.md",
           "oauth_test": "tests/eo-04c-google-oauth-corrective-rebuild.test.js",
@@ -700,13 +701,15 @@
           "first_production_access_target": "explorer",
           "developer_token_runtime_requirement": "optional_compatibility_only",
           "oauth_public_verification_is_separate": true,
-          "historical_listing_tree_snapshot_persistence_owner": "A6-EO-05"
+          "historical_listing_tree_snapshot_persistence_owner": "A6-EO-05",
+          "final_product_owner_acceptance": true,
+          "accepted_at": "2026-10-18"
         },
         {
           "id": "A6-EO-04-D",
           "title": "Klaviyo adapter",
           "objective": "Campaign/Flow Message Channel reporting with mandatory Medium, subordinate Variation, event product evidence and separately governed estimated-spend input.",
-          "status": "oauth_hardening_and_attribution_resolution_ready_for_review_live_reporting_closed",
+          "status": "Accepted_repository_and_connection_with_live_reporting_environment_deferred",
           "implementation_started": true,
           "document": "docs/EO_04D_KLAVIYO_OAUTH_ESTIMATED_SPEND_START_BRIEF.md",
           "contract": "contracts/eo-04d-klaviyo-oauth-estimated-spend-v1.json",
@@ -737,7 +740,7 @@
           "attribution_resolution_module": "app/lib/providers/klaviyo-attribution-resolution.server.js",
           "attribution_resolution_test": "tests/eo-04d-klaviyo-attribution-resolution.test.js",
           "attribution_resolution_contract_test": "tests/eo-04d-klaviyo-attribution-resolution-contract.test.js",
-          "attribution_resolution_repository_implementation": "ready_for_review",
+          "attribution_resolution_repository_implementation": "accepted_for_closure",
           "attribution_resolution_implemented_at": "2026-10-17",
           "live_evidence_brief": "docs/EO_04D_KLAVIYO_LIVE_EVIDENCE_TRIGGER_BRIEF.md",
           "live_evidence_contract": "contracts/eo-04d-klaviyo-live-evidence-trigger-v1.json",
@@ -760,15 +763,17 @@
           "oauth_hardening_test": "tests/eo-04d-klaviyo-oauth-hardening-contract.test.js",
           "oauth_hardening_implementation_authorized": true,
           "oauth_hardening_implementation_authorized_at": "2026-10-17",
-          "oauth_hardening_repository_implementation": "ready_for_review",
+          "oauth_hardening_repository_implementation": "accepted_for_closure",
           "klaviyo_origin_installation_deferred_to_isolated_preproduction": true,
-          "merge_commit": "1ac9c8d"
+          "merge_commit": "1ac9c8d",
+          "final_product_owner_acceptance": true,
+          "accepted_at": "2026-10-18"
         },
         {
           "id": "A6-EO-04-E",
           "title": "Integrated three-provider acceptance",
           "objective": "Provider-isolated and combined non-fabricated acceptance evidence.",
-          "status": "channel_contract_corrected_meta_live_shape_retained_klaviyo_repository_runtime_started",
+          "status": "Accepted_contract_and_repository_with_provider_live_validations_deferred",
           "analyst_brief": "docs/EO_04E_THREE_PROVIDER_CHANNEL_PRODUCT_ECONOMICS_START_BRIEF.md",
           "contract": "contracts/eo-04e-three-provider-channel-product-economics-v1.json",
           "ci_test": "tests/eo-04e-three-provider-channel-product-economics.test.js",
@@ -781,7 +786,9 @@
           "meta_live_evidence": "docs/evidence/EO_04_META_PROVIDER_LIVE_EVIDENCE_2026-10-16.json",
           "meta_live_mapping_status": "impressions_and_spend_direct_click_unresolved_session_unmapped_product_not_observed",
           "product_owner_contract_acceptance": true,
-          "product_owner_contract_accepted_at": "2026-10-16"
+          "product_owner_contract_accepted_at": "2026-10-16",
+          "final_product_owner_acceptance": true,
+          "accepted_at": "2026-10-18"
         }
       ],
       "outputs": [
@@ -796,6 +803,48 @@
         "E10-T5-C2-C"
       ],
       "reference_closure_rule": "not_closed_until_exact_EO_acceptance_evidence_and_explicit_closure_record",
+      "explicit_product_owner_closure": "PASS_2026-10-18",
+      "closure_record": {
+        "actual_output": [
+          "three_provider_adapters",
+          "raw_response_evidence",
+          "normalized_fact_contracts",
+          "canonical_human_readable_scenario_matrix"
+        ],
+        "acceptance_evidence": [
+          "docs/EO_04_ANALYSIS_DESIGN_BOOK.md",
+          "contracts/eo-04-canonical-scenario-matrix-v1.json",
+          "docs/evidence/EO_04_META_PROVIDER_LIVE_EVIDENCE_2026-10-16.json",
+          "docs/evidence/EO_04C_GOOGLE_TEST_ACCOUNT_REVIEW_EVIDENCE_2026-10-16.json",
+          "docs/evidence/EO_04D_KLAVIYO_ENVIRONMENT_NOT_READY_2026-10-18.json"
+        ],
+        "reference_obligations_satisfied_or_open": {
+          "satisfied": "repository_contract_runtime_tests_and_bounded_live_shape_evidence",
+          "open_and_deferred": [
+            "meta_real_app_role_catalog_product_validation",
+            "google_explorer_or_higher_production_evidence",
+            "klaviyo_shopify_integration_live_reporting_evidence",
+            "EO-05_versioned_historical_pmax_listing_tree_persistence"
+          ]
+        },
+        "temporary_evidence_transport": {
+          "meta_button": "removed_route_retained",
+          "google_button": "retained_until_production_evidence_or_EO-05_scheduler_acceptance",
+          "klaviyo_button": "retained_until_shopify_integration_evidence_or_EO-05_scheduler_acceptance"
+        },
+        "repository_verification": {
+          "tests": "384_pass",
+          "typecheck": "pass",
+          "production_build": "pass",
+          "diff_check": "pass",
+          "github_ci_required_before_merge": true
+        },
+        "single_next_parent": "A6-EO-05",
+        "intervening_required_gates": [
+          "A6-TECH-01",
+          "A6-DOCS-01"
+        ]
+      },
       "start_gate": "PASS_A6-EO-03_accepted_2026-10-09",
       "start_brief": "docs/EO_04A_COMMON_ADAPTER_START_BRIEF.md",
       "start_contract": "contracts/eo-04a-common-adapter-start-brief-v1.json"
@@ -1159,15 +1208,15 @@
   "live_data_carry_authorized": false,
   "cutover_authorized": false,
   "legacy_deletion_authorized": false,
-  "current_active_parent": "A6-EO-04",
-  "current_active_child": "A6-EO-04-E",
-  "current_gate": "A6-EO-04-C_google_review_demo_accepted_and_merged_production_evidence_pending_google_ads_api_access",
+  "current_active_parent": null,
+  "current_active_child": null,
+  "current_gate": "A6-TECH-01_engineering_integrity_audit_ready",
   "next_ready_child": null,
   "independent_packages": [
     {
       "id": "A6-TECH-01",
       "title": "End-to-end project integrity audit",
-      "status": "Accepted plan; execution starts after EO-04 closure",
+      "status": "Ready; execution not started",
       "objective": "Audit the complete codebase, Shopify, providers, Supabase, Vercel, GitHub/CI and end-to-end data integrity before EO-05.",
       "document": "docs/A6_QUALITY_AND_ASSURANCE_GATES.md",
       "contract": "contracts/a6-quality-and-assurance-gates-v1.json",
@@ -1242,9 +1291,10 @@
     "completed_parents": [
       "A6-EO-01",
       "A6-EO-02",
-      "A6-EO-03"
+      "A6-EO-03",
+      "A6-EO-04"
     ],
-    "next_required_parent": "A6-EO-04",
+    "next_required_parent": "A6-EO-05",
     "ci_test": "tests/a6-parent-analysis-design-books.test.js"
   }
 }

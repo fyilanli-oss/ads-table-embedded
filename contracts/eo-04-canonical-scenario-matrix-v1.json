@@ -1,9 +1,9 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "contract_id": "eo-04-canonical-scenario-matrix-v1",
   "package_id": "A6-EO-04",
-  "status": "draft_for_product_owner_closure_review",
-  "checked_at": "2026-10-17",
+  "status": "accepted_product_owner_closure_2026-10-18",
+  "checked_at": "2026-10-18",
   "analysis_design_book": "docs/EO_04_ANALYSIS_DESIGN_BOOK.md",
   "authority": [
     "docs/EXECUTION_PLAN.md",
@@ -576,8 +576,9 @@
     }
   ],
   "closure": {
-    "book_status": "draft",
+    "book_status": "accepted",
     "product_owner_closure_acceptance_required": true,
+    "product_owner_closure_acceptance": "PASS_2026-10-18",
     "package_status_changed_by_this_contract": false,
     "single_next_parent": "A6-EO-05"
   }

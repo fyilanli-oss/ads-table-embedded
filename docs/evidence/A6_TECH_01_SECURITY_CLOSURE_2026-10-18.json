@@ -1,0 +1,49 @@
+{
+  "checked_at": "2026-10-18",
+  "finding": "TECH01-RETEST-SEC01",
+  "status": "repository_security_finding_closed_product_owner_accepted",
+  "product_owner_closure_accepted": true,
+  "approval_basis": "Başarılı kontroller ve sıfır advisory sonucu sunulduktan sonra ürün sahibi PR #116 merge onayını verdi; ardından kapanış kaydına devam edilmesini istedi.",
+  "remediation_evidence": "docs/evidence/A6_TECH_01_REMAINING_SECURITY_REMEDIATION_2026-10-18.json",
+  "historical_evidence_unchanged": [
+    "docs/evidence/A6_TECH_01_FINAL_RETEST_2026-10-18.json",
+    "docs/evidence/A6_TECH_01_VITE_SECURITY_PATCH_2026-10-18.json",
+    "docs/evidence/A6_TECH_01_REMAINING_SECURITY_REMEDIATION_2026-10-18.json"
+  ],
+  "merged_pull_request": "https://github.com/fyilanli-oss/ads-table-embedded/pull/116",
+  "verified_source_commit": "ccdf3590131c1338f4b387c4a1a2bf5ae4a46591",
+  "verified_main_merge_commit": "aa32e03b57f84b7b5a950a9c9be67826135c2536",
+  "source_and_merge_tree": "f5a4bc34c54cef43e0c52aad32a19b6c76788b2b",
+  "github_ci": {
+    "run_id": 39160957214,
+    "job_id": 117773967688,
+    "url": "https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/39160957214",
+    "conclusion": "success",
+    "tests_passed": 449,
+    "tests_failed": 0,
+    "frozen_lockfile_install": "pass",
+    "typecheck": "pass",
+    "build": "pass"
+  },
+  "audit_results_from_remediation_evidence": {
+    "production_advisories": 0,
+    "complete_graph_advisories": 0,
+    "new_audit_run_claimed_by_this_record": false,
+    "ignore_suppression_fork_or_risk_acceptance_used": false
+  },
+  "closure_scope": "Yalnız exact repository bağımlılık grafiğindeki güvenlik bulgusu; canlı bundle veya tüm proje güvenliği için genel garanti değildir.",
+  "remaining_general_audit_gates": [
+    "GitHub aktif branch protection/ruleset manuel kanıtı",
+    "İlk 429 sonrasında yeniden okunmamış Meta resmî dokümanlarının ayrı onaylı teyidi",
+    "Ayrı açık onayla exact release deployment ve taze browser/API/data/response kabulü; ardından genel denetim kapanış kararı"
+  ],
+  "known_recovery_limit": "F01 scoped recovery kabulü korunur. Free Plan managed backup/PITR yokluğu bilinen sınırdır; tam veri recovery güvencesi iddia edilmez ve yeni yedek işi açılmaz.",
+  "security_finding_closed": true,
+  "security_finding_alone_blocks_EO05": false,
+  "F10_closed": false,
+  "deployment_authorized": false,
+  "live_mutation_performed": false,
+  "A6_TECH_01_overall_pass": false,
+  "A6_DOCS_01_may_start": false,
+  "EO05_may_start": false
+}

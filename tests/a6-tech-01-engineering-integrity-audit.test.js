@@ -95,7 +95,7 @@ test("F10 deferral preserves pinned dependencies, config and documentation limit
   assert.ok(evidence.follow_up.required_gates.length >= 5);
 });
 
-test("successful repository checks cannot hide an open full-graph security retest finding", () => {
+test("historical security retest stays intact while accepted repository remediation closes only its own finding", () => {
   const evidence = JSON.parse(readFileSync(new URL(audit.latest_retest_evidence, root), "utf8"));
   assert.equal(evidence.fresh_local_checks.pnpm_test.failed, 0);
   assert.equal(evidence.fresh_local_checks.production_audit.exit_code, 0);
@@ -106,18 +106,42 @@ test("successful repository checks cannot hide an open full-graph security retes
     assert.equal(evidence.advisories_observed.filter(item => item.severity === severity).length, counts[severity]);
   }
   const finding = audit.retest_findings.find(item => item.id === evidence.security_finding.id);
-  assert.equal(finding.closed, false);
-  assert.equal(finding.eo05_blocker, true);
+  assert.equal(finding.closed, true);
+  assert.equal(finding.eo05_blocker, false);
   assert.equal(finding.authorized_repository_change, "vite_7.3.6_scoped_esbuild_0.28.1_ajv_8.18.0_ts_morph_24.0.0_repository_only");
-  assert.equal(finding.remaining_remediation_execution_authorized, true);
+  assert.equal(finding.remaining_remediation_execution_authorized, false);
   assert.equal(evidence.A6_TECH_01_overall_pass, false);
   assert.equal(evidence.A6_DOCS_01_may_start, false);
   assert.equal(evidence.EO05_may_start, false);
   assert.equal(evidence.reused_database_evidence.fresh_database_replay_performed, false);
   const packageRecord = master.independent_packages.find(item => item.id === "A6-TECH-01");
-  assert.equal(packageRecord.open_retest_security_finding, finding.id);
+  assert.equal(packageRecord.open_retest_security_finding, null);
+  assert.equal(packageRecord.closed_retest_security_finding, finding.id);
+  assert.equal(packageRecord.retest_security_closure_evidence, finding.closure_evidence);
   assert.equal(packageRecord.latest_retest_evidence, audit.latest_retest_evidence);
-  assert.equal(packageRecord.retest_remediation_execution_authorized, true);
+  assert.equal(packageRecord.retest_remediation_execution_authorized, false);
   assert.equal(packageRecord.authorized_retest_repository_change, finding.authorized_repository_change);
   assert.equal(packageRecord.latest_security_remediation_evidence, finding.remediation_evidence);
+});
+
+test("security closure binds merged source and CI without granting live or overall audit acceptance", () => {
+  const finding = audit.retest_findings.find(item => item.id === "TECH01-RETEST-SEC01");
+  const closure = JSON.parse(readFileSync(new URL(finding.closure_evidence, root), "utf8"));
+  const remediation = JSON.parse(readFileSync(new URL(closure.remediation_evidence, root), "utf8"));
+  assert.equal(closure.finding, finding.id);
+  assert.equal(closure.product_owner_closure_accepted, true);
+  assert.equal(closure.security_finding_closed, true);
+  assert.equal(closure.verified_main_merge_commit, "aa32e03b57f84b7b5a950a9c9be67826135c2536");
+  assert.equal(closure.source_and_merge_tree, "f5a4bc34c54cef43e0c52aad32a19b6c76788b2b");
+  assert.equal(closure.github_ci.conclusion, "success");
+  assert.equal(closure.github_ci.tests_passed, remediation.fresh_local_checks.pnpm_test.passed);
+  assert.equal(closure.github_ci.tests_failed, 0);
+  assert.equal(closure.remaining_general_audit_gates.length, 3);
+  for (const key of ["security_finding_alone_blocks_EO05", "F10_closed", "deployment_authorized", "live_mutation_performed", "A6_TECH_01_overall_pass", "A6_DOCS_01_may_start", "EO05_may_start"]) assert.equal(closure[key], false, key);
+  for (const result of [remediation.production_audit, remediation.complete_audit]) {
+    assert.equal(result.exit_code, 0);
+    assert.deepEqual(result.vulnerabilities, {info: 0, low: 0, moderate: 0, high: 0, critical: 0});
+  }
+  assert.equal(audit.pass_baseline_commit, null);
+  assert.equal(audit.eo05_gate, "blocked");
 });

@@ -646,6 +646,17 @@ commit ayrı olarak kaydedilecektir.
 
 Şimdiki bağlayıcı karar:
 
+18 Ekim 2026 güvenlik kapanışı: PR #116 ürün sahibi onayıyla merge edildi;
+449 test ve GitHub build/typecheck/lockfile kapıları geçti, iki bağımlılık
+taramasında sıfır advisory kaydedildi. `TECH01-RETEST-SEC01` repository kapsamıyla
+kapalıdır. Önceki açık/hazırlık durumları tarihsel kanıttır. Kapanış:
+`docs/evidence/A6_TECH_01_SECURITY_CLOSURE_2026-10-18.json`.
+
+Genel kapanışta kalanlar: GitHub aktif koruma kuralları kanıtı, daha önce 429
+alınan Meta resmî kaynaklarının ayrı onaylı teyidi ve son release'in ayrı onaylı
+canlı kabulü. Bu kayıt bunları yapma yetkisi vermez. F01–F09 tekrar açılmaz;
+bilinen recovery sınırı yeni yedek işi değildir. F10 açık ve ertelenmiştir.
+
 - `A6-TECH-01`: **Findings recorded; remediation required**
 - `A6-TECH-01 PASS`: **Hayır**
 - `A6-DOCS-01`: **Başlayamaz**

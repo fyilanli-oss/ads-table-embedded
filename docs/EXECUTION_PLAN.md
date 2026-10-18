@@ -200,6 +200,18 @@ zincirden kaldırıldı, uyarılar gizlenmedi. Kanıt:
 CI ve açık merge/kapanış kabulü beklenir. Canlı deploy/provider/database/secret
 değişikliği, F10 kapanışı, genel PASS veya EO-05 başlangıcı yetkisi yoktur.
 
+Ürün sahibi PR #116 merge onayını ve ardından güvenlik kapanış kaydının
+işlenmesini kabul etti. Düzeltme `aa32e03b57f84b7b5a950a9c9be67826135c2536`
+ile main'e alındı; merge tree test edilen source tree ile exact aynı.
+GitHub CI'da 449 test, frozen-lockfile kurulumu, typecheck ve build PASS.
+`TECH01-RETEST-SEC01` yalnız repository güvenlik kapsamıyla kapalıdır; önceki
+hazırlık kanıtları tarihseldir ve değiştirilmez. Kapanış kanıtı:
+`docs/evidence/A6_TECH_01_SECURITY_CLOSURE_2026-10-18.json`.
+Genel audit için GitHub aktif koruma kuralı kanıtı, eksik Meta doküman teyidi ve
+ayrı onaylı güncel release/canlı kabulü kalır. Bilinen Free Plan recovery sınırı
+yeni yedek işi açmaz. F10 açık ertelemedir; genel PASS, A6-DOCS-01 ve EO-05
+başlangıcı verilmez. Bu kayıt canlı işlem yetkisi değildir.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

@@ -2,7 +2,7 @@
 
 **Tarih:** 18 Ekim 2026
 
-**Güncel durum:** F01 canlı uygulama ve son kontroller PASS; kapanış kabulü bekleniyor.
+**Güncel durum:** F01 canlı uygulama ve son kontroller PASS; ürün sahibi 18 Ekim 2026'da kapanışı ve PR #102 merge'ünü onayladı.
 
 ## 18 Ekim 2026 — Canlı uygulama sonucu
 
@@ -31,8 +31,11 @@ Güncel 39 kayıt: `docs/evidence/A6_TECH_01_F01_POST_MIGRATION_LEDGER_2026-10-1
 alındı; mutation yapılmadan duruldu. Düzeltme yalnız yeni kullanıcı onayından
 sonra çalıştırıldı. Bu ilk hata kanıtta korunur.
 
-Kalan tek kapı kapanış kaydının CI/merge ve ürün sahibi kabulüdür. F01 hâlâ
-otomatik kapatılmaz; F02 başlamaz. Aşağıdaki hazırlık anlatımı tarihsel bağlamdır.
+F01 ürün sahibi kabulüyle kapandı. Kabul kaydı aynı PR #102 içinde tutulur;
+merge öncesi son commit'in CI'ı ayrıca geçmelidir. Kanıt:
+`docs/evidence/A6_TECH_01_F01_CLOSURE_2026-10-18.json`.
+Sıradaki bulgu F02'dir; bu kapanış onun uygulamasını veya yeni canlı işlemi
+yetkilendirmez. Aşağıdaki hazırlık anlatımı tarihsel bağlamdır.
 
 ## Kullanıcı açısından sonuç
 

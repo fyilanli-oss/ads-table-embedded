@@ -2,7 +2,7 @@
 
 **Tarih:** 18 Ekim 2026
 
-**Güncel durum:** Dar prova PASS; yalnız F01 için kapsam kabul edildi, PR #101 merge edildi ve canlı retirement başarıyla uygulandı. Kapanış kabulü bekleniyor.
+**Güncel durum:** Dar prova PASS; yalnız F01 için kapsam kabul edildi, PR #101 merge edildi ve canlı retirement başarıyla uygulandı. Ürün sahibi F01 kapanışını ve PR #102 merge'ünü 18 Ekim 2026'da onayladı.
 
 Güncel sonuç ve açık sınırlar `docs/A6_TECH_01_F01_MIGRATION_RECONCILIATION.md`
 başındaki canlı uygulama kaydındadır. Aşağıdaki hazırlık anındaki bekleyen

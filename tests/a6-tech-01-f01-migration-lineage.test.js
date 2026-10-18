@@ -22,8 +22,12 @@ test("lineage rejects missing owner context and context assigned to an unrelated
 test("historical migration versions, names and SQL fingerprints match the captured applied ledger", () => {
   assert.equal(manifest.historical_migrations.length, 38);
   assert.deepEqual(validate(), []);
-  assert.equal(manifest.f01_closed, false);
-  assert.equal(manifest.next_finding_may_start, false);
+  assert.equal(manifest.f01_closed, true);
+  assert.equal(manifest.next_finding_may_start, true);
+  const closure = JSON.parse(read(manifest.closure_evidence));
+  assert.equal(closure.product_owner_closure_accepted, true);
+  assert.equal(closure.F02_execution_authorized, false);
+  assert.deepEqual(manifest.required_remaining_gates, []);
   assert.equal(manifest.live_mutation_authorized, false);
 });
 

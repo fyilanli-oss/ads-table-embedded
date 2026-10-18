@@ -27,7 +27,7 @@ test("scoped recovery preserves seven exact captured bodies without restoring le
   const outsideFunctions = sql.replace(/\$function\$[\s\S]*?\$function\$/g, "");
   assert.doesNotMatch(outsideFunctions, /\b(delete from|insert into|update integrations\.|truncate|drop table|alter role|schema_migrations)\b/i);
   assert.equal(lineage.live_mutation_authorized, false);
-  assert.equal(lineage.f01_closed, false);
+  assert.equal(lineage.f01_closed, true);
 });
 
 test("changed content, changed owner, unexpected signatures and forged hashes fail closed", () => {

@@ -2,7 +2,32 @@
 
 **Tarih:** 18 Ekim 2026
 
-**Durum:** İlk koşunun dar rol-bağlamı düzeltmesi onaylandı; yeni izole koşu bekleniyor. F01 açık, PR draft.
+**Durum:** İkinci koşuda 38 tarihsel migration geçti; ilk sentetik fixture'ın rol bağlamında duruldu. F01 açık, PR draft.
+
+## İkinci gerçek koşunun sonucu
+
+Kaynak `0b885052e4bba559323006d000a667256e89d5fe`,
+[koşu 39133172317](https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/39133172317).
+Dört owner-context dosyası dahil 38 tarihsel migration geçti. Canlı metadata
+karşılaştırmasına ulaşıldı ve fark kaydı oluşmadı; tam sonuç kanıtı henüz yoktur.
+İlk sentetik fixture, `shopify.bootstrap_installation` çağrısını `postgres`
+olarak yaptığı için `42501: permission denied for function bootstrap_installation`
+ile durdu. Bu fonksiyonun mevcut execute izni `adstable_runtime` rolündedir.
+
+Bu duruş test aracındaki eksik rol ayrımıdır; canlı uygulama hatası veya yeni
+grant ihtiyacı kanıtı değildir. Retirement henüz denenmedi, ikinci boş kurulum
+başlamadı. Geçici ortam temizliği başarılıdır; Production değişmedi.
+Kanıt: `docs/evidence/A6_TECH_01_F01B_SECOND_REPLAY_STOP_2026-10-18.json`.
+
+Sonraki öneri, yalnız test aracındaki tüm rol sınırlarını birlikte doğrulamaktır:
+bootstrap ve kullanıcı akışları runtime, doğrudan sentetik veri/DDL hazırlığı
+owner, privacy worker mevcut postgres izniyle çalışmalı. Rol geçişleri açıkça
+geri alınmalı; her adımın yetkisi yeni koşudan önce gözden geçirilmelidir.
+Bu ilave düzeltme ve yeni database koşusu henüz yetkilendirilmedi/yapılmadı.
+
+404 yerel test ve kaynak commit'in GitHub repository kontrolleri PASS'tir;
+gerçek database kapısı FAIL'dir. Bu sonucu kaydeden belge commit'i `[skip ci]`
+kullanır; yeni HEAD için CI PASS iddiası veya merge isteği yoktur.
 
 ## İlk gerçek koşunun sonucu
 

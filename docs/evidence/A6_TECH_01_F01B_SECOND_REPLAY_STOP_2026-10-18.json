@@ -1,0 +1,39 @@
+{
+  "checked_at": "2026-10-18",
+  "status": "stopped_at_first_synthetic_fixture_execution_role",
+  "source_commit": "0b885052e4bba559323006d000a667256e89d5fe",
+  "workflow_run_id": 39133172317,
+  "job_id": 117693383004,
+  "workflow_url": "https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/39133172317",
+  "production_mutation": false,
+  "historical_sql_changed": false,
+  "successfully_applied_historical_migrations": 38,
+  "owner_context_migrations_passed": 4,
+  "live_schema_parity": {
+    "status": "comparison_reached_no_differences_emitted",
+    "basis": "scenarios() was reached after inventoryDifferences; no F01B_LIVE_PARITY_DIFFERENCES record",
+    "final_full_evidence_emitted": false
+  },
+  "error": {
+    "code": "42501",
+    "message": "permission denied for function bootstrap_installation"
+  },
+  "cause": "fixture_calls_runtime_only_bootstrap_as_postgres_without_explicit_role",
+  "retirement_scenarios": "first_fixture_failed_before_retirement",
+  "second_clean_replay": "not_started",
+  "isolated_environment_cleanup": "success",
+  "manual_retry_requested": false,
+  "repository_governance": {
+    "run_id": 39133172388,
+    "result": "success",
+    "local_tests": 404
+  },
+  "cli_internal_image_download": {
+    "requested_registry": "public.ecr.aws",
+    "rate_limit_observed": true,
+    "automatic_fallback_registry": "ghcr.io",
+    "manual_registry_change": false
+  },
+  "f01_closed": false,
+  "next_finding_may_start": false
+}

@@ -175,6 +175,15 @@ F01–F09 kapalı, F10 açık ve tek başına EO-05 engeli değildir. Bu kayıt 
 düzeltmesi/kapanışı, sürüm veya flag değişikliği, genel audit PASS ya da EO-05
 başlangıç yetkisi değildir. Genel yeniden test ve kapanış kararı ayrı kalır.
 
+Son yeniden test `cddda0fad4803c9212412211495365c69ed2e884` üzerinde 441 test,
+typecheck/build ve production bağımlılık taramasını geçirdi. Tam bağımlılık
+taraması geliştirme/build zincirinde 4 yüksek, 3 orta, 1 düşük advisory bildirdi.
+Kanıt `docs/evidence/A6_TECH_01_FINAL_RETEST_2026-10-18.json`.
+`TECH01-RETEST-SEC01` ayrı, ön P2/güvenlik değerlendirme kaydıdır; F01–F10
+tarihsel sırası ve kapanışları değiştirilmez. Etki analizi/düzeltme henüz
+yetkili değildir. Genel audit PASS, A6-DOCS-01 ve EO-05 başlangıcı verilmez;
+bu kayıt yeni altyapı, yedek, sürüm, provider veya canlı ortam işi açmaz.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

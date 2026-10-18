@@ -94,3 +94,27 @@ test("F10 deferral preserves pinned dependencies, config and documentation limit
   assert.doesNotMatch(config, /\bfuture\s*:/);
   assert.ok(evidence.follow_up.required_gates.length >= 5);
 });
+
+test("successful repository checks cannot hide an open full-graph security retest finding", () => {
+  const evidence = JSON.parse(readFileSync(new URL(audit.latest_retest_evidence, root), "utf8"));
+  assert.equal(evidence.fresh_local_checks.pnpm_test.failed, 0);
+  assert.equal(evidence.fresh_local_checks.production_audit.exit_code, 0);
+  assert.equal(evidence.fresh_local_checks.complete_audit.exit_code, 1);
+  const counts = evidence.fresh_local_checks.complete_audit.vulnerabilities;
+  assert.deepEqual(counts, {info: 0, low: 1, moderate: 3, high: 4, critical: 0});
+  for (const severity of ["low", "moderate", "high"]) {
+    assert.equal(evidence.advisories_observed.filter(item => item.severity === severity).length, counts[severity]);
+  }
+  const finding = audit.retest_findings.find(item => item.id === evidence.security_finding.id);
+  assert.equal(finding.closed, false);
+  assert.equal(finding.eo05_blocker, true);
+  assert.equal(finding.implementation_authorized, false);
+  assert.equal(evidence.A6_TECH_01_overall_pass, false);
+  assert.equal(evidence.A6_DOCS_01_may_start, false);
+  assert.equal(evidence.EO05_may_start, false);
+  assert.equal(evidence.reused_database_evidence.fresh_database_replay_performed, false);
+  const packageRecord = master.independent_packages.find(item => item.id === "A6-TECH-01");
+  assert.equal(packageRecord.open_retest_security_finding, finding.id);
+  assert.equal(packageRecord.latest_retest_evidence, audit.latest_retest_evidence);
+  assert.equal(packageRecord.retest_remediation_execution_authorized, false);
+});

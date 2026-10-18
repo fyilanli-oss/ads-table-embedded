@@ -5,8 +5,8 @@
 **Durum:** Bulgular kaydedildi; kritik düzeltme ve yeniden test zorunlu
 **EO-05 kararı:** Kapalı
 
-**Güncel düzeltme durumu:** F01–F04 ürün sahibi kabulüyle kapandı.
-F05 repository düzeltmesi hazır; CI ve ürün sahibi kabulü bekleniyor. İlk denetim bulguları ve başlangıç sayıları aşağıda
+**Güncel düzeltme durumu:** F01–F05 ürün sahibi kabulüyle kapandı.
+Sıradaki F06 başlamadı. İlk denetim bulguları ve başlangıç sayıları aşağıda
 tarihsel baseline olarak korunur; genel A6-TECH-01 henüz PASS değildir.
 
 ## 1. Analist özeti
@@ -249,6 +249,12 @@ olmasını zorunlu tutar.
 sahibi desktop/mobile görsel kabulü geçmelidir.
 
 ### TECH01-F05 — P2 blocker — GitHub Actions immutable pin eksikliği
+
+**Kapanış — 18 Ekim 2026:** 425 test, typecheck ve build GitHub CI'da geçti
+(run `39148707523`). Ürün sahibi PR #107 merge'ünü ve F05 kapanışını kabul etti.
+Kanıt: `docs/evidence/A6_TECH_01_F05_CLOSURE_2026-10-18.json`.
+Shopify deploy workflow'u çalıştırılmadı; canlı ayar/secret/database değişmedi.
+F06 başlamadı; aşağıdaki hazırlık ve teşhis tarihsel kayıt olarak korunur.
 
 **Düzeltme hazırlığı — 18 Ekim 2026:** Dört değişken referans resmî repository
 tag → commit eşliği doğrulanarak tam SHA'ya sabitlendi; mevcut major sürümler

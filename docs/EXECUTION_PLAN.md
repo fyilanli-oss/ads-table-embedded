@@ -104,6 +104,12 @@ Kontrollü güncelleme: resmî release/commit doğrulaması → PR → CI → a�
 onayı; otomatik merge yoktur. CI ve kabul beklenir, F05 açık ve F06 yetkisizdir.
 Canlı workflow dispatch, secret veya deployment değişikliği yapılmadı.
 
+F05 repository düzeltmesinin 425 test/typecheck/build CI sonucu geçti; ürün
+sahibi PR #107 merge'ünü ve kapanışı kabul etti. Kapanış kanıtı:
+`docs/evidence/A6_TECH_01_F05_CLOSURE_2026-10-18.json`.
+Güncel F01–F05 kapalıdır; sıradaki F06 başlamadı ve uygulama yetkisi yoktur.
+Genel A6-TECH-01 PASS değildir; EO-05 engeli korunur.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

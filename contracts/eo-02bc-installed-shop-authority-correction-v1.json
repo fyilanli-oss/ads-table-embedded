@@ -44,7 +44,7 @@
     "future_non_shopify_product_requires_separate_installation_and_billing_model": true
   },
   "database_correction": {
-    "forward_only_migration": "supabase/migrations/20261009120000_eo02bc_installed_shop_authority.sql",
+    "forward_only_migration": "supabase/migrations/20261009070314_eo02bc_installed_shop_authority.sql",
     "historical_migrations_mutated": false,
     "historical_acceptance_evidence_mutated": false,
     "removed_legacy_entitlement_columns": [

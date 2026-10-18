@@ -39,7 +39,7 @@
       "privacy.deletion_runs",
       "privacy.deletion_manifests"
     ],
-    "migration": "supabase/migrations/20261008190000_eo02d_privacy_lifecycle.sql",
+    "migration": "supabase/migrations/20261008140818_eo02d_privacy_lifecycle.sql",
     "rls": "enabled_and_forced",
     "browser_roles": "no_schema_or_object_access",
     "runtime_table_dml": "none",
@@ -50,7 +50,7 @@
     ],
     "plaintext_customer_fields": false,
     "raw_shop_domain_in_privacy_tables": false,
-    "corrective_migration": "supabase/migrations/20261009160000_eo02d_durable_deletion_worker.sql",
+    "corrective_migration": "supabase/migrations/20261009074901_eo02d_durable_deletion_worker.sql",
     "scheduler_function": "privacy.process_deletion_queue(integer)",
     "scheduler_role": "postgres"
   },

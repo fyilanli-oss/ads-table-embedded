@@ -7,7 +7,7 @@ import {fileURLToPath} from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 const migration = read(
-  "supabase/migrations/20261009161000_eo02d_worker_conditional_expression_fix.sql",
+  "supabase/migrations/20261009075721_eo02d_worker_conditional_expression_fix.sql",
 );
 
 test("PostgreSQL conditional expressions are not schema-qualified", () => {

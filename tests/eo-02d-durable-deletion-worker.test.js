@@ -7,7 +7,7 @@ import {fileURLToPath} from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 const migration = read(
-  "supabase/migrations/20261009160000_eo02d_durable_deletion_worker.sql",
+  "supabase/migrations/20261009074901_eo02d_durable_deletion_worker.sql",
 );
 const contract = JSON.parse(read(
   "contracts/eo-02d-durable-deletion-worker-v1.json",

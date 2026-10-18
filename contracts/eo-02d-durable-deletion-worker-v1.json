@@ -70,7 +70,7 @@
       "production_data_deleted": false,
       "synthetic_run_status": "pending",
       "cause": "PostgreSQL GREATEST and LEAST are conditional expressions and cannot be schema-qualified",
-      "corrective_migration": "supabase/migrations/20261009161000_eo02d_worker_conditional_expression_fix.sql",
+      "corrective_migration": "supabase/migrations/20261009075721_eo02d_worker_conditional_expression_fix.sql",
       "official_reference": "https://www.postgresql.org/docs/17/functions-conditional.html"
     },
     "corrective_fix_status": "PASS_LIVE",

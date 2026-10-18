@@ -1,0 +1,208 @@
+{
+  "checked_at": "2026-10-18",
+  "source": "read_only_supabase_migrations_schema_migrations",
+  "source_project_name": "ads-table-embedded",
+  "data_classification": "migration_names_versions_and_sql_hashes_only",
+  "migration_count": 38,
+  "migrations": [
+    {
+      "version": "20261006133830",
+      "name": "eo02a_private_schema_roles",
+      "applied_sql_sha256": "49b54269c23ef697f74d20c44bd061b02aea3f17966cd50facafd1074fb50833"
+    },
+    {
+      "version": "20261006134013",
+      "name": "eo02a_runtime_schema_usage",
+      "applied_sql_sha256": "d859a143889bab0f587de0b695e11b4fa31024a50d376c8dbdbecde00ea4978f"
+    },
+    {
+      "version": "20261006140517",
+      "name": "eo02b_workspace_installation_authority",
+      "applied_sql_sha256": "9eeee01800a6e4c018edc4905e5eb7c85b3304db39ae25123ea244c0f111e553"
+    },
+    {
+      "version": "20261006140629",
+      "name": "eo02b_remove_redundant_indexes",
+      "applied_sql_sha256": "8b898073eb139de9d2dd0cb951ef27d2157b67262d186704b30ef83a0b779835"
+    },
+    {
+      "version": "20261006140828",
+      "name": "eo02b_acceptance_probe",
+      "applied_sql_sha256": "8da8d39dc8a696b26831027f1daeb4bb00767eaeebae2e6ff3b591f7c1e96cca"
+    },
+    {
+      "version": "20261006142841",
+      "name": "eo02c_shopify_app_pricing_entitlement",
+      "applied_sql_sha256": "f1390c9ed1bf43a8f6aeebb72fc7c24fc8a012f0e86d346924f25bb34ec39cb1"
+    },
+    {
+      "version": "20261006142953",
+      "name": "eo02c_disambiguate_upserts",
+      "applied_sql_sha256": "349f7da9417dd0784ab24fbf513232ee6f1a8dfff4c949bef2dc13e2a620937c"
+    },
+    {
+      "version": "20261006143039",
+      "name": "eo02c_acceptance_probe",
+      "applied_sql_sha256": "d8845321e31b6a067e13617ae7da8109c6d60a171db20348b4fd6417b31e6075"
+    },
+    {
+      "version": "20261008104511",
+      "name": "eo02c_encrypted_shopify_runtime_sessions",
+      "applied_sql_sha256": "fc18bed3975b2db5d530f4460b2fc5555917db69df39b275d7026702a145e875"
+    },
+    {
+      "version": "20261008140818",
+      "name": "eo02d_privacy_lifecycle",
+      "applied_sql_sha256": "c97762ed000d545188091b3880a2b03fd981202c1d78db53b79d486f88afa67b"
+    },
+    {
+      "version": "20261009070314",
+      "name": "eo02bc_installed_shop_authority",
+      "applied_sql_sha256": "231929c2cadd4c45530907063e3c9c058a923950d4895c7753b090d664cba974"
+    },
+    {
+      "version": "20261009074901",
+      "name": "eo02d_durable_deletion_worker",
+      "applied_sql_sha256": "a254b161e969f9bbe8cf2ec11a21b92959906e392abd4d02ab1b0960ea5e901c"
+    },
+    {
+      "version": "20261009075721",
+      "name": "eo02d_worker_conditional_expression_fix",
+      "applied_sql_sha256": "c99c356b0070ed565b077451e9bb92c08e5dc0f371e3f02e049b45f60905043f"
+    },
+    {
+      "version": "20261009091622",
+      "name": "eo03a_oauth_transaction_boundary",
+      "applied_sql_sha256": "90a6c00fdb13bf0bc72f5cb89493417b955a0e1493f8a386351e0b325e45bb5a"
+    },
+    {
+      "version": "20261009092144",
+      "name": "eo03a_oauth_installation_fk_index",
+      "applied_sql_sha256": "5d6a4fc36d79b57855cdf4aaf86b0a29408b84dcaaaf9606197dbc565da7c5d0"
+    },
+    {
+      "version": "20261009113645",
+      "name": "eo03b_token_vault",
+      "applied_sql_sha256": "92ba5f5c38d53b2841e01417d9e31b02f045dfc1bcc43a5f6fc75951580eea0e"
+    },
+    {
+      "version": "20261009115314",
+      "name": "eo03b_pkce_workspace_fk_index",
+      "applied_sql_sha256": "f11c07290d1156a0414613bd691cd0cc2bf2fcf3b854af58e72943071b56009d"
+    },
+    {
+      "version": "20261009130713",
+      "name": "eo03c_connection_account_authority",
+      "applied_sql_sha256": "a9a2d7c47d4c724077c930b7d236999365d4d1cad6843ae71f2fef9fe6c8460d"
+    },
+    {
+      "version": "20261009131339",
+      "name": "eo03c_owner_policies_fk_indexes",
+      "applied_sql_sha256": "2a55afa352dbcf411142ab32c428bac610b6e54a6ec8ef5394f93bf3dbfdf1d6"
+    },
+    {
+      "version": "20261009141549",
+      "name": "eo03d_provider_connection_lifecycle",
+      "applied_sql_sha256": "4ec71bc7a7d5d4874d8f81d2eeecd6ee07d1b0074e462d7790e0d37e3a975871"
+    },
+    {
+      "version": "20261009145154",
+      "name": "eo03d_qualify_lifecycle_event_columns",
+      "applied_sql_sha256": "eded5d169439648af8f1af3d8d08f7e7b278f7b3cf197ce3ac6b6346563b1a92"
+    },
+    {
+      "version": "20261009150114",
+      "name": "eo03d_qualify_lifecycle_update_columns",
+      "applied_sql_sha256": "0a3968515b852ff0c39eaed3098406e0c0f88846b82c706d411f5cee400e5487"
+    },
+    {
+      "version": "20261009150614",
+      "name": "eo03d_qualify_finalize_update_columns",
+      "applied_sql_sha256": "e004de454e90d0ba3f00c7844641148d160de1eca6dbece836b3dd446d20e78c"
+    },
+    {
+      "version": "20261009151123",
+      "name": "eo03d_disambiguate_reconnect_conflict",
+      "applied_sql_sha256": "e6ce6e20b723f24c12ef404e5ec3894a67a540908740676743b329af7233f7ec"
+    },
+    {
+      "version": "20261011114438",
+      "name": "eo04c_provider_authorization_handoff",
+      "applied_sql_sha256": "7346d330ab2ddecf5826897bf78f29903dd1d56b3d6c38863660b2ab6aa86a5e"
+    },
+    {
+      "version": "20261011114809",
+      "name": "eo04c_handoff_installation_fk_index",
+      "applied_sql_sha256": "2c82dcb3f0ab179ced7043a5780a50195f0bbead9070ec203ec7ccca71c0d796"
+    },
+    {
+      "version": "20261011123503",
+      "name": "eo04c_callback_return_and_handoff_cancel",
+      "applied_sql_sha256": "49aa0590f7ca95d59cca1676673a2bff41b341683c30b684bd1ce40d2ae054b8"
+    },
+    {
+      "version": "20261011163811",
+      "name": "eo04c_durable_selection_and_reconnect",
+      "applied_sql_sha256": "d9e8da443357a99a05e0b943a6f19de249657b535402b707afeb96df1ffa6163"
+    },
+    {
+      "version": "20261011170151",
+      "name": "eo04c_disconnect_handoff_credential_release",
+      "applied_sql_sha256": "a7b661998bad72d4a4267cc7a194efb8129fc5edd41d4c4c5366b92d59238e20"
+    },
+    {
+      "version": "20261011170441",
+      "name": "eo04c_finalize_stranded_invalid_google_disconnects",
+      "applied_sql_sha256": "adec25c282a1cfb4f03125bfcaa2030018aba2751e63d530544c2b58b99b36ff"
+    },
+    {
+      "version": "20261011181612",
+      "name": "eo04c_canonical_google_account_selection",
+      "applied_sql_sha256": "fc6adf2d652a0c6655d4fc7e770745f5fb55d1eb7005103fa595c5a2cb83ae4a"
+    },
+    {
+      "version": "20261011183443",
+      "name": "eo04c_qualify_account_selection_columns",
+      "applied_sql_sha256": "e923961f6bbbc741ccd712758bb739148ff62f8d7ac397375193e0424023f438"
+    },
+    {
+      "version": "20261011194721",
+      "name": "eo04c_reporting_account_completion",
+      "applied_sql_sha256": "51c1dd2f5c69363ed2e5e1fa406e77202a2283cf8c08ee6da9d18e8f8ee04f3c"
+    },
+    {
+      "version": "20261013173301",
+      "name": "eo04d_klaviyo_spend_ledger",
+      "applied_sql_sha256": "bba94360003047684565465495720b909e7a9ffa0ad7548018f9cb79f1ea69d4"
+    },
+    {
+      "version": "20261013195248",
+      "name": "eo04d_klaviyo_same_day_spend_updates",
+      "applied_sql_sha256": "b68201c681ffb3bfa90d669b04ae8401f5bb5b6e075402c61983dfb7e160ad56"
+    },
+    {
+      "version": "20261013201049",
+      "name": "eo04d_klaviyo_reconnect_same_day_spend",
+      "applied_sql_sha256": "7db7dc49f7a0987c852018c058065db804e7d943ad06fd3ad5bc9ed6fa869832"
+    },
+    {
+      "version": "20261013203128",
+      "name": "eo04d_klaviyo_reconnect_timestamp_order",
+      "applied_sql_sha256": "4a8a689aa592dedcf184bd17a3e27aeca8be43d5f26f9bc01d20742b56235397"
+    },
+    {
+      "version": "20261017135321",
+      "name": "eo04d_klaviyo_reauthorization_state",
+      "applied_sql_sha256": "ae5371b3f4e339d21ea5d1b510ed577d324a03b3242b7eed8dd26284b2fa0711"
+    }
+  ],
+  "retired_table_snapshot": {
+    "consumed": 2,
+    "failed": 6,
+    "pending": 0,
+    "credential_references": 0
+  },
+  "retired_function_count": 6,
+  "callback_return_is_active": true,
+  "not_a_schema_parity_or_replay_pass": true
+}

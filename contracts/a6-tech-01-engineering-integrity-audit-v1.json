@@ -22,6 +22,9 @@
       "id": "TECH01-F01",
       "priority": "P1",
       "title": "supabase_migration_lineage_and_live_schema_drift",
+      "remediation_status": "F01-A_repository_prepared_clean_replay_and_live_application_pending",
+      "remediation_contract": "contracts/a6-tech-01-f01-migration-lineage-v1.json",
+      "closed": false,
       "eo05_blocker": true,
       "live_mutation_required_to_close": true
     },

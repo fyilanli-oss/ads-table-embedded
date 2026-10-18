@@ -111,7 +111,7 @@ Bağlayıcı düzeltme:
 
 - `docs/EO_02D_DURABLE_DELETION_WORKER.md`
 - `contracts/eo-02d-durable-deletion-worker-v1.json`
-- `supabase/migrations/20261009160000_eo02d_durable_deletion_worker.sql`
+- `supabase/migrations/20261009074901_eo02d_durable_deletion_worker.sql`
 
 Seçilen yapı Supabase Cron içinde beş dakikalık, 25 run'lık, advisory-lock korumalı database worker'dır. Application runtime'ın doğrudan fiziksel executor yetkisi kaldırılır. Başarısız run kontrollü backoff ile en fazla 20 kez denenir; tükenen run görünür `failed` durumda kalır.
 

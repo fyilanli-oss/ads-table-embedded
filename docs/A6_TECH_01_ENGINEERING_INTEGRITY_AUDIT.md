@@ -64,6 +64,10 @@ değiştirilmemiştir.
 
 ### TECH01-F01 — P1 — Supabase migration zinciri yeniden üretilebilir değil
 
+**F01-A hazırlığı:** Ayrıntılı eşleme ve kapılar
+`docs/A6_TECH_01_F01_MIGRATION_RECONCILIATION.md` içindedir. Repository hazırlığı
+F01'i kapatmaz; temiz database provası ve ayrı canlı uygulama kapıları beklenir.
+
 Repository 32 migration taşırken canlı migration ledger'ı 38 kayıt taşır. Aynı
 isimli 32 migration'ın version kimlikleri eşleşmemektedir. Canlıda repository
 `main` içinde bulunmayan altı eski authorization-handoff migration'ı ile bunların

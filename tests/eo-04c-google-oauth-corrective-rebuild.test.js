@@ -16,13 +16,13 @@ const settings = read("app/routes/_admin.settings.tsx");
 const callback = read("app/routes/auth.google-ads.callback.ts");
 const runtime = read("app/lib/oauth/google-oauth-runtime.server.js");
 const migration = read(
-  "supabase/migrations/20261011190000_eo04c_canonical_google_account_selection.sql",
+  "supabase/migrations/20261011181612_eo04c_canonical_google_account_selection.sql",
 );
 const ambiguityFix = read(
-  "supabase/migrations/20261011191000_eo04c_qualify_account_selection_columns.sql",
+  "supabase/migrations/20261011183443_eo04c_qualify_account_selection_columns.sql",
 );
 const reportingMigration = read(
-  "supabase/migrations/20261011203000_eo04c_reporting_account_completion.sql",
+  "supabase/migrations/20261011194721_eo04c_reporting_account_completion.sql",
 );
 const decision = read(
   "docs/decisions/A6_EO_04_C_GOOGLE_OAUTH_CORRECTIVE_REBUILD.md",

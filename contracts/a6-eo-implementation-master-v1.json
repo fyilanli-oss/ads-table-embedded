@@ -506,7 +506,7 @@
           "official_documentation_checked_at": "2026-10-09",
           "repository_branch": "codex/eo03d-live-acceptance-closure",
           "repository_implementation": "PASS",
-          "database_migration": "supabase/migrations/20261009210000_eo03d_provider_connection_lifecycle.sql",
+          "database_migration": "supabase/migrations/20261009141549_eo03d_provider_connection_lifecycle.sql",
           "live_database_migration": "APPLIED_2026-10-09",
           "live_provider_authorization": false,
           "implementation_prs": [
@@ -1222,6 +1222,8 @@
       "contract": "contracts/a6-quality-and-assurance-gates-v1.json",
       "audit_document": "docs/A6_TECH_01_ENGINEERING_INTEGRITY_AUDIT.md",
       "audit_contract": "contracts/a6-tech-01-engineering-integrity-audit-v1.json",
+      "active_finding": "TECH01-F01",
+      "active_remediation_contract": "contracts/a6-tech-01-f01-migration-lineage-v1.json",
       "audited_starting_baseline_commit": "c3faddff97628f372f5cc843f3326fb38de95dfc",
       "pass_baseline_commit": null,
       "blocks_eo05_until_critical_findings_close": true,

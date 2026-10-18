@@ -13,9 +13,9 @@ import {createTokenVaultRepository} from "../app/lib/database/token-vault-reposi
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
-const migration = read("supabase/migrations/20261009180000_eo03b_token_vault.sql");
+const migration = read("supabase/migrations/20261009113645_eo03b_token_vault.sql");
 const workspaceIndexMigration = read(
-  "supabase/migrations/20261009190000_eo03b_pkce_workspace_fk_index.sql",
+  "supabase/migrations/20261009115314_eo03b_pkce_workspace_fk_index.sql",
 );
 const contract = JSON.parse(
   read("contracts/eo-03b-token-envelope-startup-guard-v1.json"),

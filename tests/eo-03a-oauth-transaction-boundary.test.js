@@ -15,10 +15,10 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) =>
   fs.readFileSync(path.join(root, relativePath), "utf8");
 const migration = read(
-  "supabase/migrations/20261009170000_eo03a_oauth_transaction_boundary.sql",
+  "supabase/migrations/20261009091622_eo03a_oauth_transaction_boundary.sql",
 );
 const installationIndexMigration = read(
-  "supabase/migrations/20261009173000_eo03a_oauth_installation_fk_index.sql",
+  "supabase/migrations/20261009092144_eo03a_oauth_installation_fk_index.sql",
 );
 const contract = JSON.parse(
   read("contracts/eo-03a-oauth-transaction-boundary-v1.json"),

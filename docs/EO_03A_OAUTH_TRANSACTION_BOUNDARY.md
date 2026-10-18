@@ -171,7 +171,7 @@ Repository implementation now contains:
 
 Implementation files:
 
-- `supabase/migrations/20261009170000_eo03a_oauth_transaction_boundary.sql`
+- `supabase/migrations/20261009091622_eo03a_oauth_transaction_boundary.sql`
 - `app/lib/database/oauth-transaction-repository.server.js`
 - `app/lib/oauth/oauth-transaction.server.js`
 - `tests/eo-03a-oauth-transaction-boundary.test.js`

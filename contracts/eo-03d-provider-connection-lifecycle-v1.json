@@ -92,20 +92,20 @@
     "security_definer_empty_search_path": true
   },
   "implementation": {
-    "migration": "supabase/migrations/20261009210000_eo03d_provider_connection_lifecycle.sql",
+    "migration": "supabase/migrations/20261009141549_eo03d_provider_connection_lifecycle.sql",
     "repository": "app/lib/database/provider-connection-lifecycle-repository.server.js",
     "service": "app/lib/oauth/provider-connection-lifecycle.server.js",
     "tests": "tests/eo-03d-provider-connection-lifecycle.test.js",
     "live_migration_applied": true,
     "provider_adapters_implemented": false,
     "live_routes_wired": false,
-    "first_corrective_migration": "supabase/migrations/20261009211000_eo03d_qualify_lifecycle_event_columns.sql",
+    "first_corrective_migration": "supabase/migrations/20261009145154_eo03d_qualify_lifecycle_event_columns.sql",
     "first_corrective_migration_live_applied": true,
-    "second_corrective_migration": "supabase/migrations/20261009212000_eo03d_qualify_lifecycle_update_columns.sql",
+    "second_corrective_migration": "supabase/migrations/20261009150114_eo03d_qualify_lifecycle_update_columns.sql",
     "second_corrective_migration_live_applied": true,
-    "third_corrective_migration": "supabase/migrations/20261009213000_eo03d_qualify_finalize_update_columns.sql",
+    "third_corrective_migration": "supabase/migrations/20261009150614_eo03d_qualify_finalize_update_columns.sql",
     "third_corrective_migration_live_applied": true,
-    "fourth_corrective_migration": "supabase/migrations/20261009214000_eo03d_disambiguate_reconnect_conflict.sql",
+    "fourth_corrective_migration": "supabase/migrations/20261009151123_eo03d_disambiguate_reconnect_conflict.sql",
     "fourth_corrective_migration_live_applied": true
   },
   "live_effect": {

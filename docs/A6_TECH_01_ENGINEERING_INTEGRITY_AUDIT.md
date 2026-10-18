@@ -96,6 +96,27 @@ ve canlı schema parity testi geçmelidir.
 
 ### TECH01-F02 — P1 — Sahipsiz şifreli Google credential
 
+**Güncel sonuç — 18 Ekim 2026:** PR #103 iki temiz PostgreSQL kurulumunda
+F02 regresyonu ve governance/test/typecheck/build PASS sonrasında açık onayla
+merge edildi. Kullanıcı yalnız tek sahipsiz envelope'un commit sonrası geri
+getirilemeyeceğini açıkça kabul ederek canlı temizlemeyi ayrıca onayladı.
+Kayıt tek transaction ve tek denemede silindi. Kilit altında ön koşullar ve
+COMMIT öncesi son koşullar doğrulandı. Sahipsiz Google credential 1 → 0,
+toplam credential 4 → 3. Diğer üç credential, üç connection ve sekiz history
+satırının parmak izleri aynı; Security Advisor 0. Google revoke çağrısı,
+token çözme/dışa aktarma, schema/grant veya platform config değişikliği yok.
+
+Kanıt: `docs/evidence/A6_TECH_01_F02_LIVE_CLEANUP_2026-10-18.json`.
+Exact transaction SQL'i aynı evidence dizininde korunur; tekrar çalıştırma
+yetkisi vermez ve aday artık bulunmadığından guard ile durur. Başlangıçtaki
+recoverable-deletion kapısı genel olarak gevşetilmedi: yalnız bu kayda ait
+commit-sonrası geri dönüşsüzlük istisnası açıkça kabul edildi. Full backup
+varmış gibi gösterilmez. Ürün sahibi 18 Ekim 2026'da F02 kapanışını ve PR #104
+merge'ünü kabul etti. Kanıt:
+`docs/evidence/A6_TECH_01_F02_CLOSURE_2026-10-18.json`.
+F03 sıradadır; uygulaması başlamadı ve bu kabul yeni işlem yetkisi vermez.
+Aşağıdaki teşhis/hazırlık notları önceki durumu açıklar.
+
 **18 Ekim 2026 incelemesi:** Tek Google kalıntısının connection ve handoff
 referansı yok; aynı sahibi için süresi dolmamış OAuth işlemi de yok. Kayıt
 11 Ekim 15:50:07 UTC'de oluşmuş. Yakın OAuth/handoff geçmişi

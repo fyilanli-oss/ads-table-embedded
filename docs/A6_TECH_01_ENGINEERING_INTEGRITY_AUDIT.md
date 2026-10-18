@@ -5,6 +5,10 @@
 **Durum:** Bulgular kaydedildi; kritik düzeltme ve yeniden test zorunlu
 **EO-05 kararı:** Kapalı
 
+**Güncel düzeltme durumu:** F01, F02 ve F03 ürün sahibi kabulüyle kapandı.
+Sıradaki F04 başlamadı. İlk denetim bulguları ve başlangıç sayıları aşağıda
+tarihsel baseline olarak korunur; genel A6-TECH-01 henüz PASS değildir.
+
 ## 1. Analist özeti
 
 Çalışan Production uygulamasında veri kaybı veya aktif servis kırılması
@@ -175,7 +179,10 @@ Negatif test, Google adı hem örnekten hem contract'tan çıkarılsa bile canl�
 snapshot karşılaştırmasının bunu yakalamasını sağlar; eski `16` sabiti kaldırıldı.
 Secret çözümleme/değer okuma, provider/config mutation veya deploy yapılmadı.
 Kanıt `docs/evidence/A6_TECH_01_F03_ENV_INVENTORY_2026-10-18.json`.
-F03 kapanış kabulü bekleniyor; F04 başlamadı. Aşağıdaki metin başlangıç bulgusudur.
+Ürün sahibi F03 kapanışını ve PR #105 merge'ünü 18 Ekim 2026'da onayladı.
+Kanıt `docs/evidence/A6_TECH_01_F03_CLOSURE_2026-10-18.json`.
+F04 başlamadı. Bu kabul genel secret custody/recovery açıklarını kapatmaz;
+aşağıdaki metin başlangıç bulgusudur.
 
 Canlı Vercel Production projesi 22 environment adı taşır. Repository secret
 contract'ı 18 Vercel girdisi, master contract ise daha eski 16 toplam/11 Vercel

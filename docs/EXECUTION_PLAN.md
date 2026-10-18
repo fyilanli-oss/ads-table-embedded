@@ -85,6 +85,12 @@ temizlendi. Üç bağlı credential, üç connection ve sekiz tarihsel kayıt ko
 `docs/evidence/A6_TECH_01_F02_CLOSURE_2026-10-18.json`.
 Sıradaki F03 başlamadı; yeni canlı işlem veya EO-05 başlangıcı yetkisi yoktur.
 
+F03 envanter düzeltmesi 18 Ekim 2026'da ürün sahibi kabulünü aldı: 22 Vercel
+adı, 1 GitHub workflow secret adı, toplam 23 envanter girdisi; örnek dosya,
+contract ve testler eşlendi. Secret değeri okuma veya canlı ayar/deploy işlemi
+yok. Kapanış kanıtı `docs/evidence/A6_TECH_01_F03_CLOSURE_2026-10-18.json`.
+F01–F03 kapalıdır. Sıradaki F04 başlamadı; EO-05 kapısı hâlâ kapalıdır.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

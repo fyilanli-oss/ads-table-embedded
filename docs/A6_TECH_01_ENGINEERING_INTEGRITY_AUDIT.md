@@ -368,6 +368,14 @@ provenance tekrar doğrulanmalıdır.
 
 ### TECH01-F08 — P2 blocker — Privacy foreign-key indexleri
 
+**İzole doğrulama PASS:** PR #111 kaynak `b935ed6` üzerinde genel CI 437 test,
+typecheck/build PASS; DB Integrity `39152944207` PASS. Doğal plan iki tabloda
+Seq Scan'den exact yeni index kullanılan Bitmap Heap Scan'e geçti. Fixture'lar
+rollback edildi; iki bağımsız 40-migration replay son şema SHA256'sı
+`74f45de15c47463848809ffd220fddb122775935f46c3f7eead961f116f3dec3` ile aynı.
+Kanıt `docs/evidence/A6_TECH_01_F08_ISOLATED_PASS_2026-10-18.json`.
+Canlı uygulama hâlâ ayrı açık onay bekler; F08 kapanmadı.
+
 **Repository hazırlığı — 18 Ekim 2026:** Canlı read-only kontrol iki eksik
 workspace FK index'ini doğruladı. `deletion_runs` ve `deletion_manifests` sıfır
 satır; mevcut owner/RLS/FORCE RLS/ACL ve RESTRICT FK'ler korunacak. İki full,

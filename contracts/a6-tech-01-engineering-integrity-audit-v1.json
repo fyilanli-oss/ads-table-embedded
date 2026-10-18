@@ -103,6 +103,7 @@
       "title": "privacy_foreign_key_covering_indexes_missing",
       "remediation_status": "repository_prepared_isolated_ci_and_live_application_pending",
       "remediation_evidence": "docs/evidence/A6_TECH_01_F08_PRIVACY_INDEXES_2026-10-18.json",
+      "isolated_verification_evidence": "docs/evidence/A6_TECH_01_F08_ISOLATED_PASS_2026-10-18.json",
       "closed": false,
       "eo05_blocker": true,
       "blocker_reason": "capacity_and_deletion_lifecycle"

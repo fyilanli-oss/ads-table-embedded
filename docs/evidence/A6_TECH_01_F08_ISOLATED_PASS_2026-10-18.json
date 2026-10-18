@@ -1,0 +1,40 @@
+{
+  "checked_at": "2026-10-18",
+  "finding": "TECH01-F08",
+  "status": "isolated_verification_pass_live_application_pending",
+  "prepared_evidence": "docs/evidence/A6_TECH_01_F08_PRIVACY_INDEXES_2026-10-18.json",
+  "tested_source_commit": "b935ed6724a2b928c823eed5072a8f844b91c088",
+  "tested_source_tree": "8a16689c082b9960b8fbf367fc6704f7ccf69e6e",
+  "governance_run_id": 39152944172,
+  "database_integrity_run_id": 39152944207,
+  "database_job_id": 117750145401,
+  "repository_tests_passed": 437,
+  "typecheck": "pass",
+  "build": "pass_existing_Router_warnings_remain_F10",
+  "plan_probe": {
+    "synthetic_only": true,
+    "workspaces": 2000,
+    "rows_per_table": 20000,
+    "before": ["Seq Scan", "Seq Scan"],
+    "after": ["Bitmap Heap Scan", "Bitmap Heap Scan"],
+    "matching_indexes": ["deletion_runs_workspace_fk_idx", "deletion_manifests_workspace_fk_idx"],
+    "forced_planner_flags": false,
+    "owner_RLS_ACL_FK_policies_and_fixture_row_counts_preserved": true,
+    "fixtures_and_probe_indexes_rolled_back": true
+  },
+  "replay": {
+    "postgres_version_num": 170011,
+    "staged_migrations_applied": 40,
+    "full_migrations_applied": 40,
+    "historical_snapshot_parity": true,
+    "final_schemas_equal": true,
+    "final_schema_sha256": "74f45de15c47463848809ffd220fddb122775935f46c3f7eead961f116f3dec3",
+    "temporary_databases_cleaned": true
+  },
+  "migration_sql_sha256": "828056300ca0f8bc3fe689737a9b9973ce5b73ca07d4ae05bb57dc781113a70a",
+  "live_application_authorized": false,
+  "production_mutation": false,
+  "F08_closed": false,
+  "F09_execution_authorized": false,
+  "EO05_may_start": false
+}

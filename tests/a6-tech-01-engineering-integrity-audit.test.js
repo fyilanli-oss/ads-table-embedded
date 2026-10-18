@@ -33,7 +33,7 @@ test("open critical findings block EO-05 and accepted closure removes only its o
   assert.equal(critical.length, 8);
   assert.ok(critical.filter(finding => finding.closed !== true).every(finding => finding.eo05_blocker === true));
   const closed = critical.filter(finding => finding.closed === true);
-  assert.deepEqual(closed.map(finding => finding.id), ["TECH01-F01", "TECH01-F02", "TECH01-F03", "TECH01-F04", "TECH01-F05", "TECH01-F06"]);
+  assert.deepEqual(closed.map(finding => finding.id), ["TECH01-F01", "TECH01-F02", "TECH01-F03", "TECH01-F04", "TECH01-F05", "TECH01-F06", "TECH01-F07"]);
   for (const finding of closed) {
     assert.equal(finding.eo05_blocker, false);
     const closure = JSON.parse(readFileSync(new URL(finding.closure_evidence, root), "utf8"));

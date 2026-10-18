@@ -1,0 +1,32 @@
+{
+  "checked_at": "2026-10-18",
+  "finding": "TECH01-F07",
+  "status": "closed_product_owner_accepted",
+  "product_owner_closure_accepted": true,
+  "approval_source": "explicit user approval of F07 closure and PR110 merge in current conversation",
+  "pull_request": "https://github.com/fyilanli-oss/ads-table-embedded/pull/110",
+  "remediation_evidence": "docs/evidence/A6_TECH_01_F07_PROVENANCE_2026-10-18.json",
+  "previous_prepared_evidence_preserved": true,
+  "pre_acceptance_ci_source": "c4acc327ba718827a199a2caec74d2f879b71c8b",
+  "pre_acceptance_governance_run_id": 39151678195,
+  "pre_acceptance_tests_passed": 434,
+  "final_acceptance_commit_requires_fresh_ci_before_merge": true,
+  "accepted_result": "existing_authorized_exact_main_deployment_verified_no_runtime_drift_no_new_deploy_needed",
+  "deployment_id": "dpl_JAAMKofCU2oi8Tr2s6mAVk2XGAhu",
+  "deployed_main_commit": "17e79ae4993860de23c3efda091844aaf88c23e5",
+  "comparison_main_commit": "f429bcc64aa699cc70003d3c35daac87646b9102",
+  "same_full_commit_or_tree_claimed": false,
+  "scope": {
+    "point_in_time_provenance_not_ongoing_monitor": true,
+    "no_blanket_exception_for_future_runtime_changes": true,
+    "runtime_workflow_or_dependency_change": false,
+    "new_deployment": false,
+    "secret_configuration_database_or_provider_mutation": false
+  },
+  "F07_closed": true,
+  "remaining_F07_gates": [],
+  "next_finding": "TECH01-F08",
+  "F08_execution_authorized": false,
+  "A6_TECH_01_overall_pass": false,
+  "EO05_may_start": false
+}

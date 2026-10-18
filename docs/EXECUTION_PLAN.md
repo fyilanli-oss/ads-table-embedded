@@ -129,6 +129,12 @@ diğer 371 kaynak girdisi eşleşir. Kanıt:
 Yeni deploy/secret/config/database işlemi yok. CI ve ürün sahibi kabulü beklenir;
 F07 henüz kapanmadı, F08 başlamadı ve EO-05 engeli korunur.
 
+F07 provenance doğrulaması 434 test/typecheck/build CI kapısından geçti;
+ürün sahibi kapanışı ve PR #110 merge'ünü kabul etti. Yeni deploy gerekmedi
+ve yapılmadı. Kapanış kanıtı:
+`docs/evidence/A6_TECH_01_F07_CLOSURE_2026-10-18.json`.
+Güncel F01–F07 kapalıdır; F08 başlamadı/yetkili değil, EO-05 engeli korunur.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

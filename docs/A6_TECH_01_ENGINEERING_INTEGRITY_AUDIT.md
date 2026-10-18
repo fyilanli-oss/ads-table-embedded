@@ -5,9 +5,8 @@
 **Durum:** Bulgular kaydedildi; kritik düzeltme ve yeniden test zorunlu
 **EO-05 kararı:** Kapalı
 
-**Güncel düzeltme durumu:** F01–F06 ürün sahibi kabulüyle kapandı.
-F06 kapanış kaydı PR #109 ile merge edildi. F07 provenance doğrulandı;
-CI ve ürün sahibi kabulü beklenir.
+**Güncel düzeltme durumu:** F01–F07 ürün sahibi kabulüyle kapandı.
+F08 başlamadı; genel audit PASS değildir.
 İlk denetim bulguları ve başlangıç sayıları aşağıda
 tarihsel baseline olarak korunur; genel A6-TECH-01 henüz PASS değildir.
 
@@ -337,6 +336,11 @@ saklanabilir.
 credential, query, stack ve provider ham body negatif testleri geçmelidir.
 
 ### TECH01-F07 — P2 blocker — Production deployment provenance
+
+**Kapanış — 18 Ekim 2026:** Ürün sahibi kaynak eşliği sonucunu, yeni deploy
+gerekmemesi kararını, F07 kapanışını ve PR #110 merge'ünü kabul etti.
+Kanıt `docs/evidence/A6_TECH_01_F07_CLOSURE_2026-10-18.json`.
+F08 başlamadı; aşağıdaki doğrulama/teşhis tarihsel kanıt olarak korunur.
 
 **Doğrulama — 18 Ekim 2026:** Eski feature-branch deployment'ı F06'da ayrı
 açık onayla değiştirildi. Mevcut `dpl_JAAMKofCU2oi8Tr2s6mAVk2XGAhu`, o anda

@@ -6,7 +6,8 @@
 **EO-05 kararı:** Kapalı
 
 **Güncel düzeltme durumu:** F01–F07 ürün sahibi kabulüyle kapandı.
-F08 index hazırlığı sürüyor; izole CI ve ayrı canlı onay beklenir. Genel audit PASS değildir.
+F08 canlı index uygulaması doğrulandı; son CI ve ürün sahibi kapanış/merge kabulü
+beklenir. Genel audit PASS değildir.
 İlk denetim bulguları ve başlangıç sayıları aşağıda
 tarihsel baseline olarak korunur; genel A6-TECH-01 henüz PASS değildir.
 
@@ -367,6 +368,19 @@ mutation onayıyla exact audited `main` commit'i Production'a alınmalı ve depl
 provenance tekrar doğrulanmalıdır.
 
 ### TECH01-F08 — P2 blocker — Privacy foreign-key indexleri
+
+**Canlı uygulama — 18 Ekim 2026:** Ayrı açık onayla tek migration çağrısı
+başarılı oldu. Supabase version `20261018181906`; hazırlık dosyası bu version'a
+yeniden adlandırıldı, SQL hash'i değişmedi. Önceki 39 migration korunur;
+toplam 40 applied, pending sıfır. İki index valid/ready; eski index, owner,
+RLS/FORCE RLS, ACL, policy, FK/check ve privacy function hash'i aynı; hedef
+tablolar öncesi/sonrası sıfır satır. Canlı EXPLAIN iki exact index'i kullanır;
+boş tablo sonucu latency/kapasite sertifikası değildir. Security Advisor 0;
+unindexed FK 2 → 0. 14 unused-index bildirimi düşük kullanım gözlemidir,
+hiçbir index silinmedi. Kanıt:
+`docs/evidence/A6_TECH_01_F08_LIVE_ACCEPTANCE_2026-10-18.json`.
+Son CI ve açık kapanış/merge kabulü beklenir; F08 henüz kapalı sayılmaz.
+Aşağıdaki hazırlık/teşhis kayıtları tarihsel kanıttır.
 
 **İzole doğrulama PASS:** PR #111 kaynak `b935ed6` üzerinde genel CI 437 test,
 typecheck/build PASS; DB Integrity `39152944207` PASS. Doğal plan iki tabloda

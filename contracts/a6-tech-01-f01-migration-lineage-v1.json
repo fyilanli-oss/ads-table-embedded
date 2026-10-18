@@ -15,7 +15,7 @@
   "scoped_recovery_pass_evidence": "docs/evidence/A6_TECH_01_F01C_SCOPED_RECOVERY_PASS_2026-10-18.json",
   "backup_restore_evidence_status": "scoped_alternative_accepted_for_F01_only_not_full_database_backup",
   "live_application_evidence": "docs/evidence/A6_TECH_01_F01_LIVE_ACCEPTANCE_2026-10-18.json",
-  "live_ledger_evidence": "docs/evidence/A6_TECH_01_F01_POST_MIGRATION_LEDGER_2026-10-18.json",
+  "live_ledger_evidence": "docs/evidence/A6_TECH_01_F08_POST_MIGRATION_LEDGER_2026-10-18.json",
   "replay_document": "docs/A6_TECH_01_F01B_DATABASE_REPLAY.md",
   "replay_status": "isolated_database_replay_and_live_retirement_pass",
   "replay_pass_evidence": "docs/evidence/A6_TECH_01_F01B_DATABASE_REPLAY_PASS_2026-10-18.json",
@@ -409,16 +409,7 @@
       "applied_sql_difference": null
     }
   ],
-  "pending_migrations": [
-    {
-      "version": "20261018180529",
-      "name": "a6tech01_privacy_workspace_fk_indexes",
-      "file": "supabase/migrations/20261018180529_a6tech01_privacy_workspace_fk_indexes.sql",
-      "created_with": "supabase@2.121.0 migration new a6tech01_privacy_workspace_fk_indexes",
-      "repository_sql_sha256": "828056300ca0f8bc3fe689737a9b9973ce5b73ca07d4ae05bb57dc781113a70a",
-      "applied": false
-    }
-  ],
+  "pending_migrations": [],
   "forward_migrations": [
     {
       "version": "20261018152910",
@@ -428,6 +419,16 @@
       "created_with": "supabase@2.121.0 migration new a6tech01_retire_provider_authorization_handoffs",
       "repository_sql_sha256": "b67db0a415a1dc17b5af2d4e904d4eb7d500e6eb96eddaa5f43a2c78818e40ca",
       "applied_sql_sha256": "b67db0a415a1dc17b5af2d4e904d4eb7d500e6eb96eddaa5f43a2c78818e40ca",
+      "applied": true
+    },
+    {
+      "version": "20261018181906",
+      "prepared_version": "20261018180529",
+      "name": "a6tech01_privacy_workspace_fk_indexes",
+      "file": "supabase/migrations/20261018181906_a6tech01_privacy_workspace_fk_indexes.sql",
+      "created_with": "supabase@2.121.0 migration new a6tech01_privacy_workspace_fk_indexes",
+      "repository_sql_sha256": "828056300ca0f8bc3fe689737a9b9973ce5b73ca07d4ae05bb57dc781113a70a",
+      "applied_sql_sha256": "828056300ca0f8bc3fe689737a9b9973ce5b73ca07d4ae05bb57dc781113a70a",
       "applied": true
     }
   ],

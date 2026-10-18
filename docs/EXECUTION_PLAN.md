@@ -142,6 +142,13 @@ replay ve sentetik öncesi/sonrası plan kontrolü beklenir. Canlı uygulama ayr
 açık onay, fresh preflight ve postcheck/Advisor kapısından geçer. F08 açık,
 F09 başlamadı; veri/silme kuralı/runtime/deploy değişikliği yetkilendirilmedi.
 
+F08 iki index'i ayrı açık onayla canlıya ekledi; Supabase version
+`20261018181906` repository'ye SQL içeriği değişmeden eşlendi. 40 applied / 0
+pending; önceki migration hash'leri, veri ve güvenlik sınırları korundu.
+Security Advisor 0, eksik FK index uyarısı 0. Canlı kanıt:
+`docs/evidence/A6_TECH_01_F08_LIVE_ACCEPTANCE_2026-10-18.json`.
+Son CI ve açık kapanış/merge kabulü beklenir; F09 başlamadı.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

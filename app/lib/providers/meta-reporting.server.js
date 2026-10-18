@@ -48,6 +48,7 @@ export const META_PRODUCT_BREAKDOWN_ID_LIMIT = 100;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const ACCOUNT_PATTERN = /^act_[0-9]+$/;
 const MAX_CURSOR_LENGTH = 4096;
+const RATE_LIMIT_CODES = new Set([4, 17, 32, 80000, 80004]);
 
 function nonEmpty(value, code, maximum = 8192) {
   if (
@@ -189,13 +190,18 @@ async function fetchMetaInsightsPayload({url, accessToken, appSecret, fetchFn}) 
   const payload = await jsonResponse(response);
   if (!response.ok || !payload) {
     const code = providerErrorCode(payload);
+    const authorizationInvalid = code === 190 || response.status === 401;
+    const rateLimited = response.status === 429 || RATE_LIMIT_CODES.has(code);
+    const permissionDenied = !rateLimited && (
+      response.status === 403 || code === 10 || (code >= 200 && code <= 299)
+    );
     throw new MetaGraphError(
-      code === 190 || response.status === 401 || response.status === 403
+      authorizationInvalid
         ? "META_REAUTHORIZATION_REQUIRED"
-        : "META_REPORTING_REQUEST_FAILED",
-      code === 190 || response.status === 401 || response.status === 403
+        : permissionDenied ? "META_PERMISSION_DENIED" : "META_REPORTING_REQUEST_FAILED",
+      authorizationInvalid
         ? "Meta authorization is no longer valid"
-        : "Meta reporting request failed",
+        : permissionDenied ? "Meta permission was denied" : "Meta reporting request failed",
       {
         status: response.status,
         provider_error_code: code,
@@ -387,10 +393,22 @@ export function classifyMetaReportingError(error) {
       message: error.message,
     });
   }
-  if (status === 429 || providerCode === 4 || providerCode === 17 || providerCode === 32) {
+  if (status === 429 || RATE_LIMIT_CODES.has(providerCode)) {
     return Object.freeze({
       class: "rate_limited",
       retryable: true,
+      retry_after_ms: error.details?.retry_after_ms ?? null,
+      provider_request_id: error.details?.request_id ?? null,
+      message: error.message,
+    });
+  }
+  if (
+    error.code === "META_PERMISSION_DENIED" || status === 403
+    || providerCode === 10 || (providerCode >= 200 && providerCode <= 299)
+  ) {
+    return Object.freeze({
+      class: "permission_denied",
+      retryable: false,
       retry_after_ms: error.details?.retry_after_ms ?? null,
       provider_request_id: error.details?.request_id ?? null,
       message: error.message,

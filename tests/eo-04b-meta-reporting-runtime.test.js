@@ -199,6 +199,53 @@ test("Meta reporting error classification keeps auth terminal and quotas retryab
   assert.equal(retryAfter.retry_after_ms, 7000);
 });
 
+test("Meta permission errors and bare 403 do not masquerade as invalid tokens", async () => {
+  for (const [status, code] of [[403, 10], [400, 10], [400, 200], [403, 299], [403, null]]) {
+    let calls = 0;
+    await assert.rejects(fetchMetaAdChannelInsightsPage({
+      accessToken: "valid", appSecret: "test-secret", adAccountId: "act_123456",
+      dateWindow: {start: "2026-10-14", end: "2026-10-14"},
+      fetchFn: async () => {calls++; return json({error: code === null ? {} : {code}}, status);},
+    }), error => {
+      assert.equal(error.code, "META_PERMISSION_DENIED");
+      assert.equal(classifyMetaReportingError(error).class, "permission_denied");
+      assert.equal(classifyMetaReportingError(error).retryable, false);
+      return true;
+    });
+    assert.equal(calls, 1);
+  }
+});
+
+test("Meta BUC quota codes win over generic HTTP 403 and never retry the request", async () => {
+  for (const code of [80000, 80004]) {
+    for (const status of [400, 403, 429]) {
+      let calls = 0;
+      await assert.rejects(fetchMetaAdChannelInsightsPage({
+        accessToken: "valid", appSecret: "test-secret", adAccountId: "act_123456",
+        dateWindow: {start: "2026-10-14", end: "2026-10-14"},
+        fetchFn: async () => {calls++; return json({error: {code, error_subcode: 2446079}}, status, {"retry-after": "7"});},
+      }), error => {
+        assert.equal(error.code, "META_REPORTING_REQUEST_FAILED");
+        const classified = classifyMetaReportingError(error);
+        assert.equal(classified.class, "rate_limited");
+        assert.equal(classified.retryable, true);
+        assert.equal(classified.retry_after_ms, 7000);
+        return true;
+      });
+      assert.equal(calls, 1);
+    }
+  }
+});
+
+test("Meta explicit invalid token code remains reauthorization even on HTTP 403", async () => {
+  await assert.rejects(fetchMetaAdChannelInsightsPage({
+    accessToken: "expired", appSecret: "test-secret", adAccountId: "act_123456",
+    dateWindow: {start: "2026-10-14", end: "2026-10-14"},
+    fetchFn: async () => json({error: {code: 190}}, 403),
+  }), error => error.code === "META_REAUTHORIZATION_REQUIRED"
+    && classifyMetaReportingError(error).class === "reauthorization_required");
+});
+
 test("Meta first reporting slice cannot mutate Dataset V2 or another provider", () => {
   assert.equal(contract.mutations.live_provider_call, false);
   assert.equal(contract.mutations.dataset_v2, false);

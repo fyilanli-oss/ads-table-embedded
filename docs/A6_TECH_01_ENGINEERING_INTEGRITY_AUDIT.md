@@ -12,7 +12,7 @@ son eşlik kanıtı PR #112 üzerinde tutulur. F10 ürün sahibi kararıyla ayr�
 İlk denetim bulguları ve başlangıç sayıları aşağıda
 tarihsel baseline olarak korunur; genel A6-TECH-01 henüz PASS değildir.
 
-**Son yeniden test — 18 Ekim 2026:** `cddda0fad4803c9212412211495365c69ed2e884`
+**İlk yeniden test (tarihsel) — 18 Ekim 2026:** `cddda0fad4803c9212412211495365c69ed2e884`
 üzerinde 441 test, typecheck ve build geçti. Production bağımlılık taraması
 uyarı bildirmedi; geliştirme/build bağımlılıklarını da içeren tarama ise dört
 yüksek, üç orta, bir düşük advisory bildirdi. Yeni `TECH01-RETEST-SEC01`
@@ -20,6 +20,20 @@ güvenlik değerlendirmesi açık olduğundan genel kapanış ve EO-05 başlang�
 Kanıt: `docs/evidence/A6_TECH_01_FINAL_RETEST_2026-10-18.json`.
 
 ## 1. Analist özeti
+
+**Son ek kanıt — 18 Ekim 2026:** GitHub `main-protection` aktif ve yalnız `main`
+hedefli; bypass boş, PR ve `governance` zorunlu, silme/force-push engelli.
+Meta'nın iki resmî doküman metni ürün sahibinin paylaşımı üzerinden incelendi;
+agent'ın başarısız HTTP erişimi bağımsız teyit gibi sunulmaz. İzin hatasının
+yeniden bağlantıya çevrilmesi ve `80000/80004` kota kodlarının eksikliği için
+onaylı dar kod/test düzeltmesi hazırdır; CI/kabul/merge beklenir. Kanıt:
+`docs/evidence/A6_TECH_01_GITHUB_META_EVIDENCE_2026-10-18.json`.
+
+Yukarıdaki ilk retest ve aşağıdaki ilk denetim sayıları tarihseldir. Güncel
+kritik F01–F09 ve repository dependency güvenlik bulgusu kapalıdır. Bu Meta
+düzeltmesinin teslimi sonrasında ayrı onaylı exact release/canlı kabul ve genel
+kapanış kararı kalır. F10 ertelenmiştir; yeni yedek işi açılmaz, genel PASS veya
+EO-05 başlangıcı verilmez.
 
 Çalışan Production uygulamasında veri kaybı veya aktif servis kırılması
 gözlenmemiştir. Repository test, typecheck ve build kapılarından geçmektedir.

@@ -132,7 +132,7 @@
     }
   ],
   "latest_retest_evidence": "docs/evidence/A6_TECH_01_FINAL_RETEST_2026-10-18.json",
-  "latest_retest_status": "repository_security_closed_general_evidence_and_release_acceptance_pending",
+  "latest_retest_status": "repository_security_closed_platform_evidence_verified_meta_fix_acceptance_pending",
   "retest_findings": [
     {
       "id": "TECH01-RETEST-SEC01",
@@ -149,11 +149,17 @@
       "evidence": "docs/evidence/A6_TECH_01_FINAL_RETEST_2026-10-18.json"
     }
   ],
-  "open_evidence": [
+  "latest_platform_evidence": "docs/evidence/A6_TECH_01_GITHUB_META_EVIDENCE_2026-10-18.json",
+  "historical_open_evidence": [
     "github_branch_protection_or_ruleset_manual_evidence",
     "supabase_backup_and_pitr_manual_evidence",
     "meta_current_official_documentation_recheck_after_initial_429"
   ],
+  "open_evidence": [
+    "meta_two_error_classification_fixes_CI_and_acceptance",
+    "latest_release_deployment_and_fresh_end_to_end_acceptance"
+  ],
+  "historical_evidence_limit": "F01 scoped recovery kabulü ve bilinen Free Plan recovery sınırı korunur; tarihsel backup/PITR satırı yeni yedek işi veya yeni kapanış şartı değildir.",
   "baseline_verification": {
     "repository_tests": "384_of_384_pass",
     "typecheck": "pass",

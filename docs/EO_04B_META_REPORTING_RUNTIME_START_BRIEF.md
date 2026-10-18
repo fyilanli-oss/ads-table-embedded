@@ -49,6 +49,23 @@ This is not Dataset V2 and is not persisted.
 - a next page without a valid opaque cursor fails closed.
 - an empty `data` array is a valid empty provider page; it is not fabricated as zero.
 
+## Onaylı dar hata düzeltmesi — 18 Ekim 2026
+
+Ürün sahibinin resmî Meta sayfalarından paylaştığı iki metin incelendi; bağımsız
+HTTP erişimi başarılı ilan edilmez. Kaynaklar rate-limiting ve error-handling
+sayfalarıdır; provenance ve GitHub koruma kanıtı
+`docs/evidence/A6_TECH_01_GITHUB_META_EVIDENCE_2026-10-18.json` içindedir.
+
+- Raporlama izin hataları (`10`, `200–299`, tek başına HTTP `403`) token geçersizliği
+  diye işaretlenmez; `permission_denied` sınıfı terminaldir. Hesap keşfinde `403`
+  mevcut Graph hatası olarak korunur; bağlantı yenileme gerekçesi üretilmez.
+- Açık `190` token hatası ve mevcut `401` davranışı korunur.
+- `80000` ve `80004`, HTTP `403` ile gelse de kota sınıfıdır.
+- Retryable sınıflandırması otomatik tekrar yetkisi değildir. İlk hata isteği
+  sonlandırır; izin/kota hatasında lifecycle değiştirilmez, kalan sayfalar/veri
+  aileleri çağrılmaz, kısmi sonuç yayımlanmaz.
+- Sayısal kota, scheduler, BUC bekleme süresi parser'ı veya canlı çağrı eklenmez.
+
 ## Second slice — raw product breakdown
 
 The second repository-only slice adds a separate Meta request with:

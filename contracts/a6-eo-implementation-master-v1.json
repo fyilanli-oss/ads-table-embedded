@@ -1234,6 +1234,7 @@
       "open_retest_security_finding": null,
       "closed_retest_security_finding": "TECH01-RETEST-SEC01",
       "retest_security_closure_evidence": "docs/evidence/A6_TECH_01_SECURITY_CLOSURE_2026-10-18.json",
+      "latest_platform_evidence": "docs/evidence/A6_TECH_01_GITHUB_META_EVIDENCE_2026-10-18.json",
       "retest_remediation_execution_authorized": false,
       "authorized_retest_repository_change": "vite_7.3.6_scoped_esbuild_0.28.1_ajv_8.18.0_ts_morph_24.0.0_repository_only",
       "latest_security_remediation_evidence": "docs/evidence/A6_TECH_01_REMAINING_SECURITY_REMEDIATION_2026-10-18.json",

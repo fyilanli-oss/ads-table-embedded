@@ -80,6 +80,17 @@
     "deployment": false
   },
   "next_gate": "app_role_repository_ci_and_visual_acceptance_before_separate_deployment_and_real_catalog_call_authorizations",
+  "error_classification_correction": {
+    "checked_at": "2026-10-18",
+    "repository_authorized": true,
+    "evidence": "docs/evidence/A6_TECH_01_GITHUB_META_EVIDENCE_2026-10-18.json",
+    "permission_codes": [10, "200-299"],
+    "bare_403_proves_invalid_token": false,
+    "buc_rate_limit_codes": [80000, 80004],
+    "automatic_retry": false,
+    "deployment_authorized": false,
+    "live_provider_call_authorized": false
+  },
   "google_runtime_started": false,
   "klaviyo_runtime_started": false
 }

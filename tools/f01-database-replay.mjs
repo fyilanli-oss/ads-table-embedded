@@ -87,14 +87,37 @@ const countHistory = async (client) => withReplayRole(client, "adstable_owner", 
   Number((await client.query("select count(*) as count from integrations.provider_authorization_handoffs")).rows[0].count));
 const hash = (value) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
 
-async function rollbackScenario(client, name, run) {
+const membershipSql = `select member.rolname as member, grantor.rolname as grantor,
+  m.admin_option, m.inherit_option, m.set_option
+  from pg_auth_members m join pg_roles role on role.oid=m.roleid
+  join pg_roles member on member.oid=m.member join pg_roles grantor on grantor.oid=m.grantor
+  where role.rolname='adstable_runtime' order by member.rolname,grantor.rolname`;
+
+export async function withTestRuntimeMembership(client, run, environment = process.env) {
+  assertReplayEnvironment(environment);
+  assert.equal((await client.query("select session_user as role")).rows[0].role, "postgres");
+  const before = (await client.query(membershipSql)).rows;
+  assert.ok(!before.some(row => row.member === "postgres" && row.grantor === "postgres"),
+    "unexpected existing test grant; do not overwrite it");
   await client.query("begin");
   try {
-    await run();
-    console.log(`F01B_SCENARIO_PASS ${name}`);
+    // Test-only, uncommitted membership. No application object grant is changed.
+    await client.query("grant adstable_runtime to postgres with inherit false, set true, admin false");
+    const during = (await client.query(membershipSql)).rows;
+    assert.deepEqual(during.filter(row => !(row.member === "postgres" && row.grantor === "postgres")), before);
+    assert.deepEqual(during.filter(row => row.member === "postgres" && row.grantor === "postgres"),
+      [{member: "postgres", grantor: "postgres", admin_option: false, inherit_option: false, set_option: true}]);
+    return await run();
   } finally {
     await client.query("rollback");
+    assert.deepEqual((await client.query(membershipSql)).rows, before, "test role membership must be restored exactly");
+    console.log("F01B_TEST_MEMBERSHIP_RESTORED");
   }
+}
+
+async function rollbackScenario(client, name, run) {
+  await withTestRuntimeMembership(client, run);
+  console.log(`F01B_SCENARIO_PASS ${name}`);
 }
 
 async function expectSqlFailure(client, name, operation, expected) {
@@ -102,6 +125,7 @@ async function expectSqlFailure(client, name, operation, expected) {
   let failure;
   try { await operation(); } catch (error) { failure = error; }
   await client.query("rollback to savepoint expected_failure");
+  await client.query("release savepoint expected_failure");
   assert.ok(failure, `${name} unexpectedly succeeded`);
   if (expected.code) assert.equal(failure.code, expected.code, name);
   if (expected.message) assert.equal(failure.message, expected.message, name);
@@ -174,9 +198,9 @@ async function assertRetired(client, authority) {
 
 async function rolePreflight(client) {
   for (const role of Object.keys(replayRoleSql)) {
-    assert.equal((await client.query("select pg_has_role(session_user,$1,'SET') as allowed", [role])).rows[0].allowed,
-      true, `existing SET membership required: ${role}; never grant it in the test`);
     await rollbackScenario(client, `role_boundary_${role}`, async () => {
+      assert.equal((await client.query("select pg_has_role(session_user,$1,'SET') as allowed", [role])).rows[0].allowed,
+        true, `prepared test SET membership required: ${role}`);
       await withReplayRole(client, role, async () => {
         assert.equal((await client.query("select current_user as role")).rows[0].role, role);
         if (role === "adstable_runtime") {
@@ -187,9 +211,33 @@ async function rolePreflight(client) {
       assert.equal((await client.query("select current_user as role")).rows[0].role, "postgres");
     });
   }
-  const bootstrap = "shopify.bootstrap_installation(text,text,bytea,timestamp with time zone)";
-  assert.equal((await client.query("select has_function_privilege('adstable_runtime',$1,'EXECUTE') as allowed", [bootstrap])).rows[0].allowed, true);
-  assert.equal((await client.query("select has_function_privilege('postgres','privacy.process_deletion_queue(integer)','EXECUTE') as allowed")).rows[0].allowed, true);
+  for (const schema of ["app", "shopify", "integrations", "privacy", "billing", "analytics", "operations"]) {
+    for (const role of ["adstable_owner", "adstable_runtime"]) {
+      assert.equal((await client.query("select has_schema_privilege($1,$2,'USAGE') as allowed", [role,schema])).rows[0].allowed, true,
+        `schema usage required: ${role}/${schema}`);
+    }
+  }
+  assert.equal((await client.query("select has_schema_privilege('postgres','privacy','USAGE') as allowed")).rows[0].allowed, true,
+    "privacy worker schema access required; never mask a missing application permission");
+  const functions = [
+    ["adstable_runtime", "shopify.bootstrap_installation(text,text,bytea,timestamptz)"],
+    ["adstable_runtime", "shopify.resolve_active_installation_callback_return(uuid,bigint)"],
+    ["adstable_runtime", "integrations.stage_provider_account_selection(uuid,uuid,bigint,text,uuid,text[],timestamptz)"],
+    ["adstable_runtime", "integrations.complete_pending_provider_account_selection(uuid,uuid,bigint,text,bigint,jsonb,timestamptz)"],
+    ["adstable_runtime", "integrations.transition_provider_connection_lifecycle(uuid,uuid,uuid,bigint,text,bigint,text,text,text,timestamptz)"],
+    ["adstable_runtime", "integrations.finalize_provider_disconnect(uuid,uuid,uuid,bigint,text,bigint,text,text,timestamptz)"],
+    ["adstable_runtime", "privacy.request_workspace_deletion(text,text,text,bigint,bytea,timestamptz)"],
+    ["postgres", "privacy.process_deletion_queue(integer)"],
+  ];
+  for (const [role, signature] of functions) {
+    assert.equal((await client.query("select has_function_privilege($1,$2,'EXECUTE') as allowed", [role,signature])).rows[0].allowed, true,
+      `function execute required: ${role}/${signature}`);
+  }
+  await rollbackScenario(client, "fixture_contract_preflight", () => fixture(client,
+    ["consumed", "failed", "expired", "awaiting_selection", "consumed_with_credential"]));
+  await rollbackScenario(client, "historical_lifecycle_privacy_baseline", async () => {
+    await canonicalDisconnectAndPrivacy(client, await fixture(client));
+  });
 }
 
 async function securityProbes(client) {

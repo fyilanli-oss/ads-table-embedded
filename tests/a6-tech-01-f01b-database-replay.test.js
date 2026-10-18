@@ -1,10 +1,68 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import {assertReplayEnvironment, executeMigration, inventoryDifferences, replayConnection, withReplayRole} from "../tools/f01-database-replay.mjs";
+import {assertReplayEnvironment, executeMigration, inventoryDifferences, replayConnection, withReplayRole, withTestRuntimeMembership} from "../tools/f01-database-replay.mjs";
 import {readFileSync} from "node:fs";
 
 const manifest = JSON.parse(readFileSync(new URL("../contracts/a6-tech-01-f01-migration-lineage-v1.json", import.meta.url), "utf8"));
 const ownerEntries = manifest.historical_migrations.filter(entry => entry.execution_context);
+const runnerEnvironment = {GITHUB_ACTIONS: "true", RUNNER_TEMP: "ephemeral-test"};
+
+function membershipClient() {
+  const original = [{member: "postgres", grantor: "supabase_admin", admin_option: true, inherit_option: false, set_option: false}];
+  const client = {rows: structuredClone(original), original, queries: [], failOn: null};
+  client.query = async sql => {
+    client.queries.push(sql);
+    if (sql === client.failOn) throw new Error("synthetic membership failure");
+    if (sql === "select session_user as role") return {rows: [{role: "postgres"}]};
+    if (sql.includes("from pg_auth_members")) return {rows: structuredClone(client.rows)};
+    if (sql.startsWith("grant adstable_runtime")) client.rows.push({member: "postgres", grantor: "postgres", admin_option: false, inherit_option: false, set_option: true});
+    if (sql === "rollback") client.rows = structuredClone(original);
+    return {rows: []};
+  };
+  return client;
+}
+
+test("test-only membership is uncommitted, non-inheriting and restored on success", async () => {
+  const client = membershipClient();
+  assert.equal(await withTestRuntimeMembership(client, async () => {
+    assert.equal(client.rows.length, 2);
+    return "verified";
+  }, runnerEnvironment), "verified");
+  assert.deepEqual(client.rows, client.original);
+  assert.equal(client.queries.filter(sql => sql.startsWith("grant ")).length, 1);
+  assert.ok(!client.queries.includes("commit"));
+  assert.ok(client.queries.includes("rollback"));
+});
+
+test("test membership SQL and scenario errors roll back without retry", async () => {
+  for (const failOn of ["grant adstable_runtime to postgres with inherit false, set true, admin false", "synthetic operation"]) {
+    const client = membershipClient();
+    client.failOn = failOn;
+    await assert.rejects(withTestRuntimeMembership(client, () => client.query("synthetic operation"), runnerEnvironment), /synthetic membership failure/);
+    assert.deepEqual(client.rows, client.original);
+    assert.equal(client.queries.filter(sql => sql === failOn).length, 1);
+    assert.equal(client.queries.filter(sql => sql === "rollback").length, 1);
+  }
+});
+
+test("membership preparation refuses non-runner environments and existing coordinator grants", async () => {
+  const client = membershipClient();
+  await assert.rejects(withTestRuntimeMembership(client, () => assert.fail("must not run"), {}), /ephemeral GitHub runner/);
+  assert.deepEqual(client.queries, []);
+  client.rows.push({member: "postgres", grantor: "postgres", admin_option: true, inherit_option: false, set_option: false});
+  await assert.rejects(withTestRuntimeMembership(client, () => assert.fail("must not run"), runnerEnvironment), /unexpected existing test grant/);
+  assert.ok(!client.queries.includes("begin"));
+});
+
+test("database workflow has one trigger and independently cleans both temporary environments", () => {
+  const workflow = readFileSync(new URL("../.github/workflows/database-integrity.yml", import.meta.url), "utf8");
+  assert.match(workflow, /\n  pull_request:/);
+  assert.doesNotMatch(workflow, /\n  (push|pull_request_target|workflow_dispatch):/);
+  assert.match(workflow, /name: Clean second isolated database\s+if: always\(\)/);
+  assert.match(workflow, /name: Clean first isolated database if not already stopped\s+if: always\(\) && steps.stop-staged.outcome != 'success'/);
+  assert.doesNotMatch(workflow, /\belif\b/);
+  assert.match(workflow, /permissions:\s+contents: read/);
+});
 
 function roleClient(initialRole = "postgres") {
   const client = {role: initialRole, queries: [], savepoints: new Map(), failOn: null};

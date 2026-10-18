@@ -6,11 +6,11 @@ on:
     paths:
       - "supabase/migrations/**"
       - "tools/f01-*"
+      - "tools/check-migration-lineage.mjs"
+      - "tests/a6-tech-01-f01*"
       - "contracts/a6-tech-01-f01-migration-lineage-v1.json"
       - "docs/evidence/A6_TECH_01_F01_LIVE_SCHEMA_2026-10-18.json"
       - ".github/workflows/database-integrity.yml"
-  push:
-    branches: ["codex/a6-tech-01-f01b"]
 
 permissions:
   contents: read
@@ -44,6 +44,7 @@ jobs:
       - name: Historical replay, live metadata parity and retirement scenarios
         run: node tools/f01-database-replay.mjs staged
       - name: Stop first isolated database
+        id: stop-staged
         run: pnpm dlx supabase@2.121.0 stop --no-backup --workdir "$RUNNER_TEMP/f01b-staged"
       - name: Start second empty local Supabase database
         run: |
@@ -52,11 +53,15 @@ jobs:
           pnpm dlx supabase@2.121.0 db start --workdir "$RUNNER_TEMP/f01b-full"
       - name: Full clean replay and final schema comparison
         run: node tools/f01-database-replay.mjs full
-      - name: Clean isolated database
+      - name: Clean second isolated database
         if: always()
         run: |
           if test -f "$RUNNER_TEMP/f01b-full/supabase/config.toml"; then
             pnpm dlx supabase@2.121.0 stop --no-backup --workdir "$RUNNER_TEMP/f01b-full"
-          elif test -f "$RUNNER_TEMP/f01b-staged/supabase/config.toml"; then
+          fi
+      - name: Clean first isolated database if not already stopped
+        if: always() && steps.stop-staged.outcome != 'success'
+        run: |
+          if test -f "$RUNNER_TEMP/f01b-staged/supabase/config.toml"; then
             pnpm dlx supabase@2.121.0 stop --no-backup --workdir "$RUNNER_TEMP/f01b-staged"
           fi

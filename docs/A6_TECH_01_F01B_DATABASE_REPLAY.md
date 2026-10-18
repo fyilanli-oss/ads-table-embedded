@@ -2,7 +2,37 @@
 
 **Tarih:** 18 Ekim 2026
 
-**Durum:** 38 migration ve canlı şema karşılaştırması PASS; izole test ortamında runtime rolüne geçiş üyeliği olmadığı için duruldu. F01 açık, PR draft.
+**Durum:** Toplu test hazırlığı onaylandı ve uygulandı; yeni izole prova bekleniyor. Önceki 38 migration/şema PASS kanıtı korunur. F01 açık, PR draft.
+
+## Onaylanan toplu hazırlık — 18 Ekim 2026
+
+Kullanıcı bu beş maddeyi tek uygulama sınırı olarak onayladı:
+
+1. Yalnız geçici GitHub runner database'inde test transaction'ı içinde
+   `adstable_runtime` → `postgres` üyeliği `SET TRUE, INHERIT FALSE, ADMIN FALSE`
+   ile verilir. Mevcut üyelik satırları değiştirilmez; beklenmeyen mevcut grant
+   üzerine yazılmaz. Başarıda ve hatada transaction rollback edilir; bütün
+   runtime üyelikleri önceki name-only katalog envanteriyle birebir karşılaştırılır.
+   Uygulama rolü, tablo/fonksiyon grant'ı veya tarihsel SQL değiştirilmez.
+2. Senaryolardan önce tüm kullanılan schema/function izinleri, üç rol sınırı,
+   beş sentetik handoff durumu ve tarihsel lifecycle/privacy davranışı gerçek
+   database üzerinde kontrol edilir. Eksik application izni test grant'ıyla
+   maskelenmez. SQL gövdelerine veya iş kuralına müdahale edilmez.
+3. Database workflow'u yalnız PR ile çalışır; aynı commit'in push koşusu ve
+   bunu iptal edip yeniden başlayan ikinci database koşusu kaldırılmıştır.
+4. İki geçici ortamın temizliği birbirinden bağımsızdır. İlk ortam başarıyla
+   durdurulduysa ikinci kez durdurulmaz; hata durumunda diğer cleanup adımı
+   yine çalışır. Production deploy veya database bağlantısı yoktur.
+5. Retirement koruma/rollback, callback, disconnect/idempotence, privacy cascade
+   ve ikinci sıfırdan kurulum tamamlanarak kaynak commit'e bağlı sonuç kaydedilir.
+
+Bu onay canlı uygulama, merge, tarihsel migration değişikliği veya F02 başlangıcı
+değildir. Gerçek application hatası veya açıklanamayan dış-provider hatasında
+durma kapısı korunur. Test-aracındaki rutin düzeltmeler bu dar kapsam içindedir.
+
+Resmî PostgreSQL `GRANT` ve GitHub workflow tetikleme belgeleri 18 Ekim 2026'da
+kontrol edildi. Supabase/Postgres least-privilege rehberi gereği geçici rol
+üyeliği bütün senaryoyla rollback edilir; haklar kalıcı genişletilmez.
 
 ## Üçüncü gerçek koşunun sonucu
 

@@ -1,7 +1,7 @@
 # EO-04-D — Geçici Klaviyo Run Evidence analist brief'i
 
 **Kontrol tarihi:** 18 Ekim 2026
-**Durum:** Repository implementasyonu ve Production deploy ürün sahibi tarafından onaylandı; canlı çağrı kapalı
+**Durum:** Production deploy tamamlandı; tek yetkili çağrı Shopify entegrasyonu bulunmadığı için fail-closed durdu; ek çağrı kapalı
 
 ## İş amacı ve kullanıcı sonucu
 
@@ -99,6 +99,26 @@ exact Channel'ı belirlemeye yetmedi.** Teknik `unknown`, `missing`, `partial` v
 - Sample data üretimi veya silinmesi: kapalı.
 - Database, Dataset V2, secret/environment ve provider mutation: kapalı.
 - Merge: ayrı ürün sahibi onayına bağlı.
+
+## 18 Ekim 2026 canlı kapı sonucu
+
+- Exact commit `b675885469effe9f3d9cb58135fa27d0219dcbb7`, Production
+  deployment `dpl_FBfQ8t9mV4vw4PZkKmtgbjDbDqdy` olarak `READY` oldu.
+- Ürün sahibinin ayrıca onayladığı tek çağrı ilk `metrics` ailesinde
+  `KLAVIYO_SHOPIFY_METRIC_CARDINALITY_INVALID` ile durdu.
+- `completed_families=[]`; Campaign, Flow, Ordered Product ve resolution
+  aileleri başlamadı; retry, database/Dataset write veya Sample Data mutation
+  olmadı.
+- Ürün sahibi Klaviyo Metrics ekranında Shopify integration bulunmadığını;
+  yalnız `Klaviyo` ve `API` integration adlarını gözlemledi. Günlük değerlerin
+  sıfır olması metric identity/cardinality kanıtı sayılmadı.
+- Sonuç `environment_not_ready — shopify_integration_absent` olarak tutuldu;
+  kod veya provider arızası kanıtlanmadı ve EO-04 bu kanıtla kapatılmadı.
+- Geçici buton, gerçek Shopify mağazası Klaviyo'ya bağlanıp Shopify-authored
+  `Placed Order` ve `Ordered Product` metrikleri tam birer adet oluşana kadar
+  korunur. Ek canlı çağrı yetkili değildir.
+- Kalıcı kanıt:
+  `docs/evidence/EO_04D_KLAVIYO_ENVIRONMENT_NOT_READY_2026-10-18.json`.
 
 ## Resmî kaynaklar
 

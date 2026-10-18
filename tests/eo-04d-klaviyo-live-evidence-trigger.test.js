@@ -16,6 +16,9 @@ const read = (path) => readFileSync(new URL(path, root), "utf8");
 const settings = read("app/routes/_admin.settings.tsx");
 const route = read("app/routes/settings.klaviyo-live-evidence.ts");
 const contract = JSON.parse(read("contracts/eo-04d-klaviyo-live-evidence-trigger-v1.json"));
+const environmentEvidence = JSON.parse(read(
+  "docs/evidence/EO_04D_KLAVIYO_ENVIRONMENT_NOT_READY_2026-10-18.json",
+));
 
 function productProperty(state, value = null) {
   return {state, value};
@@ -207,4 +210,20 @@ test("the executable contract authorizes deployment while live call and sample g
   assert.equal(contract.safety.first_provider_error_stops_execution, true);
   assert.equal(contract.safety.automatic_retry, false);
   assert.equal(contract.sample_data.custom_ecommerce_is_shopify_metric_evidence, false);
+});
+
+test("the consumed live call is retained as environment-not-ready without authorizing retry", () => {
+  assert.equal(contract.authority.authorized_live_provider_calls, 1);
+  assert.equal(contract.authority.authorized_live_provider_calls_consumed, 1);
+  assert.equal(contract.authority.additional_live_provider_call_authorized, false);
+  assert.equal(contract.observed_live_gate.classification, "environment_not_ready");
+  assert.equal(contract.observed_live_gate.reason, "shopify_integration_absent");
+  assert.deepEqual(contract.observed_live_gate.completed_families, []);
+  assert.equal(environmentEvidence.execution.safe_error_code, "KLAVIYO_SHOPIFY_METRIC_CARDINALITY_INVALID");
+  assert.equal(environmentEvidence.execution.provider_retry_performed, false);
+  assert.equal(environmentEvidence.product_owner_observation.shopify_integration_present, false);
+  assert.deepEqual(environmentEvidence.product_owner_observation.observed_integration_names, ["Klaviyo", "API"]);
+  assert.equal(environmentEvidence.classification.daily_zero_is_metric_identity_evidence, false);
+  assert.equal(environmentEvidence.next_gate.additional_live_provider_call_authorized, false);
+  assert.equal(environmentEvidence.truth_boundaries.package_closed_by_this_evidence, false);
 });

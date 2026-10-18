@@ -486,6 +486,18 @@ CI enforcement: `tests/eo-04d-klaviyo-live-evidence-trigger.test.js`
   credential taşımaz.
 - Klaviyo custom ecommerce sample data, kanonik `integration.name = Shopify`
   metric kanıtı değildir ve Shopify-native ürün satışı kabulünün yerine geçmez.
+- Exact commit `b675885469effe9f3d9cb58135fa27d0219dcbb7`, Production
+  deployment `dpl_FBfQ8t9mV4vw4PZkKmtgbjDbDqdy` olarak `READY` oldu ve gerçek
+  Shopify Admin Settings görünümü ürün sahibi tarafından kabul edildi. Ayrı
+  onaylı tek Klaviyo çağrısı ilk `metrics` ailesinde
+  `KLAVIYO_SHOPIFY_METRIC_CARDINALITY_INVALID` ile retry yapmadan durdu;
+  sonraki sorgu aileleri başlamadı ve hiçbir database/Dataset write oluşmadı.
+  Ürün sahibinin Klaviyo Metrics incelemesinde Shopify integration bulunmadı;
+  yalnız Klaviyo ve API integration adları görüldü. Sonuç kod/provider hatası
+  değil `environment_not_ready — shopify_integration_absent` olarak kaydedildi.
+  Geçici buton gerçek Shopify entegrasyonu sonrası doğrulama için korunur; ek
+  canlı çağrı kapalıdır. Kalıcı kanıt:
+  `docs/evidence/EO_04D_KLAVIYO_ENVIRONMENT_NOT_READY_2026-10-18.json`.
 
 ## EO-04-D Klaviyo sales-attribution resolution — 17 October 2026
 

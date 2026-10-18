@@ -1,0 +1,254 @@
+{
+  "checked_at": "2026-10-18",
+  "finding": "TECH01-F03",
+  "status": "live_metadata_captured_repository_reconciliation_prepared",
+  "source_main_commit": "d929592e5369476967f4a1f50257b05d46aecbfe",
+  "project_name": "ads-table-embedded",
+  "method": "Vercel_Connector_filter_project_envs_decrypt_false_projection_allowlist",
+  "persisted_fields": [
+    "key",
+    "target",
+    "type",
+    "visibility",
+    "gitBranch",
+    "customEnvironmentIds"
+  ],
+  "value_fields_discarded_before_model_output": true,
+  "secret_decryption_requested": false,
+  "secret_values_read": false,
+  "raw_response_saved": false,
+  "live_mutation": false,
+  "production_entries": 22,
+  "production_secret_storage_entries": 17,
+  "production_config_storage_entries": 5,
+  "preview_entries": 0,
+  "development_entries": 0,
+  "entries": [
+    {
+      "key": "ADSTABLE_PROVIDER_TOKEN_ACTIVE_KEY_VERSION",
+      "target": [
+        "production"
+      ],
+      "type": "sensitive",
+      "visibility": "secret",
+      "gitBranch": null,
+      "customEnvironmentIds": []
+    },
+    {
+      "key": "ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_V1",
+      "target": [
+        "production"
+      ],
+      "type": "sensitive",
+      "visibility": "secret",
+      "gitBranch": null,
+      "customEnvironmentIds": []
+    },
+    {
+      "key": "ADSTABLE_RUNTIME_DATABASE_URL",
+      "target": [
+        "production"
+      ],
+      "type": "sensitive",
+      "visibility": "secret",
+      "gitBranch": null,
+      "customEnvironmentIds": []
+    },
+    {
+      "key": "ADSTABLE_SESSION_ENCRYPTION_KEY_V1",
+      "target": [
+        "production"
+      ],
+      "type": "sensitive",
+      "visibility": "secret",
+      "gitBranch": null,
+      "customEnvironmentIds": []
+    },
+    {
+      "key": "GOOGLE_ADS_DEVELOPER_TOKEN",
+      "target": [
+        "production"
+      ],
+      "type": "sensitive",
+      "visibility": "secret",
+      "gitBranch": null,
+      "customEnvironmentIds": []
+    },
+    {
+      "key": "GOOGLE_ADS_OAUTH_CLIENT_ID",
+      "target": [
+        "production"
+      ],
+      "type": "sensitive",
+      "visibility": "secret",
+      "gitBranch": null,
+      "customEnvironmentIds": []
+    },
+    {
+      "key": "GOOGLE_ADS_OAUTH_CLIENT_SECRET",
+      "target": [
+        "production"
+      ],
+      "type": "sensitive",
+      "visibility": "secret",
+      "gitBranch": null,
+      "customEnvironmentIds": []
+    },
+    {
+      "key": "GOOGLE_ADS_OAUTH_REDIRECT_URI",
+      "target": [
+        "production"
+      ],
+      "type": "sensitive",
+      "visibility": "secret",
+      "gitBranch": null,
+      "customEnvironmentIds": []
+    },
+    {
+      "key": "KLAVIYO_CLIENT_ID",
+      "target": [
+        "production"
+      ],
+      "type": "sensitive",
+      "visibility": "secret",
+      "gitBranch": null,
+      "customEnvironmentIds": []
+    },
+    {
+      "key": "KLAVIYO_CLIENT_SECRET",
+      "target": [
+        "production"
+      ],
+      "type": "sensitive",
+      "visibility": "secret",
+      "gitBranch": null,
+      "customEnvironmentIds": []
+    },
+    {
+      "key": "KLAVIYO_OAUTH_REDIRECT_URI",
+      "target": [
+        "production"
+      ],
+      "type": "sensitive",
+      "visibility": "secret",
+      "gitBranch": null,
+      "customEnvironmentIds": []
+    },
+    {
+      "key": "META_APP_ID",
+      "target": [
+        "production"
+      ],
+      "type": "sensitive",
+      "visibility": "secret",
+      "gitBranch": null,
+      "customEnvironmentIds": []
+    },
+    {
+      "key": "META_APP_SECRET",
+      "target": [
+        "production"
+      ],
+      "type": "sensitive",
+      "visibility": "secret",
+      "gitBranch": null,
+      "customEnvironmentIds": []
+    },
+    {
+      "key": "META_GRAPH_VERSION",
+      "target": [
+        "production"
+      ],
+      "type": "sensitive",
+      "visibility": "secret",
+      "gitBranch": null,
+      "customEnvironmentIds": []
+    },
+    {
+      "key": "META_OAUTH_REDIRECT_URI",
+      "target": [
+        "production"
+      ],
+      "type": "sensitive",
+      "visibility": "secret",
+      "gitBranch": null,
+      "customEnvironmentIds": []
+    },
+    {
+      "key": "SCOPES",
+      "target": [
+        "production"
+      ],
+      "type": "plain",
+      "visibility": null,
+      "gitBranch": null,
+      "customEnvironmentIds": []
+    },
+    {
+      "key": "SHOPIFY_API_KEY",
+      "target": [
+        "production"
+      ],
+      "type": "plain",
+      "visibility": null,
+      "gitBranch": null,
+      "customEnvironmentIds": []
+    },
+    {
+      "key": "SHOPIFY_API_SECRET",
+      "target": [
+        "production"
+      ],
+      "type": "sensitive",
+      "visibility": "secret",
+      "gitBranch": null,
+      "customEnvironmentIds": []
+    },
+    {
+      "key": "SHOPIFY_APP_GID",
+      "target": [
+        "production"
+      ],
+      "type": "plain",
+      "visibility": null,
+      "gitBranch": null,
+      "customEnvironmentIds": []
+    },
+    {
+      "key": "SHOPIFY_APP_URL",
+      "target": [
+        "production"
+      ],
+      "type": "plain",
+      "visibility": null,
+      "gitBranch": null,
+      "customEnvironmentIds": []
+    },
+    {
+      "key": "SHOPIFY_PARTNER_API_ACCESS_TOKEN",
+      "target": [
+        "production"
+      ],
+      "type": "sensitive",
+      "visibility": "secret",
+      "gitBranch": null,
+      "customEnvironmentIds": []
+    },
+    {
+      "key": "SHOPIFY_PARTNER_ORG_ID",
+      "target": [
+        "production"
+      ],
+      "type": "plain",
+      "visibility": null,
+      "gitBranch": null,
+      "customEnvironmentIds": []
+    }
+  ],
+  "github_actions_entries": 1,
+  "github_actions_source": "repository_shopify_app_deploy_workflow_and_existing_contract_not_fresh_GitHub_secret_store_audit",
+  "logical_confidentiality_and_live_storage_are_distinct": true,
+  "scope": "repository inventory and example only; no credential rotation, storage reclassification, environment provisioning or deployment",
+  "F03_closed": false,
+  "F04_may_start": false
+}

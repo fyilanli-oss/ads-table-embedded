@@ -5,6 +5,10 @@
 **Durum:** Bulgular kaydedildi; kritik düzeltme ve yeniden test zorunlu
 **EO-05 kararı:** Kapalı
 
+**Güncel düzeltme durumu:** F01, F02 ve F03 ürün sahibi kabulüyle kapandı.
+Sıradaki F04 başlamadı. İlk denetim bulguları ve başlangıç sayıları aşağıda
+tarihsel baseline olarak korunur; genel A6-TECH-01 henüz PASS değildir.
+
 ## 1. Analist özeti
 
 Çalışan Production uygulamasında veri kaybı veya aktif servis kırılması
@@ -164,6 +168,21 @@ deletion planı ve rollback açıkça kabul edilmeli; canlı silme yalnız ayrı
 sahibi onayıyla yapılmalıdır.
 
 ### TECH01-F03 — P1 — Vercel environment envanter drift'i
+
+**18 Ekim repository düzeltmesi:** Güncel metadata yalnız ad/target/type
+alanlarıyla yeniden okundu: 22 Production, 0 Preview/Development. Eksik dört
+Google adı `.env.example` ve secret contract'ına eklendi. Master 23 toplam /
+22 Vercel / 1 workflow secret adıyla eşlendi; GitHub secret store yeniden
+denetlenmiş sayılmaz. Contract'ın mantıksal saklama politikası ile gözlenen
+fiilî tür ayrıldı: Vercel 17 Secret / 5 Config. Canlı yeniden sınıflandırma yok.
+Negatif test, Google adı hem örnekten hem contract'tan çıkarılsa bile canlı
+snapshot karşılaştırmasının bunu yakalamasını sağlar; eski `16` sabiti kaldırıldı.
+Secret çözümleme/değer okuma, provider/config mutation veya deploy yapılmadı.
+Kanıt `docs/evidence/A6_TECH_01_F03_ENV_INVENTORY_2026-10-18.json`.
+Ürün sahibi F03 kapanışını ve PR #105 merge'ünü 18 Ekim 2026'da onayladı.
+Kanıt `docs/evidence/A6_TECH_01_F03_CLOSURE_2026-10-18.json`.
+F04 başlamadı. Bu kabul genel secret custody/recovery açıklarını kapatmaz;
+aşağıdaki metin başlangıç bulgusudur.
 
 Canlı Vercel Production projesi 22 environment adı taşır. Repository secret
 contract'ı 18 Vercel girdisi, master contract ise daha eski 16 toplam/11 Vercel

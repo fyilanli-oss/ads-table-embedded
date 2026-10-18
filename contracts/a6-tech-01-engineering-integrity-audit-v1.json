@@ -46,7 +46,11 @@
       "id": "TECH01-F03",
       "priority": "P1",
       "title": "vercel_environment_inventory_drift",
-      "eo05_blocker": true,
+      "remediation_status": "closed_product_owner_accepted_2026-10-18",
+      "closure_evidence": "docs/evidence/A6_TECH_01_F03_CLOSURE_2026-10-18.json",
+      "remediation_evidence": "docs/evidence/A6_TECH_01_F03_ENV_INVENTORY_2026-10-18.json",
+      "closed": true,
+      "eo05_blocker": false,
       "live_mutation_required_to_close": false
     },
     {

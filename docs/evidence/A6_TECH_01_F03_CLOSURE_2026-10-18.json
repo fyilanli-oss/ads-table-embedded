@@ -1,0 +1,32 @@
+{
+  "checked_at": "2026-10-18",
+  "status": "closed_product_owner_accepted",
+  "finding": "TECH01-F03",
+  "product_owner_closure_accepted": true,
+  "approval_source": "explicit user approval of PR 105 merge and F03 closure in current conversation",
+  "pull_request": "https://github.com/fyilanli-oss/ads-table-embedded/pull/105",
+  "remediation_evidence": "docs/evidence/A6_TECH_01_F03_ENV_INVENTORY_2026-10-18.json",
+  "pre_acceptance_ci_source": "d25e9ec7ba38881ca6cf80c2e7ea064efea5a95f",
+  "pre_acceptance_governance_run_id": 39144688708,
+  "pre_acceptance_tests_passed": 421,
+  "final_acceptance_commit_requires_fresh_ci_before_merge": true,
+  "previous_prepared_evidence_preserved": true,
+  "scope": {
+    "repository_inventory_example_and_tests_only": true,
+    "vercel_names": 22,
+    "github_workflow_secret_names": 1,
+    "total_inventory": 23,
+    "secret_values_read": false,
+    "secret_values_persisted": false,
+    "live_configuration_mutation": false,
+    "storage_reclassification": false,
+    "deployment": false,
+    "general_secret_custody_recovery_gaps_closed": false
+  },
+  "F03_closed": true,
+  "remaining_F03_gates": [],
+  "next_finding": "TECH01-F04",
+  "F04_execution_authorized": false,
+  "A6_TECH_01_overall_pass": false,
+  "EO05_may_start": false
+}

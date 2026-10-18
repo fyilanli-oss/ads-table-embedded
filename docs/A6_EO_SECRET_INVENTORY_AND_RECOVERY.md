@@ -1,6 +1,6 @@
 # A6-EO Secret inventory, custody and recovery
 
-**Control date:** 10 October 2026  
+**Control date:** 18 October 2026
 **Status:** Ready for product-owner acceptance  
 **Scope:** Current Production Vercel environment and GitHub Actions secret inventory  
 **Binding contract:** `contracts/a6-eo-secret-inventory-recovery-v1.json`  
@@ -8,7 +8,19 @@
 
 ## Analyst result
 
-AdsTable currently has eleven Vercel environment entries and one GitHub Actions secret. Vercel stores six entries as Secret, but one of those is the non-confidential active-key version selector; the other five Vercel entries and the GitHub token are confidential credentials or key material. Five Vercel entries are reconstructible Config. No secret value is stored in this document, the repository, chat evidence or a local project file.
+18 Ekim F03 kontrolünde 22 Production Vercel adı doğrulandı. Repository workflow'u
+ve mevcut contract bir GitHub Actions secret adı daha taşır: toplam envanter 23.
+GitHub secret store bu işte yeniden sorgulanmadı. Vercel metadata'sında 17 girdi
+Secret, 5 girdi Config türündedir. Mantıksal olarak config olan bazı girdiler de
+Secret saklanır; canlı türleri değiştirilmedi. Contract'taki `storage_type`
+tanımlı saklama politikasını, `observed_storage_type` gerçek gözlemi ayrı gösterir.
+Değer çözümleme istenmedi; secret değeri okunmadı veya kaydedilmedi. Kanıt:
+`docs/evidence/A6_TECH_01_F03_ENV_INVENTORY_2026-10-18.json`.
+
+Bu düzeltme yalnız envanter eşliğidir; aşağıdaki custody/recovery açıklarını
+kapatmaz ve secret rotasyonu, canlı yeniden sınıflandırma ya da deploy yetkisi
+vermez. Aşağıdaki eski Config/Secret etiketleri mantıksal politikayı açıklar;
+güncel fiilî saklama türü için contract'ın observed alanı kullanılır.
 
 A masked value in Vercel or GitHub is not deleted. Both systems deliberately prevent plaintext read-back. The canonical runtime copy remains in the provider secret store. A second copy is allowed only in one product-owner-controlled encrypted recovery vault. A browser download, note, screenshot, repository file, chat message, desktop text file or machine backup is not an approved recovery vault.
 
@@ -30,6 +42,22 @@ This contract inventories names and recovery procedures. It authorizes no rotati
 | `ADSTABLE_PROVIDER_TOKEN_ACTIVE_KEY_VERSION` | Vercel Production / Secret (classification debt) | Selects the provider-token write key; current logical value is version 1 | No plaintext secret backup needed; contract is authority | Restore the accepted version number. Reclassifying it as Config is a separately approved cleanup |
 | `ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_V1` | Vercel Production / Secret | AES-256-GCM provider token/PKCE envelope key | Encrypted recovery copy required before the first real provider authorization | The same key cannot be regenerated. Add a new version, keep all referenced old versions readable, rotate envelopes, verify zero references, then remove an old key |
 | `SHOPIFY_APP_AUTOMATION_TOKEN` | GitHub repository Actions Secret | App-scoped Shopify CLI validation/deployment token | Encrypted recovery copy and exact expiry record required | Generate a replacement in Shopify Dev Dashboard, update GitHub Actions Secret and validate through the approved workflow before expiry |
+
+Provider ekleri (mantıksal sınıf; fiilî Vercel türü contract'tadır):
+
+| Ad | Amaç / mantıksal sınıf | Kaynak ve kurtarma sınırı |
+|---|---|---|
+| `META_APP_ID` | Meta uygulama kimliği / Config | Meta App Dashboard'dan yeniden bulunabilir |
+| `META_APP_SECRET` | Meta uygulama secret'ı / Secret | Açık onaylı provider rotasyonu ve doğrulama gerekir |
+| `META_GRAPH_VERSION` | Kabul edilmiş Graph sürümü / Config | EO-04-B sürüm sözleşmesi; kendiliğinden yükseltilmez |
+| `META_OAUTH_REDIRECT_URI` | Exact callback / Config | Kabul edilmiş EO-04-B callback |
+| `GOOGLE_ADS_OAUTH_CLIENT_ID` | OAuth client kimliği / Config | Google Cloud OAuth client kaydı |
+| `GOOGLE_ADS_OAUTH_CLIENT_SECRET` | OAuth client secret / Secret | Açık onaylı Google rotasyonu ve doğrulama gerekir |
+| `GOOGLE_ADS_OAUTH_REDIRECT_URI` | Exact callback / Config | Kabul edilmiş EO-04-C callback |
+| `GOOGLE_ADS_DEVELOPER_TOKEN` | Geçiş uyumluluğu / Secret | Mevcut runtime'da opsiyonel; kaldırma/yenileme bu işin dışında |
+| `KLAVIYO_CLIENT_ID` | OAuth client kimliği / Config | Klaviyo OAuth App kaydı |
+| `KLAVIYO_CLIENT_SECRET` | OAuth client secret / Secret | Açık onaylı Klaviyo rotasyonu ve doğrulama gerekir |
+| `KLAVIYO_OAUTH_REDIRECT_URI` | Exact callback / Config | Kabul edilmiş EO-04-D callback |
 
 ## What remains under product-owner control
 

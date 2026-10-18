@@ -473,8 +473,9 @@ Executable contract: `contracts/eo-04d-klaviyo-live-evidence-trigger-v1.json`
 
 CI enforcement: `tests/eo-04d-klaviyo-live-evidence-trigger.test.js`
 
-- Ürün sahibi repository-only geçici `Run Klaviyo evidence` taşımasını
-  onayladı. Deploy, canlı provider çağrısı ve Sample Data üretimi kapalıdır.
+- Ürün sahibi geçici `Run Klaviyo evidence` taşımasını ve 18 Ekim 2026'da
+  Production deploy adımını onayladı. Canlı provider çağrısı ve Sample Data
+  üretimi kapalıdır.
 - Tarih merchant'tan alınmaz; bağlı Klaviyo hesabının timezone'una göre güncel
   business date server tarafında hesaplanır.
 - Kalıcı reporting runtime metrics, Campaign Values, Flow Values, Ordered
@@ -502,8 +503,9 @@ and `tests/eo-04d-klaviyo-attribution-resolution.test.js`
   remains exact when catalog name, Medium or Variation is unresolved.
 - Campaign Message sales are Assisted until exact content-product evidence can
   prove Advertised or Cross-sell. Flow Message sales are Triggered.
-- Missing or conflicting Message evidence preserves the sale once under Unclassified Channel
-  Channel and Unclassified; timing or report totals cannot resolve ambiguity.
+- Missing or conflicting Message evidence preserves the sale once under
+  Unclassified Channel with Sales Role Unclassified; timing or report totals
+  cannot resolve ambiguity.
 - Resolution runs after all provider families and remains atomic. No live
   Klaviyo call, database/migration, Dataset V2, secret/environment, deploy or UI
   work is authorized by this package.

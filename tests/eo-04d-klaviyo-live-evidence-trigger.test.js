@@ -199,9 +199,9 @@ test("the resource route is authenticated, read-only and logs bounded success or
   assert.doesNotMatch(route, /INSERT|UPDATE|DELETE|upsert/i);
 });
 
-test("the executable contract keeps deploy, live call and sample generation closed", () => {
+test("the executable contract authorizes deployment while live call and sample generation stay closed", () => {
   assert.equal(contract.authority.repository_implementation, true);
-  assert.equal(contract.authority.deployment, false);
+  assert.equal(contract.authority.deployment, true);
   assert.equal(contract.authority.live_provider_call, false);
   assert.equal(contract.authority.sample_data_generation, false);
   assert.equal(contract.safety.first_provider_error_stops_execution, true);

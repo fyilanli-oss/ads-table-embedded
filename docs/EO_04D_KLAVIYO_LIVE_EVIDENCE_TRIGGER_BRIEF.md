@@ -1,7 +1,7 @@
 # EO-04-D — Geçici Klaviyo Run Evidence analist brief'i
 
 **Kontrol tarihi:** 18 Ekim 2026
-**Durum:** Repository implementasyonu ürün sahibi tarafından onaylandı; deploy ve canlı çağrı kapalı
+**Durum:** Repository implementasyonu ve Production deploy ürün sahibi tarafından onaylandı; canlı çağrı kapalı
 
 ## İş amacı ve kullanıcı sonucu
 
@@ -13,8 +13,9 @@ sayılarını gösterir; ham provider satırı, ad, ID, profil, PII, ticari değ
 token veya credential göstermez ve kaydetmez.
 
 Bu taşıma mekanizması ürün özelliği değildir. Dataset V2'ye yazmaz; scheduler,
-reconciliation veya otomatik retry başlatmaz. Canlı çağrı, deploy ve Klaviyo
-Sample Data Generation Tool kullanımı ayrıca ve açıkça onaylanacaktır.
+reconciliation veya otomatik retry başlatmaz. Production deploy 18 Ekim
+2026'da ayrıca onaylandı. Canlı çağrı ve Klaviyo Sample Data Generation Tool
+kullanımı ayrıca ve açıkça onaylanacaktır.
 
 ## Çalıştırma sırası
 
@@ -93,7 +94,7 @@ exact Channel'ı belirlemeye yetmedi.** Teknik `unknown`, `missing`, `partial` v
 ## Yetki sınırı
 
 - Repository kodu, contract, test ve dokümantasyon: onaylı.
-- Deploy: kapalı.
+- Production deploy: 18 Ekim 2026'da onaylandı.
 - Canlı Klaviyo çağrısı: kapalı.
 - Sample data üretimi veya silinmesi: kapalı.
 - Database, Dataset V2, secret/environment ve provider mutation: kapalı.

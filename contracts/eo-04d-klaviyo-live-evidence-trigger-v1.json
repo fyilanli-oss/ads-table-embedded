@@ -1,0 +1,95 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "eo-04d-klaviyo-live-evidence-trigger-v1",
+  "package_id": "A6-EO-04-D",
+  "status": "repository_implementation_authorized_live_call_closed",
+  "checked_at": "2026-10-18",
+  "analyst_brief": "docs/EO_04D_KLAVIYO_LIVE_EVIDENCE_TRIGGER_BRIEF.md",
+  "authority": {
+    "repository_implementation": true,
+    "deployment": false,
+    "live_provider_call": false,
+    "sample_data_generation": false,
+    "database_or_dataset_write": false,
+    "secret_or_environment_mutation": false,
+    "merge": false
+  },
+  "transport": {
+    "temporary": true,
+    "route": "/settings/klaviyo-live-evidence",
+    "method": "POST",
+    "accepted_input": {"provider": "klaviyo"},
+    "business_date_input_from_merchant": false,
+    "business_date_authority": "connected_account_timezone_current_business_date",
+    "single_attempt_per_page_load": true,
+    "new_product_surface": false,
+    "remove_after_evidence_acceptance": true
+  },
+  "query_sequence": [
+    "metrics",
+    "campaign_values",
+    "flow_values",
+    "ordered_product_events",
+    "resolved_product_sales"
+  ],
+  "safety": {
+    "shopify_admin_authentication_required": true,
+    "active_installation_authority_required": true,
+    "canonical_connected_klaviyo_account_required": true,
+    "first_provider_error_stops_execution": true,
+    "automatic_retry": false,
+    "alternate_endpoint_or_auth_route": false,
+    "partial_result_publishable": false,
+    "dataset_v2_publishable": false,
+    "database_write": false
+  },
+  "safe_result": {
+    "allowed": [
+      "api_revision",
+      "business_date",
+      "family_row_and_page_counts",
+      "observation_states",
+      "medium_counts",
+      "variation_resolution_counts",
+      "product_property_presence_counts",
+      "channel_resolution_counts",
+      "sales_role_counts",
+      "control_flags"
+    ],
+    "forbidden": [
+      "raw_rows",
+      "names",
+      "raw_identifiers",
+      "profiles_or_pii",
+      "commercial_values",
+      "provider_request_ids",
+      "cursors_or_hashes",
+      "tokens_or_credentials"
+    ],
+    "empty_success": "not_observed_in_this_execution",
+    "empty_success_is_zero_or_unsupported": false
+  },
+  "sample_data": {
+    "tool_is_provider_mutation": true,
+    "one_time_per_data_type": true,
+    "klaviyo_data_can_support_campaign_message_medium_shape": true,
+    "custom_ecommerce_is_shopify_metric_evidence": false,
+    "custom_ecommerce_can_prove_shopify_product_sales": false,
+    "separate_manual_authorization_required": true
+  },
+  "channel_terminology": {
+    "canonical_unresolved_business_bucket": "Unclassified Channel",
+    "merchant_explanation": "Satış doğrulandı, ancak mevcut provider kanıtı exact Channel'ı belirlemeye yetmedi.",
+    "technical_unknown_missing_partial_stale_states_preserved": true
+  },
+  "official_sources_checked_at": "2026-10-18",
+  "official_sources": [
+    "https://developers.klaviyo.com/en/reference/reporting_api_overview",
+    "https://developers.klaviyo.com/en/reference/campaigns_omni_api_overview",
+    "https://developers.klaviyo.com/en/reference/get_metrics",
+    "https://developers.klaviyo.com/en/reference/get_events",
+    "https://developers.klaviyo.com/en/docs/generate_sample_data",
+    "https://shopify.dev/docs/api/app-home/latest/web-components/actions/button",
+    "https://shopify.dev/docs/api/shopify-app-react-router/latest/authenticate/admin"
+  ]
+}

@@ -62,7 +62,7 @@ test("scenario matrix retains the accepted shared axes and never invents a Meta 
   const common = await load(commonPath);
 
   assert.deepEqual(matrix.card_schema.sales_roles, common.common.sales_roles);
-  assert.equal(matrix.common_rules.unknown_channel_is_sales_role, false);
+  assert.equal(matrix.common_rules.unclassified_channel_is_sales_role, false);
   assert.equal(matrix.common_rules.zero_value_is_sales_role, false);
   assert.equal(matrix.common_rules.sold_product_may_select_channel, false);
 
@@ -102,13 +102,13 @@ test("Google PMax scenarios separate clicked-product Channel evidence from sold 
   assert.equal(exact.expected.channel_resolution, "exact");
   assert.equal(exact.expected.sales_role, "Cross-sell");
 
-  assert.equal(overlap.expected.channel_type, "Unknown Channel");
+  assert.equal(overlap.expected.channel_type, "Unclassified Channel");
   assert.equal(overlap.expected.channel_resolution, "unknown");
   assert.equal(overlap.expected.sales_role, "Cross-sell");
   assert.ok(overlap.forbidden_inferences.includes("sold Kolye selects second Asset Group"));
 
   assert.equal(historical.temporal_evidence, "sale_business_day_listing_tree_missing");
-  assert.equal(historical.expected.channel_type, "Unknown Channel");
+  assert.equal(historical.expected.channel_type, "Unclassified Channel");
   assert.equal(historical.expected.sales_role, "Advertised");
   assert.equal(historical.next_owner, "A6-EO-05-PMAX-HISTORICAL-LISTING-TREE");
 });
@@ -132,7 +132,7 @@ test("Klaviyo Message stays Channel while Medium and Variation remain separate a
   assert.equal(flow.expected.variation_state, "exact");
   assert.equal(flow.expected.sales_role, "Triggered");
 
-  assert.equal(unknown.expected.channel_type, "Unknown Channel");
+  assert.equal(unknown.expected.channel_type, "Unclassified Channel");
   assert.equal(unknown.expected.sales_role, "Unclassified");
 });
 

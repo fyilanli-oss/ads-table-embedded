@@ -57,7 +57,10 @@
     ]
   },
   "common_rules": {
-    "unknown_channel_is_sales_role": false,
+    "unresolved_business_channel_bucket": "Unclassified Channel",
+    "unclassified_channel_merchant_explanation": "Satış doğrulandı, ancak mevcut provider kanıtı exact Channel'ı belirlemeye yetmedi.",
+    "technical_unknown_missing_partial_and_stale_states_preserved": true,
+    "unclassified_channel_is_sales_role": false,
     "zero_value_is_sales_role": false,
     "sold_product_may_select_channel": false,
     "missing_null_unsupported_permission_denied_not_observed_and_explicit_zero_are_distinct": true,
@@ -175,7 +178,7 @@
         "cost_rule": "preserve_attributed_ad_spend",
         "fact_rule": "ad_id_selects_channel_not_product_membership"
       },
-      "forbidden_inferences": ["multiple Ads containing product creates Unknown Channel", "product membership selects Ad"],
+      "forbidden_inferences": ["multiple Ads containing product creates Unclassified Channel", "product membership selects Ad"],
       "evidence_level": "contract_fixture",
       "next_owner": "A6-EO-05"
     },
@@ -232,7 +235,7 @@
         "cost_rule": "preserve_ad_spend_without_product_allocation",
         "fact_rule": "preserve_sale_with_conflict_provenance"
       },
-      "forbidden_inferences": ["pick one conflicting product", "turn product conflict into Unknown Channel"],
+      "forbidden_inferences": ["pick one conflicting product", "turn product conflict into Unclassified Channel"],
       "evidence_level": "contract_fixture",
       "next_owner": "A6-EO-05"
     },
@@ -336,13 +339,13 @@
       "temporal_evidence": "complete_sale_business_day_listing_tree",
       "expected": {
         "channel_names": [],
-        "channel_type": "Unknown Channel",
+        "channel_type": "Unclassified Channel",
         "channel_resolution": "unknown",
         "sales_role": "Cross-sell",
         "medium_state": "not_defined_for_provider_in_eo04",
         "variation_state": "not_applicable",
         "value_modifier": "none",
-        "cost_rule": "preserve_exact_provider_product_cost_under_unknown_channel",
+        "cost_rule": "preserve_exact_provider_product_cost_under_unclassified_channel",
         "fact_rule": "preserve_sale_without_asset_group_distribution"
       },
       "forbidden_inferences": ["sold Kolye selects second Asset Group", "split sale between Asset Groups"],
@@ -364,13 +367,13 @@
       "temporal_evidence": "sale_business_day_listing_tree_missing",
       "expected": {
         "channel_names": [],
-        "channel_type": "Unknown Channel",
+        "channel_type": "Unclassified Channel",
         "channel_resolution": "unknown",
         "sales_role": "Advertised",
         "medium_state": "not_defined_for_provider_in_eo04",
         "variation_state": "not_applicable",
         "value_modifier": "none",
-        "cost_rule": "preserve_exact_provider_product_cost_under_unknown_channel",
+        "cost_rule": "preserve_exact_provider_product_cost_under_unclassified_channel",
         "fact_rule": "preserve_sale_until_date_matched_evidence_exists"
       },
       "forbidden_inferences": ["current tree backfills historical Channel", "missing snapshot becomes zero"],
@@ -457,7 +460,7 @@
         "cost_rule": "no_native_campaign_or_product_cost_in_eo04",
         "fact_rule": "one_ordered_product_event_is_one_sale_fact"
       },
-      "forbidden_inferences": ["choose Variation A or B", "multiple Variations create Unknown Channel"],
+      "forbidden_inferences": ["choose Variation A or B", "multiple Variations create Unclassified Channel"],
       "evidence_level": "contract_fixture",
       "next_owner": "A6-EO-05"
     },
@@ -513,7 +516,7 @@
         "cost_rule": "no_native_campaign_or_product_cost_in_eo04",
         "fact_rule": "one_ordered_product_event_is_one_sale_fact"
       },
-      "forbidden_inferences": ["unavailable content means Cross-sell", "unresolved Variation means Unknown Channel"],
+      "forbidden_inferences": ["unavailable content means Cross-sell", "unresolved Variation means Unclassified Channel"],
       "evidence_level": "contract_fixture",
       "next_owner": "A6-EO-05"
     },
@@ -550,7 +553,7 @@
       "provider": "klaviyo",
       "campaign_family": "message_attribution_missing_or_conflicting",
       "business_question": "Message attribution cannot resolve one Channel",
-      "campaign": "Unknown campaign or flow context",
+      "campaign": "Unresolved campaign or flow context",
       "channel_entities": [],
       "provider_subordinate_evidence": "Missing Message, multiple Messages, Campaign/Flow conflict or parent conflict",
       "advertised_product_evidence": {"state": "conflicting", "products": []},
@@ -558,7 +561,7 @@
       "temporal_evidence": "provider_business_date_exact",
       "expected": {
         "channel_names": [],
-        "channel_type": "Unknown Channel",
+        "channel_type": "Unclassified Channel",
         "channel_resolution": "unknown",
         "sales_role": "Unclassified",
         "medium_state": "unresolved",

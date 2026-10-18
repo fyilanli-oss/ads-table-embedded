@@ -33,6 +33,30 @@ Bu repository onaylı A6-EO embedded-only temiz yeniden kuruluş programını uy
 
 Aynı anda yalnız bir parent paket aktiftir. Executable paket tablosu `contracts/a6-eo-implementation-master-v1.json` dosyasındadır.
 
+## Mühendislik bütünlüğü ve review güvence sırası — 18 Ekim 2026
+
+Bağlayıcı belge: `docs/A6_QUALITY_AND_ASSURANCE_GATES.md`
+
+Executable contract: `contracts/a6-quality-and-assurance-gates-v1.json`
+
+CI enforcement: `tests/a6-quality-and-assurance-gates.test.js`
+
+- EO-04 kapanışından hemen sonra ve EO-05 başlamadan önce `A6-TECH-01` bütün
+  kodu, Shopify yapısını, provider runtime'larını, Supabase'i, Vercel'i,
+  GitHub/CI/lineage'ı ve uçtan uca veri güvenliğini denetler.
+- Testlerin geçmesi tek başına yeterli değildir; yanlış davranışın yanlış testle
+  korunması, paketler arası eski varsayımlar ve canlı yapı-repository drift'i de
+  aranır. P0/P1 ile güvenlik, veri doğruluğu veya review'u etkileyen P2 açıkken
+  EO-05 başlamaz.
+- `A6-DOCS-01`, A6-TECH-01 düzeltmelerinden sonra ve EO-05'ten önce aktif insan
+  okuyucu belgelerini Türkçe standardına getirir; machine contract ve immutable
+  evidence toplu çevrilmez.
+- EO-05, EO-06, EO-07 ve EO-08 sonunda A6-TECH-01 baseline'ına karşı delta
+  bütünlük denetimi zorunludur.
+- `A6-ASSURE-01` EO-08 sonrasında çalışan pre-review doğrulamasıdır; ilk kod
+  sağlamlık denetimi değildir. Hiçbir nihai review başvurusu A6-ASSURE-01 PASS
+  ve ürün sahibi GO kararı olmadan yapılamaz.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance
@@ -47,7 +71,7 @@ testlerle kilitlenecektir. Bu, EO-05'in ilk zorunlu kapısıdır:
    Asset Group kanıtlıyorsa üretilebilir.
 3. Eksik/partial pencere, gün içi tree değişikliği, çelişkili version/hash veya
    birden fazla eligible Asset Group satış ve Sales Role'u korur; yalnız Channel
-   `Unknown Channel` kalır. Satılan ürün Channel seçmek için kullanılamaz.
+   `Unclassified Channel` kalır. Satılan ürün Channel seçmek için kullanılamaz.
 4. Bugünkü/current listing tree geçmiş tarih için snapshot veya exact Channel
    üretemez. Snapshot toplama başlamadan önceki günler, provider'dan o güne ait
    exact tarihsel kanıt alınamadıkça geriye dönük tahminle doldurulamaz.
@@ -375,7 +399,7 @@ Official capability record: `docs/decisions/A6_EO_04_D_KLAVIYO_REPORTING_CAPABIL
 
 - `2026-10-15` revision Campaign Message, `send_channel` ve isteğe bağlı Variation reporting boyutlarını GA olarak belgeler.
 - 17 Ekim 2026 ürün sahibi düzeltmesi bağlayıcıdır: Campaign Message ve Flow Message AdsTable Channel'dır; `send_channel` zorunlu Medium, Variation ayrı alt kırılımdır.
-- Events attribution Campaign Message'ı fakat Campaign Variation'ı içermez. Message biliniyorsa Channel exact kalır; çoklu veya çözülemeyen Variation yalnız Variation çözünürlüğünü etkiler ve `Unknown Channel` üretmez.
+- Events attribution Campaign Message'ı fakat Campaign Variation'ı içermez. Message biliniyorsa Channel exact kalır; çoklu veya çözülemeyen Variation yalnız Variation çözünürlüğünü etkiler ve `Unclassified Channel` üretmez.
 - Flow attribution `Flow Message Variation` veya `Flow Message` ilişkisini açıkça döndürebilir; Variation parent Message'a çözülür ve Channel yine Flow Message kalır.
 - Campaign için Values endpoint'i vardır fakat Series endpoint'i yoktur. Günlük grain tek-gün timeframe sorgularıyla korunur; ilk bootstrap yalnız dün ve bugündür. Saatlik refresh/reconciliation kota bütçesi EO-05'e aittir.
 - Estimated Email Spend allocation ve Dataset mapping EO-05'e aittir.
@@ -392,11 +416,11 @@ CI enforcement: `tests/eo-04e-three-provider-channel-product-economics.test.js`
 
 - Meta Channel = Ad; Google Standard Shopping/Search Channel = Ad Group; Google PMax Retail Channel = Asset Group; Klaviyo Campaign Channel = Campaign Message; Klaviyo Flow Channel = Flow Message. Klaviyo `send_channel` zorunlu Medium, Variation ayrı alt kırılımdır.
 - Sales Role sözlüğü `Advertised`, `Cross-sell`, `Assisted`, `Triggered` ve yalnız gerçek ambiguity için `Unclassified` olarak kabul edilmiştir.
-- `Zero Value` bir role değil modifier'dır. `Unknown Channel`, sale kanıtı bulunduğu halde exact Channel çözülemediğini ifade eder.
+- `Zero Value` bir role değil modifier'dır. `Unclassified Channel`, sale kanıtı bulunduğu halde exact Channel çözülemediğini ifade eder.
 - PMax broad/overlapping listing üyeliği aşağıya paylaştırılmaz. Search provider-attributed product sale'i bastırılmaz; `Assisted` olur.
 - Meta Ad spend ürünlere dağıtılmaz. Google provider product cost gerçek/blended maliyet sayılmaz. Klaviyo Estimated Spend dağıtımı EO-05'e bırakılır.
 - `Channel Ad Cost`, `Provider Product Ad Cost` ve EO-05'e ait `Allocated Ad Cost` ayrı kalır. Explicit zero dışındaki eksik/support state'leri sıfır olmaz; product cost satırları Channel toplamını yeniden üretmez.
-- Exact provider ürün Ad Cost'u `Cross-sell`, `Assisted`, `Zero Value` veya `Unknown Channel` nedeniyle silinmez ve ilgili ürün satırında korunur. Exact product cost yoksa Channel toplamı ürünlere tahminî dağıtılmaz; Klaviyo `Triggered` allocation'ı EO-05'e aittir.
+- Exact provider ürün Ad Cost'u `Cross-sell`, `Assisted`, `Zero Value` veya `Unclassified Channel` nedeniyle silinmez ve ilgili ürün satırında korunur. Exact product cost yoksa Channel toplamı ürünlere tahminî dağıtılmaz; Klaviyo `Triggered` allocation'ı EO-05'e aittir.
 - Desteklenen product identity yolları resmî Shopify-managed Facebook & Instagram, Google & YouTube ve Klaviyo entegrasyonlarıdır. Meta ve Google product/variant adayları Shopify Admin API ile doğrulanmadan SKU, ürün adı veya varyant adı yayımlanmaz; manual/third-party feed/catalog bu sürümde kapsam dışıdır.
 - Bu contract gate ürün sahibi tarafından 16 Ekim 2026'da bütün olarak kabul edilmiştir. Kabul tek başına provider reporting runtime, canlı provider çağrısı, Dataset V2, migration veya environment/deployment mutation başlatmaz; bunlar ayrı onay kapısındadır.
 
@@ -410,7 +434,7 @@ CI enforcement: `tests/eo-04d-klaviyo-reporting-runtime-contract.test.js` and `t
 
 - Product owner authorized the repository-only runtime foundation after Campaign and Flow hierarchy examples were accepted.
 - Campaign/Flow Message is Channel; Message name is Channel name. `send_channel` is mandatory Medium and Variation never replaces Channel.
-- Exact Message with unresolved or multiple Variations remains exact Channel. `Unknown Channel` is restricted to missing, unresolved or conflicting Message evidence.
+- Exact Message with unresolved or multiple Variations remains exact Channel. `Unclassified Channel` is restricted to missing, unresolved or conflicting Message evidence.
 - Shopify `Placed Order` is the Reporting API conversion metric; `Ordered Product` is product-sale event evidence. They are never both counted as the same sale.
 - Product identifiers remain provider-native observations; Product ID standardization, persistence, scheduler, reconciliation and estimated-spend allocation remain later gates.
 - No live Klaviyo call, provider mutation, database/migration, secret/environment, deploy or UI work is authorized by this package.
@@ -441,6 +465,27 @@ CI enforcement: `tests/eo-04d-klaviyo-reporting-authority-contract.test.js` and 
 - No live Klaviyo call, provider mutation, database/migration, Dataset V2,
   secret/environment, deploy or UI work is authorized by this package.
 
+## EO-04-D temporary Klaviyo live-evidence trigger — 18 Ekim 2026
+
+Binding analyst brief: `docs/EO_04D_KLAVIYO_LIVE_EVIDENCE_TRIGGER_BRIEF.md`
+
+Executable contract: `contracts/eo-04d-klaviyo-live-evidence-trigger-v1.json`
+
+CI enforcement: `tests/eo-04d-klaviyo-live-evidence-trigger.test.js`
+
+- Ürün sahibi repository-only geçici `Run Klaviyo evidence` taşımasını
+  onayladı. Deploy, canlı provider çağrısı ve Sample Data üretimi kapalıdır.
+- Tarih merchant'tan alınmaz; bağlı Klaviyo hesabının timezone'una göre güncel
+  business date server tarafında hesaplanır.
+- Kalıcı reporting runtime metrics, Campaign Values, Flow Values, Ordered
+  Product Events ve resolution ailelerini tek denemede çalıştırır. İlk hata
+  kalan aileleri durdurur; retry, fallback ve partial publication yoktur.
+- UI ve safe log yalnız satır/durum/sınıflandırma sayılarını taşır. Raw satır,
+  isim, ID, profil/PII, ticari değer, request ID, cursor/hash, token veya
+  credential taşımaz.
+- Klaviyo custom ecommerce sample data, kanonik `integration.name = Shopify`
+  metric kanıtı değildir ve Shopify-native ürün satışı kabulünün yerine geçmez.
+
 ## EO-04-D Klaviyo sales-attribution resolution — 17 October 2026
 
 Binding analyst brief: `docs/EO_04D_KLAVIYO_ATTRIBUTION_RESOLUTION_BRIEF.md`
@@ -457,7 +502,7 @@ and `tests/eo-04d-klaviyo-attribution-resolution.test.js`
   remains exact when catalog name, Medium or Variation is unresolved.
 - Campaign Message sales are Assisted until exact content-product evidence can
   prove Advertised or Cross-sell. Flow Message sales are Triggered.
-- Missing or conflicting Message evidence preserves the sale once under Unknown
+- Missing or conflicting Message evidence preserves the sale once under Unclassified Channel
   Channel and Unclassified; timing or report totals cannot resolve ambiguity.
 - Resolution runs after all provider families and remains atomic. No live
   Klaviyo call, database/migration, Dataset V2, secret/environment, deploy or UI
@@ -523,8 +568,8 @@ CI enforcement: `tests/eo-04c-google-reporting-runtime-contract.test.js`
 
 - Standard Shopping and Search preserve Ad Group Channel; Performance Max Retail preserves Asset Group Channel.
 - PMax product sale and Sales Role survive broad listing trees. Exact Asset Group is resolved from the advertised product only when exactly one eligible listing tree matches.
-- One eligible `All products` Asset Group is exact. Multiple overlapping `All products`, category or other broad trees remain `Unknown Channel`; the sale is neither dropped nor distributed.
-- A current listing tree never resolves an earlier sale by itself. Exact historical Channel requires versioned listing-tree evidence valid for the complete sale business-date window; tree changes or incomplete temporal evidence retain the sale under `Unknown Channel`.
+- One eligible `All products` Asset Group is exact. Multiple overlapping `All products`, category or other broad trees remain `Unclassified Channel`; the sale is neither dropped nor distributed.
+- A current listing tree never resolves an earlier sale by itself. Exact historical Channel requires versioned listing-tree evidence valid for the complete sale business-date window; tree changes or incomplete temporal evidence retain the sale under `Unclassified Channel`.
 - `cart_data_sales_view` advertised-product, sold-product, units, revenue and lead/cross-sell evidence remains separate from aggregate `asset_group_product_group_view` evidence.
 - Provider Product Ad Cost remains on the advertised product and is never moved to a Cross-sell sold product. Allocation remains EO-05 work.
 - Missing Cart Data configuration, empty success, absent fields, unsupported fields and explicit numeric zero remain separate states.
@@ -553,6 +598,6 @@ CI enforcement: `tests/eo-04c-google-reporting-runtime-contract.test.js`
 - İlk gerçek-hesap geliştirme hedefi Explorer access'tir. Google Ads API access seviyesi OAuth istemcisinin bağlı olduğu Google Cloud Project'e aittir; OAuth public verification ayrı bir dış-kullanıcı kapısıdır.
 - Google Ads API v25 için `GOOGLE_ADS_DEVELOPER_TOKEN` yalnız geçiş uyumluluğudur: varsa header gönderilir, yoksa runtime fail etmez. Mevcut Production secret bu paketle değiştirilmez veya silinmez.
 - HTTP 401, Cloud Project access eksikliği, 2-Step Verification eksikliği, diğer permission/scope 403'leri ve `AUTHORIZATION_ERROR` ayrı fail-closed sınıflardır. Hiçbiri otomatik retry, project değişimi veya alternatif auth rotası başlatmaz.
-- Historical PMax doğruluğu korunur: bugünkü listing tree geçmiş satışı exact çözemez. Tam business-day snapshot yoksa satış ve Sales Role korunur, Channel `Unknown Channel` kalır. Versioned snapshot persistence A6-EO-05 sorumluluğudur.
+- Historical PMax doğruluğu korunur: bugünkü listing tree geçmiş satışı exact çözemez. Tam business-day snapshot yoksa satış ve Sales Role korunur, Channel `Unclassified Channel` kalır. Versioned snapshot persistence A6-EO-05 sorumluluğudur.
 - Ürün sahibi 17 Ekim 2026'da bu repository düzeltme paketini onaylamıştır. Onay Google başvurusu, canlı provider çağrısı, Cloud Project/OAuth/secret/environment değişikliği, deployment, database, Dataset V2 veya UI mutation'ı yetkilendirmez.
 - Ürün sahibi gerekli CI sonrasında merge'i açıkça onaylamıştır. PR #89, 17 Ekim 2026'da `main` üzerine `ff54d518b7c93ba576c9943a7c8d66a7ea511de6` olarak squash-merge edilmiştir. Explorer başvurusu, ilk Production çağrısı ve her provider mutation'ı ayrı kapıda kalır.

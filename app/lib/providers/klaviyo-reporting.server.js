@@ -347,7 +347,7 @@ export function resolveKlaviyoMessageChannel({
     const parent = variationToMessage[variationId] ?? null;
     if (resolvedMessageId != null && parent != null && parent !== resolvedMessageId) {
       return Object.freeze({
-        channel_type: "Unknown Channel",
+        channel_type: "Unclassified Channel",
         channel_id: null,
         channel_name: null,
         medium: null,
@@ -369,7 +369,7 @@ export function resolveKlaviyoMessageChannel({
   ]));
   if (resolvedMessageId == null || unique.size !== 1) {
     return Object.freeze({
-      channel_type: "Unknown Channel",
+      channel_type: "Unclassified Channel",
       channel_id: null,
       channel_name: null,
       medium: null,

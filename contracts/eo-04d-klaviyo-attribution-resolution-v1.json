@@ -18,7 +18,7 @@
     "known_flow_message_is_exact_channel": true,
     "catalog_name_missing_changes_known_message_to_unknown": false,
     "multiple_variations_same_message_changes_known_message_to_unknown": false,
-    "unknown_channel_reasons": [
+    "unclassified_channel_reasons": [
       "message_attribution_missing",
       "multiple_distinct_messages",
       "campaign_flow_conflict",

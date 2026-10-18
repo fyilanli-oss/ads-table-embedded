@@ -31,10 +31,10 @@ test("PMax broad listing resolution preserves sales without inventing Asset Grou
   assert.equal(pmax.channel_resolution_uses, "advertised_product_listing_membership");
   assert.equal(pmax.channel_resolution_never_uses, "sold_product_listing_membership");
   assert.equal(pmax.one_eligible_asset_group, "exact_asset_group");
-  assert.equal(pmax.multiple_eligible_asset_groups, "Unknown Channel");
+  assert.equal(pmax.multiple_eligible_asset_groups, "Unclassified Channel");
   assert.equal(pmax.one_all_products_asset_group, "exact_asset_group");
-  assert.equal(pmax.multiple_overlapping_all_products_or_category_asset_groups, "Unknown Channel");
-  assert.equal(pmax.unknown_channel_drops_product_sale, false);
+  assert.equal(pmax.multiple_overlapping_all_products_or_category_asset_groups, "Unclassified Channel");
+  assert.equal(pmax.unclassified_channel_drops_product_sale, false);
   assert.equal(pmax.ambiguous_sale_distribution, "forbidden");
   assert.equal(pmax.aggregate_product_group_metrics_joined_to_exact_sold_product_by_arithmetic, false);
 });
@@ -44,9 +44,9 @@ test("a current listing tree can never resolve an earlier sale without date-matc
   assert.equal(temporal.sale_business_date_timezone, "reporting_account_timezone");
   assert.equal(temporal.exact_requires_listing_tree_valid_for_complete_business_date_window, true);
   assert.equal(temporal.current_tree_may_resolve_earlier_sale, false);
-  assert.equal(temporal.tree_change_inside_business_date_window, "Unknown Channel");
-  assert.equal(temporal.missing_partial_or_conflicting_temporal_evidence, "Unknown Channel");
-  assert.equal(temporal.unknown_channel_drops_product_sale, false);
+  assert.equal(temporal.tree_change_inside_business_date_window, "Unclassified Channel");
+  assert.equal(temporal.missing_partial_or_conflicting_temporal_evidence, "Unclassified Channel");
+  assert.equal(temporal.unclassified_channel_drops_product_sale, false);
   assert.deepEqual(temporal.required_exact_evidence, [
     "sale_business_date",
     "reporting_account_timezone",
@@ -62,7 +62,7 @@ test("Google product sales use Sales Role and preserve both product identities",
   assert.equal(contract.sales_role.term, "Sales Role");
   assert.match(contract.sales_role.advertised, /match/);
   assert.match(contract.sales_role.cross_sell, /differ/);
-  assert.equal(contract.sales_role.unknown_channel_is_sales_role, false);
+  assert.equal(contract.sales_role.unclassified_channel_is_sales_role, false);
   assert.equal(contract.sales_role.zero_value_is_sales_role, false);
   assert.ok(contract.product_sales_fields.identity.includes("segments.product_item_id"));
   assert.ok(contract.product_sales_fields.identity.includes("segments.product_sold_item_id"));

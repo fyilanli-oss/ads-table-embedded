@@ -59,7 +59,7 @@ Aynı şemada `campaign-variation` attribution relationship'i yoktur. Bunun sonu
 2. Flow Message AdsTable Channel'dır; Flow Message Variation Channel değildir.
 3. `send_channel` zorunlu ayrı Medium kanıtıdır.
 4. Message biliniyor fakat Variation bilinmiyorsa Channel exact kalır; yalnız Variation unresolved olur.
-5. Çoklu variation ürün satışı A veya B variation'a dağıtılamaz fakat Message biliniyorsa `Unknown Channel` oluşmaz.
+5. Çoklu variation ürün satışı A veya B variation'a dağıtılamaz fakat Message biliniyorsa `Unclassified Channel` oluşmaz.
 6. Flow event'i variation relationship verirse parent Flow Message Channel olarak çözülür; Variation ayrıca exact tutulur.
 
 Bu kurallar synthetic çıkarım değil, provider schema sınırıdır.

@@ -151,7 +151,7 @@ test("Flow Message is Channel and exact Flow variation never replaces it", () =>
   assert.equal(resolved.sales_role, "Triggered");
 });
 
-test("message-known multi-variation sales do not create Unknown Channel", () => {
+test("message-known multi-variation sales do not create Unclassified Channel", () => {
   const channel = normalizeKlaviyoReportRow(
     "campaign",
     reportRow("campaign", {variation: null, variation_name: null}),
@@ -193,10 +193,10 @@ test("Campaign Sales Role uses only verified content product evidence", () => {
   }), "Unclassified");
 });
 
-test("Unknown Channel is reserved for missing or conflicting Message evidence", () => {
+test("Unclassified Channel is reserved for missing or conflicting Message evidence", () => {
   const channel = normalizeKlaviyoReportRow("flow", reportRow("flow"));
   const missing = resolveKlaviyoMessageChannel({source: "flow", channels: [channel]});
-  assert.equal(missing.channel_type, "Unknown Channel");
+  assert.equal(missing.channel_type, "Unclassified Channel");
   assert.equal(missing.sales_role, "Triggered");
 
   const conflicting = resolveKlaviyoMessageChannel({
@@ -206,7 +206,7 @@ test("Unknown Channel is reserved for missing or conflicting Message evidence", 
     variationToMessage: {"variation-2": "flow-message-2"},
     channels: [channel],
   });
-  assert.equal(conflicting.channel_type, "Unknown Channel");
+  assert.equal(conflicting.channel_type, "Unclassified Channel");
   assert.equal(conflicting.sales_role, "Unclassified");
 });
 

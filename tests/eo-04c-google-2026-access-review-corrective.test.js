@@ -52,7 +52,7 @@ test("Google corrective preserves the historical listing-tree safety boundary", 
 
   assert.equal(contract.listing_tree_boundary.current_tree_may_resolve_historical_sale, false);
   assert.equal(contract.listing_tree_boundary.historical_exact_requires_complete_business_day_snapshot, true);
-  assert.equal(contract.listing_tree_boundary.missing_snapshot_result, "Unknown Channel");
+  assert.equal(contract.listing_tree_boundary.missing_snapshot_result, "Unclassified Channel");
   assert.equal(contract.listing_tree_boundary.sales_and_sales_role_preserved, true);
   assert.equal(contract.listing_tree_boundary.versioned_snapshot_persistence_owner, "A6-EO-05");
   assert.equal(contract.listing_tree_boundary.versioned_snapshot_persistence_implemented, false);

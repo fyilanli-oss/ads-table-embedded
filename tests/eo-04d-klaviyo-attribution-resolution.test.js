@@ -90,7 +90,7 @@ test("Flow Message, Medium and provider variation resolve exactly as Triggered",
   assert.equal(resolution.sales_role, "Triggered");
 });
 
-test("known Message never becomes Unknown merely because catalog, Medium or Variation is unresolved", () => {
+test("known Message never becomes Unclassified Channel merely because catalog, Medium or Variation is unresolved", () => {
   const noCatalog = resolve({
     events: [event("event-1", [attribution({campaign_message_id: "campaign-message-1"})])],
   }).rows[0].attribution_resolution;
@@ -145,7 +145,7 @@ test("multiple variations of the same Flow Message preserve exact Channel withou
   assert.equal(resolution.sales_role, "Triggered");
 });
 
-test("missing or conflicting Message attribution preserves one sale under Unknown Channel", () => {
+test("missing or conflicting Message attribution preserves one sale under Unclassified Channel", () => {
   const events = [
     event("missing", []),
     event("conflict", [
@@ -161,7 +161,7 @@ test("missing or conflicting Message attribution preserves one sale under Unknow
   assert.equal(result.rows.length, 3);
   assert.deepEqual(result.rows.map((row) => row.provider_event_id), ["missing", "conflict", "cross-source"]);
   for (const row of result.rows) {
-    assert.equal(row.attribution_resolution.channel_type, "Unknown Channel");
+    assert.equal(row.attribution_resolution.channel_type, "Unclassified Channel");
     assert.equal(row.attribution_resolution.sales_role, "Unclassified");
   }
 });

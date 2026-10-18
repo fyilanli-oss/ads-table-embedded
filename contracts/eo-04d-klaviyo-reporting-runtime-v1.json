@@ -11,8 +11,14 @@
     "ui_authorized": false
   },
   "hierarchy": {
-    "campaign": ["campaign", "campaign_message", "variation"],
+    "campaign": ["campaign", "campaign_audience", "campaign_message", "variation"],
     "flow": ["flow", "flow_message", "variation"],
+    "campaign_audience_is_channel": false,
+    "campaign_audience_role": "provider_navigation_only",
+    "campaign_audience_persisted_in_canonical_dataset": false,
+    "campaign_audience_exposed_to_user": false,
+    "campaign_audience_splits_sales": false,
+    "campaign_content_traversal_must_follow_audience_parentage": true,
     "campaign_channel_entity": "campaign_message",
     "flow_channel_entity": "flow_message",
     "variation_replaces_channel": false,
@@ -24,7 +30,7 @@
     "message_known_variation_exact": "message_channel_exact_variation_exact",
     "message_known_variation_unresolved": "message_channel_exact_variation_unresolved",
     "message_known_multiple_variations": "message_channel_exact_variation_unresolved",
-    "message_missing_or_conflicting": "Unknown Channel",
+    "message_missing_or_conflicting": "Unclassified Channel",
     "candidate_variations_in_primary_ui": false,
     "multi_channel_synthetic_bucket": false
   },
@@ -88,7 +94,7 @@
     "provider_native_product_cost": "unavailable",
     "estimated_spend_allocation": "A6-EO-05_only"
   },
-  "official_sources_checked_at": "2026-10-17",
+  "official_sources_checked_at": "2026-10-18",
   "official_sources": [
     "https://developers.klaviyo.com/en/reference/campaigns_omni_api_overview",
     "https://developers.klaviyo.com/en/reference/reporting_api_overview",

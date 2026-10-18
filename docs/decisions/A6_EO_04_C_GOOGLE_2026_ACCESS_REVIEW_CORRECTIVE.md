@@ -62,9 +62,9 @@ Explorer başvurusu/gerçek-hesap kabul gününden önce:
 
 ## Listing tree ve veri doğruluğu sınırı
 
-Mevcut sözleşme geçmiş satışı bugünkü listing tree ile `exact` eşleştirmeyi yasaklıyor ve satış/Sales Role bilgisini koruyup yalnız Channel'ı `Unknown Channel` yapıyor. Bu koruma testlerle kilitlidir.
+Mevcut sözleşme geçmiş satışı bugünkü listing tree ile `exact` eşleştirmeyi yasaklıyor ve satış/Sales Role bilgisini koruyup yalnız Channel'ı `Unclassified Channel` yapıyor. Bu koruma testlerle kilitlidir.
 
-Ancak versioned historical listing-tree snapshot persistence henüz yoktur. Bu nedenle gerçek geçmiş PMax satışlarında exact Asset Group yalnız satış gününün tam business-day penceresini kapsayan snapshot mevcutsa üretilebilir. Snapshot scheduler/persistence A6-EO-05'e aittir; yapılana kadar doğru sonuç `Unknown Channel` olabilir. Bu, Explorer başvurusunu engellemez fakat nihai ürün doğruluğu için açık iş olarak kalır.
+Ancak versioned historical listing-tree snapshot persistence henüz yoktur. Bu nedenle gerçek geçmiş PMax satışlarında exact Asset Group yalnız satış gününün tam business-day penceresini kapsayan snapshot mevcutsa üretilebilir. Snapshot scheduler/persistence A6-EO-05'e aittir; yapılana kadar doğru sonuç `Unclassified Channel` olabilir. Bu, Explorer başvurusunu engellemez fakat nihai ürün doğruluğu için açık iş olarak kalır.
 
 ## Yetki ve mutation sınırı
 

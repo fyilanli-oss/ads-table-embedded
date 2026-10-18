@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.26.0",
+  "schema_version": "1.27.0",
   "contract_id": "a6-eo-implementation-master-v1",
   "title": "A6 EO single-track execution rule and integrated implementation package table",
   "effective_date": "2026-10-04",
@@ -739,6 +739,13 @@
           "attribution_resolution_contract_test": "tests/eo-04d-klaviyo-attribution-resolution-contract.test.js",
           "attribution_resolution_repository_implementation": "ready_for_review",
           "attribution_resolution_implemented_at": "2026-10-17",
+          "live_evidence_brief": "docs/EO_04D_KLAVIYO_LIVE_EVIDENCE_TRIGGER_BRIEF.md",
+          "live_evidence_contract": "contracts/eo-04d-klaviyo-live-evidence-trigger-v1.json",
+          "live_evidence_test": "tests/eo-04d-klaviyo-live-evidence-trigger.test.js",
+          "live_evidence_repository_implementation_authorized": true,
+          "live_evidence_deployment_authorized": false,
+          "live_evidence_call_authorized": false,
+          "sample_data_generation_authorized": false,
           "reporting_live_provider_call_authorized": false,
           "oauth_hardening_document": "docs/EO_04D_KLAVIYO_OAUTH_HARDENING_BRIEF.md",
           "oauth_hardening_contract": "contracts/eo-04d-klaviyo-oauth-hardening-v1.json",
@@ -809,7 +816,7 @@
           "date_matched_evidence_delivery_to_channel_resolver"
         ],
         "historical_exact_rule": "one_eligible_asset_group_from_versioned_listing_tree_evidence_covering_the_complete_sale_business_day",
-        "missing_partial_changed_conflicting_or_overlapping_result": "preserve_sale_and_sales_role_with_Unknown_Channel",
+        "missing_partial_changed_conflicting_or_overlapping_result": "preserve_sale_and_sales_role_with_Unclassified_Channel",
         "sold_product_may_select_channel": false,
         "current_tree_may_backfill_historical_snapshot_or_channel": false,
         "acceptance_rule": "capture_persistence_retention_gap_detection_reconciliation_and_resolver_delivery_must_pass_together"
@@ -1149,6 +1156,36 @@
   "current_gate": "A6-EO-04-C_google_review_demo_accepted_and_merged_production_evidence_pending_google_ads_api_access",
   "next_ready_child": null,
   "independent_packages": [
+    {
+      "id": "A6-TECH-01",
+      "title": "End-to-end project integrity audit",
+      "status": "Accepted plan; execution starts after EO-04 closure",
+      "objective": "Audit the complete codebase, Shopify, providers, Supabase, Vercel, GitHub/CI and end-to-end data integrity before EO-05.",
+      "document": "docs/A6_QUALITY_AND_ASSURANCE_GATES.md",
+      "contract": "contracts/a6-quality-and-assurance-gates-v1.json",
+      "blocks_eo05_until_critical_findings_close": true,
+      "external_mutation_authorized": false
+    },
+    {
+      "id": "A6-DOCS-01",
+      "title": "Turkish documentation and terminology standardization",
+      "status": "Accepted plan; execution starts after A6-TECH-01 remediation",
+      "objective": "Normalize active human-facing Markdown to Turkish without changing accepted semantics or machine/evidence artifacts.",
+      "document": "docs/A6_QUALITY_AND_ASSURANCE_GATES.md",
+      "contract": "contracts/a6-quality-and-assurance-gates-v1.json",
+      "blocks_eo05_until_complete": true,
+      "external_mutation_authorized": false
+    },
+    {
+      "id": "A6-ASSURE-01",
+      "title": "Pre-Review Assurance Program",
+      "status": "Accepted plan; execution starts after EO-08",
+      "objective": "Verify the already-audited product is ready for Shopify and provider review submission; this is not the first code-integrity audit.",
+      "document": "docs/A6_QUALITY_AND_ASSURANCE_GATES.md",
+      "contract": "contracts/a6-quality-and-assurance-gates-v1.json",
+      "review_submission_requires_pass_and_product_owner_go": true,
+      "external_mutation_authorized": false
+    },
     {
       "id": "A6-OPS-LOCAL-01",
       "title": "One-time local safety cleanup",

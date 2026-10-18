@@ -17,7 +17,7 @@ Paketin gerçek çıktıları:
 - advertised/clicked product ile sold product kanıtının ayrı tutulması;
 - yalnız kanıtla üretilen `Advertised`, `Cross-sell`, `Assisted`, `Triggered`
   veya `Unclassified` Sales Role;
-- Sales Role'den ayrı `Unknown Channel` ve `Zero Value` eksenleri;
+- Sales Role'den ayrı `Unclassified Channel` ve `Zero Value` eksenleri;
 - Channel cost ile provider product cost'un birbirine dönüştürülmeden korunması;
 - missing, unsupported, permission-denied, not-observed ve explicit zero'nun
   ayrı sonuçlar olmasıdır.
@@ -90,10 +90,14 @@ kullanır ve şu alanları taşır:
 | Channel biliniyor, exact advertised product kanıtı yok | `Assisted` |
 | Geçerli Klaviyo Flow Message attribution'ı | `Triggered` |
 | Ürün veya attribution kanıtı gerçekten çelişkili | `Unclassified` |
-| Satış var, exact Channel çözülemiyor | `Unknown Channel`; Sales Role ayrı korunur |
+| Satış var, exact Channel çözülemiyor | `Unclassified Channel`; Sales Role ayrı korunur |
 | Pozitif quantity ve explicit zero sales value | Mevcut Sales Role + `Zero Value` |
 
-`Unknown Channel` Sales Role değildir. `Zero Value` da Sales Role değildir.
+`Unclassified Channel` Sales Role değildir. Kullanıcı açısından bilinmeyen bir
+kampanyanın içeri sızdığı anlamına gelmez: **Satış doğrulandı, ancak mevcut
+provider kanıtı exact Channel'ı belirlemeye yetmedi.** Teknik `unknown`,
+`missing`, `partial` ve `stale` evidence durumları veri kalitesi/provenance
+katmanında ayrı korunur. `Zero Value` da Sales Role değildir.
 
 ## 5. Meta standardize senaryoları
 
@@ -106,7 +110,7 @@ Ortak kurulumda Campaign `Sonbahar Kampanyası`; gerçek Channel her zaman Meta
 | META-02 | Aynı Ad'da exact `İnci Küpe` | İnci Kolye | Channel exact Ad; `Cross-sell` |
 | META-03 | Ad biliniyor; generic creative veya yalnız `product_set_id` | İnci Kolye | Channel exact Ad; `Assisted` |
 | META-04 | İnci Küpe hem `İnci Küpe Videosu` hem `Sonbahar Carousel` Ad'ında; Meta attribution yalnız ilk Ad'ı verir | İnci Küpe | İlk Ad exact Channel; `Advertised` |
-| META-05 | Meta aynı ürün attribution metriğini iki Ad altında döndürür | İnci Küpe | İki provider Ad fact'i korunur; `Unknown Channel` yok; bunlar iki Shopify siparişi sayılmaz |
+| META-05 | Meta aynı ürün attribution metriğini iki Ad altında döndürür | İnci Küpe | İki provider Ad fact'i korunur; `Unclassified Channel` yok; bunlar iki Shopify siparişi sayılmaz |
 | META-06 | Ad exact fakat Creative ürün kimlikleri çelişkili | İnci Kolye | Channel exact Ad; `Unclassified` |
 
 ### META-01 — Exact reklam ürünü satılıyor
@@ -171,7 +175,7 @@ Ortak kurulumda Campaign `Sonbahar Kampanyası`; gerçek Channel her zaman Meta
 - **Medium / Variation:** Meta EO-04 sözleşmesinde tanımlı değildir / uygulanmaz.
 - **Cost / fact davranışı:** Yalnız providerın attribution verdiği Ad fact'i bu sonuçta kullanılır.
 - **Neden:** Meta Channel'ı ürün üyeliğinden değil doğrudan gerçek `ad_id`den gelir.
-- **Yasak çıkarım:** Ürünün iki Ad'da bulunması `Unknown Channel` veya ikiye dağıtım nedeni değildir.
+- **Yasak çıkarım:** Ürünün iki Ad'da bulunması `Unclassified Channel` veya ikiye dağıtım nedeni değildir.
 
 ### META-05 — Provider aynı ürün metriğini iki Ad altında raporluyor
 
@@ -203,7 +207,7 @@ Ortak kurulumda Campaign `Sonbahar Kampanyası`; gerçek Channel her zaman Meta
 - **Medium / Variation:** Meta EO-04 sözleşmesinde tanımlı değildir / uygulanmaz.
 - **Cost / fact davranışı:** Ad spend korunur; çelişki çözülmeden product allocation yapılmaz.
 - **Neden:** Channel kanıtı ile ürün kanıtı ayrı eksenlerdir; ürün çelişkisi gerçek Ad'ı belirsizleştirmez.
-- **Yasak çıkarım:** Çelişkili ürünlerden biri seçilemez veya ürün çelişkisi `Unknown Channel`a çevrilemez.
+- **Yasak çıkarım:** Çelişkili ürünlerden biri seçilemez veya ürün çelişkisi `Unclassified Channel`a çevrilemez.
 
 Bir ürünün birden fazla Ad'da bulunması PMax listing-tree overlap'i değildir.
 Meta `level=ad` cevabı gerçek `ad_id` verdiği için Channel ürün üyeliğinden
@@ -217,8 +221,8 @@ semantiği doğrulanmamış product breakdown spend, gerçek ürün maliyeti say
 | GOOGLE-01 | Standard Shopping / `Küpeler Ad Group` | İnci Küpe → İnci Küpe | Exact Ad Group; `Advertised` |
 | GOOGLE-02 | Standard Shopping / `Küpeler Ad Group` | İnci Küpe → İnci Kolye | Exact Ad Group; `Cross-sell` |
 | GOOGLE-03 | PMax; İnci Küpe yalnız `Küpeler Asset Group` listing tree'sinde | İnci Küpe → İnci Kolye | Exact Asset Group; `Cross-sell` |
-| GOOGLE-04 | PMax; İnci Küpe hem `Küpeler` hem `Sonbahar Takıları` Asset Group tree'sinde | İnci Küpe → İnci Kolye | `Unknown Channel`; `Cross-sell` korunur |
-| GOOGLE-05 | PMax satış günü tree snapshot'ı yok; yalnız bugünkü tree var | İnci Küpe → İnci Küpe | `Unknown Channel`; `Advertised` korunur |
+| GOOGLE-04 | PMax; İnci Küpe hem `Küpeler` hem `Sonbahar Takıları` Asset Group tree'sinde | İnci Küpe → İnci Kolye | `Unclassified Channel`; `Cross-sell` korunur |
+| GOOGLE-05 | PMax satış günü tree snapshot'ı yok; yalnız bugünkü tree var | İnci Küpe → İnci Küpe | `Unclassified Channel`; `Advertised` korunur |
 | GOOGLE-06 | Search / `İnci Takılar Ad Group`; exact advertised product yok | unavailable → İnci Kolye | Exact Ad Group; `Assisted` |
 
 ### GOOGLE-01 — Standard Shopping, aynı ürün satılıyor
@@ -278,7 +282,7 @@ semantiği doğrulanmamış product breakdown spend, gerçek ürün maliyeti say
 - **Advertised/clicked product:** `İnci Küpe`; iki Asset Group tree'sinde de bulunur.
 - **Sold product:** `İnci Kolye`; yalnız `Sonbahar Takıları Asset Group` tree'sinde bulunur.
 - **Temporal evidence:** Her iki versioned listing tree de satışın tüm provider business-day penceresini kapsar.
-- **Beklenen Channel:** `Unknown Channel`; resolution `unknown`; iki aday Asset Group provenance olarak korunur.
+- **Beklenen Channel:** `Unclassified Channel`; resolution `unknown`; iki aday Asset Group provenance olarak korunur.
 - **Beklenen Sales Role:** `Cross-sell`.
 - **Medium / Variation:** Google EO-04 sözleşmesinde tanımlı değildir / uygulanmaz.
 - **Cost / fact davranışı:** Satış ve exact provider product cost korunur; hiçbir Asset Group'a dağıtılmaz.
@@ -294,7 +298,7 @@ semantiği doğrulanmamış product breakdown spend, gerçek ürün maliyeti say
 - **Advertised/clicked product:** 1 Ekim'de `İnci Küpe`.
 - **Sold product:** 1 Ekim'de `İnci Küpe`.
 - **Temporal evidence:** Sale business date `1 Ekim`; eldeki tree `16 Ekim`; date-matched full-day evidence `missing`.
-- **Beklenen Channel:** `Unknown Channel`; resolution `unknown`.
+- **Beklenen Channel:** `Unclassified Channel`; resolution `unknown`.
 - **Beklenen Sales Role:** `Advertised`.
 - **Medium / Variation:** Google EO-04 sözleşmesinde tanımlı değildir / uygulanmaz.
 - **Cost / fact davranışı:** Satış ve exact provider product cost korunur; bugünkü Asset Group'a taşınmaz.
@@ -330,7 +334,20 @@ kopyalanamaz.
 | KLAVIYO-03 | Campaign Message exact içerik kümesi yalnız İnci Küpe | İnci Kolye | Message exact Channel; `Cross-sell` |
 | KLAVIYO-04 | Campaign Message biliniyor, içerik ürün kümesi unavailable | İnci Kolye | Message exact Channel; `Assisted` |
 | KLAVIYO-05 | Flow Message `Sepet Hatırlatma`; Medium `SMS`; exact Flow Variation attribution | İnci Küpe | Parent Flow Message Channel; Variation exact; `Triggered` |
-| KLAVIYO-06 | Message attribution missing, birden fazla Message veya Campaign/Flow çatışması | İnci Küpe | Satış bir kez korunur; `Unknown Channel`; `Unclassified` |
+| KLAVIYO-06 | Message attribution missing, birden fazla Message veya Campaign/Flow çatışması | İnci Küpe | Satış bir kez korunur; `Unclassified Channel`; `Unclassified` |
+
+### Campaign Audience — teknik geçiş, raporlama boyutu değil
+
+- **Provider ağacı:** `Sonbahar Kampanyası` → `Son 90 Günde Alışveriş Yapanlar` → `Sonbahar Takıları` → `Küpe Görseli`.
+- **Audience:** `Son 90 Günde Alışveriş Yapanlar`.
+- **İş amacı:** Audience, mesajın kime gönderildiğini belirleyen Klaviyo hedefleme/configuration katmanıdır. Campaign içeriğine giderken doğru Message parent ilişkisini izlemek için kullanılır.
+- **Channel:** `Sonbahar Takıları`; type `Campaign Message`.
+- **Medium / Variation:** Medium `Email`; Variation `Küpe Görseli`.
+- **Advertised product:** Exact Message içerik kümesi `[İnci Küpe]`.
+- **Sold product:** `İnci Kolye`.
+- **Sales Role:** `Cross-sell`.
+- **Audience sonucu:** canonical AdsTable satırına alınmaz; kullanıcıya gösterilmez; Channel olmaz; satışı bölmez veya ayrı raporlama grubu üretmez.
+- **Yasak çıkarım:** Audience adı Channel, Campaign veya Variation yerine geçirilemez. Aynı Campaign altındaki başka bir Audience'ın Message içeriği bu satışa karıştırılamaz.
 
 ### KLAVIYO-01 — Campaign Message exact, tek katalog Variation var
 
@@ -362,7 +379,7 @@ kopyalanamaz.
 - **Medium / Variation:** Medium `Email` exact; Variation `unresolved`; Variation listesi UI Channel adına eklenmez.
 - **Cost / fact davranışı:** Bir Ordered Product event'i bir sale fact'tir; EO-04'te estimated spend allocation yoktur.
 - **Neden:** Message exacttır ve satılan ürün Message-level exact içerik kümesindedir; event A veya B Variation'ı kanıtlamaz.
-- **Yasak çıkarım:** Variation A/B seçilemez veya çoklu Variation `Unknown Channel` üretemez.
+- **Yasak çıkarım:** Variation A/B seçilemez veya çoklu Variation `Unclassified Channel` üretemez.
 
 ### KLAVIYO-03 — Campaign Message exact, içerik dışı ürün satılıyor
 
@@ -421,7 +438,7 @@ kopyalanamaz.
 - **Advertised/clicked product:** Evidence state `conflicting`; exact içerik ilişkisi üretilemez.
 - **Sold product:** `İnci Küpe`; Ordered Product event'i olarak bir kez korunur.
 - **Temporal evidence:** Event business date bilinmektedir fakat timing Channel çözmek için kullanılamaz.
-- **Beklenen Channel:** `Unknown Channel`; resolution `unknown`.
+- **Beklenen Channel:** `Unclassified Channel`; resolution `unknown`.
 - **Beklenen Sales Role:** `Unclassified`.
 - **Medium / Variation:** İkisi de `unresolved`.
 - **Cost / fact davranışı:** Satış bir kez korunur; başka Message toplamına dağıtılmaz.
@@ -430,7 +447,7 @@ kopyalanamaz.
 
 Klaviyo'da `send_channel` zorunlu Medium'dur. Campaign/Flow adı Channel değildir;
 Campaign Message veya Flow Message Channel'dır. Variation Channel'ın yerine
-geçmez. Message biliniyorsa Variation belirsizliği `Unknown Channel` üretmez.
+geçmez. Message biliniyorsa Variation belirsizliği `Unclassified Channel` üretmez.
 
 ## 8. Negatif ve hata yolları
 
@@ -492,8 +509,8 @@ scheduler kabulünde geçici transport atomik olarak kaldırılır.
 - Reauthorization sırasında reporting authority kapanır; geçmiş analytics
   silinmez. EO-05 eksik business-date aralığını açıkça backfill/reconcile eder.
 - Current tree veya başka tarihli evidence ile geçmiş PMax Channel fabricate
-  edilmez; sonuç güvenli biçimde `Unknown Channel` kalır.
-- Exact product cost kanıtı Sales Role, Zero Value veya Unknown Channel nedeniyle
+  edilmez; sonuç güvenli biçimde `Unclassified Channel` kalır.
+- Exact product cost kanıtı Sales Role, Zero Value veya Unclassified Channel nedeniyle
   silinmez; fakat Channel toplamı ürüne tahminî dağıtılmaz.
 
 ## 13. Kabul kanıtı ve bilinen sınırlar

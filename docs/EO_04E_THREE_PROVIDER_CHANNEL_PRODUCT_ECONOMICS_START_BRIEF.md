@@ -50,7 +50,7 @@ Campaign, Ad Set, Flow, trigger, split ve delay tek başına Channel değildir.
 ### Ayrı eksenler
 
 - `Zero Value`, Sales Role değildir. Satılan adet pozitif ve provider ürün satış değeri açıkça sıfırsa role `Zero Value` modifier'ı eklenir.
-- `Unknown Channel`, Sales Role değildir. Satış kanıtı vardır fakat exact Channel çözülememiştir.
+- `Unclassified Channel`, Sales Role değildir. Satış kanıtı vardır fakat exact Channel çözülememiştir.
 - Eksik, null, unsupported, permission-denied ve explicit zero birbirine dönüştürülemez.
 
 ## Meta sözleşmesi
@@ -80,7 +80,7 @@ Bağlayıcı sınırlar:
 | --- | --- | --- | --- | --- |
 | Standard Shopping | Ad Group | Tekil veya çoklu Merchant Center ürünleri | Exact Ad Group bağlamındaki sold product | Advertised / Cross-sell / Assisted kanıta göre |
 | Performance Max Retail | Asset Group | Ürün yalnız bir Asset Group listing ağacına exact uyuyor | Exact Asset Group altında sold product | Advertised / Cross-sell kanıta göre |
-| Performance Max Retail | Asset Group | Ürün birden fazla Asset Group'a uyuyor veya exact üyelik kanıtlanamıyor | Sold product `Unknown Channel` altında kalır | Provider ilişki kanıtı korunur; tahmin yapılmaz |
+| Performance Max Retail | Asset Group | Ürün birden fazla Asset Group'a uyuyor veya exact üyelik kanıtlanamıyor | Sold product `Unclassified Channel` altında kalır | Provider ilişki kanıtı korunur; tahmin yapılmaz |
 | Search | Ad Group | Exact advertised product yok | Provider-attributed sold product | Assisted |
 
 Bağlayıcı sınırlar:
@@ -88,7 +88,7 @@ Bağlayıcı sınırlar:
 1. `segments.product_item_id` advertised/clicked ürün; `segments.product_sold_item_id` sold-product kanıtıdır.
 2. Standard Shopping için Channel `Ad Group`, PMax Retail için `Asset Group`, Search için `Ad Group`tır.
 3. `cart_data_sales_view` Campaign ve Ad Group ile segmentlenebilir; Asset Group ile segmentlenemez. Google'ın vermediği PMax Asset Group ilişkisi aşağıya dağıtılmaz.
-4. PMax listing-tree üyeliği yalnız tek Asset Group'u exact belirliyorsa Channel exact olur; aksi halde `Unknown Channel` kullanılır.
+4. PMax listing-tree üyeliği yalnız tek Asset Group'u exact belirliyorsa Channel exact olur; aksi halde `Unclassified Channel` kullanılır.
 5. Search satışı bastırılmaz. Exact advertised product kanıtı olmadığı için provider-attributed sold product `Assisted` olur.
 6. Provider product cost, Channel spend ve ilerideki gerçek/blended ürün maliyeti ayrı değerlerdir. Google'ın `cost_micros` değeri yalnız provider attribution kanıtıdır.
 7. Desteklenen ürün kimliği yolu Shopify'ın resmî `Google & YouTube` otomatik ürün senkronudur. Google item ID'deki Shopify product/variant adayları Shopify Admin API ile doğrulanmadan SKU veya ürün adı yayımlanmaz.
@@ -101,7 +101,7 @@ Bağlayıcı sınırlar:
 | Campaign yapısı | Channel | Medium / Variation | Sold-product attribution | Sonuç |
 | --- | --- | --- | --- | --- |
 | Tek variation | Campaign Message | `send_channel` zorunlu; Variation ayrı exact kırılım olabilir | Event Campaign Message'a bağlı | Satış exact Message Channel altında korunur |
-| A/B veya çoklu variation | Campaign Message | Medium zorunlu; exact Variation yoksa yalnız Variation unresolved | Event Campaign Message'a bağlı | Satış exact Message Channel altında korunur; `Unknown Channel` oluşmaz |
+| A/B veya çoklu variation | Campaign Message | Medium zorunlu; exact Variation yoksa yalnız Variation unresolved | Event Campaign Message'a bağlı | Satış exact Message Channel altında korunur; `Unclassified Channel` oluşmaz |
 
 Klaviyo `2026-10-15` GA sözleşmesinde Campaign Message reporting'in zorunlu kimliğidir; `send_channel` Medium'dur ve Variation isteğe bağlı alt boyuttur. Event attribution Campaign Message'ı içerir fakat Campaign Variation'ı içermez. Bu asimetri Message Channel'ı bozmaz; yalnız Variation çözünürlüğünü sınırlar.
 
@@ -112,7 +112,7 @@ Klaviyo `2026-10-15` GA sözleşmesinde Campaign Message reporting'in zorunlu ki
 3. Attribution `Flow Message Variation` döndürürse Variation'ın parent Flow Message'ı Channel olarak çözülür; Variation ayrıca exact tutulur.
 4. Variation attribution yok fakat `Flow Message` attribution varsa Channel exact Flow Message, Variation unresolved olur.
 5. Bu attribution ile gelen sold product `Triggered` olur.
-6. Attribution çelişkiliyse ürün `Unclassified`; Message çözülemiyorsa `Unknown Channel` altında korunur.
+6. Attribution çelişkiliyse ürün `Unclassified`; Message çözülemiyorsa `Unclassified Channel` altında korunur.
 
 ### Campaign Sales Role
 
@@ -158,16 +158,16 @@ Bağlayıcı Ad Cost kuralları:
 4. Shopify product/variant kimliği doğrulanamasa bile provider ürün kimliği ve cost kanıtı kaybedilmez; yalnız Shopify SKU/ad/varyant etiketi yayımlanmaz.
 5. Channel cost, product cost satırlarının toplamından yeniden üretilmez. Product satırları impression veya provider attribution nedeniyle üst toplamı aşabilir.
 6. Product cost yoksa Channel cost ürünlere eşit, revenue, click, quantity veya başka oranla dağıtılmaz.
-7. Provider ürün bazında exact Ad Cost veriyorsa bu kanıt; ürünün Sales Role'ü `Cross-sell` veya `Assisted`, modifier'ı `Zero Value` ya da Channel sonucu `Unknown Channel` olsa bile aynı ürün satırında korunur. Sales Role, modifier veya çözülemeyen Channel exact provider cost'u silemez.
+7. Provider ürün bazında exact Ad Cost veriyorsa bu kanıt; ürünün Sales Role'ü `Cross-sell` veya `Assisted`, modifier'ı `Zero Value` ya da Channel sonucu `Unclassified Channel` olsa bile aynı ürün satırında korunur. Sales Role, modifier veya çözülemeyen Channel exact provider cost'u silemez.
 8. Provider ürün bazında cost vermiyorsa Channel toplam cost'u ürünlere eşit, sales, revenue, click, quantity, Sales Role veya başka bir oranla tahminî dağıtılmaz.
-9. `Unknown Channel` ürününün exact provider product cost'u korunur; fakat ürün ve cost bilinen bir Asset Group, Ad Group, Ad veya Variation'a tahminle taşınmaz.
+9. `Unclassified Channel` ürününün exact provider product cost'u korunur; fakat ürün ve cost bilinen bir Asset Group, Ad Group, Ad veya Variation'a tahminle taşınmaz.
 10. Klaviyo `Triggered` ürünlerinde provider-native product cost bulunmaz. Estimated Spend'den allocation yalnız EO-05'in kabul edilmiş formülüyle üretilebilir.
 11. Klaviyo Update spend ve Change value geçmişi effective-dated ledger'da korunur; EO-05 allocation geçmiş girdiyi sessizce yeniden yazamaz.
 12. Refresh ve reconciliation maliyet kanıtını performans kanıtıyla aynı truthful snapshot ilkelerine göre yeniden okuyabilir; çalışma sıklığı ve kota bütçesi EO-05'tedir.
 13. Vergi, kargo, platform ücreti, attribution overlap ve blended/true cost formülleri EO-05 analist sözleşmesi olmadan `Ad Cost` içine eklenmez.
 14. EO-07 UI, kabul edilmiş maliyet alanını kullanıcıya `Ad Cost` etiketiyle gösterir; source/provenance ayrımı detay yüzeyinde kaybolmaz.
 
-Örnek: Google, Kolye B için exact provider product Ad Cost olarak `₺18` döndürürse bu değer Kolye B satırında korunur. Ürün `Cross-sell` ise `Cross-sell + ₺18`, exact Channel çözülemiyorsa `Unknown Channel + ₺18`, ürünün sales değeri sıfırsa `Zero Value + ₺18` gösterilir. Buna karşılık provider yalnız Ad/Ad Group/Asset Group toplamı olarak `₺500` döndürüyorsa bu tutar ürünlere keyfî olarak bölünmez.
+Örnek: Google, Kolye B için exact provider product Ad Cost olarak `₺18` döndürürse bu değer Kolye B satırında korunur. Ürün `Cross-sell` ise `Cross-sell + ₺18`, exact Channel çözülemiyorsa `Unclassified Channel + ₺18`, ürünün sales değeri sıfırsa `Zero Value + ₺18` gösterilir. Buna karşılık provider yalnız Ad/Ad Group/Asset Group toplamı olarak `₺500` döndürüyorsa bu tutar ürünlere keyfî olarak bölünmez.
 
 ## Ortak ham kanıt zarfı
 
@@ -190,15 +190,15 @@ Provider-isolated ve combined deterministic acceptance aşağıdakileri kanıtla
 
 1. Meta Channel daima Ad olarak kalır.
 2. Google Standard Shopping, PMax Retail ve Search farklı gerçek Channel leaf'lerini korur.
-3. PMax ambiguous listing membership `Unknown Channel` üretir ve satış dağıtılmaz.
-4. Klaviyo Campaign Message Channel olarak kalır; multi-variation yalnız Variation'ı unresolved bırakır ve Message biliniyorsa `Unknown Channel` üretmez.
+3. PMax ambiguous listing membership `Unclassified Channel` üretir ve satış dağıtılmaz.
+4. Klaviyo Campaign Message Channel olarak kalır; multi-variation yalnız Variation'ı unresolved bırakır ve Message biliniyorsa `Unclassified Channel` üretmez.
 5. Klaviyo Flow Message Channel olarak kalır; Flow Message Variation parent Message'a çözülür ve ayrı Variation kanıtı olarak korunur.
 6. `Advertised`, `Cross-sell`, `Assisted`, `Triggered` ve gerçek ambiguity için `Unclassified` ayrımı çalışır.
 7. `Zero Value` role değildir; modifier'dır.
 8. Provider product cost ile Channel spend ve gelecekteki blended/true cost birbirine dönüştürülmez.
 9. Kimliği doğrulanmamış ürün SKU/name olarak yayımlanmaz; ham provider ID ve provider cost kanıtı kaybedilmez.
 10. Channel Ad Cost, Provider Product Ad Cost ve Allocated Ad Cost birbirine dönüşmeden ayrı kalır.
-11. Exact provider product cost; `Cross-sell`, `Assisted`, `Zero Value` veya `Unknown Channel` altında da aynı ürün satırında korunur.
+11. Exact provider product cost; `Cross-sell`, `Assisted`, `Zero Value` veya `Unclassified Channel` altında da aynı ürün satırında korunur.
 12. Product cost yokken Channel cost ürünlere dağıtılmaz; explicit zero dışındaki state'ler sıfır olmaz.
 13. Synthetic fixture yalnız contract davranışını kanıtlar; canlı provider gerçeği olarak sunulmaz.
 

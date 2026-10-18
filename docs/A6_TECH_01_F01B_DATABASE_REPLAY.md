@@ -2,7 +2,7 @@
 
 **Tarih:** 18 Ekim 2026
 
-**Durum:** İlk gerçek koşu 21. migration'da durdu; F01 açık, PR draft.
+**Durum:** İlk koşunun dar rol-bağlamı düzeltmesi onaylandı; yeni izole koşu bekleniyor. F01 açık, PR draft.
 
 ## İlk gerçek koşunun sonucu
 
@@ -20,11 +20,15 @@ olmadan private schema'ya DDL uygulanamaması beklenen least-privilege davranı�
 Bu sonuç yetki genişletme gerekçesi değildir; repository kurulum prosedürünün
 eksik çalıştırma bağlamını gösterir.
 
-Önerilen dar düzeltme: bu dört manifest kaydına transaction içindeki mevcut
+Onaylanan dar düzeltme: bu dört manifest kaydına transaction içindeki mevcut
 `adstable_owner` çalıştırma bağlamını açıkça eklemek ve replay aracının yalnız bu
 dört dosyayı o bağlamda yürütmesini sağlamak. Tarihsel SQL gövdeleri/hash'leri,
-NOINHERIT rol modeli ve canlı grant'lar korunur. Bu değişiklik henüz yapılmadı;
-yeniden database koşusu başlatılmadı. Ayrıntılı bounded kanıt
+NOINHERIT rol modeli ve canlı grant'lar korunur. Manifest ve replay aracı bu
+bağlamı artık açıkça taşır; yalnız dört bilinen version/name çifti kabul edilir.
+Rol transaction-local'dir; SQL veya commit hatasında rollback yapılır, tekrar
+denenmez. Bilinmeyen rol, session kapsamı veya başka migration'a bağlam eklenmesi
+SQL çalıştırılmadan reddedilir. Yeni izole koşunun sonucu henüz bilinmiyor.
+İlk duruşun değiştirilmemiş bounded kanıtı
 `docs/evidence/A6_TECH_01_F01B_FIRST_REPLAY_STOP_2026-10-18.json` içindedir.
 
 Normal repository CI'ı ve 399 yerel test başarılıdır; gerçek database kapısı
@@ -97,6 +101,10 @@ Cloud Advisor ve backup/PITR kanıtı F01-C canlı kapısında ayrıca alınır.
 kayıtlı index bulguları bu pakette düzeltilmez.
 
 ## Resmî dayanak
+
+18 Ekim 2026: [PostgreSQL SET ROLE](https://www.postgresql.org/docs/17/sql-set-role.html)
+belgesi de kontrol edildi. `SET LOCAL ROLE` mevcut rol üyeliğini transaction
+içinde kullanır; yeni grant veya rol niteliği değişikliği değildir.
 
 18 Ekim 2026 tarihinde Supabase Docs Connector üzerinden kontrol edildi:
 

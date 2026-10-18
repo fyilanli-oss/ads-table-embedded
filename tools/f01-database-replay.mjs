@@ -4,7 +4,7 @@ import {readFileSync, writeFileSync} from "node:fs";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
 import pg from "pg";
-import {loadMigrationFiles, validateMigrationLineage} from "./check-migration-lineage.mjs";
+import {loadMigrationFiles, validateMigrationLineage, validExecutionContext} from "./check-migration-lineage.mjs";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const read = (file) => readFileSync(path.join(root, file), "utf8").replaceAll("\r\n", "\n");
@@ -25,6 +25,21 @@ export function assertReplayEnvironment(environment) {
   assert.ok(environment.RUNNER_TEMP, "runner temporary directory required");
   // The database address is compiled above; no URL/secret/environment override is accepted.
   assert.equal(replayConnection.host, "127.0.0.1");
+}
+
+export async function executeMigration(client, entry, sql) {
+  assert.ok(validExecutionContext(entry), "unsupported migration execution context");
+  if (!entry.execution_context) return client.query(sql);
+  await client.query("begin");
+  try {
+    // Literal, allowlisted role: never interpolate manifest data into SQL.
+    await client.query("set local role adstable_owner");
+    await client.query(sql);
+    await client.query("commit");
+  } catch (error) {
+    await client.query("rollback");
+    throw error;
+  }
 }
 
 export function inventoryDifferences(expected, actual) {
@@ -229,7 +244,7 @@ async function main() {
     const migrations=mode==="staged"?manifest.historical_migrations:[...manifest.historical_migrations,...manifest.pending_migrations];
     for (const entry of migrations) {
       console.log(`F01B_APPLY ${entry.version} ${entry.name}`);
-      await client.query(read(entry.file));
+      await executeMigration(client, entry, read(entry.file));
     }
     let beforeDifferences=[];
     if(mode==="staged") {

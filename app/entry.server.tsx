@@ -1,9 +1,12 @@
 import {PassThrough} from "node:stream";
 import {createReadableStreamFromReadable} from "@react-router/node";
 import {renderToPipeableStream} from "react-dom/server";
-import {ServerRouter, type EntryContext} from "react-router";
+import {ServerRouter, type EntryContext, type HandleErrorFunction} from "react-router";
 import {isbot} from "isbot";
 import {addDocumentResponseHeaders} from "./shopify.server";
+import {handleServerError, logServerFailure} from "./lib/server-error-log.server.js";
+
+export const handleError: HandleErrorFunction = handleServerError;
 
 const STREAM_TIMEOUT_MS = 5000;
 
@@ -30,9 +33,9 @@ export default function handleRequest(
           pipe(body);
         },
         onShellError: reject,
-        onError(error) {
+        onError() {
           responseStatusCode = 500;
-          console.error(error);
+          logServerFailure("render", request);
         },
       },
     );

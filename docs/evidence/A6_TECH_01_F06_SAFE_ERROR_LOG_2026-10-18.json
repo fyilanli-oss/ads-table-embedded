@@ -1,0 +1,48 @@
+{
+  "checked_at": "2026-10-18",
+  "finding": "TECH01-F06",
+  "status": "repository_prepared_ci_and_live_acceptance_pending",
+  "source_main_commit": "fe9a476aee7d53dc7464af2c6f12b57a28f2b8b9",
+  "analyst_brief": "docs/A6_TECH_01_ENGINEERING_INTEGRITY_AUDIT.md#f06-uygulama-öncesi-analist-briefi--18-ekim-2026",
+  "official_sources_checked": [
+    "https://reactrouter.com/how-to/error-reporting",
+    "https://react.dev/reference/react-dom/server/renderToPipeableStream"
+  ],
+  "installed_framework_verified": "react-router 7.18.2 derive uses entry.module.handleError instead of default console.error",
+  "log_keys": ["event", "code", "stage", "route", "method"],
+  "codes": ["SERVER_RENDER_FAILED", "SERVER_REQUEST_FAILED"],
+  "error_object_inspected": false,
+  "allowed_routes": ["/", "/ad-analysis", "/settings", "other"],
+  "request_url_query_host_headers_or_identity_logged": false,
+  "verification_scope": [
+    "real_production_Router_loader_action_resource_shell_errors_return_500_without_raw_logs",
+    "real_React_streaming_error_preserves_original_shell_rejection",
+    "synthetic_token_SQL_email_stack_cause_response_body_and_request_id_excluded",
+    "hostile_error_proxy_and_toJSON_not_accessed",
+    "aborted_request_suppressed_and_broken_log_sink_does_not_change_application_failure",
+    "success_and_redirect_responses_unchanged",
+    "server_entry_safe_hook_wiring_and_existing_headers_status_abort_preserved"
+  ],
+  "scope": {
+    "visible_ui_or_component_change": false,
+    "auth_provider_or_database_behavior_change": false,
+    "dependency_change": false,
+    "real_secret_or_provider_requests": false,
+    "environment_or_configuration_mutation": false,
+    "deployment_authorized": false,
+    "deployment_performed": false,
+    "intentional_production_failure_triggered": false
+  },
+  "github_ci": "pending",
+  "local_verification": {
+    "repository_tests_passed_before_final_guard_extension": 431,
+    "final_f06_suite_with_recursive_log_guard": "7_of_7_pass",
+    "typecheck": "pass",
+    "build": "pass_existing_five_Router_future_warnings_remain_F10",
+    "diff_check": "pass"
+  },
+  "product_owner_closure_accepted": false,
+  "F06_closed": false,
+  "F07_execution_authorized": false,
+  "EO05_may_start": false
+}

@@ -180,16 +180,25 @@ typecheck/build ve production bağımlılık taramasını geçirdi. Tam bağıml
 taraması geliştirme/build zincirinde 4 yüksek, 3 orta, 1 düşük advisory bildirdi.
 Kanıt `docs/evidence/A6_TECH_01_FINAL_RETEST_2026-10-18.json`.
 `TECH01-RETEST-SEC01` ayrı, ön P2/güvenlik değerlendirme kaydıdır; F01–F10
-tarihsel sırası ve kapanışları değiştirilmez. Etki analizi/düzeltme henüz
-yetkili değildir. Genel audit PASS, A6-DOCS-01 ve EO-05 başlangıcı verilmez;
+tarihsel sırası ve kapanışları değiştirilmez. İlk kayıtta etki analizi/düzeltme
+yetkili değildi; sonraki dar onaylar aşağıdadır. Genel audit PASS, A6-DOCS-01 ve EO-05 başlangıcı verilmez;
 bu kayıt yeni altyapı, yedek, sürüm, provider veya canlı ortam işi açmaz.
 
 Kullanıcı yalnız Vite `7.3.1 → 7.3.5` güvenlik düzeltmesine açık onay verdi.
 Registry ve lockfile eşlendi; diğer paket sürümleri aynı kaldı. Vite'nin beş
 uyarısı yeni taramada kalktı; kalan 1 yüksek/1 orta/1 düşük advisory açıktır.
 Kanıt `docs/evidence/A6_TECH_01_VITE_SECURITY_PATCH_2026-10-18.json`.
-Son CI/merge kabulü beklenir. Bu kayıt kalan riskleri, F10'u veya genel audit'i
-kapatmaz; canlı deploy, override, ignore veya başka dependency değişimi yetkisi yoktur.
+Bu ilk düzeltme PR #115 ile merge edildi. Tarihsel kanıt değiştirilmez.
+
+Ürün sahibi ardından kalan üç uyarı için kontrollü repository denemesini onayladı:
+Vite `7.3.6`, yalnız Vite altında esbuild `0.28.1`, yalnız Vercel config
+zincirinde Ajv `8.18.0` ve ts-morph `24.0.0`. Sonuncusu upstream pin'i dışında
+major geçiştir; gerçek config okuma, doğrulama ve bundle kimliği test edilir.
+Yeni production ve tam bağımlılık taramaları sıfır advisory döndürdü; braces
+zincirden kaldırıldı, uyarılar gizlenmedi. Kanıt:
+`docs/evidence/A6_TECH_01_REMAINING_SECURITY_REMEDIATION_2026-10-18.json`.
+CI ve açık merge/kapanış kabulü beklenir. Canlı deploy/provider/database/secret
+değişikliği, F10 kapanışı, genel PASS veya EO-05 başlangıcı yetkisi yoktur.
 
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 

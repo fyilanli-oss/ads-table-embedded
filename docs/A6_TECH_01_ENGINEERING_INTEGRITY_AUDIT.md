@@ -544,6 +544,28 @@ değişikliği yapılmadı. F10'un v8 geçiş borcuyla birleştirilmez. Sonraki 
 ayrı açık onayla advisory'lerin exact sürüm ve gerçek kullanım koşullarını
 inceleyip en küçük güvenli düzeltmeyi önermektir; henüz uygulama yetkisi yoktur.
 
+### Sonraki onaylı güvenlik düzeltmesi — repository-only
+
+İlk Vite düzeltmesi PR #115 ile merge edildi; beş advisory kalktı, üçü kaldı.
+Ürün sahibinin ayrı onayıyla Vite `7.3.6` ve dört exact scoped override uygulandı:
+Vite altında esbuild `0.28.1`; Vercel static-config altında Ajv `8.18.0` ve
+ts-morph `24.0.0`; Vercel React Router adapter altında ts-morph `24.0.0`.
+Braces güncellenmiş gibi gösterilmedi: onu getiren eski glob zinciri kaldırıldı.
+Production ve tam bağımlılık taraması yeni grafikte sıfır advisory döndürdü.
+Ignore, advisory filtresi, fork veya risk kabulü kullanılmadı.
+
+ts-morph `12 → 24` upstream Vercel pin'i dışındadır; resmî Vercel destek garantisi
+iddia edilmez. Kurulu gerçek Vercel parser/validator ve preset'iyle normal yol,
+native parser yokken ts-morph yolu, hatalı config reddi, config yokluğu, route
+mirası ve bundle kimliği sınanır. Test-only native-loader hatası hiçbir dependency
+dosyasını değiştirmez. Exact lock hash ve sürümler yeni kanıta bağlanır:
+`docs/evidence/A6_TECH_01_REMAINING_SECURITY_REMEDIATION_2026-10-18.json`.
+
+CI ve ürün sahibi kabulü beklenir; güvenlik bulgusu henüz kapalı ilan edilmez.
+Eski audit ve PR #115 kanıtları tarihsel olarak korunur. Canlı deploy yapılmadı;
+bu sonuç mevcut canlı bundle'ın veya genel audit'in PASS kanıtı değildir.
+F10 ertelemesi, diğer kanıt kapıları ve EO-05 engeli değişmez.
+
 ### Önceden açık kalan kanıtların güncel sınırı
 
 F01'de scoped schema recovery açık ürün sahibi kabulüyle kapandı. Free Plan'da

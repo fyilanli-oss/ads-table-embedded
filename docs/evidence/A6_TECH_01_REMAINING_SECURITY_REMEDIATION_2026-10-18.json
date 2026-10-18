@@ -1,0 +1,81 @@
+{
+  "checked_at": "2026-10-18",
+  "finding": "TECH01-RETEST-SEC01",
+  "status": "all_three_advisories_removed_local_checks_pass_CI_and_acceptance_pending",
+  "baseline_commit": "08b0d1e800ae1f04ab3b4f9b288e32b32747f8dd",
+  "approval": "Ürün sahibi exact aday sürümleri ve ts-morph major geçişini kapsayan kontrollü repository denemesini onayladı; merge ve canlı deploy dahil değil.",
+  "official_sources": [
+    "https://pnpm.io/settings/dependency-resolution#overrides",
+    "https://pnpm.io/cli/install",
+    "https://github.com/vitejs/vite/releases/tag/v7.3.6",
+    "https://github.com/ajv-validator/ajv/releases/tag/v8.18.0",
+    "https://github.com/evanw/esbuild/releases/tag/v0.28.1"
+  ],
+  "direct_dependency_change": {"package": "vite", "from": "7.3.5", "to": "7.3.6"},
+  "scoped_overrides": {
+    "vite@7.3.6>esbuild": "0.28.1",
+    "@vercel/static-config@3.4.4>ajv": "8.18.0",
+    "@vercel/static-config@3.4.4>ts-morph": "24.0.0",
+    "@vercel/react-router@1.3.7>ts-morph": "24.0.0"
+  },
+  "install": {
+    "command": "pnpm install --no-frozen-lockfile --prefer-offline --ignore-scripts",
+    "exit_code": 0,
+    "registry_retries_configured": 0,
+    "scripts_executed": false,
+    "force_or_integrity_bypass_used": false
+  },
+  "lockfile": {
+    "sha256_lf": "b79cec6aa6aa7c718fd675cd0e9b91f6c15705fd637164d3955c527c46e4af5d",
+    "added_package_entries": 33,
+    "removed_package_entries": 56,
+    "review": "Değişiklikler Vite, esbuild/platform binary paketleri, Ajv/URI çözümleyicisi ve ts-morph/common/code-block-writer ile eski glob zincirinin kaldırılmasıyla sınırlı; diğer ortak package girdileri korunur.",
+    "removed_chain": ["braces@3.0.3", "micromatch@4.0.8", "fast-glob@3.3.3", "ts-morph@12.0.0", "@ts-morph/common@0.11.1"],
+    "new_chain": ["ts-morph@24.0.0", "@ts-morph/common@0.25.0", "code-block-writer@13.0.3", "fast-uri@3.1.8"]
+  },
+  "production_audit": {
+    "command": "pnpm audit --prod --json", "exit_code": 0,
+    "vulnerabilities": {"info": 0, "low": 0, "moderate": 0, "high": 0, "critical": 0},
+    "dependency_counts": {"dependencies": 118, "devDependencies": 0, "optionalDependencies": 2, "totalDependencies": 120}
+  },
+  "complete_audit": {
+    "command": "pnpm audit --json", "exit_code": 0,
+    "vulnerabilities": {"info": 0, "low": 0, "moderate": 0, "high": 0, "critical": 0},
+    "dependency_counts": {"dependencies": 119, "devDependencies": 186, "optionalDependencies": 79, "totalDependencies": 306}
+  },
+  "removed_advisories": [
+    {"id": "GHSA-2g4f-4pwh-qvx6", "module": "ajv", "resolution": "8.6.3 → 8.18.0"},
+    {"id": "GHSA-g7r4-m6w7-qqqr", "module": "esbuild", "resolution": "0.27.7 → 0.28.1; Vite 7.3.6 declares ^0.27.0 || ^0.28.0"},
+    {"id": "GHSA-vfj7-8cjw-p6xm", "module": "braces", "resolution": "eski ts-morph/glob zinciri tamamen kaldırıldı"}
+  ],
+  "compatibility_verification": {
+    "test_file": "tests/a6-tech-01-remaining-security.test.js",
+    "real_consumers": ["@vercel/static-config@3.4.4", "@vercel/react-router@1.3.7", "vite@7.3.6"],
+    "normal_parser_valid_invalid_and_missing": "pass",
+    "real_ts_morph_fallback_with_test_only_native_loader_failure": "pass",
+    "real_preset_bundle_identity_and_route_inheritance": "pass",
+    "dependency_source_files_modified": false,
+    "limit": "Upstream Vercel hâlâ ts-morph 12.0.0 ve Ajv 8.6.3 pinliyor. Scoped override repository kararıdır; test edilen yolların dışına veya canlı deploy'a resmî uyumluluk garantisi değildir."
+  },
+  "fresh_final_CI_required_before_merge": true,
+  "fresh_local_checks": {
+    "pnpm_test": {"passed": 449, "failed": 0, "exit_code": 0},
+    "pnpm_typecheck": {"exit_code": 0},
+    "pnpm_build": {"exit_code": 0, "vite": "7.3.6", "client_modules": 324, "server_modules": 67},
+    "unchanged_F10_react_router_future_warnings": 5,
+    "same_package_metadata_in_both_lockfiles_changed": 0,
+    "other_direct_manifest_changes": false,
+    "git_diff_check": "pass"
+  },
+  "audit_ignore_suppression_fork_or_risk_acceptance_used": false,
+  "historical_evidence_rewritten": false,
+  "app_routes_UI_runtime_config_changed": false,
+  "react_router_v8_or_future_flags_changed": false,
+  "live_deployment_database_provider_or_secret_change": false,
+  "security_finding_closed": false,
+  "merge_authorized": false,
+  "deployment_authorized": false,
+  "F10_closed": false,
+  "A6_TECH_01_overall_pass": false,
+  "EO05_may_start": false
+}

@@ -108,8 +108,8 @@ test("successful repository checks cannot hide an open full-graph security retes
   const finding = audit.retest_findings.find(item => item.id === evidence.security_finding.id);
   assert.equal(finding.closed, false);
   assert.equal(finding.eo05_blocker, true);
-  assert.equal(finding.authorized_repository_change, "vite_7.3.1_to_7.3.5_only");
-  assert.equal(finding.remaining_remediation_execution_authorized, false);
+  assert.equal(finding.authorized_repository_change, "vite_7.3.6_scoped_esbuild_0.28.1_ajv_8.18.0_ts_morph_24.0.0_repository_only");
+  assert.equal(finding.remaining_remediation_execution_authorized, true);
   assert.equal(evidence.A6_TECH_01_overall_pass, false);
   assert.equal(evidence.A6_DOCS_01_may_start, false);
   assert.equal(evidence.EO05_may_start, false);
@@ -117,5 +117,7 @@ test("successful repository checks cannot hide an open full-graph security retes
   const packageRecord = master.independent_packages.find(item => item.id === "A6-TECH-01");
   assert.equal(packageRecord.open_retest_security_finding, finding.id);
   assert.equal(packageRecord.latest_retest_evidence, audit.latest_retest_evidence);
-  assert.equal(packageRecord.retest_remediation_execution_authorized, false);
+  assert.equal(packageRecord.retest_remediation_execution_authorized, true);
+  assert.equal(packageRecord.authorized_retest_repository_change, finding.authorized_repository_change);
+  assert.equal(packageRecord.latest_security_remediation_evidence, finding.remediation_evidence);
 });

@@ -110,6 +110,12 @@ sahibi PR #107 merge'ünü ve kapanışı kabul etti. Kapanış kanıtı:
 Güncel F01–F05 kapalıdır; sıradaki F06 başlamadı ve uygulama yetkisi yoktur.
 Genel A6-TECH-01 PASS değildir; EO-05 engeli korunur.
 
+F06 server hata logger'ı repository'de hazırlandı. Kanıt:
+`docs/evidence/A6_TECH_01_F06_SAFE_ERROR_LOG_2026-10-18.json`.
+Ham hata nesnesi loglanmaz; sabit kod/aşama ve izinli route/metot kaydedilir.
+CI/merge ve ayrı açık onaylı canlı deploy/doğrulama beklenir; F06 açık kalır.
+Bu hazırlık canlı düzeltme kanıtı veya F07 başlangıç yetkisi değildir.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

@@ -6,7 +6,7 @@
 **EO-05 kararı:** Kapalı
 
 **Güncel düzeltme durumu:** F01–F05 ürün sahibi kabulüyle kapandı.
-Sıradaki F06 başlamadı. İlk denetim bulguları ve başlangıç sayıları aşağıda
+F06 repository düzeltmesi hazır; CI ve canlı kabul bekleniyor. İlk denetim bulguları ve başlangıç sayıları aşağıda
 tarihsel baseline olarak korunur; genel A6-TECH-01 henüz PASS değildir.
 
 ## 1. Analist özeti
@@ -279,6 +279,39 @@ commit SHA'sına sabitlenmeli; Dependabot/controlled update yöntemi ve CI testi
 eklenmelidir.
 
 ### TECH01-F06 — P2 blocker — Production hata log sanitizasyonu
+
+**Repository hazırlığı — 18 Ekim 2026:** Server entry `onError` ve resmî
+`handleError` export'u tek bounded logger'a bağlandı. Hata nesnesine erişim yok;
+yalnız sabit event/code/stage ve allowlist route/method yazılır. Gerçek Router
+production loader/action/resource/shell hata testleri, React streaming hatası,
+başarı/redirect, abort ve log sink arızası sentetik olarak kontrol edilir.
+Kanıt `docs/evidence/A6_TECH_01_F06_SAFE_ERROR_LOG_2026-10-18.json`.
+CI, merge ve ayrı onaylı deploy/canlı doğrulama tamamlanmadan F06 kapanmaz;
+Production hâlâ önceki kodu kullanabilir. F07 başlamadı.
+
+#### F06 uygulama öncesi analist brief'i — 18 Ekim 2026
+
+- Amaç: SSR ve framework hata kayıtlarında ham hata taşınmasın; teşhis için
+  sabit hata kodu, aşama, izinli HTTP metodu ve yalnız üç canonical route etiketi
+  tutulsun. Diğer URL'ler `other`; query, host, header ve kimlik kaydedilmez.
+- Hata nesnesi hiç okunmaz/serialize edilmez: message, stack, cause, provider
+  body, SQL, token veya kişisel veri filtre tahminine bırakılmadan dışarıda kalır.
+- React Router'ın varsayılan ham logger'ı resmî `handleError` export'uyla
+  değiştirilir; React streaming `onError` aynı güvenli logger'ı kullanır.
+- Loading/empty/connected/error/reauthorization/cancel/success görünümü, exact
+  copy, Polaris/App Bridge component/property eşlemesi, desktop/mobil düzen,
+  OAuth ve provider/database davranışı değişmez. Yeni görsel öğe yoktur.
+  SSR 500 ataması, shell rejection, response header ve abort timeout korunur.
+- Kaynaklar: https://reactrouter.com/how-to/error-reporting ve
+  https://react.dev/reference/react-dom/server/renderToPipeableStream;
+  18 Ekim 2026'da kontrol edildi. Kurulu Router 7.18.2 kaynak kodunda özel
+  `handleError` export'unun varsayılan logger'ın yerini aldığı doğrulandı.
+- Kabul: gerçek Router/React üzerinde sentetik hata ve sızıntı negatifleri,
+  route/method allowlist, kesilen istek ve logger arızası testleri; mevcut UI
+  guard, tüm testler, typecheck/build ve CI. Gerçek secret/provider çağrısı yok.
+- Kapsam dışı: UI değişikliği, dependency güncelleme, dış log servisi,
+  secret/config/database mutation ve deploy. Canlıya alma ayrı yetki kapısında;
+  bu hazırlık canlı düzeltme/PASS iddiası değildir. F07/F06 kapıları atlanmaz.
 
 Top-level server rendering sınırı `console.error(error)` ile ham hata nesnesi
 yazabilmektedir. Geçmiş log örneklerinde provider request ID, database nesne adı,

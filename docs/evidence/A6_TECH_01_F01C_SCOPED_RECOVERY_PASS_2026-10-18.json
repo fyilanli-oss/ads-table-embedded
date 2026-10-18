@@ -1,0 +1,57 @@
+{
+  "checked_at": "2026-10-18",
+  "status": "scoped_schema_recovery_rehearsal_pass",
+  "source_commit": "977ab611fda862a3d71c6e1b8c7d982a8c230ec7",
+  "workflow_run_id": 39137629146,
+  "job_id": 117705282616,
+  "workflow_url": "https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/39137629146",
+  "local_tests": 415,
+  "typecheck": "pass",
+  "build": "pass_known_F10_warnings",
+  "recovery": {
+    "recovery_sql_sha256": "954dc40d045601e2cc2600b76b65ecf05b2e284972e4d63ac183f5288706acec",
+    "committed_roundtrip": true,
+    "restored_function_count": 7,
+    "legacy_runtime_execute_restored": false,
+    "database_backup": false,
+    "production_mutation": false
+  },
+  "expected_retired_finalize_definition_sha256": "9559540ab6402b11631c7f528c82c12569c489d9a1945091a104539e8d1b52cb",
+  "regenerated_recovery_script_hash_matches_observed_run": true,
+  "terminal_history_and_late_failure_rollback": "pass_8_synthetic_rows_preserved_before_lifecycle_privacy_test",
+  "metadata_restore": "exact_historical_metadata_except_6_legacy_runtime_EXECUTE_grants_intentionally_closed",
+  "active_lifecycle_and_privacy_after_recovery": "pass",
+  "post_commit_retire_recover_retire": "pass",
+  "runs": [
+    {
+      "mode": "staged",
+      "postgres_version_num": 170011,
+      "migrations_applied": 39,
+      "schema_sha256": "1a26e26bc6d905f6369599d209b5d76ea5c725444f42d3bc0389b3a829ab62b4",
+      "live_parity": true,
+      "live_difference_categories": [],
+      "business_data_source": "synthetic_only",
+      "production_mutation": false
+    },
+    {
+      "mode": "full",
+      "postgres_version_num": 170011,
+      "migrations_applied": 39,
+      "schema_sha256": "1a26e26bc6d905f6369599d209b5d76ea5c725444f42d3bc0389b3a829ab62b4",
+      "live_parity": true,
+      "live_difference_categories": [],
+      "business_data_source": "synthetic_only",
+      "production_mutation": false
+    }
+  ],
+  "isolated_cleanup": "both_environments_success",
+  "managed_database_backup": "unavailable_Free_Plan_user_screenshot",
+  "full_data_backup_or_PITR_proven": false,
+  "backup_gate_satisfied": false,
+  "scoped_alternative_acceptance": "pending_explicit_product_owner_decision",
+  "live_application_authorized": false,
+  "production_mutation": false,
+  "historical_migration_SQL_changed": false,
+  "f01_closed": false,
+  "next_finding_may_start": false
+}

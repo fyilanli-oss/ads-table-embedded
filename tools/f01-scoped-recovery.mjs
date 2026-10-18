@@ -7,6 +7,7 @@ export const definitionHash = sql => createHash("sha256").update(sql).digest("he
 export function buildScopedRecovery({snapshot, lineage, reference, retiredFinalizeHash, transaction = true}) {
   assert.equal(snapshot.live_execution_authorized, false, "artifact must not authorize live execution");
   assert.match(retiredFinalizeHash, /^[a-f0-9]{64}$/);
+  assert.equal(retiredFinalizeHash, snapshot.expected_retired_finalize_definition_sha256, "retired finalize must match the proven recovery source state");
   const finalize = "integrations.finalize_provider_disconnect(uuid,uuid,uuid,bigint,text,bigint,text,text,timestamptz)";
   const expected = [...lineage.retired_function_signatures, finalize].map(normalized).sort();
   assert.deepEqual(snapshot.functions.map(row => normalized(row.signature)).sort(), expected, "exact seven-function scope required");

@@ -5,6 +5,7 @@
   "source": "read_only_pg_get_functiondef_no_business_rows_no_credentials",
   "purpose": "scoped_DDL_recovery_not_database_backup",
   "live_execution_authorized": false,
+  "expected_retired_finalize_definition_sha256": "9559540ab6402b11631c7f528c82c12569c489d9a1945091a104539e8d1b52cb",
   "functions": [
     {
       "owner": "adstable_owner",

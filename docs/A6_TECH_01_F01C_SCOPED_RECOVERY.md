@@ -2,7 +2,29 @@
 
 **Tarih:** 18 Ekim 2026
 
-**Durum:** Repository/izole prova hazırlığı. Canlı uygulama veya merge onayı yoktur.
+**Durum:** Dar şema kurtarma provası PASS. Kapsam kabulü, merge ve canlı uygulama onayları yoktur.
+
+## Gerçek prova sonucu
+
+[39137629146 numaralı koşu](https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/39137629146),
+`977ab611fda862a3d71c6e1b8c7d982a8c230ec7` kaynak commit'ini PostgreSQL 17.11
+üzerinde çalıştırdı. Sekiz terminal sentetik kayıtta recovery, geç aşama hata
+rollback'i, metadata/satır koruması ve recovery sonrasında lifecycle/privacy geçti.
+Retirement COMMIT → ayrı recovery COMMIT → retirement COMMIT zinciri de geçti.
+Son şema, ikinci 39 migration kurulumu ve önceki F01-B sonucu ile birebir aynı:
+`1a26e26bc6d905f6369599d209b5d76ea5c725444f42d3bc0389b3a829ab62b4`.
+
+Yedi fonksiyon geri kuruldu; eski altı runtime EXECUTE yetkisi kapalı kaldı.
+Test edilen recovery SQL SHA-256:
+`954dc40d045601e2cc2600b76b65ecf05b2e284972e4d63ac183f5288706acec`.
+Generator bu SQL'i database bağlantısı olmadan yeniden üretebilir; beklenen
+retired finalize hash'i artık artifact'te sabittir ve farklı kaynak durumu reddedilir.
+İki geçici ortam temizlendi. 415 yerel test, typecheck ve build PASS.
+
+Kanıt: `docs/evidence/A6_TECH_01_F01C_SCOPED_RECOVERY_PASS_2026-10-18.json`.
+Bu sonucu kaydeden son commit'in CI durumu ayrıca PR'da doğrulanır; sonuç kaydı
+için sürekli yeni commit üretilmez. İlk duruş kanıtı aynen korunur.
+Tam veri backup/PITR kanıtı **yoktur**; sözleşmenin backup kapısı PASS değildir.
 
 İlk gerçek koşu `39137350657`, mevcut F01-B senaryoları geçtikten sonra yeni
 recovery generator'ının statement ayıracı eksikliğiyle durdu (`42601`).

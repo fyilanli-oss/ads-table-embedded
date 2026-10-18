@@ -7,7 +7,8 @@
 
 **Güncel düzeltme durumu:** F01–F09 ürün sahibi kabulüyle kapandı.
 F09 teslimi için son CI, merge ve temiz primary checkout eşliği zorunludur;
-son eşlik kanıtı PR #112 üzerinde tutulur. F10 başlamadı. Genel audit PASS değildir.
+son eşlik kanıtı PR #112 üzerinde tutulur. F10 ürün sahibi kararıyla ayrı uyumluluk
+çalışmasına bırakıldı; açık teknik borçtur, düzeltilmiş değildir. Genel audit PASS değildir.
 İlk denetim bulguları ve başlangıç sayıları aşağıda
 tarihsel baseline olarak korunur; genel A6-TECH-01 henüz PASS değildir.
 
@@ -462,12 +463,44 @@ runtime'ını veya EO-05 kapısını tek başına engellemez.
 
 ### TECH01-F10 — P3 — Framework yükseltme borcu
 
+**Güncel karar — 18 Ekim 2026:** Ürün sahibi F10'un ayrı uyumluluk çalışması
+bekleyen, EO-05'i tek başına engellemeyen açık teknik borç olarak kaydedilmesini
+onayladı. Kanıt: `docs/evidence/A6_TECH_01_F10_DEFERRED_2026-10-18.json`.
+Bu karar F10 kapanışı, framework yükseltme veya genel audit PASS kararı değildir.
+
 Build beş React Router v8 future uyarısı üretmektedir. Mevcut
 `@vercel/react-router` sürümü React Router 7 peer sınırına sahiptir; bu nedenle
 major upgrade bu denetimde otomatik yapılmaz.
 
+Uyarılar şu beş davranışla ilgilidir:
+
+- `v8_middleware`: route isteklerinin ara katmanda işlenmesi.
+- `v8_splitRouteModules`: route kodunun parçalara ayrılması.
+- `v8_viteEnvironmentApi`: geliştirme/build ortamının yönetimi.
+- `v8_passThroughRequests`: isteğin framework içinde aktarılması.
+- `v8_trailingSlashAwareDataRequests`: veri isteği URL'lerinde son `/` ayrımı.
+
+Bu uyarılar tek başına mevcut çalışma hatasını kanıtlamaz. Uyarıları gizlemek
+için `false` flag, log filtresi veya başka susturma ayarı eklenmedi; mevcut
+flag varsayımları ve sürümler korundu. Flag'lerin v7 üzerinde tek tek
+benimsenmesi mümkün olabilir; bunun güvenli olduğu henüz kanıtlanmadı.
+Beş uyarının giderilmesi için mutlaka major upgrade gerektiği iddia edilmez.
+
+Kaynak kontrolü 18 Ekim 2026'da yapıldı. Kurulu adaptör `1.3.7` manifest'i
+React Router dev/node için `7` peer sınırı bildirir. Vercel'in resmî GitHub
+[manifest'i](https://github.com/vercel/vercel/blob/main/packages/react-router/package.json)
+aynı peer sınırını gösterir; erişilen uzak dosyada sürüm `1.3.6` olduğundan
+bu kaynak kurulu `1.3.7` ile birebir veya en yeni yayımlanmış sürüm kanıtı
+sayılmaz. Vercel doküman sayfasına erişim hatasından sonra yalnız kullanıcı
+onaylı resmî GitHub rotası kullanıldı. React Router'ın sürüme özel rehberine
+erişim de başarısız oldu; yeniden deneme/alternatif rota zorlanmadı. Bu nedenle
+tam geçiş/flag uyumluluğu kanıtlanmış değildir.
+
 **Kapatma kapısı:** Uyumlu Vercel adapter sürümü ve resmi migration yolu birlikte
-kanıtlandığında ayrı dependency paketi.
+kanıtlandığında ayrı açık onaylı uyumluluk işi. O işte exact sürüm/peer desteği,
+güncel resmî geçiş belgeleri ve her flag'in etkisi doğrulanır; davranış
+testleri, typecheck/build ve gerekiyorsa Shopify masaüstü/mobil kabulü alınır.
+EO-05 öncesi genel yeniden test ve audit kararı bu ertelemeden bağımsızdır.
 
 ## 5. Açık kanıtlar
 

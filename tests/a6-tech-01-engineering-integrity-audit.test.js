@@ -60,3 +60,37 @@ test("quality and master ledgers expose the same active remediation gate", () =>
   assert.equal(packageRecord.audited_starting_baseline_commit, audit.audited_starting_baseline_commit);
   assert.equal(packageRecord.pass_baseline_commit, null);
 });
+
+test("F10 accepted deferral remains open and cannot authorize an upgrade or EO-05", () => {
+  const finding = audit.findings.find(item => item.id === "TECH01-F10");
+  const evidence = JSON.parse(readFileSync(new URL(finding.remediation_evidence, root), "utf8"));
+  const packageRecord = master.independent_packages.find(item => item.id === "A6-TECH-01");
+  assert.equal(finding.remediation_status, "deferred_separate_compatibility_work_product_owner_accepted");
+  assert.equal(finding.closed, false);
+  assert.equal(finding.eo05_blocker, false);
+  assert.equal(finding.upgrade_execution_authorized, false);
+  assert.equal(evidence.product_owner_deferral_accepted, true);
+  for (const key of ["F10_closed", "F10_fixed", "F10_upgrade_execution_authorized", "F10_alone_blocks_EO05", "A6_TECH_01_overall_pass", "EO05_may_start"]) {
+    assert.equal(evidence[key], false, key);
+  }
+  assert.equal(packageRecord.last_closed_finding, "TECH01-F09");
+  assert.equal(packageRecord.next_finding, finding.id);
+  assert.equal(packageRecord.next_finding_disposition, finding.remediation_status);
+  assert.equal(packageRecord.next_finding_disposition_evidence, finding.remediation_evidence);
+  assert.equal(packageRecord.next_finding_execution_authorized, false);
+});
+
+test("F10 deferral preserves pinned dependencies, config and documentation limitations", () => {
+  const finding = audit.findings.find(item => item.id === "TECH01-F10");
+  const evidence = JSON.parse(readFileSync(new URL(finding.remediation_evidence, root), "utf8"));
+  const manifest = JSON.parse(readFileSync(new URL("package.json", root), "utf8"));
+  assert.equal(manifest.dependencies["react-router"], evidence.versions_observed.react_router);
+  assert.equal(manifest.devDependencies["@vercel/react-router"], evidence.versions_observed.vercel_adapter_installed);
+  assert.equal(evidence.documentation_access.complete_migration_or_flag_compatibility_proven, false);
+  assert.equal(evidence.major_upgrade_required_to_remove_all_warnings_proven, false);
+  assert.equal(evidence.future_warning_flags_observed_in_installed_dev_source.length, 5);
+  for (const changed of Object.values(evidence.scope)) assert.equal(changed, false);
+  const config = readFileSync(new URL("react-router.config.ts", root), "utf8");
+  assert.doesNotMatch(config, /\bfuture\s*:/);
+  assert.ok(evidence.follow_up.required_gates.length >= 5);
+});

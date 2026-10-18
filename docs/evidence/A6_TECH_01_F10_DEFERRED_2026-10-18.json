@@ -1,0 +1,54 @@
+{
+  "checked_at": "2026-10-18",
+  "finding": "TECH01-F10",
+  "baseline_commit": "3310b89fd704c28d8cdc5bc06dea928ab657690c",
+  "status": "deferred_separate_compatibility_work_product_owner_accepted",
+  "product_owner_deferral_accepted": true,
+  "approval_scope": "record open non-blocking technical debt pending separate compatibility work; not a fix, closure, upgrade or merge approval",
+  "versions_observed": {
+    "react_router": "7.18.2",
+    "vercel_adapter_installed": "1.3.7",
+    "installed_adapter_peer_dev": "7",
+    "installed_adapter_peer_node": "7"
+  },
+  "official_source": "https://github.com/vercel/vercel/blob/main/packages/react-router/package.json",
+  "remote_source_limitation": "accessed remote manifest reports 1.3.6 with dev/node peers 7; not proof of exact installed 1.3.7 contents, latest published version or v8 compatibility",
+  "documentation_access": {
+    "vercel_documentation_page": "access_failed_no_retry; official GitHub alternative separately authorized by user",
+    "vercel_official_github": "read_success",
+    "react_router_version_specific_guide": "access_failed_no_retry_or_alternative",
+    "complete_migration_or_flag_compatibility_proven": false
+  },
+  "future_warning_flags_observed_in_installed_dev_source": [
+    "v8_middleware",
+    "v8_splitRouteModules",
+    "v8_viteEnvironmentApi",
+    "v8_passThroughRequests",
+    "v8_trailingSlashAwareDataRequests"
+  ],
+  "major_upgrade_required_to_remove_all_warnings_proven": false,
+  "follow_up": {
+    "owner": "AdsTable engineering, subject to product owner authorization",
+    "trigger": "separate compatibility work before any v8 migration or adoption of these flags; reassess at the next engineering integrity delta audit",
+    "required_gates": [
+      "current official version-specific migration and flag documentation read successfully",
+      "exact package and peer compatibility including Vercel adapter verified",
+      "each changed request, URL, middleware, bundle or build behavior tested",
+      "repository tests, typecheck and build pass",
+      "Shopify desktop/mobile acceptance if runtime or user-visible behavior changes",
+      "explicit product owner implementation and merge approvals; live deployment separately authorized"
+    ]
+  },
+  "scope": {
+    "runtime_configuration_or_future_flags_changed": false,
+    "package_manifest_or_lockfile_changed": false,
+    "warnings_suppressed": false,
+    "deployment_database_provider_or_secret_change": false
+  },
+  "F10_closed": false,
+  "F10_fixed": false,
+  "F10_upgrade_execution_authorized": false,
+  "F10_alone_blocks_EO05": false,
+  "A6_TECH_01_overall_pass": false,
+  "EO05_may_start": false
+}

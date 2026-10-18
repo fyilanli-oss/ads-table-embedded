@@ -124,6 +124,10 @@
       "id": "TECH01-F10",
       "priority": "P3",
       "title": "react_router_v8_future_warning_debt",
+      "remediation_status": "deferred_separate_compatibility_work_product_owner_accepted",
+      "remediation_evidence": "docs/evidence/A6_TECH_01_F10_DEFERRED_2026-10-18.json",
+      "closed": false,
+      "upgrade_execution_authorized": false,
       "eo05_blocker": false
     }
   ],

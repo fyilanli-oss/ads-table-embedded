@@ -161,6 +161,13 @@ doğrulandı. Kanıt `docs/evidence/A6_TECH_01_F09_CHECKOUT_SYNC_2026-10-18.json
 CI/kabul ve PR merge sonrası son primary sync beklenir. F10 başlamadı; canlı
 uygulama/database/deploy değişmedi, genel audit/EO-05 kapısı korunur.
 
+F09 kapanış ve PR #112 merge onayı alındı. Kapanış kanıtı
+`docs/evidence/A6_TECH_01_F09_CLOSURE_2026-10-18.json`.
+Önceki hazırlık kayıtları tarihseldir; güncel F01–F09 kapalıdır. Son CI,
+merge ve primary checkout'un yeni main ile temiz commit/tree eşliği teslim
+kapısıdır; son eşlik PR #112 açıklamasında kalıcılaştırılır. F10 başlamaz,
+genel audit PASS veya EO-05 başlangıç yetkisi verilmez.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

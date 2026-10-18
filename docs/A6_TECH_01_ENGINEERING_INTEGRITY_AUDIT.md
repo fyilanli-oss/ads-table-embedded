@@ -5,9 +5,9 @@
 **Durum:** Bulgular kaydedildi; kritik düzeltme ve yeniden test zorunlu
 **EO-05 kararı:** Kapalı
 
-**Güncel düzeltme durumu:** F01–F08 ürün sahibi kabulüyle kapandı.
-F09 temiz primary checkout fast-forward ile eşlendi; CI ve ürün sahibi kabulü
-beklenir. Genel audit PASS değildir.
+**Güncel düzeltme durumu:** F01–F09 ürün sahibi kabulüyle kapandı.
+F09 teslimi için son CI, merge ve temiz primary checkout eşliği zorunludur;
+son eşlik kanıtı PR #112 üzerinde tutulur. F10 başlamadı. Genel audit PASS değildir.
 İlk denetim bulguları ve başlangıç sayıları aşağıda
 tarihsel baseline olarak korunur; genel A6-TECH-01 henüz PASS değildir.
 
@@ -440,8 +440,12 @@ GitHub eşliği, temiz durum ve ahead/behind 0/0 doğrulandı. Eski commit Git
 geçmişinde korunur; reset/clean/force/kimlik onarımı, install, servis restart,
 deploy veya database işlemi yoktur. Görev attachment'ı ve iki checkout korundu.
 Kanıt `docs/evidence/A6_TECH_01_F09_CHECKOUT_SYNC_2026-10-18.json`.
-CI/kabul beklenir; bu PR merge edilince primary temizliği yeniden kontrol
-edilip yeni exact main'e bir kez daha fast-forward yapılmadan teslim bitmez.
+Ürün sahibi kapanış ve PR #112 merge onayını verdi. Kapanış kaydı
+`docs/evidence/A6_TECH_01_F09_CLOSURE_2026-10-18.json`.
+Son CI geçip bu PR merge edilince primary temizliği yeniden kontrol edilip
+yeni exact main'e bir kez daha fast-forward yapılmadan teslim bitmez.
+Son merge commit/tree ve temiz eşlik kanıtı PR #112 açıklamasına kaydedilir;
+bu kayıt yeniden commit üretip checkout'u tekrar geride bırakmaz.
 
 **Tekrar kullanım kuralı:** Eski klasörde işe başlamadan GitHub source + fetch,
 status ve ancestry kontrol edilir; yalnız temiz ve doğrusal main ilerletilir.

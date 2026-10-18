@@ -1,0 +1,66 @@
+{
+  "checked_at": "2026-10-18",
+  "finding": "TECH01-RETEST-SEC01",
+  "status": "vite_patch_prepared_remaining_advisories_open",
+  "baseline_commit": "822d71038e8aded30bb6fccd3b48f7e83900a2c1",
+  "approval": "explicit product owner approval for Vite 7.3.1 to 7.3.5 repository-only patch, lockfile review, tests and two audits; no other dependency or live change",
+  "official_sources": [
+    "https://github.com/vitejs/vite/releases/tag/v7.3.5",
+    "https://pnpm.io/cli/install",
+    "https://github.com/vitejs/vite/security/advisories/GHSA-fx2h-pf6j-xcff",
+    "https://github.com/vitejs/launch-editor/security/advisories/GHSA-v6wh-96g9-6wx3"
+  ],
+  "dependency_change": {"package": "vite", "from": "7.3.1", "to": "7.3.5", "other_package_versions_changed": false},
+  "install": {
+    "command": "pnpm install --no-frozen-lockfile --prefer-offline --ignore-scripts",
+    "exit_code": 0,
+    "registry_retries_configured": 0,
+    "scripts_executed": false,
+    "force_or_integrity_bypass_used": false
+  },
+  "lockfile": {
+    "changes": "15 removed and 15 added lines: Vite specifier/version/integrity and dependent peer references only",
+    "normalized_sha256_before_and_after": "5133e2267d9ab50a93a1a89f8c98640f9b05346c01afdb5d799a7de3fb3ca5aa",
+    "normalization": "LF; replace Vite old/new version in vite@, specifier, importer version and vite dependency references with APPROVED; replace only Vite package integrity with APPROVED; every other byte equal"
+  },
+  "production_audit": {
+    "command": "pnpm audit --prod --json", "exit_code": 0,
+    "vulnerabilities": {"info": 0, "low": 0, "moderate": 0, "high": 0, "critical": 0}
+  },
+  "complete_audit": {
+    "command": "pnpm audit --json", "exit_code": 1,
+    "registry_response_received": true,
+    "vulnerabilities": {"info": 0, "low": 1, "moderate": 1, "high": 1, "critical": 0},
+    "fix_ignore_override_or_update_used": false,
+    "limitation": "exit 1 is the expected advisory finding, not a connection failure; full graph is not clean"
+  },
+  "removed_advisories": [
+    "GHSA-4w7w-66w2-5vf9", "GHSA-v2wj-q39q-566r", "GHSA-p9ff-h696-f583",
+    "GHSA-v6wh-96g9-6wx3", "GHSA-fx2h-pf6j-xcff"
+  ],
+  "remaining_advisories": [
+    {"id": "GHSA-2g4f-4pwh-qvx6", "module": "ajv", "version": "8.6.3", "severity": "moderate"},
+    {"id": "GHSA-g7r4-m6w7-qqqr", "module": "esbuild", "version": "0.27.7", "severity": "low"},
+    {"id": "GHSA-vfj7-8cjw-p6xm", "module": "braces", "version": "3.0.3", "severity": "high"}
+  ],
+  "assessment_limits": {
+    "ajv": "installed static-config creates Ajv with no data option; documented dynamic data trigger not observed in this path",
+    "esbuild": "repo and inspected Vite path use compilation, not esbuild servedir; Vite 7.3.5 declares ^0.27.0, so 0.28.1 is outside declared range and not forced",
+    "braces": "no merchant-to-build-pattern input path identified in inspected adapter; no published patched version shown by advisory; no fork or replacement proposed in this patch",
+    "not_proof_of_universal_unreachability_or_current_live_state": true,
+    "residual_risk_acceptance_or_suppression_authorized": false
+  },
+  "verification": {"installed_vite": "7.3.5", "targeted_tests_passed_before_new_scope_tests": 11, "fresh_final_CI_required_before_merge": true},
+  "scope": {
+    "app_routes_UI_or_runtime_configuration_changed": false,
+    "react_router_v8_or_future_flags_changed": false,
+    "other_dependency_versions_or_workspace_policy_changed": false,
+    "live_deployment_database_provider_or_secret_change": false
+  },
+  "security_finding_closed": false,
+  "remaining_remediation_authorized": false,
+  "merge_authorized": false,
+  "deployment_authorized": false,
+  "A6_TECH_01_overall_pass": false,
+  "EO05_may_start": false
+}

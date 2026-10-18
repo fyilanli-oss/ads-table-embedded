@@ -1,0 +1,83 @@
+{
+  "checked_at": "2026-10-18",
+  "status": "live_cleanup_and_postchecks_pass_closure_acceptance_pending",
+  "finding": "TECH01-F02",
+  "source_main_commit": "74453f97dca4dd8fca5c45194312c26ab9f73412",
+  "preparation_pr": 103,
+  "approval": {
+    "source": "explicit user approval of PR 103 merge and exact one-record cleanup in current conversation",
+    "one_record_cleanup_approved": true,
+    "before_commit_rollback": true,
+    "after_commit_envelope_restore_unavailable_explicitly_accepted": true,
+    "full_backup_claimed": false,
+    "provider_revocation_authorized": false,
+    "repeat_mutation_authorized": false
+  },
+  "execution": {
+    "attempts": 1,
+    "transaction_committed": true,
+    "deleted_records": 1,
+    "sql_evidence": "docs/evidence/A6_TECH_01_F02_CLEANUP_SQL_2026-10-18.sql",
+    "lock_timeout_seconds": 5,
+    "statement_timeout_seconds": 30,
+    "guarded_tables": 4,
+    "precondition_check_inside_lock": true,
+    "postcondition_check_before_commit": true
+  },
+  "before": {
+    "connections": 3,
+    "credentials": 4,
+    "history_rows": 8,
+    "history_sha256": "f0ec37f341d0b5fecbd8a7b5dc021f91ba7289c900781969670a498d42b6984b",
+    "candidate_count": 1,
+    "bound_credentials": 3,
+    "connections_sha256": "2a760704c4cc5025cefb4eea30d727bae79cc020772604f734959b89f41aada2",
+    "candidate_inflight_oauth": 0,
+    "other_credentials_sha256": "a4b7a086f5ccfa9731b177485bdc60af58e6cfc0c5f81f71468d127959968dc8",
+    "orphan_google_credentials": 1,
+    "candidate_handoff_references": 0,
+    "candidate_connection_references": 0
+  },
+  "after": {
+    "connections": 3,
+    "credentials": 3,
+    "history_rows": 8,
+    "history_sha256": "f0ec37f341d0b5fecbd8a7b5dc021f91ba7289c900781969670a498d42b6984b",
+    "candidate_count": 0,
+    "bound_credentials": 3,
+    "connections_sha256": "2a760704c4cc5025cefb4eea30d727bae79cc020772604f734959b89f41aada2",
+    "candidate_inflight_oauth": 0,
+    "other_credentials_sha256": "a4b7a086f5ccfa9731b177485bdc60af58e6cfc0c5f81f71468d127959968dc8",
+    "orphan_google_credentials": 0,
+    "candidate_handoff_references": 0,
+    "candidate_connection_references": 0
+  },
+  "security_advisor_findings": 0,
+  "preserved": {
+    "bound_credentials": 3,
+    "connections": 3,
+    "historical_handoffs": 8,
+    "other_credentials_sha256_unchanged": true,
+    "connections_sha256_unchanged": true,
+    "history_sha256_unchanged": true,
+    "migration_ledger_unchanged_by_data_only_cleanup": true
+  },
+  "scope": {
+    "real_token_decryption": false,
+    "ciphertext_export": false,
+    "new_provider_calls": 0,
+    "google_grant_revocation": false,
+    "schema_or_privilege_mutation": false,
+    "vercel_or_shopify_configuration_mutation": false
+  },
+  "regression": {
+    "source_commit": "c07767bb6b3e8cf4f8f3988cd72b944b93699152",
+    "governance_run_id": 39142837217,
+    "database_run_id": 39142837194,
+    "database_job_id": 117720597449,
+    "staged_and_full_F02_REPLACEMENT_PASS": true,
+    "final_schema_sha256": "1a26e26bc6d905f6369599d209b5d76ea5c725444f42d3bc0389b3a829ab62b4"
+  },
+  "F02_closed": false,
+  "F03_may_start": false
+}

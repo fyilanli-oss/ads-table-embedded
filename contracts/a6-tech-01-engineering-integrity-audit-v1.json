@@ -68,7 +68,11 @@
       "id": "TECH01-F05",
       "priority": "P2",
       "title": "github_actions_mutable_action_references",
-      "eo05_blocker": true,
+      "remediation_status": "closed_product_owner_accepted_2026-10-18",
+      "closure_evidence": "docs/evidence/A6_TECH_01_F05_CLOSURE_2026-10-18.json",
+      "remediation_evidence": "docs/evidence/A6_TECH_01_F05_ACTION_PINS_2026-10-18.json",
+      "closed": true,
+      "eo05_blocker": false,
       "blocker_reason": "security"
     },
     {

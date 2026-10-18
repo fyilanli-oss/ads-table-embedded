@@ -5,8 +5,8 @@
 **Durum:** Bulgular kaydedildi; kritik düzeltme ve yeniden test zorunlu
 **EO-05 kararı:** Kapalı
 
-**Güncel düzeltme durumu:** F01–F04 ürün sahibi kabulüyle kapandı.
-Sıradaki F05 başlamadı. İlk denetim bulguları ve başlangıç sayıları aşağıda
+**Güncel düzeltme durumu:** F01–F05 ürün sahibi kabulüyle kapandı.
+Sıradaki F06 başlamadı. İlk denetim bulguları ve başlangıç sayıları aşağıda
 tarihsel baseline olarak korunur; genel A6-TECH-01 henüz PASS değildir.
 
 ## 1. Analist özeti
@@ -249,6 +249,24 @@ olmasını zorunlu tutar.
 sahibi desktop/mobile görsel kabulü geçmelidir.
 
 ### TECH01-F05 — P2 blocker — GitHub Actions immutable pin eksikliği
+
+**Kapanış — 18 Ekim 2026:** 425 test, typecheck ve build GitHub CI'da geçti
+(run `39148707523`). Ürün sahibi PR #107 merge'ünü ve F05 kapanışını kabul etti.
+Kanıt: `docs/evidence/A6_TECH_01_F05_CLOSURE_2026-10-18.json`.
+Shopify deploy workflow'u çalıştırılmadı; canlı ayar/secret/database değişmedi.
+F06 başlamadı; aşağıdaki hazırlık ve teşhis tarihsel kayıt olarak korunur.
+
+**Düzeltme hazırlığı — 18 Ekim 2026:** Dört değişken referans resmî repository
+tag → commit eşliği doğrulanarak tam SHA'ya sabitlendi; mevcut major sürümler
+ve diğer iki action pin'i korundu. Tüm workflow dosyalarını tarayan kontrol,
+değişken/kısa/doğrulanmamış referansları negatif testlerle reddeder.
+Kanıt: `docs/evidence/A6_TECH_01_F05_ACTION_PINS_2026-10-18.json`.
+Güncelleme yöntemi kontrollü manuel PR'dır: resmî release/tag ve commit yeniden
+doğrulanır, SHA ve açıklama/evidence birlikte güncellenir; CI ve açık ürün sahibi
+merge onayı gerekir. Otomatik merge yoktur. Workflow trigger, permission,
+input ve komutlar değişmedi; Shopify deploy workflow'u çalıştırılmadı.
+CI ve kabul gelmeden F05 kapalı sayılmaz; F06 başlamaz.
+Aşağıdaki teşhis başlangıç kaydıdır.
 
 Governance ve Shopify deploy workflow'larında bazı üçüncü taraf action'lar tam
 commit SHA yerine mutable major tag kullanmaktadır. Deploy workflow'u Shopify

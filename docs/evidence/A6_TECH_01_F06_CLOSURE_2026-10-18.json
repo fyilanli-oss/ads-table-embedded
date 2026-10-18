@@ -1,0 +1,56 @@
+{
+  "checked_at": "2026-10-18",
+  "finding": "TECH01-F06",
+  "status": "closed_product_owner_live_acceptance_record_pending_merge",
+  "product_owner_closure_accepted": true,
+  "approval_source": "User separately approved PR108 merge and Production deploy, then reported Her ikiside normal Codex for desktop/mobile checks",
+  "implementation_pull_request": "https://github.com/fyilanli-oss/ads-table-embedded/pull/108",
+  "implementation_merge_commit": "17e79ae4993860de23c3efda091844aaf88c23e5",
+  "remediation_evidence": "docs/evidence/A6_TECH_01_F06_SAFE_ERROR_LOG_2026-10-18.json",
+  "previous_prepared_evidence_preserved": true,
+  "tested_source_commit": "c073cf294c6a0a58b47bf7fe65e1d14080d69905",
+  "tested_and_merge_tree": "5f05d3fdc57a9cbfd96368f53175d0c9f07af3de",
+  "governance_run_id": 39149580079,
+  "repository_tests_passed": 432,
+  "typecheck": "pass",
+  "build": "pass",
+  "closure_record_requires_fresh_ci_and_explicit_merge_approval": true,
+  "deployment": {
+    "separately_authorized": true,
+    "project_id": "prj_RVvXZGLuj9ItUAqvMJvb1GOTd8Lr",
+    "target": "production",
+    "source_commit": "17e79ae4993860de23c3efda091844aaf88c23e5",
+    "id": "dpl_JAAMKofCU2oi8Tr2s6mAVk2XGAhu",
+    "state": "READY",
+    "verified_alias": "embedded.adstable.app",
+    "alias_error": null,
+    "create_requests": 1,
+    "previous_deployment_id": "dpl_DSEy9L1on1s454fE6DTJAv9UAixn",
+    "rollback_performed": false
+  },
+  "initial_log_observation": {
+    "scope": "new_deployment_production_error_fatal_last_10m_group_by_level_before_user_visual_acceptance",
+    "observed_groups": 0,
+    "raw_log_content_requested": false,
+    "limitation": "short-window observation only; not evidence of traffic volume, live error injection or future absence of errors"
+  },
+  "normal_operation_acceptance": {
+    "evidence_type": "explicit_product_owner_report",
+    "desktop_real_shopify_admin": "accepted_normal",
+    "mobile_real_shopify_admin": "accepted_normal"
+  },
+  "scope": {
+    "intentional_live_failure_or_provider_call": false,
+    "secret_read_or_mutation": false,
+    "environment_or_app_configuration_mutation": false,
+    "database_mutation": false,
+    "new_deployment_by_closure_record": false,
+    "F07_provenance_closed": false
+  },
+  "F06_closed": true,
+  "remaining_F06_technical_gates": [],
+  "next_finding": "TECH01-F07",
+  "F07_execution_authorized": false,
+  "A6_TECH_01_overall_pass": false,
+  "EO05_may_start": false
+}

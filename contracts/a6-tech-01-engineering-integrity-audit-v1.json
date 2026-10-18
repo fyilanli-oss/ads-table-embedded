@@ -90,6 +90,9 @@
       "id": "TECH01-F07",
       "priority": "P2",
       "title": "production_deployment_not_at_main_merge_commit",
+      "remediation_status": "provenance_verified_ci_and_product_owner_acceptance_pending",
+      "remediation_evidence": "docs/evidence/A6_TECH_01_F07_PROVENANCE_2026-10-18.json",
+      "closed": false,
       "eo05_blocker": true,
       "blocker_reason": "release_lineage"
     },

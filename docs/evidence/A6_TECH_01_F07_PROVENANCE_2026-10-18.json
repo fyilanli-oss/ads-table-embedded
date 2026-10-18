@@ -1,0 +1,58 @@
+{
+  "checked_at": "2026-10-18",
+  "finding": "TECH01-F07",
+  "status": "provenance_verified_ci_and_product_owner_acceptance_pending",
+  "official_source": "https://vercel.com/docs/rest-api/deployments/get-a-deployment-by-id-or-url",
+  "deployment": {
+    "id": "dpl_JAAMKofCU2oi8Tr2s6mAVk2XGAhu",
+    "project_id": "prj_RVvXZGLuj9ItUAqvMJvb1GOTd8Lr",
+    "target": "production",
+    "state": "READY",
+    "verified_alias": "embedded.adstable.app",
+    "alias_error": null,
+    "source_commit": "17e79ae4993860de23c3efda091844aaf88c23e5",
+    "source_tree": "5f05d3fdc57a9cbfd96368f53175d0c9f07af3de",
+    "exact_approved_main_commit_at_deployment": true,
+    "prior_deploy_evidence": "docs/evidence/A6_TECH_01_F06_CLOSURE_2026-10-18.json",
+    "tested_source_commit": "c073cf294c6a0a58b47bf7fe65e1d14080d69905",
+    "tested_source_governance_run_id": 39149580079
+  },
+  "comparison": {
+    "main_at_inspection": "f429bcc64aa699cc70003d3c35daac87646b9102",
+    "main_tree": "37e7d44e22de69d5297da97a5bb42d47a4a39a7e",
+    "same_commit_as_live": false,
+    "same_full_tree_as_live": false,
+    "deployed_commit_is_main_ancestor": true,
+    "github_compare_status": "ahead",
+    "ahead_by": 1,
+    "behind_by": 0,
+    "only_subsequent_commit": "PR109_F06_closure_record",
+    "github_compare_url": "https://github.com/fyilanli-oss/ads-table-embedded/compare/17e79ae4993860de23c3efda091844aaf88c23e5...f429bcc64aa699cc70003d3c35daac87646b9102",
+    "exact_non_runtime_changes": [
+      "contracts/a6-eo-implementation-master-v1.json",
+      "contracts/a6-tech-01-engineering-integrity-audit-v1.json",
+      "docs/A6_TECH_01_ENGINEERING_INTEGRITY_AUDIT.md",
+      "docs/EXECUTION_PLAN.md",
+      "docs/evidence/A6_TECH_01_F06_CLOSURE_2026-10-18.json",
+      "tests/a6-tech-01-engineering-integrity-audit.test.js"
+    ],
+    "other_source_entries_compared": 371,
+    "fingerprint_method": "git ls-tree -r --full-tree COMMIT; exclude only the six exact paths above; join remaining mode/type/blob/path lines with LF and final LF; UTF8 SHA256",
+    "deployed_filtered_tree_sha256": "0c55666d0cf9002550ca1a36a0556bcc9018bc36f90343c35b6fb79b60cf8f9c",
+    "main_filtered_tree_sha256": "0c55666d0cf9002550ca1a36a0556bcc9018bc36f90343c35b6fb79b60cf8f9c",
+    "application_config_dependencies_workflows_migrations_and_other_files_equal": true,
+    "changed_governance_files_imported_by_application": false,
+    "limitation": "point-in-time source provenance, not a binary reproducibility claim or ongoing live monitor; future non-metadata changes require fresh comparison and separately approved deployment"
+  },
+  "decision": "no_new_deploy_required_existing_authorized_exact_main_deployment_and_no_runtime_drift",
+  "scope": {
+    "new_deployment": false,
+    "configuration_or_secret_mutation": false,
+    "database_or_provider_mutation": false,
+    "runtime_or_workflow_change": false
+  },
+  "product_owner_closure_accepted": false,
+  "F07_closed": false,
+  "F08_execution_authorized": false,
+  "EO05_may_start": false
+}

@@ -6,7 +6,8 @@
 **EO-05 kararı:** Kapalı
 
 **Güncel düzeltme durumu:** F01–F06 ürün sahibi kabulüyle kapandı.
-F06 kapanış kaydının merge kapısı ayrıca beklenir; F07 başlamadı.
+F06 kapanış kaydı PR #109 ile merge edildi. F07 provenance doğrulandı;
+CI ve ürün sahibi kabulü beklenir.
 İlk denetim bulguları ve başlangıç sayıları aşağıda
 tarihsel baseline olarak korunur; genel A6-TECH-01 henüz PASS değildir.
 
@@ -336,6 +337,19 @@ saklanabilir.
 credential, query, stack ve provider ham body negatif testleri geçmelidir.
 
 ### TECH01-F07 — P2 blocker — Production deployment provenance
+
+**Doğrulama — 18 Ekim 2026:** Eski feature-branch deployment'ı F06'da ayrı
+açık onayla değiştirildi. Mevcut `dpl_JAAMKofCU2oi8Tr2s6mAVk2XGAhu`, o anda
+onaylı exact `main` merge commit'i `17e79ae4993860de23c3efda091844aaf88c23e5`
+kaynağından READY; domain ve kaynak tekrar doğrulandı. Güncel `main`
+`f429bcc64aa699cc70003d3c35daac87646b9102` aynı commit değildir: fark yalnız
+PR #109'un altı kapanış belge/ledger/test dosyasıdır. Bu altı exact yol dışında
+371 kaynak girdisinin mode/type/blob/path SHA256 özeti iki tarafta aynıdır.
+Uygulama/config/dependency/workflow/migration farkı yok; yeni deploy gerekmiyor.
+Kanıt: `docs/evidence/A6_TECH_01_F07_PROVENANCE_2026-10-18.json`.
+Bu noktasal kaynak doğrulamasıdır; binary reproducibility veya gelecek
+değişikliklere genel istisna değildir. CI/kabul beklenir, F08 başlamaz.
+Aşağıdaki ilk teşhis tarihsel baseline olarak korunur.
 
 Güncel Production deployment'ın kaynak ref'i `codex/eo04-closure`, kaynak commit'i
 ise denetlenen `main` merge commit'i değildir. Runtime/config/schema/workflow

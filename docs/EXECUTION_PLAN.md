@@ -122,6 +122,13 @@ Admin masaüstü ve mobil normal çalışmayı kabul etti. Kanıt:
 `docs/evidence/A6_TECH_01_F06_CLOSURE_2026-10-18.json`.
 Kapanış kaydının merge onayı beklenir; F07 başlamadı, EO-05 engeli korunur.
 
+F07 mevcut Production'ın F06'da onaylı exact `main` commit'inden deploy edildiğini
+yeniden doğruladı. Güncel main'e göre yalnız altı F06 kapanış dosyası farklı;
+diğer 371 kaynak girdisi eşleşir. Kanıt:
+`docs/evidence/A6_TECH_01_F07_PROVENANCE_2026-10-18.json`.
+Yeni deploy/secret/config/database işlemi yok. CI ve ürün sahibi kabulü beklenir;
+F07 henüz kapanmadı, F08 başlamadı ve EO-05 engeli korunur.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

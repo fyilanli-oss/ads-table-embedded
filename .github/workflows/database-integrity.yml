@@ -9,6 +9,7 @@ on:
       - "tools/check-migration-lineage.mjs"
       - "tests/a6-tech-01-f01*"
       - "contracts/a6-tech-01-f01-migration-lineage-v1.json"
+      - "contracts/a6-tech-01-f01c-scoped-recovery-v1.json"
       - "docs/evidence/A6_TECH_01_F01_LIVE_SCHEMA_2026-10-18.json"
       - ".github/workflows/database-integrity.yml"
 

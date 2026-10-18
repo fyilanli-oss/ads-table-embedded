@@ -2,7 +2,32 @@
 
 **Tarih:** 18 Ekim 2026
 
-**Durum:** İkinci koşudaki fixture rol hatasının kapsamlı test-aracı düzeltmesi onaylandı; yeni izole koşu bekleniyor. F01 açık, PR draft.
+**Durum:** 38 migration ve canlı şema karşılaştırması PASS; izole test ortamında runtime rolüne geçiş üyeliği olmadığı için duruldu. F01 açık, PR draft.
+
+## Üçüncü gerçek koşunun sonucu
+
+Kaynak `71ae55aa154ad6492c42ec6ec893cbd4e65361ce`,
+[koşu 39134192984](https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/39134192984).
+38 tarihsel migration geçti ve açık `F01B_LIVE_PARITY_PASS` kaydı oluştu.
+`postgres` ve `adstable_owner` rol sınırı senaryoları geçti. Ardından
+`pg_has_role(session_user,'adstable_runtime','SET') = false` bulundu ve ön kontrol
+durdu. Henüz runtime uygulama çağrısı veya retirement senaryosu çalışmadı.
+
+Bu sonuç geçici test makinesinin runtime rolünü kullanma yetkisinin olmadığını
+kanıtlar; Production rol üyeliğine ilişkin bir ölçüm değildir. Tarihsel
+migration veya canlı yetki değiştirilmedi, yeni grant üretilmedi. İzole ortamın
+temizliği başarılıdır. İkinci temiz kurulum başlamadı; tam database kapısı FAIL.
+Kaynak commit için 408 yerel test ve Repository Governance PASS'tir.
+
+Kanıt: `docs/evidence/A6_TECH_01_F01B_THIRD_REPLAY_STOP_2026-10-18.json`.
+Son belge commit'i `[skip ci]` kullanır; başarısız işlem kayıt nedeniyle tekrar
+başlatılmaz ve bu yeni HEAD için CI PASS iddiası yapılmaz.
+
+Sonraki öneri ayrı onay ister: yalnız geçici GitHub test database'inde koordinatör
+`postgres` için `adstable_runtime` rolüne geçici `SET` üyeliği sağlamak; INHERIT
+ve rol niteliklerini genişletmemek. Üyelik önce/sonra kanıtlanmalı ve test
+sonrasında eski durumu geri gelmeli; Production, tarihsel SQL ve application
+grant'ları değişmemelidir. Bu test altyapısı adımı henüz uygulanmadı.
 
 ## Onaylanan test rol sınırları
 

@@ -19,7 +19,8 @@ export function buildScopedRecovery({snapshot, lineage, reference, retiredFinali
     assert.equal(row.definition_sha256, original[0].definition_sha256, "captured body must match immutable live metadata baseline");
   }
   const absenceChecks = lineage.retired_function_signatures.map(signature => `to_regprocedure('${signature}') is not null`).join(" or ");
-  const bodies = snapshot.functions.map(row => `${row.definition}\nrevoke all on function ${row.signature} from public, anon, authenticated, service_role, adstable_runtime;\n${normalized(row.signature) === finalize ? `grant execute on function ${row.signature} to adstable_runtime;` : ""}`).join("\n");
+  // pg_get_functiondef returns a definition, not a semicolon-terminated script.
+  const bodies = snapshot.functions.map(row => `${row.definition};\nrevoke all on function ${row.signature} from public, anon, authenticated, service_role, adstable_runtime;\n${normalized(row.signature) === finalize ? `grant execute on function ${row.signature} to adstable_runtime;` : ""}`).join("\n");
   const body = `set local lock_timeout = '5s';
 set local statement_timeout = '30s';
 set local role adstable_owner;

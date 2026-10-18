@@ -4,6 +4,13 @@
 
 **Durum:** Repository/izole prova hazırlığı. Canlı uygulama veya merge onayı yoktur.
 
+İlk gerçek koşu `39137350657`, mevcut F01-B senaryoları geçtikten sonra yeni
+recovery generator'ının statement ayıracı eksikliğiyle durdu (`42601`).
+`pg_get_functiondef` kaynakları son SQL noktalı virgülünü içermez; generator
+tanımları REVOKE ifadelerinden önce ayırmalıdır. Düzeltme yalnız generator'dadır;
+kaydedilmiş gövdeler ve tarihsel migration'lar değiştirilmez. Kanıt
+`docs/evidence/A6_TECH_01_F01C_FIRST_RECOVERY_STOP_2026-10-18.json` içindedir.
+
 ## Analist özeti
 
 Supabase ekranı bu projenin Free Plan'da olduğunu ve platform yedeği sunulmadığını

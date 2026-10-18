@@ -11,7 +11,10 @@ const build = overrides => buildScopedRecovery({snapshot, lineage, reference, re
 
 test("scoped recovery preserves seven exact captured bodies without restoring legacy runtime grants", () => {
   const sql = build();
-  for (const fn of snapshot.functions) assert.ok(sql.includes(fn.definition));
+  for (const fn of snapshot.functions) {
+    assert.ok(sql.includes(fn.definition));
+    assert.ok(sql.includes(`${fn.definition};\nrevoke all on function ${fn.signature}`), "captured definitions must be separated from their REVOKE statements");
+  }
   const grants = sql.match(/^grant execute.*$/gm);
   assert.equal(grants.length, 1);
   assert.match(grants[0], /integrations\.finalize_provider_disconnect/);

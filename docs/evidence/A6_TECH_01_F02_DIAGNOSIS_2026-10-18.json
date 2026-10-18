@@ -1,0 +1,105 @@
+{
+  "checked_at": "2026-10-18",
+  "status": "diagnosis_recorded_live_cleanup_not_authorized",
+  "finding": "TECH01-F02",
+  "source_main_commit": "17b63aed68ba3c7db02bc7fa051eebc59f0b98e8",
+  "source": "read_only_live_metadata_and_repository_history",
+  "candidate_count": 1,
+  "candidate": {
+    "provider": "google_ads",
+    "created_at": "2026-10-11T15:50:07.837069+00:00",
+    "expires_at": null,
+    "updated_at": "2026-10-11T15:50:07.837069+00:00",
+    "fingerprint": "dc4db4375091b8039851d0c49a2b28c6396eb49954caa75e84430157dd94b981",
+    "nearby_oauth": [
+      {
+        "status": "exchanged",
+        "claimed_at": "2026-10-11T15:49:05.176+00:00",
+        "created_at": "2026-10-11T15:48:49.842+00:00",
+        "completed_at": "2026-10-11T15:49:06.232+00:00",
+        "failure_code": null
+      },
+      {
+        "status": "exchanged",
+        "claimed_at": "2026-10-11T15:50:06.842+00:00",
+        "created_at": "2026-10-11T15:49:48.306+00:00",
+        "completed_at": "2026-10-11T15:50:07.885+00:00",
+        "failure_code": null
+      },
+      {
+        "status": "redirected",
+        "claimed_at": null,
+        "created_at": "2026-10-11T15:55:42.163+00:00",
+        "completed_at": null,
+        "failure_code": null
+      }
+    ],
+    "handoff_references": 0,
+    "install_generation": 1,
+    "connection_statuses": null,
+    "installation_status": "active",
+    "connection_references": 0
+  },
+  "incoming_foreign_keys": [
+    {
+      "name": "provider_connections_credential_id_fkey",
+      "table": "integrations.provider_connections",
+      "definition": "FOREIGN KEY (credential_id) REFERENCES integrations.provider_credential_envelopes(id) ON UPDATE RESTRICT ON DELETE RESTRICT"
+    },
+    {
+      "name": "provider_authorization_handoffs_credential_id_fkey",
+      "table": "integrations.provider_authorization_handoffs",
+      "definition": "FOREIGN KEY (credential_id) REFERENCES integrations.provider_credential_envelopes(id) ON UPDATE RESTRICT ON DELETE RESTRICT"
+    }
+  ],
+  "valid_inflight_oauth_same_owner": 0,
+  "nearby_transactions": [
+    {
+      "oauth_status": "exchanged",
+      "handoff_status": "failed",
+      "handoff_failure": "SUPERSEDED_BY_NEW_AUTHORIZATION",
+      "oauth_created_at": "2026-10-11T15:49:48.306+00:00",
+      "handoff_created_at": "2026-10-11T15:50:07.981+00:00",
+      "handoff_updated_at": "2026-10-11T16:52:19.340428+00:00",
+      "oauth_completed_at": "2026-10-11T15:50:07.885+00:00"
+    },
+    {
+      "oauth_status": "exchanged",
+      "handoff_status": "failed",
+      "handoff_failure": "USER_CANCELLED_SELECTION",
+      "oauth_created_at": "2026-10-11T15:48:49.842+00:00",
+      "handoff_created_at": "2026-10-11T15:49:06.331+00:00",
+      "handoff_updated_at": "2026-10-11T15:49:34.225418+00:00",
+      "oauth_completed_at": "2026-10-11T15:49:06.232+00:00"
+    }
+  ],
+  "causality": {
+    "old_sql_defect_confirmed": true,
+    "defect": "UPDATE sets credential_id NULL, RETURNING reads new NULL so superseded envelope ID is lost",
+    "historical_source": "supabase/migrations/20261011163811_eo04c_durable_selection_and_reconnect.sql",
+    "historical_function": "integrations.create_provider_authorization_handoff",
+    "legacy_function_retired_by_F01": true,
+    "candidate_link_to_historical_event": "timestamp_correlation_not_direct_ID_lineage; original reference was cleared",
+    "current_stage_preserves_previous_id_before_update": true,
+    "last_token_use": "not_tracked; not_inferred_from_updated_at",
+    "provider_token_validity": "not_queried"
+  },
+  "verification": {
+    "real_token_decryption": false,
+    "ciphertext_export": false,
+    "provider_api_calls": 0,
+    "live_mutation": false,
+    "regression_status": "prepared_waiting_isolated_database_CI",
+    "regression_marker": "F02_REPLACEMENT_PASS"
+  },
+  "proposed_cleanup": {
+    "scope": "one exact fingerprint/created_at/provider candidate only after fresh reference and inflight checks",
+    "live_cleanup_authorized": false,
+    "merge_authorized": false,
+    "before_commit_recovery": "transaction rollback",
+    "after_commit_envelope_restore": "not_available_without_separate_backup; no_backup_created",
+    "provider_revocation_authorized": false
+  },
+  "F02_closed": false,
+  "F03_may_start": false
+}

@@ -141,7 +141,10 @@
       "classification": "provisional_security_finding_not_confirmed_exploitation",
       "closed": false,
       "eo05_blocker": true,
-      "implementation_authorized": false,
+      "authorized_repository_change": "vite_7.3.1_to_7.3.5_only",
+      "remaining_remediation_execution_authorized": false,
+      "remediation_status": "vite_patch_prepared_remaining_advisories_open",
+      "remediation_evidence": "docs/evidence/A6_TECH_01_VITE_SECURITY_PATCH_2026-10-18.json",
       "evidence": "docs/evidence/A6_TECH_01_FINAL_RETEST_2026-10-18.json"
     }
   ],

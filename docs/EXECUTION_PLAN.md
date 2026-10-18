@@ -184,6 +184,13 @@ tarihsel sırası ve kapanışları değiştirilmez. Etki analizi/düzeltme hen�
 yetkili değildir. Genel audit PASS, A6-DOCS-01 ve EO-05 başlangıcı verilmez;
 bu kayıt yeni altyapı, yedek, sürüm, provider veya canlı ortam işi açmaz.
 
+Kullanıcı yalnız Vite `7.3.1 → 7.3.5` güvenlik düzeltmesine açık onay verdi.
+Registry ve lockfile eşlendi; diğer paket sürümleri aynı kaldı. Vite'nin beş
+uyarısı yeni taramada kalktı; kalan 1 yüksek/1 orta/1 düşük advisory açıktır.
+Kanıt `docs/evidence/A6_TECH_01_VITE_SECURITY_PATCH_2026-10-18.json`.
+Son CI/merge kabulü beklenir. Bu kayıt kalan riskleri, F10'u veya genel audit'i
+kapatmaz; canlı deploy, override, ignore veya başka dependency değişimi yetkisi yoktur.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

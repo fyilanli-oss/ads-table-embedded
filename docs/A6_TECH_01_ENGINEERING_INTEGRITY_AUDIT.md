@@ -513,6 +513,15 @@ EO-05 öncesi genel yeniden test ve audit kararı bu ertelemeden bağımsızdır
 
 ### Son yeniden testte bulunan güvenlik konusu — TECH01-RETEST-SEC01
 
+**Vite düzeltmesi — 18 Ekim 2026:** Ayrı açık kullanıcı onayıyla yalnız
+Vite `7.3.1 → 7.3.5` ve dependency registry/lockfile eşliği hazırlandı.
+Yeni taramada Vite'nin beş advisory'si yok; toplam 4 yüksek/3 orta/1 düşükten
+1 yüksek/1 orta/1 düşüğe indi. Production taraması temiz. Kalan `braces`,
+`ajv`, `esbuild` sürümleri değişmedi; override/ignore eklenmedi. Kanıt:
+`docs/evidence/A6_TECH_01_VITE_SECURITY_PATCH_2026-10-18.json`.
+Bu kısmi düzeltme genel güvenlik kapanışı değildir. CI ve ayrı merge kabulü
+beklenir; deploy yetkisi yoktur. Aşağıdaki sekiz advisory kaydı önceki taramadır.
+
 Bu kayıt ilk F01–F10 listesini veya o denetimin başlangıç sayılarını değiştirmez.
 F01–F09 kapanışları ve F10'un kabul edilmiş açık teknik borç kararı korunur.
 Yeni konu, tam bağımlılık taramasında görülen geliştirme/build zinciridir:

@@ -108,7 +108,8 @@ test("successful repository checks cannot hide an open full-graph security retes
   const finding = audit.retest_findings.find(item => item.id === evidence.security_finding.id);
   assert.equal(finding.closed, false);
   assert.equal(finding.eo05_blocker, true);
-  assert.equal(finding.implementation_authorized, false);
+  assert.equal(finding.authorized_repository_change, "vite_7.3.1_to_7.3.5_only");
+  assert.equal(finding.remaining_remediation_execution_authorized, false);
   assert.equal(evidence.A6_TECH_01_overall_pass, false);
   assert.equal(evidence.A6_DOCS_01_may_start, false);
   assert.equal(evidence.EO05_may_start, false);

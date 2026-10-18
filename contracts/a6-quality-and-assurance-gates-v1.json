@@ -17,7 +17,7 @@
   ],
   "engineering_integrity": {
     "id": "A6-TECH-01",
-    "status": "ready_execution_not_started",
+    "status": "audit_findings_recorded_critical_remediation_required",
     "timing": "immediately_after_EO-04_before_EO-05",
     "review_readiness_program": false,
     "scope": [
@@ -36,6 +36,7 @@
       "all_P1",
       "P2_affecting_security_data_correctness_or_review"
     ],
+    "audit_result_contract": "contracts/a6-tech-01-engineering-integrity-audit-v1.json",
     "required_outputs": [
       "audit_plan",
       "control_matrix",

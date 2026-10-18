@@ -27,6 +27,12 @@ doğruluğu, güvenlik veya review sonucunu etkileyen P2 kapanmadan EO-05 başla
 Çıktılar: denetim planı, kontrol matrisi, kanıt bağlantıları, bulgu kaydı,
 düzeltme/retest sonucu ve denetlenmiş baseline commit.
 
+18 Ekim 2026 ilk denetim sonucu
+`docs/A6_TECH_01_ENGINEERING_INTEGRITY_AUDIT.md` ve
+`contracts/a6-tech-01-engineering-integrity-audit-v1.json` içinde
+kaydedilmiştir. P0 bulunmamış; üç P1 ve EO-05'i engelleyen beş P2 tespit
+edilmiştir. Bu kayıt PASS değildir. Aktif kapı kritik düzeltme ve yeniden testtir.
+
 ## 2. Paket sonu delta bütünlük kapısı
 
 EO-05, EO-06, EO-07 ve EO-08 sonunda A6-TECH-01 baseline'ına karşı kısa delta

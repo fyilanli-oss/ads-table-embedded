@@ -21,7 +21,7 @@ test("opens one independent package without changing the EO plan", () => {
   assert.equal(master.counts.independent_operational_packages, 2);
   assert.equal(master.current_active_parent, null);
   assert.equal(master.current_active_child, null);
-  assert.equal(master.current_gate, "A6-TECH-01_engineering_integrity_audit_ready");
+  assert.equal(master.current_gate, "A6-TECH-01_critical_remediation_and_retest");
   assert.equal(master.next_ready_child, null);
   assert.notEqual(master.current_active_child, cleanup.id);
 });

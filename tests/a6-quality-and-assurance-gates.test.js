@@ -13,7 +13,10 @@ const master = JSON.parse(readFileSync(
 ));
 
 test("engineering integrity runs before EO-05 and is not reduced to review readiness", () => {
-  assert.equal(contract.engineering_integrity.status, "ready_execution_not_started");
+  assert.equal(
+    contract.engineering_integrity.status,
+    "audit_findings_recorded_critical_remediation_required",
+  );
   assert.equal(contract.engineering_integrity.timing, "immediately_after_EO-04_before_EO-05");
   assert.equal(contract.engineering_integrity.review_readiness_program, false);
   assert.equal(contract.engineering_integrity.test_pass_alone_is_sufficient, false);
@@ -22,7 +25,7 @@ test("engineering integrity runs before EO-05 and is not reduced to review readi
   assert.ok(contract.engineering_integrity.scope.includes("github_lineage_pr_ci_and_local_only_inventory"));
   assert.equal(master.current_active_parent, null);
   assert.equal(master.current_active_child, null);
-  assert.equal(master.current_gate, "A6-TECH-01_engineering_integrity_audit_ready");
+  assert.equal(master.current_gate, "A6-TECH-01_critical_remediation_and_retest");
   assert.equal(master.packages.find((item) => item.id === "A6-EO-04").status, "Accepted");
 });
 

@@ -22,11 +22,13 @@
       "id": "TECH01-F01",
       "priority": "P1",
       "title": "supabase_migration_lineage_and_live_schema_drift",
-      "remediation_status": "F01-A_repository_prepared_clean_replay_and_live_application_pending",
+      "remediation_status": "closed_product_owner_accepted_2026-10-18",
+      "closure_evidence": "docs/evidence/A6_TECH_01_F01_CLOSURE_2026-10-18.json",
+      "live_application_evidence": "docs/evidence/A6_TECH_01_F01_LIVE_ACCEPTANCE_2026-10-18.json",
       "remediation_contract": "contracts/a6-tech-01-f01-migration-lineage-v1.json",
-      "closed": false,
-      "eo05_blocker": true,
-      "live_mutation_required_to_close": true
+      "closed": true,
+      "eo05_blocker": false,
+      "live_mutation_required_to_close": false
     },
     {
       "id": "TECH01-F02",

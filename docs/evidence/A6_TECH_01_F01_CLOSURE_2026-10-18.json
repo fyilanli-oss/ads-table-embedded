@@ -1,0 +1,29 @@
+{
+  "checked_at": "2026-10-18",
+  "status": "closed_product_owner_accepted",
+  "finding": "TECH01-F01",
+  "product_owner_closure_accepted": true,
+  "approval_source": "explicit user approval of PR 102 merge and F01 closure in current conversation",
+  "pull_request": "https://github.com/fyilanli-oss/ads-table-embedded/pull/102",
+  "live_evidence": "docs/evidence/A6_TECH_01_F01_LIVE_ACCEPTANCE_2026-10-18.json",
+  "ledger_evidence": "docs/evidence/A6_TECH_01_F01_POST_MIGRATION_LEDGER_2026-10-18.json",
+  "pre_acceptance_ci_source": "0d9c94912f407c93e91ca8efec99d89d223ef643",
+  "pre_acceptance_ci": {
+    "governance_run_id": 39141093459,
+    "database_run_id": 39141093435,
+    "conclusion": "success"
+  },
+  "final_acceptance_commit_requires_fresh_ci_before_merge": true,
+  "previous_pending_acceptance_evidence_preserved": true,
+  "scope": {
+    "scoped_recovery_accepted_for_F01_only": true,
+    "full_database_backup_claimed": false,
+    "additional_live_mutation_authorized": false
+  },
+  "f01_closed": true,
+  "remaining_F01_gates": [],
+  "next_finding": "TECH01-F02",
+  "F02_execution_authorized": false,
+  "A6_TECH_01_overall_pass": false,
+  "EO05_may_start": false
+}

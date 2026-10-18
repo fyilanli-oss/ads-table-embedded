@@ -11,7 +11,7 @@ const root = fileURLToPath(new URL("../", import.meta.url));
 const read = (file) => readFileSync(path.join(root, file), "utf8").replaceAll("\r\n", "\n");
 const manifest = JSON.parse(read("contracts/a6-tech-01-f01-migration-lineage-v1.json"));
 const inventorySql = read("tools/f01-schema-inventory.sql");
-const retirementSql = read(manifest.pending_migrations[0].file);
+const retirementSql = read(manifest.forward_migrations[0].file);
 const recoverySnapshot = JSON.parse(read("contracts/a6-tech-01-f01c-scoped-recovery-v1.json"));
 const historicalReference = JSON.parse(read("docs/evidence/A6_TECH_01_F01_LIVE_SCHEMA_2026-10-18.json")).inventory;
 // Within rollback-only scenario transactions, preserve the SQL body exactly.
@@ -406,7 +406,7 @@ async function main() {
     const version=Number((await client.query("show server_version_num")).rows[0].server_version_num);
     assert.ok(version>=170000 && version<180000,"PostgreSQL 17 required");
     assert.equal((await client.query("select count(*)::int as n from pg_namespace where nspname='app'")).rows[0].n,0,"database must be empty before replay");
-    const migrations=mode==="staged"?manifest.historical_migrations:[...manifest.historical_migrations,...manifest.pending_migrations];
+    const migrations=mode==="staged"?manifest.historical_migrations:[...manifest.historical_migrations,...manifest.forward_migrations,...manifest.pending_migrations];
     for (const entry of migrations) {
       console.log(`F01B_APPLY ${entry.version} ${entry.name}`);
       await executeMigration(client, entry, read(entry.file));

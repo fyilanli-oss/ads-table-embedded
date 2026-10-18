@@ -27,7 +27,7 @@ test("scoped recovery preserves seven exact captured bodies without restoring le
   const outsideFunctions = sql.replace(/\$function\$[\s\S]*?\$function\$/g, "");
   assert.doesNotMatch(outsideFunctions, /\b(delete from|insert into|update integrations\.|truncate|drop table|alter role|schema_migrations)\b/i);
   assert.equal(lineage.live_mutation_authorized, false);
-  assert.equal(lineage.f01_closed, false);
+  assert.equal(lineage.f01_closed, true);
 });
 
 test("changed content, changed owner, unexpected signatures and forged hashes fail closed", () => {
@@ -50,5 +50,5 @@ test("scoped recovery body can be tested in a rollback-only scenario without nes
   const sql = build({transaction: false});
   assert.doesNotMatch(sql, /^begin;|^commit;$/m);
   assert.match(sql, /set local role adstable_owner/);
-  assert.equal(lineage.backup_restore_evidence_status, "not_satisfied_scoped_alternative_requires_explicit_acceptance");
+  assert.equal(lineage.backup_restore_evidence_status, "scoped_alternative_accepted_for_F01_only_not_full_database_backup");
 });

@@ -26,7 +26,7 @@ export function sqlHash(sql) {
 
 export function validateMigrationLineage({manifest, files, liveLedger}) {
   const errors = [];
-  const expected = [...manifest.historical_migrations, ...manifest.pending_migrations];
+  const expected = [...manifest.historical_migrations, ...(manifest.forward_migrations ?? []), ...manifest.pending_migrations];
   for (const key of ["version", "name", "file"]) {
     if (new Set(expected.map((entry) => entry[key])).size !== expected.length) {
       errors.push(`DUPLICATE_${key.toUpperCase()}`);
@@ -52,7 +52,7 @@ export function validateMigrationLineage({manifest, files, liveLedger}) {
     if (!expected.some((entry) => entry.file === file)) errors.push(`UNREGISTERED_FILE:${file}`);
   }
   if (liveLedger) {
-    const historical = manifest.historical_migrations;
+    const historical = [...manifest.historical_migrations, ...(manifest.forward_migrations ?? []).filter(entry => entry.applied)];
     for (const entry of historical) {
       if (!/^[0-9a-f]{64}$/.test(entry.applied_sql_sha256 ?? "")) {
         errors.push(`APPLIED_SQL_HASH_REQUIRED:${entry.name}`);
@@ -84,12 +84,12 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const suppliedLedger = process.argv[2];
   const evidence = JSON.parse(readFileSync(suppliedLedger
     ? path.resolve(suppliedLedger)
-    : path.join(root, "docs/evidence/A6_TECH_01_F01_MIGRATION_LEDGER_2026-10-18.json"), "utf8"));
+    : path.join(root, manifest.live_ledger_evidence ?? "docs/evidence/A6_TECH_01_F01_MIGRATION_LEDGER_2026-10-18.json"), "utf8"));
   const errors = validateMigrationLineage({manifest, files: loadMigrationFiles(root), liveLedger: evidence.migrations});
   if (errors.length) {
     for (const error of errors) console.error(error);
     process.exitCode = 1;
   } else {
-    console.log(`Migration lineage PASS: ${manifest.historical_migrations.length} historical, ${manifest.pending_migrations.length} pending. Ledger source: ${suppliedLedger ? "supplied snapshot" : "2026-10-18 snapshot"}. Live schema and replay are not verified by this check.`);
+    console.log(`Migration lineage PASS: ${manifest.historical_migrations.length} historical, ${manifest.forward_migrations?.length ?? 0} forward, ${manifest.pending_migrations.length} pending. Ledger source: ${suppliedLedger ?? manifest.live_ledger_evidence ?? "2026-10-18 snapshot"}. Live schema and replay are not verified by this check.`);
   }
 }

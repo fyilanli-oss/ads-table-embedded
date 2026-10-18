@@ -24,14 +24,22 @@ test("A6-TECH-01 records the audited starting baseline without declaring PASS", 
   assert.equal(audit.external_mutation_authorized, false);
 });
 
-test("all P1 and review, security, correctness or capacity P2 findings block EO-05", () => {
+test("open critical findings block EO-05 and accepted closure removes only its own blocker", () => {
   const critical = audit.findings.filter((finding) =>
     finding.priority === "P1" || finding.priority === "P2"
   );
 
   assert.deepEqual(audit.finding_counts, {P0: 0, P1: 3, P2: 5, P3: 2});
   assert.equal(critical.length, 8);
-  assert.ok(critical.every((finding) => finding.eo05_blocker === true));
+  assert.ok(critical.filter(finding => finding.closed !== true).every(finding => finding.eo05_blocker === true));
+  const closed = critical.filter(finding => finding.closed === true);
+  assert.deepEqual(closed.map(finding => finding.id), ["TECH01-F01"]);
+  for (const finding of closed) {
+    assert.equal(finding.eo05_blocker, false);
+    const closure = JSON.parse(readFileSync(new URL(finding.closure_evidence, root), "utf8"));
+    assert.equal(closure.product_owner_closure_accepted, true);
+    assert.equal(closure.finding, finding.id);
+  }
   assert.equal(audit.eo05_gate, "blocked");
   assert.equal(audit.a6_docs_01_may_start, false);
   assert.equal(audit.a6_eo_05_may_start, false);

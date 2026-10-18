@@ -2,24 +2,27 @@
   "schema_version": "1.0.0",
   "contract_id": "a6-tech-01-f01-migration-lineage-v1",
   "checked_at": "2026-10-18",
-  "status": "repository_prepared_live_application_and_clean_replay_pending",
+  "status": "closed_product_owner_accepted_2026-10-18",
   "document": "docs/A6_TECH_01_F01_MIGRATION_RECONCILIATION.md",
   "source_main_commit": "785ffc7289be163a2527a31975082d5af44b72bc",
   "sql_hash_normalization": "SHA256_UTF8_CRLF_TO_LF_TRIM_OUTER_WHITESPACE",
   "migration_history_repair_authorized": false,
   "live_mutation_authorized": false,
-  "f01_closed": false,
+  "f01_closed": true,
+  "closure_evidence": "docs/evidence/A6_TECH_01_F01_CLOSURE_2026-10-18.json",
   "scoped_recovery_document": "docs/A6_TECH_01_F01C_SCOPED_RECOVERY.md",
-  "scoped_recovery_status": "isolated_rehearsal_pass_scope_acceptance_pending",
+  "scoped_recovery_status": "isolated_rehearsal_pass_scope_accepted_for_F01_only",
   "scoped_recovery_pass_evidence": "docs/evidence/A6_TECH_01_F01C_SCOPED_RECOVERY_PASS_2026-10-18.json",
-  "backup_restore_evidence_status": "not_satisfied_scoped_alternative_requires_explicit_acceptance",
+  "backup_restore_evidence_status": "scoped_alternative_accepted_for_F01_only_not_full_database_backup",
+  "live_application_evidence": "docs/evidence/A6_TECH_01_F01_LIVE_ACCEPTANCE_2026-10-18.json",
+  "live_ledger_evidence": "docs/evidence/A6_TECH_01_F01_POST_MIGRATION_LEDGER_2026-10-18.json",
   "replay_document": "docs/A6_TECH_01_F01B_DATABASE_REPLAY.md",
-  "replay_status": "isolated_database_replay_pass_live_retirement_pending",
+  "replay_status": "isolated_database_replay_and_live_retirement_pass",
   "replay_pass_evidence": "docs/evidence/A6_TECH_01_F01B_DATABASE_REPLAY_PASS_2026-10-18.json",
   "latest_replay_stop_evidence": "docs/evidence/A6_TECH_01_F01B_THIRD_REPLAY_STOP_2026-10-18.json",
   "replay_stop_evidence": "docs/evidence/A6_TECH_01_F01B_FIRST_REPLAY_STOP_2026-10-18.json",
   "replay_workflow": ".github/workflows/database-integrity.yml",
-  "next_finding_may_start": false,
+  "next_finding_may_start": true,
   "historical_migrations": [
     {
       "version": "20261006133830",
@@ -406,14 +409,17 @@
       "applied_sql_difference": null
     }
   ],
-  "pending_migrations": [
+  "pending_migrations": [],
+  "forward_migrations": [
     {
-      "version": "20261018131548",
+      "version": "20261018152910",
       "name": "a6tech01_retire_provider_authorization_handoffs",
-      "file": "supabase/migrations/20261018131548_a6tech01_retire_provider_authorization_handoffs.sql",
+      "file": "supabase/migrations/20261018152910_a6tech01_retire_provider_authorization_handoffs.sql",
+      "prepared_version": "20261018131548",
       "created_with": "supabase@2.121.0 migration new a6tech01_retire_provider_authorization_handoffs",
       "repository_sql_sha256": "b67db0a415a1dc17b5af2d4e904d4eb7d500e6eb96eddaa5f43a2c78818e40ca",
-      "applied": false
+      "applied_sql_sha256": "b67db0a415a1dc17b5af2d4e904d4eb7d500e6eb96eddaa5f43a2c78818e40ca",
+      "applied": true
     }
   ],
   "retired_function_signatures": [
@@ -428,12 +434,5 @@
     "shopify.resolve_active_installation_callback_return(uuid,bigint)",
     "integrations.finalize_provider_disconnect(uuid,uuid,uuid,bigint,text,bigint,text,text,timestamptz)"
   ],
-  "required_remaining_gates": [
-    "isolated_PostgreSQL17_full_replay_and_negative_retirement_probes",
-    "live_schema_parity_and_dependency_comparison",
-    "backup_restore_evidence",
-    "product_owner_live_application_approval",
-    "live_retirement_postchecks",
-    "F01_closure_acceptance"
-  ]
+  "required_remaining_gates": []
 }

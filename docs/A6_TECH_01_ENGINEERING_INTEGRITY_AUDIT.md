@@ -64,6 +64,18 @@ değiştirilmemiştir.
 
 ### TECH01-F01 — P1 — Supabase migration zinciri yeniden üretilebilir değil
 
+**Güncel düzeltme durumu — 18 Ekim 2026:** F01-A/B ve PR #101 tamamlandı.
+Ürün sahibinin ayrı kapsam ve canlı uygulama onayından sonra retirement bir kez
+uygulandı. İlk 38 ledger kaydı/SQL hash'i değişmedi; yeni gerçek version
+`20261018152910`. Canlı katalog yalnız beklenen function/policy farklarını
+taşıyor; connection, credential ve tarihsel satır parmak izleri aynı.
+Security Advisor temiz. Kanıt:
+`docs/evidence/A6_TECH_01_F01_LIVE_ACCEPTANCE_2026-10-18.json`.
+Ürün sahibi F01 kapanışını ve PR #102 merge'ünü 18 Ekim 2026'da onayladı.
+Kapanış kanıtı `docs/evidence/A6_TECH_01_F01_CLOSURE_2026-10-18.json`.
+Bu kabul diğer bulguları kapatmaz veya EO-05 başlangıcını yetkilendirmez.
+Aşağıdaki bulgu metni denetim başlangıcındaki durumu açıklar.
+
 **F01-A hazırlığı:** Ayrıntılı eşleme ve kapılar
 `docs/A6_TECH_01_F01_MIGRATION_RECONCILIATION.md` içindedir. Repository hazırlığı
 F01'i kapatmaz; temiz database provası ve ayrı canlı uygulama kapıları beklenir.

@@ -1,0 +1,92 @@
+{
+  "checked_at": "2026-10-18",
+  "package": "A6-TECH-01",
+  "status": "PASS_product_owner_accepted_scoped_integrity_baseline",
+  "product_owner_closure_accepted": true,
+  "merge_authorized_after_required_CI": true,
+  "approval_basis": "Ürün sahibi masaüstü/mobil canlı kabulünü ve ardından F10/provider/recovery sınırları korunarak genel kapanış kaydının PR/CI sonrası merge edilmesini açıkça onayladı.",
+  "audited_starting_baseline_commit": "c3faddff97628f372f5cc843f3326fb38de95dfc",
+  "pass_baseline_commit": "bd243fff7200ae6bdb3900ebb7417b3beba53010",
+  "pass_baseline_tree": "b9523b6191ac578f0597c61ffe8d1c9c5d0e86d9",
+  "source_governance": {
+    "source_commit": "145fd274a322039b831d7829f209c05344ae455b",
+    "source_tree_equals_pass_baseline_tree": true,
+    "workflow_run_id": 39164205308,
+    "job_id": 117783629748,
+    "conclusion": "success",
+    "tests_passed": 457,
+    "tests_failed": 0,
+    "frozen_lockfile_install": "pass",
+    "typecheck": "pass",
+    "build": "pass"
+  },
+  "deployment": {
+    "id": "dpl_6AeuxVdBj2DMVB8Bskc4xX1qKKJT",
+    "project_id": "prj_RVvXZGLuj9ItUAqvMJvb1GOTd8Lr",
+    "target": "production",
+    "state": "READY",
+    "source_commit": "bd243fff7200ae6bdb3900ebb7417b3beba53010",
+    "verified_domain": "embedded.adstable.app",
+    "alias_error": null,
+    "create_requests": 1,
+    "previous_deployment_id": "dpl_JAAMKofCU2oi8Tr2s6mAVk2XGAhu",
+    "rollback_performed": false,
+    "trace": "https://github.com/fyilanli-oss/ads-table-embedded/pull/118"
+  },
+  "live_acceptance": {
+    "evidence_type": "explicit_product_owner_report",
+    "user_report": "Ikiside normal Codex",
+    "requested_surfaces": [
+      "Funnel",
+      "Ad Analysis",
+      "Settings"
+    ],
+    "desktop_real_shopify_admin": "accepted_normal",
+    "mobile_real_shopify_admin": "accepted_normal",
+    "agent_direct_browser_observation": false,
+    "post_acceptance_domain_and_source_rechecked": true,
+    "runtime_logs": {
+      "scope": "only accepted deployment; production; last 10 minutes; error/fatal/warning; grouped by level",
+      "observed_groups": 0,
+      "raw_log_content_requested": false,
+      "limit": "Kısa pencere ve normal çalışma kabulüdür; trafik hacmi, her veri yolu, gerçek provider hata enjeksiyonu veya gelecekte hatasızlık garantisi değildir."
+    }
+  },
+  "supporting_evidence": {
+    "dependency_security": "docs/evidence/A6_TECH_01_SECURITY_CLOSURE_2026-10-18.json",
+    "zero_advisory_graph": "docs/evidence/A6_TECH_01_REMAINING_SECURITY_REMEDIATION_2026-10-18.json",
+    "github_rules_and_meta_documentation": "docs/evidence/A6_TECH_01_GITHUB_META_EVIDENCE_2026-10-18.json",
+    "F10_deferral": "docs/evidence/A6_TECH_01_F10_DEFERRED_2026-10-18.json"
+  },
+  "current_open_findings": {
+    "P0": 0,
+    "P1": 0,
+    "P2": 0,
+    "P3": 1
+  },
+  "F01_through_F09_closed": true,
+  "TECH01_RETEST_SEC01_closed": true,
+  "meta_two_error_fixes_merged_and_released": true,
+  "accepted_limits": [
+    "F10 açıktır; beş React Router future uyarısı ayrı uyumluluk işidir. Yeni upgrade/flag yetkisi verilmez.",
+    "F01 scoped recovery tam veri backup/PITR garantisi değildir. Bilinen Free Plan sınırı korunur; yedek işi yeniden açılmaz.",
+    "İki Meta dokümanı ürün sahibi tarafından resmî sayfalardan sağlandı; agent'ın bağımsız HTTP erişimi başarılı sayılmaz.",
+    "Meta gerçek katalog/product semantiği, Google production provider yetkisi ve Klaviyo environment readiness dahil EO04 kanıt sınırları kapanmış sayılmaz.",
+    "Provider negatif senaryoları repository testleriyle doğrulandı; yeni gerçek provider çağrısı veya canlı hata enjeksiyonu yapılmadı.",
+    "A6-ASSURE-01, review submission, gerçek mağaza pilotu ve EO09 cutover bu kabulün dışındadır."
+  ],
+  "closure_record_scope": {
+    "application_runtime_or_UI_changed": false,
+    "dependency_or_lockfile_changed": false,
+    "new_deploy_or_database_or_provider_mutation": false,
+    "historical_evidence_rewritten": false
+  },
+  "closure_record_local_tests": {"passed": 459, "failed": 0},
+  "closure_record_requires_fresh_CI_before_merge": true,
+  "A6_TECH_01_overall_pass": true,
+  "A6_DOCS_01_prerequisite_satisfied": true,
+  "A6_DOCS_01_implementation_started": false,
+  "EO05_may_start": false,
+  "next_gate": "A6-DOCS-01",
+  "review_or_cutover_authorized": false
+}

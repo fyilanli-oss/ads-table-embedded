@@ -17,7 +17,9 @@
   ],
   "engineering_integrity": {
     "id": "A6-TECH-01",
-    "status": "audit_findings_recorded_critical_remediation_required",
+    "status": "pass_product_owner_accepted_2026-10-18",
+    "pass_baseline_commit": "bd243fff7200ae6bdb3900ebb7417b3beba53010",
+    "closure_evidence": "docs/evidence/A6_TECH_01_CLOSURE_2026-10-18.json",
     "timing": "immediately_after_EO-04_before_EO-05",
     "review_readiness_program": false,
     "scope": [

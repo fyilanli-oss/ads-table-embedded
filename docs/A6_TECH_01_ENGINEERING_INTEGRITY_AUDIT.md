@@ -2,8 +2,18 @@
 
 **Kontrol tarihi:** 18 Ekim 2026
 **Denetlenen ürün baseline'ı:** `c3faddff97628f372f5cc843f3326fb38de95dfc`
-**Durum:** Bulgular kaydedildi; kritik düzeltme ve yeniden test zorunlu
-**EO-05 kararı:** Kapalı
+**Durum:** PASS — ürün sahibi genel kapanış kabulü, 18 Ekim 2026
+**PASS baseline:** `bd243fff7200ae6bdb3900ebb7417b3beba53010`
+**EO-05 kararı:** A6-DOCS-01 tamamlanana kadar kapalı
+
+Güncel kapanış otoritesi:
+`docs/evidence/A6_TECH_01_CLOSURE_2026-10-18.json`.
+F01–F09 ve dependency güvenlik bulgusu kapalı; açık P0/P1/P2 yoktur. F10 açık
+P3 ertelemesidir. Gerçek Shopify Admin masaüstü/mobil kabulü ürün sahibi
+bildirimidir; agent'ın doğrudan browser veya gerçek provider testi değildir.
+Provider/recovery sınırları ve sonraki review kapıları aynen korunur. Aşağıdaki
+ilk denetim ve ara düzeltme kayıtları tarihsel gelişimi gösterir; güncel karar
+bu özet ve bölüm 8'in son kapanış kaydıdır.
 
 **Güncel düzeltme durumu:** F01–F09 ürün sahibi kabulüyle kapandı.
 F09 teslimi için son CI, merge ve temiz primary checkout eşliği zorunludur;
@@ -658,7 +668,7 @@ tamamlanmadığını gösterir.
 PASS baseline'ı değildir. A6-TECH-01 remediation ve retest tamamlanınca yeni exact
 commit ayrı olarak kaydedilecektir.
 
-Şimdiki bağlayıcı karar:
+Güvenlik düzeltmesinden sonraki ara karar (tarihsel):
 
 18 Ekim 2026 güvenlik kapanışı: PR #116 ürün sahibi onayıyla merge edildi;
 449 test ve GitHub build/typecheck/lockfile kapıları geçti, iki bağımlılık
@@ -675,3 +685,20 @@ bilinen recovery sınırı yeni yedek işi değildir. F10 açık ve ertelenmişt
 - `A6-TECH-01 PASS`: **Hayır**
 - `A6-DOCS-01`: **Başlayamaz**
 - `A6-EO-05`: **Başlayamaz**
+
+### Son bağlayıcı karar — 18 Ekim 2026
+
+Ürün sahibi canlı kabulü ve genel denetim kapanışını açıkça onayladı.
+`A6-TECH-01`: **PASS / Accepted**, baseline
+`bd243fff7200ae6bdb3900ebb7417b3beba53010`.
+`dpl_6AeuxVdBj2DMVB8Bskc4xX1qKKJT` Production READY; domain/source eşleşmesi
+kabul sonrası doğrulandı. 457 testlik kaynak CI'ı, iki sıfır-advisory tarama
+kanıtı, GitHub koruması, Meta doküman incelemesi/dar düzeltme ve ürün sahibi
+masaüstü/mobil normal çalışma kabulü kapanışa bağlandı.
+
+Kısa log penceresinde hata/uyarı grubu gözlenmedi; bu tüm veri yolları veya
+gelecekte hatasızlık garantisi değildir. Yeni gerçek provider çağrısı, taze DB
+replay veya canlı hata enjeksiyonu yapılmış sayılmaz. F10 açık ertelemesi,
+F01 scoped recovery ve EO04 provider kanıt sınırları devam eder.
+`A6-DOCS-01` önkoşulu sağlandı; implementation başlamadı. EO-05, review ve
+cutover açılmaz. Kapanış PR'ının CI/merge teslimi zorunludur.

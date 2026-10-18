@@ -35,7 +35,10 @@ test("user-supplied Meta docs and prepared fixes never masquerade as direct fetc
   assert.equal(evidence.meta_documentation.agent_rate_limit_fetch, "HTTP_429_stop_no_retry_no_alternative");
   assert.equal(evidence.meta_documentation.agent_error_handling_fetch_after_429, "not_attempted");
   assert.equal(evidence.approved_remediation.new_real_provider_calls, 0);
-  assert.deepEqual(audit.open_evidence, ["meta_two_error_classification_fixes_CI_and_acceptance", "latest_release_deployment_and_fresh_end_to_end_acceptance"]);
+  assert.deepEqual(audit.open_evidence, []);
+  const closure = read(audit.closure_evidence);
+  assert.equal(closure.meta_two_error_fixes_merged_and_released, true);
+  assert.equal(closure.product_owner_closure_accepted, true);
   for (const key of ["historical_evidence_rewritten", "F01_through_F09_reopened", "F10_closed", "new_backup_work_authorized", "A6_TECH_01_overall_pass", "A6_DOCS_01_may_start", "EO05_may_start"]) assert.equal(evidence[key], false, key);
   for (const changed of Object.values(evidence.scope)) assert.equal(changed, false);
 });

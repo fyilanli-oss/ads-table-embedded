@@ -91,6 +91,13 @@ contract ve testler eşlendi. Secret değeri okuma veya canlı ayar/deploy işle
 yok. Kapanış kanıtı `docs/evidence/A6_TECH_01_F03_CLOSURE_2026-10-18.json`.
 F01–F03 kapalıdır. Sıradaki F04 başlamadı; EO-05 kapısı hâlâ kapalıdır.
 
+F04 Polaris preload/script eşliği düzeltildi; ayrı onaylı exact-source deploy
+sonrası ürün sahibi gerçek Shopify Admin masaüstü ve mobil görünümünü kabul
+etti, PR #106 merge'ünü onayladı. Kapanış kanıtı:
+`docs/evidence/A6_TECH_01_F04_CLOSURE_2026-10-18.json`.
+Güncel durum F01–F04 kapalı, sıradaki F05 başlamadı ve yetkili değil.
+F07 release provenance ve genel EO-05 kapısı açık bulgulara bağlı kalır.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

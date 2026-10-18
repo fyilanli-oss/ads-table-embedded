@@ -5,8 +5,8 @@
 **Durum:** Bulgular kaydedildi; kritik düzeltme ve yeniden test zorunlu
 **EO-05 kararı:** Kapalı
 
-**Güncel düzeltme durumu:** F01, F02 ve F03 ürün sahibi kabulüyle kapandı.
-Sıradaki F04 başlamadı. İlk denetim bulguları ve başlangıç sayıları aşağıda
+**Güncel düzeltme durumu:** F01–F04 ürün sahibi kabulüyle kapandı.
+Sıradaki F05 başlamadı. İlk denetim bulguları ve başlangıç sayıları aşağıda
 tarihsel baseline olarak korunur; genel A6-TECH-01 henüz PASS değildir.
 
 ## 1. Analist özeti
@@ -198,6 +198,16 @@ env sözleşmesi, örnek dosya, master kayıt ve test aynı authoritative set ü
 birleştirilmelidir.
 
 ### TECH01-F04 — P2 blocker — Shopify Polaris URL bütünlüğü
+
+**Kapanış — 18 Ekim 2026:** Tek Polaris sabiti server ve AppProvider'a verildi;
+gerçek SDK Link preload/script eşliği ve negatif testler geçti. Test edilmiş
+`3e665f647f1c815673b0d6ff05f7e70649d4c4e5` ayrı açık onayla mevcut Production
+adresine deploy edildi. Vercel `READY`, exact commit ve domain alias'ı doğrulandı.
+Ürün sahibi gerçek Shopify Admin masaüstü ve mobil görünümünü normal buldu ve
+PR #106 merge'ünü onayladı. Kanıt:
+`docs/evidence/A6_TECH_01_F04_CLOSURE_2026-10-18.json`.
+F05 başlamaz; F07 release provenance ve genel EO-05 engeli açık kalır.
+Aşağıdaki brief ve teşhis uygulama öncesi tarihsel kayıttır.
 
 #### F04 uygulama öncesi analist brief'i — 18 Ekim 2026
 

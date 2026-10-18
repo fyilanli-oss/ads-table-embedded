@@ -52,4 +52,3 @@ test("quality and master ledgers expose the same active remediation gate", () =>
   assert.equal(packageRecord.audited_starting_baseline_commit, audit.audited_starting_baseline_commit);
   assert.equal(packageRecord.pass_baseline_commit, null);
 });
-

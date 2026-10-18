@@ -1,8 +1,8 @@
 # A6-TECH-01 mühendislik bütünlüğü denetimi
 
-**Kontrol tarihi:** 18 Ekim 2026  
-**Denetlenen ürün baseline'ı:** `c3faddff97628f372f5cc843f3326fb38de95dfc`  
-**Durum:** Bulgular kaydedildi; kritik düzeltme ve yeniden test zorunlu  
+**Kontrol tarihi:** 18 Ekim 2026
+**Denetlenen ürün baseline'ı:** `c3faddff97628f372f5cc843f3326fb38de95dfc`
+**Durum:** Bulgular kaydedildi; kritik düzeltme ve yeniden test zorunlu
 **EO-05 kararı:** Kapalı
 
 ## 1. Analist özeti
@@ -251,4 +251,3 @@ commit ayrı olarak kaydedilecektir.
 - `A6-TECH-01 PASS`: **Hayır**
 - `A6-DOCS-01`: **Başlayamaz**
 - `A6-EO-05`: **Başlayamaz**
-

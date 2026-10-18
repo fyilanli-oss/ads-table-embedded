@@ -5,8 +5,9 @@
 **Durum:** Bulgular kaydedildi; kritik düzeltme ve yeniden test zorunlu
 **EO-05 kararı:** Kapalı
 
-**Güncel düzeltme durumu:** F01–F05 ürün sahibi kabulüyle kapandı.
-F06 repository düzeltmesi hazır; CI ve canlı kabul bekleniyor. İlk denetim bulguları ve başlangıç sayıları aşağıda
+**Güncel düzeltme durumu:** F01–F06 ürün sahibi kabulüyle kapandı.
+F06 kapanış kaydının merge kapısı ayrıca beklenir; F07 başlamadı.
+İlk denetim bulguları ve başlangıç sayıları aşağıda
 tarihsel baseline olarak korunur; genel A6-TECH-01 henüz PASS değildir.
 
 ## 1. Analist özeti
@@ -279,6 +280,17 @@ commit SHA'sına sabitlenmeli; Dependabot/controlled update yöntemi ve CI testi
 eklenmelidir.
 
 ### TECH01-F06 — P2 blocker — Production hata log sanitizasyonu
+
+**Canlı kabul — 18 Ekim 2026:** PR #108 `17e79ae4993860de23c3efda091844aaf88c23e5`
+olarak merge edildi; test edilmiş kaynakla exact tree eşliği doğrulandı.
+Ayrı onaylı tek Production deploy'u `dpl_JAAMKofCU2oi8Tr2s6mAVk2XGAhu`
+READY oldu; exact kaynak SHA ve `embedded.adstable.app` alias'ı doğrulandı.
+İlk kısa deployment-scoped error/fatal sorgusunda kayıt gözlenmedi; bu sonuç
+yalnız o pencereyi kapsar, canlı hata enjeksiyonu yapılmadı. Ürün sahibi
+masaüstü ve mobil normal çalışmayı kabul etti. Kapanış kanıtı:
+`docs/evidence/A6_TECH_01_F06_CLOSURE_2026-10-18.json`.
+Kapanış kaydı merge onayı bekler; F07 ve genel audit PASS ilan edilmez.
+Aşağıdaki hazırlık/teşhis tarihsel kayıttır.
 
 **Repository hazırlığı — 18 Ekim 2026:** Server entry `onError` ve resmî
 `handleError` export'u tek bounded logger'a bağlandı. Hata nesnesine erişim yok;

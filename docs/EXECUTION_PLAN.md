@@ -116,6 +116,12 @@ Ham hata nesnesi loglanmaz; sabit kod/aşama ve izinli route/metot kaydedilir.
 CI/merge ve ayrı açık onaylı canlı deploy/doğrulama beklenir; F06 açık kalır.
 Bu hazırlık canlı düzeltme kanıtı veya F07 başlangıç yetkisi değildir.
 
+F06 düzeltmesi PR #108 ile merge edilip ayrı açık onayla mevcut Production
+adresine alındı. Exact kaynak/alias READY doğrulandı; ürün sahibi gerçek Shopify
+Admin masaüstü ve mobil normal çalışmayı kabul etti. Kanıt:
+`docs/evidence/A6_TECH_01_F06_CLOSURE_2026-10-18.json`.
+Kapanış kaydının merge onayı beklenir; F07 başlamadı, EO-05 engeli korunur.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

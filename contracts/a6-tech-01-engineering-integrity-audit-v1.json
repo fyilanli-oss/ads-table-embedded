@@ -79,10 +79,11 @@
       "id": "TECH01-F06",
       "priority": "P2",
       "title": "unsanitized_production_error_logging",
-      "remediation_status": "repository_prepared_ci_and_live_acceptance_pending",
+      "remediation_status": "closed_product_owner_accepted_2026-10-18",
+      "closure_evidence": "docs/evidence/A6_TECH_01_F06_CLOSURE_2026-10-18.json",
       "remediation_evidence": "docs/evidence/A6_TECH_01_F06_SAFE_ERROR_LOG_2026-10-18.json",
-      "closed": false,
-      "eo05_blocker": true,
+      "closed": true,
+      "eo05_blocker": false,
       "blocker_reason": "security"
     },
     {

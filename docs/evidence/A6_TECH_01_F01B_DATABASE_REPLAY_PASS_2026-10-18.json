@@ -1,0 +1,68 @@
+{
+  "checked_at": "2026-10-18",
+  "status": "isolated_database_replay_pass",
+  "source_commit": "fc7e43056444ad002d6c9489c8b7f3ebb276b84c",
+  "workflow_run_id": 39135603458,
+  "job_id": 117699362819,
+  "workflow_url": "https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/39135603458",
+  "local_tests": 412,
+  "typecheck": "pass",
+  "build": "pass_known_RR8_future_warnings_remain_F10",
+  "repository_governance": {
+    "run_id": 39135603491,
+    "result": "success"
+  },
+  "postgres_version_num": 170011,
+  "historical_migrations_applied": 38,
+  "live_parity_source": "docs/evidence/A6_TECH_01_F01_LIVE_SCHEMA_2026-10-18.json",
+  "live_metadata_parity": "pass_against_captured_snapshot_not_fresh_live_read",
+  "scenarios_passed": [
+    "role_boundary_postgres",
+    "role_boundary_adstable_owner",
+    "role_boundary_adstable_runtime",
+    "fixture_contract_preflight",
+    "historical_lifecycle_privacy_baseline",
+    "empty",
+    "terminal_history",
+    "awaiting_selection",
+    "consumed_with_credential",
+    "restrict_dependency_rollback",
+    "concurrent_lock_timeout",
+    "fixtures_rolled_back"
+  ],
+  "temporary_membership_restoration_count": 11,
+  "temporary_membership_method": "uncommitted_SET_TRUE_INHERIT_FALSE_ADMIN_FALSE_rolled_back_exact_catalog_membership_comparison",
+  "runs": [
+    {
+      "mode": "staged",
+      "postgres_version_num": 170011,
+      "migrations_applied": 39,
+      "schema_sha256": "1a26e26bc6d905f6369599d209b5d76ea5c725444f42d3bc0389b3a829ab62b4",
+      "live_parity": true,
+      "live_difference_categories": [],
+      "business_data_source": "synthetic_only",
+      "production_mutation": false
+    },
+    {
+      "mode": "full",
+      "postgres_version_num": 170011,
+      "migrations_applied": 39,
+      "schema_sha256": "1a26e26bc6d905f6369599d209b5d76ea5c725444f42d3bc0389b3a829ab62b4",
+      "live_parity": true,
+      "live_difference_categories": [],
+      "business_data_source": "synthetic_only",
+      "production_mutation": false
+    }
+  ],
+  "final_schema_hashes_equal": true,
+  "staged_environment_cleanup": "success",
+  "full_environment_cleanup": "success",
+  "historical_sql_changed": false,
+  "production_mutation": false,
+  "business_data_source": "synthetic_only",
+  "full_clean_replay": "pass_39_migrations",
+  "supabase_cloud_advisor": "not_executed",
+  "live_retirement": "not_authorized_not_applied",
+  "f01_closed": false,
+  "next_finding_may_start": false
+}

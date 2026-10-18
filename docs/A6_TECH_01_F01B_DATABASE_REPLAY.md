@@ -2,7 +2,44 @@
 
 **Tarih:** 18 Ekim 2026
 
-**Durum:** Toplu test hazırlığı onaylandı ve uygulandı; yeni izole prova bekleniyor. Önceki 38 migration/şema PASS kanıtı korunur. F01 açık, PR draft.
+**Durum:** F01-B izole database provası PASS. F01'in canlı uygulama/kapanış kapıları açık; canlı değişiklik yapılmadı.
+
+## Başarılı gerçek koşu
+
+Kaynak `fc7e43056444ad002d6c9489c8b7f3ebb276b84c`,
+[koşu 39135603458](https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/39135603458).
+PostgreSQL 17.11 üzerinde şu kontroller geçti:
+
+- İlk 38 tarihsel migration ve kaydedilmiş canlı metadata snapshot'ıyla birebir
+  karşılaştırma. Bu sonuç yeni bir canlı schema okuması değildir.
+- Üç rol sınırı, beş sentetik handoff durumu, eski lifecycle/privacy baseline.
+- Boş ve sekiz terminal satırlı tabloda retirement; tarihsel satırların korunması.
+- Pending seçim ve credential referansı guard'ları; başarısızlıkta schema/satır
+  durumunun korunması; bağımlılık `RESTRICT` rollback'i ve 5 saniyelik lock timeout.
+- Altı eski fonksiyonun yokluğu, runtime callback, tablo erişim yasağı,
+  connect/disconnect ve idempotent tekrar, ilişkisiz orphan'ın korunması,
+  privacy silme/cascade ve sentetik fixture'ların rollback ile temizlenmesi.
+- Geçici runtime üyeliğinin 11 transaction sonunda önceki katalog durumuna
+  birebir dönmesi. Kalıcı üyelik, application grant veya tarihsel SQL değişmedi.
+- 39 migration'ın ikinci boş database'e uygulanması ve ilk nihai şemayla eşleşmesi.
+  İki schema SHA-256 değeri de
+  `1a26e26bc6d905f6369599d209b5d76ea5c725444f42d3bc0389b3a829ab62b4`.
+- Forced RLS, function-only grant ve security-definer search_path katalog kontrolleri.
+  İki geçici ortamın kapatılması/temizlenmesi de başarılıdır.
+
+412 yerel test, typecheck, build ve kaynak commit'in Repository Governance koşusu
+PASS'tir. Bilinen RR8 future warning borcu F10'da kalır. Cloud Advisor çalıştırılmış
+sayılmaz. Production bağlantısı/mutation, gerçek credential veya business veri
+taşıma yoktur. Kanıt:
+`docs/evidence/A6_TECH_01_F01B_DATABASE_REPLAY_PASS_2026-10-18.json`.
+
+Bu kanıtı kaydeden son commit de normal zorunlu CI'dan geçer; yeni kanıtı kaydetmek
+için tekrar tekrar sonuç commit'i üretilmez. Son commit'in koşu bağlantısı PR'da
+tutulur. Önceki üç duruş kanıtı aynen korunur.
+
+Sıradaki ayrı kapı F01-C'dir: güncel canlı ön kontroller, backup/geri dönüş kanıtı,
+ürün sahibi exact canlı uygulama onayı ve uygulama sonrası doğrulamalar.
+Merge ve canlı uygulama için henüz onay alınmadı; F01 kapanmadı, F02 başlamaz.
 
 ## Onaylanan toplu hazırlık — 18 Ekim 2026
 

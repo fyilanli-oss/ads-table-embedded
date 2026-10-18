@@ -1,0 +1,48 @@
+{
+  "checked_at": "2026-10-18",
+  "finding": "TECH01-F04",
+  "status": "closed_product_owner_accepted",
+  "product_owner_closure_accepted": true,
+  "approval_source": "User: Ikiside normal merge edebilirsin; desktop and mobile real Shopify Admin checks accepted after corrected-source deployment",
+  "pull_request": "https://github.com/fyilanli-oss/ads-table-embedded/pull/106",
+  "remediation_evidence": "docs/evidence/A6_TECH_01_F04_POLARIS_PARITY_2026-10-18.json",
+  "previous_prepared_evidence_preserved": true,
+  "pre_acceptance_ci_source": "3e665f647f1c815673b0d6ff05f7e70649d4c4e5",
+  "pre_acceptance_governance_run_id": 39147079706,
+  "pre_acceptance_tests_passed": 423,
+  "final_acceptance_commit_requires_fresh_ci_before_merge": true,
+  "deployment": {
+    "separately_authorized": true,
+    "project_id": "prj_RVvXZGLuj9ItUAqvMJvb1GOTd8Lr",
+    "target": "production",
+    "source_commit": "3e665f647f1c815673b0d6ff05f7e70649d4c4e5",
+    "id": "dpl_DSEy9L1on1s454fE6DTJAv9UAixn",
+    "state": "READY",
+    "verified_alias": "embedded.adstable.app",
+    "alias_error": null,
+    "previous_deployment_id": "dpl_FBfQ8t9mV4vw4PZkKmtgbjDbDqdy",
+    "rollback_performed": false,
+    "create_requests": 1,
+    "official_source_checked": "https://vercel.com/docs/rest-api/deployments/create-a-new-deployment"
+  },
+  "visual_acceptance": {
+    "evidence_type": "explicit_product_owner_report_not_automated_viewport_measurement",
+    "desktop_real_shopify_admin": "accepted_normal",
+    "mobile_real_shopify_admin": "accepted_normal"
+  },
+  "scope": {
+    "dependency_change": false,
+    "visible_copy_or_component_change": false,
+    "secret_read_or_mutation": false,
+    "shopify_app_configuration_mutation": false,
+    "database_mutation": false,
+    "new_preview_infrastructure": false,
+    "F07_release_provenance_closed": false
+  },
+  "F04_closed": true,
+  "remaining_F04_gates": [],
+  "next_finding": "TECH01-F05",
+  "F05_execution_authorized": false,
+  "A6_TECH_01_overall_pass": false,
+  "EO05_may_start": false
+}

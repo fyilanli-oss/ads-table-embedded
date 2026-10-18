@@ -5,8 +5,8 @@
 **Durum:** Bulgular kaydedildi; kritik düzeltme ve yeniden test zorunlu
 **EO-05 kararı:** Kapalı
 
-**Güncel düzeltme durumu:** F01, F02 ve F03 ürün sahibi kabulüyle kapandı.
-Sıradaki F04 başlamadı. İlk denetim bulguları ve başlangıç sayıları aşağıda
+**Güncel düzeltme durumu:** F01–F04 ürün sahibi kabulüyle kapandı.
+Sıradaki F05 başlamadı. İlk denetim bulguları ve başlangıç sayıları aşağıda
 tarihsel baseline olarak korunur; genel A6-TECH-01 henüz PASS değildir.
 
 ## 1. Analist özeti
@@ -198,6 +198,45 @@ env sözleşmesi, örnek dosya, master kayıt ve test aynı authoritative set ü
 birleştirilmelidir.
 
 ### TECH01-F04 — P2 blocker — Shopify Polaris URL bütünlüğü
+
+**Kapanış — 18 Ekim 2026:** Tek Polaris sabiti server ve AppProvider'a verildi;
+gerçek SDK Link preload/script eşliği ve negatif testler geçti. Test edilmiş
+`3e665f647f1c815673b0d6ff05f7e70649d4c4e5` ayrı açık onayla mevcut Production
+adresine deploy edildi. Vercel `READY`, exact commit ve domain alias'ı doğrulandı.
+Ürün sahibi gerçek Shopify Admin masaüstü ve mobil görünümünü normal buldu ve
+PR #106 merge'ünü onayladı. Kanıt:
+`docs/evidence/A6_TECH_01_F04_CLOSURE_2026-10-18.json`.
+F05 başlamaz; F07 release provenance ve genel EO-05 engeli açık kalır.
+Aşağıdaki brief ve teşhis uygulama öncesi tarihsel kayıttır.
+
+#### F04 uygulama öncesi analist brief'i — 18 Ekim 2026
+
+- Amaç: Browser'ın ön yüklediği Polaris ile AppProvider'ın çalıştırdığı Polaris
+  aynı kabul edilmiş RC adresi olsun; gereksiz/yanlış bundle ön yüklenmesin.
+- Başlangıç: `publicConfig.polarisUrl` RC adresi, server config ise library
+  varsayılanında. Başarı: iki değer tek sabitten gelir ve gerçek SDK response
+  Link header'ı ile render edilen script adresi eşleşir.
+- Exact copy: hiçbir görünür metin, buton veya kullanıcı eylemi değişmez.
+- Durum matrisi: loading, empty/not connected, resume, connected, error,
+  reauthorization, cancel ve success akışları mevcut davranışı aynen korur;
+  bu düzeltme yeni durum veya action eklemez. Auth/OAuth/database/provider
+  çağrıları ve üç ürün URL'i değişmez.
+- Component mapping: mevcut `AppProvider` / `polarisUrl` korunur; server
+  `shopifyApp({polarisUrl})` aynı sabiti alır. Sayfa, section, form, modal,
+  navigation ve action componentleri/propları değişmez. Yeni CSS/control yok.
+- Desktop/mobil beklenti: görünüm ve bilgi mimarisi aynı; mevcut RC sürümü ve
+  `@shopify/polaris-types@2.0.0-rc.2` korunur, yükseltme veya stable fallback yok.
+- Resmî kaynak: `https://shopify.dev/docs/apps/build/app-home/polaris2` ve
+  `https://shopify.dev/docs/api/app-home/v2.0-rc/web-components/versioning`.
+  Kontrol tarihi 18 Ekim 2026; kurulu React Router adapter 3.0.1 destekliyor.
+- Kabul: constitution/test/typecheck/build/CI; tek bundle ve Link/script
+  eşliği; ayrı onaylı exact-source deploy sonrası gerçek Shopify Admin
+  desktop ve en az 320 px gerçek mobil kontrolü, açık ürün sahibi kabulü.
+- Kapsam dışı: yeni özellik, dependency yükseltme, yeni app/secret/config,
+  database/provider mutation, auth/data değişikliği. Deploy henüz yetkili değil.
+- Rollback: uygulama kodundaki dar config değişikliği geri alınabilir; deploy
+  gerekirse ayrı onaylı önceki deployment'a dönüş uygulanır. Mevcut secret ve
+  veritabanı değiştirilmez. Görsel kabul kanıtsız PASS yazılmaz.
 
 `AppProvider` Polaris 2 RC URL'sini alırken server `shopifyApp()` yapılandırması
 aynı `polarisUrl` değerini almamaktadır. Kurulu kütüphanenin varsayılanı stable

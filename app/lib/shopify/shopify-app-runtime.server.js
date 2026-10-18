@@ -10,6 +10,7 @@ import {createEncryptedShopifySessionStorage} from "./encrypted-session-storage.
 
 const API_KEY_PATTERN = /^[a-f0-9]{32}$/;
 const APP_URL = "https://embedded.adstable.app";
+const POLARIS_URL = "https://cdn.shopify.com/shopifycloud/polaris-2.0-rc.js";
 const SCOPE_PATTERN = /^(?:[a-z][a-z0-9_]*)(?:,[a-z][a-z0-9_]*)*$/;
 
 function invalidConfiguration(field) {
@@ -66,6 +67,7 @@ export async function createShopifyAppRuntime({
     apiVersion: ApiVersion.October26,
     scopes: config.scopes,
     appUrl: config.appUrl,
+    polarisUrl: POLARIS_URL,
     authPathPrefix: "/auth",
     sessionStorage: runtimeSessionStorage,
     distribution: AppDistribution.AppStore,
@@ -81,7 +83,7 @@ export async function createShopifyAppRuntime({
     tokenVaultStartup,
     publicConfig: Object.freeze({
       apiKey: config.apiKey,
-      polarisUrl: "https://cdn.shopify.com/shopifycloud/polaris-2.0-rc.js",
+      polarisUrl: POLARIS_URL,
     }),
   });
 }

@@ -42,6 +42,34 @@ export async function executeMigration(client, entry, sql) {
   }
 }
 
+const replayRoleSql = Object.freeze({
+  postgres: "set local role postgres",
+  adstable_owner: "set local role adstable_owner",
+  adstable_runtime: "set local role adstable_runtime",
+});
+let roleScope = 0;
+
+// An active transaction is mandatory: SAVEPOINT deliberately refuses autocommit.
+export async function withReplayRole(client, role, operation) {
+  assert.ok(Object.hasOwn(replayRoleSql, role), "unsupported replay role");
+  const previous = (await client.query("select current_user as role")).rows[0].role;
+  assert.ok(Object.hasOwn(replayRoleSql, previous), "unsupported previous replay role");
+  const savepoint = `f01b_role_${++roleScope}`;
+  await client.query(`savepoint ${savepoint}`);
+  try {
+    await client.query(replayRoleSql[role]);
+    const result = await operation();
+    await client.query(replayRoleSql[previous]);
+    await client.query(`release savepoint ${savepoint}`);
+    return result;
+  } catch (error) {
+    // Also restores SET LOCAL changes and clears an aborted SQL subtransaction.
+    await client.query(`rollback to savepoint ${savepoint}`);
+    await client.query(`release savepoint ${savepoint}`);
+    throw error;
+  }
+}
+
 export function inventoryDifferences(expected, actual) {
   return Object.keys(expected).flatMap((category) => {
     const left = expected[category] ?? [];
@@ -55,7 +83,8 @@ export function inventoryDifferences(expected, actual) {
 }
 
 const inventory = async (client) => (await client.query(inventorySql)).rows[0].inventory;
-const countHistory = async (client) => Number((await client.query("select count(*) as count from integrations.provider_authorization_handoffs")).rows[0].count);
+const countHistory = async (client) => withReplayRole(client, "adstable_owner", async () =>
+  Number((await client.query("select count(*) as count from integrations.provider_authorization_handoffs")).rows[0].count));
 const hash = (value) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
 
 async function rollbackScenario(client, name, run) {
@@ -79,12 +108,16 @@ async function expectSqlFailure(client, name, operation, expected) {
 }
 
 async function fixture(client, statuses = []) {
+  return withReplayRole(client, "adstable_owner", () => fixtureAsOwner(client, statuses));
+}
+
+async function fixtureAsOwner(client, statuses) {
   const shopId = `gid://shopify/Shop/99${Date.now()}${randomBytes(3).readUIntBE(0, 3)}`;
   const domain = `f01b-${randomBytes(6).toString("hex")}.myshopify.com`;
   const identity = randomBytes(32);
-  const authority = (await client.query(
+  const authority = await withReplayRole(client, "adstable_runtime", async () => (await client.query(
     "select * from shopify.bootstrap_installation($1,$2,$3,statement_timestamp())", [shopId, domain, identity],
-  )).rows[0];
+  )).rows[0]);
   const workspace = authority.workspace_id;
   const generation = authority.install_generation;
   const installation = (await client.query("select id from shopify.installations where workspace_id=$1", [workspace])).rows[0].id;
@@ -114,6 +147,10 @@ async function fixture(client, statuses = []) {
 }
 
 async function insertCredential(client, authority) {
+  return withReplayRole(client, "adstable_owner", () => insertCredentialAsOwner(client, authority));
+}
+
+async function insertCredentialAsOwner(client, authority) {
   const id = randomUUID();
   await client.query(`insert into integrations.provider_credential_envelopes
     (id,installation_id,workspace_id,install_generation,provider,purpose,payload_ciphertext,nonce,auth_tag,key_version)
@@ -127,12 +164,32 @@ async function assertRetired(client, authority) {
   for (const signature of manifest.retired_function_signatures) {
     assert.equal((await client.query("select to_regprocedure($1)::text as signature", [signature])).rows[0].signature, null);
   }
-  await client.query("set local role adstable_runtime");
+  await withReplayRole(client, "adstable_runtime", async () => {
   const callback = (await client.query("select * from shopify.resolve_active_installation_callback_return($1,$2)",
     [authority.workspace,authority.generation])).rows;
   assert.equal(callback[0].shop_domain, authority.domain);
   await expectSqlFailure(client,"runtime_table_access",() => client.query("select * from integrations.provider_authorization_handoffs"),{code:"42501"});
-  await client.query("reset role");
+  });
+}
+
+async function rolePreflight(client) {
+  for (const role of Object.keys(replayRoleSql)) {
+    assert.equal((await client.query("select pg_has_role(session_user,$1,'SET') as allowed", [role])).rows[0].allowed,
+      true, `existing SET membership required: ${role}; never grant it in the test`);
+    await rollbackScenario(client, `role_boundary_${role}`, async () => {
+      await withReplayRole(client, role, async () => {
+        assert.equal((await client.query("select current_user as role")).rows[0].role, role);
+        if (role === "adstable_runtime") {
+          await expectSqlFailure(client, "runtime_fixture_insert_denied", () => client.query(
+            "insert into app.workspaces default values"), {code: "42501"});
+        }
+      });
+      assert.equal((await client.query("select current_user as role")).rows[0].role, "postgres");
+    });
+  }
+  const bootstrap = "shopify.bootstrap_installation(text,text,bytea,timestamp with time zone)";
+  assert.equal((await client.query("select has_function_privilege('adstable_runtime',$1,'EXECUTE') as allowed", [bootstrap])).rows[0].allowed, true);
+  assert.equal((await client.query("select has_function_privilege('postgres','privacy.process_deletion_queue(integer)','EXECUTE') as allowed")).rows[0].allowed, true);
 }
 
 async function securityProbes(client) {
@@ -154,7 +211,7 @@ async function canonicalDisconnectAndPrivacy(client, authority) {
   const credential = await insertCredential(client, authority);
   const orphan = await insertCredential(client, authority);
   const connection = randomUUID();
-  await client.query("set local role adstable_runtime");
+  await withReplayRole(client, "adstable_runtime", async () => {
   await client.query(`select * from integrations.stage_provider_account_selection(
     $1,$2,$3,'google_ads',$4,array['adwords'],statement_timestamp())`,
   [connection,authority.workspace,authority.generation,credential]);
@@ -172,14 +229,17 @@ async function canonicalDisconnectAndPrivacy(client, authority) {
   const disconnected = (await client.query(sql,args)).rows[0];
   assert.equal(disconnected.lifecycle_status,"disconnected");
   assert.deepEqual((await client.query(sql,args)).rows[0],disconnected,"disconnect replay must be idempotent");
-  await client.query("reset role");
+  });
+  await withReplayRole(client, "adstable_owner", async () => {
   assert.equal((await client.query("select count(*)::int as n from integrations.provider_credential_envelopes where id=$1",[credential])).rows[0].n,0);
   assert.equal((await client.query("select count(*)::int as n from integrations.provider_credential_envelopes where id=$1",[orphan])).rows[0].n,1,"F02 orphan must remain untouched");
-  await client.query("set local role adstable_runtime");
+  });
+  await withReplayRole(client, "adstable_runtime", async () => {
   await client.query(`select privacy.request_workspace_deletion($1,$2,$3,$4,$5,statement_timestamp())`,
     [`f01b-delete-${randomUUID()}`,authority.shopId,authority.domain,authority.generation,authority.identity]);
-  await client.query("reset role");
-  const worker = (await client.query("select * from privacy.process_deletion_queue(25)")).rows[0];
+  });
+  const worker = await withReplayRole(client, "postgres", async () =>
+    (await client.query("select * from privacy.process_deletion_queue(25)")).rows[0]);
   assert.equal(worker.failed_count,0);
   assert.equal(worker.completed_count,1);
   assert.equal(await countHistory(client),0,"privacy cascade must remove historical handoffs");
@@ -210,7 +270,7 @@ async function scenarios(client) {
   }
   await rollbackScenario(client,"restrict_dependency_rollback",async()=>{
     await fixture(client);
-    await client.query(`create view public.f01b_dependency as select * from integrations.load_current_provider_authorization_handoff(null::uuid,null::bigint,null::text,null::timestamptz)`);
+    await withReplayRole(client, "adstable_owner", () => client.query(`create view integrations.f01b_dependency as select * from integrations.load_current_provider_authorization_handoff(null::uuid,null::bigint,null::text,null::timestamptz)`));
     const before=await inventory(client);
     await expectSqlFailure(client,"restrict_dependency",()=>client.query(retirementBody),{code:"2BP01"});
     assert.deepEqual(await inventory(client),before,"late DDL failure must roll back earlier replacement and drops");
@@ -220,7 +280,7 @@ async function scenarios(client) {
   await blocker.connect(); await contender.connect();
   try {
     await blocker.query("begin");
-    await blocker.query("lock table integrations.provider_authorization_handoffs in access share mode");
+    await withReplayRole(blocker, "adstable_owner", () => blocker.query("lock table integrations.provider_authorization_handoffs in access share mode"));
     await contender.query("begin");
     await expectSqlFailure(contender,"concurrent_lock",()=>contender.query(retirementBody),{code:"55P03"});
     console.log("F01B_SCENARIO_PASS concurrent_lock_timeout");
@@ -252,8 +312,13 @@ async function main() {
       const live=JSON.parse(read("docs/evidence/A6_TECH_01_F01_LIVE_SCHEMA_2026-10-18.json")).inventory;
       beforeDifferences=inventoryDifferences(live,before);
       if(beforeDifferences.length) console.log(`F01B_LIVE_PARITY_DIFFERENCES ${JSON.stringify(beforeDifferences)}`);
+      assert.equal(beforeDifferences.length,0,"historical replay differs from captured live schema; review required");
+      console.log("F01B_LIVE_PARITY_PASS");
+      await rolePreflight(client);
       await scenarios(client);
-      assert.equal((await client.query("select count(*)::int as n from app.workspaces")).rows[0].n,0,"scenario fixtures must roll back to zero");
+      await rollbackScenario(client, "fixtures_rolled_back", () => withReplayRole(client, "adstable_owner", async () => {
+        assert.equal((await client.query("select count(*)::int as n from app.workspaces")).rows[0].n,0,"scenario fixtures must roll back to zero");
+      }));
       await client.query(retirementSql);
     }
     const after=await inventory(client);

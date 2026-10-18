@@ -2,7 +2,27 @@
 
 **Tarih:** 18 Ekim 2026
 
-**Durum:** İkinci koşuda 38 tarihsel migration geçti; ilk sentetik fixture'ın rol bağlamında duruldu. F01 açık, PR draft.
+**Durum:** İkinci koşudaki fixture rol hatasının kapsamlı test-aracı düzeltmesi onaylandı; yeni izole koşu bekleniyor. F01 açık, PR draft.
+
+## Onaylanan test rol sınırları
+
+| İşlem | Mevcut rol |
+| --- | --- |
+| Bootstrap, callback, account selection, disconnect, deletion request | `adstable_runtime` |
+| Sentetik satır hazırlama, doğrudan satır kontrolü, bağımlılık view'ı ve lock fixture'ı | `adstable_owner` |
+| Migration koordinasyonu, katalog envanteri ve privacy queue worker | `postgres` |
+
+Her rol kapsamı aktif transaction içinde ayrı savepoint kullanır. Başarıda
+önceki role geri döner ve değişiklikleri korur; hatada kapsam rollback edilir,
+rol geri gelir ve hata tekrar denenmeden yukarı taşınır. İç içe runtime çağrısı
+owner'a döner; doğrudan session rolüne sıçramaz. Yeni grant veya rol üyeliği
+üretilmez. Mevcut `SET` yetkileri, gerçek rol geçişleri ve runtime'ın doğrudan
+fixture INSERT yasağı yeni koşuda senaryolardan önce sınanır.
+
+Bağımlılık testi view'ı public yerine private `integrations` schema'sında owner
+tarafından oluşturulur; uygulama tablosu veya kalıcı migration değildir ve
+senaryoyla birlikte rollback olur. Canlı metadata farkı varsa senaryolara
+başlamadan durulur; fark yoksa ayrı `F01B_LIVE_PARITY_PASS` kaydı yazılır.
 
 ## İkinci gerçek koşunun sonucu
 
@@ -23,7 +43,8 @@ Sonraki öneri, yalnız test aracındaki tüm rol sınırlarını birlikte doğr
 bootstrap ve kullanıcı akışları runtime, doğrudan sentetik veri/DDL hazırlığı
 owner, privacy worker mevcut postgres izniyle çalışmalı. Rol geçişleri açıkça
 geri alınmalı; her adımın yetkisi yeni koşudan önce gözden geçirilmelidir.
-Bu ilave düzeltme ve yeni database koşusu henüz yetkilendirilmedi/yapılmadı.
+Bu ilave test-aracı düzeltmesi ve yeni izole koşu kullanıcı tarafından onaylandı.
+İkinci koşunun kanıtı değiştirilmez; yeni koşunun sonucu ayrıca kaydedilecektir.
 
 404 yerel test ve kaynak commit'in GitHub repository kontrolleri PASS'tir;
 gerçek database kapısı FAIL'dir. Bu sonucu kaydeden belge commit'i `[skip ci]`

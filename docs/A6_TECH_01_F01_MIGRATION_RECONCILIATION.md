@@ -108,6 +108,10 @@ bir canlı okuma yapmaz. Geçmesi güncel canlı schema parity PASS anlamına ge
 
 ## F01-B — İzole database provası
 
+Tekrarlanabilir GitHub runner düzeneği ve sonuç kaydı
+`docs/A6_TECH_01_F01B_DATABASE_REPLAY.md` dosyasındadır. Yerel test ile gerçek
+database koşusunun durumları ayrı tutulur.
+
 Bu makinede Docker yoktur. F01-A kapsamında Docker kurulmadı veya yeni Supabase
 projesi açılmadı. Sonraki kapıda onaylı izole PostgreSQL 17/Supabase ortamı gerekir.
 Production credential veya business data bu ortama taşınmaz.

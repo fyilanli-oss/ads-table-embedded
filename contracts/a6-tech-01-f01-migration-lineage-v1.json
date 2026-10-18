@@ -9,6 +9,12 @@
   "migration_history_repair_authorized": false,
   "live_mutation_authorized": false,
   "f01_closed": false,
+  "replay_document": "docs/A6_TECH_01_F01B_DATABASE_REPLAY.md",
+  "replay_status": "isolated_database_replay_pass_live_retirement_pending",
+  "replay_pass_evidence": "docs/evidence/A6_TECH_01_F01B_DATABASE_REPLAY_PASS_2026-10-18.json",
+  "latest_replay_stop_evidence": "docs/evidence/A6_TECH_01_F01B_THIRD_REPLAY_STOP_2026-10-18.json",
+  "replay_stop_evidence": "docs/evidence/A6_TECH_01_F01B_FIRST_REPLAY_STOP_2026-10-18.json",
+  "replay_workflow": ".github/workflows/database-integrity.yml",
   "next_finding_may_start": false,
   "historical_migrations": [
     {
@@ -219,7 +225,8 @@
       "source_commit": "785ffc7289be163a2527a31975082d5af44b72bc",
       "repository_sql_sha256": "cbf710066982ce4378fe210268a5640157df004d84a63657d6f4339612b34627",
       "applied_sql_sha256": "eded5d169439648af8f1af3d8d08f7e7b278f7b3cf197ce3ac6b6346563b1a92",
-      "applied_sql_difference": "live_session_role_wrapper_only"
+      "applied_sql_difference": "live_session_role_wrapper_only",
+      "execution_context": {"role": "adstable_owner", "scope": "transaction_local"}
     },
     {
       "version": "20261009150114",
@@ -229,7 +236,8 @@
       "source_commit": "785ffc7289be163a2527a31975082d5af44b72bc",
       "repository_sql_sha256": "a6b61a45898a6c6a1f63bf62d0083416e55543cad8c0b4cf3e6c84a82eec4f55",
       "applied_sql_sha256": "0a3968515b852ff0c39eaed3098406e0c0f88846b82c706d411f5cee400e5487",
-      "applied_sql_difference": "live_session_role_wrapper_only"
+      "applied_sql_difference": "live_session_role_wrapper_only",
+      "execution_context": {"role": "adstable_owner", "scope": "transaction_local"}
     },
     {
       "version": "20261009150614",
@@ -239,7 +247,8 @@
       "source_commit": "785ffc7289be163a2527a31975082d5af44b72bc",
       "repository_sql_sha256": "093761bdc5c2976f5d05f9f4bb044e88491f9f49222ad4a13dcf9d2df6f6188b",
       "applied_sql_sha256": "e004de454e90d0ba3f00c7844641148d160de1eca6dbece836b3dd446d20e78c",
-      "applied_sql_difference": "live_session_role_wrapper_only"
+      "applied_sql_difference": "live_session_role_wrapper_only",
+      "execution_context": {"role": "adstable_owner", "scope": "transaction_local"}
     },
     {
       "version": "20261009151123",
@@ -249,7 +258,8 @@
       "source_commit": "785ffc7289be163a2527a31975082d5af44b72bc",
       "repository_sql_sha256": "f5b5a6457b39d16407e5168c003876c54eddd003528c9f4887f38d6c2509e695",
       "applied_sql_sha256": "e6ce6e20b723f24c12ef404e5ec3894a67a540908740676743b329af7233f7ec",
-      "applied_sql_difference": "live_session_role_wrapper_only"
+      "applied_sql_difference": "live_session_role_wrapper_only",
+      "execution_context": {"role": "adstable_owner", "scope": "transaction_local"}
     },
     {
       "version": "20261011114438",

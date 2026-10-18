@@ -3,6 +3,23 @@ import {readFileSync, readdirSync} from "node:fs";
 import {fileURLToPath} from "node:url";
 import path from "node:path";
 
+const ownerContextMigrations = new Map([
+  ["20261009145154", "eo03d_qualify_lifecycle_event_columns"],
+  ["20261009150114", "eo03d_qualify_lifecycle_update_columns"],
+  ["20261009150614", "eo03d_qualify_finalize_update_columns"],
+  ["20261009151123", "eo03d_disambiguate_reconnect_conflict"],
+]);
+
+export function validExecutionContext(entry) {
+  const requiresOwner = ownerContextMigrations.get(entry.version) === entry.name;
+  if (!requiresOwner) return entry.execution_context === undefined
+    && entry.applied_sql_difference !== "live_session_role_wrapper_only";
+  const context = entry.execution_context;
+  return entry.applied_sql_difference === "live_session_role_wrapper_only"
+    && context?.role === "adstable_owner" && context.scope === "transaction_local"
+    && Object.keys(context).length === 2;
+}
+
 export function sqlHash(sql) {
   return createHash("sha256").update(sql.replaceAll("\r\n", "\n").trim()).digest("hex");
 }
@@ -16,6 +33,7 @@ export function validateMigrationLineage({manifest, files, liveLedger}) {
     }
   }
   for (const entry of expected) {
+    if (!validExecutionContext(entry)) errors.push(`INVALID_EXECUTION_CONTEXT:${entry.name}`);
     if (!/^\d{14}$/.test(entry.version)) errors.push(`INVALID_VERSION:${entry.name}`);
     if (!/^[a-z0-9_]+$/.test(entry.name)) errors.push("INVALID_MIGRATION_NAME");
     if (!/^[0-9a-f]{64}$/.test(entry.repository_sql_sha256 ?? "")) {

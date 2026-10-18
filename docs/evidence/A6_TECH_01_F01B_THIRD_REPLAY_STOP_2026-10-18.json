@@ -1,0 +1,38 @@
+{
+  "checked_at": "2026-10-18",
+  "status": "stopped_at_missing_isolated_runtime_set_membership",
+  "source_commit": "71ae55aa154ad6492c42ec6ec893cbd4e65361ce",
+  "workflow_run_id": 39134192984,
+  "job_id": 117695585682,
+  "workflow_url": "https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/39134192984",
+  "production_mutation": false,
+  "historical_sql_changed": false,
+  "new_grants_issued": false,
+  "successfully_applied_historical_migrations": 38,
+  "live_schema_parity": "pass_explicit_F01B_LIVE_PARITY_PASS",
+  "role_boundary_scenarios_passed": [
+    "postgres",
+    "adstable_owner"
+  ],
+  "failed_precondition": {
+    "query": "select pg_has_role(session_user,'adstable_runtime','SET')",
+    "expected": true,
+    "actual": false
+  },
+  "error": {
+    "code": "ERR_ASSERTION",
+    "message": "existing SET membership required: adstable_runtime; never grant it in the test"
+  },
+  "retirement_scenarios": "not_started",
+  "second_clean_replay": "not_started",
+  "isolated_environment_cleanup": "success",
+  "manual_retry_requested": false,
+  "repository_governance": {
+    "run_id": 39134193062,
+    "result": "success",
+    "local_tests": 408
+  },
+  "next_proposal_requires_approval": "test_only_runtime_set_membership_in_ephemeral_runner_with_explicit_before_after_membership_evidence_no_production_or_historical_sql_change",
+  "f01_closed": false,
+  "next_finding_may_start": false
+}

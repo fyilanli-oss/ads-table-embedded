@@ -11,6 +11,14 @@ const evidence = JSON.parse(read("docs/evidence/A6_TECH_01_F01_MIGRATION_LEDGER_
 const files = loadMigrationFiles(root);
 const validate = (overrides = {}) => validateMigrationLineage({manifest, files, liveLedger: evidence.migrations, ...overrides});
 
+test("lineage rejects missing owner context and context assigned to an unrelated migration", () => {
+  const changed = structuredClone(manifest);
+  const owner = changed.historical_migrations.find(entry => entry.execution_context);
+  changed.historical_migrations[0].execution_context = owner.execution_context;
+  delete owner.execution_context;
+  assert.equal(validate({manifest: changed}).filter(error => error.startsWith("INVALID_EXECUTION_CONTEXT:")).length, 2);
+});
+
 test("historical migration versions, names and SQL fingerprints match the captured applied ledger", () => {
   assert.equal(manifest.historical_migrations.length, 38);
   assert.deepEqual(validate(), []);

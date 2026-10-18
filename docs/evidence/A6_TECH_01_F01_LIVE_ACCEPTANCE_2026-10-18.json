@@ -1,0 +1,405 @@
+{
+  "checked_at": "2026-10-18",
+  "status": "live_migration_and_postchecks_pass_closure_acceptance_pending",
+  "source_main_commit": "e1a139d38a326b15f702fc9d741a7d676cf03b3c",
+  "source_pr": 101,
+  "approval": {
+    "source": "explicit_product_owner_approval_in_current_conversation",
+    "scoped_recovery_accepted_for_F01_only": true,
+    "live_migration_approved": true,
+    "full_database_backup_available": false,
+    "blanket_future_mutation_authority": false
+  },
+  "migration": {
+    "name": "a6tech01_retire_provider_authorization_handoffs",
+    "prepared_version": "20261018131548",
+    "applied_version": "20261018152910",
+    "sql_sha256": "b67db0a415a1dc17b5af2d4e904d4eb7d500e6eb96eddaa5f43a2c78818e40ca",
+    "exact_source_sql_equal_to_applied_ledger": true,
+    "attempts": 1,
+    "provider_result": {
+      "success": true
+    },
+    "original_38_version_name_sql_hashes_unchanged": true,
+    "ledger_repair_performed": false
+  },
+  "prechecks": {
+    "ledger": [
+      {
+        "name": "eo02a_private_schema_roles",
+        "version": "20261006133830"
+      },
+      {
+        "name": "eo02a_runtime_schema_usage",
+        "version": "20261006134013"
+      },
+      {
+        "name": "eo02b_workspace_installation_authority",
+        "version": "20261006140517"
+      },
+      {
+        "name": "eo02b_remove_redundant_indexes",
+        "version": "20261006140629"
+      },
+      {
+        "name": "eo02b_acceptance_probe",
+        "version": "20261006140828"
+      },
+      {
+        "name": "eo02c_shopify_app_pricing_entitlement",
+        "version": "20261006142841"
+      },
+      {
+        "name": "eo02c_disambiguate_upserts",
+        "version": "20261006142953"
+      },
+      {
+        "name": "eo02c_acceptance_probe",
+        "version": "20261006143039"
+      },
+      {
+        "name": "eo02c_encrypted_shopify_runtime_sessions",
+        "version": "20261008104511"
+      },
+      {
+        "name": "eo02d_privacy_lifecycle",
+        "version": "20261008140818"
+      },
+      {
+        "name": "eo02bc_installed_shop_authority",
+        "version": "20261009070314"
+      },
+      {
+        "name": "eo02d_durable_deletion_worker",
+        "version": "20261009074901"
+      },
+      {
+        "name": "eo02d_worker_conditional_expression_fix",
+        "version": "20261009075721"
+      },
+      {
+        "name": "eo03a_oauth_transaction_boundary",
+        "version": "20261009091622"
+      },
+      {
+        "name": "eo03a_oauth_installation_fk_index",
+        "version": "20261009092144"
+      },
+      {
+        "name": "eo03b_token_vault",
+        "version": "20261009113645"
+      },
+      {
+        "name": "eo03b_pkce_workspace_fk_index",
+        "version": "20261009115314"
+      },
+      {
+        "name": "eo03c_connection_account_authority",
+        "version": "20261009130713"
+      },
+      {
+        "name": "eo03c_owner_policies_fk_indexes",
+        "version": "20261009131339"
+      },
+      {
+        "name": "eo03d_provider_connection_lifecycle",
+        "version": "20261009141549"
+      },
+      {
+        "name": "eo03d_qualify_lifecycle_event_columns",
+        "version": "20261009145154"
+      },
+      {
+        "name": "eo03d_qualify_lifecycle_update_columns",
+        "version": "20261009150114"
+      },
+      {
+        "name": "eo03d_qualify_finalize_update_columns",
+        "version": "20261009150614"
+      },
+      {
+        "name": "eo03d_disambiguate_reconnect_conflict",
+        "version": "20261009151123"
+      },
+      {
+        "name": "eo04c_provider_authorization_handoff",
+        "version": "20261011114438"
+      },
+      {
+        "name": "eo04c_handoff_installation_fk_index",
+        "version": "20261011114809"
+      },
+      {
+        "name": "eo04c_callback_return_and_handoff_cancel",
+        "version": "20261011123503"
+      },
+      {
+        "name": "eo04c_durable_selection_and_reconnect",
+        "version": "20261011163811"
+      },
+      {
+        "name": "eo04c_disconnect_handoff_credential_release",
+        "version": "20261011170151"
+      },
+      {
+        "name": "eo04c_finalize_stranded_invalid_google_disconnects",
+        "version": "20261011170441"
+      },
+      {
+        "name": "eo04c_canonical_google_account_selection",
+        "version": "20261011181612"
+      },
+      {
+        "name": "eo04c_qualify_account_selection_columns",
+        "version": "20261011183443"
+      },
+      {
+        "name": "eo04c_reporting_account_completion",
+        "version": "20261011194721"
+      },
+      {
+        "name": "eo04d_klaviyo_spend_ledger",
+        "version": "20261013173301"
+      },
+      {
+        "name": "eo04d_klaviyo_same_day_spend_updates",
+        "version": "20261013195248"
+      },
+      {
+        "name": "eo04d_klaviyo_reconnect_same_day_spend",
+        "version": "20261013201049"
+      },
+      {
+        "name": "eo04d_klaviyo_reconnect_timestamp_order",
+        "version": "20261013203128"
+      },
+      {
+        "name": "eo04d_klaviyo_reauthorization_state",
+        "version": "20261017135321"
+      }
+    ],
+    "connections": 3,
+    "credentials": 4,
+    "history_rows": 8,
+    "history_sha256": "f0ec37f341d0b5fecbd8a7b5dc021f91ba7289c900781969670a498d42b6984b",
+    "legacy_functions": 6,
+    "owner_set_allowed": true,
+    "connections_sha256": "2a760704c4cc5025cefb4eea30d727bae79cc020772604f734959b89f41aada2",
+    "credentials_sha256": "7910e1a0ed25e3686475aa3ba41b528c42ffb3d557436b0da02762130ea64d5e",
+    "history_nonterminal": 0,
+    "history_credential_refs": 0,
+    "callback_runtime_execute": true,
+    "finalize_runtime_execute": true
+  },
+  "postchecks": {
+    "ledger": [
+      {
+        "name": "eo02a_private_schema_roles",
+        "version": "20261006133830"
+      },
+      {
+        "name": "eo02a_runtime_schema_usage",
+        "version": "20261006134013"
+      },
+      {
+        "name": "eo02b_workspace_installation_authority",
+        "version": "20261006140517"
+      },
+      {
+        "name": "eo02b_remove_redundant_indexes",
+        "version": "20261006140629"
+      },
+      {
+        "name": "eo02b_acceptance_probe",
+        "version": "20261006140828"
+      },
+      {
+        "name": "eo02c_shopify_app_pricing_entitlement",
+        "version": "20261006142841"
+      },
+      {
+        "name": "eo02c_disambiguate_upserts",
+        "version": "20261006142953"
+      },
+      {
+        "name": "eo02c_acceptance_probe",
+        "version": "20261006143039"
+      },
+      {
+        "name": "eo02c_encrypted_shopify_runtime_sessions",
+        "version": "20261008104511"
+      },
+      {
+        "name": "eo02d_privacy_lifecycle",
+        "version": "20261008140818"
+      },
+      {
+        "name": "eo02bc_installed_shop_authority",
+        "version": "20261009070314"
+      },
+      {
+        "name": "eo02d_durable_deletion_worker",
+        "version": "20261009074901"
+      },
+      {
+        "name": "eo02d_worker_conditional_expression_fix",
+        "version": "20261009075721"
+      },
+      {
+        "name": "eo03a_oauth_transaction_boundary",
+        "version": "20261009091622"
+      },
+      {
+        "name": "eo03a_oauth_installation_fk_index",
+        "version": "20261009092144"
+      },
+      {
+        "name": "eo03b_token_vault",
+        "version": "20261009113645"
+      },
+      {
+        "name": "eo03b_pkce_workspace_fk_index",
+        "version": "20261009115314"
+      },
+      {
+        "name": "eo03c_connection_account_authority",
+        "version": "20261009130713"
+      },
+      {
+        "name": "eo03c_owner_policies_fk_indexes",
+        "version": "20261009131339"
+      },
+      {
+        "name": "eo03d_provider_connection_lifecycle",
+        "version": "20261009141549"
+      },
+      {
+        "name": "eo03d_qualify_lifecycle_event_columns",
+        "version": "20261009145154"
+      },
+      {
+        "name": "eo03d_qualify_lifecycle_update_columns",
+        "version": "20261009150114"
+      },
+      {
+        "name": "eo03d_qualify_finalize_update_columns",
+        "version": "20261009150614"
+      },
+      {
+        "name": "eo03d_disambiguate_reconnect_conflict",
+        "version": "20261009151123"
+      },
+      {
+        "name": "eo04c_provider_authorization_handoff",
+        "version": "20261011114438"
+      },
+      {
+        "name": "eo04c_handoff_installation_fk_index",
+        "version": "20261011114809"
+      },
+      {
+        "name": "eo04c_callback_return_and_handoff_cancel",
+        "version": "20261011123503"
+      },
+      {
+        "name": "eo04c_durable_selection_and_reconnect",
+        "version": "20261011163811"
+      },
+      {
+        "name": "eo04c_disconnect_handoff_credential_release",
+        "version": "20261011170151"
+      },
+      {
+        "name": "eo04c_finalize_stranded_invalid_google_disconnects",
+        "version": "20261011170441"
+      },
+      {
+        "name": "eo04c_canonical_google_account_selection",
+        "version": "20261011181612"
+      },
+      {
+        "name": "eo04c_qualify_account_selection_columns",
+        "version": "20261011183443"
+      },
+      {
+        "name": "eo04c_reporting_account_completion",
+        "version": "20261011194721"
+      },
+      {
+        "name": "eo04d_klaviyo_spend_ledger",
+        "version": "20261013173301"
+      },
+      {
+        "name": "eo04d_klaviyo_same_day_spend_updates",
+        "version": "20261013195248"
+      },
+      {
+        "name": "eo04d_klaviyo_reconnect_same_day_spend",
+        "version": "20261013201049"
+      },
+      {
+        "name": "eo04d_klaviyo_reconnect_timestamp_order",
+        "version": "20261013203128"
+      },
+      {
+        "name": "eo04d_klaviyo_reauthorization_state",
+        "version": "20261017135321"
+      },
+      {
+        "name": "a6tech01_retire_provider_authorization_handoffs",
+        "version": "20261018152910"
+      }
+    ],
+    "connections": 3,
+    "credentials": 4,
+    "history_rows": 8,
+    "history_sha256": "f0ec37f341d0b5fecbd8a7b5dc021f91ba7289c900781969670a498d42b6984b",
+    "legacy_functions": 0,
+    "owner_set_allowed": true,
+    "connections_sha256": "2a760704c4cc5025cefb4eea30d727bae79cc020772604f734959b89f41aada2",
+    "credentials_sha256": "7910e1a0ed25e3686475aa3ba41b528c42ffb3d557436b0da02762130ea64d5e",
+    "history_nonterminal": 0,
+    "history_credential_refs": 0,
+    "callback_runtime_execute": true,
+    "finalize_runtime_execute": true
+  },
+  "catalog": {
+    "all_nine_categories_match_expected_post_migration": true,
+    "only_changed_categories": [
+      "functions",
+      "policies"
+    ],
+    "removed_legacy_functions": 6,
+    "finalize_definition_sha256": "9559540ab6402b11631c7f528c82c12569c489d9a1945091a104539e8d1b52cb",
+    "callback_definition_and_grants_unchanged": true,
+    "table_forced_rls_preserved": true,
+    "runtime_direct_table_access": false,
+    "legacy_table_owner_policy": "SELECT_only"
+  },
+  "advisors": {
+    "security_findings": 0,
+    "performance_missing_fk_indexes": 2,
+    "missing_indexes_owned_by": "TECH01-F08",
+    "unused_index_info": 12,
+    "new_performance_findings": false
+  },
+  "behavioral_verification": {
+    "isolated_replay_evidence": "docs/evidence/A6_TECH_01_F01B_DATABASE_REPLAY_PASS_2026-10-18.json",
+    "scoped_recovery_evidence": "docs/evidence/A6_TECH_01_F01C_SCOPED_RECOVERY_PASS_2026-10-18.json",
+    "live_callback_disconnect_privacy_mutating_probes": "not_run_on_real_connections; exact_tested_definitions_and_effective_grants_verified",
+    "real_provider_api_calls": 0
+  },
+  "scope": {
+    "F02_credential_untouched": true,
+    "production_credentials_exported": false,
+    "vercel_or_shopify_config_changed": false
+  },
+  "initial_read_only_probe_error": {
+    "code": "42703",
+    "cause": "agent_used_t.id_instead_of_t.oauth_transaction_id",
+    "live_mutation_before_error": false,
+    "retry_only_after_explicit_user_approval": true
+  },
+  "f01_closed": false,
+  "next_finding_may_start": false
+}

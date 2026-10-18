@@ -70,6 +70,12 @@ repair, canlı uygulama, F01 kapanışı veya EO-05 başlangıcını yetkilendir
 Denetim düzeltmeleri F01 → F02 → F03 → F04 → F05 → F06 → F07 → F08 → F09 → F10
 sırasıyla ilerler; F01 kapanmadan F02 başlamaz.
 
+F01 canlı retirement 18 Ekim 2026'da ayrı ürün sahibi onayıyla uygulandı;
+postcheck kanıtı `docs/evidence/A6_TECH_01_F01_LIVE_ACCEPTANCE_2026-10-18.json`.
+İlk 38 migration değişmedi. Supabase'in verdiği yeni version `20261018152910`
+ile repository eşlenmiştir. Kapanış kaydının merge/kabulü beklenir; bu kayıt
+F02 başlangıcı veya yeni canlı mutation yetkisi değildir.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

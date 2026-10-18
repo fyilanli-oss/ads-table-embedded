@@ -7,7 +7,7 @@ import {loadMigrationFiles, sqlHash, validateMigrationLineage} from "../tools/ch
 const root = fileURLToPath(new URL("../", import.meta.url));
 const read = (name) => readFileSync(new URL(`../${name}`, import.meta.url), "utf8");
 const manifest = JSON.parse(read("contracts/a6-tech-01-f01-migration-lineage-v1.json"));
-const evidence = JSON.parse(read("docs/evidence/A6_TECH_01_F01_MIGRATION_LEDGER_2026-10-18.json"));
+const evidence = JSON.parse(read(manifest.live_ledger_evidence));
 const files = loadMigrationFiles(root);
 const validate = (overrides = {}) => validateMigrationLineage({manifest, files, liveLedger: evidence.migrations, ...overrides});
 
@@ -63,9 +63,9 @@ test("captured applied SQL cannot change behind an unchanged version and name", 
 test("missing fingerprints cannot bypass historical or pending SQL protection", () => {
   const changed = structuredClone(manifest);
   delete changed.historical_migrations[0].repository_sql_sha256;
-  delete changed.pending_migrations[0].repository_sql_sha256;
+  delete changed.forward_migrations[0].repository_sql_sha256;
   assert.equal(validate({manifest: changed}).filter((error) => error.startsWith("SQL_HASH_REQUIRED:")).length, 2);
-  const pending = manifest.pending_migrations[0].file;
+  const pending = manifest.forward_migrations[0].file;
   assert.ok(validate({files: {...files, [pending]: `${files[pending]}\nselect 1;`}})
     .includes(`SQL_CONTENT_CHANGED:${pending}`));
 });
@@ -79,7 +79,16 @@ test("six recovered files match applied SQL while known historical wrapper diffe
   for (const entry of differences) assert.notEqual(entry.repository_sql_sha256, entry.applied_sql_sha256);
 });
 
-const retirement = read(manifest.pending_migrations[0].file);
+const retirement = read(manifest.forward_migrations[0].file);
+
+test("applied forward migration cannot disappear from the live ledger or change its hash", () => {
+  assert.equal(manifest.pending_migrations.length, 0);
+  assert.equal(manifest.forward_migrations[0].applied, true);
+  assert.ok(validate({liveLedger: evidence.migrations.slice(0, 38)}).some(error => error.startsWith("LIVE_LEDGER_MISMATCH:")));
+  const changed = structuredClone(evidence.migrations);
+  changed.at(-1).applied_sql_sha256 = "0".repeat(64);
+  assert.ok(validate({liveLedger: changed}).some(error => error.startsWith("LIVE_LEDGER_MISMATCH:")));
+});
 test("retirement requires terminal credential-free handoffs under a bounded exclusive lock", () => {
   assert.match(retirement, /set local lock_timeout = '5s'/);
   assert.match(retirement, /set local statement_timeout = '30s'/);

@@ -2,7 +2,37 @@
 
 **Tarih:** 18 Ekim 2026
 
-**Durum:** F01-A repository hazırlığı; F01 açık, canlı uygulama yapılmadı.
+**Güncel durum:** F01 canlı uygulama ve son kontroller PASS; kapanış kabulü bekleniyor.
+
+## 18 Ekim 2026 — Canlı uygulama sonucu
+
+Ürün sahibi PR #101 merge'ünü, ardından yalnız bu işlem için test edilmiş dar
+şema geri dönüşünün kabulünü ve exact retirement migration'ının uygulanmasını
+ayrı ayrı onayladı. Bu kabul tam database backup/PITR bulunduğu anlamına gelmez.
+
+- Migration bir kez uygulandı ve başarılı oldu. Supabase'in verdiği gerçek
+  version `20261018152910`; hazırlık version'ı `20261018131548` idi. Yalnız yeni
+  dosya adı gerçek version'a eşlendi; SQL gövdesi ve ilk 38 kayıt değiştirilmedi.
+- Altı eski fonksiyon kaldırıldı. Aktif callback aynen korundu; finalize gövdesi
+  izole ortamda test edilen hash ile eşleşti. Runtime EXECUTE yetkileri korundu.
+- Üç connection, dört credential ve sekiz tarihsel satırın öncesi/sonrası
+  parmak izleri aynı. F02'deki sahipsiz credential'a dokunulmadı.
+- Dokuz şema kategorisi beklenen nihai yapıyla karşılaştırıldı: yalnız planlanan
+  function/policy farkları var. Forced RLS ve function-only sınırı korundu.
+- Security Advisor: 0 bulgu. Önceden F08'e kaydedilen iki FK index eksiği ve
+  12 unused-index INFO bildirimi sürüyor; bunlar bu işlemde değiştirilmedi.
+- Gerçek bağlantılar üzerinde disconnect veya privacy silme testi yapılmadı;
+  bu davranışların izole prova kanıtı ile canlı definition/grant eşliği birlikte
+  kullanıldı. Gerçek provider çağrısı yapılmadı.
+
+Kanıt: `docs/evidence/A6_TECH_01_F01_LIVE_ACCEPTANCE_2026-10-18.json`.
+Güncel 39 kayıt: `docs/evidence/A6_TECH_01_F01_POST_MIGRATION_LEDGER_2026-10-18.json`.
+İlk name-only kontrol sorgusunda ajan yanlış kolon kullandığı için `42703`
+alındı; mutation yapılmadan duruldu. Düzeltme yalnız yeni kullanıcı onayından
+sonra çalıştırıldı. Bu ilk hata kanıtta korunur.
+
+Kalan tek kapı kapanış kaydının CI/merge ve ürün sahibi kabulüdür. F01 hâlâ
+otomatik kapatılmaz; F02 başlamaz. Aşağıdaki hazırlık anlatımı tarihsel bağlamdır.
 
 ## Kullanıcı açısından sonuç
 

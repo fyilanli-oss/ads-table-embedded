@@ -96,6 +96,41 @@ ve canlı schema parity testi geçmelidir.
 
 ### TECH01-F02 — P1 — Sahipsiz şifreli Google credential
 
+**18 Ekim 2026 incelemesi:** Tek Google kalıntısının connection ve handoff
+referansı yok; aynı sahibi için süresi dolmamış OAuth işlemi de yok. Kayıt
+11 Ekim 15:50:07 UTC'de oluşmuş. Yakın OAuth/handoff geçmişi
+`SUPERSEDED_BY_NEW_AUTHORIZATION` ile sonlanmış. Credential bağlantısı eskiden
+boşaltıldığı için bu tarih eşliği doğrudan ID lineage kanıtı değildir.
+
+Eski `create_provider_authorization_handoff` fonksiyonunda somut hata bulundu:
+`credential_id = null` güncellemesinden sonra `RETURNING handoff.credential_id`
+yeni NULL değeri topluyor, dolayısıyla eski envelope silinemiyordu. Bu fonksiyon
+F01'de kaldırılmıştır. Güncel `stage_provider_account_selection` eski ID'yi
+güncellemeden önce değişkende tutar ve aynı transaction içinde siler. Gerçek
+PostgreSQL regresyon senaryosu mevcut izole runner'a eklenmiştir; CI geçmeden
+bu yeni senaryo PASS sayılmaz. Application veya historical SQL değiştirilmedi.
+
+Kanıt: `docs/evidence/A6_TECH_01_F02_DIAGNOSIS_2026-10-18.json`.
+Canlı silme yetkisi yoktur. Kayıt hâlâ korunmaktadır. En son token kullanımını
+gösteren ayrı audit alanı bulunmadığından son kullanım zamanı iddia edilmez.
+Commit öncesi rollback mümkün; commit sonrası kaydı geri getirecek yedek bu
+çalışmada oluşturulmadı. Bu sınır kabul edilmeden silme yapılmaz.
+
+**Önerilen tek-kayıt temizleme sınırı (henüz yetkili değil):** Provider,
+created-at ve kimlik parmak iziyle tam bir aday bulunmalı. Kısa transaction
+içinde credential ve iki referans tablosu kilitlenip referans/in-flight kontrolleri
+yeniden yapılmalı; aday sayısı bir değilse veya referans oluşmuşsa durulmalı.
+Yalnız bu envelope silinmeli; üç bağlı credential ve connection/history
+parmak izleri korunmalı. Kontrol başarısızsa COMMIT yapılmadan rollback edilmeli.
+Commit sonrasında yerel envelope bu çalışma ile geri getirilemez; yeniden
+OAuth gerekebilir. Google tarafında grant revocation yapılması bu işlemin
+parçası değildir. Bu sınırlı ve commit-sonrası geri alınamayan silme yolunun
+kabulü, başlangıçtaki recoverable-deletion kapısı için açık ürün sahibi kararı
+gerektirir; mevcut kayıt bu kapıyı PASS yapmaz.
+
+Regresyon yalnız pending credential değiştirme davranışını kanıtlar; process
+crash veya sessiz cleanup hatalarının bütün olasılıklarını çözdüğü iddia edilmez.
+
 Canlı credential envanterinde iki Google envelope bulunmasına rağmen yalnız biri
 mevcut canonical connection tarafından referanslanmaktadır. Diğeri geçerli anahtar
 ailesiyle şifreli ve çözülebilir durumdadır.

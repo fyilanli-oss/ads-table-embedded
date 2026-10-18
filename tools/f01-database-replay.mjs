@@ -296,6 +296,34 @@ async function canonicalDisconnectAndPrivacy(client, authority) {
   assert.equal(await countHistory(client),0,"privacy cascade must remove historical handoffs");
 }
 
+async function credentialReplacementRegression(client) {
+  await rollbackScenario(client, "F02_pending_credential_replacement", async () => {
+    const authority = await fixture(client);
+    const foreignAuthority = await fixture(client);
+    const oldCredential = await insertCredential(client, authority);
+    const newCredential = await insertCredential(client, authority);
+    const unrelatedCredential = await insertCredential(client, foreignAuthority);
+    const connection = randomUUID();
+    const stage = credential => withReplayRole(client, "adstable_runtime", () => client.query(
+      `select * from integrations.stage_provider_account_selection(
+        $1,$2,$3,'google_ads',$4,array['adwords'],statement_timestamp())`,
+      [connection,authority.workspace,authority.generation,credential]));
+    const present = credential => withReplayRole(client, "adstable_owner", async () =>
+      (await client.query("select count(*)::int as n from integrations.provider_credential_envelopes where id=$1", [credential])).rows[0].n);
+    await stage(oldCredential);
+    await expectSqlFailure(client, "F02_foreign_credential_refused", () => stage(unrelatedCredential),
+      {message: "PROVIDER_CREDENTIAL_AUTHORITY_MISMATCH"});
+    assert.equal(await present(oldCredential), 1, "failed replacement must retain the current credential");
+    const replaced = (await stage(newCredential)).rows[0];
+    assert.equal(replaced.connection_id, connection);
+    assert.equal(replaced.credential_id, newCredential);
+    assert.equal(await present(oldCredential), 0, "superseded credential must be deleted using its previous identity");
+    assert.equal(await present(newCredential), 1, "replacement credential must remain");
+    assert.equal(await present(unrelatedCredential), 1, "another workspace credential must remain");
+    console.log("F02_REPLACEMENT_PASS old_removed new_preserved foreign_preserved invalid_replacement_rolled_back");
+  });
+}
+
 async function scenarios(client) {
   for (const [name,statuses] of [["empty",[]],["terminal_history",["consumed","consumed",...Array(6).fill("failed")]]]) {
     await rollbackScenario(client,name,async()=>{
@@ -428,6 +456,7 @@ async function main() {
       await client.query(retirementSql);
       await committedRecoveryRoundtrip(client, before);
     }
+    await credentialReplacementRegression(client);
     const after=await inventory(client);
     await securityProbes(client);
     const output=path.join(process.env.RUNNER_TEMP,"f01b-staged-schema.json");

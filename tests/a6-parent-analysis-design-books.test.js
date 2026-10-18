@@ -15,12 +15,12 @@ test("every closed parent has an accepted Analysis-Design Book", async () => {
 
   assert.deepEqual(
     closed.map((item) => item.id),
-    ["A6-EO-01", "A6-EO-02", "A6-EO-03"],
+    ["A6-EO-01", "A6-EO-02", "A6-EO-03", "A6-EO-04"],
   );
   assert.equal(closure.application_ledger.length, closed.length);
   assert.equal(
     master.parent_package_analysis_design_closure.next_required_parent,
-    "A6-EO-04",
+    "A6-EO-05",
   );
 
   for (const item of closed) {
@@ -43,6 +43,25 @@ test("every closed parent has an accepted Analysis-Design Book", async () => {
       );
     }
   }
+});
+
+test("EO-04 closure preserves deferred provider evidence and the next integrity gate", async () => {
+  const master = await readJson(masterPath);
+  const eo04 = master.packages.find((item) => item.id === "A6-EO-04");
+  const record = eo04.closure_record;
+
+  assert.equal(eo04.explicit_product_owner_closure, "PASS_2026-10-18");
+  assert.deepEqual(record.reference_obligations_satisfied_or_open.open_and_deferred, [
+    "meta_real_app_role_catalog_product_validation",
+    "google_explorer_or_higher_production_evidence",
+    "klaviyo_shopify_integration_live_reporting_evidence",
+    "EO-05_versioned_historical_pmax_listing_tree_persistence",
+  ]);
+  assert.equal(record.temporary_evidence_transport.meta_button, "removed_route_retained");
+  assert.match(record.temporary_evidence_transport.google_button, /^retained_/);
+  assert.match(record.temporary_evidence_transport.klaviyo_button, /^retained_/);
+  assert.deepEqual(record.intervening_required_gates, ["A6-TECH-01", "A6-DOCS-01"]);
+  assert.equal(record.repository_verification.github_ci_required_before_merge, true);
 });
 
 test("Execution Plan exposes the capacity ladder and safe demo-fixture boundary", async () => {

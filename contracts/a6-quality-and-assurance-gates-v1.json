@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.1.0",
+  "contract_id": "a6-quality-and-assurance-gates-v1",
+  "status": "accepted_product_owner_2026-10-18",
+  "document": "docs/A6_QUALITY_AND_ASSURANCE_GATES.md",
+  "sequence": [
+    "A6-EO-04_closure",
+    "A6-TECH-01",
+    "A6-TECH-01_critical_remediation_and_retest",
+    "A6-DOCS-01",
+    "A6-EO-05_through_A6-EO-08_with_delta_integrity_gates",
+    "A6-ASSURE-01",
+    "product_owner_GO_NO_GO",
+    "review_submissions",
+    "real_store_pilot",
+    "A6-EO-09"
+  ],
+  "engineering_integrity": {
+    "id": "A6-TECH-01",
+    "status": "ready_execution_not_started",
+    "timing": "immediately_after_EO-04_before_EO-05",
+    "review_readiness_program": false,
+    "scope": [
+      "complete_codebase_and_tests",
+      "shopify_embedded_auth_installation_and_ui",
+      "provider_contracts_and_runtime",
+      "supabase_schema_security_performance_and_recovery",
+      "vercel_environment_deployment_runtime_and_rollback",
+      "github_lineage_pr_ci_and_local_only_inventory",
+      "end_to_end_data_integrity_and_failure_boundaries"
+    ],
+    "test_pass_alone_is_sufficient": false,
+    "finding_levels": ["P0", "P1", "P2", "P3"],
+    "eo05_blockers": [
+      "all_P0",
+      "all_P1",
+      "P2_affecting_security_data_correctness_or_review"
+    ],
+    "required_outputs": [
+      "audit_plan",
+      "control_matrix",
+      "evidence",
+      "findings",
+      "remediation_and_retest",
+      "audited_baseline_commit"
+    ]
+  },
+  "delta_integrity": {
+    "required_after": ["A6-EO-05", "A6-EO-06", "A6-EO-07", "A6-EO-08"],
+    "baseline": "A6-TECH-01_audited_commit",
+    "next_package_blocked_on_regression": true
+  },
+  "documentation": {
+    "id": "A6-DOCS-01",
+    "timing": "after_A6-TECH-01_remediation_before_A6-EO-05",
+    "active_human_facing_markdown_language": "Turkish",
+    "machine_contract_bulk_translation": false,
+    "immutable_evidence_translation": false,
+    "accepted_semantics_may_change": false
+  },
+  "pre_review_assurance": {
+    "id": "A6-ASSURE-01",
+    "timing": "after_A6-EO-08_before_any_final_review_submission",
+    "first_code_integrity_audit": false,
+    "gates": [
+      "shopify_compliance",
+      "code_lineage",
+      "github_delivery",
+      "supabase",
+      "vercel",
+      "meta_google_ads_klaviyo",
+      "data_integrity",
+      "analyst_and_user_experience",
+      "fresh_end_to_end_flow"
+    ],
+    "review_affecting_P0_P1_P2_blocks_pass": true,
+    "silent_exception_allowed": false,
+    "review_submission_requires": ["A6-ASSURE-01_PASS", "product_owner_GO"]
+  },
+  "external_mutation_authorized": false
+}

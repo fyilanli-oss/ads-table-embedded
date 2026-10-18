@@ -64,6 +64,23 @@ type GoogleEvidenceResult = {
   pmax_asset_group_performance: {row_count: number};
 };
 
+type KlaviyoEvidenceResult = {
+  status: "complete";
+  observation_state: "present" | "not_observed_in_this_execution";
+  business_date: string;
+  campaign_messages: {row_count: number};
+  flow_messages: {row_count: number};
+  ordered_product_events: {row_count: number};
+  resolved_product_sales: {
+    row_count: number;
+    channel_resolution_counts: {exact: number; unclassified: number};
+    sales_role_counts: Record<
+      "Advertised" | "Cross-sell" | "Assisted" | "Triggered" | "Unclassified",
+      number
+    >;
+  };
+};
+
 type KlaviyoAccount = {
   id: string;
   name: string;
@@ -520,6 +537,12 @@ export default function Settings() {
   const [googleEvidenceResult, setGoogleEvidenceResult] =
     useState<GoogleEvidenceResult | null>(null);
   const [googleEvidenceError, setGoogleEvidenceError] = useState<string | null>(null);
+  const klaviyoEvidenceAttempted = useRef(false);
+  const [klaviyoEvidenceStatus, setKlaviyoEvidenceStatus] =
+    useState<"idle" | "loading" | "complete" | "failed">("idle");
+  const [klaviyoEvidenceResult, setKlaviyoEvidenceResult] =
+    useState<KlaviyoEvidenceResult | null>(null);
+  const [klaviyoEvidenceError, setKlaviyoEvidenceError] = useState<string | null>(null);
   const metaChoices = useRef<any>(null);
   const metaReportingChoice = useRef<any>(null);
   const metaAccountModal = useRef<any>(null);
@@ -705,6 +728,34 @@ export default function Settings() {
     } catch {
       setGoogleEvidenceError("GOOGLE_LIVE_EVIDENCE_REQUEST_FAILED");
       setGoogleEvidenceStatus("failed");
+    }
+  };
+
+  const runKlaviyoEvidence = async () => {
+    if (klaviyoEvidenceAttempted.current) return;
+    klaviyoEvidenceAttempted.current = true;
+    setKlaviyoEvidenceStatus("loading");
+    try {
+      const response = await fetch("/settings/klaviyo-live-evidence", {
+        method: "POST",
+        headers: {"content-type": "application/json"},
+        body: JSON.stringify({provider: "klaviyo"}),
+      });
+      const result = await response.json();
+      if (!response.ok || result?.status !== "complete") {
+        setKlaviyoEvidenceError(
+          typeof result?.code === "string" && /^KLAVIYO_[A-Z0-9_]{1,100}$/.test(result.code)
+            ? result.code
+            : "KLAVIYO_LIVE_EVIDENCE_FAILED",
+        );
+        setKlaviyoEvidenceStatus("failed");
+        return;
+      }
+      setKlaviyoEvidenceResult(result as KlaviyoEvidenceResult);
+      setKlaviyoEvidenceStatus("complete");
+    } catch {
+      setKlaviyoEvidenceError("KLAVIYO_LIVE_EVIDENCE_REQUEST_FAILED");
+      setKlaviyoEvidenceStatus("failed");
     }
   };
 
@@ -1580,6 +1631,46 @@ export default function Settings() {
               <s-paragraph>
                 Currency: {state.klaviyo.account.currency} · Timezone: {state.klaviyo.account.timezone}
               </s-paragraph>
+              <s-button
+                loading={klaviyoEvidenceStatus === "loading"}
+                disabled={klaviyoEvidenceStatus === "complete" || klaviyoEvidenceStatus === "failed"}
+                onClick={runKlaviyoEvidence}
+              >
+                {klaviyoEvidenceStatus === "loading"
+                  ? "Reading Klaviyo evidence…"
+                  : klaviyoEvidenceStatus === "complete"
+                    ? "Klaviyo evidence received"
+                    : klaviyoEvidenceStatus === "failed"
+                      ? "Klaviyo evidence stopped"
+                      : "Run Klaviyo evidence"}
+              </s-button>
+              {klaviyoEvidenceStatus === "complete" && klaviyoEvidenceResult ? (
+                klaviyoEvidenceResult.observation_state === "present" ? (
+                  <s-banner tone="success">
+                    Klaviyo evidence received for {klaviyoEvidenceResult.business_date}.
+                    {" Campaign Message "}{klaviyoEvidenceResult.campaign_messages.row_count}
+                    {" rows; Flow Message "}{klaviyoEvidenceResult.flow_messages.row_count}
+                    {" rows; Ordered Product "}{klaviyoEvidenceResult.ordered_product_events.row_count}
+                    {" rows; resolved product sales "}{klaviyoEvidenceResult.resolved_product_sales.row_count}
+                    {" rows; exact Channel "}
+                    {klaviyoEvidenceResult.resolved_product_sales.channel_resolution_counts.exact}
+                    {"; Unclassified Channel "}
+                    {klaviyoEvidenceResult.resolved_product_sales.channel_resolution_counts.unclassified}
+                    {". No raw rows, profiles, identifiers or commercial values were retained."}
+                  </s-banner>
+                ) : (
+                  <s-banner tone="warning">
+                    Klaviyo completed the read-only evidence run but returned no Campaign,
+                    Flow or Ordered Product rows for {klaviyoEvidenceResult.business_date}.
+                    This is not zero or unsupported.
+                  </s-banner>
+                )
+              ) : null}
+              {klaviyoEvidenceStatus === "failed" ? (
+                <s-banner tone="critical">
+                  Klaviyo evidence stopped. No retry was performed. Error code: {klaviyoEvidenceError}.
+                </s-banner>
+              ) : null}
               <s-stack direction="inline" gap="base">
                 <s-button
                   variant="secondary"

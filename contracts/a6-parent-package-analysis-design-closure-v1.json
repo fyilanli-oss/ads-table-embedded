@@ -1,6 +1,6 @@
 {
   "contract_id": "a6-parent-package-analysis-design-closure-v1",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "status": "accepted",
   "decided_at": "2026-10-09",
   "purpose": "Make every accepted parent package understandable, operable and auditable without reconstructing child-package history.",
@@ -76,11 +76,22 @@
       "status": "PASS_parent_closed",
       "accepted_at": "2026-10-09",
       "next_parent": "A6-EO-04"
+    },
+    {
+      "parent": "A6-EO-04",
+      "artifact": "docs/EO_04_ANALYSIS_DESIGN_BOOK.md",
+      "status": "PASS_parent_closed",
+      "accepted_at": "2026-10-18",
+      "next_parent": "A6-EO-05",
+      "intervening_required_gates": [
+        "A6-TECH-01",
+        "A6-DOCS-01"
+      ]
     }
   ],
   "ci_enforcement": {
     "test": "tests/a6-parent-analysis-design-books.test.js",
     "rule": "Every parent whose master-plan status is Done or Accepted must have an accepted ledger entry and readable Analysis-Design Book; otherwise CI fails.",
-    "next_required_parent": "A6-EO-04"
+    "next_required_parent": "A6-EO-05"
   }
 }

@@ -20,7 +20,7 @@ Google Ads tarafında Channel kimliğini, provider ürün performansını, satı
 | --- | --- | --- | --- | --- |
 | Standard Shopping | Ad Group | Tekil veya çoklu Merchant Center ürünleri | Product performance ve Cart Data Ad Group bağlamında korunur. | Kanıtlanan lead/advertised ürün Advertised; farklı sold product Cross-sell. |
 | Performance Max Retail | Asset Group | Listing-tree leaf tekil item ID ve üyelik yalnız bir Asset Group'u exact belirliyor | Product satırı exact Asset Group'a bağlanabilir. | Advertised veya Cross-sell provider kanıtına göre korunur. |
-| Performance Max Retail | Asset Group | All products, kategori, marka, product type, custom label veya birden fazla Asset Group'a uyan ürün | Campaign-product kanıtı vardır; exact Asset Group kanıtı yoktur. | Ürün Unknown Channel altında kalır; ilişki kanıtı varsa korunur, tahmin yapılmaz. |
+| Performance Max Retail | Asset Group | All products, kategori, marka, product type, custom label veya birden fazla Asset Group'a uyan ürün | Campaign-product kanıtı vardır; exact Asset Group kanıtı yoktur. | Ürün Unclassified Channel altında kalır; ilişki kanıtı varsa korunur, tahmin yapılmaz. |
 | Search | Ad Group | Exact advertised product kanıtı yok | Provider-attributed sold product Ad Group bağlamında korunur. | Assisted |
 
 ## Temel çalışma kuralları
@@ -31,8 +31,8 @@ Google Ads tarafında Channel kimliğini, provider ürün performansını, satı
 4. Aynı Cart Data satırında gösterilen/tıklanan ürün ile satılan ürün farklıysa, satılan farklı ürün Cross-sell kanıtıdır.
 5. PMax'te `cart_data_sales_view` Asset Group ile segmentlenmez. Google'ın vermediği Asset Group ilişkisi oranlanmaz, paylaştırılmaz veya üretilmez.
 6. PMax'te tıklanan ürünün listing-tree üyeliği yalnız tek bir Asset Group'u exact belirliyorsa o Asset Group Channel adayıdır.
-7. Ürün birden fazla Asset Group listing ağacına uyuyorsa veya exact üyelik kanıtlanamıyorsa Channel `Unknown Channel` olur.
-8. `Unknown Channel`, satış ilişkisinin değil Channel çözümlemesinin durumudur.
+7. Ürün birden fazla Asset Group listing ağacına uyuyorsa veya exact üyelik kanıtlanamıyorsa Channel `Unclassified Channel` olur.
+8. `Unclassified Channel`, satış ilişkisinin değil Channel çözümlemesinin durumudur.
 9. Search Ad Group için exact advertised product kanıtı bulunmadığından provider-attributed sold product bastırılmaz; `Assisted` olur.
 10. Promotion terimi kullanılmaz. Satılan adet pozitif ve ürün satış değeri gerçekten sıfırsa değer durumu `Zero Value` olur.
 11. Google ürün seviyesinde ham olarak `units_sold` ve `revenue_micros` sağlar. `units_sold`, ortak Dataset sözleşmesi kararı olmadan kullanıcıya Purchase diye yeniden adlandırılmaz.
@@ -55,7 +55,7 @@ Aşağıdaki üç değer birbirinin yerine kullanılamaz:
 
 Bu nedenle ürün satırları Channel toplamını yeniden üretmek veya finansal maliyet gerçeği sayılmak için toplanmaz. Provider Product Cost, ilerideki açıklanabilir maliyet dağıtım motorunun yalnız bir kanıt girdisidir.
 
-Provider Product Cost exact olarak dönüyorsa `Cross-sell`, `Assisted`, `Zero Value` veya `Unknown Channel` sonucu bu değeri silmez; exact değer ilgili ürün satırında korunur. Provider ürün cost'u vermiyorsa Channel toplamı ürünlere tahminî dağıtılmaz.
+Provider Product Cost exact olarak dönüyorsa `Cross-sell`, `Assisted`, `Zero Value` veya `Unclassified Channel` sonucu bu değeri silmez; exact değer ilgili ürün satırında korunur. Provider ürün cost'u vermiyorsa Channel toplamı ürünlere tahminî dağıtılmaz.
 
 ## PMax örneği
 
@@ -76,7 +76,7 @@ Küpe A yalnız Küpeler Asset Group listing ağacına uyuyorsa çalışma sonuc
 
 Küpe A birden fazla Asset Group'a uyuyorsa:
 
-- Channel: Unknown Channel
+- Channel: Unclassified Channel
 - Satılan ürün: Kolye B
 - Satış ilişkisi: Google'ın sağladığı ham lead/cross-sell kanıtı korunur
 - Asset Group uydurulmaz
@@ -172,7 +172,7 @@ Channel çözümleme durumu ayrıca tutulur:
 
 - exact Ad Group
 - exact Asset Group
-- Unknown Channel
+- Unclassified Channel
 
 ## Açık konular
 

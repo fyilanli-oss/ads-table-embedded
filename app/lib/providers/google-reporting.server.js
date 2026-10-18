@@ -428,7 +428,7 @@ function validInstant(value, code) {
 
 function unknownChannel(sale, reason, candidates = []) {
   return Object.freeze({
-    channel_type: "Unknown Channel",
+    channel_type: "Unclassified Channel",
     channel_id: null,
     channel_name: null,
     resolution: "unknown",

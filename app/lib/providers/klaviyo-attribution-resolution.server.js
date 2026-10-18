@@ -16,7 +16,7 @@ function unknown(reason) {
   return Object.freeze({
     source: null,
     source_entity_id: null,
-    channel_type: "Unknown Channel",
+    channel_type: "Unclassified Channel",
     channel_id: null,
     channel_name: null,
     medium: null,

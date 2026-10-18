@@ -11,6 +11,6 @@ export function createKlaviyoReportingAuthorityRuntime(input?: {
 }): {
   readDailyEvidenceSnapshot(input: {
     installationAuthority: any;
-    businessDate: string;
+    businessDate?: string | null;
   }): Promise<any>;
 };

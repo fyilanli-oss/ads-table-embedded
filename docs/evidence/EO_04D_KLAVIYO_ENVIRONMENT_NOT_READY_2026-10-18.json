@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0.0",
+  "evidence_id": "EO-04D-KLAVIYO-ENVIRONMENT-NOT-READY-2026-10-18",
+  "package_id": "A6-EO-04-D",
+  "status": "recorded_environment_not_ready_shopify_integration_absent",
+  "observed_at_utc": "2026-10-18T11:37:41.317Z",
+  "provider": "klaviyo",
+  "repository_commit": "b675885469effe9f3d9cb58135fa27d0219dcbb7",
+  "production_deployment": "dpl_FBfQ8t9mV4vw4PZkKmtgbjDbDqdy",
+  "evidence_sources": [
+    "allowlisted_production_runtime_log",
+    "product_owner_manual_klaviyo_metrics_inspection"
+  ],
+  "execution": {
+    "status": "stopped_fail_closed",
+    "safe_error_code": "KLAVIYO_SHOPIFY_METRIC_CARDINALITY_INVALID",
+    "stopped_family": "metrics",
+    "completed_families": [],
+    "later_query_family_started": false,
+    "provider_retry_performed": false,
+    "database_write_performed": false,
+    "dataset_v2_write_performed": false,
+    "sample_data_generated": false
+  },
+  "product_owner_observation": {
+    "shopify_integration_present": false,
+    "observed_integration_names": ["Klaviyo", "API"],
+    "placed_order_today_value": 0,
+    "ordered_product_today_value": 0,
+    "observation_is_provider_api_raw_row": false
+  },
+  "classification": {
+    "result": "environment_not_ready",
+    "reason": "shopify_integration_absent",
+    "code_failure_proven": false,
+    "provider_failure_proven": false,
+    "daily_zero_is_metric_identity_evidence": false,
+    "shopify_metric_cardinality_satisfied": false,
+    "full_live_reporting_path_proven": false
+  },
+  "truth_boundaries": {
+    "klaviyo_or_api_metric_is_shopify_metric": false,
+    "custom_ecommerce_sample_data_can_create_shopify_evidence": false,
+    "campaign_flow_or_ordered_product_queries_may_be_claimed_complete": false,
+    "publishable_to_dataset_v2": false,
+    "package_closed_by_this_evidence": false
+  },
+  "next_gate": {
+    "condition": "real_shopify_store_is_connected_to_klaviyo_and_exactly_one_shopify_placed_order_and_ordered_product_metric_exist",
+    "temporary_button_retained": true,
+    "additional_live_provider_call_authorized": false,
+    "automatic_retry": false
+  }
+}

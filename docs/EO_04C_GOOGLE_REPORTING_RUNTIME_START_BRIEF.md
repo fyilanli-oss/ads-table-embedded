@@ -30,7 +30,7 @@ The accepted Channel leaves remain:
 
 1. resolve the candidate Asset Groups from the **advertised** `segments.product_item_id` and the Asset Group listing trees;
 2. if exactly one eligible Asset Group matches, use that exact Asset Group as Channel;
-3. if more than one Asset Group matches, retain the product sale under `Unknown Channel`;
+3. if more than one Asset Group matches, retain the product sale under `Unclassified Channel`;
 4. never choose Channel from the sold product;
 5. never distribute an ambiguous sale across candidate Asset Groups;
 6. use only listing-tree evidence proven valid for the sale's business-date reporting window.
@@ -38,7 +38,7 @@ The accepted Channel leaves remain:
 This applies equally to item-ID, category, brand, product-type, custom-label and `All products` trees:
 
 - one eligible `All products` Asset Group is exact;
-- multiple overlapping `All products` or category trees are `Unknown Channel`;
+- multiple overlapping `All products` or category trees are `Unclassified Channel`;
 - product sale and Sales Role remain available even when Channel is unknown.
 
 ### Historical listing-tree safety
@@ -47,7 +47,7 @@ A listing tree observed today does not prove the tree that was active on an earl
 
 - current listing-tree state cannot be applied retroactively to an earlier sale;
 - a tree change inside the business-date window makes exact daily Channel resolution unavailable;
-- missing, partial or conflicting temporal evidence results in `Unknown Channel`;
+- missing, partial or conflicting temporal evidence results in `Unclassified Channel`;
 - the product sale, units, revenue and Sales Role are still retained;
 - every exact resolution must retain the sale business date, account timezone, listing-tree evidence version/hash and validity window.
 
@@ -60,7 +60,7 @@ The only term is `Sales Role`.
 - `Assisted`: sold product is provider-attributed but exact advertised-product evidence is unavailable.
 - `Unclassified`: provider identities or lead/cross-sell evidence genuinely conflict.
 
-`Unknown Channel` is not a Sales Role. `Zero Value` is not a Sales Role.
+`Unclassified Channel` is not a Sales Role. `Zero Value` is not a Sales Role.
 
 ## Provider request families
 
@@ -140,7 +140,7 @@ Repository fixtures are controlled examples owned by AdsTable. They verify only 
 - `Advertised`, `Cross-sell`, `Assisted` and `Unclassified` Sales Role rules;
 - one-versus-many broad listing-tree behavior;
 - advertised-product-only Channel resolution;
-- historical listing-tree validity and fail-closed `Unknown Channel` behavior;
+- historical listing-tree validity and fail-closed `Unclassified Channel` behavior;
 - empty, missing, unsupported and explicit zero separation;
 - first provider error without automatic retry.
 

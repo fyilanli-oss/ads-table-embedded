@@ -219,7 +219,7 @@ test("one temporally valid All products Asset Group resolves exact", () => {
   assert.equal(result.evidence.listing_tree_evidence_version_or_hash, "tree-401");
 });
 
-test("overlapping All products Asset Groups preserve sale under Unknown Channel", () => {
+test("overlapping All products Asset Groups preserve sale under Unclassified Channel", () => {
   const input = resolutionInput({
     listingEvidence: {
       complete: true,
@@ -230,7 +230,7 @@ test("overlapping All products Asset Groups preserve sale under Unknown Channel"
     },
   });
   const result = resolvePmaxSaleChannel(input);
-  assert.equal(result.channel_type, "Unknown Channel");
+  assert.equal(result.channel_type, "Unclassified Channel");
   assert.equal(result.reason, "overlapping_asset_groups");
   assert.deepEqual(result.candidate_asset_group_ids, ["401", "402"]);
   assert.equal(result.sale.sales_role, "Advertised");
@@ -259,7 +259,7 @@ test("category matching requires category-ID evidence and remains conservative",
     },
   });
   const unknown = resolvePmaxSaleChannel(missingCategoryEvidence);
-  assert.equal(unknown.channel_type, "Unknown Channel");
+  assert.equal(unknown.channel_type, "Unclassified Channel");
   assert.equal(unknown.reason, "no_eligible_asset_group");
 });
 
@@ -287,7 +287,7 @@ test("sold product is never used to choose a PMax Asset Group", () => {
       snapshots: [snapshot("404", [rootAllProductsRow("404")])],
     },
   }));
-  assert.equal(result.channel_type, "Unknown Channel");
+  assert.equal(result.channel_type, "Unclassified Channel");
   assert.equal(result.reason, "advertised_product_evidence_missing_or_mismatched");
   assert.equal(result.sale.sales_role, "Cross-sell");
 });
@@ -300,7 +300,7 @@ test("current or partial listing evidence cannot resolve an earlier sale", () =>
   const staleResult = resolvePmaxSaleChannel(resolutionInput({
     listingEvidence: {complete: true, snapshots: [currentTree]},
   }));
-  assert.equal(staleResult.channel_type, "Unknown Channel");
+  assert.equal(staleResult.channel_type, "Unclassified Channel");
   assert.equal(staleResult.reason, "no_eligible_asset_group");
 
   const partialResult = resolvePmaxSaleChannel(resolutionInput({
@@ -309,7 +309,7 @@ test("current or partial listing evidence cannot resolve an earlier sale", () =>
       snapshots: [snapshot("405", [rootAllProductsRow("405")])],
     },
   }));
-  assert.equal(partialResult.channel_type, "Unknown Channel");
+  assert.equal(partialResult.channel_type, "Unclassified Channel");
   assert.equal(partialResult.reason, "listing_tree_evidence_incomplete");
 });
 
@@ -322,7 +322,7 @@ test("a tree change inside the sale day cannot produce exact Channel", () => {
       })],
     },
   }));
-  assert.equal(result.channel_type, "Unknown Channel");
+  assert.equal(result.channel_type, "Unclassified Channel");
   assert.equal(result.reason, "no_eligible_asset_group");
 });
 

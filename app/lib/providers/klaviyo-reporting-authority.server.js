@@ -124,6 +124,26 @@ function observation(rows) {
   return rows.length === 0 ? "not_observed_in_this_execution" : "observed";
 }
 
+function calendarDateInTimeZone(instant, timeZone) {
+  const value = instant instanceof Date ? instant : new Date(instant);
+  if (Number.isNaN(value.valueOf())) {
+    fail("KLAVIYO_REPORTING_CLOCK_INVALID", "Klaviyo reporting clock is invalid");
+  }
+  let parts;
+  try {
+    parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(value);
+  } catch {
+    fail("KLAVIYO_ACCOUNT_TIMEZONE_INVALID", "Klaviyo account timezone is invalid");
+  }
+  const fields = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${fields.year}-${fields.month}-${fields.day}`;
+}
+
 function normalizeAttributionResource(value) {
   if (value?.type !== "attribution") return null;
   const relationshipId = (name) => {
@@ -305,10 +325,14 @@ export function createKlaviyoReportingAuthorityRuntime({
   }
 
   return Object.freeze({
-    async readDailyEvidenceSnapshot({installationAuthority, businessDate}) {
+    async readDailyEvidenceSnapshot({installationAuthority, businessDate = null}) {
       const context = await prepareContext(installationAuthority);
+      const resolvedBusinessDate = businessDate ?? calendarDateInTimeZone(
+        now(),
+        context.account.timezone,
+      );
       const timeframe = klaviyoBusinessDayTimeframe({
-        businessDate,
+        businessDate: resolvedBusinessDate,
         timeZone: context.account.timezone,
       });
       const result = await runKlaviyoReportingFamilies({
@@ -338,7 +362,7 @@ export function createKlaviyoReportingAuthorityRuntime({
             parameter: "page_cursor",
             buildRequest: (pageCursor) => buildKlaviyoCampaignValuesRequest({
               accessToken: context.accessToken,
-              businessDate,
+              businessDate: resolvedBusinessDate,
               timeZone: context.account.timezone,
               conversionMetricId: metrics.placed_order_metric_id,
               pageCursor,
@@ -361,7 +385,7 @@ export function createKlaviyoReportingAuthorityRuntime({
             parameter: "page_cursor",
             buildRequest: (pageCursor) => buildKlaviyoFlowValuesRequest({
               accessToken: context.accessToken,
-              businessDate,
+              businessDate: resolvedBusinessDate,
               timeZone: context.account.timezone,
               conversionMetricId: metrics.placed_order_metric_id,
               pageCursor,
@@ -385,7 +409,7 @@ export function createKlaviyoReportingAuthorityRuntime({
             buildRequest: (cursor) => buildKlaviyoOrderedProductEventsRequest({
               accessToken: context.accessToken,
               orderedProductMetricId: metrics.ordered_product_metric_id,
-              businessDate,
+              businessDate: resolvedBusinessDate,
               timeZone: context.account.timezone,
               cursor,
             }),
@@ -424,7 +448,7 @@ export function createKlaviyoReportingAuthorityRuntime({
           connected_account_currency: context.account.currency,
           connected_account_timezone: context.account.timezone,
         }),
-        business_date: businessDate,
+        business_date: resolvedBusinessDate,
         timeframe,
         ...result,
       });

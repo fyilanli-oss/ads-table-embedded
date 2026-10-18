@@ -33,7 +33,9 @@
     ],
     "unclassified_rule": "only_for_contradictory_or_ambiguous_evidence",
     "value_modifier": "Zero Value",
-    "unknown_channel": "sale_is_proven_but_exact_channel_is_not",
+    "unclassified_channel": "sale_is_proven_but_exact_channel_is_not",
+    "unclassified_channel_merchant_explanation": "Satış doğrulandı, ancak mevcut provider kanıtı exact Channel'ı belirlemeye yetmedi.",
+    "technical_unknown_missing_partial_and_stale_states_preserved": true,
     "null_rule": "missing_null_unsupported_permission_denied_and_explicit_zero_are_distinct",
     "no_fabrication": true,
     "no_product_cost_allocation": true
@@ -82,7 +84,7 @@
       },
       "pmax": {
         "exact_unique_listing_membership": "exact_asset_group",
-        "broad_or_overlapping_listing_membership": "Unknown Channel",
+        "broad_or_overlapping_listing_membership": "Unclassified Channel",
         "cart_data_asset_group_segmentation": "unsupported",
         "downward_distribution": "forbidden"
       },
@@ -120,7 +122,7 @@
       "variation": {
         "relationship": "subordinate_to_message_channel",
         "replaces_channel": false,
-        "unresolved_when_message_known_creates_unknown_channel": false
+        "unresolved_when_message_known_creates_unclassified_channel": false
       },
       "not_channels": [
         "flow",
@@ -183,8 +185,8 @@
         "channel_cost": "exact_provider_channel_cost",
         "product_cost": "shopping_performance_view.metrics.cost_micros",
         "shopify_identity_required_for_shopify_product_labels": true,
-        "exact_product_cost_under_unknown_channel": "preserve",
-        "unknown_channel_redistribution": "forbidden"
+        "exact_product_cost_under_unclassified_channel": "preserve",
+        "unclassified_channel_redistribution": "forbidden"
       },
       "klaviyo": {
         "raw_cost_input": "effective_dated_estimated_30_day_email_spend_ledger",
@@ -198,8 +200,8 @@
       "product_cost_rows_reconstruct_channel_total": false,
       "missing_product_cost_may_be_ratio_allocated_in_EO04": false,
       "unverified_shopify_identity_drops_provider_cost_evidence": false,
-      "sales_role_value_modifier_or_unknown_channel_erases_exact_provider_product_cost": false,
-      "exact_provider_product_cost_is_preserved_for_cross_sell_assisted_zero_value_and_unknown_channel": true,
+      "sales_role_value_modifier_or_unclassified_channel_erases_exact_provider_product_cost": false,
+      "exact_provider_product_cost_is_preserved_for_cross_sell_assisted_zero_value_and_unclassified_channel": true,
       "sales_role_or_value_modifier_may_fabricate_product_cost_in_EO04": false,
       "klaviyo_triggered_native_product_cost": "unavailable_allocation_in_A6_EO_05",
       "cost_provenance_required": [

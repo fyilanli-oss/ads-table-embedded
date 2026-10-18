@@ -10,9 +10,14 @@
 ## Bağlayıcı hiyerarşi
 
 ```text
-Campaign -> Campaign Message (Channel) -> Variation
-Flow     -> Flow Message (Channel)     -> Variation
+Campaign -> Campaign Audience -> Campaign Message (Channel) -> Variation
+Flow     -> Flow Message (Channel)                              -> Variation
 ```
+
+`Campaign Audience` provider targeting/configuration katmanıdır; AdsTable
+Channel değildir. 2026-10-15 omnichannel Campaigns API bu ara katmanı resmî
+resource hierarchy içinde tanımlar. Reporting API'nin zorunlu Channel grain'i
+yine `campaign_message_id` olarak kalır.
 
 `Campaign Message` ve `Flow Message` provider entity'si AdsTable Channel'dır. Provider Message adı Channel adıdır. Variation ayrı alt kırılımdır ve hiçbir durumda Channel'ın yerine geçmez.
 
@@ -22,9 +27,9 @@ Flow     -> Flow Message (Channel)     -> Variation
 
 1. Message biliniyor, exact Variation biliniyorsa Channel yine Message'dır; Variation ayrıca exact tutulur.
 2. Message biliniyor, Variation bilinmiyorsa Channel exact Message'dır; yalnız Variation `unresolved` kalır.
-3. Message altında çok sayıda Variation bulunması `Unknown Channel` veya sentetik `Multi Channel` üretmez.
+3. Message altında çok sayıda Variation bulunması `Unclassified Channel` veya sentetik `Multi Channel` üretmez.
 4. Variation adayları ana UI verisi değildir ve satış aday Variation'lara dağıtılmaz.
-5. `Unknown Channel` yalnız Message bulunamadığında, Message kataloğu çözülemediğinde veya Message/Variation ilişkisi çeliştiğinde kullanılır.
+5. `Unclassified Channel` yalnız Message bulunamadığında, Message kataloğu çözülemediğinde veya Message/Variation ilişkisi çeliştiğinde kullanılır.
 
 ## Sales Role
 
@@ -58,7 +63,7 @@ Reporting satırı en az Message ID, Message Name ve `send_channel` içermelidir
 - Kısmi sonuç publish edilmez.
 - Başarılı boş cevap yalnız `not_observed_in_this_execution` anlamındadır; numeric zero veya global unsupported kanıtı değildir.
 
-## 17 Ekim 2026 resmî kaynak kontrolü
+## 18 Ekim 2026 resmî kaynak kontrolü
 
 1. [Campaigns API overview](https://developers.klaviyo.com/en/reference/campaigns_omni_api_overview)
 2. [Reporting API overview](https://developers.klaviyo.com/en/reference/reporting_api_overview)

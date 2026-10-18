@@ -29,7 +29,7 @@ test("known Message remains exact when catalog, Medium or Variation is unresolve
   assert.equal(contract.message_resolution.catalog_name_missing_changes_known_message_to_unknown, false);
   assert.equal(contract.medium.unresolved_medium_changes_known_message_to_unknown, false);
   assert.equal(contract.variation.multiple_flow_variations_same_message, "unresolved");
-  assert.match(brief, /Channel'ı `Unknown` yapmaz/);
+  assert.match(brief, /Channel'ı `Unclassified Channel` yapmaz/);
 });
 
 test("Sales Role requires the accepted evidence level", () => {

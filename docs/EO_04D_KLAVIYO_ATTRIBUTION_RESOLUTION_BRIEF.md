@@ -35,10 +35,10 @@ içerikteki ürün seti okunmamışsa `Channel = Sonbahar Takıları`,
   Channel korunur, Variation `unresolved` olur.
 - Geçerli Flow Message attribution'lı satışın Sales Role'u `Triggered` olur.
 
-## Unknown Channel sınırı
+## Unclassified Channel sınırı
 
 Katalogda Message adı, Medium veya Variation bulunamaması, provider Message ID'si
-biliniyorsa Channel'ı `Unknown` yapmaz. `Unknown Channel` yalnız Message
+biliniyorsa Channel'ı `Unclassified Channel` yapmaz. `Unclassified Channel` yalnız Message
 attribution'ı yoksa, farklı Message'lar aynı satış için çelişiyorsa, Campaign ve
 Flow aynı attribution'da çelişiyorsa veya Message-parent ilişkisi bozuksa
 kullanılır. Satış yine bir kez korunur ve Sales Role `Unclassified` olur.

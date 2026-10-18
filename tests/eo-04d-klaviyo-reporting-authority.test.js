@@ -74,7 +74,7 @@ function event(id, attributionId = null) {
   };
 }
 
-function runtime({fetchFn, connected = connection, lifecycle = null} = {}) {
+function runtime({fetchFn, connected = connection, lifecycle = null, now = () => new Date()} = {}) {
   return createKlaviyoReportingAuthorityRuntime({
     fetchFn,
     accountAuthority: {load: async () => connected},
@@ -90,6 +90,7 @@ function runtime({fetchFn, connected = connection, lifecycle = null} = {}) {
       markReauthorizationRequired: async () => undefined,
     },
     config: {},
+    now,
   });
 }
 
@@ -181,7 +182,7 @@ test("Klaviyo authority binds one account, uses its timezone, exhausts opaque cu
   );
   assert.equal(
     result.results.resolved_product_sales.rows[1].attribution_resolution.channel_type,
-    "Unknown Channel",
+    "Unclassified Channel",
   );
   assert.equal(result.results.resolved_product_sales.rows[1].attribution_resolution.sales_role, "Unclassified");
   assert.deepEqual(result.completed_families, [
@@ -297,4 +298,32 @@ test("invalid connected-account cardinality fails before credential or provider 
   );
   assert.equal(credentialCalled, false);
   assert.equal(providerCalled, false);
+});
+
+test("an evidence run without a supplied date uses the connected account business date", async () => {
+  let campaignBody = null;
+  const api = runtime({
+    now: () => new Date("2026-10-17T22:30:00.000Z"),
+    fetchFn: async (url, options) => {
+      const path = new URL(url).pathname;
+      if (path === "/api/metrics") {
+        return response(200, {
+          data: [metric("placed", "Placed Order"), metric("product", "Ordered Product")],
+          links: {self: url},
+        });
+      }
+      if (path === "/api/campaign-values-reports") {
+        campaignBody = JSON.parse(options.body);
+        return response(429, {errors: [{code: "throttled"}]});
+      }
+      throw new Error("a later family must not start");
+    },
+  });
+  const result = await api.readDailyEvidenceSnapshot({installationAuthority});
+  assert.equal(result.business_date, "2026-10-18");
+  assert.equal(
+    campaignBody.data.attributes.timeframe.start,
+    "2026-10-18T00:00:00+03:00",
+  );
+  assert.equal(result.status, "failed");
 });

@@ -6,6 +6,10 @@ const contract = JSON.parse(readFileSync(
   new URL("../contracts/eo-04d-klaviyo-reporting-runtime-v1.json", import.meta.url),
   "utf8",
 ));
+const analysisBook = readFileSync(
+  new URL("../docs/EO_04_ANALYSIS_DESIGN_BOOK.md", import.meta.url),
+  "utf8",
+);
 
 test("Klaviyo reporting runtime is repository-only and uses the GA revision", () => {
   assert.equal(contract.api_revision, "2026-10-15");
@@ -24,12 +28,27 @@ test("Message is Channel, Medium is mandatory and Variation remains subordinate"
   assert.deepEqual(contract.hierarchy.supported_media, ["Email", "SMS", "WhatsApp", "Push"]);
 });
 
-test("known Message with unresolved Variation is not Unknown Channel", () => {
+test("Campaign Audience is navigation-only and never becomes an AdsTable reporting dimension", () => {
+  assert.deepEqual(
+    contract.hierarchy.campaign,
+    ["campaign", "campaign_audience", "campaign_message", "variation"],
+  );
+  assert.equal(contract.hierarchy.campaign_audience_is_channel, false);
+  assert.equal(contract.hierarchy.campaign_audience_role, "provider_navigation_only");
+  assert.equal(contract.hierarchy.campaign_audience_persisted_in_canonical_dataset, false);
+  assert.equal(contract.hierarchy.campaign_audience_exposed_to_user, false);
+  assert.equal(contract.hierarchy.campaign_audience_splits_sales, false);
+  assert.equal(contract.hierarchy.campaign_content_traversal_must_follow_audience_parentage, true);
+  assert.match(analysisBook, /\*\*Audience:\*\* `Son 90 Günde Alışveriş Yapanlar`/);
+  assert.match(analysisBook, /\*\*Audience sonucu:\*\* canonical AdsTable satırına alınmaz/);
+});
+
+test("known Message with unresolved Variation is not Unclassified Channel", () => {
   assert.equal(
     contract.channel_resolution.message_known_multiple_variations,
     "message_channel_exact_variation_unresolved",
   );
-  assert.equal(contract.channel_resolution.message_missing_or_conflicting, "Unknown Channel");
+  assert.equal(contract.channel_resolution.message_missing_or_conflicting, "Unclassified Channel");
   assert.equal(contract.channel_resolution.multi_channel_synthetic_bucket, false);
 });
 

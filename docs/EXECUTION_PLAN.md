@@ -168,6 +168,13 @@ merge ve primary checkout'un yeni main ile temiz commit/tree eşliği teslim
 kapısıdır; son eşlik PR #112 açıklamasında kalıcılaştırılır. F10 başlamaz,
 genel audit PASS veya EO-05 başlangıç yetkisi verilmez.
 
+F10 için ürün sahibi 18 Ekim 2026'da ayrı uyumluluk çalışması bekleyen açık
+teknik borç kararını onayladı. Kanıt:
+`docs/evidence/A6_TECH_01_F10_DEFERRED_2026-10-18.json`.
+F01–F09 kapalı, F10 açık ve tek başına EO-05 engeli değildir. Bu kayıt F10
+düzeltmesi/kapanışı, sürüm veya flag değişikliği, genel audit PASS ya da EO-05
+başlangıç yetkisi değildir. Genel yeniden test ve kapanış kararı ayrı kalır.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

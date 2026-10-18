@@ -1,0 +1,5151 @@
+{
+  "checked_at": "2026-10-18",
+  "source": "read_only_live_PostgreSQL_catalogs",
+  "project_name": "ads-table-embedded",
+  "scope": "seven_application_schemas_no_business_rows_no_secret_values",
+  "inventory": {
+    "roles": [
+      {
+        "name": "adstable_migrator",
+        "login": true,
+        "inherit": false,
+        "create_db": false,
+        "superuser": false,
+        "bypass_rls": false,
+        "create_role": false,
+        "replication": false
+      },
+      {
+        "name": "adstable_owner",
+        "login": false,
+        "inherit": false,
+        "create_db": false,
+        "superuser": false,
+        "bypass_rls": false,
+        "create_role": false,
+        "replication": false
+      },
+      {
+        "name": "adstable_runtime",
+        "login": true,
+        "inherit": false,
+        "create_db": false,
+        "superuser": false,
+        "bypass_rls": false,
+        "create_role": false,
+        "replication": false
+      }
+    ],
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "workspaces",
+        "schema": "app",
+        "default": "gen_random_uuid()",
+        "identity": "",
+        "not_null": true,
+        "position": 1
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "table": "workspaces",
+        "schema": "app",
+        "default": "'active'::text",
+        "identity": "",
+        "not_null": true,
+        "position": 2
+      },
+      {
+        "name": "version",
+        "type": "bigint",
+        "table": "workspaces",
+        "schema": "app",
+        "default": "1",
+        "identity": "",
+        "not_null": true,
+        "position": 3
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "table": "workspaces",
+        "schema": "app",
+        "default": "statement_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 4
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "table": "workspaces",
+        "schema": "app",
+        "default": "statement_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 5
+      },
+      {
+        "name": "id",
+        "type": "bigint",
+        "table": "trial_ledger",
+        "schema": "billing",
+        "default": null,
+        "identity": "a",
+        "not_null": true,
+        "position": 1
+      },
+      {
+        "name": "workspace_id",
+        "type": "uuid",
+        "table": "trial_ledger",
+        "schema": "billing",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 2
+      },
+      {
+        "name": "install_generation",
+        "type": "bigint",
+        "table": "trial_ledger",
+        "schema": "billing",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 3
+      },
+      {
+        "name": "trial_ends_at",
+        "type": "timestamp with time zone",
+        "table": "trial_ledger",
+        "schema": "billing",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 4
+      },
+      {
+        "name": "item_handles",
+        "type": "text[]",
+        "table": "trial_ledger",
+        "schema": "billing",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 5
+      },
+      {
+        "name": "source_observed_at",
+        "type": "timestamp with time zone",
+        "table": "trial_ledger",
+        "schema": "billing",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 6
+      },
+      {
+        "name": "source_hash",
+        "type": "text",
+        "table": "trial_ledger",
+        "schema": "billing",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 7
+      },
+      {
+        "name": "recorded_at",
+        "type": "timestamp with time zone",
+        "table": "trial_ledger",
+        "schema": "billing",
+        "default": "statement_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 8
+      },
+      {
+        "name": "workspace_id",
+        "type": "uuid",
+        "table": "workspace_entitlements",
+        "schema": "billing",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 1
+      },
+      {
+        "name": "install_generation",
+        "type": "bigint",
+        "table": "workspace_entitlements",
+        "schema": "billing",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 2
+      },
+      {
+        "name": "entitlement_status",
+        "type": "text",
+        "table": "workspace_entitlements",
+        "schema": "billing",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 3
+      },
+      {
+        "name": "source_observed_at",
+        "type": "timestamp with time zone",
+        "table": "workspace_entitlements",
+        "schema": "billing",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 7
+      },
+      {
+        "name": "source_hash",
+        "type": "text",
+        "table": "workspace_entitlements",
+        "schema": "billing",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 8
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "table": "workspace_entitlements",
+        "schema": "billing",
+        "default": "statement_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 9
+      },
+      {
+        "name": "workspace_id",
+        "type": "uuid",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 1
+      },
+      {
+        "name": "install_generation",
+        "type": "bigint",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 2
+      },
+      {
+        "name": "installation_id",
+        "type": "bigint",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 3
+      },
+      {
+        "name": "shop_id",
+        "type": "text",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 4
+      },
+      {
+        "name": "shop_domain",
+        "type": "text",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 5
+      },
+      {
+        "name": "provider",
+        "type": "text",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "default": "'shopify_app_pricing'::text",
+        "identity": "",
+        "not_null": true,
+        "position": 6
+      },
+      {
+        "name": "provider_status",
+        "type": "text",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 7
+      },
+      {
+        "name": "billing_period",
+        "type": "text",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 8
+      },
+      {
+        "name": "cancel_at_end_of_cycle",
+        "type": "boolean",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "default": "false",
+        "identity": "",
+        "not_null": true,
+        "position": 9
+      },
+      {
+        "name": "trial_ends_at",
+        "type": "timestamp with time zone",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 10
+      },
+      {
+        "name": "current_cycle_start",
+        "type": "timestamp with time zone",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 11
+      },
+      {
+        "name": "current_cycle_end",
+        "type": "timestamp with time zone",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 12
+      },
+      {
+        "name": "item_handles",
+        "type": "text[]",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "default": "'{}'::text[]",
+        "identity": "",
+        "not_null": true,
+        "position": 13
+      },
+      {
+        "name": "pending_item_handles",
+        "type": "text[]",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "default": "'{}'::text[]",
+        "identity": "",
+        "not_null": true,
+        "position": 14
+      },
+      {
+        "name": "source_observed_at",
+        "type": "timestamp with time zone",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 15
+      },
+      {
+        "name": "source_hash",
+        "type": "text",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 16
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "default": "statement_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 17
+      },
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "klaviyo_email_spend_periods",
+        "schema": "integrations",
+        "default": "gen_random_uuid()",
+        "identity": "",
+        "not_null": true,
+        "position": 1
+      },
+      {
+        "name": "connection_id",
+        "type": "uuid",
+        "table": "klaviyo_email_spend_periods",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 2
+      },
+      {
+        "name": "account_id",
+        "type": "bigint",
+        "table": "klaviyo_email_spend_periods",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 3
+      },
+      {
+        "name": "workspace_id",
+        "type": "uuid",
+        "table": "klaviyo_email_spend_periods",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 4
+      },
+      {
+        "name": "install_generation",
+        "type": "bigint",
+        "table": "klaviyo_email_spend_periods",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 5
+      },
+      {
+        "name": "provider",
+        "type": "text",
+        "table": "klaviyo_email_spend_periods",
+        "schema": "integrations",
+        "default": "'klaviyo'::text",
+        "identity": "",
+        "not_null": true,
+        "position": 6
+      },
+      {
+        "name": "provider_account_id",
+        "type": "text",
+        "table": "klaviyo_email_spend_periods",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 7
+      },
+      {
+        "name": "source_currency",
+        "type": "text",
+        "table": "klaviyo_email_spend_periods",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 8
+      },
+      {
+        "name": "estimated_30_day_email_spend",
+        "type": "numeric(10,2)",
+        "table": "klaviyo_email_spend_periods",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 9
+      },
+      {
+        "name": "effective_from",
+        "type": "date",
+        "table": "klaviyo_email_spend_periods",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 10
+      },
+      {
+        "name": "provenance",
+        "type": "text",
+        "table": "klaviyo_email_spend_periods",
+        "schema": "integrations",
+        "default": "'user_estimated'::text",
+        "identity": "",
+        "not_null": true,
+        "position": 11
+      },
+      {
+        "name": "correction_version",
+        "type": "bigint",
+        "table": "klaviyo_email_spend_periods",
+        "schema": "integrations",
+        "default": "1",
+        "identity": "",
+        "not_null": true,
+        "position": 12
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "table": "klaviyo_email_spend_periods",
+        "schema": "integrations",
+        "default": "statement_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 13
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "table": "klaviyo_email_spend_periods",
+        "schema": "integrations",
+        "default": "statement_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 14
+      },
+      {
+        "name": "transaction_id",
+        "type": "uuid",
+        "table": "oauth_pkce_envelopes",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 1
+      },
+      {
+        "name": "installation_id",
+        "type": "bigint",
+        "table": "oauth_pkce_envelopes",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 2
+      },
+      {
+        "name": "workspace_id",
+        "type": "uuid",
+        "table": "oauth_pkce_envelopes",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 3
+      },
+      {
+        "name": "install_generation",
+        "type": "bigint",
+        "table": "oauth_pkce_envelopes",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 4
+      },
+      {
+        "name": "provider",
+        "type": "text",
+        "table": "oauth_pkce_envelopes",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 5
+      },
+      {
+        "name": "payload_ciphertext",
+        "type": "bytea",
+        "table": "oauth_pkce_envelopes",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 6
+      },
+      {
+        "name": "nonce",
+        "type": "bytea",
+        "table": "oauth_pkce_envelopes",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 7
+      },
+      {
+        "name": "auth_tag",
+        "type": "bytea",
+        "table": "oauth_pkce_envelopes",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 8
+      },
+      {
+        "name": "key_version",
+        "type": "smallint",
+        "table": "oauth_pkce_envelopes",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 9
+      },
+      {
+        "name": "expires_at",
+        "type": "timestamp with time zone",
+        "table": "oauth_pkce_envelopes",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 10
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "table": "oauth_pkce_envelopes",
+        "schema": "integrations",
+        "default": "statement_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 11
+      },
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "default": "gen_random_uuid()",
+        "identity": "",
+        "not_null": true,
+        "position": 1
+      },
+      {
+        "name": "installation_id",
+        "type": "bigint",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 2
+      },
+      {
+        "name": "workspace_id",
+        "type": "uuid",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 3
+      },
+      {
+        "name": "install_generation",
+        "type": "bigint",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 4
+      },
+      {
+        "name": "provider",
+        "type": "text",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 5
+      },
+      {
+        "name": "state_digest",
+        "type": "bytea",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 6
+      },
+      {
+        "name": "transaction_nonce",
+        "type": "bytea",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 7
+      },
+      {
+        "name": "callback_uri",
+        "type": "text",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 8
+      },
+      {
+        "name": "pkce_required",
+        "type": "boolean",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 9
+      },
+      {
+        "name": "pkce_challenge",
+        "type": "text",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 10
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "default": "'created'::text",
+        "identity": "",
+        "not_null": true,
+        "position": 11
+      },
+      {
+        "name": "failure_code",
+        "type": "text",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 12
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 13
+      },
+      {
+        "name": "expires_at",
+        "type": "timestamp with time zone",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 14
+      },
+      {
+        "name": "redirected_at",
+        "type": "timestamp with time zone",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 15
+      },
+      {
+        "name": "claimed_at",
+        "type": "timestamp with time zone",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 16
+      },
+      {
+        "name": "completed_at",
+        "type": "timestamp with time zone",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 17
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "default": "statement_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 18
+      },
+      {
+        "name": "id",
+        "type": "bigint",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "default": null,
+        "identity": "a",
+        "not_null": true,
+        "position": 1
+      },
+      {
+        "name": "connection_id",
+        "type": "uuid",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 2
+      },
+      {
+        "name": "workspace_id",
+        "type": "uuid",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 3
+      },
+      {
+        "name": "install_generation",
+        "type": "bigint",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 4
+      },
+      {
+        "name": "provider",
+        "type": "text",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 5
+      },
+      {
+        "name": "provider_account_id",
+        "type": "text",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 6
+      },
+      {
+        "name": "display_name",
+        "type": "text",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 7
+      },
+      {
+        "name": "account_kind",
+        "type": "text",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 8
+      },
+      {
+        "name": "reporting_eligible",
+        "type": "boolean",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 9
+      },
+      {
+        "name": "provider_status",
+        "type": "text",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 10
+      },
+      {
+        "name": "currency_code",
+        "type": "text",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 11
+      },
+      {
+        "name": "timezone_name",
+        "type": "text",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 12
+      },
+      {
+        "name": "login_account_id",
+        "type": "text",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 13
+      },
+      {
+        "name": "verified_at",
+        "type": "timestamp with time zone",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 14
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "default": "statement_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 15
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "default": "statement_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 16
+      },
+      {
+        "name": "active",
+        "type": "boolean",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "default": "true",
+        "identity": "",
+        "not_null": true,
+        "position": 17
+      },
+      {
+        "name": "disconnected_at",
+        "type": "timestamp with time zone",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 18
+      },
+      {
+        "name": "oauth_transaction_id",
+        "type": "uuid",
+        "table": "provider_authorization_handoffs",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 1
+      },
+      {
+        "name": "installation_id",
+        "type": "bigint",
+        "table": "provider_authorization_handoffs",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 2
+      },
+      {
+        "name": "workspace_id",
+        "type": "uuid",
+        "table": "provider_authorization_handoffs",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 3
+      },
+      {
+        "name": "install_generation",
+        "type": "bigint",
+        "table": "provider_authorization_handoffs",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 4
+      },
+      {
+        "name": "provider",
+        "type": "text",
+        "table": "provider_authorization_handoffs",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 5
+      },
+      {
+        "name": "credential_id",
+        "type": "uuid",
+        "table": "provider_authorization_handoffs",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 6
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "table": "provider_authorization_handoffs",
+        "schema": "integrations",
+        "default": "'awaiting_selection'::text",
+        "identity": "",
+        "not_null": true,
+        "position": 7
+      },
+      {
+        "name": "failure_code",
+        "type": "text",
+        "table": "provider_authorization_handoffs",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 8
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "table": "provider_authorization_handoffs",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 9
+      },
+      {
+        "name": "expires_at",
+        "type": "timestamp with time zone",
+        "table": "provider_authorization_handoffs",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 10
+      },
+      {
+        "name": "consumed_at",
+        "type": "timestamp with time zone",
+        "table": "provider_authorization_handoffs",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 11
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "table": "provider_authorization_handoffs",
+        "schema": "integrations",
+        "default": "statement_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 12
+      },
+      {
+        "name": "event_id",
+        "type": "uuid",
+        "table": "provider_connection_lifecycle_events",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 1
+      },
+      {
+        "name": "connection_id",
+        "type": "uuid",
+        "table": "provider_connection_lifecycle_events",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 2
+      },
+      {
+        "name": "workspace_id",
+        "type": "uuid",
+        "table": "provider_connection_lifecycle_events",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 3
+      },
+      {
+        "name": "install_generation",
+        "type": "bigint",
+        "table": "provider_connection_lifecycle_events",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 4
+      },
+      {
+        "name": "provider",
+        "type": "text",
+        "table": "provider_connection_lifecycle_events",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 5
+      },
+      {
+        "name": "event_type",
+        "type": "text",
+        "table": "provider_connection_lifecycle_events",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 6
+      },
+      {
+        "name": "from_status",
+        "type": "text",
+        "table": "provider_connection_lifecycle_events",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 7
+      },
+      {
+        "name": "to_status",
+        "type": "text",
+        "table": "provider_connection_lifecycle_events",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 8
+      },
+      {
+        "name": "version_before",
+        "type": "bigint",
+        "table": "provider_connection_lifecycle_events",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 9
+      },
+      {
+        "name": "version_after",
+        "type": "bigint",
+        "table": "provider_connection_lifecycle_events",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 10
+      },
+      {
+        "name": "reason",
+        "type": "text",
+        "table": "provider_connection_lifecycle_events",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 11
+      },
+      {
+        "name": "outcome",
+        "type": "text",
+        "table": "provider_connection_lifecycle_events",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 12
+      },
+      {
+        "name": "occurred_at",
+        "type": "timestamp with time zone",
+        "table": "provider_connection_lifecycle_events",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 13
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "table": "provider_connection_lifecycle_events",
+        "schema": "integrations",
+        "default": "statement_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 14
+      },
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 1
+      },
+      {
+        "name": "installation_id",
+        "type": "bigint",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 2
+      },
+      {
+        "name": "workspace_id",
+        "type": "uuid",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 3
+      },
+      {
+        "name": "install_generation",
+        "type": "bigint",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 4
+      },
+      {
+        "name": "provider",
+        "type": "text",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 5
+      },
+      {
+        "name": "credential_id",
+        "type": "uuid",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 6
+      },
+      {
+        "name": "granted_scopes",
+        "type": "text[]",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 7
+      },
+      {
+        "name": "connected_at",
+        "type": "timestamp with time zone",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 8
+      },
+      {
+        "name": "last_verified_at",
+        "type": "timestamp with time zone",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 9
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "default": "statement_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 10
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "default": "statement_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 11
+      },
+      {
+        "name": "lifecycle_status",
+        "type": "text",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "default": "'connected'::text",
+        "identity": "",
+        "not_null": true,
+        "position": 12
+      },
+      {
+        "name": "connection_version",
+        "type": "bigint",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "default": "1",
+        "identity": "",
+        "not_null": true,
+        "position": 13
+      },
+      {
+        "name": "lifecycle_changed_at",
+        "type": "timestamp with time zone",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "default": "statement_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 14
+      },
+      {
+        "name": "last_renewed_at",
+        "type": "timestamp with time zone",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 15
+      },
+      {
+        "name": "disconnected_at",
+        "type": "timestamp with time zone",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 16
+      },
+      {
+        "name": "disconnect_reason",
+        "type": "text",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 17
+      },
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "provider_credential_envelopes",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 1
+      },
+      {
+        "name": "installation_id",
+        "type": "bigint",
+        "table": "provider_credential_envelopes",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 2
+      },
+      {
+        "name": "workspace_id",
+        "type": "uuid",
+        "table": "provider_credential_envelopes",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 3
+      },
+      {
+        "name": "install_generation",
+        "type": "bigint",
+        "table": "provider_credential_envelopes",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 4
+      },
+      {
+        "name": "provider",
+        "type": "text",
+        "table": "provider_credential_envelopes",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 5
+      },
+      {
+        "name": "purpose",
+        "type": "text",
+        "table": "provider_credential_envelopes",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 6
+      },
+      {
+        "name": "payload_ciphertext",
+        "type": "bytea",
+        "table": "provider_credential_envelopes",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 7
+      },
+      {
+        "name": "nonce",
+        "type": "bytea",
+        "table": "provider_credential_envelopes",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 8
+      },
+      {
+        "name": "auth_tag",
+        "type": "bytea",
+        "table": "provider_credential_envelopes",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 9
+      },
+      {
+        "name": "key_version",
+        "type": "smallint",
+        "table": "provider_credential_envelopes",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 10
+      },
+      {
+        "name": "expires_at",
+        "type": "timestamp with time zone",
+        "table": "provider_credential_envelopes",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 11
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "table": "provider_credential_envelopes",
+        "schema": "integrations",
+        "default": "statement_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 12
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "table": "provider_credential_envelopes",
+        "schema": "integrations",
+        "default": "statement_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 13
+      },
+      {
+        "name": "id",
+        "type": "bigint",
+        "table": "reporting_account_bindings",
+        "schema": "integrations",
+        "default": null,
+        "identity": "a",
+        "not_null": true,
+        "position": 1
+      },
+      {
+        "name": "connection_id",
+        "type": "uuid",
+        "table": "reporting_account_bindings",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 2
+      },
+      {
+        "name": "account_id",
+        "type": "bigint",
+        "table": "reporting_account_bindings",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 3
+      },
+      {
+        "name": "workspace_id",
+        "type": "uuid",
+        "table": "reporting_account_bindings",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 4
+      },
+      {
+        "name": "install_generation",
+        "type": "bigint",
+        "table": "reporting_account_bindings",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 5
+      },
+      {
+        "name": "provider",
+        "type": "text",
+        "table": "reporting_account_bindings",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 6
+      },
+      {
+        "name": "effective_from",
+        "type": "timestamp with time zone",
+        "table": "reporting_account_bindings",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 7
+      },
+      {
+        "name": "effective_to",
+        "type": "timestamp with time zone",
+        "table": "reporting_account_bindings",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 8
+      },
+      {
+        "name": "change_reason",
+        "type": "text",
+        "table": "reporting_account_bindings",
+        "schema": "integrations",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 9
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "table": "reporting_account_bindings",
+        "schema": "integrations",
+        "default": "statement_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 10
+      },
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "deletion_manifests",
+        "schema": "privacy",
+        "default": "gen_random_uuid()",
+        "identity": "",
+        "not_null": true,
+        "position": 1
+      },
+      {
+        "name": "deletion_run_id",
+        "type": "uuid",
+        "table": "deletion_manifests",
+        "schema": "privacy",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 2
+      },
+      {
+        "name": "workspace_id",
+        "type": "uuid",
+        "table": "deletion_manifests",
+        "schema": "privacy",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 3
+      },
+      {
+        "name": "install_generation",
+        "type": "bigint",
+        "table": "deletion_manifests",
+        "schema": "privacy",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 4
+      },
+      {
+        "name": "shop_identity_sha256",
+        "type": "bytea",
+        "table": "deletion_manifests",
+        "schema": "privacy",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 5
+      },
+      {
+        "name": "kind",
+        "type": "text",
+        "table": "deletion_manifests",
+        "schema": "privacy",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 6
+      },
+      {
+        "name": "manifest_version",
+        "type": "smallint",
+        "table": "deletion_manifests",
+        "schema": "privacy",
+        "default": "1",
+        "identity": "",
+        "not_null": true,
+        "position": 7
+      },
+      {
+        "name": "deleted_families",
+        "type": "text[]",
+        "table": "deletion_manifests",
+        "schema": "privacy",
+        "default": "'{}'::text[]",
+        "identity": "",
+        "not_null": true,
+        "position": 8
+      },
+      {
+        "name": "retained_families",
+        "type": "text[]",
+        "table": "deletion_manifests",
+        "schema": "privacy",
+        "default": "'{}'::text[]",
+        "identity": "",
+        "not_null": true,
+        "position": 9
+      },
+      {
+        "name": "row_counts",
+        "type": "jsonb",
+        "table": "deletion_manifests",
+        "schema": "privacy",
+        "default": "'{}'::jsonb",
+        "identity": "",
+        "not_null": true,
+        "position": 10
+      },
+      {
+        "name": "result",
+        "type": "text",
+        "table": "deletion_manifests",
+        "schema": "privacy",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 11
+      },
+      {
+        "name": "completed_at",
+        "type": "timestamp with time zone",
+        "table": "deletion_manifests",
+        "schema": "privacy",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 12
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "table": "deletion_manifests",
+        "schema": "privacy",
+        "default": "statement_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 13
+      },
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "default": "gen_random_uuid()",
+        "identity": "",
+        "not_null": true,
+        "position": 1
+      },
+      {
+        "name": "claim_id",
+        "type": "uuid",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 2
+      },
+      {
+        "name": "request_key",
+        "type": "text",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 3
+      },
+      {
+        "name": "workspace_id",
+        "type": "uuid",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 4
+      },
+      {
+        "name": "install_generation",
+        "type": "bigint",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 5
+      },
+      {
+        "name": "shop_identity_sha256",
+        "type": "bytea",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 6
+      },
+      {
+        "name": "kind",
+        "type": "text",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 7
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "default": "'pending'::text",
+        "identity": "",
+        "not_null": true,
+        "position": 8
+      },
+      {
+        "name": "requested_at",
+        "type": "timestamp with time zone",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 9
+      },
+      {
+        "name": "deadline_at",
+        "type": "timestamp with time zone",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 10
+      },
+      {
+        "name": "started_at",
+        "type": "timestamp with time zone",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 11
+      },
+      {
+        "name": "completed_at",
+        "type": "timestamp with time zone",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 12
+      },
+      {
+        "name": "attempt_count",
+        "type": "integer",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "default": "0",
+        "identity": "",
+        "not_null": true,
+        "position": 13
+      },
+      {
+        "name": "last_error_code",
+        "type": "text",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 14
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "default": "statement_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 15
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "default": "statement_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 16
+      },
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "webhook_claims",
+        "schema": "privacy",
+        "default": "gen_random_uuid()",
+        "identity": "",
+        "not_null": true,
+        "position": 1
+      },
+      {
+        "name": "webhook_id",
+        "type": "text",
+        "table": "webhook_claims",
+        "schema": "privacy",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 2
+      },
+      {
+        "name": "event_id",
+        "type": "text",
+        "table": "webhook_claims",
+        "schema": "privacy",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 3
+      },
+      {
+        "name": "topic",
+        "type": "text",
+        "table": "webhook_claims",
+        "schema": "privacy",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 4
+      },
+      {
+        "name": "workspace_id",
+        "type": "uuid",
+        "table": "webhook_claims",
+        "schema": "privacy",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 5
+      },
+      {
+        "name": "install_generation",
+        "type": "bigint",
+        "table": "webhook_claims",
+        "schema": "privacy",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 6
+      },
+      {
+        "name": "shop_identity_sha256",
+        "type": "bytea",
+        "table": "webhook_claims",
+        "schema": "privacy",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 7
+      },
+      {
+        "name": "payload_sha256",
+        "type": "text",
+        "table": "webhook_claims",
+        "schema": "privacy",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 8
+      },
+      {
+        "name": "api_version",
+        "type": "text",
+        "table": "webhook_claims",
+        "schema": "privacy",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 9
+      },
+      {
+        "name": "triggered_at",
+        "type": "timestamp with time zone",
+        "table": "webhook_claims",
+        "schema": "privacy",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 10
+      },
+      {
+        "name": "received_at",
+        "type": "timestamp with time zone",
+        "table": "webhook_claims",
+        "schema": "privacy",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 11
+      },
+      {
+        "name": "outcome",
+        "type": "text",
+        "table": "webhook_claims",
+        "schema": "privacy",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 12
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "table": "webhook_claims",
+        "schema": "privacy",
+        "default": "statement_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 13
+      },
+      {
+        "name": "id",
+        "type": "bigint",
+        "table": "installation_domain_history",
+        "schema": "shopify",
+        "default": null,
+        "identity": "a",
+        "not_null": true,
+        "position": 1
+      },
+      {
+        "name": "installation_id",
+        "type": "bigint",
+        "table": "installation_domain_history",
+        "schema": "shopify",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 2
+      },
+      {
+        "name": "previous_shop_domain",
+        "type": "text",
+        "table": "installation_domain_history",
+        "schema": "shopify",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 3
+      },
+      {
+        "name": "replacement_shop_domain",
+        "type": "text",
+        "table": "installation_domain_history",
+        "schema": "shopify",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 4
+      },
+      {
+        "name": "changed_at",
+        "type": "timestamp with time zone",
+        "table": "installation_domain_history",
+        "schema": "shopify",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 5
+      },
+      {
+        "name": "id",
+        "type": "bigint",
+        "table": "installations",
+        "schema": "shopify",
+        "default": null,
+        "identity": "a",
+        "not_null": true,
+        "position": 1
+      },
+      {
+        "name": "shop_id",
+        "type": "text",
+        "table": "installations",
+        "schema": "shopify",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 2
+      },
+      {
+        "name": "shop_domain",
+        "type": "text",
+        "table": "installations",
+        "schema": "shopify",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 3
+      },
+      {
+        "name": "workspace_id",
+        "type": "uuid",
+        "table": "installations",
+        "schema": "shopify",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 4
+      },
+      {
+        "name": "install_generation",
+        "type": "bigint",
+        "table": "installations",
+        "schema": "shopify",
+        "default": "1",
+        "identity": "",
+        "not_null": true,
+        "position": 5
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "table": "installations",
+        "schema": "shopify",
+        "default": "'active'::text",
+        "identity": "",
+        "not_null": true,
+        "position": 6
+      },
+      {
+        "name": "installed_at",
+        "type": "timestamp with time zone",
+        "table": "installations",
+        "schema": "shopify",
+        "default": "statement_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 7
+      },
+      {
+        "name": "last_verified_at",
+        "type": "timestamp with time zone",
+        "table": "installations",
+        "schema": "shopify",
+        "default": "statement_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 8
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "table": "installations",
+        "schema": "shopify",
+        "default": "statement_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 9
+      },
+      {
+        "name": "shop_identity_sha256",
+        "type": "bytea",
+        "table": "installations",
+        "schema": "shopify",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 10
+      },
+      {
+        "name": "session_id",
+        "type": "text",
+        "table": "runtime_sessions",
+        "schema": "shopify",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 1
+      },
+      {
+        "name": "shop_domain",
+        "type": "text",
+        "table": "runtime_sessions",
+        "schema": "shopify",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 2
+      },
+      {
+        "name": "payload_ciphertext",
+        "type": "bytea",
+        "table": "runtime_sessions",
+        "schema": "shopify",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 3
+      },
+      {
+        "name": "nonce",
+        "type": "bytea",
+        "table": "runtime_sessions",
+        "schema": "shopify",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 4
+      },
+      {
+        "name": "auth_tag",
+        "type": "bytea",
+        "table": "runtime_sessions",
+        "schema": "shopify",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 5
+      },
+      {
+        "name": "key_version",
+        "type": "smallint",
+        "table": "runtime_sessions",
+        "schema": "shopify",
+        "default": null,
+        "identity": "",
+        "not_null": true,
+        "position": 6
+      },
+      {
+        "name": "expires_at",
+        "type": "timestamp with time zone",
+        "table": "runtime_sessions",
+        "schema": "shopify",
+        "default": null,
+        "identity": "",
+        "not_null": false,
+        "position": 7
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "table": "runtime_sessions",
+        "schema": "shopify",
+        "default": "statement_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 8
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "table": "runtime_sessions",
+        "schema": "shopify",
+        "default": "statement_timestamp()",
+        "identity": "",
+        "not_null": true,
+        "position": 9
+      }
+    ],
+    "indexes": [
+      {
+        "name": "workspaces_pkey",
+        "table": "workspaces",
+        "schema": "app",
+        "definition": "CREATE UNIQUE INDEX workspaces_pkey ON app.workspaces USING btree (id)"
+      },
+      {
+        "name": "trial_ledger_pkey",
+        "table": "trial_ledger",
+        "schema": "billing",
+        "definition": "CREATE UNIQUE INDEX trial_ledger_pkey ON billing.trial_ledger USING btree (id)"
+      },
+      {
+        "name": "trial_ledger_snapshot_unique",
+        "table": "trial_ledger",
+        "schema": "billing",
+        "definition": "CREATE UNIQUE INDEX trial_ledger_snapshot_unique ON billing.trial_ledger USING btree (workspace_id, install_generation, source_hash)"
+      },
+      {
+        "name": "workspace_entitlements_pkey",
+        "table": "workspace_entitlements",
+        "schema": "billing",
+        "definition": "CREATE UNIQUE INDEX workspace_entitlements_pkey ON billing.workspace_entitlements USING btree (workspace_id, install_generation)"
+      },
+      {
+        "name": "workspace_subscriptions_install_unique",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "definition": "CREATE UNIQUE INDEX workspace_subscriptions_install_unique ON billing.workspace_subscriptions USING btree (installation_id, install_generation)"
+      },
+      {
+        "name": "workspace_subscriptions_pkey",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "definition": "CREATE UNIQUE INDEX workspace_subscriptions_pkey ON billing.workspace_subscriptions USING btree (workspace_id, install_generation)"
+      },
+      {
+        "name": "klaviyo_email_spend_periods_account_fk_idx",
+        "table": "klaviyo_email_spend_periods",
+        "schema": "integrations",
+        "definition": "CREATE INDEX klaviyo_email_spend_periods_account_fk_idx ON integrations.klaviyo_email_spend_periods USING btree (account_id, connection_id, workspace_id, install_generation, provider)"
+      },
+      {
+        "name": "klaviyo_email_spend_periods_current_idx",
+        "table": "klaviyo_email_spend_periods",
+        "schema": "integrations",
+        "definition": "CREATE INDEX klaviyo_email_spend_periods_current_idx ON integrations.klaviyo_email_spend_periods USING btree (connection_id, effective_from DESC, created_at DESC, id DESC)"
+      },
+      {
+        "name": "klaviyo_email_spend_periods_pkey",
+        "table": "klaviyo_email_spend_periods",
+        "schema": "integrations",
+        "definition": "CREATE UNIQUE INDEX klaviyo_email_spend_periods_pkey ON integrations.klaviyo_email_spend_periods USING btree (id)"
+      },
+      {
+        "name": "oauth_pkce_envelopes_expiry_idx",
+        "table": "oauth_pkce_envelopes",
+        "schema": "integrations",
+        "definition": "CREATE INDEX oauth_pkce_envelopes_expiry_idx ON integrations.oauth_pkce_envelopes USING btree (expires_at)"
+      },
+      {
+        "name": "oauth_pkce_envelopes_installation_fk_idx",
+        "table": "oauth_pkce_envelopes",
+        "schema": "integrations",
+        "definition": "CREATE INDEX oauth_pkce_envelopes_installation_fk_idx ON integrations.oauth_pkce_envelopes USING btree (installation_id)"
+      },
+      {
+        "name": "oauth_pkce_envelopes_pkey",
+        "table": "oauth_pkce_envelopes",
+        "schema": "integrations",
+        "definition": "CREATE UNIQUE INDEX oauth_pkce_envelopes_pkey ON integrations.oauth_pkce_envelopes USING btree (transaction_id)"
+      },
+      {
+        "name": "oauth_pkce_envelopes_workspace_fk_idx",
+        "table": "oauth_pkce_envelopes",
+        "schema": "integrations",
+        "definition": "CREATE INDEX oauth_pkce_envelopes_workspace_fk_idx ON integrations.oauth_pkce_envelopes USING btree (workspace_id)"
+      },
+      {
+        "name": "oauth_transactions_installation_fk_idx",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "definition": "CREATE INDEX oauth_transactions_installation_fk_idx ON integrations.oauth_transactions USING btree (installation_id)"
+      },
+      {
+        "name": "oauth_transactions_installation_idx",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "definition": "CREATE INDEX oauth_transactions_installation_idx ON integrations.oauth_transactions USING btree (workspace_id, install_generation, provider, created_at DESC)"
+      },
+      {
+        "name": "oauth_transactions_open_expiry_idx",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "definition": "CREATE INDEX oauth_transactions_open_expiry_idx ON integrations.oauth_transactions USING btree (expires_at) WHERE (status = ANY (ARRAY['created'::text, 'redirected'::text, 'claimed'::text]))"
+      },
+      {
+        "name": "oauth_transactions_pkey",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "definition": "CREATE UNIQUE INDEX oauth_transactions_pkey ON integrations.oauth_transactions USING btree (id)"
+      },
+      {
+        "name": "oauth_transactions_state_digest_key",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "definition": "CREATE UNIQUE INDEX oauth_transactions_state_digest_key ON integrations.oauth_transactions USING btree (state_digest)"
+      },
+      {
+        "name": "oauth_transactions_transaction_nonce_key",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "definition": "CREATE UNIQUE INDEX oauth_transactions_transaction_nonce_key ON integrations.oauth_transactions USING btree (transaction_nonce)"
+      },
+      {
+        "name": "provider_accounts_binding_identity_unique",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "definition": "CREATE UNIQUE INDEX provider_accounts_binding_identity_unique ON integrations.provider_accounts USING btree (id, connection_id, workspace_id, install_generation, provider)"
+      },
+      {
+        "name": "provider_accounts_connection_account_unique",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "definition": "CREATE UNIQUE INDEX provider_accounts_connection_account_unique ON integrations.provider_accounts USING btree (connection_id, provider_account_id)"
+      },
+      {
+        "name": "provider_accounts_connection_authority_fk_idx",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "definition": "CREATE INDEX provider_accounts_connection_authority_fk_idx ON integrations.provider_accounts USING btree (connection_id, workspace_id, install_generation, provider)"
+      },
+      {
+        "name": "provider_accounts_connection_fk_idx",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "definition": "CREATE INDEX provider_accounts_connection_fk_idx ON integrations.provider_accounts USING btree (connection_id)"
+      },
+      {
+        "name": "provider_accounts_pkey",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "definition": "CREATE UNIQUE INDEX provider_accounts_pkey ON integrations.provider_accounts USING btree (id)"
+      },
+      {
+        "name": "provider_accounts_workspace_provider_idx",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "definition": "CREATE INDEX provider_accounts_workspace_provider_idx ON integrations.provider_accounts USING btree (workspace_id, install_generation, provider, provider_account_id)"
+      },
+      {
+        "name": "provider_authorization_handoffs_authority_idx",
+        "table": "provider_authorization_handoffs",
+        "schema": "integrations",
+        "definition": "CREATE INDEX provider_authorization_handoffs_authority_idx ON integrations.provider_authorization_handoffs USING btree (workspace_id, install_generation, provider, status)"
+      },
+      {
+        "name": "provider_authorization_handoffs_credential_id_key",
+        "table": "provider_authorization_handoffs",
+        "schema": "integrations",
+        "definition": "CREATE UNIQUE INDEX provider_authorization_handoffs_credential_id_key ON integrations.provider_authorization_handoffs USING btree (credential_id)"
+      },
+      {
+        "name": "provider_authorization_handoffs_installation_fk_idx",
+        "table": "provider_authorization_handoffs",
+        "schema": "integrations",
+        "definition": "CREATE INDEX provider_authorization_handoffs_installation_fk_idx ON integrations.provider_authorization_handoffs USING btree (installation_id)"
+      },
+      {
+        "name": "provider_authorization_handoffs_one_pending_idx",
+        "table": "provider_authorization_handoffs",
+        "schema": "integrations",
+        "definition": "CREATE UNIQUE INDEX provider_authorization_handoffs_one_pending_idx ON integrations.provider_authorization_handoffs USING btree (workspace_id, install_generation, provider) WHERE (status = 'awaiting_selection'::text)"
+      },
+      {
+        "name": "provider_authorization_handoffs_pkey",
+        "table": "provider_authorization_handoffs",
+        "schema": "integrations",
+        "definition": "CREATE UNIQUE INDEX provider_authorization_handoffs_pkey ON integrations.provider_authorization_handoffs USING btree (oauth_transaction_id)"
+      },
+      {
+        "name": "provider_connection_lifecycle_events_connection_fk_idx",
+        "table": "provider_connection_lifecycle_events",
+        "schema": "integrations",
+        "definition": "CREATE INDEX provider_connection_lifecycle_events_connection_fk_idx ON integrations.provider_connection_lifecycle_events USING btree (connection_id, workspace_id, install_generation, provider)"
+      },
+      {
+        "name": "provider_connection_lifecycle_events_history_idx",
+        "table": "provider_connection_lifecycle_events",
+        "schema": "integrations",
+        "definition": "CREATE INDEX provider_connection_lifecycle_events_history_idx ON integrations.provider_connection_lifecycle_events USING btree (connection_id, occurred_at DESC)"
+      },
+      {
+        "name": "provider_connection_lifecycle_events_pkey",
+        "table": "provider_connection_lifecycle_events",
+        "schema": "integrations",
+        "definition": "CREATE UNIQUE INDEX provider_connection_lifecycle_events_pkey ON integrations.provider_connection_lifecycle_events USING btree (event_id)"
+      },
+      {
+        "name": "provider_connections_authority_unique",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "definition": "CREATE UNIQUE INDEX provider_connections_authority_unique ON integrations.provider_connections USING btree (workspace_id, install_generation, provider)"
+      },
+      {
+        "name": "provider_connections_credential_unique",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "definition": "CREATE UNIQUE INDEX provider_connections_credential_unique ON integrations.provider_connections USING btree (credential_id)"
+      },
+      {
+        "name": "provider_connections_identity_unique",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "definition": "CREATE UNIQUE INDEX provider_connections_identity_unique ON integrations.provider_connections USING btree (id, workspace_id, install_generation, provider)"
+      },
+      {
+        "name": "provider_connections_installation_fk_idx",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "definition": "CREATE INDEX provider_connections_installation_fk_idx ON integrations.provider_connections USING btree (installation_id)"
+      },
+      {
+        "name": "provider_connections_pkey",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "definition": "CREATE UNIQUE INDEX provider_connections_pkey ON integrations.provider_connections USING btree (id)"
+      },
+      {
+        "name": "provider_credential_envelopes_authority_idx",
+        "table": "provider_credential_envelopes",
+        "schema": "integrations",
+        "definition": "CREATE INDEX provider_credential_envelopes_authority_idx ON integrations.provider_credential_envelopes USING btree (workspace_id, install_generation, provider, updated_at DESC)"
+      },
+      {
+        "name": "provider_credential_envelopes_installation_fk_idx",
+        "table": "provider_credential_envelopes",
+        "schema": "integrations",
+        "definition": "CREATE INDEX provider_credential_envelopes_installation_fk_idx ON integrations.provider_credential_envelopes USING btree (installation_id)"
+      },
+      {
+        "name": "provider_credential_envelopes_pkey",
+        "table": "provider_credential_envelopes",
+        "schema": "integrations",
+        "definition": "CREATE UNIQUE INDEX provider_credential_envelopes_pkey ON integrations.provider_credential_envelopes USING btree (id)"
+      },
+      {
+        "name": "reporting_account_bindings_account_authority_fk_idx",
+        "table": "reporting_account_bindings",
+        "schema": "integrations",
+        "definition": "CREATE INDEX reporting_account_bindings_account_authority_fk_idx ON integrations.reporting_account_bindings USING btree (account_id, connection_id, workspace_id, install_generation, provider)"
+      },
+      {
+        "name": "reporting_account_bindings_account_fk_idx",
+        "table": "reporting_account_bindings",
+        "schema": "integrations",
+        "definition": "CREATE INDEX reporting_account_bindings_account_fk_idx ON integrations.reporting_account_bindings USING btree (account_id)"
+      },
+      {
+        "name": "reporting_account_bindings_connection_history_idx",
+        "table": "reporting_account_bindings",
+        "schema": "integrations",
+        "definition": "CREATE INDEX reporting_account_bindings_connection_history_idx ON integrations.reporting_account_bindings USING btree (connection_id, effective_from DESC)"
+      },
+      {
+        "name": "reporting_account_bindings_one_active_idx",
+        "table": "reporting_account_bindings",
+        "schema": "integrations",
+        "definition": "CREATE UNIQUE INDEX reporting_account_bindings_one_active_idx ON integrations.reporting_account_bindings USING btree (connection_id) WHERE (effective_to IS NULL)"
+      },
+      {
+        "name": "reporting_account_bindings_pkey",
+        "table": "reporting_account_bindings",
+        "schema": "integrations",
+        "definition": "CREATE UNIQUE INDEX reporting_account_bindings_pkey ON integrations.reporting_account_bindings USING btree (id)"
+      },
+      {
+        "name": "deletion_manifests_deletion_run_id_key",
+        "table": "deletion_manifests",
+        "schema": "privacy",
+        "definition": "CREATE UNIQUE INDEX deletion_manifests_deletion_run_id_key ON privacy.deletion_manifests USING btree (deletion_run_id)"
+      },
+      {
+        "name": "deletion_manifests_identity_generation_idx",
+        "table": "deletion_manifests",
+        "schema": "privacy",
+        "definition": "CREATE INDEX deletion_manifests_identity_generation_idx ON privacy.deletion_manifests USING btree (shop_identity_sha256, install_generation DESC)"
+      },
+      {
+        "name": "deletion_manifests_pkey",
+        "table": "deletion_manifests",
+        "schema": "privacy",
+        "definition": "CREATE UNIQUE INDEX deletion_manifests_pkey ON privacy.deletion_manifests USING btree (id)"
+      },
+      {
+        "name": "deletion_runs_claim_id_key",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "definition": "CREATE UNIQUE INDEX deletion_runs_claim_id_key ON privacy.deletion_runs USING btree (claim_id)"
+      },
+      {
+        "name": "deletion_runs_pending_idx",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "definition": "CREATE INDEX deletion_runs_pending_idx ON privacy.deletion_runs USING btree (status, requested_at) WHERE (status = ANY (ARRAY['pending'::text, 'failed'::text]))"
+      },
+      {
+        "name": "deletion_runs_pkey",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "definition": "CREATE UNIQUE INDEX deletion_runs_pkey ON privacy.deletion_runs USING btree (id)"
+      },
+      {
+        "name": "deletion_runs_request_key_key",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "definition": "CREATE UNIQUE INDEX deletion_runs_request_key_key ON privacy.deletion_runs USING btree (request_key)"
+      },
+      {
+        "name": "webhook_claims_pkey",
+        "table": "webhook_claims",
+        "schema": "privacy",
+        "definition": "CREATE UNIQUE INDEX webhook_claims_pkey ON privacy.webhook_claims USING btree (id)"
+      },
+      {
+        "name": "webhook_claims_webhook_id_key",
+        "table": "webhook_claims",
+        "schema": "privacy",
+        "definition": "CREATE UNIQUE INDEX webhook_claims_webhook_id_key ON privacy.webhook_claims USING btree (webhook_id)"
+      },
+      {
+        "name": "webhook_claims_workspace_idx",
+        "table": "webhook_claims",
+        "schema": "privacy",
+        "definition": "CREATE INDEX webhook_claims_workspace_idx ON privacy.webhook_claims USING btree (workspace_id, install_generation, received_at DESC)"
+      },
+      {
+        "name": "installation_domain_history_pkey",
+        "table": "installation_domain_history",
+        "schema": "shopify",
+        "definition": "CREATE UNIQUE INDEX installation_domain_history_pkey ON shopify.installation_domain_history USING btree (id)"
+      },
+      {
+        "name": "installation_domain_history_unique",
+        "table": "installation_domain_history",
+        "schema": "shopify",
+        "definition": "CREATE UNIQUE INDEX installation_domain_history_unique ON shopify.installation_domain_history USING btree (installation_id, previous_shop_domain, replacement_shop_domain, changed_at)"
+      },
+      {
+        "name": "installations_pkey",
+        "table": "installations",
+        "schema": "shopify",
+        "definition": "CREATE UNIQUE INDEX installations_pkey ON shopify.installations USING btree (id)"
+      },
+      {
+        "name": "installations_shop_generation_unique",
+        "table": "installations",
+        "schema": "shopify",
+        "definition": "CREATE UNIQUE INDEX installations_shop_generation_unique ON shopify.installations USING btree (shop_id, install_generation)"
+      },
+      {
+        "name": "installations_single_live_shop_idx",
+        "table": "installations",
+        "schema": "shopify",
+        "definition": "CREATE UNIQUE INDEX installations_single_live_shop_idx ON shopify.installations USING btree (shop_id) WHERE (status = ANY (ARRAY['active'::text, 'uninstall_pending_redaction'::text, 'deletion_pending'::text]))"
+      },
+      {
+        "name": "installations_workspace_unique",
+        "table": "installations",
+        "schema": "shopify",
+        "definition": "CREATE UNIQUE INDEX installations_workspace_unique ON shopify.installations USING btree (workspace_id)"
+      },
+      {
+        "name": "runtime_sessions_pkey",
+        "table": "runtime_sessions",
+        "schema": "shopify",
+        "definition": "CREATE UNIQUE INDEX runtime_sessions_pkey ON shopify.runtime_sessions USING btree (session_id)"
+      },
+      {
+        "name": "runtime_sessions_shop_lookup_idx",
+        "table": "runtime_sessions",
+        "schema": "shopify",
+        "definition": "CREATE INDEX runtime_sessions_shop_lookup_idx ON shopify.runtime_sessions USING btree (shop_domain, expires_at DESC NULLS LAST)"
+      }
+    ],
+    "schemas": [
+      {
+        "acl": "{adstable_owner=UC/adstable_owner,adstable_runtime=U/adstable_owner}",
+        "name": "analytics",
+        "owner": "adstable_owner"
+      },
+      {
+        "acl": "{adstable_owner=UC/adstable_owner,adstable_runtime=U/adstable_owner}",
+        "name": "app",
+        "owner": "adstable_owner"
+      },
+      {
+        "acl": "{adstable_owner=UC/adstable_owner,adstable_runtime=U/adstable_owner}",
+        "name": "billing",
+        "owner": "adstable_owner"
+      },
+      {
+        "acl": "{adstable_owner=UC/adstable_owner,adstable_runtime=U/adstable_owner}",
+        "name": "integrations",
+        "owner": "adstable_owner"
+      },
+      {
+        "acl": "{adstable_owner=UC/adstable_owner,adstable_runtime=U/adstable_owner}",
+        "name": "operations",
+        "owner": "adstable_owner"
+      },
+      {
+        "acl": "{adstable_owner=UC/adstable_owner,adstable_runtime=U/adstable_owner}",
+        "name": "privacy",
+        "owner": "adstable_owner"
+      },
+      {
+        "acl": "{adstable_owner=UC/adstable_owner,adstable_runtime=U/adstable_owner}",
+        "name": "shopify",
+        "owner": "adstable_owner"
+      }
+    ],
+    "policies": [
+      {
+        "name": "workspaces_owner_all",
+        "check": "true",
+        "roles": [
+          "adstable_owner"
+        ],
+        "table": "workspaces",
+        "using": "true",
+        "schema": "app",
+        "command": "ALL",
+        "permissive": "PERMISSIVE"
+      },
+      {
+        "name": "trial_ledger_owner_all",
+        "check": "true",
+        "roles": [
+          "adstable_owner"
+        ],
+        "table": "trial_ledger",
+        "using": "true",
+        "schema": "billing",
+        "command": "ALL",
+        "permissive": "PERMISSIVE"
+      },
+      {
+        "name": "workspace_entitlements_owner_all",
+        "check": "true",
+        "roles": [
+          "adstable_owner"
+        ],
+        "table": "workspace_entitlements",
+        "using": "true",
+        "schema": "billing",
+        "command": "ALL",
+        "permissive": "PERMISSIVE"
+      },
+      {
+        "name": "workspace_subscriptions_owner_all",
+        "check": "true",
+        "roles": [
+          "adstable_owner"
+        ],
+        "table": "workspace_subscriptions",
+        "using": "true",
+        "schema": "billing",
+        "command": "ALL",
+        "permissive": "PERMISSIVE"
+      },
+      {
+        "name": "klaviyo_email_spend_periods_owner_all",
+        "check": "true",
+        "roles": [
+          "adstable_owner"
+        ],
+        "table": "klaviyo_email_spend_periods",
+        "using": "true",
+        "schema": "integrations",
+        "command": "ALL",
+        "permissive": "PERMISSIVE"
+      },
+      {
+        "name": "oauth_pkce_envelopes_owner_all",
+        "check": "true",
+        "roles": [
+          "adstable_owner"
+        ],
+        "table": "oauth_pkce_envelopes",
+        "using": "true",
+        "schema": "integrations",
+        "command": "ALL",
+        "permissive": "PERMISSIVE"
+      },
+      {
+        "name": "oauth_transactions_owner_all",
+        "check": "true",
+        "roles": [
+          "adstable_owner"
+        ],
+        "table": "oauth_transactions",
+        "using": "true",
+        "schema": "integrations",
+        "command": "ALL",
+        "permissive": "PERMISSIVE"
+      },
+      {
+        "name": "provider_accounts_owner_all",
+        "check": "true",
+        "roles": [
+          "adstable_owner"
+        ],
+        "table": "provider_accounts",
+        "using": "true",
+        "schema": "integrations",
+        "command": "ALL",
+        "permissive": "PERMISSIVE"
+      },
+      {
+        "name": "provider_authorization_handoffs_owner_all",
+        "check": "true",
+        "roles": [
+          "adstable_owner"
+        ],
+        "table": "provider_authorization_handoffs",
+        "using": "true",
+        "schema": "integrations",
+        "command": "ALL",
+        "permissive": "PERMISSIVE"
+      },
+      {
+        "name": "provider_connection_lifecycle_events_owner_all",
+        "check": "true",
+        "roles": [
+          "adstable_owner"
+        ],
+        "table": "provider_connection_lifecycle_events",
+        "using": "true",
+        "schema": "integrations",
+        "command": "ALL",
+        "permissive": "PERMISSIVE"
+      },
+      {
+        "name": "provider_connections_owner_all",
+        "check": "true",
+        "roles": [
+          "adstable_owner"
+        ],
+        "table": "provider_connections",
+        "using": "true",
+        "schema": "integrations",
+        "command": "ALL",
+        "permissive": "PERMISSIVE"
+      },
+      {
+        "name": "provider_credential_envelopes_owner_all",
+        "check": "true",
+        "roles": [
+          "adstable_owner"
+        ],
+        "table": "provider_credential_envelopes",
+        "using": "true",
+        "schema": "integrations",
+        "command": "ALL",
+        "permissive": "PERMISSIVE"
+      },
+      {
+        "name": "reporting_account_bindings_owner_all",
+        "check": "true",
+        "roles": [
+          "adstable_owner"
+        ],
+        "table": "reporting_account_bindings",
+        "using": "true",
+        "schema": "integrations",
+        "command": "ALL",
+        "permissive": "PERMISSIVE"
+      },
+      {
+        "name": "deletion_manifests_owner_all",
+        "check": "true",
+        "roles": [
+          "adstable_owner"
+        ],
+        "table": "deletion_manifests",
+        "using": "true",
+        "schema": "privacy",
+        "command": "ALL",
+        "permissive": "PERMISSIVE"
+      },
+      {
+        "name": "deletion_runs_owner_all",
+        "check": "true",
+        "roles": [
+          "adstable_owner"
+        ],
+        "table": "deletion_runs",
+        "using": "true",
+        "schema": "privacy",
+        "command": "ALL",
+        "permissive": "PERMISSIVE"
+      },
+      {
+        "name": "webhook_claims_owner_all",
+        "check": "true",
+        "roles": [
+          "adstable_owner"
+        ],
+        "table": "webhook_claims",
+        "using": "true",
+        "schema": "privacy",
+        "command": "ALL",
+        "permissive": "PERMISSIVE"
+      },
+      {
+        "name": "installation_domain_history_owner_all",
+        "check": "true",
+        "roles": [
+          "adstable_owner"
+        ],
+        "table": "installation_domain_history",
+        "using": "true",
+        "schema": "shopify",
+        "command": "ALL",
+        "permissive": "PERMISSIVE"
+      },
+      {
+        "name": "installations_owner_all",
+        "check": "true",
+        "roles": [
+          "adstable_owner"
+        ],
+        "table": "installations",
+        "using": "true",
+        "schema": "shopify",
+        "command": "ALL",
+        "permissive": "PERMISSIVE"
+      },
+      {
+        "name": "runtime_sessions_owner_all",
+        "check": "true",
+        "roles": [
+          "adstable_owner"
+        ],
+        "table": "runtime_sessions",
+        "using": "true",
+        "schema": "shopify",
+        "command": "ALL",
+        "permissive": "PERMISSIVE"
+      }
+    ],
+    "triggers": null,
+    "functions": [
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "apply_shopify_app_pricing_snapshot",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "billing",
+        "arguments": "p_shop_id text, p_shop_domain text, p_install_generation bigint, p_provider_active boolean, p_entitlement_status text, p_billing_period text, p_cancel_at_end_of_cycle boolean, p_trial_ends_at timestamp with time zone, p_current_cycle_start timestamp with time zone, p_current_cycle_end timestamp with time zone, p_item_handles text[], p_pending_item_handles text[], p_observed_at timestamp with time zone, p_source_hash text",
+        "security_definer": true,
+        "definition_sha256": "a7fa48e34357df793cce554d549359e06859cfb4d1e8d6eacba54344b40e8a00"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "resolve_workspace_entitlement",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "billing",
+        "arguments": "p_shop_id text, p_shop_domain text, p_install_generation bigint, p_fresh_after timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "74f46c4cdc2b4ef0477a37cd9a039a903c692ffb98c6720f916347ad49712fb1"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "append_klaviyo_spend_period",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_connection_id uuid, p_workspace_id uuid, p_install_generation bigint, p_expected_version bigint, p_account jsonb, p_estimated_spend numeric, p_verified_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "44645748af14d7e165969aa38c6ad2762f59aa4e9b07877f0708af9124826d87"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "cancel_pending_provider_account_selection",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_connection_id uuid, p_workspace_id uuid, p_install_generation bigint, p_provider text, p_expected_version bigint, p_cancelled_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "e0f0a3864907cd1539f1049bf9efd27bb6f832e3790e495b0ab020ffa9e30dec"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "cancel_provider_authorization_handoff",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_oauth_transaction_id uuid, p_workspace_id uuid, p_install_generation bigint, p_provider text, p_cancelled_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "4da29e8f9e48838d8203df3f646c2da7ff64a71bbdba295e68d07b63d7701180"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "claim_oauth_transaction",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_provider text, p_state_digest bytea, p_claimed_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "1a8754e7b03a6e0b6e162ba1066caa005a82e3c4fb77115bd086278e9fad9415"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "complete_klaviyo_setup_with_spend",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_connection_id uuid, p_workspace_id uuid, p_install_generation bigint, p_expected_version bigint, p_account jsonb, p_estimated_spend numeric, p_verified_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "f0dc3734bec50b0973d086ed9b264718d797be7f134ed3754df2523de851b35b"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "complete_oauth_transaction",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_transaction_id uuid, p_outcome text, p_failure_code text, p_completed_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "f0daeb7b6277a0e870bc2afc3332d1265b4c6ed7562c86e3eb5962bbacf972ad"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "complete_pending_provider_account_selection",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_connection_id uuid, p_workspace_id uuid, p_install_generation bigint, p_provider text, p_expected_version bigint, p_accounts jsonb, p_verified_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "b1bb9aaccf24efbfa6ced13524066807b9f76cd1cc42a510643ff9f431ed09d6"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "complete_pending_reporting_account_selection",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_connection_id uuid, p_workspace_id uuid, p_install_generation bigint, p_provider text, p_expected_version bigint, p_provider_account_id text, p_verified_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "a9526b58b818d8bc3ed2d88418b3a3ff2906db2936820a27dde2fc42abb55c31"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "consume_provider_authorization_handoff",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_oauth_transaction_id uuid, p_connection_id uuid, p_workspace_id uuid, p_install_generation bigint, p_provider text, p_granted_scopes text[], p_accounts jsonb, p_reporting_account_id text, p_verified_at timestamp with time zone, p_consumed_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "1a71e22697e9e356eb09096aecf68ce1729bae088275cbeaf6771a89cc6210c5"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "correct_klaviyo_spend_period",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_connection_id uuid, p_workspace_id uuid, p_install_generation bigint, p_effective_from date, p_expected_correction_version bigint, p_estimated_spend numeric",
+        "security_definer": true,
+        "definition_sha256": "3a25d8f777b6028ab07e3e80a9bfbd6c543cfb7c3617f5f7ab33b5dd15abdee5"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "correct_klaviyo_spend_period",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_connection_id uuid, p_workspace_id uuid, p_install_generation bigint, p_spend_period_id uuid, p_expected_correction_version bigint, p_estimated_spend numeric",
+        "security_definer": true,
+        "definition_sha256": "245ed7f525f82f6631d5749a2a96538c978b96368d7ed81d52cf53fbae175ef3"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "create_oauth_transaction",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_workspace_id uuid, p_install_generation bigint, p_provider text, p_state_digest bytea, p_transaction_nonce bytea, p_pkce_challenge text, p_created_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "748861859d381c40104c0da244c13738a2732008271cb77c16a9d75408a442ec"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "create_provider_authorization_handoff",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_oauth_transaction_id uuid, p_workspace_id uuid, p_install_generation bigint, p_provider text, p_credential_id uuid, p_created_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "739be5c5e4bb222c1224dbcb04e08ebf08a23d7da6f4e48c5be0d55cb820a082"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "delete_oauth_pkce_envelope",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_transaction_id uuid, p_workspace_id uuid, p_install_generation bigint, p_provider text",
+        "security_definer": true,
+        "definition_sha256": "30fa669f78204c668211b803bddff06caad291c9bfe50faf47518d012368f71a"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "delete_provider_credential_envelope",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_credential_id uuid, p_workspace_id uuid, p_install_generation bigint, p_provider text",
+        "security_definer": true,
+        "definition_sha256": "8b260e4f456f83fe43de717682d6e2dbeb7d8123a85e3d4009c077e1cd9a6dd4"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "establish_provider_account_authority",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_connection_id uuid, p_workspace_id uuid, p_install_generation bigint, p_provider text, p_credential_id uuid, p_granted_scopes text[], p_accounts jsonb, p_reporting_account_id text, p_verified_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "2f760b22171566ebb8cfb510aad4627bbeb8afc0e7fa351a149972d6b1e6b5fd"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "expire_provider_authorization_handoffs",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_observed_at timestamp with time zone, p_limit integer",
+        "security_definer": true,
+        "definition_sha256": "2433d638104e2135ba62a2a1d11b49386cb8ffeadc685d068075152a850a8987"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "finalize_provider_disconnect",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_event_id uuid, p_connection_id uuid, p_workspace_id uuid, p_install_generation bigint, p_provider text, p_expected_version bigint, p_outcome text, p_reason text, p_occurred_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "eedc686c545fcd2dc663c8aac598f873859e8a35e82b81920a57f35416bfb4b9"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "invalidate_oauth_transaction",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_transaction_id uuid, p_failure_code text, p_completed_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "124760bbdebc9fafbb07ae5a77cf4c34a2147d4c8019e81f90f065a1de0a38a0"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "load_current_provider_authorization_handoff",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_workspace_id uuid, p_install_generation bigint, p_provider text, p_observed_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "972382cd57dfa47ab6fa70176fe1dd8f553a3f404b0961f00adc261c840a6de1"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "load_klaviyo_spend_configuration",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_workspace_id uuid, p_install_generation bigint",
+        "security_definer": true,
+        "definition_sha256": "e69c5de553b71d7f77179be954f1083358e5253262a6d2cbdfca9100b004ad5f"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "load_pending_klaviyo_account_selection",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_workspace_id uuid, p_install_generation bigint",
+        "security_definer": true,
+        "definition_sha256": "ffe86691e0d1e21ecd396cedf35b65f1958d3a086f06871261101b2f07419018"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "load_pending_provider_account_selection",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_workspace_id uuid, p_install_generation bigint, p_provider text",
+        "security_definer": true,
+        "definition_sha256": "2e2c0d79166ae4457c6e3b26c55c88c00c7f15c6838929bef80bfb8b16df51f4"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "load_pending_reporting_account_selection",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_workspace_id uuid, p_install_generation bigint, p_provider text",
+        "security_definer": true,
+        "definition_sha256": "68e3e2074ad3b642ad19cd4006ab81b855060619502991afecd82aaa1e904522"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "load_provider_account_authority",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_workspace_id uuid, p_install_generation bigint, p_provider text",
+        "security_definer": true,
+        "definition_sha256": "bcfbbf8d24c4c624d9c14c93d0b449e1ad5dd908b3fd62fa6eac3bf16cfdbbf8"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "load_provider_authorization_handoff",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_oauth_transaction_id uuid, p_workspace_id uuid, p_install_generation bigint, p_provider text, p_observed_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "559e89af06717fce9e3411ca35ce6213e6c257ae85e1f9f3c406e7f5a9e6e256"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "load_provider_connection_lifecycle",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_connection_id uuid, p_workspace_id uuid, p_install_generation bigint, p_provider text",
+        "security_definer": true,
+        "definition_sha256": "88f511528f7e3edc6796d09cd38c3a076596d0467057b8b33687735a7d84a772"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "load_provider_connection_lifecycle_by_owner",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_workspace_id uuid, p_install_generation bigint, p_provider text",
+        "security_definer": true,
+        "definition_sha256": "62cf85eecb7c11a5873990b72066f8ea9d9c0fec1e31b40dbc544ce52837f0f5"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "load_provider_credential_envelope",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_credential_id uuid, p_workspace_id uuid, p_install_generation bigint, p_provider text",
+        "security_definer": true,
+        "definition_sha256": "d14a7d520e6d670907025fcb405263d37378010fa0336f3de8b308e35b2eda77"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "mark_oauth_transaction_redirected",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_transaction_id uuid, p_redirected_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "da0e39773d33a87c46d6b5af9484387c85189b1b6d52d36c5327e5150bc6cb3f"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "reconnect_provider_connection",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_event_id uuid, p_connection_id uuid, p_workspace_id uuid, p_install_generation bigint, p_provider text, p_expected_version bigint, p_credential_id uuid, p_granted_scopes text[], p_accounts jsonb, p_reporting_account_id text, p_verified_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "a1a3f8c6129c1e48c471283e87b78f0d9ff4669f8501d4a35e72a42c99576655"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "renew_provider_connection_credential",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_event_id uuid, p_connection_id uuid, p_workspace_id uuid, p_install_generation bigint, p_provider text, p_expected_version bigint, p_expected_credential_id uuid, p_new_credential_id uuid, p_granted_scopes text[], p_verified_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "56a7485d201940afe3fd0fa3db9dc4d0b1e580b4a45885e06aa25b4377dfffd9"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "select_reporting_account",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_connection_id uuid, p_workspace_id uuid, p_install_generation bigint, p_provider text, p_provider_account_id text, p_verified_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "8067c5653dfee2a2130d0e78ad86064c4ef0ec360b404dc0d3cabc2d1770feae"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "stage_provider_account_selection",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_connection_id uuid, p_workspace_id uuid, p_install_generation bigint, p_provider text, p_credential_id uuid, p_granted_scopes text[], p_verified_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "c3aaf88d176e2526f0a8e347c23e951c14f3e2b8784f18321c995554e96da43b"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "store_oauth_pkce_envelope",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_transaction_id uuid, p_workspace_id uuid, p_install_generation bigint, p_provider text, p_payload_ciphertext bytea, p_nonce bytea, p_auth_tag bytea, p_key_version smallint, p_expires_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "8586489b6e56e5f8feadd51e1f14f9021e36fdadfdbc44dc3976e4f11731c46c"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "store_provider_credential_envelope",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_credential_id uuid, p_workspace_id uuid, p_install_generation bigint, p_provider text, p_purpose text, p_payload_ciphertext bytea, p_nonce bytea, p_auth_tag bytea, p_key_version smallint, p_expires_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "9c0ba08ab198d15532a5e1f0effe0c498d7fdc14327361e4e1d702774546e2a6"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "take_oauth_pkce_envelope",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_transaction_id uuid, p_workspace_id uuid, p_install_generation bigint, p_provider text, p_taken_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "69e9835c9a40d792f2e0dd26af834e1b937e9366bae4ab923e63425978e0e036"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "token_vault_runtime_guard",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_expected_contract_version smallint",
+        "security_definer": true,
+        "definition_sha256": "058f2ab5d04fb91fe30bfc52f04d63f6dcc90ec6a46a8c4b1345cc241d73ef0e"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "transition_provider_connection_lifecycle",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "integrations",
+        "arguments": "p_event_id uuid, p_connection_id uuid, p_workspace_id uuid, p_install_generation bigint, p_provider text, p_expected_version bigint, p_event_type text, p_reason text, p_outcome text, p_occurred_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "88968413fc4cb2f74206404ba91dbbec6fc513ea0b4e5f773e27583deab8f1ca"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "claim_shopify_webhook",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "privacy",
+        "arguments": "p_webhook_id text, p_event_id text, p_topic text, p_shop_id text, p_shop_domain text, p_shop_identity_sha256 bytea, p_payload_sha256 text, p_api_version text, p_triggered_at timestamp with time zone, p_received_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "5dd46dc2dfabdb6b3f9f464ee968cd58f7188dd7f9518c26472c28ce7be6a19d"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner}",
+        "name": "execute_deletion_run",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "privacy",
+        "arguments": "p_run_id uuid",
+        "security_definer": true,
+        "definition_sha256": "752f449ff3487e0c911ca943464f89710f7437d048e36e8957f117cefae3d877"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,postgres=X/adstable_owner}",
+        "name": "process_deletion_queue",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "privacy",
+        "arguments": "p_batch_size integer",
+        "security_definer": true,
+        "definition_sha256": "81cc8fe0b517378f0cb46bf4a34b409e73960e95f6dd17d1f3c4797bf6b0b4f3"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "request_workspace_deletion",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "privacy",
+        "arguments": "p_request_key text, p_shop_id text, p_shop_domain text, p_install_generation bigint, p_shop_identity_sha256 bytea, p_requested_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "cbeb54507cc586c9fe02e04cf116b419c5e42a0a0c11a7eeca7a182a7bde04dd"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "bootstrap_installation",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "shopify",
+        "arguments": "p_shop_id text, p_shop_domain text, p_shop_identity_sha256 bytea, p_verified_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "0306f8b3436b8cd40be390e71fe175f7367a2cec67ad634dd05cf4e141ba084a"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "bootstrap_installation",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "shopify",
+        "arguments": "p_shop_id text, p_shop_domain text, p_verified_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "ce3c5f641e991b15d7c64e537e3076485900dd22995701bd7247d4cbf3aa7866"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "delete_runtime_session",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "shopify",
+        "arguments": "p_session_id text",
+        "security_definer": true,
+        "definition_sha256": "8e1d2aba7fecb4e19c99b0f3e22ae5f436e97b829847864f5e9300711697079a"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "delete_runtime_sessions",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "shopify",
+        "arguments": "p_session_ids text[]",
+        "security_definer": true,
+        "definition_sha256": "8ad4074c3296d0d59919348dcf8e83d94f15bf40feca5939ffb973dfdaaa2078"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "find_runtime_sessions_by_shop",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "shopify",
+        "arguments": "p_shop_domain text",
+        "security_definer": true,
+        "definition_sha256": "8eb8b63c716725d15dea22958782385a01d6f4925730e5ad7b1d3fdc05101f6d"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "load_runtime_session",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "shopify",
+        "arguments": "p_session_id text",
+        "security_definer": true,
+        "definition_sha256": "ccecab575213a25c4d6824eac0a1b607cd9d7f9708cf4173ab6bc399f3d89a10"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "resolve_active_installation",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "shopify",
+        "arguments": "p_shop_id text, p_shop_domain text",
+        "security_definer": true,
+        "definition_sha256": "913347a3200806a8054d0ba85f51d50bcaf8d65baa5e2790f1a4e29c7df38575"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "resolve_active_installation_callback_return",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "shopify",
+        "arguments": "p_workspace_id uuid, p_install_generation bigint",
+        "security_definer": true,
+        "definition_sha256": "e1ddb91a30f90db3a6becc5798567933ce93451f4b5ce8cb5b45da63631381c8"
+      },
+      {
+        "acl": "{adstable_owner=X/adstable_owner,adstable_runtime=X/adstable_owner}",
+        "name": "store_runtime_session",
+        "owner": "adstable_owner",
+        "config": [
+          "search_path=\"\""
+        ],
+        "schema": "shopify",
+        "arguments": "p_session_id text, p_shop_domain text, p_payload_ciphertext bytea, p_nonce bytea, p_auth_tag bytea, p_key_version smallint, p_expires_at timestamp with time zone",
+        "security_definer": true,
+        "definition_sha256": "f1ee29da8e1bae83dc0ebdb8ae86a41f2214e6f85663927c71ac36056bdbab96"
+      }
+    ],
+    "relations": [
+      {
+        "acl": "{adstable_owner=arwdDxtm/adstable_owner}",
+        "rls": true,
+        "kind": "r",
+        "name": "workspaces",
+        "owner": "adstable_owner",
+        "schema": "app",
+        "forced_rls": true
+      },
+      {
+        "acl": "{adstable_owner=arwdDxtm/adstable_owner}",
+        "rls": true,
+        "kind": "r",
+        "name": "trial_ledger",
+        "owner": "adstable_owner",
+        "schema": "billing",
+        "forced_rls": true
+      },
+      {
+        "acl": "{adstable_owner=rwU/adstable_owner}",
+        "rls": false,
+        "kind": "S",
+        "name": "trial_ledger_id_seq",
+        "owner": "adstable_owner",
+        "schema": "billing",
+        "forced_rls": false
+      },
+      {
+        "acl": "{adstable_owner=arwdDxtm/adstable_owner}",
+        "rls": true,
+        "kind": "r",
+        "name": "workspace_entitlements",
+        "owner": "adstable_owner",
+        "schema": "billing",
+        "forced_rls": true
+      },
+      {
+        "acl": "{adstable_owner=arwdDxtm/adstable_owner}",
+        "rls": true,
+        "kind": "r",
+        "name": "workspace_subscriptions",
+        "owner": "adstable_owner",
+        "schema": "billing",
+        "forced_rls": true
+      },
+      {
+        "acl": "{adstable_owner=arwdDxtm/adstable_owner}",
+        "rls": true,
+        "kind": "r",
+        "name": "klaviyo_email_spend_periods",
+        "owner": "adstable_owner",
+        "schema": "integrations",
+        "forced_rls": true
+      },
+      {
+        "acl": "{adstable_owner=arwdDxtm/adstable_owner}",
+        "rls": true,
+        "kind": "r",
+        "name": "oauth_pkce_envelopes",
+        "owner": "adstable_owner",
+        "schema": "integrations",
+        "forced_rls": true
+      },
+      {
+        "acl": "{adstable_owner=arwdDxtm/adstable_owner}",
+        "rls": true,
+        "kind": "r",
+        "name": "oauth_transactions",
+        "owner": "adstable_owner",
+        "schema": "integrations",
+        "forced_rls": true
+      },
+      {
+        "acl": "{adstable_owner=arwdDxtm/adstable_owner}",
+        "rls": true,
+        "kind": "r",
+        "name": "provider_accounts",
+        "owner": "adstable_owner",
+        "schema": "integrations",
+        "forced_rls": true
+      },
+      {
+        "acl": "{adstable_owner=rwU/adstable_owner}",
+        "rls": false,
+        "kind": "S",
+        "name": "provider_accounts_id_seq",
+        "owner": "adstable_owner",
+        "schema": "integrations",
+        "forced_rls": false
+      },
+      {
+        "acl": "{adstable_owner=arwdDxtm/adstable_owner}",
+        "rls": true,
+        "kind": "r",
+        "name": "provider_authorization_handoffs",
+        "owner": "adstable_owner",
+        "schema": "integrations",
+        "forced_rls": true
+      },
+      {
+        "acl": "{adstable_owner=arwdDxtm/adstable_owner}",
+        "rls": true,
+        "kind": "r",
+        "name": "provider_connection_lifecycle_events",
+        "owner": "adstable_owner",
+        "schema": "integrations",
+        "forced_rls": true
+      },
+      {
+        "acl": "{adstable_owner=arwdDxtm/adstable_owner}",
+        "rls": true,
+        "kind": "r",
+        "name": "provider_connections",
+        "owner": "adstable_owner",
+        "schema": "integrations",
+        "forced_rls": true
+      },
+      {
+        "acl": "{adstable_owner=arwdDxtm/adstable_owner}",
+        "rls": true,
+        "kind": "r",
+        "name": "provider_credential_envelopes",
+        "owner": "adstable_owner",
+        "schema": "integrations",
+        "forced_rls": true
+      },
+      {
+        "acl": "{adstable_owner=arwdDxtm/adstable_owner}",
+        "rls": true,
+        "kind": "r",
+        "name": "reporting_account_bindings",
+        "owner": "adstable_owner",
+        "schema": "integrations",
+        "forced_rls": true
+      },
+      {
+        "acl": "{adstable_owner=rwU/adstable_owner}",
+        "rls": false,
+        "kind": "S",
+        "name": "reporting_account_bindings_id_seq",
+        "owner": "adstable_owner",
+        "schema": "integrations",
+        "forced_rls": false
+      },
+      {
+        "acl": "{adstable_owner=arwdDxtm/adstable_owner}",
+        "rls": true,
+        "kind": "r",
+        "name": "deletion_manifests",
+        "owner": "adstable_owner",
+        "schema": "privacy",
+        "forced_rls": true
+      },
+      {
+        "acl": "{adstable_owner=arwdDxtm/adstable_owner}",
+        "rls": true,
+        "kind": "r",
+        "name": "deletion_runs",
+        "owner": "adstable_owner",
+        "schema": "privacy",
+        "forced_rls": true
+      },
+      {
+        "acl": "{adstable_owner=arwdDxtm/adstable_owner}",
+        "rls": true,
+        "kind": "r",
+        "name": "webhook_claims",
+        "owner": "adstable_owner",
+        "schema": "privacy",
+        "forced_rls": true
+      },
+      {
+        "acl": "{adstable_owner=arwdDxtm/adstable_owner}",
+        "rls": true,
+        "kind": "r",
+        "name": "installation_domain_history",
+        "owner": "adstable_owner",
+        "schema": "shopify",
+        "forced_rls": true
+      },
+      {
+        "acl": "{adstable_owner=rwU/adstable_owner}",
+        "rls": false,
+        "kind": "S",
+        "name": "installation_domain_history_id_seq",
+        "owner": "adstable_owner",
+        "schema": "shopify",
+        "forced_rls": false
+      },
+      {
+        "acl": "{adstable_owner=arwdDxtm/adstable_owner}",
+        "rls": true,
+        "kind": "r",
+        "name": "installations",
+        "owner": "adstable_owner",
+        "schema": "shopify",
+        "forced_rls": true
+      },
+      {
+        "acl": "{adstable_owner=rwU/adstable_owner}",
+        "rls": false,
+        "kind": "S",
+        "name": "installations_id_seq",
+        "owner": "adstable_owner",
+        "schema": "shopify",
+        "forced_rls": false
+      },
+      {
+        "acl": "{adstable_owner=arwdDxtm/adstable_owner}",
+        "rls": true,
+        "kind": "r",
+        "name": "runtime_sessions",
+        "owner": "adstable_owner",
+        "schema": "shopify",
+        "forced_rls": true
+      }
+    ],
+    "constraints": [
+      {
+        "name": "workspaces_pkey",
+        "type": "p",
+        "table": "workspaces",
+        "schema": "app",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "name": "workspaces_status_check",
+        "type": "c",
+        "table": "workspaces",
+        "schema": "app",
+        "definition": "CHECK (status = ANY (ARRAY['active'::text, 'suspended'::text, 'archived'::text]))"
+      },
+      {
+        "name": "workspaces_timestamp_order",
+        "type": "c",
+        "table": "workspaces",
+        "schema": "app",
+        "definition": "CHECK (updated_at >= created_at)"
+      },
+      {
+        "name": "workspaces_version_check",
+        "type": "c",
+        "table": "workspaces",
+        "schema": "app",
+        "definition": "CHECK (version > 0)"
+      },
+      {
+        "name": "trial_ledger_install_generation_check",
+        "type": "c",
+        "table": "trial_ledger",
+        "schema": "billing",
+        "definition": "CHECK (install_generation > 0)"
+      },
+      {
+        "name": "trial_ledger_pkey",
+        "type": "p",
+        "table": "trial_ledger",
+        "schema": "billing",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "name": "trial_ledger_snapshot_unique",
+        "type": "u",
+        "table": "trial_ledger",
+        "schema": "billing",
+        "definition": "UNIQUE (workspace_id, install_generation, source_hash)"
+      },
+      {
+        "name": "trial_ledger_source_hash_check",
+        "type": "c",
+        "table": "trial_ledger",
+        "schema": "billing",
+        "definition": "CHECK (source_hash ~ '^[0-9a-f]{64}$'::text)"
+      },
+      {
+        "name": "trial_ledger_workspace_id_install_generation_fkey",
+        "type": "f",
+        "table": "trial_ledger",
+        "schema": "billing",
+        "definition": "FOREIGN KEY (workspace_id, install_generation) REFERENCES billing.workspace_subscriptions(workspace_id, install_generation) ON UPDATE RESTRICT ON DELETE RESTRICT"
+      },
+      {
+        "name": "workspace_entitlements_entitlement_status_check",
+        "type": "c",
+        "table": "workspace_entitlements",
+        "schema": "billing",
+        "definition": "CHECK (entitlement_status = ANY (ARRAY['trial'::text, 'active'::text, 'subscription_required'::text]))"
+      },
+      {
+        "name": "workspace_entitlements_install_generation_check",
+        "type": "c",
+        "table": "workspace_entitlements",
+        "schema": "billing",
+        "definition": "CHECK (install_generation > 0)"
+      },
+      {
+        "name": "workspace_entitlements_pkey",
+        "type": "p",
+        "table": "workspace_entitlements",
+        "schema": "billing",
+        "definition": "PRIMARY KEY (workspace_id, install_generation)"
+      },
+      {
+        "name": "workspace_entitlements_source_hash_check",
+        "type": "c",
+        "table": "workspace_entitlements",
+        "schema": "billing",
+        "definition": "CHECK (source_hash ~ '^[0-9a-f]{64}$'::text)"
+      },
+      {
+        "name": "workspace_entitlements_workspace_id_install_generation_fkey",
+        "type": "f",
+        "table": "workspace_entitlements",
+        "schema": "billing",
+        "definition": "FOREIGN KEY (workspace_id, install_generation) REFERENCES billing.workspace_subscriptions(workspace_id, install_generation) ON UPDATE RESTRICT ON DELETE RESTRICT"
+      },
+      {
+        "name": "workspace_subscriptions_cycle_order",
+        "type": "c",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "definition": "CHECK (current_cycle_start IS NULL OR current_cycle_end IS NULL OR current_cycle_end > current_cycle_start)"
+      },
+      {
+        "name": "workspace_subscriptions_install_generation_check",
+        "type": "c",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "definition": "CHECK (install_generation > 0)"
+      },
+      {
+        "name": "workspace_subscriptions_install_unique",
+        "type": "u",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "definition": "UNIQUE (installation_id, install_generation)"
+      },
+      {
+        "name": "workspace_subscriptions_installation_id_fkey",
+        "type": "f",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "definition": "FOREIGN KEY (installation_id) REFERENCES shopify.installations(id) ON UPDATE RESTRICT ON DELETE RESTRICT"
+      },
+      {
+        "name": "workspace_subscriptions_pkey",
+        "type": "p",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "definition": "PRIMARY KEY (workspace_id, install_generation)"
+      },
+      {
+        "name": "workspace_subscriptions_provider_check",
+        "type": "c",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "definition": "CHECK (provider = 'shopify_app_pricing'::text)"
+      },
+      {
+        "name": "workspace_subscriptions_provider_status_check",
+        "type": "c",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "definition": "CHECK (provider_status = ANY (ARRAY['active'::text, 'no_active_subscription'::text]))"
+      },
+      {
+        "name": "workspace_subscriptions_shape",
+        "type": "c",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "definition": "CHECK (provider_status = 'no_active_subscription'::text AND billing_period IS NULL AND trial_ends_at IS NULL AND current_cycle_start IS NULL AND current_cycle_end IS NULL AND cardinality(item_handles) = 0 OR provider_status = 'active'::text AND billing_period IS NOT NULL AND cardinality(item_handles) > 0)"
+      },
+      {
+        "name": "workspace_subscriptions_shop_domain_check",
+        "type": "c",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "definition": "CHECK (shop_domain ~ '^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$'::text)"
+      },
+      {
+        "name": "workspace_subscriptions_shop_id_check",
+        "type": "c",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "definition": "CHECK (shop_id ~ '^gid://shopify/Shop/[1-9][0-9]*$'::text)"
+      },
+      {
+        "name": "workspace_subscriptions_source_hash_check",
+        "type": "c",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "definition": "CHECK (source_hash ~ '^[0-9a-f]{64}$'::text)"
+      },
+      {
+        "name": "workspace_subscriptions_workspace_id_fkey",
+        "type": "f",
+        "table": "workspace_subscriptions",
+        "schema": "billing",
+        "definition": "FOREIGN KEY (workspace_id) REFERENCES app.workspaces(id) ON UPDATE RESTRICT ON DELETE RESTRICT"
+      },
+      {
+        "name": "klaviyo_email_spend_periods_account_fk",
+        "type": "f",
+        "table": "klaviyo_email_spend_periods",
+        "schema": "integrations",
+        "definition": "FOREIGN KEY (account_id, connection_id, workspace_id, install_generation, provider) REFERENCES integrations.provider_accounts(id, connection_id, workspace_id, install_generation, provider) ON UPDATE RESTRICT ON DELETE CASCADE"
+      },
+      {
+        "name": "klaviyo_email_spend_periods_account_identity",
+        "type": "c",
+        "table": "klaviyo_email_spend_periods",
+        "schema": "integrations",
+        "definition": "CHECK (provider_account_id = btrim(provider_account_id) AND length(provider_account_id) >= 1 AND length(provider_account_id) <= 255)"
+      },
+      {
+        "name": "klaviyo_email_spend_periods_correction_version_check",
+        "type": "c",
+        "table": "klaviyo_email_spend_periods",
+        "schema": "integrations",
+        "definition": "CHECK (correction_version > 0)"
+      },
+      {
+        "name": "klaviyo_email_spend_periods_estimated_30_day_email_spend_check",
+        "type": "c",
+        "table": "klaviyo_email_spend_periods",
+        "schema": "integrations",
+        "definition": "CHECK (estimated_30_day_email_spend >= 0::numeric AND estimated_30_day_email_spend <= 99999999.99)"
+      },
+      {
+        "name": "klaviyo_email_spend_periods_install_generation_check",
+        "type": "c",
+        "table": "klaviyo_email_spend_periods",
+        "schema": "integrations",
+        "definition": "CHECK (install_generation > 0)"
+      },
+      {
+        "name": "klaviyo_email_spend_periods_pkey",
+        "type": "p",
+        "table": "klaviyo_email_spend_periods",
+        "schema": "integrations",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "name": "klaviyo_email_spend_periods_provenance_check",
+        "type": "c",
+        "table": "klaviyo_email_spend_periods",
+        "schema": "integrations",
+        "definition": "CHECK (provenance = 'user_estimated'::text)"
+      },
+      {
+        "name": "klaviyo_email_spend_periods_provider_check",
+        "type": "c",
+        "table": "klaviyo_email_spend_periods",
+        "schema": "integrations",
+        "definition": "CHECK (provider = 'klaviyo'::text)"
+      },
+      {
+        "name": "klaviyo_email_spend_periods_source_currency_check",
+        "type": "c",
+        "table": "klaviyo_email_spend_periods",
+        "schema": "integrations",
+        "definition": "CHECK (source_currency ~ '^[A-Z]{3}$'::text)"
+      },
+      {
+        "name": "klaviyo_email_spend_periods_timestamp_order",
+        "type": "c",
+        "table": "klaviyo_email_spend_periods",
+        "schema": "integrations",
+        "definition": "CHECK (updated_at >= created_at)"
+      },
+      {
+        "name": "oauth_pkce_envelopes_auth_tag_check",
+        "type": "c",
+        "table": "oauth_pkce_envelopes",
+        "schema": "integrations",
+        "definition": "CHECK (octet_length(auth_tag) = 16)"
+      },
+      {
+        "name": "oauth_pkce_envelopes_install_generation_check",
+        "type": "c",
+        "table": "oauth_pkce_envelopes",
+        "schema": "integrations",
+        "definition": "CHECK (install_generation > 0)"
+      },
+      {
+        "name": "oauth_pkce_envelopes_installation_id_fkey",
+        "type": "f",
+        "table": "oauth_pkce_envelopes",
+        "schema": "integrations",
+        "definition": "FOREIGN KEY (installation_id) REFERENCES shopify.installations(id) ON UPDATE RESTRICT ON DELETE CASCADE"
+      },
+      {
+        "name": "oauth_pkce_envelopes_key_version_check",
+        "type": "c",
+        "table": "oauth_pkce_envelopes",
+        "schema": "integrations",
+        "definition": "CHECK (key_version > 0)"
+      },
+      {
+        "name": "oauth_pkce_envelopes_nonce_check",
+        "type": "c",
+        "table": "oauth_pkce_envelopes",
+        "schema": "integrations",
+        "definition": "CHECK (octet_length(nonce) = 12)"
+      },
+      {
+        "name": "oauth_pkce_envelopes_payload_ciphertext_check",
+        "type": "c",
+        "table": "oauth_pkce_envelopes",
+        "schema": "integrations",
+        "definition": "CHECK (octet_length(payload_ciphertext) > 0)"
+      },
+      {
+        "name": "oauth_pkce_envelopes_pkey",
+        "type": "p",
+        "table": "oauth_pkce_envelopes",
+        "schema": "integrations",
+        "definition": "PRIMARY KEY (transaction_id)"
+      },
+      {
+        "name": "oauth_pkce_envelopes_provider_check",
+        "type": "c",
+        "table": "oauth_pkce_envelopes",
+        "schema": "integrations",
+        "definition": "CHECK (provider = ANY (ARRAY['meta'::text, 'google_ads'::text, 'klaviyo'::text]))"
+      },
+      {
+        "name": "oauth_pkce_envelopes_transaction_id_fkey",
+        "type": "f",
+        "table": "oauth_pkce_envelopes",
+        "schema": "integrations",
+        "definition": "FOREIGN KEY (transaction_id) REFERENCES integrations.oauth_transactions(id) ON UPDATE RESTRICT ON DELETE CASCADE"
+      },
+      {
+        "name": "oauth_pkce_envelopes_workspace_id_fkey",
+        "type": "f",
+        "table": "oauth_pkce_envelopes",
+        "schema": "integrations",
+        "definition": "FOREIGN KEY (workspace_id) REFERENCES app.workspaces(id) ON UPDATE RESTRICT ON DELETE RESTRICT"
+      },
+      {
+        "name": "oauth_transaction_callback_exact",
+        "type": "c",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "definition": "CHECK (provider = 'meta'::text AND callback_uri = 'https://embedded.adstable.app/auth/meta/callback'::text OR provider = 'google_ads'::text AND callback_uri = 'https://embedded.adstable.app/auth/google-ads/callback'::text OR provider = 'klaviyo'::text AND callback_uri = 'https://embedded.adstable.app/auth/klaviyo/callback'::text)"
+      },
+      {
+        "name": "oauth_transaction_completion_shape",
+        "type": "c",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "definition": "CHECK ((status = ANY (ARRAY['created'::text, 'redirected'::text, 'claimed'::text])) AND completed_at IS NULL OR (status = ANY (ARRAY['exchanged'::text, 'denied'::text, 'expired'::text, 'invalidated'::text, 'failed'::text])) AND completed_at IS NOT NULL)"
+      },
+      {
+        "name": "oauth_transaction_expiry_order",
+        "type": "c",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "definition": "CHECK (expires_at = (created_at + '00:10:00'::interval))"
+      },
+      {
+        "name": "oauth_transaction_pkce_shape",
+        "type": "c",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "definition": "CHECK (pkce_required AND pkce_challenge ~ '^[A-Za-z0-9_-]{43}$'::text OR NOT pkce_required AND pkce_challenge IS NULL)"
+      },
+      {
+        "name": "oauth_transaction_provider_pkce",
+        "type": "c",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "definition": "CHECK ((provider = ANY (ARRAY['google_ads'::text, 'klaviyo'::text])) AND pkce_required OR provider = 'meta'::text AND NOT pkce_required)"
+      },
+      {
+        "name": "oauth_transactions_failure_code_check",
+        "type": "c",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "definition": "CHECK (failure_code IS NULL OR failure_code ~ '^[A-Z][A-Z0-9_]{2,127}$'::text)"
+      },
+      {
+        "name": "oauth_transactions_install_generation_check",
+        "type": "c",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "definition": "CHECK (install_generation > 0)"
+      },
+      {
+        "name": "oauth_transactions_installation_id_fkey",
+        "type": "f",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "definition": "FOREIGN KEY (installation_id) REFERENCES shopify.installations(id) ON UPDATE RESTRICT ON DELETE CASCADE"
+      },
+      {
+        "name": "oauth_transactions_pkey",
+        "type": "p",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "name": "oauth_transactions_provider_check",
+        "type": "c",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "definition": "CHECK (provider = ANY (ARRAY['meta'::text, 'google_ads'::text, 'klaviyo'::text]))"
+      },
+      {
+        "name": "oauth_transactions_state_digest_check",
+        "type": "c",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "definition": "CHECK (octet_length(state_digest) = 32)"
+      },
+      {
+        "name": "oauth_transactions_state_digest_key",
+        "type": "u",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "definition": "UNIQUE (state_digest)"
+      },
+      {
+        "name": "oauth_transactions_status_check",
+        "type": "c",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "definition": "CHECK (status = ANY (ARRAY['created'::text, 'redirected'::text, 'claimed'::text, 'exchanged'::text, 'denied'::text, 'expired'::text, 'invalidated'::text, 'failed'::text]))"
+      },
+      {
+        "name": "oauth_transactions_transaction_nonce_check",
+        "type": "c",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "definition": "CHECK (octet_length(transaction_nonce) = 32)"
+      },
+      {
+        "name": "oauth_transactions_transaction_nonce_key",
+        "type": "u",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "definition": "UNIQUE (transaction_nonce)"
+      },
+      {
+        "name": "oauth_transactions_workspace_id_fkey",
+        "type": "f",
+        "table": "oauth_transactions",
+        "schema": "integrations",
+        "definition": "FOREIGN KEY (workspace_id) REFERENCES app.workspaces(id) ON UPDATE RESTRICT ON DELETE RESTRICT"
+      },
+      {
+        "name": "provider_accounts_account_kind_check",
+        "type": "c",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "definition": "CHECK (account_kind = ANY (ARRAY['advertiser'::text, 'manager'::text, 'account'::text]))"
+      },
+      {
+        "name": "provider_accounts_binding_identity_unique",
+        "type": "u",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "definition": "UNIQUE (id, connection_id, workspace_id, install_generation, provider)"
+      },
+      {
+        "name": "provider_accounts_connection_account_unique",
+        "type": "u",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "definition": "UNIQUE (connection_id, provider_account_id)"
+      },
+      {
+        "name": "provider_accounts_connection_fk",
+        "type": "f",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "definition": "FOREIGN KEY (connection_id, workspace_id, install_generation, provider) REFERENCES integrations.provider_connections(id, workspace_id, install_generation, provider) ON UPDATE RESTRICT ON DELETE CASCADE"
+      },
+      {
+        "name": "provider_accounts_currency_code_check",
+        "type": "c",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "definition": "CHECK (currency_code IS NULL OR currency_code ~ '^[A-Z]{3}$'::text)"
+      },
+      {
+        "name": "provider_accounts_display_name_check",
+        "type": "c",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "definition": "CHECK (display_name = btrim(display_name) AND length(display_name) >= 1 AND length(display_name) <= 255)"
+      },
+      {
+        "name": "provider_accounts_install_generation_check",
+        "type": "c",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "definition": "CHECK (install_generation > 0)"
+      },
+      {
+        "name": "provider_accounts_login_account_id_check",
+        "type": "c",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "definition": "CHECK (login_account_id IS NULL OR login_account_id = btrim(login_account_id) AND length(login_account_id) >= 1 AND length(login_account_id) <= 255)"
+      },
+      {
+        "name": "provider_accounts_pkey",
+        "type": "p",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "name": "provider_accounts_provider_account_id_check",
+        "type": "c",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "definition": "CHECK (provider_account_id = btrim(provider_account_id) AND length(provider_account_id) >= 1 AND length(provider_account_id) <= 255)"
+      },
+      {
+        "name": "provider_accounts_provider_check",
+        "type": "c",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "definition": "CHECK (provider = ANY (ARRAY['meta'::text, 'google_ads'::text, 'klaviyo'::text]))"
+      },
+      {
+        "name": "provider_accounts_provider_status_check",
+        "type": "c",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "definition": "CHECK (provider_status IS NULL OR provider_status = btrim(provider_status) AND length(provider_status) >= 1 AND length(provider_status) <= 100)"
+      },
+      {
+        "name": "provider_accounts_timestamp_order",
+        "type": "c",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "definition": "CHECK (updated_at >= created_at)"
+      },
+      {
+        "name": "provider_accounts_timezone_name_check",
+        "type": "c",
+        "table": "provider_accounts",
+        "schema": "integrations",
+        "definition": "CHECK (timezone_name IS NULL OR length(timezone_name) >= 1 AND length(timezone_name) <= 100)"
+      },
+      {
+        "name": "provider_authorization_handoff_status_shape",
+        "type": "c",
+        "table": "provider_authorization_handoffs",
+        "schema": "integrations",
+        "definition": "CHECK (status = 'awaiting_selection'::text AND credential_id IS NOT NULL AND consumed_at IS NULL AND failure_code IS NULL OR status = 'consumed'::text AND consumed_at IS NOT NULL AND failure_code IS NULL OR (status = ANY (ARRAY['expired'::text, 'failed'::text])) AND credential_id IS NULL AND consumed_at IS NULL AND failure_code IS NOT NULL)"
+      },
+      {
+        "name": "provider_authorization_handoffs_credential_id_fkey",
+        "type": "f",
+        "table": "provider_authorization_handoffs",
+        "schema": "integrations",
+        "definition": "FOREIGN KEY (credential_id) REFERENCES integrations.provider_credential_envelopes(id) ON UPDATE RESTRICT ON DELETE RESTRICT"
+      },
+      {
+        "name": "provider_authorization_handoffs_credential_id_key",
+        "type": "u",
+        "table": "provider_authorization_handoffs",
+        "schema": "integrations",
+        "definition": "UNIQUE (credential_id)"
+      },
+      {
+        "name": "provider_authorization_handoffs_failure_code_check",
+        "type": "c",
+        "table": "provider_authorization_handoffs",
+        "schema": "integrations",
+        "definition": "CHECK (failure_code IS NULL OR failure_code ~ '^[A-Z][A-Z0-9_]{2,127}$'::text)"
+      },
+      {
+        "name": "provider_authorization_handoffs_install_generation_check",
+        "type": "c",
+        "table": "provider_authorization_handoffs",
+        "schema": "integrations",
+        "definition": "CHECK (install_generation > 0)"
+      },
+      {
+        "name": "provider_authorization_handoffs_installation_id_fkey",
+        "type": "f",
+        "table": "provider_authorization_handoffs",
+        "schema": "integrations",
+        "definition": "FOREIGN KEY (installation_id) REFERENCES shopify.installations(id) ON UPDATE RESTRICT ON DELETE CASCADE"
+      },
+      {
+        "name": "provider_authorization_handoffs_oauth_transaction_id_fkey",
+        "type": "f",
+        "table": "provider_authorization_handoffs",
+        "schema": "integrations",
+        "definition": "FOREIGN KEY (oauth_transaction_id) REFERENCES integrations.oauth_transactions(id) ON UPDATE RESTRICT ON DELETE CASCADE"
+      },
+      {
+        "name": "provider_authorization_handoffs_pkey",
+        "type": "p",
+        "table": "provider_authorization_handoffs",
+        "schema": "integrations",
+        "definition": "PRIMARY KEY (oauth_transaction_id)"
+      },
+      {
+        "name": "provider_authorization_handoffs_provider_check",
+        "type": "c",
+        "table": "provider_authorization_handoffs",
+        "schema": "integrations",
+        "definition": "CHECK (provider = ANY (ARRAY['meta'::text, 'google_ads'::text, 'klaviyo'::text]))"
+      },
+      {
+        "name": "provider_authorization_handoffs_status_check",
+        "type": "c",
+        "table": "provider_authorization_handoffs",
+        "schema": "integrations",
+        "definition": "CHECK (status = ANY (ARRAY['awaiting_selection'::text, 'consumed'::text, 'expired'::text, 'failed'::text]))"
+      },
+      {
+        "name": "provider_authorization_handoffs_workspace_id_fkey",
+        "type": "f",
+        "table": "provider_authorization_handoffs",
+        "schema": "integrations",
+        "definition": "FOREIGN KEY (workspace_id) REFERENCES app.workspaces(id) ON UPDATE RESTRICT ON DELETE RESTRICT"
+      },
+      {
+        "name": "provider_connection_lifecycle_events_check",
+        "type": "c",
+        "table": "provider_connection_lifecycle_events",
+        "schema": "integrations",
+        "definition": "CHECK (version_after > version_before)"
+      },
+      {
+        "name": "provider_connection_lifecycle_events_connection_fk",
+        "type": "f",
+        "table": "provider_connection_lifecycle_events",
+        "schema": "integrations",
+        "definition": "FOREIGN KEY (connection_id, workspace_id, install_generation, provider) REFERENCES integrations.provider_connections(id, workspace_id, install_generation, provider) ON UPDATE RESTRICT ON DELETE CASCADE"
+      },
+      {
+        "name": "provider_connection_lifecycle_events_event_type_check",
+        "type": "c",
+        "table": "provider_connection_lifecycle_events",
+        "schema": "integrations",
+        "definition": "CHECK (event_type = ANY (ARRAY['account_selection_staged'::text, 'account_selection_completed'::text, 'account_selection_cancelled'::text, 'reporting_account_selection_required'::text, 'credential_renewed'::text, 'reauthorization_required'::text, 'disconnect_requested'::text, 'disconnect_finalized'::text, 'reconnected'::text]))"
+      },
+      {
+        "name": "provider_connection_lifecycle_events_install_generation_check",
+        "type": "c",
+        "table": "provider_connection_lifecycle_events",
+        "schema": "integrations",
+        "definition": "CHECK (install_generation > 0)"
+      },
+      {
+        "name": "provider_connection_lifecycle_events_pkey",
+        "type": "p",
+        "table": "provider_connection_lifecycle_events",
+        "schema": "integrations",
+        "definition": "PRIMARY KEY (event_id)"
+      },
+      {
+        "name": "provider_connection_lifecycle_events_provider_check",
+        "type": "c",
+        "table": "provider_connection_lifecycle_events",
+        "schema": "integrations",
+        "definition": "CHECK (provider = ANY (ARRAY['meta'::text, 'google_ads'::text, 'klaviyo'::text]))"
+      },
+      {
+        "name": "provider_connection_lifecycle_events_version_before_check",
+        "type": "c",
+        "table": "provider_connection_lifecycle_events",
+        "schema": "integrations",
+        "definition": "CHECK (version_before > 0)"
+      },
+      {
+        "name": "provider_connections_authority_unique",
+        "type": "u",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "definition": "UNIQUE (workspace_id, install_generation, provider)"
+      },
+      {
+        "name": "provider_connections_connection_version_check",
+        "type": "c",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "definition": "CHECK (connection_version > 0)"
+      },
+      {
+        "name": "provider_connections_credential_id_fkey",
+        "type": "f",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "definition": "FOREIGN KEY (credential_id) REFERENCES integrations.provider_credential_envelopes(id) ON UPDATE RESTRICT ON DELETE RESTRICT"
+      },
+      {
+        "name": "provider_connections_credential_unique",
+        "type": "u",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "definition": "UNIQUE (credential_id)"
+      },
+      {
+        "name": "provider_connections_disconnect_reason_check",
+        "type": "c",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "definition": "CHECK (disconnect_reason IS NULL OR disconnect_reason = btrim(disconnect_reason) AND length(disconnect_reason) >= 1 AND length(disconnect_reason) <= 200)"
+      },
+      {
+        "name": "provider_connections_granted_scopes_check",
+        "type": "c",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "definition": "CHECK (cardinality(granted_scopes) > 0)"
+      },
+      {
+        "name": "provider_connections_identity_unique",
+        "type": "u",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "definition": "UNIQUE (id, workspace_id, install_generation, provider)"
+      },
+      {
+        "name": "provider_connections_install_generation_check",
+        "type": "c",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "definition": "CHECK (install_generation > 0)"
+      },
+      {
+        "name": "provider_connections_installation_id_fkey",
+        "type": "f",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "definition": "FOREIGN KEY (installation_id) REFERENCES shopify.installations(id) ON UPDATE RESTRICT ON DELETE CASCADE"
+      },
+      {
+        "name": "provider_connections_lifecycle_shape",
+        "type": "c",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "definition": "CHECK ((lifecycle_status = ANY (ARRAY['pending_account_selection'::text, 'connected'::text, 'reauthorization_required'::text, 'disconnect_pending'::text])) AND credential_id IS NOT NULL AND disconnected_at IS NULL OR lifecycle_status = 'disconnected'::text AND credential_id IS NULL AND disconnected_at IS NOT NULL)"
+      },
+      {
+        "name": "provider_connections_lifecycle_status_check",
+        "type": "c",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "definition": "CHECK (lifecycle_status = ANY (ARRAY['pending_account_selection'::text, 'connected'::text, 'reauthorization_required'::text, 'disconnect_pending'::text, 'disconnected'::text]))"
+      },
+      {
+        "name": "provider_connections_pkey",
+        "type": "p",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "name": "provider_connections_provider_check",
+        "type": "c",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "definition": "CHECK (provider = ANY (ARRAY['meta'::text, 'google_ads'::text, 'klaviyo'::text]))"
+      },
+      {
+        "name": "provider_connections_timestamp_order",
+        "type": "c",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "definition": "CHECK (last_verified_at >= connected_at AND updated_at >= created_at)"
+      },
+      {
+        "name": "provider_connections_workspace_id_fkey",
+        "type": "f",
+        "table": "provider_connections",
+        "schema": "integrations",
+        "definition": "FOREIGN KEY (workspace_id) REFERENCES app.workspaces(id) ON UPDATE RESTRICT ON DELETE RESTRICT"
+      },
+      {
+        "name": "provider_credential_envelopes_auth_tag_check",
+        "type": "c",
+        "table": "provider_credential_envelopes",
+        "schema": "integrations",
+        "definition": "CHECK (octet_length(auth_tag) = 16)"
+      },
+      {
+        "name": "provider_credential_envelopes_install_generation_check",
+        "type": "c",
+        "table": "provider_credential_envelopes",
+        "schema": "integrations",
+        "definition": "CHECK (install_generation > 0)"
+      },
+      {
+        "name": "provider_credential_envelopes_installation_id_fkey",
+        "type": "f",
+        "table": "provider_credential_envelopes",
+        "schema": "integrations",
+        "definition": "FOREIGN KEY (installation_id) REFERENCES shopify.installations(id) ON UPDATE RESTRICT ON DELETE CASCADE"
+      },
+      {
+        "name": "provider_credential_envelopes_key_version_check",
+        "type": "c",
+        "table": "provider_credential_envelopes",
+        "schema": "integrations",
+        "definition": "CHECK (key_version > 0)"
+      },
+      {
+        "name": "provider_credential_envelopes_nonce_check",
+        "type": "c",
+        "table": "provider_credential_envelopes",
+        "schema": "integrations",
+        "definition": "CHECK (octet_length(nonce) = 12)"
+      },
+      {
+        "name": "provider_credential_envelopes_payload_ciphertext_check",
+        "type": "c",
+        "table": "provider_credential_envelopes",
+        "schema": "integrations",
+        "definition": "CHECK (octet_length(payload_ciphertext) > 0)"
+      },
+      {
+        "name": "provider_credential_envelopes_pkey",
+        "type": "p",
+        "table": "provider_credential_envelopes",
+        "schema": "integrations",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "name": "provider_credential_envelopes_provider_check",
+        "type": "c",
+        "table": "provider_credential_envelopes",
+        "schema": "integrations",
+        "definition": "CHECK (provider = ANY (ARRAY['meta'::text, 'google_ads'::text, 'klaviyo'::text]))"
+      },
+      {
+        "name": "provider_credential_envelopes_purpose_check",
+        "type": "c",
+        "table": "provider_credential_envelopes",
+        "schema": "integrations",
+        "definition": "CHECK (purpose = 'provider_token_set'::text)"
+      },
+      {
+        "name": "provider_credential_envelopes_workspace_id_fkey",
+        "type": "f",
+        "table": "provider_credential_envelopes",
+        "schema": "integrations",
+        "definition": "FOREIGN KEY (workspace_id) REFERENCES app.workspaces(id) ON UPDATE RESTRICT ON DELETE RESTRICT"
+      },
+      {
+        "name": "reporting_account_bindings_account_fk",
+        "type": "f",
+        "table": "reporting_account_bindings",
+        "schema": "integrations",
+        "definition": "FOREIGN KEY (account_id, connection_id, workspace_id, install_generation, provider) REFERENCES integrations.provider_accounts(id, connection_id, workspace_id, install_generation, provider) ON UPDATE RESTRICT ON DELETE CASCADE"
+      },
+      {
+        "name": "reporting_account_bindings_change_reason_check",
+        "type": "c",
+        "table": "reporting_account_bindings",
+        "schema": "integrations",
+        "definition": "CHECK (change_reason = ANY (ARRAY['initial_selection'::text, 'merchant_selection'::text, 'reauthorization'::text]))"
+      },
+      {
+        "name": "reporting_account_bindings_install_generation_check",
+        "type": "c",
+        "table": "reporting_account_bindings",
+        "schema": "integrations",
+        "definition": "CHECK (install_generation > 0)"
+      },
+      {
+        "name": "reporting_account_bindings_period",
+        "type": "c",
+        "table": "reporting_account_bindings",
+        "schema": "integrations",
+        "definition": "CHECK (effective_to IS NULL OR effective_to > effective_from)"
+      },
+      {
+        "name": "reporting_account_bindings_pkey",
+        "type": "p",
+        "table": "reporting_account_bindings",
+        "schema": "integrations",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "name": "reporting_account_bindings_provider_check",
+        "type": "c",
+        "table": "reporting_account_bindings",
+        "schema": "integrations",
+        "definition": "CHECK (provider = ANY (ARRAY['meta'::text, 'google_ads'::text]))"
+      },
+      {
+        "name": "deletion_manifests_deletion_run_id_fkey",
+        "type": "f",
+        "table": "deletion_manifests",
+        "schema": "privacy",
+        "definition": "FOREIGN KEY (deletion_run_id) REFERENCES privacy.deletion_runs(id) ON UPDATE RESTRICT ON DELETE RESTRICT"
+      },
+      {
+        "name": "deletion_manifests_deletion_run_id_key",
+        "type": "u",
+        "table": "deletion_manifests",
+        "schema": "privacy",
+        "definition": "UNIQUE (deletion_run_id)"
+      },
+      {
+        "name": "deletion_manifests_install_generation_check",
+        "type": "c",
+        "table": "deletion_manifests",
+        "schema": "privacy",
+        "definition": "CHECK (install_generation > 0)"
+      },
+      {
+        "name": "deletion_manifests_kind_check",
+        "type": "c",
+        "table": "deletion_manifests",
+        "schema": "privacy",
+        "definition": "CHECK (kind = ANY (ARRAY['customer_data_request'::text, 'customer_redact'::text, 'shop_redact'::text, 'merchant_delete_my_data'::text]))"
+      },
+      {
+        "name": "deletion_manifests_manifest_version_check",
+        "type": "c",
+        "table": "deletion_manifests",
+        "schema": "privacy",
+        "definition": "CHECK (manifest_version = 1)"
+      },
+      {
+        "name": "deletion_manifests_pkey",
+        "type": "p",
+        "table": "deletion_manifests",
+        "schema": "privacy",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "name": "deletion_manifests_result_check",
+        "type": "c",
+        "table": "deletion_manifests",
+        "schema": "privacy",
+        "definition": "CHECK (result = ANY (ARRAY['no_customer_data'::text, 'deleted'::text]))"
+      },
+      {
+        "name": "deletion_manifests_row_counts_check",
+        "type": "c",
+        "table": "deletion_manifests",
+        "schema": "privacy",
+        "definition": "CHECK (jsonb_typeof(row_counts) = 'object'::text)"
+      },
+      {
+        "name": "deletion_manifests_shop_identity_sha256_check",
+        "type": "c",
+        "table": "deletion_manifests",
+        "schema": "privacy",
+        "definition": "CHECK (octet_length(shop_identity_sha256) = 32)"
+      },
+      {
+        "name": "deletion_manifests_workspace_id_fkey",
+        "type": "f",
+        "table": "deletion_manifests",
+        "schema": "privacy",
+        "definition": "FOREIGN KEY (workspace_id) REFERENCES app.workspaces(id) ON UPDATE RESTRICT ON DELETE RESTRICT"
+      },
+      {
+        "name": "deletion_run_completion_shape",
+        "type": "c",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "definition": "CHECK (status = 'completed'::text AND completed_at IS NOT NULL OR status <> 'completed'::text AND completed_at IS NULL)"
+      },
+      {
+        "name": "deletion_run_deadline_order",
+        "type": "c",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "definition": "CHECK (deadline_at >= requested_at)"
+      },
+      {
+        "name": "deletion_runs_attempt_count_check",
+        "type": "c",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "definition": "CHECK (attempt_count >= 0)"
+      },
+      {
+        "name": "deletion_runs_claim_id_fkey",
+        "type": "f",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "definition": "FOREIGN KEY (claim_id) REFERENCES privacy.webhook_claims(id) ON UPDATE RESTRICT ON DELETE RESTRICT"
+      },
+      {
+        "name": "deletion_runs_claim_id_key",
+        "type": "u",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "definition": "UNIQUE (claim_id)"
+      },
+      {
+        "name": "deletion_runs_install_generation_check",
+        "type": "c",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "definition": "CHECK (install_generation > 0)"
+      },
+      {
+        "name": "deletion_runs_kind_check",
+        "type": "c",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "definition": "CHECK (kind = ANY (ARRAY['customer_data_request'::text, 'customer_redact'::text, 'shop_redact'::text, 'merchant_delete_my_data'::text]))"
+      },
+      {
+        "name": "deletion_runs_last_error_code_check",
+        "type": "c",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "definition": "CHECK (last_error_code IS NULL OR last_error_code ~ '^[A-Z][A-Z0-9_]{2,127}$'::text)"
+      },
+      {
+        "name": "deletion_runs_pkey",
+        "type": "p",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "name": "deletion_runs_request_key_check",
+        "type": "c",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "definition": "CHECK (char_length(request_key) >= 8 AND char_length(request_key) <= 128)"
+      },
+      {
+        "name": "deletion_runs_request_key_key",
+        "type": "u",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "definition": "UNIQUE (request_key)"
+      },
+      {
+        "name": "deletion_runs_shop_identity_sha256_check",
+        "type": "c",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "definition": "CHECK (octet_length(shop_identity_sha256) = 32)"
+      },
+      {
+        "name": "deletion_runs_status_check",
+        "type": "c",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "definition": "CHECK (status = ANY (ARRAY['pending'::text, 'running'::text, 'completed'::text, 'failed'::text, 'superseded'::text]))"
+      },
+      {
+        "name": "deletion_runs_workspace_id_fkey",
+        "type": "f",
+        "table": "deletion_runs",
+        "schema": "privacy",
+        "definition": "FOREIGN KEY (workspace_id) REFERENCES app.workspaces(id) ON UPDATE RESTRICT ON DELETE RESTRICT"
+      },
+      {
+        "name": "webhook_claim_timestamp_order",
+        "type": "c",
+        "table": "webhook_claims",
+        "schema": "privacy",
+        "definition": "CHECK (triggered_at IS NULL OR received_at >= (triggered_at - '00:01:00'::interval))"
+      },
+      {
+        "name": "webhook_claims_api_version_check",
+        "type": "c",
+        "table": "webhook_claims",
+        "schema": "privacy",
+        "definition": "CHECK (api_version IS NULL OR api_version ~ '^[0-9]{4}-[0-9]{2}$'::text)"
+      },
+      {
+        "name": "webhook_claims_event_id_check",
+        "type": "c",
+        "table": "webhook_claims",
+        "schema": "privacy",
+        "definition": "CHECK (event_id IS NULL OR char_length(event_id) >= 8 AND char_length(event_id) <= 128)"
+      },
+      {
+        "name": "webhook_claims_install_generation_check",
+        "type": "c",
+        "table": "webhook_claims",
+        "schema": "privacy",
+        "definition": "CHECK (install_generation IS NULL OR install_generation > 0)"
+      },
+      {
+        "name": "webhook_claims_outcome_check",
+        "type": "c",
+        "table": "webhook_claims",
+        "schema": "privacy",
+        "definition": "CHECK (outcome = ANY (ARRAY['claimed'::text, 'queued'::text, 'unbound'::text, 'ignored_reinstalled'::text]))"
+      },
+      {
+        "name": "webhook_claims_payload_sha256_check",
+        "type": "c",
+        "table": "webhook_claims",
+        "schema": "privacy",
+        "definition": "CHECK (payload_sha256 ~ '^[0-9a-f]{64}$'::text)"
+      },
+      {
+        "name": "webhook_claims_pkey",
+        "type": "p",
+        "table": "webhook_claims",
+        "schema": "privacy",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "name": "webhook_claims_shop_identity_sha256_check",
+        "type": "c",
+        "table": "webhook_claims",
+        "schema": "privacy",
+        "definition": "CHECK (octet_length(shop_identity_sha256) = 32)"
+      },
+      {
+        "name": "webhook_claims_topic_check",
+        "type": "c",
+        "table": "webhook_claims",
+        "schema": "privacy",
+        "definition": "CHECK (topic = ANY (ARRAY['app/uninstalled'::text, 'customers/data_request'::text, 'customers/redact'::text, 'shop/redact'::text]))"
+      },
+      {
+        "name": "webhook_claims_webhook_id_check",
+        "type": "c",
+        "table": "webhook_claims",
+        "schema": "privacy",
+        "definition": "CHECK (char_length(webhook_id) >= 8 AND char_length(webhook_id) <= 128)"
+      },
+      {
+        "name": "webhook_claims_webhook_id_key",
+        "type": "u",
+        "table": "webhook_claims",
+        "schema": "privacy",
+        "definition": "UNIQUE (webhook_id)"
+      },
+      {
+        "name": "webhook_claims_workspace_id_fkey",
+        "type": "f",
+        "table": "webhook_claims",
+        "schema": "privacy",
+        "definition": "FOREIGN KEY (workspace_id) REFERENCES app.workspaces(id) ON UPDATE RESTRICT ON DELETE RESTRICT"
+      },
+      {
+        "name": "installation_domain_changed",
+        "type": "c",
+        "table": "installation_domain_history",
+        "schema": "shopify",
+        "definition": "CHECK (previous_shop_domain <> replacement_shop_domain)"
+      },
+      {
+        "name": "installation_domain_history_installation_id_fkey",
+        "type": "f",
+        "table": "installation_domain_history",
+        "schema": "shopify",
+        "definition": "FOREIGN KEY (installation_id) REFERENCES shopify.installations(id) ON UPDATE RESTRICT ON DELETE RESTRICT"
+      },
+      {
+        "name": "installation_domain_history_pkey",
+        "type": "p",
+        "table": "installation_domain_history",
+        "schema": "shopify",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "name": "installation_domain_history_previous_shop_domain_check",
+        "type": "c",
+        "table": "installation_domain_history",
+        "schema": "shopify",
+        "definition": "CHECK (previous_shop_domain ~ '^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$'::text)"
+      },
+      {
+        "name": "installation_domain_history_replacement_shop_domain_check",
+        "type": "c",
+        "table": "installation_domain_history",
+        "schema": "shopify",
+        "definition": "CHECK (replacement_shop_domain ~ '^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$'::text)"
+      },
+      {
+        "name": "installation_domain_history_unique",
+        "type": "u",
+        "table": "installation_domain_history",
+        "schema": "shopify",
+        "definition": "UNIQUE (installation_id, previous_shop_domain, replacement_shop_domain, changed_at)"
+      },
+      {
+        "name": "installations_identity_hash_size",
+        "type": "c",
+        "table": "installations",
+        "schema": "shopify",
+        "definition": "CHECK (shop_identity_sha256 IS NULL OR octet_length(shop_identity_sha256) = 32)"
+      },
+      {
+        "name": "installations_install_generation_check",
+        "type": "c",
+        "table": "installations",
+        "schema": "shopify",
+        "definition": "CHECK (install_generation > 0)"
+      },
+      {
+        "name": "installations_pkey",
+        "type": "p",
+        "table": "installations",
+        "schema": "shopify",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "name": "installations_shop_domain_check",
+        "type": "c",
+        "table": "installations",
+        "schema": "shopify",
+        "definition": "CHECK (shop_domain ~ '^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$'::text)"
+      },
+      {
+        "name": "installations_shop_generation_unique",
+        "type": "u",
+        "table": "installations",
+        "schema": "shopify",
+        "definition": "UNIQUE (shop_id, install_generation)"
+      },
+      {
+        "name": "installations_shop_id_check",
+        "type": "c",
+        "table": "installations",
+        "schema": "shopify",
+        "definition": "CHECK (shop_id ~ '^gid://shopify/Shop/[1-9][0-9]*$'::text)"
+      },
+      {
+        "name": "installations_status_check",
+        "type": "c",
+        "table": "installations",
+        "schema": "shopify",
+        "definition": "CHECK (status = ANY (ARRAY['active'::text, 'uninstall_pending_redaction'::text, 'deletion_pending'::text, 'deleted'::text]))"
+      },
+      {
+        "name": "installations_timestamp_order",
+        "type": "c",
+        "table": "installations",
+        "schema": "shopify",
+        "definition": "CHECK (last_verified_at >= installed_at AND updated_at >= installed_at)"
+      },
+      {
+        "name": "installations_workspace_id_fkey",
+        "type": "f",
+        "table": "installations",
+        "schema": "shopify",
+        "definition": "FOREIGN KEY (workspace_id) REFERENCES app.workspaces(id) ON UPDATE RESTRICT ON DELETE RESTRICT"
+      },
+      {
+        "name": "installations_workspace_unique",
+        "type": "u",
+        "table": "installations",
+        "schema": "shopify",
+        "definition": "UNIQUE (workspace_id)"
+      },
+      {
+        "name": "runtime_sessions_auth_tag_check",
+        "type": "c",
+        "table": "runtime_sessions",
+        "schema": "shopify",
+        "definition": "CHECK (octet_length(auth_tag) = 16)"
+      },
+      {
+        "name": "runtime_sessions_key_version_check",
+        "type": "c",
+        "table": "runtime_sessions",
+        "schema": "shopify",
+        "definition": "CHECK (key_version > 0)"
+      },
+      {
+        "name": "runtime_sessions_nonce_check",
+        "type": "c",
+        "table": "runtime_sessions",
+        "schema": "shopify",
+        "definition": "CHECK (octet_length(nonce) = 12)"
+      },
+      {
+        "name": "runtime_sessions_payload_ciphertext_check",
+        "type": "c",
+        "table": "runtime_sessions",
+        "schema": "shopify",
+        "definition": "CHECK (octet_length(payload_ciphertext) > 0)"
+      },
+      {
+        "name": "runtime_sessions_pkey",
+        "type": "p",
+        "table": "runtime_sessions",
+        "schema": "shopify",
+        "definition": "PRIMARY KEY (session_id)"
+      },
+      {
+        "name": "runtime_sessions_session_id_check",
+        "type": "c",
+        "table": "runtime_sessions",
+        "schema": "shopify",
+        "definition": "CHECK (char_length(session_id) >= 1 AND char_length(session_id) <= 255)"
+      },
+      {
+        "name": "runtime_sessions_shop_domain_check",
+        "type": "c",
+        "table": "runtime_sessions",
+        "schema": "shopify",
+        "definition": "CHECK (shop_domain ~ '^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$'::text)"
+      },
+      {
+        "name": "runtime_sessions_timestamp_order",
+        "type": "c",
+        "table": "runtime_sessions",
+        "schema": "shopify",
+        "definition": "CHECK (updated_at >= created_at)"
+      }
+    ]
+  }
+}

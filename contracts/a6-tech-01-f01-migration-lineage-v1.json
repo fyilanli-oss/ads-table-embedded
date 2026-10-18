@@ -9,6 +9,9 @@
   "migration_history_repair_authorized": false,
   "live_mutation_authorized": false,
   "f01_closed": false,
+  "replay_document": "docs/A6_TECH_01_F01B_DATABASE_REPLAY.md",
+  "replay_status": "runner_prepared_execution_pending",
+  "replay_workflow": ".github/workflows/database-integrity.yml",
   "next_finding_may_start": false,
   "historical_migrations": [
     {

@@ -1,0 +1,57 @@
+{
+  "checked_at": "2026-10-18",
+  "finding": "TECH01-F09",
+  "status": "local_sync_verified_ci_and_product_owner_acceptance_pending",
+  "primary_checkout": "C:/Users/dev/Documents/ChatGPT/ads-table-embedded",
+  "task_worktree": "C:/Users/dev/.codex/worktrees/73e4/ads-table-embedded",
+  "official_source": "https://git-scm.com/docs/git-merge",
+  "before": {
+    "branch": "main",
+    "commit": "280313766413b7ff15ee8b9ff70a881ecadad797",
+    "ahead": 0,
+    "behind": 64,
+    "tracked_changes": 0,
+    "untracked_files": 0,
+    "ignored_entries": 0,
+    "stash_entries": 0,
+    "post_merge_hook_present": false,
+    "ancestor_of_target": true
+  },
+  "operation": {
+    "command": "git merge --ff-only --no-overwrite-ignore f72c1af273c2271640342051d6a7cb0d47a889d9",
+    "target_verified_with_github_connector_and_ls_remote": true,
+    "fast_forward": true,
+    "history_rewritten": false,
+    "stash_created_or_restored": false,
+    "reset_clean_force_or_auth_repair_used": false,
+    "previous_commit_preserved_in_git_history": true,
+    "observed_ORIG_HEAD": "280313766413b7ff15ee8b9ff70a881ecadad797"
+  },
+  "after": {
+    "branch": "main",
+    "commit": "f72c1af273c2271640342051d6a7cb0d47a889d9",
+    "remote_main_commit": "f72c1af273c2271640342051d6a7cb0d47a889d9",
+    "local_tree": "0f20e7713616f725b78da1b54b903bcfec8c49cf",
+    "github_commit_tree": "0f20e7713616f725b78da1b54b903bcfec8c49cf",
+    "ahead": 0,
+    "behind": 0,
+    "tracked_changes": 0,
+    "untracked_files": 0,
+    "ignored_entries": 0
+  },
+  "future_use_rule": "before using primary main: verify GitHub source, fetch, inspect clean status and ancestry, fast-forward only; stop for local work or divergence; no automatic recurring sync",
+  "post_merge_final_sync_required": true,
+  "limitation": "point-in-time local checkout state, not ongoing freshness monitoring; PR merge changes main and requires one clean fast-forward before F09 delivery",
+  "scope": {
+    "new_runtime_workflow_or_dependency_code": false,
+    "local_installs_or_builds_in_primary": false,
+    "git_auth_ACL_GCM_hooks_or_services_changed": false,
+    "worktree_archived_or_removed": false,
+    "live_deploy_configuration_database_or_provider_change": false,
+    "user_attachment_in_task_worktree_preserved": true
+  },
+  "product_owner_closure_accepted": false,
+  "F09_closed": false,
+  "F10_execution_authorized": false,
+  "EO05_may_start": false
+}

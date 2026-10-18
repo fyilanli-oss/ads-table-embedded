@@ -6,7 +6,8 @@
 **EO-05 kararı:** Kapalı
 
 **Güncel düzeltme durumu:** F01–F08 ürün sahibi kabulüyle kapandı.
-F09 başlamadı; genel audit PASS değildir.
+F09 temiz primary checkout fast-forward ile eşlendi; CI ve ürün sahibi kabulü
+beklenir. Genel audit PASS değildir.
 İlk denetim bulguları ve başlangıç sayıları aşağıda
 tarihsel baseline olarak korunur; genel A6-TECH-01 henüz PASS değildir.
 
@@ -429,6 +430,24 @@ süresi riski. EO-05 kapasite kapısını etkiler.
 Advisor yeniden kontrolü ve ayrı canlı uygulama onayı gerekir.
 
 ### TECH01-F09 — P3 — Yerel ana checkout güncellik borcu
+
+**Yerel doğrulama — 18 Ekim 2026:** Primary checkout
+`C:/Users/dev/Documents/ChatGPT/ads-table-embedded`, `main` üzerinde 64 commit
+gerideydi; ahead/staged/tracked/untracked/ignored/stash yoktu. GitHub Connector
+ve uzak ref doğrulandı; `--ff-only --no-overwrite-ignore` ile
+`f72c1af273c2271640342051d6a7cb0d47a889d9` kaynağına alındı. Commit/tree exact
+GitHub eşliği, temiz durum ve ahead/behind 0/0 doğrulandı. Eski commit Git
+geçmişinde korunur; reset/clean/force/kimlik onarımı, install, servis restart,
+deploy veya database işlemi yoktur. Görev attachment'ı ve iki checkout korundu.
+Kanıt `docs/evidence/A6_TECH_01_F09_CHECKOUT_SYNC_2026-10-18.json`.
+CI/kabul beklenir; bu PR merge edilince primary temizliği yeniden kontrol
+edilip yeni exact main'e bir kez daha fast-forward yapılmadan teslim bitmez.
+
+**Tekrar kullanım kuralı:** Eski klasörde işe başlamadan GitHub source + fetch,
+status ve ancestry kontrol edilir; yalnız temiz ve doğrusal main ilerletilir.
+Yerel iş/divergence varsa durulur; otomatik stash/reset/force veya periyodik
+sync kurulmaz. Bu kural sürekli güncellik garantisi değildir. F10 başlamaz.
+Aşağıdaki ilk teşhis tarihsel kayıttır.
 
 Görev worktree'si exact `origin/main` iken birincil checkout'un yerel `main`
 branch'i 28 commit geridedir. Yerel-only commit, stash veya upstream'siz branch

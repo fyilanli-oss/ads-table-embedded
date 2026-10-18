@@ -155,6 +155,12 @@ Kanıt `docs/evidence/A6_TECH_01_F08_CLOSURE_2026-10-18.json`.
 Güncel F01–F08 kapalı; F09 başlamadı/yetkili değil, genel audit ve EO-05 kapısı
 ayrı kapanış/retest kararı olmadan PASS/başlangıç sayılmaz.
 
+F09 primary checkout temizliği doğrulandı; kullanıcı işi veya divergent commit
+yoktu. Exact uzak `main`e fast-forward yapıldı, commit/tree ve temiz 0/0 durumu
+doğrulandı. Kanıt `docs/evidence/A6_TECH_01_F09_CHECKOUT_SYNC_2026-10-18.json`.
+CI/kabul ve PR merge sonrası son primary sync beklenir. F10 başlamadı; canlı
+uygulama/database/deploy değişmedi, genel audit/EO-05 kapısı korunur.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

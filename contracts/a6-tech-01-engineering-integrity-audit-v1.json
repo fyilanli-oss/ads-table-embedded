@@ -114,6 +114,9 @@
       "id": "TECH01-F09",
       "priority": "P3",
       "title": "primary_checkout_main_behind_origin_main",
+      "remediation_status": "local_sync_verified_ci_and_product_owner_acceptance_pending",
+      "remediation_evidence": "docs/evidence/A6_TECH_01_F09_CHECKOUT_SYNC_2026-10-18.json",
+      "closed": false,
       "eo05_blocker": false
     },
     {

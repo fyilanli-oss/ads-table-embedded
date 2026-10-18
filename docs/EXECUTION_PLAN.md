@@ -79,6 +79,12 @@ ile repository eşlenmiştir. Ürün sahibi F01 kapanışını ve PR #102 merge'
 Sıradaki bulgu F02'dir; uygulaması başlamadı. Bu kayıt yeni canlı mutation
 veya EO-05 başlangıç yetkisi değildir.
 
+F02'deki tek sahipsiz Google credential, ayrı açık onayla 18 Ekim 2026'da
+temizlendi. Üç bağlı credential, üç connection ve sekiz tarihsel kayıt korundu.
+Ürün sahibi F02 kapanışını ve PR #104 merge'ünü kabul etti. Kanıt:
+`docs/evidence/A6_TECH_01_F02_CLOSURE_2026-10-18.json`.
+Sıradaki F03 başlamadı; yeni canlı işlem veya EO-05 başlangıcı yetkisi yoktur.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

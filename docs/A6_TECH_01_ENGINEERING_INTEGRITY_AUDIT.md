@@ -111,8 +111,11 @@ Exact transaction SQL'i aynı evidence dizininde korunur; tekrar çalıştırma
 yetkisi vermez ve aday artık bulunmadığından guard ile durur. Başlangıçtaki
 recoverable-deletion kapısı genel olarak gevşetilmedi: yalnız bu kayda ait
 commit-sonrası geri dönüşsüzlük istisnası açıkça kabul edildi. Full backup
-varmış gibi gösterilmez. F02 kapanış kaydının merge/kabulü bekleniyor;
-F03 başlamadı. Aşağıdaki teşhis/hazırlık notları önceki durumu açıklar.
+varmış gibi gösterilmez. Ürün sahibi 18 Ekim 2026'da F02 kapanışını ve PR #104
+merge'ünü kabul etti. Kanıt:
+`docs/evidence/A6_TECH_01_F02_CLOSURE_2026-10-18.json`.
+F03 sıradadır; uygulaması başlamadı ve bu kabul yeni işlem yetkisi vermez.
+Aşağıdaki teşhis/hazırlık notları önceki durumu açıklar.
 
 **18 Ekim 2026 incelemesi:** Tek Google kalıntısının connection ve handoff
 referansı yok; aynı sahibi için süresi dolmamış OAuth işlemi de yok. Kayıt

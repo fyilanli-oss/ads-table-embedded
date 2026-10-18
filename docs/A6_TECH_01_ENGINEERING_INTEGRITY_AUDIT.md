@@ -165,6 +165,18 @@ sahibi onayıyla yapılmalıdır.
 
 ### TECH01-F03 — P1 — Vercel environment envanter drift'i
 
+**18 Ekim repository düzeltmesi:** Güncel metadata yalnız ad/target/type
+alanlarıyla yeniden okundu: 22 Production, 0 Preview/Development. Eksik dört
+Google adı `.env.example` ve secret contract'ına eklendi. Master 23 toplam /
+22 Vercel / 1 workflow secret adıyla eşlendi; GitHub secret store yeniden
+denetlenmiş sayılmaz. Contract'ın mantıksal saklama politikası ile gözlenen
+fiilî tür ayrıldı: Vercel 17 Secret / 5 Config. Canlı yeniden sınıflandırma yok.
+Negatif test, Google adı hem örnekten hem contract'tan çıkarılsa bile canlı
+snapshot karşılaştırmasının bunu yakalamasını sağlar; eski `16` sabiti kaldırıldı.
+Secret çözümleme/değer okuma, provider/config mutation veya deploy yapılmadı.
+Kanıt `docs/evidence/A6_TECH_01_F03_ENV_INVENTORY_2026-10-18.json`.
+F03 kapanış kabulü bekleniyor; F04 başlamadı. Aşağıdaki metin başlangıç bulgusudur.
+
 Canlı Vercel Production projesi 22 environment adı taşır. Repository secret
 contract'ı 18 Vercel girdisi, master contract ise daha eski 16 toplam/11 Vercel
 sayısını taşır. `.env.example` dört Google server-only adını içermemektedir:

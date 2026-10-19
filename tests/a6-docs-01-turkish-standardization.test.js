@@ -28,17 +28,16 @@ test("DOCS-01 inventories human Markdown without translating agent instructions 
   assert.equal(new Set(actual).size, 63);
   assert.deepEqual(contract.inventory_counts, {
     total_markdown: 63, human_markdown: 62, excluded_agent_instructions: 1,
-    translated_review_pending: 4, pending_language_review: 16,
-    translated_product_owner_accepted: 42,
+    translated_review_pending: 0, pending_language_review: 16,
+    translated_product_owner_accepted: 46,
   });
   for (const row of contract.inventory) {
     assert.match(row.baseline_blob, /^[a-f0-9]{40}$/);
     assert.equal(row.classification, row.path === "AGENTS.md"
       ? "agent_instructions_excluded" : "human_markdown");
     assert.equal(row.status, row.path === "AGENTS.md" ? "excluded_unchanged"
-      : [...contract.first_batch, ...contract.second_batch, ...contract.third_batch, ...contract.fourth_batch, ...contract.fifth_batch, ...contract.sixth_batch, ...contract.seventh_batch, ...contract.eighth_batch, ...contract.ninth_batch, ...contract.tenth_batch, ...contract.eleventh_batch].includes(row.path) ? "translated_product_owner_accepted"
-        : contract.twelfth_batch.includes(row.path)
-          ? "translated_product_owner_review_pending" : "pending_language_review");
+      : [...contract.first_batch, ...contract.second_batch, ...contract.third_batch, ...contract.fourth_batch, ...contract.fifth_batch, ...contract.sixth_batch, ...contract.seventh_batch, ...contract.eighth_batch, ...contract.ninth_batch, ...contract.tenth_batch, ...contract.eleventh_batch, ...contract.twelfth_batch].includes(row.path) ? "translated_product_owner_accepted"
+        : "pending_language_review");
   }
 });
 
@@ -422,10 +421,12 @@ test("DOCS-01 F4-F7 translation keeps exact carry, logical routes, historical es
   assert.match(go, /yeni GO talebi veya bugünkü sınırsız uygulama yetkisi değildir/);
   assert.match(go, /EO-01 ürün verisi çekmez, canlı token taşımaz/);
   assert.match(go, /A6-ASSURE-01 kapıları ayrıca geçerlidir/);
-  const prepared = contract.deliveries[11];
-  assert.deepEqual(prepared.files, contract.twelfth_batch);
-  assert.equal(prepared.product_owner_readability_accepted, false);
-  assert.equal(prepared.merge_authorized, false);
+  const accepted = contract.deliveries[11];
+  assert.deepEqual(accepted.files, contract.twelfth_batch);
+  assert.equal(accepted.product_owner_readability_accepted, true);
+  assert.equal(accepted.merge_authorized, true);
+  assert.equal(accepted.pull_request, 131);
+  assert.equal(accepted.merge_commit, "52335cc6fbcecde15f664beae591264e234c1909");
 });
 
 test("DOCS-01 language work does not authorize runtime work, closure, merge or EO-05", async () => {

@@ -360,6 +360,20 @@ listeye yönlendirilir; rota/şema taslakları bugünkü uygulama envanteri değ
 Süre tahminleri 4 Ekim başlangıç planıdır; GO bugün yeni canlı yetki oluşturmaz.
 Kod, canlı ortam ve kabul edilmiş kararlar değişmez; EO-05 başlamaz.
 
+On ikinci teslim PR #131 açık ürün sahibi okunabilirlik/merge kabulüyle
+`52335cc6fbcecde15f664beae591264e234c1909` commit'inde birleştirildi;
+test edilen ağaç korundu. 46 belge kabul edilmiş, 16 belge dil incelemesi bekler.
+Sonraki envanter kontrolünde ana tablo belgesinde bozuk UTF-8 bulundu; ürün
+sahibi 19 Ekim 2026'da dar metin onarımını onayladı. Son sağlam tarihsel gövde
+`6e95ba9c7134d56e6cf11eba03be149c502e9672` kaynağından doğrulanarak geri getirildi;
+yalnız satır sonu boşlukları temizlendi ve güncel yetki notu eklendi.
+Bozuk kayıttaki sonraki metin tahminle yeniden oluşturulmadı. Onarım kaydı
+`contracts/a6-docs-01-turkish-standardization-v1.json` içindedir. Bu iş Türkçe
+çevirinin tamamlandığı sayılmaz; sayım değişmez, EO-05 açılmaz. Yeni metin
+bütünlüğü kontrolü 62 insan-okuyucu Markdown dosyasında geçersiz UTF-8,
+yerine-geçme karakteri ve ikili kontrol karakterini reddeder. CI ve ürün sahibi
+onarım/merge kabulü beklenir; uygulama kodu ve canlı ortam değişmedi.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

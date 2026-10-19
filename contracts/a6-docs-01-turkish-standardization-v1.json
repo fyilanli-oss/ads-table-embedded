@@ -2,7 +2,7 @@
   "contract_id": "a6-docs-01-turkish-standardization-v1",
   "checked_at": "2026-10-19",
   "package_id": "A6-DOCS-01",
-  "status": "in_progress_feasibility_go_prepared",
+  "status": "in_progress_master_text_integrity_repair_prepared",
   "baseline_commit": "f62a5c6f7a254fe61be3c8af94f7fa9d2d6b65a1",
   "brief": "docs/A6_QUALITY_AND_ASSURANCE_GATES.md",
   "user_start_authorized": true,
@@ -19,9 +19,9 @@
     "total_markdown": 63,
     "human_markdown": 62,
     "excluded_agent_instructions": 1,
-    "translated_review_pending": 4,
+    "translated_review_pending": 0,
     "pending_language_review": 16,
-    "translated_product_owner_accepted": 42
+    "translated_product_owner_accepted": 46
   },
   "first_batch": [
     "README.md",
@@ -185,7 +185,7 @@
       "path": "docs/A6_EO_F4_SCHEMA_DATA_CARRY_MAP.md",
       "baseline_blob": "eb8183bcafda90453af6b5092902d07b19d75bc8",
       "classification": "human_markdown",
-      "status": "translated_product_owner_review_pending",
+      "status": "translated_product_owner_accepted",
       "preserved_technical_tokens": [
         "NOBYPASSRLS",
         "NOINHERIT",
@@ -261,7 +261,7 @@
       "path": "docs/A6_EO_F5_PRODUCT_ROUTE_MAP.md",
       "baseline_blob": "bbb9273d86570732496b5b66f463ca3f8ce55789",
       "classification": "human_markdown",
-      "status": "translated_product_owner_review_pending",
+      "status": "translated_product_owner_accepted",
       "preserved_technical_tokens": [
         "*/runtime/acceptance",
         "*/runtime/preflight",
@@ -341,7 +341,7 @@
       "path": "docs/A6_EO_F6_EFFORT_RISK_COMPARISON.md",
       "baseline_blob": "b95344c9b4f92a6628e2b6a2f6bf37ede3d30de1",
       "classification": "human_markdown",
-      "status": "translated_product_owner_review_pending",
+      "status": "translated_product_owner_accepted",
       "preserved_technical_tokens": [
         "public/",
         "server.js",
@@ -353,7 +353,7 @@
       "path": "docs/A6_EO_F7_GO_DECISION.md",
       "baseline_blob": "b92649acbf5b6cc2fcc3bdcf49625f30618d8ce5",
       "classification": "human_markdown",
-      "status": "translated_product_owner_review_pending",
+      "status": "translated_product_owner_accepted",
       "preserved_technical_tokens": [
         "/",
         "/ad-analysis",
@@ -2296,10 +2296,15 @@
         "docs/A6_EO_F6_EFFORT_RISK_COMPARISON.md",
         "docs/A6_EO_F7_GO_DECISION.md"
       ],
-      "status": "prepared_product_owner_review_pending",
+      "status": "merged_product_owner_accepted",
       "base_commit": "f0fa17301ad22dc0725a9ff1f313cbdf6d2d3c01",
-      "product_owner_readability_accepted": false,
-      "merge_authorized": false
+      "product_owner_readability_accepted": true,
+      "merge_authorized": true,
+      "accepted_at": "2026-10-19",
+      "pull_request": 131,
+      "source_commit": "60614ceb46a019396213ee0644ac7273b91617a8",
+      "merge_commit": "52335cc6fbcecde15f664beae591264e234c1909",
+      "tree": "b976f47dba4a6a79b6f337192d070677c08bbe4b"
     }
   ],
   "third_batch": [
@@ -2357,5 +2362,29 @@
     "docs/A6_EO_F5_PRODUCT_ROUTE_MAP.md",
     "docs/A6_EO_F6_EFFORT_RISK_COMPARISON.md",
     "docs/A6_EO_F7_GO_DECISION.md"
+  ],
+  "text_integrity_repairs": [
+    {
+      "path": "docs/A6_EO_IMPLEMENTATION_MASTER_TABLE.md",
+      "authorized_at": "2026-10-19",
+      "status": "prepared_product_owner_review_pending",
+      "base_commit": "52335cc6fbcecde15f664beae591264e234c1909",
+      "damaged_blob": "7c2b3da4cbf0f94caa487d0c71eafb0832a4fb01",
+      "first_damaged_source_commit": "9b17ca992355d46fb05281430addf938c95f07d9",
+      "first_damaged_main_commit": "f1dae9a95a9a831d5710e4931e6c99d8841089d0",
+      "historical_pull_request": 75,
+      "last_good_source_commit": "6e95ba9c7134d56e6cf11eba03be149c502e9672",
+      "last_good_source_blob": "e601d036afe990cfcd71242674d9c5fe390d2d06",
+      "last_good_source_bytes": 19187,
+      "last_good_source_sha256": "7ab58381b0b42b883ce3f34ec94fd5fdc5bc2c7a71755c912e1d9df4a860a498",
+      "restored_body_normalization": "LF_and_remove_trailing_spaces_only",
+      "restored_body_normalized_sha256": "3f767043b5a529fffb80859824316d197fec782fc31e6896202046810f4d89f9",
+      "current_authority_notice_added": true,
+      "later_damaged_prose_reconstructed_by_guess": false,
+      "accepted_decisions_or_runtime_changed": false,
+      "counts_as_completed_translation": false,
+      "product_owner_repair_accepted": false,
+      "merge_authorized": false
+    }
   ]
 }

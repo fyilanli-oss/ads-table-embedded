@@ -28,16 +28,16 @@ test("DOCS-01 inventories human Markdown without translating agent instructions 
   assert.equal(new Set(actual).size, 63);
   assert.deepEqual(contract.inventory_counts, {
     total_markdown: 63, human_markdown: 62, excluded_agent_instructions: 1,
-    translated_review_pending: 2, pending_language_review: 22,
-    translated_product_owner_accepted: 38,
+    translated_review_pending: 2, pending_language_review: 20,
+    translated_product_owner_accepted: 40,
   });
   for (const row of contract.inventory) {
     assert.match(row.baseline_blob, /^[a-f0-9]{40}$/);
     assert.equal(row.classification, row.path === "AGENTS.md"
       ? "agent_instructions_excluded" : "human_markdown");
     assert.equal(row.status, row.path === "AGENTS.md" ? "excluded_unchanged"
-      : [...contract.first_batch, ...contract.second_batch, ...contract.third_batch, ...contract.fourth_batch, ...contract.fifth_batch, ...contract.sixth_batch, ...contract.seventh_batch, ...contract.eighth_batch, ...contract.ninth_batch].includes(row.path) ? "translated_product_owner_accepted"
-        : contract.tenth_batch.includes(row.path)
+      : [...contract.first_batch, ...contract.second_batch, ...contract.third_batch, ...contract.fourth_batch, ...contract.fifth_batch, ...contract.sixth_batch, ...contract.seventh_batch, ...contract.eighth_batch, ...contract.ninth_batch, ...contract.tenth_batch].includes(row.path) ? "translated_product_owner_accepted"
+        : contract.eleventh_batch.includes(row.path)
           ? "translated_product_owner_review_pending" : "pending_language_review");
   }
 });
@@ -349,8 +349,39 @@ test("DOCS-01 provider research stays historical and cannot revive superseded br
   assert.match(meta, /OAuth izin kapsamını genişletmez/);
   assert.match(meta, /tek başına kanonik Ad Click eşlemesi değildir/);
   assert.match(meta, /gerçek katalog\s+yanıtı gerektiren açık doğrulamalar/i);
-  const prepared = contract.deliveries[9];
-  assert.deepEqual(prepared.files, contract.tenth_batch);
+  const accepted = contract.deliveries[9];
+  assert.deepEqual(accepted.files, contract.tenth_batch);
+  assert.equal(accepted.product_owner_readability_accepted, true);
+  assert.equal(accepted.merge_authorized, true);
+  assert.equal(accepted.pull_request, 129);
+  assert.equal(accepted.merge_commit, "ec641ea9ea19e330716a503865beaccb924ff2d8");
+});
+
+test("DOCS-01 feasibility records retain historical inventory, zero runtime carry and the binding current plan", async () => {
+  const contract = await readJson(contractPath);
+  assert.equal(contract.eleventh_batch.length, 2);
+  for (const path of contract.eleventh_batch) {
+    const content = await readFile(path, "utf8");
+    const row = contract.inventory.find((item) => item.path === path);
+    assertTechnicalTokens(content, row.preserved_technical_tokens);
+    assert.match(content, /4 Ekim 2026/);
+    assert.match(content, /docs\/EXECUTION_PLAN\.md/);
+    assert.match(content, /contracts\/a6-eo-implementation-master-v1\.json/);
+    assert.match(content, /bugünkü/);
+    assert.doesNotMatch(content, /^##? (?:Environment boundary|.*dependency carry allowlist|EO-F1 authority envanteri)/m);
+  }
+  const boundary = await readFile(contract.eleventh_batch[0], "utf8");
+  for (const count of ["2,185", "4,947", "2,392", "10,478", "21/35", "31/35"]) assert.ok(boundary.includes(count));
+  assert.match(boundary, /“Taşıma adayı” kesin taşıma onayı değildir/);
+  assert.match(boundary, /`SUPABASE_SERVICE_ROLE_KEY`.*yeni çalışma zamanına verilemez/);
+  const carry = await readFile(contract.eleventh_batch[1], "utf8");
+  for (const label of ["Carry-as-is", "Extract-and-rewrite", "Contract-only", "Retire"]) assert.ok(carry.includes(label));
+  assert.match(carry, /kodu için sonuç: \*\*sıfır modül\*\*/);
+  assert.match(carry, /“Retire” bugün silme yetkisi vermez/);
+  assert.match(carry, /ilk fizibilite taslağının paket eşlemesidir/);
+  assert.match(carry, /EO-03 OAuth\/bağlantı\/token kasası, EO-04 sağlayıcı adaptörleri/);
+  const prepared = contract.deliveries[10];
+  assert.deepEqual(prepared.files, contract.eleventh_batch);
   assert.equal(prepared.product_owner_readability_accepted, false);
   assert.equal(prepared.merge_authorized, false);
 });

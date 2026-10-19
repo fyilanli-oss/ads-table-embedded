@@ -1,177 +1,182 @@
-# A6 EO-F3 — Kod ve dependency carry allowlist
+# A6 EO-F3 — Kod ve bağımlılık taşıma izin listesi
 
 **Tarih:** 4 Ekim 2026  
-**Durum:** EO-F3 tamamlandı; EO-F4 bekleniyor  
-**Etkisi:** Salt-okunur mimari karar. Production, provider, veritabanı, deployment veya Shopify configuration değişikliği yapmaz.
+**Tarihsel durum:** EO-F3 tamamlandı; EO-F4 bekleniyor
+
+**Etkisi:** Salt okunur mimari karar. Production, sağlayıcı, veritabanı, dağıtım veya Shopify yapılandırması değişikliği yapmaz.
+
+**Okuma notu:** Bu belge eski `fyilanli-oss/ads-table-dev` yapısının 4 Ekim 2026 incelemesidir. “Mevcut” ve “henüz oluşturulmadı” ifadeleri o güne aittir; temiz projenin bugünkü durumunu anlatmaz. Güncel iş sırası `docs/EXECUTION_PLAN.md` ve `contracts/a6-eo-implementation-master-v1.json` içindedir. Bu dil düzenlemesi taşıma sınıflarını veya uygulama yetkisini değiştirmez.
 
 ## Analist sonucu
 
-Yeni embedded-only ürün, mevcut uygulamanın “temizlenmiş kopyası” olmayacaktır. Mevcut repository'deki hiçbir application module aynen taşınmaya uygun bulunmamıştır. Çalıştığı kanıtlanan iş davranışları kaynak olarak kullanılacak; tenant, güvenlik, veri doğruluğu ve Shopify UI sınırları temiz hedef modüllerde yeniden kurulacaktır.
+Yalnız Shopify içine gömülü çalışan yeni ürün, mevcut uygulamanın “temizlenmiş kopyası” olmayacaktır. Eski repository'deki hiçbir uygulama modülü aynen taşınmaya uygun bulunmamıştır. Çalıştığı kanıtlanan iş davranışları referans olarak kullanılacak; müşteri/çalışma alanı yetkisi, güvenlik, veri doğruluğu ve Shopify UI sınırları temiz hedef modüllerde yeniden kurulacaktır.
 
-Bu karar, yeniden keşif yapmayı değil, bataklığın bağımlılıklarını taşımadan kanıtlanmış bilgiyi korumayı amaçlar.
+Amaç aynı davranışı tekrar keşfetmek değil, eski yapının bağımlılıklarını taşımadan kanıtlanmış bilgiyi korumaktır.
 
 ## İnceleme zemini
 
-4 Ekim 2026 `main` ağacı ve transitive import ilişkileri incelendi:
+4 Ekim 2026 `main` ağacı ve dolaylı import ilişkileri incelendi:
 
 - 819 repository dosyası
 - 305 KB kök `server.js`
 - 1.53 MB `public/`
 - 120 dosya / 562 KB `src/`
 - 203 test dosyası / 1.02 MB `tests/`
-- mevcut doğrudan dependency'ler: `express`, `googleapis`, `@supabase/supabase-js`
+- mevcut doğrudan bağımlılıklar: `express`, `googleapis`, `@supabase/supabase-js`
 
 Önemli bulgular:
 
-- `src/shopify/runtime.js`, ürün runtime'ı ile historical inventory ve controlled acceptance modüllerini aynı composition root'ta birleştiriyor.
-- `src/shopify/embedded-app-home.js`, gerçek ürün yüzeyi ile kabul/debug/historical davranışlarını ve emekli provider izlerini birlikte taşıyor.
-- Workspace Dataset/query katmanında hâlâ `user_id` uyumluluk izleri var.
-- Mevcut token store legacy `platform_connection_tokens` tablosuna bağlı.
-- Privacy lifecycle bugün operasyonel silme motoru değil, planlayıcı seviyesinde.
-- Mevcut package manifest yeni ürünün dependency manifesti olarak kullanılamaz.
+- `src/shopify/runtime.js`, ürün çalışma zamanı ile tarihsel envanter ve kontrollü kabul modüllerini aynı kurulum noktasında birleştiriyor.
+- `src/shopify/embedded-app-home.js`, gerçek ürün yüzeyiyle kabul/hata ayıklama/tarihsel davranışları ve emekli sağlayıcı izlerini birlikte taşıyor.
+- Çalışma alanı Dataset/sorgu katmanında hâlâ `user_id` uyumluluk izleri var.
+- Mevcut token deposu eski `platform_connection_tokens` tablosuna bağlı.
+- O gün gizlilik yaşam döngüsü gerçek silme motoru değil, planlayıcı seviyesinde.
+- Mevcut paket tanımı yeni ürünün bağımlılık tanımı olarak kullanılamaz.
 
 ## Dört sınıflı bağlayıcı karar
 
-### 1. Carry-as-is
+### 1. Carry-as-is — Aynen taşı
 
-Application/runtime kodu için sonuç: **sıfır modül**.
+Uygulama/çalışma zamanı kodu için sonuç: **sıfır modül**.
 
-Aynen seed edilebilecek tek artefaktlar, içerikleri ayrıca hash/provenance ile doğrulanmak şartıyla:
+İçerikleri ayrıca özet değerleri ve köken kayıtlarıyla doğrulanırsa başlangıca aynen alınabilecek tek çıktılar:
 
-- EO karar ve executable contract'ları
-- Shopify Embedded UI Constitution
-- kabul edilmiş schema/metric/formula sözleşmeleri
-- provider ham kanıtları ve reconciliation evidence
-- bağımsız test fixture'ları; yalnız kişisel veri/secret içermiyorsa
+- EO kararları ve yürütülebilir sözleşmeler
+- Shopify Embedded UI Anayasası
+- kabul edilmiş şema/metrik/formül sözleşmeleri
+- sağlayıcı ham kanıtları ve uzlaştırma kanıtı
+- bağımsız test veri örnekleri; yalnız kişisel veri veya gizli değer içermiyorsa
 
-Bunlar da runtime dependency değildir.
+Bunlar çalışma zamanı bağımlılığı değildir.
 
-### 2. Extract-and-rewrite
+### 2. Extract-and-rewrite — Davranışı çıkarıp yeniden yaz
 
-Aşağıdaki kaynaklar davranış referansı olarak kullanılabilir; dosya kopyalanamaz, temiz hedef arayüz ve workspace-only authority ile yeniden yazılır:
+Aşağıdaki kaynaklar davranış referansı olabilir. Dosya kopyalanamaz; temiz hedef arayüz ve yalnız çalışma alanına dayalı yetki kaynağıyla yeniden yazılır:
 
 | Hedef yetenek | Kaynak ailesi | Yeniden yazma şartı |
 |---|---|---|
-| Shopify tenant/install/session | `src/shopify/tenant-model.js`, embedded auth ve managed installation ailesi | Yalnız `workspace_id`; clean-reinstall generation, billing ve lifecycle kapıları |
-| Canonical provider bağlantısı | `src/providers/workspace-provider-connection-store.js` | Legacy shim ve `user_id` çıkarılır; EO-F4 least-privilege data plane |
-| Token crypto | `security/provider-token-vault.js` | Workspace/install generation AAD; startup fail-closed; legacy token store yok |
-| Meta adapter | `src/providers/meta/**` içindeki client/capability/normalization/mapping davranışları | Historical, controlled acceptance ve operator modülleri ayrılır |
-| Google Ads adapter | `src/providers/google-ads/**` içindeki search client/conversion/mapping davranışları | Google Sheets ve `googleapis` transitive bağı yok; ham yanıt/provenance korunur |
-| Klaviyo adapter | `src/providers/klaviyo/**` içindeki provider client/metric binding/mapping davranışları | Historical inventory ve acceptance araçları production build dışında |
-| Dataset V2 | `funnel-core/workspace-*` ve mapper davranışları | `user_id` fallback yok; EO-F4 schema; finality/reconciliation zorunlu |
-| Zaman, FX, hierarchy | `funnel-core` saf davranışları | Final contract'a karşı characterization; yanlış/ambiguous semantik taşınmaz |
-| Formula/query | mevcut formula/query davranışları | A4 bulguları düzeltilir; canonical adlar, null/unknown ve cost allocation doğruluğu |
-| OAuth transaction | mevcut TTL/state davranışı | Satır taşınmaz; workspace/install generation bağlı temiz store |
-| Scheduler/finality | mevcut hourly cron ve provider davranışları | Tek authority, lease/checkpoint, idempotent rolling reconciliation |
+| Shopify müşteri/kurulum/oturum | `src/shopify/tenant-model.js`, gömülü kimlik doğrulama ve yönetilen kurulum ailesi | Yalnız `workspace_id`; temiz yeniden kurulum nesli, faturalandırma ve yaşam döngüsü kapıları |
+| Kanonik sağlayıcı bağlantısı | `src/providers/workspace-provider-connection-store.js` | Eski uyumluluk katmanı ve `user_id` çıkarılır; EO-F4 en az yetkili veri katmanı |
+| Token şifreleme | `security/provider-token-vault.js` | Çalışma alanı/kurulum nesli ek doğrulama verisi (AAD); başlangıç hatasında kapalı kalma; eski token deposu yok |
+| Meta adaptörü | `src/providers/meta/**` içindeki istemci/kabiliyet/normalleştirme/eşleme davranışları | Tarihsel, kontrollü kabul ve operatör modülleri ayrılır |
+| Google Ads adaptörü | `src/providers/google-ads/**` içindeki arama istemcisi/dönüşüm/eşleme davranışları | Google Sheets ve `googleapis` dolaylı bağı yok; ham yanıt/veri kökeni korunur |
+| Klaviyo adaptörü | `src/providers/klaviyo/**` içindeki sağlayıcı istemcisi/metrik bağlama/eşleme davranışları | Tarihsel envanter ve kabul araçları Production derlemesi dışında |
+| Dataset V2 | `funnel-core/workspace-*` ve eşleyici davranışları | `user_id` yedek yolu yok; EO-F4 şeması; kesinleşme/uzlaştırma zorunlu |
+| Zaman, döviz kuru (FX), hiyerarşi | `funnel-core` saf davranışları | Nihai sözleşmeye karşı davranış doğrulaması; yanlış/belirsiz anlam taşınmaz |
+| Formül/sorgu | mevcut formül/sorgu davranışları | A4 bulguları düzeltilir; kanonik adlar, null/bilinmeyen ve maliyet dağıtımı doğruluğu |
+| OAuth işlemi | mevcut yaşam süresi (TTL)/state davranışı | Satır taşınmaz; çalışma alanı/kurulum nesline bağlı temiz depo |
+| Zamanlayıcı/kesinleşme | mevcut saatlik cron ve sağlayıcı davranışları | Tek yetki kaynağı, kiralama/ilerleme noktası, aynı işlem tekrarlandığında çoğalmayan kayan pencere uzlaştırması |
 
-“Extract” kaynak davranışı anlamak içindir; kopyala-yapıştır izni değildir.
+“Extract” kaynak davranışını anlamak içindir; kopyala-yapıştır izni değildir.
 
-### 3. Contract-only
+### 3. Contract-only — Yalnız sözleşmeyi al
 
-Aşağıdakilerde mevcut kod değil yalnız kabul edilmiş davranış taşınır:
+Aşağıdakilerde mevcut kod değil, yalnız kabul edilmiş davranış taşınır:
 
-- Shopify App Home, settings, provider connect ve data-source UI'ları
-- App Bridge ve güncel Polaris web component eşlemesi
-- Formula/compare/intent API semantiği
-- Dataset satır sözleşmesi, provenance, maturity ve finality
-- privacy webhook claim, Workspace Data Deletion ve Clean Reinstall
-- Shopify billing, 14 günlük trial ve entitlement
-- scheduler/lease/checkpoint davranışı
-- OAuth state/TTL/replay güvenliği
-- side-by-side parity, canary, rollback ve consumer-zero kapıları
-- controlled acceptance testlerinin doğruladığı beklentiler
+- Shopify App Home, Settings, sağlayıcı bağlantısı ve veri kaynağı arayüzleri
+- App Bridge ve güncel Polaris web bileşeni eşlemesi
+- Formül/karşılaştırma/niyet API anlamı
+- Dataset satır sözleşmesi, veri kökeni, olgunluk ve kesinleşme
+- gizlilik webhook işleme sahipliği, Workspace Data Deletion ve Clean Reinstall davranışları
+- Shopify faturalandırması, 14 günlük deneme ve kullanım hakkı
+- zamanlayıcı/kiralama/ilerleme noktası davranışı
+- OAuth state/TTL/tekrar kullanım güvenliği
+- yan yana eşlik, kademeli geçiş (canary), geri dönüş ve eski tüketicilerin sıfırlanması kapıları
+- kontrollü kabul testlerinin doğruladığı beklentiler
 
-UI, kod yazılmadan önce analyst brief + exact Shopify component mapping ile yeniden tasarlanır. Resmî component/property doğrulanmadan implementation başlamaz.
+UI, kod yazılmadan önce analist brief'i ve birebir Shopify bileşen eşlemesiyle yeniden tasarlanır. Resmî bileşen/özellik doğrulanmadan uygulama başlamaz.
 
-### 4. Retire / hedef build'e giremez
+### 4. Retire — Emekliye ayır / hedef derlemeye giremez
 
 - kök `server.js` monoliti
-- `public/` standalone login/signup/dashboard ve legacy statik ürün
-- legacy `users`, `user_settings`, `subscriptions` authority davranışları
-- `platform_connections`, `platform_connection_tokens` ve legacy OAuth/refresh yolları
-- V1 snapshots, V1 dataset, legacy jobs/schedules ve user-scoped backfill runtime'ı
-- GA4, Google Sheets, TikTok, Pinterest ve Organic runtime/provider yüzeyleri
-- `shopify_workspace_provider_connections` transitional authority
-- dual-write, live-shadow ve legacy primary/canonical fallback
-- debug, test, operator, diagnostic, controlled-acceptance ve historical-inventory route'ları
-- mevcut `package.json`, lockfile, Vercel route/build glob'ları ve bulk environment kopyası
-- mevcut embedded UI dosyalarının toplu kopyası veya CSS/HTML Shopify taklidi
+- `public/` bağımsız giriş/kayıt/pano ve eski statik ürün
+- eski `users`, `user_settings`, `subscriptions` yetki kaynağı davranışları
+- `platform_connections`, `platform_connection_tokens` ve eski OAuth/yenileme yolları
+- V1 anlık görüntüler, V1 veri kümesi, eski işler/zamanlamalar ve kullanıcıya bağlı geçmiş veri tamamlama çalışma zamanı
+- GA4, Google Sheets, TikTok, Pinterest ve Organic çalışma zamanı/sağlayıcı yüzeyleri
+- `shopify_workspace_provider_connections` geçiş dönemi yetki kaynağı
+- çift yazım, canlı gölge çalışma ve eski birincil/kanonik kaynağa geri dönme yolları
+- hata ayıklama, test, operatör, tanılama, kontrollü kabul ve tarihsel envanter rotaları
+- mevcut `package.json`, lockfile, Vercel rota/derleme dosya kalıpları ve toplu ortam değişkeni kopyası
+- mevcut gömülü UI dosyalarının toplu kopyası veya CSS/HTML ile Shopify taklidi
 
-Legacy repository EO cutover'a kadar containment/rollback olarak korunur; “retire” bugün silme yetkisi vermez.
+Eski repository yetkili EO geçişine kadar riski sınırlama/geri dönüş hattıdır. “Retire” bugün silme yetkisi vermez.
 
-## Temiz dependency politikası
+## Temiz bağımlılık politikası
 
-Yeni repository, sıfırdan üretilmiş package manifest ve lockfile ile başlar.
+Yeni repository, sıfırdan üretilmiş paket tanımı ve lockfile ile başlar.
 
-### İzinli dependency kategorileri
+### İzinli bağımlılık kategorileri
 
-- EO-01'de resmî güncel Shopify dokümanına göre seçilecek official app stack
-- Shopify App Bridge ve Polaris web components için resmî paket/dağıtım biçimi
-- EO-F4'te seçilecek data plane'e uygun tek database client/driver
-- aktif providerlar için mümkünse platform-native `fetch`/Web Crypto/Node crypto
+- EO-01'de güncel resmî Shopify dokümanına göre seçilecek resmî uygulama altyapısı
+- Shopify App Bridge ve Polaris web bileşenleri için resmî paket/dağıtım biçimi
+- EO-F4'te seçilecek veri katmanına uygun tek veritabanı istemcisi/sürücüsü
+- aktif sağlayıcılar için mümkünse platformun kendi `fetch`/Web Crypto/Node crypto araçları
 - test, lint, typecheck ve build için yalnız kullanılan araçlar
 
-### Otomatik taşınması yasak mevcut dependency'ler
+### Otomatik taşınması yasak mevcut bağımlılıklar
 
-- `express`: otomatik carry yok; hedef framework EO-01'de belirlenir
-- `googleapis`: carry yok; Google Ads hedef adapterına transitive bağ olamaz
-- `@supabase/supabase-js`: otomatik carry yok; EO-F4 data-plane kararından sonra gerekçelendirilir
-- mevcut lockfile ve transitive dependency ağacı: carry yok
+- `express`: otomatik taşıma yok; hedef uygulama çatısı EO-01'de belirlenir
+- `googleapis`: taşıma yok; Google Ads hedef adaptörüne dolaylı bağ olamaz
+- `@supabase/supabase-js`: otomatik taşıma yok; EO-F4 veri katmanı kararından sonra gerekçelendirilir
+- mevcut lockfile ve dolaylı bağımlılık ağacı: taşıma yok
 
-### Her yeni dependency için kapı
+### Her yeni bağımlılık için kapı
 
-Her doğrudan dependency kaydı şu alanları taşır:
+Her doğrudan bağımlılık kaydı şu alanları taşır:
 
 1. sahibi olduğu tek hedef yetenek;
-2. neden platform-native çözümün yetmediği;
-3. runtime mı dev-only mi olduğu;
-4. browser/server sınırı;
-5. secret ve tenant etkisi;
+2. neden platformun kendi çözümünün yetmediği;
+3. çalışma zamanında mı, yalnız geliştirmede mi kullanıldığı;
+4. tarayıcı/sunucu sınırı;
+5. gizli değer ve müşteri/çalışma alanı etkisi;
 6. lisans ve bakım durumu;
-7. version pin/upgrade politikası;
-8. kaldırma ve rollback yolu.
+7. sürüm sabitleme/güncelleme politikası;
+8. kaldırma ve geri dönüş yolu.
 
-Kullanılmayan dependency CI'da kabul edilmez. Provider SDK'sı eklemek varsayılan değil, kanıt gerektiren istisnadır.
+Kullanılmayan bağımlılık CI'da kabul edilmez. Sağlayıcı SDK'sı eklemek varsayılan değil, kanıt gerektiren istisnadır.
 
-## Hedef build sınırı
+## Hedef derleme sınırı
 
-Yeni production artefact şu negative kontrollere sahip olacaktır:
+Yeni Production çıktısında şu yasak durum kontrolleri bulunacaktır:
 
-- yasak provider veya legacy klasör adlarından import: 0
-- `user_id` tenant authority kullanımı: 0
-- legacy tablo adı kullanımı: 0
-- debug/operator/acceptance route kaydı: 0
-- root monolith veya legacy public asset inclusion: 0
-- browser bundle'da server secret/client: 0
-- tanımsız environment key okuması: 0
-- kullanılmayan direct dependency: 0
+- yasak sağlayıcı veya eski klasör adlarından import: 0
+- `user_id` ile müşteri yetkisi belirleme: 0
+- eski tablo adı kullanımı: 0
+- hata ayıklama/operatör/kabul rotası kaydı: 0
+- kök monolit veya eski public dosyalarının dahil edilmesi: 0
+- tarayıcı paketinde sunucu gizli değeri/istemcisi: 0
+- tanımsız ortam değişkeni okuması: 0
+- kullanılmayan doğrudan bağımlılık: 0
 
-CI; allowlist import graph, forbidden string/table/route taraması, dependency inventory, secret scan ve production bundle inspection çalıştırmadan merge'e izin vermez.
+CI; izinli import grafiği, yasak metin/tablo/rota taraması, bağımlılık envanteri, gizli değer taraması ve Production paket incelemesi çalıştırmadan merge'e izin vermez.
 
-## EO paketlerine etkisi
+## EO paketlerine tarihsel etkisi
 
-Bu karar implementation başlatmaz. Şu işleri net biçimde sonraki kapılara taşır:
+Bu karar uygulama başlatmaz. Aşağıdaki liste ilk fizibilite taslağının paket eşlemesidir; sonraki bağlayıcı Execution Plan'daki numaralandırmanın yerine geçmez:
 
-- **EO-F4:** exact schema/data carry, data-plane ve credential sınırı
-- **EO-F5:** product/route map; production ile operator/test yüzeyinin ayrılması
-- **EO-F6:** rewrite birimlerinin gerçek süre/risk hesabı
-- **EO-F7:** insan GO/NO-GO
-- **EO-01:** clean repository/build/CI ve resmî Shopify stack seçimi
-- **EO-02:** workspace/install/billing/lifecycle foundations
-- **EO-03:** provider adapter rewrite
-- **EO-04:** Dataset/formula/query rewrite
-- **EO-05:** scheduler/finality/deletion
-- **EO-06+:** UI, parity, canary, cutover ve legacy consumer-zero
+- **EO-F4:** birebir şema/veri taşıması, veri katmanı ve kimlik bilgisi sınırı
+- **EO-F5:** ürün/rota haritası; Production ile operatör/test yüzeyinin ayrılması
+- **EO-F6:** yeniden yazma birimlerinin gerçek süre/risk hesabı
+- **EO-F7:** insan GO/NO-GO kararı
+- **EO-01:** temiz repository/derleme/CI ve resmî Shopify altyapısı seçimi
+- **EO-02:** çalışma alanı/kurulum/faturalandırma/yaşam döngüsü temelleri
+- **EO-03:** sağlayıcı adaptörlerinin yeniden yazımı
+- **EO-04:** Dataset/formül/sorgu yeniden yazımı
+- **EO-05:** zamanlayıcı/kesinleşme/silme
+- **EO-06+:** UI, eşlik, kademeli geçiş, yetkili geçiş ve eski tüketicilerin sıfırlanması
 
-## Kabul sonucu
+**Güncel sıra için yönlendirme:** Execution Plan'da EO-03 OAuth/bağlantı/token kasası, EO-04 sağlayıcı adaptörleri, EO-05 zamanlayıcı/Dataset/FX/kesinleşme, EO-06 formül/sorgu/API, EO-07 UI, EO-08 eşlik/kademeli geçiş/geri dönüş, EO-09 yetki geçişi ve tüketici-sıfır, EO-10 emekliye ayırmadır. Yukarıdaki tarihsel liste yeni görev açmaz veya kabul edilmiş paketleri geri almaz.
+
+## Tarihsel kabul sonucu
 
 EO-F3 **PASS**:
 
-- application code carry-as-is sayısı: **0**
-- dört sınıflı allowlist machine-readable olarak donduruldu
-- mevcut package manifest toplu carry dışında
-- yasak provider/legacy dependency için hedef build inclusion hedefi: **0**
-- yeni repository/project hâlâ oluşturulmadı
-- production, DB, provider ve deployment mutation: **0**
-- sıradaki kapı: **EO-F4 — Schema and data carry map**
+- uygulama kodunu aynen taşıma sayısı: **0**
+- dört sınıflı izin listesi makinece okunabilir biçimde donduruldu
+- mevcut paket tanımı toplu taşıma dışında
+- yasak sağlayıcı/eski bağımlılık için hedef derlemeye dahil edilme hedefi: **0**
+- o gün yeni repository/proje hâlâ oluşturulmadı
+- Production, veritabanı, sağlayıcı ve dağıtım değişikliği: **0**
+- o günkü sonraki kapı: **EO-F4 — Şema ve veri taşıma haritası**
 

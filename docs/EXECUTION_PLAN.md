@@ -340,6 +340,16 @@ tam iş günü kanıtı hakkındaki kabul edilmiş sözleşmeye yönlendirilir; 
 varsayım bugünkü kural diye sunulmaz. Meta katalog yanıtı ve kanonik tıklama
 eşlemesi tamamlanmış sayılmaz. Yeni kod/canlı işlem yok; paket kapanmaz, EO-05 başlamaz.
 
+Onuncu teslim PR #129 açık ürün sahibi okunabilirlik/merge kabulüyle
+`ec641ea9ea19e330716a503865beaccb924ff2d8` commit'inde birleştirildi;
+test edilen ağaç korundu. On birinci dil geçişi F1/F2 yetki kaynağı/canlı veri/
+fiziksel proje sınırı ve F3 kod/bağımlılık taşıma kararının iki belgesidir.
+Güncel toplam: 40 kabul edilmiş, 2 okunabilirlik kabulü bekleyen,
+20 dil incelemesi bekleyen belge. 4 Ekim eski proje envanteri bugünkü durum
+değildir; taşıma adayları kesin onay sayılmaz. F3'ün ilk taslak paket eşlemesi
+tarihsel olarak korunup güncel Execution Plan sırasına yönlendirilir.
+Yeni kod, canlı işlem veya kaynak oluşturma yetkisi yoktur; EO-05 başlamaz.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

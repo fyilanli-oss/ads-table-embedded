@@ -2,7 +2,7 @@
   "contract_id": "a6-docs-01-turkish-standardization-v1",
   "checked_at": "2026-10-19",
   "package_id": "A6-DOCS-01",
-  "status": "in_progress_provider_research_prepared",
+  "status": "in_progress_foundation_decisions_prepared",
   "baseline_commit": "f62a5c6f7a254fe61be3c8af94f7fa9d2d6b65a1",
   "brief": "docs/A6_QUALITY_AND_ASSURANCE_GATES.md",
   "user_start_authorized": true,
@@ -20,8 +20,8 @@
     "human_markdown": 62,
     "excluded_agent_instructions": 1,
     "translated_review_pending": 2,
-    "pending_language_review": 22,
-    "translated_product_owner_accepted": 38
+    "pending_language_review": 20,
+    "translated_product_owner_accepted": 40
   },
   "first_batch": [
     "README.md",
@@ -89,13 +89,97 @@
       "path": "docs/A6_EO_F1_F2_AUTHORITY_AND_PROJECT_BOUNDARY.md",
       "baseline_blob": "b4d86def8da58d0e2dd6076f542e286b8ab179d2",
       "classification": "human_markdown",
-      "status": "pending_language_review"
+      "status": "translated_product_owner_review_pending",
+      "preserved_technical_tokens": [
+        "/api/cron/auto-refresh",
+        "17.6.1.121",
+        "ACTIVE_HEALTHY",
+        "ADSTABLE_CODEX_READONLY_TOKEN",
+        "FIRAT's projects",
+        "PROVIDER_TOKEN_LEGACY_READ_ENABLED",
+        "SUPABASE_SERVICE_ROLE_KEY",
+        "ads-table-dev",
+        "adstable-dev",
+        "ap-northeast-1",
+        "complete_shopify_managed_install",
+        "cron.job",
+        "dashboard_snapshots",
+        "dev.adstable.app",
+        "expire_trials",
+        "fx_rates",
+        "fx_rates_daily",
+        "https://supabase.com/changelog?types=breaking-change",
+        "https://supabase.com/docs/guides/database/postgres/roles",
+        "https://supabase.com/docs/guides/database/postgres/row-level-security",
+        "https://supabase.com/docs/guides/database/secure-data",
+        "insight_logs",
+        "legacy_user_workspace_bindings",
+        "main",
+        "oauth_transactions",
+        "performance_dataset_rows",
+        "performance_dataset_rows_v2",
+        "platform_account_ownerships",
+        "platform_ad_accounts",
+        "platform_businesses",
+        "platform_connection_tokens",
+        "platform_connections",
+        "public/",
+        "r4c_reject_legacy_provider_write",
+        "server.js",
+        "service_role",
+        "shopify_installations",
+        "shopify_workspace_provider_connections",
+        "snapshot_jobs",
+        "snapshot_schedules",
+        "src/",
+        "subscriptions",
+        "synthetic=true",
+        "tests/",
+        "user_settings",
+        "users",
+        "workspace_id IS NULL",
+        "workspace_provider_connections",
+        "workspace_provider_email_spend_history",
+        "workspace_settings",
+        "workspaces",
+        "xnstrzhavqkztvmlwsrx"
+      ]
     },
     {
       "path": "docs/A6_EO_F3_CODE_DEPENDENCY_CARRY_ALLOWLIST.md",
       "baseline_blob": "18c9c62757264c986b1b978bb80e1f72d372357c",
       "classification": "human_markdown",
-      "status": "pending_language_review"
+      "status": "translated_product_owner_review_pending",
+      "preserved_technical_tokens": [
+        "@supabase/supabase-js",
+        "express",
+        "fetch",
+        "funnel-core",
+        "funnel-core/workspace-*",
+        "googleapis",
+        "main",
+        "package.json",
+        "platform_connection_tokens",
+        "platform_connections",
+        "public/",
+        "security/provider-token-vault.js",
+        "server.js",
+        "shopify_workspace_provider_connections",
+        "src/",
+        "src/providers/google-ads/**",
+        "src/providers/klaviyo/**",
+        "src/providers/meta/**",
+        "src/providers/workspace-provider-connection-store.js",
+        "src/shopify/embedded-app-home.js",
+        "src/shopify/runtime.js",
+        "src/shopify/tenant-model.js",
+        "subscriptions",
+        "tests/",
+        "user_id",
+        "user_settings",
+        "users",
+        "workspace_id"
+      ]
     },
     {
       "path": "docs/A6_EO_F4_SCHEMA_DATA_CARRY_MAP.md",
@@ -1651,7 +1735,7 @@
       "path": "docs/research/EO_04E_GOOGLE_CHANNEL_WORKING_DRAFT.md",
       "baseline_blob": "1b1e59386d3a514e1d2ac8d312f8441de6ae3dd2",
       "classification": "human_markdown",
-      "status": "translated_product_owner_review_pending",
+      "status": "translated_product_owner_accepted",
       "preserved_technical_tokens": [
         "Assisted",
         "Cross-sell",
@@ -1705,7 +1789,7 @@
       "path": "docs/research/EO_04E_META_CHANNEL_WORKING_DRAFT.md",
       "baseline_blob": "5ee5c232feee8e9a464a44d3eb3839c4f6e61174",
       "classification": "human_markdown",
-      "status": "translated_product_owner_review_pending",
+      "status": "translated_product_owner_accepted",
       "preserved_technical_tokens": [
         "Ad",
         "Assisted",
@@ -2019,8 +2103,24 @@
         "docs/research/EO_04E_GOOGLE_CHANNEL_WORKING_DRAFT.md",
         "docs/research/EO_04E_META_CHANNEL_WORKING_DRAFT.md"
       ],
-      "status": "prepared_product_owner_review_pending",
+      "status": "merged_product_owner_accepted",
       "base_commit": "eaca2c5376dc0cf0b25322f9a0eac7c6aa8719e9",
+      "product_owner_readability_accepted": true,
+      "merge_authorized": true,
+      "accepted_at": "2026-10-19",
+      "pull_request": 129,
+      "source_commit": "c55f9a7801c1fc33b1ac6d996e5d1e8ba542cb43",
+      "merge_commit": "ec641ea9ea19e330716a503865beaccb924ff2d8",
+      "tree": "fbf80a9a381064529b20890f22287d70769b01f1"
+    },
+    {
+      "id": "foundation_decisions_translation_delivery",
+      "files": [
+        "docs/A6_EO_F1_F2_AUTHORITY_AND_PROJECT_BOUNDARY.md",
+        "docs/A6_EO_F3_CODE_DEPENDENCY_CARRY_ALLOWLIST.md"
+      ],
+      "status": "prepared_product_owner_review_pending",
+      "base_commit": "ec641ea9ea19e330716a503865beaccb924ff2d8",
       "product_owner_readability_accepted": false,
       "merge_authorized": false
     }
@@ -2070,5 +2170,9 @@
   "tenth_batch": [
     "docs/research/EO_04E_GOOGLE_CHANNEL_WORKING_DRAFT.md",
     "docs/research/EO_04E_META_CHANNEL_WORKING_DRAFT.md"
+  ],
+  "eleventh_batch": [
+    "docs/A6_EO_F1_F2_AUTHORITY_AND_PROJECT_BOUNDARY.md",
+    "docs/A6_EO_F3_CODE_DEPENDENCY_CARRY_ALLOWLIST.md"
   ]
 }

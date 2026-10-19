@@ -1,90 +1,94 @@
-# EO-04-B Meta App Role readiness
+# EO-04-B — Meta App Role hazırlığı
 
-## Status
+## Durum
 
-- Product-owner implementation authorization: **17 October 2026**
-- Repository implementation: **ready; 300 tests, typecheck and production build passed**
-- Production deployment: **READY on `ed1b12f`; separately authorized 17 October 2026**
-- Desktop and mobile visual acceptance: **PASS in real Shopify Admin on 17 October 2026**
-- Meta role, account, token, secret or live-call mutation: **not authorized by this package**
-- Real-account acceptance: **pending an accepted App Tester role and a separately approved live call**
-- Merge: **explicitly authorized by the product owner on 17 October 2026; required CI and GitHub merge pending**
+- Ürün sahibi uygulama onayı: **17 Ekim 2026**
+- Repository hazırlığı: **hazır; 300 test, tür kontrolü ve Production derlemesi geçti**
+- Production dağıtımı: **`ed1b12f` üzerinde READY; 17 Ekim'de ayrı onaylandı**
+- Gerçek Shopify Admin masaüstü/mobil görsel kabulü: **17 Ekim 2026'da PASS**
+- Meta rol, hesap, token, gizli bilgi veya canlı çağrı değişikliği: **bu paketle yetkilendirilmedi**
+- Gerçek hesap kabulü: **kabul edilmiş App Tester rolü ve ayrı onaylı canlı çağrı bekliyor**
+- Merge: **17 Ekim'de açık onay verildi; bu tarihsel kayıt anında zorunlu CI ve GitHub merge bekliyordu**
 
-## Analyst outcome
+Bu belge 17 Ekim 2026'daki hazırlık ve kabul sınırlarını anlatır. Bugünkü durum Execution Plan'dadır. Tarihsel hazırlık gerçek katalog verisi doğrulanmış anlamına gelmez.
 
-This package prepares the existing Meta connection and read-only reporting runtime for the day an authorized real person is added to the Meta app as a Tester. App Role is a provider-side access gate, not a new OAuth scope and not a reason to bypass the existing installation, account or token authorities.
+## Analist sonucu
 
-The connected Settings state stops exposing the temporary internal `Run Meta evidence` action. It continues to show the selected Reporting Account and Disconnect actions only. The authenticated server-side evidence route remains available as a controlled acceptance transport; removing the button does not change OAuth, token storage, reporting queries or data semantics.
+Mevcut Meta bağlantısı ve salt okunur raporlama çalışma zamanı, yetkili gerçek kişinin Meta uygulamasına Tester olarak ekleneceği güne hazırlanır. App Role sağlayıcı tarafı erişim kapısıdır; yeni OAuth izni veya kurulum/hesap/token yetkisini aşma gerekçesi değildir.
 
-## App Role operating model
+Settings'in bağlı durumundan geçici iç **`Run Meta evidence`** eylemi kaldırılır. Seçili Reporting Account ve bağlantıyı kesme eylemleri kalır. Kimliği doğrulanmış sunucu kanıt adresi kontrollü kabul taşıyıcısı olarak durur. Butonun kaldırılması OAuth, token saklama, raporlama sorgusu veya veri anlamını değiştirmez.
 
-Stage 1 is restricted development acceptance:
+## App Role çalışma modeli
 
-1. the invited person accepts the Meta App Tester role;
-2. the same person already has legitimate access to the selected real Meta ad account;
-3. OAuth requests only `ads_read`;
-4. the account contains delivered catalog ads for the chosen acceptance date;
-5. no public merchant or unrelated customer account is connected;
-6. each live provider call still requires explicit product-owner authorization;
-7. the Tester role is removed when the restricted acceptance work is complete.
+Birinci aşama sınırlı geliştirme kabulüdür:
 
-Stage 2 is production access and is deliberately separate: company/business verification, any required technology-provider verification, Advanced Access/App Review and public-customer operation remain later gates.
+1. Davet edilen kişi Meta App Tester rolünü kabul eder.
+2. Aynı kişinin seçilen gerçek reklam hesabına zaten meşru erişimi vardır.
+3. OAuth yalnız `ads_read` ister.
+4. Seçilen kabul tarihinde hesapta gerçekten yayınlanmış katalog reklamı vardır.
+5. Herkese açık kullanıcı veya ilgisiz müşteri hesabı bağlanmaz.
+6. Her canlı sağlayıcı çağrısı yine açık ürün sahibi onayı ister.
+7. Sınırlı kabul işi bitince Tester rolü kaldırılır.
 
-## Real-account acceptance prerequisites
+İkinci aşama Production erişimidir ve ayrıdır: şirket/business doğrulaması, gerekiyorsa teknoloji sağlayıcı doğrulaması, Advanced Access/App Review ve herkese açık müşteri kullanımı sonraki kapılardır.
 
-- Shopify migration and the official Facebook & Instagram catalog synchronization are complete.
-- Shopify product/variant identifiers and Meta catalog `product_id` continuity are recorded.
-- The exact business date has real delivered catalog-ad activity.
-- App Tester invitation and any required narrow tester agreement are accepted.
-- The tester's access to the target ad account is confirmed in Meta.
-- The app is reauthorized with `ads_read`, then exactly one Reporting Account is selected in AdsTable.
-- The product owner authorizes the exact live acceptance call.
+## Gerçek hesap kabulü ön koşulları
 
-If any provider call returns an explicit or unexplained error, the call stops at the first failure. It is not retried and no alternate account, browser, token, authentication method or endpoint is used without a new explanation and approval.
+- Shopify taşıması ve resmî Facebook & Instagram katalog eşitlemesi tamamlanmıştır.
+- Shopify ürün/varyant kimliği ile Meta katalog `product_id` sürekliliği kayıtlıdır.
+- Tam iş tarihinde gerçek katalog reklamı yayını vardır.
+- App Tester daveti ve gerekiyorsa dar tester sözleşmesi kabul edilmiştir.
+- Test eden kişinin hedef reklam hesabı erişimi Meta'da doğrulanmıştır.
+- Uygulama `ads_read` ile yeniden yetkilendirilir; AdsTable'da tam olarak bir Reporting Account seçilir.
+- Ürün sahibi tam canlı kabul çağrısını onaylar.
 
-## Repository readiness requirements
+Açık veya açıklamasız ilk sağlayıcı hatasında çağrı durur. Yeni açıklama/onay olmadan tekrar veya başka hesap, tarayıcı, token, kimlik doğrulama yöntemi ya da uç nokta kullanılmaz.
 
-- Every server-side Graph request carries `appsecret_proof`; the access token and proof never enter UI, result evidence or logs.
-- An expired local token or Meta authorization rejection changes the canonical connection lifecycle to `reauthorization_required`.
-- A reporting acceptance run follows opaque cursors to a bounded complete snapshot, detects cursor loops and publishes neither fact family unless both complete.
-- HTTP `Retry-After` and bounded, identifier-free Meta usage signals are retained as recovery evidence.
-- No account ID may be accepted from a merchant-supplied reporting request.
-- Missing, unsupported, partial, stale, real zero and valid empty provider pages remain distinct states.
+## Repository hazırlık şartları
 
-## UI task contract
+- Sunucudaki her Graph isteği `appsecret_proof` taşır. Token/kanıt değeri arayüze, sonuç kanıtına veya loga girmez.
+- Yerelde süresi dolmuş token veya Meta yetkilendirme reddi yetkili bağlantıyı `reauthorization_required` yapar.
+- Kanıt koşusu içi yorumlanmayan imleçlerle sınırlı tam sonuca ulaşır; döngüyü yakalar. İki veri ailesi de bitmeden hiçbirini yayımlamaz.
+- HTTP `Retry-After` ve sınırlı, kimliksiz Meta kullanım sinyalleri erişimi geri kazanma kanıtı olarak tutulur.
+- Kullanıcının raporlama isteğinde verdiği hesap kimliği kabul edilmez.
+- Eksik, desteklenmiyor, kısmi, eski, gerçek sıfır ve geçerli boş sayfa ayrı kalır.
 
-- Surface: `/settings`
-- State changed: Meta `connected`
-- Removed copy/action: `Run Meta evidence`, `Meta evidence received`, `Meta evidence failed`
-- Remaining visible actions: `Change` for Reporting Account and `Disconnect`
-- Components: existing stable Polaris web components; no raw HTML control, custom CSS, inline style or literal color is introduced.
-- Desktop and mobile visual acceptance: **PASS in real Shopify Admin on Production, explicitly confirmed by the product owner on 17 October 2026**
-- Visual acceptance evidence: `docs/evidence/EO_04B_META_APP_ROLE_VISUAL_ACCEPTANCE_2026-10-17.json`
+## Arayüz görev sözleşmesi
 
-## Acceptance evidence
+- Yüzey: `/settings`
+- Değişen durum: Meta `connected`
+- Kaldırılan özgün metin/eylem: `Run Meta evidence`, `Meta evidence received`, `Meta evidence failed`
+- Kalan özgün eylemler: Reporting Account için `Change` ve `Disconnect`
+- Bileşenler: Mevcut kararlı Polaris web bileşenleri; ham HTML kontrolü, özel CSS, satır içi stil veya doğrudan renk eklenmez.
+- Görsel kabul: **Gerçek Shopify Admin Production masaüstü/mobil, 17 Ekim 2026 açık ürün sahibi kabulüyle PASS**
+- Kanıt: `docs/evidence/EO_04B_META_APP_ROLE_VISUAL_ACCEPTANCE_2026-10-17.json`
 
-A successful real-account acceptance must record, without raw tokens or business identifiers:
+Bu tarihsel görev açıklaması yeni bileşen/sürüm kararı değildir; özgün ekran metinleri çeviri kapsamında değiştirilmez.
 
-- app-role and ad-account-access precondition confirmations;
-- selected connection/account authority fingerprints;
-- requested business date and Graph version;
-- completed channel and product page/row counts;
-- provider request IDs or their safe hashes;
-- product IDs observed as provider-native values;
-- valid-empty versus non-empty state;
-- bounded rate-limit/recovery evidence;
-- first provider error, if one occurs, with no retry.
+## Kabul kanıtı
 
-The real response decides whether product-level impression, click, spend and conversion fields can be standardized. Creative advertised-product evidence, Sales Role and exact Shopify identity verification remain separate evidence gates; repository readiness must not mislabel them as proven.
+Başarılı gerçek hesap kabulü ham token veya iş kimlikleri olmadan şunları kaydeder:
 
-## Official sources
+- Rol ve reklam hesabı erişim ön koşulu teyitleri;
+- Seçilen bağlantı/hesap yetkisi parmak izleri;
+- İstenen iş tarihi ve Graph sürümü;
+- Biten Channel/ürün sayfa ve satır sayıları;
+- Sağlayıcı istek kimlikleri veya güvenli özetleri;
+- Sağlayıcının özgün değerleri olarak ürün kimlikleri;
+- Geçerli boş/dolu durum;
+- Sınırlı kota/erişim geri kazanma kanıtı;
+- Varsa ilk hata ve tekrar yapılmadığı.
 
-Checked 17 October 2026:
+Ürün düzeyi gösterim, tıklama, harcama ve dönüşüm alanlarının standartlaşabilirliğine gerçek yanıt karar verir. Creative içeriğindeki reklamı yapılan ürün kanıtı, Sales Role ve kesin Shopify kimliği ayrı kapılardır; repository hazırlığı bunları kanıtlanmış gösteremez.
+
+## Tarihsel resmî kaynaklar
+
+Kontrol: 17 Ekim 2026.
 
 - Meta App Roles: <https://developers.facebook.com/documentation/development/build-and-test/app-roles>
-- Meta Graph API access levels: <https://developers.facebook.com/docs/graph-api/overview/access-levels/>
+- Meta Graph API erişim seviyeleri: <https://developers.facebook.com/docs/graph-api/overview/access-levels/>
 - Meta `ads_read`: <https://developers.facebook.com/docs/permissions/reference/ads_read>
-- Meta official Business SDK configuration (`v26.0`): <https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/apiconfig.py>
-- Meta official Business SDK security guidance and `appsecret_proof`: <https://github.com/facebook/facebook-python-business-sdk/blob/main/README.md>
-- Meta official Business SDK session proof implementation: <https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/session.py>
-- Shopify Button web component: <https://shopify.dev/docs/api/app-home/using-polaris-components/components/actions/button>
+- Resmî Business SDK yapılandırması (`v26.0`): <https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/apiconfig.py>
+- Resmî SDK güvenliği ve `appsecret_proof`: <https://github.com/facebook/facebook-python-business-sdk/blob/main/README.md>
+- Resmî SDK oturum kanıtı uygulaması: <https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/session.py>
+- Shopify Button bileşeni: <https://shopify.dev/docs/api/app-home/using-polaris-components/components/actions/button>

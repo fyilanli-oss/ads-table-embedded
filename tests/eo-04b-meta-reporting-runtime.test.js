@@ -252,8 +252,8 @@ test("Meta first reporting slice cannot mutate Dataset V2 or another provider", 
   assert.equal(contract.mutations.database, false);
   assert.equal(contract.google_runtime_started, false);
   assert.equal(contract.klaviyo_runtime_started, false);
-  assert.match(brief, /not Dataset V2/i);
-  assert.match(brief, /No Google or Klaviyo runtime begins/i);
+  assert.match(brief, /Dataset V2 değildir/i);
+  assert.match(brief, /Meta sağlayıcı dilimi kabul edilmeden Google veya Klaviyo çalışma zamanı başlamaz/i);
   assert.match(brief, /validation_pending_real_catalog_response/);
   assert.equal(contract.product_breakdown_slice.live_provider_acceptance, false);
   assert.equal(contract.reporting_authority_slice.installed_shop_authority_required, true);

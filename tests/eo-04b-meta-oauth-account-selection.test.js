@@ -252,7 +252,7 @@ test("Meta OAuth cannot write Dataset V2 or start scheduling", () => {
   }
   assert.equal(contract.invariants.oauth_writes_dataset_v2, false);
   assert.equal(contract.invariants.oauth_starts_backfill_or_scheduler, false);
-  assert.match(decision, /do not\s+write Dataset V2, start backfill or schedule data jobs/);
+  assert.match(decision, /Dataset V2 yazmaz, geriye dönük doldurma veya veri işi başlatmaz/);
 });
 
 test("Meta implementation leaves Google provider behavior isolated", () => {

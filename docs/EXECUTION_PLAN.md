@@ -281,6 +281,15 @@ Güncel toplam: 15 kabul edilmiş, 4 okunabilirlik kabulü bekleyen, 43 dil ince
 bekleyen belge. Önceki sayımlar ara kayıttır. Tarihsel kabul/denemeler yeniden
 yürütülmez; kod, canlı ortam ve EO-05 yetki sınırı değişmez.
 
+Dördüncü teslim PR #123, açık ürün sahibi okunabilirlik/merge kabulüyle
+`a9d03046d3b0fb8561c366fb398e8a1ef4d950d3` commit'inde birleştirildi;
+test edilen ağaç korundu. Beşinci dil geçişi ortak adaptör sözleşmesi ile Meta
+OAuth/hesap seçimi, App Role hazırlığı ve raporlama çalışma zamanının dört belgesidir.
+Güncel toplam: 19 kabul edilmiş, 4 okunabilirlik kabulü bekleyen, 39 dil incelemesi
+bekleyen belge. Meta'nın 13 Ekim tarihsel 403 notu 18 Ekim'de onaylanan dar
+düzeltmeye yönlendirilir; eski kanıt değiştirilmez, yeni hata kuralı oluşturulmaz.
+Paket kapanmaz; uygulama kodu, canlı ortam ve EO-05 yetkisi değişmez.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

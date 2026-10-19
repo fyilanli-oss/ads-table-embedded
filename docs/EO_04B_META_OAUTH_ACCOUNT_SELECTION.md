@@ -1,107 +1,76 @@
-# A6-EO-04-B Meta OAuth and Account Selection
+# A6-EO-04-B — Meta OAuth ve hesap seçimi
 
-Status: Accepted; merged  
-Checked: 13 October 2026
+**Durum:** Kabul edildi; merge edildi
 
-## Official sources
+**Kontrol tarihi:** 13 Ekim 2026
 
-- Meta Graph API changelog: https://developers.facebook.com/docs/graph-api/changelog
-- Meta Graph API versions: https://developers.facebook.com/docs/graph-api/changelog/versions/
-- Meta app versioning: https://developers.facebook.com/docs/apps/versions
+Bu belge 13 Ekim 2026 kabulünü anlatır. O tarihteki hata eşlemesi, sonraki kabul edilmiş düzeltmenin yerine geçmez. Özellikle HTTP 403 davranışının 18 Ekim düzeltmesi aşağıda yönlendirilmiştir. Güncel proje durumu Execution Plan'dadır; bu dil düzenlemesi yeni canlı işlem yetkisi değildir.
+
+## Tarihsel resmî kaynaklar
+
+- Meta Graph API değişiklik günlüğü: https://developers.facebook.com/docs/graph-api/changelog
+- Meta Graph API sürümleri: https://developers.facebook.com/docs/graph-api/changelog/versions/
+- Meta uygulama sürümleme: https://developers.facebook.com/docs/apps/versions
 - Meta Facebook Login: https://developers.facebook.com/docs/facebook-login
-- Meta Marketing API official collection: https://www.postman.com/meta/facebook-marketing-api/collection/0zr4mes/facebook-marketing-api-mapi
-- Meta Ad Account reference: https://developers.facebook.com/docs/marketing-api/reference/ad-account
-- Shopify App Home web components: https://shopify.dev/docs/api/app-home/latest/web-components
+- Meta Marketing API resmî koleksiyon: https://www.postman.com/meta/facebook-marketing-api/collection/0zr4mes/facebook-marketing-api-mapi
+- Meta Ad Account başvurusu: https://developers.facebook.com/docs/marketing-api/reference/ad-account
+- Shopify App Home web bileşenleri: https://shopify.dev/docs/api/app-home/latest/web-components
 
-The repository's accepted Shopify UI baseline remains `polaris-2.0-rc.js` with
-`@shopify/polaris-types@2.0.0-rc.2`. This product decision is not downgraded by
-the current Shopify documentation page displaying the stable 1.1 surface.
+Kabul edilmiş Shopify arayüz temeli `polaris-2.0-rc.js` ve `@shopify/polaris-types@2.0.0-rc.2` olarak kalır. Resmî sayfanın kararlı 1.1 yüzeyini göstermesi bu ürün kararını otomatik geri çevirmez.
 
-## Business outcome
+## İş sonucu
 
-The merchant connects Meta from the installed Shopify workspace, authorizes
-read-only advertising access, selects one to three real advertiser accounts and
-ends with exactly one explicit Reporting Account. The installed Shopify Store
-remains the immutable commerce authority. A Meta account, pixel, domain or
-browser identity cannot select or change the store.
+Kullanıcı kurulu Shopify çalışma alanından Meta'ya bağlanır, salt okunur reklam erişimi verir, 1–3 gerçek reklamveren hesabı seçer ve tam olarak bir Reporting Account belirler. Kurulu Shopify mağazası değiştirilemez ticaret kaynağıdır. Meta hesabı, pixel, alan adı veya tarayıcı kimliği mağaza seçemez/değiştiremez.
 
-## Accepted flow
+## Kabul edilmiş akış
 
-1. **Connect Meta** opens a Shopify confirmation modal.
-2. **Continue to Meta** starts a short-lived server-owned OAuth transaction and
-   navigates at the top-level window.
-3. Meta handles login and any required verification. The mobile device does not
-   need the Facebook app or an existing Facebook browser session beforehand.
-4. After callback, AdsTable exchanges the short-lived token for a long-lived
-   token, validates it with Meta, encrypts it and discovers `/me/adaccounts`.
-5. Settings automatically opens the advertiser-account selector. The merchant
-   selects one to three provider-returned ad accounts.
-6. One selected account becomes the Reporting Account automatically.
-7. For two or three selected accounts, the Reporting Account modal opens
-   automatically and requires exactly one explicit choice from that set.
-8. Dismissing either selector preserves pending state. **Resume setup** reloads
-   and opens the correct selector; it never starts OAuth again.
-9. A connected merchant may change the Reporting Account from the selected set
-   without OAuth. Meta access is revalidated first.
-10. **Disconnect** revokes Meta permissions first. Only `revoked` or
-    `already_invalid` permits local authority and encrypted credential removal.
-    Provider/network failure preserves the connection and fails closed.
+Aşağıdaki İngilizce eylem adları özgün ekran metinleridir; uygulama çevirisi yapılmaz.
 
-Only `connected` grants reporting authority. OAuth and account selection do not
-write Dataset V2, start backfill or schedule data jobs.
+1. **Connect Meta**, Shopify onay penceresini açar.
+2. **Continue to Meta**, kısa ömürlü sunucuya ait OAuth işlemini başlatıp üst düzey pencerede yönlendirir.
+3. Giriş ve gerekli doğrulamayı Meta yürütür. Mobilde önceden Facebook uygulaması veya tarayıcı oturumu bulunması gerekmez.
+4. Dönüşten sonra AdsTable kısa ömürlü token'ı uzun ömürlüye çevirir, Meta ile doğrular, şifreler ve `/me/adaccounts` hesaplarını keşfeder.
+5. Settings reklamveren seçicisini otomatik açar. Kullanıcı sağlayıcının döndürdüğü 1–3 reklam hesabını seçer.
+6. Seçim tek hesapsa kendiliğinden Reporting Account olur.
+7. İki/üç hesapsa Reporting Account penceresi otomatik açılır; bu kümeden tam olarak bir açık seçim ister.
+8. Seçiciyi kapatmak bekleyen durumu korur. **Resume setup** doğru seçiciyi yeniden yükleyip açar; OAuth'u tekrar başlatmaz.
+9. Bağlı kullanıcı seçili kümeden Reporting Account değiştirebilir; OAuth gerekmez, Meta erişimi önce yeniden doğrulanır.
+10. **Disconnect** önce Meta izinlerini iptal eder. Yalnız `revoked` veya `already_invalid`, yerel yetki ve şifreli erişim bilgisinin kaldırılmasına izin verir. Sağlayıcı/ağ hatasında bağlantı korunur; işlem güvenle durur.
 
-## Runtime contract
+Yalnız `connected` raporlama yetkisi verir. OAuth ve hesap seçimi Dataset V2 yazmaz, geriye dönük doldurma veya veri işi başlatmaz.
 
-- Graph and Login version: exact `v26.0`.
-- Requested scope: exact `ads_read`.
-- Callback: `https://embedded.adstable.app/auth/meta/callback`.
-- Account discovery: cursor-paginated `/me/adaccounts`, bounded to 20 pages and
-  1,000 distinct accounts, with loop and malformed-response rejection.
-- Token validation: `is_valid`, exact app identity, `ads_read` and bounded expiry.
-- Credential storage: existing EO-03-B encrypted provider-token vault only.
-- Provider error `190`, HTTP 401 or HTTP 403 during account discovery means
-  reauthorization; it is never converted to an empty account list.
+## Çalışma zamanı sözleşmesi
 
-## Shopify component mapping
+- Graph ve Login sürümü: tam `v26.0`.
+- İzin: tam `ads_read`.
+- Dönüş: `https://embedded.adstable.app/auth/meta/callback`.
+- Hesap keşfi: imleçli `/me/adaccounts`, en fazla 20 sayfa ve 1.000 farklı hesap; döngü ve bozuk yanıt reddedilir.
+- Token doğrulama: `is_valid`, tam uygulama kimliği, `ads_read` ve sınırlandırılmış süre dolumu.
+- Saklama: yalnız EO-03-B şifreli sağlayıcı-token kasası.
+- 13 Ekim tarihsel eşlemesinde sağlayıcı hatası `190`, HTTP 401 veya hesap keşfinde HTTP 403 yeniden yetkilendirme sayılıyordu; boş hesap listesine çevrilmiyordu.
 
-| Need | Exact component |
-| --- | --- |
-| Page and provider section | `s-page`, `s-section`, `s-stack` |
-| Status and errors | `s-badge`, `s-banner` |
-| Actions | `s-button` |
-| Account and Reporting Account selection | `s-modal`, `s-choice-list`, `s-choice` |
-| Provider authorization navigation | top-level Shopify embedded navigation |
+**Sonraki kabul edilmiş düzeltme:** 18 Ekim'de tek başına HTTP 403'ün token geçersizliği olmadığı kabul edildi. İzin hatası yeniden yetkilendirme gerekçesi üretmez; açık 190 ve mevcut 401 davranışı korunur. Ayrıntı: `docs/EO_04B_META_REPORTING_RUNTIME_START_BRIEF.md` içindeki “Onaylı dar hata düzeltmesi — 18 Ekim 2026”. Bu not eski kaydı silmez veya yeni hata kuralı oluşturmaz.
 
-No raw form controls, custom component imitation, inline CSS or literal visual
-tokens are introduced.
+## Shopify bileşen eşlemesi
 
-## Acceptance and mutation gates
+| İhtiyaç | Tam bileşen |
+|---|---|
+| Sayfa ve sağlayıcı bölümü | `s-page`, `s-section`, `s-stack` |
+| Durum ve hatalar | `s-badge`, `s-banner` |
+| Eylemler | `s-button` |
+| Hesap ve Reporting Account seçimi | `s-modal`, `s-choice-list`, `s-choice` |
+| Sağlayıcı yetkilendirmesine gezinme | Üst düzey Shopify embedded gezinmesi |
 
-Repository acceptance requires deterministic tests, TypeScript, build and CI.
-Product-owner-controlled Meta app configuration, Production deployment and the
-desktop Shopify Admin flow have passed. The desktop evidence covers callback,
-automatic account selection, single-account Reporting Account assignment,
-Cancel/Resume without OAuth restart, revoke-first Disconnect and clean reconnect.
+Ham form kontrolü, özel bileşen taklidi, satır içi CSS veya doğrudan görsel değer eklenmez.
 
-The complete Windows flow passes with the Meta developer-role account. A fresh
-Connect transaction on the product owner's iPhone had no usable Facebook
-session and correctly opened Meta's password authentication screen. A controlled
-Windows comparison then started OAuth with a different, non-role Facebook
-account and reproduced the exact **App not active** response previously seen on
-Android. This proves that the response follows Meta's pre-review/development-mode
-user restriction rather than device type or AdsTable application code.
+## Kabul ve dış sistem değişikliği kapıları
 
-The Android result therefore does not block acceptance. Repeating it on another
-Android device is an optional post-acceptance regression check. No copied OAuth
-URL or `state` may be reused, and no unobserved iOS callback or account-selection
-behavior is claimed.
+Repository kabulü tekrarlanabilir testler, TypeScript, derleme ve CI ister. Ürün sahibinin yönettiği Meta ayarı, Production dağıtımı ve masaüstü Shopify Admin akışı geçti. Masaüstü kanıtı dönüşü, otomatik hesap seçimini, tek hesap Reporting Account atamasını, OAuth'u yeniden başlatmadan Cancel/Resume'u, önce iptal eden Disconnect'i ve temiz yeniden bağlanmayı kapsar.
 
-Durable evidence is
-`docs/evidence/EO_04B_META_OAUTH_LIVE_ACCEPTANCE_2026-10-13.json`. OAuth live
-acceptance and EO-04-B product-owner acceptance are PASS. Product-owner merge
-authorization was explicit; PR #68 was squash-merged as
-`23911ffd565f385c02693ed7a1f3a07f017c30f5`.
+Tam Windows akışı Meta geliştirici rolü hesabıyla geçti. Ürün sahibinin iPhone'undaki yeni Connect işleminde kullanılabilir Facebook oturumu yoktu; Meta parola ekranı doğru açıldı. Kontrollü Windows karşılaştırmasında rolü olmayan başka Facebook hesabı, Android'de görülen **App not active** yanıtının aynısını üretti. Bu tarihsel karşılaştırma yanıtın cihaz türü/AdsTable kodundan değil, Meta'nın review öncesi geliştirme modu kullanıcı kısıtından geldiğini gösterdi.
 
-Product owner gave EO-04-B direct final acceptance in chat on 13 October 2026.
+Android sonucu kabulü engellemedi. Başka Android'de tekrar, kabul sonrası isteğe bağlı gerileme kontrolüdür; yeni onay gerektiren canlı işlem izni sayılmaz. Kopyalanmış OAuth adresi veya `state` kullanılamaz. Gözlenmemiş iOS dönüşü/hesap seçimi iddia edilmez.
 
-Product owner accepted this exact start brief in chat on 13 October 2026.
+Kalıcı kanıt: `docs/evidence/EO_04B_META_OAUTH_LIVE_ACCEPTANCE_2026-10-13.json`. Canlı OAuth ve EO-04-B ürün sahibi kabulü geçti. Açık merge onayıyla PR #68, `23911ffd565f385c02693ed7a1f3a07f017c30f5` olarak squash merge edildi.
+
+Ürün sahibi başlangıç açıklamasını ve EO-04-B'nin doğrudan nihai kabulünü 13 Ekim 2026'da sohbette verdi.

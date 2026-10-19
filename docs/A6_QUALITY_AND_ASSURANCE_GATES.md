@@ -133,6 +133,16 @@ Message kimliği ile Medium/Variation ayrımı korunur. Supabase rehberi yalnız
 güvenlik terimlerini korumak için kullanılır; yeni şema, sorgu veya canlı test
 yapılmaz. Bu teslim kapanış veya EO-05 başlangıcı değildir.
 
+PR #126 açık ürün sahibi kabulüyle merge edildi; kabul edilmiş belge sayısı
+31'dir. Sekizinci teslimde Klaviyo raporlama çalışma zamanı, yeniden
+yetkilendirme, geçici canlı kanıt ve kabiliyet kaydının dört belgesi okunabilirlik
+kabulü, diğer 27 belge dil incelemesi bekler. Önceki sayımlar tarihseldir.
+Audience'ın yalnız sağlayıcı gezinti katmanı olması, Message Channel kimliği,
+örnek veri/Shopify verisi ayrımı ve ilk hatada durma sınırı korunur. Eski INFO
+ve merge-bekliyor kayıtları nihai kabule yönlendirilir. Yeniden bağlantı sonrası
+eksik günleri tamamlama EO-05 açık işidir; yapılmış sayılmaz. Bu çalışma
+arayüz, veritabanı veya sağlayıcı davranışı değiştirmez; paket kapanmaz.
+
 ## 4. A6-ASSURE-01 — Pre-Review Assurance Programı
 
 EO-08 sonrasında çalışır. İlk kez kod sağlamlığı arayan denetim değildir;

@@ -309,6 +309,17 @@ istekten önce kalıcı token yenileme ve Message biliniyorsa Channel'ı koruma
 kuralları değişmez. Kod, tarihsel kanıtlar ve canlı ortam değiştirilmez;
 A6-DOCS-01 kapanmaz, EO-05 başlamaz.
 
+Yedinci teslim PR #126 açık ürün sahibi okunabilirlik/merge kabulüyle
+`bfc0de411fa89b5d029952d8399c5fd1be8ca5a9` commit'inde birleştirildi;
+test edilen ağaç korundu. Sekizinci dil geçişi Klaviyo raporlama çalışma zamanı,
+yeniden yetkilendirme, geçici canlı kanıt ve resmî kabiliyet kaydının dört belgesidir.
+Güncel toplam: 31 kabul edilmiş, 4 okunabilirlik kabulü bekleyen, 27 dil incelemesi
+bekleyen belge. Önceki sayımlar tarihseldir. Audience sağlayıcı ara katmanıdır;
+AdsTable Channel/satış bölme boyutu değildir. Eski merge/Advisor durumları
+bugünün açık işleri sayılmaz. Gerçek Shopify entegrasyonu kanıtı ve EO-05 eksik
+günleri tamamlama işi açık kalır; yeni kod, canlı çağrı veya örnek veri üretimi yoktur.
+A6-DOCS-01 kapanmaz; EO-05 başlamaz.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

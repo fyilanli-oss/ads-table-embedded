@@ -1,111 +1,122 @@
-# A6-EO-04-D Klaviyo reauthorization truth brief
+# A6-EO-04-D — Klaviyo yeniden yetkilendirme durumunun doğru gösterimi
 
-**Status:** Production deployed and visually accepted; merge pending
-**Checked:** 17 October 2026
+**Tarihsel durum:** Production'a dağıtıldı ve görsel kabul alındı; merge bekliyordu.
 
-## Analyst outcome
+**Kaynak kontrol tarihi:** 17 Ekim 2026
 
-When an explicit Klaviyo provider operation proves that authorization is no
-longer valid, reporting authority is already removed fail-closed. Settings must
-show that same canonical lifecycle truth. It must not translate
-`reauthorization_required` into `Not connected`.
+Bu belge o günkü düzeltmeyi ve kabul kanıtını korur. Eski bekleyen durumlar
+bugünün açık iş listesi değildir. Güncel kabul ve sıra `docs/EXECUTION_PLAN.md`,
+nihai paket anlatımı `docs/EO_04_ANALYSIS_DESIGN_BOOK.md` içindedir.
 
-The correction is a local lifecycle read. Opening Settings does not call
-Klaviyo, refresh a token or retry a failed provider request. Historical spend
-periods remain unchanged.
+## Analist sonucu
 
-## State matrix
+Kullanıcının başlattığı açık bir Klaviyo işlemi yetkilendirmenin artık geçerli
+olmadığını kanıtlarsa raporlama yetkisi zaten güvenli biçimde kaldırılır.
+Settings de aynı merkezi yaşam döngüsü gerçeğini göstermelidir;
+`reauthorization_required` durumunu `Not connected` diye gösteremez.
 
-| State | Merchant copy | Action | Result |
-|---|---|---|---|
-| Loading | `Klaviyo setup is being updated…` | none | Duplicate action is prevented |
-| Disconnected | `Not connected` | `Connect Klaviyo` | Starts a new authorized setup |
-| Pending | `Account selection required` | `Resume setup` | Returns to account and spend completion |
-| Connected | `Connected` | Existing spend and disconnect actions | Local verified authority is shown |
-| Reauthorization required | `Reauthorization required` and `Klaviyo authorization is no longer valid. Reconnect to continue.` | `Reconnect Klaviyo` | Starts OAuth; no reporting resumes before verified completion |
-| Error | Existing bounded public error code | Reload or restart according to error class | No hidden retry |
-| Cancel | Existing cancelled notice | none | No account is connected |
+Düzeltme, yerel yaşam döngüsü okumasıdır. Settings'i açmak Klaviyo çağrısı,
+token yenileme veya başarısız sağlayıcı isteğini tekrar etme işlemi yapmaz.
+Geçmiş harcama dönemleri değişmez.
 
-## Shopify component mapping
+## Durum matrisi
 
-| Visible element | Component | Exact property | Official source | Checked |
-|---|---|---|---|---|
-| Lifecycle status | `s-badge` | `tone="warning"` | https://shopify.dev/docs/api/app-home/latest/web-components/feedback-and-status-indicators/badge | 17 October 2026 |
-| Reconnect action | `s-button` | `variant="primary"` | https://shopify.dev/docs/api/app-home/latest/web-components/actions/button | 17 October 2026 |
-| Explanation | `s-paragraph` | existing default | Shopify App Home web components | 17 October 2026 |
+İngilizce ekran metinleri özgün arayüz sözleşmesidir; bu dil çalışmasında çevrilmez.
 
-No new visual component, CSS, color, layout or product surface is introduced.
-The already accepted desktop/mobile Settings presentation is reused.
+| Durum | Kullanıcının gördüğü metin | Eylem | Sonuç |
+| --- | --- | --- | --- |
+| Yükleniyor | `Klaviyo setup is being updated…` | yok | yinelenen eylem engellenir |
+| Bağlantı kesilmiş | `Not connected` | `Connect Klaviyo` | yeni onaylı kurulum başlar |
+| Bekliyor | `Account selection required` | `Resume setup` | hesap ve harcama tamamlama adımına döner |
+| Bağlı | `Connected` | mevcut harcama ve bağlantı kesme eylemleri | yerel doğrulanmış yetki gösterilir |
+| Yeniden yetkilendirme gerekli | `Reauthorization required` ve `Klaviyo authorization is no longer valid. Reconnect to continue.` | `Reconnect Klaviyo` | OAuth başlar; doğrulanmış tamamlama olmadan raporlama açılmaz |
+| Hata | mevcut sınırlı genel hata kodu | hata sınıfına göre yeniden yükleme veya yeniden başlatma | gizli tekrar yok |
+| İptal | mevcut iptal bildirimi | yok | hesap bağlanmaz |
 
-## Backend and data boundary
+## Shopify bileşen eşlemesi
 
-- Only `connected` remains reporting authority.
-- `reauthorization_required` remains fail-closed and cannot produce new rows.
-- Settings reads canonical local lifecycle state without provider access.
-- OAuth retry, provider fallback, secret, deployment and live Klaviyo calls are
-  outside this repository correction.
-- Spend history is neither deleted nor rewritten.
-- After OAuth reauthorization, pending account verification remains resumable
-  even though the historical account record still exists. Reporting stays
-  closed until fresh account evidence and spend completion succeed.
+| Görünür öğe | Bileşen | Özellik | Resmî kaynak | Kontrol tarihi |
+| --- | --- | --- | --- | --- |
+| Yaşam döngüsü durumu | `s-badge` | `tone="warning"` | https://shopify.dev/docs/api/app-home/latest/web-components/feedback-and-status-indicators/badge | 17 Ekim 2026 |
+| Yeniden bağlanma eylemi | `s-button` | `variant="primary"` | https://shopify.dev/docs/api/app-home/latest/web-components/actions/button | 17 Ekim 2026 |
+| Açıklama | `s-paragraph` | mevcut varsayılan | Shopify App Home web bileşenleri | 17 Ekim 2026 |
 
-## EO-05 mandatory follow-up
+Yeni görsel bileşen, CSS, renk, yerleşim veya ürün yüzeyi eklenmez.
+Kabul edilmiş masaüstü/mobil Settings sunumu yeniden kullanılır.
 
-Reauthorization can create a time interval with no provider collection while
-the merchant is unaware. EO-05 must define and test all of the following before
-scheduler or Dataset V2 acceptance:
+## Sunucu ve veri sınırı
 
-1. the exact missing business-date interval from the last successful provider
-   checkpoint through verified reconnection;
-2. bounded provider-specific backfill and reconciliation windows;
-3. explicit `missing`, `partial`, `stale` and recovered states, never invented
-   zeroes;
-4. what the merchant sees before, during and after recovery;
-5. the point at which recovered dates can become provisional or final;
-6. behavior when the provider cannot return the full missing interval.
+- Yalnız `connected` raporlama yetkisi taşır.
+- `reauthorization_required` güvenli biçimde kapalı kalır ve yeni satır üretemez.
+- Settings, sağlayıcı erişimi olmadan merkezi yerel yaşam döngüsü durumunu okur.
+- OAuth tekrarı, alternatif sağlayıcı yolu, secret, dağıtım ve canlı Klaviyo
+  çağrıları bu repository düzeltmesinin dışındadır.
+- Harcama geçmişi silinmez ve yeniden yazılmaz.
+- OAuth ile yeniden yetkilendirme sonrasında tarihsel hesap kaydı duruyor olsa
+  bile bekleyen hesap doğrulamasına devam edilebilir. Yeni hesap kanıtı ve
+  harcama tamamlama başarılı olana kadar raporlama kapalı kalır.
 
-## Acceptance
+## EO-05 zorunlu takip işi
 
-- Lifecycle read is installation-, generation- and provider-scoped.
-- A stored `reauthorization_required` row maps to the Settings reconnect state.
-- Reauthorization can resume pending account verification without deleting the
-  historical account or spend ledger.
-- No provider request is made by Settings inspection.
-- Connected, pending and disconnected behavior does not regress.
-- Repository tests, typecheck, build and Shopify UI guards pass.
-- The approved additive migration is live on the dedicated
-  `ads-table-embedded` Supabase project. Both private functions retain the
-  expected owner, empty `search_path` and runtime-only execute boundary.
-- The product owner accepted the real Shopify Admin Settings result on desktop
-  and mobile after the exact repository commit reached Production. Merge
-  remains a separate explicit gate.
+Kullanıcı farkında değilken yeniden yetkilendirme ihtiyacı, sağlayıcıdan veri
+toplanmayan bir aralık oluşturabilir. EO-05, zamanlayıcı veya Dataset V2
+kabulünden önce aşağıdakilerin tamamını tanımlayıp test etmelidir:
 
-## Official sources
+1. Son başarılı sağlayıcı kontrol noktasından doğrulanmış yeniden bağlantıya
+   kadar eksik kalan iş tarihlerinin tam aralığı.
+2. Sağlayıcıya özgü, sınırları belirlenmiş geçmiş veri tamamlama ve uzlaştırma pencereleri.
+3. Açık `missing`, `partial`, `stale` ve kurtarılmış durumlar; uydurulmuş sıfırlar değil.
+4. Tamamlama öncesinde, sırasında ve sonrasında kullanıcının ne göreceği.
+5. Tamamlanan tarihlerin ne zaman geçici veya kesin sonuç sayılabileceği.
+6. Sağlayıcı eksik aralığın tamamını döndüremediğinde uygulanacak davranış.
+
+Bu takip işi burada tamamlanmış veya yetkilendirilmiş sayılmaz.
+
+## Kabul
+
+- Yaşam döngüsü okuması kurulum, kurulum nesli ve sağlayıcıyla sınırlıdır.
+- Saklanan `reauthorization_required` satırı Settings'te yeniden bağlanma durumuna eşlenir.
+- Tarihsel hesap ve harcama defteri silinmeden bekleyen hesap doğrulamasına devam edilebilir.
+- Settings durum kontrolü sağlayıcı isteği yapmaz.
+- Bağlı, bekleyen ve bağlantısı kesilmiş durumların davranışları bozulmaz.
+- Repository testleri, typecheck, build ve Shopify UI koruma testleri geçer.
+- Onaylı ekleyici migration, ayrılmış `ads-table-embedded` Supabase projesinde
+  canlıdır. İki özel fonksiyon da beklenen sahibi, boş `search_path` değerini
+  ve yalnız runtime rolüne verilen çalıştırma yetkisini korur.
+- Ürün sahibi, repository'nin tam kaynak commit'i Production'a ulaştıktan
+  sonra gerçek Shopify Admin Settings sonucunu masaüstü ve mobilde kabul etti.
+  Merge bu tarihsel aşamada ayrı açık kapıydı.
+
+## Resmî kaynaklar
 
 - https://developers.klaviyo.com/en/docs/set_up_oauth
 - https://shopify.dev/docs/api/app-home/latest/web-components/feedback-and-status-indicators/badge
 - https://shopify.dev/docs/api/app-home/latest/web-components/actions/button
 
-## Repository verification
+## Tarihsel repository ve canlı kabul doğrulaması
 
-- Complete tests: 361/361 PASS
-- TypeScript verification: PASS
-- Production build: PASS
-- Diff whitespace validation: PASS
-- Live database migration: PASS (`20261017135321 /
+- Tam test kümesi: 361/361 PASS
+- TypeScript kontrolü: PASS
+- Production derlemesi: PASS
+- Diff boşluk kontrolü: PASS
+- Canlı veritabanı migration'ı: PASS (`20261017135321 /
   eo04d_klaviyo_reauthorization_state`)
-- Supabase Security Advisor: 0 findings
-- Performance Advisor: no migration-created finding; two pre-existing privacy
-  foreign-key INFO findings remain unchanged
-- Provider call or secret/environment mutation: none
-- Durable evidence:
+- Supabase Security Advisor: 0 bulgu
+- Performance Advisor: migration'ın ürettiği bulgu yok; önceden var olan iki
+  privacy yabancı anahtar INFO bulgusu o gün değişmeden kaldı
+- Sağlayıcı çağrısı veya secret/ortam değişikliği: yok
+- Kalıcı kanıt:
   `docs/evidence/EO_04D_KLAVIYO_REAUTHORIZATION_LIVE_DATABASE_ACCEPTANCE_2026-10-17.json`
-- Production deployment: PASS (`dpl_8QgriVfjig4RjxC7hwpwtBJ77n8F`, commit
+- Production dağıtımı: PASS (`dpl_8QgriVfjig4RjxC7hwpwtBJ77n8F`, commit
   `9bc3108d366a58ce9ff92a293681245a0c380462`, `embedded.adstable.app`)
-- Deployment-scoped error/fatal scan after desktop/mobile inspection: clean
-- Desktop Shopify Admin Settings: PASS
-- Mobile Shopify Admin Settings: PASS
-- Visual evidence:
+- Masaüstü/mobil kontrolünden sonraki dağıtıma ait error/fatal taraması: temiz
+- Masaüstü Shopify Admin Settings: PASS
+- Mobil Shopify Admin Settings: PASS
+- Görsel kanıt:
   `docs/evidence/EO_04D_KLAVIYO_REAUTHORIZATION_VISUAL_ACCEPTANCE_2026-10-17.json`
-- Merge: pending explicit product-owner approval
+- Merge: bu ara kayıtta açık ürün sahibi onayı bekliyordu.
+
+İki INFO bulgusu 17 Ekim'in tarihsel sonucudur. Sonraki F08 kapanışı
+`docs/evidence/A6_TECH_01_F08_CLOSURE_2026-10-18.json` içindedir; bu dil
+çalışması yeni Advisor kontrolü yapmaz ve eski kanıtı değiştirmez.
 

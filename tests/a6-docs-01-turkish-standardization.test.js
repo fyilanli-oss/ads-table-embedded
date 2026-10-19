@@ -28,16 +28,16 @@ test("DOCS-01 inventories human Markdown without translating agent instructions 
   assert.equal(new Set(actual).size, 63);
   assert.deepEqual(contract.inventory_counts, {
     total_markdown: 63, human_markdown: 62, excluded_agent_instructions: 1,
-    translated_review_pending: 4, pending_language_review: 31,
-    translated_product_owner_accepted: 27,
+    translated_review_pending: 4, pending_language_review: 27,
+    translated_product_owner_accepted: 31,
   });
   for (const row of contract.inventory) {
     assert.match(row.baseline_blob, /^[a-f0-9]{40}$/);
     assert.equal(row.classification, row.path === "AGENTS.md"
       ? "agent_instructions_excluded" : "human_markdown");
     assert.equal(row.status, row.path === "AGENTS.md" ? "excluded_unchanged"
-      : [...contract.first_batch, ...contract.second_batch, ...contract.third_batch, ...contract.fourth_batch, ...contract.fifth_batch, ...contract.sixth_batch].includes(row.path) ? "translated_product_owner_accepted"
-        : contract.seventh_batch.includes(row.path)
+      : [...contract.first_batch, ...contract.second_batch, ...contract.third_batch, ...contract.fourth_batch, ...contract.fifth_batch, ...contract.sixth_batch, ...contract.seventh_batch].includes(row.path) ? "translated_product_owner_accepted"
+        : contract.eighth_batch.includes(row.path)
           ? "translated_product_owner_review_pending" : "pending_language_review");
   }
 });
@@ -242,8 +242,44 @@ test("DOCS-01 Klaviyo language work preserves ledger, first-error and Message at
   assert.match(attribution, /Message ID'si\s+biliniyorsa Channel'ı `Unclassified Channel` yapmaz/);
   assert.match(attribution, /Campaign Variation vermediği için Variation/);
   assert.match(attribution, /Sales Role\s+`Assisted` olur/);
-  const prepared = contract.deliveries[6];
-  assert.deepEqual(prepared.files, contract.seventh_batch);
+  const accepted = contract.deliveries[6];
+  assert.deepEqual(accepted.files, contract.seventh_batch);
+  assert.equal(accepted.product_owner_readability_accepted, true);
+  assert.equal(accepted.merge_authorized, true);
+  assert.equal(accepted.pull_request, 126);
+  assert.equal(accepted.merge_commit, "bfc0de411fa89b5d029952d8399c5fd1be8ca5a9");
+});
+
+test("DOCS-01 Klaviyo evidence prose retains hierarchy, historical limits and the unbuilt EO-05 recovery gate", async () => {
+  const contract = await readJson(contractPath);
+  assert.equal(contract.eighth_batch.length, 4);
+  for (const path of contract.eighth_batch) {
+    const content = await readFile(path, "utf8");
+    const row = contract.inventory.find((item) => item.path === path);
+    assertTechnicalTokens(content, row.preserved_technical_tokens);
+    assert.match(content, /EXECUTION_PLAN|Execution Plan/);
+    assert.match(content, /[Tt]arihsel/);
+    assert.doesNotMatch(content, /^##? (?:Analyst outcome|State matrix|Official sources|Acceptance|Repository verification)/m);
+  }
+  const runtime = await readFile(contract.eighth_batch[0], "utf8");
+  assert.ok(runtime.includes("Campaign -> Campaign Audience -> Campaign Message (Channel) -> Variation"));
+  assert.match(runtime, /kanonik veri kümesine alınmaz, kullanıcıya ayrı boyut olarak gösterilmez ve\s+satışı bölmez/);
+  assert.match(runtime, /Message ID biliniyorsa bu eksikler Channel'ı kaybettirmez/);
+  const reauthorization = await readFile(contract.eighth_batch[1], "utf8");
+  assert.match(reauthorization, /Settings'i açmak Klaviyo çağrısı,\s+token yenileme veya başarısız sağlayıcı isteğini tekrar etme işlemi yapmaz/);
+  assert.match(reauthorization, /takip işi burada tamamlanmış veya yetkilendirilmiş sayılmaz/);
+  assert.match(reauthorization, /iki.*privacy yabancı anahtar INFO bulgusu o gün/s);
+  assert.ok(reauthorization.includes("A6_TECH_01_F08_CLOSURE_2026-10-18.json"));
+  const live = await readFile(contract.eighth_batch[2], "utf8");
+  assert.match(live, /custom ecommerce/);
+  assert.match(live, /Shopify `Placed Order` veya `Ordered Product` kanıtı değildir/);
+  assert.match(live, /Ek canlı çağrı yetkili değildir/);
+  assert.match(live, /ortam sınırının giderildiği veya başarılı\s+Shopify ürün satışı cevabı alındığı anlamına gelmez/);
+  const capability = await readFile(contract.eighth_batch[3], "utf8");
+  assert.match(capability, /Kota değerleri tarihsel kaynak kaydıdır/);
+  assert.match(capability, /yeni kota taahhüdü/);
+  const prepared = contract.deliveries[7];
+  assert.deepEqual(prepared.files, contract.eighth_batch);
   assert.equal(prepared.product_owner_readability_accepted, false);
   assert.equal(prepared.merge_authorized, false);
 });

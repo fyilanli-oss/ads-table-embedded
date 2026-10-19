@@ -54,8 +54,8 @@ test("a current listing tree can never resolve an earlier sale without date-matc
     "listing_tree_valid_from",
     "listing_tree_valid_to",
   ]);
-  assert.match(brief, /observed today does not prove/i);
-  assert.match(brief, /cannot be applied retroactively/i);
+  assert.match(brief, /Bugün gözlenen ağaç, önceki satış gününde etkin ağacı kanıtlamaz/);
+  assert.match(brief, /geriye dönük uygulanamaz/);
 });
 
 test("Google product sales use Sales Role and preserve both product identities", () => {
@@ -102,8 +102,8 @@ test("accepted and merged runtime never authorizes a live provider call", () => 
   assert.equal(contract.mutations.runtime_implementation, true);
   assert.equal(contract.mutations.database, false);
   assert.equal(contract.mutations.deployment, false);
-  assert.match(brief, /Product-owner analyst-brief acceptance/);
-  assert.match(brief, /Runtime implementation: \*\*accepted and merged/);
+  assert.match(brief, /Ürün sahibi analist açıklaması kabulü/);
+  assert.match(brief, /Çalışma zamanı uygulaması: \*\*16 Ekim 2026'da kabul edildi ve merge edildi/);
   assert.doesNotMatch(brief, /Sales Mode/);
 });
 
@@ -112,6 +112,6 @@ test("synthetic fixtures verify AdsTable logic but never stand in for Google evi
   assert.equal(contract.test_strategy.google_test_account_serving_metrics_expected, false);
   assert.equal(contract.test_strategy.repository_fixtures_are_provider_evidence, false);
   assert.ok(contract.test_strategy.repository_fixtures_verify.includes("sales_role_classification"));
-  assert.match(brief, /do not serve ads/i);
-  assert.match(brief, /Fixture success never proves/i);
+  assert.match(brief, /Google test hesapları reklam yayınlamaz/);
+  assert.match(brief, /Sentetik testin geçmesi.*kanıtlamaz/);
 });

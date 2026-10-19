@@ -34,7 +34,7 @@ test("Google setup has no browser handoff or setup reference", () => {
     assert.doesNotMatch(source, /authorization[_-]handoff/i);
     assert.doesNotMatch(source, /transactionId.*form|form.*transactionId/i);
   }
-  assert.match(decision, /MUST NOT depend on a Google setup reference/);
+  assert.match(decision, /Google kurulum başvurusuna.*bağlı OLAMAZ/);
 });
 
 test("canonical pending selection is resumable and fails closed", () => {
@@ -53,7 +53,7 @@ test("connected accounts and the single Reporting Account stay distinct", () => 
   assert.match(settings, /Reporting Account/);
   assert.match(runtime, /reportingAccountId/);
   assert.match(reportingMigration, /p_provider_account_id text/);
-  assert.match(decision, /connected-account set and the single Reporting Account are distinct/);
+  assert.match(decision, /Bağlı hesap kümesi ile tek Reporting Account ayrı yetkilerdir/);
   assert.match(settings, /send\("disconnect"\)/);
 });
 

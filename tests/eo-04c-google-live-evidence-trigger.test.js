@@ -469,8 +469,8 @@ test("contracts record completed live gates and the authorized merge without ena
   assert.equal(contract.failure_evidence.server_log_required, true);
   assert.equal(contract.failure_evidence.provider_request_id_logged, false);
   assert.equal(contract.acceptance.mobile_320px_real_shopify_admin_required, true);
-  assert.match(brief, /modal, date\s+input, new section or `s-clickable`/i);
-  assert.match(brief, /additional live request requires a separate explicit product-owner approval/i);
+  assert.match(brief, /modal, tarih girişi, yeni bölüm veya `s-clickable`/);
+  assert.match(brief, /her ek canlı istek ayrı açık ürün sahibi onayı gerektirir/);
 
   assert.equal(runtimeContract.product_owner_acceptance.runtime_final_acceptance, true);
   assert.equal(runtimeContract.product_owner_acceptance.merge_authorized, true);

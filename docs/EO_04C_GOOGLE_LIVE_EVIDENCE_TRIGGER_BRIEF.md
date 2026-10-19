@@ -1,46 +1,39 @@
-# EO-04-C Google live evidence trigger analyst brief
+# EO-04-C — Google canlı kanıt tetikleyicisi analist açıklaması
 
-## Status and authority
+## Durum ve yetki
 
-- Package: `A6-EO-04-C`
-- Analyst brief accepted by product owner: **16 October 2026**
-- Repository implementation authorized: **16 October 2026**
-- Deployment and real Shopify Admin visual acceptance: **completed 16 October 2026**
-- First live Google Ads request: **authorized and stopped on its first failure 16 October 2026**
-- Safe failure logging correction: **authorized 16 October 2026**
-- Single preflight access-token refresh: **authorized 16 October 2026**
-- Successful complete empty live execution: **recorded 16 October 2026**
-- Account/campaign context correction implementation: **authorized 16 October 2026**
-- Account/campaign context correction production deployment: **completed 16 October 2026**
-- Test-account review semantics: **accepted and repository implementation authorized 16 October 2026**
-- Test-account review semantics repository verification: **289/289 tests, typecheck and production build passed 16 October 2026**
-- Test-account review semantics production deployment: **completed 16 October 2026**
-- Test-account review semantics desktop/mobile visual acceptance: **accepted by product owner 16 October 2026**
-- Live-evidence trigger and review semantics merge: **PR #85 merged as `54c427733cd51ba8600016941ce7afdd24ac2e64` on 16 October 2026**
-- Test-account review demo live verification: **successful 16 October 2026; six query families completed without provider or runtime error**
-- Binding runtime contract: `contracts/eo-04c-google-reporting-runtime-v1.json`
-- Trigger contract: `contracts/eo-04c-google-live-evidence-trigger-v1.json`
+Aşağıdaki kayıtlar 16 Ekim 2026 tarihsel yürütme/kabul sırasıdır. Bugünkü durum Execution Plan'dadır; yeni canlı istek veya dağıtım izni verilmez.
 
-## User purpose and outcome
+- Paket: `A6-EO-04-C`
+- Analist açıklaması kabulü: **16 Ekim 2026**
+- Repository uygulama onayı: **16 Ekim 2026**
+- Dağıtım ve gerçek Shopify Admin görsel kabulü: **16 Ekim'de tamamlandı**
+- İlk canlı Google Ads isteği: **onaylandı, 16 Ekim'de ilk hatada durdu**
+- Güvenli hata logu düzeltmesi: **16 Ekim'de onaylandı**
+- Tek ön kontrol erişim token'ı yenilemesi: **16 Ekim'de onaylandı**
+- Tam ve başarılı boş canlı yürütme: **16 Ekim'de kaydedildi**
+- Hesap/kampanya bağlam düzeltmesi: **16 Ekim'de onaylandı**
+- Bağlam düzeltmesinin Production dağıtımı: **16 Ekim'de tamamlandı**
+- Test hesabı review anlamı: **16 Ekim'de kabul edildi; repository uygulaması onaylandı**
+- Test hesabı düzenlemesi: **16 Ekim'de 289/289 test, tür kontrolü ve Production derlemesi geçti**
+- Test hesabı düzenlemesinin Production dağıtımı: **16 Ekim'de tamamlandı**
+- Masaüstü/mobil görsel kabulü: **16 Ekim'de ürün sahibinden alındı**
+- Tetikleyici/review anlamı merge'ü: **PR #85, 16 Ekim'de `54c427733cd51ba8600016941ce7afdd24ac2e64` olarak merge edildi**
+- Test hesabı review demosu: **16 Ekim'de altı sorgu ailesi sağlayıcı/çalışma zamanı hatası olmadan tamamlandı**
+- Bağlayıcı çalışma zamanı sözleşmesi: `contracts/eo-04c-google-reporting-runtime-v1.json`
+- Tetikleyici sözleşmesi: `contracts/eo-04c-google-live-evidence-trigger-v1.json`
 
-The connected merchant can start one bounded, read-only Google Ads evidence
-execution from the existing Google Ads section in Settings. The execution answers
-whether the selected production Reporting Account returns product performance,
-Cart Data product sales and Sales Role evidence, current PMax listing-tree evidence,
-and PMax Asset Group performance.
+## Kullanıcı amacı ve sonuç
 
-The result is evidence only. It never publishes Dataset V2 facts and never treats
-an empty response as zero or globally unsupported.
+Bağlı kullanıcı Settings'teki Google Ads bölümünden tek, sınırlı, salt okunur kanıt yürütmesi başlatabilir. Seçili Production Reporting Account'un ürün performansı, Cart Data satış/Sales Role, güncel PMax listing tree ve Asset Group performansı döndürüp döndürmediğini inceler.
 
-## Exact execution
+Sonuç yalnız kanıttır; Dataset V2 gerçeği yayımlamaz. Boş yanıtı sıfır veya genel desteklenmiyor saymaz.
 
-Before any query family starts, the request uses the stored refresh token exactly
-once to obtain one temporary access token. A refresh failure stops the execution
-with zero Google Ads query calls. A successful refresh is reused in memory for
-every family and page in that execution; it is not persisted. There is no
-refresh-after-401 path.
+## Tam yürütme
 
-The button then starts these query families sequentially and stops at the first error:
+Sorgulardan önce saklı yenileme token'ı **tam bir kez** kullanılarak geçici erişim token'ı alınır. Yenileme başarısızsa Google Ads sorgu çağrısı sıfırdır. Başarılı token aynı yürütmenin bütün aile/sayfalarında bellekte kullanılır; saklanmaz. 401 sonrasında token yenileyip tekrar etme yolu yoktur.
+
+Sıra, ilk hatada durmak üzere:
 
 1. `account_identity` (`FROM customer`);
 2. `campaign_context` (`FROM campaign`);
@@ -49,166 +42,105 @@ The button then starts these query families sequentially and stops at the first 
 5. `pmax_listing_tree_current`;
 6. `pmax_asset_group_channel_daily`.
 
-The dated families use the last 30 completed business dates in the Reporting
-Account timezone. All pages are read before an execution is complete. Pagination
-is bounded; reaching a safety limit fails the execution instead of publishing a
-partial result. There is no retry, endpoint fallback, API-version fallback or
-authentication fallback.
+Tarihli aileler Reporting Account saat diliminde son 30 tamamlanmış iş tarihini kullanır. Tamamlanmadan bütün sayfalar okunur. Sayfalama sınırlıdır; güvenlik sınırına gelmek kısmi yayım değil başarısız yürütmedir. Tekrar, uç nokta, API sürümü veya kimlik doğrulama alternatifi yoktur.
 
-## State matrix and exact copy
+## Durum matrisi ve özgün ekran metni
 
-| State | Visible copy | Action | Expected result |
+İngilizce metinler kabul edilmiş arayüz sözleşmesidir; bu paket ürün çevirisi yapmaz.
+
+| Durum | Görünen özgün metin | Eylem | Beklenen |
 |---|---|---|---|
-| Not connected / setup incomplete | Existing Google connection/setup controls only | None | Evidence action is unavailable |
-| Connected / idle | `Run Google evidence` | Press once | Starts one read-only execution |
-| Loading | `Reading Google evidence…` | No second action | Native loading state prevents duplicate submission |
-| Successful test-account demo | `Google test account verified. Read-only reporting queries completed: campaign context {count}; Cart Data {count}; product performance {count}; current listing tree {count}; PMax Asset Group performance {count}. Test accounts do not serve ads, so these results are not production performance evidence. Production validation remains pending Google Ads API Explorer access.` | None | Button reads `Google test account checked` and stays disabled |
-| Success with production evidence | `Google evidence received.` followed by bounded row and Sales Role counts | None | Button reads `Google evidence received` and stays disabled |
-| Successful empty evidence | `Google returned no product or PMax evidence in this execution. This is not zero or unsupported.` | None | Button reads `Google evidence received` and stays disabled |
-| Provider or runtime error | `Google evidence stopped. No retry was performed. Error code: {code}` | None | Button reads `Google evidence stopped` and stays disabled |
-| Reauthorization | Same stopped copy with the returned reauthorization code/class | Existing Google reconnect flow remains separate | No automatic OAuth restart |
-| Cancel | Not applicable; the action has no modal, form or intermediate confirmation | None | No cancel control is invented |
+| Bağlı değil / kurulum eksik | Yalnız mevcut bağlantı/kurulum kontrolleri | Yok | Kanıt eylemi kullanılamaz |
+| Bağlı / bekliyor | `Run Google evidence` | Bir kez bas | Tek salt okunur yürütme |
+| Yükleniyor | `Reading Google evidence…` | İkinci eylem yok | Doğal yüklenme durumu çift gönderimi engeller |
+| Başarılı test demosu | `Google test account verified. Read-only reporting queries completed: campaign context {count}; Cart Data {count}; product performance {count}; current listing tree {count}; PMax Asset Group performance {count}. Test accounts do not serve ads, so these results are not production performance evidence. Production validation remains pending Google Ads API Explorer access.` | Yok | `Google test account checked`; buton kapalı kalır |
+| Production kanıtı başarılı | `Google evidence received.` ve sınırlı satır/Sales Role sayıları | Yok | `Google evidence received`; buton kapalı |
+| Başarılı boş kanıt | `Google returned no product or PMax evidence in this execution. This is not zero or unsupported.` | Yok | `Google evidence received`; buton kapalı |
+| Sağlayıcı/çalışma zamanı hatası | `Google evidence stopped. No retry was performed. Error code: {code}` | Yok | `Google evidence stopped`; buton kapalı |
+| Yeniden yetkilendirme | Aynı durma metni, dönen kod/sınıfla | Mevcut yeniden bağlanma ayrı | Otomatik OAuth başlatılmaz |
+| İptal | Uygulanamaz; modal/form/ara onay yok | Yok | İptal kontrolü uydurulmaz |
 
-## Shopify component mapping
+## Shopify bileşen eşlemesi
 
-| Visible element | Shopify component | Property / variant / tone | Official source | Checked |
+| Öğe | Bileşen | Özellik / tür / ton | Resmî kaynak | Kontrol |
 |---|---|---|---|---|
-| Existing Google section and stack | `s-section`, `s-stack` | Existing native layout | App Home web components | 2026-10-16 |
-| Evidence action | `s-button` | `loading`; `disabled` after complete or failure | <https://shopify.dev/docs/api/app-home/latest/web-components/actions/button> | 2026-10-16 |
-| Successful test-account result | `s-banner` | `tone="info"` | <https://shopify.dev/docs/api/app-home/latest/web-components/feedback-and-status-indicators/banner> | 2026-10-16 |
-| Successful production result | `s-banner` | `tone="success"` | Same Banner reference | 2026-10-16 |
-| Empty result | `s-banner` | `tone="warning"` | Same Banner reference | 2026-10-16 |
-| Failure result | `s-banner` | `tone="critical"` | Same Banner reference | 2026-10-16 |
+| Mevcut Google bölümü/yığını | `s-section`, `s-stack` | Mevcut doğal yerleşim | App Home web bileşenleri | 2026-10-16 |
+| Kanıt eylemi | `s-button` | `loading`; tamamlanma/hata sonrası `disabled` | <https://shopify.dev/docs/api/app-home/latest/web-components/actions/button> | 2026-10-16 |
+| Başarılı test sonucu | `s-banner` | `tone="info"` | <https://shopify.dev/docs/api/app-home/latest/web-components/feedback-and-status-indicators/banner> | 2026-10-16 |
+| Başarılı Production sonucu | `s-banner` | `tone="success"` | Aynı Banner kaynağı | 2026-10-16 |
+| Boş sonuç | `s-banner` | `tone="warning"` | Aynı Banner kaynağı | 2026-10-16 |
+| Hata | `s-banner` | `tone="critical"` | Aynı Banner kaynağı | 2026-10-16 |
 
-No raw HTML action control, custom CSS, inline style, literal color, modal, date
-input, new section or `s-clickable` is introduced. Desktop and mobile use the
-same native block stack and Shopify's responsive behavior.
+Ham HTML eylemi, özel CSS, satır içi stil, doğrudan renk, modal, tarih girişi, yeni bölüm veya `s-clickable` eklenmez. Masaüstü/mobil aynı doğal blok yığını ve Shopify uyarlanabilirliğini kullanır.
 
-## Safe result boundary
+## Güvenli sonuç sınırı
 
-The browser and server log may receive only bounded summaries:
+Tarayıcı ve sunucu logu yalnız sınırlı özet alır:
 
-- reporting window and timezone;
-- row counts and observation states by query family;
-- field-presence counts for accepted product and sales fields;
-- `Advertised`, `Cross-sell`, `Assisted` and `Unclassified` counts;
-- the statement that current listing-tree evidence does not resolve historical
-  Channel without versioned full-day evidence.
+- Raporlama penceresi/saat dilimi;
+- Aile bazlı satır sayısı/gözlem durumu;
+- Kabul edilmiş ürün/satış alanlarının varlık sayıları;
+- `Advertised`, `Cross-sell`, `Assisted`, `Unclassified` sayıları;
+- Güncel ağacın, sürümlü tam gün kanıtı olmadan tarihsel Channel çözemeyeceği açıklaması.
 
-Raw provider rows, names, product IDs, campaign IDs, account IDs, tokens,
-credentials, cursors and provider request IDs are not exposed or logged.
+Ham satır, ad, ürün/kampanya/hesap kimliği, token, erişim bilgisi, imleç ve sağlayıcı istek kimliği açığa çıkmaz/loglanmaz.
 
-The first authorized live request proved an observability gap: the route returned
-`GOOGLE_LIVE_EVIDENCE_FAILED`, while the server log contained no bounded failure
-evidence. Failure logs must now record only the execution stage, query family,
-safe source/provider code, provider HTTP status and whether a provider response
-was observed. Raw error messages and identifiers remain prohibited. This
-diagnostic record does not enable retry or start the next query family.
+İlk onaylı canlı istekte gözlemlenebilirlik açığı bulundu: adres `GOOGLE_LIVE_EVIDENCE_FAILED` döndürdü, logda sınırlı hata kanıtı yoktu. Düzeltme loga yalnız yürütme aşaması, sorgu ailesi, güvenli kaynak/sağlayıcı kodu, HTTP durumu ve yanıt gözlenip gözlenmediğini ekler. Ham hata mesajı/kimlik yasaktır. Tanı kaydı tekrar veya sonraki aileyi başlatmaz.
 
-The successful production execution is retained at
-`docs/evidence/EO_04C_GOOGLE_PROVIDER_LIVE_EVIDENCE_2026-10-16.json`. All five
-families completed, but no provider rows were observed. This does not prove zero,
-global unsupported behavior, Product ID support or Sales Role support.
+İlk başarılı boş yürütme `docs/evidence/EO_04C_GOOGLE_PROVIDER_LIVE_EVIDENCE_2026-10-16.json` içindedir. O ilk yapıda beş aile tamamlandı, satır gözlenmedi. Bu sıfır, genel desteklenmiyor, Product ID veya Sales Role desteğini kanıtlamaz.
 
-The combined account/campaign query uses `FROM campaign`. When it returns no
-campaign rows it also cannot expose `customer.test_account`; therefore the
-selected account remains unclassified as test or production. Before another
-live call, account identity must be read independently from `FROM customer` and
-campaign inventory must remain a separate `FROM campaign` concern.
+Birleşik hesap/kampanya sorgusu `FROM campaign` kullanıyordu. Kampanya satırı yoksa `customer.test_account` da görülemiyor, hesap Test/Production diye sınıflandırılamıyordu. Sonraki çağrıdan önce kimlik bağımsız `FROM customer`, kampanya ayrı `FROM campaign` olarak okunmalıydı.
 
-The product owner authorized this narrow correction on 16 October 2026. The
-repository now reads account identity before campaign inventory. A successful
-empty campaign inventory can therefore no longer suppress the selected
-account's `customer.test_account` evidence. Exact commit
-`53730bee401c79600570f199bd9967cf2d560c8a` was deployed to Production as
-`dpl_GFNme3aUQUJ25723fwU3e7HU235p`. The deployment was `READY`, carried the
-`embedded.adstable.app` alias, and its initial error/fatal scan was clean. This
-deployment does not authorize another live request.
+Ürün sahibi 16 Ekim'de dar düzeltmeyi onayladı. Kimlik önce, kampanya sonra okunur; boş kampanya artık `customer.test_account` kanıtını saklayamaz. Tam `53730bee401c79600570f199bd9967cf2d560c8a` commit'i `dpl_GFNme3aUQUJ25723fwU3e7HU235p` olarak Production'a çıktı. READY, `embedded.adstable.app` eşlemesi ve ilk error/fatal taraması temizdi. Bu dağıtım yeni canlı istek izni değildi.
 
-The separately authorized follow-up request successfully returned
-`customer.test_account=true` for the selected Reporting Account. Google did not
-return a provider error; the deployed runtime converted that successful account
-classification into the internal
-`GOOGLE_LIVE_EVIDENCE_TEST_ACCOUNT_NOT_ELIGIBLE` failure. The product owner
-accepted a review-aligned correction on 16 October 2026: retain the separate
-account identity query, classify the account as `test_observed`, complete the
-same bounded read-only query families, and present their actual row counts as a
-successful test-account demo result. The result never becomes production
-serving evidence, Product ID support evidence, Sales Role support evidence or
-Dataset V2 authority. The same runtime remains in place after review; connecting
-a production account after Explorer access changes the observed account/data,
-not the implementation path.
+Ayrı onaylı sonraki istek `customer.test_account=true` döndürdü. Google hata vermedi; çalışma zamanı başarılı sınıflandırmayı iç `GOOGLE_LIVE_EVIDENCE_TEST_ACCOUNT_NOT_ELIGIBLE` hatasına çevirdi. Ürün sahibi review uyumlu düzeltmeyi 16 Ekim'de kabul etti: ayrı kimlik sorgusu kalır; hesap `test_observed` olur; aynı sınırlı sorgu aileleri tamamlanır; gerçek satır sayıları başarılı test demosu gösterilir. Sonuç Production reklam yayını, Product ID/Sales Role desteği veya Dataset V2 yetkisi değildir.
 
-The product owner separately authorized Production deployment on 16 October
-2026. Exact commit `16a54df48e853c282d9c3481fb9e3b7c2b2ca16d` was deployed as
-`dpl_AQWkrVxdQvVzxPQkeNbhwXXwcXXQ`; Vercel reported `READY`, assigned
-`embedded.adstable.app` without alias error, and the initial deployment-scoped
-error/fatal scan was clean. The product owner then accepted the real Shopify
-Admin Settings result on desktop and mobile. That deployment and visual
-acceptance did not themselves authorize another Google request or merge.
+**Review sonrasında aynı çalışma zamanı kalır.** Explorer erişimiyle Production hesabı bağlamak uygulama yolunu değil, gözlenen hesap/veriyi değiştirir.
 
-The product owner then explicitly authorized merge. PR #85 was merged into
-`main` as `54c427733cd51ba8600016941ce7afdd24ac2e64` on 16 October 2026. No
-automatic second Vercel Production deployment was created by the merge.
-Production performance evidence remains pending Google Ads API Explorer-or-higher
-access; another live provider request remains separately gated.
+Ayrı onaylı Production dağıtımında `16a54df48e853c282d9c3481fb9e3b7c2b2ca16d`, `dpl_AQWkrVxdQvVzxPQkeNbhwXXwcXXQ` olarak READY oldu; `embedded.adstable.app` hatasız eşlendi, ilk dağıtıma özel error/fatal taraması temizdi. Ürün sahibi gerçek Settings masaüstü/mobil sonucunu kabul etti. Dağıtım/görsel kabul tek başına yeni sorgu veya merge izni değildi.
 
-The product owner then separately authorized one live test-account review-demo
-execution. The real Shopify Admin terminal state verified `test_observed` and
-completed all six read-only query families without provider error, runtime error
-or retry. Campaign context, Cart Data sales, Shopping product performance,
-current PMax listing tree and PMax Asset Group performance each returned zero
-rows. Those empty results mean only `not_observed_in_this_execution`; they are
-not numeric zero, global unsupported evidence, Product ID support, Sales Role
-support or Production performance evidence. Durable bounded evidence is
-`docs/evidence/EO_04C_GOOGLE_TEST_ACCOUNT_REVIEW_EVIDENCE_2026-10-16.json`.
-Google's official access-level and test-account documentation was rechecked on
-16 October 2026: Explorer-or-higher adds Production account access and does not
-remove Test account access. The shared runtime therefore remains unchanged;
-the observed account type and returned data change, not the query structure.
+Sonra açık merge onayı verildi. PR #85, 16 Ekim'de `main`e `54c427733cd51ba8600016941ce7afdd24ac2e64` olarak girdi. Merge ikinci otomatik Production dağıtımı oluşturmadı. Production performans kanıtı Explorer veya üstünü; yeni sorgu ayrı onayı bekler.
 
-## Unchanged behavior and out of scope
+Ayrıca onaylanan tek test hesabı review demosu, gerçek Shopify Admin'de `test_observed` durumunu doğruladı. Altı salt okunur aile sağlayıcı/çalışma zamanı hatası ve tekrar olmadan tamamlandı. Kampanya, Cart Data, Shopping ürün performansı, güncel PMax ağacı ve Asset Group performansı sıfır satır döndürdü. Bu boşluk yalnız `not_observed_in_this_execution` demektir; sayısal sıfır, genel desteklenmiyor, Product ID/Sales Role desteği veya Production performans kanıtı değildir.
 
-- No Google campaign, account, budget, listing tree or conversion configuration
-  mutation.
-- No OAuth consent, scope, secret, environment or persisted credential mutation.
-- The authorized preflight access-token refresh is temporary and request-scoped.
-- No database write, Dataset V2 publication, scheduler or product identity mapping.
-- No historical PMax Channel is resolved from the current listing tree.
-- No additional live provider request is authorized by the safe logging correction.
-- No additional live provider request is authorized by the account-context correction.
-- No additional live provider request is authorized by the test-account review correction.
-- Test-account rows or empty responses are never promoted to production serving evidence.
-- No review-only branch, fabricated provider row or post-review runtime swap is introduced.
-- The existing Meta evidence route and behavior remain unchanged.
+Kalıcı sınırlı kanıt: `docs/evidence/EO_04C_GOOGLE_TEST_ACCOUNT_REVIEW_EVIDENCE_2026-10-16.json`. Erişim/test hesabı belgeleri 16 Ekim'de yeniden kontrol edildi: Explorer ve üstü Production erişimi ekler; Test erişimini kaldırmaz. Ortak çalışma zamanı değişmez; hesap türü ve dönen veri değişir, sorgu yapısı değişmez.
 
-## Acceptance plan
+## Değişmeyen davranış ve kapsam dışı
 
-- Repository tests prove exact family order, 30 completed business dates,
-  complete bounded pagination, first-error stop, no retry and safe summaries.
-- Constitution guard, full tests, typecheck and build must pass.
-- Deployment requires a separate product-owner approval.
-- Desktop Shopify Admin and at least 320 px real mobile evidence are required
-  before the UI can be accepted or merged.
-- Any additional live request requires a separate explicit product-owner approval
-  after the safe failure logging correction is deployed.
+- Kampanya, hesap, bütçe, listing tree veya dönüşüm ayarı değiştirilmez.
+- OAuth consent/izin, gizli bilgi, ortam veya kalıcı erişim bilgisi değiştirilmez.
+- Onaylı ön kontrol token yenilemesi geçici ve istek kapsamlıdır.
+- Veritabanı yazımı, Dataset V2 yayımı, zamanlayıcı veya ürün kimliği eşlemesi yoktur.
+- Tarihsel PMax Channel bugünkü ağaçtan çözülmez.
+- Güvenli log, hesap bağlamı veya test hesabı review düzeltmelerinin hiçbiri ek canlı istek yetkilendirmez.
+- Test satırları/boş yanıt Production reklam yayını kanıtına yükseltilmez.
+- Review'a özel dal, uydurulmuş sağlayıcı satırı veya review sonrası çalışma zamanı değişimi yoktur.
+- Mevcut Meta kanıt adresi ve davranışı değişmez.
 
-## Official sources
+## Kabul planı
 
-Checked 16 October 2026:
+- Testler tam aile sırası, 30 tamamlanmış iş tarihi, sınırlı tam sayfalama, ilk hata, tekrarsızlık ve güvenli özeti kanıtlar.
+- Anayasa kontrolü, bütün testler, tür kontrolü ve derleme geçer.
+- Dağıtım ayrı ürün sahibi onayı ister.
+- Arayüz kabulü/merge öncesi masaüstü Shopify Admin ve en az 320 px gerçek mobil kanıt gerekir.
+- Güvenli hata logu düzeltmesi dağıtıldıktan sonra her ek canlı istek ayrı açık ürün sahibi onayı gerektirir.
+
+## Tarihsel resmî kaynaklar
+
+Kontrol: 16 Ekim 2026.
 
 - Shopify Button: <https://shopify.dev/docs/api/app-home/latest/web-components/actions/button>
 - Shopify Banner: <https://shopify.dev/docs/api/app-home/latest/web-components/feedback-and-status-indicators/banner>
-- Shopify Polaris 2 migration: <https://shopify.dev/docs/apps/build/app-home/polaris2>
-- Shopify web-component versioning: <https://shopify.dev/docs/api/app-home/v2.0-rc/web-components/versioning>
-- Google Ads API test accounts: <https://developers.google.com/google-ads/api/docs/best-practices/test-accounts>
-- Google Ads API v25 Cart Data Sales View: <https://developers.google.com/google-ads/api/fields/v25/cart_data_sales_view>
-- Google Ads API PMax listing groups: <https://developers.google.com/google-ads/api/performance-max/listing-groups>
-- Google Ads Query Language: <https://developers.google.com/google-ads/api/docs/query/overview>
-- Google Ads API v25 Customer fields: <https://developers.google.com/google-ads/api/fields/v25/customer>
-- Google Ads API v25 Campaign fields: <https://developers.google.com/google-ads/api/fields/v25/campaign>
-- Google Ads API access levels: <https://developers.google.com/google-ads/api/docs/api-policy/access-levels>
-- Google OAuth restricted-scope verification: <https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification>
-- Google Ads API policies and demo-account rule: <https://support.google.com/adspolicy/answer/6169371>
-- Google Ads credential management: <https://developers.google.com/google-ads/api/docs/oauth/credential-management>
-- Google Ads OAuth internals: <https://developers.google.com/google-ads/api/docs/oauth/internals>
+- Polaris 2 geçişi: <https://shopify.dev/docs/apps/build/app-home/polaris2>
+- Bileşen sürümleme: <https://shopify.dev/docs/api/app-home/v2.0-rc/web-components/versioning>
+- Test hesapları: <https://developers.google.com/google-ads/api/docs/best-practices/test-accounts>
+- v25 Cart Data: <https://developers.google.com/google-ads/api/fields/v25/cart_data_sales_view>
+- PMax listing grupları: <https://developers.google.com/google-ads/api/performance-max/listing-groups>
+- GAQL: <https://developers.google.com/google-ads/api/docs/query/overview>
+- v25 Customer: <https://developers.google.com/google-ads/api/fields/v25/customer>
+- v25 Campaign: <https://developers.google.com/google-ads/api/fields/v25/campaign>
+- Erişim seviyeleri: <https://developers.google.com/google-ads/api/docs/api-policy/access-levels>
+- OAuth kısıtlı izin doğrulaması: <https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification>
+- API politikası/demo hesabı: <https://support.google.com/adspolicy/answer/6169371>
+- Erişim bilgisi yönetimi: <https://developers.google.com/google-ads/api/docs/oauth/credential-management>
+- OAuth iç yapısı: <https://developers.google.com/google-ads/api/docs/oauth/internals>

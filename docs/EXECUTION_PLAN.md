@@ -406,6 +406,16 @@ kabulü tam veri yedeği/PITR sayılmaz; F10 açık ertelemedir. SQL, migration,
 araç, workflow ve değişmez kanıtlar değiştirilmez; yeni denetim/prova/yedek veya
 canlı işlem başlatılmaz. Ana tablo gövdesi korunur; DOCS bitmez, EO-05 açılmaz.
 
+On beşinci dil teslimi PR #135 açık ürün sahibi kabulüyle
+`38c3da3c2272320b58247497de7c099c0c9f36bf` commit'inde birleştirildi;
+test edilen ağaç korundu. On altıncı teslim Shopify UI anayasası ve görev
+şablonudur. Güncel toplam: 57 kabul edilmiş, 2 okunabilirlik kabulü bekleyen,
+3 dil incelemesi bekleyen belge. Önceki sayımlar tarihseldir. Eski R7-B6 kaydı
+bugünkü Settings kusuru veya yeni kabul sayılmaz. RC/type eşleşmesi, gerçek
+masaüstü/mobil kabulü ve dar grafik çizim istisnası korunur. UI kodu ve
+yürütülebilir anayasa sözleşmesi değişmez. Ana tablo metin onarımı kanıtı
+korunur; DOCS kapanışı, EO-05 veya yeni görsel uygulama yetkisi verilmez.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

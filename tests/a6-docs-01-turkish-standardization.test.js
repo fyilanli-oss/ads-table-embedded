@@ -28,16 +28,16 @@ test("DOCS-01 inventories human Markdown without translating agent instructions 
   assert.equal(new Set(actual).size, 63);
   assert.deepEqual(contract.inventory_counts, {
     total_markdown: 63, human_markdown: 62, excluded_agent_instructions: 1,
-    translated_review_pending: 4, pending_language_review: 5,
-    translated_product_owner_accepted: 53,
+    translated_review_pending: 2, pending_language_review: 3,
+    translated_product_owner_accepted: 57,
   });
   for (const row of contract.inventory) {
     assert.match(row.baseline_blob, /^[a-f0-9]{40}$/);
     assert.equal(row.classification, row.path === "AGENTS.md"
       ? "agent_instructions_excluded" : "human_markdown");
     assert.equal(row.status, row.path === "AGENTS.md" ? "excluded_unchanged"
-      : [...contract.first_batch, ...contract.second_batch, ...contract.third_batch, ...contract.fourth_batch, ...contract.fifth_batch, ...contract.sixth_batch, ...contract.seventh_batch, ...contract.eighth_batch, ...contract.ninth_batch, ...contract.tenth_batch, ...contract.eleventh_batch, ...contract.twelfth_batch, ...contract.thirteenth_batch, ...contract.fourteenth_batch].includes(row.path) ? "translated_product_owner_accepted"
-        : contract.fifteenth_batch.includes(row.path) ? "translated_product_owner_review_pending" : "pending_language_review");
+      : [...contract.first_batch, ...contract.second_batch, ...contract.third_batch, ...contract.fourth_batch, ...contract.fifth_batch, ...contract.sixth_batch, ...contract.seventh_batch, ...contract.eighth_batch, ...contract.ninth_batch, ...contract.tenth_batch, ...contract.eleventh_batch, ...contract.twelfth_batch, ...contract.thirteenth_batch, ...contract.fourteenth_batch, ...contract.fifteenth_batch].includes(row.path) ? "translated_product_owner_accepted"
+        : contract.sixteenth_batch.includes(row.path) ? "translated_product_owner_review_pending" : "pending_language_review");
   }
 });
 
@@ -538,8 +538,40 @@ test("DOCS-01 integrity audit and F01 history retain scoped closure, failed runs
   assert.match(recovery, /Yedi fonksiyon geri kuruldu; eski altı fonksiyonun runtime EXECUTE yetkisi kapalı kaldı/);
   assert.match(recovery, /kurtarma SQL'i\s+tek başına hiçbir iş verisi satırına INSERT\/UPDATE\/DELETE uygulamaz/);
   assert.ok(recovery.includes("954dc40d045601e2cc2600b76b65ecf05b2e284972e4d63ac183f5288706acec"));
-  const prepared = contract.deliveries[14];
-  assert.deepEqual(prepared.files, contract.fifteenth_batch);
+  const accepted = contract.deliveries[14];
+  assert.deepEqual(accepted.files, contract.fifteenth_batch);
+  assert.equal(accepted.product_owner_readability_accepted, true);
+  assert.equal(accepted.merge_authorized, true);
+  assert.equal(accepted.pull_request, 135);
+  assert.equal(accepted.merge_commit, "38c3da3c2272320b58247497de7c099c0c9f36bf");
+});
+
+test("DOCS-01 Shopify governance preserves RC, real user acceptance and the chart-only exception", async () => {
+  const contract = await readJson(contractPath);
+  assert.equal(contract.sixteenth_batch.length, 2);
+  for (const path of contract.sixteenth_batch) {
+    const content = await readFile(path, "utf8");
+    const row = contract.inventory.find(item => item.path === path);
+    assertTechnicalTokens(content, row.preserved_technical_tokens);
+    assert.match(content, /docs\/EXECUTION_PLAN\.md/);
+    assert.match(content, /320 px/);
+    assert.doesNotMatch(content, /component mapping|Constitution guard|Exact Shopify|Primary action|Secondary action|Destructive action/);
+  }
+  const constitution = await readFile(contract.sixteenth_batch[0], "utf8");
+  assert.match(constitution, /Güncel üst otorite/);
+  assert.match(constitution, /Taşınmış kaynağın tarihsel üst otorite kaydı/);
+  assert.match(constitution, /otomatik olarak stable 1\.x'e geri çevrilemez/);
+  assert.match(constitution, /Eski Settings tespiti — tarihsel kayıt/);
+  assert.match(constitution, /Eski R7-B6 için yeni kabul üretmez/);
+  assert.match(constitution, /yalnız veri çizim düzleminde SVG veya Canvas/);
+  assert.match(constitution, /Sayısal veya durum anlamındaki fark kabul hatasıdır/);
+  assert.match(constitution, /A6-EO-07-C kanıtı ve ayrı kabul edilmiş grafik özeti/);
+  const template = await readFile(contract.sixteenth_batch[1], "utf8");
+  for (const state of ["Loading", "Empty / Not connected", "Resume required", "Connected", "Error / Reauthorization", "Cancel"]) assert.ok(template.includes("`" + state + "`"));
+  assert.match(template, /yeni arayüz işi başlatmaz veya kabul üretmez/);
+  assert.match(template, /Ürün sahibi açık kabul verdi/);
+  const prepared = contract.deliveries[15];
+  assert.deepEqual(prepared.files, contract.sixteenth_batch);
   assert.equal(prepared.product_owner_readability_accepted, false);
   assert.equal(prepared.merge_authorized, false);
 });

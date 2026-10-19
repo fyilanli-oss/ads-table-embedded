@@ -1,11 +1,14 @@
-# EO-02-D-C1 — Durable deletion worker corrective gate
+# EO-02-D-C1 — Kalıcı silme işçisi düzeltme kapısı
 
-**Kontrol tarihi:** 9 Ekim 2026  
-**Durum:** Accepted — live acceptance ve ürün sahibi kapanış kabulü PASS
+**Kontrol tarihi:** 9 Ekim 2026
+
+**Durum:** Kabul edildi — canlı kabul ve ürün sahibi kapanış kabulü geçti.
+
+Bu belge 9 Ekim 2026'da kapatılan yürütme eksikliğini anlatır. Aşağıdaki ilk hata ve sonraki başarılı koşu tarihsel kanıttır; bugün yeniden çalıştırılmış sayılmaz. Güncel proje durumu Execution Plan'dadır.
 
 ## Analist sonucu
 
-EO-02-D webhook ingress'i doğrulanmış silme işini `privacy.deletion_runs` kuyruğuna yazıyor, fakat production'da bu kuyruğu tüketen kalıcı bir işçi yoktu. Bu boşluk, kabul edilmiş bir `shop/redact` talebinin süresiz `pending` kalabilmesi anlamına geliyordu. Bu corrective gate yalnız o yürütme boşluğunu kapatır; EO-02-D'nin parent/child yapısını değiştirmez.
+EO-02-D'nin webhook girişi doğrulanmış silme işini `privacy.deletion_runs` kuyruğuna yazıyordu; fakat Production'da bu kuyruğu tüketen kalıcı işçi yoktu. Kabul edilmiş `shop/redact` talebi süresiz `pending` kalabilirdi. Bu düzeltme yalnız yürütme boşluğunu kapatır; EO-02-D'nin ana/alt paket yapısını değiştirmez.
 
 ## Seçilen mimari
 
@@ -13,38 +16,38 @@ EO-02-D webhook ingress'i doğrulanmış silme işini `privacy.deletion_runs` ku
 
 Bu seçim:
 
-- Vercel environment veya `CRON_SECRET` gerektirmez.
-- HTTP/network katmanı eklemez.
-- Shopify webhook endpoint'ini ağır fiziksel silme işinden ayrı tutar.
-- Kuyruk, manifest ve yürütücüyü aynı PostgreSQL transaction sınırında bırakır.
+- Vercel ortam değişkeni veya `CRON_SECRET` gerektirmez.
+- HTTP/ağ katmanı eklemez.
+- Shopify webhook girişini ağır fiziksel silmeden ayırır.
+- Kuyruk, silme sonuç kaydı ve yürütücüyü aynı PostgreSQL işlem sınırında tutar.
 
 ## Güvenlik sınırı
 
-- Uygulama rolü `adstable_runtime`, fiziksel executor veya scheduler fonksiyonunu çalıştıramaz.
-- Scheduler yalnız `postgres` rolüne açılan dar `privacy.process_deletion_queue(integer)` kapısını çağırır.
+- Uygulama rolü `adstable_runtime`, fiziksel silme yürütücüsünü veya zamanlayıcı fonksiyonunu çalıştıramaz.
+- Zamanlayıcı yalnız `postgres` rolüne açılan dar `privacy.process_deletion_queue(integer)` kapısını çağırır.
 - Fonksiyon `SECURITY DEFINER` ve boş `search_path` ile tanımlıdır.
-- Browser, anon, authenticated, service_role ve runtime doğrudan privacy table DML alamaz.
+- Tarayıcı, anon, authenticated, service_role ve çalışma zamanı privacy tablolarında doğrudan veri değiştirme yetkisi alamaz.
 - Hata metni saklanmaz; yalnız güvenli `SQLSTATE` sınıflandırması tutulur.
 
 ## Dayanıklılık
 
-- Aynı isimli pg_cron işi provider seviyesinde seri çalışır.
-- Transaction advisory lock, manuel veya duplicate eşzamanlı çağrıyı ikinci kez işletmez.
-- `FOR UPDATE SKIP LOCKED` seçilen run'ları korur.
-- Başarılı iş mevcut generation-locked ve idempotent executor üzerinden tamamlanır.
+- Aynı adlı pg_cron işi sağlayıcı düzeyinde sıralı çalışır.
+- İşlem kapsamlı danışma kilidi, manuel veya yinelenen eşzamanlı çağrıyı ikinci kez işletmez.
+- `FOR UPDATE SKIP LOCKED` seçilen işleri korur.
+- Başarılı iş, mevcut nesle kilitli ve yinelenince aynı sonucu koruyan yürütücüyle tamamlanır.
 - Başarısız iş `failed` kalır; 5 dakikadan başlayan üstel gecikmeyle, en fazla 320 dakikalık aralık ve 20 deneme sınırıyla yeniden denenir.
-- 20 denemeyi tüketen iş sessizce tamamlanmaz; operasyon müdahalesi için açık `failed` kaydı olarak kalır.
-- Cron geçmişi günlük temizlenir ve son 30 gün korunur.
+- 20 denemeyi tüketen iş sessizce tamamlanmaz; operasyon müdahalesi için açık `failed` kaydı kalır.
+- Cron geçmişi günlük temizlenir; son 30 gün korunur.
 
-## Resmî kaynak kontrolü
+## Tarihsel resmî kaynak kontrolü
 
 9 Ekim 2026 tarihinde:
 
-- Supabase Cron bir database fonksiyonunu beş dakikada bir çağırabilir.
-- Aynı isimle yeniden schedule edilen job mevcut tanımı günceller.
+- Supabase Cron veritabanı fonksiyonunu beş dakikada bir çağırabilir.
+- Aynı adla yeniden zamanlanan iş mevcut tanımı günceller.
 - `cron.job_run_details` kendiliğinden temizlenmez.
-- Supabase, database function güvenliğinde dar yetki ve güvenli `search_path` kullanımını gerektirir.
-- pg_cron aynı job'ın eşzamanlı iki örneğini çalıştırmaz; sonraki koşuyu kuyruğa alır.
+- Supabase fonksiyon güvenliğinde dar yetki ve güvenli `search_path` kullanımı gerekir.
+- pg_cron aynı işin iki örneğini eşzamanlı çalıştırmaz; sonraki koşuyu kuyruğa alır.
 
 Kaynaklar:
 
@@ -55,49 +58,47 @@ Kaynaklar:
 
 ## Canlı uygulama kapısı
 
-Repository merge'i canlı mutation yetkisi değildir. Ayrı açık onaydan önce:
+Repository merge'ü canlı işlem yetkisi değildir. Ayrı açık onaydan önce:
 
 - `pg_cron` etkinleştirilmez.
-- Corrective migration canlı Supabase'e uygulanmaz.
-- Cron job oluşturulmaz.
+- Düzeltici migration canlı Supabase'e uygulanmaz.
+- Cron işi oluşturulmaz.
 - Sentetik veya gerçek silme yürütülmez.
 
-Canlı kabul; named job ve cadence doğrulaması, yalnız Cron üzerinden sentetik completion, duplicate/overlap idempotency, forced-failure retry görünürlüğü, Advisors PASS ve sentetik temizliği birlikte kanıtlamadan tamamlanmış sayılmaz.
+Canlı kabul; adlı iş ve çalışma aralığı, yalnız Cron üzerinden sentetik tamamlanma, yinelenen/çakışan işlerin sonucu çoğaltmaması, zorlanmış hatada yeniden denemenin görünürlüğü, Advisor kontrolleri ve sentetik temizlik birlikte kanıtlanmadan tamamlanmaz.
 
+## İlk canlı Cron koşusu ve güvenli başarısızlık düzeltmesi
 
-## İlk canlı Cron koşusu ve fail-safe düzeltme
-
-9 Ekim 2026 saat 07:50 UTC'deki ilk job, hiçbir run yürütmeden önce PostgreSQL parser hatasıyla durdu. `GREATEST` ve `LEAST`, fonksiyona benzeseler de ordinary function değildir; bu nedenle `pg_catalog.greatest` / `pg_catalog.least` biçiminde schema-qualified kullanılamaz.
+9 Ekim 2026 saat 07:50 UTC'deki ilk iş, hiçbir silme işi yürütmeden PostgreSQL ayrıştırıcı hatasıyla durdu. `GREATEST` ve `LEAST` fonksiyona benzese de sıradan fonksiyon değildir; `pg_catalog.greatest` / `pg_catalog.least` şeklinde şema adıyla nitelenemez.
 
 Kanıtlanan güvenlik davranışı:
 
-- Gerçek mağaza veya production business verisi silinmedi.
-- Sentetik kabul run'ı `pending`, `attempt_count=0` kaldı.
+- Gerçek mağaza veya Production iş verisi silinmedi.
+- Sentetik kabul işi `pending`, `attempt_count=0` kaldı.
 - Cron hata ayrıntısını `cron.job_run_details` içinde görünür tuttu.
-- Canlıda yetki genişletme veya ad-hoc function patch yapılmadı.
+- Canlıda yetki genişletme veya geçici fonksiyon yaması yapılmadı.
 
-Düzeltici migration yalnız iki conditional expression'ı PostgreSQL 17'nin resmî sözdizimine getirir; worker'ın advisory lock, row lock, batch, retry ve least-privilege sınırlarını değiştirmez.
+Düzeltici migration yalnız iki koşullu ifadeyi PostgreSQL 17'nin resmî sözdizimine getirir. İşçinin danışma kilidi, satır kilidi, toplu iş, yeniden deneme ve en az yetki sınırları değişmez.
 
 Kaynak: https://www.postgresql.org/docs/17/functions-conditional.html
 
-
 ## Canlı kabul sonucu — 9 Ekim 2026
 
-Düzeltici migration sonrasında 08:00 UTC doğal Cron koşusu sentetik `customer_data_request` run'ını doğrudan executor çağrısı olmadan tamamladı.
+Düzeltici migration sonrası 08:00 UTC doğal Cron koşusu sentetik `customer_data_request` işini doğrudan yürütücü çağrısı olmadan tamamladı.
 
-- Cron status: `succeeded`
-- Run status: `completed`
-- Attempt count: `1`
-- Manifest: `no_customer_data`
-- Customer scoped rows: `0`
-- Replay: seçilen iş `0`; duplicate sonuç yok
-- Runtime worker execute: `false`
-- Runtime physical delete execute: `false`
+- Cron durumu: `succeeded`
+- İş durumu: `completed`
+- Deneme sayısı: `1`
+- Silme sonuç kaydı: `no_customer_data`
+- Müşteri kapsamlı satır: `0`
+- Tekrar çalıştırmada seçilen iş: `0`; yinelenen sonuç yok
+- Çalışma zamanının işçi çalıştırma yetkisi: `false`
+- Çalışma zamanının fiziksel silme yetkisi: `false`
 - Security Advisor: sıfır bulgu
-- Performance Advisor: preflight'a göre yeni bulgu yok
-- Sentetik workspace/run/manifest: sıfır kalan kayıt
-- Açık pending/failed/running deletion run: `0`
+- Performance Advisor: ön kontrole göre yeni bulgu yok
+- Sentetik çalışma alanı/iş/sonuç kaydı: sıfır kalan kayıt
+- Açık pending/failed/running silme işi: `0`
 
 Kalıcı kanıt: `docs/evidence/EO_02D_DURABLE_WORKER_LIVE_2026-10-09.json`.
 
-Ürün sahibi 9 Ekim 2026'da EO-02-D kapanışını açıkça kabul etti. Teknik açık kalem sıfırdır.
+Ürün sahibi 9 Ekim 2026'da EO-02-D kapanışını açıkça kabul etti. O kabul anında teknik açık kalem sıfırdı.

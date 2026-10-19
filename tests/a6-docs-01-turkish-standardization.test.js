@@ -28,16 +28,16 @@ test("DOCS-01 inventories human Markdown without translating agent instructions 
   assert.equal(new Set(actual).size, 63);
   assert.deepEqual(contract.inventory_counts, {
     total_markdown: 63, human_markdown: 62, excluded_agent_instructions: 1,
-    translated_review_pending: 6, pending_language_review: 52,
-    translated_product_owner_accepted: 4,
+    translated_review_pending: 5, pending_language_review: 47,
+    translated_product_owner_accepted: 10,
   });
   for (const row of contract.inventory) {
     assert.match(row.baseline_blob, /^[a-f0-9]{40}$/);
     assert.equal(row.classification, row.path === "AGENTS.md"
       ? "agent_instructions_excluded" : "human_markdown");
     assert.equal(row.status, row.path === "AGENTS.md" ? "excluded_unchanged"
-      : contract.first_batch.includes(row.path) ? "translated_product_owner_accepted"
-        : contract.second_batch.includes(row.path)
+      : [...contract.first_batch, ...contract.second_batch].includes(row.path) ? "translated_product_owner_accepted"
+        : contract.third_batch.includes(row.path)
           ? "translated_product_owner_review_pending" : "pending_language_review");
   }
 });
@@ -77,13 +77,41 @@ test("DOCS-01 foundation briefs retain technical identity, historical scope and 
     "No advertising analysis is available in this preview. No provider data has been requested or inferred.",
     "Connections and configuration are not available in this preview. Existing accounts, tokens, and settings remain unchanged.",
   ]) assert.ok(shell.includes(copy));
-  const [accepted, prepared] = contract.deliveries;
+  const [accepted, foundation] = contract.deliveries;
   assert.deepEqual(accepted.files, contract.first_batch);
   assert.equal(accepted.product_owner_readability_accepted, true);
   assert.equal(accepted.merge_authorized, true);
   assert.equal(accepted.pull_request, 120);
   assert.equal(accepted.merge_commit, "57d18a1a125de30ca8d86a65034f60fce403dc74");
-  assert.deepEqual(prepared.files, contract.second_batch);
+  assert.deepEqual(foundation.files, contract.second_batch);
+  assert.equal(foundation.product_owner_readability_accepted, true);
+  assert.equal(foundation.merge_authorized, true);
+  assert.equal(foundation.pull_request, 121);
+  assert.equal(foundation.merge_commit, "039087456127cd0d936049e75603ed52a2bbb7c4");
+});
+
+test("DOCS-01 billing and privacy translation keeps exact tokens, historical stages and no new acceptance", async () => {
+  const contract = await readJson(contractPath);
+  assert.equal(contract.third_batch.length, 5);
+  for (const path of contract.third_batch) {
+    const content = await readFile(path, "utf8");
+    const row = contract.inventory.find((item) => item.path === path);
+    assertTechnicalTokens(content, row.preserved_technical_tokens);
+    assert.match(content, /Execution Plan/);
+    assert.match(content, /tarihsel|Tarihsel/);
+  }
+  const pricing = await readFile("docs/EO_02C_SHOPIFY_APP_PRICING_ENTITLEMENT.md", "utf8");
+  assert.match(pricing, /price\.active.*aktiflik bayrağı değildir/);
+  assert.match(pricing, /180/);
+  const privacy = await readFile("docs/EO_02D_PRIVACY_LIFECYCLE.md", "utf8");
+  assert.match(privacy, /bu işlem abonelik iptali değildir/);
+  assert.match(privacy, /48 saat/);
+  assert.match(privacy, /eski çalışma alanı\/nesil/);
+  const worker = await readFile("docs/EO_02D_DURABLE_DELETION_WORKER.md", "utf8");
+  assert.match(worker, /320 dakikalık aralık ve 20 deneme sınırı/);
+  assert.match(worker, /en az yetki sınırları değişmez/);
+  const prepared = contract.deliveries[2];
+  assert.deepEqual(prepared.files, contract.third_batch);
   assert.equal(prepared.product_owner_readability_accepted, false);
   assert.equal(prepared.merge_authorized, false);
 });

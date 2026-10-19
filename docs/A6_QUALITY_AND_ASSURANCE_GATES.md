@@ -93,6 +93,14 @@ değerleri korunur, açıklama dili Türkçedir. Bu çalışma arayüz çevirisi
 Supabase rehberi doğrultusunda nesne erişimi ile RLS'nin satır erişimi ayrımı
 korundu; yeni veritabanı sorgusu, şema değişikliği veya canlı test yapılmadı.
 
+Ürün sahibinin sonraki açık kabulüyle PR #121 de merge edildi. Güncel dil envanteri
+10 kabul edilmiş belgedir. EO-02'nin faturalandırma, oturum köprüsü, gizlilik,
+kalıcı silme işçisi ve canlı kabul kılavuzunun 5 belgesi üçüncü teslimde kabul
+bekler; diğer 47 belge dil incelemesi bekler. Önceki ara sayımlar tarihseldir.
+Hazırlık durumları bugünkü açık işler gibi gösterilmez; nihai kabul kaydına yönlendirilir.
+Supabase rehberi yalnız güvenlik terimlerinin anlamını korumak için kullanılmıştır;
+canlı veritabanı veya sağlayıcı işlemi yapılmamıştır. Bu teslim paket kapanışı değildir.
+
 ## 4. A6-ASSURE-01 — Pre-Review Assurance Programı
 
 EO-08 sonrasında çalışır. İlk kez kod sağlamlığı arayan denetim değildir;

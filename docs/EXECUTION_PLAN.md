@@ -263,6 +263,16 @@ bekleyen durumdadır; paket henüz tamamlanmadı ve EO-05 başlamaz.
 altı belgesidir. Bunlar okunabilirlik kabulü bekler; diğer 52 belge dil incelemesi
 bekler. Uygulama kodu, tarihsel kanıtlar ve canlı ortam değişmez; paket kapanmaz.
 
+Aynı gün ikinci teslimin altı belgesi de ürün sahibi tarafından kabul edildi;
+PR #121 onaylı kaynakla aynı ağaç korunarak merge edildi. Merge commit'i
+`039087456127cd0d936049e75603ed52a2bbb7c4`.
+Üçüncü dil geçişi EO-02-C faturalandırma ve oturum köprüsü, EO-02-D gizlilik ve
+kalıcı işçi belgeleri ile EO-02-C canlı kabul kılavuzudur. Güncel toplam:
+10 kabul edilmiş, 5 okunabilirlik kabulü bekleyen, 47 dil incelemesi bekleyen belge.
+Önceki ara sayımlar tarihseldir. Bu geçiş eski kabul akışını yeniden yürütmez;
+yeni token, gizli bilgi, sorgu, silme, migration veya dağıtım yetkisi üretmez.
+EO-05 kapalıdır ve A6-DOCS-01 henüz tamamlanmamıştır.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

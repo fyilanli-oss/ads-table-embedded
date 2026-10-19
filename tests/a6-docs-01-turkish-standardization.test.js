@@ -28,8 +28,8 @@ test("DOCS-01 inventories human Markdown without translating agent instructions 
   assert.equal(new Set(actual).size, 63);
   assert.deepEqual(contract.inventory_counts, {
     total_markdown: 63, human_markdown: 62, excluded_agent_instructions: 1,
-    translated_review_pending: 3, pending_language_review: 0,
-    translated_product_owner_accepted: 59,
+    translated_review_pending: 0, pending_language_review: 0,
+    translated_product_owner_accepted: 62,
   });
   for (const row of contract.inventory) {
     assert.match(row.baseline_blob, /^[a-f0-9]{40}$/);
@@ -37,7 +37,7 @@ test("DOCS-01 inventories human Markdown without translating agent instructions 
       ? "agent_instructions_excluded" : "human_markdown");
     assert.equal(row.status, row.path === "AGENTS.md" ? "excluded_unchanged"
       : [...contract.first_batch, ...contract.second_batch, ...contract.third_batch, ...contract.fourth_batch, ...contract.fifth_batch, ...contract.sixth_batch, ...contract.seventh_batch, ...contract.eighth_batch, ...contract.ninth_batch, ...contract.tenth_batch, ...contract.eleventh_batch, ...contract.twelfth_batch, ...contract.thirteenth_batch, ...contract.fourteenth_batch, ...contract.fifteenth_batch, ...contract.sixteenth_batch].includes(row.path) ? "translated_product_owner_accepted"
-        : contract.seventeenth_batch.includes(row.path) ? "translated_product_owner_review_pending" : "pending_language_review");
+        : contract.seventeenth_batch.includes(row.path) ? "translated_product_owner_accepted" : "pending_language_review");
   }
 });
 
@@ -583,11 +583,12 @@ test("DOCS-01 final language delivery covers all human documents without self-ac
   assert.equal(contract.seventeenth_batch.length, 3);
   assert.equal(contract.final_delivery.all_62_human_documents_language_prepared, true);
   assert.equal(contract.inventory.filter(row => row.status === "pending_language_review").length, 0);
-  assert.equal(contract.final_delivery.package_closure_acceptance_pending, true);
+  assert.equal(contract.final_delivery.package_closure_acceptance_pending, false);
+  assert.equal(contract.final_delivery.last_three_readability_acceptance_pending, false);
   const prepared = contract.deliveries[16];
   assert.deepEqual(prepared.files, contract.seventeenth_batch);
-  assert.equal(prepared.product_owner_readability_accepted, false);
-  assert.equal(prepared.merge_authorized, false);
+  assert.equal(prepared.product_owner_readability_accepted, true);
+  assert.equal(prepared.merge_authorized, true);
   for (const path of contract.seventeenth_batch) {
     const content = await readFile(path, "utf8");
     const row = contract.inventory.find(item => item.path === path);
@@ -609,7 +610,7 @@ test("DOCS-01 final language delivery covers all human documents without self-ac
   assert.match(quality, /review başvurusu veya EO-05 başlangıç onayı değildir/);
 });
 
-test("DOCS-01 language work does not authorize runtime work, closure, merge or EO-05", async () => {
+test("DOCS-01 explicit closure acceptance authorizes only the approved merge, not runtime work or EO-05", async () => {
   const contract = await readJson(contractPath);
   assert.equal(contract.user_start_authorized, true);
   for (const key of ["accepted_semantics_may_change", "bulk_machine_contract_translation",
@@ -617,7 +618,8 @@ test("DOCS-01 language work does not authorize runtime work, closure, merge or E
     assert.equal(contract.scope[key], false, key);
   }
   for (const key of ["package_complete", "product_owner_readability_accepted",
-    "merge_authorized", "EO05_may_start"]) assert.equal(contract[key], false, key);
+    "merge_authorized"]) assert.equal(contract[key], true, key);
+  assert.equal(contract.EO05_may_start, false);
   const master = await readFile("contracts/a6-eo-implementation-master-v1.json", "utf8");
   const quality = await readFile("contracts/a6-quality-and-assurance-gates-v1.json", "utf8");
   assert.ok(master.includes(contractPath));

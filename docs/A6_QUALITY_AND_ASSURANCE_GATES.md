@@ -6,8 +6,9 @@
 ## Güncel durum — 19 Ekim 2026
 
 TECH-01 kabul edilmiş referans sürümdür; F01–F09 ve güvenlik konusu kapalı,
-F10 açık ertelemedir. DOCS-01'de 59 belge kabul edildi, son üç belgenin dil
-düzenlemesi ve paket kapanışı ürün sahibi kabulünü bekler. EO-05–08 ve her paket
+F10 açık ertelemedir. DOCS-01'in 62 belgesi, son okunabilirlik ve paket kapanışı
+19 Ekim 2026'da ürün sahibi tarafından kabul edildi; PR #137 merge onayı verildi.
+Önceki kabul bekleyen teslim notları tarihsel hazırlık durumudur. EO-05–08 ve her paket
 sonu fark denetimi, ardından A6-ASSURE-01 sırası değişmez. Bu kayıt yeni teknik
 uygulama, canlı işlem, review başvurusu veya EO-05 başlangıç onayı değildir.
 

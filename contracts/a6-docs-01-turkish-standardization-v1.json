@@ -2,7 +2,7 @@
   "contract_id": "a6-docs-01-turkish-standardization-v1",
   "checked_at": "2026-10-19",
   "package_id": "A6-DOCS-01",
-  "status": "final_language_delivery_prepared_product_owner_closure_pending",
+  "status": "product_owner_accepted_complete",
   "baseline_commit": "f62a5c6f7a254fe61be3c8af94f7fa9d2d6b65a1",
   "brief": "docs/A6_QUALITY_AND_ASSURANCE_GATES.md",
   "user_start_authorized": true,
@@ -19,9 +19,9 @@
     "total_markdown": 63,
     "human_markdown": 62,
     "excluded_agent_instructions": 1,
-    "translated_review_pending": 3,
+    "translated_review_pending": 0,
     "pending_language_review": 0,
-    "translated_product_owner_accepted": 59
+    "translated_product_owner_accepted": 62
   },
   "first_batch": [
     "README.md",
@@ -37,9 +37,9 @@
     "Anlamsal çelişki otomatik düzeltilmez; ürün sahibine bildirilir."
   ],
   "verification_limits": "Dil kontrolü ve teknik kimlik testi semantik eşdeğerliği tek başına kanıtlamaz; kaynakla karşılaştırmalı okuma ve ürün sahibi okunabilirlik kabulü ayrıca gerekir. Kabul edilen İngilizce ekran metinleri teknik arayüz sözleşmesidir; bu pakette ürün metni çevirisi yapılmaz.",
-  "package_complete": false,
-  "product_owner_readability_accepted": false,
-  "merge_authorized": false,
+  "package_complete": true,
+  "product_owner_readability_accepted": true,
+  "merge_authorized": true,
   "EO05_may_start": false,
   "inventory": [
     {
@@ -465,7 +465,7 @@
       "path": "docs/A6_EO_IMPLEMENTATION_MASTER_TABLE.md",
       "baseline_blob": "7c2b3da4cbf0f94caa487d0c71eafb0832a4fb01",
       "classification": "human_markdown",
-      "status": "translated_product_owner_review_pending",
+      "status": "translated_product_owner_accepted",
       "preserved_technical_tokens": [
         "/",
         "/ad-analysis",
@@ -582,7 +582,7 @@
       "path": "docs/A6_QUALITY_AND_ASSURANCE_GATES.md",
       "baseline_blob": "b5d4ce5a0838225c06c40f6f9734d00cb30192fa",
       "classification": "human_markdown",
-      "status": "translated_product_owner_review_pending",
+      "status": "translated_product_owner_accepted",
       "preserved_technical_tokens": [
         ".md",
         "AGENTS.md",
@@ -2220,7 +2220,7 @@
       "path": "docs/EXECUTION_PLAN.md",
       "baseline_blob": "b7ca6aa8b33b16862e0fd02c7accf683f00e86fa",
       "classification": "human_markdown",
-      "status": "translated_product_owner_review_pending",
+      "status": "translated_product_owner_accepted",
       "preserved_technical_tokens": [
         "/",
         "/ad-analysis",
@@ -3155,10 +3155,10 @@
         "docs/A6_EO_IMPLEMENTATION_MASTER_TABLE.md",
         "docs/A6_QUALITY_AND_ASSURANCE_GATES.md"
       ],
-      "status": "prepared_product_owner_readability_and_package_closure_pending",
+      "status": "product_owner_accepted_merge_authorized",
       "base_commit": "ed47adf7bc19a9206b1baebda995838021ad3585",
-      "product_owner_readability_accepted": false,
-      "merge_authorized": false
+      "product_owner_readability_accepted": true,
+      "merge_authorized": true
     }
   ],
   "third_batch": [
@@ -3274,10 +3274,14 @@
     "docs/A6_QUALITY_AND_ASSURANCE_GATES.md"
   ],
   "final_delivery": {
+    "product_owner_accepted_at": "2026-10-19",
+    "approval_scope": "last_three_readability_package_closure_and_PR137_merge_only",
+    "pull_request": 137,
+    "accepted_translation_source_commit": "0cf9c8dd86c5919d28e7a5353f746c7a373a7019",
     "all_62_human_documents_language_prepared": true,
     "remaining_untranslated_documents": 0,
-    "last_three_readability_acceptance_pending": true,
-    "package_closure_acceptance_pending": true,
+    "last_three_readability_acceptance_pending": false,
+    "package_closure_acceptance_pending": false,
     "execution_plan_sequence_changed": false,
     "EO05_start_requires_separate_user_direction": true,
     "restored_master_source_preserved": true

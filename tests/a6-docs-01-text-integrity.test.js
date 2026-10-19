@@ -55,7 +55,7 @@ test("master source archive preserves the verified restoration while its transla
   assert.equal(repair.later_damaged_prose_reconstructed_by_guess, false);
   assert.equal(repair.accepted_decisions_or_runtime_changed, false);
   assert.equal(repair.counts_as_completed_translation, false);
-  assert.equal(ledger.inventory.find((row) => row.path === repair.path).status, "translated_product_owner_review_pending");
+  assert.equal(ledger.inventory.find((row) => row.path === repair.path).status, "translated_product_owner_accepted");
   assert.equal(repair.product_owner_repair_accepted, true);
   assert.equal(repair.merge_authorized, true);
   assert.equal(repair.pull_request, 132);

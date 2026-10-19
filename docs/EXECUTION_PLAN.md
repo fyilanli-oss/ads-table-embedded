@@ -3,10 +3,11 @@
 ## Güncel durum — 19 Ekim 2026
 
 EO-01–04 ve A6-TECH-01 kabul edilmiştir; F01–F09 ve son güvenlik konusu kapalı,
-F10 açık, engelleyici olmayan P3 ertelemesidir. Aktif kapı A6-DOCS-01'dir.
-PR #136 ile 59 belge kabul edildi. Son üç belgenin dil çalışması hazırlandığında
-62 insan-okuyucu belgenin tamamı düzenlenmiş olacak; son okunabilirlik ve paket
-kapanışı açık ürün sahibi kabulünü bekler. EO-05 otomatik başlamaz.
+F10 açık, engelleyici olmayan P3 ertelemesidir. A6-DOCS-01'in 62 insan-okuyucu
+belgesinin tamamı, son üç belgenin okunabilirliği ve paket kapanışı ürün sahibi
+tarafından 19 Ekim 2026'da kabul edildi; PR #137 merge onayı verildi.
+Önceki kabul bekleyen teslim notları tarihsel hazırlık durumudur.
+EO-05 otomatik başlamaz; sonraki iş için ayrı ürün sahibi yönlendirmesi gerekir.
 
 Bu belge tarih sırasıyla birikmiş karar ve kanıt kayıtlarını korur. Aşağıdaki
 “başlamadı”, “bekliyor”, “güncel” ve ara sayımlar kayıt tarihine aittir; bugünkü

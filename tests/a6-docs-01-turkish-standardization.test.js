@@ -28,16 +28,16 @@ test("DOCS-01 inventories human Markdown without translating agent instructions 
   assert.equal(new Set(actual).size, 63);
   assert.deepEqual(contract.inventory_counts, {
     total_markdown: 63, human_markdown: 62, excluded_agent_instructions: 1,
-    translated_review_pending: 4, pending_language_review: 9,
-    translated_product_owner_accepted: 49,
+    translated_review_pending: 4, pending_language_review: 5,
+    translated_product_owner_accepted: 53,
   });
   for (const row of contract.inventory) {
     assert.match(row.baseline_blob, /^[a-f0-9]{40}$/);
     assert.equal(row.classification, row.path === "AGENTS.md"
       ? "agent_instructions_excluded" : "human_markdown");
     assert.equal(row.status, row.path === "AGENTS.md" ? "excluded_unchanged"
-      : [...contract.first_batch, ...contract.second_batch, ...contract.third_batch, ...contract.fourth_batch, ...contract.fifth_batch, ...contract.sixth_batch, ...contract.seventh_batch, ...contract.eighth_batch, ...contract.ninth_batch, ...contract.tenth_batch, ...contract.eleventh_batch, ...contract.twelfth_batch, ...contract.thirteenth_batch].includes(row.path) ? "translated_product_owner_accepted"
-        : contract.fourteenth_batch.includes(row.path) ? "translated_product_owner_review_pending" : "pending_language_review");
+      : [...contract.first_batch, ...contract.second_batch, ...contract.third_batch, ...contract.fourth_batch, ...contract.fifth_batch, ...contract.sixth_batch, ...contract.seventh_batch, ...contract.eighth_batch, ...contract.ninth_batch, ...contract.tenth_batch, ...contract.eleventh_batch, ...contract.twelfth_batch, ...contract.thirteenth_batch, ...contract.fourteenth_batch].includes(row.path) ? "translated_product_owner_accepted"
+        : contract.fifteenth_batch.includes(row.path) ? "translated_product_owner_review_pending" : "pending_language_review");
   }
 });
 
@@ -498,8 +498,48 @@ test("DOCS-01 safety and operations translation preserves future gates without s
   assert.match(preproduction, /hangisi önceyse ondan önce/);
   assert.match(preproduction, /Production kimlik bilgisi değerleri Preview veya Development'a kopyalanamaz/);
   assert.match(preproduction, /İlk açık veya açıklamasız sağlayıcı hatasında durulur/);
-  const prepared = contract.deliveries[13];
-  assert.deepEqual(prepared.files, contract.fourteenth_batch);
+  const accepted = contract.deliveries[13];
+  assert.deepEqual(accepted.files, contract.fourteenth_batch);
+  assert.equal(accepted.product_owner_readability_accepted, true);
+  assert.equal(accepted.merge_authorized, true);
+  assert.equal(accepted.pull_request, 134);
+  assert.equal(accepted.merge_commit, "93756a705ac84c5bb0a16e0fb08b18fb45b4158e");
+});
+
+test("DOCS-01 integrity audit and F01 history retain scoped closure, failed runs and immutable SQL references", async () => {
+  const contract = await readJson(contractPath);
+  assert.equal(contract.fifteenth_batch.length, 4);
+  for (const path of contract.fifteenth_batch) {
+    const content = await readFile(path, "utf8");
+    const row = contract.inventory.find((item) => item.path === path);
+    assertTechnicalTokens(content, row.preserved_technical_tokens);
+    assert.match(content, /18 Ekim 2026/);
+    assert.match(content, /docs\/EXECUTION_PLAN\.md/);
+    assert.match(content, /tarihsel/);
+    assert.match(content, /yeni (?:denetim, )?prova veya canlı işlem yetkisi vermez|yeni denetim, prova,\s+yedekleme, yükseltme veya canlı işlem yetkisi vermez/);
+  }
+  const audit = await readFile(contract.fifteenth_batch[0], "utf8");
+  assert.match(audit, /İlk denetimde 0 P0, 3 P1, 5 engelleyici P2 ve 2 P3/);
+  assert.match(audit, /kapalı; açık P0\/P1\/P2 yoktur/);
+  assert.match(audit, /İlk denetimin kontrol matrisi — tarihsel sonuçlar/);
+  assert.match(audit, /İlk düzeltme taslağı — tarihsel, uygulanacak güncel sıra değil/);
+  assert.match(audit, /Son bağlayıcı karar — 18 Ekim 2026/);
+  assert.ok(audit.includes("bd243fff7200ae6bdb3900ebb7417b3beba53010"));
+  const lineage = await readFile(contract.fifteenth_batch[1], "utf8");
+  assert.match(lineage, /ilk 38 kayıt değiştirilmedi/);
+  assert.match(lineage, /Yalnız F01 için test edilmiş\s+dar şema kurtarma alternatifi açıkça kabul edildi/);
+  assert.match(lineage, /yeni kullanıcı\s+onayından sonra çalıştırıldı/);
+  const replay = await readFile(contract.fifteenth_batch[2], "utf8");
+  for (const id of ["39135603458", "39134192984", "39133172317", "39132400862", "127.0.0.1:54322"]) assert.ok(replay.includes(id));
+  assert.match(replay, /Katalog güvenlik testleri Supabase Cloud Advisor servisini çalıştırmış sayılmaz/);
+  assert.match(replay, /aşağıdaki “yeni üyelik üretilmez” ifadesi o ara kapsamdır/);
+  const recovery = await readFile(contract.fifteenth_batch[3], "utf8");
+  assert.match(recovery, /Tam veri yedeği\/PITR kanıtı \*\*yoktur\*\*/);
+  assert.match(recovery, /Yedi fonksiyon geri kuruldu; eski altı fonksiyonun runtime EXECUTE yetkisi kapalı kaldı/);
+  assert.match(recovery, /kurtarma SQL'i\s+tek başına hiçbir iş verisi satırına INSERT\/UPDATE\/DELETE uygulamaz/);
+  assert.ok(recovery.includes("954dc40d045601e2cc2600b76b65ecf05b2e284972e4d63ac183f5288706acec"));
+  const prepared = contract.deliveries[14];
+  assert.deepEqual(prepared.files, contract.fifteenth_batch);
   assert.equal(prepared.product_owner_readability_accepted, false);
   assert.equal(prepared.merge_authorized, false);
 });

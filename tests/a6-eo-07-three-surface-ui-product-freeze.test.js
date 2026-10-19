@@ -87,5 +87,5 @@ test("freeze records official components but authorizes no implementation or acc
   assert.equal(contract.implementation_authorized_by_this_contract, false);
   assert.equal(contract.live_mutation_authorized, false);
   assert.match(doc, /Ürün kararı donduruldu; uygulama ve kabul bekliyor/);
-  assert.match(plan, /A6-EO-07 three-surface UI product freeze/);
+  assert.match(plan, /A6-EO-07 üç yüzeyli arayüz ürün kararı/);
 });

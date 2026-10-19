@@ -26,7 +26,7 @@ test("DOCS-01 human Markdown rejects invalid UTF-8, replacement characters and b
   assert.equal(checkedText(Buffer.from("Türkçe: ıİşŞğĞüÜöÖçÇ\n\t")), "Türkçe: ıİşŞğĞüÜöÖçÇ\n\t");
 });
 
-test("master text restoration matches the verified last-good body and cannot revive historical authority", async () => {
+test("master source archive preserves the verified restoration while its translation cannot revive historical authority", async () => {
   const ledger = JSON.parse(await readFile(ledgerPath, "utf8"));
   const repair = ledger.text_integrity_repairs[0];
   assert.equal(repair.path, "docs/A6_EO_IMPLEMENTATION_MASTER_TABLE.md");
@@ -40,10 +40,14 @@ test("master text restoration matches the verified last-good body and cannot rev
   assert.ok(text.startsWith(heading + "\n"));
   const bodyStart = text.indexOf("**Tarih:** 4 Ekim 2026");
   assert.ok(bodyStart > 0);
-  const restoredBody = heading + "\n\n" + text.slice(bodyStart);
+  const archivePath = "docs/evidence/A6_DOCS_01_MASTER_RESTORED_SOURCE_2026-10-19.txt";
+  assert.equal(repair.restored_body_archive, archivePath);
+  const restoredBody = normalize(checkedText(await readFile(archivePath)));
+  assert.ok(restoredBody.startsWith(heading + "\n\n**Tarih:** 4 Ekim 2026"));
   assert.equal(createHash("sha256").update(restoredBody).digest("hex"), "3f767043b5a529fffb80859824316d197fec782fc31e6896202046810f4d89f9");
   assert.equal(repair.restored_body_normalized_sha256, "3f767043b5a529fffb80859824316d197fec782fc31e6896202046810f4d89f9");
   const notice = text.slice(heading.length, bodyStart);
+  assert.ok(notice.includes(archivePath));
   for (const authority of ["docs/EXECUTION_PLAN.md", "contracts/a6-eo-implementation-master-v1.json", "docs/EO_04_ANALYSIS_DESIGN_BOOK.md"]) assert.ok(notice.includes(authority));
   assert.match(notice, /bugünkü durum veya kural değildir/);
   assert.match(notice, /EO-01–04 ve A6-TECH-01 kabulleri korunur/);
@@ -51,7 +55,7 @@ test("master text restoration matches the verified last-good body and cannot rev
   assert.equal(repair.later_damaged_prose_reconstructed_by_guess, false);
   assert.equal(repair.accepted_decisions_or_runtime_changed, false);
   assert.equal(repair.counts_as_completed_translation, false);
-  assert.equal(ledger.inventory.find((row) => row.path === repair.path).status, "pending_language_review");
+  assert.equal(ledger.inventory.find((row) => row.path === repair.path).status, "translated_product_owner_accepted");
   assert.equal(repair.product_owner_repair_accepted, true);
   assert.equal(repair.merge_authorized, true);
   assert.equal(repair.pull_request, 132);

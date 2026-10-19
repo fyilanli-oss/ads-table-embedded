@@ -75,5 +75,5 @@ test("routes deterministic capacity generation under the existing capacity autho
   const decision = master.cross_cutting_decisions.demo_fixture_export_reference_v1;
   assert.equal(decision.export_first_review_in_scope, false);
   assert.equal(decision.advances_package_status, false);
-  assert.match(plan, /Demo fixture, export reference and Shopify dev-store boundary/);
+  assert.match(plan, /Demo test verisi, dışa aktarma referansı ve Shopify geliştirme mağazası sınırı/);
 });

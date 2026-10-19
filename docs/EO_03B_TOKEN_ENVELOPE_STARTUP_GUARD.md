@@ -1,168 +1,175 @@
-# EO-03-B — Token envelope and startup guard
+# EO-03-B — Token zarfı ve başlangıç koruması
 
-**Control date:** 9 October 2026  
-**Status:** Accepted — repository, live database, production startup and product-owner gates passed  
-**Parent:** A6-EO-03 — Canonical OAuth, connection and token vault
+**Kontrol tarihi:** 9 Ekim 2026
 
-## Analyst result
+**Durum:** Kabul edildi — repository, canlı veritabanı, Production başlangıç ve ürün sahibi kapıları geçti.
 
-EO-03-B ensures that a recoverable OAuth PKCE verifier or future provider token set is never stored as readable database text. AdsTable encrypts the value server-side, binds it to the exact workspace, Shopify installation generation, provider, purpose and record, and persists only the authenticated ciphertext envelope.
+**Ana paket:** A6-EO-03 — Tek yetkili OAuth, bağlantı ve token kasası
 
-Before a provider authorization can begin, the runtime must prove that the database contract is the expected version, every key version already used by stored records is still available, the active provider-token key exists and differs from the Shopify session key, and an authenticated-encryption self-test succeeds. Any failure stops authorization rather than falling back to plaintext, another key or an unverified store.
+Bu belge 9 Ekim 2026'daki kapsam ve kabulü anlatır. İlk hazırlık kapsamı ile ayrı onaylı canlı işlemler ayrı kayıtlardır. Supabase Vault'un sürüm durumu dahil dış platform açıklamaları tarihsel kontrolü yansıtır; güncel proje durumu Execution Plan'dadır. Yeni canlı işlem yetkisi verilmez.
 
-The accepted package provisions the dedicated production key, applies the approved Supabase migrations and verifies the production startup guard. It still does not connect a provider, carry a real provider token or authorize live provider OAuth.
+## Analist sonucu
 
-## Official documentation checked
+Geri alınabilir OAuth PKCE doğrulayıcısı veya ilerideki sağlayıcı token kümesi, veritabanında okunabilir metin olarak saklanmaz. AdsTable değeri sunucuda şifreler; tam çalışma alanı, Shopify kurulum nesli, sağlayıcı, amaç ve kayda bağlar. Yalnız bütünlüğü doğrulanabilen şifreli zarf kalıcılaşır.
 
-Checked on 9 October 2026:
+Yetkilendirme başlamadan çalışma zamanı şunları kanıtlar: beklenen veritabanı sözleşmesi sürümü, mevcut kayıtlardaki bütün anahtar sürümlerinin kullanılabilirliği, Shopify oturum anahtarından farklı aktif sağlayıcı-token anahtarı ve başarılı şifreleme öz testi. Başarısızlıkta açık metne, başka anahtara veya doğrulanmamış mağazaya geçilmez; yetkilendirme durur.
 
-- Node.js Crypto — authenticated encryption, `createCipheriv`, `setAAD`, `getAuthTag` and `setAuthTag`:  
+Kabul edilen paket, özel Production anahtarını oluşturup onaylı Supabase migration'larını uyguladı ve Production başlangıç korumasını doğruladı. Buna rağmen sağlayıcı bağlamaz, gerçek sağlayıcı token'ı taşımaz ve canlı sağlayıcı OAuth izni vermez.
+
+## Tarihsel resmî kaynak kontrolü
+
+9 Ekim 2026 tarihinde:
+
+- Node.js Crypto — doğrulamalı şifreleme, `createCipheriv`, `setAAD`, `getAuthTag`, `setAuthTag`:
   https://nodejs.org/api/crypto.html
-- Supabase Database Security — private schemas, RLS and database-function security boundary:  
+- Supabase veritabanı güvenliği — özel şemalar, RLS ve fonksiyon güvenlik sınırı:
   https://supabase.com/docs/guides/database/database-security
-- Supabase Vault — currently public alpha and exposes a decrypted view to sufficiently privileged database actors:  
+- Supabase Vault — o kontrolde herkese açık alfa sürümündeydi; yeterince yetkili veritabanı rollerine çözülmüş görünüm açıyordu:
   https://supabase.com/docs/guides/database/vault
-- Supabase pgcrypto deprecation/migration guidance — PostgreSQL 17 change concerns legacy `pgcrypto` encryption functions; EO-03-B uses application-level Node AES-GCM instead:  
+- Supabase pgcrypto emeklilik/geçiş rehberi — PostgreSQL 17 değişimi eski `pgcrypto` şifreleme fonksiyonlarıyla ilgilidir. EO-03-B uygulama düzeyinde Node AES-GCM kullanır:
   https://supabase.com/docs/guides/troubleshooting/pgcrypto-deprecation-and-data-migration-guide
-- Vercel environment variables — sensitive server-only environment values and environment scoping:  
+- Vercel ortam değişkenleri — yalnız sunucuya özel hassas değerler ve ortam kapsamı:
   https://vercel.com/docs/environment-variables
 
-## Security decision
+## Güvenlik kararı
 
-### Root key
+### Kök anahtar
 
-- The provider-token root key is a dedicated 32-byte random key.
-- It is not the Shopify session-encryption key and reuse is rejected.
-- Production values live only as Vercel Sensitive environment variables.
-- The database never stores or returns a root key.
-- The active version is selected by `ADSTABLE_PROVIDER_TOKEN_ACTIVE_KEY_VERSION`.
-- Key material uses `ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_V<n>`.
-- New writes use the active version; old versions remain readable until every envelope has been rotated.
+- Sağlayıcı-token kök anahtarı özel, rastgele 32 baytlık anahtardır.
+- Shopify oturum şifreleme anahtarı değildir; aynı anahtarı kullanma reddedilir.
+- Production değerleri yalnız Vercel Sensitive ortam değişkenlerinde bulunur.
+- Veritabanı kök anahtarı saklamaz veya döndürmez.
+- Aktif sürüm `ADSTABLE_PROVIDER_TOKEN_ACTIVE_KEY_VERSION` ile seçilir.
+- Anahtar malzemesi `ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_V<n>` adlandırmasını kullanır.
+- Yeni yazımlar aktif sürümü kullanır; bütün zarflar yeni anahtara geçirilene kadar eski sürümler okunabilir kalır.
 
-Supabase Vault is not the primary key store because its current public-alpha and decrypted-view model would not improve this product's separation of duties.
+O tarihteki alfa ve çözülmüş görünüm modeli görev ayrımını iyileştirmediğinden Supabase Vault anahtarların birincil deposu seçilmedi.
 
-### Envelope
+### Zarf
 
-- Algorithm: AES-256-GCM.
-- Nonce: 12 random bytes per envelope.
-- Authentication tag: 16 bytes.
-- Associated data binds contract version, key version, record ID, workspace ID, installation generation, provider and purpose.
-- Moving ciphertext to another tenant, generation, provider, purpose or record makes authentication fail.
-- Decryption failures return a generic vault-authentication error; secret material is not logged.
+- Algoritma: AES-256-GCM.
+- Nonce: her zarf için 12 rastgele bayt.
+- Kimlik doğrulama etiketi: 16 bayt.
+- Bağlı veri; sözleşme sürümü, anahtar sürümü, kayıt kimliği, çalışma alanı, kurulum nesli, sağlayıcı ve amacı birlikte bağlar.
+- Şifreli metni başka kiracı, nesil, sağlayıcı, amaç veya kayda taşımak doğrulamayı bozar.
+- Şifre çözme hatası genel kasa doğrulama hatası döndürür; gizli malzeme loglanmaz.
 
-## Database model
+## Veritabanı modeli
 
-### PKCE envelopes
+### PKCE zarfları
 
-`integrations.oauth_pkce_envelopes` stores only ciphertext metadata for Google Ads and Klaviyo PKCE verifiers.
+`integrations.oauth_pkce_envelopes`, Google Ads ve Klaviyo PKCE doğrulayıcıları için yalnız şifreli metin üst verisi saklar.
 
-The record is bound one-to-one to the OAuth transaction and exact active Shopify installation authority. After EO-03-A atomically claims the callback, EO-03-B atomically validates and deletes the envelope while returning it to the server. A second take returns nothing. Expired or authority-mismatched records are not returned.
+Kayıt OAuth işlemiyle birebirdir; tam aktif Shopify kurulum yetkisine bağlıdır. EO-03-A dönüşü atomik sahiplenince EO-03-B, zarfı sunucuya döndürürken tek işlemde doğrulayıp siler. İkinci alma sonuç döndürmez. Süresi dolmuş veya yetkisi uyuşmayan kayıt dönmez.
 
-### Provider credential envelopes
+### Sağlayıcı erişim bilgisi zarfları
 
-`integrations.provider_credential_envelopes` is the ciphertext-only persistence boundary for future Meta, Google Ads and Klaviyo token sets. EO-03-B prepares the boundary; EO-03-C/D and provider packages own connection activation, exchange, refresh and revoke behavior.
+`integrations.provider_credential_envelopes`, ilerideki Meta, Google Ads ve Klaviyo token kümelerinin yalnız şifreli saklama sınırıdır. EO-03-B sınırı hazırlar; bağlantıyı etkinleştirme, kod değişimi, yenileme ve iptal EO-03-C/D ile sağlayıcı paketlerinin sorumluluğudur.
 
-Both tables:
+İki tablo da:
 
-- are in the private `integrations` schema;
-- enable and force RLS;
-- deny direct access to browser roles, `service_role` and `adstable_runtime`;
-- are reachable by runtime only through exact `SECURITY DEFINER` functions with empty `search_path`;
-- cascade from the exact Shopify installation generation;
-- contain no plaintext token, refresh token or PKCE verifier column.
+- Özel `integrations` şemasındadır.
+- RLS'yi açar ve zorunlu uygular.
+- Tarayıcı rolleri, `service_role` ve `adstable_runtime` için doğrudan erişimi kapatır.
+- Çalışma zamanından yalnız boş `search_path` taşıyan tam `SECURITY DEFINER` fonksiyonlarıyla erişilir.
+- Tam Shopify kurulum neslinden kademeli silinir.
+- Açık metin erişim token'ı, yenileme token'ı veya PKCE doğrulayıcı kolonu içermez.
 
-## Startup guard
+## Başlangıç koruması
 
-The runtime refuses provider authorization or token use unless:
+Aşağıdakiler sağlanmadan sağlayıcı yetkilendirmesi veya token kullanımı reddedilir:
 
-1. the database contract version is exactly 1;
-2. the active key version exists;
-3. every key version referenced by stored envelopes is readable;
-4. provider-token and Shopify-session keys differ;
-5. an in-memory AES-GCM seal/open self-test passes.
+1. Veritabanı sözleşme sürümü tam olarak 1'dir.
+2. Aktif anahtar sürümü vardır.
+3. Saklanan zarfların kullandığı her anahtar sürümü okunabilirdir.
+4. Sağlayıcı-token ve Shopify oturum anahtarları farklıdır.
+5. Bellekte AES-GCM şifrele/aç öz testi geçer.
 
-The guard is cached only after success. A failed guard is not cached as success and cannot silently downgrade.
+Koruma yalnız başarıdan sonra önbelleğe alınır. Başarısızlık başarı diye saklanmaz; sessiz koruma düşürme yoktur.
 
-## Environment contract
+## Ortam değişkeni sözleşmesi
+
+Aşağıdaki teknik örnek gerçek anahtar değildir; adlar ve yer tutucu aynen korunur:
 
 ```text
 ADSTABLE_PROVIDER_TOKEN_ACTIVE_KEY_VERSION=1
 ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_V1=<32 random bytes, base64url>
 ```
 
-The version number is configuration. Every `...ENCRYPTION_KEY...` value is a secret and must never be committed, printed, returned to the browser or copied into Supabase rows.
+Sürüm numarası yapılandırmadır. Her `...ENCRYPTION_KEY...` değeri gizlidir: commit edilemez, yazdırılamaz, tarayıcıya döndürülemez veya Supabase satırlarına kopyalanamaz.
 
-## Scope
+## Kapsam
 
-Included:
+Dahil:
 
-- versioned server-only keyring;
-- authenticated encryption and contextual binding;
-- ciphertext-only PKCE and token-set schema;
-- atomic single-use PKCE retrieval;
-- active-installation authority checks;
-- function-only runtime access;
-- startup guard;
-- repository tests and executable contract.
+- Sürümlü, yalnız sunucuda anahtar kümesi;
+- Doğrulamalı şifreleme ve bağlama;
+- Yalnız şifreli PKCE/token kümesi şeması;
+- Atomik, tek kullanımlık PKCE alma;
+- Aktif kurulum yetkisi kontrolleri;
+- Yalnız fonksiyon çağıran çalışma zamanı erişimi;
+- Başlangıç koruması;
+- Repository testleri ve makine sözleşmesi.
 
-Excluded:
+İlk repository hazırlığında kapsam dışı olanlar:
 
-- live database migration;
-- Vercel secret creation;
-- live provider credentials or OAuth;
-- provider exchange, refresh, revoke and disconnect;
-- reporting-account selection;
-- production deployment.
+- Canlı veritabanı migration'ı;
+- Vercel gizli bilgisi oluşturma;
+- Gerçek sağlayıcı erişim bilgisi veya OAuth;
+- Sağlayıcı değişim, yenileme, iptal ve bağlantıyı kesme işlemleri;
+- Raporlama hesabı seçimi;
+- Production dağıtımı.
 
-## Acceptance sequence
+Bu ilk liste, aşağıdaki ayrı onaylı canlı kabulün yapılmadığı anlamına gelmez.
 
-1. Repository implementation, tests, typecheck, build and CI pass.
-2. Product owner reviews the repository result and separately authorizes or declines the live gate.
-3. If authorized, generate a fresh production provider-token key outside source control and store it as a Vercel Sensitive value.
-4. Apply the exact migration to the approved Supabase project.
-5. Run read-only schema, privilege, RLS, key-version and advisor checks.
-6. Run a synthetic ciphertext-only vault probe without a real provider token, then remove all probe rows.
-7. Verify the deployed startup guard.
-8. Record durable evidence and require explicit product-owner closure.
+## Kabul sırası
 
-Repository merge alone does not make EO-03-B Accepted and does not authorize steps 3–7.
+1. Repository uygulaması, testler, tür kontrolü, derleme ve CI geçer.
+2. Ürün sahibi sonucu inceler; canlı kapıya ayrıca izin verir veya reddeder.
+3. Yetki verilirse kaynak kontrolü dışında yeni Production sağlayıcı-token anahtarı üretilir; Vercel Sensitive değeri olarak saklanır.
+4. Tam migration onaylı Supabase projesine uygulanır.
+5. Salt okunur şema, yetki, RLS, anahtar sürümü ve Advisor kontrolleri yapılır.
+6. Gerçek token olmadan, yalnız sentetik şifreli kasa sınaması yapılır; bütün sınama satırları kaldırılır.
+7. Dağıtılmış başlangıç koruması doğrulanır.
+8. Kalıcı kanıt ve açık ürün sahibi kapanışı gerekir.
 
+Repository merge'ü tek başına kabul değildir; 3–7. adımları yetkilendirmez.
 
-## Production acceptance — 9 October 2026
+## Production kabulü — 9 Ekim 2026
 
-The separately approved live gate completed without a real provider token or live OAuth:
+Ayrı onaylı canlı kapı, gerçek sağlayıcı token'ı veya canlı OAuth olmadan tamamlandı:
 
-- Supabase migrations `20261009113645_eo03b_token_vault` and `20261009115314_eo03b_pkce_workspace_fk_index` are live.
-- The dedicated provider-token key and active key version exist only as Vercel production Sensitive environment values; neither value was read back, printed or committed.
-- Production deployment `dpl_JDGeSSRYZNshT5m5bMHYHS4bBtts` for commit `07e5396badb839b6d8bac290afa2bf058c193485` reached `READY` with no alias error.
-- Both the unique deployment URL and `embedded.adstable.app` initialized the Shopify runtime; Vercel reported zero runtime errors in the verification windows.
-- The expected unauthenticated root response is HTTP 410 after successful runtime initialization; it is not a startup-guard failure.
+- `20261009113645_eo03b_token_vault` ve `20261009115314_eo03b_pkce_workspace_fk_index` Supabase migration'ları canlıdır.
+- Özel anahtar ve aktif anahtar sürümü yalnız Vercel Production Sensitive değerleridir; geri okunmadı, yazdırılmadı veya commit edilmedi.
+- `07e5396badb839b6d8bac290afa2bf058c193485` commit'inin `dpl_JDGeSSRYZNshT5m5bMHYHS4bBtts` dağıtımı adres eşleme hatası olmadan `READY` oldu.
+- Benzersiz dağıtım adresi ve `embedded.adstable.app` Shopify çalışma zamanını başlattı; kontrol pencerelerinde Vercel çalışma zamanı hatası sıfırdı.
+- Başarılı başlangıçtan sonraki kimliksiz kök yanıtı HTTP 410 beklenen sonuçtur; başlangıç koruması hatası değildir.
 
-## Synthetic ciphertext-only vault probe — 9 October 2026
+## Yalnız sentetik şifreli kasa sınaması — 9 Ekim 2026
 
-A separately approved, single PostgreSQL transaction exercised the production database function boundary without a provider credential:
+Ayrı onaylı tek PostgreSQL işlemi, sağlayıcı erişim bilgisi olmadan Production fonksiyon sınırını sınadı:
 
-1. The preflight proved the management caller could not execute the runtime functions and could not assume `adstable_runtime`.
-2. Inside one controlled transaction, role membership was granted only long enough to execute as the exact runtime role.
-3. A fixed synthetic credential ID and opaque ciphertext/nonce/tag were stored under the one active installation authority.
-4. Correct-context load returned exactly one envelope.
-5. Provider substitution returned zero envelopes.
-6. Delete returned true and the second load returned zero envelopes.
-7. The transaction removed the temporary role membership before commit.
-8. Independent verification proved:
-   - `postgres` is not a member of `adstable_runtime`;
-   - `postgres` still cannot execute the guard;
-   - `adstable_runtime` still can;
-   - PKCE envelope rows: 0;
-   - provider credential envelope rows: 0;
-   - Supabase Security Advisor findings: 0.
+1. Ön kontrol, yönetim çağırıcısının çalışma zamanı fonksiyonlarını çalıştıramadığını ve `adstable_runtime` rolüne geçemediğini kanıtladı.
+2. Kontrollü işlemde rol üyeliği yalnız tam çalışma zamanı rolüyle yürütmeye yetecek süre için verildi.
+3. Sabit sentetik erişim bilgisi kimliği ile içi yorumlanmayan şifreli metin/nonce/etiket, tek aktif kurulum yetkisi altında saklandı.
+4. Doğru bağlamla yükleme tam bir zarf döndürdü.
+5. Sağlayıcı değiştirme sıfır zarf döndürdü.
+6. Silme true döndürdü; ikinci yükleme sıfır zarf döndürdü.
+7. İşlem, commit öncesi geçici rol üyeliğini kaldırdı.
+8. Bağımsız son kontrol:
+   - `postgres`, `adstable_runtime` üyesi değildir.
+   - `postgres` korumayı hâlâ çalıştıramaz.
+   - `adstable_runtime` çalıştırabilir.
+   - PKCE zarf satırı: 0.
+   - Sağlayıcı erişim bilgisi zarf satırı: 0.
+   - Supabase Security Advisor bulgusu: 0.
 
-The probe did not contain a real access token, refresh token, authorization code, PKCE verifier, customer record or personal data. The application-level production startup guard separately proved the real Vercel keyring and AES-GCM self-test; the database probe proved the function-only persistence boundary.
+Sınama gerçek erişim token'ı, yenileme token'ı, yetkilendirme kodu, PKCE doğrulayıcı, müşteri kaydı veya kişisel veri içermedi. Uygulamanın Production başlangıç koruması gerçek Vercel anahtar kümesini ve AES-GCM öz testini ayrıca kanıtladı; veritabanı sınaması yalnız fonksiyon erişimli kalıcı kayıt sınırını kanıtladı.
 
-Machine-readable evidence: `docs/evidence/EO_03B_PRODUCTION_ACCEPTANCE_2026-10-09.json`.
+Makine kanıtı: `docs/evidence/EO_03B_PRODUCTION_ACCEPTANCE_2026-10-09.json`.
 
-## Product-owner closure — 9 October 2026
+## Ürün sahibi kapanışı — 9 Ekim 2026
 
-After the repository, live-schema, Vercel startup and synthetic ciphertext-only evidence passed, the product owner explicitly accepted EO-03-B.
+Repository, canlı şema, Vercel başlangıcı ve sentetik şifreli saklama kanıtları geçtikten sonra ürün sahibi EO-03-B'yi açıkça kabul etti.
 
-EO-03-B is **Accepted**. The single next child is **EO-03-C — Connection and reporting-account authority**, now **Ready**. Live provider authorization remains disabled until EO-03-C/D establish and accept the corresponding connection lifecycle.
+O tarihte tek sonraki alt paket **EO-03-C — Bağlantı ve raporlama hesabı yetkisi** hazırdı. EO-03-C/D ilgili yaşam döngüsünü kurup kabul edene kadar canlı sağlayıcı yetkilendirmesi kapalı kalıyordu.

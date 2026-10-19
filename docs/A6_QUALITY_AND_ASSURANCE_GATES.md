@@ -53,6 +53,33 @@ okuyucu `.md` belgeleri Türkçeleştirilir. API field'ları, code symbol'leri,
 provider entity adları, resmî hata kodları, JSON machine contract'ları ve
 immutable evidence içerikleri çevrilmez. Kabul edilmiş semantik değiştirilmez.
 
+### A6-DOCS-01 çalışma standardı — 19 Ekim 2026
+
+Ürün sahibi pakete başlanmasını onayladı. Çalışma sözleşmesi ve tam envanter:
+`contracts/a6-docs-01-turkish-standardization-v1.json`.
+
+**İş sonucu:** İnsan okuyucu, kabul edilmiş kararları alt paket geçmişini yeniden
+kurmadan Türkçe anlayabilmeli. Bu paket yeni ürün kararı veya kod düzeltmesi değildir.
+
+- README ile `docs` altındaki insan-okuyucu Markdown belgeleri kapsamda.
+  `AGENTS.md` makine/ajan çalışma talimatıdır; bu dil geçişinde değiştirilmez.
+- Önce iş sonucu, sonra normal akış, hata yolları, yetki/veri sınırı ve kabul
+  anlatılır. Teknik terim ilk kullanımda Türkçe açıklanır; gereksiz İngilizce
+  cümle ve başlık bırakılmaz.
+- `Channel`, `Sales Role`, `Medium`, sağlayıcı varlık adları, API alanları,
+  durum kodları, paket kimlikleri, komutlar ve dosya yolları teknik kimliktir.
+  Anlamları açıklanır; kod içindeki karşılıkları yeniden adlandırılmaz.
+- Kapanmış paketin kitap bölümü o paketin kabul edildiği tarihteki kapsamıdır.
+  Tarihsel durum bugünkü proje durumu gibi sunulmaz; güncel sıra Execution Plan'dadır.
+- JSON sözleşmeler, değişmez kabul kanıtları, migration'lar ve kod çevrilmez.
+  Yalnız bu paketin çalışma durumu ve kapsam kaydı için gereken metadata eklenir.
+- Dil düzenlemesinde tasarım çelişkisi görülürse kayda alınır; otomatik olarak
+  iş kuralı değiştirilmez, yeni provider davranışı veya izin varsayılmaz.
+- İlk geçiş README ile EO-01/02/03 analiz kitaplarıdır. Diğer belgeler envanterde
+  bekler; bu geçişin tamamlanması A6-DOCS-01'in tamamlandığı anlamına gelmez.
+- Her teslimde dil ve teknik kimlik kontrolleri, mevcut repository testleri ve
+  zorunlu GitHub CI geçer. Merge ayrı açık onay ister. EO-05 açılmaz.
+
 ## 4. A6-ASSURE-01 — Pre-Review Assurance Programı
 
 EO-08 sonrasında çalışır. İlk kez kod sağlamlığı arayan denetim değildir;

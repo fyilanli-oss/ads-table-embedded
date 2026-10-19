@@ -1,17 +1,19 @@
 # AdsTable Embedded
 
-Clean Shopify embedded-only application for AdsTable.
+AdsTable'ın yalnız Shopify Admin içinde çalışan temiz embedded uygulaması.
 
-## Program boundary
+## Programın sınırları
 
-- Source repository: `fyilanli-oss/ads-table-embedded`
-- Legacy evidence repository: `fyilanli-oss/ads-table-dev`
-- Active providers: Meta, Google Ads, and Klaviyo
-- Product surfaces: Funnel App Home (`/`), Ad Analysis (`/ad-analysis`), and Settings (`/settings`)
-- Initial hosting state: preview-only
-- Production cutover: not authorized
-- Live data or token carry: not authorized
-- Legacy application/runtime carry-as-is: zero modules
+- Kaynak repository: `fyilanli-oss/ads-table-embedded`
+- Eski yapının kanıt repository'si: `fyilanli-oss/ads-table-dev`
+- Aktif sağlayıcılar: Meta, Google Ads ve Klaviyo
+- Ürün yüzeyleri: Funnel App Home (`/`), Ad Analysis (`/ad-analysis`) ve Settings (`/settings`)
+- Başlangıçtaki barındırma durumu: yalnız önizleme (preview-only)
+- Production cutover — eski yapıdan yeni yapıya nihai geçiş: yetkilendirilmedi
+- Canlı veri veya token taşıma: yetkilendirilmedi
+- Eski uygulamadan/çalışma zamanından aynen taşınan modül: sıfır
 
-Implementation is governed by the A6-EO Execution Plan, the executable EO master contract, and the Shopify Embedded UI Constitution.
+Geliştirme; A6-EO Execution Plan, makine tarafından kontrol edilen EO ana sözleşmesi ve Shopify Embedded UI Anayasası ile yönetilir.
+
+Başlangıç durumu ile bugünkü kabul edilmiş durumu ayırmak için güncel yetki ve paket sırası [Execution Plan](docs/EXECUTION_PLAN.md) üzerinden okunur.
 

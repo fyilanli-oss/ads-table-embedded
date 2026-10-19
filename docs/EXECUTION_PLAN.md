@@ -245,6 +245,16 @@ CI, kabul ve merge beklenir. Sonrasında yalnız ayrı onaylı exact release/can
 kabulü ve genel kapanış kararı kalır. F10 ertelemesi korunur; yeni yedek işi,
 genel PASS, A6-DOCS-01 veya EO-05 başlangıç yetkisi yoktur.
 
+### A6-DOCS-01 başlangıcı — 19 Ekim 2026
+
+Ürün sahibi Türkçe dokümantasyon standardizasyonuna başlanmasını onayladı.
+63 Markdown dosyası envantere alındı: 62 insan-okuyucu belge ve değiştirilmeden
+korunan `AGENTS.md`. Çalışma sözleşmesi:
+`contracts/a6-docs-01-turkish-standardization-v1.json`.
+İlk geçiş README ile EO-01/02/03 analiz kitaplarının dilidir; kabul edilmiş
+semantik, tarihler, kimlikler ve makine bölüm eşlemeleri korunur. Diğer belgeler
+bekleyen durumdadır; paket henüz tamamlanmadı ve EO-05 başlamaz.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

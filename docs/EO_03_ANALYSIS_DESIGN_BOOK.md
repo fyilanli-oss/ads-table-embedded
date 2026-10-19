@@ -1,114 +1,118 @@
-# EO-03 Analysis–Design Book
+# EO-03 — Analiz ve tasarım kitabı
 
-**Parent package:** A6-EO-03 — Canonical OAuth, connection and token vault  
-**Status:** Accepted — 2026-10-09  
-**Purpose:** Teknik olmayan bir okuyucunun provider bağlantısının kurulmasından yenileme, yeniden yetkilendirme ve ayrılmaya kadar bütün yaşam döngüsünü ve güvenlik sınırını anlayabilmesi.
+**Ana paket:** A6-EO-03 — Tek yetkili OAuth, bağlantı ve token kasası
+
+**Durum:** Kabul edildi — 2026-10-09
+
+**Amaç:** Teknik olmayan bir okuyucunun sağlayıcı bağlantısının kurulmasından yenileme, yeniden yetkilendirme ve ayrılmaya kadar bütün yaşam döngüsünü ve güvenlik sınırını anlayabilmesi.
+
+Bu kitap EO-03'ün kabul edildiği günkü kapsamını anlatır. Daha sonraki sağlayıcı uygulamaları ve güncel işlem yetkileri için Execution Plan geçerlidir.
 
 ## 1. İş amacı ve gerçek çıktı
 
-EO-03 Meta, Google Ads ve Klaviyo bağlantılarının güvenli ve tek anlamlı otorite modeliyle kurulmasını sağlar.
+EO-03, Meta, Google Ads ve Klaviyo bağlantılarının güvenli ve tek anlamlı bir yetki modeliyle kurulmasını sağlar.
 
 Paket sonunda:
 
-- OAuth işlemi workspace, kurulum nesli ve provider'a bağlı tek kullanımlık transaction olarak kuruldu.
-- Tokenlar sürümlü AES-256-GCM envelope ile ciphertext olarak saklanır.
-- Runtime eksik veya hatalı secret ile sessizce başlamaz.
-- Provider tarafından doğrulanan hesaplar ile reporting authority birbirinden ayrıldı.
+- OAuth işlemi; çalışma alanı, kurulum nesli ve sağlayıcıya bağlı, tek kullanımlık bir işlem olarak kuruldu.
+- Token'lar, sürümlü AES-256-GCM şifreli zarf içinde saklanır; açık metin kalıcılaştırılmaz.
+- Çalışma zamanı, eksik veya hatalı gizli bilgiyle sessizce başlamaz.
+- Sağlayıcının doğruladığı hesaplar ile veri çekme yetkisi birbirinden ayrıldı.
 - Kurulu Shopify mağazası değiştirilemez kapsam otoritesidir; Reporting Store seçimi yoktur.
-- Meta ve Google Ads için tam bir canonical Reporting Account seçilir.
+- Meta ve Google Ads için tam olarak bir yetkili Reporting Account seçilir.
 - Klaviyo tek Connected Account olarak çalışır; ayrı Reporting Account kontrolü yoktur.
-- Reauthorization, disconnect ve reconnect yaşam döngüleri güvenli durum geçişleriyle yönetilir.
+- Yeniden yetkilendirme, bağlantıyı kesme ve yeniden bağlanma yaşam döngüleri güvenli durum geçişleriyle yönetilir.
 
 EO-03 henüz reklam verisi çekmez ve Dataset V2 yazmaz.
 
 ## 2. Aktörler ve otoriteler
 
-- **Kurulu Shopify mağazası:** Workspace'in değiştirilemez commerce kapsamıdır.
-- **Shopify installation generation:** Eski kurulumun yeni kurulum adına işlem yapmasını engeller.
-- **Kullanıcı:** Provider OAuth iznini verir ve desteklenen providerlarda reporting account seçer.
-- **Provider:** Kimliği, erişilebilir hesapları ve token yenileme sonucunu doğrulayan dış otoritedir.
-- **OAuth transaction store:** State, PKCE, callback ve tek kullanım sınırını korur.
-- **Token vault:** Şifreli provider credential'larının tek kalıcı saklama sınırıdır.
-- **Connection/account records:** Bağlantı durumu ile raporlama yetkisini açıkça ayırır.
-- **Runtime:** Yalnız connected ve yetkili kaydı kullanabilir.
+- **Kurulu Shopify mağazası:** Çalışma alanının değiştirilemez ticaret kapsamıdır.
+- **Shopify kurulum nesli (installation generation):** Eski kurulumun yeni kurulum adına işlem yapmasını engeller.
+- **Kullanıcı:** Sağlayıcıya OAuth izni verir; desteklenen sağlayıcılarda raporlama hesabını seçer.
+- **Sağlayıcı:** Kimliği, erişilebilir hesapları ve token yenileme sonucunu doğrulayan dış otoritedir.
+- **OAuth işlem deposu:** State, PKCE, dönüş adresi (callback) ve tek kullanım sınırını korur.
+- **Token kasası (token vault):** Şifreli sağlayıcı erişim bilgilerinin tek kalıcı saklama sınırıdır.
+- **Bağlantı/hesap kayıtları:** Bağlantı durumu ile raporlama yetkisini açıkça ayırır.
+- **Çalışma zamanı:** Yalnız connected durumundaki yetkili kaydı kullanabilir.
 
 ## 3. Uçtan uca normal bağlantı akışı
 
-1. Kullanıcı kurulu Shopify mağazası içinden bir provider bağlantısı başlatır.
-2. Sistem workspace, installation generation, provider, exact callback, state ve gerekiyorsa PKCE bilgisini kısa ömürlü transaction'a bağlar.
-3. Kullanıcı provider'ın kendi ekranında izin verir.
-4. Callback geldiğinde state tek seferde claim edilir; tekrar kullanım reddedilir.
-5. Provider dönüşü doğrulanır ve token plaintext olarak kalıcılaştırılmadan şifreli envelope'a çevrilir.
-6. Provider'ın erişilebilir hesapları fresh response ile alınır.
-7. Meta ve Google Ads için kullanıcı bir canonical Reporting Account seçer. Klaviyo bağlantının kendisini canonical hesap kabul eder.
-8. Connection durumu connected olur; yalnız bu durumda sonraki veri hattına raporlama yetkisi verir.
+1. Kullanıcı, kurulu Shopify mağazası içinden bir sağlayıcı bağlantısı başlatır.
+2. Sistem; çalışma alanı, kurulum nesli, sağlayıcı, tam dönüş adresi, state ve gerekiyorsa PKCE bilgisini kısa ömürlü OAuth işlemine bağlar.
+3. Kullanıcı sağlayıcının kendi ekranında izin verir.
+4. Dönüş geldiğinde state tek seferde işleme alınır; tekrar kullanım reddedilir.
+5. Sağlayıcının dönüşü doğrulanır; token açık metin olarak saklanmadan şifreli zarfa çevrilir.
+6. Sağlayıcının erişilebilir hesapları güncel yanıtla alınır.
+7. Meta ve Google Ads için kullanıcı bir yetkili Reporting Account seçer. Klaviyo bağlantının kendisini yetkili hesap kabul eder.
+8. Bağlantı connected durumuna geçer; ancak bu durumda sonraki veri hattına raporlama yetkisi verir.
 
-## 4. Reporting authority kuralları
+## 4. Raporlama yetkisi kuralları
 
-- Bir workspace yalnız kurulu Shopify mağazasını temsil eder.
-- Kullanıcı başka bir Shopify, WooCommerce, BigCommerce veya Magento mağazasını bu workspace'e reporting store olarak seçemez.
-- Meta ve Google Ads'te provider hesabı ile Reporting Account aynı kavram değildir; seçilen hesap bağlantının altında doğrulanmış olmalıdır.
+- Bir çalışma alanı yalnız kurulu Shopify mağazasını temsil eder.
+- Kullanıcı başka bir Shopify, WooCommerce, BigCommerce veya Magento mağazasını bu çalışma alanına Reporting Store olarak seçemez.
+- Meta ve Google Ads'te sağlayıcı hesabı ile Reporting Account aynı kavram değildir; seçilen hesap bağlantının altında doğrulanmış olmalıdır.
 - Hesap değişikliği eski hesabı sessizce yeniden adlandırmaz; açık yetki değişimi olarak işlenir.
-- Klaviyo için ayrı reporting account katmanı yaratılmaz.
-- connected olmayan, stale veya generation uyuşmayan kayıt veri çekme otoritesi vermez.
+- Klaviyo için ayrı raporlama hesabı katmanı yaratılmaz.
+- connected olmayan, güncelliğini yitirmiş veya kurulum nesli uyuşmayan kayıt veri çekme yetkisi vermez.
 
-## 5. Yenileme, yeniden yetkilendirme, disconnect ve reconnect
+## 5. Yenileme, yeniden yetkilendirme, bağlantıyı kesme ve yeniden bağlanma
 
-- Geçerli refresh sonucu credential envelope'ı ileri sürümle güncelleyebilir.
-- invalid_grant veya kalıcı yetki kaybı bağlantıyı reauthorization_required durumuna taşır; son başarılı token varmış gibi kullanılmaz.
-- Kullanıcı disconnect başlattığında durum disconnect_pending olur, raporlama otoritesi hemen kapanır ve güvenli cleanup tamamlanınca disconnected olur.
-- Reconnect yeni OAuth transaction ve fresh provider doğrulaması gerektirir.
-- Eski callback, eski installation generation veya eski connection state yeni bağlantıyı ele geçiremez.
+- Geçerli token yenileme sonucu, erişim bilgilerinin şifreli zarfını daha ileri sürümle güncelleyebilir.
+- invalid_grant veya kalıcı yetki kaybı bağlantıyı reauthorization_required durumuna taşır; son başarılı token hâlâ kullanılabilirmiş gibi davranılmaz.
+- Kullanıcı bağlantıyı kesmeyi başlattığında durum disconnect_pending olur; raporlama yetkisi hemen kapanır. Güvenli temizlik tamamlandığında durum disconnected olur.
+- Yeniden bağlanma, yeni OAuth işlemi ve sağlayıcının güncel doğrulamasını gerektirir.
+- Eski dönüş isteği, eski kurulum nesli veya eski bağlantı durumu yeni bağlantıyı ele geçiremez.
 
 ## 6. Negatif ve hata yolları
 
-- Geçersiz, süresi geçmiş, başka workspace/provider'a ait veya daha önce kullanılmış state reddedilir.
-- Callback allowlist dışındaysa işlem durur.
-- Provider hesap yanıtı boş, yetkisiz veya belirsizse reporting authority kurulmaz.
-- Token decrypt edilemiyorsa veya key version desteklenmiyorsa runtime güvenli biçimde durur.
-- Refresh geçici hatasında sınırlı retry uygulanabilir; kalıcı auth hatası reauthorization gerektirir.
-- Disconnect tekrar çağrılsa dahi sonuç idempotent kalır.
-- Başarısız bağlantı mevcut sağlıklı başka provider bağlantısını bozmaz.
+- Geçersiz, süresi geçmiş, başka çalışma alanına/sağlayıcıya ait veya daha önce kullanılmış state reddedilir.
+- Dönüş adresi izin verilen adresler listesinin dışındaysa işlem durur.
+- Sağlayıcının hesap yanıtı boş, yetkisiz veya belirsizse raporlama yetkisi kurulmaz.
+- Token'ın şifresi çözülemiyorsa veya anahtar sürümü desteklenmiyorsa çalışma zamanı güvenli biçimde durur.
+- Token yenilemenin geçici hatasında sınırlı yeniden deneme uygulanabilir; kalıcı kimlik doğrulama hatası yeniden yetkilendirme gerektirir.
+- Bağlantıyı kesme işlemi tekrar çağrılsa da aynı sonucu korur; yinelenen işlem yan etkiyi çoğaltmaz.
+- Başarısız bir bağlantı, mevcut sağlıklı başka sağlayıcı bağlantısını bozmaz.
 
 ## 7. Kalıcı durum ve veri sahipliği
 
 Kalıcı veri sınıfları:
 
-- kısa ömürlü OAuth transaction durumu,
-- provider connection kimliği ve yaşam döngüsü,
-- provider tarafından doğrulanmış account envanteri,
-- canonical reporting account seçimi,
-- ciphertext credential envelope ve key version metadata'sı,
+- kısa ömürlü OAuth işlem durumu,
+- sağlayıcı bağlantısının kimliği ve yaşam döngüsü,
+- sağlayıcının doğruladığı hesap envanteri,
+- yetkili raporlama hesabı seçimi,
+- şifreli erişim bilgisi zarfı ve anahtar sürümü bilgisi,
 - güvenli operasyon ve kabul kanıtlarıdır.
 
-Shopify mağaza kapsamı EO-02 workspace/installation otoritesinden gelir. EO-03 bu mağazayı değiştirecek metadata üretmez.
+Shopify mağaza kapsamı EO-02 çalışma alanı/kurulum yetkisinden gelir. EO-03 bu mağazayı değiştirecek bilgi üretmez.
 
-## 8. Secret ve güvenlik sınırları
+## 8. Gizli bilgiler ve güvenlik sınırları
 
-- Plaintext access veya refresh token database, log, response, doküman ya da GitHub'a yazılmaz.
-- Token yalnız gerekli runtime sınırında çözülür.
-- Encryption key ve provider client secret'ları environment/secret manager içinde kalır.
+- Açık metin erişim veya yenileme token'ı; veritabanına, loga, yanıta, dokümana veya GitHub'a yazılmaz.
+- Token'ın şifresi yalnız gerekli çalışma zamanı sınırında çözülür.
+- Şifreleme anahtarı ve sağlayıcı istemci sırları, ortam değişkeni/gizli bilgi yöneticisi içinde kalır.
 - OAuth state tek kullanımlı, kısa ömürlü ve kurulum nesline bağlıdır.
-- Application runtime doğrudan tablo yetkisiyle güvenlik katmanını aşamaz.
-- Canlı kabul kanıtları secret-free ve synthetic olmalıdır.
+- Uygulamanın çalışma zamanı, doğrudan tablo yetkisiyle güvenlik katmanını aşamaz.
+- Canlı kabul kanıtları gizli bilgi içermeyen, sentetik verilerle oluşturulmalıdır.
 
 ## 9. Operasyon, tekrar deneme ve gözlemlenebilirlik
 
-Operasyonel olarak connection state, reporting authority, credential version ve son güvenli lifecycle sonucu ayrı gözlenir.
+Bağlantı durumu, raporlama yetkisi, erişim bilgisi sürümü ve son güvenli yaşam döngüsü sonucu ayrı gözlenir.
 
-- Retry yalnız sınıflandırılmış geçici hatalarda yapılır.
-- Kalıcı auth hatası kullanıcı eylemi gerektiren reauthorization olarak gösterilir.
-- Disconnect/reconnect işlemleri idempotent ve audit edilebilir olmalıdır.
-- Startup guard eksik secret veya bozuk key setini uygulama trafiği almadan yakalar.
-- Repository testleri ve canlı rollback-scoped database acceptance birlikte kapanış kanıtıdır.
+- Yeniden deneme yalnız sınıflandırılmış geçici hatalarda yapılır.
+- Kalıcı kimlik doğrulama hatası, kullanıcı eylemi gerektiren yeniden yetkilendirme olarak gösterilir.
+- Bağlantıyı kesme/yeniden bağlanma işlemleri tekrarlansa da tutarlı sonuç vermeli ve denetlenebilir olmalıdır.
+- Başlangıç koruması, eksik gizli bilgiyi veya bozuk anahtar kümesini uygulama trafik almadan yakalar.
+- Repository testleri ile canlı veritabanında geri alınan işlem kapsamındaki kabul birlikte kapanış kanıtıdır.
 
-## 10. Rollback, kurtarma ve güvenli başarısızlık
+## 10. Geri alma, kurtarma ve güvenli başarısızlık
 
-- Migration ve lifecycle kabulü rollback-scoped synthetic fixture ile sınanır.
-- Başarısız provider işlemi bağlantıyı connected göstermemelidir.
-- Bozuk yeni credential sürümü önceki kaydı körlemesine overwrite etmez.
-- Disconnect tamamlanamazsa yetki kapalı tutulur ve durum yeniden işlenebilir kalır.
-- Forward-only düzeltmeler kabul edilmiş tarihsel kanıtı silmez.
+- Migration ve yaşam döngüsü kabulü, işlem sonunda geri alınan sentetik test verisiyle sınanır.
+- Başarısız sağlayıcı işlemi bağlantıyı connected göstermemelidir.
+- Bozuk yeni erişim bilgisi sürümü, önceki kaydın üzerine körlemesine yazmaz.
+- Bağlantıyı kesme tamamlanamazsa yetki kapalı tutulur; durum yeniden işlenebilir kalır.
+- Yalnız ileri yönde yapılan düzeltmeler, kabul edilmiş tarihsel kanıtı silmez.
 
 ## 11. Kabul kanıtı ve bilinen sınırlar
 
@@ -119,23 +123,25 @@ Kabul kanıtları:
 - docs/EO_03C_CONNECTION_ACCOUNT_AUTHORITY.md
 - docs/EO_03D_PROVIDER_CONNECTION_LIFECYCLE.md
 - evidence/eo-03d-live-database-evidence-2026-10-09.json
-- Repository test, typecheck ve build PASS.
-- Canlı rollback-scoped lifecycle kabulü PASS; synthetic residue 0.
-- Supabase Security Advisor 0; EO-03-D kaynaklı yeni unindexed foreign key yok.
-- Ürün sahibi EO-03 kapanışını 9 Ekim 2026'da açıkça kabul etti.
+- Repository testleri, tür kontrolü ve derleme geçmiştir.
+- Canlı veritabanında geri alınan işlem kapsamındaki yaşam döngüsü kabulü geçmiştir; sentetik test artığı 0'dır.
+- Supabase Security Advisor bulgusu 0'dır; EO-03-D kaynaklı yeni indekslenmemiş foreign key yoktur.
+- Ürün sahibi EO-03 kapanışını 9 Ekim 2026'da açıkça kabul etmiştir.
 
 Bilinen sınırlar:
 
-- Provider HTTP adapter'ları ve gerçek veri çekimi EO-04 kapsamıdır.
-- Scheduler, Dataset V2, reconciliation ve finality EO-05 kapsamıdır.
-- Bu paket canlı provider OAuth töreni, provider console mutation'ı veya production deploy yetkilendirmez.
-- UI yüzeyleri EO-07 kapsamında uygulanacaktır.
+- Sağlayıcı HTTP adaptörleri ve gerçek veri çekimi EO-04 kapsamıdır.
+- Scheduler, Dataset V2, uzlaştırma ve verinin kesinleşmesi EO-05 kapsamıdır.
+- Bu paket canlı sağlayıcı OAuth işlemi, sağlayıcı paneli değişikliği veya Production deploy yetkisi vermez.
+- Arayüz yüzeyleri EO-07 kapsamında uygulanacaktır.
 
-## 12. Tek sonraki parent
+## 12. Tek sonraki ana paket
 
-EO-03'ün tek sonraki parent'ı **A6-EO-04 — Meta, Google Ads and Klaviyo adapters** paketidir.
+EO-03'ün tek sonraki ana paketi **A6-EO-04 — Meta, Google Ads ve Klaviyo adaptörleri** paketidir.
 
-## Contract section map
+## Makine sözleşmesinin bölüm eşlemesi
+
+Aşağıdaki kimlikler testler tarafından kullanıldığı için çevrilmez:
 
 - business_purpose_and_actual_output
 - actors_and_authorities

@@ -55,6 +55,8 @@
   },
   "documentation": {
     "id": "A6-DOCS-01",
+    "work_contract": "contracts/a6-docs-01-turkish-standardization-v1.json",
+    "execution_status": "in_progress_2026-10-19",
     "timing": "after_A6-TECH-01_remediation_before_A6-EO-05",
     "active_human_facing_markdown_language": "Turkish",
     "machine_contract_bulk_translation": false,

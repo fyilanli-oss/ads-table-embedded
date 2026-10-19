@@ -1,0 +1,461 @@
+{
+  "contract_id": "a6-docs-01-turkish-standardization-v1",
+  "checked_at": "2026-10-19",
+  "package_id": "A6-DOCS-01",
+  "status": "in_progress_first_translation_batch_prepared",
+  "baseline_commit": "f62a5c6f7a254fe61be3c8af94f7fa9d2d6b65a1",
+  "brief": "docs/A6_QUALITY_AND_ASSURANCE_GATES.md",
+  "user_start_authorized": true,
+  "scope": {
+    "human_markdown_translation": true,
+    "analyst_readability_review": true,
+    "accepted_semantics_may_change": false,
+    "bulk_machine_contract_translation": false,
+    "immutable_evidence_translation": false,
+    "runtime_code_change": false,
+    "live_mutation": false
+  },
+  "inventory_counts": {
+    "total_markdown": 63,
+    "human_markdown": 62,
+    "excluded_agent_instructions": 1,
+    "translated_review_pending": 4,
+    "pending_language_review": 58
+  },
+  "first_batch": [
+    "README.md",
+    "docs/EO_01_ANALYSIS_DESIGN_BOOK.md",
+    "docs/EO_02_ANALYSIS_DESIGN_BOOK.md",
+    "docs/EO_03_ANALYSIS_DESIGN_BOOK.md"
+  ],
+  "terminology_policy": [
+    "İnsan tarafından okunan anlatım Türkçeleştirilir; teknik kimlikler değiştirilmez.",
+    "Channel, Sales Role, Medium ve provider adları yerleşik teknik terimler olarak korunur.",
+    "API alanları, hata kodları, durum değerleri, paket kimlikleri, dosya yolları, URL ve komutlar korunur.",
+    "Tarihsel kabul tarihleri ve kapsamları korunur; güncel durum Execution Plan üzerinden okunur.",
+    "Anlamsal çelişki otomatik düzeltilmez; ürün sahibine bildirilir."
+  ],
+  "verification_limits": "Dil kontrolü ve teknik kimlik testi semantik eşdeğerliği tek başına kanıtlamaz; kaynakla karşılaştırmalı okuma ve ürün sahibi okunabilirlik kabulü ayrıca gerekir.",
+  "package_complete": false,
+  "product_owner_readability_accepted": false,
+  "merge_authorized": false,
+  "EO05_may_start": false,
+  "inventory": [
+    {
+      "path": "AGENTS.md",
+      "baseline_blob": "e561656a151184571d87a09eb7a8e5a6785b6e2e",
+      "classification": "agent_instructions_excluded",
+      "status": "excluded_unchanged"
+    },
+    {
+      "path": "README.md",
+      "baseline_blob": "edf24afd95ea1cb9a29c8ebee060b208eb9c062c",
+      "classification": "human_markdown",
+      "status": "translated_product_owner_review_pending",
+      "preserved_technical_tokens": [
+        "/",
+        "/ad-analysis",
+        "/settings",
+        "fyilanli-oss/ads-table-dev",
+        "fyilanli-oss/ads-table-embedded"
+      ]
+    },
+    {
+      "path": "docs/A6_EO_07_FUNNEL_VISUALIZATION_REFERENCE.md",
+      "baseline_blob": "781230483ebdb3a016ac4730973f1c31454d2e55",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/A6_EO_07_THREE_SURFACE_UI_PRODUCT_FREEZE.md",
+      "baseline_blob": "7c3c782c1c8db6028160c47c87043ead0fe9780d",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/A6_EO_CROSS_CUTTING_SAFETY_CAPACITY_FREEZE.md",
+      "baseline_blob": "e678aec0d1590ee02c15c6f735eefd0f83a6bf67",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/A6_EO_DEMO_FIXTURE_EXPORT_REFERENCE.md",
+      "baseline_blob": "fc208934ac32f4738f0ab7827d7e7575fab114b7",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/A6_EO_F1_F2_AUTHORITY_AND_PROJECT_BOUNDARY.md",
+      "baseline_blob": "b4d86def8da58d0e2dd6076f542e286b8ab179d2",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/A6_EO_F3_CODE_DEPENDENCY_CARRY_ALLOWLIST.md",
+      "baseline_blob": "18c9c62757264c986b1b978bb80e1f72d372357c",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/A6_EO_F4_SCHEMA_DATA_CARRY_MAP.md",
+      "baseline_blob": "eb8183bcafda90453af6b5092902d07b19d75bc8",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/A6_EO_F5_PRODUCT_ROUTE_MAP.md",
+      "baseline_blob": "bbb9273d86570732496b5b66f463ca3f8ce55789",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/A6_EO_F6_EFFORT_RISK_COMPARISON.md",
+      "baseline_blob": "b95344c9b4f92a6628e2b6a2f6bf37ede3d30de1",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/A6_EO_F7_GO_DECISION.md",
+      "baseline_blob": "b92649acbf5b6cc2fcc3bdcf49625f30618d8ce5",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/A6_EO_IMPLEMENTATION_MASTER_TABLE.md",
+      "baseline_blob": "7c2b3da4cbf0f94caa487d0c71eafb0832a4fb01",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/A6_EO_SECRET_INVENTORY_AND_RECOVERY.md",
+      "baseline_blob": "02ff940fd2e062ff1e4adfe70cda6e739a0004bb",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/A6_OPS_LOCAL_01_SAFE_CLEANUP.md",
+      "baseline_blob": "45541afd270810be824d79bce485cd99d1138f7e",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/A6_OPS_SHOPIFY_01_ISOLATED_PREPRODUCTION.md",
+      "baseline_blob": "24b711e037c8f23b9f47c2b8d979835d40f4f613",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/A6_QUALITY_AND_ASSURANCE_GATES.md",
+      "baseline_blob": "b5d4ce5a0838225c06c40f6f9734d00cb30192fa",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/A6_TECH_01_ENGINEERING_INTEGRITY_AUDIT.md",
+      "baseline_blob": "3178f5374ca28fc09f9a4f5edf0ea1dc6720468f",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/A6_TECH_01_F01B_DATABASE_REPLAY.md",
+      "baseline_blob": "b3129cebb29aa61872b69e4a7525fc06ad1c1c12",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/A6_TECH_01_F01C_SCOPED_RECOVERY.md",
+      "baseline_blob": "fb2f96323ede2d1d6d75cefad6d10952fa64f57d",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/A6_TECH_01_F01_MIGRATION_RECONCILIATION.md",
+      "baseline_blob": "d817462a387a4e6d195b5ab9553ddd6e02ebaa19",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_01A_REPOSITORY_BOUNDARY.md",
+      "baseline_blob": "9c7d991c12524ccb9f38a826d61762ed938086af",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_01B_OFFICIAL_STACK_MANIFEST_CI.md",
+      "baseline_blob": "cba0e9e53cb3e43c76f3ac8859f049daec89d6a9",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_01C_THREE_ROUTE_PREVIEW_SHELL.md",
+      "baseline_blob": "428c62978ff665f71fed5448dc53972b8f6b44b4",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_01_ANALYSIS_DESIGN_BOOK.md",
+      "baseline_blob": "ab1f6c25f8907b311956567fac33383b62c9b5bc",
+      "classification": "human_markdown",
+      "status": "translated_product_owner_review_pending",
+      "preserved_technical_tokens": [
+        "A6-EO-01",
+        "A6-EO-02",
+        "docs/EO_01A_REPOSITORY_BOUNDARY.md",
+        "docs/EO_01B_OFFICIAL_STACK_MANIFEST_CI.md",
+        "docs/EO_01C_THREE_ROUTE_PREVIEW_SHELL.md"
+      ]
+    },
+    {
+      "path": "docs/EO_02A_SUPABASE_FOUNDATION.md",
+      "baseline_blob": "cf95c827e809092a011bf5a9357f05505f7a62de",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_02BC_INSTALLED_SHOP_AUTHORITY_CORRECTION.md",
+      "baseline_blob": "e9b2de7974c1e8184fdb6d43acdbac11ed7f0510",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_02B_WORKSPACE_INSTALLATION_AUTHORITY.md",
+      "baseline_blob": "7bab56665216e262176ca5b5b0eecb308e9412da",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_02C_SHOPIFY_APP_PRICING_ENTITLEMENT.md",
+      "baseline_blob": "6305883eb5037fbdf0da2541a3f7652199da58c7",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_02C_SHOPIFY_RUNTIME_AUTH_BRIDGE.md",
+      "baseline_blob": "a710ac4161446027a11cf5c23af91ea1636c1122",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_02D_DURABLE_DELETION_WORKER.md",
+      "baseline_blob": "026e28d90eba00731dea3e404edfc24d3e653747",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_02D_PRIVACY_LIFECYCLE.md",
+      "baseline_blob": "b58b486293e3a66b7a4946526a2a3f93675259d1",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_02_ANALYSIS_DESIGN_BOOK.md",
+      "baseline_blob": "3028af9456678c3d9d4551f5edcd79a4dc62f90f",
+      "classification": "human_markdown",
+      "status": "translated_product_owner_review_pending",
+      "preserved_technical_tokens": [
+        "A6-EO-02",
+        "A6-EO-03",
+        "app/uninstalled",
+        "customers/data_request",
+        "customers/redact",
+        "docs/EO_02A_SUPABASE_FOUNDATION.md",
+        "docs/EO_02BC_INSTALLED_SHOP_AUTHORITY_CORRECTION.md",
+        "docs/EO_02B_WORKSPACE_INSTALLATION_AUTHORITY.md",
+        "docs/EO_02C_SHOPIFY_APP_PRICING_ENTITLEMENT.md",
+        "docs/EO_02C_SHOPIFY_RUNTIME_AUTH_BRIDGE.md",
+        "docs/EO_02D_DURABLE_DELETION_WORKER.md",
+        "docs/EO_02D_PRIVACY_LIFECYCLE.md",
+        "shop/redact"
+      ]
+    },
+    {
+      "path": "docs/EO_03A_OAUTH_TRANSACTION_BOUNDARY.md",
+      "baseline_blob": "b12621607ddfb23fa181a7c7a62db93ac34c2524",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_03B_TOKEN_ENVELOPE_STARTUP_GUARD.md",
+      "baseline_blob": "9d7eb1b1615a4ac58cf03c3fba450c0bf240d68b",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_03C_CONNECTION_ACCOUNT_AUTHORITY.md",
+      "baseline_blob": "81eeafcb6a9550b3b42ffc6d0072ed711a46c04a",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_03D_PROVIDER_CONNECTION_LIFECYCLE.md",
+      "baseline_blob": "5aaab7fc78f9adf64c851f16bbaa8d84df8090e4",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_03_ANALYSIS_DESIGN_BOOK.md",
+      "baseline_blob": "1f4c3a3289ecd3e7e5283fe23e1d355cb5063a0c",
+      "classification": "human_markdown",
+      "status": "translated_product_owner_review_pending",
+      "preserved_technical_tokens": [
+        "A6-EO-03",
+        "A6-EO-04",
+        "docs/EO_03A_OAUTH_TRANSACTION_BOUNDARY.md",
+        "docs/EO_03B_TOKEN_ENVELOPE_STARTUP_GUARD.md",
+        "docs/EO_03C_CONNECTION_ACCOUNT_AUTHORITY.md",
+        "docs/EO_03D_PROVIDER_CONNECTION_LIFECYCLE.md",
+        "evidence/eo-03d-live-database-evidence-2026-10-09.json"
+      ]
+    },
+    {
+      "path": "docs/EO_04A_COMMON_ADAPTER_START_BRIEF.md",
+      "baseline_blob": "95c02617258b2c55534c65cd14375242453ced6e",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_04B_META_APP_ROLE_READINESS_BRIEF.md",
+      "baseline_blob": "2ac9f6ceba2751ba1c85a9c570e8e854c7cc3f69",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_04B_META_OAUTH_ACCOUNT_SELECTION.md",
+      "baseline_blob": "ad4d62b0dc3834bdde3a2c14879ca5d1f921320d",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_04B_META_REPORTING_RUNTIME_START_BRIEF.md",
+      "baseline_blob": "6c3e3a72ce08c31d9f8583d6a2b310db92f99bb9",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_04C_GOOGLE_LIVE_EVIDENCE_TRIGGER_BRIEF.md",
+      "baseline_blob": "e7d6d8725d39b16ac8ebc2eec615cf6a236f6682",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_04C_GOOGLE_REPORTING_RUNTIME_START_BRIEF.md",
+      "baseline_blob": "59c78569fab522070515b662f0e7a853225162d8",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_04D_KLAVIYO_ATTRIBUTION_RESOLUTION_BRIEF.md",
+      "baseline_blob": "50f342caa8669621686ebdd7ee5c9fc0c1050965",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_04D_KLAVIYO_LIVE_EVIDENCE_TRIGGER_BRIEF.md",
+      "baseline_blob": "a6722ec7ae3da7e755d88f5171fb48fb4024259b",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_04D_KLAVIYO_OAUTH_ESTIMATED_SPEND_START_BRIEF.md",
+      "baseline_blob": "ea88a8134dbcff225e158f97dc7c693bbaaf8018",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_04D_KLAVIYO_OAUTH_HARDENING_BRIEF.md",
+      "baseline_blob": "3154be5e12135a5b50a56ba785b7f4355dce76ef",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_04D_KLAVIYO_REAUTHORIZATION_TRUTH_BRIEF.md",
+      "baseline_blob": "655b12b270684ea388cce99cf773c63df54fa8e1",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_04D_KLAVIYO_REPORTING_AUTHORITY_BRIEF.md",
+      "baseline_blob": "91106f0a0403b996dae695ff2b2ddd0f2d34203e",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_04D_KLAVIYO_REPORTING_RUNTIME_BRIEF.md",
+      "baseline_blob": "f9af6f481b21abd702e9ff86cc3fd7efca2209e3",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_04E_THREE_PROVIDER_CHANNEL_PRODUCT_ECONOMICS_START_BRIEF.md",
+      "baseline_blob": "3dc7834234efcd90d324719d16a320d2d7ddfe07",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_04_ANALYSIS_DESIGN_BOOK.md",
+      "baseline_blob": "73a20cb470542780c5645b53a2101112f5832ad1",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EO_04_PROVIDER_LIVE_ACCEPTANCE_START_BRIEF.md",
+      "baseline_blob": "0cf62fd3c7d9c050f138be4d17caf0bf34a4e121",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/EXECUTION_PLAN.md",
+      "baseline_blob": "b7ca6aa8b33b16862e0fd02c7accf683f00e86fa",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/SHOPIFY_EMBEDDED_UI_CONSTITUTION.md",
+      "baseline_blob": "69067ecb5ca4f78e343e708f9eb5536e1ed938df",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/decisions/A6_EO_04_C_GOOGLE_2026_ACCESS_REVIEW_CORRECTIVE.md",
+      "baseline_blob": "2c8d24b399c1f33e823b0d65d7c3d68aed6d60c8",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/decisions/A6_EO_04_C_GOOGLE_OAUTH_CORRECTIVE_REBUILD.md",
+      "baseline_blob": "682b8e626c07f77af5c381374b9fcd0478bc0cad",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/decisions/A6_EO_04_D_KLAVIYO_REPORTING_CAPABILITY_BASELINE.md",
+      "baseline_blob": "dddc8795b33207453f92c202463145d72e60a4f4",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/research/EO_04E_GOOGLE_CHANNEL_WORKING_DRAFT.md",
+      "baseline_blob": "1b1e59386d3a514e1d2ac8d312f8441de6ae3dd2",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/research/EO_04E_META_CHANNEL_WORKING_DRAFT.md",
+      "baseline_blob": "5ee5c232feee8e9a464a44d3eb3839c4f6e61174",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/runbooks/EO_02C_LIVE_ACCEPTANCE_RUNBOOK.md",
+      "baseline_blob": "ca870768da9d967a5942db1320cf88daff9609f2",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    },
+    {
+      "path": "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md",
+      "baseline_blob": "cf566b3e41c958bb1684c1f25575c325f585f033",
+      "classification": "human_markdown",
+      "status": "pending_language_review"
+    }
+  ]
+}

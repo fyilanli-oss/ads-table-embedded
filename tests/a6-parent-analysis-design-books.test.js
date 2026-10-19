@@ -34,7 +34,8 @@ test("every closed parent has an accepted Analysis-Design Book", async () => {
 
     const book = await readFile(ledger.artifact, "utf8");
     assert.match(book, new RegExp(item.id));
-    assert.match(book, /Status:\*\* Accepted/);
+    // Accepted machine ledger remains authoritative; prose may be localized.
+    assert.match(book, /(?:Status:\*\* Accepted|Durum:\*\* Kabul edildi)/);
     for (const requiredSection of closure.required_sections) {
       assert.match(
         book,

@@ -1247,8 +1247,9 @@
     {
       "id": "A6-DOCS-01",
       "title": "Turkish documentation and terminology standardization",
-      "status": "Ready; prerequisite A6-TECH-01 accepted; implementation not started",
+      "status": "In progress; Turkish documentation standardization authorized 2026-10-19",
       "objective": "Normalize active human-facing Markdown to Turkish without changing accepted semantics or machine/evidence artifacts.",
+      "work_contract": "contracts/a6-docs-01-turkish-standardization-v1.json",
       "document": "docs/A6_QUALITY_AND_ASSURANCE_GATES.md",
       "contract": "contracts/a6-quality-and-assurance-gates-v1.json",
       "blocks_eo05_until_complete": true,

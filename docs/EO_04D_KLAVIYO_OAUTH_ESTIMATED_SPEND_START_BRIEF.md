@@ -1,171 +1,169 @@
-# A6-EO-04-D Klaviyo OAuth and Estimated Email Spend Start Brief
+# A6-EO-04-D — Klaviyo bağlantısı ve tahmini e-posta harcaması başlangıç brief'i
 
-Status: Accepted — implementation in progress  
-Checked: 13 October 2026
+**Tarihsel durum:** Kabul edildi — uygulama sürüyordu.
 
-Product-owner acceptance was received on 13 October 2026 after the OAuth,
-single-account and effective-dated spend boundaries below were reviewed. This
-acceptance authorizes repository implementation and the corrective spend-ledger
-schema migration only; live provider-console, Vercel and deployment mutations
-remain separate gates.
+**Kaynak kontrol tarihi:** 13 Ekim 2026
 
-## Official sources
+Ürün sahibi, aşağıdaki OAuth, tek hesap ve başlangıç tarihli harcama sınırlarını
+inceleyerek 13 Ekim 2026'da kabul verdi. Bu kabul yalnız repository uygulamasını
+ve düzeltici harcama defteri şema migration'ını yetkilendirdi; canlı sağlayıcı
+paneli, Vercel ve dağıtım işlemleri ayrı onay kapıları olarak kaldı.
+
+Bu belge o günkü kapsamı ve sonraki düzeltmeleri koruyan tarihsel kayıttır;
+bugün yeniden işlem yapma talimatı değildir. Güncel kabul ve iş sırası
+`docs/EXECUTION_PLAN.md`, nihai paket anlatımı `docs/EO_04_ANALYSIS_DESIGN_BOOK.md`
+üzerinden okunur. Özgün İngilizce ekran metinleri değiştirilmez.
+
+## Resmî kaynaklar
 
 - Klaviyo OAuth: https://developers.klaviyo.com/en/docs/set_up_oauth
-- Klaviyo Get Accounts: https://developers.klaviyo.com/en/reference/get_accounts
-- Klaviyo API overview and revisions: https://developers.klaviyo.com/en/v2026-07-15/reference/api_overview
-- Supabase Row Level Security: https://supabase.com/docs/guides/database/postgres/row-level-security
-- Supabase changelog: https://supabase.com/changelog
+- Klaviyo hesap sorgusu: https://developers.klaviyo.com/en/reference/get_accounts
+- Klaviyo API genel bakışı ve sürümleri: https://developers.klaviyo.com/en/v2026-07-15/reference/api_overview
+- Supabase satır düzeyi güvenlik: https://supabase.com/docs/guides/database/postgres/row-level-security
+- Supabase değişiklik günlüğü: https://supabase.com/changelog
 - Shopify App Home 2.0 RC: https://shopify.dev/docs/api/app-home/v2.0-rc
-- Shopify number field: https://shopify.dev/docs/api/app-home/latest/web-components/forms/number-field
+- Shopify sayı alanı: https://shopify.dev/docs/api/app-home/latest/web-components/forms/number-field
 - Shopify modal: https://shopify.dev/docs/api/app-home/latest/web-components/overlays/modal
-- Shopify button: https://shopify.dev/docs/api/app-home/latest/web-components/actions/button
+- Shopify buton: https://shopify.dev/docs/api/app-home/latest/web-components/actions/button
 
-## Business outcome
+## İş sonucu
 
-The merchant connects exactly one provider-verified Klaviyo Account beneath the
-immutable installed Shopify Store, confirms that account and records an
-Estimated 30-Day Klaviyo Email Spend in the account's provider currency. The
-merchant can later start a new effective spend period or correct the value of an
-existing period without changing its date.
+Kullanıcı, kimliği değiştirilemeyen kurulu Shopify mağazasının altına sağlayıcı
+tarafından doğrulanmış tam bir Klaviyo Account bağlar. Hesabı açıkça seçer ve
+hesabın para biriminde **Estimated 30-Day Klaviyo Email Spend** değerini kaydeder.
+Bu, 30 günlük tahmini e-posta harcamasıdır. Daha sonra yeni bir harcama dönemi
+başlatabilir veya mevcut dönemin tutarını, başlangıç tarihini değiştirmeden düzeltebilir.
 
-This package preserves the proven legacy product behavior while rebuilding it on
-the new repository's EO-03 transaction, encrypted-token, provider-account and
-connection-lifecycle foundations. Legacy source code and public-schema access
-patterns are not copied.
+Eski uygulamada kanıtlanmış ürün davranışı korunur; ancak yeni repository'nin
+EO-03 işlem, şifreli token, sağlayıcı hesabı ve bağlantı yaşam döngüsü temelleri
+üzerinde yeniden kurulur. Eski kaynak kod ve public şema erişim kalıpları kopyalanmaz.
 
-## Accepted implementation boundary proposed by this brief
+## Kabul edilmiş uygulama akışı
 
-1. **Connect Klaviyo** opens a Shopify confirmation modal.
-2. **Continue to Klaviyo** creates the server-owned OAuth transaction, generates
-   an S256 PKCE verifier/challenge and navigates at the top level.
-3. The callback consumes the one-time transaction, exchanges the code at
-   `https://a.klaviyo.com/oauth/token`, encrypts the returned token set and moves
-   the connection to pending account selection.
-4. AdsTable calls `GET https://a.klaviyo.com/api/accounts/` with
-   `accounts:read`. Exactly one valid account object is required.
-5. OAuth return follows the accepted Meta/Google setup behavior: the account
-   selection modal opens, and **Resume setup** reopens that same account step
-   without restarting OAuth. The merchant must explicitly select the
-   provider-returned account; AdsTable never silently assigns it.
-6. **Continue** advances the same modal to a separate estimated-spend step. The
-   account name, currency and timezone are then read-only. There is no Ad
-   Account or Reporting Account concept for Klaviyo.
-7. The second step collects **Estimated 30-Day Klaviyo Email Spend**.
-   Currency is read-only and provider-authoritative. The initial effective date
-   is the server-calculated business date in the verified account timezone.
-8. **Save and connect** submits both the selected account ID and spend. The
-   server reloads the pending credential, re-fetches the account list and rejects
-   a missing or stale selection before it atomically persists the verified
-   account, the initial
-   spend period and the connected lifecycle state. Partial success is forbidden.
-9. Dismissing either modal step preserves pending state. The next **Resume
-   setup** always begins again at account selection.
-10. Connected state exposes **Update spend**, **Change value** and
-   revoke-first **Disconnect**.
+1. **Connect Klaviyo**, Shopify onay modalını açar.
+2. **Continue to Klaviyo**, sunucunun yönettiği OAuth işlemini oluşturur,
+   S256 PKCE doğrulayıcı/karşılık çiftini üretir ve üst düzey sayfayı yönlendirir.
+3. Dönüş adresi, tek kullanımlık işlemi tüketir; kodu
+   `https://a.klaviyo.com/oauth/token` üzerinden değiştirir, dönen token kümesini
+   şifreler ve bağlantıyı hesap seçimi bekleyen duruma taşır.
+4. AdsTable, `accounts:read` ile `GET https://a.klaviyo.com/api/accounts/`
+   çağrısını yapar. Tam bir geçerli hesap nesnesi gerekir.
+5. OAuth dönüşünde Meta/Google ile kabul edilmiş kurulum davranışı izlenir:
+   hesap seçimi modalı açılır. **Resume setup**, OAuth'u yeniden başlatmadan
+   aynı hesap adımını açar. Sağlayıcıdan gelen hesabı kullanıcı açıkça seçer;
+   AdsTable sessizce atama yapmaz.
+6. **Continue**, aynı modalı ayrı bir tahmini harcama adımına ilerletir.
+   Hesap adı, para birimi ve saat dilimi salt okunurdur. Klaviyo için Ad Account
+   veya Reporting Account kavramı yoktur.
+7. İkinci adım **Estimated 30-Day Klaviyo Email Spend** değerini alır.
+   Para biriminin tek kaynağı sağlayıcıdır ve değiştirilemez. İlk başlangıç tarihi,
+   doğrulanmış hesap saat dilimine göre sunucunun hesapladığı iş tarihidir.
+8. **Save and connect**, seçilen hesap kimliği ve harcamayı birlikte gönderir.
+   Sunucu bekleyen kimlik bilgisini yeniden yükler, hesap listesini yeniden
+   sorgular; eksik veya güncelliğini yitirmiş seçimi reddeder. Doğrulanmış hesap,
+   ilk harcama dönemi ve bağlı durum birlikte, atomik olarak kaydedilir.
+   Kısmi başarı yasaktır.
+9. Modalın iki adımından herhangi birini kapatmak bekleyen durumu korur.
+   Sonraki **Resume setup** her zaman yeniden hesap seçiminden başlar.
+10. Bağlı durumda **Update spend**, **Change value** ve önce sağlayıcı yetkisini
+    iptal eden **Disconnect** eylemleri bulunur.
 
-## Estimated-spend ledger
+## Tahmini harcama defteri
 
-Estimated spend is operational merchant configuration with its own effective-
-dated ledger. It is not stored inside provider tokens or a reporting fact row.
+Tahmini harcama, kendi başlangıç tarihli defteri olan kullanıcı ayarıdır.
+Sağlayıcı token'ının veya raporlama gerçeği satırının içine yazılmaz.
 
-The proposed private table is
-`integrations.klaviyo_email_spend_periods` with these authoritative fields:
+Öngörülen özel tablo `integrations.klaviyo_email_spend_periods` ve yetkili alanları:
 
-- `id`: immutable UUID primary key.
-- `connection_id`: EO-03 provider connection foreign key.
-- `account_id`: verified `integrations.provider_accounts` foreign key.
-- `workspace_id` and `install_generation`: installed-shop authority boundary.
-- `provider_account_id`: server-verified Klaviyo account identity.
-- `source_currency`: verified three-letter Klaviyo account currency.
-- `estimated_30_day_email_spend`: `numeric(10,2)`, from `0.00` through
-  `99999999.99`.
-- `effective_from`: verified-account-timezone business date.
-- `provenance`: exact value `user_estimated`.
-- `correction_version`: positive integer beginning at 1.
-- `created_at` and `updated_at`: server timestamps.
+- `id`: değişmez UUID birincil anahtar.
+- `connection_id`: EO-03 sağlayıcı bağlantısının yabancı anahtarı.
+- `account_id`: doğrulanmış `integrations.provider_accounts` yabancı anahtarı.
+- `workspace_id` ve `install_generation`: kurulu mağazanın yetki sınırı.
+- `provider_account_id`: sunucunun doğruladığı Klaviyo hesap kimliği.
+- `source_currency`: doğrulanmış, üç harfli Klaviyo hesap para birimi.
+- `estimated_30_day_email_spend`: `numeric(10,2)`; `0.00`–`99999999.99` aralığı.
+- `effective_from`: doğrulanmış hesap saat dilimindeki iş tarihi.
+- `provenance`: tam olarak `user_estimated` değeri.
+- `correction_version`: 1'den başlayan pozitif tamsayı.
+- `created_at` ve `updated_at`: sunucu zaman damgaları.
 
-Every **Update spend** submission creates its own immutable ledger event,
-including multiple submissions on the same business date. The newest event is
-ordered by `effective_from`, then `created_at`, then `id`; older same-day events
-remain visible and correctable as audit history. The table lives in the private
-`integrations` schema, has RLS enabled and forced,
-grants no browser, `anon`, `authenticated` or generic `service_role` access, and
-is reachable only through narrowly granted `adstable_runtime` functions.
+Her **Update spend** gönderimi ayrı ve değişmez bir defter olayı oluşturur;
+aynı iş tarihindeki birden fazla gönderim de buna dahildir. En yeni olay
+`effective_from`, ardından `created_at`, ardından `id` ile belirlenir.
+Önceki aynı gün kayıtları denetim geçmişinde görünür ve tutarları düzeltilebilir kalır.
+Tablo özel `integrations` şemasındadır; RLS etkin ve zorunludur.
+Tarayıcıya, `anon`, `authenticated` veya genel `service_role` rolüne erişim
+verilmez. Yalnız dar yetkili `adstable_runtime` fonksiyonları üzerinden erişilir.
 
-### Update spend
+### Update spend — yeni dönem başlatma
 
-- Revalidate the current Klaviyo account, currency and timezone first.
-- Compute the new effective date on the server from the account timezone.
-- Insert a new ledger row; do not overwrite a previous period.
-- Allow repeated updates on the same business date and preserve each as a
-  separate immutable event. The latest same-day event is current.
-- Use optimistic connection-version locking so reconnect/disconnect races fail
-  closed.
-- Preserve the accepted legacy Settings presentation exactly: the connected
-  action is **Update spend**; the modal heading is **Update Klaviyo email
-  spend**; its explanation is **Enter the new estimated Klaviyo email cost for
-  the next 30-day period starting today. SMS costs are not included.**; the
-  field label is **Estimated 30-Day Klaviyo Email Spend**; and the primary
-  action is **Save new value**.
+- Önce güncel Klaviyo hesabı, para birimi ve saat dilimi yeniden doğrulanır.
+- Yeni başlangıç tarihi, hesap saat diliminden sunucuda hesaplanır.
+- Yeni defter satırı eklenir; önceki dönemin üzerine yazılmaz.
+- Aynı iş tarihinde tekrar güncelleme yapılabilir. Her biri ayrı ve değişmez
+  olaydır; aynı günün son olayı geçerli olur.
+- Yeniden bağlanma/bağlantı kesme yarışlarında güvenli durmak için iyimser
+  bağlantı sürümü kilidi kullanılır.
+- Kabul edilmiş Settings sunumu aynen korunur: bağlı durumdaki eylem
+  **Update spend**; modal başlığı **Update Klaviyo email spend**; açıklaması
+  **Enter the new estimated Klaviyo email cost for the next 30-day period starting today. SMS costs are not included.**;
+  alan etiketi **Estimated 30-Day Klaviyo Email Spend**; ana eylem **Save new value**.
 
-Disconnect preserves historical spend. A later reconnect completed on the same
-business date also appends a distinct immutable event; it must not collide with,
-overwrite or delete the earlier connection history.
+Disconnect geçmiş harcamayı korur. Aynı iş tarihinde tamamlanan sonraki yeniden
+bağlanma da ayrı ve değişmez olay ekler; önceki bağlantı geçmişiyle çakışamaz,
+üzerine yazamaz veya onu silemez.
 
-Reconnect completion uses the fresh provider verification timestamp for both
-`connected_at` and `last_verified_at`. This preserves the existing
-`last_verified_at >= connected_at` invariant without changing OAuth, account
-selection, Disconnect or historical spend rows.
+Yeniden bağlanmanın tamamlanmasında hem `connected_at` hem `last_verified_at`
+için yeni sağlayıcı doğrulama zaman damgası kullanılır. Böylece
+`last_verified_at >= connected_at` değişmezi; OAuth, hesap seçimi, Disconnect
+ve geçmiş harcama satırları değiştirilmeden korunur.
 
-### Change value
+### Change value — kayıtlı tutarı düzeltme
 
-- Target one existing ledger row by its immutable spend-period UUID. A date is
-  not a unique selector because multiple updates may occur on the same day.
-- Change the amount only.
-- Preserve account, currency and effective date.
-- Increment `correction_version` and update the server timestamp.
-- Reject a missing entry with `SPEND_HISTORY_ENTRY_NOT_FOUND`.
-- The displayed current value is derived from the latest effective period; no
-  second mutable current-cost authority is created.
-- Preserve the accepted legacy Settings presentation exactly: **Change value**
-  is one connected-state action rather than one action repeated beside every
-  history row. Its modal heading is **Change Klaviyo email spend**; its
-  explanation is **Change a previously saved amount. Its original start date
-  will not change.**; the merchant chooses one **Saved period**; the selected
-  period's amount pre-fills **Updated 30-Day Klaviyo Email Spend**; and the
-  primary action is **Save change**.
+- Mevcut tek defter satırı, değişmez harcama dönemi UUID'siyle seçilir.
+  Aynı gün birden fazla güncelleme olabileceğinden tarih tekil seçici değildir.
+- Yalnız tutar değişir; hesap, para birimi ve başlangıç tarihi korunur.
+- `correction_version` artırılır; sunucu zaman damgası güncellenir.
+- Eksik kayıt `SPEND_HISTORY_ENTRY_NOT_FOUND` ile reddedilir.
+- Ekrandaki güncel tutar son geçerli dönemden türetilir; ikinci bir değiştirilebilir
+  güncel maliyet kaynağı oluşturulmaz.
+- Kabul edilmiş Settings sunumu aynen korunur: **Change value**, her geçmiş
+  satırının yanında tekrarlanan değil, bağlı durumda tek bir eylemdir.
+  Modal başlığı **Change Klaviyo email spend**; açıklaması
+  **Change a previously saved amount. Its original start date will not change.**.
+  Kullanıcı bir **Saved period** seçer; kayıtlı tutar
+  **Updated 30-Day Klaviyo Email Spend** alanına doldurulur. Ana eylem **Save change**.
 
-## Input and authority rules
+## Girdi ve yetki kuralları
 
-- Accepted textual amount: `0` or a non-negative decimal with at most eight
-  integer digits and two fractional digits.
-- Scientific notation, signs, commas, NaN, Infinity and more than two decimal
-  places are rejected.
-- `0.00` explicitly supports Klaviyo's free plan.
-- Account ID, account name, currency, timezone and effective date are never
-  accepted from merchant-authored hidden fields as authority.
-- Currency and timezone must be freshly revalidated for initial completion and
-  Update spend. Change value may only correct an existing server-owned period.
-- SMS, MMS and WhatsApp cost are outside this email-spend input.
+- Metinsel tutar `0` veya en fazla sekiz tamsayı ve iki ondalık basamaklı,
+  negatif olmayan ondalık sayı olabilir.
+- Bilimsel gösterim, işaretler, virgül, NaN, Infinity ve ikiden fazla ondalık
+  basamak reddedilir.
+- `0.00`, Klaviyo'nun ücretsiz planını açıkça destekler.
+- Kullanıcının değiştirebildiği gizli form alanlarından gelen hesap kimliği,
+  hesap adı, para birimi, saat dilimi ve başlangıç tarihi yetkili kaynak sayılmaz.
+- İlk tamamlama ve Update spend için para birimi/saat dilimi yeniden doğrulanır.
+  Change value yalnız sunucuya ait mevcut dönemi düzeltir.
+- SMS, MMS ve WhatsApp maliyeti bu e-posta harcaması girdisinin dışındadır.
 
-## Token and disconnect rules
+## Token ve bağlantı kesme kuralları
 
-- Authorization URL: `https://www.klaviyo.com/oauth/authorize`.
-- Token and refresh URL: `https://a.klaviyo.com/oauth/token`.
-- Revoke URL: `https://a.klaviyo.com/oauth/revoke`.
-- PKCE method: exact `S256`.
-- Authorization codes are treated as five-minute credentials.
-- Token expiry follows `expires_in`; no fixed access-token lifetime is assumed.
-- `invalid_grant` becomes reauthorization required.
-- Refresh is bounded and never loops.
-- Disconnect revokes the refresh token before clearing local active authority.
-  Provider or network failure preserves the local connection and fails closed.
-- Historical spend periods remain auditable after disconnect.
+- Yetkilendirme adresi: `https://www.klaviyo.com/oauth/authorize`.
+- Token alma/yenileme adresi: `https://a.klaviyo.com/oauth/token`.
+- Yetki iptal adresi: `https://a.klaviyo.com/oauth/revoke`.
+- PKCE yöntemi tam olarak `S256` olur.
+- Yetkilendirme kodları beş dakikalık kimlik bilgisi olarak ele alınır.
+- Token ömrü `expires_in` değerinden okunur; sabit erişim token ömrü varsayılmaz.
+- `invalid_grant`, yeniden yetkilendirme gerektiren duruma dönüşür.
+- Yenileme sınırlıdır; döngüye girmez.
+- Disconnect, yerel aktif yetkiyi temizlemeden önce yenileme token'ını iptal eder.
+  Sağlayıcı veya ağ hatasında yerel bağlantı korunur; işlem güvenli biçimde durur.
+- Geçmiş harcama dönemleri bağlantı kesildikten sonra denetlenebilir kalır.
 
-## Requested scopes
+## İstenen izinler
 
-The proposed legacy-compatible scope set is:
+Eski davranışla uyumlu önerilmiş izin kümesi:
 
 - `accounts:read`
 - `campaigns:read`
@@ -173,93 +171,99 @@ The proposed legacy-compatible scope set is:
 - `events:read`
 - `metrics:read`
 
-Only `accounts:read` is exercised by this OAuth/account/spend slice. The other
-read scopes remain provisional until the subsequent Klaviyo reporting endpoint
-contract proves each one necessary. No write scope is requested.
+Bu OAuth/hesap/harcama diliminde yalnız `accounts:read` kullanılır. Diğer okuma
+izinleri, sonraki Klaviyo raporlama endpoint sözleşmesi gerekliliklerini
+kanıtlayana kadar geçici öneridir. Yazma izni istenmez. Bu ifade 13 Ekim'deki
+başlangıç kapsamıdır; sonraki raporlama kabulünü geri almaz.
 
-## User-visible state matrix
+## Kullanıcıya görünen durumlar
 
-| State | Visible result | Action | Result |
+Aşağıdaki İngilizce değerler özgün ekran/eylem adlarıdır; bu paket onları çevirmiyor.
+
+| Durum | Görünen sonuç | Eylem | İşlem sonucu |
 | --- | --- | --- | --- |
-| Loading | Klaviyo status is loading | none | duplicate actions disabled |
-| Not connected | Klaviyo · Not connected | Connect | confirmation modal |
-| Authorization | Continue to Klaviyo | Continue / Cancel | OAuth or unchanged state |
-| Account selection required | Provider-returned Klaviyo account list | Continue / Cancel | separate spend step or pending |
-| Estimated spend required | Selected account summary plus estimated spend field | Save and connect / Cancel | connected atomically or pending |
-| Resume required | Setup incomplete | Resume setup | account selection modal; no OAuth restart |
-| Connected | Connected account and `amount currency / 30 days` | Update spend / Change value / Disconnect | focused action |
-| Reauthorization | Klaviyo authorization expired | Reconnect | fresh OAuth transaction |
-| Provider error | Clear retryable provider message | Retry | no fabricated empty/success state |
+| Yükleniyor | Klaviyo status is loading | yok | yinelenen eylemler kapalı |
+| Bağlı değil | Klaviyo · Not connected | Connect | onay modalı |
+| Yetkilendirme | Continue to Klaviyo | Continue / Cancel | OAuth veya değişmeyen durum |
+| Hesap seçimi gerekli | sağlayıcıdan gelen Klaviyo hesap listesi | Continue / Cancel | ayrı harcama adımı veya bekleyen durum |
+| Tahmini harcama gerekli | seçili hesap özeti ve harcama alanı | Save and connect / Cancel | atomik bağlantı veya bekleyen durum |
+| Kuruluma devam gerekli | Setup incomplete | Resume setup | hesap seçimi; OAuth yeniden başlamaz |
+| Bağlı | bağlı hesap ve `amount currency / 30 days` | Update spend / Change value / Disconnect | seçili işleme özel akış |
+| Yeniden yetkilendirme | Klaviyo authorization expired | Reconnect | yeni OAuth işlemi |
+| Sağlayıcı hatası | açık, yeniden denenebilir sağlayıcı mesajı | Retry | uydurulmuş boş/başarılı durum yok |
 
-## Shopify component mapping
+Tarihsel matristeki **Retry**, ilk sağlayıcı hatasından sonra otomatik tekrar
+yetkisi değildir; kullanıcı kararı ve bağlayıcı ilk hata kapısı korunur.
 
-| Need | Exact component and property |
+## Shopify bileşen eşlemesi
+
+| İhtiyaç | Bileşen ve özellik |
 | --- | --- |
-| Page/provider section | `s-page`, `s-section`, `s-stack` |
-| Status and errors | `s-badge`, `s-banner` |
-| Actions | `s-button`; `loading` and `disabled` during submission |
-| Confirmation/completion/history correction | `s-modal` |
-| Explicit single-account selection | `s-choice-list`, `s-choice` |
-| Estimated spend | `s-number-field`, `min=0`, `max=99999999.99`, `step=0.01`, `required`, currency `suffix` |
-| Read-only account/currency/timezone | Shopify typography components inside the modal |
+| Sayfa/sağlayıcı bölümü | `s-page`, `s-section`, `s-stack` |
+| Durum ve hata | `s-badge`, `s-banner` |
+| Eylemler | `s-button`; gönderim sırasında `loading` ve `disabled` |
+| Onay/tamamlama/geçmiş tutar düzeltmesi | `s-modal` |
+| Açık tek hesap seçimi | `s-choice-list`, `s-choice` |
+| Tahmini harcama | `s-number-field`, `min=0`, `max=99999999.99`, `step=0.01`, `required`, para birimi için `suffix` |
+| Salt okunur hesap/para birimi/saat dilimi | modal içindeki Shopify metin bileşenleri |
 
-No raw form controls, custom CSS, literal visual tokens or `s-clickable` action
-substitutes are permitted. Klaviyo uses the already accepted Meta/Google setup
-pattern: callback state causes the account-selection modal to open, while
-**Resume setup** is the user-triggered recovery path after dismissal. Account
-selection and estimated spend are separate sequential views of the same modal;
-they are never combined on one screen and no nested modal is introduced.
+Ham form kontrolleri, özel CSS, sabit görsel değerler veya eylem yerine
+`s-clickable` kullanımı yasaktır. Klaviyo, kabul edilmiş Meta/Google kurulum
+kalıbını izler: dönüş durumu hesap seçimi modalını açar; **Resume setup**,
+modal kapatıldıktan sonra kullanıcının başlattığı devam yoludur. Hesap seçimi
+ve tahmini harcama aynı modalın ayrı, ardışık görünümleridir. Tek ekranda
+birleştirilmez ve iç içe modal açılmaz.
 
-## Out of scope
+## Kapsam dışı
 
-- Campaign, Flow, Message or Variation reporting requests.
-- Channel hierarchy and presentation rules.
-- Recipient-weighted cost allocation or formula calculations.
-- Reporting facts, backfill, scheduling, export or charts.
-- Provider write operations.
-- SMS, MMS or WhatsApp cost.
-- Historical legacy-record carry or controlled reset tooling.
-- Automatic activation of any 15 October Variation behavior.
+- Campaign, Flow, Message veya Variation raporlama istekleri.
+- Channel hiyerarşisi ve sunum kuralları.
+- Alıcı ağırlıklı maliyet dağıtımı veya formül hesapları.
+- Raporlama gerçekleri, geçmiş veri yükleme, zamanlama, dışa aktarma veya grafikler.
+- Sağlayıcıda yazma işlemleri.
+- SMS, MMS veya WhatsApp maliyeti.
+- Geçmiş eski kayıtların taşınması veya kontrollü sıfırlama aracı.
+- 15 Ekim Variation davranışlarının kendiliğinden etkinleştirilmesi.
 
-## Acceptance and rollback
+## Kabul ve geri dönüş
 
-Implementation may start only after explicit product-owner acceptance of this
-brief. Repository acceptance then requires deterministic OAuth, validation,
-ledger, concurrency, revoke-first and UI-contract tests; typecheck; build; CI;
-controlled database verification; desktop Shopify Admin evidence; real-mobile
-Shopify Admin evidence; and explicit final product-owner acceptance.
+Uygulama, bu brief için ürün sahibinin açık kabulünden sonra başlayabilir.
+Repository kabulü; belirlenimci OAuth, doğrulama, defter, eşzamanlılık, önce
+yetki iptali ve UI sözleşme testleri; typecheck, build, CI; kontrollü veritabanı
+doğrulaması; masaüstü ve gerçek mobil Shopify Admin kanıtı; son olarak açık
+ürün sahibi kabulü gerektirir.
 
-Before live schema use, the migration must pass Supabase security and performance
-advisors. Rollback disables the new Klaviyo actions and preserves the private
-ledger and encrypted credentials; it does not delete auditable history.
+Canlı şema kullanılmadan önce migration, Supabase güvenlik ve performans
+Advisor kontrollerini geçmelidir. Geri dönüş yeni Klaviyo eylemlerini kapatır;
+özel defter ve şifreli kimlik bilgilerini korur, denetlenebilir geçmişi silmez.
 
-## Live database gate — 13 October 2026
+## Tarihsel canlı veritabanı kapısı — 13 Ekim 2026
 
-The product owner separately authorized the live Supabase migration. No new
-secret, provider OAuth, provider API call, Vercel environment mutation or
-deployment was included in this gate.
+Ürün sahibi canlı Supabase migration'ını ayrıca onayladı. Bu kapı yeni secret,
+sağlayıcı OAuth'u, sağlayıcı API çağrısı, Vercel ortam ayarı veya dağıtım içermedi.
 
-Migration `eo04d_klaviyo_spend_ledger` was applied to the healthy
-`ads-table-embedded` Supabase project. Independent catalog checks verified the
-private table owner, enabled and forced RLS, denied direct table privileges,
-and function-only `adstable_runtime` access. Supabase Security Advisor remained
-at zero findings and the package introduced no unindexed-foreign-key finding.
+`eo04d_klaviyo_spend_ledger` migration'ı sağlıklı `ads-table-embedded` Supabase
+projesine uygulandı. Bağımsız katalog kontrolleri özel tablo sahibini, etkin ve
+zorunlu RLS'yi, doğrudan tablo yetkilerinin verilmediğini ve yalnız fonksiyonla
+`adstable_runtime` erişimini doğruladı. Security Advisor sıfır bulguda kaldı;
+paket, indekssiz yabancı anahtar bulgusu üretmedi.
 
-A rollback-scoped synthetic scenario passed atomic setup with initial spend,
-configuration load, append, duplicate-date rejection, amount-only correction,
-correction-version increment, disconnect and history preservation. The test
-transaction rolled back and independent residue checks returned zero for every
-synthetic workspace, installation, credential, connection, account, lifecycle
-event and spend period. Durable evidence is
+Geri alınan işlem içindeki sentetik senaryo; ilk harcamayla atomik kurulum,
+ayar yükleme, kayıt ekleme, aynı tarihi reddetme, yalnız tutar düzeltme, düzeltme
+sürümünü artırma, bağlantı kesme ve geçmişi koruma adımlarını geçti. Bu ilk
+denemedeki aynı tarihi reddetme davranışı tarihsel kanıttır; son kabul edilmiş
+kural yukarıdaki ayrı aynı-gün olaylarıdır. İşlem geri alındı; bağımsız artık
+kontrolleri tüm sentetik çalışma alanı, kurulum, kimlik bilgisi, bağlantı, hesap,
+yaşam döngüsü olayı ve harcama dönemi için sıfır döndürdü. Kalıcı kanıt:
 `docs/evidence/EO_04D_KLAVIYO_SPEND_LIVE_DATABASE_ACCEPTANCE_2026-10-13.json`.
 
-This passes the database gate only. Environment values, deployment, live
-Klaviyo OAuth, desktop/mobile Shopify acceptance, final product-owner acceptance
-and merge remain open.
+Bu ara aşamada yalnız veritabanı kapısı geçti. Ortam değerleri, dağıtım, canlı
+Klaviyo OAuth'u, masaüstü/mobil Shopify kabulü, nihai ürün sahibi kabulü ve merge
+henüz açıktı. Bu liste bugünün açık iş listesi değildir.
 
-The live reconnect timestamp-order correction is recorded in
+Canlı yeniden bağlanma zaman damgası düzeltmesinin kaydı:
 `docs/evidence/EO_04D_KLAVIYO_RECONNECT_TIMESTAMP_ORDER_ACCEPTANCE_2026-10-13.json`.
-Its database and security checks pass. The product owner then repeated the full
-live reconnect process and explicitly confirmed that the complete flow works.
-Merge remains a separate explicit gate.
+Veritabanı ve güvenlik kontrolleri geçti. Ürün sahibi ardından tam canlı yeniden
+bağlanma akışını tekrarlayıp bütün akışın çalıştığını açıkça doğruladı.
+Merge ayrı açık kapı olarak kaldı; sonraki nihai durum Execution Plan'dadır.
 

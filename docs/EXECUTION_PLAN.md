@@ -299,6 +299,16 @@ bekleyen belge. Tam gün tarihsel PMax kanıtı, test/Production ayrımı ve rev
 sonrası aynı çalışma zamanı kararı korunur. Önceki sayımlar tarihseldir;
 yeni provider çağrısı, erişim başvurusu veya kod/canlı ortam değişikliği yoktur.
 
+Altıncı teslim PR #125 açık ürün sahibi okunabilirlik/merge kabulüyle
+`77ac39cfb9cf373c6595b6b7dfe6df5927140457` commit'inde birleştirildi;
+test edilen ağaç korundu. Yedinci dil geçişi Klaviyo bağlantı/tahmini harcama,
+OAuth güçlendirme, raporlama yetkisi ve satış kaynağı çözümlemesinin dört belgesidir.
+Güncel toplam: 27 kabul edilmiş, 4 okunabilirlik kabulü bekleyen, 31 dil incelemesi
+bekleyen belge. Önceki sayımlar tarihseldir. Aynı-gün ayrı harcama olayları,
+istekten önce kalıcı token yenileme ve Message biliniyorsa Channel'ı koruma
+kuralları değişmez. Kod, tarihsel kanıtlar ve canlı ortam değiştirilmez;
+A6-DOCS-01 kapanmaz, EO-05 başlamaz.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

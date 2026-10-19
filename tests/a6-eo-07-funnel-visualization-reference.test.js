@@ -54,5 +54,5 @@ test("keeps Ad Analysis charts blocked and package statuses unchanged", () => {
   assert.equal(master.cross_cutting_decisions.funnel_visualization_reference_v1.advances_package_status, false);
   assert.equal(master.cross_cutting_decisions.funnel_visualization_reference_v1.authorizes_ui_implementation, false);
   assert.match(doc, /Ürün niyeti kabul edildi; uygulama ve görsel kabul bekliyor/);
-  assert.match(plan, /A6-EO-07-B Funnel visualization reference/);
+  assert.match(plan, /A6-EO-07-B Funnel grafik referansı/);
 });

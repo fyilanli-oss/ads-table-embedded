@@ -95,7 +95,7 @@ test("Execution Plan and master contract preserve EO-04-A after EO-04 closure", 
     "docs/EO_04A_COMMON_ADAPTER_START_BRIEF.md",
     "contracts/eo-04a-common-adapter-start-brief-v1.json",
     "tests/eo-04a-common-adapter-start-brief.test.js",
-    "Only an explicit provider zero becomes zero",
+    "Yalnız sağlayıcının açık sayısal sıfırı sıfır olur",
   ]) {
     assert.match(plan, new RegExp(value.replace(/[.*+?^$\{\}()|[\]\\]/g, "\\$&")));
   }

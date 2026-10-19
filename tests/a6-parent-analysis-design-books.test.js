@@ -72,13 +72,13 @@ test("Execution Plan exposes the capacity ladder and safe demo-fixture boundary"
     "docs/EO_01_ANALYSIS_DESIGN_BOOK.md",
     "docs/EO_02_ANALYSIS_DESIGN_BOOK.md",
     "docs/EO_03_ANALYSIS_DESIGN_BOOK.md",
-    "workload budget + index/query-plan baseline",
-    "2,000-workspace hourly scheduler",
-    "4,000-workspace compressed stress",
-    "24 saatlik 2,000-workspace soak",
-    "Summary/Daily/Compare/Table sorgu karakterizasyonu",
-    "production-shape restore/load provası",
-    "Supabase kapasite koşuları raw HTML'i çalıştırmaz",
+    "iş yükü bütçesi ve indeks/sorgu planı başlangıç ölçümü",
+    "2,000 çalışma alanlı saatlik zamanlayıcı",
+    "4,000 çalışma alanlı sıkıştırılmış stres",
+    "24 saatlik 2,000 çalışma alanlı dayanıklılık",
+    "Summary/Daily/Compare/Table sorgu ölçümü",
+    "canlıya benzer geri yükleme/yük provası",
+    "Supabase kapasite koşuları ham HTML'i çalıştırmaz",
   ]) {
     const escaped = value.replace(/[.*+?^$\{\}()|[\]\\]/g, "\\$&");
     assert.match(plan, new RegExp(escaped));

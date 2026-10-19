@@ -1,125 +1,140 @@
-# AdsTable Embedded Execution Plan
+# AdsTable Embedded — Execution Plan (Yürütme Planı)
 
-## Authority
+## Güncel durum — 19 Ekim 2026
 
-Bu repository onaylı A6-EO embedded-only temiz yeniden kuruluş programını uygular.
+EO-01–04 ve A6-TECH-01 kabul edilmiştir; F01–F09 ve son güvenlik konusu kapalı,
+F10 açık, engelleyici olmayan P3 ertelemesidir. Aktif kapı A6-DOCS-01'dir.
+PR #136 ile 59 belge kabul edildi. Son üç belgenin dil çalışması hazırlandığında
+62 insan-okuyucu belgenin tamamı düzenlenmiş olacak; son okunabilirlik ve paket
+kapanışı açık ürün sahibi kabulünü bekler. EO-05 otomatik başlamaz.
+
+Bu belge tarih sırasıyla birikmiş karar ve kanıt kayıtlarını korur. Aşağıdaki
+“başlamadı”, “bekliyor”, “güncel” ve ara sayımlar kayıt tarihine aittir; bugünkü
+yetki veya yeni iş talimatı değildir. Önce bu özet, sonra ilgili nihai kabul
+kaydı okunur. Makine sözleşmeleri ve değişmez kanıtlar çevrilmez.
+
+Teknik terimler: Runtime çalışan uygulama, migration sıralı veritabanı değişikliği,
+CI otomatik teslim kontrolü, build derleme, typecheck tip kontrolü, BFF arayüzün
+sunucu katmanıdır. API alanları, ekran metinleri ve durum kimlikleri aynen korunur.
+## Otorite
+
+Bu repository onaylı A6-EO yalnız gömülü temiz yeniden kuruluş programını uygular.
 
 - Aktif karar kaynağı: bu repository ve `docs/EXECUTION_PLAN.md`
-- İlk kuruluş provenance/evidence kaynağı: `fyilanli-oss/ads-table-dev` commit `3416ee736fc3c53910e5e6571a7b8f445c4ce3cd`
-- Legacy repository aktif karar otoritesi değildir; yalnız referans, kanıt, containment ve rollback kaynağıdır.
-- Legacy repository'den as-is taşınan application/runtime modülü: **0**
-- Legacy repository EO-09 cutover tamamlanana kadar containment ve rollback hattıdır.
+- İlk kuruluş kaynak geçmişi/kanıt kaynağı: `fyilanli-oss/ads-table-dev` commit `3416ee736fc3c53910e5e6571a7b8f445c4ce3cd`
+- Eski repository aktif karar otoritesi değildir; yalnız referans, kanıt, koruma ve geri dönüş kaynağıdır.
+- Eski repository'den aynen taşınan uygulama/çalışma zamanı modülü: **0**
+- Eski repository EO-09 canlı otorite geçişi tamamlanana kadar koruma ve geri dönüş hattıdır.
 
-## Product boundary
+## Ürün sınırı
 
-- Shopify embedded iframe application
-- Aktif providerlar: Meta, Google Ads, Klaviyo
-- Canonical yüzeyler: Funnel App Home (`/`), Ad Analysis (`/ad-analysis`), Settings (`/settings`)
-- EO-08 review gate ve ayrıca açık cutover kararı gelene kadar preview-only
-- EO-01 sırasında production domain, Shopify app config, provider, live data/token veya legacy retirement mutation yoktur.
+- Shopify Admin iframe'i içinde gömülü uygulama.
+- Aktif sağlayıcılar: Meta, Google Ads, Klaviyo.
+- Kanonik yüzeyler: Funnel App Home (`/`), Ad Analysis (`/ad-analysis`), Settings (`/settings`).
+- İlk kuruluş planında EO-08 review kapısı ve ayrıca açık canlı geçiş kararı gelene kadar Preview sınırı kondu. Sonraki dar Production onayları yalnız kayıtlı kapsamlarını açtı; EO-09 otorite geçişi yetkisi olmadı.
+- EO-01 sırasında canlı alan adı, Shopify yapılandırması, sağlayıcı, gerçek veri/token veya eski yapıyı devreden çıkarma değişikliği yoktu.
 
-## Ordered program
+## Sıralı program
 
-1. **EO-01 — Clean runtime shell, CI and dependency boundary**
-2. **EO-02 — Workspace, installation, billing/trial and privacy foundations**
-3. **EO-03 — Canonical OAuth, connection and token vault**
-4. **EO-04 — Meta, Google Ads and Klaviyo adapters**
-5. **EO-05 — Scheduler, Dataset V2, FX, maturity and reconciliation**
-6. **EO-06 — Formula, Query and same-origin BFF/API**
-7. **EO-07 — Shopify-native three-surface UI**
-8. **EO-08 — Carry rehearsal, parity, canary and rollback**
-9. **EO-09 — Authority cutover stabilization and consumer-zero**
-10. **EO-10 — Legacy archive, retention and controlled retirement**
+1. **EO-01 — Temiz çalışma zamanı kabuğu, CI ve bağımlılık sınırı**
+2. **EO-02 — Çalışma alanı, kurulum, abonelik/deneme ve gizlilik temeli**
+3. **EO-03 — Kanonik OAuth, bağlantı ve token kasası**
+4. **EO-04 — Meta, Google Ads ve Klaviyo adaptörleri**
+5. **EO-05 — Zamanlayıcı, Dataset V2, kur dönüşümü, olgunluk ve uzlaştırma**
+6. **EO-06 — Formül, sorgu ve aynı-origin BFF/API**
+7. **EO-07 — Shopify'a özgü üç yüzeyli arayüz**
+8. **EO-08 — Taşıma provası, eşlik, kontrollü pilot ve geri alma**
+9. **EO-09 — Otorite geçişi, kararlılık ve eski tüketici kalmadığının kanıtı**
+10. **EO-10 — Eski yapının arşivi, saklama süresi ve kontrollü devreden çıkarma**
 
-Aynı anda yalnız bir parent paket aktiftir. Executable paket tablosu `contracts/a6-eo-implementation-master-v1.json` dosyasındadır.
+Aynı anda yalnız bir ana paket aktiftir. Yürütülebilir paket tablosu `contracts/a6-eo-implementation-master-v1.json` dosyasındadır.
 
 ## Mühendislik bütünlüğü ve review güvence sırası — 18 Ekim 2026
 
 Bağlayıcı belge: `docs/A6_QUALITY_AND_ASSURANCE_GATES.md`
 
-Executable contract: `contracts/a6-quality-and-assurance-gates-v1.json`
+Yürütülebilir sözleşme: `contracts/a6-quality-and-assurance-gates-v1.json`
 
-CI enforcement: `tests/a6-quality-and-assurance-gates.test.js`
+CI kontrolü: `tests/a6-quality-and-assurance-gates.test.js`
 
 - EO-04 kapanışından hemen sonra ve EO-05 başlamadan önce `A6-TECH-01` bütün
-  kodu, Shopify yapısını, provider runtime'larını, Supabase'i, Vercel'i,
-  GitHub/CI/lineage'ı ve uçtan uca veri güvenliğini denetler.
+  kodu, Shopify yapısını, sağlayıcı çalışma zamanlarını, Supabase'i, Vercel'i,
+  GitHub/CI/kaynak zincirini ve uçtan uca veri güvenliğini denetler.
 - Testlerin geçmesi tek başına yeterli değildir; yanlış davranışın yanlış testle
   korunması, paketler arası eski varsayımlar ve canlı yapı-repository drift'i de
   aranır. P0/P1 ile güvenlik, veri doğruluğu veya review'u etkileyen P2 açıkken
   EO-05 başlamaz.
 - `A6-DOCS-01`, A6-TECH-01 düzeltmelerinden sonra ve EO-05'ten önce aktif insan
-  okuyucu belgelerini Türkçe standardına getirir; machine contract ve immutable
-  evidence toplu çevrilmez.
-- EO-05, EO-06, EO-07 ve EO-08 sonunda A6-TECH-01 baseline'ına karşı delta
+  okuyucu belgelerini Türkçe standardına getirir; makine sözleşmesi ve değişmez
+  kanıt toplu çevrilmez.
+- EO-05, EO-06, EO-07 ve EO-08 sonunda A6-TECH-01 referans sürümüne karşı delta
   bütünlük denetimi zorunludur.
 - `A6-ASSURE-01` EO-08 sonrasında çalışan pre-review doğrulamasıdır; ilk kod
   sağlamlık denetimi değildir. Hiçbir nihai review başvurusu A6-ASSURE-01 PASS
   ve ürün sahibi GO kararı olmadan yapılamaz.
 - `A6-TECH-01` ilk denetimi 18 Ekim 2026'da
-  `c3faddff97628f372f5cc843f3326fb38de95dfc` başlangıç baseline'ında
+  `c3faddff97628f372f5cc843f3326fb38de95dfc` başlangıç referans sürümünde
   tamamlanmış ve bulgular
   `docs/A6_TECH_01_ENGINEERING_INTEGRITY_AUDIT.md` içinde kaydedilmiştir.
   İlk kayıtta P0 yoktu; üç P1 ve beş engelleyici P2 açıktı. Bu tarihsel başlangıç
   kaydıdır. Güncel genel kapanış kararı aşağıdadır.
 
 **A6-TECH-01 genel kapanışı — 18 Ekim 2026:** Ürün sahibi açık kabul verdi.
-Denetlenmiş ve canlı kabul edilmiş PASS baseline:
+Denetlenmiş ve canlı kabul edilmiş PASS referans sürüm:
 `bd243fff7200ae6bdb3900ebb7417b3beba53010`.
-F01–F09 ve sonradan bulunan dependency güvenlik bulgusu kapalı; açık P0/P1/P2
+F01–F09 ve sonradan bulunan bağımlılık güvenlik bulgusu kapalı; açık P0/P1/P2
 sıfırdır. F10 kabul edilmiş açık P3 ertelemesidir; düzeltilmiş sayılmaz.
-PR #118 kaynak CI'ı 457 test/typecheck/build PASS; aynı source tree canlıya
+PR #118 kaynak CI'ı 457 test/typecheck/build PASS; aynı kaynak ağacı canlıya
 alındı. Gerçek Shopify Admin masaüstü ve mobil normal çalışma kabulü ürün
 sahibi tarafından verildi. Kapanış kanıtı:
 `docs/evidence/A6_TECH_01_CLOSURE_2026-10-18.json`.
 
-Yeni aktif kapı `A6-DOCS-01`dir; uygulaması henüz başlamadı. EO-05 halen
-dokümantasyon kapısını bekler. Provider gerçek veri/review sınırları ve F01
-scoped recovery sınırı korunur; yeni yedek/upgrade/canlı çağrı işi açılmaz.
-Bu kayıt yalnız kapanış metadata'sıdır; yeniden deploy gerekmez. Aşağıdaki
-düzeltme hazırlığı ve ara kapı anlatımları tarihseldir; güncel karar bu paragraf
-ve kapanış kanıtıdır. Kapanış PR'ı da CI'dan geçmeden merge edilmez.
+A6-TECH-01 kapanışında sıradaki kapı `A6-DOCS-01` idi; uygulaması o gün başlamamıştı.
+DOCS başlangıcı 19 Ekim'de ayrıca onaylandı. EO-05 dokümantasyon kabulünü bekler.
+Gerçek sağlayıcı/review sınırları ve F01 dar kurtarma sınırı korunur; yeni yedek,
+yükseltme veya canlı çağrı işi açılmaz. Aşağıdaki ara durumlar tarihseldir;
+güncel kabul bu genel kapanış ve belgenin başındaki durumdur.
 
 F01 düzeltmesinin repository hazırlığı:
 `docs/A6_TECH_01_F01_MIGRATION_RECONCILIATION.md` ve
-`contracts/a6-tech-01-f01-migration-lineage-v1.json`. Bu kayıt migration history
-repair, canlı uygulama, F01 kapanışı veya EO-05 başlangıcını yetkilendirmez.
+`contracts/a6-tech-01-f01-migration-lineage-v1.json`. Bu kayıt migration geçmişi
+onarımı, canlı uygulama, F01 kapanışı veya EO-05 başlangıcını yetkilendirmez.
 Denetim düzeltmeleri F01 → F02 → F03 → F04 → F05 → F06 → F07 → F08 → F09 → F10
 sırasıyla ilerler; F01 kapanmadan F02 başlamaz.
 
-F01 canlı retirement 18 Ekim 2026'da ayrı ürün sahibi onayıyla uygulandı;
-postcheck kanıtı `docs/evidence/A6_TECH_01_F01_LIVE_ACCEPTANCE_2026-10-18.json`.
-İlk 38 migration değişmedi. Supabase'in verdiği yeni version `20261018152910`
+F01 canlı devreden çıkarma 18 Ekim 2026'da ayrı ürün sahibi onayıyla uygulandı;
+işlem sonrası kontrol kanıtı `docs/evidence/A6_TECH_01_F01_LIVE_ACCEPTANCE_2026-10-18.json`.
+İlk 38 migration değişmedi. Supabase'in verdiği yeni sürüm `20261018152910`
 ile repository eşlenmiştir. Ürün sahibi F01 kapanışını ve PR #102 merge'ünü
 18 Ekim 2026'da onayladı. Kapanış kanıtı
 `docs/evidence/A6_TECH_01_F01_CLOSURE_2026-10-18.json`.
-Sıradaki bulgu F02'dir; uygulaması başlamadı. Bu kayıt yeni canlı mutation
+Sıradaki bulgu F02'dir; uygulaması başlamadı. Bu kayıt yeni canlı değişiklik
 veya EO-05 başlangıç yetkisi değildir.
 
-F02'deki tek sahipsiz Google credential, ayrı açık onayla 18 Ekim 2026'da
-temizlendi. Üç bağlı credential, üç connection ve sekiz tarihsel kayıt korundu.
+F02'deki tek sahipsiz Google kimlik bilgisi, ayrı açık onayla 18 Ekim 2026'da
+temizlendi. Üç bağlı kimlik bilgisi, üç bağlantı ve sekiz tarihsel kayıt korundu.
 Ürün sahibi F02 kapanışını ve PR #104 merge'ünü kabul etti. Kanıt:
 `docs/evidence/A6_TECH_01_F02_CLOSURE_2026-10-18.json`.
 Sıradaki F03 başlamadı; yeni canlı işlem veya EO-05 başlangıcı yetkisi yoktur.
 
 F03 envanter düzeltmesi 18 Ekim 2026'da ürün sahibi kabulünü aldı: 22 Vercel
-adı, 1 GitHub workflow secret adı, toplam 23 envanter girdisi; örnek dosya,
-contract ve testler eşlendi. Secret değeri okuma veya canlı ayar/deploy işlemi
+adı, 1 GitHub iş akışı secret adı, toplam 23 envanter girdisi; örnek dosya,
+sözleşme ve testler eşlendi. Secret değeri okuma veya canlı ayar/dağıtım işlemi
 yok. Kapanış kanıtı `docs/evidence/A6_TECH_01_F03_CLOSURE_2026-10-18.json`.
 F01–F03 kapalıdır. Sıradaki F04 başlamadı; EO-05 kapısı hâlâ kapalıdır.
 
-F04 Polaris preload/script eşliği düzeltildi; ayrı onaylı exact-source deploy
+F04 Polaris ön yükleme/script eşliği düzeltildi; ayrı onaylı birebir kaynaklı dağıtım
 sonrası ürün sahibi gerçek Shopify Admin masaüstü ve mobil görünümünü kabul
 etti, PR #106 merge'ünü onayladı. Kapanış kanıtı:
 `docs/evidence/A6_TECH_01_F04_CLOSURE_2026-10-18.json`.
 Güncel durum F01–F04 kapalı, sıradaki F05 başlamadı ve yetkili değil.
-F07 release provenance ve genel EO-05 kapısı açık bulgulara bağlı kalır.
+F07 sürüm kaynak geçmişi ve genel EO-05 kapısı açık bulgulara bağlı kalır.
 
 F05 action SHA sabitlemesi ürün sahibi onayıyla repository'de hazırlandı.
 Kanıt `docs/evidence/A6_TECH_01_F05_ACTION_PINS_2026-10-18.json`.
-Kontrollü güncelleme: resmî release/commit doğrulaması → PR → CI → açık merge
+Kontrollü güncelleme: resmî sürüm/commit doğrulaması → PR → CI → açık merge
 onayı; otomatik merge yoktur. CI ve kabul beklenir, F05 açık ve F06 yetkisizdir.
-Canlı workflow dispatch, secret veya deployment değişikliği yapılmadı.
+Canlı iş akışını elle çalıştırma, secret veya deployment değişikliği yapılmadı.
 
 F05 repository düzeltmesinin 425 test/typecheck/build CI sonucu geçti; ürün
 sahibi PR #107 merge'ünü ve kapanışı kabul etti. Kapanış kanıtı:
@@ -127,99 +142,99 @@ sahibi PR #107 merge'ünü ve kapanışı kabul etti. Kapanış kanıtı:
 Güncel F01–F05 kapalıdır; sıradaki F06 başlamadı ve uygulama yetkisi yoktur.
 Genel A6-TECH-01 PASS değildir; EO-05 engeli korunur.
 
-F06 server hata logger'ı repository'de hazırlandı. Kanıt:
+F06 sunucu hata kayıt aracı repository'de hazırlandı. Kanıt:
 `docs/evidence/A6_TECH_01_F06_SAFE_ERROR_LOG_2026-10-18.json`.
-Ham hata nesnesi loglanmaz; sabit kod/aşama ve izinli route/metot kaydedilir.
+Ham hata nesnesi loglanmaz; sabit kod/aşama ve izinli yol/metot kaydedilir.
 CI/merge ve ayrı açık onaylı canlı deploy/doğrulama beklenir; F06 açık kalır.
 Bu hazırlık canlı düzeltme kanıtı veya F07 başlangıç yetkisi değildir.
 
-F06 düzeltmesi PR #108 ile merge edilip ayrı açık onayla mevcut Production
-adresine alındı. Exact kaynak/alias READY doğrulandı; ürün sahibi gerçek Shopify
+F06 düzeltmesi PR #108 ile birleştirilip ayrı açık onayla mevcut Production
+adresine alındı. Birebir kaynak/alias READY doğrulandı; ürün sahibi gerçek Shopify
 Admin masaüstü ve mobil normal çalışmayı kabul etti. Kanıt:
 `docs/evidence/A6_TECH_01_F06_CLOSURE_2026-10-18.json`.
-Kapanış kaydının merge onayı beklenir; F07 başlamadı, EO-05 engeli korunur.
+Kapanış kaydının birleştirme onayı beklenir; F07 başlamadı, EO-05 engeli korunur.
 
-F07 mevcut Production'ın F06'da onaylı exact `main` commit'inden deploy edildiğini
+F07 mevcut Production'ın F06'da onaylı birebir `main` commit'inden deploy edildiğini
 yeniden doğruladı. Güncel main'e göre yalnız altı F06 kapanış dosyası farklı;
 diğer 371 kaynak girdisi eşleşir. Kanıt:
 `docs/evidence/A6_TECH_01_F07_PROVENANCE_2026-10-18.json`.
-Yeni deploy/secret/config/database işlemi yok. CI ve ürün sahibi kabulü beklenir;
+Yeni deploy/secret/yapılandırma/veritabanı işlemi yok. CI ve ürün sahibi kabulü beklenir;
 F07 henüz kapanmadı, F08 başlamadı ve EO-05 engeli korunur.
 
-F07 provenance doğrulaması 434 test/typecheck/build CI kapısından geçti;
+F07 kaynak geçmişi doğrulaması 434 test/typecheck/build CI kapısından geçti;
 ürün sahibi kapanışı ve PR #110 merge'ünü kabul etti. Yeni deploy gerekmedi
 ve yapılmadı. Kapanış kanıtı:
 `docs/evidence/A6_TECH_01_F07_CLOSURE_2026-10-18.json`.
 Güncel F01–F07 kapalıdır; F08 başlamadı/yetkili değil, EO-05 engeli korunur.
 
-F08 iki private privacy tablosunda `workspace_id` FK index hazırlığıdır.
+F08 iki özel gizlilik tablosunda `workspace_id` FK indeks hazırlığıdır.
 Kanıt `docs/evidence/A6_TECH_01_F08_PRIVACY_INDEXES_2026-10-18.json`.
 Yeni migration pending; canlı DDL/DML yapılmadı. Mevcut izole DB workflow'u ile
 replay ve sentetik öncesi/sonrası plan kontrolü beklenir. Canlı uygulama ayrı
-açık onay, fresh preflight ve postcheck/Advisor kapısından geçer. F08 açık,
-F09 başlamadı; veri/silme kuralı/runtime/deploy değişikliği yetkilendirilmedi.
+açık onay, güncel ön kontrol ve işlem sonrası kontrol/Advisor kapısından geçer. F08 açık,
+F09 başlamadı; veri/silme kuralı/çalışma zamanı/deploy değişikliği yetkilendirilmedi.
 
-F08 iki index'i ayrı açık onayla canlıya ekledi; Supabase version
+F08 iki indeksi ayrı açık onayla canlıya ekledi; Supabase sürüm
 `20261018181906` repository'ye SQL içeriği değişmeden eşlendi. 40 applied / 0
 pending; önceki migration hash'leri, veri ve güvenlik sınırları korundu.
-Security Advisor 0, eksik FK index uyarısı 0. Canlı kanıt:
+Security Advisor 0, eksik FK indeks uyarısı 0. Canlı kanıt:
 `docs/evidence/A6_TECH_01_F08_LIVE_ACCEPTANCE_2026-10-18.json`.
 Son CI ve açık kapanış/merge kabulü beklenir; F09 başlamadı.
 
 F08 canlı kabul/eşleme sonrası genel CI (437 test/typecheck/build) ve iki izole
-40-migration replay geçti. Ürün sahibi kapanışı ve PR #111 merge'ünü kabul etti.
+40-migration yeniden kurulum geçti. Ürün sahibi kapanışı ve PR #111 merge'ünü kabul etti.
 Kanıt `docs/evidence/A6_TECH_01_F08_CLOSURE_2026-10-18.json`.
-Güncel F01–F08 kapalı; F09 başlamadı/yetkili değil, genel audit ve EO-05 kapısı
+Güncel F01–F08 kapalı; F09 başlamadı/yetkili değil, genel denetim ve EO-05 kapısı
 ayrı kapanış/retest kararı olmadan PASS/başlangıç sayılmaz.
 
-F09 primary checkout temizliği doğrulandı; kullanıcı işi veya divergent commit
-yoktu. Exact uzak `main`e fast-forward yapıldı, commit/tree ve temiz 0/0 durumu
+F09 birincil çalışma kopyası temizliği doğrulandı; kullanıcı işi veya ayrışmış commit
+yoktu. Birebir uzak `main`e fast-forward yapıldı, commit/tree ve temiz 0/0 durumu
 doğrulandı. Kanıt `docs/evidence/A6_TECH_01_F09_CHECKOUT_SYNC_2026-10-18.json`.
-CI/kabul ve PR merge sonrası son primary sync beklenir. F10 başlamadı; canlı
-uygulama/database/deploy değişmedi, genel audit/EO-05 kapısı korunur.
+CI/kabul ve PR merge sonrası son birincil kopya eşitlemesi beklenir. F10 başlamadı; canlı
+uygulama/veritabanı/deploy değişmedi, genel denetim/EO-05 kapısı korunur.
 
-F09 kapanış ve PR #112 merge onayı alındı. Kapanış kanıtı
+F09 kapanış ve PR #112 birleştirme onayı alındı. Kapanış kanıtı
 `docs/evidence/A6_TECH_01_F09_CLOSURE_2026-10-18.json`.
 Önceki hazırlık kayıtları tarihseldir; güncel F01–F09 kapalıdır. Son CI,
-merge ve primary checkout'un yeni main ile temiz commit/tree eşliği teslim
+merge ve birincil çalışma kopyası'un yeni main ile temiz commit/tree eşliği teslim
 kapısıdır; son eşlik PR #112 açıklamasında kalıcılaştırılır. F10 başlamaz,
-genel audit PASS veya EO-05 başlangıç yetkisi verilmez.
+genel denetim PASS veya EO-05 başlangıç yetkisi verilmez.
 
 F10 için ürün sahibi 18 Ekim 2026'da ayrı uyumluluk çalışması bekleyen açık
 teknik borç kararını onayladı. Kanıt:
 `docs/evidence/A6_TECH_01_F10_DEFERRED_2026-10-18.json`.
 F01–F09 kapalı, F10 açık ve tek başına EO-05 engeli değildir. Bu kayıt F10
-düzeltmesi/kapanışı, sürüm veya flag değişikliği, genel audit PASS ya da EO-05
+düzeltmesi/kapanışı, sürüm veya flag değişikliği, genel denetim PASS ya da EO-05
 başlangıç yetkisi değildir. Genel yeniden test ve kapanış kararı ayrı kalır.
 
 Son yeniden test `cddda0fad4803c9212412211495365c69ed2e884` üzerinde 441 test,
 typecheck/build ve production bağımlılık taramasını geçirdi. Tam bağımlılık
-taraması geliştirme/build zincirinde 4 yüksek, 3 orta, 1 düşük advisory bildirdi.
+taraması geliştirme/build zincirinde 4 yüksek, 3 orta, 1 düşük güvenlik bildirimi bildirdi.
 Kanıt `docs/evidence/A6_TECH_01_FINAL_RETEST_2026-10-18.json`.
 `TECH01-RETEST-SEC01` ayrı, ön P2/güvenlik değerlendirme kaydıdır; F01–F10
 tarihsel sırası ve kapanışları değiştirilmez. İlk kayıtta etki analizi/düzeltme
-yetkili değildi; sonraki dar onaylar aşağıdadır. Genel audit PASS, A6-DOCS-01 ve EO-05 başlangıcı verilmez;
-bu kayıt yeni altyapı, yedek, sürüm, provider veya canlı ortam işi açmaz.
+yetkili değildi; sonraki dar onaylar aşağıdadır. Genel denetim PASS, A6-DOCS-01 ve EO-05 başlangıcı verilmez;
+bu kayıt yeni altyapı, yedek, sürüm, sağlayıcı veya canlı ortam işi açmaz.
 
 Kullanıcı yalnız Vite `7.3.1 → 7.3.5` güvenlik düzeltmesine açık onay verdi.
-Registry ve lockfile eşlendi; diğer paket sürümleri aynı kaldı. Vite'nin beş
-uyarısı yeni taramada kalktı; kalan 1 yüksek/1 orta/1 düşük advisory açıktır.
+Paket kayıt dosyası ve lockfile eşlendi; diğer paket sürümleri aynı kaldı. Vite'nin beş
+uyarısı yeni taramada kalktı; kalan 1 yüksek/1 orta/1 düşük güvenlik bildirimi açıktır.
 Kanıt `docs/evidence/A6_TECH_01_VITE_SECURITY_PATCH_2026-10-18.json`.
-Bu ilk düzeltme PR #115 ile merge edildi. Tarihsel kanıt değiştirilmez.
+Bu ilk düzeltme PR #115 ile birleştirildi. Tarihsel kanıt değiştirilmez.
 
 Ürün sahibi ardından kalan üç uyarı için kontrollü repository denemesini onayladı:
 Vite `7.3.6`, yalnız Vite altında esbuild `0.28.1`, yalnız Vercel config
-zincirinde Ajv `8.18.0` ve ts-morph `24.0.0`. Sonuncusu upstream pin'i dışında
-major geçiştir; gerçek config okuma, doğrulama ve bundle kimliği test edilir.
-Yeni production ve tam bağımlılık taramaları sıfır advisory döndürdü; braces
+zincirinde Ajv `8.18.0` ve ts-morph `24.0.0`. Sonuncusu sağlayıcının sürüm sabitlemesi dışında
+major geçiştir; gerçek config okuma, doğrulama ve kod paketi kimliği test edilir.
+Yeni production ve tam bağımlılık taramaları sıfır güvenlik bildirimi döndürdü; braces
 zincirden kaldırıldı, uyarılar gizlenmedi. Kanıt:
 `docs/evidence/A6_TECH_01_REMAINING_SECURITY_REMEDIATION_2026-10-18.json`.
-CI ve açık merge/kapanış kabulü beklenir. Canlı deploy/provider/database/secret
+CI ve açık birleştirme/kapanış kabulü beklenir. Canlı deploy/sağlayıcı/veritabanı/secret
 değişikliği, F10 kapanışı, genel PASS veya EO-05 başlangıcı yetkisi yoktur.
 
 Ürün sahibi PR #116 merge onayını ve ardından güvenlik kapanış kaydının
 işlenmesini kabul etti. Düzeltme `aa32e03b57f84b7b5a950a9c9be67826135c2536`
-ile main'e alındı; merge tree test edilen source tree ile exact aynı.
+ile main'e alındı; merge tree test edilen kaynak ağacı ile birebir aynı.
 GitHub CI'da 449 test, frozen-lockfile kurulumu, typecheck ve build PASS.
 `TECH01-RETEST-SEC01` yalnız repository güvenlik kapsamıyla kapalıdır; önceki
 hazırlık kanıtları tarihseldir ve değiştirilmez. Kapanış kanıtı:
@@ -241,7 +256,7 @@ Karşılaştırmada iki dar eksik görüldü ve ürün sahibi repository düzelt
 onayladı: izin reddi token geçersizliği değildir; `80000/80004` BUC kota sınıfıdır.
 Kod/test hazırlığı tek kanıt PR'ında teslim edilir. Kaynak ve kapsam:
 `docs/evidence/A6_TECH_01_GITHUB_META_EVIDENCE_2026-10-18.json`.
-CI, kabul ve merge beklenir. Sonrasında yalnız ayrı onaylı exact release/canlı
+CI, kabul ve birleştirme beklenir. Sonrasında yalnız ayrı onaylı birebir release/canlı
 kabulü ve genel kapanış kararı kalır. F10 ertelemesi korunur; yeni yedek işi,
 genel PASS, A6-DOCS-01 veya EO-05 başlangıç yetkisi yoktur.
 
@@ -264,7 +279,7 @@ altı belgesidir. Bunlar okunabilirlik kabulü bekler; diğer 52 belge dil incel
 bekler. Uygulama kodu, tarihsel kanıtlar ve canlı ortam değişmez; paket kapanmaz.
 
 Aynı gün ikinci teslimin altı belgesi de ürün sahibi tarafından kabul edildi;
-PR #121 onaylı kaynakla aynı ağaç korunarak merge edildi. Merge commit'i
+PR #121 onaylı kaynakla aynı ağaç korunarak birleştirildi. Merge commit'i
 `039087456127cd0d936049e75603ed52a2bbb7c4`.
 Üçüncü dil geçişi EO-02-C faturalandırma ve oturum köprüsü, EO-02-D gizlilik ve
 kalıcı işçi belgeleri ile EO-02-C canlı kabul kılavuzudur. Güncel toplam:
@@ -274,7 +289,7 @@ yeni token, gizli bilgi, sorgu, silme, migration veya dağıtım yetkisi üretme
 EO-05 kapalıdır ve A6-DOCS-01 henüz tamamlanmamıştır.
 
 Üçüncü teslimin beş belgesi de aynı gün açık ürün sahibi kabulüyle PR #122'de
-merge edildi. Merge commit'i `0e8f03ddd1526cc53b8e5e2922211301d512ffef`;
+birleştirildi. Merge commit'i `0e8f03ddd1526cc53b8e5e2922211301d512ffef`;
 test edilen kaynak ağacı korunmuştur. Dördüncü dil geçişi EO-03-A/B/C/D'nin
 OAuth işlemi, token kasası, hesap yetkisi ve bağlantı yaşam döngüsü belgeleridir.
 Güncel toplam: 15 kabul edilmiş, 4 okunabilirlik kabulü bekleyen, 43 dil incelemesi
@@ -291,13 +306,13 @@ düzeltmeye yönlendirilir; eski kanıt değiştirilmez, yeni hata kuralı oluş
 Paket kapanmaz; uygulama kodu, canlı ortam ve EO-05 yetkisi değişmez.
 
 Beşinci teslim PR #124 açık ürün sahibi kabulüyle
-`1581f749e1fcfbf0ad69cf3bc9f3592d5a719db6` commit'inde merge edildi;
+`1581f749e1fcfbf0ad69cf3bc9f3592d5a719db6` commit'inde birleştirildi;
 test edilen ağaç korundu. Altıncı dil geçişi Google raporlama çalışma zamanı,
 canlı kanıt tetikleyicisi, OAuth düzeltici kuruluşu ve 2026 erişim/review kararıdır.
 Güncel toplam: 23 kabul edilmiş, 4 okunabilirlik kabulü bekleyen, 35 dil incelemesi
 bekleyen belge. Tam gün tarihsel PMax kanıtı, test/Production ayrımı ve review
 sonrası aynı çalışma zamanı kararı korunur. Önceki sayımlar tarihseldir;
-yeni provider çağrısı, erişim başvurusu veya kod/canlı ortam değişikliği yoktur.
+yeni sağlayıcı çağrısı, erişim başvurusu veya kod/canlı ortam değişikliği yoktur.
 
 Altıncı teslim PR #125 açık ürün sahibi okunabilirlik/merge kabulüyle
 `77ac39cfb9cf373c6595b6b7dfe6df5927140457` commit'inde birleştirildi;
@@ -416,565 +431,511 @@ masaüstü/mobil kabulü ve dar grafik çizim istisnası korunur. UI kodu ve
 yürütülebilir anayasa sözleşmesi değişmez. Ana tablo metin onarımı kanıtı
 korunur; DOCS kapanışı, EO-05 veya yeni görsel uygulama yetkisi verilmez.
 
-## EO-05 mandatory first gate — historical PMax listing-tree evidence
+PR #136 açık ürün sahibi onayıyla `ed47adf7bc19a9206b1baebda995838021ad3585`
+commit'inde birleştirildi; test edilen ağaç korundu. Son dil teslimi Execution
+Plan, ana paket tablosu ve kalite kapılarıdır. 59 belge kabul edilmiş, bu son
+3 belge okunabilirlik ve paket kapanış kabulünü bekler; çevrilmemiş belge sıfırdır.
+Önceki ara sayımlar tarihseldir. Ana tablonun onarılmış özgün gövdesi
+`docs/evidence/A6_DOCS_01_MASTER_RESTORED_SOURCE_2026-10-19.txt` içinde önceki
+hash'iyle korunur. Çeviri onarım kanıtını veya iş kararlarını değiştirmez.
+Son kabul/merge, tüm repository kontrolleri ve uzak içerik doğrulaması kapanış
+kapısıdır. EO-05, review, yedekleme veya canlı işlem otomatik başlamaz.
 
-EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance
-Max için versioned historical listing-tree snapshot persistence kurulacak ve
-testlerle kilitlenecektir. Bu, EO-05'in ilk zorunlu kapısıdır:
+## EO-05 ilk zorunlu kapısı — tarihsel PMax listing-tree kanıtı
 
-1. Her snapshot verified Reporting Account timezone'u, Campaign ve Asset Group
-   kimliği, complete listing-tree rows, source version/hash, `valid_from`,
-   `valid_to`, observed-at ve query provenance taşır.
-2. Exact historical Asset Group yalnız snapshot satışın tüm provider business-day
-   penceresini kapsıyor ve advertised/clicked ürün için tam olarak bir eligible
-   Asset Group kanıtlıyorsa üretilebilir.
-3. Eksik/partial pencere, gün içi tree değişikliği, çelişkili version/hash veya
-   birden fazla eligible Asset Group satış ve Sales Role'u korur; yalnız Channel
-   `Unclassified Channel` kalır. Satılan ürün Channel seçmek için kullanılamaz.
-4. Bugünkü/current listing tree geçmiş tarih için snapshot veya exact Channel
-   üretemez. Snapshot toplama başlamadan önceki günler, provider'dan o güne ait
-   exact tarihsel kanıt alınamadıkça geriye dönük tahminle doldurulamaz.
-5. Scheduler capture, immutable/versioned persistence, retention, gap detection,
-   reconciliation ve resolver'a date-matched evidence delivery birlikte kabul
-   edilmeden bu kapı PASS sayılamaz.
+EO-05 zamanlayıcısı veya Dataset V2 kabulü başlamadan önce Google Performance Max için
+sürümlü tarihsel listing-tree kayıtlarını kalıcı saklama kurulup testle kilitlenecektir.
+Bu EO-05'in ilk zorunlu kapısıdır; tamamlanmış sayılmaz:
 
+1. Her kayıt doğrulanmış Reporting Account saat dilimi, Campaign/Asset Group kimliği, tam listing-tree satırları, kaynak sürümü/hash'i, `valid_from`, `valid_to`, gözlem zamanı ve sorgu kaynak geçmişini taşır.
+2. Kesin tarihsel Asset Group yalnız kayıt satışın tüm sağlayıcı iş günü penceresini kapsıyor ve reklamı yapılan/tıklanan ürün için tam bir uygun Asset Group kanıtlıysa üretilebilir.
+3. Eksik/kısmi pencere, gün içi ağaç değişimi, çelişkili sürüm/hash veya birden çok uygun grup satış ve Sales Role'u korur; yalnız Channel `Unclassified Channel` kalır. Satılan ürün Channel seçemez.
+4. Bugünkü ağaç geçmiş tarih kaydı veya kesin Channel üretemez. Toplama öncesi günler sağlayıcıdan o güne ait kesin tarihsel kanıt gelmedikçe tahminle doldurulamaz.
+5. Zamanlayıcı kaydı, değişmez/sürümlü saklama, saklama süresi, boşluk tespiti, uzlaştırma ve çözümleyiciye tarih eşleşmeli kanıt teslimi birlikte kabul edilmeden kapı PASS değildir.
 
-## Parent package Analysis–Design Book closure gate — 9 October 2026
+## Ana paket analiz–tasarım kitabı kapanış kapısı — 9 Ekim 2026
 
-Binding contract: `contracts/a6-parent-package-analysis-design-closure-v1.json`  
-CI enforcement: `tests/a6-parent-analysis-design-books.test.js`
+Bağlayıcı sözleşme: `contracts/a6-parent-package-analysis-design-closure-v1.json`
+CI kontrolü: `tests/a6-parent-analysis-design-books.test.js`
 
-- `Done` veya `Accepted` durumundaki her parent paket, teknik olmayan bir okuyucunun iş akışını anlayabileceği kabul edilmiş bir Analysis–Design Book taşır.
+- `Done` veya `Accepted` durumundaki her ana paket, teknik olmayan bir okuyucunun iş akışını anlayabileceği kabul edilmiş bir analiz–tasarım kitabı taşır.
 - EO-01: `docs/EO_01_ANALYSIS_DESIGN_BOOK.md`
 - EO-02: `docs/EO_02_ANALYSIS_DESIGN_BOOK.md`
 - EO-03: `docs/EO_03_ANALYSIS_DESIGN_BOOK.md`
-- EO-04 ve sonraki parent paketler kendi kitapları oluşmadan kapatılamaz; eksik dosya veya ledger kaydı CI'ı düşürür.
-- Kitaplar executable contract ve testlerin yerine geçmez; onları analist diliyle açıklayan operasyonel kütüphane katmanıdır.
+- EO-04 ve sonraki ana paketler kendi kitapları oluşmadan kapatılamaz; eksik dosya veya defter kaydı CI'ı düşürür.
+- Kitaplar yürütülebilir sözleşme ve testlerin yerine geçmez; onları analist diliyle açıklayan operasyonel kütüphane katmanıdır.
 
+## Secret envanteri, saklama ve kurtarma kapısı — 10 Ekim 2026
 
+Bağlayıcı analist özeti: `docs/A6_EO_SECRET_INVENTORY_AND_RECOVERY.md`
+Yürütülebilir sözleşme: `contracts/a6-eo-secret-inventory-recovery-v1.json`
+CI kontrolü: `tests/a6-eo-secret-inventory-recovery.test.js`
 
-## Secret inventory, custody and recovery gate — 10 October 2026
+- 10 Ekim başlangıç kaydı 11 Vercel Production girdisi ve 1 GitHub Actions secret içeriyordu; repository yalnız ad ve prosedür saklar, değer saklamaz. Sonraki F03 kontrolünde toplam 23 ad doğrulandı; güncel ad envanteri ilgili sözleşme ve kanıttadır.
+- Vercel/GitHub maskesi beklenen, yalnız yazılabilen saklama davranışıdır; değerin silindiği anlamına gelmez.
+- Secret değişikliği için kesin anahtarın ürün sahibi onayı, etki haritası, geri alma, onaylı şifreli kurtarma kasasına kayıt, dağıtım/iş akışı doğrulaması ve değer içermeyen kanıt gerekir.
+- Bağımsız kurtarma kopyası var sayılmaz. Kayıp şifreleme anahtarı eski şifreli veriyi çözmek için yeniden üretilemez.
+- İlk gerçek sağlayıcı yetkilendirmesinden önce token anahtarı kurtarma kapısı ve sağlayıcıya özel envanter genişletmesi geçmelidir.
+- Production kimlik bilgileri Preview veya Development'a kopyalanmaz; bu ortamların kimlik bilgileri ayrıdır.
+- Bu karar secret, sağlayıcı, veritabanı, ortam veya dağıtım değişikliğine izin vermez.
 
-Binding analyst brief: `docs/A6_EO_SECRET_INVENTORY_AND_RECOVERY.md`  
-Executable contract: `contracts/a6-eo-secret-inventory-recovery-v1.json`  
-CI enforcement: `tests/a6-eo-secret-inventory-recovery.test.js`
+## Paketler arası güvenlik, kapasite ve taşınabilirlik kararı — 7 Ekim 2026
 
-- Current baseline is eleven Production Vercel entries and one GitHub Actions secret; the repository stores names and procedures, never values.
-- Vercel/GitHub masking is expected write-only behavior and does not mean a value was deleted.
-- Secret mutation requires exact-key product-owner approval, impact map, rollback, approved encrypted recovery-vault capture, redeploy/workflow verification and secret-free evidence.
-- Existing independent recovery copies are not assumed. A generated encryption key cannot be recreated to decrypt old ciphertext.
-- Before the first real provider authorization, the provider-token key recovery gate and the provider-specific inventory extension must pass.
-- Production credentials are never copied to Preview or Development; non-production environments require isolated credentials.
-- This decision authorizes no secret, provider, database, environment or deployment mutation.
+Bağlayıcı analist özeti: `docs/A6_EO_CROSS_CUTTING_SAFETY_CAPACITY_FREEZE.md`
+Yürütülebilir sözleşme: `contracts/a6-eo-cross-cutting-safety-capacity-v1.json`
 
+- Saatlik yenileme zamana yayılır ve bugün+dün ile sınırlıdır. Sağlayıcıya özel kapsamlı uzlaştırma 24 saatte bir çalışır; verinin doğru kesinleşmesini yönetir.
+- Summary/Table özel aralığı 90, Daily 31 günle sınırlıdır. Karşılaştırma eşit uzunlukta, çakışmayan dönemleri kurulu Shopify mağazasının saat diliminde kullanır.
+- Canlı kabul hedefleri: Kritik DB RPO ≤15 dakika, Dataset V2 RPO ≤60 dakika, kısıtlı hizmet RTO ≤60 dakika, tam hizmet RTO ≤240 dakika. Bunlar tamamlanmış kurtarma kanıtı değildir.
+- Supabase kapasitesi çalışma alanı sayısından tahmin edilmez, ölçülür. Hedef 2,000 doğrulanmış aktif çalışma alanı; kanıtı 4,000 çalışma alanlı stres testi ve en az %30 boş kapasitedir.
+- Zorunlu test sırası: EO-05 öncesi iş yükü bütçesi ve indeks/sorgu planı başlangıç ölçümü; EO-05 içinde 2,000 çalışma alanlı saatlik zamanlayıcı, 4,000 çalışma alanlı sıkıştırılmış stres ve 24 saatlik 2,000 çalışma alanlı dayanıklılık; EO-06 içinde Summary/Daily/Compare/Table sorgu ölçümü, dışa aktarma çıkmadan yük testi; EO-08 içinde canlıya benzer geri yükleme/yük provası.
+- Öncelik ölçülmüş PostgreSQL/Supabase ölçeklemesidir; platform taşıması arıza sırasında doğaçlama çözüm değildir.
+- Dışa aktarma ilk review kapsamı dışındadır; eklendiğinde asenkron ve etkileşimli sorgu havuzundan ayrı olacaktır.
+- Bu karar paket durumunu değiştirmez veya canlı altyapı değişikliği başlatmaz.
 
-## Cross-cutting safety, capacity and portability freeze — 7 October 2026
+## Demo test verisi, dışa aktarma referansı ve Shopify geliştirme mağazası sınırı — 7 Ekim 2026
 
-Binding analyst brief: `docs/A6_EO_CROSS_CUTTING_SAFETY_CAPACITY_FREEZE.md`  
-Executable contract: `contracts/a6-eo-cross-cutting-safety-capacity-v1.json`
+Bağlayıcı analist özeti: `docs/A6_EO_DEMO_FIXTURE_EXPORT_REFERENCE.md`
+Yürütülebilir sözleşme: `contracts/a6-eo-demo-fixture-export-reference-v1.json`
 
-- Hourly refresh is staggered and limited to today+yesterday; provider-specific deep reconciliation runs every 24 hours and governs truthful finality.
-- Summary/Table custom ranges are limited to 90 days, Daily to 31 days; compare uses equal non-overlapping periods in the installed Shopify shop timezone.
-- Production acceptance targets are critical DB RPO ≤15 minutes, Dataset V2 RPO ≤60 minutes, degraded RTO ≤60 minutes and full RTO ≤240 minutes.
-- Supabase capacity is measured, not inferred from workspace count. The target is 2,000 certified active workspaces with 4,000-workspace stress evidence and at least 30% headroom.
-- Zorunlu test merdiveni: EO-05 başlamadan workload budget + index/query-plan baseline; EO-05 içinde 2,000-workspace hourly scheduler, 4,000-workspace compressed stress ve 24 saatlik 2,000-workspace soak; EO-06 içinde Summary/Daily/Compare/Table sorgu karakterizasyonu ve export çıkmadan export yük testi; EO-08 içinde production-shape restore/load provası.
-- The scale ladder remains inside measured PostgreSQL/Supabase scaling first; a database-platform migration cannot be an outage response.
-- Export is outside the first review slice; when introduced it must be asynchronous and isolated from the interactive query pool.
-- This cross-cutting decision changes no package status and authorizes no live infrastructure mutation.
+- Eski dashboard HTML'i yalnız referans ve sentetik test verisi ham maddesidir; HTML/JavaScript yeni çalışma zamanına kopyalanmaz.
+- 1,000 satır ve 50 günlük sentetik veri; temiz Dataset V2 test verisi, UI kabul girdisi, Shopify geliştirme mağazası demosu ve belirlenimci kapasite üreticisi tohumu olarak EO-05/06/07/08'e yönlendirilir.
+- Supabase kapasite koşuları ham HTML'i çalıştırmaz; yalnız standartlaştırılmış belirlenimci üretici tohumunu kullanır.
+- Her satır sentetik ve sağlayıcı gerçeği değil olarak işaretlenir. Sağlayıcı kabiliyeti, doğal attribution, kesinleşme, gerçek sıfır, ürün ilişkilendirmesi veya Cross-sell kanıtlayamaz.
+- Dışa aktarma davranışı yalnız review sonrası referanstır; uygulaması ilk review kapsamı dışındadır.
+- Ayrı Shopify geliştirme mağazası/çalışma alanı ileride sahte sağlayıcı bağlantısı göstermeden gömülü arayüzü sergileyebilir.
+- Kaynak test verisi ürün/Cross-sell kabulüne yeterli değildir; EO-07-C'nin ayrı canlı kanıt kapısı korunur.
+- Bu karar paket durumunu değiştirmez; mağaza, sağlayıcı, canlı ortam veya veritabanı değişikliğine izin vermez.
 
-## Demo fixture, export reference and Shopify dev-store boundary — 7 October 2026
+## A6-EO-07 üç yüzeyli arayüz ürün kararı — 7 Ekim 2026
 
-Binding analyst brief: `docs/A6_EO_DEMO_FIXTURE_EXPORT_REFERENCE.md`  
-Executable contract: `contracts/a6-eo-demo-fixture-export-reference-v1.json`
+Bağlayıcı analist özeti: `docs/A6_EO_07_THREE_SURFACE_UI_PRODUCT_FREEZE.md`
+Yürütülebilir sözleşme: `contracts/shopify/a6-eo-07-three-surface-ui-product-freeze-v1.json`
 
-- The legacy dashboard HTML is reference and fixture raw material only; no HTML/JavaScript is copied into the new runtime.
-- Its 1,000-row, 50-day synthetic dataset is routed to EO-05/06/07/08 as a clean Dataset V2 fixture, UI acceptance source, Shopify dev-store demo and deterministic capacity-generator seed.
-- Supabase kapasite koşuları raw HTML'i çalıştırmaz; yalnız normalize edilmiş deterministic generator seed'ini kullanır.
-- Every normalized row is marked synthetic and non-provider truth. It cannot prove provider capability, native attribution, finality, real zero, product attribution or cross-sell.
-- Export behavior is captured as post-review reference only; export implementation remains outside the first review slice.
-- A dedicated Shopify dev store/workspace may later demonstrate embedded UI truthfully without fake provider connections.
-- The source fixture is insufficient for product/cross-sell acceptance; EO-07-C retains that separate live-evidence gate.
-- This decision changes no package status and authorizes no dev-store, provider, production or database mutation.
+- Funnel App Home, Ad Analysis ve Settings tablo/kontrol/iş akışı davranışları donduruldu; EO-07 ilerlemedi, UI uygulaması yetkilendirilmedi.
+- İlk kayıtta Funnel bağlamsal dashboard'u ürün sahibinin ilişki grafiği referansını bekliyordu; ilgisiz klasik grafik varsayımı yasaktı. Sonraki kabul aşağıdaki grafik referansı kaydındadır.
+- Ad Analysis grafikleri; EO-07-C en alt analiz seviyesini ve iki ayrı küpe/Cross-sell senaryosunu Meta, Google Ads ve Klaviyo için doğrulayana kadar kapalıdır.
+- Settings'te grafik yüzeyi yoktur.
+- Çalışan eski Settings akışı yalnız etkileşim kanıtıdır; eski kaynak kod, stil ve emekli sağlayıcı arayüzü kopyalanmaz.
 
-## A6-EO-07 three-surface UI product freeze — 7 October 2026
+## Kabul edilmiş temel: EO-02
 
-Binding analyst brief: `docs/A6_EO_07_THREE_SURFACE_UI_PRODUCT_FREEZE.md`  
-Executable contract: `contracts/shopify/a6-eo-07-three-surface-ui-product-freeze-v1.json`
+- **EO-01-A — Accepted:** Fork veya toplu kopyalama olmadan ayrı temiz repository ve fiziksel sınır kuruldu. Kabul commit'i: `cb02ef7c2e9236ab50da792f21d667fae91cbccd`.
+- **EO-01-B — Accepted:** Güncel resmî Shopify teknoloji yığını, temiz bağımlılık tanımı/lockfile ve negatif CI kapıları birleştirildi. Kabul commit'i: `111e7dec66c84c48be43930f3496ea5b0f918949`.
+- **EO-01-C — Accepted:** Polaris 2.0 RC üç yollu veri iddiası taşımayan Preview kabuğu ürün sahibi tarafından görsel olarak kabul edildi ve birleştirildi. Kabul commit'i: `76ea38a474c701d69871f73ba713376e3a7d623e`.
+- **EO-02-A — Accepted:** Ayrı Frankfurt Supabase projesinde özel şema, sahip/migration yöneticisi/çalışma zamanı rol sınırı ve temiz migration zinciri canlı olarak doğrulandı; PR #4 merge commit'i: `2ac00f969eb35ac632ead57017753ed495e7b66f`.
+- **EO-02-B — Accepted:** Çalışma alanı, kurulum ve nesil otoritesi migration zinciri canlı Supabase'de PASS oldu; kendini temizleyen ilk yükleme/güvenli tekrar/eski kayıt/alan adı değişimi kontrolü sonrası iş satırı sıfır, Security ve Performance Advisor temizdir. PR #6 merge commit'i: `edc9e21588f5a32bea139b754ea0108c9809cf27`.
+- **EO-02-C — Accepted:** Shopify App Pricing + Partner API otorite modeli, zorunlu RLS korumalı abonelik izdüşümü ve Supabase kontrolü hazırdı. 8 Ekim 2026'da App Store kaydı, Production Vercel Partner secret/dağıtım ve `activeSubscription` null/trial/active sağlayıcı kabulü PASS oldu. Deneme, herkese açık `AdsTable Monthly` planında etkin fiyat `USD 0.0` ve `price.active=false`; aktif durum, hedef mağazaya açılan özel `shopify-test` planında `trialEndsAt=null`, geçerli faturalandırma dönemi, etkin fiyat `USD 0.0` ve `price.active=true` döndürdü. Fiyat-sürümü üst veri düzeltmesi PR #18 ile birleştirilip Production'a alındı. Tarayıcı/yanıt/uygulama/platform log sızıntı kontrolleri PASS oldu. PR #23 ile Supabase Root CA doğrulamalı transaction-pooler TLS Production'a alındı; Shopify Admin masaüstü ilk yükleme ve tam sayfa yeniden yükleme PASS oldu. Canlı veritabanı bir çalışma alanı, nesil-1 aktif kurulum, yalnız şifreli çalışma zamanı oturumu, aktif abonelik izdüşümü ve aktif kullanım hakkı taşır. 9 Ekim 2026'da kullanım hakkının seçilebilir mağaza üst verisi taşımasının yanlış olduğu saptandı; aktif model kurulu Shopify mağazasına kilitlendi. Ayrı açık ürün sahibi onayıyla düzeltici migration canlı Supabase'e uygulandı; eski üç üst veri kolonu kaldırıldı, mevcut kullanım hakkı satırı korundu, yalnız fonksiyon çalıştırma çalışma zamanı sınırı ve sıfır Security Advisor bulgusu doğrulandı. Gerçek mobil Shopify uygulamasında Funnel, Ad Analysis, Settings ve tam uygulama kapatıp yeniden açma kabulü PASS oldu; canlı izdüşüm sayıları tutarlı ve kontrol edilen Vercel çalışma zamanı penceresi hatasız kaldı. Teknik canlı kabul kapılarının tamamı PASS oldu. Eski kayıt reddi önceki canlı veritabanı kabul kanıtından bağlandı; ürün sahibi 8 Ekim 2026'da açık kapanış kabulünü verdi. Teknik açık kalem sıfırdır.
+- **EO-02-D — Accepted:** Gizlilik/kaldırma/silme/temiz kurulum girişi, özel zorunlu-RLS kuyruk/envanter modeli, birebir Shopify yapılandırması ve dağıtılmış geçersiz-HMAC 401 kabulü PASS oldu. 9 Ekim 2026'da Supabase Cron işçisi ve PostgreSQL koşullu ifade düzeltmesi canlıya uygulandı. 08:00 UTC doğal Cron koşusu sentetik `customer_data_request` çalışmasını tek denemede `completed/no_customer_data` manifestiyle tamamladı; yeniden işleme sıfır iş seçti, uygulama çalışma zamanı işçiyi ve fiziksel silme yürütücüsünü çalıştıramıyor, Security Advisor sıfır ve sentetik temizliği sıfır kalan kayıtla PASS oldu. Kalıcı kanıt `docs/evidence/EO_02D_DURABLE_WORKER_LIVE_2026-10-09.json` dosyasındadır. Ürün sahibi 9 Ekim 2026'da açık kapanış kabulünü verdi; teknik açık kalem sıfırdır.
 
-- Funnel App Home, Ad Analysis and Settings table/control/workflow behavior is frozen without advancing EO-07 or authorizing UI implementation.
-- Funnel contextual dashboard work is waiting for the product-owner relationship-graph reference package; unrelated classic-chart assumptions are forbidden.
-- Ad Analysis charts remain blocked until EO-07-C verifies the deepest analytical leaf and both exact earring/cross-sell fixtures independently for Meta, Google Ads and Klaviyo.
-- Settings has no chart surface.
-- The working legacy Settings flow is interaction evidence only; legacy source, styling and retired-provider UI are not copied.
+EO-02-A iş tablosu veya veri kurmaz, çalışma zamanı kimlik bilgisini etkinleştirmez, canlı token/veri taşımaz, Vercel ortamını değiştirmez ve eski Supabase projesine dokunmaz.
 
-## Accepted foundation: EO-02
+## EO-04-A ortak adaptör başlangıç özeti — 10 Ekim 2026 (tarihsel)
 
-- **EO-01-A — Accepted:** Fork veya bulk copy olmadan ayrı temiz repository ve fiziksel sınır kuruldu. Kabul commit'i: `cb02ef7c2e9236ab50da792f21d667fae91cbccd`.
-- **EO-01-B — Accepted:** Güncel resmî Shopify stack, temiz dependency manifest/lockfile ve negatif CI kapıları merge edildi. Kabul commit'i: `111e7dec66c84c48be43930f3496ea5b0f918949`.
-- **EO-01-C — Accepted:** Polaris 2.0 RC üç-route truthful preview shell ürün sahibi tarafından görsel olarak kabul edildi ve merge edildi. Kabul commit'i: `76ea38a474c701d69871f73ba713376e3a7d623e`.
-- **EO-02-A — Accepted:** Ayrı Frankfurt Supabase projesinde private schema, owner/migrator/runtime rol sınırı ve temiz migration zinciri canlı olarak doğrulandı; PR #4 merge commit'i: `2ac00f969eb35ac632ead57017753ed495e7b66f`.
-- **EO-02-B — Accepted:** Workspace, installation ve generation authority migration zinciri canlı Supabase'de PASS oldu; self-cleaning bootstrap/idempotency/stale/domain-change probe sonrası business row sıfır, Security ve Performance Advisor temizdir. PR #6 merge commit'i: `edc9e21588f5a32bea139b754ea0108c9809cf27`.
-- **EO-02-C — Accepted:** Shopify App Pricing + Partner API authority modeli, forced-RLS billing projection ve Supabase probe hazırdır. 8 Ekim 2026'da App Store registration, Production Vercel Partner secret/deployment ve `activeSubscription` null/trial/active provider kabulü PASS oldu. Trial, public `AdsTable Monthly` planında effective `USD 0.0` ve `price.active=false`; active durum, hedef mağazaya açılan private `shopify-test` planında `trialEndsAt=null`, geçerli billing cycle, effective `USD 0.0` ve `price.active=true` döndürdü. Fiyat-sürümü metadata düzeltmesi PR #18 ile merge edilip Production'a alındı. Browser/response/application/platform log sızıntı kontrolleri PASS oldu. PR #23 ile Supabase Root CA doğrulamalı transaction-pooler TLS Production'a alındı; Shopify Admin desktop ilk yükleme ve tam sayfa reload PASS oldu. Canlı database bir workspace, generation-1 active installation, ciphertext-only runtime session, active subscription projection ve active entitlement taşır. 9 Ekim 2026'da entitlement'ın seçilebilir mağaza metadata'sı taşımasının yanlış olduğu saptandı; aktif model kurulu Shopify mağazasına kilitlendi. Ayrı açık ürün sahibi onayıyla düzeltici migration canlı Supabase'e uygulandı; eski üç metadata kolonu kaldırıldı, mevcut entitlement satırı korundu, function-only runtime sınırı ve sıfır Security Advisor bulgusu doğrulandı. Gerçek mobil Shopify uygulamasında Funnel, Ad Analysis, Settings ve tam uygulama kapatıp yeniden açma kabulü PASS oldu; canlı projection sayıları tutarlı ve kontrol edilen Vercel runtime penceresi hatasız kaldı. Teknik canlı kabul kapılarının tamamı PASS oldu. Stale snapshot rejection önceki canlı database acceptance kanıtından bağlandı; ürün sahibi 8 Ekim 2026'da açık kapanış kabulünü verdi. Teknik açık kalem sıfırdır.
-- **EO-02-D — Accepted:** Privacy/uninstall/deletion/clean-reinstall ingress'i, private forced-RLS queue/manifest modeli, exact Shopify app configuration ve deployed invalid-HMAC 401 kabulü PASS oldu. 9 Ekim 2026'da Supabase Cron worker ve PostgreSQL conditional-expression düzeltmesi canlıya uygulandı. 08:00 UTC doğal Cron koşusu sentetik `customer_data_request` run'ını tek denemede `completed/no_customer_data` manifestiyle tamamladı; replay sıfır iş seçti, application runtime worker ve fiziksel executor çalıştıramıyor, Security Advisor sıfır ve sentetik temizliği sıfır kalan kayıtla PASS oldu. Kalıcı kanıt `docs/evidence/EO_02D_DURABLE_WORKER_LIVE_2026-10-09.json` dosyasındadır. Ürün sahibi 9 Ekim 2026'da açık kapanış kabulünü verdi; teknik açık kalem sıfırdır.
+Bağlayıcı analist özeti: `docs/EO_04A_COMMON_ADAPTER_START_BRIEF.md`
+Yürütülebilir başlangıç sözleşmesi: `contracts/eo-04a-common-adapter-start-brief-v1.json`
+CI kontrolü: `tests/eo-04a-common-adapter-start-brief.test.js`
 
-EO-02-A business tablo veya veri kurmaz, runtime credential'ı etkinleştirmez, canlı token/veri taşımaz, Vercel environment değiştirmez ve legacy Supabase projesine dokunmaz.
+- O aşamada EO-04 yalnız EO-04-A başlangıç özeti kapısında aktifti; ortak adaptör uygulaması başlamamıştı.
+- Kurulu Shopify mağazası değiştirilemez ticaret otoritesidir. Sağlayıcı hesabı, alan adı, pixel, URL, UTM, click ID veya Campaign adı çalışma alanı/mağaza kapsamı oluşturamaz veya değiştiremez.
+- Yalnız sağlayıcının açık sayısal sıfırı sıfır olur. Boş, eksik, desteklenmeyen, izni reddedilmiş, belirsiz, geçici, kısmi ve başarısız ayrı kalır.
+- Kanonik Funnel talebi on ham gerçektir: Gösterim, reklam tıklaması, oturum, harcama, ATC adet/değer, checkout adet/değer ve purchase adet/değer. Sağlayıcının alan adı sözleşmeyi değiştiremez.
+- Meta/Google Ads bir ila üç doğrulanmış reklamveren hesabına izin verir. Google Manager/MCC yalnız erişim yoludur; Reporting Account veya Funnel varlığı seçilemez. Klaviyo tam bir doğrulanmış hesaba bağlanır; Ad Account diye adlandırılmaz.
+- Başlangıç özeti OAuth'tan ilk veriye birebir 17 adımı kaydeder. İlk yükleme önce dün, sonra bugündür; saatlik yenileme/uzlaştırma EO-05'e aittir.
+- Sayfalama opak, sınırlı, güvenle tekrarlanabilir ve yayından önce tamdır; eksik sayfa tam sonuç olamaz.
+- İlk taslağın tekrar denemesi yalnız belgelenmiş geçici sınıflarla sınırlıydı; kota kurtarma bilgisi tahminî gecikmeden önceliklidir. Bu tasarım ilk sağlayıcı hatasında durma ve yeni onay kapısını aşmaz.
+- Ham kanıt özel, sınırlı, temizlenmiş ve içerik hash'li tutulur; token, kimlik bilgisi ve profil düzeyi kişisel veri yasaktır.
+- EO-04-A sağlayıcı secret'ı veya canlı sağlayıcı/API, veritabanı, Vercel, dağıtım değişikliği oluşturmadı.
+- Meta Graph/Login/sürüm/hesap kaynakları 13 Ekim 2026'da yeniden kontrol edildi. Production yapılandırması, dağıtımı ve masaüstü OAuth kabulü ayrı açık yetkiyle geçti. Mobil temiz oturum kabulü o kayıtta denenen kimliğin App Role yetkisi olmaması nedeniyle açıktı; AdsTable kod hatası sayılmadı. Sonraki kabul kayıtları bu ara durumu tamamlar.
 
+## EO-03/EO-04 kapanışı ve o andaki sonraki kapı TECH-01 — tarihsel
 
-## EO-04-A common adapter start brief — 10 October 2026
+- **EO-03-A — Accepted:** Çalışma alanı/kurulum nesline bağlı OAuth durum makinesi, birebir dönüş izin listesi, tek kullanımlık state sahiplenme ve canlı özel veritabanı sınırı repository, veritabanı ve ürün sahibi kapılarından geçti.
+- **EO-03-B — Accepted:** Sürümlü AES-256-GCM şifreli token kaydı, yalnız şifreli veri kasası, canlı özel veritabanı sınırı, Production başlangıç koruması ve secret içermeyen sentetik kabul geçti.
+- **EO-03-C — Accepted:** Güncel sağlayıcı doğrulamalı hesaplar ve tek kanonik Meta/Google Reporting Account, değişmez kurulu Shopify mağazasına bağlıdır. Klaviyo tek Connected Account'tur, Reporting Account kontrolü yoktur. Kullanıcı mağaza kapsamı seçemez.
+- Ayrı onayla EO-03-C temel/düzeltici Supabase migration'ları 9 Ekim 2026'da uygulandı. Geri alınan sentetik kabul geçti; kalıntı, Security Advisor ve bu işten kaynaklı eksik FK indeksi sıfırdır. Sağlayıcı API/OAuth, Vercel değişikliği veya Production dağıtımı yapılmadı. Ürün sahibi kapanışı 9 Ekim'de kabul etti; kanıt `docs/evidence/EO_03C_LIVE_ACCEPTANCE_2026-10-09.json`.
+- **EO-03-D — Accepted:** Yeniden yetkilendirme, atomik kimlik bilgisi yenileme, iki aşamalı bağlantı kesme ve aynı kanonik kimlikle yeniden bağlanma; tamamen geri alınan canlı yaşam döngüsü senaryosundan geçti. Sentetik kalıntı ve Advisor sıfır; sağlayıcı API/OAuth/Vercel/dağıtım değişikliği yok. Kanıt: `evidence/eo-03d-live-database-evidence-2026-10-09.json`.
+- **EO-03 — Accepted:** Dört alt paket açık ürün sahibi kabulüyle kapandı.
+- **EO-04 — Accepted (18 Ekim 2026):** Ortak adaptör, üç sağlayıcı çalışma zamanı sınırı, kanonik Channel/Sales Role sözleşmesi ve okunabilir senaryo matrisi kabul edildi. Meta canlı yanıt biçimi, Google test hesabı review kanıtı ve Klaviyo `environment_not_ready` kanıtı sınırlarıyla korunur.
+- Bu kapanış Meta App Role gerçek katalog, Google Explorer-or-higher canlı hesap ve Klaviyo Shopify entegrasyonu sonrası gerçek raporlama kanıtını tamamlamaz. Tarihsel PMax listing-tree saklama EO-05'in ilk zorunlu kapısıdır.
+- Geçici Settings Meta kanıt butonu kaldırıldı. Google butonu canlı hesap kanıtına, Klaviyo butonu Shopify entegrasyonu kanıtına veya EO-05 zamanlayıcısının bu taşımanın yerini almasına kadar korunur.
+- O kapanışta sıradaki zorunlu çalışma `A6-TECH-01` idi; kritik düzeltmeler ve `A6-DOCS-01` tamamlanmadan EO-05 açılamaz. TECH-01'in sonraki genel kabulü üstteki güncel özettedir.
 
-Binding analyst brief: `docs/EO_04A_COMMON_ADAPTER_START_BRIEF.md`  
-Executable start contract: `contracts/eo-04a-common-adapter-start-brief-v1.json`  
-CI enforcement: `tests/eo-04a-common-adapter-start-brief.test.js`
+## EO-03-C resmî sağlayıcı dayanağı — 9 Ekim 2026
 
-- EO-04 is active only at the EO-04-A start-brief gate; common-adapter implementation has not started.
-- Installed Shopify Store remains immutable commerce authority. Provider account, domain, pixel, URL, UTM, click ID or campaign name cannot create or switch workspace/store scope.
-- Only an explicit provider zero becomes zero. Empty, absent, unsupported, permission-denied, ambiguous, provisional, partial and failed remain distinct states.
-- Canonical Funnel demand is fixed to ten raw facts: impression, ad click, session, spend, ATC count/value, checkout count/value and purchase count/value; provider-native field names cannot change this contract.
-- Meta and Google Ads allow one to three provider-verified advertiser accounts. Google Manager/MCC accounts are access paths only and are never selectable Reporting Accounts or Funnel entities. Klaviyo binds exactly one verified account and is never labelled an Ad Account.
-- The binding analyst brief records the exact 17-step OAuth-to-first-data order; initial bootstrap remains yesterday then today, while hourly refresh and reconciliation remain EO-05 responsibilities.
-- Pagination is opaque, bounded, idempotent and complete-before-publish; a missing page cannot become a complete snapshot.
-- Retry is bounded and limited to documented transient failures; rate-limit recovery metadata wins over guessed delays.
-- Raw evidence is private, bounded, sanitized and content-hashed; tokens, credentials and profile-level personal data are forbidden.
-- EO-04-A creates no provider secret and makes no live provider/API, database, Vercel or deployment mutation.
-- Meta's current official Graph/Login/version/account sources were rechecked on 13 October 2026. Production configuration, deployment and desktop Shopify Admin OAuth acceptance passed under separate explicit product-owner authorization. Mobile clean-session acceptance remains open because the attempted browser identity was not an authorized app-role identity; this is not classified as an AdsTable code failure.
+Shopify kimlik doğrulama/erişim token'ı otoritesi, Meta resmî Marketing API koleksiyonu,
+Google Ads erişim modeli ve `ListAccessibleCustomers`, Klaviyo OAuth/Get Account,
+Supabase değişiklik/fonksiyon/RLS belgeleri kontrol edildi. Sağlayıcıya özel HTTP keşfi
+EO-04'e aittir; EO-03-C yalnız kısa ömürlü doğrulanmış kanıt kabul eder.
+Eski, farklı sağlayıcıya ait veya kullanıcı tarafından girilmiş hesap kimliğiyle güvenli biçimde durur.
 
+## 6 Ekim 2026 resmî teknoloji dayanağı — tarihsel
 
-## Closed packages: EO-03 and EO-04 / Next gate: A6-TECH-01
+6 Ekim 2026 tarihinde Shopify'ın resmî App Home ve başlangıç şablonu belgeleri kontrol edildi:
 
-- **EO-03-A — Accepted:** Workspace/install-generation-bound OAuth transaction state machine, exact callback allowlist, single-use state claim and live private database boundary passed repository, database and product-owner gates.
-- **EO-03-B — Accepted:** Versioned AES-256-GCM token envelope, ciphertext-only vault, live private database boundary, production startup guard and secret-free synthetic runtime acceptance passed.
-- **EO-03-C — Accepted:** Fresh provider-verified connected accounts and one canonical Meta/Google Reporting Account are bound beneath the immutable installed-Shopify-store authority. Klaviyo remains one Connected Account with no Reporting Account control. No merchant-selectable store scope exists.
-- With explicit approval, the EO-03-C base and corrective Supabase migrations were applied on 9 October 2026. Rollback-scoped synthetic runtime acceptance passed, cleanup is zero, Security Advisor findings are zero and EO-03-C introduced no unindexed-foreign-key finding. No provider API call, provider OAuth, Vercel mutation or production deploy occurred in EO-03-C. The product owner explicitly closed EO-03-C on 9 October 2026; exact evidence is `docs/evidence/EO_03C_LIVE_ACCEPTANCE_2026-10-09.json`.
-- **EO-03-D — Accepted:** Reauthorization, atomic credential renewal, two-phase disconnect and same-canonical-connection reconnect passed the complete rollback-scoped live lifecycle scenario. All synthetic rows rolled back to zero, Security Advisor remained at zero, and no provider API/OAuth/Vercel/deploy mutation occurred. Durable evidence: `evidence/eo-03d-live-database-evidence-2026-10-09.json`.
-- **EO-03 — Accepted:** All four children are closed with explicit product-owner acceptance.
-- **EO-04 — Accepted (18 Ekim 2026):** Ortak adapter, üç provider runtime sınırı, canonical Channel/Sales Role sözleşmesi ve insan tarafından okunabilir scenario matrix ürün sahibi kapanış kabulünü aldı. Meta canlı shape kanıtı, Google test-account review kanıtı ve Klaviyo `environment_not_ready` kanıtı truthful sınırlarıyla korunur.
-- Kapanış; Meta gerçek App Role katalog doğrulamasını, Google Explorer-or-higher production kanıtını veya Klaviyo Shopify entegrasyonu sonrası live reporting kanıtını tamamlanmış saymaz. Historical PMax listing-tree persistence EO-05'in ilk zorunlu kapısıdır.
-- Geçici Settings taşımasında Meta evidence butonu kaldırılmıştır. Google butonu production evidence alınana, Klaviyo butonu Shopify integration evidence alınana kadar veya EO-05 scheduler kabulü bu taşımanın yerini alana kadar korunur.
-- EO-05 başlamaz. Sıradaki zorunlu çalışma `A6-TECH-01`; onun kritik düzeltmeleri ve `A6-DOCS-01` tamamlanmadan EO-05 kapısı açılamaz.
+- Public App Store sunucu uygulaması geliştiricinin barındırdığı iframe App Home modelini kullanır.
+- Temiz başlangıç için resmî React Router şablonu temel alınır.
+- App Bridge ve Shopify Polaris web components ürün kabuğunun zorunlu arayüz katmanıdır.
+- Ürün sahibinin 6 Ekim 2026 tarihli açık kararıyla aktif referans sürüm `polaris-2.0-rc.js` ve birebir `@shopify/polaris-types@2.0.0-rc.2`'dir; RC riski kabul edilmiştir ve stable 1.x'e otomatik dönüş yapılamaz.
 
-## EO-03-C official provider baseline — 9 Ekim 2026
+EO-01-B bağımlılık sürümlerini sabitlemeden ve EO-07 UI uygulamasından önce resmî sürümler tekrar doğrulanır.
 
-Shopify authentication/access-token authority, Meta official Marketing API collection, Google Ads access model and `ListAccessibleCustomers`, Klaviyo OAuth/Get Account, Supabase changelog/functions/RLS belgeleri kontrol edildi. Provider-specific HTTP discovery remains EO-04; EO-03-C accepts only short-lived verified evidence and fails closed on stale, cross-provider or merchant-entered account identity.
+## 6 Ekim 2026 Supabase başlangıç durumu — tarihsel
 
-## Current official baseline
+6 Ekim 2026 tarihinde Supabase'in resmî API güvenliği, Postgres rolleri, RLS, bağlantı ve kırıcı değişiklik belgeleri kontrol edildi.
 
-6 Ekim 2026 tarihinde Shopify'ın resmî App Home ve scaffold belgeleri kontrol edildi:
-
-- Public App Store backend uygulaması developer-hosted iframe App Home modelini kullanır.
-- Temiz başlangıç için resmî React Router template temel alınır.
-- App Bridge ve Shopify Polaris web components ürün shell'inin zorunlu arayüz katmanıdır.
-- Ürün sahibinin 6 Ekim 2026 tarihli açık kararıyla aktif baseline `polaris-2.0-rc.js` ve exact `@shopify/polaris-types@2.0.0-rc.2`'dir; RC riski kabul edilmiştir ve stable 1.x'e otomatik dönüş yapılamaz.
-
-EO-01-B dependency pinlemeden ve EO-07 UI implementasyonundan önce resmî sürümler tekrar doğrulanır.
-
-
-## Current Supabase baseline
-
-6 Ekim 2026 tarihinde Supabase'in resmî API security, Postgres roles, RLS, connection ve breaking-change belgeleri kontrol edildi.
-
-- Yeni project: `podpwkrpmjiksskxhwsu`, Frankfurt, PostgreSQL 17.11 GA.
-- Private schema: `app`, `shopify`, `integrations`, `analytics`, `operations`, `privacy`, `billing`.
-- Data API rolleri private schema'lara erişemez.
-- Runtime şema kullanabilir fakat schema oluşturamaz ve henüz hiçbir tablo yetkisi yoktur.
-- Runtime/migrator parolaları NULL'dır; Vercel bağlantısı bu paketin kapsamı değildir.
+- Yeni proje: `podpwkrpmjiksskxhwsu`, Frankfurt, PostgreSQL 17.11 GA.
+- Özel şemalar: `app`, `shopify`, `integrations`, `analytics`, `operations`, `privacy`, `billing`.
+- Data API rolleri özel şemalara erişemez.
+- Çalışma zamanı şema kullanabilir fakat şema oluşturamaz ve henüz hiçbir tablo yetkisi yoktur.
+- Çalışma zamanı/migration yöneticisi parolaları NULL'dır; Vercel bağlantısı bu paketin kapsamı değildir.
 - Security ve performance advisor bulgusu sıfırdır.
 
-## Current Shopify billing baseline
+## 8 Ekim 2026 Shopify abonelik dayanağı
 
 8 Ekim 2026 tarihinde Shopify'ın resmî Shopify App Pricing ve Partner API belgeleri yeniden kontrol edildi:
 
-- Yeni public app için desteklenen fiyat modelinde varsayılan otorite Shopify App Pricing'dir; Manual Billing API legacy'dir.
-- Plan, fiyat ve 14 günlük trial Shopify tarafında yaşar; AdsTable `appSubscriptionCreate` veya local trial grant üretmez.
-- Canonical subscription read modeli Partner API `2026-07` `activeSubscription(appId, shopId)` sorgusudur.
-- `price.active` yalnız fiyat sürümünün güncel katalog fiyatı olup olmadığını gösterir; subscription veya entitlement aktiflik bayrağı değildir.
-- Trial kullanımı Shopify tarafından 180 günlük dönem boyunca izlenir; reinstall trial'ı sıfırlamaz.
-- Shopify App Pricing billing webhook'u göndermez; redirect, app entry ve entitlement-korumalı işlerde kontrollü Partner API reconciliation gerekir.
-- Her Shopify app installation yalnız kendi doğrulanmış mağazası için workspace ve subscription üretir; ikinci mağaza ayrı installation ve subscription gerektirir.
+- Yeni public app için desteklenen fiyat modelinde varsayılan otorite Shopify App Pricing'dir; Manual Billing API eski modeldir.
+- Plan, fiyat ve 14 günlük trial Shopify tarafında yaşar; AdsTable `appSubscriptionCreate` veya yerel deneme hakkı üretmez.
+- Kanonik abonelik okuma modeli Partner API `2026-07` `activeSubscription(appId, shopId)` sorgusudur.
+- `price.active` yalnız fiyat sürümünün güncel katalog fiyatı olup olmadığını gösterir; abonelik veya kullanım hakkı aktiflik bayrağı değildir.
+- Trial kullanımı Shopify tarafından 180 günlük dönem boyunca izlenir; yeniden kurulum denemeyi sıfırlamaz.
+- Shopify App Pricing billing webhook'u göndermez; dönüş, uygulama açılışı ve kullanım hakkı-korumalı işlerde kontrollü Partner API uzlaştırma gerekir.
+- Her Shopify uygulama kurulumu yalnız kendi doğrulanmış mağazası için çalışma alanı ve abonelik üretir; ikinci mağaza ayrı installation ve subscription gerektirir.
 
+## A6-EO-07-B Funnel grafik referansı — 7 Ekim 2026
 
-## A6-EO-07-B Funnel visualization reference — 7 October 2026
+- Ürün sahibinin grafik referansı kabul edildi; `docs/A6_EO_07_FUNNEL_VISUALIZATION_REFERENCE.md` ve `contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json` ile bağlayıcıdır.
+- Performance; Sales, Revenue ve Spend'i ilişkilendirir. Intent; Add to Cart, Checkout, Abandoned ve Purchase'ı ilişkilendirir.
+- Kullanıcı terimi `Sales`tir; iç `sales_value` uygulama anahtarı kalabilir.
+- Mevcut dönem düz, karşılaştırma kesik çizgiyle gösterilir. Olumlu/olumsuz değişimin anlamı metrik sözleşmesinden gelir.
+- Grafik, seçili nokta, KPI ve tablo tek BFF/sorgu/formül otoritesi kullanır.
+- SVG/Canvas yalnız grafik veri düzlemindedir; çevre arayüz resmî Polaris/App Bridge kalır.
+- Ad Analysis grafikleri A6-EO-07-C kanıtı ve ayrı kabul edilmiş grafik özeti bekler.
+- Yeni paket açılmadı; A6-EO-07 ilerlemedi, uygulama/canlı değişiklik yetkisi verilmedi.
 
-- Product-owner graph reference is accepted and bound by `docs/A6_EO_07_FUNNEL_VISUALIZATION_REFERENCE.md` and `contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json`.
-- Performance relates Sales, Revenue and Spend. Intent relates Add to Cart, Checkout, Abandoned and Purchase.
-- User-facing terminology is `Sales`; internal `sales_value` may remain an implementation key.
-- Current period uses solid and comparison uses dashed encoding; meaning of favorable/unfavorable change comes from the metric contract.
-- Chart, selected-point detail, KPI summary and table must use one BFF/query/formula authority.
-- SVG/Canvas is permitted only within the chart data plane. All surrounding UI remains exact official Polaris/App Bridge.
-- Ad Analysis charts remain blocked until A6-EO-07-C evidence and a separate accepted graph brief.
-- No new package was opened; A6-EO-07 status did not advance and implementation/live mutation remains unauthorized.
+## A6-OPS-LOCAL-01 — Tek seferlik güvenli yerel temizlik
 
+**Durum:** Hazır; uygulama başlamadı
+**Tür:** Bağımsız operasyon paketi; A6-EO bağımlılık zinciri dışında
 
-## A6-OPS-LOCAL-01 — One-time local safety cleanup
+- **A6-OPS-LOCAL-01-A — Salt okunur envanter:** AdsTable kökleri, durum, dallar, stash, worktree, ortak Git üst verisi ve yalnız yerelde kalan adaylar değişikliksiz listelenir.
+- **A6-OPS-LOCAL-01-B — Sınıflandırma ve uzak eşdeğer kanıtı:** Anlamlı iş, secret/yedek, atılabilir çıktı, aktif/arşivlenebilir worktree ve geçersiz üst veri ayrılır; temizlikten önce GitHub eşliği kanıtlanır.
+- **A6-OPS-LOCAL-01-C — Geri alınabilir temizlik:** Yalnız güncel envanter ve ayrı açık onaydan sonra uygun worktree arşivlenir; kesin doğrulanmış kökte atılabilir olduğu kanıtlanan içerik kaldırılır.
+- **A6-OPS-LOCAL-01-D — Kapanış kanıtı:** Yalnız yerelde kalan anlamlı işin sıfır olduğu, ana kopya/ortak üst verinin sağlamlığı, uzak eşdeğerlerin okunabilirliği ve istisnaların kaydı kanıtlanır.
 
-**Status:** Ready; execution not started  
-**Type:** Independent operational package; outside the A6-EO dependency chain
+Paketin açılması silme yetkisi vermez. 10 EO ana paketi, 43 sabit alt paket veya iş sırası değişmez.
+İlk kayıttaki A6-EO-02-C aktif kapı ifadesi tarihseldir; bugün aktif kapı DOCS'tur.
+Tekrarını, zorunlu paket sonu yalnız-yerelde-anlamlı-iş-sıfır kontrolü önler.
 
-- **A6-OPS-LOCAL-01-A — Read-only inventory and freeze:** Enumerate AdsTable roots, status, branches, stashes, worktrees, common Git metadata and local-only candidates without mutation.
-- **A6-OPS-LOCAL-01-B — Classification and remote-equivalence proof:** Separate meaningful work, secrets/backups, disposable outputs, active/archiveable worktrees and stale metadata; prove GitHub equivalence before cleanup.
-- **A6-OPS-LOCAL-01-C — Recoverable cleanup execution:** Only after a fresh manifest and separate user approval, archive eligible managed worktrees and remove proven disposable material from exact validated roots.
-- **A6-OPS-LOCAL-01-D — Closure evidence:** Prove zero meaningful local-only project work, intact anchor/common metadata, readable remote equivalents and recorded exceptions.
+## A6-OPS-SHOPIFY-01 — İzole Shopify gömülü ön üretim ortamı
 
-Opening this package authorizes no deletion. It does not change the 10 A6-EO parents, 43 stable EO children, current A6-EO-02-C gate or any product implementation sequence. Recurrence is prevented by the mandatory end-of-package local-only-zero gate.
+**Durum:** Planlandı; tetikleyiciye ulaşılmadı; uygulama başlamadı
+**Tür:** Devreye alma sınırına kadar EO bağımlılık zinciri dışında bağımsız ön koşul paketi
 
+Bağlayıcı analist özeti: `docs/A6_OPS_SHOPIFY_01_ISOLATED_PREPRODUCTION.md`
+Yürütülebilir sözleşme: `contracts/a6-ops-shopify-01-isolated-preproduction-v1.json`
 
-## A6-OPS-SHOPIFY-01 — Isolated Shopify embedded pre-production
+- Gerçek mağazanın AdsTable kullanımı için Shopify'a taşınması veya ilk dış/ekip dışı kullanıcının daveti; hangisi önceyse ondan önce zorunlu ön koşuldur.
+- Ayrı Shopify geliştirme uygulaması/mağazası, adlandırılmış canlı olmayan yapılandırma, sabit gömülü Preview/Staging URL ve birebir dönüş adresleri, Preview'a özel kimlik bilgileri ve Production'dan izole kalıcı veri gerekir.
+- Canlı mağaza geliştirme mağazası yerine geçmez. Production kimlik bilgileri Preview/Development'a kopyalanamaz; Preview Production iş verisine yazamaz.
+- Gerçek sağlayıcı hesabı kabulü ayrı onaylı, salt okunur ve kesin hesaba bağlıdır. İlk açık veya açıklamasız hatada durulur; tekrar veya alternatif rota yeni açıklama/onay ister.
+- Kanıt A6-EO-08-D'ye girdi olabilir; paket review'a hazır ilan etmez, aktif EO ana paketini ilerletmez.
+- Ürün sahibi 17 Ekim 2026'da planlamayı kabul edip uygulamayı açıkça erteledi. Bu kayıt Shopify/Vercel/veritabanı/secret/sağlayıcı/dağıtım/taşıma/davet/review/merge işlemi yetkilendirmez.
 
-**Status:** Planned; trigger not reached; implementation not started
-**Type:** Independent prerequisite package; outside the A6-EO dependency chain until its activation deadline
+### EO-02-C düzeltici kapı — Shopify çalışma zamanı kimlik doğrulama köprüsü
 
-Binding analyst brief: `docs/A6_OPS_SHOPIFY_01_ISOLATED_PREPRODUCTION.md`
-Executable contract: `contracts/a6-ops-shopify-01-isolated-preproduction-v1.json`
+EO-02-C internal caller kodu tek başına canlı tetikleyici değildir. `docs/EO_02C_SHOPIFY_RUNTIME_AUTH_BRIDGE.md` ve `contracts/eo-02c-shopify-runtime-auth-bridge-v1.json` PASS olmadan veritabanı Secret etkinleştirilemez, EO-02-C kapatılamaz ve EO-02-D başlatılamaz. Ürün URL'leri ve mevcut preview görünümü korunur.
 
-- The package becomes a hard prerequisite before either a real merchant store is migrated to Shopify for AdsTable use or the first external/non-team user is invited, whichever happens first.
-- It requires a dedicated Shopify development app and dev store, a named non-production Shopify configuration, a stable embedded Preview/Staging URL with exact redirects, Preview-specific credentials and persistence isolated from Production.
-- A merchant production store cannot substitute for the dev store. Production credential values cannot be copied to Preview or Development, and Preview cannot write Production business data.
-- Any real provider-account acceptance remains separately approved, read-only and exact-account-bound. The first explicit or unexplained provider error stops execution; retry or an alternate route requires a new explanation and approval.
-- Evidence may later feed A6-EO-08-D, but this package does not declare the product review-ready or advance the active EO parent.
-- The product owner accepted planning this package on 17 October 2026 and explicitly deferred implementation. No Shopify, Vercel, database, secret, provider, deployment, migration, invitation, review or merge mutation is authorized by this record.
+## 9 Ekim 2026 — Kurulu mağaza otoritesi düzeltici kapısı
 
-
-### EO-02-C corrective gate — Shopify runtime authentication bridge
-
-EO-02-C internal caller kodu tek başına canlı tetikleyici değildir. `docs/EO_02C_SHOPIFY_RUNTIME_AUTH_BRIDGE.md` ve `contracts/eo-02c-shopify-runtime-auth-bridge-v1.json` PASS olmadan database Secret etkinleştirilemez, EO-02-C kapatılamaz ve EO-02-D başlatılamaz. Ürün URL'leri ve mevcut preview görünümü korunur.
-
-## 9 Ekim 2026 — Installed shop authority corrective gate
-
-- Merchant-selectable store scope kaldırıldı; Shopify embedded workspace'in commerce otoritesi verified ID token + Admin GraphQL `shop` ile belirlenen kurulu Shopify mağazasıdır.
-- Provider Reporting Account seçimi downstream'dir ve kurulu mağazayı değiştiremez.
-- Provider entity'leri kurulu mağazaya deterministik bağlanamıyorsa hesap bağlı kalabilir fakat reporting authority olamaz; Dataset V2 ve SnapshotJob fail-closed durur.
-- İkinci Shopify mağazası ayrı app installation, workspace ve subscription gerektirir. WooCommerce, BigCommerce ve Magento Shopify embedded workspace'e commerce source olarak giremez.
+- Kullanıcının seçebildiği mağaza kapsamı kaldırıldı; Shopify gömülü çalışma alanının ticaret otoritesi doğrulanmış ID token + Admin GraphQL `shop` ile belirlenen kurulu Shopify mağazasıdır.
+- Sağlayıcı Reporting Account seçimi bu otoriteye tabidir ve kurulu mağazayı değiştiremez.
+- Sağlayıcı varlıkları kurulu mağazaya deterministik bağlanamıyorsa hesap bağlı kalabilir fakat raporlama otoritesi olamaz; Dataset V2 ve SnapshotJob güvenli biçimde durur.
+- İkinci Shopify mağazası ayrı app installation, çalışma alanı ve abonelik gerektirir. WooCommerce, BigCommerce ve Magento Shopify embedded workspace'e ticaret kaynağı olarak giremez.
 - EO-02-B/EO-02-C repository düzeltmesi, CI ve ayrı açık onaylı canlı Supabase migration 9 Ekim 2026'da tamamlandı. Canlı kanıt `docs/evidence/EO_02BC_INSTALLED_SHOP_AUTHORITY_LIVE_2026-10-09.json` dosyasındadır; EO-02-D kapanış hattı bu düzeltmeden sonra devam eder.
-- Authority: `contracts/eo-02bc-installed-shop-authority-correction-v1.json`.
+- Otorite: `contracts/eo-02bc-installed-shop-authority-correction-v1.json`.
 
+## 9 Ekim 2026 — EO-02-D-C1 kalıcı silme işçisi düzeltici kapısı
 
-## 9 Ekim 2026 — EO-02-D-C1 durable deletion worker corrective gate
+- Production incelemesi, doğrulanmış gizlilik talebi sahiplenmesi ve silme işi üretildiğini fakat kuyruğu tüketen kalıcı işçi bulunmadığını kanıtladı.
+- Seçilen mimari Supabase Cron / pg_cron'dur; Vercel Cron, HTTP hop veya yeni ortam secret'ı eklenmez.
+- Her 5 dakikada 25 run; güvenlik bildirimi lock, row lock, idempotent generation boundary ve bounded retry uygulanır.
+- Uygulama çalışma zamanı fiziksel silme yürütücüsünü doğrudan çağıramaz.
+- 20 denemeyi tüketen iş sessiz başarı sayılmaz; görünür başarısız durumda operasyon müdahalesi bekler.
+- Otorite: `docs/EO_02D_DURABLE_DELETION_WORKER.md` ve `contracts/eo-02d-durable-deletion-worker-v1.json`.
+- Repository değişikliği canlı değişiklik yetkisi değildir; canlı Supabase migration ve sentetik kabul ayrı açık kullanıcı onayı gerektirir.
 
-- Production incelemesi, doğrulanmış privacy claim ve deletion run üretildiğini fakat kuyruğu tüketen kalıcı worker bulunmadığını kanıtladı.
-- Seçilen mimari Supabase Cron / pg_cron'dur; Vercel Cron, HTTP hop veya yeni environment secret eklenmez.
-- Her 5 dakikada 25 run; advisory lock, row lock, idempotent generation boundary ve bounded retry uygulanır.
-- Application runtime fiziksel silme executor'ını doğrudan çağıramaz.
-- 20 denemeyi tüketen run sessiz başarı sayılmaz; görünür failed durumda operasyon müdahalesi bekler.
-- Authority: `docs/EO_02D_DURABLE_DELETION_WORKER.md` ve `contracts/eo-02d-durable-deletion-worker-v1.json`.
-- Repository değişikliği canlı mutation yetkisi değildir; canlı Supabase migration ve sentetik kabul ayrı açık kullanıcı onayı gerektirir.
+## 9 Ekim 2026 — EO-03-D sağlayıcı bağlantısı yaşam döngüsü kabulü
 
+- EO-03-D **Accepted** durumundadır; geri alınan canlı senaryonun tüm aşamaları PASS, sentetik kalıntı sıfır ve EO-03 ana paket kapanışı ürün sahibi onayıyla tamamlanmıştır.
+- Yalnız `connected` lifecycle durumu raporlama otoritesi'dir. `reauthorization_required`, `disconnect_pending` ve `disconnected` yeni veri işini fail-closed durdurur.
+- Yenileme yeni şifreli kimlik bilgisi zarfı hazır olduktan sonra expected-sürüm + unique-event-id ile atomik swap yapar; eski zarf değiştirme sonrasında aynı transaction içinde silinir.
+- Disconnect iki aşamalıdır. Geçici veya belirsiz sağlayıcı yetki iptal sonucu başarı sayılmaz; bağlantı `disconnect_pending` kalır. Son bağlantı kesme geçmiş analitiği silmez.
+- Yeniden bağlanma aynı kanonik bağlantı kimliğini kullanır; yeni kimlik bilgisi ve güncel sağlayıcı hesap kanıtı zorunludur.
+- Meta için uydurma refresh-grant davranışı yoktur. Google Ads ve Klaviyo `invalid_grant` sonucu yeniden yetkilendirme gerektirir; Klaviyo token/revoke host'u `a.klaviyo.com` olarak sabittir.
+- Otorite: `docs/EO_03D_PROVIDER_CONNECTION_LIFECYCLE.md` ve `contracts/eo-03d-provider-connection-lifecycle-v1.json`.
+- Temel migration ile dört ileri-yönlü düzeltme canlı Supabase'de uygulanmış ve doğrulanmıştır. Bu kabul sağlayıcı API çağrısı, canlı sağlayıcı OAuth, sağlayıcı-console değişiklik, Vercel değişiklik veya production deploy içermez.
+- EO-04 **Accepted** durumundadır. Sağlayıcı production doğrulamaları kapanışta açıkça devredilmiş, `A6-TECH-01` ise EO-05 öncesindeki aktif zorunlu kapı olarak atanmıştır.
 
-## 9 Ekim 2026 — EO-03-D provider connection lifecycle acceptance
+## 10 Ekim 2026 — EO-04-A ortak adaptör uygulama kapısı (tarihsel)
 
-- EO-03-D **Accepted** durumundadır; rollback-scoped canlı senaryonun tüm aşamaları PASS, sentetik kalıntı sıfır ve EO-03 ana paket kapanışı ürün sahibi onayıyla tamamlanmıştır.
-- Yalnız `connected` lifecycle durumu reporting authority'dir. `reauthorization_required`, `disconnect_pending` ve `disconnected` yeni veri işini fail-closed durdurur.
-- Renewal yeni şifreli credential zarfı hazır olduktan sonra expected-version + unique-event-id ile atomik swap yapar; eski zarf swap sonrasında aynı transaction içinde silinir.
-- Disconnect iki aşamalıdır. Geçici veya belirsiz provider revoke sonucu başarı sayılmaz; bağlantı `disconnect_pending` kalır. Final disconnect geçmiş analitiği silmez.
-- Reconnect aynı canonical connection kimliğini kullanır; yeni credential ve güncel provider hesap kanıtı zorunludur.
-- Meta için uydurma refresh-grant davranışı yoktur. Google Ads ve Klaviyo `invalid_grant` sonucu reauthorization gerektirir; Klaviyo token/revoke host'u `a.klaviyo.com` olarak sabittir.
-- Authority: `docs/EO_03D_PROVIDER_CONNECTION_LIFECYCLE.md` ve `contracts/eo-03d-provider-connection-lifecycle-v1.json`.
-- Base migration ile dört ileri-yönlü düzeltme canlı Supabase'de uygulanmış ve doğrulanmıştır. Bu kabul provider API çağrısı, canlı provider OAuth, provider-console mutation, Vercel mutation veya production deploy içermez.
-- EO-04 **Accepted** durumundadır. Provider production doğrulamaları kapanışta açıkça devredilmiş, `A6-TECH-01` ise EO-05 öncesindeki aktif zorunlu kapı olarak atanmıştır.
+- Ürün sahibi EO-04-A analist özetini uygulamadan önce kabul etti.
+- Ortak çalışma zamanı ve sıkı tipler `app/lib/providers/common-adapter.server.js` ile `app/lib/providers/common-adapter.server.d.ts` içindedir.
+- Meta, Google Ads ve Klaviyo aynı on kanonik ham metrik sorusunu yanıtlar; doğal istek biçimleri sağlayıcı alt paketlerine aittir.
+- Destek kabiliyeti ile gözlem sonucu ayrıdır. Yalnız açık sağlayıcı sayısal sıfırı sıfır olur.
+- Sayfalama yayından önce tamdır. Cursor döngüsü, çelişkili tekrar, eksik sayfa, şema hatası veya bitmiş bütçe satır yayımlamaz.
+- İlk ortak tasarımın tekrar denemesi yalnız belgelenmiş normalize geçici sınıflarla sınırlıdır; kimlik/yetki/doğrulama ve kesin kapsam hataları tekrarlanmaz. Güncel ilk hata sonrası durma kapısı korunur.
+- Sağlayıcı kanıtı sınırlı, temizlenmiş ve içerik hash'lidir; secret/kişisel veri kalıpları gizlenir.
+- Belirlenimci sentetik davranış `tests/eo-04a-common-adapter.test.js` ile sınanır.
+- EO-04-A'da canlı sağlayıcı çağrısı, secret okuma/yazma, DB/Vercel değişikliği veya dağıtım yoktur.
+- GitHub Actions `38049487145` koşusu 163/163 test, tip kontrolü ve Preview derlemesini geçti. Ürün sahibi 10 Ekim 2026'da EO-04-A'yı kabul edip PR #65 merge'ünü onayladı. EO-04-B OAuth resmî kaynak/analist kapısı 13 Ekim'de geçti; ayrı Production yapılandırma/dağıtım, tam Windows akışı ve iOS temiz oturum başlangıcı kabul edildi. Rolü olmayan Windows hesabı Android'le aynı review öncesi Meta kısıtını verdi; ürün sahibi doğrudan PASS verdi. Meta raporlama sözleşmesi/uygulaması o ara kayıtta henüz başlamamıştı.
 
+## 10 Ekim 2026 — EO-04-A ürün sahibi kapanışı
 
-## 10 October 2026 — EO-04-A common adapter implementation gate
+- EO-04-A ortak adaptör sözleşmesi **Accepted**, yani kabul edilmiş durumdadır.
+- Kapanış sağlayıcıdan bağımsız çalışma zamanı, sıkı tipler, belirlenimci sahte sağlayıcı testi ve secret içermeyen kanıt politikasını kapsar.
+- Ürün sahibi kabulü ve PR #65 merge yetkisi açıktır.
+- O anda EO-04-B aktifti; 13 Ekim resmî Meta kaynakları ve OAuth/hesap seçimi özeti kabul edilmiş, repository uygulaması/CI bekleniyordu.
+- Bu kapanış sağlayıcı secret'ı, canlı API, DB/Vercel değişikliği veya dağıtım yetkilendirmez.
 
-- Product owner accepted the EO-04-A analyst brief before implementation.
-- Common runtime and strict types are now `app/lib/providers/common-adapter.server.js` and `app/lib/providers/common-adapter.server.d.ts`.
-- Meta, Google Ads and Klaviyo answer the same ten canonical raw-metric questions; their native request shapes remain provider-specific children.
-- Support capability and observation result are separate. Only explicit provider numeric zero becomes zero.
-- Pagination is complete-before-publish. Cursor loops, conflicting replay, missing pages, schema failures and exhausted budgets publish no rows.
-- Retry is bounded and restricted to normalized documented transient classes. Auth, permission, validation and deterministic scope failures are not retried.
-- Provider evidence is bounded, sanitized and content-hashed; secret and personal-data patterns are redacted.
-- Deterministic synthetic behavior is covered by `tests/eo-04a-common-adapter.test.js`.
-- No live provider call, secret read/write, database mutation, Vercel mutation or deployment occurs in EO-04-A.
-- GitHub Actions run `38049487145` passed 163/163 tests, TypeScript verification and preview build. The product owner explicitly accepted EO-04-A and authorized PR #65 merge on 10 October 2026. EO-04-B'nin OAuth official-document ve analyst-brief kapısı 13 Ekim 2026'da geçildi. Production configuration/deployment, tam Windows akışı ve iOS temiz-oturum OAuth başlangıcı kabul edildi. Role sahip olmayan Windows hesabı Android ile aynı beklenen Meta review-öncesi kısıtını üretti; ürün sahibi EO-04-B'ye direct PASS verdi. Meta provider-data sözleşmesi ve runtime uygulaması başlamamıştır.
+## 13 Ekim 2026 — EO-04-B Meta OAuth/hesap seçimi uygulama kapısı
 
+Bağlayıcı analist özeti: `docs/EO_04B_META_OAUTH_ACCOUNT_SELECTION.md`
+Yürütülebilir sözleşme: `contracts/eo-04b-meta-oauth-account-selection-v1.json`
+CI kontrolü: `tests/eo-04b-meta-oauth-account-selection.test.js`
 
-## 10 October 2026 — EO-04-A product-owner closure
+- Meta Graph/Login `v26.0` sürümüne sabittir; OAuth yalnız `ads_read` ister ve birebir gömülü dönüş adresini kullanır.
+- Çalışan Google davranışı ayrıdır. Meta aynı kabul edilmiş akışı kullanır: OAuth, otomatik reklamveren seçimi, bir-üç hesap ve tam bir Reporting Account.
+- Tek hesap otomatik bağlanır; iki/üç hesapta ayrı açık Reporting Account seçimi gerekir. Cancel bekleyen durumu korur; Resume setup OAuth'u yeniden başlatmaz.
+- Token kabulü kısa ömürlüden uzun ömürlüye değişim, `/debug_token` ile uygulama/izin/bitiş doğrulaması ve EO-03-B kasasında yalnız şifreli saklama gerektirir.
+- `/me/adaccounts` opak cursor ile sayfalanır; sayfa/hesap üst sınırı vardır. Geçersiz yetkilendirme yeniden yetki ister; boş liste sahte başarı olmaz.
+- Disconnect önce sağlayıcı yetkisini iptal eder; sağlayıcı başarısızlığında yerel raporlama otoritesi korunur.
+- OAuth/hesap seçimi raporlama verisi, zamanlama veya geçmiş veri tamamlama başlatmaz. O kabul diliminde sağlayıcı raporlama davranışı henüz yetkili/uygulanmış değildi.
+- Dört Meta ortam adı yalnız ad envanterindedir; değer commit edilmez veya geri okunmaz.
+- `f3f0516b5b938b683d10cd14b75947cd805120e0` commit'inin `dpl_GxV2DQiXYaer24W1247iPAn9N6gR` Production dağıtımı READY oldu. Masaüstü OAuth, hesap seçimi, Reporting Account, Cancel/Resume, Disconnect ve yeniden bağlantı PASS.
+- Geliştirici rolündeki hesapla tam Windows akışı geçti. Yeni iPhone Connect işlemi Meta parola ekranını doğru açtı. Rolü olmayan farklı Facebook hesabının kontrollü Windows denemesi Android'in aynı **App not active** yanıtını üretti; bu cihaz/AdsTable kod kusuru değil, Meta geliştirme/review öncesi kullanıcı kısıtıydı. Android tekrarı isteğe bağlıdır; kopyalanmış OAuth URL/state yeniden kullanılamaz.
+- Kanıt: `docs/evidence/EO_04B_META_OAUTH_LIVE_ACCEPTANCE_2026-10-13.json`. Canlı OAuth ve ürün sahibi kabulü PASS. Açık merge onayıyla PR #68 `23911ffd565f385c02693ed7a1f3a07f017c30f5` olarak birleştirildi. O kayıtta sıradaki Klaviyo EO-04-D idi.
 
-- EO-04-A common adapter contract is **Accepted**.
-- Closure covers the provider-neutral runtime, strict types, deterministic fake-provider acceptance and secret-free evidence policy.
-- Product-owner acceptance and PR #65 merge authorization were explicit.
-- EO-04-B is active. Current official Meta documentation and the OAuth/account-selection analyst brief were accepted on 13 October 2026; repository implementation and CI are the current gate.
-- No provider secret, live API call, database mutation, Vercel mutation or deployment is authorized by this closure.
+### EO-04-D Klaviyo başlangıç kapısı (tarihsel)
 
-
-## 13 October 2026 — EO-04-B Meta OAuth/account-selection implementation gate
-
-Binding analyst brief: `docs/EO_04B_META_OAUTH_ACCOUNT_SELECTION.md`
-Executable contract: `contracts/eo-04b-meta-oauth-account-selection-v1.json`
-CI enforcement: `tests/eo-04b-meta-oauth-account-selection.test.js`
-
-- Meta Graph/Login is pinned to `v26.0`; OAuth requests exactly `ads_read` and returns through the exact embedded callback.
-- The working Google behavior is isolated. Meta uses the same accepted product flow: OAuth, automatic advertiser selector, one-to-three selected accounts and exactly one Reporting Account.
-- One selected advertiser auto-binds. Two or three require an explicit second Reporting Account choice. Cancel preserves pending state; Resume setup never restarts OAuth.
-- Meta token acceptance requires short-to-long-lived exchange, `/debug_token` app/scope/expiry verification and ciphertext-only EO-03-B vault storage.
-- `/me/adaccounts` is opaque-cursor paginated with page/account ceilings. Invalid authorization is reauthorization, while an empty list is not fabricated success.
-- Disconnect is revoke-first; provider failure preserves local reporting authority.
-- OAuth/account selection does not start provider-data collection, scheduling or backfill. Meta provider-data behavior is outside this accepted OAuth slice and has not been authorized or implemented.
-- Four Meta environment names are stored only in the name-only inventory; no value is committed or read back.
-- Production deployment `dpl_GxV2DQiXYaer24W1247iPAn9N6gR` at commit `f3f0516b5b938b683d10cd14b75947cd805120e0` is READY. Desktop OAuth, account selection, Reporting Account, Cancel/Resume, Disconnect and reconnect are PASS.
-- The complete Windows flow passes with the developer-role account. A fresh iPhone Connect transaction correctly opened Meta password authentication. A controlled Windows attempt with a different, non-role Facebook account reproduced Android's exact **App not active** response, proving a Meta pre-review/development-mode user restriction rather than a device or AdsTable code defect. Android fresh-device repetition is optional and no copied OAuth URL/state may be reused.
-- Durable evidence: `docs/evidence/EO_04B_META_OAUTH_LIVE_ACCEPTANCE_2026-10-13.json`. OAuth live acceptance and EO-04-B product-owner acceptance are PASS. Explicit merge authorization was received and PR #68 was squash-merged as `23911ffd565f385c02693ed7a1f3a07f017c30f5`. EO-04-D Klaviyo is next.
-
-### EO-04-D Klaviyo start gate
-
-The accepted start brief is recorded in
-`docs/EO_04D_KLAVIYO_OAUTH_ESTIMATED_SPEND_START_BRIEF.md` and
-`contracts/eo-04d-klaviyo-oauth-estimated-spend-v1.json`. It preserves the
-working OAuth → one verified Connected Account → initial estimated spend →
-Update spend / Change value → revoke-first Disconnect behavior on the new EO-03
-authority model. Estimated spend uses its own private effective-dated ledger;
-provider reporting requests, Channel decisions and cost allocation are outside
-this start slice. Product-owner start acceptance was received on 13 October
-2026. The repository implementation now contains the OAuth/single-account
-foundation plus the private spend-ledger migration, atomic Save and connect,
-Update spend, Change value and revoke-first Disconnect code paths. This is
-repository evidence plus an explicitly approved live database gate. Migration
-`eo04d_klaviyo_spend_ledger` is applied; rollback-scoped synthetic acceptance,
-zero residue, zero Security Advisor findings and no new unindexed-FK finding are
-recorded in
+Kabul edilmiş başlangıç özeti
+`docs/EO_04D_KLAVIYO_OAUTH_ESTIMATED_SPEND_START_BRIEF.md` ve
+`contracts/eo-04d-klaviyo-oauth-estimated-spend-v1.json` içindedir.
+Yeni EO-03 otoritesinde OAuth → tek doğrulanmış Connected Account → ilk tahmini
+harcama → Update spend / Change value → önce iptal eden Disconnect akışı korunur.
+Tahmini harcama, geçerlilik tarihli özel defterinde tutulur; raporlama, Channel
+kararı ve maliyet dağıtımı başlangıç dilimi dışındadır. Ürün sahibi başlangıcı
+13 Ekim 2026'da kabul etti. Repository OAuth/tek hesap temeli, harcama defteri
+migration'ı, atomik Save and connect, Update spend, Change value ve Disconnect
+yollarını içeriyordu. Ayrı onaylı canlı DB kapısında `eo04d_klaviyo_spend_ledger`
+uygulandı; geri alınan sentetik kabul, sıfır kalıntı, sıfır Advisor ve yeni eksik
+FK indeksi bulunmadığı kaydedildi:
 `docs/evidence/EO_04D_KLAVIYO_SPEND_LIVE_DATABASE_ACCEPTANCE_2026-10-13.json`.
-Live OAuth, provider-console, Vercel and deployment mutations remain separate
-approval gates; Shopify desktop and real-mobile product acceptance are still
-open.
+Canlı OAuth, sağlayıcı paneli, Vercel/dağıtım ayrı kapıydı; masaüstü/gerçek mobil
+kabul o hazırlık aşamasında henüz açıktı.
 
-### EO-04-D Klaviyo OAuth hardening gate — 17 October 2026
+### EO-04-D Klaviyo OAuth güçlendirme kapısı — 17 Ekim 2026
 
-Binding analyst brief: `docs/EO_04D_KLAVIYO_OAUTH_HARDENING_BRIEF.md`
-Executable contract: `contracts/eo-04d-klaviyo-oauth-hardening-v1.json`
-CI enforcement: `tests/eo-04d-klaviyo-oauth-hardening-contract.test.js`
+Bağlayıcı analist özeti: `docs/EO_04D_KLAVIYO_OAUTH_HARDENING_BRIEF.md`
+Yürütülebilir sözleşme: `contracts/eo-04d-klaviyo-oauth-hardening-v1.json`
+CI kontrolü: `tests/eo-04d-klaviyo-oauth-hardening-contract.test.js`
 
-- Product-owner authorization covers repository-only OAuth/token hardening. It
-  does not authorize a live provider call, secret, database, environment,
-  deployment, UI or provider-console mutation.
-- Klaviyo token expiry is retained inside the encrypted token set. Expired,
-  near-expiry and legacy tokens without expiry evidence refresh before the
-  intended provider request.
-- A failed provider request is terminal: it is never followed by token refresh
-  or an automatic repeat. Accounts `401`, Accounts `403`, refresh
-  `invalid_grant` and authorization-code `invalid_grant` remain distinct.
-- Connected Settings inspection remains local and does not call Klaviyo merely
-  because the merchant opened Settings.
-- The Klaviyo-origin installation transport is a valid future review need, but
-  remains deferred until isolated Shopify preproduction and explicit visual
-  acceptance. PR #91 is not merge authority for this backend package.
+- Ürün sahibi onayı yalnız repository OAuth/token güçlendirmesini kapsar; canlı çağrı, secret, DB, ortam, dağıtım, UI veya sağlayıcı paneli değişikliği değildir.
+- Klaviyo token bitişi şifreli token kümesinde tutulur. Süresi dolmuş, dolmak üzere veya bitiş kanıtı olmayan eski token, hedef sağlayıcı isteğinden önce yenilenir.
+- Başarısız sağlayıcı isteği sonlandırıcıdır; ardından token yenileme veya otomatik tekrar olmaz. Accounts `401`, Accounts `403`, yenileme `invalid_grant` ve authorization-code `invalid_grant` ayrıdır.
+- Bağlı Settings incelemesi yereldir; yalnız sayfa açıldı diye Klaviyo çağrılmaz.
+- Klaviyo'dan başlayan kurulum taşıması geçerli gelecek review ihtiyacıdır; izole Shopify ön üretimi ve açık görsel kabule kadar ertelenir. PR #91 bu sunucu paketi için merge yetkisi değildir.
 
+## EO-04-D Klaviyo raporlama kabiliyeti — 16 Ekim 2026 yeniden kontrolü
 
-## EO-04-D Klaviyo reporting capability baseline — revalidated 16 October 2026
-
-Official capability record: `docs/decisions/A6_EO_04_D_KLAVIYO_REPORTING_CAPABILITY_BASELINE.md`
+Resmî kabiliyet kaydı: `docs/decisions/A6_EO_04_D_KLAVIYO_REPORTING_CAPABILITY_BASELINE.md`
 
 - `2026-10-15` revision Campaign Message, `send_channel` ve isteğe bağlı Variation reporting boyutlarını GA olarak belgeler.
 - 17 Ekim 2026 ürün sahibi düzeltmesi bağlayıcıdır: Campaign Message ve Flow Message AdsTable Channel'dır; `send_channel` zorunlu Medium, Variation ayrı alt kırılımdır.
-- Events attribution Campaign Message'ı fakat Campaign Variation'ı içermez. Message biliniyorsa Channel exact kalır; çoklu veya çözülemeyen Variation yalnız Variation çözünürlüğünü etkiler ve `Unclassified Channel` üretmez.
-- Flow attribution `Flow Message Variation` veya `Flow Message` ilişkisini açıkça döndürebilir; Variation parent Message'a çözülür ve Channel yine Flow Message kalır.
-- Campaign için Values endpoint'i vardır fakat Series endpoint'i yoktur. Günlük grain tek-gün timeframe sorgularıyla korunur; ilk bootstrap yalnız dün ve bugündür. Saatlik refresh/reconciliation kota bütçesi EO-05'e aittir.
-- Estimated Email Spend allocation ve Dataset mapping EO-05'e aittir.
-- Bu kayıt tek başına API çağrısı, runtime, Dataset, migration, secret, environment veya deployment mutation yetkisi vermez.
+- Events attribution Campaign Message'ı fakat Campaign Variation'ı içermez. Message biliniyorsa Channel birebir kalır; çoklu veya çözülemeyen Variation yalnız Variation çözünürlüğünü etkiler ve `Unclassified Channel` üretmez.
+- Flow attribution `Flow Message Variation` veya `Flow Message` ilişkisini açıkça döndürebilir; Variation ana paket Message'a çözülür ve Channel yine Flow Message kalır.
+- Campaign için Values endpoint'i vardır fakat Series endpoint'i yoktur. Günlük grain tek-gün timeframe sorgularıyla korunur; ilk ilk yükleme yalnız dün ve bugündür. Saatlik refresh/uzlaştırma kota bütçesi EO-05'e aittir.
+- Estimated Email Spend dağıtım ve Dataset mapping EO-05'e aittir.
+- Bu kayıt tek başına API çağrısı, çalışma zamanı, Dataset, migration, secret, environment veya deployment değişiklik yetkisi vermez.
 
+## EO-04-E ortak Channel ve ürün ekonomisi sözleşme kapısı — 16 Ekim 2026
 
-## EO-04-E common Channel and product-economics contract gate — 16 October 2026
+Kabul edilmiş bağlayıcı özet: `docs/EO_04E_THREE_PROVIDER_CHANNEL_PRODUCT_ECONOMICS_START_BRIEF.md`
 
-Binding accepted brief: `docs/EO_04E_THREE_PROVIDER_CHANNEL_PRODUCT_ECONOMICS_START_BRIEF.md`
+Yürütülebilir sözleşme: `contracts/eo-04e-three-provider-channel-product-economics-v1.json`
 
-Executable contract: `contracts/eo-04e-three-provider-channel-product-economics-v1.json`
-
-CI enforcement: `tests/eo-04e-three-provider-channel-product-economics.test.js`
+CI kontrolü: `tests/eo-04e-three-provider-channel-product-economics.test.js`
 
 - Meta Channel = Ad; Google Standard Shopping/Search Channel = Ad Group; Google PMax Retail Channel = Asset Group; Klaviyo Campaign Channel = Campaign Message; Klaviyo Flow Channel = Flow Message. Klaviyo `send_channel` zorunlu Medium, Variation ayrı alt kırılımdır.
 - Sales Role sözlüğü `Advertised`, `Cross-sell`, `Assisted`, `Triggered` ve yalnız gerçek ambiguity için `Unclassified` olarak kabul edilmiştir.
-- `Zero Value` bir role değil modifier'dır. `Unclassified Channel`, sale kanıtı bulunduğu halde exact Channel çözülemediğini ifade eder.
-- PMax broad/overlapping listing üyeliği aşağıya paylaştırılmaz. Search provider-attributed product sale'i bastırılmaz; `Assisted` olur.
-- Meta Ad spend ürünlere dağıtılmaz. Google provider product cost gerçek/blended maliyet sayılmaz. Klaviyo Estimated Spend dağıtımı EO-05'e bırakılır.
-- `Channel Ad Cost`, `Provider Product Ad Cost` ve EO-05'e ait `Allocated Ad Cost` ayrı kalır. Explicit zero dışındaki eksik/support state'leri sıfır olmaz; product cost satırları Channel toplamını yeniden üretmez.
-- Exact provider ürün Ad Cost'u `Cross-sell`, `Assisted`, `Zero Value` veya `Unclassified Channel` nedeniyle silinmez ve ilgili ürün satırında korunur. Exact product cost yoksa Channel toplamı ürünlere tahminî dağıtılmaz; Klaviyo `Triggered` allocation'ı EO-05'e aittir.
-- Desteklenen product identity yolları resmî Shopify-managed Facebook & Instagram, Google & YouTube ve Klaviyo entegrasyonlarıdır. Meta ve Google product/variant adayları Shopify Admin API ile doğrulanmadan SKU, ürün adı veya varyant adı yayımlanmaz; manual/third-party feed/catalog bu sürümde kapsam dışıdır.
-- Bu contract gate ürün sahibi tarafından 16 Ekim 2026'da bütün olarak kabul edilmiştir. Kabul tek başına provider reporting runtime, canlı provider çağrısı, Dataset V2, migration veya environment/deployment mutation başlatmaz; bunlar ayrı onay kapısındadır.
+- `Zero Value` bir rol değil modifier'dır. `Unclassified Channel`, satış kanıtı bulunduğu halde birebir Channel çözülemediğini ifade eder.
+- PMax geniş/örtüşen ürün ağacı üyeliği aşağıya paylaştırılmaz. Search sağlayıcı-atıflı ürün satışı bastırılmaz; `Assisted` olur.
+- Meta Ad spend ürünlere dağıtılmaz. Google sağlayıcı ürün maliyeti gerçek/birleşik maliyet sayılmaz. Klaviyo Estimated Spend dağıtımı EO-05'e bırakılır.
+- `Channel Ad Cost`, `Provider Product Ad Cost` ve EO-05'e ait `Allocated Ad Cost` ayrı kalır. Açık sıfır dışındaki eksik/destek durumları sıfır olmaz; ürün maliyeti satırları Channel toplamını yeniden üretmez.
+- Birebir sağlayıcı ürün Ad Cost'u `Cross-sell`, `Assisted`, `Zero Value` veya `Unclassified Channel` nedeniyle silinmez ve ilgili ürün satırında korunur. Birebir product cost yoksa Channel toplamı ürünlere tahminî dağıtılmaz; Klaviyo `Triggered` dağıtım'ı EO-05'e aittir.
+- Desteklenen ürün kimliği yolları resmî Shopify yönetimli Facebook & Instagram, Google & YouTube ve Klaviyo entegrasyonlarıdır. Meta ve Google product/variant adayları Shopify Admin API ile doğrulanmadan SKU, ürün adı veya varyant adı yayımlanmaz; elle/üçüncü taraf besleme/katalog bu sürümde kapsam dışıdır.
+- Bu sözleşme kapısı ürün sahibi tarafından 16 Ekim 2026'da bütün olarak kabul edilmiştir. Kabul tek başına sağlayıcı reporting çalışma zamanı, canlı sağlayıcı çağrısı, Dataset V2, migration veya environment/deployment değişiklik başlatmaz; bunlar ayrı onay kapısındadır.
 
-## EO-04-D Klaviyo reporting runtime foundation — 17 October 2026
+## EO-04-D Klaviyo raporlama çalışma zamanı temeli — 17 Ekim 2026
 
-Binding analyst brief: `docs/EO_04D_KLAVIYO_REPORTING_RUNTIME_BRIEF.md`
+Bağlayıcı analist özeti: `docs/EO_04D_KLAVIYO_REPORTING_RUNTIME_BRIEF.md`
 
-Executable contract: `contracts/eo-04d-klaviyo-reporting-runtime-v1.json`
+Yürütülebilir sözleşme: `contracts/eo-04d-klaviyo-reporting-runtime-v1.json`
 
-CI enforcement: `tests/eo-04d-klaviyo-reporting-runtime-contract.test.js` and `tests/eo-04d-klaviyo-reporting-runtime.test.js`
+CI kontrolü: `tests/eo-04d-klaviyo-reporting-runtime-contract.test.js` and `tests/eo-04d-klaviyo-reporting-runtime.test.js`
 
-- Product owner authorized the repository-only runtime foundation after Campaign and Flow hierarchy examples were accepted.
-- Campaign/Flow Message is Channel; Message name is Channel name. `send_channel` is mandatory Medium and Variation never replaces Channel.
-- Exact Message with unresolved or multiple Variations remains exact Channel. `Unclassified Channel` is restricted to missing, unresolved or conflicting Message evidence.
-- Shopify `Placed Order` is the Reporting API conversion metric; `Ordered Product` is product-sale event evidence. They are never both counted as the same sale.
-- Product identifiers remain provider-native observations; Product ID standardization, persistence, scheduler, reconciliation and estimated-spend allocation remain later gates.
-- No live Klaviyo call, provider mutation, database/migration, secret/environment, deploy or UI work is authorized by this package.
+- Campaign/Flow hiyerarşi örnekleri kabul edildikten sonra ürün sahibi yalnız repository çalışma zamanı temelini onayladı.
+- Campaign/Flow Message Channel'dır; Message adı Channel adıdır. `send_channel` zorunlu Medium'dur; Variation Channel yerine geçmez.
+- Kesin Message, çözülmeyen veya çoklu Variation varken kesin Channel kalır. `Unclassified Channel` yalnız eksik, çözülemeyen veya çelişkili Message kanıtındadır.
+- Shopify `Placed Order` Reporting API dönüşüm metriği; `Ordered Product` ürün satış olayı kanıtıdır. Aynı satış iki kez sayılmaz.
+- Ürün kimlikleri sağlayıcının doğal gözlemidir; Product ID standardizasyonu, saklama, zamanlayıcı, uzlaştırma ve tahmini harcama dağıtımı sonraki kapılardadır.
+- Bu paket canlı Klaviyo, sağlayıcı değişikliği, DB/migration, secret/ortam, dağıtım veya UI işi yetkilendirmez.
 
-## EO-04-D Klaviyo reporting authority — 17 October 2026
+## EO-04-D Klaviyo raporlama otoritesi — 17 Ekim 2026
 
-Binding analyst brief: `docs/EO_04D_KLAVIYO_REPORTING_AUTHORITY_BRIEF.md`
+Bağlayıcı analist özeti: `docs/EO_04D_KLAVIYO_REPORTING_AUTHORITY_BRIEF.md`
 
-Executable contract: `contracts/eo-04d-klaviyo-reporting-authority-v1.json`
+Yürütülebilir sözleşme: `contracts/eo-04d-klaviyo-reporting-authority-v1.json`
 
-CI enforcement: `tests/eo-04d-klaviyo-reporting-authority-contract.test.js` and `tests/eo-04d-klaviyo-reporting-authority.test.js`
+CI kontrolü: `tests/eo-04d-klaviyo-reporting-authority-contract.test.js` and `tests/eo-04d-klaviyo-reporting-authority.test.js`
 
-- Product owner authorized the repository-only authority/coordinator implementation.
-- Active Shopify installation, exactly one canonical Klaviyo Connected Account,
-  encrypted credential authority, required read scopes and connected-account
-  timezone are mandatory before any reporting family can start.
-- Metrics, Campaign Values, Flow Values and Ordered Product Events execute in
-  that order. The first provider error stops all remaining families; successful
-  earlier rows are not publishable partial output.
-- Metrics and Events exhaust official `links.next` cursors. Values accepts only
-  an explicit same-origin/same-endpoint continuation; the runtime never invents
-  a cursor omitted by the 2026-10-15 response schema.
-- Successful empty Campaign, Flow or Event results remain
-  `not_observed_in_this_execution`, never numeric zero.
-- Ordered Product normalization preserves provider-native product fields and
-  Campaign/Flow attribution IDs without requesting profile data. Product ID
-  standardization and Dataset V2 publication remain later gates.
-- No live Klaviyo call, provider mutation, database/migration, Dataset V2,
-  secret/environment, deploy or UI work is authorized by this package.
+- Ürün sahibi yalnız repository raporlama otoritesi/koordinatör uygulamasını onayladı.
+- Raporlamadan önce aktif Shopify kurulumu, tam bir kanonik Klaviyo Connected Account, şifreli kimlik bilgisi otoritesi, gerekli okuma izinleri ve bağlı hesap saat dilimi zorunludur.
+- Metrics, Campaign Values, Flow Values, Ordered Product Events sırasıyla çalışır. İlk sağlayıcı hatası kalan bütün aileleri durdurur; önceki başarılı satırlar kısmi çıktı olarak yayımlanamaz.
+- Metrics/Events resmî `links.next` sayfalarını tamamlar. Values yalnız açık aynı-origin/aynı-endpoint devamını kabul eder; 2026-10-15 yanıt şemasının vermediği cursor uydurulmaz.
+- Başarılı boş Campaign/Flow/Event sonucu `not_observed_in_this_execution` kalır; sayısal sıfır olmaz.
+- Ordered Product standartlaştırması, profil istemeden sağlayıcı ürün alanları ve Campaign/Flow attribution ID'lerini korur. Product ID standardizasyonu ve Dataset V2 yayını sonraki kapılardadır.
+- Bu paket canlı Klaviyo, sağlayıcı değişikliği, DB/migration/Dataset V2, secret/ortam, dağıtım veya UI işi yetkilendirmez.
 
-## EO-04-D temporary Klaviyo live-evidence trigger — 18 Ekim 2026
+## EO-04-D geçici Klaviyo canlı kanıt tetikleyicisi — 18 Ekim 2026
 
-Binding analyst brief: `docs/EO_04D_KLAVIYO_LIVE_EVIDENCE_TRIGGER_BRIEF.md`
+Bağlayıcı analist özeti: `docs/EO_04D_KLAVIYO_LIVE_EVIDENCE_TRIGGER_BRIEF.md`
 
-Executable contract: `contracts/eo-04d-klaviyo-live-evidence-trigger-v1.json`
+Yürütülebilir sözleşme: `contracts/eo-04d-klaviyo-live-evidence-trigger-v1.json`
 
-CI enforcement: `tests/eo-04d-klaviyo-live-evidence-trigger.test.js`
+CI kontrolü: `tests/eo-04d-klaviyo-live-evidence-trigger.test.js`
 
 - Ürün sahibi geçici `Run Klaviyo evidence` taşımasını ve 18 Ekim 2026'da
-  Production deploy adımını onayladı. Canlı provider çağrısı ve Sample Data
+  Production deploy adımını onayladı. Canlı sağlayıcı çağrısı ve Sample Data
   üretimi kapalıdır.
 - Tarih merchant'tan alınmaz; bağlı Klaviyo hesabının timezone'una göre güncel
-  business date server tarafında hesaplanır.
-- Kalıcı reporting runtime metrics, Campaign Values, Flow Values, Ordered
+  iş tarihi server tarafında hesaplanır.
+- Kalıcı reporting çalışma zamanı metrics, Campaign Values, Flow Values, Ordered
   Product Events ve resolution ailelerini tek denemede çalıştırır. İlk hata
   kalan aileleri durdurur; retry, fallback ve partial publication yoktur.
 - UI ve safe log yalnız satır/durum/sınıflandırma sayılarını taşır. Raw satır,
   isim, ID, profil/PII, ticari değer, request ID, cursor/hash, token veya
-  credential taşımaz.
+  kimlik bilgisi taşımaz.
 - Klaviyo custom ecommerce sample data, kanonik `integration.name = Shopify`
   metric kanıtı değildir ve Shopify-native ürün satışı kabulünün yerine geçmez.
-- Exact commit `b675885469effe9f3d9cb58135fa27d0219dcbb7`, Production
+- Birebir commit `b675885469effe9f3d9cb58135fa27d0219dcbb7`, Production
   deployment `dpl_FBfQ8t9mV4vw4PZkKmtgbjDbDqdy` olarak `READY` oldu ve gerçek
   Shopify Admin Settings görünümü ürün sahibi tarafından kabul edildi. Ayrı
   onaylı tek Klaviyo çağrısı ilk `metrics` ailesinde
   `KLAVIYO_SHOPIFY_METRIC_CARDINALITY_INVALID` ile retry yapmadan durdu;
-  sonraki sorgu aileleri başlamadı ve hiçbir database/Dataset write oluşmadı.
+  sonraki sorgu aileleri başlamadı ve hiçbir veritabanı/Dataset write oluşmadı.
   Ürün sahibinin Klaviyo Metrics incelemesinde Shopify integration bulunmadı;
-  yalnız Klaviyo ve API integration adları görüldü. Sonuç kod/provider hatası
+  yalnız Klaviyo ve API integration adları görüldü. Sonuç kod/sağlayıcı hatası
   değil `environment_not_ready — shopify_integration_absent` olarak kaydedildi.
   Geçici buton gerçek Shopify entegrasyonu sonrası doğrulama için korunur; ek
   canlı çağrı kapalıdır. Kalıcı kanıt:
   `docs/evidence/EO_04D_KLAVIYO_ENVIRONMENT_NOT_READY_2026-10-18.json`.
 
-## EO-04-D Klaviyo sales-attribution resolution — 17 October 2026
+## EO-04-D Klaviyo satış kaynağı çözümlemesi — 17 Ekim 2026
 
-Binding analyst brief: `docs/EO_04D_KLAVIYO_ATTRIBUTION_RESOLUTION_BRIEF.md`
+Bağlayıcı analist özeti: `docs/EO_04D_KLAVIYO_ATTRIBUTION_RESOLUTION_BRIEF.md`
 
-Executable contract: `contracts/eo-04d-klaviyo-attribution-resolution-v1.json`
+Yürütülebilir sözleşme: `contracts/eo-04d-klaviyo-attribution-resolution-v1.json`
 
-CI enforcement: `tests/eo-04d-klaviyo-attribution-resolution-contract.test.js`
+CI kontrolü: `tests/eo-04d-klaviyo-attribution-resolution-contract.test.js`
 and `tests/eo-04d-klaviyo-attribution-resolution.test.js`
 
-- Product owner accepted the repository-only resolution contract. One Ordered
-  Product event remains one sale fact; Placed Order reporting conversions never
-  create a second product sale.
-- Provider Message attribution is the only Channel authority. A known Message
-  remains exact when catalog name, Medium or Variation is unresolved.
-- Campaign Message sales are Assisted until exact content-product evidence can
-  prove Advertised or Cross-sell. Flow Message sales are Triggered.
-- Missing or conflicting Message evidence preserves the sale once under
-  Unclassified Channel with Sales Role Unclassified; timing or report totals
-  cannot resolve ambiguity.
-- Resolution runs after all provider families and remains atomic. No live
-  Klaviyo call, database/migration, Dataset V2, secret/environment, deploy or UI
-  work is authorized by this package.
+- Ürün sahibi yalnız repository satış kaynağı çözümleme sözleşmesini kabul etti. Tek Ordered Product olayı tek satış gerçeğidir; Placed Order dönüşümü ikinci ürün satışı yaratmaz.
+- Tek Channel otoritesi sağlayıcının Message attribution kanıtıdır. Message biliniyorsa katalog adı, Medium veya Variation çözülmese de kesin kalır.
+- Campaign Message satışı, kesin içerik-ürün kanıtı Advertised/Cross-sell ispatlayana kadar Assisted olur. Flow Message satışı Triggered olur.
+- Eksik/çelişkili Message kanıtı satışı bir kez Unclassified Channel altında, Sales Role Unclassified ile korur. Zaman yakınlığı veya rapor toplamı belirsizliği çözemez.
+- Çözümleme tüm sağlayıcı ailelerinden sonra atomik çalışır. Bu paket canlı Klaviyo, DB/migration/Dataset V2, secret/ortam, dağıtım veya UI işi yetkilendirmez.
 
-## EO-04-D Klaviyo reauthorization truth correction — 17 October 2026
+## EO-04-D Klaviyo yeniden yetkilendirme durum doğruluğu — 17 Ekim 2026
 
-Binding analyst brief: `docs/EO_04D_KLAVIYO_REAUTHORIZATION_TRUTH_BRIEF.md`
+Bağlayıcı analist özeti: `docs/EO_04D_KLAVIYO_REAUTHORIZATION_TRUTH_BRIEF.md`
 
-Executable contract: `contracts/eo-04d-klaviyo-reauthorization-truth-v1.json`
+Yürütülebilir sözleşme: `contracts/eo-04d-klaviyo-reauthorization-truth-v1.json`
 
-- A canonical `reauthorization_required` lifecycle state must appear in
-  Settings as `Reauthorization required`, never `Not connected`.
-- Settings inspection remains local-only. It does not refresh credentials,
-  call Klaviyo or retry the failed provider request.
-- Only `connected` remains reporting authority and historical spend periods
-  remain intact.
-- OAuth reauthorization can resume fresh account verification while the prior
-  account and spend history remain preserved; reporting does not reopen until
-  setup completion succeeds.
-- EO-05 must identify the missing business-date interval created while
-  authorization was unavailable, run bounded backfill/reconciliation and keep
-  missing, partial, stale, recovered, provisional and final states distinct.
-  Missing dates can never be silently converted to zero.
-- Repository implementation and the separately approved additive live database
-  migration are complete. Durable acceptance evidence is
+- Kanonik `reauthorization_required` Settings'te `Reauthorization required` görünür; `Not connected` gösterilemez.
+- Settings incelemesi yereldir; kimlik bilgisi yenilemez, Klaviyo çağırmaz, başarısız isteği tekrarlamaz.
+- Yalnız `connected` raporlama otoritesidir; tarihsel harcama dönemleri korunur.
+- OAuth yeniden yetkilendirme önceki hesap/harcama geçmişini koruyarak güncel hesap doğrulamasını başlatabilir. Kurulum başarıyla tamamlanmadan raporlama açılmaz.
+- EO-05 yetkisiz kalınan iş tarihi aralığını belirlemeli, sınırlı geçmiş tamamlama/uzlaştırma çalıştırmalı; eksik, kısmi, eski, kurtarılmış, geçici ve kesin durumları ayırmalıdır. Eksik tarih sessiz sıfır yapılamaz.
+- Repository ve ayrı onaylı eklemeli canlı migration tamamlandı. Kanıt:
   `docs/evidence/EO_04D_KLAVIYO_REAUTHORIZATION_LIVE_DATABASE_ACCEPTANCE_2026-10-17.json`;
-  Supabase Security Advisor remains at zero findings. Exact commit
-  `9bc3108d366a58ce9ff92a293681245a0c380462` was separately authorized and
-  deployed to Production as `dpl_8QgriVfjig4RjxC7hwpwtBJ77n8F`; Vercel reached
-  `READY`, assigned `embedded.adstable.app` without alias error and returned no
-  deployment-scoped error/fatal log. The product owner accepted real Shopify
-  Admin Settings on desktop and mobile. Provider calls and merge remain
-  separately gated. Visual evidence is
+  Security Advisor sıfır. Ayrı onaylı `9bc3108d366a58ce9ff92a293681245a0c380462`
+  commit'i Production'a `dpl_8QgriVfjig4RjxC7hwpwtBJ77n8F` olarak dağıtıldı;
+  Vercel `READY`, `embedded.adstable.app` hatasız eşlendi; ilgili error/fatal
+  log gözlenmedi. Ürün sahibi gerçek masaüstü/mobil Settings'i kabul etti.
+  Sağlayıcı çağrısı ve merge o aşamada ayrı kapıydı. Görsel kanıt:
   `docs/evidence/EO_04D_KLAVIYO_REAUTHORIZATION_VISUAL_ACCEPTANCE_2026-10-17.json`.
 
-## EO-04 Meta retained live-shape evidence — 16 October 2026
+## EO-04 Meta korunmuş canlı yanıt biçimi kanıtı — 16 Ekim 2026
 
-- Safe production evidence completed against commit `8a7b0ca9645f46080f8fe0e69f18efe5e5638613`; no runtime error, retry, next-provider start or database write was observed.
-- One Ad row proves provider presence only, not numeric Dataset V2 publication. `impressions` and `spend` are accepted direct provider evidence.
-- `clicks`, `inline_link_clicks` and array-shaped `outbound_clicks` remain separate Ad Click candidates. `landing_page_view` is not Session. Purchase, checkout and add-to-cart were not evidenced.
-- The successful `product_id` request returned an empty page. Its canonical support state is `not_observed_in_this_execution`; empty is neither a product zero nor a global unsupported verdict.
-- User-supplied Amazon-destination context is recorded separately from provider evidence. A later product gate requires a Meta catalog-linked product ad and separate authorization; repeating the same flow is not required.
-- Durable sanitized evidence: `docs/evidence/EO_04_META_PROVIDER_LIVE_EVIDENCE_2026-10-16.json`.
+- `8a7b0ca9645f46080f8fe0e69f18efe5e5638613` commit'inde güvenli canlı kanıt tamamlandı; çalışma zamanı hatası, tekrar, sonraki sağlayıcı başlangıcı veya DB yazması gözlenmedi.
+- Tek Ad satırı yalnız sağlayıcıda varlığı kanıtlar; sayısal Dataset V2 yayını değildir. `impressions` ve `spend` doğrudan sağlayıcı kanıtıdır.
+- `clicks`, `inline_link_clicks` ve dizi biçimli `outbound_clicks` ayrı Ad Click adaylarıdır. `landing_page_view` Session değildir. Purchase/checkout/add-to-cart kanıtlanmadı.
+- Başarılı `product_id` isteği boş sayfa döndürdü. Kanonik durum `not_observed_in_this_execution`; boşluk ürün sıfırı veya genel desteklenmiyor kararı değildir.
+- Kullanıcının Amazon hedef bağlamı sağlayıcı kanıtından ayrı kaydedildi. Sonraki ürün kapısı katalog bağlantılı Meta ürün reklamı ve ayrı yetki ister; aynı akışı tekrar etmek gerekmez.
+- Temizlenmiş kalıcı kanıt: `docs/evidence/EO_04_META_PROVIDER_LIVE_EVIDENCE_2026-10-16.json`.
 
-## EO-04-B Meta App Role readiness gate — 17 October 2026
+## EO-04-B Meta App Role hazırlık kapısı — 17 Ekim 2026
 
-- Binding analyst brief: `docs/EO_04B_META_APP_ROLE_READINESS_BRIEF.md`; executable contract: `contracts/eo-04b-meta-app-role-readiness-v1.json`.
-- Stage 1 is restricted real-account acceptance by an invited App Tester who separately has legitimate access to the target ad account. It does not broaden `ads_read`, permit public customers or replace later Business Verification/Advanced Access/App Review gates.
-- Server Graph requests require `appsecret_proof`. Expired or rejected authorization moves the canonical connection to `reauthorization_required` without provider retry.
-- Real-account acceptance completes bounded opaque pagination for both Ad/Channel and `product_id` families before returning either result. Cursor loops, page/row ceilings and first provider errors fail closed.
-- The temporary Meta evidence button is removed from Settings. Reporting Account and Disconnect remain; the authenticated non-visual acceptance route stays available for a separately authorized call.
-- Shopify migration, official Facebook & Instagram catalog synchronization, product/variant identity continuity, App Tester/ad-account access and a real delivered catalog-ad date are provider-day prerequisites. Their absence is not silently treated as empty or unsupported evidence.
-- The product owner authorized a preview-only deployment for desktop/mobile Settings visual acceptance on 17 October 2026. Production deployment, Meta role/account, live provider call, secret/environment and database-schema mutation remain unauthorized.
+- Bağlayıcı özet: `docs/EO_04B_META_APP_ROLE_READINESS_BRIEF.md`; sözleşme: `contracts/eo-04b-meta-app-role-readiness-v1.json`.
+- Birinci aşama, hedef reklam hesabına ayrıca meşru erişimi olan davetli App Tester ile sınırlı gerçek hesap kabulüdür. `ads_read` genişlemez; herkese açık müşteri veya sonraki Business Verification/Advanced Access/App Review yerine geçmez.
+- Sunucu Graph istekleri `appsecret_proof` gerektirir. Süresi dolan/reddedilen yetki, tekrar çağrı olmadan kanonik bağlantıyı `reauthorization_required` yapar.
+- Gerçek hesap kabulü Ad/Channel ve `product_id` ailelerinin ikisinde de sınırlı opak sayfalamayı bitirmeden sonuç döndürmez. Cursor döngüsü, sayfa/satır sınırı ve ilk sağlayıcı hatasında güvenle durulur.
+- Geçici Meta kanıt butonu Settings'ten kaldırıldı. Reporting Account ve Disconnect kalır; kimliği doğrulanmış görsel olmayan kabul yolu ayrı onaylı çağrı için korunur.
+- Shopify taşıması, resmî Facebook & Instagram katalog eşitlemesi, ürün/varyant kimliği sürekliliği, App Tester/reklam hesabı yetkisi ve gerçekten yayımlanmış katalog reklamı tarihi o sağlayıcı günü için ön koşuldur. Yokluk sessiz boş/desteklenmiyor kanıtı sayılamaz.
+- Ürün sahibi 17 Ekim'de masaüstü/mobil Settings kabulü için yalnız Preview dağıtımını onayladı. O kayıt Production, Meta rol/hesap, canlı çağrı, secret/ortam veya DB şema değişikliği yetkilendirmedi.
 
-## EO-04-C Google reporting runtime start gate — 16 October 2026
+## EO-04-C Google raporlama çalışma zamanı başlangıç kapısı — 16 Ekim 2026
 
-Binding accepted brief: `docs/EO_04C_GOOGLE_REPORTING_RUNTIME_START_BRIEF.md`
+Kabul edilmiş bağlayıcı özet: `docs/EO_04C_GOOGLE_REPORTING_RUNTIME_START_BRIEF.md`
 
-Executable contract: `contracts/eo-04c-google-reporting-runtime-v1.json`
+Yürütülebilir sözleşme: `contracts/eo-04c-google-reporting-runtime-v1.json`
 
-CI enforcement: `tests/eo-04c-google-reporting-runtime-contract.test.js`
+CI kontrolü: `tests/eo-04c-google-reporting-runtime-contract.test.js`
 
-- Standard Shopping and Search preserve Ad Group Channel; Performance Max Retail preserves Asset Group Channel.
-- PMax product sale and Sales Role survive broad listing trees. Exact Asset Group is resolved from the advertised product only when exactly one eligible listing tree matches.
-- One eligible `All products` Asset Group is exact. Multiple overlapping `All products`, category or other broad trees remain `Unclassified Channel`; the sale is neither dropped nor distributed.
-- A current listing tree never resolves an earlier sale by itself. Exact historical Channel requires versioned listing-tree evidence valid for the complete sale business-date window; tree changes or incomplete temporal evidence retain the sale under `Unclassified Channel`.
-- `cart_data_sales_view` advertised-product, sold-product, units, revenue and lead/cross-sell evidence remains separate from aggregate `asset_group_product_group_view` evidence.
-- Provider Product Ad Cost remains on the advertised product and is never moved to a Cross-sell sold product. Allocation remains EO-05 work.
-- Missing Cart Data configuration, empty success, absent fields, unsupported fields and explicit numeric zero remain separate states.
-- The product owner accepted the analyst brief and separately authorized the bounded repository runtime implementation on 16 October 2026. The runtime now contains nine read-only GAQL families, raw page/evidence preservation, Sales Role classification and temporally safe PMax listing-tree resolution under synthetic repository tests.
-- Google test accounts are not used as reporting evidence because they do not serve ads or generate the required performance and Cart Data sales facts. Repository fixtures prove only AdsTable logic and never provider behavior.
-- The runtime implementation was accepted and squash-merged as `752cc1988323c238297d00516e7b7009432032c2` on 16 October 2026.
-- The product owner accepted and authorized the bounded repository implementation of the Google live-evidence trigger on 16 October 2026. Its analyst brief is `docs/EO_04C_GOOGLE_LIVE_EVIDENCE_TRIGGER_BRIEF.md` and executable contract is `contracts/eo-04c-google-live-evidence-trigger-v1.json`.
-- The trigger runs account context, Cart Data sales, product performance, current PMax listing tree and PMax Asset Group performance sequentially for the last 30 completed Reporting Account business dates. First error stops all remaining families; there is no retry or fallback.
-- The exact trigger commit was deployed to Production and visually accepted in real Shopify Admin at 1280 px desktop and 320 px mobile on 16 October 2026. The first separately authorized live request stopped without retry and exposed an observability defect: only `GOOGLE_LIVE_EVIDENCE_FAILED` reached the UI and no bounded failure evidence reached the runtime log.
-- The product owner authorized a narrow correction on 16 October 2026: failed executions must log only safe stage, query-family, source/provider code, provider HTTP status and provider-response-observed state. Raw messages, identifiers, request IDs, rows, tokens and credentials remain prohibited. A second live request and merge remain separately gated.
-- The product owner authorized a single request-scoped access-token refresh before Google evidence queries on 16 October 2026. Commit `960ad41a7db9446e4be147f18d33d946c8324ae5` was deployed as `dpl_EsUUG8fEiQnPrxSWj7EBT8joPoTX`; one separately authorized live execution completed all five query families without retry or runtime error.
-- The completed execution returned no observed Campaign, Cart Data sales, Shopping product, current PMax listing-tree or PMax Asset Group performance rows for 16 September through 15 October 2026 in `Europe/Istanbul`. This is not numeric zero, global unsupported evidence or Dataset V2 authority. Retained evidence is `docs/evidence/EO_04C_GOOGLE_PROVIDER_LIVE_EVIDENCE_2026-10-16.json`.
-- The retained live execution used a combined account context from `campaign`; therefore its zero Campaign rows also suppressed `customer.test_account` and left the selected account type unproven. Before another live call, account identity had to be separated to a `FROM customer` query while Campaign inventory remained `FROM campaign`. That evidence record itself authorized neither another live call nor the correction.
-- The product owner separately authorized that narrow correction on 16 October 2026. Repository runtime version `1.1.0` now runs `account_identity` from `customer` before the separate `campaign_context` inventory query from `campaign`; an empty Campaign result can no longer hide account-type evidence. No deployment or additional live provider call is authorized by this implementation approval.
-- The product owner separately authorized Production deployment on 16 October 2026. Exact commit `53730bee401c79600570f199bd9967cf2d560c8a` was deployed as `dpl_GFNme3aUQUJ25723fwU3e7HU235p`; state was `READY`, `embedded.adstable.app` was assigned without alias error, and the initial deployment-scoped error/fatal scan was clean. No additional live Google request is authorized by this deployment approval.
-- The separately authorized follow-up request returned `customer.test_account=true` successfully. Google did not return a provider error; runtime version `1.1.0` converted that classification into the internal `GOOGLE_LIVE_EVIDENCE_TEST_ACCOUNT_NOT_ELIGIBLE` failure and stopped before the remaining read-only families.
-- Google Ads API access, OAuth restricted-scope verification and demo-account policies were rechecked on 16 October 2026. The product owner accepted one shared pre/post-review runtime: retain independent account identity, classify `test_observed` without a critical error, complete the bounded read-only families, expose only safe counts, and label the result as test-account demo output that is not production performance evidence. No review-only branch, fabricated row, Dataset publication, deployment or additional provider request is authorized by this repository implementation decision.
-- Repository runtime version `1.2.0` implements that decision. Local verification passed 289/289 tests, TypeScript verification, production build and diff checks.
-- The product owner separately authorized Production deployment on 16 October 2026. Exact commit `16a54df48e853c282d9c3481fb9e3b7c2b2ca16d` was deployed as `dpl_AQWkrVxdQvVzxPQkeNbhwXXwcXXQ`; Vercel reported `READY`, assigned `embedded.adstable.app` without alias error, and the initial deployment-scoped error/fatal scan was clean. The product owner accepted the real Shopify Admin Settings result on desktop and mobile. At that point, another live provider request and merge were still separately gated.
-- The product owner explicitly authorized merge. PR #85 was merged into `main` as `54c427733cd51ba8600016941ce7afdd24ac2e64` on 16 October 2026. The merge did not create a second automatic Vercel Production deployment. The test-account review demo is accepted and merged; production performance evidence remains pending Google Ads API Explorer-or-higher access, and another live provider request remains separately gated.
-- The product owner separately authorized one live test-account review-demo execution on 16 October 2026. The real Shopify Admin terminal state verified `test_observed` and completed all six read-only query families without provider error, runtime error or retry. Campaign context, Cart Data sales, Shopping product performance, current PMax listing tree and PMax Asset Group performance each returned zero rows. Those empty results mean only `not_observed_in_this_execution`; they do not prove numeric zero, global unsupported behavior, Product ID support, Sales Role support or Production performance. Durable bounded evidence is `docs/evidence/EO_04C_GOOGLE_TEST_ACCOUNT_REVIEW_EVIDENCE_2026-10-16.json`. Google access-level and test-account documentation was rechecked: Explorer-or-higher adds Production account access without removing Test account access, so the shared query structure remains unchanged. Production evidence and every further live provider call remain separately gated.
+- Standard Shopping ve Search Channel'ı Ad Group; Performance Max Retail Channel'ı Asset Group'tur.
+- PMax satışı/Sales Role geniş listing tree'de korunur. Kesin Asset Group yalnız reklamı yapılan ürüne tam bir uygun ağaç eşleşirse çözülür.
+- Tek uygun `All products` Asset Group kesindir. Birden çok örtüşen All products, kategori veya geniş ağaç `Unclassified Channel` bırakır; satış atılmaz/dağıtılmaz.
+- Güncel ağaç tek başına eski satışı çözmez. Kesin tarihsel Channel, satışın tam iş günü boyunca geçerli sürümlü ağaç kanıtı ister. Gün içi değişiklik/eksik zaman kanıtında satış `Unclassified Channel` altında korunur.
+- `cart_data_sales_view` reklamı yapılan/satılan ürün, adet, gelir ve lead/Cross-sell kanıtı; toplu `asset_group_product_group_view` kanıtından ayrıdır.
+- Sağlayıcı Product Ad Cost reklamı yapılan üründe kalır; Cross-sell satılan ürüne taşınmaz. Dağıtım EO-05 işidir.
+- Eksik Cart Data ayarı, başarılı boş yanıt, eksik alan, desteklenmeyen alan ve açık sayısal sıfır ayrıdır.
+- Ürün sahibi 16 Ekim 2026'da özeti kabul edip sınırlı repository uygulamasını ayrıca onayladı. Dokuz salt okunur GAQL ailesi, ham sayfa/kanıt koruması, Sales Role ve zamansal güvenli PMax çözümleme sentetik testlerle kuruldu.
+- Google test hesabı reklam yayımlamaz; gerekli performans/Cart Data satış gerçeklerini üretmediğinden gerçek raporlama kanıtı değildir. Repository test verisi yalnız AdsTable mantığını kanıtlar.
+- Uygulama 16 Ekim'de `752cc1988323c238297d00516e7b7009432032c2` olarak kabul edilip birleştirildi.
+- Aynı gün geçici canlı kanıt tetikleyicisinin sınırlı repository uygulaması ayrıca kabul edildi. Özet `docs/EO_04C_GOOGLE_LIVE_EVIDENCE_TRIGGER_BRIEF.md`, sözleşme `contracts/eo-04c-google-live-evidence-trigger-v1.json`.
+- Tetikleyici hesap bağlamı, Cart Data satışları, ürün performansı, güncel PMax ağacı ve Asset Group performansını son 30 tamamlanmış hesap iş günü için sırayla çalıştırır. İlk hatada kalan aileler durur; tekrar veya alternatif yoktur.
+- Birebir commit Production'a dağıtılıp 16 Ekim'de 1280 px masaüstü ve 320 px gerçek mobil Admin'de kabul edildi. Ayrı onaylı ilk çağrı tekrarsız durdu; gözlemlenebilirlik açığı bulundu: Arayüze yalnız `GOOGLE_LIVE_EVIDENCE_FAILED` ulaştı, sınırlı hata kanıtı loga ulaşmadı.
+- Ürün sahibi dar düzeltmeyi onayladı: Yalnız güvenli aşama, sorgu ailesi, kaynak/sağlayıcı kodu, HTTP durumu ve yanıt gözlendi bilgisi loglanır. Ham mesaj, kimlik, istek ID, satır, token ve kimlik bilgisi yasaktır. İkinci çağrı/merge ayrı kapı kaldı.
+- 16 Ekim'de sorgulardan önce istek kapsamlı tek token yenileme ayrıca onaylandı. `960ad41a7db9446e4be147f18d33d946c8324ae5`, `dpl_EsUUG8fEiQnPrxSWj7EBT8joPoTX` olarak dağıtıldı; ayrı onaylı tek koşu beş aileyi hatasız/tekrarsız tamamladı.
+- `Europe/Istanbul` için 16 Eylül–15 Ekim aralığında Campaign, Cart Data, Shopping ürün, güncel PMax ağacı ve Asset Group satırı gözlenmedi. Bu sayısal sıfır, genel desteklenmiyor veya Dataset V2 otoritesi değildir. Kanıt: `docs/evidence/EO_04C_GOOGLE_PROVIDER_LIVE_EVIDENCE_2026-10-16.json`.
+- Bu koşu `campaign` kaynaklı birleşik hesap bağlamı kullandığından boş Campaign sonucu `customer.test_account` bilgisini de gizledi; hesap türü kanıtlanamadı. Yeni çağrıdan önce kimlik `FROM customer`, Campaign envanteri `FROM campaign` olarak ayrılmalıydı. İlk kanıt kendi başına düzeltme/yeni çağrı yetkisi vermedi.
+- Dar düzeltme 16 Ekim'de ayrıca onaylandı. `1.1.0` önce `customer` üzerinden `account_identity`, sonra `campaign` üzerinden ayrı `campaign_context` çalıştırır; boş Campaign tür kanıtını gizleyemez. Bu uygulama onayı deployment veya ek canlı çağrı değildi.
+- Production dağıtımı ayrıca onaylandı. `53730bee401c79600570f199bd9967cf2d560c8a`, `dpl_GFNme3aUQUJ25723fwU3e7HU235p` olarak `READY` oldu; `embedded.adstable.app` hatasız eşlendi, ilk error/fatal penceresi temizdi. Bu onay yeni Google isteği değildi.
+- Ayrı onaylı takip isteği `customer.test_account=true` döndürdü. Google hata vermedi; `1.1.0` bu sınıfı iç `GOOGLE_LIVE_EVIDENCE_TEST_ACCOUNT_NOT_ELIGIBLE` hatasına çevirip kalan ailelerden önce durdu.
+- 16 Ekim erişim, OAuth kısıtlı izin doğrulaması ve demo politikaları yeniden kontrol edildi. Ürün sahibi review öncesi/sonrası tek çalışma zamanını kabul etti: Bağımsız kimlik korunur, `test_observed` kritik hata olmadan sınıflanır, sınırlı salt okunur aileler tamamlanır, yalnız güvenli sayılar gösterilir ve çıktı test demosu olarak etiketlenir. Gerçek performans kanıtı değildir. Review'a özel dal, sahte satır, Dataset yayını, dağıtım/yeni çağrı yetkisi verilmedi.
+- `1.2.0` bu kararı uygular; 289/289 yerel test, tip kontrolü, Production derlemesi ve fark kontrolleri geçti.
+- Ayrı onaylı `16a54df48e853c282d9c3481fb9e3b7c2b2ca16d`, `dpl_AQWkrVxdQvVzxPQkeNbhwXXwcXXQ` olarak dağıtıldı. `READY`, hatasız `embedded.adstable.app` ve temiz ilk error/fatal kontrolü doğrulandı. Ürün sahibi masaüstü/mobil Settings'i kabul etti. O anda yeni çağrı ve merge ayrı kapıydı.
+- Açık merge onayıyla PR #85, 16 Ekim'de `54c427733cd51ba8600016941ce7afdd24ac2e64` olarak `main`e alındı. İkinci otomatik Production dağıtımı oluşmadı. Test demosu kabul/birleşmiş, canlı performans kanıtı Explorer-or-higher erişimi bekler; her yeni çağrı ayrı onay ister.
+- Aynı gün tek test hesabı review-demo koşusu ayrıca onaylandı. Gerçek Admin sonucu `test_observed` doğruladı; altı salt okunur aile hatasız/tekrarsız tamamlandı. Campaign, Cart Data, Shopping performansı, güncel PMax ağacı ve Asset Group performansı sıfır satır döndürdü. Bunlar yalnız `not_observed_in_this_execution`; sayısal sıfır, genel desteklenmiyor, Product ID/Sales Role desteği veya Production performansı değildir. Kanıt: `docs/evidence/EO_04C_GOOGLE_TEST_ACCOUNT_REVIEW_EVIDENCE_2026-10-16.json`. Resmî erişim/test hesabı belgelerine göre Explorer-or-higher, test erişimini kaldırmadan canlı hesap erişimi ekler; ortak sorgu yapısı korunur. Canlı performans ve her yeni çağrı ayrı kapıda kalır.
 
-## EO-04-C Google 2026 access/review corrective — 17 October 2026
+## EO-04-C Google 2026 erişim/review düzeltmesi — 17 Ekim 2026
 
-- Google'ın 9 Eylül 2026 geçiş dokümanı, access-level sayfası, OAuth production-readiness kuralları, Ads API security requirements ve policy/demo süreci resmî kaynaklardan yeniden kontrol edildi. Bağlayıcı karar `docs/decisions/A6_EO_04_C_GOOGLE_2026_ACCESS_REVIEW_CORRECTIVE.md`; executable contract `contracts/eo-04c-google-2026-access-review-corrective-v1.json` içindedir.
+- Google'ın 9 Eylül 2026 geçiş dokümanı, erişim seviyesi sayfası, OAuth canlıya hazırlık kuralları, Ads API güvenlik gereksinimleri ve policy/demo süreci resmî kaynaklardan yeniden kontrol edildi. Bağlayıcı karar `docs/decisions/A6_EO_04_C_GOOGLE_2026_ACCESS_REVIEW_CORRECTIVE.md`; yürütülebilir sözleşme `contracts/eo-04c-google-2026-access-review-corrective-v1.json` içindedir.
 - İlk gerçek-hesap geliştirme hedefi Explorer access'tir. Google Ads API access seviyesi OAuth istemcisinin bağlı olduğu Google Cloud Project'e aittir; OAuth public verification ayrı bir dış-kullanıcı kapısıdır.
-- Google Ads API v25 için `GOOGLE_ADS_DEVELOPER_TOKEN` yalnız geçiş uyumluluğudur: varsa header gönderilir, yoksa runtime fail etmez. Mevcut Production secret bu paketle değiştirilmez veya silinmez.
-- HTTP 401, Cloud Project access eksikliği, 2-Step Verification eksikliği, diğer permission/scope 403'leri ve `AUTHORIZATION_ERROR` ayrı fail-closed sınıflardır. Hiçbiri otomatik retry, project değişimi veya alternatif auth rotası başlatmaz.
-- Historical PMax doğruluğu korunur: bugünkü listing tree geçmiş satışı exact çözemez. Tam business-day snapshot yoksa satış ve Sales Role korunur, Channel `Unclassified Channel` kalır. Versioned snapshot persistence A6-EO-05 sorumluluğudur.
-- Ürün sahibi 17 Ekim 2026'da bu repository düzeltme paketini onaylamıştır. Onay Google başvurusu, canlı provider çağrısı, Cloud Project/OAuth/secret/environment değişikliği, deployment, database, Dataset V2 veya UI mutation'ı yetkilendirmez.
-- Ürün sahibi gerekli CI sonrasında merge'i açıkça onaylamıştır. PR #89, 17 Ekim 2026'da `main` üzerine `ff54d518b7c93ba576c9943a7c8d66a7ea511de6` olarak squash-merge edilmiştir. Explorer başvurusu, ilk Production çağrısı ve her provider mutation'ı ayrı kapıda kalır.
+- Google Ads API v25 için `GOOGLE_ADS_DEVELOPER_TOKEN` yalnız geçiş uyumluluğudur: varsa header gönderilir, yoksa çalışma zamanı fail etmez. Mevcut Production secret bu paketle değiştirilmez veya silinmez.
+- HTTP 401, Cloud Project erişim eksikliği, 2-Step Verification eksikliği, diğer yetki/izin kapsamı 403'leri ve `AUTHORIZATION_ERROR` ayrı güvenli durma sınıflarıdır. Hiçbiri otomatik tekrar, proje değişimi veya alternatif kimlik doğrulama rotası başlatmaz.
+- Tarihsel PMax doğruluğu korunur: bugünkü listing tree geçmiş satışı birebir çözemez. Tam iş günü kayıtlı görünüm yoksa satış ve Sales Role korunur, Channel `Unclassified Channel` kalır. Sürümlü kayıtların kalıcı saklanması A6-EO-05 sorumluluğudur.
+- Ürün sahibi 17 Ekim 2026'da bu repository düzeltme paketini onaylamıştır. Onay Google başvurusu, canlı sağlayıcı çağrısı, Cloud Project/OAuth/secret/environment değişikliği, deployment, veritabanı, Dataset V2 veya UI değişiklik'ı yetkilendirmez.
+- Ürün sahibi gerekli CI sonrasında merge'i açıkça onaylamıştır. PR #89, 17 Ekim 2026'da `main` üzerine `ff54d518b7c93ba576c9943a7c8d66a7ea511de6` olarak squash-merge edilmiştir. Explorer başvurusu, ilk Production çağrısı ve her sağlayıcı değişiklik'ı ayrı kapıda kalır.

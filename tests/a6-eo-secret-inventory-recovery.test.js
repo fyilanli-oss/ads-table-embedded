@@ -86,7 +86,7 @@ test("Execution Plan and master contract expose the EO-04 secret gate", async ()
     "docs/A6_EO_SECRET_INVENTORY_AND_RECOVERY.md",
     "contracts/a6-eo-secret-inventory-recovery-v1.json",
     "tests/a6-eo-secret-inventory-recovery.test.js",
-    "first real provider authorization",
+    "İlk gerçek sağlayıcı yetkilendirmesinden önce",
   ]) {
     assert.match(plan, new RegExp(value.replace(/[.*+?^$\{\}()|[\]\\]/g, "\\$&")));
   }

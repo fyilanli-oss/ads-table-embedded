@@ -28,16 +28,16 @@ test("DOCS-01 inventories human Markdown without translating agent instructions 
   assert.equal(new Set(actual).size, 63);
   assert.deepEqual(contract.inventory_counts, {
     total_markdown: 63, human_markdown: 62, excluded_agent_instructions: 1,
-    translated_review_pending: 2, pending_language_review: 3,
-    translated_product_owner_accepted: 57,
+    translated_review_pending: 3, pending_language_review: 0,
+    translated_product_owner_accepted: 59,
   });
   for (const row of contract.inventory) {
     assert.match(row.baseline_blob, /^[a-f0-9]{40}$/);
     assert.equal(row.classification, row.path === "AGENTS.md"
       ? "agent_instructions_excluded" : "human_markdown");
     assert.equal(row.status, row.path === "AGENTS.md" ? "excluded_unchanged"
-      : [...contract.first_batch, ...contract.second_batch, ...contract.third_batch, ...contract.fourth_batch, ...contract.fifth_batch, ...contract.sixth_batch, ...contract.seventh_batch, ...contract.eighth_batch, ...contract.ninth_batch, ...contract.tenth_batch, ...contract.eleventh_batch, ...contract.twelfth_batch, ...contract.thirteenth_batch, ...contract.fourteenth_batch, ...contract.fifteenth_batch].includes(row.path) ? "translated_product_owner_accepted"
-        : contract.sixteenth_batch.includes(row.path) ? "translated_product_owner_review_pending" : "pending_language_review");
+      : [...contract.first_batch, ...contract.second_batch, ...contract.third_batch, ...contract.fourth_batch, ...contract.fifth_batch, ...contract.sixth_batch, ...contract.seventh_batch, ...contract.eighth_batch, ...contract.ninth_batch, ...contract.tenth_batch, ...contract.eleventh_batch, ...contract.twelfth_batch, ...contract.thirteenth_batch, ...contract.fourteenth_batch, ...contract.fifteenth_batch, ...contract.sixteenth_batch].includes(row.path) ? "translated_product_owner_accepted"
+        : contract.seventeenth_batch.includes(row.path) ? "translated_product_owner_review_pending" : "pending_language_review");
   }
 });
 
@@ -570,10 +570,43 @@ test("DOCS-01 Shopify governance preserves RC, real user acceptance and the char
   for (const state of ["Loading", "Empty / Not connected", "Resume required", "Connected", "Error / Reauthorization", "Cancel"]) assert.ok(template.includes("`" + state + "`"));
   assert.match(template, /yeni arayüz işi başlatmaz veya kabul üretmez/);
   assert.match(template, /Ürün sahibi açık kabul verdi/);
-  const prepared = contract.deliveries[15];
-  assert.deepEqual(prepared.files, contract.sixteenth_batch);
+  const accepted = contract.deliveries[15];
+  assert.deepEqual(accepted.files, contract.sixteenth_batch);
+  assert.equal(accepted.product_owner_readability_accepted, true);
+  assert.equal(accepted.merge_authorized, true);
+  assert.equal(accepted.pull_request, 136);
+  assert.equal(accepted.merge_commit, "ed47adf7bc19a9206b1baebda995838021ad3585");
+});
+
+test("DOCS-01 final language delivery covers all human documents without self-acceptance or advancing EO-05", async () => {
+  const contract = await readJson(contractPath);
+  assert.equal(contract.seventeenth_batch.length, 3);
+  assert.equal(contract.final_delivery.all_62_human_documents_language_prepared, true);
+  assert.equal(contract.inventory.filter(row => row.status === "pending_language_review").length, 0);
+  assert.equal(contract.final_delivery.package_closure_acceptance_pending, true);
+  const prepared = contract.deliveries[16];
+  assert.deepEqual(prepared.files, contract.seventeenth_batch);
   assert.equal(prepared.product_owner_readability_accepted, false);
   assert.equal(prepared.merge_authorized, false);
+  for (const path of contract.seventeenth_batch) {
+    const content = await readFile(path, "utf8");
+    const row = contract.inventory.find(item => item.path === path);
+    assertTechnicalTokens(content, row.preserved_technical_tokens);
+    assert.match(content, /tarihsel/);
+    assert.doesNotMatch(content, /^#{1,3} (?:Authority|Product boundary|Ordered program|Current|Closed packages|Secret inventory|Demo fixture|EO-05 mandatory|Parent package)/m);
+  }
+  const plan = await readFile(contract.seventeenth_batch[0], "utf8");
+  assert.match(plan, /## Güncel durum — 19 Ekim 2026/);
+  assert.match(plan, /EO-05 otomatik başlamaz/);
+  assert.match(plan, /Satılan ürün Channel seçemez/);
+  assert.match(plan, /satışın tüm sağlayıcı iş günü penceresini kapsıyor/);
+  const master = await readFile(contract.seventeenth_batch[1], "utf8");
+  assert.match(master, /10 ana paket, 43 sabit alt paket/);
+  assert.match(master, /Kaynak kaydındaki aktif iş — tarihsel/);
+  assert.match(master, /bugünkü durum veya kural değildir/);
+  const quality = await readFile(contract.seventeenth_batch[2], "utf8");
+  assert.match(quality, /A6-ASSURE-01 — Pre-Review Assurance Programı/);
+  assert.match(quality, /review başvurusu veya EO-05 başlangıç onayı değildir/);
 });
 
 test("DOCS-01 language work does not authorize runtime work, closure, merge or EO-05", async () => {

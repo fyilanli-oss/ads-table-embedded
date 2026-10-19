@@ -1,27 +1,31 @@
-# A6 EO-F4 — Schema, data carry ve Supabase data-plane kararı
+# A6 EO-F4 — Şema, veri taşıma ve Supabase veri katmanı kararı
 
-**Tarih:** 4 Ekim 2026  
-**Durum:** EO-F4 tamamlandı; EO-F5 bekleniyor  
-**Etkisi:** Salt-okunur karar ve taşıma sözleşmesi. Yeni Supabase project oluşturmaz, canlı şema/veri/credential değiştirmez.
+**Tarih:** 4 Ekim 2026
+
+**Tarihsel durum:** EO-F4 tamamlandı; EO-F5 bekleniyor
+
+**Etkisi:** Salt okunur karar ve taşıma sözleşmesi. Yeni Supabase projesi oluşturmaz; canlı şema, veri veya kimlik bilgisi değiştirmez.
+
+**Okuma notu:** Bu belge eski yapının 4 Ekim 2026 incelemesini ve o günkü hedef tasarımını kaydeder. Envanter, süreler ve taslak nesne/paket eşlemeleri bugünkü temiz projenin canlı durumu veya uygulanmış DDL'si değildir. Güncel karar ve uygulama yetkisi `docs/EXECUTION_PLAN.md`, `contracts/a6-eo-implementation-master-v1.json` ve ilgili kabul edilmiş EO sözleşmelerindedir. Bu dil düzenlemesi taşıma, token işlemi, kaynak oluşturma veya yedek işi başlatmaz.
 
 ## Analist sonucu
 
-Hedef embedded-only ürün için **ayrı Supabase project** seçilmiştir.
+Yalnız Shopify içine gömülü çalışan hedef ürün için **ayrı Supabase projesi** seçilmiştir.
 
-Bu kararın nedeni mevcut verinin büyüklüğü değil, authority izolasyonudur. Mevcut project 55 migration boyunca standalone kullanıcı, V1 analytics, legacy provider/token, geçici yük testi ve embedded canonical yapıları aynı fiziksel sınırda biriktirmiştir. Aynı project içinde özel rol teknik olarak mümkün olsa da yanlış grant, eski function veya yeni bir import üzerinden legacy authority'ye dönme riski kalır.
+Neden veri büyüklüğü değil, yetkili kayıt kaynaklarını yalıtmaktır. Eski proje 55 migration boyunca bağımsız uygulama kullanıcılarını, V1 analitiğini, eski sağlayıcı/token yapılarını, geçici yük testlerini ve gömülü ürünün kanonik kayıtlarını aynı fiziksel sınırda biriktirmiştir. Aynı projede özel rol teknik olarak mümkün olsa da yanlış yetki, eski fonksiyon veya yeni bir import üzerinden eski yetki kaynağına dönme riski kalır.
 
-Yeni project temiz migration history, private schema'lar, dar yetkili runtime rolü ve sıfır legacy nesneyle başlayacaktır. Mevcut project cutover sonrasındaki consumer-zero ve rollback kapıları tamamlanana kadar silinmez veya daraltılmaz.
+Yeni proje temiz migration geçmişi, özel şemalar, dar yetkili çalışma zamanı rolü ve sıfır eski nesneyle başlayacaktır. Eski proje, yetkili geçiş sonrasındaki tüketici-sıfır ve geri dönüş kapıları tamamlanana kadar silinmez veya daraltılmaz.
 
 ## Resmî Supabase kontrolü
 
-4 Ekim 2026 tarihli resmî kaynak kontrolü:
+Aşağıdakiler 4 Ekim 2026 tarihli resmî kaynak kontrolünün tarihsel kaydıdır; yeni sürüm doğrulaması değildir:
 
-- `service_role` Data API üzerinden RLS'yi bypass eder; yeni runtime'a verilemez.
-- Trusted server doğrudan Postgres connection kullanabilir.
-- Vercel gibi serverless runtime için Supavisor transaction mode uygundur; prepared statements kapalı olmalıdır.
-- Exposed schema'lardaki tablolar için RLS zorunludur.
-- Yeni Postgres 17.11 / 15.19 breaking change'i `ltree`, legacy pgcrypto cipher, `btree_gist` float/NaN ve custom operator yeniden oluşturma alanlarını etkiler. Hedef clean schema bunların hiçbirine bağımlı olmayacaktır.
-- OrioleDB 4 Ekim 2026 itibarıyla Public Beta, SLA'sız ve bazı restore kabiliyetleri eksiktir; hedef production project için seçilmez.
+- `service_role` Data API üzerinden RLS'yi atlar; yeni çalışma zamanına verilemez.
+- Güvenilir sunucu doğrudan Postgres bağlantısı kullanabilir.
+- Vercel gibi sunucusuz çalışma zamanları için Supavisor işlem modu uygundur; önceden hazırlanmış sorgular (prepared statements) kapalı olmalıdır.
+- API'ye açık şemalardaki tablolarda RLS zorunludur.
+- O gün incelenen Postgres 17.11 / 15.19 uyumluluk değişikliği `ltree`, eski pgcrypto şifrelemesi, `btree_gist` float/NaN ve özel operatörlerin yeniden oluşturulmasını etkiler. Hedef temiz şema bunlara bağımlı olmayacaktır.
+- OrioleDB o gün Public Beta durumundadır; SLA'sı yoktur ve bazı geri yükleme kabiliyetleri eksiktir. Hedef Production projesi için seçilmez.
 
 Kaynaklar:
 
@@ -33,121 +37,123 @@ Kaynaklar:
 
 ## Canlı kaynak envanteri
 
-Salt-okunur live inspection sonucu:
+4 Ekim'deki salt okunur canlı inceleme sonucu:
 
 | Kaynak | Satır | Boyut | Karar |
 |---|---:|---:|---|
-| `workspaces` | 1 | 32 KB | Exact identity carry |
-| `workspace_settings` | 1 | 32 KB | Exact business setting carry |
-| `shopify_installations` | 1 | 80 KB | Exact identity + sealed token carry |
-| `workspace_provider_connections` | 3 | 152 KB | Exact grant/account/binding + sealed token carry |
-| `workspace_provider_email_spend_history` | 4 | 48 KB | Exact immutable-history carry |
-| `performance_dataset_rows_v2` | 5 | 128 KB | Canonical copy yok; quarantine evidence + provider re-fetch |
-| `fx_rates_daily` | 10,478 | 7.73 MB | Bulk copy yok; required-pair rebuild/reconciliation |
+| `workspaces` | 1 | 32 KB | Kimlik birebir taşınacak |
+| `workspace_settings` | 1 | 32 KB | İş ayarı birebir taşınacak |
+| `shopify_installations` | 1 | 80 KB | Kimlik ve şifreli token taşınacak |
+| `workspace_provider_connections` | 3 | 152 KB | Yetkilendirme/hesap/bağ birebir, token şifreli taşınacak |
+| `workspace_provider_email_spend_history` | 4 | 48 KB | Değişmez geçmiş birebir taşınacak |
+| `performance_dataset_rows_v2` | 5 | 128 KB | Kanonik kopyalama yok; karantina kanıtı + sağlayıcıdan yeniden çekme |
+| `fx_rates_daily` | 10,478 | 7.73 MB | Toplu kopyalama yok; gerekli kur çiftlerini yeniden kurma/uzlaştırma |
 
 Dataset satırları:
 
 - Klaviyo: 4 satır; 2 `real`, 2 `partial`
 - Meta: 1 satır; `partial`
 - Google Ads: 0 satır
-- workspace null: 0
-- `user_id` non-null: 0
-- synthetic: 0
-- raw evidence bulunan satır: 5
+- çalışma alanı boş: 0
+- `user_id` boş olmayan: 0
+- sentetik: 0
+- ham kanıtı bulunan satır: 5
 
-Token posture:
+Token durumu:
 
-- Shopify: 1 access + 1 refresh envelope; access süresi geçmiş, refresh süresi geçmemiş
-- Google Ads: 1 access + 1 refresh; access süresi geçmiş
-- Klaviyo: 1 access + 1 refresh; access süresi geçmiş
-- Meta: 1 access; süre geçmemiş
-- Envelope version ve key-id şekilleri tutarlı; secret/ciphertext okunmadı.
+- Shopify: 1 erişim + 1 yenileme zarfı; erişim süresi geçmiş, yenileme süresi geçmemiş
+- Google Ads: 1 erişim + 1 yenileme; erişim süresi geçmiş
+- Klaviyo: 1 erişim + 1 yenileme; erişim süresi geçmiş
+- Meta: 1 erişim; süresi geçmemiş
+- Zarf sürümü ve anahtar kimliği biçimleri tutarlı; gizli değer/şifreli içerik okunmadı.
 
 ## Neden mevcut şema aynen taşınmıyor?
 
 ### Dataset V2
 
-Canlı tablo workspace-first write kullanıyor; ancak DDL hâlâ:
+Canlı tablo çalışma alanını esas alarak yazıyor; ancak veri tanımı (DDL) hâlâ şunları taşıyor:
 
-- nullable legacy `user_id` ve `users(id)` foreign key;
-- GA4 alanı ve organic kaynak kuralı;
-- TikTok platform/hierarchy izinleri;
-- legacy `source_job_id`;
-- maturity/finality/reconciliation için durable authority eksikliği
+- boş kalabilen eski `user_id` ve `users(id)` yabancı anahtarı;
+- GA4 alanı ve Organic kaynak kuralı;
+- TikTok platform/hiyerarşi izinleri;
+- eski `source_job_id`;
+- olgunluk/kesinleşme/uzlaştırma için kalıcı yetkili kayıt kaynağı eksikliği.
 
-taşıyor. Bu tabloyu aynen kopyalamak EO-F3 denylist'ini yeni DB'ye gömmek olur.
+Aynen kopyalamak, EO-F3'te yasaklanan yapıları yeni veritabanına gömmek olur.
 
-### Runtime grants
+### Çalışma zamanı yetkileri
 
-Canonical tabloların çoğu RLS-enabled/forced olsa da policy yoktur ve `service_role` CRUD yetkisiyle kullanılır. Dataset V2 ve FX tablolarında forced RLS yoktur. Bu mevcut backend posture'ının kaydıdır; hedef authorization modeli değildir.
+Kanonik tabloların çoğunda RLS etkin/zorunlu olsa da politika yoktur; erişim `service_role` CRUD yetkisiyle yapılır. Dataset V2 ve FX tablolarında zorunlu RLS yoktur. Bu eski sunucu erişim düzeninin kaydıdır; hedef yetkilendirme modeli değildir.
 
-### Stored functions
+### Veritabanı fonksiyonları
 
-Canlı Klaviyo maliyet function'larının üçü `SECURITY DEFINER`, yalnız `postgres` ve `service_role` execute ACL taşır. Shopify install function'ı invoker'dır fakat public schema'dadır. Hedefte bu function'lar kopyalanmaz; clean transaction/service sınırıyla yeniden yazılır ve ihtiyaç yoksa function yerine server transaction kullanılır.
+Canlı Klaviyo maliyet fonksiyonlarının üçü `SECURITY DEFINER` kullanır; çalıştırma erişim listesinde yalnız `postgres` ve `service_role` vardır. Shopify kurulum fonksiyonu çağıranın yetkileriyle çalışır, fakat public şemadadır. Bunlar hedefe kopyalanmaz; temiz işlem/servis sınırında yeniden yazılır. Fonksiyon gerekli değilse sunucu işlemi kullanılır.
 
 ## Seçenek karşılaştırması
 
 Puan 1 zayıf, 5 güçlüdür.
 
-| Kriter | Aynı project + özel rol/private schema | Ayrı Supabase project |
+| Kriter | Aynı proje + özel rol/özel şema | Ayrı Supabase projesi |
 |---|---:|---:|
-| Legacy privilege izolasyonu | 3 | 5 |
-| Temiz migration history | 2 | 5 |
-| Yanlış tablo/function import riskini önleme | 3 | 5 |
-| Token ve installation continuity kolaylığı | 5 | 3 |
+| Eski yetkileri yalıtma | 3 | 5 |
+| Temiz migration geçmişi | 2 | 5 |
+| Yanlış tablo/fonksiyon import riskini önleme | 3 | 5 |
+| Token ve kurulum devamlılığının kolaylığı | 5 | 3 |
 | Veri taşıma kolaylığı | 5 | 4 |
-| Bağımsız rollback | 3 | 5 |
-| Backup/failure-domain ayrımı | 2 | 5 |
+| Bağımsız geri dönüş | 3 | 5 |
+| Yedek ve arıza etki alanını ayırma | 2 | 5 |
 | Başlangıç operasyon maliyeti | 4 | 3 |
 | **Toplam** | **27/40** | **35/40** |
 
-Canlı canonical veri yalnız 14 business row ve 10,478 yeniden üretilebilir FX satırıdır. Bu nedenle ayrı project'in isolation kazanımı taşıma maliyetinden büyüktür.
+Tarihsel özet metni kanonik veriyi “14 iş satırı ve 10,478 yeniden üretilebilir FX satırı” diye tanımlıyordu. **Sayım notu:** Bu “14” ifadesi aynı belgenin nihai kabulündeki 10 satırlık açık listeyle uyuşmaz; taşıma yetkisi olarak kullanılamaz. Bağlayıcı nihai liste aşağıdaki kabul sonucu ve EO-F7'deki **10 satırdır**. Eski özetin gerekçesi korunur: ayrı projenin yalıtım kazanımı taşıma maliyetinden büyüktür.
 
-## Hedef data-plane
+## Hedef veri katmanı
 
-### Project tipi
+Aşağıdaki şema adları tarihsel mantıksal tasarımdır; bugünkü nesne envanteri sayılmaz.
+
+### Proje tipi
 
 - Standard Supabase Postgres; OrioleDB yok
-- Ayrı project, ayrı database password ve ayrı backup/restore sınırı
-- Yeni Vercel project yalnız bu data-plane credential'ını alır
-- Eski project credential'ı yeni runtime'a verilmez
+- Ayrı proje, ayrı veritabanı parolası ve ayrı yedek/geri yükleme sınırı
+- Yeni Vercel projesi yalnız bu veri katmanının kimlik bilgisini alır
+- Eski projenin kimlik bilgisi yeni çalışma zamanına verilmez
 
-### Schema sınırı
+### Şema sınırı
 
-Hedef tablolar Data API'nin exposed schema'sında bulunmaz. Schema grupları:
+Hedef tablolar Data API'nin API'ye açık şemasında bulunmaz. Şema grupları:
 
-| Schema | Authority |
+| Şema | Yetkili kayıt alanı |
 |---|---|
-| `app` | workspace ve merchant-selected settings |
-| `shopify` | installation, install generation, billing/entitlement bağı |
-| `integrations` | provider connection, OAuth transaction ve encrypted token metadata |
-| `analytics` | canonical performance rows, Klaviyo cost history, FX |
-| `operations` | refresh run, lease, checkpoint, reconciliation/finality |
-| `privacy` | webhook claim, deletion run, manifest ve evidence |
-| `billing` | Shopify subscription, 14 günlük trial ve workspace entitlement |
+| `app` | çalışma alanı ve mağaza sahibinin seçtiği ayarlar |
+| `shopify` | kurulum, kurulum nesli, faturalandırma/kullanım hakkı bağı |
+| `integrations` | sağlayıcı bağlantısı, OAuth işlemi ve şifreli token üstverisi |
+| `analytics` | kanonik performans satırları, Klaviyo maliyet geçmişi, FX |
+| `operations` | yenileme çalıştırması, kiralama, ilerleme noktası, uzlaştırma/kesinleşme |
+| `privacy` | webhook işleme sahipliği, silme çalıştırması, manifest ve kanıt |
+| `billing` | Shopify aboneliği, 14 günlük deneme ve çalışma alanı kullanım hakkı |
 
-Bunlar EO-01/EO-02 migration'larında oluşturulur. `public` runtime business table içermez.
+İlk taslak bunları EO-01/EO-02 migration'larına bağlar; güncel uygulama ilgili kabul edilmiş EO sözleşmesine tabidir. `public` çalışma zamanı iş tablosu içermez.
 
-### Runtime bağlantısı
+### Çalışma zamanı bağlantısı
 
-- Vercel server runtime → Supavisor transaction mode, SSL
-- Prepared statements kapalı
-- Dedicated `adstable_runtime` login role
-- Schema-level `USAGE` ve table/function bazında allowlist
-- `NOINHERIT`, `NOBYPASSRLS`, superuser/createdb/createrole/replication yok
-- DDL, truncate, owner değişimi ve legacy schema access yok
-- Migration için runtime'dan ayrı owner credential
-- Browser'a DB credential/client verilmez
-- `service_role`, publishable/anon key ve Data API runtime yolunda kullanılmaz
-- RLS private schema'da defense-in-depth olarak açık ve forced olur
+- Vercel sunucusu → Supavisor işlem modu, SSL
+- Önceden hazırlanmış sorgular kapalı
+- Özel `adstable_runtime` giriş rolü
+- Şema düzeyinde `USAGE`, tablo/fonksiyon bazında izin listesi
+- `NOINHERIT`, `NOBYPASSRLS`; superuser/createdb/createrole/replication yok
+- DDL, truncate, sahiplik değişimi ve eski şema erişimi yok
+- Migration için çalışma zamanından ayrı sahip kimlik bilgisi
+- Tarayıcıya veritabanı kimlik bilgisi/istemcisi verilmez
+- `service_role`, publishable/anon anahtar ve Data API çalışma zamanı yolunda kullanılmaz
+- Özel şemalarda ek savunma katmanı olarak RLS etkin ve zorunlu olur
 
-Runtime rolü tek başına tenant belirleyemez. Her transaction server-verified Shopify session'dan türetilmiş `workspace_id` ile çalışır; repository katmanı caller-supplied workspace kabul etmez.
+Çalışma zamanı rolü tek başına müşteri belirleyemez. Her işlem sunucuda doğrulanmış Shopify oturumundan türetilen `workspace_id` ile çalışır; repository katmanı çağıranın verdiği çalışma alanını kabul etmez.
 
-## Exact carry map
+## Birebir taşıma haritası
 
-### A — Exact identity/state carry
+### A — Kimlik ve durumu birebir taşıma
 
-Aşağıdaki logical kayıtlar primary key ve tarihçeleri korunarak taşınır:
+Aşağıdaki mantıksal kayıtlar birincil anahtar ve geçmişleri korunarak taşınır:
 
 1. `workspaces` → `app.workspaces`
 2. `workspace_settings` → `app.workspace_settings`
@@ -155,61 +161,61 @@ Aşağıdaki logical kayıtlar primary key ve tarihçeleri korunarak taşınır:
 4. `workspace_provider_connections` → `integrations.provider_connections`
 5. `workspace_provider_email_spend_history` → `analytics.email_spend_history`
 
-Taşıma sırasında kolon adları hedef contract'a göre değişebilir; business identity ve accepted values değişemez. Her kaynak satırı canonical JSON hash manifestiyle sayılır. Secret alanları hash manifestine veya loglara girmez.
+Kolon adları hedef sözleşmeye göre değişebilir; iş kimliği ve kabul edilmiş değerler değişemez. Her kaynak satırı kanonik JSON özet değeri manifestiyle sayılır. Gizli alanlar bu manifeste veya loglara girmez.
 
-### B — Sealed token carry
+### B — Şifreli token taşıma
 
-Token plaintext export edilmez.
+Token açık metin olarak dışa aktarılmaz.
 
-1. Workspace UUID, shop ID, provider ve token type AAD context'leri korunur.
-2. Envelope'lar encrypted JSON olarak restricted migration channel üzerinden taşınır.
-3. Yeni preview runtime'ın server-only keyring'i geçici olarak eski decrypt key + yeni active key içerir.
-4. Decrypt canary yalnız success/failure ve envelope identity hash'i üretir; token değeri loglanmaz.
-5. Başarılı envelope yeni active key ile yeniden şifrelenir.
-6. Yeni DB'de eski key-id kullanan envelope sayısı sıfır doğrulanır.
-7. Eski key yeni runtime'dan kaldırılır; eski production rollback keyring'i kendi ortamında korunur.
-8. Provider/Shopify doğrulaması başarısızsa satır `reauthorization_required` olur; sahte connected durumu üretilmez.
+1. Workspace UUID, mağaza kimliği, sağlayıcı ve token türüne ait ek doğrulama verisi (AAD) bağlamları korunur.
+2. Zarflar şifreli JSON olarak kısıtlı taşıma kanalıyla aktarılır.
+3. Yeni Preview çalışma zamanının yalnız sunucudaki anahtar kümesi geçici olarak eski çözme anahtarını ve yeni etkin anahtarı içerir.
+4. Kontrollü şifre çözme denemesi yalnız başarı/başarısızlık ve zarf kimliği özetini üretir; token değeri loglanmaz.
+5. Başarılı zarf yeni etkin anahtarla yeniden şifrelenir.
+6. Yeni veritabanında eski anahtar kimliğini kullanan zarf sayısının sıfır olduğu doğrulanır.
+7. Eski anahtar yeni çalışma zamanından kaldırılır; eski Production geri dönüş anahtar kümesi kendi ortamında korunur.
+8. Sağlayıcı/Shopify doğrulaması başarısızsa satır `reauthorization_required` olur; sahte bağlı durum üretilmez.
 
-Mevcut access sürelerinin bazıları geçmiş olduğundan continuity kabulü yalnız decrypt değildir: refresh veya resmi token renewal + read-only identity probe da PASS olmalıdır.
+Bazı erişim süreleri geçmiş olduğundan devamlılık kabulü yalnız şifre çözmek değildir: yenileme veya resmî token yenilemesi ve salt okunur kimlik kontrolü de PASS olmalıdır. Bu protokol burada yürütülmez; canlı işlem için ayrı yetki gerekir.
 
-### C — Canonical copy yapılmayan Dataset
+### C — Kanonik kopyası yapılmayan Dataset
 
 Beş Dataset V2 satırı yeni `analytics.performance_rows` tablosuna kopyalanmaz.
 
-- Salt-okunur source manifestinde row count, business date, provider, entity key hash, metric-support hash, raw hash ve adapter/contract version tutulur.
-- Ham satırlar restricted migration quarantine/evidence olarak korunur; production query authority değildir.
-- Yeni adapterlar, onaylı bootstrap politikası olan **yesterday + today** aralığını providerlardan yeniden çeker.
-- Sonraki rolling reconciliation/finality penceresi EO-05'te çalışır.
-- Re-fetch sonucu source manifest ve provider ham kanıtıyla karşılaştırılır.
-- Uyuşmazlık gizlenmez; provider/date/entity bazında reconciliation kaydı açılır.
-- Google Ads için sıfır kaynak satır “başarılı taşıma” sayılmaz; canlı adapter read acceptance gerekir.
+- Salt okunur kaynak manifestinde satır sayısı, iş tarihi, sağlayıcı, varlık anahtarı özeti, metrik destek özeti, ham veri özeti ve adaptör/sözleşme sürümü tutulur.
+- Ham satırlar kısıtlı taşıma karantinası/kanıtı olarak korunur; Production sorgularının yetkili kaynağı değildir.
+- Yeni adaptörler onaylı ilk yükleme aralığı olan **dün + bugün** verisini sağlayıcılardan yeniden çeker.
+- Sonraki kayan uzlaştırma/kesinleşme penceresi EO-05'te çalışır.
+- Yeniden çekilen veri kaynak manifesti ve sağlayıcı ham kanıtıyla karşılaştırılır.
+- Uyuşmazlık gizlenmez; sağlayıcı/tarih/varlık bazında uzlaştırma kaydı açılır.
+- Google Ads'teki sıfır kaynak satır “başarılı taşıma” sayılmaz; canlı adaptör okuma kabulü gerekir.
 
-### D — FX rebuild
+### D — FX'i yeniden kurma
 
-`fx_rates_daily` bulk-copy edilmez.
+`fx_rates_daily` topluca kopyalanmaz.
 
-- Hedef yalnız gerçekten gereken currency pair/date'leri tutar.
-- Rate'ler onaylı providerdan yeniden alınır.
-- Eski rate ile yeni rate aynı provider/version/date için farklıysa cutover durur.
-- Providerdan yeniden alınamayan, canonical satırın hesaplanması için zorunlu tarihsel rate ancak source hash/provenance ile exact carry edilebilir.
-- `raw` payload zorunlu runtime kolon değildir; restricted evidence store veya content hash tercih edilir.
+- Yalnız gerçekten gereken para birimi çifti/tarih tutulur.
+- Kurlar onaylı sağlayıcıdan yeniden alınır.
+- Eski ve yeni kur aynı sağlayıcı/sürüm/tarih için farklıysa yetkili geçiş durur.
+- Yeniden alınamayan, kanonik satırın hesaplanması için zorunlu tarihsel kur ancak kaynak özeti/veri kökeniyle birebir taşınabilir.
+- `raw` içerik zorunlu çalışma zamanı kolonu değildir; kısıtlı kanıt deposu veya içerik özeti tercih edilir.
 
 ### E — Satırı taşınmayacak tablolar
 
-- `oauth_transactions`: 12/12 expired; sıfır satır, temiz TTL store
+- `oauth_transactions`: 12/12 süresi dolmuş; sıfır satır, temiz TTL deposu
 - `users`, `user_settings`, `subscriptions`
 - `platform_connections`, `platform_connection_tokens`
 - `shopify_workspace_provider_connections`
 - `legacy_user_workspace_bindings`
 - `dashboard_snapshots`, `performance_dataset_rows`
 - `snapshot_jobs`, `snapshot_schedules`
-- diğer inactive provider/account inventory ve test tabloları
+- diğer pasif sağlayıcı/hesap envanteri ve test tabloları
 
-## Hedef minimum schema sözleşmesi
+## Hedef asgari şema sözleşmesi
 
-EO-F4 logical minimumu aşağıdadır; exact DDL EO-01/EO-02 migration'ında machine-tested olacaktır.
+EO-F4'ün mantıksal asgarisi aşağıdadır. İlk taslaktaki EO-01/EO-02 DDL eşlemesi tarihsel planlamadır; gerçek DDL ilgili sonraki sözleşme ve migration testleriyle belirlenir.
 
-### Mevcut authority'nin temiz karşılığı
+### Mevcut yetkili kayıtların temiz karşılığı
 
 - `app.workspaces`
 - `app.workspace_settings`
@@ -219,7 +225,9 @@ EO-F4 logical minimumu aşağıdadır; exact DDL EO-01/EO-02 migration'ında mac
 - `analytics.email_spend_history`
 - `analytics.fx_rates`
 
-### Eksik fakat GO öncesi zorunlu foundations
+### O gün eksik olan, GO öncesi zorunlu temel kapsam
+
+Aşağıdakiler fizibilitede zorunlu kapsama alınan yapılardır; bu liste bunların o gün uygulandığını göstermez.
 
 - `billing.workspace_subscriptions`
 - `billing.workspace_entitlements`
@@ -233,105 +241,109 @@ EO-F4 logical minimumu aşağıdadır; exact DDL EO-01/EO-02 migration'ında mac
 - `privacy.deletion_manifests`
 - `integrations.oauth_transactions`
 
-Her tabloda gerekli olduğunda `workspace_id`, immutable created timestamp, monotonic version ve idempotency key bulunur. Cross-workspace foreign key veya caller-supplied tenant fallback yasaktır.
+Gerektiğinde her tabloda `workspace_id`, değişmez oluşturma zamanı, tek yönde artan sürüm ve işlemi tekilleştiren anahtar bulunur. Çalışma alanları arası yabancı anahtar veya çağıranın verdiği müşteriye geri dönüş yasaktır.
 
 ## Taşıma protokolü
 
 ### Hazırlık
 
-1. Target migration'ları boş project'e uygulanır.
-2. Grants/advisors/schema diff ve negative object scan PASS olur.
-3. Target project preview-only kalır.
-4. Kaynak DB salt-okunur manifest snapshot'ı alınır.
+1. Hedef migration'lar boş projeye uygulanır.
+2. Yetki/Advisor/şema farkı ve yasak nesne taraması PASS olur.
+3. Hedef proje yalnız Preview olarak kalır.
+4. Kaynak veritabanının salt okunur manifest görüntüsü alınır.
 
-### Dry run
+### Prova
 
-1. Secret olmayan exact rows staging transaction'a yüklenir.
-2. FK, count, canonical hash ve constraint kontrolleri yapılır.
-3. Sealed token canary ve rotation yapılır.
-4. Dataset re-fetch + reconciliation çalışır.
-5. Privacy, billing, scheduler foundations acceptance testleri geçer.
-6. Transaction rollback veya disposable branch/project ile kanıt üretilir.
+1. Gizli olmayan birebir satırlar geçici yükleme işlemine alınır.
+2. Yabancı anahtar, sayım, kanonik özet değeri ve kısıt kontrolleri yapılır.
+3. Şifreli token için kontrollü deneme ve anahtar yenileme yapılır.
+4. Dataset yeniden çekilir ve uzlaştırılır.
+5. Gizlilik, faturalandırma ve zamanlayıcı temel kabul testleri geçer.
+6. İşlem geri alınarak veya geçici dal/proje kullanılarak kanıt üretilir.
 
-### Cutover rehearsal
+### Yetkili geçiş provası
 
-- source watermark alınır
-- delta replay idempotent çalışır
-- target read-only preview Shopify session ile doğrulanır
-- side-by-side output parity raporu üretilir
-- source project yazma authority'si kapanmaz
-- rollback target credential revoke + legacy route restore ile prova edilir
+- kaynak ilerleme işareti alınır
+- farklar tekrarlandığında çoğalmadan işlenir
+- hedef salt okunur Preview, Shopify oturumuyla doğrulanır
+- yan yana çıktı eşlik raporu üretilir
+- kaynak projenin yazma yetkisi kapanmaz
+- hedef kimlik bilgisini iptal etme ve eski rotayı geri açmayla geri dönüş prova edilir
 
-### Production cutover
+### Production'a yetkili geçiş
 
-EO-F7 tek başına production cutover değildir. EO-01–EO-08'in ilgili kabul kapıları, provider parity, deletion, billing/trial, scheduler/finality ve insan onayı olmadan domain/Shopify app/runtime switch yapılmaz.
+EO-F7 tek başına Production geçişi değildir. EO-01–EO-08'in ilgili kabul kapıları, sağlayıcı eşliği, silme, faturalandırma/deneme, zamanlayıcı/kesinleşme ve insan onayı olmadan alan adı/Shopify uygulaması/çalışma zamanı değiştirilmez.
 
-## Reconciliation kabul kriterleri
+## Uzlaştırma kabul kriterleri
 
-Exact carry için:
+Birebir taşıma için:
 
-- source count = export count = import count
-- secret olmayan canonical row hash'leri birebir eşit
-- orphan FK = 0
-- duplicate canonical key = 0
-- unknown workspace = 0
-- plaintext token = 0
-- decrypt/rotate failure = 0 veya açık `reauthorization_required`
-- legacy table/function/import count = 0
-- runtime role forbidden privilege = 0
+- kaynak sayısı = dışa aktarılan sayı = içe aktarılan sayı
+- gizli olmayan kanonik satır özet değerleri birebir eşit
+- sahipsiz yabancı anahtar = 0
+- yinelenen kanonik anahtar = 0
+- bilinmeyen çalışma alanı = 0
+- açık metin token = 0
+- şifre çözme/anahtar yenileme hatası = 0 veya açık `reauthorization_required`
+- eski tablo/fonksiyon/import sayısı = 0
+- çalışma zamanı rolünde yasak yetki = 0
 
-Re-fetch için:
+Yeniden çekme için:
 
-- her aktif provider için identity/account probe PASS
-- requested date coverage eksiksiz
-- raw response evidence mevcut
-- support state `supported|unsupported|unknown`; missing değer sıfıra çevrilmez
-- reconciliation mismatch açık ve sayılabilir
-- finality state ve source watermark yazılmış
+- her aktif sağlayıcıda kimlik/hesap kontrolü PASS
+- istenen tarih aralığı eksiksiz
+- ham yanıt kanıtı mevcut
+- destek durumu `supported|unsupported|unknown`; eksik değer sıfıra çevrilmez
+- uzlaştırma uyuşmazlığı açık ve sayılabilir
+- kesinleşme durumu ve kaynak ilerleme işareti yazılmış
 
-## Rollback ve retention
+## Geri dönüş ve saklama
 
-- Eski project cutover sırasında source-of-truth/rollback olarak korunur.
-- Yeni project'e geçiş eski projectte delete/update yapmaz.
-- Rollback, yeni runtime credential'ının revoke edilmesi ve eski deployment/domain hattının yeniden aktive edilmesidir.
-- Legacy project consumer-zero, retention, privacy ve legal kararları tamamlanmadan pause/delete edilmez.
-- Yeni projectte üretilen cutover sonrası yazılar geri dönüşte delta manifestiyle korunur; sessiz veri kaybı kabul edilmez.
+- Eski proje geçişte yetkili kaynak/geri dönüş hattı olarak korunur.
+- Yeni projeye geçiş eski projede silme/güncelleme yapmaz.
+- Geri dönüş, yeni çalışma zamanı kimlik bilgisinin iptali ve eski dağıtım/alan adı hattının yeniden etkinleştirilmesidir.
+- Eski proje tüketici-sıfır, saklama, gizlilik ve hukuki kararlar tamamlanmadan duraklatılmaz/silinmez.
+- Yeni projede geçişten sonra oluşan yazılar geri dönüşte fark manifestiyle korunur; sessiz veri kaybı kabul edilmez.
 
-## Changelog etkisi
+## Tarihsel değişiklik günlüğünün etkisi
 
-Postgres 17.11 breaking-change kontrolü sonucunda:
+O günkü Postgres 17.11 uyumluluk kontrolüne göre:
 
 - hedef şema `ltree` kullanmaz;
-- DB-level legacy pgcrypto envelope kullanmaz; app AES-256-GCM envelope modeli korunur;
-- `btree_gist` float/NaN index yoktur;
-- custom operator yoktur;
+- veritabanı düzeyinde eski pgcrypto zarfı kullanılmaz; uygulama AES-256-GCM zarf modeli korunur;
+- `btree_gist` float/NaN indeksi yoktur;
+- özel operatör yoktur;
 - OrioleDB kullanılmaz.
 
-Mevcut project için upgrade veya reindex bu paket kapsamında değildir; production mutation yapılmamıştır.
+Eski projede sürüm yükseltme veya indeksleri yeniden oluşturma bu kapsamda değildir; Production değişikliği yapılmamıştır.
 
-## EO paketlerine aktarım
+## EO paketlerine tarihsel aktarım
 
-- **EO-F5:** Shopify product/route map ve DB consumer map
-- **EO-F6:** ayrı Supabase kurulum, migration ve rehearsal eforu
-- **EO-F7:** project oluşturma GO/NO-GO
-- **EO-01:** clean migrations, roles, CI, advisors, schema negative tests
-- **EO-02:** workspace/install/billing/privacy foundations
-- **EO-03:** provider connection/token renewal ve adapter acceptance
-- **EO-04:** clean Dataset/formula/query schema
-- **EO-05:** refresh lease/checkpoint/finality/deletion
-- **EO-07/08:** parity, migration rehearsal, canary, cutover ve rollback
+Bu ilk taslak eşlemesidir; güncel Execution Plan numaralandırmasının yerine geçmez:
 
-## Kabul sonucu
+- **EO-F5:** Shopify ürün/rota ve veritabanı tüketici haritası
+- **EO-F6:** ayrı Supabase kurulum, migration ve prova eforu
+- **EO-F7:** proje oluşturma GO/NO-GO kararı
+- **EO-01:** temiz migration, rol, CI, Advisor ve yasak şema testleri
+- **EO-02:** çalışma alanı/kurulum/faturalandırma/gizlilik temelleri
+- **EO-03:** sağlayıcı bağlantısı/token yenileme ve adaptör kabulü
+- **EO-04:** temiz Dataset/formül/sorgu şeması
+- **EO-05:** yenileme kiralaması/ilerleme noktası/kesinleşme/silme
+- **EO-07/08:** eşlik, taşıma provası, kademeli geçiş, yetkili geçiş ve geri dönüş
+
+Güncel planda EO-03 bağlantı/token, EO-04 adaptörler, EO-05 zamanlayıcı/Dataset/FX/kesinleşme, EO-06 formül/sorgu/API, EO-07 UI ve EO-08 prova/eşlik/geri dönüş kapsamıdır. Bu belge bugünkü eksiksiz şema veya yeni canlı uygulama yetkisi değildir.
+
+## Tarihsel kabul sonucu
 
 EO-F4 **PASS**:
 
-- data-plane: ayrı Standard Supabase Postgres project
-- new runtime `service_role`: yasak
-- exact business row carry: 10 satır (1 workspace + 1 setting + 1 installation + 3 connection + 4 spend history)
-- Dataset canonical direct copy: 0
-- FX bulk direct copy: 0
-- expired OAuth transaction carry: 0
-- plaintext token exposure: 0
-- yeni project/schema/data mutation: 0
-- sıradaki kapı: **EO-F5 — Product and route map**
+- veri katmanı: ayrı Standard Supabase Postgres projesi
+- yeni çalışma zamanında `service_role`: yasak
+- birebir iş satırı taşıması: **10 satır** (1 çalışma alanı + 1 ayar + 1 kurulum + 3 bağlantı + 4 harcama geçmişi)
+- Dataset kanonik doğrudan kopyası: 0
+- FX toplu doğrudan kopyası: 0
+- süresi dolmuş OAuth işlemi taşıması: 0
+- açık metin token ifşası: 0
+- yeni proje/şema/veri değişikliği: 0
+- o günkü sonraki kapı: **EO-F5 — Ürün ve rota haritası**
 

@@ -350,6 +350,16 @@ değildir; taşıma adayları kesin onay sayılmaz. F3'ün ilk taslak paket eşl
 tarihsel olarak korunup güncel Execution Plan sırasına yönlendirilir.
 Yeni kod, canlı işlem veya kaynak oluşturma yetkisi yoktur; EO-05 başlamaz.
 
+On birinci teslim PR #130 açık ürün sahibi okunabilirlik/merge kabulüyle
+`f0fa17301ad22dc0725a9ff1f313cbdf6d2d3c01` commit'inde birleştirildi;
+test edilen ağaç korundu. On ikinci dil geçişi F4 veri taşıma, F5 ürün/rota,
+F6 efor/risk ve F7 GO kararının dört belgesidir. Güncel toplam: 42 kabul edilmiş,
+4 okunabilirlik kabulü bekleyen, 16 dil incelemesi bekleyen belge.
+F4'ün eski “14” özeti tarihsel sayım farkı olarak ayrılıp kabul edilmiş 10 satırlık
+listeye yönlendirilir; rota/şema taslakları bugünkü uygulama envanteri değildir.
+Süre tahminleri 4 Ekim başlangıç planıdır; GO bugün yeni canlı yetki oluşturmaz.
+Kod, canlı ortam ve kabul edilmiş kararlar değişmez; EO-05 başlamaz.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

@@ -171,6 +171,15 @@ Supabase rehberi yalnız yetki terimlerini korumak için kullanılmıştır;
 veritabanı sorgusu, kaynak oluşturma, sağlayıcı veya deploy işlemi yapılmaz.
 Bu teslim paket kapanışı veya EO-05 başlangıcı değildir.
 
+PR #130 açık ürün sahibi kabulüyle merge edildi; kabul edilmiş belge sayısı
+42'dir. On ikinci teslim F4–F7'nin veri taşıma, ürün/rota, efor/risk ve GO
+belgeleridir: 4 belge okunabilirlik kabulü, diğer 16 belge dil incelemesi bekler.
+Önceki sayımlar tarihseldir. Birebir 10 satır taşıma kararı, kanonik Dataset
+kopyalamama, üç yüzey/iki menü bağlantısı ve ayrı canlı işlem onayı korunur.
+Tarihsel özet sayımı, rota/şema taslağı ve süre tahmini bugünkü yetki veya durum
+gibi sunulmaz. Supabase rehberi yalnız terim kontrolüdür; yeni yedek, sorgu,
+kaynak oluşturma, sürüm seçimi veya deploy işi açılmaz. Paket kapanmaz.
+
 ## 4. A6-ASSURE-01 — Pre-Review Assurance Programı
 
 EO-08 sonrasında çalışır. İlk kez kod sağlamlığı arayan denetim değildir;

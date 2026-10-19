@@ -28,16 +28,16 @@ test("DOCS-01 inventories human Markdown without translating agent instructions 
   assert.equal(new Set(actual).size, 63);
   assert.deepEqual(contract.inventory_counts, {
     total_markdown: 63, human_markdown: 62, excluded_agent_instructions: 1,
-    translated_review_pending: 2, pending_language_review: 20,
-    translated_product_owner_accepted: 40,
+    translated_review_pending: 4, pending_language_review: 16,
+    translated_product_owner_accepted: 42,
   });
   for (const row of contract.inventory) {
     assert.match(row.baseline_blob, /^[a-f0-9]{40}$/);
     assert.equal(row.classification, row.path === "AGENTS.md"
       ? "agent_instructions_excluded" : "human_markdown");
     assert.equal(row.status, row.path === "AGENTS.md" ? "excluded_unchanged"
-      : [...contract.first_batch, ...contract.second_batch, ...contract.third_batch, ...contract.fourth_batch, ...contract.fifth_batch, ...contract.sixth_batch, ...contract.seventh_batch, ...contract.eighth_batch, ...contract.ninth_batch, ...contract.tenth_batch].includes(row.path) ? "translated_product_owner_accepted"
-        : contract.eleventh_batch.includes(row.path)
+      : [...contract.first_batch, ...contract.second_batch, ...contract.third_batch, ...contract.fourth_batch, ...contract.fifth_batch, ...contract.sixth_batch, ...contract.seventh_batch, ...contract.eighth_batch, ...contract.ninth_batch, ...contract.tenth_batch, ...contract.eleventh_batch].includes(row.path) ? "translated_product_owner_accepted"
+        : contract.twelfth_batch.includes(row.path)
           ? "translated_product_owner_review_pending" : "pending_language_review");
   }
 });
@@ -380,8 +380,50 @@ test("DOCS-01 feasibility records retain historical inventory, zero runtime carr
   assert.match(carry, /“Retire” bugün silme yetkisi vermez/);
   assert.match(carry, /ilk fizibilite taslağının paket eşlemesidir/);
   assert.match(carry, /EO-03 OAuth\/bağlantı\/token kasası, EO-04 sağlayıcı adaptörleri/);
-  const prepared = contract.deliveries[10];
-  assert.deepEqual(prepared.files, contract.eleventh_batch);
+  const accepted = contract.deliveries[10];
+  assert.deepEqual(accepted.files, contract.eleventh_batch);
+  assert.equal(accepted.product_owner_readability_accepted, true);
+  assert.equal(accepted.merge_authorized, true);
+  assert.equal(accepted.pull_request, 130);
+  assert.equal(accepted.merge_commit, "f0fa17301ad22dc0725a9ff1f313cbdf6d2d3c01");
+});
+
+test("DOCS-01 F4-F7 translation keeps exact carry, logical routes, historical estimates and limited GO", async () => {
+  const contract = await readJson(contractPath);
+  assert.equal(contract.twelfth_batch.length, 4);
+  for (const path of contract.twelfth_batch) {
+    const content = await readFile(path, "utf8");
+    const row = contract.inventory.find((item) => item.path === path);
+    assertTechnicalTokens(content, row.preserved_technical_tokens);
+    assert.match(content, /4 Ekim 2026/);
+    assert.match(content, /docs\/EXECUTION_PLAN\.md/);
+    assert.match(content, /contracts\/a6-eo-implementation-master-v1\.json/);
+    assert.match(content, /[Tt]arihsel/);
+    assert.doesNotMatch(content, /^##? (?:Exact carry map|Runtime grants|Authenticated BFF|Internal runtime|.*route haritası)/m);
+  }
+  const carryContract = await readJson("contracts/a6-eo-f4-schema-data-carry-map-v1.json");
+  assert.equal(carryContract.exact_carry.reduce((sum, row) => sum + row.rows, 0), 10);
+  const carry = await readFile(contract.twelfth_batch[0], "utf8");
+  assert.match(carry, /“14” ifadesi.*10 satırlık açık listeyle uyuşmaz/);
+  assert.match(carry, /birebir iş satırı taşıması: \*\*10 satır\*\*/);
+  assert.match(carry, /Beş Dataset V2 satırı.*kopyalanmaz/);
+  assert.match(carry, /Bu protokol burada yürütülmez; canlı işlem için ayrı yetki gerekir/);
+  assert.match(carry, /ilk taslak eşlemesidir/);
+  const routes = await readFile(contract.twelfth_batch[1], "utf8");
+  assert.match(routes, /bugünkü uygulanmış endpoint envanteri değildir/);
+  assert.match(routes, /gösterilen App Nav bağlantısı: 2/);
+  assert.match(routes, /Sayfa veya grafik paneli açılması.*yenileme üretmez/);
+  assert.match(routes, /kabul edilmiş Shopify gömülü kimlik doğrulama sözleşmesini.*kaldırmaz/);
+  const effort = await readFile(contract.twelfth_batch[2], "utf8");
+  for (const value of ["59–92", "42–63", "17–29", "%29–32", "49–74", "45/100", "88/100", "8.4–12.6", "11.8–18.4"]) assert.ok(effort.includes(value));
+  assert.match(effort, /bugünkü kalan süre tahmini değildir/);
+  assert.match(effort, /15 Ekim.*Klaviyo/);
+  const go = await readFile(contract.twelfth_batch[3], "utf8");
+  assert.match(go, /yeni GO talebi veya bugünkü sınırsız uygulama yetkisi değildir/);
+  assert.match(go, /EO-01 ürün verisi çekmez, canlı token taşımaz/);
+  assert.match(go, /A6-ASSURE-01 kapıları ayrıca geçerlidir/);
+  const prepared = contract.deliveries[11];
+  assert.deepEqual(prepared.files, contract.twelfth_batch);
   assert.equal(prepared.product_owner_readability_accepted, false);
   assert.equal(prepared.merge_authorized, false);
 });

@@ -80,6 +80,19 @@ kurmadan Türkçe anlayabilmeli. Bu paket yeni ürün kararı veya kod düzeltme
 - Her teslimde dil ve teknik kimlik kontrolleri, mevcut repository testleri ve
   zorunlu GitHub CI geçer. Merge ayrı açık onay ister. EO-05 açılmaz.
 
+### Dil geçişinin ilerleme kaydı — 19 Ekim 2026
+
+İlk dört belge ürün sahibi tarafından okunabilir bulundu ve PR #120 kullanıcı
+tarafından merge edildi. Bu kabul yalnız o dört belgeye aittir; bütün paketin
+kabulü değildir. İkinci teslim EO-01'in üç alt belgesi ile EO-02'nin veri temeli,
+kurulum yetkisi ve kurulu mağaza düzeltmesinin üç belgesidir. Altı belge kabul,
+diğer 52 belge dil incelemesi bekler.
+
+Tarihsel ekran metinleri birebir teknik arayüz sözleşmesidir; İngilizce özgün
+değerleri korunur, açıklama dili Türkçedir. Bu çalışma arayüz çevirisi yapmaz.
+Supabase rehberi doğrultusunda nesne erişimi ile RLS'nin satır erişimi ayrımı
+korundu; yeni veritabanı sorgusu, şema değişikliği veya canlı test yapılmadı.
+
 ## 4. A6-ASSURE-01 — Pre-Review Assurance Programı
 
 EO-08 sonrasında çalışır. İlk kez kod sağlamlığı arayan denetim değildir;

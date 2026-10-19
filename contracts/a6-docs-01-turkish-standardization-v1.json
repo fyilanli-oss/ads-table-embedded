@@ -2,7 +2,7 @@
   "contract_id": "a6-docs-01-turkish-standardization-v1",
   "checked_at": "2026-10-19",
   "package_id": "A6-DOCS-01",
-  "status": "in_progress_first_translation_batch_prepared",
+  "status": "in_progress_foundation_briefs_prepared",
   "baseline_commit": "f62a5c6f7a254fe61be3c8af94f7fa9d2d6b65a1",
   "brief": "docs/A6_QUALITY_AND_ASSURANCE_GATES.md",
   "user_start_authorized": true,
@@ -19,8 +19,9 @@
     "total_markdown": 63,
     "human_markdown": 62,
     "excluded_agent_instructions": 1,
-    "translated_review_pending": 4,
-    "pending_language_review": 58
+    "translated_review_pending": 6,
+    "pending_language_review": 52,
+    "translated_product_owner_accepted": 4
   },
   "first_batch": [
     "README.md",
@@ -35,7 +36,7 @@
     "Tarihsel kabul tarihleri ve kapsamları korunur; güncel durum Execution Plan üzerinden okunur.",
     "Anlamsal çelişki otomatik düzeltilmez; ürün sahibine bildirilir."
   ],
-  "verification_limits": "Dil kontrolü ve teknik kimlik testi semantik eşdeğerliği tek başına kanıtlamaz; kaynakla karşılaştırmalı okuma ve ürün sahibi okunabilirlik kabulü ayrıca gerekir.",
+  "verification_limits": "Dil kontrolü ve teknik kimlik testi semantik eşdeğerliği tek başına kanıtlamaz; kaynakla karşılaştırmalı okuma ve ürün sahibi okunabilirlik kabulü ayrıca gerekir. Kabul edilen İngilizce ekran metinleri teknik arayüz sözleşmesidir; bu pakette ürün metni çevirisi yapılmaz.",
   "package_complete": false,
   "product_owner_readability_accepted": false,
   "merge_authorized": false,
@@ -51,7 +52,7 @@
       "path": "README.md",
       "baseline_blob": "edf24afd95ea1cb9a29c8ebee060b208eb9c062c",
       "classification": "human_markdown",
-      "status": "translated_product_owner_review_pending",
+      "status": "translated_product_owner_accepted",
       "preserved_technical_tokens": [
         "/",
         "/ad-analysis",
@@ -178,25 +179,84 @@
       "path": "docs/EO_01A_REPOSITORY_BOUNDARY.md",
       "baseline_blob": "9c7d991c12524ccb9f38a826d61762ed938086af",
       "classification": "human_markdown",
-      "status": "pending_language_review"
+      "status": "translated_product_owner_review_pending",
+      "preserved_technical_tokens": [
+        "app",
+        "codex/eo01a-repository-boundary",
+        "fyilanli-oss/ads-table-embedded",
+        "main",
+        "public",
+        "src"
+      ]
     },
     {
       "path": "docs/EO_01B_OFFICIAL_STACK_MANIFEST_CI.md",
       "baseline_blob": "cba0e9e53cb3e43c76f3ac8859f049daec89d6a9",
       "classification": "human_markdown",
-      "status": "pending_language_review"
+      "status": "translated_product_owner_review_pending",
+      "preserved_technical_tokens": [
+        "04cae87ee4c267fc4d7e6e3278b42838ac28a13a",
+        "18.3.1",
+        "7.18.2",
+        ">=22.12",
+        "@shopify/app-bridge-react@4.2.4",
+        "@shopify/polaris-types@1.1.0",
+        "@shopify/shopify-app-react-router@3.0.1",
+        "@shopify/shopify-app-session-storage-prisma",
+        "@supabase/supabase-js",
+        "^7.6.2",
+        "express",
+        "googleapis",
+        "https://shopify.dev/docs/api/app-home/v2.0-rc/web-components/versioning",
+        "https://shopify.dev/docs/api/libraries-and-templates",
+        "https://shopify.dev/docs/api/shopify-app-react-router/latest",
+        "https://shopify.dev/docs/apps/build/app-home",
+        "https://shopify.dev/docs/apps/build/app-home/polaris2",
+        "https://shopify.dev/docs/apps/build/scaffold-app",
+        "package.json",
+        "pnpm@11.25.0",
+        "polaris-1.js",
+        "public/",
+        "server.js"
+      ]
     },
     {
       "path": "docs/EO_01C_THREE_ROUTE_PREVIEW_SHELL.md",
       "baseline_blob": "428c62978ff665f71fed5448dc53972b8f6b44b4",
       "classification": "human_markdown",
-      "status": "pending_language_review"
+      "status": "translated_product_owner_review_pending",
+      "preserved_technical_tokens": [
+        "/",
+        "/ad-analysis",
+        "/settings",
+        "2.0.0-rc.2",
+        "622fcc8ebdef8df852ec4c345143335126144f9f",
+        "@shopify/polaris-types@2.0.0-rc.2",
+        "@vercel/react-router@1.3.7",
+        "direction=inline",
+        "dpl_BiCqUCRDcYD3kUifEw7wztgufTsm",
+        "gap=base",
+        "heading",
+        "href",
+        "https://shopify.dev/docs/api/app-home/latest",
+        "https://shopify.dev/docs/api/app-home/latest/web-components",
+        "https://vercel.com/docs/cli/deploy",
+        "https://vercel.com/docs/deployments",
+        "https://vercel.com/docs/frameworks/frontend/react-router",
+        "polaris-1.js",
+        "polaris-2.0-rc.js",
+        "s-link",
+        "s-page",
+        "s-paragraph",
+        "s-section",
+        "s-stack"
+      ]
     },
     {
       "path": "docs/EO_01_ANALYSIS_DESIGN_BOOK.md",
       "baseline_blob": "ab1f6c25f8907b311956567fac33383b62c9b5bc",
       "classification": "human_markdown",
-      "status": "translated_product_owner_review_pending",
+      "status": "translated_product_owner_accepted",
       "preserved_technical_tokens": [
         "A6-EO-01",
         "A6-EO-02",
@@ -209,19 +269,92 @@
       "path": "docs/EO_02A_SUPABASE_FOUNDATION.md",
       "baseline_blob": "cf95c827e809092a011bf5a9357f05505f7a62de",
       "classification": "human_markdown",
-      "status": "pending_language_review"
+      "status": "translated_product_owner_review_pending",
+      "preserved_technical_tokens": [
+        "20261006133830 — eo02a_private_schema_roles",
+        "20261006134013 — eo02a_runtime_schema_usage",
+        "2ac00f969eb35ac632ead57017753ed495e7b66f",
+        "37473375975",
+        "37473569772",
+        "CREATE",
+        "USAGE",
+        "ads-table-embedded",
+        "adstable-dev",
+        "adstable_migrator",
+        "adstable_owner",
+        "adstable_runtime",
+        "analytics",
+        "anon",
+        "app",
+        "authenticated",
+        "billing",
+        "eu-central-1",
+        "fyilanli-oss's Org",
+        "https://supabase.com/changelog/45329-breaking-change-tables-not-exposed-to-data-and-graphql-api-automatically",
+        "https://supabase.com/docs/guides/api/securing-your-api",
+        "https://supabase.com/docs/guides/database/connecting-to-postgres",
+        "https://supabase.com/docs/guides/database/postgres/roles",
+        "https://supabase.com/docs/guides/database/postgres/row-level-security",
+        "integrations",
+        "operations",
+        "podpwkrpmjiksskxhwsu",
+        "privacy",
+        "service_role",
+        "shopify"
+      ]
     },
     {
       "path": "docs/EO_02BC_INSTALLED_SHOP_AUTHORITY_CORRECTION.md",
       "baseline_blob": "e9b2de7974c1e8184fdb6d43acdbac11ed7f0510",
       "classification": "human_markdown",
-      "status": "pending_language_review"
+      "status": "translated_product_owner_review_pending",
+      "preserved_technical_tokens": [
+        "20261009070314 / eo02bc_installed_shop_authority",
+        "EXECUTE",
+        "SECURITY DEFINER",
+        "Shop GID + canonical myshopifyDomain + install generation",
+        "adstable_owner",
+        "adstable_runtime",
+        "apply_shopify_app_pricing_snapshot",
+        "docs/evidence/EO_02BC_INSTALLED_SHOP_AUTHORITY_LIVE_2026-10-09.json",
+        "https://help.shopify.com/en/manual/apps/installing-apps",
+        "https://help.shopify.com/en/manual/organization-settings/expansion-stores",
+        "https://shopify.dev/docs/api/admin-graphql/latest/queries/shop",
+        "https://shopify.dev/docs/apps/build/authentication-authorization",
+        "https://shopify.dev/docs/apps/build/authentication-authorization/id-tokens",
+        "https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing",
+        "https://supabase.com/docs/guides/database/postgres/data-deletion",
+        "resolve_workspace_entitlement",
+        "search_path"
+      ]
     },
     {
       "path": "docs/EO_02B_WORKSPACE_INSTALLATION_AUTHORITY.md",
       "baseline_blob": "7bab56665216e262176ca5b5b0eecb308e9412da",
       "classification": "human_markdown",
-      "status": "pending_language_review"
+      "status": "translated_product_owner_review_pending",
+      "preserved_technical_tokens": [
+        "Shop GID + canonical myshopifyDomain + install generation",
+        "adstable_runtime",
+        "anon",
+        "app.workspaces",
+        "authenticated",
+        "contracts/eo-02bc-installed-shop-authority-correction-v1.json",
+        "edc9e21588f5a32bea139b754ea0108c9809cf27",
+        "https://shopify.dev/docs/api/admin-graphql/2026-10/queries/shop",
+        "https://shopify.dev/docs/api/usage/versioning",
+        "https://shopify.dev/docs/apps/build/authentication-authorization/access-tokens",
+        "https://shopify.dev/docs/apps/build/authentication-authorization/id-tokens",
+        "https://shopify.dev/docs/apps/build/authentication-authorization/implement-token-exchange?lang=node",
+        "https://supabase.com/docs/guides/database/postgres/row-level-security",
+        "id",
+        "myshopifyDomain",
+        "service_role",
+        "shop",
+        "shopify.installation_domain_history",
+        "shopify.installations",
+        "workspace_id"
+      ]
     },
     {
       "path": "docs/EO_02C_SHOPIFY_APP_PRICING_ENTITLEMENT.md",
@@ -251,7 +384,7 @@
       "path": "docs/EO_02_ANALYSIS_DESIGN_BOOK.md",
       "baseline_blob": "3028af9456678c3d9d4551f5edcd79a4dc62f90f",
       "classification": "human_markdown",
-      "status": "translated_product_owner_review_pending",
+      "status": "translated_product_owner_accepted",
       "preserved_technical_tokens": [
         "A6-EO-02",
         "A6-EO-03",
@@ -296,7 +429,7 @@
       "path": "docs/EO_03_ANALYSIS_DESIGN_BOOK.md",
       "baseline_blob": "1f4c3a3289ecd3e7e5283fe23e1d355cb5063a0c",
       "classification": "human_markdown",
-      "status": "translated_product_owner_review_pending",
+      "status": "translated_product_owner_accepted",
       "preserved_technical_tokens": [
         "A6-EO-03",
         "A6-EO-04",
@@ -456,6 +589,48 @@
       "baseline_blob": "cf566b3e41c958bb1684c1f25575c325f585f033",
       "classification": "human_markdown",
       "status": "pending_language_review"
+    }
+  ],
+  "second_batch": [
+    "docs/EO_01A_REPOSITORY_BOUNDARY.md",
+    "docs/EO_01B_OFFICIAL_STACK_MANIFEST_CI.md",
+    "docs/EO_01C_THREE_ROUTE_PREVIEW_SHELL.md",
+    "docs/EO_02A_SUPABASE_FOUNDATION.md",
+    "docs/EO_02B_WORKSPACE_INSTALLATION_AUTHORITY.md",
+    "docs/EO_02BC_INSTALLED_SHOP_AUTHORITY_CORRECTION.md"
+  ],
+  "deliveries": [
+    {
+      "id": "first_translation_delivery",
+      "files": [
+        "README.md",
+        "docs/EO_01_ANALYSIS_DESIGN_BOOK.md",
+        "docs/EO_02_ANALYSIS_DESIGN_BOOK.md",
+        "docs/EO_03_ANALYSIS_DESIGN_BOOK.md"
+      ],
+      "status": "merged_product_owner_accepted",
+      "product_owner_readability_accepted": true,
+      "merge_authorized": true,
+      "accepted_at": "2026-10-19",
+      "pull_request": 120,
+      "source_commit": "be1f02a0a3c71ab7ec0b34d07e79d02f38278ff8",
+      "merge_commit": "57d18a1a125de30ca8d86a65034f60fce403dc74",
+      "tree": "7bdc1e9a28f5be5cbb6f02071555bb9378dd26a0"
+    },
+    {
+      "id": "foundation_brief_translation_delivery",
+      "files": [
+        "docs/EO_01A_REPOSITORY_BOUNDARY.md",
+        "docs/EO_01B_OFFICIAL_STACK_MANIFEST_CI.md",
+        "docs/EO_01C_THREE_ROUTE_PREVIEW_SHELL.md",
+        "docs/EO_02A_SUPABASE_FOUNDATION.md",
+        "docs/EO_02B_WORKSPACE_INSTALLATION_AUTHORITY.md",
+        "docs/EO_02BC_INSTALLED_SHOP_AUTHORITY_CORRECTION.md"
+      ],
+      "status": "prepared_product_owner_review_pending",
+      "base_commit": "57d18a1a125de30ca8d86a65034f60fce403dc74",
+      "product_owner_readability_accepted": false,
+      "merge_authorized": false
     }
   ]
 }

@@ -255,6 +255,14 @@ korunan `AGENTS.md`. Çalışma sözleşmesi:
 semantik, tarihler, kimlikler ve makine bölüm eşlemeleri korunur. Diğer belgeler
 bekleyen durumdadır; paket henüz tamamlanmadı ve EO-05 başlamaz.
 
+19 Ekim 2026'da ilk dört belgenin okunabilirlik ve merge kabulü verildi;
+ürün sahibi PR #120'yi merge etti. Merge commit'i
+`57d18a1a125de30ca8d86a65034f60fce403dc74`, test edilen kaynakla aynı
+`7bdc1e9a28f5be5cbb6f02071555bb9378dd26a0` ağacını taşır.
+İkinci dil geçişi EO-01-A/B/C ile EO-02-A/B ve kurulu mağaza yetkisi düzeltmesinin
+altı belgesidir. Bunlar okunabilirlik kabulü bekler; diğer 52 belge dil incelemesi
+bekler. Uygulama kodu, tarihsel kanıtlar ve canlı ortam değişmez; paket kapanmaz.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

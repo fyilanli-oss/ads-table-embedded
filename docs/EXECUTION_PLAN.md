@@ -62,6 +62,65 @@ kaydı okunur. Makine sözleşmeleri ve değişmez kanıtlar çevrilmez.
 Teknik terimler: Runtime çalışan uygulama, migration sıralı veritabanı değişikliği,
 CI otomatik teslim kontrolü, build derleme, typecheck tip kontrolü, BFF arayüzün
 sunucu katmanıdır. API alanları, ekran metinleri ve durum kimlikleri aynen korunur.
+## EO-05 başlangıç brief'i — 19 Ekim 2026
+
+**Durum:** Brief hazır; ürün sahibi kabulü ve dar uygulama kapsamı onayı bekliyor.
+Çalışma sözleşmesi: `contracts/eo-05-start-brief-v1.json`.
+EO-01–04, TECH-01 ve DOCS-01 kabulleri ile PR #138 iki aşamalı planı korunur.
+Bu brief çalışma zamanı kodu, migration, canlı sorgu, dağıtım veya kapasite koşusu
+başlatmaz. EO-05 henüz uygulamaya açılmadı.
+
+**Amaç:** Sağlayıcı verisini doğru mağaza/hesap ve tarihe bağlı, tekrar çalışınca
+çoğalmayan, eksikleri görünür, güncellenebilir Dataset V2 kaydına dönüştürmek.
+
+**İlk dar iş:** Zamanlayıcıya geçmeden tarihsel PMax kanıtının kayıt/okuma tasarımı
+ve iş yükü bütçesi hazırlanır. Mevcut indeks/sorgu planı başlangıç ölçümü ayrıca
+doğrulanır; henüz tamamlanmış veya üretim kapasitesi sertifikası değildir.
+Ağaç sürümü/hash'i, gözlem zamanı, kanıtlanmış geçerlilik aralığı, hesap saat
+dilimi, eksiksiz sayfalama, boşluk/çatışma ve saklama/silme sınırları belirlenir.
+Üyelikte kullanılan ürün boyutlarının tarihsel doğruluğu da gerekir; bugünkü
+ürün/feed özellikleri geçmişe uygulanmaz.
+
+**Kritik açık tasarım sorusu:** Kesintisiz geçerliliği hangi doğrulanmış kaynak
+kanıtlayacak? İki aynı snapshot arada değişim olmadığını kanıtlamaz; gözlem
+zamanı geçerlilik aralığı değildir. Bu kaynak doğrulanana kadar kayıt alınabilir
+ama geçmiş için exact sonucu üretilemez. Eksik/değişen/örtüşen tam iş günü
+kanıtında satış ve Sales Role korunur, Channel `Unclassified Channel` kalır.
+Satılan ürün Channel seçemez; bugünkü ağaç eksik geçmişi dolduramaz. İlk kapı
+yalnız tablo/snapshot oluşturmakla kapanmaz: saklama, boşluk tespiti, uzlaştırma
+ve tarih eşli resolver teslimi birlikte doğrulanmalıdır.
+
+**Mevcut alt paket sırası:**
+
+1. EO-05-A: Saat içine yayılmış zamanlayıcı; shard, lease, checkpoint, tek iş ve
+   sınırlı eşzamanlılık. Yetki/abonelik geçersizken iş çalışmaz; hesap veya kurulum
+   nesli değişince eski iş yeni veriye yazamaz.
+2. EO-05-B: Dataset V2, kaynak para birimi, doğrulanmış FX kaynak izi ve sürümlü
+   sentetik test verisi. FX kaynağı/oranı varsayılmaz; test verisi gerçek kanıt değildir.
+3. EO-05-C: Sağlayıcının doğrulanmış attribution ayarından olgunluk/kesinleşme.
+   Başarısız, kısmi veya kota sınırlı koşu kesinleşmeyi ilerletemez.
+4. EO-05-D: Önce dün, sonra bugün ilk yükleme; tekrar güvenliği ve uzlaştırma.
+   Yetki yenilemede erişilemeyen iş günleri kayda alınır, sınırlı geçmiş tamamlama
+   yapılır ve kalan eksik günler görünür olur. Sağlayıcı geçmişi yetmezse eksik
+   veri açık kalır, sıfıra çevrilmez. Saatlik tam geçmiş taraması yapılmaz;
+   derin uzlaştırma 24 saatte bir, etkin attribution ufkuna göre planlanır.
+5. EO-05-E: Gecikme, tazelik, kaynak tüketimi ve iş başına maliyetin secretsız
+   görünürlüğü. 2,000 çalışma alanı, 4,000 stres ve 24 saatlik dayanıklılık
+   kabulleri ilgili kapılarında ölçülür; bugün koşu başlatılmaz.
+
+Maliyet dağıtım formülünün sahibi EO-06-A'dır; EO-05 kaynak/dağıtılmış maliyet
+ayrımını ve gerekli girdiyi korur. Gerçek Zey&Rose doğrulaması EO-08 mühendislik
+sonundadır; bu zamana kadar kanıta bağlı özellikler doğrulanmış ilan edilmez.
+Her dar teslim test/typecheck/build/CI, açık kabul, uzak içerik eşliği ve yerel
+envanter kapısından geçer. İlk açık sağlayıcı hatasında durulur ve kullanıcıya
+dönülür; bu brief otomatik yeniden deneme veya alternatif rota izni değildir.
+
+Resmî kaynak kontrolü 19 Ekim 2026: Google Listing Groups for Retail (ağaç yapısı),
+Supabase Row Level Security (erişim sınırı), GitHub Pull Requests (teslim).
+Bağlantılar çalışma sözleşmesindedir. Bu okumalar tarihsel süreklilik servisi,
+şema güvenliği veya canlı kapasite kanıtı üretmez; uygulama öncesi ilgili resmî
+API/kalıcılık kaynakları dar kapsamda yeniden doğrulanır.
+
 ## Otorite
 
 Bu repository onaylı A6-EO yalnız gömülü temiz yeniden kuruluş programını uygular.

@@ -396,6 +396,16 @@ değerleri hedef olarak korunur; F03 envanter eşliği kurtarma hazırlığı sa
 kapıları değişmez. Secret değeri okunmaz; yedek, kasa, rotasyon, temizlik,
 kurulum veya canlı işlem başlatılmaz. Ana tablo gövdesi değişmez; EO-05 kapalıdır.
 
+On dördüncü dil teslimi PR #134 açık ürün sahibi onayıyla
+`93756a705ac84c5bb0a16e0fb08b18fb45b4158e` commit'inde birleştirildi;
+test edilen ağaç korundu. On beşinci teslim TECH-01 denetimi ve F01-A/B/C
+geçmişinin dört belgesidir. Güncel toplam: 53 kabul edilmiş, 4 okunabilirlik
+kabulü bekleyen, 5 dil incelemesi bekleyen belge. Önceki sayımlar tarihseldir.
+İlk bulgular ve başarısız provalar son kapanıştan ayrılır. F01'in dar kurtarma
+kabulü tam veri yedeği/PITR sayılmaz; F10 açık ertelemedir. SQL, migration,
+araç, workflow ve değişmez kanıtlar değiştirilmez; yeni denetim/prova/yedek veya
+canlı işlem başlatılmaz. Ana tablo gövdesi korunur; DOCS bitmez, EO-05 açılmaz.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

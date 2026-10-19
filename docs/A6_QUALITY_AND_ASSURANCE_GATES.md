@@ -208,6 +208,14 @@ eşliği secret kurtarma kanıtı değildir. İlk hata sonrası durma ve ayrı i
 onayları korunur; secret değeri, canlı ortam, yedekleme, temizlik ve kurulum
 işlemi yoktur. Bu yalnız dil teslimidir; DOCS kapanışı veya EO-05 yetkisi vermez.
 
+PR #134 güvenlik/kapasite/operasyon dil teslimi açık ürün sahibi kabulüyle
+birleştirildi. On beşinci teslim TECH-01 denetimi ile F01-A/B/C belgeleridir.
+53 belge kabul edilmiş, 4 belge okunabilirlik kabulü, 5 belge dil incelemesi
+bekler; önceki sayımlar tarihseldir. İlk denetimin FAIL sonuçları ve başarısız
+koşuları tarihsel kalır; kabul edilmiş genel PASS ve F01 kapanışı değiştirilmez.
+Dar şema kurtarması tam yedek/PITR değildir; F10 açık borçtur. Yeni denetim,
+veritabanı provası, yedek, canlı işlem veya EO-05 başlangıcı yoktur.
+
 ## 4. A6-ASSURE-01 — Pre-Review Assurance Programı
 
 EO-08 sonrasında çalışır. İlk kez kod sağlamlığı arayan denetim değildir;

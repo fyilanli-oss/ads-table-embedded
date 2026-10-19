@@ -105,7 +105,7 @@ test("Execution Plan and master contract preserve EO-04-A after EO-04 closure", 
   assert.equal(master.current_active_child, null);
   assert.equal(
     master.current_gate,
-    "A6-DOCS-01",
+    "A6-EO-05_START_BRIEF_PENDING",
   );
   assert.equal(eo04.status, "Accepted");
   assert.equal(eo04a.status, "Accepted");

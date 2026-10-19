@@ -373,7 +373,7 @@ test("master plan keeps EO-03 closed after EO-04-A acceptance", () => {
 
   assert.equal(
     implementationMaster.status,
-    "EO-04_accepted_A6-TECH-01_findings_recorded_remediation_required",
+    "EO-04_TECH_DOCS_accepted_staged_rollout_planned_EO05_start_pending",
   );
   assert.equal(eo03.status, "Accepted");
   assert.equal(eo03a.status, "Accepted");

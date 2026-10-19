@@ -1,289 +1,298 @@
-# A6-EO-07 — Three-surface UI product freeze
+# A6-EO-07 — Üç yüzeyli UI ürün kararları
 
-**Status:** Product decision frozen; implementation and acceptance pending  
-**Decision date:** 7 October 2026  
-**Scope:** Funnel App Home, Ad Analysis and Settings  
-**Authority:** Execution Plan, Shopify Embedded UI Constitution and explicit product-owner decisions
+**Durum:** Ürün kararı donduruldu; uygulama ve kabul bekliyor
 
-## 1. Purpose and non-effect
+**Karar tarihi:** 7 Ekim 2026
 
-This package freezes the user-visible behavior that later A6-EO-07 implementation must follow. It does not implement UI, change a live route, mutate provider data, deploy, or accept any screen.
+**Kapsam:** Funnel App Home, Ad Analysis ve Settings
 
-Only three product surfaces exist:
+**Yetki kaynağı:** Execution Plan, Shopify Embedded UI Anayasası ve açık ürün sahibi kararları
+
+**Okuma notu:** Bu belge EO-07 için kabul edilmiş ürün niyetidir; ekranların uygulanmış veya görsel olarak kabul edilmiş olduğunu göstermez. Güncel paket durumu `docs/EXECUTION_PLAN.md` ve `contracts/a6-eo-implementation-master-v1.json` içindedir. 7 Ekim kaynak kontrolü tarihsel kayıttır. Sonraki sağlayıcı raporlama kuralları `docs/EO_04_ANALYSIS_DESIGN_BOOK.md` üzerinden okunur; bu dil çalışması Channel, Medium veya Variation kimliğini değiştirmez.
+
+## 1. Amaç ve yetki sınırı
+
+Bu belge, sonraki A6-EO-07 uygulamasının izleyeceği kullanıcı davranışını dondurur. UI uygulamaz, canlı rota değiştirmez, sağlayıcı verisine müdahale etmez, dağıtım yapmaz veya ekran kabulü vermez.
+
+Yalnız üç ürün yüzeyi vardır:
 
 1. `/` — Funnel App Home
 2. `/ad-analysis` — Ad Analysis
 3. `/settings` — Settings
 
-Dashboard is contextual visualization inside Funnel or Ad Analysis. Platforms is a Settings section. Attribution Differences is a future nested Ad Analysis view after A6-EO-07-C and A6-EO-07-D pass.
+Dashboard, Funnel veya Ad Analysis içindeki bağlamsal görselleştirmedir. Platforms, Settings bölümüdür. Attribution Differences, A6-EO-07-C ve A6-EO-07-D geçtikten sonra Ad Analysis içinde açılacak görünümdür.
 
-## 2. Official Shopify boundary
+## 2. Resmî Shopify sınırı
 
-Official Shopify sources checked on 7 October 2026:
+7 Ekim 2026 tarihinde kontrol edilen kaynaklar:
 
 - App Home: https://shopify.dev/docs/api/app-home/latest
-- Web components: https://shopify.dev/docs/api/app-home/latest/web-components
-- Table: https://shopify.dev/docs/api/app-home/latest/web-components/layout-and-structure/table
+- Web bileşenleri: https://shopify.dev/docs/api/app-home/latest/web-components
+- Tablo: https://shopify.dev/docs/api/app-home/latest/web-components/layout-and-structure/table
 - Modal: https://shopify.dev/docs/api/app-home/latest/web-components/overlays/modal
 - Modal API: https://shopify.dev/docs/api/app-home/latest/apis/user-interface-and-interactions/modal-api
-- Date picker: https://shopify.dev/docs/api/app-home/latest/web-components/forms/date-picker
-- Select: https://shopify.dev/docs/api/app-home/latest/web-components/forms/select
-- Button: https://shopify.dev/docs/api/app-home/latest/web-components/actions/button
-- Settings pattern: https://shopify.dev/docs/api/app-home/latest/patterns/templates/settings
+- Tarih seçici: https://shopify.dev/docs/api/app-home/latest/web-components/forms/date-picker
+- Seçim alanı: https://shopify.dev/docs/api/app-home/latest/web-components/forms/select
+- Buton: https://shopify.dev/docs/api/app-home/latest/web-components/actions/button
+- Settings örüntüsü: https://shopify.dev/docs/api/app-home/latest/patterns/templates/settings
 - Shopify App Pricing: https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing
-- Privacy compliance: https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance
+- Gizlilik uyumu: https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance
 
-Implementation rechecks the exact approved Polaris runtime and every component/property on its start date. The repository's approved development runtime remains `polaris-2.0-rc.js` until a separate stable-transition decision passes.
+Uygulama başladığı gün onaylı Polaris sürümü ve her bileşen/özellik yeniden doğrulanır. Ayrı kararlı sürüm geçiş kararı geçene kadar repository'nin onaylı geliştirme sürümü `polaris-2.0-rc.js` olarak kalır.
 
-Only official Shopify App Bridge and Polaris web components may render controls, tables, sections, statuses, forms and modals. Reference mockups define product intent, not permission to reproduce custom styling.
+Kontrol, tablo, bölüm, durum, form ve modallar yalnız resmî Shopify App Bridge ve Polaris web bileşenleriyle kurulur. Referans taslakları ürün niyetini gösterir; özel görünümü kopyalama izni değildir.
 
-## 3. Shared three-surface rules
+## 3. Üç yüzeyin ortak kuralları
 
-- Active providers are Meta, Google Ads and Klaviyo only.
-- UI consumes same-origin BFF DTOs only. Browser code never becomes provider, database, workspace, billing or deletion authority.
-- `zero`, `unknown`, `unsupported`, `partial`, `stale` and `provisional` are distinct states.
-- Provider-specific hierarchy and leaf identity remain truthful. A common visual table never fabricates common provider capability.
-- Monetary aggregation requires compatible reporting currency and FX lineage.
-- Ratios are recomputed aggregate-first; row percentages are never averaged.
-- Positive/negative color is used only when the metric contract defines desirable direction. A numeric increase is not automatically good.
-- Hourly refresh is system-owned. There is no manual or page-open refresh control.
-- Desktop and real Shopify Admin mobile at 320 px carry the same information architecture.
-- Loading, empty, error, partial, unsupported, stale, provisional and success states require explicit copy and acceptance evidence.
+- Aktif sağlayıcılar yalnız Meta, Google Ads ve Klaviyo'dur.
+- UI yalnız aynı kökendeki BFF yanıtlarını (DTO) tüketir. Tarayıcı sağlayıcı, veritabanı, çalışma alanı, faturalandırma veya silme yetki kaynağı olmaz.
+- `zero`, `unknown`, `unsupported`, `partial`, `stale` ve `provisional` ayrı durumlardır.
+- Sağlayıcının kendi hiyerarşisi ve en alt öğe kimliği doğru korunur. Ortak görsel tablo, ortak sağlayıcı kabiliyeti uydurmaz.
+- Parasal toplama, uyumlu raporlama para birimi ve FX kökeni gerektirir.
+- Oranlar önce toplamlar alınarak yeniden hesaplanır; satır yüzdelerinin ortalaması alınmaz.
+- Olumlu/olumsuz renk yalnız metrik sözleşmesi hangi yönün iyi olduğunu tanımlıyorsa kullanılır. Sayısal artış otomatik olarak iyi değildir.
+- Saatlik yenileme sistemindir. Elle veya sayfa açılmasıyla yenileme kontrolü yoktur.
+- Masaüstü ve gerçek Shopify Admin mobil 320 px aynı bilgi mimarisini taşır.
+- Yükleniyor, boş, hata, kısmi, desteklenmeyen, eski, geçici ve başarılı durumlar açık metin ve kabul kanıtı gerektirir.
 
+### 3.1. Görselleştirme kararının durumu
 
-### 3.1 Visualization decision state
+- Funnel grafikleri `docs/A6_EO_07_FUNNEL_VISUALIZATION_REFERENCE.md` içindeki kabul edilmiş ilişki odaklı referansı kullanır. Performance; Sales, Revenue ve Spend'i, Intent; Add to Cart, Checkout, Abandoned ve Purchase'ı ilişkilendirir. Bu kabul ürün niyetini ve çizim sınırını dondurur; uygulama yetkisi vermez veya A6-EO-07-B'yi ilerletmez.
+- Ad Analysis grafik tasarımı ve uygulaması; A6-EO-07-C her sağlayıcının doğrulanmış en alt analiz öğesini ve iki kesin küpe/cross-sell örneğini Meta, Google Ads ve Klaviyo için ayrı ayrı doğrulayana kadar kapalıdır. Ürün seviyesinde kabiliyeti doğrulanmamış sağlayıcıya tahminî ürün grafiği verilmez.
+- Settings'te pano veya analitik grafik yüzeyi yoktur.
+- Bu bekleme durumları, dondurulmuş grafik dışı tablo, kontrol ve akış kararlarını engellemez; A6-EO-07 durumunu da ilerletmez.
 
-- Funnel dashboard visualizations use the accepted relationship-oriented reference in `docs/A6_EO_07_FUNNEL_VISUALIZATION_REFERENCE.md`: Performance relates Sales, Revenue and Spend; Intent relates Add to Cart, Checkout, Abandoned and Purchase. The reference freezes product intent and renderer boundary, but does not authorize implementation or advance A6-EO-07-B.
-- Ad Analysis visualization design and implementation are blocked until A6-EO-07-C verifies the deepest available analytical leaf and the two exact earring/cross-sell fixtures independently for Meta, Google Ads and Klaviyo. A provider with no verified product-level capability must not receive an inferred product chart.
-- Settings has no dashboard or analytical chart surface.
-- These waiting states do not block the already frozen non-chart table, control and workflow decisions, and do not advance A6-EO-07 status.
+## 4. Funnel App Home analist brief'i
 
-## 4. Funnel App Home analyst brief
+### 4.1. Kullanıcı sonucu
 
-### 4.1 User result
+Mağaza sahibi seçilen raporlama kapsamını Funnel veya metrik tablosu olarak görür; özet/günlük sunum arasında geçer, sağlayıcının doğal hiyerarşisinde filtreler ve geçerli dönemleri sahte eşlik veya sahte sıfır olmadan karşılaştırır.
 
-The merchant sees the selected reporting scope as a funnel or a metric table, can move between summary and daily presentation, can filter through provider-native hierarchy, and can compare valid periods without false parity or false zero. Relationship-oriented Funnel charts remain a separate pending analyst-input layer.
+İlk brief, ilişki grafiklerini ayrıca analist girdisi bekleyen katman olarak ayırmıştı. Bu girdinin kabul edilmiş referansı 3.1 ve 10. bölümlerdedir; referansın kabulü uygulama veya görsel kabul değildir.
 
-### 4.2 Controls
+### 4.2. Kontroller
 
-The header contains:
+Başlık alanındaki ekran etiketleri teknik arayüz kimliği olarak korunur:
 
-- Time range
-- Compare time range
-- Filters
-- Presentation: Summary or Daily
-- View: Funnel or Table
+- Time range — tarih aralığı
+- Compare time range — karşılaştırma aralığı
+- Filters — filtreler
+- Presentation: Summary veya Daily — özet/günlük sunum
+- View: Funnel veya Table — görünüm
 
-`Funnel/Table` and `Summary/Daily` are independent dimensions. Funnel/Table changes metric orientation; Summary/Daily changes time presentation.
+`Funnel/Table` ve `Summary/Daily` bağımsız boyutlardır. İlki metriklerin gösterim biçimini, ikincisi zaman sunumunu değiştirir.
 
-### 4.3 Hierarchy
+### 4.3. Hiyerarşi
 
 - Meta: Campaign → Ad Set → Ad
 - Google Search: Campaign → Ad Group → Ad
-- Google Performance Max: Campaign → Asset Group → only an A6-EO-07-C verified deeper leaf
-- Klaviyo Campaign: Campaign → Campaign Message → only a verified Variation
-- Klaviyo Flow: Flow → Flow Message → only a verified Variation
+- Google Performance Max: Campaign → Asset Group → yalnız A6-EO-07-C ile doğrulanmış daha alt öğe
+- Klaviyo Campaign: Campaign → Campaign Message → yalnız doğrulanmış Variation
+- Klaviyo Flow: Flow → Flow Message → yalnız doğrulanmış Variation
 
-Filters use the same canonical hierarchy. Reporting Account is changed only in Settings; the installed Shopify shop is not selectable.
+Filtreler aynı kanonik hiyerarşiyi kullanır. Reporting Account yalnız Settings'te değişir; kurulu Shopify mağazası seçilemez. Bu liste analitik görünüm hiyerarşisidir; sağlayıcı API'sindeki bütün dolaşım katmanlarını saymaz ve Variation'ın Channel'ın yerini aldığı anlamına gelmez.
 
-### 4.4 Compare
+### 4.4. Karşılaştırma
 
-- Custom comparison is allowed.
-- Current and compare ranges must contain the same number of calendar days, must not overlap, and use the same workspace timezone and reporting currency rules.
-- Funnel compare presents current, comparison and delta without treating unknown as zero.
-- Table compare expands only explicitly selected metrics. One metric is expanded by default; desktop may expand more, mobile only one.
-- Zero-based and unavailable percentage deltas use an explicit non-percentage state rather than invented infinity or 100%.
+- Özel karşılaştırma aralığı seçilebilir.
+- İki aralık eşit takvim günü sayısına sahip olmalı, örtüşmemeli ve aynı çalışma alanı zaman dilimi/raporlama para birimi kurallarını kullanmalıdır.
+- Funnel; mevcut, karşılaştırma ve fark değerlerini bilinmeyeni sıfır saymadan gösterir.
+- Table yalnız açıkça seçilen metrikleri genişletir. Varsayılan bir metriktir; masaüstünde daha fazlası, mobilde yalnız biri açılabilir.
+- Sıfır tabanlı veya hesaplanamayan yüzdesel farklar, uydurma sonsuzluk ya da %100 yerine açık yüzdesiz durumla gösterilir.
 
-### 4.5 Component mapping
+### 4.5. Bileşen eşlemesi
 
-| Visible element | Shopify component/API | Binding |
+| Görünür öğe | Shopify bileşeni/API | Bağlayıcı kullanım |
 |---|---|---|
-| Page | `s-page` | App Home root; no duplicate Funnel nav item |
-| Date and compare launch | `s-button` | Opens focused range modal |
-| Date range | `s-date-picker` | `type="range"`; server-validates range |
-| Compare configuration | `s-modal`, `s-date-picker` | One modal visible at a time |
-| Filters | `s-button`, `s-modal`, official choice/form components | Canonical hierarchy only |
-| View/presentation controls | `s-button-group`, `s-button` | Two independent dimensions |
-| Table | `s-table` | Native responsive table-to-list behavior |
-| Status/freshness | `s-badge`, `s-banner`, `s-text` | State is never color-only |
+| Sayfa | `s-page` | App Home kökü; yinelenen Funnel menüsü yok |
+| Tarih/karşılaştırma açma | `s-button` | Odaklı aralık modalını açar |
+| Tarih aralığı | `s-date-picker` | `type="range"`; aralık sunucuda doğrulanır |
+| Karşılaştırma ayarı | `s-modal`, `s-date-picker` | Aynı anda tek modal |
+| Filtreler | `s-button`, `s-modal`, resmî seçim/form bileşenleri | Yalnız kanonik hiyerarşi |
+| Görünüm/sunum kontrolleri | `s-button-group`, `s-button` | İki bağımsız boyut |
+| Tablo | `s-table` | Doğal duyarlı tablo/liste davranışı |
+| Durum/güncellik | `s-badge`, `s-banner`, `s-text` | Durum yalnız renkle anlatılmaz |
 
-## 5. Ad Analysis analyst brief
+## 5. Ad Analysis analist brief'i
 
-### 5.1 User result
+### 5.1. Kullanıcı sonucu
 
-The merchant ranks the deepest verified analytical items for the selected period and opens focused intent, performance and product evidence without turning the main table into an unreadable matrix.
+Mağaza sahibi dönem için doğrulanmış en alt analiz öğelerini sıralar; ana tabloyu okunamaz matrise çevirmeden odaklı Intent, Performance ve ürün kanıtını açar.
 
-Ad Analysis is one aggregate table for the selected range. It has no Funnel/Table or Summary/Daily switch. Its chart layer remains blocked until A6-EO-07-C verifies provider leaf and product/cross-sell capability.
+Ad Analysis, seçilen aralık için tek toplulaştırılmış tablodur. Funnel/Table veya Summary/Daily anahtarı yoktur. Grafik katmanı A6-EO-07-C sağlayıcı öğesini ve ürün/cross-sell kabiliyetini doğrulayana kadar kapalıdır.
 
-### 5.2 Truthful analytical leaf
+### 5.2. Gerçeği yansıtan analiz öğesi
 
-The UI label is `Analysis item`, not universally `Ad name`.
+UI etiketi `Analysis item` olur; her sağlayıcı için `Ad name` kullanılmaz.
 
-- Meta uses Ad only when verified at ad grain.
-- Google Search uses Ad only when verified at ad grain.
-- Google Performance Max uses Asset Group or a deeper leaf only after A6-EO-07-C proves it.
-- Klaviyo uses Campaign Message, Flow Message or Variation only when that leaf is verified.
+- Meta yalnız Ad kırılımında doğrulanırsa Ad kullanır.
+- Google Search yalnız Ad kırılımında doğrulanırsa Ad kullanır.
+- Google Performance Max, Asset Group veya daha alt öğeyi ancak A6-EO-07-C kanıtlarsa kullanır.
+- Klaviyo, Campaign Message, Flow Message veya Variation'ı ancak o öğe doğrulanırsa kullanır.
 
-Each row carries provider, entity type, canonical ID and parent path. Same names never collapse identity.
+Her satır sağlayıcı, varlık türü, kanonik kimlik ve üst öğe yolunu taşır. Aynı adlar kimlikleri birleştirmez.
 
-### 5.3 Ranking
+### 5.3. Sıralama
 
-Primary ranking choices are:
+Birincil sıralama seçenekleri:
 
 - Purchase
 - Sales
 - Revenue
 - Revenue Margin
 
-The canonical user-facing label is `Sales`; an internal key may remain `sales_value`. The exact distinction and formulas for Sales, Revenue, Revenue Margin Value and Revenue Margin % belong to A6-EO-06. No UI label may contradict that formula contract.
+Kullanıcıya gösterilen kanonik etiket `Sales` olur; iç anahtar `sales_value` kalabilir. Sales, Revenue, Revenue Margin Value ve Revenue Margin % ayrımı/formülleri A6-EO-06'ya aittir. UI etiketi formül sözleşmesine aykırı olamaz.
 
-The merchant can choose descending or ascending order. Verified numeric values rank first; `partial`, `unknown` and `unsupported` are not coerced to zero and are ordered in separate state groups. The total row is not rankable. Ties use a stable canonical identity order.
+Kullanıcı artan/azalan sıralamayı seçebilir. Doğrulanmış sayısal değerler önce sıralanır; `partial`, `unknown` ve `unsupported` sıfıra çevrilmez, ayrı durum gruplarında yer alır. Toplam satırı sıralamaya girmez. Eşitliklerde kararlı kanonik kimlik sırası kullanılır.
 
-### 5.4 Intent and performance detail
+### 5.4. Intent ve Performance ayrıntısı
 
-The main row exposes two accessible official actions: `View intent metrics` and `View performance metrics`. Both open one `Analysis details` modal focused on the selected section. Two modals are never visible simultaneously.
+Ana satırda erişilebilir iki resmî eylem vardır: `View intent metrics` ve `View performance metrics`. İkisi de seçilen bölüme odaklanan tek `Analysis details` modalını açar. İki modal aynı anda görünmez.
 
-Intent candidates include Add to Cart Rate, Checkout Rate, Abandoned Rate and Purchase Rate. Performance candidates include CTR, CPC, ROAS and CPS. Every numerator, denominator, support state and desirable direction comes from A6-EO-06.
+Intent adayları Add to Cart Rate, Checkout Rate, Abandoned Rate ve Purchase Rate'tir. Performance adayları CTR, CPC, ROAS ve CPS'tir. Pay, payda, destek durumu ve olumlu yön A6-EO-06'dan gelir.
 
-In compare mode the main table expands only the selected ranking/compare metrics. The focused details modal may show comparison, current value, absolute delta and valid percentage delta for all supported metrics of the selected row.
+Karşılaştırmada ana tablo yalnız seçilen sıralama/karşılaştırma metriklerini genişletir. Ayrıntı modalı, seçilen satırın desteklenen tüm metriklerinde önceki/mevcut değeri, mutlak farkı ve geçerli yüzdesel farkı gösterebilir.
 
-### 5.5 Creative and product evidence
+### 5.5. Reklam içeriği ve ürün kanıtı
 
-Creative preview and attributed/sold products are separate concepts.
+Reklam içeriği önizlemesi ile attribution alan/satılan ürün farklı kavramlardır.
 
-- A main-row thumbnail is allowed only from verified provider creative/asset media; otherwise an explicit fallback is shown.
-- A product appears only when A6-EO-07-C proves provider-returned product/catalog identity and it maps deterministically to the installed Shopify shop product/variant.
-- Shopify may supply the image after that verified identity mapping; the image does not create attribution.
-- Product name, destination URL, UTM, `fbclid`, `fbc` or an arbitrary Shopify order join cannot infer the relationship.
-- A non-advertised cross-sell product appears only if the provider natively returns it for that analytical leaf.
-- Unsupported product evidence is labelled unsupported, never hidden as zero.
+- Ana satırın küçük görseli yalnız doğrulanmış sağlayıcı reklam içeriği/asset medyasından alınabilir; yoksa açık yedek gösterim kullanılır.
+- Ürün, ancak A6-EO-07-C sağlayıcının döndürdüğü ürün/katalog kimliğini kanıtlar ve kurulu Shopify mağazasının ürün/varyantına kesin eşlerse görünür.
+- Shopify görseli bu kimlik eşlemesinden sonra sağlayabilir; görsel attribution oluşturmaz.
+- Ürün adı, hedef URL, UTM, `fbclid`, `fbc` veya keyfî Shopify sipariş birleştirmesi ilişkiyi kanıtlayamaz.
+- Reklamda olmayan cross-sell ürün ancak sağlayıcı bunu o analiz öğesi için kendi verisinde döndürürse görünür.
+- Desteklenmeyen ürün kanıtı desteklenmiyor diye etiketlenir; sıfır gibi gizlenmez.
 
-Products live in the single details modal as a compact list with image, product/variant identity, quantity, value, source and support state. They do not expand every table row inline.
+Ürünler tek ayrıntı modalında görsel, ürün/varyant kimliği, adet, değer, kaynak ve destek durumu içeren kısa listede gösterilir. Her tablo satırı içinde ayrı ayrı genişlemez.
 
-### 5.6 Component mapping
+### 5.6. Bileşen eşlemesi
 
-| Visible element | Shopify component/API | Binding |
+| Görünür öğe | Shopify bileşeni/API | Bağlayıcı kullanım |
 |---|---|---|
-| Page | `s-page` | `/ad-analysis` |
-| Range/compare/filter launch | `s-button` | Same semantics as Funnel |
-| Ranking metric | `s-select` | Four contract-backed choices |
-| Sort direction | `s-button` | Accessible ascending/descending label |
-| Main results | `s-table` | Responsive list on small screens |
-| Intent/performance action | `s-button` | Icon may supplement but never replace label |
-| Details | one `s-modal` | Focused section; never simultaneous modals |
-| State | `s-badge`, `s-banner`, `s-text` | Support/freshness/provisional copy |
+| Sayfa | `s-page` | `/ad-analysis` |
+| Aralık/karşılaştırma/filtre açma | `s-button` | Funnel ile aynı anlam |
+| Sıralama metriği | `s-select` | Sözleşmeye dayalı dört seçenek |
+| Sıralama yönü | `s-button` | Erişilebilir artan/azalan etiketi |
+| Ana sonuçlar | `s-table` | Küçük ekranda duyarlı liste |
+| Intent/Performance eylemi | `s-button` | İkon etiketi destekleyebilir; yerini alamaz |
+| Ayrıntılar | tek `s-modal` | Odaklı bölüm; eşzamanlı modal yok |
+| Durum | `s-badge`, `s-banner`, `s-text` | Destek/güncellik/geçicilik metni |
 
-## 6. Settings analyst brief
+## 6. Settings analist brief'i
 
-### 6.1 Reference behavior
+### 6.1. Referans davranış
 
-The working legacy `ads-table-dev` Settings user flow is the interaction reference. Its source code, custom styling, old navigation, test/acceptance panels and retired providers are not carry-as-is assets.
+Çalışan eski `ads-table-dev` Settings kullanıcı akışı etkileşim referansıdır. Kaynak kodu, özel görünüm, eski menü, test/kabul panelleri ve emekli sağlayıcılar aynen taşınacak varlıklar değildir.
 
-The following working behavior must not regress:
+Şu davranışlar bozulmamalıdır:
 
-- Connect and provider explanation
-- OAuth return to Settings
+- Connect ve sağlayıcı açıklaması
+- OAuth'tan Settings'e dönüş
 - Resume setup
-- Verified account selection
-- Connected, reconnect and disconnect states
-- Reporting Account selection
-- Klaviyo Email Monthly Plan Cost history and correction behavior
+- doğrulanmış hesap seçimi
+- Connected, yeniden bağlanma ve bağlantıyı kesme durumları
+- Reporting Account seçimi
+- Klaviyo Email Monthly Plan Cost geçmişi ve düzeltme davranışı
 
-No implementation may redesign, rename or remove a proven step without a separate product decision and characterization evidence. Settings has no chart requirement.
+Kanıtlanmış bir adım ayrı ürün kararı ve davranış doğrulama kanıtı olmadan yeniden tasarlanamaz, adlandırılamaz veya kaldırılamaz. Settings'in grafik gereksinimi yoktur.
 
-### 6.2 Section order
+### 6.2. Bölüm sırası
+
+Ekran başlıkları korunur:
 
 1. Reporting Currency
 2. Provider Connections and Reporting Accounts
 3. Subscription
 4. Data & Privacy
 
-The installed Shopify shop may appear only as read-only context; it is not a section, selector or switch.
+Kurulu Shopify mağazası yalnız salt okunur bağlam olarak gösterilebilir; ayrı bölüm, seçici veya değiştirme kontrolü değildir.
 
-### 6.3 Reporting Account activation under installed-shop authority
+### 6.3. Kurulu mağaza yetkisi altında Reporting Account etkinleştirme
 
-A Reporting Account change is staged, not immediately activated.
+Reporting Account değişikliği önce hazırlanır; anında etkinleşmez.
 
-1. Verify account ownership and discover the provider entities available to the account.
-2. Prove deterministic scope to the installed Shopify shop before the account becomes reporting authority.
-3. If scope is absent, ambiguous or belongs to another store, keep the existing reporting authority. The proposed account may remain connected but cannot write Dataset V2 or receive SnapshotJobs.
-4. Historical data is preserved and never relabelled.
+1. Hesap sahipliği doğrulanır, hesaptaki sağlayıcı varlıkları keşfedilir.
+2. Hesap raporlama yetkisi almadan önce kurulu Shopify mağazasına kesin kapsamı kanıtlanır.
+3. Kapsam yoksa, belirsizse veya başka mağazaya aitse mevcut raporlama yetkisi korunur. Önerilen hesap bağlı kalabilir; fakat Dataset V2 yazamaz veya SnapshotJob alamaz.
+4. Geçmiş veri korunur, yeniden etiketlenmez.
 
-The installed Shopify shop comes only from the verified app installation. Provider account, pixel, domain or merchant input cannot change it. A second Shopify shop requires a separate app installation, workspace and subscription.
+Kurulu mağaza yalnız doğrulanmış uygulama kurulumundan gelir. Sağlayıcı hesabı, piksel, alan adı veya kullanıcı girdisi bunu değiştiremez. İkinci Shopify mağazası ayrı uygulama kurulumu, çalışma alanı ve abonelik ister.
 
-### 6.4 Subscription
+### 6.4. Abonelik
 
-Settings displays the Shopify-authoritative plan, `$24.99/month` public-plan price, 14-day trial state/end, current billing period and entitlement status. The subscription belongs to the installed Shopify shop; a second shop requires a separate installation and subscription.
+Settings; Shopify'ın yetkili planını, `$24.99/month` herkese açık plan fiyatını, 14 günlük deneme durumunu/bitişini, mevcut fatura dönemini ve kullanım hakkını gösterir. Abonelik kurulu mağazaya aittir; ikinci mağaza ayrı kurulum ve abonelik ister. Bu, kabul edilmiş ürün planı kaydıdır; yeni fiyat araştırması değildir.
 
-AdsTable does not imitate Shopify checkout or host a custom pricing transaction. `Manage subscription` navigates to Shopify's hosted plan surface. Subscription state is verified through the current Shopify App Pricing authority; redirect parameters alone are not entitlement authority.
+AdsTable Shopify ödeme ekranını taklit etmez veya özel fiyatlandırma işlemi barındırmaz. `Manage subscription`, Shopify'ın barındırdığı plan yüzeyine gider. Abonelik mevcut Shopify App Pricing yetkili kaynağından doğrulanır; yönlendirme parametreleri tek başına kullanım hakkı değildir.
 
-### 6.5 Data & Privacy
+### 6.5. Data & Privacy
 
-`Delete my data` is available while installed and is separate from disconnect and uninstall.
+`Delete my data`, uygulama kuruluyken kullanılabilir; Disconnect ve Uninstall'dan ayrıdır.
 
-- First confirmation explains scope, access shutdown, credential removal, Dataset deletion, legal-retention exceptions and irreversibility after execution begins.
-- A second explicit server-verified confirmation is required.
-- The two confirmations are sequential; two modals are never open together.
-- Once accepted, new provider operations and SnapshotJobs stop before asynchronous manifest execution.
-- Progress and terminal completion are visible to the merchant.
-- Workspace identity comes only from the verified Shopify session.
+- İlk onay kapsamı, erişimin durmasını, kimlik bilgilerinin kaldırılmasını, Dataset silmesini, hukuki saklama istisnalarını ve yürütme başladıktan sonraki geri döndürülemezliği açıklar.
+- Sunucuda doğrulanmış ikinci açık onay gerekir.
+- Onaylar sıralıdır; iki modal birlikte açılmaz.
+- Talep kabul edilince yeni sağlayıcı işlemleri ve SnapshotJob'lar asenkron manifest yürütmesinden önce durur.
+- İlerleme ve nihai tamamlanma kullanıcıya görünür.
+- Çalışma alanı kimliği yalnız doğrulanmış Shopify oturumundan gelir.
 
-Uninstall remains an access-stop event. Shopify compliance webhooks and the approved retention/deletion manifest govern redaction; uninstall is not presented as immediate Delete my data completion.
+Uninstall erişimi durdurur. Verinin karartılmasını Shopify uyum webhook'ları ve onaylı saklama/silme manifesti yönetir; kaldırma, Delete my data anında tamamlandı diye sunulmaz.
 
-### 6.6 Component mapping
+### 6.6. Bileşen eşlemesi
 
-| Visible element | Shopify component/API | Binding |
+| Görünür öğe | Shopify bileşeni/API | Bağlayıcı kullanım |
 |---|---|---|
-| Page/sections | `s-page`, `s-section`, `s-stack`, `s-grid` | Official Settings pattern |
-| Provider/store/subscription state | `s-badge`, `s-banner`, `s-text` | Text plus tone, never color-only |
-| Provider/account/store actions | `s-button`, `s-select` and official choice controls | Server allowlist and ownership revalidation |
-| Klaviyo cost | official number/select/form components | Effective-dated server contract |
-| Subscription management | `s-button` navigation | Shopify-hosted plan surface |
-| Delete my data | `s-button tone="critical"`, sequential `s-modal` | Two explicit confirmations |
+| Sayfa/bölümler | `s-page`, `s-section`, `s-stack`, `s-grid` | Resmî Settings örüntüsü |
+| Sağlayıcı/mağaza/abonelik durumu | `s-badge`, `s-banner`, `s-text` | Metin ve ton birlikte; yalnız renk değil |
+| Sağlayıcı/hesap/mağaza eylemleri | `s-button`, `s-select` ve resmî seçim kontrolleri | Sunucu izin listesi ve sahiplik yeniden doğrulaması; mağaza seçici yok |
+| Klaviyo maliyeti | resmî sayı/seçim/form bileşenleri | Geçerlilik tarihli sunucu sözleşmesi |
+| Abonelik yönetimi | `s-button` gezinme | Shopify'ın barındırdığı plan yüzeyi |
+| Delete my data | `s-button tone="critical"`, sıralı `s-modal` | İki açık onay |
 
-## 7. State matrix
+## 7. Durum matrisi
 
-| State | Funnel | Ad Analysis | Settings |
+Durum adları teknik kimlik olarak korunur; açıklamaları Türkçedir.
+
+| Durum | Funnel | Ad Analysis | Settings |
 |---|---|---|---|
-| Loading | Skeleton/loading status without fake values | Loading table/list | Loading verified workspace state |
-| Empty | No rows for selected scope/range | No verified analytical items | Required setup action |
-| Partial | Exact provider/metric coverage warning | Row/metric support state | Incomplete provider/store topology |
-| Unsupported | Unsupported metric/entity is labelled | Provider leaf/product unsupported | Control omitted or disabled with reason |
-| Stale/provisional | Freshness/finality shown | Freshness/finality shown | Connection/job review message |
-| Error | Safe retry/reference; no raw provider error | Safe retry/reference | Existing authority preserved on failed mutation |
-| Success | Data and scope visible | Ranked verified leaves visible | Saved server-authoritative state visible |
+| Loading | Sahte değer olmadan yükleme iskeleti/durumu | Yüklenen tablo/liste | Doğrulanmış çalışma alanı yükleniyor |
+| Empty | Seçilen kapsam/aralık için satır yok | Doğrulanmış analiz öğesi yok | Gerekli kurulum eylemi |
+| Partial | Kesin sağlayıcı/metrik kapsam uyarısı | Satır/metrik destek durumu | Eksik sağlayıcı/mağaza topolojisi |
+| Unsupported | Desteklenmeyen metrik/varlık etiketlenir | Sağlayıcı öğesi/ürün desteklenmiyor | Kontrol gerekçeyle kaldırılır veya kapatılır |
+| Stale/provisional | Güncellik/kesinleşme gösterilir | Güncellik/kesinleşme gösterilir | Bağlantı/iş inceleme mesajı |
+| Error | Güvenli yeniden deneme/referans; ham sağlayıcı hatası yok | Güvenli yeniden deneme/referans | Başarısız değişiklikte mevcut yetki korunur |
+| Success | Veri ve kapsam görünür | Sıralanmış doğrulanmış öğeler görünür | Kaydedilmiş sunucu-yetkili durum görünür |
 
-## 8. Acceptance and sequencing
+## 8. Kabul ve sıralama
 
-- This freeze does not make A6-EO-07 Ready or Done and does not bypass A6-EO-01 through A6-EO-06.
-- A6-EO-07-A implements Settings using legacy flow characterization, not source-code carry.
-- A6-EO-07-B implements Funnel only after its BFF/query/formula contracts exist; relationship-chart implementation additionally waits for the approved product-owner graph package.
-- A6-EO-07-C must freeze deepest-grain and cross-sell capability before A6-EO-07-D.
-- A6-EO-07-D implements only verified leaf/product capability; its chart layer remains blocked until A6-EO-07-C closes the two exact earring/cross-sell fixtures per provider.
-- A6-EO-07-F requires constitution/contract tests, desktop Shopify Admin, real 320 px mobile, accessibility and explicit product-owner acceptance.
-- No surface is accepted merely because it renders or a happy path works.
+- Bu karar A6-EO-07'yi Ready veya Done yapmaz; A6-EO-01–06'yı atlamaz.
+- A6-EO-07-A, eski akışın davranış doğrulamasını kullanır; Settings kaynak kodunu taşımaz.
+- A6-EO-07-B, BFF/sorgu/formül sözleşmeleri oluştuktan sonra Funnel'ı uygular; ilişki grafikleri ayrıca onaylı ürün sahibi grafik referansına tabidir.
+- A6-EO-07-C, A6-EO-07-D öncesinde en alt kırılım ve cross-sell kabiliyetini dondurur.
+- A6-EO-07-D yalnız doğrulanmış öğe/ürün kabiliyetini uygular. Grafikler, A6-EO-07-C her sağlayıcının iki kesin küpe/cross-sell örneğini kapatana kadar bekler.
+- A6-EO-07-F; anayasa/sözleşme testleri, masaüstü Shopify Admin, gerçek 320 px mobil, erişilebilirlik ve açık ürün sahibi kabulü ister.
+- Ekranın görünmesi veya yalnız başarılı yolun çalışması kabul değildir.
 
-## 9. Explicitly out of scope
+## 9. Açıkça kapsam dışı
 
-- UI source changes
-- Backend/BFF/provider implementation
-- Database migration
-- Billing activation
-- Privacy deletion execution
-- Deployment or production mutation
-- A6-EO-07 status advancement
-- Legacy retirement
+- UI kaynak değişiklikleri
+- Sunucu/BFF/sağlayıcı uygulaması
+- Veritabanı migration'ı
+- Faturalandırmayı etkinleştirme
+- Gizlilik silmesini yürütme
+- Dağıtım veya Production değişikliği
+- A6-EO-07 durumunu ilerletme
+- Eski yapıyı emekliye ayırma
 
+## 10. Kabul edilmiş Funnel görselleştirme referansı
 
-## 9. Accepted Funnel visualization reference
+Bağlayıcı referans `docs/A6_EO_07_FUNNEL_VISUALIZATION_REFERENCE.md`, yürütülebilir sözleşme `contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json` dosyasıdır.
 
-The binding reference is `docs/A6_EO_07_FUNNEL_VISUALIZATION_REFERENCE.md` with executable contract `contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json`.
-
-- Performance relationship: Sales, Revenue and Spend.
-- Intent relationship: Add to Cart, Checkout, Abandoned and Purchase; count and value remain separate fields.
-- Current series are solid; comparison series are dashed.
-- Directional color/arrow meaning comes from the A6-EO-06 metric contract, never numeric sign alone. Spend is neutral without outcome context; lower CPC, CPS and Abandoned metrics are favorable.
-- Chart, selected-point detail, KPI summary and table share one BFF/query/formula authority.
-- Only the graph data plane may use SVG or Canvas. Every surrounding UI element remains official Polaris/App Bridge.
-- Ad Analysis graph work remains blocked by A6-EO-07-C and its provider-specific product/cross-sell evidence.
-- This reference creates no new package, changes no package status and authorizes no implementation or live mutation.
+- Performance ilişkisi: Sales, Revenue ve Spend.
+- Intent ilişkisi: Add to Cart, Checkout, Abandoned ve Purchase; adet ve değer ayrı alanlardır.
+- Mevcut seri düz, karşılaştırma serisi kesik çizgilidir.
+- Renk/ok yönünün anlamı yalnız sayısal işaretten değil A6-EO-06 metrik sözleşmesinden gelir. Spend, sonuç bağlamı olmadan nötrdür; CPC, CPS ve Abandoned metriklerinde düşüş olumludur.
+- Grafik, seçili nokta ayrıntısı, KPI özeti ve tablo aynı BFF/sorgu/formül kaynağını kullanır.
+- Yalnız grafiğin veri çizim düzleminde SVG veya Canvas kullanılabilir; çevresindeki UI resmî Polaris/App Bridge olarak kalır.
+- Ad Analysis grafik çalışması A6-EO-07-C ve sağlayıcıya özel ürün/cross-sell kanıtını bekler.
+- Bu referans yeni paket açmaz, paket durumu değiştirmez, uygulama veya canlı değişiklik yetkisi vermez.

@@ -52,6 +52,8 @@ test("master text restoration matches the verified last-good body and cannot rev
   assert.equal(repair.accepted_decisions_or_runtime_changed, false);
   assert.equal(repair.counts_as_completed_translation, false);
   assert.equal(ledger.inventory.find((row) => row.path === repair.path).status, "pending_language_review");
-  assert.equal(repair.product_owner_repair_accepted, false);
-  assert.equal(repair.merge_authorized, false);
+  assert.equal(repair.product_owner_repair_accepted, true);
+  assert.equal(repair.merge_authorized, true);
+  assert.equal(repair.pull_request, 132);
+  assert.equal(repair.merge_commit, "526c07a5415b70a21a6ddf20970e6207a33f0200");
 });

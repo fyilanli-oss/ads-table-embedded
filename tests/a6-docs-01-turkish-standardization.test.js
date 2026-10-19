@@ -28,16 +28,16 @@ test("DOCS-01 inventories human Markdown without translating agent instructions 
   assert.equal(new Set(actual).size, 63);
   assert.deepEqual(contract.inventory_counts, {
     total_markdown: 63, human_markdown: 62, excluded_agent_instructions: 1,
-    translated_review_pending: 3, pending_language_review: 13,
-    translated_product_owner_accepted: 46,
+    translated_review_pending: 4, pending_language_review: 9,
+    translated_product_owner_accepted: 49,
   });
   for (const row of contract.inventory) {
     assert.match(row.baseline_blob, /^[a-f0-9]{40}$/);
     assert.equal(row.classification, row.path === "AGENTS.md"
       ? "agent_instructions_excluded" : "human_markdown");
     assert.equal(row.status, row.path === "AGENTS.md" ? "excluded_unchanged"
-      : [...contract.first_batch, ...contract.second_batch, ...contract.third_batch, ...contract.fourth_batch, ...contract.fifth_batch, ...contract.sixth_batch, ...contract.seventh_batch, ...contract.eighth_batch, ...contract.ninth_batch, ...contract.tenth_batch, ...contract.eleventh_batch, ...contract.twelfth_batch].includes(row.path) ? "translated_product_owner_accepted"
-        : contract.thirteenth_batch.includes(row.path) ? "translated_product_owner_review_pending" : "pending_language_review");
+      : [...contract.first_batch, ...contract.second_batch, ...contract.third_batch, ...contract.fourth_batch, ...contract.fifth_batch, ...contract.sixth_batch, ...contract.seventh_batch, ...contract.eighth_batch, ...contract.ninth_batch, ...contract.tenth_batch, ...contract.eleventh_batch, ...contract.twelfth_batch, ...contract.thirteenth_batch].includes(row.path) ? "translated_product_owner_accepted"
+        : contract.fourteenth_batch.includes(row.path) ? "translated_product_owner_review_pending" : "pending_language_review");
   }
 });
 
@@ -459,8 +459,47 @@ test("DOCS-01 product, graph and demo prose retains UI copy, evidence boundaries
   assert.match(demo, /Tarihleri asla kaydırılmaz/);
   assert.match(demo, /ilk Shopify review uygulama kapsamının dışındadır/);
   assert.match(demo, /küpe\/cross-sell senaryosunu karşılayamaz/i);
-  const prepared = contract.deliveries[12];
-  assert.deepEqual(prepared.files, contract.thirteenth_batch);
+  const accepted = contract.deliveries[12];
+  assert.deepEqual(accepted.files, contract.thirteenth_batch);
+  assert.equal(accepted.product_owner_readability_accepted, true);
+  assert.equal(accepted.merge_authorized, true);
+  assert.equal(accepted.pull_request, 133);
+  assert.equal(accepted.merge_commit, "164175d47420dc37f551860658c8ec44b8916092");
+});
+
+test("DOCS-01 safety and operations translation preserves future gates without starting recovery or provisioning", async () => {
+  const contract = await readJson(contractPath);
+  assert.equal(contract.fourteenth_batch.length, 4);
+  for (const path of contract.fourteenth_batch) {
+    const content = await readFile(path, "utf8");
+    const row = contract.inventory.find((item) => item.path === path);
+    assertTechnicalTokens(content, row.preserved_technical_tokens);
+    assert.match(content, /docs\/EXECUTION_PLAN\.md/);
+    assert.doesNotMatch(content, /^##? (?:Analyst conclusion|Current inventory|Touch policy|Recovery playbooks|Purpose|Scope|Business outcome|Mandatory scope|Closure rule)/m);
+  }
+  const capacity = await readFile(contract.fourteenth_batch[0], "utf8");
+  for (const value of ["2,000", "4,000", "144,000", "0.556", "1.667", "45", "15", "240", "PITR", "EO-08-D"]) assert.ok(capacity.includes(value), value);
+  assert.match(capacity, /hedefleridir; sağlayıcı garantisi veya bugün tamamlanmış kurtarma kanıtı değildir/);
+  assert.match(capacity, /eski erişilemeyen tarihler yapay sıfır sayılmaz/);
+  assert.match(capacity, /ilk hata sonrası durma ve yeniden onay alma kapısını kaldırmaz/);
+  const secrets = await readFile(contract.fourteenth_batch[1], "utf8");
+  assert.match(secrets, /toplam envanter 23/);
+  assert.match(secrets, /GitHub secret deposu bu işte yeniden sorgulanmadı/);
+  assert.match(secrets, /17 girdi\s+Secret, 5 girdi Config/);
+  assert.match(secrets, /saklama\/kurtarma koşullarının tamamlandığını göstermez/);
+  assert.match(secrets, /Yeni açıklama ve açık onay olmadan tekrar denenmez/);
+  assert.match(secrets, /Yeni üretilen değer, kaybolmuş değerle şifrelenen veriyi çözemez/);
+  const cleanup = await readFile(contract.fourteenth_batch[2], "utf8");
+  assert.match(cleanup, /Silme yetkisi:\*\* Paket açılışında yok/);
+  assert.match(cleanup, /temizlik veya arşivleme başlatma onayı değildir/);
+  assert.match(cleanup, /Güncel envanter ve ayrıca açık kullanıcı onayı/);
+  const preproduction = await readFile(contract.fourteenth_batch[3], "utf8");
+  assert.match(preproduction, /Planlandı; tetikleyiciye ulaşılmadı; uygulama başlamadı/);
+  assert.match(preproduction, /hangisi önceyse ondan önce/);
+  assert.match(preproduction, /Production kimlik bilgisi değerleri Preview veya Development'a kopyalanamaz/);
+  assert.match(preproduction, /İlk açık veya açıklamasız sağlayıcı hatasında durulur/);
+  const prepared = contract.deliveries[13];
+  assert.deepEqual(prepared.files, contract.fourteenth_batch);
   assert.equal(prepared.product_owner_readability_accepted, false);
   assert.equal(prepared.merge_authorized, false);
 });

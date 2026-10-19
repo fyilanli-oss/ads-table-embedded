@@ -2,7 +2,7 @@
   "contract_id": "a6-docs-01-turkish-standardization-v1",
   "checked_at": "2026-10-19",
   "package_id": "A6-DOCS-01",
-  "status": "in_progress_product_graph_demo_prepared",
+  "status": "in_progress_operations_safety_prepared",
   "baseline_commit": "f62a5c6f7a254fe61be3c8af94f7fa9d2d6b65a1",
   "brief": "docs/A6_QUALITY_AND_ASSURANCE_GATES.md",
   "user_start_authorized": true,
@@ -19,9 +19,9 @@
     "total_markdown": 63,
     "human_markdown": 62,
     "excluded_agent_instructions": 1,
-    "translated_review_pending": 3,
-    "pending_language_review": 13,
-    "translated_product_owner_accepted": 46
+    "translated_review_pending": 4,
+    "pending_language_review": 9,
+    "translated_product_owner_accepted": 49
   },
   "first_batch": [
     "README.md",
@@ -65,7 +65,7 @@
       "path": "docs/A6_EO_07_FUNNEL_VISUALIZATION_REFERENCE.md",
       "baseline_blob": "781230483ebdb3a016ac4730973f1c31454d2e55",
       "classification": "human_markdown",
-      "status": "translated_product_owner_review_pending",
+      "status": "translated_product_owner_accepted",
       "preserved_technical_tokens": [
         "https://shopify.dev/docs/api/app-home/latest",
         "https://shopify.dev/docs/api/app-home/latest/web-components",
@@ -84,7 +84,7 @@
       "path": "docs/A6_EO_07_THREE_SURFACE_UI_PRODUCT_FREEZE.md",
       "baseline_blob": "7c3c782c1c8db6028160c47c87043ead0fe9780d",
       "classification": "human_markdown",
-      "status": "translated_product_owner_review_pending",
+      "status": "translated_product_owner_accepted",
       "preserved_technical_tokens": [
         "$24.99/month",
         "/",
@@ -145,13 +145,29 @@
       "path": "docs/A6_EO_CROSS_CUTTING_SAFETY_CAPACITY_FREEZE.md",
       "baseline_blob": "e678aec0d1590ee02c15c6f735eefd0f83a6bf67",
       "classification": "human_markdown",
-      "status": "pending_language_review"
+      "status": "translated_product_owner_review_pending",
+      "preserved_technical_tokens": [
+        "ads-table-dev",
+        "contracts/a6-eo-cross-cutting-safety-capacity-v1.json",
+        "docs/EXECUTION_PLAN.md",
+        "https://developers.google.com/google-ads/api/docs/conversions/getting-started",
+        "https://help.klaviyo.com/hc/en-us/articles/11118357030555",
+        "https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance",
+        "https://supabase.com/docs/guides/deployment/going-into-prod",
+        "https://supabase.com/docs/guides/observability/metrics",
+        "https://supabase.com/docs/guides/platform/clone-project",
+        "https://supabase.com/docs/guides/platform/compute-and-disk",
+        "https://supabase.com/docs/guides/platform/read-replicas",
+        "https://vercel.com/docs/cli/rollback",
+        "https://www.postman.com/meta/facebook-marketing-api/documentation/0zr4mes/facebook-marketing-api-mapi",
+        "shop/redact"
+      ]
     },
     {
       "path": "docs/A6_EO_DEMO_FIXTURE_EXPORT_REFERENCE.md",
       "baseline_blob": "fc208934ac32f4738f0ab7827d7e7575fab114b7",
       "classification": "human_markdown",
-      "status": "translated_product_owner_review_pending",
+      "status": "translated_product_owner_accepted",
       "preserved_technical_tokens": [
         "87413af1318cbdb3efbe1104e283d7294bc0c219",
         "SOURCE_ROWS",
@@ -455,19 +471,83 @@
       "path": "docs/A6_EO_SECRET_INVENTORY_AND_RECOVERY.md",
       "baseline_blob": "02ff940fd2e062ff1e4adfe70cda6e739a0004bb",
       "classification": "human_markdown",
-      "status": "pending_language_review"
+      "status": "translated_product_owner_review_pending",
+      "preserved_technical_tokens": [
+        "ADSTABLE_PROVIDER_TOKEN_ACTIVE_KEY_VERSION",
+        "ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_V1",
+        "ADSTABLE_RUNTIME_DATABASE_URL",
+        "ADSTABLE_SESSION_ENCRYPTION_KEY_V1",
+        "GOOGLE_ADS_DEVELOPER_TOKEN",
+        "GOOGLE_ADS_OAUTH_CLIENT_ID",
+        "GOOGLE_ADS_OAUTH_CLIENT_SECRET",
+        "GOOGLE_ADS_OAUTH_REDIRECT_URI",
+        "KLAVIYO_CLIENT_ID",
+        "KLAVIYO_CLIENT_SECRET",
+        "KLAVIYO_OAUTH_REDIRECT_URI",
+        "META_APP_ID",
+        "META_APP_SECRET",
+        "META_GRAPH_VERSION",
+        "META_OAUTH_REDIRECT_URI",
+        "SCOPES",
+        "SHOPIFY_API_KEY",
+        "SHOPIFY_API_SECRET",
+        "SHOPIFY_APP_AUTOMATION_TOKEN",
+        "SHOPIFY_APP_GID",
+        "SHOPIFY_APP_URL",
+        "SHOPIFY_PARTNER_API_ACCESS_TOKEN",
+        "SHOPIFY_PARTNER_ORG_ID",
+        "activeSubscription",
+        "adstable_runtime",
+        "contracts/a6-eo-secret-inventory-recovery-v1.json",
+        "docs/evidence/A6_TECH_01_F03_ENV_INVENTORY_2026-10-18.json",
+        "https://docs.github.com/en/actions/reference/security/secrets",
+        "https://docs.github.com/en/code-security/reference/secret-security/secret-types",
+        "https://shopify.dev/docs/api/partner/2026-01",
+        "https://shopify.dev/docs/apps/build/authentication-authorization/manage-credentials",
+        "https://shopify.dev/docs/apps/build/dev-dashboard/app-automation-tokens",
+        "https://supabase.com/changelog",
+        "https://supabase.com/docs/guides/database/connecting-to-postgres",
+        "https://supabase.com/docs/guides/database/connecting-to-postgres/pooling-and-limits",
+        "https://supabase.com/docs/guides/troubleshooting/supavisor-error-password-authentication-failed-after-password-rotation",
+        "https://vercel.com/changelog/environment-variables-now-use-config-and-secret-types",
+        "https://vercel.com/docs/environment-variables/manage-across-environments",
+        "https://vercel.com/docs/environment-variables/rotating-secrets",
+        "observed_storage_type",
+        "postgres",
+        "service_role",
+        "storage_type",
+        "tests/a6-eo-secret-inventory-recovery.test.js"
+      ]
     },
     {
       "path": "docs/A6_OPS_LOCAL_01_SAFE_CLEANUP.md",
       "baseline_blob": "45541afd270810be824d79bce485cd99d1138f7e",
       "classification": "human_markdown",
-      "status": "pending_language_review"
+      "status": "translated_product_owner_review_pending",
+      "preserved_technical_tokens": [
+        ".git",
+        "C:\\Users\\dev\\Documents\\Codex\\ads-table-dev",
+        "HEAD",
+        "contracts/repository-delivery-workflow-v1.json",
+        "git-common-dir",
+        "https://developers.openai.com/blog/mastering-codex-remote-for-engineering",
+        "https://git-scm.com/docs/git-status",
+        "https://git-scm.com/docs/git-worktree"
+      ]
     },
     {
       "path": "docs/A6_OPS_SHOPIFY_01_ISOLATED_PREPRODUCTION.md",
       "baseline_blob": "24b711e037c8f23b9f47c2b8d979835d40f4f613",
       "classification": "human_markdown",
-      "status": "pending_language_review"
+      "status": "translated_product_owner_review_pending",
+      "preserved_technical_tokens": [
+        "application_url",
+        "https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration",
+        "https://shopify.dev/docs/apps/build/cli-for-apps/manage-app-config-files",
+        "https://shopify.dev/docs/apps/build/stores/development-stores",
+        "https://vercel.com/docs/deployments/environments",
+        "https://vercel.com/docs/environment-variables"
+      ]
     },
     {
       "path": "docs/A6_QUALITY_AND_ASSURANCE_GATES.md",
@@ -2394,8 +2474,26 @@
         "docs/A6_EO_07_FUNNEL_VISUALIZATION_REFERENCE.md",
         "docs/A6_EO_DEMO_FIXTURE_EXPORT_REFERENCE.md"
       ],
-      "status": "prepared_product_owner_review_pending",
+      "status": "merged_product_owner_accepted",
       "base_commit": "526c07a5415b70a21a6ddf20970e6207a33f0200",
+      "product_owner_readability_accepted": true,
+      "merge_authorized": true,
+      "accepted_at": "2026-10-19",
+      "pull_request": 133,
+      "source_commit": "27edb33857c6ddd2c8d53f316b35ae8f7477effb",
+      "merge_commit": "164175d47420dc37f551860658c8ec44b8916092",
+      "tree": "d0cf97d2887a22522b6de39f0567eb7fd7aa2c11"
+    },
+    {
+      "id": "operations_safety_translation_delivery",
+      "files": [
+        "docs/A6_EO_CROSS_CUTTING_SAFETY_CAPACITY_FREEZE.md",
+        "docs/A6_EO_SECRET_INVENTORY_AND_RECOVERY.md",
+        "docs/A6_OPS_LOCAL_01_SAFE_CLEANUP.md",
+        "docs/A6_OPS_SHOPIFY_01_ISOLATED_PREPRODUCTION.md"
+      ],
+      "status": "prepared_product_owner_review_pending",
+      "base_commit": "164175d47420dc37f551860658c8ec44b8916092",
       "product_owner_readability_accepted": false,
       "merge_authorized": false
     }
@@ -2489,5 +2587,11 @@
       "merge_commit": "526c07a5415b70a21a6ddf20970e6207a33f0200",
       "tree": "91f660047e04b046b3f9d9432c738575308d374d"
     }
+  ],
+  "fourteenth_batch": [
+    "docs/A6_EO_CROSS_CUTTING_SAFETY_CAPACITY_FREEZE.md",
+    "docs/A6_EO_SECRET_INVENTORY_AND_RECOVERY.md",
+    "docs/A6_OPS_LOCAL_01_SAFE_CLEANUP.md",
+    "docs/A6_OPS_SHOPIFY_01_ISOLATED_PREPRODUCTION.md"
   ]
 }

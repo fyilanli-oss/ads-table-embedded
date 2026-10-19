@@ -1,63 +1,65 @@
-# A6-OPS-LOCAL-01 — One-time local safety cleanup
+# A6-OPS-LOCAL-01 — Tek seferlik güvenli yerel temizlik
 
-**Status:** Ready; execution not started  
-**Opened:** 7 October 2026  
-**Type:** Independent one-time operational package  
-**EO effect:** Does not add, split, close, reorder or block an A6-EO package  
-**Deletion authority:** None at package opening
+**Durum:** Hazır; uygulama başlamadı
+**Açılış:** 7 Ekim 2026
+**Tür:** Bağımsız, tek seferlik operasyon paketi
+**EO etkisi:** A6-EO paketi eklemez, bölmez, kapatmaz, sıralamaz veya engellemez
+**Silme yetkisi:** Paket açılışında yok
 
-## Purpose
+> Bu, planın tarihsel kapsam kaydıdır. Güncel durum için `docs/EXECUTION_PLAN.md` okunur. Türkçeleştirme, temizlik veya arşivleme başlatma onayı değildir.
 
-Close historical local-only risk created before the mandatory package-end gate became binding. The package inventories repository-affiliated local state, proves which content is durable on GitHub or otherwise intentionally preserved, then performs only recoverable and explicitly authorized cleanup.
+## Amaç
 
-This is a one-time remediation package. Recurrence is prevented by the already-binding end-of-package gate in `contracts/repository-delivery-workflow-v1.json`.
+Paket sonu zorunlu kontrol kapısı bağlayıcı olmadan önce oluşmuş, anlamlı işin yalnız yerelde kalması riskini kapatmak. Önce repository ile ilişkili yerel durum listelenir; içeriğin GitHub'da kalıcı olduğu veya bilinçli olarak başka şekilde korunduğu kanıtlanır. Ardından yalnız geri alınabilir ve açıkça onaylanmış temizlik yapılır.
 
-## Scope
+Bu tek seferlik düzeltme paketidir. Tekrarını, `contracts/repository-delivery-workflow-v1.json` içindeki zaten bağlayıcı paket sonu kapısı önler.
 
-- The read-only legacy anchor at `C:\Users\dev\Documents\Codex\ads-table-dev`.
-- Codex-managed or Git-registered linked worktrees associated with AdsTable repositories.
-- Staged, tracked-modified, untracked and ignored project-affiliated files.
-- Stashes, detached or upstream-less/ahead local branch tips and stale worktree metadata.
-- Reproducible caches, dependencies and build outputs.
-- Conscious local exceptions such as secrets and machine-only backups, without exposing their values.
+## Kapsam
 
-The package does not clean arbitrary user folders, unrelated repositories, provider systems, databases, Vercel, Supabase or GitHub remote history.
+- Salt okunur eski repository ana kopyası: `C:\Users\dev\Documents\Codex\ads-table-dev`.
+- AdsTable repository'leriyle ilişkili, Codex tarafından yönetilen veya Git'e kayıtlı bağlı worktree'ler.
+- Stage'e alınmış, takip edilen ama değişmiş, takip edilmeyen ve Git'in yok saydığı proje dosyaları.
+- Stash'ler; ayrık HEAD, upstream'i olmayan veya upstream'den ileride yerel dal uçları; geçersiz kalmış worktree üst verisi.
+- Yeniden üretilebilir önbellek, bağımlılık ve derleme çıktıları.
+- Değerlerini göstermeden secret'lar ve yalnız makinede tutulan yedekler gibi bilinçli yerel istisnalar.
 
-## Work steps
+Rastgele kullanıcı klasörleri, ilgisiz repository'ler, sağlayıcı sistemleri, veritabanları, Vercel, Supabase veya GitHub uzak geçmişi temizlenmez.
 
-### A6-OPS-LOCAL-01-A — Read-only inventory and freeze
+## İş adımları
 
-Record repository roots, `HEAD`, branch/upstream state, `git-common-dir`, status including untracked/ignored classification, stashes, local branch reachability and all linked worktrees. No mutation is allowed.
+### A6-OPS-LOCAL-01-A — Salt okunur envanter ve sabitleme
 
-### A6-OPS-LOCAL-01-B — Classification and remote-equivalence proof
+Repository kökleri, `HEAD`, dal/upstream durumu, `git-common-dir`, takip edilmeyen/yok sayılan dosyaların sınıflandırıldığı durum, stash'ler, yerel dalların erişilebilirliği ve tüm bağlı worktree'ler kaydedilir. Değişiklik yapılmaz.
 
-Classify every finding as meaningful project work, secret, intentional backup, reproducible cache/dependency/build output, active worktree, archived/recoverable worktree or stale metadata. Meaningful project work must have an exact GitHub branch/PR/commit/content equivalent before cleanup.
+### A6-OPS-LOCAL-01-B — Sınıflandırma ve uzak eşdeğer kanıtı
 
-### A6-OPS-LOCAL-01-C — Recoverable cleanup execution
+Her bulgu; anlamlı proje işi, secret, bilinçli yedek, yeniden üretilebilir önbellek/bağımlılık/derleme çıktısı, aktif worktree, arşivlenmiş/geri getirilebilir worktree veya geçersiz üst veri olarak sınıflandırılır. Anlamlı proje işinin temizlikten önce GitHub'da birebir dal/PR/commit/içerik eşdeğeri olmalıdır.
 
-After a fresh manifest and separate explicit user approval, archive eligible Codex-managed worktrees through the Codex recoverable archive mechanism. Remove only proven disposable files inside exact validated roots. Stale worktree metadata may be pruned only after dry-run evidence. No force removal, broad recursive target, local Git repair, ACL/GCM change, process termination or server/VM restart is authorized.
+### A6-OPS-LOCAL-01-C — Geri alınabilir temizlik
 
-### A6-OPS-LOCAL-01-D — Closure evidence
+Güncel envanter ve ayrıca açık kullanıcı onayı alındıktan sonra, uygun Codex worktree'leri Codex'in geri getirilebilir arşiv mekanizmasıyla arşivlenir. Yalnız kesin kökleri doğrulanmış, atılabilir olduğu kanıtlanmış dosyalar kaldırılır. Geçersiz worktree üst verisi ancak önce değişiklik yapmayan deneme kanıtıyla budanabilir. Zorla kaldırma, geniş kapsamlı özyinelemeli hedef, yerel Git onarımı, ACL/GCM değişikliği, süreç sonlandırma veya sunucu/VM yeniden başlatma yetkisi yoktur.
 
-Re-run the full inventory and prove: zero meaningful local-only project work, no active worktree damage, the anchor/common Git metadata remains intact, remote equivalents are readable, secrets were not uploaded, and every conscious local exception is recorded.
+### A6-OPS-LOCAL-01-D — Kapanış kanıtı
 
-## Safety invariants
+Tam envanter tekrarlanır ve şunlar kanıtlanır: Yalnız yerelde kalan anlamlı proje işi sıfırdır; aktif worktree zarar görmemiştir; ana kopya/ortak Git üst verisi sağlamdır; uzak eşdeğerler okunabilir; secret'lar yüklenmemiştir; bilinçli her yerel istisna kaydedilmiştir.
 
-- Inventory precedes classification; classification precedes mutation.
-- No local file, stash, branch or worktree is removed before remote equivalence or an intentional preservation decision is proven.
-- The legacy anchor and shared `.git` are never deleted while linked worktrees exist.
-- An unclean or locked worktree is not force-removed.
-- Secret values are neither printed nor committed.
-- Cache, dependency and build outputs are not treated as source delivery.
-- Unknown ownership or ambiguous content fails closed.
-- Package opening does not authorize cleanup execution.
+## Değişmez güvenlik kuralları
 
-## Acceptance
+- Önce envanter, sonra sınıflandırma, en son değişiklik.
+- Uzak eşdeğer veya bilinçli koruma kararı kanıtlanmadan yerel dosya, stash, dal veya worktree kaldırılmaz.
+- Bağlı worktree varken eski ana kopya ve ortak `.git` asla silinmez.
+- Değişiklik içeren veya kilitli worktree zorla kaldırılmaz.
+- Secret değerleri ne ekrana yazılır ne commit edilir.
+- Önbellek, bağımlılık ve derleme çıktısı kaynak teslimi sayılmaz.
+- Sahibi bilinmeyen veya içeriği belirsiz öğede işlem güvenli biçimde durur.
+- Paket açılışı temizlik uygulamasına yetki vermez.
 
-The package closes only when all four steps pass, GitHub evidence is attached, zero meaningful local-only work is proven, repository-delivery governance still passes, and the user explicitly accepts the cleanup result.
+## Kabul
 
-## Official sources checked 7 October 2026
+Paket ancak dört adımın tamamı geçtiğinde, GitHub kanıtları eklendiğinde, yalnız yerelde kalan anlamlı işin sıfır olduğu kanıtlandığında, repository teslim kuralları hâlâ geçtiğinde ve kullanıcı temizlik sonucunu açıkça kabul ettiğinde kapanır.
 
-- OpenAI Codex workflow guidance: https://developers.openai.com/blog/mastering-codex-remote-for-engineering
-- Git worktree documentation: https://git-scm.com/docs/git-worktree
-- Git status documentation: https://git-scm.com/docs/git-status
+## 7 Ekim 2026'da kontrol edilen resmî kaynaklar
+
+- OpenAI Codex iş akışı rehberi: https://developers.openai.com/blog/mastering-codex-remote-for-engineering
+- Git worktree dokümantasyonu: https://git-scm.com/docs/git-worktree
+- Git status dokümantasyonu: https://git-scm.com/docs/git-status

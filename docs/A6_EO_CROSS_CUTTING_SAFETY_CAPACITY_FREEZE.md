@@ -1,137 +1,139 @@
-# A6-EO Cross-Cutting Safety, Capacity and Portability Freeze
+# A6-EO — Paketler arası güvenlik, kapasite ve taşınabilirlik kararı
 
-**Status:** Decision frozen; implementation and acceptance pending  
-**Decision date:** 7 October 2026  
-**Executable contract:** `contracts/a6-eo-cross-cutting-safety-capacity-v1.json`
+**Durum:** Karar donduruldu; uygulama ve kabul bekliyor
+**Karar tarihi:** 7 Ekim 2026
+**Yürütülebilir sözleşme:** `contracts/a6-eo-cross-cutting-safety-capacity-v1.json`
 
-## Analyst conclusion
+> Bu belge 7 Ekim tarihindeki hedefleri ve kabul koşullarını kaydeder; bunların uygulanmış veya ölçümle kanıtlanmış olduğunu söylemez. Güncel ilerleme için `docs/EXECUTION_PLAN.md` bağlayıcıdır. Bu dil düzenlemesi yedekleme, kurtarma, kapasite artırımı veya EO-05 çalışması başlatmaz.
 
-Supabase has no fixed “workspace count” wall. Capacity is determined by rows and bytes written per refresh, reconciliation amplification, query shapes, concurrent users and exports, retention, connection usage, CPU, memory and disk IO. Therefore AdsTable will not promise an unmeasured workspace number and will not wait for production failure before planning a database move.
+## Analist sonucu
 
-The product target is **2,000 active workspaces**. This becomes certified only after a **4,000-workspace synthetic stress test**, a 2,000-workspace hourly-cycle test and a 24-hour 2,000-workspace soak test pass with the thresholds below.
+Supabase için sabit bir “çalışma alanı sayısı” duvarı yoktur. Kapasiteyi her yenilemede yazılan satır ve bayt miktarı, geçmiş veriyi yeniden uzlaştırmanın yükü, sorgu biçimleri, eşzamanlı kullanıcılar ve dışa aktarmalar, saklama süresi, bağlantı kullanımı, CPU, bellek ve disk IO belirler. Bu nedenle AdsTable ölçülmemiş bir çalışma alanı sayısı vaat etmez; veritabanı taşımasını planlamak için canlı ortamın arızalanmasını da beklemez.
 
-At 2,000 workspaces, uniformly sharded hourly scheduling averages 0.556 workspace starts per second. If all three providers are active, that is approximately 144,000 provider jobs per day or 1.667 provider job starts per second. This scheduler rate is not itself dangerous. The unknown multiplier is the amount of provider data normalized and written by each job. That multiplier must be measured before EO-05 implementation.
+Ürün hedefi **2,000 aktif çalışma alanıdır**. Bu hedef ancak **4,000 çalışma alanlı sentetik stres testi**, 2,000 çalışma alanlı saatlik çevrim testi ve 2,000 çalışma alanıyla 24 saatlik dayanıklılık testi aşağıdaki eşikleri geçerse doğrulanmış kapasite sayılır.
 
-## Authority and first-review boundary
+2,000 çalışma alanında saat içine eşit dağıtılmış zamanlama saniyede ortalama 0.556 çalışma alanı başlatır. Üç sağlayıcının tamamı aktifse bu yaklaşık günde 144,000 sağlayıcı işi veya saniyede 1.667 sağlayıcı işi başlangıcıdır. Tek başına bu başlangıç hızı tehlikeli değildir. Bilinmeyen çarpan, her işin standartlaştırıp yazdığı sağlayıcı verisi miktarıdır. EO-05 uygulamasından önce bu çarpan ölçülmelidir.
 
-- This repository and `docs/EXECUTION_PLAN.md` are the active authority.
-- `ads-table-dev` is initial provenance, evidence and containment only.
-- Export is outside the first review slice.
-- Settings is the only connection authority. There is no separate top-level Data Sources control.
-- Refresh is AdsTable-owned and hourly. There is no user refresh toggle; the UI may show only last update and next scheduled refresh.
+## Otorite ve ilk review sınırı
 
-## Subscription and privacy
+- Aktif otorite bu repository ve `docs/EXECUTION_PLAN.md` dosyasıdır.
+- `ads-table-dev` yalnız ilk kaynak geçmişi, kanıt ve eski yapıyı sınırlandırma referansıdır.
+- Dışa aktarma ilk review kapsamı dışındadır.
+- Bağlantıların tek yönetim yeri Settings'tir. Ayrı bir üst seviye Data Sources kontrolü yoktur.
+- Yenileme AdsTable tarafından saatlik yönetilir. Kullanıcının yenilemeyi açıp kapattığı kontrol yoktur; arayüz yalnız son güncelleme ve sonraki planlı yenilemeyi gösterebilir.
 
-- Trial and active subscriptions receive full product access.
-- Pending, frozen, cancelled, declined, expired or missing entitlement stops provider jobs.
-- Settings and privacy actions remain available; Funnel and Ad Analysis show subscription-required state and no metrics.
-- Subscription loss does not immediately delete data. Deletion is driven only by confirmed Delete My Data, verified Shopify redaction, or an approved retention expiry.
-- Shopify webhook HMAC is mandatory. Shopify’s 30-day completion deadline and uninstall-triggered `shop/redact` lifecycle remain binding.
-- There is no blanket legal-retention exception. Every exception needs an exact data class, legal basis, owner and expiry.
-- A restore cannot reopen service until the deletion ledger has been replayed.
+## Abonelik ve gizlilik
 
-## Reconciliation and finality
+- Deneme süresi ve aktif abonelik ürünün tamamına erişim sağlar.
+- Bekleyen, dondurulmuş, iptal edilmiş, reddedilmiş, süresi dolmuş veya bulunamayan kullanım hakkı sağlayıcı işlerini durdurur.
+- Settings ve gizlilik işlemleri açık kalır; Funnel ve Ad Analysis abonelik gerekli durumunu gösterir, metrik göstermez.
+- Abonelik kaybı veriyi hemen silmez. Silme yalnız doğrulanmış Delete My Data talebi, doğrulanmış Shopify veri silme bildirimi veya onaylı saklama süresinin dolmasıyla başlar.
+- Shopify webhook HMAC doğrulaması zorunludur. Shopify'ın 30 günlük tamamlama süresi ve kaldırma sonrası `shop/redact` yaşam döngüsü bağlayıcıdır.
+- Genel bir yasal saklama istisnası yoktur. Her istisnanın kesin veri sınıfı, yasal dayanağı, sorumlusu ve bitiş tarihi olmalıdır.
+- Geri yüklemeden sonra silme kayıtları yeniden uygulanmadan hizmet açılamaz.
 
-- The hourly hot window is only provider-business-date today and yesterday.
-- Full history is never fetched every hour.
-- Once per 24 hours, AdsTable reconciles the full effective provider attribution horizon.
-- Meta uses the maximum verified active account/campaign/ad-set attribution setting used for reporting. If unavailable, finality stays unknown and provisional.
-- Google Ads uses the longest active conversion-action click/view lookback. Official general caps are 90 click days and 30 view days.
-- Klaviyo uses the verified current account/message attribution setting. The current test account’s five-day email window is evidence, not a global constant.
-- A date becomes final only after the effective horizon, one full provider business day and a successful post-window reconciliation.
-- Failed, partial or quota-limited runs never advance finality. Setting changes reopen affected dates.
+## Yeniden uzlaştırma ve verinin kesinleşmesi
 
-## Date and compare boundary
+- Saatlik güncel veri penceresi, sağlayıcının iş tarihine göre yalnız bugün ve dündür.
+- Tüm geçmiş her saat yeniden çekilmez.
+- AdsTable her 24 saatte bir sağlayıcının geçerli attribution süresinin tamamını yeniden uzlaştırır.
+- Meta'da raporlamada kullanılan doğrulanmış aktif hesap/Campaign/Ad Set attribution ayarlarının en uzunu alınır. Ayara ulaşılamıyorsa kesinleşme bilinmez ve veri geçici kalır.
+- Google Ads'te aktif dönüşüm işlemlerinin en uzun tıklama/görüntüleme geriye bakış süresi alınır. Resmî genel üst sınırlar tıklamada 90, görüntülemede 30 gündür.
+- Klaviyo'da doğrulanmış güncel hesap/mesaj attribution ayarı kullanılır. Mevcut test hesabının beş günlük Email penceresi bir kanıttır; tüm hesaplara uygulanacak sabit değildir.
+- Bir tarih ancak geçerli attribution süresi, bir tam sağlayıcı iş günü ve pencere sonrası başarılı yeniden uzlaştırma tamamlanınca kesinleşir.
+- Başarısız, kısmi veya kota nedeniyle sınırlanmış çalıştırmalar kesinleşmeyi ilerletmez. Ayar değişirse etkilenen tarihler tekrar açılır.
 
-- Timezone authority is the installed Shopify shop’s IANA timezone; provider raw dates/timezones remain stored.
-- Default is the last seven calendar days including today.
-- Summary/Table custom ranges are limited to 90 days; Daily is limited to 31.
-- Compare ranges must have equal day counts, cannot overlap, and use the same timezone and reporting currency.
-- Bootstrap remains yesterday+today. Earlier unavailable dates are not synthetic zero.
-- Current/non-final dates are visibly provisional.
-- If provider daily facts cannot be translated truthfully, AdsTable returns partial/timezone-misaligned rather than silently remapping.
+## Tarih ve karşılaştırma sınırı
 
-## Restore objectives
+- Saat dilimi otoritesi, uygulamanın kurulu olduğu Shopify mağazasının IANA saat dilimidir; sağlayıcının ham tarih ve saat dilimleri ayrıca saklanır.
+- Varsayılan aralık bugün dahil son yedi takvim günüdür.
+- Summary/Table özel aralığı en fazla 90, Daily en fazla 31 gündür.
+- Karşılaştırma aralıkları aynı gün sayısında, çakışmayan, aynı saat dilimi ve raporlama para biriminde olmalıdır.
+- İlk veri yükleme dün+bugün ile sınırlıdır. Daha eski erişilemeyen tarihler yapay sıfır sayılmaz.
+- Güncel veya kesinleşmemiş tarihler görünür biçimde geçici işaretlenir.
+- Sağlayıcının günlük verisi doğru biçimde dönüştürülemiyorsa AdsTable sessiz tarih kaydırmak yerine kısmi veri/saat dilimi uyumsuzluğu döndürür.
 
-These are AdsTable acceptance objectives, not provider guarantees:
+## Geri yükleme hedefleri
 
-| Boundary | RPO | RTO |
+Bunlar AdsTable kabul hedefleridir; sağlayıcı garantisi veya bugün tamamlanmış kurtarma kanıtı değildir. RPO kabul edilebilir veri kaybı süresini, RTO hizmeti geri açma süresini ifade eder:
+
+| Sınır | RPO | RTO |
 |---|---:|---:|
-| Code/deployment | 0 | safe rollback ≤30 min |
-| Critical control-plane DB | ≤15 min | included below |
-| Replayable Dataset V2 | ≤60 min | rebuilt by replay/reconciliation |
-| Safe degraded service | — | ≤60 min |
-| Full operation | — | ≤240 min |
+| Kod/deployment | 0 | güvenli geri alma ≤30 dakika |
+| Kritik kontrol veritabanı | ≤15 dakika | aşağıdaki toplam süreye dahil |
+| Yeniden üretilebilir Dataset V2 | ≤60 dakika | yeniden işleme/uzlaştırmayla oluşturulur |
+| Güvenli, kısıtlı hizmet | — | ≤60 dakika |
+| Tam çalışma | — | ≤240 dakika |
 
-PITR is required before production. A timed restore rehearsal must pass before EO-08-D. The restore manifest covers database plus explicit presence/absence of Storage, Edge Functions, Auth settings, API keys/secret rotation, Realtime, extensions, replicas and Vercel configuration/deployment. Deleted data must not be resurrected.
+Canlı kullanımdan önce PITR gerekir. EO-08-D öncesinde süre ölçülen geri yükleme provası geçmelidir. Geri yükleme envanteri veritabanının yanında Storage, Edge Functions, Auth ayarları, API anahtarları/secret rotasyonu, Realtime, eklentiler, replikalar ve Vercel yapılandırması/deployment için var/yok durumunu açıkça kapsar. Silinmiş veri geri getirilmemelidir. Bu gelecek kabul koşulu, bugün yedekleme veya prova başlatma yetkisi değildir.
 
-## Capacity envelope
+## Kapasite sınırları
 
-### Required workload budget
+### Zorunlu iş yükü bütçesi
 
-Before EO-05, measurements must establish provider rows, database rows and bytes per refresh; reconciliation amplification; interactive query and export concurrency; and retention growth per workspace.
+EO-05 öncesi ölçümler; yenileme başına sağlayıcı satırlarını, veritabanı satır/bayt miktarını, yeniden uzlaştırma yükünü, etkileşimli sorgu ve dışa aktarma eşzamanlılığını, çalışma alanı başına saklama büyümesini ortaya koymalıdır.
 
-### Scheduling
+### Zamanlama
 
-- Workspaces are uniformly sharded across the hour; top-of-hour fan-out is forbidden.
-- Leases and single-flight prevent duplicate runs.
-- Provider and database concurrency are bounded.
-- Backpressure, retry jitter and checkpoints are mandatory.
-- The p95 hourly cycle must complete within 45 minutes, preserving 15 minutes of reserve.
+- Çalışma alanları saat içine eşit dağıtılır; saat başında tüm işleri birden başlatmak yasaktır.
+- Süreli iş sahipliği ve tek etkin çalıştırma kuralı yinelenen işleri önler.
+- Sağlayıcı ve veritabanı eşzamanlılığı sınırlıdır.
+- Yük baskısına göre yavaşlama, tekrar denemeleri zamana yayma ve ilerleme kontrol noktaları zorunludur. Bu zamanlama tasarımı, dış sağlayıcıdaki ilk hata sonrası durma ve yeniden onay alma kapısını kaldırmaz.
+- Saatlik çevrimin p95 süresi 45 dakikayı geçmez; 15 dakika yedek süre kalır.
 
-### Queries and export
+### Sorgular ve dışa aktarma
 
-- Every query is workspace- and date-bounded.
-- Indexes follow measured query shapes; unbounded scans are forbidden.
-- UI reads aggregate first.
-- When export is introduced, it is asynchronous, cursor-paged and snapshot-bounded. It cannot consume the primary interactive connection pool, and generated files expire.
+- Her sorgu çalışma alanı ve tarih ile sınırlanır.
+- İndeksler ölçülmüş sorgu biçimlerine göre kurulur; sınırsız tarama yasaktır.
+- Arayüz önce toplulaştırılmış veriyi okur.
+- Dışa aktarma eklendiğinde asenkron, cursor ile sayfalı ve belirli bir veri anına bağlı olacaktır. Ana etkileşimli bağlantı havuzunu tüketemez; üretilen dosyaların süresi dolar.
 
-### Acceptance thresholds
+### Kabul eşikleri
 
-- Interactive reads: p95 ≤2 s; p99 ≤5 s.
-- Job/query error rate: <0.1%; tenant isolation failures: 0.
-- Sustained CPU <60%, peak CPU <80%, sustained memory <70%.
-- Database/pooler connection-limit utilization <60%.
-- Recommended database-size utilization <70%.
-- Disk IO throttling events: 0. Any steady-state disk IO budget consumption triggers an upgrade review.
-- At least 30% measured headroom remains.
+- Etkileşimli okumalar: p95 ≤2 saniye; p99 ≤5 saniye.
+- İş/sorgu hata oranı: <%0.1; müşteri verisi izolasyon hatası: 0.
+- Sürekli CPU <%60, tepe CPU <%80, sürekli bellek <%70.
+- Veritabanı/pooler bağlantı sınırı kullanımı <%60.
+- Önerilen veritabanı boyutu kullanımı <%70.
+- Disk IO kısılma olayı: 0. Sürekli yükte disk IO bütçesi tüketimi kapasite yükseltme incelemesini başlatır.
+- En az %30 ölçülmüş boş kapasite kalır.
 
-Production admission may never exceed the latest certified capacity. At 80% of that capacity, scaling review is mandatory; automatic unbounded onboarding is forbidden.
+Canlı kabul edilen çalışma alanı sayısı son doğrulanmış kapasiteyi aşamaz. Bu kapasitenin %80'inde ölçekleme incelemesi zorunludur; sınırsız otomatik müşteri alımı yasaktır.
 
-## Scale ladder
+## Ölçekleme sırası
 
-1. Fix query plans, indexes, batching and retention.
-2. Increase Supabase compute.
-3. Provision disk IOPS/throughput when measured.
-4. Move read-only analysis and export to a read replica, with visible replication lag.
-5. Separate operational control-plane data from analytical fact workload if needed.
-6. Consider another PostgreSQL platform only through a measured business/operations decision—not during an outage.
+1. Sorgu planları, indeksler, toplu işleme ve saklama düzenlenir.
+2. Supabase işlem kapasitesi artırılır.
+3. Ölçüm gerektiriyorsa disk IOPS/veri aktarım kapasitesi sağlanır.
+4. Salt okunur analiz ve dışa aktarma, gecikmesi görünür olan bir okuma replikasına alınır.
+5. Gerekirse operasyonel kontrol verisi ile analitik iş yükü ayrılır.
+6. Başka PostgreSQL platformu ancak ölçüme dayalı iş/operasyon kararıyla değerlendirilir; arıza sırasında doğaçlama taşınmaz.
 
-Supabase officially provides dedicated Postgres compute from Micro through large/custom sizes, configurable disk performance and read replicas for analytical reads. This means growth does not imply an automatic Google database migration. It does require measured scaling.
+7 Ekim kaynak değerlendirmesinde Supabase'in Micro'dan büyük/özel boyutlara kadar ayrılmış Postgres işlem kapasitesi, ayarlanabilir disk performansı ve analitik okumalar için okuma replikaları sunduğu kaydedildi. Büyüme otomatik olarak Google veritabanına taşınma anlamına gelmez; ölçülmüş ölçekleme gerektirir.
 
-## Portability boundary
+## Taşınabilirlik sınırı
 
-Canonical facts remain standard-PostgreSQL-first, with repository-owned migrations, explicit keys and portable data types. Vendor-specific features require an adapter and exit record. Canonical facts may not depend irreversibly on Supabase Auth or Storage. EO-08 includes a neutral PostgreSQL restore rehearsal so a future platform move is planned and recoverable.
+Kanonik verilerde standart PostgreSQL önceliklidir; migration'lar repository'ye aittir, anahtarlar açık, veri türleri taşınabilir olmalıdır. Sağlayıcıya özgü özellik için adaptör ve çıkış planı kaydı gerekir. Kanonik veri Supabase Auth veya Storage'a geri döndürülemez biçimde bağımlı olamaz. EO-08, gelecekteki platform değişikliğinin planlı ve geri alınabilir olması için sağlayıcıdan bağımsız PostgreSQL'e geri yükleme provasını kapsar.
 
-## Package routing
+## Paketlere dağılım
 
-- EO-02: subscription/privacy and schema prerequisites.
-- EO-05: reconciliation, scheduler, write-path capacity and observability.
-- EO-06: formulas, time ranges, query and export capacity.
-- EO-07: first-review controls and truthful UI states.
-- EO-08: restore, load, portability and rollback rehearsal.
+- EO-02: abonelik/gizlilik ve şema ön koşulları.
+- EO-05: yeniden uzlaştırma, zamanlayıcı, yazma kapasitesi ve gözlemlenebilirlik.
+- EO-06: formüller, tarih aralıkları, sorgu ve dışa aktarma kapasitesi.
+- EO-07: ilk review kontrolleri ve doğru arayüz durumları.
+- EO-08: geri yükleme, yük, taşınabilirlik ve geri alma provası.
 
-This decision creates no new parent package, advances no package status and authorizes no production mutation, resizing, replica or database migration.
+Bu karar yeni ana paket oluşturmaz, paket durumunu ilerletmez; canlı ortam değişikliği, kapasite artırımı, replika veya veritabanı taşımasına izin vermez.
 
-## Official sources checked 7 October 2026
+## 7 Ekim 2026'da kontrol edilen resmî kaynaklar
 
-- [Supabase Compute and Disk](https://supabase.com/docs/guides/platform/compute-and-disk)
-- [Supabase Production Checklist](https://supabase.com/docs/guides/deployment/going-into-prod)
-- [Supabase Read Replicas](https://supabase.com/docs/guides/platform/read-replicas)
-- [Supabase Metrics API](https://supabase.com/docs/guides/observability/metrics)
-- [Supabase restore to a new project](https://supabase.com/docs/guides/platform/clone-project)
-- [Google Ads conversion windows](https://developers.google.com/google-ads/api/docs/conversions/getting-started)
-- [Klaviyo attribution settings](https://help.klaviyo.com/hc/en-us/articles/11118357030555)
-- [Meta official Marketing API collection](https://www.postman.com/meta/facebook-marketing-api/documentation/0zr4mes/facebook-marketing-api-mapi)
-- [Shopify privacy compliance](https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance)
-- [Vercel rollback](https://vercel.com/docs/cli/rollback)
+- [Supabase işlem kapasitesi ve disk](https://supabase.com/docs/guides/platform/compute-and-disk)
+- [Supabase canlıya geçiş kontrol listesi](https://supabase.com/docs/guides/deployment/going-into-prod)
+- [Supabase okuma replikaları](https://supabase.com/docs/guides/platform/read-replicas)
+- [Supabase metrik API'si](https://supabase.com/docs/guides/observability/metrics)
+- [Supabase yeni projeye geri yükleme](https://supabase.com/docs/guides/platform/clone-project)
+- [Google Ads dönüşüm pencereleri](https://developers.google.com/google-ads/api/docs/conversions/getting-started)
+- [Klaviyo attribution ayarları](https://help.klaviyo.com/hc/en-us/articles/11118357030555)
+- [Meta resmî Marketing API koleksiyonu](https://www.postman.com/meta/facebook-marketing-api/documentation/0zr4mes/facebook-marketing-api-mapi)
+- [Shopify gizlilik uyumu](https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance)
+- [Vercel geri alma](https://vercel.com/docs/cli/rollback)

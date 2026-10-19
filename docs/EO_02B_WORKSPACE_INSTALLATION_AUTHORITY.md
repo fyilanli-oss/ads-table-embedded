@@ -1,24 +1,27 @@
-# EO-02-B — Workspace, installation and generation authority
+# EO-02-B — Çalışma alanı, kurulum ve kurulum nesli yetkisi
 
-**Kontrol tarihi:** 6 Ekim 2026  
-**Durum:** Accepted
+**Kontrol tarihi:** 6 Ekim 2026
+
+**Durum:** Kabul edildi
 
 ## Analist sonucu
 
-Bu paket Shopify mağazasını AdsTable tenant'ı yapmaz. Canonical tenant 'workspace_id'dir; Shopify Shop GID yalnız doğrulanmış installation adapter kimliğidir. Görünür mağaza domain'i yönlendirme ve doğrulama bağlamıdır, kalıcı sahiplik anahtarı değildir.
+Bu paket Shopify mağazasının kimliğini AdsTable kiracı anahtarı yerine kullanmaz. Yetkili kiracı anahtarı `workspace_id` değeridir; Shopify Shop GID, doğrulanmış kurulum adaptörünün kimliğidir. Görünen mağaza alan adı yönlendirme ve doğrulama içindir; kalıcı sahiplik anahtarı değildir.
 
-İlk doğrulanmış kurulum tek transaction içinde bir workspace ve generation 1 üretir. Aynı aktif kurulum tekrar açıldığında yeni workspace veya generation oluşmaz. Uninstall, 48 saatlik reinstall yarışı, terminal deletion ve yeni generation üretimi EO-02-D'nin lifecycle otoritesidir; EO-02-B bu durumları kendiliğinden reaktive etmez.
+İlk doğrulanmış kurulum tek veritabanı işleminde bir çalışma alanı ve 1 numaralı kurulum nesli oluşturur. Aynı aktif kurulum yeniden açıldığında yeni çalışma alanı veya nesil oluşmaz. Uygulamayı kaldırma, 48 saatlik yeniden kurulum yarışı, tamamlanmış silme ve yeni nesil üretimi EO-02-D'nin yaşam döngüsü yetkisindedir. EO-02-B bu durumları kendiliğinden yeniden aktifleştirmez.
 
-## Resmî kaynak kontrolü
+Bu belge 6 Ekim 2026'daki kabul kapsamını ve aşağıdaki 9 Ekim düzeltmesini birlikte anlatır. Teknik kiracı anahtarı ile mağazanın ticaret kaynağı olması farklı kavramlardır; düzeltme bunları birbirinin yerine geçirmez. Güncel proje durumu Execution Plan'dadır.
+
+## Tarihsel resmî kaynak kontrolü
 
 6 Ekim 2026 tarihinde:
 
 - Shopify embedded istek kimliği App Bridge ID token ile doğrulanır.
-- ID token API çağrısı yetkisi taşımaz; backend bunu access token'a çevirir.
-- Arka plan işleri offline token gerektirir; public app'lerde expiring offline token modeli kullanılmalıdır.
-- Admin GraphQL 'shop' sorgusu access token'ın bağlı olduğu Shop kaynağını, 'id' ve 'myshopifyDomain' alanlarıyla doğrular.
-- Stabil Admin API tabanı '2026-10'dur.
-- Supabase/Postgres tarafında private schema, forced RLS, dar object grant, indexed foreign key ve kısa atomik transaction uygulanır.
+- ID token API çağrısı yetkisi taşımaz; sunucu bunu erişim token'ına çevirir.
+- Arka plan işleri çevrimdışı token gerektirir; herkese açık uygulamalarda süresi dolan çevrimdışı token modeli kullanılmalıdır.
+- Admin GraphQL `shop` sorgusu, erişim token'ının bağlı olduğu Shop kaynağını `id` ve `myshopifyDomain` alanlarıyla doğrular.
+- Kararlı Admin API tabanı `2026-10`'dur.
+- Supabase/PostgreSQL tarafında özel şema, zorunlu RLS, dar nesne yetkisi, indeksli yabancı anahtar ve kısa atomik veritabanı işlemi uygulanır.
 
 Kaynaklar:
 
@@ -29,78 +32,78 @@ Kaynaklar:
 - https://shopify.dev/docs/api/admin-graphql/2026-10/queries/shop
 - https://supabase.com/docs/guides/database/postgres/row-level-security
 
-## Authority akışı
+## Yetki akışı
 
-1. Resmî Shopify adapter'ı ID token'ı doğrular.
-2. Backend token exchange/authenticator üzerinden Admin API yetkisi alır.
-3. 'shop { id myshopifyDomain }' server-side okunur.
-4. ID token domain'i ile Admin shop domain'i aynı değilse hiçbir DB yazımı yapılmaz.
-5. Shop GID başına transaction advisory lock alınır.
-6. İlk kayıt atomik workspace + installation generation 1 üretir.
-7. Aktif kayıt zaten varsa aynı workspace/generation döner.
-8. Domain değişmişse Shop GID aynı kaldığı sürece ikinci workspace oluşturulmaz; domain history yazılır.
-9. Uninstall/deletion durumunda EO-02-D kararı olmadan kayıt reaktive edilmez.
+1. Resmî Shopify adaptörü ID token'ı doğrular.
+2. Sunucu, token değişimi/kimlik doğrulayıcı üzerinden Admin API yetkisi alır.
+3. `shop { id myshopifyDomain }` sunucuda okunur.
+4. ID token alan adı ile Admin API'deki mağaza alan adı farklıysa veritabanına hiçbir şey yazılmaz.
+5. Shop GID başına, işlem kapsamlı danışma kilidi (transaction advisory lock) alınır.
+6. İlk kayıt, çalışma alanını ve 1 numaralı kurulum neslini tek işlemde oluşturur.
+7. Aktif kayıt zaten varsa aynı çalışma alanı ve nesil döner.
+8. Alan adı değişmiş ama Shop GID aynı kalmışsa ikinci çalışma alanı oluşturulmaz; alan adı geçmişi yazılır.
+9. Uygulamayı kaldırma/silme durumunda EO-02-D kararı olmadan kayıt yeniden aktifleştirilmez.
 
 ## Veri modeli
 
-- 'app.workspaces': canonical tenant registry.
-- 'shopify.installations': Shop GID, canonical domain, workspace bağı, generation ve lifecycle state.
-- 'shopify.installation_domain_history': aynı Shop GID için doğrulanmış domain değişiklik izi.
+- `app.workspaces`: Yetkili kiracı kayıt defteri.
+- `shopify.installations`: Shop GID, standartlaştırılmış alan adı, çalışma alanı bağı, kurulum nesli ve yaşam döngüsü durumu.
+- `shopify.installation_domain_history`: Aynı Shop GID için doğrulanmış alan adı değişikliği izi.
 
-Bütün tablolar private schema'dadır; RLS enabled + forced'dur. 'anon', 'authenticated', 'service_role' ve browser yolu kapalıdır. 'adstable_runtime' doğrudan tablo DML yetkisi almaz; yalnız iki dar server function'ı çağırabilir. DELETE yetkisi verilmez.
+Bütün tablolar özel şemadadır; RLS açıktır ve zorunlu uygulanır. `anon`, `authenticated`, `service_role` ve tarayıcı yolu kapalıdır. `adstable_runtime` doğrudan tablo değiştirme (DML) yetkisi almaz; yalnız iki dar sunucu fonksiyonunu çağırabilir. DELETE yetkisi verilmez.
 
-## State matrisi
+## Durum matrisi
 
 | Durum | Sonuç |
 |---|---|
-| ID token eksik/geçersiz | Fail-closed, yazım yok |
-| ID token domain'i ile Admin shop farklı | Fail-closed, yazım yok |
-| İlk doğrulanmış kurulum | Workspace + generation 1 |
-| Aktif kurulum tekrar çağrıldı | Aynı workspace + aynı generation |
-| Eski doğrulama timestamp'i | Reject, yazım yok |
-| Uninstall/deletion pending | EO-02-D olmadan reactivation yok |
-| Deleted geçmişi mevcut | Yeni generation yalnız EO-02-D |
+| ID token eksik/geçersiz | Güvenli ret; yazım yok |
+| ID token alan adı ile Admin API'deki mağaza farklı | Güvenli ret; yazım yok |
+| İlk doğrulanmış kurulum | Çalışma alanı + kurulum nesli 1 |
+| Aktif kurulum tekrar çağrıldı | Aynı çalışma alanı + aynı nesil |
+| Eski doğrulama zaman damgası | Ret; yazım yok |
+| Kaldırma/silme bekliyor | EO-02-D olmadan yeniden aktifleştirme yok |
+| Silinmiş kurulum geçmişi mevcut | Yeni nesil yalnız EO-02-D yetkisinde |
 
 ## Kapsam sınırı
 
-Bu pakette görünür UI değişikliği yoktur. Raw HTML veya Polaris kararı üretilmez.
+Bu pakette görünür arayüz değişikliği yoktur. Ham HTML veya Polaris kararı üretilmez.
 
-Token plaintext'i, sahte token kolonu veya geçici token deposu kurulmaz. Expiring offline token refresh/rotation ve encrypted envelope EO-03-B'de uygulanır. EO-02-D'den önce uninstall, deletion ya da clean-reinstall davranışı uygulanmış sayılmaz.
+Açık metin token, sahte token kolonu veya geçici token deposu kurulmaz. Süresi dolan çevrimdışı token'ın yenilenmesi/döndürülmesi ve şifreli zarf EO-03-B'de uygulanır. EO-02-D'den önce kaldırma, silme veya temiz yeniden kurulum davranışı uygulanmış sayılmaz.
 
 ## Canlı kabul sonucu
 
-- Migration history: 3/3 EO-02-B migration mevcut
-- Authority tabloları: 3; RLS enabled + forced: 3/3
-- Runtime direct table DML: 0
-- Runtime function execute: 2/2
-- Data API function execute: 0
-- Self-cleaning bootstrap/idempotency/stale/domain-change probe: PASS
-- Probe sonrası business row: 0
+- Migration geçmişi: 3/3 EO-02-B migration mevcut
+- Yetki tabloları: 3; RLS açık ve zorunlu: 3/3
+- Çalışma zamanının doğrudan tablo değiştirme yetkisi: 0
+- Çalışma zamanının fonksiyon çalıştırma yetkisi: 2/2
+- Data API fonksiyon çalıştırma yetkisi: 0
+- Kendi test verisini temizleyen ilk kurulum, yinelenen işlem, eski doğrulama ve alan adı değişimi sınaması: PASS
+- Sınama sonrası iş verisi satırı: 0
 - Security Advisor: 0
 - Performance Advisor: 0
-- Evidence: 'docs/evidence/EO_02B_LIVE_ACCEPTANCE_2026-10-06.json'
+- Kanıt: `docs/evidence/EO_02B_LIVE_ACCEPTANCE_2026-10-06.json`
 
 ## Kabul
 
-- Migration, domain service ve contract aynı state matrisini uygular.
-- Eşzamanlı ilk bootstrap tek live authority üretir.
-- Caller tenant claim'i service arayüzünde yoktur.
-- Shop GID kalıcı kimliktir; domain değişimi audit edilir.
-- Runtime function-only erişim taşır; doğrudan table DML taşımaz.
-- Test, build ve Governance CI PASS olur.
-- Supabase canlı uygulaması açık kullanıcı onayıyla PASS oldu.
-- PR #6 Governance CI PASS sonrası açık kullanıcı onayıyla merge edildi.
+- Migration, iş alanı servisi ve sözleşme aynı durum matrisini uygular.
+- Eşzamanlı ilk kurulum yalnız bir aktif yetki kaydı oluşturur.
+- Çağıranın gönderdiği kiracı iddiası servis arayüzünde yoktur.
+- Shop GID kalıcı kimliktir; alan adı değişimi denetim izine yazılır.
+- Çalışma zamanı yalnız fonksiyonlara erişir; doğrudan tablo değiştirme yetkisi taşımaz.
+- Testler, derleme ve Governance CI geçer.
+- Supabase canlı uygulaması açık kullanıcı onayıyla geçti.
+- PR #6, Governance CI geçtikten sonra açık kullanıcı onayıyla merge edildi.
 - Kabul merge commit'i: `edc9e21588f5a32bea139b754ea0108c9809cf27`.
 
-## 9 Ekim 2026 — Kurulu mağaza otoritesi düzeltmesi
+## 9 Ekim 2026 — Kurulu mağaza yetkisi düzeltmesi
 
-Shopify embedded workspace'in commerce otoritesi, uygulamanın kurulu olduğu ve ID token + Admin GraphQL `shop` yanıtıyla doğrulanan Shopify mağazasıdır. Kimlik `Shop GID + canonical myshopifyDomain + install generation` üçlüsüdür ve kullanıcı tarafından seçilemez veya değiştirilemez.
+Shopify embedded çalışma alanının ticaret kaynağı, uygulamanın kurulu olduğu ve ID token ile Admin GraphQL `shop` yanıtı üzerinden doğrulanan Shopify mağazasıdır. Kimlik `Shop GID + canonical myshopifyDomain + install generation` üçlüsüdür; kullanıcı tarafından seçilemez veya değiştirilemez.
 
-- Bir workspace yalnız bir kurulu Shopify mağazasına aittir.
-- Provider Reporting Account seçimi bu mağaza otoritesinin altında kalır; mağazayı değiştiremez.
-- Provider entity'leri kurulu mağazaya deterministik bağlanamıyorsa hesap bağlı kalabilir ancak reporting authority olamaz; Dataset V2 yazımı ve SnapshotJob fail-closed durur.
-- Pixel veya provider domaini mağaza otoritesi değildir.
-- İkinci Shopify mağazası ayrı app installation, workspace ve subscription gerektirir.
-- WooCommerce, BigCommerce ve Magento bu Shopify embedded workspace'e commerce source olarak bağlanamaz.
+- Bir çalışma alanı yalnız bir kurulu Shopify mağazasına aittir.
+- Sağlayıcı Reporting Account seçimi bu mağaza yetkisinin altındadır; mağazayı değiştiremez.
+- Sağlayıcı varlıkları kurulu mağazaya kesin ve tekrarlanabilir biçimde bağlanamıyorsa hesap bağlı kalabilir, fakat veri raporlama yetkisi alamaz; Dataset V2 yazımı ve SnapshotJob güvenli biçimde durur.
+- Pixel veya sağlayıcı alan adı mağaza yetkisini belirlemez.
+- İkinci Shopify mağazası ayrı uygulama kurulumu, çalışma alanı ve abonelik gerektirir.
+- WooCommerce, BigCommerce ve Magento bu Shopify embedded çalışma alanına ticaret kaynağı olarak bağlanamaz.
 
 Bağlayıcı düzeltme: `contracts/eo-02bc-installed-shop-authority-correction-v1.json`.

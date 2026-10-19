@@ -1,48 +1,61 @@
-# EO-02-B/EO-02-C — Kurulu Shopify mağazası otoritesi düzeltmesi
+# EO-02-B/EO-02-C — Kurulu Shopify mağazası yetkisi düzeltmesi
 
-Karar tarihi: 9 Ekim 2026  
-Yerleşim: EO-02-B ve EO-02-C corrective amendment; EO-02-D acceptance öncesi zorunlu kapı.
+**Karar tarihi:** 9 Ekim 2026
+
+**Yerleşim:** EO-02-B ve EO-02-C için düzeltici ek; EO-02-D kabulü öncesinde zorunlu kapı.
+
+Bu belge 9 Ekim 2026'da kabul edilen düzeltmeyi anlatır; güncel proje durumu Execution Plan'dadır. Dokümantasyon çevirisi yeni veritabanı veya canlı işlem yetkisi vermez.
 
 ## Karar
 
-Shopify embedded AdsTable workspace'inin commerce otoritesi, uygulamanın kurulu olduğu doğrulanmış Shopify mağazasıdır. Otorite `Shop GID + canonical myshopifyDomain + install generation` ile belirlenir.
+Shopify embedded AdsTable çalışma alanının ticaret kaynağı, uygulamanın kurulu olduğu doğrulanmış Shopify mağazasıdır. Yetki `Shop GID + canonical myshopifyDomain + install generation` ile belirlenir: kalıcı mağaza kimliği, standartlaştırılmış mağaza alan adı ve kurulum nesli birlikte kullanılır.
 
-Kullanıcı mağaza seçmez. Reporting Account, pixel, provider domaini veya başka bir commerce hesabı bu otoriteyi değiştiremez.
+Kullanıcı mağaza seçmez. Reporting Account, pixel, sağlayıcı alan adı veya başka ticaret hesabı bu yetkiyi değiştiremez.
 
 ## İş kuralları
 
-- Bir app installation = bir Shopify mağazası = bir workspace = bir subscription.
+- Bir uygulama kurulumu = bir Shopify mağazası = bir çalışma alanı = bir abonelik.
 - İkinci Shopify mağazası için ayrı AdsTable kurulumu ve aboneliği gerekir.
-- Shopify organic verisi yalnız kurulu mağazadan gelir.
-- Meta, Google Ads ve Klaviyo Reporting Account seçimleri kurulu mağaza otoritesinin altındadır.
-- Provider entity'leri kurulu mağazaya deterministik bağlanamıyorsa hesap bağlı kalabilir fakat reporting authority olamaz.
-- Scope kanıtlanmadan Dataset V2 yazımı ve SnapshotJob çalışması yasaktır.
-- Pixel yardımcı scope kanıtı olabilir; trust root değildir.
-- WooCommerce, BigCommerce ve Magento bu Shopify embedded workspace'e commerce source olarak bağlanmaz. Gelecekte desteklenirse ayrı ürün, installation ve billing modeli gerekir.
-- Geçmiş veri yeni mağazaya relabel edilmez.
+- Shopify organik verisi yalnız kurulu mağazadan gelir.
+- Meta, Google Ads ve Klaviyo Reporting Account seçimleri kurulu mağaza yetkisinin altındadır.
+- Sağlayıcı varlıkları kurulu mağazaya kesin ve tekrarlanabilir biçimde bağlanamıyorsa hesap bağlı kalabilir, fakat veri raporlama yetkisi alamaz.
+- Kapsam kanıtlanmadan Dataset V2 yazımı ve SnapshotJob çalışması yasaktır.
+- Pixel, kapsamı destekleyen kanıt olabilir; güvenin temel kaynağı değildir.
+- WooCommerce, BigCommerce ve Magento bu Shopify embedded çalışma alanına ticaret kaynağı olarak bağlanmaz. Gelecekte desteklenirse ayrı ürün, kurulum ve faturalandırma modeli gerekir.
+- Geçmiş veri, yeni mağazaya aitmiş gibi yeniden etiketlenmez.
 
-## UI sonucu
+## Arayüz sonucu
 
-Settings'te mağaza seçici veya değiştirici yoktur. Kurulu mağaza kimliği gerekirse yalnız “Shopify store” adıyla salt-okunur bağlam olarak gösterilebilir; ayrı ayar yüzeyi değildir.
+Settings'te mağaza seçici veya değiştirici yoktur. Kurulu mağaza kimliği gerekirse yalnız “Shopify store” adıyla salt okunur bağlam olarak gösterilebilir; ayrı ayar yüzeyi değildir.
 
-## Database ve runtime düzeltmesi
+## Veritabanı ve çalışma zamanı düzeltmesi
 
-Yeni ileri yönlü migration, entitlement projection'daki eski üç metadata kolonunu kaldırır ve `apply_shopify_app_pricing_snapshot` ile `resolve_workspace_entitlement` sonuçlarını yalnız gerçek entitlement verilerine indirger. Uygulanmış migration'lar ve tarihsel kabul kanıtları değiştirilmez.
+Yeni, ileri yönlü migration; kullanım hakkı (entitlement) yansıtmasındaki eski üç metadata kolonunu kaldırır. `apply_shopify_app_pricing_snapshot` ve `resolve_workspace_entitlement` sonuçları yalnız gerçek kullanım hakkı verilerini içerir. Uygulanmış migration'lar ve tarihsel kabul kanıtları değiştirilmez.
 
-Repository migration'ının varlığı canlı Supabase değişikliğine yetki vermez. Canlı uygulama için ayrı açık ürün sahibi onayı gerekir.
+Repository'de migration bulunması canlı Supabase değişikliğine yetki vermez. Canlı uygulama için ayrı açık ürün sahibi onayı gerekir.
 
 ## Canlı uygulama sonucu
 
-9 Ekim 2026'da ayrı açık ürün sahibi onayı alındı. Preflight sırasında bekleyen kilit ve 30 saniyeden uzun transaction bulunmadı; üç eski kolonun yalnız kendi check constraint bağımlılıkları görüldü. Migration Supabase'e `20261009070314 / eo02bc_installed_shop_authority` olarak uygulandı. Postflight doğrulamasında eski kolon sayısı sıfır, entitlement satır sayısı değişmeden bir, iki runtime fonksiyonu `adstable_owner` sahipliğinde `SECURITY DEFINER` ve boş `search_path` ile yeniden kurulmuş, `EXECUTE` yetkisi yalnız `adstable_owner` ve `adstable_runtime` rollerinde bulunmuştur. Security Advisor bulgusu sıfırdır. Kanıt: `docs/evidence/EO_02BC_INSTALLED_SHOP_AUTHORITY_LIVE_2026-10-09.json`.
+9 Ekim 2026'da ayrı açık ürün sahibi onayı alındı. Ön kontrolde bekleyen kilit ve 30 saniyeden uzun veritabanı işlemi bulunmadı; üç eski kolona bağlı yalnız kendi kontrol kısıtları görüldü.
 
-## Resmî kaynaklar
+Migration, Supabase'e `20261009070314 / eo02bc_installed_shop_authority` olarak uygulandı. Son kontrolde:
+
+- Eski kolon sayısı sıfırdı.
+- Kullanım hakkı satır sayısı değişmeden bir kaldı.
+- İki çalışma zamanı fonksiyonu `adstable_owner` sahipliğinde, `SECURITY DEFINER` ve boş `search_path` ile yeniden kurulmuştu.
+- `EXECUTE` yetkisi yalnız `adstable_owner` ve `adstable_runtime` rollerindeydi.
+- Security Advisor bulgusu sıfırdı.
+
+Kanıt: `docs/evidence/EO_02BC_INSTALLED_SHOP_AUTHORITY_LIVE_2026-10-09.json`.
+
+## Tarihsel resmî kaynaklar
 
 Kontrol tarihi: 9 Ekim 2026.
 
-- Shopify ID tokens: https://shopify.dev/docs/apps/build/authentication-authorization/id-tokens
-- Shopify Admin GraphQL shop query: https://shopify.dev/docs/api/admin-graphql/latest/queries/shop
-- Shopify authentication: https://shopify.dev/docs/apps/build/authentication-authorization
-- Shopify organization stores: https://help.shopify.com/en/manual/organization-settings/expansion-stores
-- Shopify app installation: https://help.shopify.com/en/manual/apps/installing-apps
+- Shopify ID token'ları: https://shopify.dev/docs/apps/build/authentication-authorization/id-tokens
+- Shopify Admin GraphQL mağaza sorgusu: https://shopify.dev/docs/api/admin-graphql/latest/queries/shop
+- Shopify kimlik doğrulama: https://shopify.dev/docs/apps/build/authentication-authorization
+- Shopify organizasyon mağazaları: https://help.shopify.com/en/manual/organization-settings/expansion-stores
+- Shopify uygulama kurulumu: https://help.shopify.com/en/manual/apps/installing-apps
 - Shopify App Pricing: https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing
-- Supabase safe object deletion: https://supabase.com/docs/guides/database/postgres/data-deletion
+- Supabase güvenli nesne silme: https://supabase.com/docs/guides/database/postgres/data-deletion

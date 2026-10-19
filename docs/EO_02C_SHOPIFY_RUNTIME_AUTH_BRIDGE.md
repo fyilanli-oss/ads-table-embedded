@@ -1,18 +1,22 @@
-# EO-02-C corrective gate — Shopify runtime authentication bridge
+# EO-02-C düzeltme kapısı — Shopify çalışma zamanı kimlik doğrulama köprüsü
 
-**Kontrol tarihi:** 8 Ekim 2026  
-**Durum:** Karar donduruldu; implementation başlamadan önce executable contract bağlayıcıdır  
-**Paket:** A6-EO-02-C içinde corrective gate; yeni parent veya paralel hat değildir
+**Kontrol tarihi:** 8 Ekim 2026
+
+**O tarihteki durum:** Karar sabitlendi; uygulamadan önce makine tarafından denetlenen sözleşme bağlayıcıdır.
+
+**Paket:** A6-EO-02-C içindeki düzeltme kapısıdır; yeni ana paket veya paralel çalışma hattı değildir.
+
+Bu belge 8 Ekim 2026'daki eksikliği ve seçilen düzeltmeyi anlatır. “Yoktur” ifadeleri o aşamaya aittir; bugünkü uygulama envanteri değildir. Sonraki canlı kabul `docs/runbooks/EO_02C_LIVE_ACCEPTANCE_RUNBOOK.md`, güncel proje durumu Execution Plan üzerinden okunur. Bu belge yeni canlı işlem yetkisi vermez.
 
 ## Analist sonucu
 
-EO-02-C runtime persistence adapterı ve internal reconciliation callerı kod seviyesinde hazırdır, fakat Production uygulamasında callerı çalıştıracak doğrulanmış Shopify server boundary bulunmamaktadır. Mevcut üç ürün URL'i yalnız preview route'udur; `shopify.server.ts`, `authenticate.admin(request)` kullanan pathless Admin layout, kalıcı session storage ve gerekli Production environment sözleşmesi yoktur.
+EO-02-C'nin kalıcı kayıt adaptörü ve iç uzlaştırma çağırıcısı kodda hazırdı; fakat Production'da çağırıcıyı çalıştıracak doğrulanmış Shopify sunucu sınırı yoktu. Üç ürün adresi yalnız önizlemeydi. `shopify.server.ts`, `authenticate.admin(request)` kullanan ve adrese ek yol getirmeyen (pathless) Admin yerleşimi, kalıcı oturum deposu ve gerekli Production ortam değişkeni sözleşmesi bulunmuyordu.
 
-Bu nedenle yalnız `ADSTABLE_RUNTIME_DATABASE_URL` ekleyip deploy etmek canlı persistence kanıtı üretemez. Database Secret aktivasyonu, bu corrective gate PASS olmadan yasaktır.
+Yalnız `ADSTABLE_RUNTIME_DATABASE_URL` ekleyip dağıtım yapmak canlı kalıcı kayıt kanıtı üretemez. Bu düzeltme kapısı geçmeden veritabanı gizli bilgisini etkinleştirmek yasaktır.
 
-## Resmî kaynak kontrolü
+## Tarihsel resmî kaynak kontrolü
 
-8 Ekim 2026 tarihinde aşağıdaki güncel Shopify kaynakları kontrol edildi:
+8 Ekim 2026 tarihinde:
 
 - https://shopify.dev/docs/api/shopify-app-react-router/latest
 - https://shopify.dev/docs/api/shopify-app-react-router/latest/authenticate/admin
@@ -22,43 +26,43 @@ Bu nedenle yalnız `ADSTABLE_RUNTIME_DATABASE_URL` ekleyip deploy etmek canlı p
 - https://github.com/Shopify/shopify-app-template-react-router/blob/main/app/shopify.server.ts
 - https://github.com/Shopify/shopify-app-template-react-router/blob/main/app/routes/app.tsx
 
-Shopify'ın resmî React Router sözleşmesine göre embedded ürün route'ları authenticated Admin layout altında yaşar, her Admin isteği `authenticate.admin(request)` ile doğrulanır, framework kalıcı session storage kullanır ve public app expiring offline access token modelini etkinleştirir.
+Resmî React Router sözleşmesinde embedded ürün adresleri kimliği doğrulanmış Admin yerleşimi altında çalışır. Her Admin isteği `authenticate.admin(request)` ile doğrulanır; framework kalıcı oturum deposunu kullanır; herkese açık uygulama süresi dolan çevrimdışı erişim token'ı modelini etkinleştirir.
 
 ## Düzeltme kapsamı
 
-1. URL'leri değiştirmeyen pathless authenticated Admin layout.
-2. Resmî `@shopify/shopify-app-react-router` `shopifyApp` ve `authenticate.admin` sınırı.
-3. Supabase private schema üzerinde ciphertext-only Shopify session envelope.
-4. `adstable_runtime` için function-only session repository; doğrudan table DML yok.
-5. Node `crypto` AES-256-GCM; anahtar yalnız Vercel Production Secret'ta, versioned ve repository/log/browser dışında.
-6. Expiring offline access tokens.
-7. Doğrulanmış ID token domain'i ile Admin GraphQL `shop { id myshopifyDomain }` kimliğinin eşleştirilmesi.
-8. Doğrulanmış uygulama girişinde EO-02-C reconciliation callerının idempotent çalıştırılması.
-9. Gerçek Shopify Admin session, Supabase persistence, browser/response/log secret taraması ve explicit ürün sahibi kabulü.
+1. Adresleri değiştirmeyen, kimlik doğrulamalı pathless Admin yerleşimi.
+2. Resmî `@shopify/shopify-app-react-router`, `shopifyApp` ve `authenticate.admin` sınırı.
+3. Supabase özel şemada yalnız şifreli Shopify oturum zarfı.
+4. `adstable_runtime` için yalnız fonksiyon çağıran oturum adaptörü; doğrudan tablo değiştirme (DML) yok.
+5. Node `crypto` AES-256-GCM şifreleme; anahtar yalnız Vercel Production Secret'ta, sürümlü ve repository/log/tarayıcı dışında.
+6. Süresi dolan çevrimdışı erişim token'ları.
+7. Doğrulanmış ID token alan adıyla Admin GraphQL `shop { id myshopifyDomain }` kimliğinin eşleştirilmesi.
+8. Doğrulanmış uygulama girişinde EO-02-C uzlaştırma çağırıcısının yinelendiğinde aynı sonucu koruyarak çalışması.
+9. Gerçek Shopify Admin oturumu, Supabase kalıcı kaydı, tarayıcı/yanıt/log gizli bilgi taraması ve açık ürün sahibi kabulü.
 
-## UI analist brief'i
+## Arayüz için analist açıklaması
 
-- Kullanıcı amacı: Merchant AdsTable'ı Shopify Admin içinde mevcut üç URL ve mevcut preview görünümüyle açar; authentication arka planda gerçekleşir.
-- Başlangıç: Uygulama Shopify Admin içinden açılır ve App Bridge ID token üretir.
-- Başarı: İstek doğrulanır, mevcut Funnel/Ad Analysis/Settings preview yüzeyi değişmeden render edilir ve server-only entitlement reconciliation çalışır.
-- Error: Authentication veya persistence başarısızlığında korunan veri render edilmez; fail-closed error boundary kullanılır.
-- Değişmeyecek UI: Görünen metinler, route URL'leri, Polaris 2.0 RC baseline ve mevcut preview content.
-- Kapsam dışı: Settings ürün davranışı, provider OAuth/Reporting Account seçimi, yeni grafik veya yeni görsel component.
+- **Kullanıcı amacı:** Kullanıcı AdsTable'ı Shopify Admin'de mevcut üç adres ve önizleme görünümüyle açar; kimlik doğrulama arka planda gerçekleşir.
+- **Başlangıç:** Uygulama Shopify Admin içinden açılır; App Bridge ID token üretir.
+- **Başarı:** İstek doğrulanır. Mevcut Funnel/Ad Analysis/Settings önizlemesi değişmeden gösterilir; yalnız sunucuda çalışan kullanım hakkı uzlaştırması yürür.
+- **Hata:** Kimlik doğrulama veya kalıcı kayıt başarısızsa korunan veri gösterilmez; güvenli ret uygulayan hata sınırı kullanılır.
+- **Değişmeyen arayüz:** Görünen metinler, adresler, Polaris 2.0 RC temeli ve mevcut önizleme içeriği.
+- **Kapsam dışı:** Settings ürün davranışı, sağlayıcı OAuth/Reporting Account seçimi, yeni grafik veya yeni görsel bileşen.
 
-### Exact Shopify component mapping
+### Tam Shopify bileşen eşlemesi
 
-| Görünür öğe | Exact component | Karar |
+| Görünür öğe | Tam bileşen adı | Karar |
 |---|---|---|
-| Embedded provider | `AppProvider` from `@shopify/shopify-app-react-router/react` | Resmî App Bridge/React Router boundary |
-| Sayfa/section/text/link | Mevcut `s-page`, `s-section`, `s-paragraph`, `s-link` | Görünüm ve metin değişmez |
-| Auth error | Framework `boundary.error` ve `boundary.headers` | Özel modal/button/error taklidi yok |
-| Navigation | Mevcut üç URL | URL ve bilgi mimarisi değişmez |
+| Embedded sağlayıcı | `AppProvider`, `@shopify/shopify-app-react-router/react` paketinden | Resmî App Bridge/React Router sınırı |
+| Sayfa/bölüm/metin/bağlantı | Mevcut `s-page`, `s-section`, `s-paragraph`, `s-link` | Görünüm ve metin değişmez |
+| Kimlik doğrulama hatası | Framework'ün `boundary.error` ve `boundary.headers` işlevleri | Özel modal/buton/hata taklidi yok |
+| Gezinme | Mevcut üç adres | Adres ve bilgi mimarisi değişmez |
 
-Raw HTML action/form, özel CSS, literal renk, özel component ve public test endpoint'i eklenmez.
+Ham HTML eylem/form kontrolü, özel CSS, doğrudan renk değeri, özel bileşen ve herkese açık test uç noktası eklenmez.
 
-## Runtime environment sözleşmesi
+## Çalışma zamanı ortam değişkeni sözleşmesi
 
-| Anahtar | Tür | Scope |
+| Anahtar | Tür | Kapsam |
 |---|---|---|
 | `SHOPIFY_API_KEY` | Config | Production |
 | `SHOPIFY_API_SECRET` | Secret | Production |
@@ -67,22 +71,24 @@ Raw HTML action/form, özel CSS, literal renk, özel component ve public test en
 | `ADSTABLE_SESSION_ENCRYPTION_KEY_V1` | Secret | Production |
 | `ADSTABLE_RUNTIME_DATABASE_URL` | Secret | Production |
 
-Preview ve Development Production credential'larını alamaz. Secret değeri chat, repository, terminal argümanı, kanıt veya loga yazılmaz. Environment değişikliği yeni Production deployment olmadan etkin sayılmaz.
+Preview ve Development Production erişim bilgilerini alamaz. Gizli bilgi değeri sohbete, repository'ye, terminal argümanına, kanıta veya loga yazılmaz. Ortam değişikliği yeni Production dağıtımı olmadan etkin sayılmaz.
 
 ## Kabul kapıları
 
-- Contract/negative tests PASS.
+- Sözleşme ve olumsuz senaryo testleri geçer.
 - Migration canlı Supabase'e ayrı açık kullanıcı onayıyla uygulanır.
-- Session tablosunda plaintext token, refresh token, secret veya JSON bulunmaz.
-- Runtime direct table DML sıfır; yalnız izinli session ve entitlement functions çalışır.
-- `/`, `/ad-analysis`, `/settings` URL'leri korunur.
-- Unauthenticated/direct request fail-closed olur.
-- Gerçek Shopify Admin desktop ve en az 320 px mobil kabulü PASS olur.
-- Gerçek authenticated request workspace/install/subscription/entitlement projection'ını üretir.
-- Secret/browser/HTTP/application/platform log taraması PASS olur.
-- PR ve zorunlu CI PASS olur.
-- EO-02-C yalnız explicit ürün sahibi kapanış kararıyla Accepted olur.
+- Oturum tablosunda açık metin token, yenileme token'ı, gizli bilgi veya JSON bulunmaz.
+- Çalışma zamanının doğrudan tablo değiştirme yetkisi sıfırdır; yalnız izinli oturum ve kullanım hakkı fonksiyonları çalışır.
+- `/`, `/ad-analysis`, `/settings` adresleri korunur.
+- Kimliği doğrulanmamış/doğrudan istek güvenle reddedilir.
+- Gerçek Shopify Admin masaüstü ve en az 320 px mobil kabulü geçer.
+- Gerçek doğrulanmış istek çalışma alanı, kurulum, abonelik ve kullanım hakkı yansımalarını üretir.
+- Gizli bilgi/tarayıcı/HTTP/uygulama/platform log taraması geçer.
+- PR ve zorunlu CI geçer.
+- EO-02-C yalnız açık ürün sahibi kapanış kararıyla kabul edilir.
 
-## Rollback
+## Geri alma
 
-Yeni deployment production authority yapılmadan önce CI ve preview doğrulanır. Canlı hata halinde deployment geri alınır; yeni session/database secret kaldırılır veya rotate edilir; encrypted session rows ilgili güvenli migration rollback/retention kararına göre ele alınır. Eski public preview deployment güvenli geri dönüş noktasıdır.
+Yeni dağıtım Production otoritesi yapılmadan önce CI ve önizleme doğrulanır. Canlı hatada dağıtım geri alınır; yeni oturum/veritabanı gizli bilgisi kaldırılır veya yenilenir. Şifreli oturum satırları ilgili güvenli migration geri alma/saklama kararına göre ele alınır. Eski herkese açık önizleme dağıtımı güvenli geri dönüş noktasıdır.
+
+Bu tarihsel geri alma planı, bugün gizli bilgi değiştirme veya dağıtım yapma yetkisi değildir.

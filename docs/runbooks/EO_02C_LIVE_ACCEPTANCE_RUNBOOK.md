@@ -1,14 +1,18 @@
-# EO-02-C — Shopify App Pricing canlı kabul runbook'u
+# EO-02-C — Shopify App Pricing canlı kabul kılavuzu
 
-**Kontrol tarihi:** 8 Ekim 2026  
-**Canlı uygulama tarihi:** 8 Ekim 2026  
-**Durum:** Accepted — provider, sızıntı, doğrulanmış TLS, canlı desktop/mobile persistence ve ürün sahibi kapanış kabulü PASS
+**Kontrol tarihi:** 8 Ekim 2026
+
+**Canlı uygulama tarihi:** 8 Ekim 2026
+
+**Durum:** Kabul edildi — sağlayıcı, sızıntı, doğrulanmış TLS, canlı masaüstü/mobil kalıcı kayıt ve ürün sahibi kapanış kabulü geçti.
+
+Bu kılavuz 8 Ekim 2026'daki yürütme sırasını, ara bulguları ve nihai kabulü birlikte saklar. Ara bölümlerdeki “bekliyor/yok” ifadeleri bugünkü açık iş listesi değildir. 9 Ekim düzeltmesi ayrıca kayıtlıdır. Güncel proje durumu Execution Plan'dadır; bu belge yeni canlı sorgu, plan seçimi, gizli bilgi veya dağıtım işlemi yetkilendirmez.
 
 ## Amaç
 
-Shopify App Pricing planını, Partner API Production secret sınırını ve AdsTable entitlement projection'ını tek kontrollü akışta `null → trial → active` durumlarıyla doğrulamak. Bu runbook EO-02-C'yi otomatik olarak kapatmaz; her adımın kanıtı ve açık ürün sahibi kabulü gerekir.
+Shopify App Pricing planını, Partner API Production gizli bilgi sınırını ve AdsTable kullanım hakkı yansımasını tek kontrollü akışta `null → trial → active` durumlarıyla doğrulamak. Kılavuz EO-02-C'yi otomatik kapatmaz; her adımın kanıtı ve açık ürün sahibi kabulü gerekir.
 
-## Resmî kaynaklar
+## Tarihsel resmî kaynaklar
 
 - https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing
 - https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing/plans
@@ -24,55 +28,57 @@ Shopify App Pricing planını, Partner API Production secret sınırını ve Ads
 - https://supabase.com/docs/guides/database/connecting-to-postgres/serverless-drivers
 - https://node-postgres.com/features/pooling
 
-Shopify aynı Partner organizasyonundaki development store'a kullanılabilir tüm planları; farklı Partner organizasyonundaki development store'a ise ücretsiz veya Partner'ın **Free for partners and developers** olarak işaretlediği ücretli planları gerçek ücret olmadan test ettirir. Bu testte effective price sıfır olabilir. Vercel Secret değerleri kaydedildikten sonra okunamaz; environment değişikliği yalnız yeni deployment'a uygulanır.
+Shopify, aynı Partner organizasyonundaki geliştirme mağazasına kullanılabilir bütün planları; farklı organizasyondakine ücretsiz veya **Free for partners and developers** işaretli ücretli planları gerçek ücret olmadan test ettirir. Testte uygulanan fiyat sıfır olabilir. Vercel Secret değerleri kaydedildikten sonra okunamaz; ortam değişikliği yalnız yeni dağıtıma uygulanır.
 
-## İnsan kapıları
+## İnsan onayı kapıları
 
-Aşağıdaki işlemler kullanıcı görünür onayı olmadan yapılmaz:
+Aşağıdakiler kullanıcıya görünür onay olmadan yapılmaz:
 
-1. App Store registration kart doğrulaması ve tek seferlik USD 19 ücret.
-2. Public planın kaydedilmesi veya yayımlanması.
-3. Partner API access tokenının Vercel Production Secret olarak girilmesi.
-4. Production deployment.
-5. Development store üzerinde plan seçimi veya plan değişimi.
+1. App Store kaydı için kart doğrulaması ve tek seferlik USD 19 ücret.
+2. Herkese açık planın kaydedilmesi veya yayımlanması.
+3. Partner API erişim token'ının Vercel Production Secret olarak girilmesi.
+4. Production dağıtımı.
+5. Geliştirme mağazasında plan seçimi veya değişimi.
 
-## Dondurulmuş plan
+## Sabitlenmiş plan
+
+Aşağıdaki ad/fiyatlar 8 Ekim kabulündeki değerlerdir; yeni fiyat kararı değildir.
 
 | Alan | Değer |
 |---|---|
-| Public plan adı | AdsTable Monthly |
-| Billing | Monthly |
+| Herkese açık plan adı | AdsTable Monthly |
+| Faturalandırma | Aylık (Monthly) |
 | Fiyat | USD 24.99 |
-| Trial | 14 gün |
-| Welcome link | `/` |
-| Development store test | Farklı Dev Dashboard organizasyonu; `Free for partners and developers` açık, gerçek ücret yok |
-| Private acceptance planı | Shopify'ın `$0 private test plan`ı, trial yok |
-| Aynı anda aktif subscription | Bir |
+| Deneme | 14 gün |
+| Karşılama bağlantısı | `/` |
+| Geliştirme mağazası testi | Farklı Dev Dashboard organizasyonu; `Free for partners and developers` açık, gerçek ücret yok |
+| Özel kabul planı | Shopify'ın `$0 private test plan`ı; deneme yok |
+| Aynı anda aktif abonelik | Bir |
 
-Private test plan yalnız `active` durum şeklinin canlı kabulü içindir; merchant-facing fiyat teklifi değildir.
+Özel test planı yalnız `active` durum şeklinin canlı kabulü içindir; kullanıcıya sunulan fiyat teklifi değildir.
 
-## Aşama 0 — Salt-okunur preflight
+## Aşama 0 — Salt okunur ön kontrol
 
-- GitHub `main`, production deployment SHA ve mevcut Vercel environment anahtar adları kaydedilir.
+- GitHub `main`, Production dağıtım SHA'sı ve Vercel ortam değişkeni anahtar adları kaydedilir.
 - Vercel değerleri okunmaz veya dışarı aktarılmaz.
-- Partner API client'ın yalnız `Manage apps` yetkisi taşıdığı doğrulanır.
-- Development store/app organizasyon ilişkisi doğrulanır; farklı organizasyondaysa yalnız `Free for partners and developers` açık plan kullanılır.
-- Kanıt dosyasına token, session, cookie, authorization header, PII veya tam response header yazılamaz.
+- Partner API istemcisinin yalnız `Manage apps` yetkisi doğrulanır.
+- Mağaza/uygulama organizasyon ilişkisi doğrulanır. Farklı organizasyonda yalnız `Free for partners and developers` açık plan kullanılır.
+- Kanıta token, oturum, cookie, authorization başlığı, kişisel veri (PII) veya tam yanıt başlıkları yazılamaz.
 
-Başarısızlıkta hiçbir mutation yapılmaz.
+Başarısızlıkta hiçbir dış sistem değişikliği yapılmaz.
 
-## Aşama 1 — Shopify App Store registration
+## Aşama 1 — Shopify App Store kaydı
 
-1. Partner hesabının tek seferlik USD 19 App Store registration işlemi tamamlanır.
-2. Shopify kesin bir 24 saatlik retry süresi yayımlamadığı için `Too many attempts` devam ederken farklı kart veya tarayıcıyla ardışık deneme yapılmaz.
-3. Yeni denemeden önce bankada uluslararası internet alışverişi ve 3D Secure açık, kart sahibi/adres bilgileri bankadaki kayıtla uyumlu olmalıdır.
-4. Tek kontrollü deneme başarısızsa tekrar zinciri başlatılmaz: önce bankada işlemin ulaşıp ulaşmadığı doğrulanır; bankaya hiç ulaşmadıysa Shopify Support'a gidilir.
+1. Partner hesabının tek seferlik USD 19 App Store kaydı tamamlanır.
+2. Shopify kesin 24 saatlik yeniden deneme süresi yayımlamadığından `Too many attempts` sürerken farklı kart veya tarayıcıyla ardışık deneme yapılmaz.
+3. Yeni deneme öncesinde bankada uluslararası internet alışverişi ve 3D Secure açık; kart sahibi/adres bilgileri banka kaydıyla uyumlu olmalıdır.
+4. Tek kontrollü deneme başarısızsa tekrar zinciri başlatılmaz. Önce bankaya ulaşıp ulaşmadığı doğrulanır; hiç ulaşmadıysa Shopify Support'a gidilir.
 
-Registration tamamlanmadan plan oluşturma veya subscription-state kabulüne geçilmez.
+Kayıt tamamlanmadan plan oluşturma veya abonelik durumu kabulüne geçilmez.
 
-## Aşama 2 — Vercel Production aktivasyonu
+## Aşama 2 — Vercel Production etkinleştirmesi
 
-| Anahtar | Vercel türü | Scope |
+| Anahtar | Vercel türü | Kapsam |
 |---|---|---|
 | `SHOPIFY_PARTNER_ORG_ID` | Config | Production |
 | `SHOPIFY_PARTNER_API_ACCESS_TOKEN` | Secret | Production |
@@ -81,14 +87,14 @@ Registration tamamlanmadan plan oluşturma veya subscription-state kabulüne ge�
 
 Kurallar:
 
-- Exact Config değerleri contract'tan alınır.
-- Token kullanıcı tarafından doğrudan Vercel Secret alanına girilir; chat, terminal argümanı, local env dosyası veya clipboard kanıtına yazılmaz.
-- Database URL kullanıcı tarafından doğrudan Vercel Secret alanına girilir; yalnız Supabase transaction pooler, `adstable_runtime` rolü, project ref `podpwkrpmjiksskxhwsu`, port `6543`, database `postgres` ve `sslmode=require` kabul edilir.
-- Preview ve Development production tokenı almaz.
-- Env değişikliği sonrası yeni production deployment zorunludur.
-- Deployment source SHA, env key metadata ve health sonucu kaydedilir; değerler kaydedilmez.
+- Tam Config değerleri sözleşmeden alınır.
+- Token'ı kullanıcı doğrudan Vercel Secret alanına girer; sohbet, terminal argümanı, yerel env dosyası veya pano kanıtına yazılmaz.
+- Veritabanı URL'ini kullanıcı doğrudan Vercel Secret alanına girer. Yalnız Supabase işlem havuzlayıcısı, `adstable_runtime` rolü, proje kimliği `podpwkrpmjiksskxhwsu`, port `6543`, veritabanı `postgres` ve `sslmode=require` kabul edilir.
+- Preview ve Development Production token'ını almaz.
+- Ortam değişikliği sonrası yeni Production dağıtımı zorunludur.
+- Kaynak SHA, anahtar üst verileri ve sağlık sonucu kaydedilir; değerler kaydedilmez.
 
-## Aşama 3 — Null kabulü
+## Aşama 3 — Abonelik yokluğu (null) kabulü
 
 Plan seçilmeden önce `activeSubscription` sorgulanır.
 
@@ -96,152 +102,153 @@ Beklenen:
 
 - HTTP ve GraphQL başarılıdır.
 - `data.activeSubscription === null`.
-- AdsTable projection `subscription_required` olur.
-- Erişim fail-closed kalır.
-- Son doğrulanmış aktif projection hata cevabıyla overwrite edilmez.
+- AdsTable yansıması `subscription_required` olur.
+- Erişim güvenli biçimde kapalı kalır.
+- Son doğrulanmış aktif kaydın üzerine hata yanıtı yazılmaz.
 
-API/GraphQL hata `null` sayılmaz ve aşama PASS olamaz.
+API/GraphQL hatası `null` sayılmaz; aşama geçemez.
 
-## Aşama 4 — Intended public plan ve trial kabulü
+## Aşama 4 — Hedef herkese açık plan ve deneme kabulü
 
-1. Public plan `USD 24.99 / month`, `14-day trial`, welcome link `/` olarak kaydedilir.
-2. Development store hosted plan selection sayfasından bu planı seçer.
-3. Shopify yönlendirmesi tamamlanınca Partner API anında yeniden sorgulanır.
+1. Plan `USD 24.99 / month`, `14-day trial`, karşılama bağlantısı `/` olarak kaydedilir.
+2. Geliştirme mağazası Shopify'ın barındırdığı plan seçim sayfasından planı seçer.
+3. Yönlendirme bitince Partner API hemen yeniden sorgulanır.
 
 Beklenen:
 
 - `activeSubscription` null değildir.
 - `trialEndsAt` gelecektedir.
 - `currentBillingCycle === null`.
-- Subscription item handle kaydedilir; fiyat yalnız redacted business evidence olarak yazılır.
-- `price.active`, subscription aktiflik bayrağı değildir; yalnız fiyat sürümünün güncel katalog fiyatı olup olmadığını gösterir ve entitlement kapısı yapılamaz.
-- AdsTable projection `trial` olur ve doğrulanmış installation generation'a bağlı kalır.
-- Provider bağlantısı veya hesap değişikliği subscription scope'unu değiştirmez.
+- Abonelik kaleminin adı kaydedilir; fiyat yalnız hassas bilgilerden arındırılmış iş kanıtına yazılır.
+- `price.active` abonelik aktiflik bayrağı değildir. Yalnız fiyat sürümünün güncel katalog fiyatı olup olmadığını gösterir; kullanım hakkı kapısı olamaz.
+- AdsTable yansıması `trial` olur; doğrulanmış kurulum nesline bağlı kalır.
+- Sağlayıcı bağlantısı veya hesap değişikliği abonelik kapsamını değiştirmez.
 
-Bu development store için trial tekrarına güvenilmez; Shopify 180 günlük trial kullanımını izler.
+Bu geliştirme mağazasında denemenin tekrarlanabileceğine güvenilmez; Shopify 180 günlük kullanımı izler.
 
-## 8 Ekim 2026 canlı trial bulgusu
+## 8 Ekim 2026 — Canlı deneme bulgusu
 
-- Yeni uygulama Shopify Admin'de `adstable-1` handle'ıyla ve `embedded.adstable.app` application URL'iyle kuruldu.
-- Public `AdsTable Monthly` planı `USD 24.99 / 30 gün`, 14 gün trial ve `/` welcome link ile seçildi.
-- Farklı Dev Dashboard organizasyonundaki development store için `Free for partners and developers` açık olduğundan Shopify effective fiyatı `USD 0.0` oluşturdu.
-- Partner API `activeSubscription` trial şeklini doğruladı: `trialEndsAt=2026-10-22T08:02:49Z`, `currentBillingCycle=null`, `pendingUpdate=null`.
-- Effective sıfır fiyat nesnesi `price.active=false` döndürdü. Shopify'ın resmî 2026-07 sözleşmesinde bu alan fiyat sürümünün güncelliğidir; active subscription veya entitlement bayrağı değildir.
-- Bu bulgu nedeniyle runtime'ın `price.active === true` şartı kaldırılmadan trial persistence PASS sayılamaz.
+- Yeni uygulama Shopify Admin'de `adstable-1` adı ve `embedded.adstable.app` uygulama adresiyle kuruldu.
+- Herkese açık `AdsTable Monthly` planı `USD 24.99 / 30 gün`, 14 günlük deneme ve `/` karşılama bağlantısıyla seçildi.
+- Farklı Dev Dashboard organizasyonundaki mağazada `Free for partners and developers` açık olduğundan Shopify uygulanan fiyatı `USD 0.0` yaptı.
+- Partner API `activeSubscription` deneme şeklini doğruladı: `trialEndsAt=2026-10-22T08:02:49Z`, `currentBillingCycle=null`, `pendingUpdate=null`.
+- Sıfır fiyat nesnesi `price.active=false` döndürdü. Shopify'ın resmî 2026-07 sözleşmesinde bu alan fiyat sürümünün güncelliğidir; aktif abonelik veya kullanım hakkı bayrağı değildir.
+- Çalışma zamanının `price.active === true` şartı kaldırılmadan denemenin kalıcı kaydı geçmiş sayılamazdı.
 
-## Aşama 5 — Active kabulü
+## Aşama 5 — Aktif abonelik kabulü
 
-Trial kanıtı alındıktan sonra aynı development store, trial içermeyen Shopify `$0 private test plan`ına geçirilir. Bu plan gerçek merchant teklifi değildir ve ücret oluşturmaz.
+Deneme kanıtından sonra aynı mağaza, denemesiz Shopify `$0 private test plan`ına geçirilir. Bu gerçek kullanıcı teklifi değildir; ücret oluşturmaz.
 
-Beklenen canlı sonuç:
+Beklenen:
 
 - `trialEndsAt === null`.
 - `currentBillingCycle.startTime` ve `endTime` doludur.
-- Subscription item handle doğrulanır; `price.active` değeri entitlement kararı vermez.
-- AdsTable projection `active` olur.
-- Test contract effective recurring price'ı sıfır olabilir; ürünün public fiyatı yine USD 24.99'dur.
+- Abonelik kaleminin adı doğrulanır; `price.active` kullanım hakkı kararı vermez.
+- AdsTable yansıması `active` olur.
+- Test sözleşmesinde uygulanan dönemsel fiyat sıfır olabilir; ürünün herkese açık fiyatı USD 24.99 kalır.
 
-Shopify farklı bir response şekli döndürürse yorum yapılmaz; ham redacted response kaydedilir ve contract güncellemesi için durulur.
+Shopify farklı yanıt şekli döndürürse yorum yapılmaz. Hassas bilgilerden arındırılmış ham yanıt kaydedilir; sözleşme güncellemesi için durulur.
 
-## 8 Ekim 2026 canlı active bulgusu
+## 8 Ekim 2026 — Canlı aktif abonelik bulgusu
 
-- `adstable-development.myshopify.com` mağazası `shopify-test` private planına yetkilendirildi.
-- Shopify hosted onay ekranı planın ücretsiz olduğunu ve faturalandırma yapılmayacağını gösterdi.
+- `adstable-development.myshopify.com`, `shopify-test` özel planına yetkilendirildi.
+- Shopify onay ekranı ücretsiz planı ve faturalandırma yapılmayacağını gösterdi.
 - Başarılı dönüş `plan_handle=shopify-test` taşıdı.
-- Partner API ham sonucu `trialEndsAt=null`, `currentBillingCycle.startTime=2026-10-08T08:45:05Z`, `currentBillingCycle.endTime=2026-11-07T08:45:05Z`, `handle=shopify-test`, effective `USD 0.0`, `price.active=true` ve `pendingUpdate=null` döndürdü.
-- Active provider kabulü PASS; runtime persistence ve sızıntı kontrolleri pending'dir.
+- Partner API ham sonucu `trialEndsAt=null`, `currentBillingCycle.startTime=2026-10-08T08:45:05Z`, `currentBillingCycle.endTime=2026-11-07T08:45:05Z`, `handle=shopify-test`, uygulanan `USD 0.0`, `price.active=true` ve `pendingUpdate=null` döndürdü.
+- Sağlayıcının aktif durum kabulü geçti; bu ara aşamada kalıcı kayıt ve sızıntı kontrolleri bekliyordu.
 
-## 8 Ekim 2026 Aşama 6 preflight bulgusu
+## 8 Ekim 2026 — Aşama 6 ön kontrol bulgusu
 
-- Production HTML ve client asset taraması PASS.
-- Son 24 saat application/platform log taraması PASS.
-- Canlı Supabase business row sayımı 0/0/0/0/0 kaldı.
-- Vercel Production environment'ta database runtime credential'ı yoktur.
-- Repository'de canlı database repository adapter'ı ve production reconciliation caller'ı yoktur.
-- Bu nedenle persistence PASS sayılamaz. Önce server-only least-privilege bağlantı ve public olmayan doğrulanmış tetikleme uygulanır; ardından generation/stale/installed-shop identity kontrolleri canlı çalıştırılır.
-- Geçici public test endpoint'i, browser database client'ı veya `service_role` fallback'i yasaktır.
+- Production HTML ve istemci dosyası taraması geçti.
+- Son 24 saat uygulama/platform log taraması geçti.
+- Canlı Supabase iş verisi sayımı 0/0/0/0/0 kaldı.
+- Vercel Production'da çalışma zamanı veritabanı erişim bilgisi yoktu.
+- Repository'de canlı veritabanı adaptörü ve Production uzlaştırma çağırıcısı yoktu.
+- Kalıcı kayıt geçmiş sayılamazdı. Önce yalnız sunucuda çalışan, en az yetkili bağlantı ve herkese açık olmayan doğrulanmış tetikleme kurulmalı; ardından nesil/eski kayıt/kurulu mağaza kimliği kontrolleri canlı çalıştırılmalıydı.
+- Geçici herkese açık test uç noktası, tarayıcı veritabanı istemcisi veya `service_role` alternatif yolu yasaktır.
 
-## 8 Ekim 2026 Aşama 6 implementation sonucu
+## 8 Ekim 2026 — Aşama 6 uygulama sonucu
 
-- Server-only transaction-pooler startup guard ve `pg@8.23.0` adapterı eklendi.
-- Runtime repository doğrudan table DML taşımaz; yalnız izinli bootstrap ve snapshot-apply function'larını çağırır.
-- Doğrulanmış internal caller Shopify ID token session ve Admin shop kimliği olmadan provider veya database çağrısı yapmaz.
-- Public test endpoint'i eklenmedi.
-- Bu kayıt uygulama öncesi durumu gösterir. Production database Secret daha sonra etkinleştirildi ve aşağıdaki canlı desktop acceptance sonucu alındı.
+- Yalnız sunucuda çalışan işlem havuzlayıcısı başlangıç koruması ve `pg@8.23.0` adaptörü eklendi.
+- Çalışma zamanı adaptörü doğrudan tablo değiştirme yetkisi taşımaz; yalnız izinli başlangıç ve anlık kayıt uygulama fonksiyonlarını çağırır.
+- İç çağırıcı, doğrulanmış Shopify ID token oturumu ve Admin mağaza kimliği olmadan sağlayıcı/veritabanı çağrısı yapmaz.
+- Herkese açık test uç noktası eklenmedi.
+- Bu kayıt canlı uygulama öncesindedir. Production veritabanı gizli bilgisi daha sonra etkinleştirildi; aşağıdaki masaüstü kabulü alındı.
 
-## 8 Ekim 2026 canlı desktop persistence sonucu
+## 8 Ekim 2026 — Canlı masaüstü kalıcı kayıt sonucu
 
-- PR #23 squash merge commit'i `3b33d4f05a2604c23ec6181c584752a63390d106` Repository Governance, TypeScript ve production build kapılarından geçti.
-- Exact commit Vercel Production deployment `dpl_C8be2uodW3onwMQGYyA9gSwCqCWG` olarak READY oldu ve `embedded.adstable.app` alias'ına bağlandı.
-- Supabase transaction pooler bağlantısı resmî Supabase Root CA 2021 ile `rejectUnauthorized=true` kullanır; URL'deki `sslmode=require` doğrulandıktan sonra node-postgres'e explicit CA config verilir.
-- Shopify Admin desktop içinde AdsTable ilk yüklemede ve tam Admin sayfası yenilemesinden sonra Funnel preview'ını açtı; önceki preview-load hatası tekrarlanmadı.
-- Canlı database sayımı: workspace 1, installation 1, encrypted runtime session 1, workspace subscription 1, workspace entitlement 1, trial ledger 0.
-- Installation generation 1 ve active; subscription projection active; entitlement active ve doğrulanmış kurulu Shopify mağazasıyla aynı installation generation'a bağlı.
-- Runtime session satırı ciphertext, 12-byte nonce, 16-byte authentication tag ve key version 1 ile doğrulandı; plaintext token alanı yoktur.
-- Son kontrol penceresinde Vercel Production runtime warning/error kaydı yoktur.
-- Gerçek mobil Shopify Admin kabulü henüz yapılmadığı için EO-02-C final PASS değildir ve EO-02-D başlamaz.
+- PR #23 squash merge commit'i `3b33d4f05a2604c23ec6181c584752a63390d106`, Repository Governance, TypeScript ve Production derleme kapılarından geçti.
+- Tam commit, Vercel Production dağıtımı `dpl_C8be2uodW3onwMQGYyA9gSwCqCWG` olarak READY oldu ve `embedded.adstable.app` adresine bağlandı.
+- Supabase işlem havuzlayıcısı bağlantısı resmî Supabase Root CA 2021 ve `rejectUnauthorized=true` kullanır. URL'deki `sslmode=require` doğrulandıktan sonra node-postgres'e açık CA yapılandırması verilir.
+- Shopify Admin masaüstünde ilk yüklemede ve tam sayfa yenilemesinden sonra Funnel önizlemesi açıldı; önceki önizleme yükleme hatası tekrarlanmadı.
+- Canlı veritabanı: çalışma alanı 1, kurulum 1, şifreli çalışma zamanı oturumu 1, çalışma alanı aboneliği 1, kullanım hakkı 1, deneme kayıt defteri 0.
+- Kurulum nesli 1 ve aktifti. Abonelik yansıması ve kullanım hakkı aktifti; doğrulanmış kurulu Shopify mağazasıyla aynı nesle bağlıydı.
+- Oturum satırında şifreli metin, 12 bayt nonce, 16 bayt kimlik doğrulama etiketi ve anahtar sürümü 1 doğrulandı; açık metin token alanı yoktu.
+- Son kontrol penceresinde Vercel Production çalışma zamanı uyarı/hata kaydı yoktu.
+- Bu ara aşamada gerçek mobil kabul yapılmadığından EO-02-C nihai PASS değildi; EO-02-D başlamıyordu.
 
-## 8 Ekim 2026 gerçek mobil Shopify Admin sonucu
+## 8 Ekim 2026 — Gerçek mobil Shopify Admin sonucu
 
-- Ürün sahibi gerçek mobil Shopify uygulamasında AdsTable'ı açtı; ilk yükleme PASS oldu.
-- Funnel, Ad Analysis ve Settings route'larının üçü de mobil uygulama içinde açıldı.
-- Shopify mobil uygulaması tamamen kapatılıp yeniden açıldı; AdsTable ve Funnel tekrar yüklendi.
-- Mobil kullanım sonrasında canlı projection sayıları değişmeden tutarlı kaldı: workspace 1, generation-1 active installation 1, encrypted runtime session 1, active subscription projection 1, active entitlement projection 1, trial ledger 0.
-- Aynı production deployment'ın kontrol edilen Vercel runtime penceresinde warning/error kaydı yoktur.
-- Teknik canlı kabul kapıları PASS'tir. EO-02-C yalnız açık ürün sahibi kapanış onayı kaydedildikten sonra kapanır.
+- Ürün sahibi gerçek mobil Shopify uygulamasında AdsTable'ı açtı; ilk yükleme geçti.
+- Funnel, Ad Analysis ve Settings adreslerinin üçü de mobil uygulamada açıldı.
+- Shopify mobil uygulaması tamamen kapatılıp açıldı; AdsTable ve Funnel yeniden yüklendi.
+- Mobil sonrası canlı sayılar değişmeden tutarlı kaldı: çalışma alanı 1, nesil-1 aktif kurulum 1, şifreli oturum 1, aktif abonelik yansıması 1, aktif kullanım hakkı yansıması 1, deneme kayıt defteri 0.
+- Aynı Production dağıtımının kontrol edilen Vercel log penceresinde uyarı/hata kaydı yoktu.
+- Teknik canlı kabul kapıları geçti. EO-02-C, açık ürün sahibi kapanış onayı kaydedilmeden kapanmaz.
 
-## Aşama 6 — Sızıntı ve persistence kabulü
+## Aşama 6 — Sızıntı ve kalıcı kayıt kabulü
 
-- Browser bundle ve response'larda üç server-only değerin hiçbirinin bulunmadığı doğrulanır.
-- Application ve platform loglarında token veya authorization header bulunmadığı doğrulanır.
-- DB projection; shop GID, canonical domain ve install generation ile eşleşir.
-- Stale snapshot reddedilir.
-- Runtime direct table DML taşımaz; yalnız izinli functions kullanılır.
-- `null`, `trial` ve `active` gerçek sıfır/unknown ile karıştırılmaz.
-- Production database Secret yalnız açık insan kapısıyla etkinleştirilir; yeni deployment sonrasında gerçek provider cevabı function-only runtime ile yazılır ve residual row/evidence kontrol edilir.
+- Tarayıcı paketi ve yanıtlarda sunucuya özel üç değerin bulunmadığı doğrulanır.
+- Uygulama/platform loglarında token veya authorization başlığı bulunmadığı doğrulanır.
+- Veritabanı yansıması Shop GID, standartlaştırılmış alan adı ve kurulum nesliyle eşleşir.
+- Eski tarihli anlık kayıt reddedilir.
+- Çalışma zamanı doğrudan tablo değiştirme yetkisi taşımaz; yalnız izinli fonksiyonları kullanır.
+- `null`, `trial` ve `active`, gerçek sıfır/bilinmeyen durumuyla karıştırılmaz.
+- Production veritabanı gizli bilgisi yalnız açık insan onayıyla etkinleştirilir. Yeni dağıtımdan sonra gerçek sağlayıcı yanıtı yalnız fonksiyon çağıran çalışma zamanı üzerinden yazılır; kalan satır/kanıt kontrol edilir.
 
-## Rollback
+## Geri alma
 
-Herhangi bir aşama başarısızsa:
+Tarihsel yürütme planında herhangi bir aşama başarısızsa:
 
-1. Entitlement fail-closed kalır; hata `subscription_required` veya `active` diye yorumlanmaz.
-2. Yeni deployment production authority yapılmaz veya önceki güvenli deployment geri alınır.
-3. Token şüphesi varsa Shopify Partner Dashboard'da rotate/revoke edilir.
-4. Vercel Production Secret kaldırılır/değiştirilir ve yeni deployment alınır; eski deployment'ın env değişikliğinden etkilenmediği kabul edilir.
-5. Public plan veya trial üzerinde ikinci deneme yapılmadan önce başarısızlığın nedeni kayda alınır.
-6. EO-02-C `Verification` durumunda kalır; EO-02-D başlamaz.
+1. Kullanım hakkı güvenle kapalı kalır; hata `subscription_required` veya `active` diye yorumlanmaz.
+2. Yeni dağıtım Production otoritesi yapılmaz veya önceki güvenli dağıtıma dönülür.
+3. Token şüphesi varsa Shopify Partner Dashboard'da token yenilenir/iptal edilir.
+4. Vercel Production Secret kaldırılır/değiştirilir; yeni dağıtım alınır. Eski dağıtımın ortam değişikliğinden etkilenmediği kabul edilir.
+5. Plan veya denemede ikinci girişimden önce başarısızlığın nedeni kaydedilir.
+6. EO-02-C `Verification` kalır; EO-02-D başlamaz.
 
-## 8 Ekim 2026 ürün sahibi kapanış kabulü
+Bu tarihsel geri alma planı bugün token/gizli bilgi/dağıtım değiştirme izni değildir; dış sistem işlemleri kendi açık onay ve ilk hata durma kapılarına tabidir.
+
+## 8 Ekim 2026 — Ürün sahibi kapanış kabulü
 
 - EO-02-C için açık teknik husus kalmadığı doğrulandı.
-- Stale snapshot rejection aynı Supabase projesindeki `docs/evidence/EO_02C_DATABASE_ACCEPTANCE_2026-10-06.json` kanıtında PASS'tir ve canlı kanıt zincirine bağlandı.
-- Ürün sahibi “EO-02-C kapanışını kabul ediyorum” diyerek açık kapanış onayını verdi.
-- EO-02-C final sonucu PASS ve durum Accepted'tır. EO-02-D ayrı paket olarak başlayabilir.
+- Eski kayıt reddi aynı Supabase projesinin `docs/evidence/EO_02C_DATABASE_ACCEPTANCE_2026-10-06.json` kanıtında geçti ve canlı zincire bağlandı.
+- Ürün sahibi “EO-02-C kapanışını kabul ediyorum” diyerek açık kapanış onayı verdi.
+- EO-02-C nihai sonucu PASS, durumu kabul edildi. EO-02-D ayrı paket olarak başlayabilir.
 
 ## PASS koşulu
 
-- Üç subscription durumu gerçek Partner API cevabıyla doğrulandı.
-- Production Secret sınırı ve yeni deployment doğrulandı.
-- Projection/fail-closed davranışı PASS.
-- Secret/PII sızıntısı yok.
-- Evidence JSON secret içermeden tamamlandı.
-- PR ve zorunlu CI PASS.
+- Üç abonelik durumu gerçek Partner API yanıtıyla doğrulandı.
+- Production gizli bilgi sınırı ve yeni dağıtım doğrulandı.
+- Yansıtma/güvenli ret davranışı geçti.
+- Gizli bilgi/kişisel veri sızıntısı yok.
+- Kanıt JSON'u gizli bilgi içermeden tamamlandı.
+- PR ve zorunlu CI geçti.
 - Ürün sahibi EO-02-C kapanışını açıkça kabul etti.
 
+## Aşama 6A — Kimliği doğrulanmış çalışma zamanı düzeltme kapısı
 
-## Aşama 6A — Authenticated runtime corrective gate
+Bu bölüm, yukarıdaki kalıcı kayıt kabulünden önce gereken düzeltmeyi saklar. Production veritabanı gizli bilgisi girilmeden önce tamamı geçmelidir:
 
-Production database Secret girilmeden önce aşağıdakilerin tamamı PASS olmalıdır:
+1. Resmî Shopify React Router sunucu adaptörü ve `authenticate.admin(request)` kullanan pathless Admin yerleşimi.
+2. Mevcut `/`, `/ad-analysis`, `/settings` adresleri ve görünür metinlerinin korunması.
+3. Supabase özel şemada yalnız şifreli, AES-256-GCM ile korunan ve yalnız fonksiyon çağıran Shopify oturum saklama sınırı.
+4. ID token alan adıyla Admin GraphQL `shop { id myshopifyDomain }` kimliğinin eşleşmesi.
+5. Doğrulanmış girişten iç kullanım hakkı uzlaştırma çağırıcısının yinelenince aynı sonucu koruyarak çalışması.
+6. Sözleşme testi, tür kontrolü, derleme, Governance CI, gerçek masaüstü/mobil Shopify Admin ve gizli bilgi sızıntı kabulü.
 
-1. Resmî Shopify React Router server adapterı ve `authenticate.admin(request)` kullanan pathless Admin layout.
-2. Mevcut `/`, `/ad-analysis`, `/settings` URL ve görünür metinlerinin korunması.
-3. Supabase private schema üzerinde ciphertext-only, AES-256-GCM ve function-only Shopify session persistence.
-4. ID token domain'i ile Admin GraphQL `shop { id myshopifyDomain }` kimliğinin eşleşmesi.
-5. Authenticated entry üzerinden internal entitlement reconciliation callerının idempotent çağrılması.
-6. Contract test, typecheck, build, Governance CI, gerçek desktop/mobil Shopify Admin ve secret sızıntı kabulü.
+Bu kapı geçmeden `ADSTABLE_RUNTIME_DATABASE_URL`, oturum şifreleme anahtarı veya Shopify API sırrı Production'a etkinleştirilmez. Herkese açık test uç noktası, açık metin oturum/token tablosu, tarayıcı veritabanı istemcisi ve `service_role` alternatif yolu yasaktır.
 
-Bu kapı PASS olmadan `ADSTABLE_RUNTIME_DATABASE_URL`, session encryption key veya Shopify API secret Production'a aktive edilmez. Public test endpoint'i, plaintext session/token tablosu, browser database client'ı ve `service_role` fallback'i yasaktır.
+## 9 Ekim 2026 — Düzeltici canlı kapı
 
-## 9 Ekim 2026 düzeltici canlı kapı
-
-Repository düzeltmesi merge edildikten sonra canlı migration ayrı açık onayla uygulanır. Kabul; eski üç entitlement metadata kolonunun yokluğunu, apply/resolve function sonuçlarının sadeleştiğini, runtime identity eşleşmesini, forced RLS ve function-only yetki sınırının korunduğunu doğrular. Tarihsel kabul kanıtları değiştirilmez.
+Repository düzeltmesi merge edildikten sonra canlı migration ayrı açık onayla uygulanır. Kabul; eski üç kullanım hakkı metadata kolonunun yokluğunu, uygulama/çözümleme fonksiyon sonuçlarının sadeleşmesini, çalışma zamanı kimlik eşliğini, zorunlu RLS ve yalnız fonksiyon yetkisi sınırını doğrular. Tarihsel kabul kanıtları değiştirilmez.

@@ -37,9 +37,10 @@ test("EO-02-C live acceptance template preserves secret and state boundaries", (
   assert.match(runbook, /USD 24\.99/);
   assert.match(runbook, /14-day trial/);
   assert.match(runbook, /\$0 private test plan/);
-  assert.match(runbook, /Aşama 1 — Shopify App Store registration/);
-  assert.match(runbook, /Aşama 2 — Vercel Production aktivasyonu/);
-  assert.match(runbook, /Aşama 3 — Null kabulü/);
+  // Human-readable headings are Turkish; machine evidence and state guards above stay exact.
+  assert.match(runbook, /Aşama 1 — Shopify App Store kaydı/);
+  assert.match(runbook, /Aşama 2 — Vercel Production etkinleştirmesi/);
+  assert.match(runbook, /Aşama 3 — Abonelik yokluğu \(null\) kabulü/);
   assert.match(runbook, /EO-02-D başlamaz/);
   assert.doesNotMatch(runbook, /SHOPIFY_PARTNER_API_ACCESS_TOKEN\s*=\s*\S+/);
 });

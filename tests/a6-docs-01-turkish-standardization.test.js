@@ -28,16 +28,16 @@ test("DOCS-01 inventories human Markdown without translating agent instructions 
   assert.equal(new Set(actual).size, 63);
   assert.deepEqual(contract.inventory_counts, {
     total_markdown: 63, human_markdown: 62, excluded_agent_instructions: 1,
-    translated_review_pending: 3, pending_language_review: 24,
-    translated_product_owner_accepted: 35,
+    translated_review_pending: 2, pending_language_review: 22,
+    translated_product_owner_accepted: 38,
   });
   for (const row of contract.inventory) {
     assert.match(row.baseline_blob, /^[a-f0-9]{40}$/);
     assert.equal(row.classification, row.path === "AGENTS.md"
       ? "agent_instructions_excluded" : "human_markdown");
     assert.equal(row.status, row.path === "AGENTS.md" ? "excluded_unchanged"
-      : [...contract.first_batch, ...contract.second_batch, ...contract.third_batch, ...contract.fourth_batch, ...contract.fifth_batch, ...contract.sixth_batch, ...contract.seventh_batch, ...contract.eighth_batch].includes(row.path) ? "translated_product_owner_accepted"
-        : contract.ninth_batch.includes(row.path)
+      : [...contract.first_batch, ...contract.second_batch, ...contract.third_batch, ...contract.fourth_batch, ...contract.fifth_batch, ...contract.sixth_batch, ...contract.seventh_batch, ...contract.eighth_batch, ...contract.ninth_batch].includes(row.path) ? "translated_product_owner_accepted"
+        : contract.tenth_batch.includes(row.path)
           ? "translated_product_owner_review_pending" : "pending_language_review");
   }
 });
@@ -318,8 +318,39 @@ test("DOCS-01 EO-04 common prose preserves all scenario identities, cost boundar
   assert.match(live, /üçüncü\s+çalıştırma `2026-10-16T15:14:07.104Z`/);
   assert.match(live, /17 Ekim'deki kabul edilmiş App Role tam\s+sayfalama kuralını geri almaz/);
   assert.match(live, /yanıt sözleşmesi, yukarıdaki dar sunucu loguyla aynı şey değildir/);
-  const prepared = contract.deliveries[8];
-  assert.deepEqual(prepared.files, contract.ninth_batch);
+  const accepted = contract.deliveries[8];
+  assert.deepEqual(accepted.files, contract.ninth_batch);
+  assert.equal(accepted.product_owner_readability_accepted, true);
+  assert.equal(accepted.merge_authorized, true);
+  assert.equal(accepted.pull_request, 128);
+  assert.equal(accepted.merge_commit, "eaca2c5376dc0cf0b25322f9a0eac7c6aa8719e9");
+});
+
+test("DOCS-01 provider research stays historical and cannot revive superseded broad-tree or permission assumptions", async () => {
+  const contract = await readJson(contractPath);
+  assert.equal(contract.tenth_batch.length, 2);
+  for (const path of contract.tenth_batch) {
+    const content = await readFile(path, "utf8");
+    const row = contract.inventory.find((item) => item.path === path);
+    assertTechnicalTokens(content, row.preserved_technical_tokens);
+    assert.match(content, /yerini 16 Ekim 2026 ortak brief'i aldı/);
+    assert.match(content, /EXECUTION_PLAN/);
+    assert.match(content, /14 Ekim 2026/);
+    assert.match(content, /Yürütülebilir sözleşme, kabul kapısı veya uygulama yetkisi değildir/);
+    assert.doesNotMatch(content, /supersede edildi|executable contract/);
+  }
+  const google = await readFile(contract.tenth_batch[0], "utf8");
+  assert.match(google, /Eski varsayım: Campaign-ürün kanıtı var/);
+  assert.match(google, /Tek uygun `All products` Asset Group kesin\s+Channel olabilir/);
+  assert.match(google, /satışın tüm iş günü\s+penceresini kapsayan tarihsel kanıtı gerektirir/);
+  assert.match(google, /Satılan ürün,\s+Channel seçmek için kullanılamaz/);
+  const meta = await readFile(contract.tenth_batch[1], "utf8");
+  assert.match(meta, /Meta Channel her zaman gerçek `Ad`dır/);
+  assert.match(meta, /OAuth izin kapsamını genişletmez/);
+  assert.match(meta, /tek başına kanonik Ad Click eşlemesi değildir/);
+  assert.match(meta, /gerçek katalog\s+yanıtı gerektiren açık doğrulamalar/i);
+  const prepared = contract.deliveries[9];
+  assert.deepEqual(prepared.files, contract.tenth_batch);
   assert.equal(prepared.product_owner_readability_accepted, false);
   assert.equal(prepared.merge_authorized, false);
 });

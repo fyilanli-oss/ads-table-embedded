@@ -1,106 +1,138 @@
-# EO-04-E Google Channel çalışma taslağı
+# EO-04-E — Google Channel tarihsel çalışma taslağı
 
 ## Belge durumu
 
-- Durum: **Araştırma kaydı; 16 Ekim 2026 ortak brief'i tarafından supersede edildi**
-- Kontrol tarihi: **16 Ekim 2026**
-- Sahiplik bağlamı: A6-EO-04-E
-- Bu belge bir executable contract, kabul kapısı veya implementasyon yetkisi değildir.
-- EO-04-E, Dataset V2, Channel UI veya başka bir paketin başlamasını ya da kapanmasını engellemez.
-- Provider çağrısı, runtime kodu, migration, secret, environment veya deployment değişikliği yetkilendirmez.
+- Durum: **Araştırma kaydı; yerini 16 Ekim 2026 ortak brief'i aldı.**
+- Kaynak belgenin kontrol tarihi: **16 Ekim 2026**.
+- Sahiplik bağlamı: A6-EO-04-E.
+- Yürütülebilir sözleşme, kabul kapısı veya uygulama yetkisi değildir.
+- EO-04-E, Dataset V2, Channel UI veya başka paketin başlaması/kapanması için ayrı engel oluşturmaz.
+- Sağlayıcı çağrısı, çalışma zamanı kodu, migration, secret, ortam veya dağıtım değişikliği yetkilendirmez.
 - Bağlayıcı karar: `docs/EO_04E_THREE_PROVIDER_CHANNEL_PRODUCT_ECONOMICS_START_BRIEF.md`.
+
+Bu belge araştırmanın tarihsel düşünce akışını korur; eski öneriler bugünkü iş
+kuralları değildir. Güncel sıra `docs/EXECUTION_PLAN.md`, nihai senaryolar
+`docs/EO_04_ANALYSIS_DESIGN_BOOK.md` içindedir.
 
 ## Amaç
 
-Google Ads tarafında Channel kimliğini, provider ürün performansını, satılan ürünü ve ileride hesaplanacak gerçek ürün maliyetini birbirine karıştırmadan tanımlamak; daha sonra Meta ve Klaviyo ile ortak sözleşme kurulurken doğrulanmış Google sınırını korumak.
+Google Ads Channel kimliğini, sağlayıcının ürün performansını, satılan ürünü
+ve ileride hesaplanacak gerçek ürün maliyetini birbirine karıştırmadan
+tanımlamak; Meta ve Klaviyo ile ortak sözleşme kurulurken doğrulanmış Google
+sınırını korumaktı.
 
-## Çalışma taslağı Channel matrisi
+## Tarihsel Channel matrisi — bugünkü uygulama kuralı değil
 
-| Google kampanya ailesi | Channel adayı | Listing yapısı | Ürün-Channel sonucu | Satış ilişkisi |
+Aşağıdaki tablo eski araştırma varsayımlarını gösterir. Özellikle geniş ağaç
+satırı, sonradan kabul edilmiş tek uygun Asset Group kuralının yerine kullanılamaz.
+
+| Google kampanya ailesi | Channel adayı | Ürün listeleme yapısı | Ürün-Channel sonucu | Satış ilişkisi |
 | --- | --- | --- | --- | --- |
-| Standard Shopping | Ad Group | Tekil veya çoklu Merchant Center ürünleri | Product performance ve Cart Data Ad Group bağlamında korunur. | Kanıtlanan lead/advertised ürün Advertised; farklı sold product Cross-sell. |
-| Performance Max Retail | Asset Group | Listing-tree leaf tekil item ID ve üyelik yalnız bir Asset Group'u exact belirliyor | Product satırı exact Asset Group'a bağlanabilir. | Advertised veya Cross-sell provider kanıtına göre korunur. |
-| Performance Max Retail | Asset Group | All products, kategori, marka, product type, custom label veya birden fazla Asset Group'a uyan ürün | Campaign-product kanıtı vardır; exact Asset Group kanıtı yoktur. | Ürün Unclassified Channel altında kalır; ilişki kanıtı varsa korunur, tahmin yapılmaz. |
-| Search | Ad Group | Exact advertised product kanıtı yok | Provider-attributed sold product Ad Group bağlamında korunur. | Assisted |
+| Standard Shopping | Ad Group | Tekil veya çoklu Merchant Center ürünleri | Ürün performansı ve Cart Data, Ad Group bağlamında korunur. | Kanıtlanan öncü/reklam ürünü Advertised; farklı satılan ürün Cross-sell. |
+| Performance Max Retail | Asset Group | Listeleme ağacının yaprağı tekil item ID; üyelik yalnız bir Asset Group'u kesin belirliyor | Ürün satırı kesin Asset Group'a bağlanabilir. | Advertised veya Cross-sell, sağlayıcı kanıtına göre korunur. |
+| Performance Max Retail | Asset Group | All products, kategori, marka, ürün türü, özel etiket veya birden fazla Asset Group'a uyan ürün | Eski varsayım: Campaign-ürün kanıtı var; kesin Asset Group kanıtı yok. | Eski varsayım: ürün Unclassified Channel altında kalır; ilişki kanıtı varsa korunur, tahmin yapılmaz. |
+| Search | Ad Group | Kesin reklam ürünü kanıtı yok | Sağlayıcının ilişkilendirdiği satılan ürün Ad Group bağlamında korunur. | Assisted |
 
-## Temel çalışma kuralları
+**Sonraki kabul edilmiş karar:** Tek uygun `All products` Asset Group kesin
+Channel olabilir. Kategori/marka/geniş ağaç tek başına belirsizlik nedeni değildir;
+tıklanan/reklam ürünü tam olarak bir uygun Asset Group'u ve satışın tüm iş günü
+penceresini kapsayan tarihsel kanıtı gerektirir. Örtüşen ağaçlar veya eksik zaman
+kanıtı `Unclassified Channel` bırakır; satış ve Sales Role korunur. Satılan ürün,
+Channel seçmek için kullanılamaz.
 
-1. Channel kimliği, provider ürün performansı ve satılan ürün kimliği ayrı gerçeklerdir.
-2. Reklamda gösterilen veya tıklanan ürün tarafı `segments.product_item_id` ile temsil edilir.
-3. Gerçekten satılan ürün tarafı `segments.product_sold_item_id` ile temsil edilir.
-4. Aynı Cart Data satırında gösterilen/tıklanan ürün ile satılan ürün farklıysa, satılan farklı ürün Cross-sell kanıtıdır.
+Bu yeni bir karar değildir. Kaynaklar:
+`contracts/eo-04c-google-reporting-runtime-v1.json` ve
+`docs/EO_04C_GOOGLE_REPORTING_RUNTIME_START_BRIEF.md`.
+Eski tablo araştırma geçmişi olarak tutulur; tarihsel ağaç saklama işi burada
+tamamlanmış sayılmaz ve EO-05'e ait kalır.
+
+## Araştırmada belirlenen temel kurallar
+
+1. Channel kimliği, sağlayıcı ürün performansı ve satılan ürün kimliği ayrı gerçeklerdir.
+2. Reklamda gösterilen veya tıklanan ürün `segments.product_item_id` ile temsil edilir.
+3. Gerçekten satılan ürün `segments.product_sold_item_id` ile temsil edilir.
+4. Aynı Cart Data satırında gösterilen/tıklanan ürün ile satılan ürün farklıysa, farklı satılan ürün Cross-sell kanıtıdır.
 5. PMax'te `cart_data_sales_view` Asset Group ile segmentlenmez. Google'ın vermediği Asset Group ilişkisi oranlanmaz, paylaştırılmaz veya üretilmez.
-6. PMax'te tıklanan ürünün listing-tree üyeliği yalnız tek bir Asset Group'u exact belirliyorsa o Asset Group Channel adayıdır.
-7. Ürün birden fazla Asset Group listing ağacına uyuyorsa veya exact üyelik kanıtlanamıyorsa Channel `Unclassified Channel` olur.
+6. Tıklanan ürünün listeleme ağacı üyeliği yalnız tek Asset Group'u kesin belirliyorsa o grup Channel adayıdır.
+7. Ürün birden fazla Asset Group ağacına uyuyorsa veya kesin üyelik kanıtlanamıyorsa Channel `Unclassified Channel` olur.
 8. `Unclassified Channel`, satış ilişkisinin değil Channel çözümlemesinin durumudur.
-9. Search Ad Group için exact advertised product kanıtı bulunmadığından provider-attributed sold product bastırılmaz; `Assisted` olur.
+9. Search Ad Group için kesin reklam ürünü kanıtı olmadığında sağlayıcının ilişkilendirdiği satış bastırılmaz; `Assisted` olur.
 10. Promotion terimi kullanılmaz. Satılan adet pozitif ve ürün satış değeri gerçekten sıfırsa değer durumu `Zero Value` olur.
-11. Google ürün seviyesinde ham olarak `units_sold` ve `revenue_micros` sağlar. `units_sold`, ortak Dataset sözleşmesi kararı olmadan kullanıcıya Purchase diye yeniden adlandırılmaz.
-12. Desteklenen kimlik yolu Shopify'ın resmî Google & YouTube otomatik ürün senkronudur. Google item ID içindeki Shopify product/variant adayları Shopify Admin API ile doğrulanmadan SKU veya ürün adı yayımlanmaz. Manuel/üçüncü taraf feed kapsam dışıdır.
+11. Google ürün düzeyinde ham `units_sold` ve `revenue_micros` sağlar. Ortak Dataset sözleşmesi kararı olmadan `units_sold` kullanıcıya Purchase diye yeniden adlandırılmaz.
+12. Desteklenen kimlik yolu Shopify'ın resmî Google & YouTube otomatik ürün senkronudur. Google item ID içindeki Shopify ürün/varyant adayları Admin API ile doğrulanmadan SKU veya ürün adı yayımlanmaz. Manuel/üçüncü taraf feed kapsam dışıdır.
 
 ## Performans ve maliyet katmanları
 
-Aşağıdaki üç değer birbirinin yerine kullanılamaz:
+Üç ayrı değer birbirinin yerine kullanılamaz:
 
-1. **Channel Spend:** Provider'ın gerçek Channel toplamı.
-2. **Provider Product Cost:** Google'ın ürün raporlama attribution mantığıyla ürüne yazdığı `metrics.cost_micros`.
-3. **Allocated True Product Cost:** Vergi, kargo, Cross-sell, Zero Value, Shopify satış gerçeği ve diğer providerlar birlikte değerlendirildikten sonra ayrı analist sözleşmesiyle üretilecek gelecekteki değer.
+1. **Channel harcaması:** Sağlayıcının gerçek Channel toplamı.
+2. **Sağlayıcı ürün maliyeti:** Google'ın ürün raporlama atfıyla ürüne yazdığı `metrics.cost_micros`.
+3. **Dağıtılmış gerçek ürün maliyeti:** Vergi, kargo, Cross-sell, Zero Value,
+   Shopify satış gerçeği ve diğer sağlayıcılar birlikte değerlendirilip ayrı
+   analist sözleşmesiyle üretilecek gelecekteki değer.
 
-`shopping_performance_view`, ürün kimliği bazında `metrics.impressions`, `metrics.clicks` ve `metrics.cost_micros` sağlar. Google'ın resmî attribution açıklamasına göre:
+`shopping_performance_view`, ürün kimliğine göre `metrics.impressions`,
+`metrics.clicks` ve `metrics.cost_micros` sağlar. Kaynak belgedeki resmî
+attribution (performansı ürüne atfetme) açıklaması:
 
-- Doğrudan ürün etkileşiminde cost ve conversion kredisi ilgili ürüne verilir.
-- Reklamın genel alanındaki dolaylı etkileşimde cost ve conversion kredisi reklamda sunulan ürünlere dağıtılabilir.
-- Product impression, reklamda bulunan her ürün için artabilir; ürün impression toplamı Campaign toplamını aşabilir.
-- Product click yalnız ilgili ürüne yapılan tıklamayı ifade eder.
+- Doğrudan ürün etkileşiminde maliyet ve dönüşüm payı ilgili ürüne verilir.
+- Reklamın genel alanındaki dolaylı etkileşimde maliyet ve dönüşüm payı reklamda sunulan ürünlere dağıtılabilir.
+- Ürün gösterimi reklamda bulunan her ürün için artabilir; toplamı Campaign gösterimini aşabilir.
+- Ürün tıklaması yalnız ilgili ürüne yapılan tıklamayı ifade eder.
 
-Bu nedenle ürün satırları Channel toplamını yeniden üretmek veya finansal maliyet gerçeği sayılmak için toplanmaz. Provider Product Cost, ilerideki açıklanabilir maliyet dağıtım motorunun yalnız bir kanıt girdisidir.
+Ürün satırları, Channel toplamını yeniden üretmek veya finansal maliyet gerçeği
+sayılmak için toplanmaz. Sağlayıcının ürün maliyeti, ilerideki açıklanabilir
+maliyet dağıtım motoruna yalnız kanıt girdisidir.
 
-Provider Product Cost exact olarak dönüyorsa `Cross-sell`, `Assisted`, `Zero Value` veya `Unclassified Channel` sonucu bu değeri silmez; exact değer ilgili ürün satırında korunur. Provider ürün cost'u vermiyorsa Channel toplamı ürünlere tahminî dağıtılmaz.
+Kesin sağlayıcı ürün maliyeti dönüyorsa `Cross-sell`, `Assisted`, `Zero Value`
+veya `Unclassified Channel` bu değeri silmez; aynı ürün satırında korunur.
+Sağlayıcı ürün maliyeti vermiyorsa Channel toplamı ürünlere tahminî dağıtılmaz.
 
-## PMax örneği
+## Tarihsel PMax örneği
 
 ~~~text
 PMax Campaign: Takı
 Asset Group: Küpeler
-Advertised/clicked product: Küpe A
-Sold product: Kolye B
+Reklamda gösterilen/tıklanan ürün: Küpe A
+Satılan ürün: Kolye B
 ~~~
 
-Küpe A yalnız Küpeler Asset Group listing ağacına uyuyorsa çalışma sonucu:
+Küpe A yalnız Küpeler Asset Group ağacına uyuyorsa eski örneğin sonucu:
 
 - Channel: Küpeler
 - Satılan ürün: Kolye B
 - Ürün-Channel ilişkisi: Cross-sell
 - Değer durumu: Positive Value veya Zero Value
-- Product impression/click/cost: yalnız Google'ın ürün raporunda verdiği değerler
+- Ürün gösterim/tıklama/maliyet: yalnız Google ürün raporunda dönen değerler
 
-Küpe A birden fazla Asset Group'a uyuyorsa:
+Bu kısa örnek, sonradan kabul edilmiş tam iş günü tarihsel kanıt koşuluyla
+birlikte okunur. Küpe A birden fazla Asset Group'a uyuyorsa:
 
 - Channel: Unclassified Channel
 - Satılan ürün: Kolye B
-- Satış ilişkisi: Google'ın sağladığı ham lead/cross-sell kanıtı korunur
+- Satış ilişkisi: Google'ın verdiği ham öncü ürün/çapraz satış kanıtı korunur
 - Asset Group uydurulmaz
 
-## İstenen Google ham veri aileleri
+## Araştırmada istenen ham veri aileleri
 
 ### Ortak hesap, tarih ve kampanya bağlamı
 
-- Customer/account identity
-- Account currency
-- Account timezone
+- Müşteri/hesap kimliği
+- Hesap para birimi
+- Hesap saat dilimi
 - `segments.date`
 - `campaign.id`
 - `campaign.name`
 - `campaign.status`
 - `campaign.advertising_channel_type`
 - `campaign.advertising_channel_sub_type`
-- Kaynak resource/view
-- Google Ads API version
-- Request/query provenance
+- Kaynak varlık/görünüm
+- Google Ads API sürümü
+- İstek/sorgu kaynak bilgisi
 
 ### Channel kimliği ve performansı
 
-Standard Shopping ve Search için:
+Standard Shopping ve Search:
 
 - `ad_group.id`
 - `ad_group.name`
@@ -111,39 +143,40 @@ Standard Shopping ve Search için:
 - `metrics.conversions`
 - `metrics.conversions_value`
 
-Performance Max için:
+Performance Max:
 
 - `asset_group.id`
 - `asset_group.name`
 - `asset_group.status`
-- Asset Group performansında desteklenen impression, click, cost, conversion ve conversion-value alanları
-- Asset Group listing-tree node kimliği ve parent ilişkisi
-- Listing node include/exclude ve subdivision/unit yapısı
-- Listing boyutları: all-products, item ID, brand, category, product type ve custom attribute/label
+- Asset Group performansında desteklenen gösterim, tıklama, maliyet, dönüşüm ve dönüşüm değeri alanları
+- Listeleme ağacı düğüm kimliği ve üst düğüm ilişkisi
+- Dahil/hariç tutma ve alt bölüme ayırma/son düğüm yapısı
+- Tüm ürünler, item ID, marka, kategori, ürün türü, özel alan/etiket boyutları
 
-### Provider ürün performansı
+### Sağlayıcı ürün performansı
 
 `shopping_performance_view` üzerinden:
 
 - `segments.product_item_id`
 - `segments.product_title`
 - `segments.product_brand`
-- Product category seviyeleri
-- Product type seviyeleri
-- Product custom attribute seviyeleri
+- Ürün kategori seviyeleri
+- Ürün türü seviyeleri
+- Ürün özel alan seviyeleri
 - `metrics.impressions`
 - `metrics.clicks`
 - `metrics.cost_micros`
 - `metrics.conversions`
 - `metrics.conversions_value`
 
-Bu alanlar provider-attributed product performance'tır; Channel toplamı veya gerçek ürün maliyeti değildir.
+Bunlar sağlayıcının ürüne atfettiği performanstır; Channel toplamı veya gerçek
+ürün maliyeti değildir.
 
 ### Satılan ürün ve Cart Data kanıtı
 
 - `segments.product_sold_item_id`
 - `segments.product_sold_title`
-- Sold-product brand, category, type ve custom attribute seviyeleri
+- Satılan ürünün marka, kategori, tür ve özel alan seviyeleri
 - `metrics.units_sold`
 - `metrics.revenue_micros`
 - `metrics.lead_units_sold`
@@ -152,45 +185,47 @@ Bu alanlar provider-attributed product performance'tır; Channel toplamı veya g
 - `metrics.cross_sell_revenue_micros`
 - Gerektiğinde eşdeğer `all_*` metrikleri ayrı ham kanıt olarak
 
-## Çalışma sınıfları
+## Ayrı sınıflandırma eksenleri
 
-İki ayrı eksen korunur:
-
-### Ürün-Channel ilişkisi
+Ürün-Channel ilişkisi:
 
 - Advertised
 - Cross-sell
 - Assisted
 - Unclassified
 
-### Satış değeri durumu
+Satış değeri durumu:
 
 - Positive Value
 - Zero Value
 
-Channel çözümleme durumu ayrıca tutulur:
+Channel çözüm durumu:
 
-- exact Ad Group
-- exact Asset Group
+- Kesin Ad Group
+- Kesin Asset Group
 - Unclassified Channel
 
-## Açık konular
+## Tarihsel açık konular ve sonraki karar
 
 - Meta ve Klaviyo araştırmaları 16 Ekim ortak brief'inde birleştirildi.
-- Provider Product Cost ile gelecekteki Allocated True Product Cost birbirine dönüştürülmeyecek.
-- Vergi, kargo, blended spend ve ürün maliyeti formülleri kullanıcının sağlayacağı analist çalışma sayfaları görülmeden dondurulmayacak.
-- Resmî Google & YouTube sync dışındaki kimlik yolları bu sürümde desteklenmeyecek.
-- Runtime ancak ortak Channel sözleşmesinin ürün sahibi kabulünden sonra başlayabilir.
+- Sağlayıcı ürün maliyeti ile gelecekteki dağıtılmış gerçek ürün maliyeti birbirine dönüştürülmez.
+- Vergi, kargo, birleşik harcama ve ürün maliyeti formülleri, ürün sahibinin analist çalışma sayfaları görülmeden dondurulmaz.
+- Resmî Google & YouTube senkronizasyonu dışındaki kimlik yolları bu sürümde desteklenmez.
+- Çalışma zamanı ancak ortak Channel sözleşmesinin ürün sahibi kabulünden sonra başlayabilirdi.
 
-## Resmî kaynaklar
+Son madde eski hazırlık kapısıdır; sonraki kabul edilmiş uygulamayı geri almaz.
+Bu taslak yeni kod, canlı sorgu veya maliyet dağıtımı yetkisi vermez.
 
-14 Ekim 2026 tarihinde kontrol edildi:
+## Tarihsel resmî kaynaklar
 
-- [Google Ads API — Product reporting for Shopping ads](https://developers.google.com/google-ads/api/docs/shopping-ads/reporting)
+Kaynak belgenin araştırma kontrol tarihi: 14 Ekim 2026.
+Üstteki 16 Ekim kayıt tarihi ve bu kaynak tarihi ayrı korunur.
+
+- [Shopping ürün raporlaması](https://developers.google.com/google-ads/api/docs/shopping-ads/reporting)
 - [Google Ads API v25 — Cart Data Sales View](https://developers.google.com/google-ads/api/fields/v25/cart_data_sales_view)
-- [Google Ads API — Performance Max retail reporting](https://developers.google.com/google-ads/api/performance-max/retail-reporting)
+- [Performance Max perakende raporlaması](https://developers.google.com/google-ads/api/performance-max/retail-reporting)
 - [Google Ads API v25 — Asset Group Listing Group Filter](https://developers.google.com/google-ads/api/fields/v25/asset_group_listing_group_filter)
-- [Google Ads API — Performance Max listing groups](https://developers.google.com/google-ads/api/performance-max/listing-groups)
+- [Performance Max ürün listeleme grupları](https://developers.google.com/google-ads/api/performance-max/listing-groups)
 - [Google Ads API v25 — Shopping Performance View](https://developers.google.com/google-ads/api/fields/v25/shopping_performance_view)
 - [Google Ads API v25 — Product Group View](https://developers.google.com/google-ads/api/fields/v25/product_group_view)
-- [Google Ads API — Performance Max asset group reporting](https://developers.google.com/google-ads/api/performance-max/asset-group-reporting)
+- [Performance Max Asset Group raporlaması](https://developers.google.com/google-ads/api/performance-max/asset-group-reporting)

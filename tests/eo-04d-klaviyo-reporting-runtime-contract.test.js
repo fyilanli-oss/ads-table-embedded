@@ -40,7 +40,7 @@ test("Campaign Audience is navigation-only and never becomes an AdsTable reporti
   assert.equal(contract.hierarchy.campaign_audience_splits_sales, false);
   assert.equal(contract.hierarchy.campaign_content_traversal_must_follow_audience_parentage, true);
   assert.match(analysisBook, /\*\*Audience:\*\* `Son 90 Günde Alışveriş Yapanlar`/);
-  assert.match(analysisBook, /\*\*Audience sonucu:\*\* canonical AdsTable satırına alınmaz/);
+  assert.match(analysisBook, /\*\*Audience sonucu:\*\* kanonik AdsTable satırına alınmaz/);
 });
 
 test("known Message with unresolved Variation is not Unclassified Channel", () => {

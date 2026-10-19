@@ -144,7 +144,7 @@ test("EO-04 scenario book records explicit package closure", async () => {
   assert.equal(matrix.closure.product_owner_closure_acceptance_required, true);
   assert.equal(matrix.closure.product_owner_closure_acceptance, "PASS_2026-10-18");
   assert.equal(matrix.closure.package_status_changed_by_this_contract, false);
-  assert.match(book, /Status:\*\* Accepted — 2026-10-18/);
+  assert.match(book, /Durum:\*\* Kabul edildi — 2026-10-18/);
   assert.match(book, /META-05/);
   assert.match(book, /GOOGLE-05/);
   assert.match(book, /KLAVIYO-06/);
@@ -157,14 +157,14 @@ test("every provider scenario has a complete human-readable analyst card", async
     "İş sorusu",
     "Campaign",
     "Channel adayları",
-    "Provider alt kanıtı",
-    "Advertised/clicked product",
-    "Sold product",
-    "Temporal evidence",
+    "Sağlayıcı alt kanıtı",
+    "Reklamda gösterilen/tıklanan ürün",
+    "Satılan ürün",
+    "Zaman kanıtı",
     "Beklenen Channel",
     "Beklenen Sales Role",
     "Medium / Variation",
-    "Cost / fact davranışı",
+    "Maliyet / kayıt davranışı",
     "Neden",
     "Yasak çıkarım",
   ];

@@ -320,6 +320,16 @@ bugünün açık işleri sayılmaz. Gerçek Shopify entegrasyonu kanıtı ve EO-
 günleri tamamlama işi açık kalır; yeni kod, canlı çağrı veya örnek veri üretimi yoktur.
 A6-DOCS-01 kapanmaz; EO-05 başlamaz.
 
+Sekizinci teslim PR #127 açık ürün sahibi okunabilirlik/merge kabulüyle
+`f9780f87eaf29f20ed5520ae47e9b6426f77fa89` commit'inde birleştirildi;
+test edilen ağaç korundu. Dokuzuncu dil geçişi EO-04 analiz kitabı, ortak
+Channel/ürün ekonomisi ve geçici sağlayıcı canlı kabul brief'inin üç belgesidir.
+Güncel toplam: 35 kabul edilmiş, 3 okunabilirlik kabulü bekleyen, 24 dil incelemesi
+bekleyen belge. Önceki sayımlar tarihseldir. On sekiz senaryo aynı ürün, tarih,
+Channel ve Sales Role sonucunu korur; kart alanları Türkçeleştirilir. Meta'nın
+16 Ekim tek-sayfa anlatımı sonraki tam sayfalama kabulünü geri almaz. Yanıt ile
+dar sunucu logu ayrı kalır. Yeni kod/canlı işlem yok; paket kapanmaz, EO-05 başlamaz.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

@@ -28,16 +28,16 @@ test("DOCS-01 inventories human Markdown without translating agent instructions 
   assert.equal(new Set(actual).size, 63);
   assert.deepEqual(contract.inventory_counts, {
     total_markdown: 63, human_markdown: 62, excluded_agent_instructions: 1,
-    translated_review_pending: 4, pending_language_review: 27,
-    translated_product_owner_accepted: 31,
+    translated_review_pending: 3, pending_language_review: 24,
+    translated_product_owner_accepted: 35,
   });
   for (const row of contract.inventory) {
     assert.match(row.baseline_blob, /^[a-f0-9]{40}$/);
     assert.equal(row.classification, row.path === "AGENTS.md"
       ? "agent_instructions_excluded" : "human_markdown");
     assert.equal(row.status, row.path === "AGENTS.md" ? "excluded_unchanged"
-      : [...contract.first_batch, ...contract.second_batch, ...contract.third_batch, ...contract.fourth_batch, ...contract.fifth_batch, ...contract.sixth_batch, ...contract.seventh_batch].includes(row.path) ? "translated_product_owner_accepted"
-        : contract.eighth_batch.includes(row.path)
+      : [...contract.first_batch, ...contract.second_batch, ...contract.third_batch, ...contract.fourth_batch, ...contract.fifth_batch, ...contract.sixth_batch, ...contract.seventh_batch, ...contract.eighth_batch].includes(row.path) ? "translated_product_owner_accepted"
+        : contract.ninth_batch.includes(row.path)
           ? "translated_product_owner_review_pending" : "pending_language_review");
   }
 });
@@ -278,8 +278,48 @@ test("DOCS-01 Klaviyo evidence prose retains hierarchy, historical limits and th
   const capability = await readFile(contract.eighth_batch[3], "utf8");
   assert.match(capability, /Kota değerleri tarihsel kaynak kaydıdır/);
   assert.match(capability, /yeni kota taahhüdü/);
-  const prepared = contract.deliveries[7];
-  assert.deepEqual(prepared.files, contract.eighth_batch);
+  const accepted = contract.deliveries[7];
+  assert.deepEqual(accepted.files, contract.eighth_batch);
+  assert.equal(accepted.product_owner_readability_accepted, true);
+  assert.equal(accepted.merge_authorized, true);
+  assert.equal(accepted.pull_request, 127);
+  assert.equal(accepted.merge_commit, "f9780f87eaf29f20ed5520ae47e9b6426f77fa89");
+});
+
+test("DOCS-01 EO-04 common prose preserves all scenario identities, cost boundaries and retained live proof", async () => {
+  const contract = await readJson(contractPath);
+  const closure = await readJson("contracts/a6-parent-package-analysis-design-closure-v1.json");
+  assert.equal(contract.ninth_batch.length, 3);
+  for (const path of contract.ninth_batch) {
+    const content = await readFile(path, "utf8");
+    const row = contract.inventory.find((item) => item.path === path);
+    assertTechnicalTokens(content, row.preserved_technical_tokens);
+    assert.match(content, /EXECUTION_PLAN|Execution Plan/);
+    assert.match(content, /tarihsel|Tarihsel|kabul edildiği günkü kapsamını/);
+    assert.doesNotMatch(content, /^##? (?:Analyst result|Authority and mutation boundary|Safe response|Contract section map)/m);
+  }
+  const book = await readFile(contract.ninth_batch[0], "utf8");
+  assert.match(book, /\*\*Durum:\*\* Kabul edildi — 2026-10-18/);
+  for (const section of closure.required_sections) assert.ok(book.split(/\r?\n/).includes("- " + section));
+  for (const provider of ["META", "GOOGLE", "KLAVIYO"]) {
+    for (let index = 1; index <= 6; index++) {
+      assert.ok(book.includes("### " + provider + "-0" + index + " "));
+    }
+  }
+  assert.match(book, /Satışın iş tarihi `1 Ekim`; eldeki ağaç `16 Ekim`/);
+  assert.match(book, /PMax Channel'ı satılan ürün seçmez/);
+  assert.match(book, /kanonik AdsTable satırına alınmaz/);
+  const common = await readFile(contract.ninth_batch[1], "utf8");
+  assert.match(common, /Channel toplam maliyeti ürünlere eşit, satış, gelir, tıklama, adet, Sales Role/);
+  assert.ok(common.includes("Cross-sell + ₺18"));
+  assert.ok(common.includes("Unclassified Channel + ₺18"));
+  const live = await readFile(contract.ninth_batch[2], "utf8");
+  assert.match(live, /Kanonik Ad Click seçilmedi/);
+  assert.match(live, /üçüncü\s+çalıştırma `2026-10-16T15:14:07.104Z`/);
+  assert.match(live, /17 Ekim'deki kabul edilmiş App Role tam\s+sayfalama kuralını geri almaz/);
+  assert.match(live, /yanıt sözleşmesi, yukarıdaki dar sunucu loguyla aynı şey değildir/);
+  const prepared = contract.deliveries[8];
+  assert.deepEqual(prepared.files, contract.ninth_batch);
   assert.equal(prepared.product_owner_readability_accepted, false);
   assert.equal(prepared.merge_authorized, false);
 });

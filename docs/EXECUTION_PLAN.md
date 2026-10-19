@@ -330,6 +330,16 @@ Channel ve Sales Role sonucunu korur; kart alanları Türkçeleştirilir. Meta'n
 16 Ekim tek-sayfa anlatımı sonraki tam sayfalama kabulünü geri almaz. Yanıt ile
 dar sunucu logu ayrı kalır. Yeni kod/canlı işlem yok; paket kapanmaz, EO-05 başlamaz.
 
+Dokuzuncu teslim PR #128 açık ürün sahibi okunabilirlik/merge kabulüyle
+`eaca2c5376dc0cf0b25322f9a0eac7c6aa8719e9` commit'inde birleştirildi;
+test edilen ağaç korundu. Onuncu dil geçişi Meta ve Google tarihsel Channel
+araştırma taslaklarının iki belgesidir. Güncel toplam: 38 kabul edilmiş,
+2 okunabilirlik kabulü bekleyen, 22 dil incelemesi bekleyen belge.
+Eski Google geniş-ağaç varsayımı tarihsel tutulup tek uygun All products ve
+tam iş günü kanıtı hakkındaki kabul edilmiş sözleşmeye yönlendirilir; eski
+varsayım bugünkü kural diye sunulmaz. Meta katalog yanıtı ve kanonik tıklama
+eşlemesi tamamlanmış sayılmaz. Yeni kod/canlı işlem yok; paket kapanmaz, EO-05 başlamaz.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

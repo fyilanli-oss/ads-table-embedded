@@ -152,6 +152,15 @@ On sekiz senaryonun kimliği ve beklenen sonucu değişmez; alan adları Türkç
 doğrulama sınırları korunur. Eski sayfalama, log, merge ve hazırlık durumları
 nihai kabulle birlikte okunur. Bu teslim kod, canlı ortam veya EO-05 yetkisi değiştirmez.
 
+PR #128 açık ürün sahibi kabulüyle merge edildi; kabul edilmiş belge sayısı
+38'dir. Onuncu teslimde Google ve Meta tarihsel araştırma taslaklarının iki
+belgesi okunabilirlik kabulü, diğer 22 belge dil incelemesi bekler.
+Önceki sayımlar tarihseldir. Taslaklar bağlayıcı uygulama sözleşmesi değildir;
+14 Ekim kaynak kontrolü ve 16 Ekim kayıt tarihi ayrı korunur. Google'ın eski
+geniş-ağaç varsayımı kabul edilmiş tek uygun Asset Group/tam gün kanıtı kararına
+yönlendirilir. Meta katalog izni genişletilmez ve ürün maliyeti doğrulanmış
+gösterilmez. Bu teslim canlı çağrı, yeni karar veya EO-05 başlangıcı değildir.
+
 ## 4. A6-ASSURE-01 — Pre-Review Assurance Programı
 
 EO-08 sonrasında çalışır. İlk kez kod sağlamlığı arayan denetim değildir;

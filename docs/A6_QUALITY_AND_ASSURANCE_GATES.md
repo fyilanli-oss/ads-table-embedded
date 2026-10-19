@@ -216,6 +216,14 @@ koşuları tarihsel kalır; kabul edilmiş genel PASS ve F01 kapanışı değiş
 Dar şema kurtarması tam yedek/PITR değildir; F10 açık borçtur. Yeni denetim,
 veritabanı provası, yedek, canlı işlem veya EO-05 başlangıcı yoktur.
 
+PR #135 TECH-01/F01 dil teslimi açık ürün sahibi kabulüyle birleştirildi.
+On altıncı teslim Shopify UI anayasası ve görev şablonudur. 57 belge kabul
+edilmiş, 2 belge okunabilirlik kabulü, 3 belge dil incelemesi bekler; önceki
+sayımlar tarihseldir. Eski Settings kusuru tarihsel ayrılır; mevcut RC seçimi,
+resmî bileşen zorunluluğu, gerçek mobil/masaüstü kabulü ve dar grafik sınırı
+korunur. Teknik sözleşme, UI kodu, ana tablo onarım gövdesi ve canlı ortam
+değişmez. Bu teslim yeni UI uygulaması, DOCS kapanışı veya EO-05 izni değildir.
+
 ## 4. A6-ASSURE-01 — Pre-Review Assurance Programı
 
 EO-08 sonrasında çalışır. İlk kez kod sağlamlığı arayan denetim değildir;

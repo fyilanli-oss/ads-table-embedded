@@ -1,38 +1,41 @@
-# AdsTable Shopify Embedded UI Anayasası
+# AdsTable Shopify gömülü arayüz anayasası
 
-**Durum:** Bağlayıcı — 30 Eylül 2026  
-**Kapsam:** Shopify Admin içinde görünen bütün AdsTable sayfaları, navigation, settings, setup, OAuth dönüşü, modal, form, durum, buton ve responsive davranışları  
-**Üst otorite:** `codex-input/AdsTable_EXECUTION_PLAN_V4_2026-08-17_TR.md`
+**Durum:** Bağlayıcı — 30 Eylül 2026
+**Kapsam:** Shopify Admin içinde görünen bütün AdsTable sayfaları, gezinme, Settings, kurulum, OAuth dönüşü, modal, form, durum, buton ve ekran boyutuna uyum davranışları
+**Güncel üst otorite:** `docs/EXECUTION_PLAN.md` ve açık ürün sahibi kararları
+**Taşınmış kaynağın tarihsel üst otorite kaydı:** `codex-input/AdsTable_EXECUTION_PLAN_V4_2026-08-17_TR.md`
+
+> Bu belge eski repository'den gelen ilkeleri, 6 Ekim runtime seçimini ve 7 Ekim grafik sınırını birlikte taşır. Güncel paket sırası `docs/EXECUTION_PLAN.md`, yürütülebilir ana sözleşme `contracts/a6-eo-implementation-master-v1.json` içindedir. Eski ekran kusuru bugünkü uygulama kusuru veya yeni iş yetkisi sayılmaz. Bu dil düzenlemesi UI kodunu, sürümü, kabul durumunu veya canlı ortamı değiştirmez.
 
 ## 1. Temel karar
 
-AdsTable bir Shopify Public Embedded App'tir. Shopify Admin içindeki arayüz ikinci bir AdsTable tasarım sistemi değildir. UI yalnız Shopify App Bridge ve ürün sahibi tarafından açıkça onaylanmış güncel App Home Polaris web component sürümü ile kurulur.
+AdsTable, Shopify Admin içine gömülü çalışan bir Public Embedded App'tir. Admin içindeki arayüz ikinci bir AdsTable tasarım sistemi değildir. Arayüz yalnız Shopify App Bridge ve ürün sahibinin açıkça onayladığı güncel App Home Polaris web component sürümüyle kurulur. Web component, Shopify'ın sunduğu arayüz bileşenidir; teknik bileşen ve özellik adları çevrilmez.
 
-**Ürün sahibi runtime kararı — 6 Ekim 2026:** Yeni embedded-only uygulamanın preview ve hedef production baseline'ı `polaris-2.0-rc.js` ve onunla eşleşen exact `@shopify/polaris-types@2.0.0-rc.2` paketidir. Shopify bu hattın release candidate olduğunu ve soak döneminde değişebileceğini bildirir. Bu bilinçli ürün kararı otomatik olarak stable 1.x'e geri çevrilemez. Stable `polaris-2.0.js` yayımlandığında geçiş; güncel resmî doküman, type/runtime eşleşmesi, desktop ve gerçek mobil kabul ve açık ürün sahibi kararıyla yapılır.
+**Ürün sahibinin runtime kararı — 6 Ekim 2026:** Yeni gömülü uygulamanın Preview ve hedef Production referansı `polaris-2.0-rc.js` ile birebir eşleşen `@shopify/polaris-types@2.0.0-rc.2` paketidir. Runtime uygulamanın çalışan sürümünü, type paketi bileşenlerin tip tanımlarını ifade eder. Shopify bu hattın release candidate, yani kararlı sürüm adayı olduğunu ve gözlem döneminde değişebileceğini bildirir. Bu bilinçli karar otomatik olarak stable 1.x'e geri çevrilemez. Kararlı `polaris-2.0.js` yayımlandığında geçiş; güncel resmî dokümantasyon, type/runtime eşleşmesi, masaüstü ve gerçek mobil kabul, açık ürün sahibi kararı gerektirir.
 
-Shopify iframe uygulamanın teknik taşıyıcısıdır; özel görünüm üretme izni değildir. Merchant, AdsTable'ı Shopify'dan kopuk bir web sitesi gibi görmemelidir.
+Shopify iframe uygulamanın teknik taşıyıcısıdır; özel görünüm üretme izni değildir. Mağaza sahibi AdsTable'ı Shopify'dan kopuk bir web sitesi gibi görmemelidir.
 
 ## 2. Otorite sırası
 
 Çelişki halinde sıra şöyledir:
 
-1. Execution Plan ve açık kullanıcı kararı
-2. Bu anayasa
-3. `contracts/shopify/shopify-embedded-ui-constitution-v1.json`
-4. İlgili E10/R karar belgesi ve executable contract
-5. Onaylı analist brief'i ve component mapping
-6. Kod ve test
+1. Execution Plan ve açık kullanıcı kararı.
+2. Bu anayasa.
+3. `contracts/shopify/shopify-embedded-ui-constitution-v1.json`.
+4. İlgili karar belgesi ve yürütülebilir sözleşme. Eski E10/R belgeleri yalnız tarihsel referanstır; güncel EO otoritesinin yerine geçmez.
+5. Onaylı analist özeti ve bileşen eşlemesi.
+6. Kod ve test.
 
 Kod veya eski ekran görüntüsü üstteki kararlara aykırıysa referans değil, düzeltilmesi gereken teknik borçtur.
 
 ## 3. İzin verilen yapı
 
-- Layout, card/section, divider, stack/grid/box, title, text, icon, badge, banner, button/button group, modal, form alanı ve navigation için yalnız resmî Shopify componentleri kullanılır.
-- Component adı, property, variant, tone, spacing ve responsive davranış implementasyon günü güncel resmî Shopify kaynağından doğrulanır.
-- Referans ekran görüntüsü ürün niyetini ve Shopify standardını gösterir; görünüm özel CSS ile kopyalanmaz. Uygun resmî component/variant seçilir.
-- App navigation ve sayfa başlığı App Bridge'in resmî navigation/title yetenekleriyle yönetilir. Aynı route için `Dashboard / Settings` gibi uydurma ikinci breadcrumb üretilmez.
-- `Connected` gibi durumlar resmî status componentiyle; `Disconnect` gibi destructive eylemler resmî button'ın documented critical/destructive semantiğiyle gösterilir.
-- Mobil ve desktop aynı bilgi mimarisini taşır. Shopify componentlerinin doğal responsive davranışı esas alınır; ayrı özel mobil UI sistemi kurulmaz.
+- Yerleşim, kart/bölüm, ayırıcı, yığın/ızgara/kutu, başlık, metin, simge, rozet, bildirim, buton/buton grubu, modal, form alanı ve gezinme için yalnız resmî Shopify bileşenleri kullanılır.
+- Bileşen adı, property, variant, tone, spacing ve farklı ekran boyutlarındaki davranış uygulama günü güncel resmî Shopify kaynağından doğrulanır. Bunlar kodda kullanılacak teknik özellik kimlikleridir.
+- Referans ekran görüntüsü ürün niyetini ve Shopify standardını gösterir; görünüm özel CSS ile kopyalanmaz. Uygun resmî bileşen/varyant seçilir.
+- Uygulama gezinmesi ve sayfa başlığı App Bridge'in resmî gezinme/başlık yetenekleriyle yönetilir. Aynı yol için `Dashboard / Settings` gibi uydurma ikinci gezinme izi üretilmez.
+- `Connected` gibi durumlar resmî durum bileşeniyle; `Disconnect` gibi yıkıcı eylemler resmî butonun belgelenmiş critical/destructive anlamıyla gösterilir.
+- Mobil ve masaüstü aynı bilgi mimarisini taşır. Shopify bileşenlerinin doğal ekran uyumu esas alınır; ayrı özel mobil arayüz sistemi kurulmaz.
 
 Resmî dayanaklar:
 
@@ -45,77 +48,78 @@ Resmî dayanaklar:
 - https://shopify.dev/docs/apps/build/app-home/polaris2
 - https://shopify.dev/docs/api/app-home/v2.0-rc/web-components/versioning
 
-Shopify'ın güncel resmî rehberi `s-clickable` bileşenini, button/link ile çözülemeyen özel durumlar için bir **escape hatch** olarak tanımlar. Bu nedenle standart bir eylemi button gibi göstermek için `s-clickable` kullanmak yasaktır.
+Shopify'ın resmî rehberi `s-clickable` bileşenini, button/link ile çözülemeyen özel durumlar için istisnai çıkış yolu olarak tanımlar. Standart bir eylemi buton gibi göstermek için `s-clickable` kullanmak yasaktır.
 
 ## 4. Kesin yasaklar
 
-- Raw `<button>`, `<input>`, `<select>`, `<form>` veya `<dialog>` ile embedded kontrol üretmek
-- Özel button, badge, card, modal, form, navigation veya status componenti yazmak
-- Inline `style`, `<style>`, literal hex/rgb/hsl renk, özel class ile renk/gölge/border/radius/ölçü taklit etmek
-- Shopify'ın resmî componentini CSS ile başka bir component görünümüne çevirmek
-- `s-clickable` ile Connect, Resume setup, Disconnect, Reporting account, Update spend veya Change value button'ı taklit etmek
-- Tasarım kararını ekran görüntüsünden renk örnekleyerek veya “yakın görünür” tahminiyle vermek
-- Yalnız desktop ekranına bakarak responsive kabul vermek
-- Kullanıcı akışı çalıştığı için görsel/Shopify-native kabulü otomatik PASS saymak
-- Kanıt olmadan Execution Plan'da `Done`, `PASS` veya `Accepted` yazmak
+- Ham `<button>`, `<input>`, `<select>`, `<form>` veya `<dialog>` ile gömülü kontrol üretmek.
+- Özel buton, rozet, kart, modal, form, gezinme veya durum bileşeni yazmak.
+- Satır içi `style`, `<style>`, doğrudan hex/rgb/hsl renk veya özel class ile renk/gölge/kenarlık/köşe/ölçü taklit etmek.
+- Shopify'ın resmî bileşenini CSS ile başka bileşen görünümüne çevirmek.
+- `s-clickable` ile Connect, Resume setup, Disconnect, Reporting account, Update spend veya Change value butonu taklit etmek. Bu İngilizce adlar mevcut ekran eylemlerinin kimliğidir; bu pakette ekran metinleri çevrilmez.
+- Tasarım kararını ekran görüntüsünden renk örnekleyerek veya “yakın görünür” tahminiyle vermek.
+- Yalnız masaüstüne bakarak ekran uyumu kabulü vermek.
+- Kullanıcı akışı çalışıyor diye görsel/Shopify'a özgü kabulü otomatik PASS saymak.
+- Kanıt olmadan Execution Plan'da `Done`, `PASS` veya `Accepted` yazmak.
 
-Resmî component ihtiyacı karşılamıyorsa geliştirici kendi karşılığını uydurmaz. İş durur; analist kararı ve contract revizyonu istenir.
+Resmî bileşen ihtiyacı karşılamıyorsa geliştirici kendi karşılığını uydurmaz. İş durur; analist kararı ve sözleşme değişikliği istenir.
 
-## 5. Her UI taskından önce zorunlu analist brief'i
+## 5. Her arayüz işinden önce zorunlu analist özeti
 
 Koddan önce aşağıdakiler yazılı olmalıdır:
 
-- İş amacı ve kullanıcı sonucu
-- Başlangıç, başarı, cancel, loading, empty, error ve reconnect durumları
-- Exact görünen metinler ve eylemler
-- Desktop ve mobil yerleşim beklentisi
-- Her görünür öğe için exact Shopify component/property/variant eşlemesi
-- Doğrulanan resmî Shopify linki ve doğrulama tarihi
-- Değişmeyecek backend/OAuth/data davranışı
-- Kapsam dışı maddeler
-- Kabul adımları ve gerekli kanıt
+- İş amacı ve kullanıcı sonucu.
+- Başlangıç, başarı, iptal, yükleniyor, boş, hata ve yeniden bağlanma durumları.
+- Birebir görünen metinler ve eylemler.
+- Masaüstü ve mobil yerleşim beklentisi.
+- Her görünür öğe için birebir Shopify bileşen/property/variant eşlemesi.
+- Doğrulanan resmî Shopify bağlantısı ve doğrulama tarihi.
+- Değişmeyecek sunucu/OAuth/veri davranışı.
+- Kapsam dışı maddeler.
+- Kabul adımları ve gerekli kanıt.
 
-Bu alanlardan biri eksikse implementation başlamaz.
+Bu alanlardan biri eksikse uygulama başlamaz.
 
-## 6. Merge ve tamamlanma kapıları
+## 6. Birleştirme ve tamamlanma kapıları
 
-Bir Shopify embedded UI paketi ancak şu koşulların tamamı sağlanırsa merge edilebilir ve tamamlandı sayılabilir:
+Shopify gömülü arayüz paketi ancak bütün koşullar sağlanırsa birleştirilebilir ve tamamlanmış sayılır:
 
-1. Anayasa guard testi PASS.
-2. İlgili UI contract testi PASS.
-3. Ham HTML kontrolü, özel CSS, literal renk ve taklit component yok.
-4. Desktop Shopify Admin gerçek oturum kanıtı PASS.
+1. Anayasa koruma testi PASS.
+2. İlgili arayüz sözleşme testi PASS.
+3. Ham HTML kontrolü, özel CSS, doğrudan renk ve taklit bileşen yok.
+4. Masaüstü Shopify Admin gerçek oturum kanıtı PASS.
 5. En az 320 px gerçek mobil Shopify Admin kanıtı PASS.
-6. Loading, empty, error, cancel ve başarılı durumlar test edilmiş.
-7. OAuth değişiyorsa dönüş route'u, resume setup, account selection ve modal cancel bağımsız test edilmiş.
+6. Yükleniyor, boş, hata, iptal ve başarı durumları test edilmiş.
+7. OAuth değişiyorsa dönüş yolu, kurulum sürdürme, hesap seçimi ve modal iptali bağımsız test edilmiş.
 8. Kullanıcı/ürün sahibi açık kabul vermiş.
 9. Execution Plan yalnız bu kanıtlardan sonra güncellenmiş.
 
-Screenshot yalnız kanıttır; kullanıcı istemedikçe repository'ye kopyalanmaz. Kanıt için gereksiz dosya üretimi yapılmaz.
+Ekran görüntüsü yalnız kanıttır; kullanıcı istemedikçe repository'ye kopyalanmaz. Kanıt için gereksiz dosya üretilmez.
 
-## 7. Mevcut Settings durumu
+## 7. Eski Settings tespiti — tarihsel kayıt
 
-`main` üzerindeki `e9cd2490f1e9a9c70213baf3f47feba8c264380f` sürümünde Settings eylemleri için `s-clickable`, inline style ve `#FDE8E7` literal rengi kullanılmıştır. Mobil görünümde button/status ölçüsü ve yerleşimi Shopify referansıyla uyumlu değildir.
+Eski repository'nin `main` dalındaki `e9cd2490f1e9a9c70213baf3f47feba8c264380f` sürümünde Settings eylemleri için `s-clickable`, satır içi style ve `#FDE8E7` doğrudan renk değeri kullanılmıştı. Mobilde buton/durum ölçüsü ve yerleşimi Shopify referansıyla uyumlu değildi.
 
-Bu durum **kabul edilmiş tasarım değildir** ve R7-B6 görsel kabulü `FAIL / corrective work required` durumundadır. Bu anayasa paketi Settings UI kodunu değiştirmez; yalnız ihlali görünür kılar ve yeni ihlal eklenmesini engeller. Düzeltme ayrı, kısa ve kanıta dayalı UI paketi olacaktır.
+Bu **kabul edilmiş tasarım değildi**. O aşamadaki R7-B6 görsel kabulü `FAIL / corrective work required`, yani düzeltme gerekli durumundaydı. Anayasa kaydı Settings kodunu değiştirmedi; ihlali görünür kıldı, yeni ihlali engelledi ve ayrı kanıtlı düzeltme gerektirdi.
+
+Bu eski tespit, yeni `ads-table-embedded` uygulamasının bugünkü Settings durumunu anlatmaz. Eski R7-B6 için yeni kabul üretmez; güncel uygulamanın kabulü kendi Execution Plan ve kanıt kayıtlarından okunur.
 
 ## 8. Değişiklik yönetimi
 
-Bu anayasa ancak açık kullanıcı/ürün kararı, Execution Plan kaydı ve executable contract/test güncellemesiyle değiştirilebilir. Bir task veya ajan kendi başına istisna üretemez.
+Anayasa yalnız açık kullanıcı/ürün kararı, Execution Plan kaydı ve yürütülebilir sözleşme/test güncellemesiyle değiştirilebilir. Bir görev veya ajan kendi başına istisna üretemez. Bu Türkçe dil düzenlemesi yeni istisna veya arayüz uygulaması değildir.
 
 ## 9. Karar geçmişi
 
-- 30 Eylül 2026 development RC kararı legacy repository bağlamında alınmıştı.
-- 6 Ekim 2026 EO-01-B'deki stable 1.1 seçimi, aynı gün ürün sahibinin açık kararıyla EO-01-C kapsamında supersede edildi; aktif baseline Polaris 2.0 RC'dir.
-- Bu değişiklik legacy uygulamanın runtime'ını değiştirmez; yalnız yeni `ads-table-embedded` repository'sinin baseline'ını belirler.
-
+- 30 Eylül 2026 geliştirme RC kararı eski repository bağlamında alındı.
+- 6 Ekim 2026 EO-01-B'deki stable 1.1 seçiminin yerine aynı gün açık ürün sahibi kararıyla EO-01-C kapsamında Polaris 2.0 RC geçti.
+- Bu karar eski uygulamanın runtime'ını değiştirmez; yalnız yeni `ads-table-embedded` repository'sinin referans sürümünü belirler.
 
 ## 10. Analitik grafik çizim düzlemi istisnası
 
 **Ürün sahibi kararı — 7 Ekim 2026:** Funnel ilişki grafiklerinin yalnız veri çizim düzleminde SVG veya Canvas kullanılabilir. Bu dar istisna Shopify görünümünü taklit etme izni değildir.
 
-İzinli çizim düzlemi öğeleri: eksenler, seri çizgileri ve alanları, veri noktaları/işaretleri, kılavuzlar, grafik içi lejant ve doğrudan veri etiketleri ile bunların erişilebilir seçim/hedef mekanikleri.
+İzinli çizim öğeleri: Eksenler, seri çizgileri ve alanları, veri noktaları/işaretleri, kılavuzlar, grafik içi lejant, doğrudan veri etiketleri ve bunların erişilebilir seçim/hedef mekanikleri.
 
-İstisna dışında kalan ve resmî Polaris/App Bridge bileşeni olmak zorunda olan öğeler: sayfa kabuğu, başlıklar, tarih/compare/filter kontrolleri, butonlar, formlar, KPI özetleri, section/card yapısı, tablolar, modal/popover, durum/freshness, navigation ve loading/empty/error yüzeyleri. Grafik ayrıntısı yalnız hover'a bağlanamaz; klavye ve dokunma desteği, erişilebilir başlık/açıklama veya tablo eşdeğeri, renk dışı seri ayrımı ve reduced-motion davranışı zorunludur.
+Sayfa kabuğu, başlıklar, tarih/karşılaştırma/filtre kontrolleri, butonlar, formlar, KPI özetleri, bölüm/kart yapısı, tablolar, modal/açılır panel, durum/veri güncelliği, gezinme ve yükleniyor/boş/hata yüzeyleri istisna dışındadır; resmî Polaris/App Bridge bileşeni olmak zorundadır. Grafik ayrıntısı yalnız fareyle üzerine gelmeye bağlanamaz. Klavye ve dokunma desteği, erişilebilir başlık/açıklama veya tablo eşdeğeri, renk dışı seri ayrımı ve azaltılmış hareket tercihi desteği zorunludur.
 
-Grafik, seçili nokta ayrıntısı, KPI özeti ve tablo aynı BFF/query sonucu ile aynı formula otoritesini kullanır. Aralarındaki sayısal veya durum-semantiği farkı kabul hatasıdır. Grafik rengi veri kodlamasıdır; erişilebilirlik ve tema kabulünü geçmeden onaylanamaz. Ad Analysis aynı çizim sınırını ancak A6-EO-07-C kanıtı ve ayrı kabul edilmiş grafik brief'inden sonra kullanabilir.
+Grafik, seçili nokta ayrıntısı, KPI özeti ve tablo aynı BFF/sorgu sonucu ile aynı formül otoritesini kullanır. Sayısal veya durum anlamındaki fark kabul hatasıdır. Grafik rengi veri kodlamasıdır; erişilebilirlik ve tema kabulü geçmeden onaylanamaz. Ad Analysis aynı çizim sınırını ancak A6-EO-07-C kanıtı ve ayrı kabul edilmiş grafik özeti sonrasında kullanabilir.

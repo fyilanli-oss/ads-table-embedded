@@ -2,7 +2,7 @@
   "contract_id": "a6-docs-01-turkish-standardization-v1",
   "checked_at": "2026-10-19",
   "package_id": "A6-DOCS-01",
-  "status": "in_progress_tech_audit_history_prepared",
+  "status": "in_progress_shopify_governance_prepared",
   "baseline_commit": "f62a5c6f7a254fe61be3c8af94f7fa9d2d6b65a1",
   "brief": "docs/A6_QUALITY_AND_ASSURANCE_GATES.md",
   "user_start_authorized": true,
@@ -19,9 +19,9 @@
     "total_markdown": 63,
     "human_markdown": 62,
     "excluded_agent_instructions": 1,
-    "translated_review_pending": 4,
-    "pending_language_review": 5,
-    "translated_product_owner_accepted": 53
+    "translated_review_pending": 2,
+    "pending_language_review": 3,
+    "translated_product_owner_accepted": 57
   },
   "first_batch": [
     "README.md",
@@ -559,7 +559,7 @@
       "path": "docs/A6_TECH_01_ENGINEERING_INTEGRITY_AUDIT.md",
       "baseline_blob": "3178f5374ca28fc09f9a4f5edf0ea1dc6720468f",
       "classification": "human_markdown",
-      "status": "translated_product_owner_review_pending",
+      "status": "translated_product_owner_accepted",
       "preserved_technical_tokens": [
         "--ff-only --no-overwrite-ignore",
         ".env.example",
@@ -703,7 +703,7 @@
       "path": "docs/A6_TECH_01_F01B_DATABASE_REPLAY.md",
       "baseline_blob": "b3129cebb29aa61872b69e4a7525fc06ad1c1c12",
       "classification": "human_markdown",
-      "status": "translated_product_owner_review_pending",
+      "status": "translated_product_owner_accepted",
       "preserved_technical_tokens": [
         "--help",
         "0b885052e4bba559323006d000a667256e89d5fe",
@@ -765,7 +765,7 @@
       "path": "docs/A6_TECH_01_F01C_SCOPED_RECOVERY.md",
       "baseline_blob": "fb2f96323ede2d1d6d75cefad6d10952fa64f57d",
       "classification": "human_markdown",
-      "status": "translated_product_owner_review_pending",
+      "status": "translated_product_owner_accepted",
       "preserved_technical_tokens": [
         "1a26e26bc6d905f6369599d209b5d76ea5c725444f42d3bc0389b3a829ab62b4",
         "1ae095052d623673be7377a17d4c62ba220bbd2c",
@@ -790,7 +790,7 @@
       "path": "docs/A6_TECH_01_F01_MIGRATION_RECONCILIATION.md",
       "baseline_blob": "d817462a387a4e6d195b5ab9553ddd6e02ebaa19",
       "classification": "human_markdown",
-      "status": "translated_product_owner_review_pending",
+      "status": "translated_product_owner_accepted",
       "preserved_technical_tokens": [
         "--help",
         "20261018131548",
@@ -2184,7 +2184,41 @@
       "path": "docs/SHOPIFY_EMBEDDED_UI_CONSTITUTION.md",
       "baseline_blob": "69067ecb5ca4f78e343e708f9eb5536e1ed938df",
       "classification": "human_markdown",
-      "status": "pending_language_review"
+      "status": "translated_product_owner_review_pending",
+      "preserved_technical_tokens": [
+        "#FDE8E7",
+        "<button>",
+        "<dialog>",
+        "<form>",
+        "<input>",
+        "<select>",
+        "<style>",
+        "@shopify/polaris-types@2.0.0-rc.2",
+        "Accepted",
+        "Connected",
+        "Dashboard / Settings",
+        "Disconnect",
+        "Done",
+        "FAIL / corrective work required",
+        "PASS",
+        "ads-table-embedded",
+        "codex-input/AdsTable_EXECUTION_PLAN_V4_2026-08-17_TR.md",
+        "contracts/shopify/shopify-embedded-ui-constitution-v1.json",
+        "e9cd2490f1e9a9c70213baf3f47feba8c264380f",
+        "https://shopify.dev/docs/api/app-home-ui-extension/latest/web-components/feedback-and-status-indicators/badge",
+        "https://shopify.dev/docs/api/app-home/latest",
+        "https://shopify.dev/docs/api/app-home/latest/app-bridge-web-components",
+        "https://shopify.dev/docs/api/app-home/latest/web-components",
+        "https://shopify.dev/docs/api/app-home/latest/web-components/actions/button",
+        "https://shopify.dev/docs/api/app-home/v2.0-rc/web-components/versioning",
+        "https://shopify.dev/docs/api/polaris/using-polaris-web-components",
+        "https://shopify.dev/docs/apps/build/app-home/polaris2",
+        "main",
+        "polaris-2.0-rc.js",
+        "polaris-2.0.js",
+        "s-clickable",
+        "style"
+      ]
     },
     {
       "path": "docs/decisions/A6_EO_04_C_GOOGLE_2026_ACCESS_REVIEW_CORRECTIVE.md",
@@ -2491,7 +2525,13 @@
       "path": "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md",
       "baseline_blob": "cf566b3e41c958bb1684c1f25575c325f585f033",
       "classification": "human_markdown",
-      "status": "pending_language_review"
+      "status": "translated_product_owner_review_pending",
+      "preserved_technical_tokens": [
+        "Accepted",
+        "Done",
+        "PASS",
+        "s-clickable"
+      ]
     }
   ],
   "second_batch": [
@@ -2759,8 +2799,24 @@
         "docs/A6_TECH_01_F01B_DATABASE_REPLAY.md",
         "docs/A6_TECH_01_F01C_SCOPED_RECOVERY.md"
       ],
-      "status": "prepared_product_owner_review_pending",
+      "status": "merged_product_owner_accepted",
       "base_commit": "93756a705ac84c5bb0a16e0fb08b18fb45b4158e",
+      "product_owner_readability_accepted": true,
+      "merge_authorized": true,
+      "accepted_at": "2026-10-19",
+      "pull_request": 135,
+      "source_commit": "ac67319a4759e98564b21d881c71a407d452f3dd",
+      "merge_commit": "38c3da3c2272320b58247497de7c099c0c9f36bf",
+      "tree": "2421d2c344424fc8747549e069020dd7c507b496"
+    },
+    {
+      "id": "shopify_governance_translation_delivery",
+      "files": [
+        "docs/SHOPIFY_EMBEDDED_UI_CONSTITUTION.md",
+        "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md"
+      ],
+      "status": "prepared_product_owner_review_pending",
+      "base_commit": "38c3da3c2272320b58247497de7c099c0c9f36bf",
       "product_owner_readability_accepted": false,
       "merge_authorized": false
     }
@@ -2866,5 +2922,9 @@
     "docs/A6_TECH_01_F01_MIGRATION_RECONCILIATION.md",
     "docs/A6_TECH_01_F01B_DATABASE_REPLAY.md",
     "docs/A6_TECH_01_F01C_SCOPED_RECOVERY.md"
+  ],
+  "sixteenth_batch": [
+    "docs/SHOPIFY_EMBEDDED_UI_CONSTITUTION.md",
+    "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md"
   ]
 }

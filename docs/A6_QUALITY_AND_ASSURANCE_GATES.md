@@ -180,6 +180,15 @@ Tarihsel özet sayımı, rota/şema taslağı ve süre tahmini bugünkü yetki v
 gibi sunulmaz. Supabase rehberi yalnız terim kontrolüdür; yeni yedek, sorgu,
 kaynak oluşturma, sürüm seçimi veya deploy işi açılmaz. Paket kapanmaz.
 
+PR #131 açık ürün sahibi kabulüyle merge edildi; kabul edilmiş belge sayısı
+46, dil incelemesi bekleyen belge sayısı 16'dır. Ana tablo belgesinde bulunan
+bozuk UTF-8 için ürün sahibi dar onarımı onayladı. Son sağlam GitHub kaynak
+gövdesi geri getirildi; yalnız satır sonu boşlukları ve güncel yetki notu dışında
+değiştirilmedi. Onarım özgün makine sözleşmelerini veya sonraki kabulleri geri
+almaz; bozuk metinden yeni karar türetilmez. 62 insan-okuyucu Markdown dosyası
+için UTF-8/bozuk karakter kontrolü eklenir. Bu teknik onarım çeviri kabulü
+sayılmaz; 16 belge bekler. Onarımın CI ve ürün sahibi kabulü ayrı kapıdır.
+
 ## 4. A6-ASSURE-01 — Pre-Review Assurance Programı
 
 EO-08 sonrasında çalışır. İlk kez kod sağlamlığı arayan denetim değildir;

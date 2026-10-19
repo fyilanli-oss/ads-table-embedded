@@ -3,7 +3,7 @@
   "contract_id": "a6-eo-implementation-master-v1",
   "title": "A6 EO single-track execution rule and integrated implementation package table",
   "effective_date": "2026-10-04",
-  "status": "EO-04_accepted_A6-TECH-01_findings_recorded_remediation_required",
+  "status": "EO-04_TECH_DOCS_accepted_staged_rollout_planned_EO05_start_pending",
   "authority": {
     "execution_plan": "docs/EXECUTION_PLAN.md",
     "EO_GO": "contracts/a6-eo-f7-go-decision-v1.json",
@@ -1210,7 +1210,8 @@
   "legacy_deletion_authorized": false,
   "current_active_parent": null,
   "current_active_child": null,
-  "current_gate": "A6-DOCS-01",
+  "current_gate": "A6-EO-05_START_BRIEF_PENDING",
+  "staged_rollout_authority": "contracts/a6-quality-and-assurance-gates-v1.json#staged_rollout",
   "next_ready_child": null,
   "independent_packages": [
     {

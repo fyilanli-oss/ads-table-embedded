@@ -269,11 +269,21 @@ review başvurusu A6-ASSURE-01 PASS ve ürün sahibi GO kararı olmadan yapılam
 3. Kritik bulguların düzeltme ve yeniden testi
 4. A6-DOCS-01
 5. EO-05–08 ve her paket sonunda delta bütünlük kapısı
-6. A6-ASSURE-01
-7. Ürün sahibi GO/NO-GO
-8. Shopify/sağlayıcı review başvuruları
-9. Shopify onayı ve gerçek mağaza pilotu
-10. EO-09 otorite geçişi
+6. EO-08 mühendislik sonunda Zey&Rose gerçek hesap doğrulaması, sağlayıcı bazında kapsam kararı ve açık kalan kabul kapılarının kapatılması
+7. A6-ASSURE-01
+8. Ürün sahibi GO/NO-GO
+9. Shopify/sağlayıcı review başvuruları
+10. İlgili onaylar ve gerçek mağaza pilotu
+11. Ayrı onaylı EO-09 otorite geçişi, ardından koşullarıyla EO-10
+
+19 Ekim iki aşamalı planı Execution Plan'ın Zey&Rose bölümündedir;
+`contracts/a6-quality-and-assurance-gates-v1.json` içindeki `staged_rollout`
+bağlayıcıdır. Gerçek hesap yokluğu bağımsız EO-05–08 geliştirmesini durdurmaz;
+kanıta bağlı özellikleri açmaz veya EO-08 nihai kabulü üretmez. Satış korunarak
+Sales Role/Ad Cost kapsamını daraltmak yalnız belgelenmiş sonuç ve açık ürün
+sahibi kabulüyle mümkündür. Sentetik veri gerçek kanıt sayılmaz. OpenAI araştırma
+adayıdır, dördüncü sağlayıcı entegrasyonu değildir. DOCS kapanışı korunur;
+aktif kapı EO-05 başlangıç brief'idir, uygulama yetkisi henüz verilmemiştir.
 
 Bu karar repository kodu dışında Supabase, Vercel, GitHub, Shopify veya sağlayıcı
 değişikliği yetkilendirmez. Her dış sistem denetimi başlarken güncel resmî

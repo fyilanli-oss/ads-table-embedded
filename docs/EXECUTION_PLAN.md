@@ -9,6 +9,51 @@ tarafından 19 Ekim 2026'da kabul edildi; PR #137 merge onayı verildi.
 Önceki kabul bekleyen teslim notları tarihsel hazırlık durumudur.
 EO-05 otomatik başlamaz; sonraki iş için ayrı ürün sahibi yönlendirmesi gerekir.
 
+## Zey&Rose ve iki aşamalı geliştirme/review planı — 19 Ekim 2026
+
+Ürün sahibi bu plan güncellemesini onayladı. Bağlayıcı ayrıntı
+`contracts/a6-quality-and-assurance-gates-v1.json` içindeki `staged_rollout`
+kaydıdır. Bu karar EO-05 uygulamasını, mağaza taşımasını veya canlı işlem başlatmaz.
+
+1. **Paralel hazırlık:** Zey&Rose Shopify'a taşınacak; Facebook & Instagram,
+   Google & YouTube ve Klaviyo uygulamaları bağlanacak. Çok ürünlü Bileklik
+   Meta Advantage+, Google PMax, Klaviyo Campaign ve Flow senaryoları hazırlanacak.
+   Erişim hedefleri Meta App Role, Google Explorer ve Klaviyo'dur; erişimler bu
+   kayıtla alınmış veya doğrulanmış sayılmaz. Gerçek mağazada AdsTable kullanımı
+   öncesi A6-OPS-SHOPIFY-01 izolasyon kapısı korunur.
+2. **EO-05–08 geliştirmesi:** Onaylı sözleşmeler, sentetik testler ve her paket
+   sonundaki bütünlük denetimiyle sıralı ilerlenir. Gerçek hesap henüz hazır
+   değilse bağımsız mühendislik işleri sürebilir. EO-07-C'nin gerçek kanıtına
+   bağlı Ad Analysis/ürün grafiği ve Attribution Differences kapıları kalkmaz;
+   bağlı işler açık/bloke kalır. EO-08 mühendislik sonuna ulaşmak bütün alt işleri
+   kabul edilmiş veya review'a hazır ilan etmek değildir.
+3. **EO-08 sonu gerçek doğrulama:** Taşıma ve erişimler hazır olduğunda Zey&Rose
+   hesaplarında üç sağlayıcının ürün kimliği, satış, Sales Role, Ad Cost ve
+   uçtan uca veri eşliği ayrı ayrı sınanır. Bağımsız araştırma veya sentetik test
+   gerçek sağlayıcı kanıtı değildir. Gerçek kanıt yokluğu “bekliyor”dur; PASS,
+   unsupported veya sayısal sıfır değildir. Tarihsel PMax tam iş günü kapısı,
+   S2-A/S2-B senaryoları ve Channel/Sales Role sözleşmeleri korunur.
+4. **Kapsam kararı:** Sales Role veya Ad Cost sağlanamıyorsa geçerli satışlar ve
+   desteklenen alanlar korunarak devam seçeneği vardır. Rol/maliyet uydurulmaz;
+   Channel, sağlayıcı ürün maliyeti ve dağıtılmış maliyet birbirinin yerine geçmez.
+   Daralan kapsam sağlayıcı bazında belgelenir, ürün sahibi kabul eder ve ilgili
+   sözleşme/UI kapıları etkinleştirme öncesi eşlenir. Güvenlik veya veri doğruluğu
+   açığı bu seçenekle geçiştirilemez.
+5. **İkinci aşama:** Gerçek sonuçlar ve kapsam kararı → EO-08 kabulü →
+   A6-ASSURE-01 → ürün sahibi GO → ilgili başvuru/onaylar ve gerçek mağaza pilotu →
+   ayrı EO-09 canlı geçiş kararı → EO-10. Şirket kuruluşu; Meta/Google business,
+   Klaviyo beş kullanıcı hedefi ve business, Shopify başvuruları iş planındadır.
+   Bunlar yeniden doğrulanmış platform şartları veya kabul garantisi değildir.
+   “Önce tüm paketler, sonra review” sırası uygulanmaz.
+
+OpenAI Ads API yalnız araştırma adayıdır; aktif Meta/Google Ads/Klaviyo listesi
+değişmedi. Ürün raporlaması belgesinde ürün kimliği, tıklama ve spend bulunması,
+satılan ürün attribution'ı, Sales Role veya Zey&Rose erişimini kanıtlamaz.
+Erişim/uygunluk, satış ürünü, maliyet grain'i ve attribution ayrı araştırılıp açık
+kapsam onayı alınmadan entegrasyon veya business başvurusu yapılmaz.
+Kaynak kontrolü: 19 Ekim 2026,
+[OpenAI Ads Reporting](https://developers.openai.com/ads/reporting).
+
 Bu belge tarih sırasıyla birikmiş karar ve kanıt kayıtlarını korur. Aşağıdaki
 “başlamadı”, “bekliyor”, “güncel” ve ara sayımlar kayıt tarihine aittir; bugünkü
 yetki veya yeni iş talimatı değildir. Önce bu özet, sonra ilgili nihai kabul

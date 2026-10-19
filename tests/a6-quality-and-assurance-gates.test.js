@@ -25,7 +25,7 @@ test("engineering integrity runs before EO-05 and is not reduced to review readi
   assert.ok(contract.engineering_integrity.scope.includes("github_lineage_pr_ci_and_local_only_inventory"));
   assert.equal(master.current_active_parent, null);
   assert.equal(master.current_active_child, null);
-  assert.equal(master.current_gate, "A6-DOCS-01");
+  assert.equal(master.current_gate, "A6-EO-05_START_BRIEF_PENDING");
   assert.equal(master.packages.find((item) => item.id === "A6-EO-04").status, "Accepted");
 });
 

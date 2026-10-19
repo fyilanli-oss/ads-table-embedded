@@ -189,6 +189,16 @@ almaz; bozuk metinden yeni karar türetilmez. 62 insan-okuyucu Markdown dosyası
 için UTF-8/bozuk karakter kontrolü eklenir. Bu teknik onarım çeviri kabulü
 sayılmaz; 16 belge bekler. Onarımın CI ve ürün sahibi kabulü ayrı kapıdır.
 
+PR #132 metin onarımı açık ürün sahibi kabulüyle merge edildi. On üçüncü
+teslim üç yüzeyli UI ürün tasarımı, Funnel grafik referansı ve demo/dışa aktarma/
+dev store belgeleridir. 46 belge kabul edilmiş, 3 belge okunabilirlik kabulü,
+13 belge dil incelemesi bekler; önceki sayımlar tarihseldir. Grafik referansı
+uygulama kabulü sayılmaz; en alt kırılım/ürün/cross-sell kanıtı, tek veri
+otoritesi, yalnız çizim düzleminde SVG/Canvas ve gerçek mobil kabulü korunur.
+Demo kaynağı gerçek sağlayıcı davranışını kanıtlamaz; dışa aktarma ilk review
+kapsamı dışındadır. Ana tablo onarımı ve UTF-8 koruması korunur. Bu teslim yeni
+ürün kararı, UI/fixture kodu, mağaza kurulumu veya canlı işlem yetkisi değildir.
+
 ## 4. A6-ASSURE-01 — Pre-Review Assurance Programı
 
 EO-08 sonrasında çalışır. İlk kez kod sağlamlığı arayan denetim değildir;

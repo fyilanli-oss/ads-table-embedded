@@ -53,6 +53,6 @@ test("keeps Ad Analysis charts blocked and package statuses unchanged", () => {
   assert.equal(freeze.ad_analysis.visualization.implementation_authorized, false);
   assert.equal(master.cross_cutting_decisions.funnel_visualization_reference_v1.advances_package_status, false);
   assert.equal(master.cross_cutting_decisions.funnel_visualization_reference_v1.authorizes_ui_implementation, false);
-  assert.match(doc, /Product intent accepted; implementation and visual acceptance pending/);
+  assert.match(doc, /Ürün niyeti kabul edildi; uygulama ve görsel kabul bekliyor/);
   assert.match(plan, /A6-EO-07-B Funnel visualization reference/);
 });

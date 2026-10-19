@@ -28,7 +28,7 @@ test("DOCS-01 inventories human Markdown without translating agent instructions 
   assert.equal(new Set(actual).size, 63);
   assert.deepEqual(contract.inventory_counts, {
     total_markdown: 63, human_markdown: 62, excluded_agent_instructions: 1,
-    translated_review_pending: 0, pending_language_review: 16,
+    translated_review_pending: 3, pending_language_review: 13,
     translated_product_owner_accepted: 46,
   });
   for (const row of contract.inventory) {
@@ -37,7 +37,7 @@ test("DOCS-01 inventories human Markdown without translating agent instructions 
       ? "agent_instructions_excluded" : "human_markdown");
     assert.equal(row.status, row.path === "AGENTS.md" ? "excluded_unchanged"
       : [...contract.first_batch, ...contract.second_batch, ...contract.third_batch, ...contract.fourth_batch, ...contract.fifth_batch, ...contract.sixth_batch, ...contract.seventh_batch, ...contract.eighth_batch, ...contract.ninth_batch, ...contract.tenth_batch, ...contract.eleventh_batch, ...contract.twelfth_batch].includes(row.path) ? "translated_product_owner_accepted"
-        : "pending_language_review");
+        : contract.thirteenth_batch.includes(row.path) ? "translated_product_owner_review_pending" : "pending_language_review");
   }
 });
 
@@ -427,6 +427,42 @@ test("DOCS-01 F4-F7 translation keeps exact carry, logical routes, historical es
   assert.equal(accepted.merge_authorized, true);
   assert.equal(accepted.pull_request, 131);
   assert.equal(accepted.merge_commit, "52335cc6fbcecde15f664beae591264e234c1909");
+});
+
+test("DOCS-01 product, graph and demo prose retains UI copy, evidence boundaries and deferred implementation", async () => {
+  const contract = await readJson(contractPath);
+  assert.equal(contract.thirteenth_batch.length, 3);
+  for (const path of contract.thirteenth_batch) {
+    const content = await readFile(path, "utf8");
+    const row = contract.inventory.find((item) => item.path === path);
+    assertTechnicalTokens(content, row.preserved_technical_tokens);
+    assert.match(content, /7 Ekim 2026/);
+    assert.match(content, /docs\/EXECUTION_PLAN\.md/);
+    assert.doesNotMatch(content, /^##? (?:Product intent|Purpose and non-effect|Analyst brief|Mandatory repair boundary|Export reference|Acceptance gates)/m);
+  }
+  const product = await readFile(contract.thirteenth_batch[0], "utf8");
+  assert.match(product, /`Funnel\/Table` ve `Summary\/Daily` bağımsız boyutlardır/);
+  for (const copy of ["Time range", "Compare time range", "Filters", "Presentation", "Summary", "Daily", "View", "Funnel", "Table", "Analysis item", "Ad name", "View intent metrics", "View performance metrics", "Analysis details", "Reporting Currency", "Provider Connections and Reporting Accounts", "Subscription", "Data & Privacy", "Manage subscription", "Delete my data", "$24.99/month"]) assert.ok(product.includes(copy), copy);
+  assert.match(product, /Aynı anda tek modal/);
+  assert.match(product, /önerilen hesap bağlı kalabilir/i);
+  assert.match(product, /Variation'ın Channel'ın yerini aldığı anlamına gelmez/);
+  assert.match(product, /görsel attribution oluşturmaz/);
+  const graph = await readFile(contract.thirteenth_batch[1], "utf8");
+  assert.match(graph, /Mevcut dönem düz, karşılaştırma dönemi kesik çizgiyle/);
+  assert.match(graph, /Spend değişimi sonuç bağlamı olmadan nötrdür/);
+  assert.match(graph, /aynı BFF\/sorgu sonucu ve formül otoritesinin/);
+  assert.match(graph, /SVG veya Canvas yalnız grafik veri düzleminde/);
+  const demo = await readFile(contract.thirteenth_batch[2], "utf8");
+  for (const value of ["1,000", "458,500", "751,960", "2,000", "4,000", "data_origin = synthetic_demo", "provider_truth = false", "workspace_kind = demo"]) assert.ok(demo.includes(value));
+  assert.match(demo, /sağlayıcı kanıtı değildir/);
+  assert.match(demo, /sahte biçimde bağlı göstermez/);
+  assert.match(demo, /Tarihleri asla kaydırılmaz/);
+  assert.match(demo, /ilk Shopify review uygulama kapsamının dışındadır/);
+  assert.match(demo, /küpe\/cross-sell senaryosunu karşılayamaz/i);
+  const prepared = contract.deliveries[12];
+  assert.deepEqual(prepared.files, contract.thirteenth_batch);
+  assert.equal(prepared.product_owner_readability_accepted, false);
+  assert.equal(prepared.merge_authorized, false);
 });
 
 test("DOCS-01 language work does not authorize runtime work, closure, merge or EO-05", async () => {

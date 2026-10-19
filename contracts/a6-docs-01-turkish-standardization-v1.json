@@ -2,7 +2,7 @@
   "contract_id": "a6-docs-01-turkish-standardization-v1",
   "checked_at": "2026-10-19",
   "package_id": "A6-DOCS-01",
-  "status": "in_progress_master_text_integrity_repair_prepared",
+  "status": "in_progress_product_graph_demo_prepared",
   "baseline_commit": "f62a5c6f7a254fe61be3c8af94f7fa9d2d6b65a1",
   "brief": "docs/A6_QUALITY_AND_ASSURANCE_GATES.md",
   "user_start_authorized": true,
@@ -19,8 +19,8 @@
     "total_markdown": 63,
     "human_markdown": 62,
     "excluded_agent_instructions": 1,
-    "translated_review_pending": 0,
-    "pending_language_review": 16,
+    "translated_review_pending": 3,
+    "pending_language_review": 13,
     "translated_product_owner_accepted": 46
   },
   "first_batch": [
@@ -65,13 +65,81 @@
       "path": "docs/A6_EO_07_FUNNEL_VISUALIZATION_REFERENCE.md",
       "baseline_blob": "781230483ebdb3a016ac4730973f1c31454d2e55",
       "classification": "human_markdown",
-      "status": "pending_language_review"
+      "status": "translated_product_owner_review_pending",
+      "preserved_technical_tokens": [
+        "https://shopify.dev/docs/api/app-home/latest",
+        "https://shopify.dev/docs/api/app-home/latest/web-components",
+        "https://shopify.dev/docs/api/app-home/latest/web-components/feedback-and-status-indicators/tooltip",
+        "https://shopify.dev/docs/apps/build/app-home/polaris2",
+        "partial",
+        "provisional",
+        "sales_value",
+        "stale",
+        "unknown",
+        "unsupported",
+        "zero"
+      ]
     },
     {
       "path": "docs/A6_EO_07_THREE_SURFACE_UI_PRODUCT_FREEZE.md",
       "baseline_blob": "7c3c782c1c8db6028160c47c87043ead0fe9780d",
       "classification": "human_markdown",
-      "status": "pending_language_review"
+      "status": "translated_product_owner_review_pending",
+      "preserved_technical_tokens": [
+        "$24.99/month",
+        "/",
+        "/ad-analysis",
+        "/settings",
+        "Ad name",
+        "Analysis details",
+        "Analysis item",
+        "Delete my data",
+        "Funnel/Table",
+        "Manage subscription",
+        "Sales",
+        "Summary/Daily",
+        "View intent metrics",
+        "View performance metrics",
+        "ads-table-dev",
+        "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json",
+        "docs/A6_EO_07_FUNNEL_VISUALIZATION_REFERENCE.md",
+        "fbc",
+        "fbclid",
+        "https://shopify.dev/docs/api/app-home/latest",
+        "https://shopify.dev/docs/api/app-home/latest/apis/user-interface-and-interactions/modal-api",
+        "https://shopify.dev/docs/api/app-home/latest/patterns/templates/settings",
+        "https://shopify.dev/docs/api/app-home/latest/web-components",
+        "https://shopify.dev/docs/api/app-home/latest/web-components/actions/button",
+        "https://shopify.dev/docs/api/app-home/latest/web-components/forms/date-picker",
+        "https://shopify.dev/docs/api/app-home/latest/web-components/forms/select",
+        "https://shopify.dev/docs/api/app-home/latest/web-components/layout-and-structure/table",
+        "https://shopify.dev/docs/api/app-home/latest/web-components/overlays/modal",
+        "https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance",
+        "https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing",
+        "partial",
+        "polaris-2.0-rc.js",
+        "provisional",
+        "s-badge",
+        "s-banner",
+        "s-button",
+        "s-button tone=\"critical\"",
+        "s-button-group",
+        "s-date-picker",
+        "s-grid",
+        "s-modal",
+        "s-page",
+        "s-section",
+        "s-select",
+        "s-stack",
+        "s-table",
+        "s-text",
+        "sales_value",
+        "stale",
+        "type=\"range\"",
+        "unknown",
+        "unsupported",
+        "zero"
+      ]
     },
     {
       "path": "docs/A6_EO_CROSS_CUTTING_SAFETY_CAPACITY_FREEZE.md",
@@ -83,7 +151,20 @@
       "path": "docs/A6_EO_DEMO_FIXTURE_EXPORT_REFERENCE.md",
       "baseline_blob": "fc208934ac32f4738f0ab7827d7e7575fab114b7",
       "classification": "human_markdown",
-      "status": "pending_language_review"
+      "status": "translated_product_owner_review_pending",
+      "preserved_technical_tokens": [
+        "87413af1318cbdb3efbe1104e283d7294bc0c219",
+        "SOURCE_ROWS",
+        "codex-input/adstable_one_funnel_compare_all_v2_75_safe_clean_pass8_markup_cleanup-1.html",
+        "contracts/a6-eo-demo-fixture-export-reference-v1.json",
+        "fece0e65ac8c2d20c440d0f98cd510449bd170cf5beccf33e4a6c2cab4db9c35",
+        "fyilanli-oss/ads-table-dev",
+        "https://shopify.dev/docs/apps/build/stores/development-stores",
+        "https://shopify.dev/docs/apps/launch/app-store-review/pass-app-review",
+        "https://shopify.dev/docs/apps/launch/deployment/deploy-to-hosting-service",
+        "https://shopify.dev/docs/storefronts/themes/tools/development-stores/generated-data",
+        "main"
+      ]
     },
     {
       "path": "docs/A6_EO_F1_F2_AUTHORITY_AND_PROJECT_BOUNDARY.md",
@@ -2305,6 +2386,18 @@
       "source_commit": "60614ceb46a019396213ee0644ac7273b91617a8",
       "merge_commit": "52335cc6fbcecde15f664beae591264e234c1909",
       "tree": "b976f47dba4a6a79b6f337192d070677c08bbe4b"
+    },
+    {
+      "id": "product_graph_demo_translation_delivery",
+      "files": [
+        "docs/A6_EO_07_THREE_SURFACE_UI_PRODUCT_FREEZE.md",
+        "docs/A6_EO_07_FUNNEL_VISUALIZATION_REFERENCE.md",
+        "docs/A6_EO_DEMO_FIXTURE_EXPORT_REFERENCE.md"
+      ],
+      "status": "prepared_product_owner_review_pending",
+      "base_commit": "526c07a5415b70a21a6ddf20970e6207a33f0200",
+      "product_owner_readability_accepted": false,
+      "merge_authorized": false
     }
   ],
   "third_batch": [
@@ -2363,11 +2456,16 @@
     "docs/A6_EO_F6_EFFORT_RISK_COMPARISON.md",
     "docs/A6_EO_F7_GO_DECISION.md"
   ],
+  "thirteenth_batch": [
+    "docs/A6_EO_07_THREE_SURFACE_UI_PRODUCT_FREEZE.md",
+    "docs/A6_EO_07_FUNNEL_VISUALIZATION_REFERENCE.md",
+    "docs/A6_EO_DEMO_FIXTURE_EXPORT_REFERENCE.md"
+  ],
   "text_integrity_repairs": [
     {
       "path": "docs/A6_EO_IMPLEMENTATION_MASTER_TABLE.md",
       "authorized_at": "2026-10-19",
-      "status": "prepared_product_owner_review_pending",
+      "status": "merged_product_owner_accepted",
       "base_commit": "52335cc6fbcecde15f664beae591264e234c1909",
       "damaged_blob": "7c2b3da4cbf0f94caa487d0c71eafb0832a4fb01",
       "first_damaged_source_commit": "9b17ca992355d46fb05281430addf938c95f07d9",
@@ -2383,8 +2481,13 @@
       "later_damaged_prose_reconstructed_by_guess": false,
       "accepted_decisions_or_runtime_changed": false,
       "counts_as_completed_translation": false,
-      "product_owner_repair_accepted": false,
-      "merge_authorized": false
+      "product_owner_repair_accepted": true,
+      "merge_authorized": true,
+      "accepted_at": "2026-10-19",
+      "pull_request": 132,
+      "source_commit": "225cd805e7d6c75dec4d4dc18995c46de49c13df",
+      "merge_commit": "526c07a5415b70a21a6ddf20970e6207a33f0200",
+      "tree": "91f660047e04b046b3f9d9432c738575308d374d"
     }
   ]
 }

@@ -374,6 +374,17 @@ bütünlüğü kontrolü 62 insan-okuyucu Markdown dosyasında geçersiz UTF-8,
 yerine-geçme karakteri ve ikili kontrol karakterini reddeder. CI ve ürün sahibi
 onarım/merge kabulü beklenir; uygulama kodu ve canlı ortam değişmedi.
 
+Ana tablo metin bütünlüğü onarımı PR #132, açık ürün sahibi onayıyla
+`526c07a5415b70a21a6ddf20970e6207a33f0200` commit'inde birleştirildi;
+test edilen ağaç korundu. Onarım çeviri sayısını artırmadı. On üçüncü dil
+geçişi üç yüzeyli ürün tasarımı, Funnel görselleştirme referansı ve demo/dışa
+aktarma/dev store sınırının üç belgesidir. Güncel toplam: 46 kabul edilmiş,
+3 okunabilirlik kabulü bekleyen, 13 dil incelemesi bekleyen belge.
+Ürün niyeti ile uygulama/görsel kabul ayrılır; ekran metinleri ve teknik kimlikler
+korunur. Sentetik demo sağlayıcı kanıtı değildir; veri çıkarma, grafik, dışa
+aktarma veya dev store kurulumu başlatılmaz. Ana tablo gövdesi değişmez.
+Bu teslim kod/canlı ortam değişikliği veya EO-05 başlangıcı değildir.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

@@ -1,13 +1,18 @@
-# EO-04-D — Klaviyo satış attribution çözümleme analist brief'i
+# EO-04-D — Klaviyo satış kaynağını çözümleme analist brief'i
+
+**Tarihsel kapsam:** 17 Ekim 2026 satış eşleştirme uygulaması.
+Güncel paket kabulü ve iş sırası `docs/EXECUTION_PLAN.md`, nihai anlatım
+`docs/EO_04_ANALYSIS_DESIGN_BOOK.md` içindedir. Bu belge geçmiş kapsamı korur;
+yeni sağlayıcı çağrısı veya ürün kararı oluşturmaz.
 
 ## Karar
 
-Bu paket, `Ordered Product` satış event'ini Campaign/Flow raporlarında bulunan
-Message kataloğuyla birleştirir. Bir `Ordered Product` event'i bir satış
+Bu paket, `Ordered Product` satış olayını Campaign/Flow raporlarında bulunan
+Message kataloğuyla birleştirir. Bir `Ordered Product` olayı bir satış
 gerçeğidir ve yalnız bir kez korunur. `Placed Order` yalnız Campaign/Flow
-performans conversion kaynağıdır; aynı satışı ikinci kez üretmez.
+performans dönüşümü kaynağıdır; aynı satışı ikinci kez üretmez.
 
-Channel yalnız Klaviyo'nun event attribution ilişkisiyle belirlenir. Satış
+Channel yalnız Klaviyo'nun olay attribution (satışı kaynağa atfetme) ilişkisiyle belirlenir. Satış
 zamanı, rapor toplamı veya yakın tarihli mesaj tahmin için kullanılamaz.
 
 ## Campaign
@@ -15,9 +20,9 @@ zamanı, rapor toplamı veya yakın tarihli mesaj tahmin için kullanılamaz.
 - `campaign-message` varsa Channel kesin olarak Campaign Message'dır.
 - Resmî Events şeması Campaign Variation vermediği için Variation
   `unresolved` kalır.
-- Message kataloğunda tek `send_channel` eşleşirse Medium exact olur.
+- Message kataloğunda tek `send_channel` eşleşirse Medium kesinleşir.
 - Katalog satırı yoksa veya aynı Message birden fazla Medium taşıyorsa Channel
-  kaybedilmez; yalnız ad ve/veya Medium `unresolved` kalır.
+  kaybedilmez; yalnız ad ve/veya Medium çözümlenmemiş (`unresolved`) kalır.
 - Campaign içerik ürün seti ayrıca ve kesin kanıtlanmadıkça Sales Role
   `Assisted` olur. Kesin ürün seti geldiğinde satılan ürün içerideyse
   `Advertised`, dışarıdaysa `Cross-sell` olarak yeniden çözülebilir.
@@ -29,7 +34,7 @@ içerikteki ürün seti okunmamışsa `Channel = Sonbahar Takıları`,
 ## Flow
 
 - `flow-message` varsa Channel kesin olarak Flow Message'dır.
-- `flow-message-variation` tekil gelirse Variation exact tutulur; Variation
+- `flow-message-variation` tekil gelirse Variation kesin olarak tutulur; Variation
   Channel'ın yerine geçmez.
 - Aynı Flow Message altında birden fazla Variation attribution görülürse
   Channel korunur, Variation `unresolved` olur.
@@ -37,36 +42,36 @@ içerikteki ürün seti okunmamışsa `Channel = Sonbahar Takıları`,
 
 ## Unclassified Channel sınırı
 
-Katalogda Message adı, Medium veya Variation bulunamaması, provider Message ID'si
+Katalogda Message adı, Medium veya Variation bulunamaması, sağlayıcının Message ID'si
 biliniyorsa Channel'ı `Unclassified Channel` yapmaz. `Unclassified Channel` yalnız Message
 attribution'ı yoksa, farklı Message'lar aynı satış için çelişiyorsa, Campaign ve
-Flow aynı attribution'da çelişiyorsa veya Message-parent ilişkisi bozuksa
+Flow aynı attribution'da çelişiyorsa veya Message'ın üst varlık ilişkisi bozuksa
 kullanılır. Satış yine bir kez korunur ve Sales Role `Unclassified` olur.
 
 ## Hata ve yayın sınırı
 
-Çözümleme, dört provider sorgu ailesi tamamlandıktan sonra yerel olarak çalışır.
-Çelişen aynı event ID, bozuk attribution şeması veya resolver hatası bütün
-snapshot'ı `publishable: false` yapar; provider ailelerinin kısmi sonucu
-yayımlanmaz. Başarılı boş event listesi `not_observed_in_this_execution` olarak
+Çözümleme, dört sağlayıcı sorgu ailesi tamamlandıktan sonra yerel olarak çalışır.
+Çelişen aynı olay kimliği, bozuk attribution şeması veya çözümleyici hatası bütün
+anlık görüntüyü `publishable: false` yapar; sağlayıcı ailelerinin kısmi sonucu
+yayımlanmaz. Başarılı boş olay listesi `not_observed_in_this_execution` olarak
 kalır, sayısal sıfıra çevrilmez.
 
 ## Paket dışı
 
 - Canlı Klaviyo çağrısı
-- Database/migration, Dataset V2, scheduler veya reconciliation
-- Campaign içeriklerinin provider'dan okunması
+- Veritabanı/migration, Dataset V2, zamanlayıcı veya veri uzlaştırma
+- Campaign içeriklerinin sağlayıcıdan okunması
 - Product ID standardizasyonu
-- UI, deploy, secret veya environment değişikliği
+- UI, dağıtım, secret veya ortam değişikliği
 
 ## Resmî kaynak kontrolü
 
-Kontrol tarihi: **17 Ekim 2026**. Kullanılan Klaviyo API revision:
+Kontrol tarihi: **17 Ekim 2026**. Kullanılan Klaviyo API sürümü:
 **2026-10-15**.
 
-- [Get Events](https://developers.klaviyo.com/en/reference/get_events)
-- [Query Campaign Values](https://developers.klaviyo.com/en/reference/query_campaign_values)
-- [Query Flow Values](https://developers.klaviyo.com/en/reference/query_flow_values)
+- [Olayları alma](https://developers.klaviyo.com/en/reference/get_events)
+- [Campaign değerlerini sorgulama](https://developers.klaviyo.com/en/reference/query_campaign_values)
+- [Flow değerlerini sorgulama](https://developers.klaviyo.com/en/reference/query_flow_values)
 - [Klaviyo resmî OpenAPI repository](https://github.com/klaviyo/openapi)
 
 OpenAPI, Event attribution kaynağında Campaign için `campaign` ve
@@ -78,5 +83,5 @@ tanımlamaz.
 
 Sentetik senaryolar Campaign, Flow, çoklu Variation, eksik attribution,
 çelişen Message, içerik kanıtı ve çift sayım engelini kapsamalıdır. Tüm repository
-testleri, typecheck ve production build geçmeli; teslim PR üzerinden yapılmalı
+testleri, typecheck ve Production derlemesi geçmeli; teslim PR üzerinden yapılmalı
 ve merge için ayrıca ürün sahibi onayı alınmalıdır.

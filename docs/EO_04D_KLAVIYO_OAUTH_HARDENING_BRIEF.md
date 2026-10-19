@@ -1,72 +1,79 @@
-# A6-EO-04-D Klaviyo OAuth hardening brief
+# A6-EO-04-D — Klaviyo OAuth güvenliğini güçlendirme brief'i
 
-**Status:** Repository implementation ready for review
-**Checked:** 17 October 2026
+**Tarihsel durum:** Repository uygulaması incelemeye hazırdı.
 
-## Analyst outcome
+**Kaynak kontrol tarihi:** 17 Ekim 2026
 
-Klaviyo reporting must not discover that a token expired only after spending a
-provider request. AdsTable therefore records the provider expiry in the
-encrypted token set and renews an expired, near-expiry or legacy token before
-the intended Klaviyo request. The renewed credential is persisted before that
-request so a rotating refresh credential is not held only in memory.
+Bu belge 17 Ekim'deki kapsam ve doğrulama kaydıdır; bugün yeni kod veya canlı
+işlem yetkisi vermez. Güncel kabul ve sıra `docs/EXECUTION_PLAN.md`, nihai
+paket anlatımı `docs/EO_04_ANALYSIS_DESIGN_BOOK.md` üzerinden okunur.
 
-The opposite boundary is equally important: once Klaviyo answers a provider
-request with an error, AdsTable stops. It does not refresh and repeat that
-failed request. An authorization-code expiry, invalid refresh authorization,
-Accounts authentication failure, permission denial and unknown provider failure
-remain different states.
+## Analist sonucu
 
-## User and operational outcome
+Klaviyo raporlaması token'ın süresinin dolduğunu ancak bir sağlayıcı isteği
+harcadıktan sonra öğrenmemelidir. AdsTable bu nedenle sağlayıcının verdiği
+sona erme zamanını şifreli token kümesinde tutar. Süresi dolmuş, dolmak üzere
+olan veya eski biçimli token, amaçlanan Klaviyo isteğinden önce yenilenir.
+Yeni kimlik bilgisi de o istekten önce kalıcı kaydedilir; dönen yenileme
+kimlik bilgisi yalnız bellekte bırakılmaz.
 
-- Opening Settings for an already connected account remains a local read. A
-  temporary Klaviyo outage cannot by itself break the connected Settings view.
-- Explicit work that needs Klaviyo prepares the credential first and then makes
-  one provider request.
-- Accounts `401` and refresh `invalid_grant` remove reporting authority by
-  requiring reauthorization; they do not invent a successful connection.
-- Accounts `403` remains permission denied and is not mislabelled as token
-  expiry.
-- An unexplained provider failure is returned as failure without retry.
+Ters sınır da aynı derecede önemlidir: Klaviyo bir sağlayıcı isteğine hata
+verdiğinde AdsTable durur; token yenileyip başarısız isteği tekrar etmez.
+Yetkilendirme kodunun süresinin dolması, yenileme yetkisinin geçersizliği,
+Accounts kimlik doğrulama hatası, izin reddi ve açıklanamayan sağlayıcı hatası
+ayrı durumlar olarak kalır.
 
-## K-1 separation decision
+## Kullanıcıya ve işletime etkisi
 
-PR #91 mixes backend credential hardening with a new Klaviyo-origin installation
-screen. Its backend ideas remain necessary, but the PR is based on pre-K-2
-`main`, now conflicts with the accepted reporting runtime, and its runtime
-changes were not protected by sufficient behavior tests.
+- Bağlı hesap için Settings'i açmak yerel okumadır. Geçici Klaviyo kesintisi
+  tek başına bağlı Settings görünümünü bozamaz.
+- Klaviyo gerektiren açık işlem önce kimlik bilgisini hazırlar, sonra bir
+  sağlayıcı isteği yapar.
+- Accounts `401` ve yenilemedeki `invalid_grant`, yeniden yetkilendirme
+  gerektirerek raporlama yetkisini kaldırır; başarılı bağlantı uydurulmaz.
+- Accounts `403` izin reddi olarak kalır; token süresi dolmuş gibi etiketlenmez.
+- Açıklanamayan sağlayıcı hatası tekrar edilmeden hata olarak döner.
 
-This package therefore rebuilds only backend hardening from current `main`.
-The `/auth/klaviyo/install` transport remains deferred until isolated Shopify
-preproduction exists and desktop plus real-mobile visual acceptance can be
-performed. No route, Settings copy or action control changes in this package.
+## K-1 ayırma kararı
 
-## Verification contract
+PR #91, sunucu tarafı kimlik bilgisi güçlendirmesini Klaviyo'dan başlayan yeni
+kurulum ekranıyla birleştiriyordu. Sunucu tarafı gereksinimleri geçerliliğini
+korudu; ancak PR, K-2 öncesi `main`e dayanıyordu, kabul edilmiş raporlama çalışma
+zamanıyla çakışıyordu ve çalışma zamanı değişikliklerini yeterli davranış testi
+korumuyordu.
 
-Behavior tests execute token and Accounts HTTP outcomes through injected fakes.
-They prove refresh-before-request ordering, encrypted-vault persistence,
-pending/connected authority renewal, one Accounts request only, and terminal
-first-error behavior. Source-text matching is not accepted as proof of these
-runtime behaviors.
+Bu nedenle yalnız sunucu tarafı güçlendirme, o günün güncel `main`inden yeniden
+kuruldu. `/auth/klaviyo/install` giriş yolu, izole Shopify üretim öncesi ortamı
+ve masaüstü/gerçek mobil görsel kabul sağlanana kadar ertelendi. Bu pakette
+route, Settings metni veya eylem kontrolü değişikliği yoktur.
 
-## Scope boundary
+## Doğrulama sözleşmesi
 
-This package authorizes repository code, tests, contract and documentation only.
-It authorizes no live Klaviyo call, OAuth execution, provider-console change,
-secret, environment variable, database/migration, deployment or UI mutation.
+Davranış testleri, dışarıdan verilen sahte yanıtlarla token ve Accounts HTTP
+sonuçlarını gerçekten çalıştırır. İstekten önce yenileme sırasını, şifreli kasaya
+kalıcı kaydı, bekleyen/bağlı yetkinin yenilenmesini, tek Accounts isteğini ve
+ilk hatada kesin durmayı kanıtlar. Kaynak metin eşleştirme, bu çalışma zamanı
+davranışlarının kanıtı sayılmaz.
 
-## Official sources
+## Kapsam sınırı
 
-- [Make API calls using OAuth](https://developers.klaviyo.com/en/docs/set_up_oauth)
-- [Handle your app's OAuth flow](https://developers.klaviyo.com/en/docs/handle_your_apps_oauth_flow)
-- [Submit your app for review](https://developers.klaviyo.com/en/docs/submit_your_app_for_review)
+Tarihsel yetki yalnız repository kodu, test, sözleşme ve dokümantasyondur.
+Canlı Klaviyo çağrısı, OAuth yürütme, sağlayıcı paneli, secret, ortam değişkeni,
+veritabanı/migration, dağıtım veya UI değişikliği yetkilendirilmemiştir.
 
-The sources were rechecked on 17 October 2026.
+## Resmî kaynaklar
 
-## Repository verification
+- [OAuth ile API çağrısı](https://developers.klaviyo.com/en/docs/set_up_oauth)
+- [Uygulamanın OAuth akışını yönetme](https://developers.klaviyo.com/en/docs/handle_your_apps_oauth_flow)
+- [Uygulamayı incelemeye gönderme](https://developers.klaviyo.com/en/docs/submit_your_app_for_review)
 
-- Complete tests: 333/333 PASS
-- TypeScript verification: PASS
-- Production build: PASS
-- Diff whitespace validation: PASS
-- Live provider or infrastructure mutation: none
+Kaynaklar 17 Ekim 2026'da yeniden kontrol edilmişti. Tarihsel araştırma/kabul
+tarihi korunur; bu dil düzenlemesi yeni review başvurusu veya sağlayıcı testi değildir.
+
+## Tarihsel repository doğrulaması
+
+- Tam test kümesi: 333/333 PASS
+- TypeScript kontrolü: PASS
+- Production derlemesi: PASS
+- Diff boşluk kontrolü: PASS
+- Canlı sağlayıcı veya altyapı değişikliği: yok

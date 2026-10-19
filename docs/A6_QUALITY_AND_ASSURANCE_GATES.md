@@ -124,6 +124,15 @@ geçmişe uygulamama ve test hesabı boş yanıtını Production kanıtı saymam
 kuralları korunur. Özgün ekran metinleri değişmez; 17 Ekim erişim/review bilgisi
 tarihsel karar olarak kalır, yeni araştırma veya başvuru sayılmaz. EO-05 açılmaz.
 
+PR #125 açık ürün sahibi kabulüyle merge edildi; kabul edilmiş belge sayısı
+27'dir. Yedinci teslimde Klaviyo bağlantı/tahmini harcama, OAuth güçlendirme,
+raporlama yetkisi ve satış kaynağı çözümlemesinin dört belgesi okunabilirlik
+kabulü, diğer 31 belge dil incelemesi bekler. Önceki sayımlar tarihseldir.
+Harcama defteri/ekran metinleri, ilk hata kapısı, tek satış sayımı ve
+Message kimliği ile Medium/Variation ayrımı korunur. Supabase rehberi yalnız
+güvenlik terimlerini korumak için kullanılır; yeni şema, sorgu veya canlı test
+yapılmaz. Bu teslim kapanış veya EO-05 başlangıcı değildir.
+
 ## 4. A6-ASSURE-01 — Pre-Review Assurance Programı
 
 EO-08 sonrasında çalışır. İlk kez kod sağlamlığı arayan denetim değildir;

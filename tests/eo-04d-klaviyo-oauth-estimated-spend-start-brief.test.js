@@ -147,8 +147,8 @@ test("the start brief excludes reporting and allocation behavior", () => {
     "scheduler_or_backfill",
   ]) assert.ok(contract.out_of_scope.includes(value));
 
-  assert.match(decision, /Campaign, Flow, Message or Variation reporting requests/);
-  assert.match(decision, /Channel hierarchy and presentation rules/);
+  assert.match(decision, /Campaign, Flow, Message veya Variation raporlama istekleri/);
+  assert.match(decision, /Channel hiyerarşisi ve sunum kuralları/);
   assert.doesNotMatch(decision, /Dataset V2/);
   assert.doesNotMatch(JSON.stringify(contract), /dataset[_ -]?v2/i);
 });

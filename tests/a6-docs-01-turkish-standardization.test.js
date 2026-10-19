@@ -28,16 +28,16 @@ test("DOCS-01 inventories human Markdown without translating agent instructions 
   assert.equal(new Set(actual).size, 63);
   assert.deepEqual(contract.inventory_counts, {
     total_markdown: 63, human_markdown: 62, excluded_agent_instructions: 1,
-    translated_review_pending: 4, pending_language_review: 35,
-    translated_product_owner_accepted: 23,
+    translated_review_pending: 4, pending_language_review: 31,
+    translated_product_owner_accepted: 27,
   });
   for (const row of contract.inventory) {
     assert.match(row.baseline_blob, /^[a-f0-9]{40}$/);
     assert.equal(row.classification, row.path === "AGENTS.md"
       ? "agent_instructions_excluded" : "human_markdown");
     assert.equal(row.status, row.path === "AGENTS.md" ? "excluded_unchanged"
-      : [...contract.first_batch, ...contract.second_batch, ...contract.third_batch, ...contract.fourth_batch, ...contract.fifth_batch].includes(row.path) ? "translated_product_owner_accepted"
-        : contract.sixth_batch.includes(row.path)
+      : [...contract.first_batch, ...contract.second_batch, ...contract.third_batch, ...contract.fourth_batch, ...contract.fifth_batch, ...contract.sixth_batch].includes(row.path) ? "translated_product_owner_accepted"
+        : contract.seventh_batch.includes(row.path)
           ? "translated_product_owner_review_pending" : "pending_language_review");
   }
 });
@@ -203,8 +203,47 @@ test("DOCS-01 Google language work preserves temporal attribution and the same p
   const access = await readFile(contract.sixth_batch[3], "utf8");
   assert.match(access, /kalıcı saklanması henüz yoktur/);
   assert.match(access, /yeni kota\/fiyat\/erişim taahhüdü değildir/);
-  const prepared = contract.deliveries[5];
-  assert.deepEqual(prepared.files, contract.sixth_batch);
+  const accepted = contract.deliveries[5];
+  assert.deepEqual(accepted.files, contract.sixth_batch);
+  assert.equal(accepted.product_owner_readability_accepted, true);
+  assert.equal(accepted.merge_authorized, true);
+  assert.equal(accepted.pull_request, 125);
+  assert.equal(accepted.merge_commit, "77ac39cfb9cf373c6595b6b7dfe6df5927140457");
+});
+
+test("DOCS-01 Klaviyo language work preserves ledger, first-error and Message attribution boundaries", async () => {
+  const contract = await readJson(contractPath);
+  assert.equal(contract.seventh_batch.length, 4);
+  for (const path of contract.seventh_batch) {
+    const content = await readFile(path, "utf8");
+    const row = contract.inventory.find((item) => item.path === path);
+    assertTechnicalTokens(content, row.preserved_technical_tokens);
+    assert.match(content, /EXECUTION_PLAN|Execution Plan/);
+    assert.match(content, /[Tt]arihsel/);
+    assert.doesNotMatch(content, /^##? (?:Business outcome|Official sources|Analyst outcome|Verification contract)/m);
+  }
+  const spend = await readFile(contract.seventh_batch[0], "utf8");
+  assert.match(spend, /Aynı iş tarihinde tekrar güncelleme yapılabilir/);
+  assert.match(spend, /Yalnız tutar değişir; hesap, para birimi ve başlangıç tarihi korunur/);
+  assert.match(spend, /aynı tarihi reddetme davranışı tarihsel kanıttır/);
+  for (const copy of [
+    "Enter the new estimated Klaviyo email cost for the next 30-day period starting today. SMS costs are not included.",
+    "Change a previously saved amount. Its original start date will not change.",
+    "Update Klaviyo email spend", "Change Klaviyo email spend", "Saved period",
+    "Updated 30-Day Klaviyo Email Spend", "Save new value", "Save change",
+  ]) assert.ok(spend.includes(copy), copy);
+  const hardening = await readFile(contract.seventh_batch[1], "utf8");
+  assert.match(hardening, /token yenileyip başarısız isteği tekrar etmez/);
+  assert.match(hardening, /Kaynak metin eşleştirme.*çalışma zamanı/s);
+  const authority = await readFile(contract.seventh_batch[2], "utf8");
+  assert.match(authority, /Medium, `send_channel` alanından zorunlu olarak alınır/);
+  const attribution = await readFile(contract.seventh_batch[3], "utf8");
+  assert.match(attribution, /yalnız bir kez korunur/);
+  assert.match(attribution, /Message ID'si\s+biliniyorsa Channel'ı `Unclassified Channel` yapmaz/);
+  assert.match(attribution, /Campaign Variation vermediği için Variation/);
+  assert.match(attribution, /Sales Role\s+`Assisted` olur/);
+  const prepared = contract.deliveries[6];
+  assert.deepEqual(prepared.files, contract.seventh_batch);
   assert.equal(prepared.product_owner_readability_accepted, false);
   assert.equal(prepared.merge_authorized, false);
 });

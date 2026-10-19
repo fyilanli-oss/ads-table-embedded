@@ -46,6 +46,6 @@ test("closes only at zero meaningful local-only work and keeps the recurring gat
   assert.ok(cleanup.closure_requires.includes("zero_meaningful_local_only_project_work"));
   assert.equal(cleanup.recurrence_control, "contracts/repository-delivery-workflow-v1.json.package_end_gate");
   assert.equal(workflow.package_end_gate.package_may_close_before_gate_passes, false);
-  assert.match(doc, /Deletion authority:\*\* None at package opening/);
+  assert.match(doc, /Silme yetkisi:\*\* Paket açılışında yok/);
   assert.match(plan, /A6-OPS-LOCAL-01 — One-time local safety cleanup/);
 });

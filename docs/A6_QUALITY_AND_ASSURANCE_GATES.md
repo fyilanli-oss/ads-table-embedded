@@ -199,6 +199,15 @@ Demo kaynağı gerçek sağlayıcı davranışını kanıtlamaz; dışa aktarma 
 kapsamı dışındadır. Ana tablo onarımı ve UTF-8 koruması korunur. Bu teslim yeni
 ürün kararı, UI/fixture kodu, mağaza kurulumu veya canlı işlem yetkisi değildir.
 
+PR #133 ürün/grafik/demo dil teslimi açık ürün sahibi kabulüyle merge edildi.
+On dördüncü teslim güvenlik/kapasite, secret envanteri/kurtarma, yerel temizlik
+ve izole Shopify ön üretim planlarının dört belgesidir. 49 belge kabul edilmiş,
+4 belge okunabilirlik kabulü, 9 belge dil incelemesi bekler; önceki sayımlar
+tarihseldir. Kapasite/kurtarma hedefi tamamlanmış test değildir. Envanter
+eşliği secret kurtarma kanıtı değildir. İlk hata sonrası durma ve ayrı işlem
+onayları korunur; secret değeri, canlı ortam, yedekleme, temizlik ve kurulum
+işlemi yoktur. Bu yalnız dil teslimidir; DOCS kapanışı veya EO-05 yetkisi vermez.
+
 ## 4. A6-ASSURE-01 — Pre-Review Assurance Programı
 
 EO-08 sonrasında çalışır. İlk kez kod sağlamlığı arayan denetim değildir;

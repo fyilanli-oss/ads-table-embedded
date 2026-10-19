@@ -28,16 +28,16 @@ test("DOCS-01 inventories human Markdown without translating agent instructions 
   assert.equal(new Set(actual).size, 63);
   assert.deepEqual(contract.inventory_counts, {
     total_markdown: 63, human_markdown: 62, excluded_agent_instructions: 1,
-    translated_review_pending: 4, pending_language_review: 39,
-    translated_product_owner_accepted: 19,
+    translated_review_pending: 4, pending_language_review: 35,
+    translated_product_owner_accepted: 23,
   });
   for (const row of contract.inventory) {
     assert.match(row.baseline_blob, /^[a-f0-9]{40}$/);
     assert.equal(row.classification, row.path === "AGENTS.md"
       ? "agent_instructions_excluded" : "human_markdown");
     assert.equal(row.status, row.path === "AGENTS.md" ? "excluded_unchanged"
-      : [...contract.first_batch, ...contract.second_batch, ...contract.third_batch, ...contract.fourth_batch].includes(row.path) ? "translated_product_owner_accepted"
-        : contract.fifth_batch.includes(row.path)
+      : [...contract.first_batch, ...contract.second_batch, ...contract.third_batch, ...contract.fourth_batch, ...contract.fifth_batch].includes(row.path) ? "translated_product_owner_accepted"
+        : contract.sixth_batch.includes(row.path)
           ? "translated_product_owner_review_pending" : "pending_language_review");
   }
 });
@@ -173,8 +173,38 @@ test("DOCS-01 common and Meta prose preserves facts, historical correction and p
   assert.match(reporting, /Meta'nın gerçek Channel'ı Ad'dir/);
   assert.match(reporting, /validation_pending_real_catalog_response/);
   assert.match(reporting, /otomatik tekrar yetkisi değildir/);
-  const prepared = contract.deliveries[4];
-  assert.deepEqual(prepared.files, contract.fifth_batch);
+  const accepted = contract.deliveries[4];
+  assert.deepEqual(accepted.files, contract.fifth_batch);
+  assert.equal(accepted.product_owner_readability_accepted, true);
+  assert.equal(accepted.merge_authorized, true);
+  assert.equal(accepted.pull_request, 124);
+  assert.equal(accepted.merge_commit, "1581f749e1fcfbf0ad69cf3bc9f3592d5a719db6");
+});
+
+test("DOCS-01 Google language work preserves temporal attribution and the same post-review runtime", async () => {
+  const contract = await readJson(contractPath);
+  assert.equal(contract.sixth_batch.length, 4);
+  for (const path of contract.sixth_batch) {
+    const content = await readFile(path, "utf8");
+    const row = contract.inventory.find((item) => item.path === path);
+    assertTechnicalTokens(content, row.preserved_technical_tokens);
+    assert.match(content, /Execution Plan/);
+    assert.match(content, /[Tt]arihsel/);
+    assert.doesNotMatch(content, /^##? (?:Business outcome|Exact execution|Corrective decision|Official sources)/m);
+  }
+  const reporting = await readFile(contract.sixth_batch[0], "utf8");
+  assert.match(reporting, /Channel'ı satılan üründen seçme/);
+  assert.match(reporting, /tam iş günü raporlama penceresi/);
+  assert.match(reporting, /Sentetik testin geçmesi.*kanıtlamaz/);
+  const live = await readFile(contract.sixth_batch[1], "utf8");
+  assert.match(live, /Review sonrasında aynı çalışma zamanı kalır/);
+  assert.match(live, /401 sonrasında token yenileyip tekrar etme yolu yoktur/);
+  assert.match(live, /son 30 tamamlanmış iş tarihini/);
+  const access = await readFile(contract.sixth_batch[3], "utf8");
+  assert.match(access, /kalıcı saklanması henüz yoktur/);
+  assert.match(access, /yeni kota\/fiyat\/erişim taahhüdü değildir/);
+  const prepared = contract.deliveries[5];
+  assert.deepEqual(prepared.files, contract.sixth_batch);
   assert.equal(prepared.product_owner_readability_accepted, false);
   assert.equal(prepared.merge_authorized, false);
 });

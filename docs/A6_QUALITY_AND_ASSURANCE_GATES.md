@@ -117,6 +117,13 @@ yayımlamama kuralları korunur. 13 Ekim'in eski 403 açıklaması, 18 Ekim'in m
 kabul edilmiş düzeltmesine yönlendirilir. Özgün buton metinleri ve teknik adlar
 değişmez; bu çalışma yeni sağlayıcı davranışı veya canlı işlem üretmez.
 
+PR #124 açık ürün sahibi kabulüyle merge edildi; kabul edilmiş belge sayısı
+23'tür. Altıncı teslimde Google'ın dört belgesi okunabilirlik kabulü, diğer
+35 belge dil incelemesi bekler. Satılan üründen Channel seçmeme, bugünkü ağacı
+geçmişe uygulamama ve test hesabı boş yanıtını Production kanıtı saymama
+kuralları korunur. Özgün ekran metinleri değişmez; 17 Ekim erişim/review bilgisi
+tarihsel karar olarak kalır, yeni araştırma veya başvuru sayılmaz. EO-05 açılmaz.
+
 ## 4. A6-ASSURE-01 — Pre-Review Assurance Programı
 
 EO-08 sonrasında çalışır. İlk kez kod sağlamlığı arayan denetim değildir;

@@ -290,6 +290,15 @@ bekleyen belge. Meta'nın 13 Ekim tarihsel 403 notu 18 Ekim'de onaylanan dar
 düzeltmeye yönlendirilir; eski kanıt değiştirilmez, yeni hata kuralı oluşturulmaz.
 Paket kapanmaz; uygulama kodu, canlı ortam ve EO-05 yetkisi değişmez.
 
+Beşinci teslim PR #124 açık ürün sahibi kabulüyle
+`1581f749e1fcfbf0ad69cf3bc9f3592d5a719db6` commit'inde merge edildi;
+test edilen ağaç korundu. Altıncı dil geçişi Google raporlama çalışma zamanı,
+canlı kanıt tetikleyicisi, OAuth düzeltici kuruluşu ve 2026 erişim/review kararıdır.
+Güncel toplam: 23 kabul edilmiş, 4 okunabilirlik kabulü bekleyen, 35 dil incelemesi
+bekleyen belge. Tam gün tarihsel PMax kanıtı, test/Production ayrımı ve review
+sonrası aynı çalışma zamanı kararı korunur. Önceki sayımlar tarihseldir;
+yeni provider çağrısı, erişim başvurusu veya kod/canlı ortam değişikliği yoktur.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

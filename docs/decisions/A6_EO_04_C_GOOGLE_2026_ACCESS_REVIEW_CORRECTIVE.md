@@ -1,85 +1,87 @@
-# A6-EO-04-C — Google 2026 access and review corrective
+# A6-EO-04-C — Google 2026 erişim ve review düzeltmesi
 
-**Control date:** 17 October 2026
+**Kontrol tarihi:** 17 Ekim 2026
 
-**Status:** Repository implementation authorized; provider and production mutations are not authorized
+**O tarihteki durum:** Repository uygulaması onaylı; sağlayıcı ve Production değişiklikleri yetkili değil.
 
-**Package:** A6-EO-04-C
+**Paket:** A6-EO-04-C
 
-## Analyst result
+Bu belge 17 Ekim 2026'da kontrol edilen erişim modeli ve kabul edilmiş düzeltme kararını anlatır. Kota, erişim seviyesi ve başvuru açıklamaları tarihsel araştırma kaydıdır; bu dil düzenlemesi onları bugün yeniden doğrulanmış saymaz. Güncel proje durumu Execution Plan'dadır.
 
-Google tarafındaki ilk review hedefi **Explorer access** olmalıdır. Explorer gerçek Production Google Ads hesaplarında salt-okunur AdsTable sorgularını çalıştırmaya yeterlidir ve Standard access denetimini erkenden üstlenmeden gerçek veri geliştirmesini açar. Explorer, OAuth consent/brand doğrulamasının yerine geçmez; bunlar iki ayrı kapıdır.
+## Analist sonucu
 
-17 Ekim 2026 denetiminde repository'nin ürün ve sorgu mantığı doğru, fakat erişim kabuğunda iki 2026 uyumsuzluğu bulundu:
+İlk review hedefi **Explorer access** olmalıdır. O tarihteki karara göre Explorer, gerçek Production hesaplarında salt okunur AdsTable sorgularına yeterlidir; Standard denetimini erkenden üstlenmeden gerçek veri geliştirmesini açar. OAuth consent/marka doğrulamasının yerine geçmez; ayrı kapılardır.
 
-1. Google Ads API erişim seviyesi artık OAuth istemcisinin bağlı olduğu Google Cloud Project'e veriliyor; eski developer token erişim otoritesi değil.
-2. Runtime her `403` cevabını OAuth bağlantısı kopmuş gibi sınıflandırıyordu. Oysa Cloud Project access, 2-Step Verification, izin/scope ve Google'ın bilinen erişim olayı farklı operasyonel sonuçlardır.
+17 Ekim denetiminde ürün ve sorgu mantığı doğru, erişim katmanında iki 2026 uyumsuzluğu bulundu:
 
-Bu paket yalnız bu iki uyumsuzluğu düzeltir. Sorguların anlamını, Reporting Account yetkisini, veri setini veya arayüzü değiştirmez.
+1. API erişim seviyesi OAuth istemcisinin Google Cloud Project'ine veriliyordu; eski developer token erişim otoritesi değildi.
+2. Çalışma zamanı her `403` yanıtını OAuth kopması sayıyordu. Oysa proje erişimi, 2-Step Verification, izin kapsamı ve bilinen erişim olayı farklı sonuçlardır.
 
-## Access ve review kapıları
+Paket yalnız bu iki uyumsuzluğu düzeltir. Sorgu anlamı, Reporting Account yetkisi, veri kümesi ve arayüz değişmez.
 
-| Kapı | Ne kanıtlar | AdsTable kararı |
+## Erişim ve review kapıları
+
+| Kapı | Kanıtladığı | AdsTable kararı |
 |---|---|---|
-| Google Ads API Test | Test hesaplarına erişim | Tamamlanan demo; Production kanıtı değildir |
-| Google Ads API Explorer | Production hesaplarına sınırlı günlük operasyon | İlk gerçek-hesap geliştirme ve kabul hedefi |
-| Google Ads API Basic | Daha yüksek günlük kota; marka doğrulaması önkoşulu | Kullanım ihtiyacı doğduğunda |
-| Google Ads API Standard | Limitsiz operasyon; manuel audit ve RMF | Ortak üst-seviye business/review aşaması |
-| OAuth public verification | Dış kullanıcı consent/brand/scope güveni | Explorer'dan ayrı; dış kullanıcı öncesi zorunlu |
+| Google Ads API Test | Test hesabı erişimi | Tamamlanmış demo; Production kanıtı değil |
+| Google Ads API Explorer | Production hesabında sınırlı günlük işlem | İlk gerçek hesap geliştirme/kabul hedefi |
+| Google Ads API Basic | Daha yüksek günlük kota; marka doğrulaması ön koşulu | İhtiyaç doğduğunda |
+| Google Ads API Standard | Limitsiz işlem; manuel denetim ve RMF | Ortak üst seviye business/review aşaması |
+| OAuth public verification | Dış kullanıcı izin/marka/kapsam güveni | Explorer'dan ayrı; dış kullanıcı öncesi zorunlu |
 
-Explorer kotası Production için günde 2.880, Test için günde 15.000 operasyondur. AdsTable'ın bu aşamadaki salt-okunur reporting/search kullanımı Explorer'ın kısıtladığı account creation, user management, planning ve billing servislerine girmez.
+17 Ekim kaydında Explorer kotası Production için günlük 2.880, Test için 15.000 işlemdir. Bu aşamadaki salt okunur reporting/search, Explorer'ın kısıtladığı hesap oluşturma, kullanıcı yönetimi, planlama ve faturalandırma servislerine girmez. Bu paragraf yeni kota/fiyat/erişim taahhüdü değildir.
 
-## Runtime kararı
+## Çalışma zamanı kararı
 
 - `GOOGLE_ADS_DEVELOPER_TOKEN` geçiş dönemi için **opsiyoneldir**.
-- Değer mevcutsa v25 uyumluluğu korunarak header gönderilir; yoksa Google Ads isteği `developer-token` header'ı olmadan kurulur.
-- Bu paket mevcut Vercel secret'ını değiştirmez veya silmez. Secret kaldırma ancak Explorer gerçek-hesap kanıtından sonra ayrı etki analizi, açık onay, deployment ve rollback kapısıyla yapılabilir.
-- OAuth client ID, client secret, redirect URI, encrypted refresh token, canonical advertiser Reporting Account ve varsa manager `login-customer-id` davranışı değişmez.
-- İlk provider hatasında sorgu durur; otomatik retry, alternatif project, endpoint veya auth rotası yoktur.
+- Varsa v25 uyumuyla başlık gönderilir; yoksa istek `developer-token` başlığı olmadan kurulur.
+- Mevcut Vercel gizli bilgisi değiştirilmez/silinmez. Kaldırma, Explorer gerçek hesap kanıtından sonra ayrı etki analizi, açık onay, dağıtım ve geri alma kapısı ister.
+- OAuth istemci kimliği/sırrı, dönüş URI'si, şifreli yenileme token'ı, yetkili reklamveren Reporting Account ve varsa yönetici `login-customer-id` davranışı değişmez.
+- İlk sağlayıcı hatasında durulur; otomatik tekrar, alternatif proje, uç nokta veya kimlik doğrulama yolu yoktur.
 
 ## Hata kararları
 
-| Provider sonucu | AdsTable sınıfı | Kullanıcı/operasyon anlamı |
+| Sağlayıcı sonucu | AdsTable sınıfı | Kullanıcı/operasyon anlamı |
 |---|---|---|
-| HTTP 401 / geçersiz grant | `reauthorization_required` | OAuth yeniden yetkilendirme gerekir |
-| `CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION` | `provider_access_level_required` | Cloud Project için Explorer veya üstü erişim gerekir |
-| `TWO_STEP_VERIFICATION_NOT_ENROLLED` | `account_security_action_required` | Google hesap güvenliği kullanıcı tarafından tamamlanmalıdır |
-| Diğer HTTP 403 | `permission_or_scope_missing` | Hesap erişimi veya scope kontrol edilir; bağlantı otomatik kopmuş sayılmaz |
-| `AUTHORIZATION_ERROR` | `provider_access_incident` | Bilinen/olası provider access olayı; ilk hatada durulur |
+| HTTP 401 / geçersiz grant | `reauthorization_required` | OAuth yeniden yetkilendirmesi gerekir |
+| `CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION` | `provider_access_level_required` | Projeye Explorer veya üstü gerekir |
+| `TWO_STEP_VERIFICATION_NOT_ENROLLED` | `account_security_action_required` | Kullanıcı Google hesap güvenliğini tamamlamalı |
+| Diğer HTTP 403 | `permission_or_scope_missing` | Hesap erişimi/kapsam kontrolü; bağlantı otomatik kopmuş sayılmaz |
+| `AUTHORIZATION_ERROR` | `provider_access_incident` | Bilinen/olası sağlayıcı erişim olayı; ilk hatada dur |
 
-Google, 9 Eylül 2026 geçişinden sonra bazı yeni onaylanan Explorer/Basic projelerde Production çağrısının `AUTHORIZATION_ERROR` verebildiğini resmi migration sayfasında kaydediyor. Google'ın geçici önerisi yeni Cloud Project olabilse de AdsTable bunu otomatik uygulamaz. İlk hata kanıtıyla durur, kullanıcıya exact sonuç bildirilir ve project değişimi ancak yeni açık onayla değerlendirilir.
+Google'ın o tarihteki resmî geçiş sayfası, 9 Eylül 2026 değişiminden sonra bazı yeni Explorer/Basic projelerin Production'da `AUTHORIZATION_ERROR` alabileceğini kaydetti. Geçici öneri yeni Cloud Project olsa da AdsTable otomatik uygulamaz. İlk hata kanıtıyla durur, tam sonuç kullanıcıya bildirilir; proje değişimi yeni açık onayla değerlendirilir.
 
 ## Review hazırlık listesi
 
-Explorer başvurusu/gerçek-hesap kabul gününden önce:
+Explorer başvurusu/gerçek hesap kabulünden önce:
 
-1. OAuth istemcisinin bağlı olduğu exact Google Cloud Project ve Ads API Overview access seviyesi doğrulanır.
-2. OAuth consent brand, verified domain, public homepage ve aynı domain üzerindeki privacy policy hazır olur.
-3. Google Ads API erişimi bulunan kullanıcıda 2-Step Verification; Google zorunlu tutuyorsa passkey tamamlanır.
-4. Review demonstrasyonu yalnız gerçek davranışı gösterir: bağlantı, advertiser seçimi, Reporting Account, salt-okunur rapor ve disconnect.
-5. Google ek demo isterse yedi günlük cevap penceresi operasyon planına alınır.
-6. İlk Production çağrısı ayrıca ürün sahibi tarafından onaylanır. İlk provider hatasında işlem durur.
+1. OAuth istemcisinin tam Cloud Project'i ve Ads API Overview erişim seviyesi doğrulanır.
+2. OAuth consent markası, doğrulanmış alan adı, herkese açık ana sayfa ve aynı alanda gizlilik politikası hazırdır.
+3. API kullanıcısında 2-Step Verification; Google zorunlu tutuyorsa passkey tamamlanır.
+4. Demo gerçek davranışı gösterir: bağlantı, reklamveren seçimi, Reporting Account, salt okunur rapor, Disconnect.
+5. Ek demo istenirse yedi günlük yanıt penceresi operasyon planına alınır.
+6. İlk Production çağrısı ayrıca onaylanır; ilk sağlayıcı hatasında durur.
 
 ## Listing tree ve veri doğruluğu sınırı
 
-Mevcut sözleşme geçmiş satışı bugünkü listing tree ile `exact` eşleştirmeyi yasaklıyor ve satış/Sales Role bilgisini koruyup yalnız Channel'ı `Unclassified Channel` yapıyor. Bu koruma testlerle kilitlidir.
+Mevcut sözleşme geçmiş satışı bugünkü ağaçla `exact` eşlemeyi yasaklar. Satış/Sales Role korunur; yalnız Channel `Unclassified Channel` olur. Koruma testlerle sabittir.
 
-Ancak versioned historical listing-tree snapshot persistence henüz yoktur. Bu nedenle gerçek geçmiş PMax satışlarında exact Asset Group yalnız satış gününün tam business-day penceresini kapsayan snapshot mevcutsa üretilebilir. Snapshot scheduler/persistence A6-EO-05'e aittir; yapılana kadar doğru sonuç `Unclassified Channel` olabilir. Bu, Explorer başvurusunu engellemez fakat nihai ürün doğruluğu için açık iş olarak kalır.
+Fakat sürümlü tarihsel ağaç anlık kayıtlarının kalıcı saklanması henüz yoktur. Geçmiş PMax satışında kesin Asset Group ancak satış gününün tam iş günü penceresini kapsayan kayıt varsa üretilebilir. Toplama/zamanlayıcı/saklama A6-EO-05'tir. Yapılana kadar doğru sonuç `Unclassified Channel` olabilir. Explorer başvurusunu engellemez; nihai veri doğruluğu için açık iş kalır.
 
-## Yetki ve mutation sınırı
+## Yetki ve dış sistem değişikliği sınırı
 
 Bu karar:
 
-- Google başvurusu veya canlı provider çağrısı yapmaz;
-- Cloud Project, OAuth consent, credential, secret veya environment değiştirmez;
-- deployment, database migration, Dataset V2 veya UI değişikliği yapmaz;
+- Google başvurusu/canlı çağrı yapmaz.
+- Cloud Project, OAuth consent, erişim bilgisi, gizli bilgi veya ortam değiştirmez.
+- Dağıtım, migration, Dataset V2 veya arayüz değişikliği yapmaz.
 - Production kanıtı varmış gibi davranmaz.
 
-## 17 October 2026 tarihinde kontrol edilen resmî kaynaklar
+## 17 Ekim 2026'da kontrol edilen resmî kaynaklar
 
-1. [Developer token sunset and Cloud Project migration](https://developers.google.com/google-ads/api/docs/api-policy/developer-token)
-2. [Google Ads API access levels](https://developers.google.com/google-ads/api/docs/api-policy/access-levels)
-3. [OAuth brand verification](https://developers.google.com/identity/protocols/oauth2/production-readiness/brand-verification)
-4. [OAuth policy compliance](https://developers.google.com/identity/protocols/oauth2/production-readiness/policy-compliance)
-5. [Google Ads API security requirements](https://developers.google.com/google-ads/api/docs/oauth/security-requirements)
-6. [Google Ads API policy and demo request timing](https://support.google.com/adspolicy/answer/6169371?hl=en-GB)
+1. [Developer token emekliliği ve Cloud Project geçişi](https://developers.google.com/google-ads/api/docs/api-policy/developer-token)
+2. [Google Ads API erişim seviyeleri](https://developers.google.com/google-ads/api/docs/api-policy/access-levels)
+3. [OAuth marka doğrulaması](https://developers.google.com/identity/protocols/oauth2/production-readiness/brand-verification)
+4. [OAuth politika uyumu](https://developers.google.com/identity/protocols/oauth2/production-readiness/policy-compliance)
+5. [API güvenlik şartları](https://developers.google.com/google-ads/api/docs/oauth/security-requirements)
+6. [API politikası ve demo yanıt süresi](https://support.google.com/adspolicy/answer/6169371?hl=en-GB)

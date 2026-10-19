@@ -143,6 +143,15 @@ ve merge-bekliyor kayıtları nihai kabule yönlendirilir. Yeniden bağlantı so
 eksik günleri tamamlama EO-05 açık işidir; yapılmış sayılmaz. Bu çalışma
 arayüz, veritabanı veya sağlayıcı davranışı değiştirmez; paket kapanmaz.
 
+PR #127 açık ürün sahibi kabulüyle merge edildi; kabul edilmiş belge sayısı
+35'tir. Dokuzuncu teslimde EO-04 analiz kitabı, ortak Channel/ürün ekonomisi
+ve geçici sağlayıcı canlı kabul kaydının üç belgesi okunabilirlik kabulü,
+diğer 24 belge dil incelemesi bekler. Önceki sayımlar tarihseldir.
+On sekiz senaryonun kimliği ve beklenen sonucu değişmez; alan adları Türkçedir.
+Özgün teknik değerler, maliyet/Channel/Sales Role ayrımı ve gerçek veri
+doğrulama sınırları korunur. Eski sayfalama, log, merge ve hazırlık durumları
+nihai kabulle birlikte okunur. Bu teslim kod, canlı ortam veya EO-05 yetkisi değiştirmez.
+
 ## 4. A6-ASSURE-01 — Pre-Review Assurance Programı
 
 EO-08 sonrasında çalışır. İlk kez kod sağlamlığı arayan denetim değildir;

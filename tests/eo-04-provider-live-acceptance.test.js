@@ -344,8 +344,8 @@ test("contract keeps product fields raw and the temporary route non-visual", () 
   assert.equal(route.match(/console[.]info/g)?.length, 1);
   assert.doesNotMatch(route, /console[.]info\([^\n]*result[^\n]*\)/);
   assert.doesNotMatch(route, /<s-|useSubmit|useFetcher|Form/);
-  assert.match(brief, /separate product-owner decision/i);
-  assert.match(brief, /does not expose provider rows/i);
+  assert.match(brief, /ayrı ürün sahibi kararı/);
+  assert.match(brief, /Sağlayıcı satırları, hesap\/Ad\/ürün adları, ham yetki kimlikleri,\s+token veya credential kimliği göstermez/);
 });
 
 test("retained Meta live evidence preserves empty product semantics and mapping boundaries", () => {

@@ -1,103 +1,109 @@
-# A6-EO-F1/F2 — Authority, Canlı Veri ve Fiziksel Proje Sınırı
+# A6-EO-F1/F2 — Yetki kaynağı, canlı veri ve fiziksel proje sınırı
 
 **Tarih:** 4 Ekim 2026  
-**Durum:** EO-F1 tamam; EO-F2 karar donduruldu; EO-F3–F7 bekliyor  
-**Yöntem:** Salt-okunur GitHub, Supabase ve Vercel incelemesi  
-**Gizlilik:** Token, secret, PII, account ID, shop domain veya satır payload'ı okunmadı ve kaydedilmedi.
+**Tarihsel durum:** EO-F1 tamam; EO-F2 kararı donduruldu; EO-F3–F7 bekliyor
+
+**Yöntem:** Salt okunur GitHub, Supabase ve Vercel incelemesi
+
+**Gizlilik:** Token, gizli değer, kişisel veri (PII), hesap kimliği, mağaza alan adı veya satır içeriği okunmadı ve kaydedilmedi.
+
+**Okuma notu:** Bu belge 4 Ekim 2026'da eski `fyilanli-oss/ads-table-dev` yapısında görülen durumu ve o gün verilen kararları kaydeder. Sayılar, eksikler ve “henüz oluşturulmadı” ifadeleri bugünkü temiz projenin durumu değildir. Sonraki EO-F4 veri katmanı kararı ve EO-F7 GO kabulü bu tarihsel sıranın devamıdır. Güncel durum ve uygulama yetkisi `docs/EXECUTION_PLAN.md` ile `contracts/a6-eo-implementation-master-v1.json` üzerinden okunur; bu dil düzenlemesi eski kapıları yeniden açmaz.
 
 ## İş çıktısı
 
-Embedded-only yeniden kuruluş için hangi canlı otoritelerin korunacağı, hangilerinin legacy olduğu ve temiz uygulamanın fiziksel olarak nerede kurulacağı belirlendi.
+Yalnız Shopify içine gömülü çalışan ürünün yeniden kuruluşunda hangi canlı kayıtların yetkili kaynak olarak korunacağı, hangilerinin eski yapıya ait olduğu ve temiz uygulamanın fiziksel olarak nerede kurulacağı belirlendi.
 
-**İş değeri:** Yeni uygulamanın eski monoliti, emekli provider secret'larını veya standalone tenant modelini yanlışlıkla yeniden etkinleştirmesi fiziksel build/deploy sınırıyla engellenir. Canlı workspace, provider grant ve Dataset V2 verileri ise silinmeden sonraki veri taşıma kapısına devredilir.
+**İş değeri:** Ayrı derleme ve dağıtım sınırı, eski monolitin, emekli sağlayıcı gizli değerlerinin veya bağımsız uygulamaya ait müşteri modelinin yanlışlıkla yeniden etkinleşmesini önler. Canlı çalışma alanı, sağlayıcı yetkilendirmesi ve Dataset V2 verileri silinmez; sonraki veri taşıma kapısında değerlendirilir.
 
 ## Yönetici özeti
 
-1. **EO-F1 tamamlandı:** Canlı tenant, installation, provider grant/token, Dataset, OAuth transaction, billing ve job authority kaynakları sınıflandırıldı.
-2. **EO-F2 kararı:** Hedef runtime ayrı GitHub repository ve ayrı Vercel project olarak kurulacaktır.
-3. **Production continuity:** Mevcut `ads-table-dev` Vercel project ve `dev.adstable.app` domain cutover'a kadar değişmeden containment/rollback hattı kalır.
-4. **Data-plane kararı açık:** Aynı Supabase projesinde özel least-privilege rol/private schema ile devam etmek ile ayrı Supabase projesine canonical carry yapmak EO-F4'te karşılaştırılacaktır.
-5. **Yasak:** Yeni runtime'a mevcut karışık Supabase şemasını aşan `SUPABASE_SERVICE_ROLE_KEY` verilemez. Supabase'in resmî modelinde service role RLS'yi bypass eder.
-6. **Uygulama başlamadı:** Yeni repository, Vercel project, Supabase project, domain veya secret oluşturulmadı/değiştirilmedi.
+1. **EO-F1 tamamlandı:** Müşteri, kurulum, sağlayıcı yetkilendirmesi/token, Dataset, OAuth işlemi, faturalandırma ve iş yürütme kayıtlarının yetkili kaynakları sınıflandırıldı.
+2. **EO-F2 kararı:** Hedef çalışma zamanı ayrı GitHub repository'si ve ayrı Vercel projesi olarak kurulacaktır.
+3. **Canlı hizmetin devamlılığı:** Mevcut `ads-table-dev` Vercel projesi ve `dev.adstable.app` alan adı, yetkili geçişe kadar riski sınırlama ve geri dönüş hattı olarak değişmeden kalır.
+4. **Veri katmanı kararı o gün açık:** Aynı Supabase projesinde en az yetkili rol/özel şema ile devam etme ve ayrı Supabase projesine kanonik veri taşıma seçenekleri EO-F4'te karşılaştırılacaktır.
+5. **Yasak:** Mevcut karma Supabase projesinde geniş erişim sağlayan `SUPABASE_SERVICE_ROLE_KEY` yeni çalışma zamanına verilemez. Service role, satır düzeyi güvenliği (RLS) atlayabilir.
+6. **O gün uygulama başlamadı:** Yeni repository, Vercel projesi, Supabase projesi, alan adı veya gizli değer oluşturulmadı/değiştirilmedi.
 
 ## İncelenen canlı sınırlar
 
 ### Supabase
 
-- Project: `adstable-dev`
-- Project ref: `xnstrzhavqkztvmlwsrx`
+- Proje: `adstable-dev`
+- Proje referansı: `xnstrzhavqkztvmlwsrx`
 - Durum: `ACTIVE_HEALTHY`
-- Region: `ap-northeast-1`
+- Bölge: `ap-northeast-1`
 - PostgreSQL: `17.6.1.121`
 - Public tablo sayısı: 24
 - Bütün public tabloların RLS bayrağı açık.
-- Supabase changelog kontrolünde yeni public tabloların Data API'ye otomatik açılmaması ve explicit grant gereksinimi doğrulandı.
-- `cron.job` relation mevcut değildir; canonical DB cron authority kanıtlanmadı.
+- O günkü değişiklik günlüğü kontrolünde yeni public tabloların Data API'ye otomatik açılmaması ve açık erişim yetkisi gereksinimi doğrulandı.
+- `cron.job` ilişkisi mevcut değildir; veritabanındaki cron'un kanonik zamanlayıcı olduğu kanıtlanmadı.
 
 ### Vercel
 
-- Team: `FIRAT's projects`
-- Project: `ads-table-dev`
-- Framework: Express
+- Ekip: `FIRAT's projects`
+- Proje: `ads-table-dev`
+- Uygulama çatısı: Express
 - Node: 24.x
-- Production deployment: READY
-- Production domain: `dev.adstable.app`
-- Secret değerleri açılmadan görülen environment key sayısı: 40
-- Mevcut proje kök monolit, legacy HTML, embedded route ve cron'u aynı deploy sınırında birleştiriyor.
+- Production dağıtımı: READY
+- Production alan adı: `dev.adstable.app`
+- Gizli değerler açılmadan görülen ortam değişkeni adı sayısı: 40
+- Mevcut proje kök monoliti, eski HTML'i, gömülü uygulama rotasını ve cron'u aynı dağıtım sınırında birleştiriyor.
 
 ### GitHub
 
 4 Ekim 2026 `main` ölçümü:
 
 - 819 repository dosyası
-- 305,537 byte kök `server.js`
-- 1,530,539 byte `public/`
-- 120 dosya / 561,776 byte `src/`
-- 203 test dosyası / 1,018,092 byte `tests/`
+- 305,537 bayt kök `server.js`
+- 1,530,539 bayt `public/`
+- 120 dosya / 561,776 bayt `src/`
+- 203 test dosyası / 1,018,092 bayt `tests/`
 
-## EO-F1 authority envanteri
+## EO-F1 yetkili kaynak envanteri
 
-| Alan | Canlı source-of-truth | Canlı durum | EO kararı |
+Kanonik kaynak, yeni sistemin esas alacağı kayıt kaynağıdır. “Taşıma adayı” kesin taşıma onayı değildir.
+
+| Alan | Canlı kayıt kaynağı | O günkü canlı durum | EO kararı |
 |---|---|---|---|
-| Canonical tenant | `workspaces` | 1 active | **Carry authority** |
-| Workspace settings/currency | `workspace_settings` | 1 | **Carry authority** |
-| Shopify installation | `shopify_installations` | 1 active, generation 1 | **Carry authority**; EO-F4 exact mapping |
-| Canonical provider grants/tokens | `workspace_provider_connections` | Meta, Google Ads, Klaviyo: 3 connected | **Carry authority**; encrypted envelopes only |
-| Embedded transitional provider store | `shopify_workspace_provider_connections` | 1 | **Do not carry as authority**; reconcile then retire |
-| Dataset V2 | `performance_dataset_rows_v2` | 5 rows; 4 Klaviyo, 1 Meta; workspace null 0; synthetic 0 | **Carry candidate**; finality/provenance validation required |
-| Klaviyo cost history | `workspace_provider_email_spend_history` | 4 rows | **Carry authority** |
-| Legacy-to-workspace attestation | `legacy_user_workspace_bindings` | 1 active binding | **Migration evidence only**; not runtime authority |
-| OAuth transactions | `oauth_transactions` | 12/12 expired; all Shopify/workspace-bound | **Do not migrate rows**; rebuild TTL/cleanup store |
-| Legacy tenant | `users` | 8 | **Do not carry as tenant authority** |
-| Legacy provider grants | `platform_connections` + `platform_connection_tokens` | 8 connection rows / 6 token envelopes | **Frozen legacy**; no new runtime access |
-| Legacy account inventory | `platform_ad_accounts`, `platform_businesses`, `platform_account_ownerships` | 12 / 0 / 12 | **Historical evidence only** |
-| Legacy settings | `user_settings` | 6 | **Do not carry** |
-| Legacy billing/trial | `subscriptions` | 7 | **Not canonical**; EO-02 workspace billing must replace |
-| Legacy snapshots | `dashboard_snapshots` | 2,185 | **Read-only history** pending EO-F4 |
-| Legacy dataset | `performance_dataset_rows` | 4,947 | **No blind copy**; R8 validation/re-fetch only |
-| Legacy job ledger | `snapshot_jobs` | 2,392 | **Do not carry as scheduler authority** |
-| Legacy schedules | `snapshot_schedules` | 10; all inactive; 240 minutes | **Do not carry** |
-| FX history | `fx_rates_daily` | 10,478 | **Carry candidate**; provider/provenance check in EO-F4 |
-| Empty/secondary stores | `insight_logs`, `fx_rates`, `platform_businesses` | 0 | Recreate only if target contract requires |
+| Kanonik müşteri/çalışma alanı | `workspaces` | 1 aktif | Yetkili kaynak olarak taşınacak |
+| Çalışma alanı ayarları/para birimi | `workspace_settings` | 1 | Yetkili kaynak olarak taşınacak |
+| Shopify kurulumu | `shopify_installations` | 1 aktif, nesil 1 | Yetkili kaynak olarak taşınacak; EO-F4 birebir eşlemesi gerekli |
+| Kanonik sağlayıcı yetkilendirmeleri/token'ları | `workspace_provider_connections` | Meta, Google Ads, Klaviyo: 3 bağlı | Yetkili kaynak olarak taşınacak; yalnız şifreli zarflar |
+| Gömülü uygulamanın geçiş dönemi bağlantı deposu | `shopify_workspace_provider_connections` | 1 | Yetkili kaynak olarak taşınmayacak; önce uzlaştırılacak, sonra emekliye ayrılacak |
+| Dataset V2 | `performance_dataset_rows_v2` | 5 satır; 4 Klaviyo, 1 Meta; çalışma alanı boş 0; sentetik 0 | Taşıma adayı; kesinleşme ve veri kökeni doğrulaması gerekli |
+| Klaviyo maliyet geçmişi | `workspace_provider_email_spend_history` | 4 satır | Yetkili kaynak olarak taşınacak |
+| Eski kullanıcı–çalışma alanı eşleme onayı | `legacy_user_workspace_bindings` | 1 aktif eşleme | Yalnız taşıma kanıtı; çalışma zamanı yetkisi değil |
+| OAuth işlemleri | `oauth_transactions` | 12/12 süresi dolmuş; tümü Shopify/çalışma alanına bağlı | Satırlar taşınmayacak; yaşam süresi (TTL)/temizlik deposu yeniden kurulacak |
+| Eski müşteri modeli | `users` | 8 | Müşteri yetki kaynağı olarak taşınmayacak |
+| Eski sağlayıcı yetkilendirmeleri | `platform_connections` + `platform_connection_tokens` | 8 bağlantı satırı / 6 token zarfı | Dondurulmuş eski kayıt; yeni çalışma zamanı erişemez |
+| Eski hesap envanteri | `platform_ad_accounts`, `platform_businesses`, `platform_account_ownerships` | 12 / 0 / 12 | Yalnız tarihsel kanıt |
+| Eski ayarlar | `user_settings` | 6 | Taşınmayacak |
+| Eski faturalandırma/deneme | `subscriptions` | 7 | Kanonik değil; EO-02 çalışma alanı faturalandırması yerini almalı |
+| Eski anlık görüntüler | `dashboard_snapshots` | 2,185 | EO-F4'e kadar salt okunur geçmiş |
+| Eski veri kümesi | `performance_dataset_rows` | 4,947 | Kör kopyalama yok; yalnız R8 doğrulaması/sağlayıcıdan yeniden çekme |
+| Eski iş kayıt defteri | `snapshot_jobs` | 2,392 | Zamanlayıcı yetki kaynağı olarak taşınmayacak |
+| Eski zamanlamalar | `snapshot_schedules` | 10; hepsi pasif; 240 dakika | Taşınmayacak |
+| Döviz kuru geçmişi | `fx_rates_daily` | 10,478 | Taşıma adayı; EO-F4'te sağlayıcı/veri kökeni kontrolü |
+| Boş/ikincil depolar | `insight_logs`, `fx_rates`, `platform_businesses` | 0 | Yalnız hedef sözleşme gerektiriyorsa yeniden kurulacak |
 
-## Provider authority bulgusu
+## Sağlayıcı yetki kaynağı bulgusu
 
-Canonical workspace authority doğru üçlüyle sınırlıdır:
+Kanonik çalışma alanı yetkisi yalnız kabul edilen üç sağlayıcıyla sınırlıdır:
 
-- Meta: 1 connected
-- Google Ads: 1 connected
-- Klaviyo: 1 connected
+- Meta: 1 bağlı
+- Google Ads: 1 bağlı
+- Klaviyo: 1 bağlı
 
-Legacy `platform_connections` hâlâ şunları taşır:
+Eski `platform_connections` o gün hâlâ şunları taşıyor:
 
-- Google: 1 connected
-- Klaviyo: 2 connected
-- Meta: 1 connected
-- Pinterest: 1 connected
-- TikTok: 1 connected
-- Google Sheets ve Organic: disconnected
+- Google: 1 bağlı
+- Klaviyo: 2 bağlı
+- Meta: 1 bağlı
+- Pinterest: 1 bağlı
+- TikTok: 1 bağlı
+- Google Sheets ve Organic: bağlantısı kesilmiş
 
-Bu satırlar yeni runtime'a verilirse duplicate/retired authority tekrar etkinleşebilir. Bu nedenle yeni runtime legacy connection/token tablolarına erişemez.
+Bu satırlar yeni çalışma zamanına verilirse yinelenen veya emekli yetki kaynakları tekrar etkinleşebilir. Bu nedenle yeni çalışma zamanı eski bağlantı/token tablolarına erişemez.
 
 ## Dataset V2 bulgusu
 
@@ -107,125 +113,127 @@ Bu satırlar yeni runtime'a verilirse duplicate/retired authority tekrar etkinle
 - `workspace_id IS NULL`: 0
 - `synthetic=true`: 0
 
-Bu tablo canonical carry adayıdır; ancak beş satırın varlığı reporting completeness, maturity veya finality PASS anlamına gelmez.
+Bu tablo kanonik taşıma adayıdır. Beş satırın varlığı raporlamanın eksiksizliği, verinin olgunluğu veya kesinleşmesi için PASS anlamına gelmez.
 
-## Scheduler ve lifecycle boşlukları
+## Zamanlayıcı ve yaşam döngüsü boşlukları
 
-Canonical workspace-scoped job/lease/checkpoint tabloları yoktur.
+O gün kanonik çalışma alanına bağlı iş/kiralama/ilerleme noktası tabloları yoktur.
 
-Mevcut ledger:
+Mevcut kayıt defteri:
 
-- `snapshot_jobs`: user-scoped legacy, 2,392 satır
-- `snapshot_schedules`: user-scoped legacy, 10 satır, tamamı pasif
+- `snapshot_jobs`: eski kullanıcıya bağlı, 2,392 satır
+- `snapshot_schedules`: eski kullanıcıya bağlı, 10 satır, tamamı pasif
 - Vercel cron: saatte bir `/api/cron/auto-refresh`
-- DB `cron.job`: yok
+- Veritabanı `cron.job`: yok
 
-Canlı routine envanterinde yalnız şunlar bulundu:
+Canlı veritabanı yordam envanterinde yalnız şunlar bulundu:
 
 - `complete_shopify_managed_install`
 - `expire_trials`
 - `r4c_reject_legacy_provider_write`
 
-Durable uninstall/privacy webhook claim, deletion manifest/run/evidence, clean reinstall generation, workspace job lease/checkpoint ve canonical billing routine authority'si yoktur. Bunlar EO-02 ve EO-05'in zorunlu foundation çıktılarıdır.
+Kalıcı uninstall/gizlilik webhook işleme sahipliği, silme manifesti/çalıştırma/kanıt kaydı, temiz yeniden kurulum nesli, çalışma alanına bağlı iş kiralaması/ilerleme noktası ve kanonik faturalandırma yordamları yoktur. Bunlar EO-02 ve EO-05'in zorunlu temel çıktılarıdır.
 
-## Billing/trial boşluğu
+## Faturalandırma/deneme boşluğu
 
-Canlıda yalnız user-scoped `subscriptions` tablosu vardır. Workspace-scoped Shopify Billing authority veya entitlement ledger bulunmamaktadır.
+O gün canlıda yalnız kullanıcıya bağlı `subscriptions` tablosu vardır. Çalışma alanına bağlı Shopify Billing yetkili kaynağı veya kullanım hakkı defteri bulunmamaktadır.
 
 Sonuç:
 
-- 14 günlük Shopify trial kararı korunur.
-- Legacy `subscriptions` yeni runtime'a authority olarak taşınmaz.
-- EO-02, Shopify installation/workspace ile bağlı versionlı billing/entitlement modelini kurmadan review-ready olunamaz.
+- 14 günlük Shopify deneme süresi kararı korunur.
+- Eski `subscriptions` yeni çalışma zamanına yetkili kaynak olarak taşınmaz.
+- EO-02, Shopify kurulumu/çalışma alanına bağlı sürümlü faturalandırma ve kullanım hakkı modelini kurmadan review'a hazır olunamaz.
 
-## Environment boundary
+## Ortam değişkeni sınırı
 
-Mevcut Vercel project 40 key taşır. Yeni project için denylist:
+O günkü Vercel projesi 40 değişken adı taşır. Yeni projeye alınmayacaklar:
 
-- 10 TikTok key'i
-- 3 Pinterest key'i
-- 1 GA4 key'i
+- 10 TikTok değişkeni
+- 3 Pinterest değişkeni
+- 1 GA4 değişkeni
 - `PROVIDER_TOKEN_LEGACY_READ_ENABLED`
 - `ADSTABLE_CODEX_READONLY_TOKEN`
-- legacy/debug/test/operator-only bütün key'ler
+- eski yapıya, hata ayıklamaya, teste veya yalnız operatöre ait bütün değişkenler
 
-Yeni project secret'ları “copy all” ile taşınamaz. Her key için owner, target environment, rotation/cutover ve rollback kaydı gerekir. `SUPABASE_SERVICE_ROLE_KEY` mevcut karışık project'e karşı yeni runtime'a verilemez.
+Gizli değerler yeni projeye topluca kopyalanamaz. Her değişkenin sahibi, hedef ortamı, anahtar yenileme/geçiş ve geri dönüş kaydı gerekir. `SUPABASE_SERVICE_ROLE_KEY` mevcut karma projeye erişmek üzere yeni çalışma zamanına verilemez.
 
 ## EO-F2 seçenek karşılaştırması
 
 Puan: 1 zayıf, 5 güçlü. Yüksek puan daha güvenli/uygundur.
 
-| Kriter | Aynı repo / ayrı deploy root | Ayrı repo + ayrı Vercel |
+| Kriter | Aynı repository / ayrı dağıtım kökü | Ayrı repository + ayrı Vercel |
 |---|---:|---:|
-| Legacy import/build izolasyonu | 2 | 5 |
-| Secret ve environment izolasyonu | 2 | 5 |
-| CI ve deployment bağımsızlığı | 3 | 5 |
-| Yanlış route/static inclusion riski | 2 | 5 |
-| Bağımsız rollback/cutover | 3 | 5 |
-| Mevcut history/contract keşif kolaylığı | 5 | 3 |
+| Eski import/derleme bağımlılıklarını yalıtma | 2 | 5 |
+| Gizli değer ve ortam yalıtımı | 2 | 5 |
+| CI ve dağıtım bağımsızlığı | 3 | 5 |
+| Yanlış rota/statik dosya dahil etme riski | 2 | 5 |
+| Bağımsız geri dönüş/yetki geçişi | 3 | 5 |
+| Mevcut geçmiş/sözleşme keşfinin kolaylığı | 5 | 3 |
 | Başlangıç operasyon yükü | 4 | 3 |
 | **Toplam** | **21/35** | **31/35** |
 
-History ve contract erişim kaybı, eski repository'yi salt-okunur authority/evidence kaynağı olarak tutup yalnız onaylı dosyaları provenance ile seed ederek yönetilebilir. Buna karşılık aynı repository'nin yanlış import, build glob, secret ve route sızıntısı riski fail-closed biçimde kanıtlanamaz.
+Geçmişe ve sözleşmelere erişim, eski repository'yi salt okunur yetki/kanıt kaynağı olarak tutup yalnız onaylı dosyaları köken kaydıyla başlangıca alarak korunabilir. Buna karşılık aynı repository'deki yanlış import, derleme dosya kalıbı, gizli değer ve rota sızıntısı riskinin hata halinde kapalı kalacağı kanıtlanamaz.
 
 ## EO-F2 bağlayıcı karar
 
-Uygulama GO verilirse:
+Uygulama için GO verilirse:
 
-1. Yeni ve ayrı bir GitHub repository oluşturulur.
-2. Bu repository'ye bağlı yeni ve ayrı bir Vercel project oluşturulur.
-3. İlk deployment yalnız preview olur; `dev.adstable.app` taşınmaz.
-4. Mevcut Vercel project production/rollback hattı olarak kalır.
+1. Yeni ve ayrı bir GitHub repository'si oluşturulur.
+2. Bu repository'ye bağlı yeni ve ayrı bir Vercel projesi oluşturulur.
+3. İlk dağıtım yalnız Preview olur; `dev.adstable.app` taşınmaz.
+4. Mevcut Vercel projesi Production/geri dönüş hattı olarak kalır.
 5. Yeni repository eski repository'nin fork'u veya toplu kopyası olmaz.
-6. Başlangıç seed'i yalnız:
+6. Başlangıca yalnız şunlar alınır:
    - yeni Execution Plan özeti,
-   - EO contract'ları,
-   - Shopify UI Constitution,
-   - temiz package/build/CI manifesti,
-   - EO-F3 allowlist ile kabul edilen modüllerden oluşur.
-7. Eski repo history'si provenance URL/SHA ile referanslanır.
-8. Shopify app identity, redirect URI ve domain cutover kararı EO-F5/EO-08'de verilir.
-9. Supabase data-plane seçimi EO-F4 tamamlanmadan runtime credential verilmez.
+   - EO sözleşmeleri,
+   - Shopify UI Anayasası,
+   - temiz paket/derleme/CI tanımları,
+   - EO-F3 izin listesiyle kabul edilen modüller.
+7. Eski repository geçmişi, köken URL/SHA kaydıyla referanslanır.
+8. Shopify uygulama kimliği, yönlendirme URI'si ve alan adı geçişi kararı EO-F5/EO-08'de verilir.
+9. EO-F4 Supabase veri katmanı seçimi tamamlanmadan çalışma zamanına kimlik bilgisi verilmez.
 
-## Supabase data-plane stop kapısı
+## Supabase veri katmanı durma kapısı
 
-İki güvenli aday vardır:
+O gün değerlendirilecek iki güvenli aday vardır:
 
-### A — Mevcut Supabase + özel least-privilege boundary
+### A — Mevcut Supabase + özel en az yetki sınırı
 
-- Yeni runtime için ayrı Postgres role/private schema veya eşdeğer dar yetki
-- Yalnız allowlist tablo/function grant'leri
+- Yeni çalışma zamanı için ayrı Postgres rolü/özel şema veya eşdeğer dar yetki
+- Yalnız izin listesindeki tablo/fonksiyon erişim yetkileri
 - `service_role` yok
-- Browser Data API kullanılacaksa explicit grant + RLS
-- Legacy tablolar için sıfır privilege
-- Credential rotation ve revoke planı
+- Tarayıcı Data API kullanacaksa açık erişim yetkisi + RLS
+- Eski tablolar için sıfır yetki
+- Kimlik bilgisi yenileme ve yetki kaldırma planı
 
-### B — Ayrı Supabase project
+### B — Ayrı Supabase projesi
 
-- Canonical şema temiz migration history ile kurulur
-- Yalnız EO-F4 onaylı satırlar reconciliation kanıtıyla taşınır
-- Eski project rollback/read-only history olarak kalır
-- Token envelope key/cipher migration ve Shopify installation continuity ayrıca kanıtlanır
+- Kanonik şema temiz migration geçmişiyle kurulur
+- Yalnız EO-F4 onaylı satırlar uzlaştırma kanıtıyla taşınır
+- Eski proje geri dönüş/salt okunur geçmiş olarak kalır
+- Token zarfının anahtar/şifreleme geçişi ve Shopify kurulum devamlılığı ayrıca kanıtlanır
 
-EO-F4 bu iki seçeneği güvenlik, taşıma riski, downtime, rollback ve operasyon maliyetiyle karşılaştırıp tek karar verir.
+EO-F4 bu iki seçeneği güvenlik, taşıma riski, kesinti süresi, geri dönüş ve operasyon maliyetiyle karşılaştırıp tek karar verir.
 
 ## Resmî kaynak kontrolü
 
-- [Supabase Changelog — breaking changes](https://supabase.com/changelog?types=breaking-change)
-- [Supabase Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security)
-- [Supabase Postgres Roles](https://supabase.com/docs/guides/database/postgres/roles)
-- [Supabase Securing Your Data](https://supabase.com/docs/guides/database/secure-data)
+Aşağıdaki bağlantılar 4 Ekim tarihsel incelemesinin kaynaklarıdır; yeni canlı inceleme yapıldığı anlamına gelmez.
 
-Resmî dokümana göre `service_role` RLS'yi bypass eder. Bu nedenle “aynı DB ama yeni Vercel project” tek başına veri izolasyonu değildir.
+- [Supabase değişiklik günlüğü — uyumluluğu bozan değişiklikler](https://supabase.com/changelog?types=breaking-change)
+- [Supabase satır düzeyi güvenliği](https://supabase.com/docs/guides/database/postgres/row-level-security)
+- [Supabase Postgres rolleri](https://supabase.com/docs/guides/database/postgres/roles)
+- [Supabase veri güvenliği](https://supabase.com/docs/guides/database/secure-data)
 
-## Sonraki kapı
+`service_role` RLS'yi atlayabildiği için “aynı veritabanı ama yeni Vercel projesi” tek başına veri yalıtımı değildir.
 
-EO-F3 — Kod/dependency carry allowlist:
+## O günkü sonraki kapı
 
-- target modüllerin transitive import grafiği;
-- carry-as-is / extract-and-rewrite / contract-only / retire sınıflaması;
-- yasaklı provider ve legacy dependency için sıfır build inclusion;
-- clean package manifest ve CI sınırı.
+EO-F3 — Kod/bağımlılık taşıma izin listesi:
 
-EO-F3 tamamlanmadan yeni repository oluşturulmaz.
+- hedef modüllerin dolaylı import grafiği;
+- aynen taşı / davranışı çıkarıp yeniden yaz / yalnız sözleşmeyi al / emekliye ayır sınıflaması;
+- yasak sağlayıcı ve eski bağımlılıkların derlemeye dahil edilmemesi;
+- temiz paket tanımı ve CI sınırı.
+
+EO-F3 tamamlanmadan yeni repository oluşturulmaz. Bu son ifade tarihsel kuruluş sırasıdır; güncel proje ilerlemesi Execution Plan'dan okunur.
 

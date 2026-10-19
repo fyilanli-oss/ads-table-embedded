@@ -161,6 +161,16 @@ geniş-ağaç varsayımı kabul edilmiş tek uygun Asset Group/tam gün kanıtı
 yönlendirilir. Meta katalog izni genişletilmez ve ürün maliyeti doğrulanmış
 gösterilmez. Bu teslim canlı çağrı, yeni karar veya EO-05 başlangıcı değildir.
 
+PR #129 açık ürün sahibi kabulüyle merge edildi; kabul edilmiş belge sayısı
+40'tır. On birinci teslimde F1/F2 ve F3 fizibilite kararlarının iki belgesi
+okunabilirlik kabulü, diğer 20 belge dil incelemesi bekler. Önceki sayımlar
+tarihseldir. Eski proje envanterleri ve ilk paket taslağı bugünkü iş sırası
+gibi sunulmaz; bağlayıcı Execution Plan'a yönlendirilir. Uygulama kodunu aynen
+taşıma sayısı sıfır, aday/kesin taşıma ayrımı ve silme yasağı korunur.
+Supabase rehberi yalnız yetki terimlerini korumak için kullanılmıştır;
+veritabanı sorgusu, kaynak oluşturma, sağlayıcı veya deploy işlemi yapılmaz.
+Bu teslim paket kapanışı veya EO-05 başlangıcı değildir.
+
 ## 4. A6-ASSURE-01 — Pre-Review Assurance Programı
 
 EO-08 sonrasında çalışır. İlk kez kod sağlamlığı arayan denetim değildir;

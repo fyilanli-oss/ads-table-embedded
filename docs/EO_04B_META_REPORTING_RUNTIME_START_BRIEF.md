@@ -1,111 +1,106 @@
-# EO-04-B Meta reporting runtime — first and second slices
+# EO-04-B — Meta raporlama çalışma zamanı: ilk ve ikinci dilim
 
-## Status
+## Durum
 
-- Product-owner runtime start authorization: **recorded 16 October 2026**
-- First slice: **Meta Ad Channel daily raw Insights page**
-- Second-slice authorization: **recorded 16 October 2026**
-- Second slice: **Meta Ad + `product_id` daily raw Insights page**
-- Live Meta request: **not authorized by this slice**
-- Dataset V2, database, scheduler, UI, OAuth scope, secret, environment and deployment mutation: **forbidden**
+- Ürün sahibi başlangıç onayı: **16 Ekim 2026'da kayıtlı**
+- İlk dilim: **Ad Channel günlük ham Insights sayfası**
+- İkinci dilim onayı: **16 Ekim 2026'da kayıtlı**
+- İkinci dilim: **Ad + `product_id` günlük ham Insights sayfası**
+- Canlı Meta isteği: **bu dilimle yetkilendirilmedi**
+- Dataset V2, veritabanı, zamanlayıcı, arayüz, OAuth izni, gizli bilgi, ortam ve dağıtım değişikliği: **yasak**
 
-## Why this slice is intentionally narrow
+Bu belge 16 Ekim 2026 başlangıç kapsamını ve 18 Ekim'de onaylanan dar hata düzeltmesini birlikte saklar. İlk/ikinci dilim ifadeleri tarihsel aşamadır; yeni çalışma veya canlı çağrı izni değildir. Güncel durum Execution Plan'dadır.
 
-Meta's real Channel is the Ad. The first runtime slice therefore proves only the provider-native daily Ad-level request and opaque cursor boundary. It does not infer a product row, Sales Role or product Ad Cost.
+## Neden dar kapsam?
 
-The accepted product contract requires a real catalog response before product-breakdown impression, click and spend may be treated as exact provider product evidence. Product breakdown, Creative advertised-product evidence and Shopify product/variant verification remain separate next gates.
+Meta'nın gerçek Channel'ı Ad'dir. İlk dilim yalnız sağlayıcının günlük Ad düzeyi isteğini ve imleç sınırını kanıtlar. Ürün satırı, Sales Role veya ürün Ad Cost tahmin etmez.
 
-## Exact request
+Kabul edilen ürün sözleşmesi, ürün kırılımındaki gösterim/tıklama/harcamayı kesin sağlayıcı ürün kanıtı saymadan gerçek katalog yanıtı ister. Ürün kırılımı, Creative reklamı yapılan ürün kanıtı ve Shopify ürün/varyant doğrulaması ayrı kapılardır.
 
-- Endpoint: `/{graph-version}/{ad-account-id}/insights`
-- Graph version: `v26.0`
-- OAuth scope remains exactly `ads_read`
+## Tam istek
+
+- Uç nokta: `/{graph-version}/{ad-account-id}/insights`
+- Graph sürümü: `v26.0`
+- OAuth izni: yalnız `ads_read`
 - `level=ad`
 - `time_increment=1`
-- bounded inclusive `time_range`
-- opaque `after` cursor only
-- fields: account, Campaign, Ad Set and Ad identity/name; business dates; impressions, clicks, inline link clicks, outbound clicks, spend, actions and action values
-- no `product_id` breakdown in this slice
+- Başlangıç/bitiş dahil, sınırlı `time_range`
+- Yalnız içi yorumlanmayan `after` imleci
+- Alanlar: hesap, Campaign, Ad Set ve Ad kimliği/adı; iş tarihleri; gösterimler, tıklamalar, satır içi bağlantı tıklamaları, dışa giden tıklamalar, harcama, eylemler ve eylem değerleri
+- Bu ilk dilimde `product_id` kırılımı yok
 
-## Output boundary
+## Çıktı sınırı
 
-The runtime returns a provider-native page envelope:
+Sağlayıcıya özgü sayfa zarfı:
 
 - `fact_family=ad_channel_daily_insights`
 - `channel_type=ad`
-- untouched provider rows for later contract-controlled normalization
-- next opaque cursor
-- provider request ID
-- query evidence without token or secret
+- Sonraki sözleşme denetimli normalleştirme için değiştirilmemiş sağlayıcı satırları
+- Sonraki imleç
+- Sağlayıcı istek kimliği
+- Token/gizli bilgi içermeyen sorgu kanıtı
 
-This is not Dataset V2 and is not persisted.
+Bu Dataset V2 değildir; kalıcı saklanmaz.
 
-## Failure rules
+## Hata kuralları
 
-- Meta error `190` is `reauthorization_required` and is never retried.
-- documented rate-limit classes are retryable classifications.
-- provider/server transient failures are retryable classifications.
-- malformed successful JSON or missing `data` fails closed as `provider_schema_changed`.
-- a next page without a valid opaque cursor fails closed.
-- an empty `data` array is a valid empty provider page; it is not fabricated as zero.
+- Meta `190`, `reauthorization_required` olur; tekrar edilmez.
+- Belgelenmiş kota sınıfları yeniden denenebilir sınıflandırılır.
+- Geçici sağlayıcı/sunucu hataları yeniden denenebilir sınıflandırılır.
+- Başarılı HTTP yanıtında bozuk JSON veya eksik `data`, `provider_schema_changed` ile güvenli ret olur.
+- Geçerli imleç olmadan sonraki sayfa güvenle reddedilir.
+- Boş `data` dizisi geçerli boş sayfadır; sıfır uydurulmaz.
 
 ## Onaylı dar hata düzeltmesi — 18 Ekim 2026
 
-Ürün sahibinin resmî Meta sayfalarından paylaştığı iki metin incelendi; bağımsız
-HTTP erişimi başarılı ilan edilmez. Kaynaklar rate-limiting ve error-handling
-sayfalarıdır; provenance ve GitHub koruma kanıtı
-`docs/evidence/A6_TECH_01_GITHUB_META_EVIDENCE_2026-10-18.json` içindedir.
+Ürün sahibinin resmî Meta sayfalarından paylaştığı iki metin incelendi. Bağımsız HTTP erişimi başarılı ilan edilmez. Kaynaklar rate-limiting ve error-handling sayfalarıdır; kaynak izi ve GitHub koruma kanıtı `docs/evidence/A6_TECH_01_GITHUB_META_EVIDENCE_2026-10-18.json` içindedir.
 
-- Raporlama izin hataları (`10`, `200–299`, tek başına HTTP `403`) token geçersizliği
-  diye işaretlenmez; `permission_denied` sınıfı terminaldir. Hesap keşfinde `403`
-  mevcut Graph hatası olarak korunur; bağlantı yenileme gerekçesi üretilmez.
+- İzin hataları (`10`, `200–299`, tek başına HTTP `403`) token geçersizliği sayılmaz; `permission_denied` sonlandırıcı sınıftır. Hesap keşfinde `403` mevcut Graph hatası olarak kalır; yeniden yetkilendirme gerekçesi üretilmez.
 - Açık `190` token hatası ve mevcut `401` davranışı korunur.
 - `80000` ve `80004`, HTTP `403` ile gelse de kota sınıfıdır.
-- Retryable sınıflandırması otomatik tekrar yetkisi değildir. İlk hata isteği
-  sonlandırır; izin/kota hatasında lifecycle değiştirilmez, kalan sayfalar/veri
-  aileleri çağrılmaz, kısmi sonuç yayımlanmaz.
-- Sayısal kota, scheduler, BUC bekleme süresi parser'ı veya canlı çağrı eklenmez.
+- Yeniden denenebilir sınıflandırma otomatik tekrar yetkisi değildir. İlk hata isteği bitirir. İzin/kotada bağlantı yaşam döngüsü değişmez; kalan sayfa/veri aileleri çağrılmaz; kısmi sonuç yayımlanmaz.
+- Sayısal kota, zamanlayıcı, BUC bekleme süresi ayrıştırıcısı veya canlı çağrı eklenmez.
 
-## Second slice — raw product breakdown
+## İkinci dilim — Ham ürün kırılımı
 
-The second repository-only slice adds a separate Meta request with:
+Yalnız repository'deki ikinci dilim ayrı Meta isteği ekler:
 
 - `level=ad`;
 - `breakdowns=product_id`;
 - `time_increment=1`;
-- a fixed operational `product_id_limit=100`;
-- Ad hierarchy and business-date identity;
-- raw `impressions`, `clicks`, `spend`, `converted_product_quantity` and `converted_product_value` fields.
+- Sabit operasyonel `product_id_limit=100`;
+- Ad hiyerarşisi ve iş tarihi kimliği;
+- Ham `impressions`, `clicks`, `spend`, `converted_product_quantity`, `converted_product_value`.
 
-Each returned product-breakdown row must contain a non-empty provider `product_id`. Other requested metrics remain untouched and may be absent or null. The runtime does not fabricate zeroes and does not normalize or classify those fields.
+Her ürün kırılımı satırında boş olmayan sağlayıcı `product_id` bulunmalıdır. Diğer metrikler değiştirilmez; eksik veya null olabilir. Çalışma zamanı sıfır uydurmaz, alanları normalleştirmez/sınıflandırmaz.
 
-This slice still does **not** establish that product-breakdown impression, click or spend is exact product `Ad Cost`. Its evidence explicitly remains `validation_pending_real_catalog_response`. It also does not add Creative classification, Sales Role, Shopify identity verification, persistence, Dataset V2, scheduler or UI behavior.
+Bu dilim, ürün gösterim/tıklama/harcamasının kesin ürün `Ad Cost` olduğunu **kanıtlamaz**. Kanıt durumu `validation_pending_real_catalog_response` kalır. Creative sınıflandırması, Sales Role, Shopify kimlik doğrulaması, kalıcı saklama, Dataset V2, zamanlayıcı veya arayüz davranışı eklemez.
 
-## Next gate
+## Sonraki kapı
 
-Before a live request, the repository authority slice binds both pages to:
+Canlı istekten önce repository yetki dilimi iki sayfayı şunlara bağlar:
 
-1. the verified active Shopify installation;
-2. its connected canonical Meta authority;
-3. exactly one selected Meta Reporting Account;
-4. the server-only encrypted provider-token vault.
+1. Doğrulanmış aktif Shopify kurulumu;
+2. Onun bağlı, tek yetkili Meta bağlantısı;
+3. Tam olarak bir seçili Meta Reporting Account;
+4. Yalnız sunucudaki şifreli sağlayıcı-token kasası.
 
-The merchant cannot supply or override an account ID, and neither token nor credential ID appears in the result/evidence. The Ad/Channel and product pages are returned together only after both requests succeed; a product-request failure publishes neither page. This slice performs no provider call or database write by itself.
+Kullanıcı hesap kimliği veremez/değiştiremez; token veya erişim bilgisi kimliği sonuç/kanıtta görünmez. Ad/Channel ve ürün sayfaları ancak iki istek de başarılıysa birlikte döner. Ürün isteği başarısızsa ikisi de yayımlanmaz. Yetki dilimi kendi başına sağlayıcı çağrısı veya veritabanı yazımı yapmaz.
 
-After repository tests and product-owner review, a separately authorized live catalog-response validation may prove or reject the returned product-metric semantics. Only after that evidence may a later Meta-only slice add:
+Testler ve ürün sahibi incelemesinden sonra ayrı onaylı canlı katalog yanıtı metrik anlamını kanıtlayabilir veya reddedebilir. Ancak bundan sonra ayrı Meta dilimi şunları ekleyebilir:
 
-1. Creative/promoted-object exact advertised-product evidence;
-2. Sales Role classification;
-3. official Shopify Facebook & Instagram identity candidate verification;
-4. exact product `Ad Cost` publication, only if the live evidence supports it.
+1. Creative/promoted-object kesin reklamı yapılan ürün kanıtı;
+2. Sales Role sınıflandırması;
+3. Resmî Shopify Facebook & Instagram kimlik adayı doğrulaması;
+4. Yalnız canlı kanıt desteklerse kesin ürün `Ad Cost` yayımı.
 
-No Google or Klaviyo runtime begins before the Meta provider slice is accepted.
+Bu tarihsel sırada Meta sağlayıcı dilimi kabul edilmeden Google veya Klaviyo çalışma zamanı başlamaz.
 
-## Official sources
+## Tarihsel resmî kaynaklar
 
-Checked 16 October 2026:
+Kontrol: 16 Ekim 2026.
 
-- Meta official Business SDK — Ads Insights fields: <https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adsinsights.py>
-- Meta official Business SDK — Ad Insights request parameters: <https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/ad.py>
+- Resmî SDK Ads Insights alanları: <https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adsinsights.py>
+- Resmî SDK Ad Insights istek parametreleri: <https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/ad.py>
 - Shopify Admin GraphQL 2026-10 ProductVariant: <https://shopify.dev/docs/api/admin-graphql/latest/objects/ProductVariant>
-- Shopify Admin GraphQL `productVariant` query: <https://shopify.dev/docs/api/admin-graphql/latest/queries/productVariant>
+- Shopify Admin GraphQL `productVariant` sorgusu: <https://shopify.dev/docs/api/admin-graphql/latest/queries/productVariant>

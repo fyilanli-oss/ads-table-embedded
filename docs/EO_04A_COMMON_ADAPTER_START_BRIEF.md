@@ -1,65 +1,70 @@
-# EO-04-A — Common adapter contract start brief
+# EO-04-A — Ortak adaptör sözleşmesi başlangıç açıklaması
 
-**Control date:** 10 October 2026  
-**Status:** Accepted — 10 October 2026  
-**Parent:** A6-EO-04 — Meta, Google Ads and Klaviyo adapters  
-**Execution effect:** EO-04-A start only; no provider secret, OAuth, live API, database, Vercel or deployment mutation
+**Kontrol tarihi:** 10 Ekim 2026
 
-## Analyst result
+**Durum:** Kabul edildi — 10 Ekim 2026
 
-EO-04-A will build one strict translation boundary between AdsTable and Meta, Google Ads and Klaviyo. Every provider speaks differently, but none may decide what a missing metric means, silently publish an incomplete page set, select another Shopify store, or turn a provider failure into zero.
+**Ana paket:** A6-EO-04 — Meta, Google Ads ve Klaviyo adaptörleri
 
-This child does not implement Meta, Google Ads or Klaviyo endpoints. It freezes the behavior every provider-specific adapter must obey before EO-04-B/C/D can be accepted.
+**İşlem yetkisi:** Yalnız EO-04-A başlangıcı; sağlayıcı gizli bilgisi, OAuth, canlı API, veritabanı, Vercel veya dağıtım değişikliği yok.
 
-## Why this package exists
+Bu belge 10 Ekim 2026'daki tasarım ve kabul kaydıdır. Sonraki sağlayıcı hiyerarşisi, hata eşlemesi ve canlı kanıt kararlarının yerine geçmez; güncel durum Execution Plan'dadır. Tarihsel yeniden deneme tasarımı bugün canlı çağrı izni değildir.
 
-Without a common contract, three dangerous behaviors become likely:
+## Analist sonucu
 
-1. an absent provider field is normalized to zero;
-2. a paginated or throttled response is published as a complete dataset;
-3. an ad account containing activity for more than one commerce store is treated as if every row belongs to the installed Shopify store.
+AdsTable ile Meta, Google Ads ve Klaviyo arasında tek, sıkı dönüşüm sınırı kurulur. Sağlayıcılar farklı konuşsa da eksik metriğin anlamını değiştiremez, tamamlanmamış sayfaları sessizce yayımlayamaz, başka Shopify mağazası seçemez veya hatayı sıfıra dönüştüremez.
 
-Any of these can make AdsTable disagree with the provider Ads Manager and become the same class of review and trust risk identified during the reconciliation audit.
+Bu alt paket sağlayıcı uç noktalarını uygulamaz. EO-04-B/C/D kabul edilmeden önce her adaptörün uyması gereken ortak davranışı sabitler.
 
-## Authority boundary
+## Neden gerekli?
 
-The immutable commerce authority is the verified Shopify installation:
+Ortak sözleşme olmadan üç risk doğar:
+
+1. Gelmeyen sağlayıcı alanı sıfıra çevrilir.
+2. Sayfalanmış veya kota engeline takılmış yanıt tam veri kümesi gibi yayımlanır.
+3. Birden fazla ticaret mağazasının faaliyeti olan reklam hesabındaki her satır kurulu Shopify mağazasına ait sayılır.
+
+Bunlar AdsTable'ı sağlayıcının Ads Manager sonucuyla çeliştirir; uzlaştırma denetiminde görülen review ve güven riskini yeniden üretir.
+
+## Yetki sınırı
+
+Değiştirilemez ticaret kaynağı doğrulanmış Shopify kurulumudur:
 
 ```text
-Installed Shopify Store
-└── Workspace
-    └── Provider connection
-        ├── Meta canonical Reporting Account
-        ├── Google Ads canonical Reporting Account
-        └── Klaviyo canonical Connected Account
+Kurulu Shopify mağazası
+└── Çalışma alanı
+    └── Sağlayıcı bağlantısı
+        ├── Meta yetkili Reporting Account
+        ├── Google Ads yetkili Reporting Account
+        └── Klaviyo yetkili Connected Account
 ```
 
-Rules:
+Kurallar:
 
-- A provider account, pixel, domain, campaign URL or catalog never creates or changes a Shopify workspace.
-- There is no merchant-selectable Reporting Store.
-- Another Shopify store requires another AdsTable installation and subscription.
-- Provider-side domain/store evidence can restrict or reject rows only where the official provider API exposes a deterministic relationship.
-- A URL, UTM, click ID, campaign name or operator guess is not enough to attribute a provider row to the installed store.
-- Ambiguous multi-store scope becomes an explicit support state; it is never silently mixed into organic or paid results.
+- Sağlayıcı hesabı, pixel, alan adı, kampanya URL'i veya katalog Shopify çalışma alanı oluşturamaz/değiştiremez.
+- Kullanıcının seçebileceği Reporting Store yoktur.
+- Başka Shopify mağazası ayrı AdsTable kurulumu ve abonelik ister.
+- Sağlayıcının alan adı/mağaza kanıtı, yalnız resmî API kesin ve tekrarlanabilir ilişki gösteriyorsa satırı sınırlar veya reddeder.
+- URL, UTM, tıklama kimliği, kampanya adı veya operatör tahmini satırı kurulu mağazaya bağlamak için yeterli değildir.
+- Belirsiz çoklu mağaza kapsamı açık destek durumudur; organik veya ücretli sonuca sessizce karıştırılmaz.
 
-## Provider account selection cardinality
+## Seçilebilecek hesap sayıları
 
-Provider account selection is not generalized across all three providers:
+Üç sağlayıcıya tek genelleme uygulanmaz:
 
-- **Meta:** the merchant selects between one and three provider-verified Ad Accounts. Zero or more than three cannot become Connected.
-- **Google Ads:** the merchant selects between one and three provider-verified advertiser/serving accounts where `customer.manager=false`. A Manager/MCC account is never selectable, never a Reporting Account and never a Funnel entity. When official Google access requires it, the manager ID may be retained privately only as the `login_customer_id` access path to a selected advertiser account.
-- **Klaviyo:** a Klaviyo account is not an Ad Account. Exactly one server-verified Klaviyo Account is bound to the connection; the Meta/Google one-to-three rule does not apply.
+- **Meta:** Kullanıcı sağlayıcının doğruladığı 1–3 Ad Account seçer. Sıfır veya üçten fazlası Connected olamaz.
+- **Google Ads:** `customer.manager=false` olan doğrulanmış 1–3 reklamveren/reklam sunan hesap seçilir. Manager/MCC seçilemez; Reporting Account veya Funnel varlığı olamaz. Resmî erişim gerektiriyorsa yönetici kimliği yalnız seçilen reklamverene erişim yolu olan özel `login_customer_id` olarak tutulabilir.
+- **Klaviyo:** Klaviyo hesabı Ad Account değildir. Sunucunun doğruladığı tam olarak bir Klaviyo hesabı bağlanır; Meta/Google'ın 1–3 kuralı uygulanmaz.
 
-Browser-supplied account IDs or names are never authority. Every selected account is re-read from the provider before persistence.
+Tarayıcıdan gelen hesap kimliği/adı yetki değildir. Seçilen her hesap kalıcı kayıttan önce sağlayıcıdan yeniden okunur.
 
-## Canonical Funnel fact demand contract
+## Ortak Funnel ham veri talebi
 
-Meta, Google Ads and Klaviyo use different native endpoints and field names, but every provider adapter must answer the same canonical fact demand. Provider-specific children may not omit a canonical question merely because the native field is absent.
+Uç noktalar ve alan adları farklı olsa da her adaptör aynı yetkili ham veri talebini yanıtlar. Sağlayıcı alanı yok diye ortak soru atlanamaz.
 
-The adapter output carries the installed-workspace authority, provider identity, truthful hierarchy, daily leaf identity, raw facts, stable capability support and per-attempt observation state.
+Çıktı; kurulu çalışma alanı yetkisini, sağlayıcıyı, gerçeğe uygun hiyerarşiyi, günlük uç varlık kimliğini, ham veriyi, kalıcı yetenek desteğini ve her denemenin gözlem durumunu taşır.
 
-Canonical raw facts are exactly:
+Ham metrikler tam olarak şunlardır; teknik adları çevrilmez:
 
 ```text
 impression
@@ -74,267 +79,252 @@ purchase
 purchase_value
 ```
 
-Stable `metric_support` is limited to `supported | unsupported | unknown`. Per-attempt `observation_state` carries `present | zero | empty | absent | not_requested | permission_denied | account_configuration_missing | ambiguous_store_scope | provisional | partial | failed`. A supported metric may therefore be absent in one response without becoming unsupported, and an unsupported metric remains `null`, never numeric zero.
+Kalıcı `metric_support` yalnız `supported | unsupported | unknown` olabilir. Deneme bazlı `observation_state` ise `present | zero | empty | absent | not_requested | permission_denied | account_configuration_missing | ambiguous_store_scope | provisional | partial | failed` taşır. Desteklenen metrik bir yanıtta gelmeyince desteklenmiyor sayılmaz. Desteklenmeyen metrik `null` kalır; sayısal sıfır olmaz.
 
-The old `user_id` identity is forbidden. The new authority uses `workspace_id`, `installation_id`, `installation_generation`, `provider_connection_id`, `platform_account_id` and, where applicable, the verified Reporting Account ID. Active EO scope is Meta, Google Ads and Klaviyo only; TikTok and GA4 are not silently reactivated. Shopify organic ingestion is a separate source boundary and is not manufactured by these paid-provider adapters.
+Eski `user_id` kimliği yasaktır. Yeni yetki `workspace_id`, `installation_id`, `installation_generation`, `provider_connection_id`, `platform_account_id` ve uygulanıyorsa doğrulanmış Reporting Account kimliğini kullanır. Yalnız Meta, Google Ads ve Klaviyo aktiftir; TikTok/GA4 sessizce açılmaz. Shopify organik veri alımı ayrı kaynak sınırıdır; ücretli sağlayıcı adaptörleri bunu üretmez.
 
-Provider-native calculated fields do not become Dataset truth merely because the provider returns them. CTR, CPC, ROAS, CPS, revenue, revenue margin, abandoned counts/values and rates remain Formula Engine outputs. A verified provider conversion value maps to `purchase_value`; it does not bypass the canonical formula contract.
+Sağlayıcının hesaplanmış alanı döndürmesi onu Dataset gerçeği yapmaz. CTR, CPC, ROAS, CPS, revenue, revenue margin, terk edilmiş adet/değerler ve oranlar Formula Engine çıktısıdır. Doğrulanmış dönüşüm değeri `purchase_value` alanına eşlenir; formül sözleşmesini aşamaz.
 
-Fallback, synthetic, partial or incomplete results cannot be published as canonical facts. Raw evidence is represented only by a bounded sanitized reference, content hash and request metadata.
+Alternatif, sentetik, kısmi veya eksik sonuç ortak veri diye yayımlanamaz. Ham kanıt yalnız sınırlandırılmış, hassas bilgilerden arındırılmış başvuru, içerik özeti ve istek üst verisiyle temsil edilir.
 
-## OAuth-to-first-data analyst sequence
+## OAuth'tan ilk veriye akış
 
-Every provider connection follows this order:
+1. OAuth dönüşünü doğrula.
+2. Token'ı şifreleyip sakla; açık metin saklama.
+3. Kurulu Shopify mağazası ve aktif kurulum neslini yeniden doğrula.
+4. Hesapları canlı sağlayıcı API'sinden keşfet.
+5. Kullanıcıya 1–3 doğrulanmış Meta/Google reklamveren hesabı seçtir.
+6. Tek doğrulanmış Klaviyo hesabını bağla; Ad Account adını verme.
+7. Seçilen her hesabı sağlayıcıdan yeniden okuyup çalışma alanı/kurulum nesline bağla.
+8. Kurulu mağaza kapsamı belirsiz veya bağlantı yetkisiyle çelişkiliyse güvenle dur.
+9. Hesap saat dilimi, para birimi, API sürümü ve metrik yeteneklerini çöz.
+10. Campaign/Flow hiyerarşisini doğrulanmış sağlayıcı uç varlığına kadar al.
+11. Ortak Funnel ham veri talebinin tamamını sağlayıcı alanlarıyla iste.
+12. Sonucu yayımlanabilir yapmadan bütün gerekli sayfa/bölümleri bitir.
+13. Yanıtı yetkili kimlik/varlık/ham metrik zarfına çevir.
+14. Destek/gözlem ayrımını, sıfır/null anlamını, iş tarihini, tek FX dönüşümünü ve kaynak izini doğrula.
+15. Yalnız tam doğrulanmış sonucu ilerideki Dataset V2 yazıcısında tekrarlandığında çoğalmadan sakla.
+16. İlk başlangıç yalnız dünü, sonra bugünü ister; 14 günlük geriye dönük doldurma değildir.
+17. Sonraki saatlik yenileme ve geriye dönük uzlaştırma EO-05'e devredilir.
 
-1. Verify the OAuth callback.
-2. Encrypt and persist the token; never persist plaintext.
-3. Re-verify the Installed Shopify Store and active installation generation.
-4. Discover provider accounts from the live provider API.
-5. Let the merchant select one to three verified Meta/Google advertiser accounts.
-6. Bind exactly one verified Klaviyo Account without calling it an Ad Account.
-7. Re-read every selected account from the provider and bind it to the workspace/installation generation.
-8. Fail closed when installed-store scope is ambiguous or conflicts with the connection authority.
-9. Resolve account timezone, currency, API revision and metric capabilities.
-10. Fetch the truthful Campaign/Flow hierarchy down to the currently verified provider leaf.
-11. Request the complete canonical Funnel fact demand through provider-native fields.
-12. Finish every required page/partition before making the attempt publishable.
-13. Translate the native response into the canonical identity/entity/raw-metric envelope.
-14. Validate support versus observation state, zero/null semantics, business date, single FX conversion and provenance.
-15. Persist only the complete validated result idempotently through the later Dataset V2 writer boundary.
-16. Initial bootstrap requests only yesterday and today, in that order; it is not a 14-day backfill.
-17. Hand subsequent hourly refresh and backward reconciliation to EO-05.
+OAuth başarısı tek başına Connected değildir. İlk veri alınabilir olmadan hesap bağlama ve ilgili bütün yetki kapıları geçmelidir.
 
-OAuth success alone is not Connected. Account binding and all applicable authority gates must pass before first data is eligible for ingestion.
+## Ortak adaptör işlemleri
 
-## Common adapter operations
+EO-04-A sağlayıcıdan bağımsız işlemleri tanımlar; her sağlayıcı alt paketi bunları resmî uç noktalara eşler.
 
-EO-04-A will define provider-neutral operations; each provider child maps them to current official endpoints.
+### 1. Bağlantıyı incele
 
-### 1. Inspect connection
+Token kullanılabilirliğini, sağlayıcı kimliğini, verilmiş yetenekleri ve EO-03 bağlantı/raporlama hesabı yetkisini doğrular. Mağaza, çalışma alanı veya hesap seçemez/değiştiremez.
 
-Confirms token usability, provider identity, granted capabilities and the connection/reporting-account authority established in EO-03. It cannot select or replace a store, workspace or account.
+### 2. Kapsam kanıtını keşfet
 
-### 2. Discover scope evidence
+Yalnız sağlayıcının desteklediği hesap, alan adı, katalog, pixel, dönüşüm eylemi veya eşdeğer kapsam kanıtını döndürür. Kanıt açıklayıcıdır; satış ilişkilendirmesi uydurmaz.
 
-Returns only provider-supported account, domain, catalog, pixel, conversion-action or equivalent evidence needed to describe reporting scope. Evidence is descriptive; it does not invent attribution.
+### 3. Yapıyı al
 
-### 3. Fetch structure
+Sonraki Dataset V2 normalleştirmesinin gerektirdiği hiyerarşi ve sabit kimlikleri döndürür. Bu tarihsel ortak tasarımda:
 
-Returns the provider hierarchy and exact stable identifiers needed by later Dataset V2 normalization. Provider-specific hierarchy remains truthful:
+- Meta: hesap → kampanya → ad set → ad.
+- Google Ads: customer → kampanya → ad group → ad; Performance Max resmî asset group/asset hiyerarşisiyle ele alınır.
+- Klaviyo: hesap → campaign/flow → message/variation; API'nin desteklediği yerde.
 
-- Meta: account → campaign → ad set → ad;
-- Google Ads: customer → campaign → ad group → ad, with Performance Max handled through its officially supported asset-group/asset hierarchy;
-- Klaviyo: account → campaign/flow → message/variation where the current API supports it.
+Kesin en alt varlık, sağlayıcıya özel resmî belge ve canlı kanıt kapılarına bağlıdır. Sonraki kabul edilmiş hiyerarşi sözleşmesi bu başlangıç çizimini ayrıntılandırır.
 
-The precise deepest leaf remains subject to the provider-specific official-document and live-evidence gates.
+### 4. Ham veriyi al
 
-### 4. Fetch facts
+Açık hesap, zaman penceresi, saat dilimi ve alan kümesi için raporlama verisini döndürür. İstenen ile gerçekte geleni ayırır. AdsTable formüllerini hesaplamaz; Dataset V2'yi doğrudan yayımlamaz.
 
-Returns requested reporting facts for an explicit account, time window, timezone and field set. The adapter reports what was requested and what the provider actually returned. It does not calculate AdsTable formulas or publish Dataset V2 directly.
+### 5. Yeteneği açıkla
 
-### 5. Describe capability
+Alan, kırılım, seviye veya işlemin resmen desteklenip desteklenmediğini ve bu hesap/istekte kullanılabilirliğini bildirir. Yetenek sürümlü kanıttır; sabit iyimser vaat değildir.
 
-Returns whether a field, breakdown, level or operation is officially supported and whether it was available in this exact account/request. Capability is versioned evidence, not a hard-coded optimistic promise.
+## Destek durumu sözleşmesi
 
-## Support-state contract
+İstenen metrik/boyut şu durumlardan biriyle açıklanır:
 
-Every requested metric or dimension must resolve to one of these states:
+- `present`: Sağlayıcı null olmayan değer döndürdü.
+- `zero`: Sağlayıcı açıkça sayısal sıfır döndürdü.
+- `empty`: Açık boş koleksiyon/değer döndü.
+- `absent`: İstek başarılı, fakat alan/tür yok.
+- `unsupported`: Resmî sözleşme desteklemiyor.
+- `not_requested`: AdsTable istemedi.
+- `permission_denied`: Mevcut erişim bilgisi okuyamıyor.
+- `account_configuration_missing`: Özellik var; hesapta gereken kurulum yok.
+- `ambiguous_store_scope`: Kurulu mağazanın kesin ayrımı kanıtlanamıyor.
+- `provisional`: Sağlayıcı pencereyi hâlâ değiştirebilir.
+- `partial`: Gerekli bütün sayfa/bölümler bitmedi.
+- `failed`: Yayımlanabilir kanıt olmadan bitti.
 
-- `present`: provider returned a non-null value;
-- `zero`: provider explicitly returned numeric zero;
-- `empty`: provider returned an explicit empty collection/value;
-- `absent`: request succeeded but the field/type was not present;
-- `unsupported`: current official provider contract does not support it;
-- `not_requested`: AdsTable did not ask for it;
-- `permission_denied`: current credential cannot read it;
-- `account_configuration_missing`: provider feature exists but this account lacks the required setup;
-- `ambiguous_store_scope`: deterministic installed-store isolation cannot be proven;
-- `provisional`: provider can still revise the window;
-- `partial`: not every required page/partition completed;
-- `failed`: request ended without publishable evidence.
+Yalnız sağlayıcının açık sıfırı sıfır olur. `absent`, `empty`, `unsupported`, `permission_denied`, `partial` ve `failed` birbirinin yerine geçmez.
 
-Only an explicit provider zero becomes zero. `absent`, `empty`, `unsupported`, `permission_denied`, `partial` and `failed` are not interchangeable.
+## İstek zarfı
 
-## Request envelope
+Her istek şunlara bağlıdır:
 
-Every adapter request is bound to:
+- Çalışma alanı ve aktif Shopify kurulum nesli;
+- Sağlayıcı bağlantısı;
+- Modelde varsa yetkili Reporting Account;
+- İşlem ve sözleşme sürümü;
+- Sağlayıcı API/sürümü;
+- Kurulu mağazanın saat dilimi;
+- Dahil edilen veri tarihleri ve açık UTC istek sınırları;
+- Tam alanlar, seviyeler ve kırılımlar;
+- Sabit sorgu parmak izi ve deneme kimliği;
+- İşten çağrılmışsa zamanlayıcı/koşu kimliği.
 
-- workspace ID and active Shopify installation generation;
-- provider connection ID;
-- canonical Reporting Account ID where the provider model has one;
-- operation and contract version;
-- provider API/revision version;
-- installed-shop timezone;
-- inclusive data dates and explicit UTC request boundaries;
-- exact requested fields, levels and breakdowns;
-- stable query fingerprint and attempt ID;
-- scheduler/run ID when invoked by a job.
+Çağıranın gönderdiği çalışma alanı, mağaza, token, rastgele sağlayıcı URL'i veya değiştirilebilir hesap kimliği reddedilir.
 
-Caller-supplied workspace, store, token, arbitrary provider URL or mutable account identity is rejected.
+## Yanıt ve kanıt zarfı
 
-## Response and evidence envelope
+Her tamamlanan deneme gizli bilgi içermeden kaydeder:
 
-Every completed attempt records secret-free evidence:
+- Sağlayıcı, işlem, sözleşme/API sürümü ve sorgu parmak izi;
+- Döndüyse sağlayıcı istek/izleme kimliği;
+- Başlama, bitme ve veri alma zamanları;
+- İstenen/dönen tarih kapsamı;
+- İstenen alanlar ve alan bazlı destek durumu;
+- Sayfa/bölüm/satır sayısı ve bütünlük;
+- Resmen döndüyse kota başlıkları veya üst verisi;
+- Başarısızsa normalleştirilmiş hata sınıfı;
+- Özel, sınırlandırılmış ham yanıt kanıtı başvurusu ve içerik özeti.
 
-- provider, operation, contract/API version and query fingerprint;
-- provider request/trace ID when returned;
-- started/completed/fetched timestamps;
-- requested and returned date coverage;
-- requested fields and per-field support state;
-- page/partition count, row count and completeness;
-- rate-limit headers or quota metadata when officially returned;
-- normalized error class when unsuccessful;
-- a private bounded raw-response evidence reference and content hash.
+Token, yetkilendirme kodu, PKCE doğrulayıcı, istemci sırrı, veritabanı URL'i, müşteri e-postası ve profil düzeyinde kişisel veri log/kanıtta yasaktır.
 
-Tokens, authorization codes, PKCE verifiers, client secrets, database URLs, customer emails and profile-level personal data are forbidden in logs and evidence.
+Ham kanıt uygulama logu veya sınırsız veri gölü değildir. Canlı çağrıdan önce sağlayıcı alt paketi arındırma, özel saklama, saklama süresi ve silmeyi tanımlar. Sonradan ayrı onaylı sözleşme gerekmedikçe Klaviyo kişi/profil uç noktaları dışarıdadır.
 
-Raw evidence is not application logging and is not an unlimited data lake. Provider children must define redaction, private storage, retention and deletion before live calls. Klaviyo profile/person endpoints are outside this reporting adapter unless a later separately approved contract requires them.
+## Sayfalama ve tamlık
 
-## Pagination and completeness
+- Sağlayıcı imleci/sayfa token'ı içi yorumlanmayan değerdir; uydurulmaz.
+- Sorgu parmak izi sayfalar boyunca sabit kalır.
+- Yinelenen imleç, sayfa/satır üst sınırı ve toplam süre sınırı sonsuz dolaşmayı durdurur.
+- Sayfa token'ı dolarsa veya sayfa eksikse sağlayıcı sözleşmesine göre deneme yeniden başlar ya da başarısız olur; kısmi anlık kayıt tam diye yayımlanmaz.
+- Satırlar tek deneme altında bekletilir; bütün gerekli sayfa/bölümler geçmeden yayımlanamaz.
+- Aynı sayfanın tekrarı sonucu çoğaltmaz.
+- Google Ads Search sabit sayfa davranışını, Klaviyo üst düzey imleç bağlantılarını kullanır. Meta dolaşımı EO-04-B resmî belge kapısından sonra sabitlenir.
 
-- Provider cursors/page tokens are opaque and never manufactured.
-- The query fingerprint must remain stable across pages.
-- Repeated cursor detection, maximum pages/rows and total time budget stop infinite traversal.
-- A page-token expiry or any missing required page restarts or fails the attempt according to the provider contract; it never publishes a partial snapshot as complete.
-- Rows are staged under one attempt and become publishable only after all required pages/partitions pass.
-- Duplicate page replay is idempotent.
-- Google Ads Search pagination uses the provider's fixed page behavior; Klaviyo follows top-level cursor links. Meta-specific traversal is frozen only after the EO-04-B official-document gate passes.
+## Yeniden deneme ve kota
 
-## Retry and quota behavior
+Hem deneme sayısı hem toplam süre sınırlıdır. Yalnız belgelenmiş geçici durumlar için:
 
-Retries are bounded by both attempt count and total elapsed time.
+1. Varsa `Retry-After` veya sağlayıcı erişimi geri kazanma üst verisine uyulur.
+2. Yoksa rastgele sapmalı üstel bekleme kullanılır.
+3. Sağlayıcı ve yetkili hesap başına kota/eşzamanlılık kontrolü uygulanır.
+4. Sonraki deneme süre bütçesinde güvenle bitmeyecekse durulur.
+5. Sınırın tükenmesi sıfır değil başarısız/kısmi sonuçtur.
 
-Retry is allowed only for the provider's documented transient conditions. The adapter:
+Kimlik doğrulama, iptal edilmiş token, izin, doğrulama, desteklenmeyen alan, bozuk sorgu ve kesin hesap kapsamı hatası körlemesine tekrarlanmaz. Bu ortak yetenek, ürün sahibinin ilk sağlayıcı hatasında durma kapısını kaldırmaz.
 
-1. honors `Retry-After` or provider recovery metadata when present;
-2. otherwise uses exponential backoff with randomized jitter;
-3. applies quota/concurrency control per provider and canonical account;
-4. stops when the runtime time budget cannot safely complete the next attempt;
-5. exposes retry exhaustion as a failed/partial result rather than zero.
+## Normalleştirilmiş hata sınıfları
 
-Authentication, revoked token, permission, validation, unsupported field, malformed query and deterministic account-scope failures are not blindly retried.
+Sağlayıcı ayrıntısı özel kalır; ortak katman şunları gösterir:
 
-## Normalized error classes
+- `reauthorization_required`
+- `permission_or_scope_missing`
+- `reporting_account_inaccessible`
+- `request_contract_invalid`
+- `provider_schema_changed`
+- `rate_limited`
+- `quota_exhausted`
+- `transient_provider_failure`
+- `provider_timeout`
+- `data_not_ready`
+- `ambiguous_store_scope`
+- `partial_result`
+- `internal_adapter_failure`
 
-Provider details are preserved privately, while the common layer exposes:
+Arındırılmış sağlayıcı kodu, mesaj sınıfı ve istek kimliği eşlik edebilir; token ve ham authorization başlığı edemez.
 
-- `reauthorization_required`;
-- `permission_or_scope_missing`;
-- `reporting_account_inaccessible`;
-- `request_contract_invalid`;
-- `provider_schema_changed`;
-- `rate_limited`;
-- `quota_exhausted`;
-- `transient_provider_failure`;
-- `provider_timeout`;
-- `data_not_ready`;
-- `ambiguous_store_scope`;
-- `partial_result`;
-- `internal_adapter_failure`.
-
-A sanitized provider code, message class and request ID may accompany the class. Tokens and raw authorization headers never do.
-
-## Provider facts confirmed for the common layer
+## Ortak katman için doğrulanan tarihsel bilgiler
 
 ### Google Ads
 
-Current official documentation classifies authentication, retryable, validation and synchronization errors separately. Only transient server classes are candidates for bounded jittered backoff. Google Ads Search uses fixed 10,000-row pages in v19+; a page token is short-lived and subsequent requests must retain the identical query.
+Resmî belgeler kimlik doğrulama, yeniden denenebilir, doğrulama ve eşitleme hatalarını ayırır. Yalnız geçici sunucu sınıfları sınırlı, rastgele sapmalı beklemeye adaydır. v19+ Search sabit 10.000 satırlık sayfa kullanır; kısa ömürlü sayfa token'ıyla aynı sorgu korunmalıdır.
 
 ### Klaviyo
 
-Klaviyo uses cursor pagination and endpoint-specific page sizes. It applies per-account burst and steady windows; OAuth apps receive quota per installed app instance. HTTP 429 returns `Retry-After`. API revision is an explicit required request header and therefore part of the evidence envelope.
+İmleçli sayfalama ve uç noktaya özel sayfa boyutu vardır. Hesap bazlı ani/sürekli kullanım pencereleri uygulanır; OAuth uygulamasının her kurulumu ayrı kota alır. HTTP 429 `Retry-After` döndürür. API sürümü zorunlu açık istek başlığı ve kanıtın parçasıdır.
 
 ### Meta
 
-The current official rate-limit and Graph error pages returned HTTP 429 during the 10 October 2026 control check. Meta's accessible official May 2026 announcement confirms that Marketing API Access Tier governs enhanced rate-limit access. No Meta-specific numeric quota, retry code, header guarantee or pagination rule is frozen in EO-04-A from memory. EO-04-B cannot implement until the current official pages are readable and recorded.
+10 Ekim 2026 kontrolde resmî kota ve Graph hata sayfaları HTTP 429 döndürdü. Erişilebilen Mayıs 2026 duyurusu Marketing API Access Tier'ın yüksek kota erişimini yönettiğini doğruladı. EO-04-A sayısal kota, yeniden deneme kodu, başlık garantisi veya sayfalama kuralını hafızadan sabitlemez. EO-04-B için okunabilir, kayıtlı resmî kaynak gerekir. Bu tarihsel erişim sınırı bugün giderilmiş gibi sunulmaz.
 
-## Secret and environment gate
+## Gizli bilgi ve ortam kapısı
 
-EO-04-A creates no secret. Before a provider child introduces any credential:
+EO-04-A gizli bilgi oluşturmaz. Sağlayıcı alt paketinde erişim bilgisinden önce:
 
-- the secret inventory contract must be accepted;
-- the provider-token encryption key recovery gate must pass before first real OAuth;
-- the exact provider secret name, issuing authority, scopes, expiry, rotation and rollback must extend the inventory contract;
-- Production, Preview and Development use isolated credentials;
-- no secret value enters GitHub content, tests, fixtures, logs or acceptance evidence.
+- Gizli bilgi envanter sözleşmesi kabul edilir.
+- İlk gerçek OAuth öncesi sağlayıcı-token şifreleme anahtarı kurtarma kapısı geçer.
+- Tam ad, veren otorite, kapsam, süre dolumu, yenileme ve geri alma envantere eklenir.
+- Production, Preview ve Development ayrı erişim bilgileri kullanır.
+- Değer GitHub, test, örnek veri, log veya kabul kanıtına girmez.
 
-## Implementation sequence after acceptance
+## Kabul sonrası uygulama sırası
 
-1. Define TypeScript request/result/support/error contracts.
-2. Implement the provider-neutral pagination/retry/quota runner with injected clock, sleep and random sources.
-3. Implement sanitized evidence construction and secret redaction guards.
-4. Implement deterministic fake-provider fixtures for success, zero, empty, absent, unsupported, pagination, throttle, transient failure, auth failure, partial result and ambiguous store scope.
-5. Add repository tests for idempotency, loop/time limits, no-zero fabrication and no secret leakage.
-6. Stop for repository acceptance before any EO-04-B provider-specific implementation.
+1. TypeScript istek/sonuç/destek/hata sözleşmelerini tanımla.
+2. Dışarıdan verilen saat, bekleme ve rastgelelik kaynaklarıyla ortak sayfalama/yeniden deneme/kota yürütücüsünü kur.
+3. Arındırılmış kanıt üretimini ve gizli bilgi temizleme korumalarını kur.
+4. Başarı, sıfır, boş, eksik, desteklenmiyor, sayfalama, kota, geçici hata, kimlik hatası, kısmi sonuç ve belirsiz mağaza için tekrarlanabilir sahte sağlayıcı örnekleri kur.
+5. Tekrarın sonucu çoğaltmaması, döngü/süre sınırı, sıfır uydurmama ve sızıntı testlerini ekle.
+6. EO-04-B sağlayıcı uygulamasından önce repository kabulü için dur.
 
-## Acceptance gates
+## Kabul kapıları
 
-EO-04-A cannot close until:
+- Ürün sahibi başlangıç açıklamasını kabul eder.
+- Uygulama makine sözleşmesiyle eşleşir.
+- Bütün sentetik davranışlar geçer.
+- Gerçek sağlayıcı gizli bilgisi/token'ı kullanılmaz.
+- Ayrı açık kapı olmadan canlı sağlayıcı, veritabanı, Vercel veya dağıtım değişmez.
+- Zorunlu CI geçer.
+- Ürün sahibi EO-04-A'yı açıkça kabul eder.
 
-- product owner accepts this brief;
-- repository implementation matches the executable contract;
-- every required synthetic behavior passes;
-- no real provider secret or token is used;
-- no live provider, database, Vercel or deployment mutation occurs without a separate explicit gate;
-- required CI passes;
-- product owner explicitly accepts EO-04-A.
+## Açık kapsam dışı
 
-## Explicitly out of scope
+OAuth/token değişimi; sağlayıcı uygulama/erişim bilgisi oluşturma veya değiştirme; canlı çağrı; son uç nokta/alan listeleri; Dataset V2 saklama/uzlaştırma zamanlaması; formüller, BFF/sorgu API'si ve arayüz; ürün/cross-sell kanıtı; review başvuruları.
 
-- provider OAuth or token exchange;
-- creating or editing provider apps/credentials;
-- live provider calls;
-- final endpoint/field lists for Meta, Google Ads or Klaviyo;
-- Dataset V2 persistence and reconciliation scheduling;
-- formulas, BFF/query API and UI;
-- product/cross-sell proof;
-- provider review submissions.
+## 10 Ekim 2026'da kontrol edilen resmî kaynaklar
 
-## Official sources checked on 10 October 2026
+- Meta Access Tier duyurusu: https://developers.meta.com/blog/updates-to-ads-management-standard-access-feature/
+- Meta kota sayfası (kontrolde HTTP 429): https://developers.facebook.com/docs/graph-api/overview/rate-limiting/
+- Meta hata sayfası (kontrolde HTTP 429): https://developers.facebook.com/docs/graph-api/guides/error-handling/
+- Google Ads hata türleri: https://developers.google.com/google-ads/api/docs/best-practices/error-types
+- Google Ads hata modeli: https://developers.google.com/google-ads/api/docs/best-practices/understand-api-errors
+- Google Ads sayfalama: https://developers.google.com/google-ads/api/docs/reporting/paging
+- Klaviyo kota/hata: https://developers.klaviyo.com/en/docs/rate_limits_and_error_handling
+- Klaviyo API/sayfalama: https://developers.klaviyo.com/en/v2026-01-15/reference/api_overview
+- Vercel Functions sınırları: https://vercel.com/docs/functions/limitations
+- Supabase değişiklik günlüğü: https://supabase.com/changelog
 
-- Meta Marketing API Access Tier announcement: https://developers.meta.com/blog/updates-to-ads-management-standard-access-feature/
-- Meta Graph API rate-limit documentation URL (HTTP 429 during control check): https://developers.facebook.com/docs/graph-api/overview/rate-limiting/
-- Meta Graph API error documentation URL (HTTP 429 during control check): https://developers.facebook.com/docs/graph-api/guides/error-handling/
-- Google Ads error types: https://developers.google.com/google-ads/api/docs/best-practices/error-types
-- Google Ads error model: https://developers.google.com/google-ads/api/docs/best-practices/understand-api-errors
-- Google Ads pagination: https://developers.google.com/google-ads/api/docs/reporting/paging
-- Klaviyo rate limits and errors: https://developers.klaviyo.com/en/docs/rate_limits_and_error_handling
-- Klaviyo API overview/pagination: https://developers.klaviyo.com/en/v2026-01-15/reference/api_overview
-- Vercel Functions limits: https://vercel.com/docs/functions/limitations
-- Supabase changelog: https://supabase.com/changelog
+## Repository uygulaması — 10 Ekim 2026
 
+Ürün sahibi başlangıç açıklamasını uygulamadan önce kabul etti. Ortak sınır, sağlayıcı gizli bilgisi okumadan/oluşturmadan ve canlı API/veritabanı/Vercel/dağıtım değişikliği olmadan uygulandı.
 
-## Repository implementation — 10 October 2026
+Çıktılar:
 
-The product owner accepted the start brief before implementation. The provider-neutral boundary is now implemented without reading or creating a provider secret and without any live API, database, Vercel or deployment mutation.
+- `app/lib/providers/common-adapter.server.js`: Çalışma zamanı sözleşmesi, ortak ham veri doğrulaması, yayımdan önce tam sayfalama, sınırlı yeniden deneme ve arındırılmış kanıt.
+- `app/lib/providers/common-adapter.server.d.ts`: Sıkı istek/sonuç/ham veri tipleri.
+- `tests/eo-04a-common-adapter.test.js`: Tekrarlanabilir sahte sağlayıcı kabul testleri.
 
-Artifacts:
+Davranış:
 
-- `app/lib/providers/common-adapter.server.js`: runtime contract, canonical fact validation, complete-before-publish pagination, bounded retry and sanitized evidence.
-- `app/lib/providers/common-adapter.server.d.ts`: strict public request/result/fact types.
-- `tests/eo-04a-common-adapter.test.js`: deterministic fake-provider acceptance tests.
+- Üç sağlayıcıdan aynı tam on ham metrik istenir.
+- Kalıcı yetenek desteği ile deneme gözlemi bağımsızdır.
+- Yalnız açık sayısal sıfır sıfırdır; eksik/desteklenmeyen/başarısız sonuç null veya yayımlanamaz kalır.
+- İmleç yorumlanmaz; yinelenen imleç, çelişkili aynı veri, satır/sayfa/süre sınırı ve eksik dolaşım güvenle durur.
+- Aynı sayfa tekrarı sonucu çoğaltmaz.
+- Yalnız `rate_limited`, `transient_provider_failure`, `provider_timeout` ve ancak sağlayıcı alt paketi resmî sözleşmeden yeniden denenebilir sınıflandırdıysa tekrar adayıdır.
+- Kimlik, yetki, doğrulama ve kesin kapsam hatası çağıranın bayrağıyla tekrar edilebilir yapılamaz.
+- `Retry-After`, sınırlı rastgele sapmalı üstel beklemeden önceliklidir.
+- Önceki sayfalar bekletilmiş olsa da başarısız deneme yayımlanabilir satır döndürmez.
+- Kanıt sınırlıdır, içerik özeti taşır; erişim bilgisi, yetkilendirme malzemesi ve e-posta biçimli kişisel veriyi iç içe yapılarda da temizler.
+- Klaviyo Ad Account seçicisi olmayan tek platform hesabıdır. Meta/Google EO-03 raporlama hesabı yetkisini kullanır.
 
-Implemented behavior:
+Bu hâlâ sağlayıcıdan bağımsız sözleşmedir. Canlı çağrı öncesi EO-04-B/C/D resmî uç nokta, alan, sayfalama, kota, hesap ve hata eşlemelerini sabitlemelidir.
 
-- The same exact ten canonical raw metrics are demanded for Meta, Google Ads and Klaviyo.
-- Stable capability support and per-attempt observation state are independent.
-- Only an explicit provider numeric zero becomes zero; absence, unsupported state and failure remain null/non-publishable.
-- Cursor values remain opaque. Repeated cursors, conflicting duplicate facts, row/page/time ceilings and incomplete traversal fail closed.
-- Identical page replay is idempotent.
-- Only `rate_limited`, `transient_provider_failure` and `provider_timeout` can be retried, and only when the provider child classifies them as retryable from its official contract.
-- Authentication, authorization, validation and deterministic scope failures are never made retryable by a caller flag.
-- `Retry-After` metadata takes precedence over bounded exponential jitter.
-- Failed attempts return no publishable rows even when earlier pages were staged.
-- Evidence is bounded, content-hashed and recursively redacts credentials, authorization material and email-shaped personal data.
-- Klaviyo retains one platform account with no Ad Account selector. Meta and Google Ads continue to require their verified reporting-account authority from EO-03.
+### Kapanış kapısının sonucu
 
-This implementation remains a provider-neutral contract. EO-04-B/C/D must still freeze current official endpoint, field, pagination, quota, account and error mappings before any live provider call.
+GitHub Actions `38049487145` koşusu 163/163 test, TypeScript ve önizleme derlemesini geçti. Ürün sahibi 10 Ekim 2026'da EO-04-A'yı kabul edip PR #65 merge'ünü onayladı. Bu kapanış EO-04-B uygulamasına izin değildir; resmî belge ve analist kapısı önce geçmelidir.
 
-### Remaining closure gate
+## Ürün sahibi kapanışı — 10 Ekim 2026
 
-GitHub Actions run `38049487145` passed 163/163 tests, TypeScript verification and preview build. The product owner explicitly accepted EO-04-A and authorized PR #65 merge on 10 October 2026. EO-04-B provider implementation is not authorized by this closure; its current official-document and analyst-brief gate must pass first.
-
-
-## Product-owner closure — 10 October 2026
-
-EO-04-A is Accepted. The accepted result is the provider-neutral contract and synthetic runtime only. This closure authorizes advancing to the EO-04-B Meta official-document and analyst-brief gate; it does not authorize a live Meta call, credential change, database mutation, Vercel mutation or deployment.
+Kabul edilen sonuç ortak sözleşme ve sentetik çalışma zamanıdır. EO-04-B Meta resmî belge/analist kapısına ilerlenebilir; canlı Meta çağrısı, erişim bilgisi/veritabanı/Vercel değişikliği veya dağıtım yetkilendirilmez.

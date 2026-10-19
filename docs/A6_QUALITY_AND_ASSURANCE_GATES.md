@@ -109,6 +109,14 @@ ile gizlilik silmesi arasındaki ayrımlar korunur. Anahtar örneği yer tutucud
 gerçek değer eklenmez. Bu teslim yeni provider, veritabanı veya deploy işlemi
 ve paket kapanışı yetkilendirmez.
 
+PR #123 ürün sahibinin açık kabulüyle merge edildi; kabul edilmiş belge sayısı
+19 oldu. Beşinci teslimde ortak adaptör ve Meta'nın dört belgesi okunabilirlik
+kabulü, diğer 39 belge dil incelemesi bekler. Eksik veri/sıfır ayrımı, tam sayfalama,
+Meta Channel = Ad ve gerçek katalog yanıtı olmadan kesin ürün maliyeti
+yayımlamama kuralları korunur. 13 Ekim'in eski 403 açıklaması, 18 Ekim'in mevcut
+kabul edilmiş düzeltmesine yönlendirilir. Özgün buton metinleri ve teknik adlar
+değişmez; bu çalışma yeni sağlayıcı davranışı veya canlı işlem üretmez.
+
 ## 4. A6-ASSURE-01 — Pre-Review Assurance Programı
 
 EO-08 sonrasında çalışır. İlk kez kod sağlamlığı arayan denetim değildir;

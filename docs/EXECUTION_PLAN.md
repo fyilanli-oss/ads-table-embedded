@@ -273,6 +273,14 @@ kalıcı işçi belgeleri ile EO-02-C canlı kabul kılavuzudur. Güncel toplam:
 yeni token, gizli bilgi, sorgu, silme, migration veya dağıtım yetkisi üretmez.
 EO-05 kapalıdır ve A6-DOCS-01 henüz tamamlanmamıştır.
 
+Üçüncü teslimin beş belgesi de aynı gün açık ürün sahibi kabulüyle PR #122'de
+merge edildi. Merge commit'i `0e8f03ddd1526cc53b8e5e2922211301d512ffef`;
+test edilen kaynak ağacı korunmuştur. Dördüncü dil geçişi EO-03-A/B/C/D'nin
+OAuth işlemi, token kasası, hesap yetkisi ve bağlantı yaşam döngüsü belgeleridir.
+Güncel toplam: 15 kabul edilmiş, 4 okunabilirlik kabulü bekleyen, 43 dil incelemesi
+bekleyen belge. Önceki sayımlar ara kayıttır. Tarihsel kabul/denemeler yeniden
+yürütülmez; kod, canlı ortam ve EO-05 yetki sınırı değişmez.
+
 ## EO-05 mandatory first gate — historical PMax listing-tree evidence
 
 EO-05 scheduler veya Dataset V2 acceptance başlamadan önce Google Performance

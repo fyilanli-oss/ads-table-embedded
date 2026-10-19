@@ -1,111 +1,117 @@
-# EO-03-C — Connection and Reporting Account Authority
+# EO-03-C — Bağlantı ve Reporting Account yetkisi
 
-**Durum:** Implementation  
-**Kontrol tarihi:** 9 Ekim 2026  
-**Parent:** A6-EO-03  
-**Başlangıç kapısı:** EO-03-B Accepted  
-**Production etkisi:** Yok
+**O tarihteki durum:** Uygulama hazırlığı (Implementation)
+
+**Kontrol tarihi:** 9 Ekim 2026
+
+**Ana paket:** A6-EO-03
+
+**Başlangıç kapısı:** EO-03-B kabulü
+
+**O hazırlık aşamasındaki Production etkisi:** Yok
+
+Bu belge EO-03-C'nin tarihsel uygulama kapsamını ve kabul kapılarını anlatır; bugünkü açık iş listesi değildir. Ana paketin kapanışı `docs/EO_03_ANALYSIS_DESIGN_BOOK.md`, güncel proje durumu Execution Plan üzerinden okunur. Yeni canlı işlem yetkisi vermez.
 
 ## Analist özeti
 
-Bu paket provider OAuth bağlantısının doğruladığı hesapları AdsTable'ın canonical bağlantı otoritesine dönüştürür. Provider hesabı yalnız reklam/raporlama veri kapsamını belirler. AdsTable'ın commerce ve workspace otoritesi her zaman uygulamanın kurulu olduğu, Shopify ID token ve Admin API ile doğrulanmış mağazadır.
+Sağlayıcı OAuth bağlantısının doğruladığı hesaplar AdsTable'ın tek yetkili bağlantı modeline alınır. Sağlayıcı hesabı yalnız reklam/raporlama veri kapsamını belirler. Ticaret kaynağı ve çalışma alanı yetkisi her zaman uygulamanın kurulu olduğu, Shopify ID token ve Admin API ile doğrulanmış mağazadır.
 
-Provider bağlantısı başka bir Shopify mağazasını seçemez. İkinci Shopify mağazası ayrı app installation, workspace ve subscription gerektirir. WooCommerce, BigCommerce ve Magento bu Shopify embedded workspace'e commerce source olarak eklenemez.
+Sağlayıcı bağlantısı başka Shopify mağazası seçemez. İkinci mağaza ayrı uygulama kurulumu, çalışma alanı ve abonelik gerektirir. WooCommerce, BigCommerce ve Magento bu Shopify embedded çalışma alanına ticaret kaynağı eklenemez.
 
-## Provider davranışı
+## Sağlayıcı davranışı
 
 ### Meta
 
-- Provider tarafından doğrulanmış hesaplardan 1–3 tanesi bağlı hesap olarak saklanabilir.
-- Funnel ve Ad Analysis için bağlı kümeden tam bir Reporting Account seçilir.
-- Merchant tarafından yazılmış veya provider kanıtında bulunmayan account ID kabul edilmez.
-- Reporting Account değişikliği taze provider erişim kanıtı gerektirir.
+- Sağlayıcının doğruladığı hesaplardan 1–3 tanesi bağlı hesap olarak saklanabilir.
+- Funnel ve Ad Analysis için bağlı kümeden tam olarak bir Reporting Account seçilir.
+- Kullanıcının elle yazdığı veya sağlayıcı kanıtında olmayan hesap kimliği kabul edilmez.
+- Reporting Account değişikliği güncel sağlayıcı erişim kanıtı gerektirir.
 
 ### Google Ads
 
-- Provider tarafından doğrulanmış hesaplardan 1–3 tanesi bağlı hesap olarak saklanabilir.
-- Manager erişim yolu gerekiyorsa `login_account_id` ile korunur.
-- Manager hesap erişim kökü olabilir; advertiser değilse Reporting Account olamaz.
-- Funnel ve Ad Analysis için bağlı ve eligible advertiser hesaplardan tam biri seçilir.
+- Sağlayıcının doğruladığı hesaplardan 1–3 tanesi bağlı hesap olarak saklanabilir.
+- Gerekli yönetici erişim yolu `login_account_id` ile korunur.
+- Yönetici hesabı erişim kökü olabilir; reklamveren değilse Reporting Account olamaz.
+- Funnel ve Ad Analysis için bağlı, raporlamaya uygun reklamveren hesaplardan tam olarak biri seçilir.
 
 ### Klaviyo
 
-- OAuth tokenının ait olduğu tek hesap `Connected Account` olarak saklanır.
+- OAuth token'ının ait olduğu tek hesap `Connected Account` olarak saklanır.
 - Ayrı Reporting Account kontrolü yoktur.
-- Hesap değişikliği basit seçim değildir; EO-03-D reauthorization yaşam döngüsünü gerektirir.
+- Hesap değişikliği basit seçim değildir; EO-03-D yeniden yetkilendirme yaşam döngüsünü gerektirir.
 
 ## Kanıt sınırı
 
-EO-03-C provider HTTP çağrısı yapmaz. EO-04 adapterları daha sonra provider cevaplarını okuyup kısa ömürlü `provider_account_access_verified` kanıtı üretecektir.
+EO-03-C sağlayıcı HTTP çağrısı yapmaz. EO-04 adaptörleri sonraki aşamada yanıtları okuyup kısa ömürlü `provider_account_access_verified` kanıtı üretir.
 
 Bu kanıt:
 
-- provider ile eşleşir;
-- en fazla 10 dakika geçerlidir;
-- erişilebilir hesap kimliklerini ve raporlama uygunluğunu taşır;
-- token, credential, raw provider cevabı, workspace veya install-generation taşımaz;
-- stale, cross-provider veya secret-bearing ise fail-closed reddedilir.
+- Sağlayıcıyla eşleşir.
+- En fazla 10 dakika geçerlidir.
+- Erişilebilir hesap kimlikleri ve raporlama uygunluğu taşır.
+- Token, erişim bilgisi, ham sağlayıcı yanıtı, çalışma alanı veya kurulum nesli taşımaz.
+- Güncelliğini yitirmiş, başka sağlayıcıya ait veya gizli bilgi içeriyorsa güvenle reddedilir.
 
-Bu ayrım EO-03-C'nin kanıt tüketen güvenlik sınırı; EO-04'ün ise provider sözleşmesini bilen üretici olmasını sağlar.
+EO-03-C kanıt tüketen güvenlik sınırıdır; EO-04 sağlayıcı sözleşmesini bilen üreticidir.
 
 ## Veritabanı modeli
 
 ### `integrations.provider_connections`
 
-Bir workspace/install-generation/provider için tek canonical bağlantıdır. Exact provider credential envelope'a referans verir. Credential başka workspace, generation veya provider'a aitse bağlantı kurulmaz.
+Bir çalışma alanı/kurulum nesli/sağlayıcı için tek yetkili bağlantıdır. Tam sağlayıcı erişim bilgisi zarfına başvurur. Zarf başka çalışma alanı, nesil veya sağlayıcıya aitse bağlantı kurulmaz.
 
 ### `integrations.provider_accounts`
 
-Yalnız provider tarafından doğrulanmış ve merchant tarafından seçilmiş hesapları tutar. Token veya raw response saklamaz.
+Yalnız sağlayıcının doğruladığı ve kullanıcının seçtiği hesapları tutar. Token veya ham yanıt saklamaz.
 
 ### `integrations.reporting_account_bindings`
 
-Meta ve Google için effective-dated Reporting Account tarihçesidir. Her bağlantıda yalnız bir aktif binding bulunur. Seçim değişikliği eski kaydı kapatır, yenisini açar; tarihsel Dataset'i yeniden yazmaz.
+Meta ve Google için geçerlilik tarihli Reporting Account geçmişidir. Her bağlantıda yalnız bir aktif bağ bulunur. Seçim değişince eski kayıt kapanır, yenisi açılır; tarihsel Dataset yeniden yazılmaz.
 
-Klaviyo bu tabloda binding oluşturmaz.
+Klaviyo bu tabloda bağ oluşturmaz.
 
 ## Güvenlik
 
-- Tablolar private `integrations` şemasındadır.
-- RLS enabled ve forced'dır.
-- `public`, `anon`, `authenticated`, `service_role` ve runtime doğrudan tablo erişimine sahip değildir.
-- Runtime yalnız exact SECURITY DEFINER fonksiyonlarını çağırabilir.
+- Tablolar özel `integrations` şemasındadır.
+- RLS açıktır ve zorunludur.
+- `public`, `anon`, `authenticated`, `service_role` ve çalışma zamanı doğrudan tabloya erişemez.
+- Çalışma zamanı yalnız tam SECURITY DEFINER fonksiyonlarını çağırır.
 - Fonksiyonların `search_path` değeri boştur.
-- Her write aktif Shopify installation, workspace, install generation, provider ve credential authority eşleşmesini yeniden doğrular.
-- Reporting Account switch başarısız olursa mevcut aktif seçim aynı transaction içinde korunur.
+- Her yazım aktif Shopify kurulumu, çalışma alanı, kurulum nesli, sağlayıcı ve erişim bilgisi yetkisini yeniden eşleştirir.
+- Reporting Account değiştirme başarısızsa mevcut aktif seçim aynı işlem içinde korunur.
 
-## Resmî kaynaklar
+## Tarihsel resmî kaynaklar
 
-9 Ekim 2026 tarihinde kontrol edildi:
+9 Ekim 2026 tarihinde kontrol edilen konular:
 
-- Shopify authentication ve mağaza-bazlı access-token otoritesi
+- Shopify kimlik doğrulama ve mağaza bazlı erişim token'ı yetkisi
 - Meta'nın resmî Marketing API Postman koleksiyonu
-- Google Ads access model, `ListAccessibleCustomers` ve `login-customer-id`
-- Klaviyo OAuth ve `accounts:read` Get Account
-- Supabase changelog, database functions ve Row Level Security
+- Google Ads erişim modeli, `ListAccessibleCustomers` ve `login-customer-id`
+- Klaviyo OAuth ve `accounts:read` Get Account işlemi
+- Supabase değişiklik günlüğü, veritabanı fonksiyonları ve RLS
 
-Executable contract: `contracts/eo-03c-connection-account-authority-v1.json`.
+Makine sözleşmesi: `contracts/eo-03c-connection-account-authority-v1.json`.
 
-## Bu dilimde yapılmayanlar
+## Bu hazırlıkta yapılmayanlar
 
-- Canlı provider OAuth veya account discovery
-- Canlı Supabase migration
-- Vercel environment/secret değişikliği
-- Settings UI
+- Canlı sağlayıcı OAuth veya hesap keşfi
+- Canlı Supabase migration'ı
+- Vercel ortam değişkeni/gizli bilgi değişikliği
+- Settings arayüzü
 - Dataset V2 veya SnapshotJob
-- Reconnect, disconnect, refresh, revoke ve renewal
+- Yeniden bağlanma, bağlantıyı kesme, token yenileme, iptal ve yenileme yaşam döngüsü
 - Reporting Store seçimi
-- Production deploy
+- Production dağıtımı
 
-Bu işlemler kendi ileriki kapıları ve açık yetkileri olmadan yapılamaz.
+Bu işlemler sonraki kendi kapıları ve açık yetkileri olmadan yapılamaz.
 
 ## Repository kabulü
 
-1. Meta/Google 1–3 connected account ve tek eligible Reporting Account kuralı test edilir.
-2. Klaviyo tek Connected Account ve reporting-control-yok kuralı test edilir.
-3. Fresh evidence, stale evidence, cross-provider, cross-workspace ve secret-bearing negatif kontroller çalışır.
-4. Credential envelope exact installation authority ile eşleşir.
-5. Function-only, forced-RLS ve tek aktif reporting binding statik olarak doğrulanır.
-6. Repository testleri, typecheck, build ve zorunlu CI PASS olur.
-7. Canlı migration ve provider authorization ayrıca açık onay alır.
+1. Meta/Google için 1–3 bağlı hesap ve tek uygun Reporting Account kuralı sınanır.
+2. Klaviyo için tek Connected Account ve raporlama kontrolü bulunmaması sınanır.
+3. Güncel/eski kanıt, başka sağlayıcı/çalışma alanı ve gizli bilgi içeren kanıt kontrolleri çalışır.
+4. Erişim bilgisi zarfı tam kurulum yetkisiyle eşleşir.
+5. Yalnız fonksiyon erişimi, zorunlu RLS ve tek aktif raporlama bağı statik doğrulanır.
+6. Repository testleri, tür kontrolü, derleme ve zorunlu CI geçer.
+7. Canlı migration ve sağlayıcı yetkilendirmesi ayrıca açık onay alır.
 8. Ürün sahibi EO-03-C'yi açıkça kapatır.

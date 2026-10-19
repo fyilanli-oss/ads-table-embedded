@@ -28,16 +28,16 @@ test("DOCS-01 inventories human Markdown without translating agent instructions 
   assert.equal(new Set(actual).size, 63);
   assert.deepEqual(contract.inventory_counts, {
     total_markdown: 63, human_markdown: 62, excluded_agent_instructions: 1,
-    translated_review_pending: 5, pending_language_review: 47,
-    translated_product_owner_accepted: 10,
+    translated_review_pending: 4, pending_language_review: 43,
+    translated_product_owner_accepted: 15,
   });
   for (const row of contract.inventory) {
     assert.match(row.baseline_blob, /^[a-f0-9]{40}$/);
     assert.equal(row.classification, row.path === "AGENTS.md"
       ? "agent_instructions_excluded" : "human_markdown");
     assert.equal(row.status, row.path === "AGENTS.md" ? "excluded_unchanged"
-      : [...contract.first_batch, ...contract.second_batch].includes(row.path) ? "translated_product_owner_accepted"
-        : contract.third_batch.includes(row.path)
+      : [...contract.first_batch, ...contract.second_batch, ...contract.third_batch].includes(row.path) ? "translated_product_owner_accepted"
+        : contract.fourth_batch.includes(row.path)
           ? "translated_product_owner_review_pending" : "pending_language_review");
   }
 });
@@ -90,7 +90,7 @@ test("DOCS-01 foundation briefs retain technical identity, historical scope and 
   assert.equal(foundation.merge_commit, "039087456127cd0d936049e75603ed52a2bbb7c4");
 });
 
-test("DOCS-01 billing and privacy translation keeps exact tokens, historical stages and no new acceptance", async () => {
+test("DOCS-01 billing and privacy translation keeps exact tokens and scoped owner acceptance", async () => {
   const contract = await readJson(contractPath);
   assert.equal(contract.third_batch.length, 5);
   for (const path of contract.third_batch) {
@@ -110,8 +110,40 @@ test("DOCS-01 billing and privacy translation keeps exact tokens, historical sta
   const worker = await readFile("docs/EO_02D_DURABLE_DELETION_WORKER.md", "utf8");
   assert.match(worker, /320 dakikalık aralık ve 20 deneme sınırı/);
   assert.match(worker, /en az yetki sınırları değişmez/);
-  const prepared = contract.deliveries[2];
-  assert.deepEqual(prepared.files, contract.third_batch);
+  const accepted = contract.deliveries[2];
+  assert.deepEqual(accepted.files, contract.third_batch);
+  assert.equal(accepted.product_owner_readability_accepted, true);
+  assert.equal(accepted.merge_authorized, true);
+  assert.equal(accepted.pull_request, 122);
+  assert.equal(accepted.merge_commit, "0e8f03ddd1526cc53b8e5e2922211301d512ffef");
+});
+
+test("DOCS-01 OAuth lifecycle records preserve technical identity and do not claim live OAuth", async () => {
+  const contract = await readJson(contractPath);
+  assert.equal(contract.fourth_batch.length, 4);
+  for (const path of contract.fourth_batch) {
+    const content = await readFile(path, "utf8");
+    const row = contract.inventory.find((item) => item.path === path);
+    assertTechnicalTokens(content, row.preserved_technical_tokens);
+    assert.match(content, /Execution Plan/);
+    assert.match(content, /[Tt]arihsel/);
+    assert.doesNotMatch(content, /^##? (?:Analyst result|State machine|Official documentation|Acceptance sequence)/m);
+  }
+  const oauth = await readFile(contract.fourth_batch[0], "utf8");
+  assert.match(oauth, /canlı sağlayıcı bağlamaz/);
+  assert.match(oauth, /İşlem ömrü \(TTL\): 10 dakika/);
+  const vault = await readFile(contract.fourth_batch[1], "utf8");
+  assert.ok(vault.includes("ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_V1=<32 random bytes, base64url>"));
+  assert.match(vault, /HTTP 410 beklenen sonuçtur/);
+  assert.match(vault, /32 baytlık/);
+  const accounts = await readFile(contract.fourth_batch[2], "utf8");
+  assert.match(accounts, /1–3/);
+  assert.match(accounts, /En fazla 10 dakika/);
+  const lifecycle = await readFile(contract.fourth_batch[3], "utf8");
+  assert.match(lifecycle, /Disconnect geçmiş analiz verisini silmez/);
+  assert.match(lifecycle, /Sağlayıcı API isteği, canlı OAuth.*yapılmadı/);
+  const prepared = contract.deliveries[3];
+  assert.deepEqual(prepared.files, contract.fourth_batch);
   assert.equal(prepared.product_owner_readability_accepted, false);
   assert.equal(prepared.merge_authorized, false);
 });

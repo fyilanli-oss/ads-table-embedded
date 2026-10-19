@@ -101,6 +101,14 @@ Hazırlık durumları bugünkü açık işler gibi gösterilmez; nihai kabul kay
 Supabase rehberi yalnız güvenlik terimlerinin anlamını korumak için kullanılmıştır;
 canlı veritabanı veya sağlayıcı işlemi yapılmamıştır. Bu teslim paket kapanışı değildir.
 
+Üçüncü teslim PR #122 ile açık ürün sahibi onayıyla merge edildi. Güncel kabul
+sayısı 15'tir. Dördüncü teslimdeki EO-03-A/B/C/D belgeleri okunabilirlik kabulü,
+diğer 43 belge dil incelemesi bekler. Önceki sayımlar tarihseldir. OAuth işlemi
+ile canlı yetkilendirme, hesap bağlantısı ile raporlama yetkisi ve Disconnect
+ile gizlilik silmesi arasındaki ayrımlar korunur. Anahtar örneği yer tutucudur;
+gerçek değer eklenmez. Bu teslim yeni provider, veritabanı veya deploy işlemi
+ve paket kapanışı yetkilendirmez.
+
 ## 4. A6-ASSURE-01 — Pre-Review Assurance Programı
 
 EO-08 sonrasında çalışır. İlk kez kod sağlamlığı arayan denetim değildir;

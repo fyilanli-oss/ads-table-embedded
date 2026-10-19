@@ -1,167 +1,170 @@
-# EO-03-D — Reconnect, disconnect and renewal lifecycle
+# EO-03-D — Yeniden bağlanma, bağlantıyı kesme ve yenileme yaşam döngüsü
 
-**Control date:** 9 October 2026  
-**Status:** Accepted  
-**Parent:** A6-EO-03 — Canonical OAuth, connection and token vault
+**Kontrol tarihi:** 9 Ekim 2026
 
-## Analyst result
+**Durum:** Kabul edildi
 
-EO-03-D gives each Meta, Google Ads and Klaviyo connection an independent, truthful lifecycle beneath the immutable installed Shopify shop.
+**Ana paket:** A6-EO-03 — Tek yetkili OAuth, bağlantı ve token kasası
 
-A provider authorization failure never becomes zero data or a silently connected state. Refresh failure stops new provider work and becomes `reauthorization_required`. A merchant disconnect first stops new work, then remains `disconnect_pending` until provider revoke evidence is classified. Historical analytics are never deleted by Disconnect; privacy deletion remains the only deletion lifecycle.
+Bu belge 9 Ekim 2026'daki tasarımı, geri alınan sentetik kabul denemelerini, düzeltmeleri ve nihai kabulü anlatır. Ara “açık” durumları bugünkü açık iş listesi değildir. Tarihsel tekrar koşuları yeni deneme izni vermez. Güncel proje durumu Execution Plan'dadır.
 
-## Official documentation checked
+## Analist sonucu
 
-Checked on 9 October 2026:
+Meta, Google Ads ve Klaviyo bağlantılarının her biri, değiştirilemez kurulu Shopify mağazası altında bağımsız ve gerçeğe uygun yaşam döngüsü taşır.
 
-- Shopify access-token refresh, retirement and revocation: https://shopify.dev/docs/apps/build/authentication-authorization/access-tokens
-- Shopify app-uninstalled webhooks: https://shopify.dev/docs/api/shopify-app-react-router/latest/guide-webhooks
-- Meta official Marketing API collection and access-token baseline: https://www.postman.com/meta/facebook-marketing-api/collection/0zr4mes/facebook-marketing-api-mapi
-- Google Ads credential management: https://developers.google.com/google-ads/api/docs/oauth/credential-management
-- Google OAuth web-server refresh and revoke: https://developers.google.com/identity/protocols/oauth2/web-server
-- Klaviyo OAuth refresh, invalid_grant and revoke: https://developers.klaviyo.com/en/v2026-01-15/docs/set_up_oauth
-- Supabase changelog: https://supabase.com/changelog
-- Supabase RLS and function security: https://supabase.com/docs/guides/database/postgres/row-level-security
+Sağlayıcı yetkilendirme hatası sıfır veriye veya sessiz “bağlı” durumuna dönüşmez. Token yenileme hatası yeni sağlayıcı işini durdurur ve `reauthorization_required` olur. Kullanıcının bağlantıyı kesme isteği önce yeni işi durdurur; sağlayıcı iptal kanıtı sınıflandırılana kadar `disconnect_pending` kalır. Disconnect geçmiş analiz verisini silmez; gizlilik silmesi tek silme yaşam döngüsüdür.
 
-## State machine
+## Tarihsel resmî kaynak kontrolü
+
+9 Ekim 2026 tarihinde:
+
+- Shopify erişim token'ı yenileme, emeklilik ve iptal: https://shopify.dev/docs/apps/build/authentication-authorization/access-tokens
+- Shopify uygulama kaldırma webhook'ları: https://shopify.dev/docs/api/shopify-app-react-router/latest/guide-webhooks
+- Meta resmî Marketing API koleksiyonu ve erişim token'ı temeli: https://www.postman.com/meta/facebook-marketing-api/collection/0zr4mes/facebook-marketing-api-mapi
+- Google Ads erişim bilgisi yönetimi: https://developers.google.com/google-ads/api/docs/oauth/credential-management
+- Google OAuth web sunucusu yenileme/iptal: https://developers.google.com/identity/protocols/oauth2/web-server
+- Klaviyo OAuth yenileme, invalid_grant ve iptal: https://developers.klaviyo.com/en/v2026-01-15/docs/set_up_oauth
+- Supabase değişiklik günlüğü: https://supabase.com/changelog
+- Supabase RLS ve fonksiyon güvenliği: https://supabase.com/docs/guides/database/postgres/row-level-security
+
+## Durum makinesi
 
 `connected → reauthorization_required → connected`
 
 `connected | reauthorization_required → disconnect_pending → disconnected → connected`
 
-Rules:
+Kurallar:
 
-- `connected` is the only state eligible for provider reads, SnapshotJob or account-authority load.
-- `reauthorization_required` keeps the encrypted credential only long enough to support a safe replacement; it cannot produce new reporting data.
-- `disconnect_pending` stops new work immediately but does not claim provider revoke success.
-- `disconnected` has no credential reference and no active provider account or Reporting Account binding.
-- Reconnect reuses the same canonical connection row, increments `connection_version`, revalidates accounts and creates a new effective-dated Reporting Account binding when applicable.
-- Every mutation requires the expected connection version and a unique event ID.
+- Yalnız `connected` durumunda sağlayıcı okuması, SnapshotJob veya hesap yetkisi yüklemesi uygundur.
+- `reauthorization_required` şifreli erişim bilgisini yalnız güvenli değiştirmeyi destekleyecek kadar tutar; yeni raporlama verisi üretemez.
+- `disconnect_pending` yeni işi hemen durdurur; sağlayıcı iptalini başarılı saymaz.
+- `disconnected` erişim bilgisine başvurmaz; aktif sağlayıcı hesabı veya Reporting Account bağı yoktur.
+- Yeniden bağlanma aynı yetkili bağlantı satırını kullanır; `connection_version` artar, hesaplar yeniden doğrulanır, gerekiyorsa geçerlilik tarihli yeni Reporting Account bağı oluşturulur.
+- Her değişiklik beklenen bağlantı sürümü ve benzersiz olay kimliği ister.
 
-## Provider rules
+## Sağlayıcı kuralları
 
 ### Shopify
 
-Shopify installation/session tokens are a separate authority. Provider reconnect cannot change the installed shop. App uninstall and privacy deletion remain EO-02-D responsibilities.
+Shopify kurulum/oturum token'ları ayrı yetkidir. Sağlayıcıya yeniden bağlanma kurulu mağazayı değiştiremez. Uygulamayı kaldırma ve gizlilik silmesi EO-02-D sorumluluğudur.
 
 ### Meta
 
-EO-03-D does not invent a refresh-token grant. A verified replacement authorization can reconnect Meta. Provider-specific token inspection and revoke calls remain adapter work.
+EO-03-D olmayan bir refresh-token yetkilendirme türü uydurmaz. Doğrulanmış yeni yetkilendirme Meta'yı yeniden bağlayabilir. Sağlayıcıya özel token incelemesi ve iptal çağrısı adaptör işidir.
 
 ### Google Ads
 
-Access tokens are short-lived and normally renewed using the encrypted refresh token. `invalid_grant`, revoked access or lost scopes becomes `reauthorization_required`. A missing refresh token is never replaced with an empty value.
+Erişim token'ı kısa ömürlüdür; normalde şifreli yenileme token'ıyla yenilenir. `invalid_grant`, iptal edilmiş erişim veya kayıp izin kapsamı `reauthorization_required` olur. Eksik yenileme token'ı boş değerle değiştirilmez.
 
 ### Klaviyo
 
-Token refresh and revoke use `https://a.klaviyo.com/oauth/token` and `https://a.klaviyo.com/oauth/revoke`. Any refresh `invalid_grant` is treated as lost authorization and requires reconnect.
+Yenileme/iptal için `https://a.klaviyo.com/oauth/token` ve `https://a.klaviyo.com/oauth/revoke` kullanılır. Yenilemede her `invalid_grant` yetki kaybıdır; yeniden bağlanma gerektirir.
 
-## Atomic credential rules
+## Atomik erişim bilgisi kuralları
 
-- A new encrypted credential envelope must exist for the same workspace, installation generation and provider before rotation or reconnect.
-- Renewal compares the expected old credential and expected connection version.
-- The connection moves to the new credential and the old ciphertext envelope is deleted in one database transaction.
-- Reconnect performs the same atomic replacement and never exposes plaintext.
-- Retry with the same event ID is idempotent; reuse of an event ID for another connection fails closed.
+- Döndürme veya yeniden bağlanmadan önce aynı çalışma alanı, kurulum nesli ve sağlayıcı için yeni şifreli zarf bulunmalıdır.
+- Yenileme, beklenen eski erişim bilgisini ve bağlantı sürümünü karşılaştırır.
+- Bağlantının yeni zarfa geçmesi ve eski şifreli zarfın silinmesi tek veritabanı işlemidir.
+- Yeniden bağlanma aynı atomik değiştirmeyi yapar; açık metin göstermez.
+- Aynı olay kimliğiyle tekrar aynı sonucu korur. Olay kimliğini başka bağlantıda kullanma güvenle reddedilir.
 
-## Disconnect rules
+## Bağlantıyı kesme kuralları
 
-1. Verified merchant intent requests disconnect and immediately stops new provider work.
-2. The adapter attempts the provider-specific revoke policy.
-3. Only classified evidence `revoked`, `already_invalid`, `not_supported` or explicitly approved `local_authority_removed` can finalize.
-4. A transient timeout or unknown provider response remains `disconnect_pending`.
-5. Finalization clears the credential reference, deletes the ciphertext envelope, makes connected accounts inactive and closes the active Reporting Account binding.
-6. Historical bindings and Dataset V2 facts remain intact.
-7. Disconnect is independent per provider and never implies Delete My Data.
+1. Doğrulanmış kullanıcı niyeti bağlantıyı kesmeyi ister; yeni sağlayıcı işi hemen durur.
+2. Adaptör sağlayıcıya özel iptal politikasını dener.
+3. Yalnız sınıflandırılmış `revoked`, `already_invalid`, `not_supported` veya açık onaylı `local_authority_removed` kanıtıyla sonuçlandırılır.
+4. Geçici zaman aşımı veya bilinmeyen yanıt `disconnect_pending` kalır.
+5. Sonuçlandırma erişim bilgisi başvurusunu kaldırır, şifreli zarfı siler, bağlı hesapları pasifleştirir ve aktif Reporting Account bağını kapatır.
+6. Tarihsel bağlar ve Dataset V2 gerçekleri korunur.
+7. Disconnect her sağlayıcıda bağımsızdır; Delete My Data anlamına gelmez.
 
-## Repository scope
+## Repository kapsamı
 
-Included:
+Dahil:
 
-- lifecycle state and optimistic version;
-- append-only non-secret lifecycle events;
-- renewal, reauthorization-required, disconnect request/finalization and reconnect database operations;
-- provider-neutral server validation and repository boundary;
-- account/binding preservation;
-- forced-RLS, function-only access and negative tests.
+- Yaşam döngüsü durumu ve çakışmayı beklenen sürümle tespit etme;
+- Yalnız sona eklenen, gizli bilgi içermeyen olaylar;
+- Yenileme, yeniden yetkilendirme gereksinimi, bağlantıyı kesme isteği/sonucu ve yeniden bağlanma veritabanı işlemleri;
+- Sağlayıcıdan bağımsız sunucu doğrulaması ve adaptör sınırı;
+- Hesap/bağ geçmişinin korunması;
+- Zorunlu RLS, yalnız fonksiyon erişimi ve olumsuz senaryo testleri.
 
-Excluded:
+Hariç:
 
-- live provider HTTP refresh or revoke calls;
-- live OAuth;
-- Settings UI;
-- SnapshotJob and Dataset V2 implementation;
-- production deployment.
+- Canlı sağlayıcı HTTP yenileme/iptal çağrıları;
+- Canlı OAuth;
+- Settings arayüzü;
+- SnapshotJob ve Dataset V2 uygulaması;
+- Production dağıtımı.
 
-## Acceptance sequence
+## Kabul sırası
 
-1. Repository implementation, contract, tests, typecheck, build and CI pass.
-2. Product owner separately approves or declines live database migration.
-3. If approved, apply the exact migration and run schema, privilege, RLS, index and advisor checks.
-4. Run rollback-scoped synthetic lifecycle acceptance without a real provider token.
-5. Verify all synthetic rows and temporary privileges are removed.
-6. Record durable evidence.
-7. Product owner explicitly closes EO-03-D and A6-EO-03.
+1. Repository uygulaması, sözleşme, testler, tür kontrolü, derleme ve CI geçer.
+2. Ürün sahibi canlı migration'a ayrıca izin verir veya reddeder.
+3. İzin verilirse tam migration uygulanır; şema, yetki, RLS, indeks ve Advisor kontrolleri yapılır.
+4. Gerçek sağlayıcı token'ı olmadan, işlem sonunda geri alınacak sentetik yaşam döngüsü kabulü çalışır.
+5. Bütün sentetik satırların ve geçici yetkilerin kaldırıldığı doğrulanır.
+6. Kalıcı kanıt kaydedilir.
+7. Ürün sahibi EO-03-D ve A6-EO-03'ü açıkça kapatır.
 
-## Live database evidence — 9 October 2026
+## Canlı veritabanı kanıtı — 9 Ekim 2026
 
-The product owner explicitly approved the live database migration and rollback-scoped synthetic acceptance.
+Ürün sahibi canlı migration'ı ve geri alınan sentetik kabulü açıkça onayladı.
 
-Applied to Supabase project `podpwkrpmjiksskxhwsu`:
+Supabase `podpwkrpmjiksskxhwsu` projesinde:
 
 - PostgreSQL: `17.11.0.003`;
-- migration record: `20261009141549 / eo03d_provider_connection_lifecycle`;
-- source commit: `3abcac35c31d7eecf75ba10f044a8bd059133df5`;
-- migration blob: `a6e1403345de48d5dbdf8045256bc9a07a63c547`.
+- Migration kaydı: `20261009141549 / eo03d_provider_connection_lifecycle`;
+- Kaynak commit: `3abcac35c31d7eecf75ba10f044a8bd059133df5`;
+- Migration blob'u: `a6e1403345de48d5dbdf8045256bc9a07a63c547`.
 
-Verified live:
+Canlı doğrulama:
 
-- lifecycle columns, event table and six required lifecycle/reporting functions exist;
-- provider authority tables have forced RLS;
-- `anon`, `authenticated`, `service_role` and `adstable_runtime` have no direct table access;
-- all critical functions are `SECURITY DEFINER` with an empty `search_path`;
-- reporting authority requires `connected`, a non-null credential and an active Shopify installation;
-- Supabase security advisor returned zero findings;
-- no provider connection, credential or lifecycle-event test rows exist.
+- Yaşam döngüsü kolonları, olay tablosu ve gerekli altı yaşam döngüsü/raporlama fonksiyonu mevcut;
+- Sağlayıcı yetki tablolarında zorunlu RLS;
+- `anon`, `authenticated`, `service_role` ve `adstable_runtime` doğrudan tabloya erişemez;
+- Kritik fonksiyonlar `SECURITY DEFINER`, `search_path` boş;
+- Raporlama yetkisi `connected`, boş olmayan erişim bilgisi ve aktif Shopify kurulumu gerektirir;
+- Supabase Security Advisor bulgusu sıfır;
+- Bağlantı, erişim bilgisi veya olay test satırı yok.
 
-## First rollback-scoped acceptance finding — 9 October 2026
+## İlk geri alınan kabul bulgusu — 9 Ekim 2026
 
-The first live run reached the lifecycle function and exposed PostgreSQL `42702`: the unqualified `connection_id` lifecycle-event column conflicted with the function's `RETURNS TABLE` output variable. The transaction rolled back and residue was zero. The forward-only correction `20261009145154_eo03d_qualify_lifecycle_event_columns.sql` qualified those event-column references.
+İlk canlı koşu fonksiyona ulaştı; tablo adıyla nitelenmemiş `connection_id` olay kolonu, fonksiyonun `RETURNS TABLE` çıktı değişkeniyle çakışarak PostgreSQL `42702` üretti. İşlem geri alındı; artık satır sıfırdı. İleri yönlü `20261009145154_eo03d_qualify_lifecycle_event_columns.sql` bu kolon başvurularını niteledi.
 
+## İkinci geri alınan kabul bulgusu — 9 Ekim 2026
 
-## Second rollback-scoped acceptance finding — 9 October 2026
+İlk düzeltme merge edildi; `20261009145154 / eo03d_qualify_lifecycle_event_columns` olarak uygulandı. Önceki belirsiz olay sorgusu geçti. İlk bağlantı güncellemesinde `connection_version = connection_version + 1` ifadesi, `RETURNS TABLE` çıktı değişkeniyle çakışarak `42702` üretti.
 
-The first corrective migration was merged and applied as Supabase migration `20261009145154 / eo03d_qualify_lifecycle_event_columns`. The rerun passed the previously ambiguous lifecycle-event query, then PostgreSQL raised `42702` at the first connection update because the unqualified expression `connection_version = connection_version + 1` conflicts with the function's `RETURNS TABLE` output variable.
+Sentetik işlemin tamamı geri alındı. Bağlantı, erişim bilgisi, hesap ve olay artığı sıfırdı. İleri yönlü `20261009150114_eo03d_qualify_lifecycle_update_columns.sql`, dört `provider_connections` güncellemesine takma ad verip kaynak `connection_version` başvurusunu niteledi. EO-03-D bu ara aşamada CI, açık merge/canlı onayı ve bütün senaryonun geçmesini bekliyordu.
 
-The entire synthetic transaction rolled back again. Verified residue remains zero for synthetic connection, credential, account and lifecycle-event rows. The forward-only migration `20261009150114_eo03d_qualify_lifecycle_update_columns.sql` aliases all four `provider_connections` updates and qualifies the source `connection_version`. EO-03-D remains open until this second correction passes CI, receives explicit merge/live approval, and the complete rollback-scoped lifecycle scenario passes.
+## Üçüncü geri alınan kabul bulgusu — 9 Ekim 2026
 
-## Third rollback-scoped acceptance finding — 9 October 2026
+İkinci düzeltme merge edildi; `20261009150114 / eo03d_qualify_lifecycle_update_columns` olarak uygulandı. Yeniden yetkilendirme, olayın yinelenmesinde aynı sonuç, atomik yenileme ve bağlantıyı kesme bekleme durumu geçti. Son bağlantı kesmede nitelenmemiş `reporting_account_bindings.connection_id`, çıktı değişkeniyle çakışarak `42702` üretti.
 
-The second corrective migration was merged and applied as Supabase migration `20261009150114 / eo03d_qualify_lifecycle_update_columns`. The complete rerun passed reauthorization, transition idempotency, atomic credential renewal and disconnect-pending. During final disconnect PostgreSQL raised `42702` because `reporting_account_bindings.connection_id` remained unqualified and collided with the function output variable.
+Dört fonksiyon gövdesinin statik incelemesi son kesme güncellemelerindeki iki kalan çakışmayı buldu: Reporting Account bağı ve sağlayıcı hesabı koşulları. `20261009150614_eo03d_qualify_finalize_update_columns.sql` ikisini birlikte takma adla niteledi. İşlem geri alındı; sentetik artık sıfırdı. Paket o aşamada CI, açık merge/canlı onayı ve tam başarılı koşu bekliyordu.
 
-A static review of all four function bodies found the two remaining output-variable collision points in final-disconnect updates: the Reporting Account binding and provider-account predicates. The forward-only migration `20261009150614_eo03d_qualify_finalize_update_columns.sql` aliases and qualifies both together. The failed transaction rolled back and synthetic residue remains zero. EO-03-D remains open pending CI, explicit merge/live approval and a complete passing rerun.
+## Dördüncü geri alınan kabul bulgusu — 9 Ekim 2026
 
-## Fourth rollback-scoped acceptance finding — 9 October 2026
+Üçüncü düzeltme merge edildi; `20261009150614 / eo03d_qualify_finalize_update_columns` olarak uygulandı. Yeniden yetkilendirme, olay tekrarı, yenileme, kesme beklemesi ve son kesme geçti. Yeniden bağlanmada `ON CONFLICT (connection_id, provider_account_id)`, çıktı değişkeninin adını içerdiğinden `42702` üretti.
 
-The third corrective migration was merged and applied as Supabase migration `20261009150614 / eo03d_qualify_finalize_update_columns`. The rerun passed reauthorization, transition idempotency, credential renewal, disconnect-pending and final disconnect. Reconnect then raised PostgreSQL `42702` because the upsert target `ON CONFLICT (connection_id, provider_account_id)` contains the function output variable name.
+Tabloda `provider_accounts_connection_account_unique` adlı benzersizlik kısıtı zaten vardı. İleri yönlü `20261009151123_eo03d_disambiguate_reconnect_conflict.sql`, `ON CONFLICT ON CONSTRAINT provider_accounts_connection_account_unique` kullanarak benzersizlik anlamını değiştirmeden belirsizliği kaldırdı. İşlem geri alındı; sentetik artık sıfırdı.
 
-The table already has the named unique constraint `provider_accounts_connection_account_unique`. The forward-only migration `20261009151123_eo03d_disambiguate_reconnect_conflict.sql` uses `ON CONFLICT ON CONSTRAINT provider_accounts_connection_account_unique`, removing the parser ambiguity without changing uniqueness semantics. The transaction rolled back and synthetic residue remains zero.
+## Nihai geri alınan kabul — 9 Ekim 2026
 
-## Final rollback-scoped acceptance — 9 October 2026
+Dördüncü düzeltme `f56be5d91d51b6d7132650accbc820c7a97b3690` commit'inde merge edildi; `20261009151123 / eo03d_disambiguate_reconnect_conflict` olarak uygulandı.
 
-The fourth corrective migration was merged at commit `f56be5d91d51b6d7132650accbc820c7a97b3690` and applied as Supabase migration `20261009151123 / eo03d_disambiguate_reconnect_conflict`.
+Bütün belirlenebilir yaşam döngüsü senaryosu geçti:
 
-The complete deterministic lifecycle scenario passed:
+- `reauthorization_required` geçişi ve aynı olayın sonucu çoğaltmaması;
+- Atomik erişim bilgisi yenileme ve değiştirilen eski zarfın silinmesi;
+- `disconnect_pending` ve doğrulanmış son kesme;
+- Aynı yetkili bağlantıya yeniden bağlanma ve yinelenen yeniden bağlanmada aynı sonuç;
+- Eski sürüm/başka çalışma alanı için güvenli ret;
+- Son bağlantı sürümü 6, aktif sağlayıcı hesabı ve aktif Reporting Account bağı.
 
-- transition to `reauthorization_required` and event idempotency;
-- atomic credential renewal and deletion of the replaced credential envelope;
-- `disconnect_pending` and verified final disconnect;
-- reconnect to the same canonical connection and reconnect idempotency;
-- stale-version and cross-workspace fail-closed rejection;
-- final connected version 6, active provider account and active Reporting Account binding.
+Test işlemi geri alındı. Bağımsız canlı kontrol bağlantı, erişim bilgisi, olay, sağlayıcı hesabı ve raporlama bağı sentetik satırlarının tamamında sıfır artık buldu. Dört yaşam döngüsü değiştirme fonksiyonu `SECURITY DEFINER` ve boş `search_path` sınırını korudu. Security Advisor bulgusu sıfır kaldı. EO-03-D yeni indekssiz yabancı anahtar bulgusu üretmedi. İki Performance Advisor indekssiz-FK INFO bildirimi önceden vardı; ilgisiz privacy şemasına aitti.
 
-The test transaction rolled back. Independent live verification found zero synthetic connection, credential, lifecycle-event, provider-account and reporting-binding rows. The four lifecycle mutation functions remain `SECURITY DEFINER` with empty `search_path`; Supabase Security Advisor findings remain zero. EO-03-D introduced no unindexed-foreign-key finding. The only two Performance Advisor unindexed-FK INFO findings are pre-existing and unrelated privacy-schema items.
+Sağlayıcı API isteği, canlı OAuth, sağlayıcı paneli/Vercel değişikliği veya Production dağıtımı yapılmadı. Kalıcı kanıt: `evidence/eo-03d-live-database-evidence-2026-10-09.json`.
 
-No provider API request, live provider OAuth, provider-console mutation, Vercel mutation or production deployment occurred. Durable evidence is recorded in `evidence/eo-03d-live-database-evidence-2026-10-09.json`.
-
-EO-03-D and parent A6-EO-03 are accepted by the product owner through the merge approval for the closure pull request. A6-EO-04 becomes Ready only; it is not started by this closure.
+Ürün sahibi kapanış PR'ının merge onayıyla EO-03-D ve ana A6-EO-03'ü kabul etti. A6-EO-04 yalnız hazır oldu; bu kapanış onu başlatmadı.

@@ -152,6 +152,25 @@ Tasarım kaydı: `contracts/eo-05a-global-refresh-design-v1.json`.
 kabul edildi. Ürün sahibi şimdi iş takibi kodu, veritabanı değişiklik dosyası ve
 testlerin hazırlanmasını onayladı; canlı uygulama onayı vermedi.
 
+**Onaylı kısa ölçüm:** Ortak iş takibi PR #142 ile kabul edildi. Şimdi yalnız
+boş test veritabanlarında 100 örnek mağaza, 1/2/4 çalışan ve 0/10.000 geçmiş iş
+kaydıyla altı kısa deneme yapılır. 90 mağazanın birer, 10 büyük mağazanın beşer
+küçük işi vardır: toplam 140 iş. “Büyük” burada daha çok iş parçası demektir;
+gerçek ürün verisi çekilmez veya Dataset'e yazılmaz.
+
+İşin sıra alması, kaydedilmesi ve tamamlanması ne kadar sürüyor; bütün mağazalara
+ilk sıra geliyor mu; geçmiş kayıtlar artınca takip yavaşlıyor mu ölçülür. Ölçüm
+süresi uygulama/veritabanı arasındaki beklemeyi de içerir; veritabanının kendi
+harcadığı süre ayrıca örnek sorguyla görülür. Tekrarlanan sahiplenme çatışmaları
+hata/otomatik provider retry değil, sınırlı test sürücüsünün yeni sıra denemeleridir.
+
+Her deneme en fazla 60 saniye ve 10.000 sıra denemesiyle sınırlıdır. Ölçüm için
+tablo sahibinin test bağlantıları kullanılır; canlı Supabase planı, bağlantı havuzu,
+UI raporları veya provider yanıt süreleri ölçülmüş sayılmaz. Çıkan hız sayıları
+üretim ayarı, gerçek mağaza kapasitesi veya 2.000/4.000 mağaza/24 saat kabulü değildir.
+Ürün verisi yazma yükü Dataset V2 kurulduğunda ayrıca sınanır. Yeni şema, servis,
+provider çağrısı, canlı ayar veya deploy bu test kapsamında yoktur.
+
 `app/lib/database/refresh-work-repository.server.js` ve
 `supabase/migrations/20261020092429_eo05a_refresh_work_tracking.sql` bütün
 çalışanların aynı iş kaydını görmesini sağlar. İşin kimde olduğu ve sistemde

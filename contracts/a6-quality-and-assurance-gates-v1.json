@@ -115,7 +115,9 @@
       "blocked_work": "record_explicitly_do_not_mark_Done_or_silently_waive_dependencies",
       "unverified_product_graphs_may_activate": false,
       "package_delta_integrity_required": true,
-      "EO05_first_gate": "A6-EO-05-PMAX-HISTORICAL-LISTING-TREE"
+      "EO05_first_gate": "A6-EO-05-PMAX-HISTORICAL-LISTING-TREE",
+      "EO05_first_gate_execution_status": "paused_by_product_owner_2026_10_20_not_passed",
+      "EO05_first_gate_blocks_independent_refresh_work": false
     },
     "phase_1_real_validation": {
       "timing": "EO08_end_engineering_checkpoint_before_final_acceptance_and_ASSURE",

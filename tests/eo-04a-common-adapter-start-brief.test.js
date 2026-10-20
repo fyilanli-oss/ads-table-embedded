@@ -100,7 +100,7 @@ test("Execution Plan and master contract preserve EO-04-A after EO-04 closure", 
     assert.match(plan, new RegExp(value.replace(/[.*+?^$\{\}()|[\]\\]/g, "\\$&")));
   }
 
-  assert.equal(master.schema_version, "1.28.0");
+  assert.equal(master.schema_version, "1.29.0");
   assert.equal(master.current_active_parent, null);
   assert.equal(master.current_active_child, null);
   assert.equal(

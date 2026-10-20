@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.28.0",
+  "schema_version": "1.29.0",
   "contract_id": "a6-eo-implementation-master-v1",
   "title": "A6 EO single-track execution rule and integrated implementation package table",
   "effective_date": "2026-10-04",
@@ -863,9 +863,11 @@
       "mandatory_first_gate": {
         "id": "A6-EO-05-PMAX-HISTORICAL-LISTING-TREE",
         "title": "Versioned historical PMax listing-tree evidence",
+        "execution_status": "paused_by_product_owner_2026_10_20_not_passed",
+        "blocks_independent_refresh_work": false,
+        "resume_requires_explicit_product_owner_approval": true,
         "must_pass_before": [
-          "scheduler_acceptance",
-          "dataset_v2_acceptance"
+          "historical_PMax_exact_Channel_feature_acceptance"
         ],
         "required_outputs": [
           "reporting_account_timezone_scoped_capture",

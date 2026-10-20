@@ -20,8 +20,11 @@
     "real_account_validation_timing": "EO08_end_engineering_checkpoint_before_final_acceptance_and_ASSURE"
   },
   "first_repository_slice": {
-    "scope": "whole_EO05_scope_and_global_refresh_design_then_historical_PMax_evidence_and_workload_budget_before_scheduler_implementation",
+    "scope": "global_refresh_workload_budget_and_execution_design_listing_tree_work_paused",
     "mandatory_gate": "A6-EO-05-PMAX-HISTORICAL-LISTING-TREE",
+    "mandatory_gate_execution_status": "paused_by_product_owner_2026_10_20_not_passed",
+    "mandatory_gate_blocks_independent_refresh_work": false,
+    "historical_design_outputs_execution": "paused_not_required_for_independent_refresh_design",
     "prerequisites": ["workload_budget_contract", "index_and_query_plan_baseline"],
     "implementation_next_requires": "explicit_product_owner_approval_of_scoped_design",
     "continuity_proof_source": "not_yet_verified_do_not_infer",
@@ -81,6 +84,15 @@
     "product_level_storage_design": "deferred_to_EO05B_discussion_not_decided",
     "product_level_physical_table_selected": false,
     "EO05_is_only_a_PMax_slice": false
+  },
+  "work_order_decision_2026_10_20": {
+    "listing_tree_work": "paused_by_explicit_product_owner_direction",
+    "next_work": "global_refresh_workload_budget_and_execution_design",
+    "Google_reporting_runtime_or_sales_Channel_cost_semantics_changed": false,
+    "historical_exact_evidence_gate_waived_or_passed": false,
+    "unverified_historical_PMax_Channel_activation_authorized": false,
+    "resume_listing_tree_requires_explicit_product_owner_approval": true,
+    "runtime_migration_live_or_deployment_authorized_by_work_order": false
   },
   "acceptance": {
     "repository": ["positive_and_negative_contract_tests", "tenant_and_generation_isolation", "replay_and_idempotency", "time_gap_DST_and_conflict_tests", "full_test_typecheck_build_CI", "explicit_product_owner_acceptance", "remote_content_parity_and_local_only_inventory"],

@@ -64,6 +64,15 @@ CI otomatik teslim kontrolü, build derleme, typecheck tip kontrolü, BFF arayü
 sunucu katmanıdır. API alanları, ekran metinleri ve durum kimlikleri aynen korunur.
 ## EO-05 başlangıç brief'i — 19 Ekim 2026
 
+**20 Ekim güncel iş sırası kararı:** Fırat listing tree çalışmasını açıkça
+durdurdu; sıradaki iş tüm workspace'leri kapsayan refresh bütçesi ve yürütme
+tasarımıdır. Aşağıdaki önceki tarihsel PMax tasarım maddeleri ertelenmiş kayıttır,
+bağımsız refresh çalışmasının ön koşulu değildir. Erteleme tamamlanma/PASS veya
+Google'ın satış, Channel, Sales Role ve Ad Cost sözleşmesinde değişiklik değildir.
+Kanıtsız tarihsel kesin Channel etkinleştirilmez; listing tree çalışmasına dönüş
+ayrı açık onay gerektirir. Bu iş sırası kararı runtime, migration, canlı çağrı,
+deploy veya merge yetkisi vermez.
+
 **Durum:** Brief hazır; ürün sahibi kabulü ve dar uygulama kapsamı onayı bekliyor.
 Çalışma sözleşmesi: `contracts/eo-05-start-brief-v1.json`.
 EO-01–04, TECH-01 ve DOCS-01 kabulleri ile PR #138 iki aşamalı planı korunur.
@@ -76,8 +85,9 @@ başlatmaz. EO-05 henüz uygulamaya açılmadı.
 **20 Ekim kapsam netleştirmesi:** EO-05 yalnız bir PMax işi değildir. Önce tüm
 alt paketler ve sistem geneli refresh tasarımı netleştirilir; eski yapı yalnız
 yararlı iş takibi fikirleri için referanstır, kodu veya mimarisi taşınmaz.
-Zamanlayıcı uygulamasına geçmeden tarihsel PMax kanıtının kayıt/okuma tasarımı
-ve iş yükü bütçesi hazırlanır. Mevcut indeks/sorgu planı başlangıç ölçümü ayrıca
+Zamanlayıcı uygulamasına geçmeden iş yükü bütçesi hazırlanır; tarihsel PMax
+kanıtının kayıt/okuma tasarımı 20 Ekim iş sırası kararıyla durdurulmuştur.
+Mevcut indeks/sorgu planı başlangıç ölçümü ayrıca
 doğrulanır; henüz tamamlanmış veya üretim kapasitesi sertifikası değildir.
 Ağaç sürümü/hash'i, gözlem zamanı, kanıtlanmış geçerlilik aralığı, hesap saat
 dilimi, eksiksiz sayfalama, boşluk/çatışma ve saklama/silme sınırları belirlenir.
@@ -169,7 +179,8 @@ kalıcılık sınırı ve ölçülmüş limitler ayrıca doğrulanacaktır. Bu t
 bir Vercel/Supabase servisi seçmez, satın alma veya canlı işlem gerektirmez.
 Yarış, çöken çalışan, eski sahip, büyük/küçük workspace adaleti ve Disconnect
 aralığı senaryoları gelecekte çalışan kod üzerinde sınanacak; bugünkü sözleşme
-testleri bunların çalıştığını kanıtlamaz. PMax ilk zorunlu kanıt kapısı korunur.
+testleri bunların çalıştığını kanıtlamaz. PMax kanıt çalışması durdurulmuştur;
+bağımsız refresh işini engellemez, tarihsel kesin Channel kabulü yerine geçmez.
 
 Resmî tasarım kaynakları 20 Ekim 2026'da kontrol edildi: PostgreSQL SELECT/kilit
 kuralları ve GitHub PR güncelleme belgesi. Bağlantılar tasarım kaydındadır;
@@ -602,9 +613,10 @@ kapısıdır. EO-05, review, yedekleme veya canlı işlem otomatik başlamaz.
 
 ## EO-05 ilk zorunlu kapısı — tarihsel PMax listing-tree kanıtı
 
-EO-05 zamanlayıcısı veya Dataset V2 kabulü başlamadan önce Google Performance Max için
-sürümlü tarihsel listing-tree kayıtlarını kalıcı saklama kurulup testle kilitlenecektir.
-Bu EO-05'in ilk zorunlu kapısıdır; tamamlanmış sayılmaz:
+**20 Ekim kararıyla durduruldu; PASS değildir.** Bu bölüm önceki gereksinimi
+korur, bağımsız zamanlayıcı veya Dataset V2 çalışmasını durdurmaz. Yeniden çalışma
+için ürün sahibinin açık onayı gerekir. Kanıta bağlı tarihsel kesin PMax Channel
+özelliği bu erteleme ile kabul edilmiş veya etkinleştirilebilir sayılmaz:
 
 1. Her kayıt doğrulanmış Reporting Account saat dilimi, Campaign/Asset Group kimliği, tam listing-tree satırları, kaynak sürümü/hash'i, `valid_from`, `valid_to`, gözlem zamanı ve sorgu kaynak geçmişini taşır.
 2. Kesin tarihsel Asset Group yalnız kayıt satışın tüm sağlayıcı iş günü penceresini kapsıyor ve reklamı yapılan/tıklanan ürün için tam bir uygun Asset Group kanıtlıysa üretilebilir.

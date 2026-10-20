@@ -2,6 +2,7 @@ import {reconcileShopifyAppPricingEntitlement} from "../shopify/app-pricing-enti
 import {refreshWorkIdentity} from "./work-stop-policy.server.js";
 import {createQuotaManagedClients,quotaManagedClientProvider} from "../providers/quota-managed-clients.server.js";
 import {refreshQuotaWait,refreshQuotaWaitBoundary} from "./quota-work-wait.server.js";
+import {createRefreshQuotaClients} from "./quota-authority-binding.server.js";
 
 // Internal adapter only. No route, scheduler, service credential or automatic retry.
 // Legacy unbound adapters require authorizeRead. Managed native clients MUST omit it (one HTTP debit).
@@ -81,6 +82,20 @@ export function createQuotaRefreshEntitlementVerifier({store,appId,guard,resolve
     async verify(context) {
       const partnerApi=createQuotaManagedClients({guard,resolveOperation,lane:"background",fetchFn}).shopify({environment});
       return createRefreshEntitlementVerifier({store,partnerApi,appId,now,limits}).verify(context);
+    },
+    async isCurrent({claim,receipt}) {
+      try {return await store.isEntitlementCurrent({claim,receipt})===true;} catch {return false;}
+    },
+  });
+}
+
+// Current fenced work/window is reloaded before AND after quota reservation on each HTTP call.
+export function createAuthorityQuotaEntitlementVerifier({store,quotaStore,appId,environment,fetchFn,now,limits,...extra}) {
+  if(Object.keys(extra).length) throw Error("REFRESH_QUOTA_BINDING_INPUT_INVALID");
+  return Object.freeze({
+    async verify({claim,window}) {
+      const partnerApi=createRefreshQuotaClients({workStore:store,quotaStore,claim,window,now,fetchFn}).shopify({environment});
+      return createRefreshEntitlementVerifier({store,partnerApi,appId,now,limits}).verify({claim});
     },
     async isCurrent({claim,receipt}) {
       try {return await store.isEntitlementCurrent({claim,receipt})===true;} catch {return false;}

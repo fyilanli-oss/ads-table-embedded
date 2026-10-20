@@ -61,7 +61,7 @@ test("scope-resolved native factory uses the SAME store for resolution and debit
   const config={store,now:()=>0,loadContext:async()=>c,lane:"background",fetchFn:async()=>{calls++;return new Response('{"data":{"activeSubscription":null}}',{headers:{"content-type":"application/json"}});}};
   const client=createScopeResolvedQuotaClients(config).shopify({environment:{SHOPIFY_PARTNER_ORG_ID:"123",SHOPIFY_APP_GID:"gid://shopify/App/456",SHOPIFY_PARTNER_API_ACCESS_TOKEN:"SYNTHETIC"}});
   await client.activeSubscription({apiVersion:"2026-07",query:"query { activeSubscription { id } }",variables:{}});
-  assert.equal(lookups,1);assert.equal(reserves,1);assert.equal(calls,1);
+  assert.equal(lookups,2);assert.equal(reserves,1);assert.equal(calls,1);
   for(const override of [{guard:{}},{resolveOperation:async()=>"a".repeat(64)}]) assert.throws(()=>createScopeResolvedQuotaClients({...config,...override}),/OVERRIDE_FORBIDDEN/);
   c.organizationId="999";await assert.rejects(client.activeSubscription({apiVersion:"2026-07",query:"q",variables:{}}));assert.equal(calls,1);
 });

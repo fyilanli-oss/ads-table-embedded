@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
-import {createRefreshEntitlementVerifier,createQuotaRefreshEntitlementVerifier} from "../app/lib/refresh/entitlement-check.server.js";
-import {createSharedQuotaGuard} from "../app/lib/refresh/shared-quota.server.js";
+import {createRefreshEntitlementVerifier,createAuthorityQuotaEntitlementVerifier} from "../app/lib/refresh/entitlement-check.server.js";
 import {createSharedQuotaRepository} from "../app/lib/database/shared-quota-repository.server.js";
 import {randomUUID,createHash} from "node:crypto";
 import {dispatchRefreshPreflight} from "../app/lib/refresh/preflight-bridge.server.js";
 import {planRefreshPreflightAdmissions} from "../app/lib/refresh/admission-policy.server.js";
+import {quotaRouteIdentity} from "../app/lib/refresh/quota-scope-resolver.server.js";
+import {quotaAuthorityProbe} from "./eo05-quota-authority-probe.mjs";
 
 // Runs within the canonical synthetic fixture. All changes roll back, including billing/queue/claims.
 export async function refreshPreflightProbe(client,{workspace,connections,shopId,shopDomain}) {
@@ -45,13 +46,31 @@ export async function refreshPreflightProbe(client,{workspace,connections,shopId
     assert.equal((await store.readAdmissionSnapshot()).state.revision,snapshot.state.revision);
     // Real SQL quota -> existing Partner HTTP -> private wait -> durable pause -> NEW fence.
     // Policy, token and HTTP response are synthetic; transaction rollback removes all fixture changes.
-    const policy=randomUUID(),operation=createHash("sha256").update(policy).digest("hex");
+    const policy=randomUUID(),hash=v=>createHash("sha256").update(v).digest("hex");
+    const scope={provider:"shopify_partner",clientScopeKey:hash(randomUUID()),connectionScopeKey:hash(randomUUID()),connectionEpoch:1,accountId:null,organizationId:"123",apiVersion:"2026-07"};
+    const operation=quotaRouteIdentity(scope,{provider:"shopify_partner",family:"partner_graphql",accountId:null,organizationId:"123",version:"2026-07",includes:[]}).routeKey;
+    const installation=(await client.query("select id from shopify.installations where workspace_id=$1 and install_generation=1",[workspace])).rows[0].id;
+    await client.query("insert into operations.refresh_quota_contexts(workspace_id,install_generation,provider,installation_id,client_scope_key,connection_scope_key,connection_epoch,organization_id,api_version,enabled) values($1,1,'shopify_partner',$2,$3,$4,1,'123','2026-07',true)",[workspace,installation,scope.clientScopeKey,scope.connectionScopeKey]);
+    await client.query("insert into operations.refresh_quota_contexts(workspace_id,install_generation,provider,installation_id,connection_id,connection_version,account_id,client_scope_key,connection_scope_key,connection_epoch,api_version,enabled) values($1,1,'google_ads',$2,$3,1,'111',$4,$5,1,'v24',true)",[workspace,installation,connections.google_ads,hash(randomUUID()),hash(randomUUID())]);
     await client.query("insert into operations.api_quota_policies(id,provider,window_ms,max_units,interactive_reserve,dispatch_delay_ms,max_outstanding) values($1,'shopify_partner',60000,1,1,1000,8)",[policy]);
-    await client.query("insert into operations.api_quota_operations values($1,'shopify_partner',true)",[operation]);
+    await client.query("insert into operations.api_quota_operations(operation_key,provider,enabled,route_required) values($1,'shopify_partner',true,true)",[operation]);
     await client.query("insert into operations.api_quota_bindings values($1,$2,1)",[operation,policy]);
-    const managedVerifier=()=>createQuotaRefreshEntitlementVerifier({store,appId:"gid://shopify/App/456",now:Date.now,
-      limits:plan().limits,guard:createSharedQuotaGuard({store:createSharedQuotaRepository(client),now:Date.now}),resolveOperation:async()=>operation,
-      environment:{SHOPIFY_PARTNER_ORG_ID:"123",SHOPIFY_APP_GID:"gid://shopify/App/456",SHOPIFY_PARTNER_API_ACCESS_TOKEN:"SYNTHETIC-ONLY"},
+    await client.query("insert into operations.api_quota_failure_domains(id,provider) values($1,'shopify_partner')",[scope.connectionScopeKey]);
+    await client.query("insert into operations.api_quota_failure_bindings values($1,$2)",[operation,scope.connectionScopeKey]);
+    await client.query("insert into operations.api_quota_route_profiles select $1,$2,operations.shared_api_quota_fingerprint($1),true",[operation,scope.connectionScopeKey]);
+    await client.query("insert into operations.api_quota_routes values($1,$1,true)",[operation]);
+    const quotaStore=createSharedQuotaRepository(client);
+    const environment={SHOPIFY_PARTNER_ORG_ID:"123",SHOPIFY_APP_GID:"gid://shopify/App/456",SHOPIFY_PARTNER_API_ACCESS_TOKEN:"SYNTHETIC-ONLY"};
+    let authorityProbed=false;
+    args.readPage=async execution=>{
+      if(!authorityProbed) {
+        await quotaAuthorityProbe(client,{store,quotaStore,execution:{claim:execution.claim,window:execution.window,entitlementReceipt:execution.entitlementReceipt},connection:connections.google_ads,environment,payload});
+        authorityProbed=true;
+      }
+      adCalls++;return {kind:"complete",payload:{}};
+    };
+    const managedVerifier=()=>createAuthorityQuotaEntitlementVerifier({store,quotaStore,appId:"gid://shopify/App/456",now:Date.now,
+      limits:plan().limits,environment,
       fetchFn:async()=>{billingCalls++;return new Response(JSON.stringify(payload),{headers:{"content-type":"application/json"}});}});
     args.entitlementVerifier=managedVerifier();
     const firstWait=await dispatchRefreshPreflight(args);
@@ -75,6 +94,7 @@ export async function refreshPreflightProbe(client,{workspace,connections,shopId
     assert.equal(await store.commitPreflight({expectedRevision:waitingSnapshot.state.revision,queueRevision:waitingSnapshot.queueRevision,
       nextState:resuming.nextState,source:waitingSnapshot.candidates.find(s=>s.provider==="google_ads"),window,partitionId:"different-partition"}),false);
     await client.query("update operations.api_quota_policies set interactive_reserve=0 where id=$1",[policy]);
+    await client.query("update operations.api_quota_route_profiles set quota_fingerprint=operations.shared_api_quota_fingerprint(operation_key) where operation_key=$1",[operation]);
     args.entitlementVerifier=managedVerifier();
     const result=await dispatchRefreshPreflight(args);
     assert.equal(result.status,"awaiting_dataset");assert.equal(billingCalls,1);assert.equal(adCalls,1);

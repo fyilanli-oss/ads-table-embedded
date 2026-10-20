@@ -87,7 +87,7 @@ export async function runRefreshChunk({claim: suppliedClaim, window: suppliedWin
     try {
       const expired=new Promise(resolve=>{timer=setTimeout(()=>resolve({kind:"unknown"}),limits.requestTimeoutMs);});
       sent=true;
-      const response=Promise.resolve().then(()=>readPage({...context(),authority:structuredClone(current),signal:controller.signal}))
+      const response=Promise.resolve().then(()=>readPage({...context(),authority:structuredClone(current),entitlementReceipt:structuredClone(entitlement.receipt),signal:controller.signal}))
         .then(value=>({kind:"returned",value}),error=>{
           const wait=refreshQuotaWait(error,"provider_page",claim);
           return wait?{kind:"quota_wait",wait}:{kind:"unknown"};

@@ -161,6 +161,37 @@ tamamlanacağına o zaman karar verilecek. 05-A şimdiden kapandı sayılamaz.
 
 ### Ortak kota kapısı — repository çekirdeği, canlı bağlantı değil
 
+**PR #155 sonrası güncel iş kaydına bağlantı — 20 Ekim:** Arka plan çağrısı
+artık yalnız dışarıdan verilen hesap bilgisine dayanmaz. Yeni açık kurucu,
+mevcut işin sahiplik numarasını, izinli dönemini, aktif Shopify kurulumunu,
+seçilmiş hesabını ve bağlantı sürümünü özel veritabanından tekrar okur. Eksik
+veya kapalı kapsam ayarında çağrı çıkmaz. Mağaza/istemci kapsam kayıtları owner
+tarafından ayrıca doğrulanmalıdır; migration bunları veya gerçek limitleri eklemez.
+Sözleşme: `contracts/eo-05a-quota-authority-binding-v1.json`.
+
+**Örnek:** Zey&Rose Google `111` işi kotadan pay beklerken Disconnect yapılırsa
+veya hesap `222` olur, sonra tekrar `111` seçilirse eski iş dış çağrı başlatamaz.
+Kota payı ayrıldıktan sonra da güncel kayıt kontrol edilir. Gönderilmemiş çağrının
+açık kapasitesi bırakılır, tüketilen kota payı iade edilmez; bu olay sağlayıcı
+hatası veya diğer mağazaları durduran ortak kota hatası olarak gösterilmez.
+Doğrulama süresi çağrı izninin süresine dahildir. Otomatik yeniden deneme yoktur.
+
+Shopify abonelik kontrolü önceki olumlu abonelik önbelleğine ihtiyaç duymaz;
+zaten taze sonucu almak için çalışır. Reklam verisi çağrısı ise aynı iş için
+taze abonelik doğrulaması olmadan çıkmaz. Çalışan, doğrulama makbuzunu veri
+okuyucusuna aktarır; bu bir Dataset kaydı veya saatlik veri seçimi değildir.
+
+Bu kontroller sağlayıcıyla ortak bir işlem değildir: son kontrolden sonra
+gerçekten gönderilmiş istek geriye dönük iptal edilmiş sayılmaz. Yanıt sonrası
+güncel yetki ve eski çalışanın veri devredememesi kontrolleri korunur. HTTP
+beklerken veritabanı kilidi tutulmaz. Supabase rehberi özel RLS tablosunu ve
+yalnız dar function erişimini yönlendirdi. Kaynak kontrolü 20 Ekim 2026.
+İki mevcut boş CI veritabanında gerçek SQL ve sentetik HTTP ile doğrulanır;
+kota beklemesindeki değişim testinde kota izni sentetik, yetki sorgusu gerçektir.
+UI, canlı config/secret/DB/provider çağrısı/deploy yoktur. Yeni kurucular production
+yollarını sessizce değiştirmez; ilk kurulum ve kullanıcı içi yollar tamamlandı
+sayılmaz. 05-A açık, 05-B ve product level/üretim görüşmesi sırası korunur.
+
 **PR #154 sonrası çağrı–kota eşleme adımı — 20 Ekim:** Açık repository kurucusu,
 çağrının gerçek hedefini güvenilir sunucu bağlamıyla karşılaştırır. Sağlayıcı,
 istemci/proje kapsamı, bağlantı kapsamı ve sürümü, hesap/organizasyon, API sürümü,

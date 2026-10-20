@@ -9,7 +9,7 @@ import {createSharedQuotaRepository} from "../app/lib/database/shared-quota-repo
 const read=path=>readFileSync(new URL(`../${path}`,import.meta.url),"utf8");
 function fixture(provider,response) {
   const stops=[];let calls=0;
-  const store={reserve:async input=>({...input,status:"reserved",dispatchBeforeMs:1000,dispatchBudgetMs:1000}),stop:async input=>{stops.push(input);return true;},settle:async()=>true};
+  const store={reserve:async input=>({...input,status:"reserved",dispatchBeforeMs:1000,dispatchBudgetMs:1000}),recordFeedback:async()=>true,stop:async input=>{stops.push(input);return true;},settle:async()=>true};
   const fetch=createQuotaManagedFetch({provider,lane:"background",guard:createSharedQuotaGuard({store,now:()=>0}),resolveOperation:async()=>"a".repeat(64),
     fetchFn:async()=>{calls++;if(response instanceof Error)throw response;return response;}});
   return {fetch,stops,calls:()=>calls};

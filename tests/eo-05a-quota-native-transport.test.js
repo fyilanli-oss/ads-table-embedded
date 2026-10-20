@@ -12,7 +12,7 @@ const window={start:"2026-10-19",end:"2026-10-19"};
 function fixture({fetchFn=async()=>json({data:[]}),lane="background"}={}) {
   const reservations=[],metadata=[],stops=[],settles=[];let calls=0;
   const store={reserve:async x=>{reservations.push(x);return {status:"reserved",...x,dispatchBudgetMs:10000,dispatchBeforeMs:Date.now()+10000};},
-    settle:async x=>{settles.push(x);return true;},stop:async x=>{stops.push(x);return true;}};
+    recordFeedback:async()=>true,settle:async x=>{settles.push(x);return true;},stop:async x=>{stops.push(x);return true;}};
   const guard=createSharedQuotaGuard({store,now:Date.now});
   const options={guard,lane,resolveOperation:async d=>{metadata.push(d);return "a".repeat(64);},fetchFn:async(...args)=>{calls++;return fetchFn(...args);}};
   return {store,options,reservations,metadata,stops,settles,calls:()=>calls,clients:createQuotaManagedClients(options)};

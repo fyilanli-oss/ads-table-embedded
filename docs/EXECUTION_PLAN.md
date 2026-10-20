@@ -161,6 +161,32 @@ tamamlanacağına o zaman karar verilecek. 05-A şimdiden kapandı sayılamaz.
 
 ### Ortak kota kapısı — repository çekirdeği, canlı bağlantı değil
 
+**PR #156 sonrası sağlayıcı kota yanıtı — 20 Ekim:** Yeni paket açılmaz; mevcut
+kota bağlantısının yanıt tarafı tamamlanır. Güncel Klaviyo belgesindeki sayısal
+`RateLimit-Limit`, `RateLimit-Remaining`, `RateLimit-Reset` ve 429 için ayrı
+`Retry-After` okunur. Eksik veya bozuk başlık gerçek sıfır sayılmaz. Başlıkların
+tamamı, token, URL, ham yanıt veya ürün verisi saklanmaz. Özel tabloda çağrı yolu
+başına yalnız son sayısal gözlem vardır; sınırsız olay günlüğü açılmaz.
+
+**Örnek:** Başarılı Klaviyo Events yanıtı “kalan 0, sıfırlanmaya 30 saniye”
+diyorsa aynı çağrı yolu için kullanıcı içi ve arka plan çağrıları normal kota
+beklemesine girer; yeni çağrı/pay üretilmez. Bu, hesabın başka bütün endpoint veya
+include kotalarının bittiğini kanıtlamaz. O ortak kapsama tahminle durma yayılmaz.
+Pozitif kalan sayı yaklaşık bilgidir; yerel limiti yükseltmez veya önceden
+başlamış beklemeyi kısaltmaz. Geç gelen yanıt beklemeyi muhafazakâr uzatabilir.
+Önceden izin verilmiş veya başlamış istekleri iptal ettiği iddia edilmez.
+
+429 hatasında `Retry-After` kaydolur ama sürenin dolması hata durmasını kaldırmaz;
+otomatik tekrar yoktur. Mevcut izin/bağlantı/ortak kota durması normal bekleme diye
+gizlenmez. Geri bildirim kaydı başarısızsa yanıt başarı diye devredilmez; sağlayıcı
+reddi varsa durma kaydı yine denenir. Kaynak ve sınırlar mevcut
+`contracts/eo-05a-shared-api-quota-v1.json` sözleşmesine eklenir.
+Supabase rehberi özel RLS erişimini, Postgres rehberi aynı işlem kilidi sırasını
+yönlendirdi. Resmî kaynak kontrolü 20 Ekim 2026. İki mevcut boş CI veritabanında
+gerçek SQL ve sentetik HTTP ile sınanır; canlı migration/secret/provider çağrısı,
+gerçek kota değeri veya UI/deploy yoktur. Google/Meta geri bildirimi tamamlandı
+sayılmaz; bütün kota işi veya 05-A kapanmaz, 05-B başlamaz.
+
 **PR #155 sonrası güncel iş kaydına bağlantı — 20 Ekim:** Arka plan çağrısı
 artık yalnız dışarıdan verilen hesap bilgisine dayanmaz. Yeni açık kurucu,
 mevcut işin sahiplik numarasını, izinli dönemini, aktif Shopify kurulumunu,

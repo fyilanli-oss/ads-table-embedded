@@ -472,6 +472,15 @@
       "repository_sql_sha256": "88d3fe9b62364f90711d4e710f9241a57b67e6738c87d6e2a750d6f4a7f84706",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261020134823",
+      "name": "eo05a_shared_api_quota",
+      "file": "supabase/migrations/20261020134823_eo05a_shared_api_quota.sql",
+      "created_with": "supabase@2.121.0 migration new eo05a_shared_api_quota",
+      "repository_sql_sha256": "31c946223870dcab626141c9a4222b31b6a41ba1affc548c790cde45bac90483",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

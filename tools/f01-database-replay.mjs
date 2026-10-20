@@ -9,6 +9,7 @@ import {buildScopedRecovery, definitionHash} from "./f01-scoped-recovery.mjs";
 import {privacyIndexPlanProbe, assertPrivacyIndexes} from "./f08-privacy-index-probe.mjs";
 import {refreshWorkTrackingProbe} from "./eo05-refresh-work-probe.mjs";
 import {refreshSmallBaseline} from "./eo05-refresh-small-baseline.mjs";
+import {refreshWorkStopsProbe} from "./eo05-refresh-work-stops-probe.mjs";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const read = (file) => readFileSync(path.join(root, file), "utf8").replaceAll("\r\n", "\n");
@@ -470,6 +471,9 @@ async function main() {
     if ([...manifest.forward_migrations,...manifest.pending_migrations].some(entry => entry.name === "eo05a_refresh_work_tracking")) {
       await refreshWorkTrackingProbe(client, replayConnection);
       await refreshSmallBaseline(client, replayConnection);
+    }
+    if ([...manifest.forward_migrations,...manifest.pending_migrations].some(entry => entry.name === "eo05a_refresh_stop_records")) {
+      await refreshWorkStopsProbe(client, replayConnection);
     }
     const after=await inventory(client);
     await securityProbes(client);

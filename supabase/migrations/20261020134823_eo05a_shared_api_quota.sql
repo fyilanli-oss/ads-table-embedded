@@ -100,7 +100,7 @@ begin
     update operations.api_quota_policies set last_observed_at=t where id=p.id;
   end loop;
   return jsonb_build_object('status','reserved','attemptId',p_attempt,'operationKey',p_operation,
-    'dispatchBeforeMs',floor(extract(epoch from t+delay*interval '1 millisecond')*1000)::bigint);
+    'dispatchBudgetMs',delay,'dispatchBeforeMs',floor(extract(epoch from t+delay*interval '1 millisecond')*1000)::bigint);
 end
 $fn$;
 

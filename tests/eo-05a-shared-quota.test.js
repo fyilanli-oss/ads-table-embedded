@@ -7,7 +7,7 @@ import {createSharedQuotaRepository} from "../app/lib/database/shared-quota-repo
 
 function fixture() {
   let calls=0,reserves=0,stops=0,settles=0;
-  const store={reserve:async x=>{reserves++;return {status:"reserved",...x,dispatchBeforeMs:100};},
+  const store={reserve:async x=>{reserves++;return {status:"reserved",...x,dispatchBeforeMs:100,dispatchBudgetMs:1000};},
     stop:async()=>{stops++;return true;},settle:async()=>{settles++;return true;}};
   const args={operationKey:"a".repeat(64),lane:"background",run:async()=>{calls++;return {outcome:"success",value:{synthetic:true}};}};
   return {store,args,guard:createSharedQuotaGuard({store,now:()=>0}),calls:()=>calls,reserves:()=>reserves,stops:()=>stops,settles:()=>settles};
@@ -27,9 +27,14 @@ test("unknown/failed reservation, altered receipt or expired permit cannot autho
   const f=fixture();f.store.reserve=async()=>{throw Error("TOKEN");};
   assert.equal((await f.guard.execute(f.args)).reason,"quota_store_unavailable");assert.equal(f.calls(),0);
   for(const change of [{operationKey:"b".repeat(64)},{attemptId:randomUUID()},{dispatchBeforeMs:0},{dispatchBeforeMs:null}]) {
-    const g=fixture();g.store.reserve=async x=>({status:"reserved",...x,dispatchBeforeMs:100,...change});
+    const g=fixture();g.store.reserve=async x=>({status:"reserved",...x,dispatchBeforeMs:100,dispatchBudgetMs:1000,...change});
     assert.equal((await g.guard.execute(g.args)).status,"not_sent");assert.equal(g.calls(),0);assert.equal(g.settles(),1);
   }
+});
+test("monotonic time rejects a delayed reservation even when the process wall clock is behind the database",async()=>{
+  const f=fixture();let ticks=0;
+  const guard=createSharedQuotaGuard({store:f.store,now:()=>0,elapsedNow:()=>ticks++?1000:0});
+  assert.equal((await guard.execute(f.args)).status,"not_sent");assert.equal(f.calls(),0);
 });
 test("first rejected, malformed or unknown response stops once without retry, raw error or timer",async()=>{
   for(const outcome of ["rejected","unknown","invalid"]) {

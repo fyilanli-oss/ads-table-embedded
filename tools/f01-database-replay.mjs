@@ -8,6 +8,7 @@ import {loadMigrationFiles, validateMigrationLineage, validExecutionContext} fro
 import {buildScopedRecovery, definitionHash} from "./f01-scoped-recovery.mjs";
 import {privacyIndexPlanProbe, assertPrivacyIndexes} from "./f08-privacy-index-probe.mjs";
 import {refreshWorkTrackingProbe} from "./eo05-refresh-work-probe.mjs";
+import {refreshSmallBaseline} from "./eo05-refresh-small-baseline.mjs";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const read = (file) => readFileSync(path.join(root, file), "utf8").replaceAll("\r\n", "\n");
@@ -466,8 +467,9 @@ async function main() {
       await assertPrivacyIndexes(client);
     }
     await credentialReplacementRegression(client);
-    if (manifest.pending_migrations.some(entry => entry.name === "eo05a_refresh_work_tracking")) {
+    if ([...manifest.forward_migrations,...manifest.pending_migrations].some(entry => entry.name === "eo05a_refresh_work_tracking")) {
       await refreshWorkTrackingProbe(client, replayConnection);
+      await refreshSmallBaseline(client, replayConnection);
     }
     const after=await inventory(client);
     await securityProbes(client);

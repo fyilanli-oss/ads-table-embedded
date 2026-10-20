@@ -11,6 +11,7 @@ on:
       - "app/lib/refresh/**"
       - "app/lib/database/refresh-work-repository.server.js"
       - "tests/eo-05a-refresh-work*"
+      - "tests/eo-05a-refresh-small-baseline*"
       - "tests/a6-tech-01-f08*"
       - "tools/check-migration-lineage.mjs"
       - "tests/a6-tech-01-f01*"

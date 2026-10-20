@@ -39,7 +39,7 @@ test("paid reconnection and bootstrap cannot authorize the disconnected month or
   assert.ok(design.required_implementation_scenarios.includes("intentional_disconnect_month_is_never_requested_on_reconnect"));
 });
 
-test("design keeps legacy idea-only, Dataset product storage undecided, implementation and merge unauthorized", () => {
+test("design keeps legacy idea-only, Dataset product storage undecided and live scheduler unauthorized", () => {
   assert.equal(design.legacy_reference.copy_runtime_or_architecture, false);
   assert.equal(design.legacy_reference.unimplemented_legacy_contract_is_working_scheduler_evidence, false);
   assert.equal(design.legacy_reference.legacy_retry_policy_inherited, false);

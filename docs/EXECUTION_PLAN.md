@@ -143,8 +143,31 @@ API/kalıcılık kaynakları dar kapsamda yeniden doğrulanır.
 
 ## EO-05-A — Tüm workspace'ler için refresh tasarım önerisi — 20 Ekim 2026
 
-**Durum:** İncelemeye hazır tasarım önerisi; çalışan scheduler veya kapasite kabulü değildir.
+**Durum:** Tasarımdan ayrılmış repository karar çekirdeğinin uygulanması 20 Ekim'de
+ürün sahibi tarafından onaylandı. Teslim kabulü bekler; çalışan scheduler veya
+kapasite kabulü değildir. EO-05'in canlı uygulama ve başlangıç kapıları kapanmadı.
 Tasarım kaydı: `contracts/eo-05a-global-refresh-design-v1.json`.
+
+**Bu teslimin çalışan kodu:** `app/lib/refresh/admission-policy.server.js` yalnız
+hangi sınırlı iş parçasına sıra verileceğini hesaplar. Mağaza/sağlayıcı/hesap
+kimliğinden aynı saat içi konumu üretir; önceki hizmet sırasını girdiden alıp büyük
+workspace'in küçük workspace'i sürekli geriye itmesini önler. Global, sağlayıcı,
+workspace ve hesap bütçelerinden biri doluysa iş gerekçesiyle bekler. Rapor okuma
+payı global bütçeden önce ayrılır. Maliyet/bütçe bilinmiyorsa sıfır varsayılmaz.
+
+İş sahipliği ve bütçe tek global sürüm kontrolüyle birlikte kaydedilmeden iş
+başlatma hakkı doğmaz. Kod gerçek atomik depo sunmaz; iki çalışanın yarışması
+yalnız sentetik depo ile sınanır. Farklı iş amacı aynı hesap kilidini aşamaz;
+eski sahip yeni sahipliğin rezervasyonunu bırakamaz. Bırakma sonucu da atomik
+kayda uygulanması gereken öneridir. Süre dolunca kilit kendiliğinden kalkmaz.
+
+Test limitleri hayalî örneklerdir, üretim ayarı değildir. Yetki/bağlantı penceresi
+girdileri gelecekte doğrulanmış sunucu otoritesinden gelmelidir; bu çekirdek
+Shopify veya sağlayıcı yetkisi doğrulamaz. İş yükü/sorgu ölçümü, gerçek depo,
+lease kurtarma, iş sınıfı bütçeleri, worker/checkpoint ve kapasite koşuları hâlâ
+açıktır. Bu modül route'a bağlanmadı; DB, provider, secret, timer veya deploy
+değişikliği yoktur. Google satış/Channel/maliyet kuralları ve listing tree
+durdurma kararı değişmez.
 
 Akış: uygunluk → saat içindeki sıra → workspace'ler arasında adil seçim →
 ortak bütçe ve işi atomik sahiplenme → sınırlı veri parçası → güvenli kayıt/
@@ -178,8 +201,9 @@ Uygulama öncesinde yürütme/tetikleme mekanizması, atomik sahiplenmenin güve
 kalıcılık sınırı ve ölçülmüş limitler ayrıca doğrulanacaktır. Bu taslak herhangi
 bir Vercel/Supabase servisi seçmez, satın alma veya canlı işlem gerektirmez.
 Yarış, çöken çalışan, eski sahip, büyük/küçük workspace adaleti ve Disconnect
-aralığı senaryoları gelecekte çalışan kod üzerinde sınanacak; bugünkü sözleşme
-testleri bunların çalıştığını kanıtlamaz. PMax kanıt çalışması durdurulmuştur;
+aralığı senaryoları kalıcı depo/worker üzerinde ayrıca sınanacak; sentetik karar
+çekirdeği ve sözleşme testleri bunların üretimde çalıştığını kanıtlamaz.
+PMax kanıt çalışması durdurulmuştur;
 bağımsız refresh işini engellemez, tarihsel kesin Channel kabulü yerine geçmez.
 
 Resmî tasarım kaynakları 20 Ekim 2026'da kontrol edildi: PostgreSQL SELECT/kilit

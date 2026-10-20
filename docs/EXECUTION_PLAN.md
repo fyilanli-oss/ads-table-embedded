@@ -64,6 +64,14 @@ CI otomatik teslim kontrolü, build derleme, typecheck tip kontrolü, BFF arayü
 sunucu katmanıdır. API alanları, ekran metinleri ve durum kimlikleri aynen korunur.
 ## EO-05 başlangıç brief'i — 19 Ekim 2026
 
+**20 Ekim alarm kararı:** İş sırası dakikada bir kontrol edilir; her uygun mağazanın
+verisi saatte bir, saat içine yayılmış sırayla alınır. Son başarılı iş sırası
+kontrolünden sonra 2 dakika aşılması kritik alarm nedenidir. Gözetim ilk
+tetiklemeden doğru Dataset kaydına ve alarm teslimine kadar bütün zinciri kapsar.
+Ayrıntı aşağıdaki **EO-05 — İlk tetiklemeden Dataset'e kadar alarm matrisi**
+bölümünde ve `contracts/eo-05-refresh-alarm-matrix-v1.json` içindedir.
+Bu karar canlı zamanlayıcı/alarm kurmaz; EO-05-E tamamlandı sayılmaz.
+
 **20 Ekim güncel iş sırası kararı:** Fırat listing tree çalışmasını açıkça
 durdurdu; sıradaki iş tüm workspace'leri kapsayan refresh bütçesi ve yürütme
 tasarımıdır. Aşağıdaki önceki tarihsel PMax tasarım maddeleri ertelenmiş kayıttır,
@@ -340,6 +348,101 @@ gözlemidir; eksiksiz deneme geçmişi/saklama politikası ayrıca açık kalır
 
 Resmî kaynaklar 20 Ekim 2026'da kontrol edildi: PostgreSQL 17 kilitleme kuralları,
 Supabase RLS ve değişiklik kaydı. Canlı provider davranışı doğrulanmış sayılmaz.
+
+## EO-05 — İlk tetiklemeden Dataset'e kadar alarm matrisi — 20 Ekim 2026
+
+**Durum:** Fırat uçtan uca alarm tasarımının hazırlanmasını onayladı. Bu teslim
+karar/matris ve sözleşme testidir; çalışan alarm motoru, mesaj gönderimi, migration,
+provider çağrısı veya canlı etkinleştirme değildir. Mevcut EO-05-A işine bağlıdır;
+operasyonel izleme EO-05-E ile tamamlanır, yeni alt paket açılmaz.
+Makine kaydı: `contracts/eo-05-refresh-alarm-matrix-v1.json`.
+
+### Kesin çalışma sıklığı ve iki dakikalık sınır
+
+- **Dakikada bir:** Sırası gelmiş ve çalışmaya uygun işler kontrol edilir.
+  Her dakika bütün mağazalardan veri alınmaz.
+- **Saatte bir:** Her uygun mağazanın verisi kendi saat içine dağıtılmış sırasında
+  alınır. Günlük derin uzlaştırma kuralı değişmez; her saat tam geçmiş taranmaz.
+- **İki dakika aşıldığında:** Son doğrulanmış başarılı iş sırası kontrolünden
+  itibaren 120 saniyeyi aşınca kritik alarm gerekir. HTTP isteğinin gelmesi veya
+  kontrolün başlaması başarı değildir. Kontrol tamamlanıp kanıtı kalıcı kaydolmalı;
+  atlanan iş bölümleri görünür kalmalıdır. Uygun iş yokken sağlıklı kontrol yine
+  başarıdır; sırf boş diye provider'a çağrı yapılmaz.
+- **İlk açılış da izlenir:** Gözetim açıkça etkinleştirildikten sonra ilk başarı
+  için en fazla aynı 120 saniyelik pencere vardır. Eski, tekrarlanmış, başka ortam/
+  dağıtıma ait veya ileri tarihli sinyal süreyi sıfırlayamaz.
+
+Bu sınır yalnız iş sırası kontrolünündür. Provider yanıtı, kuyruk bekleme ve Dataset
+yazımı için kendi ölçülmüş süreleri onaylanacak; hepsine rastgele iki dakika
+verilmez. Mevcut kapasite sözleşmesindeki 45 dakikalık p95 hedefi tek bir işin
+zaman aşımı değildir. Alarmın oluşması gereken an ile bildirimin insana ulaşma
+gecikmesi ayrıdır: bağımsız gözetimin kontrol sıklığı ve teslim gecikmesi ölçülüp
+onaylanmadan iki dakikada canlı bildirim garantisi verilemez. Ek gizli bekleme
+penceresi eklenmez. Pro plan bilgisi Fırat'tan alınmıştır; yeni abonelik kararı yoktur.
+
+### Hangi evrede neyi durduracağız, neyi sınayacağız?
+
+| Kayıt / evre | Yakalanacak durum | Koruma ve kanıt için yapılacak test |
+|---|---|---|
+| AL01 — İş sırası kontrolü | Tetikleme yok, kontrol takıldı veya sahte başarı üretildi | Bağımsız iki dakika alarmı; başlangıç, tekrar ve ileri tarihli sinyal sınanır. |
+| AL02 — Mağazanın sıra alması | Bir mağaza, iş bölümü veya iş sınıfı sürekli atlanıyor | Bekleyen iş korunur; bir sağlıklı mağazanın diğerlerini gizleyemediği sınanır. |
+| AL03 — İşi sahiplenme | İki çalışan aynı işi alıyor, bütçe aşılıyor veya eski çalışan dönüyor | Atomik sahiplik/bütçe koruması; iki çalışan yarışı ve eski sahip sınanır. |
+| AL04 — Güncel izin | Disconnect, kaldırma, hesap değişimi veya abonelik kaybından sonra işlem deneniyor | Çağrı ve yazı öncesi güncel yetki; arada yetki değişimi sınanır. Beklenen uygunsuzluk tek başına ihlal değildir. |
+| AL05 — Provider'a başlama | Bizim/mağazanın eksik hazırlığı, ret, kota veya açıklanamayan hata | Hiç çağrı yapılmaması ile yapılmış deneme ayrılır; ilk hata durdurur, otomatik tekrar yoktur. |
+| AL06 — Çalışanın devamı | Çalışan kayıp veya dış çağrının sonucu belirsiz | Hesap ve kapasite korunur; geç yanıt/eski çalışan kilidi kaldıramaz. |
+| AL07 — Yanıtın eksiksizliği | Sayfa eksik, aynı imleç tekrarlandı, veri ailesi gelmedi veya yanıt bozuk | Kısmi sonuç tam sayılmaz; eksik sayfa ve hatalı HTTP 200 sınanır. |
+| AL08 — Normal boşluk | Gerçekten boş yanıt, uygun iş yok veya bilinçli Disconnect var | Gereksiz alarm yok; gerçek sıfır, eksik veri ve normal bekleme ayrı sınanır. |
+| AL09 — Verinin anlamı | Yanlış mağaza/hesap/ürün/tarih/kırılım/para birimi/FX/sürüm | Hatalı kayıt engellenir; kimlik ve döviz eşleşme hataları sınanır. Channel, rol veya maliyet uydurulmaz. |
+| AL10 — Kalıcı iş kaydı | Veritabanı yok, bağlantı dolu veya işin kaydı yapılamadı | Kayıtsız yeni iş/başarı yok; uygulama ve DB kapalıyken dış gözetim sınanır. |
+| AL11 — Dataset'e yazma | Eksik, tekrarlı, yanlış hedefli veya sonucu belirsiz kayıt | Tek işlemde sahiplik ve tekrar güvenliği; yazma sırasında izin kaybı ve kayıp commit cevabı sınanır. |
+| AL12 — İlerleme kaydı | Veri yazılmadan ilerleme işaretlendi veya yazıdan sonra çalışan çöktü | İlerleme yalnız kalıcı yazıdan sonra; çökme veriyi çoğaltmamalı, kanıtsız tekrar başlatmamalıdır. |
+| AL13 — Tamamlanma / tazelik | İşlem takıldı veya Dataset güncellenmeden güncel ilan edildi | Eski geçerli veri görünür ve eski/kısmi işaretli kalır; sağlıklı kontrolün takılan veri alımını gizlemesi sınanır. |
+| AL14 — Alarmın ulaşması | Gönderim reddedildi, teslim belirsiz veya insan teyidi yok | Olay açık kalır; onaylı yedek rota ve teslimsiz HTTP 200 senaryosu sınanır. |
+| AL15 — Gözetimin kendisi | Alarm sistemi de durdu veya ortak bağımlılık ikisini kör etti | Bağımsız tanık ve kontrollü örnek alarm; zamanlayıcı, uygulama, DB ve gözetim ayrı/birlikte durdurularak sınanır. |
+| AL16 — İzleme güvenliği | Token/kişisel veri sızıyor, başka mağazanın kanıtı açılıyor veya silinen veri geri geliyor | Güvensiz içerik engellenir; yabancı mağaza erişimi, ham hata ve silme sonrası kurtarma sınanır. |
+
+**Tablodaki testlerin durumu:** Bunlar yapılacak uçtan uca arıza senaryolarıdır;
+bu tasarım teslimiyle yapılmış veya canlı PASS değildir. AL03, AL05 ve AL06'nın
+bazı repository korumaları PR #141–144'te izole test edildi. Gerçek çalışan,
+provider ve Dataset bağlantısı ile alarm teslimi ayrıca doğrulanacaktır. Ürün
+seviyesi Dataset saklama kararı EO-05-B'de tartışılacak; tablo seçilmiş değildir.
+Google listing tree çalışması durdurulmuş kalır, sağlayıcı sözleşmeleri değişmez.
+
+### Alarmı kim görecek, sistem kendi hatasını nasıl saklamayacak?
+
+Gözetim aynı refresh zamanlayıcısından çalışmayacak. Uygulama veya ana veritabanı
+çöktüğünde sessizliği fark etmek için o veritabanını okumak zorunda olmayacak.
+Yalnız genel “uygulama açık” cevabı yeterli değil; iş sırası kontrolü, beklenen iş
+bölümleri ve mağaza bazında ilerleme ayrı kanıt ister. Gözetimin kendi kaybı da
+bağımsız tanık/örnek alarm ile denetlenecek. Tüm ortak arıza noktalarının yok
+edildiği veya sıfır risk sağlandığı iddia edilmez; kalan bağımlılıklar görünürdür.
+
+Bir olayın **fark edilmesi → gönderim beklemesi → bildirim hizmetinin kabulü →
+teslimin doğrulanması/belirsizliği → insanın gördüğünü teyidi → doğrulanmış
+çözüm** ayrı tutulur. Bildirim hizmetinin HTTP 200 cevabı insan teyidi değildir;
+insanın gördüm demesi de sorunu çözmez veya işin tekrarına izin vermez.
+
+Kritik bütünlük/erişim ihlali ve iki dakika sessizliği operasyonel alarmdır.
+Tek hesapta yetki yenileme gereksinimi görünür, sorumlusu belli bir aksiyondur;
+bütün mağazalara panik bildirimi değildir. Aynı olay her dakika yeni mesaj
+yığını üretmez; ilk/son görülme, tekrar sayısı ve etkilenen kapsam korunur.
+Ortak olaylar birleştirilirken tekil mağazalar veya bilinmeyen nedenler gizlenmez.
+Sonucu belirsiz provider işi alarm geldi diye bırakılmaz/tekrarlanmaz. Beklenen
+Disconnect dönemi hiçbir alarm veya yeniden bağlantıyla sonradan alınmaz.
+
+**Canlıya geçmeden açık seçimler:** Birincil/yedek bildirim kanalı, alıcı ve yedek
+sorumlu, insan teyidi süresi, yükseltme kuralı, gözetimin bağımsız çalışacağı yer,
+teslim gecikmesi, evre süreleri ve kanıtların erişim/saklama/silme sınırı seçilecek.
+Hangi uygulamanın alınacağı veya yeni ücretli hizmet gerektiği kararlaştırılmadı.
+Bildirim rotası kontrollü örnek alarm ve açık insan teyidiyle sınanmadan alarm
+canlı kabul edilemez. Bildirim yeniden gönderme politikası provider sorgusu
+yeniden deneme politikası değildir; ayrı sınır ve onay ister.
+
+Resmî kaynak kontrolü 20 Ekim 2026: [Vercel Cron teslim sınırları](https://vercel.com/docs/cron-jobs/manage-cron-jobs),
+[Google SRE izleme ilkeleri](https://sre.google/sre-book/monitoring-distributed-systems/),
+[Supabase ölçümleri](https://supabase.com/docs/guides/observability/metrics).
+Kaynaklar tasarıma rehberdir; canlı davranış kanıtı değildir. Dakika/saat ve
+iki dakika kararı Fırat'ın ürün kararıdır; provider garantisi değildir.
 
 ## Otorite
 

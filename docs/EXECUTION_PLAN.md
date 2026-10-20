@@ -159,6 +159,30 @@ Saatlik alınacak verinin seçimi/parçalanması ve yazımı bekler. Bu üç iş
 veri yazımının bu netleştirmeden sonra mı yoksa 05-B bittikten sonra mı
 tamamlanacağına o zaman karar verilecek. 05-A şimdiden kapandı sayılamaz.
 
+### Zamanlayıcının güvenli HTTP bağlantısı — yalnız hazırlık
+
+**20 Ekim 2026, Fırat'ın dar kapsam onayı:** Mevcut karar korunur; zamanlayıcı
+bağlantısı hazırlanır, sağlayıcı çağrıları kapalı kalır. Sözleşme:
+`contracts/eo-05a-refresh-queue-cron-entry-v1.json`. Yeni servis seçimi yoktur.
+
+Zil geldiğinde önce çağıranın yetkisi doğrulanır. Yetkisiz çağrı veritabanına
+ulaşamaz. Yetkili çağrı yalnız mağazaların iş sırasını ve mevcut yarıda kalmış
+işleri kontrol edebilir; veri alma, eksik gün tamamlama veya Dataset yazma
+başlatamaz. Aynı dakikanın tekrarı yeni başarı zamanı üretmez. Yanıttaki 200,
+veri güncellendi demek değildir. Belirsiz sonuç otomatik tekrar edilmez.
+
+Bağlantının ayrı veritabanı rolü yalnız bu iki işlemi yapabilir; mağaza uygulaması
+veya tam iş yöneticisi yetkisini kullanmaz. Rol henüz giriş yapamaz. Planlanan
+beş ortam ayarı mevcut secret envanterinden ayrı kaydedilir; değer oluşturulmaz.
+Cron kaydı, canlı migration, credential, deploy ve etkinleştirme bu işte yoktur.
+Gelecekte açık onayla dakikada bir bağlanacaktır; bugün otomatik zil çalmaz.
+
+Testler yalnız sentetik istekler ve mevcut iki geçici CI veritabanıyla yapılır.
+Gerçek Vercel→Supabase bağlantısı veya üretim kapasitesi kanıtlandı sayılmaz.
+Bağımsız alarm, gerçek sonlanma kanıtıyla kurtarma ve üretim yükü/süre/uçtan uca
+kabul sırası değişmez. 05-A kapanmaz, 05-B başlamaz. Resmî kaynaklar 20 Ekim
+2026'da kontrol edildi; bağlantılar sözleşmededir. Shopify ekranı değişmez.
+
 ### Süresi aşılmış ve yarıda kalmış işin güvenli durdurulması — repository
 
 **20 Ekim 2026:** Mevcut üçüncü 05-A işi kapsamında,

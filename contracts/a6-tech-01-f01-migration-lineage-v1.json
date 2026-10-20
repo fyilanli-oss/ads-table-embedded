@@ -553,6 +553,15 @@
       "repository_sql_sha256": "c4f9c80c85256f33f5f70182f9c7c2ba942f8030e95b0b917d91c4a612f0ca19",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261020193814",
+      "name": "eo05a_refresh_queue_entry_role",
+      "file": "supabase/migrations/20261020193814_eo05a_refresh_queue_entry_role.sql",
+      "created_with": "supabase@2.121.0 migration new eo05a_refresh_queue_entry_role",
+      "repository_sql_sha256": "ea937916f5a13e84a61bfdde5b5171163cf923bc23dbf98e43e191322d87e777",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

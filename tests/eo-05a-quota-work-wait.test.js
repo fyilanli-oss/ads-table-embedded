@@ -30,6 +30,7 @@ function worker() {
 test("only private first-boundary normal waits yield job-bound single-use deferral receipts",async()=>{
   const e=await waitError(),wait=refreshQuotaWait(e,"entitlement",claim);
   assert.equal(refreshQuotaWaitBoundary(wait),"entitlement");
+  assert.equal(refreshQuotaWait(e,"entitlement",{...claim,fence:2}),null,"an old error cannot mint a new receipt for another worker");
   assert.equal(refreshQuotaWait({status:"waiting",priorBoundaryAttempts:0},"entitlement",claim),null);
   for(const status of ["not_configured","not_sent","clock_invalid","already_reserved","stopped","needs_attention"])
     assert.equal(refreshQuotaWait(await waitError({execute:async()=>({status})}),"entitlement",claim),null);

@@ -143,6 +143,52 @@ API/kalıcılık kaynakları dar kapsamda yeniden doğrulanır.
 
 ## EO-05-A — Tüm workspace'ler için refresh tasarım önerisi — 20 Ekim 2026
 
+### EO-05-A — Tek veri parçasını çalıştırma ve evre kaydı — 20 Ekim 2026
+
+Fırat, 16 alarm senaryosundaki korumaların mevcut EO-05 alt işleri içinde
+uygulanmasına başlanmasını onayladı. İlk teslim yalnız önceden sıra almış bir
+veri parçasının çalışan çekirdeği ve kalıcı evre kaydıdır. Çalışma sözleşmesi:
+`contracts/eo-05a-refresh-chunk-worker-v1.json`. Alarm tasarımı PR #145 açık kalır;
+bu uygulama yönlendirmesi o PR için ayrı merge onayı değildir.
+
+Akış: **yetki kontrol ediliyor → çağrı niyeti kaydedildi → yanıt alındı →
+Dataset'e verilmeye hazır**. Her adım doğru mağaza/kurulum/hesap/iş/sahiplik
+numarası ve tarih aralığına bağlıdır; adım atlanamaz. Aynı işi ikinci kez açan
+çalışan tekrar provider okuması başlatamaz. Çağrıdan önce ve sonuç devredilmeden
+önce güncel sunucu yetkisi tekrar yüklenir; hesap/bağlantı sürümü değişirse durulur.
+
+Çağrı niyeti kalıcı kaydolmadan dış okuma yoktur. Bu kayıt “kesin çağrı yapıldı”
+kanıtı değildir; kayıt ile gerçek gönderim arasında çökme olabilir. Zaman aşımı,
+bağlantı hatası veya iptal sinyali provider'ın durduğunu kanıtlamaz: iş belirsiz
+kalır, kapasite korunur, geç gelen cevap yeni adım veya başarı üretemez.
+Bilinen provider reddi ve doğrulama hatası durdurulur; kendiliğinden tekrar yoktur.
+DB/evre kaydı sorunu da başarı veya kapasiteyi serbest bırakma nedeni değildir.
+
+En fazla satır/byte, çağrı süresi ve kapanış payı açık girdidir; ölçülmemiş canlı
+sayı seçilmedi. Kaynak yanıt akışını boyutla sınırlayan gerçek provider adaptörü
+henüz bağlı değildir; çekirdeğin byte kontrolü doğrulanmış satırların boyutudur.
+DB çağrıları/yetki yükleme için bağlantı ve sorgu süre sınırı ile gerçek çalışma
+ortamının zaman sınırı canlı etkinleştirmeden önce ayrıca doğrulanacaktır.
+
+**Önemli sınır:** Sonuç **Dataset bekliyor** durumudur. Ürün verisi henüz kalıcı
+Dataset'e yazılmaz; yalnız doğrulanmış satırlar bellekte devredilir. Bu noktada
+iş tamamlandı, checkpoint ilerledi veya veri güncel denmez. Kalıcı evre takibi
+olan iş, genel tamamla işleviyle başarılı kapatılamaz. Bellekteki veri kaybolursa
+bu otomatik yeniden alma izni değildir. Product-level saklama ve atomik Dataset
+yazma/ilerleme kapısı EO-05-B'de seninle netleştirilecek, sahte writer bağlanmayacak.
+
+Native provider yetki/okuma adaptörleri, takvim tetikleyicisi, bağımsız gözetim ve
+alarm teslimi bağlı değildir. Testteki sunucu yetkisi/provider yanıtı sentetiktir;
+gerçek provider izni veya ürün doğruluğu kanıtı değildir. Yeni migration yalnız
+hazırlanır ve iki mevcut boş CI veritabanında sınanır; canlı uygulanmaz. UI,
+secret, yeni servis veya dağıtım değişikliği yoktur. Listing tree durdurma ve
+bilinçli Disconnect aralığını almama kararları korunur.
+
+Supabase/PostgreSQL rehberleri kısa işlem, zorunlu RLS ve dar işlev erişimini
+yönlendirdi. Resmî PostgreSQL 17 kilitleme, Node.js 24 zamanlayıcı ve Supabase RLS
+kaynakları 20 Ekim 2026'da kontrol edildi. Yerel Windows build hatası için işlem/
+makine ayarı veya tekrar denenmez; bu teslimin build'i normal GitHub CI ile doğrulanır.
+
 **Durum:** Tasarımdan ayrılmış repository karar çekirdeğinin uygulanması 20 Ekim'de
 ürün sahibi tarafından onaylandı. Teslim kabulü bekler; çalışan scheduler veya
 kapasite kabulü değildir. EO-05'in canlı uygulama ve başlangıç kapıları kapanmadı.

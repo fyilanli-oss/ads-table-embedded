@@ -4,6 +4,7 @@ import {createRefreshEntitlementVerifier,createAuthorityQuotaEntitlementVerifier
 import {createSharedQuotaRepository} from "../app/lib/database/shared-quota-repository.server.js";
 import {randomUUID,createHash} from "node:crypto";
 import {dispatchRefreshPreflight} from "../app/lib/refresh/preflight-bridge.server.js";
+import {runScheduledRefreshCheck} from "../app/lib/refresh/scheduled-queue-check.server.js";
 import {planRefreshPreflightAdmissions} from "../app/lib/refresh/admission-policy.server.js";
 import {quotaRouteIdentity} from "../app/lib/refresh/quota-scope-resolver.server.js";
 import {quotaAuthorityProbe} from "./eo05-quota-authority-probe.mjs";
@@ -73,7 +74,11 @@ export async function refreshPreflightProbe(client,{workspace,connections,shopId
       limits:plan().limits,environment,
       fetchFn:async()=>{billingCalls++;return new Response(JSON.stringify(payload),{headers:{"content-type":"application/json"}});}});
     args.entitlementVerifier=managedVerifier();
-    const firstWait=await dispatchRefreshPreflight(args);
+    const tickGeneration=randomUUID();
+    await client.query("update operations.refresh_tick_control set enabled=true,generation=$1 where singleton",[tickGeneration]);
+    const firstTick=await runScheduledRefreshCheck({store,generation:tickGeneration,work:args});
+    assert.equal(firstTick.status,"queue_checked");
+    const firstWait=firstTick.work;
     assert.equal(firstWait.status,"quota_waiting");assert.equal(billingCalls,0);assert.equal(adCalls,0);
     assert.equal((await store.readAdmissionSnapshot()).state.claims.length,0,"known not-sent wait releases worker capacity");
     assert.equal(await store.isClaimCurrent({claim:firstWait.claim}),false);
@@ -96,8 +101,13 @@ export async function refreshPreflightProbe(client,{workspace,connections,shopId
     await client.query("update operations.api_quota_policies set interactive_reserve=0 where id=$1",[policy]);
     await client.query("update operations.api_quota_route_profiles set quota_fingerprint=operations.shared_api_quota_fingerprint(operation_key) where operation_key=$1",[operation]);
     args.entitlementVerifier=managedVerifier();
-    const result=await dispatchRefreshPreflight(args);
+    // Only the owner fixture ages the receipt; production has no caller-supplied clock/minute.
+    await client.query("update operations.refresh_tick_control set last_minute=last_minute-1 where singleton");
+    const workerTick=await runScheduledRefreshCheck({store,generation:tickGeneration,work:args});
+    assert.equal(workerTick.status,"queue_checked");
+    const result=workerTick.work;
     assert.equal(result.status,"awaiting_dataset");assert.equal(billingCalls,1);assert.equal(adCalls,1);
+    console.log("EO05_SCHEDULED_PREFLIGHT_PASS database_queue_to_fenced_worker=true fresh_billing=true quota_wait_no_HTTP=true synthetic_page=true dataset_write=false native_calls=0");
     assert.equal(result.claim.id,firstWait.claim.id);assert.ok(result.claim.fence>repeatedWait.claim.fence);
     assert.equal((await client.query("select count(*)::int n from operations.api_quota_debits where policy_id=$1",[policy])).rows[0].n,1,"no old authorizeRead double debit");
     assert.equal((await client.query("select count(*)::int n from operations.refresh_quota_waits where job_id=$1 and state='waiting'",[result.claim.id])).rows[0].n,0);

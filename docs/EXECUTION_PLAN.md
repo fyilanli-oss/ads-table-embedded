@@ -159,6 +159,38 @@ Saatlik alınacak verinin seçimi/parçalanması ve yazımı bekler. Bu üç iş
 veri yazımının bu netleştirmeden sonra mı yoksa 05-B bittikten sonra mı
 tamamlanacağına o zaman karar verilecek. 05-A şimdiden kapandı sayılamaz.
 
+### Zamanlayıcıdan iş sırasına güvenli giriş — repository, canlı etkinleştirme değil
+
+**20 Ekim 2026:** Mevcut 05-A işi içinde zamanlayıcının çağıracağı iç bağlantı
+kurulur. Sözleşme: `contracts/eo-05a-refresh-scheduled-queue-check-v1.json`.
+Yeni alt paket, servis, HTTP route, cron, secret veya canlı migration açılmaz.
+
+**Örnek:** Zey&Rose için aynı dakikada iki zil gelirse gerçek mağaza/hesap
+listesi bir kez kontrol edilir. İkinci zil yeni iş veya yeni başarılı kontrol
+kaydı üretmez. Kontrolde hata olursa iş sırası ve başarı kaydı birlikte geri
+alınır. On dakika zil gelmezse sonraki farklı dakikanın kontrolü mevcut bekleyen
+ihtiyacı korur; on ayrı iş oluşturmaz ve bekleme yaşını sıfırlamaz.
+
+Dakika ve başarı zamanı çağırandan değil veritabanından alınır. Eski etkinleştirme
+kimliği veya gelecek zaman izi kabul edilmez. Geç gelen tekrar başka dakikaya
+düşerse yeni kontrol sayılabilir; “zil kesin bir kez gelir” garantisi verilmez.
+İş sırasının mevcut birleştirme ve aynı hesabı iki çalışana vermeme koruması sürer.
+Kayıt tek güncel satırdır; sınırsız tetikleme geçmişi birikmez.
+
+Saatlik veri planı yoksa yalnız iş sırası kontrol edilir, sağlayıcı sorgusu
+başlamaz. Açıkça verilmiş iç test planı varsa mevcut güncel abonelik, iş sahipliği
+ve kota kapılarından geçen en fazla bir veri parçasına devir sınanır.
+`awaiting_dataset` başarılı refresh değildir: kayıt/yazım yapılmış sayılmaz,
+bekleyen ihtiyaç silinmez. Başarılı iş sırası kontrolü ile veri alımının sonucu
+ayrı tutulur; ikincisi hata verince ilki gizlenmez.
+
+Kapalı varsayılan etkinleştirme, iç rol ve tablo erişim sınırı korunur. Kimlik
+eşliği HTTP yetkilendirmesinin yerine geçmez; gerçek cron route'u, güvenli
+etkinleştirme ve bağımsız alarm/gözlemci hâlâ ayrı canlı kapılardır. Saatlik veri,
+product level ve Dataset kararı alınmadı. Yarıda kalan işlerin güvenli yönetimi
+mevcut sırada kalır. Bu kayıt 05-A kapanışı veya bütün kota işinin canlı kabulü
+değildir. Kontrol edilen resmî kaynaklar ve tarih sözleşmededir.
+
 ### Ortak kota kapısı — repository çekirdeği, canlı bağlantı değil
 
 **PR #157 sonrası Google kota hata izi — 20 Ekim:** Mevcut kota işinde,

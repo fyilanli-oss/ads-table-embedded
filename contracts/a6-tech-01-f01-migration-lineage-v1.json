@@ -463,6 +463,15 @@
       "repository_sql_sha256": "6fbfa2a0704184d249dbb8abc7c0b2979c11270c1d5052871271f223ca80eea4",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261020131343",
+      "name": "eo05a_refresh_preflight_bridge",
+      "file": "supabase/migrations/20261020131343_eo05a_refresh_preflight_bridge.sql",
+      "created_with": "supabase@2.121.0 migration new eo05a_refresh_preflight_bridge",
+      "repository_sql_sha256": "88d3fe9b62364f90711d4e710f9241a57b67e6738c87d6e2a750d6f4a7f84706",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

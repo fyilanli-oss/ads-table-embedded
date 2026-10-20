@@ -179,9 +179,10 @@ begin
   committed := operations.commit_refresh_admissions_before_stops(expected_revision,proposed);
   if committed then
     update operations.refresh_work_stops as s set state='resolved',resolved_at=statement_timestamp()
-      where s.state='waiting' and exists (select 1 from operations.refresh_runs as r
-        where r.workspace_id=s.workspace_id and r.install_generation=s.install_generation and r.provider=s.provider
-          and r.account_id=s.account_id and r.job_id=s.job_id and r.status='running');
+      from jsonb_array_elements(proposed->'claims') as selected(value)
+      where s.state='waiting' and s.workspace_id=(selected.value->>'workspaceId')::uuid
+        and s.install_generation=(selected.value->>'installGeneration')::bigint and s.provider=selected.value->>'provider'
+        and s.account_id=selected.value->>'accountId' and s.job_id=selected.value->>'id';
   end if;
   return committed;
 end

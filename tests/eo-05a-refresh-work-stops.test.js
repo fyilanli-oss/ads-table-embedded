@@ -65,6 +65,7 @@ test("pending stop schema denies bypasses and never releases unknown external wo
   assert.match(sql,/classification->>'state'<>'uncertain'/);
   assert.match(sql,/state in \('blocked','paused'\) and call_state<>'unknown'/);
   assert.match(sql,/p_version and state in/);
+  assert.match(sql,/from jsonb_array_elements\(proposed->'claims'\) as selected\(value\)/);
   assert.match(sql,/read_refresh_admission_snapshot_before_stops\(\) from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator/);
   assert.doesNotMatch(sql,/cron\.schedule|pg_net|grant .* to adstable_runtime|interval '\d|raw_payload|error_message/);
   const entry=JSON.parse(read("contracts/a6-tech-01-f01-migration-lineage-v1.json")).pending_migrations.find(e=>e.file===migration);

@@ -27,7 +27,7 @@ test("lost commit response or malformed receipt cannot report a check or retry",
 
 test("a healthy queue check without the approved data policy does no work and is not a successful refresh",async()=>{
   let reads=0;
-  const store={checkScheduledQueue:async args=>{assert.deepEqual(args,{generation});return receipt;},readPreflightSnapshot:async()=>{reads++;}};
+  const store={reviewInterruptedWork:async()=>({status:"reviewed",stopped:0,uncertain:0}),checkScheduledQueue:async args=>{assert.deepEqual(args,{generation});return receipt;},readPreflightSnapshot:async()=>{reads++;}};
   const result=await runScheduledRefreshCheck({store,generation});
   assert.equal(result.status,"queue_checked");assert.deepEqual(result.work,{status:"work_policy_required"});assert.equal(reads,0);
   assert.equal(Object.hasOwn(result,"refreshSuccess"),false);
@@ -43,7 +43,7 @@ test("an explicitly supplied internal plan uses the existing fenced preflight on
     budget:{global:vector,interactiveReserve:{requests:0,dbWrites:0,connections:0,rows:0,bytes:0},providers:[{provider:"meta",limit:vector}],
       workspaces:[{workspaceId:"w",limit:vector}],accounts:[{provider:"meta",accountId:"act_1",limit:vector}]},candidates:[source]};
   let checks=0,commits=0,billing=0,pages=0;
-  const store={checkScheduledQueue:async()=>{checks++;return receipt;},readPreflightSnapshot:async()=>snapshot,
+  const store={reviewInterruptedWork:async()=>({status:"reviewed",stopped:0,uncertain:0}),checkScheduledQueue:async()=>{checks++;return receipt;},readPreflightSnapshot:async()=>snapshot,
     commitPreflight:async()=>{commits++;return true;},loadBoundAuthority:async()=>({...source,installationVerified:true,connected:true,setupComplete:true,allowedWindow:true}),
     advanceStage:async()=>true,isClaimCurrent:async()=>true,readAdmissionSnapshot:async()=>snapshot,recordStop:async()=>({recorded:true})};
   const work={buildWorkPlan:async()=>({partitionId:"explicit-one-page",workClass:"hourly_hot_window",window:{from:"2026-10-19",to:"2026-10-19"},

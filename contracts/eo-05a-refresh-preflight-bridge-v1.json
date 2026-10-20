@@ -24,6 +24,7 @@
   "live_migration_apply": false,
   "new_secret_or_service": false,
   "migration": "supabase/migrations/20261020131343_eo05a_refresh_preflight_bridge.sql",
+  "interrupted_work_guard": "contracts/eo-05a-refresh-interrupted-work-v1.json; explicit worker deadline atomically bound by commit_refresh_preflight_with_deadline; old coordinator admission bypass revoked",
   "verification": "unit_synthetic_composition_and_real_SQL_on_two_existing_ephemeral_CI_databases; no_native_performance_or_capacity_claim",
   "remaining": ["production_date_workload_partition_policy", "shared_Partner_API_quota_across_foreground_and_background", "native_scheduler_and_provider_adapters", "EO05B_Dataset_product_grain_discussion_and_atomic_writer", "independent_watchdog_witness_notification_ack", "privacy_retention_and_measured_capacity", "explicit_activation"],
   "official_sources_checked_at": "2026-10-20",

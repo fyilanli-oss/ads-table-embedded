@@ -8,6 +8,7 @@ import {runScheduledRefreshCheck} from "../app/lib/refresh/scheduled-queue-check
 import {planRefreshPreflightAdmissions} from "../app/lib/refresh/admission-policy.server.js";
 import {quotaRouteIdentity} from "../app/lib/refresh/quota-scope-resolver.server.js";
 import {quotaAuthorityProbe} from "./eo05-quota-authority-probe.mjs";
+import {refreshInterruptedWorkProbe} from "./eo05-refresh-interrupted-work-probe.mjs";
 
 // Runs within the canonical synthetic fixture. All changes roll back, including billing/queue/claims.
 export async function refreshPreflightProbe(client,{workspace,connections,shopId,shopDomain}) {
@@ -40,7 +41,7 @@ export async function refreshPreflightProbe(client,{workspace,connections,shopId
     const candidate={...source,id:"manual-probe",workClass:"hourly_hot_window",cost:plan().cost,
       authority:{installationVerified:true,connected:true,setupComplete:true,allowedWindow:true}};
     const proposal=planRefreshPreflightAdmissions({...snapshot,candidates:[candidate],now:Date.now()});
-    const commit={expectedRevision:snapshot.state.revision,queueRevision:snapshot.queueRevision,nextState:proposal.nextState,source,window,partitionId:"synthetic"};
+    const commit={expectedRevision:snapshot.state.revision,queueRevision:snapshot.queueRevision,nextState:proposal.nextState,source,window,partitionId:"synthetic",deadlineAt:plan().limits.deadlineAt};
     assert.equal(await store.commitPreflight({...commit,source:{...source,selectionId:"999999"}}),false);
     assert.equal(await store.commitPreflight({...commit,queueRevision:snapshot.queueRevision+1}),false);
     assert.equal(await store.commitPreflight({...commit,window:{from:"2000-01-01",to:day}}),false,"cannot backfill before current connection period");
@@ -97,7 +98,7 @@ export async function refreshPreflightProbe(client,{workspace,connections,shopId
     const waitingSnapshot=await store.readPreflightSnapshot();
     const resuming=planRefreshPreflightAdmissions({...waitingSnapshot,candidates:[{...candidate,id:firstWait.claim.id}],now:Date.now()});
     assert.equal(await store.commitPreflight({expectedRevision:waitingSnapshot.state.revision,queueRevision:waitingSnapshot.queueRevision,
-      nextState:resuming.nextState,source:waitingSnapshot.candidates.find(s=>s.provider==="google_ads"),window,partitionId:"different-partition"}),false);
+      nextState:resuming.nextState,source:waitingSnapshot.candidates.find(s=>s.provider==="google_ads"),window,partitionId:"different-partition",deadlineAt:plan().limits.deadlineAt}),false);
     await client.query("update operations.api_quota_policies set interactive_reserve=0 where id=$1",[policy]);
     await client.query("update operations.api_quota_route_profiles set quota_fingerprint=operations.shared_api_quota_fingerprint(operation_key) where operation_key=$1",[operation]);
     args.entitlementVerifier=managedVerifier();
@@ -116,6 +117,7 @@ export async function refreshPreflightProbe(client,{workspace,connections,shopId
     assert.equal(await store.finishClaim({claim:repeatedWait.claim,outcome:"completed"}),false);
     args.entitlementVerifier=verifier;
     assert.equal(await store.isClaimCurrent({claim:result.claim}),true);
+    await refreshInterruptedWorkProbe(client,{store,claim:result.claim,window});
     assert.equal(await store.isClaimCurrent({claim:{...result.claim,fence:result.claim.fence+1}}),false);
     assert.equal(await store.loadBoundAuthority({claim:result.claim,window:{from:"2000-01-01",to:day}}),null);
     assert.equal(await store.advanceStage({claim:result.claim,window:{from:"2000-01-01",to:day},expectedStage:null,stage:"checking_authority"}),false);

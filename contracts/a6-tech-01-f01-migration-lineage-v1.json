@@ -544,6 +544,15 @@
       "repository_sql_sha256": "2c2eaa0461f043df08aa967a68aa7264502b05b3f6f2b66e03282cd3d3608c70",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261020184556",
+      "name": "eo05a_refresh_interrupted_work",
+      "file": "supabase/migrations/20261020184556_eo05a_refresh_interrupted_work.sql",
+      "created_with": "supabase@2.121.0 migration new eo05a_refresh_interrupted_work",
+      "repository_sql_sha256": "c4f9c80c85256f33f5f70182f9c7c2ba942f8030e95b0b917d91c4a612f0ca19",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

@@ -18,11 +18,20 @@ export async function runScheduledRefreshCheck({store,generation,work}) {
     return {status:"needs_attention",reason:"queue_check_unavailable"};
   }
   const queue={generation:receipt.generation,sequence:receipt.sequence,queueRevision:receipt.queueRevision,checkedAtMs:receipt.checkedAtMs};
-  if(work===undefined) return {status:"queue_checked",queue,work:{status:"work_policy_required"}};
+  let interruptions;
+  try {
+    interruptions=await store.reviewInterruptedWork();
+    if(interruptions?.status!=="not_configured" && (interruptions?.status!=="reviewed"
+      || ![interruptions.stopped,interruptions.uncertain].every(n=>Number.isSafeInteger(n)&&n>=0))) throw new Error();
+  } catch {
+    return {status:"queue_checked",queue,work:{status:"needs_attention",reason:"interrupted_work_review_unavailable"}};
+  }
+  if(work===undefined) return {status:"queue_checked",queue,interruptions,work:{status:"work_policy_required"}};
+  if(interruptions.status!=="reviewed") return {status:"queue_checked",queue,interruptions,work:{status:"not_configured"}};
   // Explicitly pick inputs. A work object cannot replace the store or inject a dispatch callback.
   try {
     const {buildWorkPlan,entitlementVerifier,readPage,validatePage,now}=work;
-    return {status:"queue_checked",queue,work:await dispatchRefreshPreflight({store,buildWorkPlan,entitlementVerifier,readPage,validatePage,now})};
+    return {status:"queue_checked",queue,interruptions,work:await dispatchRefreshPreflight({store,buildWorkPlan,entitlementVerifier,readPage,validatePage,now})};
   } catch {
     return {status:"queue_checked",queue,work:{status:"needs_attention",reason:"work_policy_invalid"}};
   }

@@ -526,6 +526,15 @@
       "repository_sql_sha256": "10900ae17957bc48b649836508e27c4fc8dc045a9df53a4d8b7b62f574016655",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261020165755",
+      "name": "eo05a_google_quota_diagnostic",
+      "file": "supabase/migrations/20261020165755_eo05a_google_quota_diagnostic.sql",
+      "created_with": "supabase@2.121.0 migration new eo05a_google_quota_diagnostic",
+      "repository_sql_sha256": "abd5aec6c1a5f9c4681964ce9e9b1d381a996bb63fc7d7344d2bb0434cbe7e6e",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

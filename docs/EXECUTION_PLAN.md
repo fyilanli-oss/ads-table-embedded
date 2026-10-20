@@ -161,6 +161,31 @@ tamamlanacağına o zaman karar verilecek. 05-A şimdiden kapandı sayılamaz.
 
 ### Ortak kota kapısı — repository çekirdeği, canlı bağlantı değil
 
+**PR #157 sonrası Google kota hata izi — 20 Ekim:** Mevcut kota işinde,
+Google'ın açıkça verdiği hesap (`ACCOUNT`) veya proje (`DEVELOPER`) kapsamı ve
+dört doğrulanmış kota hata kodu mevcut özel işlem kaydına eklenir. Güncel native
+istemci v25 ve eski v24 test biçimi resmî şemayla doğrulanır; API sürümü/sorgu
+değişmez. Tip ve sürüm eşliği, HTTP/error kodu ve bütün hataların tutarlılığı
+aranır. Bilinmeyen sürüm, çelişkili kapsam, eksik ayrıntı veya genel 429'dan
+“proje kotası doldu” sonucu çıkarılmaz. Ham hata, serbest kota adı veya token
+kaydedilmez; Supabase rehberine göre ham tablo erişimi açılmaz.
+
+**Örnek:** Zey&Rose Google yanıtında açıkça `ACCOUNT` görülürse bu bilgi hata
+izine yazılır. `DEVELOPER` görülürse proje kapsamı bilgisi yazılır; ancak hangi
+günlük/saniyelik/sorgu maliyeti sayacının dolduğu hâlâ bilinmeyebilir. İki durumda
+da yalnız mevcut çağrı işlemi durur; başka mağazanın paylaştığı bütçe tahminle
+durdurulmaz. Bilinen yanıt açık çağrı kapasitesini bırakır, kota payı iade edilmez.
+İlk hata izi sonraki hata tarafından değiştirilmez. Otomatik tekrar yoktur.
+
+Bu yalnız tanılama bilgisidir, yeni ortak-kota durma sinyali değildir. Kesin
+ortak sayaç eşlemesi ve Meta geri bildirimi tamamlandı sayılmaz. Yeni paket,
+canlı migration/config/secret/provider çağrısı, UI/deploy, saatlik veri veya
+Dataset kararı yoktur. Resmî Google v24/v25, ProtoJSON ve Supabase kaynakları
+20 Ekim 2026 kontrol edildi; bağlantılar mevcut kota durma sözleşmesindedir.
+İki boş CI veritabanında gerçek SQL ve sentetik HTTP ile sınanır. 05-A açık,
+05-B başlamaz. Supabase/Postgres rehberleri mevcut dar erişim ve aynı kilit
+sırasını korumayı yönlendirdi.
+
 **PR #156 sonrası sağlayıcı kota yanıtı — 20 Ekim:** Yeni paket açılmaz; mevcut
 kota bağlantısının yanıt tarafı tamamlanır. Güncel Klaviyo belgesindeki sayısal
 `RateLimit-Limit`, `RateLimit-Remaining`, `RateLimit-Reset` ve 429 için ayrı

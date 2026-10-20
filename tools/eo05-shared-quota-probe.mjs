@@ -7,6 +7,7 @@ import {createQuotaManagedClients} from "../app/lib/providers/quota-managed-clie
 import {quotaBoundaryControl} from "../app/lib/refresh/quota-native-fetch.server.js";
 import {quotaScopeResolverProbe} from "./eo05-quota-scope-resolver-probe.mjs";
 import {quotaFeedbackProbe} from "./eo05-quota-feedback-probe.mjs";
+import {googleQuotaProbe} from "./eo05-google-quota-probe.mjs";
 
 export async function sharedQuotaProbe(client,connection,environment=process.env) {
   assert.equal(environment.GITHUB_ACTIONS,"true");assert.ok(environment.RUNNER_TEMP);assert.equal(connection.host,"127.0.0.1");assert.equal(connection.port,54322);
@@ -75,6 +76,7 @@ export async function sharedQuotaProbe(client,connection,environment=process.env
     await quotaStopScopeProbe(client,second);
     await quotaScopeResolverProbe(client);
     await quotaFeedbackProbe(client);
+    await googleQuotaProbe(client);
   } finally {
     try {
       await client.query("delete from operations.api_quota_operations where operation_key=any($1::text[])",[[a,b,unrelated]]);

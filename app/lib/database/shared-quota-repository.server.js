@@ -33,6 +33,13 @@ export function createSharedQuotaRepository(database) {
       const {knownResponse=false,connectionFailure=false,quotaSignal=null}=input;
       if(!valid(input)||typeof knownResponse!=="boolean"||typeof connectionFailure!=="boolean"||![null,"shopify_partner_throttled"].includes(quotaSignal)
         ||(connectionFailure&&!knownResponse)||(quotaSignal!==null&&(!knownResponse||connectionFailure))) throw new Error("SHARED_QUOTA_INPUT_INVALID");
+      if(input.quotaObservation!=null) {
+        const d=input.quotaObservation;
+        if(!knownResponse||connectionFailure||quotaSignal!==null||!d||Object.keys(d).sort().join(",")!=="code,scope"
+          ||!["ACCOUNT","DEVELOPER"].includes(d.scope)
+          ||!["RESOURCE_EXHAUSTED","RESOURCE_TEMPORARILY_EXHAUSTED","EXCESSIVE_SHORT_TERM_QUERY_RESOURCE_CONSUMPTION","EXCESSIVE_LONG_TERM_QUERY_RESOURCE_CONSUMPTION"].includes(d.code)) throw new Error("SHARED_QUOTA_INPUT_INVALID");
+        return await result("select operations.stop_shared_api_quota_google_observed($1::text,$2::uuid,$3::text,$4::text) as result",[input.operationKey,input.attemptId,d.scope,d.code])===true;
+      }
       return await result("select operations.stop_shared_api_quota_scoped($1::text,$2::uuid,$3::boolean,$4::boolean,$5::text) as result",
         [input.operationKey,input.attemptId,knownResponse,connectionFailure,quotaSignal])===true;
     },

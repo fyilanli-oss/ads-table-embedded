@@ -1,5 +1,6 @@
 // Quota at the actual HTTP boundary, not once per report/snapshot.
 import {quotaResponseFeedback} from "./quota-response-feedback.server.js";
+import {googleQuotaObservation} from "./google-quota-observation.server.js";
 const controls=new WeakMap();
 const managed=new WeakSet();
 function control(status,priorBoundaryAttempts=null) {
@@ -69,7 +70,7 @@ export function createQuotaManagedFetch({provider,guard,resolveOperation,isDispa
     let operationKey;
     try {operationKey=await resolveOperation(metadata);} catch {throw control("not_configured");}
     if(!/^[a-f0-9]{64}$/.test(operationKey??"")) throw control("not_configured");
-    let response,rejected=false,quotaSignal=null;
+    let response,rejected=false,quotaSignal=null,quotaObservation=null;
     let result;
     try {result=await guard.execute({operationKey,lane,
       ...(isDispatchCurrent?{beforeDispatch:()=>isDispatchCurrent(metadata,operationKey)}:{}),run:async()=>{
@@ -82,6 +83,7 @@ export function createQuotaManagedFetch({provider,guard,resolveOperation,isDispa
       if((response.headers?.get?.("content-type")??"").includes("json")) {
         try {
           const payload=await response.clone().json();
+          quotaObservation=googleQuotaObservation(metadata,response.status,payload);
           const errors=Array.isArray(payload?.errors)?payload.errors:[];
           rejected=rejected||Boolean(payload?.error)||errors.length>0;
           // Only the documented Partner throttle shape can name a shared-quota signal here.
@@ -91,7 +93,7 @@ export function createQuotaManagedFetch({provider,guard,resolveOperation,isDispa
         } catch {rejected=true;}
       }
       const feedback=quotaResponseFeedback(metadata,response);
-      return rejected?{outcome:"rejected",connectionFailure:[401,403].includes(response.status),quotaSignal,feedback}:{outcome:"success",value:response,feedback};
+      return rejected?{outcome:"rejected",connectionFailure:[401,403].includes(response.status),quotaSignal,feedback,quotaObservation}:{outcome:"success",value:response,feedback};
     }});} catch {throw new Error("QUOTA_NATIVE_TRANSPORT_UNAVAILABLE");}
     if(result?.status==="returned") return result.value;
     // Keep native HTTP 401/403/429 handlers, but only AFTER the quota stop persists.

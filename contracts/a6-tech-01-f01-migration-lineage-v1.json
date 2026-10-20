@@ -499,6 +499,15 @@
       "repository_sql_sha256": "6c2f31d6d776f57ad0efc44a10ec8198c280be39fa12fbfa43da365ae0627c87",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261020152516",
+      "name": "eo05a_quota_scope_resolver",
+      "file": "supabase/migrations/20261020152516_eo05a_quota_scope_resolver.sql",
+      "created_with": "supabase@2.121.0 migration new eo05a_quota_scope_resolver",
+      "repository_sql_sha256": "5ef61f43447bca5f1a16e52a92408ced354e56d3d6d8322a2310cc2088a777ba",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

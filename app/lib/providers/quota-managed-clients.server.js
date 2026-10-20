@@ -1,4 +1,6 @@
 import {createQuotaManagedFetch} from "../refresh/quota-native-fetch.server.js";
+import {createQuotaScopeResolver} from "../refresh/quota-scope-resolver.server.js";
+import {createSharedQuotaGuard} from "../refresh/shared-quota.server.js";
 import {createShopifyPartnerApi} from "../shopify/partner-api.server.js";
 import {createMetaReportingAuthorityRuntime} from "./meta-reporting-authority.server.js";
 import {createGoogleReportingAuthorityRuntime} from "./google-reporting-authority.server.js";
@@ -22,4 +24,12 @@ export function createQuotaManagedClients({guard,resolveOperation,lane,fetchFn=g
     google:options=>createGoogleReportingAuthorityRuntime({...locked(options),fetchFn:transport("google_ads")}),
     klaviyo:options=>createKlaviyoReportingAuthorityRuntime({...locked(options),fetchFn:transport("klaviyo")}),
   });
+}
+
+// Explicit, still inactive: production callers cannot substitute an arbitrary constant operation key.
+// The authoritative context loader and coordinator store must be separately provisioned.
+export function createScopeResolvedQuotaClients({loadContext,store,now,lane,fetchFn,resolveOperation,guard}) {
+  if(resolveOperation!==undefined||guard!==undefined) throw new Error("QUOTA_SCOPE_RESOLVER_OVERRIDE_FORBIDDEN");
+  return createQuotaManagedClients({guard:createSharedQuotaGuard({store,now}),lane,fetchFn,
+    resolveOperation:createQuotaScopeResolver({loadContext,store})});
 }

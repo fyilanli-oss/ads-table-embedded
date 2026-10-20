@@ -5,6 +5,7 @@ import {createSharedQuotaRepository} from "../app/lib/database/shared-quota-repo
 import {createSharedQuotaGuard} from "../app/lib/refresh/shared-quota.server.js";
 import {createQuotaManagedClients} from "../app/lib/providers/quota-managed-clients.server.js";
 import {quotaBoundaryControl} from "../app/lib/refresh/quota-native-fetch.server.js";
+import {quotaScopeResolverProbe} from "./eo05-quota-scope-resolver-probe.mjs";
 
 export async function sharedQuotaProbe(client,connection,environment=process.env) {
   assert.equal(environment.GITHUB_ACTIONS,"true");assert.ok(environment.RUNNER_TEMP);assert.equal(connection.host,"127.0.0.1");assert.equal(connection.port,54322);
@@ -71,6 +72,7 @@ export async function sharedQuotaProbe(client,connection,environment=process.env
         assert.equal((await client.query("select has_function_privilege($1,$2,'EXECUTE') allowed",[role,`operations.${fn}`])).rows[0].allowed,false);
     console.log("EO05_SHARED_QUOTA_PASS concurrent_shared_scope=true interactive_reserve=true atomic_multi_scope=true unknown_not_expired=true persistent_stop=true bounded_cleanup=true no_live_configuration=true actual_provider_calls=0");
     await quotaStopScopeProbe(client,second);
+    await quotaScopeResolverProbe(client);
   } finally {
     try {
       await client.query("delete from operations.api_quota_operations where operation_key=any($1::text[])",[[a,b,unrelated]]);

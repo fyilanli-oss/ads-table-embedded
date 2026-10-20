@@ -40,6 +40,7 @@ function descriptor(provider,input,init) {
     if(families[path]?.[0]===method) family=families[path][1];
   }
   if(!family) throw control("not_configured");
+  if(provider==="klaviyo"&&path.startsWith("/api/")) version=init.headers?.get?.("revision")??null;
   // include modifiers may have extra quotas. Never send filter/fields/query/body/token to resolver.
   if(provider==="klaviyo"&&(url.searchParams.getAll("include").length>1||[...url.searchParams.keys()].some(k=>k.startsWith("additional-fields")))) throw control("not_configured");
   const includes=provider==="klaviyo"?(url.searchParams.get("include")??"").split(",").filter(Boolean).sort():[];

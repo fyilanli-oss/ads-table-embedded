@@ -149,6 +149,61 @@ Bağlantılar çalışma sözleşmesindedir. Bu okumalar tarihsel süreklilik se
 şema güvenliği veya canlı kapasite kanıtı üretmez; uygulama öncesi ilgili resmî
 API/kalıcılık kaynakları dar kapsamda yeniden doğrulanır.
 
+## EO-05-A — Dataset kararından bağımsız kalan üç iş — 20 Ekim 2026
+
+Fırat, PR #150'nin birleşmesinden sonra iş sırasını netleştirdi: ortak kota
+yönetimi → zamanlayıcının iş sırasına bağlanması → yarım kalan işlerin güvenli
+yönetimi. Bunlar yeni alt paketler değildir; 05-A içinde sıralı işlerdir.
+Saatlik alınacak verinin seçimi/parçalanması ve yazımı bekler. Bu üç işten sonra
+05-B başlamadan product level ve üretim planı birlikte netleştirilecek. Saatlik
+veri yazımının bu netleştirmeden sonra mı yoksa 05-B bittikten sonra mı
+tamamlanacağına o zaman karar verilecek. 05-A şimdiden kapandı sayılamaz.
+
+### Ortak kota kapısı — repository çekirdeği, canlı bağlantı değil
+
+Mevcut arka plan abonelik kontrolünde kota kontrol noktası vardır fakat uygulama
+içindeki çağrılarla ortak kalıcı sayaç henüz bağlanmamıştır. Yeni çekirdek aynı
+kotayı kullanan bütün çalışanları aynı kısa veritabanı işlemine sokar. Bir istek
+birden çok sınıra bağlıysa hepsinden birlikte pay ayrılır; biri doluysa hiçbirinden
+pay tüketilmez. Uygulama içi ve arka plan ayrı bağımsız sayaç kullanamaz. Arka plan,
+kullanıcı işlemlerine ayrılan payı tüketemez; bu payın üretim değeri seçilmemiştir.
+
+**Örnek:** Yalnız sentetik testte ortak sınır iki çağrı, kullanıcıya ayrılan pay bir
+çağrı olsun. İki arka plan çalışanı aynı anda gelirse yalnız biri geçer. Kullanıcı
+işlemi kalan tek payı kullanabilir; üçüncü çağrı bekler. Bu rakamlar gerçek platform
+kotası veya üretim ayarı değildir.
+
+Kota doluluğu normal beklemedir: sağlayıcı çağrılmaz, iş hata sayılmaz, otomatik
+tekrar döngüsü kurulmaz. Başlamış çağrı reddedilirse veya sonucu bilinmiyorsa
+paylaşılmış sınır için kalıcı durma kaydı tutulur. Süre geçmesi veya Retry-After
+bu durmayı kaldırmaz. Paylaşılmış sınırın bütün mağazaları mı tek hesabı mı
+etkileyeceği, kapsam eşlemesi yapılırken ayrıca denetlenir; burada canlı kapsam
+seçilmez. Zamanı dolmuş fakat sonucu belirsiz çağrı silinmez. Açık çağrı sayısı
+da ayrıca sınırlandırılır. Sonucu bilinen çağrı kota tüketimini geri almaz.
+Yalnız süresi geçmiş, sonucu bilinen kota metadata'sı sınırlı temizlikle silinebilir.
+Temizlik zamanlayıcısı ve retention kabulü henüz etkin değildir.
+
+Shopify Partner kotası istemci başınadır, mağaza başına değildir. Google için
+Cloud Project sınırı ve ek uygulanabilir kapsamlar; Klaviyo OAuth için hesap ve
+uygulama örneği ile endpoint/ek sorgu sınırları birlikte değerlendirilir. Bunlar
+tek tip sağlayıcı limiti değildir. Çekirdek muhafazakâr kayan pencere kullanır;
+sağlayıcının gerçek kota algoritmasının veya dinamik CPU limitlerinin birebir
+kopyası olduğu iddia edilmez. Kısa çağrı başlatma izninin süresi ve saat uyumu
+etkinleştirme öncesi ölçülür.
+
+Üretim kota kaydı eklenmez; bilinmeyen ayarda yeni kapı çağrı başlatmaz. Mevcut
+Production yolları değiştirilmedi. Güvenilir hesap/istemci kapsam eşlemesi,
+tüm gerçek çağrı yollarının tek kez bu kapıya bağlanması, sağlayıcı header
+geri bildirimi ve normal kota beklemesinin iş sırasına aktarılması henüz açıktır.
+Dolayısıyla bu teslim **ortak kota yönetiminin tamamının kapanışı değildir**.
+
+Sözleşme: `contracts/eo-05a-shared-api-quota-v1.json`. Supabase/PostgreSQL rehberleri
+kısa işlem, sıralı kilit ve dar erişim sınırını yönlendirdi. Resmî kaynaklar
+20 Ekim 2026'da kontrol edildi; bağlantılar sözleşmededir. Meta belge erişimindeki
+önceki 429 zorlanmadı, yeni Meta kota sayısı etkinleştirilmedi. Yalnız repository,
+sentetik test ve iki mevcut boş CI veritabanı. Yeni secret/hizmet, canlı migration,
+provider çağrısı, UI/deploy veya Dataset/product tasarımı yoktur. Merge ayrı onaydır.
+
 ## EO-05-A — Tüm workspace'ler için refresh tasarım önerisi — 20 Ekim 2026
 
 ### EO-05-A — Gerçek kayıtlardan mağaza ve raporlama hesabı listesi — 20 Ekim 2026

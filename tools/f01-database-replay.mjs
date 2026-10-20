@@ -7,6 +7,7 @@ import pg from "pg";
 import {refreshQueueCheckProbe} from "./eo05-refresh-queue-check-probe.mjs";
 import {refreshEntitlementProbe} from "./eo05-refresh-entitlement-probe.mjs";
 import {refreshNativeInventoryProbe} from "./eo05-refresh-native-inventory-probe.mjs";
+import {sharedQuotaProbe} from "./eo05-shared-quota-probe.mjs";
 import {loadMigrationFiles, validateMigrationLineage, validExecutionContext} from "./check-migration-lineage.mjs";
 import {buildScopedRecovery, definitionHash} from "./f01-scoped-recovery.mjs";
 import {privacyIndexPlanProbe, assertPrivacyIndexes} from "./f08-privacy-index-probe.mjs";
@@ -490,6 +491,9 @@ async function main() {
     }
     if ([...manifest.forward_migrations,...manifest.pending_migrations].some(entry => entry.name === "eo05a_refresh_native_inventory")) {
       await refreshNativeInventoryProbe(client, replayConnection);
+    }
+    if ([...manifest.forward_migrations,...manifest.pending_migrations].some(entry => entry.name === "eo05a_shared_api_quota")) {
+      await sharedQuotaProbe(client, replayConnection);
     }
     const after=await inventory(client);
     await securityProbes(client);

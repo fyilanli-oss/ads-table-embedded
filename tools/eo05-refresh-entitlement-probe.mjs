@@ -24,6 +24,10 @@ export async function refreshEntitlementProbe(client,connection,environment=proc
     const proposal=planRefreshAdmissions({...state,candidates:[job],now:3600000});
     assert.equal(await store.compareAndSwap({expectedRevision:state.state.revision,nextState:proposal.nextState}),true);
     const claim=proposal.admitted[0];let calls=0;
+    assert.equal(await store.loadRefreshInstallation({claim}),null,"no external read before durable request intent");
+    const window={from:"2026-10-19",to:"2026-10-20"};
+    assert.equal(await store.advanceStage({claim,window,expectedStage:null,stage:"checking_authority"}),true);
+    assert.equal(await store.advanceStage({claim,window,expectedStage:"checking_authority",stage:"request_intent"}),true);
     const day=86400000;
     const payload={data:{activeSubscription:{shop:{id:shopId,myshopifyDomain:shopDomain},billingPeriod:"EVERY_30_DAYS",cancelAtEndOfCycle:true,
       trialEndsAt:null,currentBillingCycle:{startTime:new Date(Date.now()-day).toISOString(),endTime:new Date(Date.now()+10*day).toISOString()},
@@ -44,7 +48,9 @@ export async function refreshEntitlementProbe(client,connection,environment=proc
     assert.equal((await verifier.verify({claim})).status,"denied");
     assert.equal(await verifier.isCurrent({claim,receipt:verified.receipt}),false,"new denial invalidates previous active receipt");
     assert.equal((await client.query("select entitlement_status from billing.workspace_entitlements where workspace_id=$1",[workspace])).rows[0].entitlement_status,"subscription_required");
-    const before=calls;assert.equal(await store.finishClaim({claim,outcome:"paused"}),true);
+    const before=calls;
+    const current=await store.readAdmissionSnapshot();
+    assert.equal((await store.recordStop({job:claim,reason:"entitlement_required",expectedRevision:current.state.revision})).recorded,true);
     assert.equal((await verifier.verify({claim})).status,"not_current");assert.equal(calls,before,"stale owner cannot query Shopify");
     for(const role of ["anon","authenticated","service_role","adstable_runtime"])
       for(const fn of ["operations.load_refresh_entitlement_installation(uuid,bigint,text,text,text,bigint)",

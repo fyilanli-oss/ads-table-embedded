@@ -9,6 +9,7 @@
   "migration": "supabase/migrations/20261020122907_eo05a_refresh_entitlement_check.sql",
   "reuse": "existing_Partner_API_2026_07_activeSubscription_normalizer_and_existing_billing_projection_no_new_billing_system",
   "identity": "claim_fence_to_active_workspace_install_generation_shop_gid_and_canonical_domain; no_browser_shop_selection_or_session_required",
+  "outbound_intent": "durable_request_intent_precedes_Shopify_check_and_ad_provider_read; native_installation_loader_denies_before_intent; thrown_verifier_outcome_is_unknown_not_not_sent",
   "freshness": "each_chunk_verification_invocation_queries_once_no_previous_active_cache_fallback; fresh_negative_cache_may_be_overridden_only_by_new_verified_positive",
   "receipt": "observation_not_before_claim_start; current_or_newer_verified_projection_active_and_not_expired; newer_denial_blocks_previous_receipt",
   "worker": "verifyEntitlement_and_isEntitlementCurrent_mandatory; check_before_ad_request_and_before_Dataset_handoff; cached_entitled_boolean_not_authority",

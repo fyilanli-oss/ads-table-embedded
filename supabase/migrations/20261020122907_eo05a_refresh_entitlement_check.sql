@@ -10,6 +10,8 @@ returns jsonb language sql stable security definer set search_path = '' as $fn$
   from shopify.installations i join app.workspaces w on w.id=i.workspace_id
   where i.workspace_id=p_workspace and i.install_generation=p_generation and i.status='active' and w.status='active'
     and operations.refresh_claim_is_current(p_workspace,p_generation,p_provider,p_account,p_job,p_fence)
+    and exists(select 1 from operations.refresh_work_progress p where p.workspace_id=p_workspace and p.install_generation=p_generation
+      and p.provider=p_provider and p.account_id=p_account and p.job_id=p_job and p.fence=p_fence and p.stage='request_intent')
 $fn$;
 
 create function operations.refresh_entitlement_is_current(p_workspace uuid,p_generation bigint,p_provider text,p_account text,p_job text,p_fence bigint,p_observed timestamptz)
@@ -38,6 +40,10 @@ begin
   perform 1 from operations.refresh_control where singleton for update;
   if not operations.refresh_claim_is_current(p_workspace,p_generation,p_provider,p_account,p_job,p_fence) then
     raise exception 'REFRESH_ENTITLEMENT_CLAIM_NOT_CURRENT';
+  end if;
+  if not exists(select 1 from operations.refresh_work_progress p where p.workspace_id=p_workspace and p.install_generation=p_generation
+    and p.provider=p_provider and p.account_id=p_account and p.job_id=p_job and p.fence=p_fence and p.stage='request_intent') then
+    raise exception 'REFRESH_ENTITLEMENT_INTENT_REQUIRED';
   end if;
   select * into strict r from operations.refresh_runs where workspace_id=p_workspace and install_generation=p_generation
     and provider=p_provider and account_id=p_account and job_id=p_job and fence=p_fence;

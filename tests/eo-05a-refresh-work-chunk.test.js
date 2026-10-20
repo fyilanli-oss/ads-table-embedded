@@ -34,6 +34,8 @@ test("fresh Shopify entitlement is mandatory; cached booleans cannot authorize o
   assert.equal((await runRefreshChunk(denied.args)).reason,"entitlement_required");assert.equal(denied.calls(),0);
   const failed=setup();failed.args.verifyEntitlement=async()=>({status:"unavailable",externalOutcome:"unknown"});
   assert.equal((await runRefreshChunk(failed.args)).status,"uncertain");assert.equal(failed.calls(),0);
+  const thrown=setup();thrown.args.verifyEntitlement=async()=>{throw Error("unknown check outcome");};
+  assert.equal((await runRefreshChunk(thrown.args)).status,"uncertain");assert.equal(thrown.calls(),0);
   const changed=setup();changed.args.isEntitlementCurrent=async()=>false;
   assert.equal((await runRefreshChunk(changed.args)).reason,"entitlement_required");assert.equal(changed.calls(),0);
   const during=setup();let checks=0;during.args.isEntitlementCurrent=async()=>++checks===1;

@@ -163,6 +163,8 @@ yazılmaz: mevcut Partner API `2026-07` `activeSubscription` sorgusu, yanıt
 doğrulayıcısı ve mevcut abonelik tabloları kullanılır. Hedef mağaza kullanıcıdan
 alınmaz; güncel iş/sahiplik numarasından aktif kurulum, Shopify mağaza kimliği ve
 alan adına ulaşılır. Başka mağazanın cevabı kabul edilmez.
+Shopify okuması da dış çağrıdır: işin kalıcı çağrı niyeti kaydı oluşmadan
+başlayamaz. Bu aşamada çalışan koparsa iş hiç başlanmamış sayılmaz.
 
 Eski “aktif” bilgisi yeterli değildir. Her veri parçası için yeni doğrulama
 çağrısı gerekir; önceki olumsuz önbellek de yeni olumlu cevabı tek başına

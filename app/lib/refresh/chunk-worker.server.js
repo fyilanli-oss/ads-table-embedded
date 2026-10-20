@@ -52,13 +52,14 @@ export async function runRefreshChunk({claim: suppliedClaim, window: suppliedWin
     const authority=await authoritySnapshot();
     if(!authorityAllowed(authority)) return stop("authority_required","not_sent");
     if(timeLeft()<limits.requestTimeoutMs+limits.finishReserveMs) return stop("stopped_before_call","not_sent");
-    const entitlement=await verifyEntitlement(context());
+    if(!await advance("request_intent")) return {status:"not_current",phase};
+    let entitlement;
+    try {entitlement=await verifyEntitlement(context());} catch {return stop("request_outcome_unknown","unknown");}
     if(entitlement?.status!=="verified") {
       if(entitlement?.externalOutcome==="unknown") return stop("request_outcome_unknown","unknown");
       return stop(entitlement?.status==="denied"?"entitlement_required":"stopped_before_call","not_sent");
     }
     if(timeLeft()<limits.requestTimeoutMs+limits.finishReserveMs) return stop("stopped_before_call","not_sent");
-    if(!await advance("request_intent")) return {status:"not_current",phase};
     // Read current authority again after persistence. A cached initial credential is not enough.
     const current=await authoritySnapshot();
     if(!authorityAllowed(current)||current.connectionId!==authority.connectionId||current.connectionVersion!==authority.connectionVersion) {

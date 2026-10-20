@@ -1,3 +1,5 @@
+import {refreshStopInput, refreshWorkIdentity} from "../refresh/work-stop-policy.server.js";
+
 // Not wired to any route/worker. Requires the separately provisioned internal coordinator role.
 export function createRefreshWorkRepository(database) {
   if (typeof database?.query !== "function") throw new TypeError("database.query is required");
@@ -15,6 +17,22 @@ export function createRefreshWorkRepository(database) {
   }
   return Object.freeze({
     readAdmissionSnapshot,
+    async recordStop(input) {
+      return result("select operations.record_refresh_work_stop($1::uuid,$2::bigint,$3::text,$4::text,$5::text,$6::bigint,$7::text,$8::bigint) as result", refreshStopInput(input));
+    },
+    async readStop({job}) {
+      return result("select operations.read_refresh_work_stop($1::uuid,$2::bigint,$3::text,$4::text,$5::text) as result", refreshWorkIdentity(job).slice(0,5));
+    },
+    // Ownership observation only. Dataset writes must check under the SAME transaction lock.
+    async isClaimCurrent({claim}) {
+      return await result("select operations.refresh_claim_is_current($1::uuid,$2::bigint,$3::text,$4::text,$5::text,$6::bigint) as result",
+        refreshWorkIdentity(claim, {claimRequired:true})) === true;
+    },
+    async resolveStop({job, expectedVersion}) {
+      if (!Number.isSafeInteger(expectedVersion) || expectedVersion < 1) throw new Error("REFRESH_WORK_INPUT_INVALID");
+      return await result("select operations.resolve_refresh_work_stop($1::uuid,$2::bigint,$3::text,$4::text,$5::text,$6::bigint) as result",
+        [...refreshWorkIdentity(job).slice(0,5), expectedVersion]) === true;
+    },
     async readState() { return (await readAdmissionSnapshot()).state; },
     async compareAndSwap({expectedRevision, nextState}) {
       if (!Number.isSafeInteger(expectedRevision) || expectedRevision < 0 || !nextState) throw new Error("REFRESH_WORK_INPUT_INVALID");

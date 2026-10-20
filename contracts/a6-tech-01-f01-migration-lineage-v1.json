@@ -418,6 +418,15 @@
       "repository_sql_sha256": "e34ccb3591a8a52f3599add786a2abd97b070dd3a18d3ba79f027ad8fdb056e7",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261020100851",
+      "name": "eo05a_refresh_stop_records",
+      "file": "supabase/migrations/20261020100851_eo05a_refresh_stop_records.sql",
+      "created_with": "supabase@2.121.0 migration new eo05a_refresh_stop_records",
+      "repository_sql_sha256": "c70e306b1a203efa203809a32d819c59efbba62b7f97762b48d2598a9ac8e83f",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

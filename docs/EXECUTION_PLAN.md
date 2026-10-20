@@ -257,6 +257,44 @@ Resmî tasarım kaynakları 20 Ekim 2026'da kontrol edildi: PostgreSQL SELECT/ki
 kuralları ve GitHub PR güncelleme belgesi. Bağlantılar tasarım kaydındadır;
 PostgreSQL belgesi tek başına güvenli bir kuyruk veya uygulanmış DB şeması değildir.
 
+## EO-05-A — Başlayamayan ve yarıda kalan işlerin takibi — 20 Ekim 2026
+
+Ürün sahibi bu dar repository uygulamasını onayladı; teslim kabulü ve merge
+ayrıca beklenir. Canlı veritabanı değişikliği, provider çağrısı ve çalışan
+etkinleştirme izni yoktur. Kaynak: `repository_work_stops_slice` tasarım kaydı.
+
+- **Sıra bekliyor:** Kapasite veya saat uygun değil. Çağrı yapılmadı; hata,
+  tamamlanma veya veri yokluğu değildir. Aynı bekleme bildirimi yeni kayıt yığını üretmez.
+- **Başlamadan engellendi:** Yapılandırma/yetki/bağlantı/abonelik kontrolü geçmedi.
+  Bilinen neden ve gerekli aksiyon kaydolur; bilinmeyen neden tahmin edilmez.
+  Provider çağrısı veya kapasite ayırma yapılmış sayılmaz.
+- **Provider reddetti:** Bir deneme yapıldı; tüm dış işlemlerin sona erdiği
+  doğrulanmışsa iş durur, kapasitesi bırakılır ve ilgili hesap engelli kalır.
+  Ham hata, token veya kişisel veri iş takibine yazılmaz.
+- **Başladı, durdu:** Hiç çağrı yapılmadan durma ile çağrılar bitince durma
+  ayrıdır. İş tamamlandı sayılmaz; mevcut geçerli veri korunur. Yeni kayıtlar
+  Dataset'e bağlı değildir; veri güncelliği/checkpoint ilerletmez.
+- **Sonuç belirsiz:** Çalışandan haber kesildi veya çağrının sonucu bilinmiyor.
+  Eski sahip için güncel sahiplik kontrolü ve işi kapatma reddedilir; aynı hesapta
+  yeni iş açılmaz. Çağrı hâlâ sürüyor olabileceğinden ayrılmış kapasite korunur.
+  Diğer hesaplar yalnız kalan bütçe içinde ilerleyebilir; sınırsız kapasite sözü yoktur.
+
+Bilinen engeli kaldırmak yalnız iç koordinatörün açık ve kayıt sürümüyle eşleşen
+onayıyla olur. Bu işlem çağrı başlatmaz, eski sahibin hakkını geri vermez, güncel
+yetkiyi kanıtlamaz veya geçmiş tamamlama izni vermez. Bilinçli Disconnect dönemi
+alınmaz. Belirsiz dış işlemi bu API kaldıramaz; süre dolması/iptal sinyali tek
+başına güvenli devir kanıtı değildir.
+
+**Açık sınır:** Çalışanın kaybolduğunu saptayan mekanizma, dış çağrının gerçekten
+sonlandığına ilişkin kanıt, belirsiz işin güvenli kurtarılması ve Dataset yazma
+kapısına aynı işlem içinde sahiplik kontrolü henüz bağlı değildir. Ayrı okunan
+“sahiplik geçerli” cevabı daha sonra yapılan yazıyı güvenli kılmaz. Bu teslim
+çalışan scheduler veya tüm kurtarma kapılarının kapanışı değildir. Kayıt son iş
+gözlemidir; eksiksiz deneme geçmişi/saklama politikası ayrıca açık kalır.
+
+Resmî kaynaklar 20 Ekim 2026'da kontrol edildi: PostgreSQL 17 kilitleme kuralları,
+Supabase RLS ve değişiklik kaydı. Canlı provider davranışı doğrulanmış sayılmaz.
+
 ## Otorite
 
 Bu repository onaylı A6-EO yalnız gömülü temiz yeniden kuruluş programını uygular.

@@ -98,6 +98,12 @@ export function planRefreshAdmissions({state, candidates, budget, now, bounds}) 
   integer(state.nextTurn);
   requireValue(Array.isArray(state.claims) && state.claims.length <= bounds.maxClaims);
   requireValue(Array.isArray(state.lastServed) && state.lastServed.length <= bounds.maxWorkspaces);
+  const heldAccounts = new Set();
+  requireValue(state.holds === undefined || (Array.isArray(state.holds) && state.holds.length <= bounds.maxCandidates + bounds.maxClaims));
+  for (const hold of state.holds ?? []) {
+    identity(hold);
+    heldAccounts.add(flightKey(hold));
+  }
   const turns = new Map();
   for (const entry of state.lastServed) {
     identifier(entry.workspaceId);
@@ -155,6 +161,7 @@ export function planRefreshAdmissions({state, candidates, budget, now, bounds}) 
     let reason;
     if (!authorityAllows(job)) reason = "authority_required";
     else if (job.queuedAt > now || job.scheduledHour + refreshHourlyOffset(job) > now) reason = "not_due";
+    else if (heldAccounts.has(flightKey(job))) reason = "account_held";
     else if (flights.has(flightKey(job))) reason = "account_busy";
     else if (admitted.length >= bounds.maxAdmissions || nextState.claims.length >= bounds.maxClaims) reason = "dispatch_limit";
     else {

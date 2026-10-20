@@ -16,7 +16,8 @@ test("only allowlisted observations enter persistence; external payloads never b
     const values=refreshStopInput({job:{...job,fence:3},reason,expectedRevision:2});
     assert.equal(values[6],reason);
     assert.equal(values[7],2);
-    assert.ok(sql.includes(`('${reason}',`),`SQL classification missing: ${reason}`);
+    const classifications=sql+read("supabase/migrations/20261020111425_eo05a_refresh_chunk_progress.sql");
+    assert.ok(classifications.includes(`'${reason}'`),`SQL classification missing: ${reason}`);
   }
   for (const reason of ["secret-token",null,"provider_response_raw","timeout_retry"]) {
     assert.throws(()=>refreshStopInput({job,reason,expectedRevision:2}),/REFRESH_WORK_INPUT_INVALID/);

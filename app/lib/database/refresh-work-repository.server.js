@@ -17,6 +17,18 @@ export function createRefreshWorkRepository(database) {
   }
   return Object.freeze({
     readAdmissionSnapshot,
+    async advanceStage({claim,window,expectedStage,stage,rows=0,bytes=0}) {
+      const stages=[null,"checking_authority","request_intent","response_received","ready_for_dataset"];
+      if(stages.indexOf(stage)!==stages.indexOf(expectedStage)+1||!stages.includes(expectedStage)||!stages.includes(stage)
+        || !Number.isSafeInteger(rows)||rows<0||!Number.isSafeInteger(bytes)||bytes<0
+        || !/^\d{4}-\d{2}-\d{2}$/.test(window?.from??"")||!/^\d{4}-\d{2}-\d{2}$/.test(window?.to??"")||window.from>window.to) throw new Error("REFRESH_WORK_INPUT_INVALID");
+      return await result("select operations.advance_refresh_work_stage($1::uuid,$2::bigint,$3::text,$4::text,$5::text,$6::bigint,$7::text,$8::text,$9::bigint,$10::bigint,$11::date,$12::date) as result",
+        [...refreshWorkIdentity(claim,{claimRequired:true}),expectedStage,stage,rows,bytes,window.from,window.to])===true;
+    },
+    async readStage({claim}) {
+      return result("select operations.read_refresh_work_stage($1::uuid,$2::bigint,$3::text,$4::text,$5::text,$6::bigint) as result",
+        refreshWorkIdentity(claim,{claimRequired:true}));
+    },
     async recordStop(input) {
       return result("select operations.record_refresh_work_stop($1::uuid,$2::bigint,$3::text,$4::text,$5::text,$6::bigint,$7::text,$8::bigint) as result", refreshStopInput(input));
     },

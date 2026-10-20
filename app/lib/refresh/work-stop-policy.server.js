@@ -5,6 +5,7 @@ export const REFRESH_STOP_REASONS = Object.freeze([
   "connection_closed", "entitlement_required", "budget_unknown", "workload_unknown",
   "provider_permission_denied", "provider_throttled", "provider_rejected", "provider_unknown_error",
   "stopped_before_call", "worker_stopped", "worker_lost", "request_outcome_unknown",
+  "validation_failed_after_request", "authority_check_failed_after_request",
 ]);
 
 export function refreshWorkIdentity(value, {claimRequired = false} = {}) {
@@ -24,7 +25,7 @@ export function refreshStopInput({job, reason, expectedRevision}) {
     throw new Error("REFRESH_WORK_INPUT_INVALID");
   }
   const identity = refreshWorkIdentity(job);
-  if ((reason.startsWith("provider_") || ["stopped_before_call", "worker_stopped", "worker_lost", "request_outcome_unknown"].includes(reason))
+  if ((reason.startsWith("provider_") || ["stopped_before_call", "worker_stopped", "worker_lost", "request_outcome_unknown", "validation_failed_after_request", "authority_check_failed_after_request"].includes(reason))
     && job.fence == null) throw new Error("REFRESH_WORK_INPUT_INVALID");
   return [...identity, reason, expectedRevision];
 }

@@ -1,5 +1,6 @@
 import {refreshStopInput, refreshWorkIdentity} from "../refresh/work-stop-policy.server.js";
 import {takeRefreshQuotaWait} from "../refresh/quota-work-wait.server.js";
+import {refreshTickGenerationValid} from "../refresh/scheduled-queue-check.server.js";
 
 // Not wired to any route/worker. Requires the separately provisioned internal coordinator role.
 export function createRefreshWorkRepository(database) {
@@ -18,6 +19,10 @@ export function createRefreshWorkRepository(database) {
   }
   return Object.freeze({
     readAdmissionSnapshot,
+    async checkScheduledQueue({generation}) {
+      if(!refreshTickGenerationValid(generation)) throw new Error("REFRESH_WORK_INPUT_INVALID");
+      return result("select operations.check_refresh_queue_on_tick($1::uuid) as result",[generation]);
+    },
     async loadQuotaContext({claim,window,provider,entitlementReceipt}) {
       if(!["shopify_partner",claim?.provider].includes(provider)||![window?.from,window?.to].every(v=>typeof v==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(v))) throw new Error("REFRESH_WORK_INPUT_INVALID");
       const observed=entitlementReceipt?.observedAt??null;

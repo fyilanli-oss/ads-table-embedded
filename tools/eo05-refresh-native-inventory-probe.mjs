@@ -4,6 +4,7 @@ import pg from "pg";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 import {checkRefreshQueueFromAuthority} from "../app/lib/refresh/native-inventory.server.js";
 import {refreshPreflightProbe} from "./eo05-refresh-preflight-probe.mjs";
+import {refreshScheduledQueueProbe} from "./eo05-refresh-scheduled-queue-probe.mjs";
 
 export async function refreshNativeInventoryProbe(client,connection,environment=process.env) {
   assert.equal(environment.GITHUB_ACTIONS,"true");assert.ok(environment.RUNNER_TEMP);assert.equal(connection.host,"127.0.0.1");assert.equal(connection.port,54322);
@@ -44,6 +45,7 @@ export async function refreshNativeInventoryProbe(client,connection,environment=
     assert.deepEqual(new Set(result.accounts.map(a=>a.accountId)),new Set(["act_101","111","klaviyo-a"]),"unselected and manager accounts cannot enter queue");
     assert.doesNotMatch(JSON.stringify(statuses),/SENSITIVE|myshopify|credential|ciphertext|access_token/);
     const age=result.accounts.find(a=>a.accountId==="111").firstQueuedAtMs;
+    await refreshScheduledQueueProbe(client,other);
     await refreshPreflightProbe(client,{workspace:workspaces[0],connections,shopId:"gid://shopify/Shop/99999980",shopDomain:"inventory-0.myshopify.com"});
     await checkRefreshQueueFromAuthority({store});assert.equal((await store.readQueueCheck()).accounts.find(a=>a.accountId==="111").firstQueuedAtMs,age);
     // Switch away AND back before the next queue scan. OAuth connection_version stays unchanged.

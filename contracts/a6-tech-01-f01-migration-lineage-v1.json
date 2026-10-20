@@ -535,6 +535,15 @@
       "repository_sql_sha256": "abd5aec6c1a5f9c4681964ce9e9b1d381a996bb63fc7d7344d2bb0434cbe7e6e",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261020172928",
+      "name": "eo05a_refresh_scheduled_queue_check",
+      "file": "supabase/migrations/20261020172928_eo05a_refresh_scheduled_queue_check.sql",
+      "created_with": "supabase@2.121.0 migration new eo05a_refresh_scheduled_queue_check",
+      "repository_sql_sha256": "2c2eaa0461f043df08aa967a68aa7264502b05b3f6f2b66e03282cd3d3608c70",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

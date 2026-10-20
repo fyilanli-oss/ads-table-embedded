@@ -25,6 +25,7 @@ create table operations.refresh_queue_accounts (
   connection_id text not null check (length(connection_id) between 1 and 256),
   connection_version bigint not null check (connection_version > 0),
   eligible_from_ms bigint not null check (eligible_from_ms >= 0),
+  connection_open boolean not null,
   state text not null check (state in ('not_due','pending','ineligible','held')),
   first_due_hour_ms bigint,
   latest_due_hour_ms bigint,
@@ -94,10 +95,12 @@ begin
     workspace_keys := array_append(workspace_keys,wid::text);
   end loop;
   for a in select value from jsonb_array_elements(p_inventory->'accounts') loop
-    if jsonb_typeof(a) is distinct from 'object' or (select count(*) from jsonb_object_keys(a)) <> 9
+    if jsonb_typeof(a) is distinct from 'object' or (select count(*) from jsonb_object_keys(a)) <> 10
       or not coalesce((a->>'workspaceId') = any(workspace_keys),false)
       or coalesce(a->>'provider','') not in ('meta','google_ads','klaviyo')
       or jsonb_typeof(a->'eligible') is distinct from 'boolean'
+      or jsonb_typeof(a->'connectionOpen') is distinct from 'boolean'
+      or (a->>'eligible'='true' and a->>'connectionOpen'<>'true')
       or coalesce(a->>'installGeneration','') !~ '^[1-9][0-9]*$'
       or coalesce(a->>'connectionVersion','') !~ '^[1-9][0-9]*$'
       or coalesce(a->>'eligibleFromMs','') !~ '^[0-9]+$'
@@ -118,7 +121,10 @@ begin
       and provider=a->>'provider' and account_id=a->>'accountId';
     if found and (old.connection_version>version or eligible_from<old.eligible_from_ms
       or (old.connection_version=version and (old.connection_id<>a->>'connectionId' or old.eligible_from_ms<>eligible_from
-        or (old.state='ineligible' and eligible)))) then raise exception 'REFRESH_QUEUE_STALE_CONNECTION'; end if;
+        or (not old.connection_open and (a->>'connectionOpen')::boolean)))) then raise exception 'REFRESH_QUEUE_STALE_CONNECTION'; end if;
+    if old.connection_open is false and (a->>'connectionOpen')::boolean and eligible_from < old.checked_at_ms then
+      raise exception 'REFRESH_QUEUE_CLOSED_WINDOW';
+    end if;
     if old.connection_id is distinct from a->>'connectionId' or old.connection_version is distinct from version
       or old.eligible_from_ms is distinct from eligible_from then
       old.first_due_hour_ms := null; old.latest_due_hour_ms := null; old.first_queued_at_ms := null;
@@ -137,10 +143,10 @@ begin
         status := 'pending';
       end if;
     end if;
-    insert into operations.refresh_queue_accounts values(wid,generation,a->>'provider',a->>'accountId',a->>'connectionId',version,eligible_from,
+    insert into operations.refresh_queue_accounts values(wid,generation,a->>'provider',a->>'accountId',a->>'connectionId',version,eligible_from,(a->>'connectionOpen')::boolean,
       status,old.first_due_hour_ms,old.latest_due_hour_ms,old.first_queued_at_ms,now_ms)
     on conflict(workspace_id,install_generation,provider,account_id) do update set
-      connection_id=excluded.connection_id,connection_version=excluded.connection_version,eligible_from_ms=excluded.eligible_from_ms,state=excluded.state,
+      connection_id=excluded.connection_id,connection_version=excluded.connection_version,eligible_from_ms=excluded.eligible_from_ms,connection_open=excluded.connection_open,state=excluded.state,
       first_due_hour_ms=excluded.first_due_hour_ms,latest_due_hour_ms=excluded.latest_due_hour_ms,first_queued_at_ms=excluded.first_queued_at_ms,checked_at_ms=excluded.checked_at_ms;
   end loop;
   -- Authoritative complete inventory only: retired account/generation metadata is invalidated, never carried to a new connection.

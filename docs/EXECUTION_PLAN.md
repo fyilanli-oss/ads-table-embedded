@@ -177,7 +177,9 @@ Bekleyen ihtiyaç henüz **çalıştırılabilir provider işi değildir**. Veri
 tarih aralığı, sayfa ve ölçülmüş iş maliyeti belirlenip önceki kabul çekirdeğine
 bağlanmadan dış çağrı yapılamaz. İlk/son kaçan saatler eksik günleri otomatik
 alma izni değildir. Bağlantı değişiminde eski ihtiyaç yeni bağlantıya taşınmaz;
-uygun olmayan bağlantının aynı sürümle sessizce yeniden açılması reddedilir.
+kapalı bağlantının aynı sürümle sessizce yeniden açılması reddedilir. Abonelik
+uygunluğunun geri gelmesi bağlantının yeniden açılmasıyla karıştırılmaz;
+tek başına yeni OAuth veya geçmiş veri alma izni gerektirmez/vermez.
 Mevcut durdurma/belirsizlik kaydı korunur; yeni kontrol eski işi çözmez,
 tekrarlamaz veya kapasitesini serbest bırakmaz. Bilinçli Disconnect boşluğu alınmaz.
 

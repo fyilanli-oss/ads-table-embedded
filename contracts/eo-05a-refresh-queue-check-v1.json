@@ -16,7 +16,7 @@
   "due": "existing_SHA256_hour_slot; earliest_eligible_slot_to_latest_due_hour_coalesced; no_business_date_or_product_partition_selected",
   "waiting_age": "first_queued_timestamp_preserved_not_reset_by_repeated_checks",
   "blocked_account": "existing_durable_hold_respected_no_resolution_retry_or_claim_release",
-  "connection_change": "monotonic_connection_version_and_eligible_from; ineligible_to_eligible_requires_new_version; pending_old_connection_invalidated",
+  "connection_change": "monotonic_connection_version_and_eligible_from; closed_to_open_requires_new_version; pending_old_connection_invalidated; entitlement_eligibility_recovery_does_not_require_OAuth_reconnection_or_grant_backfill",
   "inventory_retirement": "complete_snapshot_retires_absent_account_generation_metadata_only_no_source_or_Dataset_deletion",
   "transaction": "refresh_control_then_queue_control_locks; full_inventory_and_due_metadata_and_heartbeat_commit_together; expected_revision_single_winner",
   "heartbeat": "database_clock_at_successful_bounded_full_check_only_not_request_start_or_HTTP200; metadata_read_visible_after_commit",

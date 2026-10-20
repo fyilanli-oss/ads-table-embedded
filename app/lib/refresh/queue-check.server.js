@@ -20,10 +20,11 @@ export function prepareRefreshInventory(inventory) {
       requireInput(PROVIDERS.has(account.provider)); identifier(account.accountId); identifier(account.connectionId);
       requireInput(/^[1-9][0-9]*$/.test(account.installGeneration)); integer(Number(account.installGeneration));
       integer(account.connectionVersion); requireInput(account.connectionVersion > 0);
-      integer(account.eligibleFromMs); requireInput(typeof account.eligible === "boolean");
+      integer(account.eligibleFromMs); requireInput(typeof account.eligible === "boolean" && typeof account.connectionOpen === "boolean");
+      requireInput(!account.eligible || account.connectionOpen);
       const row = {workspaceId: workspace.workspaceId, installGeneration: account.installGeneration,
         provider: account.provider, accountId: account.accountId, connectionId: account.connectionId,
-        connectionVersion: account.connectionVersion, eligibleFromMs: account.eligibleFromMs, eligible: account.eligible};
+        connectionVersion: account.connectionVersion, eligibleFromMs: account.eligibleFromMs, eligible: account.eligible, connectionOpen: account.connectionOpen};
       const key = JSON.stringify([row.workspaceId,row.installGeneration,row.provider,row.accountId]);
       requireInput(!accounts.has(key)); accounts.add(key);
       rows.push({...row, offsetMs: refreshHourlyOffset(row)});

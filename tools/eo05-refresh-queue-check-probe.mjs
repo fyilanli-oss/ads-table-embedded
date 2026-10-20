@@ -15,7 +15,7 @@ export async function refreshQueueCheckProbe(client,connection,environment=proce
     assert.equal((await store.readQueueCheck()).configured,false);
     await client.query("update operations.refresh_queue_control set max_workspaces=4,max_accounts=4,max_snapshot_bytes=10000,max_snapshot_age_ms=60000 where singleton");
     const now=()=>Date.now();
-    const account={installGeneration:"1",provider:"klaviyo",accountId:"synthetic-a",connectionId:"connection-a",connectionVersion:1,eligibleFromMs:now()-5*3600000,eligible:true};
+    const account={installGeneration:"1",provider:"klaviyo",accountId:"synthetic-a",connectionId:"connection-a",connectionVersion:1,eligibleFromMs:now()-5*3600000,eligible:true,connectionOpen:true};
     const fixture=()=>({complete:true,observedAtMs:now(),expectedWorkspaces:2,expectedAccounts:1,
       workspaces:[{workspaceId:workspace,accounts:[{...account}]},{workspaceId:emptyShop,accounts:[]}]});
     const revision=(await store.readQueueCheck()).revision;
@@ -48,8 +48,14 @@ export async function refreshQueueCheckProbe(client,connection,environment=proce
     await runRefreshQueueCheck({store,loadInventory:async()=>fixture()});state=await store.readQueueCheck();
     assert.equal(state.accounts[0].state,"ineligible");assert.equal(state.accounts[0].firstDueHourMs,null);
     account.eligible=true;
+    assert.equal((await runRefreshQueueCheck({store,loadInventory:async()=>fixture()})).status,"checked","entitlement eligibility recovery is not a new OAuth connection");
+    account.eligible=false;account.connectionOpen=false;
+    await runRefreshQueueCheck({store,loadInventory:async()=>fixture()});
+    account.eligible=true;account.connectionOpen=true;
     assert.equal((await runRefreshQueueCheck({store,loadInventory:async()=>fixture()})).status,"needs_attention","same connection cannot silently reopen disconnected history");
-    account.connectionVersion=2;account.connectionId="connection-b";account.eligibleFromMs=now()+3600000;
+    account.connectionVersion=2;account.connectionId="connection-b";
+    assert.equal((await runRefreshQueueCheck({store,loadInventory:async()=>fixture()})).status,"needs_attention","new version cannot reuse eligibility from before the closed window");
+    account.eligibleFromMs=now()+3600000;
     await runRefreshQueueCheck({store,loadInventory:async()=>fixture()});state=await store.readQueueCheck();
     assert.equal(state.accounts[0].state,"not_due");assert.equal(state.accounts[0].firstDueHourMs,null);
     account.connectionVersion=1;

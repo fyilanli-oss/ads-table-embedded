@@ -4,7 +4,7 @@ import {readFileSync} from "node:fs";
 import {prepareRefreshInventory,runRefreshQueueCheck,refreshQueueSilence} from "../app/lib/refresh/queue-check.server.js";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 const workspaceId="10000000-0000-0000-0000-000000000001";
-const account={installGeneration:"1",provider:"klaviyo",accountId:"synthetic-account",connectionId:"synthetic-connection",connectionVersion:1,eligibleFromMs:0,eligible:true};
+const account={installGeneration:"1",provider:"klaviyo",accountId:"synthetic-account",connectionId:"synthetic-connection",connectionVersion:1,eligibleFromMs:0,eligible:true,connectionOpen:true};
 const fixture=()=>({complete:true,observedAtMs:100,expectedWorkspaces:1,expectedAccounts:1,workspaces:[{workspaceId,accounts:[{...account}]}]});
 
 test("complete inventory includes empty shops and disabled accounts, and preserves stable hourly offsets",()=>{
@@ -18,7 +18,8 @@ test("complete inventory includes empty shops and disabled accounts, and preserv
 test("partial, missing, duplicate or malformed inventory never becomes a complete check",()=>{
   for(const change of [x=>x.complete=false,x=>x.expectedWorkspaces++,x=>x.expectedAccounts++,x=>x.workspaces.push(x.workspaces[0]),
     x=>x.workspaces[0].accounts.push(account),x=>x.workspaces[0].accounts[0].eligible="true",
-    x=>x.workspaces[0].accounts[0].installGeneration="0",x=>x.workspaces[0].accounts[0].connectionVersion=0]) {
+    x=>x.workspaces[0].accounts[0].installGeneration="0",x=>x.workspaces[0].accounts[0].connectionVersion=0,
+    x=>x.workspaces[0].accounts[0].connectionOpen=false]) {
     const input=fixture();change(input);assert.throws(()=>prepareRefreshInventory(input),/REFRESH_QUEUE_INPUT_INVALID/);
   }
 });

@@ -4,6 +4,7 @@ import {readFileSync, writeFileSync} from "node:fs";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
 import pg from "pg";
+import {refreshQueueCheckProbe} from "./eo05-refresh-queue-check-probe.mjs";
 import {loadMigrationFiles, validateMigrationLineage, validExecutionContext} from "./check-migration-lineage.mjs";
 import {buildScopedRecovery, definitionHash} from "./f01-scoped-recovery.mjs";
 import {privacyIndexPlanProbe, assertPrivacyIndexes} from "./f08-privacy-index-probe.mjs";
@@ -478,6 +479,9 @@ async function main() {
     }
     if ([...manifest.forward_migrations,...manifest.pending_migrations].some(entry => entry.name === "eo05a_refresh_chunk_progress")) {
       await refreshWorkChunkProbe(client, replayConnection);
+    }
+    if ([...manifest.forward_migrations,...manifest.pending_migrations].some(entry => entry.name === "eo05a_refresh_queue_check")) {
+      await refreshQueueCheckProbe(client, replayConnection);
     }
     const after=await inventory(client);
     await securityProbes(client);

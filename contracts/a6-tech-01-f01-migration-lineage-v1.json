@@ -436,6 +436,15 @@
       "repository_sql_sha256": "28d199530f2c63099ec68d7011b105a1a4c1ef7c7fb4818861e428d26df0ad22",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261020120802",
+      "name": "eo05a_refresh_queue_check",
+      "file": "supabase/migrations/20261020120802_eo05a_refresh_queue_check.sql",
+      "created_with": "supabase@2.121.0 migration new eo05a_refresh_queue_check",
+      "repository_sql_sha256": "31962c71387f370705771b51db93c0dadbd6debc802b51b7d6610dd247f29867",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

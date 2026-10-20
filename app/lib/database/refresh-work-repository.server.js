@@ -17,6 +17,18 @@ export function createRefreshWorkRepository(database) {
   }
   return Object.freeze({
     readAdmissionSnapshot,
+    async loadRefreshInstallation({claim}) {
+      return result("select operations.load_refresh_entitlement_installation($1::uuid,$2::bigint,$3::text,$4::text,$5::text,$6::bigint) as result", refreshWorkIdentity(claim,{claimRequired:true}));
+    },
+    async applyEntitlementSnapshot({claim,snapshot}) {
+      return result("select operations.apply_refresh_entitlement_snapshot($1::uuid,$2::bigint,$3::text,$4::text,$5::text,$6::bigint,$7::jsonb) as result",
+        [...refreshWorkIdentity(claim,{claimRequired:true}),JSON.stringify(snapshot)]);
+    },
+    async isEntitlementCurrent({claim,receipt}) {
+      if(typeof receipt?.observedAt!=="string" || Number.isNaN(Date.parse(receipt.observedAt))) throw new Error("REFRESH_WORK_INPUT_INVALID");
+      return await result("select operations.refresh_entitlement_is_current($1::uuid,$2::bigint,$3::text,$4::text,$5::text,$6::bigint,$7::timestamptz) as result",
+        [...refreshWorkIdentity(claim,{claimRequired:true}),receipt.observedAt])===true;
+    },
     async readQueueCheck() {
       return result("select operations.read_refresh_queue_check() as result");
     },

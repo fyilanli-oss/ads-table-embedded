@@ -1,14 +1,14 @@
 import {refreshWorkIdentity} from "./work-stop-policy.server.js";
 
 // One already-reserved chunk only. No routes, native provider adapters, Dataset writer or retry loop.
-export async function runRefreshChunk({claim: suppliedClaim, window: suppliedWindow, limits: suppliedLimits, store, loadAuthority, readPage, validatePage, now}) {
+export async function runRefreshChunk({claim: suppliedClaim, window: suppliedWindow, limits: suppliedLimits, store, loadAuthority, verifyEntitlement, isEntitlementCurrent, readPage, validatePage, now}) {
   const claim=structuredClone(suppliedClaim);
   refreshWorkIdentity(claim,{claimRequired:true});
   const window=structuredClone(suppliedWindow);
   const limits=structuredClone(suppliedLimits);
   const inputInvalid=()=>{throw new Error("REFRESH_CHUNK_INPUT_INVALID");};
   if (!["advanceStage","isClaimCurrent","readAdmissionSnapshot","recordStop"].every(key=>typeof store?.[key]==="function")
-    || [loadAuthority,readPage,validatePage,now].some(fn=>typeof fn!=="function")) inputInvalid();
+    || [loadAuthority,verifyEntitlement,isEntitlementCurrent,readPage,validatePage,now].some(fn=>typeof fn!=="function")) inputInvalid();
   for(const field of ["requestTimeoutMs","finishReserveMs","maxRows","maxBytes","deadlineAt"]) {
     if(!Number.isSafeInteger(limits?.[field])||limits[field]<1) inputInvalid();
   }
@@ -26,7 +26,7 @@ export async function runRefreshChunk({claim: suppliedClaim, window: suppliedWin
   const context=()=>({claim:structuredClone(claim),window:structuredClone(window)});
   const timeLeft=()=>{const current=now();return Number.isSafeInteger(current)&&current>=started?limits.deadlineAt-current:-1;};
   const authorityAllowed=a=>a&&["workspaceId","installGeneration","provider","accountId"].every(key=>a[key]===claim[key])
-    && ["installationVerified","entitled","connected","setupComplete","allowedWindow"].every(key=>a[key]===true)
+    && ["installationVerified","connected","setupComplete","allowedWindow"].every(key=>a[key]===true)
     && typeof a.connectionId==="string"&&a.connectionId.length>0&&a.connectionId.length<=256
     && Number.isSafeInteger(a.connectionVersion)&&a.connectionVersion>0;
   async function advance(next, rows=0, bytes=0) {
@@ -53,6 +53,13 @@ export async function runRefreshChunk({claim: suppliedClaim, window: suppliedWin
     if(!authorityAllowed(authority)) return stop("authority_required","not_sent");
     if(timeLeft()<limits.requestTimeoutMs+limits.finishReserveMs) return stop("stopped_before_call","not_sent");
     if(!await advance("request_intent")) return {status:"not_current",phase};
+    let entitlement;
+    try {entitlement=await verifyEntitlement(context());} catch {return stop("request_outcome_unknown","unknown");}
+    if(entitlement?.status!=="verified") {
+      if(entitlement?.externalOutcome==="unknown") return stop("request_outcome_unknown","unknown");
+      return stop(entitlement?.status==="denied"?"entitlement_required":"stopped_before_call","not_sent");
+    }
+    if(timeLeft()<limits.requestTimeoutMs+limits.finishReserveMs) return stop("stopped_before_call","not_sent");
     // Read current authority again after persistence. A cached initial credential is not enough.
     const current=await authoritySnapshot();
     if(!authorityAllowed(current)||current.connectionId!==authority.connectionId||current.connectionVersion!==authority.connectionVersion) {
@@ -60,6 +67,7 @@ export async function runRefreshChunk({claim: suppliedClaim, window: suppliedWin
     }
     if(timeLeft()<limits.requestTimeoutMs+limits.finishReserveMs) return stop("stopped_before_call","not_sent");
     if(await store.isClaimCurrent({claim})!==true) return {status:"not_current",phase};
+    if(await isEntitlementCurrent({...context(),receipt:entitlement.receipt})!==true) return stop("entitlement_required","not_sent");
     if(timeLeft()<limits.requestTimeoutMs+limits.finishReserveMs) return stop("stopped_before_call","not_sent");
     const controller=new AbortController();
     let timer;
@@ -98,7 +106,8 @@ export async function runRefreshChunk({claim: suppliedClaim, window: suppliedWin
       if(bytes>limits.maxBytes) throw new Error();
     } catch {return stop("validation_failed_after_request","settled");}
     const beforeHandoff=await authoritySnapshot();
-    if(!authorityAllowed(beforeHandoff)||beforeHandoff.connectionId!==current.connectionId||beforeHandoff.connectionVersion!==current.connectionVersion) {
+    if(!authorityAllowed(beforeHandoff)||beforeHandoff.connectionId!==current.connectionId||beforeHandoff.connectionVersion!==current.connectionVersion
+      || await isEntitlementCurrent({...context(),receipt:entitlement.receipt})!==true) {
       return stop("authority_check_failed_after_request","settled");
     }
     if(timeLeft()<limits.finishReserveMs) return stop("worker_stopped","settled");

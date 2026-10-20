@@ -1,9 +1,9 @@
 // Quota at the actual HTTP boundary, not once per report/snapshot.
 const controls=new WeakMap();
 const managed=new WeakSet();
-function control(status) {
+function control(status,priorBoundaryAttempts=null) {
   const error=new Error(status==="waiting"?"SHARED_QUOTA_WAITING":"SHARED_QUOTA_NOT_DISPATCHED");
-  controls.set(error,Object.freeze({status,boundaryExternalOutcome:"not_sent"}));
+  controls.set(error,Object.freeze({status,boundaryExternalOutcome:"not_sent",priorBoundaryAttempts}));
   return error;
 }
 export function quotaBoundaryControl(error) {return controls.get(error)??null;}
@@ -50,7 +50,9 @@ function descriptor(provider,input,init) {
 export function createQuotaManagedFetch({provider,guard,resolveOperation,lane,fetchFn=globalThis.fetch}) {
   if(!["shopify_partner","meta","google_ads","klaviyo"].includes(provider)||typeof guard?.execute!=="function"||typeof resolveOperation!=="function"
     ||!["interactive","background"].includes(lane)||typeof fetchFn!=="function"||managed.has(fetchFn)) throw new Error("QUOTA_NATIVE_TRANSPORT_INPUT_INVALID");
+  let attempts=0,closed=false;
   const fetchManaged=async(input,init={})=>{
+    if(closed) throw control("not_configured",attempts);
     // Copy mutable URL/header/form objects BEFORE awaiting resolver or quota persistence.
     let requestUrl,requestInit;
     try {
@@ -69,6 +71,8 @@ export function createQuotaManagedFetch({provider,guard,resolveOperation,lane,fe
     let result;
     try {result=await guard.execute({operationKey,lane,run:async()=>{
       // No silent redirect: credentials cannot move to another target or bypass a second debit.
+      if(closed||requestInit.signal?.aborted) throw Error("QUOTA_NATIVE_DISPATCH_CLOSED");
+      attempts++;
       response=await fetchFn(requestUrl,requestInit);
       if(!response||typeof response.ok!=="boolean"||typeof response.json!=="function") return {outcome:"unknown"};
       rejected=!response.ok;
@@ -87,7 +91,11 @@ export function createQuotaManagedFetch({provider,guard,resolveOperation,lane,fe
       if(response.ok) throw new Error("QUOTA_NATIVE_PROVIDER_REJECTED");
       return response;
     }
-    if(["waiting","not_configured","clock_invalid","already_reserved","not_sent"].includes(result?.status)) throw control(result.status);
+    if(["waiting","not_configured","clock_invalid","already_reserved","not_sent"].includes(result?.status)) {
+      // A first-boundary wait terminates this execution's transport, including pending concurrent entries.
+      if(result.status==="waiting"&&attempts===0) closed=true;
+      throw control(result.status,attempts);
+    }
     // Unknown external execution must never be misclassified as a proven-not-sent wait.
     throw new Error("QUOTA_NATIVE_TRANSPORT_STOPPED");
   };

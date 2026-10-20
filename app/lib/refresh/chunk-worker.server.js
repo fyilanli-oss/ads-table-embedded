@@ -1,4 +1,5 @@
 import {refreshWorkIdentity} from "./work-stop-policy.server.js";
+import {refreshQuotaWait,refreshQuotaWaitBoundary} from "./quota-work-wait.server.js";
 
 // One already-reserved chunk only. No routes, native provider adapters, Dataset writer or retry loop.
 export async function runRefreshChunk({claim: suppliedClaim, window: suppliedWindow, limits: suppliedLimits, store, loadAuthority, verifyEntitlement, isEntitlementCurrent, readPage, validatePage, now}) {
@@ -42,6 +43,16 @@ export async function runRefreshChunk({claim: suppliedClaim, window: suppliedWin
         phase,reason,externalOutcome,stopRecorded:recorded?.recorded===true};
     } catch {return {status:"needs_attention",phase,reason:"stop_tracking_unavailable",externalOutcome,stopRecorded:false};}
   }
+  async function waitForQuota(wait) {
+    const boundary=refreshQuotaWaitBoundary(wait);
+    try {
+      if(typeof store.deferQuotaWait!=="function") throw Error();
+      const accepted=await store.deferQuotaWait({claim,window,wait});
+      return {status:accepted===true?"quota_waiting":"needs_attention",phase,waitingBoundary:boundary,boundaryExternalOutcome:"not_sent",
+        externalOutcome:boundary==="entitlement"?"not_sent":"settled",
+        waitRecorded:accepted===true,reservationRetained:accepted!==true};
+    } catch {return {status:"needs_attention",phase,reason:"quota_wait_tracking_unavailable",reservationRetained:true};}
+  }
   let sent=false;
   let settled=false;
   async function authoritySnapshot() {
@@ -55,6 +66,7 @@ export async function runRefreshChunk({claim: suppliedClaim, window: suppliedWin
     if(!await advance("request_intent")) return {status:"not_current",phase};
     let entitlement;
     try {entitlement=await verifyEntitlement(context());} catch {return stop("request_outcome_unknown","unknown");}
+    if(refreshQuotaWaitBoundary(entitlement)==="entitlement") return waitForQuota(entitlement);
     if(entitlement?.status!=="verified") {
       if(entitlement?.externalOutcome==="unknown") return stop("request_outcome_unknown","unknown");
       return stop(entitlement?.status==="denied"?"entitlement_required":"stopped_before_call","not_sent");
@@ -76,12 +88,16 @@ export async function runRefreshChunk({claim: suppliedClaim, window: suppliedWin
       const expired=new Promise(resolve=>{timer=setTimeout(()=>resolve({kind:"unknown"}),limits.requestTimeoutMs);});
       sent=true;
       const response=Promise.resolve().then(()=>readPage({...context(),authority:structuredClone(current),signal:controller.signal}))
-        .then(value=>({kind:"returned",value}),()=>({kind:"unknown"}));
+        .then(value=>({kind:"returned",value}),error=>{
+          const wait=refreshQuotaWait(error,"provider_page",claim);
+          return wait?{kind:"quota_wait",wait}:{kind:"unknown"};
+        });
       observed=await Promise.race([response,expired]);
       if(observed.kind==="unknown") controller.abort();
     } finally {clearTimeout(timer);}
     // Abort/timeout/transport rejection is NOT proof that the remote operation stopped.
     if(observed.kind==="unknown") return stop("request_outcome_unknown","unknown");
+    if(observed.kind==="quota_wait") return waitForQuota(observed.wait);
     settled=true;
     if(!await advance("response_received")) return {status:"not_current",phase,externalOutcome:"settled"};
     if(observed.value?.kind==="rejected") {

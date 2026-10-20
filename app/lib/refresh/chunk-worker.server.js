@@ -87,6 +87,11 @@ export async function runRefreshChunk({claim: suppliedClaim, window: suppliedWin
     try {
       if(observed.value?.kind!=="complete") throw new Error();
       const result=validatePage({...context(),authority:structuredClone(current),payload:observed.value.payload});
+      if(result&&typeof result.then==="function") {
+        // Async validators are unsupported; observe rejection without treating it as validation success.
+        void Promise.resolve(result).catch(()=>{});
+        throw new Error();
+      }
       if(result?.complete!==true||!Array.isArray(result.rows)||result.rows.length>limits.maxRows) throw new Error();
       rows=structuredClone(result.rows);
       bytes=Buffer.byteLength(JSON.stringify(rows),"utf8");

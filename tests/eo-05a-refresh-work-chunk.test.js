@@ -70,6 +70,8 @@ test("partial, malformed or excessive data stops; verified empty is not labelled
   }
   const empty=setup({validatePage:()=>({complete:true,rows:[]})});
   assert.equal((await runRefreshChunk(empty.args)).status,"awaiting_dataset");
+  const asyncFailure=setup({validatePage:async()=>{throw Error("PRIVATE_VALIDATOR_ERROR");}});
+  assert.equal((await runRefreshChunk(asyncFailure.args)).reason,"validation_failed_after_request");
 });
 
 test("post-request authority loss and stage persistence failure never produce ready or release success",async()=>{

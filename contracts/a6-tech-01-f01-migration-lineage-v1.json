@@ -409,7 +409,17 @@
       "applied_sql_difference": null
     }
   ],
-  "pending_migrations": [],
+  "pending_migrations": [
+    {
+      "version": "20261020092429",
+      "name": "eo05a_refresh_work_tracking",
+      "file": "supabase/migrations/20261020092429_eo05a_refresh_work_tracking.sql",
+      "created_with": "supabase@2.121.0 migration new eo05a_refresh_work_tracking",
+      "repository_sql_sha256": "e34ccb3591a8a52f3599add786a2abd97b070dd3a18d3ba79f027ad8fdb056e7",
+      "applied": false,
+      "live_apply_authorized": false
+    }
+  ],
   "forward_migrations": [
     {
       "version": "20261018152910",

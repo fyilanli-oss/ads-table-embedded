@@ -7,6 +7,7 @@ import pg from "pg";
 import {loadMigrationFiles, validateMigrationLineage, validExecutionContext} from "./check-migration-lineage.mjs";
 import {buildScopedRecovery, definitionHash} from "./f01-scoped-recovery.mjs";
 import {privacyIndexPlanProbe, assertPrivacyIndexes} from "./f08-privacy-index-probe.mjs";
+import {refreshWorkTrackingProbe} from "./eo05-refresh-work-probe.mjs";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const read = (file) => readFileSync(path.join(root, file), "utf8").replaceAll("\r\n", "\n");
@@ -465,6 +466,9 @@ async function main() {
       await assertPrivacyIndexes(client);
     }
     await credentialReplacementRegression(client);
+    if (manifest.pending_migrations.some(entry => entry.name === "eo05a_refresh_work_tracking")) {
+      await refreshWorkTrackingProbe(client, replayConnection);
+    }
     const after=await inventory(client);
     await securityProbes(client);
     const output=path.join(process.env.RUNNER_TEMP,"f01b-staged-schema.json");

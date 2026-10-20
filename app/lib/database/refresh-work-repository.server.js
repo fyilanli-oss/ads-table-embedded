@@ -17,6 +17,19 @@ export function createRefreshWorkRepository(database) {
   }
   return Object.freeze({
     readAdmissionSnapshot,
+    async readPreflightSnapshot() {
+      return result("select operations.read_refresh_preflight_snapshot() as result");
+    },
+    async commitPreflight({expectedRevision,queueRevision,nextState,source,window,partitionId}) {
+      if(![expectedRevision,queueRevision].every(n=>Number.isSafeInteger(n)&&n>=0)||!nextState||!source||!window||typeof partitionId!=="string") throw new Error("REFRESH_WORK_INPUT_INVALID");
+      return await result("select operations.commit_refresh_preflight($1::bigint,$2::bigint,$3::jsonb,$4::jsonb,$5::jsonb,$6::text) as result",
+        [expectedRevision,queueRevision,JSON.stringify(nextState),JSON.stringify(source),JSON.stringify(window),partitionId])===true;
+    },
+    async loadBoundAuthority({claim,window}) {
+      if(!window||typeof window.from!=="string"||typeof window.to!=="string") throw new Error("REFRESH_WORK_INPUT_INVALID");
+      return result("select operations.load_refresh_bound_authority($1::uuid,$2::bigint,$3::text,$4::text,$5::text,$6::bigint,$7::date,$8::date) as result",
+        [...refreshWorkIdentity(claim,{claimRequired:true}),window.from,window.to]);
+    },
     async checkQueueFromAuthority({expectedRevision}) {
       if(!Number.isSafeInteger(expectedRevision)||expectedRevision<0) throw new Error("REFRESH_WORK_INPUT_INVALID");
       return result("select operations.check_refresh_queue_from_authority($1::bigint) as result",[expectedRevision]);

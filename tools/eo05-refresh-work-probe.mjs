@@ -72,7 +72,7 @@ export async function refreshWorkTrackingProbe(client, connection, environment =
       assert.equal((await client.query("select has_function_privilege($1,'operations.read_refresh_admission_snapshot()','EXECUTE') as allowed",[role])).rows[0].allowed,false);
       assert.equal((await client.query("select has_table_privilege($1,'operations.refresh_runs','SELECT,INSERT,UPDATE,DELETE') as allowed",[role])).rows[0].allowed,false);
     }
-    assert.equal((await client.query("select has_function_privilege('adstable_refresh_coordinator','operations.commit_refresh_admissions(bigint,jsonb)','EXECUTE') as allowed")).rows[0].allowed,true);
+    assert.equal((await client.query("select has_function_privilege('adstable_refresh_coordinator','operations.commit_refresh_admissions(bigint,jsonb)','EXECUTE') as allowed")).rows[0].allowed,false,"native bridge requires source-bound admission");
     console.log("EO05_REFRESH_WORK_PROBE_PASS synthetic_only=true production_mutation=false real_capacity=false");
   } finally {
     try {

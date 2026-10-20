@@ -80,13 +80,13 @@ function compare(a, b) {
   return a < b ? -1 : a > b ? 1 : 0;
 }
 
-function authorityAllows(job) {
-  return ["installationVerified", "entitled", "connected", "setupComplete", "allowedWindow"]
+function authorityAllows(job, preflight) {
+  return ["installationVerified", ...preflight ? [] : ["entitled"], "connected", "setupComplete", "allowedWindow"]
     .every(field => job.authority?.[field] === true);
 }
 
 // Pure proposal only. No returned claim authorizes execution before a global CAS succeeds.
-export function planRefreshAdmissions({state, candidates, budget, now, bounds}) {
+function planAdmissions({state, candidates, budget, now, bounds}, preflight) {
   integer(now);
   for (const field of ["maxCandidates", "maxClaims", "maxAdmissions", "maxWorkspaces"]) {
     integer(bounds?.[field]);
@@ -159,11 +159,11 @@ export function planRefreshAdmissions({state, candidates, budget, now, bounds}) 
       || compare(a.queuedAt, b.queuedAt) || compare(a.workspaceId, b.workspaceId) || compare(a.id, b.id));
     const job = pending.shift();
     let reason;
-    if (!authorityAllows(job)) reason = "authority_required";
+    if (!authorityAllows(job, preflight)) reason = "authority_required";
     else if (job.queuedAt > now || job.scheduledHour + refreshHourlyOffset(job) > now) reason = "not_due";
     else if (heldAccounts.has(flightKey(job))) reason = "account_held";
     else if (flights.has(flightKey(job))) reason = "account_busy";
-    else if (admitted.length >= bounds.maxAdmissions || nextState.claims.length >= bounds.maxClaims) reason = "dispatch_limit";
+    else if (admitted.length >= (preflight ? 1 : bounds.maxAdmissions) || nextState.claims.length >= bounds.maxClaims) reason = "dispatch_limit";
     else {
       try { amounts(job.cost); } catch { reason = "workload_unknown"; }
       if (!reason && scopes(job).some(scope => !limits.has(scope))) reason = "budget_unknown";
@@ -193,6 +193,12 @@ export function planRefreshAdmissions({state, candidates, budget, now, bounds}) 
   }
   return {status: admitted.length ? "proposed" : "waiting", admitted, deferred, nextState};
 }
+
+export function planRefreshAdmissions(input) { return planAdmissions(input, false); }
+
+// A bounded reservation for a FRESH entitlement check, never permission to read ad data.
+// Cached billing is deliberately absent from this decision. Native commit binds the source/window.
+export function planRefreshPreflightAdmissions(input) { return planAdmissions(input, true); }
 
 // Store must atomically compare the global revision and replace reservations + claims.
 // No production adapter or local-memory fallback is supplied by this module.

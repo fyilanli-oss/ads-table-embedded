@@ -111,7 +111,7 @@ export async function refreshWorkStopsProbe(client,connection,environment=proces
       for(const name of functions) assert.equal((await client.query("select has_function_privilege($1,$2,'EXECUTE') as allowed",[role,`operations.${name}`])).rows[0].allowed,false);
       assert.equal((await client.query("select has_table_privilege($1,'operations.refresh_work_stops','SELECT,INSERT,UPDATE,DELETE') as allowed",[role])).rows[0].allowed,false);
     }
-    for(const name of functions) assert.equal((await client.query("select has_function_privilege('adstable_refresh_coordinator',$1,'EXECUTE') as allowed",[`operations.${name}`])).rows[0].allowed,true);
+    for(const name of functions) assert.equal((await client.query("select has_function_privilege('adstable_refresh_coordinator',$1,'EXECUTE') as allowed",[`operations.${name}`])).rows[0].allowed,!name.startsWith("commit_refresh_admissions("));
     for(const name of ["commit_refresh_admissions_before_stops(bigint,jsonb)","finish_refresh_work_before_stops(uuid,bigint,text,text,text,bigint,text)","read_refresh_admission_snapshot_before_stops()"]) {
       assert.equal((await client.query("select has_function_privilege('adstable_refresh_coordinator',$1,'EXECUTE') as allowed",[`operations.${name}`])).rows[0].allowed,false);
     }

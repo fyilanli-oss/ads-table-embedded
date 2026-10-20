@@ -207,6 +207,48 @@ secret yoktur; migration canlı uygulanmaz. Supabase/PostgreSQL rehberleri tek
 tutarlı kaynak görüntüsü ve dar iç erişim sınırını yönlendirdi. Resmî kaynaklar
 20 Ekim 2026'da kontrol edildi. UI değişmedi; merge ayrı açık onay bekler.
 
+### EO-05-A — İş sırasından güncel abonelik ve veri alımına güvenli devir — 20 Ekim 2026
+
+Fırat bu repository bağlantısını onayladı. Önceki yerel/uzak `main`
+`e5a426d816ffd3004efc98ea42d73ad2457fb0a8` (PR #149) korunur. 05-B başlamaz.
+Sözleşme: `contracts/eo-05a-refresh-preflight-bridge-v1.json`.
+
+**Sıradaki mağaza önce güncel abonelik kontrolüne girebilir.** Eski abonelik
+kaydı eksik veya olumsuz diye mağaza bu kontrolün dışında bırakılmaz; kullanıcının
+uygulamayı açması beklenmez. Bu aşamada ayrılan kapasite reklam verisi alma izni
+değildir. Shopify'ın yeni olumlu cevabı ve kaydın hâlâ geçerli olması zorunludur.
+Yeni olumsuz cevap reklam çağrısını durdurur. İş başına tek deneme vardır.
+
+Her devirde en fazla bir iş başlatılır. Mağaza/provider/hesap sınırları, kullanıcı
+işlemleri için ayrılan kapasite, sıra adaleti ve belirsiz işlerin blokajı korunur.
+İş, kapasitesi ve bağlı olduğu hesap dönemi aynı kısa veritabanı işleminde ayrılır;
+bu işlem sırasında dış çağrı beklenmez. Aradaki sırada başka değişiklik olduysa
+yeniden denenmez; devir yapılmaz. İç koordinatör keyfî hesap listesiyle genel iş
+başlatma yolunu kullanamaz.
+
+**İş başladığı bağlantı ve hesap seçim dönemine bağlıdır.** Bağlantı değişirse,
+yeniden yetki gerekirse veya başka hesap seçilip eski hesaba dönülürse eski iş
+geçersizdir. Aynı hesap kimliği veya OAuth sürümü tek başına yeterli değildir.
+Saat dilimi/para birimi değişikliği de eski işi geçersiz kılar. Çağrı öncesi ve
+sonuç devri öncesi yeniden kontrol yapılır; kullanıcı işlemleri küresel olarak
+dondurulmuş sayılmaz. Gelecekteki Dataset yazması aynı işlem içinde son kontrolü
+yapmak zorundadır.
+
+Tarih aralığı, parçanın kimliği, büyüklüğü ve süre sınırı güvenilir iç planlayıcı
+tarafından açıkça verilir. Eksikse tarih uydurulmaz. Günlük sorgu bağlantı/hesap
+seçim döneminden önceye taşamaz; bilinçli Disconnect boşluğu alınamaz. Dönem
+sınırını kesen günün politikası ve üretim iş parçaları henüz seçilmedi; EO-05-D
+kararı bu bağlantı koduyla atlanmaz. İhtiyaç kaydı silinmez; elde edilen satırlar
+yalnız `awaiting_dataset` olarak bellekte devredilir. Bu, başarılı refresh veya
+Dataset'e kayıt değildir.
+
+Supabase ve PostgreSQL rehberleri kısa işlem, dar yetki ve hesap dönemi korumasını
+yönlendirdi. Kaynaklar 20 Ekim 2026'da kontrol edildi; bağlantılar sözleşmededir.
+Sentetik testler ve mevcut iki boş CI veritabanı kullanılır. Canlı migration,
+Shopify/provider çağrısı, UI/deploy, yeni hizmet veya secret yoktur. Ortak Shopify
+çağrı kotası, üretim tarih/iş planı, zamanlayıcı, bağımsız alarm/gözetmen ve Dataset
+yazıcısı açık kapılardır. Merge ayrıca onaylanır.
+
 ### EO-05-A — Saatlik veri alımından önce güncel Shopify abonelik kontrolü — 20 Ekim 2026
 
 PR #147, Fırat'ın açık onayıyla `79bcbcd6ee663b8155a2737c3ac28c2687409a96`

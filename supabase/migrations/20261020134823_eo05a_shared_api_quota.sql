@@ -85,7 +85,7 @@ begin
       return jsonb_build_object('status','waiting'); end if;
     select coalesce(sum(d.units),0) into used from operations.api_quota_debits d where d.policy_id=p.id and d.expires_at>t;
     -- Both lanes consume the SAME total. Background cannot consume interactive headroom.
-    if used+p.units>p.max_units-case when p_lane='background' then p.interactive_reserve else 0 end then
+    if used+p.units>p.max_units-(case when p_lane='background' then p.interactive_reserve else 0 end) then
       return jsonb_build_object('status','waiting'); end if;
     delay:=least(delay,p.dispatch_delay_ms);
   end loop;

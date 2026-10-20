@@ -62,4 +62,5 @@ test("shared quota contract does not decide Dataset, product grain, dates or nat
   const sql=readFileSync(new URL(`../${c.migration}`,import.meta.url),"utf8");
   assert.match(sql,/order by q.id for update of q/);assert.match(sql,/and settled/);
   assert.match(sql,/interactive_reserve/);assert.match(sql,/max_outstanding/);
+  assert.match(sql,/p\.max_units-\(case when p_lane='background' then p\.interactive_reserve else 0 end\)/,"CASE expression must be parenthesized inside the PLpgSQL IF comparison");
 });

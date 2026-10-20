@@ -17,6 +17,13 @@ export function createRefreshWorkRepository(database) {
   }
   return Object.freeze({
     readAdmissionSnapshot,
+    async checkQueueFromAuthority({expectedRevision}) {
+      if(!Number.isSafeInteger(expectedRevision)||expectedRevision<0) throw new Error("REFRESH_WORK_INPUT_INVALID");
+      return result("select operations.check_refresh_queue_from_authority($1::bigint) as result",[expectedRevision]);
+    },
+    async readInventoryStatus() {
+      return result("select operations.read_refresh_inventory_status() as result");
+    },
     async loadRefreshInstallation({claim}) {
       return result("select operations.load_refresh_entitlement_installation($1::uuid,$2::bigint,$3::text,$4::text,$5::text,$6::bigint) as result", refreshWorkIdentity(claim,{claimRequired:true}));
     },

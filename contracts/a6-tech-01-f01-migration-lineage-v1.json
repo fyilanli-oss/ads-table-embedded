@@ -454,6 +454,15 @@
       "repository_sql_sha256": "d0614b7490c4ceb3103fbd77f765588187db2ead49b58798334500f26ffb5cc2",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261020124834",
+      "name": "eo05a_refresh_native_inventory",
+      "file": "supabase/migrations/20261020124834_eo05a_refresh_native_inventory.sql",
+      "created_with": "supabase@2.121.0 migration new eo05a_refresh_native_inventory",
+      "repository_sql_sha256": "6fbfa2a0704184d249dbb8abc7c0b2979c11270c1d5052871271f223ca80eea4",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

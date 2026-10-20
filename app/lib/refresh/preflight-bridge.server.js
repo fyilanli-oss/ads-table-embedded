@@ -39,7 +39,7 @@ export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlemen
     if(proposal.status!=="proposed") return {status:proposal.status,deferred:proposal.deferred};
     const selected=proposal.admitted[0],binding=plans.get(selected.id);
     const accepted=await store.commitPreflight({expectedRevision:snapshot.state.revision,queueRevision:snapshot.queueRevision,
-      nextState:proposal.nextState,source:binding.source,window:binding.plan.window,partitionId:binding.plan.partitionId});
+      nextState:proposal.nextState,source:binding.source,window:binding.plan.window,partitionId:binding.plan.partitionId,deadlineAt:binding.plan.limits.deadlineAt});
     if(accepted!==true) return {status:"conflict"};
     claim=selected;
     return {claim:structuredClone(claim),...await runRefreshChunk({claim,window:binding.plan.window,limits:binding.plan.limits,store,

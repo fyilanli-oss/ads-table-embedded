@@ -66,10 +66,11 @@ test("denied fresh billing or changed source stops before ad data; errors never 
 
 test("database bridge uses parameterized narrow functions; generic native bypass remains denied by SQL",async()=>{
   const queries=[],store=createRefreshWorkRepository({query:async(sql,args)=>{queries.push({sql,args});return {rows:[{result:true}]};}});
-  const f=fixture();await store.readPreflightSnapshot();await store.commitPreflight({expectedRevision:1,queueRevision:2,nextState:{},source:{},window:{},partitionId:"p"});
+  const f=fixture();await store.readPreflightSnapshot();await store.commitPreflight({expectedRevision:1,queueRevision:2,nextState:{},source:{},window:{},partitionId:"p",deadlineAt:3601000});
   await store.loadBoundAuthority({claim:{workspaceId:"w",installGeneration:"1",provider:"meta",accountId:"a",id:"i",fence:1},window:f.plan.window});
   assert.equal(queries[0].sql,"select operations.read_refresh_preflight_snapshot() as result");assert.equal(queries[1].args[0],1);assert.equal(queries[1].args[1],2);
   assert.equal(queries[2].args.length,8);
+  assert.equal(queries[1].args[6],3601000);assert.match(queries[1].sql,/commit_refresh_preflight_with_deadline/);
   const c=JSON.parse(readFileSync(new URL("../contracts/eo-05a-refresh-preflight-bridge-v1.json",import.meta.url),"utf8"));
   assert.equal(c.live_activation,false);assert.equal(c.Dataset_write,false);assert.equal(c.native_provider_calls,false);
 });

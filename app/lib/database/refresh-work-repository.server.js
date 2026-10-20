@@ -19,6 +19,9 @@ export function createRefreshWorkRepository(database) {
   }
   return Object.freeze({
     readAdmissionSnapshot,
+    async reviewInterruptedWork() {
+      return result("select operations.review_refresh_interrupted_work() as result");
+    },
     async checkScheduledQueue({generation}) {
       if(!refreshTickGenerationValid(generation)) throw new Error("REFRESH_WORK_INPUT_INVALID");
       return result("select operations.check_refresh_queue_on_tick($1::uuid) as result",[generation]);
@@ -39,10 +42,10 @@ export function createRefreshWorkRepository(database) {
     async readPreflightSnapshot() {
       return result("select operations.read_refresh_preflight_snapshot() as result");
     },
-    async commitPreflight({expectedRevision,queueRevision,nextState,source,window,partitionId}) {
-      if(![expectedRevision,queueRevision].every(n=>Number.isSafeInteger(n)&&n>=0)||!nextState||!source||!window||typeof partitionId!=="string") throw new Error("REFRESH_WORK_INPUT_INVALID");
-      return await result("select operations.commit_refresh_preflight($1::bigint,$2::bigint,$3::jsonb,$4::jsonb,$5::jsonb,$6::text) as result",
-        [expectedRevision,queueRevision,JSON.stringify(nextState),JSON.stringify(source),JSON.stringify(window),partitionId])===true;
+    async commitPreflight({expectedRevision,queueRevision,nextState,source,window,partitionId,deadlineAt}) {
+      if(![expectedRevision,queueRevision].every(n=>Number.isSafeInteger(n)&&n>=0)||!Number.isSafeInteger(deadlineAt)||deadlineAt<1||!nextState||!source||!window||typeof partitionId!=="string") throw new Error("REFRESH_WORK_INPUT_INVALID");
+      return await result("select operations.commit_refresh_preflight_with_deadline($1::bigint,$2::bigint,$3::jsonb,$4::jsonb,$5::jsonb,$6::text,$7::bigint) as result",
+        [expectedRevision,queueRevision,JSON.stringify(nextState),JSON.stringify(source),JSON.stringify(window),partitionId,deadlineAt])===true;
     },
     async loadBoundAuthority({claim,window}) {
       if(!window||typeof window.from!=="string"||typeof window.to!=="string") throw new Error("REFRESH_WORK_INPUT_INVALID");

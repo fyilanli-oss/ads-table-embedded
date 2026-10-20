@@ -15,6 +15,7 @@
   "work": "only an explicit trusted planner/verifier/bounded reader may call existing dispatchRefreshPreflight once; same store cannot be overridden; absent plan leaves queue checked and work_policy_required",
   "claim_safety": "existing source/entitlement/fence/queue-revision/quota gates remain; generation is checked at queue receipt, not a global freeze across subsequent HTTP work",
   "handoff": "awaiting_dataset is not refresh success; claim retained, queue need not cleared, no checkpoint or writer",
+  "interrupted_work_guard": "contracts/eo-05a-refresh-interrupted-work-v1.json; distinct successful queue receipt runs bounded durable review before any new preflight; review failure blocks dispatch without hiding queue result",
   "migration": "supabase/migrations/20261020172928_eo05a_refresh_scheduled_queue_check.sql",
   "live_activation": false,
   "live_migration_apply": false,

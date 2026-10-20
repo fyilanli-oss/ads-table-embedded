@@ -4,6 +4,7 @@ import pg from "pg";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 import {planRefreshAdmissions} from "../app/lib/refresh/admission-policy.server.js";
 import {runRefreshChunk} from "../app/lib/refresh/chunk-worker.server.js";
+import {raceInterruptedWorkReview} from "./eo05-refresh-interrupted-work-probe.mjs";
 
 export async function refreshWorkChunkProbe(client,connection,environment=process.env) {
   assert.equal(environment.GITHUB_ACTIONS,"true");assert.ok(environment.RUNNER_TEMP);
@@ -61,6 +62,7 @@ export async function refreshWorkChunkProbe(client,connection,environment=proces
     assert.equal(await store.advanceStage({claim:clean,window,expectedStage:null,stage:"checking_authority"}),false);
     assert.equal(await store.advanceStage({claim:resumed,window,expectedStage:null,stage:"checking_authority"}),true);
     assert.equal(await store.finishClaim({claim:resumed,outcome:"completed"}),false);
+    await raceInterruptedWorkReview(client,other,resumed,window);
     for(const role of ["anon","authenticated","service_role","adstable_runtime"]) {
       assert.equal((await client.query("select has_table_privilege($1,'operations.refresh_work_progress','SELECT,INSERT,UPDATE,DELETE') as allowed",[role])).rows[0].allowed,false);
       assert.equal((await client.query("select has_function_privilege($1,'operations.advance_refresh_work_stage(uuid,bigint,text,text,text,bigint,text,text,bigint,bigint,date,date)','EXECUTE') as allowed",[role])).rows[0].allowed,false);

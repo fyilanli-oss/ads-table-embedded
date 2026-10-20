@@ -159,6 +159,45 @@ Saatlik alınacak verinin seçimi/parçalanması ve yazımı bekler. Bu üç iş
 veri yazımının bu netleştirmeden sonra mı yoksa 05-B bittikten sonra mı
 tamamlanacağına o zaman karar verilecek. 05-A şimdiden kapandı sayılamaz.
 
+### Süresi aşılmış ve yarıda kalmış işin güvenli durdurulması — repository
+
+**20 Ekim 2026:** Mevcut üçüncü 05-A işi kapsamında,
+`contracts/eo-05a-refresh-interrupted-work-v1.json` uygulanır. Yeni alt paket
+veya servis açılmaz. Canlı migration, sağlayıcı çağrısı, cron/secret/deploy yoktur.
+
+**Eksik bağlantı:** Çalışanın kendi belleğindeki süre sınırı süreç kapanınca
+kayboluyordu. Açık iç iş planındaki bu sınır artık işin sahipliği ayrılırken aynı
+işlemde saklanır. Üretim için bir süre uydurulmaz. Sonraki farklı dakikanın
+başarılı iş sırası kontrolü, yeni işe geçmeden süresi aşılmış işleri inceler.
+Sağlıklı ve süresi dolmamış işlere dokunulmaz. Sınır eksikse tahminle devam edilmez.
+
+**Zey&Rose örneği:** İşin süre sınırı dolduğunda son kayıt korunur:
+
+- Henüz başlamamışsa veya yalnız yerel yetki kontrolündeyse: çağrı başlamadı.
+- Çağrı niyeti kaydedilmiş, yanıt kaydedilmemişse: çağrı sonucu belirsizdir.
+  Bu aşama güncel Shopify abonelik çağrısını da içerir.
+- Yanıt kaydedilmişse veya Dataset'e devir bekliyorsa: çağrının yanıtı alınmıştır;
+  ancak bu bilgi verinin Dataset'e yazıldığını veya sürecin kapandığını göstermez.
+
+**Üçünde de güvenlik kuralı aynıdır:** Sürenin dolması, çalışanın ve dış işlemlerin
+gerçekten sona erdiğini kanıtlamaz. Eski çalışanın ilerlemesi engellenir; hesap
+ve ayrılmış kapasitenin tamamı korunur. Çağrı başlamadı/yanıt alındı bilgisi
+“çağrı sonucu bilinmiyor” diye değiştirilmez; belirsizlik çalışmanın sonlanmasına
+aittir. Tekrar kontrol aynı engeli çoğaltmaz. Sıradan “sorunu gördüm” onayı bu
+engeli kaldıramaz. Başka hesaplar yalnız kalan gerçek bütçe içinde ilerler.
+
+Kendiliğinden kapasite bırakma, tekrar sorgu, kaldığı yerden devam, eksik gün
+tamamlama, Dataset yazma veya tazelik başarısı yoktur. İşin gerçekten sona
+erdiğine ilişkin doğrulanmış çalışma zamanı/dış işlem kanıtı ve açık kurtarma
+kapısı **hâlâ gereklidir**; sahte bir `terminated=true` girdisi kurulmaz.
+
+Bu mekanizma aynı zamanlayıcıya bağlıdır; zamanlayıcının tümüyle susmasını
+bağımsız olarak saptayan alarm değildir. Bağımsız gözlemci, bildirim ve canlı
+etkinleştirme kapıları açık kalır. Üretim saatlik veri/süre/yük planı, saat
+güvenilirliği, SQL zaman aşımı ve Dataset/product level tartışması yapılmadı.
+05-A genel kapanışı veya 05-B başlangıcı verilmez. Kaynaklar ve kontrol tarihi
+sözleşmededir; SQL kanıtı yalnız mevcut iki geçici CI veritabanında aranır.
+
 ### Zamanlayıcıdan iş sırasına güvenli giriş — repository, canlı etkinleştirme değil
 
 **20 Ekim 2026:** Mevcut 05-A işi içinde zamanlayıcının çağıracağı iç bağlantı
@@ -192,6 +231,7 @@ mevcut sırada kalır. Bu kayıt 05-A kapanışı veya bütün kota işinin canl
 değildir. Kontrol edilen resmî kaynaklar ve tarih sözleşmededir.
 
 ### Ortak kota kapısı — repository çekirdeği, canlı bağlantı değil
+
 
 **PR #157 sonrası Google kota hata izi — 20 Ekim:** Mevcut kota işinde,
 Google'ın açıkça verdiği hesap (`ACCOUNT`) veya proje (`DEVELOPER`) kapsamı ve

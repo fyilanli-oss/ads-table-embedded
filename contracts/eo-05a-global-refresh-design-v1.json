@@ -86,7 +86,13 @@
     "partial_pages_dates_and_missed_cycles_remain_visible",
     "2000_workspaces_4000_stress_and_24_hour_soak_with_governing_thresholds"
   ],
-  "next_implementation_decisions": ["durable_execution_and_wakeup_mechanism_with_official_runtime_limits", "atomic_storage_and_claim_schema_with_security_review", "measured_row_byte_query_provider_and_DB_budgets", "lease_timeout_chunk_size_and_retention_from_measurement", "PMax_continuity_evidence_source_before_exact_resolution"],
+  "next_implementation_decisions": ["durable_execution_and_wakeup_mechanism_with_official_runtime_limits", "atomic_storage_and_claim_schema_with_security_review", "measured_row_byte_query_provider_and_DB_budgets", "lease_timeout_chunk_size_and_retention_from_measurement"],
+  "listing_tree_work_order": {
+    "execution_status": "paused_by_product_owner_2026_10_20_not_passed",
+    "blocks_independent_refresh_work": false,
+    "resume_requires_explicit_product_owner_approval": true,
+    "historical_exact_Channel_evidence_rules_changed": false
+  },
   "verification_limit": "Contract assertions validate design intent only, not executable scheduling, race safety, fairness, DB capacity or live provider behavior.",
   "sources_checked_at": "2026-10-20",
   "sources": ["https://www.postgresql.org/docs/current/sql-select.html", "https://docs.github.com/en/rest/pulls/pulls#update-a-pull-request"],

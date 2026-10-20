@@ -7,6 +7,26 @@ const brief = read("contracts/eo-05-start-brief-v1.json");
 const master = read("contracts/a6-eo-implementation-master-v1.json");
 const eo05 = master.packages.find(p => p.id === "A6-EO-05");
 
+test("owner pause removes listing-tree work from independent refresh prerequisites without waiving historical truth", () => {
+  const gate = eo05.mandatory_first_gate;
+  const decision = brief.work_order_decision_2026_10_20;
+  const design = read("contracts/eo-05a-global-refresh-design-v1.json");
+  const engineering = read("contracts/a6-quality-and-assurance-gates-v1.json").staged_rollout.phase_1_engineering;
+  assert.equal(gate.execution_status, "paused_by_product_owner_2026_10_20_not_passed");
+  assert.equal(brief.first_repository_slice.mandatory_gate_execution_status, gate.execution_status);
+  assert.equal(design.listing_tree_work_order.execution_status, gate.execution_status);
+  assert.equal(engineering.EO05_first_gate_execution_status, gate.execution_status);
+  assert.equal(gate.blocks_independent_refresh_work, false);
+  assert.equal(brief.first_repository_slice.mandatory_gate_blocks_independent_refresh_work, false);
+  assert.equal(design.listing_tree_work_order.blocks_independent_refresh_work, false);
+  assert.equal(engineering.EO05_first_gate_blocks_independent_refresh_work, false);
+  assert.equal(gate.resume_requires_explicit_product_owner_approval, true);
+  assert.deepEqual(gate.must_pass_before, ["historical_PMax_exact_Channel_feature_acceptance"]);
+  assert.equal(decision.next_work, "global_refresh_workload_budget_and_execution_design");
+  for (const key of ["Google_reporting_runtime_or_sales_Channel_cost_semantics_changed", "historical_exact_evidence_gate_waived_or_passed", "unverified_historical_PMax_Channel_activation_authorized", "runtime_migration_live_or_deployment_authorized_by_work_order"]) assert.equal(decision[key], false);
+  assert.equal(design.next_implementation_decisions.some(item => item.includes("PMax")), false);
+});
+
 test("EO05 brief is linked without starting implementation or creating a new parent or child", () => {
   assert.equal(eo05.start_contract, "contracts/eo-05-start-brief-v1.json");
   assert.equal(eo05.status, "Not started");

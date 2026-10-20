@@ -854,6 +854,9 @@
       "title": "Scheduler, Dataset V2, FX, maturity and reconciliation",
       "phase": "review_critical",
       "status": "Not started",
+      "start_contract": "contracts/eo-05-start-brief-v1.json",
+      "start_brief": "docs/EXECUTION_PLAN.md#eo-05-başlangıç-briefi--19-ekim-2026",
+      "start_brief_status": "prepared_product_owner_acceptance_pending_no_implementation",
       "depends_on": [
         "A6-EO-04"
       ],

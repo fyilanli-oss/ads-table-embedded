@@ -1,0 +1,109 @@
+{
+  "contract_id": "eo-05-start-brief-v1",
+  "package_id": "A6-EO-05",
+  "checked_at": "2026-10-20",
+  "status": "brief_prepared_product_owner_acceptance_pending",
+  "base_commit": "c93fd8a979b709f1a3517aae82c6691733748a7e",
+  "brief": "docs/EXECUTION_PLAN.md#eo-05-başlangıç-briefi--19-ekim-2026",
+  "authorities": [
+    "contracts/a6-eo-implementation-master-v1.json",
+    "contracts/a6-quality-and-assurance-gates-v1.json",
+    "contracts/a6-eo-cross-cutting-safety-capacity-v1.json",
+    "contracts/eo-04c-google-reporting-runtime-v1.json",
+    "contracts/eo-04d-klaviyo-reauthorization-truth-v1.json"
+  ],
+  "entry": {
+    "EO01_through_EO04_accepted": true,
+    "TECH01_accepted_F10_nonblocking_deferred": true,
+    "DOCS01_complete": true,
+    "staged_rollout_PR138_merged": true,
+    "real_account_validation_timing": "EO08_end_engineering_checkpoint_before_final_acceptance_and_ASSURE"
+  },
+  "first_repository_slice": {
+    "scope": "whole_EO05_scope_and_global_refresh_design_then_historical_PMax_evidence_and_workload_budget_before_scheduler_implementation",
+    "mandatory_gate": "A6-EO-05-PMAX-HISTORICAL-LISTING-TREE",
+    "prerequisites": ["workload_budget_contract", "index_and_query_plan_baseline"],
+    "implementation_next_requires": "explicit_product_owner_approval_of_scoped_design",
+    "continuity_proof_source": "not_yet_verified_do_not_infer",
+    "observation_time_is_validity_interval": false,
+    "matching_snapshots_prove_no_intermediate_change": false,
+    "current_tree_can_reconstruct_missing_past": false,
+    "required_design_outputs": [
+      "workspace_install_generation_account_campaign_asset_group_and_timezone_identity",
+      "complete_tree_and_pagination_integrity",
+      "immutable_version_hash_observed_at_and_evidenced_validity",
+      "complete_provider_business_day_coverage_including_DST",
+      "historical_product_dimension_inputs_for_membership_not_current_feed_guess",
+      "capture_retention_gap_conflict_and_reconciliation_policy",
+      "date_matched_resolver_delivery",
+      "tenant_isolation_lifecycle_deletion_and_function_boundary",
+      "bounded_provider_database_and_storage_workload_budget"
+    ],
+    "exact_requires": "one_eligible_asset_group_with_proven_complete_business_day_membership",
+    "otherwise": "preserve_valid_sale_and_Sales_Role_keep_Unclassified_Channel",
+    "sold_product_selects_Channel": false,
+    "snapshot_capture_alone_closes_gate": false
+  },
+  "children_in_order": [
+    {"id": "A6-EO-05-A", "scope": "hourly_staggered_scheduler_shard_lease_checkpoint_single_flight_and_backpressure"},
+    {"id": "A6-EO-05-B", "scope": "Dataset_V2_source_currency_FX_lineage_and_versioned_synthetic_fixture"},
+    {"id": "A6-EO-05-C", "scope": "provider_configured_maturity_attribution_horizon_and_finality"},
+    {"id": "A6-EO-05-D", "scope": "yesterday_then_today_bootstrap_idempotent_upsert_reconciliation_and_reauthorization_gap_recovery"},
+    {"id": "A6-EO-05-E", "scope": "secret_free_operational_capacity_freshness_and_failure_observability"}
+  ],
+  "invariants": {
+    "verified_install_generation_and_reporting_authority_required": true,
+    "non_entitled_or_reauthorization_required_jobs_run": false,
+    "stale_job_can_write_after_account_or_generation_change": false,
+    "hourly_dates": ["yesterday", "today"],
+    "hourly_full_history_fetch": false,
+    "deep_reconciliation_frequency_hours": 24,
+    "attribution_horizon": "verified_provider_configuration_never_global_constant",
+    "failed_partial_or_quota_limited_run_advances_finality": false,
+    "reauthorization_gap": "classify_disconnect_vs_involuntary_authorization_loss_before_any_bounded_recovery",
+    "intentional_disconnect_interval_may_be_backfilled": false,
+    "paid_subscription_overrides_disconnected_interval": false,
+    "yesterday_today_bootstrap_may_cross_disconnected_interval": false,
+    "involuntary_authorization_loss_recovery_policy": "pending_separate_EO05D_and_UI_decision_not_automatic_backfill",
+    "provider_window_insufficient": "explicit_unrecoverable_or_partial_never_zero",
+    "missing_or_unsupported_becomes_zero": false,
+    "source_currency_and_FX_provenance_preserved": true,
+    "FX_provider_or_rate_is_assumed": false,
+    "cost_allocation_formula_owner": "A6-EO-06-A",
+    "synthetic_fixture_is_provider_proof": false,
+    "first_provider_error": "stop_classify_and_return_to_user_no_automatic_alternative_route"
+  },
+  "scope_clarifications_2026_10_20": {
+    "global_refresh_design": "contracts/eo-05a-global-refresh-design-v1.json",
+    "legacy_runtime_copy": false,
+    "legacy_use": "useful_job_tracking_ideas_only",
+    "existing_DatasetV2_and_Frankfurter_currency_lock": "product_owner_reference_description_pending_source_verification_in_EO05B",
+    "product_level_storage_design": "deferred_to_EO05B_discussion_not_decided",
+    "product_level_physical_table_selected": false,
+    "EO05_is_only_a_PMax_slice": false
+  },
+  "acceptance": {
+    "repository": ["positive_and_negative_contract_tests", "tenant_and_generation_isolation", "replay_and_idempotency", "time_gap_DST_and_conflict_tests", "full_test_typecheck_build_CI", "explicit_product_owner_acceptance", "remote_content_parity_and_local_only_inventory"],
+    "capacity": ["2000_workspace_hourly_scheduler_test", "4000_workspace_compressed_stress_test", "24_hour_2000_workspace_soak"],
+    "capacity_runs_authorized_now": false,
+    "live_acceptance_separate_from_repository_readiness": true,
+    "package_delta_integrity_required": true
+  },
+  "official_sources_checked_at": "2026-10-19",
+  "official_sources": [
+    "https://developers.google.com/google-ads/api/performance-max/listing-groups",
+    "https://supabase.com/docs/guides/database/postgres/row-level-security",
+    "https://docs.github.com/en/rest/pulls/pulls#create-a-pull-request"
+  ],
+  "source_limits": "Listing groups document structure, not a verified historical continuity service. Supabase read is boundary guidance, not new schema design or an advisor/live check. Provider-specific implementation sources must be refreshed at each scoped implementation gate.",
+  "authority": {
+    "brief_preparation": true,
+    "runtime_implementation": false,
+    "migration_creation_or_apply": false,
+    "provider_call_or_configuration": false,
+    "secret_or_environment_change": false,
+    "deployment": false,
+    "merge": false,
+    "OpenAI_integration": false
+  }
+}

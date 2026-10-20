@@ -9,6 +9,7 @@ import {planRefreshPreflightAdmissions} from "../app/lib/refresh/admission-polic
 import {quotaRouteIdentity} from "../app/lib/refresh/quota-scope-resolver.server.js";
 import {quotaAuthorityProbe} from "./eo05-quota-authority-probe.mjs";
 import {refreshInterruptedWorkProbe} from "./eo05-refresh-interrupted-work-probe.mjs";
+import {refreshQueueCronEntryProbe} from "./eo05-refresh-queue-cron-entry-probe.mjs";
 
 // Runs within the canonical synthetic fixture. All changes roll back, including billing/queue/claims.
 export async function refreshPreflightProbe(client,{workspace,connections,shopId,shopDomain}) {
@@ -24,6 +25,7 @@ export async function refreshPreflightProbe(client,{workspace,connections,shopId
     const budget={global:vector,interactiveReserve:{requests:0,dbWrites:0,connections:0,rows:0,bytes:0},providers:accounts.map(a=>({provider:a.provider,limit:vector})),
       workspaces:[{workspaceId:workspace,limit:vector}],accounts:accounts.map(a=>({...a,limit:vector}))};
     await client.query("update operations.refresh_control set budget=$1::jsonb,bounds=$2::jsonb where singleton",[JSON.stringify(budget),JSON.stringify({maxCandidates:8,maxClaims:8,maxAdmissions:8,maxWorkspaces:8})]);
+    await refreshQueueCronEntryProbe(client);
     const day=new Date(Date.now()-86400000).toISOString().slice(0,10),window={from:day,to:day};
     const plan=()=>({partitionId:"synthetic-one-page",workClass:"hourly_hot_window",window,
       cost:{requests:2,dbWrites:5,connections:1,rows:5,bytes:1000},limits:{deadlineAt:Date.now()+30000,requestTimeoutMs:1000,finishReserveMs:10,maxRows:5,maxBytes:1000}});

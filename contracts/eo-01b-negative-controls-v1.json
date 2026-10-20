@@ -56,6 +56,14 @@
     "server.js"
   ],
   "allowedEnvironmentKeys": [
+    "CRON_SECRET",
+    "ADSTABLE_REFRESH_QUEUE_MODE",
+    "ADSTABLE_REFRESH_QUEUE_GENERATION",
+    "ADSTABLE_REFRESH_QUEUE_DATABASE_URL",
+    "ADSTABLE_REFRESH_QUEUE_DB_TIMEOUT_MS",
+    "VERCEL_ENV",
+    "VERCEL_URL",
+    "VERCEL_PROJECT_PRODUCTION_URL",
     "ADSTABLE_RUNTIME_DATABASE_URL",
     "ADSTABLE_SESSION_ENCRYPTION_KEY_V1",
     "META_APP_ID",
@@ -78,6 +86,7 @@
     "/settings"
   ],
   "reservedSystemRoutePrefixes": [
+    "/internal/refresh",
     "/auth",
     "/webhooks"
   ]

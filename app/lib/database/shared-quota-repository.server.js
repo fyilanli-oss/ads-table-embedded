@@ -15,8 +15,11 @@ export function createSharedQuotaRepository(database) {
       return result("select operations.reserve_shared_api_quota($1::text,$2::uuid,$3::text) as result",[input.operationKey,input.attemptId,input.lane]);
     },
     async stop(input) {
-      if(!valid(input)) throw new Error("SHARED_QUOTA_INPUT_INVALID");
-      return await result("select operations.stop_shared_api_quota($1::text,$2::uuid) as result",[input.operationKey,input.attemptId])===true;
+      const {knownResponse=false,connectionFailure=false,quotaSignal=null}=input;
+      if(!valid(input)||typeof knownResponse!=="boolean"||typeof connectionFailure!=="boolean"||![null,"shopify_partner_throttled"].includes(quotaSignal)
+        ||(connectionFailure&&!knownResponse)||(quotaSignal!==null&&(!knownResponse||connectionFailure))) throw new Error("SHARED_QUOTA_INPUT_INVALID");
+      return await result("select operations.stop_shared_api_quota_scoped($1::text,$2::uuid,$3::boolean,$4::boolean,$5::text) as result",
+        [input.operationKey,input.attemptId,knownResponse,connectionFailure,quotaSignal])===true;
     },
     async settle(input) {
       if(!valid(input)) throw new Error("SHARED_QUOTA_INPUT_INVALID");

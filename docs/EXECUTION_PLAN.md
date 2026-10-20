@@ -161,6 +161,48 @@ tamamlanacağına o zaman karar verilecek. 05-A şimdiden kapandı sayılamaz.
 
 ### Ortak kota kapısı — repository çekirdeği, canlı bağlantı değil
 
+**PR #153 sonrası hata kapsamı düzeltmesi — 20 Ekim:** Fırat ortak kotayı
+paylaşmak ile her hatada birlikte durmayı ayıran repository düzeltmesini onayladı.
+Önceki çekirdeğin her hatada çağrıya bağlı bütün kota sayaçlarını durdurma davranışı
+bu adımla değiştirilir; eski SQL ve tarihsel kanıtlar silinmez. Sözleşme:
+`contracts/eo-05a-quota-stop-scope-v1.json`.
+
+**Örnek:** Zey&Rose ve başka bir mağaza aynı Google proje kotasını kullanıyor
+olsun, ancak bağlantıları bağımsız olsun. Zey&Rose'un izin hatası kendi bağlantı
+grubunu durdurur; ortak proje kotasını dolmuş sayıp diğer mağazayı durdurmaz.
+Gerçekten ortak kota sınırına ulaşıldığı doğrulanmışsa yalnız o sınıra bağlı işler
+etkilenir. Aynı gerçek credential'ı kullanan işler de bağımsızmış gibi ayrılmaz;
+doğrulanmış ortak bağlantı grubuna alınır. Gruplar token/URL'den tahmin edilmez.
+
+Bağlantı hata grubu ile kota bütçesi ayrı özel kayıtlardır. Aynı bağlantıya bağlı
+farklı çağrı aileleri HTTP 401/403 bağlantı/izin hatasında birlikte durabilir;
+belirsiz veya diğer hata yalnız mevcut kota işlemini durdurur. Aynı bütçeyi paylaşan bağımsız bağlantı
+çalışmaya devam edebilir. Eşleme yoksa yalnız mevcut işlem durur; bu dar varsayılan,
+bağlantı eşlemesinin tamamlandığı veya canlıya hazır olduğu anlamına gelmez.
+Hatanın bilinen ret mi belirsiz sonuç mu olduğu, sınırlı sinyali ve zamanı kalıcı
+kayda girer; raw hata veya secret saklanmaz. Alarm teslimi henüz bağlı değildir.
+
+Ortak bütçeyi durdurmak için üç kanıt birlikte gerekir: doğrulanmış sağlayıcı
+sinyali, önceden yetkili olarak tanımlanmış eşleme ve o çağrıda gerçekten payı
+kullanılmış aynı sağlayıcı kotası. HTTP kodu, mesaj veya Retry-After tek başına
+hangi ortak kotanın etkilendiğini seçemez. Bu teslimde yalnız belgelenmiş Shopify
+Partner throttle biçimi için sinyal vardır; üretim eşlemesi eklenmez. Google'da
+429 yanıtı boyut sınırından da gelebilir; doğrudan tüm proje kotası durdurulmaz.
+Klaviyo ve Meta için yeni ortak-kota sinyali uydurulmaz. Meta güncel belge erişimi
+doğrulanamadı ve zorlanmadı. Var olan sağlayıcı hata sınıflandırmaları korunur.
+
+Kesin hata yanıtı gelmiş çağrı, durma kaydı sonrasında açık çağrı kapasitesini
+bırakabilir; tüketilen kota payı iade edilmez. Belirsiz çağrı süresi doldu diye
+serbest bırakılmaz. Hiçbir durma süre geçmesiyle kalkmaz ve otomatik tekrar yoktur.
+Supabase/Postgres rehberleri özel erişimi ve işlem → bağlantı grubu → sıralı kota
+kilit düzenini yönlendirdi. Owner eşlemeleri aktif çağrı varken değiştirilmez;
+canlı yeniden yapılandırma ayrı kapıdır. İki mevcut boş CI veritabanında gerçek
+SQL ve sentetik HTTP ile sınanır. Canlı DB/config/secret/route/deploy, yeni Meta
+kuralı veya saatlik veri/Dataset kararı yoktur. Kaynak kontrolü 20 Ekim 2026.
+Durma sonraki rezervasyonları engeller; önceden verilmiş kısa çağrı izinlerini
+ve başlamış istekleri geriye dönük iptal eden bir ana şalter değildir. Bu izinlerin
+ölçülmüş gecikme sınırı ve etkinleştirme kabulü hâlâ açık kapıdır.
+
 **PR #152 sonrası güvenli bekleme adımı — 20 Ekim:** Kota dolu olduğu için
 ilk dış istek hiç gönderilemediyse iş kaybolmaz. Hangi işin, hangi sahiplik
 numarasıyla beklediği özel veritabanı kaydına yazılır. Çalışan kapasitesi bırakılır;

@@ -37,7 +37,7 @@ export function createShopifyPartnerApi({environment = process.env, fetchImpl = 
 
   return Object.freeze({
     appId: config.appId,
-    async activeSubscription({apiVersion, query, variables}) {
+    async activeSubscription({apiVersion, query, variables, signal}) {
       if (apiVersion !== "2026-07") {
         throw new Error("SHOPIFY_PARTNER_API_VERSION_MISMATCH");
       }
@@ -49,6 +49,7 @@ export function createShopifyPartnerApi({environment = process.env, fetchImpl = 
         `https://partners.shopify.com/${config.organizationId}/api/${apiVersion}/graphql.json`,
         {
           method: "POST",
+          ...(signal ? {signal} : {}),
           headers: {
             "Content-Type": "application/json",
             "X-Shopify-Access-Token": config.accessToken,

@@ -15,6 +15,8 @@
   "scope": "one_already_reserved_chunk_one_injected_read_callback_no_native_adapter_or_Dataset_writer",
   "injected_authority": "trusted_internal_fresh_loader_not_merchant_booleans_no_cached_initial_credential_authority",
   "authority_reads": "before_intent_immediately_before_request_and_before_handoff_identity_connection_version_and_window_required",
+  "fresh_entitlement_guard": "contracts/eo-05a-refresh-entitlement-check-v1.json",
+  "worker_entitlement_callbacks": "verifyEntitlement_and_isEntitlementCurrent_mandatory_no_cached_entitled_boolean_authority; native_scheduler_binding_pending",
   "stage_persistence": "short_locked_postgres_function_exact_claim_fence_previous_stage_and_business_date_window",
   "progress_payload": "identity_fence_dates_stage_counts_and_database_timestamp_only_no_raw_payload_tokens_or_PII",
   "duplicate_entry": "only_one_checking_authority_insert_per_fence_no_second_read_after_reentry",

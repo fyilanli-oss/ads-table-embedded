@@ -151,6 +151,52 @@ API/kalıcılık kaynakları dar kapsamda yeniden doğrulanır.
 
 ## EO-05-A — Tüm workspace'ler için refresh tasarım önerisi — 20 Ekim 2026
 
+### EO-05-A — Saatlik veri alımından önce güncel Shopify abonelik kontrolü — 20 Ekim 2026
+
+PR #147, Fırat'ın açık onayıyla `79bcbcd6ee663b8155a2737c3ac28c2687409a96`
+olarak birleşti. Sonraki incelemede mevcut abonelik yenileme çağrısının uygulama
+açılışına bağlı olduğu görüldü. Fırat, arka plandaki saatlik veri alımından önce
+aboneliğin Shopify'dan sunucu tarafında doğrulanmasını onayladı. 05-B başlamaz.
+
+**Kullanıcı uygulamayı açmasa da kontrol yapılabilecek.** Yeni abonelik sistemi
+yazılmaz: mevcut Partner API `2026-07` `activeSubscription` sorgusu, yanıt
+doğrulayıcısı ve mevcut abonelik tabloları kullanılır. Hedef mağaza kullanıcıdan
+alınmaz; güncel iş/sahiplik numarasından aktif kurulum, Shopify mağaza kimliği ve
+alan adına ulaşılır. Başka mağazanın cevabı kabul edilmez.
+
+Eski “aktif” bilgisi yeterli değildir. Her veri parçası için yeni doğrulama
+çağrısı gerekir; önceki olumsuz önbellek de yeni olumlu cevabı tek başına
+engellemez. İş çekirdeğinde bu kontrol zorunludur. Provider çağrısından hemen
+önce ve sonuç devredilmeden önce aboneliğin hâlâ geçerli olduğu tekrar okunur.
+Yeni bir olumsuz abonelik kaydı önceki olumlu doğrulamayı geçersiz kılar.
+
+Shopify abonelik yok diyorsa `subscription_required` kaydedilir ve reklam
+verisi alınmaz. Süresi bitmiş trial veya geçmiş fatura dönemi işi açamaz.
+“Dönem sonunda iptal” bugün iptal demek değildir; geçerli dönem yine aranır.
+Hata, bozuk cevap, farklı mağaza veya kayıt sorunu eski aktif kayda dönüş
+nedeni değildir. Otomatik tekrar/alternatif rota yoktur. Zaman aşımı ve ağ
+kopmasında uzaktaki isteğin durduğu varsayılmaz; geç yanıt kayıt veya izin
+üretemez. Belirsiz istek mevcut iş takibinde belirsiz tutulur, kapasite çözülmez.
+
+Kalıcı kayıt kısa ve iş/sahiplik numarasıyla korunan SQL işlemidir; eski çalışan
+yeni işe veya başka kuruluma abonelik sonucu yazamaz. HTTP beklerken transaction
+açılmaz. Abonelik tabloları ve genel abonelik yazma işlevi koordinatöre açılmaz;
+yalnız dar, iş kimliğine bağlı işlevler hazırlanır. Supabase/PostgreSQL rehberleri
+bu erişim ve kısa işlem sınırını yönlendirdi.
+
+**Canlı etkinleştirme değil:** Testteki Shopify cevapları sentetiktir. Partner
+API'nin resmî sınırı istemci başına saniyede dört istektir; uygulama açılışındaki
+kontroller ile bütün arka plan çalışanlarının aynı kotayı paylaşması gerekir.
+Yeni kontrol bu ortak sıra izni gelmeden çağrı başlatamaz. Ortak kota uygulaması,
+tam mağaza envanteri, gerçek zamanlayıcı/provider adaptörü ve alarm teslimi henüz
+bağlı değildir. Bu teslim limit değeri seçmez, yeni servis/secret açmaz ve canlı
+Shopify çağrısı veya migration uygulamaz. 05-A bütünü tamamlandı denmez.
+
+Sözleşme: `contracts/eo-05a-refresh-entitlement-check-v1.json`. Resmî Shopify
+activeSubscription/Partner API, PostgreSQL ve Supabase RLS kaynakları
+20 Ekim 2026'da kontrol edildi. Yerel build tekrar denenmez; build GitHub CI'da,
+SQL iki mevcut boş geçici veritabanında doğrulanır. Merge ayrı açık onay bekler.
+
 ### EO-05-A — Zamanı gelen mağazanın iş ihtiyacını kaydetme — 20 Ekim 2026
 
 **Kapsam:** Fırat'ın onayıyla 05-A içinde devam edilir; 05-B başlamaz.

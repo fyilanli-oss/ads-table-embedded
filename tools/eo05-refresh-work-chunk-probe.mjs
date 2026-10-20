@@ -47,6 +47,7 @@ export async function refreshWorkChunkProbe(client,connection,environment=proces
     const result=await runRefreshChunk({claim:clean,window,store,now:()=>0,
       limits:{deadlineAt:10000,requestTimeoutMs:500,finishReserveMs:10,maxRows:5,maxBytes:1000},
       loadAuthority:async()=>authority,readPage:async()=>{requests++;return {kind:"complete",payload:{synthetic:true}};},
+      verifyEntitlement:async()=>({status:"verified",receipt:{observedAt:"2026-10-20T00:00:00Z"}}),isEntitlementCurrent:async()=>true,
       validatePage:()=>({complete:true,rows:[{product:"bracelet",quantity:3},{product:"necklace",quantity:2}]})});
     assert.equal(requests,1);assert.equal(result.status,"awaiting_dataset");
     const progress=await second.readStage({claim:clean});

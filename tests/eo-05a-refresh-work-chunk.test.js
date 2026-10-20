@@ -12,6 +12,7 @@ function setup(extra={}) {
     now:()=>0,store:{advanceStage:async e=>{stages.push(e);return true;},isClaimCurrent:async()=>true,
       readAdmissionSnapshot:async()=>({state:{revision:1}}),recordStop:async e=>{stops.push(e);return {recorded:true};}},
     loadAuthority:async()=>{loads++;return authority;},readPage:async()=>{calls++;return {kind:"complete",payload:{}};},
+    verifyEntitlement:async()=>({status:"verified",receipt:{observedAt:"2026-10-20T00:00:00Z"}}),isEntitlementCurrent:async()=>true,
     validatePage:()=>({complete:true,rows:[{product:"bracelet",quantity:3},{product:"necklace",quantity:2}]}),...extra};
   return {args,stages,stops,authority,calls:()=>calls,loads:()=>loads};
 }
@@ -24,6 +25,21 @@ test("one chunk checks authority freshly and records every stage but never claim
   assert.equal(f.stages[3].rows,2);assert.equal(f.stages[3].bytes,Buffer.byteLength(JSON.stringify(result.rows)));
   assert.deepEqual(f.stops,[]);
   assert.equal(Object.hasOwn(result,"completed"),false);
+});
+
+test("fresh Shopify entitlement is mandatory; cached booleans cannot authorize or prevent a fresh decision",async()=>{
+  const f=setup();f.authority.entitled=false;
+  assert.equal((await runRefreshChunk(f.args)).status,"awaiting_dataset","fresh verification replaces an old negative cache");
+  const denied=setup();denied.args.verifyEntitlement=async()=>({status:"denied"});
+  assert.equal((await runRefreshChunk(denied.args)).reason,"entitlement_required");assert.equal(denied.calls(),0);
+  const failed=setup();failed.args.verifyEntitlement=async()=>({status:"unavailable",externalOutcome:"unknown"});
+  assert.equal((await runRefreshChunk(failed.args)).status,"uncertain");assert.equal(failed.calls(),0);
+  const changed=setup();changed.args.isEntitlementCurrent=async()=>false;
+  assert.equal((await runRefreshChunk(changed.args)).reason,"entitlement_required");assert.equal(changed.calls(),0);
+  const during=setup();let checks=0;during.args.isEntitlementCurrent=async()=>++checks===1;
+  assert.equal((await runRefreshChunk(during.args)).reason,"authority_check_failed_after_request");assert.equal(during.calls(),1);
+  const absent=setup();delete absent.args.verifyEntitlement;
+  await assert.rejects(runRefreshChunk(absent.args),/REFRESH_CHUNK_INPUT_INVALID/);
 });
 
 test("missing authority, changed connection, no time and noncurrent ownership never reach a provider",async()=>{

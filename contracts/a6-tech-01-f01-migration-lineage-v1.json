@@ -445,6 +445,15 @@
       "repository_sql_sha256": "31962c71387f370705771b51db93c0dadbd6debc802b51b7d6610dd247f29867",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261020122907",
+      "name": "eo05a_refresh_entitlement_check",
+      "file": "supabase/migrations/20261020122907_eo05a_refresh_entitlement_check.sql",
+      "created_with": "supabase@2.121.0 migration new eo05a_refresh_entitlement_check",
+      "repository_sql_sha256": "8e3467c74685ee986e6b0b06a0b44ec54ee099946e7947c2ea63bc8ed7278b5c",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

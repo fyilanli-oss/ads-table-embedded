@@ -67,7 +67,7 @@ export function createQuotaManagedFetch({provider,guard,resolveOperation,lane,fe
     let operationKey;
     try {operationKey=await resolveOperation(metadata);} catch {throw control("not_configured");}
     if(!/^[a-f0-9]{64}$/.test(operationKey??"")) throw control("not_configured");
-    let response,rejected=false;
+    let response,rejected=false,quotaSignal=null;
     let result;
     try {result=await guard.execute({operationKey,lane,run:async()=>{
       // No silent redirect: credentials cannot move to another target or bypass a second debit.
@@ -76,13 +76,18 @@ export function createQuotaManagedFetch({provider,guard,resolveOperation,lane,fe
       response=await fetchFn(requestUrl,requestInit);
       if(!response||typeof response.ok!=="boolean"||typeof response.json!=="function") return {outcome:"unknown"};
       rejected=!response.ok;
-      if(!rejected&&(response.headers?.get?.("content-type")??"").includes("json")) {
+      if((response.headers?.get?.("content-type")??"").includes("json")) {
         try {
           const payload=await response.clone().json();
-          rejected=Boolean(payload?.error)||(Array.isArray(payload?.errors)&&payload.errors.length>0);
+          const errors=Array.isArray(payload?.errors)?payload.errors:[];
+          rejected=rejected||Boolean(payload?.error)||errors.length>0;
+          // Only the documented Partner throttle shape can name a shared-quota signal here.
+          // 401/403, mixed GraphQL errors, Google 429 and arbitrary header/JSON scope IDs cannot widen it.
+          if(provider==="shopify_partner"&&[200,429].includes(response.status)&&!payload?.error&&errors.length>0
+            &&errors.every(error=>String(error?.extensions?.code)==="429")) quotaSignal="shopify_partner_throttled";
         } catch {rejected=true;}
       }
-      return rejected?{outcome:"rejected"}:{outcome:"success",value:response};
+      return rejected?{outcome:"rejected",connectionFailure:[401,403].includes(response.status),quotaSignal}:{outcome:"success",value:response};
     }});} catch {throw new Error("QUOTA_NATIVE_TRANSPORT_UNAVAILABLE");}
     if(result?.status==="returned") return result.value;
     // Keep native HTTP 401/403/429 handlers, but only AFTER the quota stop persists.

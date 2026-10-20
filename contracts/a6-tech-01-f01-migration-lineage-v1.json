@@ -490,6 +490,15 @@
       "repository_sql_sha256": "fced695101b031ee14a5cfe928f508514d55650e1b07a0a9984e2baa9f39ea50",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261020150205",
+      "name": "eo05a_quota_stop_scope",
+      "file": "supabase/migrations/20261020150205_eo05a_quota_stop_scope.sql",
+      "created_with": "supabase@2.121.0 migration new eo05a_quota_stop_scope",
+      "repository_sql_sha256": "6c2f31d6d776f57ad0efc44a10ec8198c280be39fa12fbfa43da365ae0627c87",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

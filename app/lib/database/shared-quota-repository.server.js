@@ -10,6 +10,13 @@ export function createSharedQuotaRepository(database) {
     } catch {throw new Error("SHARED_QUOTA_STORE_UNAVAILABLE");}
   }
   return Object.freeze({
+    async resolveRoute({routeKey,connectionScopeKey,provider}) {
+      if(![routeKey,connectionScopeKey].every(v=>typeof v==="string"&&/^[a-f0-9]{64}$/.test(v))
+        ||!["shopify_partner","meta","google_ads","klaviyo"].includes(provider)) throw new Error("SHARED_QUOTA_INPUT_INVALID");
+      const operation=await result("select operations.resolve_shared_api_quota_route($1::text,$2::text,$3::text) as result",[routeKey,connectionScopeKey,provider]);
+      if(operation!==null&&(typeof operation!=="string"||!/^[a-f0-9]{64}$/.test(operation))) throw new Error("SHARED_QUOTA_STORE_UNAVAILABLE");
+      return operation;
+    },
     async reserve(input) {
       if(!valid(input)||!["interactive","background"].includes(input.lane)) throw new Error("SHARED_QUOTA_INPUT_INVALID");
       return result("select operations.reserve_shared_api_quota($1::text,$2::uuid,$3::text) as result",[input.operationKey,input.attemptId,input.lane]);

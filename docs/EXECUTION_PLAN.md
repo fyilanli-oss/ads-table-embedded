@@ -161,6 +161,47 @@ tamamlanacağına o zaman karar verilecek. 05-A şimdiden kapandı sayılamaz.
 
 ### Ortak kota kapısı — repository çekirdeği, canlı bağlantı değil
 
+**PR #154 sonrası çağrı–kota eşleme adımı — 20 Ekim:** Açık repository kurucusu,
+çağrının gerçek hedefini güvenilir sunucu bağlamıyla karşılaştırır. Sağlayıcı,
+istemci/proje kapsamı, bağlantı kapsamı ve sürümü, hesap/organizasyon, API sürümü,
+çağrı ailesi ve ek alanlar birlikte eşlenir. Eski bağlantı bağlamı, farklı hesap,
+eksik sürüm veya tanımsız eşleme varsa çağrı çıkmaz. Token veya URL'den hangi
+istemci/projeye ait olduğu tahmin edilmez. Sözleşme:
+`contracts/eo-05a-quota-scope-resolver-v1.json`.
+
+**Örnek:** Zey&Rose'un onaylı Google hesabı `111` olsun. Gerçek çağrı `222`
+hesabına gidiyorsa kota kontrolünden geçmez. Token yenileme URL'sinde hesap
+yazmasa da hesap ve bağlantı, doğrulanmış sunucu bağlamından alınır. Klaviyo'da
+API revision ve include alanları eşlemenin parçasıdır; ek alanlı istek, düz
+isteğin eşlemesine sessizce düşmez. Bunlar veri seçimi veya Dataset grain kararı
+değildir. Örnek hesaplar sentetiktir, gerçek hesap kanıtı sayılmaz.
+
+Sunucu her çağrıda güncel bağlamı yüklemek zorundadır. Bu yükleyici yeni bir yetki
+kaynağı değildir: mevcut kurulum, iş sahipliği, hesap seçimi, abonelik ve izinli
+dönem kontrolleri korunur. Güncel bağlamı gerçek otoriteden alan production
+yükleyicisi ve istemci/proje kapsam envanteri henüz etkin değildir. İlk kurulumda
+hesabı bilinmeyen OAuth akışı bu bağlı-hesap bağlamına varsayımla sokulmaz.
+
+Eşleme, özel veritabanında ancak açık ve eksiksiz profil varsa işlem kimliği
+döndürür. Profil tüm tanımlı sayaç bağlantılarının ve limitlerinin parmak izini
+tutar. Eksik/fazladan sayaç, değişmiş limit veya farklı bağlantı hata grubu
+eşlemeyi geçersiz yapar. Eşlemeden sonra rezervasyon sırasında tekrar kontrol
+edilir; eski işlem kimliğini saklayıp eksik profili aşmak mümkün değildir.
+Değişiklik fark edilirse bütün rezervasyon geri alınır, kısmi pay kalmaz.
+Bu parmak izi, seçilmiş ayarın sağlayıcının bütün gerçek kotalarını kapsadığını
+kanıtlamaz; o kapsam incelemesi ve gerçek limitler ayrı etkinleştirme kapısıdır.
+
+Her eşleme yalnız kendi değişmez işlem anahtarına bağlıdır. Eşleme kapatılır
+veya silinirse önceden alınmış anahtar da yeni çağrı başlatamaz.
+Yeni kurucu eşleme ve rezervasyonda aynı depoyu kullanır; rastgele resolver/guard
+ile değiştirilemez. Mevcut düşük seviyeli kurucu sentetik testler için korunur,
+canlı bağlantıda yeni kapıyı atlama onayı değildir. Supabase/Postgres rehberleri
+iki özel RLS tablosunu, yalnız dar function erişimini ve kısa kilit düzenini
+yönlendirdi. Migration yalnız repository'de bekler; canlı mapping/limit, secret,
+route, alarm veya zamanlayıcı etkinleştirilmez. İki mevcut boş CI veritabanında
+gerçek SQL ve sentetik HTTP ile sınanır. Resmî kaynak kontrolü 20 Ekim 2026;
+Meta için yeni özel kota kuralı üretilmedi. 05-A kapanmaz, 05-B başlamaz.
+
 **PR #153 sonrası hata kapsamı düzeltmesi — 20 Ekim:** Fırat ortak kotayı
 paylaşmak ile her hatada birlikte durmayı ayıran repository düzeltmesini onayladı.
 Önceki çekirdeğin her hatada çağrıya bağlı bütün kota sayaçlarını durdurma davranışı

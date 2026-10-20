@@ -192,7 +192,14 @@ export function planRefreshAdmissions({state, candidates, budget, now, bounds}) 
 export async function commitRefreshAdmissions({store, ...input}) {
   requireValue(typeof store?.readState === "function" && typeof store?.compareAndSwap === "function");
   let state;
-  try { state = await store.readState(); } catch { throw new Error("REFRESH_STORE_UNAVAILABLE"); }
+  try {
+    if (typeof store.readAdmissionSnapshot === "function") {
+      const snapshot = await store.readAdmissionSnapshot();
+      state = snapshot.state;
+      // Persisted limits and revision are read together; caller-supplied limits cannot override them.
+      input = {...input, budget: snapshot.budget, bounds: snapshot.bounds};
+    } else state = await store.readState();
+  } catch { throw new Error("REFRESH_STORE_UNAVAILABLE"); }
   const proposal = planRefreshAdmissions({...input, state});
   if (proposal.status !== "proposed") return {...proposal, admitted: []};
   let committed;

@@ -148,6 +148,34 @@ API/kalıcılık kaynakları dar kapsamda yeniden doğrulanır.
 kapasite kabulü değildir. EO-05'in canlı uygulama ve başlangıç kapıları kapanmadı.
 Tasarım kaydı: `contracts/eo-05a-global-refresh-design-v1.json`.
 
+**Sonraki onaylı teslim — ortak iş takibi:** Önceki karar çekirdeği PR #141 ile
+kabul edildi. Ürün sahibi şimdi iş takibi kodu, veritabanı değişiklik dosyası ve
+testlerin hazırlanmasını onayladı; canlı uygulama onayı vermedi.
+
+`app/lib/database/refresh-work-repository.server.js` ve
+`supabase/migrations/20261020092429_eo05a_refresh_work_tracking.sql` bütün
+çalışanların aynı iş kaydını görmesini sağlar. İşin kimde olduğu ve sistemde
+ayrılan yer birlikte kaydolur. İş bittiğinde tamamlandı, yarıda kaldığında durdu
+olarak saklanır; eski çalışan yeni sahibin işini kapatamaz. Tamamlanmış iş aynı
+kimlikle yeniden başlatılamaz. Durmuş işi yeniden başlatmak ayrı bir işlemdir;
+otomatik tekrar veya süre dolunca kendiliğinden devir yoktur.
+
+Sistemin sınırları da aynı ortak kayıttan okunur; bir çalışanın gönderdiği daha
+yüksek sayılar bunların yerine geçemez. Başlangıçta bu sınırlar tanımlı değildir,
+bu nedenle iş başlatılamaz. Testteki küçük örnek sayılar gerçek kapasite değildir.
+
+Yeni kayıtlara kullanıcı ekranları ve mevcut web uygulaması doğrudan erişemez.
+Yalnız bu iş için ayrılan, henüz hiçbir giriş hesabına bağlanmamış iç yetki vardır.
+İş kaydı tutulurken veritabanı kısa süre meşgul edilir; sağlayıcı yanıtı beklenirken
+açık tutulmaz. Veritabanı rehberleri bu güvenlik ve kısa işlem sınırını belirledi.
+
+İki ayrı boş PostgreSQL test veritabanında aynı işe iki çalışanın uzanması,
+dolmuş kapasite, arada kalan kayıtların geri alınması, yarım iş, eski çalışan ve
+erişim sınırları sınanır. Bunlar sentetik testlerdir; canlı Supabase değişikliği
+veya gerçek mağaza/kapasite kanıtı değildir. Çalışanların çağrı ve kayıt öncesi
+yetki kontrolü, güvenli otomatik devir, saklama/silme bağlantısı ve gerçek sınır
+ölçümleri tamamlanmadan canlı kullanım açılmaz. EO-05-A kapanmış değildir.
+
 **Bu teslimin çalışan kodu:** `app/lib/refresh/admission-policy.server.js` yalnız
 hangi sınırlı iş parçasına sıra verileceğini hesaplar. Mağaza/sağlayıcı/hesap
 kimliğinden aynı saat içi konumu üretir; önceki hizmet sırasını girdiden alıp büyük

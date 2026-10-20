@@ -161,6 +161,46 @@ tamamlanacağına o zaman karar verilecek. 05-A şimdiden kapandı sayılamaz.
 
 ### Ortak kota kapısı — repository çekirdeği, canlı bağlantı değil
 
+**PR #151 sonrası bağlantı adımı:** Fırat kota kapısının mevcut çağrı yollarına
+bağlanmasını onayladı. İlk repository teslimi, dışarı çıkan her HTTP isteğini
+kapıdan geçiren ortak bağlantı ve mevcut Shopify/Meta/Google/Klaviyo istemcilerini
+bu bağlantıyla oluşturan açık sunucu kurucusudur. Üretimde kullanılan kurucular
+sessizce değiştirilmez. Bu teslim canlı etkinleştirme veya bütün kota işinin
+kapanışı değildir. Sözleşme: `contracts/eo-05a-quota-native-transport-v1.json`.
+
+**Bir rapor tek çağrı değildir:** Sentetik testte Meta Channel ve ürün için iki
+istek yaparsa iki pay ayrılır. Google token yenileme ve iki rapor sayfası için
+üç istek yaparsa üç pay ayrılır. Bu fiziksel istek sayımı, sağlayıcının günlük
+ücretlendirilen işlem sayısıyla birebir aynı kabul edilmez. Klaviyo'nun her
+HTTP sayfası da ayrı kapıdan geçer. Hangi tarih/ürün/verinin alınacağı değişmez.
+
+Kota doluysa bu istek hiç çıkmaz. Özel yerel bekleme bilgisi, sağlayıcıdan gelen
+benzer isimli JSON ile taklit edilemez. Klaviyo artık bu bilgiyi genel bağlantı
+veya veri grubu hatasına dönüştürmeden üst koordinatöre taşır. Bir raporda
+önceden başarılı çağrı varsa bu bilgi onları “hiç yapılmadı” saymaz; yalnız
+bekleyen HTTP sınırına aittir. Kalıcı bekleme ve yeni sahiplik numarasıyla tekrar
+sıraya alma henüz tamamlanmadı. Eski arka plan `authorizeRead` rezervasyonu ile
+yeni HTTP sayımı birlikte kullanılamaz; bu çift sayım kapısı, worker bağlantısı
+yapılmadan ayrıca kapatılacaktır.
+
+HTTP hata yanıtında kota durması kaydolduktan sonra aynı yanıt mevcut sağlayıcı
+doğrulayıcısına bırakılır; 401/403/429 davranışları yeniden uydurulmaz. HTTP 200
+içinde hata veya bozuk JSON varsa sabit hata ile durulur; boş veri diye
+devredilmez. Durma kaydı başarısızsa yanıt başarı diye devredilmez. Yönlendirme
+takibi kapalıdır; farklı hedefe sessiz istek çıkmaz. Kota kapsamını çözümleyen
+sunucuya yalnız doğrulanmış endpoint ailesi ve gerekli kimlikler gider; token,
+URL sorgusu, body, GAQL, cursor veya ürün satırı gitmez. URL/header/form girdileri
+bekleme öncesinde kopyalanır. Ek kota gerektiren desteklenmeyen sorgu değiştiricisi
+bilinmiyormuş gibi atlanmaz; yeni yol çağrı başlatmaz.
+
+Güvenilir hesap/istemci kapsam eşlemesi ve üretim limitleri hâlâ etkin değildir.
+Gerçek çağrı kotası header'larının geri bildirimi, normal beklemenin kalıcı iş
+sırasına bağlanması ve production kurucu bağlantısı açık kalır. Supabase rehberi
+gereği mevcut dar DB yetkisi genişletilmedi; yeni migration veya secret yoktur.
+20 Ekim resmî kaynak kontrolü sözleşmededir. Mevcut native istemciler sentetik
+HTTP yanıtlarıyla, kota→Shopify bağlantısı ayrıca iki boş CI veritabanında
+sınanır. Canlı provider/UI/deploy, zamanlayıcı veya Dataset/product kararı yoktur.
+
 Mevcut arka plan abonelik kontrolünde kota kontrol noktası vardır fakat uygulama
 içindeki çağrılarla ortak kalıcı sayaç henüz bağlanmamıştır. Yeni çekirdek aynı
 kotayı kullanan bütün çalışanları aynı kısa veritabanı işlemine sokar. Bir istek

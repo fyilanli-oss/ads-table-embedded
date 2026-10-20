@@ -30,6 +30,9 @@
     "database_transaction_held_across_provider_HTTP": false
   },
   "fairness_and_cadence": {
+    "queue_check_interval_seconds": 60,
+    "workspace_refresh_interval_seconds": 3600,
+    "queue_check_missing_success_critical_after_seconds": 120,
     "top_of_hour_fanout": false,
     "stable_slot_key": ["workspace_id", "provider", "reporting_account_id"],
     "workspace_round_robin_with_persisted_age": true,
@@ -167,8 +170,9 @@
     "full_2000_4000_or_24_hour_acceptance_authorized": false
   },
   "repository_work_stops_slice": {
+    "accepted_commit": "31a244155e539648acd1b95318b4c11a1ae297f6",
     "approved_at": "2026-10-20",
-    "status": "implementation_authorized_acceptance_pending_not_wired",
+    "status": "repository_accepted_not_wired",
     "sources": ["app/lib/refresh/work-stop-policy.server.js", "app/lib/database/refresh-work-repository.server.js"],
     "migration": "supabase/migrations/20261020100851_eo05a_refresh_stop_records.sql",
     "tests": "tests/eo-05a-refresh-work-stops.test.js",
@@ -199,7 +203,8 @@
     "sources_checked_at": "2026-10-20",
     "sources_checked": ["https://www.postgresql.org/docs/17/explicit-locking.html", "https://supabase.com/docs/guides/database/postgres/row-level-security"]
   },
-  "verification_limit": "Executable admission policy is tested with synthetic state and CAS only; not executable scheduling, production race safety, DB capacity or live provider behavior. Contract assertions alone remain design evidence.",
+  "end_to_end_alarm_design": "contracts/eo-05-refresh-alarm-matrix-v1.json",
+  "verification_limit": "Repository admission, work tracking and stop guards have synthetic and isolated SQL evidence; not executable scheduling, production race safety, DB capacity or live provider behavior. Contract assertions alone remain design evidence.",
   "sources_checked_at": "2026-10-20",
   "sources": ["https://www.postgresql.org/docs/current/sql-select.html", "https://docs.github.com/en/rest/pulls/pulls#update-a-pull-request", "https://nodejs.org/docs/latest-v24.x/api/crypto.html", "https://nodejs.org/docs/latest-v24.x/api/test.html"],
   "source_limit": "PostgreSQL locking documentation is reference for future atomic claim design; no SQL mechanism or deployed runtime version selected here.",

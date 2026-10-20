@@ -69,7 +69,7 @@ export async function refreshQueueCheckProbe(client,connection,environment=proce
       for(const fn of ["operations.read_refresh_queue_check()","operations.commit_refresh_queue_check(bigint,jsonb)"])
         assert.equal((await client.query("select has_function_privilege($1,$2,'EXECUTE') as allowed",[role,fn])).rows[0].allowed,false);
     }
-    assert.equal((await client.query("select has_function_privilege('adstable_refresh_coordinator','operations.commit_refresh_queue_check(bigint,jsonb)','EXECUTE') as allowed")).rows[0].allowed,true);
+    assert.equal((await client.query("select has_function_privilege('adstable_refresh_coordinator','operations.commit_refresh_queue_check(bigint,jsonb)','EXECUTE') as allowed")).rows[0].allowed,false,"native source follow-up removes arbitrary JSON authority from coordinator");
     console.log("EO05_REFRESH_QUEUE_PASS complete_inventory=true atomic_heartbeat=true duplicate_wakeup_safe=true missed_hours_coalesced=true account_wait_age_preserved=true stale_connection_denied=true no_provider_or_Dataset=true synthetic_only=true live_changes=false");
   } finally {
     try {

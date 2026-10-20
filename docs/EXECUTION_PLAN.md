@@ -151,6 +151,62 @@ API/kalıcılık kaynakları dar kapsamda yeniden doğrulanır.
 
 ## EO-05-A — Tüm workspace'ler için refresh tasarım önerisi — 20 Ekim 2026
 
+### EO-05-A — Gerçek kayıtlardan mağaza ve raporlama hesabı listesi — 20 Ekim 2026
+
+PR #148 açık merge onayıyla `300f52bb6efc3d9953e0a383d8ffe8cc9707e51b`
+olarak kabul edildi. Fırat şimdi mağaza/raporlama hesabı listesinin mevcut
+veritabanı kaynaklarından çıkarılıp iş ihtiyacı takibine bağlanmasını onayladı.
+05-A içindeyiz; 05-B başlamadı. Eski teslimlerdeki kabul bekliyor ifadeleri
+kendi hazırlık tarihleridir; bu kayıt onların merge durumunu günceller.
+
+**Kimler var?** Mevcut tüm workspace kayıtları sayılır. Kurulumu olmayan,
+uygulaması kaldırılan veya provider hesabı bulunmayan mağaza kaybolmaz. Her
+mağaza için Meta, Google ve Klaviyo'nun üç ayrı güncel durum kaydı tutulur.
+Aktif kurulum/nesil, bağlantı ve seçili raporlama hesabı aynı veritabanı
+görüntüsünden okunur; kullanıcıdan mağaza/hesap listesi alınmaz.
+
+Meta/Google'da erişilebilen bütün hesaplar değil **seçili Reporting Account**
+değerlendirilir. Manager hesap iş kuyruğuna giremez. Klaviyo'da tek aktif hesap
+aranır; iki hesap varsa rastgele biri seçilmez, belirsizlik nedeni görünür kalır.
+Hesap seçilmemiş, yeniden yetkilendirme gereken, bağlantısı kapalı, scope veya
+para birimi/saat dilimi eksik durumlar birbirinden ayrılır.
+
+**Hazır ne demek?** `ready_for_entitlement_check` yalnız güncel Shopify abonelik
+kontrolüne aday iş ihtiyacıdır. Reklam verisini alma izni, aktif abonelik veya
+ürün doğruluğu kanıtı değildir. Eski abonelik durumu yalnız tanısal bilgi olarak
+korunur; önceki yeni Shopify kontrolü atlanamaz. Kaynak liste aboneliği olmayan
+mağazayı gizlemez. Bu adayları yeni abonelik kontrolüne kabul edip sonucunu gerçek
+provider işine bağlama henüz tamamlanmamıştır: eski/olumsuz abonelik kaydı
+yüzünden kullanıcıyı uygulamayı açmaya mecbur bırakmamak gerekir. Mevcut admission
+işlevine uydurma `entitled=true` verilerek bu kapı aşılmaz; sonraki bağlama işidir.
+
+Reporting Account seçiminin kendi geçerlilik dönemi vardır; bu değişiklik her
+zaman OAuth bağlantı sürümünü artırmaz. Başka hesaba geçip tekrar dönüldüğünde
+eski bekleyen saatler yeni seçime taşınmaz. Yalnız bu native kaynak, değişen
+seçim/bağlantı dönemine ait ihtiyaç metadata'sını yenileyebilir. Eski çalışan,
+belirsiz çağrı, hesap hold'u veya ayrılmış kapasite bu işlemle çözülmez.
+
+Tam kaynak listesi, güncel ihtiyaçlar, üç provider durumları ve başarılı kontrol
+zamanı aynı kısa işlemde kaydolur. Kaynak görüntüsünden sonra gerçekleşen bağlantı
+değişikliğini sistem dondurmaz; worker çağrı/yazma öncesi yetkiyi tekrar denetler.
+Liste belirlenen boyuta sığmazsa kesilip başarı üretilmez: bütün kontrol reddedilir,
+son geçerli kayıt ve başarı zamanı korunur. Sayfalı tarama/üretim kapasitesi
+kanıtı bu küçük test değildir; canlı limit sayısı seçilmez.
+
+İç koordinatörün dışarıdan JSON liste göndererek kontrolü tamamlaması kapatılır;
+yalnız veritabanının kendi ürettiği listeyle işlev çağrısı yapabilir. Uygulama
+ekranına veya tarayıcı rollerine toplu mağaza erişimi verilmez. Durum kaydında
+mağaza alan adı, hesap adı, token, credential kimliği veya şifreli payload yoktur.
+Güncel durum metadata'sı tam tarihsel boşluk defteri değildir. Workspace silinince
+FK üzerinden temizlenir; ayrıntılı retention/mahremiyet kabul kapısı açık kalır.
+
+Sözleşme: `contracts/eo-05a-refresh-native-inventory-v1.json`. Yalnız repository,
+sentetik kurulum/hesap kayıtları ve iki mevcut boş CI veritabanı testleri.
+Canlı provider/Shopify çağrısı, Dataset yazması, zamanlayıcı, yeni hizmet veya
+secret yoktur; migration canlı uygulanmaz. Supabase/PostgreSQL rehberleri tek
+tutarlı kaynak görüntüsü ve dar iç erişim sınırını yönlendirdi. Resmî kaynaklar
+20 Ekim 2026'da kontrol edildi. UI değişmedi; merge ayrı açık onay bekler.
+
 ### EO-05-A — Saatlik veri alımından önce güncel Shopify abonelik kontrolü — 20 Ekim 2026
 
 PR #147, Fırat'ın açık onayıyla `79bcbcd6ee663b8155a2737c3ac28c2687409a96`

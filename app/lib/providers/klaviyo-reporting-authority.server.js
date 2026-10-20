@@ -16,6 +16,7 @@ import {
   selectKlaviyoShopifyMetrics,
 } from "./klaviyo-reporting.server.js";
 import {resolveKlaviyoOrderedProductSales} from "./klaviyo-attribution-resolution.server.js";
+import {quotaBoundaryControl} from "../refresh/quota-native-fetch.server.js";
 
 const PROVIDER = "klaviyo";
 const API_ORIGIN = "https://a.klaviyo.com";
@@ -267,7 +268,8 @@ export function createKlaviyoReportingAuthorityRuntime({
         headers: request.headers,
         ...(request.body == null ? {} : {body: request.body}),
       });
-    } catch {
+    } catch (error) {
+      if(quotaBoundaryControl(error)) throw error;
       fail("KLAVIYO_REPORTING_REQUEST_FAILED", "Klaviyo reporting request failed", {family});
     }
     const payload = await readPayload(response, family);

@@ -1,3 +1,5 @@
+import {quotaBoundaryControl} from "../refresh/quota-native-fetch.server.js";
+
 export const KLAVIYO_REPORTING_API_REVISION = "2026-10-15";
 export const KLAVIYO_REPORTING_STATISTICS = Object.freeze([
   "recipients",
@@ -454,6 +456,7 @@ export async function runKlaviyoReportingFamilies({
       completed.push(name);
     }
   } catch (error) {
+    if(quotaBoundaryControl(error)) throw error;
     const safeCode = typeof error?.code === "string" && /^KLAVIYO_[A-Z0-9_]{1,80}$/.test(error.code)
       ? error.code
       : "KLAVIYO_REPORTING_FAMILY_FAILED";

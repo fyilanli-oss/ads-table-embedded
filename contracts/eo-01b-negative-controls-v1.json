@@ -39,6 +39,11 @@
       "file": "app/lib/providers/meta-graph.server.js",
       "token": "debug",
       "reason": "official_Meta_debug_token_protocol_endpoint_not_a_product_or_operator_route"
+    },
+    {
+      "file": "app/lib/refresh/quota-native-fetch.server.js",
+      "token": "debug",
+      "reason": "exact_Meta_outbound_debug_token_allowlist_not_a_new_product_or_operator_route"
     }
   ],
   "forbiddenPaths": [

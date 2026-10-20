@@ -3,6 +3,8 @@ import {randomUUID,createHash} from "node:crypto";
 import pg from "pg";
 import {createSharedQuotaRepository} from "../app/lib/database/shared-quota-repository.server.js";
 import {createSharedQuotaGuard} from "../app/lib/refresh/shared-quota.server.js";
+import {createQuotaManagedClients} from "../app/lib/providers/quota-managed-clients.server.js";
+import {quotaBoundaryControl} from "../app/lib/refresh/quota-native-fetch.server.js";
 
 export async function sharedQuotaProbe(client,connection,environment=process.env) {
   assert.equal(environment.GITHUB_ACTIONS,"true");assert.ok(environment.RUNNER_TEMP);assert.equal(connection.host,"127.0.0.1");assert.equal(connection.port,54322);
@@ -45,6 +47,17 @@ export async function sharedQuotaProbe(client,connection,environment=process.env
     const guard=createSharedQuotaGuard({store,now:Date.now});
     assert.equal((await guard.execute({operationKey:unrelated,lane:"interactive",run:async()=>{calls++;return {outcome:"success",value:[]};}})).status,"returned");
     assert.equal(calls,1);
+    let nativeCalls=0;
+    const clients=createQuotaManagedClients({guard,lane:"interactive",resolveOperation:async()=>unrelated,
+      fetchFn:async()=>{nativeCalls++;return new Response(JSON.stringify({data:{activeSubscription:null}}),{headers:{"content-type":"application/json"}});}});
+    const partner=clients.shopify({environment:{SHOPIFY_PARTNER_ORG_ID:"123",SHOPIFY_APP_GID:"gid://shopify/App/456",SHOPIFY_PARTNER_API_ACCESS_TOKEN:"SYNTHETIC-ONLY"}});
+    const request={apiVersion:"2026-07",query:"query { activeSubscription { id } }",variables:{shopId:"gid://shopify/Shop/1"}};
+    assert.deepEqual(await partner.activeSubscription(request),{data:{activeSubscription:null}});
+    assert.equal(nativeCalls,1);
+    assert.equal((await client.query("select count(*)::int n from operations.api_quota_debits where policy_id=$1",[otherPolicy])).rows[0].n,3,"one actual native HTTP attempt consumed exactly one additional debit");
+    await client.query("update operations.api_quota_policies set max_units=3 where id=$1",[otherPolicy]);
+    await assert.rejects(partner.activeSubscription(request),e=>quotaBoundaryControl(e)?.status==="waiting");assert.equal(nativeCalls,1,"normal wait is not an HTTP attempt");
+    console.log("EO05_QUOTA_NATIVE_TRANSPORT_PASS real_SQL_to_existing_Shopify_client=true one_debit_per_HTTP=true normal_wait_no_call=true synthetic_only=true actual_provider_calls=0");
     await client.query("update operations.api_quota_policies set last_observed_at=clock_timestamp()+interval '1 hour' where id=$1",[otherPolicy]);
     assert.equal((await store.reserve(input(unrelated))).status,"clock_invalid");
     for(const role of ["anon","authenticated","service_role","adstable_runtime","adstable_refresh_coordinator"])

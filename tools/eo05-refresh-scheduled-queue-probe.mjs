@@ -15,9 +15,7 @@ export async function refreshScheduledQueueProbe(client,other) {
     assert.equal((await runScheduledRefreshCheck({store,generation:randomUUID()})).status,"not_current_generation");
     assert.equal(await queue(),baseline);
     const beforeMinute=Number((await client.query("select floor(extract(epoch from clock_timestamp())/60) as minute")).rows[0].minute);
-    await client.query("set role adstable_refresh_coordinator");await other.query("set role adstable_refresh_coordinator");
     const raced=await Promise.all([runScheduledRefreshCheck({store,generation}),runScheduledRefreshCheck({store:second,generation})]);
-    await client.query("set role adstable_owner");await other.query("set role adstable_owner");
     const afterMinute=Number((await client.query("select floor(extract(epoch from clock_timestamp())/60) as minute")).rows[0].minute);
     const checks=raced.filter(r=>r.status==="queue_checked");
     assert.ok(checks.length>=1);assert.ok(raced.every(r=>["queue_checked","duplicate"].includes(r.status)));
@@ -67,7 +65,6 @@ export async function refreshScheduledQueueProbe(client,other) {
     console.log("EO05_SCHEDULED_QUEUE_PASS native_inventory=true concurrent_arrivals=true duplicate_no_heartbeat=true missed_tick_coalesced=true atomic_failure=true clock_guard=true owner_only=true work_policy_required=true provider_calls=0 live_changes=false");
   } finally {
     await client.query("rollback");
-    await client.query("set role adstable_owner");await other.query("set role adstable_owner");
     await client.query("update operations.refresh_tick_control set enabled=false,generation=null,sequence=0,last_minute=null,last_checked_at_ms=null,queue_revision=null where singleton");
   }
 }

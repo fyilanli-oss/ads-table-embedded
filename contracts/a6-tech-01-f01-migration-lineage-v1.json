@@ -517,6 +517,15 @@
       "repository_sql_sha256": "b79c05bd94bc61b0f05dc4b4eede4e59df88d3c7ac63990a1ee30dce22e79823",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261020164124",
+      "name": "eo05a_quota_response_feedback",
+      "file": "supabase/migrations/20261020164124_eo05a_quota_response_feedback.sql",
+      "created_with": "supabase@2.121.0 migration new eo05a_quota_response_feedback",
+      "repository_sql_sha256": "10900ae17957bc48b649836508e27c4fc8dc045a9df53a4d8b7b62f574016655",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

@@ -1,4 +1,5 @@
 // Quota at the actual HTTP boundary, not once per report/snapshot.
+import {quotaResponseFeedback} from "./quota-response-feedback.server.js";
 const controls=new WeakMap();
 const managed=new WeakSet();
 function control(status,priorBoundaryAttempts=null) {
@@ -89,7 +90,8 @@ export function createQuotaManagedFetch({provider,guard,resolveOperation,isDispa
             &&errors.every(error=>String(error?.extensions?.code)==="429")) quotaSignal="shopify_partner_throttled";
         } catch {rejected=true;}
       }
-      return rejected?{outcome:"rejected",connectionFailure:[401,403].includes(response.status),quotaSignal}:{outcome:"success",value:response};
+      const feedback=quotaResponseFeedback(metadata,response);
+      return rejected?{outcome:"rejected",connectionFailure:[401,403].includes(response.status),quotaSignal,feedback}:{outcome:"success",value:response,feedback};
     }});} catch {throw new Error("QUOTA_NATIVE_TRANSPORT_UNAVAILABLE");}
     if(result?.status==="returned") return result.value;
     // Keep native HTTP 401/403/429 handlers, but only AFTER the quota stop persists.

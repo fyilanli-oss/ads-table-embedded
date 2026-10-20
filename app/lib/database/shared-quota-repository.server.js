@@ -10,6 +10,14 @@ export function createSharedQuotaRepository(database) {
     } catch {throw new Error("SHARED_QUOTA_STORE_UNAVAILABLE");}
   }
   return Object.freeze({
+    async recordFeedback({operationKey,attemptId,feedback}) {
+      if(!valid({operationKey,attemptId})||!feedback||typeof feedback!=="object"||Array.isArray(feedback)
+        ||Object.keys(feedback).sort().join(",")!=="httpStatus,kind,limit,remaining,resetSeconds,retryAfterSeconds"
+        ||!["steady","retry_after","missing","invalid"].includes(feedback.kind)
+        ||!Number.isInteger(feedback.httpStatus)||feedback.httpStatus<100||feedback.httpStatus>599
+        ||[feedback.limit,feedback.remaining,feedback.resetSeconds,feedback.retryAfterSeconds].some(v=>v!==null&&(!Number.isSafeInteger(v)||v<0))) throw new Error("SHARED_QUOTA_INPUT_INVALID");
+      return await result("select operations.record_shared_api_quota_feedback($1::text,$2::uuid,$3::jsonb) as result",[operationKey,attemptId,JSON.stringify(feedback)])===true;
+    },
     async resolveRoute({routeKey,connectionScopeKey,provider}) {
       if(![routeKey,connectionScopeKey].every(v=>typeof v==="string"&&/^[a-f0-9]{64}$/.test(v))
         ||!["shopify_partner","meta","google_ads","klaviyo"].includes(provider)) throw new Error("SHARED_QUOTA_INPUT_INVALID");

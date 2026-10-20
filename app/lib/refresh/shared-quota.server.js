@@ -34,7 +34,13 @@ export function createSharedQuotaGuard({store,now,elapsedNow=()=>performance.now
       // run must immediately perform exactly one boundary request, not a hidden multi-call/retry loop.
       let response;
       try {response=await run();} catch {response={outcome:"unknown"};}
+      let feedbackRecorded=true;
+      if(response?.feedback!=null) {
+        try {feedbackRecorded=typeof store.recordFeedback==="function"&&await store.recordFeedback({operationKey,attemptId,feedback:response.feedback})===true;}
+        catch {feedbackRecorded=false;}
+      }
       if(response?.outcome==="success") {
+        if(!feedbackRecorded) return {status:"needs_attention",reason:"quota_feedback_unavailable"};
         try {if(await store.settle({operationKey,attemptId})!==true) throw Error();} catch {return {status:"needs_attention",reason:"quota_settlement_unavailable"};}
         return {status:"returned",value:response.value};
       }
@@ -43,6 +49,7 @@ export function createSharedQuotaGuard({store,now,elapsedNow=()=>performance.now
       const connectionFailure=knownResponse&&response?.connectionFailure===true;
       const quotaSignal=knownResponse&&!connectionFailure&&response?.quotaSignal==="shopify_partner_throttled"?response.quotaSignal:null;
       try {stopped=await store.stop({operationKey,attemptId,knownResponse,connectionFailure,quotaSignal})===true;} catch { /* independent alarm wiring is a later gate */ }
+      if(!feedbackRecorded) return {status:"needs_attention",reason:"quota_feedback_unavailable",stopRecorded:stopped};
       return {status:stopped?"stopped":"needs_attention",reason:response?.outcome==="rejected"?"provider_rejected":"provider_outcome_unknown",stopRecorded:stopped};
     },
   });

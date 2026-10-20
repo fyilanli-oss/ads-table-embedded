@@ -17,6 +17,13 @@ export function createRefreshWorkRepository(database) {
   }
   return Object.freeze({
     readAdmissionSnapshot,
+    async readQueueCheck() {
+      return result("select operations.read_refresh_queue_check() as result");
+    },
+    async commitQueueCheck({expectedRevision, inventory}) {
+      if (!Number.isSafeInteger(expectedRevision) || expectedRevision < 0 || !inventory) throw new Error("REFRESH_WORK_INPUT_INVALID");
+      return result("select operations.commit_refresh_queue_check($1::bigint,$2::jsonb) as result", [expectedRevision, JSON.stringify(inventory)]);
+    },
     async advanceStage({claim,window,expectedStage,stage,rows=0,bytes=0}) {
       const stages=[null,"checking_authority","request_intent","response_received","ready_for_dataset"];
       if(stages.indexOf(stage)!==stages.indexOf(expectedStage)+1||!stages.includes(expectedStage)||!stages.includes(stage)

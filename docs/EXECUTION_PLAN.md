@@ -151,6 +151,60 @@ API/kalıcılık kaynakları dar kapsamda yeniden doğrulanır.
 
 ## EO-05-A — Tüm workspace'ler için refresh tasarım önerisi — 20 Ekim 2026
 
+### EO-05-A — Zamanı gelen mağazanın iş ihtiyacını kaydetme — 20 Ekim 2026
+
+**Kapsam:** Fırat'ın onayıyla 05-A içinde devam edilir; 05-B başlamaz.
+Alarm tasarımı PR #145 (`e51506b244da3a21b25073b3ccbf160d2d9f9bb3`) ve
+tek veri parçası çekirdeği PR #146 (`dee7b8621c33abea997eadbcb3a6cb61cf375bdb`)
+ayrı açık onayla birleşmiştir. Aşağıdaki eski “PR145 açık” ifadeleri o teslim
+hazırlanırken geçerli tarihsel durumu anlatır, bugünkü merge durumunu değiştirmez.
+
+Bu adımda güvenilir iç kaynaktan gelen **tam mağaza/hesap listesi** değerlendirilir.
+Hesabı olmayan mağaza ve uygun olmayan hesap da sayılır. Eksik, yarım, yinelenmiş,
+eski, ileri tarihli veya açık boyut sınırını aşan liste başarılı kontrol olamaz.
+Listeyi üreten gerçek kurulum/bağlantı kaynağı henüz bağlanmamıştır: testteki
+“tam liste” sentetiktir. Sayıların eşit çıkması tek başına doğru kaynak kapsamının
+kanıtı değildir; bu sınır kapanmadan canlı genel sağlık sinyali yayımlanmaz.
+
+Her hesap saat içine yayılmış mevcut sabit sırasını korur. Zamanı geldiyse
+**bekleyen iş ihtiyacı** oluşur; her dakikada veya kaçan her saatte yeni iş
+yığını açılmaz. Aynı hesap için ilk bekleme anı ve ilk/son kaçan saat saklanır.
+Kontrol tekrar geldi diye bekleme süresi sıfırlanmaz. Böylece genel kontrol
+sağlıklı olsa bile bir hesabın beklemesi iç gözlemci tarafından görülebilir.
+Takılma eşiği ölçülmeden uydurulmaz; çalışan alarm/mesaj teslimi iddiası yoktur.
+
+Bekleyen ihtiyaç henüz **çalıştırılabilir provider işi değildir**. Veri ailesi,
+tarih aralığı, sayfa ve ölçülmüş iş maliyeti belirlenip önceki kabul çekirdeğine
+bağlanmadan dış çağrı yapılamaz. İlk/son kaçan saatler eksik günleri otomatik
+alma izni değildir. Bağlantı değişiminde eski ihtiyaç yeni bağlantıya taşınmaz;
+uygun olmayan bağlantının aynı sürümle sessizce yeniden açılması reddedilir.
+Mevcut durdurma/belirsizlik kaydı korunur; yeni kontrol eski işi çözmez,
+tekrarlamaz veya kapasitesini serbest bırakmaz. Bilinçli Disconnect boşluğu alınmaz.
+
+Tam liste değerlendirmesi, hesapların güncel ihtiyaç kaydı ve başarılı kontrol
+zamanı **aynı kısa veritabanı işlemiyle** saklanır. İki kontrol aynı sürümle
+yarışırsa yalnız biri kabul edilir; diğerinde otomatik tekrar yoktur. İşlem
+yarıda kalırsa başarı saati de ilerlemez. Saat veritabanından gelir; HTTP 200
+veya kontrolün başlaması başarı değildir. Ayrı gözlemcide kullanılacak karar
+işlevi açık etkinleştirmeden veya son başarılı kontrolden itibaren **120 saniye
+aşılmasını** kritik sayar; şu anda bağımsız gözlemci çalıştırılmaz.
+
+Her hesap için yalnız güncel metadata vardır; bu eksiksiz tarihsel boşluk/deneme
+defteri değildir. Tam liste eski hesap/kurulum metadata'sını geçersizleştirebilir;
+provider veya Dataset verisi silmez. Gizlilik yaşam döngüsü, tarihsel kanıtın
+saklanması ve iş tüketme/başarı bağlantısı kendi açık kapılarında kalır.
+
+İlk uygulama açıkça sınırlanmış tam listeyle çalışır; ölçülen sınırlara sığmazsa
+listeyi kesip başarı üretmez. Sürümlü sayfalı tarama ayrıca gerekir. Canlı limit
+sayısı seçilmez, yeni zamanlayıcı/hizmet/secret açılmaz, migration canlı uygulanmaz.
+UI değişmez. Sentetik test ve iki boş CI veritabanı kontrolüyle teslim edilir.
+Sözleşme: `contracts/eo-05a-refresh-queue-check-v1.json`.
+
+Resmî kaynak kontrolü 20 Ekim 2026: PostgreSQL 17 INSERT/ON CONFLICT ve kilitleme,
+Supabase RLS ve changelog. Supabase rehberi özel schema, zorunlu RLS ve yalnız
+mevcut NOLOGIN iç koordinatörün çağırabildiği işlev sınırını yönlendirdi.
+Yerel Windows build tekrar denenmez; build normal GitHub CI'da doğrulanır.
+
 ### EO-05-A — Tek veri parçasını çalıştırma ve evre kaydı — 20 Ekim 2026
 
 Fırat, 16 alarm senaryosundaki korumaların mevcut EO-05 alt işleri içinde

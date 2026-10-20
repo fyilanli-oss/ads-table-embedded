@@ -35,7 +35,10 @@ test("EO05 preserves configured finality, bounded reauthorization recovery and n
   assert.equal(invariant.non_entitled_or_reauthorization_required_jobs_run, false);
   assert.equal(invariant.stale_job_can_write_after_account_or_generation_change, false);
   assert.equal(invariant.cost_allocation_formula_owner, "A6-EO-06-A");
-  assert.ok(invariant.reauthorization_gap.includes("bounded_recovery"));
+  assert.ok(invariant.reauthorization_gap.includes("classify_disconnect_vs_involuntary_authorization_loss"));
+  assert.equal(invariant.intentional_disconnect_interval_may_be_backfilled, false);
+  assert.equal(invariant.paid_subscription_overrides_disconnected_interval, false);
+  assert.equal(invariant.yesterday_today_bootstrap_may_cross_disconnected_interval, false);
 });
 
 test("brief preserves capacity prerequisites and staged real validation without declaring acceptance", () => {

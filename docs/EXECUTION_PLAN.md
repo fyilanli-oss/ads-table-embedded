@@ -73,7 +73,10 @@ başlatmaz. EO-05 henüz uygulamaya açılmadı.
 **Amaç:** Sağlayıcı verisini doğru mağaza/hesap ve tarihe bağlı, tekrar çalışınca
 çoğalmayan, eksikleri görünür, güncellenebilir Dataset V2 kaydına dönüştürmek.
 
-**İlk dar iş:** Zamanlayıcıya geçmeden tarihsel PMax kanıtının kayıt/okuma tasarımı
+**20 Ekim kapsam netleştirmesi:** EO-05 yalnız bir PMax işi değildir. Önce tüm
+alt paketler ve sistem geneli refresh tasarımı netleştirilir; eski yapı yalnız
+yararlı iş takibi fikirleri için referanstır, kodu veya mimarisi taşınmaz.
+Zamanlayıcı uygulamasına geçmeden tarihsel PMax kanıtının kayıt/okuma tasarımı
 ve iş yükü bütçesi hazırlanır. Mevcut indeks/sorgu planı başlangıç ölçümü ayrıca
 doğrulanır; henüz tamamlanmış veya üretim kapasitesi sertifikası değildir.
 Ağaç sürümü/hash'i, gözlem zamanı, kanıtlanmış geçerlilik aralığı, hesap saat
@@ -92,16 +95,23 @@ ve tarih eşli resolver teslimi birlikte doğrulanmalıdır.
 
 **Mevcut alt paket sırası:**
 
-1. EO-05-A: Saat içine yayılmış zamanlayıcı; shard, lease, checkpoint, tek iş ve
+1. EO-05-A: Tüm workspace'lerin toplam DB yükünü yöneten, saat içine yayılmış
+   zamanlayıcı; adil sıra, shard, lease, checkpoint, tek iş ve sistem geneli
    sınırlı eşzamanlılık. Yetki/abonelik geçersizken iş çalışmaz; hesap veya kurulum
    nesli değişince eski iş yeni veriye yazamaz.
 2. EO-05-B: Dataset V2, kaynak para birimi, doğrulanmış FX kaynak izi ve sürümlü
    sentetik test verisi. FX kaynağı/oranı varsayılmaz; test verisi gerçek kanıt değildir.
+   Ürün sahibinin anlattığı sabit ilk-kurulum para birimi, Frankfurter ve mevcut
+   Dataset V2 yapısı EO-05-B'de kaynakla incelenecektir. Product level kayıt/
+   fiziksel tablo tasarımı şimdi kararlaştırılmadı; EO-05-B'de yeniden tartışılacak.
 3. EO-05-C: Sağlayıcının doğrulanmış attribution ayarından olgunluk/kesinleşme.
    Başarısız, kısmi veya kota sınırlı koşu kesinleşmeyi ilerletemez.
 4. EO-05-D: Önce dün, sonra bugün ilk yükleme; tekrar güvenliği ve uzlaştırma.
-   Yetki yenilemede erişilemeyen iş günleri kayda alınır, sınırlı geçmiş tamamlama
-   yapılır ve kalan eksik günler görünür olur. Sağlayıcı geçmişi yetmezse eksik
+   Bilinçli Disconnect aralığı ücretli abonelik sürse bile sonradan alınmaz;
+   bir ay sonra dönüş, o ayı doldurma izni değildir. Dün/bugün ilk yüklemesi de
+   bu sınırı delemez. İstemsiz token/yetki kaybı ayrı sınıflanır; geçmiş tamamlama
+   politikası EO-05-D ve UI kapsamında ayrıca kararlaştırılmadan otomatik uygulanmaz.
+   İzin verilen kurtarmada kalan eksik günler görünür olur. Sağlayıcı geçmişi yetmezse eksik
    veri açık kalır, sıfıra çevrilmez. Saatlik tam geçmiş taraması yapılmaz;
    derin uzlaştırma 24 saatte bir, etkin attribution ufkuna göre planlanır.
 5. EO-05-E: Gecikme, tazelik, kaynak tüketimi ve iş başına maliyetin secretsız
@@ -120,6 +130,50 @@ Supabase Row Level Security (erişim sınırı), GitHub Pull Requests (teslim).
 Bağlantılar çalışma sözleşmesindedir. Bu okumalar tarihsel süreklilik servisi,
 şema güvenliği veya canlı kapasite kanıtı üretmez; uygulama öncesi ilgili resmî
 API/kalıcılık kaynakları dar kapsamda yeniden doğrulanır.
+
+## EO-05-A — Tüm workspace'ler için refresh tasarım önerisi — 20 Ekim 2026
+
+**Durum:** İncelemeye hazır tasarım önerisi; çalışan scheduler veya kapasite kabulü değildir.
+Tasarım kaydı: `contracts/eo-05a-global-refresh-design-v1.json`.
+
+Akış: uygunluk → saat içindeki sıra → workspace'ler arasında adil seçim →
+ortak bütçe ve işi atomik sahiplenme → sınırlı veri parçası → güvenli kayıt/
+checkpoint → bütçeyi bırakıp kalan iş için sıraya dönme.
+
+- **Sistem bütünü:** Bütün çalışanların toplam sağlayıcı istekleri, DB yazma
+  işleri, bağlantı ve satır/byte yükü birlikte sınırlandırılır. Her worker'ın
+  kendi sayacı yetmez. Kullanıcının rapor okuması için kapasite ayrılır; bütçe
+  dolunca iş kaybolmaz, bekler. Sayısal limitler ölçülmeden uydurulmaz.
+- **Adil sıra:** Aynı saatte toplu yükleme yoktur. Büyük workspace'in tüm
+  geçmişi tek seferde kuyruğu tutamaz; sınırlı sayfa/tarih parçasından sonra
+  diğer workspace'lere sıra verilir. İlk yükleme, saatlik veri, derin uzlaştırma
+  ve izinli kurtarma işleri birbirini süresiz aç bırakmamalıdır.
+- **Çakışma:** Aynı workspace/kurulum nesli/sağlayıcı/hesapta tek aktif iş olur.
+  Başka iş amacı bu sınırı aşamaz. Sahiplik süresi dolan eski çalışan, yeni
+  sahibin verisine yazamaz. Sağlayıcı yanıtı beklenirken DB işlemi açık tutulmaz.
+- **Yarıda kalma:** Checkpoint yalnız veri kalıcı kaydedildikten sonra ilerler.
+  Kayıttan hemen sonra çökme olursa tekrar çalıştırma veriyi çoğaltmaz. Kısmi
+  sayfa/tarih başarı sayılmaz; kaçırılan saatler sınırsız yeni iş üretmez.
+- **Yetki ve hata:** İş öncesi ve kayıt öncesi hesap/kurulum/abonelik/bağlantı
+  yetkisi kontrol edilir. Disconnect dönemi alınmaz. İlk açık provider hatasında
+  ilgili işlem durur; otomatik tekrar, süre dolunca kendiliğinden yeniden deneme
+  veya alternatif rota izni yoktur. Geçerli eski veri korunur.
+
+Eski referans `fyilanli-oss/ads-table-dev` commit
+`6d79fbb8d975be550d5611d682ae1ad2a97594d7` içindeki iş durumu, source job ve
+güvenli hata görünürlüğü fikirleridir. Eski otomatik retry kuralları ve uygulama
+bekleyen scheduler sözleşmesi taşınmaz; hazır altyapı kabul edilmez.
+
+Uygulama öncesinde yürütme/tetikleme mekanizması, atomik sahiplenmenin güvenli
+kalıcılık sınırı ve ölçülmüş limitler ayrıca doğrulanacaktır. Bu taslak herhangi
+bir Vercel/Supabase servisi seçmez, satın alma veya canlı işlem gerektirmez.
+Yarış, çöken çalışan, eski sahip, büyük/küçük workspace adaleti ve Disconnect
+aralığı senaryoları gelecekte çalışan kod üzerinde sınanacak; bugünkü sözleşme
+testleri bunların çalıştığını kanıtlamaz. PMax ilk zorunlu kanıt kapısı korunur.
+
+Resmî tasarım kaynakları 20 Ekim 2026'da kontrol edildi: PostgreSQL SELECT/kilit
+kuralları ve GitHub PR güncelleme belgesi. Bağlantılar tasarım kaydındadır;
+PostgreSQL belgesi tek başına güvenli bir kuyruk veya uygulanmış DB şeması değildir.
 
 ## Otorite
 

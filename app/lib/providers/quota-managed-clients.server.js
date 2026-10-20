@@ -11,8 +11,8 @@ export function quotaManagedClientProvider(client) {return clients.get(client)??
 
 // Inactive server composition. Existing Production construction is NOT silently replaced.
 // Resolver binds full verified client/project/account scopes from trusted configuration.
-export function createQuotaManagedClients({guard,resolveOperation,lane,fetchFn=globalThis.fetch}) {
-  const transport=provider=>createQuotaManagedFetch({provider,guard,resolveOperation,lane,fetchFn});
+export function createQuotaManagedClients({guard,resolveOperation,isDispatchCurrent,lane,fetchFn=globalThis.fetch}) {
+  const transport=provider=>createQuotaManagedFetch({provider,guard,resolveOperation,isDispatchCurrent,lane,fetchFn});
   const locked=options=>{
     if(Object.hasOwn(options??{},"fetchFn")||Object.hasOwn(options??{},"fetchImpl")) throw new Error("QUOTA_NATIVE_TRANSPORT_OVERRIDE_FORBIDDEN");
     return options??{};
@@ -28,8 +28,9 @@ export function createQuotaManagedClients({guard,resolveOperation,lane,fetchFn=g
 
 // Explicit, still inactive: production callers cannot substitute an arbitrary constant operation key.
 // The authoritative context loader and coordinator store must be separately provisioned.
-export function createScopeResolvedQuotaClients({loadContext,store,now,lane,fetchFn,resolveOperation,guard}) {
-  if(resolveOperation!==undefined||guard!==undefined) throw new Error("QUOTA_SCOPE_RESOLVER_OVERRIDE_FORBIDDEN");
+export function createScopeResolvedQuotaClients({loadContext,store,now,lane,fetchFn,resolveOperation,guard,isDispatchCurrent}) {
+  if(resolveOperation!==undefined||guard!==undefined||isDispatchCurrent!==undefined) throw new Error("QUOTA_SCOPE_RESOLVER_OVERRIDE_FORBIDDEN");
+  const resolve=createQuotaScopeResolver({loadContext,store});
   return createQuotaManagedClients({guard:createSharedQuotaGuard({store,now}),lane,fetchFn,
-    resolveOperation:createQuotaScopeResolver({loadContext,store})});
+    resolveOperation:resolve,isDispatchCurrent:async(metadata,key)=>await resolve(metadata)===key});
 }

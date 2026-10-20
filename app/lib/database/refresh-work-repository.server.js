@@ -18,6 +18,13 @@ export function createRefreshWorkRepository(database) {
   }
   return Object.freeze({
     readAdmissionSnapshot,
+    async loadQuotaContext({claim,window,provider,entitlementReceipt}) {
+      if(!["shopify_partner",claim?.provider].includes(provider)||![window?.from,window?.to].every(v=>typeof v==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(v))) throw new Error("REFRESH_WORK_INPUT_INVALID");
+      const observed=entitlementReceipt?.observedAt??null;
+      if(observed!==null&&(typeof observed!=="string"||Number.isNaN(Date.parse(observed)))) throw new Error("REFRESH_WORK_INPUT_INVALID");
+      return result("select operations.load_refresh_quota_context($1::uuid,$2::bigint,$3::text,$4::text,$5::text,$6::bigint,$7::date,$8::date,$9::text,$10::timestamptz) as result",
+        [...refreshWorkIdentity(claim,{claimRequired:true}),window.from,window.to,provider,observed]);
+    },
     async deferQuotaWait({claim,window,wait}) {
       const boundary=takeRefreshQuotaWait(wait,claim);
       if(!boundary||!/^\d{4}-\d{2}-\d{2}$/.test(window?.from??"")||!/^\d{4}-\d{2}-\d{2}$/.test(window?.to??"")) throw new Error("REFRESH_WORK_INPUT_INVALID");

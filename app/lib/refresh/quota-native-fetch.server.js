@@ -48,7 +48,7 @@ function descriptor(provider,input,init) {
   return Object.freeze({provider,family,accountId,organizationId,version,includes:Object.freeze([...new Set(includes)])});
 }
 
-export function createQuotaManagedFetch({provider,guard,resolveOperation,lane,fetchFn=globalThis.fetch}) {
+export function createQuotaManagedFetch({provider,guard,resolveOperation,isDispatchCurrent,lane,fetchFn=globalThis.fetch}) {
   if(!["shopify_partner","meta","google_ads","klaviyo"].includes(provider)||typeof guard?.execute!=="function"||typeof resolveOperation!=="function"
     ||!["interactive","background"].includes(lane)||typeof fetchFn!=="function"||managed.has(fetchFn)) throw new Error("QUOTA_NATIVE_TRANSPORT_INPUT_INVALID");
   let attempts=0,closed=false;
@@ -70,7 +70,8 @@ export function createQuotaManagedFetch({provider,guard,resolveOperation,lane,fe
     if(!/^[a-f0-9]{64}$/.test(operationKey??"")) throw control("not_configured");
     let response,rejected=false,quotaSignal=null;
     let result;
-    try {result=await guard.execute({operationKey,lane,run:async()=>{
+    try {result=await guard.execute({operationKey,lane,
+      ...(isDispatchCurrent?{beforeDispatch:()=>isDispatchCurrent(metadata,operationKey)}:{}),run:async()=>{
       // No silent redirect: credentials cannot move to another target or bypass a second debit.
       if(closed||requestInit.signal?.aborted) throw Error("QUOTA_NATIVE_DISPATCH_CLOSED");
       attempts++;

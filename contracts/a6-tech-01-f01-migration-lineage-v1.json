@@ -508,6 +508,15 @@
       "repository_sql_sha256": "5ef61f43447bca5f1a16e52a92408ced354e56d3d6d8322a2310cc2088a777ba",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261020161840",
+      "name": "eo05a_quota_authority_binding",
+      "file": "supabase/migrations/20261020161840_eo05a_quota_authority_binding.sql",
+      "created_with": "supabase@2.121.0 migration new eo05a_quota_authority_binding",
+      "repository_sql_sha256": "bec150b3fb5e36e8995af81f4a2690a0c967a53fdea03d12e78620580d520dfb",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

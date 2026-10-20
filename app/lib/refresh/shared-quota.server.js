@@ -5,7 +5,7 @@ import {randomUUID} from "node:crypto";
 export function createSharedQuotaGuard({store,now,elapsedNow=()=>performance.now()}) {
   if(!["reserve","stop","settle"].every(k=>typeof store?.[k]==="function")||typeof now!=="function"||typeof elapsedNow!=="function") throw new Error("SHARED_QUOTA_INPUT_INVALID");
   return Object.freeze({
-    async execute({operationKey,lane,run}) {
+    async execute({operationKey,lane,run,beforeDispatch}) {
       if(!/^[a-f0-9]{64}$/.test(operationKey??"")||!["interactive","background"].includes(lane)||typeof run!=="function") throw new Error("SHARED_QUOTA_INPUT_INVALID");
       const attemptId=randomUUID();
       const started=elapsedNow();
@@ -14,6 +14,14 @@ export function createSharedQuotaGuard({store,now,elapsedNow=()=>performance.now
       if(permit?.status!=="reserved") {
         return ["waiting","not_configured","stopped","clock_invalid","already_reserved"].includes(permit?.status)
           ?{status:permit.status}:{status:"needs_attention",reason:"quota_receipt_invalid"};
+      }
+      let dispatchCurrent=true;
+      if(beforeDispatch!==undefined) {
+        try {dispatchCurrent=typeof beforeDispatch==="function"&&await beforeDispatch()===true;} catch {dispatchCurrent=false;}
+      }
+      if(!dispatchCurrent) {
+        try {if(await store.settle({operationKey,attemptId})!==true) throw Error();} catch {return {status:"needs_attention",reason:"quota_settlement_unavailable"};}
+        return {status:"not_sent",reason:"authority_not_current"};
       }
       const current=now();
       const elapsed=elapsedNow()-started;

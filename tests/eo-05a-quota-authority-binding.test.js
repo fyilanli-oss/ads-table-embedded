@@ -4,11 +4,16 @@ import {createRefreshQuotaClients} from "../app/lib/refresh/quota-authority-bind
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 import {quotaBoundaryControl} from "../app/lib/refresh/quota-native-fetch.server.js";
 import {createSharedQuotaGuard} from "../app/lib/refresh/shared-quota.server.js";
+import {readFileSync} from "node:fs";
 
 const claim=()=>({workspaceId:"00000000-0000-4000-8000-000000000001",installGeneration:"1",provider:"google_ads",accountId:"111",id:"test",fence:1});
 const window={from:"2026-10-19",to:"2026-10-19"};
 const context=()=>({provider:"shopify_partner",clientScopeKey:"a".repeat(64),connectionScopeKey:"b".repeat(64),connectionEpoch:1,accountId:null,organizationId:"123",apiVersion:"2026-07"});
 const request={apiVersion:"2026-07",query:"query { activeSubscription { id } }",variables:{}};
+test("quota inventory installation FK uses the established bigint installation identity",()=>{
+  const sql=readFileSync(new URL("../supabase/migrations/20261020161840_eo05a_quota_authority_binding.sql",import.meta.url),"utf8");
+  assert.match(sql,/installation_id bigint not null references shopify\.installations\(id\)/);
+});
 function fixture() {
   const state={context:context(),calls:0,stops:0,settles:0,loads:[],onReserve:async()=>{}};
   const workStore={loadQuotaContext:async input=>{state.loads.push(input);return state.context;}};

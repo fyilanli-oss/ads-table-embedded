@@ -8,7 +8,7 @@ create table operations.refresh_quota_contexts (
   workspace_id uuid not null references app.workspaces(id) on delete cascade,
   install_generation bigint not null check(install_generation>0),
   provider text not null check(provider in ('shopify_partner','meta','google_ads','klaviyo')),
-  installation_id uuid not null references shopify.installations(id) on delete cascade,
+  installation_id bigint not null references shopify.installations(id) on delete cascade,
   connection_id uuid references integrations.provider_connections(id) on delete cascade,
   connection_version bigint,
   account_id text,

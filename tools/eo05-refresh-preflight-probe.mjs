@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
-import {createRefreshEntitlementVerifier} from "../app/lib/refresh/entitlement-check.server.js";
+import {createRefreshEntitlementVerifier,createQuotaRefreshEntitlementVerifier} from "../app/lib/refresh/entitlement-check.server.js";
+import {createSharedQuotaGuard} from "../app/lib/refresh/shared-quota.server.js";
+import {createSharedQuotaRepository} from "../app/lib/database/shared-quota-repository.server.js";
+import {randomUUID,createHash} from "node:crypto";
 import {dispatchRefreshPreflight} from "../app/lib/refresh/preflight-bridge.server.js";
 import {planRefreshPreflightAdmissions} from "../app/lib/refresh/admission-policy.server.js";
 
@@ -40,8 +43,48 @@ export async function refreshPreflightProbe(client,{workspace,connections,shopId
     assert.equal(await store.commitPreflight({...commit,queueRevision:snapshot.queueRevision+1}),false);
     assert.equal(await store.commitPreflight({...commit,window:{from:"2000-01-01",to:day}}),false,"cannot backfill before current connection period");
     assert.equal((await store.readAdmissionSnapshot()).state.revision,snapshot.state.revision);
+    // Real SQL quota -> existing Partner HTTP -> private wait -> durable pause -> NEW fence.
+    // Policy, token and HTTP response are synthetic; transaction rollback removes all fixture changes.
+    const policy=randomUUID(),operation=createHash("sha256").update(policy).digest("hex");
+    await client.query("insert into operations.api_quota_policies(id,provider,window_ms,max_units,interactive_reserve,dispatch_delay_ms,max_outstanding) values($1,'shopify_partner',60000,1,1,1000,8)",[policy]);
+    await client.query("insert into operations.api_quota_operations values($1,'shopify_partner',true)",[operation]);
+    await client.query("insert into operations.api_quota_bindings values($1,$2,1)",[operation,policy]);
+    const managedVerifier=()=>createQuotaRefreshEntitlementVerifier({store,appId:"gid://shopify/App/456",now:Date.now,
+      limits:plan().limits,guard:createSharedQuotaGuard({store:createSharedQuotaRepository(client),now:Date.now}),resolveOperation:async()=>operation,
+      environment:{SHOPIFY_PARTNER_ORG_ID:"123",SHOPIFY_APP_GID:"gid://shopify/App/456",SHOPIFY_PARTNER_API_ACCESS_TOKEN:"SYNTHETIC-ONLY"},
+      fetchFn:async()=>{billingCalls++;return new Response(JSON.stringify(payload),{headers:{"content-type":"application/json"}});}});
+    args.entitlementVerifier=managedVerifier();
+    const firstWait=await dispatchRefreshPreflight(args);
+    assert.equal(firstWait.status,"quota_waiting");assert.equal(billingCalls,0);assert.equal(adCalls,0);
+    assert.equal((await store.readAdmissionSnapshot()).state.claims.length,0,"known not-sent wait releases worker capacity");
+    assert.equal(await store.isClaimCurrent({claim:firstWait.claim}),false);
+    const persistedWait=(await client.query("select * from operations.refresh_quota_waits where fence=$1",[firstWait.claim.fence])).rows[0];
+    assert.equal(persistedWait.state,"waiting");assert.equal(persistedWait.boundary,"entitlement");
+    assert.equal((await store.readQueueCheck()).accounts.find(a=>a.provider==="google_ads").firstQueuedAtMs,source.queuedAt);
+    assert.equal(await store.advanceStage({claim:firstWait.claim,window,expectedStage:"request_intent",stage:"response_received"}),false);
+    assert.equal(await store.finishClaim({claim:firstWait.claim,outcome:"completed"}),false);
+    assert.equal((await client.query("select operations.defer_refresh_quota_wait($1,1,'google_ads','111',$2,$3,$4,$4,'entitlement') result",[workspace,firstWait.claim.id,firstWait.claim.fence,day])).rows[0].result,false);
+    // A fresh wakeup may check quota again, but still cannot send while reserve is full.
+    args.entitlementVerifier=managedVerifier();
+    const repeatedWait=await dispatchRefreshPreflight(args);
+    assert.equal(repeatedWait.status,"quota_waiting");assert.equal(repeatedWait.claim.id,firstWait.claim.id);
+    assert.ok(repeatedWait.claim.fence>firstWait.claim.fence);assert.equal(billingCalls,0);assert.equal(adCalls,0);
+    // Reject period/source widening even if a paused quota job exists.
+    const waitingSnapshot=await store.readPreflightSnapshot();
+    const resuming=planRefreshPreflightAdmissions({...waitingSnapshot,candidates:[{...candidate,id:firstWait.claim.id}],now:Date.now()});
+    assert.equal(await store.commitPreflight({expectedRevision:waitingSnapshot.state.revision,queueRevision:waitingSnapshot.queueRevision,
+      nextState:resuming.nextState,source:waitingSnapshot.candidates.find(s=>s.provider==="google_ads"),window,partitionId:"different-partition"}),false);
+    await client.query("update operations.api_quota_policies set interactive_reserve=0 where id=$1",[policy]);
+    args.entitlementVerifier=managedVerifier();
     const result=await dispatchRefreshPreflight(args);
     assert.equal(result.status,"awaiting_dataset");assert.equal(billingCalls,1);assert.equal(adCalls,1);
+    assert.equal(result.claim.id,firstWait.claim.id);assert.ok(result.claim.fence>repeatedWait.claim.fence);
+    assert.equal((await client.query("select count(*)::int n from operations.api_quota_debits where policy_id=$1",[policy])).rows[0].n,1,"no old authorizeRead double debit");
+    assert.equal((await client.query("select count(*)::int n from operations.refresh_quota_waits where job_id=$1 and state='waiting'",[result.claim.id])).rows[0].n,0);
+    assert.equal(await store.isClaimCurrent({claim:repeatedWait.claim}),false);
+    assert.equal(await store.advanceStage({claim:repeatedWait.claim,window,expectedStage:"request_intent",stage:"response_received"}),false);
+    assert.equal(await store.finishClaim({claim:repeatedWait.claim,outcome:"completed"}),false);
+    args.entitlementVerifier=verifier;
     assert.equal(await store.isClaimCurrent({claim:result.claim}),true);
     assert.equal(await store.isClaimCurrent({claim:{...result.claim,fence:result.claim.fence+1}}),false);
     assert.equal(await store.loadBoundAuthority({claim:result.claim,window:{from:"2000-01-01",to:day}}),null);
@@ -64,10 +107,13 @@ export async function refreshPreflightProbe(client,{workspace,connections,shopId
     assert.equal(await store.isClaimCurrent({claim:recovered.claim}),false);
     for(const role of ["anon","authenticated","service_role","adstable_runtime","adstable_refresh_coordinator"])
       assert.equal((await client.query("select has_table_privilege($1,'operations.refresh_work_bindings','SELECT,INSERT,UPDATE,DELETE') allowed",[role])).rows[0].allowed,false);
+    for(const role of ["anon","authenticated","service_role","adstable_runtime","adstable_refresh_coordinator"])
+      assert.equal((await client.query("select has_table_privilege($1,'operations.refresh_quota_waits','SELECT,INSERT,UPDATE,DELETE') allowed",[role])).rows[0].allowed,false);
     assert.equal((await client.query("select has_function_privilege('adstable_refresh_coordinator','operations.commit_refresh_admissions(bigint,jsonb)','EXECUTE') allowed")).rows[0].allowed,false);
     for(const role of ["anon","authenticated","service_role","adstable_runtime"])
-      for(const fn of ["read_refresh_preflight_snapshot()","commit_refresh_preflight(bigint,bigint,jsonb,jsonb,jsonb,text)","load_refresh_bound_authority(uuid,bigint,text,text,text,bigint,date,date)"])
+      for(const fn of ["read_refresh_preflight_snapshot()","commit_refresh_preflight(bigint,bigint,jsonb,jsonb,jsonb,text)","load_refresh_bound_authority(uuid,bigint,text,text,text,bigint,date,date)","defer_refresh_quota_wait(uuid,bigint,text,text,text,bigint,date,date,text)"])
         assert.equal((await client.query("select has_function_privilege($1,$2,'EXECUTE') allowed",[role,`operations.${fn}`])).rows[0].allowed,false);
     console.log("EO05_PREFLIGHT_BRIDGE_PASS native_queue_to_fenced_worker=true missing_and_negative_cache_fresh_check=true fresh_denial_blocks_data=true selection_away_back_invalidates=true connection_change_invalidates=true explicit_period_required=true no_Dataset_commit=true actual_provider_calls=0 live_changes=false");
+    console.log("EO05_QUOTA_WORK_WAIT_PASS first_boundary_only=true durable_wait=true fresh_fence=true stale_worker_denied=true same_source_period=true queue_age_preserved=true no_double_debit=true real_SQL=true synthetic_HTTP_only=true actual_provider_calls=0");
   } finally {await client.query("rollback");}
 }

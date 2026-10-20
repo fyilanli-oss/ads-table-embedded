@@ -161,6 +161,39 @@ tamamlanacağına o zaman karar verilecek. 05-A şimdiden kapandı sayılamaz.
 
 ### Ortak kota kapısı — repository çekirdeği, canlı bağlantı değil
 
+**PR #152 sonrası güvenli bekleme adımı — 20 Ekim:** Kota dolu olduğu için
+ilk dış istek hiç gönderilemediyse iş kaybolmaz. Hangi işin, hangi sahiplik
+numarasıyla beklediği özel veritabanı kaydına yazılır. Çalışan kapasitesi bırakılır;
+API kotasından daha önce kullanılan pay iade edilmez. İlk sıraya giriş zamanı,
+bekleyen ihtiyaç ve seçilmiş dönem korunur. Aynı çalışan bu kaydı ikinci kez
+kullanamaz. Kayıt sırasında hata veya belirsizlik varsa otomatik tekrar yapılmaz.
+Sözleşme: `contracts/eo-05a-quota-work-wait-v1.json`.
+
+Sonraki iş sırası kontrolünde aynı iş tekrar değerlendirilebilir; bu, sağlayıcı
+hatasını tekrar denemek değildir: önceki bekleyen istek hiç gönderilmemiştir.
+Güncel mağaza/hesap seçimi, izinli dönem, bütçe ve adil sıra yeniden kontrol
+edilir. Uygunsa yeni sahiplik numarası verilir ve Shopify aboneliği yeniden
+doğrulanır. Eski çalışan sonradan dönse bile ilerleme, bitiş veya abonelik kaydı
+yapamaz. Hesap/kurulum değişikliği veya Disconnect sınırı bu yolla aşılamaz.
+Bu repository bağlantısı canlı zamanlayıcıyı etkinleştirmez.
+
+**Somut örnek:** Bileklik mağazasının ilk isteği için kota doluysa hiçbir veri
+çağrısı çıkmaz ve iş bekler. Daha sonraki kontrolde kota hâlâ doluysa yine çağrı
+çıkmaz. Kota uygun olduğunda iş yeni sahiplikle başlayabilir. Fakat raporun ilk
+sayfası alınmışken ikinci sayfada kota dolduysa aynı raporu baştan çağırmayız;
+bu teslim yalnız ilk istek öncesi güvenli beklemeyi tamamlar. Kısmi raporun
+kanıtlı devam noktası ayrı açık iştir. Token yenileme de önceki çağrı sayılır.
+Belirsiz istek veya sağlayıcı hatası normal kota beklemesi gibi gösterilmez.
+
+Shopify arka plan kontrolünün yeni açık kurucusu HTTP sınırındaki ortak kota
+sayımını kullanır; eski ek rezervasyon callback'i birlikte verilirse reddeder.
+Her doğrulama için yeni istemci kurulur. Bekleme alan ilk-istek bağlantısı kapanır;
+geç kalan eşzamanlı giriş sonradan istek gönderemez. Normal production kurucular,
+limitler, secret, canlı DB ve route'lar değiştirilmez. UI veya saatlik veri kapsamı
+seçilmez; 05-B, Dataset ve product level kararı hâlâ bekler. Supabase güvenlik ve
+Postgres kilitleme rehberleri dar özel erişimi ve aynı kısa kilit sırasını korumak
+için kullanıldı. Kaynak kontrolü 20 Ekim 2026; canlı advisor/kapasite kanıtı yoktur.
+
 **PR #151 sonrası bağlantı adımı:** Fırat kota kapısının mevcut çağrı yollarına
 bağlanmasını onayladı. İlk repository teslimi, dışarı çıkan her HTTP isteğini
 kapıdan geçiren ortak bağlantı ve mevcut Shopify/Meta/Google/Klaviyo istemcilerini

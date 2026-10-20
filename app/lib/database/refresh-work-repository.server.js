@@ -1,4 +1,5 @@
 import {refreshStopInput, refreshWorkIdentity} from "../refresh/work-stop-policy.server.js";
+import {takeRefreshQuotaWait} from "../refresh/quota-work-wait.server.js";
 
 // Not wired to any route/worker. Requires the separately provisioned internal coordinator role.
 export function createRefreshWorkRepository(database) {
@@ -17,6 +18,12 @@ export function createRefreshWorkRepository(database) {
   }
   return Object.freeze({
     readAdmissionSnapshot,
+    async deferQuotaWait({claim,window,wait}) {
+      const boundary=takeRefreshQuotaWait(wait,claim);
+      if(!boundary||!/^\d{4}-\d{2}-\d{2}$/.test(window?.from??"")||!/^\d{4}-\d{2}-\d{2}$/.test(window?.to??"")) throw new Error("REFRESH_WORK_INPUT_INVALID");
+      return await result("select operations.defer_refresh_quota_wait($1::uuid,$2::bigint,$3::text,$4::text,$5::text,$6::bigint,$7::date,$8::date,$9::text) as result",
+        [...refreshWorkIdentity(claim,{claimRequired:true}),window.from,window.to,boundary])===true;
+    },
     async readPreflightSnapshot() {
       return result("select operations.read_refresh_preflight_snapshot() as result");
     },

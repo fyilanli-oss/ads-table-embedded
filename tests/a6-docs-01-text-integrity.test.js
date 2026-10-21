@@ -20,6 +20,12 @@ test("DOCS-01 human Markdown rejects invalid UTF-8, replacement characters and b
     const bytes = await readFile(row.path);
     assert.doesNotThrow(() => checkedText(bytes), row.path);
   }
+  // New operational documentation is checked without rewriting the accepted DOCS-01 ledger.
+  const recovery = checkedText(await readFile("docs/runbooks/WINDOWS_VM_RECOVERY.md"));
+  for (const token of ["21 Ekim 2026", "İlk açıklanmayan", "SAC>", "select volume 0", "extend",
+    "AutomaticManagedPagefile=$true", "shutdown.exe /r /t 0 /d p:2:4", "1920 MiB", "ilert"]) {
+    assert.ok(recovery.includes(token), "Missing recovery instruction/boundary: " + token);
+  }
   assert.throws(() => checkedText(new Uint8Array([0xC3, 0x28])));
   assert.throws(() => checkedText(Buffer.from("bozuk \uFFFD metin")));
   assert.throws(() => checkedText(Buffer.from("binary\u0000control")));

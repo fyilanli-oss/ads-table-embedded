@@ -17,3 +17,11 @@ Geliştirme; A6-EO Execution Plan, makine tarafından kontrol edilen EO ana söz
 
 Başlangıç durumu ile bugünkü kabul edilmiş durumu ayırmak için güncel yetki ve paket sırası [Execution Plan](docs/EXECUTION_PLAN.md) üzerinden okunur.
 
+## Geliştirme makinesine erişemiyorsan
+
+[Windows VM kurtarma rehberi](docs/runbooks/WINDOWS_VM_RECOVERY.md), 21 Ekim 2026'da
+yaşanan RDP/`Please wait` olayını, SAC girişini, disk ve sanal bellek kontrollerini
+ve kontrollü yeniden başlatmayı adım adım açıklar. Komutları topluca çalıştırma;
+değişiklik öncesi koşulları ve ilk hatada durma kuralını oku. Bu, AdsTable üretim
+uygulamasının kurtarma planı veya EO-05/ilert etkinleştirmesi değildir.
+

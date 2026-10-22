@@ -640,7 +640,7 @@ test("DOCS-01 explicit closure acceptance authorizes only the approved merge, no
 test("PD CPD working table preserves query scope and the pending owner Ad Channel decision", async () => {
   const content = await readFile("docs/research/PD_CPD_QUERY_WORKING_TABLE_2026-10-22.md", "utf8");
   const rows = content.split(/\r?\n/).filter((line) => /^\| (Meta|Google Ads|Klaviyo) \|/.test(line));
-  assert.equal(rows.length, 23);
+  assert.equal(rows.length, 26);
   for (const row of rows) assert.equal(row.split("|").length - 2, 13);
   assert.match(content, /henüz ürün sahibi tarafından kabul edilmedi/);
   assert.match(content, /Google incelemesinden sonra kabul edecek veya itiraz edecek/);
@@ -678,8 +678,40 @@ test("Google working table freezes real leaf levels and product-based Channel to
     assert.equal(row[11], "Ürün satış adetleri toplamı⁶");
     assert.equal(row[12], "Ürün satış değerleri toplamı⁶");
   }
-  assert.match(content, /Önce Klaviyo sorgu tablosu tamamlanacak/);
+  assert.match(content, /Klaviyo sorgu seçimleri sabitlendi/);
   assert.match(content, /PD Purchase, sağlayıcının satın alma dönüşümü sayısıdır/);
   assert.match(content, /CPD satılan adet, ürün satış miktarıdır/);
   assert.match(content, /çalışan toplam veya tamamlanmış ürün→Channel bağlantısı değildir/);
+});
+
+
+test("Klaviyo working table preserves accepted PD metrics and excluded product engagement", async () => {
+  const content = await readFile("docs/research/PD_CPD_QUERY_WORKING_TABLE_2026-10-22.md", "utf8");
+  const rows = content.split(/\r?\n/).filter(line => line.startsWith("| Klaviyo |"))
+    .map(line => line.split("|").slice(1, -1).map(cell => cell.trim()));
+  assert.equal(rows.length, 8);
+  for (const row of rows) assert.equal(row.length, 13);
+  const messages = rows.filter(row => row[1] === "PD" && row[3].endsWith(" Message"));
+  assert.deepEqual(messages.map(row => row[3]), ["Campaign Message", "Flow Message"]);
+  for (const row of messages) {
+    assert.equal(row[4], "Var: `delivered`");
+    assert.equal(row[5], "Var: `clicks`");
+    assert.equal(row[6], "Açık⁷");
+    assert.deepEqual(row.slice(7, 11), Array(4).fill("Yok⁸"));
+    assert.equal(row[11], "Var: `conversions` — Placed Order");
+    assert.equal(row[12], "Var: `conversion_value` — Placed Order");
+  }
+  const product = rows.find(row => row[1] === "CPD" && row[2] === "Ürün performansı");
+  assert.deepEqual(product.slice(4, 7), ["N/A¹⁰", "N/A¹⁰", "Açık⁷"]);
+  assert.equal(product[11], "Var⁹: `Quantity`");
+  assert.equal(product[12], "Var⁹: `$value`");
+  const sale = rows.find(row => row[2] === "Ürün satış ilişkisi");
+  assert.equal(sale[11], product[11]);
+  assert.equal(sale[12], product[12]);
+  const channels = rows.filter(row => row[1] === "CPD" && row[2].includes("Channel performansı"));
+  for (const row of channels) assert.deepEqual(row.slice(4, 7), ["N/A¹⁰", "N/A¹⁰", "Açık⁷"]);
+  assert.match(content, /N\/A sıfır veya sağlayıcının kesinlikle desteklemediği demek değildir/);
+  assert.match(content, /iki ayrı satış sayılarak toplanmaz/);
+  assert.match(content, /Ürün sahibi şu aşamada hesaplama yapılmamasını/);
+  assert.match(content, /Bu kayıt eksik kodları uygulama yetkisi vermez/);
 });

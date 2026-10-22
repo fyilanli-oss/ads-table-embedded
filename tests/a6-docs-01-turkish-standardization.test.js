@@ -640,8 +640,8 @@ test("DOCS-01 explicit closure acceptance authorizes only the approved merge, no
 test("PD CPD working table preserves query scope and the pending owner Ad Channel decision", async () => {
   const content = await readFile("docs/research/PD_CPD_QUERY_WORKING_TABLE_2026-10-22.md", "utf8");
   const rows = content.split(/\r?\n/).filter((line) => /^\| (Meta|Google Ads|Klaviyo) \|/.test(line));
-  assert.equal(rows.length, 18);
-  for (const row of rows) assert.equal(row.split("|").length - 2, 12);
+  assert.equal(rows.length, 23);
+  for (const row of rows) assert.equal(row.split("|").length - 2, 13);
   assert.match(content, /henüz ürün sahibi tarafından kabul edilmedi/);
   assert.match(content, /Google incelemesinden sonra kabul edecek veya itiraz edecek/);
   assert.match(content, /Ad kayıtlarından hiyerarşik toplam/);
@@ -653,4 +653,33 @@ test("PD CPD working table preserves query scope and the pending owner Ad Channe
   assert.match(content, /Tam ham yanıt saklanmadı/);
   assert.match(content, /Bu çalışma referansı yürütülebilir sözleşmeleri değiştirmez/);
   assert.doesNotMatch(rows.filter((row) => row.startsWith("| Meta |")).join("\n"), /Ürün satış ilişkisi — ayrı sorgu/);
+});
+
+
+test("Google working table freezes real leaf levels and product-based Channel totals", async () => {
+  const content = await readFile("docs/research/PD_CPD_QUERY_WORKING_TABLE_2026-10-22.md", "utf8");
+  const rows = content.split(/\r?\n/).filter(line => line.startsWith("| Google Ads |"))
+    .map(line => line.split("|").slice(1, -1).map(cell => cell.trim()));
+  assert.equal(rows.length, 12);
+  const pd = rows.filter(row => row[1] === "PD");
+  assert.deepEqual(pd.map(row => [row[2], row[3]]), [
+    ["Search", "Campaign"], ["Search", "Ad Group"], ["Search", "Ad"],
+    ["Shopping", "Campaign"], ["Shopping", "Ad Group"],
+    ["Retail PMax", "Campaign"], ["Retail PMax", "Asset Group"],
+  ]);
+  for (const row of pd.filter(row => row[3] === "Campaign" || row[2] === "Search" && row[3] === "Ad Group")) {
+    assert.deepEqual(row.slice(4), Array(9).fill("Alt kayıtlardan hiyerarşik toplam"));
+  }
+  assert.deepEqual(pd.find(row => row[2] === "Search" && row[3] === "Ad").slice(4), Array(9).fill("Yok⁴"));
+  const channels = rows.filter(row => row[1] === "CPD" && row[2].includes("Channel performansı"));
+  assert.deepEqual(channels.map(row => row[3]), ["Ad", "Ad Group", "Asset Group"]);
+  for (const row of channels) {
+    assert.equal(row[4], "Ürün kayıtlarından toplam⁶");
+    assert.equal(row[11], "Ürün satış adetleri toplamı⁶");
+    assert.equal(row[12], "Ürün satış değerleri toplamı⁶");
+  }
+  assert.match(content, /Önce Klaviyo sorgu tablosu tamamlanacak/);
+  assert.match(content, /PD Purchase, sağlayıcının satın alma dönüşümü sayısıdır/);
+  assert.match(content, /CPD satılan adet, ürün satış miktarıdır/);
+  assert.match(content, /çalışan toplam veya tamamlanmış ürün→Channel bağlantısı değildir/);
 });

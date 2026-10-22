@@ -25,11 +25,14 @@ test("DOCS-01 preserves its accepted historical inventory and explicitly account
   const contract = await readJson(contractPath);
   const actual = ["AGENTS.md", "README.md", ...await markdownFiles("docs")].sort();
   // DOCS-01's accepted 19 October translation ledger is not a mutable count of all future docs.
-  const laterDocuments = ["docs/runbooks/WINDOWS_VM_RECOVERY.md"];
+  const laterDocuments = [
+    "docs/runbooks/WINDOWS_VM_RECOVERY.md",
+    "docs/research/PD_CPD_QUERY_WORKING_TABLE_2026-10-22.md",
+  ];
   const baseline = contract.inventory.map((row) => row.path).sort();
   assert.deepEqual(actual, [...baseline, ...laterDocuments].sort());
   assert.equal(new Set(baseline).size, 63);
-  assert.equal(new Set(actual).size, 64);
+  assert.equal(new Set(actual).size, 65);
   assert.deepEqual(contract.inventory_counts, {
     total_markdown: 63, human_markdown: 62, excluded_agent_instructions: 1,
     translated_review_pending: 0, pending_language_review: 0,
@@ -631,4 +634,23 @@ test("DOCS-01 explicit closure acceptance authorizes only the approved merge, no
   for (const path of ["docs/EXECUTION_PLAN.md", contract.brief]) {
     assert.ok((await readFile(path, "utf8")).includes(contractPath));
   }
+});
+
+
+test("PD CPD working table preserves query scope and the pending owner Ad Channel decision", async () => {
+  const content = await readFile("docs/research/PD_CPD_QUERY_WORKING_TABLE_2026-10-22.md", "utf8");
+  const rows = content.split(/\r?\n/).filter((line) => /^\| (Meta|Google Ads|Klaviyo) \|/.test(line));
+  assert.equal(rows.length, 18);
+  for (const row of rows) assert.equal(row.split("|").length - 2, 12);
+  assert.match(content, /henüz ürün sahibi tarafından kabul edilmedi/);
+  assert.match(content, /Google incelemesinden sonra kabul edecek veya itiraz edecek/);
+  assert.match(content, /Ad kayıtlarından hiyerarşik toplam/);
+  assert.match(content, /Var¹: `converted_promoted_product_quantity`/);
+  assert.match(content, /Var²: `converted_promoted_product_value`/);
+  assert.match(content, /hata alınmadı; dolu ürün yanıtıyla reel test bekleniyor/);
+  assert.match(content, /Var³: `actions`/);
+  assert.match(content, /Var³: `action_values`/);
+  assert.match(content, /Tam ham yanıt saklanmadı/);
+  assert.match(content, /Bu çalışma referansı yürütülebilir sözleşmeleri değiştirmez/);
+  assert.doesNotMatch(rows.filter((row) => row.startsWith("| Meta |")).join("\n"), /Ürün satış ilişkisi — ayrı sorgu/);
 });

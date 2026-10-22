@@ -27,7 +27,17 @@
       "new_mount_authorizes_another_live_call": false,
       "raw_response_stored_or_logged_by_browser": false,
       "visual_acceptance": "pending_desktop_real_mobile_and_owner_acceptance",
-      "merge": "separate_explicit_approval_required"
+      "merge": "explicit_product_owner_approval_2026_10_22",
+      "deployment": "explicit_product_owner_approval_2026_10_22",
+      "visual_acceptance_timing_exception": {
+        "authority": "explicit_product_owner_reply_to_PR164_merge_deploy_and_postdeploy_visual_review",
+        "decision_date": "2026-10-22",
+        "scope": "PR164_temporary_fixed_meta_probe_button_only",
+        "review_timing": "immediately_after_deployment",
+        "desktop_and_real_mobile_acceptance_still_required": true,
+        "visual_pass_or_package_closure_granted": false,
+        "other_ui_gates_changed": false
+      }
     },
     "optional_input": {"probe": "promoted_product_metrics"},
     "extra_fields": ["converted_promoted_product_quantity", "converted_promoted_product_value"],

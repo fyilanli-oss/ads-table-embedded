@@ -14,7 +14,10 @@ Canlı sonuç yoktur. Ürün sahibi Settings'te yalnız bu sabit test için geç
 Polaris düğmesini onayladı; analist özeti canlı kabul brief'indedir.
 Bu UI diliminin uygulaması, yerel testleri, typecheck ve build tamamlandı;
 PR/CI incelemesi ile gerçek masaüstü/mobil ve ürün
-sahibi görsel kabulü bekleniyor. UI kabulü, merge veya canlı test yapılmış sayılmaz.
+sahibi görsel kabulü bekleniyor. Ürün sahibi PR #164 için merge ve dağıtımı
+ayrıca onayladı; yalnız geçici test düğmesinin görsel kontrolünü dağıtımdan
+hemen sonraya alan dar zamanlama istisnası sözleşmeye işlendi. Bu istisna görsel
+PASS veya paket kapanışı değildir; diğer UI kapıları değişmez.
 Ürün sahibinin seçtiği tek iş tarihi: `2026-10-01`.
 PR/CI ve ayrı açık merge onayı kapısı korunur. EO-05 başlamaz.
 

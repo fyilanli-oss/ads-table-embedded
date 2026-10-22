@@ -5,7 +5,11 @@
 Ürün sahibi Settings'e yalnız bu test için geçici düğme eklenmesini açıkça
 onayladı. Bu karar, aşağıdaki ilk dar ek alan diliminin "yeni buton eklenmez"
 sınırını yalnız bu taşıma mekanizması için değiştirir; sunucu sorgusu değişmez.
-Merge ayrı açık onaya tabidir; görsel kabul ve canlı test henüz yapılmadı.
+Ürün sahibi PR #164'ün merge ve dağıtımını ayrıca onayladı. Yalnız bu geçici
+düğme için masaüstü/mobil görsel kontrolün dağıtımdan hemen sonra yapılmasını
+açıkça kabul etti. İstisna kontrolün zamanını değiştirir; gerçek mobil veya ürün
+sahibi görsel kabulünü kaldırmaz, görsel PASS/Done/Accepted veya paket kapanışı
+vermez. Diğer UI kuralları değişmez. Görsel kabul ve canlı test henüz yapılmadı.
 
 - Amaç: Mevcut Shopify Admin oturumundan, bağlı Meta'nın seçili Reporting
   Account'u için `2026-10-01` tarihli `promoted_product_metrics` testini başlatmak.

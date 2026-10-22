@@ -87,6 +87,12 @@ test("temporary button contract keeps real UI acceptance open and transport free
   assert.equal(button.single_attempt_per_settings_mount, true);
   assert.equal(button.new_mount_authorizes_another_live_call, false);
   assert.equal(button.visual_acceptance, "pending_desktop_real_mobile_and_owner_acceptance");
+  assert.equal(button.merge, "explicit_product_owner_approval_2026_10_22");
+  assert.equal(button.visual_acceptance_timing_exception.scope, "PR164_temporary_fixed_meta_probe_button_only");
+  assert.equal(button.visual_acceptance_timing_exception.review_timing, "immediately_after_deployment");
+  assert.equal(button.visual_acceptance_timing_exception.desktop_and_real_mobile_acceptance_still_required, true);
+  assert.equal(button.visual_acceptance_timing_exception.visual_pass_or_package_closure_granted, false);
+  assert.equal(button.visual_acceptance_timing_exception.other_ui_gates_changed, false);
   const source = fs.readFileSync(new URL("../app/lib/providers/meta-probe-button.js", import.meta.url), "utf8");
   assert.doesNotMatch(source, /console[.]|process[.]env|setTimeout|setInterval|graph[.]facebook|authorization:/i);
   assert.doesNotMatch(source, /import .*server/);

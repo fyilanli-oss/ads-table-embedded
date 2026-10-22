@@ -4,6 +4,17 @@
   "package_id": "A6-EO-04-B",
   "status": "repository_accepted_live_shape_observed_real_catalog_validation_pending",
   "checked_at": "2026-10-17",
+  "opt_in_promoted_product_probe": {
+    "decision_date": "2026-10-22",
+    "authority": "contracts/eo-04-provider-live-acceptance-v1.json#promoted_product_probe_2026_10_22",
+    "default_enabled": false,
+    "extra_fields": ["converted_promoted_product_quantity", "converted_promoted_product_value"],
+    "breakdowns": ["product_id"],
+    "level": "ad",
+    "time_increment": 1,
+    "standardization_or_sales_role": false,
+    "provider_compatibility": "requires_live_response_not_inferred_from_sdk"
+  },
   "authority": {
     "parent_contract": "contracts/eo-04e-three-provider-channel-product-economics-v1.json",
     "brief": "docs/EO_04B_META_REPORTING_RUNTIME_START_BRIEF.md",

@@ -26,6 +26,7 @@ export function createMetaReportingAuthorityRuntime(input: {
     product: Readonly<Record<string, unknown>>;
   }>>;
   readDailyEvidenceSnapshot(input: {
+    includePromotedProductMetrics?: boolean;
     installationAuthority: {
       authority: "shopify_installation_verified";
       workspaceId: string;

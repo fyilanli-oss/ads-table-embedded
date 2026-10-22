@@ -12,6 +12,7 @@ import {
   META_AD_CHANNEL_INSIGHTS_FIELDS,
   META_PRODUCT_BREAKDOWN_ID_LIMIT,
   META_PRODUCT_BREAKDOWN_INSIGHTS_FIELDS,
+  META_PROMOTED_PRODUCT_PROBE_FIELDS,
 } from "../app/lib/providers/meta-reporting.server.js";
 import {MetaGraphError} from "../app/lib/providers/meta-graph.server.js";
 
@@ -24,6 +25,34 @@ const json = (payload, status = 200, headers = {}) => new Response(
   JSON.stringify(payload),
   {status, headers: {"content-type": "application/json", ...headers}},
 );
+
+test("promoted product probe adds exactly two fixed fields without changing the default", async () => {
+  const input = {adAccountId: "act_123456", dateWindow: {start: "2026-10-15", end: "2026-10-15"}};
+  const original = new URL(buildMetaProductBreakdownInsightsUrl(input));
+  const probe = new URL(buildMetaProductBreakdownInsightsUrl({...input, includePromotedProductMetrics: true}));
+  assert.deepEqual(probe.searchParams.get("fields").split(","), [
+    ...original.searchParams.get("fields").split(","),
+    "converted_promoted_product_quantity", "converted_promoted_product_value",
+  ]);
+  original.searchParams.delete("fields");
+  probe.searchParams.delete("fields");
+  assert.equal(probe.toString(), original.toString());
+  const row = {product_id: "retailer-1", converted_promoted_product_quantity: [],
+    converted_promoted_product_value: null};
+  let calls = 0;
+  const result = await fetchMetaProductBreakdownInsightsPage({...input,
+    accessToken: "test-token", appSecret: "test-secret", includePromotedProductMetrics: true,
+    fetchFn: async (url) => {
+      calls++;
+      assert.deepEqual(new URL(url).searchParams.get("fields").split(","), META_PROMOTED_PRODUCT_PROBE_FIELDS);
+      return json({data: [row]});
+    },
+  });
+  assert.equal(calls, 1);
+  assert.deepEqual(result.rows, [row]);
+  assert.deepEqual(result.evidence.requested_fields, META_PROMOTED_PRODUCT_PROBE_FIELDS);
+  assert.throws(() => buildMetaProductBreakdownInsightsUrl({...input, includePromotedProductMetrics: "true"}));
+});
 
 test("Meta first reporting slice is exact daily Ad Channel without product breakdown", () => {
   const url = new URL(buildMetaAdChannelInsightsUrl({

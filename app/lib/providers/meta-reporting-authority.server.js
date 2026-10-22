@@ -218,7 +218,10 @@ export function createMetaReportingAuthorityRuntime({
       });
     },
 
-    async readDailyEvidenceSnapshot({installationAuthority, dateWindow}) {
+    async readDailyEvidenceSnapshot({installationAuthority, dateWindow, includePromotedProductMetrics = false}) {
+      if (typeof includePromotedProductMetrics !== "boolean") {
+        throw new TypeError("includePromotedProductMetrics must be boolean");
+      }
       const context = await loadAuthority(installationAuthority);
       const channel = await collectPages({
         context,
@@ -237,6 +240,7 @@ export function createMetaReportingAuthorityRuntime({
         context,
         dateWindow,
         fetchPage: (after) => fetchMetaProductBreakdownInsightsPage({
+          includePromotedProductMetrics,
           accessToken: context.stored.access_token,
           appSecret,
           adAccountId: context.reportingAccountId,

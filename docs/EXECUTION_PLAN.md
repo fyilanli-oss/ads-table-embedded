@@ -1,5 +1,17 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## Dar Meta ek alan testi — 22 Ekim 2026
+
+Ürün sahibi, mevcut `product_id` sorgusuna yalnız test seçeneğiyle
+`converted_promoted_product_quantity` / `converted_promoted_product_value`
+eklenmesini, dağıtımı ve tek canlı denemeyi onayladı. Normal sorgu, Dataset,
+kimlik eşlemesi ve Sales Role değişmez. İlk sağlayıcı hatasında durulur.
+Sözleşme: `contracts/eo-04-provider-live-acceptance-v1.json` içindeki
+`promoted_product_probe_2026_10_22`. Dar uygulama hazır; yerel testler, tip
+kontrolü ve derleme geçti. PR/CI incelemesi bekleniyor; canlı sonuç yoktur.
+Ürün sahibinin seçtiği tek iş tarihi: `2026-10-01`.
+PR/CI ve ayrı açık merge onayı kapısı korunur. EO-05 başlamaz.
+
 ## Güncel durum — 19 Ekim 2026
 
 EO-01–04 ve A6-TECH-01 kabul edilmiştir; F01–F09 ve son güvenlik konusu kapalı,

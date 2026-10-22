@@ -14,7 +14,28 @@ export const META_PRODUCT_ACCEPTED_FIELDS = Object.freeze([
 ]);
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-const INPUT_KEYS = new Set(["provider", "business_date"]);
+export const META_PROMOTED_PRODUCT_PROBE = "promoted_product_metrics";
+export const META_PRODUCT_PROBE_ACCEPTED_FIELDS = Object.freeze([
+  ...META_PRODUCT_ACCEPTED_FIELDS,
+  "converted_promoted_product_quantity",
+  "converted_promoted_product_value",
+]);
+const INPUT_KEYS = new Set(["provider", "business_date", "probe"]);
+
+function probeFields(probe) {
+  if (probe !== undefined && probe !== META_PROMOTED_PRODUCT_PROBE) {
+    throw new ProviderLiveEvidenceError("LIVE_EVIDENCE_PROBE_INVALID", "Unknown evidence probe");
+  }
+  return probe === META_PROMOTED_PRODUCT_PROBE
+    ? META_PRODUCT_PROBE_ACCEPTED_FIELDS : META_PRODUCT_ACCEPTED_FIELDS;
+}
+
+function promotedActionTypes(rows) {
+  return Object.freeze({
+    quantity: actionTypes(rows, "converted_promoted_product_quantity"),
+    value: actionTypes(rows, "converted_promoted_product_value"),
+  });
+}
 const CHANNEL_EVIDENCE_FIELDS = Object.freeze([
   "impressions",
   "spend",
@@ -68,7 +89,7 @@ export function validateProviderLiveEvidenceInput(value) {
   if (extras.length > 0) {
     throw new ProviderLiveEvidenceError(
       "LIVE_EVIDENCE_INPUT_FIELDS_INVALID",
-      "Only provider and business_date are accepted",
+      "Only provider, business_date and the fixed optional probe are accepted",
     );
   }
   if (value.provider !== "meta") {
@@ -83,7 +104,11 @@ export function validateProviderLiveEvidenceInput(value) {
       "business_date must be YYYY-MM-DD",
     );
   }
-  return Object.freeze({provider: "meta", businessDate: value.business_date});
+  probeFields(value.probe);
+  return Object.freeze({
+    provider: "meta", businessDate: value.business_date,
+    ...(value.probe === undefined ? {} : {probe: value.probe}),
+  });
 }
 
 function digest(value) {
@@ -206,6 +231,7 @@ function safeActionTypeLog(source) {
 }
 
 export function buildProviderLiveEvidenceSafeLog(result) {
+  const fields = probeFields(result?.probe);
   if (result?.status !== "complete" || result?.provider !== "meta") {
     throw new ProviderLiveEvidenceError(
       "LIVE_EVIDENCE_SAFE_LOG_RESULT_INVALID",
@@ -226,6 +252,7 @@ export function buildProviderLiveEvidenceSafeLog(result) {
     provider: "meta",
     business_date: result.business_date,
     evidence_version: PROVIDER_LIVE_EVIDENCE_VERSION,
+    ...(result.probe === undefined ? {} : {probe: result.probe}),
     publishable_to_dataset_v2: false,
     channel: Object.freeze({
       grain: "ad",
@@ -253,10 +280,10 @@ export function buildProviderLiveEvidenceSafeLog(result) {
       status: "raw_provider_evidence_pending_standardization",
       grain: "ad_product_id",
       row_count: safeCount(result.product?.row_count),
-      accepted_fields: META_PRODUCT_ACCEPTED_FIELDS,
+      accepted_fields: fields,
       field_state_counts: safeFieldStateCounts(
         result.product?.field_state_counts,
-        META_PRODUCT_ACCEPTED_FIELDS,
+        fields,
       ),
       converted_product_action_types: Object.freeze({
         quantity: safeActionTypeLog(
@@ -265,6 +292,12 @@ export function buildProviderLiveEvidenceSafeLog(result) {
         value: safeActionTypeLog(
           result.product?.converted_product_action_types?.value,
         ),
+      }),
+      ...(result.probe === undefined ? {} : {
+        converted_promoted_product_action_types: Object.freeze({
+          quantity: safeActionTypeLog(result.product?.converted_promoted_product_action_types?.quantity),
+          value: safeActionTypeLog(result.product?.converted_promoted_product_action_types?.value),
+        }),
       }),
       next_page_exists: result.product?.request?.next_page_exists === true,
       product_metric_semantics: "validation_pending_real_catalog_response",
@@ -282,7 +315,8 @@ export function buildProviderLiveEvidenceSafeLog(result) {
   });
 }
 
-export function summarizeMetaLiveEvidence(result, businessDate) {
+export function summarizeMetaLiveEvidence(result, businessDate, probe) {
+  const fields = probeFields(probe);
   const channelRows = Array.isArray(result?.channel?.rows) ? result.channel.rows : null;
   const productRows = Array.isArray(result?.product?.rows) ? result.product.rows : null;
   if (!channelRows || !productRows) {
@@ -310,6 +344,7 @@ export function summarizeMetaLiveEvidence(result, businessDate) {
     provider: "meta",
     business_date: businessDate,
     evidence_version: PROVIDER_LIVE_EVIDENCE_VERSION,
+    ...(probe === undefined ? {} : {probe}),
     authority: Object.freeze({
       connection_id_sha256: digest(result.authority?.connection_id ?? "missing"),
       reporting_account_id_sha256: digest(
@@ -341,14 +376,17 @@ export function summarizeMetaLiveEvidence(result, businessDate) {
       status: "raw_provider_evidence_pending_standardization",
       grain: "ad_product_id",
       row_count: productRows.length,
-      accepted_fields: META_PRODUCT_ACCEPTED_FIELDS,
+      accepted_fields: fields,
       field_state_counts: Object.freeze(
-        fieldStateCounts(productRows, META_PRODUCT_ACCEPTED_FIELDS),
+        fieldStateCounts(productRows, fields),
       ),
       product_identity_sha256: rowHashes(productRows, ["date_start", "ad_id", "product_id"]),
       converted_product_action_types: Object.freeze({
         quantity: actionTypes(productRows, "converted_product_quantity"),
         value: actionTypes(productRows, "converted_product_value"),
+      }),
+      ...(probe === undefined ? {} : {
+        converted_promoted_product_action_types: promotedActionTypes(productRows),
       }),
       request: requestEvidence(result.product),
       product_metric_semantics: "validation_pending_real_catalog_response",
@@ -373,8 +411,9 @@ export function createProviderLiveEvidenceRuntime({metaRuntime}) {
       const result = await metaRuntime.readDailyEvidenceSnapshot({
         installationAuthority,
         dateWindow: {start: accepted.businessDate, end: accepted.businessDate},
+        ...(accepted.probe === undefined ? {} : {includePromotedProductMetrics: true}),
       });
-      return summarizeMetaLiveEvidence(result, accepted.businessDate);
+      return summarizeMetaLiveEvidence(result, accepted.businessDate, accepted.probe);
     },
   });
 }

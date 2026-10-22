@@ -1,5 +1,34 @@
 # EO-04 — Geçici sağlayıcı canlı kabul tetikleyicisi
 
+## Dar ek alan testi — 22 Ekim 2026
+
+Ürün sahibi, mevcut `product_id` kırılımına
+`converted_promoted_product_quantity` ve `converted_promoted_product_value`
+eklenerek tek canlı test yapılmasını ve bunun için dar uygulama/dağıtımı onayladı.
+Bu yeni yetki aşağıdaki tarihsel 16/17 Ekim kayıtlarını değiştirmez.
+Merge ayrı açık onay gerektirir. Canlı test henüz yapılmadı.
+
+Mevcut kimlik doğrulamalı POST kaynağına yalnız sabit
+`"probe": "promoted_product_metrics"` seçeneği eklenir. `provider` yine `meta`,
+`business_date` tek açık iş tarihidir. Normal istek ve Channel sorgusu değişmez;
+hesap, token, URL, keyfi alan veya sürüm istemciden alınmaz. Yeni buton eklenmez.
+Ürün sahibinin seçtiği tarih 1 Ekim 2026'dır. Test gövdesi:
+`{"provider":"meta","business_date":"2026-10-01","probe":"promoted_product_metrics"}`.
+Bu gövdenin belgelenmesi testin gerçekleştiği anlamına gelmez.
+
+İlk sağlayıcı hatasında durulur; eski alanlarla tekrar veya başka teknik rota
+yoktur. Mevcut sınırlı sayfalama korunur; tek test tek HTTP isteği demek değildir.
+Başarılı yanıt yalnız alanların bulunma/boş/null/sıfır/dizi durumlarını ve eylem
+türlerini bildirir. Ham ticari değer, ürün kimliği veya token yayımlanmaz.
+Dataset yazımı, ürün eşlemesi ve Sales Role sınıflandırması yapılmaz. Mevcut
+token reddi yaşam döngüsü davranışı korunur; yeni token veya izin üretilmez.
+Boş ürün yanıtı ne gerçek sıfır ne genel desteklenmeme kanıtıdır.
+
+Resmî SDK'da iki alan mevcut; bu, `product_id` ile uyumluluğu kanıtlamaz.
+Kaynak, kontrol 22 Ekim 2026:
+<https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adsinsights.py>.
+Dağıtım dayanağı, aynı kontrol tarihi: <https://vercel.com/docs/git/vercel-for-github>.
+
 **Tarihsel kontrol tarihi:** 16 Ekim 2026
 
 **Ürün sahibi analist brief'i kabulü:** 16 Ekim 2026'da kaydedildi.

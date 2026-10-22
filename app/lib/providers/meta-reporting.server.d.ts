@@ -1,6 +1,7 @@
 export const META_AD_CHANNEL_INSIGHTS_FIELDS: readonly string[];
 export const META_PRODUCT_BREAKDOWN_INSIGHTS_FIELDS: readonly string[];
 export const META_PRODUCT_BREAKDOWN_ID_LIMIT: number;
+export const META_PROMOTED_PRODUCT_PROBE_FIELDS: readonly string[];
 
 export function buildMetaAdChannelInsightsUrl(input: {
   adAccountId: string;
@@ -28,6 +29,7 @@ export function fetchMetaAdChannelInsightsPage(input: {
 }>;
 
 export function buildMetaProductBreakdownInsightsUrl(input: {
+  includePromotedProductMetrics?: boolean;
   adAccountId: string;
   dateWindow: {start: string; end: string};
   after?: string | null;
@@ -36,6 +38,7 @@ export function buildMetaProductBreakdownInsightsUrl(input: {
 }): string;
 
 export function fetchMetaProductBreakdownInsightsPage(input: {
+  includePromotedProductMetrics?: boolean;
   accessToken: string;
   adAccountId: string;
   dateWindow: {start: string; end: string};

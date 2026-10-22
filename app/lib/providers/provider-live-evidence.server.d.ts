@@ -1,4 +1,6 @@
 export const PROVIDER_LIVE_EVIDENCE_VERSION: "1.0.0";
+export const META_PROMOTED_PRODUCT_PROBE: "promoted_product_metrics";
+export const META_PRODUCT_PROBE_ACCEPTED_FIELDS: readonly string[];
 export const PROVIDER_LIVE_EVIDENCE_SAFE_LOG_PREFIX: "[AdsTable provider live evidence safe]";
 export const META_PRODUCT_ACCEPTED_FIELDS: readonly [
   "product_id",
@@ -17,11 +19,13 @@ export class ProviderLiveEvidenceError extends Error {
 export function validateProviderLiveEvidenceInput(value: unknown): Readonly<{
   provider: "meta";
   businessDate: string;
+  probe?: "promoted_product_metrics";
 }>;
 
 export function summarizeMetaLiveEvidence(
   result: Record<string, any>,
   businessDate: string,
+  probe?: "promoted_product_metrics",
 ): Readonly<Record<string, any>>;
 
 export function buildProviderLiveEvidenceSafeLog(

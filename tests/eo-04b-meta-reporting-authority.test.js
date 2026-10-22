@@ -44,6 +44,37 @@ function database(row = databaseRow()) {
   };
 }
 
+test("snapshot applies promoted probe only to product pages and stops on the first rejection", async () => {
+  for (const fail of [false, true]) {
+    const requests = [];
+    const runtime = createMetaReportingAuthorityRuntime({
+      database: database(), appSecret: "test-secret",
+      tokenVault: {async loadProviderTokenSet() {return {access_token: "vault-only-token"};}},
+      fetchFn: async (url) => {
+        const parsed = new URL(url);
+        requests.push(parsed);
+        if (!parsed.searchParams.has("breakdowns")) return json({data: []});
+        if (fail) return json({error: {code: 100}}, 400);
+        return parsed.searchParams.has("after") ? json({data: []}) : json({
+          data: [{product_id: "provider-1"}],
+          paging: {cursors: {after: "page-2"}, next: "next"},
+        });
+      },
+    });
+    const operation = runtime.readDailyEvidenceSnapshot({installationAuthority,
+      dateWindow: {start: "2026-10-15", end: "2026-10-15"}, includePromotedProductMetrics: true});
+    if (fail) await assert.rejects(operation, error => error.code === "META_REPORTING_REQUEST_FAILED");
+    else assert.equal((await operation).product.evidence.page_count, 2);
+    assert.equal(requests.length, fail ? 2 : 3);
+    assert.equal(requests[0].searchParams.get("fields").includes("converted_promoted_product"), false);
+    for (const url of requests.slice(1)) {
+      assert.equal(url.searchParams.get("breakdowns"), "product_id");
+      assert.ok(url.searchParams.get("fields").includes("converted_promoted_product_quantity"));
+      assert.ok(url.searchParams.get("fields").includes("converted_promoted_product_value"));
+    }
+  }
+});
+
 test("Meta reporting is bound to canonical Reporting Account and encrypted token authority", async () => {
   const requests = [];
   const vaultLoads = [];

@@ -44,6 +44,19 @@ export const META_PRODUCT_BREAKDOWN_INSIGHTS_FIELDS = Object.freeze([
 ]);
 
 export const META_PRODUCT_BREAKDOWN_ID_LIMIT = 100;
+export const META_PROMOTED_PRODUCT_PROBE_FIELDS = Object.freeze([
+  ...META_PRODUCT_BREAKDOWN_INSIGHTS_FIELDS,
+  "converted_promoted_product_quantity",
+  "converted_promoted_product_value",
+]);
+
+function productFields(includePromotedProductMetrics) {
+  if (typeof includePromotedProductMetrics !== "boolean") {
+    throw new MetaGraphError("META_REPORTING_PROBE_INVALID", "Probe flag must be boolean");
+  }
+  return includePromotedProductMetrics
+    ? META_PROMOTED_PRODUCT_PROBE_FIELDS : META_PRODUCT_BREAKDOWN_INSIGHTS_FIELDS;
+}
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const ACCOUNT_PATTERN = /^act_[0-9]+$/;
@@ -297,6 +310,7 @@ export function buildMetaProductBreakdownInsightsUrl({
   after = null,
   graphVersion = META_GRAPH_VERSION,
   limit = 100,
+  includePromotedProductMetrics = false,
 }) {
   const url = baseInsightsUrl({
     adAccountId,
@@ -304,7 +318,7 @@ export function buildMetaProductBreakdownInsightsUrl({
     after,
     graphVersion,
     limit,
-    fields: META_PRODUCT_BREAKDOWN_INSIGHTS_FIELDS,
+    fields: productFields(includePromotedProductMetrics),
   });
   url.searchParams.set("breakdowns", "product_id");
   url.searchParams.set("product_id_limit", String(META_PRODUCT_BREAKDOWN_ID_LIMIT));
@@ -319,6 +333,7 @@ export async function fetchMetaProductBreakdownInsightsPage({
   after = null,
   graphVersion = META_GRAPH_VERSION,
   fetchFn = fetch,
+  includePromotedProductMetrics = false,
 }) {
   if (typeof fetchFn !== "function") throw new TypeError("fetchFn is required");
   const url = buildMetaProductBreakdownInsightsUrl({
@@ -326,6 +341,7 @@ export async function fetchMetaProductBreakdownInsightsPage({
     dateWindow,
     after,
     graphVersion,
+    includePromotedProductMetrics,
   });
   const {payload, response, nextCursor, rateLimit} = await fetchMetaInsightsPayload({
     url,
@@ -362,7 +378,7 @@ export async function fetchMetaProductBreakdownInsightsPage({
       graph_version: graphVersion,
       level: "ad",
       time_increment: 1,
-      requested_fields: META_PRODUCT_BREAKDOWN_INSIGHTS_FIELDS,
+      requested_fields: productFields(includePromotedProductMetrics),
       breakdowns: Object.freeze(["product_id"]),
       product_id_limit: META_PRODUCT_BREAKDOWN_ID_LIMIT,
       product_metric_semantics: "validation_pending_real_catalog_response",

@@ -7,6 +7,8 @@ import {
   buildProviderLiveEvidenceSafeLog,
   createProviderLiveEvidenceRuntime,
   META_PRODUCT_ACCEPTED_FIELDS,
+  META_PRODUCT_PROBE_ACCEPTED_FIELDS,
+  META_PROMOTED_PRODUCT_PROBE,
   PROVIDER_LIVE_EVIDENCE_SAFE_LOG_PREFIX,
   summarizeMetaLiveEvidence,
   validateProviderLiveEvidenceInput,
@@ -84,7 +86,7 @@ function metaResult() {
   };
 }
 
-test("accepted trigger input is exactly Meta plus one business date", () => {
+test("accepted trigger input is Meta plus one business date and a fixed optional probe", () => {
   assert.deepEqual(
     validateProviderLiveEvidenceInput({provider: "meta", business_date: "2026-10-15"}),
     {provider: "meta", businessDate: "2026-10-15"},
@@ -95,7 +97,75 @@ test("accepted trigger input is exactly Meta plus one business date", () => {
     {provider: "meta", business_date: "2026-02-31"},
     {provider: "meta", business_date: "2026-10-15", account_id: "act_999"},
     {provider: "meta", business_date: "2026-10-15", cursor: "operator-value"},
+    {provider: "meta", business_date: "2026-10-15", probe: true},
+    {provider: "meta", business_date: "2026-10-15", probe: "arbitrary_fields"},
+    {provider: "meta", business_date: "2026-10-15", probe: null},
+    {provider: "meta", business_date: "2026-10-15", fields: ["secret"]},
   ]) assert.throws(() => validateProviderLiveEvidenceInput(input));
+});
+
+test("promoted probe preserves field states and redacts raw values in response and log", () => {
+  const source = metaResult();
+  source.product.rows = [
+    {...source.product.rows[0],
+      converted_promoted_product_quantity: [{action_type: "purchase", value: "123.45"}],
+      converted_promoted_product_value: [{action_type: "purchase", value: "987.65"}]},
+    {product_id: "private-2", converted_promoted_product_quantity: null,
+      converted_promoted_product_value: []},
+    {product_id: "private-3", converted_promoted_product_quantity: "0"},
+    {product_id: "private-4"},
+  ];
+  const evidence = summarizeMetaLiveEvidence(source, "2026-10-15", META_PROMOTED_PRODUCT_PROBE);
+  assert.equal(evidence.probe, META_PROMOTED_PRODUCT_PROBE);
+  assert.deepEqual(evidence.product.accepted_fields, META_PRODUCT_PROBE_ACCEPTED_FIELDS);
+  assert.deepEqual(evidence.product.field_state_counts.converted_promoted_product_quantity,
+    {array: 1, null: 1, zero: 1, absent: 1});
+  assert.deepEqual(evidence.product.field_state_counts.converted_promoted_product_value,
+    {array: 1, empty: 1, absent: 2});
+  const safe = buildProviderLiveEvidenceSafeLog(evidence);
+  assert.deepEqual(safe.product.field_state_counts, evidence.product.field_state_counts);
+  assert.deepEqual(safe.product.converted_promoted_product_action_types.quantity.values, ["purchase"]);
+  assert.deepEqual(safe.product.accepted_fields, META_PRODUCT_PROBE_ACCEPTED_FIELDS);
+  for (const value of [evidence, safe]) {
+    assert.doesNotMatch(JSON.stringify(value), /123[.]45|987[.]65|private-[234]|shopify_123_456/);
+    assert.equal(value.publishable_to_dataset_v2, false);
+  }
+  const defaultEvidence = summarizeMetaLiveEvidence(source, "2026-10-15");
+  assert.equal(defaultEvidence.probe, undefined);
+  assert.equal(defaultEvidence.product.converted_promoted_product_action_types, undefined);
+  assert.deepEqual(defaultEvidence.product.accepted_fields, META_PRODUCT_ACCEPTED_FIELDS);
+});
+
+test("promoted probe forwards only the fixed flag and never retries on failure", async () => {
+  for (const fail of [false, true]) {
+    const calls = [];
+    const failure = new Error("provider rejected probe");
+    const runtime = createProviderLiveEvidenceRuntime({metaRuntime: {
+      async readDailyEvidenceSnapshot(input) {
+        calls.push(input);
+        if (fail) throw failure;
+        return metaResult();
+      },
+    }});
+    const operation = runtime.execute({installationAuthority, input: {
+      provider: "meta", business_date: "2026-10-15", probe: META_PROMOTED_PRODUCT_PROBE,
+    }});
+    if (fail) await assert.rejects(operation, error => error === failure);
+    else assert.equal((await operation).probe, META_PROMOTED_PRODUCT_PROBE);
+    assert.deepEqual(calls, [{installationAuthority,
+      dateWindow: {start: "2026-10-15", end: "2026-10-15"},
+      includePromotedProductMetrics: true}]);
+  }
+});
+
+test("empty product probe does not invent zero or global unsupported", () => {
+  const source = metaResult();
+  source.product.rows = [];
+  const evidence = summarizeMetaLiveEvidence(source, "2026-10-15", META_PROMOTED_PRODUCT_PROBE);
+  assert.equal(evidence.product.row_count, 0);
+  assert.deepEqual(evidence.product.field_state_counts.converted_promoted_product_quantity, {});
+  assert.equal(evidence.product.product_metric_semantics, "validation_pending_real_catalog_response");
+  assert.throws(() => buildProviderLiveEvidenceSafeLog({...evidence, probe: "unapproved"}));
 });
 
 test("evidence fails closed when runtime authority identity is missing", () => {
@@ -306,6 +376,12 @@ test("read-only Shopify authority resolves an existing generation without bootst
 });
 
 test("contract keeps product fields raw and the temporary route non-visual", () => {
+  const probe = contract.promoted_product_probe_2026_10_22;
+  assert.deepEqual([...META_PRODUCT_ACCEPTED_FIELDS, ...probe.extra_fields], META_PRODUCT_PROBE_ACCEPTED_FIELDS);
+  assert.deepEqual(contract.http_trigger.optional_input_fields.probe, [META_PROMOTED_PRODUCT_PROBE]);
+  assert.equal(probe.business_date, "2026-10-01");
+  assert.equal(probe.merge, "requires_separate_explicit_approval");
+  assert.equal(probe.dataset_write, false);
   assert.deepEqual(
     contract.meta.product_breakdown.accepted_fields,
     META_PRODUCT_ACCEPTED_FIELDS,

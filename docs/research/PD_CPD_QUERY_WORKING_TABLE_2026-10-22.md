@@ -2,7 +2,7 @@
 
 Tarih: 22 Ekim 2026. Durum: çalışma referansı sabitlendi; nihai ortak tasarım kabulü değildir.
 
-Ürün sahibi mevcut üç sağlayıcılı tablo düzeninin korunmasını ve Meta bölümündeki son düzeltmelerin kaydedilmesini istedi. Google bölümü ürün sahibinin sonraki kararlarıyla güncellenmiştir. Klaviyo satırları önceki mesaj içi tablonun envanter kaydıdır; incelemesi sıradadır.
+Ürün sahibi mevcut üç sağlayıcılı tablo düzeninin korunmasını ve Meta bölümündeki son düzeltmelerin kaydedilmesini istedi. Google bölümü ürün sahibinin sonraki kararlarıyla güncellenmiştir. Klaviyo bölümü de ürün sahibinin kabul ettiği seçimlerle sabitlenmiştir; teknik uygulama ve açık Spend hesabı tamamlanmış sayılmaz.
 
 ## Açık karar
 
@@ -39,11 +39,14 @@ Tarih: 22 Ekim 2026. Durum: çalışma referansı sabitlendi; nihai ortak tasar�
 | Google Ads | CPD | Retail PMax — Channel performansı | Asset Group | Ürün kayıtlarından toplam⁶ | Ürün kayıtlarından toplam⁶ | Ürün kayıtlarından toplam⁶ | KD | KD | KD | KD | Ürün satış adetleri toplamı⁶ | Ürün satış değerleri toplamı⁶ |
 | Google Ads | CPD | Ürün performansı | Ürün kırılımı | Var | Var | Var | KD | KD | KD | KD | Var⁵: `conversions` — dönüşüm sayısı | Var⁵: `conversions_value` — dönüşüm değeri |
 | Google Ads | CPD | Ürün satış ilişkisi | Cart data | KD | KD | KD | KD | KD | KD | KD | Var: `units_sold`, lead / cross-sell ve `all_*` | Var: `revenue_micros`, lead / cross-sell ve `all_*` |
-| Klaviyo | PD | Önceki envanter — Klaviyo incelemesi bekliyor | Campaign / Flow — ayrı üst seviye sorgusu | Yok | Yok | Yok | Yok | Yok | Yok | Yok | Yok | Yok |
-| Klaviyo | PD | Önceki envanter — Klaviyo incelemesi bekliyor | Campaign Message / Flow Message | Eşleme yok⁷ | Var: `clicks`, `clicks_unique` | Yok | Yok | Yok | Yok | Yok | Var: `conversions`, `conversion_uniques` — Placed Order | Var: `conversion_value` — Placed Order |
-| Klaviyo | CPD | Önceki envanter — Klaviyo incelemesi bekliyor | Channel — Message | Eşleme yok⁷ | Var | Yok | KD | KD | KD | KD | Var: Placed Order dönüşümleri | Var: Placed Order değeri |
-| Klaviyo | CPD | Önceki envanter — Klaviyo incelemesi bekliyor | Message × ürün — ayrı performans sorgusu | Yok | Yok | Yok | KD | KD | KD | KD | Yok | Yok |
-| Klaviyo | CPD | Önceki envanter — Klaviyo incelemesi bekliyor | Ürün satış ilişkisi — Ordered Product | Yok | Yok | Yok | KD | KD | KD | KD | `event_properties` içinde `Quantity` okunuyor | `event_properties` içinde `$value` okunuyor |
+| Klaviyo | PD | Campaign | Campaign | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam | Açık⁷ | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam |
+| Klaviyo | PD | Campaign | Campaign Message | Var: `delivered` | Var: `clicks` | Açık⁷ | Yok⁸ | Yok⁸ | Yok⁸ | Yok⁸ | Var: `conversions` — Placed Order | Var: `conversion_value` — Placed Order |
+| Klaviyo | PD | Flow | Flow | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam | Açık⁷ | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam |
+| Klaviyo | PD | Flow | Flow Message | Var: `delivered` | Var: `clicks` | Açık⁷ | Yok⁸ | Yok⁸ | Yok⁸ | Yok⁸ | Var: `conversions` — Placed Order | Var: `conversion_value` — Placed Order |
+| Klaviyo | CPD | Campaign — Channel performansı | Campaign Message | N/A¹⁰ | N/A¹⁰ | Açık⁷ | KD | KD | KD | KD | Ürün satış adetleri toplamı⁹ | Ürün satış değerleri toplamı⁹ |
+| Klaviyo | CPD | Flow — Channel performansı | Flow Message | N/A¹⁰ | N/A¹⁰ | Açık⁷ | KD | KD | KD | KD | Ürün satış adetleri toplamı⁹ | Ürün satış değerleri toplamı⁹ |
+| Klaviyo | CPD | Ürün performansı | Message × ürün | N/A¹⁰ | N/A¹⁰ | Açık⁷ | KD | KD | KD | KD | Var⁹: `Quantity` | Var⁹: `$value` |
+| Klaviyo | CPD | Ürün satış ilişkisi | Ordered Product → Message | KD | KD | KD | KD | KD | KD | KD | Var⁹: `Quantity` | Var⁹: `$value` |
 
 ## Meta test notları
 
@@ -79,11 +82,34 @@ Tarih: 22 Ekim 2026. Durum: çalışma referansı sabitlendi; nihai ortak tasar�
 
 Açık bağlantılar kaybolmadan ertelenmiştir: Search→Ad ürün satış bağlantısı tamam değil; Shopping ürün performansında Ad Group kimliği var ancak cart data satışında Ad Group kimliği istenmiyor; PMax ürün performansı Asset Group'a bağlanmamış; PMax satış çözümleyicisi yazılmış ancak reporting akışında çağrılmıyor. Bu kayıtlar yeni sağlayıcı kısıtlaması değil, 22 Ekim kaynak incelemesinde görülen kod durumudur.
 
-**İş sırası:** Önce Klaviyo sorgu tablosu tamamlanacak. Sonra üç sağlayıcı birlikte değerlendirilerek doğal olarak sonraya bırakılmış işler, atlanmış/yanlış kurulmuş işler ve yeni tasarım nedeniyle değişecek işler ayrılacak. Bu aşamada eksik kodları uygulamaya başlanmayacak.
+**İş sırası:** Klaviyo sorgu seçimleri sabitlendi. Sıradaki iş, üç sağlayıcının eksiklerini birlikte değerlendirerek doğal olarak sonraya bırakılmış işler, atlanmış/yanlış kurulmuş işler ve yeni tasarım nedeniyle değişecek işleri ayırmaktır. Bu kayıt eksik kodları uygulama yetkisi vermez.
 
-## Klaviyo önceki tablo notu
+## Klaviyo kabul edilen sorgu seçimleri
 
-⁷ Klaviyo sorgusunda `recipients`, `delivered`, `opens`, `opens_unique` isteniyor; bunlardan PD Impression karşılığı seçilmiş değildir. Önceki envanter satırları içerik olarak korunmuştur; Klaviyo incelemesinde netleştirilecek.
+- PD Impression karşılığı `delivered`: teslim edilen mesaj sayısıdır, fiziksel görüntülenme kanıtı değildir. `recipients`, `opens` ve `opens_unique` artık bu standart sütun için alternatif değildir; kaynakta korunmaları bu seçimi değiştirmez.
+- PD Click `clicks`: toplam tıklama. `clicks_unique` standart Click yerine kullanılmayacak.
+- PD Purchase `conversions`, seçili Shopify `Placed Order` metriğinin olay sayısıdır. Değer `conversion_value` alanından gelir; `conversion_uniques` standart Purchase yerine kullanılmayacak.
+- CPD satılan ürün adedi `event_properties.Quantity`, satış değeri `event_properties.$value` kaynağından alınır. Sipariş dönüşümü sayısı ve satılan ürün miktarı ayrı tutulur.
+- Campaign → Campaign Message ve Flow → Flow Message hiyerarşileri korunur. Channel bağlantı kimlikleri Campaign Message ID ve Flow Message ID'dir. Mevcut `variation` ayrıntısı Message kimliğinin yerine geçirilmez.
+- Campaign ve Flow üst metrikleri mesaj kayıtlarından hiyerarşik toplam hedefidir. Spend bu toplam kararına otomatik maliyet hesabı eklemez; ayrıca açık kalır.
+
+## Klaviyo açık işler ve kapsam kararları
+
+⁷ **Spend açık:** Ürün sahibi şu aşamada hesaplama yapılmamasını, maliyet hesabının sonraki ortak değerlendirmeye bırakılmasını istedi. Önceki estimated-spend/ledger çalışmaları tamamlanmış raporlama hesabı yerine konulmaz. Bu belge yeni formül veya ürün maliyeti dağıtımı belirlemez.
+
+⁸ **Teknik sorgu eklemesi:** Campaign Message ve Flow Message seviyelerinde ATC/Checkout adet ve değerlerinin conversion metric talepleri eklenecek; mevcut Placed Order sorgusunun bu dört alanı karşıladığı varsayılmayacak. Üst Campaign/Flow kayıtları bu mesaj kaynaklarının toplamıdır.
+
+⁹ **Ortak ürün satış kaynağı:** Ordered Product olayındaki Quantity ve $value hem ürün performansı hem ürün satış ilişkisini besleyebilir; iki ayrı satış sayılarak toplanmaz. Channel ürün satış toplamları aynı kayıtları bir kez sayar. Bu, kimlik eşlemesi, tarih/attribution kapsamı veya Dataset bağlantılarının tamamlandığı iddiası değildir; bu işler sonraki ortak değerlendirmede ele alınacak.
+
+¹⁰ **N/A kapsam kararı:** Klaviyo CPD ürün Impression ve Click bu aşamada kapsam dışında bırakıldı; ürün link tıklamasını Product ID'ye eşleme veya ürün gösterimi çıkarma geliştirmesi yapılmayacak. N/A sıfır veya sağlayıcının kesinlikle desteklemediği demek değildir. Ürün esaslı CPD Channel bu alanlar için mesaj delivered/click değerini kopyalamaz; bu yüzden ilgili Channel hücreleri de N/A'dır. PD mesaj delivered/click ölçümleri korunur.
+
+## Klaviyo resmî kaynaklar
+
+Kontrol tarihi: 22 Ekim 2026.
+
+- [Reporting API tanımları](https://developers.klaviyo.com/en/reference/reporting_api_overview#available-statistics): delivered, clicks, conversions ve conversion_value anlamları.
+- [Link ve ürün satış raporları](https://help.klaviyo.com/hc/en-us/articles/115005258568): link bazlı tıklama ve ürün satışı için Ordered Product ayrımı.
+- [Events API](https://developers.klaviyo.com/en/reference/get_events): olay özellikleri kaynağı. Kaynak varlığı N/A kapsam kararını değiştirmez.
 
 ## Yetki ve sonraki adım
 

@@ -392,14 +392,14 @@ test("contract keeps product fields raw and the temporary route non-visual", () 
     (field) => META_PRODUCT_BREAKDOWN_INSIGHTS_FIELDS.includes(field),
   ));
   assert.equal(contract.http_trigger.visual_product_surface, false);
-  assert.equal(contract.http_trigger.temporary_settings_button, false);
+  assert.equal(contract.http_trigger.temporary_settings_button, true);
   assert.equal(
     contract.http_trigger.temporary_settings_button_business_date,
-    null,
+    "2026-10-01",
   );
   assert.equal(
     contract.http_trigger.temporary_settings_button_single_attempt_per_page_load,
-    false,
+    true,
   );
   assert.equal(contract.http_trigger.route, "/settings/provider-live-evidence");
   assert.equal(contract.mutations.database_write, false);
@@ -449,7 +449,13 @@ test("retained Meta live evidence preserves empty product semantics and mapping 
   assert.equal(liveEvidence.retention_boundary.raw_names_or_identifiers_retained, false);
 });
 
-test("connected Meta no longer exposes the temporary evidence button", () => {
+test("connected Meta exposes only the newly authorized fixed product probe, not the old trigger", () => {
+  assert.match(settings, /Run Meta product test \(2026-10-01\)/);
+  assert.match(settings, /onClick=\{runMetaProductProbe\}/);
+  assert.match(settings, /disabled=\{metaProbeStatus !== "idle"\}/);
+  assert.match(settings, /loading=\{metaProbeStatus === "loading"\}/);
+  assert.match(settings, /if \(!runner \|\| runner.attempted\) return/);
+  assert.match(settings, /Meta returned no product rows[.] This is not evidence of zero sales or global lack of support/);
   assert.doesNotMatch(settings, /Run Meta evidence/);
   assert.doesNotMatch(settings, /fetch\("\/settings\/provider-live-evidence"/);
   assert.doesNotMatch(settings, /business_date: "2026-10-01"/);

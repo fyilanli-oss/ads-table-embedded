@@ -1,5 +1,61 @@
 # EO-04 — Geçici sağlayıcı canlı kabul tetikleyicisi
 
+## Geçici Meta test düğmesi — 22 Ekim 2026 analist özeti
+
+Ürün sahibi Settings'e yalnız bu test için geçici düğme eklenmesini açıkça
+onayladı. Bu karar, aşağıdaki ilk dar ek alan diliminin "yeni buton eklenmez"
+sınırını yalnız bu taşıma mekanizması için değiştirir; sunucu sorgusu değişmez.
+Merge ayrı açık onaya tabidir; görsel kabul ve canlı test henüz yapılmadı.
+
+- Amaç: Mevcut Shopify Admin oturumundan, bağlı Meta'nın seçili Reporting
+  Account'u için `2026-10-01` tarihli `promoted_product_metrics` testini başlatmak.
+- Yerleşim: Bağlı Meta bölümünde hesap listesinden sonra, Reporting Account
+  eyleminden önce tek secondary `s-button`; masaüstü ve mobil aynı doğal akış.
+  Yeni modal, tarih alanı, özel CSS veya başka ürün yüzeyi yoktur.
+- Bileşen eşlemesi: `s-button` / `variant="secondary"`, boolean `loading` ve
+  `disabled`, React `onClick`; durum açıklaması özellik eklenmeyen `s-paragraph`.
+  Mevcut onaylı Polaris RC runtime/type eşleşmesi korunur.
+- Başlangıç metni: `Run Meta product test (2026-10-01)`.
+- Loading: `Reading Meta product evidence…`; düğme disabled, ilk tıklama kilidi
+  ilk await'ten önce alınır. Aynı Settings mount'unda ikinci istek yoktur.
+- Başarı: `Meta product evidence received`; açıklamada yalnız tarih ve
+  Channel/ürün satır sayıları vardır. Ham yanıt, kimlik, hash veya değer yoktur.
+- Boş ürün sonucu: `Meta returned no product rows. This is not evidence of zero sales or global lack of support.`
+- Hata/401/reauthorization/network/bozuk yanıt: `Meta product test stopped`;
+  açıklama `Meta product test stopped. No retry was performed. Error code: ...`.
+  Yalnız izinli büyük harf hata kodu gösterilir; token yenileme, OAuth başlatma,
+  eski sorguya fallback veya otomatik tekrar yoktur. Düğme disabled kalır.
+- İptal: Tıklamamak hiçbir istek yapmaz. Başlatılmış isteği iptal/yenileme veya
+  navigasyonla yeniden başlatma yetkisi yoktur; yeni mount tek canlı çağrı
+  onayını yenilemez. Bu kilit global/durable idempotency garantisi değildir.
+- Bağlı değil / pending / reauthorization_required / başka Meta işlemi:
+  mevcut durum ekranı korunur, test düğmesi gösterilmez.
+- Değişmeyen sınır: authenticated POST `/settings/provider-live-evidence`,
+  yalnız sabit provider/date/probe; sunucu token kasası ve yetki zinciri,
+  güvenli sunucu logu, Dataset yazmama ve ilk sağlayıcı hatasında durma korunur.
+  Google/Klaviyo test düğmeleri, hesap seçimi ve OAuth değişmez.
+- Kaldırma: Test ve güvenli kanıt saklandıktan sonra ayrı gözden geçirilen
+  cleanup ile düğme kaldırılır; arka planda kendiliğinden tekrar çalışmaz.
+- Kabul planı: çift tıklama/concurrent çağrı, başarısız HTTP/network/JSON,
+  yanlış probe/tarih/zarf, boş/present sonuç ve veri sızıntısı unit testleri;
+  anayasa koruma, typecheck/build; ardından gerçek masaüstü ve en az 320 px
+  gerçek mobil Shopify Admin kabulü ve açık ürün sahibi görsel kabulü.
+  Preview ölçüsü gerçek mobil kabulü sayılmaz. Canlı test onayı tek çalıştırmadır.
+
+Resmî kaynaklar, kontrol 22 Ekim 2026:
+<https://shopify.dev/docs/api/app-home/v2.0-rc/web-components/actions/button>,
+<https://shopify.dev/docs/api/app-home/v2.0-rc/web-components/typography-and-content/paragraph>,
+<https://shopify.dev/docs/api/app-home/latest/apis/authentication-and-data/resource-fetching-api>.
+
+## Production önkoşulu — 22 Ekim 2026
+
+PR #163 ürün sahibi onayıyla birleşti; güncel main'in önceki EO-05 kodları dahil
+tamamını dağıtma onayı ayrıca alındı. `b0a4fbaca14ac751fae5d97bc9d71da3a446493f`
+commit'i `dpl_ELF7zyKfwKzEiV9Dz7LrT7rMwqRp` ile Production READY oldu;
+`embedded.adstable.app` alias'ı doğrulandı. Kontrolde son 5 dakikada runtime
+hatası bulunmadı; bu canlı Meta testinin yapıldığı veya kabul edildiği anlamına
+gelmez. PR #163 açıklamasında dağıtım kanıtı kayıtlıdır.
+
 ## Dar ek alan testi — 22 Ekim 2026
 
 Ürün sahibi, mevcut `product_id` kırılımına

@@ -7,6 +7,7 @@ import {
   useSubmit,
 } from "react-router";
 import {useEffect, useRef, useState} from "react";
+import {createMetaProbeButtonRunner, type MetaProbeButtonResult} from "../lib/providers/meta-probe-button.js";
 import {
   authenticate,
   database,
@@ -549,6 +550,10 @@ export default function Settings() {
   const metaReportingModal = useRef<any>(null);
   const openedMetaSetupView = useRef<"pending" | "pending_reporting" | null>(null);
   const metaResumeRequested = useRef(false);
+  const metaProbeRunner = useRef<ReturnType<typeof createMetaProbeButtonRunner> | null>(null);
+  if (!metaProbeRunner.current) metaProbeRunner.current = createMetaProbeButtonRunner();
+  const [metaProbeStatus, setMetaProbeStatus] = useState<"idle" | "loading" | "complete" | "failed">("idle");
+  const [metaProbeResult, setMetaProbeResult] = useState<MetaProbeButtonResult | null>(null);
   const klaviyoInitialSpend = useRef<any>(null);
   const klaviyoAccountChoice = useRef<any>(null);
   const klaviyoSetupModal = useRef<any>(null);
@@ -701,6 +706,16 @@ export default function Settings() {
     form.set("provider", "google_ads");
     if (reportingAccountId) form.set("reportingAccountId", reportingAccountId);
     submit(form, {method: "post"});
+  };
+
+  const runMetaProductProbe = async () => {
+    const runner = metaProbeRunner.current;
+    if (!runner || runner.attempted) return;
+    setMetaProbeStatus("loading");
+    const result = await runner.run();
+    if (!result) return;
+    setMetaProbeResult(result);
+    setMetaProbeStatus(result.status);
   };
 
   const runGoogleEvidence = async () => {
@@ -1023,6 +1038,36 @@ export default function Settings() {
                   </s-paragraph>
                 ))}
               </s-stack>
+              <s-button
+                variant="secondary"
+                loading={metaProbeStatus === "loading"}
+                disabled={metaProbeStatus !== "idle"}
+                onClick={runMetaProductProbe}
+              >
+                {metaProbeStatus === "loading"
+                  ? "Reading Meta product evidence…"
+                  : metaProbeStatus === "complete"
+                    ? "Meta product evidence received"
+                    : metaProbeStatus === "failed"
+                      ? "Meta product test stopped"
+                      : "Run Meta product test (2026-10-01)"}
+              </s-button>
+              {metaProbeResult?.status === "complete" ? (
+                <s-paragraph>
+                  Meta product evidence received for 2026-10-01.
+                  {" Channel rows: "}{metaProbeResult.channelRows}
+                  {"; product rows: "}{metaProbeResult.productRows}
+                  {". No Dataset write was performed."}
+                  {metaProbeResult.productRows === 0
+                    ? " Meta returned no product rows. This is not evidence of zero sales or global lack of support."
+                    : " Product semantics remain pending review."}
+                </s-paragraph>
+              ) : null}
+              {metaProbeResult?.status === "failed" ? (
+                <s-paragraph>
+                  Meta product test stopped. No retry was performed. Error code: {metaProbeResult.code}.
+                </s-paragraph>
+              ) : null}
               <s-button commandFor="meta-reporting-modal" command="--show">
                 Reporting Account
               </s-button>

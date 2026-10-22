@@ -7,8 +7,14 @@
 eklenmesini, dağıtımı ve tek canlı denemeyi onayladı. Normal sorgu, Dataset,
 kimlik eşlemesi ve Sales Role değişmez. İlk sağlayıcı hatasında durulur.
 Sözleşme: `contracts/eo-04-provider-live-acceptance-v1.json` içindeki
-`promoted_product_probe_2026_10_22`. Dar uygulama hazır; yerel testler, tip
-kontrolü ve derleme geçti. PR/CI incelemesi bekleniyor; canlı sonuç yoktur.
+`promoted_product_probe_2026_10_22`. PR #163 CI geçti ve açık onayla birleşti.
+Güncel main'in EO-05 kodları dahil tamamını dağıtma onayı ayrıca alındı;
+`b0a4fba` / `dpl_ELF7zyKfwKzEiV9Dz7LrT7rMwqRp` Production READY doğrulandı.
+Canlı sonuç yoktur. Ürün sahibi Settings'te yalnız bu sabit test için geçici
+Polaris düğmesini onayladı; analist özeti canlı kabul brief'indedir.
+Bu UI diliminin uygulaması, yerel testleri, typecheck ve build tamamlandı;
+PR/CI incelemesi ile gerçek masaüstü/mobil ve ürün
+sahibi görsel kabulü bekleniyor. UI kabulü, merge veya canlı test yapılmış sayılmaz.
 Ürün sahibinin seçtiği tek iş tarihi: `2026-10-01`.
 PR/CI ve ayrı açık merge onayı kapısı korunur. EO-05 başlamaz.
 

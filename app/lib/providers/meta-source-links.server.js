@@ -77,7 +77,7 @@ export function buildMetaSourceLinks({scope, dateWindow, channelRows, productRow
       state,
       reason,
       channel_type: "ad",
-      channel_id: pdRowIndex === null ? null : key.ad_id,
+      referenced_pd_ad_id: pdRowIndex === null ? null : key.ad_id,
       native_key: key ? Object.freeze({...key,
         campaign_id: identifier(row.campaign_id), adset_id: identifier(row.adset_id)}) : null,
       provider_product_id: identifier(row?.product_id),

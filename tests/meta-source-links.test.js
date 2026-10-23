@@ -45,7 +45,7 @@ test("04 never links across account, day, requested window or absent native iden
     const result = build([ad], [{...product, ...patch}]).product_links[0];
     assert.equal(result.state, "unresolved", JSON.stringify(patch));
     assert.equal(result.pd_row_index, null);
-    assert.equal(result.channel_id, null);
+    assert.equal(result.referenced_pd_ad_id, null);
   }
   assert.equal(build([{...ad, account_id: "999"}], [product]).product_links[0].reason, "pd_row_not_observed");
   assert.equal(build([ad], [{...product, date_start: "2026-10-02", date_stop: "2026-10-02"}])
@@ -77,6 +77,8 @@ test("04 preserves row indexes, isolated workspace scopes and empty observation 
   assert.notDeepEqual(other.scope, result.scope);
   assert.deepEqual(build([ad], []).product_links, []);
   assert.equal(build([], [product]).product_links[0].state, "unresolved");
+  assert.equal(build([], [product]).product_links[0].native_key.ad_id, "ad-1");
+  assert.equal(build([], [product]).product_links[0].provider_product_id, product.product_id);
   assert.deepEqual(build([], []).product_links, []);
   for (const patch of [{scope: {...scope, reporting_account_id: "123"}},
     {scope: {...scope, install_generation: 0}}, {scope: {...scope, workspace_id: ""}},

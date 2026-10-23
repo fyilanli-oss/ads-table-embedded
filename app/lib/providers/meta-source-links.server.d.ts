@@ -16,7 +16,7 @@ export type MetaSourceLinks = Readonly<{
     state: "unresolved" | "ambiguous" | "conflicting" | "exact_native_ad_reference";
     reason: string;
     channel_type: "ad";
-    channel_id: string | null;
+    referenced_pd_ad_id: string | null;
     native_key: Readonly<{account_id: string; ad_id: string; business_date: string;
       campaign_id: string | null; adset_id: string | null}> | null;
     provider_product_id: string | null;

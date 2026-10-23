@@ -1,5 +1,14 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## Google Shopping kaynak bağlantısı — 23 Ekim 2026, 09 dilimi ve 10/12 resmî kontrolü
+
+- #171 açık onayla `7fe9628e46a46bd853d6d62ed064d96911af6467` olarak birleşti; bu dilim o main'den başlar. 09 için yalnız Shopping filtreli `shopping_cart_data_product_sales_daily` sorgusu Ad Group kimliği/adını ekler. Genel cart data sorgusunun exact gövdesi ve eski canlı tetikleyici korunur; iki satış raporu birlikte toplanmaz.
+- `readShoppingSourceEvidenceSnapshot` üç native aileyi (Shopping PD Ad Group, mevcut ürün performansı, Shopping cart data satışı) sınırlı/tam sayfalarla okur. Her aile en çok 20 sayfa/20.000 satırdır. Ürün ve satış satırları aynı hesap–Campaign–Ad Group–gün anahtarıyla tek PD kaydına referans verir. Kaynak para birimi/saat dilimi doğrulanmış hesaptandır. Metrik kopyası, maliyet aktarımı veya toplam yoktur. Eksik/yinelenen kimlikte PD referansı seçilmez; ham kayıt ve kimlik korunur. Mevcut ürün ailesindeki PMax satırları da silinmez, Asset Group atanmaz.
+- Workspace ve kurulum nesli yürütme önbelleğine bağlanır; aynı nesne başka kurulum için kullanılırsa provider erişiminden önce reddedilir. Bozuk başarılı yanıt/satır/imleç ve HTTP 200 hata gövdesi boş/tam rapor sayılamaz. İlk hatada kalan sayfalar/aileler durur, retry veya kısmi snapshot yoktur.
+- Resmî v25 metadata 23 Ekim'de okundu: cart data ve shopping performance segmenting resources `ad_group`, `campaign`; `product_sold_item_id` selectable_with içinde `ad_group` var, `ad_group_ad` yok; `product_item_id` listesinde `asset_group` yok. 10/12 mevcut doğrudan sorgu yoluyla kapatılamaz. Bu, diğer API/sürümlerde hiçbir yol olmadığı iddiası değildir. Search PD Ad hedefi değişmez, ürün satışı Ad Group'a veya Ad'e tahminle taşınmaz. 11 tarihsel PMax işi duraklatılmış kalır.
+- Web aracının boyut sınırı sonrası aynı herkese açık resmî v25 sayfaların ilgili HTML metadata bölümleri salt okunur HTTP ile okundu; token/hesap API'sine erişilmedi. Google Ads Search yanıt referansı da okundu. Kaynaklar Google runtime brief/sözleşmesindedir. Bu metadata ve sentetik testler canlı sorgu/ürün kabulü değildir.
+- 09 repository bağlantı dilimidir; Shopify kimlik doğrulaması (16), yeni rol, tam Dataset/ürün toplamları/FX (17–23) tamam değildir. `publishable=false`. Canlı çağrı, token/izin değişikliği, DB, deploy veya Shopify görsel işlem yoktur. 24 hata/tamlık/kapsam testleriyle eşlik eder; merge ayrı açık onay ister.
+
 ## Kaynak ve kimlik bağlantıları — 23 Ekim 2026, 04 + 09 + 10 + 11 + 12 + 16 ilk dilim
 
 - Ürün sahibi devam talimatını verdi. #170 `92f4a9b32beb0c41c5736a0c90fa5ba3b9df7f4a` olarak açık onayla birleşti; bu dilim o main'den başlar. Grup birlikte tasarlanır, sağlayıcı/kanıt sınırlarında küçük PR'larla teslim edilir; bu kayıt altı maddeyi kapatmaz.

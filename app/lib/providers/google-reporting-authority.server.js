@@ -8,7 +8,8 @@ import {
   readGoogleAdsOAuthConfig,
   refreshGoogleAdsAccessToken,
 } from "./google-ads-rest.server.js";
-import {fetchGoogleReportingPage} from "./google-reporting.server.js";
+import {buildGoogleReportingQueries, fetchGoogleReportingPage, GoogleReportingError} from "./google-reporting.server.js";
+import {buildGoogleShoppingSourceLinks} from "./google-source-links.server.js";
 
 const PROVIDER = "google_ads";
 const CUSTOMER_ID_PATTERN = /^[0-9]+$/;
@@ -66,11 +67,17 @@ export function createGoogleReportingAuthorityRuntime({
   const config = readGoogleAdsOAuthConfig(environment);
   const accountAuthority = createProviderAccountAuthorityRepository(database);
   let preparedAuthorityPromise = null;
+  let preparedInstallationKey = null;
 
   async function prepareEvidenceExecution({installationAuthority}) {
+    const installation = owner(installationAuthority);
+    const installationKey = JSON.stringify([installation.workspaceId, installation.installGeneration]);
+    if (preparedInstallationKey !== null && preparedInstallationKey !== installationKey) {
+      throw new GoogleReportingError("GOOGLE_REPORTING_EXECUTION_SCOPE_MISMATCH", "Google execution belongs to another installation");
+    }
     if (preparedAuthorityPromise) return preparedAuthorityPromise;
+    preparedInstallationKey = installationKey;
     preparedAuthorityPromise = (async () => {
-      const installation = owner(installationAuthority);
       const connection = await accountAuthority.load({
         workspaceId: installation.workspaceId,
         installGeneration: installation.installGeneration,
@@ -107,8 +114,66 @@ export function createGoogleReportingAuthorityRuntime({
     return preparedAuthorityPromise;
   }
 
+  function clientFor(context) {
+    return createGoogleAdsRestClient({accessToken: context.accessToken, developerToken: config.developerToken,
+      loginCustomerId: context.reportingAccount.loginAccountId, fetchFn});
+  }
+
+  async function collect(context, queryFamily, dateWindow) {
+    const client = clientFor(context);
+    const rows = [];
+    const pdMetricRows = [];
+    const requestIds = [];
+    const seen = new Set();
+    let cursor = null;
+    let first = null;
+    for (let pageNumber = 0; pageNumber < 20; pageNumber++) {
+      const page = await fetchGoogleReportingPage({client, customerId: context.reportingAccount.id,
+        queryFamily, dateWindow, pageToken: cursor});
+      if (!first) first = page;
+      const offset = rows.length;
+      pdMetricRows.push(...(page.pd_metric_rows ?? []).map(row => Object.freeze({
+        ...row, source_row_index: row.source_row_index + offset,
+      })));
+      rows.push(...page.rows);
+      if (page.provider_request_id) requestIds.push(page.provider_request_id);
+      if (rows.length > 20_000) throw new GoogleReportingError("GOOGLE_REPORTING_ROW_LIMIT_EXCEEDED", "Google row limit exceeded");
+      if (page.next_cursor === null) return Object.freeze({...first, rows: Object.freeze(rows),
+        ...(first.pd_metric_rows ? {pd_metric_rows: Object.freeze(pdMetricRows)} : {}), next_cursor: null,
+        observation_state: rows.length ? "present" : "not_observed_in_this_execution",
+        evidence: Object.freeze({...first.evidence, page_count: pageNumber + 1,
+          provider_request_ids: Object.freeze(requestIds)})});
+      if (typeof page.next_cursor !== "string" || page.next_cursor.length < 1 || page.next_cursor.length > 4096) {
+        throw new GoogleReportingError("GOOGLE_REPORTING_CURSOR_INVALID", "Google cursor is invalid");
+      }
+      if (seen.has(page.next_cursor)) throw new GoogleReportingError("GOOGLE_REPORTING_CURSOR_LOOP", "Google cursor loop detected");
+      seen.add(page.next_cursor);
+      cursor = page.next_cursor;
+    }
+    throw new GoogleReportingError("GOOGLE_REPORTING_PAGE_LIMIT_EXCEEDED", "Google page limit exceeded");
+  }
+
   return Object.freeze({
     prepareEvidenceExecution,
+    async readShoppingSourceEvidenceSnapshot({installationAuthority, dateWindow}) {
+      const installation = owner(installationAuthority);
+      buildGoogleReportingQueries({dateWindow});
+      const context = await prepareEvidenceExecution({installationAuthority});
+      const results = {};
+      // The scoped cart report replaces, never adds to, the general cart report here.
+      for (const family of ["ad_group_channel_daily", "shopping_product_daily", "shopping_cart_data_product_sales_daily"]) {
+        results[family] = await collect(context, family, dateWindow);
+      }
+      const sourceLinks = buildGoogleShoppingSourceLinks({scope: {
+        workspace_id: installation.workspaceId, install_generation: installation.installGeneration,
+        connection_id: context.connection.connectionId, reporting_account_id: context.reportingAccount.id,
+      }, dateWindow, pdRows: results.ad_group_channel_daily.rows,
+      productRows: results.shopping_product_daily.rows, saleRows: results.shopping_cart_data_product_sales_daily.rows});
+      return Object.freeze({provider: PROVIDER, authority: Object.freeze({
+        connection_id: context.connection.connectionId, reporting_account_id: context.reportingAccount.id,
+        reporting_account_currency: context.reportingAccount.currency, reporting_account_timezone: context.reportingAccount.timezone,
+      }), results: Object.freeze(results), source_links: sourceLinks, publishable: false});
+    },
     async readEvidencePage({
       installationAuthority,
       queryFamily,

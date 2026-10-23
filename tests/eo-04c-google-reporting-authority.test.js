@@ -268,3 +268,101 @@ test("refresh failure stops before the first Google Ads query and is not retried
   );
   assert.deepEqual(calls, ["oauth2.googleapis.com"]);
 });
+
+test("09 complete Shopping snapshot binds authenticated scope and global indexes without a second cart report", async () => {
+  const common = {customer: {id: "200"}, campaign: {id: "20", advertisingChannelType: "SHOPPING"},
+    adGroup: {id: "30"}, segments: {date: "2026-10-01"}};
+  const second = {...common, adGroup: {id: "31"}};
+  const product = {...second, segments: {...common.segments, productMerchantId: "50", productFeedLabel: "IS", productItemId: "A"}};
+  const sale = {...product, segments: {...product.segments, productSoldItemId: "B"}, metrics: {unitsSold: "1", revenueMicros: "0"}};
+  const responses = [{results: [common], nextPageToken: "pd-next"}, {results: [second]},
+    {results: [], nextPageToken: "product-next"}, {results: [product]}, {results: [sale]}];
+  const bodies = [];
+  let refreshes = 0;
+  const runtime = createGoogleReportingAuthorityRuntime({database: database(), environment,
+    tokenVault: {async loadProviderTokenSet() {return {refresh_token: "fixture-refresh"};}},
+    fetchFn: async (url, options) => {
+      if (new URL(url).hostname === "oauth2.googleapis.com") {
+        refreshes++; return json({access_token: "fixture-access", expires_in: 3600, token_type: "Bearer"});
+      }
+      bodies.push(JSON.parse(options.body));
+      return json(responses.shift());
+    },
+  });
+  const snapshot = await runtime.readShoppingSourceEvidenceSnapshot({installationAuthority,
+    dateWindow: {start: "2026-10-01", end: "2026-10-01"}, reportingAccountId: "999", workspaceId: "forged"});
+  assert.equal(refreshes, 1);
+  assert.equal(bodies.length, 5);
+  assert.equal(bodies.filter(body => body.query.includes("FROM cart_data_sales_view")).length, 1);
+  assert.match(bodies.at(-1).query, /ad_group[.]id/);
+  assert.match(bodies.at(-1).query, /advertising_channel_type = 'SHOPPING'/);
+  assert.deepEqual(snapshot.source_links.scope, {workspace_id: installationAuthority.workspaceId, install_generation: 2,
+    connection_id: databaseRow().connection_id, reporting_account_id: "200"});
+  assert.equal(snapshot.source_links.product_sales_links[0].pd_row_index, 1);
+  assert.equal(snapshot.source_links.product_performance_links[0].pd_row_index, 1);
+  assert.deepEqual(snapshot.results.ad_group_channel_daily.pd_metric_rows.map(row => row.source_row_index), [0, 1]);
+  assert.equal(snapshot.results.shopping_product_daily.observation_state, "present");
+  assert.deepEqual(snapshot.results.shopping_cart_data_product_sales_daily.rows, [sale]);
+  assert.equal(snapshot.publishable, false);
+  assert.doesNotMatch(JSON.stringify(snapshot), /fixture-access|fixture-refresh|forged/);
+});
+
+test("09 first family/page error, cursor loop and bound stop without retry or partial snapshot", async () => {
+  for (const scenario of ["rejection", "loop", "bound", "bad_cursor", "row_bound"]) {
+    let adsCalls = 0;
+    const runtime = createGoogleReportingAuthorityRuntime({database: database(), environment,
+      tokenVault: {async loadProviderTokenSet() {return {refresh_token: "fixture-refresh"};}},
+      fetchFn: async url => {
+        if (new URL(url).hostname === "oauth2.googleapis.com") return json({access_token: "fixture-access", expires_in: 3600, token_type: "Bearer"});
+        adsCalls++;
+        if (scenario === "rejection") return adsCalls === 2 ? json({error: {status: "PERMISSION_DENIED"}}, 403) : json({results: []});
+        if (scenario === "row_bound") return json({results: Array.from({length: 20_001}, () => ({}))});
+        return json({results: [], nextPageToken: scenario === "loop" ? "same" : scenario === "bad_cursor" ? 4 : `next-${adsCalls}`});
+      },
+    });
+    const expected = {rejection: "GOOGLE_ADS_REST_REQUEST_FAILED", loop: "GOOGLE_REPORTING_CURSOR_LOOP",
+      bound: "GOOGLE_REPORTING_PAGE_LIMIT_EXCEEDED", bad_cursor: "GOOGLE_ADS_SEARCH_SCHEMA_CHANGED", row_bound: "GOOGLE_REPORTING_ROW_LIMIT_EXCEEDED"}[scenario];
+    await assert.rejects(runtime.readShoppingSourceEvidenceSnapshot({installationAuthority,
+      dateWindow: {start: "2026-10-01", end: "2026-10-01"}}), error => error.code === expected);
+    assert.equal(adsCalls, {rejection: 2, loop: 2, bound: 20, bad_cursor: 1, row_bound: 1}[scenario]);
+  }
+});
+
+test("09 cached Google execution cannot be reused by a different workspace or install generation", async () => {
+  let calls = 0;
+  const runtime = createGoogleReportingAuthorityRuntime({database: database(), environment,
+    tokenVault: {async loadProviderTokenSet() {return {refresh_token: "fixture-refresh"};}},
+    fetchFn: async url => {calls++; return new URL(url).hostname === "oauth2.googleapis.com"
+      ? json({access_token: "fixture-access", expires_in: 3600, token_type: "Bearer"}) : json({results: []});},
+  });
+  await runtime.prepareEvidenceExecution({installationAuthority});
+  for (const other of [{...installationAuthority, workspaceId: "99999999-9999-4999-8999-999999999999"},
+    {...installationAuthority, installGeneration: 3}]) {
+    await assert.rejects(runtime.readShoppingSourceEvidenceSnapshot({installationAuthority: other,
+      dateWindow: {start: "2026-10-01", end: "2026-10-01"}}), error => error.code === "GOOGLE_REPORTING_EXECUTION_SCOPE_MISMATCH");
+  }
+  assert.equal(calls, 1);
+});
+
+test("09 invalid successful payloads cannot become empty complete evidence; input dates validate before OAuth", async () => {
+  for (const payload of [null, [], {results: null}, {results: [null]}, {results: [4]},
+    {results: [[{}]]}, {error: {status: "PERMISSION_DENIED"}, results: []}]) {
+    let calls = 0;
+    const runtime = createGoogleReportingAuthorityRuntime({database: database(), environment,
+      tokenVault: {async loadProviderTokenSet() {return {refresh_token: "fixture-refresh"};}},
+      fetchFn: async url => {calls++; return new URL(url).hostname === "oauth2.googleapis.com"
+        ? json({access_token: "fixture-access", expires_in: 3600, token_type: "Bearer"}) : json(payload);},
+    });
+    await assert.rejects(runtime.readShoppingSourceEvidenceSnapshot({installationAuthority,
+      dateWindow: {start: "2026-10-01", end: "2026-10-01"}}), error => error.code ===
+        (payload?.error ? "GOOGLE_ADS_REST_REQUEST_FAILED" : "GOOGLE_ADS_SEARCH_SCHEMA_CHANGED"));
+    assert.equal(calls, 2);
+  }
+  let calls = 0;
+  const runtime = createGoogleReportingAuthorityRuntime({database: database(), environment,
+    tokenVault: {async loadProviderTokenSet() {assert.fail("vault must not load");}}, fetchFn: async () => {calls++;},
+  });
+  await assert.rejects(runtime.readShoppingSourceEvidenceSnapshot({installationAuthority,
+    dateWindow: {start: "2026-02-30", end: "2026-03-01"}}), error => error.code === "GOOGLE_REPORTING_DATE_INVALID");
+  assert.equal(calls, 0);
+});

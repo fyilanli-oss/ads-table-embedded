@@ -95,7 +95,9 @@ test("04 source reference is a partial native slice; 09–12 and 16 retain their
   assert.equal(meta.native_source_reference.new_query_or_call, false);
   assert.equal(meta.native_source_reference.shopify_identity_role_or_cost_semantics_proven, false);
   assert.equal(design.google_ads.historical_gate_reopened, false);
-  assert.equal(design.google_ads.new_google_query_in_this_slice, false);
+  assert.equal(design.google_ads.new_google_query_in_this_slice, true);
+  assert.equal(design.google_ads.new_query_family, "shopping_cart_data_product_sales_daily");
+  assert.equal(design.google_ads.google_09_fully_accepted, false);
   for (const item of ["09", "10", "11", "12"]) assert.equal(typeof design.google_ads[item], "string");
   assert.equal(design.identity_design_item_16.reporting_identity, "shopify_product_id");
   assert.equal(design.identity_design_item_16.physical_model_or_reader_implemented, false);
@@ -106,4 +108,21 @@ test("04 source reference is a partial native slice; 09–12 and 16 retain their
   const table = await readFile(standard.source_table, "utf8");
   assert.ok(table.includes("04 kapanmadı"));
   assert.ok(table.includes("tarihsel tam gün kanıtı"));
+});
+
+test("09 records actual scoped query and 10/12 direct metadata limits without broad provider claims", async () => {
+  const contract = await readJson("contracts/eo-04c-google-reporting-runtime-v1.json");
+  const slice = contract.shopping_source_reference;
+  assert.equal(slice.inventory_item, "09");
+  assert.equal(slice.general_cart_query_changed, false);
+  assert.equal(slice.general_and_scoped_cart_reports_added_together, false);
+  assert.equal(slice.existing_live_trigger_changed, false);
+  assert.equal(slice.publishable, false);
+  assert.equal(slice.metric_copy_aggregation_or_cost_transfer, false);
+  assert.equal(slice.shopify_identity_or_new_role_resolution, false);
+  assert.deepEqual(slice.added_fields, ["ad_group.id", "ad_group.name"]);
+  assert.deepEqual(contract.direct_product_leaf_metadata_check.cart_data_sales_view_segmenting_resources, ["ad_group", "campaign"]);
+  assert.equal(contract.direct_product_leaf_metadata_check.sold_item_id_selectable_with_includes_ad_group_ad, false);
+  assert.equal(contract.direct_product_leaf_metadata_check.product_item_id_selectable_with_includes_asset_group, false);
+  assert.equal(contract.direct_product_leaf_metadata_check.claim_about_all_other_google_apis_or_versions, false);
 });

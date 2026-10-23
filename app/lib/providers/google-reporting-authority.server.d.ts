@@ -23,4 +23,13 @@ export function createGoogleReportingAuthorityRuntime(input: {
     dateWindow: {start: string; end: string};
     pageToken?: string | null;
   }): Promise<Readonly<Record<string, unknown>>>;
+  readShoppingSourceEvidenceSnapshot(input: {
+    installationAuthority: {
+      authority: "shopify_installation_verified";
+      workspaceId: string;
+      installGeneration: number;
+      status: "active";
+    };
+    dateWindow: {start: string; end: string};
+  }): Promise<Readonly<Record<string, any>>>;
 };

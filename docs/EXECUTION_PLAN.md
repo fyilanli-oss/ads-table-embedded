@@ -1,5 +1,12 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## Ortak kayıt eşleme analiz kaydı — 23 Ekim 2026
+
+- Ürün sahibinin kabul ettiği beş sütunlu PD / CPD ürün performansı / CPD ürün satışı düzeni, mevcut `docs/research/PD_CPD_QUERY_WORKING_TABLE_2026-10-22.md` dosyasına aynı 15 satırla işlendi. Teslim edilen Excel aynı tablonun çıktısıdır; eski 13 sütunlu sorgu matrisi değiştirilmedi. Başlangıç main `77c9efe0e1d32e99a7877658e2df474940ce1d9d` (#175).
+- Bu yalnız analiz kaydıdır: 16 + 20 + 22 için kaynak kapsamı ve bağlantı ayrımını görünür kılar; fiziksel model/unique key, runtime composer/toplam, FX/formül, DB, provider çağrısı, izin, deploy veya EO-05-B başlangıcı değildir. 17–19 tasarım kontrolü uygulama kapanışı sayılmaz.
+- Meta 05, Google PMax 10/11 ve Klaviyo 15 açık kalır. Ürün sahibi Klaviyo ürün etkileşim yolu için yeni kod geliştirmeden devam edilmesini istedi; mevcut roller korunur. Yeni sağlayıcı araştırması veya tarihsel PMax işi açılmadı.
+- Kaynak kodla tablo kontrolü yapıldı; bu yeni provider desteği/live kabulü değildir. GitHub PR resmî belgesi 23 Ekim 2026'da kontrol edildi: https://docs.github.com/en/pull-requests/how-tos/create-pull-requests/creating-a-pull-request . Dokümantasyon PR'ının merge'ü ayrıca açık onay gerektirir.
+
 ## 18–19 — Üst hiyerarşi ve CPD Channel toplamı tasarımı, 23 Ekim 2026
 
 - PR #174 açık kullanıcı onayıyla `d0d3b0e6962b2ed8fe9af487108e0902cb9cf115` olarak birleşti. Bu dilim o main'den başlar. Yalnız 18–19 inceleme taslağı eklenir; 17'nin runtime birleşimi, toplama kodu, fiziksel model, DB/FX/formül veya canlı işlem başlamaz. Tasarım `contracts/pd-cpd-query-standard-v1.json#hierarchy_channel_review` içindedir; ürün sahibi incelemesi beklenir.

@@ -1,5 +1,41 @@
 # PD ve CPD sorgu çalışma tablosu
 
+## Ortak kayıt aileleri ve kaynak eşlemesi — 23 Ekim 2026
+
+Ürün sahibi beş sütunlu ortak düzeni kabul etti ve sohbet tablosunun Excel çıktısını aldı. Bu bölüm o çıktının aynı 15 satırlık analiz kaydıdır; önceki 13 sütunlu sorgu matrisi değiştirilmez. Kaynak, mevcut repository sorgu ve normalizasyon kodudur; yeni provider desteği veya canlı veri kabulü değildir. Fiziksel tablo, unique constraint, Dataset writer ve FX uygulaması bu kayıtla başlamaz. 16 + 20 + 22 tasarımına girdidir; 17–19 kapanışı değildir.
+
+**Ortak bağlam:** Workspace + kurulum/nesil + provider bağlantısı + doğrulanmış hesap. Aşağıdaki bütün kayıtlarda bu bağlam korunur.
+
+| Kayıt ailesi | Kayıt kapsamı | Hiyerarşi bağlantısı | Ürün bağlantısı | İçerik |
+| --- | --- | --- | --- | --- |
+| Meta — PD | Gün + Ad | Campaign → Ad Set → Ad | Gerekmez | PD metrikleri |
+| Meta — CPD ürün performansı | Gün + Ad + kaynak ürün kırılımı | Channel: Ad; üst kimlikler korunur | Kaynak product_id; Shopify eşlemesi açık | Ürün Impression / Click / Spend |
+| Meta — CPD ürün satışı | Aynı ürün kırılımlı kaynak kayda referans | Channel: Ad; üst kimlikler korunur | Kaynak product_id korunur; satılan ürün anlamı ve eşlemesi açık | Dört quantity/value alanı sorguda; anlam ve Sales Role kabulü açık |
+| Google Search — PD | Gün + Ad; dönüşüm kaynağında ayrıca action/category | Campaign → Ad Group → Ad | Gerekmez | PD metrikleri |
+| Google Search — CPD ürün performansı | Bu aile için ürün performansı kaynağı kurulmuş değil | Hedef Channel: Ad Group | — | Ad performansı ürünlere kopyalanmaz |
+| Google Search — CPD ürün satışı | Gün + Ad Group + Merchant/feed + satılan ürün kırılımı | Channel: Ad Group → Campaign | Satılan item ID; Shopify eşlemesi açık | Normal satış adedi/değeri; reklam ürünü kimliği bu sorguda yok |
+| Google Shopping — PD | Gün + Ad Group; dönüşüm kaynağında ayrıca action/category | Campaign → Ad Group | Gerekmez | PD metrikleri |
+| Google Shopping — CPD ürün performansı | Gün + Ad Group + Merchant/feed + ürün ve diğer kaynak kırılımları | Channel: Ad Group → Campaign | Item ID; Shopify eşlemesi açık | Ürün Impression / Click / Spend |
+| Google Shopping — CPD ürün satışı | Gün + Ad Group + Merchant/feed + reklam ürünü/satılan ürün kırılımı | Channel: Ad Group → Campaign | Reklam ve satılan item ID’leri ayrı korunur; Shopify eşlemesi açık | Normal adet/değer + lead/cross-sell ayrıntıları |
+| Google PMax — PD | Gün + Asset Group; dönüşüm kaynağında ayrıca action/category | Campaign → Asset Group | Gerekmez | PD metrikleri |
+| Google PMax — CPD ürün performansı | Gün + Campaign + Merchant/feed + ürün ve diğer kaynak kırılımları | Asset Group bağlantısı açık; Campaign korunur | Item ID; Shopify eşlemesi açık | Ürün Impression / Click / Spend |
+| Google PMax — CPD ürün satışı | Gün + Campaign + Merchant/feed + reklam ürünü/satılan ürün kırılımı | Asset Group bağlantısı açık; Campaign korunur | Reklam ve satılan item ID’leri ayrı korunur; Shopify eşlemesi açık | Normal adet/değer + lead/cross-sell ayrıntıları |
+| Klaviyo — PD | Rapor günü + Message + Medium + Variation ayrıntısı; seçili dönüşüm metriği | Campaign → Message veya Flow → Message | Gerekmez | PD metrikleri; Spend açık |
+| Klaviyo — CPD ürün performansı | Ürün satışına referans; ayrıca ürün teslim/tıklama kaydı kurulmaz | Channel: Message; üst kimlikler korunur | Ordered Product içindeki ProductID; varsa VariantID | Impression/Click N/A; Spend açık |
+| Klaviyo — CPD ürün satışı | Ordered Product Event ID | Doğrulanmış atıfla Message → Campaign/Flow | ProductID; varsa VariantID; standart Shopify eşlemesi açık | Quantity / $value; mevcut Assisted / Triggered kuralları |
+
+### Bu tablonun sınırları
+
+- Kayıt kapsamı fiziksel unique key beyanı değildir. Kaynak raporunun bütün kırılımları tekilleştirmeden önce korunur; Product ID tek başına yeterli değildir. Klaviyo olayı ile Meta/Google toplulaştırılmış rapor satırı aynı tür kayıt sayılmaz. Kaynak satır indeksi kalıcı anahtar olmaz.
+- Kaydı tekilleştiren anahtar ile Channel ve ürün bağlantıları ayrıdır. Channel kimliği Shopify eşlemesini veya Sales Role'ü kanıtlamaz. Çözülemeyen ürün/Channel bağlantısı native kaydı sildirmez.
+- Aynı native satış iki ailede görünse bile bir kez sayılır. Meta total/promoted ve Google total/lead/cross-sell değerleri bağımsız satışlar diye eklenmez. Klaviyo ürün performansı satırı ikinci Ordered Product satış kaydı üretmez.
+- Eksik, açık ve kapsam dışı alanlar sıfır veya PD metrikleriyle doldurulmaz. Gün/zaman kapsamı, kaynak para birimi, atıf ve tamlık uyumu önceki 17–19 tasarımına tabidir. FX dönüşümü yeni kaynak satış kimliği üretmez; kaynak tutar korunur. FX sağlayıcısı/kur seçimi bu tabloda kararlaştırılmaz.
+- Meta 05, Google PMax 10/11 ve Klaviyo 15 açık kalır. Ürün sahibi Klaviyo için yeni etkileşim yolu geliştirmeden devam edilmesini istedi; mevcut Assisted/Triggered ve çelişkili kanıtta Unclassified sınırı değişmez.
+
+Kaynak kod kontrolü, 23 Ekim 2026: `app/lib/providers/meta-reporting.server.js`, `app/lib/providers/google-reporting.server.js`, `app/lib/providers/klaviyo-reporting.server.js`, `app/lib/providers/klaviyo-attribution-resolution.server.js` ve `app/lib/providers/common-adapter.server.js`. Bu bölüm yeni dış API davranışı doğrulaması değildir. Excel çıktısı `AdsTable_PD_CPD_Kayit_Esleme_2026-10-23.xlsx` aynı beş sütun ve 15 satırı taşır; dışa aktarımdır, yürütülebilir sözleşmenin yerine geçmez. Sonraki değişikliklerde analiz kaydı ve Excel çıktısı eşlenmeden aynı sürüm denmez.
+
+## Önceki sorgu matrisi ve karar kayıtları
+
 Tarih: 22 Ekim 2026. Durum: çalışma referansı sabitlendi; nihai ortak tasarım kabulü değildir.
 
 Ürün sahibi mevcut üç sağlayıcılı tablo düzeninin korunmasını ve Meta bölümündeki son düzeltmelerin kaydedilmesini istedi. Google bölümü ürün sahibinin sonraki kararlarıyla güncellenmiştir. Klaviyo bölümü de ürün sahibinin kabul ettiği seçimlerle sabitlenmiştir; teknik uygulama ve açık Spend hesabı tamamlanmış sayılmaz.

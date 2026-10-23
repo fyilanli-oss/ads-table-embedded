@@ -1,6 +1,6 @@
 {
   "contract_id": "pd-cpd-query-standard-v1",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "checked_at": "2026-10-23",
   "inventory_item": "01",
   "status": "accepted_product_decisions_implementation_partial",
@@ -31,6 +31,77 @@
     {"provider": "klaviyo", "flow": "campaign", "levels": ["campaign", "campaign_message"], "channel_key": "campaign_message_id", "implemented_mapping_items": ["13", "14"]},
     {"provider": "klaviyo", "flow": "flow", "levels": ["flow", "flow_message"], "channel_key": "flow_message_id", "implemented_mapping_items": ["13", "14"]}
   ],
+  "pd_composition_review": {
+    "inventory_item": "17",
+    "status": "design_proposed_for_owner_review_not_runtime_implemented",
+    "scope": "compose_complementary_pd_projections_only_not_cpd_or_ancestor_rollups",
+    "identity_basis": "existing_common_adapter_canonicalFactKey_authority_date_and_entity",
+    "compatibility_checks": [
+      "same_workspace_installation_and_generation",
+      "same_provider_connection_and_verified_account",
+      "same_provider_flow_leaf_and_consistent_ancestor_ids",
+      "same_business_date_source_timezone_and_reporting_time_basis",
+      "same_source_currency_and_compatible_units",
+      "same_effective_attribution_and_conversion_scope",
+      "same_complete_bounded_execution_not_mixed_refresh_attempts"
+    ],
+    "source_ownership": {
+      "meta": {
+        "family": "ad_channel_daily_insights",
+        "metrics": "all_nine_pd_metrics_from_existing_ad_projection",
+        "product_breakdown_is_pd_fallback": false
+      },
+      "google_ads": {
+        "family_pairs": [
+          ["search_ad_channel_daily", "search_ad_conversion_action_daily"],
+          ["ad_group_channel_daily", "shopping_ad_group_conversion_action_daily"],
+          ["pmax_asset_group_channel_daily", "pmax_asset_group_conversion_action_daily"]
+        ],
+        "performance_metrics": ["impression", "ad_click", "spend_value"],
+        "conversion_metrics": ["add_to_cart", "add_to_cart_value", "checkout", "checkout_value", "purchase", "purchase_value"],
+        "conversion_detail_identity": "native_conversion_action_and_category_retained_until_verified_reduction",
+        "reduction_of_multiple_conversion_actions": "requires_complete_unique_disjoint_source_detail_not_blind_sum",
+        "performance_conversions_or_campaign_helper_as_purchase_fallback": false,
+        "all_scope_as_normal_fallback": false,
+        "cart_or_product_metrics_as_pd_fallback": false,
+        "pmax_pd_composition_proves_product_asset_group_link": false
+      },
+      "klaviyo": {
+        "leaf": "campaign_message_or_flow_message",
+        "delivery_and_purchase_source": "Placed Order",
+        "add_to_cart_source": "Added to Cart",
+        "checkout_source": "Checkout Started",
+        "detail_checks": ["send_channel", "variation"],
+        "detail_policy": "preserve_native_detail_no_message_totals_joined_to_each_variation",
+        "variation_is_channel": false,
+        "ordered_product_events_as_pd_fallback": false,
+        "spend": "open_null_no_calculation"
+      }
+    },
+    "missing_and_conflict_policy": {
+      "absent_empty_null_or_not_requested_becomes_zero": false,
+      "explicit_zero_preserved": true,
+      "missing_count_inferred_from_value_or_reverse": false,
+      "missing_metric_erases_other_observed_metrics": false,
+      "failed_partial_or_incompatible_input_published_as_complete": false,
+      "unobserved_leaf_created_from_cpd": false,
+      "duplicate_or_conflicting_detail": "preserve_source_evidence_no_arbitrary_selection_or_double_sum",
+      "metadata_missing": "compatibility_unproven_no_guessed_currency_timezone_or_attribution"
+    },
+    "provenance": "each_metric_references_its_native_family_query_and_source_rows_not_just_final_number",
+    "canonical_validation": "existing_validator_still_required_no_invented_fx_or_identity_to_make_projection_valid",
+    "runtime_composer_implemented": false,
+    "physical_dataset_schema_selected": false,
+    "publishable": false,
+    "items_18_19_closed": false,
+    "deferred_items": {
+      "05": "four_meta_fields_retained_semantics_and_roles_pending_real_data",
+      "15": "advertised_cross_sell_requires_new_owner_discussion_existing_roles_unchanged",
+      "10_11": "product_asset_group_link_open_google_support_reply_pending_history_still_paused",
+      "16": "physical_identity_mapping_remains_EO05B"
+    },
+    "acceptance": "contract_tests_guard_design_only_runtime_merge_rollup_and_live_acceptance_not_proven"
+  },
   "hierarchy_rollup": {
     "upper_metrics": "sum_children_at_same_scope_date_currency_and_attribution",
     "parent_plus_child_double_count": false,

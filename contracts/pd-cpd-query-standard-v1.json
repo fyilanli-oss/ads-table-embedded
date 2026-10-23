@@ -1,6 +1,6 @@
 {
   "contract_id": "pd-cpd-query-standard-v1",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "checked_at": "2026-10-23",
   "inventory_item": "01",
   "status": "accepted_product_decisions_implementation_partial",
@@ -108,6 +108,70 @@
     "campaign_conversion_action_helper_is_hierarchy_level": false,
     "klaviyo_variation_is_channel": false,
     "implementation_items": ["17", "18", "19", "21"]
+  },
+  "hierarchy_channel_review": {
+    "inventory_items": ["18", "19"],
+    "status": "design_proposed_for_owner_review_not_runtime_implemented",
+    "compatibility_basis": "pd_composition_review.compatibility_checks_plus_metric_specific_source_coverage",
+    "pd_rollup": {
+      "input": "composed_pd_leaf_metrics_not_all_raw_report_rows",
+      "paths_authority": "hierarchy_targets.levels",
+      "parent_plus_child_added_together": false,
+      "direct_parent_query_is_total_fallback": false,
+      "campaign_conversion_action_helper_is_additive_source": false,
+      "consistent_native_parent_ids_required": true,
+      "name_based_or_guessed_parent": false,
+      "klaviyo_variation": "detail_reduced_once_at_message_then_parent_not_a_new_hierarchy_level",
+      "ratios": "recompute_after_aggregation_in_EO06A_never_sum_or_average_child_ratios"
+    },
+    "cpd_channel": {
+      "identity_authority": "hierarchy_targets.channel_key",
+      "delivery_cost_source": "validated_native_product_performance_only",
+      "sales_source": "validated_native_product_sales_only",
+      "aggregation_order": "deduplicate_native_facts_then_aggregate_each_family_independently_before_linking_totals",
+      "raw_product_performance_times_sales_join": false,
+      "pd_delivery_cost_or_purchase_used_as_product_total": false,
+      "product_performance_conversions_used_as_sold_quantity": false,
+      "sale_only_product_retained": true,
+      "performance_only_product_and_observed_cost_retained": true,
+      "sales_absence_is_no_conversion_or_numeric_zero": false,
+      "cost_repeated_per_sale_or_sales_role": false,
+      "cost_of_unsold_products_redistributed": false,
+      "pd_total_equals_cpd_channel_total_required": false,
+      "product_cost_completeness_inferred_from_pd_cost": false,
+      "missing_product_metric_filled_from_pd_residual": false,
+      "native_channel_missing_or_conflicting": "preserve_facts_without_guessing_or_distribution",
+      "shopify_identity_unresolved": "preserve_native_product_and_known_channel_without_shopify_label",
+      "variant_detail": "retain_source_values_until_verified_product_mapping_no_catalog_price_reconstruction"
+    },
+    "single_count": {
+      "identity": "native_fact_grain_and_source_provenance_not_product_id_alone_or_snapshot_row_index",
+      "google_sales_total": "normal_units_sold_and_revenue_micros_once_not_total_plus_lead_plus_cross_sell",
+      "google_general_and_scoped_cart_reports_added_together": false,
+      "meta_total_and_promoted_added_or_subtracted_without_semantic_acceptance": false,
+      "klaviyo_ordered_product": "one_native_event_even_when_referenced_by_multiple_views",
+      "klaviyo_placed_order_added_to_ordered_product_sales": false,
+      "provider_attributed_sales_are_deduplicated_shopify_store_sales": false
+    },
+    "coverage": {
+      "per_metric": true,
+      "unknown_or_NA_as_zero": false,
+      "known_subtotal_as_complete_total": false,
+      "empty_response_proves_zero": false,
+      "same_source_currency_units_timezone_time_basis_and_attribution_required": true,
+      "different_currency_values_summed_before_FX": false,
+      "missing_metadata_or_source_evidence": "retain_partial_or_unknown_state_no_completed_total",
+      "klaviyo_product_impression_click": "N/A_by_existing_product_decision",
+      "klaviyo_spend": "open_no_new_formula"
+    },
+    "deferred": "pd_composition_review.deferred_items_remain_open",
+    "pmax_product_asset_group_link_or_history_reopened": false,
+    "runtime_aggregator_implemented": false,
+    "physical_schema_or_writer_implemented": false,
+    "fx_or_formula_implemented": false,
+    "publishable": false,
+    "items_17_18_19_closed": false,
+    "acceptance": "contract_guards_only_not_runtime_aggregation_or_live_provider_acceptance"
   },
   "product_identity": {
     "reporting_backbone": "shopify_product_id",

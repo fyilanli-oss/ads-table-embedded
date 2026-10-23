@@ -25,11 +25,14 @@ test("DOCS-01 preserves its accepted historical inventory and explicitly account
   const contract = await readJson(contractPath);
   const actual = ["AGENTS.md", "README.md", ...await markdownFiles("docs")].sort();
   // DOCS-01's accepted 19 October translation ledger is not a mutable count of all future docs.
-  const laterDocuments = ["docs/runbooks/WINDOWS_VM_RECOVERY.md"];
+  const laterDocuments = [
+    "docs/runbooks/WINDOWS_VM_RECOVERY.md",
+    "docs/research/PD_CPD_QUERY_WORKING_TABLE_2026-10-22.md",
+  ];
   const baseline = contract.inventory.map((row) => row.path).sort();
   assert.deepEqual(actual, [...baseline, ...laterDocuments].sort());
   assert.equal(new Set(baseline).size, 63);
-  assert.equal(new Set(actual).size, 64);
+  assert.equal(new Set(actual).size, 65);
   assert.deepEqual(contract.inventory_counts, {
     total_markdown: 63, human_markdown: 62, excluded_agent_instructions: 1,
     translated_review_pending: 0, pending_language_review: 0,
@@ -631,4 +634,84 @@ test("DOCS-01 explicit closure acceptance authorizes only the approved merge, no
   for (const path of ["docs/EXECUTION_PLAN.md", contract.brief]) {
     assert.ok((await readFile(path, "utf8")).includes(contractPath));
   }
+});
+
+
+test("PD CPD working table preserves query scope and the pending owner Ad Channel decision", async () => {
+  const content = await readFile("docs/research/PD_CPD_QUERY_WORKING_TABLE_2026-10-22.md", "utf8");
+  const rows = content.split(/\r?\n/).filter((line) => /^\| (Meta|Google Ads|Klaviyo) \|/.test(line));
+  assert.equal(rows.length, 26);
+  for (const row of rows) assert.equal(row.split("|").length - 2, 13);
+  assert.match(content, /henüz ürün sahibi tarafından kabul edilmedi/);
+  assert.match(content, /Google incelemesinden sonra kabul edecek veya itiraz edecek/);
+  assert.match(content, /Ad kayıtlarından hiyerarşik toplam/);
+  assert.match(content, /Var¹: `converted_promoted_product_quantity`/);
+  assert.match(content, /Var²: `converted_promoted_product_value`/);
+  assert.match(content, /hata alınmadı; dolu ürün yanıtıyla reel test bekleniyor/);
+  assert.match(content, /Var³: `actions`/);
+  assert.match(content, /Var³: `action_values`/);
+  assert.match(content, /Tam ham yanıt saklanmadı/);
+  assert.match(content, /Bu çalışma referansı yürütülebilir sözleşmeleri değiştirmez/);
+  assert.doesNotMatch(rows.filter((row) => row.startsWith("| Meta |")).join("\n"), /Ürün satış ilişkisi — ayrı sorgu/);
+});
+
+
+test("Google working table freezes real leaf levels and product-based Channel totals", async () => {
+  const content = await readFile("docs/research/PD_CPD_QUERY_WORKING_TABLE_2026-10-22.md", "utf8");
+  const rows = content.split(/\r?\n/).filter(line => line.startsWith("| Google Ads |"))
+    .map(line => line.split("|").slice(1, -1).map(cell => cell.trim()));
+  assert.equal(rows.length, 12);
+  const pd = rows.filter(row => row[1] === "PD");
+  assert.deepEqual(pd.map(row => [row[2], row[3]]), [
+    ["Search", "Campaign"], ["Search", "Ad Group"], ["Search", "Ad"],
+    ["Shopping", "Campaign"], ["Shopping", "Ad Group"],
+    ["Retail PMax", "Campaign"], ["Retail PMax", "Asset Group"],
+  ]);
+  for (const row of pd.filter(row => row[3] === "Campaign" || row[2] === "Search" && row[3] === "Ad Group")) {
+    assert.deepEqual(row.slice(4), Array(9).fill("Alt kayıtlardan hiyerarşik toplam"));
+  }
+  assert.deepEqual(pd.find(row => row[2] === "Search" && row[3] === "Ad").slice(4), Array(9).fill("Yok⁴"));
+  const channels = rows.filter(row => row[1] === "CPD" && row[2].includes("Channel performansı"));
+  assert.deepEqual(channels.map(row => row[3]), ["Ad", "Ad Group", "Asset Group"]);
+  for (const row of channels) {
+    assert.equal(row[4], "Ürün kayıtlarından toplam⁶");
+    assert.equal(row[11], "Ürün satış adetleri toplamı⁶");
+    assert.equal(row[12], "Ürün satış değerleri toplamı⁶");
+  }
+  assert.match(content, /Klaviyo sorgu seçimleri sabitlendi/);
+  assert.match(content, /PD Purchase, sağlayıcının satın alma dönüşümü sayısıdır/);
+  assert.match(content, /CPD satılan adet, ürün satış miktarıdır/);
+  assert.match(content, /çalışan toplam veya tamamlanmış ürün→Channel bağlantısı değildir/);
+});
+
+
+test("Klaviyo working table preserves accepted PD metrics and excluded product engagement", async () => {
+  const content = await readFile("docs/research/PD_CPD_QUERY_WORKING_TABLE_2026-10-22.md", "utf8");
+  const rows = content.split(/\r?\n/).filter(line => line.startsWith("| Klaviyo |"))
+    .map(line => line.split("|").slice(1, -1).map(cell => cell.trim()));
+  assert.equal(rows.length, 8);
+  for (const row of rows) assert.equal(row.length, 13);
+  const messages = rows.filter(row => row[1] === "PD" && row[3].endsWith(" Message"));
+  assert.deepEqual(messages.map(row => row[3]), ["Campaign Message", "Flow Message"]);
+  for (const row of messages) {
+    assert.equal(row[4], "Var: `delivered`");
+    assert.equal(row[5], "Var: `clicks`");
+    assert.equal(row[6], "Açık⁷");
+    assert.deepEqual(row.slice(7, 11), Array(4).fill("Yok⁸"));
+    assert.equal(row[11], "Var: `conversions` — Placed Order");
+    assert.equal(row[12], "Var: `conversion_value` — Placed Order");
+  }
+  const product = rows.find(row => row[1] === "CPD" && row[2] === "Ürün performansı");
+  assert.deepEqual(product.slice(4, 7), ["N/A¹⁰", "N/A¹⁰", "Açık⁷"]);
+  assert.equal(product[11], "Var⁹: `Quantity`");
+  assert.equal(product[12], "Var⁹: `$value`");
+  const sale = rows.find(row => row[2] === "Ürün satış ilişkisi");
+  assert.equal(sale[11], product[11]);
+  assert.equal(sale[12], product[12]);
+  const channels = rows.filter(row => row[1] === "CPD" && row[2].includes("Channel performansı"));
+  for (const row of channels) assert.deepEqual(row.slice(4, 7), ["N/A¹⁰", "N/A¹⁰", "Açık⁷"]);
+  assert.match(content, /N\/A sıfır veya sağlayıcının kesinlikle desteklemediği demek değildir/);
+  assert.match(content, /iki ayrı satış sayılarak toplanmaz/);
+  assert.match(content, /Ürün sahibi şu aşamada hesaplama yapılmamasını/);
+  assert.match(content, /Bu kayıt eksik kodları uygulama yetkisi vermez/);
 });

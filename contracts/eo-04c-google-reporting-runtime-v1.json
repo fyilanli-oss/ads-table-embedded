@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.6.0",
+  "schema_version": "1.7.0",
   "contract_id": "eo-04c-google-reporting-runtime-v1",
   "accepted_query_target_contract": "contracts/pd-cpd-query-standard-v1.json",
   "package_id": "A6-EO-04-C",
@@ -21,7 +21,7 @@
     "all_fields": "raw_row_only_never_standard_or_fallback",
     "pd_cpd_product_units_equal": false,
     "combined_pd_dataset_join_and_completeness": "later_items_17_18_20_21",
-    "product_channel_joins": "09_native_reference_repository_slice_live_pending_10_11_12_16_open",
+    "product_channel_joins": "09_12_native_reference_repository_slices_live_pending_10_11_16_open",
     "historical_pmax_work_reopened": false,
     "existing_live_trigger_family_list_changed": false,
     "live_query_acceptance": "pending"
@@ -65,13 +65,46 @@
     "sold_item_id_selectable_with_includes_ad_group_ad": false,
     "product_item_id_selectable_with_includes_asset_group": false,
     "10_disposition": "direct_asset_group_product_query_not_proven_or_added_historical_route_11_stays_paused",
-    "12_disposition": "ad_level_PD_kept_sold_product_to_ad_open_no_ad_group_substitution",
+    "12_disposition": "owner_approved_cpd_ad_group_channel_pd_ad_preserved_no_product_sale_to_individual_ad",
     "claim_about_all_other_google_apis_or_versions": false,
     "sources": [
       "https://developers.google.com/google-ads/api/fields/v25/cart_data_sales_view",
       "https://developers.google.com/google-ads/api/fields/v25/shopping_performance_view",
       "https://developers.google.com/google-ads/api/reference/rpc/v25/SearchGoogleAdsResponse"
     ]
+  },
+  "search_source_reference": {
+    "inventory_item": "12",
+    "decision_date": "2026-10-23",
+    "status": "owner_approved_grain_change_repository_implemented_live_acceptance_pending",
+    "pd_leaf": "ad",
+    "cpd_channel": "ad_group",
+    "entrypoint": "readSearchSourceEvidenceSnapshot",
+    "new_query_family": "search_cart_data_product_sales_daily",
+    "filter": "campaign.advertising_channel_type = 'SEARCH'",
+    "families": ["search_ad_channel_daily", "search_cart_data_product_sales_daily"],
+    "source_reference_key": ["customer.id", "campaign.id", "ad_group.id", "segments.date"],
+    "native_channel_known_without_pd_rows": true,
+    "pd_relationship": "same_ad_group_child_ad_indexes_are_context_only_not_sales_attribution",
+    "multiple_distinct_pd_ads": "normal_shared_parent_not_ambiguous_channel",
+    "duplicate_pd_ad_rows": "ambiguous_pd_context_does_not_erase_native_channel",
+    "product_sale_to_single_or_multiple_ads": false,
+    "product_impressions_clicks_cost_from_pd_ads": false,
+    "requires_cart_data_and_linked_merchant_feed": true,
+    "sales_metrics": ["metrics.units_sold", "metrics.revenue_micros"],
+    "raw_only_metrics": ["metrics.all_units_sold", "metrics.all_revenue_micros"],
+    "advertised_item_or_lead_cross_sell_metrics_requested": false,
+    "advertised_product_identity_required_for_sold_product_reference": false,
+    "max_pages_per_family": 20,
+    "max_rows_per_family": 20000,
+    "publishable": false,
+    "live_acceptance": "pending",
+    "official_search_source": "https://support.google.com/google-ads/answer/16564103?hl=en"
+  },
+  "pmax_next_work": {
+    "product_owner_reconfirmation_required": true,
+    "existing_target_changed_here": false,
+    "historical_work_reopened": false
   },
   "authority": {
     "execution_plan": "docs/EXECUTION_PLAN.md",
@@ -92,7 +125,7 @@
   },
   "channels": {
     "standard_shopping": "ad_group",
-    "search": "ad",
+    "search": "ad_group",
     "performance_max_retail": "asset_group"
   },
   "request_families": [

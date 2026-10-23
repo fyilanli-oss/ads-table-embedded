@@ -2,6 +2,16 @@
 
 ## Durum ve yetki
 
+### Son ürün sahibi kararı — Search/Shopping CPD Channel Ad Group, 23 Ekim 2026
+
+Search **PD Ad** kalır; Search ve Shopping **CPD Channel Ad Group** olarak onaylandı. Önceki Search CPD Ad hedefi değiştirilmiştir; aşağıdaki ilk 09 incelemesinin açık Ad bağlantısı notu o ara kararı anlatır. PMax mevcut hedefi bu değişiklikte uygulanmaz veya değiştirilmez; sıradaki PMax işinden önce ürün sahibiyle yeniden teyit zorunludur, tarihsel 11 çalışması açılmaz.
+
+12 için `search_cart_data_product_sales_daily`, yalnız `SEARCH` filtresiyle `ad_group.id/name`, satılan ürün/Merchant/feed kimlikleri ve normal `units_sold/revenue_micros` ister; all adet/gelir yalnız ham kaynakta kalır. Reklamı yapılan item veya lead/cross-sell metrikleri bu Search sorgusuna eklenmez. `readSearchSourceEvidenceSnapshot`, `search_ad_channel_daily` ve Search cart ailesini tam/sınırlı sayfalarla okur. Mevcut genel cart sorgusu ve eski canlı tetikleyici listesi değişmez. İki cart raporu toplanmaz. Native hesap/Campaign/Ad Group/gün ve satılan ürün kimliği Channel referansıdır; PD Ad satırı bulunması bu bağı kurmanın ön koşulu değildir.
+
+Aynı gruptaki bir veya çok Ad'nin indeksleri yalnız PD üst bağlamını gösterir. Ürün satışı hiçbir Ad'e bağlanmaz; tek Ad bulunması da satışın o Ad'den geldiğini kanıtlamaz. Çok Ad olması normaldir, yinelenen aynı Ad satırı yalnız PD bağlamını belirsiz yapar. Native Channel ve ham ürün satışı korunur. Ad harcama/tıklama/gösterimleri ürüne kopyalanmaz; Search ürün performansı maliyeti türetilmez. Shopify kimliği, yeni Sales Role, toplam veya Dataset yayını bu dilimde yoktur; `publishable=false`.
+
+Resmî [Search cart data açıklaması](https://support.google.com/google-ads/answer/16564103?hl=en) 23 Ekim'de yeniden okundu. Search belirli reklam ürününü kanıtlamaz, fakat satılan ürünler cart data ve Ads hesabına bağlı Merchant Center feed'iyle tanınabilir. Kurulum ve gerçek yanıt kabulü açık kalır. Metadata ve kaynak, hesaptan veri alınmış anlamına gelmez. Aynı ilk hata, tarih doğrulama, kurulum kapsamı, 20 sayfa/20.000 satır ve imleç sınırları korunur.
+
 ### 09 — Shopping Ad Group kaynak referansı, 23 Ekim 2026
 
 Yeni `shopping_cart_data_product_sales_daily`, genel cart data alanlarının tamamını korur ve yalnız `campaign.advertising_channel_type = 'SHOPPING'` için `ad_group.id/name` ekler. Genel `cart_data_product_sales_daily` gövdesi değişmez; PMax/Search için Ad Group alanı zorlanmaz. Eski canlı kanıt tetikleyicisinin sorgu ailesi listesi büyütülmez.

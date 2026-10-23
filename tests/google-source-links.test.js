@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import {buildGoogleShoppingSourceLinks} from "../app/lib/providers/google-source-links.server.js";
+import {buildGoogleSearchSourceLinks, buildGoogleShoppingSourceLinks} from "../app/lib/providers/google-source-links.server.js";
 import {buildGoogleReportingQueries, fetchGoogleReportingPage} from "../app/lib/providers/google-reporting.server.js";
 
 const scope = Object.freeze({workspace_id: "workspace-1", install_generation: 2,
@@ -72,14 +72,14 @@ test("09 never joins another account, campaign, Ad Group or day; incomplete fact
   assert.equal(renamed.product_sales_links[0].state, "exact_native_ad_group_reference");
 });
 
-test("10 and 12 never substitute Ad Group or current listings for the missing native leaf", () => {
+test("Shopping linker rejects Search rows from its scope and never assigns a PMax leaf", () => {
   for (const type of ["SEARCH", "PERFORMANCE_MAX"]) {
     const result = build([pd], [{...product, campaign: {...pd.campaign, advertisingChannelType: type}}],
       [{...sale, campaign: {...pd.campaign, advertisingChannelType: type}}]);
     for (const link of [...result.product_performance_links, ...result.product_sales_links]) {
       assert.equal(link.state, "unresolved");
       assert.equal(link.pd_row_index, null);
-      assert.match(link.reason, type === "SEARCH" ? /item_12/ : /item_10_11/);
+      assert.match(link.reason, type === "SEARCH" ? /search_source_entrypoint/ : /item_10_11/);
     }
   }
 });
@@ -93,5 +93,75 @@ test("09 retains multiple products and explicit zero as native facts, with empty
   assert.deepEqual(build([], [], []).product_sales_links, []);
   assert.notDeepEqual(build([pd], [product], [sale], {scope: {...scope, workspace_id: "other"}}).scope, result.scope);
   assert.throws(() => build([], [], [], {scope: {...scope, install_generation: 0}}),
+    error => error.code === "GOOGLE_SOURCE_LINK_INPUT_INVALID");
+});
+
+test("12 Search cart query is Ad Group grain while Search PD query stays Ad grain", () => {
+  const queries = buildGoogleReportingQueries({dateWindow});
+  assert.match(queries.search_cart_data_product_sales_daily, /advertising_channel_type = 'SEARCH'/);
+  assert.match(queries.search_cart_data_product_sales_daily, /ad_group[.]id/);
+  assert.match(queries.search_cart_data_product_sales_daily, /segments[.]product_sold_item_id/);
+  assert.match(queries.search_cart_data_product_sales_daily, /metrics[.]units_sold/);
+  assert.doesNotMatch(queries.search_cart_data_product_sales_daily, /segments[.]product_item_id|metrics[.](all_)?(lead|cross_sell)_/);
+  assert.match(queries.search_ad_channel_daily, /ad_group_ad[.]ad[.]id/);
+  assert.doesNotMatch(queries.search_cart_data_product_sales_daily, /ad_group_ad[.]|metrics[.](impressions|clicks|cost_micros)/);
+});
+
+const searchAd = (id, overrides = {}) => ({...pd, campaign: {...pd.campaign, advertisingChannelType: "SEARCH"},
+  adGroupAd: {ad: {id}}, ...overrides});
+const searchSale = {...sale, campaign: {...pd.campaign, advertisingChannelType: "SEARCH"},
+  segments: {...sale.segments, productItemId: undefined}};
+const buildSearch = (pdRows = [searchAd("11"), searchAd("12")], saleRows = [searchSale], overrides = {}) =>
+  buildGoogleSearchSourceLinks({scope, dateWindow, pdRows, saleRows, ...overrides});
+
+test("12 one Search Ad Group sale references parent context, not individual Ad attribution or duplicated sales", () => {
+  const result = buildSearch();
+  assert.equal(result.pd_grain, "ad");
+  assert.equal(result.cpd_channel_grain, "ad_group");
+  assert.equal(result.product_sales_links.length, 1);
+  const link = result.product_sales_links[0];
+  assert.equal(link.channel_state, "exact_native_ad_group_reference");
+  assert.equal(link.native_leaf_key.ad_group_id, "300");
+  assert.equal(link.provider_product_key.advertised_item_id, null);
+  assert.equal(link.provider_product_key.sold_item_id, "other-product");
+  assert.deepEqual(link.pd_parent_context.ad_row_indexes, [0, 1]);
+  assert.equal(link.pd_parent_context.product_sales_attributed_to_these_ads, false);
+  assert.equal(result.product_metrics_from_pd_ads, false);
+  assert.equal(result.publishable, false);
+  assert.doesNotMatch(JSON.stringify(result), /costMicros|unitsSold|revenue|sales_role|shopify_product_id/);
+  assert.ok(Object.isFrozen(link.pd_parent_context.ad_row_indexes));
+  const single = buildSearch([searchAd("11")]).product_sales_links[0];
+  assert.equal(single.pd_parent_context.product_sales_attributed_to_these_ads, false);
+  assert.deepEqual(single.pd_parent_context.ad_row_indexes, [0]);
+  assert.equal(buildSearch(undefined, [{...searchSale, segments: {...searchSale.segments, productItemId: "unexpected"}}])
+    .product_sales_links[0].provider_product_key.advertised_item_id, null);
+});
+
+test("12 CPD Channel remains exact without PD Ads; duplicate PD affects context only", () => {
+  const missing = buildSearch([]).product_sales_links[0];
+  assert.equal(missing.channel_state, "exact_native_ad_group_reference");
+  assert.equal(missing.pd_parent_context.state, "not_observed");
+  const duplicate = buildSearch([searchAd("11"), searchAd("11")]).product_sales_links[0];
+  assert.equal(duplicate.channel_state, "exact_native_ad_group_reference");
+  assert.equal(duplicate.pd_parent_context.state, "ambiguous_pd_ad_rows");
+  assert.equal(duplicate.pd_parent_context.product_sales_attributed_to_these_ads, false);
+});
+
+test("12 isolates Search account/campaign/group/day and preserves sales without guessed parent", () => {
+  for (const patch of [{customer: {id: "999"}}, {adGroup: {}},
+    {campaign: {...searchSale.campaign, advertisingChannelType: "SHOPPING"}},
+    {segments: {...searchSale.segments, date: "2026-09-30"}},
+    {segments: {...searchSale.segments, productSoldItemId: null}}]) {
+    const result = buildSearch(undefined, [{...searchSale, ...patch}]);
+    assert.equal(result.product_sales_links.length, 1);
+    assert.equal(result.product_sales_links[0].channel_state, "unresolved");
+  }
+  const otherContexts = [searchAd("11", {customer: {id: "999"}}), searchAd("12", {adGroup: {id: "301"}}),
+    searchAd("13", {campaign: {...searchSale.campaign, id: "201"}}),
+    searchAd("14", {segments: {date: "2026-10-02"}}), searchAd("15")];
+  const result = buildSearch(otherContexts);
+  assert.deepEqual(result.product_sales_links[0].pd_parent_context.ad_row_indexes, [4]);
+  assert.deepEqual(buildSearch([], []).product_sales_links, []);
+  assert.throws(() => buildSearch([], [], {scope: {...scope, install_generation: 0}}),
     error => error.code === "GOOGLE_SOURCE_LINK_INPUT_INVALID");
 });

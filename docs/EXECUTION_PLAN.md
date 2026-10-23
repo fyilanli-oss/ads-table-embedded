@@ -1,5 +1,14 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## Search/Shopping Channel kararı — 23 Ekim 2026, 12 düzeltmesi
+
+- Ürün sahibi açıkça onayladı: Search ve Shopping **CPD Channel Ad Group**. Search **PD Ad** düzeyinde kalır; iki kayıt ailesi aynı üst grup kimliğiyle ilişkili fakat bağımsızdır. Önceki Search Channel Ad hedefi bu kararla değiştirilmiştir. PMax mevcut hedefi bu işte değiştirilmez; sırası geldiğinde ürün sahibiyle yeniden teyitleşme zorunludur, 11 tarihsel çalışması duraklatılmış kalır.
+- Bu düzeltme açık PR #172'nin 09 dilimine eklenir; henüz merge onayı verilmemiştir. Başlangıç main `7fe9628e46a46bd853d6d62ed064d96911af6467` olarak kalır. Ortak ve Google sözleşmeleri ile 13 sütunlu çalışma tablosu birlikte güncellenir.
+- `search_cart_data_product_sales_daily`, yalnız Search için Ad Group kimliğiyle satılan item/adet/gelir kanıtı ister. `readSearchSourceEvidenceSnapshot`, PD Ad performansı ve bu ayrı cart raporunu aynı sınırlarla tam okur. Genel cart sorgusu veya eski canlı tetikleyici genişletilmez. Search'te ürün Impression/Click/Spend bu yolla üretilmez; PD Ad değerleri ürünlere kopyalanmaz.
+- Native satışın Ad Group Channel'ı PD kaydı yokken de korunur. Aynı gruptaki birden çok Ad normaldir; yalnız ortak üst bağlamı gösterir. Satış hiçbir Ad'e veya tüm Ad'lere dağıtılmaz. Tek Ad bulunması bile ürün satışını o Ad'e atfetme kanıtı yapılmaz. Kaynak indeksleri snapshot içidir; kalıcı Dataset/üst toplam/FX uygulanmaz, publishable false.
+- Resmî [Google Search cart data açıklaması](https://support.google.com/google-ads/answer/16564103?hl=en) 23 Ekim'de kontrol edildi: Search kaynaklı satılan ürünler cart data ve bağlı Merchant Center feed'iyle tanınabilir; reklamı yapılan belirli ürün varmış gibi davranılmaz. v25 cart data Ad Group uyumu korunur. Sentetik test canlı sorgu/ürün veya kurulum kabulü değildir.
+- 12 repository uygulaması için çok Ad/tek satış, PD yokluğu, yinelenen PD, farklı hesap/grup/gün, sayfalama ve ilk hata testleri vardır. 09/12 canlı kabulü, 16 kimlik ve 17–23 işleri açıktır. Yeni canlı çağrı, izin/token, DB, deploy veya Shopify görsel işlem yapılmaz; merge ayrıca açık onay ister.
+
 ## Google Shopping kaynak bağlantısı — 23 Ekim 2026, 09 dilimi ve 10/12 resmî kontrolü
 
 - #171 açık onayla `7fe9628e46a46bd853d6d62ed064d96911af6467` olarak birleşti; bu dilim o main'den başlar. 09 için yalnız Shopping filtreli `shopping_cart_data_product_sales_daily` sorgusu Ad Group kimliği/adını ekler. Genel cart data sorgusunun exact gövdesi ve eski canlı tetikleyici korunur; iki satış raporu birlikte toplanmaz.

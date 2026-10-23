@@ -48,7 +48,7 @@ export function buildGoogleShoppingSourceLinks({scope, dateWindow, pdRows, produ
       if (row?.campaign?.advertisingChannelType === "PERFORMANCE_MAX") {
         reason = "pmax_asset_group_reference_pending_item_10_11";
       } else if (row?.campaign?.advertisingChannelType === "SEARCH") {
-        reason = "search_ad_product_reference_pending_item_12";
+        reason = "search_rows_require_search_source_entrypoint";
       } else if (native) {
         if (candidates.length > 1) {
           state = "ambiguous";
@@ -90,4 +90,65 @@ export function buildGoogleShoppingSourceLinks({scope, dateWindow, pdRows, produ
     product_sales_links: links(saleRows, true),
     publishable: false,
   });
+}
+
+// Search PD stays at Ad grain. Cart sales establish an independent native Ad Group
+// Channel; matching child Ads are context only, never recipients of product sales.
+export function buildGoogleSearchSourceLinks({scope, dateWindow, pdRows, saleRows}) {
+  if (!text(scope?.workspace_id) || !text(scope?.connection_id) || !entityId(scope?.reporting_account_id)
+    || !Number.isSafeInteger(scope?.install_generation) || scope.install_generation < 1
+    || !day(dateWindow?.start) || !day(dateWindow?.end) || dateWindow.start > dateWindow.end
+    || !Array.isArray(pdRows) || !Array.isArray(saleRows)) {
+    throw new GoogleReportingError("GOOGLE_SOURCE_LINK_INPUT_INVALID", "Google source link context is invalid");
+  }
+  function searchKey(row) {
+    const date = day(row?.segments?.date);
+    if (row?.customer?.id !== scope.reporting_account_id || row?.campaign?.advertisingChannelType !== "SEARCH"
+      || !entityId(row?.campaign?.id) || !entityId(row?.adGroup?.id) || !date
+      || date < dateWindow.start || date > dateWindow.end) return null;
+    return {account_id: row.customer.id, campaign_id: row.campaign.id,
+      ad_group_id: row.adGroup.id, business_date: date};
+  }
+  const parents = new Map();
+  pdRows.forEach((row, sourceRowIndex) => {
+    const native = searchKey(row);
+    const adId = entityId(row?.adGroupAd?.ad?.id);
+    if (!native || !adId) return;
+    const id = keyString(native);
+    const children = parents.get(id) ?? [];
+    children.push({ad_id: adId, source_row_index: sourceRowIndex});
+    parents.set(id, children);
+  });
+  const links = saleRows.map((row, sourceRowIndex) => {
+    const native = searchKey(row);
+    const soldItemId = text(row?.segments?.productSoldItemId);
+    const children = native ? parents.get(keyString(native)) ?? [] : [];
+    const duplicateAds = new Set(children.map(child => child.ad_id)).size !== children.length;
+    return Object.freeze({
+      source_row_index: sourceRowIndex,
+      channel_type: "ad_group",
+      channel_state: native && soldItemId ? "exact_native_ad_group_reference" : "unresolved",
+      native_leaf_key: native ? Object.freeze(native) : null,
+      observed_context: Object.freeze({account_id: text(row?.customer?.id), campaign_id: text(row?.campaign?.id),
+        campaign_type: text(row?.campaign?.advertisingChannelType), ad_group_id: text(row?.adGroup?.id),
+        business_date: text(row?.segments?.date)}),
+      provider_product_key: Object.freeze({merchant_id: text(row?.segments?.productMerchantId),
+        feed_label: text(row?.segments?.productFeedLabel), advertised_item_id: null,
+        sold_item_id: soldItemId}),
+      pd_parent_context: Object.freeze({
+        state: duplicateAds ? "ambiguous_pd_ad_rows" : children.length ? "observed" : "not_observed",
+        ad_row_indexes: Object.freeze(children.map(child => child.source_row_index)),
+        product_sales_attributed_to_these_ads: false,
+      }),
+      shopify_identity_state: "unresolved_mapping_pending",
+    });
+  });
+  return Object.freeze({version: "1.0.0", provider: "google_ads",
+    scope: Object.freeze({workspace_id: scope.workspace_id, install_generation: scope.install_generation,
+      connection_id: scope.connection_id, reporting_account_id: scope.reporting_account_id}),
+    date_window: Object.freeze({start: dateWindow.start, end: dateWindow.end}),
+    pd_fact_family: "search_ad_channel_daily", pd_grain: "ad", cpd_channel_grain: "ad_group",
+    product_sales_fact_family: "search_cart_data_product_sales_daily",
+    product_sales_links: Object.freeze(links),
+    product_metrics_from_pd_ads: false, publishable: false});
 }

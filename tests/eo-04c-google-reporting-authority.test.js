@@ -366,3 +366,59 @@ test("09 invalid successful payloads cannot become empty complete evidence; inpu
     dateWindow: {start: "2026-02-30", end: "2026-03-01"}}), error => error.code === "GOOGLE_REPORTING_DATE_INVALID");
   assert.equal(calls, 0);
 });
+
+test("12 Search snapshot retains PD Ads and one Ad Group product sale without per-Ad distribution", async () => {
+  const common = {customer: {id: "200"}, campaign: {id: "20", advertisingChannelType: "SEARCH"},
+    adGroup: {id: "30"}, segments: {date: "2026-10-01"}};
+  const ads = [{...common, adGroupAd: {ad: {id: "11"}}, metrics: {costMicros: "10000000"}},
+    {...common, adGroupAd: {ad: {id: "12"}}, metrics: {costMicros: "20000000"}}];
+  const sale = {...common, segments: {...common.segments, productMerchantId: "50", productFeedLabel: "IS", productSoldItemId: "B"},
+    metrics: {unitsSold: "1", revenueMicros: "0"}};
+  const responses = [{results: [ads[0]], nextPageToken: "ad-next"}, {results: [ads[1]]},
+    {results: [], nextPageToken: "sale-next"}, {results: [sale]}];
+  const queries = [];
+  const runtime = createGoogleReportingAuthorityRuntime({database: database(), environment,
+    tokenVault: {async loadProviderTokenSet() {return {refresh_token: "fixture-refresh"};}},
+    fetchFn: async (url, options) => {
+      if (new URL(url).hostname === "oauth2.googleapis.com") return json({access_token: "fixture-access", expires_in: 3600, token_type: "Bearer"});
+      queries.push(JSON.parse(options.body).query);
+      return json(responses.shift());
+    },
+  });
+  const snapshot = await runtime.readSearchSourceEvidenceSnapshot({installationAuthority,
+    dateWindow: {start: "2026-10-01", end: "2026-10-01"}, reportingAccountId: "999", workspaceId: "forged"});
+  assert.equal(queries.length, 4);
+  assert.ok(queries.every(query => query.includes("= 'SEARCH'")));
+  assert.match(queries[0], /FROM ad_group_ad/);
+  assert.match(queries[2], /FROM cart_data_sales_view/);
+  assert.doesNotMatch(queries[2], /ad_group_ad[.]/);
+  assert.deepEqual(snapshot.results.search_ad_channel_daily.rows, ads);
+  assert.deepEqual(snapshot.results.search_cart_data_product_sales_daily.rows, [sale]);
+  assert.deepEqual(snapshot.results.search_ad_channel_daily.pd_metric_rows.map(row => row.source_row_index), [0, 1]);
+  assert.equal(snapshot.results.search_cart_data_product_sales_daily.observation_state, "present");
+  assert.equal(snapshot.source_links.scope.reporting_account_id, "200");
+  assert.equal(snapshot.source_links.scope.workspace_id, installationAuthority.workspaceId);
+  assert.deepEqual(snapshot.source_links.product_sales_links[0].pd_parent_context.ad_row_indexes, [0, 1]);
+  assert.equal(snapshot.source_links.product_sales_links[0].pd_parent_context.product_sales_attributed_to_these_ads, false);
+  assert.equal(snapshot.publishable, false);
+  assert.doesNotMatch(JSON.stringify(snapshot), /fixture-refresh|fixture-access|forged/);
+});
+
+test("12 Search first rejection or cursor loop returns no partial snapshot and no retry", async () => {
+  for (const loop of [false, true]) {
+    let calls = 0;
+    const runtime = createGoogleReportingAuthorityRuntime({database: database(), environment,
+      tokenVault: {async loadProviderTokenSet() {return {refresh_token: "fixture-refresh"};}},
+      fetchFn: async url => {
+        if (new URL(url).hostname === "oauth2.googleapis.com") return json({access_token: "fixture-access", expires_in: 3600, token_type: "Bearer"});
+        calls++;
+        return loop ? json({results: [], nextPageToken: "repeat"})
+          : calls === 2 ? json({error: {status: "PERMISSION_DENIED"}}, 403) : json({results: []});
+      },
+    });
+    await assert.rejects(runtime.readSearchSourceEvidenceSnapshot({installationAuthority,
+      dateWindow: {start: "2026-10-01", end: "2026-10-01"}}), error => error.code ===
+        (loop ? "GOOGLE_REPORTING_CURSOR_LOOP" : "GOOGLE_ADS_REST_REQUEST_FAILED"));
+    assert.equal(calls, 2);
+  }
+});

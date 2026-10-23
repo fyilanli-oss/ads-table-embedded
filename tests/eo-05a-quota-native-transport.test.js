@@ -48,6 +48,15 @@ test("existing Google runtime charges refresh + EACH reporting page, not once pe
   assert.equal(f.calls(),3);assert.equal(f.reservations.length,3);assert.deepEqual(f.metadata.map(d=>d.family),["token","reporting_query","reporting_query"]);
   assert.doesNotMatch(JSON.stringify(f.metadata),/SECRET|cart_data|SELECT|pageToken/);
 });
+test("12 Search snapshot uses existing shared quota for refresh and both source families",async()=>{
+  const f=fixture({fetchFn:async url=>url.includes("oauth2")?json({access_token:"SECRET-ACCESS",token_type:"Bearer",expires_in:3600}):json({results:[]})});
+  const api=f.clients.google({database:database("google_ads"),tokenVault:{loadProviderTokenSet:async()=>({refresh_token:"SECRET-REFRESH"})},
+    environment:{GOOGLE_ADS_OAUTH_CLIENT_ID:"client",GOOGLE_ADS_OAUTH_CLIENT_SECRET:"SECRET-CLIENT",GOOGLE_ADS_OAUTH_REDIRECT_URI:"https://embedded.adstable.app/auth/google-ads/callback"}});
+  const result=await api.readSearchSourceEvidenceSnapshot({installationAuthority:owner,dateWindow:window});
+  assert.equal(result.publishable,false);assert.equal(f.calls(),3);assert.equal(f.reservations.length,3);
+  assert.deepEqual(f.metadata.map(d=>d.family),["token","reporting_query","reporting_query"]);
+  assert.doesNotMatch(JSON.stringify(f.metadata),/SECRET|SELECT|pageToken/);
+});
 function klaviyo(f) {
   return f.clients.klaviyo({accountAuthority:{load:async()=>({connectionId:"c",credentialId:"v",grantedScopes:["campaigns:read","events:read","flows:read","metrics:read"],
     accounts:[{id:"k",kind:"account",status:"active",currency:"USD",timezone:"UTC"}]})},credentialAuthority:{prepareCredential:async()=>({tokenSet:{access_token:"SECRET-K"}})},

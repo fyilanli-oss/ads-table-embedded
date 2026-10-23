@@ -21,6 +21,7 @@ export const GOOGLE_REPORTING_QUERY_FAMILIES = Object.freeze([
   "shopping_product_daily",
   "cart_data_product_sales_daily",
   "shopping_cart_data_product_sales_daily",
+  "search_cart_data_product_sales_daily",
   "pmax_listing_tree_current",
   "pmax_product_group_aggregate_daily",
 ]);
@@ -223,6 +224,12 @@ export function buildGoogleReportingQueries({dateWindow: requestedWindow}) {
     shopping_cart_data_product_sales_daily: datedQuery([
       ...cartFields.slice(0, 4), "ad_group.id", "ad_group.name", ...cartFields.slice(4),
     ], "cart_data_sales_view", "campaign.advertising_channel_type = 'SHOPPING'", window),
+    search_cart_data_product_sales_daily: datedQuery([
+      "customer.id", "campaign.id", "campaign.name", "campaign.advertising_channel_type",
+      "ad_group.id", "ad_group.name", "segments.date", "segments.product_merchant_id",
+      "segments.product_feed_label", "segments.product_sold_item_id", "segments.product_sold_title",
+      "metrics.units_sold", "metrics.revenue_micros", "metrics.all_units_sold", "metrics.all_revenue_micros",
+    ], "cart_data_sales_view", "campaign.advertising_channel_type = 'SEARCH'", window),
     pmax_listing_tree_current: [
       "SELECT",
       "  customer.id,",

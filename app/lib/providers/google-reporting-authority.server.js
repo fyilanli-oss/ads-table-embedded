@@ -9,7 +9,7 @@ import {
   refreshGoogleAdsAccessToken,
 } from "./google-ads-rest.server.js";
 import {buildGoogleReportingQueries, fetchGoogleReportingPage, GoogleReportingError} from "./google-reporting.server.js";
-import {buildGoogleShoppingSourceLinks} from "./google-source-links.server.js";
+import {buildGoogleSearchSourceLinks, buildGoogleShoppingSourceLinks} from "./google-source-links.server.js";
 
 const PROVIDER = "google_ads";
 const CUSTOMER_ID_PATTERN = /^[0-9]+$/;
@@ -155,6 +155,24 @@ export function createGoogleReportingAuthorityRuntime({
 
   return Object.freeze({
     prepareEvidenceExecution,
+    async readSearchSourceEvidenceSnapshot({installationAuthority, dateWindow}) {
+      const installation = owner(installationAuthority);
+      buildGoogleReportingQueries({dateWindow});
+      const context = await prepareEvidenceExecution({installationAuthority});
+      const results = {};
+      for (const family of ["search_ad_channel_daily", "search_cart_data_product_sales_daily"]) {
+        results[family] = await collect(context, family, dateWindow);
+      }
+      const sourceLinks = buildGoogleSearchSourceLinks({scope: {
+        workspace_id: installation.workspaceId, install_generation: installation.installGeneration,
+        connection_id: context.connection.connectionId, reporting_account_id: context.reportingAccount.id,
+      }, dateWindow, pdRows: results.search_ad_channel_daily.rows,
+      saleRows: results.search_cart_data_product_sales_daily.rows});
+      return Object.freeze({provider: PROVIDER, authority: Object.freeze({
+        connection_id: context.connection.connectionId, reporting_account_id: context.reportingAccount.id,
+        reporting_account_currency: context.reportingAccount.currency, reporting_account_timezone: context.reportingAccount.timezone,
+      }), results: Object.freeze(results), source_links: sourceLinks, publishable: false});
+    },
     async readShoppingSourceEvidenceSnapshot({installationAuthority, dateWindow}) {
       const installation = owner(installationAuthority);
       buildGoogleReportingQueries({dateWindow});

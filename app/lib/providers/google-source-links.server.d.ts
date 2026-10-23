@@ -5,3 +5,10 @@ export function buildGoogleShoppingSourceLinks(input: {
   productRows: readonly unknown[];
   saleRows: readonly unknown[];
 }): Readonly<Record<string, any>>;
+
+export function buildGoogleSearchSourceLinks(input: {
+  scope: {workspace_id: string; install_generation: number; connection_id: string; reporting_account_id: string};
+  dateWindow: {start: string; end: string};
+  pdRows: readonly unknown[];
+  saleRows: readonly unknown[];
+}): Readonly<Record<string, any>>;

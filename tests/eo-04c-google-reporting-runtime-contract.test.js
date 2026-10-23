@@ -9,7 +9,8 @@ const brief = read("docs/EO_04C_GOOGLE_REPORTING_RUNTIME_START_BRIEF.md");
 test("Google reporting start package preserves the accepted real Channel leaves", () => {
   assert.equal(contract.provider.api_version, "v25");
   assert.equal(contract.channels.standard_shopping, "ad_group");
-  assert.equal(contract.channels.search, "ad");
+  assert.equal(contract.channels.search, "ad_group");
+  assert.equal(contract.query_alignment.search_leaf, "ad_group_ad.ad.id");
   assert.equal(contract.channels.performance_max_retail, "asset_group");
   assert.equal(contract.provider.canonical_reporting_account_required, true);
   assert.equal(contract.provider.manager_account_reporting_eligible, false);

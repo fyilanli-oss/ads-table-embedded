@@ -7,6 +7,8 @@ yeni canlı çağrı veya uygulama yetkisi vermez.
 
 ## Karar özeti
 
+23 Ekim 2026, envanter 13 + 14 eklemesi: `readPdEvidenceSnapshot` mevcut hesap/izin/credential ve sayfalama denetimlerini kullanarak Placed Order, Added to Cart ve Checkout Started için Campaign/Flow Message raporları okur. Bu ayrı repository giriş noktası eski canlı tetikleyiciyi veya aşağıdaki ürün satış yolunu değiştirmez. Eksik metrikte istek yok, durum account_configuration_missing; çelişkili kimlikte güvenli hata, ilk sağlayıcı hatasında kalan aileler durur ve kısmi sonuç dönmez. Ham satırlar ve bunlara indeksle bağlı PD projeksiyonları korunur. Dataset publishable false, gerçek hesap kabulü pending'dir. Ayrıntı `docs/EO_04D_KLAVIYO_REPORTING_RUNTIME_BRIEF.md` ve sözleşmelerin pd_alignment kayıtlarındadır.
+
 Bu paket, daha önce kabul edilen Klaviyo sorgu ve sınıflandırma kurallarını gerçek
 uygulama otoritesine bağlar. Bir raporlama çalışması artık yalnız şu zincirin
 tamamı doğruysa yayınlanabilir:

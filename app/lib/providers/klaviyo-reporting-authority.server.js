@@ -14,6 +14,11 @@ import {
   normalizeKlaviyoReportRow,
   runKlaviyoReportingFamilies,
   selectKlaviyoShopifyMetrics,
+  buildKlaviyoPdValuesRequest,
+  selectKlaviyoPdShopifyMetrics,
+  mapKlaviyoPdMetrics,
+  runKlaviyoPdReportingFamilies,
+  KLAVIYO_REPORTING_API_REVISION,
 } from "./klaviyo-reporting.server.js";
 import {resolveKlaviyoOrderedProductSales} from "./klaviyo-attribution-resolution.server.js";
 import {quotaBoundaryControl} from "../refresh/quota-native-fetch.server.js";
@@ -327,6 +332,35 @@ export function createKlaviyoReportingAuthorityRuntime({
   }
 
   return Object.freeze({
+    async readPdEvidenceSnapshot({installationAuthority, businessDate = null}) {
+      const context = await prepareContext(installationAuthority);
+      const resolvedBusinessDate = businessDate ?? calendarDateInTimeZone(now(), context.account.timezone);
+      const timeframe = klaviyoBusinessDayTimeframe({businessDate: resolvedBusinessDate, timeZone: context.account.timezone});
+      const result = await runKlaviyoPdReportingFamilies({
+        discoverMetrics: async () => {
+          const collected = await collect({context, family: "pd_metrics", path: "/api/metrics", parameter: "page[cursor]",
+            buildRequest: cursor => buildKlaviyoShopifyMetricsRequest({accessToken: context.accessToken, cursor}),
+            rowsOf: payload => payload?.data});
+          return Object.freeze({...collected, selected: selectKlaviyoPdShopifyMetrics(collected.rows)});
+        },
+        fetchValues: async ({kind, conversionMetricName, conversionMetricId}) => {
+          const input = {kind, conversionMetricName, conversionMetricId, accessToken: context.accessToken,
+            businessDate: resolvedBusinessDate, timeZone: context.account.timezone};
+          const collected = await collect({context, family: `${kind}:${conversionMetricName}`,
+            path: `/api/${kind}-values-reports`, parameter: "page_cursor",
+            buildRequest: pageCursor => buildKlaviyoPdValuesRequest({...input, pageCursor}),
+            rowsOf: payload => payload?.data?.attributes?.results});
+          const messageRows = collected.rows.map(row => normalizeKlaviyoReportRow(kind, row));
+          return Object.freeze({...collected, message_rows: Object.freeze(messageRows), observation: observation(collected.rows),
+            pd_metric_rows: Object.freeze(collected.rows.map((row, source_row_index) => Object.freeze({source_row_index,
+              ...mapKlaviyoPdMetrics(row, conversionMetricName)}))),
+            evidence: Object.freeze({revision: KLAVIYO_REPORTING_API_REVISION, request_body: JSON.parse(buildKlaviyoPdValuesRequest(input).body)})});
+        },
+      });
+      return Object.freeze({provider: PROVIDER, authority: Object.freeze({connection_id: context.connection.connectionId,
+        connected_account_id: context.account.id, connected_account_currency: context.account.currency,
+        connected_account_timezone: context.account.timezone}), business_date: resolvedBusinessDate, timeframe, ...result});
+    },
     async readDailyEvidenceSnapshot({installationAuthority, businessDate = null}) {
       const context = await prepareContext(installationAuthority);
       const resolvedBusinessDate = businessDate ?? calendarDateInTimeZone(

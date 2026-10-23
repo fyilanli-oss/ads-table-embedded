@@ -1,6 +1,6 @@
 {
   "contract_id": "pd-cpd-query-standard-v1",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "checked_at": "2026-10-23",
   "inventory_item": "01",
   "status": "accepted_product_decisions_implementation_partial",
@@ -28,8 +28,8 @@
     {"provider": "google_ads", "flow": "search", "levels": ["campaign", "ad_group", "ad"], "channel_key": "ad_id", "implemented_query_items": ["06"], "pending_join_items": ["12"]},
     {"provider": "google_ads", "flow": "shopping", "levels": ["campaign", "ad_group"], "channel_key": "ad_group_id", "implemented_query_items": ["07"], "pending_join_items": ["09"]},
     {"provider": "google_ads", "flow": "retail_pmax", "levels": ["campaign", "asset_group"], "channel_key": "asset_group_id", "implemented_query_items": ["07"], "pending_join_items": ["10", "11"]},
-    {"provider": "klaviyo", "flow": "campaign", "levels": ["campaign", "campaign_message"], "channel_key": "campaign_message_id", "pending_mapping_items": ["13", "14"]},
-    {"provider": "klaviyo", "flow": "flow", "levels": ["flow", "flow_message"], "channel_key": "flow_message_id", "pending_mapping_items": ["13", "14"]}
+    {"provider": "klaviyo", "flow": "campaign", "levels": ["campaign", "campaign_message"], "channel_key": "campaign_message_id", "implemented_mapping_items": ["13", "14"]},
+    {"provider": "klaviyo", "flow": "flow", "levels": ["flow", "flow_message"], "channel_key": "flow_message_id", "implemented_mapping_items": ["13", "14"]}
   ],
   "hierarchy_rollup": {
     "upper_metrics": "sum_children_at_same_scope_date_currency_and_attribution",
@@ -75,6 +75,9 @@
     "historical_pmax_gate": "paused_work_not_reopened_by_this_contract"
   },
   "klaviyo": {
+    "pd_repository_implemented_items": ["13", "14"],
+    "pd_entrypoint": "readPdEvidenceSnapshot",
+    "live_acceptance_and_combined_dataset": "pending",
     "pd_impression_target": "delivered",
     "pd_click_target": "clicks",
     "pd_purchase_target": "Placed_Order_conversions_and_conversion_value",

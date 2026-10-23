@@ -697,7 +697,10 @@ test("Klaviyo working table preserves accepted PD metrics and excluded product e
     assert.equal(row[4], "Var: `delivered`");
     assert.equal(row[5], "Var: `clicks`");
     assert.equal(row[6], "Açık⁷");
-    assert.deepEqual(row.slice(7, 11), Array(4).fill("Yok⁸"));
+    assert.deepEqual(row.slice(7, 11), [
+      "Var⁸: `conversions` — Added to Cart", "Var⁸: `conversion_value` — Added to Cart",
+      "Var⁸: `conversions` — Checkout Started", "Var⁸: `conversion_value` — Checkout Started",
+    ]);
     assert.equal(row[11], "Var: `conversions` — Placed Order");
     assert.equal(row[12], "Var: `conversion_value` — Placed Order");
   }

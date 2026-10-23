@@ -1,5 +1,13 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## Klaviyo PD sorgu ve metrik uyumu — 23 Ekim 2026, envanter 13 + 14
+
+- #169 açık onayla `4c303a0cd865f4bf839496c35b5541fd61ad702e` olarak birleşti; bu düzeltme o main'den başlar.
+- Ayrı `readPdEvidenceSnapshot` giriş noktası mevcut Klaviyo hesap/izin/credential ve sınırlı sayfalama denetimlerini kullanır. Üç Shopify metric ID (Placed Order, Added to Cart, Checkout Started) Campaign/Flow Message seviyesinde ayrı raporlanır. Eksik yapılandırmada ID uydurulmaz; birden fazla adayda hata verilir. Eski canlı tetikleyici ve ürün satış akışı genişletilmez.
+- PD delivered/clicks ve Placed Order conversions/conversion_value sabitlendi. ATC/Checkout için yalnız conversions/conversion_value istenir; teslim/tıklama tekrarlanmaz. Ham yanıt ve istatistikler korunur, projeksiyon kaynak satır indeksiyle bağlıdır. Eksik/null/sıfır ayrıdır; Spend açık ve null kalır. CPD ürün/Channel Impression ve Click N/A kararı değişmez.
+- İlk sağlayıcı hatasında kalan aileler durur; kısmi sonuç yoktur. Tam sayfalama bitse de birleşik Dataset ve üst toplam kabulü bu pakette yoktur; publication false. İlgili 17–21 işleri, 16 kimlik, 15 ürün etkileşim kanıtı ve 22/23 FX/formül sırası korunur. 24 sentetik istek/yanıt ve hata testleriyle eşlik eder.
+- Resmî Reporting API, Campaign/Flow Values, OpenAPI ve Shopify veri referansı 23 Ekim'de okundu. Raporların gönderim-tarihi kapsamı ürün olayı tarihiyle eşit varsayılmaz. Yeni canlı çağrı, quota politikası, OAuth/secret, DB, deploy veya Shopify görsel işlem yoktur. Bu PR merge'i ayrıca açık onay ister.
+
 ## Google uç sorguları ve normal kapsam — 23 Ekim 2026, envanter 06 + 07 + 08
 
 - #168 açık onayla `b883992dbd87b97827c44ad8ddfcc8bd6cd4b393` olarak birleşti. Bu düzeltme o main'den başlar; Meta ürün canlı kabulünü tamamlamaz.

@@ -3,6 +3,20 @@
   "status": "repository_implementation_ready_for_review",
   "accepted_at": "2026-10-17",
   "api_revision": "2026-10-15",
+  "pd_alignment_2026_10_23": {
+    "inventory_items": ["13", "14"],
+    "entrypoint": "readPdEvidenceSnapshot",
+    "uses_existing_authority_credentials_permissions_and_bounded_pagination": true,
+    "metric_reports": ["Placed Order", "Added to Cart", "Checkout Started"],
+    "each_metric_requested_for": ["campaign_message", "flow_message"],
+    "maximum_report_families_before_pagination": 6,
+    "missing_metric_no_request_and_not_zero": true,
+    "ambiguous_metric_fails_closed": true,
+    "partial_failure_results": null,
+    "dataset_publishable": false,
+    "existing_evidence_execution_order_changed": false,
+    "new_live_call_or_deploy_authority": false
+  },
   "authority": {
     "shopify_active_installation_required": true,
     "connected_klaviyo_account_cardinality": 1,

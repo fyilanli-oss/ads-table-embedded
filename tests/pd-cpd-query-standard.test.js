@@ -76,5 +76,7 @@ test("08 and role boundaries do not invent provider proof or mix normal and all"
   assert.equal(standard.klaviyo.campaign_content_membership_proves_clicked_product, false);
   assert.equal(standard.klaviyo.campaign_content_membership_role, "Assisted");
   assert.equal(standard.klaviyo.spend, "open_no_formula_or_zero_fallback");
+  assert.deepEqual(standard.klaviyo.pd_repository_implemented_items, ["13", "14"]);
+  assert.equal(standard.klaviyo.live_acceptance_and_combined_dataset, "pending");
   assert.equal(standard.delivery_boundary["N/A_or_KD_is_numeric_zero"], false);
 });

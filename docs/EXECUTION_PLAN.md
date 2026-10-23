@@ -1993,6 +1993,17 @@ CI kontrolü: `tests/eo-04c-google-reporting-runtime-contract.test.js`
 - Açık merge onayıyla PR #85, 16 Ekim'de `54c427733cd51ba8600016941ce7afdd24ac2e64` olarak `main`e alındı. İkinci otomatik Production dağıtımı oluşmadı. Test demosu kabul/birleşmiş, canlı performans kanıtı Explorer-or-higher erişimi bekler; her yeni çağrı ayrı onay ister.
 - Aynı gün tek test hesabı review-demo koşusu ayrıca onaylandı. Gerçek Admin sonucu `test_observed` doğruladı; altı salt okunur aile hatasız/tekrarsız tamamlandı. Campaign, Cart Data, Shopping performansı, güncel PMax ağacı ve Asset Group performansı sıfır satır döndürdü. Bunlar yalnız `not_observed_in_this_execution`; sayısal sıfır, genel desteklenmiyor, Product ID/Sales Role desteği veya Production performansı değildir. Kanıt: `docs/evidence/EO_04C_GOOGLE_TEST_ACCOUNT_REVIEW_EVIDENCE_2026-10-16.json`. Resmî erişim/test hesabı belgelerine göre Explorer-or-higher, test erişimini kaldırmadan canlı hesap erişimi ekler; ortak sorgu yapısı korunur. Canlı performans ve her yeni çağrı ayrı kapıda kalır.
 
+## PD/CPD ortak sözleşme uyumu — 23 Ekim 2026, envanter 01
+
+- Kaynak çalışma tablosu: `docs/research/PD_CPD_QUERY_WORKING_TABLE_2026-10-22.md`; kabul edilen hedef sözleşmesi: `contracts/pd-cpd-query-standard-v1.json`.
+- PD'nin güncel talebi 9 metriktir. Session çıkarılmıştır; ortak runtime ve tip sözleşmesi `2.0.0` ile eski istek/ek metrik alanını reddeder. Eski tarihli 10 metrikli kabul kayıtları tarihsel kalır.
+- PD ve CPD ayrı kayıt aileleridir. CPD Channel bağlı ürün toplamıdır; PD genel maliyeti her ürüne kopyalanmaz. Üst hiyerarşi aynı kapsamlı alt kayıtlardan toplanır; parent ve child birlikte yeniden sayılmaz. Fiziksel Dataset tasarımı ve toplam uygulaması bu adımda yapılmaz.
+- Channel hedefleri Meta Ad; Google Search Ad, Shopping Ad Group, Retail PMax Asset Group; Klaviyo Campaign Message/Flow Message'dır. Shopify Product ID raporlama omurgası, Variant ID varsa korunan kaynak ayrıntısıdır. Mevcut sorgu/bağlantı eksikleri kendi 02–16 maddelerinde kalır.
+- 08 kararı: PD Purchase ayrımı normal `conversions`/`conversions_value`; CPD ürün adedi/geliri ve rol alanları aynı normal kapsam. `all_*` yalnız ham kaynak; eksik normale yedek veya toplama girdisi değildir. Runtime kabul testleri sonraki Google grubundadır.
+- Klaviyo içerik üyeliği tıklanan ürünü kanıtlamaz. PR #166 düzeltmesi üyeliği Assisted tutar; Advertised/Cross-sell için satışa bağlı doğrulanmış ürün etkileşim kanıtı yolu hâlâ açıktır. Flow Triggered sınırı korunur.
+- PR #165 ve #166 ürün sahibinin açık onayıyla sırasıyla `2c2c8cc296b9bf38f213ae84dd749511843177db` ve `fed48b3fc209fe34dae44d388ad55f98148afdd2` olarak birleşmiştir. Bu 01 değişikliğinin merge'i, deploy ve canlı çağrı ayrı kapıdır. Tarihsel PMax duraklaması yeniden açılmaz.
+- Resmî belge kontrolü 23 Ekim: Google Metrics v25 ve Klaviyo Reporting API Overview okundu. Meta Insights sayfası HTTP 429 verdi; alternatif rota/tekrar yapılmadı, yeni Meta davranışı kanıtlanmış sayılmadı.
+
 ## EO-04-C Google 2026 erişim/review düzeltmesi — 17 Ekim 2026
 
 - Google'ın 9 Eylül 2026 geçiş dokümanı, erişim seviyesi sayfası, OAuth canlıya hazırlık kuralları, Ads API güvenlik gereksinimleri ve policy/demo süreci resmî kaynaklardan yeniden kontrol edildi. Bağlayıcı karar `docs/decisions/A6_EO_04_C_GOOGLE_2026_ACCESS_REVIEW_CORRECTIVE.md`; yürütülebilir sözleşme `contracts/eo-04c-google-2026-access-review-corrective-v1.json` içindedir.

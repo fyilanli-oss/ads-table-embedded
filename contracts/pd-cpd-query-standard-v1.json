@@ -1,0 +1,102 @@
+{
+  "contract_id": "pd-cpd-query-standard-v1",
+  "version": "1.0.0",
+  "checked_at": "2026-10-23",
+  "inventory_item": "01",
+  "status": "accepted_product_decisions_implementation_partial",
+  "source_table": "docs/research/PD_CPD_QUERY_WORKING_TABLE_2026-10-22.md",
+  "authority": "accepted_query_targets_not_provider_support_or_completed_runtime_proof",
+  "adapter_contract_version": "2.0.0",
+  "pd_metrics": [
+    "impression", "ad_click", "spend_value", "add_to_cart", "add_to_cart_value",
+    "checkout", "checkout_value", "purchase", "purchase_value"
+  ],
+  "cpd_metric_columns": ["Impression", "Click", "Spend", "Satış adedi / türü", "Satış değeri / türü"],
+  "fact_boundaries": {
+    "pd": "provider_leaf_performance_and_ancestor_rollups",
+    "cpd_product_performance": "native_product_delivery_and_cost_not_a_copy_of_pd_leaf",
+    "cpd_product_sales": "sold_product_quantity_and_value_with_role_evidence",
+    "cpd_channel": "linked_product_metrics_aggregated_once_not_pd_general_metrics",
+    "pd_purchase_equals_cpd_units": false,
+    "same_native_fact_counted_twice_across_product_families": false,
+    "pd_cost_copied_to_every_product": false,
+    "physical_dataset_schema_selected": false,
+    "implementation_items": ["17", "18", "19", "20"]
+  },
+  "hierarchy_targets": [
+    {"provider": "meta", "flow": "ads", "levels": ["campaign", "adset", "ad"], "channel_key": "ad_id", "pending_join_items": ["04"]},
+    {"provider": "google_ads", "flow": "search", "levels": ["campaign", "ad_group", "ad"], "channel_key": "ad_id", "pending_query_items": ["06"], "pending_join_items": ["12"]},
+    {"provider": "google_ads", "flow": "shopping", "levels": ["campaign", "ad_group"], "channel_key": "ad_group_id", "pending_query_items": ["07"], "pending_join_items": ["09"]},
+    {"provider": "google_ads", "flow": "retail_pmax", "levels": ["campaign", "asset_group"], "channel_key": "asset_group_id", "pending_query_items": ["07"], "pending_join_items": ["10", "11"]},
+    {"provider": "klaviyo", "flow": "campaign", "levels": ["campaign", "campaign_message"], "channel_key": "campaign_message_id", "pending_mapping_items": ["13", "14"]},
+    {"provider": "klaviyo", "flow": "flow", "levels": ["flow", "flow_message"], "channel_key": "flow_message_id", "pending_mapping_items": ["13", "14"]}
+  ],
+  "hierarchy_rollup": {
+    "upper_metrics": "sum_children_at_same_scope_date_currency_and_attribution",
+    "parent_plus_child_double_count": false,
+    "campaign_conversion_action_helper_is_hierarchy_level": false,
+    "klaviyo_variation_is_channel": false,
+    "implementation_items": ["17", "18", "19", "21"]
+  },
+  "product_identity": {
+    "reporting_backbone": "shopify_product_id",
+    "variant_id": "preserve_when_present_as_source_detail",
+    "mapping_scope": "workspace_provider_account_catalog_or_feed_and_native_product_identity",
+    "unresolved_identity": "preserve_raw_do_not_guess_or_discard",
+    "implementation_item": "16",
+    "persistence_package": "A6-EO-05-B"
+  },
+  "meta": {
+    "pd_click_target": "outbound_clicks",
+    "pd_mapping_pending_item": "03",
+    "cpd_product_fields_target": [
+      "impressions", "clicks", "spend", "converted_product_quantity", "converted_product_value",
+      "converted_promoted_product_quantity", "converted_promoted_product_value"
+    ],
+    "promoted_fields_default_query_pending_item": "02",
+    "sales_role_proof_pending_items": ["05", "24"],
+    "empty_product_response_proves_support_or_zero": false,
+    "pd_actions_and_action_values_mapping_complete": false,
+    "current_official_docs_check": "HTTP_429_2026-10-23_no_alternate_route",
+    "new_provider_semantics_proven_by_this_contract": false
+  },
+  "google_ads": {
+    "inventory_item": "08",
+    "scope_decision": "normal",
+    "pd_purchase": {"count": "conversions", "value": "conversions_value", "filter": "purchase_conversion_action_required"},
+    "cpd_sales": {"quantity": "units_sold", "value": "revenue_micros"},
+    "cpd_role_fields": ["lead_units_sold", "lead_revenue_micros", "cross_sell_units_sold", "cross_sell_revenue_micros"],
+    "all_fields_policy": "raw_only_never_add_or_use_as_missing_normal_fallback",
+    "normal_mapping_and_acceptance_complete": false,
+    "historical_pmax_gate": "paused_work_not_reopened_by_this_contract"
+  },
+  "klaviyo": {
+    "pd_impression_target": "delivered",
+    "pd_click_target": "clicks",
+    "pd_purchase_target": "Placed_Order_conversions_and_conversion_value",
+    "cpd_sales_target": "Ordered_Product_Quantity_and_$value",
+    "cpd_product_and_channel_impression_click": "N/A_by_product_decision_not_provider_unsupported_claim",
+    "spend": "open_no_formula_or_zero_fallback",
+    "campaign_content_membership_role": "Assisted",
+    "campaign_content_membership_proves_clicked_product": false,
+    "campaign_advertised_cross_sell": "requires_verified_sale_linked_product_interaction_evidence_not_implemented",
+    "flow_role": "Triggered_when_existing_flow_evidence_valid",
+    "contradictory_evidence_role": "Unclassified",
+    "content_membership_fix": "merged_PR_166",
+    "remaining_role_item": "15"
+  },
+  "delivery_boundary": {
+    "provider_runtime_contracts_describe": "actual_existing_queries_and_guards_not_target_completion",
+    "new_provider_queries_or_live_calls": false,
+    "dataset_writer_or_migration": false,
+    "fx_implementation_item": "22",
+    "formula_implementation_item": "23",
+    "sanitized_raw_evidence_item": "24",
+    "missing_unknown_unsupported_partial_stale_zero_distinct": true,
+    "N/A_or_KD_is_numeric_zero": false
+  },
+  "official_sources": [
+    "https://developers.google.com/google-ads/api/reference/rpc/v25/Metrics",
+    "https://developers.klaviyo.com/en/reference/reporting_api_overview"
+  ]
+}

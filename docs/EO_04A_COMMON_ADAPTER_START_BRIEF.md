@@ -12,6 +12,12 @@ Bu belge 10 Ekim 2026'daki tasarım ve kabul kaydıdır. Sonraki sağlayıcı hi
 
 ## Analist sonucu
 
+### Güncel metrik uyumu — 23 Ekim 2026, envanter 01
+
+Güncel ortak talep **9 PD metriğidir**; Session ürün sahibi kararıyla çıkarılmıştır. Aşağıdaki 10 metrikli blok 10 Ekim tarihsel kabul kaydıdır, güncel talep değildir. Runtime ve TypeScript sözleşmesi `2.0.0` kullanır; eski `1.0.0` istekleri ve ek `session` metrik alanı sessizce kabul edilmez. Kimlik doğrulama oturumları bu değişikliğin konusu değildir.
+
+Kabul edilmiş PD/CPD hedefleri `contracts/pd-cpd-query-standard-v1.json` içinde tekleştirilmiştir: sağlayıcı/akış/level ve Channel kimliği, Product ID omurgası, 08 normal kapsam kararı, ürün esaslı CPD Channel ve Klaviyo rol sınırı. Kaynak 13 sütunlu tablo `docs/research/PD_CPD_QUERY_WORKING_TABLE_2026-10-22.md` dosyasıdır. Sağlayıcı runtime sözleşmelerindeki mevcut sorgular hedefler uygulanmış gibi değiştirilmez; yeni sözleşmede eksikler mevcut envanter numaralarına bağlıdır. Bu uyum provider sorgusu, fiziksel Dataset, FX veya Formula Engine uygulaması değildir.
+
 AdsTable ile Meta, Google Ads ve Klaviyo arasında tek, sıkı dönüşüm sınırı kurulur. Sağlayıcılar farklı konuşsa da eksik metriğin anlamını değiştiremez, tamamlanmamış sayfaları sessizce yayımlayamaz, başka Shopify mağazası seçemez veya hatayı sıfıra dönüştüremez.
 
 Bu alt paket sağlayıcı uç noktalarını uygulamaz. EO-04-B/C/D kabul edilmeden önce her adaptörün uyması gereken ortak davranışı sabitler.

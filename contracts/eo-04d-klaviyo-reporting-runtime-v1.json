@@ -1,5 +1,6 @@
 {
   "contract_id": "A6-EO-04-D-KLAVIYO-REPORTING-RUNTIME-V1",
+  "accepted_query_target_contract": "contracts/pd-cpd-query-standard-v1.json",
   "status": "accepted_product_owner_repository_runtime_authorized",
   "accepted_at": "2026-10-17",
   "api_revision": "2026-10-15",

@@ -1,6 +1,7 @@
 {
   "schema_version": "1.4.0",
   "contract_id": "eo-04c-google-reporting-runtime-v1",
+  "accepted_query_target_contract": "contracts/pd-cpd-query-standard-v1.json",
   "package_id": "A6-EO-04-C",
   "status": "runtime_accepted_2026_access_review_corrective_repository_verified",
   "checked_at": "2026-10-17",

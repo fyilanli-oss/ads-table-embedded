@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-export const COMMON_ADAPTER_CONTRACT_VERSION = "1.0.0";
+export const COMMON_ADAPTER_CONTRACT_VERSION = "2.0.0";
 
 export const PROVIDERS = Object.freeze(["meta", "google_ads", "klaviyo"]);
 export const OPERATIONS = Object.freeze([
@@ -13,7 +13,6 @@ export const OPERATIONS = Object.freeze([
 export const RAW_METRICS = Object.freeze([
   "impression",
   "ad_click",
-  "session",
   "spend_value",
   "add_to_cart",
   "add_to_cart_value",

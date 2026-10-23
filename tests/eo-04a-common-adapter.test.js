@@ -175,15 +175,15 @@ test("canonical row preserves explicit zero, absence and unsupported as differen
   const row = makeRow("ad-states", {
     impression: 100,
     ad_click: 0,
-    session: null,
+    checkout_value: null,
   });
   assert.equal(validateCanonicalFunnelFact(row), row);
   assert.equal(row.raw_metrics.ad_click, 0);
   assert.equal(row.observation_state.ad_click, "zero");
   assert.equal(row.raw_metrics.add_to_cart, null);
   assert.equal(row.observation_state.add_to_cart, "absent");
-  assert.equal(row.raw_metrics.session, null);
-  assert.equal(row.metric_support.session, "unsupported");
+  assert.equal(row.raw_metrics.checkout_value, null);
+  assert.equal(row.metric_support.checkout_value, "unsupported");
 });
 
 test("canonical row rejects invented zero and non-null unsupported values", () => {
@@ -195,13 +195,30 @@ test("canonical row rejects invented zero and non-null unsupported values", () =
   );
 
   const unsupportedValue = makeRow();
-  unsupportedValue.raw_metrics.session = 12;
-  unsupportedValue.metric_support.session = "unsupported";
-  unsupportedValue.observation_state.session = "not_requested";
+  unsupportedValue.raw_metrics.checkout_value = 12;
+  unsupportedValue.metric_support.checkout_value = "unsupported";
+  unsupportedValue.observation_state.checkout_value = "not_requested";
   assert.throws(
     () => validateCanonicalFunnelFact(unsupportedValue),
     /must be null when support is unsupported/,
   );
+});
+
+test("nine-metric version rejects the old envelope and removed session metric", () => {
+  assert.equal(COMMON_ADAPTER_CONTRACT_VERSION, "2.0.0");
+  assert.equal(RAW_METRICS.length, 9);
+  assert.equal(RAW_METRICS.includes("session"), false);
+  assert.throws(() => validateCommonAdapterRequest(makeRequest({
+    adapter_contract_version: "1.0.0",
+  })), /version/i);
+  assert.throws(() => validateCommonAdapterRequest(makeRequest({
+    requested_metrics: [...RAW_METRICS, "session"],
+  })), /metric/i);
+  for (const container of ["raw_metrics", "metric_support", "observation_state"]) {
+    const row = makeRow();
+    row[container].session = container === "raw_metrics" ? null : "unknown";
+    assert.throws(() => validateCanonicalFunnelFact(row), /extra fields/);
+  }
 });
 
 test("complete multi-page traversal stages all rows and deduplicates identical replay", async () => {

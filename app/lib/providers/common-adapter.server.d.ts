@@ -1,4 +1,4 @@
-export const COMMON_ADAPTER_CONTRACT_VERSION: "1.0.0";
+export const COMMON_ADAPTER_CONTRACT_VERSION: "2.0.0";
 export const PROVIDERS: readonly ["meta", "google_ads", "klaviyo"];
 export const OPERATIONS: readonly [
   "inspect_connection",
@@ -10,7 +10,6 @@ export const OPERATIONS: readonly [
 export const RAW_METRICS: readonly [
   "impression",
   "ad_click",
-  "session",
   "spend_value",
   "add_to_cart",
   "add_to_cart_value",

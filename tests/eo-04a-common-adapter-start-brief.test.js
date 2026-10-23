@@ -27,7 +27,8 @@ test("EO-04-A start brief freezes truthful common adapter behavior", async () =>
   assert.equal(contract.account_selection.klaviyo.maximum, 1);
   assert.equal(contract.account_selection.klaviyo.is_ad_account, false);
   assert.equal(contract.canonical_funnel_fact_contract.legacy_user_id_forbidden, true);
-  assert.equal(contract.canonical_funnel_fact_contract.raw_metrics.length, 10);
+  assert.equal(contract.canonical_funnel_fact_contract.raw_metrics.length, 9);
+  assert.equal(contract.canonical_funnel_fact_contract.raw_metrics.includes("session"), false);
   assert.deepEqual(contract.canonical_funnel_fact_contract.metric_support_values, [
     "supported",
     "unsupported",

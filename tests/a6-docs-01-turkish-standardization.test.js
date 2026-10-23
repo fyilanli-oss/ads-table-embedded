@@ -637,13 +637,13 @@ test("DOCS-01 explicit closure acceptance authorizes only the approved merge, no
 });
 
 
-test("PD CPD working table preserves query scope and the pending owner Ad Channel decision", async () => {
+test("PD CPD working table preserves query scope and accepted product-based Channel target", async () => {
   const content = await readFile("docs/research/PD_CPD_QUERY_WORKING_TABLE_2026-10-22.md", "utf8");
   const rows = content.split(/\r?\n/).filter((line) => /^\| (Meta|Google Ads|Klaviyo) \|/.test(line));
   assert.equal(rows.length, 26);
   for (const row of rows) assert.equal(row.split("|").length - 2, 13);
-  assert.match(content, /henüz ürün sahibi tarafından kabul edilmedi/);
-  assert.match(content, /Google incelemesinden sonra kabul edecek veya itiraz edecek/);
+  assert.match(content, /CPD Channel, üç sağlayıcıda da PD genel değerlerinin kopyası değil/);
+  assert.match(content, /Bu toplam ve bağlantılar henüz uygulanmış kabul edilmez/);
   assert.match(content, /Ad kayıtlarından hiyerarşik toplam/);
   assert.match(content, /Var¹: `converted_promoted_product_quantity`/);
   assert.match(content, /Var²: `converted_promoted_product_value`/);

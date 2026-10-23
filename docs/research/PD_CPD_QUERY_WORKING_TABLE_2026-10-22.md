@@ -4,9 +4,9 @@ Tarih: 22 Ekim 2026. Durum: çalışma referansı sabitlendi; nihai ortak tasar�
 
 Ürün sahibi mevcut üç sağlayıcılı tablo düzeninin korunmasını ve Meta bölümündeki son düzeltmelerin kaydedilmesini istedi. Google bölümü ürün sahibinin sonraki kararlarıyla güncellenmiştir. Klaviyo bölümü de ürün sahibinin kabul ettiği seçimlerle sabitlenmiştir; teknik uygulama ve açık Spend hesabı tamamlanmış sayılmaz.
 
-## Açık karar
+## Kabul edilen hedef ve açık uygulama
 
-**Meta PD Ad ile CPD Channel performansının aynı Ad ölçümlerini kullanması henüz ürün sahibi tarafından kabul edilmedi.** Google incelemesinden sonra kabul edecek veya itiraz edecek yönündeki önceki açık karar korunur. Sonraki görüşmede CPD Channel'ın Ad genel değerleri yerine bağlı ürün metriklerinin toplamını temsil etmesi kararlaştırılmıştır. Meta hücrelerinin bu yeni anlama göre revizyonu ve kod eksikleri, Klaviyo tablosundan sonraki ortak değerlendirmede ele alınacaktır; mevcut Meta ham kaynak hücreleri bu karara uygun tamamlanmış uygulama değildir.
+CPD Channel, üç sağlayıcıda da PD genel değerlerinin kopyası değil, bağlı ürün metriklerinin toplamıdır. 23 Ekim 2026 envanter 01 uyumunda Meta Channel hücreleri de bu hedefe hizalanmıştır. Bu toplam ve bağlantılar henüz uygulanmış kabul edilmez; envanter 17–19 kontrolü ve ilgili sağlayıcı bağlantı işleri açıktır. Kabul edilen hedeflerin ortak sözleşmesi `contracts/pd-cpd-query-standard-v1.json`; sağlayıcı runtime sözleşmeleri mevcut sorgu durumunu korur.
 
 ## Hücrelerin anlamı
 
@@ -24,7 +24,7 @@ Tarih: 22 Ekim 2026. Durum: çalışma referansı sabitlendi; nihai ortak tasar�
 | Meta | PD | Reklam | Campaign | Ad kayıtlarından hiyerarşik toplam | Ad kayıtlarından hiyerarşik toplam | Ad kayıtlarından hiyerarşik toplam | Ad kayıtlarından hiyerarşik toplam | Ad kayıtlarından hiyerarşik toplam | Ad kayıtlarından hiyerarşik toplam | Ad kayıtlarından hiyerarşik toplam | Ad kayıtlarından hiyerarşik toplam | Ad kayıtlarından hiyerarşik toplam |
 | Meta | PD | Reklam | Ad Set | Ad kayıtlarından hiyerarşik toplam | Ad kayıtlarından hiyerarşik toplam | Ad kayıtlarından hiyerarşik toplam | Ad kayıtlarından hiyerarşik toplam | Ad kayıtlarından hiyerarşik toplam | Ad kayıtlarından hiyerarşik toplam | Ad kayıtlarından hiyerarşik toplam | Ad kayıtlarından hiyerarşik toplam | Ad kayıtlarından hiyerarşik toplam |
 | Meta | PD | Reklam | Ad | Var: `impressions` | Var | Var: `spend` | Var³: `actions` | Var³: `action_values` | Var³: `actions` | Var³: `action_values` | Var³: `actions` | Var³: `action_values` |
-| Meta | CPD | Channel performansı | Ad | Var: `impressions` | Var | Var: `spend` | KD | KD | KD | KD | Var³: `actions` | Var³: `action_values` |
+| Meta | CPD | Channel performansı | Ad | Ürün kayıtlarından toplam — hedef | Ürün kayıtlarından toplam — hedef | Ürün kayıtlarından toplam — hedef | KD | KD | KD | KD | Ürün satış adetleri toplamı — hedef | Ürün satış değerleri toplamı — hedef |
 | Meta | CPD | Ürün performansı | Ad × ürün | Var: `impressions` | Var: `clicks` | Var: `spend` | KD | KD | KD | KD | Var: `converted_product_quantity` | Var: `converted_product_value` |
 | Meta | CPD | Ürün satış ilişkisi | Ad × ürün | KD | KD | KD | KD | KD | KD | KD | Var¹: `converted_promoted_product_quantity` | Var²: `converted_promoted_product_value` |
 | Google Ads | PD | Search | Campaign | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam |
@@ -107,6 +107,8 @@ Açık bağlantılar kaybolmadan ertelenmiştir: Search→Ad ürün satış bağ
 - Campaign ve Flow üst metrikleri mesaj kayıtlarından hiyerarşik toplam hedefidir. Spend bu toplam kararına otomatik maliyet hesabı eklemez; ayrıca açık kalır.
 
 ## Klaviyo açık işler ve kapsam kararları
+
+23 Ekim rol düzeltmesi (PR #166): Campaign mesaj içeriğinde bulunma, tıklanan ürün kanıtı değildir; içerikteki ve dışındaki ürünler yalnız mesaj atfıyla Assisted kalır. Advertised/Cross-sell için satışa bağlı doğrulanmış ürün etkileşimi gerekir; bu kanıt yolu henüz uygulanmadı. Flow Triggered ve çelişkili kanıtta Unclassified sınırı korunur.
 
 ⁷ **Spend açık:** Ürün sahibi şu aşamada hesaplama yapılmamasını, maliyet hesabının sonraki ortak değerlendirmeye bırakılmasını istedi. Önceki estimated-spend/ledger çalışmaları tamamlanmış raporlama hesabı yerine konulmaz. Bu belge yeni formül veya ürün maliyeti dağıtımı belirlemez.
 

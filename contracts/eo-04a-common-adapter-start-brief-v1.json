@@ -1,6 +1,9 @@
 {
   "contract_id": "eo-04a-common-adapter-start-brief-v1",
-  "version": "1.3.0",
+  "version": "1.4.0",
+  "query_standard": "contracts/pd-cpd-query-standard-v1.json",
+  "adapter_contract_version": "2.0.0",
+  "metric_alignment_checked_at": "2026-10-23",
   "status": "Accepted",
   "checked_at": "2026-10-10",
   "parent": "A6-EO-04",
@@ -283,7 +286,6 @@
     "raw_metrics": [
       "impression",
       "ad_click",
-      "session",
       "spend_value",
       "add_to_cart",
       "add_to_cart_value",
@@ -364,7 +366,7 @@
     "database_mutation": false,
     "vercel_or_deployment_mutation": false,
     "invariants": [
-      "same_canonical_ten_raw_metric_demand_for_all_active_providers",
+      "same_canonical_nine_raw_metric_demand_for_all_active_providers",
       "support_and_observation_are_distinct",
       "only_explicit_provider_zero_becomes_zero",
       "all_pages_complete_before_publishable",

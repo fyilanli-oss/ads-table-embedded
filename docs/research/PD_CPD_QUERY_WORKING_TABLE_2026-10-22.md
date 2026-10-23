@@ -38,7 +38,7 @@ Tarih: 22 Ekim 2026. Durum: çalışma referansı sabitlendi; nihai ortak tasar�
 | Google Ads | CPD | Shopping — Channel performansı | Ad Group | Ürün kayıtlarından toplam⁶ | Ürün kayıtlarından toplam⁶ | Ürün kayıtlarından toplam⁶ | KD | KD | KD | KD | Ürün satış adetleri toplamı⁶ | Ürün satış değerleri toplamı⁶ |
 | Google Ads | CPD | Retail PMax — Channel performansı | Asset Group | Ürün kayıtlarından toplam⁶ | Ürün kayıtlarından toplam⁶ | Ürün kayıtlarından toplam⁶ | KD | KD | KD | KD | Ürün satış adetleri toplamı⁶ | Ürün satış değerleri toplamı⁶ |
 | Google Ads | CPD | Ürün performansı | Ürün kırılımı | Var | Var | Var | KD | KD | KD | KD | Var⁵: `conversions` — dönüşüm sayısı | Var⁵: `conversions_value` — dönüşüm değeri |
-| Google Ads | CPD | Ürün satış ilişkisi | Cart data | KD | KD | KD | KD | KD | KD | KD | Var: `units_sold`, lead / cross-sell ve `all_*` | Var: `revenue_micros`, lead / cross-sell ve `all_*` |
+| Google Ads | CPD | Ürün satış ilişkisi | Cart data | KD | KD | KD | KD | KD | KD | KD | Var: `units_sold`, lead / cross-sell — normal esas; `all_*` ham kaynak | Var: `revenue_micros`, lead / cross-sell — normal esas; `all_*` ham kaynak |
 | Klaviyo | PD | Campaign | Campaign | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam | Açık⁷ | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam |
 | Klaviyo | PD | Campaign | Campaign Message | Var: `delivered` | Var: `clicks` | Açık⁷ | Yok⁸ | Yok⁸ | Yok⁸ | Yok⁸ | Var: `conversions` — Placed Order | Var: `conversion_value` — Placed Order |
 | Klaviyo | PD | Flow | Flow | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam | Açık⁷ | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam | Alt kayıtlardan hiyerarşik toplam |
@@ -71,6 +71,19 @@ Tarih: 22 Ekim 2026. Durum: çalışma referansı sabitlendi; nihai ortak tasar�
 - PD Purchase, sağlayıcının satın alma dönüşümü sayısıdır. CPD satılan adet, ürün satış miktarıdır; aynı ölçüm değildir.
 - CPD Channel ürün esaslıdır: bağlı ürünlerin metrik toplamlarını gösterir; PD Ad/Ad Group/Asset Group genel değerleri CPD ürün toplamlarının yerine konulmaz.
 - Ürün satış değeri ile sağlayıcının genel dönüşüm değerinin vergi/kargo kapsamı eşit varsayılmaz. Kullanıcı örneği: 3.000 ürün + 600 vergi + 300 kargo = 3.900; 300 spend ile genel değer ROAS 13, ürün geliri ROAS 10. Bu açıklama örneği sağlayıcının her yanıtta aynı kapsamı döndürdüğü iddiası değildir.
+
+## Google normal kapsam kararı
+
+08. madde, 22 Ekim 2026 ürün sahibi onayıyla netleşti; 23 Ekim 2026 tarihinde çalışma tablosuna aktarıldı. Karar netleşti; runtime eşlemeleri ve kabul testleri açık.
+
+- PD satış adedi/değeri: normal `conversions` / `conversions_value` içinden Purchase ayrımı. Genel dönüşüm toplamı doğrudan satış sayılmaz.
+- CPD satılan ürün adedi/geliri: normal `units_sold` / `revenue_micros`. Sales Role aynı normal kapsamdaki lead/cross-sell adet ve gelir alanlarına dayanır.
+- `all_*` alanları standart PD/CPD sonuçlarına eklenmez; normal alan eksikse bunlarla otomatik tamamlama yapılmaz. Ham kaynakta korunmaları bu seçimi değiştirmez.
+- PD Purchase sayısı ile CPD ürün adedi eşit sayılmaz. CPD Channel bağlı ürünlerden oluşur; PD genel Ad/Ad Group/Asset Group değeri ürün toplamı yerine geçirilmez.
+- Search Ad, Shopping Ad Group ve Retail PMax Asset Group seviyeleri korunur; Campaign değerleri aşağı kopyalanmaz.
+- Kabul testleri yalnız normal, yalnız `all_*`, iki ailenin farklı değerleri, eksik normal alan, gerçek sıfır ve çelişkili rol kanıtını ayırır. Çift sayım ve kanıtsız rol üretimi olmaz.
+
+Resmî metrik tanımları, kontrol 23 Ekim 2026: [Google Ads API v25 Metrics](https://developers.google.com/google-ads/api/reference/rpc/v25/Metrics). Kaynak metrik tanımlarını destekler; normal kapsamı seçmek AdsTable ürün kararıdır.
 
 ## Google teknik işler ve ertelenen değerlendirme
 
@@ -110,6 +123,26 @@ Kontrol tarihi: 22 Ekim 2026.
 - [Reporting API tanımları](https://developers.klaviyo.com/en/reference/reporting_api_overview#available-statistics): delivered, clicks, conversions ve conversion_value anlamları.
 - [Link ve ürün satış raporları](https://help.klaviyo.com/hc/en-us/articles/115005258568): link bazlı tıklama ve ürün satışı için Ordered Product ayrımı.
 - [Events API](https://developers.klaviyo.com/en/reference/get_events): olay özellikleri kaynağı. Kaynak varlığı N/A kapsam kararını değiştirmez.
+
+## Birlikte ele alınacak maddeler
+
+23 Ekim 2026 son kullanıcı incelemesine sunulan çalışma gruplarıdır. Mevcut 24 numara korunur; yeni EO paketi veya toplu uygulama yetkisi oluşmaz. 01–16 kaynak/kimlik/rol tasarımı ve düzeltmeleri; 17–19 bütünleşik tasarım kontrolü; ardından mevcut EO-05/06 paket sırası korunur. Gruplar tek dev PR zorunluluğu değildir; sağlayıcı ve kanıt sınırlarında küçük teslimlere bölünebilir.
+
+| Maddeler | Birlikte yapılacak iş | Sıra ve sınır |
+| --- | --- | --- |
+| 01 | Sözleşme uyumu | Önce ortak karar ve alan sözleşmesi. Her grupta güncel tutulur; EO-04 düzeltmeleri ile EO-05/06 sahiplikleri karıştırılmaz. |
+| 02, 03 | Meta sorgu ve metrik eşlemeleri | 02 + 03 birlikte: promoted alanları ve PD Click/funnel eşlemeleri. EO-04-B düzeltmesi; 24 ile sorgu ve yanıt kanıtı. Kalıcı Dataset yazımı bu grupta yok. |
+| 06, 07, 08 | Google sorgu ve normal kapsam | 06 + 07 + 08 birlikte: Search Ad, Shopping/PMax funnel ve normal kapsam Purchase/ürün satış eşlemeleri. EO-04-C düzeltmesi; alan birleşimi doğrulaması ve 24 kabulü. |
+| 13, 14 | Klaviyo sorgu ve metrik eşlemeleri | 13 + 14 birlikte: kabul edilen PD alanları ve Message ATC/Checkout talepleri. EO-04-D düzeltmesi; ürün Impression/Click N/A ve Spend açık kalır. |
+| 04, 09, 10, 11, 12, 16 | Kaynak ve kimlik bağlantıları | 04 + 09 + 10 + 11 + 12 + 16 birlikte tasarlanır. Provider bağlantı düzeltmeleri EO-04; 16 kalıcı kimlik modeli EO-05-B. 11 tarihsel PMax çalışması ayrı açık onay olmadan başlamaz; kanıtsız Channel atanmaz. |
+| 05, 15 | Satış ilişkisi ve Sales Role | 05 + 15 birlikte: Meta ve Klaviyo kanıt/rol kuralları. Google rolü 08 normal kapsam kararıyla uyumlu kalır. Kaynak/kimlik kanıtlarına bağlı EO-04-B/D düzeltmeleri; tek ortak rol tanımı. |
+| 17, 18, 19 | Bütünleşik tasarım kontrolü | 17 + 18 + 19 birlikte tasarım kontrolü; provider gruplarından sonra. Bağımsız PD/CPD, üst hiyerarşi ve ürün esaslı Channel onayı. Kayıt/yayın EO-05-B; aggregate-first hesaplama EO-06-A. Paketler erkene alınmaz. |
+| 20, 22 | Dataset ve FX | 20 + 22 birlikte EO-05-B: Dataset aileleri, anahtarlar, kaynak para birimi ve FX izi; 16 kimlik tasarımını kullanır. 20'nin idempotent upsert/düzeltme kısmı EO-05-D'de, 21 ile birlikte ele alınır. |
+| 21 | Tarih ve uzlaştırma | 21: EO-05-C'de attribution/olgunluk; EO-05-D'de 20'nin tekrar yazma ve düzeltme kısmıyla birlikte. 20'nin veri modeliyle karıştırılmaz; Klaviyo tarih ve gün sınırı testleri korunur. |
+| 23 | Formula Engine | 23 ayrı EO-06-A sırasında uygulanır. 20 + 22 ile veri/FX sözleşmesi birlikte tasarlanır; formül kodu erkene alınmaz. 18/19 aggregate-first kuralları kullanılır. Klaviyo Spend için yeni formül onaylanmış değildir. |
+| 24 | Her aşamada kanıt ve kabul | 24 tüm gruplara eşlik eder; sona bırakılmaz. Her grubun sorgu/ham yanıt, tamlık, tekrar ve hata testleri; EO-08 sonundaki gerçek hesap kontrolü ayrı kapıdır. Canlı çağrı ayrıca açık yetki gerektirir. |
+
+20'nin veri modeli EO-05-B, idempotent upsert ve uzlaştırması EO-05-D sahibindedir. 16, 20, 21, 22 ve 23'ün mevcut paket kapıları korunur. EO-05-A kapanışı veya EO-05-B başlangıcı verilmez. 11'in durdurulmuş tarihsel kanıt işi kendiliğinden açılmaz; kanıtsız Channel için geçerli satış korunur.
 
 ## Yetki ve sonraki adım
 

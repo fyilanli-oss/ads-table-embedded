@@ -1,5 +1,13 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## 17 — PD birleşim tasarımı incelemesi, 23 Ekim 2026
+
+- Ürün sahibi bütünleşik tasarım kontrolüne devam talimatı verdi. Bu dilim yalnız 17'nin inceleme taslağıdır; runtime composer, DB/FX, üst toplam (18), CPD Channel toplamı (19) veya yeni paket başlangıcı değildir. Başlangıç main `ac8a192182ceb7664453d1e9cabb2508831854e2` (#173). Bağlayıcı tasarım ayrıntısı ortak sorgu sözleşmesinin `pd_composition_review` bölümündedir; ürün sahibi incelemesi beklenir.
+- PD'deki her metrik yalnız kendi kaynak raporundan alınır. Meta mevcut Ad projeksiyonu; Google uç performansı + ayrı normal dönüşüm eylemi raporları; Klaviyo Placed Order + Added to Cart + Checkout Started. Ürün performansı ve Ordered Product/cart satışları PD metrik yedeği olmaz. Mevcut ham yanıtlar değişmez; yeni sorgu veya provider davranışı eklenmez.
+- Mevcut canonical anahtar başlangıçtır, tek başına yeterlilik kanıtı değildir. Kurulum/hesap/akış/yaprak/üst kimlikler, gün/saat dilimi/raporlama zamanı, kaynak para birimi/birim, etkin atıf/kapsam ve tam yürütme uyuşmalıdır. Bunların yokluğu tahminle doldurulmaz. Klaviyo Medium/Variation ayrıntıları korunur; mesaj toplamı her varyanta tekrar yazılmaz. Google'da farklı dönüşüm eylemleri, kaynak ayrıklığı ve tamlığı kanıtlanmadan körlemesine toplanmaz.
+- Eksik metrik gerçek sıfır değildir; gözlenen diğer metrikleri silmez. Adet değerden türetilmez. Kısmi/başarısız/çelişkili rapor tam birleşim sayılamaz. Her metriğin kaynak izi korunur. Mevcut canonical doğrulayıcı için sahte FX/kimlik üretilmez. Testler yalnız bu tasarım sınırlarının korunmasını gösterir, runtime birleşim veya canlı kabul değildir.
+- 05'te Meta'nın dört alanı standart sorguda kalır, anlam/rol kabulü gerçek veriyle yapılacaktır; ek araştırma bu dilimde sürdürülmez. 15'te Klaviyo Advertised/Cross-sell maddesi geldiğinde ürün sahibiyle yeniden tartışılır, mevcut roller değişmez. PMax ürün bağlantısı Google teknik cevabını bekler; 11 tarihsel iş açılmaz. 16 kalıcı kimlik işi EO-05-B'de kalır. 17/18/19 kapatılmaz; merge ayrıca açık onay gerektirir.
+
 ## Google ürün sorgusu ayrımı — 23 Ekim 2026, dar repository düzeltmesi
 
 - Ürün sahibi Shopping/PMax ortak ürün sorgusunun ayrılmasını açıkça onayladı. Başlangıç main `6947b200ed6bd05441405751b7848b2a84151ee7` (#172). Bu dilim 09/10 kaynak sorgusu düzeltmesidir; yeni paket veya Channel seviyesi kararı değildir.

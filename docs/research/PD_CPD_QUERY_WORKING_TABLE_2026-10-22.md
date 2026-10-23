@@ -136,6 +136,18 @@ Kontrol tarihi: 22 Ekim 2026.
 
 ## Birlikte ele alınacak maddeler
 
+### 17 — PD tek kayıt birleşimi: inceleme taslağı
+
+23 Ekim 2026 kod kontrolü: sorgu aileleri ve metrik projeksiyonları var; ortak PD composer henüz uygulanmış değil. Aşağıdaki tasarım mevcut sorguları değiştirmez, yeni kolon/fiziksel tablo seçmez ve 17'yi kapatmaz. Ayrıntı: `contracts/pd-cpd-query-standard-v1.json#pd_composition_review`.
+
+- Meta: Mevcut Ad projeksiyonundaki dokuz PD metriği kullanılır. Ürün kırılımındaki metrikler PD yedeği olmaz.
+- Google: Uç performans raporundan Impression/Click/Spend; aynı ucun dönüşüm eylemi raporundan ATC/Checkout/Purchase adet-değer alınır. Eylem/kategori ayrıntısı korunur; ayrık ve tam kaynaklar kanıtlanmadan toplanmaz. Genel conversions Purchase veya all alanı normal yedeği yapılmaz.
+- Klaviyo: Placed Order raporundan delivered/clicks/Purchase; Added to Cart ve Checkout Started raporlarından ilgili adet-değerler alınır. Aynı Message/Medium/Variation ayrıntısı karşılaştırılır; Message toplamı her varyanta kopyalanmaz. Spend açık/null kalır.
+
+Tek kayda aday olmak için mevcut canonical kimlik anahtarına ek olarak üst kimlikler, kaynak gün/saat dilimi/raporlama zamanı, para birimi/birim ve atıf kapsamı uyuşmalıdır. Bunlar fiziksel yeni anahtar/kolon ilanı değil, birleşim ön koşullarıdır. Farklı yenilemelerin satırları veya tamamlanmamış aileler tam rapor diye birleştirilmez. Eksik/null/boş/sıfır ayrılır; eksik adet değerden türetilmez, gözlenen diğer metrikleri silmez. Kaynak aile/sorgu/satır izi metrikle korunur; yalnız nihai sayı bırakılmaz.
+
+CPD ürün performansı ve ürün satışı ayrı kalır; PD'yi tamamlamak için kullanılmaz. PMax PD Asset Group raporlarının varlığı, ürün→Asset Group bağlantısını çözmez. Meta 05 gerçek veri kabulü açık; Klaviyo 15 Advertised/Cross-sell kararı yeniden tartışılmadan değiştirilmez. 18 üst hiyerarşi ve 19 ürün esaslı Channel toplamı bu taslakla tamamlanmış değildir. Dataset/FX/formül uygulaması ileriki mevcut paket sırasındadır.
+
 23 Ekim 2026 son kullanıcı incelemesine sunulan çalışma gruplarıdır. Mevcut 24 numara korunur; yeni EO paketi veya toplu uygulama yetkisi oluşmaz. 01–16 kaynak/kimlik/rol tasarımı ve düzeltmeleri; 17–19 bütünleşik tasarım kontrolü; ardından mevcut EO-05/06 paket sırası korunur. Gruplar tek dev PR zorunluluğu değildir; sağlayıcı ve kanıt sınırlarında küçük teslimlere bölünebilir.
 
 | Maddeler | Birlikte yapılacak iş | Sıra ve sınır |

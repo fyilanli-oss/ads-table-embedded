@@ -136,6 +136,17 @@ Kontrol tarihi: 22 Ekim 2026.
 
 ## Birlikte ele alınacak maddeler
 
+### 18–19 — İki bağımsız toplama yolu: inceleme taslağı
+
+17'nin PR #174 taslağı main'e alındı; runtime birleşim tamamlanmış değildir. 18–19 ayrıntıları ortak sözleşmenin `hierarchy_channel_review` bölümündedir. Mevcut 13 sütunlu sorgu satırları ve provider hedefleri değişmez.
+
+- 18, birleşmiş PD yapraklarını kendi üst kimliklerine toplar. Parent ve child aynı toplamda tekrar sayılmaz; Campaign yardımcı raporu ilave satış kaynağı olmaz. Klaviyo Variation detayı Message'ta bir kez ele alınır. Oranlar alt oranların toplamı/ortalaması değildir; hesaplama EO-06-A'dadır.
+- 19, doğrulanmış ürün performansından Impression/Click/Spend; ürün satışından adet/değer alır. Önce her aile kendi native kayıt kapsamıyla ayrı tekilleştirilip toplanır, sonra Channel seviyesinde ilişkilendirilir. Ham performans ve satış satırları birbirleriyle çarpılmaz. Aynı Product ID'nin farklı native kaynak kayıtları tek ürün diye silinmez; snapshot satır indeksi kalıcı tekilleştirme anahtarı olmaz.
+- Yalnız performansı/maliyeti olan ürün ve yalnız satışı görülen ürün korunur. Satış satırı yokluğu tek başına sıfır veya No Conversion kararı değildir. Satılmayan ürünün maliyeti satanlara dağıtılmaz; bir ürünün maliyeti her satışa veya Sales Role'e yeniden yazılmaz. PD toplamıyla CPD toplamının eşit olması şart koşulmaz, aradaki fark ürünlere paylaştırılmaz.
+- Google units_sold/revenue_micros toplamı lead/cross-sell detaylarıyla tekrar toplanmaz; genel ve scoped cart raporları birbirine eklenmez. Meta total/promoted alanlarında semantik kabul olmadan toplama/çıkarma yoktur. Klaviyo Ordered Product olayı iki görünümde iki satış olmaz; Placed Order sayısı ürün adedine eklenmez.
+- Her metriğin tamlık durumu ayrı korunur: bilinen ara toplam tam toplam değildir; eksik/N/A/boş sıfır yapılmaz. Kaynak para birimi/birim, saat dilimi/raporlama zamanı ve atıf kapsamı uyumlu olmalıdır; FX öncesi farklı para değerleri toplanmaz. Provider atıflı satış toplamı Shopify mağaza satışlarının tekilleştirilmiş gerçeği değildir.
+- Shopify kimliği çözülmemiş native kayıt ve bilinen Channel korunur; varyant fiyatından tutar yeniden üretilmez. Meta 05, Klaviyo 15 yeniden tartışması, PMax 10/11 bağlantı ve tarihsel duraklama, 16 kimlik/20–23 uygulama kapıları açıktır. Bu tasarım toplam kodu, DB/FX/formül veya 17–19 kapanışı değildir; ürün sahibi incelemesi beklenir.
+
 ### 17 — PD tek kayıt birleşimi: inceleme taslağı
 
 23 Ekim 2026 kod kontrolü: sorgu aileleri ve metrik projeksiyonları var; ortak PD composer henüz uygulanmış değil. Aşağıdaki tasarım mevcut sorguları değiştirmez, yeni kolon/fiziksel tablo seçmez ve 17'yi kapatmaz. Ayrıntı: `contracts/pd-cpd-query-standard-v1.json#pd_composition_review`.

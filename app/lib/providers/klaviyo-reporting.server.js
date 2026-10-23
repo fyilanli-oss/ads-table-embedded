@@ -12,6 +12,14 @@ export const KLAVIYO_REPORTING_STATISTICS = Object.freeze([
   "conversion_uniques",
   "conversion_value",
 ]);
+export const KLAVIYO_PD_CONVERSION_METRICS = Object.freeze(["Placed Order", "Added to Cart", "Checkout Started"]);
+const PD_SOURCES = Object.freeze({
+  "Placed Order": Object.freeze({impression: "delivered", ad_click: "clicks", purchase: "conversions", purchase_value: "conversion_value"}),
+  "Added to Cart": Object.freeze({add_to_cart: "conversions", add_to_cart_value: "conversion_value"}),
+  "Checkout Started": Object.freeze({checkout: "conversions", checkout_value: "conversion_value"}),
+});
+const PD_METRICS = Object.freeze(["impression", "ad_click", "spend_value", "add_to_cart", "add_to_cart_value",
+  "checkout", "checkout_value", "purchase", "purchase_value"]);
 
 const API_ROOT = "https://a.klaviyo.com/api";
 const MEDIUM_LABELS = Object.freeze({
@@ -174,7 +182,7 @@ export function buildKlaviyoShopifyMetricsRequest({accessToken, cursor = null}) 
   return request("GET", url, accessToken);
 }
 
-function reportBody(type, {businessDate, timeZone, conversionMetricId}) {
+function reportBody(type, {businessDate, timeZone, conversionMetricId}, statistics = KLAVIYO_REPORTING_STATISTICS) {
   const prefix = type === "campaign-values-report" ? "campaign" : "flow";
   const timeframe = klaviyoBusinessDayTimeframe({businessDate, timeZone});
   const groupBy = [
@@ -192,20 +200,20 @@ function reportBody(type, {businessDate, timeZone, conversionMetricId}) {
       attributes: {
         timeframe: {start: timeframe.start, end: timeframe.end},
         conversion_metric_id: text(conversionMetricId, "KLAVIYO_CONVERSION_METRIC_ID_REQUIRED", 256),
-        statistics: [...KLAVIYO_REPORTING_STATISTICS],
+        statistics: [...statistics],
         group_by: groupBy,
       },
     },
   };
 }
 
-function reportRequest(kind, input) {
+function reportRequest(kind, input, statistics = KLAVIYO_REPORTING_STATISTICS) {
   const type = `${kind}-values-report`;
   const url = new URL(`${API_ROOT}/${kind}-values-reports`);
   if (input.pageCursor != null) {
     url.searchParams.set("page_cursor", text(input.pageCursor, "KLAVIYO_CURSOR_INVALID"));
   }
-  return request("POST", url, input.accessToken, reportBody(type, input), {
+  return request("POST", url, input.accessToken, reportBody(type, input, statistics), {
     accept: "application/vnd.api+json",
     contentType: "application/vnd.api+json",
   });
@@ -217,6 +225,99 @@ export function buildKlaviyoCampaignValuesRequest(input) {
 
 export function buildKlaviyoFlowValuesRequest(input) {
   return reportRequest("flow", input);
+}
+
+export function buildKlaviyoPdValuesRequest({kind, conversionMetricName, ...input}) {
+  if (!["campaign", "flow"].includes(kind) || !KLAVIYO_PD_CONVERSION_METRICS.includes(conversionMetricName)) {
+    fail("KLAVIYO_PD_REPORT_SCOPE_INVALID", "Unknown PD report scope");
+  }
+  return reportRequest(kind, input, [...new Set(Object.values(PD_SOURCES[conversionMetricName]))]);
+}
+
+export function selectKlaviyoPdShopifyMetrics(items) {
+  const matches = new Map(KLAVIYO_PD_CONVERSION_METRICS.map(name => [name, []]));
+  if (!Array.isArray(items)) fail("KLAVIYO_METRICS_SCHEMA_INVALID", "Metric data must be an array");
+  for (const item of items) {
+    if (item?.type === "metric" && item?.attributes?.integration?.name === "Shopify" && matches.has(item.attributes.name)) {
+      matches.get(item.attributes.name).push(text(item.id, "KLAVIYO_METRIC_ID_INVALID", 256));
+    }
+  }
+  const selected = {};
+  const seenIds = new Set();
+  for (const [name, ids] of matches) {
+    if (ids.length > 1 || (ids.length === 1 && seenIds.has(ids[0]))) {
+      fail("KLAVIYO_SHOPIFY_METRIC_CARDINALITY_INVALID", "PD Shopify metric identity is ambiguous");
+    }
+    if (ids.length) seenIds.add(ids[0]);
+    selected[name] = Object.freeze({metric_id: ids[0] ?? null,
+      state: ids.length ? "present" : "account_configuration_missing"});
+  }
+  return Object.freeze(selected);
+}
+
+export function mapKlaviyoPdMetrics(row, conversionMetricName) {
+  if (!KLAVIYO_PD_CONVERSION_METRICS.includes(conversionMetricName)) {
+    fail("KLAVIYO_PD_REPORT_SCOPE_INVALID", "Unknown PD conversion metric");
+  }
+  const statistics = record(record(row, "KLAVIYO_REPORT_ROW_INVALID").statistics, "KLAVIYO_REPORT_STATISTICS_INVALID");
+  const sources = PD_SOURCES[conversionMetricName];
+  const raw_metrics = {}, metric_support = {}, observation_state = {};
+  for (const metric of PD_METRICS) {
+    const source = sources[metric];
+    const native = source ? statistics[source] : undefined;
+    let value = null;
+    if (native != null) {
+      if ((typeof native !== "number" && typeof native !== "string")
+        || (typeof native === "string" && !/^\d+(?:\.\d+)?$/.test(native))
+        || !Number.isFinite(Number(native)) || Number(native) < 0) {
+        fail("KLAVIYO_PD_STATISTIC_INVALID", "PD statistic is malformed");
+      }
+      value = Number(native);
+    }
+    raw_metrics[metric] = value;
+    metric_support[metric] = value === null ? "unknown" : "supported";
+    observation_state[metric] = !source ? "not_requested" : value === null ? "absent" : value === 0 ? "zero" : "present";
+  }
+  return Object.freeze({raw_metrics: Object.freeze(raw_metrics), metric_support: Object.freeze(metric_support),
+    observation_state: Object.freeze(observation_state), conversion_metric_name: conversionMetricName,
+    metric_sources: sources, spend_state: "open_no_calculation"});
+}
+
+export async function runKlaviyoPdReportingFamilies({discoverMetrics, fetchValues}) {
+  if (typeof discoverMetrics !== "function" || typeof fetchValues !== "function") {
+    fail("KLAVIYO_REPORTING_FAMILY_INVALID", "PD families must be functions");
+  }
+  const completed = [], reports = [];
+  try {
+    const metrics = await discoverMetrics();
+    completed.push("metrics");
+    for (const conversionMetricName of KLAVIYO_PD_CONVERSION_METRICS) {
+      const selected = metrics.selected[conversionMetricName];
+      for (const kind of ["campaign", "flow"]) {
+        const family = `${kind}:${conversionMetricName}`;
+        if (selected.state !== "present") {
+          reports.push(Object.freeze({source: kind, conversion_metric_name: conversionMetricName,
+            conversion_metric_id: null, observation: "account_configuration_missing", rows: Object.freeze([]),
+            pd_metric_rows: Object.freeze([]), page_count: 0}));
+          continue;
+        }
+        const report = await fetchValues({kind, conversionMetricName, conversionMetricId: selected.metric_id});
+        reports.push(Object.freeze({...report, source: kind, conversion_metric_name: conversionMetricName,
+          conversion_metric_id: selected.metric_id}));
+        completed.push(family);
+      }
+    }
+    const complete = reports.every(report => report.observation !== "account_configuration_missing");
+    return Object.freeze({status: complete ? "completed" : "configuration_missing", complete,
+      publishable: false, completed_families: Object.freeze(completed),
+      results: Object.freeze({metrics, reports: Object.freeze(reports)}), error: null});
+  } catch (error) {
+    if (quotaBoundaryControl(error)) throw error;
+    const code = /^KLAVIYO_[A-Z0-9_]{1,80}$/.test(error?.code ?? "") ? error.code : "KLAVIYO_REPORTING_FAMILY_FAILED";
+    return Object.freeze({status: "failed", complete: false, publishable: false,
+      completed_families: Object.freeze(completed), results: null,
+      error: Object.freeze({code, message: "Klaviyo PD reporting family failed"})});
+  }
 }
 
 export function buildKlaviyoOrderedProductEventsRequest({

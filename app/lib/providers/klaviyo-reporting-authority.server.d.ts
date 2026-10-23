@@ -9,6 +9,10 @@ export function createKlaviyoReportingAuthorityRuntime(input?: {
   credentialAuthority?: any;
   config?: any;
 }): {
+  readPdEvidenceSnapshot(input: {
+    installationAuthority: any;
+    businessDate?: string | null;
+  }): Promise<any>;
   readDailyEvidenceSnapshot(input: {
     installationAuthority: any;
     businessDate?: string | null;

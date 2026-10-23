@@ -94,6 +94,67 @@ function runtime({fetchFn, connected = connection, lifecycle = null, now = () =>
   });
 }
 
+test("PD authority discovers exact metrics, retains whole rows and exhausts per-metric pagination", async () => {
+  const calls = [];
+  const api = runtime({fetchFn: async (url, options) => {
+    const parsed = new URL(url);
+    if (parsed.pathname === "/api/metrics") {
+      calls.push("metrics");
+      return response(200, {data: [metric("p", "Placed Order"), metric("a", "Added to Cart"), metric("c", "Checkout Started")]});
+    }
+    const attrs = JSON.parse(options.body).data.attributes;
+    const kind = parsed.pathname.includes("campaign") ? "campaign" : "flow";
+    calls.push(`${kind}:${attrs.conversion_metric_id}:${parsed.searchParams.get("page_cursor") ?? "first"}`);
+    const hasNext = kind === "campaign" && attrs.conversion_metric_id === "a" && !parsed.searchParams.has("page_cursor");
+    return response(200, {data: {attributes: {results: [reportRow(kind, "1")]}},
+      ...(hasNext ? {links: {next: "https://a.klaviyo.com/api/campaign-values-reports?page_cursor=second"}} : {})});
+  }});
+  const result = await api.readPdEvidenceSnapshot({installationAuthority, businessDate: "2026-10-17"});
+  assert.equal(result.status, "completed");
+  assert.equal(result.complete, true);
+  assert.equal(result.publishable, false);
+  assert.equal(calls.length, 8);
+  assert.equal(result.results.reports.length, 6);
+  const cart = result.results.reports.find(r => r.source === "campaign" && r.conversion_metric_name === "Added to Cart");
+  assert.equal(cart.page_count, 2);
+  assert.deepEqual(cart.rows, [reportRow("campaign", "1"), reportRow("campaign", "1")]);
+  assert.deepEqual(cart.pd_metric_rows.map(r => r.source_row_index), [0, 1]);
+  assert.equal(cart.pd_metric_rows[0].raw_metrics.add_to_cart, 1);
+  assert.equal(cart.pd_metric_rows[0].raw_metrics.purchase, null);
+  assert.deepEqual(cart.evidence.request_body.data.attributes.statistics, ["conversions", "conversion_value"]);
+  assert.doesNotMatch(JSON.stringify(result), /access-token|refresh_token/);
+});
+
+test("PD missing metric never sends a guessed conversion ID or silently reports zero", async () => {
+  let calls = 0;
+  const api = runtime({fetchFn: async url => {
+    calls++;
+    if (new URL(url).pathname === "/api/metrics") return response(200, {data: [metric("p", "Placed Order")]});
+    return response(200, {data: {attributes: {results: []}}});
+  }});
+  const result = await api.readPdEvidenceSnapshot({installationAuthority, businessDate: "2026-10-17"});
+  assert.equal(calls, 3);
+  assert.equal(result.status, "configuration_missing");
+  assert.equal(result.publishable, false);
+  assert.equal(result.results.reports.filter(r => r.observation === "account_configuration_missing").length, 4);
+  assert.equal(result.results.reports[0].observation, "not_observed_in_this_execution");
+});
+
+test("PD provider error stops remaining metric reports with no staged results or retry", async () => {
+  let calls = 0;
+  const api = runtime({fetchFn: async () => {
+    calls++;
+    if (calls === 1) return response(200, {data: [metric("p", "Placed Order"), metric("a", "Added to Cart"), metric("c", "Checkout Started")]});
+    if (calls === 3) return response(403, {errors: [{code: "permission_denied"}]});
+    return response(200, {data: {attributes: {results: []}}});
+  }});
+  const result = await api.readPdEvidenceSnapshot({installationAuthority, businessDate: "2026-10-17"});
+  assert.equal(calls, 3);
+  assert.equal(result.status, "failed");
+  assert.equal(result.results, null);
+  assert.equal(result.error.code, "KLAVIYO_PERMISSION_DENIED");
+});
+
 test("Klaviyo authority binds one account, uses its timezone, exhausts opaque cursors and publishes only a complete snapshot", async () => {
   const calls = [];
   const api = runtime({

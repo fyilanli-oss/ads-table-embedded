@@ -55,6 +55,30 @@ const json = (payload, status = 200, headers = {}) => new Response(
   {status, headers: {"content-type": "application/json", ...headers}},
 );
 
+test("PMax product family uses the canonical authority transport without adding an Asset Group link", async () => {
+  const requests = [];
+  const row = {customer: {id: "200"}, campaign: {id: "201", advertisingChannelType: "PERFORMANCE_MAX"},
+    segments: {date: "2026-10-01", productItemId: "native-item"}, metrics: {clicks: "0"}};
+  const runtime = createGoogleReportingAuthorityRuntime({database: database(), environment,
+    tokenVault: {async loadProviderTokenSet() {return {refresh_token: "synthetic-refresh"};}},
+    fetchFn: async (url, options) => {
+      requests.push({url: new URL(url), body: JSON.parse(new URL(url).hostname === "googleads.googleapis.com" ? options.body : "{}")});
+      if (new URL(url).hostname === "oauth2.googleapis.com") return json({access_token: "synthetic-access", expires_in: 3600, token_type: "Bearer"});
+      return json({results: [row]}, 200, {"request-id": "synthetic-pmax-request"});
+    }});
+  const result = await runtime.readEvidencePage({installationAuthority, queryFamily: "pmax_product_daily",
+    dateWindow: {start: "2026-10-01", end: "2026-10-01"}});
+  assert.equal(requests.length, 2);
+  assert.equal(requests[1].url.pathname, "/v25/customers/200/googleAds:search");
+  assert.match(requests[1].body.query, /advertising_channel_type = 'PERFORMANCE_MAX'/);
+  assert.doesNotMatch(requests[1].body.query, /ad_group|asset_group/);
+  assert.deepEqual(result.page.rows, [row]);
+  assert.equal(result.authority.reporting_account_id, "200");
+  assert.equal(result.page.provider_request_id, "synthetic-pmax-request");
+  assert.equal(Object.hasOwn(result.page, "pd_metric_rows"), false);
+  assert.equal(Object.hasOwn(result, "source_links"), false);
+});
+
 test("Google reporting refreshes once and reuses one token for canonical advertiser pages", async () => {
   const requests = [];
   const vaultLoads = [];

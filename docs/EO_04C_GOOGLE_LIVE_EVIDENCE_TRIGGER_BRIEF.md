@@ -2,6 +2,8 @@
 
 ## Durum ve yetki
 
+**23 Ekim repository sorgu kapsam düzeltmesi:** Aşağıdaki mevcut altı ailenin listesi büyütülmez. `shopping_product_daily` artık yalnız SHOPPING filtrelidir; ayrı `pmax_product_daily` eski tetikleyicide çalıştırılmaz. Bu nedenle tetikleyicinin `complete` durumu yalnız listelenen ailelerin tam okunduğunu belirtir, PMax ürün performansı veya ürün–Asset Group bağlantısının tamamlandığını değil. Yeni canlı yürütme, dağıtım veya arayüz değişikliği onaylanmamıştır.
+
 Aşağıdaki kayıtlar 16 Ekim 2026 tarihsel yürütme/kabul sırasıdır. Bugünkü durum Execution Plan'dadır; yeni canlı istek veya dağıtım izni verilmez.
 
 - Paket: `A6-EO-04-C`

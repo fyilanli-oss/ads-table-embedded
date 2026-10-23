@@ -1,5 +1,13 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## Google ürün sorgusu ayrımı — 23 Ekim 2026, dar repository düzeltmesi
+
+- Ürün sahibi Shopping/PMax ortak ürün sorgusunun ayrılmasını açıkça onayladı. Başlangıç main `6947b200ed6bd05441405751b7848b2a84151ee7` (#172). Bu dilim 09/10 kaynak sorgusu düzeltmesidir; yeni paket veya Channel seviyesi kararı değildir.
+- `shopping_product_daily`, mevcut bütün ürün alanları/metrikleri ve `ad_group.id/name` ile yalnız SHOPPING ister. Yeni `pmax_product_daily`, aynı ürün alanlarını `shopping_performance_view` üzerinden yalnız PERFORMANCE_MAX için, Ad Group veya Asset Group alanı olmadan ister. Campaign kimliği kaynak bağlamıdır; PMax CPD Channel Campaign yapılmaz, mevcut Asset Group hedefi değişmez.
+- Yeni PMax ailesi genel mevcut reporting okuma sınırında hazırlanır; snapshot/zamanlayıcı/canlı tetikleyici ailesi eklenmez. Eski tetikleyicideki `shopping_product_daily` artık yalnız Shopping ürünlerini kapsar; onun `complete` sonucu PMax ürün kanıtının tamamlandığı anlamına gelmez. Genel cart data, Search/Shopping native bağlantıları, ham satır güvenliği ve 11 duraklaması korunur.
+- 10/11 ürün–Asset Group bağlantısı açık kalır; resmî destek başvurusunun alındığı ürün sahibi tarafından doğrulanmıştır, teknik yanıt beklenir. Destek kabulü teknik çözüm veya sağlayıcı alan kabulü sayılmaz. Tarihsel kayıt/çözümleyici, Shopify kimliği, rol/Channel toplamı, Dataset/FX/formül, canlı çağrı, DB, deploy ve UI uygulanmaz.
+- Resmî PMax raporlama ve ürün raporlama rehberleri 23 Ekim'de yeniden okundu: PMax standart Ad Group kullanmaz; ürün performansının kaynağı shopping performance view'dır. Testler exact alan/filter ayrımı, kayıpsız ham satır/sorgu izi, boş–sıfır ayrımı, sayfalama ve ilk hatada tekrar yokluğunu denetler; canlı kabul değildir. PR/CI ve ayrı açık merge onayı gerekir.
+
 ## Search/Shopping Channel kararı — 23 Ekim 2026, 12 düzeltmesi
 
 - Ürün sahibi açıkça onayladı: Search ve Shopping **CPD Channel Ad Group**. Search **PD Ad** düzeyinde kalır; iki kayıt ailesi aynı üst grup kimliğiyle ilişkili fakat bağımsızdır. Önceki Search Channel Ad hedefi bu kararla değiştirilmiştir. PMax mevcut hedefi bu işte değiştirilmez; sırası geldiğinde ürün sahibiyle yeniden teyitleşme zorunludur, 11 tarihsel çalışması duraklatılmış kalır.

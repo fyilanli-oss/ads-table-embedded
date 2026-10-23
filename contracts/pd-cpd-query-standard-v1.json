@@ -1,6 +1,6 @@
 {
   "contract_id": "pd-cpd-query-standard-v1",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "checked_at": "2026-10-23",
   "inventory_item": "01",
   "status": "accepted_product_decisions_implementation_partial",
@@ -71,6 +71,15 @@
     "google_ads": {
       "09": "scoped_shopping_cart_query_and_complete_snapshot_native_ad_group_reference_repository_implemented_live_pending",
       "10": "v25_shopping_performance_view_has_no_asset_group_segment_direct_link_not_implemented",
+      "product_performance_query_split": {
+        "shopping": "shopping_product_daily_shopping_only_with_ad_group",
+        "retail_pmax": "pmax_product_daily_pmax_only_without_ad_group_or_asset_group",
+        "native_product_fields_and_metrics_preserved": true,
+        "cpd_channel_target_changed": false,
+        "product_asset_group_link_complete": false,
+        "new_family_added_to_live_trigger": false,
+        "live_acceptance": "pending"
+      },
       "11": "historical_pmax_listing_work_paused_no_capture_persistence_or_resolver_integration_started",
       "12": "owner_changed_search_cpd_channel_to_ad_group_pd_ad_preserved_native_reference_repository_implemented_live_pending",
       "new_google_query_in_this_slice": true,

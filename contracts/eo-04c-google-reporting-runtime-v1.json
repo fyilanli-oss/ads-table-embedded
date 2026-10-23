@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.7.0",
+  "schema_version": "1.8.0",
   "contract_id": "eo-04c-google-reporting-runtime-v1",
   "accepted_query_target_contract": "contracts/pd-cpd-query-standard-v1.json",
   "package_id": "A6-EO-04-C",
@@ -26,6 +26,31 @@
     "existing_live_trigger_family_list_changed": false,
     "live_query_acceptance": "pending"
   },
+  "product_performance_query_split": {
+    "authorized_at": "2026-10-23",
+    "status": "repository_query_split_live_acceptance_pending",
+    "shopping_family": "shopping_product_daily",
+    "shopping_filter": "campaign.advertising_channel_type = 'SHOPPING'",
+    "shopping_native_group_fields": ["ad_group.id", "ad_group.name"],
+    "pmax_family": "pmax_product_daily",
+    "pmax_filter": "campaign.advertising_channel_type = 'PERFORMANCE_MAX'",
+    "shared_source": "shopping_performance_view",
+    "product_fields_and_metrics_preserved": true,
+    "pmax_ad_group_fields_requested": false,
+    "pmax_asset_group_fields_or_assignment_added": false,
+    "campaign_context_is_cpd_channel_decision": false,
+    "product_to_asset_group_link": "unresolved_official_support_reply_pending",
+    "old_live_trigger_product_scope": "shopping_only_new_pmax_family_not_scheduled",
+    "new_snapshot_or_scheduler_entrypoint": false,
+    "generic_cart_query_changed": false,
+    "historical_11_reopened": false,
+    "live_call_or_deployment_authorized": false,
+    "official_sources_checked_at": "2026-10-23",
+    "official_sources": [
+      "https://developers.google.com/google-ads/api/performance-max/reporting",
+      "https://developers.google.com/google-ads/api/docs/shopping-ads/reporting"
+    ]
+  },
   "shopping_source_reference": {
     "inventory_item": "09",
     "status": "repository_implemented_native_reference_only_live_acceptance_pending",
@@ -45,7 +70,7 @@
     "row_indexes": "local_to_completely_collected_family_not_persistent_dataset_keys",
     "duplicate_pd_leaf": "ambiguous_no_selected_row",
     "missing_reference": "preserve_native_row_and_context_no_selected_pd_row",
-    "pmax_rows_in_existing_product_family": "preserved_unresolved_no_asset_group_assignment",
+    "pmax_rows_in_existing_product_family": "no_longer_requested_defensive_raw_row_preservation_unchanged",
     "metric_copy_aggregation_or_cost_transfer": false,
     "shopify_identity_or_new_role_resolution": false,
     "publishable": false,

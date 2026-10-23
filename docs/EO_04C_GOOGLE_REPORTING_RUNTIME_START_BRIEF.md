@@ -2,6 +2,14 @@
 
 ## Durum ve yetki
 
+### Son düzeltme — Shopping/PMax ürün sorguları ayrıldı, 23 Ekim 2026
+
+Ürün sahibi yalnız repository sorgu ayrımını onayladı. `shopping_product_daily` artık yalnız SHOPPING için mevcut ürün alanlarının tamamını ve `ad_group.id/name` ister. Yeni `pmax_product_daily` aynı ürün alanları/metriklerini yalnız PERFORMANCE_MAX için `shopping_performance_view` üzerinden ister; Ad Group alanı ve kanıtlanmamış Asset Group bağlantısı eklemez. PMax ürünündeki Campaign kimliği kaynak bağlamıdır, CPD Channel seviyesinin Campaign'e değiştirilmesi değildir.
+
+Yeni PMax ailesi eski canlı tetikleyiciye veya Shopping snapshot'ına eklenmez; yeni snapshot/zamanlayıcı da yoktur. Eski tetikleyicinin ürün performansı artık yalnız Shopping kapsamındadır; tamamlanması PMax ürün kanıtının tamlığı değildir. Generic cart, Sales Role, kaynak bağlayıcı ve tarihsel çözümleyici davranışları değiştirilmez. Aşağıdaki eski ortak ürün ailesinden PMax satırı gelebileceği notu önceki sorgu şeklini anlatır; beklenmeyen ham satırları koruyan savunma kaldırılmaz.
+
+10/11 ürün–Asset Group bağlantısı açık ve 11 duraklatılmış kalır. Google destek talebinin alındığı kullanıcı tarafından doğrulanmıştır; teknik cevap henüz yoktur. [PMax raporlama](https://developers.google.com/google-ads/api/performance-max/reporting) ve [ürün raporlama](https://developers.google.com/google-ads/api/docs/shopping-ads/reporting), 23 Ekim 2026 kontrolü. Sentetik testler gerçek sorgu kabulünü kanıtlamaz; yeni canlı çağrı/deploy/DB/UI yoktur.
+
 ### Son ürün sahibi kararı — Search/Shopping CPD Channel Ad Group, 23 Ekim 2026
 
 Search **PD Ad** kalır; Search ve Shopping **CPD Channel Ad Group** olarak onaylandı. Önceki Search CPD Ad hedefi değiştirilmiştir; aşağıdaki ilk 09 incelemesinin açık Ad bağlantısı notu o ara kararı anlatır. PMax mevcut hedefi bu değişiklikte uygulanmaz veya değiştirilmez; sıradaki PMax işinden önce ürün sahibiyle yeniden teyit zorunludur, tarihsel 11 çalışması açılmaz.

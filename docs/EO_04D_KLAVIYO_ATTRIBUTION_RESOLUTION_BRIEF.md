@@ -23,9 +23,11 @@ zamanı, rapor toplamı veya yakın tarihli mesaj tahmin için kullanılamaz.
 - Message kataloğunda tek `send_channel` eşleşirse Medium kesinleşir.
 - Katalog satırı yoksa veya aynı Message birden fazla Medium taşıyorsa Channel
   kaybedilmez; yalnız ad ve/veya Medium çözümlenmemiş (`unresolved`) kalır.
-- Campaign içerik ürün seti ayrıca ve kesin kanıtlanmadıkça Sales Role
-  `Assisted` olur. Kesin ürün seti geldiğinde satılan ürün içerideyse
-  `Advertised`, dışarıdaysa `Cross-sell` olarak yeniden çözülebilir.
+- 23 Ekim 2026 düzeltmesi: kesin içerik ürün seti bile etkileşime konu ürünü
+  kanıtlamaz. Satılan ürün setin içinde veya dışında olsa da yalnız bu kanıtla
+  Sales Role `Assisted` olur; `Advertised` / `Cross-sell` üretilmez.
+- Ürün etkileşiminin aynı satışa doğrulanmış bağlantısı gelecekte ayrıca
+  tasarlanmalıdır. Bu düzeltme yeni bir sağlayıcı alanı veya kanıt yolu eklemez.
 
 Örnek: `Sonbahar Takıları` Message'ından attribution alan `Kolye` satışı,
 içerikteki ürün seti okunmamışsa `Channel = Sonbahar Takıları`,

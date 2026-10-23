@@ -35,9 +35,10 @@ test("known Message remains exact when catalog, Medium or Variation is unresolve
 test("Sales Role requires the accepted evidence level", () => {
   assert.equal(contract.sales_role.flow_message_attributed, "Triggered");
   assert.equal(contract.sales_role.campaign_content_unavailable, "Assisted");
-  assert.equal(contract.sales_role.campaign_exact_content_contains_sold_product, "Advertised");
-  assert.equal(contract.sales_role.campaign_exact_content_excludes_sold_product, "Cross-sell");
-  assert.equal(contract.sales_role.advertised_or_cross_sell_without_exact_content_evidence, false);
+  assert.equal(contract.sales_role.campaign_exact_content_contains_sold_product, "Assisted");
+  assert.equal(contract.sales_role.campaign_exact_content_excludes_sold_product, "Assisted");
+  assert.equal(contract.sales_role.content_product_set_proves_interaction_product, false);
+  assert.equal(contract.sales_role.advertised_or_cross_sell_from_content_membership, false);
 });
 
 test("resolver is repository-only and preserves fail-closed publication", () => {

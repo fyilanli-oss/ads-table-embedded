@@ -6,7 +6,9 @@
 
 Bu kitap EO-04'ün kabul edildiği günkü kapsamını korur. Sonraki A6-TECH-01
 kapanışı ve aktif A6-DOCS-01 durumu `docs/EXECUTION_PLAN.md` içindedir.
-Senaryo ürünleri, tarihler, kimlikler ve beklenen sonuçlar değiştirilmemiştir.
+23 Ekim 2026 ürün sahibi kararıyla Klaviyo içerik-kümesi Sales Role çıkarımı
+düzeltildi. KLAVIYO-01/02/03 sonuçları artık `Assisted` olur; ürünler,
+kimlikler, Message/Medium/Variation ve diğer sağlayıcı senaryoları korunur.
 
 ## 1. İş amacı ve gerçek çıktı
 
@@ -331,11 +333,19 @@ kopyalanamaz.
 
 ## 7. Klaviyo standardize senaryoları
 
+23 Ekim düzeltmesi: Message içerik kümesi, satışla ilişkili ürün etkileşimi
+kanıtı değildir. Küme içinde veya dışında olmak `Advertised` / `Cross-sell`
+üretmez. Geçerli Campaign Message bağlantısıyla yalnız içerik biliniyorsa
+`Assisted` kullanılır. A/B/C içerikli mesajdan A/B/C/D satışı bu koşulda dört
+`Assisted` satış olarak korunur. Ürün etkileşimi kanıtını toplama/eşleme yolu
+bu düzeltmede eklenmez. Flow `Triggered` kalır. Ortak sözlüğün önceki küme
+üyeliği açıklaması Klaviyo'ya bu ayrım olmadan uygulanamaz.
+
 | ID | Message / alt kırılım | Satılan ürün | Beklenen sonuç |
 | --- | --- | --- | --- |
-| KLAVIYO-01 | Campaign Message `Sonbahar Takıları`; Medium `Email`; tek Variation katalogda bulunsa da olay Variation vermez | kesin içerikte İnci Küpe | Message kesin Channel; Medium kesin; Variation çözümlenmemiş; `Advertised` |
-| KLAVIYO-02 | Aynı Campaign Message altında A/B veya çoklu Variation | kesin içerikte İnci Kolye | Message kesin Channel; Variation çözümlenmemiş; `Advertised` |
-| KLAVIYO-03 | Campaign Message kesin içerik kümesi yalnız İnci Küpe | İnci Kolye | Message kesin Channel; `Cross-sell` |
+| KLAVIYO-01 | Campaign Message `Sonbahar Takıları`; Medium `Email`; tek Variation katalogda bulunsa da olay Variation vermez | kesin içerikte İnci Küpe | Message kesin Channel; Medium kesin; Variation çözümlenmemiş; `Assisted` |
+| KLAVIYO-02 | Aynı Campaign Message altında A/B veya çoklu Variation | kesin içerikte İnci Kolye | Message kesin Channel; Variation çözümlenmemiş; `Assisted` |
+| KLAVIYO-03 | Campaign Message kesin içerik kümesi yalnız İnci Küpe | İnci Kolye | Message kesin Channel; `Assisted` |
 | KLAVIYO-04 | Campaign Message biliniyor, içerik ürün kümesi elde edilemiyor | İnci Kolye | Message kesin Channel; `Assisted` |
 | KLAVIYO-05 | Flow Message `Sepet Hatırlatma`; Medium `SMS`; kesin Flow Variation attribution | İnci Küpe | Üst Flow Message Channel; Variation kesin; `Triggered` |
 | KLAVIYO-06 | Message attribution eksik, birden fazla Message veya Campaign/Flow çatışması | İnci Küpe | Satış bir kez korunur; `Unclassified Channel`; `Unclassified` |
@@ -349,7 +359,7 @@ kopyalanamaz.
 - **Medium / Variation:** Medium `Email`; Variation `Küpe Görseli`.
 - **Reklamda gösterilen ürün:** Kesin Message içerik kümesi `[İnci Küpe]`.
 - **Satılan ürün:** `İnci Kolye`.
-- **Sales Role:** `Cross-sell`.
+- **Sales Role:** `Assisted`; içerik kümesi ürün etkileşimini kanıtlamaz.
 - **Audience sonucu:** kanonik AdsTable satırına alınmaz; kullanıcıya gösterilmez; Channel olmaz; satışı bölmez veya ayrı raporlama grubu üretmez.
 - **Yasak çıkarım:** Audience adı Channel, Campaign veya Variation yerine geçirilemez. Aynı Campaign altındaki başka bir Audience'ın Message içeriği bu satışa karıştırılamaz.
 
@@ -363,10 +373,10 @@ kopyalanamaz.
 - **Satılan ürün:** `İnci Küpe`.
 - **Zaman kanıtı:** Klaviyo hesabının saat diliminde kesin iş günü olayı ve Message kataloğu kanıtı.
 - **Beklenen Channel:** `Sonbahar Takıları`; tür `Campaign Message`; çözüm durumu `exact`.
-- **Beklenen Sales Role:** `Advertised`.
+- **Beklenen Sales Role:** `Assisted`.
 - **Medium / Variation:** Medium `Email` kesin; Variation `unresolved`.
 - **Maliyet / kayıt davranışı:** Bir Ordered Product olayı bir satış gerçeğidir; EO-04'te sağlayıcı kaynaklı Campaign/ürün maliyeti yoktur.
-- **Neden:** Message ve içerik ürünü kesindir; resmî olay ilişkisi Campaign Variation'ı kanıtlamaz.
+- **Neden:** Message ve içerik ürünü kesindir; içerik, satışla ilişkili ürün etkileşimini kanıtlamaz. Olay Campaign Variation'ı da kanıtlamaz.
 - **Yasak çıkarım:** Katalogda tek Variation bulunması olayın kaynak olarak gösterdiği Variation kanıtı sayılamaz.
 
 ### KLAVIYO-02 — Campaign Message kesin, birden fazla Variation var
@@ -379,10 +389,10 @@ kopyalanamaz.
 - **Satılan ürün:** `İnci Kolye`.
 - **Zaman kanıtı:** Klaviyo hesabının saat diliminde kesin iş günü olayı ve Message kataloğu kanıtı.
 - **Beklenen Channel:** `Sonbahar Takıları`; tür `Campaign Message`; çözüm durumu `exact`.
-- **Beklenen Sales Role:** `Advertised`.
+- **Beklenen Sales Role:** `Assisted`.
 - **Medium / Variation:** Medium `Email` kesin; Variation `unresolved`; Variation listesi UI Channel adına eklenmez.
 - **Maliyet / kayıt davranışı:** Bir Ordered Product olayı bir satış gerçeğidir; EO-04'te tahmini harcama dağıtımı yoktur.
-- **Neden:** Message kesindir ve satılan ürün Message düzeyinde kesin içerik kümesindedir; olay A veya B Variation'ı kanıtlamaz.
+- **Neden:** Message kesindir; içerik kümesi üyeliği ürün etkileşimini, olay da A/B Variation'ı kanıtlamaz.
 - **Yasak çıkarım:** Variation A/B seçilemez veya çoklu Variation `Unclassified Channel` üretemez.
 
 ### KLAVIYO-03 — Campaign Message kesin, içerik dışı ürün satılıyor
@@ -395,10 +405,10 @@ kopyalanamaz.
 - **Satılan ürün:** `İnci Kolye`; kesin içerik kümesinin dışındadır.
 - **Zaman kanıtı:** Klaviyo hesabının saat diliminde kesin iş günü olayı ve Message kanıtı.
 - **Beklenen Channel:** `Sonbahar Takıları`; tür `Campaign Message`; çözüm durumu `exact`.
-- **Beklenen Sales Role:** `Cross-sell`.
+- **Beklenen Sales Role:** `Assisted`.
 - **Medium / Variation:** Medium `Email` kesin; Variation olay tarafından verilmediği için `unresolved`.
 - **Maliyet / kayıt davranışı:** Estimated Email Spend kolyeye taşınmaz; maliyet dağıtımı EO-05'e aittir.
-- **Neden:** Satılan ürün kesin Message içerik kümesinin dışındadır.
+- **Neden:** Satılan ürün Message içerik kümesinin dışındadır; bu tek başına satışla ilişkili ürün etkileşimini veya Cross-sell rolünü kanıtlamaz.
 - **Yasak çıkarım:** Satılan kolye Channel veya Variation seçemez.
 
 ### KLAVIYO-04 — Campaign Message kesin, içerik ürün kümesi yok

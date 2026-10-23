@@ -331,7 +331,9 @@ export function classifyKlaviyoCampaignSalesRole({
   if (!Array.isArray(advertisedProductIds) || advertisedProductIds.length === 0) {
     fail("KLAVIYO_ADVERTISED_PRODUCT_EVIDENCE_INVALID", "Exact content evidence requires products");
   }
-  return advertisedProductIds.includes(soldProductId) ? "Advertised" : "Cross-sell";
+  // Message content is not evidence of the product involved in the attributed interaction.
+  // Do not infer Advertised/Cross-sell from membership (or non-membership) alone.
+  return "Assisted";
 }
 
 export function resolveKlaviyoMessageChannel({

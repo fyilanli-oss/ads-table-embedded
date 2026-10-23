@@ -172,17 +172,17 @@ test("message-known multi-variation sales do not create Unclassified Channel", (
   assert.equal(resolved.sales_role, "Assisted");
 });
 
-test("Campaign Sales Role uses only verified content product evidence", () => {
+test("Campaign content membership alone cannot prove Advertised or Cross-sell", () => {
   assert.equal(classifyKlaviyoCampaignSalesRole({
     soldProductId: "necklace",
     advertisedProductIds: ["necklace"],
     contentEvidence: "exact_product_set",
-  }), "Advertised");
+  }), "Assisted");
   assert.equal(classifyKlaviyoCampaignSalesRole({
     soldProductId: "necklace",
     advertisedProductIds: ["earrings"],
     contentEvidence: "exact_product_set",
-  }), "Cross-sell");
+  }), "Assisted");
   assert.equal(classifyKlaviyoCampaignSalesRole({
     soldProductId: "necklace",
     contentEvidence: "unavailable",
@@ -191,6 +191,24 @@ test("Campaign Sales Role uses only verified content product evidence", () => {
     soldProductId: "necklace",
     contentEvidence: "contradictory",
   }), "Unclassified");
+});
+
+test("A B C D sales remain Assisted when only message content A B C is known", () => {
+  const content = {advertisedProductIds: ["A", "B", "C"], contentEvidence: "exact_product_set"};
+  for (const soldProductId of ["A", "B", "C", "D"]) {
+    assert.equal(classifyKlaviyoCampaignSalesRole({soldProductId, ...content}), "Assisted");
+    const resolved = resolveKlaviyoMessageChannel({
+      source: "campaign",
+      messageId: "campaign-message-1",
+      channels: [normalizeKlaviyoReportRow("campaign", reportRow("campaign"))],
+      campaignProductEvidence: {soldProductId, ...content},
+    });
+    assert.equal(resolved.channel_id, "campaign-message-1");
+    assert.equal(resolved.sales_role, "Assisted");
+  }
+  assert.throws(() => classifyKlaviyoCampaignSalesRole({
+    soldProductId: "A", contentEvidence: "exact_product_set", advertisedProductIds: [],
+  }), error => error.code === "KLAVIYO_ADVERTISED_PRODUCT_EVIDENCE_INVALID");
 });
 
 test("Unclassified Channel is reserved for missing or conflicting Message evidence", () => {

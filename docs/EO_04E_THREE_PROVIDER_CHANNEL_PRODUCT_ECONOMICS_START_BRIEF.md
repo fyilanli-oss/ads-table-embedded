@@ -126,7 +126,10 @@ Klaviyo `2026-10-15` GA sözleşmesinde Campaign Message raporlamanın zorunlu k
 
 ### Campaign Sales Role
 
-- Kesin tek ürün içeriği veya kesin ürün listesi varsa: `Advertised` / `Cross-sell`.
+- 23 Ekim 2026 düzeltmesi: kesin tek ürün içeriği veya ürün listesi,
+  etkileşime konu ürünü tek başına kanıtlamaz. Yalnız bu bilgi varsa `Assisted`.
+- İçerik kümesi üyeliğinden `Advertised` / `Cross-sell` üretilmez;
+  aynı satışa bağlı doğrulanmış ürün etkileşimi yolu bu düzeltmede eklenmez.
 - Genel mağaza, kategori, dinamik/geniş içerik veya tekil ürün kanıtı olmayan sağlayıcının ilişkilendirdiği satış: `Assisted`.
 - Gerçek kanıt çelişkisi: `Unclassified`.
 - Pozitif adet ve açık sıfır değer: mevcut Sales Role + `Zero Value`.

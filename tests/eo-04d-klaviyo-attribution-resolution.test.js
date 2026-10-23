@@ -166,7 +166,7 @@ test("missing or conflicting Message attribution preserves one sale under Unclas
   }
 });
 
-test("verified campaign content may refine Assisted into Advertised or Cross-sell", () => {
+test("verified campaign content does not refine Assisted into Advertised or Cross-sell", () => {
   const base = {
     campaignChannels: [channel("campaign")],
     evidence: {
@@ -180,7 +180,7 @@ test("verified campaign content may refine Assisted into Advertised or Cross-sel
     ...base,
     events: [event("event-1", [attribution({campaign_message_id: "campaign-message-1"})], "necklace")],
   });
-  assert.equal(crossSell.rows[0].attribution_resolution.sales_role, "Cross-sell");
+  assert.equal(crossSell.rows[0].attribution_resolution.sales_role, "Assisted");
 
   const advertised = resolve({
     ...base,
@@ -192,7 +192,37 @@ test("verified campaign content may refine Assisted into Advertised or Cross-sel
     },
     events: [event("event-2", [attribution({campaign_message_id: "campaign-message-1"})], "necklace")],
   });
-  assert.equal(advertised.rows[0].attribution_resolution.sales_role, "Advertised");
+  assert.equal(advertised.rows[0].attribution_resolution.sales_role, "Assisted");
+});
+
+test("message-only A B C D sales preserve all facts and exact Channel without inventing a clicked product", () => {
+  const events = ["A", "B", "C", "D"].map(product => event(product, [
+    attribution({campaign_message_id: "campaign-message-1"}),
+  ], product));
+  const result = resolve({
+    campaignChannels: [channel("campaign")], events,
+    evidence: {"campaign-message-1": {
+      contentEvidence: "exact_product_set", advertisedProductIds: ["A", "B", "C"],
+    }},
+  });
+  assert.equal(result.rows.length, 4);
+  for (let i = 0; i < 4; i++) {
+    assert.equal(result.rows[i].provider_event_id, events[i].provider_event_id);
+    assert.deepEqual(result.rows[i].provider_product_properties, events[i].provider_product_properties);
+    assert.equal(result.rows[i].attribution_resolution.channel_id, "campaign-message-1");
+    assert.equal(result.rows[i].attribution_resolution.sales_role, "Assisted");
+  }
+});
+
+test("contradictory content stays Unclassified and malformed exact content still fails closed", () => {
+  const events = [event("A", [attribution({campaign_message_id: "campaign-message-1"})], "A")];
+  const base = {campaignChannels: [channel("campaign")], events};
+  assert.equal(resolve({...base, evidence: {"campaign-message-1": {
+    contentEvidence: "contradictory",
+  }}}).rows[0].attribution_resolution.sales_role, "Unclassified");
+  assert.throws(() => resolve({...base, evidence: {"campaign-message-1": {
+    contentEvidence: "exact_product_set", advertisedProductIds: [],
+  }}}), error => error.code === "KLAVIYO_ADVERTISED_PRODUCT_EVIDENCE_INVALID");
 });
 
 test("Ordered Product is the only sale fact and duplicate event IDs cannot double count", () => {

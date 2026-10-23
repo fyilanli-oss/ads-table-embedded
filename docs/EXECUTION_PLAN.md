@@ -1,5 +1,27 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## Klaviyo Sales Role düzeltmesi — 23 Ekim 2026
+
+Ürün sahibi, 15. madde kapsamında yalnız repository düzeltmesini onayladı.
+Campaign Message'ın içerik ürün kümesi, etkileşime konu ürünü kanıtlamaz.
+Kümenin içinde veya dışında satılan ürün bu kanıtla `Advertised` / `Cross-sell`
+yapılmaz; kesin Message bağlantısı varsa `Assisted` kalır. A/B/C içerikli
+mesajdan A/B/C/D satıldığında, ürün etkileşimi ayrıca doğrulanmadıkça dört satış
+da `Assisted` olur. Aynı kümede bulunmak ürün etkileşiminin yerine geçmez.
+
+İki Klaviyo sınıflandırıcısı, ilgili sözleşmeler ve senaryolar birlikte
+düzeltilir. Flow `Triggered`, çelişkili kanıt `Unclassified`, kesin Channel,
+ham ürün satışı ve çift sayım sınırları korunur. Yeni ürün-tıklama API alanı
+veya doğrulanmamış kanıt yolu eklenmez. Meta ve Google rol kuralları değişmez.
+EO-05 sırası, DB, canlı sağlayıcı, secret, UI ve deploy kapıları açılmaz;
+merge ayrıca açık onay gerektirir.
+
+Resmî kaynaklar 23 Ekim 2026'da kontrol edildi:
+[Reporting API](https://developers.klaviyo.com/en/reference/reporting_api_overview),
+[Message conversion tracking](https://help.klaviyo.com/hc/en-us/articles/115005248128).
+Bu kaynaklar mesaj raporlama/attribution kapsamını açıklar; içerik kümesinden
+ürün etkileşimi çıkarmayı doğrulamaz. Bu dar koruma AdsTable ürün kararıdır.
+
 ## Dar Meta ek alan testi — 22 Ekim 2026
 
 Ürün sahibi, mevcut `product_id` sorgusuna yalnız test seçeneğiyle

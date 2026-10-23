@@ -45,10 +45,12 @@
   "sales_role": {
     "flow_message_attributed": "Triggered",
     "campaign_content_unavailable": "Assisted",
-    "campaign_exact_content_contains_sold_product": "Advertised",
-    "campaign_exact_content_excludes_sold_product": "Cross-sell",
+    "campaign_exact_content_contains_sold_product": "Assisted",
+    "campaign_exact_content_excludes_sold_product": "Assisted",
     "contradictory_or_unresolvable": "Unclassified",
-    "advertised_or_cross_sell_without_exact_content_evidence": false
+    "content_product_set_proves_interaction_product": false,
+    "advertised_or_cross_sell_from_content_membership": false,
+    "product_interaction_role_resolution": "deferred_until_verified_sale_linked_product_interaction_evidence"
   },
   "publication": {
     "resolution_runs_after_all_provider_families": true,

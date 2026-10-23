@@ -35,8 +35,10 @@
     "multi_channel_synthetic_bucket": false
   },
   "sales_role": {
-    "campaign_exact_sold_in_content_product_set": "Advertised",
-    "campaign_exact_sold_outside_content_product_set": "Cross-sell",
+    "campaign_exact_sold_in_content_product_set": "Assisted",
+    "campaign_exact_sold_outside_content_product_set": "Assisted",
+    "content_product_set_proves_interaction_product": false,
+    "product_interaction_role_resolution": "deferred_until_verified_sale_linked_product_interaction_evidence",
     "campaign_content_product_set_unavailable": "Assisted",
     "campaign_contradictory_evidence": "Unclassified",
     "flow_attributed_sale": "Triggered",

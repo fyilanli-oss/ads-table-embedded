@@ -141,9 +141,11 @@
         "message_relationship_only": "Triggered_at_flow_message"
       },
       "classification": {
-        "exact_sold_in_advertised_set": "Advertised",
-        "exact_sold_outside_advertised_set": "Cross-sell",
+        "exact_sold_in_content_product_set": "Assisted",
+        "exact_sold_outside_content_product_set": "Assisted",
         "broad_dynamic_general_or_category_content": "Assisted",
+        "content_product_set_proves_interaction_product": false,
+        "product_interaction_role_resolution": "deferred_until_verified_sale_linked_product_interaction_evidence",
         "flow_attributed_product": "Triggered",
         "contradictory_or_ambiguous_evidence": "Unclassified"
       },

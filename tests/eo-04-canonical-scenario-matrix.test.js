@@ -121,6 +121,9 @@ test("Klaviyo Message stays Channel while Medium and Variation remain separate a
   const unknown = scenarios.find(({scenario_id}) => scenario_id === "KLAVIYO-06");
 
   assert.equal(single.expected.channel_type, "Campaign Message");
+  for (const scenario of scenarios.filter(s => /^KLAVIYO-0[1-4]$/.test(s.scenario_id))) {
+    assert.equal(scenario.expected.sales_role, "Assisted");
+  }
   assert.equal(single.expected.medium_state, "Email");
   assert.equal(single.expected.variation_state, "unresolved");
 

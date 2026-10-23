@@ -1,5 +1,13 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## Meta sorgu ve PD metrik uyumu — 23 Ekim 2026, envanter 02 + 03
+
+- Kullanıcı repository uygulamasını onayladı. PR #167 açık merge onayıyla `5b8f1a7acb2974bdb14eaba77f7f4cfb054dbb08` olarak main'e alındı; bu düzeltme o main'den başlar.
+- Standart ürün kırılımında dört converted/promoted quantity/value alanı birlikte istenir; ham satırlar korunur. Test bayrağı artık alanları kapatmaz. Gerçek katalog desteği, ürün maliyeti, Shopify kimliği ve Sales Role kabulü hâlâ sonraki kapılardadır.
+- Dokuz PD metriği Ad ham yanıtından ayrı projeksiyonla eşlenir: dışa giden Click; Shopify web Pixel ATC/Checkout/Purchase adet ve aynı action_type değerleri. Grouped/website eylemler veya attribution pencereleri toplanmaz; eksik değer sıfır/yedek alanla doldurulmaz. Ham sayfalarla projeksiyonun indeks bağı çok sayfalı snapshot'ta korunur.
+- Bağlayıcı ayrıntı `contracts/eo-04b-meta-reporting-runtime-v1.json` ve `docs/EO_04B_META_REPORTING_RUNTIME_START_BRIEF.md`; ortak hedef `contracts/pd-cpd-query-standard-v1.json`. Bu metrik projeksiyonu Dataset yazımı, Channel ürün toplamı, FX veya formül motoru değildir. Envanter 24 sentetik sorgu/yanıt, boş/eksik/sıfır, çift sayım ve ilk hata kontrolleriyle bu gruba eşlik eder; canlı kabul ayrıca açıktır.
+- Resmî Insights, alan referansı, AdsActionStats ve Breakdowns 23 Ekim'de tarayıcıdan okundu. HTTP 429 sonrası alternatif tarayıcı okuması açık kullanıcı onayıyla yapıldı. v25 alan referansı/v26 Stats sürüm ayrımı ve promoted alanlarının referansta bulunmaması saklanmaz; sorgu uyumu ispatlanmış sayılmaz. Deploy, canlı çağrı, secret, DB ve Shopify görsel işlem yoktur; bu PR'nin merge'i ayrıca onay ister.
+
 ## Klaviyo Sales Role düzeltmesi — 23 Ekim 2026
 
 Ürün sahibi, 15. madde kapsamında yalnız repository düzeltmesini onayladı.

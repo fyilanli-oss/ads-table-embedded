@@ -26,14 +26,15 @@ const json = (payload, status = 200, headers = {}) => new Response(
   {status, headers: {"content-type": "application/json", ...headers}},
 );
 
-test("promoted product probe adds exactly two fixed fields without changing the default", async () => {
+test("standard product request always retains all four sales fields including legacy probe calls", async () => {
   const input = {adAccountId: "act_123456", dateWindow: {start: "2026-10-15", end: "2026-10-15"}};
   const original = new URL(buildMetaProductBreakdownInsightsUrl(input));
   const probe = new URL(buildMetaProductBreakdownInsightsUrl({...input, includePromotedProductMetrics: true}));
-  assert.deepEqual(probe.searchParams.get("fields").split(","), [
-    ...original.searchParams.get("fields").split(","),
-    "converted_promoted_product_quantity", "converted_promoted_product_value",
-  ]);
+  assert.deepEqual(probe.searchParams.get("fields").split(","), original.searchParams.get("fields").split(","));
+  for (const field of ["converted_product_quantity", "converted_product_value",
+    "converted_promoted_product_quantity", "converted_promoted_product_value"]) {
+    assert.ok(original.searchParams.get("fields").split(",").includes(field));
+  }
   original.searchParams.delete("fields");
   probe.searchParams.delete("fields");
   assert.equal(probe.toString(), original.toString());

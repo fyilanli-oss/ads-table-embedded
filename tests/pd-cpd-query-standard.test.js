@@ -70,7 +70,9 @@ test("08 and role boundaries do not invent provider proof or mix normal and all"
   assert.equal(standard.meta.empty_product_response_proves_support_or_zero, false);
   assert.ok(standard.meta.cpd_product_fields_target.includes("converted_promoted_product_quantity"));
   assert.ok(standard.meta.cpd_product_fields_target.includes("converted_promoted_product_value"));
-  assert.equal(standard.meta.promoted_fields_default_query_pending_item, "02");
+  assert.equal(standard.meta.promoted_fields_default_query_implemented_item, "02");
+  assert.equal(standard.meta.pd_mapping_implemented_item, "03");
+  assert.equal(standard.meta.pd_mapping_live_acceptance, "pending");
   assert.equal(standard.klaviyo.campaign_content_membership_proves_clicked_product, false);
   assert.equal(standard.klaviyo.campaign_content_membership_role, "Assisted");
   assert.equal(standard.klaviyo.spend, "open_no_formula_or_zero_fallback");

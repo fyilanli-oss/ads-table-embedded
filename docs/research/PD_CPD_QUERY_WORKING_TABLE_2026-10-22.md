@@ -58,9 +58,9 @@ CPD Channel, üç sağlayıcıda da PD genel değerlerinin kopyası değil, bağ
 
 ## Koda eklenecek
 
-³ Sorguda istenen `actions` ve `action_values` içinden ATC, Checkout ve Purchase adet/değerlerinin ilgili standart metriklere işlenmesi tamamlanacak. Bu bir sorgu eksiği değildir.
+³ 23 Ekim 02 + 03 repository düzeltmesi: `actions` / `action_values` içinden web Pixel ATC, Checkout ve Purchase adet/değer projeksiyonu uygulanmıştır. PD Click `outbound_clicks[outbound_click].value` olur. Eksik değerler sıfıra çevrilmez, `omni_*` toplamı/yedeği yoktur. Bu bir sorgu eksiği değildi; gerçek hesap kabulü ve Dataset yayını tamamlanmış değildir.
 
-¹ ve ² ile işaretli alanlar mevcut kodda yalnız test seçeneğiyle isteniyor. Standart ürün sorgusunda kalıcı istenmesi gelecek kod değişikliğidir; bu belge o değişikliği yapmaz.
+¹ ve ² ile işaretli alanlar 23 Ekim 02 repository düzeltmesinde standart ürün sorgusuna kalıcı eklenmiştir; eski test bayrağı alanları çıkarmaz. Yukarıdaki boş yanıt ve reel test bekleniyor notu korunur; kalıcı talep gerçek ürün desteği/rol kanıtı değildir.
 
 ## Google tasarım kararları
 

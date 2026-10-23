@@ -11,15 +11,13 @@ export const META_PRODUCT_ACCEPTED_FIELDS = Object.freeze([
   "spend",
   "converted_product_quantity",
   "converted_product_value",
+  "converted_promoted_product_quantity",
+  "converted_promoted_product_value",
 ]);
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 export const META_PROMOTED_PRODUCT_PROBE = "promoted_product_metrics";
-export const META_PRODUCT_PROBE_ACCEPTED_FIELDS = Object.freeze([
-  ...META_PRODUCT_ACCEPTED_FIELDS,
-  "converted_promoted_product_quantity",
-  "converted_promoted_product_value",
-]);
+export const META_PRODUCT_PROBE_ACCEPTED_FIELDS = META_PRODUCT_ACCEPTED_FIELDS;
 const INPUT_KEYS = new Set(["provider", "business_date", "probe"]);
 
 function probeFields(probe) {
@@ -264,9 +262,8 @@ export function buildProviderLiveEvidenceSafeLog(result) {
       direct_metric_decisions: Object.freeze({
         impression: "evidence_supported_pending_numeric_publication",
         spend_value: "evidence_supported_pending_numeric_publication",
-        ad_click: "mapping_pending_live_click_field_review",
-        session: "mapping_pending_live_action_type_review",
-        funnel: "mapping_pending_live_action_type_review",
+        ad_click: "outbound_click_value_mapping_implemented_live_validation_pending",
+        funnel: "website_pixel_action_type_value_mapping_implemented_live_validation_pending",
       }),
       action_type_inventory: Object.freeze({
         actions: safeActionTypeLog(result.channel?.action_type_inventory?.actions),
@@ -362,9 +359,8 @@ export function summarizeMetaLiveEvidence(result, businessDate, probe) {
       direct_metric_decisions: Object.freeze({
         impression: "evidence_supported_pending_numeric_publication",
         spend_value: "evidence_supported_pending_numeric_publication",
-        ad_click: "mapping_pending_live_click_field_review",
-        session: "mapping_pending_live_action_type_review",
-        funnel: "mapping_pending_live_action_type_review",
+        ad_click: "outbound_click_value_mapping_implemented_live_validation_pending",
+        funnel: "website_pixel_action_type_value_mapping_implemented_live_validation_pending",
       }),
       action_type_inventory: Object.freeze({
         actions: actionTypes(channelRows, "actions"),

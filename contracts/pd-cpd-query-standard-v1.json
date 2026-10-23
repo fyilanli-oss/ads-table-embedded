@@ -1,6 +1,6 @@
 {
   "contract_id": "pd-cpd-query-standard-v1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "checked_at": "2026-10-23",
   "inventory_item": "01",
   "status": "accepted_product_decisions_implementation_partial",
@@ -48,16 +48,18 @@
   },
   "meta": {
     "pd_click_target": "outbound_clicks",
-    "pd_mapping_pending_item": "03",
+    "pd_mapping_implemented_item": "03",
+    "pd_mapping_scope": "website_pixel_action_types_only_no_omni_fallback",
+    "pd_mapping_live_acceptance": "pending",
     "cpd_product_fields_target": [
       "impressions", "clicks", "spend", "converted_product_quantity", "converted_product_value",
       "converted_promoted_product_quantity", "converted_promoted_product_value"
     ],
-    "promoted_fields_default_query_pending_item": "02",
+    "promoted_fields_default_query_implemented_item": "02",
     "sales_role_proof_pending_items": ["05", "24"],
     "empty_product_response_proves_support_or_zero": false,
-    "pd_actions_and_action_values_mapping_complete": false,
-    "current_official_docs_check": "HTTP_429_2026-10-23_no_alternate_route",
+    "pd_actions_and_action_values_mapping_complete": true,
+    "current_official_docs_check": "read_in_browser_2026-10-23_user_authorized_after_HTTP_429",
     "new_provider_semantics_proven_by_this_contract": false
   },
   "google_ads": {
@@ -88,6 +90,7 @@
   "delivery_boundary": {
     "provider_runtime_contracts_describe": "actual_existing_queries_and_guards_not_target_completion",
     "new_provider_queries_or_live_calls": false,
+    "meta_existing_query_field_extension_and_pd_projection": "items_02_03_repository_only",
     "dataset_writer_or_migration": false,
     "fx_implementation_item": "22",
     "formula_implementation_item": "23",

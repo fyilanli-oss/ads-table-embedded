@@ -4,6 +4,14 @@
   "package_id": "A6-EO-04-LIVE-ACCEPTANCE",
   "status": "meta_live_shape_evidence_retained_mapping_boundary_accepted",
   "checked_at": "2026-10-16",
+  "repository_alignment_2026_10_23": {
+    "inventory_items": ["02", "03"],
+    "historical_probe_authorizations_are_not_new_call_authority": true,
+    "standard_product_fields_now_include_promoted_metrics": true,
+    "pd_projection": "implemented_website_pixel_scope_live_acceptance_pending",
+    "session_metric": "removed_by_product_owner_decision",
+    "new_live_execution_or_deployment_authorized": false
+  },
   "promoted_product_probe_2026_10_22": {
     "authorization": "explicit_product_owner_approval",
     "repository_implementation": true,
@@ -122,7 +130,9 @@
         "clicks",
         "spend",
         "converted_product_quantity",
-        "converted_product_value"
+        "converted_product_value",
+        "converted_promoted_product_quantity",
+        "converted_promoted_product_value"
       ],
       "standardized": false,
       "semantics": "not_observed_in_this_execution_not_zero_and_not_global_unsupported",

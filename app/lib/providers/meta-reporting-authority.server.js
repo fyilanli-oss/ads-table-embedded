@@ -155,6 +155,7 @@ export function createMetaReportingAuthorityRuntime({
 
   async function collectPages({context, dateWindow, fetchPage}) {
     const rows = [];
+    const pdMetricRows = [];
     const requestIds = [];
     const rateLimits = [];
     const seen = new Set();
@@ -163,6 +164,12 @@ export function createMetaReportingAuthorityRuntime({
     for (let pageNumber = 0; pageNumber < MAX_PAGES_PER_FACT_FAMILY; pageNumber += 1) {
       const page = await protectedRead(context, () => fetchPage(after));
       if (!first) first = page;
+      const rowOffset = rows.length;
+      if (page.pd_metric_rows) {
+        pdMetricRows.push(...page.pd_metric_rows.map(projection => Object.freeze({
+          ...projection, source_row_index: rowOffset + projection.source_row_index,
+        })));
+      }
       rows.push(...page.rows);
       if (page.provider_request_id) requestIds.push(page.provider_request_id);
       if (page.evidence?.rate_limit) rateLimits.push(page.evidence.rate_limit);
@@ -173,6 +180,7 @@ export function createMetaReportingAuthorityRuntime({
         return Object.freeze({
           ...first,
           rows: Object.freeze(rows),
+          ...(first.pd_metric_rows ? {pd_metric_rows: Object.freeze(pdMetricRows)} : {}),
           next_cursor: null,
           provider_request_id: requestIds.at(-1) ?? null,
           evidence: Object.freeze({

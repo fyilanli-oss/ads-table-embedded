@@ -41,21 +41,76 @@ export const META_PRODUCT_BREAKDOWN_INSIGHTS_FIELDS = Object.freeze([
   "spend",
   "converted_product_quantity",
   "converted_product_value",
-]);
-
-export const META_PRODUCT_BREAKDOWN_ID_LIMIT = 100;
-export const META_PROMOTED_PRODUCT_PROBE_FIELDS = Object.freeze([
-  ...META_PRODUCT_BREAKDOWN_INSIGHTS_FIELDS,
   "converted_promoted_product_quantity",
   "converted_promoted_product_value",
 ]);
+
+export const META_PRODUCT_BREAKDOWN_ID_LIMIT = 100;
+// Compatibility export: the former opt-in fields now belong to every product request.
+export const META_PROMOTED_PRODUCT_PROBE_FIELDS = META_PRODUCT_BREAKDOWN_INSIGHTS_FIELDS;
 
 function productFields(includePromotedProductMetrics) {
   if (typeof includePromotedProductMetrics !== "boolean") {
     throw new MetaGraphError("META_REPORTING_PROBE_INVALID", "Probe flag must be boolean");
   }
-  return includePromotedProductMetrics
-    ? META_PROMOTED_PRODUCT_PROBE_FIELDS : META_PRODUCT_BREAKDOWN_INSIGHTS_FIELDS;
+  return META_PRODUCT_BREAKDOWN_INSIGHTS_FIELDS;
+}
+
+export const META_PD_METRIC_SOURCES = Object.freeze({
+  impression: Object.freeze({field: "impressions"}),
+  ad_click: Object.freeze({field: "outbound_clicks", action_type: "outbound_click"}),
+  spend_value: Object.freeze({field: "spend"}),
+  add_to_cart: Object.freeze({field: "actions", action_type: "offsite_conversion.fb_pixel_add_to_cart"}),
+  add_to_cart_value: Object.freeze({field: "action_values", action_type: "offsite_conversion.fb_pixel_add_to_cart"}),
+  checkout: Object.freeze({field: "actions", action_type: "offsite_conversion.fb_pixel_initiate_checkout"}),
+  checkout_value: Object.freeze({field: "action_values", action_type: "offsite_conversion.fb_pixel_initiate_checkout"}),
+  purchase: Object.freeze({field: "actions", action_type: "offsite_conversion.fb_pixel_purchase"}),
+  purchase_value: Object.freeze({field: "action_values", action_type: "offsite_conversion.fb_pixel_purchase"}),
+});
+
+function metricSchemaError() {
+  throw new MetaGraphError("META_REPORTING_SCHEMA_CHANGED", "Meta PD metric shape is invalid or ambiguous");
+}
+
+function metricNumber(value) {
+  if (value == null) return null;
+  if (typeof value !== "number" && typeof value !== "string") metricSchemaError();
+  if (typeof value === "string" && !/^(?:\d+(?:\.\d*)?|\.\d+)$/.test(value)) metricSchemaError();
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric) || numeric < 0) metricSchemaError();
+  return numeric;
+}
+
+// A metric projection, not a canonical Dataset fact: identity, currency and publication
+// remain owned by later gates. Provider-native rows are retained alongside this view.
+export function mapMetaPdMetrics(row) {
+  if (!row || typeof row !== "object" || Array.isArray(row)) metricSchemaError();
+  const raw_metrics = {};
+  const metric_support = {};
+  const observation_state = {};
+  for (const [metric, source] of Object.entries(META_PD_METRIC_SOURCES)) {
+    let value = row[source.field];
+    let state = "absent";
+    if (source.action_type && value != null) {
+      if (!Array.isArray(value)) metricSchemaError();
+      if (value.some(item => !item || typeof item !== "object" || Array.isArray(item)
+        || typeof item.action_type !== "string" || !item.action_type.length)) metricSchemaError();
+      const selected = value.filter(item => item.action_type === source.action_type);
+      if (selected.length > 1) metricSchemaError();
+      state = value.length === 0 ? "empty" : "absent";
+      value = selected[0]?.value;
+    }
+    const numeric = metricNumber(value);
+    raw_metrics[metric] = numeric;
+    metric_support[metric] = numeric === null ? "unknown" : "supported";
+    observation_state[metric] = numeric === null ? state : numeric === 0 ? "zero" : "present";
+  }
+  return Object.freeze({
+    raw_metrics: Object.freeze(raw_metrics),
+    metric_support: Object.freeze(metric_support),
+    observation_state: Object.freeze(observation_state),
+    metric_sources: META_PD_METRIC_SOURCES,
+  });
 }
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -252,14 +307,16 @@ export function buildMetaAdChannelInsightsUrl({
   graphVersion = META_GRAPH_VERSION,
   limit = 100,
 }) {
-  return baseInsightsUrl({
+  const url = baseInsightsUrl({
     adAccountId,
     dateWindow,
     after,
     graphVersion,
     limit,
     fields: META_AD_CHANNEL_INSIGHTS_FIELDS,
-  }).toString();
+  });
+  url.searchParams.set("action_breakdowns", "action_type");
+  return url.toString();
 }
 
 export async function fetchMetaAdChannelInsightsPage({
@@ -290,6 +347,10 @@ export async function fetchMetaAdChannelInsightsPage({
     fact_family: "ad_channel_daily_insights",
     channel_type: "ad",
     rows: Object.freeze(payload.data.map((row) => Object.freeze({...row}))),
+    pd_metric_rows: Object.freeze(payload.data.map((row, source_row_index) => Object.freeze({
+      source_row_index,
+      ...mapMetaPdMetrics(row),
+    }))),
     next_cursor: nextCursor,
     provider_request_id: requestId(response),
     evidence: Object.freeze({
@@ -299,6 +360,9 @@ export async function fetchMetaAdChannelInsightsPage({
       time_increment: 1,
       requested_fields: META_AD_CHANNEL_INSIGHTS_FIELDS,
       breakdowns: Object.freeze([]),
+      action_breakdowns: Object.freeze(["action_type"]),
+      pd_mapping_version: "1.0.0",
+      pd_metric_sources: META_PD_METRIC_SOURCES,
       rate_limit: rateLimit,
     }),
   });

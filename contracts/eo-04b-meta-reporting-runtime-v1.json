@@ -1,14 +1,37 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "contract_id": "eo-04b-meta-reporting-runtime-v1",
   "accepted_query_target_contract": "contracts/pd-cpd-query-standard-v1.json",
   "package_id": "A6-EO-04-B",
   "status": "repository_accepted_live_shape_observed_real_catalog_validation_pending",
-  "checked_at": "2026-10-17",
+  "checked_at": "2026-10-23",
+  "query_alignment": {
+    "inventory_items": ["02", "03"],
+    "standard_product_request_includes_promoted_fields": true,
+    "legacy_probe_flag_can_remove_standard_fields": false,
+    "pd_metric_projection": "page.pd_metric_rows_linked_by_source_row_index_to_untouched_rows",
+    "pd_mapping_version": "1.0.0",
+    "pd_click": "outbound_clicks[action_type=outbound_click].value",
+    "pd_funnel_scope": "website_pixel_only_not_grouped_omni",
+    "pd_funnel_action_types": {
+      "add_to_cart": "offsite_conversion.fb_pixel_add_to_cart",
+      "checkout": "offsite_conversion.fb_pixel_initiate_checkout",
+      "purchase": "offsite_conversion.fb_pixel_purchase"
+    },
+    "count_container": "actions",
+    "value_container": "action_values",
+    "attribution_value": "value_only_no_summing_windows_or_action_aliases",
+    "missing_or_empty": "null_unknown_never_inferred_zero",
+    "duplicate_selected_action_type_or_invalid_number": "schema_failure_no_publication_or_retry",
+    "projection_is_complete_canonical_dataset_fact": false,
+    "live_acceptance": "pending",
+    "product_cost_identity_join_sales_role": "unchanged_pending_later_items"
+  },
   "opt_in_promoted_product_probe": {
     "decision_date": "2026-10-22",
     "authority": "contracts/eo-04-provider-live-acceptance-v1.json#promoted_product_probe_2026_10_22",
-    "default_enabled": false,
+    "default_enabled": true,
+    "current_role": "historical_probe_alias_standard_fields_since_inventory_02",
     "extra_fields": ["converted_promoted_product_quantity", "converted_promoted_product_value"],
     "breakdowns": ["product_id"],
     "level": "ad",
@@ -46,7 +69,9 @@
       "clicks",
       "spend",
       "converted_product_quantity",
-      "converted_product_value"
+      "converted_product_value",
+      "converted_promoted_product_quantity",
+      "converted_promoted_product_value"
     ],
     "provider_rows_are_untouched": true,
     "product_metric_semantics": "validation_pending_real_catalog_response",
@@ -78,7 +103,7 @@
     "repository_implementation_authorized": true,
     "deployment_authorized": false,
     "live_provider_call_authorized": false,
-    "ad_click_session_and_funnel_mapping": "pending_live_evidence_and_product_owner_decision",
+    "ad_click_and_funnel_mapping": "repository_projection_implemented_live_acceptance_pending",
     "product_breakdown_standardized": false
   },
   "mutations": {

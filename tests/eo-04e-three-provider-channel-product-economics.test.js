@@ -51,6 +51,9 @@ test("Sales Role, Zero Value and Unclassified Channel are distinct axes", () => 
 });
 
 test("PMax ambiguity cannot be guessed and Klaviyo preserves Message Channel", () => {
+  assert.equal(contract.providers.klaviyo.classification.exact_sold_in_content_product_set, "Assisted");
+  assert.equal(contract.providers.klaviyo.classification.exact_sold_outside_content_product_set, "Assisted");
+  assert.equal(contract.providers.klaviyo.classification.content_product_set_proves_interaction_product, false);
   assert.equal(
     contract.providers.google_ads.pmax.broad_or_overlapping_listing_membership,
     "Unclassified Channel",

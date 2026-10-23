@@ -44,6 +44,9 @@ test("Campaign Audience is navigation-only and never becomes an AdsTable reporti
 });
 
 test("known Message with unresolved Variation is not Unclassified Channel", () => {
+  assert.equal(contract.sales_role.campaign_exact_sold_in_content_product_set, "Assisted");
+  assert.equal(contract.sales_role.campaign_exact_sold_outside_content_product_set, "Assisted");
+  assert.equal(contract.sales_role.content_product_set_proves_interaction_product, false);
   assert.equal(
     contract.channel_resolution.message_known_multiple_variations,
     "message_channel_exact_variation_unresolved",

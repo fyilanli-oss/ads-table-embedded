@@ -1,4 +1,7 @@
-import {KlaviyoReportingError} from "./klaviyo-reporting.server.js";
+import {
+  KlaviyoReportingError,
+  classifyKlaviyoCampaignSalesRole,
+} from "./klaviyo-reporting.server.js";
 
 function fail(code, message, details = null) {
   throw new KlaviyoReportingError(code, message, details);
@@ -163,13 +166,7 @@ function campaignSalesRole(event, candidate, campaignProductEvidenceByMessageId)
   if (evidence.contentEvidence !== "exact_product_set") return "Assisted";
   const productId = soldProductId(event);
   if (productId == null) return "Unclassified";
-  if (!Array.isArray(evidence.advertisedProductIds) || evidence.advertisedProductIds.length === 0) {
-    fail(
-      "KLAVIYO_ADVERTISED_PRODUCT_EVIDENCE_INVALID",
-      "Exact campaign content evidence requires advertised products",
-    );
-  }
-  return evidence.advertisedProductIds.includes(productId) ? "Advertised" : "Cross-sell";
+  return classifyKlaviyoCampaignSalesRole({...evidence, soldProductId: productId});
 }
 
 function resolveEvent(event, input) {

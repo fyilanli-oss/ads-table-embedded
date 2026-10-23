@@ -53,8 +53,11 @@ kısa ifadesi nihai çözümle birlikte okunur; yeni iş kuralı eklenmez.
 
 ## Sales Role
 
-- Campaign'in kesin içerik ürün kümesinde satılan ürün: `Advertised`.
-- Campaign'in kesin içerik ürün kümesinin dışında satılan ürün: `Cross-sell`.
+- 23 Ekim 2026 düzeltmesi: Campaign'in kesin içerik ürün kümesinde veya
+  dışında satılan ürün, yalnız içerik üyeliği biliniyorsa `Assisted` olur.
+- İçerik kümesi, aynı satışın etkileşime konu ürünü kanıtı değildir;
+  bu bilgiyle `Advertised` veya `Cross-sell` üretilmez. Yeni ürün etkileşimi
+  kanıtı yolu bu düzeltmede uygulanmaz.
 - Campaign içerik ürün kümesi kanıtlanamıyorsa: `Assisted`.
 - Campaign kanıtı gerçekten çelişkiliyse: `Unclassified`.
 - Geçerli Flow attribution'lı satış: `Triggered`.

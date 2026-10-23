@@ -1,3 +1,5 @@
+import type {MetaSourceLinks} from "./meta-source-links.server.js";
+
 export function createMetaReportingAuthorityRuntime(input: {
   database: any;
   tokenVault: any;
@@ -42,5 +44,6 @@ export function createMetaReportingAuthorityRuntime(input: {
     }>;
     channel: Readonly<Record<string, unknown>>;
     product: Readonly<Record<string, unknown>>;
+    source_links: MetaSourceLinks;
   }>>;
 };

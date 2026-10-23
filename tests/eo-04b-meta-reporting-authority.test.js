@@ -232,6 +232,39 @@ test("default product rejection never retries with the old field list", async ()
   assert.ok(requests[1].searchParams.get("fields").includes("converted_promoted_product_value"));
 });
 
+test("04 snapshot links only after both families finish, using global indexes and authenticated scope", async () => {
+  const native = {account_id: "123456", campaign_id: "campaign-1", adset_id: "set-1",
+    date_start: "2026-10-15", date_stop: "2026-10-15"};
+  const ad1 = {...native, ad_id: "ad-1", spend: "300"};
+  const ad2 = {...native, ad_id: "ad-2", spend: "400"};
+  const product1 = {...native, ad_id: "ad-2", product_id: "product-1", spend: "18"};
+  const product2 = {...native, ad_id: "ad-1", product_id: "product-2", spend: "9"};
+  const responses = [
+    json({data: [ad1], paging: {cursors: {after: "ad-next"}, next: "next"}}),
+    json({data: [ad2]}),
+    json({data: [product1], paging: {cursors: {after: "product-next"}, next: "next"}}),
+    json({data: [product2]}),
+  ];
+  let calls = 0;
+  const runtime = createMetaReportingAuthorityRuntime({database: database(), appSecret: "test-secret",
+    tokenVault: {async loadProviderTokenSet() {return {access_token: "fixture-token"};}},
+    fetchFn: async () => {calls++; return responses.shift();},
+  });
+  const snapshot = await runtime.readDailyEvidenceSnapshot({installationAuthority,
+    dateWindow: {start: "2026-10-15", end: "2026-10-15"},
+    scope: {workspace_id: "forged", reporting_account_id: "act_999"},
+  });
+  assert.equal(calls, 4);
+  assert.deepEqual(snapshot.source_links.scope, {workspace_id: installationAuthority.workspaceId,
+    install_generation: 2, connection_id: databaseRow().connection_id, reporting_account_id: "act_123456"});
+  assert.deepEqual(snapshot.source_links.product_links.map(link => [link.product_row_index, link.pd_row_index]), [[0, 1], [1, 0]]);
+  assert.ok(snapshot.source_links.product_links.every(link => link.state === "exact_native_ad_reference"));
+  assert.deepEqual(snapshot.product.rows, [product1, product2]);
+  assert.deepEqual(snapshot.channel.rows, [ad1, ad2]);
+  assert.equal(snapshot.source_links.publishable, false);
+  assert.doesNotMatch(JSON.stringify(snapshot.source_links), /fixture-token|forged|spend/);
+});
+
 test("invalid PD mapping stops before product fetch and returns no partial snapshot", async () => {
   let calls = 0;
   const runtime = createMetaReportingAuthorityRuntime({

@@ -119,7 +119,7 @@ test("Google reporting separates account identity from campaign inventory", () =
   assert.doesNotMatch(queries.campaign_context, /customer[.]test_account/);
   assert.match(queries.ad_group_channel_daily, /FROM ad_group/);
   assert.match(queries.ad_group_channel_daily, /ad_group[.]id/);
-  assert.match(queries.ad_group_channel_daily, /IN \('SEARCH', 'SHOPPING'\)/);
+  assert.match(queries.ad_group_channel_daily, /advertising_channel_type = 'SHOPPING'/);
   assert.match(queries.pmax_asset_group_channel_daily, /FROM asset_group/);
   assert.match(queries.pmax_asset_group_channel_daily, /asset_group[.]id/);
   assert.match(queries.pmax_asset_group_channel_daily, /PERFORMANCE_MAX/);

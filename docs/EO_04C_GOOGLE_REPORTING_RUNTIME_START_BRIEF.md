@@ -2,6 +2,18 @@
 
 ## Durum ve yetki
 
+### Güncel repository düzeltmesi — 23 Ekim 2026, envanter 06 + 07 + 08
+
+Güncel uçlar Search **Ad**, Shopping **Ad Group**, Retail PMax **Asset Group**'tur. Aşağıdaki 16 Ekim kayıtlarında Search Ad Group geçmesi tarihsel durumu anlatır; güncel sorgu hedefi değildir.
+
+Search için `ad_group_ad` günlük performans sorgusu eklendi; eski `ad_group_channel_daily` artık yalnız Shopping ister. Her üç uç için aynı kimlik/tarihte ayrı dönüşüm sorgusu `segments.conversion_action`, `segments.conversion_action_category`, normal `metrics.conversions` ve `metrics.conversions_value` ister. Kategoriler ADD_TO_CART, BEGIN_CHECKOUT, PURCHASE'tır. Dönüşüm eylemi kırılımına gösterim/tıklama/maliyet eklenmez; maliyet her dönüşüm satırında tekrar edilmez. Campaign yardımcı dönüşüm sorgusu ham kanıt olarak kalır, alt seviyeye dağıtılmaz.
+
+Sayfadaki `pd_metric_rows`, `source_row_index` ile değişmemiş ham `rows` satırına bağlı metrik projeksiyonudur. Performans ailesi yalnız gösterim/tıklama ve cost_micros birim ölçeklemesini; dönüşüm ailesi yalnız ilgili kategorinin adet/değerini üretir. Her projeksiyon ortak dokuz alanı taşır ama başka aileye ait metrikler null/not_requested kalır. Bu parçalar henüz birleşmiş dokuz metrikli Dataset satırı değildir. Eksik/sıfır dönüşümlü satırın hiç dönmeyebilmesi sıfır doldurma yetkisi vermez; tamlık ve birleşik yayın 17–21 kapılarıdır. Yeni sorgular genel reporting API üzerinden kullanılabilir; eski canlı kanıt tetikleyicisinin aile listesi büyütülmedi.
+
+08: Cart Data standart `raw_metrics` yalnız altı normal adet/gelir alanını taşır; `all_*` değişmemiş `raw_row` içinde korunur, toplama/yedek/Sales Role girdisi olmaz. Yalnız all verisiyle normal satış rolü üretilmez. PD Purchase dönüşüm sayısı CPD ürün miktarı değildir; ürün→Channel bağlantıları 09–12/16'da kalır. Tarihsel PMax çalışması yeniden açılmaz.
+
+Resmî kontrol 23 Ekim 2026: [v25 alan uyumu](https://developers.google.com/google-ads/api/fields/v25/asset_group), [Search Ad alanları](https://developers.google.com/google-ads/api/fields/v25/ad_group_ad), [dönüşüm raporlama](https://developers.google.com/google-ads/api/docs/conversions/reporting), [segment uyumu](https://developers.google.com/google-ads/api/docs/reporting/segmentation), [Metrics](https://developers.google.com/google-ads/api/reference/rpc/v25/Metrics). Büyük alan sayfaları tam metin aracında boyut sınırını aştı; resmî indeksin conversion_action_category selectable_with kayıtları incelendi. Bu metadata ve sentetik testler hesabın sorguyu çalıştırdığı veya dolu veri döndürdüğü kanıtı değildir. Canlı çağrı/deploy/DB/UI/secret değişikliği yoktur; merge ayrı açık onay ister.
+
 - Paket: `A6-EO-04-C`
 - Ürün sahibi analist açıklaması kabulü: **16 Ekim 2026**
 - Çalışma zamanı uygulaması: **16 Ekim 2026'da kabul edildi ve merge edildi**

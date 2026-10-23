@@ -1,5 +1,14 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## Kaynak ve kimlik bağlantıları — 23 Ekim 2026, 04 + 09 + 10 + 11 + 12 + 16 ilk dilim
+
+- Ürün sahibi devam talimatını verdi. #170 `92f4a9b32beb0c41c5736a0c90fa5ba3b9df7f4a` olarak açık onayla birleşti; bu dilim o main'den başlar. Grup birlikte tasarlanır, sağlayıcı/kanıt sınırlarında küçük PR'larla teslim edilir; bu kayıt altı maddeyi kapatmaz.
+- Ortak bağlantı tasarımı `contracts/pd-cpd-query-standard-v1.json#source_link_design` içindedir. PD ve CPD ayrı ailelerdir; aynı kurulum ve doğrulanmış hesapta aynı kaynak yaprağı/gün/üst kimlikler ile ilişkilidir. Adlar eşleme anahtarı değildir. Satır indeksi yalnız tam snapshot ailesine aittir; kalıcı Dataset anahtarı seçilmemiştir.
+- 04'ün yalnız Meta yerel kaynak referansı uygulanır. İki ailenin bütün sayfaları toplandıktan sonra `source_links` hesap–Ad–gün ve Campaign/Ad Set kimliklerini karşılaştırır. Tek eşleşme kaynak satırına referanstır; eksik, yinelenen veya çelişkili kimlikte seçim yapılmaz. Ham satırlar ve metrikler değişmez. Tamamlanmamış sayfa çiftinden bağlantı üretilmez. Shopify kimliği, katalog/creative kanıtı, rol, ürün maliyet anlamı, ürün toplamı veya Dataset yayını değildir; `publishable=false`.
+- 09 Shopping cart data Ad Group, 10 PMax ürün performansı Asset Group, 12 Search ürün satışının Ad bağlantıları açık kalır. 11'in durdurulmuş tarihsel kayıt/çözümleyici entegrasyonu açılmaz. Bugünkü listing tree geçmiş güne uygulanmaz. 16 yalnız mantıksal kimlik kapsamıyla tasarlanır; kalıcı model ve okuyucular EO-05-B kapısındadır.
+- Meta resmî SDK Insights alanları ve Klaviyo Reporting Overview 23 Ekim'de okundu. SDK'da dört converted/promoted alanı listelenir; bu canlı veri/kombinasyon kabulü değildir. Google v25 cart data/shopping alan sayfaları okuma aracının içerik boyutu sınırında alınamadı; alternatif rota denenmedi, bu dilimde Google sorgusu değiştirilmedi. Kaynak ve sınırlar çalışma tablosundadır.
+- 24: çok sayfalı indeks, hesap/gün/kurulum kapsamı, eksik/çelişkili/yinelenen kimlik, metrik kopyası yokluğu ve ilk hatada sonuç dönmeme testleri. Yeni canlı çağrı, OAuth/secret, DB/migration, deploy, UI/Shopify görsel işlem yoktur. Merge ayrıca açık kullanıcı onayı ister.
+
 ## Klaviyo PD sorgu ve metrik uyumu — 23 Ekim 2026, envanter 13 + 14
 
 - #169 açık onayla `4c303a0cd865f4bf839496c35b5541fd61ad702e` olarak birleşti; bu düzeltme o main'den başlar.

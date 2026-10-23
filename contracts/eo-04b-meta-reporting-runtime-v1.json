@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1.0",
+  "schema_version": "1.2.0",
   "contract_id": "eo-04b-meta-reporting-runtime-v1",
   "accepted_query_target_contract": "contracts/pd-cpd-query-standard-v1.json",
   "package_id": "A6-EO-04-B",
@@ -26,6 +26,26 @@
     "projection_is_complete_canonical_dataset_fact": false,
     "live_acceptance": "pending",
     "product_cost_identity_join_sales_role": "unchanged_pending_later_items"
+  },
+  "native_source_reference": {
+    "inventory_item": "04",
+    "status": "repository_partial_native_reference_only_live_pending",
+    "runtime": "app/lib/providers/meta-source-links.server.js",
+    "entrypoint": "readDailyEvidenceSnapshot.source_links",
+    "page_pair_entrypoint": "unchanged_no_reference_from_incomplete_pages",
+    "scope": "authenticated_workspace_install_generation_connection_and_reporting_account",
+    "key": ["account_id", "ad_id", "date_start_equals_date_stop"],
+    "date_window_required": true,
+    "ancestor_checks": ["campaign_id", "adset_id"],
+    "source_indexes": "product_row_index_and_unique_pd_row_index_within_fully_collected_families",
+    "states": ["exact_native_ad_reference", "unresolved", "ambiguous", "conflicting"],
+    "product_rows_without_reference": "retained_untouched_with_reason_and_null_pd_index",
+    "metric_copy_or_aggregation": false,
+    "shopify_identity_role_or_cost_semantics_proven": false,
+    "creative_catalog_verification": false,
+    "new_query_or_call": false,
+    "publishable": false,
+    "live_acceptance": "pending"
   },
   "opt_in_promoted_product_probe": {
     "decision_date": "2026-10-22",

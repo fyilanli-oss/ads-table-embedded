@@ -2,6 +2,16 @@
 
 ## Durum
 
+### 04 — Yerel Ad–ürün kaynak referansı, 23 Ekim 2026
+
+`readDailyEvidenceSnapshot`, iki ailenin bütün sınırlı sayfaları başarıyla alındıktan sonra ayrı `source_links` zarfı üretir. Kapsam istemciden değil doğrulanmış kurulumun workspace/install generation ve bağlı Reporting Account otoritesinden gelir. Ürün satırındaki `account_id` hesap kimliğinin sayısal bölümüyle aynı olmalı; `ad_id`, tek günlük `date_start=date_stop` ve istek aralığı doğrulanmalıdır. Campaign/Ad Set kimlikleri iki tarafta da dolu ve aynı olmadan PD satırı seçilmez. Adlar anahtar değildir.
+
+Tek PD Ad–gün kaydı varsa `product_row_index` → `pd_row_index` referansı kurulur. Aynı Ad–gün için birden fazla PD kaydı `ambiguous`, üst kimlik çelişkisi `conflicting`, eksik/gözlenmeyen kimlik `unresolved` olur. Ürün satırı silinmez veya başka hesaba/güne/üst kayda taşınmaz. Farklı ürünlerin aynı PD satırına bağlanması metrik kopyası değildir; referansta yalnız kimlikler ve indeksler vardır. İndeksler snapshot içi kaynak izidir, kalıcı Dataset anahtarı değildir.
+
+Bu dilim 04'ü tamamen kapatmaz: katalog/creative kanıtı, Shopify Product/Variant doğrulaması, Sales Role ve ürün maliyet anlamı uygulanmaz. Native `product_id` örüntüsü parçalanmaz veya Shopify kimliği sayılmaz. `shopify_identity_state=unresolved_mapping_pending`, `publishable=false`; ham metrik ve ürün yanıtları aynen kalır. Ürün kırılımındaki satır limitinden tam katalog kapsamı çıkarılmaz. Sayfa çifti giriş noktası değişmez; eksik sayfadan referans kurulmaz. Sorgu/alan/izin listesi genişletilmez, canlı çağrı eklenmez.
+
+Resmî [Meta Business SDK Insights alan listesi](https://raw.githubusercontent.com/facebook/facebook-python-business-sdk/main/facebook_business/adobjects/adsinsights.py), 23 Ekim 2026 kontrolünde hesap, Ad, Ad Set, Campaign ve tarih alanlarını; dört converted/promoted quantity/value alanını listeler. Bu SDK snapshot'ı sorgu kombinasyonu, dönen katalog verisi veya ürün/satış semantiği kabulü değildir. Önceki doküman gözlem kayıtları kendi tarihleriyle korunur.
+
 ### Güncel düzeltme — 23 Ekim 2026, envanter 02 + 03
 
 Ürün sahibi repository uygulamasını onayladı. Standart Ad × `product_id` sorgusu artık `converted_product_quantity`, `converted_product_value`, `converted_promoted_product_quantity` ve `converted_promoted_product_value` alanlarının dördünü birlikte ister. Eski test bayrağı uyumluluk için kabul edilir; false verilmesi alanları çıkarmaz. Ham ürün satırları değiştirilmez; destek, ürün maliyeti, satış rolü veya gerçek katalog kabulü kanıtlanmış sayılmaz.

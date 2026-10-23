@@ -6,6 +6,7 @@ import {
   createProviderConnectionLifecycle,
 } from "../oauth/provider-connection-lifecycle.server.js";
 import {META_GRAPH_VERSION, MetaGraphError} from "./meta-graph.server.js";
+import {buildMetaSourceLinks} from "./meta-source-links.server.js";
 import {
   fetchMetaAdChannelInsightsPage,
   fetchMetaProductBreakdownInsightsPage,
@@ -258,6 +259,17 @@ export function createMetaReportingAuthorityRuntime({
           fetchFn,
         }),
       });
+      const sourceLinks = buildMetaSourceLinks({
+        scope: {
+          workspace_id: context.installation.workspaceId,
+          install_generation: context.installation.installGeneration,
+          connection_id: context.connection.connectionId,
+          reporting_account_id: context.reportingAccountId,
+        },
+        dateWindow,
+        channelRows: channel.rows,
+        productRows: product.rows,
+      });
       return Object.freeze({
         provider: PROVIDER,
         authority: Object.freeze({
@@ -266,6 +278,7 @@ export function createMetaReportingAuthorityRuntime({
         }),
         channel,
         product,
+        source_links: sourceLinks,
       });
     },
   });

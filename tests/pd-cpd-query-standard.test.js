@@ -80,3 +80,30 @@ test("08 and role boundaries do not invent provider proof or mix normal and all"
   assert.equal(standard.klaviyo.live_acceptance_and_combined_dataset, "pending");
   assert.equal(standard.delivery_boundary["N/A_or_KD_is_numeric_zero"], false);
 });
+
+test("04 source reference is a partial native slice; 09–12 and 16 retain their own gates", async () => {
+  const standard = await readJson(contractPath);
+  const design = standard.source_link_design;
+  const meta = await readJson("contracts/eo-04b-meta-reporting-runtime-v1.json");
+  assert.deepEqual(design.inventory_items, ["04", "09", "10", "11", "12", "16"]);
+  assert.deepEqual(design.meta.key, meta.native_source_reference.key);
+  assert.deepEqual(design.meta.ancestor_checks, meta.native_source_reference.ancestor_checks);
+  assert.equal(design.names_are_join_keys, false);
+  assert.equal(design.channel_reference_proves_shopify_identity_or_sales_role, false);
+  assert.equal(design.meta.publishable, false);
+  assert.equal(meta.native_source_reference.metric_copy_or_aggregation, false);
+  assert.equal(meta.native_source_reference.new_query_or_call, false);
+  assert.equal(meta.native_source_reference.shopify_identity_role_or_cost_semantics_proven, false);
+  assert.equal(design.google_ads.historical_gate_reopened, false);
+  assert.equal(design.google_ads.new_google_query_in_this_slice, false);
+  for (const item of ["09", "10", "11", "12"]) assert.equal(typeof design.google_ads[item], "string");
+  assert.equal(design.identity_design_item_16.reporting_identity, "shopify_product_id");
+  assert.equal(design.identity_design_item_16.physical_model_or_reader_implemented, false);
+  assert.equal(design.identity_design_item_16.native_id_pattern_or_title_sku_price_is_proof, false);
+  assert.equal(design.identity_design_item_16.unresolved_identity_blocks_native_channel_reference, false);
+  assert.equal(design.identity_design_item_16.persistence_package, "A6-EO-05-B");
+  assert.equal(design.dataset_channel_totals_fx_and_roles_implemented, false);
+  const table = await readFile(standard.source_table, "utf8");
+  assert.ok(table.includes("04 kapanmadı"));
+  assert.ok(table.includes("tarihsel tam gün kanıtı"));
+});

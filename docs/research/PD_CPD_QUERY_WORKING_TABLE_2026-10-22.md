@@ -148,6 +148,27 @@ Kontrol tarihi: 22 Ekim 2026.
 
 ## Yetki ve sonraki adım
 
+### Kaynak ve kimlik grubu — 23 Ekim 2026 ilk dilim
+
+04 + 09 + 10 + 11 + 12 + 16 birlikte tasarlanır; aynı anda tamamlanmış sayılmaz. Ortak sözleşme `source_link_design` bölümüdür. Bağlantı anahtarı metrik değildir: PD performansı, CPD ürün performansı ve ürün satışı kendi kaynak ailelerinde kalır; birinden diğerine değer kopyalanmaz.
+
+| Madde | Mevcut kanıt / hedef bağlantı | Bu dilim ve açık sınır |
+| --- | --- | --- |
+| 04 | Meta ürün sorgusu hesap/Campaign/Ad Set/Ad/gün kimliklerini zaten ister; hedef Ad referansı | Tam snapshot'ta yerel native Ad referansı uygulandı. Tek eşleşme ve aynı üst kimlikler gerekir. Eksik/yinelenen/çelişkili kayıt seçilmez. Katalog/creative, Shopify kimliği, satış rolü, ürün maliyet anlamı ve canlı kabul açık; 04 kapanmadı. |
+| 09 | Shopping ürün performansında Ad Group var; cart data sorgusunda yok | Satış→Ad Group sorgu uyumu ve eşleme açık. Campaign satırı Ad Group'lara dağıtılmaz. Bu dilimde sorgu değişmedi. |
+| 10 | PMax ürün performansı `shopping_product_daily` içinde; Asset Group referansı yok | Ürün→Asset Group kanıt yolu açık. Ürün grubu toplamı tekil ürün performansı sayılmaz. Bu dilimde sorgu/çözüm eklenmedi. |
+| 11 | Satış çözümleyicisi mevcut; reporting akışında çağrılmıyor; tarihsel tam gün kanıtı gerekiyor | Tarihsel listing tree işi duraklatılmıştır. Kayıt toplama/saklama ve çözümleyici entegrasyonu başlamadı. Güncel ağaç geçmiş güne yedek olmaz. |
+| 12 | Search PD Ad sorgusu mevcut; cart data satılan ürününü Ad'e bağlamaz | Ürün satışı→Ad kimliği uyumu ve eşleme açık. PD Purchase sayısı Product ID bağlantısını kanıtlamaz. Bu dilimde sorgu değişmedi. |
+| 16 | Shopify Product ID raporlama omurgası; varsa Variant ID kaynak ayrıntısı | Mantıksal kimlik kapsamı aşağıda; okuyucu, kalıcı model ve doğrulama EO-05-B kapısında. Native kayıt kaybolmaz; örüntü/SKU/ad/fiyatla eşleme yapılmaz. |
+
+Bağlantı kapsamı workspace + aktif kurulum + provider + doğrulanmış hesaptır. Aynı kaynak yaprak kimliği ve iş günü için üst hiyerarşi tutarlı olmalıdır. Satır indeksi yalnız tam snapshot içindeki kaynak kaydı gösterir; kalıcı anahtar veya tabloların fiziksel birleşimi değildir. Ürün satırının native Channel referansı kurulsa bile Shopify Product ID çözülmüş sayılmaz; çözülemeyen ürün kimliği native kaynak bağlantısını tek başına iptal etmez. Metrik toplamı/FX/tarih uzlaştırması 17–23 sırasındadır.
+
+16 için mantıksal eşleme kapsamı workspace, provider, doğrulanmış hesap, katalog/feed bağlamı ve ham ürün kimliğidir. Doğrulanmış resmî entegrasyon kaynağı ve Shopify ürün/varyant ilişkisi olmadan Shopify ürün etiketi yayımlanmaz. Katalog/feed bağlamı eksikse farklı kataloglara bakılarak tahmin yapılmaz. Varyant ayrı raporlama omurgası yapılmaz; varsa doğrulanmış ayrıntı olarak korunur. Kaynak fiyat farkları kimlik kanıtı veya satış değerinin yerine geçirilmez. Çelişkili eşlemede tek bir Shopify Product ID seçilmez; native ürün, satış ve maliyet kanıtı korunur. Gerekli izin/hesap erişimi her kimlik okuyucusunun resmî kontrolünde belirlenecek; bu tasarım mevcut Ads iznini katalog erişimi saymaz veya yeni izin eklemez. Fiziksel kolonlar/indeksler ve okuyucular uygulanmış değildir.
+
+Klaviyo'nun mevcut Message/Variation attribution yolu bu dilimde değişmez. Message bağlantısı ürün etkileşimini kanıtlamaz; ürün Impression/Click N/A ve Spend açık kalır.
+
+Resmî kontrol, 23 Ekim 2026: [Meta SDK Insights alanları](https://raw.githubusercontent.com/facebook/facebook-python-business-sdk/main/facebook_business/adobjects/adsinsights.py), [Klaviyo Reporting Overview](https://developers.klaviyo.com/en/reference/reporting_api_overview). Google v25 `cart_data_sales_view` ve `shopping_performance_view` alan sayfaları içerik boyutu sınırı nedeniyle okuma aracında alınamadı; başka rota denenmedi. Google satırları mevcut kod/tasarım durumunu bildirir, yeni alan kombinasyonunun resmî doğrulaması değildir. SDK'da alan bulunması gerçek katalog yanıtı veya satış semantiği kabulü değildir.
+
 Önce üç sağlayıcının teorik sorgu standardı netleştirilecek; kod ve DB bundan sonra ele alınacak. Bu kayıt runtime, DB, provider çağrısı, OAuth, deploy veya merge yetkisi vermez. Shopify üzerinde görsel işlem yapılmayacak.
 
 Bağlayıcı üst belgeler `docs/EXECUTION_PLAN.md` ve `contracts/a6-eo-implementation-master-v1.json` olarak kalır. Bu çalışma referansı yürütülebilir sözleşmeleri değiştirmez.

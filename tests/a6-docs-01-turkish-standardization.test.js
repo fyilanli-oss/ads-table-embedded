@@ -670,7 +670,7 @@ test("Google working table freezes real leaf levels and product-based Channel to
   for (const row of pd.filter(row => row[3] === "Campaign" || row[2] === "Search" && row[3] === "Ad Group")) {
     assert.deepEqual(row.slice(4), Array(9).fill("Alt kayıtlardan hiyerarşik toplam"));
   }
-  assert.deepEqual(pd.find(row => row[2] === "Search" && row[3] === "Ad").slice(4), Array(9).fill("Yok⁴"));
+  assert.ok(pd.find(row => row[2] === "Search" && row[3] === "Ad").slice(4).every(cell => cell.startsWith("Var")));
   const channels = rows.filter(row => row[1] === "CPD" && row[2].includes("Channel performansı"));
   assert.deepEqual(channels.map(row => row[3]), ["Ad", "Ad Group", "Asset Group"]);
   for (const row of channels) {

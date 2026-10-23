@@ -1,5 +1,13 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## Google uç sorguları ve normal kapsam — 23 Ekim 2026, envanter 06 + 07 + 08
+
+- #168 açık onayla `b883992dbd87b97827c44ad8ddfcc8bd6cd4b393` olarak birleşti. Bu düzeltme o main'den başlar; Meta ürün canlı kabulünü tamamlamaz.
+- Search Ad performansı ve üç uçta (Search Ad / Shopping Ad Group / Retail PMax Asset Group) ayrı dönüşüm kategorisi sorguları eklendi. ATC/Checkout/Purchase normal adet/değerleri istenir; maliyet dönüşüm eylemlerine göre tekrar sayılmaz. Campaign yardımcı metrikleri aşağı dağıtılmaz.
+- Her ailede ham satıra indeksle bağlı PD metrik projeksiyonu vardır. Performansın genel conversions değeri Purchase yapılmaz; normal kategori dönüşümleri kullanılır. Tam birleşik PD satırı, üst toplamlar ve yayın sonraki 17–21 kapılarındadır. Dönüşüm sorgusunda satır yoksa sıfır varsayılmaz.
+- Cart Data normal adet/gelir ve Sales Role aynı kapsamdadır. all alanları yalnız ham satırda kalır; normal eksikse yedek olmaz. Kaynak/kimlik bağlantıları 09–12/16, tarihsel PMax duraklaması ve EO-05/06 sırası korunur. Eski canlı tetikleyici aileleri büyütülmez; yeni canlı çağrı/deploy/DB/UI yetkisi yoktur.
+- Sözleşme `contracts/eo-04c-google-reporting-runtime-v1.json`, açıklama `docs/EO_04C_GOOGLE_REPORTING_RUNTIME_START_BRIEF.md`. 23 Ekim resmî Google v25 alan metadata, Metrics, segment ve dönüşüm raporlama kontrolü yapıldı. Hesapta sorgu uyumu ve gerçek yanıt kabulü hâlâ ayrı kapıdır. 24 sentetik sorgu/yanıt ve hata testleriyle eşlik eder; merge açık onay ister.
+
 ## Meta sorgu ve PD metrik uyumu — 23 Ekim 2026, envanter 02 + 03
 
 - Kullanıcı repository uygulamasını onayladı. PR #167 açık merge onayıyla `5b8f1a7acb2974bdb14eaba77f7f4cfb054dbb08` olarak main'e alındı; bu düzeltme o main'den başlar.

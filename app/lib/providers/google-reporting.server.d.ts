@@ -1,4 +1,6 @@
 export const GOOGLE_REPORTING_QUERY_FAMILIES: readonly string[];
+export const GOOGLE_PD_QUERY_FAMILIES: readonly string[];
+export function mapGooglePdMetrics(row: Readonly<Record<string, any>>, queryFamily: string): Readonly<Record<string, any>>;
 
 export class GoogleReportingError extends Error {
   code: string;

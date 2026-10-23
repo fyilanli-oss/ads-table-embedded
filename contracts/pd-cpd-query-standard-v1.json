@@ -1,6 +1,6 @@
 {
   "contract_id": "pd-cpd-query-standard-v1",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "checked_at": "2026-10-23",
   "inventory_item": "01",
   "status": "accepted_product_decisions_implementation_partial",
@@ -25,9 +25,9 @@
   },
   "hierarchy_targets": [
     {"provider": "meta", "flow": "ads", "levels": ["campaign", "adset", "ad"], "channel_key": "ad_id", "pending_join_items": ["04"]},
-    {"provider": "google_ads", "flow": "search", "levels": ["campaign", "ad_group", "ad"], "channel_key": "ad_id", "pending_query_items": ["06"], "pending_join_items": ["12"]},
-    {"provider": "google_ads", "flow": "shopping", "levels": ["campaign", "ad_group"], "channel_key": "ad_group_id", "pending_query_items": ["07"], "pending_join_items": ["09"]},
-    {"provider": "google_ads", "flow": "retail_pmax", "levels": ["campaign", "asset_group"], "channel_key": "asset_group_id", "pending_query_items": ["07"], "pending_join_items": ["10", "11"]},
+    {"provider": "google_ads", "flow": "search", "levels": ["campaign", "ad_group", "ad"], "channel_key": "ad_id", "implemented_query_items": ["06"], "pending_join_items": ["12"]},
+    {"provider": "google_ads", "flow": "shopping", "levels": ["campaign", "ad_group"], "channel_key": "ad_group_id", "implemented_query_items": ["07"], "pending_join_items": ["09"]},
+    {"provider": "google_ads", "flow": "retail_pmax", "levels": ["campaign", "asset_group"], "channel_key": "asset_group_id", "implemented_query_items": ["07"], "pending_join_items": ["10", "11"]},
     {"provider": "klaviyo", "flow": "campaign", "levels": ["campaign", "campaign_message"], "channel_key": "campaign_message_id", "pending_mapping_items": ["13", "14"]},
     {"provider": "klaviyo", "flow": "flow", "levels": ["flow", "flow_message"], "channel_key": "flow_message_id", "pending_mapping_items": ["13", "14"]}
   ],
@@ -70,6 +70,8 @@
     "cpd_role_fields": ["lead_units_sold", "lead_revenue_micros", "cross_sell_units_sold", "cross_sell_revenue_micros"],
     "all_fields_policy": "raw_only_never_add_or_use_as_missing_normal_fallback",
     "normal_mapping_and_acceptance_complete": false,
+    "leaf_queries_and_per_family_projections_implemented_items": ["06", "07", "08"],
+    "combined_pd_publication_and_live_acceptance": "pending_later_gates",
     "historical_pmax_gate": "paused_work_not_reopened_by_this_contract"
   },
   "klaviyo": {

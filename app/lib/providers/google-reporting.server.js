@@ -12,7 +12,11 @@ export const GOOGLE_REPORTING_QUERY_FAMILIES = Object.freeze([
   "account_identity",
   "campaign_context",
   "ad_group_channel_daily",
+  "search_ad_channel_daily",
   "pmax_asset_group_channel_daily",
+  "search_ad_conversion_action_daily",
+  "shopping_ad_group_conversion_action_daily",
+  "pmax_asset_group_conversion_action_daily",
   "conversion_action_daily",
   "shopping_product_daily",
   "cart_data_product_sales_daily",
@@ -82,6 +86,14 @@ function datedQuery(fields, resource, filter, window) {
   return lines.join("\n");
 }
 
+function leafConversionQuery(resource, identity, filter, window) {
+  return datedQuery([
+    "customer.id", "campaign.id", "campaign.advertising_channel_type", ...identity,
+    "segments.date", "segments.conversion_action", "segments.conversion_action_category",
+    "metrics.conversions", "metrics.conversions_value",
+  ], resource, `${filter} AND segments.conversion_action_category IN ('ADD_TO_CART', 'BEGIN_CHECKOUT', 'PURCHASE')`, window);
+}
+
 export function buildGoogleReportingQueries({dateWindow: requestedWindow}) {
   const window = dateWindow(requestedWindow);
   return Object.freeze({
@@ -121,7 +133,13 @@ export function buildGoogleReportingQueries({dateWindow: requestedWindow}) {
       "metrics.cost_micros",
       "metrics.conversions",
       "metrics.conversions_value",
-    ], "ad_group", "campaign.advertising_channel_type IN ('SEARCH', 'SHOPPING')", window),
+    ], "ad_group", "campaign.advertising_channel_type = 'SHOPPING'", window),
+    search_ad_channel_daily: datedQuery([
+      "customer.id", "campaign.id", "campaign.name", "campaign.advertising_channel_type",
+      "ad_group.id", "ad_group.name", "ad_group_ad.ad.id", "ad_group_ad.status",
+      "segments.date", "metrics.impressions", "metrics.clicks", "metrics.cost_micros",
+      "metrics.conversions", "metrics.conversions_value",
+    ], "ad_group_ad", "campaign.advertising_channel_type = 'SEARCH'", window),
     pmax_asset_group_channel_daily: datedQuery([
       "customer.id",
       "campaign.id",
@@ -138,6 +156,12 @@ export function buildGoogleReportingQueries({dateWindow: requestedWindow}) {
       "metrics.conversions",
       "metrics.conversions_value",
     ], "asset_group", "campaign.advertising_channel_type = 'PERFORMANCE_MAX' AND campaign.shopping_setting.merchant_id IS NOT NULL", window),
+    search_ad_conversion_action_daily: leafConversionQuery("ad_group_ad",
+      ["ad_group.id", "ad_group_ad.ad.id"], "campaign.advertising_channel_type = 'SEARCH'", window),
+    shopping_ad_group_conversion_action_daily: leafConversionQuery("ad_group",
+      ["ad_group.id"], "campaign.advertising_channel_type = 'SHOPPING'", window),
+    pmax_asset_group_conversion_action_daily: leafConversionQuery("asset_group",
+      ["asset_group.id"], "campaign.advertising_channel_type = 'PERFORMANCE_MAX' AND campaign.shopping_setting.merchant_id IS NOT NULL", window),
     conversion_action_daily: datedQuery([
       "customer.id",
       "campaign.id",
@@ -267,10 +291,15 @@ export async function fetchGoogleReportingPage({
   const query = queries[queryFamily];
   const result = await client.search({customerId, query, pageToken});
   const rows = freezeRows(result.results);
+  const pdMetrics = GOOGLE_PD_QUERY_FAMILIES.includes(queryFamily)
+    ? Object.freeze(rows.map((row, source_row_index) => Object.freeze({
+      source_row_index, ...mapGooglePdMetrics(row, queryFamily),
+    }))) : null;
   return Object.freeze({
     provider: "google_ads",
     fact_family: queryFamily,
     rows,
+    ...(pdMetrics ? {pd_metric_rows: pdMetrics} : {}),
     next_cursor: result.next_page_token,
     provider_request_id: result.request_id,
     observation_state: rows.length === 0
@@ -285,6 +314,55 @@ export async function fetchGoogleReportingPage({
       page_row_count: rows.length,
     }),
   });
+}
+
+export const GOOGLE_PD_QUERY_FAMILIES = Object.freeze([
+  "ad_group_channel_daily", "search_ad_channel_daily", "pmax_asset_group_channel_daily",
+  "search_ad_conversion_action_daily", "shopping_ad_group_conversion_action_daily",
+  "pmax_asset_group_conversion_action_daily",
+]);
+const GOOGLE_PD_METRICS = Object.freeze([
+  "impression", "ad_click", "spend_value", "add_to_cart", "add_to_cart_value",
+  "checkout", "checkout_value", "purchase", "purchase_value",
+]);
+
+// Leaf projections stay separate until the later completeness/rollup contract joins
+// their exact authority/date/currency keys. A missing conversion row is not zero.
+export function mapGooglePdMetrics(row, queryFamily) {
+  if (!GOOGLE_PD_QUERY_FAMILIES.includes(queryFamily) || !row || typeof row !== "object" || Array.isArray(row)) {
+    throw new GoogleReportingError("GOOGLE_PD_PROJECTION_INVALID", "Invalid Google PD source");
+  }
+  const conversion = queryFamily.endsWith("conversion_action_daily");
+  const categoryMetrics = {ADD_TO_CART: ["add_to_cart", "add_to_cart_value"],
+    BEGIN_CHECKOUT: ["checkout", "checkout_value"], PURCHASE: ["purchase", "purchase_value"]};
+  const category = row.segments?.conversionActionCategory;
+  const selected = conversion && Object.hasOwn(categoryMetrics, category) ? categoryMetrics[category] : null;
+  if (conversion && (!selected || !optionalId(row.segments?.conversionAction))) {
+    throw new GoogleReportingError("GOOGLE_PD_PROJECTION_INVALID", "Missing conversion action/category");
+  }
+  const sources = conversion ? {[selected[0]]: "conversions", [selected[1]]: "conversionsValue"}
+    : {impression: "impressions", ad_click: "clicks", spend_value: "costMicros"};
+  const raw_metrics = {}, metric_support = {}, observation_state = {};
+  for (const metric of GOOGLE_PD_METRICS) {
+    const source = sources[metric];
+    const native = source ? row.metrics?.[source] : undefined;
+    let value = null;
+    if (native != null) {
+      if ((typeof native !== "string" && typeof native !== "number")
+        || (typeof native === "string" && !/^-?\d+(?:\.\d+)?$/.test(native))
+        || !Number.isFinite(Number(native))) {
+        throw new GoogleReportingError("GOOGLE_PD_PROJECTION_INVALID", "Malformed Google metric");
+      }
+      value = Number(native);
+      if (metric === "spend_value") value /= 1_000_000;
+    }
+    raw_metrics[metric] = value;
+    metric_support[metric] = value === null ? "unknown" : "supported";
+    observation_state[metric] = !source ? "not_requested" : value === null ? "absent" : value === 0 ? "zero" : "present";
+  }
+  return Object.freeze({raw_metrics: Object.freeze(raw_metrics), metric_support: Object.freeze(metric_support),
+    observation_state: Object.freeze(observation_state), conversion_scope: "normal",
+    source_query_family: queryFamily, source_currency_conversion: "none_cost_micros_unit_scale_only"});
 }
 
 function optionalId(value) {
@@ -325,7 +403,9 @@ export function normalizeGoogleCartDataSale(row) {
   ]);
 
   let salesRole = "Unclassified";
-  if (soldItemId && !advertisedItemId) {
+  const normalObserved = ["unitsSold", "revenueMicros", "leadUnitsSold", "leadRevenueMicros",
+    "crossSellUnitsSold", "crossSellRevenueMicros"].some(name => numericEvidence(metrics[name]) !== null);
+  if (normalObserved && soldItemId && !advertisedItemId) {
     salesRole = "Assisted";
   } else if (
     advertisedItemId
@@ -357,6 +437,7 @@ export function normalizeGoogleCartDataSale(row) {
       sold_item_id: soldItemId,
     }),
     sales_role: salesRole,
+    conversion_scope: "normal",
     raw_metrics: Object.freeze({
       units_sold: metrics.unitsSold ?? null,
       revenue_micros: metrics.revenueMicros ?? null,
@@ -364,12 +445,6 @@ export function normalizeGoogleCartDataSale(row) {
       lead_revenue_micros: metrics.leadRevenueMicros ?? null,
       cross_sell_units_sold: metrics.crossSellUnitsSold ?? null,
       cross_sell_revenue_micros: metrics.crossSellRevenueMicros ?? null,
-      all_units_sold: metrics.allUnitsSold ?? null,
-      all_revenue_micros: metrics.allRevenueMicros ?? null,
-      all_lead_units_sold: metrics.allLeadUnitsSold ?? null,
-      all_lead_revenue_micros: metrics.allLeadRevenueMicros ?? null,
-      all_cross_sell_units_sold: metrics.allCrossSellUnitsSold ?? null,
-      all_cross_sell_revenue_micros: metrics.allCrossSellRevenueMicros ?? null,
     }),
     raw_row: Object.freeze({...row}),
   });

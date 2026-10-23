@@ -1,10 +1,31 @@
 {
-  "schema_version": "1.4.0",
+  "schema_version": "1.5.0",
   "contract_id": "eo-04c-google-reporting-runtime-v1",
   "accepted_query_target_contract": "contracts/pd-cpd-query-standard-v1.json",
   "package_id": "A6-EO-04-C",
   "status": "runtime_accepted_2026_access_review_corrective_repository_verified",
-  "checked_at": "2026-10-17",
+  "checked_at": "2026-10-23",
+  "query_alignment": {
+    "inventory_items": ["06", "07", "08"],
+    "search_leaf": "ad_group_ad.ad.id",
+    "shopping_leaf": "ad_group.id",
+    "retail_pmax_leaf": "asset_group.id",
+    "performance_and_conversion_action_queries_separate": true,
+    "leaf_conversion_action_families": ["search_ad_conversion_action_daily", "shopping_ad_group_conversion_action_daily", "pmax_asset_group_conversion_action_daily"],
+    "conversion_categories": ["ADD_TO_CART", "BEGIN_CHECKOUT", "PURCHASE"],
+    "normal_fields": ["metrics.conversions", "metrics.conversions_value"],
+    "pd_projection": "page.pd_metric_rows_source_row_index_links_to_native_rows",
+    "performance_projection": "impression_click_and_micros_scaled_spend_only_not_general_conversions_as_purchase",
+    "conversion_projection": "selected_category_normal_count_and_value_no_cost_repetition",
+    "empty_conversion_rows_are_zero": false,
+    "all_fields": "raw_row_only_never_standard_or_fallback",
+    "pd_cpd_product_units_equal": false,
+    "combined_pd_dataset_join_and_completeness": "later_items_17_18_20_21",
+    "product_channel_joins": "later_items_09_10_11_12_16",
+    "historical_pmax_work_reopened": false,
+    "existing_live_trigger_family_list_changed": false,
+    "live_query_acceptance": "pending"
+  },
   "authority": {
     "execution_plan": "docs/EXECUTION_PLAN.md",
     "parent_contract": "contracts/eo-04e-three-provider-channel-product-economics-v1.json",
@@ -24,7 +45,7 @@
   },
   "channels": {
     "standard_shopping": "ad_group",
-    "search": "ad_group",
+    "search": "ad",
     "performance_max_retail": "asset_group"
   },
   "request_families": [

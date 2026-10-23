@@ -46,7 +46,7 @@ test("01 preserves the 13-column table and exact provider flow hierarchy targets
   assert.deepEqual(standard.hierarchy_targets.map(({provider, flow, levels, channel_key}) =>
     [provider, flow, levels, channel_key]), [
     ["meta", "ads", ["campaign", "adset", "ad"], "ad_id"],
-    ["google_ads", "search", ["campaign", "ad_group", "ad"], "ad_id"],
+    ["google_ads", "search", ["campaign", "ad_group", "ad"], "ad_group_id"],
     ["google_ads", "shopping", ["campaign", "ad_group"], "ad_group_id"],
     ["google_ads", "retail_pmax", ["campaign", "asset_group"], "asset_group_id"],
     ["klaviyo", "campaign", ["campaign", "campaign_message"], "campaign_message_id"],
@@ -57,6 +57,26 @@ test("01 preserves the 13-column table and exact provider flow hierarchy targets
   assert.equal(metaChannel.includes("`actions`"), false);
   assert.equal(standard.product_identity.reporting_backbone, "shopify_product_id");
   assert.equal(standard.product_identity.variant_id, "preserve_when_present_as_source_detail");
+});
+
+test("12 owner decision separates Search PD Ad from CPD Ad Group and preserves PMax confirmation gate", async () => {
+  const standard = await readJson(contractPath);
+  const google = await readJson("contracts/eo-04c-google-reporting-runtime-v1.json");
+  const search = standard.hierarchy_targets.find(row => row.provider === "google_ads" && row.flow === "search");
+  assert.equal(search.pd_leaf_key, "ad_id");
+  assert.equal(search.channel_key, "ad_group_id");
+  assert.equal(google.query_alignment.search_leaf, "ad_group_ad.ad.id");
+  assert.equal(google.channels.search, "ad_group");
+  assert.equal(google.channels.standard_shopping, "ad_group");
+  assert.equal(google.search_source_reference.product_sale_to_single_or_multiple_ads, false);
+  assert.equal(google.search_source_reference.native_channel_known_without_pd_rows, true);
+  assert.equal(google.search_source_reference.product_impressions_clicks_cost_from_pd_ads, false);
+  assert.equal(google.search_source_reference.publishable, false);
+  assert.equal(google.pmax_next_work.product_owner_reconfirmation_required, true);
+  assert.equal(google.pmax_next_work.historical_work_reopened, false);
+  const table = await readFile(standard.source_table, "utf8");
+  assert.ok(table.includes("| Google Ads | CPD | Search — Channel performansı | Ad Group |"));
+  assert.ok(table.includes("| Google Ads | PD | Search | Ad |"));
 });
 
 test("08 and role boundaries do not invent provider proof or mix normal and all", async () => {
@@ -95,7 +115,9 @@ test("04 source reference is a partial native slice; 09–12 and 16 retain their
   assert.equal(meta.native_source_reference.new_query_or_call, false);
   assert.equal(meta.native_source_reference.shopify_identity_role_or_cost_semantics_proven, false);
   assert.equal(design.google_ads.historical_gate_reopened, false);
-  assert.equal(design.google_ads.new_google_query_in_this_slice, false);
+  assert.equal(design.google_ads.new_google_query_in_this_slice, true);
+  assert.equal(design.google_ads.new_query_family, "shopping_cart_data_product_sales_daily");
+  assert.equal(design.google_ads.google_09_fully_accepted, false);
   for (const item of ["09", "10", "11", "12"]) assert.equal(typeof design.google_ads[item], "string");
   assert.equal(design.identity_design_item_16.reporting_identity, "shopify_product_id");
   assert.equal(design.identity_design_item_16.physical_model_or_reader_implemented, false);
@@ -106,4 +128,21 @@ test("04 source reference is a partial native slice; 09–12 and 16 retain their
   const table = await readFile(standard.source_table, "utf8");
   assert.ok(table.includes("04 kapanmadı"));
   assert.ok(table.includes("tarihsel tam gün kanıtı"));
+});
+
+test("09 records actual scoped query and 10/12 direct metadata limits without broad provider claims", async () => {
+  const contract = await readJson("contracts/eo-04c-google-reporting-runtime-v1.json");
+  const slice = contract.shopping_source_reference;
+  assert.equal(slice.inventory_item, "09");
+  assert.equal(slice.general_cart_query_changed, false);
+  assert.equal(slice.general_and_scoped_cart_reports_added_together, false);
+  assert.equal(slice.existing_live_trigger_changed, false);
+  assert.equal(slice.publishable, false);
+  assert.equal(slice.metric_copy_aggregation_or_cost_transfer, false);
+  assert.equal(slice.shopify_identity_or_new_role_resolution, false);
+  assert.deepEqual(slice.added_fields, ["ad_group.id", "ad_group.name"]);
+  assert.deepEqual(contract.direct_product_leaf_metadata_check.cart_data_sales_view_segmenting_resources, ["ad_group", "campaign"]);
+  assert.equal(contract.direct_product_leaf_metadata_check.sold_item_id_selectable_with_includes_ad_group_ad, false);
+  assert.equal(contract.direct_product_leaf_metadata_check.product_item_id_selectable_with_includes_asset_group, false);
+  assert.equal(contract.direct_product_leaf_metadata_check.claim_about_all_other_google_apis_or_versions, false);
 });

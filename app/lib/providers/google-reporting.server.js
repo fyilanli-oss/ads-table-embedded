@@ -20,6 +20,8 @@ export const GOOGLE_REPORTING_QUERY_FAMILIES = Object.freeze([
   "conversion_action_daily",
   "shopping_product_daily",
   "cart_data_product_sales_daily",
+  "shopping_cart_data_product_sales_daily",
+  "search_cart_data_product_sales_daily",
   "pmax_listing_tree_current",
   "pmax_product_group_aggregate_daily",
 ]);
@@ -96,6 +98,15 @@ function leafConversionQuery(resource, identity, filter, window) {
 
 export function buildGoogleReportingQueries({dateWindow: requestedWindow}) {
   const window = dateWindow(requestedWindow);
+  const cartFields = [
+    "customer.id", "campaign.id", "campaign.name", "campaign.advertising_channel_type",
+    "segments.date", "segments.product_merchant_id", "segments.product_feed_label",
+    "segments.product_item_id", "segments.product_sold_item_id", "segments.product_sold_title",
+    "metrics.units_sold", "metrics.revenue_micros", "metrics.lead_units_sold", "metrics.lead_revenue_micros",
+    "metrics.cross_sell_units_sold", "metrics.cross_sell_revenue_micros",
+    "metrics.all_units_sold", "metrics.all_revenue_micros", "metrics.all_lead_units_sold",
+    "metrics.all_lead_revenue_micros", "metrics.all_cross_sell_units_sold", "metrics.all_cross_sell_revenue_micros",
+  ];
   return Object.freeze({
     account_identity: [
       "SELECT",
@@ -209,30 +220,16 @@ export function buildGoogleReportingQueries({dateWindow: requestedWindow}) {
       "metrics.conversions",
       "metrics.conversions_value",
     ], "shopping_performance_view", "campaign.advertising_channel_type IN ('SHOPPING', 'PERFORMANCE_MAX')", window),
-    cart_data_product_sales_daily: datedQuery([
-      "customer.id",
-      "campaign.id",
-      "campaign.name",
-      "campaign.advertising_channel_type",
-      "segments.date",
-      "segments.product_merchant_id",
-      "segments.product_feed_label",
-      "segments.product_item_id",
-      "segments.product_sold_item_id",
-      "segments.product_sold_title",
-      "metrics.units_sold",
-      "metrics.revenue_micros",
-      "metrics.lead_units_sold",
-      "metrics.lead_revenue_micros",
-      "metrics.cross_sell_units_sold",
-      "metrics.cross_sell_revenue_micros",
-      "metrics.all_units_sold",
-      "metrics.all_revenue_micros",
-      "metrics.all_lead_units_sold",
-      "metrics.all_lead_revenue_micros",
-      "metrics.all_cross_sell_units_sold",
-      "metrics.all_cross_sell_revenue_micros",
-    ], "cart_data_sales_view", null, window),
+    cart_data_product_sales_daily: datedQuery(cartFields, "cart_data_sales_view", null, window),
+    shopping_cart_data_product_sales_daily: datedQuery([
+      ...cartFields.slice(0, 4), "ad_group.id", "ad_group.name", ...cartFields.slice(4),
+    ], "cart_data_sales_view", "campaign.advertising_channel_type = 'SHOPPING'", window),
+    search_cart_data_product_sales_daily: datedQuery([
+      "customer.id", "campaign.id", "campaign.name", "campaign.advertising_channel_type",
+      "ad_group.id", "ad_group.name", "segments.date", "segments.product_merchant_id",
+      "segments.product_feed_label", "segments.product_sold_item_id", "segments.product_sold_title",
+      "metrics.units_sold", "metrics.revenue_micros", "metrics.all_units_sold", "metrics.all_revenue_micros",
+    ], "cart_data_sales_view", "campaign.advertising_channel_type = 'SEARCH'", window),
     pmax_listing_tree_current: [
       "SELECT",
       "  customer.id,",

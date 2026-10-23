@@ -373,11 +373,27 @@ export function createGoogleAdsRestClient({
         body,
         fetchFn,
       });
-      if (!Array.isArray(result.payload?.results ?? [])) {
+      if (result.payload && typeof result.payload === "object" && Object.hasOwn(result.payload, "error")) {
+        throw new GoogleAdsRestError("GOOGLE_ADS_REST_REQUEST_FAILED", "Google Ads search returned an error", {
+          status: 200, provider_status: publicProviderError(result.payload),
+          provider_error_code: publicProviderFailureCode(result.payload), request_id: result.requestId,
+        });
+      }
+      if (!result.payload || typeof result.payload !== "object" || Array.isArray(result.payload)
+        || (Object.hasOwn(result.payload, "results") && !Array.isArray(result.payload.results))
+        || (result.payload.results ?? []).some(row => !row || typeof row !== "object" || Array.isArray(row))) {
         throw new GoogleAdsRestError(
           "GOOGLE_ADS_SEARCH_SCHEMA_CHANGED",
           "Google Ads search response is malformed",
           { request_id: result.requestId },
+        );
+      }
+      if (Object.hasOwn(result.payload ?? {}, "nextPageToken")
+        && typeof result.payload.nextPageToken !== "string") {
+        throw new GoogleAdsRestError(
+          "GOOGLE_ADS_SEARCH_SCHEMA_CHANGED",
+          "Google Ads search cursor is malformed",
+          {request_id: result.requestId},
         );
       }
       return Object.freeze({

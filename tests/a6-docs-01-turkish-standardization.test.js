@@ -672,7 +672,7 @@ test("Google working table freezes real leaf levels and product-based Channel to
   }
   assert.ok(pd.find(row => row[2] === "Search" && row[3] === "Ad").slice(4).every(cell => cell.startsWith("Var")));
   const channels = rows.filter(row => row[1] === "CPD" && row[2].includes("Channel performansı"));
-  assert.deepEqual(channels.map(row => row[3]), ["Ad", "Ad Group", "Asset Group"]);
+  assert.deepEqual(channels.map(row => row[3]), ["Ad Group", "Ad Group", "Asset Group"]);
   for (const row of channels) {
     assert.equal(row[4], "Ürün kayıtlarından toplam⁶");
     assert.equal(row[11], "Ürün satış adetleri toplamı⁶");
@@ -681,7 +681,7 @@ test("Google working table freezes real leaf levels and product-based Channel to
   assert.match(content, /Klaviyo sorgu seçimleri sabitlendi/);
   assert.match(content, /PD Purchase, sağlayıcının satın alma dönüşümü sayısıdır/);
   assert.match(content, /CPD satılan adet, ürün satış miktarıdır/);
-  assert.match(content, /çalışan toplam veya tamamlanmış ürün→Channel bağlantısı değildir/);
+  assert.match(content, /çalışan toplam veya tam Dataset yayını değildir/);
 });
 
 

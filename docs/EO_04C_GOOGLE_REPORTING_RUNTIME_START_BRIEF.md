@@ -2,6 +2,32 @@
 
 ## Durum ve yetki
 
+### Son ürün sahibi kararı — Search/Shopping CPD Channel Ad Group, 23 Ekim 2026
+
+Search **PD Ad** kalır; Search ve Shopping **CPD Channel Ad Group** olarak onaylandı. Önceki Search CPD Ad hedefi değiştirilmiştir; aşağıdaki ilk 09 incelemesinin açık Ad bağlantısı notu o ara kararı anlatır. PMax mevcut hedefi bu değişiklikte uygulanmaz veya değiştirilmez; sıradaki PMax işinden önce ürün sahibiyle yeniden teyit zorunludur, tarihsel 11 çalışması açılmaz.
+
+12 için `search_cart_data_product_sales_daily`, yalnız `SEARCH` filtresiyle `ad_group.id/name`, satılan ürün/Merchant/feed kimlikleri ve normal `units_sold/revenue_micros` ister; all adet/gelir yalnız ham kaynakta kalır. Reklamı yapılan item veya lead/cross-sell metrikleri bu Search sorgusuna eklenmez. `readSearchSourceEvidenceSnapshot`, `search_ad_channel_daily` ve Search cart ailesini tam/sınırlı sayfalarla okur. Mevcut genel cart sorgusu ve eski canlı tetikleyici listesi değişmez. İki cart raporu toplanmaz. Native hesap/Campaign/Ad Group/gün ve satılan ürün kimliği Channel referansıdır; PD Ad satırı bulunması bu bağı kurmanın ön koşulu değildir.
+
+Aynı gruptaki bir veya çok Ad'nin indeksleri yalnız PD üst bağlamını gösterir. Ürün satışı hiçbir Ad'e bağlanmaz; tek Ad bulunması da satışın o Ad'den geldiğini kanıtlamaz. Çok Ad olması normaldir, yinelenen aynı Ad satırı yalnız PD bağlamını belirsiz yapar. Native Channel ve ham ürün satışı korunur. Ad harcama/tıklama/gösterimleri ürüne kopyalanmaz; Search ürün performansı maliyeti türetilmez. Shopify kimliği, yeni Sales Role, toplam veya Dataset yayını bu dilimde yoktur; `publishable=false`.
+
+Resmî [Search cart data açıklaması](https://support.google.com/google-ads/answer/16564103?hl=en) 23 Ekim'de yeniden okundu. Search belirli reklam ürününü kanıtlamaz, fakat satılan ürünler cart data ve Ads hesabına bağlı Merchant Center feed'iyle tanınabilir. Kurulum ve gerçek yanıt kabulü açık kalır. Metadata ve kaynak, hesaptan veri alınmış anlamına gelmez. Aynı ilk hata, tarih doğrulama, kurulum kapsamı, 20 sayfa/20.000 satır ve imleç sınırları korunur.
+
+### 09 — Shopping Ad Group kaynak referansı, 23 Ekim 2026
+
+Yeni `shopping_cart_data_product_sales_daily`, genel cart data alanlarının tamamını korur ve yalnız `campaign.advertising_channel_type = 'SHOPPING'` için `ad_group.id/name` ekler. Genel `cart_data_product_sales_daily` gövdesi değişmez; PMax/Search için Ad Group alanı zorlanmaz. Eski canlı kanıt tetikleyicisinin sorgu ailesi listesi büyütülmez.
+
+Ayrı `readShoppingSourceEvidenceSnapshot` mevcut kurulum/bağlı hesap/token yetkisini kullanır; bir yürütme nesnesi farklı workspace veya install generation için önbelleğini kullandıramaz. Tarih provider/OAuth erişiminden önce doğrulanır. Sabit üç aile sırasıyla tam okunur: `ad_group_channel_daily`, `shopping_product_daily`, `shopping_cart_data_product_sales_daily`. Genel cart raporu buna eklenmez. Aile başına 20 sayfa/20.000 satır, opak imleç döngü/biçim kontrolü ve ilk hatada durma vardır. Bozuk JSON/başarılı gövde, bozuk satır veya string olmayan imleç boş rapor olmaz; HTTP 200 içindeki hata reddedilir. Hata kalan aileleri çalıştırmaz ve snapshot dönmez.
+
+Tam ailelerde indeksler bütün diziye aittir. Aynı `customer.id + campaign.id + ad_group.id + segments.date`, Shopping türü ve istek aralığı için tek PD satırı referans alınır. Eksik/gözlenmeyen anahtar `unresolved`, yinelenen PD anahtarı `ambiguous` olur; isimle eşleme yapılmaz. Ürün performansı ve satış linkleri ayrı dizilerdir. Reklamı yapılan/satılan native item, Merchant/feed kimliği ve ham satır korunur; ürünün Shopify kimliği çözülmüş sayılmaz. PD yokken native Ad Group/Product ID silinmez. Mevcut ürün sorgusundan PMax satırı gelirse tutulur fakat Asset Group seçilmez. Kaynak projeksiyonunda metrik kopyası/toplam/rol/maliyet aktarımı yoktur; `publishable=false`. 09 canlı kabulü, 16 ve 17–23 sonraki kapılardır.
+
+#### 10 ve 12 için dar resmî sonuç
+
+23 Ekim 2026'da [cart data v25](https://developers.google.com/google-ads/api/fields/v25/cart_data_sales_view) ve [shopping performance v25](https://developers.google.com/google-ads/api/fields/v25/shopping_performance_view) sayfalarının doğrudan metadata bölümleri okundu. Web aracının içerik sınırı nedeniyle aynı herkese açık sayfanın HTML'i salt okunur HTTP ile incelendi; Google Ads hesabı/API'sine çağrı yapılmadı. İki kaynağın segmenting resources listesi `ad_group`, `campaign`; attributed resource `customer`dır. `product_sold_item_id` selectable_with listesi Ad Group'u içerir, `ad_group_ad` içermez. `product_item_id` listesinde `asset_group` yoktur. Bu yüzden bu iki v25 raporuna Ad/Asset Group eklemek doğrulanmış doğrudan çözüm değildir.
+
+12: Search PD Ad kalır; satılan Product ID→Ad bağı açık kalır. PD'nin Ad dönüşümü, satılan ürün kimliği değildir. Ad Group'u gizlice Channel yapmak veya tutar eşitliğinden Ad seçmek yoktur. 10: PMax ürün performansı→Asset Group bağı açık; grup toplamı tekil ürün satırına aritmetikle çevrilmez. Tarihsel listing tree/çözümleyici entegrasyonu olan 11 duraklatılmıştır; bu dilimde açılmaz. Bu sonuç başka API veya sürüm için genel desteklenmiyor iddiası değildir.
+
+Ayrıca [ürün raporlama rehberi](https://developers.google.com/google-ads/api/docs/shopping-ads/reporting), [Asset Group raporlama](https://developers.google.com/google-ads/api/performance-max/asset-group-reporting) ve [v25 Search yanıtı](https://developers.google.com/google-ads/api/reference/rpc/v25/SearchGoogleAdsResponse) kontrol edildi. İmleç stringdir, son sayfada dönmez. Metadata uyumu hesabın sorguyu kabul ettiği veya dolu ürün verdiği anlamına gelmez; gerçek kabul bekliyor.
+
 ### Güncel repository düzeltmesi — 23 Ekim 2026, envanter 06 + 07 + 08
 
 Güncel uçlar Search **Ad**, Shopping **Ad Group**, Retail PMax **Asset Group**'tur. Aşağıdaki 16 Ekim kayıtlarında Search Ad Group geçmesi tarihsel durumu anlatır; güncel sorgu hedefi değildir.

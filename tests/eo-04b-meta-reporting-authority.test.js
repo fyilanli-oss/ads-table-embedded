@@ -208,9 +208,40 @@ test("Meta App Role acceptance snapshot follows every bounded opaque page", asyn
 
   assert.deepEqual(cursors, [null, "channel-2", null, "product-2"]);
   assert.deepEqual(result.channel.rows.map((row) => row.ad_id), ["ad-1", "ad-2"]);
+  assert.deepEqual(result.channel.pd_metric_rows.map(row => row.source_row_index), [0, 1]);
+  assert.equal(result.channel.pd_metric_rows.length, result.channel.rows.length);
   assert.deepEqual(result.product.rows.map((row) => row.product_id), ["product-1", "product-2"]);
   assert.equal(result.channel.evidence.page_count, 2);
   assert.equal(result.product.evidence.page_count, 2);
+});
+
+test("default product rejection never retries with the old field list", async () => {
+  const requests = [];
+  const runtime = createMetaReportingAuthorityRuntime({
+    database: database(), appSecret: "test-secret",
+    tokenVault: {async loadProviderTokenSet() {return {access_token: "fixture-token"};}},
+    fetchFn: async url => {
+      requests.push(new URL(url));
+      return requests.length === 1 ? json({data: [{ad_id: "ad-1"}]}) : json({error: {code: 100}}, 400);
+    },
+  });
+  await assert.rejects(runtime.readDailyEvidenceSnapshot({installationAuthority,
+    dateWindow: {start: "2026-10-15", end: "2026-10-15"}}), error => error.code === "META_REPORTING_REQUEST_FAILED");
+  assert.equal(requests.length, 2);
+  assert.ok(requests[1].searchParams.get("fields").includes("converted_promoted_product_quantity"));
+  assert.ok(requests[1].searchParams.get("fields").includes("converted_promoted_product_value"));
+});
+
+test("invalid PD mapping stops before product fetch and returns no partial snapshot", async () => {
+  let calls = 0;
+  const runtime = createMetaReportingAuthorityRuntime({
+    database: database(), appSecret: "test-secret",
+    tokenVault: {async loadProviderTokenSet() {return {access_token: "fixture-token"};}},
+    fetchFn: async () => {calls++; return json({data: [{ad_id: "ad-1", spend: "broken"}]});},
+  });
+  await assert.rejects(runtime.readDailyEvidenceSnapshot({installationAuthority,
+    dateWindow: {start: "2026-10-15", end: "2026-10-15"}}), error => error.code === "META_REPORTING_SCHEMA_CHANGED");
+  assert.equal(calls, 1);
 });
 
 test("first Meta authorization rejection persists reauthorization_required without retry", async () => {

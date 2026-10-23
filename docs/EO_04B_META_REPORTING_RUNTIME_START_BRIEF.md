@@ -2,6 +2,18 @@
 
 ## Durum
 
+### Güncel düzeltme — 23 Ekim 2026, envanter 02 + 03
+
+Ürün sahibi repository uygulamasını onayladı. Standart Ad × `product_id` sorgusu artık `converted_product_quantity`, `converted_product_value`, `converted_promoted_product_quantity` ve `converted_promoted_product_value` alanlarının dördünü birlikte ister. Eski test bayrağı uyumluluk için kabul edilir; false verilmesi alanları çıkarmaz. Ham ürün satırları değiştirilmez; destek, ürün maliyeti, satış rolü veya gerçek katalog kabulü kanıtlanmış sayılmaz.
+
+PD Ad sorgusunun tüm mevcut alanları korunur; `action_breakdowns=action_type` açık yazılır. `outbound_clicks` dizisindeki `outbound_click.value` Click olur; `clicks` veya `inline_link_clicks` yedeği yoktur. Shopify web kapsamı için `offsite_conversion.fb_pixel_add_to_cart`, `offsite_conversion.fb_pixel_initiate_checkout` ve `offsite_conversion.fb_pixel_purchase` seçilir. Adet `actions`, değer aynı türün `action_values` kaydından alınır. Grouped `omni_*`, on-Meta veya mobil-app olayları bu web metriğine eklenmez/yedek olmaz. Varsayılan attribution `value` okunur; pencere alanları birbirine eklenmez ve istek attribution ayarları değiştirilmez.
+
+Ham Ad satırları `rows` içinde aynen kalır; dokuz PD metriğinin projeksiyonu `pd_metric_rows` içinde `source_row_index` ile o satıra bağlanır. Çok sayfalı snapshot bu indeksleri tüm ham satır dizisine göre taşır. Bu, tam kanonik Dataset gerçeği veya yayın değildir; kurulum/para birimi/FX/kimlik ve Dataset kapıları tamamlanmış sayılmaz. Ürün satırlarına PD metrikleri kopyalanmaz.
+
+Eksik/null değer `null + unknown + absent`, boş dizi `null + unknown + empty`, açık sayısal sıfır `0 + supported + zero` kalır. Seçilen türün yinelenmesi, bozuk dizi veya geçersiz sayı şema hatasıdır; tekrar veya kısmi yayın yoktur. Aynı aksiyon türündeki adet ile değer bağımsızdır: adet bulunması eksik değeri sıfır yapmaz.
+
+Resmî belgeler 23 Ekim'de kullanıcı onaylı tarayıcı okumasıyla kontrol edildi: [Insights](https://developers.facebook.com/documentation/ads-commerce/marketing-api/insights), [alan referansı](https://developers.facebook.com/documentation/ads-commerce/marketing-api/reference/ad-account/insights), [AdsActionStats](https://developers.facebook.com/docs/marketing-api/reference/ads-action-stats), [Breakdowns](https://developers.facebook.com/documentation/ads-commerce/marketing-api/insights/breakdowns). Alan referansı v25 seçiliydi; AdsActionStats v26 idi. Bu sürüm ayrımı ve referansta promoted alanlarının bulunmaması v26 ürün kombinasyonunun doğrulandığı iddiasına çevrilmez. Dört alan ürün sahibi kararıyla korunur; gerçek ürün yanıtı ve Sales Role testi hâlâ açıktır. Yeni canlı çağrı/deploy/DB/UI yetkisi yoktur. Aşağıdaki ilk/ikinci dilim kayıtları tarihsel kapsamı korur.
+
 - Ürün sahibi başlangıç onayı: **16 Ekim 2026'da kayıtlı**
 - İlk dilim: **Ad Channel günlük ham Insights sayfası**
 - İkinci dilim onayı: **16 Ekim 2026'da kayıtlı**

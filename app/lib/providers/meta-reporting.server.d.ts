@@ -2,6 +2,14 @@ export const META_AD_CHANNEL_INSIGHTS_FIELDS: readonly string[];
 export const META_PRODUCT_BREAKDOWN_INSIGHTS_FIELDS: readonly string[];
 export const META_PRODUCT_BREAKDOWN_ID_LIMIT: number;
 export const META_PROMOTED_PRODUCT_PROBE_FIELDS: readonly string[];
+export const META_PD_METRIC_SOURCES: Readonly<Record<string, Readonly<{field: string; action_type?: string}>>>;
+export type MetaPdMetricProjection = Readonly<{
+  raw_metrics: Readonly<Record<string, number | null>>;
+  metric_support: Readonly<Record<string, "supported" | "unknown">>;
+  observation_state: Readonly<Record<string, "absent" | "empty" | "zero" | "present">>;
+  metric_sources: typeof META_PD_METRIC_SOURCES;
+}>;
+export function mapMetaPdMetrics(row: Readonly<Record<string, unknown>>): MetaPdMetricProjection;
 
 export function buildMetaAdChannelInsightsUrl(input: {
   adAccountId: string;
@@ -13,6 +21,7 @@ export function buildMetaAdChannelInsightsUrl(input: {
 
 export function fetchMetaAdChannelInsightsPage(input: {
   accessToken: string;
+  appSecret: string;
   adAccountId: string;
   dateWindow: {start: string; end: string};
   after?: string | null;
@@ -21,6 +30,7 @@ export function fetchMetaAdChannelInsightsPage(input: {
 }): Promise<{
   readonly provider: "meta";
   readonly fact_family: "ad_channel_daily_insights";
+  readonly pd_metric_rows: readonly (MetaPdMetricProjection & {readonly source_row_index: number})[];
   readonly channel_type: "ad";
   readonly rows: readonly Readonly<Record<string, unknown>>[];
   readonly next_cursor: string | null;
@@ -40,6 +50,7 @@ export function buildMetaProductBreakdownInsightsUrl(input: {
 export function fetchMetaProductBreakdownInsightsPage(input: {
   includePromotedProductMetrics?: boolean;
   accessToken: string;
+  appSecret: string;
   adAccountId: string;
   dateWindow: {start: string; end: string};
   after?: string | null;

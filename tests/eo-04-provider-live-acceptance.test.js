@@ -188,7 +188,7 @@ test("Meta acceptance emits shape evidence without raw commercial or authority v
   ]);
   assert.equal(
     result.channel.direct_metric_decisions.ad_click,
-    "mapping_pending_live_click_field_review",
+    "outbound_click_value_mapping_implemented_live_validation_pending",
   );
   assert.equal(result.product.status, "raw_provider_evidence_pending_standardization");
   assert.deepEqual(result.product.accepted_fields, META_PRODUCT_ACCEPTED_FIELDS);
@@ -377,7 +377,8 @@ test("read-only Shopify authority resolves an existing generation without bootst
 
 test("contract keeps product fields raw and the temporary route non-visual", () => {
   const probe = contract.promoted_product_probe_2026_10_22;
-  assert.deepEqual([...META_PRODUCT_ACCEPTED_FIELDS, ...probe.extra_fields], META_PRODUCT_PROBE_ACCEPTED_FIELDS);
+  assert.deepEqual([...new Set([...META_PRODUCT_ACCEPTED_FIELDS, ...probe.extra_fields])], META_PRODUCT_PROBE_ACCEPTED_FIELDS);
+  assert.equal(contract.repository_alignment_2026_10_23.new_live_execution_or_deployment_authorized, false);
   assert.deepEqual(contract.http_trigger.optional_input_fields.probe, [META_PROMOTED_PRODUCT_PROBE]);
   assert.equal(probe.business_date, "2026-10-01");
   assert.equal(probe.merge, "requires_separate_explicit_approval");

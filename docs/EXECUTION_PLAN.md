@@ -1,5 +1,13 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## Ürün kimliği kaynak okuyucuları — 26 Ekim 2026 repository uygulaması
+
+- Ürün sahibi kodlamaya açık talimat verdi. #179 teknik tarif PR'ı aynı branch/PR içinde çalışan repository okuyucuları ve aday doğrulayıcısıyla genişletildi; merge onayı değildir. Güncel main `dc565a4a9fba50c6cad15a32d19b604056bd29be`; GitHub Connector ve ayrı yerel/uzak envanter doğrulandı.
+- `product-identity-readers.server.js` Merchant v1 ürünlerini ve Meta v26 katalog ürünlerini sınırlandırılmış tam sayfalama ile okur. Tekil native kaynak araması hesap/feed/dil ve açık Meta ID namespace ayrımını korur. Aynı ürünün farklı dil kayıtları seçilemez; yanlış hesap/katalog, tekrar, bozuk yanıt, limit ve ilk HTTP hatası snapshot kabulünü durdurur. Cursor sabit endpoint üzerinde yeniden kurulur; provider next URL'si izlenmez. Otomatik retry ve token içeren hata çıktısı yoktur.
+- `product-identity-verification.server.js` kurulu mağazanın mevcut Admin client'ıyla Product ve varsa Variant-parent bağını okur; yanıttaki Shop ID/domain de beklenen otoriteyle karşılaştırılır. ID'ler metin olarak korunur. Eksik aday, yanlış parent, bozuk yanıt ve API hatası ayrı ele alınır. Ürün-only kontrol sahte varyant istemez. Başarılı aday kontrolü `provider_link_verified: false` verir; kendi başına sağlayıcı eşlemesi veya saklama üretmez.
+- Bunlar server içi ilkel fonksiyonlardır; token/hesap/varlık/mağaza/kurulum otoritesini taze yükleyecek owner'a henüz bağlanmadı. Canlı route/scheduler/quota aktivasyonu, Google/Meta kanıtlı aday çıkarımı, Meta güncel yetki ve ID semantiği kabulü, Klaviyo exact varyant anahtarı, eşleme writer/migration ve 16 kapanışı açık kalır. Mevcut Klaviyo olay okuyucusu değişmedi; ortak doğrulayıcı kimliği kanıtlanmış olay adayını da kabul eder.
+- 26 Ekim resmî Merchant products.list/Product, Meta resmî SDK ProductCatalog/ProductItem ve Shopify product/productVariant kaynakları okundu; bağlantılar aşağıdaki analiz tarifinde kayıtlıdır. OAuth izinleri, canlı provider/DB, Shopify görsel işlem, UI/deploy ve eski matrisler değişmedi. Ortak sözleşme 1.12.0; runtime ve doğrulama sonuçları aşağıdaki analiz kaydında izlenir.
+
 ## Ürün kimliği okuyucu tarifi — 26 Ekim 2026
 
 - Ürün sahibi mevcut Merchant / Meta katalog / Klaviyo kaynak kararının endpoint, alan, izin ve saklama tarifine başlanmasını istedi. Başlangıç main `dc565a4a9fba50c6cad15a32d19b604056bd29be` (#178). Mevcut sorgu çalışma belgesine teknik tablo ve `pd-cpd-query-standard-v1.json` 1.11.0 içine `product_identity.reader_specification` eklendi. Yeni iş paketi veya provider seçimi yoktur.

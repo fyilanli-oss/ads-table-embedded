@@ -64,6 +64,22 @@ Resmî kaynak kontrolü **26 Ekim 2026**:
 - [Klaviyo Get Events](https://developers.klaviyo.com/en/reference/get_events), [Shopify veri referansı](https://help.klaviyo.com/hc/en-us/articles/115005080447): kaynak olay ve Shopify ürün/varyant alanı anlamı.
 - [Shopify productVariant](https://shopify.dev/docs/api/admin-graphql/latest/queries/productVariant), [ProductVariant](https://shopify.dev/docs/api/admin-graphql/latest/objects/ProductVariant): ID, legacy ID, parent ürün ve `read_products`. Kaynak sürümü 2026-10; repository webhook sürümü bu notla değiştirilmez.
 
+### Teknik tariften sonraki repository uygulaması — 26 Ekim 2026
+
+Ürün sahibinin kodlama talimatıyla `app/lib/providers/product-identity-readers.server.js` ve `app/lib/shopify/product-identity-verification.server.js` eklendi. Yukarıdaki "uygulanmadı" ifadeleri ilk tarifin tarihsel durumudur; güncel repository durumu aşağıdadır. Ortak sözleşme 1.12.0 `product_identity.reader_specification.repository_runtime` ile hizalıdır.
+
+| Bileşen | Repository durumu | Kabul sınırı |
+| --- | --- | --- |
+| Merchant okuyucusu | `readMerchantProductIdentitySnapshot`; GET, content scope kontrolü, tam/sınırlı sayfalama, ham ürün ve hesap/feed/dil/veri kaynağı bağlamı | Çağıran owner taze Merchant erişimini/token'ı sağlamalıdır; OAuth genişletilmedi. |
+| Meta katalog okuyucusu | `readMetaCatalogIdentitySnapshot`; v26 GET, bearer + app secret proof, katalog üyeliği, ayrı catalog ID/retailer ID ve ham kayıt | Çağıran owner doğrulanmış katalog erişimini sağlamalıdır; exact izin ve Insights kimlik semantiği kabul edilmedi. |
+| Native kaynak araması | `matchMerchantProductIdentity`, `matchMetaCatalogProductIdentity`; yalnız tam snapshot, exact kaynak kimliği, yanlış kapsamı reddetme ve belirsizliği koruma | Kaynak kaydı bulmak Shopify eşlemesi değildir; Meta namespace açık verilmelidir. |
+| Shopify aday doğrulaması | `verifyShopifyProductCandidate`; aynı mağazada Product, varsa Variant-parent ve yanıt Shop ID/domain kontrolü; metin kimlikler | `candidate_verified_in_shop` sağlayıcı bağını kanıtlamaz. Sonuç açıkça `provider_link_verified: false`, `mapping_write_performed: false` taşır. |
+| Klaviyo olay yolu | Mevcut Ordered Product okuyucusu korunur; kimliği kanıtlanmış ProductID/varsa varyant ortak aday doğrulayıcıya aktarılabilir | Yeni event alias veya uçtan uca orchestration eklenmedi. |
+
+Sayfalama hatası, tekrar eden cursor/kayıt, sınır aşımı veya geç sayfa HTTP hatasında kısmi snapshot döndürülmez. Provider next URL'si takip edilmez; yalnız cursor sabit endpoint'te kullanılır. Sağlayıcı yanıtındaki hata metni/token içerebilen URL dışarı taşınmaz. HTTP/GraphQL başarısızlığı explicit NULL adayla aynı şey değildir. Taze authority loader, canlı tetikleyici, quota owner entegrasyonu, Google/Meta kaynak kanıtından aday çıkarımı ve EO-05-B kalıcı eşleme writer'ı bu repository diliminde yoktur; 16 tamamlanmadı. Bunlar çalışan kodun sınırlarıdır; yeni erişim yolu kararı değildir.
+
+Doğrulama: `tests/product-identity-readers.test.js` tam sayfalama, hesap/katalog/feed/dil belirsizliği, geç hata ve tek deneme, yönlendirme/next URL sınırı, büyük ID taşıması, yanlış mağaza ve varyant-parent, eksik/çelişkili aday ve hatanın yokluk sayılmaması davranışlarını sentetik olarak sınar. Canlı provider kabulü veya kalıcı Dataset kabulü değildir.
+
 ## Beş tablo kolon sözlüğü — 26 Ekim 2026 inceleme taslağı
 
 Durum: **ürün sahibi incelemesine sunulan kolon taslağı; uygulanmış şema değildir**. Ürün sahibi Dataset'in üç veri ve iki destek tablosuyla tasarlanmasını istedi. Aşağıdaki kolon adları AdsTable tasarım önerisidir; provider'ın aynı isimli alanları verdiği iddiası değildir. Bu sözlük eski beş sütunlu/15 satırlık kaynak eşleme tablosunu ve 13 sütunlu sorgu matrisini değiştirmez. Önceden teslim edilen Excel yalnız kaynak eşleme tablosudur; yeni kolon sözlüğünü içerdiği iddia edilmez.

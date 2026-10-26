@@ -1,6 +1,6 @@
 {
   "contract_id": "pd-cpd-query-standard-v1",
-  "version": "1.11.0",
+  "version": "1.12.0",
   "checked_at": "2026-10-26",
   "inventory_item": "01",
   "status": "accepted_product_decisions_implementation_partial",
@@ -181,7 +181,7 @@
     "implementation_item": "16",
     "persistence_package": "A6-EO-05-B",
     "reader_specification": {
-      "status": "review_specification_not_runtime_or_live_acceptance",
+      "status": "repository_readers_and_shopify_candidate_verification_live_acceptance_pending",
       "checked_at": "2026-10-26",
       "document_section": "Ürün kimliği okuyucuları — 26 Ekim 2026 uygulama tarifi",
       "google_ads": {
@@ -192,7 +192,7 @@
         "existing_ads_scope_is_merchant_authority": false,
         "lookup": "verified_merchant_feed_and_exact_native_item_id; preserve_language_and_data_source; ambiguous_match_is_not_selected",
         "shopify_candidate_extraction": "official_shopify_channel_evidence_required; no_universal_offerId_parser_selected",
-        "implemented": false
+        "implemented": true
       },
       "meta": {
         "selected_source": "meta_product_catalog",
@@ -202,7 +202,7 @@
         "insights_id_namespace": "must_verify_catalog_id_vs_retailer_id; no_assumed_equality",
         "permission_gate": "catalog_permission_and_asset_access_review_required_before_activation; ads_read_alone_not_accepted_as_catalog_authority",
         "shopify_candidate_extraction": "official_shopify_channel_evidence_required; retailer_id_or_group_id_not_automatically_shopify_id",
-        "implemented": false
+        "implemented": true
       },
       "klaviyo": {
         "selected_source": "existing_shopify_integration_ordered_product_events",
@@ -222,7 +222,7 @@
         "variant_parent_must_match_product_candidate": true,
         "numeric_ids_transported_as_text": true,
         "current_toml_scopes": "empty_not_evidence_of_live_installed_grants",
-        "implemented": false
+        "implemented": true
       },
       "persistence": {
         "table_candidate": "product_identity_mappings",
@@ -234,7 +234,25 @@
         "physical_schema_writer_and_temporal_uniqueness": "not_implemented_EO05B"
       },
       "implementation_order": ["source_readers_with_scoped_raw_evidence", "evidence_backed_candidate_resolution_and_shopify_validation", "EO05B_mapping_persistence_and_fact_references", "separate_live_acceptance"],
-      "runtime_or_permission_mutation_authorized_by_this_specification": false
+      "runtime_or_permission_mutation_authorized_by_this_specification": false,
+      "repository_runtime": {
+        "version": "1.0.0",
+        "readers": "app/lib/providers/product-identity-readers.server.js",
+        "shopify_candidate_verifier": "app/lib/shopify/product-identity-verification.server.js",
+        "tests": "tests/product-identity-readers.test.js",
+        "authority": "server_internal_fresh_account_asset_shop_and_installation_authority_required_from_caller; no_browser_DTO_authority",
+        "complete_snapshots_only": true,
+        "bounded_pagination_and_rows": true,
+        "retry_or_provider_next_url_following": false,
+        "native_lookup_is_shopify_mapping": false,
+        "candidate_found_in_shop_is_provider_link_proof": false,
+        "google_meta_candidate_extraction": "not_implemented_without_source_evidence",
+        "klaviyo_existing_event_reader_changed": false,
+        "klaviyo_candidate_verification_path": "same_common_verifier_after_verified_Shopify_event_product_identity; no_new_event_alias",
+        "fresh_authority_loader_route_scheduler_quota_activation": "not_wired",
+        "dataset_mapping_writer": false,
+        "live_calls_or_new_grants": false
+      }
     }
   },
   "source_link_design": {

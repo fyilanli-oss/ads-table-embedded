@@ -64,14 +64,14 @@ Campaign, Ad Set, Flow, trigger, split ve delay tek başına Channel değildir.
 | --- | --- | --- | --- | --- |
 | Satışa bağlı ürün etkileşimi ilişkisi doğrulanmış | Ad | Reklam etkileşimi ürünü ve satılan ürün aynı | Aynı ürün | Hedef Advertised; Meta native çözücü/kanıt açık |
 | Satışa bağlı ürün etkileşimi ilişkisi doğrulanmış | Ad | Reklam etkileşimi ürünü ve satılan ürün farklı | Küme içinde veya dışında diğer ürün | Hedef Cross-sell; Meta native çözücü/kanıt açık |
-| Yalnız kesin içerik listesi veya ürün kümesi biliniyor | Ad | Tıklanan/gösterilen ürün–satış ilişkisi kanıtlanmamış | Liste içi/dışı üyelik | Advertised/Cross-sell üretmek için yeterli değil |
+| Yalnız kesin içerik listesi veya ürün kümesi biliniyor | Ad | `retailer_item_ids` gibi liste var; tıklanan/gösterilen ürün–satış ilişkisi kanıtlanmamış | Liste içi/dışı üyelik | Advertised/Cross-sell üretmek için yeterli değil |
 | Ürün kümesi, kategori, dinamik veya genel reklam içeriği | Ad | Tekil ürün kesin değil | Sağlayıcının ilişkilendirdiği satılan ürün | Assisted |
 | Çelişkili kimlik/kanıt | Ad veya çözülebildiği bağlam | Çelişkili | Satılan ürün korunur | Unclassified |
 
 Bağlayıcı sınırlar:
 
 1. Campaign ve Ad Set yalnız hiyerarşi bağlamıdır; Channel `Ad`dır.
-2. Bu eski raporlama slice'ı `ads_read` kullanır. EO-05 kimlik çalışmasındaki katalog izin genişletmesi ayrıca kendi sözleşmesinde kayıtlıdır; bu brief tek başına ek izin veya canlı çağrı yetkisi değildir.
+2. Bu eski raporlama slice'ı `ads_read` kullanır. EO-05 kimlik çalışmasındaki `catalog_management`, `business_management`, `pages_read_engagement`, `pages_show_list` izin genişletmesi ayrıca kendi sözleşmesinde kayıtlıdır; bu brief tek başına ek izin veya canlı çağrı yetkisi değildir.
 3. Ad seviyesindeki gösterim, tıklama ve harcama kesin Channel toplamıdır.
 4. `product_id` kırılımında sağlayıcının gerçekten döndürdüğü ürün metrikleri ayrı ham kanıt olarak korunur.
 5. Ürün kırılımı içindeki gösterim/tıklama/harcama semantiği gerçek katalog reklamı cevabıyla doğrulanmadan `Ad Cost` veya gerçek ürün maliyeti sayılmaz.

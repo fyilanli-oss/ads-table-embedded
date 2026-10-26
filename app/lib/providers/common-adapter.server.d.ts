@@ -1,4 +1,4 @@
-export const COMMON_ADAPTER_CONTRACT_VERSION: "2.0.0";
+export const COMMON_ADAPTER_CONTRACT_VERSION: "3.0.0";
 export const PROVIDERS: readonly ["meta", "google_ads", "klaviyo"];
 export const OPERATIONS: readonly [
   "inspect_connection",
@@ -72,6 +72,7 @@ export class AdapterContractError extends Error {
 
 export interface AdapterAuthority {
   workspace_id: string;
+  /** Canonical decimal string in 1..9223372036854775807, from verified DB authority; not a UUID. */
   installation_id: string;
   installation_generation: number;
   status: "active";
@@ -104,6 +105,7 @@ export interface CommonAdapterRequest {
 export interface CanonicalFunnelFact {
   identity: {
     workspace_id: string;
+    /** Same positive PostgreSQL bigint string representation as AdapterAuthority.installation_id. */
     installation_id: string;
     installation_generation: number;
     provider_connection_id: string;

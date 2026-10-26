@@ -162,6 +162,14 @@ Kaynak tutarlar fact kolonlarında değişmeden kalır. İlk taslakta dönüşt�
 
 **Teslim sınırı:** yalnız analiz sözlüğü ve sınır koruma testleri. 05, 10/11, 15 açık; 17–19 tamamlanmadı. Physical schema seçildi veya Dataset yayını hazır denmez. Merge, canlı DB, migration, provider çağrısı, izin/deploy ve paket başlangıcı ayrı kapılardır.
 
+### Kurulum kimliği uygulama düzeltmesi — 26 Ekim 2026, kolon taslağı sonrası
+
+Ürün sahibi kimlik teşhisinden sonra dar repository düzeltmesini onayladı. Yukarıdaki UUID/DB uyumsuzluğu paragrafı ilk sözlük incelemesinin tarihsel bulgusudur: ortak adaptör `3.0.0` artık hem istek hem fact için pozitif PostgreSQL bigint aralığında canonical ondalık metin ister. UUID/Number/BigInt girdi, baştaki sıfır/işaret/boşluk ve taşma reddedilir; Number dönüşümü yoktur. DB kimliği veya migration değiştirilmedi. Kurulumun server'dan çözülüp writer'a aktarılması hâlâ uygulanmadı; biçim kontrolü yetki kanıtı değildir. FX/ad zorunluluğu ve diğer sözlük tasarımı açık kalır.
+
+Hesap kimliği teşhisinde son `integrations.load_provider_account_authority` tanımı (`20261009141549_eo03d_provider_connection_lifecycle.sql`) binding üzerinden `account.provider_account_id` döndürür. Repository bunu `reportingAccountId` olarak taşır; Meta/Google provider authority aynı native hesabı seçer. Bu nedenle adaptörün metin `canonical_reporting_account_id` alanı dahili bigint `reporting_account_bindings.id` değildir; bu alana o ID için FK önerilmez. Klaviyo aynı alanı NULL tutar ve kendi doğrulanmış platform hesabını kullanır. Ortak adaptörün provider snapshot'larına veya Dataset'e uçtan uca bağlandığı sonucu çıkarılmaz.
+
+Resmî kaynak kontrolü 26 Ekim 2026: [PostgreSQL 17 bigint aralığı](https://www.postgresql.org/docs/17/datatype-numeric.html), [node-postgres metin taşıma](https://node-postgres.com/features/types). Supabase changelog okuma sınırı önceki bölümdeki gibi korunur; yeni Supabase özelliği/şema/CLI işlemi yoktur. Testler temsil sınırları, JSON kayıpsızlığı, eski envelope reddi, farklı büyük kimliklerin ayrılması, sayfalı hata durumunda yayın olmaması ve aktif sözleşme eşliğini sınar. Canlı DB/provider kabulü veya Dataset tekillik/yetki entegrasyonu değildir. Eski 13 sütunlu ve 15 satırlık tablolar ile teslim edilmiş Excel değiştirilmedi.
+
 ## Önceki sorgu matrisi ve karar kayıtları
 
 Tarih: 22 Ekim 2026. Durum: çalışma referansı sabitlendi; nihai ortak tasarım kabulü değildir.

@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import {readFile} from "node:fs/promises";
 
 import {
   AdapterContractError,
   COMMON_ADAPTER_CONTRACT_VERSION,
   RAW_METRICS,
+  canonicalFactKey,
   createQueryFingerprint,
   runCommonAdapterOperation,
   sanitizeProviderEvidence,
@@ -14,7 +16,7 @@ import {
 
 const IDS = Object.freeze({
   workspace: "11111111-1111-4111-8111-111111111111",
-  installation: "22222222-2222-4222-8222-222222222222",
+  installation: "1",
   connection: "33333333-3333-4333-8333-333333333333",
   attempt: "44444444-4444-4444-8444-444444444444",
 });
@@ -204,12 +206,15 @@ test("canonical row rejects invented zero and non-null unsupported values", () =
   );
 });
 
-test("nine-metric version rejects the old envelope and removed session metric", () => {
-  assert.equal(COMMON_ADAPTER_CONTRACT_VERSION, "2.0.0");
+test("current version rejects old envelopes and the removed session metric", () => {
+  assert.equal(COMMON_ADAPTER_CONTRACT_VERSION, "3.0.0");
   assert.equal(RAW_METRICS.length, 9);
   assert.equal(RAW_METRICS.includes("session"), false);
   assert.throws(() => validateCommonAdapterRequest(makeRequest({
     adapter_contract_version: "1.0.0",
+  })), /version/i);
+  assert.throws(() => validateCommonAdapterRequest(makeRequest({
+    adapter_contract_version: "2.0.0",
   })), /version/i);
   assert.throws(() => validateCommonAdapterRequest(makeRequest({
     requested_metrics: [...RAW_METRICS, "session"],
@@ -456,4 +461,91 @@ test("oversized provider evidence fails closed instead of escaping the runner", 
   assert.deepEqual(result.rows, []);
   assert.equal(result.error.class, "internal_adapter_failure");
   assert.match(result.error.message, /evidence/i);
+});
+
+test("installation IDs preserve exact positive int8 strings across requests, facts, keys and JSON", () => {
+  for (const installationId of ["1", "9007199254740991", "9007199254740992", "9007199254740993", "9223372036854775807"]) {
+    const request = makeRequest();
+    request.authority.installation_id = installationId;
+    const row = makeRow();
+    row.identity.installation_id = installationId;
+    assert.equal(validateCommonAdapterRequest(request), request);
+    assert.equal(validateCanonicalFunnelFact(row), row);
+    const roundTrip = JSON.parse(JSON.stringify({request, row}));
+    assert.equal(roundTrip.request.authority.installation_id, installationId);
+    assert.equal(roundTrip.row.identity.installation_id, installationId);
+    assert.equal(canonicalFactKey(roundTrip.row).split("|")[1], installationId);
+  }
+  const a = makeRow();
+  const b = makeRow();
+  a.identity.installation_id = "9007199254740992";
+  b.identity.installation_id = "9007199254740993";
+  assert.notEqual(canonicalFactKey(a), canonicalFactKey(b));
+});
+
+test("installation validation rejects noncanonical, unsafe, legacy and oversized inputs without coercion", () => {
+  const malformed = [undefined, null, true, false, 1, Number.MAX_SAFE_INTEGER + 1, 1n,
+    "", "0", "00", "01", "-1", "+1", "1.0", "1e3", " 1", "1 ", "1\n", "1\r\n", "1\u2028",
+    "１", "9223372036854775808", "9".repeat(10000),
+    "22222222-2222-4222-8222-222222222222", [], ["1"], new String("1"),
+    {[Symbol.toPrimitive]() { throw new Error("coercion must not run"); }}];
+  for (const value of malformed) {
+    const request = makeRequest();
+    request.authority.installation_id = value;
+    const row = makeRow();
+    row.identity.installation_id = value;
+    for (const validate of [() => validateCommonAdapterRequest(request), () => validateCanonicalFunnelFact(row)]) {
+      assert.throws(validate, error => error instanceof AdapterContractError
+        && /installation_id.*positive PostgreSQL bigint string/.test(error.message));
+    }
+  }
+  for (const field of ["workspace_id", "provider_connection_id"]) {
+    const row = makeRow();
+    row.identity[field] = "1";
+    assert.throws(() => validateCanonicalFunnelFact(row), /must be a UUID/);
+  }
+});
+
+test("invalid installation requests and old envelopes fail before any page call", async () => {
+  for (const request of [
+    {...makeRequest(), authority: {...makeRequest().authority, installation_id: "legacy-uuid"}},
+    makeRequest({adapter_contract_version: "2.0.0"}),
+  ]) {
+    let calls = 0;
+    await assert.rejects(runCommonAdapterOperation({request,
+      fetchPage: async () => {calls++; return {rows: [], next_cursor: null};},
+      classifyError: noRetryClassifier,
+    }), AdapterContractError);
+    assert.equal(calls, 0);
+  }
+});
+
+test("a legacy installation on a later page cannot publish earlier valid rows or continue", async () => {
+  let calls = 0;
+  const result = await runCommonAdapterOperation({request: makeRequest(),
+    fetchPage: async () => {
+      calls++;
+      const row = makeRow(`ad-${calls}`);
+      if (calls === 2) row.identity.installation_id = "22222222-2222-4222-8222-222222222222";
+      return {rows: [row], next_cursor: `page-${calls}`, raw_evidence: {}};
+    }, classifyError: noRetryClassifier,
+  });
+  assert.equal(calls, 2);
+  assert.equal(result.publishable, false);
+  assert.deepEqual(result.rows, []);
+  assert.equal(result.error.class, "provider_schema_changed");
+  assert.match(result.error.message, /installation_id/);
+});
+
+test("installation representation is aligned with DB authority and both active contracts", async () => {
+  const common = JSON.parse(await readFile("contracts/eo-04a-common-adapter-start-brief-v1.json", "utf8"));
+  const standard = JSON.parse(await readFile("contracts/pd-cpd-query-standard-v1.json", "utf8"));
+  const sql = await readFile("supabase/migrations/20261006140517_eo02b_workspace_installation_authority.sql", "utf8");
+  assert.match(sql, /create table shopify\.installations \(\s*id bigint generated always as identity primary key/);
+  assert.equal(common.adapter_contract_version, COMMON_ADAPTER_CONTRACT_VERSION);
+  assert.equal(standard.adapter_contract_version, COMMON_ADAPTER_CONTRACT_VERSION);
+  assert.equal(common.installation_identity.minimum, "1");
+  assert.equal(common.installation_identity.maximum, "9223372036854775807");
+  assert.equal(common.installation_identity.database_resolver_or_writer_added, false);
+  assert.equal(common.installation_identity.uuid_accepted, false);
 });

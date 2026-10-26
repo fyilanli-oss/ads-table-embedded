@@ -1,5 +1,12 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## Ortak adaptör kurulum kimliği düzeltmesi — 26 Ekim 2026
+
+- Ürün sahibi dar kimlik düzeltmesini onayladı. Başlangıç main `a0d5d1194e8cae2cde0033674e66e400f4278ee3` (#177). Mevcut DB bigint kurulum ID'si korunur; yalnız ortak adaptör istek/fact UUID kontrolü `1`–`9223372036854775807` aralığındaki canonical ondalık metin kontrolüne dönüştürülür. Number'a çevirme, yeni UUID, alias veya DB değişikliği yoktur.
+- Kabul edilen temsil kırıcı değiştiği için runtime/types ve iki aktif sözleşme `3.0.0` sürümünde hizalanır; eski envelope ve UUID fixture'ları sessizce kabul edilmez. Bu teknik sözleşme sürümüdür, yeni iş paketi değildir. Dokuz metrik, workspace/connection UUID, provider hesap ve Klaviyo NULL reporting-account davranışı korunur.
+- Son SQL/repository incelemesi reporting_account_id'nin dahili binding ID'si değil seçilmiş native provider_account_id olduğunu doğruladı. İnceleme notu mevcut analiz belgesine işlendi. Kurulum kimliği DB resolver/writer'a bağlanmadı; biçim doğrulaması sahiplik kanıtı değildir. FX/ad zorunluluğu, fiziksel Dataset, 05/10/11/15 ve 17–19 açık kalır.
+- PostgreSQL 17 numeric ve node-postgres types resmî belgeleri 26 Ekim 2026'da okundu. Test/CI ve açık merge onayı gerekir. Migration, canlı DB/provider çağrısı, token/izin, UI, deploy veya EO-05-B writer başlangıcı yoktur.
+
 ## Beş tablo kolon sözlüğü — 26 Ekim 2026 inceleme taslağı
 
 - Ürün sahibi beş tabloluk Dataset tasarımında kolon ve zorunluluk incelemesine devam talimatı verdi. Başlangıç main `568f6642b62688774199a550ac8b41395f2f988c` (#176). Mevcut sorgu çalışma belgesine `pd_facts`, `cpd_product_performance_facts`, `cpd_product_sales_facts`, `product_identity_mappings`, `fx_rates` için ortak/adaya özgü kolon, tip, boşluk ve kaynak kuralları eklendi. Bu adlar ve tipler inceleme önerisidir; oluşturulmuş tablolar değildir.

@@ -7,6 +7,7 @@ import {
 } from "../oauth/provider-connection-lifecycle.server.js";
 import {META_GRAPH_VERSION, MetaGraphError} from "./meta-graph.server.js";
 import {buildMetaSourceLinks} from "./meta-source-links.server.js";
+import {projectMetaProductSales} from "./meta-sales-role.server.js";
 import {
   fetchMetaAdChannelInsightsPage,
   fetchMetaProductBreakdownInsightsPage,
@@ -48,7 +49,11 @@ export function createMetaReportingAuthorityRuntime({
   graphVersion = META_GRAPH_VERSION,
   fetchFn = fetch,
   now = () => new Date(),
+  loadProductSalesEvidence = null,
 } = {}) {
+  if (loadProductSalesEvidence !== null && typeof loadProductSalesEvidence !== "function") {
+    throw new TypeError("loadProductSalesEvidence must be a server-side loader");
+  }
   if (!tokenVault || typeof tokenVault.loadProviderTokenSet !== "function") {
     throw new TypeError("tokenVault.loadProviderTokenSet is required");
   }
@@ -270,6 +275,35 @@ export function createMetaReportingAuthorityRuntime({
         channelRows: channel.rows,
         productRows: product.rows,
       });
+      let salesEvidence = null;
+      if (loadProductSalesEvidence !== null) {
+        try {
+          const batch = await loadProductSalesEvidence({installationAuthority: context.installation,
+            connectionId: context.connection.connectionId, reportingAccountId: context.reportingAccountId,
+            dateWindow: Object.freeze({...dateWindow}), productRows: structuredClone(product.rows)});
+          if (batch?.scope?.workspace_id !== context.installation.workspaceId
+            || batch?.scope?.install_generation !== context.installation.installGeneration
+            || batch?.scope?.connection_id !== context.connection.connectionId
+            || batch?.scope?.reporting_account_id !== context.reportingAccountId) {
+            throw new Error("scope mismatch");
+          }
+          salesEvidence = batch.rows;
+        } catch {
+          throw new MetaGraphError("META_SALES_ROLE_EVIDENCE_FAILED", "Meta sale evidence loading failed");
+        }
+        if (!Array.isArray(salesEvidence)) {
+          throw new MetaGraphError("META_PRODUCT_SALE_EVIDENCE_INVALID", "Meta sale evidence must be an array");
+        }
+        for (let index = 0; index < product.rows.length; index++) {
+          if (salesEvidence[index]?.state !== "verified") continue;
+          const row = product.rows[index];
+          if (row.account_id !== context.reportingAccountId.slice(4) || row.date_start < dateWindow.start
+            || row.date_start > dateWindow.end) {
+            throw new MetaGraphError("META_SALES_ROLE_SCOPE_MISMATCH", "Meta sale evidence is outside the requested scope");
+          }
+        }
+      }
+      const productSales = projectMetaProductSales({rows: product.rows, evidenceRows: salesEvidence});
       return Object.freeze({
         provider: PROVIDER,
         authority: Object.freeze({
@@ -279,6 +313,7 @@ export function createMetaReportingAuthorityRuntime({
         channel,
         product,
         source_links: sourceLinks,
+        product_sales: productSales,
       });
     },
   });

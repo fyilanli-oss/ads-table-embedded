@@ -44,6 +44,92 @@ function database(row = databaseRow()) {
   };
 }
 
+function saleRow(productId) {
+  return {account_id: "123456", campaign_id: "campaign-1", adset_id: "adset-1", ad_id: "ad-1",
+    date_start: "2026-10-15", date_stop: "2026-10-15", product_id: productId,
+    converted_product_quantity: [{action_type: "purchase", value: "2"}],
+    converted_product_value: [{action_type: "purchase", value: "200"}],
+    converted_promoted_product_quantity: [{action_type: "purchase", value: "1"}],
+    converted_promoted_product_value: [{action_type: "purchase", value: "100"}]};
+}
+
+function evidenceBatch(rows, input) {
+  return {scope: {workspace_id: input.installationAuthority.workspaceId,
+    install_generation: input.installationAuthority.installGeneration,
+    connection_id: input.connectionId, reporting_account_id: input.reportingAccountId},
+  rows: rows.map(row => ({state: "verified", relation_scope: "single_product_sale_relation",
+    row_identity: {account_id: row.account_id, ad_id: row.ad_id, product_id: row.product_id, business_date: row.date_start},
+    advertised_product_id: "A", sold_product_id: row.product_id, sales_quantity: "1", catalog_id: "123",
+    identity_namespace: "retailer_id", source_reference: "synthetic:verified-source"}))};
+}
+
+test("Meta complete snapshot classifies verified relationships after all pages and retains one source projection", async () => {
+  let requests = 0, loaderCalls = 0;
+  const runtime = createMetaReportingAuthorityRuntime({database: database(), appSecret: "test-secret",
+    tokenVault: {async loadProviderTokenSet() {return {access_token: "vault-only-token"};}},
+    fetchFn: async request => {
+      requests++;
+      const parsed = new URL(request);
+      if (!parsed.searchParams.has("breakdowns")) return json({data: [{...saleRow("A"), product_id: undefined}]});
+      for (const field of ["converted_product_quantity", "converted_product_value",
+        "converted_promoted_product_quantity", "converted_promoted_product_value"]) {
+        assert.ok(parsed.searchParams.get("fields").split(",").includes(field));
+      }
+      return parsed.searchParams.has("after") ? json({data: [saleRow("B")]})
+        : json({data: [saleRow("A")], paging: {next: "next", cursors: {after: "page-2"}}});
+    }, loadProductSalesEvidence: async input => {
+      loaderCalls++;
+      assert.equal(requests, 3);
+      assert.equal(input.productRows.length, 2);
+      const batch = evidenceBatch(input.productRows, input);
+      input.productRows[0].converted_product_quantity[0].value = "999";
+      return batch;
+    }});
+  const result = await runtime.readDailyEvidenceSnapshot({installationAuthority,
+    dateWindow: {start: "2026-10-15", end: "2026-10-15"}});
+  assert.equal(loaderCalls, 1);
+  assert.deepEqual(result.product_sales.rows.map(row => row.sales_role), ["Advertised", "Cross-sell"]);
+  assert.deepEqual(result.product_sales.rows.map(row => row.source_row_index), [0, 1]);
+  assert.deepEqual(result.product.rows, [saleRow("A"), saleRow("B")]);
+  assert.equal(result.product_sales.additional_sales_facts_created, false);
+  assert.equal(result.product_sales.dataset_publishable, false);
+});
+
+test("Meta default snapshot keeps all four fields but cannot label a sale from promoted values alone", async () => {
+  const runtime = createMetaReportingAuthorityRuntime({database: database(), appSecret: "test-secret",
+    tokenVault: {async loadProviderTokenSet() {return {access_token: "vault-only-token"};}},
+    fetchFn: async request => json({data: new URL(request).searchParams.has("breakdowns") ? [saleRow("A")] : []})});
+  const result = await runtime.readDailyEvidenceSnapshot({installationAuthority,
+    dateWindow: {start: "2026-10-15", end: "2026-10-15"}});
+  assert.equal(result.product_sales.rows[0].sales_role, "Unclassified");
+  assert.equal(result.product_sales.rows[0].raw_row, result.product.rows[0]);
+  assert.equal(result.product_sales.rows[0].raw_metrics.converted_promoted_product_quantity[0].value, "1");
+});
+
+test("Meta role evidence rejects scope drift, mismatched cardinality and loader failure without retry", async () => {
+  for (const scenario of ["workspace", "generation", "connection", "account", "length", "failure", "outside_window"]) {
+    let loaderCalls = 0;
+    const runtime = createMetaReportingAuthorityRuntime({database: database(), appSecret: "test-secret",
+      tokenVault: {async loadProviderTokenSet() {return {access_token: "vault-only-token"};}},
+      fetchFn: async request => json({data: new URL(request).searchParams.has("breakdowns")
+        ? [{...saleRow("A"), ...(scenario === "outside_window" ? {date_start: "2026-10-14", date_stop: "2026-10-14"} : {})}] : []}),
+      loadProductSalesEvidence: async input => {
+        loaderCalls++;
+        if (scenario === "failure") throw new Error("private-token");
+        const batch = evidenceBatch(input.productRows, input);
+        if (scenario === "workspace") batch.scope.workspace_id = "wrong";
+        if (scenario === "generation") batch.scope.install_generation = 1;
+        if (scenario === "connection") batch.scope.connection_id = "wrong";
+        if (scenario === "account") batch.scope.reporting_account_id = "act_999";
+        if (scenario === "length") batch.rows = [];
+        return batch;
+      }});
+    await assert.rejects(runtime.readDailyEvidenceSnapshot({installationAuthority,
+      dateWindow: {start: "2026-10-15", end: "2026-10-15"}}), error => error.code.startsWith("META_") && !error.message.includes("private-token"));
+    assert.equal(loaderCalls, 1);
+  }
+});
+
 test("snapshot applies promoted probe only to product pages and stops on the first rejection", async () => {
   for (const fail of [false, true]) {
     const requests = [];

@@ -1,5 +1,12 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## Meta Sales Role sınıflandırıcısı — 26 Ekim 2026
+
+- Ürün sahibi Meta rol kararının Google'daki gibi kod ve senaryo testleriyle hazırlanmasını istedi. Başlangıç main `dc565a4a9fba50c6cad15a32d19b604056bd29be`; ayrı `codex/meta-sales-role-classifier` branch'i. #179 kimlik okuyucuları PR'ına bağımlı değildir ve onun merge'ünü ima etmez. GitHub Connector, uzak main ve yerel envanter ayrı doğrulandı.
+- `normalizeMetaProductSale` doğrulanmış tek bir reklam ürünü/satılan ürün ilişkisi ve pozitif satış adedi kanıtında aynı ürün için Advertised, farklı ürün için Cross-sell verir. Eksik/bekleyen/karışık/çelişkili kanıt Unclassified kalır. Katalog kümesi üyeliği rol kanıtı değildir; kaynak `product_id` otomatik satılan ürün yapılmaz. Dört ham quantity/value alanı korunur; toplam-promoted çıkarımı veya ikinci satış üretilmez.
+- Tam snapshot sonrasında `product_sales` birebir kaynak projeksiyonu oluşturulur. Opsiyonel server kanıt yükleyicisinin workspace/nesil/bağlantı/hesap kapsamı ve her satırın hesap/Ad/ürün/gün ilişkisi kontrol edilir. Yükleyici yoksa rol Unclassified kalır; ham alanlardan sahte doğrulama üretilmez. Hatalı yükleyici veya eksik/yanlış kapsamda kısmi sonuç yayımlanmaz. Eski sayfa çifti girişine ek projeksiyon bağlanmadı.
+- Meta resmî SDK AdsInsights alanları 26 Ekim 2026'da okundu; dört alan list<AdsActionStats> olarak vardır. Bu alanların kesin satış semantiği ve bunu kanıta dönüştürecek decoder hâlâ açık; sentetik test canlı kabul değildir. Shopify eşlemesi, maliyet anlamı, Google/PMax veya Klaviyo işi bu dilimle kapanmaz. Yeni provider sorgusu, izin/canlı çağrı, DB/migration, UI/deploy yoktur. Merge ayrıca açık ürün sahibi onayı gerektirir.
+
 ## Ortak adaptör kurulum kimliği düzeltmesi — 26 Ekim 2026
 
 - Ürün sahibi dar kimlik düzeltmesini onayladı. Başlangıç main `a0d5d1194e8cae2cde0033674e66e400f4278ee3` (#177). Mevcut DB bigint kurulum ID'si korunur; yalnız ortak adaptör istek/fact UUID kontrolü `1`–`9223372036854775807` aralığındaki canonical ondalık metin kontrolüne dönüştürülür. Number'a çevirme, yeni UUID, alias veya DB değişikliği yoktur.

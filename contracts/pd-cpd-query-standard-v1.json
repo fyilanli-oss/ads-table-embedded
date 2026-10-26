@@ -1,6 +1,6 @@
 {
   "contract_id": "pd-cpd-query-standard-v1",
-  "version": "1.15.0",
+  "version": "1.16.0",
   "checked_at": "2026-10-26",
   "inventory_item": "01",
   "status": "accepted_product_decisions_implementation_partial",
@@ -96,7 +96,7 @@
     "items_18_19_closed": false,
     "deferred_items": {
       "05": "four_meta_fields_retained_semantics_and_roles_pending_real_data",
-      "15": "advertised_cross_sell_requires_new_owner_discussion_existing_roles_unchanged",
+      "15": "Klaviyo_advertised_cross_sell_investigation_closed_by_owner_2026_10_26_keep_Assisted_Triggered",
       "10_11": "product_asset_group_link_open_google_support_reply_pending_history_still_paused",
       "16": "physical_identity_mapping_remains_EO05B"
     },
@@ -398,11 +398,24 @@
     "spend": "open_no_formula_or_zero_fallback",
     "campaign_content_membership_role": "Assisted",
     "campaign_content_membership_proves_clicked_product": false,
-    "campaign_advertised_cross_sell": "requires_verified_sale_linked_product_interaction_evidence_not_implemented",
+    "campaign_advertised_cross_sell": "out_of_current_product_scope_investigation_closed_by_owner_2026_10_26",
+    "sales_role_product_decision_2026_10_26": {
+      "status": "closed_product_scope_decision_not_implementation_of_Advertised_or_Cross_sell",
+      "campaign": "Assisted_when_existing_attribution_valid",
+      "flow": "Triggered_when_existing_attribution_valid",
+      "missing_or_contradictory_attribution": "preserve_existing_Unclassified_rules",
+      "message_membership_proves_clicked_product": false,
+      "native_provider_support_or_impossibility_proven": false,
+      "further_attributed_interaction_product_research": "stopped_until_new_explicit_product_owner_direction",
+      "PR181": "not_to_merge_for_this_closed_goal_no_automatic_merge_or_close_action",
+      "identity_work": "unaffected_remains_in_EO05_identity_work_order",
+      "Meta_sales_role_investigation": "remains_open",
+      "new_runtime_provider_DB_or_deployment_authority": false
+    },
     "flow_role": "Triggered_when_existing_flow_evidence_valid",
     "contradictory_evidence_role": "Unclassified",
     "content_membership_fix": "merged_PR_166",
-    "remaining_role_item": "15"
+    "role_inventory_item": "15_closed_by_product_scope_decision_2026_10_26"
   },
   "delivery_boundary": {
     "provider_runtime_contracts_describe": "actual_existing_queries_and_guards_not_target_completion",

@@ -1,5 +1,11 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## Klaviyo Advertised/Cross-sell kapsam kararı — 26 Ekim 2026
+
+Ürün sahibi Meta açık kalırken Klaviyo Advertised/Cross-sell araştırmasının kapatılmasını istedi. Klaviyo'da bu ayrım mevcut ürün kapsamından çıkarılır; araştırma/kodlama hedefi olarak açık tutulmaz. Mevcut geçerli Campaign atfı **Assisted**, Flow atfı **Triggered** kalır; eksik/çelişkili atıfta mevcut **Unclassified** kuralları korunur. Mesaj ürün kümesine üyelik veya üyelik dışı olma tek başına Advertised/Cross-sell üretmez. Bu karar sağlayıcının teknik olarak desteklemediğinin kanıtı veya Advertised/Cross-sell uygulamasının tamamlanması değildir.
+
+Önceki envanterin Klaviyo rol maddesi 15 bu ürün kararıyla kapanır; bu numara kimlik çalışma listesinin adım 15'i değildir. Mevcut EO-05 kimlik işi ve Klaviyo ProductID/varyant doğrulaması değişmez. Kimlik işinden sonra rol çalışması Google'ın kalan bağlantıları ve Meta'nın açık kanıt/çözümleme yolu üzerinden devam eder; Klaviyo araştırması yeni açık kullanıcı talimatı olmadan yeniden açılmaz. Bu hedef için #181 etkileşim okuyucusu birleştirilmez; bu kayıt PR kapatma veya merge işlemi değildir. Meta'nın dört alanı sorguda kalır; yanıt çözümleme ve gerçek veri doğrulaması açıktır. Ana sözleşme `contracts/pd-cpd-query-standard-v1.json#klaviyo/sales_role_product_decision_2026_10_26`, sürüm 1.16.0. Runtime, provider, OAuth, DB ve deploy değişikliği yoktur.
+
 ## EO-05 ürün kimliği iş sırası — 26 Ekim 2026
 
 Ürün sahibi kimlik eksiklerinin EO-05 paketine ve başlangıç brief'ine işlenmesini onayladı. Ana takip EO-05'tir; önceki eksik envanterindeki 16 numarası yalnız çapraz referanstır, paket veya aşağıdaki adım numarası değildir. Tam liste **EO-05 ürün kimliği çalışma listesi** bölümündedir. Makine karşılığı `contracts/eo-05-start-brief-v1.json#product_identity_work_order_2026_10_26`; ana EO-05 sözleşmesi ve sorgu standardı aynı kayda bağlıdır.

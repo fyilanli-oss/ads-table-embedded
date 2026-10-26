@@ -1,5 +1,9 @@
 # PD ve CPD sorgu çalışma tablosu
 
+## Klaviyo rol araştırması kapatıldı — 26 Ekim 2026
+
+Ürün sahibi kararı: Klaviyo Advertised/Cross-sell mevcut kapsamdan çıkarıldı; geçerli Campaign atfı **Assisted**, Flow atfı **Triggered**, eksik/çelişkili atıf mevcut **Unclassified** davranışında kalır. Ürün kümesi üyeliğinden rol türetilmez. Bu bir ürün kapsamı kapanışıdır, provider'ın desteklemediği veya ayrımın kodlandığı iddiası değildir. Yeni açık kullanıcı talimatı olmadan etkileşim ürünü araştırması sürdürülmez; #181 bu hedef için merge edilmez. Meta araştırması açık, Google bağlantı eksikleri ve EO-05 kimlik çalışması değişmez. Karar `contracts/pd-cpd-query-standard-v1.json#klaviyo/sales_role_product_decision_2026_10_26` içinde; güncel sürüm 1.16.0. Aşağıdaki önceki inceleme notları tarihseldir; eski tabloların satırları değiştirilmedi.
+
 ## EO-05 ürün kimliği çalışma kaydı — 26 Ekim 2026
 
 Ana takip, [Execution Plan içindeki EO-05 analist brief'inin tam 16 adımlık kimlik listesi](../EXECUTION_PLAN.md#eo-05-ürün-kimliği-çalışma-listesi) ve `contracts/eo-05-start-brief-v1.json#product_identity_work_order_2026_10_26` içindedir. Envanterdeki 16 numarası ayrı paket değildir. İzinler ve kullanıcı OAuth/okuma testleri aynı çalışmanın 1–11 adımlarıdır; **12'ye başlamadan kullanıcıyla değerlendirme yapılır**. Kalıcı eşleme tablosu/yazımı/yaşam döngüsü/referansları ve tam test 12–16 aynı listenin devamıdır; durak sonrası açık onaydan önce başlamaz. Adım 9 kaynak kuralı kalıcılığı ve 11'de eksik olabilecek kota tabloları bu durağı aşamaz; DB'siz hazırlık ile canlı kanıt ayrılır, engel PASS yapılmaz.

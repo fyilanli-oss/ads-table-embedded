@@ -32,6 +32,9 @@ export async function verifyShopifyProductCandidate({admin, shop, installation, 
     fail("SHOPIFY_PRODUCT_INSTALLATION_REQUIRED");
   }
   if (!admin || typeof admin.graphql !== "function") fail("SHOPIFY_PRODUCT_ADMIN_REQUIRED");
+  const expectedShopId = shop.shopId;
+  const expectedWorkspaceId = installation.workspaceId;
+  const expectedGeneration = installation.installGeneration;
   const product = candidateId(productId, "Product");
   const variant = variantId === null ? null : candidateId(variantId, "ProductVariant");
   const query = `#graphql
@@ -51,11 +54,11 @@ export async function verifyShopifyProductCandidate({admin, shop, installation, 
   let body;
   try { body = await response.json(); } catch { fail("SHOPIFY_PRODUCT_JSON_INVALID"); }
   if (!body?.data || body.errors) fail("SHOPIFY_PRODUCT_GRAPHQL_FAILED");
-  if (body.data.shop?.id !== shop.shopId || body.data.shop?.myshopifyDomain !== domain) {
+  if (body.data.shop?.id !== expectedShopId || body.data.shop?.myshopifyDomain !== domain) {
     fail("SHOPIFY_PRODUCT_SHOP_MISMATCH");
   }
-  const scope = Object.freeze({workspace_id: installation.workspaceId,
-    installation_generation: installation.installGeneration, shop_id: shop.shopId, shop_domain: domain});
+  const scope = Object.freeze({workspace_id: expectedWorkspaceId,
+    installation_generation: expectedGeneration, shop_id: expectedShopId, shop_domain: domain});
   const result = (state, reason) => Object.freeze({version: "1.0.0", scope, state, reason,
     candidate: Object.freeze({product_id: product.gid, variant_id: variant?.gid ?? null}),
     evidence: Object.freeze({product: body.data.product === null ? null : Object.freeze({...body.data.product}),

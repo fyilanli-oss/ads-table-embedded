@@ -3,6 +3,18 @@
   "status": "repository_implementation_ready_for_review",
   "accepted_at": "2026-10-17",
   "api_revision": "2026-10-15",
+  "optional_product_identity_resolution": {
+    "coordinator": "app/lib/providers/klaviyo-product-identity.server.js",
+    "context_loader": "server_only_loadProductIdentityContext_default_null",
+    "family": "product_identity_resolution_after_resolved_product_sales",
+    "exact_metric_and_event_relationship": "Shopify_Ordered_Product",
+    "same_workspace_generation_and_shop_verified": true,
+    "native_event_and_sales_role_preserved": true,
+    "duplicate_events_counted_again": false,
+    "mapping_index": "local_result_reference_not_database_id",
+    "partial_failure_results": null,
+    "writer_or_live_activation": false
+  },
   "pd_alignment_2026_10_23": {
     "inventory_items": ["13", "14"],
     "entrypoint": "readPdEvidenceSnapshot",

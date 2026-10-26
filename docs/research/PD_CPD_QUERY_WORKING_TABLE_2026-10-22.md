@@ -66,7 +66,7 @@ Resmî kaynak kontrolü **26 Ekim 2026**:
 
 ### Teknik tariften sonraki repository uygulaması — 26 Ekim 2026
 
-Ürün sahibinin kodlama talimatıyla `app/lib/providers/product-identity-readers.server.js` ve `app/lib/shopify/product-identity-verification.server.js` eklendi. Yukarıdaki "uygulanmadı" ifadeleri ilk tarifin tarihsel durumudur; güncel repository durumu aşağıdadır. Ortak sözleşme 1.12.0 `product_identity.reader_specification.repository_runtime` ile hizalıdır.
+Ürün sahibinin kodlama talimatıyla `app/lib/providers/product-identity-readers.server.js`, `app/lib/shopify/product-identity-verification.server.js` ve `app/lib/providers/klaviyo-product-identity.server.js` eklendi. Yukarıdaki "uygulanmadı" ifadeleri ilk tarifin tarihsel durumudur; güncel repository durumu aşağıdadır. Ortak sözleşme 1.13.0 `product_identity.reader_specification.repository_runtime` ile hizalıdır.
 
 | Bileşen | Repository durumu | Kabul sınırı |
 | --- | --- | --- |
@@ -74,7 +74,9 @@ Resmî kaynak kontrolü **26 Ekim 2026**:
 | Meta katalog okuyucusu | `readMetaCatalogIdentitySnapshot`; v26 GET, bearer + app secret proof, katalog üyeliği, ayrı catalog ID/retailer ID ve ham kayıt | Çağıran owner doğrulanmış katalog erişimini sağlamalıdır; exact izin ve Insights kimlik semantiği kabul edilmedi. |
 | Native kaynak araması | `matchMerchantProductIdentity`, `matchMetaCatalogProductIdentity`; yalnız tam snapshot, exact kaynak kimliği, yanlış kapsamı reddetme ve belirsizliği koruma | Kaynak kaydı bulmak Shopify eşlemesi değildir; Meta namespace açık verilmelidir. |
 | Shopify aday doğrulaması | `verifyShopifyProductCandidate`; aynı mağazada Product, varsa Variant-parent ve yanıt Shop ID/domain kontrolü; metin kimlikler | `candidate_verified_in_shop` sağlayıcı bağını kanıtlamaz. Sonuç açıkça `provider_link_verified: false`, `mapping_write_performed: false` taşır. |
-| Klaviyo olay yolu | Mevcut Ordered Product okuyucusu korunur; kimliği kanıtlanmış ProductID/varsa varyant ortak aday doğrulayıcıya aktarılabilir | Yeni event alias veya uçtan uca orchestration eklenmedi. |
+| Klaviyo olay yolu | Opsiyonel server context loader ile mevcut normalizasyon ve atıf sonrası ortak Shopify doğrulaması çağrılır; eşleme kanıtı ve yerel satır referansı üretilir | Shopify Ordered Product metric + olay metric ilişkisi, aynı workspace/nesil ve doğru Shopify mağazası zorunlu. Yeni event alias, DB writer veya canlı aktivasyon yok. |
+
+Klaviyo eşleme sonucu `product_identity_resolution` ailesindedir; ham `ordered_product_events` ve atıflı satışlar değiştirilmez. Doğrulanmış üründe yeni ailede `standardized_product_id` dolar. Aynı ProductID/varyant çifti bir kez doğrulanır; iki farklı Event ID iki satış olarak korunur, aynı Event ID'deki çelişki ilk dış çağrıdan önce reddedilir. Güvenli JS integer kaynak kimliği metne çevrilebilir; güvenli aralık dışı sayısal kimlikten tahmini ID üretilmez. Varyant gözlenmiş ama geçersizse sessizce product-only eşlemeye düşülmez. Eksik/çelişkili eşleme satışı silmez veya rolünü değiştirmez. `mapping_index` yalnız bu sonucun `mappings` dizisine referanstır, kalıcı tablo anahtarı değildir. Birinci ürün doğrulansa bile sonraki Shopify API hatası eşleme ailesini ve raporlama sonuçlarını kısmi yayımlamaz. Canlı context loader'ının bağlanması ve kalıcı writer ayrı kapılarda kalır.
 
 Sayfalama hatası, tekrar eden cursor/kayıt, sınır aşımı veya geç sayfa HTTP hatasında kısmi snapshot döndürülmez. Provider next URL'si takip edilmez; yalnız cursor sabit endpoint'te kullanılır. Sağlayıcı yanıtındaki hata metni/token içerebilen URL dışarı taşınmaz. HTTP/GraphQL başarısızlığı explicit NULL adayla aynı şey değildir. Taze authority loader, canlı tetikleyici, quota owner entegrasyonu, Google/Meta kaynak kanıtından aday çıkarımı ve EO-05-B kalıcı eşleme writer'ı bu repository diliminde yoktur; 16 tamamlanmadı. Bunlar çalışan kodun sınırlarıdır; yeni erişim yolu kararı değildir.
 

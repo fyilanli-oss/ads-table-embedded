@@ -74,9 +74,10 @@ function event(id, attributionId = null) {
   };
 }
 
-function runtime({fetchFn, connected = connection, lifecycle = null, now = () => new Date()} = {}) {
+function runtime({fetchFn, connected = connection, lifecycle = null, now = () => new Date(), loadProductIdentityContext = null} = {}) {
   return createKlaviyoReportingAuthorityRuntime({
     fetchFn,
+    loadProductIdentityContext,
     accountAuthority: {load: async () => connected},
     credentialAuthority: {
       prepareCredential: async (input) => {
@@ -93,6 +94,73 @@ function runtime({fetchFn, connected = connection, lifecycle = null, now = () =>
     now,
   });
 }
+
+test("Optional identity family connects actual Ordered Product normalization to Shopify verification atomically", async () => {
+  let shopCalls = 0, loaderCalls = 0;
+  const api = runtime({
+    fetchFn: async url => {
+      const path = new URL(url).pathname;
+      if (path === "/api/metrics") return response(200, {data: [metric("placed", "Placed Order"), metric("ordered", "Ordered Product")]});
+      if (path === "/api/events") {
+        const source = event("event-identity");
+        source.attributes.event_properties.ProductID = "9007199254740993";
+        source.relationships.metric = {data: {type: "metric", id: "ordered"}};
+        return response(200, {data: [source]});
+      }
+      return response(200, {data: {attributes: {results: []}}});
+    },
+    loadProductIdentityContext: async input => {
+      loaderCalls++;
+      assert.equal(input.connectionId, connection.connectionId);
+      assert.equal(input.accountId, connection.accounts[0].id);
+      return {installation: installationAuthority,
+        shop: {authority: "shopify_admin_verified", shopId: "gid://shopify/Shop/1", myshopifyDomain: "fixture.myshopify.com"},
+        admin: {graphql: async () => {
+          shopCalls++;
+          return response(200, {data: {shop: {id: "gid://shopify/Shop/1", myshopifyDomain: "fixture.myshopify.com"},
+            product: {id: "gid://shopify/Product/9007199254740993", legacyResourceId: "9007199254740993"}}});
+        }}};
+    },
+  });
+  const result = await api.readDailyEvidenceSnapshot({installationAuthority, businessDate: "2026-10-17"});
+  assert.equal(result.status, "completed");
+  assert.equal(loaderCalls, 1);
+  assert.equal(shopCalls, 1);
+  assert.equal(result.results.product_identity_resolution.rows[0].product_identity_resolution.state, "verified");
+  assert.equal(result.results.product_identity_resolution.mappings.length, 1);
+  assert.equal(result.results.ordered_product_events.rows[0].standardized_product_id, null);
+  assert.equal(result.results.product_identity_resolution.rows[0].attribution_resolution.sales_role, "Unclassified");
+  assert.equal(result.completed_families.at(-1), "product_identity_resolution");
+});
+
+test("Identity integration refuses wrong event metrics, stale installation and Shopify errors without partial publication", async () => {
+  for (const scenario of ["wrong_metric", "stale_installation", "shopify_error"]) {
+    let loaderCalls = 0, shopCalls = 0;
+    const api = runtime({fetchFn: async url => {
+      const path = new URL(url).pathname;
+      if (path === "/api/metrics") return response(200, {data: [metric("placed", "Placed Order"), metric("ordered", "Ordered Product")]});
+      if (path === "/api/events") {
+        const source = event("event-identity");
+        source.attributes.event_properties.ProductID = "123";
+        source.relationships.metric = {data: {type: "metric", id: scenario === "wrong_metric" ? "placed" : "ordered"}};
+        return response(200, {data: [source]});
+      }
+      return response(200, {data: {attributes: {results: []}}});
+    }, loadProductIdentityContext: async () => {
+      loaderCalls++;
+      return {installation: {...installationAuthority, installGeneration: scenario === "stale_installation" ? 2 : 3},
+        shop: {authority: "shopify_admin_verified", shopId: "gid://shopify/Shop/1", myshopifyDomain: "fixture.myshopify.com"},
+        admin: {graphql: async () => {shopCalls++; return response(403, {errors: [{message: "private-token"}]});}}};
+    }});
+    const result = await api.readDailyEvidenceSnapshot({installationAuthority, businessDate: "2026-10-17"});
+    assert.equal(result.status, "failed", scenario);
+    assert.equal(result.publishable, false);
+    assert.equal(result.results, null);
+    assert.ok(!JSON.stringify(result.error).includes("private-token"));
+    assert.equal(loaderCalls, scenario === "wrong_metric" ? 0 : 1);
+    assert.equal(shopCalls, scenario === "shopify_error" ? 1 : 0);
+  }
+});
 
 test("PD authority discovers exact metrics, retains whole rows and exhausts per-metric pagination", async () => {
   const calls = [];

@@ -539,6 +539,7 @@ export async function runKlaviyoReportingFamilies({
   fetchFlowValues,
   fetchOrderedProductEvents,
   resolveProductSales = null,
+  verifyProductIdentities = null,
 }) {
   const families = [
     ["metrics", discoverMetrics],
@@ -546,6 +547,7 @@ export async function runKlaviyoReportingFamilies({
     ["flow_values", fetchFlowValues],
     ["ordered_product_events", fetchOrderedProductEvents],
     ...(resolveProductSales == null ? [] : [["resolved_product_sales", resolveProductSales]]),
+    ...(verifyProductIdentities == null ? [] : [["product_identity_resolution", verifyProductIdentities]]),
   ];
   if (families.some(([, operation]) => typeof operation !== "function")) {
     fail("KLAVIYO_REPORTING_FAMILY_INVALID", "Every Klaviyo reporting family must be a function");

@@ -21,6 +21,7 @@ import {
   KLAVIYO_REPORTING_API_REVISION,
 } from "./klaviyo-reporting.server.js";
 import {resolveKlaviyoOrderedProductSales} from "./klaviyo-attribution-resolution.server.js";
+import {resolveKlaviyoProductIdentities} from "./klaviyo-product-identity.server.js";
 import {quotaBoundaryControl} from "../refresh/quota-native-fetch.server.js";
 
 const PROVIDER = "klaviyo";
@@ -213,8 +214,12 @@ export function createKlaviyoReportingAuthorityRuntime({
   lifecycle: lifecycleOverride = null,
   credentialAuthority: credentialAuthorityOverride = null,
   config: configOverride = null,
+  loadProductIdentityContext = null,
 } = {}) {
   if (typeof fetchFn !== "function") throw new TypeError("fetchFn is required");
+  if (loadProductIdentityContext !== null && typeof loadProductIdentityContext !== "function") {
+    throw new TypeError("loadProductIdentityContext must be a server-side loader");
+  }
   const accountAuthority = accountAuthorityOverride ?? createProviderAccountAuthorityRepository(database);
   const lifecycle = lifecycleOverride ?? createProviderConnectionLifecycle({database, now});
   const config = configOverride ?? readKlaviyoOAuthConfig(environment);
@@ -384,8 +389,11 @@ export function createKlaviyoReportingAuthorityRuntime({
             }),
             rowsOf: (payload) => payload?.data,
           });
+          const selected = selectKlaviyoShopifyMetrics(collected.rows);
           return Object.freeze({
-            ...selectKlaviyoShopifyMetrics(collected.rows),
+            ...selected,
+            ...(loadProductIdentityContext === null ? {} : {ordered_product_metric:
+              collected.rows.find(row => row.id === selected.ordered_product_metric_id)}),
             page_count: collected.page_count,
             request_ids: collected.request_ids,
           });
@@ -451,7 +459,16 @@ export function createKlaviyoReportingAuthorityRuntime({
             }),
             rowsOf: (payload) => payload?.data,
           });
-          const normalized = attachAttributionEvidence(collected.rows, collected.included);
+          let normalized = attachAttributionEvidence(collected.rows, collected.included);
+          if (loadProductIdentityContext !== null) {
+            for (const event of collected.rows) {
+              const reference = event?.relationships?.metric?.data;
+              if (reference?.type !== "metric" || reference.id !== metrics.ordered_product_metric_id) {
+                fail("KLAVIYO_PRODUCT_IDENTITY_EVENT_METRIC_MISMATCH", "Event metric does not match Shopify Ordered Product");
+              }
+            }
+            normalized = normalized.map(row => Object.freeze({...row, provider_metric_id: metrics.ordered_product_metric_id}));
+          }
           const unique = new Map();
           for (const event of normalized) {
             const existing = unique.get(event.provider_event_id);
@@ -475,6 +492,18 @@ export function createKlaviyoReportingAuthorityRuntime({
             orderedProductEvents: ordered_product_events.rows,
           })
         ),
+        verifyProductIdentities: loadProductIdentityContext === null ? null : async ({metrics, resolved_product_sales}) => {
+          const identityContext = await loadProductIdentityContext({
+            installationAuthority: context.installation,
+            connectionId: context.connection.connectionId,
+            accountId: context.account.id,
+          });
+          return resolveKlaviyoProductIdentities({rows: resolved_product_sales.rows,
+            metric: metrics.ordered_product_metric, context: identityContext,
+            sourceAuthority: {platform: PROVIDER, workspace_id: context.installation.workspaceId,
+              installation_generation: context.installation.installGeneration,
+              connection_id: context.connection.connectionId, account_id: context.account.id}});
+        },
       });
       return Object.freeze({
         provider: PROVIDER,

@@ -1,6 +1,6 @@
 {
   "contract_id": "pd-cpd-query-standard-v1",
-  "version": "1.12.0",
+  "version": "1.13.0",
   "checked_at": "2026-10-26",
   "inventory_item": "01",
   "status": "accepted_product_decisions_implementation_partial",
@@ -210,7 +210,12 @@
         "required_oauth_scope": "events:read",
         "existing_observed_keys": ["ProductID", "VariantID"],
         "variant_property_gate": "official_help_labels_Variant_ID_with_space; verify_exact_event_property_key_without_silent_alias",
-        "shopify_validation_implemented": false
+        "shopify_validation_implemented": true,
+        "coordinator": "app/lib/providers/klaviyo-product-identity.server.js",
+        "reporting_integration": "optional_server_loadProductIdentityContext_adds_product_identity_resolution_family",
+        "event_metric_relationship_required": true,
+        "same_workspace_generation_required": true,
+        "mapping_result_is_persisted": false
       },
       "shopify_verification": {
         "endpoint": "POST https://{installed_shop}/admin/api/2026-10/graphql.json",
@@ -247,8 +252,8 @@
         "native_lookup_is_shopify_mapping": false,
         "candidate_found_in_shop_is_provider_link_proof": false,
         "google_meta_candidate_extraction": "not_implemented_without_source_evidence",
-        "klaviyo_existing_event_reader_changed": false,
-        "klaviyo_candidate_verification_path": "same_common_verifier_after_verified_Shopify_event_product_identity; no_new_event_alias",
+        "klaviyo_existing_event_reader_changed": "optional_metric_relationship_validation_only; default_execution_unchanged",
+        "klaviyo_candidate_verification_path": "resolveKlaviyoProductIdentities_after_existing_sales_resolution; exact_Shopify_metric_and_event_relationship; no_new_event_alias",
         "fresh_authority_loader_route_scheduler_quota_activation": "not_wired",
         "dataset_mapping_writer": false,
         "live_calls_or_new_grants": false

@@ -1,6 +1,6 @@
 {
   "contract_id": "pd-cpd-query-standard-v1",
-  "version": "1.13.0",
+  "version": "1.14.0",
   "checked_at": "2026-10-26",
   "inventory_item": "01",
   "status": "accepted_product_decisions_implementation_partial",
@@ -191,7 +191,7 @@
         "required_oauth_scope": "https://www.googleapis.com/auth/content",
         "existing_ads_scope_is_merchant_authority": false,
         "lookup": "verified_merchant_feed_and_exact_native_item_id; preserve_language_and_data_source; ambiguous_match_is_not_selected",
-        "shopify_candidate_extraction": "official_shopify_channel_evidence_required; no_universal_offerId_parser_selected",
+        "shopify_candidate_extraction": "resolveCatalogProductIdentity_requires_scoped_verified_publisher_source_rule; no_registered_universal_offerId_rule",
         "implemented": true
       },
       "meta": {
@@ -201,7 +201,7 @@
         "field_evidence": "official_meta_python_business_sdk_ProductCatalog.get_products_and_ProductItem.Field",
         "insights_id_namespace": "must_verify_catalog_id_vs_retailer_id; no_assumed_equality",
         "permission_gate": "catalog_permission_and_asset_access_review_required_before_activation; ads_read_alone_not_accepted_as_catalog_authority",
-        "shopify_candidate_extraction": "official_shopify_channel_evidence_required; retailer_id_or_group_id_not_automatically_shopify_id",
+        "shopify_candidate_extraction": "resolveCatalogProductIdentity_decodes_retailer_id_only_under_scoped_verified_publisher_source_rule; catalog_id_and_group_id_are_not_Shopify_IDs",
         "implemented": true
       },
       "klaviyo": {
@@ -224,6 +224,7 @@
         "variant_fields": ["id", "legacyResourceId", "product.id", "product.legacyResourceId"],
         "authority": "verified_installed_shop_and_current_installation_generation; never_provider_supplied_shop_domain",
         "product_only_allowed": true,
+        "variant_only_allowed": "only_when_source_rule_proves_native_variant_meaning; parent_Product_obtained_from_Shopify_productVariant_not_guessed",
         "variant_parent_must_match_product_candidate": true,
         "numeric_ids_transported_as_text": true,
         "current_toml_scopes": "empty_not_evidence_of_live_installed_grants",
@@ -251,7 +252,19 @@
         "retry_or_provider_next_url_following": false,
         "native_lookup_is_shopify_mapping": false,
         "candidate_found_in_shop_is_provider_link_proof": false,
-        "google_meta_candidate_extraction": "not_implemented_without_source_evidence",
+        "google_meta_candidate_extraction": "app/lib/providers/catalog-product-identity.server.js; reviewed_source_rule_required_before_decode_or_Shopify_request",
+        "catalog_source_rules": {
+          "trusted_input": "server_internal_reviewed_publisher_rule_not_browser_DTO; shape_validation_is_not_source_verification",
+          "binding": "same_workspace_installation_generation_connection_provider_account_Merchant_feed_language_data_source_or_Meta_catalog_and_observed_feed_plus_verified_Shop_ID",
+          "formats": ["shopify_market_product_variant", "shopify_product_id", "shopify_variant_id"],
+          "registered_production_rules": 0,
+          "unknown_or_pending_rule": "unresolved_no_Shopify_request_no_mapping",
+          "shopify_market_product_variant": "exact_case_approved_market_positive_decimal_Product_and_Variant_IDs_no_zero_variant",
+          "numeric_id": "only_explicit_product_or_variant_rule_no_automatic_namespace_guess",
+          "custom_attribute_aliases_or_group_id_inference": false,
+          "mapping_result": "verified_source_rule_plus_same_shop_Product_Variant_parent_evidence; mapping_draft_not_persisted",
+          "live_source_format_proof": "pending_for_Google_and_Meta; synthetic_rule_fixtures_are_not_provider_evidence"
+        },
         "klaviyo_existing_event_reader_changed": "optional_metric_relationship_validation_only; default_execution_unchanged",
         "klaviyo_candidate_verification_path": "resolveKlaviyoProductIdentities_after_existing_sales_resolution; exact_Shopify_metric_and_event_relationship; no_new_event_alias",
         "fresh_authority_loader_route_scheduler_quota_activation": "not_wired",

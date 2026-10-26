@@ -1,5 +1,15 @@
 # PD ve CPD sorgu çalışma tablosu
 
+## Google/Meta kaynak kimliği çözümleme — 26 Ekim 2026 güncel ek
+
+`catalog-product-identity.server.js` mevcut okuyucu snapshot'ını ve native lookup kimliğini ortak Shopify doğrulayıcısına bağlar. Eksik/belirsiz kaynak korunur. Kaynak biçimi doğrulanmış server kuralı yoksa prefix veya sayısal ID'den çıkarım yapılmaz ve Shopify çağrısı başlamaz. Kuralın kaynak referansı, hesap/kurulum/bağlantı kapsamı, Merchant feed/dil/veri kaynağı veya Meta katalog/gözlenen feed ve Shop ID eşleşmelidir. DTO kontrolü, kuralın gerçekten kaynak kanıtıyla doğrulanmasının yerine geçmez; üretim kuralı kaydedilmedi ve taze owner yükleyicisi henüz bağlanmadı.
+
+Kaynak kuralının açıkça belirttiği `shopify_market_product_variant`, `shopify_product_id`, `shopify_variant_id` biçimleri için aday çözme kodu vardır. Market kaynaktan açık seçilir; Merchant feed label otomatik ülke yapılmaz. ID'ler metindir, `_0` varyant üretilmez, SKU/grup kimliği/özel alan alias'ı tahmin edilmez. Meta lookup dahili katalog ID'siyle yapılsa bile çözülen alan `retailer_id` olur; mapping native kimliği ve namespace'i korur. Variant-only adayda Product ID Shopify'ın `productVariant.product` yanıtından gelir.
+
+Doğrulanmış kaynak kuralı + aynı mağazanın ürün/varyant-parent yanıtı eşleme taslağı ve kanıt üretir. `mapping_write_performed: false`; bu dilim kalıcı `product_identity_mappings` writer'ı değildir. Satış, Advertised/Cross-sell, maliyet ve diğer fact'ler değiştirilmez. Google/Meta için gerçek kaynak biçimi kanıtı açık kalır; sentetik kurallar bunun kanıtı değildir. Ortak sözleşmenin güncel sürümü 1.14.0; aşağıdaki 1.13.0 uygulama kaydı önceki dilimin tarihsel durumudur. Önceki 13 sütunlu matris ve 15 satırlık kaynak tablosu değişmez.
+
+Resmî kaynak kontrolü 26 Ekim 2026: [Merchant Product](https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.products), [Meta ProductItem](https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/productitem.py), [Shopify ProductVariant](https://shopify.dev/docs/api/admin-graphql/2026-10/objects/ProductVariant). İlk iki kaynak alan varlığını, son kaynak varyantın parent Product ilişkisini kanıtlar; evrensel Shopify feed biçimini kanıtlamaz.
+
 ## Ortak kayıt aileleri ve kaynak eşlemesi — 23 Ekim 2026
 
 Ürün sahibi beş sütunlu ortak düzeni kabul etti ve sohbet tablosunun Excel çıktısını aldı. Bu bölüm o çıktının aynı 15 satırlık analiz kaydıdır; önceki 13 sütunlu sorgu matrisi değiştirilmez. Kaynak, mevcut repository sorgu ve normalizasyon kodudur; yeni provider desteği veya canlı veri kabulü değildir. Fiziksel tablo, unique constraint, Dataset writer ve FX uygulaması bu kayıtla başlamaz. 16 + 20 + 22 tasarımına girdidir; 17–19 kapanışı değildir.

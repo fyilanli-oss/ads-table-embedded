@@ -166,7 +166,8 @@ export async function readMetaCatalogIdentitySnapshot({authority, accessToken, a
         const retailerId = text(product.retailer_id, "META_RETAILER_ID_REQUIRED");
         if (numericId(product?.product_catalog?.id) !== catalogId) fail("META_PRODUCT_CATALOG_MISMATCH");
         return {key: id, catalog_product_id: id, retailer_id: retailerId,
-          product_context: {catalog_id: catalogId}, source_record: structuredClone(product)};
+          product_context: {catalog_id: catalogId, ...(product.product_feed == null ? {}
+            : {product_feed_id: numericId(product.product_feed.id)})}, source_record: structuredClone(product)};
       });
       // Never follow provider paging.next URLs (which may contain credentials).
       // A cursor without next can be the last page; next without cursor is invalid.

@@ -1,5 +1,12 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## Google/Meta kaynak kimliğinden Shopify adayına çözümleme — 26 Ekim 2026
+
+- Ürün sahibi mevcut kimlik okuyucularını kontrol edip eksik çözümlemeyi tamamlama talimatı verdi. Güncel uzak main yine `dc565a4a9fba50c6cad15a32d19b604056bd29be`; GitHub Connector, #179 head'i ve yerel envanter doğrulandı. Mevcut #179 branch/PR genişletilir; #180 Meta rolü ve #181 Klaviyo etkileşim okuyucusu taşınmaz veya merge edilmez.
+- `resolveCatalogProductIdentity`, tam snapshot'ta mevcut exact Merchant/Meta aramasını kullanır. Yalnız server tarafından kaynak kanıtıyla doğrulanmış kural workspace/kurulum/nesil/bağlantı/hesap/feed-dil-veri kaynağı veya katalog/gözlenen feed ve Shop kimliğiyle eşleşirse kaynak kimliğini çözer. Varsayılan kural kaydı yoktur. Kontrol edilmiş kural için yapılandırılmış market/Product/Variant biçimi, açık Product-only veya Variant-only anlamı desteklenir; bu biçimlerin provider varsayılanı olduğu iddia edilmez. Gemini örneği veya yalnız prefix/sayısal benzerlik kanıt sayılmaz. Meta dahili katalog ID'si Shopify kimliği gibi parçalanmaz; ham kimlik ve namespace korunur.
+- Ortak Shopify doğrulayıcısı Variant-only adayda parent Product ID'yi doğrudan Shopify `productVariant.product` ilişkisinden alır. Yanlış mağaza/parent, eksik ürün, belirsiz kaynak ve API hatası ayrı kalır. Başarı eşleme taslağı ve kaynak/kural/Shopify kanıtı üretir; kalıcı tabloya yazmaz, fact/rol/metrik değiştirmez. Google/Meta reporting owner'ına otomatik aktivasyon veya yeni canlı kural yükleyicisi eklenmedi; canlı kaynak biçimi kanıtı ve EO-05-B writer açık kalır. 16 tamamlanmış değildir.
+- Resmî Merchant v1 Product, Meta ProductItem SDK ve Shopify Admin 2026-10 ProductVariant belgeleri 26 Ekim'de kontrol edildi. Yeni OAuth izni, canlı provider/DB çağrısı, Shopify görsel işlem, UI/deploy yoktur. Ortak sözleşme 1.14.0; kaynak biçimi örnekleri sentetik testtir. Merge ayrıca açık ürün sahibi onayı gerektirir.
+
 ## Ürün kimliği kaynak okuyucuları — 26 Ekim 2026 repository uygulaması
 
 - Ürün sahibi kodlamaya açık talimat verdi. #179 teknik tarif PR'ı aynı branch/PR içinde çalışan repository okuyucuları ve aday doğrulayıcısıyla genişletildi; merge onayı değildir. Güncel main `dc565a4a9fba50c6cad15a32d19b604056bd29be`; GitHub Connector ve ayrı yerel/uzak envanter doğrulandı.

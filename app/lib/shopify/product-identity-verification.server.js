@@ -21,7 +21,7 @@ function checkedIdentity(value, type, expected) {
 
 // Verifies a supplied candidate in the installed shop, NOT its provider linkage.
 // Merchant/catalog candidate extraction and the Dataset writer remain separate.
-export async function verifyShopifyProductCandidate({admin, shop, installation, productId, variantId = null}) {
+export async function verifyShopifyProductCandidate({admin, shop, installation, productId = null, variantId = null}) {
   if (shop?.authority !== "shopify_admin_verified"
     || !/^gid:\/\/shopify\/Shop\/[1-9][0-9]*$/.test(shop?.shopId ?? "")
     || typeof shop.myshopifyDomain !== "string") fail("SHOPIFY_PRODUCT_SHOP_AUTHORITY_REQUIRED");
@@ -35,19 +35,20 @@ export async function verifyShopifyProductCandidate({admin, shop, installation, 
   const expectedShopId = shop.shopId;
   const expectedWorkspaceId = installation.workspaceId;
   const expectedGeneration = installation.installGeneration;
-  const product = candidateId(productId, "Product");
+  let product = productId == null && variantId != null ? null : candidateId(productId, "Product");
   const variant = variantId === null ? null : candidateId(variantId, "ProductVariant");
+  const variantOnly = product === null;
   const query = `#graphql
-    query AdsTableVerifyProductCandidate($productId: ID!${variant ? ", $variantId: ID!" : ""}) {
+    query AdsTableVerifyProductCandidate(${variantOnly ? "$variantId: ID!" : `$productId: ID!${variant ? ", $variantId: ID!" : ""}`}) {
       shop { id myshopifyDomain }
-      product(id: $productId) { id legacyResourceId }
+      ${variantOnly ? "" : "product(id: $productId) { id legacyResourceId }"}
       ${variant ? `productVariant(id: $variantId) {
         id legacyResourceId product { id legacyResourceId }
       }` : ""}
     }`;
   let response;
   try {
-    response = await admin.graphql(query, {variables: {productId: product.gid,
+    response = await admin.graphql(query, {variables: {...(product ? {productId: product.gid} : {}),
       ...(variant ? {variantId: variant.gid} : {})}});
   } catch { fail("SHOPIFY_PRODUCT_REQUEST_FAILED"); }
   if (!response?.ok) fail("SHOPIFY_PRODUCT_HTTP_FAILED");
@@ -59,17 +60,25 @@ export async function verifyShopifyProductCandidate({admin, shop, installation, 
   }
   const scope = Object.freeze({workspace_id: expectedWorkspaceId,
     installation_generation: expectedGeneration, shop_id: expectedShopId, shop_domain: domain});
+  if (variantOnly) {
+    if (!Object.hasOwn(body.data, "productVariant")) fail("SHOPIFY_PRODUCT_SCHEMA_INVALID");
+    if (body.data.productVariant !== null) {
+      checkedIdentity(body.data.productVariant, "ProductVariant", variant);
+      product = candidateId(body.data.productVariant.product?.id, "Product");
+      checkedIdentity(body.data.productVariant.product, "Product", product);
+    }
+  }
   const result = (state, reason) => Object.freeze({version: "1.0.0", scope, state, reason,
-    candidate: Object.freeze({product_id: product.gid, variant_id: variant?.gid ?? null}),
-    evidence: Object.freeze({product: body.data.product === null ? null : Object.freeze({...body.data.product}),
+    candidate: Object.freeze({product_id: product?.gid ?? null, variant_id: variant?.gid ?? null}),
+    evidence: Object.freeze({product: variantOnly ? null : body.data.product === null ? null : Object.freeze({...body.data.product}),
       variant: !variant || body.data.productVariant === null ? null : Object.freeze({
         id: body.data.productVariant.id, legacyResourceId: body.data.productVariant.legacyResourceId,
         product: Object.freeze({...body.data.productVariant.product}),
       })}),
     provider_link_verified: false, mapping_write_performed: false});
   // An absent key is malformed data; an explicit null is an observed no-match.
-  if (!Object.hasOwn(body.data, "product")) fail("SHOPIFY_PRODUCT_SCHEMA_INVALID");
-  if (body.data.product !== null) checkedIdentity(body.data.product, "Product", product);
+  if (!variantOnly && !Object.hasOwn(body.data, "product")) fail("SHOPIFY_PRODUCT_SCHEMA_INVALID");
+  if (!variantOnly && body.data.product !== null) checkedIdentity(body.data.product, "Product", product);
   if (variant !== null) {
     if (!Object.hasOwn(body.data, "productVariant")) fail("SHOPIFY_PRODUCT_SCHEMA_INVALID");
     if (body.data.productVariant !== null) {
@@ -80,7 +89,7 @@ export async function verifyShopifyProductCandidate({admin, shop, installation, 
       if (parentId.gid !== product.gid) return result("conflicting", "variant_parent_mismatch");
     }
   }
-  if (body.data.product === null || (variant !== null && body.data.productVariant === null)) {
+  if ((!variantOnly && body.data.product === null) || (variant !== null && body.data.productVariant === null)) {
     return result("unresolved", "candidate_not_observed");
   }
   return result("candidate_verified_in_shop", "provider_link_still_requires_source_evidence");

@@ -1,5 +1,12 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## Beş tablo kolon sözlüğü — 26 Ekim 2026 inceleme taslağı
+
+- Ürün sahibi beş tabloluk Dataset tasarımında kolon ve zorunluluk incelemesine devam talimatı verdi. Başlangıç main `568f6642b62688774199a550ac8b41395f2f988c` (#176). Mevcut sorgu çalışma belgesine `pd_facts`, `cpd_product_performance_facts`, `cpd_product_sales_facts`, `product_identity_mappings`, `fx_rates` için ortak/adaya özgü kolon, tip, boşluk ve kaynak kuralları eklendi. Bu adlar ve tipler inceleme önerisidir; oluşturulmuş tablolar değildir.
+- Eski 13 sütunlu sorgu matrisi ve beş sütunlu/15 satırlık kaynak eşleme tablosu değişmez. Teslim edilmiş Excel bu yeni sözlüğü içermez; aynı sürüm diye sunulmaz. Üst PD/CPD Channel için altıncı kalıcı toplam tablosu önerilmedi; hesaplanan görünüm hedefi henüz uygulanmadı.
+- Supabase/Postgres becerileriyle mevcut DB ve adaptör tipleri kontrol edildi. DB installation ID bigint/adaptör UUID kontrolü, canonical reporting ID/DB binding eşdeğerliği ve adaptörün ad/FX zorunluluğu uygulama öncesi açık uyarlama kontrolleri olarak kaydedildi; kod düzeltilmedi. Native saklama, doğrulanmış tekillik, çözülmüş bağlantı ve yayın hazırlığı ayrıdır.
+- Sözlük 16 + 20 + 22 girdisidir. Exact UNIQUE/FK/index/RLS SQL'i, mapping geçerlilik/sürüm tekilliği, kur kaynağı/tarih/kimlik dönüşümü ve para birimi kilidi açık kalır. 05/10/11/15 ve 17–19 kapanmaz; EO-05-B uygulaması, writer, migration/DB, yeni provider çağrısı, izin, UI/deploy veya 21/23 işi başlamaz. Merge ayrıca açık onay gerektirir.
+
 ## Ortak kayıt eşleme analiz kaydı — 23 Ekim 2026
 
 - Ürün sahibinin kabul ettiği beş sütunlu PD / CPD ürün performansı / CPD ürün satışı düzeni, mevcut `docs/research/PD_CPD_QUERY_WORKING_TABLE_2026-10-22.md` dosyasına aynı 15 satırla işlendi. Teslim edilen Excel aynı tablonun çıktısıdır; eski 13 sütunlu sorgu matrisi değiştirilmedi. Başlangıç main `77c9efe0e1d32e99a7877658e2df474940ce1d9d` (#175).

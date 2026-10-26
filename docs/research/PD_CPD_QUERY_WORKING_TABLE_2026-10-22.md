@@ -34,6 +34,134 @@
 
 Kaynak kod kontrolü, 23 Ekim 2026: `app/lib/providers/meta-reporting.server.js`, `app/lib/providers/google-reporting.server.js`, `app/lib/providers/klaviyo-reporting.server.js`, `app/lib/providers/klaviyo-attribution-resolution.server.js` ve `app/lib/providers/common-adapter.server.js`. Bu bölüm yeni dış API davranışı doğrulaması değildir. Excel çıktısı `AdsTable_PD_CPD_Kayit_Esleme_2026-10-23.xlsx` aynı beş sütun ve 15 satırı taşır; dışa aktarımdır, yürütülebilir sözleşmenin yerine geçmez. Sonraki değişikliklerde analiz kaydı ve Excel çıktısı eşlenmeden aynı sürüm denmez.
 
+## Beş tablo kolon sözlüğü — 26 Ekim 2026 inceleme taslağı
+
+Durum: **ürün sahibi incelemesine sunulan kolon taslağı; uygulanmış şema değildir**. Ürün sahibi Dataset'in üç veri ve iki destek tablosuyla tasarlanmasını istedi. Aşağıdaki kolon adları AdsTable tasarım önerisidir; provider'ın aynı isimli alanları verdiği iddiası değildir. Bu sözlük eski beş sütunlu/15 satırlık kaynak eşleme tablosunu ve 13 sütunlu sorgu matrisini değiştirmez. Önceden teslim edilen Excel yalnız kaynak eşleme tablosudur; yeni kolon sözlüğünü içerdiği iddia edilmez.
+
+Beş mantıksal tablo: `pd_facts`, `cpd_product_performance_facts`, `cpd_product_sales_facts`, `product_identity_mappings`, `fx_rates`. Başlangıçta üst PD ve CPD Channel toplamları için altıncı bir kalıcı toplam tablosu önerilmez; uyumlu girdilerden hesaplanır. Önceki 17–19 tamlık ve tek sayım kuralları geçerlidir. Fiziksel schema adı, indeksler, UNIQUE/FK SQL'i, writer, migration ve toplam okuyucusu henüz yoktur. 16 + 20 + 22 tasarımıdır; EO-05-B uygulamasını veya 21/23 işlerini başlatmaz.
+
+Sözlük gösterimi: aynı tip ve kurala sahip kolonlar aynı satırda listelenir; uygulamada ayrı kolon adaylarıdır. **Zorunlu**, bu ailede kabul edilmiş bir kayıt için gereklidir; eksik kimlikli ham yanıtın atılması anlamına gelmez. Eksik kimlikli kanıt mevcut ham kanıt sınırında korunur, tahmini anahtarla kabul edilmiş fact üretilmez. Koşullu veya eksik alanlar için ayrı durum/kanıt taşınır; NULL ile gözlenen 0 aynı değildir.
+
+### Üç fact tablosunda ortak kolonlar
+
+| Kolon | Önerilen tip | Zorunluluk | Kaynak / kural |
+| --- | --- | --- | --- |
+| `id` | bigint identity | Zorunlu | AdsTable satır kimliği; tekrar önleme anahtarı değildir. |
+| `workspace_id` | uuid | Zorunlu | Mevcut `app.workspaces.id`; Shopify Shop ID ile karıştırılmaz. |
+| `installation_id` | bigint | Zorunlu | Mevcut `shopify.installations.id`; adaptör UUID kontrolüyle uyarlama aşağıda açık. |
+| `installation_generation` | bigint | Zorunlu | Mevcut DB `install_generation` alanından açık eşleme; yeni kurulum eski çalışmaya yazdırmaz. |
+| `provider_connection_id` | uuid | Zorunlu | Mevcut bağlantı kimliği; workspace/kurulum/nesil/provider birlikte doğrulanır. |
+| `platform` | text | Zorunlu | Mevcut `meta`, `google_ads`, `klaviyo` kümesi; SQL enum seçilmedi. |
+| `platform_account_id` | text | Zorunlu | Kaynak hesap kimliği; isimden çıkarılmaz. |
+| `canonical_reporting_account_id` | text | Koşullu | Mevcut adaptörde Meta/Google için zorunlu, Klaviyo için NULL. DB binding satır ID'siyle eşit olduğu varsayılmaz. |
+| `business_date` | date | Koşullu | PD için zorunlu. CPD olayında kaynak gün/saat dilimi çözülemezse NULL ve durum; günlük toplama girmez. UTC tarihi iş günü diye atanmaz. |
+| `source_timezone` | text | Koşullu | Doğrulanmış kaynak saat dilimi; eksikse uyumlu günlük toplam/FX tarihi tahmin edilmez. |
+| `reporting_scope` | jsonb | Zorunlu | Akış, raporlama zamanı temeli, etkin attribution/conversion kapsamı ve ilgili Medium/Variation gibi boyutların kanıtlı açıklaması. Bilinmeyen değer varsayılanla tamamlanmaz. |
+| `source_identity` | jsonb | Zorunlu | Kaynak kaydın veya birleşik PD kapsamının metrik dışı kimlik bileşenleri; ilgili native kırılımların tamamı. Kanıtsız hash/UNIQUE algoritması seçilmedi. |
+| `metric_support`, `observation_state` | jsonb | Zorunlu | Metrik bazında mevcut destek/gözlem anlamlarını korur. Yeni SQL durum kümesi henüz dondurulmadı. Eksik, bilinmeyen, kapsam dışı, partial/stale ve gerçek sıfır ayrılır. |
+| `provenance` | jsonb | Zorunlu | Kaynak aile/sorgu/satır referansları, sürüm, execution ve tamlık kanıtı; birleşik PD'de metrik bazlı iz. Secret veya gereksiz müşteri bilgisi taşınmaz. Yeni ham kanıt saklama sistemi bu taslakta kurulmaz. |
+| `source_currency` | text | Koşullu | Doğrulanmış kaynak para birimi; bilinmiyorsa parasal değer saklanabilir ama currency-safe toplama/dönüşüm yapılamaz. |
+| `target_currency` | text | Koşullu | Doğrulanmış raporlama para birimi; workspace para birimi kilidi/yeniden kurulum politikası henüz seçilmedi. |
+| `fx_rate_id` | bigint | Boş olabilir | Seçilmiş `fx_rates.id` referansı; kur yoksa NULL. Aynı para birimi kimlik dönüşümü politikası ayrıca açık; sahte kur satırı yok. |
+| `fx_engine_version` | text | Koşullu | Dönüşüm kullanıldığında hesaplama sürümü; kur sağlayıcısının sürümüyle aynı şey değildir. |
+| `created_at`, `updated_at` | timestamptz | Zorunlu | AdsTable kayıt zamanları; provider olay/iş tarihi veya tarihsel geçerlilik kanıtı değildir. |
+
+`numeric`, kaynak hassasiyetini erken yuvarlamayan ilk tip önerisidir; precision/scale ve üst sınırlar kaynak kabulüyle seçilecektir. ID'ler metrik olmadığı için sayısal kimlik görünümü taşıyan provider/Shopify ID'leri text olarak korunur. Mevcut adaptörün JS number kullanması kayıpsız ondalık taşımanın tamamlandığını kanıtlamaz; bu da uygulama öncesi kontroldür.
+
+### 1. PD — `pd_facts`
+
+Ortak kolonlara ek:
+
+| Kolon | Önerilen tip | Zorunluluk | Kaynak / kural |
+| --- | --- | --- | --- |
+| `entity_type`, `entity_id` | text | Zorunlu | Meta Ad; Google Search Ad, Shopping Ad Group, PMax Asset Group; Klaviyo Campaign/Flow Message. |
+| `entity_name` | text | Boş olabilir | Ad değil ID bağlantı anahtarıdır. Mevcut adaptörün ad zorunluluğu ayrıca uyarlanmalı; burada kod değiştirilmedi. |
+| `root_entity_type`, `root_entity_id`, `root_entity_name` | text | Koşullu | Mevcut Campaign/Flow üst hiyerarşisi; tür/ID birlikte geçerli olmalı. Eksik üst kimlikte ilgili üst toplam yapılamaz. |
+| `parent_entity_type`, `parent_entity_id`, `parent_entity_name`, `campaign_type` | text | Koşullu | Mevcut adaptör hiyerarşi ayrıntısı; uygulanmayan seviye uydurulmaz. |
+| `impression`, `ad_click`, `spend_value`, `add_to_cart`, `add_to_cart_value`, `checkout`, `checkout_value`, `purchase`, `purchase_value` | numeric | Boş olabilir | Dokuz mevcut standart metrik. Değer yoksa NULL + alan durumu; conversion adetleri integer'a zorlanmaz. Tutarlar kaynak para birimindedir. |
+
+PD yalnız 17'nin uyum kontrollerinden geçmiş metrik birleşimini temsil eder. Conversion action/category, Klaviyo seçili conversion metric ve Variation ayrıntıları provenance/kapsamda kaybolmaz; farklı conversion raporları veya aynı mesajın toplam/detail satırları körlemesine toplanmaz. Üst toplamlar, ana fact'lere parent ve child birlikte eklenerek oluşturulmaz.
+
+### 2. CPD ürün performansı — `cpd_product_performance_facts`
+
+Ortak kolonlara ek:
+
+| Kolon | Önerilen tip | Zorunluluk | Kaynak / kural |
+| --- | --- | --- | --- |
+| `channel_type`, `channel_id` | text | Boş olabilir | Kaynak kanıtı varsa birlikte dolar; PD fact ID'sine zorunlu FK değildir. |
+| `channel_resolution` | text | Zorunlu | Bağlantının doğrulanmış, eksik veya çelişkili oluşu; kesin SQL durum kümesi açık. |
+| `root_entity_type`, `root_entity_id`, `root_entity_name`, `parent_entity_type`, `parent_entity_id`, `parent_entity_name` | text | Koşullu | Kaynak üst hiyerarşi; PMax Campaign kaydı Asset Group yerine geçirilmez. |
+| `native_product_id` | text | Boş olabilir | Kaynak ürün gözlenmişse korunur. Eksikse başka native kimliklerle tekillik kanıtı gerekir; yoksa fact kabul edilmez. |
+| `product_context` | jsonb | Zorunlu | Kaynağın verdiği katalog/Merchant/feed ve diğer ürün kırılımları; bilinmeyen/kapsam dışı ayrılır. Shopify eşlemesi için eksik bağlam tahmin edilmez. |
+| `product_mapping_id` | bigint | Boş olabilir | Doğrulanmış ürün eşlemesine referans; ürün/Channel kanıtından bağımsızdır. |
+| `impression`, `click`, `spend_value` | numeric | Boş olabilir | Yalnız ürün performansı kaynağı. Search'te PD Ad maliyeti kopyalanmaz; Klaviyo ürün Impression/Click N/A, Spend açık. |
+
+Klaviyo için yalnız şemayı doldurmak amacıyla boş performans fact'i veya ikinci satış satırı üretilmez. Mevcut kaynak eşleme tablosundaki Ordered Product referansı aynı native satışa işaret eder; ürün satış adedi/değeri bu performans tablosunda tekrar saklanıp toplanmaz. Satışsız gözlenmiş performans/maliyet korunur, satan ürünlere dağıtılmaz.
+
+### 3. CPD ürün satışı — `cpd_product_sales_facts`
+
+Ortak kolonlara ve ürün performansındaki aynı `channel_*`, `root_entity_*`, `parent_entity_*` bağlantı kolonlarına ek:
+
+| Kolon | Önerilen tip | Zorunluluk | Kaynak / kural |
+| --- | --- | --- | --- |
+| `provider_event_id` | text | Koşullu | Klaviyo Ordered Product olayında zorunlu; Meta/Google toplulaştırılmış satırına uydurulmaz. |
+| `occurred_at` | timestamptz | Koşullu | Kaynağın gerçek olay zamanı varsa; günlük rapor için sahte gece yarısı zamanı atanmaz. |
+| `native_sold_product_id`, `native_advertised_product_id` | text | Boş olabilir | Satılan ve reklam ürünü kimlikleri ayrı; birinden diğeri türetilmez. Meta product_id anlamı açıkken satılan ürün diye etiketlenmez, source_identity/provenance içinde korunur. |
+| `product_context` | jsonb | Zorunlu | Native ürün bağlamı; kaynak VariantID dahil varsa ayrıntılar korunur. |
+| `sold_product_mapping_id`, `advertised_product_mapping_id` | bigint | Boş olabilir | İki rolün doğrulanmış Shopify eşlemesi ayrı; fiyat/SKU/isim/pattern kanıt değildir. |
+| `sales_quantity`, `sales_value` | numeric | Boş olabilir | Anlamı kabul edilmiş normal satış toplamı; kaynak para birimi. Meta'nın dört alanı kabul edilmeden bu kolonlara zorla eşlenmez. |
+| `sales_role` | text | Zorunlu | Mevcut rol kümesi; kanıt yoksa Unclassified. Meta 05/Klaviyo 15 kapanmış sayılmaz; Flow Triggered mevcut kanıt şartına tabidir. |
+| `sales_role_evidence`, `native_sales_metrics` | jsonb | Zorunlu | Rol kanıtı ve native alanlar ayrı korunur. Meta dört quantity/value, Google normal/lead/cross-sell ve mevcut all_* ham ayrıntıları kapsam etiketleriyle saklanır; ikinci satış diye eklenmez. |
+
+Tek kaydın rolü/Shopify eşlemesi/Channel'ı sonradan çözülürse yeni satış kimliği üretilmez. Bir kaynak satırda birden çok satış rolü bileşeni varsa tek etiketle tahmini bölme yoktur; native bileşenler korunur, rol toplamının kabulü açık tutulur. Provider atıflı ürün satışları Shopify mağaza sipariş defteri veya sağlayıcılar arası tekilleştirilmiş satış gerçeği değildir.
+
+### 4. Ürün eşlemesi — `product_identity_mappings`
+
+Bu destek tablosu fact ortak bloğunu otomatik miras almaz; aşağıdaki kolonlar açıkça önerilir:
+
+| Kolon | Önerilen tip | Zorunluluk | Kaynak / kural |
+| --- | --- | --- | --- |
+| `id` | bigint identity | Zorunlu | Eşleme sürümü satır kimliği. |
+| `workspace_id`, `provider_connection_id` | uuid | Zorunlu | Doğrulanmış workspace/bağlantı kapsamı; geçerlilik ve yeniden bağlantı taşıma politikası açık. |
+| `installation_id`, `installation_generation` | bigint | Zorunlu | Mevcut kurulum otoritesiyle tutarlı olmalı; yeni kurulumda eski eşleme otomatik aktif olmaz. |
+| `platform`, `platform_account_id`, `native_product_id` | text | Zorunlu | Kaynak kimliği; Shopify kimliğinden ayrı. |
+| `product_context` | jsonb | Zorunlu | Provider'a uygulanabilir katalog/feed/ürün-varyant bağlamı. Bilinmeyen bağlamın boş nesnesi doğrulanmış kapsam sayılmaz. |
+| `shopify_product_id`, `shopify_variant_id` | text | Boş olabilir | Product ID omurga; varsa Variant ID'nin bu ürüne ait olduğu doğrulanır. |
+| `mapping_state` | text | Zorunlu | Doğrulanmış/çözülememiş/çelişkili durum; SQL kümesi açık. Çözülememiş kimlik fact'i silmez. |
+| `mapping_evidence` | jsonb | Zorunlu | Resmî entegrasyon kaynağı ve doğrulama kanıtı; son görülen tarih geçerlilik başlangıcı değildir. |
+| `verified_at` | timestamptz | Koşullu | Doğrulama yapılmışsa; provider geçerlilik tarihi uydurulmaz. |
+| `created_at` | timestamptz | Zorunlu | AdsTable kayıt zamanı. |
+
+Çelişkili eşleme geçmişi üzerine yazılarak kaybedilmez. Bir kaynağın hangi eşleme sürümünü/hangi tarihte kullanabileceği, aktif sürüm tekilliği ve geçerlilik aralıkları henüz kararlaştırılmadı; bunun UNIQUE/FK SQL'i bu taslaktan çıkarılamaz. Kaynak varyant ayrıntısı tutulur ama raporlama omurgası Variant ID olmaz.
+
+### 5. FX — `fx_rates`
+
+Bu destek tablosu provider hesap/kurulum kimliklerini otomatik taşımaz. Ortak kur kaynağı ile workspace raporlama para birimi politikası farklı kavramlardır; workspace'e özel kur gereksinimi çıkarsa kapsam yeniden onaya sunulur.
+
+| Kolon | Önerilen tip | Zorunluluk | Kaynak / kural |
+| --- | --- | --- | --- |
+| `id` | bigint identity | Zorunlu | Kullanılan belirli kur sürümüne referans; kaynak satış ID'si değildir. |
+| `source_currency`, `target_currency` | text | Zorunlu | Dönüşüm yönü açık para çifti. |
+| `fx_rate_date` | date | Zorunlu | Sağlayıcının kur tarihi; fetch tarihiyle aynı varsayılmaz. |
+| `fx_rate` | numeric | Zorunlu | Sonlu ve pozitif kur; hassasiyet sınırı açık. Sıfır/NULL sahte kur satırı olmaz. |
+| `fx_provider` | text | Zorunlu | Gerçek kur kaynağı; Frankfurter veya başka sağlayıcı bu taslakla seçilmez. |
+| `rate_version` | text | Zorunlu | AdsTable'ın belirli kanıtlı kur sürümünü ayırması; provider'ın bu isimde alan verdiği iddia edilmez. Üretim algoritması açık. |
+| `source_reference` | jsonb | Zorunlu | Tam kur kaynağı/yanıt izi; secret olmadan. |
+| `fetched_at` | timestamptz | Zorunlu | Kurun alınma zamanı; kur tarihi yerine kullanılmaz. |
+
+Kaynak tutarlar fact kolonlarında değişmeden kalır. İlk taslakta dönüştürülmüş tutarlar ikinci otoriter fact kolonları yerine seçilmiş kur referansı ve FX engine sürümüyle hesaplanan görünüm hedefidir; uygulama yoktur. Farklı currency/time-basis girdiler FX öncesi toplanmaz. Kur düzeltmesinde eski referansın korunması, yeni kurun hangi kayda ne zaman uygulanacağı, aynı para birimi dönüşümü, tatil/eksik gün ve workspace para birimi kilidi ayrı karar bekler. Bunlar sessizce son bulunan kura düşmez.
+
+### Tekillik ve uygulama öncesi açık kontroller
+
+- Satır ID'si, kaynak tekilliği ve Channel/ürün/FX referansları farklıdır. Tekrar önleme kimliğine metrik tutarı, Sales Role, sonradan çözülen bağlantı, ad, FX sonucu veya execution/run ID girmez. Kaynak kimliği belirsizse ham kanıt korunur ama tahmini kabul edilmiş fact üretilmez.
+- Mevcut `canonicalFactKey` yalnız başlangıçtır; raporlama zamanı/atıf kapsamı gibi farklılıkları tek başına kapsamaz. Kaynak ailelerinin örtüşmesi giderilmeden query family adını anahtara koyup aynı satışı iki kez kabul etmek de doğru değildir. Kalıcı anahtarın serialize/hash/null/eksik ayrımı ve çakışma politikası uygulanmadı.
+- **Mevcut tip uyarlama açığı:** DB `shopify.installations.id` bigint iken `validateCanonicalFunnelFact` içindeki `identity.installation_id` UUID ister. Adaptörde ayrıca entity adı ve FX alanları zorunludur. Bunlar native veri saklama ile yayın hazır olma sınırı ayrılmadan writer'a bağlanamaz. Bu dilim mevcut doğrulayıcıyı gevşetmez veya düzeltmez; 16/20/22 uygulama öncesi kontrolüdür.
+- `canonical_reporting_account_id` mevcut adaptörün metin kimliğidir; `integrations.reporting_account_bindings.id` bigint ile doğrudan FK eşdeğeri olduğu kanıtlanmış değildir. Yeni ad uydurularak çözülmüş sayılmaz; otorite eşlemesi kontrol edilecektir. Klaviyo'da mevcut NULL zorunluluğu korunur.
+- Workspace/kurulum/nesil/provider/hesap sınırı birlikte doğrulanacak. Cross-workspace mapping veya fact ilişkisi salt bigint ID eşleşmesiyle kabul edilmeyecek. RLS, roller, lifecycle silme/retention, indeksler ve bounded query planı uygulama kapısında tasarlanıp test edilecek; public/anon erişimi eklenmedi.
+- Supabase changelog.md okuması 26 Ekim'de aracın desteklemediği content-type nedeniyle alınamadı; alternatif rota denenmedi. Bu taslak tam güncel platform uygulama kapısının geçtiği iddiası değildir. Resmî tip/anahtar dayanağı 26 Ekim 2026'da okundu: [PostgreSQL 17 numeric](https://www.postgresql.org/docs/17/datatype-numeric.html), [PostgreSQL 17 constraints](https://www.postgresql.org/docs/17/ddl-constraints.html), [Supabase tables](https://supabase.com/docs/guides/database/tables). Kaynaklar bu kolon tasarımını veya provider desteğini onaylamaz; veri tipi/ilişki mekanizmalarını açıklar.
+
+**Teslim sınırı:** yalnız analiz sözlüğü ve sınır koruma testleri. 05, 10/11, 15 açık; 17–19 tamamlanmadı. Physical schema seçildi veya Dataset yayını hazır denmez. Merge, canlı DB, migration, provider çağrısı, izin/deploy ve paket başlangıcı ayrı kapılardır.
+
 ## Önceki sorgu matrisi ve karar kayıtları
 
 Tarih: 22 Ekim 2026. Durum: çalışma referansı sabitlendi; nihai ortak tasarım kabulü değildir.

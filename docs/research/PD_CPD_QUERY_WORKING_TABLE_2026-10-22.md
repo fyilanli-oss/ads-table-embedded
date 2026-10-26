@@ -34,6 +34,18 @@
 
 Kaynak kod kontrolü, 23 Ekim 2026: `app/lib/providers/meta-reporting.server.js`, `app/lib/providers/google-reporting.server.js`, `app/lib/providers/klaviyo-reporting.server.js`, `app/lib/providers/klaviyo-attribution-resolution.server.js` ve `app/lib/providers/common-adapter.server.js`. Bu bölüm yeni dış API davranışı doğrulaması değildir. Excel çıktısı `AdsTable_PD_CPD_Kayit_Esleme_2026-10-23.xlsx` aynı beş sütun ve 15 satırı taşır; dışa aktarımdır, yürütülebilir sözleşmenin yerine geçmez. Sonraki değişikliklerde analiz kaydı ve Excel çıktısı eşlenmeden aynı sürüm denmez.
 
+## Meta rol sınıflandırıcısı — 26 Ekim 2026 repository kontrolü
+
+Ürün sahibinin kodlama talimatıyla `app/lib/providers/meta-sales-role.server.js` içindeki `normalizeMetaProductSale` ve `projectMetaProductSales`, Google normalizer'ına benzer açık karar/test katmanı sağlar. `readDailyEvidenceSnapshot.product_sales` bütün ürün sayfaları bittikten sonra kaynak satırlara birebir referans verir. Yeni provider sorgusu veya ikinci satış kaydı değildir; eski 13 sütunlu matris ve 15 satırlık kaynak eşleme tablosu değişmez.
+
+Doğrulanmış **tek** native satış ilişkisinde aynı reklam/satılan ürün Advertised, farklı ürün Cross-sell olur. A'ya tıklanıp A/B/C/D satılması sentetik senaryosunda A Advertised, B/C/D Cross-sell'dir; B/C'nin aynı ürün kümesinde bulunması rolü değiştirmez. Kaynak `product_id` hangi ürün tarafına ait diye varsayılmaz. İlişki için hesap, Ad, kaynak ürün ve iş günü birebir eşleşmeli; katalog/kimlik ad alanı, pozitif adet ve kaynak kanıt referansı bulunmalıdır. Karışık ilişkili toplu satır tek ürün çifti gibi etiketlenmez.
+
+Dört ham alanın listeleri değiştirilmez; toplam ile promoted toplanmaz/çıkarılmaz. Eksik, NULL ve boş liste gözlemleri ayrıdır. Satış değeri sıfır, adet pozitif olduğunda rol korunur; yeni No Conversion veya Zero Value rolü üretilmez. Rol projeksiyonu `source_row_index` ile aynı native satıra gider; bu yerel referans DB unique key değildir.
+
+Opsiyonel `loadProductSalesEvidence` yalnız server yükleyicisidir. Tam snapshot'taki doğrulanmış workspace/kurulum nesli/bağlantı/Reporting Account kapsamını geri taşımalı; yanlış kapsam, boyut veya yükleme hatası snapshot'ı durdurur. Yükleyiciye verilen satır kopyalarının değiştirilmesi ham yanıtı değiştirmez. Varsayılan yükleyici yoktur; gerçek dört alanı kesin native ilişki kanıtına dönüştüren decoder henüz yazılmadı. Bu nedenle kanıtsız gerçek satırlar Unclassified kalır. **Sınıflandırıcı kodu/testi var; Meta alanlarının semantik kabulü ve uçtan uca canlı sınıflandırma henüz yok.**
+
+Resmî [Meta AdsInsights SDK](https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adsinsights.py), kontrol 26 Ekim 2026: dört quantity/value alanı list<AdsActionStats> olarak tanımlıdır. Bu, alan bulunma kanıtıdır; promoted alanından rol veya bakiye satış çıkarma kanıtı değildir. 05'in gerçek veri kabulü ve Shopify kimlik bağlantısı açık kalır. Çalışma `contracts/eo-04b-meta-reporting-runtime-v1.json#sales_role_projection` ile izlenir.
+
 ## Beş tablo kolon sözlüğü — 26 Ekim 2026 inceleme taslağı
 
 Durum: **ürün sahibi incelemesine sunulan kolon taslağı; uygulanmış şema değildir**. Ürün sahibi Dataset'in üç veri ve iki destek tablosuyla tasarlanmasını istedi. Aşağıdaki kolon adları AdsTable tasarım önerisidir; provider'ın aynı isimli alanları verdiği iddiası değildir. Bu sözlük eski beş sütunlu/15 satırlık kaynak eşleme tablosunu ve 13 sütunlu sorgu matrisini değiştirmez. Önceden teslim edilen Excel yalnız kaynak eşleme tablosudur; yeni kolon sözlüğünü içerdiği iddia edilmez.

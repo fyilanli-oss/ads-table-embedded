@@ -1,10 +1,33 @@
 {
-  "schema_version": "1.2.0",
+  "schema_version": "1.3.0",
   "contract_id": "eo-04b-meta-reporting-runtime-v1",
   "accepted_query_target_contract": "contracts/pd-cpd-query-standard-v1.json",
   "package_id": "A6-EO-04-B",
   "status": "repository_accepted_live_shape_observed_real_catalog_validation_pending",
-  "checked_at": "2026-10-23",
+  "checked_at": "2026-10-26",
+  "sales_role_projection": {
+    "implemented": true,
+    "status": "repository_classifier_and_snapshot_projection_implemented_native_evidence_decoder_pending",
+    "runtime": "app/lib/providers/meta-sales-role.server.js",
+    "types": "app/lib/providers/meta-sales-role.server.d.ts",
+    "tests": "tests/meta-sales-role.test.js",
+    "entrypoint": "readDailyEvidenceSnapshot.product_sales",
+    "evidence_loader": "optional_server_loadProductSalesEvidence_scoped_to_workspace_generation_connection_reporting_account",
+    "evidence": "verified_single_native_sale_relation_exact_account_ad_product_day_catalog_namespace_and_positive_quantity_with_source_reference",
+    "same_advertised_and_sold_product": "Advertised",
+    "different_advertised_and_sold_product": "Cross-sell",
+    "missing_pending_mixed_or_conflicting_evidence": "Unclassified",
+    "product_set_membership_is_role_proof": false,
+    "total_minus_promoted_is_cross_sell": false,
+    "four_raw_sales_fields_unchanged": true,
+    "raw_product_id_is_automatically_sold_id": false,
+    "source_row_index": "projection_reference_within_complete_snapshot_not_persistent_fact_key",
+    "additional_sales_facts_created": false,
+    "source_field_semantics_decoder": "not_implemented_or_claimed_verified",
+    "live_acceptance": false,
+    "dataset_publishable": false,
+    "shopify_identity_implemented_by_this_slice": false
+  },
   "query_alignment": {
     "inventory_items": ["02", "03"],
     "standard_product_request_includes_promoted_fields": true,
@@ -25,7 +48,7 @@
     "duplicate_selected_action_type_or_invalid_number": "schema_failure_no_publication_or_retry",
     "projection_is_complete_canonical_dataset_fact": false,
     "live_acceptance": "pending",
-    "product_cost_identity_join_sales_role": "unchanged_pending_later_items"
+    "product_cost_identity_join_sales_role": "sales_role_projection_implemented_separate_native_semantics_cost_and_shopify_identity_pending"
   },
   "native_source_reference": {
     "inventory_item": "04",

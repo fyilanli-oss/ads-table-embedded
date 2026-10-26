@@ -1,5 +1,11 @@
 # PD ve CPD sorgu çalışma tablosu
 
+## Klaviyo etkileşim olayı okuması — 26 Ekim 2026
+
+Mevcut 13 sütunlu sorgu matrisi ve 15 satırlık ortak kaynak tablosu değişmez. Satış atfındaki `event` ve `attributed-event` kimlikleri artık korunur. Opsiyonel `includeAttributingEvents: true` yolu aynı hesaptan tekil olayları `Get Event` ile okuyup ham özellikleri/metric kaynağını ve her satışa bağı ayrı server kanıt ailesinde tutar. Varsayılan kapalıdır; aynı etkileşim dört satışta bir kez sorgulanır, dört satış fact'i korunur. Liste sayfaları tamamlanmadan başlamaz; 100 farklı olaydan fazlası veya ilk hata kısmi sonuç vermez.
+
+Bu okuma tıklanan Product ID'yi doğrulamış değildir. Açılma, teslim veya tıklama olabilir; hazır Advertised/Cross-sell alanı kabul edilmez. Campaign Assisted / Flow Triggered ve eksik/çelişkili Unclassified kuralları değişmez. Ürün Impression/Click N/A ve Spend açık kalır. Ayrıntı dataset_publishable false; DB yazımı, Shopify eşleme veya canlı kabul yoktur. Get Event kotası ayrı event_detail ailesidir; native profil yapılandırması ve canlı etkinleştirme ayrı kapılardadır. Resmî kaynaklar 26 Ekim 2026: [Get Event](https://developers.klaviyo.com/en/reference/get_event), [resmî şema](https://raw.githubusercontent.com/klaviyo/openapi/main/openapi/stable/apis/get_events.json). Ayrıntı sözleşmesi: `contracts/eo-04d-klaviyo-reporting-authority-v1.json#attributing_event_reader_2026_10_26`.
+
 ## Ortak kayıt aileleri ve kaynak eşlemesi — 23 Ekim 2026
 
 Ürün sahibi beş sütunlu ortak düzeni kabul etti ve sohbet tablosunun Excel çıktısını aldı. Bu bölüm o çıktının aynı 15 satırlık analiz kaydıdır; önceki 13 sütunlu sorgu matrisi değiştirilmez. Kaynak, mevcut repository sorgu ve normalizasyon kodudur; yeni provider desteği veya canlı veri kabulü değildir. Fiziksel tablo, unique constraint, Dataset writer ve FX uygulaması bu kayıtla başlamaz. 16 + 20 + 22 tasarımına girdidir; 17–19 kapanışı değildir.

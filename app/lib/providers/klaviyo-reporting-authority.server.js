@@ -22,6 +22,7 @@ import {
 } from "./klaviyo-reporting.server.js";
 import {resolveKlaviyoOrderedProductSales} from "./klaviyo-attribution-resolution.server.js";
 import {quotaBoundaryControl} from "../refresh/quota-native-fetch.server.js";
+import {buildKlaviyoAttributedEventRequest, readKlaviyoAttributedEvents} from "./klaviyo-attributed-event.server.js";
 
 const PROVIDER = "klaviyo";
 const API_ORIGIN = "https://a.klaviyo.com";
@@ -155,10 +156,15 @@ function normalizeAttributionResource(value) {
   const relationshipId = (name) => {
     const data = value.relationships?.[name]?.data ?? null;
     if (data == null) return null;
+    if (["event", "attributed-event"].includes(name) && data.type !== "event") {
+      fail("KLAVIYO_ATTRIBUTION_RELATIONSHIP_INVALID", "Expected an event relationship");
+    }
     return text(data.id, "KLAVIYO_ATTRIBUTION_RELATIONSHIP_INVALID", 256);
   };
   return Object.freeze({
     attribution_id: text(value.id, "KLAVIYO_ATTRIBUTION_ID_INVALID", 256),
+    event_id: relationshipId("event"),
+    attributed_event_id: relationshipId("attributed-event"),
     campaign_id: relationshipId("campaign"),
     campaign_message_id: relationshipId("campaign-message"),
     flow_id: relationshipId("flow"),
@@ -193,6 +199,9 @@ function attachAttributionEvidence(events, included) {
       const attribution = attributions.get(id);
       if (!attribution) {
         fail("KLAVIYO_ATTRIBUTION_INCLUDED_RESOURCE_MISSING", "Klaviyo attribution resource is missing");
+      }
+      if (attribution.event_id != null && attribution.event_id !== normalized.provider_event_id) {
+        fail("KLAVIYO_ATTRIBUTION_EVENT_MISMATCH", "Klaviyo attribution belongs to another sale");
       }
       return attribution;
     }).sort((left, right) => left.attribution_id.localeCompare(right.attribution_id));
@@ -361,7 +370,10 @@ export function createKlaviyoReportingAuthorityRuntime({
         connected_account_id: context.account.id, connected_account_currency: context.account.currency,
         connected_account_timezone: context.account.timezone}), business_date: resolvedBusinessDate, timeframe, ...result});
     },
-    async readDailyEvidenceSnapshot({installationAuthority, businessDate = null}) {
+    async readDailyEvidenceSnapshot({installationAuthority, businessDate = null, includeAttributingEvents = false}) {
+      if (typeof includeAttributingEvents !== "boolean") {
+        fail("KLAVIYO_ATTRIBUTED_EVENT_OPTION_INVALID", "Attributing event option must be boolean");
+      }
       const context = await prepareContext(installationAuthority);
       const resolvedBusinessDate = businessDate ?? calendarDateInTimeZone(
         now(),
@@ -468,6 +480,11 @@ export function createKlaviyoReportingAuthorityRuntime({
             request_ids: collected.request_ids,
           });
         },
+        fetchAttributingEvents: !includeAttributingEvents ? null : async ({ordered_product_events}) => (
+          readKlaviyoAttributedEvents({sales: ordered_product_events.rows,
+            fetchEvent: id => providerRequest(context,
+              buildKlaviyoAttributedEventRequest({accessToken: context.accessToken, id}), "attributing_events")})
+        ),
         resolveProductSales: async ({campaign_values, flow_values, ordered_product_events}) => (
           resolveKlaviyoOrderedProductSales({
             campaignChannels: campaign_values.rows,

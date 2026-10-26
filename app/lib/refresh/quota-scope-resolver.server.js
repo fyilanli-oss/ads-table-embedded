@@ -1,7 +1,7 @@
 import {createHash} from "node:crypto";
 
 const families={shopify_partner:["partner_graphql"],meta:["insights","product_insights","token","token_debug","account_discovery","revoke"],
-  google_ads:["reporting_query","token","revoke","account_discovery"],klaviyo:["metrics","events","account_discovery","campaign_values","flow_values","token","revoke"]};
+  google_ads:["reporting_query","token","revoke","account_discovery"],klaviyo:["metrics","events","event_detail","account_discovery","campaign_values","flow_values","token","revoke"]};
 const key=value=>typeof value==="string"&&/^[a-f0-9]{64}$/.test(value);
 const fields=(value,names)=>value&&typeof value==="object"&&!Array.isArray(value)
   &&Object.keys(value).length===names.length&&names.every(name=>Object.hasOwn(value,name));

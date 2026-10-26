@@ -40,6 +40,7 @@ function descriptor(provider,input,init) {
     const families={"/api/metrics":["GET","metrics"],"/api/events":["GET","events"],"/api/accounts":["GET","account_discovery"],
       "/api/campaign-values-reports":["POST","campaign_values"],"/api/flow-values-reports":["POST","flow_values"],"/oauth/token":["POST","token"],"/oauth/revoke":["POST","revoke"]};
     if(families[path]?.[0]===method) family=families[path][1];
+    if(method==="GET"&&/^\/api\/events\/[A-Za-z0-9_-]{1,256}$/.test(path)) family="event_detail";
   }
   if(!family) throw control("not_configured");
   if(provider==="klaviyo"&&path.startsWith("/api/")) version=init.headers?.get?.("revision")??null;

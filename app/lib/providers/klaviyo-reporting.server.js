@@ -538,6 +538,7 @@ export async function runKlaviyoReportingFamilies({
   fetchCampaignValues,
   fetchFlowValues,
   fetchOrderedProductEvents,
+  fetchAttributingEvents = null,
   resolveProductSales = null,
 }) {
   const families = [
@@ -545,6 +546,7 @@ export async function runKlaviyoReportingFamilies({
     ["campaign_values", fetchCampaignValues],
     ["flow_values", fetchFlowValues],
     ["ordered_product_events", fetchOrderedProductEvents],
+    ...(fetchAttributingEvents == null ? [] : [["attributing_events", fetchAttributingEvents]]),
     ...(resolveProductSales == null ? [] : [["resolved_product_sales", resolveProductSales]]),
   ];
   if (families.some(([, operation]) => typeof operation !== "function")) {

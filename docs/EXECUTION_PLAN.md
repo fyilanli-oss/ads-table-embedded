@@ -1,5 +1,11 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## Klaviyo satıştan atfı alan olaya bağlantı — 26 Ekim 2026
+
+- Ürün sahibi araştırmada bulunan `attributed-event` yolunun uygulanmasına devam talimatı verdi. Başlangıç uzak main `dc565a4a9fba50c6cad15a32d19b604056bd29be`; ayrı `codex/klaviyo-attributed-event` branch'i. GitHub Connector, uzak main, branch ve yerel envanter doğrulandı. #179 ürün kimliği ve #180 Meta sınıflandırıcı PR'ları bu dilimin bağımlılığı veya birleşmiş parçası değildir.
+- Mevcut atıfta `event`/`attributed-event` kimlikleri korunur; başka satışa işaret eden bağ hata verir. Açıkça seçilen, varsayılan kapalı ayrıntı okuması, tüm satış sayfalarından sonra her farklı etkileşimi aynı hesap/credential otoritesiyle bir kez okur; 100 farklı olay sınırı isteklerden önce doğrulanır. Ham olay özellikleri ve metric türü özel kanıtta korunur. Ayrıntı hatasında kısmi snapshot yoktur; retry eklenmez. Ayrıntı yeni satış üretmez, mevcut Sales Role değiştirilmez.
+- Get Event ve 2026-10-15 resmî şeması 26 Ekim'de okundu. Ayrı event_detail kota ailesi liste kotasına yedeklenmez; limit profili oluşturulmadı, eksik profil dispatch'i engeller. Tıklanan ürün kimliği ve Advertised/Cross-sell kanıtı açık kalır. UI, canlı çağrı/izin, DB/writer, deploy veya Dataset kabulü yoktur. Merge ayrıca açık ürün sahibi onayı gerektirir.
+
 ## Ortak adaptör kurulum kimliği düzeltmesi — 26 Ekim 2026
 
 - Ürün sahibi dar kimlik düzeltmesini onayladı. Başlangıç main `a0d5d1194e8cae2cde0033674e66e400f4278ee3` (#177). Mevcut DB bigint kurulum ID'si korunur; yalnız ortak adaptör istek/fact UUID kontrolü `1`–`9223372036854775807` aralığındaki canonical ondalık metin kontrolüne dönüştürülür. Number'a çevirme, yeni UUID, alias veya DB değişikliği yoktur.

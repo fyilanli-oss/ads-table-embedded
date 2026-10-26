@@ -94,6 +94,82 @@ function runtime({fetchFn, connected = connection, lifecycle = null, now = () =>
   });
 }
 
+function attributedFixture({enabled = true, rejectDetail = false, wrongSale = false, wrongType = false} = {}) {
+  const calls = [];
+  const api = runtime({fetchFn: async (address, options) => {
+    const target = new URL(address);
+    calls.push(target.pathname);
+    if (target.pathname === "/api/metrics") return response(200, {data: [metric("p", "Placed Order"), metric("o", "Ordered Product")]});
+    if (target.pathname.includes("values-reports")) return response(200, {data: {attributes: {results: []}}});
+    if (target.pathname === "/api/events") return response(200, {
+      data: [event("sale-1", "attr-1"), event("sale-2", "attr-2")],
+      included: [1, 2].map(i => ({type: "attribution", id: `attr-${i}`, relationships: {
+        event: {data: {type: "event", id: wrongSale ? "another-sale" : `sale-${i}`}},
+        "attributed-event": {data: {type: wrongType ? "profile" : "event", id: "touch-1"}},
+        campaign: {data: {type: "campaign", id: "campaign-1"}},
+        "campaign-message": {data: {type: "campaign-message", id: "message-1"}},
+      }})),
+    });
+    if (target.pathname === "/api/events/touch-1") {
+      assert.equal(target.searchParams.get("include"), "metric");
+      assert.equal(options.headers.revision, "2026-10-15");
+      if (rejectDetail) return response(429, {errors: [{code: "throttled"}]});
+      return response(200, {data: {type: "event", id: "touch-1",
+        attributes: {datetime: "2026-10-16T12:00:00Z", event_properties: {"Bot Click": false}},
+        relationships: {metric: {data: {type: "metric", id: "click"}}}},
+        included: [{type: "metric", id: "click", attributes: {name: "Clicked Email"}}]}, "touch-request-1");
+    }
+    throw Error("unexpected request");
+  }});
+  return {calls, run: () => api.readDailyEvidenceSnapshot({installationAuthority,
+    businessDate: "2026-10-17", ...(enabled ? {includeAttributingEvents: true} : {})})};
+}
+
+test("attributing-event read is opt-in; default preserves native relationship IDs without extra calls", async () => {
+  const f = attributedFixture({enabled: false});
+  const result = await f.run();
+  assert.equal(result.status, "completed");
+  assert.equal(f.calls.length, 4);
+  assert.equal(result.results.attributing_events, undefined);
+  assert.equal(result.results.ordered_product_events.rows[0].provider_attributions[0].attributed_event_id, "touch-1");
+});
+
+test("opt-in reads each distinct prior-day interaction once under the same authority without changing Sales Role", async () => {
+  const f = attributedFixture();
+  const result = await f.run();
+  assert.equal(result.status, "completed");
+  assert.equal(f.calls.length, 5);
+  assert.equal(result.results.attributing_events.rows.length, 1);
+  assert.equal(result.results.attributing_events.sale_links.length, 2);
+  assert.equal(result.results.attributing_events.rows[0].metric_name, "Clicked Email");
+  assert.equal(result.results.attributing_events.dataset_publishable, false);
+  assert.equal(result.results.resolved_product_sales.rows.length, 2);
+  assert.ok(result.results.resolved_product_sales.rows.every(row => row.attribution_resolution.sales_role === "Assisted"));
+  assert.deepEqual(result.completed_families.slice(-2), ["attributing_events", "resolved_product_sales"]);
+  assert.doesNotMatch(JSON.stringify(result), /access-token/);
+});
+
+test("detail rejection discards earlier families, stops sales resolution and never retries", async () => {
+  const f = attributedFixture({rejectDetail: true});
+  const result = await f.run();
+  assert.equal(f.calls.length, 5);
+  assert.equal(result.status, "failed");
+  assert.equal(result.results, null);
+  assert.equal(result.publishable, false);
+  assert.equal(result.error.code, "KLAVIYO_REPORTING_REQUEST_REJECTED");
+  assert.equal(result.completed_families.includes("resolved_product_sales"), false);
+});
+
+test("wrong-sale or non-event attribution relationships stop before detail dispatch", async () => {
+  for (const option of [{wrongSale: true}, {wrongType: true}]) {
+    const f = attributedFixture(option);
+    const result = await f.run();
+    assert.equal(result.status, "failed");
+    assert.equal(result.results, null);
+    assert.equal(f.calls.length, 4);
+  }
+});
+
 test("PD authority discovers exact metrics, retains whole rows and exhausts per-metric pagination", async () => {
   const calls = [];
   const api = runtime({fetchFn: async (url, options) => {

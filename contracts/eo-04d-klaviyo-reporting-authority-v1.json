@@ -3,6 +3,32 @@
   "status": "repository_implementation_ready_for_review",
   "accepted_at": "2026-10-17",
   "api_revision": "2026-10-15",
+  "attributing_event_reader_2026_10_26": {
+    "entrypoint": "readDailyEvidenceSnapshot.includeAttributingEvents",
+    "default": false,
+    "preserved_relationships": ["event", "attributed-event"],
+    "sale_relationship_mismatch": "fail_before_detail_dispatch",
+    "endpoint": "GET /api/events/{id}?include=metric",
+    "scope": "events:read_existing",
+    "maximum_distinct_detail_requests": 100,
+    "dedupe": "one_request_per_native_event_id_per_execution_sale_links_preserved",
+    "date_filter": "none_attributing_event_can_precede_sale_business_day",
+    "response_validation": "exact_event_type_and_id_datetime_properties_and_single_included_metric",
+    "native_evidence": "private_raw_event_and_metric_response_properties_no_public_projection_or_log",
+    "product_interaction_verified": false,
+    "sales_role_changed": false,
+    "quota_family": "event_detail_separate_from_events_list_requires_own_configured_profile",
+    "documented_rate_limits": {"burst_per_second": 10, "steady_per_minute": 150},
+    "quota_profile_configured": false,
+    "first_error": "stop_no_retry_no_partial_snapshot",
+    "dataset_publishable": false,
+    "live_validation": "pending",
+    "official_sources_checked_at": "2026-10-26",
+    "official_sources": [
+      "https://developers.klaviyo.com/en/reference/get_event",
+      "https://raw.githubusercontent.com/klaviyo/openapi/main/openapi/stable/apis/get_events.json"
+    ]
+  },
   "pd_alignment_2026_10_23": {
     "inventory_items": ["13", "14"],
     "entrypoint": "readPdEvidenceSnapshot",

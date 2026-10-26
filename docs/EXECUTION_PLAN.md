@@ -1,5 +1,12 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## Ürün kimliği okuyucu tarifi — 26 Ekim 2026
+
+- Ürün sahibi mevcut Merchant / Meta katalog / Klaviyo kaynak kararının endpoint, alan, izin ve saklama tarifine başlanmasını istedi. Başlangıç main `dc565a4a9fba50c6cad15a32d19b604056bd29be` (#178). Mevcut sorgu çalışma belgesine teknik tablo ve `pd-cpd-query-standard-v1.json` 1.11.0 içine `product_identity.reader_specification` eklendi. Yeni iş paketi veya provider seçimi yoktur.
+- Merchant v1 ürün listeleme ve OAuth content scope; Meta resmî SDK katalog GET/ürün alanları; Klaviyo mevcut olay ProductID/VariantID ve Shopify Admin 2026-10 ürün/varyant-parent doğrulaması 26 Ekim resmî kaynaklarıyla ayrıldı. Meta exact katalog yetkisi, Insights kimlik ad alanı, Google/Meta kanıtlı Shopify aday çıkarımı ve Klaviyo exact varyant property kontrolü uygulama kabul kapılarıdır; varmış gibi kodlanmaz.
+- `product_identity_mappings` ve mevcut üç fact referansı kullanılır. Kaynak kimlikleri ve eşlenemeyen kayıt korunur; API hatası yokluk veya sıfır yapılmaz, eşleme ikinci satış üretmez. Fiziksel UNIQUE/FK/tarihsel sürüm, writer ve migration EO-05-B kapsamındadır. Kaynak okuyucusu/Shopify doğrulayıcısı bu tarifle uygulanmış sayılmaz.
+- Eski 13 sütunlu matris, beş sütunlu/15 satırlık kaynak tablosu ve teslim edilmiş Excel değiştirilmedi. Bu dilim yalnız sözleşme/analizdir; canlı API, OAuth scope değişikliği, Shopify görsel işlem, DB, UI/deploy veya paket kapanışı yoktur. Merge ayrıca açık onay gerektirir.
+
 ## Ortak adaptör kurulum kimliği düzeltmesi — 26 Ekim 2026
 
 - Ürün sahibi dar kimlik düzeltmesini onayladı. Başlangıç main `a0d5d1194e8cae2cde0033674e66e400f4278ee3` (#177). Mevcut DB bigint kurulum ID'si korunur; yalnız ortak adaptör istek/fact UUID kontrolü `1`–`9223372036854775807` aralığındaki canonical ondalık metin kontrolüne dönüştürülür. Number'a çevirme, yeni UUID, alias veya DB değişikliği yoktur.

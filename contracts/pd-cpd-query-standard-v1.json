@@ -1,12 +1,12 @@
 {
   "contract_id": "pd-cpd-query-standard-v1",
-  "version": "1.9.0",
-  "checked_at": "2026-10-23",
+  "version": "1.10.0",
+  "checked_at": "2026-10-26",
   "inventory_item": "01",
   "status": "accepted_product_decisions_implementation_partial",
   "source_table": "docs/research/PD_CPD_QUERY_WORKING_TABLE_2026-10-22.md",
   "authority": "accepted_query_targets_not_provider_support_or_completed_runtime_proof",
-  "adapter_contract_version": "2.0.0",
+  "adapter_contract_version": "3.0.0",
   "pd_metrics": [
     "impression", "ad_click", "spend_value", "add_to_cart", "add_to_cart_value",
     "checkout", "checkout_value", "purchase", "purchase_value"

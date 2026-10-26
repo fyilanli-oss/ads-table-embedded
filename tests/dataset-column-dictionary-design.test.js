@@ -29,12 +29,15 @@ test("Dataset dictionary preserves native facts, metric states and unresolved li
   assert.match(dictionary, /tahmini kabul edilmiş fact üretilmez/);
 });
 
-test("Dataset dictionary records existing adapter type mismatches without fixing or hiding them", () => {
+test("Dataset dictionary retains historical findings and separately records the narrow identity correction", () => {
   assert.match(dictionary, /installations.id` bigint/);
   assert.match(dictionary, /identity.installation_id` UUID ister/);
   assert.match(dictionary, /Klaviyo'da mevcut NULL zorunluluğu korunur/);
   assert.match(dictionary, /FX alanları zorunludur/);
   assert.match(dictionary, /mevcut doğrulayıcıyı gevşetmez veya düzeltmez/);
+  assert.match(dictionary, /UUID\/DB uyumsuzluğu paragrafı ilk sözlük incelemesinin tarihsel bulgusudur/);
+  assert.match(dictionary, /ortak adaptör `3\.0\.0` artık hem istek hem fact/);
+  assert.match(dictionary, /FX\/ad zorunluluğu ve diğer sözlük tasarımı açık kalır/);
 });
 
 test("Dataset dictionary does not select unproven keys, FX policy or provider role acceptance", () => {

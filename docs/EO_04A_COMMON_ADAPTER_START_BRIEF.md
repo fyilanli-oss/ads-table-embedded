@@ -12,6 +12,10 @@ Bu belge 10 Ekim 2026'daki tasarım ve kabul kaydıdır. Sonraki sağlayıcı hi
 
 ## Analist sonucu
 
+### Kurulum kimliği düzeltmesi — 26 Ekim 2026
+
+Aktif runtime ve TypeScript sözleşmesi `3.0.0` kullanır. `authority.installation_id` ve fact `identity.installation_id`, mevcut DB `shopify.installations.id` bigint kimliğinin `1`–`9223372036854775807` aralığında, başında sıfır/işaret/boşluk olmayan ondalık metin karşılığıdır. UUID, JS Number/BigInt girdi ve eski `1.0.0`/`2.0.0` istekleri sessizce çevrilmez. Bu kırıcı temsil düzeltmesi yalnız ortak adaptörde uygulanır; aşağıdaki `2.0.0` paragrafı 23 Ekim durumunu kaydeder. Dokuz metrik değişmedi. Workspace/connection UUID kuralları, hesap seçimi ve Klaviyo NULL reporting-account kuralı korunur. Bu kontrol kimliğin gerçekten server tarafından çözüldüğünü tek başına kanıtlamaz; DB resolver/writer, FX/ad zorunluluğu, Dataset ve canlı entegrasyon bu dilimde yoktur.
+
 ### Güncel metrik uyumu — 23 Ekim 2026, envanter 01
 
 Güncel ortak talep **9 PD metriğidir**; Session ürün sahibi kararıyla çıkarılmıştır. Aşağıdaki 10 metrikli blok 10 Ekim tarihsel kabul kaydıdır, güncel talep değildir. Runtime ve TypeScript sözleşmesi `2.0.0` kullanır; eski `1.0.0` istekleri ve ek `session` metrik alanı sessizce kabul edilmez. Kimlik doğrulama oturumları bu değişikliğin konusu değildir.

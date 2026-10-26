@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-export const COMMON_ADAPTER_CONTRACT_VERSION = "2.0.0";
+export const COMMON_ADAPTER_CONTRACT_VERSION = "3.0.0";
 
 export const PROVIDERS = Object.freeze(["meta", "google_ads", "klaviyo"]);
 export const OPERATIONS = Object.freeze([
@@ -68,6 +68,8 @@ const OBSERVATION_SET = new Set(OBSERVATION_STATES);
 const ERROR_CLASS_SET = new Set(NORMALIZED_ERROR_CLASSES);
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const INSTALLATION_ID_PATTERN = /^[1-9][0-9]{0,18}$/;
+const POSTGRES_BIGINT_MAX = 9223372036854775807n;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const HASH_PATTERN = /^[0-9a-f]{64}$/;
 const EMAIL_PATTERN = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi;
@@ -109,6 +111,19 @@ function requireUuid(value, field) {
   requireString(value, field);
   if (!UUID_PATTERN.test(value)) {
     fail("REQUEST_CONTRACT_INVALID", `${field} must be a UUID`);
+  }
+  return value;
+}
+
+function requireInstallationId(value, field) {
+  // Preserve the DB identity exactly across JSON and pg; never coerce through Number.
+  if (
+    typeof value !== "string"
+    || value !== value.trim()
+    || !INSTALLATION_ID_PATTERN.test(value)
+    || BigInt(value) > POSTGRES_BIGINT_MAX
+  ) {
+    fail("REQUEST_CONTRACT_INVALID", `${field} must be a canonical positive PostgreSQL bigint string`);
   }
   return value;
 }
@@ -196,7 +211,7 @@ export function validateCommonAdapterRequest(request) {
   requireRecord(request, "request");
   const authority = requireRecord(request.authority, "authority");
   requireUuid(authority.workspace_id, "authority.workspace_id");
-  requireUuid(authority.installation_id, "authority.installation_id");
+  requireInstallationId(authority.installation_id, "authority.installation_id");
   if (!Number.isInteger(authority.installation_generation) || authority.installation_generation < 1) {
     fail(
       "REQUEST_CONTRACT_INVALID",
@@ -331,7 +346,7 @@ export function validateCanonicalFunnelFact(row) {
   requireRecord(row, "row");
   const identity = requireRecord(row.identity, "identity");
   requireUuid(identity.workspace_id, "identity.workspace_id");
-  requireUuid(identity.installation_id, "identity.installation_id");
+  requireInstallationId(identity.installation_id, "identity.installation_id");
   if (
     !Number.isInteger(identity.installation_generation) ||
     identity.installation_generation < 1

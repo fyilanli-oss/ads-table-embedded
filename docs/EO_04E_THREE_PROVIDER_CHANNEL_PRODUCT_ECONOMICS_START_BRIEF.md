@@ -46,8 +46,8 @@ Campaign, Ad Set, Flow, trigger, split ve delay tek başına Channel değildir.
 
 ### Sales Role
 
-- `Advertised`: Satılan ürün, kesin reklamda gösterilen ürün kanıt kümesindedir.
-- `Cross-sell`: Kesin reklamda gösterilen ürün kümesi bilinmektedir ve satılan ürün bu kümenin dışındadır.
+- `Advertised`: Doğrulanmış reklam etkileşimi ürünü ile satılan ürün aynıdır; Google'da normal lead kanıtı da gerekir. Küme üyeliği tek başına yeterli değildir.
+- `Cross-sell`: Doğrulanmış reklam etkileşimi ürünü ile satılan ürün farklıdır; Google'da normal cross-sell kanıtı da gerekir. Aynı kümedeki diğer ürünler üyelik gerekçesiyle Advertised yapılmaz. Meta için bu ürün hedefinin native karşılığı/çözücüsü açıktır.
 - `Assisted`: Sağlayıcı satışı Channel bağlamına bağlamıştır fakat içerik tek bir reklam ürününü kanıtlamaz; genel mağaza, kategori, dinamik/geniş küme veya Search gibi senaryolar buna dahildir.
 - `Triggered`: Klaviyo Flow Message veya Flow Message Variation attribution'ı ile gelen satılan üründür.
 - `Unclassified`: Kanıt gerçekten çelişkili veya belirsizdir. Kesin ürün kanıtı bulunmamasının varsayılan adı değildir.
@@ -62,16 +62,16 @@ Campaign, Ad Set, Flow, trigger, split ve delay tek başına Channel değildir.
 
 | Kampanya/reklam içeriği yapısı | Channel | Reklamda gösterilen ürün kanıtı | Satılan ürün sonucu | Sales Role |
 | --- | --- | --- | --- | --- |
-| Tekil kesin ürün reklam içeriği | Ad | Kesin `product_id` / `product_item_id` | Aynı ürün | Advertised |
-| Kesin çoklu ürün reklam içeriği | Ad | Kesin `retailer_item_ids` veya eşdeğer açık liste | Liste içindeki ürün | Advertised |
-| Kesin çoklu ürün reklam içeriği | Ad | Kesin açık liste | Liste dışındaki ürün | Cross-sell |
+| Satışa bağlı ürün etkileşimi ilişkisi doğrulanmış | Ad | Reklam etkileşimi ürünü ve satılan ürün aynı | Aynı ürün | Hedef Advertised; Meta native çözücü/kanıt açık |
+| Satışa bağlı ürün etkileşimi ilişkisi doğrulanmış | Ad | Reklam etkileşimi ürünü ve satılan ürün farklı | Küme içinde veya dışında diğer ürün | Hedef Cross-sell; Meta native çözücü/kanıt açık |
+| Yalnız kesin içerik listesi veya ürün kümesi biliniyor | Ad | Tıklanan/gösterilen ürün–satış ilişkisi kanıtlanmamış | Liste içi/dışı üyelik | Advertised/Cross-sell üretmek için yeterli değil |
 | Ürün kümesi, kategori, dinamik veya genel reklam içeriği | Ad | Tekil ürün kesin değil | Sağlayıcının ilişkilendirdiği satılan ürün | Assisted |
 | Çelişkili kimlik/kanıt | Ad veya çözülebildiği bağlam | Çelişkili | Satılan ürün korunur | Unclassified |
 
 Bağlayıcı sınırlar:
 
 1. Campaign ve Ad Set yalnız hiyerarşi bağlamıdır; Channel `Ad`dır.
-2. Mevcut izin kapsamı `ads_read` olarak kalır. `catalog_management` veya başka katalog/business izni istenmez.
+2. Bu eski raporlama slice'ı `ads_read` kullanır. EO-05 kimlik çalışmasındaki katalog izin genişletmesi ayrıca kendi sözleşmesinde kayıtlıdır; bu brief tek başına ek izin veya canlı çağrı yetkisi değildir.
 3. Ad seviyesindeki gösterim, tıklama ve harcama kesin Channel toplamıdır.
 4. `product_id` kırılımında sağlayıcının gerçekten döndürdüğü ürün metrikleri ayrı ham kanıt olarak korunur.
 5. Ürün kırılımı içindeki gösterim/tıklama/harcama semantiği gerçek katalog reklamı cevabıyla doğrulanmadan `Ad Cost` veya gerçek ürün maliyeti sayılmaz.

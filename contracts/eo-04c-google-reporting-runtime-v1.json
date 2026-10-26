@@ -3,6 +3,18 @@
   "contract_id": "eo-04c-google-reporting-runtime-v1",
   "accepted_query_target_contract": "contracts/pd-cpd-query-standard-v1.json",
   "package_id": "A6-EO-04-C",
+  "sales_role_follow_up": {
+    "owner": "A6-EO-05",
+    "reference": "contracts/eo-05-start-brief-v1.json#sales_role_work_order_2026_10_26",
+    "Shopping_and_PMax": "normal_scope_classifier_exists_main_reporting_sale_projection_missing",
+    "current_classifier_usage": "google_live_evidence_sales_role_summary",
+    "Search": "special_Ad_Group_cart_query_has_sold_item_units_revenue_no_advertised_item_or_lead_cross_sell_fields",
+    "Search_next": "verify_source_scope_keep_current_Assisted_path_no_invented_advertised_product",
+    "PMax_role_implies_exact_Asset_Group_Channel": false,
+    "historical_listing_tree_pause": "unchanged",
+    "real_provider_acceptance": "pending",
+    "new_runtime_query_or_live_call_authorized": false
+  },
   "status": "runtime_accepted_2026_access_review_corrective_repository_verified",
   "checked_at": "2026-10-23",
   "query_alignment": {

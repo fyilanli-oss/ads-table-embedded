@@ -3,6 +3,17 @@
   "contract_id": "eo-04b-meta-reporting-runtime-v1",
   "accepted_query_target_contract": "contracts/pd-cpd-query-standard-v1.json",
   "package_id": "A6-EO-04-B",
+  "sales_role_follow_up": {
+    "owner": "A6-EO-05",
+    "reference": "contracts/eo-05-start-brief-v1.json#sales_role_work_order_2026_10_26",
+    "four_native_fields": "retained_in_standard_query",
+    "PR180": "classifier_expects_verified_relation_not_merged",
+    "native_relation_decoder": "missing",
+    "product_id_meaning_and_action_type": "real_response_evidence_pending",
+    "action_converted_product_id": "SDK_field_exists_query_access_and_combination_not_verified",
+    "Gemini_JSON_or_product_set_membership_proves_role": false,
+    "new_query_live_call_or_merge_authorized": false
+  },
   "status": "repository_accepted_live_shape_observed_real_catalog_validation_pending",
   "checked_at": "2026-10-23",
   "query_alignment": {

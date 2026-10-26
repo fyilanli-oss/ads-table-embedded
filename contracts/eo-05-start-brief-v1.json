@@ -2,6 +2,29 @@
   "contract_id": "eo-05-start-brief-v1",
   "package_id": "A6-EO-05",
   "checked_at": "2026-10-20",
+  "sales_role_work_order_2026_10_26": {
+    "tracking_parent": "A6-EO-05",
+    "analyst_brief": "docs/EXECUTION_PLAN.md#eo-05-advertisedcross-sell-çalışma-listesi",
+    "sequence": "after_identity_work_completion_before_remaining_code_audit",
+    "identity_pause_before_step_12_unchanged": true,
+    "single_work_no_new_package": true,
+    "authorization": "documentation_only_not_runtime_live_call_DB_deployment_or_merge",
+    "product_target": "verified_ad_interaction_product_A_sold_with_B_C_D_means_A_Advertised_others_Cross_sell_even_when_B_C_in_same_product_set",
+    "provider_support_for_target_is_assumed": false,
+    "source_product_set_membership_alone_proves_role": false,
+    "shopify_identity_proves_role": false,
+    "work": [
+      {"topic": "Ortak sözleşme", "todo": "Eski küme üyeliği temelli Advertised/Cross-sell ifadelerini kaldırmak; kaynak ve doğrulanmış ilişki esasını tüm sözleşmelerde aynı tutmak.", "state": "target_recorded_not_provider_acceptance"},
+      {"topic": "Google Shopping", "todo": "Mevcut normal-kapsam sınıflandırıcısını esas raporlama sonucundaki ürün satışlarına bağlamak; lead/cross-sell adet ve gelirlerini ham kaynağa izlenebilir tutmak.", "state": "classifier_exists_main_reporting_integration_missing"},
+      {"topic": "Google Retail PMax", "todo": "Aynı rol bağlantısını tamamlamak; rol kanıtını Asset Group/Channel kanıtından ayırmak, tarihsel listing-tree duraklamasını açmamak.", "state": "classifier_exists_main_reporting_integration_and_real_data_pending"},
+      {"topic": "Google Search", "todo": "Ad Group cart-data sorgusu satılan ürün/adet/gelir getiriyor; özel sorguda reklam ürünü ve lead/cross-sell yok. Mevcut Assisted yolunu açık tutup ayrımın kaynak kapsamını doğrulamak; kanıt olmadan Shopping kuralını veya alanlarını kopyalamamak.", "state": "current_special_query_does_not_produce_Advertised_Cross_sell"},
+      {"topic": "Meta", "todo": "Dört quantity/value alanını sorguda korumak; gerçek dönüşte action_type, product_id anlamı ve varsa action_converted_product_id kanıtını incelemek; desteklenen sorgu biçimini doğrulamadan alan eklememek. Ham yanıtı doğrulanmış ilişkiye dönüştüren decoder ve sınıflandırıcı bağlantısını kanıt izin verirse tamamlamak.", "state": "open_native_decoder_missing_classifier_only_in_unmerged_PR180", "live_test": "real_catalog_sales_required_no_repeat_empty_probe_as_evidence", "request_and_raw_response": "retain_together_in_private_sanitized_evidence_no_credentials", "Gemini_example_is_provider_proof": false, "aggregate_subtraction_proves_sold_product_id": false},
+      {"topic": "Klaviyo", "todo": "Araştırma kapalı; geçerli Campaign Assisted, Flow Triggered ve mevcut Unclassified kurallarını korumak. Advertised/Cross-sell eklememek; bu hedef için PR181'i merge etmemek.", "state": "closed_by_product_scope_decision_not_provider_impossibility", "reopen": "new_explicit_product_owner_direction_only"},
+      {"topic": "Bağlantı ve test", "todo": "Ürün rolünü doğru native satış ve doğrulanmış kimlik referansına bağlamak; A/B/C/D, aynı küme, eksik/çelişkili ilişki, aynı ürün, sıfır değer ve tekrar kayıt senaryolarını sınamak. Normal/all kapsamı, toplam/alt metrik çift sayımı, ham kanıt ve Channel ayrımını korumak.", "state": "not_implemented_or_live_accepted_by_this_document", "Meta_unavailable_proof": "explicit_open_blocker_not_guessed_role_or_completion"}
+    ],
+    "completion_boundary": "Klaviyo_scope_closed_Google_integration_pending_Meta_evidence_open_no_blanket_all_providers_complete",
+    "after_this_work": "remaining_code_audit_before_broad_Dataset_work"
+  },
   "product_identity_work_order_2026_10_26": {
     "checked_at": "2026-10-26",
     "tracking_parent": "A6-EO-05",

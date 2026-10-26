@@ -1,5 +1,9 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## EO-05 Advertised/Cross-sell iş sırası — 26 Ekim 2026
+
+Ürün sahibi rol çalışmasının kimlik eşleştirmesinin ardından mevcut EO-05 içinde tek çalışma olarak kaydını onayladı. Yeni paket yoktur; kimlik listesinin 12 öncesi değerlendirme kapısı değişmez. Tam kapsam aşağıdaki EO-05 başlangıç/analist brief'ine ve `contracts/eo-05-start-brief-v1.json#sales_role_work_order_2026_10_26` içine işlendi. Ana paket, sorgu standardı/çalışma belgesi ve Meta/Google/Klaviyo sağlayıcı sözleşmeleri aynı kayda bağlıdır. Önce kimlik işi, sonra rol işi, sonra kod genelindeki bekleyen işlerin denetimi; genel Dataset/FX/formül işine bu kayıtla geçilmez. Bu yalnız belge/sözleşme değişikliğidir; yeni runtime, sorgu, canlı çağrı, OAuth, DB, deploy veya merge yetkisi değildir.
+
 ## Klaviyo Advertised/Cross-sell kapsam kararı — 26 Ekim 2026
 
 Ürün sahibi Meta açık kalırken Klaviyo Advertised/Cross-sell araştırmasının kapatılmasını istedi. Klaviyo'da bu ayrım mevcut ürün kapsamından çıkarılır; araştırma/kodlama hedefi olarak açık tutulmaz. Mevcut geçerli Campaign atfı **Assisted**, Flow atfı **Triggered** kalır; eksik/çelişkili atıfta mevcut **Unclassified** kuralları korunur. Mesaj ürün kümesine üyelik veya üyelik dışı olma tek başına Advertised/Cross-sell üretmez. Bu karar sağlayıcının teknik olarak desteklemediğinin kanıtı veya Advertised/Cross-sell uygulamasının tamamlanması değildir.
@@ -288,6 +292,22 @@ başlatmaz. Bu tarihsel brief tek başına uygulama yetkisi değildir; sonraki d
 **Durak ve yetki:** 1–11 yapılacak çalışma sırasıdır; bu belge değişikliği onları başlatmaz. Kullanıcı OAuth testleri Google 2, Meta 3, Shopify gerekirse 4, Klaviyo mevcut izin kontrolü 8 içindedir. İzin onayı/erişim kanıtı olmadan tamam işareti konmaz. Engel testin geçtiği anlamına gelmez; sonuçları durakta açıkça sunulur. Kalıcı saklama olmadan kimlik işi kapanmaz. 12–16'ya geçiş ayrı açık onay gerektirir. Genel Dataset/FX/formül işi başlamaz; tarihsel PMax duraklaması korunur.
 
 **İzin kaynakları — kontrol 26 Ekim 2026:** [Google Merchant yetkilendirme](https://developers.google.com/merchant/api/guides/authorization/access-client-accounts), [Merchant geliştirici kaydı](https://developers.google.com/merchant/api/guides/quickstart/registration), [Meta izin referansı](https://developers.facebook.com/documentation/development/permissions) (19 Ekim güncellemesi, tarayıcıda okundu), [Shopify ProductVariant](https://shopify.dev/docs/api/admin-graphql/2026-10/objects/ProductVariant), [Shopify izin yönetimi](https://shopify.dev/docs/apps/build/authentication-authorization/manage-access-scopes), [Klaviyo Events](https://developers.klaviyo.com/en/reference/get_events), [Klaviyo Metrics](https://developers.klaviyo.com/en/reference/get_metrics). Meta zinciri `catalog_management → business_management → pages_read_engagement/pages_show_list`, `pages_read_engagement → pages_show_list` olarak belgelenir. Müşteri verileri için App Review ve Advanced Access talepleri için Business Verification uygulama tarafının işidir. Google `content` ve Meta yönetim izinleri salt okuma kapsamı değildir; uygulama kullanımı burada yalnız okumadır. İzin, ilgili hesabın/kataloğun varlık erişiminin yerine geçmez.
+
+### EO-05 Advertised/Cross-sell çalışma listesi
+
+Kimlik çalışmasının tamamlanmasının ardından yürütülecek mevcut EO-05 kapsamıdır. Kimlik eşleşmesi satış rolünün kanıtı değildir. A ürününün doğrulanmış reklam etkileşimi ardından A/B/C/D satıldığında ürün hedefi A **Advertised**, B/C/D **Cross-sell** olur; B/C'nin aynı ürün kümesinde olması bunu değiştirmez. Bu hedef, Meta'nın bunu döndürdüğüne dair kanıt değildir.
+
+| Konu | Yapılacak iş / sınır | Mevcut durum |
+| --- | --- | --- |
+| Ortak sözleşme | Eski küme üyeliği temelli rol ifadelerini kaldırmak; ilişki kanıtına göre standardı tutarlı tutmak | Bu belgelerde hedef düzeltildi; provider kabulü veya yeni kod değildir. |
+| Google Shopping | Normal-kapsam sınıflandırıcısını esas raporlama ürün satışlarına bağlamak; kaynak metrik ve rol izini korumak | Kod var; bugün canlı kanıt özetinde kullanılıyor, esas sonuç bağlantısı eksik. |
+| Google Retail PMax | Aynı rol bağlantısı; satış rolünü Asset Group/Channel kanıtından ayırmak | Bağlantı/gerçek veri testi açık. Tarihsel listing-tree duraklaması korunur. |
+| Google Search | Özel Ad Group cart-data sorgusunun rol kapsamını doğrulamak; mevcut Assisted yolunu korumak | Satılan ürün/adet/gelir isteniyor; reklam ürünü ve lead/cross-sell alanları bu özel sorguda yok. Kanıtsız Shopping alanı/kuralı kopyalanmaz. |
+| Meta | Dört alan sorguda kalır. Gerçek katalog satışı yanıtında `action_type`, `product_id` anlamı ve varsa `action_converted_product_id` incelenir; kanıt izin verirse ham yanıt çözücüsü ve sınıflandırıcı bağlantısı yazılır | Çözücü yok. #180'de ilişki bekleyen sınıflandırıcı var, merge edilmedi. Gemini temsili yanıtı kanıt değildir. |
+| Klaviyo | Araştırma kapalı; geçerli Campaign Assisted, Flow Triggered ve mevcut Unclassified kuralları korunur | Yeni Advertised/Cross-sell işi yok. #181 bu hedef için merge edilmez; yeniden açma yalnız yeni açık kullanıcı talimatıyla. |
+| Bağlantı ve test | Rolü doğru kaynak satışa ve kimlik referansına bağlamak; A/B/C/D, aynı küme, aynı ürün, eksik/çelişkili kanıt, sıfır değer, tekrar ve kapsam senaryolarını sınamak | Normal/all, toplam/alt metrik çift sayımı, ham kanıt ve Channel ayrımı korunur. Kod/gerçek veri kabulü bu kayıtla tamamlanmaz. |
+
+Meta'da desteklenen sorgu biçimi/erişim doğrulanmadan `action_converted_product_id` sorguya eklenmez. Gerçek katalog satışlı testte gönderilen istek ve ham yanıt birlikte, secretsız ve özel kanıt deposunda korunur; aynı boş sorgu tekrarı ilişki kanıtı sayılmaz. Toplam/promoted çıkarımı satılan yan ürün kimliği üretmez. Meta kanıtı yoksa eksik açık gösterilir, rol veya genel kapanış uydurulmaz. Klaviyo kapanışı Google/Meta tamamlandı anlamına gelmez. Sağlayıcı sözleşmelerinin eski bölüm/slice'ları yalnız önceki uygulamayı anlatır; bu yeni iş sırası onları canlıya almaz.
 
 **Amaç:** Sağlayıcı verisini doğru mağaza/hesap ve tarihe bağlı, tekrar çalışınca
 çoğalmayan, eksikleri görünür, güncellenebilir Dataset V2 kaydına dönüştürmek.

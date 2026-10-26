@@ -852,6 +852,15 @@
     {
       "id": "A6-EO-05",
       "title": "Scheduler, Dataset V2, FX, maturity and reconciliation",
+      "sales_role_work_order": {
+        "reference": "contracts/eo-05-start-brief-v1.json#sales_role_work_order_2026_10_26",
+        "sequence": "after_product_identity_completion_before_remaining_code_audit",
+        "new_package": false,
+        "Klaviyo": "scope_closed_keep_Assisted_Triggered",
+        "Google": "reporting_integration_pending_Search_source_scope_to_verify",
+        "Meta": "native_relation_decoder_and_real_evidence_open",
+        "authorization": "documentation_only"
+      },
       "product_identity_work_order": {
         "reference": "contracts/eo-05-start-brief-v1.json#product_identity_work_order_2026_10_26",
         "analyst_brief": "docs/EXECUTION_PLAN.md#eo-05-ürün-kimliği-çalışma-listesi",

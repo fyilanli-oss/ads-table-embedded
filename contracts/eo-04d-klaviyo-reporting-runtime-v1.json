@@ -1,5 +1,16 @@
 {
   "contract_id": "A6-EO-04-D-KLAVIYO-REPORTING-RUNTIME-V1",
+  "sales_role_follow_up": {
+    "owner": "A6-EO-05",
+    "reference": "contracts/eo-05-start-brief-v1.json#sales_role_work_order_2026_10_26",
+    "Advertised_Cross_sell": "closed_by_product_scope_decision_2026_10_26",
+    "Campaign": "Assisted_when_existing_attribution_valid",
+    "Flow": "Triggered_when_existing_attribution_valid",
+    "missing_or_conflicting_attribution": "existing_Unclassified_rules",
+    "provider_unsupported_proven": false,
+    "PR181": "do_not_merge_for_this_goal",
+    "reopen": "new_explicit_product_owner_direction_only"
+  },
   "accepted_query_target_contract": "contracts/pd-cpd-query-standard-v1.json",
   "status": "accepted_product_owner_repository_runtime_authorized",
   "accepted_at": "2026-10-17",

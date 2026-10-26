@@ -3,6 +3,7 @@
   "contract_id": "eo-04e-three-provider-channel-product-economics-v1",
   "accepted_query_target_contract": "contracts/pd-cpd-query-standard-v1.json",
   "package_id": "A6-EO-04-E",
+  "sales_role_follow_up": "contracts/eo-05-start-brief-v1.json#sales_role_work_order_2026_10_26",
   "status": "accepted_product_owner_meta_and_klaviyo_runtime_started",
   "checked_at": "2026-10-17",
   "authority": {
@@ -52,8 +53,10 @@
         "ads_read"
       ],
       "classification": {
-        "exact_sold_in_advertised_set": "Advertised",
-        "exact_sold_outside_advertised_set": "Cross-sell",
+        "product_set_membership_alone_proves_role": false,
+        "same_verified_interaction_and_sold_product_target": "Advertised",
+        "different_verified_interaction_and_sold_product_target": "Cross-sell",
+        "target_provider_semantics_and_native_decoder": "open_not_implemented_or_proven",
         "broad_dynamic_product_set_or_generic_creative": "Assisted",
         "contradictory_or_ambiguous_evidence": "Unclassified"
       },
@@ -78,8 +81,9 @@
         "search": "ad_group"
       },
       "classification": {
-        "exact_sold_in_advertised_set": "Advertised",
-        "exact_sold_outside_advertised_set": "Cross-sell",
+        "product_set_membership_alone_proves_role": false,
+        "same_advertised_and_sold_product_with_normal_lead_evidence": "Advertised",
+        "different_advertised_and_sold_product_with_normal_cross_sell_evidence": "Cross-sell",
         "search_provider_attributed_sale": "Assisted",
         "contradictory_or_ambiguous_evidence": "Unclassified"
       },
@@ -146,7 +150,7 @@
         "exact_sold_outside_content_product_set": "Assisted",
         "broad_dynamic_general_or_category_content": "Assisted",
         "content_product_set_proves_interaction_product": false,
-        "product_interaction_role_resolution": "deferred_until_verified_sale_linked_product_interaction_evidence",
+        "product_interaction_role_resolution": "closed_by_product_scope_decision_2026_10_26_keep_Assisted_Triggered",
         "flow_attributed_product": "Triggered",
         "contradictory_or_ambiguous_evidence": "Unclassified"
       },

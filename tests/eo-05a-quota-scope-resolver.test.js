@@ -21,6 +21,24 @@ test("canonical route binds client connection epoch account version family and i
   assert.equal(quotaRouteIdentity(k,kd).routeKey,quotaRouteIdentity(k,{...kd,includes:[...kd.includes].reverse()}).routeKey);
   assert.notEqual(quotaRouteIdentity(k,kd).routeKey,quotaRouteIdentity(k,{...kd,includes:[]}).routeKey);
 });
+
+test("event detail cannot reuse list quota and an unconfigured detail route never dispatches", async () => {
+  const c = context("klaviyo");
+  const list = {...descriptor("klaviyo"), includes: ["metric"]};
+  const detail = {...list, family: "event_detail"};
+  assert.notEqual(quotaRouteIdentity(c, list).routeKey, quotaRouteIdentity(c, detail).routeKey);
+  let calls = 0;
+  const resolver = createQuotaScopeResolver({loadContext: async () => c, store: {
+    resolveRoute: async identity => identity.routeKey === quotaRouteIdentity(c, list).routeKey ? identity.routeKey : null,
+  }});
+  const transport = createQuotaManagedFetch({provider: "klaviyo", lane: "background", resolveOperation: resolver,
+    guard: {execute: async () => {throw Error("must not debit");}},
+    fetchFn: async () => {calls++; throw Error("must not dispatch");}});
+  await assert.rejects(transport("https://a.klaviyo.com/api/events/touch-1?include=metric", {
+    headers: {revision: "2026-10-15"},
+  }), error => quotaBoundaryControl(error)?.status === "not_configured");
+  assert.equal(calls, 0);
+});
 test("wrong provider account version organization duplicate include missing context or extra secret field fail before lookup",async()=>{
   for(const [c,d] of [[null,descriptor()],[context(),{...descriptor(),accountId:"999"}],[context(),{...descriptor(),accountId:null}],
     [context(),{...descriptor(),provider:"meta"}],[context(),{...descriptor(),version:"v23"}],

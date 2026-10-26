@@ -8,6 +8,18 @@ import {createGoogleAdsRestClient} from "../app/lib/providers/google-ads-rest.se
 import {refreshKlaviyoAccessToken} from "../app/lib/providers/klaviyo-api.server.js";
 const json=(value,status=200)=>new Response(JSON.stringify(value),{status,headers:{"content-type":"application/json"}});
 const owner={authority:"shopify_installation_verified",workspaceId:"11111111-1111-4111-8111-111111111111",installGeneration:2,status:"active"};
+test("Klaviyo event detail uses a distinct quota family without leaking native event ID", async () => {
+  const f = fixture();
+  const transport = createQuotaManagedFetch({provider: "klaviyo", ...f.options});
+  await transport("https://a.klaviyo.com/api/events/private-event-1?include=metric", {
+    headers: {revision: "2026-10-15", authorization: "Bearer SECRET"},
+  });
+  assert.equal(f.calls(), 1);
+  assert.equal(f.reservations.length, 1);
+  assert.equal(f.metadata[0].family, "event_detail");
+  assert.deepEqual(f.metadata[0].includes, ["metric"]);
+  assert.doesNotMatch(JSON.stringify([f.metadata, f.reservations]), /private-event-1|SECRET|event_properties/);
+});
 const window={start:"2026-10-19",end:"2026-10-19"};
 function fixture({fetchFn=async()=>json({data:[]}),lane="background"}={}) {
   const reservations=[],metadata=[],stops=[],settles=[];let calls=0;

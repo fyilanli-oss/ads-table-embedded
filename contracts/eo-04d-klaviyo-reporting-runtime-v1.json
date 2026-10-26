@@ -103,6 +103,8 @@
     "metric": "Ordered Product",
     "page_size": 200,
     "include": ["attributions", "metric"],
+    "native_attribution_event_relationships_preserved": ["event", "attributed-event"],
+    "optional_detail_reader_contract": "contracts/eo-04d-klaviyo-reporting-authority-v1.json#attributing_event_reader_2026_10_26",
     "include_profile": false,
     "dedupe_key": "provider_event_id",
     "product_properties": "provider_native_observation_only",

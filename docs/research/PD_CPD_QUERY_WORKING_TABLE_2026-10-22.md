@@ -1,5 +1,11 @@
 # PD ve CPD sorgu çalışma tablosu
 
+## EO-05 ürün kimliği çalışma kaydı — 26 Ekim 2026
+
+Ana takip, [Execution Plan içindeki EO-05 analist brief'inin tam 16 adımlık kimlik listesi](../EXECUTION_PLAN.md#eo-05-ürün-kimliği-çalışma-listesi) ve `contracts/eo-05-start-brief-v1.json#product_identity_work_order_2026_10_26` içindedir. Envanterdeki 16 numarası ayrı paket değildir. İzinler ve kullanıcı OAuth/okuma testleri aynı çalışmanın 1–11 adımlarıdır; **12'ye başlamadan kullanıcıyla değerlendirme yapılır**. Kalıcı eşleme tablosu/yazımı/yaşam döngüsü/referansları ve tam test 12–16 aynı listenin devamıdır; durak sonrası açık onaydan önce başlamaz. Adım 9 kaynak kuralı kalıcılığı ve 11'de eksik olabilecek kota tabloları bu durağı aşamaz; DB'siz hazırlık ile canlı kanıt ayrılır, engel PASS yapılmaz.
+
+Meta güncel izin referansı tarayıcıda okundu (19 Ekim 2026 güncellemesi, kontrol 26 Ekim): `catalog_management → business_management → pages_read_engagement/pages_show_list`; ayrıca `pages_read_engagement → pages_show_list`. Kullanıcı onayı, uygulama incelemesi ve katalog erişimi henüz yapılmış sayılmaz. [Resmî kaynak](https://developers.facebook.com/documentation/development/permissions). Google ek `content` izni, Shopify kurulumunda `read_products` kontrolü/eksikse onayı ve Klaviyo mevcut `events:read`/`metrics:read` kontrolü aynı EO-05 sözleşmesindedir. OAuth/varlık erişimi ve uygulama geliştirici hazırlığı ayrıdır. Güncel sorgu standardı 1.15.0; aşağıdaki 1.14.0 ve önceki uygulama notları tarihsel dilimlerdir. Eski sorgu matrisi ve 15 satırlık kaynak tablosu değiştirilmez. Bu kayıt yeni kod/provider/DB/deploy/merge yetkisi değildir.
+
 ## Google/Meta kaynak kimliği çözümleme — 26 Ekim 2026 güncel ek
 
 `catalog-product-identity.server.js` mevcut okuyucu snapshot'ını ve native lookup kimliğini ortak Shopify doğrulayıcısına bağlar. Eksik/belirsiz kaynak korunur. Kaynak biçimi doğrulanmış server kuralı yoksa prefix veya sayısal ID'den çıkarım yapılmaz ve Shopify çağrısı başlamaz. Kuralın kaynak referansı, hesap/kurulum/bağlantı kapsamı, Merchant feed/dil/veri kaynağı veya Meta katalog/gözlenen feed ve Shop ID eşleşmelidir. DTO kontrolü, kuralın gerçekten kaynak kanıtıyla doğrulanmasının yerine geçmez; üretim kuralı kaydedilmedi ve taze owner yükleyicisi henüz bağlanmadı.

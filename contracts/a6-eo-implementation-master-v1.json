@@ -852,6 +852,16 @@
     {
       "id": "A6-EO-05",
       "title": "Scheduler, Dataset V2, FX, maturity and reconciliation",
+      "product_identity_work_order": {
+        "reference": "contracts/eo-05-start-brief-v1.json#product_identity_work_order_2026_10_26",
+        "analyst_brief": "docs/EXECUTION_PLAN.md#eo-05-ürün-kimliği-çalışma-listesi",
+        "tracking": "single_sequential_work_inside_EO05_not_a_new_package",
+        "current_slice": "steps_1_to_11_permissions_OAuth_tests_source_read_resolution_Shopify_verification",
+        "stop_before_step": 12,
+        "persistence_owner": "A6-EO-05-B",
+        "steps_12_to_16": "same_work_list_resume_only_after_explicit_product_owner_review_and_approval",
+        "authorization": "documentation_only_no_new_runtime_provider_DB_deployment_or_merge"
+      },
       "phase": "review_critical",
       "status": "Not started",
       "start_contract": "contracts/eo-05-start-brief-v1.json",
@@ -892,6 +902,8 @@
         {
           "id": "A6-EO-05-B",
           "title": "Dataset V2, FX and provenance",
+          "product_identity_work_order": "contracts/eo-05-start-brief-v1.json#product_identity_work_order_2026_10_26",
+          "product_identity_persistence_gate": "steps_12_to_16_wait_for_explicit_owner_review_after_steps_1_to_11",
           "objective": "Persist installed-shop-bound canonical facts, source currency and exact FX lineage; extract a versioned synthetic demo fixture without presenting it as provider truth."
         },
         {

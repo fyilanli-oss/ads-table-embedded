@@ -1,5 +1,11 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## EO-05 ürün kimliği iş sırası — 26 Ekim 2026
+
+Ürün sahibi kimlik eksiklerinin EO-05 paketine ve başlangıç brief'ine işlenmesini onayladı. Ana takip EO-05'tir; önceki eksik envanterindeki 16 numarası yalnız çapraz referanstır, paket veya aşağıdaki adım numarası değildir. Tam liste **EO-05 ürün kimliği çalışma listesi** bölümündedir. Makine karşılığı `contracts/eo-05-start-brief-v1.json#product_identity_work_order_2026_10_26`; ana EO-05 sözleşmesi ve sorgu standardı aynı kayda bağlıdır.
+
+Tek ardışık çalışma: 1–11 izinler/OAuth testleri, kaynak okuma, çözümleme ve Shopify doğrulamasıdır. **12'ye başlamadan durulur ve ürün sahibiyle değerlendirilir.** 12–16 aynı listenin devamıdır; başka paketlere dağıtılmaz, bu durak sonrasındaki açık onaydan önce uygulanmaz. Sonra Advertised/Cross-sell, ardından kod genelindeki bekleyen işlerin denetimi gelir. Bugünkü yetki yalnız belge/sözleşme kaydıdır; yeni kod, izin, provider çağrısı, DB/migration, deploy veya merge yetkisi değildir. Önceki 26 Ekim kayıtlarının Meta exact izni araştırmaya açık notu tarihseldir; aşağıdaki resmî izin kaydı günceldir. İzin listesinin bilinmesi, onayın alınmış veya incelemenin geçmiş olması değildir.
+
 ## Google/Meta kaynak kimliğinden Shopify adayına çözümleme — 26 Ekim 2026
 
 - Ürün sahibi mevcut kimlik okuyucularını kontrol edip eksik çözümlemeyi tamamlama talimatı verdi. Güncel uzak main yine `dc565a4a9fba50c6cad15a32d19b604056bd29be`; GitHub Connector, #179 head'i ve yerel envanter doğrulandı. Mevcut #179 branch/PR genişletilir; #180 Meta rolü ve #181 Klaviyo etkileşim okuyucusu taşınmaz veya merge edilmez.
@@ -248,7 +254,34 @@ deploy veya merge yetkisi vermez.
 Çalışma sözleşmesi: `contracts/eo-05-start-brief-v1.json`.
 EO-01–04, TECH-01 ve DOCS-01 kabulleri ile PR #138 iki aşamalı planı korunur.
 Bu brief çalışma zamanı kodu, migration, canlı sorgu, dağıtım veya kapasite koşusu
-başlatmaz. EO-05 henüz uygulamaya açılmadı.
+başlatmaz. Bu tarihsel brief tek başına uygulama yetkisi değildir; sonraki dar uygulama kayıtları ve aşağıdaki güncel kimlik iş sırası ayrıca esas alınır.
+
+### EO-05 ürün kimliği çalışma listesi
+
+26 Ekim 2026 kod/veritabanı denetimi ve ürün sahibi kararının birleştirilmiş listesidir. Mevcut parçalar uçtan uca çalışan eşleme değildir. Yeni alt paket açılmaz; kalıcı saklamanın teknik sahibi mevcut EO-05-B'dir. Meta/Google OAuth için EO-04-B/C teknik referansları işi ayrı takip listelerine bölmez.
+
+| Adım | İş | Kayda alınan mevcut eksik |
+| --- | --- | --- |
+| 1 | Google Merchant API etkinleştirme, uygulama geliştirici kaydı ve Merchant hesabına erişim | Hazırlığın tamamlandığı doğrulanmadı; geliştirici kaydı uygulama tarafının işidir. |
+| 2 | Google OAuth'a `https://www.googleapis.com/auth/content` eklemek; kullanıcı onayı, verilen izin ve ürün okuma testi | Mevcut bağlantıda yalnız Ads `adwords` izni var. |
+| 3 | Meta `catalog_management`, `business_management`, `pages_read_engagement`, `pages_show_list`; kullanıcı onayı, uygulama incelemesi ve katalog okuma testi | İzin listesi resmî kaynaktan netleşti; genişletme ve erişim testi yapılmadı. |
+| 4 | Shopify `read_products` kontrolü; yoksa izin onayı, ardından ürün/varyant okuma testi | Kurulumun gerçek izni doğrulanmadı; boş TOML kurulu iznin yokluğunu kanıtlamaz. |
+| 5 | Taze mağaza, kurulum/nesil, bağlantı, hesap ve Merchant/feed veya katalog otoritesi | Okuyucunun beklediği doğrulanmış bağlamı sağlayan çalışan bağlantı eksik. |
+| 6 | Google rapor ürününü Merchant ürününe ve kanıtlı kuralla Shopify Product/Variant kimliğine bağlamak | Okuyucu ve koşullu çözücü var; doğrulanmış kaynak kuralı yok. |
+| 7 | Meta rapor kimliğinin katalog iç ID veya `retailer_id` anlamı; katalogdan Shopify karşılığı | Okuyucu ve koşullu çözücü var; kimlik anlamı/kaynak kuralı açık. |
+| 8 | Klaviyo Shopify Ordered Product ürün/varyant alanlarını kesinleştirmek; mevcut izinlerle okuma testi | Product yolu var; kesin varyant property anahtarı açık. Ek Klaviyo OAuth kapsamı gerekmiyor; sentetik kayıt kaynak kanıtı değildir. |
+| 9 | Kaynak eşleme kurallarının kanıtıyla saklanması ve yüklenmesi | Güvenilir kural kaydı/yükleyicisi yok. 1–11 içinde kod/sözleşme ve DB'siz sınama hazırlanır; üretimde kalıcı kayıt 12–14 durak sonrasındadır. |
+| 10 | Üç sağlayıcıyı ortak Shopify doğrulamasına gerçek yürütme üzerinden bağlamak | Google/Meta bağlantısı ve Klaviyo isteğe bağlı loader etkinleştirmesi eksik. |
+| 11 | Kimlik okumalarını çağrı/kota düzenine bağlamak; 1–11 izin/okuma/doğrulama sonuçlarını sunmak | Çağrı eşlemeleri/tetikleme eksik. 12 öncesinde yeni kimlik/kota tablosu veya migration kurulmaz; altyapı yoksa engel bildirilir, koruma atlanmaz. |
+| 12 | Kalıcı `product_identity_mappings`: migration, tekillik, FK, indeks ve mağaza erişim sınırı | Tablo DB'de yok. **Başlamadan zorunlu kullanıcı değerlendirmesi.** |
+| 13 | Kalıcı eşleme yazma/güncelleme ve tekrar okuma | Yalnız eşleme taslağı var; writer yok. |
+| 14 | Kaynak değişikliği, çelişki, silinen ürün/varyant ve yeniden bağlantı için geçmiş/geçerlilik/sürüm | Kalıcı yaşam döngüsü uygulaması eksik. |
+| 15 | Ürün performansı ve satış kayıtlarını gerçek eşleme anahtarına bağlamak | Sonuç içi `mapping_index` kalıcı DB anahtarı değildir; bağlantı eksik. |
+| 16 | İzin → kaynak → çözümleme → Shopify → saklama → tekrar okuma bütününü sınamak | Parça testleri var; bütünleşik kalıcı akış kanıtlanmadı. |
+
+**Durak ve yetki:** 1–11 yapılacak çalışma sırasıdır; bu belge değişikliği onları başlatmaz. Kullanıcı OAuth testleri Google 2, Meta 3, Shopify gerekirse 4, Klaviyo mevcut izin kontrolü 8 içindedir. İzin onayı/erişim kanıtı olmadan tamam işareti konmaz. Engel testin geçtiği anlamına gelmez; sonuçları durakta açıkça sunulur. Kalıcı saklama olmadan kimlik işi kapanmaz. 12–16'ya geçiş ayrı açık onay gerektirir. Genel Dataset/FX/formül işi başlamaz; tarihsel PMax duraklaması korunur.
+
+**İzin kaynakları — kontrol 26 Ekim 2026:** [Google Merchant yetkilendirme](https://developers.google.com/merchant/api/guides/authorization/access-client-accounts), [Merchant geliştirici kaydı](https://developers.google.com/merchant/api/guides/quickstart/registration), [Meta izin referansı](https://developers.facebook.com/documentation/development/permissions) (19 Ekim güncellemesi, tarayıcıda okundu), [Shopify ProductVariant](https://shopify.dev/docs/api/admin-graphql/2026-10/objects/ProductVariant), [Shopify izin yönetimi](https://shopify.dev/docs/apps/build/authentication-authorization/manage-access-scopes), [Klaviyo Events](https://developers.klaviyo.com/en/reference/get_events), [Klaviyo Metrics](https://developers.klaviyo.com/en/reference/get_metrics). Meta zinciri `catalog_management → business_management → pages_read_engagement/pages_show_list`, `pages_read_engagement → pages_show_list` olarak belgelenir. Müşteri verileri için App Review ve Advanced Access talepleri için Business Verification uygulama tarafının işidir. Google `content` ve Meta yönetim izinleri salt okuma kapsamı değildir; uygulama kullanımı burada yalnız okumadır. İzin, ilgili hesabın/kataloğun varlık erişiminin yerine geçmez.
 
 **Amaç:** Sağlayıcı verisini doğru mağaza/hesap ve tarihe bağlı, tekrar çalışınca
 çoğalmayan, eksikleri görünür, güncellenebilir Dataset V2 kaydına dönüştürmek.

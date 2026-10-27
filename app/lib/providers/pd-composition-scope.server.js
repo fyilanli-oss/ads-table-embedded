@@ -62,7 +62,7 @@ function invalidField(scope) {
 }
 
 function reject(reason, sourceIndex, field) {
-  // Diagnostics contain no account IDs, source records or supplied metadata values.
+  // Rejection details contain no account IDs, source records or supplied metadata values.
   return Object.freeze({compatible: false, reason, source_index: sourceIndex, field, publishable: false});
 }
 

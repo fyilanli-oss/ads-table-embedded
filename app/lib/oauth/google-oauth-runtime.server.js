@@ -24,6 +24,7 @@ import {
 import {discoverGoogleAdsAccounts} from "../providers/google-account-discovery.server.js";
 import {inspectGoogleIdentityCredential} from "./google-identity-credential.server.js";
 import {GOOGLE_MERCHANT_OAUTH_SCOPE, validateIdentityOAuthGrantedScopes} from "./oauth-permission-profile.server.js";
+import {createIdentityOAuthAuthorization} from "./identity-oauth-authorization.server.js";
 
 const PROVIDER = "google_ads";
 const MAX_SELECTION = 3;
@@ -78,16 +79,19 @@ export function createGoogleOAuthRuntime({
   fetchFn = fetch,
   now = () => new Date(),
   randomUUIDFn = randomUUID,
+  identityAuthorizationEnabled = false,
 } = {}) {
   const config = readGoogleAdsOAuthConfig(environment);
+  const lifecycle = createProviderConnectionLifecycle({database, now});
+  const identityAuthorization = createIdentityOAuthAuthorization({lifecycle, enabled: identityAuthorizationEnabled});
   const oauthBoundary = createOAuthTransactionBoundary({
     repository: createOAuthTransactionRepository(database),
     verifierVault: tokenVault,
     now,
+    identityStartGuard: identityAuthorization.beforeStart,
   });
   const selections = createGoogleAccountSelectionRepository(database);
   const accountAuthority = createProviderAccountAuthorityRepository(database);
-  const lifecycle = createProviderConnectionLifecycle({database, now});
 
   async function discoverWithCredential({
     installationAuthority,
@@ -259,6 +263,9 @@ export function createGoogleOAuthRuntime({
 
       let credential = null;
       try {
+        if (claimed.permissionProfile === "identity_v1") {
+          await identityAuthorization.beforeCallback({installationAuthority: owner, provider: PROVIDER, binding: claimed.identityBinding});
+        }
         const tokenSet = await exchangeGoogleAdsAuthorizationCode({
           config,
           authorizationCode: claimed.authorizationCode,
@@ -282,6 +289,9 @@ export function createGoogleOAuthRuntime({
         const advertisers = advertiserAccounts(evidence);
         if (advertisers.length < 1) {
           throw new Error("GOOGLE_ADS_ENABLED_CUSTOMERS_EMPTY");
+        }
+        if (claimed.permissionProfile === "identity_v1") {
+          await identityAuthorization.beforeCallback({installationAuthority: owner, provider: PROVIDER, binding: claimed.identityBinding});
         }
         const staged = await selections.stage({
           connectionId: randomUUIDFn(),

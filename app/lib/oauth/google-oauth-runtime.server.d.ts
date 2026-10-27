@@ -4,4 +4,5 @@ export function createGoogleOAuthRuntime(input: {
   environment?: NodeJS.ProcessEnv;
   fetchFn?: typeof fetch;
   now?: () => Date;
+  identityAuthorizationEnabled?: boolean;
 }): any;

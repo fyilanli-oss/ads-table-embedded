@@ -26,20 +26,45 @@ export function oauthPermissionProfile(provider, profile = "reporting_v1") {
   return profile;
 }
 
-export function bindOAuthPermissionProfile(provider, entropy, profile = "reporting_v1") {
+export function identityOAuthBinding(value) {
+  if (value?.connectionId === null && value?.version === null) {
+    return Object.freeze({connectionId: null, version: null});
+  }
+  if (!value || typeof value.connectionId !== "string"
+    || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(value.connectionId)
+    || !Number.isSafeInteger(value.version) || value.version < 1) {
+    throw new OAuthPermissionProfileError("OAUTH_IDENTITY_BINDING_INVALID");
+  }
+  return Object.freeze({connectionId: value.connectionId, version: value.version});
+}
+
+export function bindOAuthPermissionProfile(provider, entropy, profile = "reporting_v1", binding) {
   oauthPermissionProfile(provider, profile);
   if (typeof entropy !== "string" || !/^[A-Za-z0-9_-]{43}$/.test(entropy)) {
     throw new OAuthPermissionProfileError("OAUTH_STATE_ENTROPY_INVALID");
   }
-  return profile === "identity_v1" ? entropy + IDENTITY_SUFFIX : entropy;
+  if (profile !== "identity_v1") return entropy;
+  if (binding === undefined) return entropy + IDENTITY_SUFFIX;
+  const checked = identityOAuthBinding(binding);
+  return entropy + IDENTITY_SUFFIX + (checked.connectionId === null ? ".initial" : `.${checked.connectionId}.${checked.version}`);
 }
 
 // Parsing does not prove a valid transaction. Callback must claim the full state digest.
 export function oauthPermissionProfileFromState(provider, state) {
   if (typeof state !== "string" || state.length < 1 || state.length > 128) throw new OAuthPermissionProfileError("OAUTH_STATE_INVALID");
   if (/^[A-Za-z0-9_-]{43}$/.test(state)) return oauthPermissionProfile(provider);
-  if (!/^[A-Za-z0-9_-]{43}\.identity-v1$/.test(state)) throw new OAuthPermissionProfileError("OAUTH_STATE_PROFILE_INVALID");
+  if (!/^[A-Za-z0-9_-]{43}\.identity-v1(?:\.initial|\.[0-9a-f-]{36}\.[1-9][0-9]{0,15})?$/.test(state)) throw new OAuthPermissionProfileError("OAUTH_STATE_PROFILE_INVALID");
+  if (state.length > 55) identityOAuthBindingFromState(provider, state);
   return oauthPermissionProfile(provider, "identity_v1");
+}
+
+export function identityOAuthBindingFromState(provider, state) {
+  oauthPermissionProfile(provider, "identity_v1");
+  if (typeof state !== "string" || state.length > 128) throw new OAuthPermissionProfileError("OAUTH_IDENTITY_BINDING_INVALID");
+  if (/^[A-Za-z0-9_-]{43}\.identity-v1\.initial$/.test(state)) return identityOAuthBinding({connectionId: null, version: null});
+  const match = state.match(/^[A-Za-z0-9_-]{43}\.identity-v1\.([0-9a-f-]{36})\.([1-9][0-9]{0,15})$/);
+  if (!match) throw new OAuthPermissionProfileError("OAUTH_IDENTITY_BINDING_REQUIRED");
+  return identityOAuthBinding({connectionId: match[1], version: Number(match[2])});
 }
 
 export function oauthPermissionScopes(provider, profile = "reporting_v1") {

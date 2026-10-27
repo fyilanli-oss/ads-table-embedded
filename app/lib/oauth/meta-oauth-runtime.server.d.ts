@@ -4,4 +4,5 @@ export function createMetaOAuthRuntime(input: {
   environment?: NodeJS.ProcessEnv;
   fetchFn?: typeof fetch;
   now?: () => Date;
+  identityAuthorizationEnabled?: boolean;
 }): any;

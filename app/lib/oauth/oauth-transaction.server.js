@@ -1,5 +1,5 @@
 import {createHash, randomBytes} from "node:crypto";
-import {bindOAuthPermissionProfile, oauthPermissionProfile, oauthPermissionProfileFromState} from "./oauth-permission-profile.server.js";
+import {bindOAuthPermissionProfile, oauthPermissionProfile, oauthPermissionProfileFromState, identityOAuthBindingFromState, identityOAuthBinding} from "./oauth-permission-profile.server.js";
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -99,6 +99,7 @@ export function createOAuthTransactionBoundary({
   verifierVault,
   now = () => new Date(),
   randomBytesFn = randomBytes,
+  identityStartGuard = null,
 }) {
   for (const method of ["create", "markRedirected", "claim", "complete", "invalidate"]) {
     requiredMethod(repository, method, "repository");
@@ -115,11 +116,16 @@ export function createOAuthTransactionBoundary({
       const owner = authority(installationAuthority);
       const selectedProvider = providerName(provider);
       oauthPermissionProfile(selectedProvider, permissionProfile);
+      let identityBinding;
+      if (permissionProfile === "identity_v1") {
+        if (typeof identityStartGuard !== "function") throw new Error("IDENTITY_OAUTH_START_DISABLED");
+        identityBinding = identityOAuthBinding(await identityStartGuard({installationAuthority, provider: selectedProvider}));
+      }
       await verifierVault.assertReady(selectedProvider);
 
       const stateBytes = bytes32(randomBytesFn(32), "STATE_GENERATOR");
       const nonceBytes = bytes32(randomBytesFn(32), "NONCE_GENERATOR");
-      const state = bindOAuthPermissionProfile(selectedProvider, base64url(stateBytes), permissionProfile);
+      const state = bindOAuthPermissionProfile(selectedProvider, base64url(stateBytes), permissionProfile, identityBinding);
       const pkceRequired = PKCE_PROVIDERS.has(selectedProvider);
       const verifier = pkceRequired
         ? base64url(bytes32(randomBytesFn(32), "PKCE_GENERATOR"))
@@ -199,6 +205,7 @@ export function createOAuthTransactionBoundary({
         throw new Error("OAUTH_STATE_INVALID");
       }
       const permissionProfile = oauthPermissionProfileFromState(selectedProvider, state);
+      const identityBinding = permissionProfile === "identity_v1" ? identityOAuthBindingFromState(selectedProvider, state) : null;
       const claimedAt = isoNow(now);
       const claimed = await repository.claim({
         provider: selectedProvider,
@@ -240,7 +247,7 @@ export function createOAuthTransactionBoundary({
           provider: selectedProvider,
           callbackUri: claimed.callbackUri,
           status: "denied",
-          ...(permissionProfile === "identity_v1" ? {permissionProfile} : {}),
+          ...(permissionProfile === "identity_v1" ? {permissionProfile, identityBinding} : {}),
         });
       }
 
@@ -285,7 +292,7 @@ export function createOAuthTransactionBoundary({
         authorizationCode: code,
         pkceVerifier: verifier,
         status: "claimed",
-        ...(permissionProfile === "identity_v1" ? {permissionProfile} : {}),
+        ...(permissionProfile === "identity_v1" ? {permissionProfile, identityBinding} : {}),
       });
     },
 

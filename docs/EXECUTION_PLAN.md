@@ -1,5 +1,17 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## 7. adım — Shopify izin sonucunu aktif kuruluma bağlama, 27 Ekim 2026
+
+#194 `f80cc9dd82141eb21c55623be464e1b4ccf6a210` ile main'dedir. Bu repository dilimi `inspectShopifyIdentityPermissionScopes` ile önceki grant okuyucusunu ve scope karşılaştırmasını tek sunucu fonksiyonunda birleştirir. Girdi mevcut Shopify kimlik çözümlemesinden gelen doğrulanmış Admin, ID-token mağaza kimliği ve aktif kurulumdur; tarayıcıdan workspace/nesil alınmaz. Mevcut `resolve_active_installation` fonksiyonu okuma öncesi ve sonrası gerçek shop kapsamında çalışır. Workspace, aktif durum veya kurulum nesli değişmişse izin sonucu döndürülmez; yeni kurulum bootstrap edilmez ve tekrar denenmez.
+
+`currentAppInstallation.accessScopes` tek GraphQL çağrısında `tries: 1` ile okunur. Ürün/sipariş için işlevsel minimum `read_products` + `read_orders` olarak mevcut sözleşmeden alınır. 60 günden eski sipariş isteği `read_all_orders`, seçilen MarketingEvent yolu `read_marketing_events` gerektirir; bunlar ayrı özelliklerdir. Mevcut write grant ilgili read'i karşılayabilir, yeni write izni istenmez. Eksik grant listelenir; eski/yavaş gözlem `unknown` kalır. Sonuç yalnız scope gözlemidir, App Review veya ürün/sipariş erişimi/aktivasyon yetkisi değildir. Sonraki okuyucu/yazıcı kullanımdan önce aktif kurulumu yeniden doğrulamalıdır.
+
+Yerel `shopify.app.toml` içinde `scopes = ""`, optional scope tanımı yoktur. Bu, canlı grant'in boş olduğunu kanıtlamaz. Bu dilim yapılandırmayı değiştirmez veya yayınlamaz; izin istemez. Required/optional kurulum beyanı seçilmedi. Dinamik istek kullanılacaksa izinlerin optional olarak beyan edilip yayınlanması, ardından mağaza onayı ve yeni native grant okuması gerekir. Sipariş için protected customer data başvurusu ve koşullu uygulama erişimleri ayrı kalır; ad/adres/e-posta/telefon alanı istenmedi.
+
+24 yeni davranış testi kurulum değişimi, yanlış mağaza, ilk hata, özellik kapsamları, gerçek boş liste, mevcut write grant ve eski gözlem ayrımını kapsar. Sentetik HTTP/DB testleri canlı grant/SQL kabulü değildir. Fonksiyon hazırlanmıştır; mevcut Settings/route veya provider canlı kanıt yolları yeni çağrı yapmaz. Yeni SQL/tablo/migration, Dataset veya tarihsel PMax değişmez. **7. adım açık:** yetkili Shopify scope beyanı/yayını, uygulama incelemeleri, mağaza onayı ve gerçek ürün/sipariş/yolculuk okumaları; Google/Meta atomik yazım ve bağlı hesap izin yükseltmesi kendi mevcut değerlendirme kapısında durur.
+
+Makine kaydı: `contracts/eo-05-start-brief-v1.json#Shopify_active_installation_scope_readback_2026_10_27`. Resmî kontrol 27 Ekim 2026: [Shopify scope yönetimi ve dinamik istek koşulları](https://shopify.dev/docs/apps/build/authentication-authorization/manage-access-scopes), [2026-07 currentAppInstallation](https://shopify.dev/docs/api/admin-graphql/2026-07/queries/currentAppInstallation), [protected customer data](https://shopify.dev/docs/apps/launch/protected-customer-data).
+
 ## 7. adım — kimlik OAuth başlangıcını bağlantı sürümüne bağlama, 27 Ekim 2026
 
 #193 `33783ecfa06f50010be648a651d31e3c35d78e90` ile main'dedir. Bu repository dilimi Google/Meta kimlik başlangıcını, runtime factory'sinde varsayılanı `false` olan `identityAuthorizationEnabled` koşuluna bağlar. Mevcut Settings/route bunu açmaz; yeni environment değişkeni veya UI akışı yoktur. Çağrı/form alanı factory koşulunu aşamaz. `true` yalnız izole testlerde kullanıldı; izin, App Review veya canlı aktivasyon kanıtı değildir.

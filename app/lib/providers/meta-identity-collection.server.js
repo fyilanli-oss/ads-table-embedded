@@ -4,6 +4,7 @@ import {readMetaAdCatalogSourceReference} from "./meta-adset-catalog-reference.s
 import {readMetaCatalogSourceSnapshot} from "./meta-catalog-identity-reader.server.js";
 import {quotaBoundaryControl} from "../refresh/quota-native-fetch.server.js";
 import {createMetaCandidateSourceRuleLoader, verifyMetaCatalogSourceCandidates} from "./meta-source-candidates.server.js";
+import {runIdentityReadDeadline} from "./identity-read-deadline.server.js";
 import {createMetaReportIdentityRuleLoader, readMetaIdentityProductReport, attachMetaReportCandidateReferences,
   metaIdentityReportWindow} from "./meta-report-candidates.server.js";
 
@@ -125,11 +126,14 @@ async function collectMetaIdentitySource({verified, database, tokenVault, adId, 
 
 // Mode is server-owned. Supplying caller flags to the native-only entry cannot enable parsing.
 export function collectMetaNativeIdentityEvidence(options = {}) {
-  return collectMetaIdentitySource({...options, withShopify: false, withReport: false});
+  return runIdentityReadDeadline({signal: options.signal, timeoutMs: options.maxElapsedMs,
+    run: signal => collectMetaIdentitySource({...options, signal, withShopify: false, withReport: false})});
 }
 export function collectMetaVerifiedProductCandidateEvidence(options = {}) {
-  return collectMetaIdentitySource({...options, withShopify: true, withReport: false});
+  return runIdentityReadDeadline({signal: options.signal, timeoutMs: options.maxElapsedMs,
+    run: signal => collectMetaIdentitySource({...options, signal, withShopify: true, withReport: false})});
 }
 export function collectMetaReportProductCandidateEvidence(options = {}) {
-  return collectMetaIdentitySource({...options, withShopify: true, withReport: true});
+  return runIdentityReadDeadline({signal: options.signal, timeoutMs: options.maxElapsedMs,
+    run: signal => collectMetaIdentitySource({...options, signal, withShopify: true, withReport: true})});
 }

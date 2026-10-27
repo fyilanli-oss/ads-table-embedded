@@ -149,7 +149,7 @@ test("invalid date rejected before SQL or provider call", async () => {
 });
 test("abort during native response prevents next request", async () => {
   const f = fixture(), control = new AbortController(); f.options.signal = control.signal;
-  f.hooks.fetch = (p, init) => {assert.equal(init.signal, control.signal); control.abort();};
+  f.hooks.fetch = (p, init) => {assert.ok(init.signal instanceof AbortSignal); control.abort(); assert.equal(init.signal.aborted, true);};
   await assert.rejects(f.run(), /ABORTED/); assert.equal(f.calls.length, 1);
 });
 test("observation window is checked between native calls", async () => {
@@ -391,8 +391,33 @@ test("Shopify composition: foreign shop native response is rejected", async () =
 });
 test("Shopify composition: abort signal reaches Admin query and prevents reporting", async () => {
   const f = candidateFixture(), control = new AbortController(); f.options.signal = control.signal;
-  f.shopHooks.graphql = (query, options) => {assert.equal(options.signal, control.signal); control.abort();};
+  f.shopHooks.graphql = (query, options) => {assert.ok(options.signal instanceof AbortSignal); control.abort(); assert.equal(options.signal.aborted, true);};
   await assert.rejects(f.run(), /ABORTED/); assert.equal(f.calls.length, 3);
+});
+
+test("deadline: stalled account fetch or JSON is bounded with cancellation signal", async () => {
+  for (const mode of ["fetch", "body"]) {
+    const f = fixture(); f.options.maxElapsedMs = 30; let signal;
+    f.hooks.fetch = (p, init) => {signal = init.signal;
+      return mode === "fetch" ? new Promise(() => {}) : {...response({}), json: () => new Promise(() => {})};};
+    await assert.rejects(f.run(), /IDENTITY_READ_DEADLINE_EXCEEDED/); assert.equal(signal.aborted, true); assert.equal(f.calls.length, 1);
+  }
+});
+test("deadline: stalled Shopify body cannot proceed to Message reports or final account", async () => {
+  const f = candidateFixture(); f.options.maxElapsedMs = 100; let signal;
+  f.shopHooks.graphql = (q, o) => {signal = o.signal; return {...response({}), json: () => new Promise(() => {})};};
+  await assert.rejects(f.run(), /DEADLINE_EXCEEDED/); assert.equal(signal.aborted, true); assert.equal(f.shopCalls.length, 1);
+  assert.equal(f.calls.filter(c => c.parsed.pathname === "/api/accounts/").length, 1);
+});
+test("deadline: pending vault cannot start provider request after late resolution", async () => {
+  const f = fixture(); f.options.maxElapsedMs = 20; let resume;
+  f.options.tokenVault.loadProviderTokenSet = () => new Promise(resolve => {resume = resolve;});
+  await assert.rejects(f.run(), /DEADLINE_EXCEEDED/); const count = f.queries.length;
+  resume(f.token); await new Promise(resolve => setTimeout(resolve, 0)); assert.equal(f.calls.length, 0); assert.equal(f.queries.length, count);
+});
+test("deadline: caller abort before collection reads no SQL or Klaviyo", async () => {
+  const f = fixture(), caller = new AbortController(); caller.abort(); f.options.signal = caller.signal;
+  await assert.rejects(f.run(), /IDENTITY_READ_ABORTED/); assert.equal(f.queries.length, 0); assert.equal(f.calls.length, 0);
 });
 test("Shopify composition: native/Admin helpers captured before asynchronous collection", async () => {
   const f = candidateFixture(); f.hooks.fetch = p => {

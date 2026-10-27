@@ -140,3 +140,12 @@ test("non-identity Google token rejected without refreshing", async () => {
   const f = fixture(); delete f.token.permission_profile;
   await assert.rejects(f.create().loadCurrent(), /AUTHORITY_READ_FAILED/); assert.equal(f.calls.length, 3);
 });
+
+test("abort on return from each SQL read stops before the next SQL or vault dependency", async () => {
+  for (const at of [1, 2, 3, 4, 5, 6]) {
+    const f = fixture(), caller = new AbortController(); f.options.signal = caller.signal;
+    f.hooks.query = () => {if (f.calls.length === at) caller.abort();};
+    await assert.rejects(f.create().loadCurrent(), /IDENTITY_RUNTIME_ABORTED/);
+    assert.equal(f.calls.length, at); assert.equal(f.vaultCalls.length, at <= 3 ? 0 : 1);
+  }
+});

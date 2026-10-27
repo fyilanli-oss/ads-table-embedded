@@ -294,7 +294,7 @@ test("candidate: Admin abort and actual native permission expiry stop before fin
   for (const mode of ["abort", "expiry"]) {
     const f = candidateFixture(), controller = new AbortController(); f.options.signal = controller.signal;
     f.native.debug_token.data.expires_at = f.state.now.valueOf() / 1000 + 60;
-    f.shopHooks.graphql = (q, o) => {assert.equal(o.signal, controller.signal);
+    f.shopHooks.graphql = (q, o) => {assert.ok(o.signal instanceof AbortSignal);
       if (mode === "abort") controller.abort(); else f.state.now = new Date("2026-10-27T15:01:00Z");};
     await assert.rejects(f.run()); assert.equal(f.calls.length, 6); assert.equal(f.shopCalls.length, 1);
   }
@@ -454,4 +454,27 @@ test("report bridge: authentic quota waiting control, abort and expiry stop repo
     }};
     await assert.rejects(f.run(), e => mode !== "quota" || e === control); assert.equal(f.calls.length, 7);
   }
+});
+
+test("deadline: stalled token fetch or response body rejects with child signal aborted", async () => {
+  for (const mode of ["fetch", "body"]) {
+    const f = fixture(); f.options.maxElapsedMs = 30; let signal;
+    f.hooks.fetch = (p, init) => {signal = init.signal;
+      return mode === "fetch" ? new Promise(() => {}) : {...response({}), json: () => new Promise(() => {})};};
+    await assert.rejects(f.run(), /IDENTITY_READ_DEADLINE_EXCEEDED/); assert.equal(signal.aborted, true); assert.equal(f.calls.length, 1);
+  }
+});
+test("deadline: stalled Shopify request cannot reach report or final reference", async () => {
+  const f = reportFixture(); f.options.maxElapsedMs = 200; let signal;
+  f.shopHooks.graphql = (q, o) => {signal = o.signal; return new Promise(() => {});};
+  await assert.rejects(f.run(), /DEADLINE_EXCEEDED/); assert.equal(signal.aborted, true); assert.equal(f.calls.length, 6);
+});
+test("deadline: stalled Insights body returns timeout rather than partial candidates", async () => {
+  const f = reportFixture(); f.options.maxElapsedMs = 200;
+  f.hooks.fetch = p => p.pathname.endsWith("/insights") && {...response({}), json: () => new Promise(() => {})};
+  await assert.rejects(f.run(), /DEADLINE_EXCEEDED/); assert.equal(f.calls.length, 7);
+});
+test("deadline: already-aborted caller never reads SQL or Meta", async () => {
+  const f = fixture(), caller = new AbortController(); caller.abort(); f.options.signal = caller.signal;
+  await assert.rejects(f.run(), /IDENTITY_READ_ABORTED/); assert.equal(f.calls.length, 0); assert.equal(f.queries.length, 0);
 });

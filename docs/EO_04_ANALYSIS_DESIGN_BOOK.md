@@ -1,5 +1,9 @@
 # EO-04 — Analiz ve tasarım kitabı
 
+## EO-05 takip — Ortak okuma sayacı ve provider sonrası Admin beklemesi, 27 Ekim 2026
+
+#223 main’dedir. Provider HTTP’sinden sonraki ayrı Admin beklemesinin bütün okumayı hiç gönderilmemiş saymasını önleyen ortak, opaque süreç içi sayaç hazırlandı. İlk gerçek wait sıfır kalır; sonraki wait toplam çağrıyı taşır. Ortak kapanma bekleyen kardeş dispatch’i ve geç başarı yayımını önler; önceden gönderilmiş HTTP geri alınmaz. Partner entitlement ayrı kalır. 27 yeni sentetik test gerçek guard/resolver ve kurulu SDK’yı sınar. Güçlü factory composite bağlantısı, SQL/hook/profil kapıları ve kalıcı partial continuation açıktır; EO-04 kabulü değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#shared_quota_read_execution_2026_10_27` ve Execution Plan.
+
 ## EO-05 takip — Shopify Admin rezervasyon puanı ve requested aşımı, 27 Ekim 2026
 
 #222 main’dedir. Admin guard aynı atomik rezervasyondan doğrulanmış puan tavanı ister; bu internal costBudget sözleşmesidir, native Shopify alanı değildir. Bütçesiz/bozuk yanıtta HTTP yok; puan tavanı await öncesi kopyalanır. Requested maliyet tavanı aşarsa actual daha düşük olsa da başarı yok, yerel akış kapanır ve configured stop/feedback denenir. Refund/limit artırma/otomatik retry yoktur; diğer provider callback’leri değişmez. 28 yeni ve 571 mevcut test, 7 repository kontrolü ve typecheck geçti. SQL receipt henüz üretilmez: tüm app×shop maliyet debit’lerinden atomik kanıt, incelenmiş sorgu tavanı, feedback/stop/native profil kabulü 14 kapısındadır. Canlı kurulum/diğer mevcut kapılar açık; EO-04 kabulü/PMax duraklaması değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Shopify_Admin_cost_budget_receipt_2026_10_27` ve Execution Plan.

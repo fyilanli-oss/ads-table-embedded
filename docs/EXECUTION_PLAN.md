@@ -1,5 +1,17 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## Sıralı plan 12 — Ortak veri okumasında HTTP deneme sayısı ve bekleme kanıtı, 27 Ekim 2026
+
+#223 `ad90bb36e6bcffde44af6169c1a6af7dee18c421` main’dedir. Aynı veri okumasındaki provider ve Shopify Admin transport’ları artık açıkça verilen tek, süreç içi ve kopyalanamaz okuma handle’ında fiziksel HTTP denemelerini sayabilir. Provider çağrısı gönderildikten sonra ayrı Admin istemcisi ilk rezervasyonunda beklese bile önceki çağrı sayısı korunur; bütün iş için “hiç gönderilmedi” veya otomatik ilk sayfa tekrarı kanıtı üretilmez. İlk gerçek bekleme sıfır çağrıyla mevcut tek kullanımlık receipt’i korur.
+
+Sayaç gerçek fetch’ten hemen önce artar; resolver/SQL lookup/rezervasyon sayısı değildir. Native hata/unknown/malformed/abort/normal wait aynı handle’ın bütün transport’larını kapatır. Rezervasyon veya pre-dispatch kontrolünde bekleyen kardeş HTTP gönderemez; gerçek rezervasyon mevcut settlement yoluyla kapanır, rate usage iade edilmez. Native hata saptanınca async stop bitmeden kapatma yapılır. Önceden gönderilmiş çağrılar geri alınmış sayılmaz; ortak kapanmadan sonra gelen başarı caller’a yayımlanmaz. Gerçek SDK özgün kota hata nesnesini ve toplam denemeyi korur.
+
+Bu handle kota, owner veya izin otoritesi değildir; her transport kendi guard/resolver/point receipt kontrollerini sürdürür. Partner entitlement ayrı sınırdır ve bu handle’ı kabul etmez. Caller güçlü fenced factory’ye handle veremez. Bu PR yalnız ortak primitive’i ve sentetik composite testlerini hazırlar: ilk data HTTP’sinden önce tek handle oluşturan güvenilir candidate/report factory bağlantısı mevcut Admin SQL/hook/profil kapılarından sonra yapılacaktır. Handle’sız eski transport davranışı korunur.
+
+27 yeni ve 662 mevcut ilgili test (toplam 689), 7 repository kontrolü ve typecheck geçti. Gerçek guard/resolver ile üç provider’dan Admin beklemesi, eşzamanlı lookup/reserve/pre-dispatch, devam eden HTTP, hata/feedback/settlement, aşım ve kurulu SDK sınanır. Canlı provider davranışı veya gerçek eşleme kanıtı sayılmaz. Resmî SDK kaynağı 27 Ekim 2026’da kontrol edildi: [Shopify HTTP katmanı](https://github.com/Shopify/shopify-app-js/blob/main/packages/apps/shopify-api/runtime/http/index.ts). Makine kaydı: `contracts/eo-05-start-brief-v1.json#shared_quota_read_execution_2026_10_27`.
+
+12 kapanmadı: güvenilir composite bağlantı, kalıcı partial continuation, Admin SQL/atomik costBudget/profil/feedback/stop kabulü ve global hook, gerçek kaynak/namespace/izin/Merchant inventory, sipariş okuyucusu ve prewrite kontrolleri açıktır. Yeni SQL/migration/canlı DB/provider/token/config/route/Dataset/rol değişikliği yoktur. Mevcut 13/14 kapıları, Klaviyo rol kapsamı ve tarihsel PMax duraklaması korunur.
+
 ## Sıralı plan 12 — Shopify Admin sorgu puanı rezervasyon kanıtı ve aşım kontrolü, 27 Ekim 2026
 
 #222 `93bb2ec1ab653c068057d14d547c5caa576c878b` main’dedir. Admin HTTP transport’u artık guard’dan açık `shopify_admin_query_points` birimini ister. Aynı atomik rezervasyon yanıtında `costBudget: {unit, reservedRequestedCost}` bulunmalıdır; bu **sunucu içi SQL yanıt sözleşmesidir, Shopify alanı değildir**. Pozitif safe-integer puan tavanı doğrulanır ve pre-dispatch await’ten önce primitive olarak kopyalanır. OperationKey/attemptId/permit süre kontrolü korunur; sonradan yanıt nesnesi değiştirilerek kabul edilmiş bütçe büyütülemez.

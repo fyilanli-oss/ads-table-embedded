@@ -1,6 +1,6 @@
 import {createHash} from "node:crypto";
 
-const families={shopify_partner:["partner_graphql"],meta:["insights","product_insights","token","token_debug","account_discovery","revoke",
+const families={shopify_partner:["partner_graphql"],shopify_admin:["identity_product","identity_variant","identity_product_variant"],meta:["insights","product_insights","token","token_debug","account_discovery","revoke",
   "identity_ad","identity_adset","identity_creative","identity_product_set","catalog_products"],
   google_ads:["reporting_query","token","revoke","account_discovery","merchant_products"],klaviyo:["metrics","events","account_discovery","campaign_values","flow_values","token","revoke"]};
 const key=value=>typeof value==="string"&&/^[a-f0-9]{64}$/.test(value);
@@ -29,6 +29,10 @@ export function quotaRouteIdentity(context,descriptor) {
   if(context.provider==="shopify_partner") {
     if(context.accountId!==null||descriptor.accountId!==null||!/^[1-9][0-9]*$/.test(context.organizationId??"")||descriptor.organizationId!==context.organizationId
       ||!/^\d{4}-\d{2}$/.test(context.apiVersion??"")) fail();
+  } else if(context.provider==="shopify_admin") {
+    if(typeof context.accountId!=="string"||context.accountId.length>253
+      ||!/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(context.accountId)||descriptor.accountId!==context.accountId
+      ||context.organizationId!==null||descriptor.organizationId!==null||!/^\d{4}-(01|04|07|10)$/.test(context.apiVersion??""))fail();
   } else {
     const pattern=context.provider==="meta"?/^act_[0-9]+$/:context.provider==="google_ads"?/^[0-9]+$/:/^[A-Za-z0-9_-]{1,256}$/;
     if(typeof context.accountId!=="string"||context.accountId.length>256||!pattern.test(context.accountId)
@@ -39,7 +43,7 @@ export function quotaRouteIdentity(context,descriptor) {
   }
   if(!merchantRoute&&descriptor.version!==null&&descriptor.version!==context.apiVersion) fail();
   const accountOnPath=(context.provider==="meta"&&["insights","product_insights"].includes(descriptor.family))
-    ||(context.provider==="google_ads"&&descriptor.family==="reporting_query");
+    ||context.provider==="shopify_admin"||(context.provider==="google_ads"&&descriptor.family==="reporting_query");
   if(!merchantRoute&&(accountOnPath?descriptor.accountId!==context.accountId:descriptor.accountId!==null)) fail();
   const unversioned=["token","revoke"].includes(descriptor.family)&&context.provider!=="meta";
   if(!merchantRoute&&!unversioned&&descriptor.version!==context.apiVersion) fail();

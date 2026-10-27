@@ -40,6 +40,7 @@
     "Klaviyo_identity_quota_constructor": "contracts/eo-05-start-brief-v1.json#Klaviyo_identity_quota_constructor_2026_10_27",
     "Meta_identity_quota_constructor": "contracts/eo-05-start-brief-v1.json#Meta_identity_quota_constructor_2026_10_27",
     "Google_identity_quota_constructor": "contracts/eo-05-start-brief-v1.json#Google_identity_quota_constructor_2026_10_27",
+    "Shopify_Admin_identity_quota_boundary": "contracts/eo-05-start-brief-v1.json#Shopify_Admin_identity_quota_boundary_2026_10_27",
     "repository_scope_preflight_prepared": true,
     "Shopify_current_grant_reader_prepared": true,
     "source_reader_or_role_or_dataset_acceptance": false,

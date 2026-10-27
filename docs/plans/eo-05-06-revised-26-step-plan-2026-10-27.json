@@ -1,0 +1,225 @@
+{
+  "title": "AdsTable — Revize 26 maddelik iş planı",
+  "as_of": "2026-10-27",
+  "source_thread": "01a1448e-ff92-7ab1-8a61-fdf374fd99f6",
+  "source_turn": "01a17c5f-d148-7533-95d0-3c32770859ea",
+  "base_commit": "fecb5805a55f34524b4c7907d522d81b248093ed",
+  "revision": "26 sıra korunur. Shopify satış/atıf ekleri alt işlerdir; yeni sıra veya paket açılmaz. Paket sütunu işin bağlandığı yeri gösterir; uygulanmış kabulü değildir.",
+  "gates": [
+    "1–6 yalnız repository kod teslimi; canlı runtime bağlantısı/kabulü değil.",
+    "14. sıra, kimlik alt listesinin 12. adımından önce zorunlu değerlendirmedir; iki numara sistemi karıştırılmaz.",
+    "22 tarihsel PMax ayrı açık yeniden başlatma onayı olmadan açılmaz.",
+    "Kesin overlap, aynı doğrulanmış Shopify Order ID’ye bağlanan okunabilir provider iddiası gerektirir. Bu erişim tüm provider’lar için kanıtlanmış değildir.",
+    "Shopify ek kapsamı nedeniyle eski 24–36 saat tahmini yeniden doğrulanmış süre taahhüdü değildir."
+  ],
+  "rows": [
+    {
+      "no": 1,
+      "work": "Ortak çalıştırıcı ve sağlayıcı hata sınıflarını ilk hatada durma kuralına uyarlamak.",
+      "boundary": "Kod ve test düzeltmesi. Otomatik ikinci çağrı olmayacak.",
+      "addition": "",
+      "status": "Kod main’de — PR #182. Canlı akış kabulü değil.",
+      "package": "EO-05 hazırlık"
+    },
+    {
+      "no": 2,
+      "work": "Eski durum kayıtlarını, sözleşme çelişkilerini ve test beklentilerini güncel kararlarla uzlaştırmak.",
+      "boundary": "EO-04 geçmişi korunacak; tamamlanmayan EO-05 işi tamamlandı gösterilmeyecek.",
+      "addition": "",
+      "status": "Kod/belge düzeltmesi main’de — PR #183. Açık PR #179 ayrıca uzlaştırılacak.",
+      "package": "EO-05 hazırlık"
+    },
+    {
+      "no": 3,
+      "work": "Ortak kapsam kontrolünü kodlamak: mağaza, kurulum/nesil, bağlantı, hesap, hiyerarşi, gün, saat dilimi, para birimi ve atıf.",
+      "boundary": "Sonraki birleşimlerin ön koşulu.",
+      "addition": "",
+      "status": "Kontrol helper’ı main’de — PR #184. Canlı kaynak kanıtı ayrı.",
+      "package": "EO-05-B"
+    },
+    {
+      "no": 4,
+      "work": "Google’ın performans ve dönüşüm sorgularını tek PD yaprak kaydında birleştirmek.",
+      "boundary": "Search Ad, Shopping Ad Group, PMax Asset Group; normal kapsam ve çift sayım kontrolü.",
+      "addition": "",
+      "status": "Birleştirici main’de — PR #185. Native çağrı akışına bağlantı sonraki adımlarda.",
+      "package": "EO-05-B"
+    },
+    {
+      "no": 5,
+      "work": "Klaviyo Placed Order, ATC ve Checkout raporlarını Message seviyesinde birleştirmek.",
+      "boundary": "Medium/Variation korunacak; Spend açık kalacak.",
+      "addition": "",
+      "status": "Birleştirici main’de — PR #186. Native çağrı bağlantısı bekliyor; Spend açık/null.",
+      "package": "EO-05-B"
+    },
+    {
+      "no": 6,
+      "work": "Sağlayıcı çıktısından ortak kayıt sözleşmesine geçişi hazırlamak.",
+      "boundary": "FX öncesi kaynak kayıt ile FX uygulanmış kayıt ayrılacak. Sahte kur veya eksik alan doldurulmayacak.",
+      "addition": "",
+      "status": "Canonical köprü main’de — PR #187. publishable=false; canlı metadata/FX ve writer bağlantısı bekliyor.",
+      "package": "EO-05-B"
+    },
+    {
+      "no": 7,
+      "work": "Google Merchant hazırlığı ve ek OAuth izni; Meta katalog izinleri; Shopify read_products kontrolü ve gerekli kullanıcı testleri.",
+      "boundary": "Kod + kullanıcı onayı/uygulama erişimi doğrulaması. Klaviyo’da mevcut izinler kontrol edilecek.",
+      "addition": "Shopify ek işi: read_orders; 60 günden eski sipariş gerekiyorsa read_all_orders; MarketingEvent için read_marketing_events ve görünürlük kontrolü; protected customer data / uygulama erişim incelemesi. Mağaza onayı ile uygulama onayı ayrı. read_products ve Google/Meta/Klaviyo izinleri birlikte izlenecek.",
+      "status": "Sıradaki iş — izin hazırlığı. Canlı izin/uygulama onayları henüz alınmış sayılmaz.",
+      "package": "EO-05-B ön koşulu"
+    },
+    {
+      "no": 8,
+      "work": "Google kimlik bağlantısını tamamlamak: hesap → Merchant → feed/dil/veri kaynağı → native ürün → Shopify Product/Variant.",
+      "boundary": "Kaynak kimlik biçiminin doğrulanması kanıt bekliyor.",
+      "addition": "",
+      "status": "Kısmi kod açık PR #179’da; main’e alınmadı. Gerçek kaynak kimliği kuralı kanıt bekliyor.",
+      "package": "EO-05-B"
+    },
+    {
+      "no": 9,
+      "work": "Meta kimlik bağlantısını tamamlamak: hesap → katalog → katalog iç ID/retailer_id ayrımı → Shopify Product/Variant.",
+      "boundary": "Rapor kimliğinin anlamı ve kaynak biçimi kanıt bekliyor.",
+      "addition": "",
+      "status": "Kısmi kod açık PR #179’da; main’e alınmadı. Rapor kimliği/katalog kaynak biçimi kanıt bekliyor.",
+      "package": "EO-05-B"
+    },
+    {
+      "no": 10,
+      "work": "Klaviyo kimlik bağlantısını tamamlamak: doğrulanmış Shopify Ordered Product olayı → ürün/varyant.",
+      "boundary": "Kesin varyant alanı doğrulanacak; sentetik kayıt kaynak kanıtı sayılmayacak.",
+      "addition": "",
+      "status": "Kısmi hazırlık var; kesin kaynak varyant alanı doğrulanacak. Sentetik veri kanıt değil.",
+      "package": "EO-05-B"
+    },
+    {
+      "no": 11,
+      "work": "Kaynak kuralı yükleyicilerini ve ortak Shopify Product/Variant-parent doğrulamasını çalışan akışa bağlamak.",
+      "boundary": "Kalıcı saklamadan önce kod ve DB’siz sınama.",
+      "addition": "",
+      "status": "Bağlantı kodlanacak; açık PR #179 güncel main ve Shopify kararıyla uzlaştırılacak.",
+      "package": "EO-05-B"
+    },
+    {
+      "no": 12,
+      "work": "Yeni okuyucuları güvenilir aile seçimi, çağrı/kota kontrolü, sayfalama ve iptal/timeout yönetimine bağlamak.",
+      "boundary": "Canlı aktivasyon kendi kapısında. Eksik kota altyapısı atlanmayacak.",
+      "addition": "Shopify ek işi: erişime izin verilen tüm sipariş ve LineItem kayıtlarını ve müşteri yolculuğu/ziyaret atıflarını okuyan akışı hazırlamak. Sayfalama, kota, ilk hata, eksik/ready ve iptal/timeout durumları; paid/organic/direct/unknown kanıt ayrımı. Canlı erişim ayrı onay kapısında.",
+      "status": "Kodlanacak. Shopify sipariş/atıf okuyucusu yeni ek iş; canlı aktivasyon ayrı kapıda.",
+      "package": "EO-05-A/B"
+    },
+    {
+      "no": 13,
+      "work": "Dataset yazımı öncesi ortak kontrolleri çalıştırmak: yanlış hesap/nesil, eksik kimlik, çelişki, tekrar, kısmi sonuç, gerçek sıfır ve ilk hata.",
+      "boundary": "Kod testleri ile gerçek erişim testlerinin sonuçları ayrı gösterilecek.",
+      "addition": "Shopify ek işi: workspace + shop + Order ID; satırda LineItem ID anahtarlarını DB’siz sınamak. Replay, değişiklik, iade/iptal, eksik yolculuk ve eşleşmeyen sağlayıcı iddiası senaryoları. Kod testi ile gerçek OAuth/erişim kanıtı ayrı.",
+      "status": "Kodlanacak ve sınanacak. Gerçek erişim sonuçları ayrıca kaydedilecek.",
+      "package": "EO-05-B"
+    },
+    {
+      "no": 14,
+      "work": "Birlikte değerlendirme ve durma noktası.",
+      "boundary": "Kimlik listesinin 12. adımına, yeni tablo/migration ve kalıcı yazıma başlamadan duracağız. Açık kanıtlar da burada görülecek.",
+      "addition": "Shopify ek işlerinin izin, okuyucu, tekilleştirme ve atıf sınırları da birlikte incelenecek. Yeni tablo, migration ve kalıcı yazım bu değerlendirme/onaydan önce başlamayacak.",
+      "status": "Zorunlu değerlendirme durağı — kalıcı yazımdan önce kullanıcı kararı.",
+      "package": "EO-05 değerlendirme"
+    },
+    {
+      "no": 15,
+      "work": "Onaydan sonra kalıcı kimlik eşlemesi, kaynak kuralları ve özel ham kanıt saklama bağlantısını kurmak.",
+      "boundary": "Tablo, writer, tekrar okuma, geçmiş/sürüm, silinme/yeniden bağlantı ve gerçek referanslar. Kimlik akışı uçtan uca sınanacak.",
+      "addition": "Shopify ek işi: sipariş/satır kayıtları ve Shopify atfı ile sağlayıcı iddiaları için ayrı kalıcı kaynak kayıtları; writer/tekrar okuma ve sürüm geçmişi. Fiziksel tablo sayısı burada tasarlanıp onaylanacak; mevcut beş tabloya sessiz ek yapılmayacak.",
+      "status": "14 sonrası açık onayla kodlanacak. Kimlik ve Shopify kalıcılığı henüz kurulmadı.",
+      "package": "EO-05-B"
+    },
+    {
+      "no": 16,
+      "work": "Google Shopping/PMax rol sınıflandırıcısını esas ürün satış raporuna bağlamak.",
+      "boundary": "Mevcut kod tamamlanacak; normal lead/cross-sell kapsamı korunacak. Gerçek veri doğrulaması ayrıca yapılacak.",
+      "addition": "",
+      "status": "Eksik bağlantı kodlanacak; gerçek veri kabulü ayrıca yapılacak.",
+      "package": "EO-05-B"
+    },
+    {
+      "no": 17,
+      "work": "Google Search’ün rol kapsamını doğrulamak ve desteklenen yolu bağlamak.",
+      "boundary": "Kanıt bekliyor. Mevcut özel sorgu ayrımı üretmiyor; Assisted yolu korunacak.",
+      "addition": "",
+      "status": "Kanıt bekliyor — özel sorgu mevcut haliyle ayrım üretmiyor; Assisted korunur.",
+      "package": "EO-05-B"
+    },
+    {
+      "no": 18,
+      "work": "Meta’nın ham yanıtından doğrulanmış satış ilişkisi çıkarma ve sınıflandırıcı bağlantısı.",
+      "boundary": "Kanıt bekliyor. Dört alan sorguda kalacak; gerçek istek/yanıt incelendikten sonra mümkün olan çözüm kodlanacak.",
+      "addition": "",
+      "status": "Kanıt bekliyor — dört alan sorguda; decoder/ilişki bağlantısı tamamlanmadı.",
+      "package": "EO-05-B"
+    },
+    {
+      "no": 19,
+      "work": "Klaviyo’nun mevcut rollerini korumak.",
+      "boundary": "Araştırma kapalı: Campaign Assisted, Flow Triggered. Yeni Advertised/Cross-sell geliştirmesi yok.",
+      "addition": "",
+      "status": "Kapsam kararı kapalı — Campaign Assisted / Flow Triggered / Unclassified. Yeni Advertised/Cross-sell işi yok.",
+      "package": "EO-05-B kapsam kararı"
+    },
+    {
+      "no": 20,
+      "work": "Roller için yazım öncesi son kontroller: doğru kaynak satış/kimlik referansı, A/B/C/D, aynı küme, çelişki, tekrar ve sıfır değer.",
+      "boundary": "Rol ek satış veya ek maliyet üretmeyecek.",
+      "addition": "Shopify ek işi: Shopify’ın kaynak/son temas bilgisi provider Sales Role yerine geçirilmeyecek. Sipariş adedi ile ürün adedi karıştırılmayacak; Shopify ziyareti tek başına provider’ın dönüşüm iddiası kabul edilmeyecek.",
+      "status": "Kodlanacak — rol ve sipariş/ürün kapsamı yazım öncesi kontrolü.",
+      "package": "EO-05-B"
+    },
+    {
+      "no": 21,
+      "work": "PMax ürün performansını Asset Group’a bağlamak.",
+      "boundary": "Kaynak kanıtı bekliyor. Campaign otomatik Channel yapılmayacak; ürün metrikleri gruplara dağıtılmayacak.",
+      "addition": "",
+      "status": "Kaynak kanıtı bekliyor — ürün → Asset Group bağı kurulmadan dağıtım yok.",
+      "package": "EO-05-B"
+    },
+    {
+      "no": 22,
+      "work": "PMax tarihsel satış Channel’ının kanıt saklama/yükleme ve resolver bağlantısı.",
+      "boundary": "Duraklatılmış. Ayrı açık yeniden başlatma onayı olmadan kodlama/aktivasyon yapılmayacak.",
+      "addition": "",
+      "status": "DURAKLATILDI — ayrı açık yeniden başlatma onayı gerekiyor.",
+      "package": "EO-05 tarihsel PMax kapısı"
+    },
+    {
+      "no": 23,
+      "work": "Genel Dataset yazımı, doğrulanmış FX, tekrar güvenliği, checkpoint, düzeltme ve uzlaştırma bağlantıları.",
+      "boundary": "Mevcut EO-05-B/C/D sırasıyla. Bellekteki sonuç, kalıcı yazım sayılmayacak.",
+      "addition": "Shopify ek işi: sipariş/LineItem upsert, replay tekilleştirme, iade/iptal/düzenleme düzeltmeleri; vergi/kargo/indirim/iade satış kapsamı. Shopify atfı ve provider iddiaları ayrı model/pencere/tarih/ready/olgunluk bilgileriyle korunacak.",
+      "status": "Kodlanacak — EO-05 kalıcılık/FX/olgunluk/uzlaştırma işleri ve Shopify ekleri.",
+      "package": "EO-05-B/C/D"
+    },
+    {
+      "no": 24,
+      "work": "Bağımsız PD üst toplamları ve ürün esaslı CPD Channel toplamlarını bağlamak.",
+      "boundary": "Kaynak bağlantıları EO-05; aggregate-first hesaplar EO-06-A.",
+      "addition": "Shopify ek işi: Shopify satışı bir kez sayılan bağımsız satış temeli. Provider toplamları toplanarak mağaza toplamı üretilmeyecek. Tarih, para birimi/FX, adet, vergi/kargo/indirim/iade ve atıf kapsamları uyumlu karşılaştırılacak. Kesin overlap yalnız aynı doğrulanmış Order ID’ye okunabilir provider iddiası bağlanırsa; toplam farkı tek başına kanıt değil.",
+      "status": "Bağlantı ve hesaplar kodlanacak — Shopify satış temeli ek kapsam.",
+      "package": "EO-05-B / EO-06-A"
+    },
+    {
+      "no": 25,
+      "work": "Klaviyo Spend hesabını bağlamak.",
+      "boundary": "Formül kararı bekliyor. Ledger mevcut; hesap kabul edilene kadar Spend açık/null kalacak.",
+      "addition": "",
+      "status": "Formül kararı bekliyor — kabul edilene kadar Spend açık/null.",
+      "package": "EO-06-A"
+    },
+    {
+      "no": 26,
+      "work": "Bütünleşik son kontrol: kaynaktan okumadan raporlama ve kalıcı tekrar okumaya kadar akışı sınamak.",
+      "boundary": "Kod, entegrasyon ve gerçek veri kabulü ayrı raporlanacak; açık kalan sağlayıcı kanıtları gizlenmeyecek.",
+      "addition": "Shopify ek işi: izin → sipariş/satır okuma → tekilleştirme → atıfların ayrı saklanması → düzeltme → rapor/tekrar okuma. Kesin sipariş eşleşmesi ile yalnız toplam karşılaştırması ayrılacak; eksik provider kanıtı görünür kalacak.",
+      "status": "Kodlanacak/sınanacak — bütünleşik kabul; kanıt eksikleri ayrı raporlanacak.",
+      "package": "EO-05 kabulü / EO-06-E"
+    }
+  ]
+}

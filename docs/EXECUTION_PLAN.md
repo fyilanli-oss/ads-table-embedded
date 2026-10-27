@@ -1,5 +1,11 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## Revize 26 adımlık kodlama sırası ve EO-05/06 paket özeti — 27 Ekim 2026
+
+Ürün sahibinin istediği önceki 26 adımın sırası korunarak Shopify satış/atıf ek işleri açık alt işler olarak kaydedildi: [okunabilir plan ve paket özeti](plans/EO_05_06_REVISED_PLAN_2026_10_27.md), [26 adım kaynak kaydı](plans/eo-05-06-revised-26-step-plan-2026-10-27.json), [paket özeti kaynak kaydı](plans/eo-05-06-package-summary-2026-10-27.json) ve [iki sayfalı Excel](plans/AdsTable_26_Adim_ve_EO05_EO06_2026-10-27.xlsx).
+
+Yeni sıra/paket açılmadı. Shopify ek işleri 7, 12–15, 20, 23–24 ve 26. sıralarda görünürdür. 1–6 yalnız repository kod teslimleridir; canlı akış kabulü değildir. 14. sıra kimlik alt listesinin 12. adımından önceki değerlendirme durağıdır. Tarihsel PMax 22. sırada duraklatılmıştır. Kanıt ve formül bekleyen işler açık kalır. Bu plan kendi başına canlı izin, migration veya veri yazımı yetkisi vermez; #179 güncel kararlarla uzlaştırılmadan kabul edilmez.
+
 ## Shopify sipariş satış temeli ve ayrı atıflar — 27 Ekim 2026, kabul edilen ek karar
 
 Ürün sahibi #187 merge sonrasında, sıradaki OAuth/izin hazırlığından önce Shopify siparişlerini bağımsız satış referansı olarak alma ve Shopify atfı ile Meta/Google/Klaviyo atıflarını ayrı koruma önerisini açıkça kabul etti. Karar `contracts/pd-cpd-query-standard-v1.json#shopify_order_attribution_decision_2026_10_27` içindedir; EO-05 brief'i ve master kaydı buna bağlıdır. #187 `5657ce49c2c93b4d018c4606e08134a311754c33` ile main'dedir. #179'un açık geniş iş planı kabul edilirken bu bağlayıcı ek de uzlaştırılmalıdır; #179 otomatik merge edilmez.

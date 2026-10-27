@@ -3,6 +3,18 @@
   "package_id": "A6-EO-05",
   "checked_at": "2026-10-20",
   "status": "scoped_repository_implementation_in_progress_live_gates_closed",
+  "ordered_work_plan_2026_10_27": {
+    "source": "docs/plans/eo-05-06-revised-26-step-plan-2026-10-27.json",
+    "readable_plan": "docs/plans/EO_05_06_REVISED_PLAN_2026_10_27.md",
+    "package_summary": "docs/plans/eo-05-06-package-summary-2026-10-27.json",
+    "workbook": "docs/plans/AdsTable_26_Adim_ve_EO05_EO06_2026-10-27.xlsx",
+    "existing_26_numbers_preserved": true,
+    "Shopify_added_subwork_at": [7, 12, 13, 14, 15, 20, 23, 24, 26],
+    "review_at_ordered_step": 14,
+    "review_before_identity_sublist_step": 12,
+    "historical_PMax_paused_at_ordered_step": 22,
+    "repository_delivery_is_not_live_acceptance": true
+  },
   "repository_progress_2026_10_27": {
     "owner_start_authorized": true,
     "scope": "ordered_repository_remediation_with_existing_per_operation_gates",

@@ -1,6 +1,8 @@
 import { OAUTH_CALLBACK_URIS } from "../oauth/oauth-transaction.server.js";
+import {GOOGLE_REPORTING_SCOPE, oauthPermissionProfile, oauthPermissionProfileFromState,
+  oauthPermissionScopes, validateIdentityOAuthGrantedScopes} from "../oauth/oauth-permission-profile.server.js";
 
-export const GOOGLE_ADS_OAUTH_SCOPE = "https://www.googleapis.com/auth/adwords";
+export const GOOGLE_ADS_OAUTH_SCOPE = GOOGLE_REPORTING_SCOPE;
 export const GOOGLE_ADS_AUTHORIZATION_ENDPOINT =
   "https://accounts.google.com/o/oauth2/v2/auth";
 export const GOOGLE_ADS_TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
@@ -78,7 +80,7 @@ export function buildGoogleAdsAuthorizationUrl({
   url.searchParams.set("client_id", nonEmpty(config?.clientId, "GOOGLE_ADS_OAUTH_CLIENT_ID_REQUIRED"));
   url.searchParams.set("redirect_uri", exactRedirect(config?.redirectUri));
   url.searchParams.set("response_type", "code");
-  url.searchParams.set("scope", GOOGLE_ADS_OAUTH_SCOPE);
+  url.searchParams.set("scope", oauthPermissionScopes("google_ads", oauthPermissionProfileFromState("google_ads", state)).join(" "));
   url.searchParams.set("access_type", "offline");
   url.searchParams.set("include_granted_scopes", "true");
   url.searchParams.set("prompt", "consent");
@@ -191,7 +193,9 @@ export async function exchangeGoogleAdsAuthorizationCode({
   authorizationCode,
   pkceVerifier,
   fetchFn = fetch,
+  permissionProfile = "reporting_v1",
 }) {
+  oauthPermissionProfile("google_ads", permissionProfile);
   if (typeof fetchFn !== "function") throw new TypeError("fetchFn is required");
   const payload = await postTokenForm({
     fetchFn,
@@ -204,6 +208,7 @@ export async function exchangeGoogleAdsAuthorizationCode({
       redirect_uri: exactRedirect(config?.redirectUri),
     },
   });
+  if (permissionProfile === "identity_v1") validateIdentityOAuthGrantedScopes("google_ads", payload?.scope);
   return normalizedTokenSet(payload, { requireRefreshToken: true });
 }
 

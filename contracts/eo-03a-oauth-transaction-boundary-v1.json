@@ -3,6 +3,17 @@
   "version": "1.4.0",
   "status": "Accepted",
   "checked_at": "2026-10-09",
+  "EO05_permission_profile_addendum_2026_10_27": {
+    "authority": "contracts/eo-05-start-brief-v1.json#identity_OAuth_scope_binding_2026_10_27",
+    "accepted_historical_boundary_preserved": true,
+    "profile_choice": "trusted_server_begin_argument_not_callback_or_form_choice",
+    "state_digest_includes_profile_marker": true,
+    "original_random_state_entropy_bits": 256,
+    "canonical_ASCII_only_before_digest_claim": true,
+    "database_schema_changed": false,
+    "default_profile": "reporting_v1",
+    "identity_profile_enabled_in_current_routes": false
+  },
   "parent": "A6-EO-03",
   "package": "A6-EO-03-A",
   "authoritative_sources": {

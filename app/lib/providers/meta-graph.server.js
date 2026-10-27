@@ -1,8 +1,10 @@
 import {createHmac} from "node:crypto";
 import {OAUTH_CALLBACK_URIS} from "../oauth/oauth-transaction.server.js";
+import {META_REPORTING_SCOPE, oauthPermissionProfile, oauthPermissionProfileFromState,
+  oauthPermissionScopes, validateIdentityOAuthGrantedScopes} from "../oauth/oauth-permission-profile.server.js";
 
 export const META_GRAPH_VERSION = "v26.0";
-export const META_OAUTH_SCOPE = "ads_read";
+export const META_OAUTH_SCOPE = META_REPORTING_SCOPE;
 export const META_AUTHORIZATION_ORIGIN = "https://www.facebook.com";
 export const META_GRAPH_ORIGIN = "https://graph.facebook.com";
 const MAX_ACCOUNT_PAGES = 20;
@@ -110,7 +112,7 @@ export function buildMetaAuthorizationUrl({config, state}) {
   url.searchParams.set("redirect_uri", exactRedirect(config?.redirectUri));
   url.searchParams.set("state", nonEmpty(state, "META_OAUTH_STATE_REQUIRED", 128));
   url.searchParams.set("response_type", "code");
-  url.searchParams.set("scope", META_OAUTH_SCOPE);
+  url.searchParams.set("scope", oauthPermissionScopes("meta", oauthPermissionProfileFromState("meta", state)).join(","));
   return url.toString();
 }
 
@@ -169,7 +171,9 @@ export async function exchangeAndValidateMetaAuthorizationCode({
   authorizationCode,
   fetchFn = fetch,
   now = () => new Date(),
+  permissionProfile = "reporting_v1",
 }) {
+  oauthPermissionProfile("meta", permissionProfile);
   if (typeof fetchFn !== "function") throw new TypeError("fetchFn is required");
   const base = `${META_GRAPH_ORIGIN}/${exactVersion(config?.graphVersion)}`;
   const short = await graphJson({
@@ -212,6 +216,7 @@ export async function exchangeAndValidateMetaAuthorizationCode({
     throw new MetaGraphError("META_TOKEN_APP_MISMATCH", "Meta token belongs to another app");
   }
   const scopes = scopesOf(data.scopes);
+  if (permissionProfile === "identity_v1") validateIdentityOAuthGrantedScopes("meta", data.scopes);
   if (!scopes.includes(META_OAUTH_SCOPE)) {
     throw new MetaGraphError("META_ADS_READ_SCOPE_MISSING", "Meta ads_read scope is missing");
   }

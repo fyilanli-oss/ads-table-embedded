@@ -1,4 +1,5 @@
 import {createHash, randomBytes} from "node:crypto";
+import {bindOAuthPermissionProfile, oauthPermissionProfile, oauthPermissionProfileFromState} from "./oauth-permission-profile.server.js";
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -71,6 +72,7 @@ function publicResult(transaction, state, pkceChallenge) {
     expiresAt: transaction.expiresAt,
     pkceChallenge,
     pkceMethod: pkceChallenge ? "S256" : null,
+    ...(transaction.permissionProfile === "identity_v1" ? {permissionProfile: "identity_v1"} : {}),
   });
 }
 
@@ -109,14 +111,15 @@ export function createOAuthTransactionBoundary({
   }
 
   return Object.freeze({
-    async begin({installationAuthority, provider}) {
+    async begin({installationAuthority, provider, permissionProfile = "reporting_v1"}) {
       const owner = authority(installationAuthority);
       const selectedProvider = providerName(provider);
+      oauthPermissionProfile(selectedProvider, permissionProfile);
       await verifierVault.assertReady(selectedProvider);
 
       const stateBytes = bytes32(randomBytesFn(32), "STATE_GENERATOR");
       const nonceBytes = bytes32(randomBytesFn(32), "NONCE_GENERATOR");
-      const state = base64url(stateBytes);
+      const state = bindOAuthPermissionProfile(selectedProvider, base64url(stateBytes), permissionProfile);
       const pkceRequired = PKCE_PROVIDERS.has(selectedProvider);
       const verifier = pkceRequired
         ? base64url(bytes32(randomBytesFn(32), "PKCE_GENERATOR"))
@@ -184,7 +187,7 @@ export function createOAuthTransactionBoundary({
       }
 
       return publicResult(
-        {...transaction, provider: selectedProvider},
+        {...transaction, provider: selectedProvider, permissionProfile},
         state,
         challenge,
       );
@@ -195,6 +198,7 @@ export function createOAuthTransactionBoundary({
       if (typeof state !== "string" || state.length < 43 || state.length > 128) {
         throw new Error("OAUTH_STATE_INVALID");
       }
+      const permissionProfile = oauthPermissionProfileFromState(selectedProvider, state);
       const claimedAt = isoNow(now);
       const claimed = await repository.claim({
         provider: selectedProvider,
@@ -236,6 +240,7 @@ export function createOAuthTransactionBoundary({
           provider: selectedProvider,
           callbackUri: claimed.callbackUri,
           status: "denied",
+          ...(permissionProfile === "identity_v1" ? {permissionProfile} : {}),
         });
       }
 
@@ -280,6 +285,7 @@ export function createOAuthTransactionBoundary({
         authorizationCode: code,
         pkceVerifier: verifier,
         status: "claimed",
+        ...(permissionProfile === "identity_v1" ? {permissionProfile} : {}),
       });
     },
 

@@ -1,5 +1,17 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## 7. adım — ek izin isteğini OAuth işlemine bağlama, 27 Ekim 2026
+
+#190 `ee28856c1260dffd18725eeb85718d195a5ce3de` ile main'dedir. Bu sonraki repository dilimi Google/Meta için sunucunun açıkça seçeceği `identity_v1` izin amacını mevcut OAuth transaction'ına bağlar. Varsayılan `reporting_v1` ve mevcut Settings akışı aynı kalır. Google ek istekte Ads + Merchant content, Meta ads_read + dört katalog/bağımlılık izni ister. İzin listesi ön kontrol ve OAuth kodunda aynı kaynaktan beslenir. Klaviyo için yeni amaç/izin eklenmez.
+
+Amaç işareti 32 rastgele byte'dan oluşan state'in sonuna sürümlü olarak eklenir; mevcut DB'ye tam state'in özeti yazılır. Yeni kolon veya eşleme tablosu yoktur. Dönüşte yalnız kanonik ASCII state kabul edilir ve mevcut provider/kurulum nesline bağlı atomik claim tam özeti doğrular. İşareti ekleme/silme/değiştirme, replay ve ASCII'ye dönüşürken aynı byte'ları üretebilen Unicode taklitleri testlerde reddedildi. Dönüşte verilen bağımsız profil alanı kullanılmaz. PKCE, nonce, callback allowlist ve TTL korunur.
+
+Ek izin amacında Google gerçek token yanıtının scope alanında iki izni de vermelidir; eksik alan mevcut Ads-only varsayımıyla doldurulamaz. Meta mevcut uygulamaya bağlı token incelemesinde tam bağımlılık listesini vermelidir. Eksik izin credential store/account discovery öncesinde hata verir; yeniden deneme yapılmaz. Google'ın bu akışındaki gerçek izin listesi pending account selection kaydına taşınır; Ads discovery sabitiyle daraltılmaz. Bu sonuç Merchant/katalog varlığına erişimi veya Shopify ürün kimliği bağlantısını kanıtlamaz.
+
+**7. adım hâlâ açık:** Güvenilir sunucuda yeni amacın hangi onaylı koşulda açılacağı, yeniden yetkilendirme/credential yenilenmesi ve taze varlık yetkisi, Shopify izin isteği/yapılandırması ve grant dönüşü, uygulama incelemeleri ve gerçek mağaza okuma testleri sonraki işlerdir. Yeni amaç mevcut route/Settings tarafından henüz seçilmez. Route/UI, canlı scope/token, DB/migration, Dataset ve tarihsel PMax işi değişmedi. Makine kaydı: `contracts/eo-05-start-brief-v1.json#identity_OAuth_scope_binding_2026_10_27`. Önceki #189 Excel'i plan anının görüntüsü olarak korunur.
+
+Resmî kontrol 27 Ekim 2026: [Google OAuth state ve gerçek scope yanıtı](https://developers.google.com/identity/protocols/oauth2/web-server), [Merchant ek izin](https://developers.google.com/merchant/api/guides/authorization/access-client-accounts), [Meta izin bağımlılıkları](https://developers.facebook.com/documentation/development/permissions). Meta'nın 19 Ekim güncellemeli resmî sayfası aynı oturumda tarayıcı erişilebilirlik metninden okunmuştur. Dört katalog bağımlılığı istek hedefidir; gerçek mağaza izni/erişimi henüz kabul edilmedi.
+
 ## 7. adım — izin kapsamı ön kontrolü, 27 Ekim 2026 repository dilimi
 
 #189 `7cd3216b8939df5cafec9bec4d983304630e7900` ile main'e birleştirildi. 26 adımlı sıra korunur. Bu dilim `assessIdentityPermissionScopes` ile gerçek kaynaktan geldiği sunucu tarafından sağlanan izin listesini hedefle karşılaştırır; `readShopifyPermissionScopes` doğrulanmış Admin istemcisiyle `shop` ve `currentAppInstallation { id accessScopes { handle } }` okumasını hazırlar. Shopify kurulum scope'u boş veya ürün okumasıyla sınırlı olabilir; TOML'daki istek listesi gerçek grant değildir. Okuyucu aynı mağaza kimliğini kontrol eder, tek çağrı yapar ve ilk hatada durur. Hata gövdesi/token taşıyabilecek SDK mesajı gösterilmez; varsa güvenli HTTP status korunur.

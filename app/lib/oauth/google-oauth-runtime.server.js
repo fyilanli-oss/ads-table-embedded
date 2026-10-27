@@ -225,6 +225,7 @@ export function createGoogleOAuthRuntime({
           config,
           authorizationCode: claimed.authorizationCode,
           pkceVerifier: claimed.pkceVerifier,
+          permissionProfile: claimed.permissionProfile,
           fetchFn,
         });
         credential = await tokenVault.storeProviderTokenSet({
@@ -247,7 +248,8 @@ export function createGoogleOAuthRuntime({
           workspaceId: owner.workspaceId,
           installGeneration: owner.installGeneration,
           credentialId: credential.credentialId,
-          scopes: evidence.scopes,
+          scopes: claimed.permissionProfile === "identity_v1"
+            ? tokenSet.scope.trim().split(/\s+/) : evidence.scopes,
           verifiedAt: evidence.verifiedAt,
         });
         await oauthBoundary.finalizeExchange({

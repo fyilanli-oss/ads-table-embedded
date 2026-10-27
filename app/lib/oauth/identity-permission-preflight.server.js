@@ -2,14 +2,8 @@ import {GOOGLE_ADS_OAUTH_SCOPE} from "../providers/google-ads-rest.server.js";
 import {META_OAUTH_SCOPE} from "../providers/meta-graph.server.js";
 import {KLAVIYO_OAUTH_SCOPES} from "../providers/klaviyo-api.server.js";
 import {normalizeShopDomain} from "../shopify/installation-authority.server.js";
-
-export const GOOGLE_MERCHANT_OAUTH_SCOPE = "https://www.googleapis.com/auth/content";
-export const META_CATALOG_PERMISSION_DEPENDENCIES = Object.freeze({
-  catalog_management: Object.freeze(["business_management"]),
-  business_management: Object.freeze(["pages_read_engagement", "pages_show_list"]),
-  pages_read_engagement: Object.freeze(["pages_show_list"]),
-  pages_show_list: Object.freeze([]),
-});
+import {GOOGLE_MERCHANT_OAUTH_SCOPE, META_CATALOG_PERMISSION_DEPENDENCIES} from "./oauth-permission-profile.server.js";
+export {GOOGLE_MERCHANT_OAUTH_SCOPE, META_CATALOG_PERMISSION_DEPENDENCIES};
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SHOP_ID = /^gid:\/\/shopify\/Shop\/[1-9][0-9]*$/;

@@ -1,5 +1,9 @@
 # EO-04 — Analiz ve tasarım kitabı
 
+## EO-05 takip — Shopify Admin rezervasyon puanı ve requested aşımı, 27 Ekim 2026
+
+#222 main’dedir. Admin guard aynı atomik rezervasyondan doğrulanmış puan tavanı ister; bu internal costBudget sözleşmesidir, native Shopify alanı değildir. Bütçesiz/bozuk yanıtta HTTP yok; puan tavanı await öncesi kopyalanır. Requested maliyet tavanı aşarsa actual daha düşük olsa da başarı yok, yerel akış kapanır ve configured stop/feedback denenir. Refund/limit artırma/otomatik retry yoktur; diğer provider callback’leri değişmez. 28 yeni ve 571 mevcut test, 7 repository kontrolü ve typecheck geçti. SQL receipt henüz üretilmez: tüm app×shop maliyet debit’lerinden atomik kanıt, incelenmiş sorgu tavanı, feedback/stop/native profil kabulü 14 kapısındadır. Canlı kurulum/diğer mevcut kapılar açık; EO-04 kabulü/PMax duraklaması değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Shopify_Admin_cost_budget_receipt_2026_10_27` ve Execution Plan.
+
 ## EO-05 takip — Shopify Admin fenced iş kaydı istemcisi, 27 Ekim 2026
 
 #221 main’dedir. Yeni inactive Admin kimlik client’ı; doğrulanmış owner/mağaza/kurulum neslini tek günlük fenced provider işi ve receipt ile bağlar. Asıl provider/account korunur, Admin ayrı quota target’ıdır; aynı store ile lookup/pre-dispatch current context ve pin kontrol edilir. Sahte köprü/guard/resolver override kapalıdır. Native SDK çağrısından önce gerçek hook kurulum kontrolü eklendi; eksik/farklı hook sıfır SDK/SQL/HTTP ile durur. 33 yeni ve 538 mevcut test, 7 repository kontrolü ve typecheck geçti. Gerçek repository adaptörü Admin’i hâlâ reddeder: JS/SQL/context/cost budget 14 kapısında, canlı kurulum ve aday/rapor kompozisyonu açıktır. EO-04 tarihsel kabulü/PMax duraklaması değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Shopify_Admin_fenced_identity_client_2026_10_27` ve Execution Plan.

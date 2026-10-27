@@ -7,6 +7,7 @@
   "Shopify_Admin_identity_quota_boundary": "contracts/eo-05-start-brief-v1.json#Shopify_Admin_identity_quota_boundary_2026_10_27",
   "Shopify_Admin_SDK_quota_bridge": "contracts/eo-05-start-brief-v1.json#Shopify_Admin_SDK_quota_bridge_2026_10_27",
   "Shopify_Admin_fenced_identity_client": "contracts/eo-05-start-brief-v1.json#Shopify_Admin_fenced_identity_client_2026_10_27",
+  "Shopify_Admin_cost_budget_receipt": "contracts/eo-05-start-brief-v1.json#Shopify_Admin_cost_budget_receipt_2026_10_27",
   "package_id": "A6-EO-05-A",
   "base_commit": "4bdc8bc7818bc574c343aef6cf0f7f74b3aa43ee",
   "checked_at": "2026-10-20",

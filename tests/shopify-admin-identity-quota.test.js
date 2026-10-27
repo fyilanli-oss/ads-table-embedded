@@ -17,14 +17,14 @@ function body(family="identity_product_variant") {
     ...(family!=="identity_product"?{variantId:gid("ProductVariant","20")}:{} )}});
 }
 function fixture() {
-  const metadata=[],lookups=[],reservations=[],settles=[],stops=[],feedback=[],calls=[],q={};
+  const metadata=[],lookups=[],reservations=[],settles=[],stops=[],feedback=[],calls=[],q={costBudget:{unit:"shopify_admin_query_points",reservedRequestedCost:10}};
   const context={provider:"shopify_admin",clientScopeKey:"a".repeat(64),connectionScopeKey:"b".repeat(64),connectionEpoch:3,
     accountId:shop.myshopifyDomain,organizationId:null,apiVersion:"2026-07"};
   const keys=new Map(Object.keys(queries).map(family=>[family,quotaRouteIdentity(context,{provider:"shopify_admin",family,
     accountId:context.accountId,organizationId:null,version:context.apiVersion,includes:[]}).routeKey]));
   const store={resolveRoute:async x=>{lookups.push(x);return [...keys.values()].includes(x.routeKey)&&!q.missing?x.routeKey:null;},
     reserve:async x=>{reservations.push(x);await q.reserving?.();if(q.wait)return {status:"waiting"};
-      return {...x,status:"reserved",dispatchBeforeMs:Date.now()+10000,dispatchBudgetMs:10000};},
+      return {...x,status:"reserved",dispatchBeforeMs:Date.now()+10000,dispatchBudgetMs:10000,costBudget:q.costBudget};},
     settle:async x=>{settles.push(x);return true;},stop:async x=>{stops.push(x);return true;},
     recordFeedback:async x=>{feedback.push(x);return q.feedbackFailure!==true;}};
   const resolve=createQuotaScopeResolver({store,loadContext:async()=>{await q.loading?.();return q.lost?null:context;}});
@@ -128,4 +128,33 @@ test("Admin local waiting and pre-abort preserve authentic no-dispatch evidence"
   const f=fixture();f.q.wait=true;await assert.rejects(f.read(),e=>quotaBoundaryControl(e)?.status==="waiting"&&quotaBoundaryControl(e).priorBoundaryAttempts===0);
   assert.equal(f.calls.length,0);const controller=new AbortController();controller.abort();const a=fixture();
   await assert.rejects(a.read(body(),address,{signal:controller.signal}),e=>quotaBoundaryControl(e)?.status==="not_sent");assert.equal(a.reservations.length,0);
+});
+for(const budget of [undefined,null,{unit:"requests",reservedRequestedCost:10},{unit:"shopify_admin_query_points",reservedRequestedCost:0}])
+  test("Admin HTTP budget: no valid point receipt means zero HTTP even with caller header",async()=>{
+    const f=fixture();f.q.costBudget=budget;await assert.rejects(f.read(body(),address,{headers:{"X-Requested-Cost-Budget":"999"}}),e=>quotaBoundaryControl(e)?.status==="not_sent");
+    assert.equal(f.calls.length,0);assert.equal(f.reservations.length,1);assert.equal(f.settles.length,1);assert.equal(f.stops.length,0);
+  });
+test("Admin HTTP budget: requested cost exceeding reservation stops even when actual cost fits",async()=>{
+  const f=fixture();f.q.costBudget.reservedRequestedCost=5;const c=cost();c.actualQueryCost=1;f.q.payload={data:{},extensions:{cost:c}};
+  await assert.rejects(f.read(),/COST_BUDGET_EXCEEDED/);assert.equal(f.calls.length,1);assert.equal(f.stops.length,1);assert.equal(f.settles.length,0);
+  assert.equal(f.feedback[0].feedback.requestedQueryCost,8);assert.equal(f.feedback[0].feedback.actualQueryCost,1);assert.equal(f.stops[0].quotaSignal,null);
+  await assert.rejects(f.read(),e=>quotaBoundaryControl(e)?.priorBoundaryAttempts===1);assert.equal(f.calls.length,1);
+});
+test("Admin HTTP budget: partial native response still identifies requested-cost excess",async()=>{
+  const f=fixture();f.q.costBudget.reservedRequestedCost=5;f.q.payload={extensions:{cost:{...cost(),actualQueryCost:null}}};
+  await assert.rejects(f.read(),/COST_BUDGET_EXCEEDED/);assert.equal(f.calls.length,1);assert.equal(f.stops.length,1);
+});
+test("Admin HTTP budget: exact reserved ceiling and native zero are valid without any refund",async()=>{
+  for(const points of [8,0]){const f=fixture();f.q.costBudget.reservedRequestedCost=8;const c=cost();c.requestedQueryCost=points;c.actualQueryCost=points;
+    f.q.payload={data:{},extensions:{cost:c}};await f.read();assert.equal(f.reservations.length,1);assert.equal(f.settles.length,1);assert.equal(f.stops.length,0);
+    assert.equal(f.feedback[0].feedback.requestedQueryCost,points);}
+});
+test("Admin HTTP budget: pre-dispatch mutation cannot enlarge admitted point receipt",async()=>{
+  const f=fixture();let lookups=0;f.q.loading=()=>{if(++lookups===2)f.q.costBudget.reservedRequestedCost=999;};
+  f.q.payload={extensions:{cost:{...cost(),requestedQueryCost:12,actualQueryCost:1}}};
+  await assert.rejects(f.read(),/COST_BUDGET_EXCEEDED/);assert.equal(f.calls.length,1);assert.equal(f.stops.length,1);
+});
+test("Admin HTTP budget: feedback failure on excess still attempts persistent stop and never settles success",async()=>{
+  const f=fixture();f.q.feedbackFailure=true;f.q.costBudget.reservedRequestedCost=5;
+  await assert.rejects(f.read());assert.equal(f.calls.length,1);assert.equal(f.stops.length,1);assert.equal(f.settles.length,0);
 });

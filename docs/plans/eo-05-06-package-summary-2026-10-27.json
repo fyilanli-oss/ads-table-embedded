@@ -1,0 +1,76 @@
+{
+  "source": "contracts/a6-eo-implementation-master-v1.json",
+  "as_of": "2026-10-27",
+  "packages": [
+    {
+      "id": "A6-EO-05-A",
+      "title": "Hourly scheduler, shard, lease and checkpoint",
+      "objective": "Build the AdsTable-owned staggered single-flight recurring control plane with bounded concurrency, backpressure, capacity evidence and installed-shop scope drift detection.",
+      "short_title": "Zamanlama ve iş kontrolü",
+      "summary_tr": "Saatlik işleri mağazalara dengeli dağıtır; aynı işin çakışmasını, eşzamanlılık/kota yükünü ve kaldığı yerden devam etmeyi yönetir."
+    },
+    {
+      "id": "A6-EO-05-B",
+      "title": "Dataset V2, FX and provenance",
+      "objective": "Persist installed-shop-bound canonical facts, source currency and exact FX lineage; extract a versioned synthetic demo fixture without presenting it as provider truth.",
+      "short_title": "Dataset, FX ve kaynak izi",
+      "summary_tr": "Doğrulanmış kayıtları mağaza kapsamında saklar; kaynak para birimi ve kur kanıtını korur. Kimlik eşlemesi ile Shopify sipariş/satır ve ayrı atıf saklama ekleri burada."
+    },
+    {
+      "id": "A6-EO-05-C",
+      "title": "Maturity, attribution windows and finality",
+      "objective": "Apply provider-config-derived rolling correction windows, post-window reconciliation and truthful provisional/final freshness.",
+      "short_title": "Atıf pencereleri ve kesinleşme",
+      "summary_tr": "Geç gelen/düzeltilen dönüşümleri işler; geçici/kesin ve güncellik durumlarını yönetir. Shopify ve provider model/pencere/ready ayrımı da burada."
+    },
+    {
+      "id": "A6-EO-05-D",
+      "title": "Bootstrap, idempotent upsert and reconciliation",
+      "objective": "Yesterday+today bootstrap, replay and raw-to-canonical mismatch ledger.",
+      "short_title": "İlk yükleme, tekrar güvenliği ve uzlaştırma",
+      "summary_tr": "Dün+bugün başlangıcını, aynı kaydın tekrarında çift yazmamayı, yeniden işlemeyi ve ham/ortak kayıt farklarının takibini kurar."
+    },
+    {
+      "id": "A6-EO-05-E",
+      "title": "Operational observability",
+      "objective": "Monitor job lag, reconciliation age, CPU, memory, connections, disk IO, database growth and cost per active workspace without secrets or PII.",
+      "short_title": "Operasyonel gözlem",
+      "summary_tr": "İş gecikmesi, uzlaştırma yaşı, CPU/bellek/bağlantı, disk/veritabanı büyümesi ve aktif çalışma alanı maliyetini hassas veri sızdırmadan izler."
+    },
+    {
+      "id": "A6-EO-06-A",
+      "title": "Formula engine",
+      "objective": "Apply aggregate-first KPI math, cost allocation and currency-safe calculations; recompute golden demo expectations from raw fixture inputs.",
+      "short_title": "Formül motoru",
+      "summary_tr": "Önce toplar, sonra KPI hesaplar; maliyet dağıtımı ve para birimi kurallarını uygular. PD/CPD toplamları, Shopify satış temeli ve kabul edilecek Klaviyo Spend hesabı burada."
+    },
+    {
+      "id": "A6-EO-06-B",
+      "title": "Query, filters and comparison semantics",
+      "objective": "Apply installed Shopify shop timezone, bounded date/entity filters, supported grain, 90-day Summary/Table, 31-day Daily and equal-period comparison semantics against golden fixtures.",
+      "short_title": "Sorgu, filtre ve karşılaştırma",
+      "summary_tr": "Mağaza saat dilimi, tarih/varlık filtreleri ve desteklenen seviyeleri uygular; Summary/Table 90 gün, Daily 31 gün ve eşit dönem karşılaştırması."
+    },
+    {
+      "id": "A6-EO-06-C",
+      "title": "BFF routes and DTO envelope",
+      "objective": "Session-derived workspace and stable three-surface API contracts.",
+      "short_title": "Uygulama API katmanı",
+      "summary_tr": "Oturumdan çalışma alanını belirler; üç ürün yüzeyi için tutarlı istek/yanıt sözleşmeleri sağlar."
+    },
+    {
+      "id": "A6-EO-06-D",
+      "title": "Support/null/freshness semantics",
+      "objective": "Unknown, unsupported, stale, partial and real zero remain distinct.",
+      "short_title": "Destek, eksik veri ve güncellik",
+      "summary_tr": "Bilinmeyen, desteklenmeyen, eski, kısmi ve gerçek sıfırı ayrı gösterir."
+    },
+    {
+      "id": "A6-EO-06-E",
+      "title": "Contract and security acceptance",
+      "objective": "Tenant tamper, formula, query and API characterization evidence.",
+      "short_title": "Sözleşme ve güvenlik kabulü",
+      "summary_tr": "Mağazalar arası yetki ihlali, formüller, sorgular ve API davranışlarını bütünleşik kanıtlarla sınar."
+    }
+  ]
+}

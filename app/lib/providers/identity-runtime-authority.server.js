@@ -67,12 +67,15 @@ export function createIdentityRuntimeAuthorityLoader({verified, database, tokenV
   async function read() {
     abort();
     const current = await installations.resolveActive({shopId: shop.shopId, shopDomain: shop.myshopifyDomain});
+    abort();
     if (current.status !== "active" || current.workspaceId !== shopContext.workspaceId
       || current.installGeneration !== shopContext.installGeneration) fail("IDENTITY_RUNTIME_INSTALLATION_CHANGED");
     const state = await lifecycle.loadCurrent({installationAuthority: installation, provider});
+    abort();
     if (state?.status !== "connected" || !UUID.test(state.connectionId ?? "") || !UUID.test(state.credentialId ?? "")
       || !Number.isSafeInteger(state.version) || state.version < 1) fail("IDENTITY_RUNTIME_CONNECTED_CREDENTIAL_REQUIRED");
     const connection = await accounts.load({workspaceId: installation.workspaceId, installGeneration: installation.installGeneration, provider});
+    abort();
     if (!connection || connection.connectionId !== state.connectionId || connection.credentialId !== state.credentialId) fail("IDENTITY_RUNTIME_CONNECTION_MISMATCH");
     const account = selectAccount(connection, provider), granted = scopes(connection.grantedScopes);
     if (provider === "klaviyo") {

@@ -1,5 +1,19 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## Sıralı plan 12 — Kimlik koleksiyonlarında toplam süre ve iptal sınırı, 27 Ekim 2026
+
+#213 `b094c3e4c73916059032af8b952a41a999032a36` main'dedir. 11'in kaynak/namespace/erişim kanıtı ve scoped SQL inceleme kapıları açık kalırken, sıralı 26 maddelik planın 12. adımındaki DB'siz timeout bağlantısı hazırlanır. Bu, **identity alt listesinin 12. adımına geçiş değildir**; 14'teki inceleme ve kalıcı tablo/yazım kapısı geçilmedi.
+
+Yeni `runIdentityReadDeadline`, Google'ın iki, Meta ve Klaviyo'nun üçer mevcut kimlik toplama modunu ortak toplam timer ve child AbortSignal ile sınırlar. Mevcut `maxElapsedMs` varsayılan 120000, üst sınır 600000 korunur; bütçe her sayfa/istekte yenilenmez. Mevcut sağlayıcı saatiyle gözlemsel süre/expiry denetimleri devam eder. Callback senkron başlatıldığı için config/kural/Admin'in ilk await öncesi kopyalama/bağlama davranışı korunur. Sonuç veya hata sonrası timer ve dış iptal listener'ı temizlenir.
+
+Hiç dönmeyen veya signal'ı dikkate almayan async dependency beklemesinde bile çağıran kod deadline/abort hatası alır. Child signal native fetch ve Shopify Admin'e yayılır; geç JSON/yanıt sonraki işi başlatamaz. Ortak authority yükleyicisinde mevcut kurulum/lifecycle/account SQL dönüşlerinin her birinin hemen sonrasına abort denetimi eklendi; vault sonrası mevcut kontrol korunur. Sorgu metni/DB arayüzü değiştirilmedi. Late promise rejection işlenir; başarı/kısmi sonuç, otomatik retry/refresh veya alternatif rota yoktur. Deadline öncesi gerçek ilk hata ve authentic quota kontrol nesnesinin kimliği korunur.
+
+Bu mekanizma dış sunucuya gönderilmiş isteği geri almaz, çalışan SQL statement'ını zorla sonlandırmaz, senkron bloklayan JavaScript'i kesmez ve timeout'u “istek gönderilmedi” kanıtı saymaz. Gerçek kota ailelerinin/owner registry/dispatch/work-wait bağlantısının tamamlandığı iddia edilmez; mevcut desteklenmeyen native aileler kota kapısından otomatik geçirilmez. Route/aktivasyon/yeni SQL/canlı DB/provider/token/config/Dataset/rol değişikliği yoktur.
+
+22 yeni sentetik test ve 256 mevcut collection/authority regresyonu geçti. Testler; dönmeyen fetch/JSON/Admin/SQL/vault, toplam süre, dış iptal, geç yanıt/rejection, timer/listener temizliği ve ayrı eşzamanlı koleksiyonları kapsar. Resmî kontrol 27 Ekim 2026: Node.js [AbortController](https://nodejs.org/api/globals.html#class-abortcontroller) ve [timer temizleme](https://nodejs.org/api/timers.html#cancelling-timers); runtime/dependency sürümü değişmedi. Makine kaydı: `contracts/eo-05-start-brief-v1.json#identity_execution_deadline_2026_10_27`.
+
+11 ve 12 tamamlanmadı. 12'nin endpoint aileleri/kota scope/dispatch ve Shopify Order/LineItem/journey okuyucusu; 13 yazım öncesi; 14 scoped SQL kurulum PK/seçim epoch ve kalıcı tablo öncesi inceleme işleri açıktır. Tarihsel PMax duraklaması korunur.
+
 ## 11. adım — Meta native ürün raporu ve katalog aday referansı, 27 Ekim 2026
 
 #212 `6389fbd43fc3642d19dabf7fadc7db72a9c01bb9` main'dedir. Yeni `collectMetaReportProductCandidateEvidence` mevcut somut SQL/vault/token/Ad-katalog/Shopify aday zincirine native ürün Insights sayfalarını ve kanıtlı namespace üzerinden katalog adayı referansını bağlar. İki eski giriş rapor okumasını kapalı, yeni giriş Shopify ve rapor okumasını açık tutar; çağırıcı bayrakları modu değiştiremez. Eski full-PK resolver zayıflatılmadı. Route veya mevcut reporting runtime yeni girişi çağırmaz.

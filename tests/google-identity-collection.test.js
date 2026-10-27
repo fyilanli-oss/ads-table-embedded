@@ -135,7 +135,7 @@ test("authentic local quota wait survives shared reader sanitization", async () 
 });
 test("abort during Merchant read reaches native request and prevents final link", async () => {
   const f = fixture(), controller = new AbortController(); f.options.signal = controller.signal;
-  f.hooks.fetch = (p, init) => {assert.equal(init.signal, controller.signal); if (p.hostname === "merchantapi.googleapis.com") controller.abort();};
+  f.hooks.fetch = (p, init) => {assert.ok(init.signal instanceof AbortSignal); if (p.hostname === "merchantapi.googleapis.com") {controller.abort(); assert.equal(init.signal.aborted, true);}};
   await assert.rejects(f.run(), /ABORTED/); assert.equal(f.calls.length, 2);
 });
 test("observation window does not become a completed stale snapshot", async () => {
@@ -250,7 +250,7 @@ test("candidate composition: final Ads link change invalidates successful Shopif
 });
 test("candidate composition: Admin abort reaches request and stops final link", async () => {
   const f = candidateFixture(), control = new AbortController(); f.options.signal = control.signal;
-  f.shopHooks.graphql = (query, options) => {assert.equal(options.signal, control.signal); control.abort();};
+  f.shopHooks.graphql = (query, options) => {assert.ok(options.signal instanceof AbortSignal); control.abort(); assert.equal(options.signal.aborted, true);};
   await assert.rejects(f.run(), /ABORTED/); assert.equal(f.calls.length, 2);
 });
 test("candidate composition: forged rule loader object is not accepted by candidate API", async () => {
@@ -293,4 +293,30 @@ test("candidate composition: cancelled empty source is not returned as accepted"
   await assert.rejects(verifyGoogleMerchantSourceCandidates({source: {complete: true, context: {merchant_id: "99"}, records: []},
     ownerScope: rule().scope, context: {shop: f.options.verified.identity.shop, installation: f.options.verified.installationAuthority},
     sourceRules: createGoogleCandidateSourceRuleLoader(), signal: controller.signal}), /ABORTED/);
+});
+
+test("deadline: stalled native fetch and stalled native body reject and abort transport", async () => {
+  for (const mode of ["fetch", "body"]) {
+    const f = fixture(); let signal; f.options.maxElapsedMs = 30;
+    f.hooks.fetch = (p, init) => {signal = init.signal;
+      return mode === "fetch" ? new Promise(() => {}) : {...response({}), json: () => new Promise(() => {})};};
+    await assert.rejects(f.run(), /IDENTITY_READ_DEADLINE_EXCEEDED/); assert.equal(signal.aborted, true); assert.equal(f.calls.length, 1);
+  }
+});
+test("deadline: blocked SQL authority cannot send a later provider request after timeout", async () => {
+  const f = fixture(); f.options.maxElapsedMs = 20; let resume;
+  f.hooks.query = () => new Promise(resolve => {resume = resolve;});
+  await assert.rejects(f.run(), /DEADLINE_EXCEEDED/); assert.equal(f.calls.length, 0);
+  delete f.hooks.query; resume(); await new Promise(resolve => setTimeout(resolve, 0)); assert.equal(f.calls.length, 0); assert.equal(f.queries.length, 1);
+});
+test("deadline: stalled Shopify Admin and JSON stop before final native link", async () => {
+  for (const mode of ["request", "body"]) {
+    const f = candidateFixture(); let signal; f.options.maxElapsedMs = 100;
+    f.shopHooks.graphql = (q, o) => {signal = o.signal; return mode === "request" ? new Promise(() => {}) : {...response({}), json: () => new Promise(() => {})};};
+    await assert.rejects(f.run(), /DEADLINE_EXCEEDED/); assert.equal(signal.aborted, true); assert.equal(f.calls.length, 2);
+  }
+});
+test("deadline: pre-aborted caller makes no SQL, vault or provider request", async () => {
+  const f = fixture(), caller = new AbortController(); caller.abort(); f.options.signal = caller.signal;
+  await assert.rejects(f.run(), /IDENTITY_READ_ABORTED/); assert.equal(f.queries.length, 0); assert.equal(f.calls.length, 0);
 });

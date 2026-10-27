@@ -4,6 +4,7 @@ import {readGoogleMerchantAccountLink} from "./google-merchant-account-link.serv
 import {readMerchantProductSourceSnapshot} from "./google-product-identity-reader.server.js";
 import {quotaBoundaryControl} from "../refresh/quota-native-fetch.server.js";
 import {createGoogleCandidateSourceRuleLoader, verifyGoogleMerchantSourceCandidates} from "./google-source-candidates.server.js";
+import {runIdentityReadDeadline} from "./identity-read-deadline.server.js";
 
 export class GoogleIdentityCollectionError extends Error {
   constructor(code) {super(code); this.name = "GoogleIdentityCollectionError"; this.code = code;}
@@ -105,8 +106,10 @@ async function collectGoogleIdentitySource({verified, database, tokenVault, merc
 
 // Separate locked modes: supplying flags/rules to the native-only entry cannot enable parsing.
 export function collectGoogleMerchantIdentityEvidence(options = {}) {
-  return collectGoogleIdentitySource({...options, withShopify: false});
+  return runIdentityReadDeadline({signal: options.signal, timeoutMs: options.maxElapsedMs,
+    run: signal => collectGoogleIdentitySource({...options, signal, withShopify: false})});
 }
 export function collectGoogleVerifiedProductCandidateEvidence(options = {}) {
-  return collectGoogleIdentitySource({...options, withShopify: true});
+  return runIdentityReadDeadline({signal: options.signal, timeoutMs: options.maxElapsedMs,
+    run: signal => collectGoogleIdentitySource({...options, signal, withShopify: true})});
 }

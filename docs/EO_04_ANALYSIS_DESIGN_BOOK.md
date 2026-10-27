@@ -1,5 +1,9 @@
 # EO-04 — Analiz ve tasarım kitabı
 
+## EO-05 takip — Sıralı 12'de ortak toplam süre ve iptal sınırı, 27 Ekim 2026
+
+#213 main'dedir. Üç sağlayıcının sekiz kimlik toplama modu ortak toplam timer/child AbortSignal ile sınırlandı; hiç dönmeyen async istek/JSON/Admin/SQL/vault beklemesi çağıranı süresiz tutmaz. Geç dönüş yeni sorgu/istek başlatamaz; ilk hata/quota kontrolü, ilk await öncesi kural/Admin capture ve mevcut expiry denetimleri korunur. 22 yeni ve 256 mevcut sentetik test geçti. Dış isteğin geri alındığı, SQL statement'ının durdurulduğu veya timeout'un not_sent kanıtı olduğu iddia edilmez. Kota aileleri/dispatch ve Shopify sipariş okuyucusu açık; 11'in kanıt/SQL kapıları ve 14 öncesi kalıcı tablo duraklaması korunur. Bu sıralı plan 12'dir, identity alt listesinin durdurulan 12'sine geçilmedi. EO-04 tarihsel kabulü ve PMax duraklaması değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#identity_execution_deadline_2026_10_27` ve Execution Plan.
+
 ## EO-05 takip — Meta native rapor ve katalog aday bağlantısı, 27 Ekim 2026
 
 #212 main'dedir. Yeni mod, aynı native SQL/vault/token/Ad-katalog/Shopify aday koleksiyonuna mevcut tam ürün Insights sorgusunu değiştirmeden bağlar. Varsayılan rapor namespace registry'si boş; rapor kuralı ve retailer biçim kuralı bağımsızdır. Kesin native hesap/tarih/Ad hiyerarşisi ve tek katalog kaydı varsa yalnız yerel aday referansı oluşur; diğer Ads ham raporda hedef dışı, çakışan retailer/feed ambiguous kalır. Dört satış alanı ve metrikler ham hâliyle korunur; rol veya metrik hesabı yoktur. Sayfalama tamamlanması mevcut product_id_limit=100 altında eksiksiz ürün kapsamı sayılmaz. 31 yeni ve 296 mevcut regresyon testi geçti. Gerçek iki kural kanıtı/kapsam kabulü, SQL ve kalıcı yazım kapıları açık; EO-04 tarihsel kabulü ve PMax duraklaması değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Meta_report_candidate_bridge_2026_10_27` ve Execution Plan.

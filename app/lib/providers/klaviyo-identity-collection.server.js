@@ -7,6 +7,7 @@ import {attachAttributionEvidence} from "./klaviyo-reporting-authority.server.js
 import {resolveKlaviyoOrderedProductSales} from "./klaviyo-attribution-resolution.server.js";
 import {verifyKlaviyoProductCandidateRows} from "./klaviyo-product-identity.server.js";
 import {quotaBoundaryControl} from "../refresh/quota-native-fetch.server.js";
+import {runIdentityReadDeadline} from "./identity-read-deadline.server.js";
 
 export class KlaviyoIdentityCollectionError extends Error {
   constructor(code) {super(code); this.name = "KlaviyoIdentityCollectionError"; this.code = code;}
@@ -254,11 +255,14 @@ async function collectKlaviyoIdentitySource({verified, database, tokenVault, bus
 
 // Public entry points lock their own mode; caller options cannot silently add report requests.
 export function collectKlaviyoNativeIdentityEvidence(options = {}) {
-  return collectKlaviyoIdentitySource({...options, withMessages: false, withShopify: false});
+  return runIdentityReadDeadline({signal: options.signal, timeoutMs: options.maxElapsedMs,
+    run: signal => collectKlaviyoIdentitySource({...options, signal, withMessages: false, withShopify: false})});
 }
 export function collectKlaviyoIdentityMessageEvidence(options = {}) {
-  return collectKlaviyoIdentitySource({...options, withMessages: true, withShopify: false});
+  return runIdentityReadDeadline({signal: options.signal, timeoutMs: options.maxElapsedMs,
+    run: signal => collectKlaviyoIdentitySource({...options, signal, withMessages: true, withShopify: false})});
 }
 export function collectKlaviyoVerifiedProductCandidateEvidence(options = {}) {
-  return collectKlaviyoIdentitySource({...options, withMessages: true, withShopify: true});
+  return runIdentityReadDeadline({signal: options.signal, timeoutMs: options.maxElapsedMs,
+    run: signal => collectKlaviyoIdentitySource({...options, signal, withMessages: true, withShopify: true})});
 }

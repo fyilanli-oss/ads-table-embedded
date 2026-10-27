@@ -188,6 +188,7 @@ export function createMetaOAuthRuntime({
         const exchanged = await exchangeAndValidateMetaAuthorizationCode({
           config,
           authorizationCode: claimed.authorizationCode,
+          permissionProfile: claimed.permissionProfile,
           fetchFn,
           now,
         });

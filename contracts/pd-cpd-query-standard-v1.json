@@ -5,6 +5,8 @@
   "permission_preparation_2026_10_27": {
     "authority": "contracts/eo-05-start-brief-v1.json#identity_permission_preparation_2026_10_27",
     "ordered_step": 7,
+    "scope_preflight_merged": "PR190_ee28856c1260dffd18725eeb85718d195a5ce3de",
+    "request_and_callback_binding": "contracts/eo-05-start-brief-v1.json#identity_OAuth_scope_binding_2026_10_27",
     "repository_scope_preflight_prepared": true,
     "Shopify_current_grant_reader_prepared": true,
     "source_reader_or_role_or_dataset_acceptance": false,

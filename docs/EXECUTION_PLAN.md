@@ -1,5 +1,15 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## 7. adım — Google kimlik credential yenilemesi, 27 Ekim 2026
+
+#191 `438bf5f8960cc2e25d4b6202a580cc1b1bf9b426` ile main'dedir. Bu repository dilimi Google `identity_v1` token'ına şifreli zarf içinde izin amacı, gerçek grant kapsamı, veriliş ve mutlak bitiş zamanını ekler. Kayıt okunduğunda zaman yeniden başlatılmaz. Süre dolmuşsa veya 60 saniye kalmışsa bağlı hesapta Ads çağrısından önce tek yenileme yapılır. Yeni gerçek token yanıtında Ads ve Merchant izinleri birlikte bulunmalıdır; eski scope listesiyle eksik grant tamamlanmaz.
+
+Bağlı hesapta mevcut lifecycle fonksiyonu mağaza/kurulum nesli/provider, bağlantı sürümü ve eski credential kimliğiyle yeni zarfı bağlar. Bekleyen hesap seçiminde bu fonksiyon kullanılmaz: süresi dolan credential `GOOGLE_IDENTITY_PENDING_REAUTHORIZATION_REQUIRED` hatasıyla durur, kurulum kendiliğinden connected olmaz. Yazma sonucu belirsizse yeni şifreli zarf silinmez veya kullanılmaz; yeniden uzlaştırma canlı aktivasyon öncesinde açık iştir. Kimlik yolunda Ads hatasından sonra refresh/tekrar sorgu veya başka erişilebilir köke geçiş yoktur. Normal reporting yolunun eski 401 yenileme davranışı bu dilimde değiştirilmedi.
+
+19 yeni davranış testi native scope eksikliği, mutlak süre, pending/connected ayrımı, sürüm ve credential uyuşmazlığı, belirsiz yazma, ilk hata durması ve normal reporting yolunun korunmasını kapsar. Sentetik HTTP/DB sınır testleri canlı grant veya SQL çalıştırma kanıtı değildir. Ads discovery Merchant/katalog erişim kanıtı sayılmaz. Meta credential incelemesi, güvenilir sunucu aktivasyonu/yeniden izin politikası, varlık yetkisi, Shopify config/grant dönüşü, incelemeler ve gerçek mağaza testleriyle **7. adım açık kalır**. Route/UI, canlı token/config, SQL/migration, Dataset, 14. adım incelemesi ve tarihsel PMax duraklaması değişmez.
+
+Makine kaydı: `contracts/eo-05-start-brief-v1.json#Google_identity_credential_lifecycle_2026_10_27`. Resmî kontrol 27 Ekim 2026: [Google OAuth offline yenileme ve native scope](https://developers.google.com/identity/protocols/oauth2/web-server), [Supabase fonksiyon sınırı](https://supabase.com/docs/guides/database/functions) ve [güncel değişiklikler](https://supabase.com/changelog). Yeni DB fonksiyonu veya şema eklenmedi.
+
 ## 7. adım — ek izin isteğini OAuth işlemine bağlama, 27 Ekim 2026
 
 #190 `ee28856c1260dffd18725eeb85718d195a5ce3de` ile main'dedir. Bu sonraki repository dilimi Google/Meta için sunucunun açıkça seçeceği `identity_v1` izin amacını mevcut OAuth transaction'ına bağlar. Varsayılan `reporting_v1` ve mevcut Settings akışı aynı kalır. Google ek istekte Ads + Merchant content, Meta ads_read + dört katalog/bağımlılık izni ister. İzin listesi ön kontrol ve OAuth kodunda aynı kaynaktan beslenir. Klaviyo için yeni amaç/izin eklenmez.

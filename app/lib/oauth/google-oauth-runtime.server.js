@@ -22,6 +22,8 @@ import {
   revokeGoogleAdsAuthorization,
 } from "../providers/google-ads-rest.server.js";
 import {discoverGoogleAdsAccounts} from "../providers/google-account-discovery.server.js";
+import {inspectGoogleIdentityCredential} from "./google-identity-credential.server.js";
+import {GOOGLE_MERCHANT_OAUTH_SCOPE, validateIdentityOAuthGrantedScopes} from "./oauth-permission-profile.server.js";
 
 const PROVIDER = "google_ads";
 const MAX_SELECTION = 3;
@@ -92,6 +94,7 @@ export function createGoogleOAuthRuntime({
     credentialId,
     connectionId = null,
     scopes = null,
+    connected = false,
   }) {
     const stored = await tokenVault.loadProviderTokenSet({
       credentialId,
@@ -100,6 +103,41 @@ export function createGoogleOAuthRuntime({
     });
     if (!stored?.access_token || !stored?.refresh_token) {
       throw new Error("GOOGLE_ADS_REFRESH_TOKEN_UNAVAILABLE");
+    }
+
+    if (stored.permission_profile === "identity_v1" || scopes?.includes(GOOGLE_MERCHANT_OAUTH_SCOPE)) {
+      const timing = inspectGoogleIdentityCredential(stored, now);
+      let tokenSet = stored;
+      if (timing.needsRefresh) {
+        if (!connected) throw new Error("GOOGLE_IDENTITY_PENDING_REAUTHORIZATION_REQUIRED");
+        const current = await lifecycle.load({installationAuthority, connectionId, provider: PROVIDER});
+        if (!current || current.status !== "connected" || current.credentialId !== credentialId) {
+          throw new Error("GOOGLE_IDENTITY_CONNECTION_CHANGED");
+        }
+        tokenSet = await refreshGoogleAdsAccessToken({config, refreshToken: stored.refresh_token,
+          permissionProfile: "identity_v1", fetchFn, now});
+        const granted = validateIdentityOAuthGrantedScopes(PROVIDER, tokenSet.scope);
+        const replacement = await tokenVault.storeProviderTokenSet({installationAuthority,
+          provider: PROVIDER, tokenSet, expiresAt: tokenSet.expires_at});
+        // An uncertain write may have committed. Preserve the encrypted envelope;
+        // never use it until the connection replacement has been confirmed.
+        const renewed = await lifecycle.renewCredential({installationAuthority, provider: PROVIDER,
+          connectionId, expectedVersion: current.version, expectedCredentialId: credentialId,
+          newCredentialId: replacement.credentialId,
+          providerEvidence: {authority: "provider_credential_renewal_verified", provider: PROVIDER,
+            scopes: granted, verifiedAt: tokenSet.scope_verified_at,
+            expiresAt: new Date(Math.min(Date.parse(tokenSet.expires_at),
+              Date.parse(tokenSet.scope_verified_at) + 600000)).toISOString()}});
+        if (renewed.status !== "connected" || renewed.credentialId !== replacement.credentialId
+          || renewed.version !== current.version + 1 || renewed.connectionId !== connectionId) {
+          throw new Error("GOOGLE_IDENTITY_RENEWAL_RESULT_INVALID");
+        }
+      }
+      const evidence = await discoverGoogleAdsAccounts({accessToken: tokenSet.access_token,
+        developerToken: config.developerToken, fetchFn, now, stopOnFirstError: true});
+      const advertisers = advertiserAccounts(evidence);
+      if (advertisers.length < 1) throw new Error("GOOGLE_ADS_ENABLED_CUSTOMERS_EMPTY");
+      return Object.freeze({evidence, advertisers, pending: null});
     }
 
     let evidence;
@@ -128,7 +166,7 @@ export function createGoogleOAuthRuntime({
         fetchFn,
         now,
       });
-      if (connectionId && scopes) {
+      if (connectionId && scopes && !connected) {
         const replacement = await tokenVault.storeProviderTokenSet({
           installationAuthority,
           provider: PROVIDER,
@@ -227,6 +265,7 @@ export function createGoogleOAuthRuntime({
           pkceVerifier: claimed.pkceVerifier,
           permissionProfile: claimed.permissionProfile,
           fetchFn,
+          now,
         });
         credential = await tokenVault.storeProviderTokenSet({
           installationAuthority: owner,
@@ -238,6 +277,7 @@ export function createGoogleOAuthRuntime({
           developerToken: config.developerToken,
           fetchFn,
           now,
+          stopOnFirstError: claimed.permissionProfile === "identity_v1",
         });
         const advertisers = advertiserAccounts(evidence);
         if (advertisers.length < 1) {
@@ -362,6 +402,9 @@ export function createGoogleOAuthRuntime({
       const discovered = await discoverWithCredential({
         installationAuthority,
         credentialId: connected.credentialId,
+        connectionId: connected.connectionId,
+        scopes: connected.grantedScopes,
+        connected: true,
       });
       const verified = discovered.advertisers.find(
         (account) => account.id === reportingAccountId,

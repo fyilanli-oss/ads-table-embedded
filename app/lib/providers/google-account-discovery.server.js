@@ -81,6 +81,7 @@ export async function discoverGoogleAdsAccounts({
   developerToken,
   fetchFn = fetch,
   now = () => new Date(),
+  stopOnFirstError = false,
 } = {}) {
   const googleAds = directClient({accessToken, developerToken, fetchFn});
   const accessible = await googleAds.listAccessibleCustomers();
@@ -105,6 +106,7 @@ export async function discoverGoogleAdsAccounts({
       });
       queriedRootCount += 1;
     } catch (error) {
+      if (stopOnFirstError) throw error;
       lastFailure = error;
       continue;
     }

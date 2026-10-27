@@ -1,5 +1,11 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## EO-05 ortak kayıt uyumluluk kontrolü — 27 Ekim 2026
+
+Sıralı düzeltme planının üçüncü teslimi, #183 ile güncellenmiş main `5e31bd03af6e65a507dfd7c6f1c273c4489efd1e` tabanında ortak PD kapsam kontrolüdür. `app/lib/providers/pd-composition-scope.server.js` içindeki `checkPdCompositionCompatibility`, orkestratörün verdiği beklenen kapsam ile kaynak kapsamlarını karşılaştırır. Workspace/kurulum/generation, provider/connection/hesap, akış/yaprak/üst kimlikler, iş günü/saat dilimi/raporlama zamanı, kaynak para birimi/birim özeti, etkin atıf/kapsam ve ortak run/deneme/snapshot uyuşmalıdır. Eksik, kısmi, başarısız veya sınırlandırılmamış kaynak reddedilir; aynı aile/kaynak referansı tekrar toplanmaz. Üst kimlikler adlardan bağımsız karşılaştırılır. Klaviyo reporting-account NULL kuralı korunur.
+
+Bu yalnız dahili karşılaştırma yardımcısıdır: provider yanıtı veya fiziksel Dataset şeması değildir. Kapsamların eşit olması kaynak doğruluğu, metrik sahipliği, ayrıklık veya tamlık kanıtı sayılmaz. Birim/atıf özetleri bilinmeyen metadata için uydurulamaz; bunların gerçek kaynaklardan hazırlanması Google/Klaviyo composer bağlantısında ayrıca yapılacaktır. Kontrol herhangi bir metriği toplamaz, null/sıfır durumunu değiştirmez ve başarılı olsa da `publishable: false` döner. Mevcut canonical FX/ad/kimlik doğrulaması korunur. Sonraki sıralı teslimler Google ve Klaviyo PD birleştirmesini bu kapıya bağlayacaktır; şu anda canlı yol değişmez. Yeni dış API/kütüphane semantiği eklenmedi. Kimlik 12 öncesi durak, Meta rol kanıtı, Klaviyo rol kapanışı ve tarihsel PMax duraklaması korunur; 17–19 veya EO-05 tamamlandı sayılmaz.
+
 ## EO-05 güncel durum ve sözleşme uyumu — 27 Ekim 2026
 
 Ürün sahibinin kodlamaya başlama ve #182 merge onayı sonrasında EO-05'in güncel durumu **In progress — repository uygulaması; canlı kapılar kapalı** olarak kaydedilir. İlk hata düzeltmesi #182, `114cc746be4cc28b0fe2c2a047e7d014212cae28` ile main'e birleşti; kod blob'u doğrulandı. Aktif ana paket EO-05'tir; yeni alt paket veya eşzamanlı aktif parent açılmaz. Alt paket/kapsam kabulü ve EO-05 kapanışı verilmez. Önceki başlangıç brief'inin bekliyor/başlamadı ifadeleri tarihsel kayıt olup bugünkü repository ilerlemesinin yerine geçmez.

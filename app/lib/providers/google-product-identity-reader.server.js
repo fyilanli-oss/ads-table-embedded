@@ -26,7 +26,7 @@ function freeze(value) {
   }
   return value;
 }
-function readScope(authority) {
+export function merchantIdentityReadScope(authority) {
   if (authority?.platform !== "google_ads") fail("MERCHANT_IDENTITY_PROVIDER_INVALID");
   const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   for (const key of ["workspace_id", "provider_connection_id"]) {
@@ -48,7 +48,7 @@ function readScope(authority) {
 // Server-only input context is not proof of account ownership or of an Ads-to-Merchant link.
 export async function readMerchantProductIdentitySnapshot({authority, accessToken,
   fetchFn = fetch, maxPages = 100, maxRows = 10000, signal} = {}) {
-  const scope = readScope(authority);
+  const scope = merchantIdentityReadScope(authority);
   const merchantId = numeric(authority.merchant_id);
   text(accessToken, "MERCHANT_IDENTITY_TOKEN_REQUIRED");
   if (typeof fetchFn !== "function" || !Number.isSafeInteger(maxPages) || maxPages < 1 || maxPages > 1000

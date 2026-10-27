@@ -1,4 +1,5 @@
 import { OAUTH_CALLBACK_URIS } from "../oauth/oauth-transaction.server.js";
+import {stampGoogleIdentityCredential} from "../oauth/google-identity-credential.server.js";
 import {GOOGLE_REPORTING_SCOPE, oauthPermissionProfile, oauthPermissionProfileFromState,
   oauthPermissionScopes, validateIdentityOAuthGrantedScopes} from "../oauth/oauth-permission-profile.server.js";
 
@@ -194,6 +195,7 @@ export async function exchangeGoogleAdsAuthorizationCode({
   pkceVerifier,
   fetchFn = fetch,
   permissionProfile = "reporting_v1",
+  now = () => new Date(),
 }) {
   oauthPermissionProfile("google_ads", permissionProfile);
   if (typeof fetchFn !== "function") throw new TypeError("fetchFn is required");
@@ -209,7 +211,8 @@ export async function exchangeGoogleAdsAuthorizationCode({
     },
   });
   if (permissionProfile === "identity_v1") validateIdentityOAuthGrantedScopes("google_ads", payload?.scope);
-  return normalizedTokenSet(payload, { requireRefreshToken: true });
+  const normalized = normalizedTokenSet(payload, { requireRefreshToken: true });
+  return permissionProfile === "identity_v1" ? stampGoogleIdentityCredential(normalized, now) : normalized;
 }
 
 export async function revokeGoogleAdsAuthorization({
@@ -246,7 +249,10 @@ export async function refreshGoogleAdsAccessToken({
   config,
   refreshToken,
   fetchFn = fetch,
+  permissionProfile = "reporting_v1",
+  now = () => new Date(),
 }) {
+  oauthPermissionProfile("google_ads", permissionProfile);
   if (typeof fetchFn !== "function") throw new TypeError("fetchFn is required");
   const retainedRefreshToken = nonEmpty(
     refreshToken,
@@ -261,10 +267,12 @@ export async function refreshGoogleAdsAccessToken({
       grant_type: "refresh_token",
     },
   });
-  return normalizedTokenSet(payload, {
+  if (permissionProfile === "identity_v1") validateIdentityOAuthGrantedScopes("google_ads", payload?.scope);
+  const normalized = normalizedTokenSet(payload, {
     requireRefreshToken: true,
     existingRefreshToken: retainedRefreshToken,
   });
+  return permissionProfile === "identity_v1" ? stampGoogleIdentityCredential(normalized, now) : normalized;
 }
 
 function customerId(value, code = "GOOGLE_ADS_CUSTOMER_ID_INVALID") {

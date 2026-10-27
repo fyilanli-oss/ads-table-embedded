@@ -1,5 +1,7 @@
 # EO-04 — Analiz ve tasarım kitabı
 
+27 Ekim EO-05 güncellemesi: #191 `438bf5f8960cc2e25d4b6202a580cc1b1bf9b426` ile main'dedir. 7. adımın sonraki repository dilimi Google kimlik token'ında gerçek scope/veriliş/bitiş kaydını ve bağlı hesapta çağrı öncesi tek yenilemeyi hazırlar. Yeni credential mevcut sürüm/önceki credential/mağaza/kurulum nesli denetimiyle bağlanır. Bekleyen kurulumda süre dolarsa yeniden izin hatası verilir; otomatik connected yapılmaz. İlk sağlayıcı hatasında tekrar yoktur. Belirsiz yazmada şifreli zarf korunur, kullanılmaz; uzlaştırma canlı aktivasyon öncesinde açık iştir. Normal reporting yolu değişmedi. Bu işler kaynak varlık yetkisi, Shopify ürün eşlemesi veya canlı test kabulü değildir. Ayrıntı: `docs/EXECUTION_PLAN.md` ve `contracts/eo-05-start-brief-v1.json#Google_identity_credential_lifecycle_2026_10_27`. Meta credential incelemesi ve gerçek izin testleriyle 7. adım açık kalır; tarihsel EO-04 kabulü korunur.
+
 **Ana paket:** A6-EO-04 — Meta, Google Ads ve Klaviyo adaptörleri
 **Durum:** Kabul edildi — 2026-10-18
 **Amaç:** Teknik olmayan bir okuyucunun üç sağlayıcının hangi ham gerçeği verdiğini, AdsTable'ın Channel ve Sales Role kararını nasıl ürettiğini, hangi çıkarımları kesinlikle yapmadığını ve EO-05'e hangi açık işleri devrettiğini tek belgeden anlayabilmesi.

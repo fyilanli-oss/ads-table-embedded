@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {collectGoogleMerchantIdentityEvidence} from "../app/lib/providers/google-identity-collection.server.js";
+import {collectGoogleMerchantIdentityEvidence, collectGoogleVerifiedProductCandidateEvidence} from "../app/lib/providers/google-identity-collection.server.js";
+import {createGoogleCandidateSourceRuleLoader, verifyGoogleMerchantSourceCandidates} from "../app/lib/providers/google-source-candidates.server.js";
 import {readMerchantProductIdentitySnapshot, matchMerchantProductIdentity} from "../app/lib/providers/google-product-identity-reader.server.js";
 import {oauthPermissionScopes} from "../app/lib/oauth/oauth-permission-profile.server.js";
 import {createQuotaManagedFetch, quotaBoundaryControl} from "../app/lib/refresh/quota-native-fetch.server.js";
@@ -146,4 +147,150 @@ test("invalid target/bounds stop before SQL or provider calls", async () => {
 });
 test("caller authority callback cannot replace persisted selected account", async () => {
   const f = fixture(); f.options.loadCurrent = () => {throw Error("must not use");}; assert.equal((await f.run()).account_id, "123");
+});
+
+function rule() {
+  return {state: "verified_source_rule", source_reference: "synthetic-reviewed-native-source-proof",
+    scope: {workspace_id: workspace, installation_generation: 3, provider_connection_id: connection, platform: "google_ads", platform_account_id: "123"},
+    product_context: {merchant_id: "99", feed_label: "US", content_language: "en", data_source: "accounts/99/dataSources/7", legacy_local: false},
+    shop_id: "gid://shopify/Shop/12", format: "shopify_market_product_variant", market: "US"};
+}
+function candidateFixture() {
+  const f = fixture(), shopCalls = [], shopHooks = {};
+  f.options.sourceRules = [rule()];
+  f.options.verified.context.admin.graphql = async (query, options) => {
+    shopCalls.push({query, options}); const custom = await shopHooks.graphql?.(query, options); if (custom) return custom;
+    const p = options.variables.productId?.split("/").at(-1) ?? "123", v = options.variables.variantId?.split("/").at(-1);
+    return response({data: {shop: {id: "gid://shopify/Shop/12", myshopifyDomain: "test.myshopify.com"},
+      ...(options.variables.productId ? {product: {id: `gid://shopify/Product/${p}`, legacyResourceId: p}} : {}),
+      ...(v ? {productVariant: {id: `gid://shopify/ProductVariant/${v}`, legacyResourceId: v,
+        product: {id: `gid://shopify/Product/${p}`, legacyResourceId: p}}} : {})}});
+  };
+  return {...f, shopCalls, shopHooks, run: () => collectGoogleVerifiedProductCandidateEvidence(f.options)};
+}
+test("candidate composition: empty default registry keeps Shopify-looking offer opaque and unresolved", async () => {
+  const f = candidateFixture(); delete f.options.sourceRules;
+  const r = await f.run(); assert.equal(f.shopCalls.length, 0); assert.equal(r.product_identity_candidates.candidates.length, 0);
+  assert.equal(r.product_identity_candidates.rows[0].product_identity_verification.reason, "verified_source_rule_required");
+});
+test("candidate composition: exact reviewed rule and same-shop parent produce only local candidate evidence", async () => {
+  const f = candidateFixture(), r = await f.run(), candidates = r.product_identity_candidates;
+  assert.equal(f.shopCalls.length, 1); assert.equal(f.shopCalls[0].options.tries, 1);
+  assert.deepEqual(f.shopCalls[0].options.variables, {productId: "gid://shopify/Product/123", variantId: "gid://shopify/ProductVariant/456"});
+  assert.equal(candidates.candidates[0].shopify_product_id, "gid://shopify/Product/123");
+  assert.equal(candidates.candidates[0].candidate_evidence.source_rule.source_reference, rule().source_reference);
+  assert.equal(candidates.rows[0].standardized_product_id, null); assert.equal(candidates.mappings, undefined);
+  assert.equal(r.installation_id, null); assert.equal(r.canonical_scope_ready, false); assert.equal(candidates.provider_link_verified, false);
+  assert.equal(r.provider_link_verified, true); assert.equal(r.persistable, false); assert.equal(r.mapping_write_performed, false);
+});
+for (const [name, mutate] of [
+  ["workspace", r => {r.scope.workspace_id = credential;}], ["generation", r => {r.scope.installation_generation++;}],
+  ["connection", r => {r.scope.provider_connection_id = credential;}], ["Ads account", r => {r.scope.platform_account_id = "789";}],
+  ["Merchant", r => {r.product_context.merchant_id = "100"; r.product_context.data_source = "accounts/100/dataSources/7";}],
+  ["feed", r => {r.product_context.feed_label = "CA";}], ["language", r => {r.product_context.content_language = "fr";}],
+  ["dataSource", r => {r.product_context.data_source = "accounts/99/dataSources/8";}], ["local", r => {r.product_context.legacy_local = true;}],
+  ["shop", r => {r.shop_id = "gid://shopify/Shop/99";}],
+]) test(`candidate composition: ${name} rule cannot bleed into current source`, async () => {
+  const f = candidateFixture(); mutate(f.options.sourceRules[0]); const r = await f.run();
+  assert.equal(f.shopCalls.length, 0); assert.equal(r.product_identity_candidates.candidates.length, 0);
+});
+test("candidate composition: wrong market pattern does not parse despite same context", async () => {
+  const f = candidateFixture(); f.options.sourceRules[0].market = "CA";
+  const r = await f.run(); assert.equal(f.shopCalls.length, 0);
+  assert.equal(r.product_identity_candidates.rows[0].product_identity_verification.reason, "native_id_does_not_match_verified_rule");
+});
+test("candidate composition: conflicting rules reject before native calls", async () => {
+  const f = candidateFixture(); f.options.sourceRules.push({...rule(), source_reference: "other-proof"});
+  await assert.rejects(f.run(), /RULE_CONFLICT/); assert.equal(f.calls.length, 0); assert.equal(f.shopCalls.length, 0);
+});
+test("candidate composition: malformed evidence is not a verified rule", async () => {
+  const f = candidateFixture(); f.options.sourceRules[0].source_reference = "";
+  await assert.rejects(f.run(), /RULE_INVALID/); assert.equal(f.calls.length, 0);
+});
+test("candidate composition: registry detaches rules before first asynchronous native read", async () => {
+  const f = candidateFixture(); f.hooks.fetch = () => {f.options.sourceRules[0].market = "CA";};
+  assert.equal((await f.run()).product_identity_candidates.candidates.length, 1);
+});
+test("candidate composition: native-only entry cannot enable parsing through caller flags", async () => {
+  const f = candidateFixture(); f.options.withShopify = true;
+  const r = await collectGoogleMerchantIdentityEvidence(f.options); assert.equal(f.shopCalls.length, 0); assert.equal(r.product_identity_candidates, undefined);
+});
+test("candidate composition: candidate entry cannot disable Admin via caller flags", async () => {
+  const f = candidateFixture(); f.options.withShopify = false;
+  assert.equal((await f.run()).product_identity_candidates.candidates.length, 1); assert.equal(f.shopCalls.length, 1);
+});
+test("candidate composition: first Admin error stops before final Ads link with no partial candidates", async () => {
+  const f = candidateFixture(); f.shopHooks.graphql = () => {throw Error("secret-admin-payload");};
+  await assert.rejects(f.run(), e => e.message === "GOOGLE_IDENTITY_COLLECTION_FAILED"); assert.equal(f.calls.length, 2); assert.equal(f.shopCalls.length, 1);
+});
+test("candidate composition: active authority change during Admin JSON rejects collection", async () => {
+  const f = candidateFixture(); f.shopHooks.graphql = () => {f.state.version++;};
+  await assert.rejects(f.run(), /COLLECTION_FAILED/); assert.equal(f.calls.length, 2);
+});
+test("candidate composition: unresolved native product and wrong parent are separate results", async () => {
+  for (const wrongParent of [false, true]) {
+    const f = candidateFixture(); f.shopHooks.graphql = () => response({data: {shop: {id: "gid://shopify/Shop/12", myshopifyDomain: "test.myshopify.com"},
+      product: wrongParent ? {id: "gid://shopify/Product/123", legacyResourceId: "123"} : null,
+      productVariant: wrongParent ? {id: "gid://shopify/ProductVariant/456", legacyResourceId: "456", product: {id: "gid://shopify/Product/789", legacyResourceId: "789"}} : null}});
+    const r = await f.run(); assert.equal(r.product_identity_candidates.rows[0].product_identity_verification.state, wrongParent ? "conflicting" : "unresolved");
+    assert.equal(r.product_identity_candidates.candidates.length, 0);
+  }
+});
+test("candidate composition: explicit product-only and variant-only rules share native Shopify verification", async () => {
+  for (const format of ["shopify_product_id", "shopify_variant_id"]) {
+    const f = candidateFixture(); f.options.sourceRules[0].format = format; delete f.options.sourceRules[0].market;
+    f.hooks.fetch = p => p.hostname === "merchantapi.googleapis.com" && response({products: [product("123")]});
+    const r = await f.run(); assert.equal(r.product_identity_candidates.candidates[0].shopify_product_id, "gid://shopify/Product/123");
+    assert.equal(f.shopCalls[0].options.variables[format === "shopify_product_id" ? "variantId" : "productId"], undefined);
+  }
+});
+test("candidate composition: final Ads link change invalidates successful Shopify candidates", async () => {
+  const f = candidateFixture(); f.hooks.fetch = (p, init, n) => p.hostname === "googleads.googleapis.com" && n > 1 && response({results: [link("8")]});
+  await assert.rejects(f.run(), /LINK_CHANGED/); assert.equal(f.shopCalls.length, 1);
+});
+test("candidate composition: Admin abort reaches request and stops final link", async () => {
+  const f = candidateFixture(), control = new AbortController(); f.options.signal = control.signal;
+  f.shopHooks.graphql = (query, options) => {assert.equal(options.signal, control.signal); control.abort();};
+  await assert.rejects(f.run(), /ABORTED/); assert.equal(f.calls.length, 2);
+});
+test("candidate composition: forged rule loader object is not accepted by candidate API", async () => {
+  const f = fixture(), source = (await f.run()).native_source;
+  await assert.rejects(verifyGoogleMerchantSourceCandidates({source, ownerScope: rule().scope,
+    context: {shop: f.options.verified.identity.shop, installation: f.options.verified.installationAuthority,
+      admin: f.options.verified.context.admin}, sourceRules: {load: () => rule()}}), /INPUT_INVALID/);
+});
+test("candidate composition: reviewed loader cannot match a full-PK or broader scope by accident", () => {
+  const loader = createGoogleCandidateSourceRuleLoader({rules: [rule()]});
+  assert.throws(() => loader.load({...rule(), scope: {...rule().scope, installation_id: "99"}}), /SCOPE_INVALID/);
+});
+test("candidate composition: multiple native contexts retain distinct evidence while same Shopify pair queries once", async () => {
+  const f = candidateFixture(), other = rule(); other.product_context.content_language = "fr"; other.source_reference = "other-language-proof";
+  f.options.sourceRules.push(other);
+  const raw = product(); raw.contentLanguage = "fr"; raw.name = "accounts/99/products/fr~US~shopify_US_123_456";
+  f.hooks.fetch = p => p.hostname === "merchantapi.googleapis.com" && response({products: [product(), raw]});
+  const r = await f.run(); assert.equal(f.shopCalls.length, 1); assert.equal(r.product_identity_candidates.candidates.length, 2);
+  assert.notEqual(r.product_identity_candidates.candidates[0].candidate_evidence.source_record_key, r.product_identity_candidates.candidates[1].candidate_evidence.source_record_key);
+});
+test("candidate composition: authentic local quota wait from Admin is preserved exactly", async () => {
+  const managed = createQuotaManagedFetch({provider: "google_ads", guard: {execute: async () => ({status: "waiting"})},
+    resolveOperation: async () => "a".repeat(64), lane: "background", fetchFn: async () => {throw Error("must not send");}});
+  let control; try {await managed("https://googleads.googleapis.com/v25/customers/123/googleAds:search", {method: "POST"});} catch (e) {control = e;}
+  const f = candidateFixture(); f.shopHooks.graphql = () => {throw control;};
+  await assert.rejects(f.run(), e => e === control); assert.equal(f.calls.length, 2);
+});
+test("candidate composition: unverified rule state cannot authorize extraction", () => {
+  const input = rule(); input.state = "proposed";
+  assert.throws(() => createGoogleCandidateSourceRuleLoader({rules: [input]}), /RULE_INVALID/);
+});
+test("candidate composition: tampered source projection rejected before first Admin call", async () => {
+  const f = fixture(), source = structuredClone((await f.run()).native_source); source.records[0].source_record.offerId = "different";
+  await assert.rejects(verifyGoogleMerchantSourceCandidates({source, ownerScope: rule().scope,
+    context: {shop: f.options.verified.identity.shop, installation: f.options.verified.installationAuthority,
+      admin: f.options.verified.context.admin}, sourceRules: createGoogleCandidateSourceRuleLoader({rules: [rule()]})}), /SOURCE_INVALID/);
+});
+test("candidate composition: cancelled empty source is not returned as accepted", async () => {
+  const f = fixture(), controller = new AbortController(); controller.abort();
+  await assert.rejects(verifyGoogleMerchantSourceCandidates({source: {complete: true, context: {merchant_id: "99"}, records: []},
+    ownerScope: rule().scope, context: {shop: f.options.verified.identity.shop, installation: f.options.verified.installationAuthority},
+    sourceRules: createGoogleCandidateSourceRuleLoader(), signal: controller.signal}), /ABORTED/);
 });

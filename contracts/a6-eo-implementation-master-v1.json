@@ -893,6 +893,7 @@
         "Klaviyo_identity_Message_composition": "contracts/eo-05-start-brief-v1.json#Klaviyo_identity_Message_composition_2026_10_27",
         "Klaviyo_Shopify_candidate_composition": "contracts/eo-05-start-brief-v1.json#Klaviyo_Shopify_candidate_composition_2026_10_27",
         "Google_native_identity_collection": "contracts/eo-05-start-brief-v1.json#Google_native_identity_collection_2026_10_27",
+        "Google_source_rule_candidate_composition": "contracts/eo-05-start-brief-v1.json#Google_source_rule_candidate_composition_2026_10_27",
         "Shopify_sales_attribution_decision": "contracts/pd-cpd-query-standard-v1.json#shopify_order_attribution_decision_2026_10_27",
         "open_PR179": "identity_helpers_and_work_plan_not_merged_not_live",
         "open_PR180": "Meta_classifier_only_not_native_decoder_or_live_proof",

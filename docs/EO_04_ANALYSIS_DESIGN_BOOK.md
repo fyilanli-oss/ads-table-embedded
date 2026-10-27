@@ -1,5 +1,9 @@
 # EO-04 — Analiz ve tasarım kitabı
 
+## EO-05 takip — Google kaynak kuralı ve Shopify aday zinciri, 27 Ekim 2026
+
+#209 main'dedir. Yeni candidate girişi aynı native Ads/Merchant/SQL/vault çalıştırmasında, tam bağlamına uyan sunucu kaynak kuralından sonra Shopify Product/Variant kontrolünü bağlar. Varsayılan registry boş; gerçek biçim kanıtı kaydedilmediğinden production'da kural yoksa parsing/API kontrolü yapılmaz. Owner+generation aday kapsamı kanonik PK kapsamı yerine kullanılamaz; eski resolver korunur. 31 yeni ve 204 mevcut sentetik test geçti. GID'ler yerel kanıt, standart satış/kurulum ID null, yazım/aktivasyon false kalır. EO-04 tarihsel kabulü değişmez; Meta, SQL/kalıcı mapping, quota ve gerçek kabul kapıları açıktır. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Google_source_rule_candidate_composition_2026_10_27` ve Execution Plan.
+
 ## EO-05 takip — Google native Ads–Merchant kaynak kompozisyonu, 27 Ekim 2026
 
 #208 main'dedir. Ortak SQL/vault yükleyicisi seçili Ads hesabı/manager ve aynı identity credential ile native Ads link → Merchant ürünler → aynı link kontrolünü hazırlar. Tam scope/PK isteyen eski giriş noktası korunur; yeni source-only çıktı kanonik snapshot veya Shopify eşlemesi değildir. 29 yeni ve 145 mevcut sentetik test geçti. Kaynak biçimi/Admin kompozisyonu, SQL PK/selection epoch, gerçek erişim/kanıt ve quota/yazım kapıları açık; route/canlı çağrı/yazım yoktur. EO-04 tarihsel kabulü ve tarihsel PMax duraklaması değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Google_native_identity_collection_2026_10_27` ve Execution Plan.

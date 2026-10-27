@@ -1,5 +1,17 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## 8. adım — Google Merchant kaynak okuyucusu hazırlığı, 27 Ekim 2026
+
+#196 `d5dce8eb6f021796695045affc7e97615e887580` ile main'dedir. 7. adımın canlı izin/yayın, uygulama incelemesi, gerçek okuma ve atomik yazım kapıları açık kalır. Bunları açmadan bağımsız hazırlanabilen 8. adım kaynak okuyucusu burada kodlanır; 7 veya 8 tamamlandı sayılmaz. #179'un `ffc51bdf6ebd46f9e79b07bb186fb2da82884044` sürümündeki Google okuma alt kümesi incelendi, güncel main ve resmî v1 belgeleri üzerinde yeniden uygulandı; eski PR veya sözleşmeleri toplu taşınmadı.
+
+`readMerchantProductIdentitySnapshot` yalnız Merchant API ürün listesini okur. Workspace/kurulum nesli/bağlantı/Ads hesabı/Merchant bağlamı sunucu girdisidir; bu girdilerin varlığı hesap sahipliği veya Ads–Merchant bağı kanıtı değildir. `offerId`, feed, dil, birincil dataSource ve yerel/online ayrımı birlikte korunur; ürün kaynak adı ile aynı Merchant doğrulanır. Ham `productAttributes` ve `customAttributes` dahil kaynak kaydı kopyalanıp değişmez tutulur. Shopify biçimine benzeyen bir kimlik otomatik Product/Variant kimliği sayılmaz.
+
+Boş veya kısa sayfada da native cursor izlenir. Tekrarlanan cursor, yinelenen ürün anahtarı, bozuk yanıt, sayfa/satır sınırı veya ilk taşıma/HTTP/JSON hatasında kısmi koleksiyon döndürülmez. Otomatik tekrar, token yenileme ve yönlendirme yoktur; çağırıcının iptal sinyali aktarılır. Tamamlanan sayfalama atomik veya tarihsel katalog anı kanıtı değildir. Eşleştirici bir kaynak kaydı, `unresolved` veya `ambiguous` döndürür; dil/yerel bağlam belirsizliğinde ilk ürünü seçmez.
+
+28 sentetik test geçti. Yeni fonksiyon route veya canlı credential çağırıcısına bağlanmadı; canlı çağrı, izin/config değişikliği, SQL/tablo/migration veya Dataset yazımı yoktur. `provider_link_verified=false`, `shopify_mapping_state=not_resolved`, `authorizes_activation=false` korunur. Mevcut sıralamada açık kalanlar: 8'de güvenilir Ads hesabı–Merchant bağı ve kaynak biçimi kanıtı; 11'de kural yükleyici ve Shopify ürün/varyant/ebeveyn doğrulamasıyla birleşim; 12'de okuyucu ailesinin quota/dispatch/timeout kontrolü; 13'te yazım öncesi kontroller ve 14'te değerlendirme. Yeni sıra/paket üretilmedi; tarihsel PMax duraklaması sürer.
+
+Makine kaydı: `contracts/eo-05-start-brief-v1.json#Google_Merchant_source_reader_2026_10_27`. Resmî kontrol 27 Ekim 2026: [products.list](https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.products/list), [Product alanları ve kaynak kimliği](https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.products). Belgeler Merchant ürün kimliğinin Shopify Product ID olduğunu garanti etmez.
+
 ## 7. adım — Klaviyo yeni izin gözlemi ile korunan izni ayırma, 27 Ekim 2026
 
 #195 `f5fccc7fda0e34eae210e23e80239a9ef9153aad` ile main'dedir. Klaviyo'da istenen beş scope değişmez. Mevcut hesap okumasındaki `accounts:read` ve reporting öncesindeki Campaign/Event/Flow/Metric izin kontrolleri zaten vardır. Bu dilim ek izin istemez; OAuth token yanıtında yeni gözlenen scope ile refresh yanıtı scope içermediğinde önceki kayıttan korunan scope'un kaynağını ayırır.

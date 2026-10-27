@@ -3,7 +3,9 @@ import {quotaResponseFeedback} from "./quota-response-feedback.server.js";
 import {googleQuotaObservation} from "./google-quota-observation.server.js";
 import {shopifyAdminIdentityFamily,shopifyAdminCostFeedback} from "./shopify-admin-identity-quota.server.js";
 const controls=new WeakMap();
-const managed=new WeakSet();
+const managed=new WeakMap();
+// Brand proves only this local transport construction, never authority or configured limits.
+export function isQuotaManagedFetchForProvider(value,provider) {return managed.get(value)===provider;}
 const metaIdentityFields = Object.freeze([
   ["identity_ad", "id,account_id,campaign_id,adset_id,creative"],
   ["identity_adset", "id,account_id,promoted_object"],
@@ -156,6 +158,6 @@ export function createQuotaManagedFetch({provider,guard,resolveOperation,isDispa
     // Unknown external execution must never be misclassified as a proven-not-sent wait.
     throw new Error("QUOTA_NATIVE_TRANSPORT_STOPPED");
   };
-  managed.add(fetchManaged);
+  managed.set(fetchManaged,provider);
   return fetchManaged;
 }

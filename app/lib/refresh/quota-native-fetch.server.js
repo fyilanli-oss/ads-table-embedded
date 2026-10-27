@@ -60,6 +60,13 @@ function descriptor(provider,input,init) {
       if(search&&method==="POST"){family="reporting_query";version=search[1];accountId=search[2];}
       if(discovery&&method==="GET"){family="account_discovery";version=discovery[1];}
     }
+    if(url.origin==="https://merchantapi.googleapis.com"&&method==="GET"&&init?.body==null) {
+      const products=path.match(/^\/products\/v1\/accounts\/([1-9][0-9]{0,18})\/products$/);
+      const queryOk=[...url.searchParams.keys()].every(k=>["pageSize","pageToken"].includes(k)&&url.searchParams.getAll(k).length===1);
+      if(products&&BigInt(products[1])<=9223372036854775807n&&queryOk&&url.searchParams.get("pageSize")==="1000") {
+        family="merchant_products";version="products/v1";accountId=products[1];
+      }
+    }
   } else if(provider==="klaviyo"&&url.origin==="https://a.klaviyo.com") {
     const families={"/api/metrics":["GET","metrics"],"/api/events":["GET","events"],"/api/accounts":["GET","account_discovery"],
       "/api/campaign-values-reports":["POST","campaign_values"],"/api/flow-values-reports":["POST","flow_values"],"/oauth/token":["POST","token"],"/oauth/revoke":["POST","revoke"]};

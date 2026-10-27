@@ -1,5 +1,6 @@
 {
   "contract_id": "eo-05a-quota-authority-binding-v1",
+  "Merchant_identity_extension_2026_10_27": "contracts/eo-05-start-brief-v1.json#Google_Merchant_identity_quota_2026_10_27",
   "package_id": "A6-EO-05-A",
   "base_commit": "4bdc8bc7818bc574c343aef6cf0f7f74b3aa43ee",
   "checked_at": "2026-10-20",

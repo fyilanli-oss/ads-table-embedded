@@ -1,6 +1,7 @@
 {
   "contract_id": "eo-05a-quota-scope-resolver-v1",
   "identity_endpoint_extension_2026_10_27": "contracts/eo-05-start-brief-v1.json#Meta_identity_quota_families_2026_10_27",
+  "Merchant_identity_extension_2026_10_27": "contracts/eo-05-start-brief-v1.json#Google_Merchant_identity_quota_2026_10_27",
   "package_id": "A6-EO-05-A",
   "checked_at": "2026-10-20",
   "base_commit": "02f8e74ed5ec97b119b8e40394587361ed14ac08",

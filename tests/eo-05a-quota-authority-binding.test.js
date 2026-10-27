@@ -59,3 +59,28 @@ test("database adapter binds fenced claim, exact window and fresh entitlement re
   assert.match(queries[0].sql,/load_refresh_quota_context/);assert.equal(queries[0].args.length,10);assert.equal(queries[0].args[9],"2026-10-20T00:00:00Z");
   await assert.rejects(store.loadQuotaContext({claim:claim(),window,provider:"meta"}),/INPUT_INVALID/);
 });
+
+function merchantBindingFixture() {
+  const f=fixture();f.state.context={provider:"google_ads",clientScopeKey:"a".repeat(64),connectionScopeKey:"b".repeat(64),connectionEpoch:1,
+    accountId:"111",organizationId:null,apiVersion:"v25",merchant:{targetAccountId:"99",quotaAccountId:"98",apiVersion:"products/v1",bindingEpoch:1}};
+  f.config.fetchFn=async address=>{f.state.calls++;return new Response(JSON.stringify(address.includes("oauth2")
+    ?{access_token:"SYNTHETIC",token_type:"Bearer",expires_in:3600}:{results:[]}),{headers:{"content-type":"application/json"}});};
+  const api=createRefreshQuotaClients(f.config).google({
+    database:{query:async()=>({rows:[{connection_id:"22222222-2222-4222-8222-222222222222",credential_id:"33333333-3333-4333-8333-333333333333",
+      granted_scopes:["https://www.googleapis.com/auth/adwords"],reporting_account_id:"111",accounts:[{id:"111",kind:"advertiser",reporting_eligible:true,login_account_id:null,currency:"USD",timezone:"UTC"}]}]})},
+    tokenVault:{loadProviderTokenSet:async()=>({refresh_token:"SYNTHETIC"})},
+    environment:{GOOGLE_ADS_OAUTH_CLIENT_ID:"client",GOOGLE_ADS_OAUTH_CLIENT_SECRET:"SYNTHETIC",GOOGLE_ADS_OAUTH_REDIRECT_URI:"https://embedded.adstable.app/auth/google-ads/callback"}});
+  return {...f,run:()=>api.readEvidencePage({installationAuthority:{authority:"shopify_installation_verified",workspaceId:claim().workspaceId,installGeneration:1,status:"active"},
+    queryFamily:"cart_data_product_sales_daily",dateWindow:{start:window.from,end:window.to}})};
+}
+test("background execution pins trusted Merchant target, quota pool and binding epoch even on an Ads/OAuth route",async()=>{
+  for(const change of [m=>{m.targetAccountId="100";},m=>{m.quotaAccountId="97";},m=>{m.bindingEpoch++;}]) {
+    const f=merchantBindingFixture();f.state.onReserve=async()=>{change(f.state.context.merchant);};
+    await assert.rejects(f.run(),e=>quotaBoundaryControl(e)?.status==="not_sent");
+    assert.equal(f.state.calls,0);assert.equal(f.state.stops,0);assert.equal(f.state.settles,1);
+  }
+});
+test("equivalent Merchant context field ordering does not break execution pin",async()=>{
+  const f=merchantBindingFixture();f.state.onReserve=async()=>{f.state.context.merchant=Object.fromEntries(Object.entries(f.state.context.merchant).reverse());};
+  await f.run();assert.equal(f.state.calls,2);assert.equal(f.state.stops,0);
+});

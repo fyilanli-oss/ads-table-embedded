@@ -1,5 +1,9 @@
 # EO-04 — Analiz ve tasarım kitabı
 
+## EO-05 takip — Merchant hedefi, kota hesabı ve güvenilir scope, 27 Ekim 2026
+
+#215 main'dedir. Mevcut products/v1 listelemesi kota transport'unda ayrı aile olarak tanındı; Ads hesabı/sürümü, hedef Merchant ve kimlik doğrulamanın kullandığı gerçek kota hesabı ayrı tutulur. Opsiyonel güvenilir Merchant context hedef/pool/sürüm/epoch olmadan çağrı çıkmaz; Ads bütçesine fallback yoktur. Eski Ads/OAuth route anahtarları korunur; background pin Merchant değişimini de engeller. 35 yeni ve 243 mevcut sentetik test geçti. Yeni envanter mevcut SQL'de yok; 14 inceleme kapısında hazırlanacak, gerçek pool/limit/profil ve constructor kabulü açık. Sentetik test native kanıt değildir. EO-04 tarihsel kabulü ve PMax duraklaması değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Google_Merchant_identity_quota_2026_10_27` ve Execution Plan.
+
 ## EO-05 takip — Meta kimlik çağrılarında native kota sınırı, 27 Ekim 2026
 
 #214 main'dedir. Ad/AdSet/creative/product-set/catalog products için beş kesin HTTP ailesi mevcut kota resolver'ına eklendi; numerik object ID hesap yerine kullanılmaz. Gerçek owner profili olmadan çağrı çıkmaz; limit/policy oluşturulmadı. Native Meta koleksiyonları sentetik scope/profile store ve gerçek ortak guard ile her HTTP/sayfa için ayrı debit/settlement sınandı. Rezervasyon/dispatch kontrolü sırasında iptal HTTP'den önce `not_sent` ile sonuçlanır. 30 yeni ve 149 mevcut sentetik test geçti. Bu, production constructor/gerçek kota kabulü değildir; Google Merchant/Shopify Admin/Klaviyo bağlama ve sipariş okuyucusu açık, 11 ve 14 kapıları korunur. EO-04 tarihsel kabulü ve PMax duraklaması değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Meta_identity_quota_families_2026_10_27` ve Execution Plan.

@@ -5,6 +5,8 @@ import {createGoogleCandidateSourceRuleLoader, verifyGoogleMerchantSourceCandida
 import {readMerchantProductIdentitySnapshot, matchMerchantProductIdentity} from "../app/lib/providers/google-product-identity-reader.server.js";
 import {oauthPermissionScopes} from "../app/lib/oauth/oauth-permission-profile.server.js";
 import {createQuotaManagedFetch, quotaBoundaryControl} from "../app/lib/refresh/quota-native-fetch.server.js";
+import {createQuotaScopeResolver, quotaRouteIdentity} from "../app/lib/refresh/quota-scope-resolver.server.js";
+import {createSharedQuotaGuard} from "../app/lib/refresh/shared-quota.server.js";
 
 const workspace = "11111111-1111-4111-8111-111111111111", connection = "22222222-2222-4222-8222-222222222222",
   credential = "33333333-3333-4333-8333-333333333333";
@@ -319,4 +321,65 @@ test("deadline: stalled Shopify Admin and JSON stop before final native link", a
 test("deadline: pre-aborted caller makes no SQL, vault or provider request", async () => {
   const f = fixture(), caller = new AbortController(); caller.abort(); f.options.signal = caller.signal;
   await assert.rejects(f.run(), /IDENTITY_READ_ABORTED/); assert.equal(f.queries.length, 0); assert.equal(f.calls.length, 0);
+});
+
+function quotaFixture() {
+  const f = fixture(), native = f.options.fetchFn, metadata = [], reservations = [], settles = [], stops = [], lookups = [], q = {};
+  const c = {provider: "google_ads", clientScopeKey: "a".repeat(64), connectionScopeKey: "b".repeat(64), connectionEpoch: 1,
+    accountId: "123", organizationId: null, apiVersion: "v25",
+    merchant: {targetAccountId: "99", quotaAccountId: "98", apiVersion: "products/v1", bindingEpoch: 1}};
+  const configured = new Set([quotaRouteIdentity(c, {provider: "google_ads", family: "reporting_query", accountId: "123", organizationId: null, version: "v25", includes: []}).routeKey,
+    quotaRouteIdentity(c, {provider: "google_ads", family: "merchant_products", accountId: "99", organizationId: null, version: "products/v1", includes: []}).routeKey]);
+  const store = {resolveRoute: async x => {lookups.push(x); return configured.has(x.routeKey) && x.routeKey !== q.missingKey ? x.routeKey : null;},
+    reserve: async x => {reservations.push(x); if (q.waitAt === reservations.length) return {status: "waiting"};
+      const r = {...x, status: "reserved", dispatchBeforeMs: Date.now() + 10000, dispatchBudgetMs: 10000}; q.reserved?.(); return r;},
+    settle: async x => {settles.push(x); return true;}, stop: async x => {stops.push(x); return true;}};
+  const resolve = createQuotaScopeResolver({loadContext: async () => c, store});
+  f.options.fetchFn = createQuotaManagedFetch({provider: "google_ads", lane: "background", guard: createSharedQuotaGuard({store, now: Date.now}),
+    resolveOperation: async d => {metadata.push(d); return resolve(d);}, isDispatchCurrent: async (d, k) => await resolve(d) === k,
+    fetchFn: async (...args) => {const r = await native(...args); return new Response(JSON.stringify(await r.json()), {status: r.status, headers: {"content-type": "application/json"}});}});
+  return {...f, c, q, metadata, reservations, settles, stops, lookups};
+}
+test("Merchant quota integration: native Ads link/Merchant/link debits correct separate routes per HTTP", async () => {
+  const f = quotaFixture(); const r = await f.run(); assert.equal(r.persistable, false);
+  assert.equal(f.calls.length, 3); assert.equal(f.reservations.length, 3); assert.equal(f.settles.length, 3);
+  assert.deepEqual(f.metadata.map(d => [d.family, d.accountId, d.version]),
+    [["reporting_query", "123", "v25"], ["merchant_products", "99", "products/v1"], ["reporting_query", "123", "v25"]]);
+  assert.equal(f.reservations[0].operationKey, f.reservations[2].operationKey);
+  assert.notEqual(f.reservations[0].operationKey, f.reservations[1].operationKey);
+  assert.ok(f.lookups.every(x => Object.keys(x).sort().join(",") === "connectionScopeKey,provider,routeKey"));
+  assert.doesNotMatch(JSON.stringify([f.metadata, f.lookups, f.reservations]), /secret-access|secret-developer|SELECT|shopify_US|pageToken/);
+});
+test("Merchant quota integration: empty intermediate page makes another quota reservation", async () => {
+  const f = quotaFixture(); f.hooks.fetch = p => p.hostname === "merchantapi.googleapis.com" && !p.searchParams.has("pageToken") && response({nextPageToken: "next"});
+  assert.equal((await f.run()).native_source.pages, 2); assert.equal(f.reservations.length, 4); assert.equal(f.calls.length, 4);
+});
+test("Merchant quota integration: missing binding or target mismatch stops before Merchant HTTP", async () => {
+  for (const change of [c => {delete c.merchant;}, c => {c.merchant.targetAccountId = "100";}]) {
+    const f = quotaFixture(); change(f.c);
+    await assert.rejects(f.run(), e => quotaBoundaryControl(e)?.status === "not_configured");
+    assert.equal(f.calls.length, 1); assert.equal(f.metadata[0].family, "reporting_query");
+  }
+});
+test("Merchant quota integration: wait before Merchant preserves previous Ads attempt without retry", async () => {
+  const f = quotaFixture(); f.q.waitAt = 2;
+  await assert.rejects(f.run(), e => quotaBoundaryControl(e)?.status === "waiting" && quotaBoundaryControl(e).priorBoundaryAttempts === 1);
+  assert.equal(f.calls.length, 1); assert.equal(f.stops.length, 0);
+});
+test("Merchant quota integration: quota pool or binding epoch drift after reserve settles without Merchant send", async () => {
+  for (const change of [c => {c.merchant.quotaAccountId = "97";}, c => {c.merchant.bindingEpoch++;}]) {
+    const f = quotaFixture(); f.q.reserved = () => {if (f.reservations.length === 2) change(f.c);};
+    await assert.rejects(f.run(), e => quotaBoundaryControl(e)?.status === "not_sent");
+    assert.equal(f.calls.length, 1); assert.equal(f.reservations.length, 2); assert.equal(f.settles.length, 2);
+  }
+});
+test("Merchant quota integration: missing owner profile does not fall back to Ads operation", async () => {
+  const f = quotaFixture(); f.q.missingKey = quotaRouteIdentity(f.c,
+    {provider: "google_ads", family: "merchant_products", accountId: "99", organizationId: null, version: "products/v1", includes: []}).routeKey;
+  await assert.rejects(f.run(), e => quotaBoundaryControl(e)?.status === "not_configured"); assert.equal(f.calls.length, 1); assert.equal(f.reservations.length, 1);
+});
+test("Merchant quota integration: first Merchant provider rejection records stop with no Ads quota signal", async () => {
+  const f = quotaFixture(); f.hooks.fetch = p => p.hostname === "merchantapi.googleapis.com" && response({error: {code: 429, status: "RESOURCE_EXHAUSTED", message: "SECRET"}}, 429);
+  await assert.rejects(f.run()); assert.equal(f.calls.length, 2); assert.equal(f.stops.length, 1);
+  assert.equal(f.stops[0].quotaSignal, null); assert.equal(f.stops[0].quotaObservation, undefined); assert.doesNotMatch(JSON.stringify(f.stops), /SECRET/);
 });

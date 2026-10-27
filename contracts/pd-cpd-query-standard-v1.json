@@ -38,6 +38,7 @@
     "Meta_identity_quota_families": "contracts/eo-05-start-brief-v1.json#Meta_identity_quota_families_2026_10_27",
     "Google_Merchant_identity_quota": "contracts/eo-05-start-brief-v1.json#Google_Merchant_identity_quota_2026_10_27",
     "Klaviyo_identity_quota_constructor": "contracts/eo-05-start-brief-v1.json#Klaviyo_identity_quota_constructor_2026_10_27",
+    "Meta_identity_quota_constructor": "contracts/eo-05-start-brief-v1.json#Meta_identity_quota_constructor_2026_10_27",
     "repository_scope_preflight_prepared": true,
     "Shopify_current_grant_reader_prepared": true,
     "source_reader_or_role_or_dataset_acceptance": false,

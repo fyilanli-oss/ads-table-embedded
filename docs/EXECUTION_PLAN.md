@@ -1,5 +1,17 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## 7. adım — Meta kimlik credential yeniden incelemesi, 27 Ekim 2026
+
+#192 `807408603484578555fc8700eb50f9cfa420d07d` ile main'dedir. Sonraki repository dilimi Meta kimlik OAuth dönüşünde `identity_v1` amacını şifreli credential'a kaydeder. Bekleyen hesap seçimi, bekleyen Reporting Account seçimi ve bağlı hesap yeniden doğrulaması bu credential için önce tek native token incelemesi yapar. Token geçerliliği, aynı uygulamaya ait oluşu, gerçek güncel scope dizisindeki bütün gerekli izinler ve token/veri erişim süreleri doğrulanır. Önceki scope listesi veya eski kontrol tarihi yeni grant kanıtı sayılmaz.
+
+Meta'da eski izinlerin varlığı akış amacını ispatlamaz: işaretsiz eski token reporting olarak kalır, fazladan katalog izniyle kimlik yetkisine yükseltilmez. Bilinmeyen amaç reddedilir. Bu dilimde canlı identity profili açılmamıştır; ileride identity aktivasyonu işaretli credential ve taze native kanıt gerektirecektir. Reporting akışının native çağrıları korunur; bekleyen Reporting Account ekranı yalnız mağaza/nesle bağlı vault okuması ekler.
+
+İzin eksikse, token geçersizse veya ilk provider hatası oluşursa hesap okuması/seçim yazması durur. Otomatik token exchange, tekrar deneme veya yeniden yetkilendirme başlatılmaz. Native `0` süre sınırsız olarak değerlendirilir; mevcut uygulamanın sınırlı süre politikası gereği en az bir pozitif bitiş zamanı gerekir. Bozuk süre alanları reddedilir. Hesap keşfi kanıtının bitişi native token/veri erişim süresi ve incelemeden sonraki 10 dakika ile sınırlanır; keşif uzayıp kanıt eskirse seçim yazılmaz. Çıktı yalnız izin adları, kontrol zamanı ve süreyi içerir; token, kullanıcı veya granular hedef kimlikleri içermez.
+
+35 yeni davranış testi altı akışta yeniden inceleme, kaldırılan izin, farklı uygulama, süreler, eski scope'a güvenmeme, ilk hata durması ve reporting davranışının korunmasını kapsar. Bu sentetik HTTP/DB testleri gerçek mağaza izni veya katalog varlığına erişim kabulü değildir. UI/route, canlı provider/token/config, SQL/migration, Dataset ve tarihsel PMax değişmez. **7. adım açık:** güvenilir sunucu aktivasyonu/yeniden izin politikası, Merchant/katalog varlık yetkisi, belirsiz Google credential yazmasının uzlaştırılması, Shopify config/grant dönüşü, incelemeler ve gerçek mağaza izin testleri kalır.
+
+Resmî kontrol 27 Ekim 2026: [Meta token inceleme referansı](https://developers.facebook.com/docs/graph-api/reference/debug_token/) web okuyucuda erişilemedi; Meta'nın kendi [güncel belgesi](https://github.com/facebook/agentic-tools/blob/main/plugins/devtools/skills/debug-access-token/SKILL.md) ve [yayımladığı örnek kod](https://github.com/facebook/agentic-tools/blob/main/plugins/devtools/skills/debug-access-token/scripts/debug_token_probe.py) okundu. Örnek çalıştırılmadı, canlı token alınmadı. Makine kaydı: `contracts/eo-05-start-brief-v1.json#Meta_identity_credential_reinspection_2026_10_27`.
+
 ## 7. adım — Google kimlik credential yenilemesi, 27 Ekim 2026
 
 #191 `438bf5f8960cc2e25d4b6202a580cc1b1bf9b426` ile main'dedir. Bu repository dilimi Google `identity_v1` token'ına şifreli zarf içinde izin amacı, gerçek grant kapsamı, veriliş ve mutlak bitiş zamanını ekler. Kayıt okunduğunda zaman yeniden başlatılmaz. Süre dolmuşsa veya 60 saniye kalmışsa bağlı hesapta Ads çağrısından önce tek yenileme yapılır. Yeni gerçek token yanıtında Ads ve Merchant izinleri birlikte bulunmalıdır; eski scope listesiyle eksik grant tamamlanmaz.

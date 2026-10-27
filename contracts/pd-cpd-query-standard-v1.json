@@ -9,6 +9,8 @@
     "request_and_callback_binding": "contracts/eo-05-start-brief-v1.json#identity_OAuth_scope_binding_2026_10_27",
     "request_and_callback_binding_merged": "PR191_438bf5f8960cc2e25d4b6202a580cc1b1bf9b426",
     "Google_identity_credential_lifecycle": "contracts/eo-05-start-brief-v1.json#Google_identity_credential_lifecycle_2026_10_27",
+    "Google_identity_credential_lifecycle_merged": "PR192_807408603484578555fc8700eb50f9cfa420d07d",
+    "Meta_identity_credential_reinspection": "contracts/eo-05-start-brief-v1.json#Meta_identity_credential_reinspection_2026_10_27",
     "repository_scope_preflight_prepared": true,
     "Shopify_current_grant_reader_prepared": true,
     "source_reader_or_role_or_dataset_acceptance": false,

@@ -21,6 +21,7 @@
     "Google_Ads_Merchant_link_composition": "contracts/eo-05-start-brief-v1.json#Google_Ads_Merchant_link_composition_2026_10_27",
     "Google_source_rule_Shopify_candidate_verification": "contracts/eo-05-start-brief-v1.json#Google_source_rule_Shopify_candidate_verification_2026_10_27",
     "Meta_catalog_source_reader": "contracts/eo-05-start-brief-v1.json#Meta_catalog_source_reader_2026_10_27",
+    "Meta_AdSet_catalog_reference_composition": "contracts/eo-05-start-brief-v1.json#Meta_AdSet_catalog_reference_composition_2026_10_27",
     "repository_scope_preflight_prepared": true,
     "Shopify_current_grant_reader_prepared": true,
     "source_reader_or_role_or_dataset_acceptance": false,

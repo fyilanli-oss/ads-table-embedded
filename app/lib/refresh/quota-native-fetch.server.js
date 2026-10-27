@@ -3,6 +3,23 @@ import {quotaResponseFeedback} from "./quota-response-feedback.server.js";
 import {googleQuotaObservation} from "./google-quota-observation.server.js";
 const controls=new WeakMap();
 const managed=new WeakSet();
+const metaIdentityFields = Object.freeze([
+  ["identity_ad", "id,account_id,campaign_id,adset_id,creative"],
+  ["identity_adset", "id,account_id,promoted_object"],
+  ["identity_adset", "id,account_id,promoted_object,campaign_id"],
+  ["identity_creative", "id,account_id,product_set_id"],
+  ["identity_product_set", "id,product_catalog"],
+  ["catalog_products", "id,retailer_id,retailer_product_group_id,product_catalog,product_feed"],
+].map(([family, fields]) => Object.freeze([family, fields.split(",").sort().join(",")])));
+function metaIdentityFamily(url, catalog, init) {
+  const allowed = catalog ? ["fields", "appsecret_proof", "limit", "after"] : ["fields", "appsecret_proof"];
+  if (init?.body != null || [...url.searchParams.keys()].some(k => !allowed.includes(k) || url.searchParams.getAll(k).length !== 1)) return null;
+  const fields = (url.searchParams.get("fields") ?? "").split(",");
+  if (fields.some(f => !/^[a-z_]+$/.test(f)) || new Set(fields).size !== fields.length
+    || catalog && url.searchParams.get("limit") !== "100") return null;
+  const key = fields.sort().join(","), selected = metaIdentityFields.find(([, expected]) => expected === key)?.[0];
+  return catalog ? selected === "catalog_products" ? selected : null : selected === "catalog_products" ? null : selected;
+}
 function control(status,priorBoundaryAttempts=null) {
   const error=new Error(status==="waiting"?"SHARED_QUOTA_WAITING":"SHARED_QUOTA_NOT_DISPATCHED");
   controls.set(error,Object.freeze({status,boundaryExternalOutcome:"not_sent",priorBoundaryAttempts}));
@@ -27,6 +44,13 @@ function descriptor(provider,input,init) {
     const common=path.match(/^\/(v[0-9]+\.[0-9]+)\/(oauth\/access_token|debug_token|me\/adaccounts|me\/permissions)$/);
     if(common&&((common[2]==="me/permissions"&&method==="DELETE")||(common[2]!=="me/permissions"&&["GET","POST"].includes(method)))) {
       version=common[1];family=({"oauth/access_token":"token","debug_token":"token_debug","me/adaccounts":"account_discovery","me/permissions":"revoke"})[common[2]];
+    }
+    const identity = path.match(/^\/(v[0-9]+\.[0-9]+)\/[1-9][0-9]{0,29}(\/products)?$/);
+    if (identity && method === "GET") {
+      family = metaIdentityFamily(url, Boolean(identity[2]), init);
+      version = identity[1];
+      // Graph object/catalog IDs are NOT ad-account IDs. Current account/client scope
+      // must still come from the trusted context loader and approved operation profile.
     }
   } else if(provider==="google_ads") {
     if(url.origin==="https://oauth2.googleapis.com"&&method==="POST"&&["/token","/revoke"].includes(path)) family=path==="/token"?"token":"revoke";
@@ -73,7 +97,11 @@ export function createQuotaManagedFetch({provider,guard,resolveOperation,isDispa
     let response,rejected=false,quotaSignal=null,quotaObservation=null;
     let result;
     try {result=await guard.execute({operationKey,lane,
-      ...(isDispatchCurrent?{beforeDispatch:()=>isDispatchCurrent(metadata,operationKey)}:{}),run:async()=>{
+      beforeDispatch:async()=>{
+        if(closed||requestInit.signal?.aborted) return false;
+        const current=isDispatchCurrent?await isDispatchCurrent(metadata,operationKey):true;
+        return current===true&&!closed&&!requestInit.signal?.aborted;
+      },run:async()=>{
       // No silent redirect: credentials cannot move to another target or bypass a second debit.
       if(closed||requestInit.signal?.aborted) throw Error("QUOTA_NATIVE_DISPATCH_CLOSED");
       attempts++;

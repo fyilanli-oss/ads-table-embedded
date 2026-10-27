@@ -513,6 +513,7 @@ export function normalizeKlaviyoOrderedProductEvent(event) {
   for (const key of [
     "ProductID",
     "VariantID",
+    "Variant ID",
     "SKU",
     "ProductName",
     "Name",
@@ -524,8 +525,15 @@ export function normalizeKlaviyoOrderedProductEvent(event) {
       ? Object.freeze({state: "present", value: properties[key]})
       : Object.freeze({state: "absent", value: null});
   }
+  let metricId = null;
+  if (Object.hasOwn(value.relationships ?? {}, "metric")) {
+    const metric = value.relationships.metric?.data;
+    if (metric?.type !== "metric") fail("KLAVIYO_EVENT_METRIC_REFERENCE_INVALID", "Klaviyo event metric reference is invalid");
+    metricId = text(metric.id, "KLAVIYO_EVENT_METRIC_REFERENCE_INVALID", 256);
+  }
   return Object.freeze({
     provider_event_id: text(value.id, "KLAVIYO_EVENT_ID_REQUIRED", 256),
+    provider_metric_id: metricId,
     provider_event_uuid: optionalText(attributes.uuid, "KLAVIYO_EVENT_UUID_INVALID", 256),
     occurred_at: text(attributes.datetime, "KLAVIYO_EVENT_DATETIME_REQUIRED", 128),
     provider_product_properties: Object.freeze(observed),

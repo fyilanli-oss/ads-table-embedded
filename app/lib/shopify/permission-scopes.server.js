@@ -1,4 +1,5 @@
-import {permissionContext} from "../oauth/identity-permission-preflight.server.js";
+import {permissionContext, identityPermissionRequirements, assessIdentityPermissionScopes} from "../oauth/identity-permission-preflight.server.js";
+import {createShopifyRuntimeRepositories} from "../database/shopify-runtime-repositories.server.js";
 
 export const SHOPIFY_PERMISSION_SCOPES_QUERY = `#graphql
   query AdsTablePermissionScopes {
@@ -60,4 +61,47 @@ export async function readShopifyPermissionScopes({context: rawContext, admin, n
     observedAt: startedAt.toISOString(), complete: true,
     appInstallationId: installation.id, scopes: Object.freeze(scopes),
   });
+}
+
+// verified is the server result of Shopify authentication and installation resolution.
+// This function compares scopes; it does not authorize product/order reads.
+export async function inspectShopifyIdentityPermissionScopes({
+  verified, database, includeOrderHistory = false, includeMarketingEvents = false,
+  now = () => new Date(),
+} = {}) {
+  const owner = verified?.installationAuthority;
+  const identity = verified?.identity;
+  if (owner?.authority !== "shopify_installation_verified" || owner.status !== "active"
+    || identity?.session?.authority !== "shopify_id_token_verified"
+    || identity?.shop?.authority !== "shopify_admin_verified") {
+    throw new Error("SHOPIFY_PERMISSION_VERIFIED_CALLER_REQUIRED");
+  }
+  const context = permissionContext({provider: "shopify", workspaceId: owner.workspaceId,
+    installGeneration: owner.installGeneration, shopId: identity.shop.shopId,
+    shopDomain: identity.shop.myshopifyDomain});
+  if (identity.session.shopDomain !== context.shopDomain) {
+    throw new Error("SHOPIFY_PERMISSION_VERIFIED_CALLER_MISMATCH");
+  }
+  const admin = verified?.context?.admin;
+  if (typeof admin?.graphql !== "function") throw new TypeError("AUTHENTICATED_SHOPIFY_ADMIN_REQUIRED");
+  identityPermissionRequirements({provider: "shopify", includeOrderHistory, includeMarketingEvents});
+  const installation = createShopifyRuntimeRepositories(database).installation;
+  const assertCurrent = async () => {
+    let current;
+    try {
+      current = await installation.resolveActive({shopId: context.shopId, shopDomain: context.shopDomain});
+    } catch {
+      throw new Error("SHOPIFY_PERMISSION_INSTALLATION_READ_FAILED");
+    }
+    if (current.status !== "active" || current.workspaceId !== context.workspaceId
+      || current.installGeneration !== context.installGeneration) {
+      throw new Error("SHOPIFY_PERMISSION_INSTALLATION_CHANGED");
+    }
+  };
+  await assertCurrent();
+  const evidence = await readShopifyPermissionScopes({context, admin, now});
+  await assertCurrent();
+  const assessment = assessIdentityPermissionScopes({context, evidence,
+    includeOrderHistory, includeMarketingEvents, now});
+  return Object.freeze({context, evidence, assessment});
 }

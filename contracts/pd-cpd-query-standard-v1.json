@@ -13,6 +13,8 @@
     "Meta_identity_credential_reinspection": "contracts/eo-05-start-brief-v1.json#Meta_identity_credential_reinspection_2026_10_27",
     "Meta_identity_credential_reinspection_merged": "PR193_33783ecfa06f50010be648a651d31e3c35d78e90",
     "identity_OAuth_start_connection_binding": "contracts/eo-05-start-brief-v1.json#identity_OAuth_start_connection_binding_2026_10_27",
+    "identity_OAuth_start_connection_binding_merged": "PR194_f80cc9dd82141eb21c55623be464e1b4ccf6a210",
+    "Shopify_active_installation_scope_readback": "contracts/eo-05-start-brief-v1.json#Shopify_active_installation_scope_readback_2026_10_27",
     "repository_scope_preflight_prepared": true,
     "Shopify_current_grant_reader_prepared": true,
     "source_reader_or_role_or_dataset_acceptance": false,

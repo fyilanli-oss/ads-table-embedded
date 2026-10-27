@@ -24,7 +24,7 @@
     "google_pd_source_composition": "merged_PR185_f01d31ee7f741e70513bfe96e8750d4f405580a5",
     "klaviyo_pd_source_composition": "merged_PR186_99f6474bc49ff70a084ca5916bc3631f05187ba1",
     "pd_canonical_bridge": "merged_PR187_5657ce49c2c93b4d018c4606e08134a311754c33",
-    "current_slice": "ordered_step_12_Shopify_Admin_point_budget_receipt_and_requested_cost_overrun_prepared_SQL_issuance_profiles_and_global_installation_open",
+    "current_slice": "ordered_step_12_shared_read_HTTP_attempt_accounting_prepared_composite_activation_and_durable_partial_continuation_open",
     "permission_preflight": "merged_PR190_ee28856c1260dffd18725eeb85718d195a5ce3de_not_live",
     "identity_OAuth_scope_binding": "merged_PR191_438bf5f8960cc2e25d4b6202a580cc1b1bf9b426_not_live",
     "Google_identity_credential_lifecycle": "merged_PR192_807408603484578555fc8700eb50f9cfa420d07d_not_live",
@@ -58,13 +58,51 @@
     "Shopify_Admin_identity_quota_boundary": "merged_PR220_8446a98faf8acf358feee909a7349f8ed6d1c3bc_not_live_or_full_step_12_complete",
     "Shopify_Admin_SDK_quota_bridge": "merged_PR221_b1d991455fa0d2990c676bc81e626bf5069ec960_not_live_or_full_step_12_complete",
     "Shopify_Admin_fenced_identity_client": "merged_PR222_93bb2ec1ab653c068057d14d547c5caa576c878b_not_live_or_full_step_12_complete",
-    "Shopify_Admin_cost_budget_receipt": "repository_prepared_in_current_PR_not_merged_live_or_full_step_12_complete",
+    "Shopify_Admin_cost_budget_receipt": "merged_PR223_ad90bb36e6bcffde44af6169c1a6af7dee18c421_not_live_or_full_step_12_complete",
+    "shared_quota_read_execution": "repository_prepared_in_current_PR_not_merged_live_or_full_step_12_complete",
     "Shopify_sales_attribution_decision": "contracts/pd-cpd-query-standard-v1.json#shopify_order_attribution_decision_2026_10_27",
     "planning_and_identity_PR179": "open_not_merged_or_live",
     "provider_activation": false,
     "identity_pause_before_step_12": true,
     "historical_PMax_pause_preserved": true,
     "package_complete": false
+  },
+  "shared_quota_read_execution_2026_10_27": {
+    "ordered_plan_step": 12,
+    "status": "prepared_internal_shared_data_read_attempt_ledger_not_composite_factory_activation_or_durable_continuation",
+    "runtime": [
+      "app/lib/refresh/quota-native-fetch.server.js"
+    ],
+    "purpose": "a_later_Admin_wait_after_provider_HTTP_is_NOT_whole_read_not_sent_and_cannot_authorize_first_page_replay",
+    "construction": "explicit_createQuotaReadExecution_returns_frozen_opaque_WeakMap_handle_optional_internal_transport_readExecution_rejects_copies_JSON_and_Partner_entitlement",
+    "authority": "attempt_accounting_only_NOT_permission_owner_scope_cost_budget_SQL_receipt_or_persistable_execution_identity_each_transport_still_requires_own_real_guard_and_scope_resolver",
+    "count": "monotonic_safe_integer_increment_immediately_before_physical_fetch_including_throw_rejected_malformed_response_never_resolver_lookup_or_reservation_count",
+    "scope": "same_handle_from_first_HTTP_of_one_data_read_all_provider_and_Admin_child_transports_separate_Partner_entitlement_and_independent_reads_not_combined",
+    "lifecycle": "shared_wait_or_failure_seals_all_children_before_late_lookup_reservation_pre_dispatch_or_run_can_send_known_native_error_seals_before_async_stop_finishes",
+    "concurrency": "already_sent_calls_remain_counted_and_settle_existing_quota_outcome_success_after_shared_seal_is_not_published_no_rollback_abort_or_rate_refund_claim",
+    "wait_receipt": "existing_authentic_control_error_identity_preserved_for_SDK_with_whole_read_attempt_snapshot_only_real_wait_zero_can_yield_existing_single_use_work_wait_receipt",
+    "SDK": "real_installed_React_Router_Admin_SDK_tests_preserve_shared_provider_prefix_attempts_and_true_first_wait_no_auth_recovery_or_retry",
+    "legacy": "absent_handle_retains_per_transport_counter_and_existing_native_error_handlers_and_zero_argument_other_provider_guard_behavior",
+    "activation": "strong_fenced_factories_still_reject_caller_readExecution_no_automatic_merge_of_Partner_and_provider_boundaries_no_global_SDK_hook_or_provider_candidate_mode_opened",
+    "remaining": [
+      "trusted_composite_factory_creates_one_handle_before_any_data_HTTP_and_wires_every_child_after_existing_Admin_SQL_hook_profile_gates",
+      "verified_durable_partial_continuation_checkpoint_design_no_automatic_replay_of_prior_HTTP",
+      "existing_step14_Admin_SQL_context_cost_receipt_feedback_stop_and_Merchant_inventory_review",
+      "real_source_namespace_permissions_Order_reader_and_prewrite_gates"
+    ],
+    "new_synthetic_tests": 27,
+    "existing_regressions": 662,
+    "total_relevant_tests": 689,
+    "repository_controls": 7,
+    "typecheck_passed": true,
+    "official_check_date": "2026-10-27",
+    "sources": [
+      "https://github.com/Shopify/shopify-app-js/blob/main/packages/apps/shopify-api/runtime/http/index.ts"
+    ],
+    "new_SQL_migration_live_DB_provider_token_config_Dataset_or_role_mutation": false,
+    "route_or_existing_reporting_runtime_activated": false,
+    "step_12_complete": false,
+    "historical_PMax_pause_preserved": true
   },
   "Shopify_Admin_cost_budget_receipt_2026_10_27": {
     "ordered_plan_step": 12,

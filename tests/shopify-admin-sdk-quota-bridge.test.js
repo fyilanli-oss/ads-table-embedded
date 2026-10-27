@@ -4,7 +4,7 @@ import "@shopify/shopify-api/adapters/node";
 import {shopifyApi,ApiVersion,LogSeverity,Session} from "@shopify/shopify-api";
 import {abstractFetch,setAbstractFetchFunc} from "@shopify/shopify-api/runtime";
 import {createShopifyAdminIdentitySdkBridge} from "../app/lib/refresh/shopify-admin-sdk-quota-bridge.server.js";
-import {createQuotaManagedFetch,quotaBoundaryControl} from "../app/lib/refresh/quota-native-fetch.server.js";
+import {createQuotaManagedFetch,createQuotaReadExecution,quotaBoundaryControl} from "../app/lib/refresh/quota-native-fetch.server.js";
 import {createSharedQuotaGuard} from "../app/lib/refresh/shared-quota.server.js";
 import {createQuotaScopeResolver,quotaRouteIdentity} from "../app/lib/refresh/quota-scope-resolver.server.js";
 import {SHOPIFY_PRODUCT_CANDIDATE_QUERIES as queries,verifyShopifyProductCandidate} from "../app/lib/shopify/product-identity-verification.server.js";
@@ -22,7 +22,7 @@ const api=shopifyApi({apiKey:"a".repeat(32),apiSecretKey:"b".repeat(32),hostName
 const variables={productId:"gid://shopify/Product/10",variantId:"gid://shopify/ProductVariant/20"};
 const shop={authority:"shopify_admin_verified",shopId:"gid://shopify/Shop/12",myshopifyDomain:"test.myshopify.com"};
 const installation={authority:"shopify_installation_verified",workspaceId:"11111111-1111-4111-8111-111111111111",installGeneration:3,status:"active"};
-function fixture({bridge=createShopifyAdminIdentitySdkBridge(),domain=shop.myshopifyDomain}={}) {
+function fixture({bridge=createShopifyAdminIdentitySdkBridge(),domain=shop.myshopifyDomain,readExecution}={}) {
   setAbstractFetchFunc(bridge.fetch);
   const q={costBudget:{unit:"shopify_admin_query_points",reservedRequestedCost:10}},calls=[],reservations=[],settles=[],stops=[],feedback=[],auth=[],logs=[];
   const context={provider:"shopify_admin",clientScopeKey:"a".repeat(64),connectionScopeKey:"b".repeat(64),connectionEpoch:3,
@@ -35,7 +35,7 @@ function fixture({bridge=createShopifyAdminIdentitySdkBridge(),domain=shop.mysho
     settle:async x=>{settles.push(x);return true;},stop:async x=>{stops.push(x);return true;},
     recordFeedback:async x=>{feedback.push(x);return !q.feedbackFailure;}};
   const resolve=createQuotaScopeResolver({store,loadContext:async()=>context});
-  const transport=createQuotaManagedFetch({provider:"shopify_admin",lane:"background",guard:createSharedQuotaGuard({store,now:Date.now}),
+  const transport=createQuotaManagedFetch({provider:"shopify_admin",readExecution,lane:"background",guard:createSharedQuotaGuard({store,now:Date.now}),
     resolveOperation:resolve,isDispatchCurrent:async(d,k)=>await resolve(d)===k,
     fetchFn:async(endpoint,init)=>{calls.push({endpoint,init});await q.native?.(init);if(q.throw)throw Error("SECRET-NATIVE");
       return new Response(JSON.stringify(q.payload??{data:{shop:{id:shop.shopId,myshopifyDomain:domain},product:{id:variables.productId,legacyResourceId:"10"},
@@ -75,6 +75,29 @@ test("native SDK quota wait survives SDK error wrapping as exact genuine boundar
   assert.equal(quotaBoundaryControl(error)?.status,"waiting");assert.equal(quotaBoundaryControl(error)?.priorBoundaryAttempts,0);
   const claim={workspaceId:installation.workspaceId,installGeneration:"3",provider:"meta",accountId:"act_1",id:"job1",fence:1};
   assert.equal(refreshQuotaWait(error,"provider_page",claim)?.status,"quota_waiting");assert.equal(f.calls.length,0);assert.equal(f.auth.length,0);
+});
+
+test("real SDK preserves shared provider-prefix attempts when its separate Admin transport waits",async()=>{
+  const execution=createQuotaReadExecution();let sent=0;
+  const provider=createQuotaManagedFetch({provider:"meta",readExecution:execution,lane:"background",resolveOperation:async()=>"a".repeat(64),
+    guard:{execute:async({run})=>({status:"returned",value:(await run()).value})},fetchFn:async()=>{sent++;return Response.json({});}});
+  await provider("https://graph.facebook.com/v24.0/act_1/insights");
+  const f=fixture({readExecution:execution});f.q.waitAt=1;const client=f.wrap();let error;
+  try{await f.read(client);}catch(e){error=e;}
+  assert.equal(quotaBoundaryControl(error)?.status,"waiting");assert.equal(quotaBoundaryControl(error)?.priorBoundaryAttempts,1);
+  const claim={workspaceId:installation.workspaceId,installGeneration:"3",provider:"meta",accountId:"act_1",id:"job1",fence:1};
+  assert.equal(refreshQuotaWait(error,"provider_page",claim),null);assert.equal(sent,1);assert.equal(f.calls.length,0);assert.equal(f.auth.length,0);
+  await assert.rejects(provider("https://graph.facebook.com/v24.0/act_1/insights"));assert.equal(sent,1);
+  await assert.rejects(f.read(client),/EXECUTION_CLOSED/);
+});
+
+test("real SDK first shared wait still has zero attempts and closes every sibling transport",async()=>{
+  const execution=createQuotaReadExecution(),f=fixture({readExecution:execution});f.q.waitAt=1;
+  let error;try{await f.read(f.wrap());}catch(e){error=e;}
+  assert.equal(quotaBoundaryControl(error)?.priorBoundaryAttempts,0);
+  let lookedUp=0;const provider=createQuotaManagedFetch({provider:"meta",readExecution:execution,lane:"background",
+    resolveOperation:async()=>{lookedUp++;return "a".repeat(64);},guard:{execute(){}},fetchFn:async()=>assert.fail()});
+  await assert.rejects(provider("https://graph.facebook.com/v24.0/act_1/insights"));assert.equal(lookedUp,0);
 });
 test("native SDK missing quota profile never dispatches",async()=>{
   const f=fixture();f.q.missing=true;await assert.rejects(f.read(f.wrap()),e=>quotaBoundaryControl(e)?.status==="not_configured");
@@ -264,7 +287,7 @@ test("fenced Admin: timeout at work context cannot reserve or dispatch on late r
   assert.equal(f.calls.length,0);assert.equal(f.reservations.length,0);await assert.rejects(f.read(client),/EXECUTION_CLOSED/);
 });
 test("fenced Admin cost: budget cannot be supplied by constructor or request override",async()=>{
-  for(const key of ["costBudget","requiredCostUnit"]){const f=boundFixture();f.boundConfig[key]={unit:"shopify_admin_query_points",reservedRequestedCost:999};assert.throws(f.create,/INPUT_INVALID/);}
+  for(const key of ["costBudget","requiredCostUnit","readExecution"]){const f=boundFixture();f.boundConfig[key]={unit:"shopify_admin_query_points",reservedRequestedCost:999};assert.throws(f.create,/INPUT_INVALID/);}
 });
 test("fenced Admin cost: missing atomic receipt stops before physical SDK HTTP",async()=>{
   const f=boundFixture();delete f.q.costBudget;const client=f.create();

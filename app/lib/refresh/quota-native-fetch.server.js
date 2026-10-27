@@ -5,6 +5,14 @@ import {shopifyAdminIdentityFamily,shopifyAdminCostFeedback} from "./shopify-adm
 import {SHOPIFY_ADMIN_COST_UNIT} from "./shared-quota.server.js";
 const controls=new WeakMap();
 const managed=new WeakMap();
+const readExecutions=new WeakMap();
+// One data-read boundary only. This is attempt accounting, NOT quota/owner authority.
+// Never share with the separate Partner entitlement boundary or serialize for replay.
+export function createQuotaReadExecution() {
+  const execution=Object.freeze({});
+  readExecutions.set(execution,{attempts:0,closed:false});
+  return execution;
+}
 // Brand proves only this local transport construction, never authority or configured limits.
 export function isQuotaManagedFetchForProvider(value,provider) {return managed.get(value)===provider;}
 const metaIdentityFields = Object.freeze([
@@ -90,12 +98,20 @@ function descriptor(provider,input,init) {
   return Object.freeze({provider,family,accountId,organizationId,version,includes:Object.freeze([...new Set(includes)])});
 }
 
-export function createQuotaManagedFetch({provider,guard,resolveOperation,isDispatchCurrent,lane,fetchFn=globalThis.fetch}) {
+export function createQuotaManagedFetch({provider,guard,resolveOperation,isDispatchCurrent,lane,fetchFn=globalThis.fetch,readExecution}) {
   if(!["shopify_partner","shopify_admin","meta","google_ads","klaviyo"].includes(provider)||typeof guard?.execute!=="function"||typeof resolveOperation!=="function"
-    ||!["interactive","background"].includes(lane)||typeof fetchFn!=="function"||managed.has(fetchFn)) throw new Error("QUOTA_NATIVE_TRANSPORT_INPUT_INVALID");
+    ||!["interactive","background"].includes(lane)||typeof fetchFn!=="function"||managed.has(fetchFn)
+    ||readExecution!==undefined&&(!readExecutions.has(readExecution)||provider==="shopify_partner")) throw new Error("QUOTA_NATIVE_TRANSPORT_INPUT_INVALID");
+  const shared=readExecutions.get(readExecution);
   let attempts=0,closed=false;
+  const count=()=>shared?.attempts??attempts;
+  const isClosed=()=>closed||shared?.closed===true;
+  const seal=()=>{if(shared)shared.closed=true;};
   const fetchManaged=async(input,init={})=>{
-    if(closed) throw control("not_configured",attempts);
+    let abortSignal;
+    const onAbort=()=>seal();
+    try {
+    if(isClosed()) throw control("not_configured",count());
     // Copy mutable URL/header/form objects BEFORE awaiting resolver or quota persistence.
     let requestUrl,requestInit;
     try {
@@ -107,24 +123,30 @@ export function createQuotaManagedFetch({provider,guard,resolveOperation,isDispa
     } catch {throw control("not_configured");}
     const metadata=descriptor(provider,requestUrl,requestInit);
     if(requestInit.signal?.aborted) throw control("not_sent");
+    if(shared&&requestInit.signal) {
+      abortSignal=requestInit.signal;
+      abortSignal.addEventListener("abort",onAbort,{once:true});
+    }
     let operationKey;
     try {operationKey=await resolveOperation(metadata);} catch {throw control("not_configured");}
     if(!/^[a-f0-9]{64}$/.test(operationKey??"")) throw control("not_configured");
-    if(closed||requestInit.signal?.aborted) throw control("not_sent",attempts);
+    if(isClosed()||requestInit.signal?.aborted) throw control("not_sent",count());
     let response,rejected=false,quotaSignal=null,quotaObservation=null,adminPayload,costBudgetExceeded=false;
     let result;
     try {result=await guard.execute({operationKey,lane,...provider==="shopify_admin"?{requiredCostUnit:SHOPIFY_ADMIN_COST_UNIT}:{},
       beforeDispatch:async()=>{
-        if(closed||requestInit.signal?.aborted) return false;
+        if(isClosed()||requestInit.signal?.aborted) return false;
         const current=isDispatchCurrent?await isDispatchCurrent(metadata,operationKey):true;
-        return current===true&&!closed&&!requestInit.signal?.aborted;
+        return current===true&&!isClosed()&&!requestInit.signal?.aborted;
       },run:async(requestedCostCeiling)=>{
       // No silent redirect: credentials cannot move to another target or bypass a second debit.
-      if(closed||requestInit.signal?.aborted) throw Error("QUOTA_NATIVE_DISPATCH_CLOSED");
+      if(isClosed()||requestInit.signal?.aborted) throw Error("QUOTA_NATIVE_DISPATCH_CLOSED");
       if(provider==="shopify_admin"&&(!Number.isSafeInteger(requestedCostCeiling)||requestedCostCeiling<1))throw Error("QUOTA_NATIVE_COST_BUDGET_REQUIRED");
-      attempts++;
+      if(count()>=Number.MAX_SAFE_INTEGER) {seal();throw Error("QUOTA_NATIVE_ATTEMPT_COUNT_EXHAUSTED");}
+      if(shared)shared.attempts++;else attempts++;
+      try {
       response=await fetchFn(requestUrl,requestInit);
-      if(!response||typeof response.ok!=="boolean"||typeof response.json!=="function") return {outcome:"unknown"};
+      if(!response||typeof response.ok!=="boolean"||typeof response.json!=="function") {seal();return {outcome:"unknown"};}
       rejected=!response.ok;
       if((response.headers?.get?.("content-type")??"").includes("json")) {
         try {
@@ -143,14 +165,20 @@ export function createQuotaManagedFetch({provider,guard,resolveOperation,isDispa
       const feedback=provider==="shopify_admin"?shopifyAdminCostFeedback(response.status,adminPayload):quotaResponseFeedback(metadata,response);
       if(provider==="shopify_admin"&&["shopify_admin_cost_observed","shopify_admin_cost_partial"].includes(feedback.kind)) {
         costBudgetExceeded=feedback.requestedQueryCost>requestedCostCeiling;
-        if(costBudgetExceeded){rejected=true;closed=true;}
+        if(costBudgetExceeded){rejected=true;closed=true;seal();}
       }
       // Admin success needs a complete native cost observation; missing/invalid is never zero.
       if(provider==="shopify_admin"&&feedback.kind!=="shopify_admin_cost_observed")rejected=true;
+      if(rejected)seal();
       return rejected?{outcome:"rejected",connectionFailure:[401,403].includes(response.status),quotaSignal,feedback,quotaObservation,
         ...costBudgetExceeded?{costBudgetExceeded:true}:{}}:{outcome:"success",value:response,feedback};
+      } catch(error) {seal();throw error;}
     }});} catch {throw new Error("QUOTA_NATIVE_TRANSPORT_UNAVAILABLE");}
-    if(result?.status==="returned") return result.value;
+    if(result?.status==="returned") {
+      if(shared?.closed)throw new Error("QUOTA_NATIVE_TRANSPORT_STOPPED");
+      return result.value;
+    }
+    seal();
     if(result?.status==="stopped"&&result.stopRecorded===true&&costBudgetExceeded)throw new Error("QUOTA_NATIVE_COST_BUDGET_EXCEEDED");
     // Keep native HTTP 401/403/429 handlers, but only AFTER the quota stop persists.
     // The native parser owns the unchanged response; its body never enters quota persistence.
@@ -160,11 +188,23 @@ export function createQuotaManagedFetch({provider,guard,resolveOperation,isDispa
     }
     if(["waiting","not_configured","clock_invalid","already_reserved","not_sent"].includes(result?.status)) {
       // A first-boundary wait terminates this execution's transport, including pending concurrent entries.
-      if(result.status==="waiting"&&attempts===0) closed=true;
-      throw control(result.status,attempts);
+      if(result.status==="waiting"&&count()===0) closed=true;
+      throw control(result.status,count());
     }
     // Unknown external execution must never be misclassified as a proven-not-sent wait.
     throw new Error("QUOTA_NATIVE_TRANSPORT_STOPPED");
+    } catch(error) {
+      seal();
+      // Preserve the authentic error identity through SDK wrappers; update its
+      // immutable receipt to the whole read's physical attempts, never caller JSON.
+      if(shared&&controls.has(error)) {
+        const proof=controls.get(error);
+        controls.set(error,Object.freeze({...proof,priorBoundaryAttempts:count()}));
+      }
+      throw error;
+    } finally {
+      abortSignal?.removeEventListener("abort",onAbort);
+    }
   };
   managed.set(fetchManaged,provider);
   return fetchManaged;

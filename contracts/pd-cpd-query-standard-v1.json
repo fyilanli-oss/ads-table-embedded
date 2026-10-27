@@ -33,6 +33,7 @@
     "Google_source_rule_candidate_composition": "contracts/eo-05-start-brief-v1.json#Google_source_rule_candidate_composition_2026_10_27",
     "Meta_native_identity_collection": "contracts/eo-05-start-brief-v1.json#Meta_native_identity_collection_2026_10_27",
     "Meta_source_rule_candidate_composition": "contracts/eo-05-start-brief-v1.json#Meta_source_rule_candidate_composition_2026_10_27",
+    "Meta_report_candidate_bridge": "contracts/eo-05-start-brief-v1.json#Meta_report_candidate_bridge_2026_10_27",
     "repository_scope_preflight_prepared": true,
     "Shopify_current_grant_reader_prepared": true,
     "source_reader_or_role_or_dataset_acceptance": false,

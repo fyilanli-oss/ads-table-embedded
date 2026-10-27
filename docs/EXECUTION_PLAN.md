@@ -1,5 +1,21 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## 9. adım — Meta rapor kimliği ve retailer kaynak kuralını Shopify aday doğrulamasına bağlama, 27 Ekim 2026
+
+#202 `07f6c81e8d7c297ae51ddd7ffe67e3d364df86a8` main'dedir. `resolveMetaProductIdentity` katalog kaydını #199 ortak Shopify ürün/varyant–ana ürün doğrulayıcısına bağlamaya hazırlanır. Mevcut 9. adım ve 11'in ortak bağımlılığıdır; yeni iş numarası veya production varsayımı oluşturmaz.
+
+İki bağımsız sunucu kuralı gerekir. `loadReportIdentityRule`, mevcut `ad_product_breakdown_daily_insights` ailesi, Graph sürümü, hesap/kurulum/bağlantı, katalog ve açık `catalog_product_id`/`retailer_id` namespace'i için kanıtlı `verified_report_identity_rule` döndürmelidir. Gerçek rapor kaynak referansı ayrıca taşınır. Bu kural yoksa kaynak biçimi kuralı aranmaz ve Shopify çağrısı yapılmaz. Katalogda aynı sayısal değerin bulunması veya biçimin Shopify'a benzemesi rapor namespace'ini kanıtlamaz.
+
+İkinci `loadSourceRule`, tam provider scope + katalog/feed + Shopify mağazası için kanıtlı kaynak biçimini verir. Bu kural yoksa kimlik parçalanmaz. Aday **yalnız seçilen kaydın `retailer_id` alanından** çıkarılır; Meta katalog iç ID'si ve retailer grup kimliği Shopify ID yerine kullanılamaz. Native rapor ürün kimliği, açık namespace ve katalog/feed bağlamı taslak anahtarında korunur. Yanlış namespace veya farklı bağlama ait kuralda alternatif kimlik araması yapılmaz. Kaynak kaydı belirsiz/gözlenmemişse kaynak biçimi/Shopify çağrısı gerekmez; bu sonuç rapor namespace'i doğrulandıktan sonra anlamlandırılır.
+
+Google ve Meta'nın aday çıkarma ve kaynak kuralı kapsam kontrolleri `catalog-shopify-candidate.server.js` içinde paylaşılır. Önceden koşullu desteklenen Product ID, Variant ID ve market+Product+Variant biçimleri değişmez; yeni evrensel format eklenmez. Google'ın provider scope'u, hata sınıfı/kodları ve kaynak sözleşmesi korunur; Meta, Google scope'una çevrilmez. Mevcut Shopify doğrulayıcısı tek `tries: 1` sorgusuyla mağaza, GID/legacy kimlik, varyant ve ana ürünü denetler. Null ve parent çelişkisi taşınır; ilk hata, iptal veya kural yükleme hatasında retry/fallback yoktur.
+
+Sonuç `candidate_verified_source_and_shop` durumundaki yerel taslaktır; canonical `verified` veya kalıcı eşleme değildir. `persistable=false`, `provider_link_verified=false`, `authorizes_activation=false`, `mapping_write_performed=false` korunur. #202'nin native Ad referansı kanıtı kendiliğinden devralınmaz; güncel lifecycle/vault, Ad referansı, kaynak kuralları ve Shopify/Admin yükleyicisi tek çalıştırmada mevcut 11. adımda birleştirilecektir. Bu dilimde production rapor namespace'i veya kaynak biçimi kuralı kaydedilmedi; gerçek kanıt açık kalır.
+
+30 yeni ve 83 mevcut Google/Shopify/Meta okuyucu testi sentetik verilerle geçti. Route, canlı provider çağrısı, token/config, SQL, tablo, Dataset veya Sales Role/metrik sorgusu değişmedi. 7/8/9/11 tamamlanmaz; 10 Klaviyo kimliği, 12 quota/dispatch/timeout, 13 yazım öncesi ve 14 değerlendirme kapıları korunur. Tarihsel PMax duraklaması sürer.
+
+Resmî kontrol 27 Ekim 2026: [Meta ProductItem alanları/tipleri](https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/productitem.py), [Shopify ProductVariant/ana ürün ve kimlik alanları](https://shopify.dev/docs/api/admin-graphql/2026-07/objects/ProductVariant), [UnsignedInt64](https://shopify.dev/docs/api/admin-graphql/2026-07/scalars/UnsignedInt64). Bu alan tanımları rapor namespace'i veya Shopify entegrasyon biçiminin kanıtı değildir. Makine kaydı: `contracts/eo-05-start-brief-v1.json#Meta_source_rule_Shopify_candidate_resolution_2026_10_27`.
+
 ## 9. adım — Meta Ad kanalının hiyerarşi ve creative katalog referansları, 27 Ekim 2026
 
 #201 `9ce54805d4fa348ce7bdb3b24010b8b1fc46ba81` main'dedir. `readMetaAdCatalogReference` Ad'in native `id/account_id/campaign_id/adset_id/creative` alanlarını okur. Seçili hesap, Campaign ve Ad Set sunucu bağlamıyla aynı olmalıdır. #201 Ad Set okuyucusu, Campaign istenmişse onun kimliğini de native alandan karşılaştırır. Creative'in kendi ID/hesabı da Ad referansı ve seçili hesapla karşılaştırılır; başka hesaptan creative kabul edilmez.

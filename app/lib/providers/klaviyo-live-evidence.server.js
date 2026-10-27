@@ -23,6 +23,7 @@ const SALES_ROLES = Object.freeze([
 const PRODUCT_FIELDS = Object.freeze([
   "ProductID",
   "VariantID",
+  "Variant ID",
   "SKU",
   "ProductName",
   "Name",

@@ -4,6 +4,17 @@
   "status": "accepted_product_owner_repository_runtime_authorized",
   "accepted_at": "2026-10-17",
   "api_revision": "2026-10-15",
+  "identity_candidate_preparation_2026_10_27": {
+    "authority": "contracts/eo-05-start-brief-v1.json#Klaviyo_product_identity_candidates_2026_10_27",
+    "native_event_metric_reference": "preserve_provider_metric_id_if_present_missing_remains_null_not_filled_from_request_filter",
+    "variant_observations": ["VariantID", "Variant ID"],
+    "documented_Ordered_Product_variant_property": "Variant ID",
+    "legacy_VariantID_only": "source_evidence_required_no_alias_guess",
+    "safe_summary": "Variant_ID_presence_counts_only_no_raw_values",
+    "existing_message_attribution_roles_and_amounts": "unchanged",
+    "new_resolver_route_or_runtime_activated": false,
+    "historical_EO04_acceptance_changed": false
+  },
   "pd_alignment": {
     "checked_at": "2026-10-23",
     "inventory_items": ["13", "14"],

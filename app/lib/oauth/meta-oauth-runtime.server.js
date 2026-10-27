@@ -23,6 +23,7 @@ import {
   readMetaOAuthConfig,
   revokeMetaAuthorization,
 } from "../providers/meta-graph.server.js";
+import {createIdentityOAuthAuthorization} from "./identity-oauth-authorization.server.js";
 
 const PROVIDER = "meta";
 const MAX_SELECTION = 3;
@@ -69,16 +70,19 @@ export function createMetaOAuthRuntime({
   fetchFn = fetch,
   now = () => new Date(),
   randomUUIDFn = randomUUID,
+  identityAuthorizationEnabled = false,
 } = {}) {
   const config = readMetaOAuthConfig(environment);
+  const lifecycle = createProviderConnectionLifecycle({database, now});
+  const identityAuthorization = createIdentityOAuthAuthorization({lifecycle, enabled: identityAuthorizationEnabled});
   const oauthBoundary = createOAuthTransactionBoundary({
     repository: createOAuthTransactionRepository(database),
     verifierVault: tokenVault,
     now,
+    identityStartGuard: identityAuthorization.beforeStart,
   });
   const selections = createMetaAccountSelectionRepository(database);
   const accountAuthority = createProviderAccountAuthorityRepository(database);
-  const lifecycle = createProviderConnectionLifecycle({database, now});
 
   async function inspectIdentityCredential(stored) {
     if (stored.permission_profile === undefined || stored.permission_profile === "reporting_v1") return null;
@@ -208,6 +212,9 @@ export function createMetaOAuthRuntime({
 
       let credential = null;
       try {
+        if (claimed.permissionProfile === "identity_v1") {
+          await identityAuthorization.beforeCallback({installationAuthority: owner, provider: PROVIDER, binding: claimed.identityBinding});
+        }
         const exchanged = await exchangeAndValidateMetaAuthorizationCode({
           config,
           authorizationCode: claimed.authorizationCode,
@@ -229,6 +236,9 @@ export function createMetaOAuthRuntime({
           fetchFn,
           now,
         });
+        if (claimed.permissionProfile === "identity_v1") {
+          await identityAuthorization.beforeCallback({installationAuthority: owner, provider: PROVIDER, binding: claimed.identityBinding});
+        }
         const staged = await selections.stage({
           connectionId: randomUUIDFn(),
           workspaceId: owner.workspaceId,

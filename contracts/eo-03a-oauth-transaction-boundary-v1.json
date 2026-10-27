@@ -14,6 +14,19 @@
     "default_profile": "reporting_v1",
     "identity_profile_enabled_in_current_routes": false
   },
+  "EO05_identity_connection_binding_addendum_2026_10_27": {
+    "authority": "contracts/eo-05-start-brief-v1.json#identity_OAuth_start_connection_binding_2026_10_27",
+    "identity_start_requires_server_guard": true,
+    "runtime_guard_default": "disabled",
+    "state_binding": "initial_or_exact_connection_UUID_and_version_in_full_state_digest",
+    "unbound_identity_callback": "rejected",
+    "original_random_state_entropy_bits": 256,
+    "callback_binding_usable_after_atomic_claim_only": true,
+    "reporting_state_and_existing_nonce_PKCE_TTL": "preserved",
+    "database_schema_changed": false,
+    "atomic_transaction_claim_is_atomic_connection_stage": false,
+    "live_identity_activation": false
+  },
   "parent": "A6-EO-03",
   "package": "A6-EO-03-A",
   "authoritative_sources": {

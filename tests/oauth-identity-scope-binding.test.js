@@ -33,14 +33,14 @@ function boundary(provider) {
   const vault = {async assertReady() {}, async store(id, v) {values.set(id, v);},
     async take(id) {calls.push("take"); const v = values.get(id); values.delete(id); return v;}, async remove(id) {values.delete(id);}};
   let n = 0;
-  return {api: createOAuthTransactionBoundary({repository: repo, verifierVault: vault, now, randomBytesFn: size => Buffer.alloc(size, ++n)}),
+  return {api: createOAuthTransactionBoundary({repository: repo, verifierVault: vault, now, identityStartGuard: async () => ({connectionId: null, version: null}), randomBytesFn: size => Buffer.alloc(size, ++n)}),
     calls, saved: () => saved};
 }
 for (const provider of ["google_ads", "meta"]) {
   test(`${provider}: identity purpose survives full digest claim and keeps original 32-byte state entropy`, async () => {
     const h = boundary(provider);
     const start = await h.api.begin({provider, installationAuthority: owner, permissionProfile: "identity_v1"});
-    assert.match(start.state, /^[A-Za-z0-9_-]{43}\.identity-v1$/);
+    assert.match(start.state, /^[A-Za-z0-9_-]{43}\.identity-v1\.initial$/);
     assert.equal(start.permissionProfile, "identity_v1");
     assert.deepEqual(h.saved().stateDigest, createHash("sha256").update(start.state, "ascii").digest());
     assert.equal("permissionProfile" in h.saved(), false); assert.equal("state" in h.saved(), false);
@@ -61,7 +61,7 @@ for (const provider of ["google_ads", "meta"]) {
     const h = boundary(provider);
     const start = await h.api.begin({provider, installationAuthority: owner});
     assert.equal(start.state.length, 43); assert.equal("permissionProfile" in start, false);
-    await assert.rejects(h.api.claimCallback({provider, state: start.state + ".identity-v1", code: "code"}), /OAUTH_TRANSACTION_MISSING/);
+    await assert.rejects(h.api.claimCallback({provider, state: start.state + ".identity-v1.initial", code: "code"}), /OAUTH_TRANSACTION_MISSING/);
     const result = await h.api.claimCallback({provider, state: start.state, code: "code", permissionProfile: "identity_v1"});
     assert.equal("permissionProfile" in result, false);
   });
@@ -159,6 +159,7 @@ test("invalid exchange profiles and provider errors cannot trigger fallback or a
 function runtimeHarness(provider, granted) {
   const calls = []; let stageScopes = null;
   const database = {async query(sql, values) {
+    if (sql.includes("load_provider_connection_lifecycle_by_owner")) return {rows: []};
     if (sql.includes("stage_provider_account_selection")) {calls.push("stage"); stageScopes = values[4];
       return {rows: [{connection_id: txn, connection_version: 1, lifecycle_status: "pending_account_selection", credential_id: uuid, granted_scopes: values[4]}]};}
     if (sql.includes("complete_oauth_transaction")) {calls.push(values[1]); return {rows: [{transaction_id: txn, transaction_status: values[1]}]};}
@@ -182,10 +183,10 @@ function runtimeHarness(provider, granted) {
   };
   const environment = provider === "google_ads" ? {GOOGLE_ADS_OAUTH_CLIENT_ID: "client", GOOGLE_ADS_OAUTH_CLIENT_SECRET: "secret", GOOGLE_ADS_OAUTH_REDIRECT_URI: OAUTH_CALLBACK_URIS.google_ads}
     : {META_APP_ID: "123", META_APP_SECRET: "secret", META_GRAPH_VERSION: "v26.0", META_OAUTH_REDIRECT_URI: OAUTH_CALLBACK_URIS.meta};
-  const runtime = (provider === "google_ads" ? createGoogleOAuthRuntime : createMetaOAuthRuntime)({database, tokenVault, environment, fetchFn, now, randomUUIDFn: () => txn});
+  const runtime = (provider === "google_ads" ? createGoogleOAuthRuntime : createMetaOAuthRuntime)({database, tokenVault, environment, fetchFn, now, randomUUIDFn: () => txn, identityAuthorizationEnabled: true});
   return {runtime, calls, stageScopes: () => stageScopes, requestCount: () => requestCount};
 }
-const claimed = {status: "claimed", workspaceId: uuid, installGeneration: 1, transactionId: txn, authorizationCode: "code", pkceVerifier: "verifier", permissionProfile: "identity_v1"};
+const claimed = {status: "claimed", workspaceId: uuid, installGeneration: 1, transactionId: txn, authorizationCode: "code", pkceVerifier: "verifier", permissionProfile: "identity_v1", identityBinding: {connectionId: null, version: null}};
 for (const provider of ["google_ads", "meta"]) {
   test(`${provider}: incomplete consent fails before credential storage or account discovery`, async () => {
     const granted = provider === "google_ads" ? oauthPermissionScopes(provider)[0] : ["ads_read"];

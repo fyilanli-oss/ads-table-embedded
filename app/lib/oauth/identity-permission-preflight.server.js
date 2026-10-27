@@ -102,7 +102,7 @@ function normalizedScopes(value) {
   return new Set(value);
 }
 
-// Diagnostic only: matching scope strings do not grant asset access or authorize activation.
+// Scope comparison only: matching strings do not grant asset access or authorize activation.
 export function assessIdentityPermissionScopes({
   context: rawContext, evidence = null, includeOrderHistory = false, includeMarketingEvents = false,
   now = () => new Date(),
@@ -116,7 +116,7 @@ export function assessIdentityPermissionScopes({
     missingScopes: missingScopes === null ? null : Object.freeze(missingScopes),
     satisfiedBy: Object.freeze(satisfiedBy),
     additionalChecks: requirements.additionalChecks,
-    // Not a capability token, app-review proof, verified asset binding or live acceptance.
+    // Not a capability token, app-review proof, verified asset binding or live readiness.
     authorizesActivation: false,
   });
   if (evidence === null || evidence === undefined) return result("unknown", "not_observed");

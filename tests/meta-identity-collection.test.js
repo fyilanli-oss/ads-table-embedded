@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {collectMetaNativeIdentityEvidence} from "../app/lib/providers/meta-identity-collection.server.js";
+import {collectMetaNativeIdentityEvidence, collectMetaVerifiedProductCandidateEvidence} from "../app/lib/providers/meta-identity-collection.server.js";
+import {createMetaCandidateSourceRuleLoader, verifyMetaCatalogSourceCandidates} from "../app/lib/providers/meta-source-candidates.server.js";
 import {readMetaCatalogIdentitySnapshot, matchMetaCatalogProductIdentity} from "../app/lib/providers/meta-catalog-identity-reader.server.js";
 import {readMetaAdCatalogReference} from "../app/lib/providers/meta-adset-catalog-reference.server.js";
 import {oauthPermissionScopes} from "../app/lib/oauth/oauth-permission-profile.server.js";
@@ -136,4 +137,176 @@ test("invalid config, targets and stored reporting-only credential fail before n
     f => {f.token.permission_profile = "reporting_v1";}]) {
     const f = fixture(); change(f); await assert.rejects(f.run()); assert.equal(f.calls.length, 0);
   }
+});
+
+function rule() {
+  return {state: "verified_source_rule", source_reference: "synthetic-reviewed-native-source-proof",
+    scope: {workspace_id: workspace, installation_generation: 3, provider_connection_id: connection, platform: "meta", platform_account_id: "act_123"},
+    product_context: {catalog_id: "456", product_feed_id: "100"}, shop_id: "gid://shopify/Shop/12",
+    format: "shopify_market_product_variant", market: "US"};
+}
+function candidateFixture() {
+  const f = fixture(), shopCalls = [], shopHooks = {};
+  f.options.sourceRules = [rule()];
+  f.options.verified.context.admin.graphql = async (query, options) => {
+    shopCalls.push({query, options}); const custom = await shopHooks.graphql?.(query, options); if (custom) return custom;
+    const p = options.variables.productId?.split("/").at(-1) ?? "10", v = options.variables.variantId?.split("/").at(-1);
+    return response({data: {shop: {id: "gid://shopify/Shop/12", myshopifyDomain: "test.myshopify.com"},
+      ...(options.variables.productId ? {product: {id: `gid://shopify/Product/${p}`, legacyResourceId: p}} : {}),
+      ...(v ? {productVariant: {id: `gid://shopify/ProductVariant/${v}`, legacyResourceId: v,
+        product: {id: `gid://shopify/Product/${p}`, legacyResourceId: p}}} : {})}});
+  };
+  return {...f, shopCalls, shopHooks, run: () => collectMetaVerifiedProductCandidateEvidence(f.options)};
+}
+function candidateOptions(f, source, sourceRules = createMetaCandidateSourceRuleLoader({rules: [rule()]})) {
+  return {source, ownerScope: rule().scope, context: {shop: f.options.verified.identity.shop,
+    installation: f.options.verified.installationAuthority, admin: f.options.verified.context.admin}, sourceRules};
+}
+test("candidate: empty default registry never parses retailer IDs or calls Shopify", async () => {
+  const f = candidateFixture(); delete f.options.sourceRules;
+  const r = await f.run(); assert.equal(f.shopCalls.length, 0); assert.equal(r.product_identity_candidates.candidates.length, 0);
+  assert.equal(r.product_identity_candidates.rows[0].product_identity_verification.reason, "verified_source_rule_required");
+});
+test("candidate: exact reviewed retailer rule and same-shop variant parent compose local evidence only", async () => {
+  const f = candidateFixture(), r = await f.run(), c = r.product_identity_candidates;
+  assert.equal(f.calls.length, 10); assert.equal(f.shopCalls.length, 1); assert.equal(f.shopCalls[0].options.tries, 1);
+  assert.deepEqual(f.shopCalls[0].options.variables, {productId: "gid://shopify/Product/10", variantId: "gid://shopify/ProductVariant/20"});
+  assert.equal(c.candidates[0].catalog_product_id, "900"); assert.equal(c.candidates[0].retailer_id, "shopify_US_10_20");
+  assert.equal(c.candidates[0].shopify_product_id, "gid://shopify/Product/10");
+  assert.equal(c.candidates[0].candidate_evidence.source_id_field, "retailer_id");
+  assert.equal(c.rows[0].standardized_product_id, null); assert.equal(c.mappings, undefined);
+  assert.equal(c.proves_Insights_identity_namespace, false); assert.equal(c.provider_link_verified, false);
+  assert.equal(r.provider_link_verified, true); assert.equal(r.proves_product_delivery_or_Insights_namespace, false);
+  assert.equal(r.canonical_scope_ready, false); assert.equal(r.installation_id, null); assert.equal(r.persistable, false);
+  assert.ok(Object.isFrozen(c.candidates[0].candidate_evidence));
+});
+for (const [name, mutate] of [["workspace", r => {r.scope.workspace_id = credential;}],
+  ["generation", r => {r.scope.installation_generation++;}], ["connection", r => {r.scope.provider_connection_id = credential;}],
+  ["provider", r => {r.scope.platform = "google_ads";}], ["account", r => {r.scope.platform_account_id = "act_124";}],
+  ["catalog", r => {r.product_context.catalog_id = "457";}], ["feed", r => {r.product_context.product_feed_id = "101";}],
+  ["shop", r => {r.shop_id = "gid://shopify/Shop/99";}], ["feed presence", r => {delete r.product_context.product_feed_id;}]]) {
+  test(`candidate: ${name} rule cannot match another native context`, async () => {
+    const f = candidateFixture(); mutate(f.options.sourceRules[0]);
+    if (name === "provider") await assert.rejects(f.run(), /SCOPE_INVALID/);
+    else assert.equal((await f.run()).product_identity_candidates.candidates.length, 0);
+    assert.equal(f.shopCalls.length, 0);
+  });
+}
+test("candidate: only retailer ID is parsed, never Meta internal ID or product group", async () => {
+  const f = candidateFixture(); f.native.products.data[0].id = "10"; f.native.products.data[0].retailer_id = "opaque-id";
+  f.native.products.data[0].retailer_product_group_id = "shopify_US_10_20";
+  const r = await f.run(); assert.equal(f.shopCalls.length, 0);
+  assert.equal(r.product_identity_candidates.rows[0].product_identity_verification.reason, "retailer_id_does_not_match_verified_rule");
+});
+test("candidate: market mismatch and variant zero do not authorize extraction", async () => {
+  for (const id of ["shopify_CA_10_20", "shopify_US_10_0"]) {
+    const f = candidateFixture(); f.native.products.data[0].retailer_id = id;
+    assert.equal((await f.run()).product_identity_candidates.candidates.length, 0); assert.equal(f.shopCalls.length, 0);
+  }
+});
+test("candidate: conflicting or malformed server rules stop before any native read", async () => {
+  for (const kind of ["duplicate", "evidence", "state"]) {
+    const f = candidateFixture();
+    if (kind === "duplicate") f.options.sourceRules.push(rule());
+    else if (kind === "evidence") f.options.sourceRules[0].source_reference = "";
+    else f.options.sourceRules[0].state = "proposed";
+    await assert.rejects(f.run(), /RULE_/); assert.equal(f.calls.length, 0); assert.equal(f.shopCalls.length, 0);
+  }
+});
+test("candidate: rules and authenticated Admin are captured before the first await", async () => {
+  const f = candidateFixture(); f.hooks.fetch = () => {
+    f.options.sourceRules[0].market = "CA";
+    f.options.verified.context.admin.graphql = () => {throw Error("retargeted");};
+  };
+  assert.equal((await f.run()).product_identity_candidates.candidates.length, 1); assert.equal(f.shopCalls.length, 1);
+});
+test("candidate: separate public modes ignore caller mode overrides", async () => {
+  const f = candidateFixture(); f.options.withShopify = true;
+  assert.equal((await collectMetaNativeIdentityEvidence(f.options)).product_identity_candidates, undefined); assert.equal(f.shopCalls.length, 0);
+  const g = candidateFixture(); g.options.withShopify = false;
+  assert.equal((await g.run()).product_identity_candidates.candidates.length, 1);
+});
+test("candidate: first Admin failure stops before final native reference with no retry", async () => {
+  const f = candidateFixture(); f.shopHooks.graphql = () => {throw Error("secret-native-admin");};
+  await assert.rejects(f.run(), e => e.message === "META_IDENTITY_COLLECTION_FAILED");
+  assert.equal(f.calls.length, 6); assert.equal(f.shopCalls.length, 1);
+});
+for (const [name, change] of [["connection", f => {f.state.version++;}], ["account", f => {f.state.account = "act_124";}],
+  ["credential", f => {f.token.access_token = "changed";}]]) test(`candidate: ${name} change during Admin rejects completed candidates`, async () => {
+  const f = candidateFixture(); f.shopHooks.graphql = () => {change(f);};
+  await assert.rejects(f.run()); assert.equal(f.calls.length, 6); assert.equal(f.shopCalls.length, 1);
+});
+test("candidate: final creative reference change rejects already checked Shopify candidates", async () => {
+  const f = candidateFixture(); f.hooks.fetch = (p, init, n) => n > 6 && p.pathname.endsWith("/99")
+    && response({id: "99", account_id: "123", product_set_id: null});
+  await assert.rejects(f.run(), /REFERENCE_CHANGED/); assert.equal(f.shopCalls.length, 1);
+});
+test("candidate: missing products and conflicting variant parents remain different states", async () => {
+  for (const wrongParent of [false, true]) {
+    const f = candidateFixture(); f.shopHooks.graphql = () => response({data: {shop: {id: "gid://shopify/Shop/12", myshopifyDomain: "test.myshopify.com"},
+      product: wrongParent ? {id: "gid://shopify/Product/10", legacyResourceId: "10"} : null,
+      productVariant: wrongParent ? {id: "gid://shopify/ProductVariant/20", legacyResourceId: "20",
+        product: {id: "gid://shopify/Product/11", legacyResourceId: "11"}} : null}});
+    const r = await f.run(); assert.equal(r.product_identity_candidates.rows[0].product_identity_verification.state, wrongParent ? "conflicting" : "unresolved");
+    assert.equal(r.product_identity_candidates.candidates.length, 0);
+  }
+});
+test("candidate: explicit product-only and variant-only rules reuse existing verification", async () => {
+  for (const format of ["shopify_product_id", "shopify_variant_id"]) {
+    const f = candidateFixture(); f.options.sourceRules[0].format = format; delete f.options.sourceRules[0].market;
+    f.native.products.data[0].retailer_id = "10";
+    const r = await f.run(); assert.equal(r.product_identity_candidates.candidates[0].shopify_product_id, "gid://shopify/Product/10");
+    assert.equal(f.shopCalls[0].options.variables[format === "shopify_product_id" ? "variantId" : "productId"], undefined);
+  }
+});
+test("candidate: same Shopify pair queried once while different feed records keep separate evidence", async () => {
+  const f = candidateFixture(), other = rule(); other.product_context.product_feed_id = "101"; other.source_reference = "second-feed-proof";
+  f.options.sourceRules.push(other); const p = structuredClone(f.native.products.data[0]); p.id = "901"; p.product_feed.id = "101";
+  f.native.products.data.push(p);
+  const c = (await f.run()).product_identity_candidates; assert.equal(f.shopCalls.length, 1); assert.equal(c.candidates.length, 2);
+  assert.notEqual(c.candidates[0].candidate_evidence.source_record_key, c.candidates[1].candidate_evidence.source_record_key);
+});
+test("candidate: absent feed matches only an explicit no-feed rule", async () => {
+  const f = candidateFixture(); delete f.native.products.data[0].product_feed; delete f.options.sourceRules[0].product_context.product_feed_id;
+  assert.equal((await f.run()).product_identity_candidates.candidates.length, 1);
+});
+test("candidate: arbitrary rule callback cannot replace factory-backed registry", async () => {
+  const f = candidateFixture(), source = (await collectMetaNativeIdentityEvidence(f.options)).native_source;
+  await assert.rejects(verifyMetaCatalogSourceCandidates(candidateOptions(f, source, {load: () => rule()})), /INPUT_INVALID/);
+  const loader = createMetaCandidateSourceRuleLoader({rules: [rule()]});
+  assert.throws(() => loader.load({...rule(), scope: {...rule().scope, installation_id: "99"}}), /SCOPE_INVALID/);
+});
+test("candidate: all raw record projections checked before first Admin read", async () => {
+  const f = candidateFixture(), source = structuredClone((await collectMetaNativeIdentityEvidence(f.options)).native_source);
+  for (const mutate of [r => {r.retailer_id = "other";}, r => {r.catalog_product_id = "901";},
+    r => {r.product_context.product_feed_id = "101";}, r => {r.product_context.catalog_id = "457";},
+    r => {delete r.source_record.product_feed;}, r => {r.key = "bad-key";}]) {
+    const input = structuredClone(source); mutate(input.records[0]);
+    await assert.rejects(verifyMetaCatalogSourceCandidates(candidateOptions(f, input)), /SOURCE_INVALID/);
+  }
+  const duplicate = structuredClone(source); duplicate.records.push(duplicate.records[0]);
+  await assert.rejects(verifyMetaCatalogSourceCandidates(candidateOptions(f, duplicate)), /SOURCE_INVALID/);
+  assert.equal(f.shopCalls.length, 0);
+});
+test("candidate: Admin abort and actual native permission expiry stop before final reference", async () => {
+  for (const mode of ["abort", "expiry"]) {
+    const f = candidateFixture(), controller = new AbortController(); f.options.signal = controller.signal;
+    f.native.debug_token.data.expires_at = f.state.now.valueOf() / 1000 + 60;
+    f.shopHooks.graphql = (q, o) => {assert.equal(o.signal, controller.signal);
+      if (mode === "abort") controller.abort(); else f.state.now = new Date("2026-10-27T15:01:00Z");};
+    await assert.rejects(f.run()); assert.equal(f.calls.length, 6); assert.equal(f.shopCalls.length, 1);
+  }
+});
+test("candidate: authentic quota control survives Admin verifier sanitization", async () => {
+  const managed = createQuotaManagedFetch({provider: "meta", guard: {execute: async () => ({status: "waiting"})},
+    resolveOperation: async () => "a".repeat(64), lane: "background", fetchFn: async () => {throw Error("must not send");}});
+  let control; try {await managed("https://graph.facebook.com/v26.0/debug_token");} catch (e) {control = e;}
+  assert.equal(quotaBoundaryControl(control).status, "waiting");
+  const f = candidateFixture(); f.shopHooks.graphql = () => {throw control;};
+  await assert.rejects(f.run(), e => e === control); assert.equal(f.calls.length, 6);
+});
+test("candidate: cancelled empty collection is not returned as accepted", async () => {
+  const f = fixture(), controller = new AbortController(); controller.abort();
+  await assert.rejects(verifyMetaCatalogSourceCandidates({...candidateOptions(f,
+    {complete: true, context: {catalog_id: "456", graph_version: "v26.0"}, records: []}), signal: controller.signal}), /ABORTED/);
 });

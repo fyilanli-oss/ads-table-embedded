@@ -1,5 +1,9 @@
 # EO-04 — Analiz ve tasarım kitabı
 
+## EO-05 takip — Meta katalog kuralı ve Shopify aday zinciri, 27 Ekim 2026
+
+#211 main'dedir. Yeni aday girişi mevcut native Meta/SQL/vault koleksiyonuna kanıtlı retailer kaynak kuralını ve shared Shopify ürün/varyant–ana ürün kontrolünü bağlar. Varsayılan registry boş, yalnız retailer_id koşullu parse edilir, her katalog/feed/mağaza bağlamı kesin eşleşir. Yeni katalog adayı Insights namespace seçmez; eski tam-PK resolver iki bağımsız kural kapısını korur. 30 yeni ve 239 mevcut Meta/Shopify/authority sentetik test geçti. Standart ürün/kurulum ID null ve kalıcı yazım/aktivasyon false; gerçek biçim/namespace/erişim, quota/yazım öncesi ve SQL/kalıcı eşleme kapıları açıktır. EO-04 tarihsel kabulü ve tarihsel PMax duraklaması değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Meta_source_rule_candidate_composition_2026_10_27` ve Execution Plan.
+
 ## EO-05 takip — Meta native kaynak ve somut yetki zinciri, 27 Ekim 2026
 
 #210 `d6645052745cfefb503390962d9dba76adfb3927` main'dedir. Meta token/Ad/AdSet/creative/katalog ürün okuması aynı somut SQL/vault authority zincirine bağlandı. Gerçek token scope'ları kullanılır; her çağrı öncesi/JSON sonrası authority ve koleksiyon sonunda aynı native referans denetlenir. Eski PK kapıları korunur; source-only çıktı kanonik eşleme değildir. 30 yeni ve 160 mevcut Meta/authority sentetik test geçti. Shopify kaynak kuralı/aday kompozisyonu, Insights namespace ve retailer biçimi, SQL/kalıcı mapping, quota ve gerçek kabul kapıları açıktır. Route/canlı çağrı/yazım yoktur; EO-04 tarihsel kabulü ve PMax duraklaması değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Meta_native_identity_collection_2026_10_27` ve Execution Plan.

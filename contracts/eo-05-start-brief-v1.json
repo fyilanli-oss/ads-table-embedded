@@ -11,7 +11,9 @@
     "composition_scope_guard": "merged_PR184_6d78fad994a61cdf0feca92654949ed6c6510bb9",
     "google_pd_source_composition": "merged_PR185_f01d31ee7f741e70513bfe96e8750d4f405580a5",
     "klaviyo_pd_source_composition": "merged_PR186_99f6474bc49ff70a084ca5916bc3631f05187ba1",
-    "current_slice": "pd_source_to_canonical_bridge_not_live_FX_or_dataset_write",
+    "pd_canonical_bridge": "merged_PR187_5657ce49c2c93b4d018c4606e08134a311754c33",
+    "current_slice": "accepted_Shopify_sales_attribution_decision_before_OAuth_preparation",
+    "Shopify_sales_attribution_decision": "contracts/pd-cpd-query-standard-v1.json#shopify_order_attribution_decision_2026_10_27",
     "planning_and_identity_PR179": "open_not_merged_or_live",
     "provider_activation": false,
     "identity_pause_before_step_12": true,
@@ -71,6 +73,16 @@
     {"id": "A6-EO-05-D", "scope": "yesterday_then_today_bootstrap_idempotent_upsert_reconciliation_and_reauthorization_gap_recovery"},
     {"id": "A6-EO-05-E", "scope": "secret_free_operational_capacity_freshness_and_failure_observability"}
   ],
+  "shopify_sales_attribution_work_order_2026_10_27": {
+    "authority": "explicit_owner_acceptance_of_independent_Shopify_sales_and_separate_attribution",
+    "decision": "contracts/pd-cpd-query-standard-v1.json#shopify_order_attribution_decision_2026_10_27",
+    "OAuth_preparation_includes": ["read_orders", "conditional_read_all_orders", "read_marketing_events_visibility_review", "protected_customer_data_review"],
+    "EO05B_includes": "order_line_identity_idempotency_refunds_sales_basis_and_separate_attribution_storage_design",
+    "EO05C_includes": "distinct_models_windows_readiness_and_maturity",
+    "live_scope_change_database_or_backfill_authorized": false,
+    "physical_table_count_selected": false,
+    "identity_pause_before_step_12_preserved": true
+  },
   "invariants": {
     "verified_install_generation_and_reporting_authority_required": true,
     "non_entitled_or_reauthorization_required_jobs_run": false,

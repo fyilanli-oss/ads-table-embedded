@@ -1,5 +1,9 @@
 # EO-04 — Analiz ve tasarım kitabı
 
+## EO-05 takip — Klaviyo native kimlik–Message kompozisyonu, 27 Ekim 2026
+
+#206 main'dedir. Yeni Message giriş noktası aynı SQL/vault/native hesap çalıştırmasında Campaign/Flow values kanallarını native Ordered Product event attribution'ına mevcut çözümleyiciyle bağlar. Placed Order rapor istatistikleri ürün satışı olarak kullanılmaz. Assisted/Triggered/Unclassified ve kapalı Advertised/Cross Sell kararı korunur. 19 yeni ve 132 mevcut sentetik test geçti. Native report tamamlanma biçimi, SQL PK/selection epoch ve Shopify Admin doğrulaması açık; route/canlı çağrı/yazım yoktur. EO-04 tarihsel kabulü değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Klaviyo_identity_Message_composition_2026_10_27` ve Execution Plan.
+
 ## EO-05 takip — Klaviyo native hesap/metric/event toplaması, 27 Ekim 2026
 
 #205 main'dedir. Yeni `klaviyo-identity-collection.server.js`, ortak SQL/vault yükleyicisiyle native hesabı önce/sonra ve event'in kendi Shopify Ordered Product metric bağını denetler. Kaynak projeksiyonunda ürün alanları ve attribution Message referansları korunur; müşteri/profile verisi döndürülmez. 38 yeni ve 94 mevcut sentetik test geçti. Shopify ürün doğrulaması ve Message Channel join'i, kurulum PK'si/Ads seçim epoch'u SQL arayüzü ile quota/dispatch/timeout kapıları açık kalır; route, canlı çağrı veya kalıcı eşleme yoktur. EO-04 tarihsel kabulü ve kapalı Klaviyo Advertised/Cross Sell değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Klaviyo_native_identity_collection_2026_10_27` ve Execution Plan.

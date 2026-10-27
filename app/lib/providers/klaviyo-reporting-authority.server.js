@@ -167,7 +167,8 @@ function normalizeAttributionResource(value) {
   });
 }
 
-function attachAttributionEvidence(events, included) {
+// Shared native-event normalization, also used by the prepared identity collector.
+export function attachAttributionEvidence(events, included) {
   const attributions = new Map();
   for (const item of included ?? []) {
     const normalized = normalizeAttributionResource(item);

@@ -26,7 +26,7 @@ function freeze(value) {
   }
   return value;
 }
-export function merchantIdentityReadScope(authority) {
+export function merchantIdentityScopeContext(authority) {
   if (authority?.platform !== "google_ads") fail("MERCHANT_IDENTITY_PROVIDER_INVALID");
   const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   for (const key of ["workspace_id", "provider_connection_id"]) {
@@ -37,12 +37,17 @@ export function merchantIdentityReadScope(authority) {
     || !Number.isSafeInteger(authority.installation_generation) || authority.installation_generation < 1) {
     fail("MERCHANT_IDENTITY_SCOPE_INVALID");
   }
-  if (!Array.isArray(authority.granted_scopes)
-    || !authority.granted_scopes.includes(GOOGLE_MERCHANT_OAUTH_SCOPE)) fail("MERCHANT_IDENTITY_SCOPE_MISSING");
   return {workspace_id: authority.workspace_id, installation_id: installationId,
     installation_generation: authority.installation_generation,
     provider_connection_id: authority.provider_connection_id, platform: "google_ads",
     platform_account_id: text(authority.platform_account_id)};
+}
+
+export function merchantIdentityReadScope(authority) {
+  const scope = merchantIdentityScopeContext(authority);
+  if (!Array.isArray(authority.granted_scopes)
+    || !authority.granted_scopes.includes(GOOGLE_MERCHANT_OAUTH_SCOPE)) fail("MERCHANT_IDENTITY_SCOPE_MISSING");
+  return scope;
 }
 
 // Server-only input context is not proof of account ownership or of an Ads-to-Merchant link.

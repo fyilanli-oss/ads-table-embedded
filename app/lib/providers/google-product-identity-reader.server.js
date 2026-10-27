@@ -50,11 +50,11 @@ export function merchantIdentityReadScope(authority) {
   return scope;
 }
 
-// Server-only input context is not proof of account ownership or of an Ads-to-Merchant link.
-export async function readMerchantProductIdentitySnapshot({authority, accessToken,
+// Native source observation only: no canonical installation scope or Shopify ID is emitted.
+// The composing server binds the credential and Ads/Merchant relationship separately.
+export async function readMerchantProductSourceSnapshot({merchantId, accessToken,
   fetchFn = fetch, maxPages = 100, maxRows = 10000, signal} = {}) {
-  const scope = merchantIdentityReadScope(authority);
-  const merchantId = numeric(authority.merchant_id);
+  numeric(merchantId);
   text(accessToken, "MERCHANT_IDENTITY_TOKEN_REQUIRED");
   if (typeof fetchFn !== "function" || !Number.isSafeInteger(maxPages) || maxPages < 1 || maxPages > 1000
     || !Number.isSafeInteger(maxRows) || maxRows < 1 || maxRows > 100000) fail("MERCHANT_IDENTITY_LIMIT_INVALID");
@@ -103,8 +103,18 @@ export async function readMerchantProductIdentitySnapshot({authority, accessToke
     if (cursors.has(pageToken)) fail("MERCHANT_IDENTITY_CURSOR_REPEATED");
     cursors.add(pageToken);
   }
-  return freeze({version: "1.0.0", scope, context: {merchant_id: merchantId}, complete: true,
-    pages, records, shopify_mapping_state: "not_resolved", authorizes_activation: false});
+  return freeze({version: "1.0.0", context: {merchant_id: merchantId}, complete: true,
+    pages, records, shopify_mapping_state: "not_resolved", authorizes_activation: false,
+    canonical_scope_ready: false, provider_link_verified: false, persistable: false});
+}
+
+// Existing canonical-scope entry point still validates PK and grant BEFORE native requests.
+export async function readMerchantProductIdentitySnapshot({authority, accessToken,
+  fetchFn = fetch, maxPages = 100, maxRows = 10000, signal} = {}) {
+  const scope = merchantIdentityReadScope(authority), merchantId = numeric(authority.merchant_id);
+  const source = await readMerchantProductSourceSnapshot({merchantId, accessToken, fetchFn, maxPages, maxRows, signal});
+  return freeze({version: "1.0.0", scope, context: source.context, complete: true,
+    pages: source.pages, records: source.records, shopify_mapping_state: "not_resolved", authorizes_activation: false});
 }
 
 // A unique source record still requires the later trusted source rule and Shopify verification.

@@ -1,5 +1,9 @@
 # EO-04 — Analiz ve tasarım kitabı
 
+## EO-05 takip — Meta native kaynak ve somut yetki zinciri, 27 Ekim 2026
+
+#210 `d6645052745cfefb503390962d9dba76adfb3927` main'dedir. Meta token/Ad/AdSet/creative/katalog ürün okuması aynı somut SQL/vault authority zincirine bağlandı. Gerçek token scope'ları kullanılır; her çağrı öncesi/JSON sonrası authority ve koleksiyon sonunda aynı native referans denetlenir. Eski PK kapıları korunur; source-only çıktı kanonik eşleme değildir. 30 yeni ve 160 mevcut Meta/authority sentetik test geçti. Shopify kaynak kuralı/aday kompozisyonu, Insights namespace ve retailer biçimi, SQL/kalıcı mapping, quota ve gerçek kabul kapıları açıktır. Route/canlı çağrı/yazım yoktur; EO-04 tarihsel kabulü ve PMax duraklaması değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Meta_native_identity_collection_2026_10_27` ve Execution Plan.
+
 ## EO-05 takip — Google kaynak kuralı ve Shopify aday zinciri, 27 Ekim 2026
 
 #209 main'dedir. Yeni candidate girişi aynı native Ads/Merchant/SQL/vault çalıştırmasında, tam bağlamına uyan sunucu kaynak kuralından sonra Shopify Product/Variant kontrolünü bağlar. Varsayılan registry boş; gerçek biçim kanıtı kaydedilmediğinden production'da kural yoksa parsing/API kontrolü yapılmaz. Owner+generation aday kapsamı kanonik PK kapsamı yerine kullanılamaz; eski resolver korunur. 31 yeni ve 204 mevcut sentetik test geçti. GID'ler yerel kanıt, standart satış/kurulum ID null, yazım/aktivasyon false kalır. EO-04 tarihsel kabulü değişmez; Meta, SQL/kalıcı mapping, quota ve gerçek kabul kapıları açıktır. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Google_source_rule_candidate_composition_2026_10_27` ve Execution Plan.

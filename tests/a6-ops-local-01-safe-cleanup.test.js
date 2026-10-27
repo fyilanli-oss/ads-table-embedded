@@ -19,9 +19,9 @@ test("opens one independent package without changing the EO plan", () => {
   assert.equal(master.counts.parent_packages, 10);
   assert.equal(master.counts.stable_child_packages, 43);
   assert.equal(master.counts.independent_operational_packages, 2);
-  assert.equal(master.current_active_parent, null);
+  assert.equal(master.current_active_parent, "A6-EO-05");
   assert.equal(master.current_active_child, null);
-  assert.equal(master.current_gate, "A6-EO-05_START_BRIEF_PENDING");
+  assert.equal(master.current_gate, "A6-EO-05_REPOSITORY_IMPLEMENTATION_IN_PROGRESS");
   assert.equal(master.next_ready_child, null);
   assert.notEqual(master.current_active_child, cleanup.id);
 });

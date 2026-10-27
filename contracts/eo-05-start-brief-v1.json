@@ -2,7 +2,18 @@
   "contract_id": "eo-05-start-brief-v1",
   "package_id": "A6-EO-05",
   "checked_at": "2026-10-20",
-  "status": "brief_prepared_product_owner_acceptance_pending",
+  "status": "scoped_repository_implementation_in_progress_live_gates_closed",
+  "repository_progress_2026_10_27": {
+    "owner_start_authorized": true,
+    "scope": "ordered_repository_remediation_with_existing_per_operation_gates",
+    "first_error_policy": "merged_PR182_114cc746be4cc28b0fe2c2a047e7d014212cae28",
+    "current_slice": "status_and_contract_alignment",
+    "planning_and_identity_PR179": "open_not_merged_or_live",
+    "provider_activation": false,
+    "identity_pause_before_step_12": true,
+    "historical_PMax_pause_preserved": true,
+    "package_complete": false
+  },
   "base_commit": "c93fd8a979b709f1a3517aae82c6691733748a7e",
   "brief": "docs/EXECUTION_PLAN.md#eo-05-başlangıç-briefi--19-ekim-2026",
   "authorities": [
@@ -20,6 +31,8 @@
     "real_account_validation_timing": "EO08_end_engineering_checkpoint_before_final_acceptance_and_ASSURE"
   },
   "first_repository_slice": {
+    "recorded_at": "2026-10-20",
+    "current_progress_authority": "repository_progress_2026_10_27_supersedes_pending_start_status_only_not_historical_PMax_pause",
     "scope": "global_refresh_workload_budget_and_execution_design_listing_tree_work_paused",
     "mandatory_gate": "A6-EO-05-PMAX-HISTORICAL-LISTING-TREE",
     "mandatory_gate_execution_status": "paused_by_product_owner_2026_10_20_not_passed",
@@ -110,7 +123,7 @@
   "source_limits": "Listing groups document structure, not a verified historical continuity service. Supabase read is boundary guidance, not new schema design or an advisor/live check. Provider-specific implementation sources must be refreshed at each scoped implementation gate.",
   "authority": {
     "brief_preparation": true,
-    "runtime_implementation": false,
+    "runtime_implementation": true,
     "migration_creation_or_apply": false,
     "provider_call_or_configuration": false,
     "secret_or_environment_change": false,

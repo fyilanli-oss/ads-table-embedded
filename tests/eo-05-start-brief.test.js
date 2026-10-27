@@ -27,13 +27,19 @@ test("owner pause removes listing-tree work from independent refresh prerequisit
   assert.equal(design.next_implementation_decisions.some(item => item.includes("PMax")), false);
 });
 
-test("EO05 brief is linked without starting implementation or creating a new parent or child", () => {
+test("EO05 records scoped repository progress without activating live work or a new parent or child", () => {
   assert.equal(eo05.start_contract, "contracts/eo-05-start-brief-v1.json");
-  assert.equal(eo05.status, "Not started");
-  assert.equal(master.current_active_parent, null);
+  assert.equal(eo05.status, "In progress");
+  assert.equal(eo05.repository_progress_2026_10_27.package_complete, false);
+  assert.equal(eo05.repository_progress_2026_10_27.live_provider_OAuth_DB_UI_deployment_authorized, false);
+  assert.equal(brief.repository_progress_2026_10_27.provider_activation, false);
+  assert.equal(brief.repository_progress_2026_10_27.identity_pause_before_step_12, true);
+  assert.equal(brief.repository_progress_2026_10_27.historical_PMax_pause_preserved, true);
+  assert.equal(eo05.repository_progress_2026_10_27.merged_commit, "114cc746be4cc28b0fe2c2a047e7d014212cae28");
+  assert.equal(master.current_active_parent, "A6-EO-05");
   assert.deepEqual(brief.children_in_order.map(c => c.id), eo05.children.map(c => c.id));
   assert.equal(brief.first_repository_slice.mandatory_gate, eo05.mandatory_first_gate.id);
-  for (const [name, allowed] of Object.entries(brief.authority)) assert.equal(allowed, name === "brief_preparation", name);
+  for (const [name, allowed] of Object.entries(brief.authority)) assert.equal(allowed, name === "brief_preparation" || name === "runtime_implementation", name);
   assert.equal(brief.acceptance.capacity_runs_authorized_now, false);
 });
 

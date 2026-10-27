@@ -484,11 +484,11 @@ test("contract keeps installed Shopify shop authoritative after EO-03 closure", 
   assert.equal(liveAcceptance.advisors.eo03c_new_unindexed_foreign_key_findings, 0);
   assert.equal(eo03.status, "Accepted");
   assert.equal(eo03c.status, "Accepted");
-  assert.equal(master.current_active_parent, null);
+  assert.equal(master.current_active_parent, "A6-EO-05");
   assert.equal(master.current_active_child, null);
   assert.equal(master.next_ready_child, null);
   assert.equal(
     master.current_gate,
-    "A6-EO-05_START_BRIEF_PENDING",
+    "A6-EO-05_REPOSITORY_IMPLEMENTATION_IN_PROGRESS",
   );
 });

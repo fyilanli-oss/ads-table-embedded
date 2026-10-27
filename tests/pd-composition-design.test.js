@@ -55,7 +55,9 @@ test("17 requires compatible scope and preserves missing, zero, partial and defe
   assert.equal(policy.failed_partial_or_incompatible_input_published_as_complete, false);
   assert.equal(policy.unobserved_leaf_created_from_cpd, false);
   assert.match(design.deferred_items["05"], /pending_real_data/);
-  assert.match(design.deferred_items["15"], /new_owner_discussion_existing_roles_unchanged/);
+  assert.match(design.deferred_items["15"], /investigation_closed_by_owner_2026_10_26_keep_Assisted_Triggered/);
+  assert.equal(standard.klaviyo.role_closure_is_provider_unsupported_proof, false);
+  assert.equal(standard.status_alignment_2026_10_27.Meta_role_evidence, "open");
   assert.match(design.deferred_items["10_11"], /history_still_paused/);
   assert.match(design.canonical_validation, /no_invented_fx_or_identity/);
 });

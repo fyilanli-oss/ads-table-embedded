@@ -104,11 +104,11 @@ test("Execution Plan and master contract preserve EO-04-A after EO-04 closure", 
   }
 
   assert.equal(master.schema_version, "1.29.0");
-  assert.equal(master.current_active_parent, null);
+  assert.equal(master.current_active_parent, "A6-EO-05");
   assert.equal(master.current_active_child, null);
   assert.equal(
     master.current_gate,
-    "A6-EO-05_START_BRIEF_PENDING",
+    "A6-EO-05_REPOSITORY_IMPLEMENTATION_IN_PROGRESS",
   );
   assert.equal(eo04.status, "Accepted");
   assert.equal(eo04a.status, "Accepted");

@@ -50,7 +50,7 @@ test("quality and master ledgers expose the same active remediation gate", () =>
     quality.engineering_integrity.status,
     "pass_product_owner_accepted_2026-10-18",
   );
-  assert.equal(master.current_gate, "A6-EO-05_START_BRIEF_PENDING");
+  assert.equal(master.current_gate, "A6-EO-05_REPOSITORY_IMPLEMENTATION_IN_PROGRESS");
 
   const packageRecord = master.independent_packages.find(
     (item) => item.id === "A6-TECH-01",

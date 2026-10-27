@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {collectKlaviyoNativeIdentityEvidence} from "../app/lib/providers/klaviyo-identity-collection.server.js";
+import {collectKlaviyoNativeIdentityEvidence, collectKlaviyoIdentityMessageEvidence} from "../app/lib/providers/klaviyo-identity-collection.server.js";
 import {KLAVIYO_OAUTH_SCOPES} from "../app/lib/providers/klaviyo-api.server.js";
 
 const workspace = "11111111-1111-4111-8111-111111111111", connection = "22222222-2222-4222-8222-222222222222",
@@ -184,4 +184,129 @@ test("duplicate included attribution conflict rejects all events", async () => {
   const f = fixture(), other = attribution(); other.relationships.campaign.data.id = "other";
   f.hooks.fetch = p => p.pathname === "/api/events" && response({data: [event()], included: [attribution(), other], links: {next: null}});
   await assert.rejects(f.run(), /ATTRIBUTION_CONFLICT/);
+});
+
+function messageRow(kind, medium = "email", name = "Message name") {
+  return {groupings: {[`${kind}_id`]: `${kind}1`, [`${kind}_message_id`]: kind === "campaign" ? "message1" : "flow-message1",
+    [`${kind}_message_name`]: name, ...(kind === "flow" ? {flow_name: "Flow name"} : {}),
+    send_channel: medium, variation: null, variation_name: null}, statistics: {conversions: 999, conversion_value: 99999}};
+}
+function messageFixture() {
+  const f = fixture(), rows = {campaign: [messageRow("campaign")], flow: [messageRow("flow")]};
+  const baseFetch = p => {
+    if (p.pathname === "/api/metrics") return response({data: [metric(), {type: "metric", id: "placed1", attributes: {name: "Placed Order", integration: {name: "Shopify"}}}], links: {next: null}});
+    for (const kind of ["campaign", "flow"]) if (p.pathname === `/api/${kind}-values-reports`) return response({data: {
+      type: `${kind}-values-report`, attributes: {results: rows[kind]}}, links: {next: null}});
+  };
+  f.hooks.fetch = baseFetch;
+  return {...f, rows, baseFetch, run: () => collectKlaviyoIdentityMessageEvidence(f.options)};
+}
+test("Message composition: same execution joins native event to Campaign Message without using report sales", async () => {
+  const f = messageFixture(), r = await f.run(), sale = r.message_evidence.resolved_product_sales.rows[0];
+  assert.equal(f.calls.length, 6); assert.equal(r.message_evidence.reporting_metric.id, "placed1");
+  assert.equal(sale.provider_event_id, "event1"); assert.equal(sale.provider_metric_id, "metric1");
+  assert.equal(sale.attribution_resolution.channel_id, "message1"); assert.equal(sale.attribution_resolution.source_entity_id, "campaign1");
+  assert.equal(sale.attribution_resolution.sales_role, "Assisted"); assert.equal(sale.attribution_resolution.medium, "Email");
+  assert.equal(sale.provider_product_properties.Quantity.value, 2); assert.equal(sale.provider_product_properties.$value.value, "30.00");
+  assert.equal(r.message_evidence.reporting_statistics_used_as_product_sales, false);
+  assert.equal(r.message_evidence.channels.campaign[0].statistics, undefined);
+  assert.equal(sale.standardized_product_id, null); assert.equal(r.persistable, false); assert.equal(r.installation_id, null);
+  assert.ok(!r.remaining.includes("Message_channel_join"));
+  for (const c of f.calls.filter(c => c.init.method === "POST")) {
+    const body = JSON.parse(c.init.body).data.attributes;
+    assert.equal(body.conversion_metric_id, "placed1"); assert.equal(body.timeframe.start, r.timeframe.start);
+    assert.ok(body.group_by.includes("send_channel")); assert.ok(body.group_by.includes("variation"));
+  }
+  assert.ok(!/99999|secret-access|private-profile|private@/.test(JSON.stringify(r)));
+});
+test("Message composition: Flow and variation native references resolve through existing classifier", async () => {
+  const f = messageFixture(), a = {type: "attribution", id: "attribution1", relationships: {
+    flow: {data: {type: "flow", id: "flow1"}}, "flow-message": {data: {type: "flow-message", id: "flow-message1"}},
+    "flow-message-variation": {data: {type: "flow-message-variation", id: "variation1"}}}};
+  f.rows.flow[0].groupings.variation = "variation1"; f.rows.flow[0].groupings.variation_name = "Variation name";
+  f.hooks.fetch = p => p.pathname === "/api/events" ? response({data: [event()], included: [a], links: {next: null}}) : f.baseFetch(p);
+  const sale = (await f.run()).message_evidence.resolved_product_sales.rows[0];
+  assert.equal(sale.attribution_resolution.sales_role, "Triggered"); assert.equal(sale.attribution_resolution.channel_id, "flow-message1");
+  assert.equal(sale.attribution_resolution.variation_id, "variation1");
+});
+test("Message composition: exact Message without observed report row keeps metadata unresolved", async () => {
+  const f = messageFixture(); f.rows.campaign = []; const sale = (await f.run()).message_evidence.resolved_product_sales.rows[0];
+  assert.equal(sale.attribution_resolution.channel_id, "message1"); assert.equal(sale.attribution_resolution.channel_name, null);
+  assert.equal(sale.attribution_resolution.medium, null); assert.equal(sale.attribution_resolution.reason, "message_exact_catalog_not_observed");
+});
+test("Message composition: attribution absent remains Unclassified even when reports contain one Message", async () => {
+  const f = messageFixture(), e = event(); delete e.relationships.attributions;
+  f.hooks.fetch = p => p.pathname === "/api/events" ? response({data: [e], links: {next: null}}) : f.baseFetch(p);
+  const sale = (await f.run()).message_evidence.resolved_product_sales.rows[0];
+  assert.equal(sale.attribution_resolution.channel_id, null); assert.equal(sale.attribution_resolution.sales_role, "Unclassified");
+});
+test("Message composition: Campaign parent conflict remains Unclassified", async () => {
+  const f = messageFixture(); f.rows.campaign[0].groupings.campaign_id = "other";
+  const sale = (await f.run()).message_evidence.resolved_product_sales.rows[0];
+  assert.equal(sale.attribution_resolution.sales_role, "Unclassified"); assert.equal(sale.attribution_resolution.reason, "message_parent_relationship_conflict");
+});
+test("Message composition: multiple attributed Messages never pick first", async () => {
+  const f = messageFixture(), e = event(), a = attribution(); a.id = "attribution2"; a.relationships["campaign-message"].data.id = "message2";
+  e.relationships.attributions.data.push({type: "attribution", id: "attribution2"});
+  f.hooks.fetch = p => p.pathname === "/api/events" ? response({data: [e], included: [attribution(), a], links: {next: null}}) : f.baseFetch(p);
+  const sale = (await f.run()).message_evidence.resolved_product_sales.rows[0]; assert.equal(sale.attribution_resolution.sales_role, "Unclassified");
+});
+test("Message composition: conflicting catalog names preserved, never silently replaced", async () => {
+  const f = messageFixture(); f.rows.campaign.push(messageRow("campaign", "email", "Other name"));
+  const sale = (await f.run()).message_evidence.resolved_product_sales.rows[0];
+  assert.equal(sale.attribution_resolution.channel_name, null); assert.equal(sale.attribution_resolution.reason, "message_exact_catalog_metadata_conflict");
+});
+test("Message composition: ambiguous medium does not pick first", async () => {
+  const f = messageFixture(); f.rows.campaign.push(messageRow("campaign", "sms"));
+  const sale = (await f.run()).message_evidence.resolved_product_sales.rows[0]; assert.equal(sale.attribution_resolution.medium, null);
+});
+test("Message composition: identical catalog rows deduplicate without summing report conversions", async () => {
+  const f = messageFixture(); f.rows.campaign.push(messageRow("campaign"));
+  const r = await f.run(); assert.equal(r.message_evidence.channels.campaign.length, 1);
+  assert.equal(r.message_evidence.resolved_product_sales.rows.length, 1);
+});
+test("Message composition: only event entry point cannot enable reports through caller option", async () => {
+  const f = fixture(); f.options.withMessages = true; const r = await f.run();
+  assert.equal(f.calls.length, 4); assert.equal(r.message_evidence, undefined);
+});
+test("Message composition: Message entry point cannot disable binding through caller option", async () => {
+  const f = messageFixture(); f.options.withMessages = false; assert.ok((await f.run()).message_evidence);
+});
+test("Message composition: report pagination retains POST body and native conversion metric", async () => {
+  const f = messageFixture(); f.hooks.fetch = p => p.pathname === "/api/campaign-values-reports" && !p.searchParams.has("page_cursor")
+    ? response({data: {type: "campaign-values-report", attributes: {results: []}}, links: {next: "https://a.klaviyo.com/api/campaign-values-reports?page_cursor=second&conversion_metric_id=other"}})
+    : f.baseFetch(p);
+  const r = await f.run(); assert.equal(r.message_evidence.pages.campaign, 2);
+  const requests = f.calls.filter(c => c.parsed.pathname === "/api/campaign-values-reports");
+  assert.equal(requests[0].init.body, requests[1].init.body); assert.equal(requests[1].parsed.searchParams.get("page_cursor"), "second");
+  assert.equal(requests[1].parsed.searchParams.has("conversion_metric_id"), false);
+});
+test("Message composition: missing Placed Order metric stops before events or report calls", async () => {
+  const f = fixture(); await assert.rejects(collectKlaviyoIdentityMessageEvidence(f.options), /PLACED_ORDER_METRIC/); assert.equal(f.calls.length, 2);
+});
+test("Message composition: report response type mismatch rejects complete collection", async () => {
+  const f = messageFixture(); f.hooks.fetch = p => p.pathname === "/api/campaign-values-reports"
+    ? response({data: {type: "flow-values-report", attributes: {results: []}}, links: {next: null}}) : f.baseFetch(p);
+  await assert.rejects(f.run(), /RESPONSE_INVALID/); assert.equal(f.calls.length, 4);
+});
+test("Message composition: first report error prevents Flow/account recheck with no partial output", async () => {
+  const f = messageFixture(); f.hooks.fetch = p => p.pathname === "/api/campaign-values-reports" ? response({}, 429) : f.baseFetch(p);
+  await assert.rejects(f.run(), /HTTP_FAILED/); assert.equal(f.calls.length, 4);
+});
+test("Message composition: authority change after Campaign prevents Flow request", async () => {
+  const f = messageFixture(); f.hooks.fetch = p => {if (p.pathname === "/api/campaign-values-reports") f.state.version++; return f.baseFetch(p);};
+  await assert.rejects(f.run(), /COLLECTION_FAILED/); assert.equal(f.calls.length, 4);
+});
+test("Message composition: raw report row limit includes identical replays", async () => {
+  const f = messageFixture(); f.options.maxMessageRows = 1; f.rows.campaign.push(messageRow("campaign"));
+  await assert.rejects(f.run(), /ROW_LIMIT/);
+});
+test("Message composition: report continuation without explicit completion is not empty catalog", async () => {
+  const f = messageFixture(); f.hooks.fetch = p => p.pathname === "/api/campaign-values-reports"
+    ? response({data: {type: "campaign-values-report", attributes: {results: []}}, links: {self: "ignored"}}) : f.baseFetch(p);
+  await assert.rejects(f.run(), /PAGINATION_INVALID/);
+});
+test("Message composition: no observed events does not convert report conversions into sale rows", async () => {
+  const f = messageFixture(); f.hooks.fetch = p => p.pathname === "/api/events" ? response({data: [], links: {next: null}}) : f.baseFetch(p);
+  assert.deepEqual((await f.run()).message_evidence.resolved_product_sales.rows, []);
 });

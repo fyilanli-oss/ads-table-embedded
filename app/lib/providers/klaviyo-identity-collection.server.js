@@ -1,7 +1,10 @@
 import {createIdentityRuntimeAuthorityLoader} from "./identity-runtime-authority.server.js";
 import {discoverKlaviyoAccount, KLAVIYO_OAUTH_SCOPES} from "./klaviyo-api.server.js";
 import {buildKlaviyoShopifyMetricsRequest, buildKlaviyoOrderedProductEventsRequest,
+  buildKlaviyoCampaignValuesRequest, buildKlaviyoFlowValuesRequest, normalizeKlaviyoReportRow,
   normalizeKlaviyoOrderedProductEvent, klaviyoBusinessDayTimeframe} from "./klaviyo-reporting.server.js";
+import {attachAttributionEvidence} from "./klaviyo-reporting-authority.server.js";
+import {resolveKlaviyoOrderedProductSales} from "./klaviyo-attribution-resolution.server.js";
 import {quotaBoundaryControl} from "../refresh/quota-native-fetch.server.js";
 
 export class KlaviyoIdentityCollectionError extends Error {
@@ -67,27 +70,28 @@ function addUnique(map, item, code) {
   if (old && JSON.stringify(old) !== JSON.stringify(item)) fail(code);
   map.set(item.id, item);
 }
-function cursorOf(body, path) {
+function cursorOf(body, path, parameter = "page[cursor]") {
   if (!body.links || !Object.hasOwn(body.links, "next")) fail("KLAVIYO_IDENTITY_PAGINATION_INVALID");
   if (body.links.next === null) return null;
   let next;
   try {next = new URL(body.links.next);} catch {fail("KLAVIYO_IDENTITY_PAGINATION_INVALID");}
   if (next.origin !== "https://a.klaviyo.com" || next.pathname !== path
-    || next.username || next.password || next.hash || next.searchParams.getAll("page[cursor]").length !== 1) fail("KLAVIYO_IDENTITY_PAGINATION_INVALID");
-  const cursor = next.searchParams.get("page[cursor]");
+    || next.username || next.password || next.hash || next.searchParams.getAll(parameter).length !== 1) fail("KLAVIYO_IDENTITY_PAGINATION_INVALID");
+  const cursor = next.searchParams.get(parameter);
   if (typeof cursor !== "string" || !cursor || cursor.length > 4096 || cursor !== cursor.trim()) fail("KLAVIYO_IDENTITY_PAGINATION_INVALID");
   return cursor;
 }
 
-// Prepared server-only collection. No route, persistence, Shopify query or role classification.
+// Prepared server-only collection. No route, persistence or Shopify query.
 // Uses concrete SQL/vault authority; callers cannot substitute a browser-supplied loadCurrent.
-export async function collectKlaviyoNativeIdentityEvidence({verified, database, tokenVault, businessDate,
+async function collectKlaviyoIdentitySource({verified, database, tokenVault, businessDate,
   fetchFn = fetch, now = () => new Date(), signal, maxPages = 100, maxEvents = 10000,
-  maxMetrics = 10000, maxIncluded = 20000, maxElapsedMs = 120000} = {}) {
+  maxMetrics = 10000, maxIncluded = 20000, maxMessageRows = 10000, maxElapsedMs = 120000, withMessages} = {}) {
   if (typeof fetchFn !== "function" || typeof now !== "function"
-    || ![maxPages, maxEvents, maxMetrics, maxIncluded, maxElapsedMs].every(Number.isSafeInteger)
+    || ![maxPages, maxEvents, maxMetrics, maxIncluded, maxMessageRows, maxElapsedMs].every(Number.isSafeInteger)
     || maxPages < 1 || maxPages > 1000 || maxEvents < 1 || maxEvents > 100000
     || maxMetrics < 1 || maxMetrics > 100000 || maxIncluded < 1 || maxIncluded > 100000
+    || maxMessageRows < 1 || maxMessageRows > 100000
     || maxElapsedMs < 1 || maxElapsedMs > 600000) fail("KLAVIYO_IDENTITY_COLLECTION_INPUT_INVALID");
   // Validate the requested calendar date before any authority or provider read.
   klaviyoBusinessDayTimeframe({businessDate, timeZone: "UTC"});
@@ -123,25 +127,28 @@ export async function collectKlaviyoNativeIdentityEvidence({verified, database, 
     if (account.id !== current.account.id) fail("KLAVIYO_IDENTITY_ACCOUNT_MISMATCH");
     const timeframe = klaviyoBusinessDayTimeframe({businessDate, timeZone: account.timezone});
     const requestIds = [];
-    async function collect(path, build, maximum, onRows, onIncluded = () => {}) {
+    async function collect(path, build, maximum, onRows, onIncluded = () => {}, reportKind = null) {
       const seen = new Set(); let cursor = null, rawCount = 0, includedCount = 0;
       for (let pages = 1; pages <= maxPages; pages++) {
         check(); const request = build(cursor);
-        const response = await boundFetch(request.url, {method: request.method, headers: request.headers});
+        const response = await boundFetch(request.url, {method: request.method, headers: request.headers,
+          ...(request.body == null ? {} : {body: request.body})});
         if (!response?.ok) fail("KLAVIYO_IDENTITY_HTTP_FAILED");
         let body; try {body = await response.json();} catch (error) {
           if (error instanceof KlaviyoIdentityCollectionError) throw error;
           fail("KLAVIYO_IDENTITY_JSON_INVALID");
         }
         check();
-        if (!Array.isArray(body?.data) || (Object.hasOwn(body, "included") && !Array.isArray(body.included))
+        const rows = reportKind === null ? body?.data : body?.data?.attributes?.results;
+        if (!Array.isArray(rows) || (reportKind !== null && body?.data?.type !== `${reportKind}-values-report`)
+          || (Object.hasOwn(body, "included") && !Array.isArray(body.included))
           || (Object.hasOwn(body, "errors") && (!Array.isArray(body.errors) || body.errors.length))) fail("KLAVIYO_IDENTITY_RESPONSE_INVALID");
-        rawCount += body.data.length; includedCount += body.included?.length ?? 0;
+        rawCount += rows.length; includedCount += body.included?.length ?? 0;
         if (rawCount > maximum || includedCount > maxIncluded) fail("KLAVIYO_IDENTITY_ROW_LIMIT");
-        onRows(body.data); onIncluded(body.included ?? []);
+        onRows(rows); onIncluded(body.included ?? []);
         const requestId = response.headers?.get?.("x-request-id");
         if (typeof requestId === "string" && requestId.length <= 256 && !/[\u0000-\u0020\u007f]/.test(requestId)) requestIds.push(requestId);
-        const next = cursorOf(body, path);
+        const next = cursorOf(body, path, reportKind === null ? "page[cursor]" : "page_cursor");
         if (next === null) return pages;
         if (seen.has(next)) fail("KLAVIYO_IDENTITY_CURSOR_REPEATED");
         seen.add(next); cursor = next;
@@ -153,6 +160,12 @@ export async function collectKlaviyoNativeIdentityEvidence({verified, database, 
       maxMetrics, rows => {for (const item of rows) addUnique(metrics, metricProjection(item), "KLAVIYO_IDENTITY_METRIC_CONFLICT");});
     const candidates = [...metrics.values()].filter(m => m.attributes.name === "Ordered Product" && m.attributes.integration.name === "Shopify");
     if (candidates.length !== 1) fail("KLAVIYO_IDENTITY_ORDERED_PRODUCT_METRIC_AMBIGUOUS_OR_MISSING");
+    let placedMetric = null;
+    if (withMessages) {
+      const placed = [...metrics.values()].filter(m => m.attributes.name === "Placed Order" && m.attributes.integration.name === "Shopify");
+      if (placed.length !== 1) fail("KLAVIYO_IDENTITY_PLACED_ORDER_METRIC_AMBIGUOUS_OR_MISSING");
+      placedMetric = placed[0];
+    }
     const metric = candidates[0], events = new Map(), attributions = new Map(), includedMetrics = new Map();
     const eventPages = await collect("/api/events", cursor => buildKlaviyoOrderedProductEventsRequest({accessToken: current.tokenSet.access_token,
       orderedProductMetricId: metric.id, businessDate, timeZone: account.timezone, cursor}), maxEvents,
@@ -167,24 +180,56 @@ export async function collectKlaviyoNativeIdentityEvidence({verified, database, 
     for (const e of events.values()) for (const ref of e.relationships.attributions?.data ?? []) {
       if (!attributions.has(ref.id)) fail("KLAVIYO_IDENTITY_ATTRIBUTION_MISSING");
     }
+    let messageEvidence = null;
+    if (withMessages) {
+      const channels = {}, pages = {};
+      for (const kind of ["campaign", "flow"]) {
+        const unique = new Map();
+        const build = kind === "campaign" ? buildKlaviyoCampaignValuesRequest : buildKlaviyoFlowValuesRequest;
+        pages[kind] = await collect(`/api/${kind}-values-reports`, pageCursor => build({accessToken: current.tokenSet.access_token,
+          businessDate, timeZone: account.timezone, conversionMetricId: placedMetric.id, pageCursor}), maxMessageRows,
+        rows => {for (const row of rows) {
+          const {statistics, ...channel} = normalizeKlaviyoReportRow(kind, row);
+          // Statistics are deliberately not joined to Ordered Product sale facts or returned here.
+          unique.set(JSON.stringify(channel), channel);
+        }}, undefined, kind);
+        channels[kind] = [...unique.values()];
+      }
+      const normalized = attachAttributionEvidence([...events.values()], [...attributions.values()]);
+      messageEvidence = {reporting_metric: placedMetric, channels,
+        resolved_product_sales: resolveKlaviyoOrderedProductSales({campaignChannels: channels.campaign,
+          flowChannels: channels.flow, orderedProductEvents: normalized}), pages,
+        composition_scope: "same_native_account_credential_and_business_day_collection",
+        product_sale_statistics_source: "Ordered Product", reporting_statistics_used_as_product_sales: false};
+    }
     const accountAfter = await discoverKlaviyoAccount({accessToken: current.tokenSet.access_token,
       scopes: current.grantedScopes, fetchFn: boundFetch, now});
     const after = accountAfter.accounts[0];
     if (after.id !== account.id || after.timezone !== account.timezone || after.currency !== account.currency) fail("KLAVIYO_IDENTITY_ACCOUNT_CHANGED");
     await recheck();
-    return freeze({provider: "klaviyo", source: "native_account_metric_and_event_collection", account: {id: account.id,
+    return freeze({provider: "klaviyo", source: withMessages ? "native_identity_and_message_collection" : "native_account_metric_and_event_collection", account: {id: account.id,
       timezone: account.timezone, currency: account.currency}, installation: current.installation, shop: current.shop,
       connection_id: current.connectionId, connection_version: current.connectionVersion,
       metric, events: [...events.values()], attributions: [...attributions.values()], timeframe,
+      ...(withMessages ? {message_evidence: messageEvidence} : {}),
       evidence: {metric_pages: metricPages, event_pages: eventPages, request_ids: requestIds,
         started_at: new Date(start).toISOString(), completed_at: new Date(clock()).toISOString()},
       provider_account_observed: true, Shopify_store_integration_binding_verified: false,
       canonical_scope_ready: false, installation_id: null, persistable: false,
       authorizes_activation: false, mapping_write_performed: false, sales_roles_changed: false,
-      remaining: ["trusted_installation_primary_key_read", "Shopify_Admin_candidate_verification_composition", "Message_channel_join"]});
+      remaining: ["trusted_installation_primary_key_read", "Shopify_Admin_candidate_verification_composition",
+        ...(withMessages ? [] : ["Message_channel_join"])]});
   } catch (error) {
     if (quotaBoundaryControl(error)) throw error;
     if (error instanceof KlaviyoIdentityCollectionError) throw error;
     fail(signal?.aborted ? "KLAVIYO_IDENTITY_ABORTED" : "KLAVIYO_IDENTITY_COLLECTION_FAILED");
   }
+}
+
+// Public entry points lock their own mode; caller options cannot silently add report requests.
+export function collectKlaviyoNativeIdentityEvidence(options = {}) {
+  return collectKlaviyoIdentitySource({...options, withMessages: false});
+}
+export function collectKlaviyoIdentityMessageEvidence(options = {}) {
+  return collectKlaviyoIdentitySource({...options, withMessages: true});
 }

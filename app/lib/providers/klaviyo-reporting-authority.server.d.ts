@@ -1,3 +1,4 @@
+export function attachAttributionEvidence(events: any[], included: any[]): any[];
 export function createKlaviyoReportingAuthorityRuntime(input?: {
   database?: any;
   tokenVault?: any;

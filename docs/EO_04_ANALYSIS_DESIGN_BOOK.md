@@ -1,5 +1,9 @@
 # EO-04 — Analiz ve tasarım kitabı
 
+## EO-05 takip — Shopify Admin ayrı kimlik HTTP kotası ve maliyet gözlemi, 27 Ekim 2026
+
+#219 main’dedir. Inactive Admin HTTP transport/scope yalnız mevcut üç tekil ürün/varyant doğrulama sorgusunu tanır; Partner havuzundan ayrıdır. Native cost puanları yedi tipli alana projekte edilir; missing/invalid/partial/gerçek zero ayrılır, bunlardan yeni bütçe/refund/otomatik retry üretilmez. HTTP 200 hatası dahil ilk native hata durur; Admin için Partner throttle sinyali yoktur. 54 yeni ve 487 mevcut test, 7 repository kontrolü ve typecheck geçti. Mevcut SQL Admin provider/context/feedback kabul etmez; app×shop cost inventory, reservation üst sınırı/overrun ve storage 14 inceleme kapısına işlendi. SDK fiziksel HTTP hook/fenced constructor tamamlanmadı; aday/rapor modları ve canlı runtime açılmadı. EO-04 tarihsel kabulü/PMax duraklaması değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Shopify_Admin_identity_quota_boundary_2026_10_27` ve Execution Plan.
+
 ## EO-05 takip — Google native kimlik okuyucusunda güvenilir kota constructor’ı, 27 Ekim 2026
 
 #218 main’dedir. Yeni inactive native-only Google constructor; doğrulanmış aktif Shopify owner’ını tek günlük fenced Google işi ve SQL quota/entitlement context’ine bağlar. Merchant hedefi/gerçek kota hesabı/epoch yalnız güvenilir context’ten gelir; eksik envanter ilk Ads HTTP’sini bile engeller. Mevcut SQL bu envanteri vermez, 14 inceleme kapısı açıktır. Ads ve Merchant her HTTP/sayfada ayrı guard rezervasyonu kullanır; hedef/developer token yakalanır, override/replay kapalıdır. 39 yeni ve 380 mevcut provider/kota/deadline testi, 7 repository kontrolü ve typecheck geçti. Shopify Admin aday modu, gerçek profil/kaynak kanıtı, work-wait/sipariş okuyucusu açık; EO-04 kabulü/PMax duraklaması değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Google_identity_quota_constructor_2026_10_27` ve Execution Plan.

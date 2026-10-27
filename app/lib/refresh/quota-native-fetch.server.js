@@ -1,6 +1,7 @@
 // Quota at the actual HTTP boundary, not once per report/snapshot.
 import {quotaResponseFeedback} from "./quota-response-feedback.server.js";
 import {googleQuotaObservation} from "./google-quota-observation.server.js";
+import {shopifyAdminIdentityFamily,shopifyAdminCostFeedback} from "./shopify-admin-identity-quota.server.js";
 const controls=new WeakMap();
 const managed=new WeakSet();
 const metaIdentityFields = Object.freeze([
@@ -38,6 +39,11 @@ function descriptor(provider,input,init) {
   if(provider==="shopify_partner"&&url.origin==="https://partners.shopify.com"&&method==="POST") {
     const match=path.match(/^\/([1-9][0-9]*)\/api\/(\d{4}-\d{2})\/graphql\.json$/);
     if(match){family="partner_graphql";version=match[2];organizationId=match[1];}
+  } else if(provider==="shopify_admin"&&method==="POST"&&/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(url.hostname)&&url.port==="") {
+    const match=path.match(/^\/admin\/api\/(\d{4}-(?:01|04|07|10))\/graphql\.json$/);
+    if(match&&!url.search&&url.pathname===path) {
+      family=shopifyAdminIdentityFamily(init?.body);version=match[1];accountId=url.hostname;
+    }
   } else if(provider==="meta"&&url.origin==="https://graph.facebook.com") {
     const match=path.match(/^\/(v[0-9]+\.[0-9]+)\/(act_[0-9]+)\/insights$/);
     if(match&&method==="GET"){family=url.searchParams.get("breakdowns")==="product_id"?"product_insights":"insights";version=match[1];accountId=match[2];}
@@ -82,7 +88,7 @@ function descriptor(provider,input,init) {
 }
 
 export function createQuotaManagedFetch({provider,guard,resolveOperation,isDispatchCurrent,lane,fetchFn=globalThis.fetch}) {
-  if(!["shopify_partner","meta","google_ads","klaviyo"].includes(provider)||typeof guard?.execute!=="function"||typeof resolveOperation!=="function"
+  if(!["shopify_partner","shopify_admin","meta","google_ads","klaviyo"].includes(provider)||typeof guard?.execute!=="function"||typeof resolveOperation!=="function"
     ||!["interactive","background"].includes(lane)||typeof fetchFn!=="function"||managed.has(fetchFn)) throw new Error("QUOTA_NATIVE_TRANSPORT_INPUT_INVALID");
   let attempts=0,closed=false;
   const fetchManaged=async(input,init={})=>{
@@ -102,7 +108,7 @@ export function createQuotaManagedFetch({provider,guard,resolveOperation,isDispa
     try {operationKey=await resolveOperation(metadata);} catch {throw control("not_configured");}
     if(!/^[a-f0-9]{64}$/.test(operationKey??"")) throw control("not_configured");
     if(closed||requestInit.signal?.aborted) throw control("not_sent",attempts);
-    let response,rejected=false,quotaSignal=null,quotaObservation=null;
+    let response,rejected=false,quotaSignal=null,quotaObservation=null,adminPayload;
     let result;
     try {result=await guard.execute({operationKey,lane,
       beforeDispatch:async()=>{
@@ -119,16 +125,20 @@ export function createQuotaManagedFetch({provider,guard,resolveOperation,isDispa
       if((response.headers?.get?.("content-type")??"").includes("json")) {
         try {
           const payload=await response.clone().json();
+          if(provider==="shopify_admin")adminPayload=payload;
           quotaObservation=googleQuotaObservation(metadata,response.status,payload);
           const errors=Array.isArray(payload?.errors)?payload.errors:[];
           rejected=rejected||Boolean(payload?.error)||errors.length>0;
+          if(provider==="shopify_admin"&&payload&&Object.hasOwn(payload,"errors")&&!Array.isArray(payload.errors))rejected=true;
           // Only the documented Partner throttle shape can name a shared-quota signal here.
           // 401/403, mixed GraphQL errors, Google 429 and arbitrary header/JSON scope IDs cannot widen it.
           if(provider==="shopify_partner"&&[200,429].includes(response.status)&&!payload?.error&&errors.length>0
             &&errors.every(error=>String(error?.extensions?.code)==="429")) quotaSignal="shopify_partner_throttled";
         } catch {rejected=true;}
       }
-      const feedback=quotaResponseFeedback(metadata,response);
+      const feedback=provider==="shopify_admin"?shopifyAdminCostFeedback(response.status,adminPayload):quotaResponseFeedback(metadata,response);
+      // Admin success needs a complete native cost observation; missing/invalid is never zero.
+      if(provider==="shopify_admin"&&feedback.kind!=="shopify_admin_cost_observed")rejected=true;
       return rejected?{outcome:"rejected",connectionFailure:[401,403].includes(response.status),quotaSignal,feedback,quotaObservation}:{outcome:"success",value:response,feedback};
     }});} catch {throw new Error("QUOTA_NATIVE_TRANSPORT_UNAVAILABLE");}
     if(result?.status==="returned") return result.value;

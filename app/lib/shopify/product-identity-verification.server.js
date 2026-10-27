@@ -25,6 +25,16 @@ function identity(value, type, expected = null) {
   return actual;
 }
 
+// Fixed existing read shapes shared with the inactive HTTP quota classifier.
+export const SHOPIFY_PRODUCT_CANDIDATE_QUERIES = Object.freeze(Object.fromEntries([
+  ["identity_product",true,false],["identity_variant",false,true],["identity_product_variant",true,true],
+].map(([family,productRequested,variant])=>[family,`#graphql
+    query AdsTableVerifyProductCandidate(${productRequested ? "$productId: ID!" : "$variantId: ID!"}${productRequested && variant ? ", $variantId: ID!" : ""}) {
+      shop { id myshopifyDomain }
+      ${productRequested ? "product(id: $productId) { id legacyResourceId }" : ""}
+      ${variant ? "productVariant(id: $variantId) { id legacyResourceId product { id legacyResourceId } }" : ""}
+    }`])));
+
 // Same-shop existence and parent verification only. This does not prove a provider mapping.
 export async function verifyShopifyProductCandidate({admin, shop, installation,
   productId = null, variantId = null, signal} = {}) {
@@ -40,12 +50,7 @@ export async function verifyShopifyProductCandidate({admin, shop, installation,
   let product = productId === null ? null : candidateId(productId, "Product");
   const variant = variantId === null ? null : candidateId(variantId, "ProductVariant");
   const productRequested = product !== null;
-  const query = `#graphql
-    query AdsTableVerifyProductCandidate(${productRequested ? "$productId: ID!" : "$variantId: ID!"}${productRequested && variant ? ", $variantId: ID!" : ""}) {
-      shop { id myshopifyDomain }
-      ${productRequested ? "product(id: $productId) { id legacyResourceId }" : ""}
-      ${variant ? "productVariant(id: $variantId) { id legacyResourceId product { id legacyResourceId } }" : ""}
-    }`;
+  const query = SHOPIFY_PRODUCT_CANDIDATE_QUERIES[productRequested ? variant ? "identity_product_variant" : "identity_product" : "identity_variant"];
   const variables = {...(product ? {productId: product.gid} : {}), ...(variant ? {variantId: variant.gid} : {})};
   if (signal?.aborted) fail("SHOPIFY_PRODUCT_ABORTED");
   let response, body;

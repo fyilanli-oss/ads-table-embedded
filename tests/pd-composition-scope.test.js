@@ -75,10 +75,13 @@ test("contract records helper implementation separately from composers, canonica
   const guard = contract.pd_composition_review.scope_guard_2026_10_27;
   assert.equal(guard.entrypoint, "checkPdCompositionCompatibility");
   assert.equal(guard.provider_composers_connected, false);
+  assert.equal(guard.google_leaf_composer_helper_connected, true);
+  assert.equal(guard.native_provider_orchestration_connected, false);
   assert.equal(guard.canonical_FX_validation_bypassed, false);
   assert.equal(guard.dataset_writer_or_migration, false);
   assert.equal(guard.publishable, false);
-  assert.equal(contract.pd_composition_review.runtime_composer_implemented, false);
+  assert.equal(contract.pd_composition_review.runtime_composer_implemented, true);
+  assert.equal(contract.pd_composition_review.all_provider_composers_and_native_orchestration_complete, false);
 });
 
 for (const [provider, flow, entity_type, ancestorTypes] of [

@@ -11,7 +11,8 @@ test("18–19 remain design review without runtime, Dataset, FX or package closu
   for (const flag of ["runtime_aggregator_implemented", "physical_schema_or_writer_implemented",
     "fx_or_formula_implemented", "publishable", "items_17_18_19_closed",
     "pmax_product_asset_group_link_or_history_reopened"]) assert.equal(review[flag], false);
-  assert.equal(standard.pd_composition_review.runtime_composer_implemented, false);
+  assert.equal(standard.pd_composition_review.runtime_composer_implemented, true);
+  assert.equal(standard.pd_composition_review.all_provider_composers_and_native_orchestration_complete, false);
   assert.equal(standard.source_link_design.dataset_channel_totals_fx_and_roles_implemented, false);
 });
 

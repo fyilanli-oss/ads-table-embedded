@@ -1,6 +1,6 @@
 {
   "contract_id": "pd-cpd-query-standard-v1",
-  "version": "1.10.1",
+  "version": "1.11.0",
   "checked_at": "2026-10-27",
   "status_alignment_2026_10_27": {
     "scope": "patch_current_status_and_closed_Klaviyo_decision_only",
@@ -42,6 +42,23 @@
     "status": "design_proposed_for_owner_review_not_runtime_implemented",
     "scope": "compose_complementary_pd_projections_only_not_cpd_or_ancestor_rollups",
     "identity_basis": "existing_common_adapter_canonicalFactKey_authority_date_and_entity",
+    "scope_guard_2026_10_27": {
+      "status": "repository_helper_implemented_not_connected_to_provider_composers",
+      "runtime": "app/lib/providers/pd-composition-scope.server.js",
+      "entrypoint": "checkPdCompositionCompatibility",
+      "expected_scope": "required_from_trusted_orchestration_not_selected_from_first_source",
+      "checks": "all_seven_compatibility_dimensions_below",
+      "fingerprints": "required_units_and_effective_attribution_metadata_no_unknown_default",
+      "execution_identity": "shared_run_composition_attempt_and_bounded_complete_snapshot_not_per_request_attempt",
+      "missing_metadata": "incompatible_no_guessed_default",
+      "duplicate_family_source_reference": "reject_without_selection_or_sum",
+      "ancestor_names_are_keys": false,
+      "checks_source_authenticity_or_metric_coverage": false,
+      "provider_composers_connected": false,
+      "canonical_FX_validation_bypassed": false,
+      "dataset_writer_or_migration": false,
+      "publishable": false
+    },
     "compatibility_checks": [
       "same_workspace_installation_and_generation",
       "same_provider_connection_and_verified_account",

@@ -7,6 +7,8 @@ import {oauthPermissionScopes} from "../app/lib/oauth/oauth-permission-profile.s
 import {createQuotaManagedFetch, quotaBoundaryControl} from "../app/lib/refresh/quota-native-fetch.server.js";
 import {createQuotaScopeResolver, quotaRouteIdentity} from "../app/lib/refresh/quota-scope-resolver.server.js";
 import {createSharedQuotaGuard} from "../app/lib/refresh/shared-quota.server.js";
+import {createRefreshGoogleIdentityReader} from "../app/lib/refresh/quota-authority-binding.server.js";
+import {refreshQuotaWait} from "../app/lib/refresh/quota-work-wait.server.js";
 
 const workspace = "11111111-1111-4111-8111-111111111111", connection = "22222222-2222-4222-8222-222222222222",
   credential = "33333333-3333-4333-8333-333333333333";
@@ -382,4 +384,121 @@ test("Merchant quota integration: first Merchant provider rejection records stop
   const f = quotaFixture(); f.hooks.fetch = p => p.hostname === "merchantapi.googleapis.com" && response({error: {code: 429, status: "RESOURCE_EXHAUSTED", message: "SECRET"}}, 429);
   await assert.rejects(f.run()); assert.equal(f.calls.length, 2); assert.equal(f.stops.length, 1);
   assert.equal(f.stops[0].quotaSignal, null); assert.equal(f.stops[0].quotaObservation, undefined); assert.doesNotMatch(JSON.stringify(f.stops), /SECRET/);
+});
+
+function boundFixture() {
+  const f=fixture(),native=f.options.fetchFn,q={},loads=[],reservations=[],settles=[],stops=[],lookups=[];
+  const c={provider:"google_ads",clientScopeKey:"a".repeat(64),connectionScopeKey:"b".repeat(64),connectionEpoch:1,
+    accountId:"123",organizationId:null,apiVersion:"v25",
+    merchant:{targetAccountId:"99",quotaAccountId:"98",apiVersion:"products/v1",bindingEpoch:1}};
+  const keys=new Map([["reporting_query","123","v25"],["merchant_products","99","products/v1"]]
+    .map(([family,accountId,version])=>[family,quotaRouteIdentity(c,{provider:"google_ads",family,accountId,organizationId:null,version,includes:[]}).routeKey]));
+  const config={verified:f.options.verified,database:f.options.database,tokenVault:f.options.tokenVault,
+    merchantId:"99",developerToken:"secret-developer",readNow:()=>f.state.now,now:Date.now,
+    claim:{workspaceId:workspace,installGeneration:"3",provider:"google_ads",accountId:"123",id:"job1",fence:2},
+    window:{from:"2026-10-01",to:"2026-10-01"},entitlementReceipt:{observedAt:f.state.now.toISOString()},
+    workStore:{loadQuotaContext:async input=>{loads.push(input);await q.load?.();
+      if(q.lost||f.state.version!==2||f.state.account!=="123")return null;return c;}},
+    quotaStore:{resolveRoute:async x=>{lookups.push(x);return [...keys.values()].includes(x.routeKey)&&x.routeKey!==keys.get(q.missingFamily)?x.routeKey:null;},
+      reserve:async x=>{reservations.push(x);if(reservations.length===q.waitAt)return {status:"waiting"};
+        const permit={...x,status:"reserved",dispatchBeforeMs:Date.now()+10000,dispatchBudgetMs:10000};q.reserved?.();return permit;},
+      settle:async x=>{settles.push(x);return true;},stop:async x=>{stops.push(x);return true;}},
+    fetchFn:async(...args)=>{const r=await native(...args);return new Response(JSON.stringify(await r.json()),
+      {status:r.status,headers:{"content-type":"application/json"}});}};
+  return {...f,config,c,q,loads,reservations,settles,stops,lookups,create:()=>createRefreshGoogleIdentityReader(config)};
+}
+
+test("bound Google: native Ads/Merchant/link chain binds fenced work and separate quota routes",async()=>{
+  const f=boundFixture(),r=await f.create().readEvidence();
+  assert.equal(f.calls.length,3);assert.equal(f.reservations.length,3);assert.equal(f.settles.length,3);assert.equal(f.loads.length,6);
+  assert.equal(f.reservations[0].operationKey,f.reservations[2].operationKey);assert.notEqual(f.reservations[0].operationKey,f.reservations[1].operationKey);
+  assert.ok(f.loads.every(x=>x.provider==="google_ads"&&x.claim.id==="job1"&&x.claim.fence===2&&x.claim.accountId==="123"
+    &&x.window.from==="2026-10-01"&&x.entitlementReceipt.observedAt===f.state.now.toISOString()));
+  assert.equal(f.c.merchant.quotaAccountId,"98");assert.equal(r.installation_id,null);assert.equal(r.persistable,false);
+  assert.equal(r.shopify_mapping_state,"not_resolved");assert.equal(r.native_source.records[0].shopify_product_id,undefined);
+  assert.equal(f.calls[0].init.headers.get("login-customer-id"),"456");assert.equal(f.calls[0].init.headers.get("developer-token"),"secret-developer");
+  assert.doesNotMatch(JSON.stringify([f.loads,f.lookups,f.reservations,f.stops]),/secret-access|secret-refresh|secret-developer|SELECT|shopify_US|pageToken/);
+});
+test("bound Google: owner job target and developer token are captured before read",async()=>{
+  const f=boundFixture(),reader=f.create();f.config.claim.accountId="789";f.config.claim.fence=99;f.config.window.from="2026-10-02";
+  f.config.entitlementReceipt.observedAt="2000-01-01T00:00:00Z";f.config.verified.identity.shop.shopId="gid://shopify/Shop/99";
+  f.config.merchantId="100";f.config.developerToken="changed";
+  const r=await reader.readEvidence();assert.equal(r.shop.shopId,"gid://shopify/Shop/12");assert.equal(f.calls.length,3);
+  assert.equal(f.calls[1].parsed.pathname,"/products/v1/accounts/99/products");assert.equal(f.calls[0].init.headers.get("developer-token"),"secret-developer");
+  assert.ok(f.loads.every(x=>x.claim.accountId==="123"&&x.claim.fence===2&&x.window.from==="2026-10-01"));
+});
+for(const [name,change] of [["provider",f=>{f.config.claim.provider="meta";}],["workspace",f=>{f.config.claim.workspaceId=connection;}],
+  ["generation",f=>{f.config.claim.installGeneration="4";}],["missing fence",f=>{delete f.config.claim.fence;}],
+  ["multi-day window",f=>{f.config.window.to="2026-10-02";}],["invalid day",f=>{f.config.window.from="2026-02-30";f.config.window.to=f.config.window.from;}],
+  ["missing receipt",f=>{delete f.config.entitlementReceipt;}],["inactive owner",f=>{f.config.verified.installationAuthority.status="inactive";}],
+  ["invalid Merchant ID",f=>{f.config.merchantId="099";}],["overflow Merchant ID",f=>{f.config.merchantId="9223372036854775808";}],
+  ["Shopify mode",f=>{f.config.mode="shopify";}],["source rules",f=>{f.config.sourceRules=[];}],
+  ["caller Merchant quota binding",f=>{f.config.merchant={...f.c.merchant};}],
+  ["caller quota account",f=>{f.config.quotaAccountId="98";}],["arbitrary resolver",f=>{f.config.resolveOperation=()=>"a".repeat(64);}],
+  ["arbitrary guard",f=>{f.config.guard={};}],["arbitrary context loader",f=>{f.config.loadContext=()=>f.c;}],
+  ["legacy callback",f=>{f.config.authorizeRead=()=>true;}],
+])test(`bound Google: ${name} rejected before SQL or HTTP`,()=>{
+  const f=boundFixture();change(f);assert.throws(f.create);assert.equal(f.queries.length,0);assert.equal(f.calls.length,0);
+});
+test("bound Google: overrides and concurrent or completed replay are forbidden",async()=>{
+  const f=boundFixture(),reader=f.create();await assert.rejects(reader.readEvidence({merchantId:"100"}),/OVERRIDE_FORBIDDEN/);
+  const pending=reader.readEvidence();await assert.rejects(reader.readEvidence(),/EXECUTION_USED/);await pending;
+  await assert.rejects(reader.readEvidence(),/EXECUTION_USED/);assert.equal(f.calls.length,3);
+});
+for(const [name,change] of [["lost work or entitlement",f=>{f.q.lost=true;}],["wrong Ads account",f=>{f.c.accountId="789";}],
+  ["wrong Ads version",f=>{f.c.apiVersion="v24";}],["missing Merchant inventory",f=>{delete f.c.merchant;}],
+  ["wrong Merchant target",f=>{f.c.merchant.targetAccountId="100";}],["missing quota pool",f=>{delete f.c.merchant.quotaAccountId;}],
+  ["wrong Merchant version",f=>{f.c.merchant.apiVersion="v1beta";}],["missing binding epoch",f=>{delete f.c.merchant.bindingEpoch;}],
+  ["missing Ads profile",f=>{f.q.missingFamily="reporting_query";}],
+])test(`bound Google: ${name} prevents even initial Ads HTTP`,async()=>{
+  const f=boundFixture();change(f);await assert.rejects(f.create().readEvidence());assert.equal(f.calls.length,0);assert.equal(f.reservations.length,0);
+});
+test("bound Google: reservation-time Ads or Merchant authority drift settles without HTTP",async()=>{
+  for(const change of [f=>{f.state.version++;},f=>{f.c.accountId="789";},f=>{f.c.connectionEpoch++;},f=>{f.q.lost=true;},
+    f=>{f.c.merchant.targetAccountId="100";},f=>{f.c.merchant.quotaAccountId="97";},f=>{f.c.merchant.bindingEpoch++;}]){
+    const f=boundFixture();f.q.reserved=()=>change(f);
+    await assert.rejects(f.create().readEvidence(),e=>quotaBoundaryControl(e)?.status==="not_sent");
+    assert.equal(f.calls.length,0);assert.equal(f.reservations.length,1);assert.equal(f.settles.length,1);assert.equal(f.stops.length,0);
+  }
+});
+test("bound Google: missing Merchant profile keeps prior Ads attempt without fallback or replay",async()=>{
+  const f=boundFixture();f.q.missingFamily="merchant_products";const reader=f.create();
+  await assert.rejects(reader.readEvidence(),e=>quotaBoundaryControl(e)?.status==="not_configured");assert.equal(f.calls.length,1);
+  await assert.rejects(reader.readEvidence(),/EXECUTION_USED/);assert.equal(f.reservations.length,1);
+});
+test("bound Google: first quota wait can become existing work wait but cannot replay",async()=>{
+  const f=boundFixture();f.q.waitAt=1;const reader=f.create();let error;try{await reader.readEvidence();}catch(e){error=e;}
+  assert.equal(refreshQuotaWait(error,"provider_page",f.config.claim)?.status,"quota_waiting");assert.equal(f.calls.length,0);
+  await assert.rejects(reader.readEvidence(),/EXECUTION_USED/);
+});
+test("bound Google: Merchant wait retains preceding Ads attempt and cannot restart whole job",async()=>{
+  const f=boundFixture();f.q.waitAt=2;let error;try{await f.create().readEvidence();}catch(e){error=e;}
+  assert.equal(quotaBoundaryControl(error)?.priorBoundaryAttempts,1);assert.equal(f.calls.length,1);
+  assert.equal(refreshQuotaWait(error,"provider_page",f.config.claim),null);
+});
+test("bound Google: each Merchant and Ads continuation requires its own reservation",async()=>{
+  const f=boundFixture();f.hooks.fetch=(p,init)=>{
+    if(p.hostname==="merchantapi.googleapis.com"&&!p.searchParams.has("pageToken"))return response({nextPageToken:"next"});
+    if(p.hostname==="googleads.googleapis.com"&&!JSON.parse(init.body).pageToken)return response({results:[],nextPageToken:"ads-next"});
+  };
+  assert.equal((await f.create().readEvidence()).native_source.pages,2);assert.equal(f.calls.length,6);assert.equal(f.reservations.length,6);
+});
+test("bound Google: first Merchant error is one stop with no Ads signal or final Ads read",async()=>{
+  const f=boundFixture();f.hooks.fetch=p=>p.hostname==="merchantapi.googleapis.com"&&response({error:{code:429,status:"RESOURCE_EXHAUSTED",message:"SECRET-NATIVE"}},429);
+  const reader=f.create();await assert.rejects(reader.readEvidence());assert.equal(f.calls.length,2);assert.equal(f.stops.length,1);
+  assert.equal(f.stops[0].quotaSignal,null);assert.equal(f.stops[0].quotaObservation,undefined);
+  assert.doesNotMatch(JSON.stringify(f.stops),/SECRET-NATIVE|secret-access|secret-developer/);await assert.rejects(reader.readEvidence(),/EXECUTION_USED/);
+});
+test("bound Google: native Ads-Merchant mismatch stops after first Ads read",async()=>{
+  const f=boundFixture();f.hooks.fetch=()=>response({results:[link("7","100")]});await assert.rejects(f.create().readEvidence(),/LINK_NOT_CONFIRMED/);
+  assert.equal(f.calls.length,1);assert.equal(f.reservations.length,1);
+});
+test("bound Google: deadline during context lookup cannot reserve or dispatch after late return",async()=>{
+  const f=boundFixture();f.config.maxElapsedMs=40;let release;f.q.load=()=>new Promise(resolve=>{release=resolve;});
+  await assert.rejects(f.create().readEvidence(),/DEADLINE_EXCEEDED/);delete f.q.load;release();await new Promise(r=>setTimeout(r,0));
+  assert.equal(f.calls.length,0);assert.equal(f.reservations.length,0);assert.equal(f.stops.length,0);
+});
+test("bound Google: pre-abort cannot read runtime or quota SQL",async()=>{
+  const f=boundFixture(),controller=new AbortController();controller.abort();f.config.signal=controller.signal;
+  await assert.rejects(f.create().readEvidence(),/IDENTITY_READ_ABORTED/);assert.equal(f.queries.length,0);assert.equal(f.loads.length,0);
 });

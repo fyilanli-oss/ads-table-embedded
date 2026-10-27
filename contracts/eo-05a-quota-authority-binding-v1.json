@@ -3,6 +3,7 @@
   "Merchant_identity_extension_2026_10_27": "contracts/eo-05-start-brief-v1.json#Google_Merchant_identity_quota_2026_10_27",
   "Klaviyo_identity_constructor_2026_10_27": "contracts/eo-05-start-brief-v1.json#Klaviyo_identity_quota_constructor_2026_10_27",
   "Meta_identity_quota_constructor": "contracts/eo-05-start-brief-v1.json#Meta_identity_quota_constructor_2026_10_27",
+  "Google_identity_quota_constructor": "contracts/eo-05-start-brief-v1.json#Google_identity_quota_constructor_2026_10_27",
   "package_id": "A6-EO-05-A",
   "base_commit": "4bdc8bc7818bc574c343aef6cf0f7f74b3aa43ee",
   "checked_at": "2026-10-20",

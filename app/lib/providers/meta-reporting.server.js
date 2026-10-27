@@ -476,7 +476,7 @@ export function classifyMetaReportingError(error) {
   if (status === 429 || RATE_LIMIT_CODES.has(providerCode)) {
     return Object.freeze({
       class: "rate_limited",
-      retryable: true,
+      retryable: false,
       retry_after_ms: error.details?.retry_after_ms ?? null,
       provider_request_id: error.details?.request_id ?? null,
       message: error.message,
@@ -487,7 +487,7 @@ export function classifyMetaReportingError(error) {
     || providerCode === 10 || (providerCode >= 200 && providerCode <= 299)
   ) {
     return Object.freeze({
-      class: "permission_denied",
+      class: "permission_or_scope_missing",
       retryable: false,
       retry_after_ms: error.details?.retry_after_ms ?? null,
       provider_request_id: error.details?.request_id ?? null,
@@ -497,7 +497,7 @@ export function classifyMetaReportingError(error) {
   if (status >= 500 || providerCode === 1 || providerCode === 2) {
     return Object.freeze({
       class: "transient_provider_failure",
-      retryable: true,
+      retryable: false,
       retry_after_ms: null,
       provider_request_id: error.details?.request_id ?? null,
       message: error.message,

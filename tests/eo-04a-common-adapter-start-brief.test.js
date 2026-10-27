@@ -13,7 +13,9 @@ test("EO-04-A start brief freezes truthful common adapter behavior", async () =>
   assert.equal(contract.zero_rule, "only_explicit_provider_numeric_zero_becomes_zero");
   assert.equal(contract.pagination.partial_publish_as_complete, false);
   assert.equal(contract.pagination.provider_cursor_is_opaque, true);
-  assert.equal(contract.retry.retry_only_documented_transient_conditions, true);
+  assert.equal(contract.retry.automatic_retry, false);
+  assert.equal(contract.retry.maximum_attempts_per_page, 1);
+  assert.equal(contract.first_error_policy_2026_10_27.classifier_retryable_can_override_policy, false);
   assert.equal(contract.raw_evidence.stored_in_application_logs, false);
   assert.equal(contract.store_scope.silent_cross_store_mix_forbidden, true);
   assert.equal(contract.secret_gate.creates_secret, false);
@@ -69,7 +71,7 @@ test("EO-04-A exposes complete synthetic acceptance and secret gates", async () 
     "absent_field",
     "multi_page_complete",
     "cursor_loop",
-    "rate_limit_then_success",
+    "rate_limit_stops_without_retry",
     "authentication_failure_no_retry",
     "partial_page_failure_not_publishable",
     "ambiguous_store_scope",

@@ -3,6 +3,14 @@
   "contract_id": "eo-04b-meta-reporting-runtime-v1",
   "accepted_query_target_contract": "contracts/pd-cpd-query-standard-v1.json",
   "package_id": "A6-EO-04-B",
+  "first_error_policy_2026_10_27": {
+    "reference": "contracts/eo-04a-common-adapter-start-brief-v1.json#first_error_policy_2026_10_27",
+    "all_classifications_retryable": false,
+    "permission_class": "permission_or_scope_missing",
+    "rate_limit_and_transient_classes": "unchanged_categories_not_retry_authority",
+    "retry_after": "metadata_only",
+    "new_native_error_codes_or_live_calls": false
+  },
   "status": "repository_accepted_live_shape_observed_real_catalog_validation_pending",
   "checked_at": "2026-10-23",
   "query_alignment": {

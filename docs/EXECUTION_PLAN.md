@@ -1,5 +1,11 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## EO-05 kod eksikleri — ilk hata düzeltmesi, 27 Ekim 2026
+
+Ürün sahibi 27 Ekim sıralı kodlama planına başlanmasını onayladı. Bu ilk dar teslim, güncel main `dc565a4` tabanından `codex/eo05-first-error-policy` branch'inde hazırlanır; #179 kimlik/iş-planı ve #180/#181 kodları taşınmaz. GitHub Connector, uzak main, görev branch'i ve yerel envanter ayrı doğrulandı. Ortak runner'ın otomatik retry döngüsü kaldırıldı; her sayfa tek çağrı, ilk hatada terminal sonuç ve sıfır yayımlanan satır verir. Caller >1 attempt seçemez; classifier retry isteği etkisizdir. `Retry-After` değişmeden metadata kalır; bozuk/atan classifier gizli ayrıntısız terminal hata olur. Normal sayfalama ve tam/çelişkisiz sonuç kabulü korunur.
+
+Meta classifier'ın geçici/quota hata türleri korunarak `retryable: false` yapılır; permission sınıfı `permission_or_scope_missing` ile ortak sözlüğe bağlanır. Provider'ın yeni kod/alan semantiği eklenmez. Ayrıntı `contracts/eo-04a-common-adapter-start-brief-v1.json#first_error_policy_2026_10_27`, analist brief'i `docs/EO_04A_COMMON_ADAPTER_START_BRIEF.md` içindedir. Resmî Google hata tipleri ve Meta SDK exception metadata'sı 27 Ekim okundu; Meta Graph doküman isteği 429 olduğundan o sayfa doğrulandı sayılmaz. Bu repository kodudur; native provider/OAuth/DB çağrısı, canlı aktivasyon, UI/deploy veya paket kapanışı yoktur. Kimlik 12 öncesi kullanıcı durağı, Klaviyo rol kapanışı ve tarihsel PMax duraklaması değişmez. Geniş teknik iş planı #179'da açık, bu düzeltmenin merge'ü ayrı açık kullanıcı onayına bağlıdır.
+
 ## Ortak adaptör kurulum kimliği düzeltmesi — 26 Ekim 2026
 
 - Ürün sahibi dar kimlik düzeltmesini onayladı. Başlangıç main `a0d5d1194e8cae2cde0033674e66e400f4278ee3` (#177). Mevcut DB bigint kurulum ID'si korunur; yalnız ortak adaptör istek/fact UUID kontrolü `1`–`9223372036854775807` aralığındaki canonical ondalık metin kontrolüne dönüştürülür. Number'a çevirme, yeni UUID, alias veya DB değişikliği yoktur.

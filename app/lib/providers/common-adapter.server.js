@@ -54,13 +54,8 @@ export const NORMALIZED_ERROR_CLASSES = Object.freeze([
   "partial_result",
   "internal_adapter_failure",
 ]);
-export const RETRYABLE_ERROR_CLASSES = Object.freeze([
-  "rate_limited",
-  "transient_provider_failure",
-  "provider_timeout",
-]);
-
-const RETRYABLE_SET = new Set(RETRYABLE_ERROR_CLASSES);
+// Compatibility export: provider error categories do not authorize another dispatch.
+export const RETRYABLE_ERROR_CLASSES = Object.freeze([]);
 const PROVIDER_SET = new Set(PROVIDERS);
 const OPERATION_SET = new Set(OPERATIONS);
 const SUPPORT_SET = new Set(METRIC_SUPPORT_VALUES);
@@ -464,11 +459,9 @@ function normalizeClassifiedError(classification) {
       message: "Provider error classifier returned an invalid classification",
     };
   }
-  const retryable =
-    classification.retryable === true && RETRYABLE_SET.has(classification.class);
   return {
     class: classification.class,
-    retryable,
+    retryable: false,
     retry_after_ms:
       Number.isFinite(classification.retry_after_ms) &&
       classification.retry_after_ms >= 0
@@ -485,21 +478,11 @@ function normalizeClassifiedError(classification) {
   };
 }
 
-function retryDelayMs({ classification, retryIndex, baseDelayMs, maxDelayMs, random }) {
-  if (classification.retry_after_ms != null) {
-    return classification.retry_after_ms;
-  }
-  const exponential = Math.min(baseDelayMs * 2 ** retryIndex, maxDelayMs);
-  return Math.min(exponential + Math.floor(random() * baseDelayMs), maxDelayMs);
-}
-
 export async function runCommonAdapterOperation({
   request,
   fetchPage,
   classifyError,
-  sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds)),
   now = () => Date.now(),
-  random = Math.random,
   limits = {},
 }) {
   validateCommonAdapterRequest(request);
@@ -510,7 +493,7 @@ export async function runCommonAdapterOperation({
   const maximumPages = limits.maximum_pages ?? 100;
   const maximumRows = limits.maximum_rows ?? 100_000;
   const maximumElapsedMs = limits.maximum_elapsed_ms ?? 120_000;
-  const maximumAttemptsPerPage = limits.maximum_attempts_per_page ?? 4;
+  const maximumAttemptsPerPage = limits.maximum_attempts_per_page ?? 1;
   const baseDelayMs = limits.base_delay_ms ?? 250;
   const maximumDelayMs = limits.maximum_delay_ms ?? 30_000;
   for (const [field, value] of Object.entries({
@@ -524,6 +507,9 @@ export async function runCommonAdapterOperation({
     if (!Number.isInteger(value) || value < 1) {
       fail("REQUEST_CONTRACT_INVALID", `limits.${field} must be a positive integer`);
     }
+  }
+  if (maximumAttemptsPerPage !== 1) {
+    fail("REQUEST_CONTRACT_INVALID", "Automatic provider retries are forbidden; maximum_attempts_per_page must be 1");
   }
 
   const startedAt = now();
@@ -539,7 +525,7 @@ export async function runCommonAdapterOperation({
       status: "failed",
       publishable: false,
       rows: Object.freeze([]),
-      error: Object.freeze(normalizedError),
+      error: Object.freeze(normalizeClassifiedError(normalizedError)),
       evidence: Object.freeze({
         provider: request.provider,
         operation: request.operation,
@@ -547,6 +533,7 @@ export async function runCommonAdapterOperation({
         provider_api_version: request.provider_api_version,
         query_fingerprint: request.query_fingerprint,
         attempt_id: request.attempt_id,
+        total_attempts: totalAttempts,
         page_count: pageNumber,
         staged_row_count: stagedRows.size,
         completeness: "partial",
@@ -582,62 +569,19 @@ export async function runCommonAdapterOperation({
     seenCursors.add(cursorKey);
 
     let page;
-    let pageAttempts = 0;
-    let lastClassification = null;
-    while (pageAttempts < maximumAttemptsPerPage) {
-      pageAttempts += 1;
-      totalAttempts += 1;
+    totalAttempts += 1;
+    const pageContext = {request, cursor, page_number: pageNumber + 1, attempt_number: 1};
+    try {
+      page = await fetchPage(pageContext);
+    } catch (error) {
+      let classification;
       try {
-        page = await fetchPage({
-          request,
-          cursor,
-          page_number: pageNumber + 1,
-          attempt_number: pageAttempts,
-        });
-        break;
-      } catch (error) {
-        const classification = normalizeClassifiedError(
-          await classifyError(error, {
-            request,
-            cursor,
-            page_number: pageNumber + 1,
-            attempt_number: pageAttempts,
-          }),
-        );
-        lastClassification = classification;
-        const elapsed = now() - startedAt;
-        if (
-          !classification.retryable ||
-          pageAttempts >= maximumAttemptsPerPage ||
-          elapsed >= maximumElapsedMs
-        ) {
-          return failure(classification);
-        }
-        const delay = retryDelayMs({
-          classification,
-          retryIndex: pageAttempts - 1,
-          baseDelayMs,
-          maxDelayMs: maximumDelayMs,
-          random,
-        });
-        if (elapsed + delay > maximumElapsedMs) {
-          return failure({
-            ...classification,
-            message: "Retry delay would exceed adapter elapsed-time budget",
-          });
-        }
-        await sleep(delay);
+        classification = await classifyError(error, pageContext);
+      } catch {
+        classification = null;
       }
-    }
-
-    if (!page) {
-      return failure(
-        lastClassification ?? {
-          class: "internal_adapter_failure",
-          message: "Provider page was not returned",
-          provider_request_id: null,
-        },
-      );
+      // Stop even when the classifier is broken or explicitly asks for a retry.
+      return failure(classification);
     }
     if (!isRecord(page) || !Array.isArray(page.rows)) {
       return failure({

@@ -69,7 +69,7 @@ export function fetchMetaProductBreakdownInsightsPage(input: {
 
 export function classifyMetaReportingError(error: unknown): Readonly<{
   class: string;
-  retryable: boolean;
+  retryable: false;
   retry_after_ms: number | null;
   provider_request_id: string | null;
   message: string;

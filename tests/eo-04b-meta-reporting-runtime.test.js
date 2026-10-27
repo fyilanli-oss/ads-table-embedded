@@ -206,7 +206,7 @@ test("Meta reporting fails closed on invalid auth, schema and cursor", async () 
   );
 });
 
-test("Meta reporting error classification keeps auth terminal and quotas retryable", () => {
+test("Meta reporting preserves error categories and quota metadata without automatic retry", () => {
   const auth = classifyMetaReportingError(new MetaGraphError(
     "META_REAUTHORIZATION_REQUIRED",
     "reauthorize",
@@ -220,7 +220,7 @@ test("Meta reporting error classification keeps auth terminal and quotas retryab
     {status: 429, provider_error_code: 4, request_id: "rate-1"},
   ));
   assert.equal(quota.class, "rate_limited");
-  assert.equal(quota.retryable, true);
+  assert.equal(quota.retryable, false);
   const retryAfter = classifyMetaReportingError(new MetaGraphError(
     "META_REPORTING_REQUEST_FAILED",
     "rate limited",
@@ -238,7 +238,7 @@ test("Meta permission errors and bare 403 do not masquerade as invalid tokens", 
       fetchFn: async () => {calls++; return json({error: code === null ? {} : {code}}, status);},
     }), error => {
       assert.equal(error.code, "META_PERMISSION_DENIED");
-      assert.equal(classifyMetaReportingError(error).class, "permission_denied");
+      assert.equal(classifyMetaReportingError(error).class, "permission_or_scope_missing");
       assert.equal(classifyMetaReportingError(error).retryable, false);
       return true;
     });
@@ -258,7 +258,7 @@ test("Meta BUC quota codes win over generic HTTP 403 and never retry the request
         assert.equal(error.code, "META_REPORTING_REQUEST_FAILED");
         const classified = classifyMetaReportingError(error);
         assert.equal(classified.class, "rate_limited");
-        assert.equal(classified.retryable, true);
+        assert.equal(classified.retryable, false);
         assert.equal(classified.retry_after_ms, 7000);
         return true;
       });

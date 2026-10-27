@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {readFile} from "node:fs/promises";
+import {MetaGraphError} from "../app/lib/providers/meta-graph.server.js";
+import {classifyMetaReportingError} from "../app/lib/providers/meta-reporting.server.js";
 
 import {
   AdapterContractError,
@@ -275,7 +277,7 @@ test("cursor loop fails closed and publishes no staged rows", async () => {
   assert.equal(result.evidence.staged_row_count, 2);
 });
 
-test("documented rate limit honors Retry-After then succeeds", async () => {
+test("rate limit preserves Retry-After and stops before a second dispatch", async () => {
   let calls = 0;
   const delays = [];
   const result = await runCommonAdapterOperation({
@@ -298,10 +300,13 @@ test("documented rate limit honors Retry-After then succeeds", async () => {
     random: () => 0,
   });
 
-  assert.equal(result.publishable, true);
-  assert.equal(calls, 2);
-  assert.deepEqual(delays, [1_750]);
-  assert.equal(result.evidence.total_attempts, 2);
+  assert.equal(result.publishable, false);
+  assert.deepEqual(result.rows, []);
+  assert.equal(result.error.retryable, false);
+  assert.equal(result.error.retry_after_ms, 1_750);
+  assert.equal(calls, 1);
+  assert.deepEqual(delays, []);
+  assert.equal(result.evidence.total_attempts, 1);
 });
 
 test("authentication failure is never retried even if classifier asks for retry", async () => {
@@ -326,9 +331,11 @@ test("authentication failure is never retried even if classifier asks for retry"
 });
 
 test("failure after a successful page remains partial and not publishable", async () => {
+  let calls = 0;
   const result = await runCommonAdapterOperation({
     request: makeRequest(),
     fetchPage: async ({ cursor }) => {
+      calls++;
       if (cursor == null) {
         return {
           rows: [makeRow("ad-1")],
@@ -344,7 +351,7 @@ test("failure after a successful page remains partial and not publishable", asyn
       message: "provider unavailable",
     }),
     sleep: async () => {},
-    limits: { maximum_attempts_per_page: 2 },
+    limits: { maximum_attempts_per_page: 1 },
   });
 
   assert.equal(result.publishable, false);
@@ -352,6 +359,8 @@ test("failure after a successful page remains partial and not publishable", asyn
   assert.equal(result.error.class, "transient_provider_failure");
   assert.equal(result.evidence.staged_row_count, 1);
   assert.equal(result.evidence.completeness, "partial");
+  assert.equal(calls, 2);
+  assert.equal(result.error.retryable, false);
 });
 
 test("conflicting duplicate fact fails closed", async () => {
@@ -415,7 +424,7 @@ test("evidence byte ceiling is enforced", () => {
 });
 
 
-test("provider Retry-After is never shortened to the fallback delay ceiling", async () => {
+test("provider Retry-After remains metadata even beyond the elapsed budget", async () => {
   let slept = false;
   const result = await runCommonAdapterOperation({
     request: makeRequest(),
@@ -440,8 +449,94 @@ test("provider Retry-After is never shortened to the fallback delay ceiling", as
 
   assert.equal(result.publishable, false);
   assert.equal(result.error.class, "rate_limited");
-  assert.match(result.error.message, /elapsed-time budget/i);
+  assert.equal(result.error.retry_after_ms, 5_000);
+  assert.equal(result.error.retryable, false);
+  assert.equal(result.error.message, "rate limited");
   assert.equal(slept, false);
+});
+
+test("caller configuration cannot enable automatic retries", async () => {
+  for (const attempts of [2, 4, 100]) {
+    let calls = 0;
+    await assert.rejects(runCommonAdapterOperation({
+      request: makeRequest(),
+      fetchPage: async () => { calls++; throw new Error("provider must not be reached"); },
+      classifyError: noRetryClassifier,
+      limits: {maximum_attempts_per_page: attempts},
+    }), error => error.code === "REQUEST_CONTRACT_INVALID");
+    assert.equal(calls, 0);
+  }
+});
+
+test("Meta classifier reaches the common runner without losing permission, quota or transient category", async () => {
+  for (const [status, providerCode, errorCode, expectedClass] of [
+    [403, 10, "META_PERMISSION_DENIED", "permission_or_scope_missing"],
+    [429, 4, "META_REPORTING_REQUEST_FAILED", "rate_limited"],
+    [403, 80004, "META_REPORTING_REQUEST_FAILED", "rate_limited"],
+    [503, 2, "META_REPORTING_REQUEST_FAILED", "transient_provider_failure"],
+    [401, 190, "META_REAUTHORIZATION_REQUIRED", "reauthorization_required"],
+    [200, null, "META_REPORTING_SCHEMA_CHANGED", "provider_schema_changed"],
+  ]) {
+    let calls = 0;
+    const result = await runCommonAdapterOperation({
+      request: makeRequest(),
+      fetchPage: async () => {
+        calls++;
+        throw new MetaGraphError(errorCode, "safe failure", {
+          status, provider_error_code: providerCode, retry_after_ms: 7000, request_id: "safe-request",
+        });
+      },
+      classifyError: classifyMetaReportingError,
+      sleep: async () => assert.fail("Meta error must not schedule another call"),
+    });
+    assert.equal(calls, 1);
+    assert.equal(result.error.class, expectedClass);
+    assert.equal(result.error.retryable, false);
+    assert.equal(result.error.provider_request_id, "safe-request");
+    assert.equal(result.publishable, false);
+  }
+});
+
+test("every failure category stops even when the classifier requests retry", async () => {
+  for (const errorClass of ["rate_limited", "transient_provider_failure", "provider_timeout",
+    "permission_or_scope_missing", "reauthorization_required", "provider_schema_changed", "request_contract_invalid"]) {
+    let calls = 0;
+    const result = await runCommonAdapterOperation({
+      request: makeRequest(),
+      fetchPage: async () => { calls++; throw new Error("provider rejected"); },
+      classifyError: () => ({class: errorClass, retryable: true, retry_after_ms: 100, provider_request_id: "request-safe"}),
+      sleep: async () => assert.fail("no automatic sleep"),
+    });
+    assert.equal(calls, 1);
+    assert.equal(result.error.class, errorClass);
+    assert.equal(result.error.retryable, false);
+    assert.equal(result.error.provider_request_id, "request-safe");
+    assert.equal(result.publishable, false);
+    assert.deepEqual(result.rows, []);
+  }
+});
+
+test("classifier rejection or invalid output cannot retry, expose raw errors or publish staged rows", async () => {
+  for (const classifyError of [() => {throw new Error("PRIVATE_TOKEN");}, async () => {throw new Error("PRIVATE_TOKEN");},
+    () => null, () => ({class: "unknown_raw_provider_class", message: "PRIVATE_TOKEN"})]) {
+    let calls = 0;
+    const result = await runCommonAdapterOperation({
+      request: makeRequest(),
+      fetchPage: async ({cursor}) => {
+        calls++;
+        if (cursor === null) return {rows: [makeRow()], next_cursor: "page-2", raw_evidence: {}};
+        throw new Error("PRIVATE_TOKEN");
+      },
+      classifyError,
+    });
+    assert.equal(calls, 2);
+    assert.equal(result.error.class, "internal_adapter_failure");
+    assert.equal(result.error.retryable, false);
+    assert.equal(result.publishable, false);
+    assert.equal(result.evidence.staged_row_count, 1);
+    assert.deepEqual(result.rows, []);
+    assert.doesNotMatch(JSON.stringify(result), /PRIVATE_TOKEN/);
+  }
 });
 
 test("oversized provider evidence fails closed instead of escaping the runner", async () => {

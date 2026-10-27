@@ -12,6 +12,14 @@ Bu belge 10 Ekim 2026'daki tasarım ve kabul kaydıdır. Sonraki sağlayıcı hi
 
 ## Analist sonucu
 
+### İlk hata politikası düzeltmesi — 27 Ekim 2026
+
+Güncel ortak runner her sayfada tek istek yapar; 429, geçici sunucu hatası, timeout, yetki veya şema hatasında otomatik ikinci çağrı yoktur. Sayfalama normal tamamlanana kadar sürer, ilk başarısız sayfada durur ve önceki sayfalardan toplanan kayıtlar yayımlanmaz. `maximum_attempts_per_page > 1` çağrıdan önce reddedilir. `retryable: true` döndüren sınıflandırıcı bu kuralı aşamaz. `Retry-After` kanıt/metadata olarak korunur; sleep/backoff çalıştırmaz. Uyumluluk için kalan `sleep`/`random` ve gecikme seçenekleri otomatik tekrar başlatmaz. Bozuk/atan sınıflandırıcı ham hata ayrıntısını açmadan `internal_adapter_failure` üretir.
+
+Meta permission sınıfı ortak sözlüğün `permission_or_scope_missing` değerine getirildi; gözlem durumu olan `permission_denied` değiştirilmedi. Hız sınırı ve geçici hata sınıfları kendi anlamlarını korur, `retryable` tüm Meta sınıflarında false'tur. Yeni Meta provider kodu veya davranışı türetilmedi. Ortak request/fact sürümü `3.0.0` kalır; aşağıdaki eski retry tasarımı tarihsel kabul kaydıdır ve güncel çalışma izni değildir.
+
+27 Ekim kaynakları: [Google Error types](https://developers.google.com/google-ads/api/docs/best-practices/error-types), [Meta resmî SDK exceptions](https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/exceptions.py). Kaynaklar hata kategorisi/metadata yapısını destekler; otomatik tekrar yapmamak ürün ve repository politikasıdır. Meta Graph belge sayfası 429 verdi; okunmuş gibi kabul edilmedi. Canlı API, OAuth, DB, UI veya deploy değişikliği yoktur; merge ayrıca açık kullanıcı onayına bağlıdır.
+
 ### Kurulum kimliği düzeltmesi — 26 Ekim 2026
 
 Aktif runtime ve TypeScript sözleşmesi `3.0.0` kullanır. `authority.installation_id` ve fact `identity.installation_id`, mevcut DB `shopify.installations.id` bigint kimliğinin `1`–`9223372036854775807` aralığında, başında sıfır/işaret/boşluk olmayan ondalık metin karşılığıdır. UUID, JS Number/BigInt girdi ve eski `1.0.0`/`2.0.0` istekleri sessizce çevrilmez. Bu kırıcı temsil düzeltmesi yalnız ortak adaptörde uygulanır; aşağıdaki `2.0.0` paragrafı 23 Ekim durumunu kaydeder. Dokuz metrik değişmedi. Workspace/connection UUID kuralları, hesap seçimi ve Klaviyo NULL reporting-account kuralı korunur. Bu kontrol kimliğin gerçekten server tarafından çözüldüğünü tek başına kanıtlamaz; DB resolver/writer, FX/ad zorunluluğu, Dataset ve canlı entegrasyon bu dilimde yoktur.

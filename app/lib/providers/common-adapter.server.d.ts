@@ -51,11 +51,8 @@ export const NORMALIZED_ERROR_CLASSES: readonly [
   "partial_result",
   "internal_adapter_failure",
 ];
-export const RETRYABLE_ERROR_CLASSES: readonly [
-  "rate_limited",
-  "transient_provider_failure",
-  "provider_timeout",
-];
+/** Compatibility export; automatic retries are forbidden. */
+export const RETRYABLE_ERROR_CLASSES: readonly [];
 
 export type Provider = (typeof PROVIDERS)[number];
 export type AdapterOperation = (typeof OPERATIONS)[number];
@@ -171,8 +168,10 @@ export interface AdapterLimits {
   maximum_pages?: number;
   maximum_rows?: number;
   maximum_elapsed_ms?: number;
-  maximum_attempts_per_page?: number;
+  maximum_attempts_per_page?: 1;
+  /** @deprecated Validated for compatibility only; no automatic backoff. */
   base_delay_ms?: number;
+  /** @deprecated Validated for compatibility only; no automatic backoff. */
   maximum_delay_ms?: number;
   maximum_evidence_bytes?: number;
 }
@@ -213,6 +212,8 @@ export type AdapterResult =
       rows: readonly [];
       error: Readonly<{
         class: NormalizedErrorClass;
+        retryable: false;
+        retry_after_ms: number | null;
         message: string;
         provider_request_id: string | null;
       }>;
@@ -244,8 +245,10 @@ export function runCommonAdapterOperation(options: {
     error: unknown,
     context: AdapterPageContext,
   ) => ClassifiedProviderError | Promise<ClassifiedProviderError>;
+  /** @deprecated Ignored; the runner never sleeps or retries. */
   sleep?: (milliseconds: number) => Promise<void>;
   now?: () => number;
+  /** @deprecated Ignored; the runner never schedules backoff. */
   random?: () => number;
   limits?: AdapterLimits;
 }): Promise<AdapterResult>;

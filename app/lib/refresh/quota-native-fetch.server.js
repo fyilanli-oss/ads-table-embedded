@@ -101,6 +101,7 @@ export function createQuotaManagedFetch({provider,guard,resolveOperation,isDispa
     let operationKey;
     try {operationKey=await resolveOperation(metadata);} catch {throw control("not_configured");}
     if(!/^[a-f0-9]{64}$/.test(operationKey??"")) throw control("not_configured");
+    if(closed||requestInit.signal?.aborted) throw control("not_sent",attempts);
     let response,rejected=false,quotaSignal=null,quotaObservation=null;
     let result;
     try {result=await guard.execute({operationKey,lane,

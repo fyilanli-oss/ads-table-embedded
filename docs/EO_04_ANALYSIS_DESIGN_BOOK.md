@@ -1,5 +1,9 @@
 # EO-04 — Analiz ve tasarım kitabı
 
+## EO-05 takip — Klaviyo native/Message okuyucusunda güvenilir kota constructor'ı, 27 Ekim 2026
+
+#216 main'dedir. Yeni inactive background constructor; doğrulanmış Shopify owner'ını tek günlük fenced Klaviyo işi ve SQL'den yenilenen quota/entitlement context'iyle bağlar. Her HTTP/sayfa aynı guard/store üzerinden geçer; override ve instance replay kapalıdır. Shopify Admin/üçüncü aday modu bu girişte açılmadı. İlk wait ile önceden çağrı yapılmış wait ayrımı, mevcut roller ve rapor istatistiklerinin ürün satışı sayılmaması korunur. 30 yeni ve 143 mevcut sentetik test geçti. Gerçek profiller/erişim kabulü, diğer constructor'lar, Admin kota, work-wait/sipariş okuyucusu ve 14 SQL inceleme kapısı açık; EO-04 tarihsel kabulü/PMax duraklaması değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Klaviyo_identity_quota_constructor_2026_10_27` ve Execution Plan.
+
 ## EO-05 takip — Merchant hedefi, kota hesabı ve güvenilir scope, 27 Ekim 2026
 
 #215 main'dedir. Mevcut products/v1 listelemesi kota transport'unda ayrı aile olarak tanındı; Ads hesabı/sürümü, hedef Merchant ve kimlik doğrulamanın kullandığı gerçek kota hesabı ayrı tutulur. Opsiyonel güvenilir Merchant context hedef/pool/sürüm/epoch olmadan çağrı çıkmaz; Ads bütçesine fallback yoktur. Eski Ads/OAuth route anahtarları korunur; background pin Merchant değişimini de engeller. 35 yeni ve 243 mevcut sentetik test geçti. Yeni envanter mevcut SQL'de yok; 14 inceleme kapısında hazırlanacak, gerçek pool/limit/profil ve constructor kabulü açık. Sentetik test native kanıt değildir. EO-04 tarihsel kabulü ve PMax duraklaması değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Google_Merchant_identity_quota_2026_10_27` ve Execution Plan.

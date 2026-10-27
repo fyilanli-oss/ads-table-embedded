@@ -142,3 +142,15 @@ test("abort during pre-dispatch context recheck cannot race into HTTP",async()=>
   await assert.rejects(pending,e=>quotaBoundaryControl(e)?.status==="not_sent");
   assert.equal(f.calls(),0);assert.equal(f.settles.length,1);assert.equal(f.stops.length,0);
 });
+
+test("abort while initial scope lookup waits never starts a quota reservation",async()=>{
+  const f=fixture(),caller=new AbortController();let release,entered;
+  const ready=new Promise(resolve=>{entered=resolve;});
+  const fetchFn=createQuotaManagedFetch({provider:"klaviyo",...f.options,resolveOperation:async()=>{
+    await new Promise(resolve=>{release=resolve;entered();});return "a".repeat(64);
+  }});
+  const pending=fetchFn("https://a.klaviyo.com/api/metrics",{signal:caller.signal});
+  await ready;caller.abort();release();
+  await assert.rejects(pending,e=>quotaBoundaryControl(e)?.status==="not_sent");
+  assert.equal(f.calls(),0);assert.equal(f.reservations.length,0);assert.equal(f.settles.length,0);assert.equal(f.stops.length,0);
+});

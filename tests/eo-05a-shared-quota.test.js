@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {randomUUID} from "node:crypto";
-import {createSharedQuotaGuard} from "../app/lib/refresh/shared-quota.server.js";
+import {createSharedQuotaGuard,SHOPIFY_ADMIN_COST_UNIT} from "../app/lib/refresh/shared-quota.server.js";
 import {createSharedQuotaRepository} from "../app/lib/database/shared-quota-repository.server.js";
 
 function fixture() {
@@ -63,4 +63,49 @@ test("shared quota contract does not decide Dataset, product grain, dates or nat
   assert.match(sql,/order by q.id for update of q/);assert.match(sql,/and settled/);
   assert.match(sql,/interactive_reserve/);assert.match(sql,/max_outstanding/);
   assert.match(sql,/p\.max_units-\(case when p_lane='background' then p\.interactive_reserve else 0 end\)/,"CASE expression must be parenthesized inside the PLpgSQL IF comparison");
+});
+
+function costFixture(budget={unit:SHOPIFY_ADMIN_COST_UNIT,reservedRequestedCost:10}) {
+  const f=fixture();let permit,received,reserveInput;
+  f.store.reserve=async x=>{reserveInput=x;permit={...x,status:"reserved",dispatchBeforeMs:100,dispatchBudgetMs:1000,costBudget:budget};return permit;};
+  f.args.requiredCostUnit=SHOPIFY_ADMIN_COST_UNIT;
+  f.args.run=async points=>{received=points;return {outcome:"success",value:"ok"};};
+  return {...f,permit:()=>permit,received:()=>received,reserveInput:()=>reserveInput};
+}
+test("Admin budget: same reservation supplies a copied point ceiling without caller cost input",async()=>{
+  const f=costFixture();assert.equal((await f.guard.execute(f.args)).status,"returned");assert.equal(f.received(),10);
+  assert.deepEqual(Object.keys(f.reserveInput()).sort(),["attemptId","lane","operationKey"]);assert.equal(f.settles(),1);
+});
+for(const [name,budget] of [["missing",undefined],["null",null],["wrong unit",{unit:"requests",reservedRequestedCost:10}],
+  ["zero",{unit:SHOPIFY_ADMIN_COST_UNIT,reservedRequestedCost:0}],["negative",{unit:SHOPIFY_ADMIN_COST_UNIT,reservedRequestedCost:-1}],
+  ["string",{unit:SHOPIFY_ADMIN_COST_UNIT,reservedRequestedCost:"10"}],["fraction",{unit:SHOPIFY_ADMIN_COST_UNIT,reservedRequestedCost:1.5}],
+  ["unsafe integer",{unit:SHOPIFY_ADMIN_COST_UNIT,reservedRequestedCost:Number.MAX_SAFE_INTEGER+1}],
+  ["extra budget field",{unit:SHOPIFY_ADMIN_COST_UNIT,reservedRequestedCost:10,callerLimit:100}],
+])test(`Admin budget: ${name} receipt settles without dispatch or provider stop`,async()=>{
+  const f=costFixture(budget);if(budget===undefined)f.store.reserve=async x=>({...x,status:"reserved",dispatchBeforeMs:100,dispatchBudgetMs:1000});
+  const r=await f.guard.execute(f.args);assert.equal(r.status,"not_sent");assert.equal(r.reason,"quota_cost_budget_invalid");
+  assert.equal(f.received(),undefined);assert.equal(f.settles(),1);assert.equal(f.stops(),0);
+});
+test("Admin budget: later mutation of receipt cannot increase copied admitted ceiling",async()=>{
+  const f=costFixture();f.args.beforeDispatch=async()=>{f.permit().costBudget.reservedRequestedCost=999;return true;};
+  assert.equal((await f.guard.execute(f.args)).status,"returned");assert.equal(f.received(),10);
+});
+test("Admin budget: valid cost cannot rescue a foreign attempt or operation receipt",async()=>{
+  for(const field of ["attemptId","operationKey"]){const f=costFixture();f.args.beforeDispatch=()=>{f.permit()[field]="foreign";return true;};
+    assert.equal((await f.guard.execute(f.args)).status,"not_sent");assert.equal(f.received(),undefined);assert.equal(f.settles(),1);}
+});
+test("Admin budget: invalid receipt settlement failure remains needs-attention",async()=>{
+  const f=costFixture(null);f.store.settle=async()=>false;
+  assert.equal((await f.guard.execute(f.args)).status,"needs_attention");assert.equal(f.received(),undefined);
+});
+test("Admin budget: unknown required unit rejected before reserving",async()=>{
+  const f=fixture();await assert.rejects(f.guard.execute({...f.args,requiredCostUnit:"requests"}),/INPUT_INVALID/);assert.equal(f.reserves(),0);
+});
+test("Admin budget: ordinary provider run keeps its original zero-argument interface",async()=>{
+  const f=fixture();let args;f.args.run=async(...values)=>{args=values;return {outcome:"success"};};
+  assert.equal((await f.guard.execute(f.args)).status,"returned");assert.deepEqual(args,[]);
+});
+test("Admin budget: known requested-cost excess has a distinct stop reason",async()=>{
+  const f=costFixture();f.args.run=async()=>({outcome:"rejected",costBudgetExceeded:true});
+  const r=await f.guard.execute(f.args);assert.equal(r.reason,"quota_cost_budget_exceeded");assert.equal(r.status,"stopped");assert.equal(f.stops(),1);
 });

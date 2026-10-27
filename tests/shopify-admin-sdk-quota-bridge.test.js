@@ -24,14 +24,14 @@ const shop={authority:"shopify_admin_verified",shopId:"gid://shopify/Shop/12",my
 const installation={authority:"shopify_installation_verified",workspaceId:"11111111-1111-4111-8111-111111111111",installGeneration:3,status:"active"};
 function fixture({bridge=createShopifyAdminIdentitySdkBridge(),domain=shop.myshopifyDomain}={}) {
   setAbstractFetchFunc(bridge.fetch);
-  const q={},calls=[],reservations=[],settles=[],stops=[],feedback=[],auth=[],logs=[];
+  const q={costBudget:{unit:"shopify_admin_query_points",reservedRequestedCost:10}},calls=[],reservations=[],settles=[],stops=[],feedback=[],auth=[],logs=[];
   const context={provider:"shopify_admin",clientScopeKey:"a".repeat(64),connectionScopeKey:"b".repeat(64),connectionEpoch:3,
     accountId:domain,organizationId:null,apiVersion:"2026-10"};
   const keys=Object.keys(queries).map(family=>quotaRouteIdentity(context,{provider:"shopify_admin",family,accountId:domain,
     organizationId:null,version:"2026-10",includes:[]}).routeKey);
   const store={resolveRoute:async x=>{await q.loading?.();return q.missing?null:keys.includes(x.routeKey)?x.routeKey:null;},
     reserve:async x=>{reservations.push(x);if(q.waitAt===reservations.length)return {status:"waiting"};
-      await q.reserving?.();return {...x,status:"reserved",dispatchBeforeMs:Date.now()+10000,dispatchBudgetMs:10000};},
+      await q.reserving?.();return {...x,status:"reserved",dispatchBeforeMs:Date.now()+10000,dispatchBudgetMs:10000,costBudget:q.costBudget};},
     settle:async x=>{settles.push(x);return true;},stop:async x=>{stops.push(x);return true;},
     recordFeedback:async x=>{feedback.push(x);return !q.feedbackFailure;}};
   const resolve=createQuotaScopeResolver({store,loadContext:async()=>context});
@@ -262,4 +262,17 @@ test("fenced Admin: timeout at work context cannot reserve or dispatch on late r
   const f=boundFixture();f.boundConfig.timeoutMs=40;let release;f.q.contextLoading=()=>new Promise(r=>{release=r;});const client=f.create();
   await assert.rejects(f.read(client),/DEADLINE_EXCEEDED/);delete f.q.contextLoading;release();await new Promise(r=>setTimeout(r,0));
   assert.equal(f.calls.length,0);assert.equal(f.reservations.length,0);await assert.rejects(f.read(client),/EXECUTION_CLOSED/);
+});
+test("fenced Admin cost: budget cannot be supplied by constructor or request override",async()=>{
+  for(const key of ["costBudget","requiredCostUnit"]){const f=boundFixture();f.boundConfig[key]={unit:"shopify_admin_query_points",reservedRequestedCost:999};assert.throws(f.create,/INPUT_INVALID/);}
+});
+test("fenced Admin cost: missing atomic receipt stops before physical SDK HTTP",async()=>{
+  const f=boundFixture();delete f.q.costBudget;const client=f.create();
+  await assert.rejects(f.read(client),e=>quotaBoundaryControl(e)?.status==="not_sent");assert.equal(f.calls.length,0);assert.equal(f.settles.length,1);assert.equal(f.stops.length,0);
+  await assert.rejects(f.read(client),/EXECUTION_CLOSED/);
+});
+test("fenced Admin cost: real SDK requested-cost excess preserves safe error and closed execution",async()=>{
+  const f=boundFixture();f.q.costBudget.reservedRequestedCost=5;const client=f.create();
+  await assert.rejects(f.read(client),/COST_BUDGET_EXCEEDED/);assert.equal(f.calls.length,1);assert.equal(f.stops.length,1);assert.equal(f.auth.length,0);
+  await assert.rejects(f.read(client),/EXECUTION_CLOSED/);assert.equal(f.calls.length,1);
 });

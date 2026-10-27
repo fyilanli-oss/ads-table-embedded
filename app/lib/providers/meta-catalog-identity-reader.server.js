@@ -45,11 +45,11 @@ function nextCursor(body) {
   return text(paging.cursors?.after, "META_CATALOG_IDENTITY_CURSOR_REQUIRED");
 }
 
-// Server context and a declared scope list do not prove token freshness or account/catalog access.
-export async function readMetaCatalogIdentitySnapshot({authority, accessToken, appSecret,
+// Native source only; declared grants alone never prove token freshness or an Ad/catalog link.
+export async function readMetaCatalogSourceSnapshot({catalogId, grantedScopes, accessToken, appSecret,
   fetchFn = fetch, maxPages = 100, maxRows = 10000, signal} = {}) {
-  const scope = metaCatalogIdentityScopeContext(authority), catalogId = numeric(authority.catalog_id);
-  validateIdentityOAuthGrantedScopes("meta", authority.granted_scopes);
+  numeric(catalogId);
+  validateIdentityOAuthGrantedScopes("meta", grantedScopes);
   const token = text(accessToken, "META_CATALOG_IDENTITY_TOKEN_REQUIRED");
   if (/\s/.test(token)) fail("META_CATALOG_IDENTITY_TOKEN_REQUIRED");
   const proof = createMetaAppSecretProof({accessToken: token, appSecret});
@@ -97,9 +97,20 @@ export async function readMetaCatalogIdentitySnapshot({authority, accessToken, a
     if (cursors.has(after)) fail("META_CATALOG_IDENTITY_CURSOR_REPEATED");
     cursors.add(after);
   }
-  return freeze({version: "1.0.0", scope, context: {catalog_id: catalogId, graph_version: META_GRAPH_VERSION},
+  return freeze({version: "1.0.0", context: {catalog_id: catalogId, graph_version: META_GRAPH_VERSION},
     complete: true, pages, records, shopify_mapping_state: "not_resolved",
-    provider_link_verified: false, authorizes_activation: false});
+    provider_link_verified: false, authorizes_activation: false, canonical_scope_ready: false, persistable: false});
+}
+
+// Existing canonical reader retains its PK/grant gate and output contract.
+export async function readMetaCatalogIdentitySnapshot({authority, accessToken, appSecret,
+  fetchFn = fetch, maxPages = 100, maxRows = 10000, signal} = {}) {
+  const scope = metaCatalogIdentityScopeContext(authority), catalogId = numeric(authority.catalog_id);
+  validateIdentityOAuthGrantedScopes("meta", authority.granted_scopes);
+  const source = await readMetaCatalogSourceSnapshot({catalogId, grantedScopes: [...authority.granted_scopes],
+    accessToken, appSecret, fetchFn, maxPages, maxRows, signal});
+  return freeze({version: "1.0.0", scope, context: source.context, complete: true, pages: source.pages,
+    records: source.records, shopify_mapping_state: "not_resolved", provider_link_verified: false, authorizes_activation: false});
 }
 
 export function matchMetaCatalogProductIdentity(snapshot, {catalogId, namespace, productId, productFeedId} = {}) {

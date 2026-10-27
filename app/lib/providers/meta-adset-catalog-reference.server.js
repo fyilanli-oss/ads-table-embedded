@@ -40,8 +40,7 @@ async function readNode({nodeId, fields, accessToken, appSecret, fetchFn, signal
 }
 
 // Observes this Ad Set's catalog reference, not a global catalog assignment or product delivery.
-export async function readMetaAdSetCatalogReference({authority, accessToken, appSecret, fetchFn = fetch, signal} = {}) {
-  const scope = metaCatalogIdentityScopeContext(authority);
+async function readAdSetReference({authority, scope, accessToken, appSecret, fetchFn = fetch, signal} = {}) {
   const adSetId = id(authority.adset_id), catalogId = id(authority.catalog_id);
   if (!/^act_[1-9][0-9]{0,29}$/.test(scope.platform_account_id)
     || typeof fetchFn !== "function") fail("META_CATALOG_REFERENCE_INPUT_INVALID");
@@ -76,8 +75,7 @@ export async function readMetaAdSetCatalogReference({authority, accessToken, app
 }
 
 // Binds an Ad and observed creative references; no effective-delivery precedence is assumed.
-export async function readMetaAdCatalogReference({authority, accessToken, appSecret, fetchFn = fetch, signal} = {}) {
-  const scope = metaCatalogIdentityScopeContext(authority);
+async function readAdReference({authority, scope, accessToken, appSecret, fetchFn = fetch, signal} = {}) {
   const adId = id(authority.ad_id), adSetId = id(authority.adset_id), campaignId = id(authority.campaign_id), catalogId = id(authority.catalog_id);
   if (!/^act_[1-9][0-9]{0,29}$/.test(scope.platform_account_id) || typeof fetchFn !== "function") fail("META_CATALOG_REFERENCE_INPUT_INVALID");
   validateIdentityOAuthGrantedScopes("meta", authority.granted_scopes);
@@ -91,7 +89,7 @@ export async function readMetaAdCatalogReference({authority, accessToken, appSec
   if (ad.id !== adId || ad.account_id !== accountId
     || ad.adset_id !== adSetId || ad.campaign_id !== campaignId) fail("META_CATALOG_REFERENCE_AD_PARENT_MISMATCH");
   const creativeId = id(ad.creative?.id);
-  const parent = await readMetaAdSetCatalogReference({authority, ...options});
+  const parent = await readAdSetReference({authority, scope, ...options});
   const creative = await readNode({...options, nodeId: creativeId, fields: "id,account_id,product_set_id"});
   if (creative.id !== creativeId || creative.account_id !== accountId) fail("META_CATALOG_REFERENCE_CREATIVE_MISMATCH");
   const hasSet = Object.hasOwn(creative, "product_set_id");
@@ -118,6 +116,23 @@ export async function readMetaAdCatalogReference({authority, accessToken, appSec
         product_set_state: setState, ...(hasSet ? {product_set_id: setValue} : {})},
       creative_product_set_reference: creativeSet},
     authorizes_activation: false, proves_product_delivery_or_Insights_namespace: false});
+}
+// Existing full-scope APIs still require canonical installation PK before any native request.
+export async function readMetaAdSetCatalogReference(options = {}) {
+  const scope = metaCatalogIdentityScopeContext(options.authority);
+  return readAdSetReference({...options, scope});
+}
+export async function readMetaAdCatalogReference(options = {}) {
+  const scope = metaCatalogIdentityScopeContext(options.authority);
+  return readAdReference({...options, scope});
+}
+// Native target/reference observation only. No canonical scope is produced or inferred.
+export async function readMetaAdCatalogSourceReference({accountId, adId, adSetId, campaignId, catalogId,
+  grantedScopes, accessToken, appSecret, fetchFn = fetch, signal} = {}) {
+  const {scope, ...source} = await readAdReference({scope: {platform_account_id: accountId},
+    authority: {ad_id: adId, adset_id: adSetId, campaign_id: campaignId, catalog_id: catalogId, granted_scopes: grantedScopes},
+    accessToken, appSecret, fetchFn, signal});
+  return freeze({...source, canonical_scope_ready: false, provider_link_verified: false});
 }
 function clock(now) {
   const value = now();

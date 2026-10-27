@@ -15,7 +15,8 @@ export function createRefreshQuotaClients({workStore,quotaStore,claim,window,ent
       const context=await workStore.loadQuotaContext({...structuredClone(execution),provider});
       if(!context) return null;
       const identity=JSON.stringify([context.provider,context.clientScopeKey,context.connectionScopeKey,context.connectionEpoch,
-        context.accountId,context.organizationId,context.apiVersion]);
+        context.accountId,context.organizationId,context.apiVersion,context.merchant
+          ?[context.merchant.targetAccountId,context.merchant.quotaAccountId,context.merchant.apiVersion,context.merchant.bindingEpoch]:null]);
       if(pinned.has(provider)&&pinned.get(provider)!==identity) return null;
       pinned.set(provider,identity);
       return context;

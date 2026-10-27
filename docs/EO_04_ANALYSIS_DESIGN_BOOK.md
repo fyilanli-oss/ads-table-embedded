@@ -1,5 +1,9 @@
 # EO-04 — Analiz ve tasarım kitabı
 
+## EO-05 takip — Meta native kimlik okuyucusunda güvenilir kota constructor’ı, 27 Ekim 2026
+
+#217 main’dedir. Yeni inactive native-only Meta constructor; aktif doğrulanmış Shopify owner’ını tek günlük fenced Meta işi ve SQL’den yenilenen quota/entitlement context’iyle bağlar. Ortak private Klaviyo/Meta transport’u her native HTTP/sayfayı aynı guard/store ile kontrol eder. Hedef/config constructor’da yakalanır; override/instance replay kapalıdır. Shopify Admin aday/rapor modları açılmaz. 31 yeni sentetik test; mevcut Meta/Klaviyo/kota/deadline regresyonlarıyla sınanır. Katalog ilişkisi Insights namespace veya satış rolü kanıtı olmaz; persistable=false korunur. Google constructor/Merchant SQL, Admin kota, gerçek profil/kanıt, work-wait/sipariş okuyucusu ve 14 inceleme kapısı açıktır. EO-04 tarihsel kabulü/PMax duraklaması değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Meta_identity_quota_constructor_2026_10_27` ve Execution Plan.
+
 ## EO-05 takip — Klaviyo native/Message okuyucusunda güvenilir kota constructor'ı, 27 Ekim 2026
 
 #216 main'dedir. Yeni inactive background constructor; doğrulanmış Shopify owner'ını tek günlük fenced Klaviyo işi ve SQL'den yenilenen quota/entitlement context'iyle bağlar. Her HTTP/sayfa aynı guard/store üzerinden geçer; override ve instance replay kapalıdır. Shopify Admin/üçüncü aday modu bu girişte açılmadı. İlk wait ile önceden çağrı yapılmış wait ayrımı, mevcut roller ve rapor istatistiklerinin ürün satışı sayılmaması korunur. 30 yeni ve 143 mevcut sentetik test geçti. Gerçek profiller/erişim kabulü, diğer constructor'lar, Admin kota, work-wait/sipariş okuyucusu ve 14 SQL inceleme kapısı açık; EO-04 tarihsel kabulü/PMax duraklaması değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Klaviyo_identity_quota_constructor_2026_10_27` ve Execution Plan.

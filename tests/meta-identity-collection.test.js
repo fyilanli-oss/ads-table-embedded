@@ -10,6 +10,8 @@ import {oauthPermissionScopes} from "../app/lib/oauth/oauth-permission-profile.s
 import {createQuotaManagedFetch, quotaBoundaryControl} from "../app/lib/refresh/quota-native-fetch.server.js";
 import {createQuotaScopeResolver, quotaRouteIdentity} from "../app/lib/refresh/quota-scope-resolver.server.js";
 import {createSharedQuotaGuard} from "../app/lib/refresh/shared-quota.server.js";
+import {createRefreshMetaIdentityReader} from "../app/lib/refresh/quota-authority-binding.server.js";
+import {refreshQuotaWait} from "../app/lib/refresh/quota-work-wait.server.js";
 
 const workspace = "11111111-1111-4111-8111-111111111111", connection = "22222222-2222-4222-8222-222222222222",
   credential = "33333333-3333-4333-8333-333333333333";
@@ -537,4 +539,117 @@ test("quota integration: first native error records one stop without sensitive b
   const f = quotaFixture(); f.hooks.fetch = p => p.pathname.endsWith("/products") && response({error: {message: "SECRET-NATIVE"}}, 403);
   await assert.rejects(f.run()); assert.equal(f.calls.length, 6); assert.equal(f.stops.length, 1);
   assert.doesNotMatch(JSON.stringify(f.stops), /SECRET-NATIVE/);
+});
+
+function boundFixture() {
+  const f=fixture(),native=f.options.fetchFn,q={},loads=[],reservations=[],settles=[],stops=[];
+  const c={provider:"meta",clientScopeKey:"a".repeat(64),connectionScopeKey:"b".repeat(64),connectionEpoch:1,
+    accountId:"act_123",organizationId:null,apiVersion:"v26.0"};
+  const keys=new Map(["token_debug","identity_ad","identity_adset","identity_product_set","identity_creative","catalog_products"]
+    .map(family=>[family,quotaRouteIdentity(c,{provider:"meta",family,accountId:null,organizationId:null,version:c.apiVersion,includes:[]}).routeKey]));
+  const config={verified:f.options.verified,database:f.options.database,tokenVault:f.options.tokenVault,
+    config:f.options.config,adId:"66",adSetId:"77",campaignId:"55",catalogId:"456",readNow:()=>f.state.now,now:Date.now,
+    claim:{workspaceId:workspace,installGeneration:"3",provider:"meta",accountId:"act_123",id:"job1",fence:2},
+    window:{from:"2026-10-01",to:"2026-10-01"},entitlementReceipt:{observedAt:f.state.now.toISOString()},
+    workStore:{loadQuotaContext:async input=>{
+      loads.push(input); await q.load?.();
+      if(q.lost||f.state.version!==2||f.state.account!=="act_123") return null;
+      return c;
+    }},
+    quotaStore:{resolveRoute:async x=>[...keys.values()].includes(x.routeKey)&&x.routeKey!==keys.get(q.missingFamily)?x.routeKey:null,
+      reserve:async x=>{reservations.push(x); if(reservations.length===q.waitAt) return {status:"waiting"};
+        const permit={...x,status:"reserved",dispatchBeforeMs:Date.now()+10000,dispatchBudgetMs:10000}; q.reserved?.(); return permit;},
+      settle:async x=>{settles.push(x);return true;},stop:async x=>{stops.push(x);return true;}},
+    fetchFn:async(...args)=>{const r=await native(...args);return new Response(JSON.stringify(await r.json()),
+      {status:r.status,headers:{"content-type":"application/json"}});}};
+  return {...f,config,c,q,loads,reservations,settles,stops,create:()=>createRefreshMetaIdentityReader(config)};
+}
+
+test("bound Meta: concrete native chain meters every read using fenced work and entitlement",async()=>{
+  const f=boundFixture(),r=await f.create().readEvidence();
+  assert.equal(f.calls.length,10);assert.equal(f.reservations.length,10);assert.equal(f.settles.length,10);assert.equal(f.loads.length,20);
+  assert.ok(f.loads.every(x=>x.provider==="meta"&&x.claim.id==="job1"&&x.claim.fence===2&&x.claim.accountId==="act_123"
+    &&x.window.from==="2026-10-01"&&x.entitlementReceipt.observedAt===f.state.now.toISOString()));
+  assert.equal(r.persistable,false);assert.equal(r.installation_id,null);assert.equal(r.proves_product_delivery_or_Insights_namespace,false);
+  assert.equal(r.native_source.records[0].shopify_product_id,undefined);
+  assert.doesNotMatch(JSON.stringify([f.reservations,f.loads,f.stops]),/secret-access|secret-app|shopify_US|retailer_id/);
+});
+test("bound Meta: target config and owner inputs captured before read cannot be retargeted",async()=>{
+  const f=boundFixture(),reader=f.create();
+  f.config.claim.accountId="act_124";f.config.claim.fence=99;f.config.window.from="2026-10-02";
+  f.config.entitlementReceipt.observedAt="2000-01-01T00:00:00Z";f.config.verified.identity.shop.shopId="gid://shopify/Shop/99";
+  f.config.config.appId="999";f.config.config.appSecret="changed";f.config.config.graphVersion="v1.0";
+  for(const k of ["adId","adSetId","campaignId","catalogId"]) f.config[k]="999";
+  const r=await reader.readEvidence();assert.equal(r.shop.shopId,"gid://shopify/Shop/12");assert.equal(f.calls.length,10);
+  assert.equal(f.calls[0].init.headers.get("authorization"),"Bearer 123|secret-app");
+  assert.ok(f.loads.every(x=>x.claim.accountId==="act_123"&&x.claim.fence===2&&x.window.from==="2026-10-01"));
+});
+for(const [name,change] of [["provider",f=>{f.config.claim.provider="klaviyo";}],
+  ["workspace",f=>{f.config.claim.workspaceId=connection;}],["generation",f=>{f.config.claim.installGeneration="4";}],
+  ["missing fence",f=>{delete f.config.claim.fence;}],["multi-day window",f=>{f.config.window.to="2026-10-02";}],
+  ["invalid date",f=>{f.config.window.from="2026-02-30";f.config.window.to=f.config.window.from;}],
+  ["missing receipt",f=>{delete f.config.entitlementReceipt;}],["inactive owner",f=>{f.config.verified.installationAuthority.status="inactive";}],
+  ["mode override",f=>{f.config.mode="report";}],["candidate rules",f=>{f.config.sourceRules=[];}],
+  ["report rules",f=>{f.config.reportIdentityRules=[];}],["arbitrary resolver",f=>{f.config.resolveOperation=()=>"a".repeat(64);}],
+  ["arbitrary guard",f=>{f.config.guard={};}],["arbitrary context",f=>{f.config.loadContext=()=>f.c;}],
+  ["legacy callback",f=>{f.config.authorizeRead=()=>true;}],
+]) test(`bound Meta: ${name} rejected before SQL or HTTP`,()=>{
+  const f=boundFixture();change(f);assert.throws(f.create);assert.equal(f.queries.length,0);assert.equal(f.calls.length,0);
+});
+test("bound Meta: read overrides and concurrent or completed replay are forbidden",async()=>{
+  const f=boundFixture(),reader=f.create();await assert.rejects(reader.readEvidence({adId:"999"}),/OVERRIDE_FORBIDDEN/);
+  const pending=reader.readEvidence();await assert.rejects(reader.readEvidence(),/EXECUTION_USED/);await pending;
+  await assert.rejects(reader.readEvidence(),/EXECUTION_USED/);assert.equal(f.calls.length,10);
+});
+for(const [name,change] of [["lost work or entitlement",f=>{f.q.lost=true;}],["wrong context account",f=>{f.c.accountId="act_124";}],
+  ["wrong Graph version",f=>{f.c.apiVersion="v25.0";}],["missing native profile",f=>{f.q.missingFamily="token_debug";}],
+]) test(`bound Meta: ${name} prevents token inspection HTTP`,async()=>{
+  const f=boundFixture();change(f);await assert.rejects(f.create().readEvidence());assert.equal(f.calls.length,0);assert.equal(f.reservations.length,0);
+});
+test("bound Meta: reservation-time scope or authority drift settles without HTTP",async()=>{
+  for(const change of [f=>{f.state.version++;},f=>{f.c.accountId="act_124";},f=>{f.c.connectionEpoch++;},f=>{f.q.lost=true;}]) {
+    const f=boundFixture();f.q.reserved=()=>change(f);
+    await assert.rejects(f.create().readEvidence(),e=>quotaBoundaryControl(e)?.status==="not_sent");
+    assert.equal(f.calls.length,0);assert.equal(f.settles.length,1);assert.equal(f.stops.length,0);
+  }
+});
+test("bound Meta: missing catalog profile preserves prior reads and consumes instance",async()=>{
+  const f=boundFixture();f.q.missingFamily="catalog_products";const reader=f.create();
+  await assert.rejects(reader.readEvidence(),e=>quotaBoundaryControl(e)?.status==="not_configured");assert.equal(f.calls.length,5);
+  await assert.rejects(reader.readEvidence(),/EXECUTION_USED/);assert.equal(f.calls.length,5);
+});
+test("bound Meta: first quota wait can become existing work-wait evidence but cannot replay",async()=>{
+  const f=boundFixture();f.q.waitAt=1;const reader=f.create();let error;
+  try{await reader.readEvidence();}catch(e){error=e;}
+  assert.equal(refreshQuotaWait(error,"provider_page",f.config.claim)?.status,"quota_waiting");assert.equal(f.calls.length,0);
+  await assert.rejects(reader.readEvidence(),/EXECUTION_USED/);
+});
+test("bound Meta: catalog quota wait retains five attempts and cannot become whole-job not-sent",async()=>{
+  const f=boundFixture();f.q.waitAt=6;let error;try{await f.create().readEvidence();}catch(e){error=e;}
+  assert.equal(quotaBoundaryControl(error)?.priorBoundaryAttempts,5);assert.equal(f.calls.length,5);
+  assert.equal(refreshQuotaWait(error,"provider_page",f.config.claim),null);
+});
+test("bound Meta: each catalog continuation is another reservation",async()=>{
+  const f=boundFixture();f.hooks.fetch=p=>p.pathname.endsWith("/products")&&!p.searchParams.has("after")
+    &&response({data:[],paging:{next:"opaque",cursors:{after:"next"}}});
+  assert.equal((await f.create().readEvidence()).native_source.pages,2);assert.equal(f.calls.length,11);assert.equal(f.reservations.length,11);
+});
+test("bound Meta: first native error stops once with no retry or app secret in stop",async()=>{
+  const f=boundFixture();f.hooks.fetch=()=>response({error:{message:"SECRET-NATIVE"}},403);const reader=f.create();
+  await assert.rejects(reader.readEvidence());assert.equal(f.calls.length,1);assert.equal(f.stops.length,1);
+  assert.doesNotMatch(JSON.stringify(f.stops),/SECRET-NATIVE|secret-app|secret-access/);
+  await assert.rejects(reader.readEvidence(),/EXECUTION_USED/);
+});
+test("bound Meta: native grant failure consumes instance after token inspection only",async()=>{
+  const f=boundFixture();f.native.debug_token.data.scopes.pop();const reader=f.create();await assert.rejects(reader.readEvidence());
+  assert.equal(f.calls.length,1);await assert.rejects(reader.readEvidence(),/EXECUTION_USED/);
+});
+test("bound Meta: deadline during context lookup prevents late reserve and dispatch",async()=>{
+  const f=boundFixture();f.config.maxElapsedMs=40;let release;f.q.load=()=>new Promise(resolve=>{release=resolve;});
+  await assert.rejects(f.create().readEvidence(),/DEADLINE_EXCEEDED/);delete f.q.load;release();await new Promise(r=>setTimeout(r,0));
+  assert.equal(f.calls.length,0);assert.equal(f.reservations.length,0);assert.equal(f.stops.length,0);
+});
+test("bound Meta: pre-abort cannot read SQL or native HTTP",async()=>{
+  const f=boundFixture(),controller=new AbortController();controller.abort();f.config.signal=controller.signal;
+  await assert.rejects(f.create().readEvidence(),/IDENTITY_READ_ABORTED/);assert.equal(f.queries.length,0);assert.equal(f.loads.length,0);
 });

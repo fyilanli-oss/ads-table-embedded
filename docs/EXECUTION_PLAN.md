@@ -1,5 +1,19 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## Sıralı plan 12 — Meta native kimlik okuyucusunda iş kaydına bağlı kota constructor’ı, 27 Ekim 2026
+
+#217 `93afdaa64c9f675a845a861e54bc1952164b30da` main’dedir. Yeni inactive `createRefreshMetaIdentityReader`, mevcut native Meta kimlik koleksiyonunu doğrulanmış aktif Shopify owner/workspace/kurulum nesli, tek günlük fenced Meta işi ve SQL’den her sınırda yenilenen claim/window/entitlement kota context’iyle bağlar. Receipt zamanının varlığı güncel entitlement kanıtı değildir; kontrol mevcut SQL’dedir. Provider/hesap iş kaydıyla eşleşir; rezervasyon sonrası context yeniden doğrulanır ve pin değişirse HTTP gönderilmez.
+
+Klaviyo ile yalnız private transport helper paylaşılır; aynı quotaStore resolver ve guard içindir. Token inspection, Ad/AdSet/creative/product-set/katalog okumaları ve her katalog devam sayfası ayrı rezervasyon/settlement alır. Owner/shop/session/Admin fonksiyonu, claim/window/receipt ve Meta hedef/config bilgisi constructor’da yakalanır. Parametresiz readEvidence bir kez çalışır; hata/wait sonrası gizli tekrar veya eşzamanlı replay yoktur. Çağıran guard/resolver/context loader veya authorizeRead veremez.
+
+Bu giriş yalnız native koleksiyonu açar. Shopify Admin aday ve Insights rapor modları ayrı Admin kota bağlantısını bekler; source/report rule ve mode override kabul edilmez. Mevcut somut SQL/vault ve native app/grant/expiry, hesap/üst hiyerarşi/katalog kontrolleri korunur. Katalog bağı Insights ürün namespace’i, tarihsel ürün gösterimi veya Advertised/Cross Sell kanıtı değildir; canonical kurulum PK’si üretilmez, persistable=false kalır.
+
+31 yeni sentetik test ve mevcut Meta/Klaviyo/kota/deadline regresyonları; ilk/orta wait, authority/account/epoch drift, capture, replay, eksik profil, native hata/grant, sayfalama ve geç context dönüşünde iptal sınırlarını kapsar. İlk wait mevcut work-wait kanıtı olabilir; ortadaki wait önceki denemeleri korur, bütün işi gönderilmemiş sayamaz. Kalıcı queue/resume eklenmedi.
+
+Resmî kontrol 27 Ekim 2026: Meta SDK [Ad](https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/ad.py) ve [ProductCatalog](https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/productcatalog.py). Native sorgu/alan/izin/limit değişmedi; gerçek owner profili veya politika yapılandırılmadı. Makine kaydı: `contracts/eo-05-start-brief-v1.json#Meta_identity_quota_constructor_2026_10_27`.
+
+12 tamamlanmadı: Google constructor/Merchant SQL envanteri, ayrı Shopify Admin kota ve aday/rapor modları, gerçek profiller/erişim kabulü, kalıcı work-wait/partial continuation ve Shopify sipariş okuyucusu açık. 11’in kaynak/namespace kanıtları, 13 yazım öncesi ve 14 scoped SQL/kalıcı tablo inceleme kapıları korunur. Yeni SQL/canlı DB/provider/token/config/route/Dataset/rol mutasyonu veya aktivasyon yok; Klaviyo rol araştırması ve tarihsel PMax duraklaması korunur.
+
 ## Sıralı plan 12 — Klaviyo kimlik okuyucusunda iş kaydına bağlı kota constructor'ı, 27 Ekim 2026
 
 #216 `c11044c050ffca836b2502c66a1e2817d8dbf3d8` main'dedir. Yeni, production'da aktif olmayan `createRefreshKlaviyoIdentityReader`; somut SQL/vault kimlik okuyucularının native ve Message modlarını mevcut background claim/window/entitlement kota yetkisine bağlar. Tek gün ve açık mod seçimi gerekir; verified aktif Shopify workspace/kurulum nesli iş kaydıyla eşleşir. Native hesap, metric, event ve Campaign/Flow raporu çağrıları mevcut revision/include bilgisiyle her HTTP/sayfa için ayrı ortak guard rezervasyonundan geçer.

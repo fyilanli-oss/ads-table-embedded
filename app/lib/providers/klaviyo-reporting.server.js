@@ -27,6 +27,7 @@ const MEDIUM_LABELS = Object.freeze({
   sms: "SMS",
   whatsapp: "WhatsApp",
   push: "Push",
+  "push-notification": "Push",
 });
 
 export class KlaviyoReportingError extends Error {

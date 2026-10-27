@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {resolveKlaviyoProductIdentities as resolve} from "../app/lib/providers/klaviyo-product-identity.server.js";
+import {resolveKlaviyoProductIdentities as resolve, verifyKlaviyoProductCandidateRows as verifyRows} from "../app/lib/providers/klaviyo-product-identity.server.js";
 import {normalizeKlaviyoOrderedProductEvent as normalize} from "../app/lib/providers/klaviyo-reporting.server.js";
 
 const gid = (type, value) => `gid://shopify/${type}/${value}`;
@@ -44,6 +44,20 @@ test("native Shopify Ordered Product IDs get same-shop product and variant-paren
   assert.equal(result.sales_roles_changed, false); assert.equal(result.source_amounts_or_quantities_changed, false);
   assert.equal(result.mappings[0].mapping_state, "candidate_verified_source_and_shop");
   assert.ok(Object.isFrozen(result.rows[0].provider_product_properties["Variant ID"]));
+});
+test("candidate-only API requires no canonical installation PK and returns no mapping or standardized sale ID", async () => {
+  const f = fixture(); delete f.options.sourceAuthority;
+  const r = await verifyRows(f.options); assert.equal(r.mappings, undefined); assert.equal(r.scope, undefined);
+  assert.equal(r.rows[0].standardized_product_id, null); assert.equal(r.rows[0].product_identity_verification.candidate_index, 0);
+  assert.equal(r.candidates[0].candidate_state, "candidate_verified_in_shop"); assert.equal(r.canonical_scope_ready, false);
+});
+test("full-scope resolver still refuses missing canonical PK before any Admin call", async () => {
+  const f = fixture(); delete f.options.sourceAuthority.installation_id;
+  await assert.rejects(resolve(f.options), /SCOPE_MISMATCH/); assert.equal(f.calls.length, 0);
+});
+test("candidate-only evidence validates active shop owner before any Admin call", async () => {
+  const f = fixture(); f.options.context.installation.installGeneration = 0;
+  await assert.rejects(verifyRows(f.options), /SCOPE_MISMATCH/); assert.equal(f.calls.length, 0);
 });
 test("replayed event ID is deduplicated, repeated product checks are cached, every source event ID retained", async () => {
   const first = event(), f = fixture([first, structuredClone(first), event("event2")]);

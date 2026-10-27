@@ -5,6 +5,7 @@ import {buildKlaviyoShopifyMetricsRequest, buildKlaviyoOrderedProductEventsReque
   normalizeKlaviyoOrderedProductEvent, klaviyoBusinessDayTimeframe} from "./klaviyo-reporting.server.js";
 import {attachAttributionEvidence} from "./klaviyo-reporting-authority.server.js";
 import {resolveKlaviyoOrderedProductSales} from "./klaviyo-attribution-resolution.server.js";
+import {verifyKlaviyoProductCandidateRows} from "./klaviyo-product-identity.server.js";
 import {quotaBoundaryControl} from "../refresh/quota-native-fetch.server.js";
 
 export class KlaviyoIdentityCollectionError extends Error {
@@ -86,7 +87,7 @@ function cursorOf(body, path, parameter = "page[cursor]") {
 // Uses concrete SQL/vault authority; callers cannot substitute a browser-supplied loadCurrent.
 async function collectKlaviyoIdentitySource({verified, database, tokenVault, businessDate,
   fetchFn = fetch, now = () => new Date(), signal, maxPages = 100, maxEvents = 10000,
-  maxMetrics = 10000, maxIncluded = 20000, maxMessageRows = 10000, maxElapsedMs = 120000, withMessages} = {}) {
+  maxMetrics = 10000, maxIncluded = 20000, maxMessageRows = 10000, maxElapsedMs = 120000, withMessages, withShopify} = {}) {
   if (typeof fetchFn !== "function" || typeof now !== "function"
     || ![maxPages, maxEvents, maxMetrics, maxIncluded, maxMessageRows, maxElapsedMs].every(Number.isSafeInteger)
     || maxPages < 1 || maxPages > 1000 || maxEvents < 1 || maxEvents > 100000
@@ -102,7 +103,8 @@ async function collectKlaviyoIdentitySource({verified, database, tokenVault, bus
     const t = clock(); if (t < start || t - start > maxElapsedMs) fail("KLAVIYO_IDENTITY_OBSERVATION_STALE");
   }
   const loader = createIdentityRuntimeAuthorityLoader({verified, database, tokenVault, provider: "klaviyo", now, signal});
-  let current;
+  const nativeGraphql = withShopify ? verified.context.admin.graphql.bind(verified.context.admin) : null;
+  let current, shopifyQuotaControl = null;
   async function recheck() {
     check(); current = await loader.loadCurrent(); check();
     if (KLAVIYO_OAUTH_SCOPES.some(s => !current.grantedScopes.includes(s))) fail("KLAVIYO_IDENTITY_SCOPE_MISSING");
@@ -180,6 +182,22 @@ async function collectKlaviyoIdentitySource({verified, database, tokenVault, bus
     for (const e of events.values()) for (const ref of e.relationships.attributions?.data ?? []) {
       if (!attributions.has(ref.id)) fail("KLAVIYO_IDENTITY_ATTRIBUTION_MISSING");
     }
+    let productCandidates = null;
+    if (withShopify) {
+      const admin = {async graphql(query, options) {
+        await recheck();
+        let response;
+        try {response = await nativeGraphql(query, {...options, tries: 1, signal});}
+        catch (error) {if (quotaBoundaryControl(error)) shopifyQuotaControl = error; throw error;}
+        check();
+        return {ok: response?.ok, status: response?.status, async json() {
+          const body = await response.json(); check(); await recheck(); return body;
+        }};
+      }};
+      productCandidates = await verifyKlaviyoProductCandidateRows({events: [...events.values()], metric,
+        context: {installation: current.installation, shop: current.shop, admin}, signal, maxEvents});
+      await recheck();
+    }
     let messageEvidence = null;
     if (withMessages) {
       const channels = {}, pages = {};
@@ -195,7 +213,11 @@ async function collectKlaviyoIdentitySource({verified, database, tokenVault, bus
         }}, undefined, kind);
         channels[kind] = [...unique.values()];
       }
-      const normalized = attachAttributionEvidence([...events.values()], [...attributions.values()]);
+      const candidateRows = new Map((productCandidates?.rows ?? []).map(row => [row.provider_event_id, row]));
+      const normalized = attachAttributionEvidence([...events.values()], [...attributions.values()]).map(row => {
+        const candidate = candidateRows.get(row.provider_event_id);
+        return candidate ? {...row, product_identity_verification: candidate.product_identity_verification} : row;
+      });
       messageEvidence = {reporting_metric: placedMetric, channels,
         resolved_product_sales: resolveKlaviyoOrderedProductSales({campaignChannels: channels.campaign,
           flowChannels: channels.flow, orderedProductEvents: normalized}), pages,
@@ -207,19 +229,23 @@ async function collectKlaviyoIdentitySource({verified, database, tokenVault, bus
     const after = accountAfter.accounts[0];
     if (after.id !== account.id || after.timezone !== account.timezone || after.currency !== account.currency) fail("KLAVIYO_IDENTITY_ACCOUNT_CHANGED");
     await recheck();
-    return freeze({provider: "klaviyo", source: withMessages ? "native_identity_and_message_collection" : "native_account_metric_and_event_collection", account: {id: account.id,
+    return freeze({provider: "klaviyo", source: withShopify ? "native_identity_message_and_shopify_candidate_collection"
+      : withMessages ? "native_identity_and_message_collection" : "native_account_metric_and_event_collection", account: {id: account.id,
       timezone: account.timezone, currency: account.currency}, installation: current.installation, shop: current.shop,
       connection_id: current.connectionId, connection_version: current.connectionVersion,
       metric, events: [...events.values()], attributions: [...attributions.values()], timeframe,
       ...(withMessages ? {message_evidence: messageEvidence} : {}),
+      ...(withShopify ? {product_identity_candidates: productCandidates} : {}),
       evidence: {metric_pages: metricPages, event_pages: eventPages, request_ids: requestIds,
         started_at: new Date(start).toISOString(), completed_at: new Date(clock()).toISOString()},
       provider_account_observed: true, Shopify_store_integration_binding_verified: false,
       canonical_scope_ready: false, installation_id: null, persistable: false,
       authorizes_activation: false, mapping_write_performed: false, sales_roles_changed: false,
-      remaining: ["trusted_installation_primary_key_read", "Shopify_Admin_candidate_verification_composition",
+      remaining: ["trusted_installation_primary_key_read",
+        ...(withShopify ? [] : ["Shopify_Admin_candidate_verification_composition"]),
         ...(withMessages ? [] : ["Message_channel_join"])]});
   } catch (error) {
+    if (shopifyQuotaControl !== null) throw shopifyQuotaControl;
     if (quotaBoundaryControl(error)) throw error;
     if (error instanceof KlaviyoIdentityCollectionError) throw error;
     fail(signal?.aborted ? "KLAVIYO_IDENTITY_ABORTED" : "KLAVIYO_IDENTITY_COLLECTION_FAILED");
@@ -228,8 +254,11 @@ async function collectKlaviyoIdentitySource({verified, database, tokenVault, bus
 
 // Public entry points lock their own mode; caller options cannot silently add report requests.
 export function collectKlaviyoNativeIdentityEvidence(options = {}) {
-  return collectKlaviyoIdentitySource({...options, withMessages: false});
+  return collectKlaviyoIdentitySource({...options, withMessages: false, withShopify: false});
 }
 export function collectKlaviyoIdentityMessageEvidence(options = {}) {
-  return collectKlaviyoIdentitySource({...options, withMessages: true});
+  return collectKlaviyoIdentitySource({...options, withMessages: true, withShopify: false});
+}
+export function collectKlaviyoVerifiedProductCandidateEvidence(options = {}) {
+  return collectKlaviyoIdentitySource({...options, withMessages: true, withShopify: true});
 }

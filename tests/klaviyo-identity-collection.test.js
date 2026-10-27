@@ -1,7 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {collectKlaviyoNativeIdentityEvidence, collectKlaviyoIdentityMessageEvidence} from "../app/lib/providers/klaviyo-identity-collection.server.js";
+import {collectKlaviyoNativeIdentityEvidence, collectKlaviyoIdentityMessageEvidence,
+  collectKlaviyoVerifiedProductCandidateEvidence} from "../app/lib/providers/klaviyo-identity-collection.server.js";
 import {KLAVIYO_OAUTH_SCOPES} from "../app/lib/providers/klaviyo-api.server.js";
+import {createQuotaManagedFetch, quotaBoundaryControl} from "../app/lib/refresh/quota-native-fetch.server.js";
 
 const workspace = "11111111-1111-4111-8111-111111111111", connection = "22222222-2222-4222-8222-222222222222",
   credential = "33333333-3333-4333-8333-333333333333";
@@ -309,4 +311,112 @@ test("Message composition: report continuation without explicit completion is no
 test("Message composition: no observed events does not convert report conversions into sale rows", async () => {
   const f = messageFixture(); f.hooks.fetch = p => p.pathname === "/api/events" ? response({data: [], links: {next: null}}) : f.baseFetch(p);
   assert.deepEqual((await f.run()).message_evidence.resolved_product_sales.rows, []);
+});
+
+function candidateFixture() {
+  const f = messageFixture(), shopCalls = [], shopHooks = {};
+  f.options.verified.context.admin.graphql = async (query, options) => {
+    shopCalls.push({query, options}); const custom = await shopHooks.graphql?.(query, options); if (custom) return custom;
+    const p = options.variables.productId.split("/").at(-1), v = options.variables.variantId?.split("/").at(-1);
+    return response({data: {shop: {id: "gid://shopify/Shop/12", myshopifyDomain: "test.myshopify.com"},
+      product: {id: `gid://shopify/Product/${p}`, legacyResourceId: p},
+      ...(v ? {productVariant: {id: `gid://shopify/ProductVariant/${v}`, legacyResourceId: v,
+        product: {id: `gid://shopify/Product/${p}`, legacyResourceId: p}}} : {})}});
+  };
+  return {...f, shopCalls, shopHooks, run: () => collectKlaviyoVerifiedProductCandidateEvidence(f.options)};
+}
+test("Shopify composition: native collection verifies parent and keeps evidence separate from canonical mapping", async () => {
+  const f = candidateFixture(), r = await f.run(), candidates = r.product_identity_candidates;
+  assert.equal(f.shopCalls.length, 1); assert.equal(f.shopCalls[0].options.tries, 1);
+  assert.deepEqual(f.shopCalls[0].options.variables, {productId: "gid://shopify/Product/123", variantId: "gid://shopify/ProductVariant/456"});
+  assert.equal(candidates.rows[0].product_identity_verification.state, "candidate_verified_in_shop");
+  assert.equal(candidates.rows[0].standardized_product_id, null); assert.equal(candidates.mappings, undefined);
+  assert.equal(candidates.candidates[0].shopify_product_id, "gid://shopify/Product/123");
+  assert.equal(candidates.candidates[0].installation_id, undefined); assert.equal(r.installation_id, null);
+  assert.equal(r.canonical_scope_ready, false); assert.equal(r.persistable, false); assert.equal(r.mapping_write_performed, false);
+  const sale = r.message_evidence.resolved_product_sales.rows[0];
+  assert.equal(sale.attribution_resolution.channel_id, "message1"); assert.equal(sale.attribution_resolution.sales_role, "Assisted");
+  assert.equal(sale.product_identity_verification.shopify_variant_id, "gid://shopify/ProductVariant/456");
+  assert.equal(sale.standardized_product_id, null); assert.equal(sale.provider_product_properties.$value.value, "30.00");
+  assert.equal(r.Shopify_store_integration_binding_verified, false); assert.equal(candidates.provider_link_verified, false);
+});
+test("Shopify composition: repeated products verify once and retain every native event ID", async () => {
+  const f = candidateFixture(); f.hooks.fetch = p => p.pathname === "/api/events"
+    ? response({data: [event(), event("event2")], included: [attribution()], links: {next: null}}) : f.baseFetch(p);
+  const r = await f.run(); assert.equal(f.shopCalls.length, 1);
+  assert.deepEqual(r.product_identity_candidates.candidates[0].candidate_evidence.source_event_ids, ["event1", "event2"]);
+  assert.equal(r.message_evidence.resolved_product_sales.rows.length, 2);
+});
+test("Shopify composition: product-only event never invents variant query", async () => {
+  const f = candidateFixture(), e = event(); delete e.attributes.event_properties["Variant ID"];
+  f.hooks.fetch = p => p.pathname === "/api/events" ? response({data: [e], included: [attribution()], links: {next: null}}) : f.baseFetch(p);
+  const r = await f.run(); assert.equal(f.shopCalls[0].options.variables.variantId, undefined);
+  assert.equal(r.product_identity_candidates.candidates[0].shopify_variant_id, null);
+});
+test("Shopify composition: ambiguous legacy-only variant does not query or create candidate", async () => {
+  const f = candidateFixture(), e = event(); e.attributes.event_properties.VariantID = "456"; delete e.attributes.event_properties["Variant ID"];
+  f.hooks.fetch = p => p.pathname === "/api/events" ? response({data: [e], included: [attribution()], links: {next: null}}) : f.baseFetch(p);
+  const r = await f.run(); assert.equal(f.shopCalls.length, 0); assert.deepEqual(r.product_identity_candidates.candidates, []);
+  assert.match(r.product_identity_candidates.rows[0].product_identity_verification.reason, /requires_source_evidence/);
+});
+test("Shopify composition: missing product and wrong parent stay distinct", async () => {
+  for (const wrongParent of [false, true]) {
+    const f = candidateFixture(); f.shopHooks.graphql = () => response({data: {shop: {id: "gid://shopify/Shop/12", myshopifyDomain: "test.myshopify.com"},
+      product: wrongParent ? {id: "gid://shopify/Product/123", legacyResourceId: "123"} : null,
+      productVariant: wrongParent ? {id: "gid://shopify/ProductVariant/456", legacyResourceId: "456", product: {id: "gid://shopify/Product/789", legacyResourceId: "789"}} : null}});
+    const r = await f.run(), resolution = r.product_identity_candidates.rows[0].product_identity_verification;
+    assert.equal(resolution.state, wrongParent ? "conflicting" : "unresolved"); assert.deepEqual(r.product_identity_candidates.candidates, []);
+    assert.equal(r.message_evidence.resolved_product_sales.rows[0].attribution_resolution.channel_id, "message1");
+  }
+});
+test("Shopify composition: first Admin failure prevents reporting or another product check", async () => {
+  const f = candidateFixture(); f.shopHooks.graphql = () => {throw Error("secret-native-admin-token");};
+  await assert.rejects(f.run(), e => e.message === "KLAVIYO_IDENTITY_COLLECTION_FAILED");
+  assert.equal(f.shopCalls.length, 1); assert.equal(f.calls.length, 3);
+});
+test("Shopify composition: authority changes during native Admin response discard everything", async () => {
+  const f = candidateFixture(); f.shopHooks.graphql = () => {f.state.version++;};
+  await assert.rejects(f.run(), /COLLECTION_FAILED/); assert.equal(f.shopCalls.length, 1); assert.equal(f.calls.length, 3);
+});
+test("Shopify composition: authority changes after event read prevent first Admin query", async () => {
+  const f = candidateFixture(); f.hooks.fetch = p => {
+    if (p.pathname === "/api/events") f.state.version++; return f.baseFetch(p);
+  };
+  await assert.rejects(f.run(), /COLLECTION_FAILED/); assert.equal(f.shopCalls.length, 0);
+});
+test("Shopify composition: foreign shop native response is rejected", async () => {
+  const f = candidateFixture(); f.shopHooks.graphql = () => response({data: {shop: {id: "gid://shopify/Shop/99", myshopifyDomain: "other.myshopify.com"},
+    product: null, productVariant: null}});
+  await assert.rejects(f.run(), /COLLECTION_FAILED/); assert.equal(f.calls.length, 3);
+});
+test("Shopify composition: abort signal reaches Admin query and prevents reporting", async () => {
+  const f = candidateFixture(), control = new AbortController(); f.options.signal = control.signal;
+  f.shopHooks.graphql = (query, options) => {assert.equal(options.signal, control.signal); control.abort();};
+  await assert.rejects(f.run(), /ABORTED/); assert.equal(f.calls.length, 3);
+});
+test("Shopify composition: native/Admin helpers captured before asynchronous collection", async () => {
+  const f = candidateFixture(); f.hooks.fetch = p => {
+    f.options.verified.context.admin.graphql = () => {throw Error("replaced after capture");}; return f.baseFetch(p);
+  };
+  assert.equal((await f.run()).product_identity_candidates.candidates.length, 1);
+});
+test("Shopify composition: empty native events produce no invented Shopify query or candidates", async () => {
+  const f = candidateFixture(); f.hooks.fetch = p => p.pathname === "/api/events" ? response({data: [], links: {next: null}}) : f.baseFetch(p);
+  const r = await f.run(); assert.equal(f.shopCalls.length, 0); assert.deepEqual(r.product_identity_candidates.candidates, []);
+});
+test("Shopify composition: caller options cannot enable Admin in existing entry points", async () => {
+  const f = messageFixture(); f.options.withShopify = true; await f.run();
+  const g = fixture(); g.options.withShopify = true; await g.run();
+});
+test("Shopify composition: new entry point cannot disable Admin or Message checks", async () => {
+  const f = candidateFixture(); f.options.withShopify = false; f.options.withMessages = false;
+  const r = await f.run(); assert.equal(f.shopCalls.length, 1); assert.ok(r.message_evidence);
+});
+test("Shopify composition: authentic local quota control survives verifier error sanitization", async () => {
+  const managed = createQuotaManagedFetch({provider: "klaviyo", guard: {execute: async () => ({status: "waiting"})},
+    resolveOperation: async () => "a".repeat(64), lane: "background", fetchFn: async () => {throw Error("must not send");}});
+  let control; try {await managed("https://a.klaviyo.com/api/metrics");} catch (error) {control = error;}
+  assert.equal(quotaBoundaryControl(control).status, "waiting");
+  const f = candidateFixture(); f.shopHooks.graphql = () => {throw control;};
+  await assert.rejects(f.run(), error => error === control); assert.equal(f.calls.length, 3);
 });

@@ -1,6 +1,6 @@
 {
   "contract_id": "pd-cpd-query-standard-v1",
-  "version": "1.11.0",
+  "version": "1.12.0",
   "checked_at": "2026-10-27",
   "status_alignment_2026_10_27": {
     "scope": "patch_current_status_and_closed_Klaviyo_decision_only",
@@ -39,11 +39,11 @@
   ],
   "pd_composition_review": {
     "inventory_item": "17",
-    "status": "design_proposed_for_owner_review_not_runtime_implemented",
+    "status": "partial_repository_implementation_google_leaf_composer_only",
     "scope": "compose_complementary_pd_projections_only_not_cpd_or_ancestor_rollups",
     "identity_basis": "existing_common_adapter_canonicalFactKey_authority_date_and_entity",
     "scope_guard_2026_10_27": {
-      "status": "repository_helper_implemented_not_connected_to_provider_composers",
+      "status": "repository_helper_used_by_Google_leaf_composer_not_native_orchestration",
       "runtime": "app/lib/providers/pd-composition-scope.server.js",
       "entrypoint": "checkPdCompositionCompatibility",
       "expected_scope": "required_from_trusted_orchestration_not_selected_from_first_source",
@@ -55,6 +55,8 @@
       "ancestor_names_are_keys": false,
       "checks_source_authenticity_or_metric_coverage": false,
       "provider_composers_connected": false,
+      "google_leaf_composer_helper_connected": true,
+      "native_provider_orchestration_connected": false,
       "canonical_FX_validation_bypassed": false,
       "dataset_writer_or_migration": false,
       "publishable": false
@@ -75,6 +77,35 @@
         "product_breakdown_is_pd_fallback": false
       },
       "google_ads": {
+        "leaf_composition_2026_10_27": {
+          "runtime": "app/lib/providers/google-pd-composition.server.js",
+          "entrypoint": "composeGooglePdLeaf",
+          "implemented": "single_leaf_day_native_performance_and_conversion_action_projections",
+          "scope_guard_called": true,
+          "native_row_identity_checked": "customer_campaign_parent_leaf_date_and_campaign_type",
+          "conversion_action_identity": "unique_same_customer_action_resource_no_extra_segments",
+          "reduction": "additive_native_conversion_action_grain_not_unique_Shopify_orders",
+          "missing_row_or_metric": "unknown_null_not_zero_count_and_value_independent",
+          "duplicate_conflicting_or_extra_detail": "reject_without_partial_output",
+          "unsafe_numeric_value_or_sum": "reject_no_silent_integer_precision_loss",
+          "lineage": "native_field_per_metric_plus_immutable_projection_rows_and_action_details",
+          "source_row_index": "ordinal_within_referenced_leaf_projection_not_global_or_persistent_id",
+          "normal_conversion_scope_only": true,
+          "spend_from_performance_once": true,
+          "performance_general_conversions_as_funnel": false,
+          "all_or_cart_or_campaign_helper_fallback": false,
+          "source_projection_enrichment_and_dispatch_wiring": "later_ordered_steps_not_implemented_here",
+          "canonical_validation_or_FX_bypassed": false,
+          "native_metadata_or_attribution_fingerprint_fabricated": false,
+          "pmax_product_link_or_history_reopened": false,
+          "live_provider_acceptance": "pending",
+          "dataset_write_or_publish": false,
+          "official_sources_checked_at": "2026-10-27",
+          "official_sources": [
+            "https://developers.google.com/google-ads/api/docs/conversions/reporting",
+            "https://developers.google.com/google-ads/api/docs/reporting/segmentation"
+          ]
+        },
         "family_pairs": [
           ["search_ad_channel_daily", "search_ad_conversion_action_daily"],
           ["ad_group_channel_daily", "shopping_ad_group_conversion_action_daily"],
@@ -113,7 +144,8 @@
     },
     "provenance": "each_metric_references_its_native_family_query_and_source_rows_not_just_final_number",
     "canonical_validation": "existing_validator_still_required_no_invented_fx_or_identity_to_make_projection_valid",
-    "runtime_composer_implemented": false,
+    "runtime_composer_implemented": true,
+    "all_provider_composers_and_native_orchestration_complete": false,
     "physical_dataset_schema_selected": false,
     "publishable": false,
     "items_18_19_closed": false,
@@ -123,7 +155,7 @@
       "10_11": "product_asset_group_link_open_google_support_reply_pending_history_still_paused",
       "16": "physical_identity_mapping_remains_EO05B"
     },
-    "acceptance": "contract_tests_guard_design_only_runtime_merge_rollup_and_live_acceptance_not_proven"
+    "acceptance": "Google_leaf_source_composition_repository_only_Klaviyo_canonical_bridge_rollup_and_live_acceptance_not_complete"
   },
   "hierarchy_rollup": {
     "upper_metrics": "sum_children_at_same_scope_date_currency_and_attribution",

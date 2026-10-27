@@ -852,6 +852,15 @@
     {
       "id": "A6-EO-05",
       "title": "Scheduler, Dataset V2, FX, maturity and reconciliation",
+      "eo04_gap_remediation_work_order": {
+        "reference": "contracts/eo-05-start-brief-v1.json#eo04_gap_remediation_work_order_2026_10_27",
+        "analyst_brief": "docs/EXECUTION_PLAN.md#eo-05-kod-eksikleri-teknik-iş-listesi",
+        "execution_groups": ["corrections_first", "source_reporting_connections_before_storage", "durable_connections_with_persistence"],
+        "identity_step_12_review_preserved": true,
+        "historical_PMax_pause_preserved": true,
+        "new_package": false,
+        "authority": "documentation_only_no_runtime_start_or_package_closure"
+      },
       "sales_role_work_order": {
         "reference": "contracts/eo-05-start-brief-v1.json#sales_role_work_order_2026_10_26",
         "sequence": "after_product_identity_completion_before_remaining_code_audit",

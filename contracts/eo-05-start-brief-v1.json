@@ -2,6 +2,162 @@
   "contract_id": "eo-05-start-brief-v1",
   "package_id": "A6-EO-05",
   "checked_at": "2026-10-20",
+  "eo04_gap_remediation_work_order_2026_10_27": {
+    "checked_at": "2026-10-27",
+    "parent": "A6-EO-05",
+    "status": "technical_plan_accepted_for_recording_runtime_not_started",
+    "analyst_brief": "docs/EXECUTION_PLAN.md#eo-05-kod-eksikleri-teknik-iş-listesi",
+    "audit_baseline": "EO04_closure_c3faddf_main_dc565a4_and_open_PR179_ab81947_distinguished",
+    "new_package_or_parallel_backlog": false,
+    "authorization": "plan_and_contract_documentation_only",
+    "execution_groups": ["existing_code_corrections_first", "reading_and_reporting_connections_before_storage", "durable_storage_connections_with_EO05_persistence"],
+    "rows": [
+      {
+        "topic": "İlk hata ve hata sınıfı uyumu", "group": "existing_code_corrections_first",
+        "existing": ["runCommonAdapterOperation", "normalizeClassifiedError", "classifyMetaReportingError", "classifyGoogleReportingError"],
+        "missing": "Ortak runner varsayılan dört deneme içeriyor; Meta retryable true ve permission_denied çıktısı ortak sınıf sözlüğü/ilk hata kararıyla aynı politika altında değil.",
+        "input": "provider exception, safe status/code and current attempt",
+        "output": "one normalized terminal result per attempt; no automatic second provider dispatch",
+        "implementation": "Caller limitiyle geçici örtmek yerine runner, classifier, sözleşme ve eski retry testlerini aynı ilk-hata politikasına getirmek.",
+        "verification": "429, 5xx, permission, auth ve şema hatasında tek çağrı; kısmi çıktı yok; güvenli hata sınıfı korunur."
+      },
+      {
+        "topic": "Durum ve sözleşme kayıtlarının tutarlılığı", "group": "existing_code_corrections_first",
+        "existing": ["a6-eo-implementation-master-v1.json EO05 status/start_brief_status/current_active_parent", "eo-04d-klaviyo-reporting-runtime-v1.json sales_role", "eo-04d-klaviyo-attribution-resolution-v1.json sales_role", "EO_04_ANALYSIS_DESIGN_BOOK.md", "eo-05-start-brief.test.js", "a6-docs-01-turkish-standardization.test.js"],
+        "missing": "EO05'in Not started/null kayıtları ve Klaviyo eski deferral/küme üyeliği notları güncel kısmi repository işleri ve ürün kararlarıyla uzlaştırılmalı.",
+        "input": "merged code, open PR state and explicit owner decisions",
+        "output": "consistent current status plus retained dated history",
+        "implementation": "Tarihsel kabul kayıtlarını silmeden güncel durum/override ve test beklentilerini birlikte düzeltmek; tamamlanmayan pakete Accepted vermemek.",
+        "verification": "EO04 kapanışı korunur; EO05 tamamlanmış görünmez; Klaviyo araştırması kendiliğinden yeniden açılmaz."
+      },
+      {
+        "topic": "Kaynak kapsamı ve metadata uyumu", "group": "reading_and_reporting_connections_before_storage",
+        "existing": ["pd-cpd-query-standard-v1.json pd_composition_review.compatibility_checks", "Google/Meta/Klaviyo authority snapshot methods"],
+        "missing": "Birleşim için ortak yürütülebilir uyumluluk kontrolü yok; yeni yardımcı fonksiyon tasarlanacak.",
+        "input": "workspace, installation/generation, connection/account, leaf/ancestors, business day/timezone/time basis, currency/units, effective attribution/scope, complete run identity",
+        "output": "verified compatibility or explicit missing/conflicting/partial reason with original evidence",
+        "implementation": "Hesap günü mağaza günü gibi yeniden etiketlenmez; metadata tahmin edilmez; uyumsuz kayıtlar körlemesine birleşmez.",
+        "verification": "Hesap/nesil/gün/saat dilimi/atıf/para birimi/koşu farkı ve eksik metadata olumsuz senaryoları."
+      },
+      {
+        "topic": "Google PD birleşimi", "group": "reading_and_reporting_connections_before_storage",
+        "existing": ["buildGoogleReportingQueries", "mapGooglePdMetrics", "createGoogleReportingAuthorityRuntime.readEvidencePage", "GOOGLE_PD_QUERY_FAMILIES"],
+        "missing": "Performans ve dönüşüm eylemi projeksiyonlarını tek yaprak PD kaydına bağlayan composer tasarlanacak.",
+        "input": "Search Ad, Shopping Ad Group, PMax Asset Group performance and matching normal conversion-action families",
+        "output": "one source-currency PD leaf projection with nine metric states and per-metric provenance; no FX or DB write",
+        "implementation": "Impression/Click/Spend performanstan, funnel adet/değer dönüşüm ailesinden alınır; birden fazla action ayrık/tam olduğu kanıtlanmadan toplanmaz.",
+        "verification": "Tekrar/çelişki, eksik kategori/değer, gerçek sıfır, normal/all ve performans conversions'ın Purchase yapılmaması."
+      },
+      {
+        "topic": "Klaviyo PD birleşimi", "group": "reading_and_reporting_connections_before_storage",
+        "existing": ["readPdEvidenceSnapshot", "runKlaviyoPdReportingFamilies", "normalizeKlaviyoReportRow", "mapKlaviyoPdMetrics"],
+        "missing": "Üç dönüşüm metriğini Message düzeyinde birleştiren composer tasarlanacak.",
+        "input": "Campaign/Flow Placed Order, Added to Cart, Checkout Started reports with Message/Medium/Variation detail",
+        "output": "one source-currency Message PD projection with nine metric states; Spend stays open/null",
+        "implementation": "Delivered/click ve Purchase yalnız Placed Order raporundan; ATC/Checkout kendi ailesinden; Message toplamı Variation başına kopyalanmaz.",
+        "verification": "Eksik metric ID, çok Variation, ayrı Medium, eksik değer ve boş raporun sıfıra dönüşmemesi."
+      },
+      {
+        "topic": "Kaynak çıktıdan ortak kayıt sözleşmesine geçiş", "group": "reading_and_reporting_connections_before_storage",
+        "existing": ["validateCanonicalFunnelFact", "canonicalFactKey", "runCommonAdapterOperation", "provider pd_metric_rows projections"],
+        "missing": "Provider çıktısından ortak kayda adaptasyon yok; mevcut doğrulayıcı isim ve FX alanlarını da zorunlu tutuyor.",
+        "input": "compatible complete PD projection, authoritative identity/entity metadata, source currency and raw evidence references",
+        "output": "explicit source-record handoff before FX; complete enriched canonical fact only after verified FX context",
+        "implementation": "Kaynak kayıt/enriched kayıt sınırı önce sözleşmede netleşecek. Eksik isim veya FX için sahte değer verilmez, validator koşulsuz atlanmaz. Generic runner bağlantısı zorunlu çözüm değildir; provider yolu aynı ortak sözleşmeyi sağlamalıdır.",
+        "depends_on": ["Kaynak kapsamı ve metadata uyumu", "Google PD birleşimi", "Klaviyo PD birleşimi"],
+        "verification": "Eksik authority, ad, provenance ve FX ile tamamlanmış canonical kayıt üretilememesi; source-only sonucun yayınlanmış Dataset sayılmaması."
+      },
+      {
+        "topic": "Yeni okuyucuların çalışan yürütmeye bağlanması", "group": "reading_and_reporting_connections_before_storage",
+        "existing": ["runRefreshChunk readPage/validatePage callbacks", "readSearchSourceEvidenceSnapshot", "readShoppingSourceEvidenceSnapshot", "readPdEvidenceSnapshot", "readDailyEvidenceSnapshot", "createRefreshQuotaClients"],
+        "missing": "Güvenilir aile seçimi/dispatch ve native response→validatePage bağlantısı tasarlanacak; mevcut live-evidence girişleri yeni okuyucuları çağırmıyor.",
+        "input": "verified run/claim, bounded date/family, fresh authority, quota context and cancellation signal",
+        "output": "complete bounded source snapshot or explicit stop; awaiting_dataset is not committed Dataset",
+        "implementation": "Kaynak/compose yolları DB'siz test edilebilir; canlı scheduler/route/kota aktivasyonu ayrı kapıdır. Eski kanıt route'u otomatik genişletilmez. Eksik kota altyapısı koruma atlanarak tamamlanmaz; iki cart ailesi birlikte sayılmaz.",
+        "verification": "Taze authority, ilk hata, timeout, sayfalama/limit, yanlış aile ve eski hesap/nesilde çağrı/yayın engeli."
+      },
+      {
+        "topic": "Ürün kimliği", "group": "existing_identity_work_not_duplicated",
+        "reference": "contracts/eo-05-start-brief-v1.json#product_identity_work_order_2026_10_26",
+        "boundary": "steps_1_to_11_then_owner_review_before_12; no_new_identity_or_quota_tables_before_pause",
+        "input": "native product IDs and verified source evidence", "output": "Shopify Product/optional Variant mapping as governed by existing list"
+      },
+      {
+        "topic": "Advertised/Cross-sell", "group": "existing_role_work_not_duplicated",
+        "reference": "contracts/eo-05-start-brief-v1.json#sales_role_work_order_2026_10_26",
+        "boundary": "after_identity_work; Klaviyo closed; Meta proof remains open; no guessed role",
+        "input": "verified native sale relationship", "output": "role linked to original sale without extra count or cost"
+      },
+      {
+        "topic": "PMax ürün performansı → Asset Group", "group": "reading_and_reporting_connections_before_storage",
+        "existing": ["pmax_product_daily", "pmax_asset_group_channel_daily", "buildGoogleReportingQueries"],
+        "missing": "Kaynak destekli ürün→Asset Group bağlantısı yok; yeni resolver tasarlanacak, provider desteği doğrulanmış sayılmaz.",
+        "input": "native product evidence, campaign/asset group identity and verified compatible source",
+        "output": "verified product-channel reference or explicit unresolved result with unchanged product metrics",
+        "implementation": "Campaign otomatik Channel yapılmaz; ürün performansı gruplara dağıtılmaz. Mevcut PMax teyit/duraklama kararları korunur.",
+        "verification": "Belirsiz/örtüşen grup, eksik kaynak ve yanlış hesap/gün; yalnız sentetik test native desteği kanıtlamaz."
+      },
+      {
+        "topic": "PMax tarihsel satış Channel'ı", "group": "existing_paused_work_not_reopened",
+        "existing": ["resolvePmaxSaleChannel", "A6-EO-05-PMAX-HISTORICAL-LISTING-TREE"],
+        "missing": "Resolver uygulama akışına çağrılmıyor; tam gün tarihsel ağaç kanıtını saklama/yükleme/teslim hattı yok.",
+        "input": "sale, advertisedProduct, businessWindow, complete versioned listingEvidence",
+        "output": "exact channel with validity/hash evidence or preserved sale plus Unclassified Channel",
+        "implementation": "Açık yeniden başlatma onayı olmadan tarihsel kodlama/aktivasyon yok; güncel ağaç geçmiş güne uygulanmaz.",
+        "verification": "Geçerlilik boşluğu, gün içi değişim, örtüşme ve yanlış tarih testleri; kalıcılık kendi sonraki kapısında."
+      },
+      {
+        "topic": "İstek/ham yanıt kanıt deposu", "group": "durable_storage_connections_with_EO05_persistence",
+        "existing": ["sanitizeProviderEvidence", "createQueryFingerprint", "sha256", "provider snapshots", "live evidence summaries"],
+        "missing": "Temizlenmiş istek/yanıtı birlikte yazan, okuyan ve yaşam döngüsünü yöneten evidence sink yok; arayüz tasarlanacak.",
+        "input": "sanitized query/body and response, API/query version, run/scope, page/completeness, time and hash",
+        "output": "private bounded durable evidence reference and hash usable by metric/mapping records",
+        "implementation": "Kalıcılıkta writer/retention/silme/erişim sınırı kurulur. Öncesinde yalnız DB'siz sınama; token, profil bilgisi ve ham kullanıcı verisi GitHub/loglara taşınmaz.",
+        "verification": "Hash/istek-yanıt eşliği, redaksiyon, boyut ve tamlık, cross-shop okuma engeli, writer hatasında sahte saklandı sonucu yok."
+      },
+      {
+        "topic": "Klaviyo Spend bağlantısı", "group": "durable_storage_connections_with_EO05_persistence",
+        "existing": ["createKlaviyoSpendRepository.load", "mapKlaviyoPdMetrics spend_state", "EO06A formula owner"],
+        "missing": "Ledger tutarını raporlama maliyetine dönüştüren kabul edilmiş formül ve uygulaması yok.",
+        "input": "verified workspace/installation, effective spend periods, currency/day and eligible reporting dimensions",
+        "output": "only separately approved calculated cost with lineage; until then open/null Spend",
+        "implementation": "EO05 kaynak/periyot/FX izini taşır; EO06A'da formül ayrıca kararlaştırılır. Ürün veya Message maliyeti keyfî bölünmez.",
+        "verification": "Geçerlilik aralığı, düzeltme/yeniden bağlantı, para birimi ve çift sayım senaryoları; yeni formül bu planla onaylanmaz."
+      },
+      {
+        "topic": "PD ve CPD Channel toplamları", "group": "durable_storage_connections_with_EO05_persistence",
+        "existing": ["pd_composition_review", "hierarchy_channel_review", "provider source-link builders"],
+        "missing": "Üst PD hiyerarşisi ve ürün esaslı CPD Channel için iki ayrı runtime toplam yolu tasarlanacak.",
+        "input": "composed PD leaves or separately owned product-performance/product-sales families with coverage and currency",
+        "output": "independent upper-PD and product-based Channel totals with metric-specific completeness",
+        "implementation": "EO05B kaynak/anahtar/iz bağlantısı, EO06A aggregate-first matematik. Parent+child veya satış başına ürün Spend tekrar toplanmaz; fiziksel yeni toplam tablosu kararı bu planla verilmez.",
+        "verification": "Satılmayan maliyet, tek ürün/çok satış, aynı ürün/çok rol, partial/N/A/sıfır, parent+child ve FX öncesi farklı para birimi."
+      },
+      {
+        "topic": "Kalıcı kayıt, FX ve uzlaştırma", "group": "durable_storage_connections_with_EO05_persistence",
+        "existing": ["runRefreshChunk awaiting_dataset", "validateCanonicalFunnelFact", "EO05B/EO05C/EO05D/EO06A contracts"],
+        "missing": "Kaynak çıktısı→kanıtlı FX/canonical→idempotent writer→checkpoint/uzlaştırma/finality bağlantısı yok; gerçek writer/helper adları tasarlanacak.",
+        "input": "validated source handoff, approved durable keys/mappings/evidence, verified FX and attribution policy",
+        "output": "transactionally persisted versioned records with replay/reconciliation/finality evidence",
+        "implementation": "EO05B model/FX izi, EO05C olgunluk, EO05D yazım/tekrar/düzeltme, EO06A formüller. Bellekte awaiting_dataset başarılı refresh değildir; DB commit öncesi checkpoint ilerlemez.",
+        "verification": "Replay/yarım transaction/nesil değişimi, eksik kur/kanıt, düzeltme penceresi ve kasıtlı Disconnect sınırı."
+      }
+    ],
+    "cross_group_dependencies": {
+      "corrections_before_connection_activation": true,
+      "compatibility_before_composers_and_canonical_bridge": true,
+      "composers_before_final_dispatch_projection": true,
+      "source_preparation_before_DB_writes": true,
+      "identity_and_role_lists_are_references_not_new_duplicates": true,
+      "native_source_support_or_live_evidence_can_remain_blocked": "explicitly_report_not_complete_or_guessed",
+      "identity_step_12_review_still_required": true,
+      "historical_PMax_work_still_paused": true
+    },
+    "separate_live_evidence_not_code_omissions": ["Meta_real_catalog_sales", "Google_production_cart_data", "Klaviyo_native_Shopify_reporting"],
+    "not_reopened_as_missing": ["Meta_standard_four_fields_and_PD_projection_PR168", "Google_leaf_funnel_and_normal_scope_PR169", "Klaviyo_funnel_queries_PR170", "Google_Search_Shopping_source_links_PR172", "Shopping_PMax_product_split_PR173", "installation_bigint_and_native_reporting_account_PR178"],
+    "runtime_migration_provider_UI_deploy_merge_authorized": false,
+    "planned_symbol_names_are_existing_implementation": false
+  },
   "sales_role_work_order_2026_10_26": {
     "tracking_parent": "A6-EO-05",
     "analyst_brief": "docs/EXECUTION_PLAN.md#eo-05-advertisedcross-sell-çalışma-listesi",

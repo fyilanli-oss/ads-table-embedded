@@ -1,5 +1,9 @@
 # EO-04 — Analiz ve tasarım kitabı
 
+## EO-05 takip — Klaviyo native hesap/metric/event toplaması, 27 Ekim 2026
+
+#205 main'dedir. Yeni `klaviyo-identity-collection.server.js`, ortak SQL/vault yükleyicisiyle native hesabı önce/sonra ve event'in kendi Shopify Ordered Product metric bağını denetler. Kaynak projeksiyonunda ürün alanları ve attribution Message referansları korunur; müşteri/profile verisi döndürülmez. 38 yeni ve 94 mevcut sentetik test geçti. Shopify ürün doğrulaması ve Message Channel join'i, kurulum PK'si/Ads seçim epoch'u SQL arayüzü ile quota/dispatch/timeout kapıları açık kalır; route, canlı çağrı veya kalıcı eşleme yoktur. EO-04 tarihsel kabulü ve kapalı Klaviyo Advertised/Cross Sell değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Klaviyo_native_identity_collection_2026_10_27` ve Execution Plan.
+
 ## EO-05 takip — 11. adım ortak authority yükleyicisi, 27 Ekim 2026
 
 EO-04 tarihsel kabulü değişmez. #204 main'dedir. Aktif kurulum/lifecycle/seçili hesap ve scoped vault token'ı gerçek mevcut repository okuyucuları ile önce/sonra yükleyen `identity-runtime-authority.server.js` hazırlanır. 33 yeni sentetik test vardır; route, canlı DB/provider, SQL veya Dataset yazımı yoktur. Kanonik kapsam hazır değildir: mevcut SQL kurulum bigint PK'sini ve Reporting Account seçim epoch'unu döndürmez. PK/epoch uydurma veya doğrudan tablo fallback'i yapılmaz; scoped SQL arayüz tamamlamaları mevcut 14. adım değerlendirmesine kaydedilir. Kaynak kuralı ve provider/Admin/metric/Message kompozisyonu mevcut 11'de açık kalır. Ayrıntı: `contracts/eo-05-start-brief-v1.json#identity_runtime_authority_loader_2026_10_27` ve Execution Plan.

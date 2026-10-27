@@ -16,7 +16,7 @@ function freeze(value) {
 }
 function nativeId(v) {return typeof v === "string" && /^[1-9][0-9]{0,29}$/.test(v);}
 function text(v) {return typeof v === "string" && v.length > 0 && v.length <= 8192 && v === v.trim() && !/[\u0000-\u001f\u007f]/.test(v);}
-function scopeOf(value) {
+export function metaCandidateOwnerScope(value) {
   const fields = ["workspace_id", "installation_generation", "provider_connection_id", "platform", "platform_account_id"];
   const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   if (!value || Object.keys(value).length !== fields.length || fields.some(k => !Object.hasOwn(value, k))
@@ -31,7 +31,7 @@ function productContext(value) {
   if (!value || Object.keys(value).length !== fields.length || fields.some(k => !nativeId(value[k]))) fail("META_SOURCE_CANDIDATE_PRODUCT_CONTEXT_INVALID");
   return Object.fromEntries(fields.map(k => [k, value[k]]));
 }
-function key(value) {return JSON.stringify([scopeOf(value.scope), productContext(value.product_context), value.shop_id]);}
+function key(value) {return JSON.stringify([metaCandidateOwnerScope(value.scope), productContext(value.product_context), value.shop_id]);}
 
 // Owner+generation scope is candidate context only, never the canonical installation-PK scope.
 export function createMetaCandidateSourceRuleLoader({rules = REVIEWED_SOURCE_RULES} = {}) {
@@ -39,7 +39,7 @@ export function createMetaCandidateSourceRuleLoader({rules = REVIEWED_SOURCE_RUL
   const registry = new Map();
   for (const input of rules) {
     const rule = structuredClone(input);
-    scopeOf(rule?.scope); productContext(rule?.product_context);
+    metaCandidateOwnerScope(rule?.scope); productContext(rule?.product_context);
     if (!/^gid:\/\/shopify\/Shop\/[1-9][0-9]*$/.test(rule.shop_id ?? "")) fail("META_SOURCE_CANDIDATE_RULE_INVALID");
     if (!checkedCatalogSourceRule(rule, {scope: rule.scope, productContext: rule.product_context, shopId: rule.shop_id},
       code => fail(`META_SOURCE_CANDIDATE_${code}`))) fail("META_SOURCE_CANDIDATE_RULE_INVALID");
@@ -53,7 +53,7 @@ export function createMetaCandidateSourceRuleLoader({rules = REVIEWED_SOURCE_RUL
 
 // Catalog source candidates only: no Insights product namespace or sale/role interpretation.
 export async function verifyMetaCatalogSourceCandidates({source, ownerScope, context, sourceRules, signal, maxRows = 10000} = {}) {
-  const scope = scopeOf(ownerScope), shop = structuredClone(context?.shop), installation = structuredClone(context?.installation);
+  const scope = metaCandidateOwnerScope(ownerScope), shop = structuredClone(context?.shop), installation = structuredClone(context?.installation);
   if (shop?.authority !== "shopify_admin_verified" || installation?.authority !== "shopify_installation_verified"
     || installation.status !== "active" || installation.workspaceId !== scope.workspace_id
     || installation.installGeneration !== scope.installation_generation) fail("META_SOURCE_CANDIDATE_SHOP_SCOPE_MISMATCH");

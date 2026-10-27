@@ -1,5 +1,9 @@
 # EO-04 — Analiz ve tasarım kitabı
 
+## EO-05 takip — Meta native rapor ve katalog aday bağlantısı, 27 Ekim 2026
+
+#212 main'dedir. Yeni mod, aynı native SQL/vault/token/Ad-katalog/Shopify aday koleksiyonuna mevcut tam ürün Insights sorgusunu değiştirmeden bağlar. Varsayılan rapor namespace registry'si boş; rapor kuralı ve retailer biçim kuralı bağımsızdır. Kesin native hesap/tarih/Ad hiyerarşisi ve tek katalog kaydı varsa yalnız yerel aday referansı oluşur; diğer Ads ham raporda hedef dışı, çakışan retailer/feed ambiguous kalır. Dört satış alanı ve metrikler ham hâliyle korunur; rol veya metrik hesabı yoktur. Sayfalama tamamlanması mevcut product_id_limit=100 altında eksiksiz ürün kapsamı sayılmaz. 31 yeni ve 296 mevcut regresyon testi geçti. Gerçek iki kural kanıtı/kapsam kabulü, SQL ve kalıcı yazım kapıları açık; EO-04 tarihsel kabulü ve PMax duraklaması değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Meta_report_candidate_bridge_2026_10_27` ve Execution Plan.
+
 ## EO-05 takip — Meta katalog kuralı ve Shopify aday zinciri, 27 Ekim 2026
 
 #211 main'dedir. Yeni aday girişi mevcut native Meta/SQL/vault koleksiyonuna kanıtlı retailer kaynak kuralını ve shared Shopify ürün/varyant–ana ürün kontrolünü bağlar. Varsayılan registry boş, yalnız retailer_id koşullu parse edilir, her katalog/feed/mağaza bağlamı kesin eşleşir. Yeni katalog adayı Insights namespace seçmez; eski tam-PK resolver iki bağımsız kural kapısını korur. 30 yeni ve 239 mevcut Meta/Shopify/authority sentetik test geçti. Standart ürün/kurulum ID null ve kalıcı yazım/aktivasyon false; gerçek biçim/namespace/erişim, quota/yazım öncesi ve SQL/kalıcı eşleme kapıları açıktır. EO-04 tarihsel kabulü ve tarihsel PMax duraklaması değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Meta_source_rule_candidate_composition_2026_10_27` ve Execution Plan.

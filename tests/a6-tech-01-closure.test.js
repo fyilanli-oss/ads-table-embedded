@@ -35,12 +35,12 @@ test("PASS leaves only accepted F10 debt open and cannot start EO05 or final rev
   const counts = Object.fromEntries(["P0", "P1", "P2", "P3"].map(priority => [priority, open.filter(item => item.priority === priority).length]));
   assert.deepEqual(counts, audit.current_open_finding_counts);
   assert.deepEqual(counts, closure.current_open_findings);
-  assert.equal(master.current_gate, "A6-EO-05_START_BRIEF_PENDING");
+  assert.equal(master.current_gate, "A6-EO-05_REPOSITORY_IMPLEMENTATION_IN_PROGRESS");
   assert.equal(closure.A6_DOCS_01_implementation_started, false);
   assert.equal(closure.EO05_may_start, false);
   assert.equal(closure.review_or_cutover_authorized, false);
   assert.equal(audit.a6_eo_05_may_start, false);
-  assert.equal(master.current_active_parent, null);
+  assert.equal(master.current_active_parent, "A6-EO-05");
   assert.equal(master.current_active_child, null);
   for (const changed of Object.values(closure.closure_record_scope)) assert.equal(changed, false);
   assert.equal(closure.closure_record_requires_fresh_CI_before_merge, true);

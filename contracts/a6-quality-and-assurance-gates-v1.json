@@ -86,6 +86,8 @@
   "external_mutation_authorized": false,
   "staged_rollout": {
     "approved_at": "2026-10-19",
+    "historical_authority_note": "EO05_implementation_authorized_records_the_2026_10_19_staged_plan_not_later_owner_repository_authorization",
+    "current_repository_authority": "contracts/a6-eo-implementation-master-v1.json#packages_A6_EO_05/repository_progress_2026_10_27",
     "status": "plan_approved_execution_not_authorized",
     "merchant": "Zey&Rose",
     "phase_1_parallel_preparation": {

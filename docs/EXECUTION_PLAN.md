@@ -1,5 +1,13 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## EO-05 güncel durum ve sözleşme uyumu — 27 Ekim 2026
+
+Ürün sahibinin kodlamaya başlama ve #182 merge onayı sonrasında EO-05'in güncel durumu **In progress — repository uygulaması; canlı kapılar kapalı** olarak kaydedilir. İlk hata düzeltmesi #182, `114cc746be4cc28b0fe2c2a047e7d014212cae28` ile main'e birleşti; kod blob'u doğrulandı. Aktif ana paket EO-05'tir; yeni alt paket veya eşzamanlı aktif parent açılmaz. Alt paket/kapsam kabulü ve EO-05 kapanışı verilmez. Önceki başlangıç brief'inin bekliyor/başlamadı ifadeleri tarihsel kayıt olup bugünkü repository ilerlemesinin yerine geçmez.
+
+Bu ikinci dar teslim yalnız durum/sözleşme ve bunları sınayan testlerin uyumudur; provider runtime davranışı #182 sonrasında değiştirilmez. Klaviyo Advertised/Cross-sell araştırması 26 Ekim ürün kararıyla kapalıdır; geçerli Campaign Assisted, Flow Triggered ve mevcut Unclassified kuralları kalır. Provider desteklemiyor sonucu çıkarılmaz. Meta'nın native ilişki çözücüsü/gerçek kanıtı ve Google rol bağlantıları açıktır; ürün kümesi üyeliği tek başına rol kanıtı değildir. EO-04 analiz kitabının eski örnekleri tarihsel senaryo hedefleridir, güncel provider desteği veya çalışan rol decoder'ı kanıtı değildir.
+
+#179 kimlik okuyucuları ve iş planı, #180 Meta classifier ve #181 Klaviyo etkileşim okuyucusu açık/merge edilmemiş kayıtlardır; main veya canlı teslim gibi gösterilmez. Bu teslim onların kodunu taşımaz. Kimlik listesindeki 12 öncesi değerlendirme ve açık onay, tarihsel PMax duraklaması, canlı API/OAuth/DB/UI/deploy kapıları korunur. EO-05 başlangıç sözleşmesindeki runtime yetkisi yalnız kullanıcı tarafından kabul edilmiş sıralı repository işidir; tek başına canlı işlem veya tüm paketi uygulama izni değildir. Tamamlama/PASS için repository, entegrasyon ve gerçek sağlayıcı kanıtı ayrı izlenir.
+
 ## EO-05 kod eksikleri — ilk hata düzeltmesi, 27 Ekim 2026
 
 Ürün sahibi 27 Ekim sıralı kodlama planına başlanmasını onayladı. Bu ilk dar teslim, güncel main `dc565a4` tabanından `codex/eo05-first-error-policy` branch'inde hazırlanır; #179 kimlik/iş-planı ve #180/#181 kodları taşınmaz. GitHub Connector, uzak main, görev branch'i ve yerel envanter ayrı doğrulandı. Ortak runner'ın otomatik retry döngüsü kaldırıldı; her sayfa tek çağrı, ilk hatada terminal sonuç ve sıfır yayımlanan satır verir. Caller >1 attempt seçemez; classifier retry isteği etkisizdir. `Retry-After` değişmeden metadata kalır; bozuk/atan classifier gizli ayrıntısız terminal hata olur. Normal sayfalama ve tam/çelişkisiz sonuç kabulü korunur.
@@ -227,11 +235,11 @@ Kanıtsız tarihsel kesin Channel etkinleştirilmez; listing tree çalışmasın
 ayrı açık onay gerektirir. Bu iş sırası kararı runtime, migration, canlı çağrı,
 deploy veya merge yetkisi vermez.
 
-**Durum:** Brief hazır; ürün sahibi kabulü ve dar uygulama kapsamı onayı bekliyor.
+**Güncel durum — 27 Ekim:** EO-05 sıralı repository uygulaması başladı; ilk hata düzeltmesi #182 ile birleşti. Paket kabulü ve canlı işlem kapıları açık değildir. Aşağıdaki 19–20 Ekim başlangıç açıklamaları tarihsel tasarım sınırlarını korur.
 Çalışma sözleşmesi: `contracts/eo-05-start-brief-v1.json`.
 EO-01–04, TECH-01 ve DOCS-01 kabulleri ile PR #138 iki aşamalı planı korunur.
 Bu brief çalışma zamanı kodu, migration, canlı sorgu, dağıtım veya kapasite koşusu
-başlatmaz. EO-05 henüz uygulamaya açılmadı.
+başlatmaz. Güncel dar repository yetkisi ve ilerleme yukarıdaki 27 Ekim kaydıyla izlenir; canlı yetki bu tarihsel brief'ten türetilmez.
 
 **Amaç:** Sağlayıcı verisini doğru mağaza/hesap ve tarihe bağlı, tekrar çalışınca
 çoğalmayan, eksikleri görünür, güncellenebilir Dataset V2 kaydına dönüştürmek.

@@ -1,5 +1,9 @@
 # PD ve CPD sorgu çalışma tablosu
 
+## Güncel durum düzeltmesi — 27 Ekim 2026
+
+EO-05 repository uygulaması başladı; ilk hata düzeltmesi #182 ile main'e birleşti. Ana paket kabulü, provider/DB/OAuth/UI/deploy yetkisi verilmedi. Klaviyo Advertised/Cross-sell araştırması ürün kararıyla kapalı; geçerli Assisted/Triggered/Unclassified korunur, teknik destek yokluğu iddiası değildir. Meta native rol kanıtı ve Google rol bağlantıları açık. Aşağıdaki 22–23 Ekim erteleme notları tarihsel envanterdir; Klaviyo araştırmasını yeniden açmaz. Ayrıntılı kimlik/iş planı ve helper kodları #179'da açık/merge edilmemiştir; bu main tabanlı durum düzeltmesi onların uygulandığını iddia etmez. Sorgu standardı bu branch'te yalnız durum düzeltmesi olarak 1.10.1'dir; #179'daki 1.18.0 ayrı açık head'dir. Kimlik 12 öncesi durak ve tarihsel PMax duraklaması korunur. Eski matris ve kaynak tablo satırları değiştirilmedi.
+
 ## Ortak kayıt aileleri ve kaynak eşlemesi — 23 Ekim 2026
 
 Ürün sahibi beş sütunlu ortak düzeni kabul etti ve sohbet tablosunun Excel çıktısını aldı. Bu bölüm o çıktının aynı 15 satırlık analiz kaydıdır; önceki 13 sütunlu sorgu matrisi değiştirilmez. Kaynak, mevcut repository sorgu ve normalizasyon kodudur; yeni provider desteği veya canlı veri kabulü değildir. Fiziksel tablo, unique constraint, Dataset writer ve FX uygulaması bu kayıtla başlamaz. 16 + 20 + 22 tasarımına girdidir; 17–19 kapanışı değildir.

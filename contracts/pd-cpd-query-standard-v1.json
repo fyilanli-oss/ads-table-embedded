@@ -1,7 +1,13 @@
 {
   "contract_id": "pd-cpd-query-standard-v1",
-  "version": "1.10.0",
-  "checked_at": "2026-10-26",
+  "version": "1.10.1",
+  "checked_at": "2026-10-27",
+  "status_alignment_2026_10_27": {
+    "scope": "patch_current_status_and_closed_Klaviyo_decision_only",
+    "work_plan_PR179": "open_version_1_18_not_merged_into_this_main_based_slice",
+    "Meta_role_evidence": "open",
+    "new_runtime_queries_or_provider_support_claim": false
+  },
   "inventory_item": "01",
   "status": "accepted_product_decisions_implementation_partial",
   "source_table": "docs/research/PD_CPD_QUERY_WORKING_TABLE_2026-10-22.md",
@@ -96,7 +102,7 @@
     "items_18_19_closed": false,
     "deferred_items": {
       "05": "four_meta_fields_retained_semantics_and_roles_pending_real_data",
-      "15": "advertised_cross_sell_requires_new_owner_discussion_existing_roles_unchanged",
+      "15": "Klaviyo_advertised_cross_sell_investigation_closed_by_owner_2026_10_26_keep_Assisted_Triggered",
       "10_11": "product_asset_group_link_open_google_support_reply_pending_history_still_paused",
       "16": "physical_identity_mapping_remains_EO05B"
     },
@@ -298,11 +304,13 @@
     "spend": "open_no_formula_or_zero_fallback",
     "campaign_content_membership_role": "Assisted",
     "campaign_content_membership_proves_clicked_product": false,
-    "campaign_advertised_cross_sell": "requires_verified_sale_linked_product_interaction_evidence_not_implemented",
+    "campaign_advertised_cross_sell": "out_of_current_product_scope_investigation_closed_by_owner_2026_10_26",
     "flow_role": "Triggered_when_existing_flow_evidence_valid",
     "contradictory_evidence_role": "Unclassified",
     "content_membership_fix": "merged_PR_166",
-    "remaining_role_item": "15"
+    "role_inventory_item": "15_closed_by_product_scope_decision_2026_10_26",
+    "role_closure_is_provider_unsupported_proof": false,
+    "role_research_reopens": "new_explicit_owner_direction_only"
   },
   "delivery_boundary": {
     "provider_runtime_contracts_describe": "actual_existing_queries_and_guards_not_target_completion",

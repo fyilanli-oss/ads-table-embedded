@@ -390,7 +390,7 @@ test("master plan keeps EO-03 closed after EO-04-A acceptance", () => {
   assert.equal(eo03d.status, "Accepted");
   assert.equal(eo03d.start_gate, "PASS_A6-EO-03-C_accepted_2026-10-09");
   assert.equal(eo04.status, "Accepted");
-  assert.equal(implementationMaster.current_active_parent, null);
+  assert.equal(implementationMaster.current_active_parent, "A6-EO-05");
   assert.equal(implementationMaster.current_active_child, null);
   assert.equal(implementationMaster.next_ready_child, null);
   assert.equal(contract.next_child.live_authorization_remains_disabled, true);

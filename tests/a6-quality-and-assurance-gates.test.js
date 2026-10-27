@@ -23,9 +23,9 @@ test("engineering integrity runs before EO-05 and is not reduced to review readi
   assert.ok(contract.engineering_integrity.scope.includes("supabase_schema_security_performance_and_recovery"));
   assert.ok(contract.engineering_integrity.scope.includes("vercel_environment_deployment_runtime_and_rollback"));
   assert.ok(contract.engineering_integrity.scope.includes("github_lineage_pr_ci_and_local_only_inventory"));
-  assert.equal(master.current_active_parent, null);
+  assert.equal(master.current_active_parent, "A6-EO-05");
   assert.equal(master.current_active_child, null);
-  assert.equal(master.current_gate, "A6-EO-05_START_BRIEF_PENDING");
+  assert.equal(master.current_gate, "A6-EO-05_REPOSITORY_IMPLEMENTATION_IN_PROGRESS");
   assert.equal(master.packages.find((item) => item.id === "A6-EO-04").status, "Accepted");
 });
 

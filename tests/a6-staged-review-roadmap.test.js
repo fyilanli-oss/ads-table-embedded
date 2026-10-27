@@ -7,14 +7,14 @@ const quality = read("contracts/a6-quality-and-assurance-gates-v1.json");
 const master = read("contracts/a6-eo-implementation-master-v1.json");
 const plan = quality.staged_rollout;
 
-test("staged plan records parallel merchant preparation without starting EO05 or external actions", () => {
+test("historical staged plan preserves merchant preparation while current EO05 repository work has started", () => {
   assert.equal(plan.merchant, "Zey&Rose");
   assert.equal(plan.approved_at, "2026-10-19");
   assert.equal(plan.EO05_implementation_authorized, false);
   assert.equal(plan.external_mutation_authorized, false);
   assert.equal(plan.phase_1_real_validation.live_queries_authorized, false);
-  assert.equal(master.current_gate, "A6-EO-05_START_BRIEF_PENDING");
-  assert.equal(master.current_active_parent, null);
+  assert.equal(master.current_gate, "A6-EO-05_REPOSITORY_IMPLEMENTATION_IN_PROGRESS");
+  assert.equal(master.current_active_parent, "A6-EO-05");
   assert.equal(master.current_active_child, null);
   assert.equal(read("contracts/a6-docs-01-turkish-standardization-v1.json").package_complete, true);
   assert.equal(plan.phase_1_parallel_preparation.advertising_scenarios.length, 4);
@@ -30,7 +30,7 @@ test("engineering progress cannot substitute synthetic fixtures for native produ
   assert.equal(engineering.EO08_engineering_reached_means_formally_accepted, false);
   assert.equal(engineering.unverified_product_graphs_may_activate, false);
   assert.equal(engineering.package_delta_integrity_required, true);
-  for (const id of engineering.packages) assert.equal(master.packages.find(p => p.id === id).status, "Not started");
+  for (const id of engineering.packages) assert.equal(master.packages.find(p => p.id === id).status, id === "A6-EO-05" ? "In progress" : "Not started");
   assert.equal(engineering.EO05_first_gate, master.packages.find(p => p.id === "A6-EO-05").mandatory_first_gate.id);
   assert.equal(master.packages.find(p => p.id === "A6-EO-05").mandatory_first_gate.current_tree_may_backfill_historical_snapshot_or_channel, false);
 });

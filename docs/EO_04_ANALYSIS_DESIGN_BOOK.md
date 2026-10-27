@@ -4,13 +4,15 @@
 **Durum:** Kabul edildi — 2026-10-18
 **Amaç:** Teknik olmayan bir okuyucunun üç sağlayıcının hangi ham gerçeği verdiğini, AdsTable'ın Channel ve Sales Role kararını nasıl ürettiğini, hangi çıkarımları kesinlikle yapmadığını ve EO-05'e hangi açık işleri devrettiğini tek belgeden anlayabilmesi.
 
-Bu kitap EO-04'ün kabul edildiği günkü kapsamını korur. Sonraki A6-TECH-01
-kapanışı ve aktif A6-DOCS-01 durumu `docs/EXECUTION_PLAN.md` içindedir.
+Bu kitap EO-04'ün kabul edildiği günkü kapsamını korur. Sonraki A6-TECH-01 ve
+A6-DOCS-01 kapanışları ile aktif EO-05 repository ilerlemesi `docs/EXECUTION_PLAN.md` içindedir.
 23 Ekim 2026 ürün sahibi kararıyla Klaviyo içerik-kümesi Sales Role çıkarımı
 düzeltildi. KLAVIYO-01/02/03 sonuçları artık `Assisted` olur; ürünler,
 kimlikler, Message/Medium/Variation ve diğer sağlayıcı senaryoları korunur.
 
 ## 1. İş amacı ve gerçek çıktı
+
+**27 Ekim güncel okuma kuralı:** EO-04'ün 18 Ekim kabulü korunur; EO-05 repository uygulaması başlamıştır ve ilk hata düzeltmesi #182 ile main'e alınmıştır. Bu kitabın eski META/GOOGLE senaryo kartları ürün hedefleri ve tarihsel açıklamalardır; gerçek provider ürün ilişkisi kanıtı veya bütünleşik runtime kabulü değildir. Ürün kümesine üyelik tek başına Advertised/Cross-sell vermez. Meta native ilişki decoder'ı/kanıtı ve Google raporlama rol bağlantıları açıktır. Klaviyo araştırması ürün kararıyla kapalıdır; Campaign Assisted, Flow Triggered ve mevcut Unclassified kuralları korunur. Kimlik/plan #179, Meta classifier #180 ve Klaviyo etkileşim okuyucusu #181 açık PR'lardır; main/canlı gibi okunmaz. Güncel sınır Execution Plan'dır. Bu açıklama kapanış kanıtını, mağaza/ürün adlarını veya tarihsel örnek kimliklerini değiştirmez.
 
 EO-04, kurulu Shopify mağazasına bağlı doğrulanmış Meta, Google Ads ve Klaviyo
 hesaplarından sağlayıcının kendi verisi olan raporlama kanıtını güvenli ve kanıta sadık biçimde
@@ -45,7 +47,7 @@ sağlayıcı atıflarındaki örtüşmeleri uzlaştırma veya kullanıcıya dön
 - **Shopify Admin API:** Desteklenen resmî sağlayıcı senkronizasyon yolundan türetilen ürün
   ve varyant adayını ticari ürün kimliğine doğrular.
 - **EO-05:** Kalıcı saklama, Dataset V2, tarihsel PMax ürün listeleme ağacı anlık görüntüsü,
-  veri uzlaştırma, örtüşme ve maliyet dağıtımı sahibidir.
+  veri uzlaştırma, örtüşme ve maliyet dağıtımı girdilerinin sahibidir; hesap/formül sahibi EO-06-A'dır.
 
 Campaign, Meta Ad Set, Klaviyo Flow, trigger, split ve delay Channel değildir.
 Creative, ürün listeleme ağacı düğümü ve Variation Channel'ın kanıt/alt-kırılımıdır.
@@ -91,8 +93,8 @@ kullanır ve şu alanları taşır:
 
 | Durum | Sonuç |
 | --- | --- |
-| Satılan ürün kesin reklamda gösterilen ürün kümesinde | `Advertised` |
-| Kesin küme biliniyor, satılan ürün kümenin dışında | `Cross-sell` |
+| Doğrulanmış reklam etkileşimi ürünü ile satılan ürün aynı | Hedef `Advertised`; gerekli native kanıt olmadan üretilmez |
+| Doğrulanmış reklam etkileşimi ürünü ile satılan ürün farklı; aynı kümede olabilir | Hedef `Cross-sell`; yalnız küme üyeliği/dışılığı yeterli değildir |
 | Channel biliniyor, kesin reklamda gösterilen ürün kanıtı yok | `Assisted` |
 | Geçerli Klaviyo Flow Message attribution'ı | `Triggered` |
 | Ürün veya attribution kanıtı gerçekten çelişkili | `Unclassified` |

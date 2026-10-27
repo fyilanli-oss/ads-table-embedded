@@ -50,7 +50,7 @@
     "contradictory_or_unresolvable": "Unclassified",
     "content_product_set_proves_interaction_product": false,
     "advertised_or_cross_sell_from_content_membership": false,
-    "product_interaction_role_resolution": "deferred_until_verified_sale_linked_product_interaction_evidence"
+    "product_interaction_role_resolution": "closed_by_product_scope_decision_2026_10_26_keep_Assisted_Triggered"
   },
   "publication": {
     "resolution_runs_after_all_provider_families": true,

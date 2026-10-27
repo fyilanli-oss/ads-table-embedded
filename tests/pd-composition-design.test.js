@@ -6,12 +6,14 @@ import {GOOGLE_PD_QUERY_FAMILIES} from "../app/lib/providers/google-reporting.se
 const standard = JSON.parse(await readFile("contracts/pd-cpd-query-standard-v1.json", "utf8"));
 const design = standard.pd_composition_review;
 
-test("17 records only Google leaf composition progress, not Dataset or provider acceptance", () => {
+test("17 records source composition progress, not native orchestration, Dataset or provider acceptance", () => {
   assert.equal(design.inventory_item, "17");
-  assert.equal(design.status, "partial_repository_implementation_google_leaf_composer_only");
+  assert.equal(design.status, "partial_repository_Google_and_Klaviyo_source_composers_not_native_orchestration");
   assert.equal(design.runtime_composer_implemented, true);
   assert.equal(design.all_provider_composers_and_native_orchestration_complete, false);
   assert.equal(design.source_ownership.google_ads.leaf_composition_2026_10_27.dataset_write_or_publish, false);
+  assert.equal(design.source_ownership.klaviyo.message_composition_2026_10_27.dataset_write_or_publish, false);
+  assert.equal(design.source_ownership.klaviyo.message_composition_2026_10_27.sales_role_rules_changed_or_reopened, false);
   assert.equal(design.physical_dataset_schema_selected, false);
   assert.equal(design.publishable, false);
   assert.equal(design.items_18_19_closed, false);

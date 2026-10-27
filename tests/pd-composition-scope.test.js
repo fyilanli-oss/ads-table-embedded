@@ -76,6 +76,7 @@ test("contract records helper implementation separately from composers, canonica
   assert.equal(guard.entrypoint, "checkPdCompositionCompatibility");
   assert.equal(guard.provider_composers_connected, false);
   assert.equal(guard.google_leaf_composer_helper_connected, true);
+  assert.equal(guard.klaviyo_message_composer_helper_connected, true);
   assert.equal(guard.native_provider_orchestration_connected, false);
   assert.equal(guard.canonical_FX_validation_bypassed, false);
   assert.equal(guard.dataset_writer_or_migration, false);

@@ -9,6 +9,8 @@ import {createSharedQuotaGuard} from "../app/lib/refresh/shared-quota.server.js"
 import {createQuotaScopeResolver,quotaRouteIdentity} from "../app/lib/refresh/quota-scope-resolver.server.js";
 import {SHOPIFY_PRODUCT_CANDIDATE_QUERIES as queries,verifyShopifyProductCandidate} from "../app/lib/shopify/product-identity-verification.server.js";
 import {refreshQuotaWait} from "../app/lib/refresh/quota-work-wait.server.js";
+import {createRefreshShopifyAdminIdentityClient,createRefreshQuotaClients} from "../app/lib/refresh/quota-authority-binding.server.js";
+import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 
 // Only this isolated test worker installs the SDK hook. No application bootstrap edits.
 const originalFetch=abstractFetch;after(()=>setAbstractFetchFunc(originalFetch));
@@ -44,7 +46,7 @@ function fixture({bridge=createShopifyAdminIdentitySdkBridge(),domain=shop.mysho
   const params={api,logger:{debug:(...x)=>logs.push(x)}};
   const admin={graphql:graphqlClientFactory({params,session,handleClientError:handleClientErrorFactory({request:new Request("https://example.com"),onError:async x=>auth.push(x)})})};
   const config={admin,transport};
-  return {bridge,q,calls,reservations,settles,stops,feedback,auth,logs,context,config,
+  return {bridge,q,calls,reservations,settles,stops,feedback,auth,logs,context,config,store,
     wrap:()=>bridge.wrap(config),read:client=>client.graphql(queries.identity_product_variant,{variables,tries:1})};
 }
 test("real pinned React Router/API SDK reaches guarded physical HTTP once and keeps native response",async()=>{
@@ -164,4 +166,100 @@ test("unknown native failure and feedback storage failure are not converted to q
   for(const mode of ["native","feedback"]){const f=fixture();if(mode==="native")f.q.throw=true;else f.q.feedbackFailure=true;
     await assert.rejects(f.read(f.wrap()),e=>!quotaBoundaryControl(e));assert.equal(f.calls.length,1);assert.equal(f.settles.length,0);
     assert.equal(f.auth.length,0);if(mode==="native")assert.equal(f.stops[0].knownResponse,false);}
+});
+
+function boundFixture() {
+  const f=fixture(),loads=[];
+  // Reuse only synthetic native HTTP and the same profile/guard store, not the lower transport.
+  const config={verified:{installationAuthority:structuredClone(installation),identity:{shop:structuredClone(shop),
+    session:{authority:"shopify_id_token_verified",shopDomain:shop.myshopifyDomain}},context:{admin:f.config.admin}},
+    sdkBridge:f.bridge,claim:{workspaceId:installation.workspaceId,installGeneration:"3",provider:"meta",accountId:"act_123",id:"job1",fence:2},
+    window:{from:"2026-10-01",to:"2026-10-01"},entitlementReceipt:{observedAt:"2026-10-27T15:00:00Z"},
+    now:Date.now,quotaStore:f.store,
+    workStore:{loadQuotaContext:async input=>{loads.push(input);await f.q.contextLoading?.();return f.q.lost?null:f.context;}},
+    fetchFn:async(endpoint,init)=>{
+      f.calls.push({endpoint,init});await f.q.native?.(init);
+      return new Response(JSON.stringify(f.q.payload??{data:{shop:{id:shop.shopId,myshopifyDomain:shop.myshopifyDomain},
+        product:{id:variables.productId,legacyResourceId:"10"},productVariant:{id:variables.variantId,legacyResourceId:"20",product:{id:variables.productId,legacyResourceId:"10"}}},
+        extensions:{cost:{requestedQueryCost:8,actualQueryCost:5,throttleStatus:{maximumAvailable:1000,currentlyAvailable:995,restoreRate:50}}}}),
+        {status:f.q.status??200,headers:{"content-type":"application/json"}});
+    }};
+  return {...f,loads,boundConfig:config,create:()=>createRefreshShopifyAdminIdentityClient(config)};
+}
+test("fenced Admin: real SDK/candidate reads receive original provider claim window receipt on both context checks",async()=>{
+  const f=boundFixture(),result=await verifyShopifyProductCandidate({admin:f.create(),shop,installation,productId:"10",variantId:"20"});
+  assert.equal(result.state,"candidate_verified_in_shop");assert.equal(f.calls.length,1);assert.equal(f.reservations.length,1);assert.equal(f.loads.length,2);
+  assert.ok(f.loads.every(x=>x.provider==="shopify_admin"&&x.claim.provider==="meta"&&x.claim.accountId==="act_123"&&x.claim.fence===2
+    &&x.window.from==="2026-10-01"&&x.entitlementReceipt.observedAt==="2026-10-27T15:00:00Z"));
+  assert.equal(result.provider_link_verified,false);assert.equal(f.feedback[0].feedback.actualQueryCost,5);
+  assert.doesNotMatch(JSON.stringify([f.loads,f.feedback,f.reservations]),/SECRET|gid:|ProductId|legacyResourceId/);
+});
+test("fenced Admin: job owner shop and native function captured before caller mutation",async()=>{
+  const f=boundFixture(),client=f.create();f.boundConfig.claim.accountId="act_999";f.boundConfig.claim.fence=99;
+  f.boundConfig.window.from="2026-10-02";f.boundConfig.entitlementReceipt.observedAt="2000-01-01T00:00:00Z";
+  f.boundConfig.verified.identity.shop.myshopifyDomain="other.myshopify.com";
+  f.boundConfig.verified.installationAuthority.installGeneration=99;f.boundConfig.verified.context.admin.graphql=()=>{throw Error("retarget");};
+  await f.read(client);assert.equal(f.calls.length,1);assert.ok(f.loads.every(x=>x.claim.accountId==="act_123"&&x.claim.fence===2&&x.window.from==="2026-10-01"));
+});
+for(const [name,change] of [["workspace",f=>{f.boundConfig.claim.workspaceId="other";}],["generation",f=>{f.boundConfig.claim.installGeneration="4";}],
+  ["inactive installation",f=>{f.boundConfig.verified.installationAuthority.status="inactive";}],["missing fence",f=>{delete f.boundConfig.claim.fence;}],
+  ["Admin as provider job",f=>{f.boundConfig.claim.provider="shopify_admin";}],["multi-day",f=>{f.boundConfig.window.to="2026-10-02";}],
+  ["invalid date",f=>{f.boundConfig.window.from="2026-02-30";f.boundConfig.window.to=f.boundConfig.window.from;}],
+  ["missing receipt",f=>{delete f.boundConfig.entitlementReceipt;}],["session shop",f=>{f.boundConfig.verified.identity.session.shopDomain="other.myshopify.com";}],
+  ["missing native session authority",f=>{delete f.boundConfig.verified.identity.session.authority;}],
+  ["unverified shop",f=>{f.boundConfig.verified.identity.shop.authority="unverified";}],["noncanonical shop",f=>{
+    f.boundConfig.verified.identity.shop.myshopifyDomain="TEST.myshopify.com";f.boundConfig.verified.identity.session.shopDomain="TEST.myshopify.com";}],
+  ["fake bridge",f=>{f.boundConfig.sdkBridge={wrap:()=>f.config.admin};}],["arbitrary guard",f=>{f.boundConfig.guard={};}],
+  ["arbitrary resolver",f=>{f.boundConfig.resolveOperation=()=>"a".repeat(64);}],
+  ["arbitrary context loader",f=>{f.boundConfig.loadContext=()=>f.context;}],["Admin helper flag",f=>{f.boundConfig.admin=true;}],
+  ["legacy callback",f=>{f.boundConfig.authorizeRead=()=>true;}],
+])test(`fenced Admin: ${name} rejected before SQL or native call`,()=>{
+  const f=boundFixture();change(f);assert.throws(f.create);assert.equal(f.loads.length,0);assert.equal(f.calls.length,0);
+});
+for(const [name,change] of [["lost job/entitlement",f=>{f.q.lost=true;}],["wrong shop context",f=>{f.context.accountId="other.myshopify.com";}],
+  ["wrong API context",f=>{f.context.apiVersion="2026-07";}],["provider context",f=>{f.context.provider="meta";}],
+  ["missing profile",f=>{f.q.missing=true;}],
+])test(`fenced Admin: ${name} sends no HTTP`,async()=>{
+  const f=boundFixture();change(f);await assert.rejects(f.read(f.create()),e=>quotaBoundaryControl(e)?.status==="not_configured");
+  assert.equal(f.calls.length,0);assert.equal(f.reservations.length,0);
+});
+test("fenced Admin: current repository adapter intentionally rejects Admin before SQL/native pending step14",async()=>{
+  const f=boundFixture();let queries=0;f.boundConfig.workStore=createRefreshWorkRepository({query:async()=>{queries++;throw Error("unexpected SQL");}});
+  await assert.rejects(f.read(f.create()),e=>quotaBoundaryControl(e)?.status==="not_configured");assert.equal(queries,0);assert.equal(f.calls.length,0);
+});
+test("fenced Admin: account app epoch or entitlement drift during reserve settles without HTTP",async()=>{
+  for(const change of [f=>{f.context.accountId="other.myshopify.com";},f=>{f.context.clientScopeKey="c".repeat(64);},
+    f=>{f.context.connectionEpoch++;},f=>{f.q.lost=true;}]){
+    const f=boundFixture();f.q.reserving=()=>change(f);await assert.rejects(f.read(f.create()),e=>quotaBoundaryControl(e)?.status==="not_sent");
+    assert.equal(f.calls.length,0);assert.equal(f.reservations.length,1);assert.equal(f.settles.length,1);assert.equal(f.stops.length,0);
+  }
+});
+test("fenced Admin: first quota wait survives real SDK and consumes client",async()=>{
+  const f=boundFixture();f.q.waitAt=1;const client=f.create();await assert.rejects(f.read(client),e=>quotaBoundaryControl(e)?.status==="waiting");
+  await assert.rejects(f.read(client),/EXECUTION_CLOSED/);assert.equal(f.calls.length,0);
+});
+test("fenced Admin: normal provider quota factory cannot opt in to Admin",async()=>{
+  const f=boundFixture(),{verified,sdkBridge,...ordinary}=f.boundConfig;
+  const clients=createRefreshQuotaClients(ordinary);assert.ok(clients);assert.equal(f.loads.length,0);
+  // This flag is rejected by the original public options, not forwarded to its private helper.
+  assert.throws(()=>createRefreshQuotaClients({...ordinary,admin:true}),/INPUT_INVALID/);
+});
+test("SDK hook must be actually installed before any captured SDK function runs",async()=>{
+  const f=boundFixture();let invoked=0;f.boundConfig.verified.context.admin={graphql:async()=>{invoked++;return new Response("{}");}};
+  const client=f.create();setAbstractFetchFunc(originalFetch);
+  await assert.rejects(f.read(client),/HOOK_NOT_INSTALLED/);assert.equal(invoked,0);assert.equal(f.loads.length,0);assert.equal(f.calls.length,0);
+});
+test("a different installed bridge cannot leak a fenced execution into unguarded SDK",async()=>{
+  const f=boundFixture(),client=f.create(),other=createShopifyAdminIdentitySdkBridge();setAbstractFetchFunc(other.fetch);
+  await assert.rejects(f.read(client),/HOOK_NOT_INSTALLED/);assert.equal(f.loads.length,0);assert.equal(f.calls.length,0);
+});
+test("fenced Admin: native error persists stop without SDK auth recovery or repeated call",async()=>{
+  const f=boundFixture();f.q.status=401;f.q.payload={errors:[{message:"SECRET-ERROR"}]};const client=f.create();
+  await assert.rejects(f.read(client),/NATIVE_REQUEST_FAILED/);assert.equal(f.calls.length,1);assert.equal(f.stops.length,1);assert.equal(f.auth.length,0);
+  await assert.rejects(f.read(client),/EXECUTION_CLOSED/);
+});
+test("fenced Admin: timeout at work context cannot reserve or dispatch on late return",async()=>{
+  const f=boundFixture();f.boundConfig.timeoutMs=40;let release;f.q.contextLoading=()=>new Promise(r=>{release=r;});const client=f.create();
+  await assert.rejects(f.read(client),/DEADLINE_EXCEEDED/);delete f.q.contextLoading;release();await new Promise(r=>setTimeout(r,0));
+  assert.equal(f.calls.length,0);assert.equal(f.reservations.length,0);await assert.rejects(f.read(client),/EXECUTION_CLOSED/);
 });

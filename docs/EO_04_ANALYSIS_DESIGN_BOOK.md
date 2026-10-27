@@ -1,5 +1,9 @@
 # EO-04 — Analiz ve tasarım kitabı
 
+## EO-05 takip — Shopify Admin fenced iş kaydı istemcisi, 27 Ekim 2026
+
+#221 main’dedir. Yeni inactive Admin kimlik client’ı; doğrulanmış owner/mağaza/kurulum neslini tek günlük fenced provider işi ve receipt ile bağlar. Asıl provider/account korunur, Admin ayrı quota target’ıdır; aynı store ile lookup/pre-dispatch current context ve pin kontrol edilir. Sahte köprü/guard/resolver override kapalıdır. Native SDK çağrısından önce gerçek hook kurulum kontrolü eklendi; eksik/farklı hook sıfır SDK/SQL/HTTP ile durur. 33 yeni ve 538 mevcut test, 7 repository kontrolü ve typecheck geçti. Gerçek repository adaptörü Admin’i hâlâ reddeder: JS/SQL/context/cost budget 14 kapısında, canlı kurulum ve aday/rapor kompozisyonu açıktır. EO-04 tarihsel kabulü/PMax duraklaması değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Shopify_Admin_fenced_identity_client_2026_10_27` ve Execution Plan.
+
 ## EO-05 takip — Shopify Admin gerçek SDK–HTTP köprüsü, 27 Ekim 2026
 
 #220 main’dedir. Yeni inactive async-context köprüsü gerçek kurulu React Router 3.0.1/Shopify API 15.0.0 zincirini fiziksel Admin quota transport’una bağlayabilir. Uygulamada global hook/fetch/config değiştirilmedi. Bir sorgu tek guarded HTTP ister; gizli ikinci çağrı, hook’suz yanıt, override/double-wrap ve hata sonrası replay engellenir. Native 401/403 quota stop sonrası SDK’ya güvenli hata olarak geçer; gerçek SDK handler’da auth recovery çalışmadı. Quota wait özgün kanıtıyla korunur; deadline/iptal ve farklı execution izolasyonu test edildi. 35 yeni ve 495 mevcut test, 7 repository kontrolü ve typecheck geçti. Fenced Admin constructor/global kurulum/SQL/cost bütçesi ve diğer mevcut kapılar açıktır; EO-04 kabulü/PMax duraklaması değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Shopify_Admin_SDK_quota_bridge_2026_10_27` ve Execution Plan.

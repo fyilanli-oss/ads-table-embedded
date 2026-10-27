@@ -1,8 +1,11 @@
 import {AsyncLocalStorage} from "node:async_hooks";
+import {abstractFetch} from "@shopify/shopify-api/runtime";
 import {isQuotaManagedFetchForProvider} from "./quota-native-fetch.server.js";
 import {shopifyAdminIdentityFamily} from "./shopify-admin-identity-quota.server.js";
 import {IdentityReadDeadlineError,runIdentityReadDeadline} from "../providers/identity-read-deadline.server.js";
 const wrappedClients=new WeakSet();
+const bridges=new WeakSet();
+export function isShopifyAdminIdentitySdkBridge(value) {return bridges.has(value);}
 
 // Inactive SDK hook. Explicit bootstrap installation is a separate gate; no global setter,
 // fallback fetch, token/session loader, config change or authority inference here.
@@ -43,6 +46,9 @@ export function createShopifyAdminIdentitySdkBridge() {
         return await runIdentityReadDeadline({signal:external,timeoutMs,run:child=>{
           call={transport,signal:child,requests:0,closed:false,failure:null};
           return context.run(call,async()=>{
+            // Compare the actual SDK runtime hook immediately before calling the client.
+            // An uninstalled/different adapter must not send an unguarded request first.
+            if(abstractFetch!==fetch) {call.failure=fail("HOOK_NOT_INSTALLED");throw call.failure;}
             const response=await graphql(query,{variables,tries:1,signal:child});
             if(call.failure)throw call.failure;
             if(call.requests!==1) {call.failure=fail("BOUNDARY_NOT_OBSERVED");throw call.failure;}
@@ -58,5 +64,5 @@ export function createShopifyAdminIdentitySdkBridge() {
     }});
     wrappedClients.add(client);return client;
   }
-  return Object.freeze({fetch,wrap});
+  const bridge=Object.freeze({fetch,wrap});bridges.add(bridge);return bridge;
 }

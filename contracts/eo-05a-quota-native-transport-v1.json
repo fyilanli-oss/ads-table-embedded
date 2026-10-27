@@ -1,4 +1,5 @@
 {
+  "Shopify_Admin_fenced_client_2026_10_27": "contracts/eo-05-start-brief-v1.json#Shopify_Admin_fenced_identity_client_2026_10_27",
   "Shopify_Admin_SDK_bridge_2026_10_27": "contracts/eo-05-start-brief-v1.json#Shopify_Admin_SDK_quota_bridge_2026_10_27",
   "Shopify_Admin_identity_extension_2026_10_27": "contracts/eo-05-start-brief-v1.json#Shopify_Admin_identity_quota_boundary_2026_10_27",
   "contract_id": "eo-05a-quota-native-transport-v1",

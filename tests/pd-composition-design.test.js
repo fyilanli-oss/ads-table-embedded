@@ -8,12 +8,16 @@ const design = standard.pd_composition_review;
 
 test("17 records source composition progress, not native orchestration, Dataset or provider acceptance", () => {
   assert.equal(design.inventory_item, "17");
-  assert.equal(design.status, "partial_repository_Google_and_Klaviyo_source_composers_not_native_orchestration");
+  assert.equal(design.status, "partial_repository_source_composers_and_canonical_bridge_not_native_orchestration");
   assert.equal(design.runtime_composer_implemented, true);
   assert.equal(design.all_provider_composers_and_native_orchestration_complete, false);
   assert.equal(design.source_ownership.google_ads.leaf_composition_2026_10_27.dataset_write_or_publish, false);
   assert.equal(design.source_ownership.klaviyo.message_composition_2026_10_27.dataset_write_or_publish, false);
   assert.equal(design.source_ownership.klaviyo.message_composition_2026_10_27.sales_role_rules_changed_or_reopened, false);
+  assert.equal(design.canonical_bridge_2026_10_27.repository_implemented, true);
+  assert.equal(design.canonical_bridge_2026_10_27.live_metadata_FX_enrichment_or_dispatch_connected, false);
+  assert.equal(design.canonical_bridge_2026_10_27.physical_dataset_or_writer_implemented, false);
+  assert.equal(design.canonical_bridge_2026_10_27.publishable, false);
   assert.equal(design.physical_dataset_schema_selected, false);
   assert.equal(design.publishable, false);
   assert.equal(design.items_18_19_closed, false);

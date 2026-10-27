@@ -1,6 +1,6 @@
 {
   "contract_id": "pd-cpd-query-standard-v1",
-  "version": "1.13.0",
+  "version": "1.14.0",
   "checked_at": "2026-10-27",
   "status_alignment_2026_10_27": {
     "scope": "patch_current_status_and_closed_Klaviyo_decision_only",
@@ -39,7 +39,30 @@
   ],
   "pd_composition_review": {
     "inventory_item": "17",
-    "status": "partial_repository_Google_and_Klaviyo_source_composers_not_native_orchestration",
+    "status": "partial_repository_source_composers_and_canonical_bridge_not_native_orchestration",
+    "canonical_bridge_2026_10_27": {
+      "runtime": "app/lib/providers/pd-canonical-bridge.server.js",
+      "entrypoint": "bridgePdSourceToCanonical",
+      "repository_implemented": true,
+      "tested_composer_inputs": ["google_ads", "klaviyo"],
+      "expected_scope_and_enrichment_scope_required": true,
+      "same_scope_guard_called": true,
+      "native_metric_lineage_must_resolve": true,
+      "entity_names_and_ancestor_ids_required_no_ID_as_name_fallback": true,
+      "fx_input": "explicit_positive_rate_currencies_observation_date_provider_engine_version_and_business_day_reference",
+      "same_currency": "explicit_complete_metadata_and_rate_one_no_default",
+      "fx_observation_date_equals_business_date_required": false,
+      "fx_lookup_fallback_or_date_selection_policy_implemented": false,
+      "source_metric_values_and_observation_states_changed": false,
+      "time_and_adapter_provenance_required": true,
+      "existing_common_canonical_validator_called": true,
+      "canonical_validated_means": "schema_validation_only_not_live_evidence_or_publication_authority",
+      "blocked_output": "no_canonical_rows_original_source_preserved",
+      "Meta_native_source_decoder_changed": false,
+      "live_metadata_FX_enrichment_or_dispatch_connected": false,
+      "physical_dataset_or_writer_implemented": false,
+      "publishable": false
+    },
     "scope": "compose_complementary_pd_projections_only_not_cpd_or_ancestor_rollups",
     "identity_basis": "existing_common_adapter_canonicalFactKey_authority_date_and_entity",
     "scope_guard_2026_10_27": {
@@ -184,7 +207,7 @@
       "10_11": "product_asset_group_link_open_google_support_reply_pending_history_still_paused",
       "16": "physical_identity_mapping_remains_EO05B"
     },
-    "acceptance": "Google_and_Klaviyo_source_composition_repository_only_native_orchestration_canonical_bridge_rollup_and_live_acceptance_not_complete"
+    "acceptance": "source_composition_and_canonical_bridge_repository_only_native_enrichment_orchestration_rollup_and_live_acceptance_not_complete"
   },
   "hierarchy_rollup": {
     "upper_metrics": "sum_children_at_same_scope_date_currency_and_attribution",

@@ -3,6 +3,7 @@ import {createGoogleAdsRestClient} from "./google-ads-rest.server.js";
 import {readGoogleMerchantAccountLink} from "./google-merchant-account-link.server.js";
 import {readMerchantProductSourceSnapshot} from "./google-product-identity-reader.server.js";
 import {quotaBoundaryControl} from "../refresh/quota-native-fetch.server.js";
+import {createGoogleCandidateSourceRuleLoader, verifyGoogleMerchantSourceCandidates} from "./google-source-candidates.server.js";
 
 export class GoogleIdentityCollectionError extends Error {
   constructor(code) {super(code); this.name = "GoogleIdentityCollectionError"; this.code = code;}
@@ -18,9 +19,9 @@ function positiveInt64(value) {
 
 // Prepared server-only read. merchantId is a target, never authority: a native active Ads
 // relationship must match it before source collection. No caller loadCurrent override.
-export async function collectGoogleMerchantIdentityEvidence({verified, database, tokenVault, merchantId, developerToken,
+async function collectGoogleIdentitySource({verified, database, tokenVault, merchantId, developerToken,
   fetchFn = fetch, now = () => new Date(), signal, maxPages = 100, maxRows = 10000,
-  maxLinkPages = 100, maxLinks = 10000, maxElapsedMs = 120000} = {}) {
+  maxLinkPages = 100, maxLinks = 10000, maxElapsedMs = 120000, sourceRules, withShopify} = {}) {
   if (!positiveInt64(merchantId) || typeof developerToken !== "string" || !developerToken || developerToken.length > 256
     || /[\u0000-\u0020\u007f]/.test(developerToken) || typeof fetchFn !== "function" || typeof now !== "function"
     || ![maxPages, maxRows, maxLinkPages, maxLinks, maxElapsedMs].every(Number.isSafeInteger)
@@ -32,6 +33,9 @@ export async function collectGoogleMerchantIdentityEvidence({verified, database,
     return value.valueOf();
   }
   const started = clock(), loader = createIdentityRuntimeAuthorityLoader({verified, database, tokenVault, provider: "google_ads", now, signal});
+  // Reviewed server entries are detached before the first await. Default registry is empty.
+  const rules = withShopify ? createGoogleCandidateSourceRuleLoader({rules: sourceRules}) : null;
+  const nativeGraphql = withShopify ? verified.context.admin.graphql.bind(verified.context.admin) : null;
   let current, nativeQuotaControl = null;
   function check() {
     if (signal?.aborted) fail("GOOGLE_IDENTITY_ABORTED");
@@ -61,23 +65,48 @@ export async function collectGoogleMerchantIdentityEvidence({verified, database,
     const source = await readMerchantProductSourceSnapshot({merchantId, accessToken: current.tokenSet.access_token,
       fetchFn: boundFetch, signal, maxPages, maxRows});
     await recheck();
+    let productCandidates = null;
+    if (withShopify) {
+      const admin = {async graphql(query, options) {
+        await recheck(); let response;
+        try {response = await nativeGraphql(query, {...options, tries: 1, signal});}
+        catch (error) {if (quotaBoundaryControl(error)) nativeQuotaControl = error; throw error;}
+        check();
+        return {ok: response?.ok, status: response?.status, async json() {
+          const body = await response.json(); check(); await recheck(); return body;
+        }};
+      }};
+      productCandidates = await verifyGoogleMerchantSourceCandidates({source, ownerScope: {
+        workspace_id: current.installation.workspaceId, installation_generation: current.installation.installGeneration,
+        provider_connection_id: current.connectionId, platform: "google_ads", platform_account_id: current.account.id},
+      context: {installation: current.installation, shop: current.shop, admin}, sourceRules: rules, signal, maxRows});
+      await recheck();
+    }
     const after = await readGoogleMerchantAccountLink(linkOptions);
     if (after.state !== "confirmed" || before.link.resource_name !== after.link.resource_name) fail("GOOGLE_IDENTITY_MERCHANT_LINK_CHANGED");
     await recheck();
-    return freeze({provider: "google_ads", source: "native_Ads_Merchant_link_and_product_collection",
+    return freeze({provider: "google_ads", source: withShopify ? "native_Ads_Merchant_and_Shopify_candidate_collection" : "native_Ads_Merchant_link_and_product_collection",
       account_id: current.account.id, merchant_id: merchantId, connection_id: current.connectionId,
       connection_version: current.connectionVersion, installation: current.installation, shop: current.shop,
-      native_source: source, link_evidence: {before, after,
+      native_source: source, ...(withShopify ? {product_identity_candidates: productCandidates} : {}), link_evidence: {before, after,
         started_at: new Date(started).toISOString(), completed_at: new Date(clock()).toISOString()},
       provider_link_verified: true, relationship_scope: "observed_direct_Ads_Merchant_relationship_only",
       installation_id: null, canonical_scope_ready: false, shopify_mapping_state: "not_resolved",
       authorizes_activation: false, persistable: false, mapping_write_performed: false, source_facts_changed: false,
-      remaining: ["trusted_installation_primary_key_and_Ads_selection_epoch_reads", "verified_source_format_rule_binding",
-        "Shopify_candidate_verification_composition", "quota_dispatch_and_prewrite_controls"]});
+      remaining: ["trusted_installation_primary_key_and_Ads_selection_epoch_reads", "real_source_format_evidence_and_reviewed_rule_registration",
+        ...(withShopify ? [] : ["Shopify_candidate_verification_composition"]), "quota_dispatch_and_prewrite_controls"]});
   } catch (error) {
     if (nativeQuotaControl !== null) throw nativeQuotaControl;
     if (quotaBoundaryControl(error)) throw error;
     if (error instanceof GoogleIdentityCollectionError) throw error;
     fail(signal?.aborted ? "GOOGLE_IDENTITY_ABORTED" : "GOOGLE_IDENTITY_COLLECTION_FAILED");
   }
+}
+
+// Separate locked modes: supplying flags/rules to the native-only entry cannot enable parsing.
+export function collectGoogleMerchantIdentityEvidence(options = {}) {
+  return collectGoogleIdentitySource({...options, withShopify: false});
+}
+export function collectGoogleVerifiedProductCandidateEvidence(options = {}) {
+  return collectGoogleIdentitySource({...options, withShopify: true});
 }

@@ -173,6 +173,16 @@ test("unsafe sum is rejected even when individual variation values are safe", ()
   assert.equal(compose(input).reason, "metric_sum_unsafe");
 });
 
+test("request evidence retains the report body without unrelated envelope fields", () => {
+  const {input} = fixture();
+  input.projections[0].evidence.request_body.extra = "synthetic-sensitive-envelope";
+  input.projections[0].evidence.request_body.data.extra = "synthetic-sensitive-envelope";
+  const result = compose(input);
+  assert.equal(result.status, "composed");
+  assert.doesNotMatch(JSON.stringify(result), /synthetic-sensitive-envelope/);
+  assert.equal(result.rows[0].source_projections[0].request_body.data.attributes.conversion_metric_id, "metric-0");
+});
+
 test("configuration-missing declaration cannot accompany a fetched report", () => {
   const {input} = fixture();
   input.metric_selection = {...input.metric_selection, "Added to Cart": {metric_id: null, state: "account_configuration_missing"}};

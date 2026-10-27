@@ -1,5 +1,6 @@
 import {normalizeKlaviyoOrderedProductEvent} from "./klaviyo-reporting.server.js";
 import {verifyShopifyProductCandidate} from "../shopify/product-identity-verification.server.js";
+import {permissionContext} from "../oauth/identity-permission-preflight.server.js";
 
 export class KlaviyoProductIdentityError extends Error {
   constructor(code) { super(code); this.name = "KlaviyoProductIdentityError"; this.code = code; }
@@ -49,9 +50,9 @@ function proposedIds(properties) {
   return {state: "candidate", productId, variantId, variant_observation: "documented_field_observed"};
 }
 
-// Consumes native events and their native Shopify metric from trusted server collection.
-// No caller DTO proves account access; lifecycle/current-source composition remains separate.
-export async function resolveKlaviyoProductIdentities({events, metric, context, sourceAuthority,
+// Same-shop candidate evidence only, independent of a canonical provider/installation DB key.
+// This function cannot return canonical mappings or standardized sale IDs.
+export async function verifyKlaviyoProductCandidateRows({events, metric, context,
   signal, maxEvents = 10000} = {}) {
   if (!Number.isSafeInteger(maxEvents) || maxEvents < 1 || maxEvents > 100000
     || !Array.isArray(events) || events.length > maxEvents) fail("KLAVIYO_PRODUCT_IDENTITY_EVENTS_INVALID");
@@ -59,8 +60,11 @@ export async function resolveKlaviyoProductIdentities({events, metric, context, 
   if (metric?.type !== "metric" || !text(metric.id) || metric.attributes?.name !== "Ordered Product"
     || metric.attributes?.integration?.name !== "Shopify") fail("KLAVIYO_PRODUCT_IDENTITY_METRIC_INVALID");
   const installation = structuredClone(context?.installation), shop = structuredClone(context?.shop);
-  const scope = scopeOf(sourceAuthority, installation);
   if (shop?.authority !== "shopify_admin_verified") fail("KLAVIYO_PRODUCT_IDENTITY_SHOP_REQUIRED");
+  if (installation?.authority !== "shopify_installation_verified" || installation.status !== "active") fail("KLAVIYO_PRODUCT_IDENTITY_SCOPE_MISMATCH");
+  try {permissionContext({provider: "shopify", workspaceId: installation.workspaceId,
+    installGeneration: installation.installGeneration, shopId: shop.shopId, shopDomain: shop.myshopifyDomain});}
+  catch {fail("KLAVIYO_PRODUCT_IDENTITY_SCOPE_MISMATCH");}
   const admin = typeof context?.admin?.graphql === "function" ? Object.freeze({graphql: context.admin.graphql.bind(context.admin)}) : null;
   if (signal?.aborted) fail("KLAVIYO_PRODUCT_IDENTITY_ABORTED");
   // Validate and detach every event before the first Shopify call. IDs are never derived from array position.
@@ -72,39 +76,62 @@ export async function resolveKlaviyoProductIdentities({events, metric, context, 
     if (previous && JSON.stringify(previous) !== JSON.stringify(normalized)) fail("KLAVIYO_PRODUCT_IDENTITY_EVENT_CONFLICT");
     unique.set(normalized.provider_event_id, normalized);
   }
-  const rows = [], mappings = [], checked = new Map();
+  const rows = [], candidates = [], checked = new Map();
   for (const row of unique.values()) {
     if (signal?.aborted) fail("KLAVIYO_PRODUCT_IDENTITY_ABORTED");
     const candidate = proposedIds(row.provider_product_properties);
     let resolution;
-    if (candidate.state !== "candidate") resolution = {...candidate, shopify_product_id: null, shopify_variant_id: null, mapping_index: null};
+    if (candidate.state !== "candidate") resolution = {...candidate, shopify_product_id: null, shopify_variant_id: null, candidate_index: null};
     else {
       const key = JSON.stringify([candidate.productId, candidate.variantId]);
       if (!checked.has(key)) {
         const verified = await verifyShopifyProductCandidate({admin, shop, installation,
           productId: candidate.productId, variantId: candidate.variantId, signal});
-        let mappingIndex = null;
+        let candidateIndex = null;
         if (verified.state === "candidate_verified_in_shop") {
-          mappingIndex = mappings.length;
-          mappings.push({...scope, native_product_id: candidate.productId,
+          candidateIndex = candidates.length;
+          candidates.push({native_product_id: candidate.productId,
             product_context: {integration: "Shopify", metric_id: metric.id, native_variant_id: candidate.variantId},
             shopify_product_id: verified.candidate.product_id, shopify_variant_id: verified.candidate.variant_id,
-            mapping_state: "candidate_verified_source_and_shop", mapping_evidence: {metric_id: metric.id,
+            candidate_state: "candidate_verified_in_shop", candidate_evidence: {metric_id: metric.id,
               metric_name: "Ordered Product", integration_name: "Shopify", source_event_ids: [],
               product_property: "ProductID", variant_property: candidate.variantId === null ? null : "Variant ID",
               shopify: verified.evidence, shop_scope: verified.scope}});
         }
-        checked.set(key, {state: mappingIndex === null ? verified.state : "candidate_verified_source_and_shop",
-          reason: mappingIndex === null ? verified.reason : "Shopify_ordered_product_candidate_verified_current_source_composition_still_required",
-          shopify_product_id: mappingIndex === null ? null : verified.candidate.product_id,
-          shopify_variant_id: mappingIndex === null ? null : verified.candidate.variant_id, mapping_index: mappingIndex});
+        checked.set(key, {state: candidateIndex === null ? verified.state : "candidate_verified_in_shop",
+          reason: candidateIndex === null ? verified.reason : "same_shop_candidate_checked_canonical_mapping_and_provider_link_not_verified",
+          shopify_product_id: candidateIndex === null ? null : verified.candidate.product_id,
+          shopify_variant_id: candidateIndex === null ? null : verified.candidate.variant_id, candidate_index: candidateIndex});
       }
       resolution = {...checked.get(key), variant_observation: candidate.variant_observation};
-      if (resolution.mapping_index !== null) mappings[resolution.mapping_index].mapping_evidence.source_event_ids.push(row.provider_event_id);
+      if (resolution.candidate_index !== null) candidates[resolution.candidate_index].candidate_evidence.source_event_ids.push(row.provider_event_id);
     }
-    rows.push({...row, standardized_product_id: resolution.shopify_product_id, product_identity_resolution: resolution});
+    rows.push({...row, standardized_product_id: null, product_identity_verification: resolution});
   }
-  return freeze({version: "1.0.0", scope, rows, mappings,
+  return freeze({version: "1.0.0", rows, candidates,
+    candidate_references: "candidate_index_is_local_evidence_not_a_mapping_or_database_id",
+    canonical_scope_ready: false,
+    provider_link_verified: false, persistable: false, authorizes_activation: false,
+    mapping_write_performed: false, sales_roles_changed: false, source_amounts_or_quantities_changed: false});
+}
+
+// Existing full-scope draft resolver retains its contract and validates scope BEFORE verification.
+// It still cannot persist or assert a native provider link. Both paths share the same candidate checks.
+export async function resolveKlaviyoProductIdentities({events, metric, context, sourceAuthority,
+  signal, maxEvents = 10000} = {}) {
+  const scope = scopeOf(sourceAuthority, context?.installation);
+  const result = await verifyKlaviyoProductCandidateRows({events, metric, context, signal, maxEvents});
+  return freeze({version: "1.0.0", scope,
+    rows: result.rows.map(({product_identity_verification, ...row}) => {
+      const {candidate_index, ...resolution} = product_identity_verification;
+      return {...row, standardized_product_id: resolution.shopify_product_id,
+        product_identity_resolution: {...resolution,
+          state: candidate_index === null ? resolution.state : "candidate_verified_source_and_shop",
+          reason: candidate_index === null ? resolution.reason : "Shopify_ordered_product_candidate_verified_current_source_composition_still_required",
+          mapping_index: candidate_index}};
+    }),
+    mappings: result.candidates.map(({candidate_state, candidate_evidence, ...candidate}) => ({...scope, ...candidate,
+      mapping_state: "candidate_verified_source_and_shop", mapping_evidence: candidate_evidence})),
     mapping_references: "mapping_index_is_local_to_this_result_not_a_database_id",
     provider_link_verified: false, persistable: false, authorizes_activation: false,
     mapping_write_performed: false, sales_roles_changed: false, source_amounts_or_quantities_changed: false});

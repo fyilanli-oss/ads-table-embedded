@@ -120,3 +120,25 @@ test("transport delivery is inactive, does not decide Dataset or requeue unknown
   const c=JSON.parse(readFileSync(new URL("../contracts/eo-05a-quota-native-transport-v1.json",import.meta.url),"utf8"));
   assert.equal(c.live_activation,false);assert.equal(c.Dataset_or_product_decision,false);assert.equal(c.native_calls,false);assert.equal(c.native_scheduler_activated,false);
 });
+
+test("abort while quota reservation waits settles as not_sent before any HTTP or unknown stop",async()=>{
+  const f=fixture(),caller=new AbortController();let release,entered;
+  const ready=new Promise(resolve=>{entered=resolve;});
+  f.store.reserve=async x=>{await new Promise(resolve=>{release=resolve;entered();});return {...x,status:"reserved",dispatchBeforeMs:Date.now()+10000,dispatchBudgetMs:10000};};
+  const fetchFn=createQuotaManagedFetch({provider:"meta",...f.options});
+  const pending=fetchFn("https://graph.facebook.com/v26.0/66?fields=id,product_catalog",{signal:caller.signal});
+  await ready;caller.abort();release();
+  await assert.rejects(pending,e=>quotaBoundaryControl(e)?.status==="not_sent"&&quotaBoundaryControl(e).priorBoundaryAttempts===0);
+  assert.equal(f.calls(),0);assert.equal(f.settles.length,1);assert.equal(f.stops.length,0);
+});
+test("abort during pre-dispatch context recheck cannot race into HTTP",async()=>{
+  const f=fixture(),caller=new AbortController();let release,entered;
+  const ready=new Promise(resolve=>{entered=resolve;});
+  const fetchFn=createQuotaManagedFetch({provider:"meta",...f.options,isDispatchCurrent:async()=>{
+    await new Promise(resolve=>{release=resolve;entered();});return true;
+  }});
+  const pending=fetchFn("https://graph.facebook.com/v26.0/66?fields=id,product_catalog",{signal:caller.signal});
+  await ready;caller.abort();release();
+  await assert.rejects(pending,e=>quotaBoundaryControl(e)?.status==="not_sent");
+  assert.equal(f.calls(),0);assert.equal(f.settles.length,1);assert.equal(f.stops.length,0);
+});

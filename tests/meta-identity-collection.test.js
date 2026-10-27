@@ -8,6 +8,8 @@ import {readMetaCatalogIdentitySnapshot, matchMetaCatalogProductIdentity} from "
 import {readMetaAdCatalogReference} from "../app/lib/providers/meta-adset-catalog-reference.server.js";
 import {oauthPermissionScopes} from "../app/lib/oauth/oauth-permission-profile.server.js";
 import {createQuotaManagedFetch, quotaBoundaryControl} from "../app/lib/refresh/quota-native-fetch.server.js";
+import {createQuotaScopeResolver, quotaRouteIdentity} from "../app/lib/refresh/quota-scope-resolver.server.js";
+import {createSharedQuotaGuard} from "../app/lib/refresh/shared-quota.server.js";
 
 const workspace = "11111111-1111-4111-8111-111111111111", connection = "22222222-2222-4222-8222-222222222222",
   credential = "33333333-3333-4333-8333-333333333333";
@@ -477,4 +479,62 @@ test("deadline: stalled Insights body returns timeout rather than partial candid
 test("deadline: already-aborted caller never reads SQL or Meta", async () => {
   const f = fixture(), caller = new AbortController(); caller.abort(); f.options.signal = caller.signal;
   await assert.rejects(f.run(), /IDENTITY_READ_ABORTED/); assert.equal(f.calls.length, 0); assert.equal(f.queries.length, 0);
+});
+
+function quotaFixture(withReport = false) {
+  const f = withReport ? reportFixture() : fixture(), native = f.options.fetchFn;
+  const metadata = [], reservations = [], lookups = [], stops = [], settles = [], q = {};
+  const c = {provider: "meta", clientScopeKey: "a".repeat(64), connectionScopeKey: "b".repeat(64),
+    connectionEpoch: 1, accountId: "act_123", organizationId: null, apiVersion: "v26.0"};
+  const configured = new Set(["token_debug", "identity_ad", "identity_adset", "identity_product_set", "identity_creative", "catalog_products", "product_insights"]
+    .map(family => quotaRouteIdentity(c, {provider: "meta", family, accountId: family === "product_insights" ? "act_123" : null,
+      organizationId: null, version: "v26.0", includes: []}).routeKey));
+  const store = {resolveRoute: async identity => {lookups.push(identity); return q.missing ? null : configured.has(identity.routeKey) ? identity.routeKey : null;},
+    reserve: async x => {reservations.push(x); if (q.waitAt === reservations.length) return {status: "waiting"};
+      const r = {status: "reserved", ...x, dispatchBeforeMs: Date.now() + 10000, dispatchBudgetMs: 10000}; q.reserved?.(); return r;},
+    settle: async x => {settles.push(x); return true;}, stop: async x => {stops.push(x); return true;}};
+  const resolve = createQuotaScopeResolver({loadContext: async () => c, store});
+  f.options.fetchFn = createQuotaManagedFetch({provider: "meta", lane: "background", guard: createSharedQuotaGuard({store, now: Date.now}),
+    resolveOperation: async d => {metadata.push(d); return resolve(d);}, isDispatchCurrent: async (d, key) => await resolve(d) === key,
+    fetchFn: async (...args) => {const r = await native(...args); return new Response(JSON.stringify(await r.json()), {status: r.status, headers: {"content-type": "application/json"}});}});
+  return {...f, q, c, metadata, reservations, lookups, stops, settles};
+}
+test("quota integration: native Meta chain reserves and settles once for each actual HTTP read", async () => {
+  const f = quotaFixture(); const r = await f.run(); assert.equal(r.persistable, false);
+  assert.equal(f.calls.length, 10); assert.equal(f.reservations.length, 10); assert.equal(f.settles.length, 10); assert.equal(f.stops.length, 0);
+  assert.deepEqual(f.metadata.map(d => d.family), ["token_debug", "identity_ad", "identity_adset", "identity_product_set", "identity_creative",
+    "catalog_products", "identity_ad", "identity_adset", "identity_product_set", "identity_creative"]);
+  assert.ok(f.lookups.every(x => Object.keys(x).sort().join(",") === "connectionScopeKey,provider,routeKey"));
+  assert.doesNotMatch(JSON.stringify([f.lookups, f.reservations, f.metadata]), /secret-access|secret-app|shopify_US|retailer_id|appsecret_proof/);
+});
+test("quota integration: report bridge uses the same boundary for product Insights too", async () => {
+  const f = quotaFixture(true); await f.run(); assert.equal(f.calls.length, 11); assert.equal(f.reservations.length, 11);
+  assert.equal(f.metadata[6].family, "product_insights"); assert.equal(f.metadata[6].accountId, "act_123");
+});
+test("quota integration: catalog continuation is another metered native read", async () => {
+  const f = quotaFixture(); f.hooks.fetch = p => p.pathname.endsWith("/products") && !p.searchParams.has("after")
+    && response({data: [], paging: {next: "opaque-continuation", cursors: {after: "next"}}});
+  assert.equal((await f.run()).native_source.pages, 2); assert.equal(f.calls.length, 11); assert.equal(f.reservations.length, 11);
+  assert.equal(f.metadata.filter(d => d.family === "catalog_products").length, 2);
+});
+test("quota integration: unconfigured owner profile prevents even token inspection", async () => {
+  const f = quotaFixture(); f.q.missing = true;
+  await assert.rejects(f.run(), e => quotaBoundaryControl(e)?.status === "not_configured"); assert.equal(f.calls.length, 0); assert.equal(f.reservations.length, 0);
+});
+test("quota integration: quota wait at catalog preserves five prior reads and never retries", async () => {
+  const f = quotaFixture(); f.q.waitAt = 6;
+  await assert.rejects(f.run(), e => quotaBoundaryControl(e)?.status === "waiting" && quotaBoundaryControl(e).priorBoundaryAttempts === 5);
+  assert.equal(f.calls.length, 5); assert.equal(f.reservations.length, 6); assert.equal(f.stops.length, 0);
+});
+test("quota integration: context account or epoch drift after reserve settles without dispatch", async () => {
+  for (const change of [c => {c.connectionEpoch++;}, c => {c.accountId = "act_124";}]) {
+    const f = quotaFixture(); f.q.reserved = () => {change(f.c);};
+    await assert.rejects(f.run(), e => quotaBoundaryControl(e)?.status === "not_sent");
+    assert.equal(f.calls.length, 0); assert.equal(f.reservations.length, 1); assert.equal(f.settles.length, 1);
+  }
+});
+test("quota integration: first native error records one stop without sensitive body or another request", async () => {
+  const f = quotaFixture(); f.hooks.fetch = p => p.pathname.endsWith("/products") && response({error: {message: "SECRET-NATIVE"}}, 403);
+  await assert.rejects(f.run()); assert.equal(f.calls.length, 6); assert.equal(f.stops.length, 1);
+  assert.doesNotMatch(JSON.stringify(f.stops), /SECRET-NATIVE/);
 });

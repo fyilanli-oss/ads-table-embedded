@@ -2,6 +2,15 @@
   "contract_id": "pd-cpd-query-standard-v1",
   "version": "1.15.0",
   "checked_at": "2026-10-27",
+  "permission_preparation_2026_10_27": {
+    "authority": "contracts/eo-05-start-brief-v1.json#identity_permission_preparation_2026_10_27",
+    "ordered_step": 7,
+    "repository_scope_preflight_prepared": true,
+    "Shopify_current_grant_reader_prepared": true,
+    "source_reader_or_role_or_dataset_acceptance": false,
+    "live_scope_or_configuration_changed": false,
+    "step_complete": false
+  },
   "status_alignment_2026_10_27": {
     "scope": "patch_current_status_and_closed_Klaviyo_decision_only",
     "work_plan_PR179": "open_version_1_18_not_merged_into_this_main_based_slice",

@@ -18,6 +18,7 @@ import {
 import {
   discoverMetaAdAccounts,
   exchangeAndValidateMetaAuthorizationCode,
+  inspectMetaAccessToken,
   MetaGraphError,
   readMetaOAuthConfig,
   revokeMetaAuthorization,
@@ -79,6 +80,15 @@ export function createMetaOAuthRuntime({
   const accountAuthority = createProviderAccountAuthorityRepository(database);
   const lifecycle = createProviderConnectionLifecycle({database, now});
 
+  async function inspectIdentityCredential(stored) {
+    if (stored.permission_profile === undefined || stored.permission_profile === "reporting_v1") return null;
+    if (stored.permission_profile !== "identity_v1") {
+      throw new MetaGraphError("META_IDENTITY_CREDENTIAL_METADATA_REQUIRED", "Meta identity credential purpose is missing");
+    }
+    return inspectMetaAccessToken({config, accessToken: stored.access_token,
+      permissionProfile: "identity_v1", fetchFn, now});
+  }
+
   async function discoverWithCredential({installationAuthority, credentialId}) {
     const stored = await tokenVault.loadProviderTokenSet({
       credentialId,
@@ -86,14 +96,22 @@ export function createMetaOAuthRuntime({
       provider: PROVIDER,
     });
     if (!stored?.access_token) throw new Error("META_ACCESS_TOKEN_UNAVAILABLE");
-    return discoverMetaAdAccounts({
+    const grant = await inspectIdentityCredential(stored);
+    const evidence = await discoverMetaAdAccounts({
       accessToken: stored.access_token,
       appSecret: config.appSecret,
-      scopes: stored.scopes,
+      scopes: grant?.scopes ?? stored.scopes,
       graphVersion: config.graphVersion,
       fetchFn,
       now,
     });
+    if (!grant) return evidence;
+    const expiresAt = new Date(Math.min(Date.parse(grant.expiresAt), Date.parse(evidence.expiresAt),
+      Date.parse(grant.verifiedAt) + 600000)).toISOString();
+    if (Date.parse(expiresAt) <= Date.parse(nowIso(now))) {
+      throw new MetaGraphError("META_IDENTITY_SCOPE_EVIDENCE_STALE", "Meta identity permission evidence expired during account discovery");
+    }
+    return Object.freeze({...evidence, expiresAt});
   }
 
   return Object.freeze({
@@ -142,6 +160,7 @@ export function createMetaOAuthRuntime({
             "Meta authorization is expired",
           );
         }
+        await inspectIdentityCredential(stored);
         return Object.freeze({state: "connected", connection: connected});
       }
 
@@ -150,6 +169,10 @@ export function createMetaOAuthRuntime({
         installGeneration: installationAuthority.installGeneration,
       });
       if (pendingReporting) {
+        const stored = await tokenVault.loadProviderTokenSet({installationAuthority,
+          provider: PROVIDER, credentialId: pendingReporting.credentialId});
+        if (!stored?.access_token) throw new Error("META_ACCESS_TOKEN_UNAVAILABLE");
+        await inspectIdentityCredential(stored);
         return Object.freeze({
           state: "pending_reporting_account_selection",
           pending: pendingReporting,

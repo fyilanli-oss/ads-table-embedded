@@ -166,6 +166,53 @@ function expiryIso(data, now) {
   return new Date(expiry * 1000).toISOString();
 }
 
+export async function inspectMetaAccessToken({
+  config,
+  accessToken: inputToken,
+  fetchFn = fetch,
+  now = () => new Date(),
+  permissionProfile = "reporting_v1",
+}) {
+  oauthPermissionProfile("meta", permissionProfile);
+  if (typeof fetchFn !== "function") throw new TypeError("fetchFn is required");
+  const appId = nonEmpty(config?.appId, "META_APP_ID_REQUIRED", 256);
+  const appSecret = nonEmpty(config?.appSecret, "META_APP_SECRET_REQUIRED", 512);
+  const debugUrl = new URL(`${META_GRAPH_ORIGIN}/${exactVersion(config?.graphVersion)}/debug_token`);
+  debugUrl.searchParams.set("input_token", nonEmpty(inputToken, "META_ACCESS_TOKEN_REQUIRED", 8192));
+  let inspected;
+  try {
+    inspected = await graphJson({url: debugUrl.toString(),
+      headers: {authorization: `Bearer ${appId}|${appSecret}`}, fetchFn});
+  } catch (error) {
+    if (error instanceof MetaGraphError) throw error;
+    throw new MetaGraphError("META_TOKEN_INSPECTION_FAILED", "Meta token inspection could not complete");
+  }
+  const data = inspected?.data;
+  if (!data || data.is_valid !== true) {
+    throw new MetaGraphError("META_REAUTHORIZATION_REQUIRED", "Meta token validation failed");
+  }
+  if (String(data.app_id ?? "") !== appId) {
+    throw new MetaGraphError("META_TOKEN_APP_MISMATCH", "Meta token belongs to another app");
+  }
+  const scopes = scopesOf(data.scopes);
+  if (permissionProfile === "identity_v1") {
+    validateIdentityOAuthGrantedScopes("meta", data.scopes);
+    for (const field of ["expires_at", "data_access_expires_at"]) {
+      const value = data[field];
+      if (value !== undefined && (typeof value !== "number" || !Number.isSafeInteger(value)
+        || value < 0 || value > 8640000000000)) {
+        throw new MetaGraphError("META_TOKEN_EXPIRY_INVALID", "Meta token expiry is malformed");
+      }
+    }
+  }
+  if (!scopes.includes(META_OAUTH_SCOPE)) {
+    throw new MetaGraphError("META_ADS_READ_SCOPE_MISSING", "Meta ads_read scope is missing");
+  }
+  const verifiedAt = now();
+  const expiresAt = expiryIso(data, () => verifiedAt);
+  return Object.freeze({scopes, expiresAt, verifiedAt: verifiedAt.toISOString()});
+}
+
 export async function exchangeAndValidateMetaAuthorizationCode({
   config,
   authorizationCode,
@@ -198,35 +245,15 @@ export async function exchangeAndValidateMetaAuthorizationCode({
   });
   const longToken = accessToken(long, "META_LONG_LIVED_TOKEN_MISSING");
 
-  const debugUrl = new URL(`${base}/debug_token`);
-  debugUrl.searchParams.set("input_token", longToken);
-  const debug = await graphJson({
-    url: debugUrl.toString(),
-    headers: {authorization: `Bearer ${config.appId}|${config.appSecret}`},
-    fetchFn,
-  });
-  const data = debug?.data;
-  if (!data || data.is_valid !== true) {
-    throw new MetaGraphError(
-      "META_REAUTHORIZATION_REQUIRED",
-      "Meta token validation failed",
-    );
-  }
-  if (String(data.app_id ?? "") !== config.appId) {
-    throw new MetaGraphError("META_TOKEN_APP_MISMATCH", "Meta token belongs to another app");
-  }
-  const scopes = scopesOf(data.scopes);
-  if (permissionProfile === "identity_v1") validateIdentityOAuthGrantedScopes("meta", data.scopes);
-  if (!scopes.includes(META_OAUTH_SCOPE)) {
-    throw new MetaGraphError("META_ADS_READ_SCOPE_MISSING", "Meta ads_read scope is missing");
-  }
-  const expiresAt = expiryIso(data, now);
+  const {scopes, expiresAt, verifiedAt} = await inspectMetaAccessToken({config,
+    accessToken: longToken, permissionProfile, fetchFn, now});
   return Object.freeze({
     tokenSet: Object.freeze({
       access_token: longToken,
       token_type: "Bearer",
       scopes,
       expires_at: expiresAt,
+      ...(permissionProfile === "identity_v1" ? {permission_profile: "identity_v1", scope_verified_at: verifiedAt} : {}),
     }),
     scopes,
     expiresAt,

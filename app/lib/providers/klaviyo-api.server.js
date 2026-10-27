@@ -142,7 +142,18 @@ async function tokenRequest({config, form, fetchFn, invalidGrantCode}) {
   return payload;
 }
 
-function normalizedTokenSet(payload, now, fallbackScopes = null) {
+function nativeTokenScopes(value) {
+  if (typeof value !== "string" || !/^[\x21\x23-\x5B\x5D-\x7E]+(?: [\x21\x23-\x5B\x5D-\x7E]+)*$/.test(value)) {
+    throw new KlaviyoApiError("KLAVIYO_SCOPE_RESPONSE_INVALID", "Klaviyo token scope response is malformed");
+  }
+  const values = value.split(" ");
+  if (values.length > 100 || values.some(scope => scope.length > 200) || new Set(values).size !== values.length) {
+    throw new KlaviyoApiError("KLAVIYO_SCOPE_RESPONSE_INVALID", "Klaviyo token scope response is malformed");
+  }
+  return scopesOf(values);
+}
+
+function normalizedTokenSet(payload, now, fallbackScopes = null, previousScopeObservedAt = null) {
   const accessToken = nonEmpty(payload?.access_token, "KLAVIYO_ACCESS_TOKEN_MISSING", 16384);
   const refreshToken = nonEmpty(payload?.refresh_token, "KLAVIYO_REFRESH_TOKEN_MISSING", 16384);
   const tokenType = nonEmpty(payload?.token_type, "KLAVIYO_TOKEN_TYPE_MISSING", 32);
@@ -153,8 +164,20 @@ function normalizedTokenSet(payload, now, fallbackScopes = null) {
   if (!Number.isSafeInteger(expiresIn) || expiresIn < 1 || expiresIn > 86400) {
     throw new KlaviyoApiError("KLAVIYO_TOKEN_EXPIRY_INVALID", "Klaviyo token expiry is invalid");
   }
-  const scopes = scopesOf(payload?.scope ?? fallbackScopes);
+  const nativeScopePresent = Object.hasOwn(payload, "scope");
+  if (!nativeScopePresent && fallbackScopes === null) {
+    throw new KlaviyoApiError("KLAVIYO_SCOPE_RESPONSE_REQUIRED", "Klaviyo did not return token scopes");
+  }
+  const scopes = nativeScopePresent ? nativeTokenScopes(payload.scope) : scopesOf(fallbackScopes);
   const verifiedAt = validNow(now).toISOString();
+  const scopeObservedAt = nativeScopePresent ? verifiedAt : previousScopeObservedAt;
+  if (scopeObservedAt !== null) {
+    const observed = Date.parse(scopeObservedAt);
+    if (typeof scopeObservedAt !== "string" || !Number.isFinite(observed)
+      || new Date(observed).toISOString() !== scopeObservedAt || observed > Date.parse(verifiedAt)) {
+      throw new KlaviyoApiError("KLAVIYO_SCOPE_OBSERVATION_INVALID", "Klaviyo stored scope observation time is invalid");
+    }
+  }
   const expiresAt = new Date(new Date(verifiedAt).valueOf() + expiresIn * 1000).toISOString();
   return Object.freeze({
     tokenSet: Object.freeze({
@@ -165,6 +188,8 @@ function normalizedTokenSet(payload, now, fallbackScopes = null) {
       expires_at: expiresAt,
       scope: scopes.join(" "),
       scopes,
+      scope_source: nativeScopePresent ? "native_token_response" : "retained_previous_grant",
+      scope_observed_at: scopeObservedAt,
     }),
     scopes,
     verifiedAt,
@@ -213,6 +238,7 @@ export async function refreshKlaviyoAccessToken({
   config,
   refreshToken,
   scopes,
+  scopeObservedAt = null,
   fetchFn = fetch,
   now = () => new Date(),
 }) {
@@ -226,7 +252,7 @@ export async function refreshKlaviyoAccessToken({
       refresh_token: nonEmpty(refreshToken, "KLAVIYO_REFRESH_TOKEN_REQUIRED", 16384),
     },
   });
-  return normalizedTokenSet(payload, now, scopes);
+  return normalizedTokenSet(payload, now, scopes, scopeObservedAt);
 }
 
 export async function discoverKlaviyoAccount({

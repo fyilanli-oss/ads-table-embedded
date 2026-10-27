@@ -1,5 +1,17 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## 7. adım — Klaviyo yeni izin gözlemi ile korunan izni ayırma, 27 Ekim 2026
+
+#195 `f5fccc7fda0e34eae210e23e80239a9ef9153aad` ile main'dedir. Klaviyo'da istenen beş scope değişmez. Mevcut hesap okumasındaki `accounts:read` ve reporting öncesindeki Campaign/Event/Flow/Metric izin kontrolleri zaten vardır. Bu dilim ek izin istemez; OAuth token yanıtında yeni gözlenen scope ile refresh yanıtı scope içermediğinde önceki kayıttan korunan scope'un kaynağını ayırır.
+
+Şifreli tokenSet içindeki `scope_source` yeni yanıtta `native_token_response`, scope'u olmayan refresh'te `retained_previous_grant` olur. `scope_observed_at` yeni native yanıtta o gözlemin zamanıdır; korunan listede önceki tarih aynen taşınır, bilinmiyorsa `null` kalır. Token yenilenmesinin `verifiedAt` zamanı izin gözleminin tarihi yerine yazılmaz. Gerçek native liste kısmi ise eksik izinler istenen/eski listeden tamamlanmaz. Açık `null`, boş/bozuk/tekrarlı scope listesi cached scope ile doldurulmaz; uygulamanın sıkı native yanıt politikası gereği reddedilir. İlk alışverişte scope eksikliği zaten kabul edilmiyordu; hata artık açıkça ayrılır. Normal refresh'in eksik scope'u eski listeden koruma davranışı sürer.
+
+28 yeni test native/kısmi liste, retained/undated ayrımı, önceki tarih aktarımı, bozuk scope ve ilk hata durmasını sınar. Değişiklik mevcut encrypted tokenSet'tedir; yeni SQL/kolon/tablo, canlı token/config veya scope talebi yoktur. Scope metadata'sını kullanacak canonical izin çağırıcısı retained/undated listeyi yeni native kanıt diye etiketlememelidir; mağaza/hesap bağlamı ile kaynak kompozisyonu mevcut sonraki adımlardadır. Klaviyo Advertised/Cross Sell için kapatılmış çalışma açılmadı; Dataset ve tarihsel PMax değişmez.
+
+**7. adımın kalanları:** yetkili Shopify scope beyanı/yayını ve mağaza onayı; uygulama erişim incelemeleri ile gerçek scope/varlık okuma testleri; mevcut değerlendirme kapısına bağlı atomik credential stage/connected yükseltmesi ve belirsiz yazma uzlaştırması; mevcut sonraki adımlardaki güvenilir kaynak çağırıcısı bağlantıları. Bu dilim bunları tamamlandı saymaz, yeni paket/sıra üretmez. Makine kaydı: `contracts/eo-05-start-brief-v1.json#Klaviyo_token_scope_provenance_2026_10_27`.
+
+Resmî kontrol 27 Ekim 2026: [Klaviyo token scope ve refresh yanıtı](https://developers.klaviyo.com/en/docs/set_up_oauth), [OAuth token yanıtı](https://www.rfc-editor.org/rfc/rfc6749#section-5.1) ve [refresh grant](https://www.rfc-editor.org/rfc/rfc6749#section-6). Klaviyo belgesi scope'u token erişim listesi olarak tanımlar; OAuth scope'un değişmediği yanıtlarda atlanabilmesine izin verir. Bu, önceden korunan listeye yeni native gözlem zamanı yazma kanıtı değildir. Testler sentetiktir; gerçek Klaviyo yanıtı/erişimi kabulü değildir.
+
 ## 7. adım — Shopify izin sonucunu aktif kuruluma bağlama, 27 Ekim 2026
 
 #194 `f80cc9dd82141eb21c55623be464e1b4ccf6a210` ile main'dedir. Bu repository dilimi `inspectShopifyIdentityPermissionScopes` ile önceki grant okuyucusunu ve scope karşılaştırmasını tek sunucu fonksiyonunda birleştirir. Girdi mevcut Shopify kimlik çözümlemesinden gelen doğrulanmış Admin, ID-token mağaza kimliği ve aktif kurulumdur; tarayıcıdan workspace/nesil alınmaz. Mevcut `resolve_active_installation` fonksiyonu okuma öncesi ve sonrası gerçek shop kapsamında çalışır. Workspace, aktif durum veya kurulum nesli değişmişse izin sonucu döndürülmez; yeni kurulum bootstrap edilmez ve tekrar denenmez.

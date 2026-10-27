@@ -110,6 +110,7 @@ export function createKlaviyoCredentialAuthority({
         config,
         refreshToken: stored.refresh_token,
         scopes,
+        scopeObservedAt: stored.scope_observed_at ?? null,
         fetchFn,
         now,
       });

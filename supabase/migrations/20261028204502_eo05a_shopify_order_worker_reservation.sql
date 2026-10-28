@@ -172,7 +172,8 @@ revoke all on function operations.guard_shopify_order_worker_policy(),operations
  operations.reserve_shopify_order_work(bigint,uuid,bigint,text,text,text,uuid),operations.read_shopify_order_work_reservation(bigint,uuid,bigint,text,text,text,uuid),
  operations.release_shopify_order_work(bigint,uuid,bigint,text,text,text,uuid,bigint)
  from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
-grant execute on function operations.read_refresh_admission_snapshot(),operations.commit_refresh_admissions(bigint,jsonb),
+-- Preserve the native source-bound preflight gate: generic ad admission remains owner-only.
+grant execute on function operations.read_refresh_admission_snapshot(),
  operations.reserve_shopify_order_work(bigint,uuid,bigint,text,text,text,uuid),operations.read_shopify_order_work_reservation(bigint,uuid,bigint,text,text,text,uuid),
  operations.release_shopify_order_work(bigint,uuid,bigint,text,text,text,uuid,bigint) to adstable_refresh_coordinator;
 commit;

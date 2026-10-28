@@ -8,7 +8,9 @@ import {planRefreshAdmissions} from "../app/lib/refresh/admission-policy.server.
 export async function shopifyOrderWorkProbe(client,{database,inputs,routes}){
   assert.equal(process.env.GITHUB_ACTIONS,"true");assert.ok(process.env.RUNNER_TEMP);
   const owner=inputs[0].plan.owner,v=n=>({requests:n,dbWrites:n,connections:n,rows:n,bytes:n});
-  const worker=createShopifyOrderWorkReservations({database}),ads=createRefreshWorkRepository(database);
+  // Generic ad admissions remain owner-only (native coordinator must use source-bound preflight).
+  // Exercise the original owner-context test path; worker RPCs still use the real coordinator.
+  const worker=createShopifyOrderWorkReservations({database}),ads=createRefreshWorkRepository(client);
   const count=async()=>Number((await client.query("select count(*) n from operations.shopify_order_work_reservations")).rows[0].n);
   const baseline=await count();
   const changed=async(sql,args,check)=>{
@@ -104,7 +106,7 @@ export async function shopifyOrderWorkProbe(client,{database,inputs,routes}){
     await assert.rejects(worker.releaseBeforeRequest({reservation:releaseCase}),/INPUT_INVALID/);
     for(const role of ["anon","authenticated","service_role","adstable_runtime","adstable_refresh_coordinator"]){
       assert.equal((await client.query("select has_table_privilege($1,'operations.shopify_order_work_reservations','SELECT,INSERT,UPDATE,DELETE') ok",[role])).rows[0].ok,false);
-      for(const signature of ["operations.shopify_order_combined_capacity(jsonb,uuid,jsonb)","operations.commit_refresh_admissions_before_shopify_orders(bigint,jsonb)","operations.read_refresh_admission_snapshot_before_shopify_orders()"])
+      for(const signature of ["operations.shopify_order_combined_capacity(jsonb,uuid,jsonb)","operations.commit_refresh_admissions(bigint,jsonb)","operations.commit_refresh_admissions_before_shopify_orders(bigint,jsonb)","operations.read_refresh_admission_snapshot_before_shopify_orders()"])
         assert.equal((await client.query("select has_function_privilege($1,$2,'EXECUTE') ok",[role,signature])).rows[0].ok,false);
       for(const signature of ["operations.reserve_shopify_order_work(bigint,uuid,bigint,text,text,text,uuid)","operations.release_shopify_order_work(bigint,uuid,bigint,text,text,text,uuid,bigint)","operations.read_shopify_order_work_reservation(bigint,uuid,bigint,text,text,text,uuid)"])
         assert.equal((await client.query("select has_function_privilege($1,$2,'EXECUTE') ok",[role,signature])).rows[0].ok,role==="adstable_refresh_coordinator");

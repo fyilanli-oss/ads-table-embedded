@@ -49,7 +49,7 @@ revoke all on operations.shopify_order_work_reservations from public,anon,authen
 -- SQL source of truth: shared global/workspace resources; no provider/account fabricated.
 create function operations.shopify_order_combined_capacity(p_claims jsonb,p_workspace uuid,p_extra jsonb) returns text
 language plpgsql stable security definer set search_path='' as $fn$
-declare c operations.refresh_control%rowtype; scope jsonb; resource text; maximum numeric; consumed numeric;
+declare c operations.refresh_control%rowtype; scope jsonb; resource text; maximum numeric; consumed numeric; additional integer:=0;
 begin
  select * into c from operations.refresh_control where singleton;
  if c.budget is null or c.bounds is null or jsonb_typeof(p_claims) is distinct from 'array'
@@ -59,8 +59,9 @@ begin
  or jsonb_typeof(c.bounds->'maxClaims') is distinct from 'number'
  or coalesce(c.bounds->>'maxClaims','')!~'^[1-9][0-9]*$'
  or (c.bounds->>'maxClaims')::numeric>2147483646 then return 'budget_unknown'; end if;
+ if p_workspace is not null then additional:=1; end if;
  if jsonb_array_length(p_claims)+(select count(*) from operations.shopify_order_work_reservations where status='reserved')
-   +case when p_workspace is null then 0 else 1 end > (c.bounds->>'maxClaims')::numeric then return 'budget_full'; end if;
+   +additional > (c.bounds->>'maxClaims')::numeric then return 'budget_full'; end if;
  if exists(select 1 from jsonb_array_elements(p_claims) x where operations.refresh_vector_valid(x->'cost') is not true) then return 'budget_unknown'; end if;
  if p_workspace is not null and (select count(*) from jsonb_array_elements(c.budget->'workspaces') x where x->>'workspaceId'=p_workspace::text)<>1 then return 'budget_unknown'; end if;
  for scope in select jsonb_build_object('workspaceId',null,'limit',c.budget->'global')

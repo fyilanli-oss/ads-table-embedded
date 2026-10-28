@@ -1,5 +1,19 @@
 # EO-04 — Analiz ve tasarım kitabı
 
+## Sıralı plan 12 — Meta aday ve raporunun ortak SDK/kota bağlantısı, 28 Ekim 2026
+
+#230 `c528fc20c59b69ce4e13af0b03a7c11de4d3d82d` main’dedir. Yeni inactive createRefreshMetaCandidateReader ve createRefreshMetaReportCandidateReader ayrı server entry’leridir. Native-only entry aynı kalır; aday entry rapor yeteneğine sessiz geçmez. Caller mode, context, guard, readExecution veya tarih penceresi veremez. Kaynak retailer kuralı ve Insights namespace kuralı ayrı listeler olarak constructor’da kopyalanır/doğrulanır. İki varsayılan registry de boştur; benzer kimlik string’i kanıt yerine geçmez.
+
+Asıl Meta hesabı, Ad/AdSet/Campaign/katalog hedefi, app config, authenticated SDK fonksiyonu, workspace/kurulum nesli, job/fence, entitlement ve tek iş günü korunur. Native token kontrolü, reklam/katalog kaynakları, Shopify parent kontrolü, isteğe bağlı ürün raporu ve final katalog referansı ayrı existing profillerle aynı private context binding ve tek fiziksel HTTP sayacında çalışır. İlk wait prior=0; altı Meta çağrısından sonra Admin wait prior=6; Admin sonrası report wait prior=7; report sonrası final reference wait prior=8’dir. Kısmi koleksiyon hiç gönderilmemiş sayılıp baştan oynatılamaz.
+
+Rapor penceresi yalnız yakalanan iş gününden türetilir. Tam mevcut ürün sorgusu ve dört conversion alanı ham biçimleriyle korunur; metrics_interpreted=false, sales_role_assigned=false ve exhaustive_product_coverage_proven=false kalır. İki doğrulanmış kural olsa bile bağ yerel katalog-aday referansıdır; canonical Product ID veya Advertised/Cross Sell çözümü değildir. Mevcut 18. maddenin conversion ilişki decoder’ı ve gerçek kanıtı açık kalır. provider_link_verified=true yalnız Ad parent/creative/katalog referansına aittir; Shopify adayının ve rapor bağının provider-link kanıtı false’tur.
+
+Admin genuine hook, exact identity query, typed point receipt ve native cost feedback üzerinden çalışır. Total deadline/child signal iki tarafı kapsar; tüm sonuçlarda private SDK client kapanır, geç sonuç yeni Admin isteği açamaz. İlk hatada retry/auth recovery/fallback yoktur. Actual SQL Admin’i hâlâ kendi SQL/HTTP’sinden önce reddeder. Yeni tablo/migration, SQL profil/env/config/OAuth/token/provider mutasyonu, global hook kurulumu, route veya Dataset yazımı yoktur. Gerçek kaynak/namespace/erişim, Admin SQL/profil/puan/hook/upstream kapasite, canonical scope ve partial continuation kapıları açıktır. 13 prewrite, 14 kullanıcı incelemesi, 26 sıra, Klaviyo rol kapsamı ve tarihsel PMax duraklaması korunur.
+
+49 yeni + 1.354 mevcut ilgili test (1.403 toplam), 7 repository kontrolü ve typecheck geçti. Sentetik SQL/vault/HTTP/receipt ile kurulu gerçek SDK ve gerçek guard/resolver sınandı; native kaynak biçimi, namespace, izin veya maliyet profili kanıtlanmış sayılmaz.
+
+Resmî kontrol 28 Ekim 2026: [Meta ProductItem](https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/productitem.py), [Meta AdsInsights](https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adsinsights.py), [Shopify ProductVariant](https://shopify.dev/docs/api/admin-graphql/latest/queries/productVariant). Breakdowns sayfası 429 verdi; yeniden denenmedi, yeni davranış çıkarılmadı. Makine kaydı: `contracts/eo-05-start-brief-v1.json#Meta_candidate_report_quota_composition_2026_10_28`.
+
 ## Sıralı plan 12 — Google adaylarının ortak SDK/kota bağlantısı, 28 Ekim 2026
 
 #229 `5781451fcd9a0d55377855e3d38d4d0c76d85a98` main’dedir. Yeni inactive createRefreshGoogleCandidateReader, mevcut Ads → Merchant kaynak → aynı Shopify mağazasında ürün/varyant-parent doğrulaması → son Ads link kontrolünü aynı fenced işe bağlar. Önceki native entry aday/rule/SDK moduna açılmaz. Sunucu kaynak kuralları constructor’da async işten önce kopyalanır/doğrulanır; varsayılan registry boş kalır. Shopify’a benzeyen offerId, kural yokken ayrıştırılmaz.

@@ -6,6 +6,25 @@ import {oauthPermissionScopes} from "../app/lib/oauth/oauth-permission-profile.s
 // Rollback-only real SQL + actual envelope crypto. No native provider calls or live keys.
 export async function identityOAuthAtomicProbe(client,{execution}) {
   assert.equal(process.env.GITHUB_ACTIONS,"true");assert.ok(process.env.RUNNER_TEMP);
+  assert.equal((await client.query("select session_user as role")).rows[0].role,"postgres");
+  const membershipSql="select * from pg_auth_members order by roleid,member,grantor";
+  const before=(await client.query(membershipSql)).rows;
+  // Same temporary test membership as F01 withTestRuntimeMembership, but SAVEPOINT:
+  // the native inventory fixture already owns the transaction and must not be rolled back here.
+  await client.query("savepoint identity_oauth_test_membership");
+  try {
+    await client.query("set local role postgres");
+    await client.query("grant adstable_runtime to postgres with inherit false, set true, admin false");
+    await client.query("set local role adstable_owner");
+    await identityOAuthAtomicProbeWithTestMembership(client,{execution});
+  } finally {
+    await client.query("rollback to savepoint identity_oauth_test_membership");
+    await client.query("release savepoint identity_oauth_test_membership");
+    assert.deepEqual((await client.query(membershipSql)).rows,before,"test membership restored exactly");
+  }
+}
+
+async function identityOAuthAtomicProbeWithTestMembership(client,{execution}) {
   const {workspaceId,installGeneration}=execution.claim;
   const owner={authority:"shopify_installation_verified",status:"active",workspaceId,installGeneration:Number(installGeneration)};
   const environment={ADSTABLE_PROVIDER_TOKEN_ACTIVE_KEY_VERSION:"1",
@@ -15,7 +34,7 @@ export async function identityOAuthAtomicProbe(client,{execution}) {
   for(const {key_version:v} of versions) if(Number(v)!==1) environment[`ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_V${v}`]=Buffer.alloc(32,31+Number(v)).toString("base64url");
   const runtimeDB={query:async(sql,args)=>{
     await client.query("set local role adstable_runtime");
-    try{return await client.query(sql,args);}finally{await client.query("reset role");}
+    try{return await client.query(sql,args);}finally{await client.query("set local role adstable_owner");}
   }};
   const vault=createTokenVault({database:runtimeDB,environment});
   async function transaction(provider){
@@ -44,7 +63,7 @@ export async function identityOAuthAtomicProbe(client,{execution}) {
   // The adapter below resets role only after the test restores the savepoint.
   const roleDB={async query(sql,args){await client.query("set local role adstable_runtime");return client.query(sql,args);}};
   const failureVault=createTokenVault({database:roleDB,environment});
-  await vault.assertRuntimeReady();await failureVault.assertRuntimeReady();await client.query("reset role");
+  await vault.assertRuntimeReady();await failureVault.assertRuntimeReady();await client.query("set local role adstable_owner");
   await client.query("savepoint identity_oauth_probe");
   try {
     for(const provider of ["meta","google_ads"]){
@@ -75,7 +94,7 @@ export async function identityOAuthAtomicProbe(client,{execution}) {
       await client.query("create trigger reject_identity_receipt before update of identity_credential_id on integrations.oauth_transactions for each row execute function pg_temp.reject_identity_receipt()");
       await client.query("savepoint late_reject");
       await assert.rejects(failureVault.commitIdentityOAuthCredential(late),/IDENTITY_OAUTH_WRITE_UNCONFIRMED/);
-      await client.query("rollback to savepoint late_reject");await client.query("reset role");
+      await client.query("rollback to savepoint late_reject");await client.query("set local role adstable_owner");
       assert.equal((await current(provider)).credential_id,lateBefore.credential_id);
       assert.equal((await current(provider)).connection_version,lateBefore.connection_version);
       assert.equal((await client.query("select count(*)::int n from integrations.provider_credential_envelopes")).rows[0].n,lateCount);
@@ -91,7 +110,7 @@ export async function identityOAuthAtomicProbe(client,{execution}) {
         const count=(await client.query("select count(*)::int n from integrations.provider_credential_envelopes")).rows[0].n;
         await client.query("savepoint rejected_write");
         await assert.rejects(failureVault.commitIdentityOAuthCredential(bad),/IDENTITY_OAUTH_WRITE_UNCONFIRMED/);
-        await client.query("rollback to savepoint rejected_write");await client.query("reset role");
+        await client.query("rollback to savepoint rejected_write");await client.query("set local role adstable_owner");
         assert.equal((await client.query("select count(*)::int n from integrations.provider_credential_envelopes")).rows[0].n,count);
         assert.equal(await vault.readIdentityOAuthCommit(bad),null);
         await client.query("rollback to savepoint provider_upgrade");

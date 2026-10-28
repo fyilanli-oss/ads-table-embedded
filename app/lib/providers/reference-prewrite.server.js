@@ -1,4 +1,4 @@
-import {reviewRefreshCandidatePrewrite} from "./candidate-prewrite.server.js";
+import {reviewRefreshCandidatePrewrite,reviewRefreshCandidatePrewriteCurrent} from "./candidate-prewrite.server.js";
 import {refreshCandidateReferenceInputs} from "../refresh/quota-authority-binding.server.js";
 import {attachMetaReportCandidateReferences} from "./meta-report-candidates.server.js";
 import {attachAttributionEvidence} from "./klaviyo-reporting-authority.server.js";
@@ -65,4 +65,11 @@ export function reviewRefreshReferencePrewrite({expected,observation,...extra}={
     persistable:false,authorizesActivation:false,mappingWritePerformed:false,DatasetWritePerformed:false,salesRolesChanged:false,
     remaining:["readable_provider_order_claim_and_Shopify_order_reconciliation","native_source_namespace_and_access_proof",
       "existing_step14_review_before_canonical_tables_and_writers"]});
+}
+
+export async function reviewRefreshReferencePrewriteCurrent({expected,observation,database,signal,...extra}={}){
+  if(Object.keys(extra).length)fail("INPUT_INVALID");
+  const structural=reviewRefreshReferencePrewrite({expected,observation});
+  const candidateReview=await reviewRefreshCandidatePrewriteCurrent({expected:structural.scope,observation,database,signal});
+  return freeze({...structural,candidateReview,authorityReobserved:true,atomicWriteGuardVerified:false});
 }

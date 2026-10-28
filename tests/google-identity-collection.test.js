@@ -646,7 +646,7 @@ test("bound Google candidate: every Merchant page debits before one deduplicated
   const f=candidateBoundFixture();f.hooks.fetch=p=>p.hostname==="merchantapi.googleapis.com"&&!p.searchParams.has("pageToken")&&response({nextPageToken:"second"});
   const r=await f.create().readEvidence();assert.equal(r.product_identity_candidates.candidates.length,1);assert.equal(f.calls.length,4);assert.equal(f.adminCalls.length,1);assert.equal(f.reservations.length,5);
 });
-const candidatePrewriteOwner=()=>({provider:"google_ads",workspaceId:workspace,installGeneration:3,shopId:"gid://shopify/Shop/12",shopDomain:"test.myshopify.com",
+const candidatePrewriteOwner=()=>({installationId:"42",reportingSelectionEpoch:"71",provider:"google_ads",workspaceId:workspace,installGeneration:3,shopId:"gid://shopify/Shop/12",shopDomain:"test.myshopify.com",
   connectionId:connection,connectionVersion:2,accountId:"123"});
 candidatePrewriteCases({provider:"google_ads",fixture:candidateBoundFixture,nativeFixture:boundFixture,expected:candidatePrewriteOwner,
   empty:f=>{f.hooks.fetch=p=>p.hostname==="merchantapi.googleapis.com"&&response({products:[]});},

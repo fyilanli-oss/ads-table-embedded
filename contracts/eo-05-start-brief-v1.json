@@ -1,4 +1,45 @@
 {
+  "Canonical_prewrite_owner_binding_2026_10_28": {
+    "status": "repository_prepared_pending_exact_head_CI_owner_merge_not_live",
+    "base_main": "a14459b2bcfb9825cd78e7ab149dc7f8775c2e91",
+    "migration": "supabase/migrations/20261028185046_eo05a_shopify_installation_owner_read.sql",
+    "scope": "existing_step14_PK_selection_metadata_to_prewrite_and_Shopify_Order_owner",
+    "provider_expected_fields": [
+      "provider",
+      "workspaceId",
+      "installGeneration",
+      "installationId",
+      "shopId",
+      "shopDomain",
+      "connectionId",
+      "connectionVersion",
+      "accountId",
+      "reportingSelectionEpoch"
+    ],
+    "Shopify_expected_fields": [
+      "workspaceId",
+      "installGeneration",
+      "installationId",
+      "shopId",
+      "shopDomain"
+    ],
+    "provider_provenance": "SQL_derived_observation_PK_and_selection_epoch_compared_to_exact_expected_scope_Klaviyo_epoch_null",
+    "Shopify_collection": "private_provider_independent_active_installation_SQL_owner_read_before_HTTP_and_reobserved_throughout_collection_lossless_PK_pinned",
+    "current_prewrite": "explicit_async_candidate_reference_and_order_checks_reobserve_nonsecret_SQL_metadata_no_token_or_native_HTTP",
+    "freshness_limit": "not_atomic_with_future_writer_not_current_native_grant_or_fenced_work_entitlement_proof",
+    "persistable": false,
+    "canonical_scope_ready": false,
+    "activation_authorized": false,
+    "live_apply_authorized": false,
+    "existing_26_order_unchanged": true,
+    "PMax_paused": true,
+    "remaining": [
+      "fenced_current_work_entitlement_and_atomic_writer_guards_before_storage",
+      "independent_Order_scheduling_partial_continuation",
+      "native_source_namespace_access_claim_profiles_and_consent",
+      "existing_step14_review_and_step15_storage_activation_gates"
+    ]
+  },
   "Google_identity_renewal_receipt_2026_10_28": {
     "status": "repository_prepared_pending_exact_head_CI_owner_merge_not_live",
     "base_main": "2074158e01b3017a8a40d486f5c97b759a62230a",
@@ -76,7 +117,7 @@
     "google_pd_source_composition": "merged_PR185_f01d31ee7f741e70513bfe96e8750d4f405580a5",
     "klaviyo_pd_source_composition": "merged_PR186_99f6474bc49ff70a084ca5916bc3631f05187ba1",
     "pd_canonical_bridge": "merged_PR187_5657ce49c2c93b4d018c4606e08134a311754c33",
-    "current_slice": "ordered_step14_Google_identity_refresh_renewal_atomic_receipt_prepared_pending_CI_not_live",
+    "current_slice": "ordered_step14_canonical_prewrite_metadata_and_Shopify_Order_owner_prepared_pending_CI_not_live",
     "permission_preflight": "merged_PR190_ee28856c1260dffd18725eeb85718d195a5ce3de_not_live",
     "identity_OAuth_scope_binding": "merged_PR191_438bf5f8960cc2e25d4b6202a580cc1b1bf9b426_not_live",
     "Google_identity_credential_lifecycle": "merged_PR192_807408603484578555fc8700eb50f9cfa420d07d_not_live",

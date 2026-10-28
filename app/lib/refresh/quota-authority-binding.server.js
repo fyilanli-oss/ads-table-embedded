@@ -1,3 +1,4 @@
+import {createShopifyInstallationOwnerRepository} from "../database/shopify-installation-owner-repository.server.js";
 import {createScopeResolvedQuotaClients} from "../providers/quota-managed-clients.server.js";
 import {refreshWorkIdentity} from "./work-stop-policy.server.js";
 import {createQuotaScopeResolver} from "./quota-scope-resolver.server.js";
@@ -23,6 +24,7 @@ export function refreshCandidateReferenceInputs(value){return candidateReference
 function recordCandidateObservation(result,provider,kind,owner,shop,claim,window,references=null){
   candidateObservations.set(result,Object.freeze({provider,kind,workspaceId:owner.workspaceId,installGeneration:owner.installGeneration,
     shopId:shop.shopId,shopDomain:shop.myshopifyDomain,accountId:claim.accountId,
+    installationId:result.installation_id,reportingSelectionEpoch:result.reporting_selection_epoch,
     job:Object.freeze({id:claim.id,fence:claim.fence,window:Object.freeze({...window})})}));
   if(references)candidateReferenceInputs.set(result,references);
 }
@@ -198,7 +200,7 @@ export function createRefreshShopifyOrderReader({range,limits,includeOrderHistor
   return createFencedAdminClient(options,true,{range,limits,includeOrderHistory});
 }
 
-function createFencedAdminClient({verified,sdkBridge,signal,timeoutMs,...quotaOptions}={},orders=false,collection=null,internal=null) {
+function createFencedAdminClient({verified,database,sdkBridge,signal,timeoutMs,...quotaOptions}={},orders=false,collection=null,internal=null) {
   const invalid=orders?"REFRESH_SHOPIFY_ADMIN_ORDER_INPUT_INVALID":"REFRESH_SHOPIFY_ADMIN_IDENTITY_INPUT_INVALID";
   const claim=structuredClone(quotaOptions.claim),window=structuredClone(quotaOptions.window);
   const owner=structuredClone(verified?.installationAuthority),shop=structuredClone(verified?.identity?.shop);
@@ -227,10 +229,13 @@ function createFencedAdminClient({verified,sdkBridge,signal,timeoutMs,...quotaOp
   const client=(orders?sdkBridge.wrapOrders:sdkBridge.wrap)({admin,transport,signal,timeoutMs});
   if(!collection)return client;
   try {
+    const installationOwner=createShopifyInstallationOwnerRepository(database);
     return createShopifyOrderReadExecution({client,shop:{id:shop.shopId,myshopifyDomain:shop.myshopifyDomain},
       scope:{workspace_id:owner.workspaceId,installation_generation:owner.installGeneration,installation_id:null,
         job:{provider:claim.provider,account_id:claim.accountId,id:claim.id,fence:claim.fence,window}},
       range:collection.range,limits:collection.limits,includeOrderHistory:collection.includeOrderHistory,signal,
+      loadInstallationOwner:()=>installationOwner.load({workspaceId:owner.workspaceId,installGeneration:owner.installGeneration,
+        shopId:shop.shopId,shopDomain:shop.myshopifyDomain}),
       checkCurrent:async()=>{
         try {return typeof await resolve({provider:"shopify_admin",family:"order_headers",accountId:shop.myshopifyDomain,
           organizationId:null,version:SHOPIFY_ORDER_READ_API_VERSION,includes:[]})==="string";}catch{return false;}

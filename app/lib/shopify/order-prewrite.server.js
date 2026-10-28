@@ -1,5 +1,6 @@
 import {isShopifyOrderCollectionObservation} from "./order-collection.server.js";
-import {permissionContext} from "../oauth/identity-permission-preflight.server.js";
+import {shopifyPrewriteOwner} from "../providers/prewrite-owner.server.js";
+import {createShopifyInstallationOwnerRepository} from "../database/shopify-installation-owner-repository.server.js";
 
 export class ShopifyOrderPrewriteError extends Error {
   constructor(code){super(`SHOPIFY_ORDER_PREWRITE_${code}`);this.name="ShopifyOrderPrewriteError";}
@@ -11,12 +12,12 @@ const freeze=v=>{if(v&&typeof v==="object"&&!Object.isFrozen(v)){Object.values(v
 // Read-only structural review of completed, branded in-process observations. It does
 // not load a prior database row, select a winner for a writer or verify native access.
 export function reviewShopifyOrderPrewrite({expected,current,previous=null,...extra}={}) {
-  if(Object.keys(extra).length||!expected||Object.keys(expected).sort().join(",")!=="installGeneration,shopDomain,shopId,workspaceId")fail("INPUT_INVALID");
-  let owner;try{owner=permissionContext({provider:"shopify",...expected});}catch{fail("INPUT_INVALID");}
+  if(Object.keys(extra).length)fail("INPUT_INVALID");
+  let owner;try{owner=shopifyPrewriteOwner(expected);}catch{fail("INPUT_INVALID");}
   const keyFor=(orderId,lineId)=>[owner.workspaceId,owner.shopId,orderId,...lineId===undefined?[]:[lineId]];
   function index(collection){
     if(!isShopifyOrderCollectionObservation(collection))fail("OBSERVATION_REQUIRED");
-    if(collection.scope.workspace_id!==owner.workspaceId||collection.scope.installation_generation!==owner.installGeneration
+    if(collection.scope.installation_id!==owner.installationId||collection.scope.workspace_id!==owner.workspaceId||collection.scope.installation_generation!==owner.installGeneration
       ||collection.shop.id!==owner.shopId||collection.shop.myshopifyDomain!==owner.shopDomain)fail("OWNER_MISMATCH");
     if(collection.salesPagesComplete!==true)fail("SALES_INCOMPLETE");
     const orders=new Map(),lineOwners=new Map();
@@ -56,8 +57,19 @@ export function reviewShopifyOrderPrewrite({expected,current,previous=null,...ex
     salesPagesComplete:current.salesPagesComplete,journeyPagesComplete:current.journeyPagesComplete,
     provenance:{currentScope:current.scope,previousScope:previous?.scope??null,
       currentRange:current.extractionRange,previousRange:previous?.extractionRange??null},
+    installationIdentityChecked:true,authorityReobserved:false,
     missingRecordsProveDeletion:false,atomicSnapshotVerified:false,canonicalScopeReady:false,
     nativePermissionVerified:false,historicalCoverageVerified:false,providerClaimVerified:false,exactOverlapVerified:false,
     persistable:false,authorizesActivation:false,DatasetWritePerformed:false,
     remaining:["native_access_and_canonical_SQL_scope_review","provider_claim_reconciliation","existing_step14_review_before_new_tables_and_writers"]});
+}
+
+export async function reviewShopifyOrderPrewriteCurrent({expected,current,previous=null,database,signal,...extra}={}){
+  if(Object.keys(extra).length||signal!==undefined&&!(signal instanceof AbortSignal))fail("INPUT_INVALID");
+  const review=reviewShopifyOrderPrewrite({expected,current,previous}),owner=review.owner;
+  if(signal?.aborted)fail("ABORTED");
+  let actual;try{actual=await createShopifyInstallationOwnerRepository(database).load(owner);}catch{fail("AUTHORITY_READ_FAILED");}
+  if(signal?.aborted)fail("ABORTED");
+  if(actual?.installationId!==owner.installationId)fail("AUTHORITY_CHANGED");
+  return freeze({...review,authorityReobserved:true,atomicWriteGuardVerified:false});
 }

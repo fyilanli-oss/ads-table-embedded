@@ -1,4 +1,4 @@
-import test from "node:test";
+import test,{after} from "node:test";
 import assert from "node:assert/strict";
 import {collectMetaNativeIdentityEvidence, collectMetaVerifiedProductCandidateEvidence, collectMetaReportProductCandidateEvidence} from "../app/lib/providers/meta-identity-collection.server.js";
 import {createMetaCandidateSourceRuleLoader, verifyMetaCatalogSourceCandidates} from "../app/lib/providers/meta-source-candidates.server.js";
@@ -10,7 +10,12 @@ import {oauthPermissionScopes} from "../app/lib/oauth/oauth-permission-profile.s
 import {createQuotaManagedFetch, quotaBoundaryControl} from "../app/lib/refresh/quota-native-fetch.server.js";
 import {createQuotaScopeResolver, quotaRouteIdentity} from "../app/lib/refresh/quota-scope-resolver.server.js";
 import {createSharedQuotaGuard} from "../app/lib/refresh/shared-quota.server.js";
-import {createRefreshMetaIdentityReader} from "../app/lib/refresh/quota-authority-binding.server.js";
+import {createRefreshMetaIdentityReader,createRefreshMetaCandidateReader,createRefreshMetaReportCandidateReader} from "../app/lib/refresh/quota-authority-binding.server.js";
+import "@shopify/shopify-api/adapters/node";
+import {shopifyApi,ApiVersion,LogSeverity,Session} from "@shopify/shopify-api";
+import {abstractFetch,setAbstractFetchFunc} from "@shopify/shopify-api/runtime";
+import {createShopifyAdminIdentitySdkBridge} from "../app/lib/refresh/shopify-admin-sdk-quota-bridge.server.js";
+import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 import {refreshQuotaWait} from "../app/lib/refresh/quota-work-wait.server.js";
 
 const workspace = "11111111-1111-4111-8111-111111111111", connection = "22222222-2222-4222-8222-222222222222",
@@ -652,4 +657,166 @@ test("bound Meta: deadline during context lookup prevents late reserve and dispa
 test("bound Meta: pre-abort cannot read SQL or native HTTP",async()=>{
   const f=boundFixture(),controller=new AbortController();controller.abort();f.config.signal=controller.signal;
   await assert.rejects(f.create().readEvidence(),/IDENTITY_READ_ABORTED/);assert.equal(f.queries.length,0);assert.equal(f.loads.length,0);
+});
+
+const originalSdkFetch=abstractFetch;after(()=>setAbstractFetchFunc(originalSdkFetch));
+const sdkRoot=import.meta.resolve("@shopify/shopify-app-react-router/server");
+const {graphqlClientFactory}=await import(new URL("./clients/admin/graphql.mjs",sdkRoot));
+const {handleClientErrorFactory}=await import(new URL("./authenticate/admin/helpers/handle-client-error.mjs",sdkRoot));
+const sdkApi=shopifyApi({apiKey:"a".repeat(32),apiSecretKey:"b".repeat(32),hostName:"example.com",apiVersion:ApiVersion.October26,
+  isEmbeddedApp:true,logger:{level:LogSeverity.Error,log:()=>{}}});
+function candidateBoundFixture(withReport=false){
+  const f=boundFixture(),adminCalls=[],adminLoads=[],feedback=[],auth=[];f.config.sourceRules=[rule()];
+  if(withReport){f.config.reportIdentityRules=[reportRule()];f.native.insights=reportFixture().native.insights;}
+  const bridge=createShopifyAdminIdentitySdkBridge();setAbstractFetchFunc(bridge.fetch);f.config.sdkBridge=bridge;
+  const session=new Session({id:"offline_test.myshopify.com",shop:"test.myshopify.com",state:"synthetic",isOnline:false,accessToken:"SECRET-ADMIN",scope:"read_products"});
+  f.config.verified.context.admin={graphql:graphqlClientFactory({params:{api:sdkApi,logger:{debug:()=>{}}},session,
+    handleClientError:handleClientErrorFactory({request:new Request("https://example.com"),onError:async x=>auth.push(x)})})};
+  const adminContext={provider:"shopify_admin",clientScopeKey:"c".repeat(64),connectionScopeKey:"d".repeat(64),connectionEpoch:3,
+    accountId:"test.myshopify.com",organizationId:null,apiVersion:"2026-10"};f.q.adminContext=adminContext;
+  const adminKeys=["identity_product","identity_variant","identity_product_variant"].map(family=>quotaRouteIdentity(adminContext,
+    {provider:"shopify_admin",family,accountId:adminContext.accountId,organizationId:null,version:"2026-10",includes:[]}).routeKey);
+  const reportKey=quotaRouteIdentity(f.c,{provider:"meta",family:"product_insights",accountId:"act_123",organizationId:null,version:f.c.apiVersion,includes:[]}).routeKey;
+  const load=f.config.workStore.loadQuotaContext,resolve=f.config.quotaStore.resolveRoute,reserve=f.config.quotaStore.reserve,native=f.config.fetchFn;
+  f.config.workStore={loadQuotaContext:async x=>{if(x.provider!=="shopify_admin")return load(x);
+    adminLoads.push(x);await f.q.adminLoading?.();return f.q.adminMissing?null:f.q.adminContext;}};
+  f.config.quotaStore.resolveRoute=async x=>adminKeys.includes(x.routeKey)?f.q.missingAdminProfile?null:x.routeKey:
+    withReport&&x.routeKey===reportKey?f.q.missingReportProfile?null:x.routeKey:resolve(x);
+  f.config.quotaStore.reserve=async x=>{const r=await reserve(x);return r.status==="reserved"?
+    {...r,...f.q.noBudget?{}:{costBudget:{unit:"shopify_admin_query_points",reservedRequestedCost:10}}}:r;};
+  f.config.quotaStore.recordFeedback=async x=>{feedback.push(x);return true;};
+  f.config.fetchFn=async(endpoint,init)=>{
+    if(new URL(endpoint).hostname!=="test.myshopify.com")return native(endpoint,init);
+    adminCalls.push({endpoint,init});const payload={data:{shop:{id:"gid://shopify/Shop/12",myshopifyDomain:"test.myshopify.com"},
+      product:{id:"gid://shopify/Product/10",legacyResourceId:"10"},productVariant:{id:"gid://shopify/ProductVariant/20",legacyResourceId:"20",
+        product:{id:"gid://shopify/Product/10",legacyResourceId:"10"}}},extensions:{cost:{requestedQueryCost:8,actualQueryCost:5,
+          throttleStatus:{maximumAvailable:1000,currentlyAvailable:995,restoreRate:50}}}};
+    await f.q.adminNative?.(payload,init);if(f.q.adminThrow)throw Error("SECRET-NATIVE");return Response.json(payload,{status:f.q.adminStatus??200});
+  };
+  return {...f,adminCalls,adminLoads,feedback,auth,create:()=>withReport?createRefreshMetaReportCandidateReader(f.config):createRefreshMetaCandidateReader(f.config)};
+}
+for(const report of [false,true])test(`bound Meta candidate report=${report}: real SDK and provider share original fenced execution`,async()=>{
+  const f=candidateBoundFixture(report),r=await f.create().readEvidence();assert.equal(f.calls.length,report?11:10);assert.equal(f.adminCalls.length,1);
+  assert.equal(f.reservations.length,report?12:11);assert.equal(f.settles.length,f.reservations.length);assert.equal(f.auth.length,0);
+  assert.equal(f.feedback.filter(x=>x.feedback.kind==="shopify_admin_cost_observed").length,1);
+  assert.ok(f.adminLoads.every(x=>x.claim.provider==="meta"&&x.claim.accountId==="act_123"&&x.claim.id==="job1"&&x.claim.fence===2&&x.window.from==="2026-10-01"));
+  assert.equal(r.product_identity_candidates.candidates[0].shopify_product_id,"gid://shopify/Product/10");
+  assert.equal(r.product_identity_candidates.provider_link_verified,false);assert.equal(r.provider_link_verified,true);
+  for(const k of ["persistable","canonical_scope_ready","authorizes_activation","mapping_write_performed","proves_product_delivery_or_Insights_namespace"])assert.equal(r[k],false);
+  if(report){assert.deepEqual(r.native_product_report.rows,f.native.insights.data);assert.equal(r.native_product_report.metrics_interpreted,false);
+    assert.equal(r.product_report_candidate_links.links[0].candidate_index,0);assert.equal(r.product_report_candidate_links.sales_role_assigned,false);
+    const call=f.calls.find(c=>c.parsed.pathname.endsWith("/insights"));assert.equal(call.parsed.searchParams.get("fields"),META_PRODUCT_BREAKDOWN_INSIGHTS_FIELDS.join(","));}
+  else assert.equal(r.native_product_report,undefined);
+  assert.doesNotMatch(JSON.stringify([f.loads,f.adminLoads,f.reservations,f.feedback,r]),/SECRET|secret-access|secret-app/);
+});
+test("bound Meta report: both default registries empty mean no parsed retailer or inferred namespace",async()=>{
+  const f=candidateBoundFixture(true);delete f.config.sourceRules;delete f.config.reportIdentityRules;const r=await f.create().readEvidence();
+  assert.equal(f.adminCalls.length,0);assert.equal(r.product_identity_candidates.candidates.length,0);
+  assert.equal(r.product_report_candidate_links.links[0].reason,"verified_report_identity_rule_required");
+});
+test("bound Meta report: valid source rule alone cannot infer report namespace",async()=>{
+  const f=candidateBoundFixture(true);delete f.config.reportIdentityRules;const r=await f.create().readEvidence();
+  assert.equal(f.adminCalls.length,1);assert.equal(r.product_report_candidate_links.links[0].candidate_index,null);
+  assert.equal(r.product_report_candidate_links.links[0].reason,"verified_report_identity_rule_required");
+});
+test("bound Meta report: valid report rule alone cannot create a Shopify candidate",async()=>{
+  const f=candidateBoundFixture(true);delete f.config.sourceRules;const r=await f.create().readEvidence();assert.equal(f.adminCalls.length,0);
+  assert.equal(r.product_report_candidate_links.links[0].reason,"verified_source_rule_required");
+});
+test("bound Meta report: rules config native SDK and job captured before caller mutations",async()=>{
+  const f=candidateBoundFixture(true),reader=f.create();f.config.sourceRules[0].market="CA";f.config.reportIdentityRules[0].identity_namespace="catalog_product_id";
+  f.config.config.appSecret="changed";f.config.claim.fence=99;f.config.window.from="2026-10-02";f.config.verified.context.admin.graphql=()=>{throw Error("replacement");};
+  const r=await reader.readEvidence();assert.equal(r.product_report_candidate_links.links[0].candidate_index,0);
+  assert.ok(f.adminLoads.every(x=>x.claim.fence===2&&x.window.from==="2026-10-01"));assert.equal(r.native_product_report.rows[0].date_start,"2026-10-01");
+});
+for(const [name,change] of [["missing bridge",f=>{delete f.config.sdkBridge;}],["fake bridge",f=>{f.config.sdkBridge={wrap:x=>x.admin};}],
+  ["mode override",f=>{f.config.mode="native";}],["date override",f=>{f.config.dateWindow={start:"2026-10-02",end:"2026-10-02"};}],
+  ["ledger override",f=>{f.config.readExecution={};}],["context override",f=>{f.config.loadContext=()=>({});}],
+  ["guard override",f=>{f.config.guard={};}],["wrong session",f=>{f.config.verified.identity.session.shopDomain="other.myshopify.com";}],
+  ["conflicting source rules",f=>{f.config.sourceRules.push(rule());}],["conflicting report rules",f=>{f.config.reportIdentityRules.push(reportRule());}],
+  ["unverified source",f=>{f.config.sourceRules[0].state="proposed";}],["unverified namespace",f=>{f.config.reportIdentityRules[0].state="proposed";}]])
+test(`bound Meta report: ${name} stops before SQL and HTTP`,()=>{
+  const f=candidateBoundFixture(true);change(f);assert.throws(f.create);assert.equal(f.queries.length+f.calls.length+f.adminCalls.length,0);
+});
+test("bound Meta candidate entry rejects report capability instead of silently requesting it",()=>{
+  const f=candidateBoundFixture();f.config.reportIdentityRules=[];assert.throws(f.create);assert.equal(f.calls.length,0);
+});
+for(const [name,change] of [["catalog",r=>{r.product_context.catalog_id="457";}],["feed",r=>{r.product_context.product_feed_id="101";}],
+  ["shop",r=>{r.shop_id="gid://shopify/Shop/13";}],["account",r=>{r.scope.platform_account_id="act_124";}]])
+test(`bound Meta candidate: ${name} rule mismatch never queries Shopify`,async()=>{
+  const f=candidateBoundFixture();change(f.config.sourceRules[0]);const r=await f.create().readEvidence();assert.equal(f.adminCalls.length,0);assert.equal(r.product_identity_candidates.candidates.length,0);
+});
+for(const kind of ["adminMissing","missingAdminProfile","noBudget"])test(`bound Meta candidate: ${kind} stops before Admin and final references`,async()=>{
+  const f=candidateBoundFixture();f.q[kind]=true;await assert.rejects(f.create().readEvidence());assert.equal(f.adminCalls.length,0);assert.equal(f.calls.length,6);
+});
+for(const [waitAt,prior,nativeCalls,adminCalls] of [[1,0,0,0],[7,6,6,0],[8,7,6,1],[9,8,7,1]])
+test(`bound Meta report: wait ${waitAt} retains shared prefix ${prior}`,async()=>{
+  const f=candidateBoundFixture(true);f.q.waitAt=waitAt;let error;try{await f.create().readEvidence();}catch(e){error=e;}
+  assert.equal(quotaBoundaryControl(error).priorBoundaryAttempts,prior);assert.equal(f.calls.length,nativeCalls);assert.equal(f.adminCalls.length,adminCalls);
+  if(prior>0)assert.equal(refreshQuotaWait(error,"provider_page",f.config.claim),null);
+});
+for(const status of [401,403,429,500])test(`bound Meta candidate: Admin ${status} stops once without auth recovery`,async()=>{
+  const f=candidateBoundFixture();f.q.adminStatus=status;const reader=f.create();await assert.rejects(reader.readEvidence());
+  assert.equal(f.adminCalls.length,1);assert.equal(f.calls.length,6);assert.equal(f.auth.length,0);assert.equal(f.stops.length,1);
+  await assert.rejects(reader.readEvidence(),/EXECUTION_USED/);
+});
+test("bound Meta report: missing product report profile discards candidate without fallback",async()=>{
+  const f=candidateBoundFixture(true);f.q.missingReportProfile=true;await assert.rejects(f.create().readEvidence());assert.equal(f.adminCalls.length,1);assert.equal(f.calls.length,6);
+});
+test("bound Meta candidate: Admin requested cost above receipt cannot verify product",async()=>{
+  const f=candidateBoundFixture();f.q.adminNative=p=>{p.extensions.cost.requestedQueryCost=11;};await assert.rejects(f.create().readEvidence());assert.equal(f.adminCalls.length,1);assert.equal(f.calls.length,6);
+});
+test("bound Meta report: final creative drift discards candidate and raw report",async()=>{
+  const f=candidateBoundFixture(true);f.hooks.fetch=(p,init,n)=>n>7&&p.pathname.endsWith("/99")&&response({...f.native["99"],product_set_id:"89"});
+  await assert.rejects(f.create().readEvidence());assert.equal(f.adminCalls.length,1);assert.ok(f.calls.some(c=>c.parsed.pathname.endsWith("/insights")));
+});
+test("bound Meta candidate: pinned Admin context drift prevents native dispatch",async()=>{
+  const f=candidateBoundFixture();f.q.reserved=()=>{if(f.reservations.length===7)f.q.adminContext.connectionEpoch++;};
+  await assert.rejects(f.create().readEvidence());assert.equal(f.adminCalls.length,0);assert.equal(f.calls.length,6);
+});
+test("bound Meta candidate: rotated provider credential during Admin cannot complete collection",async()=>{
+  const f=candidateBoundFixture();f.q.adminNative=()=>{f.state.version++;};await assert.rejects(f.create().readEvidence());assert.equal(f.adminCalls.length,1);assert.equal(f.calls.length,6);
+});
+test("bound Meta candidate: wrong variant parent is conflicting evidence without a mapping",async()=>{
+  const f=candidateBoundFixture();f.q.adminNative=p=>{p.data.productVariant.product={id:"gid://shopify/Product/999",legacyResourceId:"999"};};
+  const r=await f.create().readEvidence();assert.equal(r.product_identity_candidates.candidates.length,0);assert.equal(r.product_identity_candidates.rows[0].product_identity_verification.state,"conflicting");
+});
+test("bound Meta candidate: real current work repository rejects Admin before its SQL and HTTP",async()=>{
+  const f=candidateBoundFixture();let sql=0;const real=createRefreshWorkRepository({query:async()=>{sql++;return {rows:[]};}}),load=f.config.workStore.loadQuotaContext;
+  f.config.workStore.loadQuotaContext=x=>x.provider==="shopify_admin"?real.loadQuotaContext(x):load(x);
+  await assert.rejects(f.create().readEvidence());assert.equal(sql,0);assert.equal(f.adminCalls.length,0);assert.equal(f.calls.length,6);
+});
+test("bound Meta candidate: deadline at Admin lookup prevents late dispatch and final references",async()=>{
+  const f=candidateBoundFixture();f.config.maxElapsedMs=500;let release;f.q.adminLoading=()=>new Promise(r=>{release=r;});
+  await assert.rejects(f.create().readEvidence(),/DEADLINE_EXCEEDED/);delete f.q.adminLoading;release();await new Promise(r=>setTimeout(r,10));assert.equal(f.adminCalls.length,0);assert.equal(f.calls.length,6);
+});
+test("bound Meta report: deadline during sent Admin ignores late result without report HTTP",async()=>{
+  const f=candidateBoundFixture(true);f.config.maxElapsedMs=500;let release;f.q.adminNative=()=>new Promise(r=>{release=r;});
+  await assert.rejects(f.create().readEvidence(),/DEADLINE_EXCEEDED/);release();await new Promise(r=>setTimeout(r,10));assert.equal(f.calls.length,6);assert.equal(f.adminCalls[0].init.signal.aborted,true);
+});
+test("bound Meta candidate: missing actual SDK hook prevents unmanaged request",async()=>{
+  const f=candidateBoundFixture();setAbstractFetchFunc(originalSdkFetch);await assert.rejects(f.create().readEvidence());assert.equal(f.adminCalls.length,0);assert.equal(f.calls.length,6);
+});
+test("bound Meta candidate: partial GraphQL data cannot yield successful candidates",async()=>{
+  const f=candidateBoundFixture();f.q.adminNative=p=>{p.errors=[{message:"SECRET"}];};await assert.rejects(f.create().readEvidence(),e=>!/SECRET/.test(e.message));assert.equal(f.calls.length,6);
+});
+test("bound Meta report: every report page metered without interpreting the four raw conversion fields",async()=>{
+  const f=candidateBoundFixture(true);f.hooks.fetch=p=>p.pathname.endsWith("/insights")&&!p.searchParams.has("after")&&response({data:[],paging:{cursors:{after:"next"},next:"ignored"}});
+  const r=await f.create().readEvidence();assert.equal(f.calls.filter(c=>c.parsed.pathname.endsWith("/insights")).length,2);assert.equal(f.reservations.length,13);
+  assert.deepEqual(r.native_product_report.rows,f.native.insights.data);assert.equal(r.native_product_report.metrics_interpreted,false);
+});
+test("bound Meta report: explicit internal catalog namespace does not fall back to retailer ID",async()=>{
+  const f=candidateBoundFixture(true);f.config.reportIdentityRules[0].identity_namespace="catalog_product_id";
+  const r=await f.create().readEvidence();assert.equal(r.product_report_candidate_links.links[0].candidate_index,null);
+  const g=candidateBoundFixture(true);g.config.reportIdentityRules[0].identity_namespace="catalog_product_id";g.native.insights.data[0].product_id="900";
+  assert.equal((await g.create().readEvidence()).product_report_candidate_links.links[0].candidate_index,0);
+});
+test("bound Meta report: foreign target report rule stays unregistered for this ad",async()=>{
+  const f=candidateBoundFixture(true);f.config.reportIdentityRules[0].target.ad_id="67";
+  assert.equal((await f.create().readEvidence()).product_report_candidate_links.links[0].reason,"verified_report_identity_rule_required");
+});
+test("bound Meta report: local page bound stops before second report page or final references",async()=>{
+  const f=candidateBoundFixture(true);f.config.maxReportPages=1;
+  f.hooks.fetch=p=>p.pathname.endsWith("/insights")&&response({data:[],paging:{cursors:{after:"next"},next:"ignored"}});
+  await assert.rejects(f.create().readEvidence(),/COLLECTION_FAILED/);assert.equal(f.calls.length,7);assert.equal(f.adminCalls.length,1);
 });

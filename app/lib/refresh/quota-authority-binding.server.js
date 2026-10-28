@@ -5,8 +5,9 @@ import {createSharedQuotaGuard} from "./shared-quota.server.js";
 import {createQuotaManagedFetch,createQuotaReadExecution} from "./quota-native-fetch.server.js";
 import {collectKlaviyoNativeIdentityEvidence, collectKlaviyoIdentityMessageEvidence,collectKlaviyoVerifiedProductCandidateEvidence} from "../providers/klaviyo-identity-collection.server.js";
 import {klaviyoBusinessDayTimeframe} from "../providers/klaviyo-reporting.server.js";
-import {collectMetaNativeIdentityEvidence} from "../providers/meta-identity-collection.server.js";
-import {metaIdentityReportWindow} from "../providers/meta-report-candidates.server.js";
+import {collectMetaNativeIdentityEvidence,collectMetaVerifiedProductCandidateEvidence,collectMetaReportProductCandidateEvidence} from "../providers/meta-identity-collection.server.js";
+import {metaIdentityReportWindow,createMetaReportIdentityRuleLoader} from "../providers/meta-report-candidates.server.js";
+import {createMetaCandidateSourceRuleLoader} from "../providers/meta-source-candidates.server.js";
 import {collectGoogleMerchantIdentityEvidence,collectGoogleVerifiedProductCandidateEvidence} from "../providers/google-identity-collection.server.js";
 import {createGoogleCandidateSourceRuleLoader} from "../providers/google-source-candidates.server.js";
 import {isShopifyAdminIdentitySdkBridge,closeShopifyAdminOrderSdkClient,closeShopifyAdminSdkClient} from "./shopify-admin-sdk-quota-bridge.server.js";
@@ -87,13 +88,19 @@ function createKlaviyoIdentityReader({verified,database,tokenVault,mode,signal,s
   }});
 }
 
-// Native-only: candidate/report modes must wait for distinct Shopify Admin quota binding.
+// Separate entries lock native, candidate and report capabilities at construction.
 // Target IDs/config are captured inputs, not account authority or product namespace proof.
-export function createRefreshMetaIdentityReader({verified,database,tokenVault,adId,adSetId,campaignId,catalogId,
-  config,signal,readNow=()=>new Date(),maxElapsedMs,maxPages,maxRows,...quotaOptions} = {}) {
+export function createRefreshMetaIdentityReader(options) {return createMetaIdentityReader(options);}
+export function createRefreshMetaCandidateReader(options) {return createMetaIdentityReader(options,"candidate");}
+export function createRefreshMetaReportCandidateReader(options) {return createMetaIdentityReader(options,"report");}
+function createMetaIdentityReader({verified,database,tokenVault,adId,adSetId,campaignId,catalogId,config,signal,sdkBridge,
+  sourceRules,reportIdentityRules,maxReportPages,maxReportRows,readNow=()=>new Date(),maxElapsedMs,maxPages,maxRows,...quotaOptions} = {},kind="native") {
   const claim=structuredClone(quotaOptions.claim),window=structuredClone(quotaOptions.window);
   const owner=structuredClone(verified?.installationAuthority),shop=structuredClone(verified?.identity?.shop);
-  if(claim?.provider!=="meta"||typeof window?.from!=="string"||window.from!==window.to
+  if(kind==="native"&&(sdkBridge!==undefined||sourceRules!==undefined||reportIdentityRules!==undefined||maxReportPages!==undefined||maxReportRows!==undefined)
+    ||kind!=="native"&&!isShopifyAdminIdentitySdkBridge(sdkBridge)
+    ||kind==="candidate"&&(reportIdentityRules!==undefined||maxReportPages!==undefined||maxReportRows!==undefined)
+    ||claim?.provider!=="meta"||typeof window?.from!=="string"||window.from!==window.to
     ||owner?.authority!=="shopify_installation_verified"||owner.status!=="active"||owner.workspaceId!==claim.workspaceId
     ||String(owner.installGeneration)!==claim.installGeneration||typeof verified?.context?.admin?.graphql!=="function"
     ||typeof readNow!=="function"||typeof quotaOptions.entitlementReceipt?.observedAt!=="string"
@@ -102,14 +109,23 @@ export function createRefreshMetaIdentityReader({verified,database,tokenVault,ad
   const caller={installationAuthority:owner,identity:{shop,session:{authority:verified.identity?.session?.authority,
     shopDomain:verified.identity?.session?.shopDomain}},context:{admin:{graphql:verified.context.admin.graphql.bind(verified.context.admin)}}};
   const nativeConfig=structuredClone(config);
-  const binding=refreshQuotaOptions(quotaOptions),transport=identityTransport(binding,"meta",claim);
+  const rules=kind!=="native"&&sourceRules!==undefined?structuredClone(sourceRules):undefined;
+  const reportRules=kind==="report"&&reportIdentityRules!==undefined?structuredClone(reportIdentityRules):undefined;
+  if(kind!=="native")createMetaCandidateSourceRuleLoader({rules});
+  if(kind==="report")createMetaReportIdentityRuleLoader({rules:reportRules});
+  const binding=refreshQuotaOptions(quotaOptions,{admin:kind!=="native"}),execution=kind!=="native"?createQuotaReadExecution():undefined;
+  const transport=identityTransport(binding,"meta",claim,undefined,execution);
+  const admin=kind!=="native"?createFencedAdminClient({verified:caller,sdkBridge,signal,...quotaOptions},false,null,{binding,readExecution:execution}):null;
+  if(admin)caller.context.admin=admin;
   const options={verified:caller,database,tokenVault,adId,adSetId,campaignId,catalogId,config:nativeConfig,
-    fetchFn:transport,signal,now:readNow,maxElapsedMs,maxPages,maxRows};
+    fetchFn:transport,signal,now:readNow,maxElapsedMs,maxPages,maxRows,...kind!=="native"?{sourceRules:rules}:{},
+    ...kind==="report"?{reportIdentityRules:reportRules,dateWindow:{start:window.from,end:window.to},maxReportPages,maxReportRows}:{}};
+  const collect=kind==="native"?collectMetaNativeIdentityEvidence:kind==="candidate"?collectMetaVerifiedProductCandidateEvidence:collectMetaReportProductCandidateEvidence;
   let used=false;
   return Object.freeze({async readEvidence(...args){
     if(args.length) throw Error("REFRESH_META_IDENTITY_OVERRIDE_FORBIDDEN");
     if(used) throw Error("REFRESH_META_IDENTITY_EXECUTION_USED");
-    used=true; return collectMetaNativeIdentityEvidence(options);
+    used=true;try{return await collect(options);}finally{if(admin)closeShopifyAdminSdkClient(admin);}
   }});
 }
 

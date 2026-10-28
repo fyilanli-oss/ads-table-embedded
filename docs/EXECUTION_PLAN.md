@@ -1,5 +1,19 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## Sıralı plan 12 — Google adaylarının ortak SDK/kota bağlantısı, 28 Ekim 2026
+
+#229 `5781451fcd9a0d55377855e3d38d4d0c76d85a98` main’dedir. Yeni inactive createRefreshGoogleCandidateReader, mevcut Ads → Merchant kaynak → aynı Shopify mağazasında ürün/varyant-parent doğrulaması → son Ads link kontrolünü aynı fenced işe bağlar. Önceki native entry aday/rule/SDK moduna açılmaz. Sunucu kaynak kuralları constructor’da async işten önce kopyalanır/doğrulanır; varsayılan registry boş kalır. Shopify’a benzeyen offerId, kural yokken ayrıştırılmaz.
+
+Asıl Ads hesabı, Merchant hedefi ve güvenilir Merchant kota hesabı/bindingEpoch, workspace/kurulum nesli, job/fence, iş günü, entitlement receipt ve authenticated SDK fonksiyonu korunur. Ads, Merchant ve Admin ayrı existing kota profilleriyle tek private context binding ve fiziksel çağrı sayacı kullanır. İlk Ads wait prior=0; Merchant wait prior=1; iki native çağrıdan sonraki Admin wait prior=2; Admin’den sonraki final Ads wait prior=3’tür. Kısmi koleksiyon hiç gönderilmemiş sayılıp yeniden oynatılamaz.
+
+Admin okuması genuine SDK hook, exact identity sorgusu, typed point receipt ve native cost feedback üzerinden yapılır. Mevcut total deadline/child signal SQL, HTTP ve Admin’i kapsar; bütün sonuçlarda private SDK client kapanır. İlk hatada retry/auth recovery/fallback yoktur. Native kayıt, dil/feed/veri kaynağı ve varyant ayrıntısı korunur; provider_link_verified=true yalnız gözlemlenen doğrudan Ads–Merchant bağıdır. Shopify adayı provider linki veya kanonik mapping değildir; adayın provider_link_verified, canonical_scope_ready, persistable, activation ve mapping-write false kalır. Rol/metrik/satış hesabı değişmez.
+
+Actual SQL Admin’i hâlâ kendi SQL/HTTP’sinden önce reddeder. Merchant inventory SQL kabulü de açık kalır. Yeni tablo/migration, SQL profil/env/config/OAuth/token/provider mutasyonu, global hook kurulumu, route veya Dataset yazımı yoktur. Meta aday/rapor factory bağlantıları, gerçek kaynak/namespace/erişim kanıtları, Admin SQL/profil/puan/hook/upstream kapasite/canonical scope ve kalıcı partial continuation kapıları açıktır. 13 prewrite, 14 kullanıcı incelemesi, 26 sıra, Klaviyo rol kapsamı ve tarihsel PMax duraklaması korunur.
+
+42 yeni + 1.312 mevcut ilgili test (1.354 toplam), 7 repository kontrolü ve typecheck geçti. Sentetik SQL/vault/HTTP/receipt ile kurulu gerçek SDK ve gerçek quota guard/resolver sınandı; native kaynak biçimi, erişim veya maliyet profili kanıtlanmış sayılmaz.
+
+Resmî kontrol 28 Ekim 2026: [Merchant listeleme](https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.products/list), [Shopify ProductVariant](https://shopify.dev/docs/api/admin-graphql/latest/queries/productVariant). Makine kaydı: `contracts/eo-05-start-brief-v1.json#Google_candidate_quota_composition_2026_10_28`.
+
 ## Sıralı plan 12 — Klaviyo adaylarının ortak SDK/kota bağlantısı, 28 Ekim 2026
 
 #228 `30129063efc4e1880c53868b7d4a167de7c7482c` main’dedir. Yeni inactive createRefreshKlaviyoCandidateReader, mevcut native Ordered Product → Shopify ürün/varyant-parent doğrulaması → Message bağını aynı fenced iş altında hazırlar. Önceki native ve Message entry’leri aday moduna açılmaz; ayrı entry mode/guard/context/scopes/readExecution/Admin override kabul etmez. Kimlikler, native SDK fonksiyonu, workspace/kurulum nesli, asıl Klaviyo job/fence, iş günü ve entitlement receipt async işten önce yakalanır.

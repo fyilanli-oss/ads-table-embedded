@@ -1,5 +1,17 @@
 # EO-04 — Analiz ve tasarım kitabı
 
+## Mevcut 14 değerlendirmesi — Onaylı dar kapsam: Admin kota SQL bağlantısı, 28 Ekim 2026
+
+#237 `aff98cef032d1e43e87f3c4d00bc0825b1587384` main’dedir. Kullanıcı mevcut kota kapsamı tablosuna Admin desteği, SQL yetki kontrolü, adapter ve izole testler için repository migration’ını açıkça onayladı. Bu onay 14’ün tamamını, canlı uygulamayı veya 15’in Dataset/kimlik/sipariş tabloları ve writer’larını kapsamaz. Tarihsel checkpoint kendi base commit’inin kaydı olarak korunur; aşağıdaki dar ilerleme onu tamamlandıya çevirmez.
+
+CLI ile oluşturulan `20261028132721_eo05a_admin_quota_context.sql`, yalnız mevcut private operations.refresh_quota_contexts tablosunun constraint’lerini ve mevcut load_refresh_quota_context fonksiyonunu genişletir. Admin, provider bağlantısı yerine installation FK + workspace/kurulum nesli ve güncel shop domain’e bağlıdır; provider connection alanları null’dur. Quarterly API sürümü ve canonical domain zorunludur. Yeni tablo, etkin kapsam satırı, native limit veya kota profili eklenmez; enabled varsayılan false kalır. RLS/ACL korunur; fonksiyon yalnız mevcut coordinator rolüne açıktır.
+
+Admin hedefi, orijinal Meta/Google/Klaviyo job/account/window/fence ve güncel provider bağlantı/seçim kanıtıyla yüklenir. request_intent ve taze entitlement zorunludur. Yanlış kurulum/domain, kapalı kayıt, eski nesil/fence, değişmiş bağlantı veya away/back hesap seçimi scope döndürmez. Adapter artık Admin isteğini bu SQL fonksiyonuna geçirir; null/hatalı SQL native HTTP’den önce durur. Shopify Admin ayrı reklam sağlayıcısı veya caller tarafından seçilen hesap değildir.
+
+Yeni gerçek SQL probe’u mevcut F01 fenced worker’ın billing sonrası request_intent aşamasında, iki geçici veritabanı replay’inde çalışır. Sentetik Admin kayıtları savepoint’lerle geri alınır; native HTTP yoktur. Yerelde Docker bulunmadığı için PostgreSQL sonucu F01 CI’da doğrulanır. 4 yeni unit + 1.797 mevcut ilgili test (1.801 toplam), 7 repository kontrolü, typecheck ve diff kontrolü kullanılır; exact CI sonucu PR kaydında tutulur. Resmî kontrol 28 Ekim 2026: [Supabase functions](https://supabase.com/docs/guides/database/functions), [changelog](https://supabase.com/changelog). Makine kaydı: `contracts/eo-05-start-brief-v1.json#Shopify_Admin_quota_SQL_context_2026_10_28`.
+
+Admin point costBudget issuance, native profiller/feedback/shared-stop, explicit SDK hook ve kapasite; Merchant SQL, canonical PK/selection epoch/OAuth CAS; native kaynak/izin ve sipariş iddiaları; bağımsız sipariş zamanlaması/kısmi devam hâlâ açıktır. Canlıya apply, Dataset yazımı, Sales Role, 26 sıra veya PMax duraklaması değişmez.
+
 ## Sıralı plan 13 — Kod/kanıt checkpoint’i ve 14 incelemesine hazırlık, 28 Ekim 2026
 
 #236 `d7625bd0c94637e09b0ce9c25d8543bc92860212` main’dedir. [Tek checkpoint kaydı](evidence/EO_05_STEP13_PREWRITE_CHECKPOINT_2026-10-28.json), 10 kritik kod dosyasını exact base-commit/blob ve giriş fonksiyonuyla; üç sağlayıcının sipariş iddiası durumunu; açık kod/native/SQL kapılarını mevcut plan sıralarıyla bir araya getirir. Bu teslim runtime eklemez. Son kod tesliminin 1.768 ilgili testi, 7 kontrolü, typecheck ve üç CI sonucu referanstır; bu checkpoint canlı kabul değildir.

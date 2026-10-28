@@ -620,10 +620,10 @@ test("bound Google candidate: wrong variant parent stays conflicting without map
   const r=await f.create().readEvidence();assert.equal(r.product_identity_candidates.candidates.length,0);
   assert.equal(r.product_identity_candidates.rows[0].product_identity_verification.state,"conflicting");
 });
-test("bound Google candidate: actual work repository rejects Admin before its SQL or HTTP",async()=>{
+test("bound Google candidate: actual work repository with missing Admin SQL result stops before HTTP",async()=>{
   const f=candidateBoundFixture();let sql=0;const real=createRefreshWorkRepository({query:async()=>{sql++;return {rows:[]};}}),load=f.config.workStore.loadQuotaContext;
   f.config.workStore.loadQuotaContext=x=>x.provider==="shopify_admin"?real.loadQuotaContext(x):load(x);
-  await assert.rejects(f.create().readEvidence());assert.equal(sql,0);assert.equal(f.adminCalls.length,0);assert.equal(f.calls.length,2);
+  await assert.rejects(f.create().readEvidence());assert.equal(sql,1);assert.equal(f.adminCalls.length,0);assert.equal(f.calls.length,2);
 });
 test("bound Google candidate: total deadline closes pending Admin lookup against late dispatch",async()=>{
   const f=candidateBoundFixture();f.config.maxElapsedMs=500;let release;

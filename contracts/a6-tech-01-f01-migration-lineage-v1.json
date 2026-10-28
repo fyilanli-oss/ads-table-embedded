@@ -562,6 +562,15 @@
       "repository_sql_sha256": "ea937916f5a13e84a61bfdde5b5171163cf923bc23dbf98e43e191322d87e777",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261028132721",
+      "name": "eo05a_admin_quota_context",
+      "file": "supabase/migrations/20261028132721_eo05a_admin_quota_context.sql",
+      "created_with": "supabase@2.121.0 migration new eo05a_admin_quota_context",
+      "repository_sql_sha256": "9ce1c2021a339933005888f0e4e2cbab51520ada044c18a84d8b0aabf563d83c",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

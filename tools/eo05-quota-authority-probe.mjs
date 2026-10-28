@@ -1,12 +1,14 @@
 import assert from "node:assert/strict";
 import {createRefreshQuotaClients} from "../app/lib/refresh/quota-authority-binding.server.js";
 import {quotaBoundaryControl} from "../app/lib/refresh/quota-native-fetch.server.js";
+import {adminQuotaContextProbe} from "./eo05-admin-quota-context-probe.mjs";
 
 // Called while the real fenced worker is at request_intent, AFTER fresh billing proof.
 // All native data/provider tokens are synthetic. Each authority mutation rolls back to a savepoint.
 export async function quotaAuthorityProbe(client,{store,quotaStore,execution,connection,environment,payload}) {
   const input={...execution,provider:execution.claim.provider};
   const current=await store.loadQuotaContext(input);assert.equal(current.accountId,execution.claim.accountId);
+  await adminQuotaContextProbe(client,{store,execution,connection});
   assert.equal(await store.loadQuotaContext({...input,entitlementReceipt:undefined}),null,"provider data needs fresh billing proof");
   assert.equal(await store.loadQuotaContext({...input,entitlementReceipt:{observedAt:"2000-01-01T00:00:00Z"}}),null);
   assert.equal(await store.loadQuotaContext({...input,claim:{...input.claim,fence:input.claim.fence+1}}),null);

@@ -1,5 +1,9 @@
 # EO-04 — Analiz ve tasarım kitabı
 
+## EO-05 takip — Shopify sipariş/satır/yolculuk protokolü, 28 Ekim 2026
+
+#224 main’dedir. Mevcut 12’nin sipariş okuyucusu alt işi için API 2026-10 sabit sorguları, strict yanıt kontrolleri ve bağımsız cursor devam tanımları hazırlandı; HTTP okuyucusu, yeni runtime family veya yazım değildir. Order/LineItem string kimliği, Product/Variant null ve çelişki, exact decimal/currency, orijinal/güncel/iade ayrımı, stale order, yolculuk readiness ve eksik durumlar korunur. Paid/provider claim/rol/overlap veya snapshot kanıtı üretilmez. 66 sentetik test ve 210 mevcut regresyon ile 7 repository kontrolü; mevcut Admin allowlist yeni sorguları sıfır HTTP ile reddeder. SDK/kota/fenced authority/native collection ve izin kanıtı ile 13/14 kapıları açıktır. EO-04 kabulü değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Shopify_order_read_protocol_2026_10_28` ve Execution Plan.
+
 ## EO-05 takip — Ortak okuma sayacı ve provider sonrası Admin beklemesi, 27 Ekim 2026
 
 #223 main’dedir. Provider HTTP’sinden sonraki ayrı Admin beklemesinin bütün okumayı hiç gönderilmemiş saymasını önleyen ortak, opaque süreç içi sayaç hazırlandı. İlk gerçek wait sıfır kalır; sonraki wait toplam çağrıyı taşır. Ortak kapanma bekleyen kardeş dispatch’i ve geç başarı yayımını önler; önceden gönderilmiş HTTP geri alınmaz. Partner entitlement ayrı kalır. 27 yeni sentetik test gerçek guard/resolver ve kurulu SDK’yı sınar. Güçlü factory composite bağlantısı, SQL/hook/profil kapıları ve kalıcı partial continuation açıktır; EO-04 kabulü değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#shared_quota_read_execution_2026_10_27` ve Execution Plan.

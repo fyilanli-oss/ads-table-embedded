@@ -1,4 +1,40 @@
 {
+  "Shopify_order_independent_range_plan_2026_10_28": {
+    "status": "repository_prepared_pending_exact_head_CI_owner_merge_not_active_scheduler_or_durable_resume",
+    "base_main": "0bf1869a58c96f583e7a6f684519c063e3ff69c0",
+    "scope": "existing_step12_Order_scheduling_partial_continuation_gap_first_range_planning_slice_under_step14_review",
+    "runtime": "app/lib/refresh/shopify-order-range-plan.server.js",
+    "SQL_authority": "existing_shopify.load_active_installation_owner_no_migration_or_mutation",
+    "policy_fields": [
+      "anchorAt",
+      "cadenceMs",
+      "sliceMs",
+      "settleDelayMs",
+      "maxRanges",
+      "pageSize",
+      "includeOrderHistory"
+    ],
+    "lower_bound": "explicit_server_fromInclusive_not_a_verified_durable_checkpoint",
+    "boundaries": "UTC_half_open_updated_at_ranges_no_ad_provider_account_business_day_or_timezone_inference",
+    "bounded": "max1000_ranges_pageSize100_unplanned_remainder_preserved_no_progress_advance",
+    "provenance": "genuine_frozen_plan_SQL_owner_checked_before_after_collection_and_quota_control_WeakMap_brands_not_serializable_proof",
+    "interruption": "zero_data_attempt_quota_wait_requires_fresh_admission_partial_or_unknown_prefix_requires_durable_review_no_resume_or_first_page_replay_authorized",
+    "no_rows_means": "not_due_not_zero_sales_or_successful_sync",
+    "history": "updated_at_filter_does_not_establish_createdAt_access_or_read_all_orders_approval",
+    "queue_admitted": false,
+    "authorizes_dispatch": false,
+    "persistable": false,
+    "checkpoint_advanced": false,
+    "live_policy_installed": false,
+    "existing_26_order_unchanged": true,
+    "PMax_paused": true,
+    "remaining": [
+      "independent_installation_owned_work_admission_scheduler_and_Admin_Partner_quota_contexts",
+      "durable_staged_evidence_and_atomic_checkpoint_handshake_after_existing_step15_storage_review",
+      "native_order_scope_protected_data_history_access_and_runtime_capacity_acceptance",
+      "existing_step14_review_and_step15_storage_activation_gates"
+    ]
+  },
   "Canonical_prewrite_owner_binding_2026_10_28": {
     "status": "repository_prepared_pending_exact_head_CI_owner_merge_not_live",
     "base_main": "a14459b2bcfb9825cd78e7ab149dc7f8775c2e91",
@@ -117,7 +153,7 @@
     "google_pd_source_composition": "merged_PR185_f01d31ee7f741e70513bfe96e8750d4f405580a5",
     "klaviyo_pd_source_composition": "merged_PR186_99f6474bc49ff70a084ca5916bc3631f05187ba1",
     "pd_canonical_bridge": "merged_PR187_5657ce49c2c93b4d018c4606e08134a311754c33",
-    "current_slice": "ordered_step14_canonical_prewrite_metadata_and_Shopify_Order_owner_prepared_pending_CI_not_live",
+    "current_slice": "ordered_step14_independent_Order_range_plan_first_slice_not_scheduler_or_durable_continuation",
     "permission_preflight": "merged_PR190_ee28856c1260dffd18725eeb85718d195a5ce3de_not_live",
     "identity_OAuth_scope_binding": "merged_PR191_438bf5f8960cc2e25d4b6202a580cc1b1bf9b426_not_live",
     "Google_identity_credential_lifecycle": "merged_PR192_807408603484578555fc8700eb50f9cfa420d07d_not_live",

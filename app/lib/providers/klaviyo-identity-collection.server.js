@@ -240,9 +240,9 @@ async function collectKlaviyoIdentitySource({verified, database, tokenVault, bus
       evidence: {metric_pages: metricPages, event_pages: eventPages, request_ids: requestIds,
         started_at: new Date(start).toISOString(), completed_at: new Date(clock()).toISOString()},
       provider_account_observed: true, Shopify_store_integration_binding_verified: false,
-      canonical_scope_ready: false, installation_id: null, persistable: false,
+      canonical_scope_ready: false, installation_id: current.installation_id, reporting_selection_epoch: current.reporting_selection_epoch, persistable: false,
       authorizes_activation: false, mapping_write_performed: false, sales_roles_changed: false,
-      remaining: ["trusted_installation_primary_key_read",
+      remaining: ["canonical_authority_scope_to_source_binding",
         ...(withShopify ? [] : ["Shopify_Admin_candidate_verification_composition"]),
         ...(withMessages ? [] : ["Message_channel_join"])]});
   } catch (error) {

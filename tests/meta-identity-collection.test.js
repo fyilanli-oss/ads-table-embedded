@@ -46,12 +46,12 @@ function fixture() {
   };
   const database = {async query(sql, params) {
     queries.push({sql, params}); await hooks.query?.(sql);
-    if (sql.includes("resolve_active_installation")) return {rows: [{workspace_id: workspace, install_generation: state.generation, installation_status: "active"}]};
-    if (sql.includes("load_provider_connection_lifecycle_by_owner")) return {rows: [{connection_id: connection, credential_id: credential,
-      lifecycle_status: state.status, connection_version: state.version}]};
-    if (sql.includes("load_provider_account_authority")) return {rows: [{connection_id: connection, credential_id: credential,
-      reporting_account_id: state.account, granted_scopes: [...state.scopes], accounts: [{id: state.account, kind: "advertiser",
-        reporting_eligible: true, login_account_id: null}]}]};
+    if (sql.includes("load_provider_identity_authority")) return {rows: [{
+      installation_id: String(state.installationId ?? "42"),workspace_id:workspace,install_generation:state.generation,installation_status:"active",
+      shop_id:"gid://shopify/Shop/12",shop_domain:"test.myshopify.com",connection_id:connection,credential_id:credential,connection_version:state.version,lifecycle_status:state.status,
+      granted_scopes:[...state.scopes],reporting_account_id:"meta"==="klaviyo"?null:state.account,reporting_selection_epoch:"meta"==="klaviyo"?null:String(state.selectionEpoch ?? "71"),
+      accounts:[{id:state.account,kind:"meta"==="klaviyo"?"account":"advertiser",status:"active",reporting_eligible:true,
+        login_account_id:"meta"==="google_ads"?state.manager:null}]}]};
     throw Error("unexpected SQL");
   }};
   const fetchFn = async (endpoint, init) => {
@@ -72,7 +72,7 @@ test("concrete SQL/vault loader composes actual token, Ad/creative/catalog obser
   assert.equal(f.calls.length, 10); assert.equal(r.provider_link_verified, true);
   assert.equal(r.native_source.records[0].retailer_id, "shopify_US_10_20");
   assert.equal(r.native_source.scope, undefined); assert.equal(r.link_evidence.before.scope, undefined);
-  assert.equal(r.installation_id, null); assert.equal(r.canonical_scope_ready, false);
+  assert.equal(r.installation_id, "42"); assert.equal(r.canonical_scope_ready, false);
   assert.equal(r.proves_product_delivery_or_Insights_namespace, false); assert.equal(r.persistable, false);
   assert.equal(r.authorizes_activation, false); assert.equal(r.mapping_write_performed, false);
   assert.equal(r.native_source.records[0].shopify_product_id, undefined); assert.ok(Object.isFrozen(r.native_source.records));
@@ -192,7 +192,7 @@ test("candidate: exact reviewed retailer rule and same-shop variant parent compo
   assert.equal(c.rows[0].standardized_product_id, null); assert.equal(c.mappings, undefined);
   assert.equal(c.proves_Insights_identity_namespace, false); assert.equal(c.provider_link_verified, false);
   assert.equal(r.provider_link_verified, true); assert.equal(r.proves_product_delivery_or_Insights_namespace, false);
-  assert.equal(r.canonical_scope_ready, false); assert.equal(r.installation_id, null); assert.equal(r.persistable, false);
+  assert.equal(r.canonical_scope_ready, false); assert.equal(r.installation_id, "42"); assert.equal(r.persistable, false);
   assert.ok(Object.isFrozen(c.candidates[0].candidate_evidence));
 });
 for (const [name, mutate] of [["workspace", r => {r.scope.workspace_id = credential;}],
@@ -354,7 +354,7 @@ test("report bridge: existing complete product query and raw metrics remain unch
   assert.equal(link.state, "catalog_candidate_reference"); assert.equal(link.candidate_index, 0);
   assert.equal(link.source_record_key, r.native_source.records[0].key); assert.equal(link.standardized_product_id, null);
   assert.equal(r.product_report_candidate_links.sales_role_assigned, false); assert.equal(r.persistable, false);
-  assert.equal(r.proves_product_delivery_or_Insights_namespace, false); assert.equal(r.installation_id, null);
+  assert.equal(r.proves_product_delivery_or_Insights_namespace, false); assert.equal(r.installation_id, "42");
   assert.ok(Object.isFrozen(report.rows[0].converted_product_quantity));
 });
 test("report bridge: empty default namespace registry never infers equality from matching retailer ID", async () => {
@@ -579,7 +579,7 @@ test("bound Meta: concrete native chain meters every read using fenced work and 
   assert.equal(f.calls.length,10);assert.equal(f.reservations.length,10);assert.equal(f.settles.length,10);assert.equal(f.loads.length,20);
   assert.ok(f.loads.every(x=>x.provider==="meta"&&x.claim.id==="job1"&&x.claim.fence===2&&x.claim.accountId==="act_123"
     &&x.window.from==="2026-10-01"&&x.entitlementReceipt.observedAt===f.state.now.toISOString()));
-  assert.equal(r.persistable,false);assert.equal(r.installation_id,null);assert.equal(r.proves_product_delivery_or_Insights_namespace,false);
+  assert.equal(r.persistable,false);assert.equal(r.installation_id,"42");assert.equal(r.proves_product_delivery_or_Insights_namespace,false);
   assert.equal(r.native_source.records[0].shopify_product_id,undefined);
   assert.doesNotMatch(JSON.stringify([f.reservations,f.loads,f.stops]),/secret-access|secret-app|shopify_US|retailer_id/);
 });

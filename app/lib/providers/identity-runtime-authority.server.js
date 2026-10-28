@@ -1,6 +1,4 @@
-import {createShopifyRuntimeRepositories} from "../database/shopify-runtime-repositories.server.js";
-import {createProviderAccountAuthorityRepository} from "../database/provider-account-authority-repository.server.js";
-import {createProviderConnectionLifecycle} from "../oauth/provider-connection-lifecycle.server.js";
+import {createIdentityAuthorityRepository} from "../database/identity-authority-repository.server.js";
 import {permissionContext} from "../oauth/identity-permission-preflight.server.js";
 import {validateIdentityOAuthGrantedScopes} from "../oauth/oauth-permission-profile.server.js";
 import {inspectGoogleIdentityCredential} from "../oauth/google-identity-credential.server.js";
@@ -59,31 +57,26 @@ export function createIdentityRuntimeAuthorityLoader({verified, database, tokenV
   // Reuse the canonical shop/workspace/generation validator, without fabricating account authority.
   const shopContext = permissionContext({provider: "shopify", workspaceId: installation.workspaceId,
     installGeneration: installation.installGeneration, shopId: shop.shopId, shopDomain: shop.myshopifyDomain});
-  const installations = createShopifyRuntimeRepositories(database).installation;
-  const accounts = createProviderAccountAuthorityRepository(database);
-  const lifecycle = createProviderConnectionLifecycle({database});
+  const authority = createIdentityAuthorityRepository(database);
   let pinned = null, loading = false, stopped = false;
   function abort() { if (signal?.aborted) fail("IDENTITY_RUNTIME_ABORTED"); }
   async function read() {
     abort();
-    const current = await installations.resolveActive({shopId: shop.shopId, shopDomain: shop.myshopifyDomain});
+    const current = await authority.load({workspaceId:installation.workspaceId,installGeneration:installation.installGeneration,
+      provider,shopId:shop.shopId,shopDomain:shop.myshopifyDomain});
     abort();
-    if (current.status !== "active" || current.workspaceId !== shopContext.workspaceId
-      || current.installGeneration !== shopContext.installGeneration) fail("IDENTITY_RUNTIME_INSTALLATION_CHANGED");
-    const state = await lifecycle.loadCurrent({installationAuthority: installation, provider});
-    abort();
-    if (state?.status !== "connected" || !UUID.test(state.connectionId ?? "") || !UUID.test(state.credentialId ?? "")
-      || !Number.isSafeInteger(state.version) || state.version < 1) fail("IDENTITY_RUNTIME_CONNECTED_CREDENTIAL_REQUIRED");
-    const connection = await accounts.load({workspaceId: installation.workspaceId, installGeneration: installation.installGeneration, provider});
-    abort();
-    if (!connection || connection.connectionId !== state.connectionId || connection.credentialId !== state.credentialId) fail("IDENTITY_RUNTIME_CONNECTION_MISMATCH");
+    if (!current||current.installationStatus !== "active" || current.workspaceId !== shopContext.workspaceId
+      || current.installGeneration !== shopContext.installGeneration||current.shopId!==shop.shopId||current.shopDomain!==shop.myshopifyDomain) fail("IDENTITY_RUNTIME_INSTALLATION_CHANGED");
+    if (current.status !== "connected" || !UUID.test(current.connectionId ?? "") || !UUID.test(current.credentialId ?? "")
+      || !Number.isSafeInteger(current.connectionVersion) || current.connectionVersion < 1) fail("IDENTITY_RUNTIME_CONNECTED_CREDENTIAL_REQUIRED");
+    const connection=current;
     const account = selectAccount(connection, provider), granted = scopes(connection.grantedScopes);
     if (provider === "klaviyo") {
       if (KLAVIYO_SCOPES.some(s => !granted.includes(s))) fail("IDENTITY_RUNTIME_SCOPE_MISSING");
     } else validateIdentityOAuthGrantedScopes(provider, provider === "google_ads" ? granted.join(" ") : granted);
     abort();
-    return {status: "connected", connectionVersion: state.version, credentialId: state.credentialId,
-      connectionId: state.connectionId, provider, account, grantedScopes: granted};
+    return {status: "connected", connectionVersion: current.connectionVersion, credentialId: current.credentialId,
+      connectionId: current.connectionId,installationId:current.installationId,selectionEpoch:current.selectionEpoch,provider, account, grantedScopes: granted};
   }
   return Object.freeze({async loadCurrent() {
     if (stopped) fail("IDENTITY_RUNTIME_EXECUTION_STOPPED");
@@ -118,10 +111,9 @@ export function createIdentityRuntimeAuthorityLoader({verified, database, tokenV
       if (pinned !== null && pinned !== signature) fail("IDENTITY_RUNTIME_AUTHORITY_CHANGED");
       pinned = signature;
       return freeze({...before, installation: structuredClone(installation), shop: structuredClone(shop), tokenSet,
-        // Existing resolve_active_installation returns workspace/generation/status, NOT its bigint PK.
-        // Never derive it from generation or accept it from the caller. SQL review remains step 14.
-        canonical_scope_ready: false, installation_id: null,
-        remaining: ["trusted_installation_primary_key_read", "reporting_selection_epoch_read", "provider_source_context_and_rule_binding"],
+        // Real SQL keys are authority metadata; source rules and durable write gates stay separate.
+        canonical_scope_ready: false, installation_id: before.installationId,reporting_selection_epoch:before.selectionEpoch,
+        remaining: ["provider_source_context_and_rule_binding","OAuth_atomic_upgrade_and_durable_write_gates"],
         native_permission_revalidated: false, authorizes_activation: false, persistable: false});
     } catch (error) {
       stopped = true;

@@ -92,9 +92,9 @@ async function collectGoogleIdentitySource({verified, database, tokenVault, merc
       native_source: source, ...(withShopify ? {product_identity_candidates: productCandidates} : {}), link_evidence: {before, after,
         started_at: new Date(started).toISOString(), completed_at: new Date(clock()).toISOString()},
       provider_link_verified: true, relationship_scope: "observed_direct_Ads_Merchant_relationship_only",
-      installation_id: null, canonical_scope_ready: false, shopify_mapping_state: "not_resolved",
+      installation_id: current.installation_id, reporting_selection_epoch: current.reporting_selection_epoch, canonical_scope_ready: false, shopify_mapping_state: "not_resolved",
       authorizes_activation: false, persistable: false, mapping_write_performed: false, source_facts_changed: false,
-      remaining: ["trusted_installation_primary_key_and_Ads_selection_epoch_reads", "real_source_format_evidence_and_reviewed_rule_registration",
+      remaining: ["canonical_authority_scope_to_source_binding", "real_source_format_evidence_and_reviewed_rule_registration",
         ...(withShopify ? [] : ["Shopify_candidate_verification_composition"]), "quota_dispatch_and_prewrite_controls"]});
   } catch (error) {
     if (nativeQuotaControl !== null) throw nativeQuotaControl;

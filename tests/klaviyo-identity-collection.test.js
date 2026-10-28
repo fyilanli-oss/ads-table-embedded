@@ -39,12 +39,12 @@ function fixture() {
     context: {admin: {graphql() {throw Error("Shopify must not be called");}}}};
   const database = {async query(sql, params) {
     queries.push({sql, params}); await hooks.query?.(sql);
-    if (sql.includes("resolve_active_installation")) return {rows: [{workspace_id: workspace, install_generation: 3, installation_status: "active"}]};
-    if (sql.includes("load_provider_connection_lifecycle_by_owner")) return {rows: [{connection_id: connection, connection_version: state.version,
-      lifecycle_status: "connected", credential_id: credential}]};
-    if (sql.includes("load_provider_account_authority")) return {rows: [{connection_id: connection, credential_id: credential,
-      reporting_account_id: null, granted_scopes: [...KLAVIYO_OAUTH_SCOPES], accounts: [{id: state.account, kind: "account",
-        status: "active", reporting_eligible: true}]}]};
+    if (sql.includes("load_provider_identity_authority")) return {rows: [{
+      installation_id: String(state.installationId ?? "42"),workspace_id:workspace,install_generation:3,installation_status:"active",
+      shop_id:"gid://shopify/Shop/12",shop_domain:"test.myshopify.com",connection_id:connection,credential_id:credential,connection_version:state.version,lifecycle_status:"connected",
+      granted_scopes:[...KLAVIYO_OAUTH_SCOPES],reporting_account_id:"klaviyo"==="klaviyo"?null:state.account,reporting_selection_epoch:"klaviyo"==="klaviyo"?null:String(state.selectionEpoch ?? "71"),
+      accounts:[{id:state.account,kind:"klaviyo"==="klaviyo"?"account":"advertiser",status:"active",reporting_eligible:true,
+        login_account_id:"klaviyo"==="google_ads"?state.manager:null}]}]};
     throw Error("unexpected SQL");
   }};
   const token = {access_token: "secret-access", refresh_token: "secret-refresh", scopes: [...KLAVIYO_OAUTH_SCOPES],
@@ -71,7 +71,7 @@ test("real SQL/vault loader composes native account, selected metric and sparse 
   assert.equal(r.events[0].attributes.event_properties.$value, "30.00");
   assert.equal(r.attributions[0].relationships["campaign-message"].data.id, "message1");
   assert.equal(r.account.timezone, "Europe/Istanbul"); assert.equal(r.timeframe.start, "2026-10-01T00:00:00+03:00");
-  assert.equal(r.canonical_scope_ready, false); assert.equal(r.installation_id, null);
+  assert.equal(r.canonical_scope_ready, false); assert.equal(r.installation_id, "42");
   assert.equal(r.persistable, false); assert.equal(r.mapping_write_performed, false); assert.equal(r.sales_roles_changed, false);
   assert.equal(r.Shopify_store_integration_binding_verified, false); assert.ok(Object.isFrozen(r.events[0].attributes));
   assert.ok(f.queries.every(q => q.sql.startsWith("select *")));
@@ -228,7 +228,7 @@ test("Message composition: same execution joins native event to Campaign Message
   assert.equal(sale.provider_product_properties.Quantity.value, 2); assert.equal(sale.provider_product_properties.$value.value, "30.00");
   assert.equal(r.message_evidence.reporting_statistics_used_as_product_sales, false);
   assert.equal(r.message_evidence.channels.campaign[0].statistics, undefined);
-  assert.equal(sale.standardized_product_id, null); assert.equal(r.persistable, false); assert.equal(r.installation_id, null);
+  assert.equal(sale.standardized_product_id, null); assert.equal(r.persistable, false); assert.equal(r.installation_id, "42");
   assert.ok(!r.remaining.includes("Message_channel_join"));
   for (const c of f.calls.filter(c => c.init.method === "POST")) {
     const body = JSON.parse(c.init.body).data.attributes;
@@ -348,7 +348,7 @@ test("Shopify composition: native collection verifies parent and keeps evidence 
   assert.equal(candidates.rows[0].product_identity_verification.state, "candidate_verified_in_shop");
   assert.equal(candidates.rows[0].standardized_product_id, null); assert.equal(candidates.mappings, undefined);
   assert.equal(candidates.candidates[0].shopify_product_id, "gid://shopify/Product/123");
-  assert.equal(candidates.candidates[0].installation_id, undefined); assert.equal(r.installation_id, null);
+  assert.equal(candidates.candidates[0].installation_id, undefined); assert.equal(r.installation_id, "42");
   assert.equal(r.canonical_scope_ready, false); assert.equal(r.persistable, false); assert.equal(r.mapping_write_performed, false);
   const sale = r.message_evidence.resolved_product_sales.rows[0];
   assert.equal(sale.attribution_resolution.channel_id, "message1"); assert.equal(sale.attribution_resolution.sales_role, "Assisted");
@@ -493,7 +493,7 @@ test("bound constructor: native mode uses concrete SQL/vault plus fenced work/en
   assert.equal(f.calls.length, 4); assert.equal(f.reservations.length, 4); assert.equal(f.settles.length, 4); assert.equal(f.loads.length, 8);
   assert.ok(f.loads.every(x => x.provider === "klaviyo" && x.claim.id === "job1" && x.claim.fence === 2
     && x.claim.accountId === "account1" && x.window.from === "2026-10-01" && x.entitlementReceipt.observedAt === f.state.now.toISOString()));
-  assert.equal(r.persistable, false); assert.equal(r.installation_id, null); assert.equal(r.message_evidence, undefined);
+  assert.equal(r.persistable, false); assert.equal(r.installation_id, "42"); assert.equal(r.message_evidence, undefined);
   assert.equal(r.product_identity_candidates, undefined); assert.equal(r.events.length, 1);
   assert.doesNotMatch(JSON.stringify([f.reservations, f.feedback]), /secret-access|secret-refresh|private@|ProductID|event1/);
 });

@@ -24,7 +24,7 @@
     "google_pd_source_composition": "merged_PR185_f01d31ee7f741e70513bfe96e8750d4f405580a5",
     "klaviyo_pd_source_composition": "merged_PR186_99f6474bc49ff70a084ca5916bc3631f05187ba1",
     "pd_canonical_bridge": "merged_PR187_5657ce49c2c93b4d018c4606e08134a311754c33",
-    "current_slice": "ordered_step14_Merchant_quota_SQL_repository_prepared_not_live_or_Dataset",
+    "current_slice": "ordered_step14_identity_PK_selection_snapshot_repository_prepared_OAuth_CAS_next_not_live",
     "permission_preflight": "merged_PR190_ee28856c1260dffd18725eeb85718d195a5ce3de_not_live",
     "identity_OAuth_scope_binding": "merged_PR191_438bf5f8960cc2e25d4b6202a580cc1b1bf9b426_not_live",
     "Google_identity_credential_lifecycle": "merged_PR192_807408603484578555fc8700eb50f9cfa420d07d_not_live",
@@ -80,6 +80,51 @@
     "identity_pause_before_step_12": true,
     "historical_PMax_pause_preserved": true,
     "package_complete": false
+  },
+  "Identity_authority_snapshot_2026_10_28": {
+    "ordered_plan_step": 14,
+    "remediates_existing_ordered_steps": [
+      11,
+      12
+    ],
+    "status": "repository_atomic_read_snapshot_prepared_pending_exact_head_CI_owner_merge_OAuth_write_CAS_still_next",
+    "prior_Merchant_merge": "PR242_310829272b4d45d7cd7b07ca004d9c87e248d3b7",
+    "migration": "supabase/migrations/20261028161123_eo05a_identity_authority_snapshot.sql",
+    "runtime": [
+      "app/lib/database/identity-authority-repository.server.js",
+      "app/lib/providers/identity-runtime-authority.server.js",
+      "app/lib/providers/google-identity-collection.server.js",
+      "app/lib/providers/meta-identity-collection.server.js",
+      "app/lib/providers/klaviyo-identity-collection.server.js"
+    ],
+    "real_SQL_probe": "tools/eo05-identity-authority-snapshot-probe.mjs",
+    "SQL": "single_STABLE_SELECT_join_active_shop_workspace_generation_connected_provider_credential_version_cached_accounts_and_active_reporting_binding_one_statement_MVCC_snapshot_no_new_tables_or_rows",
+    "keys": "installation_id_is_actual_shopify_installations_bigint_PK_reporting_selection_epoch_is_actual_active_reporting_account_bindings_bigint_PK_lossless_positive_int64_decimal_strings_Klaviyo_has_null_selection_epoch_no_invented_counter",
+    "authority": "exact_verified_workspace_generation_shop_GID_domain_provider_parameters_no_caller_PK_or_epoch_input_no_ID_from_generation_or_selected_account",
+    "loader": "replace_three_separate_SQL_reads_with_one_snapshot_before_vault_and_one_after_compare_all_authority_metadata_pin_for_execution_changes_discard_and_poison_loader_no_retry_or_refresh",
+    "observation": "three_provider_collections_carry_SQL_installation_id_and_reporting_selection_epoch_as_metadata_canonical_scope_ready_persistable_activation_mapping_write_and_source_rule_proof_remain_false",
+    "race_boundary": "each_SQL_read_is_atomic_not_a_transaction_across_vault_or_native_HTTP_no_claim_of_detecting_every_unversioned_intermediate_change_existing_quota_fence_pre_dispatch_and_post_response_rechecks_remain",
+    "validation": "14_new_plus_1844_existing_relevant_tests_1858_total_7_controls_typecheck_passed_updated_concrete_provider_fixtures_real_SQL_pending_both_F01_three_provider_loaders_and_away_back_no_native_HTTP",
+    "security": "new_nonsecret_function_empty_search_path_definer_existing_runtime_and_coordinator_execute_only_no_public_anon_authenticated_service_role_table_or_vault_grants_no_account_names_returned",
+    "next": "OAuth_atomic_connected_upgrade_CAS_and_staging_reconciliation_remain_disabled_unchanged_in_this_read_slice",
+    "remaining": [
+      "OAuth_atomic_upgrade_compare_and_swap_credential_staging_uncertain_write_reconciliation",
+      "canonical_scope_binding_to_candidate_prewrite_and_Shopify_Order_owner_before_durable_write",
+      "native_source_namespace_access_claim_and_profile_evidence_activation",
+      "independent_Order_ranges_scheduling_safe_partial_continuation",
+      "existing_step15_storage_review_and_all_path_activation"
+    ],
+    "live_apply_authorized": false,
+    "native_calls": false,
+    "new_tables": false,
+    "Dataset_write": false,
+    "official_sources_checked_at": "2026-10-28",
+    "official_sources": [
+      "https://supabase.com/changelog",
+      "https://supabase.com/docs/guides/database/functions",
+      "https://www.postgresql.org/docs/17/xfunc-volatility.html",
+      "https://www.postgresql.org/docs/17/explicit-locking.html"
+    ]
   },
   "Google_Merchant_quota_SQL_2026_10_28": {
     "ordered_plan_step": 14,

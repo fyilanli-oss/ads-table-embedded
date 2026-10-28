@@ -1,5 +1,22 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## Mevcut 14 değerlendirmesi — Gerçek kurulum PK ve seçim sürümünün atomik SQL okuması, 28 Ekim 2026
+
+#242 `310829272b4d45d7cd7b07ca004d9c87e248d3b7` main’dedir. Kurulum kimliği, seçim sürümü ve OAuth CAS üçlüsünün okuma parçası hazırlandı; OAuth callback/write CAS sonraki parçadır. CLI migration `20261028161123_eo05a_identity_authority_snapshot.sql` yeni tablo/satır oluşturmadan tek STABLE SQL SELECT ile aktif shop/workspace/kurulum nesli, aynı bağlı provider bağlantısı/credential sürümü, cached hesaplar ve aktif reporting binding kaydını bir arada okur. Dönen installation_id gerçek shopify.installations PK’sı; reporting_selection_epoch gerçek aktif reporting_account_bindings PK’sıdır. İkisi de kayıpsız pozitif int64 decimal string’dir. Klaviyo’da seçim bağ kaydı olmadığı için epoch null kalır; sayaç uydurulmaz.
+
+Yeni function-only repository ve mevcut identity loader üç ayrı SQL okuması yerine credential vault öncesi ve sonrası birer tutarlı snapshot okur. Verified shop GID/domain/workspace/nesil/provider şarttır; caller PK/epoch veremez. Snapshot değişirse sonuç atılır ve loader kalıcı kapanır. Aynı hesaptan çıkıp geri dönüldüğünde binding PK’sı değiştiği için artık yakalanır. Credential sürümü, izin listesi, kurulum PK veya hesap değişimi de aynı karşılaştırmadadır. Bir SQL okumasının atomic olması vault/native HTTP boyunca transaction veya bütün sürümsüz ara değişimleri görme garantisi değildir; mevcut quota/fence dispatch ve son kontrol sınırları korunur.
+
+Google, Meta ve Klaviyo gözlemleri gerçek SQL kurulum kimliği ve seçim sürümünü metadata olarak taşır. canonical_scope_ready, persistable, aktivasyon ve mapping-write false kalır; source kuralı/native format, Product ID eşleme, rol veya sipariş claim kanıtı üretilmez. Candidate/prewrite ve Shopify Order canonical-owner bağlantısının yazım öncesi tamamlanması ayrı kalır. Mevcut connected OAuth identity upgrade kapısı hâlâ kapalıdır; bu teslim token değiştirmez veya callback CAS tamamlandı demez.
+
+14 yeni senaryo; aynı hesapta epoch/PK değişimi, vault sırasında değişim, bigint hassasiyeti ve geçersiz anahtarları sınar. Dört mevcut somut provider fixture’ı tek SQL snapshot’a uyarlandı; eski negative guard’lar korunur. Gerçek SQL probe mevcut F01 rollback-only matriste üç provider’ın gerçek loader’ını sentetik vault ile çalıştırır; asıl SQL PK/epoch, away-back, credential sürümü/lifecycle drift ve erişim yetkilerini doğrular. Native HTTP yoktur ve fixture değişiklikleri rollback edilir. Yeni read fonksiyonu yalnız mevcut runtime/coordinator rollerine açıktır; table/vault/public erişimi genişletilmez ve hesap adları döndürülmez.
+
+Mevcut 26 sıra, 13 sonrası kısa / 15 sonrası ana değerlendirme ve PMax duraklaması korunur. Canlı migration, OAuth/provider/token/config/Dataset mutasyonu yoktur. Tam 11/12/14 veya native kabul değildir. Sonraki kod parçası OAuth atomik upgrade/CAS/staging reconciliation; bağımsız Order scheduling/continuation, native kaynak/claim/profil ve sonraki yazım kapıları açıktır.
+
+14 yeni + 1.844 mevcut ilgili test (1.858 toplam), 7 repository kontrolü, typecheck ve diff kontrolü geçti. Gerçek SQL kanıtı exact-head PR/F01 üzerinde ayrıca doğrulanacaktır.
+
+Resmî kontrol 28 Ekim 2026: [Supabase fonksiyonlar](https://supabase.com/docs/guides/database/functions), [changelog](https://supabase.com/changelog), [PostgreSQL STABLE snapshot](https://www.postgresql.org/docs/17/xfunc-volatility.html), [kilitleme](https://www.postgresql.org/docs/17/explicit-locking.html). Makine kaydı: `contracts/eo-05-start-brief-v1.json#Identity_authority_snapshot_2026_10_28`.
+
+
 ## Mevcut 14 değerlendirmesi — Merchant kota kapsamının SQL bağlantısı, 28 Ekim 2026
 
 #241 `da5378f633fc5262e578cab98ed6792f00c21c87` main’dedir. Mevcut 12 düzeltmelerinde, owner-reviewed Merchant envanterinin SQL okuması hazırlandı. CLI migration `20261028152713_eo05a_merchant_quota_context.sql` mevcut private refresh_quota_contexts tablosuna hedef hesap, kotayı tüketen hesap, products/v1 sürümü, Merchant bağ nesli, credential UUID ve varsayılan false Merchant enabled alanını ekler. Yeni tablo, etkin kayıt, native limit, OAuth veya Dataset writer yoktur. Gerçek hedef ve kota hesabı, kimlik doğrulayan hesaba göre ayrı kanıt gerektirir; biri diğerinden türetilmez.

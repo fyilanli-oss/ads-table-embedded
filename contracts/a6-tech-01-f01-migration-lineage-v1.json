@@ -661,7 +661,7 @@
       "name": "eo05a_shopify_order_worker_reservation",
       "file": "supabase/migrations/20261028204502_eo05a_shopify_order_worker_reservation.sql",
       "created_with": "supabase@2.121.0 migration new eo05a_shopify_order_worker_reservation",
-      "repository_sql_sha256": "51ec0306475d6962d25be8143d89fe9299acd99da4fb9ce31e5d855604ceca1a",
+      "repository_sql_sha256": "fd117974e98d95a259742146b66f082234b02ca9546e6ee024dcbb267984b2ce",
       "applied": false,
       "live_apply_authorized": false
     }

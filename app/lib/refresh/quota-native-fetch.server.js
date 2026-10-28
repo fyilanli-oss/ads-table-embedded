@@ -160,10 +160,11 @@ export function createQuotaManagedFetch({provider,guard,resolveOperation,isDispa
           const errors=Array.isArray(payload?.errors)?payload.errors:[];
           rejected=rejected||Boolean(payload?.error)||errors.length>0;
           if(provider==="shopify_admin"&&payload&&Object.hasOwn(payload,"errors")&&!Array.isArray(payload.errors))rejected=true;
-          // Only the documented Partner throttle shape can name a shared-quota signal here.
-          // 401/403, mixed GraphQL errors, Google 429 and arbitrary header/JSON scope IDs cannot widen it.
+          // Exact provider-specific GraphQL codes only; HTTP status or mixed errors cannot widen a stop.
           if(provider==="shopify_partner"&&[200,429].includes(response.status)&&!payload?.error&&errors.length>0
             &&errors.every(error=>String(error?.extensions?.code)==="429")) quotaSignal="shopify_partner_throttled";
+          if(provider==="shopify_admin"&&[200,429].includes(response.status)&&!payload?.error&&errors.length>0
+            &&errors.every(error=>error?.extensions?.code==="THROTTLED"))quotaSignal="shopify_admin_throttled";
         } catch {rejected=true;}
       }
       const feedback=provider==="shopify_admin"?shopifyAdminCostFeedback(response.status,adminPayload):quotaResponseFeedback(metadata,response);

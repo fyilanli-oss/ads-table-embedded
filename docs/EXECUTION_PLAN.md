@@ -1,5 +1,20 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## Mevcut 14 değerlendirmesi — Admin maliyet geri bildirimi ve kurallı ortak durdurma, 28 Ekim 2026
+
+#239 `342691056231fcf300830ee28baa7cf4c195a2da` main’dedir. Mevcut 12 düzeltmelerinde devam onayıyla maliyet geri bildirimi ve ortak durdurma bağlantısı hazırlandı. CLI migration `20261028143322_eo05a_admin_cost_feedback.sql` yalnız mevcut private operations kota envanteri ve fonksiyonlarını tamamlar; yeni tablo, etkin profil, native limit, Dataset veya kimlik writer yoktur. 26 sıra ve 13 sonrası kısa / 15 sonrası ana değerlendirme kararı korunur; tam 14 veya canlı kabul verilmez.
+
+Admin geri bildirimi repository ve SQL tarafından exact yedi alanda doğrulanır. observed/partial/missing/invalid ayrı; gerçek zero ve kesirli native restoreRate korunur. Kayıt yalnız mevcut Admin operation ve tüketilmiş attempt’e bağlıdır; zaman sunucudandır. Aynı attempt’in birebir tekrarı idempotent, çelişkili tekrarı false’tur. Eski attempt yeni gözlemi ezemez. Ham yanıt, veri, header veya hata mesajı saklanmaz. Bu gözlem limit kurmaz, puan iade etmez, plan tahmin etmez, kapasite açmaz veya stop temizlemez.
+
+Native sınır yalnız Admin HTTP200/429, nonempty errors ve bütün extensions.code değerleri exact THROTTLED olduğunda shopify_admin_throttled üretir. Karışık hata, tek başına 429, Partner 429 kodu veya maliyet bütçesi aşımı ortak throttle kanıtı sayılmaz. SQL aynı attempt’in gerçekten tükettiği Admin puan policy’leri ile mevcut owner stop kurallarının kesişimini durdurur. İlgili policy’yi kullanan kardeş işlem de durur; kural olmayan veya tüketilmemiş policy etkilenmez. Kural yoksa yalnız operation durur. 401/403 mevcut connection-domain stop davranışını korur; unknown attempt unsettled kalır. Hatalı native yanıtta feedback kaydı başarısız olsa da stop denenir. Otomatik retry, refund veya yeniden açma yoktur.
+
+Gerçek SQL sınaması mevcut F01 authority matrisi içinde native readPage zamanlayıcısının dışında, gerçek transport/guard/repository/SQL ve sentetik HTTP ile çalışır. İki policy, shared sibling, kural yokluğu, ilgisiz policy, malformed veri, attempt bağlamı, geç gelen gözlem, idempotence, feedback yazım hatası, unknown ve cost overrun sınanır. Bütün fixture satırları rollback edilir; native HTTP=0. RLS/ACL korunur, yeni SQL fonksiyonu yalnız coordinator’a açıktır ve eski internal fonksiyonun doğrudan çağrısı kapatılır. Global SDK hook, native profil/maliyet/aktivasyon, Merchant/canonical/OAuth/scheduling ve sonraki yazım kapıları açık kalır.
+
+23 yeni + 1.802 mevcut ilgili test (1.825 toplam), 7 repository kontrolü, typecheck ve diff kontrolü geçti. Gerçek SQL kanıtı PR/F01 üzerinde ayrıca doğrulanacaktır.
+
+Resmî kontrol 28 Ekim 2026: [Shopify maliyet](https://shopify.dev/docs/apps/build/apis/graphql-admin/rate-limits), [Admin hata kodları](https://shopify.dev/docs/api/admin-graphql/latest#status-and-error-codes), [Supabase fonksiyonlar](https://supabase.com/docs/guides/database/functions), [changelog](https://supabase.com/changelog), [PostgreSQL locks](https://www.postgresql.org/docs/17/explicit-locking.html). Makine kaydı: `contracts/eo-05-start-brief-v1.json#Shopify_Admin_cost_feedback_SQL_2026_10_28`.
+
+
 ## Mevcut 14 değerlendirmesi — Admin maliyet rezervasyonunun SQL bağlantısı, 28 Ekim 2026
 
 #238 `78829f8283152daab9058a824d851677ea77a7ec` main’dedir. Kullanıcının devam onayıyla, mevcut 12 düzeltmelerinde Admin maliyet rezervasyonuna geçildi. Bu teslim yalnız mevcut private kota envanterini tamamlar; yeni tablo, Dataset writer, canlı profil veya limit tanımlamaz. 13 sonrası kısa değerlendirme yapıldı; kalan 12 kod eksikleri ardından 15 sonrasında ana değerlendirme yapılması kararlaştırıldı. Bu sıra mutabakatı canlı uygulama veya sonraki provider kapıları için onay değildir.

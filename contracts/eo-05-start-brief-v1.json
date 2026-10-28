@@ -24,7 +24,7 @@
     "google_pd_source_composition": "merged_PR185_f01d31ee7f741e70513bfe96e8750d4f405580a5",
     "klaviyo_pd_source_composition": "merged_PR186_99f6474bc49ff70a084ca5916bc3631f05187ba1",
     "pd_canonical_bridge": "merged_PR187_5657ce49c2c93b4d018c4606e08134a311754c33",
-    "current_slice": "ordered_step14_Admin_cost_budget_SQL_remediation_repository_prepared_not_live_or_Dataset",
+    "current_slice": "ordered_step14_Admin_cost_feedback_shared_stop_SQL_repository_prepared_not_live_or_Dataset",
     "permission_preflight": "merged_PR190_ee28856c1260dffd18725eeb85718d195a5ce3de_not_live",
     "identity_OAuth_scope_binding": "merged_PR191_438bf5f8960cc2e25d4b6202a580cc1b1bf9b426_not_live",
     "Google_identity_credential_lifecycle": "merged_PR192_807408603484578555fc8700eb50f9cfa420d07d_not_live",
@@ -80,6 +80,47 @@
     "identity_pause_before_step_12": true,
     "historical_PMax_pause_preserved": true,
     "package_complete": false
+  },
+  "Shopify_Admin_cost_feedback_SQL_2026_10_28": {
+    "ordered_plan_step": 14,
+    "remediates_existing_ordered_step": 12,
+    "status": "repository_prepared_pending_exact_head_CI_and_owner_merge_not_live",
+    "prior_cost_budget_merge": "PR239_342691056231fcf300830ee28baa7cf4c195a2da",
+    "migration": "supabase/migrations/20261028143322_eo05a_admin_cost_feedback.sql",
+    "runtime": [
+      "app/lib/database/shared-quota-repository.server.js",
+      "app/lib/refresh/shared-quota.server.js",
+      "app/lib/refresh/quota-native-fetch.server.js",
+      "app/lib/refresh/shopify-admin-identity-quota.server.js"
+    ],
+    "real_SQL_probe": "tools/eo05-admin-cost-feedback-probe.mjs",
+    "scope": "existing_private_api_quota_feedback_operation_stop_rules_and_functions_only_no_new_table",
+    "feedback": "exact_seven_fields_observed_partial_missing_invalid_separate_zero_fractional_native_throttle_capacity_preserved_no_body_headers_errors_or_account_details_stored",
+    "binding": "provider_Admin_and_existing_operation_attempt_debits_required_DB_clock_same_attempt_exact_replay_idempotent_conflicting_replay_false_older_attempt_cannot_replace_newer_observation",
+    "signal": "only_Admin_HTTP_200_or_429_nonempty_errors_all_exact_extensions_code_THROTTLED_no_top_level_error_native_signal_shopify_admin_throttled_Partner_and_Google_signals_remain_separate",
+    "stop": "known_nonconnection_Admin_response_and_existing_owner_stop_rule_intersect_actual_attempt_charged_point_policy_required_other_shared_policies_not_stopped_sibling_operation_waits_on_same_stopped_policy",
+    "failure": "no_owner_rule_or_mixed_errors_or_HTTP_429_alone_or_cost_overrun_only_operation_stop_connection_401_403_retains_existing_domain_stop_unknown_attempt_unsettled_feedback_error_still_attempts_rejected_response_stop",
+    "no_capacity_inference": "observed_maximum_available_currently_available_restore_rate_never_grant_capacity_refund_points_resize_policies_infer_plan_reopen_stop_or_schedule_retry",
+    "validation": "23_new_plus_1802_existing_relevant_tests_1825_total_7_controls_typecheck_passed_real_SQL_pending_both_existing_F01_rollback_only_replays_outside_native_timer_synthetic_HTTP_no_native_calls",
+    "security": "forced_RLS_and_table_ACL_preserved_new_definer_function_empty_search_path_coordinator_only_renamed_predecessor_execute_revoked",
+    "remaining": [
+      "explicit_global_SDK_hook",
+      "native_verified_profiles_and_exact_query_cost_bounds_activation_capacity_review",
+      "Merchant_SQL_canonical_installation_selection_epoch_OAuth_CAS",
+      "independent_order_ranges_scheduling_safe_partial_continuation",
+      "native_identity_order_claim_evidence_step15_storage_review"
+    ],
+    "live_apply_authorized": false,
+    "native_configuration_inserted": false,
+    "Dataset_write": false,
+    "official_sources_checked_at": "2026-10-28",
+    "official_sources": [
+      "https://shopify.dev/docs/apps/build/apis/graphql-admin/rate-limits",
+      "https://shopify.dev/docs/api/admin-graphql/latest#status-and-error-codes",
+      "https://supabase.com/docs/guides/database/functions",
+      "https://supabase.com/changelog",
+      "https://www.postgresql.org/docs/17/explicit-locking.html"
+    ]
   },
   "Shopify_Admin_cost_budget_SQL_2026_10_28": {
     "ordered_plan_step": 14,

@@ -116,7 +116,7 @@ for(const [name,payload,status] of [["HTTP 200 THROTTLED",{errors:[{message:"SEC
 ])test(`Admin ${name} stops once and never emits Partner throttle signal`,async()=>{
   const f=fixture();f.q.payload=payload;f.q.status=status;
   if(status===200)await assert.rejects(f.read());else assert.equal((await f.read()).status,status);
-  assert.equal(f.calls.length,1);assert.equal(f.stops.length,1);assert.equal(f.stops[0].quotaSignal,null);assert.equal(f.settles.length,0);
+  assert.equal(f.calls.length,1);assert.equal(f.stops.length,1);assert.equal(f.stops[0].quotaSignal,name==="HTTP 200 THROTTLED"?"shopify_admin_throttled":null);assert.equal(f.settles.length,0);
   assert.doesNotMatch(JSON.stringify([f.feedback,f.stops]),/SECRET/);
 });
 test("Admin feedback failure cannot publish success; unknown transport stops without not-sent proof",async()=>{

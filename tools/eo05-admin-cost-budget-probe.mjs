@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import {createHash,randomUUID} from "node:crypto";
 import {createSharedQuotaRepository} from "../app/lib/database/shared-quota-repository.server.js";
 import {createSharedQuotaGuard,SHOPIFY_ADMIN_COST_UNIT} from "../app/lib/refresh/shared-quota.server.js";
+import {adminCostFeedbackProbe} from "./eo05-admin-cost-feedback-probe.mjs";
 
 // Synthetic profiles in the existing isolated, rollback-only SQL scenario. No native HTTP.
 export async function adminCostBudgetProbe(client){
@@ -69,6 +70,7 @@ export async function adminCostBudgetProbe(client){
       const result=await guard.execute({operationKey:operation,lane:"interactive",requiredCostUnit:SHOPIFY_ADMIN_COST_UNIT,run:async()=>{calls++;}});
       assert.equal(result.status,"stopped");assert.equal(calls,1);assert.equal(await count(),4);
     });
+    await adminCostFeedbackProbe(client,{operation,policies,domain});
     for(const role of ["anon","authenticated","service_role","adstable_runtime","adstable_refresh_coordinator"])
       for(const table of ["api_quota_operations","api_quota_policies"])
         assert.equal((await client.query("select has_table_privilege($1,$2,'SELECT,INSERT,UPDATE,DELETE') allowed",[role,`operations.${table}`])).rows[0].allowed,false);

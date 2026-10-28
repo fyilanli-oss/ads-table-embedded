@@ -1,3 +1,4 @@
+import {reviewRefreshReferencePrewrite} from "../app/lib/providers/reference-prewrite.server.js";
 import test,{after} from "node:test";
 import assert from "node:assert/strict";
 import {collectMetaNativeIdentityEvidence, collectMetaVerifiedProductCandidateEvidence, collectMetaReportProductCandidateEvidence} from "../app/lib/providers/meta-identity-collection.server.js";
@@ -827,6 +828,61 @@ const candidatePrewriteOwner=()=>({provider:"meta",workspaceId:workspace,install
 candidatePrewriteCases({provider:"meta",fixture:candidateBoundFixture,nativeFixture:boundFixture,expected:candidatePrewriteOwner,
   empty:f=>{f.native.products.data=[];},unresolved:f=>{delete f.config.sourceRules;},
   productOnly:f=>{f.config.sourceRules[0].format="shopify_product_id";delete f.config.sourceRules[0].market;f.native.products.data[0].retailer_id="10";}});
+
+test("Meta reference prewrite: captured report links and four raw fields survive without claims or IO",async()=>{
+  const f=candidateBoundFixture(true),observation=await f.create().readEvidence(),before=JSON.stringify(observation);
+  const io=[f.calls.length,f.adminCalls.length,f.queries.length],r=reviewRefreshReferencePrewrite({expected:candidatePrewriteOwner(),observation});
+  assert.equal(r.referenceLinksReviewed,true);assert.equal(r.referenceReview.family,"meta_product_report");
+  assert.equal(r.referenceReview.rows[0].candidateIndex,0);assert.equal(r.referenceReview.rows[0].state,"catalog_candidate_reference");
+  assert.equal(r.referenceReview.rows[0].observed,observation.native_product_report.rows[0]);
+  assert.equal(r.referenceReview.observed,observation.product_report_candidate_links);assert.equal(r.candidateReview.reportLinksReviewed,false);
+  for(const field of ["converted_product_quantity","converted_product_value","converted_promoted_product_quantity","converted_promoted_product_value"])
+    assert.deepEqual(r.referenceReview.rows[0].observed[field],f.native.insights.data[0][field]);
+  for(const field of ["providerClaimsReviewed","providerClaimVerified","exactOverlapVerified","providerLinkVerified","canonicalScopeReady",
+    "nativePermissionVerified","persistable","authorizesActivation","mappingWritePerformed","DatasetWritePerformed","salesRolesChanged"])assert.equal(r[field],false);
+  assert.equal(JSON.stringify(observation),before);assert.deepEqual([f.calls.length,f.adminCalls.length,f.queries.length],io);
+  assert.ok(Object.isFrozen(r.referenceReview.rows));assert.deepEqual(reviewRefreshReferencePrewrite({expected:candidatePrewriteOwner(),observation}),r);
+});
+for(const [name,change,reason] of [
+  ["no namespace",f=>{delete f.config.reportIdentityRules;},"verified_report_identity_rule_required"],
+  ["no source rule",f=>{delete f.config.sourceRules;},"verified_source_rule_required"],
+  ["internal namespace never falls back",f=>{f.config.reportIdentityRules[0].identity_namespace="catalog_product_id";},"native_catalog_record_not_observed"],
+  ["outside selected Ad",f=>{f.native.insights.data[0].ad_id="67";},"outside_selected_Ad_catalog_observation"],
+  ["catalog record not observed",f=>{f.native.products.data=[];},"native_catalog_record_not_observed"],
+])test(`Meta reference prewrite: ${name} retained unresolved`,async()=>{
+  const f=candidateBoundFixture(true);change(f);const observation=await f.create().readEvidence();
+  const r=reviewRefreshReferencePrewrite({expected:candidatePrewriteOwner(),observation});assert.equal(r.referenceReview.rows[0].reason,reason);
+  assert.equal(r.referenceReview.rows[0].candidateIndex,null);assert.equal(r.referenceReview.rows[0].standardizedProductId,null);
+});
+test("Meta reference prewrite: exact internal namespace is reviewed against original target and registry",async()=>{
+  const f=candidateBoundFixture(true);f.config.reportIdentityRules[0].identity_namespace="catalog_product_id";f.native.insights.data[0].product_id="900";
+  const reader=f.create();f.config.reportIdentityRules[0].identity_namespace="retailer_id";f.config.adId="67";f.config.window.from="2026-10-02";
+  const observation=await reader.readEvidence(),r=reviewRefreshReferencePrewrite({expected:candidatePrewriteOwner(),observation});
+  assert.equal(r.referenceReview.rows[0].candidateIndex,0);assert.equal(r.referenceReview.rows[0].reference.identity_namespace,"catalog_product_id");
+});
+test("Meta reference prewrite: ambiguous retailer across feeds is retained without picking first",async()=>{
+  const f=candidateBoundFixture(true),other=rule();other.product_context.product_feed_id="101";f.config.sourceRules.push(other);
+  const record=structuredClone(f.native.products.data[0]);record.id="901";record.product_feed.id="101";f.native.products.data.push(record);
+  const observation=await f.create().readEvidence(),r=reviewRefreshReferencePrewrite({expected:candidatePrewriteOwner(),observation});
+  assert.equal(r.candidateReview.rows.length,2);assert.equal(r.referenceReview.rows[0].state,"ambiguous");
+  assert.equal(r.referenceReview.rows[0].candidateIndex,null);assert.equal(r.referenceReview.rows[0].reason,"multiple_native_catalog_records_for_verified_namespace");
+});
+test("Meta reference prewrite: complete empty report differs from report not collected",async()=>{
+  const f=candidateBoundFixture(true);f.native.insights.data=[];const observation=await f.create().readEvidence();
+  const r=reviewRefreshReferencePrewrite({expected:candidatePrewriteOwner(),observation});assert.equal(r.referenceReview.observedEmpty,true);assert.equal(r.referenceLinksReviewed,true);
+  const g=candidateBoundFixture(),native=await g.create().readEvidence(),s=reviewRefreshReferencePrewrite({expected:candidatePrewriteOwner(),observation:native});
+  assert.equal(s.referenceReview.state,"not_collected_in_this_reader_mode");assert.equal(s.referenceReview.observedEmpty,null);assert.equal(s.referenceLinksReviewed,false);
+});
+for(const [name,convert] of [["JSON clone",x=>structuredClone(x)],["spread",x=>({...x})],["forged flags",()=>({provider:"meta",provider_link_verified:true})]])
+test(`Meta reference prewrite: ${name} has no provenance`,async()=>{
+  const f=candidateBoundFixture(true),observation=convert(await f.create().readEvidence());
+  assert.throws(()=>reviewRefreshReferencePrewrite({expected:candidatePrewriteOwner(),observation}),/OBSERVATION_REQUIRED/);
+});
+test("Meta reference prewrite: owner or caller registry override cannot change checked links",async()=>{
+  const f=candidateBoundFixture(true),observation=await f.create().readEvidence();
+  assert.throws(()=>reviewRefreshReferencePrewrite({expected:{...candidatePrewriteOwner(),connectionVersion:3},observation}),/OWNER_MISMATCH/);
+  assert.throws(()=>reviewRefreshReferencePrewrite({expected:candidatePrewriteOwner(),observation,reportRules:[]}),/INPUT_INVALID/);
+});
 test("Meta prewrite: duplicated retailer ID across feeds does not collapse catalog records",async()=>{
   const f=candidateBoundFixture(),other=rule();other.product_context.product_feed_id="101";other.source_reference="synthetic-other-feed";f.config.sourceRules.push(other);
   const record=structuredClone(f.native.products.data[0]);record.id="901";record.product_feed.id="101";f.native.products.data.push(record);

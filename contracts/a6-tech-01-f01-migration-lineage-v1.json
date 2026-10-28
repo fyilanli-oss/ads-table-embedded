@@ -598,6 +598,15 @@
       "repository_sql_sha256": "8d5e8df045f137267361cca86462819a521602568254afd526409ab8dd8b5305",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261028161123",
+      "name": "eo05a_identity_authority_snapshot",
+      "file": "supabase/migrations/20261028161123_eo05a_identity_authority_snapshot.sql",
+      "created_with": "supabase@2.121.0 migration new eo05a_identity_authority_snapshot",
+      "repository_sql_sha256": "aa6f363301b4a840bebb12990b983828d72f46e07af3f5c7cf4a475e46194cfd",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

@@ -42,12 +42,12 @@ function fixture() {
     scope: state.scopes.join(" "), scope_verified_at: state.now.toISOString(), expires_in: 3600, expires_at: "2026-10-27T16:00:00.000Z"};
   const database = {async query(sql, params) {
     queries.push({sql, params}); await hooks.query?.(sql);
-    if (sql.includes("resolve_active_installation")) return {rows: [{workspace_id: workspace, install_generation: state.generation, installation_status: "active"}]};
-    if (sql.includes("load_provider_connection_lifecycle_by_owner")) return {rows: [{connection_id: connection, credential_id: credential,
-      lifecycle_status: state.status, connection_version: state.version}]};
-    if (sql.includes("load_provider_account_authority")) return {rows: [{connection_id: connection, credential_id: credential,
-      reporting_account_id: state.account, granted_scopes: [...state.scopes], accounts: [{id: state.account, kind: "advertiser",
-        reporting_eligible: true, login_account_id: state.manager}]}]};
+    if (sql.includes("load_provider_identity_authority")) return {rows: [{
+      installation_id: String(state.installationId ?? "42"),workspace_id:workspace,install_generation:state.generation,installation_status:"active",
+      shop_id:"gid://shopify/Shop/12",shop_domain:"test.myshopify.com",connection_id:connection,credential_id:credential,connection_version:state.version,lifecycle_status:state.status,
+      granted_scopes:[...state.scopes],reporting_account_id:"google_ads"==="klaviyo"?null:state.account,reporting_selection_epoch:"google_ads"==="klaviyo"?null:String(state.selectionEpoch ?? "71"),
+      accounts:[{id:state.account,kind:"google_ads"==="klaviyo"?"account":"advertiser",status:"active",reporting_eligible:true,
+        login_account_id:"google_ads"==="google_ads"?state.manager:null}]}]};
     throw Error("unexpected SQL");
   }};
   const tokenVault = {loadProviderTokenSet: async () => token};
@@ -65,7 +65,7 @@ function fixture() {
 test("concrete authority loader composes native Ads link, Merchant source and final link with no invented scope", async () => {
   const f = fixture(), r = await f.run();
   assert.equal(f.calls.length, 3); assert.equal(r.native_source.records[0].native_product_id, "shopify_US_123_456");
-  assert.equal(r.native_source.scope, undefined); assert.equal(r.installation_id, null); assert.equal(r.canonical_scope_ready, false);
+  assert.equal(r.native_source.scope, undefined); assert.equal(r.installation_id, "42"); assert.equal(r.canonical_scope_ready, false);
   assert.equal(r.provider_link_verified, true); assert.equal(r.relationship_scope, "observed_direct_Ads_Merchant_relationship_only");
   assert.equal(r.native_source.provider_link_verified, false); assert.equal(r.persistable, false); assert.equal(r.mapping_write_performed, false);
   assert.equal(r.shopify_mapping_state, "not_resolved"); assert.equal(r.source_facts_changed, false);
@@ -195,7 +195,7 @@ test("candidate composition: exact reviewed rule and same-shop parent produce on
   assert.equal(candidates.candidates[0].shopify_product_id, "gid://shopify/Product/123");
   assert.equal(candidates.candidates[0].candidate_evidence.source_rule.source_reference, rule().source_reference);
   assert.equal(candidates.rows[0].standardized_product_id, null); assert.equal(candidates.mappings, undefined);
-  assert.equal(r.installation_id, null); assert.equal(r.canonical_scope_ready, false); assert.equal(candidates.provider_link_verified, false);
+  assert.equal(r.installation_id, "42"); assert.equal(r.canonical_scope_ready, false); assert.equal(candidates.provider_link_verified, false);
   assert.equal(r.provider_link_verified, true); assert.equal(r.persistable, false); assert.equal(r.mapping_write_performed, false);
 });
 for (const [name, mutate] of [
@@ -425,7 +425,7 @@ test("bound Google: native Ads/Merchant/link chain binds fenced work and separat
   assert.equal(f.reservations[0].operationKey,f.reservations[2].operationKey);assert.notEqual(f.reservations[0].operationKey,f.reservations[1].operationKey);
   assert.ok(f.loads.every(x=>x.provider==="google_ads"&&x.claim.id==="job1"&&x.claim.fence===2&&x.claim.accountId==="123"
     &&x.window.from==="2026-10-01"&&x.entitlementReceipt.observedAt===f.state.now.toISOString()));
-  assert.equal(f.c.merchant.quotaAccountId,"98");assert.equal(r.installation_id,null);assert.equal(r.persistable,false);
+  assert.equal(f.c.merchant.quotaAccountId,"98");assert.equal(r.installation_id,"42");assert.equal(r.persistable,false);
   assert.equal(r.shopify_mapping_state,"not_resolved");assert.equal(r.native_source.records[0].shopify_product_id,undefined);
   assert.equal(f.calls[0].init.headers.get("login-customer-id"),"456");assert.equal(f.calls[0].init.headers.get("developer-token"),"secret-developer");
   assert.doesNotMatch(JSON.stringify([f.loads,f.lookups,f.reservations,f.stops]),/secret-access|secret-refresh|secret-developer|SELECT|shopify_US|pageToken/);
@@ -556,7 +556,7 @@ test("bound Google candidate: Ads Merchant and genuine SDK Admin share fenced jo
   assert.equal(r.product_identity_candidates.provider_link_verified,false);assert.equal(r.provider_link_verified,true);
   assert.equal(r.relationship_scope,"observed_direct_Ads_Merchant_relationship_only");
   for(const k of ["persistable","canonical_scope_ready","authorizes_activation","mapping_write_performed","source_facts_changed"])assert.equal(r[k],false);
-  assert.equal(r.installation_id,null);assert.equal(f.c.merchant.quotaAccountId,"98");
+  assert.equal(r.installation_id,"42");assert.equal(f.c.merchant.quotaAccountId,"98");
   assert.doesNotMatch(JSON.stringify([f.loads,f.adminLoads,f.reservations,f.feedback,r]),/SECRET|secret-access|secret-developer|secret-refresh/);
 });
 test("bound Google candidate: default registry remains empty without parsing Shopify-looking offers",async()=>{

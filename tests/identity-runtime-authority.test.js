@@ -23,14 +23,12 @@ function fixture(provider = "google_ads") {
   const db = {async query(sql, params) {
     calls.push({sql, params});
     await hooks.query?.(sql, params);
-    if (sql.includes("resolve_active_installation")) return {rows: [{workspace_id: state.workspace, install_generation: state.generation, installation_status: "active"}]};
-    if (sql.includes("load_provider_connection_lifecycle_by_owner")) return {rows: [{connection_id: state.connectionId,
-      lifecycle_status: state.status, connection_version: state.version, credential_id: state.credentialId}]};
-    if (sql.includes("load_provider_account_authority")) return {rows: [{connection_id: state.connectionId,
-      credential_id: state.accountCredentialId ?? state.credentialId, granted_scopes: [...state.scopes],
-      reporting_account_id: provider === "klaviyo" ? null : state.account,
-      accounts: hooks.accounts?.() ?? [{id: state.account, kind: provider === "klaviyo" ? "account" : "advertiser",
-        status: "active", reporting_eligible: true, login_account_id: provider === "google_ads" ? "456" : null, name: "private account name"}]}]};
+    if (sql.includes("load_provider_identity_authority")) return {rows: state.accountCredentialId && state.accountCredentialId!==state.credentialId ? [] : [{
+      installation_id: String(state.installationId ?? "42"),workspace_id:state.workspace,install_generation:state.generation,installation_status:"active",
+      shop_id:"gid://shopify/Shop/12",shop_domain:"test.myshopify.com",connection_id:state.connectionId,credential_id:state.credentialId,connection_version:state.version,lifecycle_status:state.status,
+      granted_scopes:[...state.scopes],reporting_account_id:provider==="klaviyo"?null:state.account,reporting_selection_epoch:provider==="klaviyo"?null:String(state.selectionEpoch ?? "71"),
+      accounts:hooks.accounts?.() ?? [{id:state.account,kind:provider==="klaviyo"?"account":"advertiser",status:"active",reporting_eligible:true,
+        login_account_id:provider==="google_ads"?"456":null}]}]};
     throw Error("unexpected SQL");
   }};
   const hooks = {};
@@ -42,16 +40,16 @@ for (const provider of ["google_ads", "meta", "klaviyo"]) test(`${provider}: con
   const f = fixture(provider), result = await f.create().loadCurrent();
   assert.equal(result.connectionId, connectionId); assert.equal(result.connectionVersion, 2);
   assert.equal(result.account.id, f.state.account); assert.equal(result.account.name, undefined);
-  assert.equal(result.installation_id, null); assert.equal(result.canonical_scope_ready, false);
+  assert.equal(result.installation_id, "42"); assert.equal(result.reporting_selection_epoch,provider==="klaviyo"?null:"71"); assert.equal(result.canonical_scope_ready, false);
   assert.equal(result.native_permission_revalidated, false); assert.equal(result.persistable, false);
-  assert.equal(result.authorizes_activation, false); assert.equal(f.calls.length, 6); assert.equal(f.vaultCalls.length, 1);
+  assert.equal(result.authorizes_activation, false); assert.equal(f.calls.length, 2); assert.equal(f.vaultCalls.length, 1);
   assert.deepEqual(f.vaultCalls[0], {credentialId, installationAuthority: f.verified.installationAuthority, provider});
   assert.ok(f.calls.every(c => /^select \*/.test(c.sql))); assert.ok(Object.isFrozen(result.tokenSet));
-  assert.ok(f.calls.filter(c => !c.sql.includes("resolve_active_installation")).every(c => JSON.stringify(c.params) === JSON.stringify([workspace, 3, provider])));
+  assert.ok(f.calls.every(c => JSON.stringify(c.params) === JSON.stringify([workspace, 3, provider,"gid://shopify/Shop/12","test.myshopify.com"])));
 });
 test("never fabricates internal installation key from caller or generation", async () => {
   const f = fixture(); f.verified.installationAuthority.installation_id = "999";
-  const r = await f.create().loadCurrent(); assert.equal(r.installation_id, null); assert.equal(r.installation.installation_id, undefined);
+  const r = await f.create().loadCurrent(); assert.equal(r.installation_id, "42"); assert.equal(r.installation.installation_id, undefined);
 });
 test("caller input detached before async reads", async () => {
   const f = fixture(), loader = f.create(); f.verified.identity.shop.shopId = "gid://shopify/Shop/99";
@@ -78,9 +76,28 @@ test("account selection change between successful loads rejected", async () => {
   const f = fixture(), loader = f.create(); await loader.loadCurrent(); f.state.account = "789";
   await assert.rejects(loader.loadCurrent(), /AUTHORITY_CHANGED/);
 });
+
+for(const field of ["selectionEpoch","installationId"])test(`SQL ${field} change during vault read cannot revive the same account`,async()=>{
+  const f=fixture(),loader=f.create();f.hooks.vault=()=>{f.state[field]="9007199254740993";};
+  await assert.rejects(loader.loadCurrent(),/AUTHORITY_CHANGED/);assert.equal(f.vaultCalls.length,1);
+  await assert.rejects(loader.loadCurrent(),/EXECUTION_STOPPED/);
+});
+test("SQL bigint installation and selection keys stay lossless strings",async()=>{
+  const f=fixture();f.state.installationId="9007199254740993";f.state.selectionEpoch="9007199254740995";
+  const r=await f.create().loadCurrent();assert.equal(r.installation_id,"9007199254740993");assert.equal(r.reporting_selection_epoch,"9007199254740995");
+  assert.equal(r.persistable,false);assert.equal(r.canonical_scope_ready,false);
+});
+test("same-account selection epoch changes between completed reads invalidate the loader",async()=>{
+  const f=fixture(),loader=f.create();await loader.loadCurrent();f.state.selectionEpoch="72";
+  await assert.rejects(loader.loadCurrent(),/AUTHORITY_CHANGED/);assert.equal(f.state.account,"123");
+});
+for(const field of ["installationId","selectionEpoch"])for(const value of ["0","01","9223372036854775808","1.5","1e3"])
+  test(`invalid SQL ${field} ${value} stops before vault`,async()=>{
+    const f=fixture();f.state[field]=value;await assert.rejects(f.create().loadCurrent(),/AUTHORITY_READ_FAILED/);assert.equal(f.vaultCalls.length,0);
+  });
 test("unchanged context can reload without metadata/token caching", async () => {
   const f = fixture(), loader = f.create(); await loader.loadCurrent(); await loader.loadCurrent();
-  assert.equal(f.calls.length, 12); assert.equal(f.vaultCalls.length, 2);
+  assert.equal(f.calls.length, 4); assert.equal(f.vaultCalls.length, 2);
 });
 test("same credential ID with changed token is rejected on next load", async () => {
   const f = fixture(), loader = f.create(); await loader.loadCurrent(); f.token.access_token = "changed";
@@ -89,11 +106,11 @@ test("same credential ID with changed token is rejected on next load", async () 
 test("missing vault token stops without a provider request or secret leak", async () => {
   const f = fixture(); f.hooks.vault = () => {throw Error("secret-credential-payload");};
   await assert.rejects(f.create().loadCurrent(), e => !e.message.includes("secret") && /AUTHORITY_READ_FAILED/.test(e.message));
-  assert.equal(f.vaultCalls.length, 1); assert.equal(f.calls.length, 3);
+  assert.equal(f.vaultCalls.length, 1); assert.equal(f.calls.length, 1);
 });
 for (const provider of ["google_ads", "klaviyo"]) test(`${provider}: expired token never refreshes`, async () => {
   const f = fixture(provider); f.token.expires_at = date.toISOString(); await assert.rejects(f.create().loadCurrent());
-  assert.equal(f.calls.length, 3); assert.equal(f.vaultCalls.length, 1);
+  assert.equal(f.calls.length, 1); assert.equal(f.vaultCalls.length, 1);
 });
 test("reporting-only Meta token cannot enter identity execution", async () => {
   const f = fixture("meta"); delete f.token.permission_profile;
@@ -127,7 +144,7 @@ test("concurrent loader reads do not race baseline", async () => {
 });
 test("invalid native token cannot trigger a second DB collection", async () => {
   const f = fixture(); f.token.access_token = "contains\u0001control";
-  await assert.rejects(f.create().loadCurrent(), /TOKEN_INVALID/); assert.equal(f.calls.length, 3);
+  await assert.rejects(f.create().loadCurrent(), /TOKEN_INVALID/); assert.equal(f.calls.length, 1);
 });
 test("frozen result does not freeze or mutate vault's original object", async () => {
   const f = fixture(), r = await f.create().loadCurrent();
@@ -138,14 +155,14 @@ test("Google manager route is read from the selected persisted account", async (
 });
 test("non-identity Google token rejected without refreshing", async () => {
   const f = fixture(); delete f.token.permission_profile;
-  await assert.rejects(f.create().loadCurrent(), /AUTHORITY_READ_FAILED/); assert.equal(f.calls.length, 3);
+  await assert.rejects(f.create().loadCurrent(), /AUTHORITY_READ_FAILED/); assert.equal(f.calls.length, 1);
 });
 
 test("abort on return from each SQL read stops before the next SQL or vault dependency", async () => {
-  for (const at of [1, 2, 3, 4, 5, 6]) {
+  for (const at of [1, 2]) {
     const f = fixture(), caller = new AbortController(); f.options.signal = caller.signal;
     f.hooks.query = () => {if (f.calls.length === at) caller.abort();};
     await assert.rejects(f.create().loadCurrent(), /IDENTITY_RUNTIME_ABORTED/);
-    assert.equal(f.calls.length, at); assert.equal(f.vaultCalls.length, at <= 3 ? 0 : 1);
+    assert.equal(f.calls.length, at); assert.equal(f.vaultCalls.length, at === 1 ? 0 : 1);
   }
 });

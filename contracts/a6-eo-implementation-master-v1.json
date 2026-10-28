@@ -1,4 +1,5 @@
 {
+  "Identity_authority_snapshot_2026_10_28": "contracts/eo-05-start-brief-v1.json#Identity_authority_snapshot_2026_10_28",
   "Google_Merchant_quota_SQL_2026_10_28": "contracts/eo-05-start-brief-v1.json#Google_Merchant_quota_SQL_2026_10_28",
   "Shopify_Admin_SDK_bootstrap_2026_10_28": "contracts/eo-05-start-brief-v1.json#Shopify_Admin_SDK_bootstrap_2026_10_28",
   "Shopify_Admin_cost_feedback_SQL_2026_10_28": "contracts/eo-05-start-brief-v1.json#Shopify_Admin_cost_feedback_SQL_2026_10_28",
@@ -870,7 +871,7 @@
         "google_pd_source_composition": "merged_PR185_f01d31ee7f741e70513bfe96e8750d4f405580a5",
         "klaviyo_pd_source_composition": "merged_PR186_99f6474bc49ff70a084ca5916bc3631f05187ba1",
         "pd_canonical_bridge": "merged_PR187_5657ce49c2c93b4d018c4606e08134a311754c33",
-        "current_slice": "ordered_step14_Merchant_quota_SQL_repository_prepared_not_live_or_Dataset",
+        "current_slice": "ordered_step14_identity_PK_selection_snapshot_repository_prepared_OAuth_CAS_next_not_live",
         "permission_preflight": "contracts/eo-05-start-brief-v1.json#identity_permission_preparation_2026_10_27",
         "permission_preflight_merged": "PR190_ee28856c1260dffd18725eeb85718d195a5ce3de",
         "identity_OAuth_scope_binding": "contracts/eo-05-start-brief-v1.json#identity_OAuth_scope_binding_2026_10_27",

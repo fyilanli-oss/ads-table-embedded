@@ -111,9 +111,9 @@ async function collectMetaIdentitySource({verified, database, tokenVault, adId, 
       ...(withReport ? {native_product_report: report, product_report_candidate_links: reportLinks} : {}),
       link_evidence: {before, after, permission, started_at: new Date(started).toISOString(), completed_at: new Date(clock()).toISOString()},
       provider_link_verified: true, relationship_scope: "current_ad_parent_and_observed_creative_catalog_references_only",
-      proves_product_delivery_or_Insights_namespace: false, installation_id: null, canonical_scope_ready: false,
+      proves_product_delivery_or_Insights_namespace: false, installation_id: current.installation_id, reporting_selection_epoch: current.reporting_selection_epoch, canonical_scope_ready: false,
       shopify_mapping_state: "not_resolved", persistable: false, authorizes_activation: false, mapping_write_performed: false,
-      remaining: ["trusted_installation_primary_key_and_Ads_selection_epoch_reads", "real_Meta_Insights_identity_namespace_evidence_and_reviewed_rule_registration",
+      remaining: ["canonical_authority_scope_to_source_binding", "real_Meta_Insights_identity_namespace_evidence_and_reviewed_rule_registration",
         "real_retailer_source_format_evidence_and_reviewed_rule_registration",
         ...(withShopify ? [] : ["Shopify_candidate_verification_composition"]), "quota_dispatch_and_prewrite_controls"]});
   } catch (error) {

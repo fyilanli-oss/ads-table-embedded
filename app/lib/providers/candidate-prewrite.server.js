@@ -1,5 +1,6 @@
 import {refreshCandidateObservationContext} from "../refresh/quota-authority-binding.server.js";
-import {permissionContext} from "../oauth/identity-permission-preflight.server.js";
+import {providerPrewriteOwner} from "./prewrite-owner.server.js";
+import {createIdentityAuthorityRepository} from "../database/identity-authority-repository.server.js";
 import {stableJson} from "./common-adapter.server.js";
 import {normalizeKlaviyoOrderedProductEvent} from "./klaviyo-reporting.server.js";
 
@@ -13,15 +14,16 @@ const freeze=v=>{if(v&&typeof v==="object"&&!Object.isFrozen(v)){Object.values(v
 // Trusted expected scope, completed in-process source evidence, structural review only.
 // No report metrics, namespace inference, source-rule extraction or SQL writes here.
 export function reviewRefreshCandidatePrewrite({expected,observation,...extra}={}){
-  if(Object.keys(extra).length||!expected||Object.keys(expected).sort().join(",")!=="accountId,connectionId,connectionVersion,installGeneration,provider,shopDomain,shopId,workspaceId"
-    ||!["meta","google_ads","klaviyo"].includes(expected.provider)||!Number.isSafeInteger(expected.connectionVersion)||expected.connectionVersion<1)fail("INPUT_INVALID");
-  let scope;try{scope=permissionContext(expected);}catch{fail("INPUT_INVALID");}
+  if(Object.keys(extra).length)fail("INPUT_INVALID");
+  let scope;try{scope=providerPrewriteOwner(expected);}catch{fail("INPUT_INVALID");}
   const provenance=refreshCandidateObservationContext(observation);if(!provenance)fail("OBSERVATION_REQUIRED");
   if(["provider","workspaceId","installGeneration","shopId","shopDomain","accountId"].some(k=>provenance[k]!==scope[k])
     ||observation.provider!==scope.provider||observation.installation?.workspaceId!==scope.workspaceId
     ||observation.installation?.installGeneration!==scope.installGeneration||observation.shop?.shopId!==scope.shopId
     ||observation.shop?.myshopifyDomain!==scope.shopDomain||observation.connection_id!==scope.connectionId
-    ||observation.connection_version!==expected.connectionVersion
+    ||observation.connection_version!==scope.connectionVersion
+    ||observation.installation_id!==scope.installationId||provenance.installationId!==scope.installationId
+    ||observation.reporting_selection_epoch!==scope.reportingSelectionEpoch||provenance.reportingSelectionEpoch!==scope.reportingSelectionEpoch
     ||(scope.provider==="klaviyo"?observation.account?.id:observation.account_id)!==scope.accountId)fail("OWNER_MISMATCH");
   const batch=observation.product_identity_candidates;
   if(!batch||!Array.isArray(batch.rows)||!Array.isArray(batch.candidates)||batch.candidates.length>batch.rows.length
@@ -84,8 +86,28 @@ export function reviewRefreshCandidatePrewrite({expected,observation,...extra}={
   return freeze({status:"structurally_reviewed_open_gates",scope:{...scope,connectionVersion:expected.connectionVersion},provenance,rows,
     observedEmpty:rows.length===0,counts:{sourceRows:rows.length,candidates:batch.candidates.length,
       unresolved:rows.filter(r=>r.state==="unresolved").length,conflicting:rows.filter(r=>r.state==="conflicting").length},
+    installationIdentityChecked:true,reportingSelectionEpochChecked:true,authorityReobserved:false,
     candidateReferencesChecked:true,reportLinksReviewed:false,providerClaimsReviewed:false,
     providerLinkVerified:false,canonicalScopeReady:false,nativePermissionVerified:false,persistable:false,
     authorizesActivation:false,mappingWritePerformed:false,DatasetWritePerformed:false,salesRolesChanged:false,exactOverlapVerified:false,
     remaining:["report_Message_and_provider_claim_reconciliation","native_source_namespace_and_access_proof","existing_step14_review_before_canonical_tables_and_writers"]});
+}
+
+// Last read is a nonsecret metadata check, not an atomic SQL write guard or native grant proof.
+export async function reviewRefreshCandidatePrewriteCurrent({expected,observation,database,signal,...extra}={}){
+  if(Object.keys(extra).length||signal!==undefined&&!(signal instanceof AbortSignal))fail("INPUT_INVALID");
+  const review=reviewRefreshCandidatePrewrite({expected,observation}),scope=review.scope;
+  if(signal?.aborted)fail("ABORTED");
+  let row;try{row=await createIdentityAuthorityRepository(database).load(scope);}catch{fail("AUTHORITY_READ_FAILED");}
+  if(signal?.aborted)fail("ABORTED");
+  const account=Array.isArray(row?.accounts)?row.accounts.find(a=>a.id===scope.accountId):null;
+  if(!row||row.installationId!==scope.installationId||row.selectionEpoch!==scope.reportingSelectionEpoch
+    ||row.workspaceId!==scope.workspaceId||row.installGeneration!==scope.installGeneration
+    ||row.shopId!==scope.shopId||row.shopDomain!==scope.shopDomain||row.installationStatus!=="active"
+    ||row.status!=="connected"||row.connectionId!==scope.connectionId||row.connectionVersion!==scope.connectionVersion
+    ||!account||account.reporting_eligible!==true||account.kind!==(scope.provider==="klaviyo"?"account":"advertiser")
+    ||scope.provider==="klaviyo"&&account.status!=="active"
+    ||(scope.provider==="klaviyo"?(row.reportingAccountId!==null||row.accounts?.length!==1||row.accounts[0].id!==scope.accountId)
+      :row.reportingAccountId!==scope.accountId))fail("AUTHORITY_CHANGED");
+  return freeze({...review,authorityReobserved:true,atomicWriteGuardVerified:false});
 }

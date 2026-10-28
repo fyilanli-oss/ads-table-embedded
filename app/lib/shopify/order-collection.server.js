@@ -1,3 +1,4 @@
+import {sqlIdentityKey} from "../providers/prewrite-owner.server.js";
 import {createShopifyOrderPageRequest,parseShopifyOrderPage,nextShopifyOrderPageRequest,SHOPIFY_ORDER_READ_API_VERSION,ShopifyOrderProtocolError} from "./order-read-protocol.server.js";
 import {isShopifyAdminOrderSdkClient,closeShopifyAdminOrderSdkClient} from "../refresh/shopify-admin-sdk-quota-bridge.server.js";
 import {runIdentityReadDeadline,IdentityReadDeadlineError} from "../providers/identity-read-deadline.server.js";
@@ -19,8 +20,8 @@ export function isShopifyOrderCollectionObservation(value){return observations.h
 // Trusted server composition only. checkCurrent is supplied by the private fenced
 // factory, never by a product route/user or as a replacement for HTTP quota/permission.
 // A genuine SDK client brand proves construction only, not owner or live access proof.
-export function createShopifyOrderReadExecution({client,shop,scope,range,limits,signal,checkCurrent,includeOrderHistory=false,...extra}={}) {
-  if(Object.keys(extra).length||!isShopifyAdminOrderSdkClient(client)||typeof checkCurrent!=="function"
+export function createShopifyOrderReadExecution({client,shop,scope,range,limits,signal,checkCurrent,loadInstallationOwner,includeOrderHistory=false,...extra}={}) {
+  if(Object.keys(extra).length||!isShopifyAdminOrderSdkClient(client)||typeof checkCurrent!=="function"||typeof loadInstallationOwner!=="function"
     ||!limits||typeof limits!=="object"||Array.isArray(limits)
     ||Object.keys(limits).sort().join(",")!=="maxBytes,maxElapsedMs,maxRequests,maxRows,pageSize"
     ||typeof includeOrderHistory!=="boolean"||signal!==undefined&&!(signal instanceof AbortSignal))fail("INPUT_INVALID");
@@ -30,6 +31,7 @@ export function createShopifyOrderReadExecution({client,shop,scope,range,limits,
   const initial=createShopifyOrderPageRequest({family:"order_headers",shop:expectedShop,range:window,first:caps.pageSize});
   const permissionOwner=permissionContext({provider:"shopify",workspaceId:owner?.workspace_id,installGeneration:owner?.installation_generation,
     shopId:expectedShop.id,shopDomain:expectedShop.myshopifyDomain});
+  if(owner.installation_id!==null)fail("INSTALLATION_OVERRIDE_FORBIDDEN");
   const graphql=client.graphql.bind(client);
   let used=false;
   return Object.freeze({async readEvidence(...args){
@@ -44,7 +46,14 @@ export function createShopifyOrderReadExecution({client,shop,scope,range,limits,
           if(closed||child.aborted)fail("ABORTED");
           if(performance.now()-started>=caps.maxElapsedMs)throw new IdentityReadDeadlineError("IDENTITY_READ_DEADLINE_EXCEEDED");
         };
-        async function current(){check();if(await checkCurrent()!==true)fail("AUTHORITY_CHANGED");check();}
+        async function current(){
+          check();let identity;try{identity=await loadInstallationOwner();}catch{fail("AUTHORITY_READ_FAILED");}check();
+          if(!identity||!sqlIdentityKey(identity.installationId)||identity.workspaceId!==permissionOwner.workspaceId
+            ||identity.installGeneration!==permissionOwner.installGeneration||identity.shopId!==permissionOwner.shopId
+            ||identity.shopDomain!==permissionOwner.shopDomain
+            ||owner.installation_id!==null&&owner.installation_id!==identity.installationId)fail("AUTHORITY_CHANGED");
+          if(await checkCurrent()!==true)fail("AUTHORITY_CHANGED");check();owner.installation_id=identity.installationId;
+        }
         async function json(response){
           if(!response?.ok||typeof response.body?.getReader!=="function")fail("RESPONSE_INVALID");
           const reader=response.body.getReader(),decoder=new TextDecoder("utf-8",{fatal:true});let text="",done=false;

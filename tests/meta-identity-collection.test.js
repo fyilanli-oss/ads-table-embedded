@@ -824,7 +824,7 @@ test("bound Meta report: local page bound stops before second report page or fin
   f.hooks.fetch=p=>p.pathname.endsWith("/insights")&&response({data:[],paging:{cursors:{after:"next"},next:"ignored"}});
   await assert.rejects(f.create().readEvidence(),/COLLECTION_FAILED/);assert.equal(f.calls.length,7);assert.equal(f.adminCalls.length,1);
 });
-const candidatePrewriteOwner=()=>({provider:"meta",workspaceId:workspace,installGeneration:3,shopId:"gid://shopify/Shop/12",shopDomain:"test.myshopify.com",
+const candidatePrewriteOwner=()=>({installationId:"42",reportingSelectionEpoch:"71",provider:"meta",workspaceId:workspace,installGeneration:3,shopId:"gid://shopify/Shop/12",shopDomain:"test.myshopify.com",
   connectionId:connection,connectionVersion:2,accountId:"act_123"});
 candidatePrewriteCases({provider:"meta",fixture:candidateBoundFixture,nativeFixture:boundFixture,expected:candidatePrewriteOwner,
   empty:f=>{f.native.products.data=[];},unresolved:f=>{delete f.config.sourceRules;},

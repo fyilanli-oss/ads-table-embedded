@@ -20,11 +20,12 @@ export function reviewKlaviyoOrderClaimPrewrite({expected,observation,current,pr
   if(Object.keys(extra).length||expected?.provider!=="klaviyo")fail("INPUT_INVALID");
   const referenceReview=reviewRefreshReferencePrewrite({expected,observation});
   const {scope}=referenceReview;
-  const orderReview=reviewShopifyOrderPrewrite({expected:{workspaceId:scope.workspaceId,installGeneration:scope.installGeneration,
+  const orderReview=reviewShopifyOrderPrewrite({expected:{workspaceId:scope.workspaceId,installGeneration:scope.installGeneration,installationId:scope.installationId,
     shopId:scope.shopId,shopDomain:scope.shopDomain},current,previous});
   const loader=refreshCandidateReferenceInputs(observation)?.orderRules;
   if(!isKlaviyoOrderIdentityRuleLoader(loader))fail("ORIGINAL_RULE_LOADER_REQUIRED");
-  const rule=loader.load({scope,metricId:observation.metric.id,integrationId:observation.metric.attributes.integration.id??null});
+  const ruleScope=Object.fromEntries(["provider","workspaceId","installGeneration","shopId","shopDomain","connectionId","connectionVersion","accountId"].map(k=>[k,scope[k]]));
+  const rule=loader.load({scope:ruleScope,metricId:observation.metric.id,integrationId:observation.metric.attributes.integration.id??null});
   const orders=new Map(orderReview.orders.map(order=>[order.observed.id,order])),rows=[];
   for(const row of referenceReview.referenceReview.rows){
     const event=row.reference,property=event.provider_order_properties.OrderId,resolution=event.attribution_resolution;

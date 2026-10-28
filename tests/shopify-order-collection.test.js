@@ -8,15 +8,55 @@ import {SHOPIFY_ORDER_READ_QUERIES as queries} from "../app/lib/shopify/order-re
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 import {quotaBoundaryControl} from "../app/lib/refresh/quota-native-fetch.server.js";
 import {refreshQuotaWait} from "../app/lib/refresh/quota-work-wait.server.js";
-import {reviewShopifyOrderPrewrite} from "../app/lib/shopify/order-prewrite.server.js";
+import {reviewShopifyOrderPrewrite,reviewShopifyOrderPrewriteCurrent} from "../app/lib/shopify/order-prewrite.server.js";
 import {reviewShopifyProviderClaimReadiness} from "../app/lib/shopify/provider-claim-prewrite.server.js";
 
 import {fixture,connection,gid,shop,workspace,stamp,money,header,line,visit,gate,pause,prewriteOwner,restoreShopifyOrderFixtureFetch} from "./helpers/shopify-order-fixture.js";
 after(restoreShopifyOrderFixtureFetch);
 
+test("order owner: SQL PK is provider-independent and reobserved throughout the collection",async()=>{
+  const f=fixture(),current=await f.create().readEvidence();
+  assert.equal(current.scope.installation_id,"42");assert.ok(f.q.ownerReads>f.calls.length);
+  const n=f.calls.length,before=f.q.ownerReads;
+  const r=await reviewShopifyOrderPrewriteCurrent({expected:prewriteOwner(),current,database:f.config.database});
+  assert.equal(r.owner.installationId,"42");assert.equal(r.installationIdentityChecked,true);
+  assert.equal(r.authorityReobserved,true);assert.equal(r.atomicWriteGuardVerified,false);assert.equal(r.persistable,false);
+  assert.equal(f.q.ownerReads,before+1);assert.equal(f.calls.length,n);
+});
+for(const change of [{ownerMissing:true},{ownerError:true},{ownerGeneration:99},{installationId:42},{installationId:"0"}])
+  test(`order owner: invalid or unavailable SQL owner blocks before native HTTP ${JSON.stringify(change)}`,async()=>{
+    const f=fixture();Object.assign(f.q,change);await assert.rejects(f.create().readEvidence(),/AUTHORITY_CHANGED|AUTHORITY_READ_FAILED/);
+    assert.equal(f.calls.length,0);
+  });
+test("order owner: missing database is rejected without native fallback",()=>{
+  const f=fixture();delete f.config.database;assert.throws(f.create,/OWNER_INPUT_INVALID/);assert.equal(f.calls.length,0);
+});
+test("order owner: PK changes after native response discard collection and close execution",async()=>{
+  const f=fixture();f.q.native=({family})=>{if(family==="order_lines")f.q.installationId="43";};
+  const reader=f.create();await assert.rejects(reader.readEvidence(),/AUTHORITY_CHANGED/);
+  await assert.rejects(reader.readEvidence(),/EXECUTION_USED/);
+});
+test("order current prewrite: post-collection PK drift is rejected and expected input cannot override it",async()=>{
+  const f=fixture(),current=await f.create().readEvidence();f.q.installationId="43";
+  await assert.rejects(reviewShopifyOrderPrewriteCurrent({expected:prewriteOwner(),current,database:f.config.database}),/AUTHORITY_CHANGED/);
+  assert.throws(()=>reviewShopifyOrderPrewrite({expected:{...prewriteOwner(),installationId:"43"},current}),/OWNER_MISMATCH/);
+});
+test("order current prewrite: abort and SQL errors stay safe and do not retry",async()=>{
+  const f=fixture(),current=await f.create().readEvidence(),before=f.q.ownerReads,c=new AbortController();c.abort();
+  await assert.rejects(reviewShopifyOrderPrewriteCurrent({expected:prewriteOwner(),current,database:f.config.database,signal:c.signal}),/ABORTED/);
+  assert.equal(f.q.ownerReads,before);f.q.ownerError=true;
+  await assert.rejects(reviewShopifyOrderPrewriteCurrent({expected:prewriteOwner(),current,database:f.config.database}),/^ShopifyOrderPrewriteError: SHOPIFY_ORDER_PREWRITE_AUTHORITY_READ_FAILED$/);
+  assert.equal(f.q.ownerReads,before+1);
+});
+test("order owner: bigint PK beyond JS safe integer stays lossless",async()=>{
+  const f=fixture();f.q.installationId="9007199254740993";const current=await f.create().readEvidence();
+  const r=reviewShopifyOrderPrewrite({expected:{...prewriteOwner(),installationId:f.q.installationId},current});
+  assert.equal(r.owner.installationId,"9007199254740993");assert.equal(r.canonicalScopeReady,false);
+});
+
 test("claim gate: three selected but missing provider observations remain three unknown claim states",async()=>{
   const f=fixture(),current=await f.create().readEvidence(),providers=["meta","google_ads","klaviyo"].map((provider,i)=>({
-    expected:{...prewriteOwner(),provider,connectionId:"22222222-2222-4222-8222-222222222222",connectionVersion:2,accountId:["act_123","123","account1"][i]},observation:null}));
+    expected:{...prewriteOwner(),provider,connectionId:"22222222-2222-4222-8222-222222222222",connectionVersion:2,reportingSelectionEpoch:provider==="klaviyo"?null:"71",accountId:["act_123","123","account1"][i]},observation:null}));
   const r=reviewShopifyProviderClaimReadiness({expected:prewriteOwner(),current,providers});
   assert.equal(r.providerReviews.length,3);assert.ok(r.providerReviews.every(row=>row.observationState==="observation_not_supplied"));
   assert.equal(r.orderReview.orders.length,1);assert.equal(r.ordersWithoutProviderClaim,null);assert.equal(r.unmatchedClaims,null);assert.equal(r.exactOverlapVerified,false);
@@ -24,7 +64,7 @@ test("claim gate: three selected but missing provider observations remain three 
 });
 test("claim gate: empty selection, invalid scope and per-provider invented claims are not a successful review",async()=>{
   const f=fixture(),current=await f.create().readEvidence(),input={expected:{...prewriteOwner(),provider:"klaviyo",
-    connectionId:"22222222-2222-4222-8222-222222222222",connectionVersion:2,accountId:"account1"},observation:null};
+    connectionId:"22222222-2222-4222-8222-222222222222",connectionVersion:2,reportingSelectionEpoch:null,accountId:"account1"},observation:null};
   for(const providers of [[],null,[{...input,claims:[]}],[{expected:{...input.expected,provider:"unknown"},observation:null}],
     [{expected:{...input.expected,connectionVersion:0},observation:null}],[{expected:input.expected}]])
     assert.throws(()=>reviewShopifyProviderClaimReadiness({expected:prewriteOwner(),current,providers}),/INPUT_INVALID/);
@@ -36,7 +76,7 @@ test("real fenced SDK collects all three independent paginations and explicit co
   assert.equal(result.orders[0].journey.moments.length,3);assert.equal(result.journeyPagesComplete,true);assert.equal(f.calls.length,10);
   assert.equal(result.stats.requests,f.calls.length);assert.equal(result.stats.rows,8);assert.ok(result.stats.SDKResponseBytes>0);
   assert.equal(f.reservations.length,f.calls.length);assert.equal(f.feedback.length,f.calls.length);assert.equal(f.auth.length,0);
-  assert.equal(result.scope.job.provider,"meta");assert.equal(result.scope.job.fence,2);assert.equal(result.scope.installation_id,null);
+  assert.equal(result.scope.job.provider,"meta");assert.equal(result.scope.job.fence,2);assert.equal(result.scope.installation_id,"42");
   assert.equal(result.orders[0].lineItems[0].product.id,result.orders[0].lineItems[1].product.id);
   assert.notEqual(result.orders[0].lineItems[0].id,result.orders[0].lineItems[1].id);
   for(const flag of ["nativePermissionVerified","historicalCoverageVerified","providerClaimVerified","exactOverlapVerified","canonicalScopeReady","authorizesActivation","persistable","DatasetWritePerformed"])assert.equal(result[flag],false);

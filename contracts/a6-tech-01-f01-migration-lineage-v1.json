@@ -637,6 +637,15 @@
       "repository_sql_sha256": "729741834ba4c9150dd1b376bd2f3b90ae5278804ecd74a89c4bdc9a464e9d8b",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261028185046",
+      "name": "eo05a_shopify_installation_owner_read",
+      "file": "supabase/migrations/20261028185046_eo05a_shopify_installation_owner_read.sql",
+      "created_with": "supabase@2.121.0 migration new eo05a_shopify_installation_owner_read",
+      "repository_sql_sha256": "4601df4e0f6bac24489b762e87284528f6d21e81768eb4de7d59365224ffe8eb",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

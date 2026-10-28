@@ -1,9 +1,53 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {reviewRefreshCandidatePrewrite as review} from "../../app/lib/providers/candidate-prewrite.server.js";
+import {reviewRefreshCandidatePrewrite as review,reviewRefreshCandidatePrewriteCurrent as currentReview} from "../../app/lib/providers/candidate-prewrite.server.js";
+import {reviewRefreshReferencePrewriteCurrent} from "../../app/lib/providers/reference-prewrite.server.js";
 
 // Same behavioral assertions against each real SDK/fenced collection fixture.
 export function candidatePrewriteCases({provider,fixture,nativeFixture,expected,empty,unresolved,productOnly}){
+  test(`${provider} prewrite: SQL installation and selection keys are checked without promotion`,async()=>{
+    const f=fixture(),observation=await f.create().readEvidence(),r=review({expected:expected(),observation});
+    assert.equal(r.scope.installationId,"42");assert.equal(r.installationIdentityChecked,true);
+    assert.equal(r.scope.reportingSelectionEpoch,provider==="klaviyo"?null:"71");
+    assert.equal(r.reportingSelectionEpochChecked,true);assert.equal(r.authorityReobserved,false);
+    assert.equal(r.canonicalScopeReady,false);assert.equal(r.persistable,false);
+  });
+  for(const key of ["installationId","reportingSelectionEpoch"])test(`${provider} prewrite: wrong canonical key rejected ${key}`,async()=>{
+    const f=fixture(),observation=await f.create().readEvidence(),scope=expected();scope[key]="99";
+    assert.throws(()=>review({expected:scope,observation}),/OWNER_MISMATCH|INPUT_INVALID/);
+  });
+  test(`${provider} current prewrite: one fresh metadata SQL read, no native/vault IO or write authority`,async()=>{
+    const f=fixture(),observation=await f.create().readEvidence(),before=f.queries.length,native=f.calls.length+f.adminCalls.length;
+    const r=await currentReview({expected:expected(),observation,database:f.config.database});
+    assert.equal(f.queries.length,before+1);assert.equal(f.calls.length+f.adminCalls.length,native);
+    assert.equal(r.authorityReobserved,true);assert.equal(r.atomicWriteGuardVerified,false);assert.equal(r.persistable,false);
+  });
+  for(const change of ["installation","version",...provider==="klaviyo"?[]:["same_account_epoch"]])
+    test(`${provider} current prewrite: post-collection authority drift rejected ${change}`,async()=>{
+      const f=fixture(),observation=await f.create().readEvidence();
+      if(change==="installation")f.state.installationId="99";
+      if(change==="version")f.state.version++;
+      if(change==="same_account_epoch")f.state.selectionEpoch="99";
+      await assert.rejects(currentReview({expected:expected(),observation,database:f.config.database}),/AUTHORITY_CHANGED/);
+    });
+  test(`${provider} current prewrite: caller mutation during read cannot change captured expected owner`,async()=>{
+    const f=fixture(),observation=await f.create().readEvidence(),scope=expected();
+    f.hooks.query=()=>{scope.installationId="99";};
+    const r=await currentReview({expected:scope,observation,database:f.config.database});assert.equal(r.scope.installationId,"42");
+  });
+  test(`${provider} current prewrite: canceled or failed lookup never retries or leaks bodies`,async()=>{
+    const f=fixture(),observation=await f.create().readEvidence(),before=f.queries.length,controller=new AbortController();controller.abort();
+    await assert.rejects(currentReview({expected:expected(),observation,database:f.config.database,signal:controller.signal}),/ABORTED/);
+    assert.equal(f.queries.length,before);f.hooks.query=()=>{throw Error("SECRET-SQL");};
+    await assert.rejects(currentReview({expected:expected(),observation,database:f.config.database}),/^CandidatePrewriteError: CANDIDATE_PREWRITE_AUTHORITY_READ_FAILED$/);
+    assert.equal(f.queries.length,before+1);
+  });
+  test(`${provider} current reference review retains actual owner metadata and open gates`,async()=>{
+    const f=fixture(),observation=await f.create().readEvidence();
+    const r=await reviewRefreshReferencePrewriteCurrent({expected:expected(),observation,database:f.config.database});
+    assert.equal(r.authorityReobserved,true);assert.equal(r.candidateReview.authorityReobserved,true);
+    assert.equal(r.persistable,false);assert.equal(r.providerClaimsReviewed,false);
+  });
   test(`${provider} prewrite: genuine completed candidate batch is checked without extra IO or promotion`,async()=>{
     const f=fixture(),observation=await f.create().readEvidence(),n=f.calls.length+f.adminCalls.length;
     const r=review({expected:expected(),observation});assert.equal(f.calls.length+f.adminCalls.length,n);
@@ -23,7 +67,7 @@ export function candidatePrewriteCases({provider,fixture,nativeFixture,expected,
   for(const [name,mutate] of [["workspace",v=>{v.workspaceId="99999999-9999-4999-8999-999999999999";}],["generation",v=>{v.installGeneration++;}],
     ["shop",v=>{v.shopId="gid://shopify/Shop/99";}],["domain",v=>{v.shopDomain="other.myshopify.com";}],
     ["connection",v=>{v.connectionId="99999999-9999-4999-8999-999999999999";}],["credential version",v=>{v.connectionVersion++;}],
-    ["account",v=>{v.accountId=provider==="meta"?"act_999":"999";}],["provider",v=>{v.provider=provider==="meta"?"google_ads":"meta";}]])
+    ["account",v=>{v.accountId=provider==="meta"?"act_999":"999";}],["provider",v=>{v.provider=provider==="meta"?"google_ads":"meta";v.reportingSelectionEpoch="71";}]])
     test(`${provider} prewrite: wrong ${name} cannot pass expected owner`,async()=>{
       const f=fixture(),observation=await f.create().readEvidence(),scope=expected();mutate(scope);
       assert.throws(()=>review({expected:scope,observation}),/OWNER_MISMATCH/);

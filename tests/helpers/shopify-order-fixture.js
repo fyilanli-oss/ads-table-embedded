@@ -29,7 +29,7 @@ function line(n) {return {id:gid("LineItem",n),quantity:1,currentQuantity:1,isGi
 const visit=n=>({__typename:"CustomerVisit",id:gid("CustomerVisit",n),occurredAt:"2026-09-30T12:00:00Z",source:"facebook",sourceDescription:null,sourceType:"SOCIAL"});
 const gate=()=>{let resolve;const promise=new Promise(r=>{resolve=r;});return {promise,resolve};};
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
-const prewriteOwner=()=>({workspaceId:workspace,installGeneration:3,shopId:shop.id,shopDomain:shop.myshopifyDomain});
+const prewriteOwner=()=>({installationId:"42",workspaceId:workspace,installGeneration:3,shopId:shop.id,shopDomain:shop.myshopifyDomain});
 function connection(rows,variables,prefix) {
   const offset=variables.after===null?0:Number(variables.after.split(":").at(-1))+1;
   const selected=rows.slice(offset,offset+variables.first);
@@ -55,7 +55,13 @@ function fixture() {
         costBudget:{unit:"shopify_admin_query_points",reservedRequestedCost:10}};},
     settle:async x=>{settles.push(x);return true;},stop:async x=>{stops.push(x);return true;},
     recordFeedback:async x=>{feedback.push(x);return true;}};
-  const config={verified:{installationAuthority:{authority:"shopify_installation_verified",workspaceId:workspace,installGeneration:3,status:"active"},
+  const config={database:{async query(sql,args){
+    if(!sql.includes("load_active_installation_owner"))throw Error("UNEXPECTED_SQL");
+    q.ownerReads=(q.ownerReads??0)+1;await q.ownerLoading?.();
+    if(q.ownerError)throw Error("SECRET-SQL");
+    return {rows:q.ownerMissing?[]:[{installation_id:q.installationId??"42",workspace_id:workspace,install_generation:q.ownerGeneration??Number(args[1]),
+      shop_id:shop.id,shop_domain:shop.myshopifyDomain,installation_status:q.ownerStatus??"active"}]};
+  }},verified:{installationAuthority:{authority:"shopify_installation_verified",workspaceId:workspace,installGeneration:3,status:"active"},
     identity:{shop:{authority:"shopify_admin_verified",shopId:shop.id,myshopifyDomain:shop.myshopifyDomain},
       session:{authority:"shopify_id_token_verified",shopDomain:shop.myshopifyDomain}},context:{admin}},sdkBridge:bridge,
     claim:{workspaceId:workspace,installGeneration:"3",provider:"meta",accountId:"act_1",id:"job1",fence:2},

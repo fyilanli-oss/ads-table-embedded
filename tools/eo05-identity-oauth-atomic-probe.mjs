@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import {randomBytes,randomUUID} from "node:crypto";
 import {createTokenVault} from "../app/lib/oauth/token-vault.server.js";
 import {oauthPermissionScopes} from "../app/lib/oauth/oauth-permission-profile.server.js";
+import {shopifyInstallationOwnerProbe} from "./eo05-shopify-installation-owner-probe.mjs";
 import {googleIdentityRenewalProbe} from "./eo05-google-identity-renewal-probe.mjs";
 
 // Rollback-only real SQL + actual envelope crypto. No native provider calls or live keys.
@@ -19,6 +20,7 @@ export async function identityOAuthAtomicProbe(client,{execution}) {
     await client.query("set local role adstable_owner");
     await identityOAuthAtomicProbeWithTestMembership(client,{execution});
     await googleIdentityRenewalProbe(client,{execution});
+    await shopifyInstallationOwnerProbe(client,{execution});
   } finally {
     await client.query("rollback to savepoint identity_oauth_test_membership");
     await client.query("release savepoint identity_oauth_test_membership");

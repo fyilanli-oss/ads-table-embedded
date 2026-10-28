@@ -1,6 +1,6 @@
 import {reviewShopifyOrderPrewrite} from "./order-prewrite.server.js";
 import {reviewRefreshReferencePrewrite} from "../providers/reference-prewrite.server.js";
-import {permissionContext} from "../oauth/identity-permission-preflight.server.js";
+import {providerPrewriteOwner} from "../providers/prewrite-owner.server.js";
 import {reviewKlaviyoOrderClaimPrewrite} from "../providers/klaviyo-order-prewrite.server.js";
 
 export class ProviderClaimPrewriteError extends Error {
@@ -16,12 +16,9 @@ export function reviewShopifyProviderClaimReadiness({expected,current,previous=n
   const orderReview=reviewShopifyOrderPrewrite({expected,current,previous});
   const selected=new Set(),providerReviews=[];
   for(const input of providers){
-    if(!input||Object.keys(input).sort().join(",")!=="expected,observation"
-      ||!input.expected||Object.keys(input.expected).sort().join(",")!=="accountId,connectionId,connectionVersion,installGeneration,provider,shopDomain,shopId,workspaceId"
-      ||!["meta","google_ads","klaviyo"].includes(input.expected.provider)
-      ||!Number.isSafeInteger(input.expected.connectionVersion)||input.expected.connectionVersion<1)fail("PROVIDER_INPUT_INVALID");
-    let scope;try{scope=permissionContext(input.expected);}catch{fail("PROVIDER_INPUT_INVALID");}
-    if(["workspaceId","installGeneration","shopId","shopDomain"].some(key=>scope[key]!==orderReview.owner[key]))fail("OWNER_MISMATCH");
+    if(!input||Object.keys(input).sort().join(",")!=="expected,observation")fail("PROVIDER_INPUT_INVALID");
+    let scope;try{scope=providerPrewriteOwner(input.expected);}catch{fail("PROVIDER_INPUT_INVALID");}
+    if(["workspaceId","installGeneration","installationId","shopId","shopDomain"].some(key=>scope[key]!==orderReview.owner[key]))fail("OWNER_MISMATCH");
     const key=[scope.provider,scope.connectionId,scope.accountId],identity=JSON.stringify(key);
     if(selected.has(identity))fail("PROVIDER_DUPLICATE");selected.add(identity);
     const review=input.observation===null?null:reviewRefreshReferencePrewrite({expected:input.expected,observation:input.observation});

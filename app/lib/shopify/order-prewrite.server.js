@@ -61,7 +61,7 @@ export function reviewShopifyOrderPrewrite({expected,current,previous=null,...ex
     missingRecordsProveDeletion:false,atomicSnapshotVerified:false,canonicalScopeReady:false,
     nativePermissionVerified:false,historicalCoverageVerified:false,providerClaimVerified:false,exactOverlapVerified:false,
     persistable:false,authorizesActivation:false,DatasetWritePerformed:false,
-    remaining:["native_access_and_canonical_SQL_scope_review","provider_claim_reconciliation","existing_step14_review_before_new_tables_and_writers"]});
+    remaining:["native_access_and_atomic_writer_scope_review","provider_claim_reconciliation","existing_step14_review_before_new_tables_and_writers"]});
 }
 
 export async function reviewShopifyOrderPrewriteCurrent({expected,current,previous=null,database,signal,...extra}={}){

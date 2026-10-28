@@ -1,4 +1,57 @@
 {
+  "Shopify_order_pending_queue_2026_10_28": {
+    "status": "repository_prepared_pending_exact_head_CI_owner_merge_not_active_worker",
+    "base_main": "fab49fca164a2a63dfc36f92762f0abd6c6f4143",
+    "scope": "existing_step12_independent_Order_scheduling_gap_pending_metadata_slice_under_step14_review",
+    "migration": "supabase/migrations/20261028201729_eo05a_shopify_order_pending_queue.sql",
+    "runtime": [
+      "app/lib/refresh/shopify-order-queue-admission.server.js",
+      "app/lib/database/shopify-order-queue-repository.server.js"
+    ],
+    "tables": [
+      "operations.shopify_order_queue_control",
+      "operations.shopify_order_pending_ranges"
+    ],
+    "table_purpose": "private_operational_pending_range_metadata_not_Order_LineItem_evidence_or_Dataset_facts",
+    "default": "one_disabled_control_row_null_limits_no_native_profiles_or_policy_activation",
+    "owner": "actual_active_installation_PK_workspace_generation_ShopGID_domain_and_active_workspace_no_ad_provider_account_or_connection_dependency",
+    "provenance": "genuine_in_process_range_plan_only_no_caller_range_cursor_fence_entitlement_or_queue_revision",
+    "quota_routes": [
+      "shopify_partner:partner_graphql",
+      "shopify_admin:permission_scopes",
+      "shopify_admin:order_headers",
+      "shopify_admin:order_lines",
+      "shopify_admin:order_journey"
+    ],
+    "quota_binding": "existing_private_Admin_Partner_contexts_plus_five_reviewed_fingerprint_routes_recomputed_in_SQL_no_quota_reservation_or_available_capacity_claim",
+    "atomic": "singleton_control_lock_revalidates_owner_key_epoch_context_routes_revision_pending_global_and_installation_bounds_insert_plus_revision_one_transaction",
+    "duplicate": "same_key_same_body_metadata_already_recorded_no_reactivation_cancelled_is_not_dispatch_overlap_of_queued_ranges_record_conflict",
+    "unknown_write": "no_automatic_retry_delete_or_read_explicit_scoped_read_not_observed_is_not_proof_of_rollback",
+    "ACL": "forced_RLS_owner_only_tables_three_coordinator_RPC_helpers_private_runtime_and_browser_denied",
+    "workerAdmitted": false,
+    "quotaReserved": false,
+    "authorizesDispatch": false,
+    "authorizesActivation": false,
+    "checkpointAdvanced": false,
+    "persistable": false,
+    "DatasetWritePerformed": false,
+    "live_apply_authorized": false,
+    "existing_26_order_unchanged": true,
+    "PMax_paused": true,
+    "remaining": [
+      "independent_worker_fence_shared_global_worker_capacity_fresh_entitlement_and_native_Admin_Partner_execution",
+      "active_scheduler_and_native_permissions_history_protected_data_capacity_acceptance",
+      "durable_Order_evidence_atomic_checkpoint_handshake_after_existing_step15_storage_review",
+      "existing_step14_review_and_storage_activation_gates"
+    ],
+    "official_checked_at": "2026-10-28",
+    "official_sources": [
+      "https://supabase.com/changelog",
+      "https://supabase.com/docs/guides/database/functions",
+      "https://www.postgresql.org/docs/17/explicit-locking.html",
+      "https://www.postgresql.org/docs/17/functions-binarystring.html"
+    ]
+  },
   "Shopify_order_independent_range_plan_2026_10_28": {
     "status": "repository_prepared_pending_exact_head_CI_owner_merge_not_active_scheduler_or_durable_resume",
     "base_main": "0bf1869a58c96f583e7a6f684519c063e3ff69c0",

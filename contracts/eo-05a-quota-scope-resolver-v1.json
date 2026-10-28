@@ -1,4 +1,9 @@
 {
+  "Shopify_order_pending_queue_2026_10_28": {
+    "reference": "contracts/eo-05-start-brief-v1.json#Shopify_order_pending_queue_2026_10_28",
+    "status": "repository_prepared_pending_CI_pending_metadata_only_not_worker_dispatch",
+    "activation_authorized": false
+  },
   "Shopify_order_scope_readback_2026_10_28": "contracts/eo-05-start-brief-v1.json#Shopify_order_scope_readback_2026_10_28",
   "Shopify_order_SDK_quota_binding_2026_10_28": "contracts/eo-05-start-brief-v1.json#Shopify_order_SDK_quota_binding_2026_10_28",
   "Shopify_Admin_identity_extension_2026_10_27": "contracts/eo-05-start-brief-v1.json#Shopify_Admin_identity_quota_boundary_2026_10_27",

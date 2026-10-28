@@ -646,6 +646,15 @@
       "repository_sql_sha256": "4601df4e0f6bac24489b762e87284528f6d21e81768eb4de7d59365224ffe8eb",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261028201729",
+      "name": "eo05a_shopify_order_pending_queue",
+      "file": "supabase/migrations/20261028201729_eo05a_shopify_order_pending_queue.sql",
+      "created_with": "supabase@2.121.0 migration new eo05a_shopify_order_pending_queue",
+      "repository_sql_sha256": "9511f837ddc66610b4fb0c6893aeca55d5b2e4d2a33bfd8e0fbdefaf65949673",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

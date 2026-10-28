@@ -1,10 +1,15 @@
-import test from "node:test";
+import test,{after} from "node:test";
 import assert from "node:assert/strict";
 import {collectKlaviyoNativeIdentityEvidence, collectKlaviyoIdentityMessageEvidence,
   collectKlaviyoVerifiedProductCandidateEvidence} from "../app/lib/providers/klaviyo-identity-collection.server.js";
 import {KLAVIYO_OAUTH_SCOPES} from "../app/lib/providers/klaviyo-api.server.js";
 import {createQuotaManagedFetch, quotaBoundaryControl} from "../app/lib/refresh/quota-native-fetch.server.js";
-import {createRefreshKlaviyoIdentityReader} from "../app/lib/refresh/quota-authority-binding.server.js";
+import {createRefreshKlaviyoIdentityReader,createRefreshKlaviyoCandidateReader} from "../app/lib/refresh/quota-authority-binding.server.js";
+import "@shopify/shopify-api/adapters/node";
+import {shopifyApi,ApiVersion,LogSeverity,Session} from "@shopify/shopify-api";
+import {abstractFetch,setAbstractFetchFunc} from "@shopify/shopify-api/runtime";
+import {createShopifyAdminIdentitySdkBridge} from "../app/lib/refresh/shopify-admin-sdk-quota-bridge.server.js";
+import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 import {quotaRouteIdentity} from "../app/lib/refresh/quota-scope-resolver.server.js";
 import {refreshQuotaWait} from "../app/lib/refresh/quota-work-wait.server.js";
 
@@ -564,4 +569,130 @@ test("bound constructor: deadline during initial scope lookup cannot reserve or 
 test("bound constructor: pre-aborted caller does not read runtime or quota SQL", async () => {
   const f = boundFixture(), caller = new AbortController(); caller.abort(); f.config.signal = caller.signal;
   await assert.rejects(f.create().readEvidence(), /IDENTITY_READ_ABORTED/); assert.equal(f.loads.length, 0); assert.equal(f.queries.length, 0);
+});
+
+const originalSdkFetch=abstractFetch;after(()=>setAbstractFetchFunc(originalSdkFetch));
+const sdkRoot=import.meta.resolve("@shopify/shopify-app-react-router/server");
+const {graphqlClientFactory}=await import(new URL("./clients/admin/graphql.mjs",sdkRoot));
+const {handleClientErrorFactory}=await import(new URL("./authenticate/admin/helpers/handle-client-error.mjs",sdkRoot));
+const sdkApi=shopifyApi({apiKey:"a".repeat(32),apiSecretKey:"b".repeat(32),hostName:"example.com",apiVersion:ApiVersion.October26,
+  isEmbeddedApp:true,logger:{level:LogSeverity.Error,log:()=>{}}});
+function candidateBoundFixture(){
+  const f=boundFixture("message"),adminCalls=[],adminLoads=[],auth=[];delete f.config.mode;
+  const bridge=createShopifyAdminIdentitySdkBridge();setAbstractFetchFunc(bridge.fetch);f.config.sdkBridge=bridge;
+  const session=new Session({id:"offline_test.myshopify.com",shop:"test.myshopify.com",state:"synthetic",isOnline:false,accessToken:"SECRET-ADMIN",scope:"read_products"});
+  f.config.verified.context.admin={graphql:graphqlClientFactory({params:{api:sdkApi,logger:{debug:()=>{}}},session,
+    handleClientError:handleClientErrorFactory({request:new Request("https://example.com"),onError:async x=>auth.push(x)})})};
+  const adminContext={provider:"shopify_admin",clientScopeKey:"c".repeat(64),connectionScopeKey:"d".repeat(64),connectionEpoch:3,
+    accountId:"test.myshopify.com",organizationId:null,apiVersion:"2026-10"};
+  f.q.adminContext=adminContext;
+  const adminKeys=["identity_product","identity_variant","identity_product_variant"].map(family=>quotaRouteIdentity(adminContext,
+    {provider:"shopify_admin",family,accountId:adminContext.accountId,organizationId:null,version:"2026-10",includes:[]}).routeKey);
+  const originalLoad=f.config.workStore.loadQuotaContext,originalResolve=f.config.quotaStore.resolveRoute,
+    originalReserve=f.config.quotaStore.reserve,originalNative=f.config.fetchFn;
+  f.config.workStore={loadQuotaContext:async x=>{
+    if(x.provider!=="shopify_admin")return originalLoad(x);
+    adminLoads.push(x);await f.q.adminLoading?.();return f.q.adminMissing?null:f.q.adminContext;
+  }};
+  f.config.quotaStore.resolveRoute=async x=>adminKeys.includes(x.routeKey)?f.q.missingAdminProfile?null:x.routeKey:originalResolve(x);
+  f.config.quotaStore.reserve=async x=>{const r=await originalReserve(x);return r.status==="reserved"?
+    {...r,...f.q.noBudget?{}:{costBudget:{unit:"shopify_admin_query_points",reservedRequestedCost:10}}}:r;};
+  f.config.fetchFn=async(endpoint,init)=>{
+    if(new URL(endpoint).hostname!=="test.myshopify.com")return originalNative(endpoint,init);
+    adminCalls.push({endpoint,init});const payload={data:{shop:{id:"gid://shopify/Shop/12",myshopifyDomain:"test.myshopify.com"},
+      product:{id:"gid://shopify/Product/123",legacyResourceId:"123"},productVariant:{id:"gid://shopify/ProductVariant/456",legacyResourceId:"456",
+        product:{id:"gid://shopify/Product/123",legacyResourceId:"123"}}},
+      extensions:{cost:{requestedQueryCost:8,actualQueryCost:5,throttleStatus:{maximumAvailable:1000,currentlyAvailable:995,restoreRate:50}}}};
+    await f.q.adminNative?.(payload,init);if(f.q.adminThrow)throw Error("SECRET-ADMIN-FAIL");return Response.json(payload,{status:f.q.adminStatus??200});
+  };
+  return {...f,adminCalls,adminLoads,auth,create:()=>createRefreshKlaviyoCandidateReader(f.config)};
+}
+test("bound candidate: real SDK/Admin and Klaviyo share fenced job and separately metered families",async()=>{
+  const f=candidateBoundFixture(),r=await f.create().readEvidence();
+  assert.equal(f.calls.length,6);assert.equal(f.adminCalls.length,1);assert.equal(f.reservations.length,7);assert.equal(f.settles.length,7);
+  assert.equal(f.feedback.filter(x=>x.feedback.kind==="shopify_admin_cost_observed").length,1);assert.equal(f.auth.length,0);
+  assert.ok(f.adminLoads.every(x=>x.claim.provider==="klaviyo"&&x.claim.id==="job1"&&x.claim.fence===2&&x.claim.workspaceId===workspace&&x.window.from==="2026-10-01"));
+  assert.equal(r.product_identity_candidates.candidates[0].shopify_product_id,"gid://shopify/Product/123");
+  assert.equal(r.message_evidence.resolved_product_sales.rows[0].attribution_resolution.sales_role,"Assisted");
+  for(const k of ["persistable","canonical_scope_ready","authorizes_activation","mapping_write_performed","sales_roles_changed"])assert.equal(r[k],false);
+  assert.doesNotMatch(JSON.stringify([f.loads,f.adminLoads,f.reservations,f.feedback,r]),/SECRET|secret-access|private-profile|private@/);
+});
+test("bound candidate: original native Admin and owner/job/window captured before caller changes",async()=>{
+  const f=candidateBoundFixture(),reader=f.create();f.config.claim.id="other";f.config.claim.fence=99;f.config.window.from="2026-10-02";
+  f.config.verified.context.admin.graphql=()=>{throw Error("replacement");};
+  const r=await reader.readEvidence();assert.equal(r.product_identity_candidates.candidates.length,1);
+  assert.ok(f.adminLoads.every(x=>x.claim.id==="job1"&&x.claim.fence===2&&x.window.from==="2026-10-01"));
+});
+for(const [name,change] of [["missing genuine bridge",f=>{delete f.config.sdkBridge;}],["fake bridge",f=>{f.config.sdkBridge={wrap:x=>x.admin};}],
+  ["mode override",f=>{f.config.mode="native";}],["read execution override",f=>{f.config.readExecution={};}],
+  ["admin override",f=>{f.config.admin={};}],["scope override",f=>{f.config.scopes=["read_products"];}],
+  ["guard override",f=>{f.config.guard={};}],["context override",f=>{f.config.loadContext=()=>({});}],
+  ["wrong session",f=>{f.config.verified.identity.session.shopDomain="other.myshopify.com";}]])test(`bound candidate: ${name} rejected before SQL/HTTP`,()=>{
+  const f=candidateBoundFixture();change(f);assert.throws(f.create);assert.equal(f.calls.length+f.adminCalls.length+f.queries.length,0);
+});
+for(const kind of ["adminMissing","missingAdminProfile","noBudget"])test(`bound candidate: ${kind} stops at Shopify without final reports`,async()=>{
+  const f=candidateBoundFixture();f.q[kind]=true;await assert.rejects(f.create().readEvidence());assert.equal(f.adminCalls.length,0);assert.equal(f.calls.length,3);
+});
+test("bound candidate: shared ledger preserves provider prefix when first Admin quota waits",async()=>{
+  const f=candidateBoundFixture();f.q.waitAt=4;let error;try{await f.create().readEvidence();}catch(e){error=e;}
+  assert.equal(quotaBoundaryControl(error).priorBoundaryAttempts,3);assert.equal(refreshQuotaWait(error,"provider_page",f.config.claim),null);
+  assert.equal(f.calls.length,3);assert.equal(f.adminCalls.length,0);
+});
+test("bound candidate: first provider wait still has zero attempts",async()=>{
+  const f=candidateBoundFixture();f.q.waitAt=1;let error;try{await f.create().readEvidence();}catch(e){error=e;}
+  assert.equal(quotaBoundaryControl(error).priorBoundaryAttempts,0);assert.equal(f.calls.length+f.adminCalls.length,0);
+});
+test("bound candidate: report wait includes completed Admin attempt",async()=>{
+  const f=candidateBoundFixture();f.q.waitAt=5;let error;try{await f.create().readEvidence();}catch(e){error=e;}
+  assert.equal(quotaBoundaryControl(error).priorBoundaryAttempts,4);assert.equal(f.adminCalls.length,1);assert.equal(f.calls.length,3);
+});
+for(const status of [401,403,429,500])test(`bound candidate: Admin HTTP ${status} stops once without SDK recovery or reporting`,async()=>{
+  const f=candidateBoundFixture();f.q.adminStatus=status;const reader=f.create();await assert.rejects(reader.readEvidence());
+  assert.equal(f.adminCalls.length,1);assert.equal(f.calls.length,3);assert.equal(f.auth.length,0);assert.equal(f.stops.length,1);
+  await assert.rejects(reader.readEvidence(),/EXECUTION_USED/);
+});
+test("bound candidate: requested native cost exceeding receipt stops after one physical Admin attempt",async()=>{
+  const f=candidateBoundFixture();f.q.adminNative=p=>{p.extensions.cost.requestedQueryCost=11;};
+  await assert.rejects(f.create().readEvidence());assert.equal(f.adminCalls.length,1);assert.equal(f.calls.length,3);
+});
+test("bound candidate: pinned Admin context drift during reservation prevents native dispatch",async()=>{
+  const f=candidateBoundFixture();f.q.reserved=()=>{if(f.reservations.length===4)f.q.adminContext.connectionEpoch++;};
+  await assert.rejects(f.create().readEvidence());assert.equal(f.adminCalls.length,0);assert.equal(f.calls.length,3);
+});
+test("bound candidate: wrong variant parent remains conflicting evidence without invented mapping",async()=>{
+  const f=candidateBoundFixture();f.q.adminNative=p=>{p.data.productVariant.product={id:"gid://shopify/Product/999",legacyResourceId:"999"};};
+  const r=await f.create().readEvidence();assert.equal(r.product_identity_candidates.candidates.length,0);
+  assert.equal(r.product_identity_candidates.rows[0].product_identity_verification.state,"conflicting");
+});
+test("bound candidate: real current work repository rejects Admin before its SQL or HTTP",async()=>{
+  const f=candidateBoundFixture();let sql=0;const real=createRefreshWorkRepository({query:async()=>{sql++;return {rows:[]};}});
+  const original=f.config.workStore.loadQuotaContext;f.config.workStore.loadQuotaContext=x=>x.provider==="shopify_admin"?real.loadQuotaContext(x):original(x);
+  await assert.rejects(f.create().readEvidence());assert.equal(sql,0);assert.equal(f.calls.length,3);assert.equal(f.adminCalls.length,0);
+});
+test("bound candidate: total deadline blocks late Admin lookup and subsequent reports",async()=>{
+  const f=candidateBoundFixture();f.config.maxElapsedMs=100;let release;
+  f.q.adminLoading=()=>new Promise(r=>{release=r;});await assert.rejects(f.create().readEvidence(),/DEADLINE_EXCEEDED/);
+  delete f.q.adminLoading;release?.();await new Promise(r=>setTimeout(r,10));assert.equal(f.adminCalls.length,0);assert.equal(f.calls.length,3);
+});
+test("bound candidate: empty events do not invent Shopify verification but still observe Message catalogs",async()=>{
+  const f=candidateBoundFixture();f.hooks.fetch=p=>p.pathname==="/api/events"?response({data:[],links:{next:null}}):f.baseFetch(p);
+  const r=await f.create().readEvidence();assert.equal(f.adminCalls.length,0);assert.deepEqual(r.product_identity_candidates.candidates,[]);assert.ok(r.message_evidence);
+});
+test("bound candidate: deadline during sent Admin HTTP cannot publish late response or send reports",async()=>{
+  const f=candidateBoundFixture();f.config.maxElapsedMs=150;let release;
+  f.q.adminNative=()=>new Promise(r=>{release=r;});const reader=f.create();await assert.rejects(reader.readEvidence(),/DEADLINE_EXCEEDED/);
+  assert.equal(f.adminCalls.length,1);release();await new Promise(r=>setTimeout(r,10));assert.equal(f.calls.length,3);
+  assert.equal(f.adminCalls[0].init.signal.aborted,true);await assert.rejects(reader.readEvidence(),/EXECUTION_USED/);
+});
+test("bound candidate: missing SDK hook cannot send unguarded Admin request",async()=>{
+  const f=candidateBoundFixture();setAbstractFetchFunc(originalSdkFetch);
+  await assert.rejects(f.create().readEvidence());assert.equal(f.adminCalls.length,0);assert.equal(f.calls.length,3);
+});
+test("bound candidate: provider failure prevents all Admin work",async()=>{
+  const f=candidateBoundFixture();f.hooks.fetch=()=>response({errors:[{detail:"SECRET"}]},403);
+  await assert.rejects(f.create().readEvidence());assert.equal(f.calls.length,1);assert.equal(f.adminCalls.length,0);assert.equal(f.stops.length,1);
+});
+test("bound candidate: partial GraphQL data is not a verified product",async()=>{
+  const f=candidateBoundFixture();f.q.adminNative=p=>{p.errors=[{message:"SECRET"}];};
+  await assert.rejects(f.create().readEvidence(),e=>!/SECRET/.test(e.message));assert.equal(f.calls.length,3);assert.equal(f.adminCalls.length,1);
 });

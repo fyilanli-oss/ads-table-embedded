@@ -167,6 +167,7 @@ function runtimeHarness(provider, granted) {
     throw new Error("UNEXPECTED_TEST_QUERY");
   }};
   const tokenVault = {async storeProviderTokenSet() {calls.push("store"); return {credentialId: uuid};},
+    async commitIdentityOAuthCredential(v) {stageScopes=v.scopes;calls.push("atomic");return {connectionId:txn,credentialId:uuid,version:1,status:"pending_account_selection"};},
     async deleteProviderTokenSet() {calls.push("delete");}, async assertReady() {}, async store() {}, async take() {}, async remove() {}};
   let requestCount = 0;
   const fetchFn = async () => {
@@ -202,6 +203,6 @@ for (const provider of ["google_ads", "meta"]) {
     const r = await h.runtime.completeCallback({claimed});
     assert.equal(r.outcome, "pending_account_selection");
     assert.deepEqual([...h.stageScopes()].sort(), [...scopes].sort());
-    assert.deepEqual(h.calls, ["store", "stage", "exchanged"]);
+    assert.deepEqual(h.calls, ["atomic"]);
   });
 }

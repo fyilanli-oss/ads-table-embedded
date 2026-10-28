@@ -211,6 +211,7 @@ export function createMetaOAuthRuntime({
       }
 
       let credential = null;
+      let identityWriteAttempted = false;
       try {
         if (claimed.permissionProfile === "identity_v1") {
           await identityAuthorization.beforeCallback({installationAuthority: owner, provider: PROVIDER, binding: claimed.identityBinding});
@@ -222,7 +223,7 @@ export function createMetaOAuthRuntime({
           fetchFn,
           now,
         });
-        credential = await tokenVault.storeProviderTokenSet({
+        if (claimed.permissionProfile !== "identity_v1") credential = await tokenVault.storeProviderTokenSet({
           installationAuthority: owner,
           provider: PROVIDER,
           tokenSet: exchanged.tokenSet,
@@ -238,6 +239,15 @@ export function createMetaOAuthRuntime({
         });
         if (claimed.permissionProfile === "identity_v1") {
           await identityAuthorization.beforeCallback({installationAuthority: owner, provider: PROVIDER, binding: claimed.identityBinding});
+        }
+        if (claimed.permissionProfile === "identity_v1") {
+          identityWriteAttempted = true;
+          const committed = await tokenVault.commitIdentityOAuthCredential({installationAuthority:owner,
+            provider:PROVIDER,transactionId:claimed.transactionId,connectionId:randomUUIDFn(),
+            binding:claimed.identityBinding,tokenSet:exchanged.tokenSet,scopes:evidence.scopes,
+            accounts:evidence.accounts,verifiedAt:evidence.verifiedAt,expiresAt:exchanged.expiresAt});
+          return Object.freeze({outcome:committed.status,owner,pending:committed,
+            callbackReturn:await selections.callbackReturn(owner)});
         }
         const staged = await selections.stage({
           connectionId: randomUUIDFn(),
@@ -258,6 +268,7 @@ export function createMetaOAuthRuntime({
           callbackReturn: await selections.callbackReturn(owner),
         });
       } catch (error) {
+        if (identityWriteAttempted) throw error;
         if (credential?.credentialId) {
           await tokenVault.deleteProviderTokenSet({
             credentialId: credential.credentialId,

@@ -233,7 +233,10 @@
       "repository_sql_sha256": "cbf710066982ce4378fe210268a5640157df004d84a63657d6f4339612b34627",
       "applied_sql_sha256": "eded5d169439648af8f1af3d8d08f7e7b278f7b3cf197ce3ac6b6346563b1a92",
       "applied_sql_difference": "live_session_role_wrapper_only",
-      "execution_context": {"role": "adstable_owner", "scope": "transaction_local"}
+      "execution_context": {
+        "role": "adstable_owner",
+        "scope": "transaction_local"
+      }
     },
     {
       "version": "20261009150114",
@@ -244,7 +247,10 @@
       "repository_sql_sha256": "a6b61a45898a6c6a1f63bf62d0083416e55543cad8c0b4cf3e6c84a82eec4f55",
       "applied_sql_sha256": "0a3968515b852ff0c39eaed3098406e0c0f88846b82c706d411f5cee400e5487",
       "applied_sql_difference": "live_session_role_wrapper_only",
-      "execution_context": {"role": "adstable_owner", "scope": "transaction_local"}
+      "execution_context": {
+        "role": "adstable_owner",
+        "scope": "transaction_local"
+      }
     },
     {
       "version": "20261009150614",
@@ -255,7 +261,10 @@
       "repository_sql_sha256": "093761bdc5c2976f5d05f9f4bb044e88491f9f49222ad4a13dcf9d2df6f6188b",
       "applied_sql_sha256": "e004de454e90d0ba3f00c7844641148d160de1eca6dbece836b3dd446d20e78c",
       "applied_sql_difference": "live_session_role_wrapper_only",
-      "execution_context": {"role": "adstable_owner", "scope": "transaction_local"}
+      "execution_context": {
+        "role": "adstable_owner",
+        "scope": "transaction_local"
+      }
     },
     {
       "version": "20261009151123",
@@ -266,7 +275,10 @@
       "repository_sql_sha256": "f5b5a6457b39d16407e5168c003876c54eddd003528c9f4887f38d6c2509e695",
       "applied_sql_sha256": "e6ce6e20b723f24c12ef404e5ec3894a67a540908740676743b329af7233f7ec",
       "applied_sql_difference": "live_session_role_wrapper_only",
-      "execution_context": {"role": "adstable_owner", "scope": "transaction_local"}
+      "execution_context": {
+        "role": "adstable_owner",
+        "scope": "transaction_local"
+      }
     },
     {
       "version": "20261011114438",
@@ -605,6 +617,15 @@
       "file": "supabase/migrations/20261028161123_eo05a_identity_authority_snapshot.sql",
       "created_with": "supabase@2.121.0 migration new eo05a_identity_authority_snapshot",
       "repository_sql_sha256": "aa6f363301b4a840bebb12990b983828d72f46e07af3f5c7cf4a475e46194cfd",
+      "applied": false,
+      "live_apply_authorized": false
+    },
+    {
+      "version": "20261028164208",
+      "name": "eo05a_identity_oauth_atomic_stage",
+      "file": "supabase/migrations/20261028164208_eo05a_identity_oauth_atomic_stage.sql",
+      "created_with": "supabase@2.121.0 migration new eo05a_identity_oauth_atomic_stage",
+      "repository_sql_sha256": "e828409dbad0b12f2d407e0507a0c30056f9a0e19264e99d610b642902a1f9d2",
       "applied": false,
       "live_apply_authorized": false
     }

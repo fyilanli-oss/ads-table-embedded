@@ -1,4 +1,9 @@
 {
+  "Identity_oauth_atomic_stage_2026_10_28": {
+    "reference": "contracts/eo-05-start-brief-v1.json#Identity_oauth_atomic_stage_2026_10_28",
+    "status": "repository_callback_write_prepared_not_live",
+    "activation_authorized": false
+  },
   "Identity_authority_snapshot_2026_10_28": "contracts/eo-05-start-brief-v1.json#Identity_authority_snapshot_2026_10_28",
   "Google_Merchant_quota_SQL_2026_10_28": "contracts/eo-05-start-brief-v1.json#Google_Merchant_quota_SQL_2026_10_28",
   "Shopify_Admin_SDK_bootstrap_2026_10_28": "contracts/eo-05-start-brief-v1.json#Shopify_Admin_SDK_bootstrap_2026_10_28",

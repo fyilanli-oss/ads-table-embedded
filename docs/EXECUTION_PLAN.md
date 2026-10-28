@@ -1,3 +1,13 @@
+## 28 Ekim 2026 — OAuth callback atomik credential / CAS yazımı
+
+PR243 (2927877cde4b56113fb3d83e3a558666824739ec) main’dedir. Mevcut PK/seçim/OAuth grubunun callback yazımı hazırlanıyor. CLI migration 20261028164208_eo05a_identity_oauth_atomic_stage.sql mevcut OAuth transaction tablosuna dört nonsecret sonuç alanı ekler; yeni kimlik/Dataset tablosu açmaz. Gerçek aktif kurulum ve claimed transaction kilidi altında beklenen bağlantı ID/sürümü veya doğrulanmış yokluk kontrol edilir. Şifreli credential insert, bağlantı CAS, receipt ve exchanged durumu tek SQL transaction’dadır. Hata tümünü geri alır.
+
+Bağlı Google/Meta hesabı için native discovery’nin önceden bağlanmış hesapların tamamını doğrulaması ve granted scope listesinin gerilememesi gerekir; mevcut reporting seçimi ve cached hesaplar korunur. Disconnect canlandırılmaz. İlk/pending/reauthorization kurulumu mevcut seçim akışına kalır. Mevcut identity server switch varsayılan false; raporlama OAuth ve Klaviyo kapsamı değişmez.
+
+Yanıt belirsiz kaldığında yeni credential silinmez, failed finalize veya ikinci mutation yapılmaz. readIdentityOAuthCommit ayrı açık salt-okuma kontrolüdür: receipt yalnız geçmiş commit kanıtıdır; güncel token yetkisi/aktivasyon değildir. Receipt yokluğu rollback kanıtı veya yeniden deneme izni değildir. Mevcut Google refresh-renew belirsiz yazım uzlaştırması bu callback tesliminden ayrıdır ve sonraki parçada açık kalır.
+
+Gerçek SQL/şifreleme probe’u mevcut F01 rollback fixture içinde; native HTTP yok. Yeni migration canlıya uygulanmaz. Canonical metadata→prewrite/Shopify Order bağı, native kaynak/izin/profil kanıtları, bağımsız Order scheduling/continuation, storage ve activation sonraki kapılardır. Mevcut 26 sıra, 13/15 değerlendirmeleri ve PMax duraklaması değişmez. Tam 12/14 veya canlı kabul değildir. Resmî kontrol 2026-10-28: [Supabase functions](https://supabase.com/docs/guides/database/functions), [changelog](https://supabase.com/changelog), [PostgreSQL locking](https://www.postgresql.org/docs/17/explicit-locking.html), [isolation](https://www.postgresql.org/docs/17/transaction-iso.html). Makine kaydı: contracts/eo-05-start-brief-v1.json#Identity_oauth_atomic_stage_2026_10_28.
+
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
 ## Mevcut 14 değerlendirmesi — Gerçek kurulum PK ve seçim sürümünün atomik SQL okuması, 28 Ekim 2026

@@ -119,6 +119,24 @@ export function createTokenVaultRepository(database) {
       return row.deleted === true;
     },
 
+    async commitIdentityCredential(value) {
+      return exactlyOneRow(await query(
+        `select * from integrations.commit_identity_oauth_credential(
+          $1::uuid,$2::uuid,$3::bigint,$4::text,$5::uuid,$6::uuid,$7::bigint,
+          $8::uuid,$9::text[],$10::jsonb,$11::timestamptz,$12::bytea,$13::bytea,
+          $14::bytea,$15::smallint,$16::timestamptz)`,
+        [value.transactionId,value.workspaceId,value.installGeneration,value.provider,
+          value.connectionId,value.binding.connectionId,value.binding.version,value.recordId,
+          value.scopes,JSON.stringify(value.accounts),value.verifiedAt,value.ciphertext,
+          value.nonce,value.authTag,value.keyVersion,value.expiresAt]), "IDENTITY_OAUTH_COMMIT");
+    },
+
+    async readIdentityCommit(value) {
+      return optionalOneRow(await query(
+        `select * from integrations.read_identity_oauth_commit($1::uuid,$2::uuid,$3::bigint,$4::text)`,
+        [value.transactionId,value.workspaceId,value.installGeneration,value.provider]), "IDENTITY_OAUTH_RECEIPT");
+    },
+
     async storeCredential(value) {
       const row = exactlyOneRow(
         await query(

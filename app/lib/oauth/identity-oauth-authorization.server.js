@@ -2,8 +2,7 @@ import {identityOAuthBinding, oauthPermissionProfile} from "./oauth-permission-p
 
 function eligibleBinding(current) {
   if (current === null) return identityOAuthBinding({connectionId: null, version: null});
-  if (current.status === "connected") throw new Error("IDENTITY_OAUTH_CONNECTED_UPGRADE_NOT_PREPARED");
-  if (!["pending_account_selection", "reauthorization_required"].includes(current.status)) {
+  if (!["connected", "pending_account_selection", "reauthorization_required"].includes(current.status)) {
     throw new Error("IDENTITY_OAUTH_CONNECTION_STATE_NOT_ELIGIBLE");
   }
   return identityOAuthBinding({connectionId: current.connectionId, version: current.version});

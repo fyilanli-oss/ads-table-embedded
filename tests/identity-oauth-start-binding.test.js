@@ -22,7 +22,7 @@ test("server gate is closed by default and rejects non-boolean configuration", a
   assert.equal(reads, 0);
   for (const enabled of ["true", 1, null]) assert.throws(() => createIdentityOAuthAuthorization({lifecycle, enabled}));
 });
-for (const current of [null, row, {...row, status: "reauthorization_required"}]) {
+for (const current of [null, row, {...row, status: "connected"}, {...row, status: "reauthorization_required"}]) {
   test(`server gate reads actual owner/provider lifecycle and admits supported setup: ${current?.status ?? "initial"}`, async () => {
     const gate = createIdentityOAuthAuthorization({enabled: true, lifecycle: {async loadCurrent(input) {
       assert.deepEqual(input, {installationAuthority: owner, provider: "google_ads"}); return current;
@@ -31,7 +31,7 @@ for (const current of [null, row, {...row, status: "reauthorization_required"}])
       current === null ? initial : {connectionId: id(2), version: 7});
   });
 }
-for (const status of ["connected", "disconnect_pending", "disconnected", "unknown"]) {
+for (const status of ["disconnect_pending", "disconnected", "unknown"]) {
   test(`no implicit connected upgrade or disconnect revival: ${status}`, async () => {
     const gate = createIdentityOAuthAuthorization({enabled: true, lifecycle: {async loadCurrent() {return {...row, status};}}});
     await assert.rejects(gate.beforeStart({installationAuthority: owner, provider: "meta"}), /IDENTITY_OAUTH_/);
@@ -98,7 +98,7 @@ for (const provider of ["meta", "google_ads"]) {
   });
 }
 
-function runtimeHarness(provider, {enabled = false, changedDuringRead = false, current = null} = {}) {
+function runtimeHarness(provider, {enabled = false, changedDuringRead = false, current = null, commitFails = false, returnFails = false} = {}) {
   const calls = [], writes = [], vault = [], lifecycleReads = [];
   let currentRow = current;
   const database = {async query(sql, values) {
@@ -106,11 +106,18 @@ function runtimeHarness(provider, {enabled = false, changedDuringRead = false, c
       connection_id: currentRow.connectionId, connection_version: currentRow.version, lifecycle_status: currentRow.status, credential_id: id(4)}] : []};}
     if (sql.includes("complete_oauth_transaction")) {writes.push(values[1]); return {rows: [{transaction_id: id(3), transaction_status: values[1]}]};}
     if (sql.includes("stage_provider_account_selection")) {writes.push("stage"); return {rows: [{connection_id: id(2), connection_version: 1, lifecycle_status: "pending_account_selection", granted_scopes: values[4]}]};}
-    if (sql.includes("resolve_active_installation_callback_return")) return {rows: [{shop_domain: "example.myshopify.com"}]};
+    if (sql.includes("resolve_active_installation_callback_return")) {
+      if (returnFails) throw Error("CALLBACK_RETURN_UNAVAILABLE");
+      return {rows: [{shop_domain: "example.myshopify.com"}]};
+    }
     throw new Error("UNEXPECTED_SQL");
   }};
   const tokenVault = {async assertReady() {}, async store() {}, async take() {}, async remove() {},
     async storeProviderTokenSet() {vault.push("store"); return {credentialId: id(4)};},
+    async commitIdentityOAuthCredential(value) {writes.push("atomic");
+      assert.deepEqual(value.binding,initial); assert.ok(value.accounts.length);
+      if (commitFails) throw Error("IDENTITY_OAUTH_WRITE_UNCONFIRMED");
+      return {connectionId:id(2),credentialId:id(4),version:1,status:"pending_account_selection"};},
     async deleteProviderTokenSet() {vault.push("delete");}};
   const environment = provider === "google_ads" ? {GOOGLE_ADS_OAUTH_CLIENT_ID: "client", GOOGLE_ADS_OAUTH_CLIENT_SECRET: "secret", GOOGLE_ADS_OAUTH_REDIRECT_URI: OAUTH_CALLBACK_URIS.google_ads}
     : {META_APP_ID: "123", META_APP_SECRET: "secret", META_GRAPH_VERSION: "v26.0", META_OAUTH_REDIRECT_URI: OAUTH_CALLBACK_URIS.meta};
@@ -132,6 +139,13 @@ function runtimeHarness(provider, {enabled = false, changedDuringRead = false, c
 const claimed = {status: "claimed", transactionId: id(3), workspaceId: owner.workspaceId, installGeneration: 2,
   permissionProfile: "identity_v1", identityBinding: initial, authorizationCode: "code", pkceVerifier: "verifier"};
 for (const provider of ["meta", "google_ads"]) {
+  for (const options of [{commitFails:true},{returnFails:true}]) {
+    test(`${provider}: uncertain write or later return failure never deletes or finalizes failed ${JSON.stringify(options)}`,async()=>{
+      const h=runtimeHarness(provider,{enabled:true,...options});
+      await assert.rejects(h.runtime.completeCallback({claimed}), /WRITE_UNCONFIRMED|CALLBACK_RETURN_UNAVAILABLE/);
+      assert.deepEqual(h.writes,["atomic"]);assert.deepEqual(h.vault,[]);
+    });
+  }
   test(`${provider}: runtime default and call arguments cannot enable identity start or callback`, async () => {
     const h = runtimeHarness(provider);
     await assert.rejects(h.runtime.oauthBoundary.begin({installationAuthority: owner, provider, permissionProfile: "identity_v1", identityAuthorizationEnabled: true}), /IDENTITY_OAUTH_START_DISABLED/);
@@ -153,7 +167,7 @@ for (const provider of ["meta", "google_ads"]) {
   test(`${provider}: connection change during provider reads stops before selection storage`, async () => {
     const h = runtimeHarness(provider, {enabled: true, changedDuringRead: true});
     await assert.rejects(h.runtime.completeCallback({claimed}), /IDENTITY_OAUTH_CONNECTION_CHANGED/);
-    assert.deepEqual(h.vault, ["store", "delete"]);
+    assert.deepEqual(h.vault, []);
     assert.deepEqual(h.writes, ["failed"]);
     assert.equal(h.lifecycleReads.length, 2);
     assert.equal(h.calls.length, provider === "meta" ? 4 : 3);
@@ -161,7 +175,7 @@ for (const provider of ["meta", "google_ads"]) {
   test(`${provider}: unchanged initial binding completes existing scope-checked callback in isolated tests`, async () => {
     const h = runtimeHarness(provider, {enabled: true});
     assert.equal((await h.runtime.completeCallback({claimed})).outcome, "pending_account_selection");
-    assert.deepEqual(h.writes, ["stage", "exchanged"]); assert.equal(h.lifecycleReads.length, 2);
+    assert.deepEqual(h.writes, ["atomic"]); assert.deepEqual(h.vault, []); assert.equal(h.lifecycleReads.length, 2);
   });
   test(`${provider}: unbound identity callback is rejected without provider calls`, async () => {
     const h = runtimeHarness(provider, {enabled: true});

@@ -262,6 +262,7 @@ export function createGoogleOAuthRuntime({
       }
 
       let credential = null;
+      let identityWriteAttempted = false;
       try {
         if (claimed.permissionProfile === "identity_v1") {
           await identityAuthorization.beforeCallback({installationAuthority: owner, provider: PROVIDER, binding: claimed.identityBinding});
@@ -274,7 +275,7 @@ export function createGoogleOAuthRuntime({
           fetchFn,
           now,
         });
-        credential = await tokenVault.storeProviderTokenSet({
+        if (claimed.permissionProfile !== "identity_v1") credential = await tokenVault.storeProviderTokenSet({
           installationAuthority: owner,
           provider: PROVIDER,
           tokenSet,
@@ -292,6 +293,15 @@ export function createGoogleOAuthRuntime({
         }
         if (claimed.permissionProfile === "identity_v1") {
           await identityAuthorization.beforeCallback({installationAuthority: owner, provider: PROVIDER, binding: claimed.identityBinding});
+        }
+        if (claimed.permissionProfile === "identity_v1") {
+          identityWriteAttempted = true;
+          const committed = await tokenVault.commitIdentityOAuthCredential({installationAuthority:owner,
+            provider:PROVIDER,transactionId:claimed.transactionId,connectionId:randomUUIDFn(),
+            binding:claimed.identityBinding,tokenSet:tokenSet,scopes:tokenSet.scope.trim().split(/\s+/),
+            accounts:advertisers,verifiedAt:evidence.verifiedAt,expiresAt:tokenSet.expires_at});
+          return Object.freeze({outcome:committed.status,owner,pending:committed,
+            callbackReturn:await selections.callbackReturn(owner)});
         }
         const staged = await selections.stage({
           connectionId: randomUUIDFn(),
@@ -313,6 +323,7 @@ export function createGoogleOAuthRuntime({
           callbackReturn: await selections.callbackReturn(owner),
         });
       } catch (error) {
+        if (identityWriteAttempted) throw error;
         if (credential?.credentialId) {
           await tokenVault.deleteProviderTokenSet({
             credentialId: credential.credentialId,

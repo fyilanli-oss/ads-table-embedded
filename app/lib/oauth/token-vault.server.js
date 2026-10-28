@@ -1,4 +1,5 @@
 import {identityOAuthBinding, validateIdentityOAuthGrantedScopes} from "./oauth-permission-profile.server.js";
+import {inspectGoogleIdentityCredential} from "./google-identity-credential.server.js";
 import {
   createTokenEnvelopeCipher,
   readProviderTokenKeyring,
@@ -179,6 +180,56 @@ export function createTokenVault({
         installGeneration: context.installGeneration,
         provider: selectedProvider,
       });
+    },
+
+    async renewGoogleIdentityCredential({installationAuthority,renewalId,connectionId,
+      expectedVersion,expectedCredentialId,tokenSet}) {
+      const owner=authority(installationAuthority);
+      if (![renewalId,connectionId,expectedCredentialId].every(v=>UUID_PATTERN.test(v || ""))
+        || !Number.isSafeInteger(expectedVersion) || expectedVersion<1 || expectedVersion>=Number.MAX_SAFE_INTEGER) {
+        throw new Error("GOOGLE_IDENTITY_RENEWAL_INPUT_INVALID");
+      }
+      if (inspectGoogleIdentityCredential(tokenSet,now).needsRefresh
+        || typeof tokenSet.access_token!=="string" || !tokenSet.access_token
+        || typeof tokenSet.refresh_token!=="string" || !tokenSet.refresh_token) {
+        throw new Error("GOOGLE_IDENTITY_RENEWAL_TOKEN_INVALID");
+      }
+      const scopes=[...validateIdentityOAuthGrantedScopes("google_ads",tokenSet.scope)];
+      const recordId=envelopeCipher.createRecordId();
+      const sealed=envelopeCipher.seal({identity:{recordId,workspaceId:owner.workspaceId,
+        installGeneration:owner.installGeneration,provider:"google_ads",purpose:"provider_token_set"},
+        secret:tokenSetJson(tokenSet)});
+      const value={...sealed,renewalId,connectionId,expectedVersion,expectedCredentialId,scopes,
+        verifiedAt:tokenSet.scope_verified_at,expiresAt:tokenSet.expires_at};
+      await assertReady("google_ads");
+      try {
+        const row=await envelopes.commitGoogleIdentityRenewal(value);
+        if (row.renewal_id!==renewalId || row.connection_id!==connectionId
+          || row.lifecycle_status!=="connected" || Number(row.connection_version)!==expectedVersion+1
+          || row.credential_id!==recordId) throw new Error("GOOGLE_IDENTITY_RENEWAL_RESULT_INVALID");
+        return Object.freeze({renewalId,connectionId,credentialId:recordId,status:"connected",version:expectedVersion+1});
+      } catch {
+        // A committed replacement must never be deleted or replayed after response loss.
+        const error=new Error("GOOGLE_IDENTITY_RENEWAL_WRITE_UNCONFIRMED");
+        error.renewalId=renewalId;throw error;
+      }
+    },
+
+    async readGoogleIdentityRenewal({installationAuthority,renewalId}) {
+      const owner=authority(installationAuthority);
+      if (!UUID_PATTERN.test(renewalId || "")) throw new Error("GOOGLE_IDENTITY_RENEWAL_ID_INVALID");
+      const row=await envelopes.readGoogleIdentityRenewal({renewalId,workspaceId:owner.workspaceId,
+        installGeneration:owner.installGeneration});
+      if (!row) return null;
+      const before=Number(row.version_before),after=Number(row.version_after);
+      if (row.renewal_id!==renewalId || ![row.connection_id,row.credential_before_id,row.credential_after_id].every(v=>UUID_PATTERN.test(v || ""))
+        || row.credential_before_id===row.credential_after_id || !Number.isSafeInteger(before)
+        || before<1 || !Number.isSafeInteger(after) || after!==before+1) {
+        throw new Error("GOOGLE_IDENTITY_RENEWAL_RECEIPT_INVALID");
+      }
+      return Object.freeze({renewalId,connectionId:row.connection_id,versionBefore:before,versionAfter:after,
+        credentialBeforeId:row.credential_before_id,credentialAfterId:row.credential_after_id,
+        historicalCommit:true,authorizesActivation:false});
     },
 
     async commitIdentityOAuthCredential({installationAuthority, provider, transactionId,

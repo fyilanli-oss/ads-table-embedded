@@ -23,7 +23,7 @@ import {
 } from "../providers/google-ads-rest.server.js";
 import {discoverGoogleAdsAccounts} from "../providers/google-account-discovery.server.js";
 import {inspectGoogleIdentityCredential} from "./google-identity-credential.server.js";
-import {GOOGLE_MERCHANT_OAUTH_SCOPE, validateIdentityOAuthGrantedScopes} from "./oauth-permission-profile.server.js";
+import {GOOGLE_MERCHANT_OAUTH_SCOPE} from "./oauth-permission-profile.server.js";
 import {createIdentityOAuthAuthorization} from "./identity-oauth-authorization.server.js";
 
 const PROVIDER = "google_ads";
@@ -115,26 +115,21 @@ export function createGoogleOAuthRuntime({
       if (timing.needsRefresh) {
         if (!connected) throw new Error("GOOGLE_IDENTITY_PENDING_REAUTHORIZATION_REQUIRED");
         const current = await lifecycle.load({installationAuthority, connectionId, provider: PROVIDER});
-        if (!current || current.status !== "connected" || current.credentialId !== credentialId) {
+        if (!current || current.status !== "connected" || current.credentialId !== credentialId
+          || current.connectionId!==connectionId || !Number.isSafeInteger(current.version)
+          || current.version<1 || current.version>=Number.MAX_SAFE_INTEGER) {
           throw new Error("GOOGLE_IDENTITY_CONNECTION_CHANGED");
         }
         tokenSet = await refreshGoogleAdsAccessToken({config, refreshToken: stored.refresh_token,
           permissionProfile: "identity_v1", fetchFn, now});
-        const granted = validateIdentityOAuthGrantedScopes(PROVIDER, tokenSet.scope);
-        const replacement = await tokenVault.storeProviderTokenSet({installationAuthority,
-          provider: PROVIDER, tokenSet, expiresAt: tokenSet.expires_at});
-        // An uncertain write may have committed. Preserve the encrypted envelope;
-        // never use it until the connection replacement has been confirmed.
-        const renewed = await lifecycle.renewCredential({installationAuthority, provider: PROVIDER,
-          connectionId, expectedVersion: current.version, expectedCredentialId: credentialId,
-          newCredentialId: replacement.credentialId,
-          providerEvidence: {authority: "provider_credential_renewal_verified", provider: PROVIDER,
-            scopes: granted, verifiedAt: tokenSet.scope_verified_at,
-            expiresAt: new Date(Math.min(Date.parse(tokenSet.expires_at),
-              Date.parse(tokenSet.scope_verified_at) + 600000)).toISOString()}});
-        if (renewed.status !== "connected" || renewed.credentialId !== replacement.credentialId
-          || renewed.version !== current.version + 1 || renewed.connectionId !== connectionId) {
-          throw new Error("GOOGLE_IDENTITY_RENEWAL_RESULT_INVALID");
+        const renewalId=randomUUIDFn();
+        const renewed=await tokenVault.renewGoogleIdentityCredential({installationAuthority,renewalId,
+          connectionId,expectedVersion:current.version,expectedCredentialId:credentialId,tokenSet});
+        if (renewed.status!=="connected" || renewed.version!==current.version+1
+          || renewed.connectionId!==connectionId || renewed.renewalId!==renewalId
+          || typeof renewed.credentialId!=="string" || renewed.credentialId===credentialId) {
+          const error=new Error("GOOGLE_IDENTITY_RENEWAL_WRITE_UNCONFIRMED");
+          error.renewalId=renewalId;throw error;
         }
       }
       const evidence = await discoverGoogleAdsAccounts({accessToken: tokenSet.access_token,

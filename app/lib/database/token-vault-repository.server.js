@@ -119,6 +119,23 @@ export function createTokenVaultRepository(database) {
       return row.deleted === true;
     },
 
+    async commitGoogleIdentityRenewal(value) {
+      return exactlyOneRow(await query(
+        `select * from integrations.commit_google_identity_renewal(
+          $1::uuid,$2::uuid,$3::bigint,$4::uuid,$5::bigint,$6::uuid,$7::uuid,
+          $8::text[],$9::timestamptz,$10::bytea,$11::bytea,$12::bytea,$13::smallint,$14::timestamptz)`,
+        [value.renewalId,value.workspaceId,value.installGeneration,value.connectionId,
+          value.expectedVersion,value.expectedCredentialId,value.recordId,value.scopes,
+          value.verifiedAt,value.ciphertext,value.nonce,value.authTag,value.keyVersion,value.expiresAt]),
+      "GOOGLE_IDENTITY_RENEWAL_COMMIT");
+    },
+
+    async readGoogleIdentityRenewal(value) {
+      return optionalOneRow(await query(
+        `select * from integrations.read_google_identity_renewal($1::uuid,$2::uuid,$3::bigint)`,
+        [value.renewalId,value.workspaceId,value.installGeneration]), "GOOGLE_IDENTITY_RENEWAL_RECEIPT");
+    },
+
     async commitIdentityCredential(value) {
       return exactlyOneRow(await query(
         `select * from integrations.commit_identity_oauth_credential(

@@ -628,6 +628,15 @@
       "repository_sql_sha256": "e828409dbad0b12f2d407e0507a0c30056f9a0e19264e99d610b642902a1f9d2",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261028175738",
+      "name": "eo05a_google_identity_renewal_receipt",
+      "file": "supabase/migrations/20261028175738_eo05a_google_identity_renewal_receipt.sql",
+      "created_with": "supabase@2.121.0 migration new eo05a_google_identity_renewal_receipt",
+      "repository_sql_sha256": "729741834ba4c9150dd1b376bd2f3b90ae5278804ecd74a89c4bdc9a464e9d8b",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

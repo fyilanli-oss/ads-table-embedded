@@ -1,4 +1,9 @@
 {
+  "Google_identity_renewal_receipt_2026_10_28": {
+    "reference": "contracts/eo-05-start-brief-v1.json#Google_identity_renewal_receipt_2026_10_28",
+    "status": "repository_prepared_pending_CI_not_live",
+    "activation_authorized": false
+  },
   "Identity_oauth_atomic_stage_2026_10_28": {
     "reference": "contracts/eo-05-start-brief-v1.json#Identity_oauth_atomic_stage_2026_10_28",
     "status": "repository_callback_write_prepared_not_live",

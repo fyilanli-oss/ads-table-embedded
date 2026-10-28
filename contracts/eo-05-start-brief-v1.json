@@ -1,4 +1,29 @@
 {
+  "Google_identity_renewal_receipt_2026_10_28": {
+    "status": "repository_prepared_pending_exact_head_CI_owner_merge_not_live",
+    "base_main": "2074158e01b3017a8a40d486f5c97b759a62230a",
+    "migration": "supabase/migrations/20261028175738_eo05a_google_identity_renewal_receipt.sql",
+    "scope": "existing_PK_selection_OAuth_group_Google_refresh_renewal_atomic_write_and_read_only_reconciliation",
+    "atomic": [
+      "encrypted_envelope_insert",
+      "active_installation_and_connected_connection_CAS",
+      "expected_old_credential_and_version",
+      "credential_renewed_lifecycle_event_with_nonsecret_before_after_ids",
+      "old_envelope_retirement"
+    ],
+    "uncertainty": "stop_first_error_return_nonsecret_renewalId_no_retry_no_delete_no_Ads_no_selection_write_no_automatic_receipt_read",
+    "read_receipt": "explicit_historical_commit_only_not_current_token_or_activation_absent_is_not_rollback_or_replay_permission",
+    "compatibility": "existing_reporting_OAuth_Meta_Klaviyo_unchanged_identity_default_switch_false_no_new_provider_permission_or_native_behavior",
+    "live_apply_authorized": false,
+    "remaining": [
+      "canonical_installation_and_selection_metadata_to_prewrite_and_Shopify_Order_owner",
+      "independent_Order_scheduling_and_partial_continuation",
+      "native_source_namespace_access_claims_profiles_and_consent",
+      "step15_storage_and_later_activation_gates"
+    ],
+    "existing_26_order_unchanged": true,
+    "PMax_paused": true
+  },
   "Identity_oauth_atomic_stage_2026_10_28": {
     "status": "repository_prepared_pending_exact_head_CI_owner_merge_not_live",
     "base_main": "2927877cde4b56113fb3d83e3a558666824739ec",
@@ -51,7 +76,7 @@
     "google_pd_source_composition": "merged_PR185_f01d31ee7f741e70513bfe96e8750d4f405580a5",
     "klaviyo_pd_source_composition": "merged_PR186_99f6474bc49ff70a084ca5916bc3631f05187ba1",
     "pd_canonical_bridge": "merged_PR187_5657ce49c2c93b4d018c4606e08134a311754c33",
-    "current_slice": "ordered_step14_identity_OAuth_atomic_callback_write_prepared_pending_CI_not_live",
+    "current_slice": "ordered_step14_Google_identity_refresh_renewal_atomic_receipt_prepared_pending_CI_not_live",
     "permission_preflight": "merged_PR190_ee28856c1260dffd18725eeb85718d195a5ce3de_not_live",
     "identity_OAuth_scope_binding": "merged_PR191_438bf5f8960cc2e25d4b6202a580cc1b1bf9b426_not_live",
     "Google_identity_credential_lifecycle": "merged_PR192_807408603484578555fc8700eb50f9cfa420d07d_not_live",

@@ -50,9 +50,9 @@ for (const scope of [undefined, scopes[0], scopes[1], "", []]) {
 
 function harness({pending = false, token = stored(), tokenPayload = native, tokenStatus = 200,
   adsStatus = 200, renewalFailure = false, changed = false, malformedRenewal = false,
-  ledgerScopes = scopes, firstAdsFailure = false} = {}) {
+  ledgerScopes = scopes, firstAdsFailure = false, currentVersion = 7} = {}) {
   const calls = [], sqlCalls = [], vaultCalls = [];
-  const row = {connection_id: connectionId, connection_version: 7, lifecycle_status: "connected",
+  const row = {connection_id: connectionId, connection_version: currentVersion, lifecycle_status: "connected",
     credential_id: credentialId, granted_scopes: ledgerScopes, accounts: [{id: "123"}], reporting_account_id: "123"};
   const database = {async query(sql, values) {
     sqlCalls.push({sql, values});
@@ -70,6 +70,9 @@ function harness({pending = false, token = stored(), tokenPayload = native, toke
   const tokenVault = {
     async assertReady() {}, async store() {}, async take() {}, async remove() {},
     async loadProviderTokenSet(input) {vaultCalls.push(["load", input]); return token;},
+    async renewGoogleIdentityCredential(input) {vaultCalls.push(["renew",input]);
+      if(renewalFailure){const e=new Error("GOOGLE_IDENTITY_RENEWAL_WRITE_UNCONFIRMED");e.renewalId=input.renewalId;throw e;}
+      return {renewalId:input.renewalId,connectionId,status:"connected",version:8,credentialId:malformedRenewal?credentialId:replacementId};},
     async storeProviderTokenSet(input) {vaultCalls.push(["store", input]); return {credentialId: replacementId};},
     async deleteProviderTokenSet(input) {vaultCalls.push(["delete", input]);},
   };
@@ -93,11 +96,13 @@ test("connected expiry refreshes before Ads and binds replacement with owner, ge
   const h = harness(); await h.run();
   assert.ok(h.calls[0].address.includes("oauth2.googleapis.com/token"));
   assert.equal(h.calls[1].options.headers.authorization, "Bearer new-token");
-  const renew = h.sqlCalls.find(c => c.sql.includes("renew_provider_connection_credential"));
-  assert.deepEqual(renew.values.slice(1, 8), [connectionId, owner.workspaceId, 2, "google_ads", 7, credentialId, replacementId]);
-  assert.deepEqual([...renew.values[8]].sort(), [...scopes].sort());
-  const envelope = h.vaultCalls.find(c => c[0] === "store")[1];
-  assert.equal(envelope.installationAuthority, owner); assert.equal(envelope.expiresAt, "2026-10-27T13:00:00.000Z");
+  const renew=h.vaultCalls.find(c=>c[0]==="renew")[1];
+  assert.equal(renew.connectionId,connectionId);assert.equal(renew.installationAuthority,owner);
+  assert.equal(renew.expectedVersion,7);assert.equal(renew.expectedCredentialId,credentialId);
+  assert.equal(renew.tokenSet.expires_at,"2026-10-27T13:00:00.000Z");
+  assert.equal(renew.tokenSet.refresh_token,"retained-refresh");
+  assert.deepEqual(renew.tokenSet.scope.split(" "),[...scopes]);
+  assert.deepEqual(h.vaultCalls.map(c=>c[0]),["load","renew"]);
   assert.equal(h.vaultCalls.some(c => c[0] === "delete"), false);
   assert.equal(h.sqlCalls.some(c => c.sql.includes("stage_provider_account_selection")), false);
 });
@@ -132,7 +137,7 @@ for (const options of [{renewalFailure: true}, {malformedRenewal: true}]) {
   test(`uncertain or invalid replacement never uses or deletes the new envelope: ${JSON.stringify(options)}`, async () => {
     const h = harness(options); await assert.rejects(h.run());
     assert.equal(h.calls.length, 1);
-    assert.deepEqual(h.vaultCalls.map(c => c[0]), ["load", "store"]);
+    assert.deepEqual(h.vaultCalls.map(c => c[0]), ["load", "renew"]);
     assert.equal(h.sqlCalls.some(c => c.sql.includes("select_reporting_account(")), false);
   });
 }
@@ -154,4 +159,8 @@ test("first root failure stops before trying a different accessible root", async
   await assert.rejects(discoverGoogleAdsAccounts({accessToken: "token", now, stopOnFirstError: true,
     fetchFn: async () => ++count === 1 ? json({resourceNames: ["customers/123", "customers/456"]}) : json({error: {}}, 403)}));
   assert.equal(count, 2);
+});
+
+for(const currentVersion of [0,Number.MAX_SAFE_INTEGER,NaN]) test("invalid current version stops before Google: "+currentVersion,async()=>{
+ const h=harness({currentVersion});await assert.rejects(h.run(),/GOOGLE_IDENTITY_CONNECTION_CHANGED/);assert.equal(h.calls.length,0);
 });

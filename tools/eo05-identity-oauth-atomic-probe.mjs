@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import {randomBytes,randomUUID} from "node:crypto";
 import {createTokenVault} from "../app/lib/oauth/token-vault.server.js";
 import {oauthPermissionScopes} from "../app/lib/oauth/oauth-permission-profile.server.js";
+import {googleIdentityRenewalProbe} from "./eo05-google-identity-renewal-probe.mjs";
 
 // Rollback-only real SQL + actual envelope crypto. No native provider calls or live keys.
 export async function identityOAuthAtomicProbe(client,{execution}) {
@@ -17,6 +18,7 @@ export async function identityOAuthAtomicProbe(client,{execution}) {
     await client.query("grant adstable_runtime to postgres with inherit false, set true, admin false");
     await client.query("set local role adstable_owner");
     await identityOAuthAtomicProbeWithTestMembership(client,{execution});
+    await googleIdentityRenewalProbe(client,{execution});
   } finally {
     await client.query("rollback to savepoint identity_oauth_test_membership");
     await client.query("release savepoint identity_oauth_test_membership");

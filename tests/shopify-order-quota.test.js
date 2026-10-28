@@ -4,6 +4,7 @@ import {createShopifyOrderPageRequest as request,shopifyOrderReadFamily as class
 import {createQuotaManagedFetch,quotaBoundaryControl} from "../app/lib/refresh/quota-native-fetch.server.js";
 import {createQuotaScopeResolver,quotaRouteIdentity} from "../app/lib/refresh/quota-scope-resolver.server.js";
 import {createSharedQuotaGuard} from "../app/lib/refresh/shared-quota.server.js";
+import {SHOPIFY_PERMISSION_SCOPES_QUERY} from "../app/lib/shopify/permission-scope-protocol.server.js";
 
 const families=["order_headers","order_lines","order_journey"];
 const shop={id:"gid://shopify/Shop/12",myshopifyDomain:"test.myshopify.com"};
@@ -27,6 +28,25 @@ function fixture() {
   return {q,metadata,lookups,reservations,feedback,calls,read:(r=spec(),version="2026-10")=>
     fetch(`https://test.myshopify.com/admin/api/${version}/graphql.json`,{method:"POST",body:typeof r==="string"?r:raw(r)})};
 }
+
+test("native scopes have distinct cost operation, same six-field private metadata and actual feedback",async()=>{
+  const f=fixture();await f.read({query:SHOPIFY_PERMISSION_SCOPES_QUERY,variables:{}});
+  assert.equal(f.metadata[0].family,"permission_scopes");assert.equal(f.calls.length,1);assert.equal(f.feedback[0].feedback.actualQueryCost,5);
+  assert.equal(Object.keys(f.metadata[0]).sort().join(","),"accountId,family,includes,organizationId,provider,version");
+  const keys=[...families,"identity_product","permission_scopes"].map(family=>quotaRouteIdentity(context,{provider:"shopify_admin",family,
+    accountId:context.accountId,organizationId:null,version:"2026-10",includes:[]}).routeKey);
+  assert.equal(new Set(keys).size,5);assert.doesNotMatch(JSON.stringify([f.metadata,f.lookups,f.reservations]),/accessScopes|AppInstallation|read_orders/);
+});
+test("missing native scope profile does not borrow existing product/order profile",async()=>{
+  const f=fixture();f.q.missing=true;await assert.rejects(f.read({query:SHOPIFY_PERMISSION_SCOPES_QUERY}),e=>quotaBoundaryControl(e)?.status==="not_configured");
+  assert.equal(f.calls.length,0);assert.equal(f.reservations.length,0);
+});
+for(const version of ["2026-07","2026-01","2027-01"])test(`native scope dependency rejects unreviewed version ${version}`,async()=>{
+  const f=fixture();await assert.rejects(f.read({query:SHOPIFY_PERMISSION_SCOPES_QUERY},version),e=>quotaBoundaryControl(e)?.status==="not_configured");
+  assert.equal(f.calls.length,0);assert.equal(f.metadata.length,0);
+  assert.throws(()=>quotaRouteIdentity({...context,apiVersion:version},{provider:"shopify_admin",family:"permission_scopes",
+    accountId:context.accountId,organizationId:null,version,includes:[]}));
+});
 
 for(const family of families)test(`exact ${family} reaches real resolver/guard with a distinct operation and typed point feedback`,async()=>{
   const f=fixture(),r=spec(family);assert.equal(classify(raw(r)),family);await f.read(r);

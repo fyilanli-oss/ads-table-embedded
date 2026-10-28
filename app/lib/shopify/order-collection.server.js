@@ -2,6 +2,8 @@ import {createShopifyOrderPageRequest,parseShopifyOrderPage,nextShopifyOrderPage
 import {isShopifyAdminOrderSdkClient,closeShopifyAdminOrderSdkClient} from "../refresh/shopify-admin-sdk-quota-bridge.server.js";
 import {runIdentityReadDeadline,IdentityReadDeadlineError} from "../providers/identity-read-deadline.server.js";
 import {quotaBoundaryControl} from "../refresh/quota-native-fetch.server.js";
+import {SHOPIFY_PERMISSION_SCOPES_QUERY,parseShopifyPermissionScopePage,ShopifyPermissionScopeProtocolError} from "./permission-scope-protocol.server.js";
+import {permissionContext,assessIdentityPermissionScopes} from "../oauth/identity-permission-preflight.server.js";
 
 export class ShopifyOrderCollectionError extends Error {
   constructor(code){super(`SHOPIFY_ORDER_COLLECTION_${code}`);this.name="ShopifyOrderCollectionError";}
@@ -14,15 +16,17 @@ const journeySummary=p=>({state:p.state,ready:p.ready??null,firstVisit:p.firstVi
 // Trusted server composition only. checkCurrent is supplied by the private fenced
 // factory, never by a product route/user or as a replacement for HTTP quota/permission.
 // A genuine SDK client brand proves construction only, not owner or live access proof.
-export function createShopifyOrderReadExecution({client,shop,scope,range,limits,signal,checkCurrent,...extra}={}) {
+export function createShopifyOrderReadExecution({client,shop,scope,range,limits,signal,checkCurrent,includeOrderHistory=false,...extra}={}) {
   if(Object.keys(extra).length||!isShopifyAdminOrderSdkClient(client)||typeof checkCurrent!=="function"
     ||!limits||typeof limits!=="object"||Array.isArray(limits)
     ||Object.keys(limits).sort().join(",")!=="maxBytes,maxElapsedMs,maxRequests,maxRows,pageSize"
-    ||signal!==undefined&&!(signal instanceof AbortSignal))fail("INPUT_INVALID");
+    ||typeof includeOrderHistory!=="boolean"||signal!==undefined&&!(signal instanceof AbortSignal))fail("INPUT_INVALID");
   const caps=structuredClone(limits),expectedShop=structuredClone(shop),owner=structuredClone(scope),window=structuredClone(range);
   const maxima={maxElapsedMs:600000,maxRequests:10000,maxRows:1000000,maxBytes:134217728,pageSize:100};
   if(Object.entries(maxima).some(([key,max])=>!Number.isSafeInteger(caps[key])||caps[key]<1||caps[key]>max))fail("LIMITS_INVALID");
   const initial=createShopifyOrderPageRequest({family:"order_headers",shop:expectedShop,range:window,first:caps.pageSize});
+  const permissionOwner=permissionContext({provider:"shopify",workspaceId:owner?.workspace_id,installGeneration:owner?.installation_generation,
+    shopId:expectedShop.id,shopDomain:expectedShop.myshopifyDomain});
   const graphql=client.graphql.bind(client);
   let used=false;
   return Object.freeze({async readEvidence(...args){
@@ -58,14 +62,24 @@ export function createShopifyOrderReadExecution({client,shop,scope,range,limits,
             reader.releaseLock();
           }
         }
-        async function page(request){
+        async function payload(request){
           check();if(stats.requests>=caps.maxRequests)fail("REQUEST_LIMIT");
           await current();stats.requests++;
           const response=await graphql(request.query,{variables:request.variables,tries:1,signal:child});check();
-          const body=await json(response);check();
-          const parsed=parseShopifyOrderPage({request,body});
+          const body=await json(response);check();return body;
+        }
+        async function page(request){
+          const parsed=parseShopifyOrderPage({request,body:await payload(request)});
           if(parsed.rows.length>caps.maxRows-stats.rows)fail("ROW_LIMIT");stats.rows+=parsed.rows.length;
           await current();return parsed;
+        }
+        async function scopes(){
+          const observedAt=new Date().toISOString();
+          const native=parseShopifyPermissionScopePage({shop:expectedShop,body:await payload({query:SHOPIFY_PERMISSION_SCOPES_QUERY,variables:{}})});
+          const evidence={source:"shopify_current_app_installation",context:permissionOwner,observedAt,complete:true,...native};
+          const assessment=assessIdentityPermissionScopes({context:permissionOwner,evidence,includeOrderHistory});
+          if(assessment.scopeStatus!=="observed_sufficient")fail("SCOPES_REQUIRED");
+          await current();return {evidence,assessment};
         }
         async function headers(first){
           const rows=[];let request=first;
@@ -94,6 +108,7 @@ export function createShopifyOrderReadExecution({client,shop,scope,range,limits,
           return {...journeySummary(first),moments:rows,fullyPaged:first.state==="parsed"};
         }
         await current();
+        const permissionsBefore=await scopes();
         const before=await headers(initial),orders=[];
         for(const h of before){
           check();const items=await lines(h),visits=await journey(h);
@@ -110,11 +125,15 @@ export function createShopifyOrderReadExecution({client,shop,scope,range,limits,
         const after=await headers(createShopifyOrderPageRequest({family:"order_headers",shop:expectedShop,range:window,first:caps.pageSize}));
         const observed=new Map(before.map(h=>[h.id,signature(h)]));
         if(after.length!==before.length||after.some(h=>observed.get(h.id)!==signature(h)))fail("ORDER_SET_CHANGED");
+        const permissionsAfter=await scopes();
+        if(permissionsBefore.evidence.appInstallationId!==permissionsAfter.evidence.appInstallationId)fail("APP_INSTALLATION_CHANGED");
+        if(signature([...permissionsBefore.evidence.scopes].sort())!==signature([...permissionsAfter.evidence.scopes].sort()))fail("SCOPES_CHANGED");
         await current();check();
         const journeyPagesComplete=orders.every(o=>o.journey.fullyPaged);
         const result=freeze({source:"Shopify_Order_LineItem_and_journey_observations",apiVersion:SHOPIFY_ORDER_READ_API_VERSION,
           scope:owner,shop:expectedShop,extractionRange:window,state:journeyPagesComplete?"collected":"journey_incomplete",
           salesPagesComplete:true,journeyPagesComplete,orders,stats:{...stats},
+          nativeScopeObservation:{includeOrderHistory,before:permissionsBefore,after:permissionsAfter},nativeScopeListObserved:true,
           consistency:{headerWindowReobserved:true,orderVersionReobserved:true,journeySummaryAndFirstMomentReobserved:true,
             atomicSnapshotVerified:false,journeyMiddleUnchangedVerified:false},
           nativePermissionVerified:false,historicalCoverageVerified:false,providerClaimVerified:false,exactOverlapVerified:false,
@@ -124,7 +143,7 @@ export function createShopifyOrderReadExecution({client,shop,scope,range,limits,
     } catch(error){
       if(quotaBoundaryControl(error)||error instanceof IdentityReadDeadlineError||error instanceof ShopifyOrderCollectionError)throw error;
       // Preserve only fixed protocol error codes, never SDK/provider bodies/messages.
-      if(error instanceof ShopifyOrderProtocolError)throw error;
+      if(error instanceof ShopifyOrderProtocolError||error instanceof ShopifyPermissionScopeProtocolError)throw error;
       fail("FAILED");
     } finally {closed=true;closeShopifyAdminOrderSdkClient(client);}
   }});

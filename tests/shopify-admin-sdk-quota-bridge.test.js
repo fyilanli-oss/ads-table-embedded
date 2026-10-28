@@ -12,6 +12,7 @@ import {refreshQuotaWait} from "../app/lib/refresh/quota-work-wait.server.js";
 import {createRefreshShopifyAdminIdentityClient,createRefreshShopifyAdminOrderClient,createRefreshQuotaClients} from "../app/lib/refresh/quota-authority-binding.server.js";
 import {createShopifyOrderPageRequest,parseShopifyOrderPage,SHOPIFY_ORDER_READ_QUERIES as orderQueries} from "../app/lib/shopify/order-read-protocol.server.js";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
+import {SHOPIFY_PERMISSION_SCOPES_QUERY} from "../app/lib/shopify/permission-scope-protocol.server.js";
 
 // Only this isolated test worker installs the SDK hook. No application bootstrap edits.
 const originalFetch=abstractFetch;after(()=>setAbstractFetchFunc(originalFetch));
@@ -31,7 +32,7 @@ function fixture({bridge=createShopifyAdminIdentitySdkBridge(),domain=shop.mysho
   const q={costBudget:{unit:"shopify_admin_query_points",reservedRequestedCost:10}},calls=[],reservations=[],settles=[],stops=[],feedback=[],auth=[],logs=[];
   const context={provider:"shopify_admin",clientScopeKey:"a".repeat(64),connectionScopeKey:"b".repeat(64),connectionEpoch:3,
     accountId:domain,organizationId:null,apiVersion:"2026-10"};
-  const keys=Object.keys(orders?orderQueries:queries).map(family=>quotaRouteIdentity(context,{provider:"shopify_admin",family,accountId:domain,
+  const keys=[...Object.keys(orders?orderQueries:queries),...orders?["permission_scopes"]:[]].map(family=>quotaRouteIdentity(context,{provider:"shopify_admin",family,accountId:domain,
     organizationId:null,version:"2026-10",includes:[]}).routeKey);
   const store={resolveRoute:async x=>{await q.loading?.();return q.missing?null:keys.includes(x.routeKey)?x.routeKey:null;},
     reserve:async x=>{reservations.push(x);if(q.waitAt===reservations.length)return {status:"waiting"};
@@ -64,6 +65,14 @@ test("real pinned React Router/API SDK reaches guarded physical HTTP once and ke
 });
 test("sequential candidate queries use separate debit, no SDK cache bypass",async()=>{
   const f=fixture(),client=f.wrap();await f.read(client);await f.read(client);assert.equal(f.calls.length,2);assert.equal(f.reservations.length,2);
+});
+test("genuine order SDK client admits exact native scope dependency with one quota debit",async()=>{
+  const f=fixture({orders:true}),client=f.wrap();await client.graphql(SHOPIFY_PERMISSION_SCOPES_QUERY,{variables:{},tries:1});
+  assert.equal(f.calls.length,1);assert.equal(f.reservations.length,1);assert.equal(f.feedback.length,1);assert.equal(f.auth.length,0);
+});
+test("identity-only SDK client cannot silently grow scope-query capability",async()=>{
+  const f=fixture(),client=f.wrap();await assert.rejects(client.graphql(SHOPIFY_PERMISSION_SCOPES_QUERY,{variables:{},tries:1}));
+  assert.equal(f.calls.length,0);assert.equal(f.reservations.length,0);
 });
 test("SDK bridge rejects double wrapping across bridge instances before dispatch",()=>{
   const f=fixture(),client=f.wrap();assert.throws(()=>f.bridge.wrap({admin:client,transport:f.config.transport}),/INPUT_INVALID/);

@@ -1,5 +1,19 @@
 # EO-04 — Analiz ve tasarım kitabı
 
+## Sıralı plan 12 — Shopify native izin listesi, 28 Ekim 2026
+
+#227 `a3e8db49a82aeaf77fba93a95006e93e56d7e82d` main’dedir. Hazırlanan tek kullanımlık sipariş çalıştırıcısı, ilk sipariş sorgusundan önce ve tüm veri kontrollerinden sonra `currentAppInstallation.id/accessScopes` listesini aynı genuine SDK/kota yolundan okur. Ayrı `permission_scopes` ailesi yalnız API 2026-10’da, kendi operation key ve typed point receipt’iyle çalışır; mevcut ürün/sipariş profili yerine kullanılamaz. Global SDK hook kurulmadı; identity-only istemci bu sorguya açılmadı.
+
+Mevcut izin politikası korunur: read_products + read_orders; açık boolean includeOrderHistory=true ise ayrıca read_all_orders. Native write grant’lerin read eşdeğerliği mevcut politikadan gelir; yeni izin istenmez. Caller scopes/evidence enjekte edemez. Native mağaza, kurulum GID’si ve eksiksiz/tekil izin listesi doğrulanır. Başlangıçta eksik izin sipariş HTTP’sini durdurur; sonda kurulum veya izin kümesi değişirse bütün sonuç teslim edilmez. Aynı kümenin sırası değişebilir.
+
+İki scope HTTP okuması aynı total süre/çağrı/SDK Response byte sınırına ve fiziksel attempt sayacına dahildir. İlk wait sıfır olabilir; scope okumasından sonraki wait önceki çağrıları silmez veya koleksiyonu hiç gönderilmemiş saymaz. Scope handle listesi yerel 100 kayıt sınırındadır; sipariş veri satırı sayacıyla karıştırılmaz. Quota metadata’ya izin, kurulum GID’si veya sorgu gövdesi taşınmaz.
+
+nativeScopeListObserved=true yalnız gözlemlenen listeyi ifade eder. nativePermissionVerified, historicalCoverageVerified, persistable, authorizesActivation ve DatasetWritePerformed=false kalır. Korunan müşteri verisi onayı, tarihsel kapsam, gerçek erişim ve SQL/profil/hook/upstream kapasite kabulü bu listeyle kanıtlanmaz. Actual SQL Admin’i hâlâ SQL/HTTP öncesinde reddeder. Yeni SQL/migration, OAuth/config/token/provider mutation veya Dataset yazımı yoktur. 13 prewrite, 14 kullanıcı incelemesi, mevcut 26 sıra, Klaviyo rol kapsamı ve tarihsel PMax duraklaması korunur.
+
+57 yeni + 1.222 mevcut ilgili test (1.279 toplam), 7 repository kontrolü ve typecheck geçti. Bunlar sentetik native yanıt/store ile kurulu gerçek SDK ve guard testleridir; canlı izin/erişim kanıtı değildir.
+
+Resmî kontrol 28 Ekim 2026: [currentAppInstallation](https://shopify.dev/docs/api/admin-graphql/latest/queries/currentAppInstallation), [access scopes](https://shopify.dev/docs/api/usage/access-scopes), [protected customer data](https://shopify.dev/docs/apps/launch/protected-customer-data). Makine kaydı: `contracts/eo-05-start-brief-v1.json#Shopify_order_scope_readback_2026_10_28`.
+
 ## EO-05 takip — Shopify native sipariş koleksiyonu, 28 Ekim 2026
 
 #226 main’dedir. Tek kullanımlık prepared order reader, gerçek SDK/kota/fenced authority ile header, LineItem ve journey sayfalarını toplar; tek total süre/çağrı/satır ve reconstructed SDK Response byte sınırı uygular. Missing/pending journey satış satırlarını silmez; final order version/first-last-first moment/header-window ve scope kontrolleri değişiklikte publish’i durdurur. Atomik snapshot, orta journey değişmezliği, ağ memory sınırı, native izin veya overlap kanıtı yoktur. 40 yeni + 747 regresyon, 7 kontrol ve typecheck; actual SQL Admin’i hâlâ reddeder. İzin/history/protected-data, SQL/profil/hook/upstream capacity, scheduling/partial continuation ve 13/14 kapıları açıktır. EO-04 kabulü, PMax duraklaması ve Klaviyo rol kapsamı değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Shopify_order_native_collection_2026_10_28` ve Execution Plan.

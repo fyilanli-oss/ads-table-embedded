@@ -1,12 +1,8 @@
 import {permissionContext, identityPermissionRequirements, assessIdentityPermissionScopes} from "../oauth/identity-permission-preflight.server.js";
 import {createShopifyRuntimeRepositories} from "../database/shopify-runtime-repositories.server.js";
 
-export const SHOPIFY_PERMISSION_SCOPES_QUERY = `#graphql
-  query AdsTablePermissionScopes {
-    shop { id myshopifyDomain }
-    currentAppInstallation { id accessScopes { handle } }
-  }
-`;
+import {SHOPIFY_PERMISSION_SCOPES_QUERY} from "./permission-scope-protocol.server.js";
+export {SHOPIFY_PERMISSION_SCOPES_QUERY};
 
 function readFailure(response) {
   const error = new Error("SHOPIFY_PERMISSION_SCOPES_READ_FAILED");

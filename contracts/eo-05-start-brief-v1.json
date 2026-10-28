@@ -24,7 +24,7 @@
     "google_pd_source_composition": "merged_PR185_f01d31ee7f741e70513bfe96e8750d4f405580a5",
     "klaviyo_pd_source_composition": "merged_PR186_99f6474bc49ff70a084ca5916bc3631f05187ba1",
     "pd_canonical_bridge": "merged_PR187_5657ce49c2c93b4d018c4606e08134a311754c33",
-    "current_slice": "ordered_step14_Admin_SDK_explicit_bootstrap_repository_prepared_not_live_or_Dataset",
+    "current_slice": "ordered_step14_Merchant_quota_SQL_repository_prepared_not_live_or_Dataset",
     "permission_preflight": "merged_PR190_ee28856c1260dffd18725eeb85718d195a5ce3de_not_live",
     "identity_OAuth_scope_binding": "merged_PR191_438bf5f8960cc2e25d4b6202a580cc1b1bf9b426_not_live",
     "Google_identity_credential_lifecycle": "merged_PR192_807408603484578555fc8700eb50f9cfa420d07d_not_live",
@@ -80,6 +80,41 @@
     "identity_pause_before_step_12": true,
     "historical_PMax_pause_preserved": true,
     "package_complete": false
+  },
+  "Google_Merchant_quota_SQL_2026_10_28": {
+    "ordered_plan_step": 14,
+    "remediates_existing_ordered_step": 12,
+    "status": "repository_Merchant_scope_SQL_prepared_pending_exact_head_CI_and_owner_merge_not_live",
+    "prior_SDK_bootstrap_merge": "PR241_da5378f633fc5262e578cab98ed6792f00c21c87",
+    "migration": "supabase/migrations/20261028152713_eo05a_merchant_quota_context.sql",
+    "real_SQL_probe": "tools/eo05-merchant-quota-context-probe.mjs",
+    "scope": "existing_private_refresh_quota_contexts_six_nullable_or_disabled_Merchant_fields_no_new_table_or_Dataset_writer",
+    "inventory": "owner_reviewed_target_account_quota_account_products_v1_binding_epoch_and_current_credential_UUID_separate_from_Ads_account_connection_version_and_API_version_merchant_enabled_defaults_false_no_rows_seeded",
+    "authority": "delegate_existing_original_job_account_window_fence_installation_fresh_entitlement_checks_join_same_Google_connection_current_version_installation_workspace_generation_connected_lifecycle_exact_credential_ID_and_granted_content_scope",
+    "output": "existing_seven_field_base_for_nonMerchant_or_missing_disabled_stale_Merchant_inventory_only_valid_enabled_Google_inventory_adds_exact_four_field_merchant_object_existing_Merchant_transport_requires_object_no_Ads_profile_fallback",
+    "epoch": "existing_row_UPDATE_binding_or_enabled_changes_require_strictly_increasing_safe_integer_Merchant_epoch_no_null_reset_or_decrease_away_back_with_increment_cannot_reuse_old_route_profile_no_automatic_inventory_writer",
+    "credential_reference": "nonsecret_UUID_compared_to_current_connection_credential_FK_no_new_credential_storage_access_or_reference_FK_that_blocks_old_envelope_retirement_stale_reference_omits_Merchant",
+    "security": "existing_forced_RLS_table_ACL_preserved_new_wrapper_empty_search_path_coordinator_only_predecessor_direct_execute_revoked_epoch_trigger_invoker_owner_updates_only",
+    "validation": "4_new_plus_1840_existing_relevant_tests_1844_total_7_controls_typecheck_passed_real_SQL_pending_both_existing_F01_replays_outside_native_timer_synthetic_HTTP_and_reserve_drift_rollback_only",
+    "not_native_proof": "synthetic_target_quota_accounts_are_not_native_authenticating_principal_quota_pool_or_Ads_Merchant_link_evidence_no_default_target_equals_quota_no_limits_or_method_group_mapping_inferred",
+    "remaining": [
+      "native_authenticating_principal_quota_account_method_group_limits_and_enabled_profile_evidence_activation",
+      "canonical_installation_PK_selection_epoch_OAuth_CAS_SQL",
+      "independent_order_ranges_scheduling_safe_partial_continuation",
+      "native_identity_order_claim_evidence_and_step15_storage_review",
+      "dedicated_background_host_and_all_foreground_auth_activation"
+    ],
+    "live_apply_authorized": false,
+    "native_configuration_inserted": false,
+    "Dataset_write": false,
+    "official_sources_checked_at": "2026-10-28",
+    "official_sources": [
+      "https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.products/list",
+      "https://developers.google.com/merchant/api/guides/quotas-limits/quotas",
+      "https://supabase.com/docs/guides/database/functions",
+      "https://supabase.com/changelog",
+      "https://www.postgresql.org/docs/17/sql-createtrigger.html"
+    ]
   },
   "Shopify_Admin_SDK_bootstrap_2026_10_28": {
     "ordered_plan_step": 14,

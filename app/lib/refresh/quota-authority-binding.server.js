@@ -8,9 +8,10 @@ import {klaviyoBusinessDayTimeframe} from "../providers/klaviyo-reporting.server
 import {collectMetaNativeIdentityEvidence} from "../providers/meta-identity-collection.server.js";
 import {metaIdentityReportWindow} from "../providers/meta-report-candidates.server.js";
 import {collectGoogleMerchantIdentityEvidence} from "../providers/google-identity-collection.server.js";
-import {isShopifyAdminIdentitySdkBridge} from "./shopify-admin-sdk-quota-bridge.server.js";
+import {isShopifyAdminIdentitySdkBridge,closeShopifyAdminOrderSdkClient} from "./shopify-admin-sdk-quota-bridge.server.js";
 import {normalizeShopDomain} from "../shopify/installation-authority.server.js";
 import {SHOPIFY_ORDER_READ_API_VERSION} from "../shopify/order-read-protocol.server.js";
+import {createShopifyOrderReadExecution} from "../shopify/order-collection.server.js";
 
 // Explicit background-only composition. SQL supplies current authority and owner scope handles.
 // No caller account/context loader override; never a setup OAuth or interactive authority shortcut.
@@ -139,7 +140,13 @@ export function createRefreshShopifyAdminIdentityClient(options) {return createF
 // The original provider job is retained; no fourth provider or order scheduler added.
 export function createRefreshShopifyAdminOrderClient(options) {return createFencedAdminClient(options,true);}
 
-function createFencedAdminClient({verified,sdkBridge,signal,timeoutMs,...quotaOptions}={},orders=false) {
+// One-shot prepared native collection. Explicit extraction instants remain separate
+// from the job's business dates; permission/history/timezone proof is not inferred.
+export function createRefreshShopifyOrderReader({range,limits,...options}={}) {
+  return createFencedAdminClient(options,true,{range,limits});
+}
+
+function createFencedAdminClient({verified,sdkBridge,signal,timeoutMs,...quotaOptions}={},orders=false,collection=null) {
   const invalid=orders?"REFRESH_SHOPIFY_ADMIN_ORDER_INPUT_INVALID":"REFRESH_SHOPIFY_ADMIN_IDENTITY_INPUT_INVALID";
   const claim=structuredClone(quotaOptions.claim),window=structuredClone(quotaOptions.window);
   const owner=structuredClone(verified?.installationAuthority),shop=structuredClone(verified?.identity?.shop);
@@ -165,5 +172,16 @@ function createFencedAdminClient({verified,sdkBridge,signal,timeoutMs,...quotaOp
     guard:createSharedQuotaGuard({store:binding.store,now:binding.now}),resolveOperation:resolve,
     isDispatchCurrent:async(metadata,key)=>await resolve(metadata)===key,
     ...orders?{readExecution:createQuotaReadExecution()}:{}});
-  return (orders?sdkBridge.wrapOrders:sdkBridge.wrap)({admin,transport,signal,timeoutMs});
+  const client=(orders?sdkBridge.wrapOrders:sdkBridge.wrap)({admin,transport,signal,timeoutMs});
+  if(!collection)return client;
+  try {
+    return createShopifyOrderReadExecution({client,shop:{id:shop.shopId,myshopifyDomain:shop.myshopifyDomain},
+      scope:{workspace_id:owner.workspaceId,installation_generation:owner.installGeneration,installation_id:null,
+        job:{provider:claim.provider,account_id:claim.accountId,id:claim.id,fence:claim.fence,window}},
+      range:collection.range,limits:collection.limits,signal,
+      checkCurrent:async()=>{
+        try {return typeof await resolve({provider:"shopify_admin",family:"order_headers",accountId:shop.myshopifyDomain,
+          organizationId:null,version:SHOPIFY_ORDER_READ_API_VERSION,includes:[]})==="string";}catch{return false;}
+      }});
+  } catch(error){closeShopifyAdminOrderSdkClient(client);throw error;}
 }

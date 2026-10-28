@@ -3,7 +3,10 @@
 import {normalizeShopDomain} from "./installation-authority.server.js";
 
 const requests=new WeakMap(),pages=new WeakMap();
-const fail=code=>{throw new Error(`SHOPIFY_ORDER_${code}`);};
+export class ShopifyOrderProtocolError extends Error {
+  constructor(code){super(`SHOPIFY_ORDER_${code}`);this.name="ShopifyOrderProtocolError";}
+}
+const fail=code=>{throw new ShopifyOrderProtocolError(code);};
 const object=v=>v!==null&&typeof v==="object"&&!Array.isArray(v);
 const freeze=v=>{if(object(v)||Array.isArray(v)){Object.values(v).forEach(freeze);Object.freeze(v);}return v;};
 const moneyFields=["subtotalPriceSet","currentSubtotalPriceSet","originalTotalPriceSet","totalPriceSet","currentTotalPriceSet",

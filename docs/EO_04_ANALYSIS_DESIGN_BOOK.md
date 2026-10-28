@@ -1,5 +1,9 @@
 # EO-04 — Analiz ve tasarım kitabı
 
+## EO-05 takip — Shopify native sipariş koleksiyonu, 28 Ekim 2026
+
+#226 main’dedir. Tek kullanımlık prepared order reader, gerçek SDK/kota/fenced authority ile header, LineItem ve journey sayfalarını toplar; tek total süre/çağrı/satır ve reconstructed SDK Response byte sınırı uygular. Missing/pending journey satış satırlarını silmez; final order version/first-last-first moment/header-window ve scope kontrolleri değişiklikte publish’i durdurur. Atomik snapshot, orta journey değişmezliği, ağ memory sınırı, native izin veya overlap kanıtı yoktur. 40 yeni + 747 regresyon, 7 kontrol ve typecheck; actual SQL Admin’i hâlâ reddeder. İzin/history/protected-data, SQL/profil/hook/upstream capacity, scheduling/partial continuation ve 13/14 kapıları açıktır. EO-04 kabulü, PMax duraklaması ve Klaviyo rol kapsamı değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Shopify_order_native_collection_2026_10_28` ve Execution Plan.
+
 ## EO-05 takip — Sipariş SDK/kota istemcisi, 28 Ekim 2026
 
 #225 main’dedir. Üç exact sipariş sorgusu yalnız API 2026-10’da ayrı quota key/point receipt ile inactive SDK HTTP yoluna bağlandı. Tek genuine hook’ta wrap identity-only kalır, wrapOrders order-only’dir. Yeni fenced order client asıl provider job/owner/shop/session ve güncel context’i korur; kendi shared read sayacı sonraki wait’te ilk HTTP’yi silmez. Caller scopes/guard/budget/classifier veremez; native hata auth recovery/retry yapmaz. 56 yeni + 691 mevcut test ve 7 kontrol/typecheck; gerçek adapter Admin’i SQL/HTTP öncesinde hâlâ reddeder. Order permission/history/protected-data ve canlı profil/hook/SQL kabulü ile native koleksiyon/total bounds/parser-stop/final consistency açıktır. EO-04 kabulü, 13/14 durağı ve PMax duraklaması değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Shopify_order_SDK_quota_binding_2026_10_28` ve Execution Plan.

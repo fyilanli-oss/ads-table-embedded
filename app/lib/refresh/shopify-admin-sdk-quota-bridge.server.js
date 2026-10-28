@@ -6,7 +6,10 @@ import {shopifyOrderReadFamily} from "../shopify/order-read-protocol.server.js";
 import {IdentityReadDeadlineError,runIdentityReadDeadline} from "../providers/identity-read-deadline.server.js";
 const wrappedClients=new WeakSet();
 const bridges=new WeakSet();
+const orderClients=new WeakMap();
 export function isShopifyAdminIdentitySdkBridge(value) {return bridges.has(value);}
+export function isShopifyAdminOrderSdkClient(value) {return orderClients.has(value);}
+export function closeShopifyAdminOrderSdkClient(value) {orderClients.get(value)?.();}
 
 // Inactive SDK hook. Explicit bootstrap installation is a separate gate; no global setter,
 // fallback fetch, token/session loader, config change or authority inference here.
@@ -30,6 +33,7 @@ export function createShopifyAdminIdentitySdkBridge() {
     if(Object.keys(extra).length||typeof admin?.graphql!=="function"||wrappedClients.has(admin)||!isQuotaManagedFetchForProvider(transport,"shopify_admin")
       ||signal!==undefined&&!(signal instanceof AbortSignal)||!Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>600000)throw fail("INPUT_INVALID");
     const graphql=admin.graphql.bind(admin);
+    const lifetime=classify===shopifyOrderReadFamily?new AbortController():null;
     let busy=false,failed=false;
     const client=Object.freeze({async graphql(query,options={}) {
       if(busy)throw fail("CONCURRENT_CALL_FORBIDDEN");
@@ -40,7 +44,7 @@ export function createShopifyAdminIdentitySdkBridge() {
           ||options.tries!==undefined&&options.tries!==1||options.signal!==undefined&&!(options.signal instanceof AbortSignal))throw Error();
         variables=structuredClone(options.variables);
         if(!classify(JSON.stringify({query,variables})))throw Error();
-        const signals=[signal,options.signal].filter(Boolean);external=signals.length?AbortSignal.any(signals):undefined;
+        const signals=[signal,options.signal,lifetime?.signal].filter(Boolean);external=signals.length?AbortSignal.any(signals):undefined;
       } catch {throw fail("INPUT_INVALID");}
       busy=true;let call;
       try {
@@ -63,7 +67,9 @@ export function createShopifyAdminIdentitySdkBridge() {
         throw call?.failure??fail("REQUEST_FAILED");
       } finally {busy=false;if(call)call.closed=true;}
     }});
-    wrappedClients.add(client);return client;
+    wrappedClients.add(client);
+    if(lifetime)orderClients.set(client,()=>{failed=true;lifetime.abort();});
+    return client;
   }
   // Keep the existing identity entry closed to caller-selected classifiers/modes.
   // Both entries use ONE SDK hook; no competing global adapter installation.

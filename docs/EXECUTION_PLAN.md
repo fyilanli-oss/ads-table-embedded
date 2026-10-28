@@ -1,5 +1,21 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## Sıralı plan 13 — Üç sağlayıcının DB’siz ürün adayı kontrolü, 28 Ekim 2026
+
+#232 `27ceaf7bdf577e08194a52c69480d645f5e69da2` main’dedir. Yeni reviewRefreshCandidatePrewrite, tamamlanmış Google/Meta/Klaviyo aday okuyucusu çıktısını aynı yapıda inceler. Fenced factory içindeki private WeakMap yalnız başarılı aday (Meta’da aday+rapor dahil) sonucuna köken kaydı ekler; registrar export edilmez. Native-only/Message-only çıktı, JSON kopyası, spread veya güven flag’i bunu taklit edemez. Bu kayıt güncel native izin/fence veya yazım yetkisi değildir.
+
+Beklenen sunucu kapsamı: provider, workspace, kurulum nesli, shop ID/domain, bağlantı ID/sürümü ve hesap. Bu kapsam hem factory’nin yakaladığı metadata hem SQL/vault okuyucusu çıktısıyla eşleşir. Kaynak kapsaması ve tekrarlar; her aday indeksinin aralığı/durumu, native kayıt bağı ve aynı Shopify mağazasında product/variant-parent kanıtı denetlenir. Referanssız aday ve uyuşmayan Klaviyo event-ID referans kümesi kabul edilmez. İndeksler yerel referanstır; DB ID değildir.
+
+Google’da Merchant/feed/dil/veri kaynağı; Meta’da katalog iç ID, retailer ve varsa feed; Klaviyo’da olay ID/metric ve normalize edilmiş native olgu korunur. Aynı Product ID altında farklı varyantlar, diller, feed’ler veya olaylar birleştirilmez. Kaynak kuralı ya da kimlik eksikse unresolved/conflicting satır nedeni ve null standardizedProductId ile kalır. Gerçek boş kaynak observedEmpty’dir; metrik sıfırı veya aday uydurulmaz. Tutar/adetler değişmez. Yerel sourceRows/candidates/unresolved/conflicting sayıları yalnız yapısal kontrol sayılarıdır, reklam metriği değildir.
+
+Ortak çıktı sourceReference, state, reason, yerel candidateIndex, aday Shopify Product/Variant ve orijinal observed satırını içerir. Product ID aday omurgasıdır; varsa Variant ID kaynak ayrıntısıdır. Standardize edilmiş kimlik veya kanonik mapping atanmaz. reportLinksReviewed=false ve providerClaimsReviewed=false: Meta rapor/Message bağları ve sipariş satış iddiaları bu teslimde incelenmiş sayılmaz. Role, paid atıf, kesin overlap, native izin, canonical scope, persistable, aktivasyon ve yazım false kalır.
+
+Yeni HTTP/SQL, tablo/migration, provider/OAuth/config/token/route/Dataset mutasyonu yoktur. 12’nin native kaynak/namespace/erişim, SQL/profil/kapasite kapıları; 13’ün rapor/Message/claim mutabakatı ve 14 incelemesi açıktır. 26 sıra, Klaviyo rol kararı ve tarihsel PMax duraklaması korunur.
+
+71 yeni + 1.436 mevcut ilgili test (1.507 toplam), 7 repository kontrolü ve typecheck geçti. Ortak test senaryoları üç sağlayıcının gerçek kurulu SDK/fenced collector nesneleriyle, sentetik native HTTP/SQL/vault üzerinden çalıştı. Native erişim, namespace veya kalıcı mapping/idempotence kanıtı değildir.
+
+Resmî kontrol 28 Ekim 2026: [Merchant Product](https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.products), [Meta ProductItem](https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/productitem.py), [Klaviyo Events](https://developers.klaviyo.com/en/reference/get_events), [Shopify ProductVariant](https://shopify.dev/docs/api/admin-graphql/latest/objects/ProductVariant). Makine kaydı: `contracts/eo-05-start-brief-v1.json#provider_candidate_prewrite_review_2026_10_28`.
+
 ## Sıralı plan 13 — Shopify sipariş/satır için DB’siz yazım öncesi kontrol, 28 Ekim 2026
 
 #231 `470207d24a7de65a536487992cb2844b7a77806e` main’dedir. Üç sağlayıcının aday SDK/kota bağlantıları hazırlanmıştır; 12’nin native kanıt/SQL/kabul kapıları kapanmış sayılmaz. 13’ün ilk kod parçası reviewShopifyOrderPrewrite, yalnız aynı süreçte tamamlanmış gerçek collection çıktısını ve varsa önceki böyle bir çıktıyı inceler. Collector’ın private WeakSet kaydı son kontroller geçince eklenir; JSON kopyası, wrapper veya güven iddia eden flag kabul edilmez. Bu işaret kaynak nesnenin yerel kökenidir; native izin veya yazım yetkisi değildir. Önceki gözlem DB satırı değildir; kalıcı replay okuyucusu/yazıcısı eklenmedi.

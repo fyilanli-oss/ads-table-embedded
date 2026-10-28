@@ -17,6 +17,8 @@ import {abstractFetch,setAbstractFetchFunc} from "@shopify/shopify-api/runtime";
 import {createShopifyAdminIdentitySdkBridge} from "../app/lib/refresh/shopify-admin-sdk-quota-bridge.server.js";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 import {refreshQuotaWait} from "../app/lib/refresh/quota-work-wait.server.js";
+import {candidatePrewriteCases} from "./helpers/candidate-prewrite-cases.js";
+import {reviewRefreshCandidatePrewrite} from "../app/lib/providers/candidate-prewrite.server.js";
 
 const workspace = "11111111-1111-4111-8111-111111111111", connection = "22222222-2222-4222-8222-222222222222",
   credential = "33333333-3333-4333-8333-333333333333";
@@ -819,4 +821,28 @@ test("bound Meta report: local page bound stops before second report page or fin
   const f=candidateBoundFixture(true);f.config.maxReportPages=1;
   f.hooks.fetch=p=>p.pathname.endsWith("/insights")&&response({data:[],paging:{cursors:{after:"next"},next:"ignored"}});
   await assert.rejects(f.create().readEvidence(),/COLLECTION_FAILED/);assert.equal(f.calls.length,7);assert.equal(f.adminCalls.length,1);
+});
+const candidatePrewriteOwner=()=>({provider:"meta",workspaceId:workspace,installGeneration:3,shopId:"gid://shopify/Shop/12",shopDomain:"test.myshopify.com",
+  connectionId:connection,connectionVersion:2,accountId:"act_123"});
+candidatePrewriteCases({provider:"meta",fixture:candidateBoundFixture,nativeFixture:boundFixture,expected:candidatePrewriteOwner,
+  empty:f=>{f.native.products.data=[];},unresolved:f=>{delete f.config.sourceRules;},
+  productOnly:f=>{f.config.sourceRules[0].format="shopify_product_id";delete f.config.sourceRules[0].market;f.native.products.data[0].retailer_id="10";}});
+test("Meta prewrite: duplicated retailer ID across feeds does not collapse catalog records",async()=>{
+  const f=candidateBoundFixture(),other=rule();other.product_context.product_feed_id="101";other.source_reference="synthetic-other-feed";f.config.sourceRules.push(other);
+  const record=structuredClone(f.native.products.data[0]);record.id="901";record.product_feed.id="101";f.native.products.data.push(record);
+  const observation=await f.create().readEvidence(),r=reviewRefreshCandidatePrewrite({expected:candidatePrewriteOwner(),observation});
+  assert.equal(r.rows.length,2);assert.equal(r.counts.candidates,2);assert.equal(f.adminCalls.length,1);
+  assert.notEqual(r.rows[0].sourceReference.nativeKey,r.rows[1].sourceReference.nativeKey);
+});
+test("Meta prewrite: candidate review does not certify raw report identity links or assign roles",async()=>{
+  const f=candidateBoundFixture(true),observation=await f.create().readEvidence(),r=reviewRefreshCandidatePrewrite({expected:candidatePrewriteOwner(),observation});
+  assert.equal(r.provenance.kind,"report");assert.equal(r.candidateReferencesChecked,true);assert.equal(r.reportLinksReviewed,false);
+  assert.equal(r.providerClaimsReviewed,false);assert.equal(r.salesRolesChanged,false);
+});
+test("Meta prewrite: two variants of one product retain both catalog source records",async()=>{
+  const f=candidateBoundFixture(),record=structuredClone(f.native.products.data[0]);record.id="901";record.retailer_id="shopify_US_10_21";f.native.products.data.push(record);
+  f.q.adminNative=(p,init)=>{const id=JSON.parse(init.body).variables.variantId;p.data.productVariant.id=id;p.data.productVariant.legacyResourceId=id.split("/").at(-1);};
+  const observation=await f.create().readEvidence(),r=reviewRefreshCandidatePrewrite({expected:candidatePrewriteOwner(),observation});
+  assert.equal(r.rows.length,2);assert.equal(r.rows[0].candidateShopifyProductId,r.rows[1].candidateShopifyProductId);
+  assert.notEqual(r.rows[0].candidateShopifyVariantId,r.rows[1].candidateShopifyVariantId);assert.equal(f.adminCalls.length,2);
 });

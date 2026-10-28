@@ -1,4 +1,55 @@
 {
+  "Shopify_order_work_reservation_2026_10_28": {
+    "status": "repository_prepared_pending_exact_head_CI_owner_merge_pre_HTTP_reservation_only",
+    "base_main": "d32a4c8b7209ad3378eaea8e9e72cafc962bbd87",
+    "scope": "existing_independent_Order_worker_capacity_and_fence_gap_under_step14_review",
+    "migration": "supabase/migrations/20261028204502_eo05a_shopify_order_worker_reservation.sql",
+    "runtime": "app/lib/refresh/shopify-order-work-reservation.server.js",
+    "SQL": "operations.reserve_shopify_order_work/read_shopify_order_work_reservation/release_shopify_order_work",
+    "source_identity": "actual_installation_PK_workspace_generation_ShopGID_domain_and_queued_range_not_ad_provider_or_account",
+    "policy": "existing_queue_control_separate_worker_enabled_false_worker_cost_null_worker_epoch1_no_limits_enabled",
+    "reservation_table": "operations.shopify_order_work_reservations_private_forced_RLS_not_Order_LineItem_or_Dataset_facts",
+    "resources": [
+      "requests",
+      "dbWrites",
+      "connections",
+      "rows",
+      "bytes"
+    ],
+    "capacity": "same_refresh_control_global_lock_revision_next_fence_both_ad_and_Order_global_workspace_vectors_and_maxClaims_include_reserved_Order_cost_interactive_headroom_preserved",
+    "per_source": "explicit_positive_five_resource_cost_SQL_policy_only_no_caller_cost_or_fake_fourth_provider",
+    "SQL_rechecks": "active_owner_queued_range_version_queue_epoch_current_Admin_Partner_contexts_five_reviewed_routes_capacity_then_insert_plus_shared_counter_increment_atomically",
+    "single_flight": "one_reserved_Order_work_per_actual_installation_no_timeout_release",
+    "ad_proposals": "state.externalClaims_source_shopify_orders_counts_global_workspace_resources_and_combined_maxClaims_SQL_rechecks_actual_rows_even_if_caller_omits_external_claims",
+    "uncertainty": "unknown_reserve_or_release_no_retry_no_automatic_read_or_release_explicit_scoped_read_is_observation_not_releasable_handle_absence_not_rollback_proof",
+    "release": "only_genuine_in_process_factory_handle_once_before_any_HTTP_stale_attempt_fence_and_concurrent_duplicate_release_rejected",
+    "HTTP": "no_HTTP_callback_request_intent_entitlement_or_native_dispatch_method_exposed_future_request_intent_must_close_pre_HTTP_release_path",
+    "ACL": "only_three_worker_RPC_to_coordinator_tables_helpers_and_renamed_ad_implementations_private",
+    "workerAdmitted": false,
+    "authorizesDispatch": false,
+    "authorizesActivation": false,
+    "entitlementVerified": false,
+    "quotaReserved": false,
+    "checkpointAdvanced": false,
+    "persistable": false,
+    "DatasetWritePerformed": false,
+    "live_apply_authorized": false,
+    "existing_26_order_unchanged": true,
+    "PMax_paused": true,
+    "remaining": [
+      "fresh_native_Partner_entitlement_independent_Order_request_intent_current_fence_and_stop_protocol",
+      "native_Admin_Order_collection_bound_to_Order_reservation_and_shared_quota",
+      "bounded_fair_active_scheduler_native_history_protected_data_capacity_acceptance",
+      "durable_Order_evidence_and_atomic_checkpoint_handshake_after_existing_step15_storage_review",
+      "existing_step14_review_and_activation_gates"
+    ],
+    "official_checked_at": "2026-10-28",
+    "official_sources": [
+      "https://supabase.com/docs/guides/database/functions",
+      "https://www.postgresql.org/docs/17/explicit-locking.html",
+      "https://www.postgresql.org/docs/17/functions-json.html"
+    ]
+  },
   "Shopify_order_pending_queue_2026_10_28": {
     "status": "repository_prepared_pending_exact_head_CI_owner_merge_not_active_worker",
     "base_main": "fab49fca164a2a63dfc36f92762f0abd6c6f4143",

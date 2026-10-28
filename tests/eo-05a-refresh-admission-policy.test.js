@@ -27,6 +27,23 @@ function input(candidates, extra = {}) {
 }
 const ids = result => result.admitted.map(claim => claim.id);
 
+test("installation-owned Order reservations consume global/workspace capacity without ad provider/account identity",()=>{
+  const args=input([job("a")]);args.state.nextFence=2;
+  args.state.externalClaims=[{source:"shopify_orders",id:"order-attempt",installationId:"42",workspaceId:"a",fence:1,cost:amounts(20)}];
+  assert.equal(planRefreshAdmissions(args).deferred[0].reason,"budget_full");
+  args.state.externalClaims[0].workspaceId="other";args.budget.global=amounts(40);
+  assert.deepEqual(ids(planRefreshAdmissions(args)),["a"]);
+  args.budget.global=amounts(20);assert.equal(planRefreshAdmissions(args).deferred[0].reason,"budget_full");
+  args.budget.global=amounts(40);args.bounds={...bounds,maxClaims:1};assert.equal(planRefreshAdmissions(args).deferred[0].reason,"dispatch_limit");
+});
+test("external reservation metadata cannot invent a fourth reporting provider or invalid resource use",()=>{
+  for(const extra of [{source:"shopify"},{provider:"meta"},{accountId:"fake"},{cost:amounts(-1)},{fence:2}]){
+    const args=input([job("a")]);args.state.nextFence=2;args.state.externalClaims=[{source:"shopify_orders",id:"order-attempt",installationId:"42",workspaceId:"a",fence:1,cost:amounts(1),...extra}];
+    assert.throws(()=>planRefreshAdmissions(args),/INPUT_INVALID/);
+  }
+  const args=input([job("a")]);args.state.externalClaims=null;assert.throws(()=>planRefreshAdmissions(args),/INPUT_INVALID/);
+});
+
 test("hour slots are deterministic, identity-scoped and spread rather than all at the hour boundary", () => {
   const offsets = Array.from({length: 24}, (_, i) => refreshHourlyOffset(job(`workspace-${i}`)));
   assert.ok(offsets.every(offset => offset >= 0 && offset < 3_600_000));

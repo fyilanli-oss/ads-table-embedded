@@ -7,6 +7,8 @@ import {quotaBoundaryControl} from "./quota-native-fetch.server.js";
 const flags={workerAdmitted:false,authorizesDispatch:false,authorizesActivation:false,checkpointAdvanced:false,persistable:false,DatasetWritePerformed:false};
 const freeze=v=>{if(v&&typeof v==="object"&&!Object.isFrozen(v)){Object.values(v).forEach(freeze);Object.freeze(v);}return v;};
 const fail=()=>{throw Error("SHOPIFY_ORDER_ENTITLEMENT_INPUT_INVALID");};
+const checkers=new WeakMap();
+export function shopifyOrderEntitlementBinding(checker){const b=checkers.get(checker);if(!b)fail();return b;}
 // Explicit inactive native composition: no route/cron/Admin/Dataset reader or retry entry.
 export function createShopifyOrderEntitlementCheck({reservations,quotaStore,environment,now,limits,fetchFn=globalThis.fetch,...extra}={}){
   if(Object.keys(extra).length||typeof now!=="function"||typeof fetchFn!=="function")fail();
@@ -29,7 +31,7 @@ export function createShopifyOrderEntitlementCheck({reservations,quotaStore,envi
       return freeze({status,reason,attemptId:h.attemptId,rangeKey:h.p.key,stopRecorded:true,reservationRetained:r.reservationRetained,...flags,entitlementVerified:false});
     }catch{return freeze({status:"needs_attention",reason:"entitlement_stop_unconfirmed",attemptId:h.attemptId,rangeKey:h.p.key,stopRecorded:false,reservationRetained:true,...flags,entitlementVerified:false});}
   }
-  return Object.freeze({async verify({reservation,...overrides}={}){
+  const checker=Object.freeze({async verify({reservation,...overrides}={}){
     if(Object.keys(overrides).length||!binding.has(reservation))fail();
     const started=now(),left=()=>{const t=now();return Number.isSafeInteger(t)&&t>=started?bound.deadlineAt-t:-1;};
     if(!Number.isSafeInteger(started)||started<0)fail();
@@ -82,4 +84,7 @@ export function createShopifyOrderEntitlementCheck({reservations,quotaStore,envi
     const timely=()=>{const t=now();return Number.isSafeInteger(t)&&t>=v.started&&bound.deadlineAt-t>=bound.finishReserveMs;};
     try{return timely()&&await current(v.h,v.receipt)&&timely();}catch{return false;}
   }});
+  const view=v=>Object.freeze({h:Object.freeze({...v.h}),receipt:v.receipt,database,now,deadlineAt:bound.deadlineAt,finishReserveMs:bound.finishReserveMs});
+  checkers.set(checker,Object.freeze({peek(verification){const v=verified.get(verification);if(!v||v.claimed)fail();return view(v);},
+    take(verification){const v=verified.get(verification);if(!v||v.claimed)fail();v.claimed=true;return view(v);}}));return checker;
 }

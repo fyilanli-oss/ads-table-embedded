@@ -30,7 +30,7 @@ export function createShopifyOrderWorkReservations({database,...extra}={}){
       const r=await one("select operations.reserve_shopify_order_work($1::bigint,$2::uuid,$3::bigint,$4::text,$5::text,$6::text,$7::uuid) as result",[...args(p),attemptId]);
       if(states.has(r?.status))return frozen({status:r.status,...flags});
       if(r?.status!=="reserved"||!valid(r,p,attemptId))throw Error();
-      const result=frozen({...r,reservationHeld:true,...flags});handles.set(result,{p,attemptId,fence:r.fence});return result;
+      const result=frozen({...r,reservationHeld:true,...flags});handles.set(result,{p,attemptId,fence:r.fence,cost:result.cost});return result;
     }catch{return frozen({status:"needs_attention",reason:"reservation_write_unconfirmed",attemptId,rangeKey:p.key,reservationMayBeHeld:true,...flags});}
   },async readReservation({plan,rangeKey,attemptId,...overrides}={}){
     if(Object.keys(overrides).length||!uuid(attemptId))fail();const p=shopifyOrderRangeProposal(plan,rangeKey);

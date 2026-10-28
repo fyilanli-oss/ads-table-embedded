@@ -1,5 +1,21 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## Sıralı plan 13 — Shopify sipariş/satır için DB’siz yazım öncesi kontrol, 28 Ekim 2026
+
+#231 `470207d24a7de65a536487992cb2844b7a77806e` main’dedir. Üç sağlayıcının aday SDK/kota bağlantıları hazırlanmıştır; 12’nin native kanıt/SQL/kabul kapıları kapanmış sayılmaz. 13’ün ilk kod parçası reviewShopifyOrderPrewrite, yalnız aynı süreçte tamamlanmış gerçek collection çıktısını ve varsa önceki böyle bir çıktıyı inceler. Collector’ın private WeakSet kaydı son kontroller geçince eklenir; JSON kopyası, wrapper veya güven iddia eden flag kabul edilmez. Bu işaret kaynak nesnenin yerel kökenidir; native izin veya yazım yetkisi değildir. Önceki gözlem DB satırı değildir; kalıcı replay okuyucusu/yazıcısı eklenmedi.
+
+Beklenen workspace/kurulum nesli/shop ID/domain sunucu orkestrasyonundan gelir ve iki gözlem de bu owner ile eşleşir. Okumalar arası AppInstallation değişimi reddedilir. Order anahtarı workspace + shop + Order ID; satır anahtarı workspace + shop + Order ID + LineItem ID’dir. Product/Variant, provider/hesap/job veya gün bu fiziksel Shopify kayıt anahtarına eklenmez. Kurulum nesli owner kontrolüdür, kaynak job ve extraction range provenance’da korunur. Aynı ürüne ait farklı satırlar birleşmez. Aynı LineItem başka siparişe bağlanamaz.
+
+Eski current.updatedAt reddedilir. Aynı timestamp altında header, satır değerleri veya satır kümesi farklıysa sessiz sürüm seçilmez; conflict ile durur. Aynı satış gözlemi replay’dir, tutarlar toplanmaz; line pagination sırası farkı conflict değildir. Daha yeni sürüm native current/original adet ve tutarları, iade/iptal, gerçek sıfır ve null ürün/varyantı korur. Vergi/kargo/indirim/iade/FX hesabı yapılmaz; writer’a kazanan kayıt seçilmez. Bir sonraki okumada görünmeyen order/line yalnız gözlemlenmeyen anahtar olarak raporlanır; silinme, tombstone, sıfır satış veya yeni satır üretilmez.
+
+Journey hazır değilse tam satış satırları korunur. Journey farkı, sales replay/sürüm kontrolünden ayrı gözlemdir; paid/provider claim/overlap veya Sales Role sonucu değildir. Sonuç deep-frozen structurally_reviewed_open_gates’tir; native izin, canonical scope, snapshot, persistable, aktivasyon, provider claim, kesin overlap ve Dataset-write false kalır. HTTP, SQL, yeni tablo/migration, provider/OAuth/config/token/route veya Dataset mutasyonu yoktur.
+
+13’ün üç sağlayıcı ortak aday/claim kontrolleri hâlâ sıradadır. Gerçek kaynak/namespace/erişim ve 12’den gelen Admin SQL/profil/kapasite kapıları, canonical PK/selection epoch ve kalıcı replay/writer için 14 incelemesi açıktır. 14 değerlendirmesi geçilmedi; 26 sıra, Klaviyo rol kapsamı ve tarihsel PMax duraklaması korunur.
+
+33 yeni + 1.403 mevcut ilgili test (1.436 toplam), 7 repository kontrolü ve typecheck geçti. Yeni kontroller, sentetik HTTP/store ile gerçek SDK/guard üzerinden üretilmiş completed collection nesneleriyle sınandı; native erişim veya kalıcı idempotence kanıtı değildir.
+
+Resmî kontrol 28 Ekim 2026: [Order](https://shopify.dev/docs/api/admin-graphql/latest/objects/Order), [LineItem](https://shopify.dev/docs/api/admin-graphql/latest/objects/LineItem). Makine kaydı: `contracts/eo-05-start-brief-v1.json#Shopify_order_prewrite_review_2026_10_28`.
+
 ## Sıralı plan 12 — Meta aday ve raporunun ortak SDK/kota bağlantısı, 28 Ekim 2026
 
 #230 `c528fc20c59b69ce4e13af0b03a7c11de4d3d82d` main’dedir. Yeni inactive createRefreshMetaCandidateReader ve createRefreshMetaReportCandidateReader ayrı server entry’leridir. Native-only entry aynı kalır; aday entry rapor yeteneğine sessiz geçmez. Caller mode, context, guard, readExecution veya tarih penceresi veremez. Kaynak retailer kuralı ve Insights namespace kuralı ayrı listeler olarak constructor’da kopyalanır/doğrulanır. İki varsayılan registry de boştur; benzer kimlik string’i kanıt yerine geçmez.

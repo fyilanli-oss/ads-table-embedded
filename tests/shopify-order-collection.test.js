@@ -12,6 +12,7 @@ import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repo
 import {quotaRouteIdentity} from "../app/lib/refresh/quota-scope-resolver.server.js";
 import {quotaBoundaryControl} from "../app/lib/refresh/quota-native-fetch.server.js";
 import {refreshQuotaWait} from "../app/lib/refresh/quota-work-wait.server.js";
+import {reviewShopifyOrderPrewrite} from "../app/lib/shopify/order-prewrite.server.js";
 
 const original=abstractFetch;after(()=>setAbstractFetchFunc(original));
 const sdkRoot=import.meta.resolve("@shopify/shopify-app-react-router/server");
@@ -34,6 +35,7 @@ function line(n) {return {id:gid("LineItem",n),quantity:1,currentQuantity:1,isGi
 const visit=n=>({__typename:"CustomerVisit",id:gid("CustomerVisit",n),occurredAt:"2026-09-30T12:00:00Z",source:"facebook",sourceDescription:null,sourceType:"SOCIAL"});
 const gate=()=>{let resolve;const promise=new Promise(r=>{resolve=r;});return {promise,resolve};};
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
+const prewriteOwner=()=>({workspaceId:workspace,installGeneration:3,shopId:shop.id,shopDomain:shop.myshopifyDomain});
 function connection(rows,variables,prefix) {
   const offset=variables.after===null?0:Number(variables.after.split(":").at(-1))+1;
   const selected=rows.slice(offset,offset+variables.first);
@@ -326,4 +328,121 @@ test("caller callbacks throwing provider-like order error text cannot leak it as
 test("current authority is also checked when there are no orders to collect",async()=>{
   const f=fixture();f.rows.headers=[];f.q.native=({scan})=>{if(scan===2)f.q.lost=true;};
   await assert.rejects(f.create().readEvidence(),/AUTHORITY_CHANGED/);assert.equal(f.calls.length,3);
+});
+
+function version(f,time="2026-10-01T13:00:00Z"){
+  f.rows.headers.forEach(h=>{h.updatedAt=time;});
+  f.q.native=({payload})=>{if(payload.data.order)payload.data.order.updatedAt=time;};
+}
+test("prewrite: genuine completed collection yields independent Order and LineItem keys, no write authority",async()=>{
+  const f=fixture(),current=await f.create().readEvidence(),before=f.calls.length;
+  const r=reviewShopifyOrderPrewrite({expected:prewriteOwner(),current});assert.equal(f.calls.length,before);
+  assert.deepEqual(r.orders[0].key,[workspace,shop.id,gid("Order","10")]);
+  assert.deepEqual(r.orders[0].lines[0].key,[workspace,shop.id,gid("Order","10"),gid("LineItem","1")]);
+  assert.notDeepEqual(r.orders[0].lines[0].key,r.orders[0].lines[1].key);
+  assert.equal(r.orders[0].lines[0].observed.product.id,r.orders[0].lines[1].observed.product.id);
+  assert.equal(r.orders[0].change,"new");assert.equal(r.orders[0].observed,current.orders[0].header);
+  assert.equal(r.provenance.currentScope,current.scope);assert.ok(Object.isFrozen(r.orders[0].lines[0].key));
+  for(const flag of ["persistable","authorizesActivation","DatasetWritePerformed","nativePermissionVerified","canonicalScopeReady","providerClaimVerified","exactOverlapVerified","atomicSnapshotVerified","missingRecordsProveDeletion"])assert.equal(r[flag],false);
+});
+test("prewrite: identical read replay does not sum amounts or duplicate line rows",async()=>{
+  const f=fixture(),previous=await f.create().readEvidence(),current=await f.create().readEvidence();
+  const r=reviewShopifyOrderPrewrite({expected:prewriteOwner(),previous,current});assert.equal(r.orders.length,1);assert.equal(r.orders[0].lines.length,2);
+  assert.equal(r.orders[0].change,"replay");assert.ok(r.orders[0].lines.every(l=>l.change==="unchanged"));
+  assert.equal(r.orders[0].lines[0].observed.originalTotalSet.shopMoney.amount,"50.00");
+});
+test("prewrite: the same branded observation can be reviewed twice without another read or accumulation",async()=>{
+  const f=fixture(),current=await f.create().readEvidence(),n=f.calls.length;
+  const r=reviewShopifyOrderPrewrite({expected:prewriteOwner(),previous:current,current});
+  assert.equal(r.orders[0].change,"replay");assert.equal(f.calls.length,n);
+});
+for(const [name,change] of [["workspace",v=>{v.workspaceId="22222222-2222-4222-8222-222222222222";}],
+  ["generation",v=>{v.installGeneration=4;}],["shop",v=>{v.shopId=gid("Shop","13");}],
+  ["domain",v=>{v.shopDomain="other.myshopify.com";}]])test(`prewrite: wrong expected ${name} rejects current observation`,async()=>{
+  const f=fixture(),current=await f.create().readEvidence(),expected=prewriteOwner();change(expected);
+  assert.throws(()=>reviewShopifyOrderPrewrite({expected,current}),/OWNER_MISMATCH/);
+});
+for(const name of ["plain JSON","forged flags","null","wrapper"])test(`prewrite: ${name} is not a genuine collection observation`,async()=>{
+  const f=fixture(),r=await f.create().readEvidence(),current=name==="plain JSON"?structuredClone(r):name==="forged flags"?
+    {...r,nativePermissionVerified:true,persistable:true}:name==="null"?null:{observation:r};
+  assert.throws(()=>reviewShopifyOrderPrewrite({expected:prewriteOwner(),current}),/OBSERVATION_REQUIRED/);
+});
+test("prewrite: unbranded previous JSON cannot become stored replay evidence",async()=>{
+  const f=fixture(),current=await f.create().readEvidence();assert.throws(()=>reviewShopifyOrderPrewrite({expected:prewriteOwner(),current,previous:structuredClone(current)}),/OBSERVATION_REQUIRED/);
+});
+test("prewrite: old installation observation cannot mix into current generation",async()=>{
+  const f=fixture(),previous=await f.create().readEvidence();f.config.verified.installationAuthority.installGeneration=4;f.config.claim.installGeneration="4";
+  const current=await f.create().readEvidence(),expected={...prewriteOwner(),installGeneration:4};
+  assert.throws(()=>reviewShopifyOrderPrewrite({expected,previous,current}),/OWNER_MISMATCH/);
+});
+test("prewrite: AppInstallation drift between completed reads stops comparison",async()=>{
+  const f=fixture(),previous=await f.create().readEvidence();
+  f.q.native=({family,payload})=>{if(family==="permission_scopes")payload.data.currentAppInstallation.id=gid("AppInstallation","10");};
+  const current=await f.create().readEvidence();assert.throws(()=>reviewShopifyOrderPrewrite({expected:prewriteOwner(),previous,current}),/APP_INSTALLATION_CHANGED/);
+});
+for(const [name,change] of [["order amount",f=>{f.rows.headers[0].totalPriceSet=money("99.00");}],
+  ["line quantity",f=>{f.rows.lines[0].quantity=2;}],["line amount",f=>{f.rows.lines[0].originalTotalSet=money("99.00");}],
+  ["missing line",f=>{f.rows.lines.pop();}],["added line",f=>{f.rows.lines.push(line("3"));}]])
+test(`prewrite: same updatedAt with conflicting ${name} never silently chooses a version`,async()=>{
+  const f=fixture(),previous=await f.create().readEvidence();change(f);const current=await f.create().readEvidence();
+  assert.throws(()=>reviewShopifyOrderPrewrite({expected:prewriteOwner(),previous,current}),/SAME_VERSION_CONFLICT/);
+});
+test("prewrite: line pagination order is not a conflicting replay",async()=>{
+  const f=fixture(),previous=await f.create().readEvidence();f.rows.lines.reverse();const current=await f.create().readEvidence();
+  assert.equal(reviewShopifyOrderPrewrite({expected:prewriteOwner(),previous,current}).orders[0].change,"replay");
+});
+test("prewrite: older current native version cannot replace a newer observation",async()=>{
+  const f=fixture();version(f);const previous=await f.create().readEvidence();version(f,stamp);const current=await f.create().readEvidence();
+  assert.throws(()=>reviewShopifyOrderPrewrite({expected:prewriteOwner(),previous,current}),/STALE_VERSION/);
+});
+test("prewrite: newer refund/cancellation facts retain original/current/zero values without calculation",async()=>{
+  const f=fixture(),previous=await f.create().readEvidence();version(f);f.rows.headers[0].cancelledAt="2026-10-01T12:30:00Z";
+  f.rows.headers[0].totalRefundedSet=money("45.00");f.rows.headers[0].currentTotalPriceSet=money("0.00");
+  f.rows.lines[0].currentQuantity=0;f.rows.lines[0].priceAfterAllDiscountsBeforeTaxesSet=money("0.00");const current=await f.create().readEvidence();
+  const r=reviewShopifyOrderPrewrite({expected:prewriteOwner(),previous,current}),o=r.orders[0];
+  assert.equal(o.change,"new_version");assert.equal(o.lines[0].change,"changed");assert.equal(o.lines[0].observed.quantity,1);assert.equal(o.lines[0].observed.currentQuantity,0);
+  assert.equal(o.lines[0].observed.originalTotalSet.shopMoney.amount,"50.00");assert.equal(o.observed.totalRefundedSet.shopMoney.amount,"45.00");
+  assert.equal(o.observed.currentTotalPriceSet.shopMoney.amount,"0.00");assert.equal(o.observed.cancelledAt,"2026-10-01T12:30:00Z");
+});
+test("prewrite: same LineItem ID cannot belong to two different orders in one collection",async()=>{
+  const f=fixture();f.rows.headers.push(header("11"));const current=await f.create().readEvidence();
+  assert.throws(()=>reviewShopifyOrderPrewrite({expected:prewriteOwner(),current}),/LINE_OWNER_CONFLICT/);
+});
+test("prewrite: an old LineItem ID cannot move into another order between observations",async()=>{
+  const f=fixture(),previous=await f.create().readEvidence();f.rows.headers=[header("11")];const current=await f.create().readEvidence();
+  assert.throws(()=>reviewShopifyOrderPrewrite({expected:prewriteOwner(),previous,current}),/LINE_OWNER_CONFLICT/);
+});
+test("prewrite: an absent order in a later extraction is unobserved rather than deleted or zero",async()=>{
+  const f=fixture(),previous=await f.create().readEvidence();f.rows.headers=[];const current=await f.create().readEvidence();
+  const r=reviewShopifyOrderPrewrite({expected:prewriteOwner(),previous,current});assert.deepEqual(r.orders,[]);
+  assert.deepEqual(r.previousOrderKeysNotObserved,[[workspace,shop.id,gid("Order","10")]]);assert.equal(r.missingRecordsProveDeletion,false);
+});
+test("prewrite: missing line in a newer version is an observed difference, no delete or zero row is invented",async()=>{
+  const f=fixture(),previous=await f.create().readEvidence();version(f);f.rows.lines.pop();const current=await f.create().readEvidence();
+  const r=reviewShopifyOrderPrewrite({expected:prewriteOwner(),previous,current});assert.equal(r.orders[0].lines.length,1);
+  assert.deepEqual(r.orders[0].previousLineKeysNotObserved,[[workspace,shop.id,gid("Order","10"),gid("LineItem","2")]]);
+});
+test("prewrite: null product/variant identity keeps the sale line and its native LineItem key",async()=>{
+  const f=fixture();f.rows.lines[0].product=null;f.rows.lines[0].variant=null;const current=await f.create().readEvidence();
+  const r=reviewShopifyOrderPrewrite({expected:prewriteOwner(),current});assert.equal(r.orders[0].lines[0].observed.product,null);
+  assert.equal(r.orders[0].lines[0].observed.productIdentityState,"unavailable");assert.equal(r.orders[0].lines.length,2);
+});
+test("prewrite: incomplete journey remains separate from complete sales",async()=>{
+  const f=fixture();f.q.native=({family,payload})=>{if(family==="order_journey")payload.data.order.customerJourneySummary.ready=false;};
+  const current=await f.create().readEvidence(),r=reviewShopifyOrderPrewrite({expected:prewriteOwner(),current});
+  assert.equal(r.salesPagesComplete,true);assert.equal(r.journeyPagesComplete,false);assert.equal(r.orders[0].journey.state,"journey_pending");assert.equal(r.orders[0].lines.length,2);
+});
+test("prewrite: journey change without sales version change is a separate observation, no role or overlap claim",async()=>{
+  const f=fixture(),previous=await f.create().readEvidence();f.rows.moments=[];const current=await f.create().readEvidence();
+  const r=reviewShopifyOrderPrewrite({expected:prewriteOwner(),previous,current});assert.equal(r.orders[0].change,"replay");assert.equal(r.orders[0].journeyChange,"changed");
+  assert.equal(r.providerClaimVerified,false);assert.equal(r.exactOverlapVerified,false);
+});
+test("prewrite: provider job/date metadata remains provenance and never enters Shopify order keys",async()=>{
+  const f=fixture(),previous=await f.create().readEvidence();f.config.claim.provider="google_ads";f.config.claim.accountId="123";f.config.claim.id="another-job";
+  const current=await f.create().readEvidence(),r=reviewShopifyOrderPrewrite({expected:prewriteOwner(),previous,current});
+  assert.equal(r.orders[0].change,"replay");assert.equal(r.provenance.currentScope.job.provider,"google_ads");assert.equal(r.provenance.previousScope.job.provider,"meta");
+  assert.equal(r.orders[0].key.length,3);assert.equal(r.orders[0].lines[0].key.length,4);
+});
+for(const change of [v=>{delete v.shopId;},v=>{v.installGeneration=0;},v=>{v.persistable=true;}])test("prewrite: missing/invalid owner or permission-like override is rejected",()=>{
+  const expected=prewriteOwner();change(expected);assert.throws(()=>reviewShopifyOrderPrewrite({expected,current:{}}),/INPUT_INVALID/);
 });

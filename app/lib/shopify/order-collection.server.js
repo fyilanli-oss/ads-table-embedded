@@ -12,6 +12,9 @@ const fail=code=>{throw new ShopifyOrderCollectionError(code);};
 const freeze=v=>{if(v&&typeof v==="object"){Object.values(v).forEach(freeze);Object.freeze(v);}return v;};
 const signature=v=>JSON.stringify(v);
 const journeySummary=p=>({state:p.state,ready:p.ready??null,firstVisit:p.firstVisit??null,lastVisit:p.lastVisit??null});
+const observations=new WeakSet();
+// In-process provenance only, never permission, persistence or snapshot authority.
+export function isShopifyOrderCollectionObservation(value){return observations.has(value);}
 
 // Trusted server composition only. checkCurrent is supplied by the private fenced
 // factory, never by a product route/user or as a replacement for HTTP quota/permission.
@@ -138,7 +141,7 @@ export function createShopifyOrderReadExecution({client,shop,scope,range,limits,
             atomicSnapshotVerified:false,journeyMiddleUnchangedVerified:false},
           nativePermissionVerified:false,historicalCoverageVerified:false,providerClaimVerified:false,exactOverlapVerified:false,
           canonicalScopeReady:false,authorizesActivation:false,persistable:false,DatasetWritePerformed:false});
-        check();return result;
+        check();observations.add(result);return result;
       }});
     } catch(error){
       if(quotaBoundaryControl(error)||error instanceof IdentityReadDeadlineError||error instanceof ShopifyOrderCollectionError)throw error;

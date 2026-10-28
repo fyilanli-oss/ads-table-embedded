@@ -1,0 +1,281 @@
+{
+  "checked_at": "2026-10-28",
+  "base_commit": "d7625bd0c94637e09b0ce9c25d8543bc92860212",
+  "ordered_plan_step": 13,
+  "review_at_ordered_step": 14,
+  "status": "checkpoint_prepared_for_owner_review_not_full_step13_or_step14_acceptance",
+  "new_plan_numbers": false,
+  "authority": [
+    "docs/EXECUTION_PLAN.md",
+    "contracts/a6-eo-implementation-master-v1.json",
+    "docs/plans/eo-05-06-revised-26-step-plan-2026-10-27.json"
+  ],
+  "last_code_validation": {
+    "pull_request": 236,
+    "head": "a169bfd38ad215218c3a0a68bc2eb23824ab63f4",
+    "merge": "d7625bd0c94637e09b0ce9c25d8543bc92860212",
+    "relevant_tests": 1768,
+    "new_tests": 31,
+    "repository_controls": 7,
+    "typecheck": "passed_at_PR236",
+    "native_access_proven": false,
+    "workflows": [
+      {
+        "kind": "PR_governance",
+        "run": 40690876503,
+        "job": 122825030299,
+        "status": "success"
+      },
+      {
+        "kind": "push_governance",
+        "run": 40690844425,
+        "job": 122824923196,
+        "status": "success"
+      },
+      {
+        "kind": "F01",
+        "run": 40690876492,
+        "job": 122825031455,
+        "status": "success"
+      }
+    ],
+    "new_runtime_or_test_change_in_this_checkpoint": false
+  },
+  "runtime_inventory": [
+    {
+      "area": "Shopify Order/LineItem replay",
+      "path": "app/lib/shopify/order-prewrite.server.js",
+      "symbol": "reviewShopifyOrderPrewrite",
+      "git_blob": "11e892c5ea0e7199b7ec8fb55afe95fbfe53061d",
+      "status": "repository_prepared_not_live_or_canonical_acceptance"
+    },
+    {
+      "area": "Provider candidate/source scope",
+      "path": "app/lib/providers/candidate-prewrite.server.js",
+      "symbol": "reviewRefreshCandidatePrewrite",
+      "git_blob": "3750765d3df2bdfa08c6ddb9be1e944c33cf5d17",
+      "status": "repository_prepared_not_live_or_canonical_acceptance"
+    },
+    {
+      "area": "Meta report / Klaviyo Message references",
+      "path": "app/lib/providers/reference-prewrite.server.js",
+      "symbol": "reviewRefreshReferencePrewrite",
+      "git_blob": "13afd846bc5dbb89f5ea3559060e065f4b915a3a",
+      "status": "repository_prepared_not_live_or_canonical_acceptance"
+    },
+    {
+      "area": "Shopify/provider claim readiness",
+      "path": "app/lib/shopify/provider-claim-prewrite.server.js",
+      "symbol": "reviewShopifyProviderClaimReadiness",
+      "git_blob": "e768eb17df827263637f8f9b257499d6b52d8608",
+      "status": "repository_prepared_not_live_or_canonical_acceptance"
+    },
+    {
+      "area": "Klaviyo OrderId / Order / Message candidates",
+      "path": "app/lib/providers/klaviyo-order-prewrite.server.js",
+      "symbol": "reviewKlaviyoOrderClaimPrewrite",
+      "git_blob": "793815e047d88819d2826e86a20cff9d053dddb4",
+      "status": "repository_prepared_not_live_or_canonical_acceptance"
+    },
+    {
+      "area": "Klaviyo source rule registry",
+      "path": "app/lib/providers/klaviyo-order-rules.server.js",
+      "symbol": "createKlaviyoOrderIdentityRuleLoader",
+      "git_blob": "e65e35fa8c56748f119f91de6d67110b62085b67",
+      "status": "repository_prepared_not_live_or_canonical_acceptance"
+    },
+    {
+      "area": "Fenced provider / Admin factories",
+      "path": "app/lib/refresh/quota-authority-binding.server.js",
+      "symbol": "createRefreshKlaviyoCandidateReader",
+      "git_blob": "b793654fc96fbe5ca51a8c2f3269e600e745874d",
+      "status": "repository_prepared_not_live_or_canonical_acceptance"
+    },
+    {
+      "area": "Native Shopify scopes/orders/lines/journey",
+      "path": "app/lib/shopify/order-collection.server.js",
+      "symbol": "createShopifyOrderReadExecution",
+      "git_blob": "20fac9cc63ce4c88c551afa6fbb14335eb1ac19e",
+      "status": "repository_prepared_not_live_or_canonical_acceptance"
+    },
+    {
+      "area": "Actual SQL quota context boundary",
+      "path": "app/lib/database/refresh-work-repository.server.js",
+      "symbol": "loadQuotaContext",
+      "git_blob": "279de8b9c671ad41c71298110359836175905d61",
+      "status": "repository_prepared_not_live_or_canonical_acceptance"
+    },
+    {
+      "area": "Explicit SDK hook boundary",
+      "path": "app/lib/refresh/shopify-admin-sdk-quota-bridge.server.js",
+      "symbol": "createShopifyAdminIdentitySdkBridge",
+      "git_blob": "02c35cf2336f39ab1f2a73da94a6e54cdb3ae5be",
+      "status": "repository_prepared_not_live_or_canonical_acceptance"
+    }
+  ],
+  "provider_order_claim_review": [
+    {
+      "provider": "google_ads",
+      "current_readers": [
+        "app/lib/providers/google-identity-collection.server.js",
+        "app/lib/providers/google-reporting.server.js"
+      ],
+      "current_state": "no_readable_order_claim_collector_implemented",
+      "documented_send_or_adjust_field": "order_id_in_upload_or_conversion_adjustment",
+      "source": "https://developers.google.com/google-ads/api/docs/conversions/upload-adjustments",
+      "reporting_source": "https://developers.google.com/google-ads/api/docs/conversions/reporting",
+      "finding": "documented_upload_adjustment_or_aggregate_conversion_action_reporting_is_not_evidence_of_reading_individual_retail_Order_ID_plus_attributed_Ad_claims",
+      "read_endpoint_verified": false,
+      "provider_wide_unsupported_asserted": false,
+      "action": "keep_readable_native_order_claim_source_open_no_fake_reader_or_orderID_inference"
+    },
+    {
+      "provider": "meta",
+      "current_readers": [
+        "app/lib/providers/meta-identity-collection.server.js",
+        "app/lib/providers/meta-report-candidates.server.js"
+      ],
+      "current_state": "raw_product_metrics_and_report_catalog_candidates_no_order_claim_collector",
+      "documented_send_or_adjust_field": "Conversions_API_custom_data.order_id_and_event.event_id",
+      "source": "https://raw.githubusercontent.com/facebook/facebook-python-business-sdk/main/facebook_business/adobjects/serverside/custom_data.py",
+      "send_source": "https://raw.githubusercontent.com/facebook/facebook-python-business-sdk/main/facebook_business/adobjects/serverside/event_request.py",
+      "reporting_source": "https://raw.githubusercontent.com/facebook/facebook-python-business-sdk/main/facebook_business/adobjects/adsinsights.py",
+      "finding": "SDK_EventRequest_sends_events_via_AdsPixel.create_event_send_fields_and_acknowledgement_are_not_readable_ad_attributed_order_claim_evidence",
+      "read_endpoint_verified": false,
+      "provider_wide_unsupported_asserted": false,
+      "action": "keep_order_claim_source_and_existing_step18_raw_metric_semantics_open_four_raw_fields_remain"
+    },
+    {
+      "provider": "klaviyo",
+      "current_readers": [
+        "app/lib/providers/klaviyo-identity-collection.server.js",
+        "app/lib/providers/klaviyo-order-prewrite.server.js"
+      ],
+      "current_state": "OrderId_retained_with_conditional_scoped_structural_Order_Message_candidates",
+      "source": "https://developers.klaviyo.com/en/reference/events_api_overview",
+      "finding": "generic_custom_event_OrderId_example_not_Shopify_integration_format_or_native_attribution_proof",
+      "native_source_rule_registered": false,
+      "read_endpoint_verified": "Get_Events_and_attributions_already_used_but_Shopify_OrderId_semantics_not_verified",
+      "provider_wide_unsupported_asserted": false,
+      "action": "verify_actual_account_metric_integration_shop_OrderId_and_claim_semantics_before_registering_live_rule"
+    }
+  ],
+  "documentation_limits": [
+    {
+      "source": "https://developers.google.com/google-ads/api/fields/v23/shopping_performance_view",
+      "result": "web_reader_content_size_limit_not_capability_evidence"
+    },
+    {
+      "source": "https://developers.google.com/google-ads/api/fields/v23/ad_group_ad",
+      "result": "web_reader_content_size_limit_not_capability_evidence"
+    }
+  ],
+  "open_gates": [
+    {
+      "category": "native_source_identity_and_access",
+      "ordered_steps": [
+        7,
+        8,
+        9,
+        10,
+        12,
+        14
+      ],
+      "state": "evidence_open",
+      "work": "actual_shop_provider_account_catalog_Merchant_feed_namespace_variant_OrderId_rules_native_grants_and_app_protected_data_history_approval",
+      "evidence": "contracts/eo-05-start-brief-v1.json#Shopify_order_scope_readback_2026_10_28"
+    },
+    {
+      "category": "actual_Admin_SQL_and_quota",
+      "ordered_steps": [
+        12,
+        14
+      ],
+      "state": "code_and_profile_open",
+      "work": "current_work_repository_rejects_shopify_admin_before_SQL_Admin_context_inventory_cost_receipt_profiles_feedback_shared_stop_require_review_and_implementation",
+      "evidence": "app/lib/database/refresh-work-repository.server.js#loadQuotaContext"
+    },
+    {
+      "category": "SDK_hook_and_capacity",
+      "ordered_steps": [
+        12,
+        14
+      ],
+      "state": "integration_and_capacity_open",
+      "work": "explicit_global_hook_bootstrap_other_auth_foreground_paths_native_point_profiles_upstream_response_parse_clone_capacity_and_total_memory_acceptance",
+      "evidence": "contracts/eo-05-start-brief-v1.json#Shopify_Admin_cost_budget_receipt_2026_10_27"
+    },
+    {
+      "category": "canonical_owner_and_selection",
+      "ordered_steps": [
+        12,
+        14,
+        15
+      ],
+      "state": "code_and_schema_review_open",
+      "work": "canonical_installation_PK_selection_epochs_OAuth_CAS_Merchant_SQL_and_authority_binding_before_canonical_persistence",
+      "evidence": "contracts/eo-05-start-brief-v1.json#Shopify_order_scope_readback_2026_10_28"
+    },
+    {
+      "category": "order_scheduling_and_partial_continuation",
+      "ordered_steps": [
+        12,
+        14,
+        23
+      ],
+      "state": "code_and_time_scope_open",
+      "work": "independent_Shopify_order_extraction_range_scheduler_history_coverage_and_safe_durable_partial_collection_continuation",
+      "evidence": "contracts/eo-05-start-brief-v1.json#Shopify_order_scope_readback_2026_10_28"
+    },
+    {
+      "category": "readable_provider_order_claims",
+      "ordered_steps": [
+        13,
+        14,
+        15,
+        20,
+        24,
+        26
+      ],
+      "state": "source_and_integration_open",
+      "work": "readable_claims_same_verified_Shopify_order_identity_model_window_maturity_and_sales_basis_before_actual_matching_or_overlap",
+      "evidence": "provider_order_claim_review_in_this_checkpoint"
+    },
+    {
+      "category": "durable_storage_and_roles",
+      "ordered_steps": [
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26
+      ],
+      "state": "existing_later_work_not_silently_accepted",
+      "work": "step14_owner_review_before_new_tables_mapping_writers_then_existing_role_evidence_Dataset_FX_maturity_reconciliation_PD_CPD_independent_Shopify_totals_Klaviyo_spend_and_end_to_end_acceptance",
+      "evidence": "docs/plans/eo-05-06-revised-26-step-plan-2026-10-27.json"
+    }
+  ],
+  "checkpoint_decisions": {
+    "step13_complete": false,
+    "step14_review_completed": false,
+    "new_tables_or_migrations_authorized": false,
+    "canonical_writer_authorized": false,
+    "live_activation_authorized": false,
+    "source_rules_registered": false,
+    "provider_claim_verified": false,
+    "exact_overlap_verified": false,
+    "PD_CPD_merged_or_cost_duplicated": false,
+    "Klaviyo_Advertised_CrossSell_reopened": false,
+    "historical_PMax_step22_resumed": false
+  },
+  "next": "owner_review_existing_step14_with_open_code_native_and_SQL_gates_visible_no_table_migration_or_writer_before_review",
+  "workbook_status": "existing_2026_10_27_xlsx_is_historical_planning_snapshot_not_regenerated_in_this_checkpoint"
+}

@@ -1,5 +1,21 @@
 # EO-04 — Analiz ve tasarım kitabı
 
+## Sıralı plan 13 — Kod/kanıt checkpoint’i ve 14 incelemesine hazırlık, 28 Ekim 2026
+
+#236 `d7625bd0c94637e09b0ce9c25d8543bc92860212` main’dedir. [Tek checkpoint kaydı](evidence/EO_05_STEP13_PREWRITE_CHECKPOINT_2026-10-28.json), 10 kritik kod dosyasını exact base-commit/blob ve giriş fonksiyonuyla; üç sağlayıcının sipariş iddiası durumunu; açık kod/native/SQL kapılarını mevcut plan sıralarıyla bir araya getirir. Bu teslim runtime eklemez. Son kod tesliminin 1.768 ilgili testi, 7 kontrolü, typecheck ve üç CI sonucu referanstır; bu checkpoint canlı kabul değildir.
+
+| Sağlayıcı | Kodda bulunan | Açık kalan |
+|---|---|---|
+| Google | Merchant/link/kaynak-kuralı/Shopify ürün aday yolu ve mevcut performans/dönüşüm sorguları | Bireysel Shopify Order ID + sağlayıcının saydığı satış iddiası için okunabilir kaynak doğrulanmadı. order_id yükleme/düzeltme alanı, böyle bir geri-okuma kanıtı değil. |
+| Meta | Katalog/Ad referansı, Shopify adayları, ham dört conversion alanı ve namespace kontrollü rapor bağı | Okunabilir sipariş iddiası kaynağı doğrulanmadı. CAPI order_id/event_id gönderimi geri-okuma kanıtı değil. Ürün satış ilişkisi decoder/kanıtı mevcut 18. maddede açık. |
+| Klaviyo | OrderId korunuyor; exact kaynak kuralı + gözlenen Shopify Order + exact Message ile yapısal aday bağı var | Gerçek hesap/metric/integration/shop kimliği, OrderId biçimi ve atıf iddiası kanıtı açık; canlı kural yok. Assisted/Triggered/Unclassified değişmedi. |
+
+Google’ın dönüşüm raporlama ve yükleme/düzeltme belgeleriyle Meta’nın resmî AdsInsights/CAPI SDK’sı 28 Ekim 2026’da kontrol edildi. Gönderme alanı okuma yeteneği yerine konmadı; sağlayıcı genelinde desteklenmiyor sonucu çıkarılmadı. İki büyük Google alan sayfası okuyucunun içerik sınırına takıldı; bu sınırlama kaynak kısıtı olarak kaydedildi, API kısıtı sayılmadı. Bkz. [Google reporting](https://developers.google.com/google-ads/api/docs/conversions/reporting), [Google adjustment](https://developers.google.com/google-ads/api/docs/conversions/upload-adjustments), [Meta AdsInsights](https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adsinsights.py), [Meta CAPI EventRequest](https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/serverside/event_request.py).
+
+Mevcut 12’den gelen açık işler aynı checkpoint’te ayrıdır: actual Admin SQL context/cost receipt/profil/feedback/shared stop; Merchant SQL ve canonical installation PK/selection epoch/OAuth CAS; explicit SDK global hook ve upstream response kapasitesi; bağımsız Shopify sipariş zaman aralığı/scheduler/geçmiş erişim ve kalıcı kısmi devam. Native kaynak/namespace/izin/app onayları ve okunabilir provider iddiaları da açık. Bunlar yeni iş numarası değildir; mevcut 7–15 ve ilgili sonraki sıralara bağlıdır.
+
+26 adımlı JSON ve okunabilir planın 7–14 durumları, artık main’de bulunan kod hazırlığını gösterecek şekilde düzeltildi; sıra, iş, sınır ve Shopify ekleri değiştirilmedi. 27 Ekim Exceli tarihsel görüntü olarak kaldı ve yeniden üretilmedi. 13 tamamlandı işaretlenmedi. 14 incelemesi/kalıcı yazım onayı verilmedi; yeni tablo/migration/writer/aktivasyon başlamadı. 15’e geçiş, mevcut 14 değerlendirmesindeki açık karar ve onayı gerektirir. Kanıt bekleyen davranış için yeni bir okuyucu varsayılmadı; tarihsel PMax duraklaması ve PD/CPD ayrımı korunur.
+
 ## Sıralı plan 13 — Klaviyo OrderId’nin korunması ve koşullu Order–Message aday bağı, 28 Ekim 2026
 
 #235 `bde44288e093398e8ab00de174ef282ba7ed3922` main’dedir. Mevcut Events sorgusu event_properties istiyor; OrderId normalizer/projection’da kayboluyordu. Artık provider_order_properties.OrderId altında ham türü/değeri, present/absent, null ve gerçek sıfır korunur. Ürün alanlarına karıştırılmaz; müşteri/profil alanı eklenmez. Yeni native sorgu ailesi, çağrı veya izin yoktur. Resmî Events örneğindeki OrderId genel bir UUID’dir; bunun Shopify sipariş kimliği olduğu varsayılmaz. Başka case/alias, event UUID, ürün, sipariş adı, gün veya tutardan fallback yapılmaz.

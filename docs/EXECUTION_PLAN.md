@@ -1,5 +1,15 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## Sıralı plan 13 — Shopify ile sağlayıcı gözlemlerinin ortak iddia hazırlık kontrolü, 28 Ekim 2026
+
+#234 `433c6ab9b9877a1764ab5ce0c6749dcca1820aab` main’dedir. Yeni reviewShopifyProviderClaimReadiness, Shopify Order/LineItem replay kontrolü ile sağlayıcı aday/rapor/Message kontrolünü aynı owner altında birlikte çalıştırır. Beklenen workspace, kurulum nesli, shop ID/domain ve seçilmiş provider/bağlantı sürümü/hesap kapsamı sunucudan gelir. Yanlış owner, tekrarlanan seçim, kopya gözlem ve caller tarafından verilen claim veya eşleme kuralı reddedilir. Aynı mağazaya ait gözlemler yan yana korunur; ürün, gün, tutar veya ziyaret kaynağından Order ID üretilmez.
+
+Mevcut identity okuyucuları okunabilir provider Order ID iddiası toplamıyor. Birleşik kontrol bunu not_collected_in_identity_observation olarak korur. Hiç sunulmamış gözlem observation_not_supplied’dır; tamamlanmış boş kaynak bunlardan ayrıdır. comparisonState=not_assessed_readable_provider_order_claim_required; claimMatches boş, unmatchedClaims ve ordersWithoutProviderClaim null kalır. Karşılaştırılmamış sipariş eşleşmeyen sayılmaz. Bu teslim gerçek iddia okuyucusu veya sipariş matcher’ı değildir; sağlayıcının başka API’sinde destek yok sonucu çıkarılmaz.
+
+Shopify siparişi/LineItem’ı tek bağımsız satış temeli olarak kalır; replay yeni satış sayılmaz. Eksik yolculuk tam satışları silmez; hazır yolculuk da provider dönüşüm iddiası değildir. Shopify extraction range ile provider business day ayrı saklanır ve eşit varsayılmaz. Sayısal toplam, para birimi/FX veya atıf kapsamı karşılaştırması yapılmaz. Sales Role, kesin overlap, native erişim, canonical scope, persistable, aktivasyon ve Dataset-write false kalır. HTTP/SQL/tablo/migration/provider/OAuth/token/config/route mutasyonu yoktur. Mevcut 12 native/SQL/profil/kapasite kapıları ve 14 değerlendirmesi açıktır; 26 sıra ve tarihsel PMax duraklaması korunur.
+
+26 yeni + 1.533 mevcut ilgili test (1.559 toplam), 7 repository kontrolü, typecheck ve diff kontrolü geçti. Üç sağlayıcı gerçek SDK/fenced koleksiyonu, paylaşılan mevcut Shopify sipariş fixture’ıyla sentetik HTTP/SQL/vault üzerinden sınandı. Canlı erişim, okunabilir claim veya kalıcı idempotence kanıtı değildir. Resmî kontrol 28 Ekim 2026: [Shopify CustomerJourneySummary](https://shopify.dev/docs/api/admin-graphql/latest/objects/CustomerJourneySummary), [Klaviyo Events](https://developers.klaviyo.com/en/reference/get_events). Makine kaydı: `contracts/eo-05-start-brief-v1.json#Shopify_provider_claim_readiness_2026_10_28`.
+
 ## Sıralı plan 13 — Meta rapor ve Klaviyo Message bağlarının DB’siz kontrolü, 28 Ekim 2026
 
 #233 `ca16b2d4aa4b89d4f6ddc741ddd615588fcad49b` main’dedir. Yeni reviewRefreshReferencePrewrite önce mevcut ortak aday kontrolünü çalıştırır; aynı tamamlanmış, değiştirilemez gözlemden rapor/Message referanslarını inceler. Beklenen provider/workspace/kurulum nesli/shop/bağlantı sürümü/hesap kapsamı zorunludur. Caller hedef, kural, rapor veya rol kanıtı veremez. Önceki aday kontrolünün reportLinksReviewed=false sonucu değiştirilmez; yeni referenceReview ayrı kontrol kapsamıdır.

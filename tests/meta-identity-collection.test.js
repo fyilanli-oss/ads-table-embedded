@@ -1,3 +1,4 @@
+import {providerClaimPrewriteCases} from "./helpers/provider-claim-prewrite-cases.js";
 import {reviewRefreshReferencePrewrite} from "../app/lib/providers/reference-prewrite.server.js";
 import test,{after} from "node:test";
 import assert from "node:assert/strict";
@@ -902,3 +903,5 @@ test("Meta prewrite: two variants of one product retain both catalog source reco
   assert.equal(r.rows.length,2);assert.equal(r.rows[0].candidateShopifyProductId,r.rows[1].candidateShopifyProductId);
   assert.notEqual(r.rows[0].candidateShopifyVariantId,r.rows[1].candidateShopifyVariantId);assert.equal(f.adminCalls.length,2);
 });
+
+providerClaimPrewriteCases({provider:"meta",fixture:candidateBoundFixture,expected:candidatePrewriteOwner,empty:f=>{f.native.products.data=[];}});

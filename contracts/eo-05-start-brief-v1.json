@@ -24,7 +24,7 @@
     "google_pd_source_composition": "merged_PR185_f01d31ee7f741e70513bfe96e8750d4f405580a5",
     "klaviyo_pd_source_composition": "merged_PR186_99f6474bc49ff70a084ca5916bc3631f05187ba1",
     "pd_canonical_bridge": "merged_PR187_5657ce49c2c93b4d018c4606e08134a311754c33",
-    "current_slice": "ordered_step_13_Meta_report_Klaviyo_Message_DBless_reference_review_prepared_order_claim_native_SQL_and_step14_gates_open",
+    "current_slice": "ordered_step_13_Shopify_provider_claim_readiness_composition_prepared_readable_order_claim_native_SQL_and_step14_gates_open",
     "permission_preflight": "merged_PR190_ee28856c1260dffd18725eeb85718d195a5ce3de_not_live",
     "identity_OAuth_scope_binding": "merged_PR191_438bf5f8960cc2e25d4b6202a580cc1b1bf9b426_not_live",
     "Google_identity_credential_lifecycle": "merged_PR192_807408603484578555fc8700eb50f9cfa420d07d_not_live",
@@ -69,13 +69,59 @@
     "Meta_candidate_report_quota_composition": "merged_PR231_470207d24a7de65a536487992cb2844b7a77806e_not_native_or_step12_complete",
     "Shopify_order_prewrite_review": "merged_PR232_27ceaf7bdf577e08194a52c69480d645f5e69da2_not_native_or_step13_complete",
     "provider_candidate_prewrite_review": "merged_PR233_ca16b2d4aa4b89d4f6ddc741ddd615588fcad49b_not_native_or_step13_complete",
-    "provider_reference_prewrite_review": "repository_prepared_in_current_PR_not_merged_native_or_step13_complete",
+    "provider_reference_prewrite_review": "merged_PR234_433c6ab9b9877a1764ab5ce0c6749dcca1820aab_not_native_or_step13_complete",
+    "Shopify_provider_claim_readiness": "repository_prepared_in_current_PR_not_merged_native_or_step13_complete",
     "Shopify_sales_attribution_decision": "contracts/pd-cpd-query-standard-v1.json#shopify_order_attribution_decision_2026_10_27",
     "planning_and_identity_PR179": "open_not_merged_or_live",
     "provider_activation": false,
     "identity_pause_before_step_12": true,
     "historical_PMax_pause_preserved": true,
     "package_complete": false
+  },
+  "Shopify_provider_claim_readiness_2026_10_28": {
+    "new_tests": 26,
+    "existing_relevant_regressions": 1533,
+    "total_relevant_tests": 1559,
+    "repository_controls": 7,
+    "typecheck_passed": true,
+    "ordered_plan_step": 13,
+    "status": "prepared_DBless_same_owner_Shopify_provider_claim_readiness_composition_NOT_readable_claim_collection_matching_or_full_step13_completion",
+    "runtime": [
+      "app/lib/shopify/provider-claim-prewrite.server.js"
+    ],
+    "tests": [
+      "tests/helpers/shopify-order-fixture.js",
+      "tests/helpers/provider-claim-prewrite-cases.js",
+      "tests/shopify-order-collection.test.js",
+      "tests/google-identity-collection.test.js",
+      "tests/meta-identity-collection.test.js",
+      "tests/klaviyo-identity-collection.test.js"
+    ],
+    "entry": "reviewShopifyProviderClaimReadiness_expected_owner_current_and_optional_previous_genuine_Shopify_observations_plus_trusted_selected_provider_expected_scopes_and_nullable_original_observations_no_claim_or_match_rule_override",
+    "checks": "reuse_reviewShopifyOrderPrewrite_and_reviewRefreshReferencePrewrite_reject_mixed_workspace_generation_shop_domain_version_and_duplicate_provider_connection_account_selection_clones_and_forged_claim_inputs",
+    "preserved": "Shopify_order_replay_native_header_lines_journey_and_provider_native_candidates_reports_Message_references_remain_independent_no_totals_or_role_change_no_IO_no_cart_or_product_date_amount_join",
+    "missing_states": "provider_observation_not_supplied_distinct_from_completed_identity_observation_with_not_collected_in_identity_observation_claim_state_complete_empty_source_not_missing_and_not_zero_claims",
+    "comparison": "not_assessed_readable_provider_order_claim_required_claimMatches_empty_unmatchedClaims_and_ordersWithoutProviderClaim_null_not_empty_assertions_no_exact_overlap_no_provider_absence_or_unsupported_inference",
+    "ranges": "Shopify_updated_at_extraction_instants_and_each_provider_original_job_business_day_retained_separately_timeRangesEquated_false_no_date_window_join_or_coverage_proof",
+    "journey": "Shopify_journey_ready_or_incomplete_retained_alongside_complete_sales_never_provider_counted_conversion_claim_or_paid_proof",
+    "fixture": "existing_Shopify_order_SDK_fenced_fixture_extracted_once_into_shared_helper_no_runtime_collection_change_reused_by_three_provider_integration_cases",
+    "remaining": [
+      "readable_provider_order_claim_collection_and_verified_same_Shopify_order_identity_before_actual_matching",
+      "provider_claim_models_windows_maturity_and_sales_basis_before_metric_comparison",
+      "native_source_namespace_access_and_existing_SQL_profile_capacity_gates",
+      "existing_step14_user_review_before_identity_sublist_step12_and_new_tables"
+    ],
+    "official_checked_at": "2026-10-28",
+    "sources": [
+      "https://shopify.dev/docs/api/admin-graphql/latest/objects/CustomerJourneySummary",
+      "https://developers.klaviyo.com/en/reference/get_events"
+    ],
+    "source_limit": "Shopify_visit_attribution_and_Klaviyo_event_attributions_are_not_automatically_order_level_provider_conversion_claims_no_provider_API_capability_added_or_declared_unsupported",
+    "new_SQL_migration_live_DB_provider_OAuth_token_config_route_Dataset_or_role_mutation": false,
+    "step_12_native_SQL_acceptance_complete": false,
+    "step_13_complete": false,
+    "step_14_review_crossed": false,
+    "historical_PMax_pause_preserved": true
   },
   "provider_reference_prewrite_review_2026_10_28": {
     "new_tests": 26,

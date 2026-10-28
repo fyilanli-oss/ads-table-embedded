@@ -1,5 +1,22 @@
 # AdsTable Embedded — Execution Plan (Yürütme Planı)
 
+## Mevcut 14 değerlendirmesi — Arka plan Shopify SDK açık başlangıcı, 28 Ekim 2026
+
+#240 `baef6e545eae15d4f0dc74cb6499ba9e4db90746` main’dedir. Mevcut 12 düzeltmelerinde arka plan SDK başlangıcı için initializeShopifyAdminRefreshSdk hazırlandı. Modül import’u hook kurmaz; açık çağrı, önceden yüklenen @shopify/shopify-api/adapters/node sonrasında tek gerçek bridge kurar. Aynı hook ile tekrar aynı nesne döner; getter kurulum yapmaz. Eksik adaptör veya yabancı custom hook üzerine yazılmaz. globalThis.fetch değişmez; native fetch fallback, otomatik onarım veya reset yoktur.
+
+Kurulu API15.0.0 ve React Router3.0.1 kaynakları ile resmî kod kontrol edildi. React Router Node adaptörü yalnız runtime string’i ayarlar; fetch bağlantısını API Node adaptörü yapar. İlk yerel testte React Router adaptörünün fetch kurduğu varsayımı başarısız oldu. Test başlangıcı exact API adaptörünü açıkça yükleyecek biçimde düzeltildi ve yalnız React Router adaptörünün yetersiz olduğunu doğrulayan negatif senaryo eklendi. Sürüm veya bağımlılık değiştirilmedi.
+
+Bridge için ortak AbortController eklendi; tek client kapatması diğerlerini kapatmaz. Açık SDK close veya gözlenen hook değişimi bridge’i terminal kapatır; bekleyen bütün client’lar abort alır. Eski fetch geri yüklenmez, tekrar initialize ile açılmaz. SDK hook dışarıdan eski değere alınsa bile kapatılmış bridge canlanmaz. Başka bir bileşenin SDK setter’ını gözlenmeden önce engellediğimiz iddia edilmez; mevcut bound client native çağrıdan önce exact hook kontrolünü sürdürür.
+
+Sınamalar her SDK ömrünü ayrı Node sürecinde açar; pozitif yol test setter’ı yerine uygulamanın gerçek initializer’ını kullanır. Gerçek pinned React Router/API SDK, mevcut fenced ürün/sipariş/izin constructor’larıyla sentetik HTTP/SQL/profil üzerinden çalışır. İki mağaza aynı hook’ta eşzamanlı ayrıdır. Profil eksikliği, yetki nesli değişimi, unbound çağrı, 401, kalıcı close, yabancı hook, import-only ve kotada beklerken shutdown kontrol edilir. Gerçek native HTTP yoktur; test süreçleri görünür pencere açmaz.
+
+Bu teslim explicit bootstrap kodudur; üretimde çağrı noktası kurulmadı. Web/OAuth başlangıcı, queue entry, provider aktivasyonu, canlı token/profil/limit veya Dataset writer değiştirilmez. SDK genel ayarı nedeniyle üretim kullanımı ayrılmış arka plan host’u ve tüm foreground/auth yollarının kendi kapısında değerlendirilmesini gerektirir; baseline eşitliği kimlik/izin veya process izolasyonu kanıtı değildir. Mevcut 26 sıra, 13 sonrası kısa / 15 sonrası ana değerlendirme ve PMax duraklaması korunur. Merchant/canonical/OAuth/scheduling/native kaynak ve kapasite işleri açık kalır.
+
+15 yeni + 1.825 mevcut ilgili test (1.840 toplam), 7 repository kontrolü, typecheck ve diff kontrolü geçti. Exact-head CI ve mevcut F01 tekrarları ayrıca PR üzerinde doğrulanacaktır.
+
+Resmî kontrol 28 Ekim 2026: [SDK fetch runtime](https://github.com/Shopify/shopify-app-js/blob/main/packages/apps/shopify-api/runtime/http/index.ts), [API Node adaptörü](https://github.com/Shopify/shopify-app-js/blob/main/packages/apps/shopify-api/adapters/node/index.ts), [React Router Node adaptörü](https://github.com/Shopify/shopify-app-js/blob/main/packages/apps/shopify-app-react-router/src/server/adapters/node/index.ts), [shopifyApp](https://shopify.dev/docs/api/shopify-app-react-router/latest/entrypoints/shopifyapp). Makine kaydı: `contracts/eo-05-start-brief-v1.json#Shopify_Admin_SDK_bootstrap_2026_10_28`.
+
+
 ## Mevcut 14 değerlendirmesi — Admin maliyet geri bildirimi ve kurallı ortak durdurma, 28 Ekim 2026
 
 #239 `342691056231fcf300830ee28baa7cf4c195a2da` main’dedir. Mevcut 12 düzeltmelerinde devam onayıyla maliyet geri bildirimi ve ortak durdurma bağlantısı hazırlandı. CLI migration `20261028143322_eo05a_admin_cost_feedback.sql` yalnız mevcut private operations kota envanteri ve fonksiyonlarını tamamlar; yeni tablo, etkin profil, native limit, Dataset veya kimlik writer yoktur. 26 sıra ve 13 sonrası kısa / 15 sonrası ana değerlendirme kararı korunur; tam 14 veya canlı kabul verilmez.

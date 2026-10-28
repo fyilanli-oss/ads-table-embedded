@@ -672,10 +672,10 @@ test("bound candidate: wrong variant parent remains conflicting evidence without
   const r=await f.create().readEvidence();assert.equal(r.product_identity_candidates.candidates.length,0);
   assert.equal(r.product_identity_candidates.rows[0].product_identity_verification.state,"conflicting");
 });
-test("bound candidate: real current work repository rejects Admin before its SQL or HTTP",async()=>{
+test("bound candidate: real work repository with missing Admin SQL result stops before HTTP",async()=>{
   const f=candidateBoundFixture();let sql=0;const real=createRefreshWorkRepository({query:async()=>{sql++;return {rows:[]};}});
   const original=f.config.workStore.loadQuotaContext;f.config.workStore.loadQuotaContext=x=>x.provider==="shopify_admin"?real.loadQuotaContext(x):original(x);
-  await assert.rejects(f.create().readEvidence());assert.equal(sql,0);assert.equal(f.calls.length,3);assert.equal(f.adminCalls.length,0);
+  await assert.rejects(f.create().readEvidence());assert.equal(sql,1);assert.equal(f.calls.length,3);assert.equal(f.adminCalls.length,0);
 });
 test("bound candidate: total deadline blocks late Admin lookup and subsequent reports",async()=>{
   const f=candidateBoundFixture();f.config.maxElapsedMs=100;let release;

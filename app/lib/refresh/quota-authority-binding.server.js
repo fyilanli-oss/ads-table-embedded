@@ -183,11 +183,11 @@ function createGoogleIdentityReader({verified,database,tokenVault,merchantId,dev
   }});
 }
 
-// Inactive Admin-only client for an existing fenced provider job. The current repository
-// adapter/SQL rejects Admin context until the separately required step14 review is done.
+// Inactive Admin-only client for an existing fenced provider job. SQL requires an
+// enabled installation-owned context; native profiles and activation remain separate gates.
 export function createRefreshShopifyAdminIdentityClient(options) {return createFencedAdminClient(options);}
 
-// Inactive order-only entry. Current SQL rejects Admin; native order permissions,
+// Inactive order-only entry. Configured SQL scope, native order permissions,
 // reviewed point profiles and hook installation remain mandatory activation gates.
 // The original provider job is retained; no fourth provider or order scheduler added.
 export function createRefreshShopifyAdminOrderClient(options) {return createFencedAdminClient(options,true);}

@@ -272,9 +272,9 @@ for(const [name,change] of [["lost job/entitlement",f=>{f.q.lost=true;}],["wrong
   const f=boundFixture();change(f);await assert.rejects(f.read(f.create()),e=>quotaBoundaryControl(e)?.status==="not_configured");
   assert.equal(f.calls.length,0);assert.equal(f.reservations.length,0);
 });
-test("fenced Admin: current repository adapter intentionally rejects Admin before SQL/native pending step14",async()=>{
+test("fenced Admin: current repository stops Admin before HTTP when SQL authority fails",async()=>{
   const f=boundFixture();let queries=0;f.boundConfig.workStore=createRefreshWorkRepository({query:async()=>{queries++;throw Error("unexpected SQL");}});
-  await assert.rejects(f.read(f.create()),e=>quotaBoundaryControl(e)?.status==="not_configured");assert.equal(queries,0);assert.equal(f.calls.length,0);
+  await assert.rejects(f.read(f.create()),e=>quotaBoundaryControl(e)?.status==="not_configured");assert.equal(queries,1);assert.equal(f.calls.length,0);
 });
 test("fenced Admin: account app epoch or entitlement drift during reserve settles without HTTP",async()=>{
   for(const change of [f=>{f.context.accountId="other.myshopify.com";},f=>{f.context.clientScopeKey="c".repeat(64);},
@@ -384,9 +384,9 @@ for(const mutate of [f=>{f.context.apiVersion="2026-07";},f=>{f.q.lost=true;},f=
   assert.equal(f.calls.length,0);assert.equal(f.reservations.length,0);
 });
 
-test("current repository still rejects order Admin context before SQL and native HTTP at step14 gate",async()=>{
+test("current repository stops order Admin before HTTP when SQL authority fails",async()=>{
   const f=boundFixture({orders:true});let sql=0;f.boundConfig.workStore=createRefreshWorkRepository({query:async()=>{sql++;throw Error("must not query");}});
-  await assert.rejects(f.read(f.create()),e=>quotaBoundaryControl(e)?.status==="not_configured");assert.equal(sql,0);assert.equal(f.calls.length,0);
+  await assert.rejects(f.read(f.create()),e=>quotaBoundaryControl(e)?.status==="not_configured");assert.equal(sql,1);assert.equal(f.calls.length,0);
 });
 
 for(const key of ["readExecution","orders","classify","loadContext","authorizeRead","guard","costBudget","requiredCostUnit","scopes"])

@@ -122,7 +122,7 @@
       "work": "Birlikte değerlendirme ve durma noktası.",
       "boundary": "Kimlik listesinin 12. adımına, yeni tablo/migration ve kalıcı yazıma başlamadan duracağız. Açık kanıtlar da burada görülecek.",
       "addition": "Shopify ek işlerinin izin, okuyucu, tekilleştirme ve atıf sınırları da birlikte incelenecek. Yeni tablo, migration ve kalıcı yazım bu değerlendirme/onaydan önce başlamayacak.",
-      "status": "İnceleme hazırlığı: EO_05_STEP13_PREWRITE_CHECKPOINT_2026-10-28.json hazır; kullanıcı değerlendirmesi/kalıcı yazım onayı verilmedi.",
+      "status": "14 değerlendirmesinde dar Admin kota SQL/adapter repository migration ve izole test kapsamı kullanıcı tarafından onaylandı; tam storage incelemesi, canlı apply ve 15 writer/tablo onayı verilmedi.",
       "package": "EO-05 değerlendirme"
     },
     {

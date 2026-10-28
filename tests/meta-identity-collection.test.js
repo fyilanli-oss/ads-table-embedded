@@ -785,10 +785,10 @@ test("bound Meta candidate: wrong variant parent is conflicting evidence without
   const f=candidateBoundFixture();f.q.adminNative=p=>{p.data.productVariant.product={id:"gid://shopify/Product/999",legacyResourceId:"999"};};
   const r=await f.create().readEvidence();assert.equal(r.product_identity_candidates.candidates.length,0);assert.equal(r.product_identity_candidates.rows[0].product_identity_verification.state,"conflicting");
 });
-test("bound Meta candidate: real current work repository rejects Admin before its SQL and HTTP",async()=>{
+test("bound Meta candidate: real work repository with missing Admin SQL result stops before HTTP",async()=>{
   const f=candidateBoundFixture();let sql=0;const real=createRefreshWorkRepository({query:async()=>{sql++;return {rows:[]};}}),load=f.config.workStore.loadQuotaContext;
   f.config.workStore.loadQuotaContext=x=>x.provider==="shopify_admin"?real.loadQuotaContext(x):load(x);
-  await assert.rejects(f.create().readEvidence());assert.equal(sql,0);assert.equal(f.adminCalls.length,0);assert.equal(f.calls.length,6);
+  await assert.rejects(f.create().readEvidence());assert.equal(sql,1);assert.equal(f.adminCalls.length,0);assert.equal(f.calls.length,6);
 });
 test("bound Meta candidate: deadline at Admin lookup prevents late dispatch and final references",async()=>{
   const f=candidateBoundFixture();f.config.maxElapsedMs=500;let release;f.q.adminLoading=()=>new Promise(r=>{release=r;});

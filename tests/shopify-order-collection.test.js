@@ -186,9 +186,9 @@ test("reader rejects caller recheck/authority callback override before work or H
   const f=fixture();f.config.checkCurrent=async()=>true;assert.throws(f.create,/INPUT_INVALID/);assert.equal(f.loads.length,0);assert.equal(f.calls.length,0);
 });
 
-test("current repository still blocks Admin collection before SQL/native activation gate",async()=>{
+test("current repository blocks Admin collection when SQL authority is unavailable",async()=>{
   const f=fixture();let sql=0;f.config.workStore=createRefreshWorkRepository({query:async()=>{sql++;throw Error("must not run");}});
-  await assert.rejects(f.create().readEvidence(),/AUTHORITY_CHANGED/);assert.equal(sql,0);assert.equal(f.calls.length,0);
+  await assert.rejects(f.create().readEvidence(),/AUTHORITY_CHANGED/);assert.equal(sql,1);assert.equal(f.calls.length,0);
 });
 
 test("final current authority loss after last header HTTP prevents publication",async()=>{

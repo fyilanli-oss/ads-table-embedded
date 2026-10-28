@@ -65,12 +65,9 @@ export async function refreshPreflightProbe(client,{workspace,connections,shopId
     await client.query("insert into operations.api_quota_routes values($1,$1,true)",[operation]);
     const quotaStore=createSharedQuotaRepository(client);
     const environment={SHOPIFY_PARTNER_ORG_ID:"123",SHOPIFY_APP_GID:"gid://shopify/App/456",SHOPIFY_PARTNER_API_ACCESS_TOKEN:"SYNTHETIC-ONLY"};
-    let authorityProbed=false;
+    let authorityExecution=null;
     args.readPage=async execution=>{
-      if(!authorityProbed) {
-        await quotaAuthorityProbe(client,{store,quotaStore,execution:{claim:execution.claim,window:execution.window,entitlementReceipt:execution.entitlementReceipt},connection:connections.google_ads,environment,payload});
-        authorityProbed=true;
-      }
+      if(authorityExecution===null)authorityExecution=structuredClone({claim:execution.claim,window:execution.window,entitlementReceipt:execution.entitlementReceipt});
       adCalls++;return {kind:"complete",payload:{}};
     };
     const managedVerifier=()=>createAuthorityQuotaEntitlementVerifier({store,quotaStore,appId:"gid://shopify/App/456",now:Date.now,
@@ -110,6 +107,17 @@ export async function refreshPreflightProbe(client,{workspace,connections,shopId
     assert.equal(workerTick.status,"queue_checked");
     const result=workerTick.work;
     assert.equal(result.status,"awaiting_dataset");assert.equal(billingCalls,1);assert.equal(adCalls,1);
+    // SQL authority matrix is not native page latency. Use the same real claim and
+    // billing receipt after the worker handoff, with a rollback-only stage fixture.
+    // Keep the original one-second read timeout and handoff outcome unchanged.
+    await client.query("savepoint quota_authority_stage");
+    try{
+      await client.query("update operations.refresh_work_progress set stage='request_intent',rows_observed=0,bytes_observed=0 where workspace_id=$1 and provider=$2 and account_id=$3 and job_id=$4 and fence=$5",
+        [workspace,authorityExecution.claim.provider,authorityExecution.claim.accountId,authorityExecution.claim.id,authorityExecution.claim.fence]);
+      await quotaAuthorityProbe(client,{store,quotaStore,execution:authorityExecution,connection:connections.google_ads,environment,payload});
+    }finally{await client.query("rollback to savepoint quota_authority_stage");await client.query("release savepoint quota_authority_stage");}
+    assert.equal((await client.query("select stage from operations.refresh_work_progress where workspace_id=$1 and provider=$2 and account_id=$3 and job_id=$4 and fence=$5",
+      [workspace,result.claim.provider,result.claim.accountId,result.claim.id,result.claim.fence])).rows[0].stage,"ready_for_dataset");
     console.log("EO05_SCHEDULED_PREFLIGHT_PASS database_queue_to_fenced_worker=true fresh_billing=true quota_wait_no_HTTP=true synthetic_page=true dataset_write=false native_calls=0");
     assert.equal(result.claim.id,firstWait.claim.id);assert.ok(result.claim.fence>repeatedWait.claim.fence);
     assert.equal((await client.query("select count(*)::int n from operations.api_quota_debits where policy_id=$1",[policy])).rows[0].n,1,"no old authorizeRead double debit");

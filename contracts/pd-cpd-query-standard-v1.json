@@ -44,6 +44,7 @@
     "Shopify_Admin_SDK_quota_bridge": "contracts/eo-05-start-brief-v1.json#Shopify_Admin_SDK_quota_bridge_2026_10_27",
     "Shopify_Admin_fenced_identity_client": "contracts/eo-05-start-brief-v1.json#Shopify_Admin_fenced_identity_client_2026_10_27",
     "Shopify_provider_claim_readiness_2026_10_28": "contracts/eo-05-start-brief-v1.json#Shopify_provider_claim_readiness_2026_10_28",
+    "Shopify_Admin_quota_SQL_context_2026_10_28": "contracts/eo-05-start-brief-v1.json#Shopify_Admin_quota_SQL_context_2026_10_28",
     "step13_prewrite_checkpoint_2026_10_28": "docs/evidence/EO_05_STEP13_PREWRITE_CHECKPOINT_2026-10-28.json",
     "Klaviyo_order_reference_prewrite_2026_10_28": "contracts/eo-05-start-brief-v1.json#Klaviyo_order_reference_prewrite_2026_10_28",
     "provider_reference_prewrite_review_2026_10_28": "contracts/eo-05-start-brief-v1.json#provider_reference_prewrite_review_2026_10_28",

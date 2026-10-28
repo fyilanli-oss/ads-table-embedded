@@ -24,7 +24,7 @@
     "google_pd_source_composition": "merged_PR185_f01d31ee7f741e70513bfe96e8750d4f405580a5",
     "klaviyo_pd_source_composition": "merged_PR186_99f6474bc49ff70a084ca5916bc3631f05187ba1",
     "pd_canonical_bridge": "merged_PR187_5657ce49c2c93b4d018c4606e08134a311754c33",
-    "current_slice": "ordered_step_13_checkpoint_prepared_step14_review_pending_native_SQL_and_order_claim_gates_open",
+    "current_slice": "ordered_step14_limited_Admin_quota_SQL_remediation_authorized_repository_prepared_not_live_or_Dataset",
     "permission_preflight": "merged_PR190_ee28856c1260dffd18725eeb85718d195a5ce3de_not_live",
     "identity_OAuth_scope_binding": "merged_PR191_438bf5f8960cc2e25d4b6202a580cc1b1bf9b426_not_live",
     "Google_identity_credential_lifecycle": "merged_PR192_807408603484578555fc8700eb50f9cfa420d07d_not_live",
@@ -72,13 +72,69 @@
     "provider_reference_prewrite_review": "merged_PR234_433c6ab9b9877a1764ab5ce0c6749dcca1820aab_not_native_or_step13_complete",
     "Shopify_provider_claim_readiness": "merged_PR235_bde44288e093398e8ab00de174ef282ba7ed3922_not_native_or_step13_complete",
     "Klaviyo_order_reference_prewrite": "merged_PR236_d7625bd0c94637e09b0ce9c25d8543bc92860212_not_native_or_step13_complete",
-    "step13_prewrite_checkpoint": "prepared_for_existing_step14_review_not_accepted_or_new_runtime",
+    "step13_prewrite_checkpoint": "merged_PR237_aff98cef032d1e43e87f3c4d00bc0825b1587384_not_step13_or_step14_acceptance",
+    "Shopify_Admin_quota_SQL_context": "repository_prepared_in_current_PR_not_merged_or_live",
     "Shopify_sales_attribution_decision": "contracts/pd-cpd-query-standard-v1.json#shopify_order_attribution_decision_2026_10_27",
     "planning_and_identity_PR179": "open_not_merged_or_live",
     "provider_activation": false,
     "identity_pause_before_step_12": true,
     "historical_PMax_pause_preserved": true,
     "package_complete": false
+  },
+  "Shopify_Admin_quota_SQL_context_2026_10_28": {
+    "ordered_plan_step": 14,
+    "remediates_existing_ordered_step": 12,
+    "status": "owner_authorized_limited_repository_Admin_context_migration_and_tests_not_full_step14_or_live_acceptance",
+    "authorization": "explicit_owner_approval_2026_10_28_for_existing_quota_table_Admin_scope_SQL_authority_adapter_and_isolated_tests_only",
+    "migration": "supabase/migrations/20261028132721_eo05a_admin_quota_context.sql",
+    "created_with": "supabase@2.121.0 migration new eo05a_admin_quota_context",
+    "runtime": [
+      "app/lib/database/refresh-work-repository.server.js",
+      "app/lib/refresh/quota-authority-binding.server.js"
+    ],
+    "real_SQL_probe": "tools/eo05-admin-quota-context-probe.mjs",
+    "probe_composition": "existing_F01_successful_real_worker_handoff_captures_original_claim_window_billing_receipt_then_rollback_only_request_intent_stage_fixture_calls_authority_Admin_SQL_matrix_outside_unchanged_native_page_timer_on_both_replays",
+    "schema": "existing_private_operations.refresh_quota_contexts_extended_no_new_table_Admin_installation_FK_workspace_generation_domain_account_null_provider_connection_fields_quarter_API_version_disabled_default_no_rows_or_native_limits_installed",
+    "authority": "original_Meta_Google_Klaviyo_job_account_exact_window_fence_current_connection_selection_request_intent_and_fresh_entitlement_remain_mandatory_join_enabled_Admin_context_to_same_active_installation_compare_account_domain_to_current_shopDomain",
+    "adapter": "shopify_admin_target_passes_to_existing_SQL_function_without_replacing_original_provider_account_job_or_allowing_caller_context_fallback_failed_or_null_SQL_stops_before_native_HTTP",
+    "security": "existing_forced_RLS_private_table_acl_unchanged_fixed_empty_function_search_path_revoke_all_then_grant_only_existing_refresh_coordinator_no_public_runtime_service_role_access",
+    "validation": {
+      "new_unit_tests": 4,
+      "existing_relevant_tests": 1797,
+      "total_relevant_tests": 1801,
+      "repository_controls": 7,
+      "typecheck": "passed",
+      "isolated_SQL": "prepared_for_existing_F01_two_ephemeral_database_replays_results_recorded_at_exact_PR_head_not_native_evidence"
+    },
+    "negative_SQL_cases": [
+      "missing_or_disabled_inventory",
+      "wrong_installation_domain_generation",
+      "old_fence_wrong_account_or_window",
+      "missing_or_stale_entitlement_receipt",
+      "provider_connection_version_lifecycle_or_away_back_selection_change",
+      "not_request_intent",
+      "invalid_Admin_domain_API_version_or_provider_connection_columns",
+      "private_table_and_function_roles",
+      "all_synthetic_inventory_rollback_no_HTTP"
+    ],
+    "remaining": [
+      "Merchant_inventory_SQL_canonical_installation_PK_selection_epoch_and_OAuth_CAS",
+      "Admin_reserved_point_costBudget_issuance_native_profiles_feedback_shared_stop_and_explicit_SDK_hook_capacity_acceptance",
+      "native_permission_source_namespace_order_claim_proof_and_independent_order_scheduler_partial_continuation",
+      "full_existing_step14_storage_review_before_step15_tables_mappings_writers"
+    ],
+    "official_checked_at": "2026-10-28",
+    "sources": [
+      "https://supabase.com/changelog",
+      "https://supabase.com/docs/guides/database/functions"
+    ],
+    "live_apply_authorized": false,
+    "live_rows_or_native_configuration_inserted": false,
+    "new_Dataset_table_or_writer": false,
+    "step13_complete": false,
+    "step14_full_review_complete": false,
+    "step15_storage_authorized": false,
+    "historical_PMax_pause_preserved": true
   },
   "step13_prewrite_checkpoint_2026_10_28": {
     "ordered_plan_step": 13,

@@ -60,6 +60,24 @@ test("database adapter binds fenced claim, exact window and fresh entitlement re
   await assert.rejects(store.loadQuotaContext({claim:claim(),window,provider:"meta"}),/INPUT_INVALID/);
 });
 
+for(const provider of ["meta","google_ads","klaviyo"])test(`Admin SQL adapter: ${provider} job retains original authority parameters`,async()=>{
+  const job={...claim(),provider,accountId:provider==="meta"?"act_111":provider==="klaviyo"?"account1":"111"},queries=[];
+  const admin={provider:"shopify_admin",clientScopeKey:"a".repeat(64),connectionScopeKey:"b".repeat(64),connectionEpoch:1,
+    accountId:"test.myshopify.com",organizationId:null,apiVersion:"2026-10"};
+  const store=createRefreshWorkRepository({query:async(sql,args)=>{queries.push({sql,args});return {rows:[{result:admin}]};}});
+  assert.deepEqual(await store.loadQuotaContext({claim:job,window,provider:"shopify_admin",entitlementReceipt:{observedAt:"2026-10-28T00:00:00Z"}}),admin);
+  assert.deepEqual(queries[0].args,[job.workspaceId,"1",provider,job.accountId,"test",1,window.from,window.to,"shopify_admin","2026-10-28T00:00:00Z"]);
+});
+test("Admin SQL adapter: unconfigured or failed SQL is not a context fallback",async()=>{
+  for(const broken of [false,true]){
+    let calls=0;const store=createRefreshWorkRepository({query:async()=>{calls++;if(broken)throw Error("SECRET");return {rows:[{result:null}]};}});
+    const input={claim:claim(),window,provider:"shopify_admin"};
+    if(!broken)assert.equal(await store.loadQuotaContext(input),null);
+    else await assert.rejects(store.loadQuotaContext(input),e=>e.message==="REFRESH_WORK_REPOSITORY_UNAVAILABLE");
+    assert.equal(calls,1);
+  }
+});
+
 function merchantBindingFixture() {
   const f=fixture();f.state.context={provider:"google_ads",clientScopeKey:"a".repeat(64),connectionScopeKey:"b".repeat(64),connectionEpoch:1,
     accountId:"111",organizationId:null,apiVersion:"v25",merchant:{targetAccountId:"99",quotaAccountId:"98",apiVersion:"products/v1",bindingEpoch:1}};

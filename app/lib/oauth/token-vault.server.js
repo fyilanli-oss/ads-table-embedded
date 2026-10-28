@@ -1,3 +1,4 @@
+import {identityOAuthBinding, validateIdentityOAuthGrantedScopes} from "./oauth-permission-profile.server.js";
 import {
   createTokenEnvelopeCipher,
   readProviderTokenKeyring,
@@ -178,6 +179,68 @@ export function createTokenVault({
         installGeneration: context.installGeneration,
         provider: selectedProvider,
       });
+    },
+
+    async commitIdentityOAuthCredential({installationAuthority, provider, transactionId,
+      connectionId, binding, tokenSet, scopes, accounts, verifiedAt, expiresAt}) {
+      const owner = authority(installationAuthority);
+      const selectedProvider = providerName(provider);
+      if (!UUID_PATTERN.test(transactionId || "") || !UUID_PATTERN.test(connectionId || "")) {
+        throw new Error("IDENTITY_OAUTH_COMMIT_INPUT_INVALID");
+      }
+      const expected = identityOAuthBinding(binding);
+      const granted = validateIdentityOAuthGrantedScopes(selectedProvider,
+        selectedProvider === "google_ads" ? scopes?.join(" ") : scopes);
+      if (tokenSet?.permission_profile !== "identity_v1") throw new Error("IDENTITY_OAUTH_TOKEN_PROFILE_REQUIRED");
+      const nativeScopes = validateIdentityOAuthGrantedScopes(selectedProvider,
+        selectedProvider === "google_ads" ? tokenSet.scope : tokenSet.scopes);
+      if (nativeScopes.length !== granted.length || nativeScopes.some(s => !granted.includes(s))) {
+        throw new Error("IDENTITY_OAUTH_TOKEN_SCOPE_MISMATCH");
+      }
+      const expires = requiredDate(expiresAt,"IDENTITY_OAUTH_EXPIRY_REQUIRED");
+      const verified = requiredDate(verifiedAt,"IDENTITY_OAUTH_VERIFICATION_REQUIRED");
+      if (!Array.isArray(accounts) || accounts.length < 1 || accounts.length > 1000
+        || accounts.some(a => !a || typeof a.id !== "string" || !a.id || a.id !== a.id.trim()
+          || a.kind !== "advertiser" || a.reportingEligible !== true)
+        || new Set(accounts.map(a=>a.id)).size !== accounts.length) throw new Error("IDENTITY_OAUTH_ACCOUNTS_INVALID");
+      // Snapshot all mutable inputs before the first await. No plaintext enters SQL.
+      const accountIds = accounts.map(a => ({id:a.id,kind:a.kind,reportingEligible:a.reportingEligible}));
+      const recordId = envelopeCipher.createRecordId();
+      const sealed = envelopeCipher.seal({identity:{recordId,workspaceId:owner.workspaceId,
+        installGeneration:owner.installGeneration,provider:selectedProvider,purpose:"provider_token_set"},
+        secret:tokenSetJson(tokenSet)});
+      await assertReady(selectedProvider);
+      try {
+        const row = await envelopes.commitIdentityCredential({...sealed,transactionId,connectionId,
+          binding:expected,scopes:[...granted],accounts:accountIds,verifiedAt:verified,expiresAt:expires});
+        if (row.credential_id !== recordId || !UUID_PATTERN.test(row.connection_id || "")
+          || (expected.connectionId !== null && row.connection_id !== expected.connectionId)
+          || !["connected","pending_account_selection"].includes(row.lifecycle_status)
+          || Number(row.connection_version) !== (expected.version === null ? 1 : expected.version+1)) {
+          throw new Error("IDENTITY_OAUTH_COMMIT_RESULT_INVALID");
+        }
+        return Object.freeze({connectionId:row.connection_id,credentialId:recordId,
+          version:Number(row.connection_version),status:row.lifecycle_status});
+      } catch {
+        // SQL may have committed. Never delete, finalize failed, retry, refresh or activate.
+        throw new Error("IDENTITY_OAUTH_WRITE_UNCONFIRMED");
+      }
+    },
+
+    async readIdentityOAuthCommit({installationAuthority,provider,transactionId}) {
+      const owner = authority(installationAuthority);
+      if (!UUID_PATTERN.test(transactionId || "")) throw new Error("OAUTH_TRANSACTION_ID_INVALID");
+      const row = await envelopes.readIdentityCommit({transactionId,workspaceId:owner.workspaceId,
+        installGeneration:owner.installGeneration,provider:providerName(provider)});
+      if (!row) return null; // No receipt is not proof of rollback or permission to replay.
+      if (!UUID_PATTERN.test(row.connection_id || "") || !UUID_PATTERN.test(row.credential_id || "")
+        || !Number.isSafeInteger(Number(row.connection_version)) || Number(row.connection_version)<1
+        || !["connected","pending_account_selection"].includes(row.lifecycle_status)) {
+        throw new Error("IDENTITY_OAUTH_RECEIPT_INVALID");
+      }
+      return Object.freeze({connectionId:row.connection_id,credentialId:row.credential_id,
+        version:Number(row.connection_version),status:row.lifecycle_status,
+        historicalCommit:true,authorizesActivation:false});
     },
 
     async storeProviderTokenSet({

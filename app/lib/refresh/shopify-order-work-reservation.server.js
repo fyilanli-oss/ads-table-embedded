@@ -8,6 +8,10 @@ const amounts=v=>v&&Object.keys(v).sort().join(",")==="bytes,connections,dbWrite
   &&Object.values(v).every(n=>Number.isSafeInteger(n)&&n>0);
 const frozen=v=>{if(v&&typeof v==="object"&&!Object.isFrozen(v)){Object.values(v).forEach(frozen);Object.freeze(v);}return v;};
 const fail=()=>{throw Error("SHOPIFY_ORDER_WORK_INPUT_INVALID");};
+const factories=new WeakMap();
+export function shopifyOrderWorkReservationBinding(factory){
+  const binding=factories.get(factory);if(!binding)fail();return binding;
+}
 
 // Inactive pre-HTTP reservation adapter only. No HTTP callback, timer, lease release,
 // entitlement receipt, quota debit or Dataset writer can be supplied here.
@@ -20,7 +24,7 @@ export function createShopifyOrderWorkReservations({database,...extra}={}){
     return result.rows[0].result;
   }
   const valid=(r,p,id)=>r?.attemptId===id&&r.rangeKey===p.key&&Number.isSafeInteger(r.fence)&&r.fence>0&&amounts(r.cost);
-  return Object.freeze({async reserve({plan,rangeKey,...overrides}={}){
+  const factory=Object.freeze({async reserve({plan,rangeKey,...overrides}={}){
     if(Object.keys(overrides).length)fail();const p=shopifyOrderRangeProposal(plan,rangeKey),attemptId=randomUUID();
     try{
       const r=await one("select operations.reserve_shopify_order_work($1::bigint,$2::uuid,$3::bigint,$4::text,$5::text,$6::text,$7::uuid) as result",[...args(p),attemptId]);
@@ -49,4 +53,7 @@ export function createShopifyOrderWorkReservations({database,...extra}={}){
       handles.delete(reservation);return frozen({status:"needs_attention",reason:"reservation_release_unconfirmed",attemptId:h.attemptId,rangeKey:h.p.key,reservationMayBeHeld:true,...flags});
     }
   }});
+  factories.set(factory,Object.freeze({database,has:reservation=>handles.has(reservation),take(reservation){
+    const h=handles.get(reservation);if(!h)fail();handles.delete(reservation);return h;
+  }}));return factory;
 }

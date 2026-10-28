@@ -50,11 +50,11 @@ export async function shopifyOrderQueueProbe(client,{execution}){
     const contexts={};
     for(const provider of ["shopify_admin","shopify_partner"]){
       const c=contexts[provider]={provider,clientScopeKey:hash(),connectionScopeKey:hash(),connectionEpoch:1,
-        accountId:provider==="shopify_admin"?row.shop_domain:null,organizationId:provider==="shopify_partner"?"123":null,apiVersion:"2026-10"};
+        accountId:provider==="shopify_admin"?row.shop_domain:null,organizationId:provider==="shopify_partner"?"123":null,apiVersion:provider==="shopify_partner"?"2026-07":"2026-10"};
       await client.query(`insert into operations.refresh_quota_contexts(workspace_id,install_generation,provider,installation_id,
         account_id,organization_id,client_scope_key,connection_scope_key,connection_epoch,api_version,enabled)
-        values($1,$2,$3,$4,$5,$6,$7,$8,1,'2026-10',true)`,
-      [workspaceId,installGeneration,provider,row.id,c.accountId,c.organizationId,c.clientScopeKey,c.connectionScopeKey]);
+        values($1,$2,$3,$4,$5,$6,$7,$8,1,$9,true)`,
+      [workspaceId,installGeneration,provider,row.id,c.accountId,c.organizationId,c.clientScopeKey,c.connectionScopeKey,c.apiVersion]);
       await client.query("insert into operations.api_quota_failure_domains(id,provider) values($1,$2)",[c.connectionScopeKey,provider]);
     }
     assert.equal((await queue.enqueue(inputs[0])).status,"quota_configuration_required");assert.equal(writes,0);

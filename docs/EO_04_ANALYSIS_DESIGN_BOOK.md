@@ -1,5 +1,22 @@
 # EO-04 — Analiz ve tasarım kitabı
 
+## Mevcut 14 değerlendirmesi — Merchant kota kapsamının SQL bağlantısı, 28 Ekim 2026
+
+#241 `da5378f633fc5262e578cab98ed6792f00c21c87` main’dedir. Mevcut 12 düzeltmelerinde, owner-reviewed Merchant envanterinin SQL okuması hazırlandı. CLI migration `20261028152713_eo05a_merchant_quota_context.sql` mevcut private refresh_quota_contexts tablosuna hedef hesap, kotayı tüketen hesap, products/v1 sürümü, Merchant bağ nesli, credential UUID ve varsayılan false Merchant enabled alanını ekler. Yeni tablo, etkin kayıt, native limit, OAuth veya Dataset writer yoktur. Gerçek hedef ve kota hesabı, kimlik doğrulayan hesaba göre ayrı kanıt gerektirir; biri diğerinden türetilmez.
+
+Mevcut load_refresh_quota_context orijinal Ads job/account/window/fence, aktif kurulum, bağlantı ve taze entitlement kontrolünü korur. Ek Merchant nesnesi yalnız aynı workspace/kurulum/Google bağlantısı, güncel bağlantı sürümü, connected durum, exact credential UUID ve mevcut content scope varsa döner. Credential UUID nonsecret referanstır; güncel bağlantının zaten FK ile bağlı credential kimliğiyle karşılaştırılır. Yeni credential FK’si veya vault erişimi eklenmez; eski envelope temizliği engellenmez. Eksik, kapalı veya stale Merchant envanterinde Ads’ın eski yedi alanı korunur. Mevcut Merchant transport ek nesneyi şart koştuğundan Ads profiline fallback yapamaz.
+
+Tam Merchant binding’de yapılan UPDATE; hedef/kota hesabı, credential, bağlantı, enabled, installation/account veya route kapsamı değişince bağ neslinin kesin ilerlemesini ister. Nesil null’a alınamaz veya azaltılamaz. Aynı hedefe geri dönülse de ilerleyen epoch eski route/profile’ın yeniden kullanılmasını engeller. Bu, mevcut kayıt UPDATE korumasıdır; native envanter doğrulaması veya otomatik writer değildir. Hiçbir native method-group limiti, izin kanıtı veya quota-account ilişkisi sentetik fixture’dan üretilmez.
+
+Gerçek SQL sınaması mevcut F01 authority matrisi içinde native readPage zamanlayıcısının dışında çalışır. Gerçek repository/resolver/guard/SQL ve sentetik products HTTP ile kapalı varsayılan, content izni, stale credential/connection, eksik fatura/fence/window, ayrı target/quota/version, değişmeyen Ads route’u, geçersiz field/epoch, away-back, actual SQL rezervasyonu sırasında nesil değişimi ve HTTP öncesi settlement sınanır. Sentetik native link/limit veya Shopify Product ID eşleşmesi doğrulanmış sayılmaz; tüm satırlar rollback edilir ve native HTTP=0 kalır. Forced RLS/ACL korunur; coordinator dışı erişim ve predecessor çağrısı kapalıdır.
+
+Mevcut 26 sıra, 13 sonrası kısa / 15 sonrası ana değerlendirme ve PMax duraklaması korunur. Bu teslim Merchant SQL read bağlantısıdır; native hesap/kota kaynağı ve profil aktivasyonu, canonical kurulum PK/seçim epoch/OAuth CAS, bağımsız Order range/scheduling/continuation, native kaynak/claim ve sonraki yazım kapıları açık kalır. Tam 12/14 veya canlı kabul değildir.
+
+4 yeni + 1.840 mevcut ilgili test (1.844 toplam), 7 repository kontrolü, typecheck ve diff kontrolü geçti. Gerçek SQL kanıtı exact-head PR/F01 üzerinde ayrıca doğrulanacaktır.
+
+Resmî kontrol 28 Ekim 2026: [Merchant ürün listesi](https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.products/list), [Merchant kota ve hesap hiyerarşisi](https://developers.google.com/merchant/api/guides/quotas-limits/quotas), [Supabase fonksiyonlar](https://supabase.com/docs/guides/database/functions), [changelog](https://supabase.com/changelog), [PostgreSQL trigger](https://www.postgresql.org/docs/17/sql-createtrigger.html). Makine kaydı: `contracts/eo-05-start-brief-v1.json#Google_Merchant_quota_SQL_2026_10_28`.
+
+
 ## Mevcut 14 değerlendirmesi — Arka plan Shopify SDK açık başlangıcı, 28 Ekim 2026
 
 #240 `baef6e545eae15d4f0dc74cb6499ba9e4db90746` main’dedir. Mevcut 12 düzeltmelerinde arka plan SDK başlangıcı için initializeShopifyAdminRefreshSdk hazırlandı. Modül import’u hook kurmaz; açık çağrı, önceden yüklenen @shopify/shopify-api/adapters/node sonrasında tek gerçek bridge kurar. Aynı hook ile tekrar aynı nesne döner; getter kurulum yapmaz. Eksik adaptör veya yabancı custom hook üzerine yazılmaz. globalThis.fetch değişmez; native fetch fallback, otomatik onarım veya reset yoktur.

@@ -589,6 +589,15 @@
       "repository_sql_sha256": "19fcc7baff1f51795e40321ef6200f0a149e0e19fd13b034aff454eae05ef41d",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261028152713",
+      "name": "eo05a_merchant_quota_context",
+      "file": "supabase/migrations/20261028152713_eo05a_merchant_quota_context.sql",
+      "created_with": "supabase@2.121.0 migration new eo05a_merchant_quota_context",
+      "repository_sql_sha256": "8d5e8df045f137267361cca86462819a521602568254afd526409ab8dd8b5305",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

@@ -7,6 +7,7 @@ import {shopifyPermissionScopeFamily} from "../shopify/permission-scope-protocol
 import {IdentityReadDeadlineError,runIdentityReadDeadline} from "../providers/identity-read-deadline.server.js";
 const wrappedClients=new WeakSet();
 const bridges=new WeakSet();
+const bridgeClosers=new WeakMap();
 const orderClients=new WeakMap();
 const clientClosers=new WeakMap();
 const orderReadFamily=raw=>shopifyOrderReadFamily(raw)??shopifyPermissionScopeFamily(raw);
@@ -14,32 +15,37 @@ export function isShopifyAdminIdentitySdkBridge(value) {return bridges.has(value
 export function isShopifyAdminOrderSdkClient(value) {return orderClients.has(value);}
 export function closeShopifyAdminOrderSdkClient(value) {orderClients.get(value)?.();}
 export function closeShopifyAdminSdkClient(value) {clientClosers.get(value)?.();}
+export function closeShopifyAdminIdentitySdkBridge(value) {bridgeClosers.get(value)?.();}
 
 // Inactive SDK hook. Explicit bootstrap installation is a separate gate; no global setter,
 // fallback fetch, token/session loader, config change or authority inference here.
 export function createShopifyAdminIdentitySdkBridge() {
   const context=new AsyncLocalStorage();
+  const lifetime=new AbortController();
   const fail=code=>new Error(`SHOPIFY_ADMIN_SDK_${code}`);
   async function fetch(input,init) {
+    if(lifetime.signal.aborted)throw fail("RUNTIME_CLOSED");
     const call=context.getStore();
     if(!call)throw fail("UNBOUND_HTTP");
     if(call.closed||call.signal.aborted||call.failure)throw call.failure??fail("EXECUTION_CLOSED");
     if(call.requests++!==0) {call.failure=fail("EXTRA_HTTP_FORBIDDEN");throw call.failure;}
     try {
       const response=await call.transport(input,{...init,signal:call.signal});
-      if(call.closed||call.signal.aborted)throw fail("EXECUTION_CLOSED");
+      if(call.closed||call.signal.aborted||lifetime.signal.aborted)throw fail("EXECUTION_CLOSED");
       // Quota stop was already persisted. Do not hand native 401/403 to SDK auth recovery.
       if(!response?.ok)throw fail("NATIVE_REQUEST_FAILED");
       return response;
     } catch(error) {call.failure=error;throw error;}
   }
   function wrap({admin,transport,signal,timeoutMs=120000,...extra}={},classify=shopifyAdminIdentityFamily) {
+    if(lifetime.signal.aborted)throw fail("RUNTIME_CLOSED");
     if(Object.keys(extra).length||typeof admin?.graphql!=="function"||wrappedClients.has(admin)||!isQuotaManagedFetchForProvider(transport,"shopify_admin")
       ||signal!==undefined&&!(signal instanceof AbortSignal)||!Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>600000)throw fail("INPUT_INVALID");
     const graphql=admin.graphql.bind(admin);
-    const lifetime=new AbortController();
+    const clientLifetime=new AbortController();
     let busy=false,failed=false;
     const client=Object.freeze({async graphql(query,options={}) {
+      if(lifetime.signal.aborted)throw fail("RUNTIME_CLOSED");
       if(busy)throw fail("CONCURRENT_CALL_FORBIDDEN");
       if(failed)throw fail("EXECUTION_CLOSED");
       let variables,external;
@@ -48,7 +54,7 @@ export function createShopifyAdminIdentitySdkBridge() {
           ||options.tries!==undefined&&options.tries!==1||options.signal!==undefined&&!(options.signal instanceof AbortSignal))throw Error();
         variables=structuredClone(options.variables);
         if(!classify(JSON.stringify({query,variables})))throw Error();
-        const signals=[signal,options.signal,lifetime?.signal].filter(Boolean);external=signals.length?AbortSignal.any(signals):undefined;
+        const signals=[signal,options.signal,clientLifetime.signal,lifetime.signal].filter(Boolean);external=AbortSignal.any(signals);
       } catch {throw fail("INPUT_INVALID");}
       busy=true;let call;
       try {
@@ -72,7 +78,7 @@ export function createShopifyAdminIdentitySdkBridge() {
       } finally {busy=false;if(call)call.closed=true;}
     }});
     wrappedClients.add(client);
-    const close=()=>{failed=true;lifetime.abort();};
+    const close=()=>{failed=true;clientLifetime.abort();};
     clientClosers.set(client,close);
     if(classify===orderReadFamily)orderClients.set(client,close);
     return client;
@@ -80,5 +86,5 @@ export function createShopifyAdminIdentitySdkBridge() {
   // Keep the existing identity entry closed to caller-selected classifiers/modes.
   // Both entries use ONE SDK hook; no competing global adapter installation.
   const bridge=Object.freeze({fetch,wrap:options=>wrap(options),wrapOrders:options=>wrap(options,orderReadFamily)});
-  bridges.add(bridge);return bridge;
+  bridges.add(bridge);bridgeClosers.set(bridge,()=>lifetime.abort());return bridge;
 }

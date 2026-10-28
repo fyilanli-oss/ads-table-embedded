@@ -24,7 +24,7 @@
     "google_pd_source_composition": "merged_PR185_f01d31ee7f741e70513bfe96e8750d4f405580a5",
     "klaviyo_pd_source_composition": "merged_PR186_99f6474bc49ff70a084ca5916bc3631f05187ba1",
     "pd_canonical_bridge": "merged_PR187_5657ce49c2c93b4d018c4606e08134a311754c33",
-    "current_slice": "ordered_step14_Admin_cost_feedback_shared_stop_SQL_repository_prepared_not_live_or_Dataset",
+    "current_slice": "ordered_step14_Admin_SDK_explicit_bootstrap_repository_prepared_not_live_or_Dataset",
     "permission_preflight": "merged_PR190_ee28856c1260dffd18725eeb85718d195a5ce3de_not_live",
     "identity_OAuth_scope_binding": "merged_PR191_438bf5f8960cc2e25d4b6202a580cc1b1bf9b426_not_live",
     "Google_identity_credential_lifecycle": "merged_PR192_807408603484578555fc8700eb50f9cfa420d07d_not_live",
@@ -80,6 +80,43 @@
     "identity_pause_before_step_12": true,
     "historical_PMax_pause_preserved": true,
     "package_complete": false
+  },
+  "Shopify_Admin_SDK_bootstrap_2026_10_28": {
+    "ordered_plan_step": 14,
+    "remediates_existing_ordered_step": 12,
+    "status": "repository_explicit_background_bootstrap_prepared_pending_exact_head_CI_and_owner_merge_no_production_call_site",
+    "prior_feedback_merge": "PR240_baef6e545eae15d4f0dc74cb6499ba9e4db90746",
+    "runtime": [
+      "app/lib/refresh/shopify-admin-sdk-bootstrap.server.js",
+      "app/lib/refresh/shopify-admin-sdk-quota-bridge.server.js"
+    ],
+    "entry": "initializeShopifyAdminRefreshSdk_no_arguments_explicit_once_after_shopify_api_Node_adapter_import_returns_single_genuine_bridge_getter_never_installs",
+    "baseline": "installed_shopify_api_15_0_0_Node_adapter_sets_abstractFetch_globalThis_fetch_React_Router_3_0_1_Node_adapter_only_sets_runtime_string_React_Router_adapter_alone_rejected_no_assumed_fetch_install",
+    "lifetime": "import_no_side_effect_globalThis_fetch_unchanged_idempotent_same_hook_foreign_or_missing_baseline_rejected_no_override_custom_transport_no_fallback_no_automatic_repair",
+    "shutdown": "observed_hook_change_or_explicit_close_terminally_closes_owned_bridge_AbortController_all_current_clients_no_restore_no_reinitialize_even_if_external_hook_restored",
+    "boundaries": "only_existing_genuine_fenced_Admin_identity_Order_permission_clients_scope_SQL_point_receipt_feedback_stop_guards_retained_unbound_SDK_HTTP_rejected_no_OAuth_recovery_or_hidden_retry",
+    "trust_limit": "baseline_equality_is_not_identity_permission_or_process_isolation_proof_dedicated_background_host_and_full_foreground_auth_bootstrap_review_required_before_production_activation_external_SDK_setter_cannot_be_policed_before_observation_existing_bound_clients_check_actual_hook_before_native_call",
+    "tests": "15_new_plus_1825_existing_relevant_tests_1840_total_7_controls_typecheck_passed_tests/shopify-admin-sdk-bootstrap.test.js_separate_Node_process_per_lifetime_application_installer_positive_real_pinned_API_React_Router_clients_synthetic_HTTP_SQL_profiles_only",
+    "initial_test_finding": "React_Router_Node_adapter_did_not_install_fetch_local_harness_assumption_failed_API_Node_adapter_dependency_made_explicit_and_router_only_negative_case_added_no_package_upgrade_or_live_runtime_change",
+    "remaining": [
+      "reviewed_dedicated_background_host_production_call_site_and_all_foreground_auth_paths_activation",
+      "native_verified_profiles_and_query_cost_bounds_capacity_acceptance",
+      "Merchant_SQL_canonical_installation_selection_epoch_OAuth_CAS",
+      "independent_order_ranges_scheduling_safe_partial_continuation",
+      "native_identity_order_claim_evidence_step15_storage_review"
+    ],
+    "production_hook_installed": false,
+    "live_activation": false,
+    "native_calls": false,
+    "new_SQL_migration": false,
+    "Dataset_write": false,
+    "official_sources_checked_at": "2026-10-28",
+    "official_sources": [
+      "https://github.com/Shopify/shopify-app-js/blob/main/packages/apps/shopify-api/runtime/http/index.ts",
+      "https://github.com/Shopify/shopify-app-js/blob/main/packages/apps/shopify-api/adapters/node/index.ts",
+      "https://github.com/Shopify/shopify-app-js/blob/main/packages/apps/shopify-app-react-router/src/server/adapters/node/index.ts",
+      "https://shopify.dev/docs/api/shopify-app-react-router/latest/entrypoints/shopifyapp"
+    ]
   },
   "Shopify_Admin_cost_feedback_SQL_2026_10_28": {
     "ordered_plan_step": 14,

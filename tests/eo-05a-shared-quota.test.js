@@ -12,6 +12,15 @@ function fixture() {
   const args={operationKey:"a".repeat(64),lane:"background",run:async()=>{calls++;return {outcome:"success",value:{synthetic:true}};}};
   return {store,args,guard:createSharedQuotaGuard({store,now:()=>0}),calls:()=>calls,reserves:()=>reserves,stops:()=>stops,settles:()=>settles};
 }
+
+test("Admin route repository passes only opaque route/domain keys and the Admin provider",async()=>{
+  const calls=[],routeKey="a".repeat(64),connectionScopeKey="b".repeat(64);
+  const store=createSharedQuotaRepository({query:async(sql,args)=>{calls.push({sql,args});return {rows:[{result:routeKey}]};}});
+  assert.equal(await store.resolveRoute({routeKey,connectionScopeKey,provider:"shopify_admin"}),routeKey);
+  assert.deepEqual(calls,[{sql:"select operations.resolve_shared_api_quota_route($1::text,$2::text,$3::text) as result",args:[routeKey,connectionScopeKey,"shopify_admin"]}]);
+  await assert.rejects(store.resolveRoute({routeKey,connectionScopeKey:"shop.myshopify.com",provider:"shopify_admin"}),/INPUT_INVALID/);
+  assert.equal(calls.length,1);
+});
 test("one shared reservation precedes one operation; a settled response does not refund its quota",async()=>{
   for(const lane of ["interactive","background"]) {
     const f=fixture();f.args.lane=lane;assert.equal((await f.guard.execute(f.args)).status,"returned");

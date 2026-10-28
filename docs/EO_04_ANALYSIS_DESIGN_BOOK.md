@@ -1,5 +1,18 @@
 # EO-04 — Analiz ve tasarım kitabı
 
+## Mevcut 14 değerlendirmesi — Admin maliyet rezervasyonunun SQL bağlantısı, 28 Ekim 2026
+
+#238 `78829f8283152daab9058a824d851677ea77a7ec` main’dedir. Kullanıcının devam onayıyla, mevcut 12 düzeltmelerinde Admin maliyet rezervasyonuna geçildi. Bu teslim yalnız mevcut private kota envanterini tamamlar; yeni tablo, Dataset writer, canlı profil veya limit tanımlamaz. 13 sonrası kısa değerlendirme yapıldı; kalan 12 kod eksikleri ardından 15 sonrasında ana değerlendirme yapılması kararlaştırıldı. Bu sıra mutabakatı canlı uygulama veya sonraki provider kapıları için onay değildir.
+
+CLI ile oluşturulan `20261028141201_eo05a_admin_cost_budget.sql`, Admin operation için pozitif güvenli tam sayı reserved_requested_cost ve zorunlu route profili; policy için shopify_admin_query_points birimi getirir. Aynı rezervasyonda bütün ilgili policy kayıtları aynı puanı tüketmeden costBudget makbuzu üretilemez. Eksik, kapalı, eski fingerprint veya tutarsız puan kaydı not_configured kalır. Maliyet değişmesi fingerprint’i geçersiz kılar; diğer sağlayıcıların fingerprint biçimi korunur. Caller maliyet seçmez. Mevcut atomik çoklu kapsam, interactive rezervi, stop zinciri ve rate tüketimini iade etmeyen settlement davranışı korunur. Profil varsayılanları kapalıdır; migration satır eklemez.
+
+Gerçek PostgreSQL sınaması mevcut F01 rollback-only authority matrisi içinde, native readPage zamanlayıcısının dışında çalışır. Sentetik profillerle iki policy’ye aynı puan yazımı, typed makbuzdan gerçek guard’a geçiş, eski profil ve eksik/tutarsız kapsamların kısmi debit bırakmaması, tekrar attempt, background headroom, iadesiz settlement, kapalı/stopped kayıtlar ve private erişim kontrol edilir. Sentetik satırlar geri alınır; native HTTP yoktur. Admin cost feedback/shared throttle sinyalleri ve global SDK hook bu teslimde kapanmaz; native ölçüm/limit ve Merchant/canonical/OAuth/scheduling işleri açık kalır. Paket veya 14 bütünü Done değildir.
+
+1 yeni + 1.801 mevcut ilgili test (1.802 toplam), 7 repository kontrolü, typecheck ve diff kontrolü geçti. Gerçek SQL sonucu PR/F01 üzerinde ayrıca doğrulanacaktır.
+
+Kaynak kontrolü 28 Ekim 2026: [Shopify GraphQL Admin rate limits](https://shopify.dev/docs/apps/build/apis/graphql-admin/rate-limits), [Supabase database functions](https://supabase.com/docs/guides/database/functions), [Supabase changelog](https://supabase.com/changelog), [PostgreSQL locks](https://www.postgresql.org/docs/17/explicit-locking.html). Makine kaydı: `contracts/eo-05-start-brief-v1.json#Shopify_Admin_cost_budget_SQL_2026_10_28`.
+
+
 ## Mevcut 14 değerlendirmesi — Onaylı dar kapsam: Admin kota SQL bağlantısı, 28 Ekim 2026
 
 #237 `aff98cef032d1e43e87f3c4d00bc0825b1587384` main’dedir. Kullanıcı mevcut kota kapsamı tablosuna Admin desteği, SQL yetki kontrolü, adapter ve izole testler için repository migration’ını açıkça onayladı. Bu onay 14’ün tamamını, canlı uygulamayı veya 15’in Dataset/kimlik/sipariş tabloları ve writer’larını kapsamaz. Tarihsel checkpoint kendi base commit’inin kaydı olarak korunur; aşağıdaki dar ilerleme onu tamamlandıya çevirmez.

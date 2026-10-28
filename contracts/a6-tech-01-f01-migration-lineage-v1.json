@@ -571,6 +571,15 @@
       "repository_sql_sha256": "9ce1c2021a339933005888f0e4e2cbab51520ada044c18a84d8b0aabf563d83c",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261028141201",
+      "name": "eo05a_admin_cost_budget",
+      "file": "supabase/migrations/20261028141201_eo05a_admin_cost_budget.sql",
+      "created_with": "supabase@2.121.0 migration new eo05a_admin_cost_budget",
+      "repository_sql_sha256": "e60f87398caf9bf82b9414ab08afe808c35cc334713702214bf927bc9084a969",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

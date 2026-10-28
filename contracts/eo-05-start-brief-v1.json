@@ -1,4 +1,47 @@
 {
+  "Shopify_independent_Admin_reader_2026_10_28": {
+    "status": "repository_prepared_pending_exact_head_CI_owner_merge_inactive_independent_Admin_collection",
+    "base_main": "bb08b735948243541dce2dd6cb3de4b3f74f231c",
+    "scope": "existing_step14_Admin_Order_collection_binding_to_genuine_fresh_receipt_and_installation_owned_reservation",
+    "migration": "supabase/migrations/20261028220207_eo05a_shopify_order_admin_read.sql",
+    "runtime": "app/lib/refresh/shopify-order-admin-reader.server.js",
+    "identity": "actual_installation_workspace_generation_shop_domain_range_attempt_fence_no_ad_provider_account_business_day_or_browser_session_identity",
+    "provenance": "same_genuine_entitlement_checker_verification_one_use_claimed_synchronously_cloned_or_reused_receipt_cannot_open_reader",
+    "reuse": "existing_SDK_hook_brand_shared_point_quota_Order_read_protocol_permissions_pagination_consistency_collection_brand_and_prewrite_review",
+    "owner_SQL": "new_scoped_coordinator_owner_RPC_existing_runtime_only_installation_loader_privilege_unchanged_no_raw_table_access",
+    "limits": "explicit_five_collection_caps_page_size_equals_genuine_plan_rows_bytes_within_SQL_reservation_maxRequests_separate_from_active_request_concurrency_deadline_clamped_to_entitlement_and_elapsed_cap",
+    "per_HTTP": "current_SQL_fence_epochs_billing_source_hash_owner_and_pinned_Admin_context_before_after_quota_each_physical_dispatch_marker_persisted_under_shared_lock_before_fetch",
+    "native_scopes": "existing_before_after_currentAppInstallation_scopes_and_history_gate_no_permission_proof_or_source_window_inferred",
+    "result": "genuine_collection_observation_plus_nonsecret_SQL_count_stats_metadata_Order_LineItem_journey_not_stored_no_durable_checkpoint_or_completed_job",
+    "failure": "first_Admin_quota_wait_SQL_zero_dispatch_count_can_release_prefix_or_unknown_or_handoff_loss_retains_reservation_no_retry_resume_first_page_replay_or_stale_result_published",
+    "SDK": "trusted_existing_server_Admin_client_plus_genuine_installed_bridge_no_bootstrap_global_hook_or_session_token_loader_added_in_runtime",
+    "ACL": "six_order_RPC_coordinator_only_private_helpers_original_generic_ad_billing_and_runtime_owner_grants_preserved",
+    "workerAdmitted": false,
+    "authorizesDispatch": false,
+    "authorizesActivation": false,
+    "resumeAuthorized": false,
+    "reloadFirstPageAuthorized": false,
+    "checkpointAdvanced": false,
+    "persistable": false,
+    "DatasetWritePerformed": false,
+    "live_apply_authorized": false,
+    "live_native_acceptance": false,
+    "existing_26_order_unchanged": true,
+    "PMax_paused": true,
+    "remaining": [
+      "bounded_fair_active_dispatcher_and_dedicated_background_SDK_session_host_composition",
+      "explicit_unknown_or_partial_reservation_reconciliation_no_automatic_release_or_replay",
+      "native_permissions_history_protected_data_measured_wire_body_connection_and_capacity_acceptance",
+      "durable_staged_Order_evidence_and_atomic_checkpoint_after_existing_step15_storage_review",
+      "existing_step14_review_and_activation_gates"
+    ],
+    "official_checked_at": "2026-10-28",
+    "official_sources": [
+      "https://shopify.dev/docs/api/admin-graphql/2026-10/queries/orders",
+      "https://shopify.dev/docs/api/admin-graphql/2026-10/objects/Order",
+      "https://www.postgresql.org/docs/17/explicit-locking.html"
+    ]
+  },
   "Shopify_order_entitlement_intent_2026_10_28": {
     "status": "repository_prepared_pending_exact_head_CI_owner_merge_inactive_native_Partner_slice",
     "base_main": "40da3e394be9e4341dc6ce021e6ef974925fcbf5",

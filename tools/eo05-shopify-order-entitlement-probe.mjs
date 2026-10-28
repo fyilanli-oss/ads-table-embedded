@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import {createShopifyOrderWorkReservations} from "../app/lib/refresh/shopify-order-work-reservation.server.js";
 import {createShopifyOrderEntitlementCheck} from "../app/lib/refresh/shopify-order-entitlement.server.js";
 import {createSharedQuotaRepository} from "../app/lib/database/shared-quota-repository.server.js";
+import {shopifyIndependentAdminProbe} from "./eo05-shopify-order-admin-probe.mjs";
 
 // Real SQL/quotas/billing normalizer in the existing rollback-only F01 fixture.
 // Physical HTTP is synthetic and confined to this fixture; no live credentials or requests.
@@ -79,6 +80,7 @@ export async function shopifyOrderEntitlementProbe(client,{database,inputs,route
     }finally{await client.query("rollback to savepoint order_entitlement_case");await client.query("release savepoint order_entitlement_case");}
   }
   for(const mode of ["success","denied","quota_wait","unknown","owner_changed","lost_intent","lost_apply","late_apply","false_not_sent"])await scenario(mode);
+  await shopifyIndependentAdminProbe(client,{database,inputs,routes});
   const signatures=["operations.begin_shopify_order_entitlement(bigint,uuid,bigint,text,text,text,uuid,bigint)",
     "operations.load_shopify_order_entitlement_context(bigint,uuid,bigint,text,text,text,uuid,bigint)",
     "operations.dispatch_shopify_order_entitlement(bigint,uuid,bigint,text,text,text,uuid,bigint)",

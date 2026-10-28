@@ -36,9 +36,11 @@ function connection(rows,variables,prefix) {
   return {edges:selected.map((node,i)=>({cursor:`${prefix}:${offset+i}`,node})),
     pageInfo:{hasNextPage:offset+selected.length<rows.length,endCursor:selected.length?`${prefix}:${offset+selected.length-1}`:null}};
 }
-function fixture() {
+function fixture({shop:targetShop=shop,updatedAt:targetStamp=stamp}={}) {
+  const shop=targetShop,stamp=targetStamp;
   const calls=[],loads=[],lookups=[],reservations=[],settles=[],stops=[],feedback=[],auth=[],q={headerScans:0,journeyStarts:0,scopeReads:0};
   const rows={headers:[header()],lines:[line("1"),line("2")],moments:[visit("1"),visit("2"),visit("3")]};
+  for(const h of rows.headers){h.updatedAt=stamp;h.processedAt=stamp;}
   const bridge=createShopifyAdminIdentitySdkBridge();setAbstractFetchFunc(bridge.fetch);
   const session=new Session({id:`offline_${shop.myshopifyDomain}`,shop:shop.myshopifyDomain,state:"synthetic",isOnline:false,
     accessToken:"SECRET-TOKEN",scope:"read_orders,read_products"});

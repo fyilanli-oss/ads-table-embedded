@@ -1,3 +1,6 @@
+import {reviewRefreshReferencePrewrite} from "../app/lib/providers/reference-prewrite.server.js";
+
+
 import test,{after} from "node:test";
 import assert from "node:assert/strict";
 import {collectGoogleMerchantIdentityEvidence, collectGoogleVerifiedProductCandidateEvidence} from "../app/lib/providers/google-identity-collection.server.js";
@@ -662,4 +665,12 @@ test("Google prewrite: two variants of the same product remain distinct candidat
   const observation=await f.create().readEvidence(),r=reviewRefreshCandidatePrewrite({expected:candidatePrewriteOwner(),observation});
   assert.equal(r.rows.length,2);assert.equal(r.rows[0].candidateShopifyProductId,r.rows[1].candidateShopifyProductId);
   assert.notEqual(r.rows[0].candidateShopifyVariantId,r.rows[1].candidateShopifyVariantId);assert.equal(f.adminCalls.length,2);
+});
+
+test("Google reference prewrite: Merchant candidate reader did not collect reports or order claims",async()=>{
+  const f=candidateBoundFixture(),observation=await f.create().readEvidence(),r=reviewRefreshReferencePrewrite({expected:candidatePrewriteOwner(),observation});
+  assert.equal(r.candidateReview.candidateReferencesChecked,true);assert.equal(r.referenceReview.state,"not_collected_in_this_reader_mode");
+  assert.equal(r.referenceLinksReviewed,false);assert.equal(r.referenceReview.observedEmpty,null);assert.equal(r.referenceReview.observed,null);
+  assert.deepEqual(r.referenceReview.rows,[]);assert.equal(r.providerClaimState,"not_collected_in_identity_observation");
+  assert.equal(r.providerClaimVerified,false);assert.equal(r.exactOverlapVerified,false);assert.equal(r.persistable,false);
 });

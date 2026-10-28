@@ -24,7 +24,7 @@
     "google_pd_source_composition": "merged_PR185_f01d31ee7f741e70513bfe96e8750d4f405580a5",
     "klaviyo_pd_source_composition": "merged_PR186_99f6474bc49ff70a084ca5916bc3631f05187ba1",
     "pd_canonical_bridge": "merged_PR187_5657ce49c2c93b4d018c4606e08134a311754c33",
-    "current_slice": "ordered_step_13_three_provider_candidate_DBless_prewrite_review_prepared_claim_native_SQL_and_step14_gates_open",
+    "current_slice": "ordered_step_13_Meta_report_Klaviyo_Message_DBless_reference_review_prepared_order_claim_native_SQL_and_step14_gates_open",
     "permission_preflight": "merged_PR190_ee28856c1260dffd18725eeb85718d195a5ce3de_not_live",
     "identity_OAuth_scope_binding": "merged_PR191_438bf5f8960cc2e25d4b6202a580cc1b1bf9b426_not_live",
     "Google_identity_credential_lifecycle": "merged_PR192_807408603484578555fc8700eb50f9cfa420d07d_not_live",
@@ -68,13 +68,60 @@
     "Google_candidate_quota_composition": "merged_PR230_c528fc20c59b69ce4e13af0b03a7c11de4d3d82d_not_live_or_step12_complete",
     "Meta_candidate_report_quota_composition": "merged_PR231_470207d24a7de65a536487992cb2844b7a77806e_not_native_or_step12_complete",
     "Shopify_order_prewrite_review": "merged_PR232_27ceaf7bdf577e08194a52c69480d645f5e69da2_not_native_or_step13_complete",
-    "provider_candidate_prewrite_review": "repository_prepared_in_current_PR_not_merged_native_or_step13_complete",
+    "provider_candidate_prewrite_review": "merged_PR233_ca16b2d4aa4b89d4f6ddc741ddd615588fcad49b_not_native_or_step13_complete",
+    "provider_reference_prewrite_review": "repository_prepared_in_current_PR_not_merged_native_or_step13_complete",
     "Shopify_sales_attribution_decision": "contracts/pd-cpd-query-standard-v1.json#shopify_order_attribution_decision_2026_10_27",
     "planning_and_identity_PR179": "open_not_merged_or_live",
     "provider_activation": false,
     "identity_pause_before_step_12": true,
     "historical_PMax_pause_preserved": true,
     "package_complete": false
+  },
+  "provider_reference_prewrite_review_2026_10_28": {
+    "new_tests": 26,
+    "existing_relevant_regressions": 1507,
+    "total_relevant_tests": 1533,
+    "repository_controls": 7,
+    "typecheck_passed": true,
+    "ordered_plan_step": 13,
+    "status": "prepared_DBless_Meta_report_Klaviyo_Message_reference_review_NOT_order_claim_role_decoder_native_proof_or_full_step13_completion",
+    "runtime": [
+      "app/lib/providers/reference-prewrite.server.js",
+      "app/lib/refresh/quota-authority-binding.server.js"
+    ],
+    "tests": [
+      "tests/google-identity-collection.test.js",
+      "tests/meta-identity-collection.test.js",
+      "tests/klaviyo-identity-collection.test.js"
+    ],
+    "entry": "reviewRefreshReferencePrewrite_expected_trusted_scope_completed_candidate_observation_only_no_caller_rules_target_role_or_report_override",
+    "common": "existing_reviewRefreshCandidatePrewrite_first_checks_private_provenance_owner_source_coverage_and_candidate_links_original_candidate_review_reportLinksReviewed_remains_false_separate_referenceReview_reports_new_scope",
+    "Meta": "private_WeakMap_records_original_constructor_captured_nominal_report_rule_loader_and_frozen_target_only_after_successful_report_collection_no_public_registrar_or_inference_from_returned_links_recompute_attachMetaReportCandidateReferences_and_compare_captured_Ad_day_scope_with_completed_native_report_and_catalog_source",
+    "namespaces": "retailer_id_and_catalog_product_id_remain_explicit_no_fallback_empty_default_registry_unresolved_no_source_rule_unresolved_outside_selected_Ad_unresolved_duplicate_retailer_across_feeds_ambiguous_no_first_match",
+    "Meta_raw_fields": "all_four_converted_product_and_converted_promoted_product_quantity_value_fields_retained_by_reference_no_decode_subtraction_role_assignment_or_exhaustive_coverage_proof",
+    "Klaviyo": "recompute_attachAttributionEvidence_from_native_events_and_attributions_attach_already_checked_candidate_verification_then_existing_resolveKlaviyoOrderedProductSales_with_same_campaign_flow_Message_metadata_compare_full_result_preserve_event_ID_metric_variation_medium_parent_relationships_and_facts",
+    "Klaviyo_roles": "existing_Assisted_Triggered_Unclassified_unchanged_missing_or_multiple_attributions_and_parent_conflicts_remain_Unclassified_no_Advertised_Cross_Sell_or_product_set_evidence_added",
+    "facts": "Placed_Order_report_statistics_never_joined_to_Ordered_Product_facts_two_events_one_candidate_stay_distinct_zero_quantity_value_remain_zero_no_aggregation_FX_or_cost_allocation",
+    "modes": "Google_Merchant_candidate_and_Meta_candidate_only_readers_return_not_collected_in_this_reader_mode_null_observedEmpty_this_is_not_provider_unsupported_complete_empty_collected_report_or_events_observedEmpty_true",
+    "output": "frozen_referenceReview_state_family_rows_observed_uniform_sourceReference_candidateIndex_state_reason_reference_observed_and_null_standardizedProductId_original_observations_not_replaced_repeated_review_does_not_accumulate_or_perform_IO",
+    "order_claim_boundary": "identity_observations_do_not_collect_readable_provider_Order_ID_claims_Event_ID_UUID_Product_ID_and_aggregate_values_are_not_Order_IDs_not_collected_is_not_provider_unsupported_or_claim_absent_in_other_sources_providerClaimsReviewed_providerClaimVerified_exactOverlapVerified_false",
+    "remaining": [
+      "readable_provider_order_claim_and_Shopify_order_reconciliation_separate_from_identity_Message_reference_review",
+      "native_source_namespace_access_and_existing_SQL_profile_capacity_gates",
+      "canonical_PK_selection_epoch_durable_mapping_and_idempotence_after_review",
+      "existing_step14_user_review_before_identity_sublist_step12_and_new_tables"
+    ],
+    "official_checked_at": "2026-10-28",
+    "sources": [
+      "https://raw.githubusercontent.com/facebook/facebook-python-business-sdk/main/facebook_business/adobjects/adsinsights.py",
+      "https://developers.klaviyo.com/en/reference/get_events"
+    ],
+    "source_limits": "Meta_SDK_field_presence_does_not_prove_conversion_semantics_or_report_namespace_Klaviyo_Events_include_attributions_does_not_prove_Order_ID_claim_or_clicked_product_relationship",
+    "new_SQL_migration_live_DB_provider_OAuth_token_config_route_Dataset_or_role_mutation": false,
+    "step_12_native_SQL_acceptance_complete": false,
+    "step_13_complete": false,
+    "step_14_review_crossed": false,
+    "historical_PMax_pause_preserved": true
   },
   "provider_candidate_prewrite_review_2026_10_28": {
     "new_tests": 71,

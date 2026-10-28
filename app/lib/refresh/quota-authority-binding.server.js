@@ -15,12 +15,15 @@ import {normalizeShopDomain} from "../shopify/installation-authority.server.js";
 import {SHOPIFY_ORDER_READ_API_VERSION} from "../shopify/order-read-protocol.server.js";
 import {createShopifyOrderReadExecution} from "../shopify/order-collection.server.js";
 const candidateObservations=new WeakMap();
+const candidateReferenceInputs=new WeakMap();
 // In-process collection provenance only. No public registrar or permission proof.
 export function refreshCandidateObservationContext(value){return candidateObservations.get(value)??null;}
-function recordCandidateObservation(result,provider,kind,owner,shop,claim,window){
+export function refreshCandidateReferenceInputs(value){return candidateReferenceInputs.get(value)??null;}
+function recordCandidateObservation(result,provider,kind,owner,shop,claim,window,references=null){
   candidateObservations.set(result,Object.freeze({provider,kind,workspaceId:owner.workspaceId,installGeneration:owner.installGeneration,
     shopId:shop.shopId,shopDomain:shop.myshopifyDomain,accountId:claim.accountId,
     job:Object.freeze({id:claim.id,fence:claim.fence,window:Object.freeze({...window})})}));
+  if(references)candidateReferenceInputs.set(result,references);
 }
 
 // Explicit background-only composition. SQL supplies current authority and owner scope handles.
@@ -121,7 +124,9 @@ function createMetaIdentityReader({verified,database,tokenVault,adId,adSetId,cam
   const rules=kind!=="native"&&sourceRules!==undefined?structuredClone(sourceRules):undefined;
   const reportRules=kind==="report"&&reportIdentityRules!==undefined?structuredClone(reportIdentityRules):undefined;
   if(kind!=="native")createMetaCandidateSourceRuleLoader({rules});
-  if(kind==="report")createMetaReportIdentityRuleLoader({rules:reportRules});
+  const reportRuleLoader=kind==="report"?createMetaReportIdentityRuleLoader({rules:reportRules}):null;
+  const referenceInputs=kind==="report"?Object.freeze({reportRules:reportRuleLoader,
+    target:Object.freeze({ad_id:adId,adset_id:adSetId,campaign_id:campaignId,catalog_id:catalogId})}):null;
   const binding=refreshQuotaOptions(quotaOptions,{admin:kind!=="native"}),execution=kind!=="native"?createQuotaReadExecution():undefined;
   const transport=identityTransport(binding,"meta",claim,undefined,execution);
   const admin=kind!=="native"?createFencedAdminClient({verified:caller,sdkBridge,signal,...quotaOptions},false,null,{binding,readExecution:execution}):null;
@@ -134,7 +139,7 @@ function createMetaIdentityReader({verified,database,tokenVault,adId,adSetId,cam
   return Object.freeze({async readEvidence(...args){
     if(args.length) throw Error("REFRESH_META_IDENTITY_OVERRIDE_FORBIDDEN");
     if(used) throw Error("REFRESH_META_IDENTITY_EXECUTION_USED");
-    used=true;try{const result=await collect(options);if(kind!=="native")recordCandidateObservation(result,"meta",kind,owner,shop,claim,window);return result;}
+    used=true;try{const result=await collect(options);if(kind!=="native")recordCandidateObservation(result,"meta",kind,owner,shop,claim,window,referenceInputs);return result;}
     finally{if(admin)closeShopifyAdminSdkClient(admin);}
   }});
 }

@@ -1,3 +1,4 @@
+import {reviewRefreshReferencePrewrite} from "../app/lib/providers/reference-prewrite.server.js";
 import test,{after} from "node:test";
 import assert from "node:assert/strict";
 import {collectKlaviyoNativeIdentityEvidence, collectKlaviyoIdentityMessageEvidence,
@@ -706,6 +707,87 @@ candidatePrewriteCases({provider:"klaviyo",fixture:candidateBoundFixture,nativeF
     f.hooks.fetch=p=>p.pathname==="/api/events"?response({data:[e],included:[attribution()],links:{next:null}}):f.baseFetch(p);},
   productOnly:f=>{const e=event();delete e.attributes.event_properties["Variant ID"];
     f.hooks.fetch=p=>p.pathname==="/api/events"?response({data:[e],included:[attribution()],links:{next:null}}):f.baseFetch(p);}});
+
+test("Klaviyo reference prewrite: Campaign Message keeps native sale facts and Assisted without report totals",async()=>{
+  const f=candidateBoundFixture(),observation=await f.create().readEvidence(),before=JSON.stringify(observation),io=[f.calls.length,f.adminCalls.length,f.queries.length];
+  const r=reviewRefreshReferencePrewrite({expected:candidatePrewriteOwner(),observation}),row=r.referenceReview.rows[0];
+  assert.equal(r.referenceReview.family,"klaviyo_Message");assert.equal(r.referenceLinksReviewed,true);assert.equal(row.candidateIndex,0);
+  assert.equal(row.reference,observation.message_evidence.resolved_product_sales.rows[0]);assert.equal(row.observed,observation.events[0]);
+  assert.equal(row.reference.attribution_resolution.channel_id,"message1");assert.equal(row.reference.attribution_resolution.sales_role,"Assisted");
+  assert.equal(row.reference.provider_product_properties.Quantity.value,2);assert.equal(row.reference.provider_product_properties.$value.value,"30.00");
+  for(const field of ["providerClaimsReviewed","providerClaimVerified","exactOverlapVerified","providerLinkVerified","canonicalScopeReady",
+    "nativePermissionVerified","persistable","authorizesActivation","mappingWritePerformed","DatasetWritePerformed","salesRolesChanged"])assert.equal(r[field],false);
+  assert.equal(r.providerClaimState,"not_collected_in_identity_observation");assert.equal(r.candidateReview.reportLinksReviewed,false);
+  assert.equal(JSON.stringify(observation),before);assert.deepEqual([f.calls.length,f.adminCalls.length,f.queries.length],io);
+  assert.deepEqual(reviewRefreshReferencePrewrite({expected:candidatePrewriteOwner(),observation}),r);assert.ok(Object.isFrozen(r.referenceReview.rows));
+});
+test("Klaviyo reference prewrite: native Flow Message retains Triggered and exact medium",async()=>{
+  const f=candidateBoundFixture(),a={type:"attribution",id:"attribution1",relationships:{
+    flow:{data:{type:"flow",id:"flow1"}},"flow-message":{data:{type:"flow-message",id:"flow-message1"}}}};
+  f.rows.flow=[messageRow("flow","sms")];f.hooks.fetch=p=>p.pathname==="/api/events"?response({data:[event()],included:[a],links:{next:null}}):f.baseFetch(p);
+  const observation=await f.create().readEvidence(),r=reviewRefreshReferencePrewrite({expected:candidatePrewriteOwner(),observation}),resolution=r.referenceReview.rows[0].reference.attribution_resolution;
+  assert.equal(resolution.channel_id,"flow-message1");assert.equal(resolution.sales_role,"Triggered");assert.equal(resolution.medium,"SMS");
+});
+for(const [name,prepare] of [
+  ["missing attribution",()=>{const e=event();e.relationships.attributions.data=[];return {events:[e],attributions:[]};}],
+  ["multiple Messages",()=>{const e=event(),a=attribution(),b=attribution();b.id="attribution2";b.relationships["campaign-message"].data.id="message2";
+    e.relationships.attributions.data.push({type:"attribution",id:"attribution2"});return {events:[e],attributions:[a,b]};}],
+  ["contradictory Campaign parent",()=>{const a=attribution();a.relationships.campaign.data.id="campaign2";return {events:[event()],attributions:[a]};}],
+])test(`Klaviyo reference prewrite: ${name} stays Unclassified`,async()=>{
+  const f=candidateBoundFixture(),x=prepare();f.hooks.fetch=p=>p.pathname==="/api/events"?response({data:x.events,included:x.attributions,links:{next:null}}):f.baseFetch(p);
+  const observation=await f.create().readEvidence(),r=reviewRefreshReferencePrewrite({expected:candidatePrewriteOwner(),observation});
+  assert.equal(r.referenceReview.rows[0].reference.attribution_resolution.sales_role,"Unclassified");assert.equal(r.referenceReview.rows[0].state,"unresolved");
+});
+test("Klaviyo reference prewrite: missing Message metadata retains native Message reference without invented name",async()=>{
+  const f=candidateBoundFixture();f.rows.campaign=[];const observation=await f.create().readEvidence();
+  const r=reviewRefreshReferencePrewrite({expected:candidatePrewriteOwner(),observation}),resolution=r.referenceReview.rows[0].reference.attribution_resolution;
+  assert.equal(resolution.channel_id,"message1");assert.equal(resolution.channel_name,null);assert.equal(resolution.medium,null);
+});
+test("Klaviyo reference prewrite: Flow variation remains exact and conflicting metadata stays unresolved",async()=>{
+  const f=candidateBoundFixture(),a={type:"attribution",id:"attribution1",relationships:{
+    flow:{data:{type:"flow",id:"flow1"}},"flow-message":{data:{type:"flow-message",id:"flow-message1"}},
+    "flow-message-variation":{data:{type:"flow-message-variation",id:"variation1"}}}};
+  f.rows.flow[0].groupings.variation="variation1";f.rows.flow[0].groupings.variation_name="Variation name";
+  f.hooks.fetch=p=>p.pathname==="/api/events"?response({data:[event()],included:[a],links:{next:null}}):f.baseFetch(p);
+  const observation=await f.create().readEvidence(),r=reviewRefreshReferencePrewrite({expected:candidatePrewriteOwner(),observation});
+  const resolution=r.referenceReview.rows[0].reference.attribution_resolution;
+  assert.equal(resolution.variation_id,"variation1");assert.equal(resolution.variation_name,"Variation name");assert.equal(resolution.variation_resolution,"exact");
+  const g=candidateBoundFixture();g.rows.campaign.push(messageRow("campaign","email","Other name"));
+  const other=reviewRefreshReferencePrewrite({expected:candidatePrewriteOwner(),observation:await g.create().readEvidence()});
+  assert.equal(other.referenceReview.rows[0].reference.attribution_resolution.channel_name,null);
+  assert.equal(other.referenceReview.rows[0].reference.attribution_resolution.reason,"message_exact_catalog_metadata_conflict");
+});
+test("Klaviyo reference prewrite: two native events for one candidate remain two Message sale references",async()=>{
+  const f=candidateBoundFixture();f.hooks.fetch=p=>p.pathname==="/api/events"?response({data:[event(),event("event2")],included:[attribution()],links:{next:null}}):f.baseFetch(p);
+  const observation=await f.create().readEvidence(),r=reviewRefreshReferencePrewrite({expected:candidatePrewriteOwner(),observation});
+  assert.equal(r.referenceReview.rows.length,2);assert.equal(r.referenceReview.rows[0].candidateIndex,r.referenceReview.rows[1].candidateIndex);
+  assert.notEqual(r.referenceReview.rows[0].sourceReference.nativeKey,r.referenceReview.rows[1].sourceReference.nativeKey);
+});
+test("Klaviyo reference prewrite: zero Quantity/value retained and event UUID never becomes an Order ID",async()=>{
+  const f=candidateBoundFixture(),e=event();e.attributes.event_properties.Quantity=0;e.attributes.event_properties.$value=0;e.attributes.event_properties.OrderID="not-collected";
+  f.hooks.fetch=p=>p.pathname==="/api/events"?response({data:[e],included:[attribution()],links:{next:null}}):f.baseFetch(p);
+  const observation=await f.create().readEvidence(),r=reviewRefreshReferencePrewrite({expected:candidatePrewriteOwner(),observation});
+  const row=r.referenceReview.rows[0].reference;assert.equal(row.provider_product_properties.Quantity.value,0);assert.equal(row.provider_product_properties.$value.value,0);
+  assert.equal(row.provider_event_uuid,"uuid1");assert.equal(Object.hasOwn(row,"order_id"),false);assert.equal(r.providerClaimVerified,false);
+});
+test("Klaviyo reference prewrite: conflicting product alias does not erase existing Message evidence",async()=>{
+  const f=candidateBoundFixture(),e=event();e.attributes.event_properties.VariantID="999";
+  f.hooks.fetch=p=>p.pathname==="/api/events"?response({data:[e],included:[attribution()],links:{next:null}}):f.baseFetch(p);
+  const observation=await f.create().readEvidence(),r=reviewRefreshReferencePrewrite({expected:candidatePrewriteOwner(),observation});
+  assert.equal(r.candidateReview.rows[0].state,"conflicting");assert.equal(r.referenceReview.rows[0].candidateIndex,null);
+  assert.equal(r.referenceReview.rows[0].reference.attribution_resolution.channel_id,"message1");
+});
+test("Klaviyo reference prewrite: empty event observation is not an inferred zero sale",async()=>{
+  const f=candidateBoundFixture();f.hooks.fetch=p=>p.pathname==="/api/events"?response({data:[],links:{next:null}}):f.baseFetch(p);
+  const observation=await f.create().readEvidence(),r=reviewRefreshReferencePrewrite({expected:candidatePrewriteOwner(),observation});
+  assert.equal(r.referenceReview.observedEmpty,true);assert.deepEqual(r.referenceReview.rows,[]);assert.equal(r.referenceLinksReviewed,true);
+});
+test("Klaviyo reference prewrite: copied result, wrong owner and caller role evidence cannot replace native chain",async()=>{
+  const f=candidateBoundFixture(),observation=await f.create().readEvidence();
+  assert.throws(()=>reviewRefreshReferencePrewrite({expected:candidatePrewriteOwner(),observation:structuredClone(observation)}),/OBSERVATION_REQUIRED/);
+  assert.throws(()=>reviewRefreshReferencePrewrite({expected:{...candidatePrewriteOwner(),accountId:"other"},observation}),/OWNER_MISMATCH/);
+  assert.throws(()=>reviewRefreshReferencePrewrite({expected:candidatePrewriteOwner(),observation,campaignProductEvidenceByMessageId:{}}),/INPUT_INVALID/);
+});
 test("Klaviyo prewrite: two events for same product share one candidate but keep both source references",async()=>{
   const f=candidateBoundFixture();f.hooks.fetch=p=>p.pathname==="/api/events"?response({data:[event(),event("event2")],included:[attribution()],links:{next:null}}):f.baseFetch(p);
   const observation=await f.create().readEvidence(),r=reviewRefreshCandidatePrewrite({expected:candidatePrewriteOwner(),observation});

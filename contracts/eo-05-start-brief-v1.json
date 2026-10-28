@@ -1,4 +1,52 @@
 {
+  "Shopify_order_entitlement_intent_2026_10_28": {
+    "status": "repository_prepared_pending_exact_head_CI_owner_merge_inactive_native_Partner_slice",
+    "base_main": "40da3e394be9e4341dc6ce021e6ef974925fcbf5",
+    "scope": "existing_step14_independent_Order_fresh_entitlement_request_intent_and_stop_gap",
+    "migration": "supabase/migrations/20261028212220_eo05a_shopify_order_entitlement_intent.sql",
+    "runtime": "app/lib/refresh/shopify-order-entitlement.server.js",
+    "reuse": "existing_Partner_API_2026_07_activeSubscription_shared_quota_route_existing_app_pricing_normalizer_and_billing_projection_no_new_billing_or_Order_fact_table",
+    "ownership": "genuine_same_factory_Order_reservation_consumed_once_exact_actual_installation_workspace_generation_shop_domain_range_attempt_fence",
+    "phases": [
+      "pre_request",
+      "entitlement_intent",
+      "entitlement_dispatched",
+      "entitlement_observed",
+      "entitlement_denied",
+      "stopped"
+    ],
+    "release_boundary": "old_pre_request_release_SQL_wrapped_private_old_implementation_after_intent_rejected_dispatch_marker_committed_before_physical_fetch_not_sent_reason_after_dispatch_never_releases",
+    "quota": "current_SQL_owner_epoch_queue_version_five_profiles_checked_before_intent_Partner_context_pinned_before_and_after_shared_quota_reservation_no_HTTP_transaction_no_double_debit",
+    "native": "fixed_existing_activeSubscription_query_appId_from_captured_existing_server_config_no_caller_Partner_client_guard_resolver_receipt_fence_or_database_override",
+    "freshness": "one_native_query_per_reservation_no_cached_positive_fallback_SQL_intent_timestamp_equals_response_observation_exact_source_hash_and_billing_projection_receipt_any_later_denial_or_source_change_invalidates",
+    "atomic": "existing_billing_apply_and_reservation_receipt_same_short_global_lock_transaction_no_generic_billing_EXECUTE_grant",
+    "stop": "known_not_dispatched_only_before_durable_dispatch_or_verified_persisted_denial_can_release_dispatched_unknown_or_unconfirmed_write_retains_capacity_and_single_flight_no_retry_no_timeout_release",
+    "deadline": "explicit_request_timeout_finish_reserve_deadline_and_clock_checks_abort_advisory_late_success_never_applies_snapshot_or_authorizes_work",
+    "ACL": "six_new_entitlement_RPC_coordinator_only_current_helper_and_old_release_private_existing_generic_ad_and_billing_mutations_stay_closed",
+    "workerAdmitted": false,
+    "authorizesDispatch": false,
+    "authorizesActivation": false,
+    "checkpointAdvanced": false,
+    "persistable": false,
+    "DatasetWritePerformed": false,
+    "live_apply_authorized": false,
+    "live_native_acceptance": false,
+    "existing_26_order_unchanged": true,
+    "PMax_paused": true,
+    "remaining": [
+      "Admin_Order_collection_bound_to_genuine_fresh_entitlement_receipt_and_Order_fence_stop_protocol",
+      "bounded_fair_active_scheduler_and_native_permissions_history_protected_data_capacity_acceptance",
+      "explicit_reconciliation_for_stopped_unknown_reservations_no_automatic_release_or_replay",
+      "durable_Order_evidence_and_atomic_checkpoint_handshake_after_existing_step15_storage_review",
+      "existing_step14_review_and_activation_gates"
+    ],
+    "official_checked_at": "2026-10-28",
+    "official_sources": [
+      "https://shopify.dev/docs/api/partner/2026-07/queries/activeSubscription",
+      "https://supabase.com/docs/guides/database/functions",
+      "https://www.postgresql.org/docs/17/explicit-locking.html"
+    ]
+  },
   "Shopify_order_work_reservation_2026_10_28": {
     "status": "repository_prepared_pending_exact_head_CI_owner_merge_pre_HTTP_reservation_only",
     "base_main": "d32a4c8b7209ad3378eaea8e9e72cafc962bbd87",

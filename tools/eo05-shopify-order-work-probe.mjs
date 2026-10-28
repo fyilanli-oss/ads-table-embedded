@@ -3,6 +3,7 @@ import {randomUUID} from "node:crypto";
 import {createShopifyOrderWorkReservations} from "../app/lib/refresh/shopify-order-work-reservation.server.js";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 import {planRefreshAdmissions} from "../app/lib/refresh/admission-policy.server.js";
+import {shopifyOrderEntitlementProbe} from "./eo05-shopify-order-entitlement-probe.mjs";
 
 // Shares the existing rollback-only queue fixture and its five reviewed synthetic profiles.
 export async function shopifyOrderWorkProbe(client,{database,inputs,routes}){
@@ -84,6 +85,7 @@ export async function shopifyOrderWorkProbe(client,{database,inputs,routes}){
     const second=await worker.reserve(inputs[1]);assert.equal(second.status,"reserved");assert.ok(second.fence>first.fence);
     assert.equal((await directRelease(first)).rows[0].result,false,"old fence/attempt cannot release newer owner");
     assert.equal((await worker.releaseBeforeRequest({reservation:second})).status,"released");
+    await shopifyOrderEntitlementProbe(client,{database,inputs,routes});
     let writes=0;
     const uncertain=createShopifyOrderWorkReservations({database:{async query(sql,args){const r=await database.query(sql,args);
       if(sql.includes("reserve_shopify_order_work")){writes++;throw Error("synthetic response loss");}return r;}}});

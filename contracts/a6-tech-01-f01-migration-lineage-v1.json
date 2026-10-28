@@ -664,6 +664,15 @@
       "repository_sql_sha256": "2f971fbe0de4e9fb0788a4896b205cd5554ad0027eef138d764ecbb96076c6a8",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261028212220",
+      "name": "eo05a_shopify_order_entitlement_intent",
+      "file": "supabase/migrations/20261028212220_eo05a_shopify_order_entitlement_intent.sql",
+      "created_with": "supabase@2.121.0 migration new eo05a_shopify_order_entitlement_intent",
+      "repository_sql_sha256": "2bb84b76831d459788879fa255c72b3496f2a37c652a4946e244137745cfad04",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

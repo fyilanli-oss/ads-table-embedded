@@ -7,6 +7,7 @@ import {createShopifyAdminIdentitySdkBridge,isShopifyAdminOrderSdkClient,closeSh
 import {createRefreshShopifyOrderReader,createRefreshShopifyAdminOrderClient} from "../app/lib/refresh/quota-authority-binding.server.js";
 import {createShopifyOrderReadExecution} from "../app/lib/shopify/order-collection.server.js";
 import {SHOPIFY_ORDER_READ_QUERIES as queries} from "../app/lib/shopify/order-read-protocol.server.js";
+import {SHOPIFY_PERMISSION_SCOPES_QUERY} from "../app/lib/shopify/permission-scope-protocol.server.js";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 import {quotaRouteIdentity} from "../app/lib/refresh/quota-scope-resolver.server.js";
 import {quotaBoundaryControl} from "../app/lib/refresh/quota-native-fetch.server.js";
@@ -40,7 +41,7 @@ function connection(rows,variables,prefix) {
     pageInfo:{hasNextPage:offset+selected.length<rows.length,endCursor:selected.length?`${prefix}:${offset+selected.length-1}`:null}};
 }
 function fixture() {
-  const calls=[],loads=[],lookups=[],reservations=[],settles=[],stops=[],feedback=[],auth=[],q={headerScans:0,journeyStarts:0};
+  const calls=[],loads=[],lookups=[],reservations=[],settles=[],stops=[],feedback=[],auth=[],q={headerScans:0,journeyStarts:0,scopeReads:0};
   const rows={headers:[header()],lines:[line("1"),line("2")],moments:[visit("1"),visit("2"),visit("3")]};
   const bridge=createShopifyAdminIdentitySdkBridge();setAbstractFetchFunc(bridge.fetch);
   const session=new Session({id:`offline_${shop.myshopifyDomain}`,shop:shop.myshopifyDomain,state:"synthetic",isOnline:false,
@@ -49,7 +50,7 @@ function fixture() {
     handleClientError:handleClientErrorFactory({request:new Request("https://example.com"),onError:async x=>auth.push(x)})})};
   const context={provider:"shopify_admin",clientScopeKey:"a".repeat(64),connectionScopeKey:"b".repeat(64),connectionEpoch:3,
     accountId:shop.myshopifyDomain,organizationId:null,apiVersion:"2026-10"};
-  const keys=Object.keys(queries).map(family=>quotaRouteIdentity(context,{provider:"shopify_admin",family,accountId:context.accountId,
+  const keys=[...Object.keys(queries),"permission_scopes"].map(family=>quotaRouteIdentity(context,{provider:"shopify_admin",family,accountId:context.accountId,
     organizationId:null,version:context.apiVersion,includes:[]}).routeKey);
   const quotaStore={resolveRoute:async x=>{lookups.push(x);return q.missing?null:keys.includes(x.routeKey)?x.routeKey:null;},
     reserve:async x=>{reservations.push(x);await q.reserving?.();if(q.waitAt===reservations.length)return {status:"waiting"};
@@ -67,12 +68,14 @@ function fixture() {
     limits:{maxElapsedMs:10000,maxRequests:100,maxRows:1000,maxBytes:1000000,pageSize:1},now:Date.now,quotaStore,
     workStore:{loadQuotaContext:async input=>{loads.push(input);await q.loading?.();return q.lost?null:context;}},
     fetchFn:async(endpoint,init)=>{
-      const request=JSON.parse(init.body),family=Object.entries(queries).find(([,v])=>v===request.query)?.[0],v=request.variables;
+      const request=JSON.parse(init.body),family=request.query===SHOPIFY_PERMISSION_SCOPES_QUERY?"permission_scopes":Object.entries(queries).find(([,v])=>v===request.query)?.[0],v=request.variables;
       calls.push({family,variables:structuredClone(v),signal:init.signal});
       if(family==="order_headers"&&v.after===null)q.headerScans++;
       if(family==="order_journey"&&v.after===null)q.journeyStarts++;
+      if(family==="permission_scopes")q.scopeReads++;
       const data={shop:structuredClone(shop)};
-      if(family==="order_headers")data.orders=connection(rows.headers,v,"headers");
+      if(family==="permission_scopes")data.currentAppInstallation={id:gid("AppInstallation","9"),accessScopes:[{handle:"read_products"},{handle:"read_orders"}]};
+      else if(family==="order_headers")data.orders=connection(rows.headers,v,"headers");
       else {
         data.order={id:v.orderId,updatedAt:stamp};
         if(family==="order_lines")data.order.lineItems=connection(rows.lines,v,"lines");
@@ -81,7 +84,7 @@ function fixture() {
       }
       const payload={data,extensions:{cost:{requestedQueryCost:8,actualQueryCost:5,
         throttleStatus:{maximumAvailable:1000,currentlyAvailable:995,restoreRate:50}}}};
-      await q.native?.({family,variables:v,payload,scan:q.headerScans,journeyStart:q.journeyStarts});
+      await q.native?.({family,variables:v,payload,scan:q.headerScans,journeyStart:q.journeyStarts,scopeRead:q.scopeReads});
       if(q.delay)await pause(q.delay);if(q.throw)throw Error("SECRET-NATIVE");
       return Response.json(payload,{status:q.status??200});
     }};
@@ -91,7 +94,7 @@ function fixture() {
 test("real fenced SDK collects all three independent paginations and explicit consistency reads",async()=>{
   const f=fixture(),reader=f.create(),result=await reader.readEvidence();
   assert.equal(result.state,"collected");assert.equal(result.orders.length,1);assert.equal(result.orders[0].lineItems.length,2);
-  assert.equal(result.orders[0].journey.moments.length,3);assert.equal(result.journeyPagesComplete,true);assert.equal(f.calls.length,8);
+  assert.equal(result.orders[0].journey.moments.length,3);assert.equal(result.journeyPagesComplete,true);assert.equal(f.calls.length,10);
   assert.equal(result.stats.requests,f.calls.length);assert.equal(result.stats.rows,8);assert.ok(result.stats.SDKResponseBytes>0);
   assert.equal(f.reservations.length,f.calls.length);assert.equal(f.feedback.length,f.calls.length);assert.equal(f.auth.length,0);
   assert.equal(result.scope.job.provider,"meta");assert.equal(result.scope.job.fence,2);assert.equal(result.scope.installation_id,null);
@@ -105,7 +108,59 @@ test("real fenced SDK collects all three independent paginations and explicit co
 
 test("empty selected range still gets final header and authority recheck, without claiming history access",async()=>{
   const f=fixture();f.rows.headers=[];const result=await f.create().readEvidence();assert.deepEqual(result.orders,[]);
-  assert.equal(f.calls.length,2);assert.ok(f.calls.every(c=>c.family==="order_headers"));assert.equal(result.historicalCoverageVerified,false);
+  assert.equal(f.calls.length,4);assert.equal(f.calls.filter(c=>c.family==="order_headers").length,2);assert.equal(result.historicalCoverageVerified,false);
+});
+
+test("native scopes use same SDK quota path before and after data without permission or protected-data proof",async()=>{
+  const f=fixture(),r=await f.create().readEvidence();
+  assert.equal(f.calls[0].family,"permission_scopes");assert.equal(f.calls.at(-1).family,"permission_scopes");
+  assert.equal(r.nativeScopeListObserved,true);assert.equal(r.nativePermissionVerified,false);
+  assert.equal(r.nativeScopeObservation.before.assessment.scopeStatus,"observed_sufficient");
+  assert.equal(r.nativeScopeObservation.after.assessment.authorizesActivation,false);
+  assert.ok(Object.isFrozen(r.nativeScopeObservation.before.evidence.scopes));
+  assert.doesNotMatch(JSON.stringify(f.lookups),/read_orders|AppInstallation|accessScopes/);
+});
+for(const handles of [[],["read_orders"],["read_products"]])test(`missing current scopes stop before any order HTTP ${handles}`,async()=>{
+  const f=fixture();f.q.native=({family,payload})=>{if(family==="permission_scopes")payload.data.currentAppInstallation.accessScopes=handles.map(handle=>({handle}));};
+  await assert.rejects(f.create().readEvidence(),/SCOPES_REQUIRED/);assert.equal(f.calls.length,1);
+});
+test("native write grants satisfy existing read policy without asking for new grants",async()=>{
+  const f=fixture();f.q.native=({family,payload})=>{if(family==="permission_scopes")payload.data.currentAppInstallation.accessScopes=[{handle:"write_orders"},{handle:"write_products"}];};
+  const r=await f.create().readEvidence();assert.equal(r.nativeScopeListObserved,true);assert.equal(r.authorizesActivation,false);
+});
+test("history flag requires native read_all_orders before data",async()=>{
+  const f=fixture();f.config.includeOrderHistory=true;await assert.rejects(f.create().readEvidence(),/SCOPES_REQUIRED/);assert.equal(f.calls.length,1);
+});
+test("history scope observed still does not prove approval or historical order coverage",async()=>{
+  const f=fixture();f.config.includeOrderHistory=true;
+  f.q.native=({family,payload})=>{if(family==="permission_scopes")payload.data.currentAppInstallation.accessScopes.push({handle:"read_all_orders"});};
+  const reader=f.create();f.config.includeOrderHistory=false;const r=await reader.readEvidence();
+  assert.equal(r.nativeScopeObservation.includeOrderHistory,true);assert.equal(r.historicalCoverageVerified,false);assert.equal(r.nativePermissionVerified,false);
+});
+for(const [name,pattern,change] of [
+  ["revoked",/SCOPES_REQUIRED/,app=>{app.accessScopes=[];}],
+  ["new grant",/SCOPES_CHANGED/,app=>app.accessScopes.push({handle:"read_inventory"})],
+  ["other app",/APP_INSTALLATION_CHANGED/,app=>{app.id=gid("AppInstallation","10");}]
+])test(`final native scope ${name} discards collected data`,async()=>{
+  const f=fixture();f.q.native=({family,scopeRead,payload})=>{if(family==="permission_scopes"&&scopeRead===2)change(payload.data.currentAppInstallation);};
+  const reader=f.create();await assert.rejects(reader.readEvidence(),pattern);assert.equal(f.calls.length,10);await assert.rejects(reader.readEvidence(),/EXECUTION_USED/);
+});
+test("scope order is not a grant change",async()=>{
+  const f=fixture();f.q.native=({family,scopeRead,payload})=>{if(family==="permission_scopes"&&scopeRead===2)payload.data.currentAppInstallation.accessScopes.reverse();};
+  assert.equal((await f.create().readEvidence()).nativeScopeListObserved,true);
+});
+for(const [name,change] of [["wrong shop",b=>{b.data.shop.id=gid("Shop","13");}],
+  ["partial",b=>{b.errors=[{message:"SECRET"}];}],["bad grants",b=>{b.data.currentAppInstallation.accessScopes=[{handle:null}];}]])
+  test(`bad scope response stops safely before orders: ${name}`,async()=>{
+    const f=fixture();f.q.native=({family,payload})=>{if(family==="permission_scopes")change(payload);};
+    await assert.rejects(f.create().readEvidence(),e=>!/SECRET/.test(e.message));assert.equal(f.calls.length,1);
+  });
+test("nonboolean history selection rejected before HTTP",()=>{
+  const f=fixture();f.config.includeOrderHistory="true";assert.throws(f.create,/INPUT_INVALID/);assert.equal(f.calls.length,0);
+});
+test("final scope wait retains all previous physical attempts",async()=>{
+  const f=fixture();f.q.waitAt=10;let error;try{await f.create().readEvidence();}catch(e){error=e;}
+  assert.equal(quotaBoundaryControl(error).priorBoundaryAttempts,9);assert.equal(f.calls.length,9);
 });
 
 for(const state of ["pending","missing","missing_moments"])test(`journey ${state} preserves sales without claiming completed attribution or retrying pending pages`,async()=>{
@@ -154,7 +209,7 @@ test("malformed cursor or raw GraphQL error stops collection and never returns p
   for(const mode of ["cursor","GraphQL"]){const f=fixture();f.q.native=({family,payload})=>{if(family!=="order_lines")return;
     if(mode==="cursor")payload.data.order.lineItems.pageInfo.endCursor="wrong";else payload.errors=[{message:"SECRET",extensions:{code:"ACCESS_DENIED"}}];};
     await assert.rejects(f.create().readEvidence(),e=>/PAGE_INVALID|COLLECTION_FAILED/.test(e.message)&&!e.message.includes("SECRET"));
-    assert.equal(f.calls.length,2);assert.equal(f.auth.length,0);
+    assert.equal(f.calls.length,3);assert.equal(f.auth.length,0);
   }
 });
 
@@ -180,7 +235,7 @@ test("explicit bounds are captured before caller mutation and are never supplied
   const f=fixture(),reader=f.create();f.config.range.fromInclusive="2000-01-01T00:00:00Z";f.config.limits.pageSize=100;
   f.config.claim.fence=99;f.config.verified.installationAuthority.installGeneration=99;
   const result=await reader.readEvidence();assert.equal(result.scope.job.fence,2);
-  assert.equal(result.extractionRange.fromInclusive,"2026-10-01T00:00:00Z");assert.equal(f.calls[0].variables.first,1);
+  assert.equal(result.extractionRange.fromInclusive,"2026-10-01T00:00:00Z");assert.equal(f.calls.find(c=>c.family==="order_headers").variables.first,1);
   assert.ok(f.loads.every(x=>x.claim.fence===2));assert.ok(f.reservations.every(x=>Object.keys(x).sort().join(",")==="attemptId,lane,operationKey"));
 });
 
@@ -254,7 +309,7 @@ test("native nullable product, current zero, cancellation and refunded money are
 
 test("invalid range and caller per-read override cannot change the bound extraction",async()=>{
   const f=fixture(),reader=f.create();await assert.rejects(reader.readEvidence({range:{}}),/OVERRIDE_FORBIDDEN/);
-  assert.equal(f.calls.length,0);await reader.readEvidence();assert.equal(f.calls.length,8);
+  assert.equal(f.calls.length,0);await reader.readEvidence();assert.equal(f.calls.length,10);
   const bad=fixture();bad.config.range.toExclusive=bad.config.range.fromInclusive;assert.throws(bad.create,/RANGE_INVALID/);assert.equal(bad.loads.length,0);
 });
 
@@ -270,5 +325,5 @@ test("caller callbacks throwing provider-like order error text cannot leak it as
 
 test("current authority is also checked when there are no orders to collect",async()=>{
   const f=fixture();f.rows.headers=[];f.q.native=({scan})=>{if(scan===2)f.q.lost=true;};
-  await assert.rejects(f.create().readEvidence(),/AUTHORITY_CHANGED/);assert.equal(f.calls.length,2);
+  await assert.rejects(f.create().readEvidence(),/AUTHORITY_CHANGED/);assert.equal(f.calls.length,3);
 });

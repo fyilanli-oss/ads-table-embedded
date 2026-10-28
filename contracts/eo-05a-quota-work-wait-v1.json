@@ -1,4 +1,5 @@
 {
+  "Shopify_order_scope_readback_2026_10_28": "contracts/eo-05-start-brief-v1.json#Shopify_order_scope_readback_2026_10_28",
   "Shopify_order_native_collection_2026_10_28": "contracts/eo-05-start-brief-v1.json#Shopify_order_native_collection_2026_10_28",
   "shared_quota_read_execution_2026_10_27": "contracts/eo-05-start-brief-v1.json#shared_quota_read_execution_2026_10_27",
   "contract_id": "eo-05a-quota-work-wait-v1",

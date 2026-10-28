@@ -24,7 +24,7 @@
     "google_pd_source_composition": "merged_PR185_f01d31ee7f741e70513bfe96e8750d4f405580a5",
     "klaviyo_pd_source_composition": "merged_PR186_99f6474bc49ff70a084ca5916bc3631f05187ba1",
     "pd_canonical_bridge": "merged_PR187_5657ce49c2c93b4d018c4606e08134a311754c33",
-    "current_slice": "ordered_step_12_Shopify_order_native_collection_prepared_permission_SQL_capacity_and_prewrite_gates_open",
+    "current_slice": "ordered_step_12_Shopify_order_scope_readback_prepared_protected_data_live_SQL_capacity_and_prewrite_gates_open",
     "permission_preflight": "merged_PR190_ee28856c1260dffd18725eeb85718d195a5ce3de_not_live",
     "identity_OAuth_scope_binding": "merged_PR191_438bf5f8960cc2e25d4b6202a580cc1b1bf9b426_not_live",
     "Google_identity_credential_lifecycle": "merged_PR192_807408603484578555fc8700eb50f9cfa420d07d_not_live",
@@ -62,13 +62,62 @@
     "shared_quota_read_execution": "merged_PR224_1e1d45f719e91d64cc335ebe3da44ae389fbe93c_not_live_or_full_step_12_complete",
     "Shopify_order_read_protocol": "merged_PR225_4ec0c5fe7839a621420f09267ecfc75bf2261b05_not_live_reader_or_full_step_12_complete",
     "Shopify_order_SDK_quota_binding": "merged_PR226_e2b48e20c285c260a25b5c1aad833449d7e78d99_not_live_order_permission_acceptance",
-    "Shopify_order_native_collection": "repository_prepared_in_current_PR_not_merged_live_or_step12_complete",
+    "Shopify_order_native_collection": "merged_PR227_a3e8db49a82aeaf77fba93a95006e93e56d7e82d_not_live_or_step12_complete",
+    "Shopify_order_scope_readback": "repository_prepared_in_current_PR_not_merged_live_or_step12_complete",
     "Shopify_sales_attribution_decision": "contracts/pd-cpd-query-standard-v1.json#shopify_order_attribution_decision_2026_10_27",
     "planning_and_identity_PR179": "open_not_merged_or_live",
     "provider_activation": false,
     "identity_pause_before_step_12": true,
     "historical_PMax_pause_preserved": true,
     "package_complete": false
+  },
+  "Shopify_order_scope_readback_2026_10_28": {
+    "new_tests": 57,
+    "existing_relevant_regressions": 1222,
+    "total_relevant_tests": 1279,
+    "repository_controls": 7,
+    "typecheck_passed": true,
+    "ordered_plan_step": 12,
+    "status": "prepared_inactive_native_scope_dependency_NOT_protected_data_history_or_live_access_proof",
+    "runtime": [
+      "app/lib/shopify/permission-scope-protocol.server.js",
+      "app/lib/shopify/order-collection.server.js",
+      "app/lib/refresh/quota-native-fetch.server.js",
+      "app/lib/refresh/quota-scope-resolver.server.js",
+      "app/lib/refresh/shopify-admin-sdk-quota-bridge.server.js",
+      "app/lib/refresh/quota-authority-binding.server.js"
+    ],
+    "tests": [
+      "tests/shopify-permission-scope-protocol.test.js",
+      "tests/shopify-order-collection.test.js",
+      "tests/shopify-order-quota.test.js",
+      "tests/shopify-admin-sdk-quota-bridge.test.js"
+    ],
+    "request": "exact_readonly_currentAppInstallation_id_accessScopes_handle_and_shop_query_permission_scopes_distinct_family_API_2026_10_only_same_genuine_order_SDK_hook_typed_point_receipt_no_profile_fallback_no_global_hook_install",
+    "validation": "native_shop_exact_complete_nonduplicate_handle_list_and_bounded_AppInstallation_GID_fixed_nominal_errors_no_caller_scopes_or_evidence_override",
+    "policy": "existing_identity_permission_preflight_read_products_read_orders_optional_boolean_includeOrderHistory_requires_read_all_orders_native_write_equivalent_accepted_no_new_grant_requested",
+    "consistency": "native_read_before_orders_and_after_all_data_rechecks_same_AppInstallation_and_same_sorted_complete_scope_set_added_removed_or_missing_grants_stop_no_partial_result_reordered_set_allowed",
+    "limits": "both_scope_HTTP_calls_share_physical_attempt_ledger_total_deadline_request_and_SDKResponseBytes_caps_scope_handles_local_max100_separate_from_order_data_row_count_existing_privacy_six_field_quota_descriptor",
+    "output": "nativeScopeListObserved_true_nativeScopeObservation_captured_before_after_assessments_nativePermissionVerified_historicalCoverageVerified_persistable_authorizesActivation_DatasetWritePerformed_all_false",
+    "legacy": "permission_scopes_server_reexports_same_query_existing_native_readback_helper_behavior_preserved_identity_only_SDK_entry_does_not_gain_scope_capability",
+    "errors": "first_scope_wait_zero_may_requeue_existing_work_wait_later_data_or_final_scope_wait_has_prior_attempts_and_never_replays_as_unsent_nominal_protocol_errors_preserved_provider_messages_sanitized",
+    "official_checked_at": "2026-10-28",
+    "sources": [
+      "https://shopify.dev/docs/api/admin-graphql/latest/queries/currentAppInstallation",
+      "https://shopify.dev/docs/api/usage/access-scopes",
+      "https://shopify.dev/docs/apps/launch/protected-customer-data"
+    ],
+    "remaining": [
+      "protected_customer_data_app_approval_and_actual_native_order_access",
+      "historical_approval_coverage_and_independent_order_scheduling_time_scope",
+      "existing_step14_Admin_SQL_context_costBudget_profiles_feedback_stop_global_hook_and_upstream_response_capacity",
+      "canonical_installation_PK_selection_epoch_OAuth_CAS_Merchant_SQL_and_durable_partial_continuation",
+      "step13_prewrite_reconciliation_and_existing_step14_review_before_new_tables"
+    ],
+    "new_SQL_migration_live_DB_provider_OAuth_token_config_route_Dataset_or_role_mutation": false,
+    "global_SDK_hook_installed": false,
+    "step_12_complete": false,
+    "historical_PMax_pause_preserved": true
   },
   "Shopify_order_native_collection_2026_10_28": {
     "ordered_plan_step": 12,

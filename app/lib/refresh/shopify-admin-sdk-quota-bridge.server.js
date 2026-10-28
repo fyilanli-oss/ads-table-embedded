@@ -3,10 +3,12 @@ import {abstractFetch} from "@shopify/shopify-api/runtime";
 import {isQuotaManagedFetchForProvider} from "./quota-native-fetch.server.js";
 import {shopifyAdminIdentityFamily} from "./shopify-admin-identity-quota.server.js";
 import {shopifyOrderReadFamily} from "../shopify/order-read-protocol.server.js";
+import {shopifyPermissionScopeFamily} from "../shopify/permission-scope-protocol.server.js";
 import {IdentityReadDeadlineError,runIdentityReadDeadline} from "../providers/identity-read-deadline.server.js";
 const wrappedClients=new WeakSet();
 const bridges=new WeakSet();
 const orderClients=new WeakMap();
+const orderReadFamily=raw=>shopifyOrderReadFamily(raw)??shopifyPermissionScopeFamily(raw);
 export function isShopifyAdminIdentitySdkBridge(value) {return bridges.has(value);}
 export function isShopifyAdminOrderSdkClient(value) {return orderClients.has(value);}
 export function closeShopifyAdminOrderSdkClient(value) {orderClients.get(value)?.();}
@@ -33,7 +35,7 @@ export function createShopifyAdminIdentitySdkBridge() {
     if(Object.keys(extra).length||typeof admin?.graphql!=="function"||wrappedClients.has(admin)||!isQuotaManagedFetchForProvider(transport,"shopify_admin")
       ||signal!==undefined&&!(signal instanceof AbortSignal)||!Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>600000)throw fail("INPUT_INVALID");
     const graphql=admin.graphql.bind(admin);
-    const lifetime=classify===shopifyOrderReadFamily?new AbortController():null;
+    const lifetime=classify===orderReadFamily?new AbortController():null;
     let busy=false,failed=false;
     const client=Object.freeze({async graphql(query,options={}) {
       if(busy)throw fail("CONCURRENT_CALL_FORBIDDEN");
@@ -73,6 +75,6 @@ export function createShopifyAdminIdentitySdkBridge() {
   }
   // Keep the existing identity entry closed to caller-selected classifiers/modes.
   // Both entries use ONE SDK hook; no competing global adapter installation.
-  const bridge=Object.freeze({fetch,wrap:options=>wrap(options),wrapOrders:options=>wrap(options,shopifyOrderReadFamily)});
+  const bridge=Object.freeze({fetch,wrap:options=>wrap(options),wrapOrders:options=>wrap(options,orderReadFamily)});
   bridges.add(bridge);return bridge;
 }

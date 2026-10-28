@@ -142,8 +142,8 @@ export function createRefreshShopifyAdminOrderClient(options) {return createFenc
 
 // One-shot prepared native collection. Explicit extraction instants remain separate
 // from the job's business dates; permission/history/timezone proof is not inferred.
-export function createRefreshShopifyOrderReader({range,limits,...options}={}) {
-  return createFencedAdminClient(options,true,{range,limits});
+export function createRefreshShopifyOrderReader({range,limits,includeOrderHistory=false,...options}={}) {
+  return createFencedAdminClient(options,true,{range,limits,includeOrderHistory});
 }
 
 function createFencedAdminClient({verified,sdkBridge,signal,timeoutMs,...quotaOptions}={},orders=false,collection=null) {
@@ -178,7 +178,7 @@ function createFencedAdminClient({verified,sdkBridge,signal,timeoutMs,...quotaOp
     return createShopifyOrderReadExecution({client,shop:{id:shop.shopId,myshopifyDomain:shop.myshopifyDomain},
       scope:{workspace_id:owner.workspaceId,installation_generation:owner.installGeneration,installation_id:null,
         job:{provider:claim.provider,account_id:claim.accountId,id:claim.id,fence:claim.fence,window}},
-      range:collection.range,limits:collection.limits,signal,
+      range:collection.range,limits:collection.limits,includeOrderHistory:collection.includeOrderHistory,signal,
       checkCurrent:async()=>{
         try {return typeof await resolve({provider:"shopify_admin",family:"order_headers",accountId:shop.myshopifyDomain,
           organizationId:null,version:SHOPIFY_ORDER_READ_API_VERSION,includes:[]})==="string";}catch{return false;}

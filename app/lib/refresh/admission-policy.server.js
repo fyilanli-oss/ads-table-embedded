@@ -97,6 +97,8 @@ function planAdmissions({state, candidates, budget, now, bounds}, preflight) {
   integer(state.nextFence);
   integer(state.nextTurn);
   requireValue(Array.isArray(state.claims) && state.claims.length <= bounds.maxClaims);
+  const externalClaims=state.externalClaims===undefined?[]:state.externalClaims;
+  requireValue(Array.isArray(externalClaims)&&externalClaims.length<=bounds.maxClaims);
   requireValue(Array.isArray(state.lastServed) && state.lastServed.length <= bounds.maxWorkspaces);
   const heldAccounts = new Set();
   requireValue(state.holds === undefined || (Array.isArray(state.holds) && state.holds.length <= bounds.maxCandidates + bounds.maxClaims));
@@ -131,6 +133,16 @@ function planAdmissions({state, candidates, budget, now, bounds}, preflight) {
   const nextState = structuredClone(state);
   const used = new Map();
   const flights = new Set();
+  const externalIds=new Set();
+  for(const claim of externalClaims){
+    requireValue(claim?.source==="shopify_orders"&&!Object.hasOwn(claim,"provider")&&!Object.hasOwn(claim,"accountId"));
+    identifier(claim.id);identifier(claim.workspaceId);identifier(claim.installationId);integer(claim.fence);
+    requireValue(claim.fence>0&&claim.fence<state.nextFence&&!externalIds.has(claim.id));externalIds.add(claim.id);amounts(claim.cost);
+    for(const scope of ["global",key(["workspace",claim.workspaceId])]){
+      const usage=used.get(scope)??Object.fromEntries(RESOURCES.map(r=>[r,0]));
+      for(const r of RESOURCES){usage[r]+=claim.cost[r];integer(usage[r]);}used.set(scope,usage);
+    }
+  }
   function reserve(claim) {
     identity(claim);
     amounts(claim.cost);
@@ -163,7 +175,7 @@ function planAdmissions({state, candidates, budget, now, bounds}, preflight) {
     else if (job.queuedAt > now || job.scheduledHour + refreshHourlyOffset(job) > now) reason = "not_due";
     else if (heldAccounts.has(flightKey(job))) reason = "account_held";
     else if (flights.has(flightKey(job))) reason = "account_busy";
-    else if (admitted.length >= (preflight ? 1 : bounds.maxAdmissions) || nextState.claims.length >= bounds.maxClaims) reason = "dispatch_limit";
+    else if (admitted.length >= (preflight ? 1 : bounds.maxAdmissions) || nextState.claims.length+externalClaims.length >= bounds.maxClaims) reason = "dispatch_limit";
     else {
       try { amounts(job.cost); } catch { reason = "workload_unknown"; }
       if (!reason && scopes(job).some(scope => !limits.has(scope))) reason = "budget_unknown";

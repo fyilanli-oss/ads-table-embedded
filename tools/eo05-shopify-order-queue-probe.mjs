@@ -5,6 +5,7 @@ import {createShopifyOrderQueueAdmission} from "../app/lib/refresh/shopify-order
 import {createShopifyOrderQueueRepository} from "../app/lib/database/shopify-order-queue-repository.server.js";
 import {createSharedQuotaRepository} from "../app/lib/database/shared-quota-repository.server.js";
 import {quotaRouteIdentity} from "../app/lib/refresh/quota-scope-resolver.server.js";
+import {shopifyOrderWorkProbe} from "./eo05-shopify-order-work-probe.mjs";
 
 // Existing rollback-only F01 SQL fixture; all profiles/limits are synthetic, never live defaults.
 export async function shopifyOrderQueueProbe(client,{execution}){
@@ -107,6 +108,7 @@ export async function shopifyOrderQueueProbe(client,{execution}){
     assert.equal(unknown.status,"needs_attention");assert.equal(unknown.queueWriteMayHaveCommitted,true);
     const afterWrites=writes;assert.equal((await queue.readPending(inputs[1])).status,"observed");assert.equal(writes,afterWrites);
     assert.equal(await count(),beforeCount+2);assert.equal((await queue.enqueue(inputs[2])).status,"queue_full");
+    await shopifyOrderWorkProbe(client,{database:db,inputs:inputs.slice(0,2),routes});
     await changed("update operations.shopify_order_queue_control set max_pending_total=2,configuration_epoch=configuration_epoch+1",[],async()=>{
       assert.equal((await queue.enqueue(inputs[2])).status,"queue_full");
     });

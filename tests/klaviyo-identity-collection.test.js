@@ -1,4 +1,8 @@
 import {providerClaimPrewriteCases} from "./helpers/provider-claim-prewrite-cases.js";
+import {fixture as ShopifyOrderFixture} from "./helpers/shopify-order-fixture.js";
+import {reviewKlaviyoOrderClaimPrewrite} from "../app/lib/providers/klaviyo-order-prewrite.server.js";
+import {createKlaviyoOrderIdentityRuleLoader} from "../app/lib/providers/klaviyo-order-rules.server.js";
+import {reviewShopifyProviderClaimReadiness} from "../app/lib/shopify/provider-claim-prewrite.server.js";
 import {reviewRefreshReferencePrewrite} from "../app/lib/providers/reference-prewrite.server.js";
 import test,{after} from "node:test";
 import assert from "node:assert/strict";
@@ -810,3 +814,108 @@ test("Klaviyo prewrite: conflicting native variant aliases stay conflicting with
 });
 
 providerClaimPrewriteCases({provider:"klaviyo",fixture:candidateBoundFixture,expected:candidatePrewriteOwner,empty:f=>{f.hooks.fetch=p=>p.pathname==="/api/events"?response({data:[],links:{next:null}}):f.baseFetch(p);}});
+function orderReferenceFixture(value="10"){
+  const f=candidateBoundFixture(),m=metric(),e=event(),included=[attribution()];m.attributes.integration.id="integration1";
+  e.attributes.event_properties.OrderId=value;
+  f.config.orderIdentityRules=[{state:"verified_order_identity_rule",scope:candidatePrewriteOwner(),metric_id:"metric1",integration_id:"integration1",
+    property:"OrderId",format:"Shopify_Order_legacy_ID",source_reference:"synthetic-reviewed-order-proof"}];
+  f.hooks.fetch=p=>p.pathname==="/api/metrics"?response({data:[m,{type:"metric",id:"placed1",attributes:{name:"Placed Order",integration:{name:"Shopify"}}}],links:{next:null}})
+    :p.pathname==="/api/events"?response({data:[e],included:[m,...included],links:{next:null}}):f.baseFetch(p);
+  return {...f,m,e,included};
+}
+async function reviewOrderReference(f){
+  const observation=await f.create().readEvidence(),s=ShopifyOrderFixture(),current=await s.create().readEvidence();
+  return {f,s,observation,current,result:reviewKlaviyoOrderClaimPrewrite({expected:candidatePrewriteOwner(),observation,current})};
+}
+test("order reference: raw OrderId and scoped rule link Order/Message candidates without IO or writes",async()=>{
+  const {f,s,observation,current,result:r}=await reviewOrderReference(orderReferenceFixture());
+  assert.equal(observation.events[0].attributes.event_properties.OrderId,"10");
+  assert.deepEqual(observation.product_identity_candidates.rows[0].provider_order_properties.OrderId,{state:"present",value:"10"});
+  assert.equal(r.rows[0].state,"structural_Order_Message_reference");assert.equal(r.rows[0].candidateShopifyOrderId,"gid://shopify/Order/10");
+  assert.equal(r.rows[0].ShopifyOrder,current.orders[0].header);assert.deepEqual(r.rows[0].ShopifyOrderKey,[workspace,"gid://shopify/Shop/12","gid://shopify/Order/10"]);
+  assert.equal(r.rows[0].MessageReference.channel_id,"message1");assert.equal(r.rows[0].MessageReference.sales_role,"Assisted");
+  assert.equal(r.rows[0].observed,observation.message_evidence.resolved_product_sales.rows[0]);assert.equal(r.rows[0].canonicalClaimId,null);
+  for(const k of ["sourceRuleRegisteredByDefault","readableOrderClaimVerified","providerClaimVerified","exactOverlapVerified","nativePermissionVerified",
+    "canonicalScopeReady","persistable","authorizesActivation","mappingWritePerformed","DatasetWritePerformed","salesRolesChanged","amountsOrQuantitiesChanged"])assert.equal(r[k],false);
+  const counts=[f.calls.length,f.adminCalls.length,s.calls.length],copy=JSON.stringify({observation,current});
+  assert.deepEqual(reviewKlaviyoOrderClaimPrewrite({expected:candidatePrewriteOwner(),observation,current}),r);
+  assert.deepEqual([f.calls.length,f.adminCalls.length,s.calls.length],counts);assert.equal(JSON.stringify({observation,current}),copy);assert.ok(Object.isFrozen(r.rows));
+  const {provider:ignored,connectionId:ignoredConnection,connectionVersion:ignoredVersion,accountId:ignoredAccount,...owner}=candidatePrewriteOwner();
+  const composed=reviewShopifyProviderClaimReadiness({expected:owner,current,providers:[{expected:candidatePrewriteOwner(),observation}]});
+  assert.equal(composed.providerReviews[0].orderReferenceReview.rows[0].state,"structural_Order_Message_reference");
+  assert.equal(composed.providerClaimVerified,false);assert.equal(composed.exactOverlapVerified,false);
+});
+for(const [name,value,reason] of [["UUID","cc50e5b3-059c-4f7d-9e26-821302b63235","order_reference_format_invalid"],
+  ["zero",0,"order_reference_format_invalid"],["unsafe number",9007199254740992,"order_reference_format_invalid"],
+  ["null",null,"order_reference_empty"],["empty","","order_reference_empty"],["boolean",true,"order_reference_format_invalid"],
+  ["fraction",10.5,"order_reference_format_invalid"],["order name","#1010","order_reference_format_invalid"],
+  ["unobserved order","11","order_not_observed_in_Shopify_collection"]])test(`order reference: ${name} retained unresolved`,async()=>{
+  const {observation,result:r}=await reviewOrderReference(orderReferenceFixture(value));
+  assert.equal(observation.events[0].attributes.event_properties.OrderId,value);assert.equal(r.rows[0].state,"unresolved");assert.equal(r.rows[0].reason,reason);assert.equal(r.rows[0].ShopifyOrderKey,null);
+});
+test("order reference: absent OrderId never falls back to event UUID/product/date",async()=>{
+  const f=orderReferenceFixture();delete f.e.attributes.event_properties.OrderId;const {result:r}=await reviewOrderReference(f);
+  assert.deepEqual(r.rows[0].orderReference,{state:"absent",value:null});assert.equal(r.rows[0].reason,"order_reference_missing");assert.equal(r.rows[0].candidateShopifyOrderId,null);
+});
+test("order reference: raw numeric ID preserved and matching digits without registered rule remain unbound",async()=>{
+  const {result:r}=await reviewOrderReference(orderReferenceFixture(10));assert.equal(r.rows[0].candidateShopifyOrderId,"gid://shopify/Order/10");assert.equal(r.rows[0].orderReference.value,10);
+  const f=orderReferenceFixture();delete f.config.orderIdentityRules;const {result:s}=await reviewOrderReference(f);assert.equal(s.rows[0].reason,"verified_order_identity_rule_required");assert.equal(s.rows[0].candidateShopifyOrderId,null);
+});
+test("order reference: GID rule never falls back to decimal",async()=>{
+  const f=orderReferenceFixture();f.config.orderIdentityRules[0].format="Shopify_Order_GID";const {result:r}=await reviewOrderReference(f);assert.equal(r.rows[0].reason,"order_reference_format_invalid");
+  const g=orderReferenceFixture("gid://shopify/Order/10");g.config.orderIdentityRules[0].format="Shopify_Order_GID";const {result:s}=await reviewOrderReference(g);assert.equal(s.rows[0].state,"structural_Order_Message_reference");
+});
+for(const [name,mutate] of [["shop",r=>{r.scope.shopId="gid://shopify/Shop/13";}],["account",r=>{r.scope.accountId="other";}],
+  ["connection version",r=>{r.scope.connectionVersion=3;}],["generation",r=>{r.scope.installGeneration=4;}],
+  ["metric",r=>{r.metric_id="other";}],["integration",r=>{r.integration_id="other";}]])test(`order reference: ${name} rule mismatch remains unbound`,async()=>{
+  const f=orderReferenceFixture();mutate(f.config.orderIdentityRules[0]);const {result:r}=await reviewOrderReference(f);assert.equal(r.rows[0].reason,"verified_order_identity_rule_required");
+});
+test("order reference: integration ID missing cannot fall back to integration name",async()=>{
+  const f=orderReferenceFixture();delete f.m.attributes.integration.id;const {result:r}=await reviewOrderReference(f);assert.equal(r.rows[0].reason,"verified_order_identity_rule_required");
+});
+test("order reference: constructor captures original rules before caller mutation",async()=>{
+  const f=orderReferenceFixture(),reader=f.create();f.config.orderIdentityRules[0].scope.accountId="changed";f.config.orderIdentityRules[0].format="Shopify_Order_GID";
+  const observation=await reader.readEvidence(),s=ShopifyOrderFixture(),current=await s.create().readEvidence();
+  assert.equal(reviewKlaviyoOrderClaimPrewrite({expected:candidatePrewriteOwner(),observation,current}).rows[0].state,"structural_Order_Message_reference");
+});
+for(const name of ["missing Message","multiple Messages","parent conflict"])test(`order reference: ${name} cannot create claim candidate`,async()=>{
+  const f=orderReferenceFixture();
+  if(name==="missing Message")f.e.relationships.attributions.data=[];
+  if(name==="multiple Messages"){const a=attribution();a.id="attribution2";a.relationships["campaign-message"].data.id="message2";f.included.push(a);f.e.relationships.attributions.data.push({type:"attribution",id:a.id});}
+  if(name==="parent conflict")f.included[0].relationships.campaign.data.id="other";
+  const {result:r}=await reviewOrderReference(f);assert.equal(r.rows[0].reason,"native_Message_reference_unresolved");assert.equal(r.rows[0].state,"unresolved");assert.notEqual(r.rows[0].ShopifyOrderKey,null);
+});
+test("order reference: clones foreign owner and caller source rules cannot bypass original scope",async()=>{
+  const {observation,current}=await reviewOrderReference(orderReferenceFixture()),input={expected:candidatePrewriteOwner(),observation,current};
+  assert.throws(()=>reviewKlaviyoOrderClaimPrewrite({...input,observation:structuredClone(observation)}),/OBSERVATION_REQUIRED/);
+  assert.throws(()=>reviewKlaviyoOrderClaimPrewrite({...input,current:structuredClone(current)}),/OBSERVATION_REQUIRED/);
+  assert.throws(()=>reviewKlaviyoOrderClaimPrewrite({...input,rules:[]}),/INPUT_INVALID/);
+  assert.throws(()=>reviewKlaviyoOrderClaimPrewrite({...input,expected:{...input.expected,shopId:"gid://shopify/Shop/13"}}),/OWNER_MISMATCH/);
+});
+test("order reference: invalid or duplicate registry fails before SQL/HTTP",()=>{
+  for(const change of [f=>{f.config.orderIdentityRules.push(structuredClone(f.config.orderIdentityRules[0]));},f=>{f.config.orderIdentityRules[0].state="proposed";},
+    f=>{f.config.orderIdentityRules[0].format="guess";},f=>{f.config.orderIdentityRules[0].property="event_id";}]){
+    const f=orderReferenceFixture();change(f);assert.throws(f.create,/RULE/);assert.equal(f.queries.length+f.calls.length+f.adminCalls.length,0);
+  }
+  assert.equal(createKlaviyoOrderIdentityRuleLoader().load({scope:candidatePrewriteOwner(),metricId:"metric1",integrationId:"integration1"}),null);
+});
+test("order reference: object property stops collection without returning customer payload",async()=>{
+  const f=orderReferenceFixture({email:"SECRET"});await assert.rejects(f.create().readEvidence(),e=>!/SECRET/.test(e.message));
+});
+test("order reference: native and Message-only constructors reject order-rule capability before IO",()=>{
+  for(const mode of ["native","message"]){const f=boundFixture(mode);f.config.orderIdentityRules=[];assert.throws(f.create,/INPUT_INVALID/);assert.equal(f.queries.length+f.calls.length,0);}
+});
+test("order reference: long decimal string preserved without rounding and requires observed Shopify order",async()=>{
+  const value="9007199254740993",{result:r}=await reviewOrderReference(orderReferenceFixture(value));
+  assert.equal(r.rows[0].orderReference.value,value);assert.equal(r.rows[0].candidateShopifyOrderId,`gid://shopify/Order/${value}`);assert.equal(r.rows[0].reason,"order_not_observed_in_Shopify_collection");
+});
+test("order reference: two events may reference same Order without sales summing or LineItem inference",async()=>{
+  const f=orderReferenceFixture(),second=structuredClone(f.e);second.id="event2";const load=f.hooks.fetch;
+  f.hooks.fetch=p=>p.pathname==="/api/events"?response({data:[f.e,second],included:[f.m,...f.included],links:{next:null}}):load(p);
+  const {result:r}=await reviewOrderReference(f);assert.equal(r.rows.length,2);assert.deepEqual(r.rows[0].ShopifyOrderKey,r.rows[1].ShopifyOrderKey);
+  assert.notEqual(r.rows[0].sourceReference.nativeKey,r.rows[1].sourceReference.nativeKey);assert.equal(r.orderReview.orders.length,1);assert.equal(r.lineItemMatchAssigned,false);
+});
+test("order reference: complete empty events produce no invented order reference",async()=>{
+  const f=orderReferenceFixture(),load=f.hooks.fetch;f.hooks.fetch=p=>p.pathname==="/api/events"?response({data:[],links:{next:null}}):load(p);
+  const {result:r}=await reviewOrderReference(f);assert.equal(r.observedEmpty,true);assert.deepEqual(r.rows,[]);assert.equal(r.orderReview.orders.length,1);
+});

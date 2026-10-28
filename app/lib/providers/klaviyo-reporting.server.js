@@ -537,6 +537,9 @@ export function normalizeKlaviyoOrderedProductEvent(event) {
     provider_event_uuid: optionalText(attributes.uuid, "KLAVIYO_EVENT_UUID_INVALID", 256),
     occurred_at: text(attributes.datetime, "KLAVIYO_EVENT_DATETIME_REQUIRED", 128),
     provider_product_properties: Object.freeze(observed),
+    provider_order_properties: Object.freeze({OrderId: Object.hasOwn(properties, "OrderId")
+      ? Object.freeze({state: "present", value: properties.OrderId})
+      : Object.freeze({state: "absent", value: null})}),
     product_identity_state: observed.ProductID.state === "present" ? "provider_native_observed" : "missing",
     standardized_product_id: null,
   });

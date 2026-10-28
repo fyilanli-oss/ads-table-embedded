@@ -1,6 +1,7 @@
 import {reviewShopifyOrderPrewrite} from "./order-prewrite.server.js";
 import {reviewRefreshReferencePrewrite} from "../providers/reference-prewrite.server.js";
 import {permissionContext} from "../oauth/identity-permission-preflight.server.js";
+import {reviewKlaviyoOrderClaimPrewrite} from "../providers/klaviyo-order-prewrite.server.js";
 
 export class ProviderClaimPrewriteError extends Error {
   constructor(code){super(`PROVIDER_CLAIM_PREWRITE_${code}`);this.name="ProviderClaimPrewriteError";}
@@ -24,10 +25,12 @@ export function reviewShopifyProviderClaimReadiness({expected,current,previous=n
     const key=[scope.provider,scope.connectionId,scope.accountId],identity=JSON.stringify(key);
     if(selected.has(identity))fail("PROVIDER_DUPLICATE");selected.add(identity);
     const review=input.observation===null?null:reviewRefreshReferencePrewrite({expected:input.expected,observation:input.observation});
+    const orderReferenceReview=review!==null&&scope.provider==="klaviyo"
+      ?reviewKlaviyoOrderClaimPrewrite({expected:input.expected,observation:input.observation,current,previous}):null;
     providerReviews.push({key,scope:{...scope,connectionVersion:input.expected.connectionVersion},
       observationState:review===null?"observation_not_supplied":"completed_identity_observation",
       claimState:review===null?"not_assessed_without_provider_observation":review.providerClaimState,
-      review});
+      review,orderReferenceReview});
   }
   return freeze({status:"structurally_reviewed_open_gates",owner:orderReview.owner,orderReview,providerReviews,
     comparisonState:"not_assessed_readable_provider_order_claim_required",

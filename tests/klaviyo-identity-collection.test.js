@@ -1,3 +1,4 @@
+import {providerClaimPrewriteCases} from "./helpers/provider-claim-prewrite-cases.js";
 import {reviewRefreshReferencePrewrite} from "../app/lib/providers/reference-prewrite.server.js";
 import test,{after} from "node:test";
 import assert from "node:assert/strict";
@@ -807,3 +808,5 @@ test("Klaviyo prewrite: conflicting native variant aliases stay conflicting with
   const observation=await f.create().readEvidence(),r=reviewRefreshCandidatePrewrite({expected:candidatePrewriteOwner(),observation});
   assert.equal(r.rows[0].reason,"source_variant_alias_conflict");assert.equal(r.counts.conflicting,1);assert.equal(f.adminCalls.length,0);
 });
+
+providerClaimPrewriteCases({provider:"klaviyo",fixture:candidateBoundFixture,expected:candidatePrewriteOwner,empty:f=>{f.hooks.fetch=p=>p.pathname==="/api/events"?response({data:[],links:{next:null}}):f.baseFetch(p);}});

@@ -1,3 +1,4 @@
+import {providerClaimPrewriteCases} from "./helpers/provider-claim-prewrite-cases.js";
 import {reviewRefreshReferencePrewrite} from "../app/lib/providers/reference-prewrite.server.js";
 
 
@@ -674,3 +675,5 @@ test("Google reference prewrite: Merchant candidate reader did not collect repor
   assert.deepEqual(r.referenceReview.rows,[]);assert.equal(r.providerClaimState,"not_collected_in_identity_observation");
   assert.equal(r.providerClaimVerified,false);assert.equal(r.exactOverlapVerified,false);assert.equal(r.persistable,false);
 });
+
+providerClaimPrewriteCases({provider:"google_ads",fixture:candidateBoundFixture,expected:candidatePrewriteOwner,empty:f=>{f.hooks.fetch=p=>p.hostname==="merchantapi.googleapis.com"&&response({products:[]});}});

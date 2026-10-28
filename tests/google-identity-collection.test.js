@@ -1,4 +1,4 @@
-import test from "node:test";
+import test,{after} from "node:test";
 import assert from "node:assert/strict";
 import {collectGoogleMerchantIdentityEvidence, collectGoogleVerifiedProductCandidateEvidence} from "../app/lib/providers/google-identity-collection.server.js";
 import {createGoogleCandidateSourceRuleLoader, verifyGoogleMerchantSourceCandidates} from "../app/lib/providers/google-source-candidates.server.js";
@@ -7,7 +7,12 @@ import {oauthPermissionScopes} from "../app/lib/oauth/oauth-permission-profile.s
 import {createQuotaManagedFetch, quotaBoundaryControl} from "../app/lib/refresh/quota-native-fetch.server.js";
 import {createQuotaScopeResolver, quotaRouteIdentity} from "../app/lib/refresh/quota-scope-resolver.server.js";
 import {createSharedQuotaGuard} from "../app/lib/refresh/shared-quota.server.js";
-import {createRefreshGoogleIdentityReader} from "../app/lib/refresh/quota-authority-binding.server.js";
+import {createRefreshGoogleIdentityReader,createRefreshGoogleCandidateReader} from "../app/lib/refresh/quota-authority-binding.server.js";
+import "@shopify/shopify-api/adapters/node";
+import {shopifyApi,ApiVersion,LogSeverity,Session} from "@shopify/shopify-api";
+import {abstractFetch,setAbstractFetchFunc} from "@shopify/shopify-api/runtime";
+import {createShopifyAdminIdentitySdkBridge} from "../app/lib/refresh/shopify-admin-sdk-quota-bridge.server.js";
+import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 import {refreshQuotaWait} from "../app/lib/refresh/quota-work-wait.server.js";
 
 const workspace = "11111111-1111-4111-8111-111111111111", connection = "22222222-2222-4222-8222-222222222222",
@@ -501,4 +506,137 @@ test("bound Google: deadline during context lookup cannot reserve or dispatch af
 test("bound Google: pre-abort cannot read runtime or quota SQL",async()=>{
   const f=boundFixture(),controller=new AbortController();controller.abort();f.config.signal=controller.signal;
   await assert.rejects(f.create().readEvidence(),/IDENTITY_READ_ABORTED/);assert.equal(f.queries.length,0);assert.equal(f.loads.length,0);
+});
+
+const originalSdkFetch=abstractFetch;after(()=>setAbstractFetchFunc(originalSdkFetch));
+const sdkRoot=import.meta.resolve("@shopify/shopify-app-react-router/server");
+const {graphqlClientFactory}=await import(new URL("./clients/admin/graphql.mjs",sdkRoot));
+const {handleClientErrorFactory}=await import(new URL("./authenticate/admin/helpers/handle-client-error.mjs",sdkRoot));
+const sdkApi=shopifyApi({apiKey:"a".repeat(32),apiSecretKey:"b".repeat(32),hostName:"example.com",apiVersion:ApiVersion.October26,
+  isEmbeddedApp:true,logger:{level:LogSeverity.Error,log:()=>{}}});
+function candidateBoundFixture(){
+  const f=boundFixture(),adminCalls=[],adminLoads=[],feedback=[],auth=[];
+  f.config.sourceRules=[rule()];const bridge=createShopifyAdminIdentitySdkBridge();setAbstractFetchFunc(bridge.fetch);f.config.sdkBridge=bridge;
+  const session=new Session({id:"offline_test.myshopify.com",shop:"test.myshopify.com",state:"synthetic",isOnline:false,accessToken:"SECRET-ADMIN",scope:"read_products"});
+  f.config.verified.context.admin={graphql:graphqlClientFactory({params:{api:sdkApi,logger:{debug:()=>{}}},session,
+    handleClientError:handleClientErrorFactory({request:new Request("https://example.com"),onError:async x=>auth.push(x)})})};
+  const adminContext={provider:"shopify_admin",clientScopeKey:"c".repeat(64),connectionScopeKey:"d".repeat(64),connectionEpoch:3,
+    accountId:"test.myshopify.com",organizationId:null,apiVersion:"2026-10"};f.q.adminContext=adminContext;
+  const keys=["identity_product","identity_variant","identity_product_variant"].map(family=>quotaRouteIdentity(adminContext,
+    {provider:"shopify_admin",family,accountId:adminContext.accountId,organizationId:null,version:"2026-10",includes:[]}).routeKey);
+  const load=f.config.workStore.loadQuotaContext,resolve=f.config.quotaStore.resolveRoute,reserve=f.config.quotaStore.reserve,native=f.config.fetchFn;
+  f.config.workStore={loadQuotaContext:async x=>{if(x.provider!=="shopify_admin")return load(x);
+    adminLoads.push(x);await f.q.adminLoading?.();return f.q.adminMissing?null:f.q.adminContext;}};
+  f.config.quotaStore.resolveRoute=async x=>keys.includes(x.routeKey)?f.q.missingAdminProfile?null:x.routeKey:resolve(x);
+  f.config.quotaStore.reserve=async x=>{const r=await reserve(x);return r.status==="reserved"?
+    {...r,...f.q.noBudget?{}:{costBudget:{unit:"shopify_admin_query_points",reservedRequestedCost:10}}}:r;};
+  f.config.quotaStore.recordFeedback=async x=>{feedback.push(x);return true;};
+  f.config.fetchFn=async(endpoint,init)=>{
+    if(new URL(endpoint).hostname!=="test.myshopify.com")return native(endpoint,init);
+    adminCalls.push({endpoint,init});const payload={data:{shop:{id:"gid://shopify/Shop/12",myshopifyDomain:"test.myshopify.com"},
+      product:{id:"gid://shopify/Product/123",legacyResourceId:"123"},productVariant:{id:"gid://shopify/ProductVariant/456",legacyResourceId:"456",
+        product:{id:"gid://shopify/Product/123",legacyResourceId:"123"}}},extensions:{cost:{requestedQueryCost:8,actualQueryCost:5,
+          throttleStatus:{maximumAvailable:1000,currentlyAvailable:995,restoreRate:50}}}};
+    await f.q.adminNative?.(payload,init);if(f.q.adminThrow)throw Error("SECRET-NATIVE");return Response.json(payload,{status:f.q.adminStatus??200});
+  };
+  return {...f,adminCalls,adminLoads,feedback,auth,create:()=>createRefreshGoogleCandidateReader(f.config)};
+}
+test("bound Google candidate: Ads Merchant and genuine SDK Admin share fenced job but separate quota keys",async()=>{
+  const f=candidateBoundFixture(),r=await f.create().readEvidence();assert.equal(f.calls.length,3);assert.equal(f.adminCalls.length,1);
+  assert.equal(f.reservations.length,4);assert.equal(f.settles.length,4);assert.equal(new Set(f.reservations.map(x=>x.operationKey)).size,3);
+  assert.equal(f.feedback.filter(x=>x.feedback.kind==="shopify_admin_cost_observed").length,1);assert.equal(f.auth.length,0);
+  assert.ok(f.adminLoads.every(x=>x.claim.provider==="google_ads"&&x.claim.accountId==="123"&&x.claim.id==="job1"&&x.claim.fence===2&&x.window.from==="2026-10-01"));
+  assert.equal(r.product_identity_candidates.candidates[0].shopify_product_id,"gid://shopify/Product/123");
+  assert.equal(r.product_identity_candidates.provider_link_verified,false);assert.equal(r.provider_link_verified,true);
+  assert.equal(r.relationship_scope,"observed_direct_Ads_Merchant_relationship_only");
+  for(const k of ["persistable","canonical_scope_ready","authorizes_activation","mapping_write_performed","source_facts_changed"])assert.equal(r[k],false);
+  assert.equal(r.installation_id,null);assert.equal(f.c.merchant.quotaAccountId,"98");
+  assert.doesNotMatch(JSON.stringify([f.loads,f.adminLoads,f.reservations,f.feedback,r]),/SECRET|secret-access|secret-developer|secret-refresh/);
+});
+test("bound Google candidate: default registry remains empty without parsing Shopify-looking offers",async()=>{
+  const f=candidateBoundFixture();delete f.config.sourceRules;const r=await f.create().readEvidence();
+  assert.equal(f.adminCalls.length,0);assert.equal(f.calls.length,3);assert.equal(r.product_identity_candidates.candidates.length,0);
+  assert.equal(r.product_identity_candidates.rows[0].product_identity_verification.reason,"verified_source_rule_required");
+});
+test("bound Google candidate: constructor captures rule, SDK function and original job before caller mutation",async()=>{
+  const f=candidateBoundFixture(),reader=f.create();f.config.sourceRules[0].market="CA";f.config.claim.fence=99;f.config.claim.accountId="999";
+  f.config.merchantId="100";f.config.window.from="2026-10-02";f.config.verified.context.admin.graphql=()=>{throw Error("replacement");};
+  const r=await reader.readEvidence();assert.equal(r.product_identity_candidates.candidates.length,1);
+  assert.ok(f.adminLoads.every(x=>x.claim.fence===2&&x.claim.accountId==="123"&&x.window.from==="2026-10-01"));
+});
+for(const [name,change] of [["missing bridge",f=>{delete f.config.sdkBridge;}],["fake bridge",f=>{f.config.sdkBridge={wrap:x=>x.admin};}],
+  ["mode override",f=>{f.config.mode="native";}],["scope override",f=>{f.config.scopes=[];}],["ledger override",f=>{f.config.readExecution={};}],
+  ["context override",f=>{f.config.loadContext=()=>({});}],["guard override",f=>{f.config.guard={};}],
+  ["wrong session",f=>{f.config.verified.identity.session.shopDomain="other.myshopify.com";}],
+  ["forged rule loader",f=>{f.config.sourceRules={load:()=>rule()};}],["conflicting rules",f=>{f.config.sourceRules.push(rule());}],
+  ["unverified rule",f=>{f.config.sourceRules[0].state="unverified";}]])test(`bound Google candidate: ${name} stops before SQL and HTTP`,()=>{
+  const f=candidateBoundFixture();change(f);assert.throws(f.create);assert.equal(f.queries.length+f.calls.length+f.adminCalls.length,0);
+});
+for(const [name,change] of [["feed",r=>{r.product_context.feed_label="CA";}],["language",r=>{r.product_context.content_language="fr";}],
+  ["merchant",r=>{r.product_context.merchant_id="100";r.product_context.data_source="accounts/100/dataSources/7";}],
+  ["datasource",r=>{r.product_context.data_source="accounts/99/dataSources/8";}],["account",r=>{r.scope.platform_account_id="789";}],
+  ["shop",r=>{r.shop_id="gid://shopify/Shop/13";}]])test(`bound Google candidate: ${name} mismatch never derives a Shopify candidate`,async()=>{
+  const f=candidateBoundFixture();change(f.config.sourceRules[0]);const r=await f.create().readEvidence();
+  assert.equal(f.adminCalls.length,0);assert.equal(r.product_identity_candidates.candidates.length,0);
+});
+for(const kind of ["adminMissing","missingAdminProfile","noBudget"])test(`bound Google candidate: ${kind} stops before Admin HTTP and final Ads link`,async()=>{
+  const f=candidateBoundFixture();f.q[kind]=true;await assert.rejects(f.create().readEvidence());assert.equal(f.adminCalls.length,0);assert.equal(f.calls.length,2);
+});
+for(const [waitAt,prior,providerCalls,adminCalls] of [[1,0,0,0],[2,1,1,0],[3,2,2,0],[4,3,2,1]])
+test(`bound Google candidate: wait ${waitAt} retains exact shared prefix ${prior}`,async()=>{
+  const f=candidateBoundFixture();f.q.waitAt=waitAt;let error;try{await f.create().readEvidence();}catch(e){error=e;}
+  assert.equal(quotaBoundaryControl(error).priorBoundaryAttempts,prior);assert.equal(f.calls.length,providerCalls);assert.equal(f.adminCalls.length,adminCalls);
+  if(prior>0)assert.equal(refreshQuotaWait(error,"provider_page",f.config.claim),null);
+});
+for(const status of [401,403,429,500])test(`bound Google candidate: Admin ${status} stops once without recovery`,async()=>{
+  const f=candidateBoundFixture();f.q.adminStatus=status;const reader=f.create();await assert.rejects(reader.readEvidence());
+  assert.equal(f.calls.length,2);assert.equal(f.adminCalls.length,1);assert.equal(f.auth.length,0);assert.equal(f.stops.length,1);
+  await assert.rejects(reader.readEvidence(),/EXECUTION_USED/);
+});
+test("bound Google candidate: Admin cost above receipt cannot be verified",async()=>{
+  const f=candidateBoundFixture();f.q.adminNative=p=>{p.extensions.cost.requestedQueryCost=11;};await assert.rejects(f.create().readEvidence());
+  assert.equal(f.adminCalls.length,1);assert.equal(f.calls.length,2);
+});
+test("bound Google candidate: native link change discards already checked Shopify candidate",async()=>{
+  const f=candidateBoundFixture();f.hooks.fetch=(p,init,n)=>p.hostname==="googleads.googleapis.com"&&n>1&&response({results:[link("8")]});
+  await assert.rejects(f.create().readEvidence(),/LINK_CHANGED/);assert.equal(f.adminCalls.length,1);
+});
+test("bound Google candidate: Merchant binding drift before Admin cannot complete collection",async()=>{
+  const f=candidateBoundFixture();f.q.adminNative=()=>{f.c.merchant.bindingEpoch++;};
+  await assert.rejects(f.create().readEvidence());assert.equal(f.adminCalls.length,1);assert.equal(f.calls.length,2);
+});
+test("bound Google candidate: Admin context drift before dispatch sends no Admin HTTP",async()=>{
+  const f=candidateBoundFixture();f.q.reserved=()=>{if(f.reservations.length===3)f.q.adminContext.connectionEpoch++;};
+  await assert.rejects(f.create().readEvidence());assert.equal(f.adminCalls.length,0);assert.equal(f.calls.length,2);
+});
+test("bound Google candidate: wrong variant parent stays conflicting without mapping",async()=>{
+  const f=candidateBoundFixture();f.q.adminNative=p=>{p.data.productVariant.product={id:"gid://shopify/Product/999",legacyResourceId:"999"};};
+  const r=await f.create().readEvidence();assert.equal(r.product_identity_candidates.candidates.length,0);
+  assert.equal(r.product_identity_candidates.rows[0].product_identity_verification.state,"conflicting");
+});
+test("bound Google candidate: actual work repository rejects Admin before its SQL or HTTP",async()=>{
+  const f=candidateBoundFixture();let sql=0;const real=createRefreshWorkRepository({query:async()=>{sql++;return {rows:[]};}}),load=f.config.workStore.loadQuotaContext;
+  f.config.workStore.loadQuotaContext=x=>x.provider==="shopify_admin"?real.loadQuotaContext(x):load(x);
+  await assert.rejects(f.create().readEvidence());assert.equal(sql,0);assert.equal(f.adminCalls.length,0);assert.equal(f.calls.length,2);
+});
+test("bound Google candidate: total deadline closes pending Admin lookup against late dispatch",async()=>{
+  const f=candidateBoundFixture();f.config.maxElapsedMs=500;let release;
+  f.q.adminLoading=()=>new Promise(r=>{release=r;});await assert.rejects(f.create().readEvidence(),/DEADLINE_EXCEEDED/);
+  delete f.q.adminLoading;release();await new Promise(r=>setTimeout(r,10));assert.equal(f.adminCalls.length,0);assert.equal(f.calls.length,2);
+});
+test("bound Google candidate: deadline during sent Admin ignores late result and final Ads link",async()=>{
+  const f=candidateBoundFixture();f.config.maxElapsedMs=500;let release;
+  f.q.adminNative=()=>new Promise(r=>{release=r;});await assert.rejects(f.create().readEvidence(),/DEADLINE_EXCEEDED/);
+  assert.equal(f.adminCalls.length,1);release();await new Promise(r=>setTimeout(r,10));assert.equal(f.calls.length,2);assert.equal(f.adminCalls[0].init.signal.aborted,true);
+});
+test("bound Google candidate: missing SDK hook cannot send unguarded Admin HTTP",async()=>{
+  const f=candidateBoundFixture();setAbstractFetchFunc(originalSdkFetch);await assert.rejects(f.create().readEvidence());assert.equal(f.adminCalls.length,0);assert.equal(f.calls.length,2);
+});
+test("bound Google candidate: partial GraphQL data cannot produce candidate",async()=>{
+  const f=candidateBoundFixture();f.q.adminNative=p=>{p.errors=[{message:"SECRET"}];};
+  await assert.rejects(f.create().readEvidence(),e=>!/SECRET/.test(e.message));assert.equal(f.calls.length,2);assert.equal(f.adminCalls.length,1);
+});
+test("bound Google candidate: every Merchant page debits before one deduplicated Shopify check",async()=>{
+  const f=candidateBoundFixture();f.hooks.fetch=p=>p.hostname==="merchantapi.googleapis.com"&&!p.searchParams.has("pageToken")&&response({nextPageToken:"second"});
+  const r=await f.create().readEvidence();assert.equal(r.product_identity_candidates.candidates.length,1);assert.equal(f.calls.length,4);assert.equal(f.adminCalls.length,1);assert.equal(f.reservations.length,5);
 });

@@ -7,7 +7,8 @@ import {collectKlaviyoNativeIdentityEvidence, collectKlaviyoIdentityMessageEvide
 import {klaviyoBusinessDayTimeframe} from "../providers/klaviyo-reporting.server.js";
 import {collectMetaNativeIdentityEvidence} from "../providers/meta-identity-collection.server.js";
 import {metaIdentityReportWindow} from "../providers/meta-report-candidates.server.js";
-import {collectGoogleMerchantIdentityEvidence} from "../providers/google-identity-collection.server.js";
+import {collectGoogleMerchantIdentityEvidence,collectGoogleVerifiedProductCandidateEvidence} from "../providers/google-identity-collection.server.js";
+import {createGoogleCandidateSourceRuleLoader} from "../providers/google-source-candidates.server.js";
 import {isShopifyAdminIdentitySdkBridge,closeShopifyAdminOrderSdkClient,closeShopifyAdminSdkClient} from "./shopify-admin-sdk-quota-bridge.server.js";
 import {normalizeShopDomain} from "../shopify/installation-authority.server.js";
 import {SHOPIFY_ORDER_READ_API_VERSION} from "../shopify/order-read-protocol.server.js";
@@ -114,12 +115,15 @@ export function createRefreshMetaIdentityReader({verified,database,tokenVault,ad
 
 // Native-only. Merchant inventory comes only from fenced workStore context, never caller
 // quotaAccountId/default Ads ID. Existing SQL needs its separately reviewed inventory read.
-export function createRefreshGoogleIdentityReader({verified,database,tokenVault,merchantId,developerToken,signal,
-  readNow=()=>new Date(),maxElapsedMs,maxPages,maxRows,maxLinkPages,maxLinks,...quotaOptions} = {}) {
+export function createRefreshGoogleIdentityReader(options) {return createGoogleIdentityReader(options);}
+export function createRefreshGoogleCandidateReader(options) {return createGoogleIdentityReader(options,true);}
+function createGoogleIdentityReader({verified,database,tokenVault,merchantId,developerToken,signal,sdkBridge,sourceRules,
+  readNow=()=>new Date(),maxElapsedMs,maxPages,maxRows,maxLinkPages,maxLinks,...quotaOptions} = {},candidates=false) {
   const claim=structuredClone(quotaOptions.claim),window=structuredClone(quotaOptions.window);
   const owner=structuredClone(verified?.installationAuthority),shop=structuredClone(verified?.identity?.shop);
   const day=window?.from;
-  if(claim?.provider!=="google_ads"||typeof day!=="string"||day!==window.to||!/^\d{4}-\d{2}-\d{2}$/.test(day)
+  if((candidates?!isShopifyAdminIdentitySdkBridge(sdkBridge):sdkBridge!==undefined||sourceRules!==undefined)
+    ||claim?.provider!=="google_ads"||typeof day!=="string"||day!==window.to||!/^\d{4}-\d{2}-\d{2}$/.test(day)
     ||!Number.isFinite(Date.parse(day))||new Date(day).toISOString().slice(0,10)!==day
     ||typeof merchantId!=="string"||!/^\d{1,19}$/.test(merchantId)||merchantId.startsWith("0")||BigInt(merchantId)>9223372036854775807n
     ||owner?.authority!=="shopify_installation_verified"||owner.status!=="active"||owner.workspaceId!==claim.workspaceId
@@ -128,14 +132,20 @@ export function createRefreshGoogleIdentityReader({verified,database,tokenVault,
     ||!Number.isFinite(Date.parse(quotaOptions.entitlementReceipt.observedAt))) throw Error("REFRESH_GOOGLE_IDENTITY_INPUT_INVALID");
   const caller={installationAuthority:owner,identity:{shop,session:{authority:verified.identity?.session?.authority,
     shopDomain:verified.identity?.session?.shopDomain}},context:{admin:{graphql:verified.context.admin.graphql.bind(verified.context.admin)}}};
-  const binding=refreshQuotaOptions(quotaOptions),transport=identityTransport(binding,"google_ads",claim,merchantId);
+  const rules=candidates&&sourceRules!==undefined?structuredClone(sourceRules):undefined;
+  if(candidates)createGoogleCandidateSourceRuleLoader({rules});
+  const binding=refreshQuotaOptions(quotaOptions,{admin:candidates}),execution=candidates?createQuotaReadExecution():undefined;
+  const transport=identityTransport(binding,"google_ads",claim,merchantId,execution);
+  const admin=candidates?createFencedAdminClient({verified:caller,sdkBridge,signal,...quotaOptions},false,null,{binding,readExecution:execution}):null;
+  if(admin)caller.context.admin=admin;
   const options={verified:caller,database,tokenVault,merchantId,developerToken,fetchFn:transport,signal,now:readNow,
-    maxElapsedMs,maxPages,maxRows,maxLinkPages,maxLinks};
+    maxElapsedMs,maxPages,maxRows,maxLinkPages,maxLinks,...candidates?{sourceRules:rules}:{}};
+  const collect=candidates?collectGoogleVerifiedProductCandidateEvidence:collectGoogleMerchantIdentityEvidence;
   let used=false;
   return Object.freeze({async readEvidence(...args){
     if(args.length) throw Error("REFRESH_GOOGLE_IDENTITY_OVERRIDE_FORBIDDEN");
     if(used) throw Error("REFRESH_GOOGLE_IDENTITY_EXECUTION_USED");
-    used=true;return collectGoogleMerchantIdentityEvidence(options);
+    used=true;try{return await collect(options);}finally{if(admin)closeShopifyAdminSdkClient(admin);}
   }});
 }
 

@@ -11,6 +11,11 @@ export class ShopifyOrderRangePlanError extends Error {
 const fail=code=>{throw new ShopifyOrderRangePlanError(code);};
 const freeze=v=>{if(v&&typeof v==="object"&&!Object.isFrozen(v)){Object.values(v).forEach(freeze);Object.freeze(v);}return v;};
 const plans=new WeakMap();
+export function shopifyOrderRangeProposal(plan,key){
+  const row=plans.get(plan)?.get(key);if(!row)fail("PROVENANCE_REQUIRED");
+  return Object.freeze({owner:plan.owner,range:row.range,key:row.key,
+    includeOrderHistory:plan.policy.includeOrderHistory,pageSize:plan.policy.pageSize});
+}
 function instant(value){
   if(typeof value!=="string"||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(value))fail("TIME_INVALID");
   const ms=Date.parse(value);if(!Number.isFinite(ms))fail("TIME_INVALID");

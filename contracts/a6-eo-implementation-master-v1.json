@@ -1,4 +1,9 @@
 {
+  "Shopify_order_pending_queue_2026_10_28": {
+    "reference": "contracts/eo-05-start-brief-v1.json#Shopify_order_pending_queue_2026_10_28",
+    "status": "repository_prepared_pending_CI_pending_metadata_only_not_worker_dispatch",
+    "activation_authorized": false
+  },
   "Shopify_order_independent_range_plan_2026_10_28": {
     "reference": "contracts/eo-05-start-brief-v1.json#Shopify_order_independent_range_plan_2026_10_28",
     "status": "repository_prepared_not_scheduler_or_durable_resume",

@@ -1,6 +1,7 @@
 import {createHash} from "node:crypto";
+import {SHOPIFY_ORDER_READ_API_VERSION} from "../shopify/order-read-protocol.server.js";
 
-const families={shopify_partner:["partner_graphql"],shopify_admin:["identity_product","identity_variant","identity_product_variant"],meta:["insights","product_insights","token","token_debug","account_discovery","revoke",
+const families={shopify_partner:["partner_graphql"],shopify_admin:["identity_product","identity_variant","identity_product_variant","order_headers","order_lines","order_journey"],meta:["insights","product_insights","token","token_debug","account_discovery","revoke",
   "identity_ad","identity_adset","identity_creative","identity_product_set","catalog_products"],
   google_ads:["reporting_query","token","revoke","account_discovery","merchant_products"],klaviyo:["metrics","events","account_discovery","campaign_values","flow_values","token","revoke"]};
 const key=value=>typeof value==="string"&&/^[a-f0-9]{64}$/.test(value);
@@ -30,6 +31,7 @@ export function quotaRouteIdentity(context,descriptor) {
     if(context.accountId!==null||descriptor.accountId!==null||!/^[1-9][0-9]*$/.test(context.organizationId??"")||descriptor.organizationId!==context.organizationId
       ||!/^\d{4}-\d{2}$/.test(context.apiVersion??"")) fail();
   } else if(context.provider==="shopify_admin") {
+    if(["order_headers","order_lines","order_journey"].includes(descriptor.family)&&context.apiVersion!==SHOPIFY_ORDER_READ_API_VERSION)fail();
     if(typeof context.accountId!=="string"||context.accountId.length>253
       ||!/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(context.accountId)||descriptor.accountId!==context.accountId
       ||context.organizationId!==null||descriptor.organizationId!==null||!/^\d{4}-(01|04|07|10)$/.test(context.apiVersion??""))fail();

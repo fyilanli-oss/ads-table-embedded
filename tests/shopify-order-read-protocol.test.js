@@ -224,12 +224,12 @@ test("missing or null required processed timestamp is not accepted as a normal n
   assert.throws(()=>read("order_headers",raw),/TIME_INVALID/);
 });
 
-for(const family of Object.keys(queries))test(`${family} preparation cannot bypass the unopened Admin HTTP family/profile gate`,async()=>{
+for(const family of Object.keys(queries))test(`${family} cannot bypass a missing approved Admin operation profile`,async()=>{
   const r=request(config(family)),raw=JSON.stringify({query:r.query,variables:r.variables});let lookedUp=0,reserved=0,sent=0;
   assert.equal(shopifyAdminIdentityFamily(raw),null);
-  const fetch=createQuotaManagedFetch({provider:"shopify_admin",lane:"background",resolveOperation:async()=>{lookedUp++;return "a".repeat(64);},
+  const fetch=createQuotaManagedFetch({provider:"shopify_admin",lane:"background",resolveOperation:async()=>{lookedUp++;return null;},
     guard:{execute:async()=>{reserved++;}},fetchFn:async()=>{sent++;}});
   await assert.rejects(fetch("https://test.myshopify.com/admin/api/2026-10/graphql.json",{method:"POST",body:raw}),
     e=>quotaBoundaryControl(e)?.status==="not_configured");
-  assert.equal(lookedUp,0);assert.equal(reserved,0);assert.equal(sent,0);
+  assert.equal(lookedUp,1);assert.equal(reserved,0);assert.equal(sent,0);
 });

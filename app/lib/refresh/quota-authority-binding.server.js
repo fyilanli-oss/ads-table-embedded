@@ -2,7 +2,7 @@ import {createScopeResolvedQuotaClients} from "../providers/quota-managed-client
 import {refreshWorkIdentity} from "./work-stop-policy.server.js";
 import {createQuotaScopeResolver} from "./quota-scope-resolver.server.js";
 import {createSharedQuotaGuard} from "./shared-quota.server.js";
-import {createQuotaManagedFetch} from "./quota-native-fetch.server.js";
+import {createQuotaManagedFetch,createQuotaReadExecution} from "./quota-native-fetch.server.js";
 import {collectKlaviyoNativeIdentityEvidence, collectKlaviyoIdentityMessageEvidence} from "../providers/klaviyo-identity-collection.server.js";
 import {klaviyoBusinessDayTimeframe} from "../providers/klaviyo-reporting.server.js";
 import {collectMetaNativeIdentityEvidence} from "../providers/meta-identity-collection.server.js";
@@ -10,6 +10,7 @@ import {metaIdentityReportWindow} from "../providers/meta-report-candidates.serv
 import {collectGoogleMerchantIdentityEvidence} from "../providers/google-identity-collection.server.js";
 import {isShopifyAdminIdentitySdkBridge} from "./shopify-admin-sdk-quota-bridge.server.js";
 import {normalizeShopDomain} from "../shopify/installation-authority.server.js";
+import {SHOPIFY_ORDER_READ_API_VERSION} from "../shopify/order-read-protocol.server.js";
 
 // Explicit background-only composition. SQL supplies current authority and owner scope handles.
 // No caller account/context loader override; never a setup OAuth or interactive authority shortcut.
@@ -131,7 +132,15 @@ export function createRefreshGoogleIdentityReader({verified,database,tokenVault,
 
 // Inactive Admin-only client for an existing fenced provider job. The current repository
 // adapter/SQL rejects Admin context until the separately required step14 review is done.
-export function createRefreshShopifyAdminIdentityClient({verified,sdkBridge,signal,timeoutMs,...quotaOptions}={}) {
+export function createRefreshShopifyAdminIdentityClient(options) {return createFencedAdminClient(options);}
+
+// Inactive order-only entry. Current SQL rejects Admin; native order permissions,
+// reviewed point profiles and hook installation remain mandatory activation gates.
+// The original provider job is retained; no fourth provider or order scheduler added.
+export function createRefreshShopifyAdminOrderClient(options) {return createFencedAdminClient(options,true);}
+
+function createFencedAdminClient({verified,sdkBridge,signal,timeoutMs,...quotaOptions}={},orders=false) {
+  const invalid=orders?"REFRESH_SHOPIFY_ADMIN_ORDER_INPUT_INVALID":"REFRESH_SHOPIFY_ADMIN_IDENTITY_INPUT_INVALID";
   const claim=structuredClone(quotaOptions.claim),window=structuredClone(quotaOptions.window);
   const owner=structuredClone(verified?.installationAuthority),shop=structuredClone(verified?.identity?.shop);
   const session=structuredClone(verified?.identity?.session),day=window?.from;
@@ -142,17 +151,19 @@ export function createRefreshShopifyAdminIdentityClient({verified,sdkBridge,sign
     ||shop?.authority!=="shopify_admin_verified"||!/^gid:\/\/shopify\/Shop\/[1-9][0-9]*$/.test(shop.shopId??"")
     ||session?.authority!=="shopify_id_token_verified"||session.shopDomain!==shop.myshopifyDomain
     ||typeof verified?.context?.admin?.graphql!=="function"||typeof quotaOptions.entitlementReceipt?.observedAt!=="string"
-    ||!Number.isFinite(Date.parse(quotaOptions.entitlementReceipt.observedAt)))throw Error("REFRESH_SHOPIFY_ADMIN_IDENTITY_INPUT_INVALID");
-  if(normalizeShopDomain(shop.myshopifyDomain)!==shop.myshopifyDomain)throw Error("REFRESH_SHOPIFY_ADMIN_IDENTITY_INPUT_INVALID");
+    ||!Number.isFinite(Date.parse(quotaOptions.entitlementReceipt.observedAt)))throw Error(invalid);
+  if(normalizeShopDomain(shop.myshopifyDomain)!==shop.myshopifyDomain)throw Error(invalid);
   const admin={graphql:verified.context.admin.graphql.bind(verified.context.admin)};
   const binding=refreshQuotaOptions(quotaOptions,{admin:true});
   const resolve=createQuotaScopeResolver({store:binding.store,loadContext:async input=>{
     if(input.provider!=="shopify_admin")return null;
     const context=await binding.loadContext(input);
-    return context?.provider==="shopify_admin"&&context.accountId===shop.myshopifyDomain?context:null;
+    return context?.provider==="shopify_admin"&&context.accountId===shop.myshopifyDomain
+      &&(!orders||context.apiVersion===SHOPIFY_ORDER_READ_API_VERSION)?context:null;
   }});
   const transport=createQuotaManagedFetch({provider:"shopify_admin",lane:"background",fetchFn:binding.fetchFn,
     guard:createSharedQuotaGuard({store:binding.store,now:binding.now}),resolveOperation:resolve,
-    isDispatchCurrent:async(metadata,key)=>await resolve(metadata)===key});
-  return sdkBridge.wrap({admin,transport,signal,timeoutMs});
+    isDispatchCurrent:async(metadata,key)=>await resolve(metadata)===key,
+    ...orders?{readExecution:createQuotaReadExecution()}:{}});
+  return (orders?sdkBridge.wrapOrders:sdkBridge.wrap)({admin,transport,signal,timeoutMs});
 }

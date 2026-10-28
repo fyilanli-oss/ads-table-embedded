@@ -56,6 +56,30 @@ export const SHOPIFY_ORDER_READ_QUERIES=Object.freeze({
     }`,
 });
 
+// Classify only the exact native SDK request body, not a permission/owner proof.
+// No order ID, range, query, cursor or row is forwarded to quota scope resolution.
+export function shopifyOrderReadFamily(raw) {
+  if(typeof raw!=="string"||raw.length>65536)return null;
+  try {
+    const body=JSON.parse(raw);
+    if(JSON.stringify(body)!==raw||!object(body)||Object.keys(body).sort().join(",")!=="query,variables")return null;
+    const family=Object.entries(SHOPIFY_ORDER_READ_QUERIES).find(([,q])=>q===body.query)?.[0],v=body.variables;
+    if(!family||!object(v)||!Number.isSafeInteger(v.first)||v.first<1||v.first>100)return null;
+    cursor(v.after);
+    if(family==="order_headers") {
+      if(Object.keys(v).sort().join(",")!=="after,first,query"||typeof v.query!=="string")return null;
+      const range=/^updated_at:>='([^']+)' updated_at:<'([^']+)'$/.exec(v.query);
+      if(!range)return null;
+      const from=instant(range[1]),to=instant(range[2]);
+      if(!from.endsWith("Z")||!to.endsWith("Z")||Date.parse(from)>=Date.parse(to))return null;
+    } else {
+      if(Object.keys(v).sort().join(",")!=="after,first,orderId")return null;
+      gid(v.orderId,"Order");
+    }
+    return family;
+  } catch {return null;}
+}
+
 function gid(v,type) {
   if(typeof v!=="string"||!new RegExp(`^gid://shopify/${type}/[1-9][0-9]{0,19}$`).test(v)
     ||BigInt(v.slice(v.lastIndexOf("/")+1))>18446744073709551615n)fail("ID_INVALID");

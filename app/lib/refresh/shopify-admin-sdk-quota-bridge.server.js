@@ -2,6 +2,7 @@ import {AsyncLocalStorage} from "node:async_hooks";
 import {abstractFetch} from "@shopify/shopify-api/runtime";
 import {isQuotaManagedFetchForProvider} from "./quota-native-fetch.server.js";
 import {shopifyAdminIdentityFamily} from "./shopify-admin-identity-quota.server.js";
+import {shopifyOrderReadFamily} from "../shopify/order-read-protocol.server.js";
 import {IdentityReadDeadlineError,runIdentityReadDeadline} from "../providers/identity-read-deadline.server.js";
 const wrappedClients=new WeakSet();
 const bridges=new WeakSet();
@@ -25,7 +26,7 @@ export function createShopifyAdminIdentitySdkBridge() {
       return response;
     } catch(error) {call.failure=error;throw error;}
   }
-  function wrap({admin,transport,signal,timeoutMs=120000,...extra}={}) {
+  function wrap({admin,transport,signal,timeoutMs=120000,...extra}={},classify=shopifyAdminIdentityFamily) {
     if(Object.keys(extra).length||typeof admin?.graphql!=="function"||wrappedClients.has(admin)||!isQuotaManagedFetchForProvider(transport,"shopify_admin")
       ||signal!==undefined&&!(signal instanceof AbortSignal)||!Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>600000)throw fail("INPUT_INVALID");
     const graphql=admin.graphql.bind(admin);
@@ -38,7 +39,7 @@ export function createShopifyAdminIdentitySdkBridge() {
         if(!options||typeof options!=="object"||Object.keys(options).some(k=>!["variables","tries","signal"].includes(k))
           ||options.tries!==undefined&&options.tries!==1||options.signal!==undefined&&!(options.signal instanceof AbortSignal))throw Error();
         variables=structuredClone(options.variables);
-        if(!shopifyAdminIdentityFamily(JSON.stringify({query,variables})))throw Error();
+        if(!classify(JSON.stringify({query,variables})))throw Error();
         const signals=[signal,options.signal].filter(Boolean);external=signals.length?AbortSignal.any(signals):undefined;
       } catch {throw fail("INPUT_INVALID");}
       busy=true;let call;
@@ -64,5 +65,8 @@ export function createShopifyAdminIdentitySdkBridge() {
     }});
     wrappedClients.add(client);return client;
   }
-  const bridge=Object.freeze({fetch,wrap});bridges.add(bridge);return bridge;
+  // Keep the existing identity entry closed to caller-selected classifiers/modes.
+  // Both entries use ONE SDK hook; no competing global adapter installation.
+  const bridge=Object.freeze({fetch,wrap:options=>wrap(options),wrapOrders:options=>wrap(options,shopifyOrderReadFamily)});
+  bridges.add(bridge);return bridge;
 }

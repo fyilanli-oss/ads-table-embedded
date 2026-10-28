@@ -65,7 +65,7 @@ export function createSharedQuotaGuard({store,now,elapsedNow=()=>performance.now
       let stopped=false;
       const knownResponse=response?.outcome==="rejected";
       const connectionFailure=knownResponse&&response?.connectionFailure===true;
-      const quotaSignal=knownResponse&&!connectionFailure&&response?.quotaSignal==="shopify_partner_throttled"?response.quotaSignal:null;
+      const quotaSignal=knownResponse&&!connectionFailure&&["shopify_partner_throttled","shopify_admin_throttled"].includes(response?.quotaSignal)?response.quotaSignal:null;
       const observation=knownResponse&&!connectionFailure&&response?.quotaObservation;
       try {stopped=await store.stop({operationKey,attemptId,knownResponse,connectionFailure,quotaSignal,...observation?{quotaObservation:observation}:{}})===true;} catch { /* independent alarm wiring is a later gate */ }
       if(!feedbackRecorded) return {status:"needs_attention",reason:"quota_feedback_unavailable",stopRecorded:stopped};

@@ -20,7 +20,7 @@ export function shopifyAdminIdentityFamily(raw) {
 }
 
 // Observation only: never grants capacity, refunds usage, guesses plan/limits or reopens a stop.
-// Existing SQL feedback storage does not accept this shape yet (step14 review gate).
+// Private SQL storage retains this typed shape; native profiles and activation remain gated.
 export function shopifyAdminCostFeedback(status,payload) {
   const httpStatus=Number.isSafeInteger(status)&&status>=100&&status<=599?status:null;
   const empty=kind=>({kind,httpStatus,requestedQueryCost:null,actualQueryCost:null,

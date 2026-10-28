@@ -11,6 +11,20 @@ export function createSharedQuotaRepository(database) {
   }
   return Object.freeze({
     async recordFeedback({operationKey,attemptId,feedback}) {
+      if(typeof feedback?.kind==="string"&&feedback.kind.startsWith("shopify_admin_cost_")) {
+        const points=["requestedQueryCost","actualQueryCost","maximumAvailable","currentlyAvailable","restoreRate"];
+        const observed=feedback.kind==="shopify_admin_cost_observed",partial=feedback.kind==="shopify_admin_cost_partial";
+        const number=v=>typeof v==="number"&&Number.isFinite(v)&&v>=0&&v<=Number.MAX_SAFE_INTEGER;
+        if(!valid({operationKey,attemptId})||!feedback||typeof feedback!=="object"||Array.isArray(feedback)
+          ||Object.keys(feedback).sort().join(",")!=="actualQueryCost,currentlyAvailable,httpStatus,kind,maximumAvailable,requestedQueryCost,restoreRate"
+          ||!["shopify_admin_cost_observed","shopify_admin_cost_partial","shopify_admin_cost_missing","shopify_admin_cost_invalid"].includes(feedback.kind)
+          ||!Number.isInteger(feedback.httpStatus)||feedback.httpStatus<100||feedback.httpStatus>599
+          ||(observed||partial?(!Number.isSafeInteger(feedback.requestedQueryCost)||feedback.requestedQueryCost<0
+            ||(observed?(!Number.isSafeInteger(feedback.actualQueryCost)||feedback.actualQueryCost<0||feedback.actualQueryCost>feedback.requestedQueryCost):feedback.actualQueryCost!==null)
+            ||![feedback.maximumAvailable,feedback.currentlyAvailable,feedback.restoreRate].every(number)||feedback.currentlyAvailable>feedback.maximumAvailable)
+            :points.some(k=>feedback[k]!==null))) throw new Error("SHARED_QUOTA_INPUT_INVALID");
+        return await result("select operations.record_shopify_admin_quota_feedback($1::text,$2::uuid,$3::jsonb) as result",[operationKey,attemptId,JSON.stringify(feedback)])===true;
+      }
       if(!valid({operationKey,attemptId})||!feedback||typeof feedback!=="object"||Array.isArray(feedback)
         ||Object.keys(feedback).sort().join(",")!=="httpStatus,kind,limit,remaining,resetSeconds,retryAfterSeconds"
         ||!["steady","retry_after","missing","invalid"].includes(feedback.kind)
@@ -31,7 +45,7 @@ export function createSharedQuotaRepository(database) {
     },
     async stop(input) {
       const {knownResponse=false,connectionFailure=false,quotaSignal=null}=input;
-      if(!valid(input)||typeof knownResponse!=="boolean"||typeof connectionFailure!=="boolean"||![null,"shopify_partner_throttled"].includes(quotaSignal)
+      if(!valid(input)||typeof knownResponse!=="boolean"||typeof connectionFailure!=="boolean"||![null,"shopify_partner_throttled","shopify_admin_throttled"].includes(quotaSignal)
         ||(connectionFailure&&!knownResponse)||(quotaSignal!==null&&(!knownResponse||connectionFailure))) throw new Error("SHARED_QUOTA_INPUT_INVALID");
       if(input.quotaObservation!=null) {
         const d=input.quotaObservation;

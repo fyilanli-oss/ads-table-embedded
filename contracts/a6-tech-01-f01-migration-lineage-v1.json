@@ -580,6 +580,15 @@
       "repository_sql_sha256": "e60f87398caf9bf82b9414ab08afe808c35cc334713702214bf927bc9084a969",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261028143322",
+      "name": "eo05a_admin_cost_feedback",
+      "file": "supabase/migrations/20261028143322_eo05a_admin_cost_feedback.sql",
+      "created_with": "supabase@2.121.0 migration new eo05a_admin_cost_feedback",
+      "repository_sql_sha256": "19fcc7baff1f51795e40321ef6200f0a149e0e19fd13b034aff454eae05ef41d",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

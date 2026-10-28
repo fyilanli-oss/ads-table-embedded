@@ -1,4 +1,5 @@
 {
+  "Shopify_order_SDK_quota_binding_2026_10_28": "contracts/eo-05-start-brief-v1.json#Shopify_order_SDK_quota_binding_2026_10_28",
   "Shopify_Admin_identity_extension_2026_10_27": "contracts/eo-05-start-brief-v1.json#Shopify_Admin_identity_quota_boundary_2026_10_27",
   "contract_id": "eo-05a-quota-scope-resolver-v1",
   "identity_endpoint_extension_2026_10_27": "contracts/eo-05-start-brief-v1.json#Meta_identity_quota_families_2026_10_27",

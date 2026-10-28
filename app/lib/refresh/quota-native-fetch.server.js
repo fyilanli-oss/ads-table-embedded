@@ -3,6 +3,7 @@ import {quotaResponseFeedback} from "./quota-response-feedback.server.js";
 import {googleQuotaObservation} from "./google-quota-observation.server.js";
 import {shopifyAdminIdentityFamily,shopifyAdminCostFeedback} from "./shopify-admin-identity-quota.server.js";
 import {SHOPIFY_ADMIN_COST_UNIT} from "./shared-quota.server.js";
+import {shopifyOrderReadFamily,SHOPIFY_ORDER_READ_API_VERSION} from "../shopify/order-read-protocol.server.js";
 const controls=new WeakMap();
 const managed=new WeakMap();
 const readExecutions=new WeakMap();
@@ -53,7 +54,9 @@ function descriptor(provider,input,init) {
   } else if(provider==="shopify_admin"&&method==="POST"&&/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(url.hostname)&&url.port==="") {
     const match=path.match(/^\/admin\/api\/(\d{4}-(?:01|04|07|10))\/graphql\.json$/);
     if(match&&!url.search&&url.pathname===path) {
-      family=shopifyAdminIdentityFamily(init?.body);version=match[1];accountId=url.hostname;
+      version=match[1];accountId=url.hostname;
+      family=shopifyAdminIdentityFamily(init?.body)
+        ??(version===SHOPIFY_ORDER_READ_API_VERSION?shopifyOrderReadFamily(init?.body):null);
     }
   } else if(provider==="meta"&&url.origin==="https://graph.facebook.com") {
     const match=path.match(/^\/(v[0-9]+\.[0-9]+)\/(act_[0-9]+)\/insights$/);

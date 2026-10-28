@@ -1,5 +1,9 @@
 # EO-04 — Analiz ve tasarım kitabı
 
+## EO-05 takip — Sipariş SDK/kota istemcisi, 28 Ekim 2026
+
+#225 main’dedir. Üç exact sipariş sorgusu yalnız API 2026-10’da ayrı quota key/point receipt ile inactive SDK HTTP yoluna bağlandı. Tek genuine hook’ta wrap identity-only kalır, wrapOrders order-only’dir. Yeni fenced order client asıl provider job/owner/shop/session ve güncel context’i korur; kendi shared read sayacı sonraki wait’te ilk HTTP’yi silmez. Caller scopes/guard/budget/classifier veremez; native hata auth recovery/retry yapmaz. 56 yeni + 691 mevcut test ve 7 kontrol/typecheck; gerçek adapter Admin’i SQL/HTTP öncesinde hâlâ reddeder. Order permission/history/protected-data ve canlı profil/hook/SQL kabulü ile native koleksiyon/total bounds/parser-stop/final consistency açıktır. EO-04 kabulü, 13/14 durağı ve PMax duraklaması değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Shopify_order_SDK_quota_binding_2026_10_28` ve Execution Plan.
+
 ## EO-05 takip — Shopify sipariş/satır/yolculuk protokolü, 28 Ekim 2026
 
 #224 main’dedir. Mevcut 12’nin sipariş okuyucusu alt işi için API 2026-10 sabit sorguları, strict yanıt kontrolleri ve bağımsız cursor devam tanımları hazırlandı; HTTP okuyucusu, yeni runtime family veya yazım değildir. Order/LineItem string kimliği, Product/Variant null ve çelişki, exact decimal/currency, orijinal/güncel/iade ayrımı, stale order, yolculuk readiness ve eksik durumlar korunur. Paid/provider claim/rol/overlap veya snapshot kanıtı üretilmez. 66 sentetik test ve 210 mevcut regresyon ile 7 repository kontrolü; mevcut Admin allowlist yeni sorguları sıfır HTTP ile reddeder. SDK/kota/fenced authority/native collection ve izin kanıtı ile 13/14 kapıları açıktır. EO-04 kabulü değişmez. Ayrıntı: `contracts/eo-05-start-brief-v1.json#Shopify_order_read_protocol_2026_10_28` ve Execution Plan.

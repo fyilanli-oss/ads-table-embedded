@@ -9,7 +9,8 @@ import {createSharedQuotaGuard} from "../app/lib/refresh/shared-quota.server.js"
 import {createQuotaScopeResolver,quotaRouteIdentity} from "../app/lib/refresh/quota-scope-resolver.server.js";
 import {SHOPIFY_PRODUCT_CANDIDATE_QUERIES as queries,verifyShopifyProductCandidate} from "../app/lib/shopify/product-identity-verification.server.js";
 import {refreshQuotaWait} from "../app/lib/refresh/quota-work-wait.server.js";
-import {createRefreshShopifyAdminIdentityClient,createRefreshQuotaClients} from "../app/lib/refresh/quota-authority-binding.server.js";
+import {createRefreshShopifyAdminIdentityClient,createRefreshShopifyAdminOrderClient,createRefreshQuotaClients} from "../app/lib/refresh/quota-authority-binding.server.js";
+import {createShopifyOrderPageRequest,parseShopifyOrderPage,SHOPIFY_ORDER_READ_QUERIES as orderQueries} from "../app/lib/shopify/order-read-protocol.server.js";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 
 // Only this isolated test worker installs the SDK hook. No application bootstrap edits.
@@ -22,12 +23,15 @@ const api=shopifyApi({apiKey:"a".repeat(32),apiSecretKey:"b".repeat(32),hostName
 const variables={productId:"gid://shopify/Product/10",variantId:"gid://shopify/ProductVariant/20"};
 const shop={authority:"shopify_admin_verified",shopId:"gid://shopify/Shop/12",myshopifyDomain:"test.myshopify.com"};
 const installation={authority:"shopify_installation_verified",workspaceId:"11111111-1111-4111-8111-111111111111",installGeneration:3,status:"active"};
-function fixture({bridge=createShopifyAdminIdentitySdkBridge(),domain=shop.myshopifyDomain,readExecution}={}) {
+const orderRange={fromInclusive:"2026-10-01T00:00:00Z",toExclusive:"2026-10-02T00:00:00Z"};
+function orderRequest(family="order_headers") {return createShopifyOrderPageRequest({family,shop:{id:shop.shopId,myshopifyDomain:shop.myshopifyDomain},
+  ...family==="order_headers"?{range:orderRange}:{orderId:"gid://shopify/Order/10",updatedAt:"2026-10-01T12:00:00Z"}});}
+function fixture({bridge=createShopifyAdminIdentitySdkBridge(),domain=shop.myshopifyDomain,readExecution,orders=false}={}) {
   setAbstractFetchFunc(bridge.fetch);
   const q={costBudget:{unit:"shopify_admin_query_points",reservedRequestedCost:10}},calls=[],reservations=[],settles=[],stops=[],feedback=[],auth=[],logs=[];
   const context={provider:"shopify_admin",clientScopeKey:"a".repeat(64),connectionScopeKey:"b".repeat(64),connectionEpoch:3,
     accountId:domain,organizationId:null,apiVersion:"2026-10"};
-  const keys=Object.keys(queries).map(family=>quotaRouteIdentity(context,{provider:"shopify_admin",family,accountId:domain,
+  const keys=Object.keys(orders?orderQueries:queries).map(family=>quotaRouteIdentity(context,{provider:"shopify_admin",family,accountId:domain,
     organizationId:null,version:"2026-10",includes:[]}).routeKey);
   const store={resolveRoute:async x=>{await q.loading?.();return q.missing?null:keys.includes(x.routeKey)?x.routeKey:null;},
     reserve:async x=>{reservations.push(x);if(q.waitAt===reservations.length)return {status:"waiting"};
@@ -39,6 +43,7 @@ function fixture({bridge=createShopifyAdminIdentitySdkBridge(),domain=shop.mysho
     resolveOperation:resolve,isDispatchCurrent:async(d,k)=>await resolve(d)===k,
     fetchFn:async(endpoint,init)=>{calls.push({endpoint,init});await q.native?.(init);if(q.throw)throw Error("SECRET-NATIVE");
       return new Response(JSON.stringify(q.payload??{data:{shop:{id:shop.shopId,myshopifyDomain:domain},product:{id:variables.productId,legacyResourceId:"10"},
+        ...orders?{orders:{edges:[],pageInfo:{hasNextPage:false,endCursor:null}}}:{},
         productVariant:{id:variables.variantId,legacyResourceId:"20",product:{id:variables.productId,legacyResourceId:"10"}}},
         extensions:{cost:{requestedQueryCost:8,actualQueryCost:5,throttleStatus:{maximumAvailable:1000,currentlyAvailable:995,restoreRate:50}}}}),
       {status:q.status??200,headers:{"content-type":"application/json"}});}});
@@ -47,7 +52,8 @@ function fixture({bridge=createShopifyAdminIdentitySdkBridge(),domain=shop.mysho
   const admin={graphql:graphqlClientFactory({params,session,handleClientError:handleClientErrorFactory({request:new Request("https://example.com"),onError:async x=>auth.push(x)})})};
   const config={admin,transport};
   return {bridge,q,calls,reservations,settles,stops,feedback,auth,logs,context,config,store,
-    wrap:()=>bridge.wrap(config),read:client=>client.graphql(queries.identity_product_variant,{variables,tries:1})};
+    wrap:()=>orders?bridge.wrapOrders(config):bridge.wrap(config),read:client=>orders?
+      client.graphql(orderRequest().query,{variables:orderRequest().variables,tries:1}):client.graphql(queries.identity_product_variant,{variables,tries:1})};
 }
 test("real pinned React Router/API SDK reaches guarded physical HTTP once and keeps native response",async()=>{
   const f=fixture(),client=f.wrap(),result=await verifyShopifyProductCandidate({admin:client,shop,installation,productId:"10",variantId:"20"});
@@ -191,8 +197,8 @@ test("unknown native failure and feedback storage failure are not converted to q
     assert.equal(f.auth.length,0);if(mode==="native")assert.equal(f.stops[0].knownResponse,false);}
 });
 
-function boundFixture() {
-  const f=fixture(),loads=[];
+function boundFixture({orders=false}={}) {
+  const f=fixture({orders}),loads=[];
   // Reuse only synthetic native HTTP and the same profile/guard store, not the lower transport.
   const config={verified:{installationAuthority:structuredClone(installation),identity:{shop:structuredClone(shop),
     session:{authority:"shopify_id_token_verified",shopDomain:shop.myshopifyDomain}},context:{admin:f.config.admin}},
@@ -207,7 +213,7 @@ function boundFixture() {
         extensions:{cost:{requestedQueryCost:8,actualQueryCost:5,throttleStatus:{maximumAvailable:1000,currentlyAvailable:995,restoreRate:50}}}}),
         {status:f.q.status??200,headers:{"content-type":"application/json"}});
     }};
-  return {...f,loads,boundConfig:config,create:()=>createRefreshShopifyAdminIdentityClient(config)};
+  return {...f,loads,boundConfig:config,create:()=>orders?createRefreshShopifyAdminOrderClient(config):createRefreshShopifyAdminIdentityClient(config)};
 }
 test("fenced Admin: real SDK/candidate reads receive original provider claim window receipt on both context checks",async()=>{
   const f=boundFixture(),result=await verifyShopifyProductCandidate({admin:f.create(),shop,installation,productId:"10",variantId:"20"});
@@ -298,4 +304,105 @@ test("fenced Admin cost: real SDK requested-cost excess preserves safe error and
   const f=boundFixture();f.q.costBudget.reservedRequestedCost=5;const client=f.create();
   await assert.rejects(f.read(client),/COST_BUDGET_EXCEEDED/);assert.equal(f.calls.length,1);assert.equal(f.stops.length,1);assert.equal(f.auth.length,0);
   await assert.rejects(f.read(client),/EXECUTION_CLOSED/);assert.equal(f.calls.length,1);
+});
+
+for(const family of Object.keys(orderQueries))test(`real SDK order entry dispatches exact ${family} with separate quota and native cost feedback`,async()=>{
+  const f=fixture({orders:true}),r=orderRequest(family),client=f.wrap();
+  const result=await client.graphql(r.query,{variables:r.variables,tries:1});assert.equal(result.ok,true);
+  assert.equal(f.calls.length,1);assert.equal(f.reservations.length,1);assert.equal(f.feedback.length,1);assert.equal(f.auth.length,0);
+  const raw=JSON.parse(f.calls[0].init.body);assert.equal(raw.query,r.query);assert.deepEqual(raw.variables,r.variables);
+  assert.ok(f.feedback.every(x=>x.feedback.kind==="shopify_admin_cost_observed"));
+  assert.doesNotMatch(JSON.stringify([f.feedback,f.reservations]),/SECRET|orderId|updated_at|gid:|cursor/);
+});
+
+test("one installed SDK hook supports isolated identity and order clients without widening identity entry",async()=>{
+  const bridge=createShopifyAdminIdentitySdkBridge(),a=fixture({bridge}),b=fixture({bridge,orders:true});
+  await a.read(a.wrap());await b.read(b.wrap());assert.equal(a.calls.length,1);assert.equal(b.calls.length,1);
+  const c=fixture({bridge}),identity=c.wrap(),r=orderRequest();
+  await assert.rejects(identity.graphql(r.query,{variables:r.variables}),/INPUT_INVALID/);assert.equal(c.calls.length,0);
+  const d=fixture({bridge,orders:true}),orders=d.wrap();await assert.rejects(orders.graphql(queries.identity_product,{variables:{productId:variables.productId}}),/INPUT_INVALID/);
+  assert.equal(d.calls.length,0);assert.equal(d.reservations.length,0);
+});
+
+test("order entry cannot replace private classifier via extra public argument or options",async()=>{
+  const f=fixture({orders:true}),r=orderRequest();
+  const identity=f.bridge.wrap(f.config,()=>"order_headers");
+  await assert.rejects(identity.graphql(r.query,{variables:r.variables}),/INPUT_INVALID/);
+  assert.throws(()=>f.bridge.wrapOrders({...f.config,classify:()=>"order_headers"}),/INPUT_INVALID/);assert.equal(f.calls.length,0);
+});
+
+test("order query variables are captured before async quota reservation",async()=>{
+  const f=fixture({orders:true}),client=f.wrap(),r=orderRequest(),v=structuredClone(r.variables);let release;
+  f.q.reserving=()=>new Promise(resolve=>{release=resolve;});const pending=client.graphql(r.query,{variables:v,tries:1});
+  while(!release)await new Promise(resolve=>setTimeout(resolve,0));v.query="status:paid";v.first=999;release();await pending;
+  assert.deepEqual(JSON.parse(f.calls[0].init.body).variables,r.variables);
+});
+
+for(const status of [401,403,429,500])test(`real order SDK HTTP ${status} stops once without auth recovery/retry`,async()=>{
+  const f=fixture({orders:true});f.q.status=status;f.q.payload={errors:[{message:"SECRET"}]};const client=f.wrap();
+  await assert.rejects(f.read(client),/NATIVE_REQUEST_FAILED/);assert.equal(f.calls.length,1);assert.equal(f.stops.length,1);assert.equal(f.auth.length,0);
+  await assert.rejects(f.read(client),/EXECUTION_CLOSED/);assert.equal(f.calls.length,1);
+});
+
+test("fenced order SDK carries original provider claim and closes on later wait without first-page replay",async()=>{
+  const f=boundFixture({orders:true}),client=f.create();await f.read(client);f.q.waitAt=2;let error;
+  try{await f.read(client);}catch(e){error=e;}
+  assert.equal(quotaBoundaryControl(error)?.status,"waiting");assert.equal(quotaBoundaryControl(error)?.priorBoundaryAttempts,1);
+  assert.equal(refreshQuotaWait(error,"provider_page",f.boundConfig.claim),null);assert.equal(f.calls.length,1);
+  assert.ok(f.loads.every(x=>x.provider==="shopify_admin"&&x.claim.provider==="meta"&&x.claim.accountId==="act_123"&&x.claim.fence===2));
+  await assert.rejects(f.read(client),/EXECUTION_CLOSED/);
+});
+
+test("fenced order SDK true first wait has zero attempts and no native call",async()=>{
+  const f=boundFixture({orders:true});f.q.waitAt=1;let error;try{await f.read(f.create());}catch(e){error=e;}
+  assert.equal(quotaBoundaryControl(error)?.priorBoundaryAttempts,0);assert.ok(refreshQuotaWait(error,"provider_page",f.boundConfig.claim));assert.equal(f.calls.length,0);
+});
+
+for(const mutate of [f=>{f.context.apiVersion="2026-07";},f=>{f.q.lost=true;},f=>{f.q.missing=true;},
+  f=>{f.context.accountId="other.myshopify.com";}])test("fenced orders missing current authority/profile/version sends zero HTTP",async()=>{
+  const f=boundFixture({orders:true});mutate(f);await assert.rejects(f.read(f.create()),e=>quotaBoundaryControl(e)?.status==="not_configured");
+  assert.equal(f.calls.length,0);assert.equal(f.reservations.length,0);
+});
+
+test("current repository still rejects order Admin context before SQL and native HTTP at step14 gate",async()=>{
+  const f=boundFixture({orders:true});let sql=0;f.boundConfig.workStore=createRefreshWorkRepository({query:async()=>{sql++;throw Error("must not query");}});
+  await assert.rejects(f.read(f.create()),e=>quotaBoundaryControl(e)?.status==="not_configured");assert.equal(sql,0);assert.equal(f.calls.length,0);
+});
+
+for(const key of ["readExecution","orders","classify","loadContext","authorizeRead","guard","costBudget","requiredCostUnit","scopes"])
+  test(`fenced orders rejects caller ${key} override before lookup or native HTTP`,()=>{
+    const f=boundFixture({orders:true});f.boundConfig[key]={};assert.throws(f.create,/INPUT_INVALID/);assert.equal(f.loads.length,0);assert.equal(f.calls.length,0);
+  });
+
+test("fenced order SDK rechecks job/connection epoch after quota reserve and settles stale authority",async()=>{
+  const f=boundFixture({orders:true});f.q.reserving=()=>{f.context.connectionEpoch++;};
+  await assert.rejects(f.read(f.create()),e=>quotaBoundaryControl(e)?.status==="not_sent");
+  assert.equal(f.calls.length,0);assert.equal(f.reservations.length,1);assert.equal(f.settles.length,1);
+});
+
+test("fenced order SDK missing point receipt cannot dispatch and native requested-cost excess cannot succeed",async()=>{
+  for(const mode of ["missing","excess"]){
+    const f=boundFixture({orders:true});if(mode==="missing")delete f.q.costBudget;else f.q.costBudget.reservedRequestedCost=5;
+    await assert.rejects(f.read(f.create()),e=>mode==="missing"?quotaBoundaryControl(e)?.status==="not_sent":e.message==="QUOTA_NATIVE_COST_BUDGET_EXCEEDED");
+    assert.equal(f.calls.length,mode==="missing"?0:1);assert.equal(f.stops.length,mode==="missing"?0:1);
+  }
+});
+
+test("real SDK response is consumed by the existing order parser without granting authority or snapshot proof",async()=>{
+  const f=fixture({orders:true}),r=orderRequest(),response=await f.wrap().graphql(r.query,{variables:r.variables,tries:1});
+  const page=parseShopifyOrderPage({request:r,body:await response.json()});assert.equal(page.state,"parsed");assert.deepEqual(page.rows,[]);
+  assert.equal(page.runtimeAuthorityVerified,false);assert.equal(page.snapshotVerified,false);assert.equal(page.authorizesActivation,false);
+});
+
+test("fenced order client captures original job owner shop and native SDK function",async()=>{
+  const f=boundFixture({orders:true}),client=f.create();f.boundConfig.claim.fence=999;
+  f.boundConfig.claim.accountId="act_999";f.boundConfig.verified.context.admin.graphql=()=>{throw Error("retarget");};
+  f.boundConfig.verified.installationAuthority.installGeneration=99;
+  f.boundConfig.verified.identity.shop.myshopifyDomain="other.myshopify.com";
+  await f.read(client);assert.equal(f.calls.length,1);assert.ok(f.loads.every(x=>x.claim.accountId==="act_123"&&x.claim.fence===2));
+});
+
+test("fenced order client requires its actual SDK hook before any work context lookup",async()=>{
+  const f=boundFixture({orders:true}),client=f.create();setAbstractFetchFunc(originalFetch);
+  await assert.rejects(f.read(client),/HOOK_NOT_INSTALLED/);assert.equal(f.calls.length,0);assert.equal(f.loads.length,0);
 });

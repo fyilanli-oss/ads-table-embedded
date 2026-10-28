@@ -1,5 +1,19 @@
 # EO-04 — Analiz ve tasarım kitabı
 
+## Sıralı plan 12 — Klaviyo adaylarının ortak SDK/kota bağlantısı, 28 Ekim 2026
+
+#228 `30129063efc4e1880c53868b7d4a167de7c7482c` main’dedir. Yeni inactive createRefreshKlaviyoCandidateReader, mevcut native Ordered Product → Shopify ürün/varyant-parent doğrulaması → Message bağını aynı fenced iş altında hazırlar. Önceki native ve Message entry’leri aday moduna açılmaz; ayrı entry mode/guard/context/scopes/readExecution/Admin override kabul etmez. Kimlikler, native SDK fonksiyonu, workspace/kurulum nesli, asıl Klaviyo job/fence, iş günü ve entitlement receipt async işten önce yakalanır.
+
+Klaviyo ve Shopify Admin ayrı profillerle, aynı private context binding ve tek fiziksel HTTP attempt sayacıyla çalışır. İlk provider wait sıfırdır; üç provider çağrısından sonraki Admin wait prior=3, Admin’den sonraki rapor wait prior=4’tür. Kısmi okuma hiç gönderilmemiş sayılıp baştan oynatılamaz. Admin sorgusu yalnız genuine SDK hook, existing exact identity query, typed point receipt ve native cost feedback üzerinden gönderilir; ilk hatada retry/auth recovery yoktur. Mevcut tek koleksiyon süre/iptal sinyali her iki tarafa gider. SDK client bütün sonuçlarda kapatılır; geç dönen dependency yeni Admin sayfası açamaz. Gönderilmiş çağrı geri alınmış sayılmaz.
+
+Çıktı mevcut yerel aday kanıtıdır; doğrulanmış provider linki/kanonik mapping değildir. Product ID omurgası, varsa Variant ID ayrıntısı korunur. Message rapor istatistiği ürün satışına çevrilmez; Campaign Assisted / Flow Triggered / Unclassified kararı değişmez. Canonical scope, persistable, mapping write ve aktivasyon false kalır. Actual SQL Admin’i hâlâ SQL/HTTP öncesinde reddeder. Yeni tablo/migration, SQL profil/env/config/OAuth/token/provider mutasyonu, route veya Dataset yazımı yoktur.
+
+Google/Meta aday-rapor factory bağlantıları, gerçek kaynak/namespace/erişim kanıtları, Admin SQL/profil/puan/global hook/upstream kapasite ve canonical scope kapıları açıktır. 13 prewrite ve 14 kullanıcı incelemesi, mevcut 26 sıra ve tarihsel PMax duraklaması korunur.
+
+33 yeni + 1.279 mevcut ilgili test (1.312 toplam), 7 repository kontrolü ve typecheck geçti. Sentetik DB/vault/HTTP/receipt ile kurulu gerçek SDK ve gerçek quota guard/resolver sınandı; native erişim veya maliyet profili kanıtlanmış sayılmaz.
+
+Resmî kontrol 28 Ekim 2026: [Klaviyo Events](https://developers.klaviyo.com/en/reference/get_events), [Shopify ProductVariant](https://shopify.dev/docs/api/admin-graphql/latest/queries/productVariant), [Node async context](https://nodejs.org/api/async_context.html). Makine kaydı: `contracts/eo-05-start-brief-v1.json#Klaviyo_candidate_quota_composition_2026_10_28`.
+
 ## Sıralı plan 12 — Shopify native izin listesi, 28 Ekim 2026
 
 #227 `a3e8db49a82aeaf77fba93a95006e93e56d7e82d` main’dedir. Hazırlanan tek kullanımlık sipariş çalıştırıcısı, ilk sipariş sorgusundan önce ve tüm veri kontrollerinden sonra `currentAppInstallation.id/accessScopes` listesini aynı genuine SDK/kota yolundan okur. Ayrı `permission_scopes` ailesi yalnız API 2026-10’da, kendi operation key ve typed point receipt’iyle çalışır; mevcut ürün/sipariş profili yerine kullanılamaz. Global SDK hook kurulmadı; identity-only istemci bu sorguya açılmadı.

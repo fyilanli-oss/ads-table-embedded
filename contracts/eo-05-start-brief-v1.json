@@ -24,7 +24,7 @@
     "google_pd_source_composition": "merged_PR185_f01d31ee7f741e70513bfe96e8750d4f405580a5",
     "klaviyo_pd_source_composition": "merged_PR186_99f6474bc49ff70a084ca5916bc3631f05187ba1",
     "pd_canonical_bridge": "merged_PR187_5657ce49c2c93b4d018c4606e08134a311754c33",
-    "current_slice": "ordered_step_12_Shopify_order_scope_readback_prepared_protected_data_live_SQL_capacity_and_prewrite_gates_open",
+    "current_slice": "ordered_step_12_Klaviyo_candidate_SDK_shared_quota_composition_prepared_live_SQL_and_prewrite_gates_open",
     "permission_preflight": "merged_PR190_ee28856c1260dffd18725eeb85718d195a5ce3de_not_live",
     "identity_OAuth_scope_binding": "merged_PR191_438bf5f8960cc2e25d4b6202a580cc1b1bf9b426_not_live",
     "Google_identity_credential_lifecycle": "merged_PR192_807408603484578555fc8700eb50f9cfa420d07d_not_live",
@@ -63,13 +63,56 @@
     "Shopify_order_read_protocol": "merged_PR225_4ec0c5fe7839a621420f09267ecfc75bf2261b05_not_live_reader_or_full_step_12_complete",
     "Shopify_order_SDK_quota_binding": "merged_PR226_e2b48e20c285c260a25b5c1aad833449d7e78d99_not_live_order_permission_acceptance",
     "Shopify_order_native_collection": "merged_PR227_a3e8db49a82aeaf77fba93a95006e93e56d7e82d_not_live_or_step12_complete",
-    "Shopify_order_scope_readback": "repository_prepared_in_current_PR_not_merged_live_or_step12_complete",
+    "Shopify_order_scope_readback": "merged_PR228_30129063efc4e1880c53868b7d4a167de7c7482c_not_live_or_step12_complete",
+    "Klaviyo_candidate_quota_composition": "repository_prepared_in_current_PR_not_merged_live_or_step12_complete",
     "Shopify_sales_attribution_decision": "contracts/pd-cpd-query-standard-v1.json#shopify_order_attribution_decision_2026_10_27",
     "planning_and_identity_PR179": "open_not_merged_or_live",
     "provider_activation": false,
     "identity_pause_before_step_12": true,
     "historical_PMax_pause_preserved": true,
     "package_complete": false
+  },
+  "Klaviyo_candidate_quota_composition_2026_10_28": {
+    "new_tests": 33,
+    "existing_relevant_regressions": 1279,
+    "total_relevant_tests": 1312,
+    "repository_controls": 7,
+    "typecheck_passed": true,
+    "ordered_plan_step": 12,
+    "status": "prepared_inactive_Klaviyo_and_Shopify_candidate_quota_composition_NOT_live_mapping_or_full_step12_completion",
+    "runtime": [
+      "app/lib/refresh/quota-authority-binding.server.js",
+      "app/lib/refresh/shopify-admin-sdk-quota-bridge.server.js"
+    ],
+    "tests": [
+      "tests/klaviyo-identity-collection.test.js",
+      "tests/shopify-admin-sdk-quota-bridge.test.js"
+    ],
+    "entry": "createRefreshKlaviyoCandidateReader_explicit_separate_parameterless_one_shot_readEvidence_native_and_message_factories_cannot_select_candidate_work_or_supply_sdkBridge",
+    "authority": "same_captured_original_Klaviyo_job_workspace_generation_fence_business_day_entitlement_receipt_workStore_and_pinned_context_binding_for_provider_and_Admin_native_SDK_function_and_owner_captured_before_async",
+    "transport": "Klaviyo_account_metrics_events_Message_reports_and_Shopify_identity_product_variant_use_distinct_existing_operation_profiles_same_opaque_physical_attempt_ledger_original_owner_job_not_fourth_provider",
+    "shared_wait": "first_provider_wait_prior0_retained_Admin_wait_after_account_metric_event_prior3_report_wait_after_Admin_prior4_no_whole_collection_unsent_replay",
+    "SDK": "genuine_bridge_same_actual_hook_exact_existing_identity_queries_typed_Admin_point_receipt_native_cost_feedback_no_auth_recovery_retry_or_unmanaged_Admin_fallback",
+    "lifetime": "one_existing_collector_total_deadline_child_signal_propagates_to_Admin_SDK_SQL_quota_and_HTTP_new_generic_private_SDK_client_closer_closes_on_all_collection_outcomes_even_success_late_ignored_dependencies_cannot_start_more_Admin_requests",
+    "output": "existing_same_shop_candidate_and_native_Message_evidence_only_ProductID_and_Variant_ID_not_assumed_verified_provider_link_or_canonical_mapping_no_statistics_duplication_Campaign_Assisted_Flow_Triggered_Unclassified_preserved",
+    "current_SQL": "actual_refresh_work_repository_still_rejects_Admin_before_SQL_HTTP_no_inventory_profile_costBudget_or_schema_change",
+    "remaining": [
+      "Google_and_Meta_candidate_report_factories_still_need_shared_Admin_composition",
+      "real_provider_source_format_namespace_and_access_evidence",
+      "protected_data_history_and_native_scope_SQL_context_profiles_costBudget_feedback_stop_global_hook_upstream_capacity_review",
+      "canonical_installation_PK_selection_epoch_OAuth_CAS_Merchant_SQL_and_durable_partial_continuation",
+      "step13_prewrite_checks_and_existing_step14_user_review_before_tables_and_durable_write"
+    ],
+    "official_checked_at": "2026-10-28",
+    "sources": [
+      "https://developers.klaviyo.com/en/reference/get_events",
+      "https://shopify.dev/docs/api/admin-graphql/latest/queries/productVariant",
+      "https://nodejs.org/api/async_context.html"
+    ],
+    "new_SQL_migration_live_DB_provider_OAuth_token_config_route_Dataset_or_role_mutation": false,
+    "global_SDK_hook_installed": false,
+    "step_12_complete": false,
+    "historical_PMax_pause_preserved": true
   },
   "Shopify_order_scope_readback_2026_10_28": {
     "new_tests": 57,

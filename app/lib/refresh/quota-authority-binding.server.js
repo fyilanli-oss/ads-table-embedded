@@ -3,12 +3,12 @@ import {refreshWorkIdentity} from "./work-stop-policy.server.js";
 import {createQuotaScopeResolver} from "./quota-scope-resolver.server.js";
 import {createSharedQuotaGuard} from "./shared-quota.server.js";
 import {createQuotaManagedFetch,createQuotaReadExecution} from "./quota-native-fetch.server.js";
-import {collectKlaviyoNativeIdentityEvidence, collectKlaviyoIdentityMessageEvidence} from "../providers/klaviyo-identity-collection.server.js";
+import {collectKlaviyoNativeIdentityEvidence, collectKlaviyoIdentityMessageEvidence,collectKlaviyoVerifiedProductCandidateEvidence} from "../providers/klaviyo-identity-collection.server.js";
 import {klaviyoBusinessDayTimeframe} from "../providers/klaviyo-reporting.server.js";
 import {collectMetaNativeIdentityEvidence} from "../providers/meta-identity-collection.server.js";
 import {metaIdentityReportWindow} from "../providers/meta-report-candidates.server.js";
 import {collectGoogleMerchantIdentityEvidence} from "../providers/google-identity-collection.server.js";
-import {isShopifyAdminIdentitySdkBridge,closeShopifyAdminOrderSdkClient} from "./shopify-admin-sdk-quota-bridge.server.js";
+import {isShopifyAdminIdentitySdkBridge,closeShopifyAdminOrderSdkClient,closeShopifyAdminSdkClient} from "./shopify-admin-sdk-quota-bridge.server.js";
 import {normalizeShopDomain} from "../shopify/installation-authority.server.js";
 import {SHOPIFY_ORDER_READ_API_VERSION} from "../shopify/order-read-protocol.server.js";
 import {createShopifyOrderReadExecution} from "../shopify/order-collection.server.js";
@@ -39,25 +39,29 @@ export function createRefreshQuotaClients(options) {
   return createScopeResolvedQuotaClients(refreshQuotaOptions(options));
 }
 
-function identityTransport(binding,provider,claim,merchantTarget) {
+function identityTransport(binding,provider,claim,merchantTarget,readExecution) {
   const resolve=createQuotaScopeResolver({store:binding.store,loadContext:async input=>{
     if(input.provider!==provider) return null;
     const context=await binding.loadContext(input);
     return context?.provider===provider&&context.accountId===claim.accountId
       &&(merchantTarget===undefined||context.merchant?.targetAccountId===merchantTarget)?context:null;
   }});
-  return createQuotaManagedFetch({provider,lane:"background",fetchFn:binding.fetchFn,
+  return createQuotaManagedFetch({provider,lane:"background",fetchFn:binding.fetchFn,...readExecution?{readExecution}:{},
     guard:createSharedQuotaGuard({store:binding.store,now:binding.now}),resolveOperation:resolve,
     isDispatchCurrent:async(metadata,key)=>await resolve(metadata)===key});
 }
 
 // Inactive background constructor. Existing SQL rechecks fenced claim/window/entitlement
 // and approved quota inventory at each boundary. No caller resolver/guard/account override.
-export function createRefreshKlaviyoIdentityReader({verified,database,tokenVault,mode,signal,
-  readNow=()=>new Date(),maxElapsedMs,maxPages,maxEvents,maxMetrics,maxIncluded,maxMessageRows,...quotaOptions} = {}) {
+export function createRefreshKlaviyoIdentityReader(options) {return createKlaviyoIdentityReader(options);}
+// Candidate composition is explicit; native/Message callers cannot opt into Admin work.
+export function createRefreshKlaviyoCandidateReader(options) {return createKlaviyoIdentityReader(options,true);}
+function createKlaviyoIdentityReader({verified,database,tokenVault,mode,signal,sdkBridge,
+  readNow=()=>new Date(),maxElapsedMs,maxPages,maxEvents,maxMetrics,maxIncluded,maxMessageRows,...quotaOptions} = {},candidates=false) {
   const claim=structuredClone(quotaOptions.claim),window=structuredClone(quotaOptions.window);
   const owner=structuredClone(verified?.installationAuthority),shop=structuredClone(verified?.identity?.shop);
-  if(!["native","message"].includes(mode)||claim?.provider!=="klaviyo"||typeof window?.from!=="string"||window.from!==window.to
+  if((candidates?mode!==undefined||!isShopifyAdminIdentitySdkBridge(sdkBridge):!["native","message"].includes(mode)||sdkBridge!==undefined)
+    ||claim?.provider!=="klaviyo"||typeof window?.from!=="string"||window.from!==window.to
     ||owner?.authority!=="shopify_installation_verified"||owner.status!=="active"||owner.workspaceId!==claim.workspaceId
     ||String(owner.installGeneration)!==claim.installGeneration||typeof verified?.context?.admin?.graphql!=="function"
     ||typeof readNow!=="function"||typeof quotaOptions.entitlementReceipt?.observedAt!=="string"
@@ -65,16 +69,20 @@ export function createRefreshKlaviyoIdentityReader({verified,database,tokenVault
   klaviyoBusinessDayTimeframe({businessDate:window.from,timeZone:"UTC"});
   const caller={installationAuthority:owner,identity:{shop,session:{authority:verified.identity?.session?.authority,
     shopDomain:verified.identity?.session?.shopDomain}},context:{admin:{graphql:verified.context.admin.graphql.bind(verified.context.admin)}}};
-  const binding=refreshQuotaOptions(quotaOptions);
-  const transport=identityTransport(binding,"klaviyo",claim);
-  const collect=mode==="native"?collectKlaviyoNativeIdentityEvidence:collectKlaviyoIdentityMessageEvidence;
+  const binding=refreshQuotaOptions(quotaOptions,{admin:candidates});
+  const execution=candidates?createQuotaReadExecution():undefined;
+  const transport=identityTransport(binding,"klaviyo",claim,undefined,execution);
+  const admin=candidates?createFencedAdminClient({verified:caller,sdkBridge,signal,...quotaOptions},false,null,{binding,readExecution:execution}):null;
+  if(admin)caller.context.admin=admin;
+  const collect=candidates?collectKlaviyoVerifiedProductCandidateEvidence:mode==="native"?collectKlaviyoNativeIdentityEvidence:collectKlaviyoIdentityMessageEvidence;
   const options={verified:caller,database,tokenVault,businessDate:window.from,fetchFn:transport,signal,now:readNow,
     maxElapsedMs,maxPages,maxEvents,maxMetrics,maxIncluded,maxMessageRows};
   let used=false;
   return Object.freeze({async readEvidence(...args){
     if(args.length) throw Error("REFRESH_KLAVIYO_IDENTITY_OVERRIDE_FORBIDDEN");
     if(used) throw Error("REFRESH_KLAVIYO_IDENTITY_EXECUTION_USED");
-    used=true; return collect(options);
+    used=true;
+    try{return await collect(options);}finally{if(admin)closeShopifyAdminSdkClient(admin);}
   }});
 }
 
@@ -146,7 +154,7 @@ export function createRefreshShopifyOrderReader({range,limits,includeOrderHistor
   return createFencedAdminClient(options,true,{range,limits,includeOrderHistory});
 }
 
-function createFencedAdminClient({verified,sdkBridge,signal,timeoutMs,...quotaOptions}={},orders=false,collection=null) {
+function createFencedAdminClient({verified,sdkBridge,signal,timeoutMs,...quotaOptions}={},orders=false,collection=null,internal=null) {
   const invalid=orders?"REFRESH_SHOPIFY_ADMIN_ORDER_INPUT_INVALID":"REFRESH_SHOPIFY_ADMIN_IDENTITY_INPUT_INVALID";
   const claim=structuredClone(quotaOptions.claim),window=structuredClone(quotaOptions.window);
   const owner=structuredClone(verified?.installationAuthority),shop=structuredClone(verified?.identity?.shop);
@@ -161,7 +169,7 @@ function createFencedAdminClient({verified,sdkBridge,signal,timeoutMs,...quotaOp
     ||!Number.isFinite(Date.parse(quotaOptions.entitlementReceipt.observedAt)))throw Error(invalid);
   if(normalizeShopDomain(shop.myshopifyDomain)!==shop.myshopifyDomain)throw Error(invalid);
   const admin={graphql:verified.context.admin.graphql.bind(verified.context.admin)};
-  const binding=refreshQuotaOptions(quotaOptions,{admin:true});
+  const binding=internal?.binding??refreshQuotaOptions(quotaOptions,{admin:true});
   const resolve=createQuotaScopeResolver({store:binding.store,loadContext:async input=>{
     if(input.provider!=="shopify_admin")return null;
     const context=await binding.loadContext(input);
@@ -171,7 +179,7 @@ function createFencedAdminClient({verified,sdkBridge,signal,timeoutMs,...quotaOp
   const transport=createQuotaManagedFetch({provider:"shopify_admin",lane:"background",fetchFn:binding.fetchFn,
     guard:createSharedQuotaGuard({store:binding.store,now:binding.now}),resolveOperation:resolve,
     isDispatchCurrent:async(metadata,key)=>await resolve(metadata)===key,
-    ...orders?{readExecution:createQuotaReadExecution()}:{}});
+    ...internal?.readExecution?{readExecution:internal.readExecution}:orders?{readExecution:createQuotaReadExecution()}:{}});
   const client=(orders?sdkBridge.wrapOrders:sdkBridge.wrap)({admin,transport,signal,timeoutMs});
   if(!collection)return client;
   try {

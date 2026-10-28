@@ -8,10 +8,12 @@ import {IdentityReadDeadlineError,runIdentityReadDeadline} from "../providers/id
 const wrappedClients=new WeakSet();
 const bridges=new WeakSet();
 const orderClients=new WeakMap();
+const clientClosers=new WeakMap();
 const orderReadFamily=raw=>shopifyOrderReadFamily(raw)??shopifyPermissionScopeFamily(raw);
 export function isShopifyAdminIdentitySdkBridge(value) {return bridges.has(value);}
 export function isShopifyAdminOrderSdkClient(value) {return orderClients.has(value);}
 export function closeShopifyAdminOrderSdkClient(value) {orderClients.get(value)?.();}
+export function closeShopifyAdminSdkClient(value) {clientClosers.get(value)?.();}
 
 // Inactive SDK hook. Explicit bootstrap installation is a separate gate; no global setter,
 // fallback fetch, token/session loader, config change or authority inference here.
@@ -35,7 +37,7 @@ export function createShopifyAdminIdentitySdkBridge() {
     if(Object.keys(extra).length||typeof admin?.graphql!=="function"||wrappedClients.has(admin)||!isQuotaManagedFetchForProvider(transport,"shopify_admin")
       ||signal!==undefined&&!(signal instanceof AbortSignal)||!Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>600000)throw fail("INPUT_INVALID");
     const graphql=admin.graphql.bind(admin);
-    const lifetime=classify===orderReadFamily?new AbortController():null;
+    const lifetime=new AbortController();
     let busy=false,failed=false;
     const client=Object.freeze({async graphql(query,options={}) {
       if(busy)throw fail("CONCURRENT_CALL_FORBIDDEN");
@@ -70,7 +72,9 @@ export function createShopifyAdminIdentitySdkBridge() {
       } finally {busy=false;if(call)call.closed=true;}
     }});
     wrappedClients.add(client);
-    if(lifetime)orderClients.set(client,()=>{failed=true;lifetime.abort();});
+    const close=()=>{failed=true;lifetime.abort();};
+    clientClosers.set(client,close);
+    if(classify===orderReadFamily)orderClients.set(client,close);
     return client;
   }
   // Keep the existing identity entry closed to caller-selected classifiers/modes.

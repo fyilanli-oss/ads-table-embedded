@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import "@shopify/shopify-api/adapters/node";
 import {shopifyApi,ApiVersion,LogSeverity,Session} from "@shopify/shopify-api";
 import {abstractFetch,setAbstractFetchFunc} from "@shopify/shopify-api/runtime";
-import {createShopifyAdminIdentitySdkBridge} from "../app/lib/refresh/shopify-admin-sdk-quota-bridge.server.js";
+import {createShopifyAdminIdentitySdkBridge,closeShopifyAdminSdkClient} from "../app/lib/refresh/shopify-admin-sdk-quota-bridge.server.js";
 import {createQuotaManagedFetch,createQuotaReadExecution,quotaBoundaryControl} from "../app/lib/refresh/quota-native-fetch.server.js";
 import {createSharedQuotaGuard} from "../app/lib/refresh/shared-quota.server.js";
 import {createQuotaScopeResolver,quotaRouteIdentity} from "../app/lib/refresh/quota-scope-resolver.server.js";
@@ -65,6 +65,17 @@ test("real pinned React Router/API SDK reaches guarded physical HTTP once and ke
 });
 test("sequential candidate queries use separate debit, no SDK cache bypass",async()=>{
   const f=fixture(),client=f.wrap();await f.read(client);await f.read(client);assert.equal(f.calls.length,2);assert.equal(f.reservations.length,2);
+});
+test("identity SDK lifetime closes explicitly after successful collection without another HTTP",async()=>{
+  const f=fixture(),client=f.wrap();await f.read(client);closeShopifyAdminSdkClient(client);closeShopifyAdminSdkClient(client);
+  await assert.rejects(f.read(client),/EXECUTION_CLOSED/);assert.equal(f.calls.length,1);assert.equal(f.reservations.length,1);
+});
+test("identity SDK close aborts pending dependency and ignores late return",async()=>{
+  const f=fixture();let release,entered;const started=new Promise(r=>{entered=r;});
+  f.q.native=()=>{entered();return new Promise(r=>{release=r;});};const client=f.wrap(),pending=f.read(client);
+  const stopped=assert.rejects(pending);await started;closeShopifyAdminSdkClient(client);await stopped;
+  release();await new Promise(r=>setTimeout(r,0));await assert.rejects(f.read(client),/EXECUTION_CLOSED/);
+  assert.equal(f.calls.length,1);assert.equal(f.calls[0].init.signal.aborted,true);
 });
 test("genuine order SDK client admits exact native scope dependency with one quota debit",async()=>{
   const f=fixture({orders:true}),client=f.wrap();await client.graphql(SHOPIFY_PERMISSION_SCOPES_QUERY,{variables:{},tries:1});

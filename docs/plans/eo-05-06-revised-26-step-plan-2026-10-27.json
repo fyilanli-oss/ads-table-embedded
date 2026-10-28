@@ -66,7 +66,7 @@
       "work": "Google Merchant hazırlığı ve ek OAuth izni; Meta katalog izinleri; Shopify read_products kontrolü ve gerekli kullanıcı testleri.",
       "boundary": "Kod + kullanıcı onayı/uygulama erişimi doğrulaması. Klaviyo’da mevcut izinler kontrol edilecek.",
       "addition": "Shopify ek işi: read_orders; 60 günden eski sipariş gerekiyorsa read_all_orders; MarketingEvent için read_marketing_events ve görünürlük kontrolü; protected customer data / uygulama erişim incelemesi. Mağaza onayı ile uygulama onayı ayrı. read_products ve Google/Meta/Klaviyo izinleri birlikte izlenecek.",
-      "status": "Sıradaki iş — izin hazırlığı. Canlı izin/uygulama onayları henüz alınmış sayılmaz.",
+      "status": "Repository izin/OAuth hazırlığı main’de; native kapsam, mağaza/uygulama onayı ve kullanıcı erişim kanıtları açık.",
       "package": "EO-05-B ön koşulu"
     },
     {
@@ -74,7 +74,7 @@
       "work": "Google kimlik bağlantısını tamamlamak: hesap → Merchant → feed/dil/veri kaynağı → native ürün → Shopify Product/Variant.",
       "boundary": "Kaynak kimlik biçiminin doğrulanması kanıt bekliyor.",
       "addition": "",
-      "status": "Kısmi kod açık PR #179’da; main’e alınmadı. Gerçek kaynak kimliği kuralı kanıt bekliyor.",
+      "status": "Google Merchant/link/kaynak-kuralı/Shopify aday kodu main’de; gerçek kaynak biçimi, Merchant SQL ve native kabul açık.",
       "package": "EO-05-B"
     },
     {
@@ -82,7 +82,7 @@
       "work": "Meta kimlik bağlantısını tamamlamak: hesap → katalog → katalog iç ID/retailer_id ayrımı → Shopify Product/Variant.",
       "boundary": "Rapor kimliğinin anlamı ve kaynak biçimi kanıt bekliyor.",
       "addition": "",
-      "status": "Kısmi kod açık PR #179’da; main’e alınmadı. Rapor kimliği/katalog kaynak biçimi kanıt bekliyor.",
+      "status": "Meta katalog/Ad referansı/Shopify aday/ham rapor bağları main’de; katalog biçimi ve Insights namespace/native kabul açık.",
       "package": "EO-05-B"
     },
     {
@@ -90,7 +90,7 @@
       "work": "Klaviyo kimlik bağlantısını tamamlamak: doğrulanmış Shopify Ordered Product olayı → ürün/varyant.",
       "boundary": "Kesin varyant alanı doğrulanacak; sentetik kayıt kaynak kanıtı sayılmayacak.",
       "addition": "",
-      "status": "Kısmi hazırlık var; kesin kaynak varyant alanı doğrulanacak. Sentetik veri kanıt değil.",
+      "status": "Klaviyo Shopify ürün/varyant aday ve OrderId/Message kontrol kodu main’de; native varyant/OrderId/kaynak ve atıf kanıtı açık.",
       "package": "EO-05-B"
     },
     {
@@ -98,7 +98,7 @@
       "work": "Kaynak kuralı yükleyicilerini ve ortak Shopify Product/Variant-parent doğrulamasını çalışan akışa bağlamak.",
       "boundary": "Kalıcı saklamadan önce kod ve DB’siz sınama.",
       "addition": "",
-      "status": "Bağlantı kodlanacak; açık PR #179 güncel main ve Shopify kararıyla uzlaştırılacak.",
+      "status": "Kaynak kuralı ve Shopify parent doğrulaması aday akışlarına main’de bağlı; canonical PK/selection/OAuth CAS ve kalıcılık ayrı açık.",
       "package": "EO-05-B"
     },
     {
@@ -106,7 +106,7 @@
       "work": "Yeni okuyucuları güvenilir aile seçimi, çağrı/kota kontrolü, sayfalama ve iptal/timeout yönetimine bağlamak.",
       "boundary": "Canlı aktivasyon kendi kapısında. Eksik kota altyapısı atlanmayacak.",
       "addition": "Shopify ek işi: erişime izin verilen tüm sipariş ve LineItem kayıtlarını ve müşteri yolculuğu/ziyaret atıflarını okuyan akışı hazırlamak. Sayfalama, kota, ilk hata, eksik/ready ve iptal/timeout durumları; paid/organic/direct/unknown kanıt ayrımı. Canlı erişim ayrı onay kapısında.",
-      "status": "Kodlanacak. Shopify sipariş/atıf okuyucusu yeni ek iş; canlı aktivasyon ayrı kapıda.",
+      "status": "Fenced SDK/kota/iptal/sayfalama ve Shopify sipariş/LineItem/journey kod hazırlığı main’de; actual Admin/Merchant SQL, profil/hook/kapasite ve native kabul açık.",
       "package": "EO-05-A/B"
     },
     {
@@ -114,7 +114,7 @@
       "work": "Dataset yazımı öncesi ortak kontrolleri çalıştırmak: yanlış hesap/nesil, eksik kimlik, çelişki, tekrar, kısmi sonuç, gerçek sıfır ve ilk hata.",
       "boundary": "Kod testleri ile gerçek erişim testlerinin sonuçları ayrı gösterilecek.",
       "addition": "Shopify ek işi: workspace + shop + Order ID; satırda LineItem ID anahtarlarını DB’siz sınamak. Replay, değişiklik, iade/iptal, eksik yolculuk ve eşleşmeyen sağlayıcı iddiası senaryoları. Kod testi ile gerçek OAuth/erişim kanıtı ayrı.",
-      "status": "Kodlanacak ve sınanacak. Gerçek erişim sonuçları ayrıca kaydedilecek.",
+      "status": "DB’siz Order/LineItem replay, ortak aday/rapor/Message ve koşullu Klaviyo Order bağı main’de (#232–236); okunabilir Google/Meta sipariş iddiası ve native claim kabulü açık. Tamamlandı değil.",
       "package": "EO-05-B"
     },
     {
@@ -122,7 +122,7 @@
       "work": "Birlikte değerlendirme ve durma noktası.",
       "boundary": "Kimlik listesinin 12. adımına, yeni tablo/migration ve kalıcı yazıma başlamadan duracağız. Açık kanıtlar da burada görülecek.",
       "addition": "Shopify ek işlerinin izin, okuyucu, tekilleştirme ve atıf sınırları da birlikte incelenecek. Yeni tablo, migration ve kalıcı yazım bu değerlendirme/onaydan önce başlamayacak.",
-      "status": "Zorunlu değerlendirme durağı — kalıcı yazımdan önce kullanıcı kararı.",
+      "status": "İnceleme hazırlığı: EO_05_STEP13_PREWRITE_CHECKPOINT_2026-10-28.json hazır; kullanıcı değerlendirmesi/kalıcı yazım onayı verilmedi.",
       "package": "EO-05 değerlendirme"
     },
     {
@@ -221,5 +221,6 @@
       "status": "Kodlanacak/sınanacak — bütünleşik kabul; kanıt eksikleri ayrı raporlanacak.",
       "package": "EO-05 kabulü / EO-06-E"
     }
-  ]
+  ],
+  "execution_status_checkpoint_2026_10_28": "docs/evidence/EO_05_STEP13_PREWRITE_CHECKPOINT_2026-10-28.json"
 }

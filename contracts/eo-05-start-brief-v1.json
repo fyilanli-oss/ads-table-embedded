@@ -24,7 +24,7 @@
     "google_pd_source_composition": "merged_PR185_f01d31ee7f741e70513bfe96e8750d4f405580a5",
     "klaviyo_pd_source_composition": "merged_PR186_99f6474bc49ff70a084ca5916bc3631f05187ba1",
     "pd_canonical_bridge": "merged_PR187_5657ce49c2c93b4d018c4606e08134a311754c33",
-    "current_slice": "ordered_step_13_Shopify_provider_claim_readiness_composition_prepared_readable_order_claim_native_SQL_and_step14_gates_open",
+    "current_slice": "ordered_step_13_Klaviyo_OrderId_retention_scoped_Order_Message_candidates_prepared_native_claim_and_step14_gates_open",
     "permission_preflight": "merged_PR190_ee28856c1260dffd18725eeb85718d195a5ce3de_not_live",
     "identity_OAuth_scope_binding": "merged_PR191_438bf5f8960cc2e25d4b6202a580cc1b1bf9b426_not_live",
     "Google_identity_credential_lifecycle": "merged_PR192_807408603484578555fc8700eb50f9cfa420d07d_not_live",
@@ -70,13 +70,63 @@
     "Shopify_order_prewrite_review": "merged_PR232_27ceaf7bdf577e08194a52c69480d645f5e69da2_not_native_or_step13_complete",
     "provider_candidate_prewrite_review": "merged_PR233_ca16b2d4aa4b89d4f6ddc741ddd615588fcad49b_not_native_or_step13_complete",
     "provider_reference_prewrite_review": "merged_PR234_433c6ab9b9877a1764ab5ce0c6749dcca1820aab_not_native_or_step13_complete",
-    "Shopify_provider_claim_readiness": "repository_prepared_in_current_PR_not_merged_native_or_step13_complete",
+    "Shopify_provider_claim_readiness": "merged_PR235_bde44288e093398e8ab00de174ef282ba7ed3922_not_native_or_step13_complete",
+    "Klaviyo_order_reference_prewrite": "repository_prepared_in_current_PR_not_merged_native_or_step13_complete",
     "Shopify_sales_attribution_decision": "contracts/pd-cpd-query-standard-v1.json#shopify_order_attribution_decision_2026_10_27",
     "planning_and_identity_PR179": "open_not_merged_or_live",
     "provider_activation": false,
     "identity_pause_before_step_12": true,
     "historical_PMax_pause_preserved": true,
     "package_complete": false
+  },
+  "Klaviyo_order_reference_prewrite_2026_10_28": {
+    "new_tests": 31,
+    "existing_relevant_regressions": 1737,
+    "total_relevant_tests": 1768,
+    "previous_breadth_tests": 1559,
+    "additional_existing_Klaviyo_tests": 178,
+    "repository_controls": 7,
+    "typecheck_passed": true,
+    "ordered_plan_step": 13,
+    "status": "prepared_native_OrderId_retention_and_DBless_scoped_Order_Message_candidate_link_NOT_native_claim_proof_or_full_step13_completion",
+    "runtime": [
+      "app/lib/providers/klaviyo-reporting.server.js",
+      "app/lib/providers/klaviyo-identity-collection.server.js",
+      "app/lib/providers/klaviyo-order-rules.server.js",
+      "app/lib/providers/klaviyo-order-prewrite.server.js",
+      "app/lib/refresh/quota-authority-binding.server.js",
+      "app/lib/shopify/provider-claim-prewrite.server.js"
+    ],
+    "tests": [
+      "tests/klaviyo-identity-collection.test.js"
+    ],
+    "raw": "existing_Get_Events_query_already_requests_event_properties_no_extra_native_family_call_or_permission_OrderId_was_dropped_by_normalizer_projection_now_retained_separately_as_provider_order_properties_OrderId_present_or_absent_with_original_scalar_type_null_and_zero_no_profile_customer_projection",
+    "property_limit": "official_Events_overview_OrderId_example_is_generic_UUID_not_a_guaranteed_Shopify_order_ID_no_other_case_alias_event_UUID_ProductID_name_date_or_amount_fallback",
+    "rules": "empty_default_nominal_server_registry_verified_order_identity_rule_scope_includes_Klaviyo_workspace_install_generation_shop_domain_connection_ID_version_and_account_plus_exact_metric_ID_and_Shopify_integration_ID_OrderId_property_explicit_Shopify_Order_GID_or_legacy_ID_format_and_source_reference_rule_cloned_before_await_duplicates_invalid_formats_or_proposed_rules_rejected_before_SQL_HTTP",
+    "binding": "candidate_factory_only_captures_original_loader_in_private_result_WeakMap_after_success_native_or_Message_only_cannot_opt_into_order_rules_no_public_registrar_no_per_review_rule_override_no_new_provider_calls",
+    "review": "reviewKlaviyoOrderClaimPrewrite_runs_existing_genuine_reference_and_Shopify_order_replay_reviews_then_looks_up_original_rule_same_owner_account_metric_integration_version_no_name_only_integration_fallback",
+    "candidates": "exact_explicit_format_only_GID_requires_full_Order_namespace_legacy_accepts_positive_safe_integer_or_exact_uint64_decimal_string_no_rounding_candidate_must_be_observed_in_same_shop_order_collection_and_native_Message_reason_message_channel_exact_for_structural_Order_Message_reference",
+    "unresolved": "missing_or_empty_OrderId_rule_missing_or_mismatched_invalid_format_unobserved_Shopify_order_and_unresolved_or_conflicting_Message_retained_with_reasons_no_silent_dropping_or_first_match",
+    "composition": "existing_reviewShopifyProviderClaimReadiness_includes_Klaviyo_orderReferenceReview_for_supplied_genuine_Klaviyo_observations_original_claimState_and_not_assessed_comparison_remain_until_readable_native_claim_verified_no_Google_Meta_capability_change",
+    "facts": "distinct_events_referencing_same_Order_remain_distinct_Shopify_order_not_duplicated_or_summed_no_LineItem_assignment_native_Quantity_value_refund_tax_shipping_FX_and_Sales_Role_unchanged_Campaign_Assisted_Flow_Triggered_Unclassified_preserved",
+    "output": "immutable_raw_and_source_Order_Message_references_only_canonicalClaimId_null_readableOrderClaimVerified_providerClaimVerified_exactOverlapVerified_nativePermission_canonical_persistable_activation_mapping_and_Dataset_write_false",
+    "remaining": [
+      "actual_account_metric_integration_shop_OrderId_semantics_and_attribution_claim_proof_before_registering_any_live_source_rule",
+      "Google_and_Meta_readable_order_claim_sources_not_added_or_declared_unsupported",
+      "native_SQL_profile_capacity_and_canonical_selection_gates",
+      "existing_step14_review_before_identity_sublist_step12_and_new_tables_writers"
+    ],
+    "official_checked_at": "2026-10-28",
+    "sources": [
+      "https://developers.klaviyo.com/en/reference/events_api_overview",
+      "https://help.klaviyo.com/hc/en-us/articles/115005080447"
+    ],
+    "source_limit": "OrderId_in_official_custom_Ordered_Product_example_is_not_Shopify_integration_field_format_or_native_attribution_acceptance_proof_no_live_source_rule_registered",
+    "new_SQL_migration_live_DB_provider_OAuth_token_config_route_Dataset_or_role_mutation": false,
+    "step_12_native_SQL_acceptance_complete": false,
+    "step_13_complete": false,
+    "step_14_review_crossed": false,
+    "historical_PMax_pause_preserved": true
   },
   "Shopify_provider_claim_readiness_2026_10_28": {
     "new_tests": 26,

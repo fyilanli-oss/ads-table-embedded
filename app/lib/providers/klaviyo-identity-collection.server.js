@@ -47,7 +47,7 @@ function eventProjection(item, metricId, timeframe) {
   if (!Number.isFinite(occurred) || occurred < Date.parse(timeframe.start) || occurred > Date.parse(timeframe.end)) fail("KLAVIYO_IDENTITY_EVENT_DATE_MISMATCH");
   const properties = {};
   // Project only fields already retained by the reporting normalizer; never return profile/customer fields.
-  for (const [key, entry] of Object.entries(row.provider_product_properties)) {
+  for (const [key, entry] of Object.entries({...row.provider_product_properties,...row.provider_order_properties})) {
     if (entry.state === "present") {
       if (entry.value !== null && !["string", "number", "boolean"].includes(typeof entry.value)
         || typeof entry.value === "string" && entry.value.length > 8192

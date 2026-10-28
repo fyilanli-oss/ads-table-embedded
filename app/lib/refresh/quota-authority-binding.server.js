@@ -5,6 +5,7 @@ import {createSharedQuotaGuard} from "./shared-quota.server.js";
 import {createQuotaManagedFetch,createQuotaReadExecution} from "./quota-native-fetch.server.js";
 import {collectKlaviyoNativeIdentityEvidence, collectKlaviyoIdentityMessageEvidence,collectKlaviyoVerifiedProductCandidateEvidence} from "../providers/klaviyo-identity-collection.server.js";
 import {klaviyoBusinessDayTimeframe} from "../providers/klaviyo-reporting.server.js";
+import {createKlaviyoOrderIdentityRuleLoader} from "../providers/klaviyo-order-rules.server.js";
 import {collectMetaNativeIdentityEvidence,collectMetaVerifiedProductCandidateEvidence,collectMetaReportProductCandidateEvidence} from "../providers/meta-identity-collection.server.js";
 import {metaIdentityReportWindow,createMetaReportIdentityRuleLoader} from "../providers/meta-report-candidates.server.js";
 import {createMetaCandidateSourceRuleLoader} from "../providers/meta-source-candidates.server.js";
@@ -69,17 +70,18 @@ function identityTransport(binding,provider,claim,merchantTarget,readExecution) 
 export function createRefreshKlaviyoIdentityReader(options) {return createKlaviyoIdentityReader(options);}
 // Candidate composition is explicit; native/Message callers cannot opt into Admin work.
 export function createRefreshKlaviyoCandidateReader(options) {return createKlaviyoIdentityReader(options,true);}
-function createKlaviyoIdentityReader({verified,database,tokenVault,mode,signal,sdkBridge,
+function createKlaviyoIdentityReader({verified,database,tokenVault,mode,signal,sdkBridge,orderIdentityRules,
   readNow=()=>new Date(),maxElapsedMs,maxPages,maxEvents,maxMetrics,maxIncluded,maxMessageRows,...quotaOptions} = {},candidates=false) {
   const claim=structuredClone(quotaOptions.claim),window=structuredClone(quotaOptions.window);
   const owner=structuredClone(verified?.installationAuthority),shop=structuredClone(verified?.identity?.shop);
-  if((candidates?mode!==undefined||!isShopifyAdminIdentitySdkBridge(sdkBridge):!["native","message"].includes(mode)||sdkBridge!==undefined)
+  if((candidates?mode!==undefined||!isShopifyAdminIdentitySdkBridge(sdkBridge):!["native","message"].includes(mode)||sdkBridge!==undefined||orderIdentityRules!==undefined)
     ||claim?.provider!=="klaviyo"||typeof window?.from!=="string"||window.from!==window.to
     ||owner?.authority!=="shopify_installation_verified"||owner.status!=="active"||owner.workspaceId!==claim.workspaceId
     ||String(owner.installGeneration)!==claim.installGeneration||typeof verified?.context?.admin?.graphql!=="function"
     ||typeof readNow!=="function"||typeof quotaOptions.entitlementReceipt?.observedAt!=="string"
     ||!Number.isFinite(Date.parse(quotaOptions.entitlementReceipt.observedAt))) throw Error("REFRESH_KLAVIYO_IDENTITY_INPUT_INVALID");
   klaviyoBusinessDayTimeframe({businessDate:window.from,timeZone:"UTC"});
+  const referenceInputs=candidates?Object.freeze({orderRules:createKlaviyoOrderIdentityRuleLoader({rules:orderIdentityRules})}):null;
   const caller={installationAuthority:owner,identity:{shop,session:{authority:verified.identity?.session?.authority,
     shopDomain:verified.identity?.session?.shopDomain}},context:{admin:{graphql:verified.context.admin.graphql.bind(verified.context.admin)}}};
   const binding=refreshQuotaOptions(quotaOptions,{admin:candidates});
@@ -95,7 +97,7 @@ function createKlaviyoIdentityReader({verified,database,tokenVault,mode,signal,s
     if(args.length) throw Error("REFRESH_KLAVIYO_IDENTITY_OVERRIDE_FORBIDDEN");
     if(used) throw Error("REFRESH_KLAVIYO_IDENTITY_EXECUTION_USED");
     used=true;
-    try{const result=await collect(options);if(candidates)recordCandidateObservation(result,"klaviyo","candidate",owner,shop,claim,window);return result;}
+    try{const result=await collect(options);if(candidates)recordCandidateObservation(result,"klaviyo","candidate",owner,shop,claim,window,referenceInputs);return result;}
     finally{if(admin)closeShopifyAdminSdkClient(admin);}
   }});
 }

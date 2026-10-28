@@ -14,6 +14,14 @@ import {isShopifyAdminIdentitySdkBridge,closeShopifyAdminOrderSdkClient,closeSho
 import {normalizeShopDomain} from "../shopify/installation-authority.server.js";
 import {SHOPIFY_ORDER_READ_API_VERSION} from "../shopify/order-read-protocol.server.js";
 import {createShopifyOrderReadExecution} from "../shopify/order-collection.server.js";
+const candidateObservations=new WeakMap();
+// In-process collection provenance only. No public registrar or permission proof.
+export function refreshCandidateObservationContext(value){return candidateObservations.get(value)??null;}
+function recordCandidateObservation(result,provider,kind,owner,shop,claim,window){
+  candidateObservations.set(result,Object.freeze({provider,kind,workspaceId:owner.workspaceId,installGeneration:owner.installGeneration,
+    shopId:shop.shopId,shopDomain:shop.myshopifyDomain,accountId:claim.accountId,
+    job:Object.freeze({id:claim.id,fence:claim.fence,window:Object.freeze({...window})})}));
+}
 
 // Explicit background-only composition. SQL supplies current authority and owner scope handles.
 // No caller account/context loader override; never a setup OAuth or interactive authority shortcut.
@@ -84,7 +92,8 @@ function createKlaviyoIdentityReader({verified,database,tokenVault,mode,signal,s
     if(args.length) throw Error("REFRESH_KLAVIYO_IDENTITY_OVERRIDE_FORBIDDEN");
     if(used) throw Error("REFRESH_KLAVIYO_IDENTITY_EXECUTION_USED");
     used=true;
-    try{return await collect(options);}finally{if(admin)closeShopifyAdminSdkClient(admin);}
+    try{const result=await collect(options);if(candidates)recordCandidateObservation(result,"klaviyo","candidate",owner,shop,claim,window);return result;}
+    finally{if(admin)closeShopifyAdminSdkClient(admin);}
   }});
 }
 
@@ -125,7 +134,8 @@ function createMetaIdentityReader({verified,database,tokenVault,adId,adSetId,cam
   return Object.freeze({async readEvidence(...args){
     if(args.length) throw Error("REFRESH_META_IDENTITY_OVERRIDE_FORBIDDEN");
     if(used) throw Error("REFRESH_META_IDENTITY_EXECUTION_USED");
-    used=true;try{return await collect(options);}finally{if(admin)closeShopifyAdminSdkClient(admin);}
+    used=true;try{const result=await collect(options);if(kind!=="native")recordCandidateObservation(result,"meta",kind,owner,shop,claim,window);return result;}
+    finally{if(admin)closeShopifyAdminSdkClient(admin);}
   }});
 }
 
@@ -161,7 +171,8 @@ function createGoogleIdentityReader({verified,database,tokenVault,merchantId,dev
   return Object.freeze({async readEvidence(...args){
     if(args.length) throw Error("REFRESH_GOOGLE_IDENTITY_OVERRIDE_FORBIDDEN");
     if(used) throw Error("REFRESH_GOOGLE_IDENTITY_EXECUTION_USED");
-    used=true;try{return await collect(options);}finally{if(admin)closeShopifyAdminSdkClient(admin);}
+    used=true;try{const result=await collect(options);if(candidates)recordCandidateObservation(result,"google_ads","candidate",owner,shop,claim,window);return result;}
+    finally{if(admin)closeShopifyAdminSdkClient(admin);}
   }});
 }
 

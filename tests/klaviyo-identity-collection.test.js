@@ -12,6 +12,8 @@ import {createShopifyAdminIdentitySdkBridge} from "../app/lib/refresh/shopify-ad
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 import {quotaRouteIdentity} from "../app/lib/refresh/quota-scope-resolver.server.js";
 import {refreshQuotaWait} from "../app/lib/refresh/quota-work-wait.server.js";
+import {candidatePrewriteCases} from "./helpers/candidate-prewrite-cases.js";
+import {reviewRefreshCandidatePrewrite} from "../app/lib/providers/candidate-prewrite.server.js";
 
 const workspace = "11111111-1111-4111-8111-111111111111", connection = "22222222-2222-4222-8222-222222222222",
   credential = "33333333-3333-4333-8333-333333333333";
@@ -695,4 +697,31 @@ test("bound candidate: provider failure prevents all Admin work",async()=>{
 test("bound candidate: partial GraphQL data is not a verified product",async()=>{
   const f=candidateBoundFixture();f.q.adminNative=p=>{p.errors=[{message:"SECRET"}];};
   await assert.rejects(f.create().readEvidence(),e=>!/SECRET/.test(e.message));assert.equal(f.calls.length,3);assert.equal(f.adminCalls.length,1);
+});
+const candidatePrewriteOwner=()=>({provider:"klaviyo",workspaceId:workspace,installGeneration:3,shopId:"gid://shopify/Shop/12",shopDomain:"test.myshopify.com",
+  connectionId:connection,connectionVersion:2,accountId:"account1"});
+candidatePrewriteCases({provider:"klaviyo",fixture:candidateBoundFixture,nativeFixture:boundFixture,expected:candidatePrewriteOwner,
+  empty:f=>{f.hooks.fetch=p=>p.pathname==="/api/events"?response({data:[],links:{next:null}}):f.baseFetch(p);},
+  unresolved:f=>{const e=event();delete e.attributes.event_properties.ProductID;
+    f.hooks.fetch=p=>p.pathname==="/api/events"?response({data:[e],included:[attribution()],links:{next:null}}):f.baseFetch(p);},
+  productOnly:f=>{const e=event();delete e.attributes.event_properties["Variant ID"];
+    f.hooks.fetch=p=>p.pathname==="/api/events"?response({data:[e],included:[attribution()],links:{next:null}}):f.baseFetch(p);}});
+test("Klaviyo prewrite: two events for same product share one candidate but keep both source references",async()=>{
+  const f=candidateBoundFixture();f.hooks.fetch=p=>p.pathname==="/api/events"?response({data:[event(),event("event2")],included:[attribution()],links:{next:null}}):f.baseFetch(p);
+  const observation=await f.create().readEvidence(),r=reviewRefreshCandidatePrewrite({expected:candidatePrewriteOwner(),observation});
+  assert.equal(r.rows.length,2);assert.equal(r.counts.candidates,1);assert.equal(f.adminCalls.length,1);
+  assert.equal(r.rows[0].candidateIndex,r.rows[1].candidateIndex);assert.notEqual(r.rows[0].sourceReference.nativeKey,r.rows[1].sourceReference.nativeKey);
+});
+test("Klaviyo prewrite: numeric zero sale facts survive candidate review without becoming missing",async()=>{
+  const f=candidateBoundFixture(),e=event();e.attributes.event_properties.Quantity=0;e.attributes.event_properties.$value=0;
+  f.hooks.fetch=p=>p.pathname==="/api/events"?response({data:[e],included:[attribution()],links:{next:null}}):f.baseFetch(p);
+  const observation=await f.create().readEvidence(),r=reviewRefreshCandidatePrewrite({expected:candidatePrewriteOwner(),observation});
+  assert.equal(r.rows[0].observed,observation.product_identity_candidates.rows[0]);assert.equal(r.counts.candidates,1);
+  assert.equal(r.rows[0].observed.provider_product_properties.Quantity.value,0);
+});
+test("Klaviyo prewrite: conflicting native variant aliases stay conflicting without an Admin lookup",async()=>{
+  const f=candidateBoundFixture(),e=event();e.attributes.event_properties.VariantID="999";
+  f.hooks.fetch=p=>p.pathname==="/api/events"?response({data:[e],included:[attribution()],links:{next:null}}):f.baseFetch(p);
+  const observation=await f.create().readEvidence(),r=reviewRefreshCandidatePrewrite({expected:candidatePrewriteOwner(),observation});
+  assert.equal(r.rows[0].reason,"source_variant_alias_conflict");assert.equal(r.counts.conflicting,1);assert.equal(f.adminCalls.length,0);
 });

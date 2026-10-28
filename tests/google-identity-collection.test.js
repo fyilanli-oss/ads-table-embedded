@@ -14,6 +14,8 @@ import {abstractFetch,setAbstractFetchFunc} from "@shopify/shopify-api/runtime";
 import {createShopifyAdminIdentitySdkBridge} from "../app/lib/refresh/shopify-admin-sdk-quota-bridge.server.js";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 import {refreshQuotaWait} from "../app/lib/refresh/quota-work-wait.server.js";
+import {candidatePrewriteCases} from "./helpers/candidate-prewrite-cases.js";
+import {reviewRefreshCandidatePrewrite} from "../app/lib/providers/candidate-prewrite.server.js";
 
 const workspace = "11111111-1111-4111-8111-111111111111", connection = "22222222-2222-4222-8222-222222222222",
   credential = "33333333-3333-4333-8333-333333333333";
@@ -639,4 +641,25 @@ test("bound Google candidate: partial GraphQL data cannot produce candidate",asy
 test("bound Google candidate: every Merchant page debits before one deduplicated Shopify check",async()=>{
   const f=candidateBoundFixture();f.hooks.fetch=p=>p.hostname==="merchantapi.googleapis.com"&&!p.searchParams.has("pageToken")&&response({nextPageToken:"second"});
   const r=await f.create().readEvidence();assert.equal(r.product_identity_candidates.candidates.length,1);assert.equal(f.calls.length,4);assert.equal(f.adminCalls.length,1);assert.equal(f.reservations.length,5);
+});
+const candidatePrewriteOwner=()=>({provider:"google_ads",workspaceId:workspace,installGeneration:3,shopId:"gid://shopify/Shop/12",shopDomain:"test.myshopify.com",
+  connectionId:connection,connectionVersion:2,accountId:"123"});
+candidatePrewriteCases({provider:"google_ads",fixture:candidateBoundFixture,nativeFixture:boundFixture,expected:candidatePrewriteOwner,
+  empty:f=>{f.hooks.fetch=p=>p.hostname==="merchantapi.googleapis.com"&&response({products:[]});},
+  unresolved:f=>{delete f.config.sourceRules;},
+  productOnly:f=>{f.config.sourceRules[0].format="shopify_product_id";delete f.config.sourceRules[0].market;
+    f.hooks.fetch=p=>p.hostname==="merchantapi.googleapis.com"&&response({products:[product("123")]});}});
+test("Google prewrite: same offer and Shopify pair across languages retain separate source context",async()=>{
+  const f=candidateBoundFixture(),other=rule();other.product_context.content_language="fr";other.source_reference="synthetic-fr-proof";f.config.sourceRules.push(other);
+  f.hooks.fetch=p=>p.hostname==="merchantapi.googleapis.com"&&response({products:[product(),{...product(),name:"accounts/99/products/fr~US~shopify_US_123_456",contentLanguage:"fr"}]});
+  const observation=await f.create().readEvidence(),r=reviewRefreshCandidatePrewrite({expected:candidatePrewriteOwner(),observation});
+  assert.equal(r.rows.length,2);assert.equal(r.counts.candidates,2);assert.equal(f.adminCalls.length,1);
+  assert.notEqual(r.rows[0].sourceReference.context.content_language,r.rows[1].sourceReference.context.content_language);
+});
+test("Google prewrite: two variants of the same product remain distinct candidate references",async()=>{
+  const f=candidateBoundFixture();f.hooks.fetch=p=>p.hostname==="merchantapi.googleapis.com"&&response({products:[product(),product("shopify_US_123_789")]});
+  f.q.adminNative=(p,init)=>{const id=JSON.parse(init.body).variables.variantId;p.data.productVariant.id=id;p.data.productVariant.legacyResourceId=id.split("/").at(-1);};
+  const observation=await f.create().readEvidence(),r=reviewRefreshCandidatePrewrite({expected:candidatePrewriteOwner(),observation});
+  assert.equal(r.rows.length,2);assert.equal(r.rows[0].candidateShopifyProductId,r.rows[1].candidateShopifyProductId);
+  assert.notEqual(r.rows[0].candidateShopifyVariantId,r.rows[1].candidateShopifyVariantId);assert.equal(f.adminCalls.length,2);
 });

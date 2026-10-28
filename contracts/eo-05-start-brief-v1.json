@@ -24,7 +24,7 @@
     "google_pd_source_composition": "merged_PR185_f01d31ee7f741e70513bfe96e8750d4f405580a5",
     "klaviyo_pd_source_composition": "merged_PR186_99f6474bc49ff70a084ca5916bc3631f05187ba1",
     "pd_canonical_bridge": "merged_PR187_5657ce49c2c93b4d018c4606e08134a311754c33",
-    "current_slice": "ordered_step_13_Shopify_Order_LineItem_DBless_prewrite_review_prepared_provider_checks_and_native_SQL_gates_open",
+    "current_slice": "ordered_step_13_three_provider_candidate_DBless_prewrite_review_prepared_claim_native_SQL_and_step14_gates_open",
     "permission_preflight": "merged_PR190_ee28856c1260dffd18725eeb85718d195a5ce3de_not_live",
     "identity_OAuth_scope_binding": "merged_PR191_438bf5f8960cc2e25d4b6202a580cc1b1bf9b426_not_live",
     "Google_identity_credential_lifecycle": "merged_PR192_807408603484578555fc8700eb50f9cfa420d07d_not_live",
@@ -67,13 +67,60 @@
     "Klaviyo_candidate_quota_composition": "merged_PR229_5781451fcd9a0d55377855e3d38d4d0c76d85a98_not_live_or_step12_complete",
     "Google_candidate_quota_composition": "merged_PR230_c528fc20c59b69ce4e13af0b03a7c11de4d3d82d_not_live_or_step12_complete",
     "Meta_candidate_report_quota_composition": "merged_PR231_470207d24a7de65a536487992cb2844b7a77806e_not_native_or_step12_complete",
-    "Shopify_order_prewrite_review": "repository_prepared_in_current_PR_not_merged_native_or_step13_complete",
+    "Shopify_order_prewrite_review": "merged_PR232_27ceaf7bdf577e08194a52c69480d645f5e69da2_not_native_or_step13_complete",
+    "provider_candidate_prewrite_review": "repository_prepared_in_current_PR_not_merged_native_or_step13_complete",
     "Shopify_sales_attribution_decision": "contracts/pd-cpd-query-standard-v1.json#shopify_order_attribution_decision_2026_10_27",
     "planning_and_identity_PR179": "open_not_merged_or_live",
     "provider_activation": false,
     "identity_pause_before_step_12": true,
     "historical_PMax_pause_preserved": true,
     "package_complete": false
+  },
+  "provider_candidate_prewrite_review_2026_10_28": {
+    "new_tests": 71,
+    "existing_relevant_regressions": 1436,
+    "total_relevant_tests": 1507,
+    "repository_controls": 7,
+    "typecheck_passed": true,
+    "ordered_plan_step": 13,
+    "status": "prepared_DBless_shared_candidate_reference_review_NOT_canonical_mapping_claim_review_or_full_step13_completion",
+    "runtime": [
+      "app/lib/providers/candidate-prewrite.server.js",
+      "app/lib/refresh/quota-authority-binding.server.js"
+    ],
+    "tests": [
+      "tests/helpers/candidate-prewrite-cases.js",
+      "tests/google-identity-collection.test.js",
+      "tests/meta-identity-collection.test.js",
+      "tests/klaviyo-identity-collection.test.js"
+    ],
+    "entry": "reviewRefreshCandidatePrewrite_expected_trusted_provider_workspace_generation_shop_domain_connection_ID_connection_version_and_account_completed_candidate_observation_no_extra_options",
+    "provenance": "private_WeakMap_in_fenced_factory_registers_only_successful_candidate_or_Meta_report_candidate_results_after_collector_completion_no_public_registrar_native_only_Message_only_clones_spreads_and_forged_flags_rejected_context_is_origin_not_fresh_authority",
+    "owner": "expected_permissionContext_and_connectionVersion_match_private_factory_capture_and_concrete_SQL_vault_output_installation_shop_provider_connection_account_context_no_new_SQL_or_permission_inference",
+    "source": "Google_Merchant_native_record_key_full_merchant_feed_language_dataSource_context_Meta_catalog_internal_ID_and_retailer_feed_context_Klaviyo_event_ID_metric_and_all_normalized_facts_checked_source_coverage_duplicates_and_candidate_scope_checked",
+    "references": "each_candidate_index_range_state_and_native_source_link_checked_same_shop_product_variant_parent_evidence_matches_exact_scope_no_orphan_candidates_Klaviyo_event_ID_reference_set_exact_no_index_as_DB_ID",
+    "variants": "Shopify_Product_ID_candidate_backbone_Variant_ID_nullable_source_detail_preserved_multiple_variants_or_feeds_languages_events_never_collapsed_by_Product_ID_no_new_extraction_rules",
+    "missing": "complete_empty_source_reported_observedEmpty_unresolved_conflicting_retained_with_reason_and_null_standardizedProductId_no_false_zero_or_default_candidate_original_facts_retained_by_reference",
+    "counts": "source_rows_candidates_unresolved_and_conflicting_are_local_structural_counts_not_reporting_metrics_no_sum_FX_formula_or_sales_cost_allocation",
+    "output": "frozen_structurally_reviewed_open_gates_uniform_sourceReference_state_reason_local_candidateIndex_candidateShopifyProductId_variant_and_native_observed_row_no_standardized_ID_promotion_reportLinksReviewed_providerClaimsReviewed_false",
+    "remaining": [
+      "Meta_raw_report_and_Klaviyo_Message_reference_and_provider_claim_reconciliation_checks",
+      "native_source_namespace_access_and_existing_SQL_profile_capacity_gates",
+      "canonical_PK_selection_epoch_durable_mapping_and_idempotence_after_review",
+      "existing_step14_user_review_before_identity_sublist_step12_and_new_tables"
+    ],
+    "official_checked_at": "2026-10-28",
+    "sources": [
+      "https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.products",
+      "https://raw.githubusercontent.com/facebook/facebook-python-business-sdk/main/facebook_business/adobjects/productitem.py",
+      "https://developers.klaviyo.com/en/reference/get_events",
+      "https://shopify.dev/docs/api/admin-graphql/latest/objects/ProductVariant"
+    ],
+    "new_SQL_migration_live_DB_provider_OAuth_token_config_route_Dataset_or_role_mutation": false,
+    "step_12_native_SQL_acceptance_complete": false,
+    "step_13_complete": false,
+    "step_14_review_crossed": false,
+    "historical_PMax_pause_preserved": true
   },
   "Shopify_order_prewrite_review_2026_10_28": {
     "new_tests": 33,

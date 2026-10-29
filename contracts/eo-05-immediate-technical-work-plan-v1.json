@@ -1,0 +1,330 @@
+{
+  "contract_id": "eo-05-immediate-technical-work-plan-v1",
+  "checked_at": "2026-10-29",
+  "status": "code_delivery_plan_prepared_for_owner_review_not_implementation_complete",
+  "base_main": "9a1bc8a0f6cd8cc8f5b5a5d6cf113db982ddbb4d",
+  "authority": [
+    "docs/EXECUTION_PLAN.md",
+    "contracts/a6-eo-implementation-master-v1.json",
+    "contracts/eo-05-start-brief-v1.json",
+    "docs/plans/eo-05-06-revised-26-step-plan-2026-10-27.json"
+  ],
+  "numbering": "delivery_order below is execution order only, not replacement of the existing 26 plan steps; no new EO parent/child",
+  "before_live_work": {
+    "work": "07 geliştirici uygulama izin/onay envanteri",
+    "kind": "evidence_audit_not_code",
+    "checks": [
+      "Uygulamada tanımlanan kapsam",
+      "Gerekiyorsa başvuru ve native onay durumu",
+      "Mağazanın verdiği kapsam",
+      "Seçilen hesap/katalog/merchant erişimi"
+    ],
+    "boundary": "Independent code and isolated tests may proceed within documented behavior. Unknown app approval does not become denied or granted, and user reauthorization is not a substitute for app approval.",
+    "meta": "Current official permission read previously returned 429; current scope/dependency/access prerequisites must be verified before changing Meta-specific permission implementation."
+  },
+  "deliveries": [
+    {
+      "delivery_order": 1,
+      "existing_steps": [
+        7
+      ],
+      "work": "Temel kurulum ile sipariş özelliğinin izin kontrollerini ayır",
+      "output": "Products kurulumu read_products ile ilerler; eksik Orders sadece sipariş/overlap yolunu kapatır. Mevcut order reader read_orders olmadan çalışmaz.",
+      "code_basis": [
+        "app/lib/oauth/identity-permission-preflight.server.js",
+        "app/lib/shopify/permission-scopes.server.js"
+      ],
+      "acceptance": "Products var/Orders yok, Products yok, izin geri alınmış, geçersiz native scope ve yanlış mağaza durumları ayrı sonuç verir.",
+      "depends_on": [],
+      "status": "planned_not_implemented"
+    },
+    {
+      "delivery_order": 2,
+      "existing_steps": [
+        7
+      ],
+      "work": "Google Ads–Merchant ve Meta Ads–Catalog birleşik kurulumunu bağla",
+      "output": "Mevcut tam permission profile başlangıca bağlanır; dönüşte gerçek grant ve varlık erişimi kontrol edilir. Kısmi/iptal setup Resume Setup kalır; eski güvenli veri/bağlantı sessiz silinmez.",
+      "code_basis": [
+        "app/lib/oauth/oauth-permission-profile.server.js",
+        "app/lib/oauth/identity-oauth-authorization.server.js"
+      ],
+      "acceptance": "Tam/kısmi/ret/iptal, aynı callback tekrarı, eski nesil/token değişimi, eksik hesap/katalog ve geliştirici onay eksikliği ayrı sınanır. Native kapsam seti belgelenmeden yeni bağımlılık varsayılmaz.",
+      "depends_on": [
+        1
+      ],
+      "status": "planned_not_implemented"
+    },
+    {
+      "delivery_order": 3,
+      "existing_steps": [
+        7,
+        12
+      ],
+      "work": "Shopify Products ve daha sonra Orders izin isteme/dönüş altyapısını hazırla",
+      "output": "Asgari kurulumdan sonra Products istemi; daha sonra yalnız kullanıcı Connect dediğinde Orders istemi. Dönüşte currentAppInstallation yeniden okunur. Web/arka plan SDK çağrıları mevcut güvenilir köprü ve kota sınırlarını korur.",
+      "code_basis": [
+        "shopify.app.toml",
+        "app/lib/shopify/permission-scope-protocol.server.js",
+        "app/lib/shopify/shopify-app-runtime.server.js",
+        "app/lib/refresh/shopify-admin-sdk-bootstrap.server.js"
+      ],
+      "acceptance": "Cancel, decline, izin verilmesi/geri alınması, yeniden giriş ve temel kurulumun bozulmaması. Optional scope config hazırlığı ayrı incelenir; canlı config yayını ve izin istemi bu planla yapılmaz.",
+      "depends_on": [
+        1
+      ],
+      "status": "planned_not_implemented"
+    },
+    {
+      "delivery_order": 4,
+      "existing_steps": [
+        7
+      ],
+      "work": "İzin öncesi açıklama modallarını bağımsız UI işi olarak tamamla",
+      "output": "Her provider için ne istendiği/neden istendiği/ret sonucu/Cancel–Connect ve Resume Setup yolu açık olur. Orders sonraya bırakılır; Klaviyo maliyet adımı ayrı kalır.",
+      "code_basis": [
+        "docs/SHOPIFY_EMBEDDED_UI_CONSTITUTION.md",
+        "contracts/shopify/shopify-embedded-ui-constitution-v1.json",
+        "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md"
+      ],
+      "acceptance": "Kod öncesi exact metin ve resmî component eşlemesi; desktop/mobile, iptal/hata/dönüş ve açık kullanıcı görsel kabulü. Overlap rapor butonunun nihai yeri raporlama arayüzü işinde; mevcut ürün yüzeyleri dışına yeni route yok.",
+      "depends_on": [
+        2,
+        3
+      ],
+      "status": "planned_UI_not_implemented_or_accepted"
+    },
+    {
+      "delivery_order": 5,
+      "existing_steps": [
+        6,
+        11,
+        12
+      ],
+      "work": "Mevcut okuyucu ve kaynak bağlamını ortak çalışma girişine bağla",
+      "output": "Gerçek kurulum/seçili hesap/nesil/üst hiyerarşi/gün/saat dilimi/para birimi/atıf bilgisi kaynaklarıyla taşınır; mevcut kota, iptal, ilk-hata ve revalidation kontrolleri korunur. Kayıp metadata uydurulmaz.",
+      "code_basis": [
+        "app/lib/providers/identity-runtime-authority.server.js",
+        "app/lib/providers/pd-composition-scope.server.js",
+        "app/lib/refresh/quota-authority-binding.server.js"
+      ],
+      "acceptance": "Yanlış hesap/nesil/para birimi/gün, bağlantı değişimi, metadata eksiği ve yarım okuma ortak akışta reddedilir. Kaynak kuralları kanıtsız kaydedilmez; yeni storage/aktivasyon yok.",
+      "depends_on": [
+        1,
+        2,
+        3
+      ],
+      "status": "planned_wiring_not_implemented"
+    },
+    {
+      "delivery_order": 6,
+      "existing_steps": [
+        4
+      ],
+      "work": "Google PD okumasını hazır birleştiriciye bağla",
+      "output": "Performans ve normal kapsam dönüşüm sonuçları composeGooglePdLeaf ile tek PD yaprak kaydına bağlanır; native alan/satır izleri korunur.",
+      "code_basis": [
+        "app/lib/providers/google-reporting-authority.server.js",
+        "app/lib/providers/google-pd-composition.server.js"
+      ],
+      "acceptance": "Search PD Ad, Shopping PD Ad Group, PMax PD Asset Group ayrımı korunur. Bu CPD Search/Shopping Ad Group veya PMax ürün/rol kararı değildir. Çift sayım/all kapsamı/kısmi sayfa/eksik değer kontrol edilir.",
+      "depends_on": [
+        5
+      ],
+      "status": "composer_exists_runtime_call_wiring_open"
+    },
+    {
+      "delivery_order": 7,
+      "existing_steps": [
+        5
+      ],
+      "work": "Klaviyo PD raporlarını hazır Message birleştiricisine bağla",
+      "output": "Placed Order, ATC ve Checkout raporları composeKlaviyoPdMessage girişine aynı kaynak kapsamıyla bağlanır; Message/Medium/Variation korunur.",
+      "code_basis": [
+        "app/lib/providers/klaviyo-reporting-authority.server.js",
+        "app/lib/providers/klaviyo-pd-composition.server.js"
+      ],
+      "acceptance": "Funnel kaynakları karışmaz; Ordered Product satışları PD sipariş raporuna eklenerek iki kez sayılmaz. Estimated Monthly Cost girişi Spend formülü değildir; Spend hesabı 25’e kadar açık/null kalır.",
+      "depends_on": [
+        5
+      ],
+      "status": "composer_exists_runtime_call_wiring_open"
+    },
+    {
+      "delivery_order": 8,
+      "existing_steps": [
+        6
+      ],
+      "work": "Üç sağlayıcının kaynak çıktısını ortak kayıt köprüsüne bağla",
+      "output": "Google/Klaviyo birleşik PD ve Meta tek sorgu PD projeksiyonu ortak kaynak/metadata sınırında izlenir. Meta için gereksiz ikinci sayısal birleştirme kurulmaz.",
+      "code_basis": [
+        "app/lib/providers/pd-canonical-bridge.server.js",
+        "app/lib/providers/meta-reporting.server.js",
+        "app/lib/providers/meta-reporting-authority.server.js"
+      ],
+      "acceptance": "Eksik metadata/FX açık bekleme nedeni olur; sahte kur veya otomatik 1 üretilmez. Kaynak ham metrikleri korunur. Tam kalıcı canonical eşleme 15, FX/Dataset writer 23; bu dilimde yayım/yazım yok.",
+      "depends_on": [
+        6,
+        7
+      ],
+      "status": "bridge_exists_source_call_metadata_wiring_open"
+    },
+    {
+      "delivery_order": 9,
+      "existing_steps": [
+        12
+      ],
+      "work": "Klaviyo satış–atfedilen etkileşim bağlantısını koru ve kontrollü oku",
+      "output": "Attribution event/attributed-event referansları korunur; işaret edilen olay kimliği, metric türü ve zamanı mevcut hesap/kota/timeout sınırında okunur. Gereksiz müşteri özellikleri taşınmaz.",
+      "code_basis": [
+        "app/lib/providers/klaviyo-identity-collection.server.js",
+        "app/lib/providers/klaviyo-reporting-authority.server.js"
+      ],
+      "acceptance": "Karşılıklı referans ve metric, missing/conflict, click/open, tekrar ve ilk-hata kontrolleri. Campaign Assisted, Flow Triggered korunur; tıklanan ürün veya Advertised/Cross-sell üretilmez.",
+      "depends_on": [
+        5
+      ],
+      "status": "confirmed_gap_planned_not_implemented"
+    },
+    {
+      "delivery_order": 10,
+      "existing_steps": [
+        13
+      ],
+      "work": "Bütün teknik ekleri ortak yazım öncesi kontrollerde birlikte sına",
+      "output": "Yeni izin/setup ve PD/etkileşim bağlantıları mevcut candidate/reference/Order/LineItem kontrolleriyle birlikte sınanır; code/test hazır ile native kabul ayrılır.",
+      "code_basis": [
+        "app/lib/providers/candidate-prewrite.server.js",
+        "app/lib/providers/reference-prewrite.server.js",
+        "app/lib/providers/klaviyo-order-prewrite.server.js",
+        "app/lib/shopify/order-prewrite.server.js",
+        "app/lib/shopify/provider-claim-prewrite.server.js"
+      ],
+      "acceptance": "Yanlış mağaza/hesap/nesil, izin geri alma, eksik kimlik, replay, çelişkili referans, partial/unknown/zero, iptal ve ilk-hata. Sonuç yalnız kaynak hazırlığı ve kontrol; canonical writer/aktivasyon yok.",
+      "depends_on": [
+        4,
+        8,
+        9
+      ],
+      "status": "existing_guards_prepared_new_wiring_tests_pending"
+    }
+  ],
+  "coverage_01_13": [
+    {
+      "steps": [
+        1,
+        2,
+        3
+      ],
+      "now": "Yeni bilinen kod eksiği yok; mevcut korumalar regresyonda korunur.",
+      "later": "Gerçek ortam doğrulaması bekliyor; tekrar kodlama listesine alınmaz."
+    },
+    {
+      "steps": [
+        4
+      ],
+      "deliveries": [
+        6
+      ]
+    },
+    {
+      "steps": [
+        5
+      ],
+      "deliveries": [
+        7
+      ]
+    },
+    {
+      "steps": [
+        6
+      ],
+      "deliveries": [
+        5,
+        8
+      ]
+    },
+    {
+      "steps": [
+        7
+      ],
+      "deliveries": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "separate": "Geliştirici app onayı ve native kullanıcı kanıtı kod tesliminden ayrı."
+    },
+    {
+      "steps": [
+        8,
+        9,
+        10
+      ],
+      "now": "Mevcut kimlik okuyucu/aday kodu yeniden yazılmaz; bağlantı ve kontroller teslim 5/10 içinde korunur.",
+      "evidence": "Gerçek Merchant/katalog/Shopify biçimi, Meta rapor namespace, Klaviyo varyant/OrderId kaynak kanıtı açık."
+    },
+    {
+      "steps": [
+        11,
+        12
+      ],
+      "deliveries": [
+        3,
+        5,
+        9
+      ],
+      "later": "Mapping/source-rule kalıcı kayıt, staged evidence ve durable continuation 15 tasarımı sonrası."
+    },
+    {
+      "steps": [
+        13
+      ],
+      "deliveries": [
+        10
+      ]
+    }
+  ],
+  "already_prepared_do_not_recode": [
+    {
+      "work": "Shopify sipariş çalıştırıcısı ve arka plan oturumu",
+      "main_PR": 251
+    },
+    {
+      "work": "Belirsiz/yarım sipariş rezervasyonlarının açık uzlaştırılması",
+      "main_PR": 252
+    },
+    {
+      "work": "Mevcut authority snapshot/OAuth staging/canonical owner ve prewrite helperları",
+      "basis": "Güncel main kodu ve ilgili EO-05 brief tarihsel teslimleri; yeni bağlantılarda korunacak, eski remaining metinlerinden tekrar backlog üretilmez."
+    }
+  ],
+  "evidence_only": [
+    "Google/Meta/Klaviyo app kapsam/onay ve gerçek mağaza consent erişimi",
+    "Gerçek kaynak kimlik biçimleri ve Shopify Product/Variant/OrderId doğrulaması",
+    "Gerçek limit/profil/izinli geçmiş sipariş/protected-data kabulü",
+    "Ölçülmüş body/bellek/bağlantı/kapasite ve gerçek kaynak okuması"
+  ],
+  "later_not_pulled_forward": {
+    "15": "Kalıcı mapping/source rules/özel ham kanıt ve Order–LineItem saklama; writer/tekrar okuma/geçmiş/durable continuation tasarımı ve uygulaması ayrı onayla.",
+    "22": "Listing tree duraklatılmıştır.",
+    "23": "Genel Dataset yazımı ve FX uygulaması.",
+    "16_20": "Provider rol bağlantıları ve native kanıtları; Klaviyo Assisted kararı korunur.",
+    "17_18_19_21": "Search, Meta, Klaviyo ürün seçimi ve PMax ayrıntısı kanıt/karar işleri kullanıcı değerlendirmesinde; uydurma kaynak kodlanmaz.",
+    "24_26": "Uzlaştırma, Spend hesabı ve bütünleşik kabul kendi mevcut sıralarında."
+  },
+  "stop_after": {
+    "existing_step": 14,
+    "action": "Bu teknik teslimlerin ardından 01–13 durum tablosunu birlikte yeniden değerlendir; 15’e kendiliğinden geçme."
+  },
+  "delivery_gates": [
+    "Her küçük kod dilimi güncel main → codex branch → PR → ilgili testler/CI → açık kullanıcı merge onayı.",
+    "Resmî kaynaklar kodlama dilimi başında güncel doğrulanır; kanıtlanmamış davranış uygulanmaz.",
+    "UI diliminde metin/component eşlemesi ve kullanıcı görsel kabulü ayrıca gerekir.",
+    "Provider/config/deploy/canlı izin/DB mutation kendi açık yetki kapısında; bu plan bunları yetkilendirmez."
+  ],
+  "runtime_changed": false,
+  "step15_started": false,
+  "Dataset_write": false
+}

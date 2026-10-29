@@ -1,3 +1,32 @@
+## 29 Ekim 2026 — 01–13 teknik tamamlama kod planı
+
+07 OAuth kararları, 04–06 çalışan PD/kayıt bağlantıları ve yeni Klaviyo etkileşim referansı eksiği tek 10 teslim sırasına bağlandı. Bu teslim numaraları yeni plan maddesi değildir. Ayrıntılı mesaj/tablo karşılığı docs/plans/EO_05_06_REVISED_PLAN_2026_10_27.md başındadır; makine otoritesi contracts/eo-05-immediate-technical-work-plan-v1.json. EO-05 brief, master ve 26-adım JSON planı aynı kayda bağlıdır.
+
+İlk teknik iş 07 temel ürün kurulumu ile Orders izin kontrolünü ayırmaktır. Geliştirici onay/native kimlik/izin/kapasite kanıtları ayrı; 08–10 aday/okuyucu kodu kanıtsız biçim varsayımlarıyla yeniden yazılmaz. #251 çalıştırıcı ve #252 belirsiz rezervasyon uzlaştırması tekrar backlog değildir. Kanıt bekleyen provider rol konuları öne çekilmedi; kalıcı saklama 15, duraklatılan listing tree 22 ve genel Dataset/FX yazımı 23 yerindedir. Teknik teslimlerden sonra 14’te birlikte değerlendirilir; 15’e otomatik geçilmez.
+
+Bu tur yalnız plan ve sözleşme değişti; runtime/UI/DB/provider/config/deploy/izin veya token değişmedi. Kaynaklar güncel main kodu, mevcut 01–13 teslim/evidence kayıtları ve 29 Ekim 07 politika contract’ındaki resmî kaynak kontrolüdür; native app onayı veya üretim kabulü iddia edilmez.
+
+## 29 Ekim 2026 — 07 OAuth: izin öncesi açıklama ve kurulum sürdürme politikası
+
+Kullanıcı önerisi mevcut 07 içinde bağımsız ve izlenen alt iş olarak kaydedildi; 26 ana sıra değişmedi. Contract: contracts/eo-05-oauth-setup-permission-policy-v1.json. Bu ürün politikası/teknik iş kaydıdır; modal, OAuth/config veya canlı izin uygulaması değildir.
+
+| Bağlantı | Hedef kurulum davranışı |
+|---|---|
+| Google | Ads + Merchant izinleri aynı açıklanmış kurulum akışında istenir. İkisi ve gerekli hesap erişimi doğrulanmadan Connected olmaz. Kısmi izin Resume Setup olur; otomatik disconnect/revoke yapılmaz. Merchant hesabı olmayan Search-only mağazanın da bu politikada kurulumu eksik kalacağı ayrıca görünürdür. |
+| Meta | Ads + Catalog ve doğrulanmış gerekli bağımlı izinler birlikte istenir. Kısmi izin Resume Setup; Ads/Business/katalog erişimi ve uygulama onayı ayrı kontrol edilir. Bugünkü resmî Meta izin sayfası okuması 429 verdi; güncel kapsam/bağımlılık/uygulama onayı tekrar doğrulanmış sayılmaz. |
+| Klaviyo | Mevcut hesap/campaign/flow/event/metric OAuth okuma kapsamları ve ayrı Estimated Monthly Cost adımı korunur. Bu değer API izni değildir; eksikse Resume Setup. Geçerli izin/hesap varken sırf maliyet eksik diye OAuth baştan açılmaz. |
+| Shopify | Repository başlangıç TOML scopes listesi boş; mevcut production config yeniden gözlenmedi. Product-enabled temel kurulum için read_products gerekir. Orders ilk kurulumun zorunlusu yapılmaz. Orders reddedilirse temel kurulum kendi izinleri tam olduğunda tamamlanır; sipariş/overlap yetkisi açılmaz. |
+
+Shopify Orders sonradan read_orders isteğe bağlı izniyle istenir. Resmî dinamik isteme yolu için optional_scopes tanımı önceden yayımlanmalıdır. Overlap girişinde açıklama + Cancel/Connect hedefi ayrı UI işidir; Cancel temel bağlantıyı bozmaz. Dönüşte gerçekten verilen izinler native olarak tekrar okunur. Eski sipariş gerekiyorsa read_all_orders ayrıca, uygulama onayı ve mağaza izniyle değerlendirilir; read_marketing_events yalnız kullanılan özellik gerektiriyorsa ayrıca açıklanır. Kişi/adres/e-posta izinleri topluca eklenmez. Orders izni tek başına kesin provider sipariş çakışması kanıtı değildir.
+
+İlk Shopify kurulum ekranı Shopify’a aittir; uygulamaya girilmeden bizim embedded modalımız açılamaz. Modalın izin öncesinde gösterilebilmesi için hedef akış mevcut asgari native kurulum → uygulamaya ilk girişte Products açıklaması → optional_scopes olarak tanımlanmış read_products isteğidir. Products native açıdan sonradan istenebilir olsa da ürün kurulumu açısından zorunludur; Orders temel kurulumun zorunlusu değildir. Gerekli config yayını ayrı onay kapısındadır. Native zorunlu kurulum izni reddedilirse kurulum tamamlanmaz; kurulu uygulamanın eksik iş adımı Resume Setup olabilir. Mevcut identityPermissionRequirements helper’ı read_products + read_orders birlikte istiyor; temel ürün kurulumu ile sipariş özelliği kontrollerinin ayrılması 07 teknik işi olarak açık kaydedildi. Sipariş okuyucusunun kendi izin kapısı gevşetilmez.
+
+Bağımsız modal işi: amaç/veri kullanımı, birlikte istenen izinler, reddedilirse etkilenen adım, sonraya bırakılabilen Orders, Cancel/Connect davranışı, kısmi dönüş, tekrar bağlanma ve izin geri alma durumları. Google/Meta native scope kapsamı daha genişse sadece-okuma izni diye yanlış açıklanmaz; uygulamanın yalnız okuma davranışı ile verilen iznin kapsamı ayrılır. Bileşen/metin/masaüstü/mobil ve kullanıcı kabulü mevcut Shopify UI anayasasına göre ayrı hazırlanır; bu karar UI PASS değildir.
+
+Geliştirici yetkisi ile mağaza izni ayrıdır. 07’de her sağlayıcı için kapsamın uygulamada tanımı, gerekiyorsa review/verification başvurusu, native onay/pending durumu, mağaza grant’i, seçilen varlık erişimi ve canlı kabul ayrı izlenecek. Elimizdeki tarihli test/OAuth kanıtı bütün Merchant/Catalog/Orders erişimlerinin veya genel mağaza dağıtımının onaylandığını göstermez. Güncel provider yönetim panelleri bu turda incelenmedi; tüm izinler var veya hiç yok hükmü verilmez. Kullanıcıdan tekrar izin almak geliştirici app onay eksikliğini çözmez.
+
+Resmî kontrol tarihi 2026-10-29: Shopify manage-access-scopes/access-scopes/protected-customer-data; Google Merchant third-party authorization ve Google Ads access-levels; Klaviyo submit-your-app-for-review. Kaynaklar contract içinde tam bağlantılarıyla kayıtlı. 04–06 teknik kararları hâlâ birlikte değerlendirilecek; 15/23 başlamadı, 22 listing-tree duraklaması korunur.
+
 ## 29 Ekim 2026 — Klaviyo araştırma kapanışı ve teknik eksiğin mevcut sıralara bağlanması
 
 Kullanıcı kararı: Klaviyo Campaign için şimdilik Assisted doğrudur; mevcut Flow Triggered ve çözümlenemeyen Unclassified korunur. Araştırma, Advertised/Cross-sell kanıtı veya runtime uygulaması değildir.

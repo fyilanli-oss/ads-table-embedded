@@ -1,0 +1,171 @@
+{
+  "contract_id": "eo-05-oauth-setup-permission-policy-v1",
+  "checked_at": "2026-10-29",
+  "status": "owner_product_direction_recorded_implementation_and_UI_acceptance_pending",
+  "existing_plan_step": 7,
+  "new_plan_number": false,
+  "authority": [
+    "docs/EXECUTION_PLAN.md",
+    "contracts/a6-eo-implementation-master-v1.json",
+    "contracts/eo-05-start-brief-v1.json"
+  ],
+  "independent_work_item": "07 — İzin öncesi açıklama, birleşik izin kontrolü ve kurulum sürdürme",
+  "principle": "Developer/app access readiness, merchant scope grant, selected asset access and product setup readiness are separate observations; none implies the others.",
+  "providers": {
+    "google_ads": {
+      "request_together": [
+        "https://www.googleapis.com/auth/adwords",
+        "https://www.googleapis.com/auth/content"
+      ],
+      "setup_complete_requires": "Both grants and verified account/asset authority",
+      "partial_or_cancelled": "Resume Setup for incomplete chosen connection; no silent successful setup or automatic disconnect",
+      "missing_merchant_account": "Explicit unavailable account/asset condition; combined requirement also affects Search-only merchants",
+      "developer_gate": "Google Cloud project API access level and OAuth verification; Merchant API enablement/registration/verification as applicable; current approved status not established by this review"
+    },
+    "meta": {
+      "request_together": "Ads and Catalog permission profile; reuse exact existing dependency-closed scope set only after official/app configuration recheck",
+      "code_declared_scope_set": [
+        "ads_read",
+        "catalog_management",
+        "business_management",
+        "pages_read_engagement",
+        "pages_show_list"
+      ],
+      "scope_set_provenance": "app/lib/oauth/oauth-permission-profile.server.js; current official permission reference fetch blocked, not newly verified",
+      "setup_complete_requires": "All required grants plus selected business/Ads/catalog access verified",
+      "partial_or_cancelled": "Resume Setup for incomplete chosen connection; do not mark Connected or silently disconnect",
+      "developer_gate": "App permission/access-level/review and business/asset prerequisites separately verified; own-app test access is not general merchant approval"
+    },
+    "klaviyo": {
+      "permission_name": "Klaviyo OAuth reporting/event access, not Ads API",
+      "request_scopes": [
+        "accounts:read",
+        "campaigns:read",
+        "flows:read",
+        "events:read",
+        "metrics:read"
+      ],
+      "estimated_monthly_cost": "Separate user-entered setup value, not an API scope; preserve existing zero/missing distinction and source currency rules",
+      "missing_cost": "Existing Resume Setup; resume existing verified account/spend stage rather than restarting OAuth when grants remain valid",
+      "developer_gate": "OAuth app declared scopes and production/public distribution state verified separately; Marketplace approval is distinct from ability to install an unreviewed OAuth app"
+    },
+    "shopify": {
+      "repository_initial_configuration": {
+        "path": "shopify.app.toml",
+        "access_scopes": "",
+        "optional_scopes_declared": false,
+        "production_configuration_rechecked": false
+      },
+      "base_product_requirement": "Product read access required for product-enabled setup; do not infer it from installation/session success",
+      "product_scope": "read_products",
+      "base_denial": "Incomplete product setup => Resume Setup when app is installed; denial of native required installation permissions means installation is not completed",
+      "orders": {
+        "required_for_initial_setup": false,
+        "optional_feature_scope": "read_orders",
+        "initial_decline": "Base product setup remains completed if its own requirements pass; order/overlap feature not authorized; no order job admission",
+        "later_entry": "Overlap action in existing report surface is proposed; final UI location and exact copy require analyst/owner acceptance",
+        "pre_consent_copy_intent": "Explain order access is needed to inspect overlap; Cancel keeps current base connection, Connect invokes native Shopify permission request",
+        "dynamic_requirement": "Declare needed scope in deployed optional_scopes before dynamic request; verify native grants after return; no automatic grant or read on Cancel",
+        "older_than_60_days": "read_all_orders only when needed with read_orders; app approval and merchant grant separately checked",
+        "protected_customer_data": "Minimum order/line/journey fields and applicable Shopify protected-data approval; no blanket read_customers/name/email/address access added",
+        "marketing_events": "read_marketing_events only for specifically used and separately explained features; not silently bundled as an Order permission"
+      },
+      "modal_constraint": "Our embedded modal cannot precede native installation. Target is existing minimal installation followed by in-app Products permission request; read_products and read_orders must be declared in optional_scopes and released in a separately authorized config change. Products is required by product setup; Orders is optional for base setup. No TOML mutation here.",
+      "target_sequence": [
+        "Native minimal Shopify installation establishes store context",
+        "First in-app product setup explanation; request read_products declared optional natively but required by product setup",
+        "Missing Products => Resume Setup with no product-enabled activation",
+        "Do not request Orders as a base completion requirement",
+        "Later Overlap explanation; request read_orders only on Connect"
+      ]
+    }
+  },
+  "pre_permission_modal": {
+    "standalone_subtask": true,
+    "scope": "All providers and later Shopify Orders permission request",
+    "must_explain": [
+      "What data we use and why",
+      "Permissions requested together",
+      "Which setup step remains incomplete if declined",
+      "Which Shopify Orders feature is optional and can be connected later",
+      "What Cancel and Connect do"
+    ],
+    "must_not_claim": "Google/Meta permission grants are read-only where native scopes permit writes; distinguish app read-only behavior from provider-granted scope breadth",
+    "behaviors": [
+      "Cancel without starting external authorization",
+      "Connect starts exactly the explained permission flow",
+      "Return verifies actual scopes and assets",
+      "Separate missing merchant grant from missing developer approval; user reauthorization cannot cure app approval deficiency",
+      "No automatic retries, provider fallback, revocation or clearing other connections",
+      "Reconnect/revocation updates feature readiness; scopes alone do not activate jobs or establish overlap"
+    ],
+    "UI_gate": "Existing Shopify embedded UI constitution, analyst brief, official components, desktop/mobile and owner acceptance required before UI implementation/Done"
+  },
+  "known_code_work": {
+    "oauth_profile_selection": "Existing reporting_v1 and identity_v1 remain separate in code; new Google/Meta setup must intentionally choose complete profile. Recorded target, not changed.",
+    "shopify_permission_preflight": "identityPermissionRequirements currently bundles read_products + read_orders. Split capability assessment so missing Orders cannot block base product setup; keep order-reader admission strict.",
+    "orders_later_permission": "Configure optional scopes in a separately authorized app-config delivery; add controlled request/return/currentAppInstallation validation and feature-specific readiness.",
+    "no_runtime_changed": true
+  },
+  "developer_approval_audit": {
+    "status": "current_native_dashboards_not_inspected_not_all_approved_or_all_missing",
+    "required_columns": [
+      "Required app permission/scope",
+      "Declared in provider app",
+      "Review/application required",
+      "Submission evidence",
+      "Native approved/denied/pending status and date",
+      "Merchant granted scopes",
+      "Selected asset read evidence",
+      "Production acceptance"
+    ],
+    "existing_evidence": [
+      "contracts/eo-04c-google-2026-access-review-corrective-v1.json",
+      "docs/evidence/EO_04B_META_APP_ROLE_VISUAL_ACCEPTANCE_2026-10-17.json",
+      "contracts/eo-04d-klaviyo-oauth-estimated-spend-v1.json",
+      "app/lib/oauth/identity-permission-preflight.server.js"
+    ],
+    "interpretation": "Historical test/OAuth success and requested scope strings do not establish current all-merchant or new Merchant/Catalog/Orders access approval."
+  },
+  "boundaries": {
+    "scope_request_or_config_change": false,
+    "UI_implemented": false,
+    "provider_mutation": false,
+    "new_token": false,
+    "live_customer_reads": false,
+    "db_change": false,
+    "Dataset_write": false,
+    "step15_started": false,
+    "Orders_permission_proves_provider_order_overlap": false
+  },
+  "official_sources": [
+    {
+      "source": "https://shopify.dev/docs/apps/build/authentication-authorization/manage-access-scopes",
+      "status": "read_2026-10-29"
+    },
+    {
+      "source": "https://shopify.dev/docs/api/usage/access-scopes",
+      "status": "read_2026-10-29"
+    },
+    {
+      "source": "https://shopify.dev/docs/apps/launch/protected-customer-data",
+      "status": "read_2026-10-29"
+    },
+    {
+      "source": "https://developers.google.com/merchant/api/guides/authorization/access-client-accounts",
+      "status": "read_2026-10-29"
+    },
+    {
+      "source": "https://developers.google.com/google-ads/api/docs/api-policy/access-levels",
+      "status": "read_2026-10-29"
+    },
+    {
+      "source": "https://developers.klaviyo.com/en/docs/submit_your_app_for_review",
+      "status": "read_2026-10-29"
+    },
+    {
+      "source": "https://developers.facebook.com/docs/permissions/",
+      "status": "429_read_failed_not_retried_no_mutation"
+    }
+  ]
+}

@@ -97,7 +97,7 @@ test("transport rejects malformed inventories, duplicate accounts and expired ac
   assert.equal(permissionResponseMatches({...reply, expiresAt: "2020-01-01"}, pending), false);
 });
 
-test("actual selection component renders native choices versus candidate ID fields and escapes account names", () => {
+test("actual selection component renders native candidate choices without manual IDs and escapes account names", () => {
   const sourceLocation = new URL("../app/components/permission-setup-selection.tsx", import.meta.url);
   const source = readFileSync(sourceLocation, "utf8");
   const output = ts.transpileModule(source, {compilerOptions: {jsx: ts.JsxEmit.ReactJSX,
@@ -106,7 +106,10 @@ test("actual selection component renders native choices versus candidate ID fiel
   new Function("require", "exports", output)(createRequire(sourceLocation), exports);
   for (const feature of ["google_ads", "meta"]) {
     for (const stage of ["select_account", "select_reporting_account", "verify_assets"]) {
-      const model = {key: "view", feature, stage, selection: {...expected, accounts: [{id: "123", name: "<script>unsafe</script>"}]}};
+      const model = {key: "view", feature, stage, selection: {...expected, accounts: [{id: "123", name: "<script>unsafe</script>"}],
+        ...(stage === "verify_assets" ? {assetOptions: {candidateKind: feature === "meta" ? "catalogs" : "merchant_accounts",
+          businessId: feature === "meta" ? "88" : null, candidates: [{id: "77", name: "Visible catalog"}],
+          expiresAt: new Date(Date.now() + 60000).toISOString(), complete: true, accessVerified: false}} : {})}};
       const html = renderToStaticMarkup(createElement(exports.PermissionSetupSelection, {model, busy: false,
         onConfirm: () => assert.fail(), onAfterHide: () => assert.fail()}));
       assert.equal((html.match(/<s-modal\b/g) ?? []).length, 1);
@@ -116,8 +119,9 @@ test("actual selection component renders native choices versus candidate ID fiel
         assert.match(html, /<s-choice-list/);
         assert.doesNotMatch(html, /<s-text-field/);
       } else {
-        assert.match(html, /These are candidates, not verified connections/);
-        assert.equal((html.match(/<s-text-field\b/g) ?? []).length, feature === "meta" ? 2 : 1);
+        assert.match(html, /Access will be verified before setup can continue/);
+        assert.match(html, /<s-choice-list/);
+        assert.doesNotMatch(html, /<s-text-field/);
       }
     }
   }

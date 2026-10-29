@@ -28,7 +28,7 @@ export function usePermissionSettings({availability, onResume}: Props) {
   const [selectionModel, setSelectionModel] = useState<SelectionModel | null>(null);
   const selectionIntent = useRef<{model: SelectionModel; input: SelectionInput | null; failed: boolean} | null>(null);
   const [selectionActivity, setSelectionActivity] = useState<string | null>(null);
-  const execute = useCallback((intent: "permission_connect" | "permission_status" | "permission_select_accounts" | "permission_select_reporting" | "permission_verify_assets", feature: PermissionFeature, fields: Record<string, string> = {}) => {
+  const execute = useCallback((intent: "permission_connect" | "permission_status" | "permission_select_accounts" | "permission_select_reporting" | "permission_verify_assets" | "permission_discover_assets", feature: PermissionFeature, fields: Record<string, string> = {}) => {
     if (pending.current) return Promise.reject(new Error("PERMISSION_ACTION_PENDING"));
     return new Promise<Reply>((resolve, reject) => {
       const requestId = crypto.randomUUID();
@@ -93,7 +93,7 @@ export function usePermissionSettings({availability, onResume}: Props) {
     connectReply.current = null;
     setSnapshot(controller.snapshot);
   }, [controller]);
-  const openSelection = (reply: PermissionSettingsResult) => {
+  const openSelection = useCallback((reply: PermissionSettingsResult) => {
     if (pending.current || selectionIntent.current || controller.snapshot.phase !== "idle" || reply.kind !== "status" || !reply.selection
       || (reply.feature !== "google_ads" && reply.feature !== "meta")
       || !["select_account", "select_reporting_account", "verify_assets"].includes(reply.stage)) return;
@@ -101,6 +101,18 @@ export function usePermissionSettings({availability, onResume}: Props) {
       stage: reply.stage as SelectionModel["stage"], selection: reply.selection};
     selectionIntent.current = {model, input: null, failed: false};
     setSelectionModel(model);
+  }, [controller]);
+  const loadAssets = async (reply: PermissionSettingsResult) => {
+    if (reply.kind !== "status" || !reply.selection || pending.current || selectionIntent.current) return;
+    setChecking(true); setSelectionActivity("Loading available accounts and catalogs…");
+    try {
+      const result = await execute("permission_discover_assets", reply.feature, {
+        connectionId: reply.selection.connectionId, version: String(reply.selection.version),
+        reportingAccountId: reply.selection.reportingAccountId ?? "",
+      });
+      setFeedback(result); openSelection(result);
+    } catch { setFeedback({kind: "unknown", feature: reply.feature}); }
+    finally { setChecking(false); setSelectionActivity(null); }
   };
   const checkStatus = async (feature: PermissionFeature, openNext = false) => {
     if (pending.current || selectionIntent.current || ["explaining", "hiding_for_cancel", "hiding_for_connect", "starting"].includes(controller.snapshot.phase)) return;
@@ -111,7 +123,10 @@ export function usePermissionSettings({availability, onResume}: Props) {
       if (reply.kind === "status" || reply.kind === "unavailable") {
         controller.statusObserved(controller.snapshot.session, reply.feature);
         setSnapshot(controller.snapshot);
-        if (openNext) openSelection(reply);
+        if (openNext) {
+          if (reply.kind === "status" && reply.stage === "verify_assets") await loadAssets(reply);
+          else openSelection(reply);
+        }
       }
     } catch { setFeedback({kind: "unknown", feature}); }
     finally { setChecking(false); }
@@ -121,7 +136,7 @@ export function usePermissionSettings({availability, onResume}: Props) {
     if (!active || active.model.key !== key || active.input || active.failed || pending.current) return;
     active.input = {...input, ...(input.accountIds ? {accountIds: [...input.accountIds]} : {})};
     setChecking(true);
-    setSelectionActivity(active.model.stage === "verify_assets" ? "Verifying access…" : "Saving selection…");
+    setSelectionActivity(input.loadCatalogs ? "Loading available accounts and catalogs…" : active.model.stage === "verify_assets" ? "Verifying access…" : "Saving selection…");
     try { hide(); } catch {
       active.failed = true;
       setChecking(true);
@@ -136,9 +151,10 @@ export function usePermissionSettings({availability, onResume}: Props) {
     if (!active.input || active.failed) { setChecking(false); setSelectionActivity(null); return; }
     const {model, input} = active;
     setChecking(true);
-    setSelectionActivity(model.stage === "verify_assets" ? "Verifying access…" : "Saving selection…");
+    setSelectionActivity(input.loadCatalogs ? "Loading available accounts and catalogs…" : model.stage === "verify_assets" ? "Verifying access…" : "Saving selection…");
     try {
-      const intent = model.stage === "select_account" ? "permission_select_accounts"
+      if (model.selection.assetOptions && !(Date.parse(model.selection.assetOptions.expiresAt) > Date.now())) throw new Error("PERMISSION_OPTIONS_EXPIRED");
+      const intent = input.loadCatalogs ? "permission_discover_assets" : model.stage === "select_account" ? "permission_select_accounts"
         : model.stage === "select_reporting_account" ? "permission_select_reporting" : "permission_verify_assets";
       const fields: Record<string, string> = {connectionId: model.selection.connectionId, version: String(model.selection.version)};
       if (model.stage === "select_account") fields.selectedAccountIds = JSON.stringify(input.accountIds ?? []);
@@ -148,14 +164,18 @@ export function usePermissionSettings({availability, onResume}: Props) {
         if (model.feature === "google_ads") fields.merchantId = input.merchantId ?? "";
         else { fields.businessId = input.businessId ?? ""; fields.catalogId = input.catalogId ?? ""; }
       }
-      setFeedback(await execute(intent, model.feature, fields));
+      const reply = await execute(intent, model.feature, fields);
+      setFeedback(reply);
+      if (input.loadCatalogs) openSelection(reply);
     } catch { setFeedback({kind: "unknown", feature: model.feature}); }
     finally { setChecking(false); setSelectionActivity(null); }
-  }, [execute]);
+  }, [execute, openSelection]);
   useEffect(() => {
-    if (feedback?.kind !== "status" || !feedback.expiresAt) return;
+    if (feedback?.kind !== "status") return;
+    const expiry = feedback.expiresAt ?? feedback.selection?.assetOptions?.expiresAt;
+    if (!expiry) return;
     const feature = feedback.feature;
-    const remaining = Date.parse(feedback.expiresAt) - Date.now();
+    const remaining = Date.parse(expiry) - Date.now();
     const timer = setTimeout(() => setFeedback({kind: "unknown", feature}), Math.max(0, remaining));
     return () => clearTimeout(timer);
   }, [feedback]);
@@ -165,7 +185,8 @@ export function usePermissionSettings({availability, onResume}: Props) {
     if (feedback.stage === "products_required") open("shopify_products");
     else if (permissionResumeTarget(feedback.stage) === "explanation") open(feedback.feature);
     else if (feedback.feature === "google_ads" || feedback.feature === "meta") {
-      if (feedback.selection) openSelection(feedback);
+      if (feedback.stage === "verify_assets" && feedback.selection && !feedback.selection.assetOptions) void loadAssets(feedback);
+      else if (feedback.selection) openSelection(feedback);
       else void checkStatus(feedback.feature, true);
     } else callbacks.current.onResume(feedback.feature, feedback.stage);
   };

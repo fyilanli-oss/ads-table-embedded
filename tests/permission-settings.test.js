@@ -160,9 +160,11 @@ test("actual Settings action authenticates before reading form or constructing p
 
 test("actual Settings action cannot be forced to open a closed server gate through form flags", async () => {
   const route = loadRoute();
-  const reply = await route.action({request: formRequest({intent: "permission_connect", feature: "google_ads", requestId,
-    identityAuthorizationEnabled: "true", permissionProfile: "reporting_v1"})});
-  assert.deepEqual(reply, {kind: "unavailable", feature: "google_ads", requestId});
+  for (const intent of ["permission_connect", "permission_discover_assets"]) {
+    const reply = await route.action({request: formRequest({intent, feature: "google_ads", requestId,
+      identityAuthorizationEnabled: "true", permissionProfile: "reporting_v1"})});
+    assert.deepEqual(reply, {kind: "unavailable", feature: "google_ads", requestId});
+  }
 });
 
 test("actual Settings action rejects an invalid feature and preserves authentication Responses", async () => {
@@ -186,7 +188,7 @@ test("actual Settings action returns unknown without raw errors and never retrie
 
 test("permission actions do not implicitly rerun existing provider loaders", () => {
   const route = loadRoute();
-  for (const intent of ["permission_connect", "permission_status", "permission_select_accounts", "permission_select_reporting", "permission_verify_assets"]) {
+  for (const intent of ["permission_connect", "permission_status", "permission_select_accounts", "permission_select_reporting", "permission_verify_assets", "permission_discover_assets"]) {
     assert.equal(route.shouldRevalidate({formData: new URLSearchParams({intent}), defaultShouldRevalidate: true}), false);
   }
   assert.equal(route.shouldRevalidate({formData: new URLSearchParams({intent: "select"}), defaultShouldRevalidate: true}), true);

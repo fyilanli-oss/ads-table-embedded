@@ -402,7 +402,8 @@
     "route_wiring_remaining": "Runtime remains gated; actual native callback/install/permission/config/desktop/mobile acceptance and durable activation are not complete.",
     "combined_selectors_wired": true,
     "candidate_asset_verification_wired": true,
-    "automatic_asset_inventory_discovery": false
+    "automatic_asset_inventory_discovery": true,
+    "automatic_asset_inventory_discovery_evidence": "code_and_isolated_tests_only_not_live_access_or_native_visual_acceptance"
   },
   "step15_started": false,
   "Dataset_write": false,
@@ -410,7 +411,7 @@
     "checked_at": "2026-10-29",
     "existing_plan_step": 7,
     "code_delivery_order": 4,
-    "status": "analyst_spec_prepared_not_native_acceptance",
+    "status": "historical_manual_identifier_design_superseded_by_asset_discovery_spec_for_assets",
     "purpose": "Resume combined Google/Meta setup using server-observed account choices and native verification of candidate asset identifiers, without legacy reporting fallback or new OAuth.",
     "exact_copy": {
       "account_heading": {
@@ -495,6 +496,51 @@
       "https://shopify.dev/docs/api/app-home/latest/web-components/forms/choice-list",
       "https://shopify.dev/docs/api/app-home/latest/web-components/forms/text-field",
       "https://shopify.dev/docs/api/app-home/latest/web-components/overlays/modal"
+    ],
+    "superseded_by": "asset_discovery_spec"
+  },
+  "asset_discovery_spec": {
+    "checked_at": "2026-10-29",
+    "status": "automatic_candidate_discovery_and_native_choice_selection_code_prepared_release_visual_and_durable_activation_pending",
+    "existing_plan_step": 7,
+    "code_delivery_order": 4,
+    "official_sources": [
+      "https://developers.google.com/merchant/api/reference/rest/accounts_v1/accounts/list",
+      "https://developers.google.com/merchant/api/reference/rest/accounts_v1/accounts",
+      "https://raw.githubusercontent.com/facebook/facebook-python-business-sdk/26.0.0/facebook_business/adobjects/user.py",
+      "https://raw.githubusercontent.com/facebook/facebook-python-business-sdk/26.0.0/facebook_business/adobjects/business.py"
+    ],
+    "source_limit": "Meta web references returned inaccessible/429; pinned official SDK26.0.0 GET edges and id/name fields verified instead. This does not prove current app/merchant access.",
+    "exact_copy": {
+      "merchant_heading": "Select Merchant Center account",
+      "business_heading": "Select Meta business",
+      "catalog_heading": "Select Meta catalog",
+      "merchant_label": "Merchant Center accounts",
+      "business_label": "Businesses",
+      "catalog_label": "Catalogs",
+      "body": "Choose an item visible to this connection. Access will be verified before setup can continue.",
+      "empty": "No available accounts or catalogs were returned. Check status before continuing.",
+      "primary_business": "Continue",
+      "primary_verify": "Verify access",
+      "secondary": "Cancel",
+      "loading": "Loading available accounts and catalogs…"
+    },
+    "flow": [
+      "Resume at verify_assets explicitly loads candidates; no native request on mount or permission restart",
+      "Google GET accounts/v1/accounts with existing content scope, complete bounded pagination; user-scoped quota, not all advanced subaccounts claim",
+      "Meta GET me/businesses; explicit business Continue rechecks business visibility and lists owned_product_catalogs plus client_product_catalogs",
+      "Only same connection/version/Reporting Account and fresh complete candidates can open selector; duplicate/conflicting/cursor/error/limit abort without partial list",
+      "One native choice-list/choice modal replaces manual ID input; Continue closes before catalog read, Verify closes before existing native verification",
+      "Listing is not asset access, Ads link, product matching, role or activation evidence; existing verifier still checks selected IDs",
+      "First HTTP/error stops; no retry, alternate provider route, manual-ID fallback or partial choices"
+    ],
+    "component_mapping": "Existing s-modal base/base, s-stack block/base, s-paragraph, single s-choice-list and s-choice, primary/secondary s-button native slots. No text field for manual identifiers, raw controls or CSS.",
+    "acceptance": "Real Shopify Admin desktop/min320px mobile, keyboard/touch/focus/cancel/empty/error/expiry and explicit owner acceptance pending. Agent performs no Shopify visual operations.",
+    "gates": "Existing Google/Meta identity and release flags remain false; no live calls, token/config/deploy/DB/Dataset change; final activation and persistence remain step15.",
+    "remaining": [
+      "Developer/release/native install/callback/decline/partial-grant and real desktop/min320px mobile owner acceptance; all new switches stay closed",
+      "Before activation, approved native transport/quota/app-owner inventory must cover the new read endpoints; existing shared transport rejects unconfigured families and is not bypassed",
+      "Final durable selection/proof storage and activation decision remain existing step15; step15 not started, step22 paused, Dataset/FX writer step23"
     ]
   }
 }

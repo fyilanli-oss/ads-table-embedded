@@ -380,7 +380,7 @@ export const loader = async ({request}: LoaderFunctionArgs): Promise<LoaderData>
   return {...google, meta, klaviyo, permissionAvailability: PERMISSION_SETTINGS_AVAILABILITY};
 };
 
-const permissionIntents = new Set(["permission_connect", "permission_status", "permission_select_accounts", "permission_select_reporting", "permission_verify_assets"]);
+const permissionIntents = new Set(["permission_connect", "permission_status", "permission_select_accounts", "permission_select_reporting", "permission_verify_assets", "permission_discover_assets"]);
 
 export function shouldRevalidate({formData, defaultShouldRevalidate}: ShouldRevalidateFunctionArgs) {
   const intent = formData?.get("intent");
@@ -413,7 +413,12 @@ export const action = async ({request}: ActionFunctionArgs) => {
       else if (intent === "permission_status") result = await settings.status({feature, verified});
       else {
         const expected = {connectionId: String(form.get("connectionId") ?? ""), version: Number(form.get("version"))};
-        if (intent === "permission_verify_assets") {
+        if (intent === "permission_discover_assets") {
+          const businessId = form.get("businessId");
+          result = await settings.discoverAssets({feature, verified,
+            expected: {...expected, reportingAccountId: String(form.get("reportingAccountId") ?? "")},
+            ...(typeof businessId === "string" && businessId ? {businessId} : {})});
+        } else if (intent === "permission_verify_assets") {
           result = await settings.verifyAssets({feature, verified, expected: {...expected, reportingAccountId: String(form.get("reportingAccountId") ?? "")},
             merchantId: String(form.get("merchantId") ?? ""), businessId: String(form.get("businessId") ?? ""), catalogId: String(form.get("catalogId") ?? "")});
         } else {

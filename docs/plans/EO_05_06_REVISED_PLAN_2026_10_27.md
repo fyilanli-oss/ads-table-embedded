@@ -1,3 +1,15 @@
+## 29 Ekim 2026 — Merchant / Meta katalog listesi ve native seçim
+
+Yerel doğrulama: 3.087/3.087 test, tip kontrolü ve derleme geçti. Exact commit CI GitHub üzerinde ayrıca doğrulanır; sentetik testler native görsel/izin kanıtı değildir.
+
+Aynı taslak #264 / mevcut 07 / dördüncü teknik teslimde elle kimlik girme tasarımı otomatik aday listesiyle değiştirildi. Google mevcut content izniyle erişilebilir Merchant hesaplarını okur. Meta önce işletmeleri, açık işletme seçimi sonrasında owned/client kataloglarını okur. Tam ve geçerli liste olmadan seçim sunulmaz; seçilen varlık ayrıca mevcut native erişim doğrulayıcısından geçer. Liste görünürlüğü erişim, Ads ilişkisi, Product ID, Sales Role veya aktivasyon kanıtı değildir.
+
+Her native okumada aynı kurulum/bağlantı/sürüm/credential/Reporting Account yeniden kontrol edilir. Sayfalama sabit resmî hedefte opaque cursor ile sınırlıdır; başka next hedefi takip edilmez. İlk hata, sınır, bozuk cursor veya çelişki bütün listeyi reddeder; tekrar/alternatif rota/elle kimlik fallback yoktur. Seçim ve Continue/Verify yalnız native afterhide sonrası; Cancel I/O yapmaz. Süresi dolan liste veya kanıt yeniden kullanılmaz.
+
+Resmî Merchant accounts list/account belgeleri 2026-10-29 okundu; kota kullanıcı bazlıdır ve bütün advanced subaccount listesi garantisi verilmez. Meta web referansı erişim/429 sınırı nedeniyle SDK26.0.0 resmî user/business GET uçları ve id/name alanları doğrulandı; bu developer onayı veya mağaza erişimi değildir. Kaynaklar ve kontrol tarihi contracts/eo-05-start-brief-v1.json#Permission_asset_discovery_2026_10_29 içinde.
+
+Kod ve izolasyon testleri hazır; canlı izin/config/deploy/token/DB/Dataset işlemi yok, mevcut kapılar kapalı. Yeni native okuma uçlarının onaylı kota/owner envanteri ve transport aileleri aktivasyondan önce tamamlanmalı; mevcut shared transport tanımsız uçları reddeder, bypass edilmez. Gerçek Shopify Admin desktop/min320px mobil, callback/ret/kısmi izin ve açık kullanıcı görsel kabulü bekler; ajan Shopify üzerinde görsel işlem yapmaz. Kalıcı seçili kaynak/kanıt ve aktivasyon 15 kararındadır; 15 başlamadı, 22 duraklatılmış, 23 Dataset/FX yazımı. Eski elle kimlik kayıtları tarihsel olup asset_discovery_spec güncel tasarımdır; Done/PASS veya merge-ready ilan edilmez.
+
 ## 29 Ekim 2026 — Birleşik hesap seçimi ve katalog adayı doğrulaması bağlandı
 
 Aynı taslak #264 / mevcut 07 / dördüncü teslim: Google/Meta native hesap listesi ve tek Reporting Account seçimi kendi bound combinedSetup.select/finishReporting yoluna bağlandı. Ekranda görülen bağlantı/sürüm core içinde, guard edilmiş yazımdan önce karşılaştırılır. Varlık doğrulayıcısı da her native okumada aynı bağlantı/sürüm/Reporting Account eşliğini korur. Bu sayede iki sekme/bağlantı değişimi eski seçimi yeni bağlantıya yazamaz. Eski reporting yolu bu yeni seçimler için kullanılmaz.

@@ -153,5 +153,35 @@ export function createPermissionSettings({shopify, providerRuntime, availability
       }
       return Object.freeze({kind: "status", feature, stage: "review_setup", expiresAt: result.expiresAt});
     },
+    async discoverAssets({feature, verified, expected, businessId}) {
+      if (!["google_ads", "meta"].includes(feature)) throw new Error("PERMISSION_SETTINGS_FEATURE_INVALID");
+      if (!check(feature, verified)) return unavailable(feature);
+      const binding = expectedBinding(expected, true);
+      const business = feature === "meta" ? businessId ?? null : null;
+      if (business !== null && (typeof business !== "string" || !/^[1-9][0-9]{0,29}$/.test(business))) {
+        throw new Error("PERMISSION_SETTINGS_ASSET_TARGET_INVALID");
+      }
+      const result = await providerRuntime(feature).combinedSetup.discoverAssets({verified,
+        installationAuthority: verified.installationAuthority, expectedConnection: binding,
+        ...(business !== null ? {businessId: business} : {}),
+      });
+      const candidateKind = feature === "google_ads" ? "merchant_accounts" : business === null ? "businesses" : "catalogs";
+      if (result?.provider !== feature || result.complete !== true || result.assetAccessVerified !== false
+        || result.authorizesActivation !== false || result.persisted !== false || result.candidateKind !== candidateKind
+        || result.connectionId !== binding.connectionId || result.connectionVersion !== binding.version
+        || result.reportingAccountId !== binding.reportingAccountId || result.workspaceId !== verified.installationAuthority.workspaceId
+        || result.installGeneration !== verified.installationAuthority.installGeneration || result.businessId !== business
+        || typeof result.expiresAt !== "string" || !(Date.parse(result.expiresAt) > Date.now())
+        || !Array.isArray(result.candidates) || result.candidates.length > 10000) throw new Error("PERMISSION_SETTINGS_DISCOVERY_UNCONFIRMED");
+      const ids = new Set();
+      const candidates = result.candidates.map(value => {
+        if (typeof value?.id !== "string" || !/^[1-9][0-9]{0,29}$/.test(value.id) || ids.has(value.id)
+          || typeof value.name !== "string" || !value.name || value.name.length > 512) throw new Error("PERMISSION_SETTINGS_DISCOVERY_UNCONFIRMED");
+        ids.add(value.id); return Object.freeze({id: value.id, name: value.name});
+      });
+      return Object.freeze({kind: "status", feature, stage: "verify_assets", selection: Object.freeze({...binding,
+        accounts: Object.freeze([]), assetOptions: Object.freeze({candidateKind, businessId: result.businessId,
+          candidates: Object.freeze(candidates), expiresAt: result.expiresAt, complete: true, accessVerified: false})})});
+    },
   });
 }

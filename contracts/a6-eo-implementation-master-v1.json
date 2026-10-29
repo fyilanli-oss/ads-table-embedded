@@ -1,4 +1,53 @@
 {
+  "Permission_asset_discovery_2026_10_29": {
+    "checked_at": "2026-10-29",
+    "existing_plan_step": 7,
+    "code_delivery_order": 4,
+    "PR": 264,
+    "status": "automatic_candidate_discovery_and_native_choice_selection_code_prepared_release_visual_and_durable_activation_pending",
+    "outputs": [
+      "Google accounts/v1/accounts lists accessible Merchant accounts with existing content scope and bounded opaque pagination; user quota, not a claim to list all advanced subaccounts",
+      "Meta SDK26.0.0 verified me/businesses plus selected business owned_product_catalogs/client_product_catalogs; business visibility rechecked before catalogs",
+      "Native choices replace manual identifiers; Continue closes before catalog read, Verify closes before existing native access validation",
+      "Every native read pins owner, generation, connection, version, credential, reporting account and grant; first error/invalid cursor/limit/partial response discards candidate list",
+      "Complete fresh list is not access proof, Ads relationship, product mapping, Sales Role, durable storage or activation"
+    ],
+    "sources": [
+      "https://developers.google.com/merchant/api/reference/rest/accounts_v1/accounts/list",
+      "https://developers.google.com/merchant/api/reference/rest/accounts_v1/accounts",
+      "https://raw.githubusercontent.com/facebook/facebook-python-business-sdk/26.0.0/facebook_business/adobjects/user.py",
+      "https://raw.githubusercontent.com/facebook/facebook-python-business-sdk/26.0.0/facebook_business/adobjects/business.py"
+    ],
+    "source_limit": "Meta web references inaccessible/429; official pinned SDK verifies read endpoints and fields, not current developer app approval or merchant grant.",
+    "remaining": [
+      "Developer/release/native install/callback/decline/partial-grant and real desktop/min320px mobile owner acceptance; all new switches stay closed",
+      "Before activation, approved native transport/quota/app-owner inventory must cover the new read endpoints; existing shared transport rejects unconfigured families and is not bypassed",
+      "Final durable selection/proof storage and activation decision remain existing step15; step15 not started, step22 paused, Dataset/FX writer step23"
+    ],
+    "live_permission_flags_changed": false,
+    "provider_scope_added": false,
+    "read_endpoints_added": true,
+    "live_calls": false,
+    "database_or_Dataset_write": false,
+    "step15_started": false,
+    "step22": "paused",
+    "native_visual_acceptance": false,
+    "tests": [
+      "tests/combined-setup-asset-discovery.test.js",
+      "tests/combined-setup-assets.test.js",
+      "tests/permission-setup-selection.test.js",
+      "tests/permission-settings.test.js"
+    ],
+    "validation": {
+      "local_tests": 3087,
+      "passed": 3087,
+      "failed": 0,
+      "typecheck": "passed",
+      "build": "passed",
+      "native_visual_evidence": false,
+      "exact_commit_CI": "checked_separately_after_push"
+    }
+  },
   "Permission_combined_selectors_2026_10_29": {
     "checked_at": "2026-10-29",
     "existing_plan_step": 7,

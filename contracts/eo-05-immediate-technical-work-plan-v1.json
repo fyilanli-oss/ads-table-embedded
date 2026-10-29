@@ -110,12 +110,12 @@
         2,
         3
       ],
-      "status": "combined_account_reporting_selection_and_candidate_asset_verification_wired_native_release_visual_and_durable_activation_pending",
-      "implementation_record": "contracts/eo-05-start-brief-v1.json#Permission_combined_selectors_2026_10_29",
+      "status": "automatic_candidate_discovery_and_native_choice_selection_code_prepared_release_visual_and_durable_activation_pending",
+      "implementation_record": "contracts/eo-05-start-brief-v1.json#Permission_asset_discovery_2026_10_29",
       "remaining_in_this_delivery": [
-        "Automatic Merchant/business/catalog list discovery is not implemented; current UI accepts candidate IDs for native verification",
-        "Developer app/release/native install/callback/decline/partial-grant and actual desktop/min320px mobile owner acceptance; switches remain closed",
-        "Final durable selection/proof storage and activation decision belong to existing step15; Dataset/FX writer is step23"
+        "Developer/release/native install/callback/decline/partial-grant and real desktop/min320px mobile owner acceptance; all new switches stay closed",
+        "Before activation, approved native transport/quota/app-owner inventory must cover the new read endpoints; existing shared transport rejects unconfigured families and is not bypassed",
+        "Final durable selection/proof storage and activation decision remain existing step15; step15 not started, step22 paused, Dataset/FX writer step23"
       ],
       "runtime_alignment_record": "contracts/eo-05-start-brief-v1.json#Polaris_stable_2_alignment_2026_10_29"
     },

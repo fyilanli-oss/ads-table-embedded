@@ -1,3 +1,13 @@
+## 29 Ekim — Otomatik liste keşfi: uygulama öncesi ekran sözleşmesi
+
+Mevcut 07 / dördüncü teslim. Google Merchant hesap listesi, Meta işletme ve seçilen işletmenin owned/client katalog listeleri mevcut read izinleriyle okunur. Liste bağlantı/sürüm/Reporting Account bağlamına ve süreye bağlı adaylardır; erişim/Ads bağı veya ürün eşlemesi değildir. Google accounts.list kullanıcıya göre kota kullanır; bütün advanced subaccount evreni vaat edilmez. Meta güncel web belgesi erişilemedi/429 döndürdü; resmî SDK 26.0.0 GET businesses/owned_product_catalogs/client_product_catalogs ve id/name alanları doğrulandı. Bu, gerçek uygulama/mağaza izni kanıtı değildir.
+
+Exact başlıklar: Select Merchant Center account / Select Meta business / Select Meta catalog. Alanlar: Merchant Center accounts / Businesses / Catalogs. Metin: Choose an item visible to this connection. Access will be verified before setup can continue. Boş liste: No available accounts or catalogs were returned. Check status before continuing. İşletme eylemi Continue, son seçim Verify access, iptal Cancel; yükleniyor Loading available accounts and catalogs…
+
+Aynı native s-modal base/base ve block/base stack içinde tek s-choice-list/s-choice kullanılır; manual kimlik text-field kaldırılır. İşletme Continue ancak modal afterhide sonrası katalogları okur. Son Verify native erişim doğrulayıcısına gider. Açılış/mount izin istemez; hata/sınır/tekrarlanan cursor/çelişki/kısmi liste başarı sayılmaz. İlk hatada durulur; otomatik tekrar/başka rota/manual kimlik fallback yoktur. İşletme değişince eski katalog seçimi korunmaz. Tam liste gözlemi de Connected/aktivasyon değildir.
+
+Kaynaklar: Google Merchant accounts.list ve Account v1; Meta resmî facebook-python-business-sdk/26.0.0 user.py/business.py. Kontrol 2026-10-29. Gerçek desktop/min320px mobil, tam metin/alan/eylem, klavye/dokunma/odak, boş/hata/iptal/süre ve açık owner görsel kabulü bekler; ajan Shopify’da görsel işlem yapmaz. Canlı izin/yayın bayrakları kapalı; canlı çağrı/config/deploy/DB/Dataset yok. Kalıcı saklama/son aktivasyon 15’te. Makine karşılığı: contracts/eo-05-permission-explanation-design-v1.json#asset_discovery_spec.
+
 ## 29 Ekim — Birleşik hesap seçimi ve katalog adayı doğrulaması: uygulama özeti
 
 Mevcut 07 / dördüncü teslim, aynı Settings yüzeyinde. Google/Meta için sunucunun verdiği advertiser listesinde 1–3 hesap, gerekiyorsa tek Reporting Account seçilir. Liste yalnız mevcut combinedSetup.inspect sonucundan gelir. Bir sonraki evre, Google Merchant Center account ID veya Meta Business ID + Catalog ID adayı girilerek mevcut native doğrulayıcının açık Verify access eylemiyle çağrılmasıdır. Bu alanlar otomatik keşif listesi veya kanıt değildir. Tam liste keşfi bu teslimde uydurulmaz.

@@ -22,8 +22,10 @@ import {
   MetaGraphError,
   readMetaOAuthConfig,
   revokeMetaAuthorization,
+  buildMetaAuthorizationUrl,
 } from "../providers/meta-graph.server.js";
 import {createIdentityOAuthAuthorization} from "./identity-oauth-authorization.server.js";
+import {OAuthPermissionProfileError} from "./oauth-permission-profile.server.js";
 
 const PROVIDER = "meta";
 const MAX_SELECTION = 3;
@@ -122,6 +124,12 @@ export function createMetaOAuthRuntime({
     config,
     oauthBoundary,
 
+    // Prepared entry: current routes do not call it; the server gate defaults closed.
+    async beginCombinedSetup({installationAuthority}) {
+      const started = await oauthBoundary.begin({installationAuthority, provider: PROVIDER, permissionProfile: "identity_v1"});
+      return Object.freeze({permissionProfile: "identity_v1", authorizationUrl: buildMetaAuthorizationUrl({config, state: started.state})});
+    },
+
     async callbackReturn({workspaceId, installGeneration}) {
       return selections.callbackReturn({workspaceId, installGeneration});
     },
@@ -205,6 +213,10 @@ export function createMetaOAuthRuntime({
       if (claimed.status === "denied") {
         return Object.freeze({
           outcome: "denied",
+          ...(claimed.permissionProfile === "identity_v1" ? {
+            setupState: "resume_setup", setupReason: "authorization_not_completed", setupComplete: false,
+            setupResumeAction: "request_permissions",
+          } : {}),
           owner,
           callbackReturn: await selections.callbackReturn(owner),
         });
@@ -246,7 +258,11 @@ export function createMetaOAuthRuntime({
             provider:PROVIDER,transactionId:claimed.transactionId,connectionId:randomUUIDFn(),
             binding:claimed.identityBinding,tokenSet:exchanged.tokenSet,scopes:evidence.scopes,
             accounts:evidence.accounts,verifiedAt:evidence.verifiedAt,expiresAt:exchanged.expiresAt});
-          return Object.freeze({outcome:committed.status,owner,pending:committed,
+          return Object.freeze({outcome:committed.status==="connected"?"pending_asset_verification":committed.status,
+            connectionState:committed.status,owner,pending:committed,
+            setupState:"resume_setup",setupComplete:false,
+            setupReason:committed.status==="connected"?"asset_verification_required":"account_selection_required",
+            setupResumeAction:committed.status==="connected"?"verify_assets":"select_account",
             callbackReturn:await selections.callbackReturn(owner)});
         }
         const staged = await selections.stage({
@@ -276,10 +292,18 @@ export function createMetaOAuthRuntime({
             provider: PROVIDER,
           }).catch(() => undefined);
         }
-        await oauthBoundary.finalizeExchange({
+        const finalized = await oauthBoundary.finalizeExchange({
           transactionId: claimed.transactionId,
           success: false,
-        }).catch(() => undefined);
+        }).then(result => result?.transactionId === claimed.transactionId && result.status === "failed", () => false);
+        if (claimed.permissionProfile === "identity_v1" && error instanceof OAuthPermissionProfileError
+          && error.code === "OAUTH_IDENTITY_SCOPE_NOT_GRANTED") {
+          if (!finalized) throw new Error("IDENTITY_OAUTH_FINALIZATION_UNCONFIRMED");
+          return Object.freeze({outcome:"pending_permissions",owner,
+            setupState:"resume_setup",setupReason:"permissions_incomplete",setupComplete:false,
+            setupResumeAction:"request_permissions",
+            callbackReturn:await selections.callbackReturn(owner)});
+        }
         throw error;
       }
     },

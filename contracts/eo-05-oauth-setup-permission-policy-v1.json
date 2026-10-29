@@ -102,11 +102,11 @@
     "UI_gate": "Existing Shopify embedded UI constitution, analyst brief, official components, desktop/mobile and owner acceptance required before UI implementation/Done"
   },
   "known_code_work": {
-    "oauth_profile_selection": "Existing reporting_v1 and identity_v1 remain separate in code; new Google/Meta setup must intentionally choose complete profile. Recorded target, not changed.",
+    "oauth_profile_selection": "Prepared beginCombinedSetup fixes identity_v1; partial/denied/full grant return distinct safe setup progress. Existing routes and default closed server gate unchanged. Account/asset final readiness and accepted modal/Resume Setup routing remain.",
     "shopify_permission_preflight": "Product-only default and explicit includeOrders checks prepared in first code delivery; order reader opts in before and after collection. Scope comparison is not completed setup, native access or activation; see Shopify_product_order_permission_split_2026_10_29.",
     "orders_later_permission": "Configure optional scopes in a separately authorized app-config delivery; add controlled request/return/currentAppInstallation validation and feature-specific readiness.",
     "no_runtime_changed": false,
-    "runtime_change": "Permission assessment helpers and explicit Order collector scope option only; no new route or live activation."
+    "runtime_change": "Permission assessment split plus inactive combined OAuth start/callback progress only; no new route, scope, config, UI or live activation."
   },
   "developer_approval_audit": {
     "status": "current_native_dashboards_not_inspected_not_all_approved_or_all_missing",

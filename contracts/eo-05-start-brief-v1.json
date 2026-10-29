@@ -1,10 +1,66 @@
 {
+  "Combined_provider_setup_backend_2026_10_29": {
+    "checked_at": "2026-10-29",
+    "base_main": "8ebb4caeb6f766ebd624888a8b3efacc4d0239f4",
+    "existing_step": 7,
+    "code_delivery_order": 2,
+    "status": "backend_start_and_callback_slice_ready_pending_exact_CI_owner_merge_inactive_not_full_setup_acceptance",
+    "previous_delivery": {
+      "PR": 257,
+      "merged": "8ebb4caeb6f766ebd624888a8b3efacc4d0239f4"
+    },
+    "code": [
+      "app/lib/oauth/google-oauth-runtime.server.js",
+      "app/lib/oauth/meta-oauth-runtime.server.js"
+    ],
+    "start": "beginCombinedSetup fixes identity_v1 on the server, uses existing lifecycle/state/PKCE/profile builder; caller provider/profile flags cannot downgrade or enable it",
+    "callbacks": {
+      "partial_grant": "Only typed known missing-scope error before any atomic credential write; finalize same transaction as failed with exact ID/status receipt, then pending_permissions + resume_setup/request_permissions. No account discovery or partial-token persistence.",
+      "denied": "Existing denied outcome retained; identity response adds incomplete setup/request_permissions, no claimed root cause beyond authorization not completed.",
+      "full_grant": "Existing atomic staging/CAS remains; account selection or Merchant/catalog asset verification still pending. Underlying connectionState is separate; combined outcome is never connected before asset verification.",
+      "uncertain": "Unknown/mismatched finalization receipt, provider/malformed-scope errors, callback-return failure and errors after atomic-write attempt remain errors; no retry, automatic revoke/delete of existing credential or fallback."
+    },
+    "activation": {
+      "identityAuthorizationEnabled_default": false,
+      "Settings_or_callback_routes_changed": false,
+      "permission_scopes_changed": false,
+      "external_mutation": false,
+      "UI_changed": false,
+      "DB_or_Dataset_write": false,
+      "new_env_or_provider_config": false
+    },
+    "remaining_within_delivery2": [
+      "Account/Merchant/catalog verification and final combined readiness integration",
+      "Settings/return/Resume Setup wiring with separately accepted explanation modal in delivery4",
+      "Native app approval/merchant grant/asset access evidence, not inferred from unit fixtures"
+    ],
+    "legacy_reporting": "Existing reporting_v1 paths and current routes remain unchanged; no new combined flow enabled",
+    "validation": {
+      "targeted_tests": 129,
+      "new_tests": 28,
+      "full_tests": 2863,
+      "failed": 0,
+      "typecheck": "passed",
+      "build": "passed",
+      "exact_CI": "pending",
+      "F01": "unchanged_paths_not_triggered"
+    },
+    "official_sources": {
+      "google": [
+        "https://developers.google.com/identity/protocols/oauth2/web-server",
+        "https://developers.google.com/merchant/api/guides/authorization/access-client-accounts"
+      ],
+      "meta": "Permission reference inaccessible; existing scope set and native validator reused unchanged. This slice adds no new Meta permission/dependency or API response-field assumption."
+    },
+    "step15_started": false,
+    "Dataset_write": false
+  },
   "Shopify_product_order_permission_split_2026_10_29": {
     "checked_at": "2026-10-29",
     "base_main": "d2a1b3521bd192648e6cfdb15af588a0e33b7baf",
     "existing_plan_step": 7,
     "code_delivery_order": 1,
-    "status": "repository_code_and_tests_ready_pending_exact_CI_and_owner_merge_not_live_setup",
+    "status": "merged_code_tests_ready_native_setup_not_accepted",
     "behavior": {
       "Shopify_default_required_scopes": [
         "read_products"
@@ -50,7 +106,9 @@
       "typecheck": "passed",
       "build": "passed",
       "F01": "not_triggered_by_this_diff_no_migration_refresh_or_work_repository_paths"
-    }
+    },
+    "PR": 257,
+    "merge_commit": "8ebb4caeb6f766ebd624888a8b3efacc4d0239f4"
   },
   "Immediate_technical_work_plan_2026_10_29": {
     "contract": "contracts/eo-05-immediate-technical-work-plan-v1.json",

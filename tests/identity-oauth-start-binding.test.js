@@ -3,7 +3,7 @@ import test from "node:test";
 import {createHash} from "node:crypto";
 import {createOAuthTransactionBoundary, oauthInstallationAuthority, OAUTH_CALLBACK_URIS} from "../app/lib/oauth/oauth-transaction.server.js";
 import {createIdentityOAuthAuthorization} from "../app/lib/oauth/identity-oauth-authorization.server.js";
-import {bindOAuthPermissionProfile, identityOAuthBindingFromState, oauthPermissionProfileFromState, oauthPermissionScopes} from "../app/lib/oauth/oauth-permission-profile.server.js";
+import {bindOAuthPermissionProfile, identityOAuthBindingFromState, oauthPermissionProfileFromState, oauthPermissionScopes, OAuthPermissionProfileError} from "../app/lib/oauth/oauth-permission-profile.server.js";
 import {createGoogleOAuthRuntime} from "../app/lib/oauth/google-oauth-runtime.server.js";
 import {createMetaOAuthRuntime} from "../app/lib/oauth/meta-oauth-runtime.server.js";
 
@@ -98,13 +98,19 @@ for (const provider of ["meta", "google_ads"]) {
   });
 }
 
-function runtimeHarness(provider, {enabled = false, changedDuringRead = false, current = null, commitFails = false, returnFails = false} = {}) {
+function runtimeHarness(provider, {enabled = false, changedDuringRead = false, current = null, commitFails = false, returnFails = false,
+  grantedScopes, finalizeFails = false, finalizeMismatch = null, commitScopeError = false, commitStatus = "pending_account_selection", providerStatus = 200} = {}) {
   const calls = [], writes = [], vault = [], lifecycleReads = [];
   let currentRow = current;
   const database = {async query(sql, values) {
     if (sql.includes("load_provider_connection_lifecycle_by_owner")) {lifecycleReads.push(values); return {rows: currentRow ? [{
       connection_id: currentRow.connectionId, connection_version: currentRow.version, lifecycle_status: currentRow.status, credential_id: id(4)}] : []};}
-    if (sql.includes("complete_oauth_transaction")) {writes.push(values[1]); return {rows: [{transaction_id: id(3), transaction_status: values[1]}]};}
+    if (sql.includes("create_oauth_transaction(")) {writes.push("created");return {rows:[{transaction_id:id(3),callback_uri:OAUTH_CALLBACK_URIS[provider],
+      pkce_required:provider==="google_ads",expires_at:"2026-10-27T12:05:00.000Z",transaction_status:"created"}]};}
+    if (sql.includes("mark_oauth_transaction_redirected")) {writes.push("redirected");return {rows:[{transaction_id:id(3),transaction_status:"redirected"}]};}
+    if (sql.includes("complete_oauth_transaction")) {writes.push(values[1]); if(finalizeFails)throw Error("FINALIZE_ACK_LOST");
+      return {rows: [{transaction_id: finalizeMismatch==="transaction"?id(4):id(3),
+        transaction_status:finalizeMismatch==="status"?"exchanged":values[1]}]};}
     if (sql.includes("stage_provider_account_selection")) {writes.push("stage"); return {rows: [{connection_id: id(2), connection_version: 1, lifecycle_status: "pending_account_selection", granted_scopes: values[4]}]};}
     if (sql.includes("resolve_active_installation_callback_return")) {
       if (returnFails) throw Error("CALLBACK_RETURN_UNAVAILABLE");
@@ -115,29 +121,126 @@ function runtimeHarness(provider, {enabled = false, changedDuringRead = false, c
   const tokenVault = {async assertReady() {}, async store() {}, async take() {}, async remove() {},
     async storeProviderTokenSet() {vault.push("store"); return {credentialId: id(4)};},
     async commitIdentityOAuthCredential(value) {writes.push("atomic");
-      assert.deepEqual(value.binding,initial); assert.ok(value.accounts.length);
+      assert.deepEqual(value.binding,current===null?initial:{connectionId:current.connectionId,version:current.version}); assert.ok(value.accounts.length);
+      if(commitScopeError) throw new OAuthPermissionProfileError("OAUTH_IDENTITY_SCOPE_NOT_GRANTED");
       if (commitFails) throw Error("IDENTITY_OAUTH_WRITE_UNCONFIRMED");
-      return {connectionId:id(2),credentialId:id(4),version:1,status:"pending_account_selection"};},
+      return {connectionId:id(2),credentialId:id(4),version:1,status:commitStatus};},
     async deleteProviderTokenSet() {vault.push("delete");}};
   const environment = provider === "google_ads" ? {GOOGLE_ADS_OAUTH_CLIENT_ID: "client", GOOGLE_ADS_OAUTH_CLIENT_SECRET: "secret", GOOGLE_ADS_OAUTH_REDIRECT_URI: OAUTH_CALLBACK_URIS.google_ads}
     : {META_APP_ID: "123", META_APP_SECRET: "secret", META_GRAPH_VERSION: "v26.0", META_OAUTH_REDIRECT_URI: OAUTH_CALLBACK_URIS.meta};
   const runtime = (provider === "google_ads" ? createGoogleOAuthRuntime : createMetaOAuthRuntime)({database, tokenVault, environment, now,
     identityAuthorizationEnabled: enabled, randomUUIDFn: () => id(2), fetchFn: async address => {
       calls.push(address);
+      if(providerStatus!==200)return json({error:{code:190}},providerStatus);
       if (changedDuringRead) currentRow = {...row, version: 8};
+      const nativeScopes=grantedScopes===undefined?oauthPermissionScopes(provider,"identity_v1"):grantedScopes;
       if (provider === "google_ads") {
-        if (calls.length === 1) return json({access_token: "token", refresh_token: "refresh", token_type: "Bearer", expires_in: 3600, scope: oauthPermissionScopes(provider, "identity_v1").join(" ")});
+        if (calls.length === 1) return json({access_token: "token", refresh_token: "refresh", token_type: "Bearer", expires_in: 3600,
+          scope:Array.isArray(nativeScopes)?nativeScopes.join(" "):nativeScopes});
         if (calls.length === 2) return json({resourceNames: ["customers/123"]});
         return json({results: [{customerClient: {id: "123", level: 0, manager: false}}]});
       }
       if (calls.length < 3) return json({access_token: "token"});
-      if (calls.length === 3) return json({data: {app_id: "123", is_valid: true, scopes: oauthPermissionScopes(provider, "identity_v1"), expires_at: 1893456000}});
+      if (calls.length === 3) return json({data: {app_id: "123", is_valid: true, scopes:nativeScopes, expires_at: 1893456000}});
       return json({data: [{id: "act_123", name: "Shop"}]});
     }});
-  return {runtime, calls, writes, vault, lifecycleReads};
+  return {runtime, calls, writes, vault, lifecycleReads, current:()=>currentRow};
 }
 const claimed = {status: "claimed", transactionId: id(3), workspaceId: owner.workspaceId, installGeneration: 2,
   permissionProfile: "identity_v1", identityBinding: initial, authorizationCode: "code", pkceVerifier: "verifier"};
+
+for (const provider of ["google_ads", "meta"]) {
+  test(`${provider}: combined setup always binds the full profile to the server-read connection`, async () => {
+    const current={...row,status:"connected"};
+    const h=runtimeHarness(provider,{enabled:true,current});
+    const r=await h.runtime.beginCombinedSetup({installationAuthority:owner,
+      provider:"klaviyo",permissionProfile:"reporting_v1",identityBinding:initial});
+    const target=new URL(r.authorizationUrl);
+    assert.equal(r.permissionProfile,"identity_v1");
+    assert.deepEqual(target.searchParams.get("scope").split(provider==="meta"?",":" "),oauthPermissionScopes(provider,"identity_v1"));
+    const state=target.searchParams.get("state");
+    assert.equal(oauthPermissionProfileFromState(provider,state),"identity_v1");
+    assert.deepEqual(identityOAuthBindingFromState(provider,state),{connectionId:current.connectionId,version:current.version});
+    assert.deepEqual(h.writes,["created","redirected"]);
+    assert.equal(h.calls.length,0);
+    assert.doesNotMatch(r.authorizationUrl,/client_secret|access_token|refresh_token/);
+  });
+  test(`${provider}: combined setup cannot enable itself through caller arguments`, async () => {
+    const h=runtimeHarness(provider);
+    await assert.rejects(h.runtime.beginCombinedSetup({installationAuthority:owner,identityAuthorizationEnabled:true}),/START_DISABLED/);
+    assert.deepEqual(h.writes,[]);assert.equal(h.calls.length,0);assert.equal(h.lifecycleReads.length,0);
+  });
+  for(const current of [null,{...row,status:"connected"}]) {
+    test(`${provider}: partial native grant stays resumable without replacing ${current?"existing":"initial"} authority`, async () => {
+      const h=runtimeHarness(provider,{enabled:true,current,grantedScopes:[oauthPermissionScopes(provider,"identity_v1")[0]]});
+      const before=JSON.stringify(current);
+      const r=await h.runtime.completeCallback({claimed:{...claimed,identityBinding:current?{connectionId:current.connectionId,version:current.version}:initial}});
+      assert.equal(r.outcome,"pending_permissions");assert.equal(r.setupState,"resume_setup");
+      assert.equal(r.setupReason,"permissions_incomplete");assert.equal(r.setupComplete,false);
+      assert.equal(r.setupResumeAction,"request_permissions");
+      assert.deepEqual(h.writes,["failed"]);assert.deepEqual(h.vault,[]);
+      assert.equal(h.calls.length,provider==="meta"?3:1);
+      assert.equal(JSON.stringify(h.current()),before);
+      assert.doesNotMatch(JSON.stringify(r),/access_token|refresh_token|authorizationCode|pkceVerifier/);
+    });
+  }
+  test(`${provider}: malformed grants are an error, not a partial-permission completion`, async () => {
+    const h=runtimeHarness(provider,{enabled:true,grantedScopes:42});
+    await assert.rejects(h.runtime.completeCallback({claimed}),/INVALID/);
+    assert.deepEqual(h.writes,["failed"]);assert.deepEqual(h.vault,[]);
+    assert.equal(h.calls.length,provider==="meta"?3:1);
+  });
+  test(`${provider}: failed transaction acknowledgement cannot be reported as resumable`, async () => {
+    const h=runtimeHarness(provider,{enabled:true,grantedScopes:[oauthPermissionScopes(provider,"identity_v1")[0]],finalizeFails:true});
+    await assert.rejects(h.runtime.completeCallback({claimed}),/IDENTITY_OAUTH_FINALIZATION_UNCONFIRMED/);
+    assert.deepEqual(h.writes,["failed"]);assert.deepEqual(h.vault,[]);
+  });
+  for(const finalizeMismatch of ["transaction","status"]) {
+    test(`${provider}: wrong ${finalizeMismatch} acknowledgement cannot confirm a partial-permission stop`, async () => {
+      const h=runtimeHarness(provider,{enabled:true,grantedScopes:[oauthPermissionScopes(provider,"identity_v1")[0]],finalizeMismatch});
+      await assert.rejects(h.runtime.completeCallback({claimed}),/IDENTITY_OAUTH_FINALIZATION_UNCONFIRMED/);
+      assert.deepEqual(h.writes,["failed"]);assert.deepEqual(h.vault,[]);
+    });
+  }
+  test(`${provider}: scope-shaped error after atomic write starts must not become a permission resume`, async () => {
+    const h=runtimeHarness(provider,{enabled:true,commitScopeError:true});
+    await assert.rejects(h.runtime.completeCallback({claimed}),/OAUTH_IDENTITY_SCOPE_NOT_GRANTED/);
+    assert.deepEqual(h.writes,["atomic"]);assert.deepEqual(h.vault,[]);
+  });
+  test(`${provider}: partial grant with unavailable callback return cannot pretend setup can resume`, async () => {
+    const h=runtimeHarness(provider,{enabled:true,grantedScopes:[oauthPermissionScopes(provider,"identity_v1")[0]],returnFails:true});
+    await assert.rejects(h.runtime.completeCallback({claimed}),/CALLBACK_RETURN_UNAVAILABLE/);
+    assert.deepEqual(h.writes,["failed"]);assert.deepEqual(h.vault,[]);
+  });
+  test(`${provider}: provider HTTP error is not relabeled as a permission decline and is not retried`, async () => {
+    const h=runtimeHarness(provider,{enabled:true,providerStatus:503});
+    await assert.rejects(h.runtime.completeCallback({claimed}));
+    assert.equal(h.calls.length,1);assert.deepEqual(h.writes,["failed"]);assert.deepEqual(h.vault,[]);
+  });
+  test(`${provider}: denied combined authorization remains incomplete without token or connection mutation`, async () => {
+    const h=runtimeHarness(provider,{enabled:true,current:{...row,status:"connected"}});
+    const r=await h.runtime.completeCallback({claimed:{...claimed,status:"denied"}});
+    assert.equal(r.outcome,"denied");assert.equal(r.setupState,"resume_setup");
+    assert.equal(r.setupReason,"authorization_not_completed");assert.equal(r.setupComplete,false);
+    assert.equal(r.setupResumeAction,"request_permissions");
+    assert.deepEqual(h.writes,[]);assert.deepEqual(h.vault,[]);assert.equal(h.calls.length,0);
+    const legacy=await h.runtime.completeCallback({claimed:{...claimed,status:"denied",permissionProfile:undefined}});
+    assert.equal("setupState" in legacy,false);
+  });
+  for(const connected of [false,true]) {
+    test(`${provider}: full grants alone cannot complete ${connected?"upgraded":"initial"} combined setup`, async () => {
+      const current=connected?{...row,status:"connected"}:null;
+      const h=runtimeHarness(provider,{enabled:true,current,commitStatus:connected?"connected":"pending_account_selection"});
+      const r=await h.runtime.completeCallback({claimed:{...claimed,identityBinding:current?{connectionId:current.connectionId,version:current.version}:initial}});
+      assert.equal(r.setupComplete,false);assert.equal(r.setupState,"resume_setup");
+      assert.equal(r.outcome,connected?"pending_asset_verification":"pending_account_selection");
+      assert.equal(r.connectionState,connected?"connected":"pending_account_selection");
+      assert.equal(r.setupReason,connected?"asset_verification_required":"account_selection_required");
+      assert.equal(r.setupResumeAction,connected?"verify_assets":"select_account");
+      assert.deepEqual(h.writes,["atomic"]);assert.deepEqual(h.vault,[]);
+    });
+  }
+}
 for (const provider of ["meta", "google_ads"]) {
   for (const options of [{commitFails:true},{returnFails:true}]) {
     test(`${provider}: uncertain write or later return failure never deletes or finalizes failed ${JSON.stringify(options)}`,async()=>{

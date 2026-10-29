@@ -6,7 +6,7 @@ import {fileURLToPath} from "node:url";
 const run=promisify(execFile),script=fileURLToPath(new URL("./helpers/shopify-admin-sdk-bootstrap-scenario.js",import.meta.url));
 // Separate SDK lifetimes: successful startup uses the application installer, never a test setter.
 for(const mode of ["import-only","router-only","foreign-hook","singleton","input","unbound","close-before","close","changed",
-  "identity-orders-permission","two-shops","authority","missing-profile","known-error","shutdown"]){
+  "identity-orders-permission","two-shops","authority","missing-profile","known-error","shutdown","background-host"]){
   test(`Admin SDK bootstrap ${mode}`,async()=>{
     const {stdout}=await run(process.execPath,[script,mode],{timeout:20000,windowsHide:true,maxBuffer:65536});
     assert.match(stdout,new RegExp(`SHOPIFY_ADMIN_SDK_BOOTSTRAP_PASS ${mode} native_HTTP=0`));assert.doesNotMatch(stdout,/SECRET/);

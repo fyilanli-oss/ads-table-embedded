@@ -1,5 +1,7 @@
 import {randomUUID} from "node:crypto";
+import {createHash} from "node:crypto";
 import {shopifyOrderRangeProposal} from "./shopify-order-range-plan.server.js";
+import {shopifyPrewriteOwner} from "../providers/prewrite-owner.server.js";
 
 const uuid=v=>typeof v==="string"&&/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(v);
 const flags={workerAdmitted:false,authorizesDispatch:false,authorizesActivation:false,entitlementVerified:false,quotaReserved:false,checkpointAdvanced:false,persistable:false,DatasetWritePerformed:false};
@@ -24,7 +26,27 @@ export function createShopifyOrderWorkReservations({database,...extra}={}){
     return result.rows[0].result;
   }
   const valid=(r,p,id)=>r?.attemptId===id&&r.rangeKey===p.key&&Number.isSafeInteger(r.fence)&&r.fence>0&&amounts(r.cost);
-  const factory=Object.freeze({async reserve({plan,rangeKey,...overrides}={}){
+  const factory=Object.freeze({async reserveNext({maxCandidates,excludeWorkspaceIds=[],...overrides}={}){
+    if(Object.keys(overrides).length||!Number.isSafeInteger(maxCandidates)||maxCandidates<1||maxCandidates>100
+      ||!Array.isArray(excludeWorkspaceIds)||excludeWorkspaceIds.length>100||excludeWorkspaceIds.some(v=>!uuid(v))
+      ||new Set(excludeWorkspaceIds).size!==excludeWorkspaceIds.length)fail();
+    const attemptId=randomUUID();
+    try{
+      const r=await one("select operations.reserve_next_shopify_order_work($1::uuid,$2::integer,$3::uuid[]) as result",[attemptId,maxCandidates,[...excludeWorkspaceIds]]);
+      if(["not_configured","empty","no_admission"].includes(r?.status))return frozen({...r,...flags});
+      const p=r?.proposal;
+      if(r?.status!=="reserved"||!p||Object.keys(p).sort().join(",")!=="includeOrderHistory,key,owner,pageSize,range")throw Error();
+      const owner=shopifyPrewriteOwner(p.owner);
+      if(typeof p.includeOrderHistory!=="boolean"||!Number.isSafeInteger(p.pageSize)||p.pageSize<1||p.pageSize>100
+        ||Object.keys(p.range??{}).sort().join(",")!=="fromInclusive,toExclusive"
+        ||![p.range.fromInclusive,p.range.toExclusive].every(v=>typeof v==="string"&&new Date(v).toISOString()===v)
+        ||p.range.fromInclusive>=p.range.toExclusive||excludeWorkspaceIds.includes(owner.workspaceId)
+        ||p.key!==createHash("sha256").update(JSON.stringify(["shopify_orders",owner,"2026-10",p.includeOrderHistory,p.range])).digest("hex")
+        ||!valid(r,p,attemptId))throw Error();
+      const result=frozen({status:"reserved",attemptId,rangeKey:p.key,fence:r.fence,cost:r.cost,reservationHeld:true,...flags});
+      handles.set(result,{p:frozen({...p,owner}),attemptId,fence:r.fence,cost:result.cost});return result;
+    }catch{return frozen({status:"needs_attention",reason:"dispatch_reservation_unconfirmed",attemptId,reservationMayBeHeld:true,...flags});}
+  },async reserve({plan,rangeKey,...overrides}={}){
     if(Object.keys(overrides).length)fail();const p=shopifyOrderRangeProposal(plan,rangeKey),attemptId=randomUUID();
     try{
       const r=await one("select operations.reserve_shopify_order_work($1::bigint,$2::uuid,$3::bigint,$4::text,$5::text,$6::text,$7::uuid) as result",[...args(p),attemptId]);
@@ -53,7 +75,7 @@ export function createShopifyOrderWorkReservations({database,...extra}={}){
       handles.delete(reservation);return frozen({status:"needs_attention",reason:"reservation_release_unconfirmed",attemptId:h.attemptId,rangeKey:h.p.key,reservationMayBeHeld:true,...flags});
     }
   }});
-  factories.set(factory,Object.freeze({database,has:reservation=>handles.has(reservation),take(reservation){
+  factories.set(factory,Object.freeze({database,has:reservation=>handles.has(reservation),peek(reservation){const h=handles.get(reservation);if(!h)fail();return h;},take(reservation){
     const h=handles.get(reservation);if(!h)fail();handles.delete(reservation);return h;
   }}));return factory;
 }

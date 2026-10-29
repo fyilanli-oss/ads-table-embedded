@@ -10,8 +10,8 @@ const fail=()=>{throw Error("SHOPIFY_ORDER_ENTITLEMENT_INPUT_INVALID");};
 const checkers=new WeakMap();
 export function shopifyOrderEntitlementBinding(checker){const b=checkers.get(checker);if(!b)fail();return b;}
 // Explicit inactive native composition: no route/cron/Admin/Dataset reader or retry entry.
-export function createShopifyOrderEntitlementCheck({reservations,quotaStore,environment,now,limits,fetchFn=globalThis.fetch,...extra}={}){
-  if(Object.keys(extra).length||typeof now!=="function"||typeof fetchFn!=="function")fail();
+export function createShopifyOrderEntitlementCheck({reservations,quotaStore,environment,now,limits,fetchFn=globalThis.fetch,signal,...extra}={}){
+  if(Object.keys(extra).length||typeof now!=="function"||typeof fetchFn!=="function"||signal!==undefined&&!(signal instanceof AbortSignal))fail();
   const binding=shopifyOrderWorkReservationBinding(reservations),database=binding.database;
   const env={...environment},config=readShopifyPartnerRuntimeConfig(env),bound=structuredClone(limits);
   for(const k of ["requestTimeoutMs","finishReserveMs","deadlineAt"])if(!Number.isSafeInteger(bound?.[k])||bound[k]<1)fail();
@@ -33,7 +33,7 @@ export function createShopifyOrderEntitlementCheck({reservations,quotaStore,envi
   }
   const checker=Object.freeze({async verify({reservation,...overrides}={}){
     if(Object.keys(overrides).length||!binding.has(reservation))fail();
-    const started=now(),left=()=>{const t=now();return Number.isSafeInteger(t)&&t>=started?bound.deadlineAt-t:-1;};
+    const started=now(),left=()=>{const t=now();return !signal?.aborted&&Number.isSafeInteger(t)&&t>=started?bound.deadlineAt-t:-1;};
     if(!Number.isSafeInteger(started)||started<0)fail();
     if(left()<bound.requestTimeoutMs+bound.finishReserveMs)return freeze({status:"not_started",reservationRetained:true,...flags,entitlementVerified:false});
     const h=binding.take(reservation);let intentConfirmed=false,sent=false,writeAttempted=false;
@@ -60,7 +60,7 @@ export function createShopifyOrderEntitlementCheck({reservations,quotaStore,envi
         installation:{authority:"shopify_installation_verified",shopId:h.p.owner.shopId,shopDomain:h.p.owner.shopDomain,installGeneration:h.p.owner.installGeneration},
         appId:config.appId,observedAt:new Date(intent.observedAt),
         partnerApi:{async activeSubscription(request){
-          const read=Promise.resolve().then(()=>partnerApi.activeSubscription({...request,signal:controller.signal}));
+          const read=Promise.resolve().then(()=>partnerApi.activeSubscription({...request,signal:AbortSignal.any([controller.signal,signal].filter(Boolean))}));
           const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(Error("ORDER_ENTITLEMENT_TIMEOUT"));},bound.requestTimeoutMs);});
           try{return await Promise.race([read,timeout]);}finally{clearTimeout(timer);}
         }},repository:{async applySnapshot(snapshot){
@@ -81,7 +81,7 @@ export function createShopifyOrderEntitlementCheck({reservations,quotaStore,envi
     }
   },async isCurrent({verification,...overrides}={}){
     const v=verified.get(verification);if(Object.keys(overrides).length||!v)fail();
-    const timely=()=>{const t=now();return Number.isSafeInteger(t)&&t>=v.started&&bound.deadlineAt-t>=bound.finishReserveMs;};
+    const timely=()=>{const t=now();return !signal?.aborted&&Number.isSafeInteger(t)&&t>=v.started&&bound.deadlineAt-t>=bound.finishReserveMs;};
     try{return timely()&&await current(v.h,v.receipt)&&timely();}catch{return false;}
   }});
   const view=v=>Object.freeze({h:Object.freeze({...v.h}),receipt:v.receipt,database,now,deadlineAt:bound.deadlineAt,finishReserveMs:bound.finishReserveMs});

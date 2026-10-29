@@ -84,13 +84,14 @@
       "depends_on": [
         1
       ],
-      "status": "backend_request_readback_ready_inactive_config_and_UI_pending",
+      "status": "merged_backend_request_readback_inactive_config_and_UI_pending",
       "implementation_record": "contracts/eo-05-start-brief-v1.json#Shopify_progressive_permission_setup_2026_10_29",
       "remaining_in_this_delivery": [
         "Separately approved optional_scopes TOML/app release and exact released configuration proof",
         "Prepermission explanation/Settings/return wiring and owner UI acceptance in delivery4",
         "Native install/Products/Orders decline/grant/revocation, protected-data and SDK/session/quota environment acceptance"
-      ]
+      ],
+      "merged_PR": 261
     },
     {
       "delivery_order": 4,
@@ -109,7 +110,13 @@
         2,
         3
       ],
-      "status": "planned_UI_not_implemented_or_accepted"
+      "status": "design_prepared_owner_review_and_runtime_alignment_pending",
+      "implementation_record": "contracts/eo-05-start-brief-v1.json#Permission_explanation_design_2026_10_29",
+      "remaining_in_this_delivery": [
+        "Owner review of concrete copy and stable 2.0 runtime/type alignment decision",
+        "UI component plus existing Settings/Home stage routing and authenticated fixed-action wiring; current gates remain closed until accepted",
+        "Real Shopify Admin desktop/mobile 320px, state/return/cancel acceptance and explicit owner visual acceptance; no agent visual operation on Shopify"
+      ]
     },
     {
       "delivery_order": 5,

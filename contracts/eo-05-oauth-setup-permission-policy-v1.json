@@ -99,14 +99,17 @@
       "No automatic retries, provider fallback, revocation or clearing other connections",
       "Reconnect/revocation updates feature readiness; scopes alone do not activate jobs or establish overlap"
     ],
-    "UI_gate": "Existing Shopify embedded UI constitution, analyst brief, official components, desktop/mobile and owner acceptance required before UI implementation/Done"
+    "UI_gate": "Existing Shopify embedded UI constitution, analyst brief, official components, desktop/mobile and owner acceptance required before UI implementation/Done",
+    "design_contract": "contracts/eo-05-permission-explanation-design-v1.json",
+    "analyst_brief": "docs/EO_05_PERMISSION_EXPLANATION_DESIGN_BRIEF.md",
+    "design_status": "design_prepared_owner_review_and_runtime_alignment_pending"
   },
   "known_code_work": {
     "oauth_profile_selection": "Prepared beginCombinedSetup fixes identity_v1; partial/denied/full grant return distinct safe setup progress. Existing routes and default closed server gate unchanged. Account/asset final readiness and accepted modal/Resume Setup routing remain.",
     "shopify_permission_preflight": "Product-only default and explicit includeOrders checks prepared in first code delivery; order reader opts in before and after collection. Scope comparison is not completed setup, native access or activation; see Shopify_product_order_permission_split_2026_10_29.",
-    "orders_later_permission": "Configure optional scopes in a separately authorized app-config delivery; add controlled request/return/currentAppInstallation validation and feature-specific readiness.",
+    "orders_later_permission": "Prepared permissionSetup request/readback controller merged #261; fixed native scope/optional-handle/return checks and separate release candidate, default closed request/release gates. Config release and accepted UI/native environment remain.",
     "no_runtime_changed": false,
-    "runtime_change": "Permission assessment split plus inactive combined OAuth start/callback progress only; no new route, scope, config, UI or live activation."
+    "runtime_change": "Prepared permission split, inactive combined OAuth start/callback/account/asset checks and inactive Shopify progressive permission controller; no current route/UI/config/live activation."
   },
   "developer_approval_audit": {
     "status": "current_native_dashboards_not_inspected_not_all_approved_or_all_missing",
@@ -183,7 +186,7 @@
   },
   "shopify_progressive_permissions_backend": {
     "record": "contracts/eo-05-start-brief-v1.json#Shopify_progressive_permission_setup_2026_10_29",
-    "status": "backend_request_readback_ready_inactive_config_and_UI_pending",
+    "status": "merged_backend_request_readback_inactive_config_and_UI_pending",
     "release_candidate": "contracts/shopify/shopify-progressive-permissions-release-candidate-v1.json",
     "shopify_app_toml_or_live_release_changed": false,
     "requests_enabled": false

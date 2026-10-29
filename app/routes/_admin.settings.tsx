@@ -187,10 +187,11 @@ async function routeAuthority(request: Request) {
   });
 }
 
-// Broader stored grants require the bound setup route. This is a routing guard,
-// not evidence of an identity profile, native asset access or completed setup.
+// Pending broader grants require bound account selection. A connected reporting
+// account returns to its existing view without a catalog-selection prerequisite.
 function requiresCombinedSelection(inspected: any) {
-  const scopes = inspected?.state === "connected" ? inspected.connection?.grantedScopes : inspected?.pending?.scopes;
+  if (inspected?.state === "connected") return false;
+  const scopes = inspected?.pending?.scopes;
   return Array.isArray(scopes) && scopes.some(scope => scope === "https://www.googleapis.com/auth/content" || scope === "catalog_management");
 }
 
@@ -380,7 +381,7 @@ export const loader = async ({request}: LoaderFunctionArgs): Promise<LoaderData>
   return {...google, meta, klaviyo, permissionAvailability: PERMISSION_SETTINGS_AVAILABILITY};
 };
 
-const permissionIntents = new Set(["permission_connect", "permission_status", "permission_select_accounts", "permission_select_reporting", "permission_verify_assets", "permission_discover_assets"]);
+const permissionIntents = new Set(["permission_connect", "permission_status", "permission_select_accounts", "permission_select_reporting"]);
 
 export function shouldRevalidate({formData, defaultShouldRevalidate}: ShouldRevalidateFunctionArgs) {
   const intent = formData?.get("intent");
@@ -413,27 +414,20 @@ export const action = async ({request}: ActionFunctionArgs) => {
       else if (intent === "permission_status") result = await settings.status({feature, verified});
       else {
         const expected = {connectionId: String(form.get("connectionId") ?? ""), version: Number(form.get("version"))};
-        if (intent === "permission_discover_assets") {
-          const businessId = form.get("businessId");
-          result = await settings.discoverAssets({feature, verified,
-            expected: {...expected, reportingAccountId: String(form.get("reportingAccountId") ?? "")},
-            ...(typeof businessId === "string" && businessId ? {businessId} : {})});
-        } else if (intent === "permission_verify_assets") {
-          result = await settings.verifyAssets({feature, verified, expected: {...expected, reportingAccountId: String(form.get("reportingAccountId") ?? "")},
-            merchantId: String(form.get("merchantId") ?? ""), businessId: String(form.get("businessId") ?? ""), catalogId: String(form.get("catalogId") ?? "")});
-        } else {
-          const encoded = String(form.get("selectedAccountIds") ?? "[]");
-          if (encoded.length > 1024) throw new Error("PERMISSION_SETTINGS_ACCOUNTS_INVALID");
-          result = await settings.select({feature, verified, expected,
-            operation: intent === "permission_select_accounts" ? "accounts" : "reporting",
-            selectedAccountIds: JSON.parse(encoded), reportingAccountId: String(form.get("reportingAccountId") ?? "")});
-        }
+        const encoded = String(form.get("selectedAccountIds") ?? "[]");
+        if (encoded.length > 1024) throw new Error("PERMISSION_SETTINGS_ACCOUNTS_INVALID");
+        result = await settings.select({feature, verified, expected,
+          operation: intent === "permission_select_accounts" ? "accounts" : "reporting",
+          selectedAccountIds: JSON.parse(encoded), reportingAccountId: String(form.get("reportingAccountId") ?? "")});
       }
       return {...result, requestId};
     } catch (error) {
       if (error instanceof Response) throw error;
       return {kind: "unknown" as const, feature, requestId};
     }
+  }
+  if (typeof intent === "string" && intent.startsWith("permission_")) {
+    return new Response("Invalid permission action.", {status: 400});
   }
   const providerValue = form.get("provider");
   const provider: Provider = providerValue === "meta" || providerValue === "klaviyo"
@@ -745,13 +739,15 @@ export default function Settings() {
   }, [state.klaviyo, klaviyoWorking, selectedKlaviyoAccountId]);
 
   const permissions = usePermissionSettings({availability: state.permissionAvailability,
-    onResume(feature) {
+    onResume(feature, stage) {
       if (feature === "klaviyo") {
         klaviyoResumeRequested.current = true;
         revalidator.revalidate();
       }
-      // Combined Google/Meta account/asset selection has its own verified path.
-      // Never fall back to legacy reporting selection or restart OAuth here.
+      if ((feature === "google_ads" || feature === "meta") && stage === "reporting_selected") {
+        revalidator.revalidate();
+      }
+      // Re-read the normal reporting view after explicit account selection only.
     },
   });
 

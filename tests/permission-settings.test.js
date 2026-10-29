@@ -38,12 +38,11 @@ for (const feature of ["google_ads", "meta"]) {
     const settings = createPermissionSettings({availability, providerRuntime: () => ({
       beginCombinedSetup: () => assert.fail(), combinedSetup: {inspect: async args => {
         calls++; assert.equal(args.installationAuthority, verified.installationAuthority);
-        return {setupResumeAction: "verify_assets", setupComplete: false, credentialId: "private",
+        return {setupResumeAction: "reporting_selected", setupComplete: false, credentialId: "private",
           connectionId: "displayed-connection", connectionVersion: 7, reportingAccountId: "account-1", accounts: []};
       }},
     })});
-    assert.deepEqual(await settings.status({feature, verified}), {kind: "status", feature, stage: "verify_assets",
-      selection: {connectionId: "displayed-connection", version: 7, reportingAccountId: "account-1", accounts: []}});
+    assert.deepEqual(await settings.status({feature, verified}), {kind: "status", feature, stage: "reporting_selected"});
     assert.equal(calls, 1);
   });
 }
@@ -160,7 +159,7 @@ test("actual Settings action authenticates before reading form or constructing p
 
 test("actual Settings action cannot be forced to open a closed server gate through form flags", async () => {
   const route = loadRoute();
-  for (const intent of ["permission_connect", "permission_discover_assets"]) {
+  for (const intent of ["permission_connect"]) {
     const reply = await route.action({request: formRequest({intent, feature: "google_ads", requestId,
       identityAuthorizationEnabled: "true", permissionProfile: "reporting_v1"})});
     assert.deepEqual(reply, {kind: "unavailable", feature: "google_ads", requestId});
@@ -188,13 +187,13 @@ test("actual Settings action returns unknown without raw errors and never retrie
 
 test("permission actions do not implicitly rerun existing provider loaders", () => {
   const route = loadRoute();
-  for (const intent of ["permission_connect", "permission_status", "permission_select_accounts", "permission_select_reporting", "permission_verify_assets", "permission_discover_assets"]) {
+  for (const intent of ["permission_connect", "permission_status", "permission_select_accounts", "permission_select_reporting"]) {
     assert.equal(route.shouldRevalidate({formData: new URLSearchParams({intent}), defaultShouldRevalidate: true}), false);
   }
   assert.equal(route.shouldRevalidate({formData: new URLSearchParams({intent: "select"}), defaultShouldRevalidate: true}), true);
 });
 
-test("actual Settings loader keeps broader grant setup out of legacy pending/Connected views", async () => {
+test("actual Settings loader keeps pending broader grants in bound account selection", async () => {
   const route = loadRoute({providerRuntime: () => ({inspect: async () => ({state: "pending_account_selection",
     pending: {scopes: ["catalog_management", "https://www.googleapis.com/auth/content"]},
     accounts: [{id: "123", name: "Shop", currency: "USD", timezone: "UTC"}],
@@ -204,4 +203,35 @@ test("actual Settings loader keeps broader grant setup out of legacy pending/Con
   assert.equal(result.meta.view, "combined");
   assert.equal(result.permissionAvailability.google_ads, false);
   assert.equal(result.permissionAvailability.meta, false);
+});
+
+test("removed catalog actions reject before constructing any provider runtime", async () => {
+  let calls = 0;
+  const route = loadRoute({providerRuntime: () => {calls++; assert.fail("Removed action must do no I/O");}});
+  for (const intent of ["permission_discover_assets", "permission_verify_assets"]) {
+    const reply = await route.action({request: formRequest({intent, feature: "meta", requestId,
+      merchantId: "99", businessId: "88", catalogId: "77"})});
+    assert.equal(reply.status, 400);
+  }
+  assert.equal(calls, 0);
+});
+
+test("single and multiple connected accounts return to the existing reporting view without catalog work", async () => {
+  for (const count of [1, 3]) {
+    let reads = 0;
+    const accounts = Array.from({length: count}, (_, i) => ({id: String(123 + i), name: `Shop ${i}`,
+      currency: "USD", timezone: "UTC"}));
+    const route = loadRoute({providerRuntime: () => ({inspect: async () => {
+      reads++;
+      return {state: "connected", connection: {reportingAccountId: accounts[0].id, accounts,
+        grantedScopes: ["catalog_management", "https://www.googleapis.com/auth/content"]}};
+    }})});
+    const result = await route.loader({request: new Request("https://embedded.adstable.app/settings")});
+    assert.equal(result.view, "connected");
+    assert.equal(result.meta.view, "connected");
+    assert.equal(result.reportingAccountId, accounts[0].id);
+    assert.equal(result.meta.reportingAccountId, accounts[0].id);
+    assert.equal(result.accounts.length, count);
+    assert.equal(reads, 3); // Existing Google/Meta/Klaviyo inspect only; no asset reader exists in fixture.
+  }
 });

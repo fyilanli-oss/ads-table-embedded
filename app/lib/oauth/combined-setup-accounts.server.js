@@ -51,12 +51,12 @@ export function createCombinedSetupAccounts({provider, enabled, lifecycle, token
   }
   function project(current, accounts = [], reportingAccountId = null, selectionState = current?.status ?? "disconnected") {
     const state = selectionState;
-    const action = state === "connected" ? "verify_assets"
+    const action = state === "connected" ? "reporting_selected"
       : state === "pending_reporting_account_selection" ? "select_reporting_account"
       : state === "pending_account_selection" ? "select_account" : "request_permissions";
     return Object.freeze({provider, connectionState: current?.status ?? "disconnected", selectionState: state,
       setupState: "resume_setup", setupComplete: false,
-      setupReason: action === "verify_assets" ? "asset_verification_required"
+      setupReason: action === "reporting_selected" ? "reporting_account_selected"
         : action === "request_permissions" ? "authorization_required" : "account_selection_required",
       setupResumeAction: action, connectionId: current?.connectionId ?? null,
       connectionVersion: current?.version ?? null, reportingAccountId,

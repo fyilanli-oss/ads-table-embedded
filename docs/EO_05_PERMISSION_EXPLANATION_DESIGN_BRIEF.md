@@ -1,3 +1,13 @@
+## 29 Ekim 2026 — Kullanıcı onaylı 6. adım temizliği
+
+Doğrulama: 3.064/3.064 tüm test, 224 ilgili test, tip kontrolü ve derleme geçti. Native görsel kabulü yoktur; exact commit CI ayrıca kontrol edilir.
+
+Somut izin: “Tamam başla temizlemeye.” Yalnız OAuth kurulumuna izinsiz eklenen Merchant/işletme/katalog seçimi ve bağımlılıkları kaldırılır. Çalışan 1–5: açıklama, birleşik izinler, callback/token/izin doğrulaması, 1–3 reklam hesabı ve tek Reporting Account seçimi korunur. Hesap seçimi sonrasında mevcut Connected raporlama görünümüne dönülür. Bu görünüm katalog/ürün kimliği/rol/kalıcı aktivasyon veya Dataset yetkisi değildir.
+
+Otomatik ve elle katalog seçimi, bunlara özel listeleme modülü/metot/route eylemleri ve Verify access kaldırılır; yerine otomatik katalog seçimi, hata yutma veya sahte doğrulama konmaz. Ürün kimliği için önceden bulunan bağımsız native okuyucular korunur. Cancel/hide I/O yapmaz, seçim Save sonrasında native afterhide ile bir kez gider; hata unknown ve no-retry kalır. Tek/çok hesap, normal görünüme dönüş, kaldırılmış eylemlerin reddi ve artık katalog çağrısı yapılmaması test edilir.
+
+Meta açıklamasındaki “selected business” bağımlılığı kaldırılır: Allow AdsTable to read advertising and catalog data for reporting and product matching. Bu değişiklik yeni izin veya seçim eklemez. Birebir hesap/Reporting Account metinleri ve native s-modal/s-choice-list/s-choice/s-button eşliği korunur; yeni ekran yok. Resmî Choice list/Modal kaynakları 2026-10-29 okundu. Gerçek desktop/min320px mobil owner kabulü ayrıca bekler; ajan Shopify’da görsel işlem yapmaz. #265 açık OAuth izin kapısını kaydeder; bu temizliğin onayı başka OAuth işi veya merge yetkisi değildir. Önceki katalog seçim/listeleme tasarımları reddedilmiş tarihsel kayıtlardır. Canlı izin/config/deploy/token/DB/Dataset işlemi yoktur.
+
 ## 29 Ekim — Otomatik liste keşfi: uygulama öncesi ekran sözleşmesi
 
 Mevcut 07 / dördüncü teslim. Google Merchant hesap listesi, Meta işletme ve seçilen işletmenin owned/client katalog listeleri mevcut read izinleriyle okunur. Liste bağlantı/sürüm/Reporting Account bağlamına ve süreye bağlı adaylardır; erişim/Ads bağı veya ürün eşlemesi değildir. Google accounts.list kullanıcıya göre kota kullanır; bütün advanced subaccount evreni vaat edilmez. Meta güncel web belgesi erişilemedi/429 döndürdü; resmî SDK 26.0.0 GET businesses/owned_product_catalogs/client_product_catalogs ve id/name alanları doğrulandı. Bu, gerçek uygulama/mağaza izni kanıtı değildir.

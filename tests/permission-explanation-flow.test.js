@@ -87,13 +87,13 @@ test("only one explanation can open and stale hide cannot cancel the next sessio
   assert.equal(flow.snapshot.phase, "explaining");
 });
 
-test("account, asset, activation and zero-cost completion paths never request permissions", () => {
+test("account, activation and zero-cost completion paths never request permissions", () => {
   assert.equal(permissionResumeTarget("request_permissions"), "explanation");
   for (const [stage, target] of Object.entries({select_account: "account", select_reporting_account: "reporting_account",
-    verify_assets: "assets", review_setup: "activation_pending", klaviyo_cost_missing: "cost"})) {
+    review_setup: "activation_pending", klaviyo_cost_missing: "cost"})) {
     assert.equal(permissionResumeTarget(stage), target);
   }
-  for (const stage of [null, undefined, "connected", "__proto__", "toString"]) {
+  for (const stage of [null, undefined, "connected", "verify_assets", "reporting_selected", "__proto__", "toString"]) {
     assert.equal(permissionResumeTarget(stage), "check_status");
   }
 });

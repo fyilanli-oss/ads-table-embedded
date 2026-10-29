@@ -28,7 +28,7 @@ export function usePermissionSettings({availability, onResume}: Props) {
   const [selectionModel, setSelectionModel] = useState<SelectionModel | null>(null);
   const selectionIntent = useRef<{model: SelectionModel; input: SelectionInput | null; failed: boolean} | null>(null);
   const [selectionActivity, setSelectionActivity] = useState<string | null>(null);
-  const execute = useCallback((intent: "permission_connect" | "permission_status" | "permission_select_accounts" | "permission_select_reporting" | "permission_verify_assets" | "permission_discover_assets", feature: PermissionFeature, fields: Record<string, string> = {}) => {
+  const execute = useCallback((intent: "permission_connect" | "permission_status" | "permission_select_accounts" | "permission_select_reporting", feature: PermissionFeature, fields: Record<string, string> = {}) => {
     if (pending.current) return Promise.reject(new Error("PERMISSION_ACTION_PENDING"));
     return new Promise<Reply>((resolve, reject) => {
       const requestId = crypto.randomUUID();
@@ -96,24 +96,12 @@ export function usePermissionSettings({availability, onResume}: Props) {
   const openSelection = useCallback((reply: PermissionSettingsResult) => {
     if (pending.current || selectionIntent.current || controller.snapshot.phase !== "idle" || reply.kind !== "status" || !reply.selection
       || (reply.feature !== "google_ads" && reply.feature !== "meta")
-      || !["select_account", "select_reporting_account", "verify_assets"].includes(reply.stage)) return;
+      || !["select_account", "select_reporting_account"].includes(reply.stage)) return;
     const model: SelectionModel = {key: crypto.randomUUID(), feature: reply.feature,
       stage: reply.stage as SelectionModel["stage"], selection: reply.selection};
     selectionIntent.current = {model, input: null, failed: false};
     setSelectionModel(model);
   }, [controller]);
-  const loadAssets = async (reply: PermissionSettingsResult) => {
-    if (reply.kind !== "status" || !reply.selection || pending.current || selectionIntent.current) return;
-    setChecking(true); setSelectionActivity("Loading available accounts and catalogs…");
-    try {
-      const result = await execute("permission_discover_assets", reply.feature, {
-        connectionId: reply.selection.connectionId, version: String(reply.selection.version),
-        reportingAccountId: reply.selection.reportingAccountId ?? "",
-      });
-      setFeedback(result); openSelection(result);
-    } catch { setFeedback({kind: "unknown", feature: reply.feature}); }
-    finally { setChecking(false); setSelectionActivity(null); }
-  };
   const checkStatus = async (feature: PermissionFeature, openNext = false) => {
     if (pending.current || selectionIntent.current || ["explaining", "hiding_for_cancel", "hiding_for_connect", "starting"].includes(controller.snapshot.phase)) return;
     setChecking(true);
@@ -124,7 +112,7 @@ export function usePermissionSettings({availability, onResume}: Props) {
         controller.statusObserved(controller.snapshot.session, reply.feature);
         setSnapshot(controller.snapshot);
         if (openNext) {
-          if (reply.kind === "status" && reply.stage === "verify_assets") await loadAssets(reply);
+          if (reply.kind === "status" && reply.stage === "reporting_selected") callbacks.current.onResume(reply.feature, reply.stage);
           else openSelection(reply);
         }
       }
@@ -136,7 +124,7 @@ export function usePermissionSettings({availability, onResume}: Props) {
     if (!active || active.model.key !== key || active.input || active.failed || pending.current) return;
     active.input = {...input, ...(input.accountIds ? {accountIds: [...input.accountIds]} : {})};
     setChecking(true);
-    setSelectionActivity(input.loadCatalogs ? "Loading available accounts and catalogs…" : active.model.stage === "verify_assets" ? "Verifying access…" : "Saving selection…");
+    setSelectionActivity("Saving selection…");
     try { hide(); } catch {
       active.failed = true;
       setChecking(true);
@@ -151,42 +139,25 @@ export function usePermissionSettings({availability, onResume}: Props) {
     if (!active.input || active.failed) { setChecking(false); setSelectionActivity(null); return; }
     const {model, input} = active;
     setChecking(true);
-    setSelectionActivity(input.loadCatalogs ? "Loading available accounts and catalogs…" : model.stage === "verify_assets" ? "Verifying access…" : "Saving selection…");
+    setSelectionActivity("Saving selection…");
     try {
-      if (model.selection.assetOptions && !(Date.parse(model.selection.assetOptions.expiresAt) > Date.now())) throw new Error("PERMISSION_OPTIONS_EXPIRED");
-      const intent = input.loadCatalogs ? "permission_discover_assets" : model.stage === "select_account" ? "permission_select_accounts"
-        : model.stage === "select_reporting_account" ? "permission_select_reporting" : "permission_verify_assets";
+      const intent = model.stage === "select_account" ? "permission_select_accounts" : "permission_select_reporting";
       const fields: Record<string, string> = {connectionId: model.selection.connectionId, version: String(model.selection.version)};
       if (model.stage === "select_account") fields.selectedAccountIds = JSON.stringify(input.accountIds ?? []);
-      else if (model.stage === "select_reporting_account") fields.reportingAccountId = input.accountIds?.[0] ?? "";
-      else {
-        fields.reportingAccountId = model.selection.reportingAccountId ?? "";
-        if (model.feature === "google_ads") fields.merchantId = input.merchantId ?? "";
-        else { fields.businessId = input.businessId ?? ""; fields.catalogId = input.catalogId ?? ""; }
-      }
+      else fields.reportingAccountId = input.accountIds[0] ?? "";
       const reply = await execute(intent, model.feature, fields);
       setFeedback(reply);
-      if (input.loadCatalogs) openSelection(reply);
+      if (reply.kind === "status" && reply.stage === "reporting_selected") callbacks.current.onResume(reply.feature, reply.stage);
     } catch { setFeedback({kind: "unknown", feature: model.feature}); }
     finally { setChecking(false); setSelectionActivity(null); }
-  }, [execute, openSelection]);
-  useEffect(() => {
-    if (feedback?.kind !== "status") return;
-    const expiry = feedback.expiresAt ?? feedback.selection?.assetOptions?.expiresAt;
-    if (!expiry) return;
-    const feature = feedback.feature;
-    const remaining = Date.parse(expiry) - Date.now();
-    const timer = setTimeout(() => setFeedback({kind: "unknown", feature}), Math.max(0, remaining));
-    return () => clearTimeout(timer);
-  }, [feedback]);
+  }, [execute]);
   const busy = checking || ["hiding_for_connect", "starting"].includes(snapshot.phase);
   const resume = () => {
     if (feedback?.kind !== "status") return;
     if (feedback.stage === "products_required") open("shopify_products");
     else if (permissionResumeTarget(feedback.stage) === "explanation") open(feedback.feature);
     else if (feedback.feature === "google_ads" || feedback.feature === "meta") {
-      if (feedback.stage === "verify_assets" && feedback.selection && !feedback.selection.assetOptions) void loadAssets(feedback);
-      else if (feedback.selection) openSelection(feedback);
+      if (feedback.selection) openSelection(feedback);
       else void checkStatus(feedback.feature, true);
     } else callbacks.current.onResume(feedback.feature, feedback.stage);
   };
@@ -195,17 +166,16 @@ export function usePermissionSettings({availability, onResume}: Props) {
     <s-banner tone="warning" heading="Connection setup is not available yet." />
   ) : feedback?.kind === "unknown" || snapshot.phase === "unknown" ? (
     <s-banner tone="critical" heading="We could not confirm the result. Check the connection status before starting again." />
-  ) : feedback?.kind === "status" && feedback.stage === "existing_reporting_connection" ? null
+  ) : feedback?.kind === "status" && (feedback.stage === "existing_reporting_connection" || feedback.stage === "reporting_selected") ? null
     : feedback?.kind === "status" ? (
     <s-stack direction="block" gap="base">
       <s-banner tone="info" heading={feedback.stage === "review_setup"
         ? "Access verified. Setup is awaiting activation."
         : feedback.stage === "products_required" ? "Product access is still missing. Resume setup when you are ready."
-        : feedback.stage === "verify_assets" ? "Select the account or catalog needed to continue setup."
         : feedback.stage === "select_account" || feedback.stage === "select_reporting_account"
           ? "Choose the account to use for reporting." : "Resume setup"} />
       {feedback.stage === "request_permissions" || feedback.stage === "products_required" || feedback.feature === "klaviyo"
-        || ["select_account", "select_reporting_account", "verify_assets"].includes(feedback.stage)
+        || ["select_account", "select_reporting_account"].includes(feedback.stage)
         ? <s-button disabled={busy ? true : undefined} onClick={resume}>Resume setup</s-button> : null}
     </s-stack>
   ) : busy || snapshot.phase === "awaiting_status" ? (

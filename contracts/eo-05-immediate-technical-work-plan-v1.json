@@ -59,7 +59,7 @@
       "implementation_record": "contracts/eo-05-start-brief-v1.json#Combined_provider_setup_asset_access_2026_10_29",
       "remaining_in_this_delivery": [
         "Final setup readiness/activation joined to developer approval evidence and accepted UI; access proof alone cannot authorize it",
-        "Settings/return/Resume Setup and Merchant/business/catalog target selection wiring with separately accepted explanation modal in delivery4",
+        "Account/Reporting Account selection wiring is prepared in delivery4; user Merchant/business/catalog selection is rejected and removed",
         "Native app approval/merchant grant/asset access acceptance; isolated tests are not live evidence"
       ],
       "merged_backend_start_callback_PR": 258,
@@ -110,12 +110,12 @@
         2,
         3
       ],
-      "status": "automatic_candidate_discovery_and_native_choice_selection_code_prepared_release_visual_and_durable_activation_pending",
-      "implementation_record": "contracts/eo-05-start-brief-v1.json#Permission_asset_discovery_2026_10_29",
+      "status": "step6_removed_account_selection_preserved_native_visual_acceptance_pending",
+      "implementation_record": "contracts/eo-05-start-brief-v1.json#OAuth_step6_removal_2026_10_29",
       "remaining_in_this_delivery": [
-        "Developer/release/native install/callback/decline/partial-grant and real desktop/min320px mobile owner acceptance; all new switches stay closed",
-        "Before activation, approved native transport/quota/app-owner inventory must cover the new read endpoints; existing shared transport rejects unconfigured families and is not bypassed",
-        "Final durable selection/proof storage and activation decision remain existing step15; step15 not started, step22 paused, Dataset/FX writer step23"
+        "Real Shopify Admin desktop/min320px mobile owner acceptance remains pending; agent performs no visual interactions",
+        "Developer/release/native permission evidence remains separate and no live switches were opened",
+        "Step15 durable-source/activation design not started; step22 paused; Dataset/FX write step23"
       ],
       "runtime_alignment_record": "contracts/eo-05-start-brief-v1.json#Polaris_stable_2_alignment_2026_10_29"
     },

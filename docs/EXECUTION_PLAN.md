@@ -1,3 +1,13 @@
+## 29 Ekim 2026 — Onaylı OAuth 6. adım temizliği
+
+Doğrulama: 3.064/3.064 tüm test, 224 ilgili test, tip kontrolü ve derleme geçti. Native görsel kabulü yoktur; exact commit CI ayrıca kontrol edilir.
+
+Somut kullanıcı izni: “Tamam başla temizlemeye.” Yalnız izinsiz eklenen Merchant/işletme/katalog seçimi, elle kimlik alanları, otomatik listeleme, Verify access eylemleri ve bunları şart koşan OAuth geçişi kaldırıldı. Çalışan açıklama/birleşik izin/callback/token/hesap/Reporting Account adımları1–5 korunur; son seçim normal Connected raporlama görünümüne döner. Bu raporlama bağlantısı katalog/ürün kimliği/rol/kalıcı aktivasyon veya Dataset yetkisi değildir.
+
+Ürün kimliği için önceden bulunan bağımsız katalog/API okuyucuları ve native erişim helper’ları korunur; OAuth ekranından çağrılmaz. Otomatik katalog ataması, hata yutma, sahte doğrulama veya yeni kullanıcı seçimi eklenmedi. Kaldırılan eylemler provider runtime kurulmadan400 ile reddedilir. Meta açıklamasındaki selected-business bağımlılığı da kaldırılır; izin seti değişmez.
+
+AGENTS.md / #265: OAuth’a değen her iş önceden somut açık izin ister; bu onay yalnız bu temizlik ve ilgili test/kayıt içindir, yeni tasarım veya merge onayı değildir. Önceki katalog seçim/keşif tasarımları reddedilmiş tarihsel kayıtlardır. Resmî Shopify Choice list/Modal ve React Router useRevalidator kaynakları 2026-10-29 kontrol edildi; paket/sürüm değişmedi. Gerçek desktop/min320px mobil owner kabulü ayrıca bekler; ajan Shopify’da görsel işlem yapmaz. Canlı izin/config/deploy/token/DB/Dataset işlemi yoktur.15 başlamadı,22 duraklatılmış,23 Dataset/FX yazımı. Kayıt: contracts/eo-05-start-brief-v1.json#OAuth_step6_removal_2026_10_29.
+
 ## 29 Ekim 2026 — Merchant / Meta katalog listesi ve native seçim
 
 Yerel doğrulama: 3.087/3.087 test, tip kontrolü ve derleme geçti. Exact commit CI GitHub üzerinde ayrıca doğrulanır; sentetik testler native görsel/izin kanıtı değildir.

@@ -4,7 +4,6 @@ const resumeTargets = Object.freeze({
   request_permissions: "explanation",
   select_account: "account",
   select_reporting_account: "reporting_account",
-  verify_assets: "assets",
   review_setup: "activation_pending",
   klaviyo_cost_missing: "cost",
 });

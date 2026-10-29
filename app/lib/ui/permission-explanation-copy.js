@@ -27,7 +27,7 @@ export const PERMISSION_EXPLANATIONS = Object.freeze(Object.fromEntries(
   "meta": {
     "heading": "Connect Meta ads and catalog",
     "paragraphs": [
-      "Allow AdsTable to read advertising data and the catalog available to your selected business.",
+      "Allow AdsTable to read advertising and catalog data for reporting and product matching.",
       "Both ad account and catalog access are needed to finish setup. You may also see business and Page permissions.",
       "Some business and catalog permissions also allow changes. AdsTable uses this connection for reporting and product matching; it does not edit those assets."
     ]

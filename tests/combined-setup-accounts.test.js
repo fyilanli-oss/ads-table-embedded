@@ -102,7 +102,7 @@ for (const provider of ["google_ads", "meta"]) {
     const h = harness(provider), expectedConnection = {connectionId: id(2), version: 7};
     const pending = h.setup.select({installationAuthority: owner, selectedAccountIds: [first], expectedConnection});
     expectedConnection.version = 6;
-    incomplete(await pending, "verify_assets");
+    incomplete(await pending, "reporting_selected");
     assert.deepEqual(h.writes, ["accounts"]);
   });
   test(`${provider}: combined account entry stays closed, caller cannot enable it`, async () => {
@@ -112,14 +112,14 @@ for (const provider of ["google_ads", "meta"]) {
     }
     assert.deepEqual(h.reads, []); assert.deepEqual(h.calls, []); assert.deepEqual(h.writes, []);
   });
-  test(`${provider}: one account selection and reopening keep asset verification pending`, async () => {
+  test(`${provider}: one account selection and reopening end at reporting selection without a catalog step`, async () => {
     const h = harness(provider);
     incomplete(await h.setup.inspect({installationAuthority: owner}), "select_account");
     const result = await h.setup.select({installationAuthority: owner, selectedAccountIds: [first], setupComplete: true,
       assetVerified: true, provider: "other", permissionProfile: "reporting_v1"});
-    incomplete(result, "verify_assets"); assert.equal(result.connectionState, "connected");
+    incomplete(result, "reporting_selected"); assert.equal(result.connectionState, "connected");
     assert.equal(result.reportingAccountId, first); assert.equal(result.connectionVersion, 8);
-    incomplete(await h.setup.inspect({installationAuthority: owner}), "verify_assets");
+    incomplete(await h.setup.inspect({installationAuthority: owner}), "reporting_selected");
     assert.deepEqual(h.writes, ["accounts"]);
   });
   test(`${provider}: multiple accounts require reporting selection without a new OAuth exchange`, async () => {
@@ -128,7 +128,7 @@ for (const provider of ["google_ads", "meta"]) {
     const pending = await h.setup.inspect({installationAuthority: owner});
     incomplete(pending, "select_reporting_account"); assert.equal(pending.connectionState, "pending_account_selection");
     assert.deepEqual(pending.accounts, [{id: first, name: "Shop 123"}, {id: second, name: "Shop 456"}]);
-    incomplete(await h.setup.finishReporting({installationAuthority: owner, reportingAccountId: second}), "verify_assets");
+    incomplete(await h.setup.finishReporting({installationAuthority: owner, reportingAccountId: second}), "reporting_selected");
     assert.deepEqual(h.writes, ["accounts", "reporting"]);
     assert.ok(h.calls.every(address => !address.includes("oauth/access_token") && !address.includes("oauth2.googleapis.com")));
   });

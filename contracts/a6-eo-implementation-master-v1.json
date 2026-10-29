@@ -1,4 +1,50 @@
 {
+  "OAuth_step6_removal_2026_10_29": {
+    "checked_at": "2026-10-29",
+    "existing_plan_step": 7,
+    "code_delivery_order": 4,
+    "PR": 264,
+    "owner_authorization": "Tamam başla temizlemeye.",
+    "authorized_scope": "Remove step6 and its code/tests/docs dependencies only; preserve working OAuth steps1–5 and prior independent product identity readers",
+    "OAuth_approval_rule": "AGENTS.md and PR265: concrete explicit prior owner permission required; this cleanup approval is not new design/provider/live/merge authorization",
+    "status": "step6_removed_account_selection_preserved_native_visual_acceptance_pending",
+    "removed": [
+      "Automatic Merchant/business/catalog discovery module and its runtime wiring",
+      "Manual and automatic asset selection controls; asset fields, loading/expiry states and Continue/Verify",
+      "permission_discover_assets and permission_verify_assets routes, service methods and transport types",
+      "Callback/combined account projection asset-verification prerequisite; no catalog Resume after Reporting Account",
+      "Misleading selected-business permission-copy dependency"
+    ],
+    "preserved": [
+      "Exact combined permission scope sets, token/callback/security validation and closed live flags",
+      "1–3 advertiser selection, one Reporting Account and bound version/concurrency guards",
+      "Normal Connected reporting view after final account selection; not product/role/activation authority",
+      "Existing independent combined-setup-assets and product identity/catalog readers; no new calling path",
+      "Cancel/no I/O, first-error stop, no retry/fallback, Shopify optional Orders and Klaviyo account/cost behavior"
+    ],
+    "remaining": [
+      "Real Shopify Admin desktop/min320px mobile owner acceptance remains pending; agent performs no visual interactions",
+      "Developer/release/native permission evidence remains separate and no live switches were opened",
+      "Step15 durable-source/activation design not started; step22 paused; Dataset/FX write step23"
+    ],
+    "test_scope": "Removed actions reject before native runtime construction;1/3 accounts normal view; no catalog controls; existing callback/security/closed gates preserved",
+    "provider_scope_changed": false,
+    "live_calls": false,
+    "config_or_deploy_changed": false,
+    "token_or_database_or_Dataset_mutation": false,
+    "step15_started": false,
+    "merge_authorized": false,
+    "validation": {
+      "full_local_tests": 3064,
+      "passed": 3064,
+      "failed": 0,
+      "targeted_tests": 224,
+      "typecheck": "passed",
+      "build": "passed",
+      "native_visual_acceptance": false,
+      "CI": "exact_head_checked_after_push"
+    }
+  },
   "Permission_asset_discovery_2026_10_29": {
     "checked_at": "2026-10-29",
     "existing_plan_step": 7,

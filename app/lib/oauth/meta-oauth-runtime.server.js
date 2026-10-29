@@ -1,4 +1,3 @@
-import {createCombinedSetupAssetDiscovery} from "./combined-setup-asset-discovery.server.js";
 import {createCombinedSetupAssetAccess} from "./combined-setup-assets.server.js";
 import {createCombinedSetupAccounts, assertCombinedSetupAccountBinding} from "./combined-setup-accounts.server.js";
 import {randomUUID} from "node:crypto";
@@ -261,11 +260,11 @@ export function createMetaOAuthRuntime({
             provider:PROVIDER,transactionId:claimed.transactionId,connectionId:randomUUIDFn(),
             binding:claimed.identityBinding,tokenSet:exchanged.tokenSet,scopes:evidence.scopes,
             accounts:evidence.accounts,verifiedAt:evidence.verifiedAt,expiresAt:exchanged.expiresAt});
-          return Object.freeze({outcome:committed.status==="connected"?"pending_asset_verification":committed.status,
+          return Object.freeze({outcome:committed.status==="connected"?"reporting_account_selected":committed.status,
             connectionState:committed.status,owner,pending:committed,
             setupState:"resume_setup",setupComplete:false,
-            setupReason:committed.status==="connected"?"asset_verification_required":"account_selection_required",
-            setupResumeAction:committed.status==="connected"?"verify_assets":"select_account",
+            setupReason:committed.status==="connected"?"reporting_account_selected":"account_selection_required",
+            setupResumeAction:committed.status==="connected"?"reporting_selected":"select_account",
             callbackReturn:await selections.callbackReturn(owner)});
         }
         const staged = await selections.stage({
@@ -446,8 +445,6 @@ export function createMetaOAuthRuntime({
   };
   return Object.freeze({...runtime, combinedSetup: Object.freeze({
     ...createCombinedSetupAccounts({provider: PROVIDER, enabled: identityAuthorizationEnabled, lifecycle, tokenVault, runtime}),
-    discoverAssets: createCombinedSetupAssetDiscovery({provider: PROVIDER, enabled: identityAuthorizationEnabled,
-      database, tokenVault, config, fetchFn, now}).discover,
     verifyAssets: createCombinedSetupAssetAccess({provider: PROVIDER, enabled: identityAuthorizationEnabled,
       database, tokenVault, config, fetchFn, now}).verify,
   })});

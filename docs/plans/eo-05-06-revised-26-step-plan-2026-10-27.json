@@ -1,4 +1,15 @@
 {
+  "OAuth_setup_permission_policy_2026_10_29": {
+    "contract": "contracts/eo-05-oauth-setup-permission-policy-v1.json",
+    "existing_step": 7,
+    "independent_subtask": "İzin öncesi açıklama ve kurulum sürdürme",
+    "status": "product_direction_recorded_implementation_pending",
+    "Google_Meta": "Ads_and_product_catalog_access_requested_together_partial_setup_not_connected",
+    "Shopify_Orders": "optional_later_feature_permission_base_setup_may_complete_without_Orders",
+    "developer_app_approval": "separate_audit_required_current_status_not_proven",
+    "runtime_changed": false,
+    "new_plan_number": false
+  },
   "Klaviyo_research_closure_and_existing_step_assignment_2026_10_29": {
     "decision": "contracts/eo-05-start-brief-v1.json#Klaviyo_research_closure_and_existing_step_assignment_2026_10_29",
     "existing_steps": [

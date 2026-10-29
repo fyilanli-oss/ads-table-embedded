@@ -1,3 +1,11 @@
+## 29 Ekim 2026 — 01–13 teknik tamamlama kod planı
+
+07 OAuth kararları, 04–06 çalışan PD/kayıt bağlantıları ve yeni Klaviyo etkileşim referansı eksiği tek 10 teslim sırasına bağlandı. Bu teslim numaraları yeni plan maddesi değildir. Ayrıntılı mesaj/tablo karşılığı docs/plans/EO_05_06_REVISED_PLAN_2026_10_27.md başındadır; makine otoritesi contracts/eo-05-immediate-technical-work-plan-v1.json. EO-05 brief, master ve 26-adım JSON planı aynı kayda bağlıdır.
+
+İlk teknik iş 07 temel ürün kurulumu ile Orders izin kontrolünü ayırmaktır. Geliştirici onay/native kimlik/izin/kapasite kanıtları ayrı; 08–10 aday/okuyucu kodu kanıtsız biçim varsayımlarıyla yeniden yazılmaz. #251 çalıştırıcı ve #252 belirsiz rezervasyon uzlaştırması tekrar backlog değildir. Kanıt bekleyen provider rol konuları öne çekilmedi; kalıcı saklama 15, duraklatılan listing tree 22 ve genel Dataset/FX yazımı 23 yerindedir. Teknik teslimlerden sonra 14’te birlikte değerlendirilir; 15’e otomatik geçilmez.
+
+Bu tur yalnız plan ve sözleşme değişti; runtime/UI/DB/provider/config/deploy/izin veya token değişmedi. Kaynaklar güncel main kodu, mevcut 01–13 teslim/evidence kayıtları ve 29 Ekim 07 politika contract’ındaki resmî kaynak kontrolüdür; native app onayı veya üretim kabulü iddia edilmez.
+
 ## 29 Ekim 2026 — 07 OAuth: izin öncesi açıklama ve kurulum sürdürme politikası
 
 Kullanıcı önerisi mevcut 07 içinde bağımsız ve izlenen alt iş olarak kaydedildi; 26 ana sıra değişmedi. Contract: contracts/eo-05-oauth-setup-permission-policy-v1.json. Bu ürün politikası/teknik iş kaydıdır; modal, OAuth/config veya canlı izin uygulaması değildir.

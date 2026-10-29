@@ -1,4 +1,16 @@
 {
+  "Immediate_technical_work_plan_2026_10_29": {
+    "contract": "contracts/eo-05-immediate-technical-work-plan-v1.json",
+    "covers_existing_steps": "01–13",
+    "delivery_count": 10,
+    "delivery_numbers_are_not_new_plan_steps": true,
+    "first_code_work": "07 temel kurulum ve Orders özellik izni ayrımı",
+    "stop_after_existing_step": 14,
+    "step15_started": false,
+    "Dataset_write_step": 23,
+    "listing_tree_step22_paused": true,
+    "status": "plan_prepared_implementation_pending"
+  },
   "OAuth_setup_permission_policy_2026_10_29": {
     "contract": "contracts/eo-05-oauth-setup-permission-policy-v1.json",
     "existing_step": 7,

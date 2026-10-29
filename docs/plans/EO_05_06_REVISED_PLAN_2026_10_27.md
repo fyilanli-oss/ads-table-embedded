@@ -1,3 +1,28 @@
+## 29 Ekim 2026 — 01–13 şimdi tamamlanacak teknik işlerin kodlama sırası
+
+Aşağıdaki numaralar yalnız kod teslim sırasıdır; mevcut 26 maddelik plan yeniden numaralanmadı. Tek ayrıntılı kayıt: contracts/eo-05-immediate-technical-work-plan-v1.json. 07 izin politikası ve araştırmada bulunan Klaviyo eksiği bu sıraya dahildir. Bu plan kod teslimi veya gerçek ortam kabulü değildir.
+
+| Kodlama sırası | Mevcut madde | Şimdi tamamlanacak iş |
+|---|---|---|
+| 1 | 07 | Temel ürün kurulumu ile Orders/Overlap izin kontrolünü ayır. Orders yokken temel kurulumun tamamlanabilmesini, sipariş okuyucusunun ise kapalı kalmasını sağla. |
+| 2 | 07 | Google Ads–Merchant ve Meta Ads–Catalog tam izin profilini kurulum akışına bağla; kısmi/iptal durumda Resume Setup, gerçek grant/hesap/varlık kontrolü. |
+| 3 | 07 / 12 | Shopify ilk Products ve sonraki Orders isteme/dönüş altyapısını, native scope okumasını ve gerekli SDK/kota bağlarını hazırla. Canlı config/izin yayını ayrı kapıdır. |
+| 4 | 07 | İzin öncesi modalları bağımsız UI işi olarak hazırla; amaç, ret sonucu, Cancel/Connect ve kurulum sürdürme. Metin/component ve desktop/mobile kullanıcı kabulü ayrı. |
+| 5 | 06 / 11 / 12 | Mevcut okuyucuları ortak güvenilir çalışma bağlamına bağla: doğru mağaza/hesap/nesil/üst hiyerarşi/gün/saat dilimi/para birimi/atıf ve kota/iptal/ilk-hata kontrolleri. |
+| 6 | 04 | Google performans ve normal kapsam dönüşüm sorgularını mevcut PD birleştiricisine çalışan okuma akışından bağla. |
+| 7 | 05 | Klaviyo Placed Order/ATC/Checkout raporlarını mevcut Message PD birleştiricisine çalışan okuma akışından bağla. Spend formülü 25’te kalır. |
+| 8 | 06 | Üç sağlayıcının kaynak çıktısını mevcut ortak kayıt köprüsüne bağla. Meta tek sorgu projeksiyonu kullanır; gereksiz ikinci birleştirici yok. Metadata/FX eksikliği açık gösterilir, kur uydurulmaz; Dataset yazılmaz. |
+| 9 | 12 | Klaviyo satış–atfedilen etkileşim referanslarını koru ve kontrollü olay okuyucusuna bağla. Click/open ayrımı korunur; Advertised/Cross-sell üretilmez. |
+| 10 | 13 | Yeni izin, PD ve etkileşim bağlantılarını mevcut ortak aday/referans/Order/LineItem yazım öncesi kontrolleriyle birlikte sına. |
+
+01–03 için yeni bilinen kod işi yok; mevcut korumalar regresyonda korunur. 08–10 kimlik okuyucu/aday kodu yeniden yazılmaz; gerçek Merchant/katalog/Shopify biçimi, Meta rapor namespace’i ve Klaviyo kaynak/varyant/OrderId kanıtı bekler. 11–12’de hazırlanmış source-rule/owner/kota bağlantıları yeni teslimlerde korunur. Sipariş çalıştırıcısı/arka plan oturumu (#251) ve belirsiz rezervasyon uzlaştırması (#252) main’de hazırlanmıştır; eski remaining alanlarından bunlar tekrar kod işi çıkarılmaz.
+
+Ayrı kanıt işleri: geliştirici uygulama izin/onay durumu, native mağaza grant’i ve seçili varlık erişimi, gerçek ürün/sipariş kimliği biçimleri, izinli geçmiş sipariş/protected-data erişimi, gerçek limit/profil ve body/bellek/bağlantı/kapasite ölçümü. Bunlar kod yazılarak tamamlandı sayılmaz; unknown, denied ve granted ayrılır. Meta’nın güncel resmî izin kapsamı/bağımlılıkları doğrulanmadan Meta’ya özgü kapsam değişikliği yapılmaz. Bu engel diğer bağımsız teknik dilimleri tamamlandı göstermeyi veya durdurmayı gerektirmez.
+
+İleriki işler: 15 kalıcı kimlik/kaynak/ham kanıt/Order saklama ve writer/tekrar okuma/durable devam tasarımı; 16–21 rol/kanıt kararları kendi sıralarında; 22 listing tree duraklatılmış; 23 genel Dataset/FX yazımı; 24–26 uzlaştırma, Spend ve bütünleşik kabul. Klaviyo Campaign Assisted / Flow Triggered ve PMax Campaign + gerektiğinde Unclassified Channel kararları korunur.
+
+Her küçük kod teslimi ayrı PR/ilgili test/CI ve açık kullanıcı merge onayıyla ilerler. Resmî doküman, UI anayasası ve canlı mutation onay kapıları korunur. Bu teslimler sonunda mevcut 14’te birlikte durum değerlendirmesinde durulur; 15 kendiliğinden başlamaz. Tarihli Excel tarihsel görüntü olarak kaldı; kullanıcı bu turda mesaj içi plan istedi.
+
 ## 29 Ekim 2026 — 07 OAuth: izin öncesi açıklama ve kurulum sürdürme politikası
 
 Kullanıcı önerisi mevcut 07 içinde bağımsız ve izlenen alt iş olarak kaydedildi; 26 ana sıra değişmedi. Contract: contracts/eo-05-oauth-setup-permission-policy-v1.json. Bu ürün politikası/teknik iş kaydıdır; modal, OAuth/config veya canlı izin uygulaması değildir.

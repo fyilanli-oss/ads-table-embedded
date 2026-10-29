@@ -95,6 +95,7 @@ test("native scopes use same SDK quota path before and after data without permis
   assert.equal(f.calls[0].family,"permission_scopes");assert.equal(f.calls.at(-1).family,"permission_scopes");
   assert.equal(r.nativeScopeListObserved,true);assert.equal(r.nativePermissionVerified,false);
   assert.equal(r.nativeScopeObservation.before.assessment.scopeStatus,"observed_sufficient");
+  assert.deepEqual(r.nativeScopeObservation.before.assessment.requiredScopes,["read_products","read_orders"]);
   assert.equal(r.nativeScopeObservation.after.assessment.authorizesActivation,false);
   assert.ok(Object.isFrozen(r.nativeScopeObservation.before.evidence.scopes));
   assert.doesNotMatch(JSON.stringify(f.lookups),/read_orders|AppInstallation|accessScopes/);
@@ -118,6 +119,7 @@ test("history scope observed still does not prove approval or historical order c
 });
 for(const [name,pattern,change] of [
   ["revoked",/SCOPES_REQUIRED/,app=>{app.accessScopes=[];}],
+  ["Orders revoked while Products remains",/SCOPES_REQUIRED/,app=>{app.accessScopes=[{handle:"read_products"}];}],
   ["new grant",/SCOPES_CHANGED/,app=>app.accessScopes.push({handle:"read_inventory"})],
   ["other app",/APP_INSTALLATION_CHANGED/,app=>{app.id=gid("AppInstallation","10");}]
 ])test(`final native scope ${name} discards collected data`,async()=>{

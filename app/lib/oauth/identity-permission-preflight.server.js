@@ -53,12 +53,15 @@ export function permissionContext(value) {
   return Object.freeze(context);
 }
 
+// Product setup is the Shopify default. Order callers must opt in explicitly;
+// a sufficient scope comparison still does not prove data access or activation.
 export function identityPermissionRequirements({
-  provider, includeOrderHistory = false, includeMarketingEvents = false,
+  provider, includeOrders = false, includeOrderHistory = false, includeMarketingEvents = false,
 } = {}) {
   if (!Object.hasOwn(SOURCES, provider)) throw new TypeError("PERMISSION_PROVIDER_UNSUPPORTED");
-  if (typeof includeOrderHistory !== "boolean" || typeof includeMarketingEvents !== "boolean"
-    || (provider !== "shopify" && (includeOrderHistory || includeMarketingEvents))) {
+  if (typeof includeOrders !== "boolean" || typeof includeOrderHistory !== "boolean" || typeof includeMarketingEvents !== "boolean"
+    || (provider !== "shopify" && (includeOrders || includeOrderHistory || includeMarketingEvents))
+    || (includeOrderHistory && !includeOrders)) {
     throw new TypeError("PERMISSION_FEATURE_SELECTION_INVALID");
   }
   let scopes;
@@ -75,8 +78,12 @@ export function identityPermissionRequirements({
     scopes = [...KLAVIYO_OAUTH_SCOPES];
     additionalChecks = ["selected_klaviyo_account_read", "verified_shopify_ordered_product_metric_and_event_read"];
   } else {
-    scopes = ["read_products", "read_orders"];
-    additionalChecks = ["shopify_product_read", "shopify_order_line_read", "shopify_protected_customer_data_access"];
+    scopes = ["read_products"];
+    additionalChecks = ["shopify_product_read"];
+    if (includeOrders) {
+      scopes.push("read_orders");
+      additionalChecks.push("shopify_order_line_read", "shopify_protected_customer_data_access");
+    }
     if (includeOrderHistory) {
       scopes.push("read_all_orders");
       additionalChecks.push("shopify_all_orders_application_approval_and_historical_read");
@@ -98,11 +105,11 @@ function normalizedScopes(value) {
 
 // Scope comparison only: matching strings do not grant asset access or authorize activation.
 export function assessIdentityPermissionScopes({
-  context: rawContext, evidence = null, includeOrderHistory = false, includeMarketingEvents = false,
+  context: rawContext, evidence = null, includeOrders = false, includeOrderHistory = false, includeMarketingEvents = false,
   now = () => new Date(),
 } = {}) {
   const context = permissionContext(rawContext);
-  const requirements = identityPermissionRequirements({provider: context.provider, includeOrderHistory, includeMarketingEvents});
+  const requirements = identityPermissionRequirements({provider: context.provider, includeOrders, includeOrderHistory, includeMarketingEvents});
   const checkedAt = currentTime(now).toISOString();
   const result = (scopeStatus, reason, missingScopes = null, satisfiedBy = []) => Object.freeze({
     provider: context.provider, scopeStatus, reason, checkedAt,

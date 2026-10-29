@@ -89,7 +89,8 @@ export function createShopifyOrderReadExecution({client,shop,scope,range,limits,
           const observedAt=new Date().toISOString();
           const native=parseShopifyPermissionScopePage({shop:expectedShop,body:await payload({query:SHOPIFY_PERMISSION_SCOPES_QUERY,variables:{}})});
           const evidence={source:"shopify_current_app_installation",context:permissionOwner,observedAt,complete:true,...native};
-          const assessment=assessIdentityPermissionScopes({context:permissionOwner,evidence,includeOrderHistory});
+          // Order reads must never inherit the product-only setup default.
+          const assessment=assessIdentityPermissionScopes({context:permissionOwner,evidence,includeOrders:true,includeOrderHistory});
           if(assessment.scopeStatus!=="observed_sufficient")fail("SCOPES_REQUIRED");
           await current();return {evidence,assessment};
         }

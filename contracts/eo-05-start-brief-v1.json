@@ -1,4 +1,57 @@
 {
+  "Shopify_product_order_permission_split_2026_10_29": {
+    "checked_at": "2026-10-29",
+    "base_main": "d2a1b3521bd192648e6cfdb15af588a0e33b7baf",
+    "existing_plan_step": 7,
+    "code_delivery_order": 1,
+    "status": "repository_code_and_tests_ready_pending_exact_CI_and_owner_merge_not_live_setup",
+    "behavior": {
+      "Shopify_default_required_scopes": [
+        "read_products"
+      ],
+      "explicit_order_option": "includeOrders:true",
+      "Orders_required_scopes": [
+        "read_products",
+        "read_orders"
+      ],
+      "history_requires_explicit_Orders": true,
+      "Orders_reader_always_opted_in": true,
+      "Order_grants_checked_before_and_after_collection": true,
+      "product_only_observation_is_not_order_authority": true,
+      "unknown_not_missing": true,
+      "scope_sufficient_is_not_app_approval_or_activation": true
+    },
+    "code": [
+      "app/lib/oauth/identity-permission-preflight.server.js",
+      "app/lib/oauth/identity-permission-preflight.server.d.ts",
+      "app/lib/shopify/permission-scopes.server.js",
+      "app/lib/shopify/permission-scopes.server.d.ts",
+      "app/lib/shopify/order-collection.server.js"
+    ],
+    "tests": [
+      "tests/identity-permission-preflight.test.js",
+      "tests/shopify-permission-readback.test.js",
+      "tests/shopify-order-collection.test.js"
+    ],
+    "targeted_tests_passed": 224,
+    "not_claimed": [
+      "user-facing_Connected_or_Resume_setup_flow_implemented",
+      "dynamic_scope_request_or_optional_scopes_release",
+      "native_permission_or_app_review_acceptance",
+      "new_UI_or_modal",
+      "live_Order_access",
+      "DB_or_Dataset_write"
+    ],
+    "next_delivery": "07 combined Google/Meta setup flow after first code PR review/merge; official prerequisite gates remain",
+    "validation": {
+      "targeted_tests": 224,
+      "full_tests": 2835,
+      "failed": 0,
+      "typecheck": "passed",
+      "build": "passed",
+      "F01": "not_triggered_by_this_diff_no_migration_refresh_or_work_repository_paths"
+    }
+  },
   "Immediate_technical_work_plan_2026_10_29": {
     "contract": "contracts/eo-05-immediate-technical-work-plan-v1.json",
     "covers_existing_steps": "01–13",

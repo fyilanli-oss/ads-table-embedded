@@ -168,5 +168,11 @@
       "source": "https://developers.facebook.com/docs/permissions/",
       "status": "429_read_failed_not_retried_no_mutation"
     }
-  ]
+  ],
+  "combined_account_selection_backend": {
+    "record": "contracts/eo-05-start-brief-v1.json#Combined_provider_setup_account_selection_2026_10_29",
+    "status": "account_selection_backend_slice_ready_inactive_not_full_setup_acceptance",
+    "setupComplete": false,
+    "asset_access_and_UI_acceptance": "still_open"
+  }
 }

@@ -1,3 +1,15 @@
+## 29 Ekim 2026 — Birleşik kurulum: hesap seçimi ve sürdürme sunucu dilimi
+
+#258 main’e birleşti (e936b033a2f0e794f94d8c03def4f58d5cedc77a); iki zorunlu CI başarılı. 07 / ikinci kod tesliminin hesap seçimi dilimi hazırlandı. Google ve Meta runtime.combinedSetup girişleri mevcut hesap keşfi/izin doğrulayıcısı ve CAS seçim kayıtlarını kullanır. Varsayılan sunucu kapısı kapalı; mevcut Settings/callback yolları ve reporting_v1 davranışı değişmedi.
+
+Tek hesap seçilince verify_assets; çoklu hesap seçilince select_reporting_account, ardından verify_assets döner. Hepsinde Resume Setup ve setupComplete=false kalır. Reklam hesabı seçmek Merchant/katalog erişimi veya uygulama onayı kanıtı değildir. Veritabanındaki pending_account_selection korunur; raporlama hesabı seçme aşaması ayrı selectionState ile anlatılır. Yeni lifecycle durumu veya tablo üretilmedi.
+
+Yalnız sahipli current lifecycle ve tam identity_v1 credential ile girilir. Başlangıçtaki connection/version/credential, native keşiften önce seçilecek kayda bağlanır. Yazım sonrası exact seçim yanıtı ve güncel lifecycle tekrar doğrulanır. Kayıp/yanlış yanıt veya değişmiş bağ hata kalır; otomatik retry/fallback/revoke yoktur. Sonuçta credential/token veya ham provider yanıtı taşınmaz.
+
+Bu ikinci kod işinin tamamı değildir: Merchant/katalog doğrulamasını nihai hazır durumuna bağlamak, ayrı modal teslimiyle ekran akışını bağlamak ve native geliştirici onayı/izin/varlık kanıtı açık kalır. Canlı izin/token/config/deploy/DB/Dataset değişikliği yapılmadı. 15 başlamadı; 22 duraklatılmış, 23 Dataset/FX yazımıdır. Makine kaydı: contracts/eo-05-start-brief-v1.json#Combined_provider_setup_account_selection_2026_10_29.
+
+46 yeni entegrasyon testi, 175 ilgili test ve 2.909/2.909 tüm test geçti; tip kontrolü ve derleme başarılı. Exact commit CI ve kullanıcı merge onayı bekler. Google OAuth/Merchant ve Supabase function dokümanları 2026-10-29 kontrol edildi; Meta reklam hesabı okuma yolu resmî SDK User.getAdAccounts üzerinden kontrol edildi; mevcut doğrulayıcı kullanıldı, yeni API davranışı/katalog erişimi/uygulama onayı varsayılmadı.
+
 ## 29 Ekim 2026 — Birleşik Google/Meta kurulumunun sunucu başlangıç/dönüş dilimi
 
 İlk Products/Orders teslimi #257 ile main’e birleşti (8ebb4caeb6f766ebd624888a8b3efacc4d0239f4). 07 içindeki ikinci kod işinin sunucu başlangıç/dönüş parçası hazırlandı; bütün ikinci iş veya OAuth kurulumu tamamlandı denmez. Mevcut sunucu kapısı varsayılan kapalıdır; Settings ve callback route’ları bu yeni başlangıca bağlanmadı. Modalın açık anlatımı/kullanıcı kabulü ve uygun canlı kapılar olmadan birleşik izin akışı açılmaz.

@@ -1,10 +1,62 @@
 {
+  "Combined_provider_setup_account_selection_2026_10_29": {
+    "checked_at": "2026-10-29",
+    "base_main": "e936b033a2f0e794f94d8c03def4f58d5cedc77a",
+    "existing_plan_step": 7,
+    "code_delivery_order": 2,
+    "status": "account_selection_backend_slice_ready_inactive_not_full_setup_acceptance",
+    "runtime": [
+      "app/lib/oauth/combined-setup-accounts.server.js",
+      "app/lib/oauth/google-oauth-runtime.server.js",
+      "app/lib/oauth/meta-oauth-runtime.server.js"
+    ],
+    "entry": "runtime.combinedSetup.inspect/select/finishReporting; server gate identityAuthorizationEnabled remains false by default",
+    "behavior": [
+      "Requires owner-bound current lifecycle and stored identity_v1 full grant; legacy reporting credential cannot enter combined account selection. Stored grant is not fresh asset/app approval evidence.",
+      "Account selection uses existing native discovery/validation and existing CAS RPC. The original connection/version/credential is bound before discovery; exact selection receipt and fresh owner lifecycle are checked after the one write attempt.",
+      "One account proceeds to verify_assets. Multiple accounts proceed to select_reporting_account, then verify_assets. All return resume_setup and setupComplete=false.",
+      "The database lifecycle remains pending_account_selection while a reporting choice is pending. selectionState separates this derived phase; no invented database status.",
+      "inspect rechecks connection/version/credential around existing runtime lookup; safe projection includes account id/name, not credential/token/raw provider evidence.",
+      "Wrong or lost write acknowledgement, scope failure, stale binding and provider failure remain errors. No retry, fallback, credential deletion or revocation."
+    ],
+    "unchanged": [
+      "Existing reporting_v1 entries/current Settings and callback routes",
+      "Provider scope sets, native validators and endpoints",
+      "Native app approval and live grant/asset evidence",
+      "UI/prepermission modal/config/deploy/production/DB schema/Dataset"
+    ],
+    "remaining_within_delivery2": [
+      "Merchant/catalog verification joined to final setup readiness, with fresh owner/account/credential-bound native evidence",
+      "Settings/return/Resume Setup wiring with separately accepted explanation modal in delivery4",
+      "Native app approval/merchant grant/asset access acceptance; isolated tests do not prove these"
+    ],
+    "validation": {
+      "new_tests": 46,
+      "targeted_tests": 175,
+      "full_tests": 2909,
+      "failed": 0,
+      "typecheck": "passed",
+      "build": "passed",
+      "exact_CI": "pending_PR_exact_commit",
+      "F01": "unchanged_paths_not_triggered"
+    },
+    "official_sources": {
+      "google": [
+        "https://developers.google.com/identity/protocols/oauth2/web-server",
+        "https://developers.google.com/merchant/api/guides/authorization/access-client-accounts"
+      ],
+      "meta": "Existing native scope validators reused. Official SDK User.getAdAccounts /adaccounts checked 2026-10-29: https://github.com/facebook/facebook-nodejs-business-sdk/blob/main/src/objects/user.js . Official permission reference remains unreadable; SDK read is not permission dependency/catalog access/app approval proof.",
+      "database": "Existing account selection RPC and repository contract inspected; no SQL change. https://supabase.com/docs/guides/database/functions; changelog markdown not readable through current web tool."
+    },
+    "step15_started": false,
+    "Dataset_write": false
+  },
   "Combined_provider_setup_backend_2026_10_29": {
     "checked_at": "2026-10-29",
     "base_main": "8ebb4caeb6f766ebd624888a8b3efacc4d0239f4",
     "existing_step": 7,
     "code_delivery_order": 2,
-    "status": "backend_start_and_callback_slice_ready_pending_exact_CI_owner_merge_inactive_not_full_setup_acceptance",
+    "status": "merged_backend_start_callback_slice_inactive_not_full_setup_acceptance",
     "previous_delivery": {
       "PR": 257,
       "merged": "8ebb4caeb6f766ebd624888a8b3efacc4d0239f4"
@@ -42,7 +94,7 @@
       "failed": 0,
       "typecheck": "passed",
       "build": "passed",
-      "exact_CI": "pending",
+      "exact_CI": "two_governance_checks_success_on_727680ac8e9d84e777874213bc2d8898a142e2fe",
       "F01": "unchanged_paths_not_triggered"
     },
     "official_sources": {
@@ -53,7 +105,9 @@
       "meta": "Permission reference inaccessible; existing scope set and native validator reused unchanged. This slice adds no new Meta permission/dependency or API response-field assumption."
     },
     "step15_started": false,
-    "Dataset_write": false
+    "Dataset_write": false,
+    "PR": 258,
+    "merge_commit": "e936b033a2f0e794f94d8c03def4f58d5cedc77a"
   },
   "Shopify_product_order_permission_split_2026_10_29": {
     "checked_at": "2026-10-29",

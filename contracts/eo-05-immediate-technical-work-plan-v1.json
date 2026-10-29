@@ -55,13 +55,14 @@
       "depends_on": [
         1
       ],
-      "status": "backend_start_and_callback_slice_ready_pending_exact_CI_owner_merge_inactive_not_full_setup_acceptance",
-      "implementation_record": "contracts/eo-05-start-brief-v1.json#Combined_provider_setup_backend_2026_10_29",
+      "status": "account_selection_backend_slice_ready_inactive_not_full_setup_acceptance",
+      "implementation_record": "contracts/eo-05-start-brief-v1.json#Combined_provider_setup_account_selection_2026_10_29",
       "remaining_in_this_delivery": [
-        "Account/Merchant/catalog verification and final combined readiness integration",
+        "Merchant/catalog verification joined to final setup readiness, with fresh owner/account/credential-bound native evidence",
         "Settings/return/Resume Setup wiring with separately accepted explanation modal in delivery4",
-        "Native app approval/merchant grant/asset access evidence, not inferred from unit fixtures"
-      ]
+        "Native app approval/merchant grant/asset access acceptance; isolated tests do not prove these"
+      ],
+      "merged_backend_start_callback_PR": 258
     },
     {
       "delivery_order": 3,

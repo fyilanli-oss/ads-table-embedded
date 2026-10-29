@@ -1,3 +1,4 @@
+import {createCombinedSetupAccounts, assertCombinedSetupAccountBinding} from "./combined-setup-accounts.server.js";
 import {randomUUID} from "node:crypto";
 import {
   createOAuthTransactionBoundary,
@@ -120,7 +121,7 @@ export function createMetaOAuthRuntime({
     return Object.freeze({...evidence, expiresAt});
   }
 
-  return Object.freeze({
+  const runtime = {
     config,
     oauthBoundary,
 
@@ -308,12 +309,13 @@ export function createMetaOAuthRuntime({
       }
     },
 
-    async select({installationAuthority, selectedAccountIds}) {
+    async select({installationAuthority, selectedAccountIds, combinedSetupBinding}) {
       const pending = await selections.loadPending({
         workspaceId: installationAuthority.workspaceId,
         installGeneration: installationAuthority.installGeneration,
       });
       if (!pending) throw new Error("PENDING_ACCOUNT_SELECTION_REQUIRED");
+      assertCombinedSetupAccountBinding(combinedSetupBinding, pending);
       const evidence = await discoverWithCredential({
         installationAuthority,
         credentialId: pending.credentialId,
@@ -338,12 +340,13 @@ export function createMetaOAuthRuntime({
       });
     },
 
-    async finishReporting({installationAuthority, reportingAccountId}) {
+    async finishReporting({installationAuthority, reportingAccountId, combinedSetupBinding}) {
       const pending = await selections.loadPendingReporting({
         workspaceId: installationAuthority.workspaceId,
         installGeneration: installationAuthority.installGeneration,
       });
       if (!pending) throw new Error("PENDING_REPORTING_ACCOUNT_SELECTION_REQUIRED");
+      assertCombinedSetupAccountBinding(combinedSetupBinding, pending);
       if (!pending.accounts.some((account) => account.id === reportingAccountId)) {
         throw new Error("REPORTING_ACCOUNT_NOT_SELECTED");
       }
@@ -438,5 +441,8 @@ export function createMetaOAuthRuntime({
         },
       });
     },
-  });
+  };
+  return Object.freeze({...runtime, combinedSetup: createCombinedSetupAccounts({
+    provider: PROVIDER, enabled: identityAuthorizationEnabled, lifecycle, tokenVault, runtime,
+  })});
 }

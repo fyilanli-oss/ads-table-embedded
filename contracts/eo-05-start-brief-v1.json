@@ -1,4 +1,31 @@
 {
+  "Klaviyo_sales_metric_property_followup_2026_10_29": {
+    "evidence": "docs/evidence/EO_05_KLAVIYO_CLICK_METRIC_PROPERTIES_2026-10-29.json#followup_after_initial_probe",
+    "scope": [
+      "metrics:read"
+    ],
+    "additional_native_requests": 2,
+    "total_native_requests": 5,
+    "HTTP_200": 5,
+    "placed_order": {
+      "integration": "API",
+      "properties": 12,
+      "OrderId": true,
+      "ProductID": true
+    },
+    "ordered_product": {
+      "integration": "API",
+      "properties": 10,
+      "OrderId": true,
+      "ProductID": true,
+      "Quantity": true
+    },
+    "all_property_samples_null": true,
+    "sales_ProductID_is_clicked_product_proof": false,
+    "raw_event_read_performed": false,
+    "next_read_permission": "events:read_requires_separate_explicit_approval_new_key_existing_scopes_immutable",
+    "runtime_and_roles_changed": false
+  },
   "Klaviyo_click_metric_properties_probe_2026_10_29": {
     "evidence": "docs/evidence/EO_05_KLAVIYO_CLICK_METRIC_PROPERTIES_2026-10-29.json",
     "checked_at": "2026-10-29",

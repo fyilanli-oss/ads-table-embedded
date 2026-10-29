@@ -1,3 +1,9 @@
+## 29 Ekim 2026 — Klaviyo araştırması satış tarafında sürdürüldü
+
+İlk üç dar sorgunun ardından aynı metrics:read anahtarıyla Placed Order ve Ordered Product metric-properties alanları ayrıca okundu; iki çağrı da 200, devam sayfası yok, tüm örnek değerler null. API entegrasyonlu Placed Order 12 alanda OrderId/ProductID; Ordered Product 10 alanda OrderId/ProductID/Quantity gösterdi. Bunlar satış tarafı alanlarıdır; tıklanan Product ID kanıtı sayılmaz. Toplam beş çağrının ham gövdeleri aynı evidence dosyasında, ilk üç kayıt değiştirilmeden korunur. Gerçek Shopify sipariş kaynağı veya tıklama→ürün bağı doğrulanmadı.
+
+Sıradaki kontrol alan listesi değil, sipariş atfının işaret ettiği attributed-event kaydının okunmasıdır. Mevcut araştırma anahtarı events:read taşımaz. Klaviyo mevcut anahtar scope değişikliğine izin vermediğinden metrics:read + events:read kapsamlı yeni anahtar için ayrı kullanıcı kararı gerekir. Bu kayıtta bu onay alınmış veya yeni anahtar oluşturulmuş sayılmaz. OAuth uygulaması, runtime, roller ve Dataset değişmedi. Makine kaydı: contracts/eo-05-start-brief-v1.json#Klaviyo_sales_metric_property_followup_2026_10_29.
+
 ## 29 Ekim 2026 — Klaviyo tıklama alanları için dar salt okunur sorgu
 
 Kullanıcının ayrı açık onayıyla test hesabında yalnız metrics:read kapsamlı AdsTable Metric Properties Research anahtarı oluşturuldu. GET /api/metrics ve iki metric-properties sorgusu (örnek değerler istenerek) HTTP 200 döndü; üç yanıtın tamamında devam sayfası yok. Envanter 33 metriktir; Shopify kaynaklı metric gözlenmedi. Klaviyo iç Clicked Email UzHWku için 20, Clicked Text Message Uv6FZ6 için 9 alan döndü. İkisinde de doğrudan ürün/varyant/SKU/item/sipariş kimliği alanı listelenmedi; bütün sample_values değerleri null. Bu, bu test hesabının schema yanıtıdır; gerçek Shopify sipariş/tıklama bağı veya provider genelinde desteklenmeme kanıtı değildir.

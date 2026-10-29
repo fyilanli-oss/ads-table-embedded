@@ -21,6 +21,19 @@ async function main(){
   assert.ok(isShopifyAdminIdentitySdkBridge(bridge));assert.equal(abstractFetch,bridge.fetch);assert.equal(globalThis.fetch,nativeFetch);
   assert.equal(initialize(),bridge);assert.equal(getBridge(),bridge);
   if(mode==="singleton")return;
+  if(mode==="background-host"){
+    const {initializeShopifyOrderBackgroundHost}=await import("../../app/lib/refresh/shopify-order-background-dispatcher.server.js");
+    const queries=[];
+    const host=initializeShopifyOrderBackgroundHost({database:{async query(sql){queries.push(sql);return {rows:[{result:{status:"empty"}}]};}},
+      sessionDatabase:{async query(){throw Error("must not load sessions for an empty queue");}},
+      quotaStore:Object.fromEntries(["resolveRoute","reserve","settle","stop","recordFeedback"].map(k=>[k,async()=>{throw Error("must not call quota for an empty queue");}])),
+      environment:{SHOPIFY_API_KEY:"a".repeat(32),SHOPIFY_API_SECRET:"b".repeat(32),SHOPIFY_APP_URL:"https://embedded.adstable.app",ADSTABLE_SESSION_ENCRYPTION_KEY_V1:Buffer.alloc(32,7).toString("base64url"),
+        SHOPIFY_PARTNER_ORG_ID:"123",SHOPIFY_APP_GID:"gid://shopify/App/456",SHOPIFY_PARTNER_API_ACCESS_TOKEN:"synthetic"},
+      now:Date.now,limits:{maxJobs:1,maxCandidates:1,maxElapsedMs:10000,jobTimeoutMs:5000,requestTimeoutMs:1000,finishReserveMs:10,
+        collection:{maxElapsedMs:4000,maxRequests:20,maxRows:100,maxBytes:10000,pageSize:1}},fetchFn:async()=>{throw Error("must not call HTTP");}});
+    assert.equal((await host.runBatch()).status,"empty");assert.equal(queries.length,1);assert.equal(getBridge(),bridge);
+    host.close();await assert.rejects(host.runBatch(),/INPUT_INVALID/);assert.equal(abstractFetch,bridge.fetch);return;
+  }
   if(mode==="input"){
     for(const fn of [initialize,getBridge,close])for(const arg of [undefined,{},bridge,()=>{}])assert.throws(()=>fn(arg),/INPUT_INVALID/);
     assert.equal(getBridge(),bridge);return;

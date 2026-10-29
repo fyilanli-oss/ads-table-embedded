@@ -1,4 +1,51 @@
 {
+  "Shopify_order_background_dispatch_2026_10_29": {
+    "status": "repository_prepared_pending_exact_head_CI_and_owner_merge_not_live_activated",
+    "base_main": "e87cd80c4816b55ba8d7727bb6eb26819786c46b",
+    "ordered_plan_step": 12,
+    "review_at": 14,
+    "new_plan_number": false,
+    "scope": "complete_existing_step12_independent_Order_fair_dispatch_and_dedicated_background_offline_session_composition_before_step14_joint_review",
+    "runtime": [
+      "app/lib/refresh/shopify-order-background-dispatcher.server.js",
+      "app/lib/refresh/shopify-order-work-reservation.server.js"
+    ],
+    "migration": "supabase/migrations/20261029083341_eo05a_shopify_order_fair_dispatch.sql",
+    "SQL": "coordinator_only_bounded_admission_candidates_one_oldest_eligible_range_per_workspace_ordered_by_last_persisted_global_reservation_or_consideration_fence_then_queue_age_existing_global_lock_capacity_single_flight_rechecked_query_plan_capacity_pending",
+    "fairness": "released_attempts_and_refused_candidates_keep_service_age_new_process_uses_same_SQL_age_batch_excludes_selected_workspaces_stale_front_candidate_rotates_even_scan_bound_one",
+    "provenance": "reserveNext_only_promotes_valid_SQL_queue_proposal_exact_owner_range_hash_and_generated_attempt_into_existing_private_handle_factory_no_browser_shop_or_ad_identity",
+    "background_host": "explicit_initialization_after_node_adapter_existing_bootstrap_only_no_web_runtime_import_no_import_side_effect_no_new_cron_route_deploy_role_or_live_config",
+    "offline_session": "existing_encrypted_SessionStorage_load_only_separate_runtime_session_database_from_coordinator_no_table_or_session_write_no_unauthenticated_admin_refresh_or_exchange_fallback",
+    "SDK": "public_pinned_shopifyApi_Graphql_request_retries0_through_existing_genuine_quota_bridge_Response_adapter_same_as_pinned_router_SDK_no_internal_SDK_import",
+    "session_fence": "exact_offline_id_shop_isOnline_false_token_expiry_checked_private_fingerprint_reloaded_before_query_and_before_after_physical_HTTP_SQL_owner_fresh_entitlement_and_hook_rechecked_session_change_discards_result_no_token_or_fingerprint_output",
+    "bounds": "explicit_maxJobs_maxCandidates_elapsed_job_request_finish_and_collection_limits_no_native_rate_or_capacity_default_one_batch_no_timer_no_parallel_fanout",
+    "failure": "first_provider_or_unknown_failure_ends_batch_no_other_shop_fallback_no_auto_retry_release_only_genuine_pre_HTTP_local_limit_or_stop_case_after_dispatch_unknown_and_successful_uncommitted_collection_keep_reservation",
+    "source_data": "collections_only_in_memory_existing_SQL_operational_reservation_metadata_only_no_Order_LineItem_source_evidence_or_identity_mapping_writer",
+    "config_refactor": "existing_Shopify_config_validation_moved_to_side_effect_free_module_original_runtime_exports_and_validation_unchanged_web_adapter_not_loaded_by_background",
+    "validation": {
+      "unit": "actual_SDK_encrypted_offline_session_and_synthetic_HTTP",
+      "SQL": "existing_rollback_only_F01_two_real_PG_replays_two_workspaces_fairness_capacity_singleflight_and_ACL"
+    },
+    "remaining": [
+      "explicit_unknown_or_partial_reservation_reconciliation_existing_step12_gap_next",
+      "real_native_permissions_history_protected_data_measured_wire_body_connections_capacity_and_source_acceptance",
+      "step14_joint_review_of_steps01_to13_then_explicit_step15_storage_decision"
+    ],
+    "step15_storage_started": false,
+    "general_Dataset_writer_at_step": 23,
+    "checkpointAdvanced": false,
+    "DatasetWritePerformed": false,
+    "live_apply_authorized": false,
+    "activation_authorized": false,
+    "PMax_paused": true,
+    "official_checked_at": "2026-10-29",
+    "official_sources": [
+      "https://shopify.dev/docs/apps/build/authentication-authorization/access-tokens",
+      "https://raw.githubusercontent.com/Shopify/shopify-app-js/main/packages/apps/shopify-api/docs/reference/clients/Graphql.md",
+      "https://www.postgresql.org/docs/17/explicit-locking.html",
+      "https://supabase.com/docs/guides/database/functions"
+    ]
+  },
   "Shopify_independent_Admin_reader_2026_10_28": {
     "status": "repository_prepared_pending_exact_head_CI_owner_merge_inactive_independent_Admin_collection",
     "base_main": "bb08b735948243541dce2dd6cb3de4b3f74f231c",

@@ -682,6 +682,15 @@
       "repository_sql_sha256": "e61d60e610fd6cb78ff3b7ae8b5c3877054f6fcb708bf02c6876dd53e7f9289b",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261029083341",
+      "name": "eo05a_shopify_order_fair_dispatch",
+      "file": "supabase/migrations/20261029083341_eo05a_shopify_order_fair_dispatch.sql",
+      "created_with": "supabase@2.121.0 migration new eo05a_shopify_order_fair_dispatch",
+      "repository_sql_sha256": "58e20d2358dd553ef827396c9d838ae553598d064dea48cb7d57597abb529d71",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

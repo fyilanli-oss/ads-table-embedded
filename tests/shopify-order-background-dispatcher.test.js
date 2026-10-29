@@ -96,6 +96,13 @@ test("invalid SQL proposal is never promoted to a genuine reservation",async()=>
   const f=await fixture();f.s.onProposal=r=>{r.proposal.key="0".repeat(64);};
   const r=await f.create().runBatch();assert.equal(r.status,"needs_attention");assert.equal(f.s.http.length,0);
 });
+test("PostgreSQL jsonb field ordering does not change the genuine range identity",async()=>{
+  const f=await fixture();f.s.onProposal=r=>{
+    const p=r.proposal;p.range={toExclusive:p.range.toExclusive,fromInclusive:p.range.fromInclusive};
+    p.owner={shopDomain:p.owner.shopDomain,shopId:p.owner.shopId,installGeneration:p.owner.installGeneration,workspaceId:p.owner.workspaceId,installationId:p.owner.installationId};
+  };
+  const r=await f.create().runBatch();assert.equal(r.status,"empty");assert.ok(isShopifyOrderCollectionObservation(r.results[0].collection));
+});
 test("closed or already aborted dispatcher performs no reservation or session read",async()=>{
   const f=await fixture(),closed=f.create();closed.close();await assert.rejects(closed.runBatch(),/INPUT_INVALID/);
   const ac=new AbortController();ac.abort();const r=await f.create({signal:ac.signal}).runBatch();

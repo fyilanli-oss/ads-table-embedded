@@ -37,14 +37,15 @@ export function createShopifyOrderWorkReservations({database,...extra}={}){
       const p=r?.proposal;
       if(r?.status!=="reserved"||!p||Object.keys(p).sort().join(",")!=="includeOrderHistory,key,owner,pageSize,range")throw Error();
       const owner=shopifyPrewriteOwner(p.owner);
+      const range={fromInclusive:p.range?.fromInclusive,toExclusive:p.range?.toExclusive};
       if(typeof p.includeOrderHistory!=="boolean"||!Number.isSafeInteger(p.pageSize)||p.pageSize<1||p.pageSize>100
         ||Object.keys(p.range??{}).sort().join(",")!=="fromInclusive,toExclusive"
         ||![p.range.fromInclusive,p.range.toExclusive].every(v=>typeof v==="string"&&new Date(v).toISOString()===v)
         ||p.range.fromInclusive>=p.range.toExclusive||excludeWorkspaceIds.includes(owner.workspaceId)
-        ||p.key!==createHash("sha256").update(JSON.stringify(["shopify_orders",owner,"2026-10",p.includeOrderHistory,p.range])).digest("hex")
+        ||p.key!==createHash("sha256").update(JSON.stringify(["shopify_orders",owner,"2026-10",p.includeOrderHistory,range])).digest("hex")
         ||!valid(r,p,attemptId))throw Error();
       const result=frozen({status:"reserved",attemptId,rangeKey:p.key,fence:r.fence,cost:r.cost,reservationHeld:true,...flags});
-      handles.set(result,{p:frozen({...p,owner}),attemptId,fence:r.fence,cost:result.cost});return result;
+      handles.set(result,{p:frozen({...p,owner,range}),attemptId,fence:r.fence,cost:result.cost});return result;
     }catch{return frozen({status:"needs_attention",reason:"dispatch_reservation_unconfirmed",attemptId,reservationMayBeHeld:true,...flags});}
   },async reserve({plan,rangeKey,...overrides}={}){
     if(Object.keys(overrides).length)fail();const p=shopifyOrderRangeProposal(plan,rangeKey),attemptId=randomUUID();

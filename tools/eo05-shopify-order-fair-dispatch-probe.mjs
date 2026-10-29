@@ -44,7 +44,7 @@ export async function shopifyOrderFairDispatchProbe(client,{database,inputs}){
     await client.query("update operations.refresh_control set budget=$1::jsonb",[JSON.stringify(budget)]);
     const work=createShopifyOrderWorkReservations({database}),bind=shopifyOrderWorkReservationBinding(work);
     const next=()=>work.reserveNext({maxCandidates:2});
-    const a=await next();assert.equal(a.status,"reserved");assert.equal(bind.peek(a).p.owner.workspaceId,workspaceId,"never-served workspace is chosen before previously served root");
+    const a=await next();assert.equal(a.status,"reserved","first fair candidate must produce a genuine SQL reservation");assert.equal(bind.peek(a).p.owner.workspaceId,workspaceId,"never-served workspace is chosen before previously served root");
     assert.equal((await work.releaseBeforeRequest({reservation:a})).status,"released");
     const b=await next();assert.equal(b.status,"reserved");assert.equal(bind.peek(b).p.owner.workspaceId,root.workspaceId,"released attempts retain service age across factory instances");
     assert.equal(b.rangeKey,inputs[0].rangeKey,"oldest queued range first");

@@ -1,4 +1,24 @@
 {
+  "step02_PR179_reconciliation_2026_10_29": {
+    "checked_at": "2026-10-29",
+    "ordered_step": 2,
+    "review_at_step": 14,
+    "evidence": "docs/evidence/EO_05_STEP02_PR179_RECONCILIATION_2026-10-29.json",
+    "legacy_pr": 179,
+    "legacy_head": "ffc51bdf6ebd46f9e79b07bb186fb2da82884044",
+    "compared_main": "d55c8c59eef3681ce963eca49c21f2f26506eb21",
+    "legacy_state": "closed_without_merge_branch_and_commits_preserved",
+    "closed_at": "2026-10-29T11:36:34Z",
+    "code_reconciliation": "complete_current_counterparts_or_deliberate_supersession_recorded_for_all_24_files",
+    "status_for_steps_01_03": "Kod/testler hazır; gerçek ortam doğrulaması bekliyor.",
+    "steps_04_06": "technical_running_PD_wiring_open",
+    "steps_07_10": "native_permission_source_identity_proof_open",
+    "step_15_started": false,
+    "Dataset_write_step": 23,
+    "historical_PMax_step_22_paused": true,
+    "live_acceptance": false,
+    "package_complete": false
+  },
   "Shopify_order_explicit_reconciliation_2026_10_29": {
     "status": "repository_prepared_pending_exact_head_CI_owner_merge_not_live_activated",
     "base_main": "63282f8cf77af30d3e4dac8429a81e8f085ee379",

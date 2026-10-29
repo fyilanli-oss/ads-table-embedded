@@ -177,8 +177,15 @@
   },
   "combined_asset_access_backend": {
     "record": "contracts/eo-05-start-brief-v1.json#Combined_provider_setup_asset_access_2026_10_29",
-    "status": "asset_access_backend_ready_inactive_pending_UI_and_native_acceptance",
+    "status": "merged_asset_access_backend_inactive_pending_UI_and_native_acceptance",
     "setupComplete": false,
     "developer_app_approval_and_UI_activation": "not_inferred_from_access_probe"
+  },
+  "shopify_progressive_permissions_backend": {
+    "record": "contracts/eo-05-start-brief-v1.json#Shopify_progressive_permission_setup_2026_10_29",
+    "status": "backend_request_readback_ready_inactive_config_and_UI_pending",
+    "release_candidate": "contracts/shopify/shopify-progressive-permissions-release-candidate-v1.json",
+    "shopify_app_toml_or_live_release_changed": false,
+    "requests_enabled": false
   }
 }

@@ -1,3 +1,15 @@
+## 29 Ekim 2026 — Shopify Products / sonradan Orders izin isteme ve dönüş altyapısı
+
+#260 main’e birleşti (d9dc4585c4859b07df3e9ebb8464a390fc0080c3); iki CI ve 2.966 test/tip/derleme başarılı. 07/12 içindeki üçüncü teknik teslimin runtime.permissionSetup sunucu girişi hazırlandı. Products temel izin durumu ve isteğe bağlı Orders ayrı okunur. Orders yok/ret/geri alma Products hazır durumunu bozmaz; Products yoksa Orders istemi başlatılmaz. Tarayıcı granted-all bilgisi veya caller scope listesi kanıt değildir. afterReturn, aynı güvenilir kurulumdan currentAppInstallation izinlerini yeniden okur.
+
+requestProducts/requestOrders yalnız açık Connect, iki kapalı-varsayılan sunucu kapısı ve native olarak yayımlanmış exact optional handle ile çalışabilir. Sabit hedef read_products veya read_orders; write/history/marketing/customer izinleri eklenmez. Cancel hiç I/O yapmaz; mevcut grant yeniden istenmez. Doğrudan Admin okumaları tries:1 ve iptal sinyaliyle yapılır. Native kurulum/mağaza/nesil yeniden doğrulanır; Admin ve SDK metotları ilk await öncesi sabitlenir. SDK yalnız bir kez çağrılır, ilk hata sonrası retry/fallback/yenileme/revoke/delete veya token yazımı yoktur.
+
+Kurulu SDK 3.0.1 native scopes.request metodu kullanılır; elle yönlendirme kurulmaz. Yalnız o mağaza/uygulama/sabit izinler için SDK’nın boş 401 App Bridge yanıtı aynen aktarılır; farklı yanıt veya hata izin verilmiş sayılmaz. SDK void dönüşünden sonra gerçek izin tekrar okunur. Toplam süre/ip­tal kapısı geç sonucu reddeder; SDK scope metodunun kendi iç okuması signal almadığından başlamış iç okumayı durdurma garantisi verilmez.
+
+Mevcut shopify.app.toml değişmedi. read_products/read_orders optional_scopes hedefi ayrı yayın adayında: contracts/shopify/shopify-progressive-permissions-release-candidate-v1.json. Aday yayın/grant değildir; config yayını ayrı açık onay ve exact sürüm doğrulaması ister. Açıklama modalı ve Settings/dönüş bağlantısı dördüncü teslimde; canlı kurulum/izin/korumalı veri/SDK-kota kabulü ayrıca bekler. Arka plan Orders okuyucusunun izin/oturum/kota sınırları değiştirilmedi. permission_ready yalnız scope gözlemidir, sipariş okuma/Overlap veya genel aktivasyon yetkisi değildir.
+
+43 yeni test, 151 ilgili test ve 3.009/3.009 tüm test geçti; tip kontrolü ve derleme başarılı. Exact commit CI ve kullanıcı merge onayı beklenir. Shopify resmî izin yönetimi/SDK kaynakları 2026-10-29 kontrol edildi; paket yükseltilmedi. Yeni UI/route, canlı izin/token/config/deploy/DB veya Dataset yazımı yoktur. 15 başlamadı; 22 duraklatılmış, 23 Dataset/FX yazımıdır. Makine kaydı: contracts/eo-05-start-brief-v1.json#Shopify_progressive_permission_setup_2026_10_29.
+
 ## 29 Ekim 2026 — Birleşik kurulum: Merchant/katalog erişim kontrolü
 
 #259 main’e birleşti (2151de8df9ba155e541b9e4558b3f059a842f41d); iki zorunlu CI başarılı. 07 / ikinci kod tesliminin runtime.combinedSetup.verifyAssets sunucu girişi hazırlandı. Kapı varsayılan kapalı; mevcut Settings/callback ve reporting_v1 yolları değişmedi.

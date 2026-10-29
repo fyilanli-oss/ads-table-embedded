@@ -7,6 +7,7 @@ import {
 import {createRuntimePostgresClient} from "../database/runtime-postgres.server.js";
 import {createTokenVault} from "../oauth/token-vault.server.js";
 import {createEncryptedShopifySessionStorage} from "./encrypted-session-storage.server.js";
+import {createShopifyProgressivePermissions} from "./progressive-permissions.server.js";
 
 import {readShopifyAppRuntimeConfig} from "./shopify-app-config.server.js";
 export {readShopifyAppRuntimeConfig};
@@ -16,6 +17,8 @@ export async function createShopifyAppRuntime({
   environment = process.env,
   database,
   sessionStorage,
+  permissionRequestsEnabled = false,
+  optionalScopesReleased = false,
 } = {}) {
   const config = readShopifyAppRuntimeConfig(environment);
   const runtimeDatabase = database ?? createRuntimePostgresClient({environment});
@@ -49,6 +52,8 @@ export async function createShopifyAppRuntime({
     database: runtimeDatabase,
     tokenVault,
     tokenVaultStartup,
+    permissionSetup: createShopifyProgressivePermissions({database: runtimeDatabase, apiKey: config.apiKey,
+      requiredScopes: config.scopes, requestsEnabled: permissionRequestsEnabled, optionalScopesReleased}),
     publicConfig: Object.freeze({
       apiKey: config.apiKey,
       polarisUrl: POLARIS_URL,

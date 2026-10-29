@@ -1,0 +1,33 @@
+{
+  "contract_id": "shopify-progressive-permissions-release-candidate-v1",
+  "checked_at": "2026-10-29",
+  "status": "review_candidate_not_applied_or_released",
+  "existing_plan_step": 7,
+  "code_delivery_order": 3,
+  "configuration_target": "shopify.app.toml",
+  "repository_configuration_changed": false,
+  "live_configuration_changed": false,
+  "required_scopes_candidate": [],
+  "optional_scopes_candidate": ["read_products", "read_orders"],
+  "candidate_access_scopes_section": "[access_scopes]\nscopes = \"\"\noptional_scopes = [\"read_products\", \"read_orders\"]",
+  "meaning": {
+    "products": "Native optional scope, required by product-enabled setup after minimal installation and accepted explanation.",
+    "orders": "Native optional scope, not required by base setup; requested later only by an authenticated explicit Connect action.",
+    "release": "Declaring/releasing optional scopes does not grant them on any store.",
+    "excluded": "No write scopes, read_all_orders, read_marketing_events, read_customers or personal-data fields bundled. Older-order and protected-data approval remain separate checks."
+  },
+  "before_enable": [
+    "Exact prepermission copy and UI acceptance in the existing modal delivery",
+    "Developer app/permission/protected-data approval inventory, where applicable",
+    "Separate explicit owner approval for TOML/config release and verification of its exact released version",
+    "Native declared optional handle readback on the authenticated installation",
+    "Native permission return/decline/revocation acceptance; isolated tests do not prove merchant grants"
+  ],
+  "server_gates": {
+    "permissionRequestsEnabled_default": false,
+    "optionalScopesReleased_default": false,
+    "request_fields_cannot_enable_gates": true
+  },
+  "no_release_commands_executed": true,
+  "Dataset_write": false
+}

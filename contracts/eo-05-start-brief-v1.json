@@ -1,4 +1,134 @@
 {
+  "Klaviyo_research_closure_and_existing_step_assignment_2026_10_29": {
+    "checked_at": "2026-10-29",
+    "scope": "Research closure and assignment to existing steps only; not runtime implementation",
+    "missing_technical_work": {
+      "plain": "Klaviyo atıf kaydının dönüşüm olayı ve atfedilen etkileşim olayı kimlikleri mevcut projeksiyon/normalizer içinde korunmuyor; mevcut akış atfedilen olayı okumuyor.",
+      "code_locations": [
+        "app/lib/providers/klaviyo-identity-collection.server.js#ATTRIBUTION_RELATIONS/attributionProjection",
+        "app/lib/providers/klaviyo-reporting-authority.server.js#normalizeAttributionResource"
+      ],
+      "source_relations": [
+        "event",
+        "attributed-event"
+      ],
+      "implemented": false
+    },
+    "existing_step_assignment": {
+      "12": "Teknik tamamlama listesi: dönüşüm/event ve attributed-event referanslarını kimlik/türleriyle koru; mevcut hesap/izin/kota/iptal/ilk-hata sınırında açık, sınırlı etkileşim okumasını bağla. Mesaj/flow çözümlemesini koru; müşteri özelliklerini topluca taşıma.",
+      "13": "Teknik tamamlama listesi: yanlış kaynak/hesap, geçersiz veya çelişkili geri referans, eksik olay/metric, tekrar/kısmi yanıt ve click/open ayrımı kontrolleri. Gerçek ürün bağı yoksa rol üretme.",
+      "15": "İleride: onaylanacak özel kanıt saklama ve tekrar okuma tasarımına bu referansları bağla; yeni tablo/writer bu kararla başlamaz.",
+      "19": "Kapsam: Campaign Assisted; Flow Triggered; çözümlenemeyen mevcut Unclassified. Advertised/Cross-sell yeni kanıt ve ayrı karara kadar açılmaz."
+    },
+    "acceptance_boundary": "Araştırma API okuması kod eksiğinin kapandığı veya native Shopify kabulü anlamına gelmez. İlişkinin korunması ürün seçimi/Advertised kanıtı değildir.",
+    "next_discussion": "Önce 07 OAuth için kullanıcının yaklaşımı dinlenecek; ardından 04–06 ve diğer şimdi tamamlanacak teknik işler birlikte kesinleştirilecek. Bu kayıt kodlamayı kendiliğinden başlatmaz.",
+    "deferred_questions": [
+      "Klaviyo ürün seçimi/Advertised-Cross-sell",
+      "Google Search ürün/rol ayrımı",
+      "PMax Asset Group–Campaign ürün/rol sınırı"
+    ],
+    "existing_PMax_decision": "Campaign preserved; Channel Unclassified where Asset Group identity not proven; no new decision in this closure",
+    "listing_tree_step": 22,
+    "listing_tree_remains_paused": true,
+    "step15_started": false,
+    "Dataset_write_step": 23,
+    "new_plan_number": false,
+    "new_OAuth_permission_decided": false,
+    "evidence": [
+      "docs/evidence/EO_05_KLAVIYO_ORDER_ATTRIBUTED_EVENT_PROBE_2026-10-29.json",
+      "docs/evidence/EO_05_KLAVIYO_PRODUCT_JOURNEY_PROBE_2026-10-29.json"
+    ]
+  },
+  "Klaviyo_product_journey_probe_2026_10_29": {
+    "evidence": "docs/evidence/EO_05_KLAVIYO_PRODUCT_JOURNEY_PROBE_2026-10-29.json",
+    "scope": "four_read_only_native_event_queries_include_attributions_metric",
+    "HTTP_200": 4,
+    "viewed_product_events": 16,
+    "added_to_cart_events": 11,
+    "started_checkout_events": 10,
+    "active_on_site_events": 9,
+    "cart_attributions": 4,
+    "checkout_attributions": 4,
+    "all_eight_stage_links_match_observed_order_interaction": true,
+    "all_eight_stage_links_have_AcceptanceRun": true,
+    "all_four_attributed_orders_have_AcceptanceRun": true,
+    "native_Shopify_acceptance": false,
+    "clicked_product_verified": false,
+    "co_attribution_is_not_exclusive_product_selection": true,
+    "runtime_and_roles_changed": false,
+    "Dataset_write": false
+  },
+  "Klaviyo_order_attributed_event_probe_2026_10_29": {
+    "evidence": "docs/evidence/EO_05_KLAVIYO_ORDER_ATTRIBUTED_EVENT_PROBE_2026-10-29.json",
+    "status": "eight_native_read_requests_200_test_account_order_to_interaction_observed_clicked_product_not_established",
+    "user_approved_scope": [
+      "metrics:read",
+      "events:read"
+    ],
+    "orders": 9,
+    "verified_attribution_links": 4,
+    "clicked_email": 2,
+    "opened_email": 2,
+    "ordered_product_events": 10,
+    "order_matches": 5,
+    "viewed_product_events": 16,
+    "explicit_clicked_product_join": false,
+    "Shopify_production_acceptance": false,
+    "runtime_or_roles_changed": false,
+    "Dataset_write": false,
+    "step15_started": false,
+    "raw_evidence": "Encrypted outside repository; public file contains request templates and exact response SHA256 hashes"
+  },
+  "Klaviyo_sales_metric_property_followup_2026_10_29": {
+    "evidence": "docs/evidence/EO_05_KLAVIYO_CLICK_METRIC_PROPERTIES_2026-10-29.json#followup_after_initial_probe",
+    "scope": [
+      "metrics:read"
+    ],
+    "additional_native_requests": 2,
+    "total_native_requests": 5,
+    "HTTP_200": 5,
+    "placed_order": {
+      "integration": "API",
+      "properties": 12,
+      "OrderId": true,
+      "ProductID": true
+    },
+    "ordered_product": {
+      "integration": "API",
+      "properties": 10,
+      "OrderId": true,
+      "ProductID": true,
+      "Quantity": true
+    },
+    "all_property_samples_null": true,
+    "sales_ProductID_is_clicked_product_proof": false,
+    "raw_event_read_performed": false,
+    "next_read_permission": "events:read_requires_separate_explicit_approval_new_key_existing_scopes_immutable",
+    "runtime_and_roles_changed": false
+  },
+  "Klaviyo_click_metric_properties_probe_2026_10_29": {
+    "evidence": "docs/evidence/EO_05_KLAVIYO_CLICK_METRIC_PROPERTIES_2026-10-29.json",
+    "checked_at": "2026-10-29",
+    "status": "three_read_only_native_requests_200_test_account_schema_only_no_product_order_fields_in_returned_property_lists_all_samples_null",
+    "api_revision": "2026-10-15",
+    "scope": [
+      "metrics:read"
+    ],
+    "requests": 3,
+    "retries": 0,
+    "provider_errors": 0,
+    "email_property_count": 20,
+    "sms_property_count": 9,
+    "Shopify_order_or_click_event_read": false,
+    "source_product_binding_verified": false,
+    "provider_unsupported_proven": false,
+    "role_decision_changed": false,
+    "runtime_code_changed": false,
+    "Dataset_write": false,
+    "step15_started": false,
+    "key_state": "created_active_not_revoked_secret_not_recorded",
+    "attributed_event_followup": "documented_reference_not_yet_retained_or_followed_by_current_code_not_implemented_in_probe"
+  },
   "step02_PR179_reconciliation_2026_10_29": {
     "checked_at": "2026-10-29",
     "ordered_step": 2,

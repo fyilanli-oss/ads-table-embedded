@@ -1,4 +1,20 @@
 {
+  "Klaviyo_research_closure_and_existing_step_assignment_2026_10_29": {
+    "decision": "contracts/eo-05-start-brief-v1.json#Klaviyo_research_closure_and_existing_step_assignment_2026_10_29",
+    "existing_steps": [
+      12,
+      13,
+      15,
+      19
+    ],
+    "runtime_implemented": false,
+    "Campaign": "Assisted",
+    "Flow": "Triggered",
+    "OAuth07_discussion_before_technical_work_decisions": true,
+    "step15_started": false,
+    "listing_tree_step22_paused": true,
+    "new_step": false
+  },
   "step02_PR179_reconciliation_2026_10_29": {
     "ordered_plan": "docs/plans/eo-05-06-revised-26-step-plan-2026-10-27.json",
     "brief": "contracts/eo-05-start-brief-v1.json#step02_PR179_reconciliation_2026_10_29",

@@ -1,3 +1,52 @@
+## 29 Ekim 2026 — Klaviyo araştırma kapanışı ve teknik eksiğin mevcut sıralara bağlanması
+
+Kullanıcı kararı: Klaviyo Campaign için şimdilik Assisted doğrudur; mevcut Flow Triggered ve çözümlenemeyen Unclassified korunur. Araştırma, Advertised/Cross-sell kanıtı veya runtime uygulaması değildir.
+
+Araştırmanın başında bulunan kod eksiği somuttur: klaviyo-identity-collection.server.js içindeki attributionProjection yalnız campaign/message/flow referanslarını korur; event ve attributed-event bağlantılarını düşürür. klaviyo-reporting-authority.server.js içindeki normalizeAttributionResource da bu iki olay referansını normalize etmez. Mevcut akış atfedilen etkileşim olayını takip etmez. Bu eksik, ürün kimliği araştırmasından ayrı bir teknik alt iştir; kodlandı denmez.
+
+| Mevcut sıra | Bağlanan iş | Durum |
+|---|---|---|
+| 12 | Dönüşüm olayı ve atfedilen etkileşim olayı kimliklerini korumak; mevcut hesap/izin/kota/iptal/ilk-hata sınırında sınırlı okuyucuya bağlamak. | Şimdi tamamlanacak teknik işler listesine eklendi; kodlanmadı. |
+| 13 | Referans bütünlüğü, yanlış kaynak/hesap, çelişki/eksik olay/metric, tekrar/kısmi yanıt ve click/open ayrımı kontrolleri. | Şimdi tamamlanacak teknik işler listesine eklendi; kodlanmadı. |
+| 15 | Bu referansların özel kaynak/kanıt saklama ve tekrar okuma tasarımına bağlanması. | İleriki saklama işi; 15 başlamadı. |
+| 19 | Campaign Assisted / Flow Triggered kapsamını korumak. | Yeni Advertised/Cross-sell geliştirmesi açılmadı. |
+
+Yeni sıra/paket, yeni OAuth izni veya veri tabanı tablosu açılmadı. Önce 07 OAuth için kullanıcı yaklaşımı dinlenecek; sonra 04–06 ve diğer şimdi tamamlanacak teknik işler birlikte kesinleştirilecek. Bu kayıt tek başına kodlama başlangıcı değildir. Klaviyo ürün seçimi, Google Search ve PMax Asset Group–Campaign ayrımı kullanıcı değerlendirmesinde kalır; önceki PMax Campaign + Unclassified Channel kararı korunur. Listing tree mevcut 22. sırada duraklatılmıştır. Genel Dataset yazımı 23. sıradadır.
+
+Makine kararı: contracts/eo-05-start-brief-v1.json#Klaviyo_research_closure_and_existing_step_assignment_2026_10_29. Master ve 26-adım JSON planı aynı kayda bağlıdır. 27 Ekim Exceli tarihsel görüntüdür; bu turda Excel istenmedi ve yeniden üretilmedi. Kaynak kontrolü 2026-10-29: https://developers.klaviyo.com/en/reference/get_events ve https://developers.klaviyo.com/en/reference/get_event.
+
+## 29 Ekim 2026 — Klaviyo ürün yolculuğu ve ortak atfedilen etkileşim kontrolü
+
+Kullanıcının devam kararıyla mevcut events:read/metrics:read anahtarı kullanılarak Viewed Product, Added to Cart, Started Checkout ve Active on Site için dört ek sınırlı salt okunur sorgu yapıldı. include=attributions,metric ve olayın tam event_properties alanı istendi. Tamamı 200, tekrar/hata/devam sayfası yok. Sırasıyla 16/11/10/9 olay geldi. Viewed Product ve Active on Site sıfır attribution döndürdü; sepet ve ödeme başlatma dörder attribution döndürdü. Sekiz ilişkide ürün olayının kendi referansı karşılıklı doğrulandı; her biri önceki dört siparişten birinin aynı attributed-event kimliğine bağlanır. Aynı profil ve aynı OrderId de gözlendi. İki click-attributed siparişte ürün olayları etkileşimden sonra ve siparişten öncedir; iki open-attributed siparişte bu aralık doğrulanmaz.
+
+Önemli kaynak sınırı: dört atıflı sipariş ve eşleşen sekiz sepet/ödeme olayının tamamında AcceptanceRun var; test verisidir. Native Shopify entegrasyonu veya gerçek müşteri yolculuğu kabulü değildir. 16 ürün görüntüleme olayının hiçbiri bu dört sipariş profiline ait değildir. Product ID taşıyan sepet/ödeme olayına aynı mesaj etkileşimi üzerinden ulaşılabilir olduğu bu testte gözlendi; bu, ürünün tıklandığını ya da tek advertised ürün olduğunu kanıtlamaz. Bir e-postaya atfedilen birden fazla ürün olabilir. Aynı kişi/saat, olayın unique_id değeri veya belgede olay için tanımlanan Activity ID, doğrulanmış session/ürün seçimi kanıtı yerine kullanılmaz.
+
+Native Shopify ürün olayında etkileşim/oturum ile siparişi bağlayan açık kaynak anahtarı ve rol için ürün seçimi kanıtı hâlâ gereklidir. Kaynak bulunamaması provider genelinde desteklenmeme kararı değildir. Son sepete eklenen veya son görüntülenen ürün kendiliğinden Advertised yapılmadı; Assisted/Triggered/Unclassified ve runtime değişmedi. 15/23 başlamadı; 22 duraklaması korunur. Dört exact yanıt ayrıca Downloads altında şifreli arşivlendi; önceki sekiz yanıt arşivi korunur. Secret/PII GitHub’a konmadı. Kanıt: docs/evidence/EO_05_KLAVIYO_PRODUCT_JOURNEY_PROBE_2026-10-29.json. Resmî kontrol 2026-10-29: https://developers.klaviyo.com/en/reference/get_events, https://developers.klaviyo.com/en/reference/events_api_overview ve https://help.klaviyo.com/hc/en-us/articles/115005080447.
+
+## 29 Ekim 2026 — Klaviyo siparişten atfedilen etkileşime gerçek API okuması
+
+Kullanıcı metrics:read + events:read araştırma anahtarını kendisi oluşturup indirdi. Sekiz sınırlı salt okunur çağrı HTTP 200 verdi; hata, tekrar ve devam sayfası yok. 9 Placed Order olayının tamamında OrderId var. Dört attribution nesnesinde dönüşüm olayı ve atfedilen olay referansları karşılıklı doğrulandı; bu dört olay tek tek okundu: 2 Clicked Email (Bot Click=false), 2 Opened Email. Atıf verilen her etkileşim tıklama değildir.
+
+10 Ordered Product olayının 5 satırı okunan siparişlerle aynı OrderId taşır. 16 Viewed Product olayı ayrıca okundu. İki tıklama payloadında doğrudan ürün kimliği bulunmadı; ürün olaylarında tıklamayla ortak açık etkileşim kimliği gözlenmedi. engtrack_id etkileşimlerde var; ürün bağı veya semantiği doğrulanmış değildir. Satış kaynağı API olan mevcut test hesabıdır; bu sonuç gerçek Shopify üretim sipariş/tıklama kanıtı veya Klaviyo genelinde desteklenmeme kararı değildir. Doğrulanan yol sipariş → attribution → belirli etkileşimdir; tıklanan Shopify Product ID bağı açık kalır.
+
+Secret ve müşteri bilgileri repositoryye konmadı. Sekiz exact istek/ham gövde Downloads altında AES-256-GCM şifreli özel arşivde tutuldu; çözme doğrulaması geçti. Kurtarma, kullanıcının indirdiği araştırma anahtarının özgün değerini gerektirir; anahtar iptal edilse bile bu dosya özel saklanmalıdır. Public evidence istek şablonları, yanıt SHA256 özetleri ve sayısal sonuçları taşır: docs/evidence/EO_05_KLAVIYO_ORDER_ATTRIBUTED_EVENT_PROBE_2026-10-29.json. Her iki araştırma anahtarı aktiftir; iptal edilmedi. Önceki beş schema sorgusu tarihsel aşama olarak korunur. Runtime, Assisted/Triggered/Unclassified rolleri, OAuth uygulaması, config, deploy ve DB değişmedi; 15 ve 23 başlamadı, 22 duraklaması korunur.
+
+Resmî kontrol 2026-10-29: https://developers.klaviyo.com/en/reference/get_events ve https://developers.klaviyo.com/en/reference/get_event. Makine kaydı: contracts/eo-05-start-brief-v1.json#Klaviyo_order_attributed_event_probe_2026_10_29.
+
+## 29 Ekim 2026 — Klaviyo araştırması satış tarafında sürdürüldü
+
+İlk üç dar sorgunun ardından aynı metrics:read anahtarıyla Placed Order ve Ordered Product metric-properties alanları ayrıca okundu; iki çağrı da 200, devam sayfası yok, tüm örnek değerler null. API entegrasyonlu Placed Order 12 alanda OrderId/ProductID; Ordered Product 10 alanda OrderId/ProductID/Quantity gösterdi. Bunlar satış tarafı alanlarıdır; tıklanan Product ID kanıtı sayılmaz. Toplam beş çağrının ham gövdeleri aynı evidence dosyasında, ilk üç kayıt değiştirilmeden korunur. Gerçek Shopify sipariş kaynağı veya tıklama→ürün bağı doğrulanmadı.
+
+Sıradaki kontrol alan listesi değil, sipariş atfının işaret ettiği attributed-event kaydının okunmasıdır. Mevcut araştırma anahtarı events:read taşımaz. Klaviyo mevcut anahtar scope değişikliğine izin vermediğinden metrics:read + events:read kapsamlı yeni anahtar için ayrı kullanıcı kararı gerekir. Bu kayıtta bu onay alınmış veya yeni anahtar oluşturulmuş sayılmaz. OAuth uygulaması, runtime, roller ve Dataset değişmedi. Makine kaydı: contracts/eo-05-start-brief-v1.json#Klaviyo_sales_metric_property_followup_2026_10_29.
+
+## 29 Ekim 2026 — Klaviyo tıklama alanları için dar salt okunur sorgu
+
+Kullanıcının ayrı açık onayıyla test hesabında yalnız metrics:read kapsamlı AdsTable Metric Properties Research anahtarı oluşturuldu. GET /api/metrics ve iki metric-properties sorgusu (örnek değerler istenerek) HTTP 200 döndü; üç yanıtın tamamında devam sayfası yok. Envanter 33 metriktir; Shopify kaynaklı metric gözlenmedi. Klaviyo iç Clicked Email UzHWku için 20, Clicked Text Message Uv6FZ6 için 9 alan döndü. İkisinde de doğrudan ürün/varyant/SKU/item/sipariş kimliği alanı listelenmedi; bütün sample_values değerleri null. Bu, bu test hesabının schema yanıtıdır; gerçek Shopify sipariş/tıklama bağı veya provider genelinde desteklenmeme kanıtı değildir.
+
+Siparişten atfedilen etkileşime attributed-event üzerinden geçiş resmî kaynakta belgeli; mevcut aday projeksiyonu ve attribution normalizer bu ilişkiyi henüz koruyup takip etmiyor. Bu sorgulama events:read istemedi ve olay/sipariş okumadı. Klaviyo Assisted/Triggered/Unclassified kararları değiştirilmedi; Advertised/Cross-sell üretimi kodlanmadı. 15 saklama veya 23 Dataset yazımı başlamadı; PMax 22 duraklaması korunur.
+
+Anahtar yalnız bellekte kullanıldı; değeri dosyaya/loga/evidence veya GitHub’a yazılmadı. Yeni anahtar aktif kaldı, iptal edilmedi. Mevcut OAuth anahtarı, uygulama config’i, deploy ve DB değiştirilmedi. Secret içermeyen üç istek ve exact ham yanıt gövdeleri docs/evidence/EO_05_KLAVIYO_CLICK_METRIC_PROPERTIES_2026-10-29.json içindedir. Revizyon 2026-10-15; resmî kontrol 2026-10-29: https://developers.klaviyo.com/en/reference/get_metrics ve https://developers.klaviyo.com/en/reference/get_properties_for_metric.
+
 ## 29 Ekim 2026 — 02 tamamlandı: eski PR #179 uzlaştırması
 
 01–03 grubunun güncel durumu: **Kod/testler hazır; gerçek ortam doğrulaması bekliyor.** 02’nin önceki PR #183 teslimine ek olarak açık kalan PR #179, main d55c8c59eef3681ce963eca49c21f2f26506eb21 ile dosya bazında karşılaştırıldı ve 29 Ekim 2026’da birleştirilmeden kapatıldı. Eski branch ve ffc51bdf6ebd46f9e79b07bb186fb2da82884044 head commit’i korunur. Değişen 24 dosyanın tümü ve güncel 32 karşılık dosyasının uzak blobları birebir doğrulandı. Ayrıntı: docs/evidence/EO_05_STEP02_PR179_RECONCILIATION_2026-10-29.json.

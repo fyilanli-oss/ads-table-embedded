@@ -1,3 +1,20 @@
+## 29 Ekim 2026 — Klaviyo araştırma kapanışı ve teknik eksiğin mevcut sıralara bağlanması
+
+Kullanıcı kararı: Klaviyo Campaign için şimdilik Assisted doğrudur; mevcut Flow Triggered ve çözümlenemeyen Unclassified korunur. Araştırma, Advertised/Cross-sell kanıtı veya runtime uygulaması değildir.
+
+Araştırmanın başında bulunan kod eksiği somuttur: klaviyo-identity-collection.server.js içindeki attributionProjection yalnız campaign/message/flow referanslarını korur; event ve attributed-event bağlantılarını düşürür. klaviyo-reporting-authority.server.js içindeki normalizeAttributionResource da bu iki olay referansını normalize etmez. Mevcut akış atfedilen etkileşim olayını takip etmez. Bu eksik, ürün kimliği araştırmasından ayrı bir teknik alt iştir; kodlandı denmez.
+
+| Mevcut sıra | Bağlanan iş | Durum |
+|---|---|---|
+| 12 | Dönüşüm olayı ve atfedilen etkileşim olayı kimliklerini korumak; mevcut hesap/izin/kota/iptal/ilk-hata sınırında sınırlı okuyucuya bağlamak. | Şimdi tamamlanacak teknik işler listesine eklendi; kodlanmadı. |
+| 13 | Referans bütünlüğü, yanlış kaynak/hesap, çelişki/eksik olay/metric, tekrar/kısmi yanıt ve click/open ayrımı kontrolleri. | Şimdi tamamlanacak teknik işler listesine eklendi; kodlanmadı. |
+| 15 | Bu referansların özel kaynak/kanıt saklama ve tekrar okuma tasarımına bağlanması. | İleriki saklama işi; 15 başlamadı. |
+| 19 | Campaign Assisted / Flow Triggered kapsamını korumak. | Yeni Advertised/Cross-sell geliştirmesi açılmadı. |
+
+Yeni sıra/paket, yeni OAuth izni veya veri tabanı tablosu açılmadı. Önce 07 OAuth için kullanıcı yaklaşımı dinlenecek; sonra 04–06 ve diğer şimdi tamamlanacak teknik işler birlikte kesinleştirilecek. Bu kayıt tek başına kodlama başlangıcı değildir. Klaviyo ürün seçimi, Google Search ve PMax Asset Group–Campaign ayrımı kullanıcı değerlendirmesinde kalır; önceki PMax Campaign + Unclassified Channel kararı korunur. Listing tree mevcut 22. sırada duraklatılmıştır. Genel Dataset yazımı 23. sıradadır.
+
+Makine kararı: contracts/eo-05-start-brief-v1.json#Klaviyo_research_closure_and_existing_step_assignment_2026_10_29. Master ve 26-adım JSON planı aynı kayda bağlıdır. 27 Ekim Exceli tarihsel görüntüdür; bu turda Excel istenmedi ve yeniden üretilmedi. Kaynak kontrolü 2026-10-29: https://developers.klaviyo.com/en/reference/get_events ve https://developers.klaviyo.com/en/reference/get_event.
+
 # EO-05 / EO-06 — revize 26 adım ve paket özeti
 
 27 Ekim 2026. Önceki 26 sıra aynen korunur; Shopify satış/atıf işleri açık alt işlerdir.

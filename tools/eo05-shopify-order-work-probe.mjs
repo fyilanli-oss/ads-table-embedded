@@ -5,6 +5,7 @@ import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repo
 import {planRefreshAdmissions} from "../app/lib/refresh/admission-policy.server.js";
 import {shopifyOrderEntitlementProbe} from "./eo05-shopify-order-entitlement-probe.mjs";
 import {shopifyOrderFairDispatchProbe} from "./eo05-shopify-order-fair-dispatch-probe.mjs";
+import {shopifyOrderReconciliationProbe} from "./eo05-shopify-order-reconciliation-probe.mjs";
 
 // Shares the existing rollback-only queue fixture and its five reviewed synthetic profiles.
 export async function shopifyOrderWorkProbe(client,{database,inputs,routes}){
@@ -88,6 +89,7 @@ export async function shopifyOrderWorkProbe(client,{database,inputs,routes}){
     assert.equal((await worker.releaseBeforeRequest({reservation:second})).status,"released");
     await shopifyOrderEntitlementProbe(client,{database,inputs,routes});
     await shopifyOrderFairDispatchProbe(client,{database,inputs});
+    await shopifyOrderReconciliationProbe(client,{database,inputs});
     let writes=0;
     const uncertain=createShopifyOrderWorkReservations({database:{async query(sql,args){const r=await database.query(sql,args);
       if(sql.includes("reserve_shopify_order_work")){writes++;throw Error("synthetic response loss");}return r;}}});

@@ -1,4 +1,48 @@
 {
+  "Shopify_order_explicit_reconciliation_2026_10_29": {
+    "status": "repository_prepared_pending_exact_head_CI_owner_merge_not_live_activated",
+    "base_main": "63282f8cf77af30d3e4dac8429a81e8f085ee379",
+    "ordered_plan_step": 12,
+    "review_at": 14,
+    "new_plan_number": false,
+    "scope": "second_existing_step12_code_gap_explicit_reconciliation_of_unknown_partial_and_uncommitted_Order_reservations_then_joint_steps01_to13_review",
+    "runtime": "app/lib/refresh/shopify-order-reconciliation.server.js",
+    "migration": "supabase/migrations/20261029091041_eo05a_shopify_order_reconciliation.sql",
+    "dispatch_proof": "durable_Partner_dispatch_marker_written_atomically_with_phase_before_HTTP_survives_stopped_phase_Admin_existing_dispatch_counter_preserved_marker_is_not_proof_physical_HTTP_was_sent",
+    "legacy": "backfill_pre_request_intent_zero_dispatched_observed_or_receipt_one_old_stopped_without_receipt_null_never_infer_zero_from_reason_age_or_missing_record",
+    "access": "two_coordinator_only_explicit_attempt_UUID_RPC_private_owner_and_pure_view_helpers_no_runtime_browser_public_service_access_or_direct_table_grants",
+    "inspection": "read_only_SQL_owner_scope_phase_counters_receipt_presence_audit_and_server_snapshot_hash_nominal_same_factory_one_use_inspection_no_caller_owner_fence_hash_force_termination_flag_or_retry",
+    "CAS": "shared_refresh_control_lock_then_exact_reservation_row_lock_snapshot_hash_of_locked_current_row_and_SQL_owner_rechecked_stale_observation_no_mutation_no_automatic_reread",
+    "known_release": "only_proven_no_Partner_or_Admin_dispatch_or_SQL_settled_Partner_receipt_with_zero_Admin_dispatch_old_callbacks_fenced_same_transaction_as_release_audit_and_revision",
+    "hold": "unknown_legacy_or_unsettled_Partner_dispatch_Admin_prefix_and_observed_not_durable_full_shared_capacity_and_installation_single_flight_retained_phase_reconciled_denies_late_begin_dispatch_apply_observe_and_old_release",
+    "audit": "same_existing_operational_reservation_latest_prior_phase_classification_action_id_timestamp_version_and_preimage_hash_no_new_fact_or_evidence_table_no_full_attempt_history_claim",
+    "uncertainty": "unknown_mutation_reply_consumes_capability_explicit_fresh_inspection_only_absence_not_rollback_proof_confirmed_prior_action_id_preserved_on_already_recorded_no_revision_growth",
+    "runtime_boundary": "no_HTTP_no_worker_kill_or_external_execution_termination_claim_no_automatic_release_replay_resume_first_page_reload_or_periodic_reconciliation_unknown_outbound_may_still_be_in_flight",
+    "source_data": "no_recovery_or_storage_claim_for_lost_raw_Order_LineItem_prefix_no_discard_command_false_completion_checkpoint_or_Dataset_write",
+    "validation": {
+      "unit_tests": 10,
+      "SQL": "existing_F01_two_PG_replays_14_rollback_only_scenarios_real_roles_dispatch_receipts_capacity_CAS_late_callbacks_lost_ack_atomic_final_failure_synthetic_Partner_HTTP"
+    },
+    "remaining_for_joint_review": [
+      "real_native_scopes_permission_history_protected_data_source_formats_and_readable_provider_order_claims",
+      "actual_wire_body_memory_connections_query_plans_and_2000_4000_24h_capacity_acceptance_not_synthetic_proof",
+      "explicit_step14_joint_steps01_to13_outcome_review_before_step15_storage_design_and_unknown_partial_durable_handling_decision"
+    ],
+    "next_code_before_joint_review": false,
+    "step15_storage_started": false,
+    "general_Dataset_writer_at_step": 23,
+    "checkpointAdvanced": false,
+    "DatasetWritePerformed": false,
+    "activation_authorized": false,
+    "live_apply_authorized": false,
+    "PMax_paused": true,
+    "official_checked_at": "2026-10-29",
+    "official_sources": [
+      "https://www.postgresql.org/docs/17/explicit-locking.html",
+      "https://www.postgresql.org/docs/17/transaction-iso.html",
+      "https://shopify.dev/docs/api/usage/response-codes"
+    ]
+  },
   "Shopify_order_background_dispatch_2026_10_29": {
     "status": "repository_prepared_pending_exact_head_CI_and_owner_merge_not_live_activated",
     "base_main": "e87cd80c4816b55ba8d7727bb6eb26819786c46b",

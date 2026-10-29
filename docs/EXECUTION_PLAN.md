@@ -1,3 +1,17 @@
+## 29 Ekim 2026 — Birleşik hesap seçimi ve katalog adayı doğrulaması bağlandı
+
+Aynı taslak #264 / mevcut 07 / dördüncü teslim: Google/Meta native hesap listesi ve tek Reporting Account seçimi kendi bound combinedSetup.select/finishReporting yoluna bağlandı. Ekranda görülen bağlantı/sürüm core içinde, guard edilmiş yazımdan önce karşılaştırılır. Varlık doğrulayıcısı da her native okumada aynı bağlantı/sürüm/Reporting Account eşliğini korur. Bu sayede iki sekme/bağlantı değişimi eski seçimi yeni bağlantıya yazamaz. Eski reporting yolu bu yeni seçimler için kullanılmaz.
+
+Katalog evresinde Google Merchant Center account ID veya Meta Business ID + Catalog ID adayı girilip mevcut API doğrulayıcısı çağrılır. Otomatik liste keşfi yapılmadı; formdaki kimlik kanıt değildir. Yalnız native cevap aynı workspace/kurulum nesli/bağlantı/sürüm/Reporting Account ve aynı aday varlığa aitse, geçerlilik süresiyle Access verified / activation pending gösterilir. Süresi dolunca unknown olur; tekrar veya aktivasyon başlamaz. Bu kanıt ürün kimliği eşleşmesi, Advertised/Cross-sell, Ad-katalog teslim ilişkisi veya kalıcı kayıt değildir.
+
+Genişletilmiş kapsam bağlamı eski pending/Connected seçim ekranına düşmez; gerçek profile/asset kanıtı sayılmadan combined doğrulamaya yönelir. Aynı bağlamdaki bağımsız eski seçim eylemi bound giriş olmadan reddedilir. Mevcut raporlama bağlantısı silinmez/revoke edilmez. Save selection / Verify access yalnız native afterhide sonrası bir kez; Cancel/kapatma I/O yapmaz. Belirsiz sonuçta yalnız Check status vardır. Yazım makbuzu hesap listesi değildir; sonraki Resume güncel liste/sürümü okur.
+
+Resmî Choice list/Text field/Modal kaynakları 2026-10-29 doğrulandı; exact metin, native property/slot, boş/geçersiz/yükleniyor/iptal ve desktop/min320px mobil kabul özeti mevcut analist belgesinde yazıldı. React hook/listener cleanup, server action kimlik doğrulama ve native-only bileşen kontrolü korundu. Gerçek Shopify Admin görsel kabulü yok; ajan görsel işlem yapmaz. Yayın/izin kapıları kapalı, canlı API/config/deploy/token/DB/Dataset işlemi yok.
+
+Açık kalan: otomatik asset liste keşfi bu teslimde yok; geliştirici/yayın/native dönüş/ret/kısmi izin ve gerçek desktop/mobil kabulü bekliyor. Kalıcı seçili kaynak/kanıt bağları ve son aktivasyon mevcut 15 kararıyla ele alınır; 15 başlamadı, 22 duraklatılmış, 23 Dataset/FX yazımı. Bu UI işi Done/PASS veya merge-ready sayılmaz. Kayıt: contracts/eo-05-start-brief-v1.json#Permission_combined_selectors_2026_10_29.
+
+Doğrulama: tip kontrolü ve derleme geçti. İlk tüm koşuda 3.065 testin 3.056’sı geçti; 9 eski Meta güvenlik testi artık engellenen bağsız girişten çağırıyordu. Bu testlerin izin kaybı/süre/ilk hata assertion’ları korunup fixture bağlantısı eklendi; ilgili toplam 197/197 test geçti. Son exact commit için zorunlu CI tüm testi yeniden çalıştırır. Native görsel kabulü bekliyor.
+
 ## 29 Ekim 2026 — İzin açıklamaları Settings ve sabit sunucu eylemlerine bağlandı
 
 Aynı taslak #264 üzerinde ortak açıklama artık mevcut Settings içinde kullanılıyor. Üç eski Connect modalı kaldırıldı; Connect/Reconnect ve hata sonrası kontrol aynı host’a bağlandı. Settings içindeki Shopify bölümünde Products, ayrı isteğe bağlı Orders ve Check status var. İzin eyleminden önce mağaza/kurulum sunucuda doğrulanır. Formun provider/permissionProfile veya enabled alanı yetki kaynağı değildir. Sabit feature + ilişkilendirme kimliği kontrol edilir; response yalnız aynı özelliğe/isteğe ve o sağlayıcının native hedef ekranına bağlanabilir.

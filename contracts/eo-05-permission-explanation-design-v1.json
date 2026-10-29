@@ -395,12 +395,106 @@
     "live_permission_flags_changed": false,
     "package_Done_or_PASS": false,
     "UI_component_prepared": true,
-    "route_wiring": false,
+    "route_wiring": true,
     "component_record": "contracts/eo-05-start-brief-v1.json#Permission_explanation_component_2026_10_29",
     "settings_actions_wired": true,
     "klaviyo_existing_resume_wired": true,
-    "route_wiring_remaining": "Verified combined Google/Meta account/reporting/asset selectors; release and actual native acceptance remain open."
+    "route_wiring_remaining": "Runtime remains gated; actual native callback/install/permission/config/desktop/mobile acceptance and durable activation are not complete.",
+    "combined_selectors_wired": true,
+    "candidate_asset_verification_wired": true,
+    "automatic_asset_inventory_discovery": false
   },
   "step15_started": false,
-  "Dataset_write": false
+  "Dataset_write": false,
+  "combined_selection_spec": {
+    "checked_at": "2026-10-29",
+    "existing_plan_step": 7,
+    "code_delivery_order": 4,
+    "status": "analyst_spec_prepared_not_native_acceptance",
+    "purpose": "Resume combined Google/Meta setup using server-observed account choices and native verification of candidate asset identifiers, without legacy reporting fallback or new OAuth.",
+    "exact_copy": {
+      "account_heading": {
+        "google_ads": "Select Google Ads accounts",
+        "meta": "Select Meta accounts"
+      },
+      "account_body": "Choose one to three advertiser accounts.",
+      "account_label": "Advertiser accounts",
+      "reporting_heading": "Select Reporting Account",
+      "reporting_body": "Choose the account to use for reporting.",
+      "reporting_label": "Reporting Account",
+      "asset_heading": {
+        "google_ads": "Verify Merchant Center account",
+        "meta": "Verify Meta catalog access"
+      },
+      "asset_body": "Enter the account or catalog identifiers to verify access. These are candidates, not verified connections.",
+      "merchant_label": "Merchant Center account ID",
+      "business_label": "Business ID",
+      "catalog_label": "Catalog ID",
+      "primary_accounts": "Save selection",
+      "primary_reporting": "Save selection",
+      "primary_assets": "Verify access",
+      "secondary": "Cancel",
+      "empty": "No selectable accounts were returned. Check status before continuing.",
+      "invalid": "Check the selected accounts or identifiers before continuing.",
+      "verified": "Access verified. Setup is awaiting activation.",
+      "working_accounts": "Saving selection…",
+      "working_assets": "Verifying access…"
+    },
+    "component_mapping": {
+      "modal": {
+        "tag": "s-modal",
+        "size": "base",
+        "padding": "base"
+      },
+      "account_choices": {
+        "tag": "s-choice-list",
+        "multiple": "true for account set; omitted for reporting account",
+        "label": "exact copy above"
+      },
+      "choice": {
+        "tag": "s-choice",
+        "value": "native server account ID",
+        "children": "escaped native name and ID"
+      },
+      "asset_identifiers": {
+        "tag": "s-text-field",
+        "label": "exact copy above",
+        "required": true,
+        "maxLength": 30
+      },
+      "actions": {
+        "tag": "s-button",
+        "slot": "primary-action / secondary-actions",
+        "variant": "primary / secondary"
+      },
+      "content": {
+        "tag": "s-stack / s-paragraph / s-banner",
+        "gap": "base",
+        "direction": "block",
+        "tone": "warning or info"
+      }
+    },
+    "states": [
+      "Explicit Resume with current status opens one selector; no native permission request",
+      "Cancel/hide returns to the current feedback without request/write",
+      "Save captures fixed feature/stage/connection-version/IDs before hide; dispatch only once after native afterhide",
+      "Selection binds the same displayed connection/version in the core before the write; concurrent change fails with no retry",
+      "Write receipt is not an account inventory; next explicit Resume reads fresh current choices",
+      "Candidate asset IDs are passed to the existing native verifier; never accepted by syntax or membership assumption alone",
+      "Verified access is temporary, has source expiry and never grants activation or persistence",
+      "No automatic native account/catalog list discovery is claimed for manually entered candidates"
+    ],
+    "desktop_mobile": "Same native modal hierarchy; full text/fields/actions readable and reachable at desktop and min320px real mobile; keyboard/touch/focus required; native evidence and explicit owner acceptance pending.",
+    "unchanged": "Server availability switches remain false for Google/Meta; no provider API/scope addition, live grant/config/deploy/token/DB/Dataset change; no agent native Shopify visual operation.",
+    "out_of_scope": [
+      "Automatic Merchant/business/catalog inventory discovery",
+      "Final setup activation and durable selection/proof persistence in step15",
+      "Real developer permissions and native UI acceptance"
+    ],
+    "official_sources": [
+      "https://shopify.dev/docs/api/app-home/latest/web-components/forms/choice-list",
+      "https://shopify.dev/docs/api/app-home/latest/web-components/forms/text-field",
+      "https://shopify.dev/docs/api/app-home/latest/web-components/overlays/modal"
+    ]
+  }
 }

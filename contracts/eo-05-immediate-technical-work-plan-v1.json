@@ -110,13 +110,12 @@
         2,
         3
       ],
-      "status": "Settings_host_fixed_authenticated_actions_and_Klaviyo_resume_wired_combined_selectors_release_and_native_acceptance_pending",
-      "implementation_record": "contracts/eo-05-start-brief-v1.json#Permission_settings_wiring_2026_10_29",
+      "status": "combined_account_reporting_selection_and_candidate_asset_verification_wired_native_release_visual_and_durable_activation_pending",
+      "implementation_record": "contracts/eo-05-start-brief-v1.json#Permission_combined_selectors_2026_10_29",
       "remaining_in_this_delivery": [
-        "Combined Google/Meta verified account/reporting/asset selectors must be wired to their own server operations; no legacy reporting fallback or inert Resume button",
-        "Actual developer app readiness and separately authorized optional-scope/config releases; switches stay closed until their own acceptance",
-        "Actual Shopify Admin desktop/minimum320px mobile and explicit owner visual acceptance; no agent native visual operation",
-        "Native auth/callback/request/decline/error/partial-grant/capacity evidence remains pending"
+        "Automatic Merchant/business/catalog list discovery is not implemented; current UI accepts candidate IDs for native verification",
+        "Developer app/release/native install/callback/decline/partial-grant and actual desktop/min320px mobile owner acceptance; switches remain closed",
+        "Final durable selection/proof storage and activation decision belong to existing step15; Dataset/FX writer is step23"
       ],
       "runtime_alignment_record": "contracts/eo-05-start-brief-v1.json#Polaris_stable_2_alignment_2026_10_29"
     },

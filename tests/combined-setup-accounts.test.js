@@ -87,6 +87,24 @@ function incomplete(result, action) {
 }
 for (const provider of ["google_ads", "meta"]) {
   const first = provider === "meta" ? "act_123" : "123", second = provider === "meta" ? "act_456" : "456";
+  test(`${provider}: broader grant context cannot use an unbound legacy selection entry`, async () => {
+    const h = harness(provider);
+    await assert.rejects(h.runtime.select({installationAuthority: owner, selectedAccountIds: [first]}), /BOUND_ENTRY_REQUIRED/);
+    assert.deepEqual(h.calls, []); assert.deepEqual(h.writes, []);
+  });
+  test(`${provider}: displayed stale version stops before native discovery or selection write`, async () => {
+    const h = harness(provider);
+    await assert.rejects(h.setup.select({installationAuthority: owner, selectedAccountIds: [first],
+      expectedConnection: {connectionId: id(2), version: 6}}), /CONNECTION_CHANGED/);
+    assert.deepEqual(h.calls, []); assert.deepEqual(h.writes, []);
+  });
+  test(`${provider}: displayed binding is captured before the first await`, async () => {
+    const h = harness(provider), expectedConnection = {connectionId: id(2), version: 7};
+    const pending = h.setup.select({installationAuthority: owner, selectedAccountIds: [first], expectedConnection});
+    expectedConnection.version = 6;
+    incomplete(await pending, "verify_assets");
+    assert.deepEqual(h.writes, ["accounts"]);
+  });
   test(`${provider}: combined account entry stays closed, caller cannot enable it`, async () => {
     const h = harness(provider, {enabled: false});
     for (const [method, fields] of [["inspect", {}], ["select", {selectedAccountIds: [first]}], ["finishReporting", {reportingAccountId: first}]]) {

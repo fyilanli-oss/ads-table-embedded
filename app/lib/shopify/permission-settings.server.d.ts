@@ -1,9 +1,13 @@
 import type {PermissionFeature} from "../ui/permission-explanation-flow.js";
 export const PERMISSION_SETTINGS_AVAILABILITY: Readonly<Record<PermissionFeature, boolean>>;
+export type PermissionSelection = Readonly<{
+  connectionId: string; version: number; reportingAccountId: string | null;
+  accounts: readonly Readonly<{id: string; name: string}>[];
+}>;
 export type PermissionSettingsResult = Readonly<
   {kind: "unavailable" | "unknown"; feature: PermissionFeature}
   | {kind: "authorization"; feature: PermissionFeature; authorizationUrl: string}
-  | {kind: "status"; feature: PermissionFeature; stage: string}
+  | {kind: "status"; feature: PermissionFeature; stage: string; selection?: PermissionSelection; expiresAt?: string}
 >;
 export function createPermissionSettings(args: {
   shopify: import("./progressive-permissions.server.js").ShopifyPermissionSetup;
@@ -12,4 +16,8 @@ export function createPermissionSettings(args: {
 }): Readonly<{
   connect(args: {feature: PermissionFeature; verified: any; action: "connect"}): Promise<PermissionSettingsResult>;
   status(args: {feature: PermissionFeature; verified: any}): Promise<PermissionSettingsResult>;
+  select(args: {feature: PermissionFeature; verified: any; expected: {connectionId: string; version: number};
+    operation: "accounts" | "reporting"; selectedAccountIds?: string[]; reportingAccountId?: string}): Promise<PermissionSettingsResult>;
+  verifyAssets(args: {feature: PermissionFeature; verified: any; expected: {connectionId: string; version: number; reportingAccountId: string};
+    merchantId?: string; businessId?: string; catalogId?: string}): Promise<PermissionSettingsResult>;
 }>;

@@ -38,10 +38,12 @@ for (const feature of ["google_ads", "meta"]) {
     const settings = createPermissionSettings({availability, providerRuntime: () => ({
       beginCombinedSetup: () => assert.fail(), combinedSetup: {inspect: async args => {
         calls++; assert.equal(args.installationAuthority, verified.installationAuthority);
-        return {setupResumeAction: "verify_assets", setupComplete: false, credentialId: "private"};
+        return {setupResumeAction: "verify_assets", setupComplete: false, credentialId: "private",
+          connectionId: "displayed-connection", connectionVersion: 7, reportingAccountId: "account-1", accounts: []};
       }},
     })});
-    assert.deepEqual(await settings.status({feature, verified}), {kind: "status", feature, stage: "verify_assets"});
+    assert.deepEqual(await settings.status({feature, verified}), {kind: "status", feature, stage: "verify_assets",
+      selection: {connectionId: "displayed-connection", version: 7, reportingAccountId: "account-1", accounts: []}});
     assert.equal(calls, 1);
   });
 }
@@ -184,8 +186,20 @@ test("actual Settings action returns unknown without raw errors and never retrie
 
 test("permission actions do not implicitly rerun existing provider loaders", () => {
   const route = loadRoute();
-  for (const intent of ["permission_connect", "permission_status"]) {
+  for (const intent of ["permission_connect", "permission_status", "permission_select_accounts", "permission_select_reporting", "permission_verify_assets"]) {
     assert.equal(route.shouldRevalidate({formData: new URLSearchParams({intent}), defaultShouldRevalidate: true}), false);
   }
   assert.equal(route.shouldRevalidate({formData: new URLSearchParams({intent: "select"}), defaultShouldRevalidate: true}), true);
+});
+
+test("actual Settings loader keeps broader grant setup out of legacy pending/Connected views", async () => {
+  const route = loadRoute({providerRuntime: () => ({inspect: async () => ({state: "pending_account_selection",
+    pending: {scopes: ["catalog_management", "https://www.googleapis.com/auth/content"]},
+    accounts: [{id: "123", name: "Shop", currency: "USD", timezone: "UTC"}],
+  })})});
+  const result = await route.loader({request: new Request("https://embedded.adstable.app/settings")});
+  assert.equal(result.view, "combined");
+  assert.equal(result.meta.view, "combined");
+  assert.equal(result.permissionAvailability.google_ads, false);
+  assert.equal(result.permissionAvailability.meta, false);
 });

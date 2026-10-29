@@ -10,7 +10,12 @@ function sameBinding(left, right) {
 // Optional only for the unchanged legacy entries. Combined callers bind the exact
 // server-read pending record before any credential discovery or selection write.
 export function assertCombinedSetupAccountBinding(expected, pending) {
-  if (expected === undefined) return;
+  if (expected === undefined) {
+    if (Array.isArray(pending?.scopes) && pending.scopes.some(scope => scope === "https://www.googleapis.com/auth/content" || scope === "catalog_management")) {
+      fail("COMBINED_SETUP_BOUND_ENTRY_REQUIRED");
+    }
+    return;
+  }
   if (!expected || !pending || expected.connectionId !== pending.connectionId
     || expected.version !== pending.version || expected.credentialId !== pending.credentialId) {
     fail("COMBINED_SETUP_CONNECTION_CHANGED");
@@ -58,8 +63,16 @@ export function createCombinedSetupAccounts({provider, enabled, lifecycle, token
       accounts: Object.freeze(accounts.map(account => Object.freeze({id: account.id, name: account.name}))),
     });
   }
-  async function select(installationAuthority, input, operation, expectedStatus) {
+  async function select(installationAuthority, input, operation, expectedStatus, expectedConnection) {
+    const expected = expectedConnection === undefined ? null : {
+      connectionId: expectedConnection?.connectionId, version: expectedConnection?.version,
+    };
+    if (expected && (typeof expected.connectionId !== "string" || !expected.connectionId
+      || !Number.isSafeInteger(expected.version) || expected.version < 1)) fail("COMBINED_SETUP_BINDING_INVALID");
     const before = await snapshot(installationAuthority);
+    if (expected && (before?.connectionId !== expected.connectionId || before?.version !== expected.version)) {
+      fail("COMBINED_SETUP_CONNECTION_CHANGED");
+    }
     if (before?.status !== expectedStatus) fail("COMBINED_SETUP_SELECTION_STATE_INVALID");
     if (before.version >= Number.MAX_SAFE_INTEGER) fail("COMBINED_SETUP_BINDING_INVALID");
     const receipt = await operation({installationAuthority, ...input, combinedSetupBinding: {
@@ -102,11 +115,11 @@ export function createCombinedSetupAccounts({provider, enabled, lifecycle, token
       }
       return project(after, result.accounts ?? record.accounts ?? [], record.reportingAccountId ?? null, result.state);
     },
-    async select({installationAuthority, selectedAccountIds}) {
-      return select(installationAuthority, {selectedAccountIds}, runtime.select, "pending_account_selection");
+    async select({installationAuthority, selectedAccountIds, expectedConnection}) {
+      return select(installationAuthority, {selectedAccountIds}, runtime.select, "pending_account_selection", expectedConnection);
     },
-    async finishReporting({installationAuthority, reportingAccountId}) {
-      return select(installationAuthority, {reportingAccountId}, runtime.finishReporting, "pending_account_selection");
+    async finishReporting({installationAuthority, reportingAccountId, expectedConnection}) {
+      return select(installationAuthority, {reportingAccountId}, runtime.finishReporting, "pending_account_selection", expectedConnection);
     },
   });
 }

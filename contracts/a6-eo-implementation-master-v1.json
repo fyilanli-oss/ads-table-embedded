@@ -1,4 +1,43 @@
 {
+  "Permission_combined_selectors_2026_10_29": {
+    "checked_at": "2026-10-29",
+    "existing_plan_step": 7,
+    "code_delivery_order": 4,
+    "PR": 264,
+    "status": "combined_account_reporting_selection_and_candidate_asset_verification_wired_native_release_visual_and_durable_activation_pending",
+    "sources": [
+      "app/lib/oauth/combined-setup-accounts.server.js",
+      "app/lib/oauth/combined-setup-assets.server.js"
+    ],
+    "outputs": [
+      "Native server-observed account set and single Reporting Account use bound combined methods only",
+      "Current connection/version captured in displayed selection is checked inside core immediately before guarded write, and during every native asset recheck",
+      "Google Merchant account ID / Meta Business + Catalog ID are candidates validated by existing native probes; no automatic inventory discovery claimed",
+      "New Resume uses fresh status when prior write receipt is not an account inventory",
+      "Save/Verify captures input before hide and dispatches once afterhide; Cancel performs no request",
+      "Proof projected only for same workspace/generation/connection/version/reporting account and same candidate targets, with source expiry; no activation or persistence",
+      "Broader stored grants route to combined UI and cannot take unbound legacy selection path; this is routing, not identity-profile or native-access proof"
+    ],
+    "remaining": [
+      "Automatic Merchant/business/catalog list discovery is not implemented; current UI accepts candidate IDs for native verification",
+      "Developer app/release/native install/callback/decline/partial-grant and actual desktop/min320px mobile owner acceptance; switches remain closed",
+      "Final durable selection/proof storage and activation decision belong to existing step15; Dataset/FX writer is step23"
+    ],
+    "live_permission_flags_changed": false,
+    "provider_API_added": false,
+    "provider_scope_added": false,
+    "live_calls": false,
+    "database_or_Dataset_write": false,
+    "step15_started": false,
+    "step22": "paused",
+    "native_visual_acceptance": false,
+    "tests": [
+      "tests/permission-setup-selection.test.js",
+      "tests/combined-setup-accounts.test.js",
+      "tests/combined-setup-assets.test.js",
+      "tests/permission-settings.test.js"
+    ]
+  },
   "Permission_settings_wiring_2026_10_29": {
     "checked_at": "2026-10-29",
     "existing_plan_step": 7,

@@ -38,6 +38,7 @@ type Advertiser = {
 };
 
 type State =
+  | {view: "combined"}
   | {view: "disconnected"; notice: "cancelled" | "disconnected" | null}
   | {view: "pending"; accounts: Advertiser[]}
   | {view: "pending_reporting"; accounts: Advertiser[]}
@@ -186,6 +187,13 @@ async function routeAuthority(request: Request) {
   });
 }
 
+// Broader stored grants require the bound setup route. This is a routing guard,
+// not evidence of an identity profile, native asset access or completed setup.
+function requiresCombinedSelection(inspected: any) {
+  const scopes = inspected?.state === "connected" ? inspected.connection?.grantedScopes : inspected?.pending?.scopes;
+  return Array.isArray(scopes) && scopes.some(scope => scope === "https://www.googleapis.com/auth/content" || scope === "catalog_management");
+}
+
 async function loadGoogleState(
   verified: Awaited<ReturnType<typeof routeAuthority>>,
   url: URL,
@@ -198,6 +206,7 @@ async function loadGoogleState(
     const inspected = await runtime.inspect({
       installationAuthority: verified.installationAuthority,
     });
+    if (requiresCombinedSelection(inspected)) return {view: "combined"};
     if (inspected.state === "connected") {
       if (!inspected.connection.reportingAccountId) {
         throw new Error("GOOGLE_REPORTING_ACCOUNT_REQUIRED");
@@ -260,6 +269,7 @@ async function loadMetaState(
     const inspected = await runtime.inspect({
       installationAuthority: verified.installationAuthority,
     });
+    if (requiresCombinedSelection(inspected)) return {view: "combined"};
     if (inspected.state === "connected") {
       if (!inspected.connection.reportingAccountId) {
         throw new Error("META_REPORTING_ACCOUNT_REQUIRED");
@@ -370,10 +380,12 @@ export const loader = async ({request}: LoaderFunctionArgs): Promise<LoaderData>
   return {...google, meta, klaviyo, permissionAvailability: PERMISSION_SETTINGS_AVAILABILITY};
 };
 
+const permissionIntents = new Set(["permission_connect", "permission_status", "permission_select_accounts", "permission_select_reporting", "permission_verify_assets"]);
+
 export function shouldRevalidate({formData, defaultShouldRevalidate}: ShouldRevalidateFunctionArgs) {
   const intent = formData?.get("intent");
   // Permission status reads are explicit; do not implicitly rerun provider loaders.
-  if (intent === "permission_connect" || intent === "permission_status") return false;
+  if (typeof intent === "string" && permissionIntents.has(intent)) return false;
   return defaultShouldRevalidate;
 }
 
@@ -381,7 +393,7 @@ export const action = async ({request}: ActionFunctionArgs) => {
   const verified = await routeAuthority(request);
   const form = await request.formData();
   const intent = form.get("intent");
-  if (intent === "permission_connect" || intent === "permission_status") {
+  if (typeof intent === "string" && permissionIntents.has(intent)) {
     const featureValue = form.get("feature");
     const requestId = form.get("requestId");
     if (typeof featureValue !== "string" || !Object.hasOwn(PERMISSION_SETTINGS_AVAILABILITY, featureValue)
@@ -396,9 +408,22 @@ export const action = async ({request}: ActionFunctionArgs) => {
         : createGoogleOAuthRuntime({database, tokenVault: providerTokenVault}),
     });
     try {
-      const result = intent === "permission_connect"
-        ? await settings.connect({feature, verified, action: "connect"})
-        : await settings.status({feature, verified});
+      let result;
+      if (intent === "permission_connect") result = await settings.connect({feature, verified, action: "connect"});
+      else if (intent === "permission_status") result = await settings.status({feature, verified});
+      else {
+        const expected = {connectionId: String(form.get("connectionId") ?? ""), version: Number(form.get("version"))};
+        if (intent === "permission_verify_assets") {
+          result = await settings.verifyAssets({feature, verified, expected: {...expected, reportingAccountId: String(form.get("reportingAccountId") ?? "")},
+            merchantId: String(form.get("merchantId") ?? ""), businessId: String(form.get("businessId") ?? ""), catalogId: String(form.get("catalogId") ?? "")});
+        } else {
+          const encoded = String(form.get("selectedAccountIds") ?? "[]");
+          if (encoded.length > 1024) throw new Error("PERMISSION_SETTINGS_ACCOUNTS_INVALID");
+          result = await settings.select({feature, verified, expected,
+            operation: intent === "permission_select_accounts" ? "accounts" : "reporting",
+            selectedAccountIds: JSON.parse(encoded), reportingAccountId: String(form.get("reportingAccountId") ?? "")});
+        }
+      }
       return {...result, requestId};
     } catch (error) {
       if (error instanceof Response) throw error;
@@ -918,6 +943,11 @@ export default function Settings() {
       {permissions.content}
       <s-section heading="Meta">
         <s-stack direction="block" gap="base">
+          {state.meta.view === "combined" ? <>
+            <s-badge tone="warning">Resume setup</s-badge>
+            <s-button onClick={() => permissions.checkStatus("meta", true)}>Resume setup</s-button>
+            <s-button onClick={() => permissions.open("meta")}>Reconnect Meta</s-button>
+          </> : null}
           {actionData?.ok === false && actionData.provider === "meta"
             ? <ErrorBanner provider="meta" code={actionData.code} />
             : null}
@@ -1195,6 +1225,11 @@ export default function Settings() {
       </s-section>
       <s-section heading="Google Ads">
         <s-stack direction="block" gap="base">
+          {state.view === "combined" ? <>
+            <s-badge tone="warning">Resume setup</s-badge>
+            <s-button onClick={() => permissions.checkStatus("google_ads", true)}>Resume setup</s-button>
+            <s-button onClick={() => permissions.open("google_ads")}>Reconnect Google Ads</s-button>
+          </> : null}
           {actionData?.ok === false && actionData.provider === "google_ads"
             ? <ErrorBanner provider="google_ads" code={actionData.code} />
             : null}

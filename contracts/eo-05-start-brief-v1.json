@@ -1,4 +1,23 @@
 {
+  "Polaris_stable_2_alignment_2026_10_29": {
+    "checked_at": "2026-10-29",
+    "base_main": "284c789715342786e972f912e5a57d253b1c7001",
+    "existing_plan_step": 7,
+    "code_delivery_order": 4,
+    "status": "owner_approved_stable_2_alignment_UI_and_native_visual_acceptance_pending",
+    "runtime": "https://cdn.shopify.com/shopifycloud/polaris-2.0.js",
+    "types": "2.0.0",
+    "source": "https://shopify.dev/docs/api/app-home/latest/web-components/versioning",
+    "design_merged_pr": 262,
+    "visual_acceptance": false,
+    "live_deployment": false,
+    "dataset_writer": false,
+    "lockfile": {
+      "previous_sha256_lf": "b79cec6aa6aa7c718fd675cd0e9b91f6c15705fd637164d3955c527c46e4af5d",
+      "sha256_lf": "048661c323617fbd5d1c72eb5ade45ed11d2690aca9cbe3487c4095f25df10e6",
+      "change": "Only Polaris types package specifier, resolution integrity and snapshot; existing security overrides unchanged."
+    }
+  },
   "Permission_explanation_design_2026_10_29": {
     "checked_at": "2026-10-29",
     "base_main": "297d0d620e0878e90ae2284903037784d472b541",

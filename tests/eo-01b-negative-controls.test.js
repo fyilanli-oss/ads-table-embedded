@@ -47,7 +47,7 @@ test("clean pnpm lockfile and package manager are pinned", () => {
   assert.match(lock, /^lockfileVersion:/m);
   assert.doesNotMatch(lock, /ads-table-dev|file:\.\.\/|link:\.\.\//i);
   assert.match(workspace, /^allowBuilds:\s*\n\s+esbuild:\s+true\s*$/m);
-  assert.match(workspace, /minimumReleaseAgeExclude:\s*\n\s+- '@shopify\/polaris-types@2\.0\.0-rc\.2'/m);
+  assert.doesNotMatch(workspace, /minimumReleaseAgeExclude/);
   assert.doesNotMatch(workspace, /dangerouslyAllowAllBuilds/);
 });
 
@@ -71,12 +71,16 @@ test("legacy runtime, unknown env and obsolete Polaris references are rejected",
   }
 });
 
-test("product-owner-selected Polaris 2.0 RC runtime and types stay aligned", () => {
+test("product-owner-selected Polaris stable 2.0 runtime and types stay aligned", () => {
   const ui = readJson("contracts/shopify/shopify-embedded-ui-constitution-v1.json");
   const providerSource = fs.readFileSync(path.join(root, "app/lib/shopify/shopify-app-runtime.server.js"), "utf8");
-  assert.equal(manifest.devDependencies["@shopify/polaris-types"], "2.0.0-rc.2");
-  assert.equal(ui.approved_runtime.polaris_script, "https://cdn.shopify.com/shopifycloud/polaris-2.0-rc.js");
-  assert.equal(ui.approved_runtime.polaris_types, "2.0.0-rc.2");
-  assert.equal(providerSource.match(/polaris-2\.0-rc\.js/g)?.length, 1);
+  assert.equal(manifest.devDependencies["@shopify/polaris-types"], "2.0.0");
+  assert.equal(ui.approved_runtime.polaris_script, "https://cdn.shopify.com/shopifycloud/polaris-2.0.js");
+  assert.equal(ui.approved_runtime.polaris_types, "2.0.0");
+  assert.equal(providerSource.match(/polaris-2\.0\.js/g)?.length, 1);
   assert.equal(providerSource.includes(controls.forbiddenObsoletePolarisRuntime), false);
+  assert.equal(ui.approved_runtime.polaris_2_rc_selected, false);
+  assert.equal(ui.approved_runtime.desktop_mobile_visual_acceptance, "pending");
+  assert.equal(providerSource.includes("polaris-2.0-rc.js"), false);
+  assert.equal(ui.historical_runtime_decisions[0].polaris_types, "2.0.0-rc.2");
 });

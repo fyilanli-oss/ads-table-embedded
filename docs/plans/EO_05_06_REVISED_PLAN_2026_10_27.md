@@ -1,3 +1,11 @@
+## 29 Ekim 2026 — Onaylı kararlı Polaris 2.0 hizalaması
+
+#262 main’e birleşti (284c789715342786e972f912e5a57d253b1c7001). Ürün sahibi açıklama tasarımını ve sabit polaris-2.0.js + exact @shopify/polaris-types@2.0.0 geçişini açıkça onayladı. Sunucu ShopifyApp ve AppProvider aynı merkezi runtime değerini kullanır; paket ve lock birlikte değiştirilir. Resmî Shopify sürümleme kaynağı 2026-10-29 kontrol edildi: https://shopify.dev/docs/api/app-home/latest/web-components/versioning.
+
+Bu kayıt yalnız kod referansını hizalar. Gerçek Shopify Admin masaüstü ve en az 320 px gerçek mobil görsel kabulü bekliyor; yeni modal/route veya izin aktivasyonu tamamlandı sayılmaz. Shopify üzerinde ajan görsel işlem yapmaz. Canlı config/deploy/izin/token/DB değişikliği yok. Eski RC kararları tarihsel kayıttır; güncel sürüm seçimi kararlı 2.0’dır. 15 başlamadı, 22 duraklatılmış, 23 Dataset/FX yazımıdır.
+
+Doğrulama: kararlı tiplerle tip kontrolü ve derleme geçti. İlk tüm test koşusunda 3.009 testten 3.007 geçti; eski sürüm/lock beklentileri güncellendikten sonra ilgili 34 testin tamamı geçti. Tarihsel 18 Ekim güvenlik kanıtı korunur; yeni lock parmak izi bu geçiş kaydındadır. Exact commit için zorunlu CI tüm testleri yeniden çalıştırır; CI sonucu ayrıca doğrulanır.
+
 ## 29 Ekim 2026 — İzin açıklamaları: tek standartta somut metin ve akış tasarımı
 
 #261 main’e birleşti (297d0d620e0878e90ae2284903037784d472b541); 3.009 test/tip/derleme ve iki CI başarılı. 07 içindeki dördüncü teslimin kod öncesi tasarımı hazırlandı. Tek okunabilir analist belgesi docs/EO_05_PERMISSION_EXPLANATION_DESIGN_BRIEF.md; makine sözleşmesi contracts/eo-05-permission-explanation-design-v1.json. Shopify Products, isteğe bağlı Orders, Google Ads+Merchant, Meta Ads+Catalog ve Klaviyo için birebir İngilizce ekran metinleri; Türkçe inceleme özeti; Cancel/Connect, yükleniyor/dönüş/eksik/belirsiz sonuç durumları ve aşamaya göre Resume yolu birlikte yazıldı.

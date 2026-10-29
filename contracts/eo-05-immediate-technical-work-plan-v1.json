@@ -110,13 +110,14 @@
         2,
         3
       ],
-      "status": "design_prepared_owner_review_and_runtime_alignment_pending",
+      "status": "owner_approved_design_and_stable_runtime_aligned_UI_and_native_visual_acceptance_pending",
       "implementation_record": "contracts/eo-05-start-brief-v1.json#Permission_explanation_design_2026_10_29",
       "remaining_in_this_delivery": [
         "Owner review of concrete copy and stable 2.0 runtime/type alignment decision",
         "UI component plus existing Settings/Home stage routing and authenticated fixed-action wiring; current gates remain closed until accepted",
         "Real Shopify Admin desktop/mobile 320px, state/return/cancel acceptance and explicit owner visual acceptance; no agent visual operation on Shopify"
-      ]
+      ],
+      "runtime_alignment_record": "contracts/eo-05-start-brief-v1.json#Polaris_stable_2_alignment_2026_10_29"
     },
     {
       "delivery_order": 5,

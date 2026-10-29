@@ -1,10 +1,19 @@
 {
+  "Combined_provider_setup_account_selection_2026_10_29": {
+    "record": "contracts/eo-05-start-brief-v1.json#Combined_provider_setup_account_selection_2026_10_29",
+    "existing_step": 7,
+    "code_delivery_order": 2,
+    "status": "account_selection_backend_slice_ready_inactive_not_full_setup_acceptance",
+    "live_UI_or_setup_acceptance": false
+  },
   "Combined_provider_setup_backend_2026_10_29": {
     "record": "contracts/eo-05-start-brief-v1.json#Combined_provider_setup_backend_2026_10_29",
     "existing_step": 7,
     "code_delivery_order": 2,
-    "status": "backend_start_and_callback_slice_ready_pending_exact_CI_owner_merge_inactive_not_full_setup_acceptance",
-    "live_UI_or_setup_acceptance": false
+    "status": "merged_backend_start_callback_slice_inactive_not_full_setup_acceptance",
+    "live_UI_or_setup_acceptance": false,
+    "PR": 258,
+    "merge_commit": "e936b033a2f0e794f94d8c03def4f58d5cedc77a"
   },
   "Shopify_product_order_permission_split_2026_10_29": {
     "decision": "contracts/eo-05-start-brief-v1.json#Shopify_product_order_permission_split_2026_10_29",

@@ -29,11 +29,12 @@ test("DOCS-01 preserves its accepted historical inventory and explicitly account
     "docs/runbooks/WINDOWS_VM_RECOVERY.md",
     "docs/research/PD_CPD_QUERY_WORKING_TABLE_2026-10-22.md",
     "docs/plans/EO_05_06_REVISED_PLAN_2026_10_27.md",
+    "docs/EO_05_PERMISSION_EXPLANATION_DESIGN_BRIEF.md",
   ];
   const baseline = contract.inventory.map((row) => row.path).sort();
   assert.deepEqual(actual, [...baseline, ...laterDocuments].sort());
   assert.equal(new Set(baseline).size, 63);
-  assert.equal(new Set(actual).size, 66);
+  assert.equal(new Set(actual).size, 67);
   assert.deepEqual(contract.inventory_counts, {
     total_markdown: 63, human_markdown: 62, excluded_agent_instructions: 1,
     translated_review_pending: 0, pending_language_review: 0,

@@ -29,7 +29,9 @@
       "JSON_and_references": "checked",
       "exact_CI": "pending",
       "local_runtime_tests": "not_repeated_docs_only_diff_no_runtime_change",
-      "F01": "unchanged_paths_not_triggered"
+      "F01": "unchanged_paths_not_triggered",
+      "docs_inventory_guard": "passed: new brief explicitly added to laterDocuments; historical 63 accepted documents untouched, current total 67",
+      "initial_CI": "failed_new_markdown_missing_from_post_baseline_inventory_corrected_without_weakening_guard"
     },
     "step15_started": false,
     "Dataset_write": false

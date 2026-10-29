@@ -1,7 +1,5 @@
 allowBuilds:
   esbuild: true
-minimumReleaseAgeExclude:
-  - '@shopify/polaris-types@2.0.0-rc.2'
 overrides:
   'vite@7.3.6>esbuild': '0.28.1'
   '@vercel/static-config@3.4.4>ajv': '8.18.0'

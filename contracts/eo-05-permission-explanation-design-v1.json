@@ -3,7 +3,7 @@
   "checked_at": "2026-10-29",
   "existing_plan_step": 7,
   "code_delivery_order": 4,
-  "status": "exact_copy_and_flow_prepared_for_owner_review_not_UI_implementation_or_acceptance",
+  "status": "owner_approved_copy_and_flow_UI_implementation_and_visual_acceptance_pending",
   "authority": [
     "docs/EXECUTION_PLAN.md",
     "contracts/eo-05-oauth-setup-permission-policy-v1.json",
@@ -364,17 +364,17 @@
     "no_custom_CSS": true
   },
   "runtime_alignment": {
-    "current_repository_script": "polaris-2.0-rc.js",
-    "current_repository_types": "2.0.0-rc.2",
-    "current_binding_decision": "Explicit 2026-10-06 RC baseline; no change by this design.",
+    "current_repository_script": "polaris-2.0.js",
+    "current_repository_types": "2.0.0",
+    "current_binding_decision": "Explicit 2026-10-29 owner approval of pinned stable 2.0 with exact matching types.",
     "new_AGENTS_requirement": "Stable Polaris web components",
     "official_check": "2026-10-29 Shopify versioning guide identifies stable 2.0; official polaris-2.0.js HEAD 200 and official npm latest types 2.0.0.",
     "proposed_target_script": "https://cdn.shopify.com/shopifycloud/polaris-2.0.js",
     "proposed_target_types": "2.0.0",
-    "before_UI_code": "Explicit owner decision required to align stable-only instruction with recorded RC baseline; no automatic runtime/type upgrade, no claim RC equals stable.",
-    "decision_status": "owner_decision_pending",
+    "before_UI_code": "Runtime and types aligned together; actual desktop/mobile visual acceptance remains required.",
+    "decision_status": "owner_approved_stable_2_code_alignment",
     "source": "https://shopify.dev/docs/api/app-home/latest/web-components/versioning",
-    "property_cross_check": "Proposed properties/slots also exist in installed RC manifest; this is compatibility evidence, not stable runtime migration or visual acceptance."
+    "property_cross_check": "Stable 2.0 manifest and TypeScript checks verify component surface; native visual acceptance remains pending."
   },
   "out_of_scope": [
     "UI component or application route implementation in this design PR",
@@ -386,7 +386,7 @@
     "Automated Shopify Admin visual interactions"
   ],
   "acceptance": {
-    "design_readiness": "Exact copy, stage routing and official component mapping prepared; owner review pending.",
+    "design_readiness": "Exact copy, stage routing and component mapping approved by owner on 2026-10-29; UI implementation and actual visual acceptance pending.",
     "UI_implementation": false,
     "desktop_real_admin": "not_run",
     "mobile_320px_real_admin": "not_run",

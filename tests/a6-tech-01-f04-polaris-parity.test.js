@@ -62,5 +62,5 @@ test("mismatched preloads, duplicate scripts and an unapproved version fail pari
   assert.doesNotThrow(() => assertPolarisParity(validLink, validHtml));
   assert.throws(() => assertPolarisParity(validLink.replace(approved, "https://cdn.shopify.com/shopifycloud/polaris.js"), validHtml));
   assert.throws(() => assertPolarisParity(validLink, validHtml + `<script src="${approved}"></script>`));
-  assert.throws(() => assertPolarisParity(validLink, validHtml.replace(approved, "https://cdn.shopify.com/shopifycloud/polaris-2.0.js")));
+  assert.throws(() => assertPolarisParity(validLink, validHtml.replace(approved, "https://cdn.shopify.com/shopifycloud/polaris-2.0-rc.js")));
 });

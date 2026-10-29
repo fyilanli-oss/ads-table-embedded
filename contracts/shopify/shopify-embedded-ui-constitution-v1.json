@@ -18,15 +18,17 @@
     "shopify_app_home_polaris_web_components"
   ],
   "approved_runtime": {
-    "decision_date": "2026-10-06",
-    "environment": "preview_and_production_baseline",
-    "polaris_script": "https://cdn.shopify.com/shopifycloud/polaris-2.0-rc.js",
-    "polaris_types": "2.0.0-rc.2",
-    "reason": "product_owner_explicitly_selected_shopify_current_admin_compatible_release_candidate",
-    "polaris_2_rc_selected": true,
-    "decision_authority": "explicit_product_owner_instruction_2026-10-06",
-    "rc_risk": "release_candidate_can_change_during_soak_period",
-    "stable_2_transition": "requires_official_release_verification_and_explicit_product_owner_decision"
+    "decision_date": "2026-10-29",
+    "environment": "selected_code_baseline_not_deployment_or_visual_acceptance",
+    "polaris_script": "https://cdn.shopify.com/shopifycloud/polaris-2.0.js",
+    "polaris_types": "2.0.0",
+    "reason": "explicit_owner_approved_pinned_stable_2_runtime_and_exact_matching_types",
+    "polaris_2_rc_selected": false,
+    "decision_authority": "explicit_product_owner_instruction_2026-10-29",
+    "official_source": "https://shopify.dev/docs/api/app-home/latest/web-components/versioning",
+    "official_checked_at": "2026-10-29",
+    "desktop_mobile_visual_acceptance": "pending",
+    "live_deployment": false
   },
   "forbidden": [
     "raw_html_form_or_action_controls",
@@ -136,5 +138,19 @@
       "A6-EO-07-C_evidence",
       "separate_accepted_chart_brief"
     ]
-  }
+  },
+  "historical_runtime_decisions": [
+    {
+      "decision_date": "2026-10-06",
+      "environment": "preview_and_production_baseline",
+      "polaris_script": "https://cdn.shopify.com/shopifycloud/polaris-2.0-rc.js",
+      "polaris_types": "2.0.0-rc.2",
+      "reason": "product_owner_explicitly_selected_shopify_current_admin_compatible_release_candidate",
+      "polaris_2_rc_selected": true,
+      "decision_authority": "explicit_product_owner_instruction_2026-10-06",
+      "rc_risk": "release_candidate_can_change_during_soak_period",
+      "stable_2_transition": "requires_official_release_verification_and_explicit_product_owner_decision",
+      "superseded_at": "2026-10-29"
+    }
+  ]
 }

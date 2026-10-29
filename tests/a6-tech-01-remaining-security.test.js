@@ -25,7 +25,11 @@ test("remaining-security scope binds exact pins and complete lock graph without 
   assert.deepEqual(overrides, evidence.scoped_overrides);
   assert.doesNotMatch(workspace, /auditConfig|ignoreCves|ignoreGhsas|ignoredAdvisories|ignoreUnfixable/);
   const lock = read("pnpm-lock.yaml").replaceAll("\r\n", "\n");
-  assert.equal(createHash("sha256").update(lock).digest("hex"), evidence.lockfile.sha256_lf);
+  const alignment = JSON.parse(read("contracts/eo-05-start-brief-v1.json")).Polaris_stable_2_alignment_2026_10_29;
+  assert.equal(alignment.lockfile.previous_sha256_lf, evidence.lockfile.sha256_lf);
+  assert.equal(createHash("sha256").update(lock).digest("hex"), alignment.lockfile.sha256_lf);
+  assert.equal(manifest.devDependencies["@shopify/polaris-types"], alignment.types);
+  assert.doesNotMatch(workspace, /minimumReleaseAgeExclude/);
   assert.doesNotMatch(lock, /(?:braces|micromatch|fast-glob)@/);
   for (const audit of [evidence.production_audit, evidence.complete_audit]) {
     assert.equal(audit.exit_code, 0);

@@ -1,3 +1,9 @@
+## 29 Ekim 2026 — Onaylı kararlı Polaris 2.0 hizalaması
+
+#262 main’e birleşti (284c789715342786e972f912e5a57d253b1c7001). Ürün sahibi açıklama tasarımını ve sabit polaris-2.0.js + exact @shopify/polaris-types@2.0.0 geçişini açıkça onayladı. Sunucu ShopifyApp ve AppProvider aynı merkezi runtime değerini kullanır; paket ve lock birlikte değiştirilir. Resmî Shopify sürümleme kaynağı 2026-10-29 kontrol edildi: https://shopify.dev/docs/api/app-home/latest/web-components/versioning.
+
+Bu kayıt yalnız kod referansını hizalar. Gerçek Shopify Admin masaüstü ve en az 320 px gerçek mobil görsel kabulü bekliyor; yeni modal/route veya izin aktivasyonu tamamlandı sayılmaz. Shopify üzerinde ajan görsel işlem yapmaz. Canlı config/deploy/izin/token/DB değişikliği yok. Eski RC kararları tarihsel kayıttır; güncel sürüm seçimi kararlı 2.0’dır. 15 başlamadı, 22 duraklatılmış, 23 Dataset/FX yazımıdır.
+
 # İzin öncesi açıklamalar — inceleme tasarımı
 
 29 Ekim 2026 · EO-05 / mevcut 07 · dördüncü teknik teslim
@@ -101,7 +107,7 @@ Mevcut beş okuma izni; aylık tahmin ayrı adım, sıfır geçerli. Maliyet eks
 
 Özel CSS, ham HTML kontrolü, özel kart/modal/rozet veya literal renk yok. Metin kesilmez. Modalın doğal kaydırması ve resmî action slotları kullanılır; en az 320 px gerçek mobilde bütün metin ve eylemler erişilebilir olmalıdır. Klavye, dokunma, odak giriş/geri dönüş ve tek açık modal ayrıca doğrulanır.
 
-## Kod öncesi sürüm kararı
+## Tarihsel tasarım önerisi — yukarıdaki 29 Ekim onayıyla sonuçlandı
 
 Repository’nin 6 Ekim’de açıkça seçilmiş referansı hâlâ `polaris-2.0-rc.js` + `2.0.0-rc.2` tipleridir. Son AGENTS metni kararlı bileşen ister. 29 Ekim resmî kontrolünde **kararlı Polaris 2.0** ve **2.0.0 tipleri** mevcut: resmî sabit `polaris-2.0.js` dosyası HTTP 200, npm resmî latest tipi 2.0.0. [Shopify sürümleme belgesi](https://shopify.dev/docs/api/app-home/latest/web-components/versioning), sürüm ile tiplerin birlikte değiştirilmesini ve RC dosyasının kendiliğinden kararlıya dönüşmediğini açıklar.
 

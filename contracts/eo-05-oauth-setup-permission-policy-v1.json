@@ -102,7 +102,7 @@
     "UI_gate": "Existing Shopify embedded UI constitution, analyst brief, official components, desktop/mobile and owner acceptance required before UI implementation/Done",
     "design_contract": "contracts/eo-05-permission-explanation-design-v1.json",
     "analyst_brief": "docs/EO_05_PERMISSION_EXPLANATION_DESIGN_BRIEF.md",
-    "design_status": "design_prepared_owner_review_and_runtime_alignment_pending"
+    "design_status": "owner_approved_design_and_stable_runtime_aligned_UI_and_native_visual_acceptance_pending"
   },
   "known_code_work": {
     "oauth_profile_selection": "Prepared beginCombinedSetup fixes identity_v1; partial/denied/full grant return distinct safe setup progress. Existing routes and default closed server gate unchanged. Account/asset final readiness and accepted modal/Resume Setup routing remain.",

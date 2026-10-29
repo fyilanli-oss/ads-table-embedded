@@ -11,7 +11,7 @@ import {createShopifyProgressivePermissions} from "./progressive-permissions.ser
 
 import {readShopifyAppRuntimeConfig} from "./shopify-app-config.server.js";
 export {readShopifyAppRuntimeConfig};
-const POLARIS_URL = "https://cdn.shopify.com/shopifycloud/polaris-2.0-rc.js";
+const POLARIS_URL = "https://cdn.shopify.com/shopifycloud/polaris-2.0.js";
 
 export async function createShopifyAppRuntime({
   environment = process.env,

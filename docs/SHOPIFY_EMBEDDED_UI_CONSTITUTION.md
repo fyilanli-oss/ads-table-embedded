@@ -7,11 +7,13 @@
 
 > Bu belge eski repository'den gelen ilkeleri, 6 Ekim runtime seçimini ve 7 Ekim grafik sınırını birlikte taşır. Güncel paket sırası `docs/EXECUTION_PLAN.md`, yürütülebilir ana sözleşme `contracts/a6-eo-implementation-master-v1.json` içindedir. Eski ekran kusuru bugünkü uygulama kusuru veya yeni iş yetkisi sayılmaz. Bu dil düzenlemesi UI kodunu, sürümü, kabul durumunu veya canlı ortamı değiştirmez.
 
+**Güncel runtime seçimi — 29 Ekim 2026:** Ürün sahibi sabit `polaris-2.0.js` ve exact `@shopify/polaris-types@2.0.0` geçişini açıkça onayladı. Resmî sürümleme belgesi aynı gün doğrulandı. Runtime ve tipler birlikte hizalanır. Bu seçim canlı yayın veya görsel kabul değildir; gerçek Shopify Admin masaüstü ve en az 320 px gerçek mobil kabulü hâlâ zorunludur. Aşağıdaki 6 Ekim kararı tarihsel kayıttır.
+
 ## 1. Temel karar
 
 AdsTable, Shopify Admin içine gömülü çalışan bir Public Embedded App'tir. Admin içindeki arayüz ikinci bir AdsTable tasarım sistemi değildir. Arayüz yalnız Shopify App Bridge ve ürün sahibinin açıkça onayladığı güncel App Home Polaris web component sürümüyle kurulur. Web component, Shopify'ın sunduğu arayüz bileşenidir; teknik bileşen ve özellik adları çevrilmez.
 
-**Ürün sahibinin runtime kararı — 6 Ekim 2026:** Yeni gömülü uygulamanın Preview ve hedef Production referansı `polaris-2.0-rc.js` ile birebir eşleşen `@shopify/polaris-types@2.0.0-rc.2` paketidir. Runtime uygulamanın çalışan sürümünü, type paketi bileşenlerin tip tanımlarını ifade eder. Shopify bu hattın release candidate, yani kararlı sürüm adayı olduğunu ve gözlem döneminde değişebileceğini bildirir. Bu bilinçli karar otomatik olarak stable 1.x'e geri çevrilemez. Kararlı `polaris-2.0.js` yayımlandığında geçiş; güncel resmî dokümantasyon, type/runtime eşleşmesi, masaüstü ve gerçek mobil kabul, açık ürün sahibi kararı gerektirir.
+**Tarihsel ürün sahibi runtime kararı — 6 Ekim 2026 (29 Ekim sürüm seçimiyle güncellendi):** Yeni gömülü uygulamanın Preview ve hedef Production referansı `polaris-2.0-rc.js` ile birebir eşleşen `@shopify/polaris-types@2.0.0-rc.2` paketidir. Runtime uygulamanın çalışan sürümünü, type paketi bileşenlerin tip tanımlarını ifade eder. Shopify bu hattın release candidate, yani kararlı sürüm adayı olduğunu ve gözlem döneminde değişebileceğini bildirir. Bu bilinçli karar otomatik olarak stable 1.x'e geri çevrilemez. Kararlı `polaris-2.0.js` yayımlandığında geçiş; güncel resmî dokümantasyon, type/runtime eşleşmesi, masaüstü ve gerçek mobil kabul, açık ürün sahibi kararı gerektirir.
 
 Shopify iframe uygulamanın teknik taşıyıcısıdır; özel görünüm üretme izni değildir. Mağaza sahibi AdsTable'ı Shopify'dan kopuk bir web sitesi gibi görmemelidir.
 

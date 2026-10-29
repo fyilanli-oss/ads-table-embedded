@@ -1,4 +1,44 @@
 {
+  "Klaviyo_research_closure_and_existing_step_assignment_2026_10_29": {
+    "checked_at": "2026-10-29",
+    "scope": "Research closure and assignment to existing steps only; not runtime implementation",
+    "missing_technical_work": {
+      "plain": "Klaviyo atıf kaydının dönüşüm olayı ve atfedilen etkileşim olayı kimlikleri mevcut projeksiyon/normalizer içinde korunmuyor; mevcut akış atfedilen olayı okumuyor.",
+      "code_locations": [
+        "app/lib/providers/klaviyo-identity-collection.server.js#ATTRIBUTION_RELATIONS/attributionProjection",
+        "app/lib/providers/klaviyo-reporting-authority.server.js#normalizeAttributionResource"
+      ],
+      "source_relations": [
+        "event",
+        "attributed-event"
+      ],
+      "implemented": false
+    },
+    "existing_step_assignment": {
+      "12": "Teknik tamamlama listesi: dönüşüm/event ve attributed-event referanslarını kimlik/türleriyle koru; mevcut hesap/izin/kota/iptal/ilk-hata sınırında açık, sınırlı etkileşim okumasını bağla. Mesaj/flow çözümlemesini koru; müşteri özelliklerini topluca taşıma.",
+      "13": "Teknik tamamlama listesi: yanlış kaynak/hesap, geçersiz veya çelişkili geri referans, eksik olay/metric, tekrar/kısmi yanıt ve click/open ayrımı kontrolleri. Gerçek ürün bağı yoksa rol üretme.",
+      "15": "İleride: onaylanacak özel kanıt saklama ve tekrar okuma tasarımına bu referansları bağla; yeni tablo/writer bu kararla başlamaz.",
+      "19": "Kapsam: Campaign Assisted; Flow Triggered; çözümlenemeyen mevcut Unclassified. Advertised/Cross-sell yeni kanıt ve ayrı karara kadar açılmaz."
+    },
+    "acceptance_boundary": "Araştırma API okuması kod eksiğinin kapandığı veya native Shopify kabulü anlamına gelmez. İlişkinin korunması ürün seçimi/Advertised kanıtı değildir.",
+    "next_discussion": "Önce 07 OAuth için kullanıcının yaklaşımı dinlenecek; ardından 04–06 ve diğer şimdi tamamlanacak teknik işler birlikte kesinleştirilecek. Bu kayıt kodlamayı kendiliğinden başlatmaz.",
+    "deferred_questions": [
+      "Klaviyo ürün seçimi/Advertised-Cross-sell",
+      "Google Search ürün/rol ayrımı",
+      "PMax Asset Group–Campaign ürün/rol sınırı"
+    ],
+    "existing_PMax_decision": "Campaign preserved; Channel Unclassified where Asset Group identity not proven; no new decision in this closure",
+    "listing_tree_step": 22,
+    "listing_tree_remains_paused": true,
+    "step15_started": false,
+    "Dataset_write_step": 23,
+    "new_plan_number": false,
+    "new_OAuth_permission_decided": false,
+    "evidence": [
+      "docs/evidence/EO_05_KLAVIYO_ORDER_ATTRIBUTED_EVENT_PROBE_2026-10-29.json",
+      "docs/evidence/EO_05_KLAVIYO_PRODUCT_JOURNEY_PROBE_2026-10-29.json"
+    ]
+  },
   "Klaviyo_product_journey_probe_2026_10_29": {
     "evidence": "docs/evidence/EO_05_KLAVIYO_PRODUCT_JOURNEY_PROBE_2026-10-29.json",
     "scope": "four_read_only_native_event_queries_include_attributions_metric",

@@ -1,4 +1,27 @@
 {
+  "Klaviyo_click_metric_properties_probe_2026_10_29": {
+    "evidence": "docs/evidence/EO_05_KLAVIYO_CLICK_METRIC_PROPERTIES_2026-10-29.json",
+    "checked_at": "2026-10-29",
+    "status": "three_read_only_native_requests_200_test_account_schema_only_no_product_order_fields_in_returned_property_lists_all_samples_null",
+    "api_revision": "2026-10-15",
+    "scope": [
+      "metrics:read"
+    ],
+    "requests": 3,
+    "retries": 0,
+    "provider_errors": 0,
+    "email_property_count": 20,
+    "sms_property_count": 9,
+    "Shopify_order_or_click_event_read": false,
+    "source_product_binding_verified": false,
+    "provider_unsupported_proven": false,
+    "role_decision_changed": false,
+    "runtime_code_changed": false,
+    "Dataset_write": false,
+    "step15_started": false,
+    "key_state": "created_active_not_revoked_secret_not_recorded",
+    "attributed_event_followup": "documented_reference_not_yet_retained_or_followed_by_current_code_not_implemented_in_probe"
+  },
   "Shopify_order_explicit_reconciliation_2026_10_29": {
     "status": "repository_prepared_pending_exact_head_CI_owner_merge_not_live_activated",
     "base_main": "63282f8cf77af30d3e4dac8429a81e8f085ee379",

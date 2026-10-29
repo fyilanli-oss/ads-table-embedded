@@ -1,3 +1,11 @@
+## 29 Ekim 2026 — Klaviyo tıklama alanları için dar salt okunur sorgu
+
+Kullanıcının ayrı açık onayıyla test hesabında yalnız metrics:read kapsamlı AdsTable Metric Properties Research anahtarı oluşturuldu. GET /api/metrics ve iki metric-properties sorgusu (örnek değerler istenerek) HTTP 200 döndü; üç yanıtın tamamında devam sayfası yok. Envanter 33 metriktir; Shopify kaynaklı metric gözlenmedi. Klaviyo iç Clicked Email UzHWku için 20, Clicked Text Message Uv6FZ6 için 9 alan döndü. İkisinde de doğrudan ürün/varyant/SKU/item/sipariş kimliği alanı listelenmedi; bütün sample_values değerleri null. Bu, bu test hesabının schema yanıtıdır; gerçek Shopify sipariş/tıklama bağı veya provider genelinde desteklenmeme kanıtı değildir.
+
+Siparişten atfedilen etkileşime attributed-event üzerinden geçiş resmî kaynakta belgeli; mevcut aday projeksiyonu ve attribution normalizer bu ilişkiyi henüz koruyup takip etmiyor. Bu sorgulama events:read istemedi ve olay/sipariş okumadı. Klaviyo Assisted/Triggered/Unclassified kararları değiştirilmedi; Advertised/Cross-sell üretimi kodlanmadı. 15 saklama veya 23 Dataset yazımı başlamadı; PMax 22 duraklaması korunur.
+
+Anahtar yalnız bellekte kullanıldı; değeri dosyaya/loga/evidence veya GitHub’a yazılmadı. Yeni anahtar aktif kaldı, iptal edilmedi. Mevcut OAuth anahtarı, uygulama config’i, deploy ve DB değiştirilmedi. Secret içermeyen üç istek ve exact ham yanıt gövdeleri docs/evidence/EO_05_KLAVIYO_CLICK_METRIC_PROPERTIES_2026-10-29.json içindedir. Revizyon 2026-10-15; resmî kontrol 2026-10-29: https://developers.klaviyo.com/en/reference/get_metrics ve https://developers.klaviyo.com/en/reference/get_properties_for_metric.
+
 ## 29 Ekim 2026 — 12. maddeden kalan açık sipariş rezervasyonu uzlaştırması
 
 PR #252 main'dedir (63282f8cf77af30d3e4dac8429a81e8f085ee379). Bu ikinci kod işi, önceki 12. maddeden kalan açık uzlaştırmadır; 14 yeni kodlama maddesi değildir. Bu teslimin kod/izole test kabulünden sonra yeni kodlamaya devam edilmez. Gerçek ortam kanıtlarının durumu ve 01–13'te yapılan/eksik/bekleyen işler birlikte 14'te değerlendirilir. 15 ayrı kararla başlar; genel Dataset yazımı 23'tedir. 16–22 arasında her geçişte durulur.

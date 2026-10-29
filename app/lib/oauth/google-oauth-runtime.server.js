@@ -20,10 +20,11 @@ import {
   readGoogleAdsOAuthConfig,
   refreshGoogleAdsAccessToken,
   revokeGoogleAdsAuthorization,
+  buildGoogleAdsAuthorizationUrl,
 } from "../providers/google-ads-rest.server.js";
 import {discoverGoogleAdsAccounts} from "../providers/google-account-discovery.server.js";
 import {inspectGoogleIdentityCredential} from "./google-identity-credential.server.js";
-import {GOOGLE_MERCHANT_OAUTH_SCOPE} from "./oauth-permission-profile.server.js";
+import {GOOGLE_MERCHANT_OAUTH_SCOPE, OAuthPermissionProfileError} from "./oauth-permission-profile.server.js";
 import {createIdentityOAuthAuthorization} from "./identity-oauth-authorization.server.js";
 
 const PROVIDER = "google_ads";
@@ -202,6 +203,14 @@ export function createGoogleOAuthRuntime({
     config,
     oauthBoundary,
 
+    // Prepared entry: current routes do not call it; the server gate defaults closed.
+    async beginCombinedSetup({installationAuthority}) {
+      const started = await oauthBoundary.begin({installationAuthority, provider: PROVIDER, permissionProfile: "identity_v1"});
+      return Object.freeze({permissionProfile: "identity_v1", authorizationUrl: buildGoogleAdsAuthorizationUrl({
+        config, state: started.state, pkceChallenge: started.pkceChallenge,
+      })});
+    },
+
     async callbackReturn({workspaceId, installGeneration}) {
       return selections.callbackReturn({workspaceId, installGeneration});
     },
@@ -251,6 +260,10 @@ export function createGoogleOAuthRuntime({
       if (claimed.status === "denied") {
         return Object.freeze({
           outcome: "denied",
+          ...(claimed.permissionProfile === "identity_v1" ? {
+            setupState: "resume_setup", setupReason: "authorization_not_completed", setupComplete: false,
+            setupResumeAction: "request_permissions",
+          } : {}),
           owner,
           callbackReturn: await selections.callbackReturn(owner),
         });
@@ -295,7 +308,11 @@ export function createGoogleOAuthRuntime({
             provider:PROVIDER,transactionId:claimed.transactionId,connectionId:randomUUIDFn(),
             binding:claimed.identityBinding,tokenSet:tokenSet,scopes:tokenSet.scope.trim().split(/\s+/),
             accounts:advertisers,verifiedAt:evidence.verifiedAt,expiresAt:tokenSet.expires_at});
-          return Object.freeze({outcome:committed.status,owner,pending:committed,
+          return Object.freeze({outcome:committed.status==="connected"?"pending_asset_verification":committed.status,
+            connectionState:committed.status,owner,pending:committed,
+            setupState:"resume_setup",setupComplete:false,
+            setupReason:committed.status==="connected"?"asset_verification_required":"account_selection_required",
+            setupResumeAction:committed.status==="connected"?"verify_assets":"select_account",
             callbackReturn:await selections.callbackReturn(owner)});
         }
         const staged = await selections.stage({
@@ -326,10 +343,18 @@ export function createGoogleOAuthRuntime({
             provider: PROVIDER,
           }).catch(() => undefined);
         }
-        await oauthBoundary.finalizeExchange({
+        const finalized = await oauthBoundary.finalizeExchange({
           transactionId: claimed.transactionId,
           success: false,
-        }).catch(() => undefined);
+        }).then(result => result?.transactionId === claimed.transactionId && result.status === "failed", () => false);
+        if (claimed.permissionProfile === "identity_v1" && error instanceof OAuthPermissionProfileError
+          && error.code === "OAUTH_IDENTITY_SCOPE_NOT_GRANTED") {
+          if (!finalized) throw new Error("IDENTITY_OAUTH_FINALIZATION_UNCONFIRMED");
+          return Object.freeze({outcome:"pending_permissions",owner,
+            setupState:"resume_setup",setupReason:"permissions_incomplete",setupComplete:false,
+            setupResumeAction:"request_permissions",
+            callbackReturn:await selections.callbackReturn(owner)});
+        }
         throw error;
       }
     },

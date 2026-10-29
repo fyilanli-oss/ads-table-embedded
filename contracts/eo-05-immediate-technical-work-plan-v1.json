@@ -36,8 +36,9 @@
       ],
       "acceptance": "Products var/Orders yok, Products yok, izin geri alınmış, geçersiz native scope ve yanlış mağaza durumları ayrı sonuç verir.",
       "depends_on": [],
-      "status": "repository_code_and_tests_ready_pending_exact_CI_and_owner_merge_not_live_setup",
-      "implementation_record": "contracts/eo-05-start-brief-v1.json#Shopify_product_order_permission_split_2026_10_29"
+      "status": "merged_code_tests_ready_native_setup_not_accepted",
+      "implementation_record": "contracts/eo-05-start-brief-v1.json#Shopify_product_order_permission_split_2026_10_29",
+      "merged_PR": 257
     },
     {
       "delivery_order": 2,
@@ -54,7 +55,13 @@
       "depends_on": [
         1
       ],
-      "status": "planned_not_implemented"
+      "status": "backend_start_and_callback_slice_ready_pending_exact_CI_owner_merge_inactive_not_full_setup_acceptance",
+      "implementation_record": "contracts/eo-05-start-brief-v1.json#Combined_provider_setup_backend_2026_10_29",
+      "remaining_in_this_delivery": [
+        "Account/Merchant/catalog verification and final combined readiness integration",
+        "Settings/return/Resume Setup wiring with separately accepted explanation modal in delivery4",
+        "Native app approval/merchant grant/asset access evidence, not inferred from unit fixtures"
+      ]
     },
     {
       "delivery_order": 3,

@@ -189,10 +189,14 @@ function runtimeHarness(provider, granted) {
 }
 const claimed = {status: "claimed", workspaceId: uuid, installGeneration: 1, transactionId: txn, authorizationCode: "code", pkceVerifier: "verifier", permissionProfile: "identity_v1", identityBinding: {connectionId: null, version: null}};
 for (const provider of ["google_ads", "meta"]) {
-  test(`${provider}: incomplete consent fails before credential storage or account discovery`, async () => {
+  test(`${provider}: incomplete consent returns Resume Setup before credential storage or account discovery`, async () => {
     const granted = provider === "google_ads" ? oauthPermissionScopes(provider)[0] : ["ads_read"];
     const h = runtimeHarness(provider, granted);
-    await assert.rejects(h.runtime.completeCallback({claimed}), /OAUTH_IDENTITY_SCOPE_/);
+    const result = await h.runtime.completeCallback({claimed});
+    assert.equal(result.outcome, "pending_permissions");
+    assert.equal(result.setupState, "resume_setup");
+    assert.equal(result.setupComplete, false);
+    assert.equal(h.stageScopes(), null);
     assert.equal(h.calls.includes("store"), false); assert.equal(h.calls.includes("stage"), false);
     assert.equal(h.requestCount(), provider === "google_ads" ? 1 : 3);
     assert.deepEqual(h.calls, ["failed"]);

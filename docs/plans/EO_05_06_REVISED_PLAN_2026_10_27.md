@@ -8,13 +8,17 @@
 - Kesin overlap, aynı doğrulanmış Shopify Order ID’ye bağlanan okunabilir provider iddiası gerektirir. Bu erişim tüm provider’lar için kanıtlanmış değildir.
 - Shopify ek kapsamı nedeniyle eski 24–36 saat tahmini yeniden doğrulanmış süre taahhüdü değildir.
 
+## 29 Ekim 2026 — 02 uzlaştırması
+
+PR #179, sonraki onaylı main teslimleriyle karşılaştırılarak birleştirilmeden kapatıldı; branch ve commitleri korunuyor. 24 dosyanın tamamı için güncel karşılık veya bilinçli değiştirme kararı [dosya bazlı kanıtta](../evidence/EO_05_STEP02_PR179_RECONCILIATION_2026-10-29.json) kayıtlıdır. 01–03: **Kod/testler hazır; gerçek ortam doğrulaması bekliyor.** 04–06’daki çalışan PD hat bağlantıları teknik olarak açık; 07–10’daki gerçek izin/kaynak kimliği kanıtları açık. 14 birlikte değerlendirmedir; 15 başlamadı. 22 duraklaması ve 23 Dataset yazımı sırası korunur. Tarihli eski checkpointler geçmiş kaydıdır; bu karar güncel 02 durumudur. Bu değişiklikte tarihli Excel yeniden üretilmedi; güncel durum bu Markdown ve eş JSON kaydındadır.
+
 ## Sıralı plan
 
 | Sıra | İş / sınır | Shopify ek işi | Durum | Paket |
 |---|---|---|---|---|
-| 1 | Ortak çalıştırıcı ve sağlayıcı hata sınıflarını ilk hatada durma kuralına uyarlamak. Kod ve test düzeltmesi. Otomatik ikinci çağrı olmayacak. | — | Kod main’de — PR #182. Canlı akış kabulü değil. | EO-05 hazırlık |
-| 2 | Eski durum kayıtlarını, sözleşme çelişkilerini ve test beklentilerini güncel kararlarla uzlaştırmak. EO-04 geçmişi korunacak; tamamlanmayan EO-05 işi tamamlandı gösterilmeyecek. | — | Kod/belge düzeltmesi main’de — PR #183. Açık PR #179 ayrıca uzlaştırılacak. | EO-05 hazırlık |
-| 3 | Ortak kapsam kontrolünü kodlamak: mağaza, kurulum/nesil, bağlantı, hesap, hiyerarşi, gün, saat dilimi, para birimi ve atıf. Sonraki birleşimlerin ön koşulu. | — | Kontrol helper’ı main’de — PR #184. Canlı kaynak kanıtı ayrı. | EO-05-B |
+| 1 | Ortak çalıştırıcı ve sağlayıcı hata sınıflarını ilk hatada durma kuralına uyarlamak. Kod ve test düzeltmesi. Otomatik ikinci çağrı olmayacak. | — | Kod/testler hazır; gerçek ortam doğrulaması bekliyor. | EO-05 hazırlık |
+| 2 | Eski durum kayıtlarını, sözleşme çelişkilerini ve test beklentilerini güncel kararlarla uzlaştırmak. EO-04 geçmişi korunacak; tamamlanmayan EO-05 işi tamamlandı gösterilmeyecek. | — | Kod/testler hazır; gerçek ortam doğrulaması bekliyor. | EO-05 hazırlık |
+| 3 | Ortak kapsam kontrolünü kodlamak: mağaza, kurulum/nesil, bağlantı, hesap, hiyerarşi, gün, saat dilimi, para birimi ve atıf. Sonraki birleşimlerin ön koşulu. | — | Kod/testler hazır; gerçek ortam doğrulaması bekliyor. | EO-05-B |
 | 4 | Google’ın performans ve dönüşüm sorgularını tek PD yaprak kaydında birleştirmek. Search Ad, Shopping Ad Group, PMax Asset Group; normal kapsam ve çift sayım kontrolü. | — | Birleştirici main’de — PR #185. Native çağrı akışına bağlantı sonraki adımlarda. | EO-05-B |
 | 5 | Klaviyo Placed Order, ATC ve Checkout raporlarını Message seviyesinde birleştirmek. Medium/Variation korunacak; Spend açık kalacak. | — | Birleştirici main’de — PR #186. Native çağrı bağlantısı bekliyor; Spend açık/null. | EO-05-B |
 | 6 | Sağlayıcı çıktısından ortak kayıt sözleşmesine geçişi hazırlamak. FX öncesi kaynak kayıt ile FX uygulanmış kayıt ayrılacak. Sahte kur veya eksik alan doldurulmayacak. | — | Canonical köprü main’de — PR #187. publishable=false; canlı metadata/FX ve writer bağlantısı bekliyor. | EO-05-B |

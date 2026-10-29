@@ -1,4 +1,14 @@
 {
+  "step02_PR179_reconciliation_2026_10_29": {
+    "ordered_plan": "docs/plans/eo-05-06-revised-26-step-plan-2026-10-27.json",
+    "brief": "contracts/eo-05-start-brief-v1.json#step02_PR179_reconciliation_2026_10_29",
+    "evidence": "docs/evidence/EO_05_STEP02_PR179_RECONCILIATION_2026-10-29.json",
+    "step": 2,
+    "steps_01_03_status": "Kod/testler hazır; gerçek ortam doğrulaması bekliyor.",
+    "step_14_joint_review": true,
+    "step_15_started": false,
+    "package_complete": false
+  },
   "Shopify_order_explicit_reconciliation_2026_10_29": {
     "reference": "contracts/eo-05-start-brief-v1.json#Shopify_order_explicit_reconciliation_2026_10_29",
     "ordered_plan_step": 12,

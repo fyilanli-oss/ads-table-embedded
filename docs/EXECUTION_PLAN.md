@@ -1,3 +1,13 @@
+## 29 Ekim 2026 — Klaviyo siparişten atfedilen etkileşime gerçek API okuması
+
+Kullanıcı metrics:read + events:read araştırma anahtarını kendisi oluşturup indirdi. Sekiz sınırlı salt okunur çağrı HTTP 200 verdi; hata, tekrar ve devam sayfası yok. 9 Placed Order olayının tamamında OrderId var. Dört attribution nesnesinde dönüşüm olayı ve atfedilen olay referansları karşılıklı doğrulandı; bu dört olay tek tek okundu: 2 Clicked Email (Bot Click=false), 2 Opened Email. Atıf verilen her etkileşim tıklama değildir.
+
+10 Ordered Product olayının 5 satırı okunan siparişlerle aynı OrderId taşır. 16 Viewed Product olayı ayrıca okundu. İki tıklama payloadında doğrudan ürün kimliği bulunmadı; ürün olaylarında tıklamayla ortak açık etkileşim kimliği gözlenmedi. engtrack_id etkileşimlerde var; ürün bağı veya semantiği doğrulanmış değildir. Satış kaynağı API olan mevcut test hesabıdır; bu sonuç gerçek Shopify üretim sipariş/tıklama kanıtı veya Klaviyo genelinde desteklenmeme kararı değildir. Doğrulanan yol sipariş → attribution → belirli etkileşimdir; tıklanan Shopify Product ID bağı açık kalır.
+
+Secret ve müşteri bilgileri repositoryye konmadı. Sekiz exact istek/ham gövde Downloads altında AES-256-GCM şifreli özel arşivde tutuldu; çözme doğrulaması geçti. Kurtarma, kullanıcının indirdiği araştırma anahtarının özgün değerini gerektirir; anahtar iptal edilse bile bu dosya özel saklanmalıdır. Public evidence istek şablonları, yanıt SHA256 özetleri ve sayısal sonuçları taşır: docs/evidence/EO_05_KLAVIYO_ORDER_ATTRIBUTED_EVENT_PROBE_2026-10-29.json. Her iki araştırma anahtarı aktiftir; iptal edilmedi. Önceki beş schema sorgusu tarihsel aşama olarak korunur. Runtime, Assisted/Triggered/Unclassified rolleri, OAuth uygulaması, config, deploy ve DB değişmedi; 15 ve 23 başlamadı, 22 duraklaması korunur.
+
+Resmî kontrol 2026-10-29: https://developers.klaviyo.com/en/reference/get_events ve https://developers.klaviyo.com/en/reference/get_event. Makine kaydı: contracts/eo-05-start-brief-v1.json#Klaviyo_order_attributed_event_probe_2026_10_29.
+
 ## 29 Ekim 2026 — Klaviyo araştırması satış tarafında sürdürüldü
 
 İlk üç dar sorgunun ardından aynı metrics:read anahtarıyla Placed Order ve Ordered Product metric-properties alanları ayrıca okundu; iki çağrı da 200, devam sayfası yok, tüm örnek değerler null. API entegrasyonlu Placed Order 12 alanda OrderId/ProductID; Ordered Product 10 alanda OrderId/ProductID/Quantity gösterdi. Bunlar satış tarafı alanlarıdır; tıklanan Product ID kanıtı sayılmaz. Toplam beş çağrının ham gövdeleri aynı evidence dosyasında, ilk üç kayıt değiştirilmeden korunur. Gerçek Shopify sipariş kaynağı veya tıklama→ürün bağı doğrulanmadı.

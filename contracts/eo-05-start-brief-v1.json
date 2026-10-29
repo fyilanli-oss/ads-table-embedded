@@ -1,4 +1,25 @@
 {
+  "Klaviyo_order_attributed_event_probe_2026_10_29": {
+    "evidence": "docs/evidence/EO_05_KLAVIYO_ORDER_ATTRIBUTED_EVENT_PROBE_2026-10-29.json",
+    "status": "eight_native_read_requests_200_test_account_order_to_interaction_observed_clicked_product_not_established",
+    "user_approved_scope": [
+      "metrics:read",
+      "events:read"
+    ],
+    "orders": 9,
+    "verified_attribution_links": 4,
+    "clicked_email": 2,
+    "opened_email": 2,
+    "ordered_product_events": 10,
+    "order_matches": 5,
+    "viewed_product_events": 16,
+    "explicit_clicked_product_join": false,
+    "Shopify_production_acceptance": false,
+    "runtime_or_roles_changed": false,
+    "Dataset_write": false,
+    "step15_started": false,
+    "raw_evidence": "Encrypted outside repository; public file contains request templates and exact response SHA256 hashes"
+  },
   "Klaviyo_sales_metric_property_followup_2026_10_29": {
     "evidence": "docs/evidence/EO_05_KLAVIYO_CLICK_METRIC_PROPERTIES_2026-10-29.json#followup_after_initial_probe",
     "scope": [

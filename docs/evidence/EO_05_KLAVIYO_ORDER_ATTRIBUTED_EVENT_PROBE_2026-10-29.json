@@ -1,0 +1,148 @@
+{
+  "checked_at": "2026-10-29",
+  "api_revision": "2026-10-15",
+  "scope": [
+    "metrics:read",
+    "events:read"
+  ],
+  "user_approved": true,
+  "native_requests": 8,
+  "http_200": 8,
+  "retries": 0,
+  "provider_errors": 0,
+  "read_only": true,
+  "account_context": "Existing API-source sales test account; not a native Shopify production acceptance",
+  "observations": {
+    "orders": 9,
+    "orders_with_OrderId": 9,
+    "attribution_objects": 4,
+    "verified_order_attribution_interaction_links": 4,
+    "interaction_metrics": [
+      {
+        "metric": "Clicked Email",
+        "integration": "Klaviyo",
+        "bot_click": false,
+        "direct_product_identity_found": false
+      },
+      {
+        "metric": "Clicked Email",
+        "integration": "Klaviyo",
+        "bot_click": false,
+        "direct_product_identity_found": false
+      },
+      {
+        "metric": "Opened Email",
+        "integration": "Klaviyo",
+        "bot_click": null,
+        "direct_product_identity_found": false
+      },
+      {
+        "metric": "Opened Email",
+        "integration": "Klaviyo",
+        "bot_click": null,
+        "direct_product_identity_found": false
+      }
+    ],
+    "ordered_product_events": 10,
+    "ordered_product_rows_matching_an_observed_OrderId": 5,
+    "viewed_product_events": 16,
+    "product_events_share_explicit_click_identifier": false,
+    "all_collections_have_next_page": false
+  },
+  "interpretation": {
+    "order_to_attributed_interaction": "Observed in native API responses",
+    "clicked_product_identity": "Not established by returned interaction and product payloads",
+    "engtrack_id": "Present in interactions; no documented or observed product join established",
+    "universal_provider_unsupported": false,
+    "native_Shopify_order_proof": false,
+    "roles_changed": false,
+    "runtime_changed": false,
+    "Dataset_write": false,
+    "step15_started": false
+  },
+  "requests": [
+    {
+      "ordinal": 1,
+      "method": "GET",
+      "request": "https://a.klaviyo.com/api/metrics?fields%5Bmetric%5D=id%2Cname%2Cintegration",
+      "status": 200,
+      "at": "2026-10-29T14:30:58.380Z",
+      "response_sha256": "5e877bfdc4543c02fb3fdb66e486461665363a2b537b360f17161980d5333eca"
+    },
+    {
+      "ordinal": 2,
+      "method": "GET",
+      "request": "https://a.klaviyo.com/api/events?filter=equals%28metric_id%2C%22UqkwjP%22%29&include=attributions%2Cmetric&fields%5Bevent%5D=id%2Cdatetime%2Ctimestamp%2Cevent_properties&fields%5Bmetric%5D=id%2Cname%2Cintegration&page%5Bsize%5D=20&sort=-datetime",
+      "status": 200,
+      "at": "2026-10-29T14:31:41.197Z",
+      "response_sha256": "a0bbc50c25a8289f8114c1981a4ae67bc6afdd3fc255b79e48bc0b176752b46d"
+    },
+    {
+      "ordinal": 3,
+      "method": "GET",
+      "request": "https://a.klaviyo.com/api/events/{native-attributed-event-id}?include=metric&fields%5Bevent%5D=id%2Cdatetime%2Ctimestamp%2Cevent_properties&fields%5Bmetric%5D=id%2Cname%2Cintegration",
+      "status": 200,
+      "at": "2026-10-29T14:32:26.324Z",
+      "response_sha256": "0a05843703ad2c8c18b98ec11a34e518f728fee407045b1a636fcb69bcd3d80d"
+    },
+    {
+      "ordinal": 4,
+      "method": "GET",
+      "request": "https://a.klaviyo.com/api/events/{native-attributed-event-id}?include=metric&fields%5Bevent%5D=id%2Cdatetime%2Ctimestamp%2Cevent_properties&fields%5Bmetric%5D=id%2Cname%2Cintegration",
+      "status": 200,
+      "at": "2026-10-29T14:32:26.585Z",
+      "response_sha256": "0aaf0c8d4e7260b510554041ef7d63473d4a8f09908566eeae40eb817b96e1e5"
+    },
+    {
+      "ordinal": 5,
+      "method": "GET",
+      "request": "https://a.klaviyo.com/api/events/{native-attributed-event-id}?include=metric&fields%5Bevent%5D=id%2Cdatetime%2Ctimestamp%2Cevent_properties&fields%5Bmetric%5D=id%2Cname%2Cintegration",
+      "status": 200,
+      "at": "2026-10-29T14:32:26.808Z",
+      "response_sha256": "a9d0d5ed5bb6ceefc9e949b0d1e01f0d89e0d4dc10884a9f9f5a5fac5d33fd8d"
+    },
+    {
+      "ordinal": 6,
+      "method": "GET",
+      "request": "https://a.klaviyo.com/api/events/{native-attributed-event-id}?include=metric&fields%5Bevent%5D=id%2Cdatetime%2Ctimestamp%2Cevent_properties&fields%5Bmetric%5D=id%2Cname%2Cintegration",
+      "status": 200,
+      "at": "2026-10-29T14:32:27.041Z",
+      "response_sha256": "39c37334fc63aabf48ff179137c6d1b608bebfc3826e26b12d2c176085f51a35"
+    },
+    {
+      "ordinal": 7,
+      "method": "GET",
+      "request": "https://a.klaviyo.com/api/events?filter=equals%28metric_id%2C%22XZchkM%22%29&include=metric&fields%5Bevent%5D=id%2Cdatetime%2Ctimestamp%2Cevent_properties&fields%5Bmetric%5D=id%2Cname%2Cintegration&page%5Bsize%5D=20&sort=-datetime",
+      "status": 200,
+      "at": "2026-10-29T14:33:32.462Z",
+      "response_sha256": "b0089b6fa70aa28dacd2f592c6f28963ae2f80707dfa56910504a3e182709186"
+    },
+    {
+      "ordinal": 8,
+      "method": "GET",
+      "request": "https://a.klaviyo.com/api/events?filter=equals%28metric_id%2C%22QPuKiR%22%29&include=metric&fields%5Bevent%5D=id%2Cdatetime%2Ctimestamp%2Cevent_properties&fields%5Bmetric%5D=id%2Cname%2Cintegration&page%5Bsize%5D=20&sort=-datetime",
+      "status": 200,
+      "at": "2026-10-29T14:33:32.817Z",
+      "response_sha256": "3fb6b4c36b3614f96964e539af0f3761cab5f4c96f29913d65f3c27f02acddee"
+    }
+  ],
+  "private_raw_evidence": {
+    "file": "AdsTable-Klaviyo-Event-Probe-2026-10-29.encrypted.json",
+    "sha256": "a95142543e5ef3f782563d0976c165da1ea61d9af33e4163e8adf7c3804fe973",
+    "exact_native_response_bodies": 8,
+    "authorization_headers_excluded": true,
+    "encrypted_outside_repository": true,
+    "round_trip_verified": true,
+    "recovery_requires": "Original downloaded research API key string; keep it privately even after revocation"
+  },
+  "credentials": {
+    "new_key": "Manually created and downloaded by user; active, not revoked; never copied to repository",
+    "previous_metrics_key": "Active, not revoked"
+  },
+  "sources": [
+    "https://developers.klaviyo.com/en/reference/get_events",
+    "https://developers.klaviyo.com/en/reference/get_event",
+    "https://help.klaviyo.com/hc/en-us/articles/1260804504250",
+    "https://nodejs.org/api/crypto.html"
+  ]
+}

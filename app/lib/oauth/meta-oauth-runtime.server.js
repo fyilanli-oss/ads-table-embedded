@@ -1,3 +1,4 @@
+import {createCombinedSetupAssetAccess} from "./combined-setup-assets.server.js";
 import {createCombinedSetupAccounts, assertCombinedSetupAccountBinding} from "./combined-setup-accounts.server.js";
 import {randomUUID} from "node:crypto";
 import {
@@ -442,7 +443,9 @@ export function createMetaOAuthRuntime({
       });
     },
   };
-  return Object.freeze({...runtime, combinedSetup: createCombinedSetupAccounts({
-    provider: PROVIDER, enabled: identityAuthorizationEnabled, lifecycle, tokenVault, runtime,
+  return Object.freeze({...runtime, combinedSetup: Object.freeze({
+    ...createCombinedSetupAccounts({provider: PROVIDER, enabled: identityAuthorizationEnabled, lifecycle, tokenVault, runtime}),
+    verifyAssets: createCombinedSetupAssetAccess({provider: PROVIDER, enabled: identityAuthorizationEnabled,
+      database, tokenVault, config, fetchFn, now}).verify,
   })});
 }

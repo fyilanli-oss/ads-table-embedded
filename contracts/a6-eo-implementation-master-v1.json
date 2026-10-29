@@ -1,10 +1,19 @@
 {
+  "Combined_provider_setup_asset_access_2026_10_29": {
+    "record": "contracts/eo-05-start-brief-v1.json#Combined_provider_setup_asset_access_2026_10_29",
+    "existing_step": 7,
+    "code_delivery_order": 2,
+    "status": "asset_access_backend_ready_inactive_pending_UI_and_native_acceptance",
+    "live_UI_or_setup_acceptance": false
+  },
   "Combined_provider_setup_account_selection_2026_10_29": {
     "record": "contracts/eo-05-start-brief-v1.json#Combined_provider_setup_account_selection_2026_10_29",
     "existing_step": 7,
     "code_delivery_order": 2,
-    "status": "account_selection_backend_slice_ready_inactive_not_full_setup_acceptance",
-    "live_UI_or_setup_acceptance": false
+    "status": "merged_account_selection_backend_inactive_not_full_setup_acceptance",
+    "live_UI_or_setup_acceptance": false,
+    "PR": 259,
+    "merge_commit": "2151de8df9ba155e541b9e4558b3f059a842f41d"
   },
   "Combined_provider_setup_backend_2026_10_29": {
     "record": "contracts/eo-05-start-brief-v1.json#Combined_provider_setup_backend_2026_10_29",

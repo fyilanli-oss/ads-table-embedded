@@ -171,8 +171,14 @@
   ],
   "combined_account_selection_backend": {
     "record": "contracts/eo-05-start-brief-v1.json#Combined_provider_setup_account_selection_2026_10_29",
-    "status": "account_selection_backend_slice_ready_inactive_not_full_setup_acceptance",
+    "status": "merged_account_selection_backend_inactive_not_full_setup_acceptance",
     "setupComplete": false,
     "asset_access_and_UI_acceptance": "still_open"
+  },
+  "combined_asset_access_backend": {
+    "record": "contracts/eo-05-start-brief-v1.json#Combined_provider_setup_asset_access_2026_10_29",
+    "status": "asset_access_backend_ready_inactive_pending_UI_and_native_acceptance",
+    "setupComplete": false,
+    "developer_app_approval_and_UI_activation": "not_inferred_from_access_probe"
   }
 }

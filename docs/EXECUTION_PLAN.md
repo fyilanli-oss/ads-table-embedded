@@ -1,3 +1,15 @@
+## 29 Ekim 2026 — Birleşik kurulum: Merchant/katalog erişim kontrolü
+
+#259 main’e birleşti (2151de8df9ba155e541b9e4558b3f059a842f41d); iki zorunlu CI başarılı. 07 / ikinci kod tesliminin runtime.combinedSetup.verifyAssets sunucu girişi hazırlandı. Kapı varsayılan kapalı; mevcut Settings/callback ve reporting_v1 yolları değişmedi.
+
+Google seçilen Ads hesabının doğrudan Merchant bağını tam okur; Merchant hesap resource name/accountId eşliğini ve tek ürün sayfasının okunabildiğini kontrol eder. Merchant erişimi ve Ads bağı tekrar kontrol edilir. Meta önce token kullanıcısının güncel reklam hesabı erişimini, sonra seçilen işletmenin kendi veya kendisine paylaşılan reklam hesabı/katalog üyeliğini, katalog kimliğini ve tek ürün sayfası erişimini native okur; kullanıcı erişimi, üyelikler ve token app/izin/süre kontrolü sonda yenilenir. İşletmede görünmek kullanıcının o hesaba erişimi yerine geçmez. Aktif kampanya/reklam zorunlusu eklenmedi. Meta için bu kanıt işletme varlık erişimidir; reklamda o katalog kullanıldı, ürün gösterildi veya Insights kimliği çözüldü anlamına gelmez.
+
+Boş ürün listesi erişim hatası değildir; toplam ürün adedi, gerçek zero veya kimlik eşlemesi çıkarılmaz. Yalnız güncel güvenilir Shopify kurulum bağlamı ve mevcut seçili raporlama hesabı kullanılır. Mağaza/nesil/connection/version/credential/raporlama seçimi her native okuma çevresinde korunur. Hata, bozuk veya döngüsel sayfalama, erişim/izin/bağ değişimi, iptal veya toplam süre aşımı sonucu geçersiz kılar. Otomatik retry/fallback/yenileme/revoke yoktur. Çıktıda token/credential/ham ürün listesi taşınmaz.
+
+Başarı accessState=verified üretir; setupComplete=false ve setup_activation_pending/review_setup kalır. Geliştirici uygulama onayı değerlendirilmiş sayılmaz; UI/modal kabulü ve nihai setup aktivasyonu açık kalır. Kanıt geçici ve sürelidir; kalıcı kaynak/kanıt bağları mevcut 15. maddede, Dataset/FX yazımı 23’te kalır. Bu parça ikinci kod tesliminin tamamı veya canlı kabulü değildir. Native izin/token/config/deploy/DB/Dataset değişikliği yapılmadı. 15 başlamadı; 22 duraklatılmış.
+
+57 yeni test ve 289 ilgili test geçti. Son kullanıcı-hesap kontrolünden önceki yerel 2.964 test/tip/derleme geçti; nihai değişikliğin tüm test/tip/derleme kabulü exact commit CI ile doğrulanacaktır. Google Merchant Account/Get/Products List ve Meta resmî Business/ProductCatalog SDK kaynakları 2026-10-29 okundu. Mevcut izin seti genişletilmedi; gerçek app review/merchant erişim kabulü sentetik testlerden çıkarılmadı. Makine kaydı: contracts/eo-05-start-brief-v1.json#Combined_provider_setup_asset_access_2026_10_29.
+
 ## 29 Ekim 2026 — Birleşik kurulum: hesap seçimi ve sürdürme sunucu dilimi
 
 #258 main’e birleşti (e936b033a2f0e794f94d8c03def4f58d5cedc77a); iki zorunlu CI başarılı. 07 / ikinci kod tesliminin hesap seçimi dilimi hazırlandı. Google ve Meta runtime.combinedSetup girişleri mevcut hesap keşfi/izin doğrulayıcısı ve CAS seçim kayıtlarını kullanır. Varsayılan sunucu kapısı kapalı; mevcut Settings/callback yolları ve reporting_v1 davranışı değişmedi.

@@ -1,10 +1,92 @@
 {
+  "Combined_provider_setup_asset_access_2026_10_29": {
+    "checked_at": "2026-10-29",
+    "base_main": "2151de8df9ba155e541b9e4558b3f059a842f41d",
+    "existing_plan_step": 7,
+    "code_delivery_order": 2,
+    "status": "asset_access_backend_ready_inactive_pending_UI_and_native_acceptance",
+    "runtime": [
+      "app/lib/oauth/combined-setup-assets.server.js",
+      "app/lib/oauth/google-oauth-runtime.server.js",
+      "app/lib/oauth/meta-oauth-runtime.server.js"
+    ],
+    "entry": "runtime.combinedSetup.verifyAssets; server-only verified Shopify context plus explicit target IDs; constructor gate false by default",
+    "behavior": {
+      "authority": "Existing concrete identity authority loader binds current installation/shop/workspace/generation/reporting account, connection/version/credential and reporting selection epoch. Revalidated around every native response; no caller reader/evidence/config override.",
+      "google": "Complete native Ads product_link lookup confirms the selected direct Merchant relationship; accounts/v1 get checks exact resource name and accountId before/after a pageSize=1 Products access probe; final Ads link must remain the same. Existing manager route preserved.",
+      "meta": "Native token app/scope/expiry inspection and current token-user advertiser discovery before/after; selected business owned/client advertiser and catalog membership, exact catalog node, limit=1 Products probe, then repeated business membership. Business visibility cannot replace the current user advertiser check. No active Ad/Campaign required.",
+      "scope": "Meta evidence is selected-business asset access, not an Ad-to-catalog delivery/Insights product namespace claim. Google evidence is the observed direct Ads-to-Merchant relationship. Neither proves Shopify Product ID mapping, roles or all connected accounts.",
+      "empty_collection": "A successful empty product collection proves only readable endpoint; no inventory zero, full scan, product mapping or sales-role proof is manufactured.",
+      "outcome": "accessState=verified with expiring owner/account/epoch-bound safe evidence. setupComplete=false, setup_activation_pending/review_setup; developerAppApproval=not_evaluated, authorizesActivation=false, persisted=false.",
+      "failure": "First native error stops; no fallback, automatic exchange/refresh/retry/revoke/delete. Invalid or unrelated assets, malformed/cyclic cursors, duplicate membership IDs, clock rollback/elapsed deadline, revoked native grant or changed authority discard result. Native quota control is preserved.",
+      "bounds": "One total wall deadline; Meta membership page/row limits span both before/after reads. Google existing complete link reader limits each before/after pass. Probe is one product page and not a bulk source collector."
+    },
+    "remaining_within_delivery2": [
+      "Final setup readiness/activation joined to developer approval evidence and accepted UI; access proof alone cannot authorize it",
+      "Settings/return/Resume Setup and Merchant/business/catalog target selection wiring with separately accepted explanation modal in delivery4",
+      "Native app approval/merchant grant/asset access acceptance; isolated tests are not live evidence"
+    ],
+    "storage_boundary": "Access result is ephemeral; durable source/evidence binding remains existing step15. No new table or writer; rereading setup does not imply an unpersisted proof survives navigation.",
+    "unchanged": [
+      "Current Settings/callback routes and reporting_v1 flow",
+      "Permission scope sets and existing OAuth/native credential validators",
+      "Provider configuration, app review, live token/permission/deploy/DB/Dataset",
+      "Shopify Product ID mapping and Advertised/Cross Sell logic"
+    ],
+    "validation": {
+      "new_tests": 57,
+      "targeted_tests": 289,
+      "full_tests": "pending_exact_CI_after_final_advertiser_check",
+      "typecheck": "pending_exact_CI_after_final_advertiser_check",
+      "build": "pending_exact_CI_after_final_advertiser_check",
+      "earlier_local_validation": {
+        "full_tests": 2964,
+        "failed": 0,
+        "typecheck": "passed",
+        "build": "passed",
+        "boundary": "preceded final current-user advertiser before/after wiring; not final acceptance"
+      },
+      "exact_CI": "pending",
+      "F01": "unchanged_paths_not_triggered"
+    },
+    "official_sources": [
+      {
+        "source": "https://developers.google.com/merchant/api/reference/rest/accounts_v1/accounts/get",
+        "checked_at": "2026-10-29"
+      },
+      {
+        "source": "https://developers.google.com/merchant/api/reference/rest/accounts_v1/accounts",
+        "checked_at": "2026-10-29"
+      },
+      {
+        "source": "https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.products/list",
+        "checked_at": "2026-10-29"
+      },
+      {
+        "source": "https://raw.githubusercontent.com/facebook/facebook-nodejs-business-sdk/main/src/objects/business.js",
+        "checked_at": "2026-10-29",
+        "proof": "owned_ad_accounts/client_ad_accounts and owned_product_catalogs/client_product_catalogs edges; not permission dependency or app review proof"
+      },
+      {
+        "source": "https://raw.githubusercontent.com/facebook/facebook-nodejs-business-sdk/main/src/objects/product-catalog.js",
+        "checked_at": "2026-10-29",
+        "proof": "id and getProducts; not delivery/Insights identity semantics"
+      },
+      {
+        "source": "https://github.com/facebook/facebook-nodejs-business-sdk/blob/main/src/objects/user.js",
+        "checked_at": "2026-10-29",
+        "proof": "Existing User.getAdAccounts native reader reused; permission dependencies/app review not inferred."
+      }
+    ],
+    "step15_started": false,
+    "Dataset_write": false
+  },
   "Combined_provider_setup_account_selection_2026_10_29": {
     "checked_at": "2026-10-29",
     "base_main": "e936b033a2f0e794f94d8c03def4f58d5cedc77a",
     "existing_plan_step": 7,
     "code_delivery_order": 2,
-    "status": "account_selection_backend_slice_ready_inactive_not_full_setup_acceptance",
+    "status": "merged_account_selection_backend_inactive_not_full_setup_acceptance",
     "runtime": [
       "app/lib/oauth/combined-setup-accounts.server.js",
       "app/lib/oauth/google-oauth-runtime.server.js",
@@ -37,7 +119,7 @@
       "failed": 0,
       "typecheck": "passed",
       "build": "passed",
-      "exact_CI": "pending_PR_exact_commit",
+      "exact_CI": "two_governance_checks_success_on_99229fe0e1796a4af086adaf3a5de981093c241b",
       "F01": "unchanged_paths_not_triggered"
     },
     "official_sources": {
@@ -49,7 +131,9 @@
       "database": "Existing account selection RPC and repository contract inspected; no SQL change. https://supabase.com/docs/guides/database/functions; changelog markdown not readable through current web tool."
     },
     "step15_started": false,
-    "Dataset_write": false
+    "Dataset_write": false,
+    "PR": 259,
+    "merge_commit": "2151de8df9ba155e541b9e4558b3f059a842f41d"
   },
   "Combined_provider_setup_backend_2026_10_29": {
     "checked_at": "2026-10-29",

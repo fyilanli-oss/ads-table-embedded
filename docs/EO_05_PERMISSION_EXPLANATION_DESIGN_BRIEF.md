@@ -1,3 +1,13 @@
+## 29 Ekim 2026 — İzin açıklamaları: ortak bileşen ve kullanıcı niyeti kontrolü
+
+#263 main’e birleşti (5887748a8e8d62eea9f61444d3833ac53b4ea6cb); kararlı Polaris 2.0 referansı kullanılıyor. Mevcut 07 / dördüncü teknik teslim içinde beş onaylı açıklamanın ortak s-modal/s-stack/s-paragraph/s-button/s-banner bileşeni ve tek Settings host’una ait akış denetleyicisi kodlandı. Yeni route veya canlı ekran girişi açılmadı.
+
+Açma/Cancel/Escape izin istemez. Connect niyeti native hide olayından önce sabitlenir, istek yalnız afterhide sonrasında ve güncel uygunluk tekrar kontrol edilerek tek kez gönderilebilir. Eski oturum/çift tıklama/çift kapanma ve ikinci provider açılması engellenir. Kapı varsayılan kapalıdır; browser uygunluğu sunucu yetkisi değildir. Başarılı adapter dönüşü awaiting_status olur, Connected olmaz. Hata ham yanıt saklamadan unknown kalır; otomatik tekrar yoktur. React 18 için native hide/afterhide dinleyicileri ve cleanup kullanılır; Connect açıklamasının kapanması yanlış Cancel sayılmaz.
+
+Açık kalan: bileşenin Settings/Home içinde barındırılması, sabit authenticated sunucu eylemleri ve dönüş/sürdürme/status bağlantısı. Google/Meta mevcut reporting-only begin’e yeni Ads+Merchant/Catalog metni bağlanmadı; böyle bir bağlantı izin kapsamını yanlış anlatırdı. Shopify Products/Orders istemi ve release kapıları açılmadı. Bu teslim tam UI işi, canlı izin veya görsel kabul değildir. Gerçek Shopify Admin masaüstü ve en az 320 px gerçek mobil kanıtı ile açık kullanıcı görsel kabulü zorunlu; Shopify üzerinde ajan görsel işlem yapmaz. 15 başlamadı, 22 duraklatılmış, 23 Dataset/FX yazımıdır.
+
+16 izolasyon testi; beş özellikte açma/iptal/tek istek, native kapanma sırası, kapı değişimi, hata, eski oturum, Resume ayrımı ve gerçek React SSR metni/kontrolleri doğrular. Bu sentetik testler native görsel kanıt değildir. Resmî Modal/Button/Stack/Paragraph/Banner ve React useEffect kaynakları 2026-10-29 kontrol edildi. Kayıt: contracts/eo-05-start-brief-v1.json#Permission_explanation_component_2026_10_29.
+
 ## 29 Ekim 2026 — Onaylı kararlı Polaris 2.0 hizalaması
 
 #262 main’e birleşti (284c789715342786e972f912e5a57d253b1c7001). Ürün sahibi açıklama tasarımını ve sabit polaris-2.0.js + exact @shopify/polaris-types@2.0.0 geçişini açıkça onayladı. Sunucu ShopifyApp ve AppProvider aynı merkezi runtime değerini kullanır; paket ve lock birlikte değiştirilir. Resmî Shopify sürümleme kaynağı 2026-10-29 kontrol edildi: https://shopify.dev/docs/api/app-home/latest/web-components/versioning.

@@ -110,12 +110,13 @@
         2,
         3
       ],
-      "status": "owner_approved_design_and_stable_runtime_aligned_UI_and_native_visual_acceptance_pending",
-      "implementation_record": "contracts/eo-05-start-brief-v1.json#Permission_explanation_design_2026_10_29",
+      "status": "shared_component_and_intent_flow_prepared_Settings_server_wiring_and_visual_acceptance_pending",
+      "implementation_record": "contracts/eo-05-start-brief-v1.json#Permission_explanation_component_2026_10_29",
       "remaining_in_this_delivery": [
-        "Owner review of concrete copy and stable 2.0 runtime/type alignment decision",
-        "UI component plus existing Settings/Home stage routing and authenticated fixed-action wiring; current gates remain closed until accepted",
-        "Real Shopify Admin desktop/mobile 320px, state/return/cancel acceptance and explicit owner visual acceptance; no agent visual operation on Shopify"
+        "Import and host the component in existing Settings/Home setup flow; current component is not mounted on any route",
+        "Fixed authenticated server adapters for combined Google/Meta identity setup and separate Shopify Products/Orders; never attach combined copy to existing reporting-only begin",
+        "Server readback, Resume stages and status reconciliation; new host only after observed status, no automatic retry",
+        "Real Shopify Admin desktop and minimum 320px mobile evidence and explicit owner visual acceptance"
       ],
       "runtime_alignment_record": "contracts/eo-05-start-brief-v1.json#Polaris_stable_2_alignment_2026_10_29"
     },

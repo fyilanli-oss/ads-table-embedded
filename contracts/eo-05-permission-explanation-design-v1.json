@@ -393,7 +393,10 @@
     "owner_visual_acceptance": "not_given",
     "provider_native_grants": "not_inferred",
     "live_permission_flags_changed": false,
-    "package_Done_or_PASS": false
+    "package_Done_or_PASS": false,
+    "UI_component_prepared": true,
+    "route_wiring": false,
+    "component_record": "contracts/eo-05-start-brief-v1.json#Permission_explanation_component_2026_10_29"
   },
   "step15_started": false,
   "Dataset_write": false

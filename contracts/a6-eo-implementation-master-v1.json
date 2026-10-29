@@ -1,4 +1,40 @@
 {
+  "Permission_explanation_component_2026_10_29": {
+    "checked_at": "2026-10-29",
+    "base_main": "5887748a8e8d62eea9f61444d3833ac53b4ea6cb",
+    "existing_plan_step": 7,
+    "code_delivery_order": 4,
+    "status": "shared_component_and_intent_flow_prepared_not_route_wiring_or_visual_acceptance",
+    "runtime_pr": 263,
+    "runtime_merge": "5887748a8e8d62eea9f61444d3833ac53b4ea6cb",
+    "component": "app/components/permission-explanation.tsx",
+    "flow": "app/lib/ui/permission-explanation-flow.js",
+    "copy": "app/lib/ui/permission-explanation-copy.js",
+    "test": "tests/permission-explanation-flow.test.js",
+    "design": "contracts/eo-05-permission-explanation-design-v1.json",
+    "scope": [
+      "Five exact approved explanations in one native stable Polaris component",
+      "One Settings host owns one flow; immutable session guards reject stale/duplicate events",
+      "Connect intent captured before hide; request waits until native afterhide and rechecks availability",
+      "Default closed availability is UI gating only, never server authority",
+      "Native React18 DOM event listeners with cleanup; no automatic request on render/open",
+      "Request success is awaiting_status, not Connected; error stays unknown without retry or raw payload"
+    ],
+    "remaining": [
+      "Import and host the component in existing Settings/Home setup flow; current component is not mounted on any route",
+      "Fixed authenticated server adapters for combined Google/Meta identity setup and separate Shopify Products/Orders; never attach combined copy to existing reporting-only begin",
+      "Server readback, Resume stages and status reconciliation; new host only after observed status, no automatic retry",
+      "Real Shopify Admin desktop and minimum 320px mobile evidence and explicit owner visual acceptance"
+    ],
+    "UI_package_complete": false,
+    "native_visual_acceptance": false,
+    "live_deployment": false,
+    "permission_flags_changed": false,
+    "dataset_write": false,
+    "step15_started": false,
+    "step22": "paused",
+    "step23": "Dataset_FX_writer"
+  },
   "Polaris_stable_2_alignment_2026_10_29": {
     "checked_at": "2026-10-29",
     "base_main": "284c789715342786e972f912e5a57d253b1c7001",

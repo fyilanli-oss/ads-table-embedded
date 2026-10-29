@@ -33,4 +33,3 @@ export function readShopifyAppRuntimeConfig(environment = process.env) {
     scopes: rawScopes === "" ? [] : rawScopes.split(","),
   });
 }
-

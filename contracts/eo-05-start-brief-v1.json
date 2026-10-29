@@ -1,4 +1,23 @@
 {
+  "Klaviyo_product_journey_probe_2026_10_29": {
+    "evidence": "docs/evidence/EO_05_KLAVIYO_PRODUCT_JOURNEY_PROBE_2026-10-29.json",
+    "scope": "four_read_only_native_event_queries_include_attributions_metric",
+    "HTTP_200": 4,
+    "viewed_product_events": 16,
+    "added_to_cart_events": 11,
+    "started_checkout_events": 10,
+    "active_on_site_events": 9,
+    "cart_attributions": 4,
+    "checkout_attributions": 4,
+    "all_eight_stage_links_match_observed_order_interaction": true,
+    "all_eight_stage_links_have_AcceptanceRun": true,
+    "all_four_attributed_orders_have_AcceptanceRun": true,
+    "native_Shopify_acceptance": false,
+    "clicked_product_verified": false,
+    "co_attribution_is_not_exclusive_product_selection": true,
+    "runtime_and_roles_changed": false,
+    "Dataset_write": false
+  },
   "Klaviyo_order_attributed_event_probe_2026_10_29": {
     "evidence": "docs/evidence/EO_05_KLAVIYO_ORDER_ATTRIBUTED_EVENT_PROBE_2026-10-29.json",
     "status": "eight_native_read_requests_200_test_account_order_to_interaction_observed_clicked_product_not_established",

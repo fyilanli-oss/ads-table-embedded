@@ -1,0 +1,401 @@
+{
+  "checked_at": "2026-10-29",
+  "revision": "2026-10-15",
+  "scope": [
+    "metrics:read",
+    "events:read"
+  ],
+  "read_only": true,
+  "additional_requests": 4,
+  "http_200": 4,
+  "retries": 0,
+  "provider_errors": 0,
+  "account_context": "API-source test events; all eight matched cart/checkout events and four attributed orders have AcceptanceRun",
+  "previous_evidence": "docs/evidence/EO_05_KLAVIYO_ORDER_ATTRIBUTED_EVENT_PROBE_2026-10-29.json",
+  "collections": {
+    "viewedProduct": {
+      "events": 16,
+      "next_page": false,
+      "attribution_objects": 0,
+      "events_with_attributions": 0,
+      "profile_references": 16
+    },
+    "addedToCart": {
+      "events": 11,
+      "next_page": false,
+      "attribution_objects": 4,
+      "events_with_attributions": 4,
+      "profile_references": 11
+    },
+    "startedCheckout": {
+      "events": 10,
+      "next_page": false,
+      "attribution_objects": 4,
+      "events_with_attributions": 4,
+      "profile_references": 10
+    },
+    "activeOnSite": {
+      "events": 9,
+      "next_page": false,
+      "attribution_objects": 0,
+      "events_with_attributions": 0,
+      "profile_references": 9
+    }
+  },
+  "verified_links": [
+    {
+      "alias": "product_stage_1",
+      "stage": "addedToCart",
+      "validReverseReference": true,
+      "matchesObservedOrderTouch": 1,
+      "topLevelProductId": true,
+      "addedItemProductId": false,
+      "itemProductIds": 0,
+      "hasOrderId": true,
+      "generatedPrefix": false,
+      "orderRelations": [
+        {
+          "sameProfile": true,
+          "beforeOrder": true,
+          "sameOrderId": true
+        }
+      ]
+    },
+    {
+      "alias": "product_stage_2",
+      "stage": "addedToCart",
+      "validReverseReference": true,
+      "matchesObservedOrderTouch": 1,
+      "topLevelProductId": true,
+      "addedItemProductId": false,
+      "itemProductIds": 0,
+      "hasOrderId": true,
+      "generatedPrefix": false,
+      "orderRelations": [
+        {
+          "sameProfile": true,
+          "beforeOrder": true,
+          "sameOrderId": true
+        }
+      ]
+    },
+    {
+      "alias": "product_stage_3",
+      "stage": "addedToCart",
+      "validReverseReference": true,
+      "matchesObservedOrderTouch": 1,
+      "topLevelProductId": true,
+      "addedItemProductId": false,
+      "itemProductIds": 0,
+      "hasOrderId": true,
+      "generatedPrefix": false,
+      "orderRelations": [
+        {
+          "sameProfile": true,
+          "beforeOrder": false,
+          "sameOrderId": true
+        }
+      ]
+    },
+    {
+      "alias": "product_stage_4",
+      "stage": "addedToCart",
+      "validReverseReference": true,
+      "matchesObservedOrderTouch": 1,
+      "topLevelProductId": true,
+      "addedItemProductId": false,
+      "itemProductIds": 0,
+      "hasOrderId": true,
+      "generatedPrefix": false,
+      "orderRelations": [
+        {
+          "sameProfile": true,
+          "beforeOrder": false,
+          "sameOrderId": true
+        }
+      ]
+    },
+    {
+      "alias": "product_stage_5",
+      "stage": "startedCheckout",
+      "validReverseReference": true,
+      "matchesObservedOrderTouch": 1,
+      "topLevelProductId": true,
+      "addedItemProductId": false,
+      "itemProductIds": 0,
+      "hasOrderId": true,
+      "generatedPrefix": false,
+      "orderRelations": [
+        {
+          "sameProfile": true,
+          "beforeOrder": true,
+          "sameOrderId": true
+        }
+      ]
+    },
+    {
+      "alias": "product_stage_6",
+      "stage": "startedCheckout",
+      "validReverseReference": true,
+      "matchesObservedOrderTouch": 1,
+      "topLevelProductId": true,
+      "addedItemProductId": false,
+      "itemProductIds": 0,
+      "hasOrderId": true,
+      "generatedPrefix": false,
+      "orderRelations": [
+        {
+          "sameProfile": true,
+          "beforeOrder": true,
+          "sameOrderId": true
+        }
+      ]
+    },
+    {
+      "alias": "product_stage_7",
+      "stage": "startedCheckout",
+      "validReverseReference": true,
+      "matchesObservedOrderTouch": 1,
+      "topLevelProductId": true,
+      "addedItemProductId": false,
+      "itemProductIds": 0,
+      "hasOrderId": true,
+      "generatedPrefix": false,
+      "orderRelations": [
+        {
+          "sameProfile": true,
+          "beforeOrder": false,
+          "sameOrderId": true
+        }
+      ]
+    },
+    {
+      "alias": "product_stage_8",
+      "stage": "startedCheckout",
+      "validReverseReference": true,
+      "matchesObservedOrderTouch": 1,
+      "topLevelProductId": true,
+      "addedItemProductId": false,
+      "itemProductIds": 0,
+      "hasOrderId": true,
+      "generatedPrefix": false,
+      "orderRelations": [
+        {
+          "sameProfile": true,
+          "beforeOrder": false,
+          "sameOrderId": true
+        }
+      ]
+    }
+  ],
+  "per_order": [
+    {
+      "orderAlias": "order_1",
+      "interactionMetric": "Clicked Email",
+      "orderHasAcceptanceRun": true,
+      "attributedInteractionFound": true,
+      "stages": [
+        {
+          "stage": "viewedProduct",
+          "sameProfileEvents": 0,
+          "betweenInteractionAndOrder": 0,
+          "betweenWithProductId": 0,
+          "betweenWithAcceptanceRun": 0
+        },
+        {
+          "stage": "addedToCart",
+          "sameProfileEvents": 1,
+          "betweenInteractionAndOrder": 1,
+          "betweenWithProductId": 1,
+          "betweenWithAcceptanceRun": 1
+        },
+        {
+          "stage": "startedCheckout",
+          "sameProfileEvents": 1,
+          "betweenInteractionAndOrder": 1,
+          "betweenWithProductId": 1,
+          "betweenWithAcceptanceRun": 1
+        },
+        {
+          "stage": "activeOnSite",
+          "sameProfileEvents": 0,
+          "betweenInteractionAndOrder": 0,
+          "betweenWithProductId": 0,
+          "betweenWithAcceptanceRun": 0
+        }
+      ]
+    },
+    {
+      "orderAlias": "order_2",
+      "interactionMetric": "Clicked Email",
+      "orderHasAcceptanceRun": true,
+      "attributedInteractionFound": true,
+      "stages": [
+        {
+          "stage": "viewedProduct",
+          "sameProfileEvents": 0,
+          "betweenInteractionAndOrder": 0,
+          "betweenWithProductId": 0,
+          "betweenWithAcceptanceRun": 0
+        },
+        {
+          "stage": "addedToCart",
+          "sameProfileEvents": 2,
+          "betweenInteractionAndOrder": 1,
+          "betweenWithProductId": 1,
+          "betweenWithAcceptanceRun": 1
+        },
+        {
+          "stage": "startedCheckout",
+          "sameProfileEvents": 2,
+          "betweenInteractionAndOrder": 1,
+          "betweenWithProductId": 1,
+          "betweenWithAcceptanceRun": 1
+        },
+        {
+          "stage": "activeOnSite",
+          "sameProfileEvents": 0,
+          "betweenInteractionAndOrder": 0,
+          "betweenWithProductId": 0,
+          "betweenWithAcceptanceRun": 0
+        }
+      ]
+    },
+    {
+      "orderAlias": "order_3",
+      "interactionMetric": "Opened Email",
+      "orderHasAcceptanceRun": true,
+      "attributedInteractionFound": true,
+      "stages": [
+        {
+          "stage": "viewedProduct",
+          "sameProfileEvents": 0,
+          "betweenInteractionAndOrder": 0,
+          "betweenWithProductId": 0,
+          "betweenWithAcceptanceRun": 0
+        },
+        {
+          "stage": "addedToCart",
+          "sameProfileEvents": 2,
+          "betweenInteractionAndOrder": 0,
+          "betweenWithProductId": 0,
+          "betweenWithAcceptanceRun": 0
+        },
+        {
+          "stage": "startedCheckout",
+          "sameProfileEvents": 2,
+          "betweenInteractionAndOrder": 0,
+          "betweenWithProductId": 0,
+          "betweenWithAcceptanceRun": 0
+        },
+        {
+          "stage": "activeOnSite",
+          "sameProfileEvents": 0,
+          "betweenInteractionAndOrder": 0,
+          "betweenWithProductId": 0,
+          "betweenWithAcceptanceRun": 0
+        }
+      ]
+    },
+    {
+      "orderAlias": "order_4",
+      "interactionMetric": "Opened Email",
+      "orderHasAcceptanceRun": true,
+      "attributedInteractionFound": true,
+      "stages": [
+        {
+          "stage": "viewedProduct",
+          "sameProfileEvents": 0,
+          "betweenInteractionAndOrder": 0,
+          "betweenWithProductId": 0,
+          "betweenWithAcceptanceRun": 0
+        },
+        {
+          "stage": "addedToCart",
+          "sameProfileEvents": 1,
+          "betweenInteractionAndOrder": 0,
+          "betweenWithProductId": 0,
+          "betweenWithAcceptanceRun": 0
+        },
+        {
+          "stage": "startedCheckout",
+          "sameProfileEvents": 1,
+          "betweenInteractionAndOrder": 0,
+          "betweenWithProductId": 0,
+          "betweenWithAcceptanceRun": 0
+        },
+        {
+          "stage": "activeOnSite",
+          "sameProfileEvents": 0,
+          "betweenInteractionAndOrder": 0,
+          "betweenWithProductId": 0,
+          "betweenWithAcceptanceRun": 0
+        }
+      ]
+    }
+  ],
+  "conclusions": {
+    "order_to_interaction_observed": true,
+    "cart_and_checkout_coattributed_to_same_interaction_observed": true,
+    "matched_events_are_acceptance_marked": true,
+    "viewed_product_events_for_four_attributed_order_profiles": 0,
+    "clicked_product_identity": false,
+    "canonical_Shopify_product_identity": false,
+    "shared_touch_does_not_identify_exclusive_promoted_product": true,
+    "profile_and_time_are_not_causal_proof": true,
+    "event_unique_id_is_not_a_session_key": true,
+    "provider_universal_unsupported": false,
+    "role_changes": false,
+    "runtime_changes": false,
+    "Dataset_write": false,
+    "Activity_ID_is_not_verified_session_key": true
+  },
+  "next_question": "Native Shopify product-stage event must carry a documented explicit interaction/session-to-order link and a justified product selection rule; co-attribution alone cannot distinguish Advertised/Cross-sell",
+  "requests": [
+    {
+      "label": "viewedProduct",
+      "request": "https://a.klaviyo.com/api/events?filter=equals%28metric_id%2C%22QPuKiR%22%29&include=attributions%2Cmetric&fields%5Bevent%5D=id%2Cdatetime%2Ctimestamp%2Cevent_properties&fields%5Bmetric%5D=id%2Cname%2Cintegration&page%5Bsize%5D=100&sort=-datetime",
+      "status": 200,
+      "at": "2026-10-29T14:51:06.018Z",
+      "method": "GET",
+      "response_sha256": "f5da685f207d0ae8468c86242e7f97e9db227e2a866efc049951ea08830ce061"
+    },
+    {
+      "label": "addedToCart",
+      "request": "https://a.klaviyo.com/api/events?filter=equals%28metric_id%2C%22WPMssV%22%29&include=attributions%2Cmetric&fields%5Bevent%5D=id%2Cdatetime%2Ctimestamp%2Cevent_properties&fields%5Bmetric%5D=id%2Cname%2Cintegration&page%5Bsize%5D=100&sort=-datetime",
+      "status": 200,
+      "at": "2026-10-29T14:51:06.389Z",
+      "method": "GET",
+      "response_sha256": "175aea0ba9fe7d89015057e903985f6aaa378d71d26e15d34875e9716f010a94"
+    },
+    {
+      "label": "startedCheckout",
+      "request": "https://a.klaviyo.com/api/events?filter=equals%28metric_id%2C%22SBUCPk%22%29&include=attributions%2Cmetric&fields%5Bevent%5D=id%2Cdatetime%2Ctimestamp%2Cevent_properties&fields%5Bmetric%5D=id%2Cname%2Cintegration&page%5Bsize%5D=100&sort=-datetime",
+      "status": 200,
+      "at": "2026-10-29T14:51:06.863Z",
+      "method": "GET",
+      "response_sha256": "92cd97618f11ecf316cf095c3e6275591aec12dde2578530545d202d2e702598"
+    },
+    {
+      "label": "activeOnSite",
+      "request": "https://a.klaviyo.com/api/events?filter=equals%28metric_id%2C%22VcJYX7%22%29&include=attributions%2Cmetric&fields%5Bevent%5D=id%2Cdatetime%2Ctimestamp%2Cevent_properties&fields%5Bmetric%5D=id%2Cname%2Cintegration&page%5Bsize%5D=100&sort=-datetime",
+      "status": 200,
+      "at": "2026-10-29T14:51:07.122Z",
+      "method": "GET",
+      "response_sha256": "81718eede5dd747a5626d9783fe3fdbf6f22f470e8c219963ee54a88ecb7b325"
+    }
+  ],
+  "private_archive": {
+    "file": "AdsTable-Klaviyo-Product-Journey-2026-10-29.encrypted.json",
+    "sha256": "c8d8a47f131ade1e731fa925da4645321451a8ae3a21ad2f8456903a4f9648bd",
+    "exact_native_responses": 4,
+    "round_trip_verified": true,
+    "recovery": "Original downloaded research key string; keep privately"
+  },
+  "sources": [
+    "https://developers.klaviyo.com/en/reference/get_events",
+    "https://developers.klaviyo.com/en/reference/events_api_overview",
+    "https://help.klaviyo.com/hc/en-us/articles/115005080447",
+    "https://help.klaviyo.com/hc/en-us/articles/1260804504250"
+  ]
+}

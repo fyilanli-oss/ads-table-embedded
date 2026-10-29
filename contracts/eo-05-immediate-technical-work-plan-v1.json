@@ -110,13 +110,13 @@
         2,
         3
       ],
-      "status": "shared_component_and_intent_flow_prepared_Settings_server_wiring_and_visual_acceptance_pending",
-      "implementation_record": "contracts/eo-05-start-brief-v1.json#Permission_explanation_component_2026_10_29",
+      "status": "Settings_host_fixed_authenticated_actions_and_Klaviyo_resume_wired_combined_selectors_release_and_native_acceptance_pending",
+      "implementation_record": "contracts/eo-05-start-brief-v1.json#Permission_settings_wiring_2026_10_29",
       "remaining_in_this_delivery": [
-        "Import and host the component in existing Settings/Home setup flow; current component is not mounted on any route",
-        "Fixed authenticated server adapters for combined Google/Meta identity setup and separate Shopify Products/Orders; never attach combined copy to existing reporting-only begin",
-        "Server readback, Resume stages and status reconciliation; new host only after observed status, no automatic retry",
-        "Real Shopify Admin desktop and minimum 320px mobile evidence and explicit owner visual acceptance"
+        "Combined Google/Meta verified account/reporting/asset selectors must be wired to their own server operations; no legacy reporting fallback or inert Resume button",
+        "Actual developer app readiness and separately authorized optional-scope/config releases; switches stay closed until their own acceptance",
+        "Actual Shopify Admin desktop/minimum320px mobile and explicit owner visual acceptance; no agent native visual operation",
+        "Native auth/callback/request/decline/error/partial-grant/capacity evidence remains pending"
       ],
       "runtime_alignment_record": "contracts/eo-05-start-brief-v1.json#Polaris_stable_2_alignment_2026_10_29"
     },

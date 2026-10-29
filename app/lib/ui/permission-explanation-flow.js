@@ -48,7 +48,7 @@ export function createPermissionExplanationFlow({request, canRequest = () => fal
     async afterHide(session) {
       if (!current(session)) return false;
       if (["explaining", "hiding_for_cancel", "unavailable"].includes(state.phase)) {
-        set("idle");
+        state = Object.freeze({...state, phase: "idle", feature: null});
         return false;
       }
       if (state.phase !== "hiding_for_connect") return false;
@@ -61,6 +61,11 @@ export function createPermissionExplanationFlow({request, canRequest = () => fal
         // A resolved adapter is not proof of a grant or a completed setup.
         set("awaiting_status");
       } catch { set("unknown"); }
+      return true;
+    },
+    statusObserved(session, feature) {
+      if (!current(session) || feature !== state.feature || !["awaiting_status", "unknown", "unavailable"].includes(state.phase)) return false;
+      set("idle");
       return true;
     },
   });

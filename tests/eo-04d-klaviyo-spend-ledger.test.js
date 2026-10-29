@@ -165,7 +165,7 @@ test("repository corrects the exact selected spend event instead of a shared dat
 test("Settings uses accepted Shopify components and keeps Resume separate from OAuth", () => {
   const route = read("app/routes/_admin.settings.tsx");
   const klaviyo = route.slice(route.indexOf('<s-section heading="Klaviyo">'));
-  assert.match(klaviyo, /commandFor="klaviyo-connect-modal"/);
+  assert.match(klaviyo, /permissions[.]open\("klaviyo"\)/);
   assert.match(klaviyo, /id="klaviyo-setup-modal"/);
   assert.match(klaviyo, /ref=\{klaviyoSetupModal\}/);
   assert.match(klaviyo, /<s-choice-list/);

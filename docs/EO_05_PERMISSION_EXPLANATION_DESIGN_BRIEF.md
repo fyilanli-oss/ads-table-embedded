@@ -1,3 +1,15 @@
+## 29 Ekim 2026 — İzin açıklamaları Settings ve sabit sunucu eylemlerine bağlandı
+
+Aynı taslak #264 üzerinde ortak açıklama artık mevcut Settings içinde kullanılıyor. Üç eski Connect modalı kaldırıldı; Connect/Reconnect ve hata sonrası kontrol aynı host’a bağlandı. Settings içindeki Shopify bölümünde Products, ayrı isteğe bağlı Orders ve Check status var. İzin eyleminden önce mağaza/kurulum sunucuda doğrulanır. Formun provider/permissionProfile veya enabled alanı yetki kaynağı değildir. Sabit feature + ilişkilendirme kimliği kontrol edilir; response yalnız aynı özelliğe/isteğe ve o sağlayıcının native hedef ekranına bağlanabilir.
+
+Google/Meta birleşik beginCombinedSetup yoluna, Shopify sabit requestProducts/requestOrders metoduna, Klaviyo mevcut beş okuma izinli girişe bağlandı. Google/Meta ve Shopify yayın/izin isteme bayrakları kapalı kaldı; kapalı durumda provider runtime oluşturulmaz ve izin/varlık okuması yapılmaz. Açıklama kapısının değişmesi developer onayı, optional_scopes yayını, token veya canlı test değildir. Kullanıcı Check status demeden mount/return effect’i yeni izin başlatmaz; permission eylemi mevcut provider loader’larını kendiliğinden tekrar çalıştırmaz. Native SDK Response aynen korunur.
+
+Klaviyo hesap/maliyet sürdürme mevcut adıma döner, geçerli seçilmiş hesap korunur; eksik maliyet yeniden OAuth istemez. Products hazır değilse Orders sürdürme Products açıklamasına döner. Yalnız aynı özelliğin doğrulanmış durum cevabı belirsiz/bekleyen istemi serbest bırakır. Hata ham yanıt göstermeden unknown olur; Check status sunulur, tekrar/alternatif rota yoktur. Bir erişim cevabı genel Connected veya Dataset yetkisi üretmez.
+
+Açık kalan kod: Google/Meta birleşik hesap/Reporting Account/merchant-business-catalog seçicilerinin kendi doğrulanmış sunucu yoluna bağlanması. Bu evreler eski reporting seçicisine veya yeniden OAuth’a düşürülmez; henüz bağlı olmayan evreye boş işlevli Resume düğmesi sunulmaz. Developer/yayın kapıları ve gerçek Shopify Admin masaüstü/en az 320 px mobil, native dönüş/ret/kısmi izin ve açık kullanıcı görsel kabulü ayrıca bekliyor. Ajan Shopify üzerinde görsel işlem yapmaz. UI işi Done/PASS ve merge-ready değildir; 15 başlamadı, 22 duraklatılmış, 23 Dataset/FX yazımı.
+
+Resmî Shopify Modal ve Scopes ile React Router useFetcher belgeleri 2026-10-29 yeniden okundu. Güncel belge v4/latest ile kurulu SDK 3.0.1 aynı sürüm diye varsayılmadı; mevcut runtime ve native SDK method sözleşmesi korundu. React best-practices becerisinin sunucu kimlik doğrulama, olay cleanup ve paket ayrımı kontrolü uygulandı; bu native görsel kanıt değildir. Kayıt: contracts/eo-05-start-brief-v1.json#Permission_settings_wiring_2026_10_29.
+
 ## 29 Ekim 2026 — İzin açıklamaları: ortak bileşen ve kullanıcı niyeti kontrolü
 
 #263 main’e birleşti (5887748a8e8d62eea9f61444d3833ac53b4ea6cb); kararlı Polaris 2.0 referansı kullanılıyor. Mevcut 07 / dördüncü teknik teslim içinde beş onaylı açıklamanın ortak s-modal/s-stack/s-paragraph/s-button/s-banner bileşeni ve tek Settings host’una ait akış denetleyicisi kodlandı. Yeni route veya canlı ekran girişi açılmadı.

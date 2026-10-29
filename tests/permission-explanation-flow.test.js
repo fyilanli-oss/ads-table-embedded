@@ -18,6 +18,7 @@ for (const feature of Object.keys(PERMISSION_EXPLANATIONS)) {
     await flow.afterHide(session);
     assert.equal(calls, 0);
     assert.equal(flow.snapshot.phase, "idle");
+    assert.equal(flow.snapshot.feature, null, "Cancel restores the previous view without a new status action");
   });
 
   test(`${feature}: Connect waits for native afterhide, duplicate events cannot dispatch twice`, async () => {

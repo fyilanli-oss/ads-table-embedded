@@ -396,7 +396,10 @@
     "package_Done_or_PASS": false,
     "UI_component_prepared": true,
     "route_wiring": false,
-    "component_record": "contracts/eo-05-start-brief-v1.json#Permission_explanation_component_2026_10_29"
+    "component_record": "contracts/eo-05-start-brief-v1.json#Permission_explanation_component_2026_10_29",
+    "settings_actions_wired": true,
+    "klaviyo_existing_resume_wired": true,
+    "route_wiring_remaining": "Verified combined Google/Meta account/reporting/asset selectors; release and actual native acceptance remain open."
   },
   "step15_started": false,
   "Dataset_write": false

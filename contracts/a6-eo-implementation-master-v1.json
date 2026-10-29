@@ -1,4 +1,55 @@
 {
+  "Permission_settings_wiring_2026_10_29": {
+    "checked_at": "2026-10-29",
+    "existing_plan_step": 7,
+    "code_delivery_order": 4,
+    "base_main": "5887748a8e8d62eea9f61444d3833ac53b4ea6cb",
+    "PR": 264,
+    "status": "Settings_host_fixed_authenticated_actions_and_Klaviyo_resume_wired_combined_selectors_release_and_native_acceptance_pending",
+    "paths": [
+      "app/routes/_admin.settings.tsx",
+      "app/components/use-permission-settings.tsx",
+      "app/components/permission-explanation.tsx",
+      "app/lib/shopify/permission-settings.server.js",
+      "app/lib/ui/permission-settings-response.js"
+    ],
+    "scope": [
+      "One shared native explanation host replaces three old Connect modals and direct Reconnect begin triggers",
+      "Shopify section exposes explicit Products and optional Orders explanations and read-only Check status; no mount permission read or native request",
+      "Existing Settings action authenticates route authority before form read or runtime creation; feature and correlation ID are fixed/validated",
+      "Google/Meta adapters call beginCombinedSetup only; Shopify calls fixed requestProducts/requestOrders; Klaviyo retains exact existing five-scope entry",
+      "Server switches for Google/Meta and Shopify remain false; browser form flags cannot open them; developer/app readiness and config release remain separate",
+      "Permission fetcher actions do not implicitly revalidate existing provider loaders; response is feature/correlation/native-target bound",
+      "Only a same-feature observed status can release a pending/unknown intent; successful adapter is not Connected",
+      "Errors provide Check status rather than direct restart; existing connections are not deleted; optional Orders missing base resumes Products",
+      "Klaviyo account/cost Resume uses existing flow without OAuth; current valid selected account is retained when resuming cost"
+    ],
+    "remaining": [
+      "Combined Google/Meta verified account/reporting/asset selectors must be wired to their own server operations; no legacy reporting fallback or inert Resume button",
+      "Actual developer app readiness and separately authorized optional-scope/config releases; switches stay closed until their own acceptance",
+      "Actual Shopify Admin desktop/minimum320px mobile and explicit owner visual acceptance; no agent native visual operation",
+      "Native auth/callback/request/decline/error/partial-grant/capacity evidence remains pending"
+    ],
+    "legacy_reporting_begin": "Retained separate existing server entry; new UI never calls it for combined setup",
+    "production_config_changed": false,
+    "live_provider_calls": false,
+    "visual_acceptance": false,
+    "step15_started": false,
+    "step22": "paused",
+    "step23": "Dataset_FX_writer",
+    "tests": "tests/permission-settings.test.js plus existing explanation/Meta/Google/Klaviyo/constitution guards",
+    "react_review": {
+      "skill": "vercel:react-best-practices",
+      "checks": [
+        "server-auth-actions",
+        "event listener cleanup and stable callbacks",
+        "minimal type-only server imports in client hook",
+        "no automatic permission request in effect",
+        "native Polaris only; no custom CSS"
+      ],
+      "not_native_visual_evidence": true
+    }
+  },
   "Permission_explanation_component_2026_10_29": {
     "checked_at": "2026-10-29",
     "base_main": "5887748a8e8d62eea9f61444d3833ac53b4ea6cb",

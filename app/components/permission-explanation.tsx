@@ -21,6 +21,7 @@ export function PermissionExplanation({
 }: Props) {
   const modal = useRef<ModalHandle | null>(null);
   const {feature, phase, session} = snapshot;
+  const shownSession = useRef<number | null>(null);
   useEffect(() => {
     const element = modal.current;
     if (!element) return;
@@ -34,6 +35,12 @@ export function PermissionExplanation({
       element.removeEventListener("afterhide", afterHide);
     };
   }, [feature, session, onHide, onAfterHide]);
+  useEffect(() => {
+    if (feature && phase === "explaining" && shownSession.current !== session) {
+      modal.current?.showOverlay();
+      shownSession.current = session;
+    }
+  }, [feature, phase, session]);
 
   if (feature === null) return null;
   const copy = PERMISSION_EXPLANATIONS[feature];

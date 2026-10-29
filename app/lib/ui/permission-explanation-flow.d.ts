@@ -11,4 +11,5 @@ export function createPermissionExplanationFlow(args?: {
   connect(session: number, hideOverlay: () => void): boolean;
   hide(session: number): boolean;
   afterHide(session: number): Promise<boolean>;
+  statusObserved(session: number, feature: PermissionFeature): boolean;
 }>;

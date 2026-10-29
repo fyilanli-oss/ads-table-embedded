@@ -42,6 +42,8 @@ test("embedded UI uses only approved Shopify components without custom styling",
   const source = [
     "app/root.tsx",
     "app/components/preview-shell.tsx",
+    "app/components/permission-explanation.tsx",
+    "app/components/use-permission-settings.tsx",
     ...routeFiles,
   ].map(read).join("\n");
   assert.match(source, /<s-page\b/);

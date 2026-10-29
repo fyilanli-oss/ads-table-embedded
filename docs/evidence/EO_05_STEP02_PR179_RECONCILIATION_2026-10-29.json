@@ -1,0 +1,434 @@
+{
+  "checked_at": "2026-10-29",
+  "ordered_step": 2,
+  "review_context": 14,
+  "repository": "fyilanli-oss/ads-table-embedded",
+  "compared_main": "d55c8c59eef3681ce963eca49c21f2f26506eb21",
+  "legacy_pr": 179,
+  "legacy_head": "ffc51bdf6ebd46f9e79b07bb186fb2da82884044",
+  "legacy_base": "dc565a4a9fba50c6cad15a32d19b604056bd29be",
+  "decision": "superseded_close_without_merge_preserve_branch_and_commits",
+  "closure_state": "closed_without_merge",
+  "branch_to_preserve": "codex/product-identity-reader-spec",
+  "status_for_steps_01_03": "Kod/testler hazır; gerçek ortam doğrulaması bekliyor.",
+  "existing_02_delivery_pr": 183,
+  "changed_file_count": 24,
+  "rows": [
+    {
+      "path": "app/lib/providers/catalog-product-identity.server.d.ts",
+      "old_blob": "6f798fe931610b00a5f89269ae8e9167aa4cd38a",
+      "disposition": "replaced",
+      "replacements": [
+        {
+          "path": "app/lib/providers/catalog-shopify-candidate.server.js",
+          "main_blob": "9cb767c16e79d1dcf8f9f6245a02eb979beb87a8"
+        },
+        {
+          "path": "app/lib/providers/google-product-identity-resolution.server.js",
+          "main_blob": "9f358acdb0b9aa2e589e0049f5d16a4aecc5cee8"
+        },
+        {
+          "path": "app/lib/providers/meta-product-identity-resolution.server.js",
+          "main_blob": "10f514146cce4bf70341bf40b05a85633d189b3f"
+        }
+      ],
+      "note": "Eski ortak tip/verified taahhüdü taşınmaz; provider özel adaylar, provider_link_verified=false ve persistable=false sınırıyla korunur."
+    },
+    {
+      "path": "app/lib/providers/catalog-product-identity.server.js",
+      "old_blob": "d9aba4a8973f7a4a67fa06f8062d2046c143ea88",
+      "disposition": "replaced",
+      "replacements": [
+        {
+          "path": "app/lib/providers/catalog-shopify-candidate.server.js",
+          "main_blob": "9cb767c16e79d1dcf8f9f6245a02eb979beb87a8"
+        },
+        {
+          "path": "app/lib/providers/google-product-identity-resolution.server.js",
+          "main_blob": "9f358acdb0b9aa2e589e0049f5d16a4aecc5cee8"
+        },
+        {
+          "path": "app/lib/providers/meta-product-identity-resolution.server.js",
+          "main_blob": "10f514146cce4bf70341bf40b05a85633d189b3f"
+        }
+      ],
+      "note": "İncelenmiş kapsamlı kaynak kuralı ve Shopify parent doğrulaması var. Önek veya biçim, rapor kimliği bağının tek başına kanıtı değildir."
+    },
+    {
+      "path": "app/lib/providers/klaviyo-product-identity.server.js",
+      "old_blob": "efe87680f708046c747623f2fe94ad8c0a884cdf",
+      "disposition": "reimplemented",
+      "replacements": [
+        {
+          "path": "app/lib/providers/klaviyo-product-identity.server.js",
+          "main_blob": "121ea7027408e1e025d3e17f956bb0ce04d3e00c"
+        },
+        {
+          "path": "app/lib/providers/klaviyo-identity-collection.server.js",
+          "main_blob": "00a8148e1d53e1e86dcd9a150f992a98b6f6cc84"
+        }
+      ],
+      "note": "Native event/metric ve standart kapsamdan aday doğrulama; kalıcı mapping veya Sales Role üretmez."
+    },
+    {
+      "path": "app/lib/providers/klaviyo-reporting-authority.server.d.ts",
+      "old_blob": "03911ec744791f10bba489e28b3c8ec3c3bd84ff",
+      "disposition": "superseded",
+      "replacements": [
+        {
+          "path": "app/lib/providers/klaviyo-identity-collection.server.js",
+          "main_blob": "00a8148e1d53e1e86dcd9a150f992a98b6f6cc84"
+        },
+        {
+          "path": "app/lib/refresh/quota-authority-binding.server.js",
+          "main_blob": "dad672183b7978df4fb41575ec98ec891f80c5bf"
+        }
+      ],
+      "note": "Eski optional loadProductIdentityContext callback sözleşmesi taşınmadı. Ayrı sabit modlu candidate reader kullanılır; çalışan PD hattı 04–06 kapsamında hâlâ açıktır."
+    },
+    {
+      "path": "app/lib/providers/klaviyo-reporting-authority.server.js",
+      "old_blob": "694a9af3d40984875472bedecb02d54a2c4fb5bd",
+      "disposition": "superseded",
+      "replacements": [
+        {
+          "path": "app/lib/providers/klaviyo-identity-collection.server.js",
+          "main_blob": "00a8148e1d53e1e86dcd9a150f992a98b6f6cc84"
+        },
+        {
+          "path": "app/lib/refresh/quota-authority-binding.server.js",
+          "main_blob": "dad672183b7978df4fb41575ec98ec891f80c5bf"
+        }
+      ],
+      "note": "Eski opsiyonel reporting loader yerine ayrı native aday okuma ve genuine SDK/kota sınırı var; eski reporting family canlı bağlandı denmez."
+    },
+    {
+      "path": "app/lib/providers/klaviyo-reporting.server.js",
+      "old_blob": "4608a4e31e1990524d9ef48de3736ff4b198ca86",
+      "disposition": "superseded",
+      "replacements": [
+        {
+          "path": "app/lib/providers/klaviyo-identity-collection.server.js",
+          "main_blob": "00a8148e1d53e1e86dcd9a150f992a98b6f6cc84"
+        },
+        {
+          "path": "app/lib/refresh/quota-authority-binding.server.js",
+          "main_blob": "dad672183b7978df4fb41575ec98ec891f80c5bf"
+        }
+      ],
+      "note": "verifyProductIdentities adlı eski opsiyonel family eklenmedi; ayrı candidate reader ile kapsam/kota/iptal korunur. PD çağrı bağlantısı açık kalır."
+    },
+    {
+      "path": "app/lib/providers/product-identity-readers.server.js",
+      "old_blob": "5bf5d2664090fb329b1eb229c37ed178487d4b5d",
+      "disposition": "reimplemented",
+      "replacements": [
+        {
+          "path": "app/lib/providers/google-product-identity-reader.server.js",
+          "main_blob": "680a8203c6b2ab734d1ef398ae5eaea514506bc1"
+        },
+        {
+          "path": "app/lib/providers/meta-catalog-identity-reader.server.js",
+          "main_blob": "655f9257be838244a69148bd9b565e43238a6a24"
+        }
+      ],
+      "note": "Tek eski okuyucu iki provider özel native kaynak okuyucusuna ayrıldı; ham kimlik, hesap/katalog/feed/dil kapsamı ve tam sınırlı okuma korunur."
+    },
+    {
+      "path": "app/lib/shopify/product-identity-verification.server.js",
+      "old_blob": "6e794642ea2a829581ba936bb37338d7aebc9028",
+      "disposition": "reimplemented",
+      "replacements": [
+        {
+          "path": "app/lib/shopify/product-identity-verification.server.js",
+          "main_blob": "debbc3fac9319d25ebc4d366c243d504301322bb"
+        }
+      ],
+      "note": "Kurulu mağazada Product/Variant/parent doğrulaması var; candidate doğrulaması provider rapor bağı veya kalıcı kabul değildir."
+    },
+    {
+      "path": "contracts/a6-eo-implementation-master-v1.json",
+      "old_blob": "5a34aa5ffc795fd3c46f511ed38907123cd1476a",
+      "disposition": "current_authority",
+      "replacements": [
+        {
+          "path": "contracts/a6-eo-implementation-master-v1.json",
+          "main_blob": "3acf60be9cafe76c547b3dad26b8526668b54f16"
+        },
+        {
+          "path": "docs/plans/eo-05-06-revised-26-step-plan-2026-10-27.json",
+          "main_blob": "90a8f3e19ceb1298149b586ecdd1be7b18454828"
+        }
+      ],
+      "note": "Güncel EO-05/26 sıra otoritesi korunur; eski paket geçişi ve sürüm bütünüyle geri taşınmaz."
+    },
+    {
+      "path": "contracts/eo-04b-meta-reporting-runtime-v1.json",
+      "old_blob": "e85048f664fdd884c37794d9375662a75de601b5",
+      "disposition": "decision_preserved",
+      "replacements": [
+        {
+          "path": "contracts/eo-04b-meta-reporting-runtime-v1.json",
+          "main_blob": "682c07cc9374382650fb8f48f0c82c67178fbb93"
+        },
+        {
+          "path": "contracts/pd-cpd-query-standard-v1.json",
+          "main_blob": "7460f33680fed7502af979fdec578ff7ef6ffb79"
+        }
+      ],
+      "note": "Dört ham Meta alanı korunur; ham yanıttan ürün satış ilişkisi ve rol decoder kanıtı 18’de açıktır."
+    },
+    {
+      "path": "contracts/eo-04c-google-reporting-runtime-v1.json",
+      "old_blob": "47e4601819c8067398d76466d0d0d48f95c3c004",
+      "disposition": "decision_preserved",
+      "replacements": [
+        {
+          "path": "contracts/eo-04c-google-reporting-runtime-v1.json",
+          "main_blob": "22a1b51362a0c718bb89237145e2979026e319e8"
+        },
+        {
+          "path": "contracts/pd-cpd-query-standard-v1.json",
+          "main_blob": "7460f33680fed7502af979fdec578ff7ef6ffb79"
+        }
+      ],
+      "note": "Normal kapsam/rol ve Channel bağlantı sınırları korunur; Google rol bağlantısı 16–17, PMax ürün bağı 21, tarihsel PMax 22 ayrı kapılardır."
+    },
+    {
+      "path": "contracts/eo-04d-klaviyo-reporting-authority-v1.json",
+      "old_blob": "8096d992ad406fe9094d8e709187f722683fd27b",
+      "disposition": "decision_preserved",
+      "replacements": [
+        {
+          "path": "contracts/eo-04d-klaviyo-reporting-authority-v1.json",
+          "main_blob": "2da92418f04abb7351162c2aeabcea7f6a230556"
+        },
+        {
+          "path": "contracts/eo-05-start-brief-v1.json",
+          "main_blob": "03e7c65d961c2a1a767781c023b8c5d8f71ea8c4"
+        }
+      ],
+      "note": "Optional eski identity loader güncel çalışma sözleşmesi sayılmaz. Rol kapsamı Assisted/Triggered/Unclassified; çalışan PD bağlantısı açık."
+    },
+    {
+      "path": "contracts/eo-04d-klaviyo-reporting-runtime-v1.json",
+      "old_blob": "373aa5356ada5bc6ed7b04a1453ae1fab4d3a6d3",
+      "disposition": "decision_preserved",
+      "replacements": [
+        {
+          "path": "contracts/eo-04d-klaviyo-reporting-runtime-v1.json",
+          "main_blob": "399f3ab843f79143f497629bcc5e8bb4026f60ce"
+        },
+        {
+          "path": "contracts/pd-cpd-query-standard-v1.json",
+          "main_blob": "7460f33680fed7502af979fdec578ff7ef6ffb79"
+        }
+      ],
+      "note": "Klaviyo rol araştırması ürün kararıyla kapalıdır; provider desteklemez iddiası değildir. Spend null/açık, formülü 25’tedir."
+    },
+    {
+      "path": "contracts/eo-04e-three-provider-channel-product-economics-v1.json",
+      "old_blob": "ed81bf4fba3ad09ae42add5473b62a6a181d00ed",
+      "disposition": "decision_preserved",
+      "replacements": [
+        {
+          "path": "contracts/eo-04e-three-provider-channel-product-economics-v1.json",
+          "main_blob": "a998ca4573b8031097b717d1922d345364855958"
+        },
+        {
+          "path": "contracts/pd-cpd-query-standard-v1.json",
+          "main_blob": "7460f33680fed7502af979fdec578ff7ef6ffb79"
+        }
+      ],
+      "note": "Ürün kümesi üyeliği tek başına Advertised/Cross-sell kanıtı değildir; sağlayıcı kaynakları ve PD/CPD ayrı kapsamlar korunur."
+    },
+    {
+      "path": "contracts/eo-05-start-brief-v1.json",
+      "old_blob": "fb5961999d660518723dadb91c964c1584a32c6f",
+      "disposition": "current_authority",
+      "replacements": [
+        {
+          "path": "contracts/eo-05-start-brief-v1.json",
+          "main_blob": "03e7c65d961c2a1a767781c023b8c5d8f71ea8c4"
+        },
+        {
+          "path": "docs/plans/eo-05-06-revised-26-step-plan-2026-10-27.json",
+          "main_blob": "90a8f3e19ceb1298149b586ecdd1be7b18454828"
+        }
+      ],
+      "note": "Eski kimlik/rol/kod açığı planları güncel sıralı 26 maddede izlenir; kimlik alt listesi ile 26 sıra numaraları karıştırılmaz. 14 değerlendirme, 15 saklama, 23 Dataset."
+    },
+    {
+      "path": "contracts/pd-cpd-query-standard-v1.json",
+      "old_blob": "7404b90aa65fd9335cb2bd07058157d71b5b7ce5",
+      "disposition": "decision_preserved",
+      "replacements": [
+        {
+          "path": "contracts/pd-cpd-query-standard-v1.json",
+          "main_blob": "7460f33680fed7502af979fdec578ff7ef6ffb79"
+        }
+      ],
+      "note": "Product ID raporlama omurgası; varsa Variant kaynak ayrıntısı. Bilinmeyen zero olmaz; kaynak biçimi evrensel kural kabul edilmez."
+    },
+    {
+      "path": "docs/EO_04E_THREE_PROVIDER_CHANNEL_PRODUCT_ECONOMICS_START_BRIEF.md",
+      "old_blob": "a7d2bc4f71debf868b03768f6c5fe44a13a4e51c",
+      "disposition": "current_authority",
+      "replacements": [
+        {
+          "path": "docs/EO_04E_THREE_PROVIDER_CHANNEL_PRODUCT_ECONOMICS_START_BRIEF.md",
+          "main_blob": "0a361f86851b0ecb1a915943be36db176af52b3e"
+        },
+        {
+          "path": "docs/plans/EO_05_06_REVISED_PLAN_2026_10_27.md",
+          "main_blob": "97eecd558252b37d3745da9e00a3d975ffb5f2eb"
+        }
+      ],
+      "note": "Eski rol/kimlik plan metni güncel sözleşme ve 26 sıra kararlarıyla okunur; provider kanıt eksikleri korunur."
+    },
+    {
+      "path": "docs/EXECUTION_PLAN.md",
+      "old_blob": "3d9d15478bc40c5d3eaee557749e6b35acc53820",
+      "disposition": "current_authority",
+      "replacements": [
+        {
+          "path": "docs/EXECUTION_PLAN.md",
+          "main_blob": "f454866291512666c3f006a6adfb73f23f4091e9"
+        },
+        {
+          "path": "docs/plans/EO_05_06_REVISED_PLAN_2026_10_27.md",
+          "main_blob": "97eecd558252b37d3745da9e00a3d975ffb5f2eb"
+        }
+      ],
+      "note": "Tarihsel kayıtlar silinmez; son karar ve ilerleme kanıtları otoritedir. Açık işler kapatılmış sayılmaz."
+    },
+    {
+      "path": "docs/research/PD_CPD_QUERY_WORKING_TABLE_2026-10-22.md",
+      "old_blob": "3499e1b6cd327e7b630a628c3739ebd9afcc3f69",
+      "disposition": "decision_preserved",
+      "replacements": [
+        {
+          "path": "docs/research/PD_CPD_QUERY_WORKING_TABLE_2026-10-22.md",
+          "main_blob": "5b3d822ac824e6c4f168da2695e5ccc0bb72fce5"
+        },
+        {
+          "path": "contracts/pd-cpd-query-standard-v1.json",
+          "main_blob": "7460f33680fed7502af979fdec578ff7ef6ffb79"
+        }
+      ],
+      "note": "Çalışma tablosunun geçerli sorgu/rol/kimlik kararları korunur; eski 1.18 sürümü güncel sözleşmenin yerine geçmez."
+    },
+    {
+      "path": "tests/catalog-product-identity.test.js",
+      "old_blob": "eb3a6ddd3dc246666a148b806501c0a5ce8b357d",
+      "disposition": "replaced",
+      "replacements": [
+        {
+          "path": "tests/meta-product-identity-resolution.test.js",
+          "main_blob": "305a58f17dd9601b27f860565f9f924cd177291f"
+        },
+        {
+          "path": "tests/shopify-product-identity-verification.test.js",
+          "main_blob": "3f537d6700f9d8e97e25f559953d4659d90ed2ea"
+        },
+        {
+          "path": "tests/klaviyo-product-identity.test.js",
+          "main_blob": "46191aa838840c739f6e1e4ac40132c8a1cfcd03"
+        }
+      ],
+      "note": "Eski provider_link_verified=true beklentisi taşınmaz; aday/parent/kapsam sınamaları güncel modüllerde korunur."
+    },
+    {
+      "path": "tests/eo-04d-klaviyo-reporting-authority.test.js",
+      "old_blob": "6330dcff60200cd9b3b1d3348e824af26789a0f5",
+      "disposition": "superseded",
+      "replacements": [
+        {
+          "path": "tests/eo-04d-klaviyo-reporting-authority.test.js",
+          "main_blob": "ac6f8d944be22a215d12a42801f4ea994499436a"
+        },
+        {
+          "path": "tests/klaviyo-identity-collection.test.js",
+          "main_blob": "66a40f5817f07da80461fb28bfa3f69a69cbf234"
+        }
+      ],
+      "note": "Mevcut authority testleri korunur; eski optional loader yerine ayrı native collection testleri vardır."
+    },
+    {
+      "path": "tests/klaviyo-product-identity.test.js",
+      "old_blob": "f3849227f525ca5fa1b1a0914634723be763ccec",
+      "disposition": "reimplemented",
+      "replacements": [
+        {
+          "path": "tests/klaviyo-product-identity.test.js",
+          "main_blob": "46191aa838840c739f6e1e4ac40132c8a1cfcd03"
+        },
+        {
+          "path": "tests/klaviyo-identity-collection.test.js",
+          "main_blob": "66a40f5817f07da80461fb28bfa3f69a69cbf234"
+        }
+      ],
+      "note": "Native metric/event, kapsam, ürün/variant ve message bağının güncel aday sınamaları vardır; sentetik veri canlı kanıt değildir."
+    },
+    {
+      "path": "tests/pd-composition-design.test.js",
+      "old_blob": "6f1cdc3eb3a5064a08154bd4565e2cb05e18aa34",
+      "disposition": "current_authority",
+      "replacements": [
+        {
+          "path": "tests/pd-composition-design.test.js",
+          "main_blob": "d3b6c67f7bb0ba8b8f1f12023e2834a6c7f9f7c8"
+        }
+      ],
+      "note": "PD sözleşme/kaynak kararı kontrolleri güncel ana dalda vardır; canlı çalıştırıcı bağlantısı bu tasarım testiyle kapanmaz."
+    },
+    {
+      "path": "tests/product-identity-readers.test.js",
+      "old_blob": "8dba498f7a21afffaf45622632166711c1a9aee1",
+      "disposition": "replaced",
+      "replacements": [
+        {
+          "path": "tests/google-product-identity-reader.test.js",
+          "main_blob": "90dd68bda3904222af295d3f797afc169367048c"
+        },
+        {
+          "path": "tests/meta-catalog-identity-reader.test.js",
+          "main_blob": "d009ad7a432e4ee3d9f49f73f2fd93c3b156447a"
+        },
+        {
+          "path": "tests/google-identity-collection.test.js",
+          "main_blob": "957ea0cb5f064af0adce0a0e2395b9b8a161460e"
+        },
+        {
+          "path": "tests/meta-identity-collection.test.js",
+          "main_blob": "ab86520b4f363f0366c9fd5bed81caa7feb3b77b"
+        }
+      ],
+      "note": "Provider özel reader/collection sınamaları ilk hata, ham kimlik ve kapsamı korur; gerçek mağaza biçimi doğrulanmış sayılmaz."
+    }
+  ],
+  "open_work_preserved": {
+    "15": "Kalıcı eşleme/kaynak kuralı/ham kanıt writer tasarımı ve uygulaması ayrı açık onay bekliyor.",
+    "04–06": "Çalışan PD çağrı hattı ve canonical köprü bağlantıları teknik olarak açık.",
+    "07–10": "Native izin, kaynak biçimi, report namespace ve ürün/varyant/Order ID kanıtları açık.",
+    "16–20": "Rol bağlantıları ve gerçek kanıtlar kendi sıralarında. Meta 18 ilişkisi kanıtlanmadı; Klaviyo 19 kapsam kararı korunur.",
+    "21–22": "PMax ürün→Asset Group kanıtı açık; tarihsel PMax 22 ayrıca duraklatıldı.",
+    "23–26": "FX/genel Dataset writer, toplam/overlap, Klaviyo Spend ve bütünleşik kabul açık."
+  },
+  "limits": [
+    "Eski PR merge edilmez; yeni runtime kodu, provider sorgusu, canlı token/izin/config veya DB mutation yok.",
+    "Tarihsel checkpoint kayıtları tarihleriyle korunur; bu son karar eski open durum kaydının güncel otoritesidir.",
+    "Kod/test hazırlığı canlı erişim veya uçtan uca Dataset kabulü değildir."
+  ],
+  "official_control": {
+    "checked_at": "2026-10-29",
+    "source": "https://docs.github.com/en/rest/pulls/pulls#update-a-pull-request"
+  },
+  "closed_at": "2026-10-29T11:36:34Z",
+  "remote_blob_comparison": {
+    "old_changed_files": 24,
+    "current_unique_counterpart_files": 32,
+    "matched": 56,
+    "mismatches": 0
+  }
+}

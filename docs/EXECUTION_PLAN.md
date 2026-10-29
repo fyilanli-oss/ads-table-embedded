@@ -30,6 +30,16 @@ Siparişten atfedilen etkileşime attributed-event üzerinden geçiş resmî kay
 
 Anahtar yalnız bellekte kullanıldı; değeri dosyaya/loga/evidence veya GitHub’a yazılmadı. Yeni anahtar aktif kaldı, iptal edilmedi. Mevcut OAuth anahtarı, uygulama config’i, deploy ve DB değiştirilmedi. Secret içermeyen üç istek ve exact ham yanıt gövdeleri docs/evidence/EO_05_KLAVIYO_CLICK_METRIC_PROPERTIES_2026-10-29.json içindedir. Revizyon 2026-10-15; resmî kontrol 2026-10-29: https://developers.klaviyo.com/en/reference/get_metrics ve https://developers.klaviyo.com/en/reference/get_properties_for_metric.
 
+## 29 Ekim 2026 — 02 tamamlandı: eski PR #179 uzlaştırması
+
+01–03 grubunun güncel durumu: **Kod/testler hazır; gerçek ortam doğrulaması bekliyor.** 02’nin önceki PR #183 teslimine ek olarak açık kalan PR #179, main d55c8c59eef3681ce963eca49c21f2f26506eb21 ile dosya bazında karşılaştırıldı ve 29 Ekim 2026’da birleştirilmeden kapatıldı. Eski branch ve ffc51bdf6ebd46f9e79b07bb186fb2da82884044 head commit’i korunur. Değişen 24 dosyanın tümü ve güncel 32 karşılık dosyasının uzak blobları birebir doğrulandı. Ayrıntı: docs/evidence/EO_05_STEP02_PR179_RECONCILIATION_2026-10-29.json.
+
+Google/Meta okuyucuları, Shopify parent/adayı ve Klaviyo native aday akışları sonraki onaylı main teslimlerinde yeniden uygulanmıştır. Eski provider_link_verified=true kabulü ve optional Klaviyo reporting loader yolu güncel sözleşmeye taşınmaz; ayrı sınırlı aday akışı ve false provider-link/persistence sınırı korunur. Kaynak biçimi veya aday doğrulaması canlı provider rapor bağının kanıtı sayılmaz.
+
+04–06’nın çalışan PD/canonical bağlantıları teknik olarak açıktır; 07–10’un gerçek izin ve kaynak kimliği kanıtları açıktır. 15 kalıcı saklama başlamadı; roller 16–20, PMax kanıtı 21, duraklatılan tarihsel PMax 22 ve genel Dataset/FX yazımı 23 yerinde kalır. 14 birlikte değerlendirmedir. Bu teslim yalnız plan, sözleşme ve karşılaştırma kanıtıdır; runtime/provider/DB değişikliği yoktur. Tarihsel open/önceki checkpoint kayıtları geçmişi korur; güncel otorite contracts/eo-05-start-brief-v1.json#step02_PR179_reconciliation_2026_10_29 kaydıdır.
+
+Resmî GitHub PR state kontrolü 2026-10-29: https://docs.github.com/en/rest/pulls/pulls#update-a-pull-request.
+
 ## 29 Ekim 2026 — 12. maddeden kalan açık sipariş rezervasyonu uzlaştırması
 
 PR #252 main'dedir (63282f8cf77af30d3e4dac8429a81e8f085ee379). Bu ikinci kod işi, önceki 12. maddeden kalan açık uzlaştırmadır; 14 yeni kodlama maddesi değildir. Bu teslimin kod/izole test kabulünden sonra yeni kodlamaya devam edilmez. Gerçek ortam kanıtlarının durumu ve 01–13'te yapılan/eksik/bekleyen işler birlikte 14'te değerlendirilir. 15 ayrı kararla başlar; genel Dataset yazımı 23'tedir. 16–22 arasında her geçişte durulur.

@@ -1,0 +1,400 @@
+{
+  "contract_id": "eo-05-permission-explanation-design-v1",
+  "checked_at": "2026-10-29",
+  "existing_plan_step": 7,
+  "code_delivery_order": 4,
+  "status": "exact_copy_and_flow_prepared_for_owner_review_not_UI_implementation_or_acceptance",
+  "authority": [
+    "docs/EXECUTION_PLAN.md",
+    "contracts/eo-05-oauth-setup-permission-policy-v1.json",
+    "contracts/eo-05-immediate-technical-work-plan-v1.json",
+    "docs/SHOPIFY_EMBEDDED_UI_CONSTITUTION.md",
+    "contracts/shopify/shopify-embedded-ui-constitution-v1.json",
+    "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md"
+  ],
+  "analyst_brief": "docs/EO_05_PERMISSION_EXPLANATION_DESIGN_BRIEF.md",
+  "language": {
+    "screen_copy": "en",
+    "review_brief": "tr",
+    "reason": "Preserve existing product screen language. This is no localization change."
+  },
+  "purpose": "Before each permission request, explain the data/purpose, required combination, optional Orders choice, Cancel behavior and return path without implying grants, asset readiness or app approval.",
+  "common": {
+    "primary": "Connect",
+    "secondary": "Cancel",
+    "resume": "Resume setup",
+    "close": "Close",
+    "modal_size": "base",
+    "modal_padding": "base",
+    "cancel_explanation": "Cancel closes this explanation without starting a permission request.",
+    "reconnect_context": "Review the access for this connection. Cancel leaves the current setup unchanged.",
+    "permission_required_for_usable_product_setup": true,
+    "orders_required_for_base": false
+  },
+  "modals": [
+    {
+      "id": "shopify_products",
+      "heading": "Connect Shopify products",
+      "paragraphs": [
+        "Allow AdsTable to read your products and variants to match product reporting to your Shopify catalog.",
+        "Product access is required to finish product setup. Order access is optional and will be requested separately when you choose an order-based feature."
+      ],
+      "review_summary_tr": "Ürün ve varyant okuma temel ürün kurulumu için gerekli; sipariş erişimi bu isteme eklenmez.",
+      "requested_scopes": [
+        "read_products"
+      ],
+      "permission_breadth": "read",
+      "entry": "First in-app product setup on existing Settings; an existing Home setup notice may navigate to Settings, never start authorization automatically.",
+      "connect_backend": "runtime.permissionSetup.requestProducts({verified, action: connect}); fixed authenticated server action, closed unless separate request/release gates pass",
+      "return_backend": "runtime.permissionSetup.afterReturn({verified}); no browser grant claim",
+      "missing_copy": "Product access is still missing. Resume setup when you are ready."
+    },
+    {
+      "id": "shopify_orders",
+      "heading": "Connect Shopify orders",
+      "paragraphs": [
+        "Allow AdsTable to read recent orders and purchased products to compare Shopify sales with marketing attribution.",
+        "Order access is optional. Cancelling does not change your existing product connection.",
+        "Order access helps investigate attribution overlap; it does not, by itself, confirm duplicate attribution for individual orders."
+      ],
+      "review_summary_tr": "Son siparişler ve satın alınan ürünlerle atıf karşılaştırması; isteğe bağlı, Products izni korunur, kesin çift sayım vaat edilmez.",
+      "requested_scopes": [
+        "read_orders"
+      ],
+      "permission_breadth": "read",
+      "entry": "Explicit order-feature Connect within existing surfaces. Final Overlap report button placement remains the reporting UI decision; not inserted by this design.",
+      "connect_backend": "runtime.permissionSetup.requestOrders({verified, action: connect}); requires already observed Products and separate release/request gates",
+      "return_backend": "runtime.permissionSetup.afterReturn({verified}); inspect current grant and keep base independent",
+      "missing_copy": "Order access is not connected. Your product connection is unchanged."
+    },
+    {
+      "id": "google_ads",
+      "heading": "Connect Google Ads and Merchant Center",
+      "paragraphs": [
+        "Allow AdsTable to read your advertising data and catalog to match product reporting.",
+        "Both Google Ads and Merchant Center access are needed to finish this connection. You need an accessible Merchant Center account, including for Search-only setups.",
+        "Google permissions may also allow changes. AdsTable uses this connection to read data and does not edit your campaigns or catalog."
+      ],
+      "review_summary_tr": "Ads ve Merchant birlikte gerekli. Merchant olmadan kurulum eksik kalır. Google izninin genişliği ile AdsTable’ın okuma amacı ayrı anlatılır.",
+      "requested_scopes": [
+        "https://www.googleapis.com/auth/adwords",
+        "https://www.googleapis.com/auth/content"
+      ],
+      "permission_breadth": "native_grants_may_allow_writes_app_reads",
+      "entry": "Google Connect/reconnect or user-selected permission resume in existing Settings",
+      "connect_backend": "runtime.beginCombinedSetup({installationAuthority}); identity_v1 fixed on server, never existing reporting_v1 begin by accident",
+      "return_backend": "combined setup account/reporting selection then native Merchant verification; none alone completes setup",
+      "missing_copy": "Google Ads or Merchant Center access is still missing. Resume setup to review the connection."
+    },
+    {
+      "id": "meta",
+      "heading": "Connect Meta ads and catalog",
+      "paragraphs": [
+        "Allow AdsTable to read advertising data and the catalog available to your selected business.",
+        "Both ad account and catalog access are needed to finish setup. You may also see business and Page permissions.",
+        "Some business and catalog permissions also allow changes. AdsTable uses this connection for reporting and product matching; it does not edit those assets."
+      ],
+      "review_summary_tr": "Reklam hesabı ve katalog birlikte gerekli; işletme/Sayfa izinleri de görünür. Yönetim izinlerinin genişliği gizlenmez, ürün/satış ayrımı vaat edilmez.",
+      "requested_scopes": [
+        "ads_read",
+        "catalog_management",
+        "business_management",
+        "pages_read_engagement",
+        "pages_show_list"
+      ],
+      "permission_breadth": "native_grants_may_allow_writes_app_reads",
+      "entry": "Meta Connect/reconnect or user-selected permission resume in existing Settings",
+      "connect_backend": "runtime.beginCombinedSetup({installationAuthority}); existing identity_v1 scope set only, native app/dependency readiness separate",
+      "return_backend": "combined account selection and native token/user/business/catalog access proof; no Ad/catalog delivery claim",
+      "missing_copy": "Ad account or catalog access is still missing. Resume setup to review the connection."
+    },
+    {
+      "id": "klaviyo",
+      "heading": "Connect Klaviyo",
+      "paragraphs": [
+        "Allow AdsTable to read account details and campaign, flow, metric and event data for reporting.",
+        "After connecting, add your estimated monthly Klaviyo cost to finish setup. Enter 0 if you have no monthly cost.",
+        "The cost is entered separately in AdsTable. If you leave it incomplete, use Resume setup to finish it later."
+      ],
+      "review_summary_tr": "Mevcut beş okuma izni; aylık tahmin ayrı adım, sıfır geçerli. Maliyet eksikliği yeniden OAuth istemez.",
+      "requested_scopes": [
+        "accounts:read",
+        "campaigns:read",
+        "flows:read",
+        "metrics:read",
+        "events:read"
+      ],
+      "permission_breadth": "read",
+      "entry": "Klaviyo Connect/reconnect or permission resume in existing Settings",
+      "connect_backend": "Existing Klaviyo authorization entry with exact existing five read scopes; no new provider profile",
+      "return_backend": "Existing account verification then Estimated Monthly Cost stage; missing cost resumes cost stage, not OAuth",
+      "missing_copy": "Finish the remaining Klaviyo setup step with Resume setup."
+    }
+  ],
+  "flow": {
+    "before_connect": "Only one explanation open; Cancel, close control and Escape in this stage close it with no new native request. Opening the explanation has no provider/token/config mutation.",
+    "on_connect": "Synchronous in-flight guard captures provider/feature, closes the explanation with reason connect, then issues one authenticated server action. Never infer Cancel from the hide event caused by Connect.",
+    "pending": "Explanation is closed, provider section shows Starting connection… and prevents a second Connect. Closing a pending display is not a claim that a started provider request was undone.",
+    "native_consent": "Shopify/provider controls their permission screen. No automated native screen interaction, no custom Shopify-look permission prompt.",
+    "on_return": "Read current server/native evidence; route by stage. No mount effect or return field automatically restarts OAuth.",
+    "connected": "Only final authorized server setup readiness can show overall Connected. Current prepared access/scope helpers authorizesActivation=false cannot produce it.",
+    "legacy": "Existing reporting_v1 remains separate until explicitly wired. A new incomplete combined setup must not delete/revoke the current reporting connection or claim it has been upgraded."
+  },
+  "resume_routing": [
+    {
+      "stage": "request_permissions",
+      "action": "Open same explanation; native request only after a new Connect."
+    },
+    {
+      "stage": "select_account",
+      "action": "Open verified account selection; no OAuth restart."
+    },
+    {
+      "stage": "select_reporting_account",
+      "action": "Open reporting account selection; no OAuth restart."
+    },
+    {
+      "stage": "verify_assets",
+      "action": "Select/verify current Merchant or business/catalog targets using trusted server authority; do not request permissions again just because selection is missing."
+    },
+    {
+      "stage": "review_setup",
+      "action": "Show access verified / activation pending; no Connected or automatic grant. App approval and UI/release acceptance are separate."
+    },
+    {
+      "stage": "klaviyo_cost_missing",
+      "action": "Open existing estimated monthly cost step; accept zero, distinguish missing; no OAuth restart."
+    }
+  ],
+  "states": [
+    {
+      "id": "loading",
+      "copy": "Checking connection status…",
+      "action": "none",
+      "effect": "No begin request, no Connected from stale view."
+    },
+    {
+      "id": "not_connected",
+      "copy": "Not connected",
+      "action": "Connect",
+      "effect": "Open matching explanation only."
+    },
+    {
+      "id": "explaining",
+      "copy": "Use exact heading/paragraphs/common Cancel and Connect above.",
+      "action": "Connect / Cancel",
+      "effect": "Only Connect may begin explained request."
+    },
+    {
+      "id": "starting",
+      "copy": "Starting connection…",
+      "action": "none",
+      "effect": "One in-flight begin; duplicate Connect blocked."
+    },
+    {
+      "id": "checking_return",
+      "copy": "Verifying access…",
+      "action": "none",
+      "effect": "Read native grants/account/asset scope."
+    },
+    {
+      "id": "permissions_missing",
+      "copy": "Use modal-specific missing_copy.",
+      "action": "Resume setup",
+      "effect": "User action opens explanation, not automatic OAuth."
+    },
+    {
+      "id": "account_selection",
+      "copy": "Choose the account to use for reporting.",
+      "action": "Resume setup",
+      "effect": "Open account stage only."
+    },
+    {
+      "id": "asset_selection",
+      "copy": "Select the account or catalog needed to continue setup.",
+      "action": "Resume setup",
+      "effect": "Open asset stage; target ID alone is not proof."
+    },
+    {
+      "id": "klaviyo_cost_missing",
+      "copy": "Add your estimated monthly Klaviyo cost to finish setup. Enter 0 if you have no monthly cost.",
+      "action": "Resume setup",
+      "effect": "Cost stage only; not a new permission."
+    },
+    {
+      "id": "orders_optional_missing",
+      "copy": "Order access is not connected. Your product connection is unchanged.",
+      "action": "Connect",
+      "effect": "Optional Orders explanation, if feature is available; base setup not failed."
+    },
+    {
+      "id": "access_verified_activation_pending",
+      "copy": "Access verified. Setup is awaiting activation.",
+      "action": "Close",
+      "effect": "No overall Connected or job activation."
+    },
+    {
+      "id": "cancelled_before_connect",
+      "copy": "No permission request was started.",
+      "action": "none",
+      "effect": "Close explanation and preserve previous view."
+    },
+    {
+      "id": "cancelled_at_provider",
+      "copy": "Setup was not completed. Review the connection status before continuing.",
+      "action": "Check status",
+      "effect": "Read only. Do not assert a cause, delete a credential or start again automatically."
+    },
+    {
+      "id": "unknown_write_or_callback",
+      "copy": "We could not confirm the result. Check the connection status before starting again.",
+      "action": "Check status",
+      "effect": "Read-only reconciliation; no automatic retry or declared grant failure."
+    },
+    {
+      "id": "native_error",
+      "copy": "We could not verify access. Check the connection status before continuing.",
+      "action": "Check status",
+      "effect": "No automatic request, alternate provider route or raw provider error/secret exposure."
+    },
+    {
+      "id": "developer_or_release_gate",
+      "copy": "Connection setup is not available yet.",
+      "action": "Close",
+      "effect": "No Connect or reauthorization as a remedy for developer/config approval."
+    },
+    {
+      "id": "connected",
+      "copy": "Connected",
+      "action": "Existing settings actions",
+      "effect": "Future final server activation only, never inferred from this design or fixtures."
+    }
+  ],
+  "component_mapping": [
+    {
+      "element": "Overlay and title",
+      "component": "s-modal",
+      "properties": {
+        "heading": "modal.heading",
+        "size": "base",
+        "padding": "base"
+      },
+      "source": "https://shopify.dev/docs/api/app-home/latest/web-components/overlays/modal",
+      "checked_at": "2026-10-29"
+    },
+    {
+      "element": "Paragraph grouping",
+      "component": "s-stack",
+      "properties": {
+        "direction": "block",
+        "gap": "base"
+      },
+      "source": "https://shopify.dev/docs/api/app-home/latest/web-components/layout-and-structure/stack",
+      "checked_at": "2026-10-29"
+    },
+    {
+      "element": "Explanation and cancellation note",
+      "component": "s-paragraph",
+      "properties": {
+        "children": "exact paragraph text; no lineClamp, custom style or color"
+      },
+      "source": "https://shopify.dev/docs/api/app-home/latest/web-components/typography-and-content/paragraph",
+      "checked_at": "2026-10-29"
+    },
+    {
+      "element": "Primary confirmation",
+      "component": "s-button",
+      "properties": {
+        "slot": "primary-action",
+        "variant": "primary",
+        "children": "Connect",
+        "loading": "true only while dispatching",
+        "disabled": "pending or server gate closed"
+      },
+      "source": "https://shopify.dev/docs/api/app-home/latest/web-components/actions/button",
+      "checked_at": "2026-10-29"
+    },
+    {
+      "element": "Cancel",
+      "component": "s-button",
+      "properties": {
+        "slot": "secondary-actions",
+        "variant": "secondary",
+        "commandFor": "matching modal id",
+        "command": "--hide",
+        "children": "Cancel"
+      },
+      "source": "https://shopify.dev/docs/api/app-home/latest/web-components/actions/button",
+      "checked_at": "2026-10-29"
+    },
+    {
+      "element": "Open explanation",
+      "component": "s-button",
+      "properties": {
+        "commandFor": "matching modal id",
+        "command": "--show",
+        "children": "Existing Connect/Resume setup trigger label"
+      },
+      "source": "https://shopify.dev/docs/api/app-home/latest/web-components/actions/button",
+      "checked_at": "2026-10-29"
+    },
+    {
+      "element": "Status/error feedback",
+      "component": "s-banner",
+      "properties": {
+        "tone": "info for pending; warning for missing; critical for error; no success from partial evidence",
+        "heading": "exact state copy"
+      },
+      "source": "https://shopify.dev/docs/api/app-home/latest/web-components/feedback-and-status-indicators/banner",
+      "checked_at": "2026-10-29"
+    }
+  ],
+  "desktop_mobile": {
+    "information_architecture": "Same title/body/actions at desktop and mobile; native component sizing and scroll only.",
+    "minimum_real_mobile_width": 320,
+    "checks": [
+      "Read all paragraphs without horizontal scrolling or truncation",
+      "Footer actions reachable with keyboard and touch",
+      "Native close/Escape before Connect starts no request",
+      "Focus enters modal and returns to exact trigger on idle Cancel/close",
+      "Only one modal visible, no nested explanation+account/consent modal stack",
+      "Connect closes explanation intentionally; hide callback does not cancel confirmed intent",
+      "Real Shopify Admin desktop and actual mobile evidence required, not static preview"
+    ],
+    "no_custom_CSS": true
+  },
+  "runtime_alignment": {
+    "current_repository_script": "polaris-2.0-rc.js",
+    "current_repository_types": "2.0.0-rc.2",
+    "current_binding_decision": "Explicit 2026-10-06 RC baseline; no change by this design.",
+    "new_AGENTS_requirement": "Stable Polaris web components",
+    "official_check": "2026-10-29 Shopify versioning guide identifies stable 2.0; official polaris-2.0.js HEAD 200 and official npm latest types 2.0.0.",
+    "proposed_target_script": "https://cdn.shopify.com/shopifycloud/polaris-2.0.js",
+    "proposed_target_types": "2.0.0",
+    "before_UI_code": "Explicit owner decision required to align stable-only instruction with recorded RC baseline; no automatic runtime/type upgrade, no claim RC equals stable.",
+    "decision_status": "owner_decision_pending",
+    "source": "https://shopify.dev/docs/api/app-home/latest/web-components/versioning",
+    "property_cross_check": "Proposed properties/slots also exist in installed RC manifest; this is compatibility evidence, not stable runtime migration or visual acceptance."
+  },
+  "out_of_scope": [
+    "UI component or application route implementation in this design PR",
+    "Live authorization, app config release, tokens, provider mutation or deployment",
+    "Asset discovery/selector implementation and durable selected-asset binding",
+    "Final setup activation from access proof alone",
+    "Changing Sales Role, Product ID matching, Dataset/FX storage or formulas",
+    "Klaviyo cost allocation formula and final Overlap button placement",
+    "Automated Shopify Admin visual interactions"
+  ],
+  "acceptance": {
+    "design_readiness": "Exact copy, stage routing and official component mapping prepared; owner review pending.",
+    "UI_implementation": false,
+    "desktop_real_admin": "not_run",
+    "mobile_320px_real_admin": "not_run",
+    "owner_visual_acceptance": "not_given",
+    "provider_native_grants": "not_inferred",
+    "live_permission_flags_changed": false,
+    "package_Done_or_PASS": false
+  },
+  "step15_started": false,
+  "Dataset_write": false
+}

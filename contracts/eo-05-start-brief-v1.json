@@ -1,4 +1,39 @@
 {
+  "Permission_explanation_design_2026_10_29": {
+    "checked_at": "2026-10-29",
+    "base_main": "297d0d620e0878e90ae2284903037784d472b541",
+    "existing_plan_step": 7,
+    "code_delivery_order": 4,
+    "status": "design_prepared_owner_review_and_runtime_alignment_pending",
+    "design_contract": "contracts/eo-05-permission-explanation-design-v1.json",
+    "analyst_brief": "docs/EO_05_PERMISSION_EXPLANATION_DESIGN_BRIEF.md",
+    "outputs": [
+      "Five exact English explanation modals preserving current screen language, with Turkish review summaries",
+      "Shared Cancel/Connect/close behavior, double-submit guard and intentional hide-on-Connect flow",
+      "17 explicit states and stage-aware Resume routing; no automatic OAuth restart for selection/cost/review stages",
+      "Official native component/property/slot mapping, 320px real-mobile and desktop acceptance plan",
+      "Verified stable 2.0 runtime/type candidate without changing installed RC runtime or package files"
+    ],
+    "runtime_alignment": "Official stable polaris-2.0.js HEAD 200, official npm polaris-types latest 2.0.0, official Shopify versioning guide confirmed 2026-10-29. Existing explicit RC baseline and current AGENTS stable-only requirement need owner alignment before runnable UI work; question pending.",
+    "scope": "Design documentation only; no TSX/route/runtime/types/lock/UI implementation/provider/token/config/DB/Dataset change.",
+    "acceptance": {
+      "design_exact_copy": "prepared_owner_review_pending",
+      "UI_code": false,
+      "real_admin_desktop": "not_run",
+      "real_mobile_320px": "not_run",
+      "owner_visual_acceptance": false,
+      "live_activation": false,
+      "package_Done_or_PASS": false
+    },
+    "validation": {
+      "JSON_and_references": "checked",
+      "exact_CI": "pending",
+      "local_runtime_tests": "not_repeated_docs_only_diff_no_runtime_change",
+      "F01": "unchanged_paths_not_triggered"
+    },
+    "step15_started": false,
+    "Dataset_write": false
+  },
   "Shopify_progressive_permission_setup_2026_10_29": {
     "checked_at": "2026-10-29",
     "base_main": "d9dc4585c4859b07df3e9ebb8464a390fc0080c3",
@@ -7,7 +42,7 @@
       12
     ],
     "code_delivery_order": 3,
-    "status": "backend_request_readback_ready_inactive_config_and_UI_pending",
+    "status": "merged_backend_request_readback_inactive_config_and_UI_pending",
     "runtime": [
       "app/lib/shopify/progressive-permissions.server.js",
       "app/lib/shopify/progressive-permissions.server.d.ts",
@@ -49,7 +84,7 @@
       "failed": 0,
       "typecheck": "passed",
       "build": "passed",
-      "exact_CI": "pending_PR_exact_commit",
+      "exact_CI": "two_governance_checks_success_on_b5f9f268d7038506f2c1076030f08daa49a635bc",
       "F01": "unchanged_paths_not_triggered"
     },
     "official_sources": [
@@ -74,7 +109,9 @@
       }
     ],
     "step15_started": false,
-    "Dataset_write": false
+    "Dataset_write": false,
+    "PR": 261,
+    "merge_commit": "297d0d620e0878e90ae2284903037784d472b541"
   },
   "Combined_provider_setup_asset_access_2026_10_29": {
     "checked_at": "2026-10-29",

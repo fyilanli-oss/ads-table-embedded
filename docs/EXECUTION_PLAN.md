@@ -1,3 +1,15 @@
+## 29 Ekim 2026 — İzin açıklamaları: tek standartta somut metin ve akış tasarımı
+
+#261 main’e birleşti (297d0d620e0878e90ae2284903037784d472b541); 3.009 test/tip/derleme ve iki CI başarılı. 07 içindeki dördüncü teslimin kod öncesi tasarımı hazırlandı. Tek okunabilir analist belgesi docs/EO_05_PERMISSION_EXPLANATION_DESIGN_BRIEF.md; makine sözleşmesi contracts/eo-05-permission-explanation-design-v1.json. Shopify Products, isteğe bağlı Orders, Google Ads+Merchant, Meta Ads+Catalog ve Klaviyo için birebir İngilizce ekran metinleri; Türkçe inceleme özeti; Cancel/Connect, yükleniyor/dönüş/eksik/belirsiz sonuç durumları ve aşamaya göre Resume yolu birlikte yazıldı.
+
+Yalnız izin eksiği yeniden açıklama/Connect ister. Hesap/katalog seçimi ve Klaviyo maliyeti eksikliği OAuth’ı otomatik başlatmaz; maliyette 0 ile eksik ayrıdır. Orders reddi Products durumunu bozmaz. Google/Meta geniş native izinleri okuma-only diye sunulmaz; uygulamanın okuma amacı ayrıca anlatılır. Yalnız access/scope gözlemi Connected veya iş aktivasyonu sayılmaz.
+
+Resmî Modal/Button/Paragraph/Stack/Banner özellik ve slot eşlemesi 2026-10-29 kaynakları ve kurulu manifest ile karşılaştırıldı. Desktop ve en az 320 px gerçek mobil, odak/klavye/dokunma, tam metin ve tek modal kabulü tanımlandı. Bu tur TSX/route veya görsel UI kodu yazılmadı; sentetik tasarım gerçek Shopify Admin kabulü değildir. Kullanıcının Shopify’da görsel otomasyon yapılmaması talimatı korunur.
+
+Kod öncesi sürüm kararı: mevcut açık onaylı RC 2.0 + rc.2 tipleri yerinde. Resmî stable 2.0 dosyası HTTP 200, resmî npm latest tipleri 2.0.0; Shopify sürümleme belgesi stable/RC ayrımını ve eşlenik geçişi doğruluyor. Somut öneri sabit polaris-2.0.js + exact 2.0.0; anayasadaki açık ürün sahibi karar kapısı için kullanıcıya soruldu. Bu tasarım runtime/type/lock geçişi, config/deploy veya kabul yapmaz; yanıt alınmadan UI sürümü sessiz değiştirilmez.
+
+JSON/başvuru/metin tutarlılığı yerelde kontrol edilir; yalnız belge/sözleşme değişikliği için çalışma zamanı testleri tekrar edilmez, zorunlu exact CI PR’da izlenir. Yeni canlı izin/token/provider/config/DB/Dataset veya kullanıcı görsel kabulü yoktur. 15 başlamadı, 22 duraklatılmış, 23 Dataset/FX yazımıdır. Makine kaydı: contracts/eo-05-start-brief-v1.json#Permission_explanation_design_2026_10_29.
+
 ## 29 Ekim 2026 — Shopify Products / sonradan Orders izin isteme ve dönüş altyapısı
 
 #260 main’e birleşti (d9dc4585c4859b07df3e9ebb8464a390fc0080c3); iki CI ve 2.966 test/tip/derleme başarılı. 07/12 içindeki üçüncü teknik teslimin runtime.permissionSetup sunucu girişi hazırlandı. Products temel izin durumu ve isteğe bağlı Orders ayrı okunur. Orders yok/ret/geri alma Products hazır durumunu bozmaz; Products yoksa Orders istemi başlatılmaz. Tarayıcı granted-all bilgisi veya caller scope listesi kanıt değildir. afterReturn, aynı güvenilir kurulumdan currentAppInstallation izinlerini yeniden okur.

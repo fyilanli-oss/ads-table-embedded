@@ -1,10 +1,87 @@
 {
+  "Shopify_progressive_permission_setup_2026_10_29": {
+    "checked_at": "2026-10-29",
+    "base_main": "d9dc4585c4859b07df3e9ebb8464a390fc0080c3",
+    "existing_plan_steps": [
+      7,
+      12
+    ],
+    "code_delivery_order": 3,
+    "status": "backend_request_readback_ready_inactive_config_and_UI_pending",
+    "runtime": [
+      "app/lib/shopify/progressive-permissions.server.js",
+      "app/lib/shopify/progressive-permissions.server.d.ts",
+      "app/lib/shopify/shopify-app-runtime.server.js",
+      "app/lib/shopify/shopify-app-runtime.server.d.ts"
+    ],
+    "entry": "runtime.permissionSetup.inspect/afterReturn/requestProducts/requestOrders; request and optional-scope-release gates default false",
+    "behavior": {
+      "readback": "Existing currentAppInstallation reader/assessment is pinned to active shop/workspace/install generation. Products base readiness and optional Orders readiness are separate; unknown is not missing. Return ignores browser granted-all or caller scope arrays.",
+      "request": "Only explicit Connect, both server gates and fixed read_products or read_orders intent. Products must already be observed before Orders request. No write/history/marketing/customer permission bundled. Already granted avoids re-prompt; Cancel does no I/O.",
+      "configuration": "Raw deployed app.optionalAccessScopes handles are read with tries:1 between active owner checks and same native AppInstallation. A write optional handle or local TOML candidate cannot stand in for an explicitly deployed read scope.",
+      "native_SDK": "Authenticated context.scopes.request called once. Installed 3.0.1 SDK returns void if already granted or throws its embedded App Bridge redirect response. Only exact empty 401/reauthorize-header response for current shop/app and fixed optional/required scopes is forwarded unchanged. Other response/error stays safe failure; no manual redirect construction or alternative route.",
+      "post_request": "SDK void triggers native grant readback and native AppInstallation identity comparison. Redirect is not consent; next authenticated afterReturn reads actual current grants. No saved browser scope state is accepted.",
+      "authority": "Native owner/Admin/scope method bindings captured before first await; generation rechecked, first error stops, no controller retry/fallback/revoke/delete or token write.",
+      "bounds": "One total read/intent wall deadline and signal on direct Admin reads. Native scopes.request has no signal argument; its internal read may finish after cancellation, but late signalling is ignored and no further controller request/result is issued.",
+      "not_authority": "permission_ready is a scope observation, not overall setup activation, Orders/PCD/history read authorization or proven overlap. authorizesActivation/ordersDataAccessAuthorized/historyAccessAuthorized/overlapVerified remain false.",
+      "native_SDK_session_boundary": "The controller adds no token/session write. The installed authenticated SDK itself invalidates a session access token on native HTTP401 in token-exchange strategy; this pre-existing SDK behavior is not suppressed or declared session-immutable by these isolated tests. Review native auth/session behavior under the existing 07/12 acceptance before enabling. Ordinary permission decline is not an HTTP401 grant read and does not revoke Products scopes."
+    },
+    "release_candidate": "contracts/shopify/shopify-progressive-permissions-release-candidate-v1.json",
+    "activation": {
+      "permissionRequestsEnabled_default": false,
+      "optionalScopesReleased_default": false,
+      "shopify_app_toml_changed": false,
+      "route_or_UI_changed": false,
+      "native_permission_request_performed": false,
+      "provider_config_or_deploy_changed": false,
+      "DB_or_Dataset_write": false
+    },
+    "background_boundary": "This foreground permission intent does not run in an order job or change the background dispatcher/SDK quota bridge/session rules. Existing native Orders permission checks remain mandatory; no raw-fetch or quota bypass. Native SDK/session/quota acceptance remains existing 07/12 evidence work.",
+    "remaining_in_this_delivery": [
+      "Separately approved optional_scopes TOML/app release and exact released configuration proof",
+      "Prepermission explanation/Settings/return wiring and owner UI acceptance in delivery4",
+      "Native install/Products/Orders decline/grant/revocation, protected-data and SDK/session/quota environment acceptance"
+    ],
+    "validation": {
+      "new_tests": 43,
+      "targeted_tests": 151,
+      "full_tests": 3009,
+      "failed": 0,
+      "typecheck": "passed",
+      "build": "passed",
+      "exact_CI": "pending_PR_exact_commit",
+      "F01": "unchanged_paths_not_triggered"
+    },
+    "official_sources": [
+      {
+        "source": "https://shopify.dev/docs/apps/build/authentication-authorization/manage-access-scopes",
+        "checked_at": "2026-10-29"
+      },
+      {
+        "source": "https://shopify.dev/docs/api/shopify-app-react-router/latest/authenticate/admin",
+        "checked_at": "2026-10-29",
+        "boundary": "Latest documentation checked against installed pinned SDK 3.0.1; dependency not upgraded."
+      },
+      {
+        "source": "https://shopify.dev/docs/api/app-bridge-library/apis/scopes",
+        "checked_at": "2026-10-29",
+        "boundary": "Browser result not server authority; no App Bridge UI implementation in this slice."
+      },
+      {
+        "source": "https://raw.githubusercontent.com/Shopify/shopify-app-js/main/packages/apps/shopify-app-react-router/src/server/authenticate/admin/scope/client/fetch-scopes-details.ts",
+        "checked_at": "2026-10-29",
+        "proof": "Official optionalAccessScopes raw handle query, checked against installed source. 2026-10 App object reference was inaccessible through current web tool; no native provider call attempted."
+      }
+    ],
+    "step15_started": false,
+    "Dataset_write": false
+  },
   "Combined_provider_setup_asset_access_2026_10_29": {
     "checked_at": "2026-10-29",
     "base_main": "2151de8df9ba155e541b9e4558b3f059a842f41d",
     "existing_plan_step": 7,
     "code_delivery_order": 2,
-    "status": "asset_access_backend_ready_inactive_pending_UI_and_native_acceptance",
+    "status": "merged_asset_access_backend_inactive_pending_UI_and_native_acceptance",
     "runtime": [
       "app/lib/oauth/combined-setup-assets.server.js",
       "app/lib/oauth/google-oauth-runtime.server.js",
@@ -36,9 +113,9 @@
     "validation": {
       "new_tests": 57,
       "targeted_tests": 289,
-      "full_tests": "pending_exact_CI_after_final_advertiser_check",
-      "typecheck": "pending_exact_CI_after_final_advertiser_check",
-      "build": "pending_exact_CI_after_final_advertiser_check",
+      "full_tests": 2966,
+      "typecheck": "passed_exact_CI",
+      "build": "passed_exact_CI",
       "earlier_local_validation": {
         "full_tests": 2964,
         "failed": 0,
@@ -46,8 +123,9 @@
         "build": "passed",
         "boundary": "preceded final current-user advertiser before/after wiring; not final acceptance"
       },
-      "exact_CI": "pending",
-      "F01": "unchanged_paths_not_triggered"
+      "exact_CI": "two_governance_checks_success_on_33d4165b3589abfad37ba9369960bf8ab72cfa00",
+      "F01": "unchanged_paths_not_triggered",
+      "failed": 0
     },
     "official_sources": [
       {
@@ -79,7 +157,9 @@
       }
     ],
     "step15_started": false,
-    "Dataset_write": false
+    "Dataset_write": false,
+    "PR": 260,
+    "merge_commit": "d9dc4585c4859b07df3e9ebb8464a390fc0080c3"
   },
   "Combined_provider_setup_account_selection_2026_10_29": {
     "checked_at": "2026-10-29",

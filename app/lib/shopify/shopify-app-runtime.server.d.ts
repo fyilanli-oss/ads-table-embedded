@@ -5,6 +5,7 @@ export interface TokenVaultStartup {
 }
 
 export interface ShopifyAppRuntime {
+  permissionSetup: import("./progressive-permissions.server.js").ShopifyPermissionSetup;
   database: unknown;
   tokenVault: {
     assertRuntimeReady: () => Promise<TokenVaultStartup>;
@@ -25,4 +26,6 @@ export function createShopifyAppRuntime(args?: {
   environment?: NodeJS.ProcessEnv;
   database?: unknown;
   sessionStorage?: unknown;
+  permissionRequestsEnabled?: boolean;
+  optionalScopesReleased?: boolean;
 }): Promise<ShopifyAppRuntime>;

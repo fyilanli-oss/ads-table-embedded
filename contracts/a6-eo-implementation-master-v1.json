@@ -1,10 +1,22 @@
 {
+  "Shopify_progressive_permission_setup_2026_10_29": {
+    "record": "contracts/eo-05-start-brief-v1.json#Shopify_progressive_permission_setup_2026_10_29",
+    "existing_steps": [
+      7,
+      12
+    ],
+    "code_delivery_order": 3,
+    "status": "backend_request_readback_ready_inactive_config_and_UI_pending",
+    "live_UI_or_setup_acceptance": false
+  },
   "Combined_provider_setup_asset_access_2026_10_29": {
     "record": "contracts/eo-05-start-brief-v1.json#Combined_provider_setup_asset_access_2026_10_29",
     "existing_step": 7,
     "code_delivery_order": 2,
-    "status": "asset_access_backend_ready_inactive_pending_UI_and_native_acceptance",
-    "live_UI_or_setup_acceptance": false
+    "status": "merged_asset_access_backend_inactive_pending_UI_and_native_acceptance",
+    "live_UI_or_setup_acceptance": false,
+    "PR": 260,
+    "merge_commit": "d9dc4585c4859b07df3e9ebb8464a390fc0080c3"
   },
   "Combined_provider_setup_account_selection_2026_10_29": {
     "record": "contracts/eo-05-start-brief-v1.json#Combined_provider_setup_account_selection_2026_10_29",

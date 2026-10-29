@@ -55,7 +55,7 @@
       "depends_on": [
         1
       ],
-      "status": "asset_access_backend_ready_inactive_pending_UI_and_native_acceptance",
+      "status": "merged_asset_access_backend_inactive_pending_UI_and_native_acceptance",
       "implementation_record": "contracts/eo-05-start-brief-v1.json#Combined_provider_setup_asset_access_2026_10_29",
       "remaining_in_this_delivery": [
         "Final setup readiness/activation joined to developer approval evidence and accepted UI; access proof alone cannot authorize it",
@@ -63,7 +63,8 @@
         "Native app approval/merchant grant/asset access acceptance; isolated tests are not live evidence"
       ],
       "merged_backend_start_callback_PR": 258,
-      "merged_account_selection_PR": 259
+      "merged_account_selection_PR": 259,
+      "merged_asset_access_PR": 260
     },
     {
       "delivery_order": 3,
@@ -83,7 +84,13 @@
       "depends_on": [
         1
       ],
-      "status": "planned_not_implemented"
+      "status": "backend_request_readback_ready_inactive_config_and_UI_pending",
+      "implementation_record": "contracts/eo-05-start-brief-v1.json#Shopify_progressive_permission_setup_2026_10_29",
+      "remaining_in_this_delivery": [
+        "Separately approved optional_scopes TOML/app release and exact released configuration proof",
+        "Prepermission explanation/Settings/return wiring and owner UI acceptance in delivery4",
+        "Native install/Products/Orders decline/grant/revocation, protected-data and SDK/session/quota environment acceptance"
+      ]
     },
     {
       "delivery_order": 4,

@@ -38,18 +38,20 @@ test("Klaviyo identity path does not expand current five OAuth scopes", () => {
     ["accounts:read", "campaigns:read", "flows:read", "events:read", "metrics:read"]);
 });
 test("Shopify historical and MarketingEvent access are explicit independent selections", () => {
-  assert.deepEqual(requirements({provider: "shopify"}).scopes, ["read_products", "read_orders"]);
-  const historical = requirements({provider: "shopify", includeOrderHistory: true});
+  assert.deepEqual(requirements({provider: "shopify"}).scopes, ["read_products"]);
+  const historical = requirements({provider: "shopify", includeOrders: true, includeOrderHistory: true});
   assert.deepEqual(historical.scopes, ["read_products", "read_orders", "read_all_orders"]);
   assert.ok(historical.additionalChecks.includes("shopify_all_orders_application_approval_and_historical_read"));
-  const marketing = requirements({provider: "shopify", includeMarketingEvents: true});
+  const marketing = requirements({provider: "shopify", includeOrders: true, includeMarketingEvents: true});
   assert.deepEqual(marketing.scopes, ["read_products", "read_orders", "read_marketing_events"]);
   assert.ok(marketing.additionalChecks.includes("shopify_marketing_event_visibility_and_journey_read"));
   assert.ok(!historical.scopes.some(s => s.startsWith("write_") || s === "read_customers"));
 });
 test("invalid feature/provider inputs cannot silently select a smaller permission set", () => {
   for (const args of [{provider: "google"}, {provider: "shopify", includeOrderHistory: "true"},
-    {provider: "shopify", includeMarketingEvents: null}, {provider: "meta", includeOrderHistory: true}]) {
+    {provider: "shopify", includeMarketingEvents: null}, {provider: "meta", includeOrderHistory: true},
+    {provider: "shopify", includeOrders: "true"}, {provider: "shopify", includeOrders: null},
+    {provider: "shopify", includeOrderHistory: true}, {provider: "google_ads", includeOrders: true}]) {
     assert.throws(() => requirements(args));
   }
 });
@@ -82,11 +84,11 @@ test("a partial Meta grant lists the declined dependencies as missing", () => {
 });
 test("read_all_orders does not substitute for read_orders", () => {
   const e = evidence("shopify"); e.scopes = ["read_products", "read_all_orders"];
-  assert.deepEqual(check(e, "shopify", {includeOrderHistory: true}).missingScopes, ["read_orders"]);
+  assert.deepEqual(check(e, "shopify", {includeOrders: true, includeOrderHistory: true}).missingScopes, ["read_orders"]);
 });
 test("existing Shopify write grants satisfy their corresponding reads without requesting writes", () => {
   const e = evidence("shopify"); e.scopes = ["write_products", "write_orders", "write_marketing_events"];
-  const r = check(e, "shopify", {includeMarketingEvents: true});
+  const r = check(e, "shopify", {includeOrders: true, includeMarketingEvents: true});
   assert.equal(r.scopeStatus, "observed_sufficient");
   assert.deepEqual(r.requiredScopes, ["read_products", "read_orders", "read_marketing_events"]);
   assert.deepEqual(r.satisfiedBy.map(x => x.grantedScope), e.scopes);
@@ -141,8 +143,38 @@ test("Shopify reads current grants and shop identity once; a valid empty grant l
 });
 test("Shopify grant reader composes with the preflight without treating product-only grant as order access", async () => {
   const r = await read(response());
-  assert.deepEqual(check(r, "shopify", {includeMarketingEvents: true}).missingScopes, ["read_orders", "read_marketing_events"]);
-  assert.equal(check(r, "shopify", {includeOrderHistory: true}).scopeStatus, "observed_missing");
+  assert.equal(check(r, "shopify").scopeStatus, "observed_sufficient");
+  assert.deepEqual(check(r, "shopify", {includeOrders: true, includeMarketingEvents: true}).missingScopes, ["read_orders", "read_marketing_events"]);
+  assert.equal(check(r, "shopify", {includeOrders: true, includeOrderHistory: true}).scopeStatus, "observed_missing");
+});
+
+test("one product-only observation passes base scope checks but cannot authorize Orders", () => {
+  const e = evidence("shopify");
+  const before = JSON.stringify(e);
+  const base = check(e, "shopify");
+  const orders = check(e, "shopify", {includeOrders: true});
+  assert.equal(base.scopeStatus, "observed_sufficient");
+  assert.deepEqual(base.requiredScopes, ["read_products"]);
+  assert.deepEqual(base.additionalChecks, ["shopify_product_read"]);
+  assert.equal(orders.scopeStatus, "observed_missing");
+  assert.deepEqual(orders.missingScopes, ["read_orders"]);
+  assert.ok(orders.additionalChecks.includes("shopify_protected_customer_data_access"));
+  assert.equal(base.authorizesActivation, false);
+  assert.equal(orders.authorizesActivation, false);
+  assert.equal(JSON.stringify(e), before);
+});
+
+test("revoking Orders leaves product scope sufficient while explicit Orders checks become missing", () => {
+  const e = evidence("shopify"); e.scopes.push("read_orders");
+  assert.equal(check(e, "shopify", {includeOrders: true}).scopeStatus, "observed_sufficient");
+  e.scopes = ["read_products"];
+  assert.equal(check(e, "shopify").scopeStatus, "observed_sufficient");
+  assert.deepEqual(check(e, "shopify", {includeOrders: true}).missingScopes, ["read_orders"]);
+  e.scopes = ["read_orders", "read_all_orders"];
+  assert.deepEqual(check(e, "shopify").missingScopes, ["read_products"]);
+  e.observedAt = "2026-10-27T11:00:00.000Z";
+  assert.equal(check(e, "shopify").scopeStatus, "unknown");
+  assert.equal(check(e, "shopify", {includeOrders: true}).scopeStatus, "unknown");
 });
 test("Shopify cannot substitute another shop’s granted permissions", async () => {
   for (const [key, value] of [["id", "gid://shopify/Shop/2"], ["myshopifyDomain", "other.myshopify.com"]]) {

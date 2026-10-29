@@ -27,12 +27,14 @@ export const META_CATALOG_PERMISSION_DEPENDENCIES: Readonly<Record<string, reado
 export function permissionContext(context: PermissionContext): PermissionContext;
 export function identityPermissionRequirements(args: {
   provider: PermissionProvider;
+  includeOrders?: boolean;
   includeOrderHistory?: boolean;
   includeMarketingEvents?: boolean;
 }): PermissionRequirements;
 export function assessIdentityPermissionScopes(args: {
   context: PermissionContext;
   evidence?: PermissionScopeEvidence | null;
+  includeOrders?: boolean;
   includeOrderHistory?: boolean;
   includeMarketingEvents?: boolean;
   now?: () => Date;

@@ -62,7 +62,7 @@ export async function readShopifyPermissionScopes({context: rawContext, admin, n
 // verified is the server result of Shopify authentication and installation resolution.
 // This function compares scopes; it does not authorize product/order reads.
 export async function inspectShopifyIdentityPermissionScopes({
-  verified, database, includeOrderHistory = false, includeMarketingEvents = false,
+  verified, database, includeOrders = false, includeOrderHistory = false, includeMarketingEvents = false,
   now = () => new Date(),
 } = {}) {
   const owner = verified?.installationAuthority;
@@ -80,7 +80,7 @@ export async function inspectShopifyIdentityPermissionScopes({
   }
   const admin = verified?.context?.admin;
   if (typeof admin?.graphql !== "function") throw new TypeError("AUTHENTICATED_SHOPIFY_ADMIN_REQUIRED");
-  identityPermissionRequirements({provider: "shopify", includeOrderHistory, includeMarketingEvents});
+  identityPermissionRequirements({provider: "shopify", includeOrders, includeOrderHistory, includeMarketingEvents});
   const installation = createShopifyRuntimeRepositories(database).installation;
   const assertCurrent = async () => {
     let current;
@@ -98,6 +98,6 @@ export async function inspectShopifyIdentityPermissionScopes({
   const evidence = await readShopifyPermissionScopes({context, admin, now});
   await assertCurrent();
   const assessment = assessIdentityPermissionScopes({context, evidence,
-    includeOrderHistory, includeMarketingEvents, now});
+    includeOrders, includeOrderHistory, includeMarketingEvents, now});
   return Object.freeze({context, evidence, assessment});
 }

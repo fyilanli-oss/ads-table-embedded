@@ -1,3 +1,13 @@
+## 29 Ekim 2026 — İlk kod teslimi: Products / Orders izin kontrolü ayrıldı
+
+07 içindeki ilk teknik teslim hazırlanmıştır; PR/CI ve kullanıcı merge kabulü bekler. Shopify identityPermissionRequirements ve assessIdentityPermissionScopes varsayılanı artık yalnız read_products ister. includeOrders:true seçilince read_orders ve sipariş/protected-data ek kontrolleri istenir. includeOrderHistory:true açık Orders seçimi olmadan reddedilir; eski sipariş erişimi read_all_orders ile birlikte değerlendirilir. Google/Meta/Klaviyo kapsamları değişmez; Shopify’a özgü Orders seçimi diğer provider’larda reddedilir.
+
+inspectShopifyIdentityPermissionScopes aynı güvenilir kurulumun öncesi/sonrası kontrolünü ve tek native grant okumasını koruyarak yeni seçimi taşır. Sipariş okuyucusu varsayılanı kullanmaz: ilk ve son native grant kontrolünde includeOrders:true sabittir. Yalnız Products varsa sipariş HTTP okumasına geçmez; son kontrolde Orders geri alınıp Products kalsa bile toplanan sonuç reddedilir. Eksik/eskimiş/yanlış mağaza gözlemi unknown kalır, false başarı veya gerçek zero olmaz. read_products mevcut write_products ile karşılanabilir; yeni write izni istenmez.
+
+Bu yalnız sunucu izin değerlendirme ayrımıdır. Kullanıcıya Connected/Resume Setup akışı, izin isteme/modal, TOML optional_scopes yayını veya gerçek izin kabulü tamamlandı denmez; sonraki kod teslimlerindedir. Yeni route/UI/token/provider/config/deploy/DB veya Dataset yazımı yoktur. Makine kaydı: contracts/eo-05-start-brief-v1.json#Shopify_product_order_permission_split_2026_10_29. Ayrıntılı planın ilk teslim durumu güncellendi; 26 ana sıra değişmedi. 15 başlamadı; 22 duraklatılmış, 23 Dataset/FX yazımıdır.
+
+224 ilgili test ve 2.835/2.835 tüm test geçti; tip kontrolü ve derleme başarılı. Exact commit CI ve kullanıcı merge onayı beklenir. Bu değişiklik F01 tetikleme yollarına girmez; yeni migration/refresh/kota SQL yoktur. Resmî kontrol 2026-10-29: https://shopify.dev/docs/apps/build/authentication-authorization/manage-access-scopes ve https://shopify.dev/docs/api/usage/access-scopes.
+
 ## 29 Ekim 2026 — 01–13 şimdi tamamlanacak teknik işlerin kodlama sırası
 
 Aşağıdaki numaralar yalnız kod teslim sırasıdır; mevcut 26 maddelik plan yeniden numaralanmadı. Tek ayrıntılı kayıt: contracts/eo-05-immediate-technical-work-plan-v1.json. 07 izin politikası ve araştırmada bulunan Klaviyo eksiği bu sıraya dahildir. Bu plan kod teslimi veya gerçek ortam kabulü değildir.

@@ -36,7 +36,8 @@
       ],
       "acceptance": "Products var/Orders yok, Products yok, izin geri alınmış, geçersiz native scope ve yanlış mağaza durumları ayrı sonuç verir.",
       "depends_on": [],
-      "status": "planned_not_implemented"
+      "status": "repository_code_and_tests_ready_pending_exact_CI_and_owner_merge_not_live_setup",
+      "implementation_record": "contracts/eo-05-start-brief-v1.json#Shopify_product_order_permission_split_2026_10_29"
     },
     {
       "delivery_order": 2,
@@ -324,7 +325,8 @@
     "UI diliminde metin/component eşlemesi ve kullanıcı görsel kabulü ayrıca gerekir.",
     "Provider/config/deploy/canlı izin/DB mutation kendi açık yetki kapısında; bu plan bunları yetkilendirmez."
   ],
-  "runtime_changed": false,
+  "runtime_changed": true,
   "step15_started": false,
-  "Dataset_write": false
+  "Dataset_write": false,
+  "runtime_change_scope": "First delivery permission helper split and explicit Orders collector option; no UI route, activation, provider or DB change."
 }

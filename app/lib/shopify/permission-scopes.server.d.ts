@@ -14,6 +14,7 @@ export function inspectShopifyIdentityPermissionScopes(args: {
     context: {admin: Parameters<typeof readShopifyPermissionScopes>[0]["admin"]};
   };
   database: {query(sql: string, values: unknown[]): Promise<{rows: unknown[]}>};
+  includeOrders?: boolean;
   includeOrderHistory?: boolean;
   includeMarketingEvents?: boolean;
   now?: () => Date;

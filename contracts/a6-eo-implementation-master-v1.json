@@ -1,4 +1,19 @@
 {
+  "Shopify_product_order_permission_split_2026_10_29": {
+    "decision": "contracts/eo-05-start-brief-v1.json#Shopify_product_order_permission_split_2026_10_29",
+    "existing_step": 7,
+    "code_delivery_order": 1,
+    "status": "repository_code_and_tests_ready_pending_exact_CI_and_owner_merge_not_live_setup",
+    "UI_or_live_acceptance": false,
+    "validation": {
+      "targeted_tests": 224,
+      "full_tests": 2835,
+      "failed": 0,
+      "typecheck": "passed",
+      "build": "passed",
+      "F01": "not_triggered_by_this_diff_no_migration_refresh_or_work_repository_paths"
+    }
+  },
   "Immediate_technical_work_plan_2026_10_29": {
     "contract": "contracts/eo-05-immediate-technical-work-plan-v1.json",
     "covers_existing_steps": "01–13",

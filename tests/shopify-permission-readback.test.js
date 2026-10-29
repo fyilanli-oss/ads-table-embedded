@@ -50,7 +50,7 @@ test("scope readback composes native reader and preflight between two active ins
 });
 test("product-only grant cannot satisfy independently selected order, history and marketing requirements", async () => {
   const h = harness({grants: ["read_products"]});
-  const result = await h.run({includeOrderHistory: true, includeMarketingEvents: true});
+  const result = await h.run({includeOrders: true, includeOrderHistory: true, includeMarketingEvents: true});
   assert.equal(result.assessment.scopeStatus, "observed_missing");
   assert.deepEqual(result.assessment.missingScopes, ["read_orders", "read_all_orders", "read_marketing_events"]);
   assert.equal(result.assessment.authorizesActivation, false);
@@ -58,8 +58,8 @@ test("product-only grant cannot satisfy independently selected order, history an
 test("explicitly empty grant stays observed missing, while write grants satisfy reads without requesting writes", async () => {
   const empty = await harness({grants: []}).run();
   assert.equal(empty.assessment.scopeStatus, "observed_missing");
-  assert.deepEqual(empty.assessment.missingScopes, ["read_products", "read_orders"]);
-  const existing = await harness({grants: ["write_products", "write_orders"]}).run();
+  assert.deepEqual(empty.assessment.missingScopes, ["read_products"]);
+  const existing = await harness({grants: ["write_products", "write_orders"]}).run({includeOrders: true});
   assert.equal(existing.assessment.scopeStatus, "observed_sufficient");
   assert.deepEqual(existing.assessment.requiredScopes, ["read_products", "read_orders"]);
 });
@@ -107,9 +107,22 @@ for (const edit of [v => {v.installationAuthority.status = "uninstalled";},
   });
 }
 test("invalid feature selection cannot silently fall back to smaller scope set", async () => {
-  const h = harness();
-  await assert.rejects(h.run({includeOrderHistory: "true"}));
-  assert.equal(h.calls.length, 0);
+  for (const features of [{includeOrderHistory: "true"}, {includeOrders: "false"},
+    {includeOrders: null}, {includeOrderHistory: true}]) {
+    const h = harness();
+    await assert.rejects(h.run(features));
+    assert.equal(h.calls.length, 0);
+  }
+});
+
+test("native product-only readback satisfies base setup scope check with no Orders app checks", async () => {
+  const h = harness({grants: ["read_products"]});
+  const result = await h.run();
+  assert.deepEqual(h.calls.map(c => c.kind), ["resolve", "graphql", "resolve"]);
+  assert.deepEqual(result.assessment.requiredScopes, ["read_products"]);
+  assert.equal(result.assessment.scopeStatus, "observed_sufficient");
+  assert.deepEqual(result.assessment.additionalChecks, ["shopify_product_read"]);
+  assert.equal(result.assessment.authorizesActivation, false);
 });
 test("a different native shop is not current grant evidence even with all requested scopes", async () => {
   const h = harness({bodyChange: body => {body.data.shop.id = "gid://shopify/Shop/2";}});

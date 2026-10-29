@@ -691,6 +691,15 @@
       "repository_sql_sha256": "58e20d2358dd553ef827396c9d838ae553598d064dea48cb7d57597abb529d71",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261029091041",
+      "name": "eo05a_shopify_order_reconciliation",
+      "file": "supabase/migrations/20261029091041_eo05a_shopify_order_reconciliation.sql",
+      "created_with": "supabase@2.121.0 migration new eo05a_shopify_order_reconciliation",
+      "repository_sql_sha256": "d25e9f0d1bca6c25dddae693b73a6461e718537443fe723f2f3d089d8c7a893f",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

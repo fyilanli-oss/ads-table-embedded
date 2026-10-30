@@ -241,7 +241,7 @@
       "status": "google_meta_native_read_klaviyo_documented_default_reference_wired",
       "implementation_record": "contracts/eo-05-start-brief-v1.json#PD_common_record_bridge_2026_10_30",
       "remaining_in_this_delivery": [
-        "Klaviyo documented native attribution-settings read still open; not declared unsupported or complete",
+        "Klaviyo actual account settings remain unobserved; owner approved documented email default reference; no API-read blocker",
         "Native provider field availability/permission/account/operation profile and capacity acceptance separate from synthetic tests",
         "Actual FX/reporting-currency proof stays existing later gate; durable metadata/evidence storage15 and Dataset/FX writer23",
         "Integrated worker/prewrite handoff delivery10; step22 paused; no automatic next package"

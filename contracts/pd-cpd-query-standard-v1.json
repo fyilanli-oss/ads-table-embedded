@@ -1004,5 +1004,64 @@
       "https://developers.klaviyo.com/en/reference/reporting_api_overview",
       "https://github.com/meta/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adsinsights.py"
     ]
+  },
+  "Integrated_source_prewrite_review_2026_10_30": {
+    "supersedes_first_slice_remaining": "PD_worker_prewrite_first_slice_2026_10_30 source-family wiring is implemented here; native setup/capacity remains open",
+    "date": "2026-10-30",
+    "delivery_order": 10,
+    "existing_step": 13,
+    "status": "integrated_source_family_guards_wired_isolated_tests_ready_native_setup_and_capacity_pending",
+    "base_main": "aeddc1888158d24fa75e70153e783ce0c166435b",
+    "entrypoints": [
+      "reviewRefreshIntegratedPrewrite",
+      "runRefreshPdPrewriteChunk({worker,source,prewrite:{identity,shopify,interaction}})"
+    ],
+    "scope": "Read-only composition of existing PD, candidate/reference, optional Shopify Order/LineItem/provider claim and optional Klaviyo attributed-interaction guards. No new provider query or source rule.",
+    "guards": [
+      "Private original PD/candidate/interaction/Order observations; JSON copies rejected",
+      "Exact workspace, installation, generation, shop, provider, account, connection version, selection epoch, claim id/fence and business window",
+      "Native independent PD metrics kept separate from product/order/interaction evidence; no numeric joins or date-range equivalence inferred",
+      "Orders not supplied versus observed empty preserved; same-version replay and line-item boundaries use existing guards",
+      "Klaviyo original collector proves same scope/execution; sale events, attributions, metric and account must equal candidate collection before interaction references are joined",
+      "Different sale references or job rejected; future/reference-conflict interaction visible and blocks integrated worker handoff",
+      "Optional worker integration runs before ready_for_dataset; combined serialized byte budget includes all retained reviews; old PD-only entry unchanged"
+    ],
+    "not_proven": [
+      "Atomic provider snapshot or historical account configuration",
+      "Clicked product identity, Advertised/Cross-sell or exact overlap",
+      "Native app approval/merchant grants/protected data/operation profile/capacity or completed setup",
+      "Durable mapping or Dataset persistence"
+    ],
+    "remaining_in_delivery10": [
+      "Join accepted setup/native permission evidence without changing OAuth or UI; no invented approval receipt",
+      "Cross-family real workload/operation-profile/capacity and native proof review before activation",
+      "Product identity/claims require their real source evidence; structural review is not verified mapping"
+    ],
+    "later": {
+      "durable_mapping_metadata": 15,
+      "listing_tree": 22,
+      "listing_tree_status": "paused",
+      "Dataset_FX_writer": 23
+    },
+    "verification": {
+      "targeted_tests": 732,
+      "full_suite": "pending",
+      "CI": "required",
+      "F01": "required_isolated"
+    },
+    "live_provider_calls": false,
+    "OAuth_change": false,
+    "UI_change": false,
+    "migration": false,
+    "deployment": false,
+    "product_mapping_assigned": false,
+    "sales_roles_changed": false,
+    "Dataset_write": false,
+    "persistable": false,
+    "publishable": false,
+    "sources": [
+      "https://developers.klaviyo.com/en/reference/get_event",
+      "https://shopify.dev/docs/api/admin-graphql/2026-07/objects/Order"
+    ]
   }
 }

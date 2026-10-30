@@ -1000,3 +1000,47 @@ test("interaction body stall is covered by whole-read deadline and stops late co
   release?.(); await new Promise(resolve => setTimeout(resolve, 10));
   assert.ok(f.calls.length <= 4);
 });
+
+import {integratedPrewriteCases} from "./helpers/integrated-prewrite-cases.js";
+integratedPrewriteCases({provider:"klaviyo",fixture:candidateBoundFixture,expected:candidatePrewriteOwner});
+
+
+import {reviewRefreshIntegratedPrewrite as integratedReview} from "../app/lib/refresh/integrated-prewrite-review.server.js";
+import {refreshCandidateObservationContext as candidateContext} from "../app/lib/refresh/quota-authority-binding.server.js";
+import {pdSourceObservation} from "./helpers/pd-source-observation.js";
+async function matchingInteractionBundle() {
+  const f=candidateBoundFixture(), old=f.baseFetch, attr=attribution();
+  attr.relationships.event={data:{type:"event",id:"event1"}};
+  attr.relationships["attributed-event"]={data:{type:"event",id:"click1"}};
+  f.hooks.fetch=p=>p.pathname==="/api/events"?response({data:[event()],included:[metric(),attr],links:{next:null}}):old(p);
+  const observation=await f.create().readEvidence(), scope=candidatePrewriteOwner(), {job}=candidateContext(observation);
+  const i=interactionFixture(true), interaction=await i.run(), pd=await pdSourceObservation(scope,job,job.window);
+  return {f,i,input:{claim:{workspaceId:scope.workspaceId,installGeneration:String(scope.installGeneration),provider:"klaviyo",accountId:scope.accountId,id:job.id,fence:job.fence},
+    window:job.window,pdObservation:pd.observation,identity:{expected:scope,observation},interaction}};
+}
+test("Klaviyo integrated prewrite retains exact sale-interaction evidence without assigning product roles",async()=>{
+  const {input}=await matchingInteractionBundle(),r=integratedReview(input);
+  assert.equal(r.interactionReview.state,"reviewed");assert.equal(r.interactionReview.links[0].status,"linked");
+  assert.equal(r.interactionReview.links[0].interaction_kind,"click");assert.equal(r.interactionReview.clickedProductVerified,false);
+  assert.equal(r.referenceReview.referenceReview.rows[0].reference.attribution_resolution.sales_role,"Assisted");
+  assert.equal(r.salesRolesChanged,false);assert.equal(r.exactOverlapVerified,false);assert.equal(r.persistable,false);
+});
+test("Klaviyo integrated prewrite rejects copied interaction observations and different sale references",async()=>{
+  const {input}=await matchingInteractionBundle();
+  assert.throws(()=>integratedReview({...input,interaction:structuredClone(input.interaction)}),/INTERACTION_SCOPE_MISMATCH/);
+  const f=interactionFixture(true);f.hooks.fetch=p=>p.pathname==="/api/events"?response({data:[event("otherSale")],included:[metric(),f.attr],links:{next:null}}):f.baseFetch(p);
+  const different=await f.run();
+  assert.throws(()=>integratedReview({...input,interaction:different}),/INTERACTION_SALE_REFERENCES_CHANGED/);
+});
+
+
+test("Klaviyo integrated prewrite does not combine a different execution or hide a future interaction",async()=>{
+  const {input}=await matchingInteractionBundle();
+  const other=interactionFixture(true);other.config.claim.fence++;
+  const awaited=await other.run();
+  assert.throws(()=>integratedReview({...input,interaction:awaited}),/INTERACTION_SCOPE_MISMATCH/);
+  const future=interactionFixture(true);future.detail.data.attributes.datetime="2026-10-02T12:00:00Z";
+  const r=integratedReview({...input,interaction:await future.run()});
+  assert.equal(r.interactionReview.state,"conflicting_references");
+  assert.equal(r.salesRolesChanged,false);assert.equal(r.persistable,false);
+});

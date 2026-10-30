@@ -18,6 +18,8 @@ import {SHOPIFY_ORDER_READ_API_VERSION} from "../shopify/order-read-protocol.ser
 import {createShopifyOrderReadExecution} from "../shopify/order-collection.server.js";
 const candidateObservations=new WeakMap();
 const candidateReferenceInputs=new WeakMap();
+const interactionObservations=new WeakMap();
+export function refreshInteractionObservationContext(value){return interactionObservations.get(value)??null;}
 // In-process collection provenance only. No public registrar or permission proof.
 export function refreshCandidateObservationContext(value){return candidateObservations.get(value)??null;}
 export function refreshCandidateReferenceInputs(value){return candidateReferenceInputs.get(value)??null;}
@@ -101,7 +103,12 @@ function createKlaviyoIdentityReader({verified,database,tokenVault,mode,signal,s
     if(args.length) throw Error("REFRESH_KLAVIYO_IDENTITY_OVERRIDE_FORBIDDEN");
     if(used) throw Error("REFRESH_KLAVIYO_IDENTITY_EXECUTION_USED");
     used=true;
-    try{const result=await collect(options);if(candidates)recordCandidateObservation(result,"klaviyo","candidate",owner,shop,claim,window,referenceInputs);return result;}
+    try{const result=await collect(options);if(candidates)recordCandidateObservation(result,"klaviyo","candidate",owner,shop,claim,window,referenceInputs);
+      if(interactions)interactionObservations.set(result,Object.freeze({provider:"klaviyo",workspaceId:owner.workspaceId,
+        installGeneration:owner.installGeneration,installationId:result.installation_id,shopId:shop.shopId,shopDomain:shop.myshopifyDomain,
+        accountId:claim.accountId,connectionId:result.connection_id,connectionVersion:result.connection_version,
+        reportingSelectionEpoch:result.reporting_selection_epoch,job:Object.freeze({id:claim.id,fence:claim.fence,window:Object.freeze({...window})})}));
+      return result;}
     finally{if(admin)closeShopifyAdminSdkClient(admin);}
   }});
 }

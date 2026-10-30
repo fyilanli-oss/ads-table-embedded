@@ -1,3 +1,14 @@
+## OAuth — işlem öncesi zorunlu açık kullanıcı onayı (29 Ekim 2026)
+
+**OAuth’a doğrudan veya dolaylı değen hiçbir çalışma, yapılacak somut işlem ve kapsam açıklanıp kullanıcıdan önceden açık izin alınmadan başlatılamaz.** Tüm sağlayıcılar ve Shopify dahildir.
+
+- İnceleme/araştırma, akış ve ekran tasarımı, izin/kapsam, hesap/Reporting Account/Merchant/işletme/katalog seçimi veya bağlantıları bu kapıya tabidir.
+- Kod, test, sözleşme, migration, config, callback/token/oturum, canlı çağrı, temizlik/kaldırma/geri alma/refactor, deploy ve merge de dahildir. Düzeltme veya geri alma amacı kendiliğinden izin oluşturmaz.
+- Genel “devam edelim”, genel onay, önceki başka iş/merge onayı veya önceki plan kararı OAuth yetkisi değildir. Onay yalnız açıkça belirtilen somut iş ve kapsam için geçerlidir. Kapsam değişecekse durulur ve yeni açık izin alınır.
+- Bu kapı, OAuth için önceki bağımsız kodlama veya izole test ilerleme izinlerinin önündedir; teknik olanak, başarılı test, geri alınabilirlik veya ajan takdiri yerine geçmez.
+- #264 kullanıcı tarafından reddedilen katalog seçim adımı nedeniyle durdurulmuştur; merge yetkisi yoktur. Katalog seçimi kodu temizlenmedi veya değiştirilmedi. Temizlik de ayrı açık izin bekler.
+- Bu kuralın AGENTS ve bağlayıcı belgelere kaydı kullanıcı tarafından açıkça istendi. Bu izin yalnız kural kaydına aittir; OAuth inceleme/kodlama/test/temizlik veya provider işlemi yetkisi vermez.
+
 ## 29 Ekim 2026 — Onaylı kararlı Polaris 2.0 hizalaması
 
 #262 main’e birleşti (284c789715342786e972f912e5a57d253b1c7001). Ürün sahibi açıklama tasarımını ve sabit polaris-2.0.js + exact @shopify/polaris-types@2.0.0 geçişini açıkça onayladı. Sunucu ShopifyApp ve AppProvider aynı merkezi runtime değerini kullanır; paket ve lock birlikte değiştirilir. Resmî Shopify sürümleme kaynağı 2026-10-29 kontrol edildi: https://shopify.dev/docs/api/app-home/latest/web-components/versioning.

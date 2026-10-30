@@ -1,4 +1,31 @@
 {
+  "OAuth_explicit_owner_approval_gate_2026_10_29": {
+    "checked_at": "2026-10-29",
+    "authority": "explicit_owner_instruction",
+    "owner_instruction": "Bundan sonra OAutha değen hiçbir şey benden izin alınmadan yapılmayacak",
+    "status": "mandatory_explicit_owner_approval_before_any_OAuth_related_work",
+    "scope": [
+      "All providers and Shopify; direct or indirect OAuth-related work",
+      "Investigation/research/review, product or UI flow design, permission/scope, account/Reporting Account/Merchant/business/catalog selection or relationship changes",
+      "Code, tests, contracts, migrations, config, callback/token/session, live calls, cleanup/removal/revert/refactor, deployment and merge affecting OAuth"
+    ],
+    "required_approval": "Describe the concrete operation and its scope first; obtain explicit owner permission covering that work before starting. Act only within that approved scope.",
+    "not_authorization": [
+      "Generic continue/proceed or general approval",
+      "Earlier approval of a different task, merge, provider permission bundle or technical plan",
+      "Technical feasibility, passing tests, reversibility, a discovered defect, safety/cleanup intent or an agents autonomous judgement"
+    ],
+    "scope_change": "Stop and request fresh explicit owner approval before expanding or changing approved scope. No silent alternative path or cleanup.",
+    "current_hold": {
+      "PR": 264,
+      "status": "stopped_owner_rejected_catalog_selection_not_merge_authorized",
+      "catalog_selection_step": "owner_rejected; no removal or replacement was performed",
+      "OAuth_cleanup": "not_started; requires separate explicit owner approval",
+      "runtime_or_test_changes_in_this_record": false
+    },
+    "recording_exception": "The owner explicitly authorized this instruction to be recorded in AGENTS and governing documents; that authorizes documentation/governance recording only, not OAuth investigation, implementation, tests, cleanup or provider operations.",
+    "precedence": "Overrides earlier permission to proceed independently with code or isolated tests in OAuth-related work. Earlier approved documents/technical possibilities do not override this gate."
+  },
   "contract_id": "eo-05-immediate-technical-work-plan-v1",
   "checked_at": "2026-10-29",
   "status": "code_delivery_plan_prepared_for_owner_review_not_implementation_complete",

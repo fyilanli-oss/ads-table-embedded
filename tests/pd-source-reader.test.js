@@ -177,3 +177,32 @@ test("explicit result bounds reject successful but oversized source data", async
     assert.equal(f.state.http, 2);
   }
 });
+
+import {recordMetadata} from "./helpers/pd-record-metadata.js";
+test("Meta runtime native read feeds the common bridge without changing either query family", async () => {
+  const f = fixture();
+  f.hooks.response = address => json({data: [{account_id: "123", campaign_id: "10", campaign_name: "Root",
+    adset_id: "20", adset_name: "Parent", ad_id: "30", ad_name: "Leaf", date_start: "2026-10-01", date_stop: "2026-10-01",
+    impressions: "10", spend: "20", outbound_clicks: [{action_type: "outbound_click", value: "0"}],
+    ...(new URL(address).searchParams.has("breakdowns") ? {product_id: "source-product"} : {})}]});
+  const native = await f.create().readEvidence();
+  const scope = {...native.source_context, flow: "ads", entity_type: "ad", entity_id: "30",
+    ancestors: [{entity_type: "campaign", entity_id: "10"}, {entity_type: "adset", entity_id: "20"}],
+    conversion_scope: "normal", reporting_time_basis: "impression_date", completeness: "complete", bounded: true,
+    composition_attempt_id: workspace, snapshot_id: "synthetic-meta", attribution_fingerprint: "a".repeat(64), metric_units_fingerprint: "b".repeat(64)};
+  const metadata = recordMetadata(native.source_context, [{scope, source_execution: {metadata_references: {attribution: "synthetic-attribution", metric_units: "synthetic-units"}}}]);
+  f.config.recordBridge = {metadata};
+  const reader = f.create(); metadata.binding.claim_fence = 999;
+  const result = await reader.readEvidence();
+  assert.equal(result.records.status, "validated");
+  assert.equal(result.records.rows[0].raw_metrics.spend_value, 20);
+  assert.equal(result.records.rows[0].observation_state.ad_click, "zero");
+  assert.equal(result.evidence.product.rows[0].product_id, "source-product");
+  assert.equal(f.state.http, 4); assert.equal(result.records.persistable, false);
+});
+test("record bridge opt-in with no server metadata retains native evidence and an explicit wait", async () => {
+  const f = fixture(); f.config.recordBridge = {};
+  const result = await f.create().readEvidence();
+  assert.equal(result.records.reason, "record_metadata_required");
+  assert.equal(result.evidence.channel.rows.length, 1); assert.deepEqual(result.records.rows, []);
+});

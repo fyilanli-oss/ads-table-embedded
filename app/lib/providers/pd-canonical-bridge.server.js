@@ -1,5 +1,7 @@
 import {RAW_METRICS, validateCanonicalFunnelFact, canonicalFactKey} from "./common-adapter.server.js";
 import {checkPdCompositionCompatibility} from "./pd-composition-scope.server.js";
+import {mapMetaPdMetrics, META_PD_METRIC_SOURCES} from "./meta-reporting.server.js";
+import {stableJson} from "./common-adapter.server.js";
 
 const record = value => value !== null && typeof value === "object" && !Array.isArray(value);
 const text = value => typeof value === "string" && value.length > 0 && value === value.trim();
@@ -51,8 +53,16 @@ function lineageValid(source) {
       const projection = projections.get(JSON.stringify([reference.source_family, reference.source_reference]));
       if (!projection || reference.source_row_index >= projection.rows.length) return false;
       const native = projection.rows[reference.source_row_index];
-      const values = source.scope.provider === "klaviyo" ? native?.statistics : native?.metrics;
+      const values = source.scope.provider === "meta" ? native : source.scope.provider === "klaviyo" ? native?.statistics : native?.metrics;
       if (["present", "zero"].includes(source.observation_state?.[metric]) && values?.[reference.native_field] == null) return false;
+      if (source.scope.provider === "meta") {
+        const spec = META_PD_METRIC_SOURCES[metric];
+        if (projection.source_family !== "ad_channel_daily_insights" || reference.native_field !== spec.field
+          || reference.action_type !== spec.action_type) return false;
+        let mapped;
+        try { mapped = mapMetaPdMetrics(native); } catch { return false; }
+        if (["raw_metrics", "metric_support", "observation_state"].some(k => stableJson(mapped[k]) !== stableJson(source[k]))) return false;
+      }
       const refKey = JSON.stringify([reference.source_family, reference.source_reference, reference.source_row_index, reference.native_field]);
       if (seen.has(refKey)) return false;
       seen.add(refKey);

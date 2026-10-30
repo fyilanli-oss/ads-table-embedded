@@ -233,3 +233,13 @@ Kaynaklar: önceki plan konuşma turu 01a17c5f-d148-7533-95d0-3c32770859ea; mast
 Paket eşlemesi işlerin yerini gösterir; EO-05-A/E gibi paketlerin bütün kapsamı 26 satırın tek tek kapanmasıyla otomatik tamamlanmış sayılmaz.
 
 28 Ekim 2026 yürütme durumu: `docs/evidence/EO_05_STEP13_PREWRITE_CHECKPOINT_2026-10-28.json`. 27 Ekim Exceli tarihsel plan görüntüsüdür; bu checkpoint için yeniden üretilmedi. 26 sıra ve iş kapsamları değişmedi.
+
+
+## Üç sağlayıcı ortak kayıt köprüsü — 30 Ekim 2026
+
+- Açık ürün sahibi onayıyla teknik teslim8: mevcut Google/Klaviyo PD birleşik kayıtları ve Meta tek Ad sorgusunun metrik projeksiyonu ortak canonical kontrolüne bağlanır. 26 maddelik sıra değişmez.
+- Giriş: createRefreshPdSourceReader için açık sunucu recordBridge.metadata seçeneği. Gerçek çalışma/hesap/gün/para birimi, bağlantı sürümü/seçim nesli/fence, varlık/üst kimlikler ve ham satır indeksleri karşılaştırılır. Meta ürün toplamı PD yerine geçirilmez.
+- Her varlığın açık atıf/birim fingerprinti ve kaynak referansı, entity/time/reporting currency/FX kanıtı gerekir. Eksik/çelişkili metadata veya FX bekleme nedeni döndürür; kur veya otomatik1 üretilmez. Bir hatalı varlık tüm ortak kayıt grubunu bekletir; kaynak ve ayrı sonuçlar korunur.
+- Kodun referans biçimini doğrulaması gerçek provider atıf kanıtı değildir. Güvenilir etkin metadata edinimi ve native kabul açık; bu kayıtla tamamlandı sayılmaz. Kalıcı metadata/kanıt deposu15, worker/prewrite bütünleşmesi teslim10, Dataset/FX writer23.
+- UI/izin/akış, canlı sorgu, yeni provider alanı, migration, deploy, Spend hesabı veya Sales Role değişmedi. canonical_scope_ready/persistable/authorizes_activation/publishable=false.15 başlamadı;22 duraklatılmış.
+- Bağlayıcı ayrıntı: contracts/eo-05-start-brief-v1.json#PD_common_record_bridge_2026_10_30. Resmî kontrol30Ekim: Google dönüşüm raporlama, Klaviyo Reporting API, Meta resmî SDK. Meta Insights sayfası429; SDK alanlarından davranış kanıtı çıkarılmadı.

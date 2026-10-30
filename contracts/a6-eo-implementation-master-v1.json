@@ -1795,5 +1795,61 @@
     "step22_paused": true,
     "Dataset_write_step": 23,
     "publishable": false
+  },
+  "PD_common_record_bridge_2026_10_30": {
+    "checked_at": "2026-10-30",
+    "delivery_order": 8,
+    "existing_step": 6,
+    "status": "runtime_common_record_bridge_wired_isolated_tests_ready_native_metadata_not_accepted",
+    "approval": "Explicit owner approval of three-provider common source/metadata bridge and isolated code/tests; no OAuth flow/permission change, live query, Dataset write or deploy.",
+    "entrypoint": "createRefreshPdSourceReader({recordBridge:{metadata}}).readEvidence()",
+    "implementation": "app/lib/providers/pd-record-orchestration.server.js",
+    "source_metadata": "Explicit trusted server-only metadata bound to exact workspace/installation/generation/connection/version/selection/account/day/currency/timezone/job/fence; per-entity scope, attribution/unit fingerprints and references. Shape/reference presence is not native proof. Request input is not a metadata authority.",
+    "providers": {
+      "google_ads": "Existing complete PD composer; no new numerical composition or query",
+      "klaviyo": "Existing Campaign/Flow Message composer, Medium/Variation preserved, Spend null; no roles",
+      "meta": "Existing Ad channel PD metric projection, one native row per Ad; no product metrics or numeric aggregation substituted; native ancestors/names checked. Explicit time basis required; no inferred request default."
+    },
+    "checks": [
+      "Exact execution and entity scope/reference coverage; duplicate entities rejected",
+      "Source projection row indices resolve to unchanged native rows and exact execution version/selection/fence",
+      "Existing canonical bridge verifies metadata/time/currency/FX references; no lookup/fallback or automatic rate1",
+      "One blocked entity withholds whole canonical batch; individual reasons and source facts retained",
+      "Raw native evidence and partial/missing/zero distinctions preserved; not_observed is not zero",
+      "Authority revalidated after bridging and entire result byte budget checked"
+    ],
+    "limits": {
+      "max_metadata_entities": 20000,
+      "canonical_scope_ready": false,
+      "persistable": false,
+      "authorizes_activation": false,
+      "publishable": false
+    },
+    "verification": {
+      "isolated_tests": "172 related tests passed; final hardening covered by exact commit CI",
+      "exact_commit_CI": "pending",
+      "F01": "required_isolated_CI",
+      "native_acceptance": false
+    },
+    "remaining": [
+      "Real native attribution/unit/entity metadata acceptance and trusted effective metadata acquisition are still required; no synthetic fingerprint proves them",
+      "Durable metadata/evidence repository and full canonical storage remain step15, not silently introduced here",
+      "Integrated worker/prewrite handoff remains delivery10; recordBridge is explicit server opt-in, not live activation"
+    ],
+    "sources": [
+      "https://developers.google.com/google-ads/api/docs/conversions/reporting",
+      "https://developers.klaviyo.com/en/reference/reporting_api_overview",
+      "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adsinsights.py"
+    ],
+    "meta_document_access": "Insights page returned429; official SDK read for field existence only, not attribution semantics",
+    "live_provider_calls": false,
+    "OAuth_permission_change": false,
+    "UI_change": false,
+    "migration": false,
+    "deployment": false,
+    "step15_started": false,
+    "step22_paused": true,
+    "Dataset_write_step": 23,
+    "publishable": false
   }
 }

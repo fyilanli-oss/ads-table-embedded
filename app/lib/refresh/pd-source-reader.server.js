@@ -6,6 +6,7 @@ import {GOOGLE_PD_QUERY_FAMILIES} from "../providers/google-reporting.server.js"
 import {klaviyoTokenRequiresRefresh} from "../providers/klaviyo-api.server.js";
 import {GOOGLE_PD_FLOW_FAMILIES, composeGooglePdSnapshot} from "../providers/google-pd-orchestration.server.js";
 import {composeKlaviyoPdSnapshot} from "../providers/klaviyo-pd-orchestration.server.js";
+import {bridgePdReadSnapshot} from "../providers/pd-record-orchestration.server.js";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const text = v => typeof v === "string" && v.length > 0 && v === v.trim();
@@ -25,10 +26,12 @@ function date(value) {
  * All dependencies are server-owned; none may be supplied from request JSON.
  */
 export function createRefreshPdSourceReader({verified, database, tokenVault, workStore, quotaStore,
-  claim: suppliedClaim, window: suppliedWindow, entitlementReceipt, queryFamily, googlePd, klaviyoPd,
+  claim: suppliedClaim, window: suppliedWindow, entitlementReceipt, queryFamily, googlePd, klaviyoPd, recordBridge,
   environment = process.env, signal, now = Date.now, readNow = () => new Date(),
   fetchFn = globalThis.fetch, limits, ...extra} = {}) {
   if (Object.keys(extra).length) fail("INPUT_INVALID");
+  if (recordBridge !== undefined && (!recordBridge || typeof recordBridge !== "object" || Array.isArray(recordBridge)
+    || Object.keys(recordBridge).some(k => k !== "metadata"))) fail("INPUT_INVALID");
   const claim = structuredClone(suppliedClaim), window = structuredClone(suppliedWindow);
   refreshWorkIdentity(claim, {claimRequired: true});
   if (klaviyoPd !== undefined && (claim.provider !== "klaviyo" || !klaviyoPd || typeof klaviyoPd !== "object" || Array.isArray(klaviyoPd)
@@ -57,6 +60,7 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
   const boundLimits = copy(limits), env = {...environment}, receipt = structuredClone(entitlementReceipt);
   const pd = googlePd === undefined ? null : copy(googlePd);
   const kpd = klaviyoPd === undefined ? null : copy(klaviyoPd);
+  const bridge = recordBridge === undefined ? null : copy(recordBridge);
   const query = database.query.bind(database), loadToken = tokenVault.loadProviderTokenSet.bind(tokenVault);
   const loadBound = workStore.loadBoundAuthority.bind(workStore), loadQuota = workStore.loadQuotaContext.bind(workStore);
   // Existing reporting readers may request reauthorization/rotation on failures.
@@ -195,12 +199,14 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
           metadata_state: "native_rows_and_request_evidence_preserved_not_composition_ready"};
         const composition = pd ? composeGooglePdSnapshot({sourceContext, evidence, compositionContext: pd.compositionContext})
           : kpd ? composeKlaviyoPdSnapshot({sourceContext, evidence, compositionContexts: kpd.compositionContexts}) : null;
-        if (pd || kpd) await currentContext();
+        const records = bridge ? bridgePdReadSnapshot({sourceContext, evidence, composition, metadata: bridge.metadata}) : null;
+        if (pd || kpd || bridge) await currentContext();
         check();
         const result = copy({status: "source_read", source_context: sourceContext, evidence,
           ...(composition ? {composition} : {}),
+          ...(records ? {records} : {}),
           rows_observed: rows, canonical_scope_ready: false, authorizes_activation: false, persistable: false, publishable: false});
-        if ((pd || kpd) && Buffer.byteLength(JSON.stringify(result), "utf8") > boundLimits.maxBytes) fail("RESULT_BOUND_EXCEEDED");
+        if ((pd || kpd || bridge) && Buffer.byteLength(JSON.stringify(result), "utf8") > boundLimits.maxBytes) fail("RESULT_BOUND_EXCEEDED");
         return result;
       })();
       return await Promise.race([operation, deadline, cancelled]);

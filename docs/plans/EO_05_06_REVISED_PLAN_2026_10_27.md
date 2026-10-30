@@ -1,3 +1,9 @@
+## 30 Ekim — Ortak kaynak okuma girişi
+
+Mevcut 6/11/12 kapsamındaki beşinci teknik teslimin ilk dilimi: createRefreshPdSourceReader mevcut kota kontrollü Google/Meta/Klaviyo okuyucularına tek-kullanımlık, mağaza/hesap/nesil/sürüm bağlı giriş sağlar. Kaynak günü, saat dilimi, para birimi ve ham hiyerarşi/sorgu kanıtı birlikte taşınır. Eksik metadata, değişen hesap/kurulum/credential/seçim nesli, yarım okuma, iptal veya ilk hata başarıya çevrilmez. Sıradaki 6/7/8 teslimleri metrik birleştiricileri ve kayıt köprüsünü bağlayacak; bu dilim canonical kapsam veya kalıcı aktivasyon vermez. Google devam sayfası bu ilk dilimde toplanmaz, partial reddedilir. Atıf/birim fingerprintleri eksikken null kalır.
+
+Klaviyo görsel bulguları ve Meta/Google native modal kabulü #264'te ayrı açık tutulur; toplu düzeltme kararı korunur. Yeni UI, canlı izin/config/yayın/DB değişikliği yoktur. F01 yalnız izole CI'da çalışır;15 başlamadı,22 duraklatılmış,23 Dataset/FX yazımıdır. Yetki, kaynak ve test kaydı: contracts/eo-05-start-brief-v1.json#Shared_source_read_context_2026_10_30.
+
 ## OAuth — işlem öncesi zorunlu açık kullanıcı onayı (29 Ekim 2026)
 
 **OAuth’a doğrudan veya dolaylı değen hiçbir çalışma, yapılacak somut işlem ve kapsam açıklanıp kullanıcıdan önceden açık izin alınmadan başlatılamaz.** Tüm sağlayıcılar ve Shopify dahildir.

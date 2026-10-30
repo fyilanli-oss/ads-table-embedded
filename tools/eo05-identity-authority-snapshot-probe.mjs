@@ -18,8 +18,9 @@ export async function identityAuthoritySnapshotProbe(client,{execution}){
       await client.query("update integrations.provider_connections set granted_scopes=$1 where workspace_id=$2 and provider=$3",[scopes,workspaceId,provider]);
       const row=(await read(provider)).rows[0];assert.equal(row.installation_id,owner.id);assert.equal(row.lifecycle_status,"connected");
       assert.equal(row.reporting_selection_epoch===null,provider==="klaviyo");assert.ok(row.accounts.every(a=>!Object.hasOwn(a,"name")));
+      const issuedAt=Date.now();
       const token={access_token:"SYNTHETIC-ONLY",refresh_token:"SYNTHETIC-ONLY",permission_profile:"identity_v1",scope:scopes.join(" "),scopes,
-        scope_verified_at:new Date().toISOString(),expires_in:3600,expires_at:new Date(Date.now()+3600000).toISOString()};
+        scope_verified_at:new Date(issuedAt).toISOString(),expires_in:3600,expires_at:new Date(issuedAt+3600000).toISOString()};
       let vaultCalls=0;
       const loader=createIdentityRuntimeAuthorityLoader({verified,database:client,provider,tokenVault:{loadProviderTokenSet:async args=>{
         vaultCalls++;assert.equal(args.credentialId,row.credential_id);return token;}}});

@@ -170,7 +170,6 @@
       "implementation_record": "contracts/eo-05-start-brief-v1.json#Shared_source_read_context_2026_10_30",
       "entrypoint": "createRefreshPdSourceReader",
       "remaining_in_this_delivery": [
-        "Google continuation and composer wiring in delivery6",
         "Klaviyo Message composer wiring in delivery7",
         "Per-entity scope/fingerprint/native attribution binding and common record bridge in delivery8",
         "Integrated worker/prewrite handoff and native authority/capacity acceptance remain separate",
@@ -192,7 +191,13 @@
       "depends_on": [
         5
       ],
-      "status": "composer_exists_runtime_call_wiring_open"
+      "status": "runtime_composer_wired_isolated_tests_ready_native_inactive_metadata_required",
+      "implementation_record": "contracts/eo-05-start-brief-v1.json#Google_PD_read_composition_2026_10_30",
+      "remaining_in_this_delivery": [
+        "Native/durable effective attribution and unit metadata loader plus canonical bridge in delivery8",
+        "Klaviyo Message runtime composer wiring in delivery7",
+        "Integrated worker/prewrite handoff in delivery10; native capacity/permission/source acceptance separate"
+      ]
     },
     {
       "delivery_order": 7,
@@ -447,6 +452,68 @@
     "runtime_code_changed": true,
     "live_provider_calls": false,
     "db_migration": false,
+    "step15_started": false,
+    "step22_paused": true,
+    "Dataset_write_step": 23,
+    "publishable": false
+  },
+  "Google_PD_read_composition_2026_10_30": {
+    "checked_at": "2026-10-30",
+    "base_main": "55a92e93ab7964b72249e93cc5d54c6c3b707f6b",
+    "owner_authorization": "Google PD complete paging, existing composer wiring and isolated tests; no live query, OAuth permission change, deployment or Dataset write",
+    "existing_steps": [
+      4
+    ],
+    "delivery_order": 6,
+    "status": "runtime_composer_wired_isolated_tests_ready_native_inactive_metadata_required",
+    "entrypoints": [
+      "createRefreshPdSourceReader({googlePd:{flow,compositionContext}}).readEvidence",
+      "createGoogleReportingAuthorityRuntime.readPdEvidenceSnapshot",
+      "composeGooglePdSnapshot"
+    ],
+    "runtime": [
+      "app/lib/refresh/pd-source-reader.server.js",
+      "app/lib/providers/google-reporting-authority.server.js",
+      "app/lib/providers/google-pd-orchestration.server.js"
+    ],
+    "uses_existing_composer": "composeGooglePdLeaf",
+    "grains": {
+      "search": "ad",
+      "shopping": "ad_group",
+      "retail_pmax": "asset_group"
+    },
+    "source_behavior": [
+      "Existing performance + normal conversion-action family per flow; no new fields/queries or cart-data family",
+      "Same query/account/day/token context across continuation pages",
+      "All observed native leaves grouped; global source row indices and page spans retained alongside per-leaf composer indices",
+      "Reject duplicate performance/action grain, native hierarchy conflicts, partial pages, cursor loops/limits and foreign account/day",
+      "Preserve normal quantity/value, absent vs explicit zero vs partial; no all_* or performance conversion totals added",
+      "First error stops; authentic quota wait, current authority checks, abort and whole-read deadline retained"
+    ],
+    "composition_context": "Trusted server-only metadata bound to exact workspace/installation/generation/connection/version/selection/account/day/timezone/currency/job/fence/flow; normal interaction scope and explicit fingerprint references required. Shape does not prove native attribution.",
+    "missing_context": "Native evidence preserved, composition blocked and rows empty; no invented fingerprint or canonical permission",
+    "bounds": "At most20 pages per family and20000 combined native rows; explicit caller elapsed/serialized-byte bounds. Decode/collection/composition precede byte checks; not measured peak-memory proof.",
+    "verification": {
+      "new_isolated_tests": 30,
+      "exact_commit_CI": "pending",
+      "F01": "required_isolated_CI",
+      "native_acceptance": false
+    },
+    "remaining": [
+      "Native/durable effective attribution and unit metadata loader plus canonical bridge in delivery8",
+      "Klaviyo Message runtime composer wiring in delivery7",
+      "Integrated worker/prewrite handoff in delivery10; native capacity/permission/source acceptance separate"
+    ],
+    "sources": [
+      "https://developers.google.com/google-ads/api/docs/reporting/paging",
+      "https://developers.google.com/google-ads/api/docs/reporting/segmentation"
+    ],
+    "new_provider_queries": false,
+    "live_provider_calls": false,
+    "OAuth_permission_change": false,
+    "UI_change": false,
+    "migration": false,
+    "deployment": false,
     "step15_started": false,
     "step22_paused": true,
     "Dataset_write_step": 23,

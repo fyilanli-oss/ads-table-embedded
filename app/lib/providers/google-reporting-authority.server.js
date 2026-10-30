@@ -10,6 +10,7 @@ import {
 } from "./google-ads-rest.server.js";
 import {buildGoogleReportingQueries, fetchGoogleReportingPage, GoogleReportingError} from "./google-reporting.server.js";
 import {buildGoogleSearchSourceLinks, buildGoogleShoppingSourceLinks} from "./google-source-links.server.js";
+import {GOOGLE_PD_FLOW_FAMILIES} from "./google-pd-orchestration.server.js";
 
 const PROVIDER = "google_ads";
 const CUSTOMER_ID_PATTERN = /^[0-9]+$/;
@@ -119,7 +120,7 @@ export function createGoogleReportingAuthorityRuntime({
       loginCustomerId: context.reportingAccount.loginAccountId, fetchFn});
   }
 
-  async function collect(context, queryFamily, dateWindow) {
+  async function collect(context, queryFamily, dateWindow, bounds = null) {
     const client = clientFor(context);
     const rows = [];
     const pdMetricRows = [];
@@ -127,11 +128,21 @@ export function createGoogleReportingAuthorityRuntime({
     const seen = new Set();
     let cursor = null;
     let first = null;
-    for (let pageNumber = 0; pageNumber < 20; pageNumber++) {
+    let bytes = 0;
+    const spans = [];
+    for (let pageNumber = 0; pageNumber < (bounds?.maxPages ?? 20); pageNumber++) {
       const page = await fetchGoogleReportingPage({client, customerId: context.reportingAccount.id,
         queryFamily, dateWindow, pageToken: cursor});
       if (!first) first = page;
       const offset = rows.length;
+      if (bounds) {
+        bytes += Buffer.byteLength(JSON.stringify(page), "utf8");
+        if (bytes > bounds.maxBytes || offset + page.rows.length > bounds.maxRows) {
+          throw new GoogleReportingError("GOOGLE_PD_READ_BOUND_EXCEEDED", "Google PD read bound exceeded");
+        }
+        spans.push(Object.freeze({page_index: pageNumber, row_start: offset, row_count: page.rows.length,
+          provider_request_id: page.provider_request_id, query_fingerprint: page.evidence.query_fingerprint}));
+      }
       pdMetricRows.push(...(page.pd_metric_rows ?? []).map(row => Object.freeze({
         ...row, source_row_index: row.source_row_index + offset,
       })));
@@ -142,7 +153,7 @@ export function createGoogleReportingAuthorityRuntime({
         ...(first.pd_metric_rows ? {pd_metric_rows: Object.freeze(pdMetricRows)} : {}), next_cursor: null,
         observation_state: rows.length ? "present" : "not_observed_in_this_execution",
         evidence: Object.freeze({...first.evidence, page_count: pageNumber + 1,
-          provider_request_ids: Object.freeze(requestIds)})});
+          provider_request_ids: Object.freeze(requestIds), ...(bounds ? {page_spans: Object.freeze(spans)} : {})})});
       if (typeof page.next_cursor !== "string" || page.next_cursor.length < 1 || page.next_cursor.length > 4096) {
         throw new GoogleReportingError("GOOGLE_REPORTING_CURSOR_INVALID", "Google cursor is invalid");
       }
@@ -155,6 +166,30 @@ export function createGoogleReportingAuthorityRuntime({
 
   return Object.freeze({
     prepareEvidenceExecution,
+    async readPdEvidenceSnapshot({installationAuthority, dateWindow, flow, limits}) {
+      const pair = Object.hasOwn(GOOGLE_PD_FLOW_FAMILIES, flow ?? "") ? GOOGLE_PD_FLOW_FAMILIES[flow] : null;
+      if (!pair || dateWindow?.start !== dateWindow?.end || !limits
+        || !["maxPages", "maxRows", "maxBytes"].every(k => Number.isSafeInteger(limits[k]) && limits[k] > 0)
+        || limits.maxPages > 20 || limits.maxRows > 20_000) {
+        throw new GoogleReportingError("GOOGLE_PD_READ_INPUT_INVALID", "Google PD read input is invalid");
+      }
+      const dates = Object.freeze({...dateWindow}), bounds = Object.freeze({...limits});
+      buildGoogleReportingQueries({dateWindow: dates});
+      const context = await prepareEvidenceExecution({installationAuthority});
+      const performance = await collect(context, pair[0], dates, bounds);
+      const remaining = {...bounds, maxRows: bounds.maxRows - performance.rows.length,
+        maxBytes: bounds.maxBytes - Buffer.byteLength(JSON.stringify(performance), "utf8")};
+      if (remaining.maxBytes <= 0) throw new GoogleReportingError("GOOGLE_PD_READ_BOUND_EXCEEDED", "Google PD read bound exceeded");
+      const conversions = await collect(context, pair[1], dates, remaining);
+      if (performance.rows.length + conversions.rows.length > bounds.maxRows
+        || Buffer.byteLength(JSON.stringify([performance, conversions]), "utf8") > bounds.maxBytes) {
+        throw new GoogleReportingError("GOOGLE_PD_READ_BOUND_EXCEEDED", "Google PD read bound exceeded");
+      }
+      return Object.freeze({provider: PROVIDER, flow, date_window: dates, authority: Object.freeze({
+        connection_id: context.connection.connectionId, reporting_account_id: context.reportingAccount.id,
+        reporting_account_currency: context.reportingAccount.currency, reporting_account_timezone: context.reportingAccount.timezone,
+      }), results: Object.freeze({performance, conversions}), publishable: false});
+    },
     async readSearchSourceEvidenceSnapshot({installationAuthority, dateWindow}) {
       const installation = owner(installationAuthority);
       buildGoogleReportingQueries({dateWindow});

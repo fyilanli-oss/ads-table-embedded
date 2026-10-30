@@ -1,3 +1,9 @@
+## 30 Ekim — Klaviyo PD Message bağlama teslimi
+
+Yedinci teknik teslim / mevcut05: mevcut Campaign/Flow × Placed Order/ATC/Checkout raporları ortak okuyucuda tek koleksiyonla Message birleştiricisine bağlandı. Medium/Variation, native parent, metrik seçimi ve kaynak satır/sayfa referansları korunur. Funnel kaynakları birbirine eklenmez; Ordered Product/ürün satış kayıtları bu hesaba girmez. Spend ve Sales Role bu teslimin dışında kalır.
+
+Her flow'a ve exact okuma bağlamına bağlı güvenilir sunucu metadata'sı eksikse ham kaynak korunur, kompozisyon blocked kalır. Eksik metrik/detay/değer sıfır değildir. Sonraki teknik teslim8 metadata/canonical kaynak köprüsünü;9 etkileşim okumasını;10 birlikte yazım öncesi sınamayı ele alır. Bunlar bu teslimle kapatılmadı.29 yeni izole test ve önceki ilgili79 test geçti; exact CI/F01 ayrı izlenir.15 başlamadı,22 duraklatılmış,23 Dataset/FX yazımı.
+
 ## 30 Ekim — Google PD bağlama teslimi
 
 Altıncı teknik teslim / mevcut04: Search Ad, Shopping Ad Group ve PMax Asset Group'un mevcut performans/normal dönüşüm aileleri tam sayfalama ile ortak kaynak girişine ve composeGooglePdLeaf'e bağlandı. Her yaprak, native hiyerarşi ve ayrı kaynak/sayfa/satır izleri korunarak işlenir. Eksik değer ve boş rapor sıfır sayılmaz; all_* veya performans dönüşüm toplamı kategori metriklerine eklenmez. Hata/iptal/kota beklemesi/authority değişimi eksik sonucu tamamlanmış göstermez.

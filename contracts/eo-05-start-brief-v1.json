@@ -3433,5 +3433,64 @@
     "step22_paused": true,
     "Dataset_write_step": 23,
     "publishable": false
+  },
+  "Klaviyo_PD_Message_wiring_2026_10_30": {
+    "checked_at": "2026-10-30",
+    "base_main": "75c3451ad4f6cbe4bfc7471dc364ebe2fb56b34b",
+    "owner_authorization": "Wire existing Klaviyo PD funnel reports to Message composer and isolated tests only; no live query, OAuth permission change, Spend calculation, sales roles or Dataset write",
+    "existing_steps": [
+      5
+    ],
+    "delivery_order": 7,
+    "status": "message_composer_wired_isolated_tests_ready_native_inactive_metadata_required",
+    "entrypoints": [
+      "createRefreshPdSourceReader({klaviyoPd:{compositionContexts}}).readEvidence",
+      "composeKlaviyoPdSnapshot"
+    ],
+    "uses_existing_composer": "composeKlaviyoPdMessage",
+    "runtime": [
+      "app/lib/refresh/pd-source-reader.server.js",
+      "app/lib/providers/klaviyo-reporting-authority.server.js",
+      "app/lib/providers/klaviyo-pd-orchestration.server.js"
+    ],
+    "grain": "Campaign/Flow Message; Medium/Variation details retained; Campaign and Flow Message IDs cannot collide",
+    "metric_ownership": {
+      "Placed Order": "delivery, clicks, purchase count/value only",
+      "Added to Cart": "ATC count/value only",
+      "Checkout Started": "checkout count/value only"
+    },
+    "lineage": "Per-message projection indices map to global report row indices and collected page spans; metric-selection IDs/states retained; no Ordered Product event/sales added",
+    "scope_binding": "Separate trusted server metadata for campaign and flow; exact workspace/installation/generation/connection/version/account/day/timezone/currency/job/fence, normal send_date, attempt/snapshot/fingerprint/source references required. Shape is not native attribution proof.",
+    "missing_context": "Native evidence preserved; composition blocked with empty rows; no inferred fingerprint or activation",
+    "missing_configuration": "New opt-in mode keeps valid other funnel sources and marks account_configuration_missing; defaults remain strict; empty complete reports not_observed rather than zero",
+    "bounds": "Caller limits; at most100 pages per family and20000 combined native rows including metric discovery; body budget after decode and final serialized output budget, not measured peak-memory proof",
+    "verification": {
+      "new_isolated_tests": 29,
+      "existing_related_tests": 79,
+      "exact_commit_CI": "pending",
+      "F01": "required_isolated_CI",
+      "native_acceptance": false
+    },
+    "remaining": [
+      "Native/durable attribution/unit metadata and canonical bridge in delivery8",
+      "Klaviyo attributed-interaction read in delivery9",
+      "Integrated worker/prewrite acceptance in delivery10",
+      "Real source/permission/capacity acceptance separate; Spend formula stays step25"
+    ],
+    "sources": [
+      "https://developers.klaviyo.com/en/reference/reporting_api_overview"
+    ],
+    "new_provider_queries": false,
+    "live_provider_calls": false,
+    "OAuth_permission_change": false,
+    "Spend_calculated": false,
+    "Sales_Role_changed": false,
+    "UI_change": false,
+    "migration": false,
+    "deployment": false,
+    "step15_started": false,
+    "step22_paused": true,
+    "Dataset_write_step": 23,
+    "publishable": false
   }
 }

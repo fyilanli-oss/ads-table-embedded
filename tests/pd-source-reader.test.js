@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createRefreshPdSourceReader} from "../app/lib/refresh/pd-source-reader.server.js";
+import {runRefreshPdPrewriteChunk, reviewRefreshPdPrewrite} from "../app/lib/refresh/pd-prewrite-chunk.server.js";
 
 const workspace = "11111111-1111-4111-8111-111111111111";
 const connection = "22222222-2222-4222-8222-222222222222";
@@ -236,4 +237,129 @@ test("Meta native metadata reaches the actual canonical bridge with explicit ext
   f.config.recordBridge={metadata:recordMetadata(first.source_context,facts)};
   const r=await f.create().readEvidence();assert.equal(r.records.status,"validated");assert.equal(r.records.rows[0].raw_metrics.spend_value,30);
   assert.equal(r.records.rows[0].identity.platform,"meta");assert.equal(r.persistable,false);
+});
+
+
+function prewriteWorker(f) {
+  const {claim, window, entitlementReceipt, now, ...source} = f.config;
+  const stages = [], stops = [];
+  const worker = {claim: {...claim, cost: {requests: 64, dbWrites: 32, connections: 4, rows: 100, bytes: 100000}}, window,
+    limits: {deadlineAt: 100000, requestTimeoutMs: 10000, finishReserveMs: 100, maxRows: 100, maxBytes: 100000}, now,
+    loadAuthority: f.config.workStore.loadBoundAuthority,
+    verifyEntitlement: async () => ({status: "verified", receipt: entitlementReceipt}), isEntitlementCurrent: async () => true,
+    store: {advanceStage: async s => {stages.push(s.stage);return true;}, isClaimCurrent: async () => true,
+      readAdmissionSnapshot: async () => ({state: {revision: 1}}), recordStop: async s => {stops.push(s.reason);return {recorded: true};}}};
+  return {worker, source, stages, stops};
+}
+async function completeMetaSource() {
+  const f = fixture(); f.config.nativeMetadata = true;
+  f.hooks.response = address => json({data: [{account_id: "123", campaign_id: "10", campaign_name: "Root", adset_id: "20", adset_name: "Parent",
+    ad_id: "30", ad_name: "Leaf", date_start: "2026-10-01", date_stop: "2026-10-01", account_currency: "USD",
+    attribution_setting: "7d_click,1d_view", impressions: "10", spend: "30",
+    ...(new URL(address).searchParams.has("breakdowns") ? {product_id: "native-product"} : {})}]});
+  const read = await f.create().readEvidence();
+  f.config.recordBridge = {metadata: recordMetadata(read.source_context, read.native_metadata.entries.map(e => ({scope: e.scope,
+    source_execution: {metadata_references: e.metadata_references}})))};
+  return f;
+}
+
+test("PD source reaches actual worker prewrite handoff with native lineage, never a Dataset write", async () => {
+  const f = await completeMetaSource(), w = prewriteWorker(f), r = await runRefreshPdPrewriteChunk({worker:w.worker,source:w.source});
+  assert.equal(r.status, "awaiting_dataset"); assert.equal(r.source_review.status, "reviewed_not_written");
+  assert.equal(r.rows[0].raw_metrics.spend_value, 30); assert.equal(r.rows[0].identity.platform, "meta");
+  assert.equal(r.rows[0].provenance.raw_reference.source_fact.source_projections[0].rows[0].ad_id, "30");
+  assert.equal(r.reservationRetained, true); assert.equal(r.persistable, false); assert.equal(r.Dataset_write_performed, false);
+  assert.deepEqual(w.stages, ["checking_authority", "request_intent", "response_received", "ready_for_dataset"]);
+  assert.ok(f.state.queries.every(q => q.startsWith("select * from integrations.load_")));
+  const args = {claim: w.worker.claim, window: w.worker.window, authority: await w.worker.loadAuthority({}), observation: r.source_observation};
+  assert.equal(reviewRefreshPdPrewrite({...args, observation: structuredClone(args.observation)}).reason, "source_observation_required");
+  assert.equal(reviewRefreshPdPrewrite({...args, claim: {...args.claim, fence: 2}}).reason, "source_scope_mismatch");
+  assert.equal(reviewRefreshPdPrewrite({...args, claim: {...args.claim, accountId: "act_999"}}).reason, "source_scope_mismatch");
+  assert.equal(reviewRefreshPdPrewrite({...args, window: {from: "2026-10-02", to: "2026-10-02"}}).reason, "source_scope_mismatch");
+});
+
+for (const change of [r => r.reporting_selection_epoch = "72", r => r.granted_scopes = [], r => r.credential_id = workspace,
+  r => r.installation_id = "43", r => r.connection_version++]) test("PD final worker boundary rechecks exact native authority: " + change, async () => {
+  const f = await completeMetaSource(), w = prewriteWorker(f), original = w.worker.loadAuthority;
+  let calls = 0;
+  w.worker.loadAuthority = async input => {const current = await original(input); if (++calls === 3) change(f.state.row); return current;};
+  const r = await runRefreshPdPrewriteChunk({worker:w.worker,source:w.source});
+  assert.equal(r.reason, "authority_check_failed_after_request"); assert.equal(r.rows, undefined);
+  assert.ok(!w.stages.includes("ready_for_dataset")); assert.equal(r.persistable, false);
+});
+
+for (const provider of ["meta", "google_ads", "klaviyo"]) test(provider + ": missing composition/FX never reaches worker handoff", async () => {
+  const f = fixture(provider), w = prewriteWorker(f), r = await runRefreshPdPrewriteChunk({worker:w.worker,source:w.source});
+  assert.equal(r.reason, "validation_failed_after_request"); assert.equal(r.source_review.status, "blocked");
+  assert.ok(!w.stages.includes("ready_for_dataset")); assert.equal(r.rows, undefined);
+});
+
+test("PD worker entitlement denial sends no provider request; provider error is not retried", async () => {
+  const f = fixture(), w = prewriteWorker(f);
+  w.worker.verifyEntitlement = async () => ({status: "denied"});
+  assert.equal((await runRefreshPdPrewriteChunk({worker:w.worker,source:w.source})).reason, "entitlement_required"); assert.equal(f.state.http, 0);
+  const failed = fixture(), fw = prewriteWorker(failed); failed.hooks.response = () => json({error: {message: "private"}}, 403);
+  const r = await runRefreshPdPrewriteChunk({worker:fw.worker,source:fw.source}); assert.equal(r.status, "uncertain"); assert.equal(failed.state.http, 1);
+  assert.equal(r.source_observation, null); assert.ok(!JSON.stringify(r).includes("private"));
+});
+
+test("PD worker rejects caller claim/receipt, async validators and oversized source budgets before native read", async () => {
+  for (const change of [w => w.source.claim = w.worker.claim, w => w.source.entitlementReceipt = {},
+    w => w.worker.validatePage = async () => ({complete: true}), w => w.source.limits.maxRows++,
+    w => w.source.limits.maxElapsedMs++]) {
+    const f = fixture(), w = prewriteWorker(f); change(w);
+    await assert.rejects(runRefreshPdPrewriteChunk({worker:w.worker,source:w.source}), /INPUT_INVALID/); assert.equal(f.state.http, 0);
+  }
+});
+
+
+test("PD final SQL authority timeout returns without a late handoff", async () => {
+  const f = await completeMetaSource(), w = prewriteWorker(f), original = w.worker.loadAuthority;
+  let calls = 0, release;
+  w.worker.loadAuthority = async input => {const current = await original(input); if (++calls === 3) {
+    f.hooks.sql = () => new Promise(resolve => {release = resolve;});
+  }return current;};
+  // Capture a small bounded source timeout before construction; provider source
+  // has already proved the fast fixture path, and final SQL must not hang.
+  w.worker.limits.requestTimeoutMs = 500; w.source.limits.maxElapsedMs = 500;
+  const r = await runRefreshPdPrewriteChunk({worker: w.worker, source: w.source});
+  assert.equal(r.reason, "authority_check_failed_after_request");
+  assert.ok(!w.stages.includes("ready_for_dataset")); assert.equal(typeof release, "function");
+  release(); await new Promise(resolve => setImmediate(resolve));
+  assert.ok(!w.stages.includes("ready_for_dataset"));
+});
+
+
+test("PD quota wait stays branded through the worker and does not dispatch or retry", async () => {
+  const f = fixture(), w = prewriteWorker(f);let waits = 0;
+  f.config.quotaStore.reserve = async () => ({status: "waiting"});
+  w.worker.store.deferQuotaWait = async () => {waits++;return true;};
+  const r = await runRefreshPdPrewriteChunk({worker: w.worker, source: w.source});
+  assert.equal(r.status, "quota_waiting");assert.equal(waits, 1);assert.equal(f.state.http, 0);
+  assert.equal(r.source_observation, null);assert.ok(!w.stages.includes("ready_for_dataset"));
+});
+
+test("PD native zero remains zero in worker rows and an expired entitlement stops final handoff", async () => {
+  const f = await completeMetaSource(), w = prewriteWorker(f), response = f.hooks.response;
+  f.hooks.response = async (address, init) => {const data = await (await response(address, init)).json();
+    data.data[0].spend = "0";data.data[0].impressions = "0";return json(data);};
+  const r = await runRefreshPdPrewriteChunk({worker: w.worker, source: w.source});
+  assert.equal(r.status, "awaiting_dataset");assert.equal(r.rows[0].raw_metrics.spend_value, 0);
+  const second = prewriteWorker(f);let checks = 0;
+  second.worker.isEntitlementCurrent = async () => ++checks === 1;
+  const stopped = await runRefreshPdPrewriteChunk({worker: second.worker, source: second.source});
+  assert.equal(stopped.reason, "authority_check_failed_after_request");assert.equal(stopped.rows, undefined);
+  assert.ok(!second.stages.includes("ready_for_dataset"));
+});
+
+
+test("PD retained envelope plus canonical rows cannot exceed worker serialized budget", async () => {
+  const f = await completeMetaSource(), first = prewriteWorker(f);
+  const observed = await runRefreshPdPrewriteChunk({worker:first.worker,source:first.source});
+  const budget = Buffer.byteLength(JSON.stringify(observed.source_observation), "utf8") + 64;
+  const w = prewriteWorker(f); w.worker.limits.maxBytes = budget; w.source.limits = {...w.source.limits,maxBytes:budget};
+  const r = await runRefreshPdPrewriteChunk({worker:w.worker,source:w.source});
+  assert.equal(r.source_review.reason,"prewrite_result_bound_exceeded");
+  assert.equal(r.rows, undefined);assert.ok(!w.stages.includes("ready_for_dataset"));
+  assert.ok(Buffer.byteLength(JSON.stringify(r), "utf8") <= budget);
 });

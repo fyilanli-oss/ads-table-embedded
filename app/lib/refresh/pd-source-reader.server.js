@@ -8,6 +8,28 @@ import {GOOGLE_PD_FLOW_FAMILIES, composeGooglePdSnapshot} from "../providers/goo
 import {composeKlaviyoPdSnapshot} from "../providers/klaviyo-pd-orchestration.server.js";
 import {bridgePdReadSnapshot} from "../providers/pd-record-orchestration.server.js";
 import {preparePdNativeMetadata, bindNativePdRecordMetadata} from "../providers/pd-native-metadata.server.js";
+import {stableJson} from "../providers/common-adapter.server.js";
+
+// Private in-process proof. A serialized snapshot cannot become an observation.
+const observedReads = new WeakMap();
+export const isRefreshPdSourceObservation = value => observedReads.has(value);
+export function refreshPdSourceAuthorityMatches(observation, row) {
+  const b = observedReads.get(observation);
+  if (!b || !row || row.installationStatus !== "active" || row.status !== "connected"
+    || !Array.isArray(row.accounts) || row.accounts.length < 1 || row.accounts.length > 3
+    || new Set(row.accounts.map(a => a.id)).size !== row.accounts.length) return false;
+  const account = row.accounts?.find(a => a.id === b.platform_account_id);
+  return row.installationId === b.installation_id && row.workspaceId === b.workspace_id
+    && row.installGeneration === b.installation_generation && row.shopId === b.shop_id && row.shopDomain === b.shop_domain
+    && row.connectionId === b.provider_connection_id && row.connectionVersion === b.connection_version
+    && row.credentialId === b.credential_id && row.selectionEpoch === b.reporting_selection_epoch
+    && row.reportingAccountId === b.canonical_reporting_account_id
+    && stableJson([...(row.grantedScopes ?? [])].sort()) === stableJson(b.granted_scopes)
+    && account?.reporting_eligible === true && account.currency === b.source_currency && account.timezone === b.source_timezone
+    && (account.login_account_id ?? null) === b.login_account_id
+    && (b.provider === "klaviyo" ? row.accounts.length === 1 && account.kind === "account" && account.status === "active"
+      : account.kind === "advertiser");
+}
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const text = v => typeof v === "string" && v.length > 0 && v === v.trim();
@@ -224,6 +246,7 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
           ...(prepared ? {native_metadata: prepared} : {}),
           rows_observed: rows, canonical_scope_ready: false, authorizes_activation: false, persistable: false, publishable: false});
         if ((pd || kpd || bridge || nativeMetadata) && Buffer.byteLength(JSON.stringify(result), "utf8") > boundLimits.maxBytes) fail("RESULT_BOUND_EXCEEDED");
+        observedReads.set(result, baseline);
         return result;
       })();
       return await Promise.race([operation, deadline, cancelled]);

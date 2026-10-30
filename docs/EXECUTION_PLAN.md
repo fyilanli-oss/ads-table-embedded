@@ -3311,3 +3311,18 @@ CI kontrolü: `tests/eo-04c-google-reporting-runtime-contract.test.js`
 Mevcut Klaviyo satışları ve sipariş–mesaj atıfları aynen korunur. Beş günlük filtre, yeni atıf hesabı veya rol değişikliği yapılmaz. Varsayılan karşılaştırma dayanağıdır; diğer kanallar ve hariç tutma ayarları doğrulanmış sayılmaz. nativeMetadata:true, native hesap/para birimi/saat dilimi kontrollerinden sonra Campaign/Flow send_date bağlamlarını bu açık kaynak bilgisiyle üretir. Eksik entity/FX ve sonraki yazım kapıları korunur.
 
 Bağlayıcı kayıt: contracts/eo-05-start-brief-v1.json#Klaviyo_documented_default_attribution_2026_10_30. Resmî kaynak30Ekim: https://help.klaviyo.com/hc/en-us/articles/11118357030555. Kod/izole test değişikliği; canlı sorgu, OAuth, UI, deploy veya Dataset yazımı yok.15 başlamadı;22 duraklatılmış;23 yazım. Merge ayrı açık onay bekler.
+
+
+## Ortak yazım öncesi kontrol: PD–çalıştırıcı ilk bağlantısı — 30 Ekim 2026
+
+PR271, açık kullanıcı onayı ve exact head562fb426 zorunlu Governance/F01 SUCCESS sonrasında03b6e3b558e022ac52a7564854f903712c2e50f9 olarak birleşti. Mevcut birincil checkout kullanıcı attachment dosyalarıyla korundu; güncel main üzerinden codex/pd-worker-prewrite açıldı.
+
+Onaylı teknik teslim10 / mevcut13 içinde yalnız ilk dilim: runRefreshPdPrewriteChunk mevcut PD kaynak okuyucusunu runRefreshChunk doğrulamasına bağlar. Kaynak okumasının private in-process kanıtı, exact mağaza/hesap/gün/claim/fence ve eksiksiz canonical kontrolleri gerekir. Eksik metadata/kur ve yarım sonuç ilerlemez; açık sayısal sıfır korunur. JSON kopyası kaynak kanıtı değildir.
+
+Teslim öncesi mevcut SQL fonksiyonundan kurulum/mağaza/hesap, bağlantı sürümü, credential referansı, seçim nesli, grant listesi ve birim/saat dilimi tekrar karşılaştırılır. SQL beklemesi süreyle sınırlıdır; geç sonuç teslim başlatmaz. Kota bekleme kanıtı korunur, provider hatası tekrar edilmez. Bu kontroller native izin veya geçmiş tam gün ayarı kanıtı değildir.
+
+Çalıştırıcının ready_for_dataset/awaiting_dataset aşaması yalnız bellekte teslimdir; rezervasyon korunur. Dataset yazımı, kalıcı checkpoint, başarıyla tamamlanmış refresh, Scheduler/route aktivasyonu veya Sales Role değişikliği yoktur.
+
+Teslim10 TAMAMLANMADI: candidate/reference, Order/LineItem/provider claim, Klaviyo etkileşim ve kabul edilmiş setup/native izin kanıtı ile bütünleşik kontroller sıradadır. OAuth/UI değiştirilmez. Kalıcı eşleme15 başlamadı;22 duraklatılmış;23 Dataset/FX writer. Bağlayıcı kayıt: contracts/eo-05-start-brief-v1.json#PD_worker_prewrite_first_slice_2026_10_30.
+
+Resmî kontrol30Ekim2026: Google Reporting Overview, Klaviyo Reporting API Overview ve Meta resmî SDK okundu. Yeni provider sorgusu/alanı veya kanıtlanmamış davranış eklenmedi. Kaynak/işçi sınırının49 testi geçti; genel/CI ve F01 ayrı doğrulanır. Canlı çağrı, config, migration veya deploy yapılmadı; merge ayrı açık onay bekler.

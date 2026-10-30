@@ -22,7 +22,9 @@ test("Shopping and PMax retain every product field with disjoint campaign filter
   assert.deepEqual(selectedFields(queries.shopping_product_daily), [
     ...productFields.slice(0, 4), "ad_group.id", "ad_group.name", ...productFields.slice(4),
   ]);
-  assert.deepEqual(selectedFields(queries.pmax_product_daily), productFields);
+  // PMax adds language to disambiguate the product namespace for Channel links;
+  // the existing Shopping projection and every shared product field are retained.
+  assert.deepEqual(selectedFields(queries.pmax_product_daily), [...productFields, "segments.product_language"]);
   for (const [family, type] of [["shopping_product_daily", "SHOPPING"], ["pmax_product_daily", "PERFORMANCE_MAX"]]) {
     assert.equal(queries[family].split("\nFROM ")[1],
       `shopping_performance_view\nWHERE segments.date BETWEEN '2026-10-01' AND '2026-10-02'\n  AND campaign.advertising_channel_type = '${type}'`);

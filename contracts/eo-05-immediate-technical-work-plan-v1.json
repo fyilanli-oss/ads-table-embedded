@@ -1013,5 +1013,13 @@
     "step15_started": false,
     "step22_resumed": false,
     "runtime_changed": false
+  },
+  "PMax_source_runtime_connection_2026_10_30": {
+    "record": "contracts/eo-05-start-brief-v1.json#PMax_source_runtime_connection_2026_10_30",
+    "status": "code_and_isolated_tests_prepared_native_acceptance_and_historical_evidence_pending",
+    "existing_step": 21,
+    "step15_started": false,
+    "step22_resumed": false,
+    "Overlap_work_started": false
   }
 }

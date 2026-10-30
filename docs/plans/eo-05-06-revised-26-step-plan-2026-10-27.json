@@ -724,5 +724,55 @@
     "deployment": false,
     "Dataset_write": false,
     "publishable": false
+  },
+  "PD_worker_prewrite_first_slice_2026_10_30": {
+    "date": "2026-10-30",
+    "delivery_order": 10,
+    "existing_step": 13,
+    "status": "pd_worker_prewrite_first_slice_code_tests_ready_other_families_pending",
+    "base_main": "03b6e3b558e022ac52a7564854f903712c2e50f9",
+    "entrypoint": "runRefreshPdPrewriteChunk({worker,source})",
+    "scope": "Explicit internal source-reader to existing runRefreshChunk binding; not scheduled or routed. Only complete validated PD records reach an in-memory prewrite handoff.",
+    "implemented": [
+      "Private in-process observation proof; serialized/forged snapshots and wrong claim/fence/account/day rejected",
+      "Worker supplies fresh claim/window/entitlement receipt and abort; source budgets cannot exceed chunk budgets",
+      "Existing native source/composition/canonical gates retain raw lineage, absent/partial/zero and explicit Klaviyo default provenance",
+      "Before handoff re-read SQL authority: installation/shop/account/connection version/credential reference/selection epoch/grants/currency/timezone/login scope; native grant acceptance remains separate",
+      "Bounded authority waits, late SQL result discarded; quota wait remains branded; first provider error is not retried",
+      "Reservation/stage progress is not Dataset persistence or a completed refresh"
+    ],
+    "remaining_in_delivery10": [
+      "Join existing candidate/reference guards with the integrated PD handoff",
+      "Join Shopify Order/LineItem and provider claim guards; exact overlap not asserted",
+      "Join optional Klaviyo attributed-interaction evidence; no clicked-product proof or role change",
+      "Review accepted setup/native permission evidence without changing OAuth/UI or treating code/tests as native acceptance",
+      "Actual workload/operation profile/capacity and real-provider acceptance remain separate"
+    ],
+    "later": {
+      "durable_mapping_and_metadata": 15,
+      "listing_tree": 22,
+      "listing_tree_status": "paused",
+      "Dataset_FX_writer": 23
+    },
+    "tests": {
+      "related_source_tests": 49,
+      "full_suite": "pending",
+      "CI": "required",
+      "F01": "required_isolated"
+    },
+    "live_provider_calls": false,
+    "OAuth_change": false,
+    "UI_change": false,
+    "migration": false,
+    "deployment": false,
+    "Dataset_write": false,
+    "sales_roles_changed": false,
+    "persistable": false,
+    "publishable": false,
+    "sources": [
+      "https://developers.google.com/google-ads/api/docs/reporting/overview",
+      "https://developers.klaviyo.com/en/reference/reporting_api_overview",
+      "https://github.com/meta/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adsinsights.py"
+    ]
   }
 }

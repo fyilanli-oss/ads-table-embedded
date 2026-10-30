@@ -1,3 +1,15 @@
+## 30 Ekim — 15 öncesi PMax sırası ve Overlap erteleme mutabakatı
+
+Ürün sahibi sıralamayı kabul etti: önce mevcut 21 içindeki PMax bağlantısının dar hazırlığı, sonra ayrıca somut OAuth/UI onayıyla 07'nin kalan işi, ardından 14 değerlendirmesi ve açık 15 kararı. Mevcut 01–26 numaraları değişmez.15 başlamadı.
+
+PMax'te kaynak Campaign içindeki reklam ürününün dönemle uyumlu, tam ve doğrulanmış üyelik kanıtı tek Asset Group gösteriyorsa o Channel'a bağlanır. Çoklu, eksik, eski veya çelişkili kanıtta Unclassified Channel kalır; bağımsız doğrulanmış Advertised/Cross-sell korunur. Cross-sell satılan ürünün üyeliği kaynak Channel'ı belirlemez. Başka Campaign'deki aynı ürün mevcut Campaign kaydını belirsizleştirmez. Meta'nın açık Ad kimliği varsa korunur. Campaign toplamı ürünlere/gruplara dağıtılmaz.
+
+Listing-filter sorgusu, DB'siz resolver ve testler kodda var; bunlar tamamlanmış envanter/tarihçe/runtime hattı değildir. Güncel liste geçmiş satışa kanıt sayılmaz; yalnız bugün açık kampanyalarla tarihsel tek aday ispatlanmaz. Tarihsel üyelik saklama/yükleme mevcut 22 kapsamındadır ve duraklatılmıştır; ayrı yeniden başlatma onayı gerekir. Dar PMax işi yeni tablo, migration, kalıcı writer veya canlı aktivasyon yetkisi değildir.
+
+Klaviyo araştırması kapatıldı: Campaign Assisted, Flow Triggered; yeni Advertised/Cross-sell veya webhook geliştirmesi yok. Overlap kaynak erişimi araştırması ve uygulama kararı 22 sonrasına ertelendi, mevcut 24 başvurusuyla izlenir. Google/Meta için sipariş bazlı okunabilir atıf yolu doğrulanmadı; order_id gönderimi sahiplenme kanıtı değildir. Shopify kaynağı/journey provider iddiası yerine geçmez; eksik kanıt sıfır Overlap değildir. Mevcut Shopify/LineItem ve sağlayıcı kaynak hazırlıkları korunur.
+
+Bu teslim yalnız karar/sıra kaydıdır; çalışma zamanı kodu, OAuth/UI, token, canlı API/config/deploy/DB veya Dataset yazımı değişmedi. Makine kaydı: contracts/eo-05-start-brief-v1.json#Pre15_PMax_and_overlap_owner_decision_2026_10_30. Resmî Google/Klaviyo belgeleri ve Meta SDK kaynakları 30 Ekim'de kontrol edildi; Meta Insights dokümanı 429 verdiği için genel destek yokluğu iddiası kurulmadı.
+
 ## 30 Ekim 2026 — Klaviyo PD raporları mevcut Message birleştiricisine bağlandı
 
 Ürün sahibi Placed Order, Added to Cart ve Checkout Started PD raporlarını mevcut Message birleştiricisine bağlama ve izole testleri hazırlamayı açıkça onayladı. Güncel main75c3451 temelinde createRefreshPdSourceReader klaviyoPd seçeneği, mevcut tek PD okumasındaki Campaign/Flow × üç funnel raporunu composeKlaviyoPdSnapshot üzerinden mevcut composeKlaviyoPdMessage'e bağlar. Yeni endpoint, sorgu alanı veya gruplama eklenmez. Message her flow içinde native üst Campaign/Flow kimliğine bağlanır; Medium/Variation aynı Message'ın ayrıntısı kalır, isimleri ham projeksiyonlarda korunur.

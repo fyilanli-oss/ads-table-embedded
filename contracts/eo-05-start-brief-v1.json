@@ -3898,5 +3898,84 @@
       "https://developers.google.com/identity/protocols/oauth2/scopes#googleads",
       "https://developers.klaviyo.com/en/docs/authenticate_"
     ]
+  },
+  "Pre15_PMax_and_overlap_owner_decision_2026_10_30": {
+    "status": "owner_agreed_plan_decision_implementation_and_native_acceptance_not_completed",
+    "checked_at": "2026-10-30",
+    "authority": "Product owner agreed: PMax before step15; remaining step07 afterwards; Overlap deferred until after step22; step22 not resumed.",
+    "current_checkpoint": 14,
+    "numbering": "Existing 01-26 numbers preserved; execution order changed without creating a new numbered item.",
+    "execution_order": [
+      {
+        "work": "PMax existing step21 bounded runtime connection",
+        "before_step15": true
+      },
+      {
+        "work": "Existing step07 deferred setup/UI work",
+        "separate_concrete_OAuth_owner_approval_required": true
+      },
+      {
+        "work": "Step14 review and explicit step15 decision",
+        "step15_started": false
+      },
+      {
+        "work": "Historical listing tree existing step22",
+        "status": "paused_separate_explicit_restart_approval_required"
+      },
+      {
+        "work": "Overlap source-access research and reconciliation design",
+        "timing": "after_step22_before_overlap_implementation_decision",
+        "existing_reference": 24
+      }
+    ],
+    "Klaviyo": {
+      "Campaign": "Assisted",
+      "Flow": "Triggered",
+      "Unclassified": "existing_unresolved_attribution_only",
+      "trigger_product_role_research": "closed_by_owner_no_Advertised_Cross_sell_or_webhook_work"
+    },
+    "PMax": {
+      "scope": "Within the source campaign/account/Merchant/feed/language identity and reporting period; use advertised product membership, not sold cross-sell product membership.",
+      "existing_code": "app/lib/providers/google-reporting.server.js#resolvePmaxSaleChannel",
+      "existing_preparation": "Current listing-filter query and DB-free resolver/tests exist; scheduled complete membership evidence collection/history and runtime resolver wiring are not complete.",
+      "one_verified_temporally_valid_candidate": "Bind Asset Group; label provenance as resolved from membership evidence, not directly reported sale attribution.",
+      "multiple_candidates": "Unclassified Channel; retain candidate identities and reason.",
+      "missing_partial_stale_or_conflicting_evidence": "Unclassified Channel; do not manufacture unique membership or historical validity.",
+      "sales_roles": "Preserve independently verified Advertised/Cross-sell; membership does not establish product Sales Role.",
+      "other_campaign_membership": "Does not make a source-campaign-bound row ambiguous.",
+      "current_inventory": "Current eligibility is not proof of past serving, click or historical membership. Enabled-now-only scans cannot establish historical uniqueness.",
+      "bounds": "Pre15 runtime preparation only; no new durable membership/history tables, writer, migration, live activation, OAuth work or implicit step22 restart.",
+      "performance": "Do not distribute campaign totals proportionally or copy totals to every product/Asset Group; unresolved product performance remains unresolved."
+    },
+    "Meta": {
+      "known_native_Ad": "Preserve explicit Ad identity; product membership in another Ad does not erase the known source Channel.",
+      "product_sales_relation": "Native promoted/converted semantics and order claims remain separate evidence requirements."
+    },
+    "Overlap": {
+      "status": "deferred_after_step22_not_a_pre15_completion_requirement",
+      "work": "First establish readable provider order-level attribution claims; then decide reconciliation implementation.",
+      "identity": "workspace + Shopify shop + verified Shopify Order ID; business date is a reporting dimension, not a cross-provider join key.",
+      "current_preparation": "Shopify Order/LineItem/journey readers and Klaviyo Order/Message structural review exist; full cross-provider overlap calculator is not implemented.",
+      "Google_and_Meta": "Readable order-level native attribution claim path has not been verified. Sending order_id or successful upload acknowledgement does not prove attributed conversion.",
+      "Shopify": "Order source/journey is Shopify evidence, not proof another provider counted that order.",
+      "incomplete_evidence": "Unknown/not assessable, never assumed zero overlap.",
+      "preservation": "Keep existing Shopify and provider source records/planned storage separate; no deletion, fabricated claim, local reattribution or forced balancing of provider totals."
+    },
+    "official_sources_checked_at": "2026-10-30",
+    "official_sources": [
+      "https://developers.google.com/google-ads/api/performance-max/listing-groups",
+      "https://developers.google.com/google-ads/api/performance-max/retail-reporting",
+      "https://developers.google.com/google-ads/api/docs/conversions/troubleshooting",
+      "https://raw.githubusercontent.com/facebook/facebook-python-business-sdk/main/facebook_business/adobjects/adsinsights.py",
+      "https://raw.githubusercontent.com/facebook/facebook-python-business-sdk/main/facebook_business/adobjects/serverside/custom_data.py",
+      "https://help.klaviyo.com/hc/en-us/articles/115005080447",
+      "https://developers.klaviyo.com/en/reference/flows_api_overview"
+    ],
+    "runtime_changed": false,
+    "OAuth_changed": false,
+    "native_calls_performed": false,
+    "step15_started": false,
+    "step22_resumed": false,
+    "Dataset_write": false
   }
 }

@@ -1129,5 +1129,14 @@
       "https://developers.google.com/identity/protocols/oauth2/scopes#googleads",
       "https://developers.klaviyo.com/en/docs/authenticate_"
     ]
+  },
+  "Pre15_PMax_and_overlap_owner_decision_2026_10_30": {
+    "record": "contracts/eo-05-start-brief-v1.json#Pre15_PMax_and_overlap_owner_decision_2026_10_30",
+    "status": "owner_agreed_plan_decision_implementation_and_native_acceptance_not_completed",
+    "execution_order": "bounded PMax step21 work -> separately authorized remaining07 -> step14 review -> explicit15 decision; historical22 paused; Overlap after22",
+    "Klaviyo": "Campaign Assisted / Flow Triggered",
+    "step15_started": false,
+    "step22_resumed": false,
+    "runtime_changed": false
   }
 }

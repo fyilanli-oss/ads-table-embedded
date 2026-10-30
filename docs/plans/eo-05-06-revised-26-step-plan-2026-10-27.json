@@ -244,8 +244,8 @@
       "no": 21,
       "work": "PMax ürün performansını Asset Group’a bağlamak.",
       "boundary": "Kaynak kanıtı bekliyor. Campaign otomatik Channel yapılmayacak; ürün metrikleri gruplara dağıtılmayacak.",
-      "addition": "",
-      "status": "Kaynak kanıtı bekliyor — ürün → Asset Group bağı kurulmadan dağıtım yok.",
+      "addition": "30 Ekim ürün sahibi kararı: mevcut resolver bağlantısının dar kapsamlı hazırlığı 15 öncesine alınır. Kaynak Campaign içinde reklam ürününe tek doğrulanmış ve dönemle uyumlu Asset Group varsa bağlanır; çoklu/eksik/geçersiz kanıtta Unclassified kalır. Tarihsel kanıt saklama/yükleme 22 kapsamındadır; bu kararla yeniden başlatılmaz.",
+      "status": "Yaklaşım onaylandı; 15 öncesi dar runtime bağlantısı kodlanacak. Çalışan envanter/tarihçe ve gerçek kaynak kabulü tamamlandı değil.",
       "package": "EO-05-B"
     },
     {
@@ -268,7 +268,7 @@
       "no": 24,
       "work": "Bağımsız PD üst toplamları ve ürün esaslı CPD Channel toplamlarını bağlamak.",
       "boundary": "Kaynak bağlantıları EO-05; aggregate-first hesaplar EO-06-A.",
-      "addition": "Shopify ek işi: Shopify satışı bir kez sayılan bağımsız satış temeli. Provider toplamları toplanarak mağaza toplamı üretilmeyecek. Tarih, para birimi/FX, adet, vergi/kargo/indirim/iade ve atıf kapsamları uyumlu karşılaştırılacak. Kesin overlap yalnız aynı doğrulanmış Order ID’ye okunabilir provider iddiası bağlanırsa; toplam farkı tek başına kanıt değil.",
+      "addition": "Shopify ek işi: Shopify satışı bir kez sayılan bağımsız satış temeli. Provider toplamları toplanarak mağaza toplamı üretilmeyecek. Tarih, para birimi/FX, adet, vergi/kargo/indirim/iade ve atıf kapsamları uyumlu karşılaştırılacak. Kesin overlap yalnız aynı doğrulanmış Order ID’ye okunabilir provider iddiası bağlanırsa; toplam farkı tek başına kanıt değil. 30 Ekim kararı: Overlap kaynak erişimi araştırması ve hesaplama kararı 22 sonrasına ertelendi; 15 öncesi kapanış koşulu değildir. Bu erteleme mevcut bağımsız Shopify satış temeli ve kaynak kayıtlarını kaldırmaz.",
       "status": "Bağlantı ve hesaplar kodlanacak — Shopify satış temeli ek kapsam.",
       "package": "EO-05-B / EO-06-A"
     },
@@ -899,5 +899,14 @@
       "https://developers.google.com/identity/protocols/oauth2/scopes#googleads",
       "https://developers.klaviyo.com/en/docs/authenticate_"
     ]
+  },
+  "Pre15_PMax_and_overlap_owner_decision_2026_10_30": {
+    "record": "contracts/eo-05-start-brief-v1.json#Pre15_PMax_and_overlap_owner_decision_2026_10_30",
+    "status": "owner_agreed_plan_decision_implementation_and_native_acceptance_not_completed",
+    "execution_order": "bounded PMax step21 work -> separately authorized remaining07 -> step14 review -> explicit15 decision; historical22 paused; Overlap after22",
+    "Klaviyo": "Campaign Assisted / Flow Triggered",
+    "step15_started": false,
+    "step22_resumed": false,
+    "runtime_changed": false
   }
 }

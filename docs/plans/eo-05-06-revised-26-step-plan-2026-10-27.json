@@ -309,5 +309,68 @@
     "historical_PMax_step_22_paused": true,
     "live_acceptance": false,
     "package_complete": false
+  },
+  "Shared_source_read_context_2026_10_30": {
+    "checked_at": "2026-10-30",
+    "owner_authorization": "Existing reader/context wiring and isolated tests only; no live permissions, connection, database or deployment changes",
+    "existing_steps": [
+      6,
+      11,
+      12
+    ],
+    "delivery_order": 5,
+    "status": "first_read_boundary_slice_code_tests_ready_native_inactive",
+    "entrypoint": "createRefreshPdSourceReader",
+    "module": "app/lib/refresh/pd-source-reader.server.js",
+    "base_main": "565abe86ac551a686ad151b60c8b01b8628f9a80",
+    "scope": "Reserved single-day background read; authoritative SQL installation/account/selection/credential/version pin; existing quota-managed provider readers; immutable nonsecret source context and unchanged native hierarchy/query evidence",
+    "boundaries": [
+      "No route/scheduler/production construction change",
+      "Google one complete PD page only; next cursor rejected as partial",
+      "Meta existing two collected families; Klaviyo existing PD families must complete",
+      "No new provider fields/queries/permission scope",
+      "No inferred attribution or metric-unit fingerprint; canonical_scope_ready remains false",
+      "Result row/serialized-byte bounds after native collection; not a measured peak-memory limit",
+      "No lifecycle/credential write; Klaviyo refresh-required credential stops before refresh",
+      "No durable source rules, Product ID mapping, roles, FX, Dataset or activation"
+    ],
+    "remaining": [
+      "Google continuation and composer wiring in delivery6",
+      "Klaviyo Message composer wiring in delivery7",
+      "Per-entity scope/fingerprint/native attribution binding and common record bridge in delivery8",
+      "Integrated worker/prewrite handoff and native authority/capacity acceptance remain separate",
+      "PR264 native visual acceptance and grouped UI corrections remain deferred"
+    ],
+    "sources": [
+      {
+        "source": "https://developers.google.com/google-ads/api/docs/reporting/overview",
+        "status": "read"
+      },
+      {
+        "source": "https://developers.klaviyo.com/en/reference/reporting_api_overview",
+        "status": "read"
+      },
+      {
+        "source": "https://developers.facebook.com/docs/marketing-api/insights/",
+        "status": "429_not_read"
+      },
+      {
+        "source": "https://github.com/facebook/facebook-nodejs-business-sdk/blob/main/src/objects/ads-insights.js",
+        "status": "official_SDK_field_list_read_no_new_behavior_inferred"
+      }
+    ],
+    "verification": {
+      "new_isolated_tests": 29,
+      "exact_commit_CI": "pending",
+      "F01": "required_isolated_CI_refresh_path_changed",
+      "native_acceptance": false
+    },
+    "runtime_code_changed": true,
+    "live_provider_calls": false,
+    "db_migration": false,
+    "step15_started": false,
+    "step22_paused": true,
+    "Dataset_write_step": 23,
+    "publishable": false
   }
 }

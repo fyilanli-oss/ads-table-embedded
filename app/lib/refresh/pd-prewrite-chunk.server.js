@@ -2,6 +2,7 @@ import {runRefreshChunk} from "./chunk-worker.server.js";
 import {createRefreshPdSourceReader, isRefreshPdSourceObservation, refreshPdSourceAuthorityMatches} from "./pd-source-reader.server.js";
 import {createIdentityAuthorityRepository} from "../database/identity-authority-repository.server.js";
 import {refreshWorkIdentity} from "./work-stop-policy.server.js";
+import {reviewRefreshIntegratedPrewrite} from "./integrated-prewrite-review.server.js";
 
 const fail = () => {throw Error("PD_PREWRITE_CHUNK_INPUT_INVALID");};
 const flags = {persistable: false, publishable: false, authorizes_activation: false, canonical_scope_ready: false,
@@ -28,7 +29,7 @@ export function reviewRefreshPdPrewrite({claim, window, authority, observation})
 /** Explicit internal worker binding only. No scheduler, route or writer is wired.
  * Worker supplies the fresh claim/window/entitlement receipt and abort signal.
  */
-export async function runRefreshPdPrewriteChunk({worker, source, ...extra} = {}) {
+export async function runRefreshPdPrewriteChunk({worker, source, prewrite, ...extra} = {}) {
   if (Object.keys(extra).length || !worker || !source
     || Object.keys(worker).some(k => !["claim", "window", "limits", "store", "loadAuthority", "verifyEntitlement", "isEntitlementCurrent", "now"].includes(k))
     || ["claim", "window", "entitlementReceipt", "signal", "now"].some(k => Object.hasOwn(source, k))
@@ -53,7 +54,11 @@ export async function runRefreshPdPrewriteChunk({worker, source, ...extra} = {})
       timer = setTimeout(() => reject(Error("PD_PREWRITE_AUTHORITY_TIMEOUT")), remaining);
     })]);} finally {clearTimeout(timer);}
   }
-  let snapshot = null, review = null;
+  if(prewrite!==undefined && (!prewrite || Object.keys(prewrite).some(k=>!["identity","shopify","interaction"].includes(k))
+    || !prewrite.identity || Object.keys(prewrite.identity).some(k=>!["expected","observation"].includes(k)))) fail();
+  const bundle=prewrite===undefined?null:{identity:{expected:structuredClone(prewrite.identity?.expected),observation:prewrite.identity?.observation},
+    shopify:prewrite.shopify?{...prewrite.shopify}:null,interaction:prewrite.interaction??null};
+  let snapshot = null, review = null, integration = null;
   const result = await runRefreshChunk({...worker, claim, window, limits,
     loadAuthority: async input => {
       const current = await boundedAuthority(() => loadAuthority(input));
@@ -70,14 +75,21 @@ export async function runRefreshPdPrewriteChunk({worker, source, ...extra} = {})
     validatePage: ({claim, window, authority, payload}) => {
       if (payload !== snapshot) return {complete: false, rows: []};
       review = reviewRefreshPdPrewrite({claim, window, authority, observation: snapshot});
+      if(bundle && review.complete) {
+        try {integration=reviewRefreshIntegratedPrewrite({claim,window,pdObservation:snapshot,...bundle});
+          if(integration.interactionReview.state==="conflicting_references") throw Error("INTEGRATED_PREWRITE_INTERACTION_CONFLICT");
+        } catch(error) {review={status:"blocked",reason:/^INTEGRATED_PREWRITE_[A-Z_]+$/.test(error?.message??"")
+          ?error.message:"integrated_prewrite_failed",complete:false,rows:[],...flags};}
+      }
       // Account for both retained source and cloned canonical rows before the
       // worker advances. This bounds serialized output, not peak memory.
-      if (Buffer.byteLength(JSON.stringify({source_observation: snapshot, rows: review.rows}), "utf8") + 2048 > limits.maxBytes)
+      if (Buffer.byteLength(JSON.stringify({source_observation: snapshot, rows: review.rows, integration_review:integration}), "utf8") + 2048 > limits.maxBytes)
         review = {status: "blocked", reason: "prewrite_result_bound_exceeded", complete: false, rows: [], ...flags};
       return review;
     }});
   const output = {...result, source_review: review ? {status: review.status, reason: review.reason} : null,
-    source_observation: snapshot, handoff_kind: "pd_prewrite_only", ...flags};
+    ...(bundle?{integration_review:integration}:{}),source_observation: snapshot,
+    handoff_kind: bundle?"integrated_prewrite_review":"pd_prewrite_only", ...flags};
   if (Buffer.byteLength(JSON.stringify(output), "utf8") > limits.maxBytes)
     return {...result, rows: undefined, status: "needs_attention", reason: "prewrite_result_bound_exceeded",
       source_review: {status: "blocked", reason: "prewrite_result_bound_exceeded"}, source_observation: null,

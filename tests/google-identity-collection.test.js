@@ -677,3 +677,6 @@ test("Google reference prewrite: Merchant candidate reader did not collect repor
 });
 
 providerClaimPrewriteCases({provider:"google_ads",fixture:candidateBoundFixture,expected:candidatePrewriteOwner,empty:f=>{f.hooks.fetch=p=>p.hostname==="merchantapi.googleapis.com"&&response({products:[]});}});
+
+import {integratedPrewriteCases} from "./helpers/integrated-prewrite-cases.js";
+integratedPrewriteCases({provider:"google_ads",fixture:candidateBoundFixture,expected:candidatePrewriteOwner});

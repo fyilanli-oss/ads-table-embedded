@@ -3326,3 +3326,16 @@ Teslim öncesi mevcut SQL fonksiyonundan kurulum/mağaza/hesap, bağlantı sür�
 Teslim10 TAMAMLANMADI: candidate/reference, Order/LineItem/provider claim, Klaviyo etkileşim ve kabul edilmiş setup/native izin kanıtı ile bütünleşik kontroller sıradadır. OAuth/UI değiştirilmez. Kalıcı eşleme15 başlamadı;22 duraklatılmış;23 Dataset/FX writer. Bağlayıcı kayıt: contracts/eo-05-start-brief-v1.json#PD_worker_prewrite_first_slice_2026_10_30.
 
 Resmî kontrol30Ekim2026: Google Reporting Overview, Klaviyo Reporting API Overview ve Meta resmî SDK okundu. Yeni provider sorgusu/alanı veya kanıtlanmamış davranış eklenmedi. Kaynak/işçi sınırının49 testi geçti; genel/CI ve F01 ayrı doğrulanır. Canlı çağrı, config, migration veya deploy yapılmadı; merge ayrı açık onay bekler.
+
+
+## Ortak yazım öncesi kontrol: kaynak ailelerinin birlikte sınanması — 30 Ekim 2026
+
+PR272, açık kullanıcı onayı ve exact e295a86 Governance/F01 SUCCESS sonrasında aeddc1888158d24fa75e70153e783ce0c166435b olarak birleşti. Approved head ile merge commit tüm tree hash eşliği doğrulandı. Güncel main üzerinden codex/integrated-prewrite-review açıldı; birincil checkout ve kullanıcı attachment dosyaları korundu.
+
+Teknik teslim10 / mevcut13: reviewRefreshIntegratedPrewrite mevcut PD, candidate/reference ve isteğe bağlı Shopify Order/LineItem/provider claim ile Klaviyo etkileşim kontrollerini bir araya getirir. runRefreshPdPrewriteChunk açık prewrite girdisiyle bu kontrolü bellekte teslim öncesi çalıştırır. Eski PD-only giriş otomatik yeni okuma yapmaz.
+
+Mağaza, kurulum/nesil, hesap/bağlantı/seçim, iş/fence ve gün eşitliği gerekir. Orijinal private kaynak gözlemleri korunur; JSON kopyası kanıt olmaz. Orders verilmemiş ile başarıyla boş okunmuş ayrıdır. Native PD toplamı ürün/sipariş metriğine dağıtılmaz; kaynak tarih aralıkları eşit sayılmaz. Klaviyo etkileşimi yalnız aynı kaynak satış/atıf/metric/account referanslarıyla eklenir. Farklı iş/satış referansı reddedilir; gelecek tarihli veya çelişkili etkileşim görünür ve ortak worker teslimini durdurur. Ürün tıklaması veya Advertised/Cross-sell üretilmez.
+
+732 ilgili test geçti. Genel test/tip/derleme ve exact source CI/F01 ayrıca doğrulanır. Teslim10 tamamlandı sayılmaz: kabul edilmiş setup/native izin kanıtının bağlanması ve gerçek kota profili/kapasite/kaynak doğrulaması açık. OAuth/UI değişikliği, canlı çağrı, migration, deploy, kalıcı eşleme veya Dataset yazımı yok.15 başlamadı;22 duraklatılmış;23 writer.
+
+Bağlayıcı kayıt: contracts/eo-05-start-brief-v1.json#Integrated_source_prewrite_review_2026_10_30. Resmî kontrol30Ekim2026: https://developers.klaviyo.com/en/reference/get_event ve https://shopify.dev/docs/api/admin-graphql/2026-07/objects/Order okundu; yeni provider davranışı çıkarılmadı. Merge ayrı açık onay bekler.

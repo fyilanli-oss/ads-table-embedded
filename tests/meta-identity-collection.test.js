@@ -905,3 +905,6 @@ test("Meta prewrite: two variants of one product retain both catalog source reco
 });
 
 providerClaimPrewriteCases({provider:"meta",fixture:candidateBoundFixture,expected:candidatePrewriteOwner,empty:f=>{f.native.products.data=[];}});
+
+import {integratedPrewriteCases} from "./helpers/integrated-prewrite-cases.js";
+integratedPrewriteCases({provider:"meta",fixture:candidateBoundFixture,expected:candidatePrewriteOwner});

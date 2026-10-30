@@ -55,10 +55,30 @@ for (const [label, change, reason] of [
   ["unknown native setting", f => f.evidence.channel.rows[0].attribution_setting = "Unknown", "native_attribution_setting_not_returned"],
   ["native currency mismatch", f => f.evidence.channel.rows[0].account_currency = "EUR", "native_account_currency_mismatch"],
 ]) test(`Meta blocks ${label}`, () => {const f = fixture("meta"); change(f); assert.equal(prepare(f).reason, reason);});
-test("Klaviyo reports verified account currency/units but cannot invent attribution settings", () => {
-  const r = prepare(fixture("klaviyo"));
-  assert.equal(r.reason, "attribution_settings_read_not_documented");
-  assert.equal(r.units.source_currency, "USD"); assert.equal(r.composition_context, null);
+test("Klaviyo uses approved documented email default without claiming observed account settings", () => {
+  const f = fixture("klaviyo"), original = structuredClone(f), r = prepare(f);
+  assert.equal(r.status, "prepared");
+  assert.equal(r.units.source_currency, "USD");
+  assert.deepEqual(r.attribution.channels, {email: {click_days: 5, open_days: 5}});
+  assert.equal(r.attribution.model, "last_touch");
+  assert.equal(r.attribution.source, "official_documented_default");
+  assert.equal(r.attribution.account_settings_verified, false);
+  assert.equal(r.attribution.other_channels, "not_modelled");
+  assert.equal(r.attribution.exclusions, "not_verified");
+  assert.equal(r.composition_contexts.campaign.reporting_time_basis, "send_date");
+  assert.equal(r.composition_contexts.flow.flow, "flow");
+  assert.equal(r.composition_contexts.flow.attribution_fingerprint, r.composition_contexts.campaign.attribution_fingerprint);
+  assert.deepEqual(f, original); assert.ok(Object.isFrozen(r.attribution.channels.email));
+  assert.equal(r.persistable, false); assert.equal(r.publishable, false);
+});
+
+test("Klaviyo default cannot bypass missing/conflicting native account authority", () => {
+  for (const change of [f => delete f.evidence.native_metadata.before.account,
+    f => f.evidence.native_metadata.after.account.currency = "EUR",
+    f => f.evidence.native_metadata.before.account.id = "wrong"]) {
+    const f = fixture("klaviyo"); change(f);
+    assert.equal(prepare(f).reason, "native_account_metadata_missing_or_conflicting");
+  }
 });
 test("native metadata never invents target currency, FX, or a display name", () => {
   const f = fixture("meta"), prepared = prepare(f);

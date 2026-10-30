@@ -80,6 +80,7 @@ export function composeKlaviyoPdSnapshot({sourceContext, evidence, compositionCo
     facts.push(copy({...result.rows[0], source_execution: {connection_version: sourceContext.connection_version,
       reporting_selection_epoch: sourceContext.reporting_selection_epoch, claim_fence: sourceContext.claim_fence,
       metadata_references: {attribution: metadata.references.attribution, metric_units: metadata.references.metric_units},
+      ...(metadata.attribution_reference ? {attribution_reference: metadata.attribution_reference} : {}),
       metric_selection: selection,
       slices: projections.map(p => ({source_family: p.source_family, source_reference: p.source_reference,
         native_row_indices: message.indices.get(p.conversion_metric_name) ?? [], page_spans: p.page_spans ?? []}))}}));

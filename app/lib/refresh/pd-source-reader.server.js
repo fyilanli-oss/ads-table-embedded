@@ -204,12 +204,13 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
           metadata_state: "native_rows_and_request_evidence_preserved_not_composition_ready"};
         const prepared = nativeMetadata ? preparePdNativeMetadata({sourceContext, evidence}) : null;
         if (prepared?.status === "prepared") {
-          sourceContext.metadata_state = "native_read_time_metadata_prepared_not_historical_authority";
+          sourceContext.metadata_state = claim.provider === "klaviyo" ? "native_account_with_documented_default_attribution_reference"
+            : "native_read_time_metadata_prepared_not_historical_authority";
           sourceContext.reporting_time_basis = claim.provider === "meta" ? "impression_date" : sourceContext.reporting_time_basis;
         }
         const blocked = prepared?.status === "blocked" ? {status: "blocked", reason: prepared.reason, rows: [], publishable: false} : null;
         const composition = blocked ?? (pd ? composeGooglePdSnapshot({sourceContext, evidence, compositionContext: prepared?.composition_context ?? pd.compositionContext})
-          : kpd ? composeKlaviyoPdSnapshot({sourceContext, evidence, compositionContexts: kpd.compositionContexts}) : null);
+          : kpd ? composeKlaviyoPdSnapshot({sourceContext, evidence, compositionContexts: prepared?.composition_contexts ?? kpd.compositionContexts}) : null);
         const recordMetadata = prepared ? bindNativePdRecordMetadata({prepared, composition, evidence, sourceContext, supplied: bridge?.metadata}) : bridge?.metadata;
         const missingTarget = prepared?.status === "prepared" && !/^[A-Z]{3}$/.test(recordMetadata?.expected_target_currency ?? "");
         const records = prepared?.status === "blocked" || missingTarget ? {status: "blocked", reason: missingTarget ? "reporting_currency_reference_required" : prepared.reason,

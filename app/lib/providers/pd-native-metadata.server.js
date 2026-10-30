@@ -1,6 +1,7 @@
 import {createHash, randomUUID} from "node:crypto";
 import {stableJson} from "./common-adapter.server.js";
 import {META_PD_METRIC_SOURCES} from "./meta-reporting.server.js";
+import {normalizeKlaviyoReportRow} from "./klaviyo-reporting.server.js";
 
 const BINDING = ["workspace_id", "installation_id", "installation_generation", "provider", "provider_connection_id",
   "connection_version", "reporting_selection_epoch", "platform_account_id", "canonical_reporting_account_id", "business_date",
@@ -67,9 +68,14 @@ export function preparePdNativeMetadata({sourceContext: context, evidence} = {})
     const before = evidence.native_metadata?.before?.account, after = evidence.native_metadata?.after?.account;
     if (!accountMatches(before, context) || !accountMatches(after, context)) return blocked("native_account_metadata_missing_or_conflicting");
     if (!same(before, after)) return blocked("native_settings_changed_during_read");
-    // Reporting/Accounts OpenAPI expose no verified account-attribution settings
-    // field in the inspected revisions. Never hash a guessed default as proof.
-    return blocked("attribution_settings_read_not_documented");
+    // Owner-approved reference policy, NOT an observation of this account's
+    // attribution configuration. Native provider sales/claims remain unchanged.
+    attribution = {kind: "documented_default_reference", policy_version: "klaviyo-email-default-v1",
+      source: "official_documented_default", account_settings_verified: false,
+      model: "last_touch", channels: {email: {click_days: 5, open_days: 5}},
+      other_channels: "not_modelled", exclusions: "not_verified",
+      source_document: "https://help.klaviyo.com/hc/en-us/articles/11118357030555",
+      checked_on: "2026-10-30", usage: "comparison_reference_only_no_sales_or_claim_recalculation"};
   } else if (context.provider === "meta") {
     const request = evidence.channel?.evidence;
     if (request?.action_report_time !== "impression" || request.use_unified_attribution_setting !== true
@@ -82,7 +88,7 @@ export function preparePdNativeMetadata({sourceContext: context, evidence} = {})
   } else return blocked("native_provider_not_supported");
   const composition_attempt_id = randomUUID(), snapshot_id = ref({binding, evidence});
   const metric_units_fingerprint = hash(units), references = {attribution: ref(attribution), metric_units: ref(units)};
-  const composition_context = {binding, flow: evidence.flow, conversion_scope: "normal", reporting_time_basis: "interaction_date",
+  const composition_context = {binding, flow: evidence.flow, conversion_scope: "normal", reporting_time_basis: context.provider === "klaviyo" ? "send_date" : "interaction_date",
     composition_attempt_id, snapshot_id, metric_units_fingerprint, attribution_fingerprint: hash(attribution), references};
   const entries = [];
   if (context.provider === "meta") for (const row of evidence.channel.rows) {
@@ -96,7 +102,9 @@ export function preparePdNativeMetadata({sourceContext: context, evidence} = {})
       entity_type: "ad", entity_id: row.ad_id, entity_name: row.ad_name};
     entries.push({scope, entity, metadata_references: {attribution: ref({settings, ad_id: row.ad_id, adset_id: row.adset_id}), metric_units: ref(units)}});
   }
-  return copy({status: "prepared", reason: null, units, attribution, composition_context, entries,
+  const composition_contexts = context.provider === "klaviyo" ? Object.fromEntries(["campaign", "flow"]
+    .map(flow => [flow, {...composition_context, flow, attribution_reference: attribution}])) : null;
+  return copy({status: "prepared", reason: null, units, attribution, composition_context, composition_contexts, entries,
     persistable: false, publishable: false});
 }
 
@@ -107,6 +115,15 @@ export function bindNativePdRecordMetadata({prepared, composition, evidence, sou
   if (prepared.status !== "prepared") return null;
   const sources = sourceContext.provider === "meta" ? prepared.entries : (composition?.rows ?? []).map(fact => {
     const s = fact.scope, rows = fact.source_projections.flatMap(p => p.rows);
+    if (sourceContext.provider === "klaviyo") {
+      const native = rows.map(row => normalizeKlaviyoReportRow(s.flow, row));
+      const message = native.find(r => text(r.channel_name)), parent = native.find(r => text(r.source_entity_name));
+      return {scope: s, metadata_references: fact.source_execution.metadata_references,
+        entity: {root_entity_type: s.flow, root_entity_id: s.ancestors[0].entity_id,
+          root_entity_name: parent?.source_entity_name, parent_entity_type: s.flow,
+          parent_entity_id: s.ancestors[0].entity_id, parent_entity_name: parent?.source_entity_name,
+          entity_type: s.entity_type, entity_id: s.entity_id, entity_name: message?.channel_name}};
+    }
     const row = rows.find(r => text(r.campaign?.name));
     const parent = s.ancestors.at(-1);
     return {scope: s, metadata_references: fact.source_execution.metadata_references,
@@ -133,6 +150,7 @@ export function bindNativePdRecordMetadata({prepared, composition, evidence, sou
         time: {source_timezone: scope.source_timezone, business_date: scope.business_date, time_engine_version: "native-business-day-v1"},
         references: {entity: ref(entity), time: ref([scope.source_timezone, scope.business_date]), fx: fx?.references?.fx ?? null,
           reporting_currency: fx?.references?.reporting_currency ?? null},
-        provenance: {source_system: sourceContext.provider, adapter_version: "pd-native-metadata-v1", source_confidence: "real", synthetic: false}}};
+        provenance: {source_system: sourceContext.provider, adapter_version: "pd-native-metadata-v1", source_confidence: sourceContext.provider === "klaviyo" ? "fallback" : "real", synthetic: false,
+          ...(sourceContext.provider === "klaviyo" ? {attribution_source: prepared.attribution.source, account_attribution_verified: false} : {})}}};
     })});
 }

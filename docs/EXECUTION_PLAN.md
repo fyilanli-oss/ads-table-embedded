@@ -3302,3 +3302,12 @@ CI kontrolü: `tests/eo-04c-google-reporting-runtime-contract.test.js`
 - Önce/sonra eşitliği transaction snapshot veya geçmiş tüm iş günü ayar kanıtı değildir. Kota, owner/version/selection/fence, abort/toplam süre, ilk-hata ve tam sayfalama sınırları korunur. Boyut sınırları decode/serialized kontroldür; tepe bellek kabulü değildir.
 - Bağlayıcı kayıt: contracts/eo-05-start-brief-v1.json#PD_native_metadata_read_2026_10_30. Google v25 field referansı, Meta resmî SDK ve Klaviyo2026-10-15 Reporting/Accounts sözleşmeleri30Ekim2026'da kontrol edildi. Native müşteri kabulü ayrı açık.
 - OAuth/izin/UI, canlı sorgu, migration/deploy, Sales Role veya Dataset yazımı yok. Kalıcılık15, FX/Dataset23, ortak prewrite teslim10;22 duraklatılmış.
+
+
+## Klaviyo atıf varsayılanı kararı — 30 Ekim 2026
+
+Ürün sahibi, hesap atıf ayarı için API beklemesi yerine resmî e-posta varsayılanını kabul etti: Last Touch, tıklama5gün, açılma5gün. Kullanıcıdan ek ayar istenmez. Kaynak official_documented_default; account_settings_verified=false. Yukarıdaki attribution_settings_read_not_documented beklemesi bu kararla kaldırılır; hesabın gerçek ayarı okunmuş sayılmaz.
+
+Mevcut Klaviyo satışları ve sipariş–mesaj atıfları aynen korunur. Beş günlük filtre, yeni atıf hesabı veya rol değişikliği yapılmaz. Varsayılan karşılaştırma dayanağıdır; diğer kanallar ve hariç tutma ayarları doğrulanmış sayılmaz. nativeMetadata:true, native hesap/para birimi/saat dilimi kontrollerinden sonra Campaign/Flow send_date bağlamlarını bu açık kaynak bilgisiyle üretir. Eksik entity/FX ve sonraki yazım kapıları korunur.
+
+Bağlayıcı kayıt: contracts/eo-05-start-brief-v1.json#Klaviyo_documented_default_attribution_2026_10_30. Resmî kaynak30Ekim: https://help.klaviyo.com/hc/en-us/articles/11118357030555. Kod/izole test değişikliği; canlı sorgu, OAuth, UI, deploy veya Dataset yazımı yok.15 başlamadı;22 duraklatılmış;23 yazım. Merge ayrı açık onay bekler.

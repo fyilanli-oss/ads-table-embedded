@@ -194,13 +194,20 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
           return structuredClone(token);
         }}, environment: env, now: readNow};
         const dateWindow = {start: window.from, end: window.to};
-        let evidence, pmaxEvidence = null;
+        let evidence, pmaxEvidence = null, pmaxMembershipState = null;
         if (claim.provider === "google_ads") {
           const client = clients.google(config);
           evidence = pd ? await client.readPdEvidenceSnapshot({installationAuthority: owner, dateWindow, flow: pd.flow,
             limits: {maxPages: boundLimits.maxPages, maxRows: boundLimits.maxRows, maxBytes: boundLimits.maxBytes}, nativeMetadata})
             : await client.readEvidencePage({installationAuthority: owner, queryFamily, dateWindow});
           if (pmax) {
+            const membership = pmax.listingEvidence ?? null;
+            const binding = {...baseline, business_date: window.from, job_or_run_id: claim.id, claim_fence: claim.fence};
+            const boundMembership = membership !== null && ["workspace_id", "installation_id", "installation_generation",
+              "provider", "provider_connection_id", "connection_version", "reporting_selection_epoch", "platform_account_id",
+              "credential_id", "business_date", "source_timezone", "source_currency", "job_or_run_id", "claim_fence"]
+              .every(k => binding[k] !== undefined && stableJson(membership.binding?.[k]) === stableJson(binding[k]));
+            pmaxMembershipState = membership === null ? "not_supplied" : boundMembership ? "bound_for_review_only" : "source_binding_mismatch";
             const usedRows = evidence.results.performance.rows.length + evidence.results.conversions.rows.length
               + (evidence.native_metadata ? [evidence.native_metadata.before, evidence.native_metadata.after]
                 .reduce((n, m) => n + m.account.rows.length + m.actions.rows.length, 0) : 0);
@@ -209,7 +216,7 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
             if (remaining.maxRows < 1 || remaining.maxBytes < 1) fail("RESULT_BOUND_EXCEEDED");
             await currentContext();
             pmaxEvidence = await client.readPmaxSourceEvidenceSnapshot({installationAuthority: owner, dateWindow,
-              limits: remaining, listingEvidence: pmax.listingEvidence ?? null, signal: controller.signal,
+              limits: remaining, listingEvidence: boundMembership ? membership : null, signal: controller.signal,
               maxElapsedMs: boundLimits.maxElapsedMs});
             await currentContext();
             if (pmaxEvidence.authority.connection_id !== baseline.provider_connection_id
@@ -275,7 +282,7 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
         if (pd || kpd || bridge || nativeMetadata) await currentContext();
         check();
         const result = copy({status: "source_read", source_context: sourceContext, evidence,
-          ...(pmaxEvidence ? {pmax_source_evidence: pmaxEvidence} : {}),
+          ...(pmaxEvidence ? {pmax_source_evidence: pmaxEvidence, pmax_membership_state: pmaxMembershipState} : {}),
           ...(composition ? {composition} : {}),
           ...(records ? {records} : {}),
           ...(prepared ? {native_metadata: prepared} : {}),

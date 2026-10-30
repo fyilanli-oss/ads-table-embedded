@@ -4000,6 +4000,7 @@
     "temporal": "Timezone-aware complete business-day bounds, including DST. Current listing inventory has no historical validity interval and is never converted into past serving proof.",
     "supported_dimension_boundary": "This bounded adapter accepts included All products / explicit product item / observed brand paths. Category IDs, other dimensions or catch-all paths without verified period source attributes remain unresolved, never silently excluded from candidate coverage.",
     "evidence_authority": "listingEvidence is detached trusted-server composition input, not a provider proof by shape, public registrar or browser option. Historical producer/storage/loading remains step22.",
+    "background_membership_binding": "Exact private workspace/installation/generation/provider/connection/version/selection/account/credential/day/timezone/currency/job/fence binding; copied or stale job evidence becomes Unclassified with source_binding_mismatch. Credential reference is not returned in the source envelope.",
     "controls": [
       "full pagination and page cursor loop detection",
       "combined family rows/bytes plus output bound",

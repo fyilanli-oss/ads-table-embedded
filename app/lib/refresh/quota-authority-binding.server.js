@@ -4,7 +4,7 @@ import {refreshWorkIdentity} from "./work-stop-policy.server.js";
 import {createQuotaScopeResolver} from "./quota-scope-resolver.server.js";
 import {createSharedQuotaGuard} from "./shared-quota.server.js";
 import {createQuotaManagedFetch,createQuotaReadExecution} from "./quota-native-fetch.server.js";
-import {collectKlaviyoNativeIdentityEvidence, collectKlaviyoIdentityMessageEvidence,collectKlaviyoVerifiedProductCandidateEvidence} from "../providers/klaviyo-identity-collection.server.js";
+import {collectKlaviyoNativeIdentityEvidence, collectKlaviyoIdentityMessageEvidence,collectKlaviyoVerifiedProductCandidateEvidence,collectKlaviyoInteractionEvidence} from "../providers/klaviyo-identity-collection.server.js";
 import {klaviyoBusinessDayTimeframe} from "../providers/klaviyo-reporting.server.js";
 import {createKlaviyoOrderIdentityRuleLoader} from "../providers/klaviyo-order-rules.server.js";
 import {collectMetaNativeIdentityEvidence,collectMetaVerifiedProductCandidateEvidence,collectMetaReportProductCandidateEvidence} from "../providers/meta-identity-collection.server.js";
@@ -72,11 +72,13 @@ function identityTransport(binding,provider,claim,merchantTarget,readExecution) 
 export function createRefreshKlaviyoIdentityReader(options) {return createKlaviyoIdentityReader(options);}
 // Candidate composition is explicit; native/Message callers cannot opt into Admin work.
 export function createRefreshKlaviyoCandidateReader(options) {return createKlaviyoIdentityReader(options,true);}
+export function createRefreshKlaviyoInteractionReader(options) {return createKlaviyoIdentityReader(options,false,true);}
 function createKlaviyoIdentityReader({verified,database,tokenVault,mode,signal,sdkBridge,orderIdentityRules,
-  readNow=()=>new Date(),maxElapsedMs,maxPages,maxEvents,maxMetrics,maxIncluded,maxMessageRows,...quotaOptions} = {},candidates=false) {
+  readNow=()=>new Date(),maxElapsedMs,maxPages,maxEvents,maxMetrics,maxIncluded,maxMessageRows,maxInteractions,maxInteractionBytes,...quotaOptions} = {},candidates=false,interactions=false) {
   const claim=structuredClone(quotaOptions.claim),window=structuredClone(quotaOptions.window);
   const owner=structuredClone(verified?.installationAuthority),shop=structuredClone(verified?.identity?.shop);
-  if((candidates?mode!==undefined||!isShopifyAdminIdentitySdkBridge(sdkBridge):!["native","message"].includes(mode)||sdkBridge!==undefined||orderIdentityRules!==undefined)
+  if((candidates?mode!==undefined||!isShopifyAdminIdentitySdkBridge(sdkBridge):interactions?mode!==undefined||sdkBridge!==undefined||orderIdentityRules!==undefined:!["native","message"].includes(mode)||sdkBridge!==undefined||orderIdentityRules!==undefined)
+    ||!interactions&&(maxInteractions!==undefined||maxInteractionBytes!==undefined)
     ||claim?.provider!=="klaviyo"||typeof window?.from!=="string"||window.from!==window.to
     ||owner?.authority!=="shopify_installation_verified"||owner.status!=="active"||owner.workspaceId!==claim.workspaceId
     ||String(owner.installGeneration)!==claim.installGeneration||typeof verified?.context?.admin?.graphql!=="function"
@@ -87,13 +89,13 @@ function createKlaviyoIdentityReader({verified,database,tokenVault,mode,signal,s
   const caller={installationAuthority:owner,identity:{shop,session:{authority:verified.identity?.session?.authority,
     shopDomain:verified.identity?.session?.shopDomain}},context:{admin:{graphql:verified.context.admin.graphql.bind(verified.context.admin)}}};
   const binding=refreshQuotaOptions(quotaOptions,{admin:candidates});
-  const execution=candidates?createQuotaReadExecution():undefined;
+  const execution=candidates||interactions?createQuotaReadExecution():undefined;
   const transport=identityTransport(binding,"klaviyo",claim,undefined,execution);
   const admin=candidates?createFencedAdminClient({verified:caller,sdkBridge,signal,...quotaOptions},false,null,{binding,readExecution:execution}):null;
   if(admin)caller.context.admin=admin;
-  const collect=candidates?collectKlaviyoVerifiedProductCandidateEvidence:mode==="native"?collectKlaviyoNativeIdentityEvidence:collectKlaviyoIdentityMessageEvidence;
+  const collect=interactions?collectKlaviyoInteractionEvidence:candidates?collectKlaviyoVerifiedProductCandidateEvidence:mode==="native"?collectKlaviyoNativeIdentityEvidence:collectKlaviyoIdentityMessageEvidence;
   const options={verified:caller,database,tokenVault,businessDate:window.from,fetchFn:transport,signal,now:readNow,
-    maxElapsedMs,maxPages,maxEvents,maxMetrics,maxIncluded,maxMessageRows};
+    maxElapsedMs,maxPages,maxEvents,maxMetrics,maxIncluded,maxMessageRows,...interactions?{maxInteractions,maxInteractionBytes}:{}};
   let used=false;
   return Object.freeze({async readEvidence(...args){
     if(args.length) throw Error("REFRESH_KLAVIYO_IDENTITY_OVERRIDE_FORBIDDEN");

@@ -1851,5 +1851,81 @@
     "step22_paused": true,
     "Dataset_write_step": 23,
     "publishable": false
+  },
+  "Klaviyo_attributed_interaction_read_2026_10_30": {
+    "checked_at": "2026-10-30",
+    "delivery_order": 9,
+    "existing_step": 12,
+    "status": "interaction_reader_wired_isolated_tests_ready_native_inactive",
+    "owner_approval": "Explicit approval for typed attribution reference retention, controlled exact-event read, event/metric/time checks and isolated tests. No live query, OAuth/permission change, Advertised/Cross Sell or Dataset write.",
+    "implementation": "app/lib/providers/klaviyo-attributed-interaction.server.js",
+    "entrypoints": [
+      "collectKlaviyoInteractionEvidence",
+      "createRefreshKlaviyoInteractionReader"
+    ],
+    "reference_retention": "Both event and attributed-event typed references retained in sparse identity projections and normalized reporting evidence; existing Message resolution preserved.",
+    "transport": "GET /api/events/{native-attributed-event-id}, include=metric, fields[event]=id,datetime,timestamp, fields[metric]=id,name,integration; revision2026-10-15, existing events:read. No profile or event_properties requested.",
+    "semantics": "Sale -> attribution, attribution.event -> same sale, attribution.attributed-event -> exact fetched event. Event identity, metric relationship/included resource and time checked; reference alone never proves clicked product or last click.",
+    "observations": [
+      "Missing relationship distinct from explicit empty attribution list",
+      "Missing/conflicting/self references remain explicit without search/fallback",
+      "Repeated attribution ref deduplicated; shared event read once per execution, each sale time checked separately",
+      "Prior-day interaction permitted; interaction later than sale is time_conflict, no assumed attribution window",
+      "Only observed native Klaviyo Clicked Email / Opened Email labeled click/open; all other native names/integrations preserved as other"
+    ],
+    "limits": {
+      "default_max_interactions": 1000,
+      "max_interactions": 10000,
+      "default_max_response_bytes": 2000000,
+      "max_response_bytes": 20000000,
+      "max_link_records": 100000
+    },
+    "quota": {
+      "family": "event_detail",
+      "includes": [
+        "metric"
+      ],
+      "native_documented_burst_per_second": 10,
+      "native_documented_steady_per_minute": 150,
+      "separate_from_list_events": true,
+      "profile_auto_provisioned": false,
+      "missing_profile": "not_configured; no HTTP or list fallback",
+      "native_runtime_profile_acceptance": false
+    },
+    "safety": [
+      "Existing owner/connection/grant/account revalidation before HTTP and after detail body; final account read retained",
+      "Each physical detail request separately quota metered; prior attempt evidence retained on wait",
+      "Whole-collection abort/deadline; first HTTP/schema failure stops reports/finalization, no retry/refresh",
+      "Old native/Message/candidate entrypoints cannot opt into interaction reads",
+      "Response byte bound is after JSON decode, not peak memory proof"
+    ],
+    "verification": {
+      "related_tests": "289 related tests passed; exact commit CI pending",
+      "exact_commit_CI": "pending",
+      "F01": "required_isolated_CI",
+      "native_acceptance": false
+    },
+    "remaining": [
+      "Real grant/operation-profile/native source acceptance remains separate; no live call or quota inventory mutation",
+      "Worker/prewrite integrated handoff in delivery10",
+      "No clicked product proof; Campaign Assisted / Flow Triggered preserved",
+      "Canonical storage step15; Dataset writer23; step22 remains paused"
+    ],
+    "sources": [
+      "https://developers.klaviyo.com/en/reference/get_event",
+      "https://raw.githubusercontent.com/klaviyo/openapi/main/openapi/stable/apis/get_event.json"
+    ],
+    "source_revision": "2026-10-15",
+    "live_provider_calls": false,
+    "OAuth_permission_change": false,
+    "UI_change": false,
+    "migration": false,
+    "deployment": false,
+    "sales_roles_changed": false,
+    "clicked_product_verified": false,
+    "step15_started": false,
+    "step22_paused": true,
+    "Dataset_write_step": 23,
+    "publishable": false
   }
 }

@@ -919,3 +919,84 @@ test("order reference: complete empty events produce no invented order reference
   const f=orderReferenceFixture(),load=f.hooks.fetch;f.hooks.fetch=p=>p.pathname==="/api/events"?response({data:[],links:{next:null}}):load(p);
   const {result:r}=await reviewOrderReference(f);assert.equal(r.observedEmpty,true);assert.deepEqual(r.rows,[]);assert.equal(r.orderReview.orders.length,1);
 });
+
+import {collectKlaviyoInteractionEvidence} from "../app/lib/providers/klaviyo-identity-collection.server.js";
+import {createRefreshKlaviyoInteractionReader} from "../app/lib/refresh/quota-authority-binding.server.js";
+function interactionFixture(bound = false) {
+  const f = bound ? boundFixture("message") : messageFixture();
+  const old = f.baseFetch;
+  f.detail = {data: {type: "event", id: "click1", attributes: {datetime: "2026-09-30T10:00:00Z"},
+    relationships: {metric: {data: {type: "metric", id: "clickedMetric"}}}},
+    included: [{type: "metric", id: "clickedMetric", attributes: {name: "Clicked Email", integration: {name: "Klaviyo"}}}]};
+  const attr = attribution();
+  attr.relationships.event = {data: {type: "event", id: "event1"}};
+  attr.relationships["attributed-event"] = {data: {type: "event", id: "click1"}};
+  f.attr = attr;
+  f.hooks.fetch = p => {
+    if (p.pathname === "/api/events") return response({data: [event()], included: [metric(), attr], links: {next: null}});
+    if (p.pathname === "/api/events/click1") return response(f.detail);
+    return old(p);
+  };
+  if (bound) {
+    delete f.config.mode;
+    const oldResolve = f.config.quotaStore.resolveRoute;
+    const detailKey = quotaRouteIdentity(f.c, {provider: "klaviyo", family: "event_detail", accountId: null,
+      organizationId: null, version: f.c.apiVersion, includes: ["metric"]}).routeKey;
+    f.config.quotaStore.resolveRoute = async v => f.q.noDetail ? oldResolve(v) : v.routeKey === detailKey ? v.routeKey : oldResolve(v);
+  }
+  return {...f, createInteraction: () => createRefreshKlaviyoInteractionReader(f.config),
+    run: () => bound ? createRefreshKlaviyoInteractionReader(f.config).readEvidence() : collectKlaviyoInteractionEvidence(f.options)};
+}
+test("interaction collection retains sale references, reads exact event and keeps Message roles", async () => {
+  const f = interactionFixture(), r = await f.run();
+  assert.equal(f.calls.length, 7); assert.equal(r.attributed_interactions.links[0].status, "linked");
+  assert.equal(r.attributions[0].relationships.event.data.id, "event1");
+  assert.equal(r.attributions[0].relationships["attributed-event"].data.id, "click1");
+  const sale = r.message_evidence.resolved_product_sales.rows[0];
+  assert.equal(sale.provider_attributions[0].attributed_event_id, "click1");
+  assert.equal(sale.attribution_resolution.sales_role, "Assisted");
+  assert.equal(r.attributed_interactions.clicked_product_verified, false);
+  assert.equal(r.canonical_scope_ready, false); assert.equal(r.persistable, false);
+  assert.doesNotMatch(JSON.stringify(r), /private-profile|private@|secret-access/);
+});
+test("existing direct entries ignore attempted interaction enablement", async () => {
+  const f = interactionFixture(); f.options.withInteractions = true;
+  const r = await collectKlaviyoIdentityMessageEvidence(f.options);
+  assert.equal(r.attributed_interactions, undefined); assert.equal(f.calls.length, 6);
+});
+test("bound interaction collection meters every request under the exact account/fence", async () => {
+  const f = interactionFixture(true), r = await f.run();
+  assert.equal(f.calls.length, 7); assert.equal(f.reservations.length, 7);
+  assert.equal(r.attributed_interactions.events[0].metric_name, "Clicked Email");
+  assert.ok(f.loads.every(l => l.claim.accountId === "account1" && l.claim.fence === 2));
+  const detail = f.calls.find(c => c.parsed.pathname === "/api/events/click1");
+  assert.equal(detail.parsed.searchParams.get("fields[event]"), "id,datetime,timestamp");
+});
+test("missing separately configured event-detail quota prevents the detail call without list fallback", async () => {
+  const f = interactionFixture(true); f.q.noDetail = true;
+  await assert.rejects(f.run(), e => quotaBoundaryControl(e)?.status === "not_configured");
+  assert.equal(f.calls.length, 3);
+});
+test("quota wait before detail retains the prior three external attempts", async () => {
+  const f = interactionFixture(true); f.q.waitAt = 4;
+  await assert.rejects(f.run(), e => quotaBoundaryControl(e)?.status === "waiting" && quotaBoundaryControl(e).priorBoundaryAttempts === 3);
+  assert.equal(f.calls.length, 3);
+});
+test("first interaction HTTP failure stops reports/final account and is never retried", async () => {
+  const f = interactionFixture(); const base=f.hooks.fetch;
+  f.hooks.fetch = p => p.pathname === "/api/events/click1" ? response({errors: [{detail: "secret-native-error"}]}, 403) : base(p);
+  await assert.rejects(f.run(), /KLAVIYO_IDENTITY_HTTP_FAILED/); assert.equal(f.calls.length, 4);
+});
+test("authority drift during detail response discards the collection", async () => {
+  const f = interactionFixture(), base = f.hooks.fetch;
+  f.hooks.fetch = p => {if(p.pathname === "/api/events/click1") f.state.version++; return base(p);};
+  await assert.rejects(f.run()); assert.equal(f.calls.length, 4);
+});
+test("interaction body stall is covered by whole-read deadline and stops late continuation", async () => {
+  const f = interactionFixture(), base = f.hooks.fetch; f.options.maxElapsedMs = 50;
+  let release; f.hooks.fetch = p => p.pathname === "/api/events/click1"
+    ? {ok: true, status: 200, headers: {get: () => null}, json: () => new Promise(resolve => {release = () => resolve(f.detail);})} : base(p);
+  await assert.rejects(f.run(), /DEADLINE_EXCEEDED/);
+  release?.(); await new Promise(resolve => setTimeout(resolve, 10));
+  assert.ok(f.calls.length <= 4);
+});

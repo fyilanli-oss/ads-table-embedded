@@ -1,3 +1,9 @@
+## 30 Ekim — Google PD bağlama teslimi
+
+Altıncı teknik teslim / mevcut04: Search Ad, Shopping Ad Group ve PMax Asset Group'un mevcut performans/normal dönüşüm aileleri tam sayfalama ile ortak kaynak girişine ve composeGooglePdLeaf'e bağlandı. Her yaprak, native hiyerarşi ve ayrı kaynak/sayfa/satır izleri korunarak işlenir. Eksik değer ve boş rapor sıfır sayılmaz; all_* veya performans dönüşüm toplamı kategori metriklerine eklenmez. Hata/iptal/kota beklemesi/authority değişimi eksik sonucu tamamlanmış göstermez.
+
+Güvenilir compositionContext bağları/fingerprintleri/kaynak referansları eksikse ham okuma korunur, birleştirme blocked kalır. Bunların kalıcı/native kaynağı ile canonical köprü teslim8'de; Klaviyo teslim7'de kalır. Yeni sorgu, izin, UI, canlı aktivasyon veya writer eklenmedi.30 yeni izole test geçti; exact CI/F01 ayrıca doğrulanır.15 başlamadı,22 duraklatılmış,23 Dataset/FX yazımı. Kayıt: contracts/eo-05-start-brief-v1.json#Google_PD_read_composition_2026_10_30.
+
 ## 30 Ekim — Ortak kaynak okuma girişi
 
 Mevcut 6/11/12 kapsamındaki beşinci teknik teslimin ilk dilimi: createRefreshPdSourceReader mevcut kota kontrollü Google/Meta/Klaviyo okuyucularına tek-kullanımlık, mağaza/hesap/nesil/sürüm bağlı giriş sağlar. Kaynak günü, saat dilimi, para birimi ve ham hiyerarşi/sorgu kanıtı birlikte taşınır. Eksik metadata, değişen hesap/kurulum/credential/seçim nesli, yarım okuma, iptal veya ilk hata başarıya çevrilmez. Sıradaki 6/7/8 teslimleri metrik birleştiricileri ve kayıt köprüsünü bağlayacak; bu dilim canonical kapsam veya kalıcı aktivasyon vermez. Google devam sayfası bu ilk dilimde toplanmaz, partial reddedilir. Atıf/birim fingerprintleri eksikken null kalır.

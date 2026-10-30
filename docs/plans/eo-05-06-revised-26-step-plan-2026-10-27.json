@@ -833,5 +833,71 @@
       "https://developers.klaviyo.com/en/reference/get_event",
       "https://shopify.dev/docs/api/admin-graphql/2026-07/objects/Order"
     ]
+  },
+  "Setup_scope_access_prewrite_binding_2026_10_30": {
+    "date": "2026-10-30",
+    "delivery_order": 10,
+    "existing_step": 13,
+    "status": "setup_scope_access_binding_code_tests_ready_native_acceptance_pending",
+    "base_main": "15457c1446000c7c1866cc547b20d1ceebc32a43",
+    "owner_approval": "Owner approved server-side permission/access proof binding and isolated tests after concrete scope explanation. OAuth UI/flow/scopes/catalog selection and live provider operations excluded.",
+    "entrypoint": "runRefreshPdPrewriteChunk({worker,source,prewrite?,setup:{shopify,assets?,identity?}})",
+    "producer_changes": "Existing inspectShopifyIdentityPermissionScopes and combined setup asset verifier only record completed immutable outputs in private in-process registries. No added HTTP call, asset discovery, target selection or credential mutation.",
+    "consumer": "reviewRefreshSetupProof binds original proof objects to PD private authority scope, then runs at validation, current SQL authority boundaries and final entitlement check.",
+    "binding": [
+      "workspace",
+      "Shopify shop/domain and installation generation",
+      "provider account/connection version/reporting selection epoch",
+      "Google manager context and credential reference/scopes for asset observations",
+      "freshness max10min and native asset expiry",
+      "Klaviyo same job/fence/day, account/Shopify Ordered Product metric/events"
+    ],
+    "classification": {
+      "provider_scopes": "retained_scope_list_not_fresh_native_grant",
+      "Shopify_scopes": "native AppInstallation inspection re-evaluated at consumption",
+      "provider_access": "existing completed native asset/account/metric/event read",
+      "developer_app_approval": "not_observed; data access does not manufacture application review approval",
+      "native_permission_verified": false
+    },
+    "feature_separation": "Products independently assessed; Orders optional. Supplied Order collections request Orders scope and matching native AppInstallation; history collections additionally request read_all_orders. Missing Orders/history does not change Products readiness.",
+    "safety": "reviewed_for_prewrite_only is not Connected/setup completion, durable authority, native app approval or activation. Explicit setup option enforces proof; legacy entry without option stays unchanged/inactive. No writer/scheduler route is activated.",
+    "remaining_in_delivery10": [
+      "Real provider/app approval/merchant consent/protected data/source product identity and claim evidence acceptance",
+      "Real combined workload/operation-profile/quota/connection/memory capacity acceptance"
+    ],
+    "supersedes_remaining_of": [
+      "PD_worker_prewrite_first_slice_2026_10_30 setup binding",
+      "Integrated_source_prewrite_review_2026_10_30 setup binding"
+    ],
+    "verification": {
+      "targeted_tests": 404,
+      "full_suite": "pending",
+      "CI": "required",
+      "F01": "required_isolated"
+    },
+    "later": {
+      "durable_mapping_metadata": 15,
+      "listing_tree": 22,
+      "listing_tree_status": "paused",
+      "Dataset_FX_writer": 23
+    },
+    "live_provider_calls": false,
+    "OAuth_flow_change": false,
+    "permission_scope_change": false,
+    "UI_change": false,
+    "asset_selection_change": false,
+    "credential_mutation": false,
+    "migration": false,
+    "deployment": false,
+    "sales_roles_changed": false,
+    "Dataset_write": false,
+    "authorizesActivation": false,
+    "persistable": false,
+    "publishable": false,
+    "sources": [
+      "https://shopify.dev/docs/api/admin-graphql/2026-07/objects/AppInstallation",
+      "https://developers.google.com/identity/protocols/oauth2/scopes#googleads",
+      "https://developers.klaviyo.com/en/docs/authenticate_"
+    ]
   }
 }

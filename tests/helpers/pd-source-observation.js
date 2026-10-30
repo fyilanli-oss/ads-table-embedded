@@ -1,20 +1,22 @@
 // Synthetic transports exercise the real fenced PD reader, never a fake DTO.
 import {createRefreshPdSourceReader} from "../../app/lib/refresh/pd-source-reader.server.js";
 import {recordMetadata} from "./pd-record-metadata.js";
+import {identityPermissionRequirements} from "../../app/lib/oauth/identity-permission-preflight.server.js";
 const credential="33333333-3333-4333-8333-333333333333";
-export async function pdSourceObservation(scope,job,window) {
+export async function pdSourceObservation(scope,job,window,{identityScopes=false,readAt="2026-10-30T00:00:00Z",loginAccountId=null}={}) {
   const claim={workspaceId:scope.workspaceId,installGeneration:String(scope.installGeneration),provider:scope.provider,
     accountId:scope.accountId,id:job.id,fence:job.fence};
-  const account={id:scope.accountId,kind:scope.provider==="klaviyo"?"account":"advertiser",status:"active",reporting_eligible:true,currency:"USD",timezone:"Europe/Istanbul"};
+  const account={id:scope.accountId,kind:scope.provider==="klaviyo"?"account":"advertiser",status:"active",reporting_eligible:true,currency:"USD",timezone:"Europe/Istanbul",login_account_id:loginAccountId};
   const row={installation_id:scope.installationId,workspace_id:scope.workspaceId,install_generation:String(scope.installGeneration),installation_status:"active",
     shop_id:scope.shopId,shop_domain:scope.shopDomain,connection_id:scope.connectionId,credential_id:credential,
     connection_version:scope.connectionVersion,lifecycle_status:"connected",reporting_selection_epoch:scope.reportingSelectionEpoch,
     reporting_account_id:scope.provider==="klaviyo"?null:scope.accountId,accounts:[account],
     granted_scopes:scope.provider==="meta"?["ads_read"]:scope.provider==="google_ads"?["https://www.googleapis.com/auth/adwords"]
       :["accounts:read","campaigns:read","flows:read","events:read","metrics:read"]};
+  if(identityScopes)row.granted_scopes=[...identityPermissionRequirements({provider:scope.provider}).scopes];
   const authority=async()=>({...claim,connectionId:scope.connectionId,connectionVersion:scope.connectionVersion,
     installationVerified:true,connected:true,setupComplete:true,allowedWindow:true});
-  const config={claim,window,entitlementReceipt:{observedAt:"2026-10-30T00:00:00Z"},
+  const config={claim,window,entitlementReceipt:{observedAt:readAt},
     verified:{installationAuthority:{authority:"shopify_installation_verified",status:"active",workspaceId:scope.workspaceId,installGeneration:scope.installGeneration},
       identity:{session:{authority:"shopify_id_token_verified",shopDomain:scope.shopDomain},
         shop:{authority:"shopify_admin_verified",shopId:scope.shopId,myshopifyDomain:scope.shopDomain}}},
@@ -24,7 +26,7 @@ export async function pdSourceObservation(scope,job,window) {
       clientScopeKey:"a".repeat(64),connectionScopeKey:"b".repeat(64),connectionEpoch:scope.connectionVersion,organizationId:null,
       apiVersion:scope.provider==="meta"?"v26.0":scope.provider==="google_ads"?"v25":"2026-10-15"})},
     quotaStore:{resolveRoute:async v=>v.routeKey,reserve:async v=>({...v,status:"reserved",dispatchBeforeMs:1000,dispatchBudgetMs:1000}),settle:async()=>true,recordFeedback:async()=>true,stop:async()=>true},
-    limits:{maxElapsedMs:10000,maxRows:100,maxBytes:300000},now:()=>0,readNow:()=>new Date("2026-10-30T00:00:00Z"),
+    limits:{maxElapsedMs:10000,maxRows:100,maxBytes:300000},now:()=>0,readNow:()=>new Date(readAt),
     environment:{META_APP_SECRET:"synthetic-secret",GOOGLE_ADS_OAUTH_CLIENT_ID:"synthetic-client",GOOGLE_ADS_OAUTH_CLIENT_SECRET:"synthetic-secret",
       GOOGLE_ADS_OAUTH_REDIRECT_URI:"https://embedded.adstable.app/auth/google-ads/callback",KLAVIYO_CLIENT_ID:"synthetic-client",KLAVIYO_CLIENT_SECRET:"synthetic-secret",
       KLAVIYO_OAUTH_REDIRECT_URI:"https://embedded.adstable.app/auth/klaviyo/callback"},

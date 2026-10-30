@@ -23,3 +23,4 @@ export function inspectShopifyIdentityPermissionScopes(args: {
   evidence: Awaited<ReturnType<typeof readShopifyPermissionScopes>>;
   assessment: ReturnType<typeof assessIdentityPermissionScopes>;
 }>>;
+export function isShopifyPermissionInspection(value: unknown): boolean;

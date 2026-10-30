@@ -3,6 +3,8 @@ import {createShopifyRuntimeRepositories} from "../database/shopify-runtime-repo
 
 import {SHOPIFY_PERMISSION_SCOPES_QUERY} from "./permission-scope-protocol.server.js";
 export {SHOPIFY_PERMISSION_SCOPES_QUERY};
+const inspections=new WeakSet();
+export const isShopifyPermissionInspection=value=>inspections.has(value);
 
 function readFailure(response) {
   const error = new Error("SHOPIFY_PERMISSION_SCOPES_READ_FAILED");
@@ -99,5 +101,7 @@ export async function inspectShopifyIdentityPermissionScopes({
   await assertCurrent();
   const assessment = assessIdentityPermissionScopes({context, evidence,
     includeOrders, includeOrderHistory, includeMarketingEvents, now});
-  return Object.freeze({context, evidence, assessment});
+  const result=Object.freeze({context, evidence, assessment});
+  inspections.add(result);
+  return result;
 }

@@ -92,6 +92,12 @@ function descriptor(provider,input,init) {
     const families={"/api/metrics":["GET","metrics"],"/api/events":["GET","events"],"/api/accounts":["GET","account_discovery"],
       "/api/campaign-values-reports":["POST","campaign_values"],"/api/flow-values-reports":["POST","flow_values"],"/oauth/token":["POST","token"],"/oauth/revoke":["POST","revoke"]};
     if(families[path]?.[0]===method) family=families[path][1];
+    // Event detail has its own native rate limit. Never reuse the list-events quota.
+    if(/^\/api\/events\/[A-Za-z0-9_-]{1,256}$/.test(path)&&method==="GET"&&init?.body==null
+      &&[...url.searchParams.keys()].length===3
+      &&["include","fields[event]","fields[metric]"].every(k=>url.searchParams.getAll(k).length===1)
+      &&url.searchParams.get("include")==="metric"&&url.searchParams.get("fields[event]")==="id,datetime,timestamp"
+      &&url.searchParams.get("fields[metric]")==="id,name,integration") family="event_detail";
   }
   if(!family) throw control("not_configured");
   if(provider==="klaviyo"&&path.startsWith("/api/")) version=init.headers?.get?.("revision")??null;

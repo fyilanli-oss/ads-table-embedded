@@ -3280,3 +3280,13 @@ CI kontrolü: `tests/eo-04c-google-reporting-runtime-contract.test.js`
 - Kodun referans biçimini doğrulaması gerçek provider atıf kanıtı değildir. Güvenilir etkin metadata edinimi ve native kabul açık; bu kayıtla tamamlandı sayılmaz. Kalıcı metadata/kanıt deposu15, worker/prewrite bütünleşmesi teslim10, Dataset/FX writer23.
 - UI/izin/akış, canlı sorgu, yeni provider alanı, migration, deploy, Spend hesabı veya Sales Role değişmedi. canonical_scope_ready/persistable/authorizes_activation/publishable=false.15 başlamadı;22 duraklatılmış.
 - Bağlayıcı ayrıntı: contracts/eo-05-start-brief-v1.json#PD_common_record_bridge_2026_10_30. Resmî kontrol30Ekim: Google dönüşüm raporlama, Klaviyo Reporting API, Meta resmî SDK. Meta Insights sayfası429; SDK alanlarından davranış kanıtı çıkarılmadı.
+
+
+## Klaviyo satış–atfedilen etkileşim okuması — 30 Ekim 2026
+
+- Açık ürün sahibi onayıyla teknik teslim9: event/attributed-event referansları reporting ve sparse kimlik kaydında korunur. Ayrı collectKlaviyoInteractionEvidence / createRefreshKlaviyoInteractionReader girişi mevcut Message/rol çözümünü koruyarak yalnız referansın gösterdiği olayı okur. Eski girişler ek olaya kendiliğinden gitmez.
+- Sale → attribution → aynı sale ve exact interaction ID kontrolü; metric kimliği/türü/adı ve zaman kontrolü. Eksik bağlantı ile açık boş ilişki, çelişkili referans ve satıştan sonraki olay ayrı sonuçtur. Aynı olay bir kez okunur; her satış zamanı ayrı kontrol edilir. Önceki günün olayı otomatik reddedilmez; atıf penceresi uydurulmaz.
+- GET event detail yalnız id/datetime/timestamp ve metric id/name/integration ister; müşteri/profile/event_properties taşımaz. Klaviyo Clicked Email/Opened Email kanıtı tıklanan ürün/son tıklama kanıtı değildir. Campaign Assisted / Flow Triggered değişmez.
+- Tek olay kotası liste kotasından ayrıdır: event_detail + include metric. Resmî10/s ve150/m bilgisi kaydedildi; gerçek runtime kota profili otomatik kurulmadı. Profil yoksa HTTP öncesi not_configured; liste/fallback yok. Owner/account/scope kontrolleri, her HTTP için kota, ilk-hata duruşu ve tüm okuma deadline/abort korunur.
+- Tam bağlayıcı kayıt: contracts/eo-05-start-brief-v1.json#Klaviyo_attributed_interaction_read_2026_10_30. Resmî kontrol30Ekim2026: Klaviyo Get Event ve resmî OpenAPI revision2026-10-15. İzole testler native kabul sayılmaz; native izin/profil/kaynak kabulü ve teslim10 worker/prewrite açık.
+- Canlı sorgu, OAuth/izin/UI, migration, deploy veya Dataset yazımı yapılmadı.15 başlamadı,22 duraklatılmış,23 writer.

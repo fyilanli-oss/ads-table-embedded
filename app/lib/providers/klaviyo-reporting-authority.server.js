@@ -159,6 +159,11 @@ function normalizeAttributionResource(value) {
   };
   return Object.freeze({
     attribution_id: text(value.id, "KLAVIYO_ATTRIBUTION_ID_INVALID", 256),
+    ...Object.fromEntries(["event", "attributed-event"].filter(name => Object.hasOwn(value.relationships ?? {}, name)).map(name => {
+      const data = value.relationships[name]?.data;
+      if (data !== null && data?.type !== "event") fail("KLAVIYO_ATTRIBUTION_EVENT_REFERENCE_INVALID", "Klaviyo event reference is invalid");
+      return [name === "event" ? "event_id" : "attributed_event_id", data === null ? null : text(data?.id, "KLAVIYO_ATTRIBUTION_EVENT_REFERENCE_INVALID", 256)];
+    })),
     campaign_id: relationshipId("campaign"),
     campaign_message_id: relationshipId("campaign-message"),
     flow_id: relationshipId("flow"),

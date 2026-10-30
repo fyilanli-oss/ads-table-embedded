@@ -3,7 +3,7 @@ import {SHOPIFY_ORDER_READ_API_VERSION} from "../shopify/order-read-protocol.ser
 
 const families={shopify_partner:["partner_graphql"],shopify_admin:["identity_product","identity_variant","identity_product_variant","order_headers","order_lines","order_journey","permission_scopes"],meta:["insights","product_insights","token","token_debug","account_discovery","revoke",
   "identity_ad","identity_adset","identity_creative","identity_product_set","catalog_products"],
-  google_ads:["reporting_query","token","revoke","account_discovery","merchant_products"],klaviyo:["metrics","events","account_discovery","campaign_values","flow_values","token","revoke"]};
+  google_ads:["reporting_query","token","revoke","account_discovery","merchant_products"],klaviyo:["metrics","events","event_detail","account_discovery","campaign_values","flow_values","token","revoke"]};
 const key=value=>typeof value==="string"&&/^[a-f0-9]{64}$/.test(value);
 const fields=(value,names)=>value&&typeof value==="object"&&!Array.isArray(value)
   &&Object.keys(value).length===names.length&&names.every(name=>Object.hasOwn(value,name));

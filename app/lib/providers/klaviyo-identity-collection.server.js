@@ -1,13 +1,14 @@
 import {createIdentityRuntimeAuthorityLoader} from "./identity-runtime-authority.server.js";
 import {discoverKlaviyoAccount, KLAVIYO_OAUTH_SCOPES} from "./klaviyo-api.server.js";
 import {buildKlaviyoShopifyMetricsRequest, buildKlaviyoOrderedProductEventsRequest,
-  buildKlaviyoCampaignValuesRequest, buildKlaviyoFlowValuesRequest, normalizeKlaviyoReportRow,
+  buildKlaviyoCampaignValuesRequest, buildKlaviyoFlowValuesRequest, normalizeKlaviyoReportRow, KlaviyoReportingError,
   normalizeKlaviyoOrderedProductEvent, klaviyoBusinessDayTimeframe} from "./klaviyo-reporting.server.js";
 import {attachAttributionEvidence} from "./klaviyo-reporting-authority.server.js";
 import {resolveKlaviyoOrderedProductSales} from "./klaviyo-attribution-resolution.server.js";
 import {verifyKlaviyoProductCandidateRows} from "./klaviyo-product-identity.server.js";
 import {quotaBoundaryControl} from "../refresh/quota-native-fetch.server.js";
 import {runIdentityReadDeadline} from "./identity-read-deadline.server.js";
+import {buildKlaviyoAttributedEventRequest, readKlaviyoAttributedInteractions} from "./klaviyo-attributed-interaction.server.js";
 
 export class KlaviyoIdentityCollectionError extends Error {
   constructor(code) {super(code); this.name = "KlaviyoIdentityCollectionError"; this.code = code;}
@@ -37,6 +38,12 @@ function attributionProjection(item) {
     const data = item.relationships[key]?.data;
     if (data !== null && (data?.type !== key || typeof data.id !== "string")) fail("KLAVIYO_IDENTITY_ATTRIBUTION_INVALID");
     relationships[key] = {data: data === null ? null : {type: key, id: id(data.id)}};
+  }
+  for (const key of ["event", "attributed-event"]) {
+    if (!Object.hasOwn(item.relationships ?? {}, key)) continue;
+    const data = item.relationships[key]?.data;
+    if (data !== null && data?.type !== "event") fail("KLAVIYO_IDENTITY_ATTRIBUTION_INVALID");
+    relationships[key] = {data: data === null ? null : {type: "event", id: id(data.id)}};
   }
   return {type: "attribution", id: id(item.id), relationships};
 }
@@ -88,13 +95,16 @@ function cursorOf(body, path, parameter = "page[cursor]") {
 // Uses concrete SQL/vault authority; callers cannot substitute a browser-supplied loadCurrent.
 async function collectKlaviyoIdentitySource({verified, database, tokenVault, businessDate,
   fetchFn = fetch, now = () => new Date(), signal, maxPages = 100, maxEvents = 10000,
-  maxMetrics = 10000, maxIncluded = 20000, maxMessageRows = 10000, maxElapsedMs = 120000, withMessages, withShopify} = {}) {
+  maxMetrics = 10000, maxIncluded = 20000, maxMessageRows = 10000, maxElapsedMs = 120000,
+  maxInteractions = 1000, maxInteractionBytes = 2_000_000, withMessages, withShopify, withInteractions} = {}) {
   if (typeof fetchFn !== "function" || typeof now !== "function"
     || ![maxPages, maxEvents, maxMetrics, maxIncluded, maxMessageRows, maxElapsedMs].every(Number.isSafeInteger)
     || maxPages < 1 || maxPages > 1000 || maxEvents < 1 || maxEvents > 100000
     || maxMetrics < 1 || maxMetrics > 100000 || maxIncluded < 1 || maxIncluded > 100000
     || maxMessageRows < 1 || maxMessageRows > 100000
-    || maxElapsedMs < 1 || maxElapsedMs > 600000) fail("KLAVIYO_IDENTITY_COLLECTION_INPUT_INVALID");
+    || maxElapsedMs < 1 || maxElapsedMs > 600000
+    || withInteractions && (!Number.isSafeInteger(maxInteractions) || maxInteractions < 1 || maxInteractions > 10000
+      || !Number.isSafeInteger(maxInteractionBytes) || maxInteractionBytes < 1 || maxInteractionBytes > 20_000_000)) fail("KLAVIYO_IDENTITY_COLLECTION_INPUT_INVALID");
   // Validate the requested calendar date before any authority or provider read.
   klaviyoBusinessDayTimeframe({businessDate, timeZone: "UTC"});
   function clock() {const t = now(); if (!(t instanceof Date) || !Number.isFinite(t.valueOf())) fail("KLAVIYO_IDENTITY_TIME_INVALID"); return t.valueOf();}
@@ -183,6 +193,17 @@ async function collectKlaviyoIdentitySource({verified, database, tokenVault, bus
     for (const e of events.values()) for (const ref of e.relationships.attributions?.data ?? []) {
       if (!attributions.has(ref.id)) fail("KLAVIYO_IDENTITY_ATTRIBUTION_MISSING");
     }
+    let interactionEvidence = null;
+    if (withInteractions) interactionEvidence = await readKlaviyoAttributedInteractions({events: [...events.values()],
+      attributions: [...attributions.values()], check, maxInteractions, maxBytes: maxInteractionBytes,
+      fetchEvent: async eventId => {
+        const request = buildKlaviyoAttributedEventRequest({eventId, accessToken: current.tokenSet.access_token});
+        const response = await boundFetch(request.url, {method: request.method, headers: request.headers});
+        const body = await response.json(); await recheck();
+        const requestId = response.headers?.get?.("x-request-id");
+        if (typeof requestId === "string" && requestId.length <= 256 && !/[\u0000-\u0020\u007f]/.test(requestId)) requestIds.push(requestId);
+        return body;
+      }});
     let productCandidates = null;
     if (withShopify) {
       const admin = {async graphql(query, options) {
@@ -230,11 +251,13 @@ async function collectKlaviyoIdentitySource({verified, database, tokenVault, bus
     const after = accountAfter.accounts[0];
     if (after.id !== account.id || after.timezone !== account.timezone || after.currency !== account.currency) fail("KLAVIYO_IDENTITY_ACCOUNT_CHANGED");
     await recheck();
-    return freeze({provider: "klaviyo", source: withShopify ? "native_identity_message_and_shopify_candidate_collection"
+    return freeze({provider: "klaviyo", source: withInteractions ? "native_identity_message_and_attributed_interaction_collection"
+      : withShopify ? "native_identity_message_and_shopify_candidate_collection"
       : withMessages ? "native_identity_and_message_collection" : "native_account_metric_and_event_collection", account: {id: account.id,
       timezone: account.timezone, currency: account.currency}, installation: current.installation, shop: current.shop,
       connection_id: current.connectionId, connection_version: current.connectionVersion,
       metric, events: [...events.values()], attributions: [...attributions.values()], timeframe,
+      ...(withInteractions ? {attributed_interactions: interactionEvidence} : {}),
       ...(withMessages ? {message_evidence: messageEvidence} : {}),
       ...(withShopify ? {product_identity_candidates: productCandidates} : {}),
       evidence: {metric_pages: metricPages, event_pages: eventPages, request_ids: requestIds,
@@ -249,6 +272,7 @@ async function collectKlaviyoIdentitySource({verified, database, tokenVault, bus
     if (shopifyQuotaControl !== null) throw shopifyQuotaControl;
     if (quotaBoundaryControl(error)) throw error;
     if (error instanceof KlaviyoIdentityCollectionError) throw error;
+    if (error instanceof KlaviyoReportingError && /^KLAVIYO_INTERACTION_[A-Z_]+$/.test(error.code)) fail(error.code);
     fail(signal?.aborted ? "KLAVIYO_IDENTITY_ABORTED" : "KLAVIYO_IDENTITY_COLLECTION_FAILED");
   }
 }
@@ -256,13 +280,19 @@ async function collectKlaviyoIdentitySource({verified, database, tokenVault, bus
 // Public entry points lock their own mode; caller options cannot silently add report requests.
 export function collectKlaviyoNativeIdentityEvidence(options = {}) {
   return runIdentityReadDeadline({signal: options.signal, timeoutMs: options.maxElapsedMs,
-    run: signal => collectKlaviyoIdentitySource({...options, signal, withMessages: false, withShopify: false})});
+    run: signal => collectKlaviyoIdentitySource({...options, signal, withMessages: false, withShopify: false, withInteractions: false})});
 }
 export function collectKlaviyoIdentityMessageEvidence(options = {}) {
   return runIdentityReadDeadline({signal: options.signal, timeoutMs: options.maxElapsedMs,
-    run: signal => collectKlaviyoIdentitySource({...options, signal, withMessages: true, withShopify: false})});
+    run: signal => collectKlaviyoIdentitySource({...options, signal, withMessages: true, withShopify: false, withInteractions: false})});
 }
 export function collectKlaviyoVerifiedProductCandidateEvidence(options = {}) {
   return runIdentityReadDeadline({signal: options.signal, timeoutMs: options.maxElapsedMs,
-    run: signal => collectKlaviyoIdentitySource({...options, signal, withMessages: true, withShopify: true})});
+    run: signal => collectKlaviyoIdentitySource({...options, signal, withMessages: true, withShopify: true, withInteractions: false})});
+}
+
+// Explicit inactive entry. Existing modes never follow references implicitly.
+export function collectKlaviyoInteractionEvidence(options = {}) {
+  return runIdentityReadDeadline({signal: options.signal, timeoutMs: options.maxElapsedMs,
+    run: signal => collectKlaviyoIdentitySource({...options, signal, withMessages: true, withShopify: false, withInteractions: true})});
 }

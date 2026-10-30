@@ -3270,3 +3270,13 @@ CI kontrolü: `tests/eo-04c-google-reporting-runtime-contract.test.js`
 - Tarihsel PMax doğruluğu korunur: bugünkü listing tree geçmiş satışı birebir çözemez. Tam iş günü kayıtlı görünüm yoksa satış ve Sales Role korunur, Channel `Unclassified Channel` kalır. Sürümlü kayıtların kalıcı saklanması A6-EO-05 sorumluluğudur.
 - Ürün sahibi 17 Ekim 2026'da bu repository düzeltme paketini onaylamıştır. Onay Google başvurusu, canlı sağlayıcı çağrısı, Cloud Project/OAuth/secret/environment değişikliği, deployment, veritabanı, Dataset V2 veya UI değişiklik'ı yetkilendirmez.
 - Ürün sahibi gerekli CI sonrasında merge'i açıkça onaylamıştır. PR #89, 17 Ekim 2026'da `main` üzerine `ff54d518b7c93ba576c9943a7c8d66a7ea511de6` olarak squash-merge edilmiştir. Explorer başvurusu, ilk Production çağrısı ve her sağlayıcı değişiklik'ı ayrı kapıda kalır.
+
+
+## Üç sağlayıcı ortak kayıt köprüsü — 30 Ekim 2026
+
+- Açık ürün sahibi onayıyla teknik teslim8: mevcut Google/Klaviyo PD birleşik kayıtları ve Meta tek Ad sorgusunun metrik projeksiyonu ortak canonical kontrolüne bağlanır. 26 maddelik sıra değişmez.
+- Giriş: createRefreshPdSourceReader için açık sunucu recordBridge.metadata seçeneği. Gerçek çalışma/hesap/gün/para birimi, bağlantı sürümü/seçim nesli/fence, varlık/üst kimlikler ve ham satır indeksleri karşılaştırılır. Meta ürün toplamı PD yerine geçirilmez.
+- Her varlığın açık atıf/birim fingerprinti ve kaynak referansı, entity/time/reporting currency/FX kanıtı gerekir. Eksik/çelişkili metadata veya FX bekleme nedeni döndürür; kur veya otomatik1 üretilmez. Bir hatalı varlık tüm ortak kayıt grubunu bekletir; kaynak ve ayrı sonuçlar korunur.
+- Kodun referans biçimini doğrulaması gerçek provider atıf kanıtı değildir. Güvenilir etkin metadata edinimi ve native kabul açık; bu kayıtla tamamlandı sayılmaz. Kalıcı metadata/kanıt deposu15, worker/prewrite bütünleşmesi teslim10, Dataset/FX writer23.
+- UI/izin/akış, canlı sorgu, yeni provider alanı, migration, deploy, Spend hesabı veya Sales Role değişmedi. canonical_scope_ready/persistable/authorizes_activation/publishable=false.15 başlamadı;22 duraklatılmış.
+- Bağlayıcı ayrıntı: contracts/eo-05-start-brief-v1.json#PD_common_record_bridge_2026_10_30. Resmî kontrol30Ekim: Google dönüşüm raporlama, Klaviyo Reporting API, Meta resmî SDK. Meta Insights sayfası429; SDK alanlarından davranış kanıtı çıkarılmadı.

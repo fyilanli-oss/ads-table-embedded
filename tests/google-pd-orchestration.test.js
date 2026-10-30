@@ -179,3 +179,43 @@ test("malformed flow, mixed query overrides and unsafe limits fail before provid
     const f = fixture(); change(f); assert.throws(() => f.create(), /INPUT_INVALID/); assert.equal(f.state.requests.length, 0);
   }
 });
+
+import {recordMetadata} from "./helpers/pd-record-metadata.js";
+test("runtime common-record bridge validates all observed entities and retains raw source", async () => {
+  const f = fixture(), native = await f.create().readEvidence();
+  f.config.recordBridge = {metadata: recordMetadata(native.source_context, native.composition.rows)};
+  const result = await f.create().readEvidence();
+  assert.equal(result.records.status, "validated");
+  assert.equal(result.records.rows.length, native.composition.rows.length);
+  assert.deepEqual(result.records.rows.map(r => r.raw_metrics), native.composition.rows.map(r => r.raw_metrics));
+  assert.deepEqual(result.records.source_facts, result.composition.rows);
+  assert.equal(result.canonical_scope_ready, false);
+  assert.equal(result.persistable, false);
+  assert.equal(result.records.publishable, false);
+});
+test("runtime common-record bridge preserves native evidence when FX is missing", async () => {
+  const f = fixture(), native = await f.create().readEvidence();
+  const metadata = recordMetadata(native.source_context, native.composition.rows);
+  delete metadata.entries[0].enrichment.currency.fx_rate;
+  f.config.recordBridge = {metadata};
+  const result = await f.create().readEvidence();
+  assert.equal(result.records.status, "blocked");
+  assert.equal(result.records.decisions[0].reason, "fx_metadata_missing_or_conflicting");
+  assert.deepEqual(result.records.rows, []);
+  assert.deepEqual(result.evidence, native.evidence);
+});
+
+import {bridgePdReadSnapshot} from "../app/lib/providers/pd-record-orchestration.server.js";
+for (const [label, change, reason] of [
+  ["changed native row", r => r.evidence.results.performance.rows[0].metrics.clicks = "999", "native_lineage_mismatch"],
+  ["dangling native slice", r => r.composition.rows[0].source_execution.slices[0].native_row_indices[0] = 999, "native_lineage_mismatch"],
+  ["wrong source metadata reference", r => r.metadata.entries[0].metadata_references.attribution = "wrong", "source_metadata_reference_mismatch"],
+  ["missing projection rows", r => delete r.composition.rows[0].source_projections[0].rows, "native_lineage_mismatch"],
+  ["wrong source provenance", r => r.metadata.entries[0].enrichment.provenance.source_system = "meta", "source_provenance_mismatch"],
+]) test("common bridge rejects " + label, async () => {
+  const f=fixture(), native=await f.create().readEvidence();
+  const input=structuredClone({sourceContext: native.source_context, evidence: native.evidence, composition: native.composition,
+    metadata: recordMetadata(native.source_context, native.composition.rows)});
+  change(input); const result=bridgePdReadSnapshot(input);
+  assert.equal(result.reason, reason); assert.deepEqual(result.rows, []);
+});

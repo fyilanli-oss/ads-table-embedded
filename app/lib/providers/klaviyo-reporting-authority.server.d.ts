@@ -13,6 +13,7 @@ export function createKlaviyoReportingAuthorityRuntime(input?: {
   readPdEvidenceSnapshot(input: {
     installationAuthority: any;
     businessDate?: string | null;
+    limits?: {maxPages: number; maxRows: number; maxBytes: number} | null;
   }): Promise<any>;
   readDailyEvidenceSnapshot(input: {
     installationAuthority: any;

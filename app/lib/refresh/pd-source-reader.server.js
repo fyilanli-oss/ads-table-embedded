@@ -5,6 +5,7 @@ import {quotaBoundaryControl} from "./quota-native-fetch.server.js";
 import {GOOGLE_PD_QUERY_FAMILIES} from "../providers/google-reporting.server.js";
 import {klaviyoTokenRequiresRefresh} from "../providers/klaviyo-api.server.js";
 import {GOOGLE_PD_FLOW_FAMILIES, composeGooglePdSnapshot} from "../providers/google-pd-orchestration.server.js";
+import {composeKlaviyoPdSnapshot} from "../providers/klaviyo-pd-orchestration.server.js";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const text = v => typeof v === "string" && v.length > 0 && v === v.trim();
@@ -24,12 +25,17 @@ function date(value) {
  * All dependencies are server-owned; none may be supplied from request JSON.
  */
 export function createRefreshPdSourceReader({verified, database, tokenVault, workStore, quotaStore,
-  claim: suppliedClaim, window: suppliedWindow, entitlementReceipt, queryFamily, googlePd,
+  claim: suppliedClaim, window: suppliedWindow, entitlementReceipt, queryFamily, googlePd, klaviyoPd,
   environment = process.env, signal, now = Date.now, readNow = () => new Date(),
   fetchFn = globalThis.fetch, limits, ...extra} = {}) {
   if (Object.keys(extra).length) fail("INPUT_INVALID");
   const claim = structuredClone(suppliedClaim), window = structuredClone(suppliedWindow);
   refreshWorkIdentity(claim, {claimRequired: true});
+  if (klaviyoPd !== undefined && (claim.provider !== "klaviyo" || !klaviyoPd || typeof klaviyoPd !== "object" || Array.isArray(klaviyoPd)
+    || Object.keys(klaviyoPd).some(k => k !== "compositionContexts")
+    || klaviyoPd.compositionContexts !== undefined && (!klaviyoPd.compositionContexts || typeof klaviyoPd.compositionContexts !== "object"
+      || Array.isArray(klaviyoPd.compositionContexts) || Object.keys(klaviyoPd.compositionContexts).some(k => !["campaign", "flow"].includes(k)))
+    || !Number.isSafeInteger(limits?.maxPages) || limits.maxPages < 1 || limits.maxPages > 100 || limits.maxRows > 20_000)) fail("INPUT_INVALID");
   const owner = copy(verified?.installationAuthority), shop = copy(verified?.identity?.shop);
   if (owner?.authority !== "shopify_installation_verified" || owner.status !== "active"
     || owner.workspaceId !== claim.workspaceId || String(owner.installGeneration) !== claim.installGeneration
@@ -50,6 +56,7 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
       : queryFamily !== undefined || googlePd !== undefined)) fail("INPUT_INVALID");
   const boundLimits = copy(limits), env = {...environment}, receipt = structuredClone(entitlementReceipt);
   const pd = googlePd === undefined ? null : copy(googlePd);
+  const kpd = klaviyoPd === undefined ? null : copy(klaviyoPd);
   const query = database.query.bind(database), loadToken = tokenVault.loadProviderTokenSet.bind(tokenVault);
   const loadBound = workStore.loadBoundAuthority.bind(workStore), loadQuota = workStore.loadQuotaContext.bind(workStore);
   // Existing reporting readers may request reauthorization/rotation on failures.
@@ -155,7 +162,8 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
         }
         else if (claim.provider === "meta") evidence = await clients.meta({...config, appSecret: env.META_APP_SECRET})
           .readDailyEvidenceSnapshot({installationAuthority: owner, dateWindow, includePromotedProductMetrics: true});
-        else evidence = await clients.klaviyo(config).readPdEvidenceSnapshot({installationAuthority: owner, businessDate: window.from});
+        else evidence = await clients.klaviyo(config).readPdEvidenceSnapshot({installationAuthority: owner, businessDate: window.from,
+          ...(kpd ? {limits: {maxPages: boundLimits.maxPages, maxRows: boundLimits.maxRows, maxBytes: boundLimits.maxBytes}} : {})});
         await currentContext();
         const observed = evidence.authority;
         if (evidence.provider !== claim.provider || observed?.connection_id !== baseline.provider_connection_id
@@ -164,7 +172,7 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
         const timezone = claim.provider === "klaviyo" ? observed.connected_account_timezone : observed.reporting_account_timezone;
         if (claim.provider !== "meta" && (currency !== baseline.source_currency || timezone !== baseline.source_timezone)) fail("READER_METADATA_MISMATCH");
         if (claim.provider === "google_ads" && !pd && evidence.page.next_cursor !== null) fail("PARTIAL_READ");
-        if (claim.provider === "klaviyo" && evidence.complete !== true) fail("INCOMPLETE_READ");
+        if (claim.provider === "klaviyo" && evidence.complete !== true && (!kpd || evidence.status !== "configuration_missing")) fail("INCOMPLETE_READ");
         const pages = claim.provider === "google_ads" ? pd ? [evidence.results.performance, evidence.results.conversions] : [evidence.page] : claim.provider === "meta"
           ? [evidence.channel, evidence.product] : [evidence.results.metrics, ...evidence.results.reports];
         if (claim.provider === "klaviyo") {
@@ -185,13 +193,14 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
           reporting_time_basis: claim.provider === "klaviyo" ? "send_date" : claim.provider === "google_ads" ? "interaction_date" : null,
           attribution_fingerprint: null, metric_units_fingerprint: null,
           metadata_state: "native_rows_and_request_evidence_preserved_not_composition_ready"};
-        const composition = pd ? composeGooglePdSnapshot({sourceContext, evidence, compositionContext: pd.compositionContext}) : null;
-        if (pd) await currentContext();
+        const composition = pd ? composeGooglePdSnapshot({sourceContext, evidence, compositionContext: pd.compositionContext})
+          : kpd ? composeKlaviyoPdSnapshot({sourceContext, evidence, compositionContexts: kpd.compositionContexts}) : null;
+        if (pd || kpd) await currentContext();
         check();
         const result = copy({status: "source_read", source_context: sourceContext, evidence,
           ...(composition ? {composition} : {}),
           rows_observed: rows, canonical_scope_ready: false, authorizes_activation: false, persistable: false, publishable: false});
-        if (pd && Buffer.byteLength(JSON.stringify(result), "utf8") > boundLimits.maxBytes) fail("RESULT_BOUND_EXCEEDED");
+        if ((pd || kpd) && Buffer.byteLength(JSON.stringify(result), "utf8") > boundLimits.maxBytes) fail("RESULT_BOUND_EXCEEDED");
         return result;
       })();
       return await Promise.race([operation, deadline, cancelled]);

@@ -296,17 +296,27 @@ export function createKlaviyoReportingAuthorityRuntime({
     return Object.freeze({payload, requestId: safeRequestId(response)});
   }
 
-  async function collect({context, family, path, parameter, buildRequest, rowsOf}) {
+  async function collect({context, family, path, parameter, buildRequest, rowsOf, budget = null}) {
     const rows = [];
     const requestIds = [];
     const included = [];
     const seen = new Set();
     let cursor = null;
-    for (let page = 0; page < MAX_PAGES_PER_FAMILY; page += 1) {
+    const spans = [];
+    for (let page = 0; page < (budget?.maxPages ?? MAX_PAGES_PER_FAMILY); page += 1) {
       const response = await providerRequest(context, buildRequest(cursor), family);
       const pageRows = rowsOf(response.payload);
       if (!Array.isArray(pageRows)) {
         fail("KLAVIYO_REPORTING_RESPONSE_SCHEMA_INVALID", "Klaviyo response data is not an array", {family});
+      }
+      if (budget) {
+        budget.rows += pageRows.length;
+        budget.bytes += Buffer.byteLength(JSON.stringify(response.payload), "utf8");
+        if (budget.rows > budget.maxRows || budget.bytes > budget.maxBytes) {
+          fail("KLAVIYO_PD_READ_BOUND_EXCEEDED", "Klaviyo PD read bound exceeded", {family});
+        }
+        spans.push(Object.freeze({page_index: page, row_start: rows.length, row_count: pageRows.length,
+          provider_request_id: response.requestId}));
       }
       rows.push(...pageRows);
       if (Array.isArray(response.payload.included)) included.push(...response.payload.included);
@@ -321,6 +331,7 @@ export function createKlaviyoReportingAuthorityRuntime({
           included: Object.freeze(included),
           page_count: page + 1,
           request_ids: Object.freeze(requestIds),
+          ...(budget ? {page_spans: Object.freeze(spans)} : {}),
         });
       }
       if (seen.has(next)) {
@@ -333,13 +344,16 @@ export function createKlaviyoReportingAuthorityRuntime({
   }
 
   return Object.freeze({
-    async readPdEvidenceSnapshot({installationAuthority, businessDate = null}) {
+    async readPdEvidenceSnapshot({installationAuthority, businessDate = null, limits = null}) {
+      if (limits !== null && (!["maxPages", "maxRows", "maxBytes"].every(k => Number.isSafeInteger(limits?.[k]) && limits[k] > 0)
+        || limits.maxPages > MAX_PAGES_PER_FAMILY || limits.maxRows > 20_000)) fail("KLAVIYO_PD_READ_INPUT_INVALID", "Klaviyo PD limits are invalid");
+      const budget = limits === null ? null : {maxPages: limits.maxPages, maxRows: limits.maxRows, maxBytes: limits.maxBytes, rows: 0, bytes: 0};
       const context = await prepareContext(installationAuthority);
       const resolvedBusinessDate = businessDate ?? calendarDateInTimeZone(now(), context.account.timezone);
       const timeframe = klaviyoBusinessDayTimeframe({businessDate: resolvedBusinessDate, timeZone: context.account.timezone});
       const result = await runKlaviyoPdReportingFamilies({
         discoverMetrics: async () => {
-          const collected = await collect({context, family: "pd_metrics", path: "/api/metrics", parameter: "page[cursor]",
+          const collected = await collect({context, budget, family: "pd_metrics", path: "/api/metrics", parameter: "page[cursor]",
             buildRequest: cursor => buildKlaviyoShopifyMetricsRequest({accessToken: context.accessToken, cursor}),
             rowsOf: payload => payload?.data});
           return Object.freeze({...collected, selected: selectKlaviyoPdShopifyMetrics(collected.rows)});
@@ -347,7 +361,7 @@ export function createKlaviyoReportingAuthorityRuntime({
         fetchValues: async ({kind, conversionMetricName, conversionMetricId}) => {
           const input = {kind, conversionMetricName, conversionMetricId, accessToken: context.accessToken,
             businessDate: resolvedBusinessDate, timeZone: context.account.timezone};
-          const collected = await collect({context, family: `${kind}:${conversionMetricName}`,
+          const collected = await collect({context, budget, family: `${kind}:${conversionMetricName}`,
             path: `/api/${kind}-values-reports`, parameter: "page_cursor",
             buildRequest: pageCursor => buildKlaviyoPdValuesRequest({...input, pageCursor}),
             rowsOf: payload => payload?.data?.attributes?.results});

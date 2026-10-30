@@ -4,6 +4,14 @@ export function createGoogleReportingAuthorityRuntime(input: {
   environment?: NodeJS.ProcessEnv;
   fetchFn?: typeof fetch;
 }): {
+  readPmaxSourceEvidenceSnapshot(input: {
+    installationAuthority: {authority: "shopify_installation_verified"; workspaceId: string; installGeneration: number; status: "active"};
+    dateWindow: {start: string; end: string};
+    limits: {maxPages: number; maxRows: number; maxBytes: number};
+    listingEvidence?: Record<string, any> | null;
+    signal?: AbortSignal;
+    maxElapsedMs?: number;
+  }): Promise<Readonly<Record<string, any>>>;
   readPdEvidenceSnapshot(input: {
     installationAuthority: {authority: "shopify_installation_verified"; workspaceId: string; installGeneration: number; status: "active"};
     dateWindow: {start: string; end: string};

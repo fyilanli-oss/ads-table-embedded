@@ -12,6 +12,8 @@ import {buildGoogleReportingQueries, fetchGoogleReportingPage, GoogleReportingEr
 import {buildGoogleSearchSourceLinks, buildGoogleShoppingSourceLinks} from "./google-source-links.server.js";
 import {GOOGLE_PD_FLOW_FAMILIES} from "./google-pd-orchestration.server.js";
 import {readGooglePdNativeMetadata} from "./google-pd-native-metadata.server.js";
+import {buildGooglePmaxSourceLinks} from "./google-pmax-source-links.server.js";
+import {runIdentityReadDeadline} from "./identity-read-deadline.server.js";
 
 const PROVIDER = "google_ads";
 const CUSTOMER_ID_PATTERN = /^[0-9]+$/;
@@ -121,7 +123,7 @@ export function createGoogleReportingAuthorityRuntime({
       loginCustomerId: context.reportingAccount.loginAccountId, fetchFn});
   }
 
-  async function collect(context, queryFamily, dateWindow, bounds = null, nativeMetadata = false) {
+  async function collect(context, queryFamily, dateWindow, bounds = null, nativeMetadata = false, check = () => {}) {
     const client = clientFor(context);
     const rows = [];
     const pdMetricRows = [];
@@ -132,8 +134,10 @@ export function createGoogleReportingAuthorityRuntime({
     let bytes = 0;
     const spans = [];
     for (let pageNumber = 0; pageNumber < (bounds?.maxPages ?? 20); pageNumber++) {
+      check();
       const page = await fetchGoogleReportingPage({client, customerId: context.reportingAccount.id,
         queryFamily, dateWindow, pageToken: cursor, nativeMetadata});
+      check();
       if (!first) first = page;
       const offset = rows.length;
       if (bounds) {
@@ -167,6 +171,45 @@ export function createGoogleReportingAuthorityRuntime({
 
   return Object.freeze({
     prepareEvidenceExecution,
+    async readPmaxSourceEvidenceSnapshot({installationAuthority, dateWindow, limits, listingEvidence = null,
+      signal, maxElapsedMs = 120000, ...extra}) {
+      if (Object.keys(extra).length || !limits || !["maxPages", "maxRows", "maxBytes"].every(k => Number.isSafeInteger(limits[k]) && limits[k] > 0)
+        || limits.maxPages > 20 || limits.maxRows > 20_000 || dateWindow?.start !== dateWindow?.end) {
+        throw new GoogleReportingError("GOOGLE_PMAX_SOURCE_INPUT_INVALID", "Invalid PMax read bounds");
+      }
+      const installation = owner(installationAuthority), dates = Object.freeze({...dateWindow}), bounds = Object.freeze({...limits});
+      const membership = listingEvidence === null ? null : structuredClone(listingEvidence);
+      buildGoogleReportingQueries({dateWindow: dates});
+      if (membership && Buffer.byteLength(JSON.stringify(membership), "utf8") > bounds.maxBytes)
+        throw new GoogleReportingError("GOOGLE_PMAX_SOURCE_BOUND_EXCEEDED", "Membership evidence bound exceeded");
+      return runIdentityReadDeadline({signal, timeoutMs: maxElapsedMs, run: async attemptSignal => {
+        const check = () => {if (attemptSignal.aborted) throw new GoogleReportingError("GOOGLE_PMAX_SOURCE_ABORTED", "PMax source read stopped");};
+        check();
+        const context = await prepareEvidenceExecution({installationAuthority: installation});
+        check();
+        const results = {}; let rows = 0, bytes = 0;
+        for (const family of ["pmax_asset_group_channel_daily", "pmax_product_daily", "pmax_cart_data_product_sales_daily", "pmax_listing_tree_current"]) {
+          const page = await collect(context, family, dates, {...bounds, maxRows: bounds.maxRows - rows,
+            maxBytes: bounds.maxBytes - bytes}, false, check);
+          rows += page.rows.length; results[family] = page;
+          bytes = Buffer.byteLength(JSON.stringify(results), "utf8");
+          if (bytes > bounds.maxBytes) throw new GoogleReportingError("GOOGLE_PMAX_SOURCE_BOUND_EXCEEDED", "PMax source bound exceeded");
+        }
+        const sourceLinks = buildGooglePmaxSourceLinks({scope: {workspace_id: installation.workspaceId,
+          install_generation: installation.installGeneration, connection_id: context.connection.connectionId,
+          reporting_account_id: context.reportingAccount.id}, dateWindow: dates, timezone: context.reportingAccount.timezone,
+        pdRows: results.pmax_asset_group_channel_daily.rows, productRows: results.pmax_product_daily.rows,
+        saleRows: results.pmax_cart_data_product_sales_daily.rows, listingEvidence: membership});
+        const snapshot = {provider: PROVIDER, authority: {connection_id: context.connection.connectionId,
+          reporting_account_id: context.reportingAccount.id, reporting_account_currency: context.reportingAccount.currency,
+          reporting_account_timezone: context.reportingAccount.timezone}, date_window: dates, results, source_links: sourceLinks,
+        current_listing_tree_is_historical_evidence: false, publishable: false, persistable: false};
+        if (Buffer.byteLength(JSON.stringify(snapshot), "utf8") > bounds.maxBytes)
+          throw new GoogleReportingError("GOOGLE_PMAX_SOURCE_BOUND_EXCEEDED", "PMax result bound exceeded");
+        check();
+        return Object.freeze(snapshot);
+      }});
+    },
     async readPdEvidenceSnapshot({installationAuthority, dateWindow, flow, limits, nativeMetadata = false}) {
       const pair = Object.hasOwn(GOOGLE_PD_FLOW_FAMILIES, flow ?? "") ? GOOGLE_PD_FLOW_FAMILIES[flow] : null;
       if (typeof nativeMetadata !== "boolean" || !pair || dateWindow?.start !== dateWindow?.end || !limits

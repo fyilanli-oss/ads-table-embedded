@@ -1,3 +1,13 @@
+## 30 Ekim — PMax kaynaklarını mevcut resolver ve arka plan okuyucusuna bağlama
+
+Mevcut 21'in 15 öncesi dar kod dilimi: PMax Asset Group PD, ürün performansı, PMax'e filtreli Cart Data ve güncel Listing Tree ayrı aileler halinde tam sayfalanır. Mevcut ortak okuyucuda açık googlePmax seçeneğiyle aynı mağaza/hesap/nesil/bağlantı kontrolleri ve fiziksel kota hattı kullanılır. Varsayılan akış değişmez; Shopify'da görsel işlem veya OAuth değişikliği yoktur.
+
+Mevcut resolver ürünün kendi Campaign'i, Merchant/feed/dil ve tam iş günüyle bağlı incelenmiş sunucu kanıtı varsa çağrılır. Tek aday ve tek PD referansı Asset Group'a bağlanır; çoklu/eksik/eski/çelişkili kanıt Unclassified bırakır. Güncel ağaç geçmiş satışın kanıtı değildir. Tetiklenen ürün satışı ve cross-sell satışı reklam ürününün üyeliğiyle aynı kaynak Channel'a bağlanır; maliyet/gelir dağıtımı yapılmaz. Bilinmeyen kategori/diğer filtre boyutları adayları düşürerek sahte tekillik yaratmaz; bu dar dilimde unresolved kalır.
+
+Dönem kanıtı açık sunucu girdisidir, şekli native doğrulama sayılmaz. Tarihsel kanıt üretimi/saklama/yükleme 22'de duraklatılmıştır. Gerçek ortam kabulü, 15 kalıcılığı, 23 Dataset/FX ve 22 sonrası Overlap açık kalır. Kod/test hazırlığı PMax'in gerçek veri kabulü veya bu kalan işlerin kapanışı değildir.
+
+Kaynak/kapsam kaydı: contracts/eo-05-start-brief-v1.json#PMax_source_runtime_connection_2026_10_30. Resmî Listing Groups, Retail Reporting ve v25 Cart Data alanları 30 Ekim 2026'da kontrol edildi. Yeni testler tek/çoklu aday, reklam/satılan ürün ayrımı, kapsam/namespace, eksik dönem ve DST, sayfalama, kota hattı, satır/byte sınırı, iptal ve ilk-hata davranışını sentetik taşıma üzerinden sınar; canlı provider çağrısı yapılmadı.
+
 ## 30 Ekim — 15 öncesi PMax sırası ve Overlap erteleme mutabakatı
 
 Ürün sahibi sıralamayı kabul etti: önce mevcut 21 içindeki PMax bağlantısının dar hazırlığı, sonra ayrıca somut OAuth/UI onayıyla 07'nin kalan işi, ardından 14 değerlendirmesi ve açık 15 kararı. Mevcut 01–26 numaraları değişmez.15 başlamadı.

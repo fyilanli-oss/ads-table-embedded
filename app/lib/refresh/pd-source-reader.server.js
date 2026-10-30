@@ -56,10 +56,13 @@ function date(value) {
  * All dependencies are server-owned; none may be supplied from request JSON.
  */
 export function createRefreshPdSourceReader({verified, database, tokenVault, workStore, quotaStore,
-  claim: suppliedClaim, window: suppliedWindow, entitlementReceipt, queryFamily, googlePd, klaviyoPd, recordBridge, nativeMetadata = false,
+  claim: suppliedClaim, window: suppliedWindow, entitlementReceipt, queryFamily, googlePd, googlePmax, klaviyoPd, recordBridge, nativeMetadata = false,
   environment = process.env, signal, now = Date.now, readNow = () => new Date(),
   fetchFn = globalThis.fetch, limits, ...extra} = {}) {
   if (Object.keys(extra).length) fail("INPUT_INVALID");
+  if (googlePmax !== undefined && (suppliedClaim?.provider !== "google_ads" || googlePd?.flow !== "retail_pmax"
+    || !googlePmax || typeof googlePmax !== "object" || Array.isArray(googlePmax)
+    || Object.keys(googlePmax).some(k => k !== "listingEvidence"))) fail("INPUT_INVALID");
   if (typeof nativeMetadata !== "boolean" || nativeMetadata && (googlePd?.compositionContext !== undefined
     || klaviyoPd?.compositionContexts !== undefined || suppliedClaim?.provider === "google_ads" && !googlePd
     || suppliedClaim?.provider === "klaviyo" && !klaviyoPd)) fail("INPUT_INVALID");
@@ -92,6 +95,7 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
       : queryFamily !== undefined || googlePd !== undefined)) fail("INPUT_INVALID");
   const boundLimits = copy(limits), env = {...environment}, receipt = structuredClone(entitlementReceipt);
   const pd = googlePd === undefined ? null : copy(googlePd);
+  const pmax = googlePmax === undefined ? null : copy(googlePmax);
   const kpd = klaviyoPd === undefined ? null : copy(klaviyoPd);
   const bridge = recordBridge === undefined ? null : copy(recordBridge);
   const query = database.query.bind(database), loadToken = tokenVault.loadProviderTokenSet.bind(tokenVault);
@@ -190,12 +194,34 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
           return structuredClone(token);
         }}, environment: env, now: readNow};
         const dateWindow = {start: window.from, end: window.to};
-        let evidence;
+        let evidence, pmaxEvidence = null;
         if (claim.provider === "google_ads") {
           const client = clients.google(config);
           evidence = pd ? await client.readPdEvidenceSnapshot({installationAuthority: owner, dateWindow, flow: pd.flow,
             limits: {maxPages: boundLimits.maxPages, maxRows: boundLimits.maxRows, maxBytes: boundLimits.maxBytes}, nativeMetadata})
             : await client.readEvidencePage({installationAuthority: owner, queryFamily, dateWindow});
+          if (pmax) {
+            const usedRows = evidence.results.performance.rows.length + evidence.results.conversions.rows.length
+              + (evidence.native_metadata ? [evidence.native_metadata.before, evidence.native_metadata.after]
+                .reduce((n, m) => n + m.account.rows.length + m.actions.rows.length, 0) : 0);
+            const remaining = {maxPages: boundLimits.maxPages, maxRows: boundLimits.maxRows - usedRows,
+              maxBytes: boundLimits.maxBytes - Buffer.byteLength(JSON.stringify(evidence), "utf8")};
+            if (remaining.maxRows < 1 || remaining.maxBytes < 1) fail("RESULT_BOUND_EXCEEDED");
+            await currentContext();
+            pmaxEvidence = await client.readPmaxSourceEvidenceSnapshot({installationAuthority: owner, dateWindow,
+              limits: remaining, listingEvidence: pmax.listingEvidence ?? null, signal: controller.signal,
+              maxElapsedMs: boundLimits.maxElapsedMs});
+            await currentContext();
+            if (pmaxEvidence.authority.connection_id !== baseline.provider_connection_id
+              || pmaxEvidence.authority.reporting_account_id !== claim.accountId
+              || pmaxEvidence.authority.reporting_account_timezone !== baseline.source_timezone
+              || pmaxEvidence.authority.reporting_account_currency !== baseline.source_currency) fail("READER_SCOPE_MISMATCH");
+            for (const [family, page] of Object.entries(pmaxEvidence.results)) for (const row of page.rows) {
+              if (row.customer?.id !== claim.accountId || !/^[1-9][0-9]*$/.test(row.campaign?.id ?? "")
+                || family !== "pmax_listing_tree_current" && (row.segments?.date !== window.from
+                  || row.campaign?.advertisingChannelType !== "PERFORMANCE_MAX")) fail("NATIVE_SCOPE_MISMATCH");
+            }
+          }
         }
         else if (claim.provider === "meta") evidence = await clients.meta({...config, appSecret: env.META_APP_SECRET})
           .readDailyEvidenceSnapshot({installationAuthority: owner, dateWindow, includePromotedProductMetrics: true, nativeMetadata});
@@ -221,7 +247,8 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
           } else if (row.account_id !== claim.accountId.slice(4) || row.date_start !== window.from || row.date_stop !== window.from
             || row.account_currency != null && row.account_currency !== baseline.source_currency) fail("NATIVE_SCOPE_MISMATCH");
         }
-        const rows = pages.reduce((n, p) => n + p.rows.length, 0);
+        const rows = pages.reduce((n, p) => n + p.rows.length, 0)
+          + (pmaxEvidence ? Object.values(pmaxEvidence.results).reduce((n, p) => n + p.rows.length, 0) : 0);
         if (rows > boundLimits.maxRows || Buffer.byteLength(JSON.stringify(evidence), "utf8") > boundLimits.maxBytes) fail("RESULT_BOUND_EXCEEDED");
         // Do not fabricate Meta attribution settings/time basis or a common fingerprint.
         // Ancestor IDs, metric units and request evidence remain in the native envelope.
@@ -248,6 +275,7 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
         if (pd || kpd || bridge || nativeMetadata) await currentContext();
         check();
         const result = copy({status: "source_read", source_context: sourceContext, evidence,
+          ...(pmaxEvidence ? {pmax_source_evidence: pmaxEvidence} : {}),
           ...(composition ? {composition} : {}),
           ...(records ? {records} : {}),
           ...(prepared ? {native_metadata: prepared} : {}),

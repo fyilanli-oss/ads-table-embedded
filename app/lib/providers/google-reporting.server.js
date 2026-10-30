@@ -23,6 +23,7 @@ export const GOOGLE_REPORTING_QUERY_FAMILIES = Object.freeze([
   "cart_data_product_sales_daily",
   "shopping_cart_data_product_sales_daily",
   "search_cart_data_product_sales_daily",
+  "pmax_cart_data_product_sales_daily",
   "pmax_listing_tree_current",
   "pmax_product_group_aggregate_daily",
 ]);
@@ -205,7 +206,7 @@ export function buildGoogleReportingQueries({dateWindow: requestedWindow}) {
     shopping_product_daily: datedQuery([
       ...productFields.slice(0, 4), "ad_group.id", "ad_group.name", ...productFields.slice(4),
     ], "shopping_performance_view", "campaign.advertising_channel_type = 'SHOPPING'", window),
-    pmax_product_daily: datedQuery(productFields, "shopping_performance_view",
+    pmax_product_daily: datedQuery([...productFields, "segments.product_language"], "shopping_performance_view",
       "campaign.advertising_channel_type = 'PERFORMANCE_MAX'", window),
     cart_data_product_sales_daily: datedQuery(cartFields, "cart_data_sales_view", null, window),
     shopping_cart_data_product_sales_daily: datedQuery([
@@ -217,6 +218,8 @@ export function buildGoogleReportingQueries({dateWindow: requestedWindow}) {
       "segments.product_feed_label", "segments.product_sold_item_id", "segments.product_sold_title",
       "metrics.units_sold", "metrics.revenue_micros", "metrics.all_units_sold", "metrics.all_revenue_micros",
     ], "cart_data_sales_view", "campaign.advertising_channel_type = 'SEARCH'", window),
+    pmax_cart_data_product_sales_daily: datedQuery([...cartFields, "segments.product_language"], "cart_data_sales_view",
+      "campaign.advertising_channel_type = 'PERFORMANCE_MAX'", window),
     pmax_listing_tree_current: [
       "SELECT",
       "  customer.id,",

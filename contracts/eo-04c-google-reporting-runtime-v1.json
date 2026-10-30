@@ -316,5 +316,13 @@
     "merge_commit": "752cc1988323c238297d00516e7b7009432032c2",
     "live_provider_call_requires_separate_approval": true
   },
-  "next_gate": "google_2026_access_review_corrective_repository_verification_required_ci_and_explicit_merge_approval"
+  "next_gate": "google_2026_access_review_corrective_repository_verification_required_ci_and_explicit_merge_approval",
+  "PMax_source_runtime_connection_2026_10_30": {
+    "record": "contracts/eo-05-start-brief-v1.json#PMax_source_runtime_connection_2026_10_30",
+    "status": "code_and_isolated_tests_prepared_native_acceptance_and_historical_evidence_pending",
+    "existing_step": 21,
+    "step15_started": false,
+    "step22_resumed": false,
+    "Overlap_work_started": false
+  }
 }

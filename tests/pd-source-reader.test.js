@@ -7,6 +7,36 @@ const workspace = "11111111-1111-4111-8111-111111111111";
 const connection = "22222222-2222-4222-8222-222222222222";
 const credential = "33333333-3333-4333-8333-333333333333";
 const json = (data, status = 200) => new Response(JSON.stringify(data), {status, headers: {"content-type": "application/json"}});
+
+test("opt-in PMax source links run through the existing fenced reader and physical quota transport", async () => {
+  const f = fixture("google_ads"), queries = [];
+  delete f.config.queryFamily; f.config.googlePd = {flow: "retail_pmax"}; f.config.googlePmax = {};
+  f.config.limits.maxPages = 3;
+  f.hooks.response = (address, init) => {
+    if (address.includes("oauth2.googleapis.com")) return json({access_token: "synthetic-access", token_type: "Bearer", expires_in: 3600});
+    const {query} = JSON.parse(init.body); queries.push(query);
+    const row = {customer: {id: "123"}, campaign: {id: "10", advertisingChannelType: "PERFORMANCE_MAX"},
+      assetGroup: {id: "40"}, segments: {date: "2026-10-01", productMerchantId: "50", productFeedLabel: "TR",
+        productLanguage: "tr", productItemId: "A", productSoldItemId: "B"}, metrics: {clicks: "1", crossSellUnitsSold: "1"}};
+    return json({results: /conversion_action/.test(query) ? [] : [row]});
+  };
+  const result = await f.create().readEvidence();
+  assert.equal(queries.length, 6); // two PD families plus four CPD/current-inventory families
+  assert.equal(result.pmax_source_evidence.source_links.product_sales_links[0].sales_role, "Cross-sell");
+  assert.equal(result.pmax_source_evidence.source_links.product_sales_links[0].channel_id, null);
+  assert.equal(f.state.reserves, f.state.http); assert.equal(result.publishable, false);
+  assert.equal(result.rows_observed, 5);
+});
+
+test("PMax links cannot be enabled for Search, another provider, or unbounded caller options", () => {
+  for (const flow of ["search", "shopping"]) {
+    const f = fixture("google_ads"); delete f.config.queryFamily;
+    assert.throws(() => createRefreshPdSourceReader({...f.config, googlePd: {flow}, googlePmax: {}}), /INPUT_INVALID/);
+  }
+  assert.throws(() => createRefreshPdSourceReader({...fixture().config, googlePmax: {}}), /INPUT_INVALID/);
+  const f = fixture("google_ads"); delete f.config.queryFamily;
+  assert.throws(() => createRefreshPdSourceReader({...f.config, googlePd: {flow: "retail_pmax"}, googlePmax: {activate: true}}), /INPUT_INVALID/);
+});
 function fixture(provider = "meta") {
   const accountId = provider === "meta" ? "act_123" : provider === "google_ads" ? "123" : "ABC123";
   const state = {http: 0, reserves: 0, vault: 0, clock: 0, stopped: 0, queries: [],

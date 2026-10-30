@@ -3977,5 +3977,55 @@
     "step15_started": false,
     "step22_resumed": false,
     "Dataset_write": false
+  },
+  "PMax_source_runtime_connection_2026_10_30": {
+    "status": "code_and_isolated_tests_prepared_native_acceptance_and_historical_evidence_pending",
+    "checked_at": "2026-10-30",
+    "base_main": "720fa71879b49213e8b6d9b306f9d5d0891a8625",
+    "existing_step": 21,
+    "execution_checkpoint": 14,
+    "scope": "Owner-approved bounded PMax runtime connection before15. No activation, OAuth/UI, durable history, migration or Dataset writer.",
+    "query_families": [
+      "pmax_asset_group_channel_daily",
+      "pmax_product_daily",
+      "pmax_cart_data_product_sales_daily",
+      "pmax_listing_tree_current"
+    ],
+    "query_change": "Dedicated PMax cart-data filter and native product_language for PMax product/cart families; existing general/Shopping/Search queries unchanged.",
+    "runtime": "createRefreshPdSourceReader googlePd.flow=retail_pmax plus explicit googlePmax option uses existing fenced physical-quota Google client and readPmaxSourceEvidenceSnapshot; existing default reads unchanged.",
+    "source_linker": "app/lib/providers/google-pmax-source-links.server.js#buildGooglePmaxSourceLinks",
+    "resolver": "Existing resolvePmaxSaleChannel invoked after context/namespace/day/filter/completeness controls; not a new native attribution API.",
+    "exact": "Same source Campaign and advertised product; reviewed complete period evidence and one matching Asset Group plus a unique native PD reference. Provenance resolved_from_reviewed_membership.",
+    "unresolved": "Missing/stale/partial/conflicting evidence, other namespace, omitted observed Asset Group, ambiguous product context, missing/duplicate PD or unverified filter dimensions -> Unclassified; native product facts and independently classified Sales Role retained.",
+    "temporal": "Timezone-aware complete business-day bounds, including DST. Current listing inventory has no historical validity interval and is never converted into past serving proof.",
+    "supported_dimension_boundary": "This bounded adapter accepts included All products / explicit product item / observed brand paths. Category IDs, other dimensions or catch-all paths without verified period source attributes remain unresolved, never silently excluded from candidate coverage.",
+    "evidence_authority": "listingEvidence is detached trusted-server composition input, not a provider proof by shape, public registrar or browser option. Historical producer/storage/loading remains step22.",
+    "controls": [
+      "full pagination and page cursor loop detection",
+      "combined family rows/bytes plus output bound",
+      "total read deadline and cancellation, no later family after stopped read",
+      "existing physical quota and fresh owner/account/credential/selection checks",
+      "no metric allocation, no PD totals copied to product facts, no all_* addition",
+      "normal Google product Sales Roles preserved; no clicked-product inference for Klaviyo",
+      "first provider error stops, no retry/fallback",
+      "no native request performed by local synthetic transport tests"
+    ],
+    "remaining": [
+      "real native query/schema/namespace/access/capacity acceptance",
+      "trusted complete period membership evidence supplied by separately approved step22 work",
+      "step15 persistence and step23 Dataset/FX writers"
+    ],
+    "official_sources_checked_at": "2026-10-30",
+    "official_sources": [
+      "https://developers.google.com/google-ads/api/performance-max/listing-groups",
+      "https://developers.google.com/google-ads/api/performance-max/retail-reporting",
+      "https://developers.google.com/google-ads/api/fields/v25/cart_data_sales_view"
+    ],
+    "step15_started": false,
+    "step22_resumed": false,
+    "Overlap_work_started": false,
+    "OAuth_changed": false,
+    "live_calls_performed": false,
+    "Dataset_write": false
   }
 }

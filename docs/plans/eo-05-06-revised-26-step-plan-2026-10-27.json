@@ -245,7 +245,7 @@
       "work": "PMax ürün performansını Asset Group’a bağlamak.",
       "boundary": "Kaynak kanıtı bekliyor. Campaign otomatik Channel yapılmayacak; ürün metrikleri gruplara dağıtılmayacak.",
       "addition": "30 Ekim ürün sahibi kararı: mevcut resolver bağlantısının dar kapsamlı hazırlığı 15 öncesine alınır. Kaynak Campaign içinde reklam ürününe tek doğrulanmış ve dönemle uyumlu Asset Group varsa bağlanır; çoklu/eksik/geçersiz kanıtta Unclassified kalır. Tarihsel kanıt saklama/yükleme 22 kapsamındadır; bu kararla yeniden başlatılmaz.",
-      "status": "Yaklaşım onaylandı; 15 öncesi dar runtime bağlantısı kodlanacak. Çalışan envanter/tarihçe ve gerçek kaynak kabulü tamamlandı değil.",
+      "status": "15 öncesi dar runtime bağlantısı kod/test hazırlığı yapıldı: dört PMax kaynak ailesi, ortak arka plan/kota girişi ve mevcut resolver bağlı. Native kabul ve güvenilir dönemsel üyelik kanıtı açık; güncel listeyle geçmiş Channel atanmaz. 22 yeniden başlamadı.",
       "package": "EO-05-B"
     },
     {
@@ -908,5 +908,13 @@
     "step15_started": false,
     "step22_resumed": false,
     "runtime_changed": false
+  },
+  "PMax_source_runtime_connection_2026_10_30": {
+    "record": "contracts/eo-05-start-brief-v1.json#PMax_source_runtime_connection_2026_10_30",
+    "status": "code_and_isolated_tests_prepared_native_acceptance_and_historical_evidence_pending",
+    "existing_step": 21,
+    "step15_started": false,
+    "step22_resumed": false,
+    "Overlap_work_started": false
   }
 }

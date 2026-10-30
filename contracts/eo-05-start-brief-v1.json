@@ -3624,5 +3624,74 @@
     "step22_paused": true,
     "Dataset_write_step": 23,
     "publishable": false
+  },
+  "PD_native_metadata_read_2026_10_30": {
+    "checked_at": "2026-10-30",
+    "delivery_order": 8,
+    "existing_step": 6,
+    "status": "google_meta_native_metadata_read_wired_klaviyo_attribution_documentation_pending",
+    "owner_approval": "Explicit approval for official-source verification, supported metadata reads wired to the existing common bridge, and isolated code/tests. No live query, OAuth flow/permission change, deployment or Dataset write.",
+    "entrypoint": "createRefreshPdSourceReader({nativeMetadata:true,...})",
+    "default_behavior": "Default false preserves existing queries/reads; cannot combine nativeMetadata with caller composition fingerprints. No UI/route/scheduler activation.",
+    "google_ads": {
+      "account": "Exact reporting customer.id/currency_code/time_zone observed before and after reports",
+      "conversion_actions": "Resource name, category, owner_customer, attribution model, click/view lookback days, counting type; complete bounded pagination before/after; actual reported action/category coverage checked",
+      "owner_boundary": "Never switches the reporting customer or follows a conversion owner into another customer",
+      "units": "Documented raw cost micros unit scale1e6, native currency; normal fractional conversions and conversionsValue fields; no all_* fallback",
+      "names": "Opt-in Search performance additionally requests ad_group_ad.ad.name. Empty/unreturned names are not invented; existing entity gate remains.",
+      "consistency": "Equal before/after observations, not transaction isolation or historical configuration proof"
+    },
+    "meta": {
+      "request": "Existing Ad fields plus account_currency and attribution_setting; explicit action_report_time=impression/use_unified_attribution_setting=true",
+      "products": "Same explicit report parameters in product request; all original four converted/promoted fields retained, no extra product metric or numeric merge",
+      "source": "Per-Ad reported attribution_setting and native currency produce scoped hashes/references; missing/unknown label blocks; SDK field/parameter proof is not native customer acceptance",
+      "time": "Explicit impression_date; no undocumented default inferred"
+    },
+    "klaviyo": {
+      "account": "Sparse Accounts id/preferred_currency/timezone observed before/after six reports; exact registered account/currency/timezone required",
+      "attribution": "No documented account attribution-settings endpoint/field identified in checked Reporting/Accounts OpenAPI; no default window, manual fingerprint or fabricated settings",
+      "behavior": "Raw six reports and verified unit/account information retained; composition/records blocked with attribution_settings_read_not_documented",
+      "provider_unsupported_proven": false
+    },
+    "bridge": "Server-generated attempt/snapshot, hashes of selected actual settings and versioned declared units feed existing composer/record bridge. Native entity/time metadata replaces only source metadata. Target currency and FX remain explicit separately supplied inputs; missing target returns reporting_currency_reference_required. No automatic1 or FX conversion.",
+    "safety": [
+      "Same existing prepared credential and quota-bound clients, first error stops without retry/alternative account",
+      "Exact owner/account/version/selection/fence revalidation before/after native reads and after bridge",
+      "Complete bounded metadata pagination; shared remaining Google row/serialized-byte budgets; Klaviyo metadata counts in collection budget",
+      "Decoded/serialized byte controls do not prove peak memory or native capacity",
+      "No current settings observation becomes business-day historical configuration proof"
+    ],
+    "verification": {
+      "related_tests": 151,
+      "exact_commit_CI": "pending",
+      "F01": "required_isolated_CI",
+      "native_acceptance": false
+    },
+    "remaining": [
+      "Klaviyo documented native attribution-settings read still open; not declared unsupported or complete",
+      "Native provider field availability/permission/account/operation profile and capacity acceptance separate from synthetic tests",
+      "Actual FX/reporting-currency proof stays existing later gate; durable metadata/evidence storage15 and Dataset/FX writer23",
+      "Integrated worker/prewrite handoff delivery10; step22 paused; no automatic next package"
+    ],
+    "sources": [
+      "https://developers.google.com/google-ads/api/fields/v25/conversion_action",
+      "https://developers.google.com/google-ads/api/fields/v25/customer",
+      "https://developers.google.com/google-ads/api/fields/v25/ad_group_ad",
+      "https://developers.google.com/google-ads/api/fields/v25/metrics",
+      "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adaccount.py",
+      "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adsinsights.py",
+      "https://developers.klaviyo.com/en/reference/reporting_api_overview",
+      "https://raw.githubusercontent.com/klaviyo/openapi/main/openapi/stable/apis/get_accounts.json"
+    ],
+    "live_provider_calls": false,
+    "OAuth_permission_change": false,
+    "UI_change": false,
+    "migration": false,
+    "deployment": false,
+    "sales_roles_changed": false,
+    "step15_started": false,
+    "step22_paused": true,
+    "Dataset_write_step": 23,
+    "publishable": false
   }
 }

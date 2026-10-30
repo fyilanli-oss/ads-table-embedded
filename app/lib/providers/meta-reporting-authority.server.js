@@ -227,7 +227,8 @@ export function createMetaReportingAuthorityRuntime({
       });
     },
 
-    async readDailyEvidenceSnapshot({installationAuthority, dateWindow, includePromotedProductMetrics = false}) {
+    async readDailyEvidenceSnapshot({installationAuthority, dateWindow, includePromotedProductMetrics = false, nativeMetadata = false}) {
+      if (typeof nativeMetadata !== "boolean") throw new TypeError("nativeMetadata must be boolean");
       if (typeof includePromotedProductMetrics !== "boolean") {
         throw new TypeError("includePromotedProductMetrics must be boolean");
       }
@@ -243,6 +244,7 @@ export function createMetaReportingAuthorityRuntime({
           after,
           graphVersion,
           fetchFn,
+          nativeMetadata,
         }),
       });
       const product = await collectPages({
@@ -257,6 +259,7 @@ export function createMetaReportingAuthorityRuntime({
           after,
           graphVersion,
           fetchFn,
+          nativeMetadata,
         }),
       });
       const sourceLinks = buildMetaSourceLinks({

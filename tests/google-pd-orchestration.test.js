@@ -219,3 +219,55 @@ for (const [label, change, reason] of [
   change(input); const result=bridgePdReadSnapshot(input);
   assert.equal(result.reason, reason); assert.deepEqual(result.rows, []);
 });
+
+function nativeMetadataFixture(flow = "search") {
+  const f=fixture(flow); f.config.nativeMetadata=true; delete f.config.googlePd.compositionContext;
+  let settingsReads=0;
+  const categories={100:"PURCHASE",101:"PURCHASE",102:"ADD_TO_CART",103:"BEGIN_CHECKOUT"};
+  f.nativeSettings=Object.entries(categories).map(([id,category])=>({conversionAction:{resourceName:"customers/123/conversionActions/"+id,
+    ownerCustomer:"customers/123",category,attributionModelSettings:{attributionModel:"GOOGLE_ADS_LAST_CLICK"},
+    clickThroughLookbackWindowDays:"30",viewThroughLookbackWindowDays:"1",countingType:"MANY_PER_CLICK"}}));
+  f.metadataHooks={};
+  for(const r of f.performance){r.campaign.name="Root";if(r.adGroup)r.adGroup.name=flow==="shopping"?"Leaf":"Parent";
+    if(r.adGroupAd)r.adGroupAd.ad.name="Leaf";if(r.assetGroup)r.assetGroup.name="Leaf";}
+  f.hooks.response=request=>{
+    if(request.query.includes("FROM customer"))return json({results:[{customer:{id:f.metadataHooks.wrongAccount?"999":"123",currencyCode:"USD",timeZone:"UTC"}}]});
+    if(request.query.includes("FROM conversion_action")){
+      settingsReads++; const rows=structuredClone(f.nativeSettings);
+      if(settingsReads===2&&f.metadataHooks.changeModel)rows[0].conversionAction.attributionModelSettings.attributionModel="GOOGLE_SEARCH_ATTRIBUTION_DATA_DRIVEN";
+      return json({results:f.metadataHooks.missingActions?[]:rows});
+    }
+    const rows=request.conversion?f.conversions:f.performance;
+    return json({results:request.pageToken?rows.slice(1):rows.slice(0,1),...(request.pageToken?{}:{nextPageToken:"next"})});
+  };
+  return f;
+}
+for(const flow of ["search","shopping","retail_pmax"])test("native metadata from actual read composes "+flow+" without supplied fingerprints",async()=>{
+  const f=nativeMetadataFixture(flow),r=await f.create().readEvidence();
+  assert.equal(r.native_metadata.status,"prepared");assert.equal(r.composition.rows.length,2);
+  assert.match(r.composition.rows[0].scope.attribution_fingerprint,/^[0-9a-f]{64}$/);
+  assert.equal(r.source_context.metadata_state,"native_read_time_metadata_prepared_not_historical_authority");
+  assert.equal(f.state.reserve,9);assert.equal(r.records.status,"blocked");assert.deepEqual(r.records.rows,[]);
+  assert.equal(r.records.reason,"reporting_currency_reference_required");assert.equal(r.persistable,false);
+  const queries=f.state.requests.filter(v=>!v.token).map(v=>v.query).join(" ");
+  assert.match(queries,/attribution_model_settings.attribution_model/);
+  if(flow==="search")assert.match(queries,/ad_group_ad.ad.name/);
+});
+test("native metadata plus explicit later FX passes existing record bridge",async()=>{
+  const f=nativeMetadataFixture(), first=await f.create().readEvidence();
+  f.config.recordBridge={metadata:recordMetadata(first.source_context,first.composition.rows)};
+  const r=await f.create().readEvidence();assert.equal(r.records.status,"validated");assert.equal(r.records.rows.length,2);
+  assert.equal(r.records.rows[0].entity.entity_name,"Leaf");assert.equal(r.persistable,false);
+});
+test("settings change or incomplete conversion-action coverage blocks composition without invented fallback",async()=>{
+  for(const flag of ["changeModel","missingActions"]){const f=nativeMetadataFixture();f.metadataHooks[flag]=true;
+    const r=await f.create().readEvidence();assert.equal(r.native_metadata.status,"blocked");assert.deepEqual(r.composition.rows,[]);
+    assert.ok(r.evidence.results.conversions.rows.length>0);assert.deepEqual(r.records.rows,[]);}
+});
+test("wrong native metadata account stops before performance reads",async()=>{
+  const f=nativeMetadataFixture();f.metadataHooks.wrongAccount=true;
+  await assert.rejects(f.create().readEvidence());assert.equal(f.state.requests.length,2);
+});
+test("native metadata mode cannot be mixed with supplied composition fingerprints",()=>{
+  const f=fixture();f.config.nativeMetadata=true;assert.throws(f.create,/INPUT_INVALID/);assert.equal(f.state.requests.length,0);
+});

@@ -206,3 +206,34 @@ test("record bridge opt-in with no server metadata retains native evidence and a
   assert.equal(result.records.reason, "record_metadata_required");
   assert.equal(result.evidence.channel.rows.length, 1); assert.deepEqual(result.records.rows, []);
 });
+
+test("Meta native metadata uses explicit same report settings and preserves product fields",async()=>{
+  const f=fixture();f.config.nativeMetadata=true;const requests=[];
+  f.hooks.response=address=>{const u=new URL(address);requests.push(u);
+    return json({data:[{account_id:"123",campaign_id:"10",campaign_name:"Root",adset_id:"20",adset_name:"Parent",ad_id:"30",ad_name:"Leaf",
+      date_start:"2026-10-01",date_stop:"2026-10-01",account_currency:"USD",attribution_setting:"7d_click,1d_view",
+      ...(u.searchParams.has("breakdowns")?{product_id:"native-product"}:{}),impressions:"10",spend:"30"}]});};
+  const r=await f.create().readEvidence();assert.equal(r.native_metadata.status,"prepared");
+  assert.equal(r.native_metadata.entries[0].scope.entity_id,"30");assert.equal(r.source_context.reporting_time_basis,"impression_date");
+  assert.ok(requests.every(u=>u.searchParams.get("action_report_time")==="impression"&&u.searchParams.get("use_unified_attribution_setting")==="true"));
+  assert.match(requests[1].searchParams.get("fields"),/converted_promoted_product_quantity/);
+  assert.match(requests[1].searchParams.get("fields"),/converted_promoted_product_value/);
+  assert.equal(r.persistable,false);assert.deepEqual(r.records.rows,[]);
+});
+test("Meta missing returned native attribution stays explicit and cannot use guessed window",async()=>{
+  const f=fixture();f.config.nativeMetadata=true;
+  const r=await f.create().readEvidence();assert.equal(r.native_metadata.reason,"native_attribution_setting_not_returned");
+  assert.equal(r.records.reason,r.native_metadata.reason);assert.ok(r.evidence.channel.rows.length>0);
+});
+
+test("Meta native metadata reaches the actual canonical bridge with explicit external FX",async()=>{
+  const f=fixture();f.config.nativeMetadata=true;
+  f.hooks.response=address=>json({data:[{account_id:"123",campaign_id:"10",campaign_name:"Root",adset_id:"20",adset_name:"Parent",ad_id:"30",ad_name:"Leaf",
+    date_start:"2026-10-01",date_stop:"2026-10-01",account_currency:"USD",attribution_setting:"7d_click,1d_view",impressions:"10",spend:"30",
+    ...(new URL(address).searchParams.has("breakdowns")?{product_id:"native-product"}:{})}]});
+  const first=await f.create().readEvidence();
+  const facts=first.native_metadata.entries.map(e=>({scope:e.scope,source_execution:{metadata_references:e.metadata_references}}));
+  f.config.recordBridge={metadata:recordMetadata(first.source_context,facts)};
+  const r=await f.create().readEvidence();assert.equal(r.records.status,"validated");assert.equal(r.records.rows[0].raw_metrics.spend_value,30);
+  assert.equal(r.records.rows[0].identity.platform,"meta");assert.equal(r.persistable,false);
+});

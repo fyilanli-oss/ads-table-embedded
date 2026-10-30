@@ -29,6 +29,7 @@ export function createMetaReportingAuthorityRuntime(input: {
   }>>;
   readDailyEvidenceSnapshot(input: {
     includePromotedProductMetrics?: boolean;
+    nativeMetadata?: boolean;
     installationAuthority: {
       authority: "shopify_installation_verified";
       workspaceId: string;

@@ -261,7 +261,9 @@ export async function fetchGoogleReportingPage({
   queryFamily,
   dateWindow: requestedWindow,
   pageToken = null,
+  nativeMetadata = false,
 }) {
+  if (typeof nativeMetadata !== "boolean") throw new TypeError("nativeMetadata must be boolean");
   if (!client || typeof client.search !== "function") {
     throw new TypeError("client.search is required");
   }
@@ -272,7 +274,8 @@ export async function fetchGoogleReportingPage({
     );
   }
   const queries = buildGoogleReportingQueries({dateWindow: requestedWindow});
-  const query = queries[queryFamily];
+  const query = nativeMetadata && queryFamily === "search_ad_channel_daily"
+    ? queries[queryFamily].replace("ad_group_ad.ad.id,", "ad_group_ad.ad.id,\n  ad_group_ad.ad.name,") : queries[queryFamily];
   const result = await client.search({customerId, query, pageToken});
   const rows = freezeRows(result.results);
   const pdMetrics = GOOGLE_PD_QUERY_FAMILIES.includes(queryFamily)

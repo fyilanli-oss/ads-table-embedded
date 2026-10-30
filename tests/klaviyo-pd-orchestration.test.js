@@ -222,3 +222,21 @@ test("runtime common-record bridge preserves native evidence when FX is missing"
   assert.deepEqual(result.records.rows, []);
   assert.deepEqual(result.evidence, native.evidence);
 });
+
+test("Klaviyo native account metadata does not invent an undocumented attribution setting",async()=>{
+  const f=fixture();f.config.nativeMetadata=true;delete f.config.klaviyoPd.compositionContexts;
+  const original=f.config.fetchFn;let accountReads=0;
+  f.config.fetchFn=async(address,init)=>{if(new URL(address).pathname==="/api/accounts"){
+    accountReads++;assert.equal(new URL(address).searchParams.get("fields[account]"),"id,preferred_currency,timezone");
+    return json({data:[{type:"account",id:"ABC123",attributes:{preferred_currency:"USD",timezone:"Europe/Istanbul"}}]});}
+    return original(address,init);};
+  const r=await f.create().readEvidence();assert.equal(accountReads,2);
+  assert.equal(r.native_metadata.reason,"attribution_settings_read_not_documented");
+  assert.equal(r.evidence.results.reports.length,6);assert.deepEqual(r.composition.rows,[]);
+  assert.equal(r.native_metadata.units.source_currency,"USD");assert.equal(r.persistable,false);
+});
+test("Klaviyo changed native account blocks before reports",async()=>{
+  const f=fixture();f.config.nativeMetadata=true;delete f.config.klaviyoPd.compositionContexts;
+  f.config.fetchFn=async()=>json({data:[{type:"account",id:"WRONG",attributes:{preferred_currency:"USD",timezone:"Europe/Istanbul"}}]});
+  await assert.rejects(f.create().readEvidence());assert.equal(f.state.reserves,1);
+});

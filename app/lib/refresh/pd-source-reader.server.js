@@ -7,6 +7,7 @@ import {klaviyoTokenRequiresRefresh} from "../providers/klaviyo-api.server.js";
 import {GOOGLE_PD_FLOW_FAMILIES, composeGooglePdSnapshot} from "../providers/google-pd-orchestration.server.js";
 import {composeKlaviyoPdSnapshot} from "../providers/klaviyo-pd-orchestration.server.js";
 import {bridgePdReadSnapshot} from "../providers/pd-record-orchestration.server.js";
+import {preparePdNativeMetadata, bindNativePdRecordMetadata} from "../providers/pd-native-metadata.server.js";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const text = v => typeof v === "string" && v.length > 0 && v === v.trim();
@@ -26,10 +27,13 @@ function date(value) {
  * All dependencies are server-owned; none may be supplied from request JSON.
  */
 export function createRefreshPdSourceReader({verified, database, tokenVault, workStore, quotaStore,
-  claim: suppliedClaim, window: suppliedWindow, entitlementReceipt, queryFamily, googlePd, klaviyoPd, recordBridge,
+  claim: suppliedClaim, window: suppliedWindow, entitlementReceipt, queryFamily, googlePd, klaviyoPd, recordBridge, nativeMetadata = false,
   environment = process.env, signal, now = Date.now, readNow = () => new Date(),
   fetchFn = globalThis.fetch, limits, ...extra} = {}) {
   if (Object.keys(extra).length) fail("INPUT_INVALID");
+  if (typeof nativeMetadata !== "boolean" || nativeMetadata && (googlePd?.compositionContext !== undefined
+    || klaviyoPd?.compositionContexts !== undefined || suppliedClaim?.provider === "google_ads" && !googlePd
+    || suppliedClaim?.provider === "klaviyo" && !klaviyoPd)) fail("INPUT_INVALID");
   if (recordBridge !== undefined && (!recordBridge || typeof recordBridge !== "object" || Array.isArray(recordBridge)
     || Object.keys(recordBridge).some(k => k !== "metadata"))) fail("INPUT_INVALID");
   const claim = structuredClone(suppliedClaim), window = structuredClone(suppliedWindow);
@@ -161,12 +165,13 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
         if (claim.provider === "google_ads") {
           const client = clients.google(config);
           evidence = pd ? await client.readPdEvidenceSnapshot({installationAuthority: owner, dateWindow, flow: pd.flow,
-            limits: {maxPages: boundLimits.maxPages, maxRows: boundLimits.maxRows, maxBytes: boundLimits.maxBytes}})
+            limits: {maxPages: boundLimits.maxPages, maxRows: boundLimits.maxRows, maxBytes: boundLimits.maxBytes}, nativeMetadata})
             : await client.readEvidencePage({installationAuthority: owner, queryFamily, dateWindow});
         }
         else if (claim.provider === "meta") evidence = await clients.meta({...config, appSecret: env.META_APP_SECRET})
-          .readDailyEvidenceSnapshot({installationAuthority: owner, dateWindow, includePromotedProductMetrics: true});
+          .readDailyEvidenceSnapshot({installationAuthority: owner, dateWindow, includePromotedProductMetrics: true, nativeMetadata});
         else evidence = await clients.klaviyo(config).readPdEvidenceSnapshot({installationAuthority: owner, businessDate: window.from,
+          nativeMetadata,
           ...(kpd ? {limits: {maxPages: boundLimits.maxPages, maxRows: boundLimits.maxRows, maxBytes: boundLimits.maxBytes}} : {})});
         await currentContext();
         const observed = evidence.authority;
@@ -197,16 +202,27 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
           reporting_time_basis: claim.provider === "klaviyo" ? "send_date" : claim.provider === "google_ads" ? "interaction_date" : null,
           attribution_fingerprint: null, metric_units_fingerprint: null,
           metadata_state: "native_rows_and_request_evidence_preserved_not_composition_ready"};
-        const composition = pd ? composeGooglePdSnapshot({sourceContext, evidence, compositionContext: pd.compositionContext})
-          : kpd ? composeKlaviyoPdSnapshot({sourceContext, evidence, compositionContexts: kpd.compositionContexts}) : null;
-        const records = bridge ? bridgePdReadSnapshot({sourceContext, evidence, composition, metadata: bridge.metadata}) : null;
-        if (pd || kpd || bridge) await currentContext();
+        const prepared = nativeMetadata ? preparePdNativeMetadata({sourceContext, evidence}) : null;
+        if (prepared?.status === "prepared") {
+          sourceContext.metadata_state = "native_read_time_metadata_prepared_not_historical_authority";
+          sourceContext.reporting_time_basis = claim.provider === "meta" ? "impression_date" : sourceContext.reporting_time_basis;
+        }
+        const blocked = prepared?.status === "blocked" ? {status: "blocked", reason: prepared.reason, rows: [], publishable: false} : null;
+        const composition = blocked ?? (pd ? composeGooglePdSnapshot({sourceContext, evidence, compositionContext: prepared?.composition_context ?? pd.compositionContext})
+          : kpd ? composeKlaviyoPdSnapshot({sourceContext, evidence, compositionContexts: kpd.compositionContexts}) : null);
+        const recordMetadata = prepared ? bindNativePdRecordMetadata({prepared, composition, evidence, sourceContext, supplied: bridge?.metadata}) : bridge?.metadata;
+        const missingTarget = prepared?.status === "prepared" && !/^[A-Z]{3}$/.test(recordMetadata?.expected_target_currency ?? "");
+        const records = prepared?.status === "blocked" || missingTarget ? {status: "blocked", reason: missingTarget ? "reporting_currency_reference_required" : prepared.reason,
+          rows: [], canonical_validated: false, persistable: false, authorizes_activation: false, canonical_scope_ready: false, publishable: false}
+          : bridge || prepared ? bridgePdReadSnapshot({sourceContext, evidence, composition, metadata: recordMetadata}) : null;
+        if (pd || kpd || bridge || nativeMetadata) await currentContext();
         check();
         const result = copy({status: "source_read", source_context: sourceContext, evidence,
           ...(composition ? {composition} : {}),
           ...(records ? {records} : {}),
+          ...(prepared ? {native_metadata: prepared} : {}),
           rows_observed: rows, canonical_scope_ready: false, authorizes_activation: false, persistable: false, publishable: false});
-        if ((pd || kpd || bridge) && Buffer.byteLength(JSON.stringify(result), "utf8") > boundLimits.maxBytes) fail("RESULT_BOUND_EXCEEDED");
+        if ((pd || kpd || bridge || nativeMetadata) && Buffer.byteLength(JSON.stringify(result), "utf8") > boundLimits.maxBytes) fail("RESULT_BOUND_EXCEEDED");
         return result;
       })();
       return await Promise.race([operation, deadline, cancelled]);

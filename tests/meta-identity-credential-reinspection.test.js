@@ -103,9 +103,9 @@ function harness({mode = "pending", token = stored, native = valid, status = 200
 }
 const operations = {
   pending_inspect: h => h.runtime.inspect({installationAuthority: owner}),
-  pending_select: h => h.runtime.select({installationAuthority: owner, selectedAccountIds: ["act_1"]}),
+  pending_select: h => h.runtime.select({installationAuthority: owner, selectedAccountIds: ["act_1"], combinedSetupBinding: {connectionId: id(2), version: 7, credentialId: id(3)}}),
   pending_reporting_inspect: h => h.runtime.inspect({installationAuthority: owner}),
-  pending_reporting_finish: h => h.runtime.finishReporting({installationAuthority: owner, reportingAccountId: "act_1"}),
+  pending_reporting_finish: h => h.runtime.finishReporting({installationAuthority: owner, reportingAccountId: "act_1", combinedSetupBinding: {connectionId: id(2), version: 7, credentialId: id(3)}}),
   connected_inspect: h => h.runtime.inspect({installationAuthority: owner}),
   connected_change: h => h.runtime.changeReporting({installationAuthority: owner, reportingAccountId: "act_1"}),
 };
@@ -126,28 +126,28 @@ for (const [name, run] of Object.entries(operations)) {
 }
 test("unknown encrypted credential purpose stops before provider reads", async () => {
   const h = harness({token: {...stored, permission_profile: "identity_v2"}});
-  await assert.rejects(h.runtime.select({installationAuthority: owner, selectedAccountIds: ["act_1"]}),
+  await assert.rejects(h.runtime.select({installationAuthority: owner, selectedAccountIds: ["act_1"], combinedSetupBinding: {connectionId: id(2), version: 7, credentialId: id(3)}}),
     {code: "META_IDENTITY_CREDENTIAL_METADATA_REQUIRED"});
   assert.equal(h.calls.length, 0);
 });
 test("fresh native scope may succeed despite stale cached scope; cached scope is not scope evidence", async () => {
   const h = harness({token: {...stored, scopes: ["ads_read"]}});
-  await h.runtime.select({installationAuthority: owner, selectedAccountIds: ["act_1"]});
+  await h.runtime.select({installationAuthority: owner, selectedAccountIds: ["act_1"], combinedSetupBinding: {connectionId: id(2), version: 7, credentialId: id(3)}});
   assert.equal(h.calls.length, 2);
 });
 test("first native provider rejection does not exchange, retry or discover accounts", async () => {
   const h = harness({status: 403});
-  await assert.rejects(h.runtime.select({installationAuthority: owner, selectedAccountIds: ["act_1"]}));
+  await assert.rejects(h.runtime.select({installationAuthority: owner, selectedAccountIds: ["act_1"], combinedSetupBinding: {connectionId: id(2), version: 7, credentialId: id(3)}}));
   assert.equal(h.calls.length, 1);
 });
 test("first Ads error after successful inspection does not renew or retry", async () => {
   const h = harness({failAds: true});
-  await assert.rejects(h.runtime.select({installationAuthority: owner, selectedAccountIds: ["act_1"]}), /Meta authorization/);
+  await assert.rejects(h.runtime.select({installationAuthority: owner, selectedAccountIds: ["act_1"], combinedSetupBinding: {connectionId: id(2), version: 7, credentialId: id(3)}}), /Meta authorization/);
   assert.equal(h.calls.length, 2);
 });
 test("permission inspection cannot stay fresh through a long account discovery", async () => {
   const h = harness({advanceClock: true});
-  await assert.rejects(h.runtime.select({installationAuthority: owner, selectedAccountIds: ["act_1"]}), /evidence expired/);
+  await assert.rejects(h.runtime.select({installationAuthority: owner, selectedAccountIds: ["act_1"], combinedSetupBinding: {connectionId: id(2), version: 7, credentialId: id(3)}}), /evidence expired/);
   assert.equal(h.sqlCalls.some(c => c.sql.includes("complete_pending_provider_account_selection")), false);
 });
 test("ordinary reporting keeps existing account discovery and connected inspection behavior", async () => {

@@ -233,10 +233,10 @@ for (const provider of ["google_ads", "meta"]) {
       const h=runtimeHarness(provider,{enabled:true,current,commitStatus:connected?"connected":"pending_account_selection"});
       const r=await h.runtime.completeCallback({claimed:{...claimed,identityBinding:current?{connectionId:current.connectionId,version:current.version}:initial}});
       assert.equal(r.setupComplete,false);assert.equal(r.setupState,"resume_setup");
-      assert.equal(r.outcome,connected?"pending_asset_verification":"pending_account_selection");
+      assert.equal(r.outcome,connected?"reporting_account_selected":"pending_account_selection");
       assert.equal(r.connectionState,connected?"connected":"pending_account_selection");
-      assert.equal(r.setupReason,connected?"asset_verification_required":"account_selection_required");
-      assert.equal(r.setupResumeAction,connected?"verify_assets":"select_account");
+      assert.equal(r.setupReason,connected?"reporting_account_selected":"account_selection_required");
+      assert.equal(r.setupResumeAction,connected?"reporting_selected":"select_account");
       assert.deepEqual(h.writes,["atomic"]);assert.deepEqual(h.vault,[]);
     });
   }

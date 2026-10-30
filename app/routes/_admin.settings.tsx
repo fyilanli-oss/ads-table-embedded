@@ -1,4 +1,7 @@
-import type {ActionFunctionArgs, LoaderFunctionArgs} from "react-router";
+import {usePermissionSettings} from "../components/use-permission-settings";
+import {createPermissionSettings, PERMISSION_SETTINGS_AVAILABILITY} from "../lib/shopify/permission-settings.server.js";
+import type {PermissionFeature} from "../lib/ui/permission-explanation-flow.js";
+import type {ActionFunctionArgs, LoaderFunctionArgs, ShouldRevalidateFunctionArgs} from "react-router";
 import {
   useActionData,
   useLoaderData,
@@ -12,6 +15,7 @@ import {
   authenticate,
   database,
   providerTokenVault,
+  permissionSetup,
 } from "../shopify.server";
 import {
   resolveShopifyRouteAuthority,
@@ -34,6 +38,7 @@ type Advertiser = {
 };
 
 type State =
+  | {view: "combined"}
   | {view: "disconnected"; notice: "cancelled" | "disconnected" | null}
   | {view: "pending"; accounts: Advertiser[]}
   | {view: "pending_reporting"; accounts: Advertiser[]}
@@ -109,7 +114,7 @@ type KlaviyoState =
   | {view: "reauthorization"}
   | {view: "error"; code: string; retry: "oauth" | "reload"};
 
-type LoaderData = State & {meta: State; klaviyo: KlaviyoState};
+type LoaderData = State & {meta: State; klaviyo: KlaviyoState; permissionAvailability: typeof PERMISSION_SETTINGS_AVAILABILITY};
 
 function providerCodeOf(provider: Provider, error: unknown) {
   const prefix = provider === "meta"
@@ -182,6 +187,14 @@ async function routeAuthority(request: Request) {
   });
 }
 
+// Pending broader grants require bound account selection. A connected reporting
+// account returns to its existing view without a catalog-selection prerequisite.
+function requiresCombinedSelection(inspected: any) {
+  if (inspected?.state === "connected") return false;
+  const scopes = inspected?.pending?.scopes;
+  return Array.isArray(scopes) && scopes.some(scope => scope === "https://www.googleapis.com/auth/content" || scope === "catalog_management");
+}
+
 async function loadGoogleState(
   verified: Awaited<ReturnType<typeof routeAuthority>>,
   url: URL,
@@ -194,6 +207,7 @@ async function loadGoogleState(
     const inspected = await runtime.inspect({
       installationAuthority: verified.installationAuthority,
     });
+    if (requiresCombinedSelection(inspected)) return {view: "combined"};
     if (inspected.state === "connected") {
       if (!inspected.connection.reportingAccountId) {
         throw new Error("GOOGLE_REPORTING_ACCOUNT_REQUIRED");
@@ -256,6 +270,7 @@ async function loadMetaState(
     const inspected = await runtime.inspect({
       installationAuthority: verified.installationAuthority,
     });
+    if (requiresCombinedSelection(inspected)) return {view: "combined"};
     if (inspected.state === "connected") {
       if (!inspected.connection.reportingAccountId) {
         throw new Error("META_REPORTING_ACCOUNT_REQUIRED");
@@ -363,13 +378,57 @@ export const loader = async ({request}: LoaderFunctionArgs): Promise<LoaderData>
     loadMetaState(verified, url),
     loadKlaviyoState(verified, url),
   ]);
-  return {...google, meta, klaviyo};
+  return {...google, meta, klaviyo, permissionAvailability: PERMISSION_SETTINGS_AVAILABILITY};
 };
+
+const permissionIntents = new Set(["permission_connect", "permission_status", "permission_select_accounts", "permission_select_reporting"]);
+
+export function shouldRevalidate({formData, defaultShouldRevalidate}: ShouldRevalidateFunctionArgs) {
+  const intent = formData?.get("intent");
+  // Permission status reads are explicit; do not implicitly rerun provider loaders.
+  if (typeof intent === "string" && permissionIntents.has(intent)) return false;
+  return defaultShouldRevalidate;
+}
 
 export const action = async ({request}: ActionFunctionArgs) => {
   const verified = await routeAuthority(request);
   const form = await request.formData();
   const intent = form.get("intent");
+  if (typeof intent === "string" && permissionIntents.has(intent)) {
+    const featureValue = form.get("feature");
+    const requestId = form.get("requestId");
+    if (typeof featureValue !== "string" || !Object.hasOwn(PERMISSION_SETTINGS_AVAILABILITY, featureValue)
+      || typeof requestId !== "string" || !/^[a-f0-9-]{36}$/.test(requestId)) {
+      return new Response("Invalid permission action.", {status: 400});
+    }
+    const feature = featureValue as PermissionFeature;
+    const settings = createPermissionSettings({shopify: permissionSetup,
+      providerRuntime: (provider) => provider === "meta"
+        ? createMetaOAuthRuntime({database, tokenVault: providerTokenVault})
+        : provider === "klaviyo" ? createKlaviyoOAuthRuntime({database, tokenVault: providerTokenVault})
+        : createGoogleOAuthRuntime({database, tokenVault: providerTokenVault}),
+    });
+    try {
+      let result;
+      if (intent === "permission_connect") result = await settings.connect({feature, verified, action: "connect"});
+      else if (intent === "permission_status") result = await settings.status({feature, verified});
+      else {
+        const expected = {connectionId: String(form.get("connectionId") ?? ""), version: Number(form.get("version"))};
+        const encoded = String(form.get("selectedAccountIds") ?? "[]");
+        if (encoded.length > 1024) throw new Error("PERMISSION_SETTINGS_ACCOUNTS_INVALID");
+        result = await settings.select({feature, verified, expected,
+          operation: intent === "permission_select_accounts" ? "accounts" : "reporting",
+          selectedAccountIds: JSON.parse(encoded), reportingAccountId: String(form.get("reportingAccountId") ?? "")});
+      }
+      return {...result, requestId};
+    } catch (error) {
+      if (error instanceof Response) throw error;
+      return {kind: "unknown" as const, feature, requestId};
+    }
+  }
+  if (typeof intent === "string" && intent.startsWith("permission_")) {
+    return new Response("Invalid permission action.", {status: 400});
+  }
   const providerValue = form.get("provider");
   const provider: Provider = providerValue === "meta" || providerValue === "klaviyo"
     ? providerValue
@@ -672,10 +731,25 @@ export default function Settings() {
     if (openedKlaviyoSetup.current && !klaviyoResumeRequested.current) return;
     openedKlaviyoSetup.current = true;
     klaviyoResumeRequested.current = false;
-    setKlaviyoSetupStep("account");
-    setSelectedKlaviyoAccountId(null);
+    if (!selectedKlaviyoAccountId || !state.klaviyo.accounts.some(account => account.id === selectedKlaviyoAccountId)) {
+      setKlaviyoSetupStep("account");
+      setSelectedKlaviyoAccountId(null);
+    }
     klaviyoSetupModal.current?.showOverlay?.();
-  }, [state.klaviyo.view, klaviyoWorking]);
+  }, [state.klaviyo, klaviyoWorking, selectedKlaviyoAccountId]);
+
+  const permissions = usePermissionSettings({availability: state.permissionAvailability,
+    onResume(feature, stage) {
+      if (feature === "klaviyo") {
+        klaviyoResumeRequested.current = true;
+        revalidator.revalidate();
+      }
+      if ((feature === "google_ads" || feature === "meta") && stage === "reporting_selected") {
+        revalidator.revalidate();
+      }
+      // Re-read the normal reporting view after explicit account selection only.
+    },
+  });
 
   const send = (intent: string, provider: Provider = "google_ads") => {
     const form = new FormData();
@@ -860,8 +934,21 @@ export default function Settings() {
   return (
     <s-page heading="Settings">
       <Navigation />
+      <s-section heading="Shopify">
+        <s-stack direction="block" gap="base">
+          <s-button onClick={() => permissions.open("shopify_products")}>Connect Shopify products</s-button>
+          <s-button onClick={() => permissions.open("shopify_orders")}>Connect Shopify orders</s-button>
+          <s-button disabled={permissions.busy ? true : undefined} onClick={() => permissions.checkStatus("shopify_products")}>Check status</s-button>
+        </s-stack>
+      </s-section>
+      {permissions.content}
       <s-section heading="Meta">
         <s-stack direction="block" gap="base">
+          {state.meta.view === "combined" ? <>
+            <s-badge tone="warning">Resume setup</s-badge>
+            <s-button onClick={() => permissions.checkStatus("meta", true)}>Resume setup</s-button>
+            <s-button onClick={() => permissions.open("meta")}>Reconnect Meta</s-button>
+          </> : null}
           {actionData?.ok === false && actionData.provider === "meta"
             ? <ErrorBanner provider="meta" code={actionData.code} />
             : null}
@@ -879,14 +966,10 @@ export default function Settings() {
               <s-button
                 variant="primary"
                 onClick={() => {
-                  if (state.meta.view === "error" && state.meta.retry === "oauth") {
-                    send("begin", "meta");
-                  } else {
-                    revalidator.revalidate();
-                  }
+                  permissions.checkStatus("meta");
                 }}
               >
-                {state.meta.retry === "oauth" ? "Restart Meta setup" : "Try loading accounts again"}
+                Check status
               </s-button>
             </>
           ) : null}
@@ -897,7 +980,7 @@ export default function Settings() {
               <s-paragraph>
                 Meta authorization is no longer valid. Reconnect to continue.
               </s-paragraph>
-              <s-button variant="primary" onClick={() => send("begin", "meta")}>
+              <s-button variant="primary" onClick={() => permissions.open("meta")}>
                 Reconnect Meta
               </s-button>
             </>
@@ -908,7 +991,7 @@ export default function Settings() {
               <s-badge>Not connected</s-badge>
               {state.meta.notice === "cancelled" ? (
                 <s-banner tone="warning">
-                  Meta setup was cancelled. No advertiser account was connected.
+                  Setup was not completed. Review the connection status before continuing.
                 </s-banner>
               ) : null}
               {state.meta.notice === "disconnected" ? (
@@ -919,8 +1002,7 @@ export default function Settings() {
               </s-paragraph>
               <s-button
                 variant="primary"
-                commandFor="meta-connect-modal"
-                command="--show"
+                onClick={() => permissions.open("meta")}
               >
                 Connect Meta
               </s-button>
@@ -1140,38 +1222,15 @@ export default function Settings() {
           ) : null}
         </s-stack>
 
-        <s-modal id="meta-connect-modal" heading="Connect Meta">
-          <s-stack direction="block" gap="base">
-            <s-paragraph>
-              Continue with a Facebook account that can access the Meta
-              advertiser accounts you want to report. AdsTable requests read-only
-              advertising access.
-            </s-paragraph>
-            <s-paragraph>
-              If this browser is not signed in, Meta will ask you to sign in and
-              complete any required verification before returning to AdsTable.
-            </s-paragraph>
-          </s-stack>
-          <s-button
-            slot="primary-action"
-            variant="primary"
-            commandFor="meta-connect-modal"
-            command="--hide"
-            onClick={() => send("begin", "meta")}
-          >
-            Continue to Meta
-          </s-button>
-          <s-button
-            slot="secondary-actions"
-            commandFor="meta-connect-modal"
-            command="--hide"
-          >
-            Cancel
-          </s-button>
-        </s-modal>
+
       </s-section>
       <s-section heading="Google Ads">
         <s-stack direction="block" gap="base">
+          {state.view === "combined" ? <>
+            <s-badge tone="warning">Resume setup</s-badge>
+            <s-button onClick={() => permissions.checkStatus("google_ads", true)}>Resume setup</s-button>
+            <s-button onClick={() => permissions.open("google_ads")}>Reconnect Google Ads</s-button>
+          </> : null}
           {actionData?.ok === false && actionData.provider === "google_ads"
             ? <ErrorBanner provider="google_ads" code={actionData.code} />
             : null}
@@ -1189,11 +1248,10 @@ export default function Settings() {
               <s-button
                 variant="primary"
                 onClick={() => {
-                  if (state.retry === "oauth") send("begin");
-                  else revalidator.revalidate();
+                  permissions.checkStatus("google_ads");
                 }}
               >
-                {state.retry === "oauth" ? "Restart Google Ads setup" : "Try loading accounts again"}
+                Check status
               </s-button>
             </>
           ) : null}
@@ -1204,7 +1262,7 @@ export default function Settings() {
               <s-paragraph>
                 Google authorization is no longer valid. Reconnect to continue.
               </s-paragraph>
-              <s-button variant="primary" onClick={() => send("begin")}>
+              <s-button variant="primary" onClick={() => permissions.open("google_ads")}>
                 Reconnect Google Ads
               </s-button>
             </>
@@ -1215,7 +1273,7 @@ export default function Settings() {
               <s-badge>Not connected</s-badge>
               {state.notice === "cancelled" ? (
                 <s-banner tone="warning">
-                  Google Ads setup was cancelled. No advertiser account was connected.
+                  Setup was not completed. Review the connection status before continuing.
                 </s-banner>
               ) : null}
               {state.notice === "disconnected" ? (
@@ -1227,8 +1285,7 @@ export default function Settings() {
               </s-paragraph>
               <s-button
                 variant="primary"
-                commandFor="google-connect-modal"
-                command="--show"
+                onClick={() => permissions.open("google_ads")}
               >
                 Connect Google Ads
               </s-button>
@@ -1478,34 +1535,7 @@ export default function Settings() {
           ) : null}
         </s-stack>
 
-        <s-modal id="google-connect-modal" heading="Connect Google Ads">
-          <s-stack direction="block" gap="base">
-            <s-paragraph>
-              Continue with a Google account that can access the advertiser
-              accounts you want to report. AdsTable requests read-only Google Ads
-              reporting access.
-            </s-paragraph>
-            <s-paragraph>
-              After authorization, AdsTable will show advertiser accounts only.
-            </s-paragraph>
-          </s-stack>
-          <s-button
-            slot="primary-action"
-            variant="primary"
-            commandFor="google-connect-modal"
-            command="--hide"
-            onClick={() => send("begin")}
-          >
-            Continue to Google
-          </s-button>
-          <s-button
-            slot="secondary-actions"
-            commandFor="google-connect-modal"
-            command="--hide"
-          >
-            Cancel
-          </s-button>
-        </s-modal>
+
       </s-section>
       <s-section heading="Klaviyo">
         <s-stack direction="block" gap="base">
@@ -1526,16 +1556,10 @@ export default function Settings() {
               <s-button
                 variant="primary"
                 onClick={() => {
-                  if (state.klaviyo.view === "error" && state.klaviyo.retry === "oauth") {
-                    send("begin", "klaviyo");
-                  } else {
-                    revalidator.revalidate();
-                  }
+                  permissions.checkStatus("klaviyo");
                 }}
               >
-                {state.klaviyo.retry === "oauth"
-                  ? "Restart Klaviyo setup"
-                  : "Try loading Klaviyo again"}
+                Check status
               </s-button>
             </>
           ) : null}
@@ -1546,7 +1570,7 @@ export default function Settings() {
               <s-paragraph>
                 Klaviyo authorization is no longer valid. Reconnect to continue.
               </s-paragraph>
-              <s-button variant="primary" onClick={() => send("begin", "klaviyo")}>
+              <s-button variant="primary" onClick={() => permissions.open("klaviyo")}>
                 Reconnect Klaviyo
               </s-button>
             </>
@@ -1557,7 +1581,7 @@ export default function Settings() {
               <s-badge>Not connected</s-badge>
               {state.klaviyo.notice === "cancelled" ? (
                 <s-banner tone="warning">
-                  Klaviyo setup was cancelled. No account was connected.
+                  Setup was not completed. Review the connection status before continuing.
                 </s-banner>
               ) : null}
               {state.klaviyo.notice === "disconnected" ? (
@@ -1569,8 +1593,7 @@ export default function Settings() {
               </s-paragraph>
               <s-button
                 variant="primary"
-                commandFor="klaviyo-connect-modal"
-                command="--show"
+                onClick={() => permissions.open("klaviyo")}
               >
                 Connect Klaviyo
               </s-button>
@@ -1866,34 +1889,7 @@ export default function Settings() {
           ) : null}
         </s-stack>
 
-        <s-modal id="klaviyo-connect-modal" heading="Connect Klaviyo">
-          <s-stack direction="block" gap="base">
-            <s-paragraph>
-              Continue to Klaviyo to authorize one account. AdsTable requests
-              the read-only scopes required for account and reporting access.
-            </s-paragraph>
-            <s-paragraph>
-              After authorization, AdsTable will ask for the estimated 30-day
-              email spend before the connection is completed.
-            </s-paragraph>
-          </s-stack>
-          <s-button
-            slot="primary-action"
-            variant="primary"
-            commandFor="klaviyo-connect-modal"
-            command="--hide"
-            onClick={() => send("begin", "klaviyo")}
-          >
-            Continue to Klaviyo
-          </s-button>
-          <s-button
-            slot="secondary-actions"
-            commandFor="klaviyo-connect-modal"
-            command="--hide"
-          >
-            Cancel
-          </s-button>
-        </s-modal>
+
       </s-section>
     </s-page>
   );

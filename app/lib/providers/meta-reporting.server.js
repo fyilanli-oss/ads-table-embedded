@@ -306,16 +306,22 @@ export function buildMetaAdChannelInsightsUrl({
   after = null,
   graphVersion = META_GRAPH_VERSION,
   limit = 100,
+  nativeMetadata = false,
 }) {
+  if (typeof nativeMetadata !== "boolean") throw new TypeError("nativeMetadata must be boolean");
   const url = baseInsightsUrl({
     adAccountId,
     dateWindow,
     after,
     graphVersion,
     limit,
-    fields: META_AD_CHANNEL_INSIGHTS_FIELDS,
+    fields: nativeMetadata ? [...META_AD_CHANNEL_INSIGHTS_FIELDS, "account_currency", "attribution_setting"] : META_AD_CHANNEL_INSIGHTS_FIELDS,
   });
   url.searchParams.set("action_breakdowns", "action_type");
+  if (nativeMetadata) {
+    url.searchParams.set("action_report_time", "impression");
+    url.searchParams.set("use_unified_attribution_setting", "true");
+  }
   return url.toString();
 }
 
@@ -327,6 +333,7 @@ export async function fetchMetaAdChannelInsightsPage({
   after = null,
   graphVersion = META_GRAPH_VERSION,
   fetchFn = fetch,
+  nativeMetadata = false,
 }) {
   if (typeof fetchFn !== "function") throw new TypeError("fetchFn is required");
   const url = buildMetaAdChannelInsightsUrl({
@@ -334,6 +341,7 @@ export async function fetchMetaAdChannelInsightsPage({
     dateWindow,
     after,
     graphVersion,
+    nativeMetadata,
   });
   const {payload, response, nextCursor, rateLimit} = await fetchMetaInsightsPayload({
     url,
@@ -358,7 +366,8 @@ export async function fetchMetaAdChannelInsightsPage({
       graph_version: graphVersion,
       level: "ad",
       time_increment: 1,
-      requested_fields: META_AD_CHANNEL_INSIGHTS_FIELDS,
+      requested_fields: nativeMetadata ? [...META_AD_CHANNEL_INSIGHTS_FIELDS, "account_currency", "attribution_setting"] : META_AD_CHANNEL_INSIGHTS_FIELDS,
+      ...(nativeMetadata ? {action_report_time: "impression", use_unified_attribution_setting: true} : {}),
       breakdowns: Object.freeze([]),
       action_breakdowns: Object.freeze(["action_type"]),
       pd_mapping_version: "1.0.0",
@@ -369,6 +378,7 @@ export async function fetchMetaAdChannelInsightsPage({
 }
 
 export function buildMetaProductBreakdownInsightsUrl({
+  nativeMetadata = false,
   adAccountId,
   dateWindow,
   after = null,
@@ -376,6 +386,7 @@ export function buildMetaProductBreakdownInsightsUrl({
   limit = 100,
   includePromotedProductMetrics = false,
 }) {
+  if (typeof nativeMetadata !== "boolean") throw new TypeError("nativeMetadata must be boolean");
   const url = baseInsightsUrl({
     adAccountId,
     dateWindow,
@@ -385,11 +396,13 @@ export function buildMetaProductBreakdownInsightsUrl({
     fields: productFields(includePromotedProductMetrics),
   });
   url.searchParams.set("breakdowns", "product_id");
+  if (nativeMetadata) {url.searchParams.set("action_report_time", "impression"); url.searchParams.set("use_unified_attribution_setting", "true");}
   url.searchParams.set("product_id_limit", String(META_PRODUCT_BREAKDOWN_ID_LIMIT));
   return url.toString();
 }
 
 export async function fetchMetaProductBreakdownInsightsPage({
+  nativeMetadata = false,
   accessToken,
   appSecret,
   adAccountId,
@@ -401,6 +414,7 @@ export async function fetchMetaProductBreakdownInsightsPage({
 }) {
   if (typeof fetchFn !== "function") throw new TypeError("fetchFn is required");
   const url = buildMetaProductBreakdownInsightsUrl({
+    nativeMetadata,
     adAccountId,
     dateWindow,
     after,

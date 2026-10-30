@@ -11,6 +11,7 @@ import {
 import {buildGoogleReportingQueries, fetchGoogleReportingPage, GoogleReportingError} from "./google-reporting.server.js";
 import {buildGoogleSearchSourceLinks, buildGoogleShoppingSourceLinks} from "./google-source-links.server.js";
 import {GOOGLE_PD_FLOW_FAMILIES} from "./google-pd-orchestration.server.js";
+import {readGooglePdNativeMetadata} from "./google-pd-native-metadata.server.js";
 
 const PROVIDER = "google_ads";
 const CUSTOMER_ID_PATTERN = /^[0-9]+$/;
@@ -120,7 +121,7 @@ export function createGoogleReportingAuthorityRuntime({
       loginCustomerId: context.reportingAccount.loginAccountId, fetchFn});
   }
 
-  async function collect(context, queryFamily, dateWindow, bounds = null) {
+  async function collect(context, queryFamily, dateWindow, bounds = null, nativeMetadata = false) {
     const client = clientFor(context);
     const rows = [];
     const pdMetricRows = [];
@@ -132,7 +133,7 @@ export function createGoogleReportingAuthorityRuntime({
     const spans = [];
     for (let pageNumber = 0; pageNumber < (bounds?.maxPages ?? 20); pageNumber++) {
       const page = await fetchGoogleReportingPage({client, customerId: context.reportingAccount.id,
-        queryFamily, dateWindow, pageToken: cursor});
+        queryFamily, dateWindow, pageToken: cursor, nativeMetadata});
       if (!first) first = page;
       const offset = rows.length;
       if (bounds) {
@@ -166,9 +167,9 @@ export function createGoogleReportingAuthorityRuntime({
 
   return Object.freeze({
     prepareEvidenceExecution,
-    async readPdEvidenceSnapshot({installationAuthority, dateWindow, flow, limits}) {
+    async readPdEvidenceSnapshot({installationAuthority, dateWindow, flow, limits, nativeMetadata = false}) {
       const pair = Object.hasOwn(GOOGLE_PD_FLOW_FAMILIES, flow ?? "") ? GOOGLE_PD_FLOW_FAMILIES[flow] : null;
-      if (!pair || dateWindow?.start !== dateWindow?.end || !limits
+      if (typeof nativeMetadata !== "boolean" || !pair || dateWindow?.start !== dateWindow?.end || !limits
         || !["maxPages", "maxRows", "maxBytes"].every(k => Number.isSafeInteger(limits[k]) && limits[k] > 0)
         || limits.maxPages > 20 || limits.maxRows > 20_000) {
         throw new GoogleReportingError("GOOGLE_PD_READ_INPUT_INVALID", "Google PD read input is invalid");
@@ -176,19 +177,32 @@ export function createGoogleReportingAuthorityRuntime({
       const dates = Object.freeze({...dateWindow}), bounds = Object.freeze({...limits});
       buildGoogleReportingQueries({dateWindow: dates});
       const context = await prepareEvidenceExecution({installationAuthority});
-      const performance = await collect(context, pair[0], dates, bounds);
-      const remaining = {...bounds, maxRows: bounds.maxRows - performance.rows.length,
-        maxBytes: bounds.maxBytes - Buffer.byteLength(JSON.stringify(performance), "utf8")};
+      const nativeInput = {client: clientFor(context), accountId: context.reportingAccount.id, currency: context.reportingAccount.currency,
+        timezone: context.reportingAccount.timezone, limits: bounds};
+      const before = nativeMetadata ? await readGooglePdNativeMetadata(nativeInput) : null;
+      const sourceBounds = nativeMetadata ? {...bounds, maxRows: bounds.maxRows - before.observed_rows,
+        maxBytes: bounds.maxBytes - before.observed_response_bytes} : bounds;
+      if (sourceBounds.maxRows < 0 || sourceBounds.maxBytes <= 0) throw new GoogleReportingError("GOOGLE_PD_READ_BOUND_EXCEEDED", "Google PD read bound exceeded");
+      const performance = await collect(context, pair[0], dates, sourceBounds, nativeMetadata);
+      const remaining = {...sourceBounds, maxRows: sourceBounds.maxRows - performance.rows.length,
+        maxBytes: sourceBounds.maxBytes - Buffer.byteLength(JSON.stringify(performance), "utf8")};
       if (remaining.maxBytes <= 0) throw new GoogleReportingError("GOOGLE_PD_READ_BOUND_EXCEEDED", "Google PD read bound exceeded");
       const conversions = await collect(context, pair[1], dates, remaining);
+      const afterBounds = {...remaining, maxRows: remaining.maxRows - conversions.rows.length,
+        maxBytes: remaining.maxBytes - Buffer.byteLength(JSON.stringify(conversions), "utf8")};
+      if (nativeMetadata && (afterBounds.maxRows < 1 || afterBounds.maxBytes <= 0)) throw new GoogleReportingError("GOOGLE_PD_READ_BOUND_EXCEEDED", "Google PD read bound exceeded");
+      const after = nativeMetadata ? await readGooglePdNativeMetadata({...nativeInput, limits: afterBounds}) : null;
       if (performance.rows.length + conversions.rows.length > bounds.maxRows
         || Buffer.byteLength(JSON.stringify([performance, conversions]), "utf8") > bounds.maxBytes) {
         throw new GoogleReportingError("GOOGLE_PD_READ_BOUND_EXCEEDED", "Google PD read bound exceeded");
       }
-      return Object.freeze({provider: PROVIDER, flow, date_window: dates, authority: Object.freeze({
+      const result = {provider: PROVIDER, flow, date_window: dates, authority: Object.freeze({
         connection_id: context.connection.connectionId, reporting_account_id: context.reportingAccount.id,
         reporting_account_currency: context.reportingAccount.currency, reporting_account_timezone: context.reportingAccount.timezone,
-      }), results: Object.freeze({performance, conversions}), publishable: false});
+      }), results: Object.freeze({performance, conversions}), ...(nativeMetadata ? {native_metadata: {before, after}} : {}), publishable: false};
+      if (nativeMetadata && ([before, after].reduce((n, m) => n + m.account.rows.length + m.actions.rows.length, performance.rows.length + conversions.rows.length) > bounds.maxRows
+        || Buffer.byteLength(JSON.stringify(result), "utf8") > bounds.maxBytes)) throw new GoogleReportingError("GOOGLE_PD_READ_BOUND_EXCEEDED", "Google PD read bound exceeded");
+      return Object.freeze(result);
     },
     async readSearchSourceEvidenceSnapshot({installationAuthority, dateWindow}) {
       const installation = owner(installationAuthority);

@@ -14,6 +14,7 @@ export function createKlaviyoReportingAuthorityRuntime(input?: {
     installationAuthority: any;
     businessDate?: string | null;
     limits?: {maxPages: number; maxRows: number; maxBytes: number} | null;
+    nativeMetadata?: boolean;
   }): Promise<any>;
   readDailyEvidenceSnapshot(input: {
     installationAuthority: any;

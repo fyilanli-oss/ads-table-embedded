@@ -12,6 +12,7 @@ export function buildGoogleReportingQueries(input: {
 }): Readonly<Record<string, string>>;
 
 export function fetchGoogleReportingPage(input: {
+  nativeMetadata?: boolean;
   client: {search(input: Record<string, unknown>): Promise<any>};
   customerId: string;
   queryFamily: string;

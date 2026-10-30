@@ -349,11 +349,27 @@ export function createKlaviyoReportingAuthorityRuntime({
   }
 
   return Object.freeze({
-    async readPdEvidenceSnapshot({installationAuthority, businessDate = null, limits = null}) {
+    async readPdEvidenceSnapshot({installationAuthority, businessDate = null, limits = null, nativeMetadata = false}) {
+      if (typeof nativeMetadata !== "boolean") fail("KLAVIYO_PD_READ_INPUT_INVALID", "Klaviyo metadata option is invalid");
       if (limits !== null && (!["maxPages", "maxRows", "maxBytes"].every(k => Number.isSafeInteger(limits?.[k]) && limits[k] > 0)
         || limits.maxPages > MAX_PAGES_PER_FAMILY || limits.maxRows > 20_000)) fail("KLAVIYO_PD_READ_INPUT_INVALID", "Klaviyo PD limits are invalid");
       const budget = limits === null ? null : {maxPages: limits.maxPages, maxRows: limits.maxRows, maxBytes: limits.maxBytes, rows: 0, bytes: 0};
       const context = await prepareContext(installationAuthority);
+      const readNativeAccount = async () => {
+        const request = {url: `${API_ORIGIN}/api/accounts?fields%5Baccount%5D=id%2Cpreferred_currency%2Ctimezone`, method: "GET",
+          headers: {authorization: `Bearer ${context.accessToken}`, accept: "application/vnd.api+json", revision: KLAVIYO_REPORTING_API_REVISION}};
+        const result = await providerRequest(context, request, "pd_account_metadata");
+        const rows = result.payload?.data;
+        if (!Array.isArray(rows) || rows.length !== 1 || rows[0]?.type !== "account") fail("KLAVIYO_PD_ACCOUNT_METADATA_INVALID", "Klaviyo account metadata is invalid");
+        if (rows[0].id !== context.account.id || rows[0].attributes?.preferred_currency !== context.account.currency
+          || rows[0].attributes?.timezone !== context.account.timezone) fail("KLAVIYO_PD_ACCOUNT_METADATA_MISMATCH", "Klaviyo native account metadata changed");
+        if (budget) {
+          budget.rows++; budget.bytes += Buffer.byteLength(JSON.stringify(result.payload), "utf8");
+          if (budget.rows > budget.maxRows || budget.bytes > budget.maxBytes) fail("KLAVIYO_PD_READ_BOUND_EXCEEDED", "Klaviyo metadata bound exceeded");
+        }
+        return {account: {id: rows[0].id, currency: rows[0].attributes?.preferred_currency, timezone: rows[0].attributes?.timezone}, request_id: result.requestId};
+      };
+      const before = nativeMetadata ? await readNativeAccount() : null;
       const resolvedBusinessDate = businessDate ?? calendarDateInTimeZone(now(), context.account.timezone);
       const timeframe = klaviyoBusinessDayTimeframe({businessDate: resolvedBusinessDate, timeZone: context.account.timezone});
       const result = await runKlaviyoPdReportingFamilies({
@@ -377,9 +393,11 @@ export function createKlaviyoReportingAuthorityRuntime({
             evidence: Object.freeze({revision: KLAVIYO_REPORTING_API_REVISION, request_body: JSON.parse(buildKlaviyoPdValuesRequest(input).body)})});
         },
       });
+      const after = nativeMetadata && ["completed", "configuration_missing"].includes(result.status) ? await readNativeAccount() : null;
       return Object.freeze({provider: PROVIDER, authority: Object.freeze({connection_id: context.connection.connectionId,
         connected_account_id: context.account.id, connected_account_currency: context.account.currency,
-        connected_account_timezone: context.account.timezone}), business_date: resolvedBusinessDate, timeframe, ...result});
+        connected_account_timezone: context.account.timezone}), business_date: resolvedBusinessDate, timeframe, ...result,
+        ...(nativeMetadata ? {native_metadata: {before, after, attribution_state: "no_documented_settings_endpoint_identified"}} : {})});
     },
     async readDailyEvidenceSnapshot({installationAuthority, businessDate = null}) {
       const context = await prepareContext(installationAuthority);

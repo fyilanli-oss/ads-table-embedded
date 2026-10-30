@@ -222,3 +222,45 @@ test("runtime common-record bridge preserves native evidence when FX is missing"
   assert.deepEqual(result.records.rows, []);
   assert.deepEqual(result.evidence, native.evidence);
 });
+
+test("Klaviyo documented default unlocks composition without recalculating native sales or adding requests",async()=>{
+  const f=fixture();f.config.nativeMetadata=true;delete f.config.klaviyoPd.compositionContexts;
+  const baseline=await fixture().create().readEvidence();
+  const original=f.config.fetchFn;let accountReads=0;
+  f.config.fetchFn=async(address,init)=>{if(new URL(address).pathname==="/api/accounts"){
+    accountReads++;assert.equal(new URL(address).searchParams.get("fields[account]"),"id,preferred_currency,timezone");
+    return json({data:[{type:"account",id:"ABC123",attributes:{preferred_currency:"USD",timezone:"Europe/Istanbul"}}]});}
+    return original(address,init);};
+  const r=await f.create().readEvidence();assert.equal(accountReads,2);
+  assert.equal(r.native_metadata.status,"prepared");
+  assert.equal(r.native_metadata.attribution.account_settings_verified,false);
+  assert.equal(r.evidence.results.reports.length,6);
+  assert.equal(r.composition.status,"composed");
+  assert.deepEqual(r.composition.rows.map(f=>f.raw_metrics),baseline.composition.rows.map(f=>f.raw_metrics));
+  assert.equal(r.source_context.metadata_state,"native_account_with_documented_default_attribution_reference");
+  assert.equal(r.records.reason,"reporting_currency_reference_required");
+  assert.equal(f.state.requests.length,14);
+  assert.equal(r.native_metadata.units.source_currency,"USD");assert.equal(r.persistable,false);
+  for(const fact of r.composition.rows) assert.equal("sales_role" in fact,false);
+  f.config.recordBridge={metadata:recordMetadata(r.source_context,r.composition.rows)};
+  const withFx=await f.create().readEvidence();
+  // Missing Campaign names stay missing; native default does not manufacture
+  // hierarchy labels to force canonical acceptance.
+  assert.equal(withFx.records.status,"blocked");
+  assert.ok(withFx.records.decisions.some(d=>d.status!=="validated"));
+  // Flow has a native parent name; Campaign reports do not promise one.
+  // Exercise the complete Flow path without adding an unsupported grouping.
+  for (const name of names) f.reports[`campaign:${name}`]=[];
+  const complete=await f.create().readEvidence();
+  assert.equal(complete.records.status,"validated",JSON.stringify({reason:complete.records.reason,composition:complete.composition.reason,decisions:complete.records.decisions}));
+  for(const row of complete.records.rows) {
+    assert.equal(row.provenance.source_confidence,"fallback");
+    assert.equal(row.provenance.raw_reference.source_fact.source_execution.attribution_reference.account_settings_verified,false);
+    assert.equal(row.provenance.raw_reference.source_fact.source_execution.attribution_reference.source,"official_documented_default");
+  }
+});
+test("Klaviyo changed native account blocks before reports",async()=>{
+  const f=fixture();f.config.nativeMetadata=true;delete f.config.klaviyoPd.compositionContexts;
+  f.config.fetchFn=async()=>json({data:[{type:"account",id:"WRONG",attributes:{preferred_currency:"USD",timezone:"Europe/Istanbul"}}]});
+  await assert.rejects(f.create().readEvidence());assert.equal(f.state.reserves,1);
+});

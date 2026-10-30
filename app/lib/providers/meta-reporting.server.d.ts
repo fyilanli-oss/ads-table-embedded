@@ -12,6 +12,7 @@ export type MetaPdMetricProjection = Readonly<{
 export function mapMetaPdMetrics(row: Readonly<Record<string, unknown>>): MetaPdMetricProjection;
 
 export function buildMetaAdChannelInsightsUrl(input: {
+  nativeMetadata?: boolean;
   adAccountId: string;
   dateWindow: {start: string; end: string};
   after?: string | null;
@@ -20,6 +21,7 @@ export function buildMetaAdChannelInsightsUrl(input: {
 }): string;
 
 export function fetchMetaAdChannelInsightsPage(input: {
+  nativeMetadata?: boolean;
   accessToken: string;
   appSecret: string;
   adAccountId: string;
@@ -39,6 +41,7 @@ export function fetchMetaAdChannelInsightsPage(input: {
 }>;
 
 export function buildMetaProductBreakdownInsightsUrl(input: {
+  nativeMetadata?: boolean;
   includePromotedProductMetrics?: boolean;
   adAccountId: string;
   dateWindow: {start: string; end: string};
@@ -48,6 +51,7 @@ export function buildMetaProductBreakdownInsightsUrl(input: {
 }): string;
 
 export function fetchMetaProductBreakdownInsightsPage(input: {
+  nativeMetadata?: boolean;
   includePromotedProductMetrics?: boolean;
   accessToken: string;
   appSecret: string;

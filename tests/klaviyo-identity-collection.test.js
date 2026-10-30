@@ -1044,3 +1044,22 @@ test("Klaviyo integrated prewrite does not combine a different execution or hide
   assert.equal(r.interactionReview.state,"conflicting_references");
   assert.equal(r.salesRolesChanged,false);assert.equal(r.persistable,false);
 });
+
+
+import {reviewRefreshSetupProof} from "../app/lib/refresh/setup-proof-review.server.js";
+import {shopifyScopeProof} from "./helpers/shopify-scope-proof.js";
+test("Klaviyo setup proof binds native account/metric/events and keeps app approval unknown",async()=>{
+  const f=candidateBoundFixture(),identity=await f.create().readEvidence(),scope=candidatePrewriteOwner(),{job}=candidateContext(identity);
+  const pd=await pdSourceObservation(scope,job,job.window,{identityScopes:true,readAt:f.state.now.toISOString()});
+  const shopify=await shopifyScopeProof(scope,["read_products"],f.state.now.toISOString());
+  const input={pdObservation:pd.observation,identity,shopify,now:()=>f.state.now};
+  const r=reviewRefreshSetupProof(input);assert.equal(r.status,"reviewed_for_prewrite_only");
+  assert.equal(r.assetAccessState,"observed_account_metric_event_read");assert.equal(r.ordersReady,false);
+  assert.equal(r.developerAppApproval,"not_observed");assert.equal(r.authorizesActivation,false);
+  assert.equal(reviewRefreshSetupProof({...input,identity:structuredClone(identity)}).reason,"klaviyo_native_identity_scope_mismatch");
+  const other=candidateBoundFixture();other.config.claim.fence++;
+  assert.equal(reviewRefreshSetupProof({...input,identity:await other.create().readEvidence()}).reason,"klaviyo_native_identity_scope_mismatch");
+  f.state.now=new Date(f.state.now.valueOf()+600001);
+  const fresh=await shopifyScopeProof(scope,["read_products"],f.state.now.toISOString());
+  assert.equal(reviewRefreshSetupProof({...input,shopify:fresh}).reason,"provider_access_evidence_stale_or_future");
+});

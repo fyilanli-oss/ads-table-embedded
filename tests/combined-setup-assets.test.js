@@ -250,3 +250,107 @@ test("Google: expired credential requires renewal outside this probe, no automat
   const f = fixture("google_ads"); f.state.now = new Date("2026-10-29T16:00:00.000Z");
   await assert.rejects(f.run()); assert.equal(f.calls.length, 0);
 });
+
+
+import {reviewRefreshSetupProof} from "../app/lib/refresh/setup-proof-review.server.js";
+import {pdSourceObservation} from "./helpers/pd-source-observation.js";
+import {shopifyScopeProof} from "./helpers/shopify-scope-proof.js";
+import {runRefreshPdPrewriteChunk} from "../app/lib/refresh/pd-prewrite-chunk.server.js";
+async function setupProofFixture(provider="meta",options={}) {
+  const f=fixture(provider), assets=await f.run(), scope={provider,workspaceId:workspace,installGeneration:3,installationId:"42",
+    shopId:"gid://shopify/Shop/12",shopDomain:"test.myshopify.com",connectionId:connection,connectionVersion:2,
+    reportingSelectionEpoch:"71",accountId:f.state.account};
+  const pd=await pdSourceObservation(scope,{id:"job1",fence:2},{from:"2026-10-01",to:"2026-10-01"},{identityScopes:options.identityScopes??true,readAt:f.state.now.toISOString(),loginAccountId:f.state.manager});
+  const shopify=await shopifyScopeProof(scope,options.scopes??["read_products"],f.state.now.toISOString());
+  return {f,pd,scope,input:{pdObservation:pd.observation,assets,shopify,now:()=>f.state.now}};
+}
+for(const provider of ["meta","google_ads"]) {
+  test(provider+": setup proof binds actual native readers but does not manufacture app approval",async()=>{
+    const {input}=await setupProofFixture(provider),r=reviewRefreshSetupProof(input);
+    assert.equal(r.status,"reviewed_for_prewrite_only");assert.equal(r.baseReady,true);assert.equal(r.ordersReady,false);
+    assert.equal(r.providerScopeState,"stored_sufficient");assert.equal(r.providerScopeSource,"retained_scope_list_not_fresh_native_grant");
+    assert.equal(r.developerAppApproval,"not_observed");assert.equal(r.nativePermissionVerified,false);assert.equal(r.authorizesActivation,false);
+  });
+  test(provider+": setup proof does not accept Connected, scope JSON or copied native observations",async()=>{
+    const {input}=await setupProofFixture(provider);
+    assert.equal(reviewRefreshSetupProof({...input,assets:structuredClone(input.assets)}).reason,"original_provider_asset_observation_required");
+    assert.equal(reviewRefreshSetupProof({...input,shopify:structuredClone(input.shopify)}).reason,"original_shopify_scope_inspection_required");
+    assert.equal(reviewRefreshSetupProof({...input,pdObservation:structuredClone(input.pdObservation)}).reason,"original_pd_observation_required");
+    assert.throws(()=>reviewRefreshSetupProof({...input,setupComplete:true}),/INPUT_INVALID/);
+  });
+  test(provider+": Orders is separate from Products and read/write equivalents keep existing semantics",async()=>{
+    const {input,scope,f}=await setupProofFixture(provider);
+    const orders=reviewRefreshSetupProof({...input,includeOrders:true});
+    assert.equal(orders.baseReady,true);assert.equal(orders.status,"blocked");assert.equal(orders.reason,"shopify_orders_scope_required");
+    const granted=await shopifyScopeProof(scope,["write_products","write_orders"],f.state.now.toISOString());
+    assert.equal(reviewRefreshSetupProof({...input,shopify:granted,includeOrders:true}).status,"reviewed_for_prewrite_only");
+    const revoked=await shopifyScopeProof(scope,[],f.state.now.toISOString());
+    assert.equal(reviewRefreshSetupProof({...input,shopify:revoked}).reason,"shopify_products_scope_missing");
+  });
+  test(provider+": foreign shop and different provider account evidence cannot satisfy setup",async()=>{
+    const {input,scope,f}=await setupProofFixture(provider);
+    const foreign=await shopifyScopeProof({...scope,shopId:"gid://shopify/Shop/99"},["read_products"],f.state.now.toISOString());
+    assert.equal(reviewRefreshSetupProof({...input,shopify:foreign}).reason,"shopify_scope_owner_mismatch");
+    f.state.epoch="72";const other=await f.run();
+    assert.equal(reviewRefreshSetupProof({...input,assets:other}).reason,"provider_asset_scope_mismatch");
+  });
+  test(provider+": stale and future observations stay unknown instead of activating",async()=>{
+    const {input,f}=await setupProofFixture(provider);
+    f.state.now=new Date(f.state.now.valueOf()+600001);
+    assert.equal(reviewRefreshSetupProof(input).reason,"shopify_scope_evidence_unconfirmed");
+    f.state.now=new Date("2026-10-29T14:59:00.000Z");
+    assert.equal(reviewRefreshSetupProof(input).reason,"shopify_scope_evidence_unconfirmed");
+  });
+}
+test("Meta stored reporting-only scope cannot masquerade as full catalog scope proof",async()=>{
+  const {input}=await setupProofFixture("meta",{identityScopes:false});
+  assert.equal(reviewRefreshSetupProof(input).reason,"provider_stored_scope_profile_incomplete");
+});
+test("Meta setup proof is consumed and rechecked by the actual worker without Orders blocking base work",async()=>{
+  const {input,pd,f}=await setupProofFixture(),{claim,window,entitlementReceipt,now,...source}=pd.config;
+  source.readNow=()=>f.state.now;
+  const stages=[];const worker={claim:{...claim,cost:{requests:64,dbWrites:32,connections:4,rows:100,bytes:300000}},window,now,
+    limits:{deadlineAt:100000,requestTimeoutMs:10000,finishReserveMs:100,maxRows:100,maxBytes:300000},loadAuthority:pd.authority,
+    verifyEntitlement:async()=>({status:"verified",receipt:entitlementReceipt}),isEntitlementCurrent:async()=>true,
+    store:{advanceStage:async s=>{stages.push(s.stage);return true;},isClaimCurrent:async()=>true,
+      readAdmissionSnapshot:async()=>({state:{revision:1}}),recordStop:async()=>({recorded:true})}};
+  const r=await runRefreshPdPrewriteChunk({worker,source,setup:{shopify:input.shopify,assets:input.assets}});
+  assert.equal(r.status,"awaiting_dataset");assert.equal(r.setup_review.baseReady,true);assert.equal(r.setup_review.ordersReady,false);
+  assert.equal(r.setup_review.authorizesActivation,false);assert.equal(r.persistable,false);
+  const missing=await runRefreshPdPrewriteChunk({worker,source,setup:{}});
+  assert.equal(missing.source_review.reason,"original_shopify_scope_inspection_required");assert.equal(missing.rows,undefined);
+  let n=0;worker.loadAuthority=async()=>{const a=await pd.authority();if(++n===3)f.state.now=new Date(f.state.now.valueOf()+600001);return a;};
+  const expired=await runRefreshPdPrewriteChunk({worker,source,setup:{shopify:input.shopify,assets:input.assets}});
+  assert.equal(expired.reason,"authority_check_failed_after_request");assert.equal(expired.rows,undefined);
+});
+
+
+test("Setup proof checks provider expiry separately from fresh Shopify scope evidence",async()=>{
+  const {input,scope,f}=await setupProofFixture();
+  f.state.now=new Date(f.state.now.valueOf()+600001);
+  const fresh=await shopifyScopeProof(scope,["read_products"],f.state.now.toISOString());
+  assert.equal(reviewRefreshSetupProof({...input,shopify:fresh}).reason,"provider_access_evidence_stale_or_future");
+});
+
+
+test("Google setup proof binds the manager context even when public account/version match",async()=>{
+  const {input,scope,f}=await setupProofFixture("google_ads");
+  const pd=await pdSourceObservation(scope,{id:"job1",fence:2},{from:"2026-10-01",to:"2026-10-01"},
+    {identityScopes:true,readAt:f.state.now.toISOString(),loginAccountId:"654"});
+  assert.equal(reviewRefreshSetupProof({...input,pdObservation:pd.observation}).reason,"provider_asset_scope_mismatch");
+});
+test("Setup proof does not accept a replaced credential reference under the same public scope",async()=>{
+  const {input,f}=await setupProofFixture();f.state.credential=workspace;
+  const assets=await f.run();
+  assert.equal(reviewRefreshSetupProof({...input,assets}).reason,"provider_asset_scope_mismatch");
+});
+
+
+test("Order history requires its own scope without blocking basic Products",async()=>{
+  const {input,scope,f}=await setupProofFixture(undefined,{scopes:["read_products","read_orders"]});
+  const r=reviewRefreshSetupProof({...input,includeOrders:true,includeOrderHistory:true});
+  assert.equal(r.baseReady,true);assert.equal(r.ordersReady,false);assert.deepEqual(r.orderMissingScopes,["read_all_orders"]);
+  const shopify=await shopifyScopeProof(scope,["read_products","read_orders","read_all_orders"],f.state.now.toISOString());
+  const complete=reviewRefreshSetupProof({...input,shopify,includeOrders:true,includeOrderHistory:true});
+  assert.equal(complete.ordersReady,true);assert.equal(complete.developerAppApproval,"not_observed");assert.equal(complete.authorizesActivation,false);
+});

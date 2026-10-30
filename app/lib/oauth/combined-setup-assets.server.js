@@ -4,6 +4,9 @@ import {readGoogleMerchantAccountLink} from "../providers/google-merchant-accoun
 import {createMetaAppSecretProof, inspectMetaAccessToken, discoverMetaAdAccounts, META_GRAPH_VERSION} from "../providers/meta-graph.server.js";
 import {runIdentityReadDeadline} from "../providers/identity-read-deadline.server.js";
 import {quotaBoundaryControl} from "../refresh/quota-native-fetch.server.js";
+const observations=new WeakMap();
+export const isCombinedSetupAssetObservation=value=>observations.has(value);
+export const combinedSetupAssetSourceContext=value=>observations.get(value)??null;
 
 export class CombinedSetupAssetError extends Error {
   constructor(code) {super(code); this.name = "CombinedSetupAssetError"; this.code = code;}
@@ -176,7 +179,7 @@ export function createCombinedSetupAssetAccess({provider, enabled = false, datab
         await recheck();
         const completed = clock(), expires = Math.min(started + 600000, credentialDeadline);
         if (!Number.isFinite(expires) || expires <= completed) fail("COMBINED_ASSET_OBSERVATION_STALE");
-        return frozen({provider, accessState: "verified", setupState: "resume_setup", setupComplete: false,
+        const result=frozen({provider, accessState: "verified", setupState: "resume_setup", setupComplete: false,
           setupReason: "setup_activation_pending", setupResumeAction: "review_setup",
           workspaceId: current.installation.workspaceId, installGeneration: current.installation.installGeneration,
           installationId: current.installation_id, connectionId: current.connectionId, connectionVersion: current.connectionVersion,
@@ -184,6 +187,10 @@ export function createCombinedSetupAssetAccess({provider, enabled = false, datab
           observedAt: new Date(started).toISOString(), completedAt: new Date(completed).toISOString(), expiresAt: new Date(expires).toISOString(),
           assetAccess: evidence, developerAppApproval: "not_evaluated", authorizesActivation: false,
           persisted: false, productMappingVerified: false, salesRolesVerified: false});
+        observations.set(result,frozen({shopId:current.shop.shopId,shopDomain:current.shop.myshopifyDomain,
+          credentialId:current.credentialId,loginAccountId:current.account.login_account_id??null,
+          scopes:[...current.grantedScopes].sort()}));
+        return result;
       } catch (error) {
         if (nativeQuotaControl !== null) throw nativeQuotaControl;
         if (quotaBoundaryControl(error)) throw error;

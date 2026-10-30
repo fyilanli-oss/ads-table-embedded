@@ -3339,3 +3339,20 @@ Mağaza, kurulum/nesil, hesap/bağlantı/seçim, iş/fence ve gün eşitliği ge
 732 ilgili test geçti. Genel test/tip/derleme ve exact source CI/F01 ayrıca doğrulanır. Teslim10 tamamlandı sayılmaz: kabul edilmiş setup/native izin kanıtının bağlanması ve gerçek kota profili/kapasite/kaynak doğrulaması açık. OAuth/UI değişikliği, canlı çağrı, migration, deploy, kalıcı eşleme veya Dataset yazımı yok.15 başlamadı;22 duraklatılmış;23 writer.
 
 Bağlayıcı kayıt: contracts/eo-05-start-brief-v1.json#Integrated_source_prewrite_review_2026_10_30. Resmî kontrol30Ekim2026: https://developers.klaviyo.com/en/reference/get_event ve https://shopify.dev/docs/api/admin-graphql/2026-07/objects/Order okundu; yeni provider davranışı çıkarılmadı. Merge ayrı açık onay bekler.
+
+
+## Teknik teslim10: kurulum/izin kanıtının ortak kontrole bağlanması — 30 Ekim 2026
+
+PR273 açık kullanıcı merge onayı ve exact head6f9d646 Actions Governance/F01 SUCCESS ile15457c1446000c7c1866cc547b20d1ceebc32a43 olarak birleşti. Approved head ile main tüm tree eşliği doğrulandı. Yeni iş güncel main üzerinden codex/setup-proof-review içinde; birincil checkout/attachment dosyaları korundu.
+
+Ürün sahibi somut sınırı gördükten sonra sunucu kodu/izole testleri onayladı. read-only incelemede eski setupComplete bilgisinin raporlama kurulumunu anlattığı görüldü; yeni ürün/katalog/app-review kanıtı sayılmadı. Eski SQL/migration veya bu alanın eski anlamı değiştirilmedi.
+
+Yeni açık setup seçeneği, mevcut Shopify AppInstallation izin incelemesi ve Google/Meta asset probe sonuçlarının private özgünlüğünü doğrular. Üreticilere yalnız private kayıt eklendi; yeni HTTP/asset keşfi, katalog seçimi, OAuth isteği veya token işlemi eklenmedi. Klaviyo mevcut özgün candidate/account/Ordered Product metric/event okumasıyla aynı iş/fence/gün kapsamında kontrol edilir. Provider saklanan grant listesi yeni native grant gibi etiketlenmez.
+
+Mağaza/kurulum/nesil, hesap/bağlantı/seçim, gerektiğinde manager/credential ref/grant listesi ve en fazla10dakika/nativeexpiry eşleşir. Kontrol validation, son SQL ve entitlement sınırlarında tekrarlanır. Kopya, yanlış hesap, eski/future kanıt veya eksik kapsam bekletir. Products, Orders ve history ayrıdır; Orders yokken temel ürün yolu ilerler. Order gözlemi verilmişse native AppInstallation eşleşir, history için ayrıca read_all_orders aranır.
+
+reviewed_for_prewrite_only uygulama onayı veya gerçek kurulum tamamlanması değildir. developerAppApproval=not_observed, nativePermissionVerified=false ve writer/activation false kalır. Hiçbir başarı sonucu veya varsayılan app-review kanıtı üretilmez. Bu kayıtla kalan TEKNİK bağlantı kod/test aşamasına geldi; teslim10 kalanları iki gerçek ortam başlığıdır: izin/uygulama/kaynak kimliği ve claim kanıtı; ortak operasyon profili/kota/bellek/bağlantı/kapasite kabulü. Native kabul olmadan teslim10 bütünü kapanmaz.
+
+404 ilgili test geçti; genel test/tip/derleme ve exact source Actions/F01 ayrıca doğrulanır. OAuth ekran/akış/kapsam/katalog seçimi, canlı sorgu, config/secret/migration/deploy, Sales Role veya Dataset yazımı değişmedi.15 başlamadı;22 duraklatılmış;23 writer.
+
+Bağlayıcı kayıt: contracts/eo-05-start-brief-v1.json#Setup_scope_access_prewrite_binding_2026_10_30. Resmî kontrol30Ekim2026: Shopify AppInstallation, Google OAuth Scopes ve Klaviyo Authenticate API Requests okundu. Merge ayrı açık onay bekler.

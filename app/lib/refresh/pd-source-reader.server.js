@@ -13,6 +13,13 @@ import {stableJson} from "../providers/common-adapter.server.js";
 // Private in-process proof. A serialized snapshot cannot become an observation.
 const observedReads = new WeakMap();
 export const isRefreshPdSourceObservation = value => observedReads.has(value);
+export function refreshPdStoredPermissionScopes(value) {return observedReads.get(value)?.granted_scopes??null;}
+export function refreshPdSetupBindingMatches(value,other) {
+  const b=observedReads.get(value);
+  return !!b && !!other && b.shop_id===other.shopId && b.shop_domain===other.shopDomain
+    && b.credential_id===other.credentialId && b.login_account_id===other.loginAccountId
+    && stableJson(b.granted_scopes)===stableJson(other.scopes);
+}
 export function refreshPdSourceAuthorityMatches(observation, row) {
   const b = observedReads.get(observation);
   if (!b || !row || row.installationStatus !== "active" || row.status !== "connected"

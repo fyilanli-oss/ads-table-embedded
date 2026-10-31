@@ -32,6 +32,10 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
   const connectReply = useRef<Reply | null>(null);
   const [checking, setChecking] = useState(false);
   const [checkingFeature, setCheckingFeature] = useState<PermissionFeature | null>(null);
+  const [removingProduct, setRemovingProduct] = useState(false);
+  const [removalNotice, setRemovalNotice] = useState<{owner: string | null | undefined; kind: "removed" | "unknown"} | null>(null);
+  const productRemovalResult = removalNotice?.owner === productOwner ? removalNotice?.kind ?? null : null;
+  const setProductRemovalResult = (kind: "removed" | "unknown" | null) => setRemovalNotice(kind ? {owner: callbacks.current.productOwner, kind} : null);
   const productReply = useCallback((reply: PermissionSettingsResult) => {
     if (reply.feature !== "shopify_products") return;
     try { clearProductPermissionReturn(globalThis.sessionStorage, callbacks.current.productOwner); } catch {}
@@ -39,11 +43,12 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
       : reply.kind === "status" && reply.stage === "review_setup" ? "ready"
       : reply.kind === "status" && reply.stage === "request_permissions" ? "missing" : "unknown";
     callbacks.current.onProductStatus?.(value);
+    setProductRemovalResult(null);
   }, []);
   const [selectionModel, setSelectionModel] = useState<SelectionModel | null>(null);
   const selectionIntent = useRef<{model: SelectionModel; input: SelectionInput | null; failed: boolean} | null>(null);
   const [selectionActivity, setSelectionActivity] = useState<string | null>(null);
-  const execute = useCallback((intent: "permission_connect" | "permission_status" | "permission_select_accounts" | "permission_select_reporting", feature: PermissionFeature, fields: Record<string, string> = {}) => {
+  const execute = useCallback((intent: "permission_connect" | "permission_status" | "permission_revoke_products" | "permission_select_accounts" | "permission_select_reporting", feature: PermissionFeature, fields: Record<string, string> = {}) => {
     if (pending.current) return Promise.reject(new Error("PERMISSION_ACTION_PENDING"));
     return new Promise<Reply>((resolve, reject) => {
       const requestId = crypto.randomUUID();
@@ -182,6 +187,26 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
     finally { setChecking(false); setSelectionActivity(null); }
   }, [execute]);
   const busy = checking || ["hiding_for_connect", "starting"].includes(snapshot.phase);
+  const productRemovalUnknown = () => {
+    callbacks.current.onProductStatus?.("unknown");
+    setProductRemovalResult("unknown");
+  };
+  const removeProductAccess = async () => {
+    if (pending.current || busy || removingProduct || selectionIntent.current || controller.snapshot.phase === "explaining") return;
+    const owner = callbacks.current.productOwner;
+    if (!owner) return;
+    setRemovingProduct(true); setChecking(true); setCheckingFeature("shopify_products");
+    setProductRemovalResult(null);
+    try {
+      const reply = await execute("permission_revoke_products", "shopify_products");
+      if (owner !== callbacks.current.productOwner) return;
+      if (reply.kind === "status" && reply.stage === "request_permissions") {
+        productReply(reply); setProductRemovalResult("removed");
+        setFeedback(reply);
+      } else productRemovalUnknown();
+    } catch {if (owner === callbacks.current.productOwner) productRemovalUnknown();}
+    finally {setRemovingProduct(false); setChecking(false); setCheckingFeature(null);}
+  };
   const resume = () => {
     if (feedback?.kind !== "status") return;
     if (feedback.stage === "products_required") open("shopify_products");
@@ -217,6 +242,7 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
   ) : null;
   return {
     open, checkStatus, busy, snapshot,
+    removeProductAccess, removingProduct, productRemovalResult, productRemovalUnknown,
     checkingProduct: checkingFeature === "shopify_products" || busy && snapshot.feature === "shopify_products",
     content: <>
       {snapshot.feature === "shopify_products" || feedback?.feature === "shopify_products" ? null : status}

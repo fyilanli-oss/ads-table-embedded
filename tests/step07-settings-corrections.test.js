@@ -61,6 +61,7 @@ function harness({accounts = [account], providerRuntime = () => assert.fail("une
       useNavigation: () => h.navigation, useRevalidator: () => h.revalidator, useFetcher: () => h.fetcher,
       useSubmit: () => () => assert.fail("unexpected navigation submission")};
     if (id === "../components/use-permission-settings") return {usePermissionSettings: props => {h.permissionProps = props; return {busy: false, checkingProduct: false, content: null};}};
+    if (id === "../components/product-access-removal") return {ProductAccessRemoval: "ProductAccessRemoval"};
     if (id === "../shopify.server") return {authenticate: {admin: async () => verified}, database: {}, providerTokenVault: {}};
     if (id.endsWith("/shopify-route-authority.server.js")) return {resolveShopifyRouteAuthority: async () => verified};
     if (id.endsWith("/klaviyo-oauth-runtime.server.js")) return {createKlaviyoOAuthRuntime: providerRuntime, normalizeKlaviyoEstimatedSpend};
@@ -251,6 +252,7 @@ test("successful setup replaces the pending modal only after server state become
 test("Products card shows fresh verified access without Connect or technical activation copy", () => {
   const h = harness(); h.state.shopifyProductAccess = "ready"; h.render();
   assert.ok(nodes(h.tree).some(e => e.type === "s-badge" && text(e) === "Ürün erişimi onaylandı"));
+  assert.ok(nodes(h.tree).some(e => e.type === "ProductAccessRemoval" && e.props.ready === true));
   assert.equal(nodes(h.tree).some(e => e.type === "s-button" && text(e) === "Connect Shopify products"), false);
   assert.equal(text(h.tree).includes("awaiting activation"), false);
 });

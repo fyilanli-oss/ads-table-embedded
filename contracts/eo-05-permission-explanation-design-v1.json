@@ -1,4 +1,34 @@
 {
+  "Shopify_products_revocation_2026_10_31": {
+    "checked_at": "2026-10-31",
+    "existing_plan_step": 7,
+    "authority": "Owner approved Products removal method research, confirmation, actual optional-scope revocation and verified card transition; code/tests/PR only",
+    "supersedes": "Ready Products card without a removal action",
+    "server": "Authenticated fixed permission_revoke_products action; only read_products. Native scope query confirms optional/not required/no write_products. Revoke once with installed SDK3.0.1 scopes.revoke; independently read actual grants after receipt; same shop/AppInstallation/install generation and exact preservation of other grants required. No local disconnect in place of permission removal.",
+    "guards": "Cancel/no explicit revoke/closed release/invalid owner/required or write-derived access/changed installation prevent mutation. Unknown or native error never retries/falls back. Readback action cannot revoke.",
+    "exact_copy": {
+      "action": "Ürün erişimini kaldır",
+      "heading": "Ürün erişimi kaldırılsın mı?",
+      "body": "AdsTable'ın Shopify ürün ve varyantlarını okuma izni kaldırılacak. Ürün kimliği eşleştirmesi için yeniden izin vermeniz gerekecek. Mevcut kayıtlar silinmez.",
+      "confirm": "Erişimi kaldır",
+      "cancel": "Vazgeç",
+      "loading": "Ürün erişimi kaldırılıyor…",
+      "removed": "Ürün erişimi kaldırıldı.",
+      "unknown": "Ürün erişiminin kaldırıldığı doğrulanamadı. Durumu kontrol edin."
+    },
+    "components": "Native s-button critical, s-modal base/base, primary-action primary/critical, secondary-actions secondary, s-paragraph, s-banner info/success/critical",
+    "client": "Confirm captures same owner; consumes intent once on native afterhide. Render/open/cancel/Escape/close do not mutate. Duplicate pending requests and stale owner replies blocked; verified missing reveals existing Connect Products. Unknown only offers explicit status read. New grant remains explicit.",
+    "preserved": "Orders permission and provider grants, tokens, installation, historical records, existing Products reader permission guards; no Dataset writer or migration",
+    "tests": ["tests/shopify-progressive-permissions.test.js", "tests/shopify-products-completion.test.js", "tests/permission-settings.test.js", "tests/step07-settings-corrections.test.js", "tests/eo-01c-preview-shell.test.js"],
+    "sources": ["https://shopify.dev/docs/api/shopify-app-react-router/latest/apis/scopes", "https://shopify.dev/docs/api/admin-graphql/2026-07/mutations/appRevokeAccessScopes", "https://shopify.dev/docs/api/app-home/latest/web-components/overlays/modal", "https://shopify.dev/docs/api/app-home/latest/web-components/actions/button", "Installed SDK3.0.1 revoke and GraphQL client source; default retries0"],
+    "native_visual_acceptance": false,
+    "live_revoke_performed": false,
+    "deploy_authorized": false,
+    "merge_authorized": false,
+    "step15_started": false,
+    "step22": "paused",
+    "step23": "Dataset_FX_writer"
+  },
   "Shopify_products_completion_2026_10_31": {
     "checked_at": "2026-10-31",
     "existing_plan_step": 7,

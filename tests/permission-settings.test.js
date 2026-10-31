@@ -156,6 +156,7 @@ function loadRoute({authenticate = async () => verified, providerRuntime = () =>
   const imported = id => {
     if (id === "../shopify.server") return {authenticate: {admin: authenticate}, database: {}, providerTokenVault: {}, permissionSetup: shopify, permissionRelease: release};
     if (id === "../components/use-permission-settings") return {usePermissionSettings: () => assert.fail()};
+    if (id === "../components/product-access-removal") return {ProductAccessRemoval: () => assert.fail()};
     if (id.endsWith("/shopify-route-authority.server.js")) return {resolveShopifyRouteAuthority: async ({request, authenticateAdmin}) => authenticateAdmin(request)};
     if (id.endsWith("/google-oauth-runtime.server.js")) return {createGoogleOAuthRuntime: providerRuntime};
     if (id.endsWith("/meta-oauth-runtime.server.js")) return {createMetaOAuthRuntime: providerRuntime};
@@ -224,7 +225,7 @@ test("actual Settings action returns unknown without raw errors and never retrie
 
 test("permission actions do not implicitly rerun existing provider loaders", () => {
   const route = loadRoute();
-  for (const intent of ["permission_connect", "permission_status", "permission_select_accounts", "permission_select_reporting"]) {
+  for (const intent of ["permission_connect", "permission_status", "permission_revoke_products", "permission_select_accounts", "permission_select_reporting"]) {
     assert.equal(route.shouldRevalidate({formData: new URLSearchParams({intent}), defaultShouldRevalidate: true}), false);
   }
   assert.equal(route.shouldRevalidate({formData: new URLSearchParams({intent: "select"}), defaultShouldRevalidate: true}), true);
@@ -362,4 +363,23 @@ test("actual Settings loader reads fresh Products permission once without starti
     assert.equal(reply.shopifyPermissionOwner, "gid://shopify/Shop/123");
     assert.equal(reads, 1);
   }
+});
+
+test("actual Settings Products removal uses only authenticated fixed runtime and sanitizes failure", async () => {
+  for (const failure of [false, true]) {
+    let mutations = 0;
+    const route = loadRoute({release: shopifyRelease, shopify: {revokeProducts: async args => {
+      mutations++; assert.equal(args.verified, verified); assert.equal(args.action, "revoke");
+      if (failure) throw Error("SECRET_TOKEN");
+      return {basePermissionState: "resume_setup"};
+    }}});
+    const reply = await route.action({request: formRequest({intent: "permission_revoke_products", feature: "shopify_products", requestId, scopes: "read_orders"})});
+    assert.deepEqual(reply, failure ? {kind: "unknown", feature: "shopify_products", requestId}
+      : {kind: "status", feature: "shopify_products", stage: "request_permissions", requestId});
+    assert.equal(mutations, 1);
+    const wrong = await route.action({request: formRequest({intent: "permission_revoke_products", feature: "shopify_orders", requestId})});
+    assert.equal(wrong.kind, "unknown"); assert.equal(mutations, 1);
+  }
+  const closed = loadRoute({shopify: {revokeProducts: () => assert.fail()}});
+  assert.equal((await closed.action({request: formRequest({intent: "permission_revoke_products", feature: "shopify_products", requestId})})).kind, "unavailable");
 });

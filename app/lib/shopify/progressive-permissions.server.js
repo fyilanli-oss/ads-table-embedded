@@ -28,7 +28,7 @@ export function createShopifyProgressivePermissions({database, apiKey, requiredS
     || typeof optionalScopesReleased !== "boolean" || typeof now !== "function") fail("CONFIGURATION_INVALID");
   const required = scopeList(requiredScopes), installation = createShopifyRuntimeRepositories(database).installation;
   function capture(verified, signal) {
-    const nativeAdmin = verified?.context?.admin, nativeRequest = verified?.context?.scopes?.request;
+    const nativeAdmin = verified?.context?.admin, nativeScopes = verified?.context?.scopes, nativeRequest = nativeScopes?.request;
     if (typeof nativeAdmin?.graphql !== "function") fail("VERIFIED_CONTEXT_REQUIRED");
     const adminRead = nativeAdmin.graphql.bind(nativeAdmin);
     const owner = Object.freeze({...verified?.installationAuthority});
@@ -38,7 +38,9 @@ export function createShopifyProgressivePermissions({database, apiKey, requiredS
       return adminRead(query, {...options, tries: 1, signal});
     }}};
     return {verified: {installationAuthority: owner, identity, context},
-      nativeRequest: typeof nativeRequest === "function" ? nativeRequest.bind(verified.context.scopes) : null};
+      nativeRequest: typeof nativeRequest === "function" ? nativeRequest.bind(nativeScopes) : null,
+      nativeRevoke: typeof nativeScopes?.revoke === "function" ? nativeScopes.revoke.bind(nativeScopes) : null,
+      nativeQuery: typeof nativeScopes?.query === "function" ? nativeScopes.query.bind(nativeScopes) : null};
   }
   async function run(verified, signal, operation) {
     return runIdentityReadDeadline({signal, timeoutMs: maxElapsedMs, run: async childSignal => {
@@ -144,6 +146,41 @@ export function createShopifyProgressivePermissions({database, apiKey, requiredS
       return project(after, "native_readback", true);
     });
   }
-  return Object.freeze({inspect, afterReturn: inspect,
+  async function revokeProducts({verified, action, signal} = {}) {
+    if (action === "cancel") return Object.freeze({outcome: "cancelled", nativeRequestInvoked: false, authorizesActivation: false});
+    if (action !== "revoke") fail("EXPLICIT_REVOKE_REQUIRED");
+    if (!requestsEnabled || !optionalScopesReleased) fail("REVOKE_DISABLED");
+    if (required.includes("read_products") || required.includes("write_products")) fail("PRODUCTS_REQUIRED");
+    return run(verified, signal, async ({captured, read, current, check}) => {
+      const before = await read();
+      if (project(before, "native_readback").basePermissionState === "resume_setup") return project(before, "native_readback");
+      if (project(before, "native_readback").basePermissionState !== "permission_ready") fail("PERMISSION_OBSERVATION_UNCONFIRMED");
+      if (before.evidence.scopes.includes("write_products")) fail("PRODUCTS_WRITE_ACCESS_PRESENT");
+      if (!captured.nativeRevoke || !captured.nativeQuery) fail("NATIVE_SCOPE_REVOKE_REQUIRED");
+      await current(before.context);
+      let detail;
+      try { detail = await captured.nativeQuery(); } catch { fail("REVOKE_CONFIGURATION_READ_FAILED"); }
+      check(); await current(before.context);
+      const nativeRequired = scopeList(detail?.required), nativeOptional = scopeList(detail?.optional);
+      const nativeGranted = scopeList(detail?.granted);
+      if (nativeRequired.includes("read_products") || nativeRequired.includes("write_products")) fail("PRODUCTS_REQUIRED");
+      if (!nativeOptional.includes("read_products") || !nativeGranted.includes("read_products")
+        || nativeGranted.includes("write_products")) fail("REVOKE_CONFIGURATION_INVALID");
+      await current(before.context);
+      let receipt;
+      try { receipt = await captured.nativeRevoke(["read_products"]); } catch { fail("NATIVE_SCOPE_REVOKE_FAILED"); }
+      check();
+      if (!receipt || !equalScopes(receipt.revoked, ["read_products"])) fail("NATIVE_SCOPE_REVOKE_RESPONSE_INVALID");
+      await current(before.context);
+      const after = await read();
+      await current(before.context);
+      if (after.evidence.appInstallationId !== before.evidence.appInstallationId) fail("INSTALLATION_CHANGED");
+      if (project(after, "native_readback").basePermissionState !== "resume_setup") fail("REVOKE_UNCONFIRMED");
+      // Preserve other grants exactly; Products revocation never silently revokes Orders.
+      if (!equalScopes(after.evidence.scopes, before.evidence.scopes.filter(s => s !== "read_products"))) fail("REVOKE_GRANTS_CHANGED");
+      return project(after, "native_readback");
+    });
+  }
+  return Object.freeze({inspect, afterReturn: inspect, revokeProducts,
     requestProducts: args => request("products", args), requestOrders: args => request("orders", args)});
 }

@@ -1,7 +1,7 @@
 import type {inspectShopifyIdentityPermissionScopes} from "./permission-scopes.server.js";
 export const SHOPIFY_OPTIONAL_SCOPES_QUERY: string;
 type Verified = Parameters<typeof inspectShopifyIdentityPermissionScopes>[0]["verified"] & {
-  context: {scopes?: {request(scopes: string[]): Promise<void>}};
+  context: {scopes?: {request(scopes: string[]): Promise<void>; revoke?(scopes: string[]): Promise<{revoked: string[]}>; query?(): Promise<{required: string[]; optional: string[]; granted: string[]}>}};
 };
 type ReadInput = {verified: Verified; signal?: AbortSignal};
 export interface ShopifyPermissionSetupReadback {
@@ -22,6 +22,7 @@ export interface ShopifyPermissionSetup {
   afterReturn(args: ReadInput): Promise<Readonly<ShopifyPermissionSetupReadback>>;
   requestProducts(args: ReadInput & {action: "connect" | "cancel"}): Promise<Readonly<ShopifyPermissionSetupReadback> | Readonly<{outcome: "cancelled"; nativeRequestInvoked: false; authorizesActivation: false}>>;
   requestOrders(args: ReadInput & {action: "connect" | "cancel"}): ReturnType<ShopifyPermissionSetup["requestProducts"]>;
+  revokeProducts(args: ReadInput & {action: "revoke" | "cancel"}): ReturnType<ShopifyPermissionSetup["requestProducts"]>;
 }
 export function createShopifyProgressivePermissions(args: {
   database: Parameters<typeof inspectShopifyIdentityPermissionScopes>[0]["database"];

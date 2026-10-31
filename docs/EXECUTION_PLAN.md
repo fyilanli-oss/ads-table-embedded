@@ -3486,3 +3486,22 @@ native deneme ve merge ayrıca açık onay bekler. Mevcut Products grant kanıt�
 Bağlayıcı kayıt: contracts/eo-05-permission-explanation-design-v1.json#Shopify_products_completion_2026_10_31.
 Ayrıntı ve 31Ekim resmî kaynakları: docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md.
 07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.
+
+## 31 Ekim — mevcut 07: Products iznini kullanıcı kaldırabilmeli
+
+Önceki hazır kartta kaldırma eylemi eksikti. Ürün sahibinin somut akış onayıyla
+“Ürün erişimini kaldır” ve native onay modalı eklendi. Cancel/çarpı/Escape
+istek yapmaz. Onay → afterhide → tek authenticated sunucu işlemi. Shopify'ın
+kurulu SDK scopes.revoke yöntemi yalnız optional read_products iznini kaldırır;
+başarı yanıtından sonra gerçek izin tekrar okunur. Aynı mağaza ve AppInstallation,
+aktif kurulum ve diğer grant'ların korunması doğrulanmadan başarı gösterilmez.
+Required/write_products erişiminden sahte kaldırma sonucu üretilmez. İlk hata
+belirsizdir; otomatik retry/fallback yoktur. Açık Durumu kontrol et yalnız okur.
+Doğrulanmış kaldırmadan sonra Connect Products görünür; yeni grant açık izin ister.
+Orders/provider izinleri, token ve geçmiş veriler silinmez. Ürün okuyucularının
+mevcut güncel izin kontrolleri korunur. Yeni DB/Dataset/config/yayın yoktur.
+Bağlayıcı kayıt ve31Ekim resmî kaynakları:
+contracts/eo-05-permission-explanation-design-v1.json#Shopify_products_revocation_2026_10_31.
+Tam metin, bileşen ve kabul matrisi: docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md.
+Kod/test onayı canlı revoke, yayın, masaüstü/en az320px mobil kabul veya merge
+onayı değildir.07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.

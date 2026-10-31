@@ -60,6 +60,11 @@ export function createPermissionSettings({shopify, providerRuntime, availability
     return enabled[feature];
   }
   return Object.freeze({
+    async revokeProducts({feature, verified, action}) {
+      if (feature !== "shopify_products" || action !== "revoke") throw new Error("PERMISSION_SETTINGS_EXPLICIT_PRODUCTS_REVOKE_REQUIRED");
+      if (!check(feature, verified)) return unavailable(feature);
+      return shopifyStatus(feature, await shopify.revokeProducts({verified, action: "revoke"}));
+    },
     async connect({feature, verified, action}) {
       if (action !== "connect") throw new Error("PERMISSION_SETTINGS_EXPLICIT_CONNECT_REQUIRED");
       if (!check(feature, verified)) return unavailable(feature);

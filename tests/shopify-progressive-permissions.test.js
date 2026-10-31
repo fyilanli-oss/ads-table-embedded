@@ -29,7 +29,16 @@ function fixture(options = {}) {
       return new Response(JSON.stringify({data: {shop,
         currentAppInstallation: {id: state.appId, accessScopes: state.grants.map(handle => ({handle}))},
         app: {optionalAccessScopes: state.optional.map(handle => ({handle}))}}}));
-    }}, scopes: {async request(scopes) {
+    }}, scopes: {async query() {
+      calls.push({kind: "nativeQuery"});
+      if (hooks.nativeQuery) return hooks.nativeQuery();
+      return {required: [], optional: state.optional, granted: state.grants};
+    }, async revoke(scopes) {
+      calls.push({kind: "revoke", scopes});
+      if (hooks.revoke) return hooks.revoke(scopes);
+      state.grants = state.grants.filter(s => !scopes.includes(s));
+      return {revoked: [...scopes]};
+    }, async request(scopes) {
       calls.push({kind: "request", scopes});
       if (hooks.request) return hooks.request(scopes);
       const result = redirect(scopes.join(",")); state.redirect = result; throw result;
@@ -197,3 +206,54 @@ test("active installation read failure during optional validation is safe and no
   assert.equal(f.calls.filter(c => c.kind === "request").length, 0);
   assert.equal(f.calls.filter(c => c.kind === "sql").length, 3);
 });
+
+test("Products revoke changes only optional product scope and verifies actual same-installation readback", async () => {
+  const f = fixture({grants: ["read_products", "read_orders"]});
+  const result = await f.setup.revokeProducts({...f.input, action: "revoke"});
+  assert.equal(result.basePermissionState, "resume_setup");
+  assert.equal(result.authorizesActivation, false);
+  assert.deepEqual(f.state.grants, ["read_orders"]);
+  assert.deepEqual(f.calls.filter(c => c.kind === "revoke").map(c => c.scopes), [["read_products"]]);
+  assert.equal(f.calls.filter(c => c.kind === "graphql" && c.query === SHOPIFY_PERMISSION_SCOPES_QUERY).length, 2);
+  assert.equal(f.calls.filter(c => c.kind === "request").length, 0);
+});
+
+test("Products revoke cancel, missing grant and closed gate never invoke mutation", async () => {
+  const canceled = fixture({grants: ["read_products"]});
+  assert.equal((await canceled.setup.revokeProducts({...canceled.input, action: "cancel"})).outcome, "cancelled");
+  assert.equal(canceled.calls.length, 0);
+  for (const f of [fixture(), fixture({enabled: false, grants: ["read_products"]}), fixture({released: false, grants: ["read_products"]})]) {
+    try {await f.setup.revokeProducts({...f.input, action: "revoke"});} catch {}
+    assert.equal(f.calls.filter(c => c.kind === "revoke").length, 0);
+  }
+  await assert.rejects(canceled.setup.revokeProducts(canceled.input), /EXPLICIT_REVOKE_REQUIRED/);
+});
+
+for (const mode of ["required", "write", "optional_missing", "native_query_error", "foreign_shop", "changed_generation"]) {
+  test(`Products revoke preflight blocks ${mode} before mutation`, async () => {
+    const f = fixture({grants: ["read_products", ...(mode === "write" ? ["write_products"] : [])]});
+    if (mode === "required") f.hooks.nativeQuery = () => ({required: ["read_products"], optional: f.state.optional, granted: f.state.grants});
+    if (mode === "optional_missing") f.state.optional = [];
+    if (mode === "native_query_error") f.hooks.nativeQuery = () => {throw Error("SECRET");};
+    if (mode === "foreign_shop") f.verified.identity.session.shopDomain = "foreign.myshopify.com";
+    if (mode === "changed_generation") f.hooks.nativeQuery = () => {f.state.generation = 3; return {required: [], optional: f.state.optional, granted: f.state.grants};};
+    await assert.rejects(f.setup.revokeProducts({...f.input, action: "revoke"}));
+    assert.equal(f.calls.filter(c => c.kind === "revoke").length, 0);
+  });
+}
+
+for (const mode of ["native_error", "bad_receipt", "still_granted", "readback_error", "changed_installation", "changed_grants"]) {
+  test(`Products revoke ${mode} stays unconfirmed and never retries`, async () => {
+    const f = fixture({grants: ["read_products", "read_orders"]});
+    f.hooks.revoke = () => {
+      if (mode === "native_error") throw Error("SECRET_PROVIDER_ERROR");
+      f.state.grants = mode === "still_granted" ? f.state.grants : mode === "changed_grants" ? [] : ["read_orders"];
+      if (mode === "changed_installation") f.state.appId = "gid://shopify/AppInstallation/10";
+      if (mode === "readback_error") f.hooks.graphql = () => {throw Error("SECRET_READBACK_ERROR");};
+      return {revoked: mode === "bad_receipt" ? ["read_orders"] : ["read_products"]};
+    };
+    await assert.rejects(f.setup.revokeProducts({...f.input, action: "revoke"}), error => !error.message.includes("SECRET"));
+    assert.equal(f.calls.filter(c => c.kind === "revoke").length, 1);
+    assert.equal(f.calls.filter(c => c.kind === "request").length, 0);
+  });
+}

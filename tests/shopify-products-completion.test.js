@@ -188,3 +188,62 @@ test("a pending Products reply cannot verify another store after the view owner 
     assert.deepEqual(h.statuses, []);
   });
 });
+
+test("native removal modal cancel/close never revoke; confirm waits for afterhide and consumes once", () => {
+  const h = hooks(), listeners = new Map(); let calls = 0, hides = 0;
+  const element = {addEventListener: (key, fn) => listeners.set(key, fn), removeEventListener: key => listeners.delete(key), hideOverlay: () => hides++};
+  const props = {owner, ready: true, busy: false, onConfirm: () => calls++, onUnknown: () => assert.fail()};
+  const Component = load("app/components/product-access-removal.tsx", (id, require) => id === "react" ? {...require(id), ...h} : require(id)).ProductAccessRemoval;
+  const nodes = value => Array.isArray(value) ? value.flatMap(nodes) : value && typeof value === "object" ? [value, ...nodes(value.props?.children)] : [];
+  let tree;
+  const render = () => {h.start(); tree = Component(props); nodes(tree).find(n => n.type === "s-modal").ref.current = element; h.finish();};
+  const button = label => nodes(tree).find(n => n.type === "s-button" && n.props.children === label);
+  const closed = () => listeners.get("afterhide")({target: element});
+  render(); closed(); assert.equal(calls, 0);
+  button("Vazgeç").props.onClick(); closed(); assert.equal(calls, 0);
+  button("Erişimi kaldır").props.onClick(); button("Erişimi kaldır").props.onClick();
+  assert.equal(hides, 1); assert.equal(calls, 0);
+  closed(); closed(); assert.equal(calls, 1);
+  button("Erişimi kaldır").props.onClick(); props.owner = "gid://shopify/Shop/456"; render();
+  closed(); assert.equal(calls, 1);
+});
+
+test("Products removal sends one fixed action, verifies missing status and leaves reconnect available", async () => {
+  const h = permissionHarness();
+  const completed = h.value.removeProductAccess();
+  await h.value.removeProductAccess();
+  assert.equal(h.submissions.length, 1);
+  assert.equal(h.submissions[0].intent, "permission_revoke_products");
+  assert.equal(h.submissions[0].feature, "shopify_products");
+  h.fetcher.data = {...h.submissions[0], kind: "status", stage: "request_permissions"};
+  h.render(); await completed; h.render();
+  assert.deepEqual(h.statuses, ["missing"]);
+  assert.equal(h.value.productRemovalResult, "removed");
+  assert.equal(h.value.busy, false);
+  h.props.productOwner = "gid://shopify/Shop/456"; h.render();
+  assert.equal(h.value.productRemovalResult, null);
+});
+
+test("unknown removal offers readback, never automatic mutation retry or false success", async () => {
+  const h = permissionHarness();
+  const completed = h.value.removeProductAccess();
+  h.fetcher.data = {...h.submissions[0], kind: "unknown"};
+  h.render(); await completed; h.render();
+  assert.deepEqual(h.statuses, ["unknown"]);
+  assert.equal(h.value.productRemovalResult, "unknown");
+  assert.equal(h.submissions.length, 1);
+  const checked = h.value.checkStatus("shopify_products");
+  assert.equal(h.submissions[1].intent, "permission_status");
+  h.fetcher.data = {...h.submissions[1], kind: "status", stage: "review_setup"};
+  h.render(); await checked; h.render();
+  assert.equal(h.value.productRemovalResult, null);
+  assert.deepEqual(h.statuses, ["unknown", "ready"]);
+});
+
+test("late removal reply from another store cannot update the current Products card", async () => {
+  const h = permissionHarness(); const completed = h.value.removeProductAccess();
+  h.props.productOwner = "gid://shopify/Shop/456";
+  h.fetcher.data = {...h.submissions[0], kind: "status", stage: "request_permissions"};
+  h.render(); await completed; h.render();
+  assert.deepEqual(h.statuses, []); assert.equal(h.value.productRemovalResult, null);
+});

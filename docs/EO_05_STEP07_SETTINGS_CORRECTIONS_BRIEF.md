@@ -238,3 +238,41 @@ https://shopify.dev/docs/api/app-home/latest/web-components/feedback-and-status-
 https://api.reactrouter.com/v7/functions/react-router.useNavigate.html
 https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage
 07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımı.
+
+## 31 Ekim — mevcut 07: Products erişimini kaldırma (kod/test onaylı)
+
+Kullanıcı, onaylı Products kartında erişimi kendisi kaldırabilmelidir. Açık onay
+bu somut kaldırma akışının kod/test/PR işidir; canlı revoke/yayın/merge değildir.
+Başarılı kartta “Ürün erişimini kaldır” bulunur. s-button tone=critical,
+commandFor=shopify-products-revoke-modal ile s-modal size=base padding=base açar.
+Başlık: “Ürün erişimi kaldırılsın mı?”
+Metin: “AdsTable'ın Shopify ürün ve varyantlarını okuma izni kaldırılacak. Ürün kimliği eşleştirmesi için yeniden izin vermeniz gerekecek. Mevcut kayıtlar silinmez.”
+Birincil: “Erişimi kaldır” (s-button variant=primary tone=critical).
+İkincil: “Vazgeç” (variant=secondary). Çarpı/Escape/Vazgeç: sıfır istek.
+Onay niyeti kaydedilip modal afterhide tamamlanınca yalnız bir sunucu POST'u.
+Yükleniyor: “Ürün erişimi kaldırılıyor…” (s-banner info); çifte işlem engellenir.
+Sunucu sabit read_products için authenticated SDK scopes.revoke kullanır;
+mağaza/kurulum/optional/required kapsam ve güncel izin kontrolü önce yapılır.
+write_products veya required kapsamdan gelen erişim varsa kaldırılmış sayılmaz.
+Başarılı native yanıt sonrası izin yeniden okunur; read_products erişiminin
+kalktığı ve aynı kurulum doğrulanmadan başarı gösterilmez. SDK/okuma hatasında
+otomatik tekrar veya alternatif yöntem yok; kart unknown olur ve yalnız açık
+“Durumu kontrol et” okunur. Bu kontrol kaldırmayı tekrarlamaz. Hata metni:
+“Ürün erişiminin kaldırıldığı doğrulanamadı. Durumu kontrol edin.”
+Başarı: “Ürün erişimi kaldırıldı.” (s-banner success), ardından mevcut Connect
+Shopify products görünür. Yeni izin sadece kullanıcı açıklamayı onaylarsa istenir.
+Yenilemede sunucudan güncel permission state okunur; yerel başarı korunmaz.
+Orders izni, provider bağlantıları, token, uygulama kurulumu ve tarihsel veri
+silinmez/değiştirilmez. Mevcut ürün okuma guard'ları güncel kapsamı esas alır;
+Orders'ın Products'a mevcut bağımlılığı korunur. Yeni Dataset/yazıcı yok.
+Mobil/masaüstü aynı native bileşenlerdir; özel CSS/raw kontrol yok.
+Boş/eksik izinde kaldırma eylemi yok; ağ hatası/malformed sonuç/yanlış mağaza,
+stale callback/iptal/çift afterhide ve required/write alias negatif testleri gerekir.
+Gerçek Shopify Admin masaüstü/en az320px mobil kabulü ve yayın ayrı onay bekler.
+31Ekim2026 resmî kaynakları:
+https://shopify.dev/docs/api/shopify-app-react-router/latest/apis/scopes
+https://shopify.dev/docs/apps/build/authentication-authorization/manage-access-scopes
+https://shopify.dev/docs/api/app-home/latest/web-components/overlays/modal
+https://shopify.dev/docs/api/app-home/latest/web-components/actions/button
+Kurulu SDK3.0.1 scopes.revoke ve GraphQL client kodu okundu: varsayılan retry0.
+07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımı.

@@ -4,6 +4,7 @@ import type {PermissionFeature} from "../lib/ui/permission-explanation-flow.js";
 import type {ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs, ShouldRevalidateFunctionArgs} from "react-router";
 import {boundary} from "@shopify/shopify-app-react-router/server";
 import {readProductPermissionStatus, type ProductPermissionStatus} from "../lib/shopify/product-permission-status.server.js";
+import {ProductAccessRemoval} from "../components/product-access-removal";
 import {
   useActionData,
   useFetcher,
@@ -399,7 +400,7 @@ export const loader = async ({request}: LoaderFunctionArgs): Promise<LoaderData>
 // headers export alone cannot forward the SDK reauthorization header on .data.
 export const headers: HeadersFunction = (args) => boundary.headers(args);
 
-const permissionIntents = new Set(["permission_connect", "permission_status", "permission_select_accounts", "permission_select_reporting"]);
+const permissionIntents = new Set(["permission_connect", "permission_status", "permission_revoke_products", "permission_select_accounts", "permission_select_reporting"]);
 
 export function shouldRevalidate({formData, actionResult, defaultShouldRevalidate}: ShouldRevalidateFunctionArgs) {
   const intent = formData?.get("intent");
@@ -435,6 +436,10 @@ export const action = async ({request}: ActionFunctionArgs) => {
       let result;
       if (intent === "permission_connect") result = await settings.connect({feature, verified, action: "connect"});
       else if (intent === "permission_status") result = await settings.status({feature, verified});
+      else if (intent === "permission_revoke_products") {
+        if (feature !== "shopify_products") throw new Error("PERMISSION_SETTINGS_FEATURE_INVALID");
+        result = await settings.revokeProducts({feature, verified, action: "revoke"});
+      }
       else {
         const expected = {connectionId: String(form.get("connectionId") ?? ""), version: Number(form.get("version"))};
         const encoded = String(form.get("selectedAccountIds") ?? "[]");
@@ -1052,10 +1057,14 @@ export default function Settings() {
       <Navigation />
       <s-section heading="Shopify">
         <s-stack direction="block" gap="base">
-          {permissions.checkingProduct ? <s-banner tone="info" heading="Ürün erişimi doğrulanıyor…" />
+          {permissions.removingProduct ? <s-banner tone="info" heading="Ürün erişimi kaldırılıyor…" />
+            : permissions.checkingProduct ? <s-banner tone="info" heading="Ürün erişimi doğrulanıyor…" />
             : productAccess === "ready" ? <s-badge tone="success">Ürün erişimi onaylandı</s-badge>
-            : productAccess === "unknown" ? <s-banner tone="critical" heading="Ürün erişimi doğrulanamadı. Durumu tekrar kontrol edin." />
+            : productAccess === "unknown" ? <s-banner tone="critical" heading={permissions.productRemovalResult === "unknown" ? "Ürün erişiminin kaldırıldığı doğrulanamadı. Durumu kontrol edin." : "Ürün erişimi doğrulanamadı. Durumu tekrar kontrol edin."} />
             : <s-paragraph>{productAccess === "missing" ? "Ürün erişimi henüz onaylanmadı." : "Ürün bağlantısı şu anda kullanılamıyor."}</s-paragraph>}
+          {permissions.productRemovalResult === "removed" && productAccess === "missing" ? <s-banner tone="success" heading="Ürün erişimi kaldırıldı." /> : null}
+          <ProductAccessRemoval owner={state.shopifyPermissionOwner} ready={productAccess === "ready"} busy={permissions.busy}
+            onConfirm={() => {void permissions.removeProductAccess();}} onUnknown={permissions.productRemovalUnknown} />
           {productAccess === "missing" || productAccess === "unavailable" ?
             <s-button disabled={permissions.busy ? true : undefined} onClick={() => permissions.open("shopify_products")}>Connect Shopify products</s-button> : null}
           {productAccess === "unknown" ? <s-button disabled={permissions.busy ? true : undefined} onClick={() => permissions.checkStatus("shopify_products")}>Durumu kontrol et</s-button> : null}

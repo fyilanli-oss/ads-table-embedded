@@ -14,6 +14,7 @@ export function createPermissionSettings(args: {
   providerRuntime: (provider: "google_ads" | "meta" | "klaviyo") => any;
   availability?: Readonly<Record<PermissionFeature, boolean>>;
 }): Readonly<{
+  revokeProducts(args: {feature: "shopify_products"; verified: any; action: "revoke"}): Promise<PermissionSettingsResult>;
   connect(args: {feature: PermissionFeature; verified: any; action: "connect"}): Promise<PermissionSettingsResult>;
   status(args: {feature: PermissionFeature; verified: any}): Promise<PermissionSettingsResult>;
   select(args: {feature: PermissionFeature; verified: any; expected: {connectionId: string; version: number};

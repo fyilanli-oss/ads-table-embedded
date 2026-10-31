@@ -9,12 +9,13 @@ import type {PermissionSettingsResult} from "../lib/shopify/permission-settings.
 type Reply = PermissionSettingsResult & {requestId: string};
 type Props = {
   availability: Readonly<Record<PermissionFeature, boolean>>;
+  unavailableReasons?: Readonly<Partial<Record<PermissionFeature, string>>>;
   onResume(feature: PermissionFeature, stage: string): void;
 };
 
 // One host handles all five explanations. No mount effect starts a permission
 // request or status read. A status check must be explicitly chosen by the user.
-export function usePermissionSettings({availability, onResume}: Props) {
+export function usePermissionSettings({availability, unavailableReasons, onResume}: Props) {
   const fetcher = useFetcher<Reply>();
   const callbacks = useRef({availability, onResume, submit: fetcher.submit});
   callbacks.current = {availability, onResume, submit: fetcher.submit};
@@ -194,6 +195,7 @@ export function usePermissionSettings({availability, onResume}: Props) {
       ) : null}
       {selectionModel ? <PermissionSetupSelection model={selectionModel} busy={busy} onConfirm={confirmSelection} onAfterHide={afterSelectionHide} /> : null}
       <PermissionExplanation snapshot={snapshot} requestsAvailable={snapshot.feature ? availability[snapshot.feature] : false}
+        unavailableReason={snapshot.feature ? unavailableReasons?.[snapshot.feature] : undefined}
         onConnect={connect} onHide={hide} onAfterHide={afterHide} />
     </>,
   };

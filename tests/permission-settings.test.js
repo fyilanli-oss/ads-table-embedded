@@ -7,13 +7,14 @@ import {createPermissionSettings, PERMISSION_SETTINGS_AVAILABILITY} from "../app
 import {permissionAuthorizationTarget, permissionResponseMatches} from "../app/lib/ui/permission-settings-response.js";
 import {createPermissionExplanationFlow} from "../app/lib/ui/permission-explanation-flow.js";
 import {normalizeKlaviyoEstimatedSpend} from "../app/lib/oauth/klaviyo-oauth-runtime.server.js";
+import {readPermissionSetupRelease} from "../app/lib/shopify/permission-release.server.js";
 
 const verified = {context: {}, installationAuthority: {workspaceId: "synthetic-workspace", installGeneration: 2}};
 const availability = Object.fromEntries(Object.keys(PERMISSION_SETTINGS_AVAILABILITY).map(k => [k, true]));
 
-test("Klaviyo status distinguishes a verified single account awaiting cost without beginning OAuth", async () => {
+test("Klaviyo status keeps explicit account confirmation even for one account without beginning OAuth", async () => {
   for (const [accounts, stage] of [
-    [[{id: "verified"}], "klaviyo_cost_missing"],
+    [[{id: "verified"}], "select_account"],
     [[{id: "one"}, {id: "two"}], "select_account"],
     [[], "select_account"],
   ]) {
@@ -99,7 +100,7 @@ test("Klaviyo keeps the existing five scopes and treats pending account/cost set
   const target = new URL(result.authorizationUrl);
   assert.equal(target.searchParams.get("scope"), "accounts:read campaigns:read flows:read events:read metrics:read");
   assert.deepEqual(calls, [{installationAuthority: verified.installationAuthority, provider: "klaviyo"}]);
-  assert.deepEqual(await settings.status({feature: "klaviyo", verified}), {kind: "status", feature: "klaviyo", stage: "klaviyo_cost_missing"});
+  assert.deepEqual(await settings.status({feature: "klaviyo", verified}), {kind: "status", feature: "klaviyo", stage: "select_account"});
   assert.equal(calls.length, 1);
 });
 
@@ -143,7 +144,7 @@ test("native targets are provider-bound and stale/mismatched transport replies a
   assert.equal(permissionAuthorizationTarget("klaviyo", "https://secret@www.klaviyo.com/oauth/authorize"), null);
 });
 
-function loadRoute({authenticate = async () => verified, providerRuntime = () => assert.fail()} = {}) {
+function loadRoute({authenticate = async () => verified, providerRuntime = () => assert.fail(), release} = {}) {
   const sourceLocation = new URL("../app/routes/_admin.settings.tsx", import.meta.url);
   const require = createRequire(sourceLocation);
   const source = readFileSync(sourceLocation, "utf8");
@@ -151,7 +152,7 @@ function loadRoute({authenticate = async () => verified, providerRuntime = () =>
     module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022}}).outputText;
   const exports = {};
   const imported = id => {
-    if (id === "../shopify.server") return {authenticate: {admin: authenticate}, database: {}, providerTokenVault: {}, permissionSetup: {}};
+    if (id === "../shopify.server") return {authenticate: {admin: authenticate}, database: {}, providerTokenVault: {}, permissionSetup: {}, permissionRelease: release};
     if (id === "../components/use-permission-settings") return {usePermissionSettings: () => assert.fail()};
     if (id.endsWith("/shopify-route-authority.server.js")) return {resolveShopifyRouteAuthority: async ({request, authenticateAdmin}) => authenticateAdmin(request)};
     if (id.endsWith("/google-oauth-runtime.server.js")) return {createGoogleOAuthRuntime: providerRuntime};
@@ -166,6 +167,23 @@ const formRequest = (fields) => new Request("https://embedded.adstable.app/setti
   method: "POST", body: new URLSearchParams(fields),
 });
 const requestId = "00000000-0000-4000-8000-000000000001";
+
+test("actual Settings action passes the server release into the native combined runtime exactly once", async () => {
+  for (const [feature, key, authorizationUrl] of [
+    ["google_ads", "ADSTABLE_GOOGLE_IDENTITY_OAUTH_ENABLED", "https://accounts.google.com/o/oauth2/v2/auth"],
+    ["meta", "ADSTABLE_META_IDENTITY_OAUTH_ENABLED", "https://www.facebook.com/v26.0/dialog/oauth"],
+  ]) {
+    let starts = 0; const options = [];
+    const route = loadRoute({release: readPermissionSetupRelease({[key]: "true"}), providerRuntime: input => {
+      options.push(input);
+      return {beginCombinedSetup: async () => { starts++; return {permissionProfile: "identity_v1", authorizationUrl}; }};
+    }});
+    const result = await route.action({request: formRequest({intent: "permission_connect", feature, requestId})});
+    assert.deepEqual(result, {kind: "authorization", feature, authorizationUrl, requestId});
+    assert.equal(starts, 1); assert.equal(options.length, 1);
+    assert.equal(options[0].identityAuthorizationEnabled, true);
+  }
+});
 
 test("actual Settings action authenticates before reading form or constructing provider runtimes", async () => {
   let formRead = false;

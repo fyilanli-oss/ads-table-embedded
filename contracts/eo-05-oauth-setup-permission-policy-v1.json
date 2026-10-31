@@ -1,4 +1,14 @@
 {
+  "Owner_flow_restore_2026_10_31": {
+    "checked_at": "2026-10-31",
+    "existing_plan_step": 7,
+    "record": "contracts/eo-05-permission-explanation-design-v1.json#Owner_flow_restore_2026_10_31",
+    "supersedes_single_account_skip": true,
+    "distinct_Klaviyo_modals": true,
+    "live_release_changed": false,
+    "owner_visual_acceptance": false,
+    "merge_authorized": false
+  },
   "Settings_corrections_2026_10_31": {
     "checked_at": "2026-10-31",
     "existing_plan_step": 7,

@@ -47,8 +47,9 @@ function harness({accounts = [account], providerRuntime = () => assert.fail("une
     },
     useEffect(effect, deps) {
       const i = cursor++, previous = h.cells[i];
-      if (!previous || deps.some((d,j) => !Object.is(d,previous[j]))) {
-        h.cells[i] = deps; h.pendingEffects.push(effect);
+      if (!previous || deps.some((d,j) => !Object.is(d,previous.deps[j]))) {
+        const next = {deps, cleanup: null}; h.cells[i] = next;
+        h.pendingEffects.push(() => { previous?.cleanup?.(); next.cleanup = effect(); });
       }
     },
   };
@@ -80,7 +81,12 @@ function harness({accounts = [account], providerRuntime = () => assert.fail("une
         h.tree = exports.default();
         for (const element of nodes(h.tree)) {
           if (element.ref && typeof element.ref === "object") {
-            element.ref.current ??= {value: "", showOverlay() {}, hideOverlay() {}};
+            element.ref.current ??= {value: "", visible: false, handlers: {},
+              showOverlay() { this.visible = true; }, hideOverlay() { this.hideRequested = true; },
+              addEventListener(name, fn) { this.handlers[name] = fn; },
+              removeEventListener(name, fn) { if (this.handlers[name] === fn) delete this.handlers[name]; },
+              emitHidden() { this.visible = false; this.handlers.afterhide?.({target: this}); },
+            };
             if (element.props?.value !== undefined) element.ref.current.value = element.props.value;
           }
         }
@@ -91,9 +97,17 @@ function harness({accounts = [account], providerRuntime = () => assert.fail("une
     } finally { globalThis.location = savedLocation; globalThis.history = savedHistory; }
   };
   h.find = (tag, label) => nodes(h.tree).find(e => e.type === tag && (label === undefined || text(e) === label));
-  h.modal = () => nodes(h.tree).find(e => e.props?.id === "klaviyo-setup-modal");
+  h.accountModal = () => nodes(h.tree).find(e => e.props?.id === "klaviyo-setup-modal");
+  h.modal = () => nodes(h.tree).find(e => e.props?.id === "klaviyo-initial-spend-modal");
   h.field = () => nodes(h.modal()).find(e => e.type === "s-number-field");
   h.input = value => { h.field().props.onInput({currentTarget: {value}}); h.render(); };
+  h.chooseAccount = (id = account.id) => {
+    nodes(h.accountModal()).find(e=>e.type === "s-choice-list").ref.current.values = [id];
+    nodes(h.accountModal()).find(e=>e.type === "s-button" && text(e)==="Continue").props.onClick();
+    h.render();
+    assert.equal(h.modal().ref.current.visible, false);
+    h.accountModal().ref.current.emitHidden(); h.render();
+  };
   h.render(); return h;
 }
 
@@ -106,18 +120,24 @@ test("spend feedback agrees with the unchanged server for zero, limits and malfo
   }
 });
 
-test("Resume uses only a verified single account or a current explicit selection", () => {
+test("one or multiple Klaviyo accounts always require explicit selection before the separate spend modal", () => {
   assert.equal(klaviyoSetupAccount([], account.id), null);
-  assert.equal(klaviyoSetupAccount([account], null), account);
+  assert.equal(klaviyoSetupAccount([account], null), null);
   const other = {...account, id: "other"};
   assert.equal(klaviyoSetupAccount([account,other], "stale"), null);
   assert.equal(klaviyoSetupAccount([account,other], other.id), other);
   const h = harness();
-  assert.match(text(h.tree), /Estimated spend required/);
-  assert.equal(h.modal().props.heading, "Add estimated email spend");
+  assert.match(text(h.tree), /Account selection required/);
+  assert.equal(h.accountModal().props.heading, "Select Klaviyo account");
+  assert.equal(h.modal().ref.current.visible, false);
+  assert.equal(nodes(h.accountModal()).some(e=>e.type === "s-number-field"), false);
+  h.chooseAccount();
+  assert.equal(h.accountModal().ref.current.visible, false);
+  assert.equal(h.modal().ref.current.visible, true);
+  assert.equal(nodes(h.modal()).some(e=>e.type === "s-choice-list"), false);
   const multiple = harness({accounts: [account,other]});
   assert.match(text(multiple.tree), /Account selection required/);
-  assert.equal(multiple.modal().props.heading, "Select Klaviyo account");
+  assert.equal(multiple.accountModal().props.heading, "Select Klaviyo account");
   multiple.state.klaviyo.accounts = [];
   multiple.render();
   assert.equal(multiple.field(), undefined);
@@ -126,6 +146,7 @@ test("Resume uses only a verified single account or a current explicit selection
 
 test("blank initial spend stays in the modal; zero submits once without hiding other providers", () => {
   const h = harness();
+  h.chooseAccount();
   h.find("s-button", "Save and connect").props.onClick(); h.render();
   assert.equal(h.field().props.error, KLAVIYO_SPEND_ERROR);
   assert.equal(h.modal().props.heading, "Add estimated email spend");
@@ -140,8 +161,35 @@ test("blank initial spend stays in the modal; zero submits once without hiding o
   assert.equal(nodes(h.tree).filter(e=>e.type === "s-badge" && text(e) === "Connected").length, 2);
 });
 
+test("account Cancel or missing/foreign selection never advances, writes, or opens spend", () => {
+  const h = harness();
+  h.accountModal().ref.current.emitHidden(); h.render();
+  assert.equal(h.modal().ref.current.visible, false);
+  h.find("s-button", "Resume setup").props.onClick(); h.render();
+  h.revalidator.state = "idle"; h.render();
+  for (const values of [[], ["foreign"], [account.id, "foreign"]]) {
+    nodes(h.accountModal()).find(e=>e.type === "s-choice-list").ref.current.values = values;
+    h.find("s-button", "Continue").props.onClick(); h.render();
+    assert.equal(h.modal().ref.current.visible, false);
+    assert.match(nodes(h.accountModal()).find(e=>e.type === "s-choice-list").props.error, /Select one/);
+  }
+  assert.equal(h.submissions.length, 0);
+});
+
+test("account hide transition is one-shot and stale account selection cannot authorize spend", () => {
+  const h = harness();
+  h.chooseAccount();
+  h.accountModal().ref.current.emitHidden(); h.render();
+  assert.equal(h.modal().ref.current.visible, true);
+  h.state.klaviyo = {view: "pending", accounts: [{...account, id: "replacement"}]}; h.render();
+  assert.equal(h.field(), undefined);
+  const save = h.find("s-button", "Save and connect");
+  assert.equal(save.props.disabled, true); save.props.onClick();
+  assert.equal(h.submissions.length, 0);
+});
+
 test("server field errors preserve the entered value; unknown failures require a status check", () => {
-  const h = harness(); h.input("12.50"); h.find("s-button", "Save and connect").props.onClick(); h.render();
+  const h = harness(); h.chooseAccount(); h.input("12.50"); h.find("s-button", "Save and connect").props.onClick(); h.render();
   h.fetcher.state = "idle";
   h.fetcher.data = {ok: false, provider: "klaviyo", fieldError: KLAVIYO_SPEND_ERROR}; h.render();
   assert.equal(h.field().props.value, "12.50");
@@ -192,7 +240,7 @@ test("navigation and unrelated reloads never mark all three providers Working", 
 });
 
 test("successful setup replaces the pending modal only after server state becomes Connected", () => {
-  const h = harness(); h.input("32"); h.find("s-button", "Save and connect").props.onClick(); h.render();
+  const h = harness(); h.chooseAccount(); h.input("32"); h.find("s-button", "Save and connect").props.onClick(); h.render();
   assert.ok(h.modal());
   h.state.klaviyo = {view: "connected", account, current: {id: "period", amount: "32", currency: "USD", effectiveFrom: "2026-10-31", correctionVersion: 0}, periods: []};
   h.fetcher.state = "idle"; h.fetcher.data = undefined; h.render();

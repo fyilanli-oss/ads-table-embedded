@@ -3,6 +3,7 @@ import {redirect} from "react-router";
 import {
   database,
   providerTokenVault,
+  permissionRelease,
 } from "../shopify.server";
 import {createGoogleOAuthRuntime} from "../lib/oauth/google-oauth-runtime.server.js";
 import {
@@ -42,6 +43,7 @@ export const loader = async ({request}: LoaderFunctionArgs) => {
   const runtime = createGoogleOAuthRuntime({
     database,
     tokenVault: providerTokenVault,
+    identityAuthorizationEnabled: permissionRelease?.availability.google_ads === true,
   });
   const url = new URL(request.url);
   let callbackReturn: {shopDomain: string} | null = null;

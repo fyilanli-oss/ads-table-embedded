@@ -1,4 +1,56 @@
 {
+  "Owner_flow_restore_2026_10_31": {
+    "checked_at": "2026-10-31",
+    "existing_plan_step": 7,
+    "authority": "Explicit owner instruction after rejecting the single-account skip and merged account/spend modal; owner accepted the concrete per-provider corrections and said Tamam başlayalım Codex",
+    "supersedes": "Settings_corrections_2026_10_31 single-account auto-advance; earlier passing tests or publication are not product acceptance",
+    "Klaviyo": {
+      "sequence": [
+        "OAuth",
+        "Separate explicit account-selection modal, including one account",
+        "Separate estimated spend modal only after account modal native afterhide"
+      ],
+      "auto_select_single_account": false,
+      "account_and_spend_same_modal": false,
+      "zero_valid": true,
+      "field_errors_preserved": true,
+      "cancel_advances": false
+    },
+    "other_platforms": {
+      "code": "Same explicit server release settings are threaded through Settings and Google/Meta callbacks; Shopify request and optional-scope release gates are joined; no catalog selector",
+      "Google": [
+        "ADSTABLE_GOOGLE_IDENTITY_OAUTH_ENABLED"
+      ],
+      "Meta": [
+        "ADSTABLE_META_IDENTITY_OAUTH_ENABLED"
+      ],
+      "Shopify": [
+        "ADSTABLE_SHOPIFY_PERMISSION_REQUESTS_ENABLED",
+        "ADSTABLE_SHOPIFY_OPTIONAL_SCOPES_RELEASED"
+      ],
+      "release_flags_are_native_approval_evidence": false,
+      "live_release_changed": false
+    },
+    "native_evidence": {
+      "Vercel_read": "Matched no entries for the four release keys in visible metadata; decrypt=false; no values or settings changed",
+      "Google_app_scope_approval": "not_verified_in_native_dashboard",
+      "Meta_app_scope_approval": "not_verified_in_native_dashboard",
+      "Shopify_local_TOML": "optional_scopes not declared",
+      "Shopify_released_optional_scopes": "not_verified_in_native_app_version"
+    },
+    "analyst_brief": "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md",
+    "authorization_excludes": [
+      "Live configuration or provider mutations",
+      "Shopify visual automation",
+      "Deploy",
+      "Merge",
+      "Migration/Dataset write"
+    ],
+    "desktop_mobile_acceptance": "pending_owner_after_separately_approved_release",
+    "step15_started": false,
+    "historical22_resumed": false,
+    "Dataset_write": false
+  },
   "Settings_corrections_2026_10_31": {
     "checked_at": "2026-10-31",
     "existing_plan_step": 7,

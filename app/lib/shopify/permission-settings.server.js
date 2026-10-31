@@ -1,7 +1,8 @@
 import {buildKlaviyoAuthorizationUrl} from "../providers/klaviyo-api.server.js";
 
-// Deployment/readiness switches are server-owned. No form field or environment
-// shortcut can open a release gate. Klaviyo keeps its existing authorization path.
+// Deployment/readiness switches are server-owned. No browser field can open a
+// release gate. The Settings composition supplies the explicit
+// server release configuration. Klaviyo keeps its existing authorization path.
 export const PERMISSION_SETTINGS_AVAILABILITY = Object.freeze({
   shopify_products: false, shopify_orders: false, google_ads: false, meta: false, klaviyo: true,
 });
@@ -93,10 +94,7 @@ export function createPermissionSettings({shopify, providerRuntime, availability
         return Object.freeze({kind: "status", feature, stage: result.setupResumeAction, ...(selection ? {selection} : {})});
       }
       const result = await runtime.inspect({installationAuthority: verified.installationAuthority});
-      const stage = result.state === "pending_account_selection"
-        ? Array.isArray(result.accounts) && result.accounts.length === 1
-          && typeof result.accounts[0]?.id === "string" && result.accounts[0].id
-          ? "klaviyo_cost_missing" : "select_account"
+      const stage = result.state === "pending_account_selection" ? "select_account"
         : result.state === "connected" ? "existing_reporting_connection"
         : ["disconnected", "reauthorization_required"].includes(result.state) ? "request_permissions" : null;
       if (!stage) throw new Error("PERMISSION_SETTINGS_STATUS_UNCONFIRMED");

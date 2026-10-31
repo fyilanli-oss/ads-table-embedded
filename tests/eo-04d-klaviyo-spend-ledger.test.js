@@ -189,7 +189,8 @@ test("Settings uses accepted Shopify components and keeps Resume separate from O
   );
   assert.doesNotMatch(klaviyo, /<input|<button|<style|style=/i);
   assert.match(klaviyo, /onClick=\{resumeKlaviyoSetup\}/);
-  assert.match(route, /setKlaviyoSetupStep\("account"\)/);
+  assert.match(klaviyo, /id="klaviyo-initial-spend-modal"/);
+  assert.match(route, /addEventListener\("afterhide", afterHide\)/);
   assert.match(route, /form\.set\("accountId", pendingKlaviyoAccount\.id\)/);
   assert.match(
     klaviyo,

@@ -62,3 +62,7 @@ Görsel ve etkileşimli UI yalnız güncel Shopify App Bridge ve stable Polaris 
 
 Production domain, Shopify app config, provider mutation, live token/data carry, database provisioning, cutover ve legacy deletion yalnız kendi ileriki kapılarında ve açık yetkiyle yapılır. Missing, unknown, unsupported, partial, stale ve gerçek zero ayrı durumlardır.
 
+
+## 31 Ekim — açık hesap adımı ve ayrı Klaviyo maliyet modalı
+
+Klaviyo OAuth dönüşünde tek hesap dahi otomatik seçilerek atlanmaz. Açık hesap seçimi ayrı modalda, estimated spend ayrı modalda gösterilir; Continue sonrası native afterhide tamamlanmadan sonraki modal açılmaz. Bu ürün sahibi kararıdır; aynı modalda adım değiştirme veya otomatik geçiş performans/kolaylık gerekçesiyle geri getirilemez. Bu somut düzeltme ve sunucu yayın koşullarının kod bağlantısı onaylıdır; canlı ayar/izin/config/deploy/merge için ayrı açık onay kapısı sürer.

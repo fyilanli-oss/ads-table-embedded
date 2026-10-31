@@ -17,6 +17,7 @@ import {
   database,
   providerTokenVault,
   permissionSetup,
+  permissionRelease,
 } from "../shopify.server";
 import {
   resolveShopifyRouteAuthority,
@@ -116,7 +117,8 @@ type KlaviyoState =
   | {view: "reauthorization"}
   | {view: "error"; code: string; retry: "oauth" | "reload"};
 
-type LoaderData = State & {meta: State; klaviyo: KlaviyoState; permissionAvailability: typeof PERMISSION_SETTINGS_AVAILABILITY};
+type LoaderData = State & {meta: State; klaviyo: KlaviyoState; permissionAvailability: typeof PERMISSION_SETTINGS_AVAILABILITY;
+  permissionUnavailableReasons?: Partial<Record<PermissionFeature, string>>};
 
 function providerCodeOf(provider: Provider, error: unknown) {
   const prefix = provider === "meta"
@@ -204,6 +206,7 @@ async function loadGoogleState(
   const runtime = createGoogleOAuthRuntime({
     database,
     tokenVault: providerTokenVault,
+    identityAuthorizationEnabled: permissionRelease?.availability.google_ads === true,
   });
   try {
     const inspected = await runtime.inspect({
@@ -268,6 +271,7 @@ async function loadMetaState(
     const runtime = createMetaOAuthRuntime({
       database,
       tokenVault: providerTokenVault,
+    identityAuthorizationEnabled: permissionRelease?.availability.meta === true,
     });
     const inspected = await runtime.inspect({
       installationAuthority: verified.installationAuthority,
@@ -380,7 +384,9 @@ export const loader = async ({request}: LoaderFunctionArgs): Promise<LoaderData>
     loadMetaState(verified, url),
     loadKlaviyoState(verified, url),
   ]);
-  return {...google, meta, klaviyo, permissionAvailability: PERMISSION_SETTINGS_AVAILABILITY};
+  return {...google, meta, klaviyo,
+    permissionAvailability: permissionRelease?.availability ?? PERMISSION_SETTINGS_AVAILABILITY,
+    permissionUnavailableReasons: permissionRelease?.unavailableReasons};
 };
 
 const permissionIntents = new Set(["permission_connect", "permission_status", "permission_select_accounts", "permission_select_reporting"]);
@@ -407,10 +413,13 @@ export const action = async ({request}: ActionFunctionArgs) => {
     }
     const feature = featureValue as PermissionFeature;
     const settings = createPermissionSettings({shopify: permissionSetup,
+      availability: permissionRelease?.availability ?? PERMISSION_SETTINGS_AVAILABILITY,
       providerRuntime: (provider) => provider === "meta"
-        ? createMetaOAuthRuntime({database, tokenVault: providerTokenVault})
+        ? createMetaOAuthRuntime({database, tokenVault: providerTokenVault,
+          identityAuthorizationEnabled: permissionRelease?.availability.meta === true})
         : provider === "klaviyo" ? createKlaviyoOAuthRuntime({database, tokenVault: providerTokenVault})
-        : createGoogleOAuthRuntime({database, tokenVault: providerTokenVault}),
+        : createGoogleOAuthRuntime({database, tokenVault: providerTokenVault,
+          identityAuthorizationEnabled: permissionRelease?.availability.google_ads === true}),
     });
     try {
       let result;
@@ -449,10 +458,12 @@ export const action = async ({request}: ActionFunctionArgs) => {
 
   try {
     const runtime = provider === "meta"
-      ? createMetaOAuthRuntime({database, tokenVault: providerTokenVault})
+      ? createMetaOAuthRuntime({database, tokenVault: providerTokenVault,
+        identityAuthorizationEnabled: permissionRelease?.availability.meta === true})
       : provider === "klaviyo"
         ? createKlaviyoOAuthRuntime({database, tokenVault: providerTokenVault})
-        : createGoogleOAuthRuntime({database, tokenVault: providerTokenVault});
+        : createGoogleOAuthRuntime({database, tokenVault: providerTokenVault,
+          identityAuthorizationEnabled: permissionRelease?.availability.google_ads === true});
     if (intent === "begin") {
       const started = await runtime.oauthBoundary.begin({
         installationAuthority: verified.installationAuthority,
@@ -635,10 +646,12 @@ export default function Settings() {
   const klaviyoInitialSpend = useRef<any>(null);
   const klaviyoAccountChoice = useRef<any>(null);
   const klaviyoSetupModal = useRef<any>(null);
+  const klaviyoSpendModal = useRef<any>(null);
+  const klaviyoAccountTransition = useRef<string | null>(null);
+  const klaviyoShowSpend = useRef(false);
+  const [klaviyoAccountError, setKlaviyoAccountError] = useState("");
   const openedKlaviyoSetup = useRef(false);
   const klaviyoResumeRequested = useRef(false);
-  const [klaviyoSetupStep, setKlaviyoSetupStep] =
-    useState<"account" | "spend">("account");
   const [selectedKlaviyoAccountId, setSelectedKlaviyoAccountId] =
     useState<string | null>(null);
   const klaviyoUpdatedSpend = useRef<any>(null);
@@ -766,30 +779,51 @@ export default function Settings() {
     if (state.klaviyo.view !== "pending") {
       openedKlaviyoSetup.current = false;
       klaviyoResumeRequested.current = false;
-      setKlaviyoSetupStep("account");
       setSelectedKlaviyoAccountId(null);
       setInitialSpendValue("");
       setInitialSpendError("");
       setInitialSpendUnknown(false);
+      setKlaviyoAccountError("");
+      klaviyoAccountTransition.current = null;
+      klaviyoShowSpend.current = false;
       return;
     }
     if (klaviyoWorking) return;
-    if (openedKlaviyoSetup.current && !klaviyoResumeRequested.current) return;
+    if (openedKlaviyoSetup.current && !klaviyoResumeRequested.current && !klaviyoShowSpend.current) return;
     if (klaviyoResumeRequested.current) setInitialSpendUnknown(false);
     openedKlaviyoSetup.current = true;
     klaviyoResumeRequested.current = false;
     const account = klaviyoSetupAccount(state.klaviyo.accounts, selectedKlaviyoAccountId);
     if (account) {
-      setKlaviyoSetupStep("spend");
       setSelectedKlaviyoAccountId(account.id);
     } else {
-      setKlaviyoSetupStep("account");
       setSelectedKlaviyoAccountId(null);
     }
-    klaviyoSetupModal.current?.showOverlay?.();
+    klaviyoShowSpend.current = false;
+    if (account) klaviyoSpendModal.current?.showOverlay?.();
+    else klaviyoSetupModal.current?.showOverlay?.();
   }, [state.klaviyo, klaviyoWorking, selectedKlaviyoAccountId]);
 
+  useEffect(() => {
+    const element = klaviyoSetupModal.current;
+    if (!element || state.klaviyo.view !== "pending") return;
+    const accounts = state.klaviyo.accounts;
+    const afterHide = (event: Event) => {
+      if (event.target !== element) return;
+      const id = klaviyoAccountTransition.current;
+      klaviyoAccountTransition.current = null;
+      if (!id) return; // Cancel/Escape/close never advances the flow.
+      const account = klaviyoSetupAccount(accounts, id);
+      if (!account) { setKlaviyoAccountError("Select one Klaviyo account to continue."); return; }
+      klaviyoShowSpend.current = true;
+      setSelectedKlaviyoAccountId(account.id);
+    };
+    element.addEventListener("afterhide", afterHide);
+    return () => element.removeEventListener("afterhide", afterHide);
+  }, [state.klaviyo]);
+
   const permissions = usePermissionSettings({availability: state.permissionAvailability,
+    unavailableReasons: state.permissionUnavailableReasons,
     onResume(feature, stage) {
       if (feature === "klaviyo") {
         klaviyoResumeRequested.current = true;
@@ -955,10 +989,17 @@ export default function Settings() {
   };
 
   const continueKlaviyoSetup = () => {
-    const [accountId] = klaviyoAccountChoice.current?.values ?? [];
-    if (!accountId) return;
-    setSelectedKlaviyoAccountId(accountId);
-    setKlaviyoSetupStep("spend");
+    if (klaviyoAccountTransition.current || state.klaviyo.view !== "pending") return;
+    const ids = klaviyoAccountChoice.current?.values ?? [];
+    const account = ids.length === 1 ? klaviyoSetupAccount(state.klaviyo.accounts, ids[0]) : null;
+    if (!account) { setKlaviyoAccountError("Select one Klaviyo account to continue."); return; }
+    setKlaviyoAccountError("");
+    klaviyoAccountTransition.current = account.id;
+    try { klaviyoSetupModal.current.hideOverlay(); }
+    catch {
+      klaviyoAccountTransition.current = null;
+      setKlaviyoAccountError("Select one Klaviyo account to continue.");
+    }
   };
 
   const correctKlaviyoSpend = () => {
@@ -1675,17 +1716,15 @@ export default function Settings() {
               <s-modal
                 ref={klaviyoSetupModal}
                 id="klaviyo-setup-modal"
-                heading={klaviyoSetupStep === "account"
-                  ? "Select Klaviyo account"
-                  : "Add estimated email spend"}
+                heading="Select Klaviyo account"
               >
-                {klaviyoSetupStep === "account" ? (
                   <s-stack direction="block" gap="base">
                     <s-paragraph>
                       Select the Klaviyo account to connect.
                     </s-paragraph>
                     <s-choice-list
                       ref={klaviyoAccountChoice}
+                      error={klaviyoAccountError}
                       label="Klaviyo accounts"
                       name="klaviyoAccountId"
                     >
@@ -1696,7 +1735,19 @@ export default function Settings() {
                       ))}
                     </s-choice-list>
                   </s-stack>
-                ) : (() => {
+                <s-button slot="primary-action" variant="primary" onClick={continueKlaviyoSetup}>
+                  Continue
+                </s-button>
+                <s-button slot="secondary-actions" commandFor="klaviyo-setup-modal" command="--hide">
+                  Cancel
+                </s-button>
+              </s-modal>
+              <s-modal
+                ref={klaviyoSpendModal}
+                id="klaviyo-initial-spend-modal"
+                heading="Add estimated email spend"
+              >
+                {(() => {
                   const account = state.klaviyo.accounts.find(
                     (candidate) => candidate.id === selectedKlaviyoAccountId,
                   );
@@ -1735,15 +1786,6 @@ export default function Settings() {
                     </s-button>
                   </s-banner>
                 ) : null}
-                {klaviyoSetupStep === "account" ? (
-                  <s-button
-                    slot="primary-action"
-                    variant="primary"
-                    onClick={continueKlaviyoSetup}
-                  >
-                    Continue
-                  </s-button>
-                ) : (
                   <s-button
                     slot="primary-action"
                     variant="primary"
@@ -1753,10 +1795,9 @@ export default function Settings() {
                   >
                     Save and connect
                   </s-button>
-                )}
                 <s-button
                   slot="secondary-actions"
-                  commandFor="klaviyo-setup-modal"
+                  commandFor="klaviyo-initial-spend-modal"
                   command="--hide"
                   disabled={initialSpendSaving}
                 >

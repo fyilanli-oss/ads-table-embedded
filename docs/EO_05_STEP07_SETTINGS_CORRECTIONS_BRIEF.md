@@ -1,5 +1,69 @@
 # EO-05 / mevcut 07 — onaylı Settings düzeltmesi
 
+## Güncel ürün sahibi düzeltmesi — 31 Ekim 2026
+
+Önceki tek hesapta adım atlama kararı reddedildi. Kullanıcı aşağıdaki somut
+işleri açıkladıktan sonra "Tamam başlayalım Codex" diyerek kodlamayı onayladı.
+Bu bölüm aşağıdaki eski tek hesap/spend yönlendirmesinin üzerindedir.
+
+- Klaviyo: OAuth → ayrı `Select Klaviyo account` modalı → ayrı
+  `Add estimated email spend` modalı. Tek hesap da açık seçim ve Continue ister.
+- Hesap seçimi modalında maliyet alanı olmaz. Spend modalında hesap seçicisi
+  olmaz; yalnız onaylanan hesap bilgisi ve maliyet alanı bulunur.
+- Continue yalnız sunucudan gelen listede bulunan tam bir hesap seçilmişse
+  kabul edilir. Seçim modalının native `afterhide` olayı gelmeden spend açılmaz.
+  Escape/Cancel/çarpı ile kapatma sonraki modalı açmaz veya kayıt yapmaz.
+- Spend iptali aynı geçerli seçimi korur; Resume spend'e dönebilir. Liste
+  değişmişse geçersiz seçimle devam edilmez; hesap modalına dönülür.
+- Boş/geçersiz tutar alan hatasıdır; `0` geçerlidir. Mevcut maliyet geçmişi,
+  sunucu doğrulaması, belirsiz sonuçta Check status ve tek istek korunur.
+- Google/Meta açıklama → OAuth → mevcut 1–3 reklam hesabı → gerektiğinde tek
+  Reporting Account sırası korunur. Katalog seçimi veya otomatik seçimi yoktur.
+- Google/Meta başlangıcı ve callback'i aynı sunucu yayın koşulunu kullanır.
+  Shopify Products ve ayrı/isteğe bağlı Orders aynı doğrulanmış yayın koşullarını
+  kullanır. UI tek başına izin veya yayın yetkisi vermez.
+- Sabit dört `false` yerine sunucu yayın ayarları okunabilir hale getirilir;
+  bu ayarların canlıda değiştirilmesi ayrı onay ister. Kapalı durumda uygulamanın
+  kendi yayın engeli sağlayıcının izin reddi gibi gösterilmez.
+
+Birebir seçim hatası: `Select one Klaviyo account to continue.`; Continue,
+Cancel ve Save and connect korunur. Seçim hatası `s-choice-list.error`, maliyet
+hatası `s-number-field.error`; ayrı `s-modal` ve native afterhide kullanılır.
+Kaynaklar (31 Ekim 2026):
+https://shopify.dev/docs/api/app-home/latest/web-components/overlays/modal ve
+https://shopify.dev/docs/api/app-home/latest/web-components/forms/choice-list .
+Yalnız native bileşenler; özel CSS/ham HTML kontrolü yok. Desktop ve en az320px
+gerçek mobilde her iki modal, Cancel, Escape, seçim, hata ve başarı ayrıca ürün
+sahibi tarafından kabul edilir; önceki ekran görüntüleri PASS değildir.
+
+Yayın koşulları için eksik geliştirici/app onayı, kapsam yayını ve canlı izin
+kanıtı ayrı kayıt edilir. Yerel kod, provider onayı veya canlı izin kanıtı
+değildir. Bu onay config/provider mutation, Shopify görsel otomasyonu, deploy
+ve merge içermez. 15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.
+
+### İncelenebilir yayın koşulları ve kalan gerçek ortam işleri
+
+Sunucu ayarları yalnız birebir `true` değerini kabul eder; eksik/başka değer
+kapalıdır. Tarayıcı formu bu ayarları değiştiremez. Bunlar izin/onay kanıtı
+değil, ayrı açık yayın kararı sonrasında kullanılacak çalıştırma anahtarlarıdır.
+
+| Platform | Kodda bağlanan ayar | Canlıya geçişte doğrulanacak |
+|---|---|---|
+| Google | `ADSTABLE_GOOGLE_IDENTITY_OAUTH_ENABLED` | Mevcut OAuth uygulamasının Ads+Merchant iki scope talebine hazır olması; geliştirici/test erişimi ve native kullanıcı onayı |
+| Meta | `ADSTABLE_META_IDENTITY_OAUTH_ENABLED` | Mevcut uygulamanın sabit beş scope için dev/test veya dağıtım koşulları; native kullanıcı onayı |
+| Shopify | `ADSTABLE_SHOPIFY_PERMISSION_REQUESTS_ENABLED` + `ADSTABLE_SHOPIFY_OPTIONAL_SCOPES_RELEASED` | Mevcut app sürümünde read_products/read_orders optional scope yayını; native okuma ve ayrı Products/Orders onayı |
+
+31 Ekim salt okunur Vercel metadata listesinde bu dört anahtar için eşleşme
+dönmedi; hiçbir değer çözülmedi veya değişmedi. Bu gözlem Google/Meta panel
+onayı veya Shopify'daki yayımlanmış sürümün izinleri hakkında kanıt değildir.
+Yerel `shopify.app.toml` optional_scopes içermiyor; native sürümün durumu ayrı
+kontrol bekler. Shopify controller, yayın anahtarı açık olsa da native optional
+handle'ı bulmadan izin isteyemez; Orders, Products tamamlanmadan istenemez.
+
+Yeni runtime ayarları, Shopify app sürümü/izin yayını, geliştirici paneli değişikliği
+ve yeni deploy bu kod onayıyla yapılmadı. Mevcut canlı sürüm hâlâ önceki1e84b00
+adayıdır; düzeltilmiş kaynak ayrıca yayınlanmadan ekran testi istenmez.
+
 31 Ekim 2026. Ürün sahibi salt okunur inceleme sonrasında somut kodlama kapsamını
 onayladı. #264'ün onaylı, katalog seçimi kaldırılmış arayüz değişiklikleri güncel
 main üzerine uyumlandırılır. Yeni paket veya madde numarası oluşturulmaz.

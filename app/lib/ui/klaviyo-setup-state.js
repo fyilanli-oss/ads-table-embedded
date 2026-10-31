@@ -7,6 +7,5 @@ export function klaviyoSpendError(value) {
 }
 
 export function klaviyoSetupAccount(accounts, selectedId) {
-  return accounts.find(account => account.id === selectedId)
-    ?? (accounts.length === 1 ? accounts[0] : null);
+  return accounts.find(account => account.id === selectedId) ?? null;
 }

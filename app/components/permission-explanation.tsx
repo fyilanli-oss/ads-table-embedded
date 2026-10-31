@@ -9,6 +9,7 @@ type ModalHandle = HTMLElementTagNameMap["s-modal"];
 type Props = {
   snapshot: PermissionSnapshot;
   requestsAvailable: boolean;
+  unavailableReason?: string;
   onConnect(session: number, hideOverlay: () => void): void;
   onHide(session: number): void;
   onAfterHide(session: number): void;
@@ -17,7 +18,7 @@ type Props = {
 // One dialog per Settings host. Rendering or opening it never invokes an adapter.
 // The host retains this session until afterhide; it must not swap features mid-hide.
 export function PermissionExplanation({
-  snapshot, requestsAvailable, onConnect, onHide, onAfterHide,
+  snapshot, requestsAvailable, unavailableReason, onConnect, onHide, onAfterHide,
 }: Props) {
   const modal = useRef<ModalHandle | null>(null);
   const {feature, phase, session} = snapshot;
@@ -61,6 +62,7 @@ export function PermissionExplanation({
         {unavailable ? (
           <s-banner tone="warning" heading="Connection setup is not available yet." />
         ) : null}
+        {unavailable && unavailableReason ? <s-paragraph>{unavailableReason}</s-paragraph> : null}
       </s-stack>
       <s-button
         slot="primary-action"

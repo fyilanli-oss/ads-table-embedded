@@ -5,7 +5,7 @@ import {PermissionSetupSelection, type SelectionModel, type SelectionInput} from
 import {createPermissionExplanationFlow, permissionResumeTarget, type PermissionFeature} from "../lib/ui/permission-explanation-flow.js";
 import {permissionAuthorizationTarget, permissionResponseMatches} from "../lib/ui/permission-settings-response.js";
 import type {PermissionSettingsResult} from "../lib/shopify/permission-settings.server.js";
-import {rememberProductPermissionReturn, clearProductPermissionReturn, rememberOrderPermissionReturn, clearOrderPermissionReturn} from "../lib/ui/product-permission-return.js";
+import {requestShopifyScopeWindow} from "../lib/ui/shopify-scope-window.js";
 import type {ProductPermissionStatus} from "../lib/shopify/product-permission-status.server.js";
 
 type Reply = PermissionSettingsResult & {requestId: string};
@@ -19,11 +19,12 @@ type Props = {
 };
 
 // One host handles all five explanations. No mount effect starts a permission
-// request. Fresh Products status is read by the Settings loader; other status
-// actions remain explicit. The return hint carries navigation intent only.
+// request. Shopify consent stays in Settings through App Bridge; the server
+// prepares a fixed scope and verifies actual grants after the native window.
 const isShopifyPermission = (feature: unknown) => feature === "shopify_products" || feature === "shopify_orders";
 export function usePermissionSettings({availability, unavailableReasons, onResume, productOwner, onProductStatus, onOrderStatus}: Props) {
   const fetcher = useFetcher<Reply>();
+  const activeView = useRef(true);
   const callbacks = useRef({availability, onResume, productOwner, onProductStatus, onOrderStatus, submit: fetcher.submit});
   callbacks.current = {availability, onResume, productOwner, onProductStatus, onOrderStatus, submit: fetcher.submit};
   const pending = useRef<{
@@ -44,7 +45,6 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
   const setOrderRemovalResult = (kind: "removed" | "unknown" | null) => setOrderNotice(kind ? {owner: callbacks.current.productOwner, kind} : null);
   const productReply = useCallback((reply: PermissionSettingsResult) => {
     if (reply.feature !== "shopify_products") return;
-    try { clearProductPermissionReturn(globalThis.sessionStorage, callbacks.current.productOwner); } catch {}
     const value = reply.kind === "unavailable" ? "unavailable"
       : reply.kind === "status" && reply.stage === "review_setup" ? "ready"
       : reply.kind === "status" && reply.stage === "request_permissions" ? "missing" : "unknown";
@@ -53,7 +53,6 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
   }, []);
   const orderReply = useCallback((reply: PermissionSettingsResult) => {
     if (reply.feature !== "shopify_orders") return;
-    try {clearOrderPermissionReturn(globalThis.sessionStorage, callbacks.current.productOwner);} catch {}
     const value = reply.kind === "unavailable" ? "unavailable"
       : reply.kind === "status" && reply.stage === "review_setup" ? "ready"
       : reply.kind === "status" && ["request_permissions", "products_required"].includes(reply.stage) ? "missing" : "unknown";
@@ -85,8 +84,9 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
     if (permissionResponseMatches(fetcher.data, active)) active.resolve(fetcher.data);
     else active.reject();
   }, [fetcher.data, fetcher.state]);
-  useEffect(() => () => {
-    pending.current?.reject(); pending.current = null;
+  useEffect(() => {
+    activeView.current = true;
+    return () => {activeView.current = false; pending.current?.reject(); pending.current = null;};
   }, []);
 
   const flow = useRef<ReturnType<typeof createPermissionExplanationFlow> | null>(null);
@@ -94,26 +94,36 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
     canRequest: feature => callbacks.current.availability[feature] === true,
     request: async feature => {
       const requestOwner = callbacks.current.productOwner;
-      if (isShopifyPermission(feature)) {
-        let stored = false;
-        try { stored = (feature === "shopify_products" ? rememberProductPermissionReturn : rememberOrderPermissionReturn)(globalThis.sessionStorage, callbacks.current.productOwner); } catch {}
-        if (!stored) {
-          (feature === "shopify_products" ? callbacks.current.onProductStatus : callbacks.current.onOrderStatus)?.("unknown");
-          throw new Error("PRODUCT_RETURN_INTENT_UNAVAILABLE");
+      const current = () => activeView.current && requestOwner === callbacks.current.productOwner;
+      connectReply.current = null;
+      let observed = false;
+      try {
+        let reply = await execute("permission_connect", feature);
+        if (isShopifyPermission(feature) && !current()) throw new Error("PERMISSION_VIEW_CHANGED");
+        if (reply.kind === "scope_request") {
+          const binding = {...reply.binding};
+          await requestShopifyScopeWindow({preparation: reply, owner: requestOwner, isCurrent: current});
+          reply = await execute("permission_status", feature, {expectedScopeBinding: JSON.stringify(binding)});
+          if (!current()) throw new Error("PERMISSION_VIEW_CHANGED");
         }
-      }
-      const reply = await execute("permission_connect", feature);
-      if (isShopifyPermission(feature) && requestOwner !== callbacks.current.productOwner) throw new Error("PERMISSION_RETURN_OWNER_CHANGED");
-      productReply(reply);
-      orderReply(reply);
-      connectReply.current = reply;
-      setFeedback(reply);
-      if (reply.kind === "authorization") {
-        const target = permissionAuthorizationTarget(feature, reply.authorizationUrl);
-        if (!target) throw new Error("PERMISSION_TARGET_INVALID");
-        globalThis.open(target, "_top");
-      } else if (reply.kind === "unknown" || reply.kind === "unavailable") {
-        throw new Error("PERMISSION_RESULT_UNKNOWN");
+        if (isShopifyPermission(feature) && !["status", "unknown", "unavailable"].includes(reply.kind)) throw new Error("PERMISSION_READBACK_INVALID");
+        productReply(reply);
+        orderReply(reply);
+        observed = true;
+        connectReply.current = reply;
+        setFeedback(reply);
+        if (reply.kind === "authorization") {
+          const target = permissionAuthorizationTarget(feature, reply.authorizationUrl);
+          if (!target) throw new Error("PERMISSION_TARGET_INVALID");
+          globalThis.open(target, "_top");
+        } else if (reply.kind === "unknown" || reply.kind === "unavailable") {
+          throw new Error("PERMISSION_RESULT_UNKNOWN");
+        }
+      } catch (error) {
+        if (isShopifyPermission(feature) && current() && !observed) {
+          (feature === "shopify_products" ? callbacks.current.onProductStatus : callbacks.current.onOrderStatus)?.("unknown");
+        }
+        throw error;
       }
     },
   });

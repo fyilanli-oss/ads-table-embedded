@@ -11,7 +11,7 @@ test("no release, malformed values or browser-like aliases cannot enable new aut
     const release = readPermissionSetupRelease(input);
     assert.deepEqual(release.availability, {google_ads: false, meta: false, shopify_products: false, shopify_orders: false, klaviyo: true});
     const settings = createPermissionSettings({availability: release.availability,
-      providerRuntime: () => assert.fail("no runtime"), shopify: {requestProducts: () => assert.fail("no native request")}});
+      providerRuntime: () => assert.fail("no runtime"), shopify: {prepareProducts: () => assert.fail("no native request")}});
     for (const feature of ["google_ads", "meta", "shopify_products", "shopify_orders"]) {
       assert.deepEqual(await settings.connect({feature, verified, action: "connect"}), {kind: "unavailable", feature});
       assert.ok(release.unavailableReasons[feature]);
@@ -35,8 +35,8 @@ test("Shopify needs both request release and confirmed optional-scope release; O
   const calls = [];
   const result = {basePermissionState: "permission_ready", ordersPermissionState: "not_connected"};
   const settings = createPermissionSettings({availability: release.availability, shopify: {
-    requestProducts: async () => {calls.push("products"); return result;},
-    requestOrders: async () => {calls.push("orders"); return result;},
+    prepareProducts: async () => {calls.push("products"); return result;},
+    prepareOrders: async () => {calls.push("orders"); return result;},
   }});
   assert.equal((await settings.connect({feature: "shopify_products", verified, action: "connect"})).stage, "review_setup");
   assert.deepEqual(calls, ["products"]);

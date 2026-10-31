@@ -437,7 +437,11 @@ export const action = async ({request}: ActionFunctionArgs) => {
     try {
       let result;
       if (intent === "permission_connect") result = await settings.connect({feature, verified, action: "connect"});
-      else if (intent === "permission_status") result = await settings.status({feature, verified});
+      else if (intent === "permission_status") {
+        const encoded = form.get("expectedScopeBinding");
+        if (encoded !== null && (typeof encoded !== "string" || encoded.length > 512)) throw new Error("PERMISSION_SETTINGS_SCOPE_BINDING_INVALID");
+        result = await settings.status({feature, verified, ...(typeof encoded === "string" ? {expectedScopeBinding: JSON.parse(encoded)} : {})});
+      }
       else if (intent === "permission_revoke_products") {
         if (feature !== "shopify_products") throw new Error("PERMISSION_SETTINGS_FEATURE_INVALID");
         result = await settings.revokeProducts({feature, verified, action: "revoke"});

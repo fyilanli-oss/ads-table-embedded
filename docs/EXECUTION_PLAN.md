@@ -3555,3 +3555,26 @@ ilk client paint regresyonları gerekir; önceki destination testleri bu kusuru
 kapsamıyordu. Ayrı yayın ve gerçek native parlamasız geçiş kabulü bekler.
 Bağlayıcı kayıt: contracts/eo-05-permission-explanation-design-v1.json#Shopify_return_first_paint_2026_10_31.
 07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.
+
+## 31 Ekim — mevcut07: yerinde Shopify izin penceresi, dönüş yamaları kaldırıldı
+
+Owner Settings vizyonu gereği root/Funnel üzerinden dönüş ve görüntü gizlemeyi
+reddetti. Salt okunur inceleme SDK sunucu request yönteminin tam sayfa install
+akışını kullandığını; resmî App Bridge yönteminin çalışan sayfa üzerinde izin
+penceresi açtığını doğruladı. Owner bu doğru önerinin uygulanmasını açıkça onayladı.
+Yeni akış: mevcut Connect/afterhide → sunucuda sabit scope ön kontrolü → App Bridge
+shopify.scopes.request → gerçek mağza/aktif kurulum/AppInstallation'a bağlı sunucu
+readback → mevcut İngilizce kart. Client sonucu tek başına yetki değildir.
+Sunucudaki optional/config/owner/Products önkoşulları ve native revoke korunur.
+App Bridge yok/hata/bozuk veya stale sonuçta unknown; tam sayfa fallback ve retry
+yoktur. Meta/Google/Klaviyo callbackleri, scope/config/credential ve DB değişmez.
+SessionStorage dönüş modülü ve deklarasyonu, root-to-Settings gezinmesi ve SSR/ilk
+paint gizleme kodları kaldırıldı. Normal AppProvider/Outlet geri geldi. Eski server
+requestProducts/requestOrders yerine salt okunur prepareProducts/prepareOrders
+vardır. Eski redirect/yama testleri yerinde pencere ve sunucu readback testleriyle
+karşılandı. Önceki karar/kanıt kayıtları tarihsel tutulur, güncel akışı belirlemez.
+34bb4ff root gizleme adayı yayınlanmadı; bu yeni aday da ayrı yayın/native owner
+masaüstü/en az320px mobil kabulü ve merge onayı bekler.07 kapanışı değildir.
+Bağlayıcı kayıt ve31Ekim kaynakları:
+contracts/eo-05-permission-explanation-design-v1.json#Shopify_scope_window_2026_10_31.
+15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.

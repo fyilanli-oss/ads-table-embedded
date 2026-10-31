@@ -16,13 +16,24 @@ export function permissionAuthorizationTarget(feature, value) {
 
 export function permissionResponseMatches(reply, pending) {
   return !!pending && reply?.requestId === pending.requestId && reply?.feature === pending.feature
-    && ["unavailable", "unknown", "authorization", "status"].includes(reply?.kind)
+    && ["unavailable", "unknown", "authorization", "status", "scope_request"].includes(reply?.kind)
+    && (reply.kind !== "scope_request" || validShopifyScopeRequest(reply))
     && (reply.kind !== "authorization" || permissionAuthorizationTarget(reply.feature, reply.authorizationUrl) !== null)
     && (reply.kind !== "status" || ["request_permissions", "select_account", "select_reporting_account",
       "reporting_selected", "review_setup", "klaviyo_cost_missing", "existing_reporting_connection", "products_required"].includes(reply.stage))
     && (reply?.selection === undefined || reply.kind === "status"
       && ["select_account", "select_reporting_account"].includes(reply.stage) && validSelection(reply.selection))
     && reply?.expiresAt === undefined;
+}
+
+export function validShopifyScopeRequest(value) {
+  const target = value?.feature === "shopify_products" ? "read_products" : value?.feature === "shopify_orders" ? "read_orders" : null;
+  const b = value?.binding;
+  return target !== null && value?.kind === "scope_request" && value.scope === target
+    && /^gid:\/\/shopify\/Shop\/[1-9][0-9]*$/.test(b?.shopId ?? "")
+    && /^gid:\/\/shopify\/AppInstallation\/[1-9][0-9]*$/.test(b?.appInstallationId ?? "")
+    && Number.isSafeInteger(b?.installGeneration) && b.installGeneration >= 1
+    && Object.keys(b).length === 3 && value.authorizationUrl === undefined;
 }
 
 function validSelection(value) {

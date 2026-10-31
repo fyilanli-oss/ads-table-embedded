@@ -372,3 +372,51 @@ paint ve effect'in SSR'de çalışmaması); kurulu React18.3.1 ve Router7.18.2 k
 Gerçek SSR testinde root Outlet/Funnel yokluğu, ilk effect öncesi client çizimi,
 normal ana sayfa ve iki izin dönüşü, mesaj yokluğu ve hata/no-retry doğrulanır.
 Native masaüstü/en az320px mobil parlamasız geçiş kabulü bekler;07 kapanışı yok.
+
+## 31 Ekim — mevcut07: Shopify App Bridge izin penceresi; dönüş yamalarının kaldırılması
+
+Ürün sahibi kök neden araştırmasındaki doğru öneriyi kabul edip uygulamayı açıkça
+onayladı. Kapsam Products/Orders izin isteme yöntemini resmî client App Bridge'e
+almak, sunucu kontrolünü korumak ve sonradan eklenmiş root/Settings dönüş ve
+gizleme kodlarını kaldırmaktır. Yayın/native izin denemesi/merge onayı değildir.
+31Ekim resmî belge iki yöntemi ayırır: React Router scopes.request tam sayfa
+Shopify Admin'e yönlendirir; shopify.scopes.request çalışan uygulamanın üzerinde
+izin penceresi açar, sayfayı yönlendirmez. KuruluSDK3.0.1 de incelendi: sunucu
+request helper client_id/scope/optional_scopes ile install sayfasına gider;
+Settings hedefi taşımaz. Çalışan üç provider callback'i Settings'i açıkça hedefler.
+
+Akış: mevcut açıklama modalında Connect → native afterhide → authenticated sabit
+Products/Orders ön kontrolü (release, mağaza/aktif kurulum, taze mevcut grant,
+Products önkoşulu ve deploy edilmiş optional handle) → zaten granted ise kart;
+eksikse scope_request hazırlığı → yalnız aynı mağza/istek için App Bridge
+shopify.scopes.request([read_products veya read_orders]) bir kez → granted-all veya
+declined-all sonucunda aynı mağza/kurulum/AppInstallation için bir sunucu readback →
+kart. App Bridge sonucu hiçbir zaman tek başına grant veya veri yetkisi değildir.
+Ön kontrol kimliği korunur; browser farklı scope, provider veya arbitrary hedef
+seçemez. App Bridge yok/reject/bozuk sonuç/owner değişimi: unknown, otomatik
+tekrar veya sunucu redirect fallback yok. Açık Check status yalnız güncel izni okur.
+Cancel açıklaması sıfır istek; Shopify decline mevcut sayfada eksik durumu gösterir.
+Mükerrer afterhide/click bir native pencere açar. İstek sürerken view kapanır veya
+owner değişirse eski sonuç kartı değiştiremez ve yeni native istek başlatamaz.
+
+UI birebir mevcut İngilizce copy/component/critical removal davranışıdır. Yeni
+banner/toast/dönüş ekranı yok. Standart authenticated AppProvider/Outlet her rota
+ve SSR'de geri gelir. SessionStorage dönüş modülü ve ilgili deklarasyonu, owner/key
+root gating, /settings replace ve gizleme kodları kaldırılır; başka amaç için
+sessionStorage veya yeni cookie/return parametresi eklenmez. Server requestProducts/
+requestOrders redirect yöntemleri kaldırılıp prepareProducts/prepareOrders olur.
+Mevcut permission query/revoke ve public Products/Orders kartları korunur. Meta,
+Google/Klaviyo, native config/scopes, credentials, DB/Dataset değişmez.
+
+Test: gerçek Settings action JSON hazırlığı/401'e redirect icat etmeme; ön kontrol
+negatifleri ve tek scope; App Bridge granted/declined/reject/unavailable/bozuk/owner/
+unmount/duplicate sonrası native+readback sayıları; server readback eski kurulum/
+AppInstallation ve foreign binding reddi; Products/Orders revoke regresyonları;
+root SSR'nin tekrar gerçek Outlet üretmesi; normal sayfalara dönüş yaması olmaması.
+Masaüstü ve en az320px native owner modal/iptal/başarı/kaldırma/reconnect kabulü
+ayrı yayın onayından sonra bekler. Kod testleri bu kabul yerine geçmez.
+Kaynaklar31Ekim2026:
+https://shopify.dev/docs/apps/build/authentication-authorization/manage-access-scopes#request-new-access-scopes-dynamically
+https://shopify.dev/docs/api/app-home/latest/apis/authentication-and-data/scopes-api
+Mevcut native modal/button/badge/banner kaynakları ve pinli Polaris2.0 değişmez.
+07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.

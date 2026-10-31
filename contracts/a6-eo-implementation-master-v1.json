@@ -1,4 +1,15 @@
 {
+  "Shopify_scope_window_2026_10_31": {
+    "existing_plan_step": 7,
+    "record": "contracts/eo-05-permission-explanation-design-v1.json#Shopify_scope_window_2026_10_31",
+    "status": "In_place_native_scope_window_code_native_acceptance_pending",
+    "supersedes_root_return_hints_and_hiding": true,
+    "deploy_authorized": false,
+    "merge_authorized": false,
+    "step15_started": false,
+    "step22": "paused",
+    "step23": "Dataset_FX_writer"
+  },
   "Shopify_return_first_paint_2026_10_31": {
     "existing_plan_step": 7,
     "record": "contracts/eo-05-permission-explanation-design-v1.json#Shopify_return_first_paint_2026_10_31",

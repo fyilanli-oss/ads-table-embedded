@@ -3,41 +3,16 @@ import test from "node:test";
 import {readFileSync} from "node:fs";
 import {createRequire} from "node:module";
 import ts from "typescript";
-import {rememberProductPermissionReturn, consumeProductPermissionReturn, rememberOrderPermissionReturn, consumeOrderPermissionReturn} from "../app/lib/ui/product-permission-return.js";
 import {readProductPermissionStatus, readShopifyPermissionStatuses} from "../app/lib/shopify/product-permission-status.server.js";
 
 const owner = "gid://shopify/Shop/123";
-function storage() {
-  const rows = new Map();
-  return {rows, setItem: (key, value) => rows.set(key, value), getItem: key => rows.get(key) ?? null,
-    removeItem: key => rows.delete(key)};
-}
-test("Products return intent is same-store, expiring, one-use navigation only", () => {
-  const s = storage();
-  assert.equal(consumeProductPermissionReturn(s, owner, 1000), false);
-  assert.equal(rememberProductPermissionReturn(s, owner, 1000), true);
-  assert.equal(consumeProductPermissionReturn(s, owner, 2000), true);
-  assert.equal(consumeProductPermissionReturn(s, owner, 2001), false);
-  for (const [other, now] of [["gid://shopify/Shop/456", 2000], [owner, 601001], [owner, 999]]) {
-    rememberProductPermissionReturn(s, owner, 1000);
-    assert.equal(consumeProductPermissionReturn(s, other, now), false);
-    assert.equal(s.rows.size, 0);
-  }
-  for (const raw of ["not json", "x".repeat(257), JSON.stringify({version: 1, owner, startedAt: 1000, redirect: "https://evil.example"})]) {
-    s.rows.set("adstable.products-return.v1", raw);
-    assert.equal(consumeProductPermissionReturn(s, owner, 2000), false);
-  }
-  assert.equal(rememberProductPermissionReturn(s, "invalid", 1000), false);
-  assert.equal(rememberProductPermissionReturn({setItem() {throw new Error();}}, owner), false);
-});
-
 test("fresh Products status uses one native read and never requests access or activates data", async () => {
   const verified = {synthetic: true};
   for (const [value, expected] of [["permission_ready", "ready"], ["resume_setup", "missing"], ["unknown", "unknown"], [undefined, "unknown"]]) {
     let reads = 0;
     const result = await readProductPermissionStatus({verified, available: true, setup: {
       async afterReturn(args) {assert.equal(args.verified, verified); reads++; return {basePermissionState: value};},
-      requestProducts() {assert.fail("readback must never request consent");},
+      prepareProducts() {assert.fail("readback must never request consent");},
     }});
     assert.equal(result, expected); assert.equal(reads, 1);
   }
@@ -57,8 +32,8 @@ function load(relative, overrides) {
   return exports;
 }
 function hooks() {
-  const cells = [], effects = []; let cursor = 0;
-  return {start() {cursor = 0;}, finish() {while (effects.length) effects.shift()();},
+  const cells = [], effects = [], cleanups = []; let cursor = 0;
+  return {start() {cursor = 0;}, finish() {while (effects.length) {const cleanup=effects.shift()();if(typeof cleanup==="function")cleanups.push(cleanup);}}, unmount() {for(const cleanup of cleanups.splice(0))cleanup();},
     useCallback(fn, deps) {const i = cursor++, previous = cells[i];
       if (!previous || deps.some((v, j) => !Object.is(v, previous.deps[j]))) cells[i] = {fn, deps};
       return cells[i].fn;},
@@ -69,66 +44,9 @@ function hooks() {
       if (!previous || deps.some((v, j) => !Object.is(v, previous[j]))) {cells[i] = deps; effects.push(fn);}},
   };
 }
-async function withStorage(s, fn) {
-  const previous = Object.getOwnPropertyDescriptor(globalThis, "sessionStorage");
-  Object.defineProperty(globalThis, "sessionStorage", {value: s, configurable: true});
-  try {return await fn();} finally {
-    if (previous) Object.defineProperty(globalThis, "sessionStorage", previous); else delete globalThis.sessionStorage;
-  }
-}
 const treeText = value => Array.isArray(value) ? value.map(treeText).join("")
   : value && typeof value === "object" ? [value.props?.heading ?? "", treeText(value.props?.children)].join("")
   : typeof value === "string" ? value : "";
-
-test("actual authenticated layout returns once to Settings and cannot redirect another store or loop", async () => {
-  const s = storage(), h = hooks(), calls = []; let pathname = "/";
-  const component = load("app/routes/_admin.tsx", (id, require) => {
-    if (id === "react") return {...require(id), ...h};
-    if (id === "react-router") return {...require(id), useLoaderData: () => ({permissionReturnOwner: owner}),
-      useLocation: () => ({pathname}), useNavigate: () => navigate};
-    if (id === "../shopify.server") return {};
-    return require(id);
-  }).default;
-  function navigate(path, options) {calls.push({path, options}); return Promise.resolve();}
-  const render = () => {h.start(); const tree = component(); h.finish(); return tree;};
-  await withStorage(s, async () => {
-    render(); assert.equal(calls.length, 0);
-    rememberProductPermissionReturn(s, owner);
-    // A fresh layout mounts after Shopify returns to the application root.
-    pathname = "/settings"; render(); pathname = "/";
-    rememberProductPermissionReturn(s, owner); render();
-    const transition = render();
-    assert.equal(transition.props.children, null); // No Funnel, caption or transient banner.
-    assert.deepEqual(calls, [{path: "/settings", options: {replace: true}}]);
-    assert.equal(s.rows.size, 0);
-    pathname = "/settings"; render(); assert.equal(treeText(render()).includes("Returning to Settings"), false);
-    rememberProductPermissionReturn(s, "gid://shopify/Shop/456"); pathname = "/"; render();
-    assert.equal(calls.length, 1);
-  });
-});
-
-test("a failed Settings return exposes a native recovery link without retrying navigation", async () => {
-  await withStorage(storage(), async () => {
-    const h = hooks(); let attempts = 0;
-    const navigate = () => {attempts++; return Promise.reject(new Error("navigation failed"));};
-    const Layout = load("app/routes/_admin.tsx", (id, require) => {
-      if (id === "react") return {...require(id), ...h};
-      if (id === "react-router") return {useLoaderData: () => ({permissionReturnOwner: owner}), useLocation: () => ({pathname: "/"}), useNavigate: () => navigate, Outlet: () => null};
-      if (id === "@shopify/shopify-app-react-router/react") return {AppProvider: ({children}) => children};
-      if (id === "@shopify/shopify-app-react-router/server") return {boundary: {}};
-      if (id === "../shopify.server" || id.endsWith(".server.js")) return {};
-      return require(id);
-    }).default;
-    const render = () => {h.start(); const tree = Layout(); h.finish(); return tree;};
-    rememberProductPermissionReturn(globalThis.sessionStorage, owner);
-    render(); await Promise.resolve();
-    const tree = render();
-    assert.equal(treeText(tree).includes("Could not return to Settings."), true);
-    assert.equal(attempts, 1); render(); assert.equal(attempts, 1);
-    const banner = tree.props.children.props.children;
-    assert.equal(banner.props.children.props.href, "/settings");
-  });
-});
 
 function permissionHarness() {
   const h = hooks(), submissions = [], statuses = [], orderStatuses = [];
@@ -145,52 +63,8 @@ function permissionHarness() {
     onProductStatus: status => statuses.push(status), onOrderStatus: status => orderStatuses.push(status), onResume: () => assert.fail()};
   const render = () => {h.start(); value = usePermissionSettings(props); h.finish(); return value;};
   render();
-  return {render, submissions, statuses, orderStatuses, fetcher, props, get value() {return value;}, modal() {return value.content.props.children.find(e => e?.props?.onConnect).props;}};
+  return {render, unmount:()=>h.unmount(), submissions, statuses, orderStatuses, fetcher, props, get value() {return value;}, modal() {return value.content.props.children.find(e => e?.props?.onConnect).props;}};
 }
-test("actual Products Connect stores intent after modal confirmation; status updates its card without activation copy", async () => {
-  const s = storage();
-  await withStorage(s, async () => {
-    const h = permissionHarness(); h.value.open("shopify_products"); h.render();
-    const {session} = h.value.snapshot;
-    assert.equal(s.rows.size, 0);
-    h.modal().onConnect(session, () => h.modal().onHide(session));
-    const completion = h.modal().onAfterHide(session);
-    assert.equal(s.rows.size, 1); assert.equal(h.submissions.length, 1);
-    h.fetcher.data = {...h.submissions[0], kind: "status", stage: "review_setup"};
-    h.render(); await completion; h.render();
-    assert.deepEqual(h.statuses, ["ready"]);
-    assert.equal(s.rows.size, 0);
-    assert.equal(treeText(h.value.content).includes("awaiting activation"), false);
-    assert.equal(treeText(h.value.content).includes("Check status"), false);
-  });
-});
-test("Products modal cancel and unavailable storage never start a native permission action", async () => {
-  await withStorage(storage(), async () => {
-    const h = permissionHarness(); h.value.open("shopify_products"); h.render();
-    const {session} = h.value.snapshot; h.modal().onHide(session); await h.modal().onAfterHide(session);
-    assert.equal(h.submissions.length, 0);
-  });
-  await withStorage({setItem() {throw new Error("blocked");}}, async () => {
-    const h = permissionHarness(); h.value.open("shopify_products"); h.render();
-    const {session} = h.value.snapshot; h.modal().onConnect(session, () => h.modal().onHide(session));
-    await h.modal().onAfterHide(session); h.render();
-    assert.equal(h.submissions.length, 0); assert.deepEqual(h.statuses, ["unknown"]);
-  });
-});
-
-test("a pending Products reply cannot verify another store after the view owner changes", async () => {
-  await withStorage(storage(), async () => {
-    const h = permissionHarness(); h.value.open("shopify_products"); h.render();
-    const {session} = h.value.snapshot;
-    h.modal().onConnect(session, () => h.modal().onHide(session));
-    const completion = h.modal().onAfterHide(session);
-    h.props.productOwner = "gid://shopify/Shop/456";
-    h.fetcher.data = {...h.submissions[0], kind: "status", stage: "review_setup"};
-    h.render(); await completion; h.render();
-    assert.deepEqual(h.statuses, []);
-  });
-});
-
 test("native removal modal cancel/close never revoke; confirm waits for afterhide and consumes once", () => {
   const h = hooks(), listeners = new Map(); let calls = 0, hides = 0;
   const element = {addEventListener: (key, fn) => listeners.set(key, fn), removeEventListener: key => listeners.delete(key), hideOverlay: () => hides++};
@@ -250,43 +124,15 @@ test("late removal reply from another store cannot update the current Products c
   assert.deepEqual(h.statuses, []); assert.equal(h.value.productRemovalResult, null);
 });
 
-test("Orders return hint is isolated, same-owner, expiring and one-use", () => {
-  const s = storage();
-  rememberOrderPermissionReturn(s, owner, 1000);
-  assert.equal(consumeProductPermissionReturn(s, owner, 1001), false);
-  assert.equal(consumeOrderPermissionReturn(s, owner, 1001), true);
-  assert.equal(consumeOrderPermissionReturn(s, owner, 1002), false);
-  for (const [other, time] of [["gid://shopify/Shop/456", 1001], [owner, 601001]]) {
-    rememberOrderPermissionReturn(s, owner, 1000);
-    assert.equal(consumeOrderPermissionReturn(s, other, time), false);
-  }
-});
-
 test("one native scope read supplies both independent cards without reading order data", async () => {
   for (const [basePermissionState, ordersScopeState, expected] of [["permission_ready", "permission_ready", {products:"ready",orders:"ready"}], ["resume_setup", "permission_ready", {products:"missing",orders:"ready"}], ["permission_ready", "not_connected", {products:"ready",orders:"missing"}]]) {
     let reads = 0;
     const result = await readShopifyPermissionStatuses({verified: {}, productsAvailable: true, ordersAvailable: true,
-      setup: {afterReturn: async () => {reads++; return {basePermissionState, ordersScopeState};}, requestOrders: () => assert.fail()}});
+      setup: {afterReturn: async () => {reads++; return {basePermissionState, ordersScopeState};}, prepareOrders: () => assert.fail()}});
     assert.deepEqual(result, expected); assert.equal(reads, 1);
   }
   const failed = await readShopifyPermissionStatuses({productsAvailable: true, ordersAvailable: true, setup:{afterReturn:()=>{throw Error();}}});
   assert.deepEqual(failed, {products:"unknown",orders:"unknown"});
-});
-
-test("Orders Connect sets its own return hint after confirmation; verified reply updates only Orders", async () => {
-  await withStorage(storage(), async () => {
-    const h = permissionHarness(); h.value.open("shopify_orders"); h.render();
-    const {session} = h.value.snapshot;
-    h.modal().onConnect(session, () => h.modal().onHide(session));
-    const completed = h.modal().onAfterHide(session);
-    assert.equal(consumeProductPermissionReturn(globalThis.sessionStorage, owner), false);
-    assert.equal(consumeOrderPermissionReturn(globalThis.sessionStorage, owner), true);
-    h.fetcher.data = {...h.submissions[0], kind:"status", stage:"review_setup"};
-    h.render(); await completed; h.render();
-    assert.deepEqual(h.statuses, []); assert.deepEqual(h.orderStatuses, ["ready"]);
-    assert.equal(treeText(h.value.content).includes("awaiting activation"), false);
-    assert.equal(treeText(h.value.content).includes("Check status"), false);
-  });
 });
 
 test("Orders removal is single-shot, cannot revoke Products and updates only its card", async () => {
@@ -336,65 +182,77 @@ test("Orders native removal modal cancel/close never revoke; confirm waits for a
   closed(); assert.equal(calls, 1);
 });
 
-test("Orders authenticated layout returns once to Settings and cannot redirect another store or loop", async () => {
-  const s = storage(), h = hooks(), calls = []; let pathname = "/";
-  const component = load("app/routes/_admin.tsx", (id, require) => {
-    if (id === "react") return {...require(id), ...h};
-    if (id === "react-router") return {...require(id), useLoaderData: () => ({permissionReturnOwner: owner}),
-      useLocation: () => ({pathname}), useNavigate: () => navigate};
-    if (id === "../shopify.server") return {};
-    return require(id);
-  }).default;
-  function navigate(path, options) {calls.push({path, options}); return Promise.resolve();}
-  const render = () => {h.start(); const tree = component(); h.finish(); return tree;};
-  await withStorage(s, async () => {
-    render(); assert.equal(calls.length, 0);
-    rememberOrderPermissionReturn(s, owner);
-    // A fresh layout mounts after Shopify returns to the application root.
-    pathname = "/settings"; render(); pathname = "/";
-    rememberOrderPermissionReturn(s, owner); render();
-    const transition = render();
-    assert.equal(transition.props.children, null); // No Funnel, caption or transient banner.
-    assert.deepEqual(calls, [{path: "/settings", options: {replace: true}}]);
-    assert.equal(s.rows.size, 0);
-    pathname = "/settings"; render(); assert.equal(treeText(render()).includes("Returning to Settings"), false);
-    rememberOrderPermissionReturn(s, "gid://shopify/Shop/456"); pathname = "/"; render();
-    assert.equal(calls.length, 1);
+
+const binding={shopId:owner,appInstallationId:"gid://shopify/AppInstallation/9",installGeneration:2};
+const scopePreparation=feature=>({kind:"scope_request",feature,scope:feature==="shopify_products"?"read_products":"read_orders",binding});
+async function withBridge(bridge,fn){const descriptor=Object.getOwnPropertyDescriptor(globalThis,"shopify");Object.defineProperty(globalThis,"shopify",{value:bridge,configurable:true});try{return await fn();}finally{if(descriptor)Object.defineProperty(globalThis,"shopify",descriptor);else delete globalThis.shopify;}}
+const ticks=async()=>{for(let i=0;i<6;i++)await Promise.resolve();};
+function begin(h,feature){h.value.open(feature);h.render();const {session}=h.value.snapshot;h.modal().onConnect(session,()=>h.modal().onHide(session));const done=h.modal().onAfterHide(session);h.render();return {session,done};}
+function reply(h,value){h.fetcher.data={...h.submissions.at(-1),...value};h.render();}
+
+for(const feature of ["shopify_products","shopify_orders"]){
+  for(const result of ["granted-all","declined-all"]){
+    test(`${feature} App Bridge ${result} stays in Settings and waits for bound server readback`,async()=>{
+      let resolveWindow;const nativeCalls=[];const bridge={scopes:{request:scopes=>{nativeCalls.push(scopes);return new Promise(resolve=>{resolveWindow=resolve;});}}};
+      await withBridge(bridge,async()=>{
+        const h=permissionHarness();const {session,done}=begin(h,feature);
+        assert.equal(nativeCalls.length,0);reply(h,scopePreparation(feature));await ticks();
+        assert.deepEqual(nativeCalls,[[feature==="shopify_products"?"read_products":"read_orders"]]);
+        await h.modal().onAfterHide(session);assert.equal(h.submissions.length,1);
+        assert.deepEqual(h.statuses,[]);assert.deepEqual(h.orderStatuses,[]);
+        resolveWindow({result});await ticks();assert.equal(h.submissions.length,2);
+        assert.equal(h.submissions[1].intent,"permission_status");assert.deepEqual(JSON.parse(h.submissions[1].expectedScopeBinding),binding);
+        assert.deepEqual(h.statuses,[]);assert.deepEqual(h.orderStatuses,[]);
+        reply(h,{kind:"status",stage:result==="granted-all"?"review_setup":"request_permissions"});await done;h.render();
+        assert.deepEqual(feature==="shopify_products"?h.statuses:h.orderStatuses,[result==="granted-all"?"ready":"missing"]);
+        assert.equal(treeText(h.value.content).includes("awaiting activation"),false);
+      });
+    });
+  }
+}
+
+for(const mode of ["missing","reject","malformed","wrong_scope","wrong_owner","unmounted"]){
+  test(`App Bridge ${mode} never redirects, retries, grants or reads an unconfirmed result`,async()=>{
+    let count=0,resolveWindow;
+    const request=()=>{count++;if(mode==="reject")return Promise.reject(Error("SECRET"));if(mode==="malformed")return Promise.resolve({result:"unknown"});return new Promise(resolve=>{resolveWindow=resolve;});};
+    await withBridge(mode==="missing"?{}:{scopes:{request}},async()=>{
+      const h=permissionHarness();const {done}=begin(h,"shopify_products");
+      reply(h,{...scopePreparation("shopify_products"),...(mode==="wrong_scope"?{scope:"read_orders"}:{})});await ticks();
+      if(mode==="wrong_owner"||mode==="unmounted"){
+        if(mode==="wrong_owner"){h.props.productOwner="gid://shopify/Shop/456";h.render();}else h.unmount();
+        resolveWindow({result:"granted-all"});
+      }
+      await done;h.render();assert.equal(h.submissions.length,1);
+      assert.deepEqual(h.statuses,["wrong_owner","unmounted"].includes(mode)?[]:["unknown"]);
+      assert.equal(count,mode==="missing"||mode==="wrong_scope"?0:1);
+    });
+  });
+}
+
+test("explanation Cancel starts no preparation and an already-granted server reply opens no native window",async()=>{
+  let native=0;await withBridge({scopes:{request:()=>{native++;assert.fail();}}},async()=>{
+    const h=permissionHarness();h.value.open("shopify_products");h.render();const {session}=h.value.snapshot;
+    h.modal().onHide(session);await h.modal().onAfterHide(session);h.render();assert.equal(h.submissions.length,0);
+    const {done}=begin(h,"shopify_products");reply(h,{kind:"status",stage:"review_setup"});await done;h.render();
+    assert.deepEqual(h.statuses,["ready"]);assert.equal(native,0);
   });
 });
 
-test("real server rendering never paints the root Funnel before the client return decision", () => {
-  const require = createRequire(import.meta.url);
-  const React = require("react"), {renderToString} = require("react-dom/server");
-  let pathname="/", outlets=0;
+test("normal authenticated layout renders its Outlet in real SSR without a root return gate",()=>{
+  const require=createRequire(import.meta.url),React=require("react"),{renderToString}=require("react-dom/server");let outlets=0;
   const Layout=load("app/routes/_admin.tsx",(id,local)=>{
-    if(id==="react-router") return {useLoaderData:()=>({permissionReturnOwner:owner}),useLocation:()=>({pathname,key:"root"}),useNavigate:()=>()=>assert.fail("SSR cannot navigate"),Outlet:()=>{outlets++;return "Funnel";}};
-    if(id==="@shopify/shopify-app-react-router/react") return {AppProvider:({children})=>children};
-    if(id==="../shopify.server"||id.endsWith(".server.js"))return {};
-    return local(id);
+    if(id==="react-router")return{useLoaderData:()=>({apiKey:"synthetic",polarisUrl:"synthetic"}),Outlet:()=>{outlets++;return "Normal page";}};
+    if(id==="@shopify/shopify-app-react-router/react")return{AppProvider:({children})=>children};
+    if(id==="../shopify.server"||id.endsWith(".server.js"))return{};return local(id);
   }).default;
-  assert.equal(renderToString(React.createElement(Layout)), ""); assert.equal(outlets,0);
-  pathname="/settings";assert.equal(renderToString(React.createElement(Layout)),"Funnel");assert.equal(outlets,1);
+  assert.equal(renderToString(React.createElement(Layout)),"Normal page");assert.equal(outlets,1);
+  const source=readFileSync(new URL("../app/routes/_admin.tsx",import.meta.url),"utf8");
+  assert.doesNotMatch(source,/sessionStorage|useNavigate|RootDecision|consume.*Return|useEffect/);
 });
 
-test("first client paint is withheld for both native returns; normal home is released without redirect", async()=>{
-  for(const kind of ["none","products","orders"]){
-    await withStorage(storage(),async()=>{
-      if(kind==="products")rememberProductPermissionReturn(globalThis.sessionStorage,owner);
-      if(kind==="orders")rememberOrderPermissionReturn(globalThis.sessionStorage,owner);
-      const h=hooks(),calls=[];const Outlet=()=>null;let effect;
-      const navigate=(...args)=>{calls.push(args);return Promise.resolve();};
-      const Layout=load("app/routes/_admin.tsx",(id,local)=>{
-        if(id==="react")return {...local(id),...h,useEffect:(fn,deps)=>{effect=fn;h.useEffect(fn,deps);}};
-        if(id==="react-router")return {useLoaderData:()=>({permissionReturnOwner:owner}),useLocation:()=>({pathname:"/",key:"root"}),useNavigate:()=>navigate,Outlet};
-        if(id==="../shopify.server"||id.endsWith(".server.js"))return {};
-        return local(id);
-      }).default;
-      h.start();let tree=Layout();assert.equal(tree.props.children,null);h.finish();
-      effect(); // Development effect replay must not expose home or navigate twice.
-      h.start();tree=Layout();h.finish();
-      if(kind==="none"){assert.equal(tree.props.children.type,Outlet);assert.equal(calls.length,0);}
-      else{assert.equal(tree.props.children,null);assert.deepEqual(calls,[["/settings",{replace:true}]]);}
-    });
-  }
+test("a closed server gate remains unavailable without requesting a native window",async()=>{
+  await withBridge({scopes:{request:()=>assert.fail()}},async()=>{
+    const h=permissionHarness();const {done}=begin(h,"shopify_products");reply(h,{kind:"unavailable"});await done;h.render();
+    assert.deepEqual(h.statuses,["unavailable"]);assert.equal(h.submissions.length,1);
+  });
 });

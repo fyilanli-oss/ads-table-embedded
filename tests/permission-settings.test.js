@@ -11,7 +11,7 @@ import {createPermissionExplanationFlow} from "../app/lib/ui/permission-explanat
 import {normalizeKlaviyoEstimatedSpend} from "../app/lib/oauth/klaviyo-oauth-runtime.server.js";
 import {readPermissionSetupRelease} from "../app/lib/shopify/permission-release.server.js";
 
-const verified = {context: {}, installationAuthority: {workspaceId: "synthetic-workspace", installGeneration: 2}};
+const verified = {context: {}, identity:{shop:{shopId:"gid://shopify/Shop/123"}}, installationAuthority: {workspaceId: "synthetic-workspace", installGeneration: 2}};
 const availability = Object.fromEntries(Object.keys(PERMISSION_SETTINGS_AVAILABILITY).map(k => [k, true]));
 
 test("Klaviyo status keeps explicit account confirmation even for one account without beginning OAuth", async () => {
@@ -70,8 +70,8 @@ for (const feature of ["google_ads", "meta"]) {
 test("Shopify fixed Products/Orders methods preserve authenticated context and independent state", async () => {
   const calls = [];
   const settings = createPermissionSettings({availability, providerRuntime: () => assert.fail(), shopify: {
-    requestProducts: async args => { calls.push(["products", args]); return {basePermissionState: "permission_ready", ordersPermissionState: "unknown"}; },
-    requestOrders: async args => { calls.push(["orders", args]); return {basePermissionState: "permission_ready", ordersPermissionState: "not_connected"}; },
+    prepareProducts: async args => { calls.push(["products", args]); return {basePermissionState: "permission_ready", ordersPermissionState: "unknown"}; },
+    prepareOrders: async args => { calls.push(["orders", args]); return {basePermissionState: "permission_ready", ordersPermissionState: "not_connected"}; },
     afterReturn: async () => ({basePermissionState: "unknown", ordersPermissionState: "unknown"}),
   }});
   assert.deepEqual(await settings.connect({feature: "shopify_products", verified, action: "connect"}),
@@ -306,21 +306,13 @@ const settingsDataRequest = feature => new Request("https://embedded.adstable.ap
   method: "POST", body: new URLSearchParams({intent: "permission_connect", feature, requestId}),
 });
 
-test("real Settings .data response preserves the SDK permission redirect for Products and Orders", async () => {
-  for (const [feature, method, scope] of [["shopify_products", "requestProducts", "read_products"],
-    ["shopify_orders", "requestOrders", "read_orders"]]) {
-    let calls = 0;
-    const address = `https://example.myshopify.com/admin/oauth/install?client_id=synthetic&scope=&optional_scopes=${scope}`;
-    const route = loadRoute({release: shopifyRelease, shopify: {[method]: async () => {
-      calls++; throw new Response(null, {status: 401, headers: {[reauthorizeHeader]: address}});
-    }}});
-    const response = await settingsHttpHandler(route)(settingsDataRequest(feature));
-    assert.equal(calls, 1);
-    assert.equal(response.status, 401);
-    assert.equal(response.headers.get(reauthorizeHeader), address,
-      "the leaf Settings .data response must deliver the SDK redirect to App Bridge");
-    assert.match(response.headers.get("content-type"), /text\/x-script/);
-    await response.text();
+test("real Settings .data returns fixed App Bridge preparation without a full-page redirect", async () => {
+  for(const [feature,method,scope] of [["shopify_products","prepareProducts","read_products"],["shopify_orders","prepareOrders","read_orders"]]){
+    let calls=0;const binding={shopId:"gid://shopify/Shop/123",appInstallationId:"gid://shopify/AppInstallation/9",installGeneration:2};
+    const route=loadRoute({release:shopifyRelease,shopify:{[method]:async()=>{calls++;return{outcome:"scope_request_prepared",scope,binding};}}});
+    const response=await settingsHttpHandler(route)(settingsDataRequest(feature));
+    assert.equal(response.status,200);assert.equal(response.headers.get(reauthorizeHeader),null);assert.equal(calls,1);
+    const body=await response.text();assert.ok(body.includes("scope_request"));assert.ok(body.includes(scope));
   }
 });
 
@@ -336,7 +328,7 @@ test("Settings .data never invents a redirect or permission success for ordinary
 
 test("Settings .data keeps normal permission status as data without redirecting or re-requesting", async () => {
   let calls = 0;
-  const route = loadRoute({release: shopifyRelease, shopify: {requestProducts: async () => {
+  const route = loadRoute({release: shopifyRelease, shopify: {prepareProducts: async () => {
     calls++; return {basePermissionState: "permission_ready", ordersPermissionState: "not_connected"};
   }}});
   const response = await settingsHttpHandler(route)(settingsDataRequest("shopify_products"));
@@ -357,7 +349,7 @@ test("actual Settings loader reads fresh Products permission once without starti
         assert.equal(current, owner); reads++;
         if (nativeState === "failure") throw new Error("private detail");
         return {basePermissionState: nativeState};
-      }, requestProducts: () => assert.fail("loader must never request consent")},
+      }, prepareProducts: () => assert.fail("loader must never request consent")},
     });
     const reply = await route.loader({request: new Request("https://embedded.adstable.app/settings")});
     assert.equal(reply.shopifyProductAccess, expected);
@@ -401,7 +393,29 @@ test("actual Settings loader reads granted Products/Orders once and does not req
   let reads=0;
   const route=loadRoute({release:shopifyRelease,providerRuntime:()=>({inspect:async()=>({state:"disconnected"})}),shopify:{afterReturn:async()=>{
     reads++;return{basePermissionState:"permission_ready",ordersScopeState:"permission_ready"};
-  },requestOrders:()=>assert.fail()}});
+  },prepareOrders:()=>assert.fail()}});
   const result=await route.loader({request:new Request("https://embedded.adstable.app/settings")});
   assert.equal(result.shopifyProductAccess,"ready");assert.equal(result.shopifyOrderAccess,"ready");assert.equal(reads,1);
+});
+
+for(const mode of ["valid","foreign_shop","stale_generation","new_app_installation","foreign_result_shop","new_result_generation"]){
+  test(`App Bridge readback ${mode} uses current server authority instead of browser grant claims`,async()=>{
+    const binding={shopId:"gid://shopify/Shop/123",appInstallationId:"gid://shopify/AppInstallation/9",installGeneration:2};
+    let reads=0;
+    const settings=createPermissionSettings({availability,shopify:{afterReturn:async()=>{
+      reads++;return{...binding,...(mode==="new_app_installation"?{appInstallationId:"gid://shopify/AppInstallation/10"}:{}),...(mode==="foreign_result_shop"?{shopId:"gid://shopify/Shop/456"}:{}),...(mode==="new_result_generation"?{installGeneration:3}:{}),basePermissionState:"permission_ready"};
+    }},providerRuntime:()=>assert.fail()});
+    const expected={...binding,...(mode==="foreign_shop"?{shopId:"gid://shopify/Shop/456"}:{}),...(mode==="stale_generation"?{installGeneration:1}:{})};
+    const run=()=>settings.status({feature:"shopify_products",verified,expectedScopeBinding:expected});
+    if(mode==="valid")assert.deepEqual(await run(),{kind:"status",feature:"shopify_products",stage:"review_setup"});
+    else await assert.rejects(run(),/SCOPE_BINDING/);
+    assert.equal(reads,["foreign_shop","stale_generation"].includes(mode)?0:1);
+  });
+}
+
+test("actual Settings action checks scope binding after an App Bridge result without accepting browser status",async()=>{
+  const expected={shopId:"gid://shopify/Shop/123",appInstallationId:"gid://shopify/AppInstallation/9",installGeneration:2};
+  const route=loadRoute({release:shopifyRelease,shopify:{afterReturn:async()=>({...expected,basePermissionState:"resume_setup"})}});
+  const result=await route.action({request:formRequest({intent:"permission_status",feature:"shopify_products",requestId,expectedScopeBinding:JSON.stringify(expected),result:"granted-all",granted:"read_products"})});
+  assert.deepEqual(result,{kind:"status",feature:"shopify_products",stage:"request_permissions",requestId});
 });

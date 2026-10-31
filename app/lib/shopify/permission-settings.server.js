@@ -9,6 +9,12 @@ export const PERMISSION_SETTINGS_AVAILABILITY = Object.freeze({
 const features = Object.keys(PERMISSION_SETTINGS_AVAILABILITY);
 const stages = new Set(["request_permissions", "select_account", "select_reporting_account", "reporting_selected", "review_setup"]);
 const unavailable = feature => Object.freeze({kind: "unavailable", feature});
+function validScopeBinding(value) {
+  return value && /^gid:\/\/shopify\/Shop\/[1-9][0-9]*$/.test(value.shopId ?? "")
+    && /^gid:\/\/shopify\/AppInstallation\/[1-9][0-9]*$/.test(value.appInstallationId ?? "")
+    && Number.isSafeInteger(value.installGeneration) && value.installGeneration >= 1
+    && Object.keys(value).length === 3;
+}
 function selectionSnapshot(result) {
   if (!["select_account", "select_reporting_account"].includes(result?.setupResumeAction)) return undefined;
   if (typeof result.connectionId !== "string" || !result.connectionId || result.connectionId.length > 128
@@ -80,7 +86,14 @@ export function createPermissionSettings({shopify, providerRuntime, availability
       if (action !== "connect") throw new Error("PERMISSION_SETTINGS_EXPLICIT_CONNECT_REQUIRED");
       if (!check(feature, verified)) return unavailable(feature);
       if (feature === "shopify_products" || feature === "shopify_orders") {
-        const result = await (feature === "shopify_products" ? shopify.requestProducts : shopify.requestOrders)({verified, action: "connect"});
+        const result = await (feature === "shopify_products" ? shopify.prepareProducts : shopify.prepareOrders)({verified, action: "connect"});
+        if (result?.outcome === "scope_request_prepared") {
+          const target = feature === "shopify_products" ? "read_products" : "read_orders";
+          if (result.scope !== target || !validScopeBinding(result.binding)
+            || result.binding.shopId !== verified.identity?.shop?.shopId
+            || result.binding.installGeneration !== verified.installationAuthority.installGeneration) throw new Error("PERMISSION_SETTINGS_SCOPE_BINDING_INVALID");
+          return Object.freeze({kind: "scope_request", feature, scope: target, binding: Object.freeze({...result.binding})});
+        }
         return shopifyStatus(feature, result);
       }
       const runtime = providerRuntime(feature);
@@ -96,10 +109,16 @@ export function createPermissionSettings({shopify, providerRuntime, availability
         config: runtime.config, state: started.state, pkceChallenge: started.pkceChallenge,
       })});
     },
-    async status({feature, verified}) {
+    async status({feature, verified, expectedScopeBinding}) {
       if (!check(feature, verified)) return unavailable(feature);
+      if (expectedScopeBinding !== undefined && (!["shopify_products", "shopify_orders"].includes(feature)
+        || !validScopeBinding(expectedScopeBinding)
+        || expectedScopeBinding.shopId !== verified.identity?.shop?.shopId
+        || expectedScopeBinding.installGeneration !== verified.installationAuthority.installGeneration)) throw new Error("PERMISSION_SETTINGS_SCOPE_BINDING_INVALID");
       if (feature === "shopify_products" || feature === "shopify_orders") {
         const result = await shopify.afterReturn({verified});
+        if (expectedScopeBinding && (result.appInstallationId !== expectedScopeBinding.appInstallationId
+          || result.shopId !== expectedScopeBinding.shopId || result.installGeneration !== expectedScopeBinding.installGeneration)) throw new Error("PERMISSION_SETTINGS_SCOPE_BINDING_CHANGED");
         return shopifyStatus(feature, result);
       }
       const runtime = providerRuntime(feature);

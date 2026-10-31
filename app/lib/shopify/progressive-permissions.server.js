@@ -11,7 +11,6 @@ export const SHOPIFY_OPTIONAL_SCOPES_QUERY = `#graphql
     app { optionalAccessScopes { handle } }
   }
 `;
-const REAUTHORIZE = "X-Shopify-API-Request-Failure-Reauthorize-Url";
 const fail = code => {throw new Error(`SHOPIFY_SETUP_${code}`);};
 function scopeList(values) {
   if (!Array.isArray(values) || values.length > 100 || values.some(v => typeof v !== "string"
@@ -28,7 +27,7 @@ export function createShopifyProgressivePermissions({database, apiKey, requiredS
     || typeof optionalScopesReleased !== "boolean" || typeof now !== "function") fail("CONFIGURATION_INVALID");
   const required = scopeList(requiredScopes), installation = createShopifyRuntimeRepositories(database).installation;
   function capture(verified, signal) {
-    const nativeAdmin = verified?.context?.admin, nativeScopes = verified?.context?.scopes, nativeRequest = nativeScopes?.request;
+    const nativeAdmin = verified?.context?.admin, nativeScopes = verified?.context?.scopes;
     if (typeof nativeAdmin?.graphql !== "function") fail("VERIFIED_CONTEXT_REQUIRED");
     const adminRead = nativeAdmin.graphql.bind(nativeAdmin);
     const owner = Object.freeze({...verified?.installationAuthority});
@@ -38,7 +37,6 @@ export function createShopifyProgressivePermissions({database, apiKey, requiredS
       return adminRead(query, {...options, tries: 1, signal});
     }}};
     return {verified: {installationAuthority: owner, identity, context},
-      nativeRequest: typeof nativeRequest === "function" ? nativeRequest.bind(nativeScopes) : null,
       nativeRevoke: typeof nativeScopes?.revoke === "function" ? nativeScopes.revoke.bind(nativeScopes) : null,
       nativeQuery: typeof nativeScopes?.query === "function" ? nativeScopes.query.bind(nativeScopes) : null};
   }
@@ -70,30 +68,29 @@ export function createShopifyProgressivePermissions({database, apiKey, requiredS
       return operation({captured, read, current, check});
     }});
   }
-  function project(result, outcome, nativeRequestInvoked = false) {
+  function project(result, outcome) {
     const products = assessIdentityPermissionScopes({context: result.context, evidence: result.evidence, now});
     const base = products.scopeStatus === "observed_sufficient" ? "permission_ready"
       : products.scopeStatus === "observed_missing" ? "resume_setup" : "unknown";
     const orders = products.scopeStatus === "unknown" || result.assessment.scopeStatus === "unknown" ? "unknown"
       : base !== "permission_ready" ? "blocked_by_products"
       : result.assessment.scopeStatus === "observed_sufficient" ? "permission_ready" : "not_connected";
-    return Object.freeze({outcome, nativeRequestInvoked, basePermissionState: base, ordersPermissionState: orders,
+    return Object.freeze({outcome, nativeRequestInvoked: false, basePermissionState: base, ordersPermissionState: orders,
       ordersRequiredForBase: false, appInstallationId: result.evidence.appInstallationId,
-      observedAt: result.evidence.observedAt, authorizesActivation: false, ordersDataAccessAuthorized: false,
+      observedAt: result.evidence.observedAt, shopId: result.context.shopId, installGeneration: result.context.installGeneration, authorizesActivation: false, ordersDataAccessAuthorized: false,
       ordersScopeState: result.evidence.scopes.some(s => s === "read_orders" || s === "write_orders") ? "permission_ready" : "not_connected",
       overlapVerified: false, historyAccessAuthorized: false});
   }
   async function inspect({verified, signal} = {}) {
     return run(verified, signal, async ({read}) => project(await read(), "native_readback"));
   }
-  async function request(feature, {verified, action, signal} = {}) {
+  async function prepare(feature, {verified, action, signal} = {}) {
     if (action === "cancel") return Object.freeze({outcome: "cancelled", nativeRequestInvoked: false, authorizesActivation: false});
     if (action !== "connect") fail("EXPLICIT_CONNECT_REQUIRED");
     if (!requestsEnabled) fail("REQUEST_DISABLED");
     if (!optionalScopesReleased) fail("OPTIONAL_SCOPES_RELEASE_REQUIRED");
     const target = feature === "products" ? "read_products" : "read_orders";
     return run(verified, signal, async ({captured, read, current, check}) => {
-      if (!captured.nativeRequest) fail("NATIVE_SCOPE_REQUEST_REQUIRED");
       const before = await read(), state = project(before, "native_readback");
       if (state.basePermissionState === "unknown" || state.ordersPermissionState === "unknown") fail("PERMISSION_OBSERVATION_UNCONFIRMED");
       if (feature === "orders" && state.basePermissionState !== "permission_ready") {
@@ -119,32 +116,10 @@ export function createShopifyProgressivePermissions({database, apiKey, requiredS
       const declared = scopeList(body.data.app.optionalAccessScopes.map(s => s?.handle));
       if (!declared.includes(target)) fail("OPTIONAL_SCOPE_NOT_DEPLOYED");
       await current(before.context);
-      try {
-        const returned = await captured.nativeRequest([target]);
-        check();
-        if (returned !== undefined) fail("NATIVE_SCOPE_REQUEST_RESPONSE_INVALID");
-      } catch (error) {
-        check();
-        // Installed AppStore SDK intentionally throws this exact App Bridge
-        // response. Do not convert other HTTP/auth responses into a grant prompt.
-        if (!(error instanceof Response)) fail("NATIVE_SCOPE_REQUEST_FAILED");
-        let targetAddress;
-        try {targetAddress = new URL(error.headers.get(REAUTHORIZE));} catch {fail("NATIVE_REDIRECT_INVALID");}
-        if (error.status !== 401 || error.body !== null
-          || [...error.headers.keys()].some(key => key.toLowerCase() !== REAUTHORIZE.toLowerCase())
-          || targetAddress.protocol !== "https:" || targetAddress.hostname !== before.context.shopDomain
-          || targetAddress.username || targetAddress.password || targetAddress.port || targetAddress.hash
-          || targetAddress.pathname !== "/admin/oauth/install" || targetAddress.searchParams.get("client_id") !== apiKey
-          || targetAddress.searchParams.getAll("client_id").length !== 1 || targetAddress.searchParams.getAll("optional_scopes").length !== 1
-          || targetAddress.searchParams.get("optional_scopes") !== target || targetAddress.searchParams.getAll("scope").length !== 1
-          || !equalScopes(targetAddress.searchParams.get("scope") === "" ? [] : targetAddress.searchParams.get("scope").split(","), required)
-          || [...targetAddress.searchParams.keys()].some(key => !["client_id", "scope", "optional_scopes"].includes(key))) fail("NATIVE_REDIRECT_INVALID");
-        await current(before.context);
-        throw error; // Preserve SDK signalling unchanged; it is not a consent receipt.
-      }
-      const after = await read();
-      if (after.evidence.appInstallationId !== before.evidence.appInstallationId) fail("INSTALLATION_CHANGED");
-      return project(after, "native_readback", true);
+      return Object.freeze({outcome: "scope_request_prepared", scope: target,
+        binding: Object.freeze({shopId: before.context.shopId,
+          appInstallationId: before.evidence.appInstallationId, installGeneration: before.context.installGeneration}),
+        authorizesActivation: false});
     });
   }
   async function revoke(feature, {verified, action, signal} = {}) {
@@ -189,5 +164,5 @@ export function createShopifyProgressivePermissions({database, apiKey, requiredS
   }
   return Object.freeze({inspect, afterReturn: inspect,
     revokeProducts: args => revoke("products", args), revokeOrders: args => revoke("orders", args),
-    requestProducts: args => request("products", args), requestOrders: args => request("orders", args)});
+    prepareProducts: args => prepare("products", args), prepareOrders: args => prepare("orders", args)});
 }

@@ -1,4 +1,33 @@
 {
+  "Shopify_scope_window_2026_10_31": {
+    "checked_at": "2026-10-31",
+    "existing_plan_step": 7,
+    "authority": "Owner accepted the documented App Bridge permission-window approach and explicitly authorized implementation; code/tests/PR only",
+    "supersedes": "Shopify server scopes.request consent redirects, Products/Orders sessionStorage return hints, root-to-Settings replace, return captions and first-paint home suppression. Previous records remain historical.",
+    "cause": "Installed SDK3.0.1 server scopes.request redirects to admin/oauth/install without a Settings destination. Other provider callbacks explicitly return to Settings. Root hiding treated the visible result rather than selecting the native in-place API.",
+    "flow": [
+      "Explicit Connect in existing explanation, then native afterhide",
+      "Authenticated prepareProducts/prepareOrders reads current grants and declared optional handle under existing release, same shop/active installation and Products prerequisite guards; it never requests consent",
+      "Already-granted or prerequisite status updates the existing card without a native request",
+      "A fixed scope_request preparation contains one scope and shop/AppInstallation/install-generation binding; browser cannot substitute scopes or another provider",
+      "One shopify.scopes.request call opens Shopify's permission window over the running Settings page; no application navigation or fallback redirect",
+      "Recognized granted-all or declined-all is followed by one authenticated readback bound to the same preparation; only actual fresh grants update the card",
+      "Missing API, rejected/malformed response, stale owner/unmounted view, changed installation or read failure remains unknown, without retry/fallback; explicit Check status only reads"
+    ],
+    "security": "Native browser grant result is never server authority. No credential is sent to the browser. Prepared binding is public correlation data, not a token; server identity/grants and active installation are revalidated. Required scopes, protected data/history, role/identity, revoke and Dataset authority remain unchanged.",
+    "cleanup": "Deleted product-permission-return.js/.d.ts; restored normal authenticated AppProvider/Outlet SSR and render; removed server requestProducts/requestOrders redirect implementations and their obsolete redirect/return-gate tests. Kept correct independent card, cancellation and native revoke/readback logic.",
+    "UI": "Existing approved English copy/native Polaris components unchanged. No new message, toast, return screen, root gating, custom styling or new route. Third-provider OAuth behavior unchanged.",
+    "tests": "Actual fixed preparation and Settings .data JSON; negative preflight; scope protocol/owner checks; actual hook with synthetic App Bridge granted/declined/error/unavailable/malformed/stale/unmount/duplicate and bound readback; generation/AppInstallation binding rejection; real SSR normal Outlet; existing cancellation, card and revoke regressions",
+    "sources": ["https://shopify.dev/docs/apps/build/authentication-authorization/manage-access-scopes#request-new-access-scopes-dynamically", "https://shopify.dev/docs/api/app-home/latest/apis/authentication-and-data/scopes-api", "Installed SDK3.0.1 scope request/install helper and current Google/Meta/Klaviyo callback source"],
+    "native_visual_acceptance": false,
+    "native_permission_attempt_performed": false,
+    "deploy_authorized": false,
+    "merge_authorized": false,
+    "dataset_write": false,
+    "step15_started": false,
+    "step22": "paused",
+    "step23": "Dataset_FX_writer"
+  },
   "Shopify_return_first_paint_2026_10_31": {
     "existing_plan_step": 7,
     "checked_at": "2026-10-31",

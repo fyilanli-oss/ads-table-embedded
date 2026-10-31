@@ -1,3 +1,22 @@
+## Mevcut07 — ürün sahibinin OAuth/Settings sadeleştirme notları
+
+Ürün sahibi şimdi yalnız gözlem ve taleplerinin kaydedilmesini istedi. Google
+kartındaki Reconnect Google Ads ve Check status ile iki Resume setup düğmesinden
+birinin kaldırılması; hesap seçiminden Reporting Account adımına gereksiz Resume
+tıklaması olmadan ilerleme; Shopify ürün/sipariş izinlerinin karmaşık görünümünün
+değerlendirilmesi bu kayda dahildir. Kullanıcıyı kesinlikle yormayan ortak akış
+isteniyor. Google yeniden bağlantısı owner ekranında Connected ile tamamlandı;
+bu sonuç arayüz kabulü veya07 Done değildir.
+
+Bütün testler bittikten sonra Google/Meta/Klaviyo/Shopify izinleri için ortak
+standart, ne yapılacağı/ne yapılmayacağı ve kırmızı çizgiler birlikte belirlenip
+bağlayıcı sözleşmeye alınacak. Şimdi sözleşme tasarımı, kod/UI, izin/config veya
+yayın değişikliği yapılmaz. Ayrıntılı owner notları:
+`docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md` içindeki
+“Ürün sahibi notları — OAuth testleri sonrası ortak standart hazırlanacak”.
+Sıra: kalan testler → birlikte standart/sözleşme → ayrıca onaylı uygulama/görsel
+kabul. Mevcut07 açık;15 başlamadı;22 paused;23 Dataset yazımıdır.
+
 ## 31 Ekim — mevcut07: test ve gerçek hesapların birlikte keşfi
 
 27 Ekim PR192/8074086 ile yeni kimlik yoluna stopOnFirstError ayarını ben ekledim.

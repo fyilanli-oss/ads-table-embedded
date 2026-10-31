@@ -98,9 +98,7 @@ test("actual authenticated layout returns once to Settings and cannot redirect a
     pathname = "/settings"; render(); pathname = "/";
     rememberProductPermissionReturn(s, owner); render();
     const transition = render();
-    assert.equal(transition.props.children.type, "s-page");
-    assert.equal(transition.props.children.props.heading, "Settings");
-    assert.equal(transition.props.children.props.children, undefined); // No transient message/banner.
+    assert.equal(transition.props.children, null); // No Funnel, caption or transient banner.
     assert.deepEqual(calls, [{path: "/settings", options: {replace: true}}]);
     assert.equal(s.rows.size, 0);
     pathname = "/settings"; render(); assert.equal(treeText(render()).includes("Returning to Settings"), false);
@@ -356,13 +354,47 @@ test("Orders authenticated layout returns once to Settings and cannot redirect a
     pathname = "/settings"; render(); pathname = "/";
     rememberOrderPermissionReturn(s, owner); render();
     const transition = render();
-    assert.equal(transition.props.children.type, "s-page");
-    assert.equal(transition.props.children.props.heading, "Settings");
-    assert.equal(transition.props.children.props.children, undefined); // No transient message/banner.
+    assert.equal(transition.props.children, null); // No Funnel, caption or transient banner.
     assert.deepEqual(calls, [{path: "/settings", options: {replace: true}}]);
     assert.equal(s.rows.size, 0);
     pathname = "/settings"; render(); assert.equal(treeText(render()).includes("Returning to Settings"), false);
     rememberOrderPermissionReturn(s, "gid://shopify/Shop/456"); pathname = "/"; render();
     assert.equal(calls.length, 1);
   });
+});
+
+test("real server rendering never paints the root Funnel before the client return decision", () => {
+  const require = createRequire(import.meta.url);
+  const React = require("react"), {renderToString} = require("react-dom/server");
+  let pathname="/", outlets=0;
+  const Layout=load("app/routes/_admin.tsx",(id,local)=>{
+    if(id==="react-router") return {useLoaderData:()=>({permissionReturnOwner:owner}),useLocation:()=>({pathname,key:"root"}),useNavigate:()=>()=>assert.fail("SSR cannot navigate"),Outlet:()=>{outlets++;return "Funnel";}};
+    if(id==="@shopify/shopify-app-react-router/react") return {AppProvider:({children})=>children};
+    if(id==="../shopify.server"||id.endsWith(".server.js"))return {};
+    return local(id);
+  }).default;
+  assert.equal(renderToString(React.createElement(Layout)), ""); assert.equal(outlets,0);
+  pathname="/settings";assert.equal(renderToString(React.createElement(Layout)),"Funnel");assert.equal(outlets,1);
+});
+
+test("first client paint is withheld for both native returns; normal home is released without redirect", async()=>{
+  for(const kind of ["none","products","orders"]){
+    await withStorage(storage(),async()=>{
+      if(kind==="products")rememberProductPermissionReturn(globalThis.sessionStorage,owner);
+      if(kind==="orders")rememberOrderPermissionReturn(globalThis.sessionStorage,owner);
+      const h=hooks(),calls=[];const Outlet=()=>null;let effect;
+      const navigate=(...args)=>{calls.push(args);return Promise.resolve();};
+      const Layout=load("app/routes/_admin.tsx",(id,local)=>{
+        if(id==="react")return {...local(id),...h,useEffect:(fn,deps)=>{effect=fn;h.useEffect(fn,deps);}};
+        if(id==="react-router")return {useLoaderData:()=>({permissionReturnOwner:owner}),useLocation:()=>({pathname:"/",key:"root"}),useNavigate:()=>navigate,Outlet};
+        if(id==="../shopify.server"||id.endsWith(".server.js"))return {};
+        return local(id);
+      }).default;
+      h.start();let tree=Layout();assert.equal(tree.props.children,null);h.finish();
+      effect(); // Development effect replay must not expose home or navigate twice.
+      h.start();tree=Layout();h.finish();
+      if(kind==="none"){assert.equal(tree.props.children.type,Outlet);assert.equal(calls.length,0);}
+      else{assert.equal(tree.props.children,null);assert.deepEqual(calls,[["/settings",{replace:true}]]);}
+    });
+  }
 });

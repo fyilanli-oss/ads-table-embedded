@@ -349,3 +349,26 @@ Kabul: sentetik SDK ile gerçek Settings loader/action/hook/modal olayları test
 Products regresyonları; typecheck/build/CI. Sonrasında ayrı yayın onayı ve gerçek
 Shopify Admin masaüstü/en az320px mobil owner grant/cancel/revoke/reconnect kabulü.
 07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.
+
+## 31 Ekim — Products/Orders dönüşünde ana sayfa parlaması
+
+Owner her iki yeniden bağlanmada da önce ana ekrana gitmeye çalışıp Settings'e
+döndüğünü bildirdi. Mevcut effect yönlendirmeyi doğruluyor ancak SSR/ilk client
+çiziminde Outlet/Funnel henüz engellenmiyordu. Bu, onaylı sessiz Settings dönüşünün
+eksik kalan görüntü düzeltmesidir; native OAuth hedefi/değişken/scope/SDK değişmez.
+Ana uygulama yolu için owner/location-key bağlı dönüş kararı verilmeden Outlet
+çizilmez; root SSR ve ilk hydration aynı boş içerikle başlar. Niyet varsa /settings
+replace sürerken de Outlet/Funnel çizilmez. Niyet yoksa normal ana sayfa açılır.
+/settings ve /ad-analysis doğrudan içerik gösterir. Yeni mesaj/toast/başlık/stil yok.
+Dönüş hata metni ve Open Settings mevcut native bileşenleriyle korunur. Effect
+tekrarında yönlendirme bir kez yapılır; eski navigation hatası yeni rotayı etkilemez.
+Bedel: normal ana sayfanın ilk içeriği client dönüş kontrolünden sonra gösterilir;
+SSR'de ana sayfa içeriği geçici olarak tutulur. Storage yok/yanlış/eski niyette
+normal ana sayfa açılır; izin verilmiş varsayılmaz. Products/Orders niyet ve native
+izin okuma/kaldırma davranışı korunur. İzin veya yeni provider mutation yapılmaz.
+Kod/test/PR kapsamında hazırlanır; yayın ayrıca açık onay bekler.
+31Ekim resmî kaynak: https://react.dev/reference/react/useEffect (effect sonrası
+paint ve effect'in SSR'de çalışmaması); kurulu React18.3.1 ve Router7.18.2 korunur.
+Gerçek SSR testinde root Outlet/Funnel yokluğu, ilk effect öncesi client çizimi,
+normal ana sayfa ve iki izin dönüşü, mesaj yokluğu ve hata/no-retry doğrulanır.
+Native masaüstü/en az320px mobil parlamasız geçiş kabulü bekler;07 kapanışı yok.

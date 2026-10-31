@@ -1,6 +1,6 @@
 import type {HeadersFunction, LoaderFunctionArgs} from "react-router";
 import {Outlet, useLoaderData, useRouteError, useLocation, useNavigate} from "react-router";
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import {consumeProductPermissionReturn, consumeOrderPermissionReturn} from "../lib/ui/product-permission-return.js";
 import {AppProvider} from "@shopify/shopify-app-react-router/react";
 import {boundary} from "@shopify/shopify-app-react-router/server";
@@ -29,11 +29,17 @@ export const loader = async ({request}: LoaderFunctionArgs) => {
 
 export default function AuthenticatedAdminLayout() {
   const {apiKey, polarisUrl, permissionReturnOwner} = useLoaderData<typeof loader>();
-  const {pathname} = useLocation();
+  const {pathname, key} = useLocation();
   const navigate = useNavigate();
-  const [returnState, setReturnState] = useState<"idle" | "returning" | "failed">("idle");
+  type RootDecision = {key: string; owner: string; state: "home" | "returning" | "failed"};
+  const [decision, setDecision] = useState<RootDecision | null>(null);
+  const processed = useRef<{key: string; owner: string} | null>(null);
   useEffect(() => {
-    if (pathname !== "/" && pathname !== "/settings") {setReturnState("idle"); return;}
+    if (pathname !== "/") {processed.current = null; setDecision(null);}
+    if (pathname !== "/" && pathname !== "/settings") return;
+    if (pathname === "/" && processed.current && processed.current.key === key && processed.current.owner === permissionReturnOwner) return;
+    const current = {key, owner: permissionReturnOwner};
+    if (pathname === "/") processed.current = current;
     let pending = false;
     try {
       const products = consumeProductPermissionReturn(globalThis.sessionStorage, permissionReturnOwner);
@@ -41,16 +47,18 @@ export default function AuthenticatedAdminLayout() {
       pending = products || orders;
     } catch {}
     if (pathname === "/" && pending) {
-      setReturnState("returning");
+      setDecision({...current, state: "returning"});
+      const failed = () => {if (processed.current === current) setDecision({...current, state: "failed"});};
       try {
-        void Promise.resolve(navigate("/settings", {replace: true})).catch(() => setReturnState("failed"));
-      } catch { setReturnState("failed"); }
-    } else if (pathname === "/settings") setReturnState("idle");
-  }, [pathname, permissionReturnOwner, navigate]);
+        void Promise.resolve(navigate("/settings", {replace: true})).catch(failed);
+      } catch { failed(); }
+    } else if (pathname === "/") setDecision({...current, state: "home"});
+  }, [pathname, key, permissionReturnOwner, navigate]);
+  const rootState = decision && decision.key === key && decision.owner === permissionReturnOwner ? decision.state : null;
   return (
     <AppProvider apiKey={apiKey} polarisUrl={polarisUrl}>
-      {returnState === "returning" ? <s-page heading="Settings" />
-        : returnState === "failed" ? <s-page heading="Settings"><s-banner tone="critical" heading="Could not return to Settings."><s-link href="/settings">Open Settings</s-link></s-banner></s-page>
+      {pathname === "/" && rootState === "failed" ? <s-page heading="Settings"><s-banner tone="critical" heading="Could not return to Settings."><s-link href="/settings">Open Settings</s-link></s-banner></s-page>
+        : pathname === "/" && rootState !== "home" ? null
         : <Outlet />}
     </AppProvider>
   );

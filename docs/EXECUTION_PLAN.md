@@ -3539,3 +3539,19 @@ Bağlayıcı kayıt ve31Ekim resmî kaynakları:
 contracts/eo-05-permission-explanation-design-v1.json#Shopify_orders_completion_2026_10_31.
 Ayrıntılı metin/component/kabul: docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md.
 15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.
+
+## 31 Ekim — Products/Orders dönüşündeki ana ekran parlaması
+
+Owner Orders Cancel/kaldırma/Products korunması ve iki yeniden bağlanmanın
+Settings'e ulaştığını doğruladı; iki dönüşte de kısa ana ekran görünümü kaldı.
+Onaylı sessiz dönüşün görüntü düzeltmesi: root SSR/ilk client Outlet'i, aynı
+owner/location-key için dönüş kararı verilene kadar çizme; niyet varsa Settings
+replace bitene kadar ana sayfayı gösterme. Niyetsiz normal ana sayfa client
+kontrolünden sonra açılır; bu SSR içeriğinin bekletilmesi açık teknik bedeldir.
+Native OAuth/SDK/scope, izin okuma/kaldırma ve provider/DB davranışı değişmez.
+Yeni caption/banner/toast eklenmedi. React31Ekim belgesi effect'in SSR'de
+çalışmadığını ve paint sonrasında olabileceğini doğrular. Gerçek React SSR ve
+ilk client paint regresyonları gerekir; önceki destination testleri bu kusuru
+kapsamıyordu. Ayrı yayın ve gerçek native parlamasız geçiş kabulü bekler.
+Bağlayıcı kayıt: contracts/eo-05-permission-explanation-design-v1.json#Shopify_return_first_paint_2026_10_31.
+07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.

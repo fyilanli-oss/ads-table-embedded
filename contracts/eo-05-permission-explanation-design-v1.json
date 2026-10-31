@@ -1,4 +1,19 @@
 {
+  "Shopify_return_first_paint_2026_10_31": {
+    "existing_plan_step": 7,
+    "checked_at": "2026-10-31",
+    "scope": "Complete the approved quiet Products/Orders Settings return by withholding root Outlet until client return decision; no native OAuth/permission/SDK/provider/DB change",
+    "defect": "Root rendered Funnel in server/initial client output before useEffect consumed return hint and navigated; previous tests covered destination but not first paint",
+    "change": "Server and first hydration root output do not render Outlet. Owner/location-key decision releases ordinary home or holds content through fixed Settings replace. No caption/banner/toast; non-root pages render normally; existing English error recovery retained.",
+    "tradeoff": "Ordinary home content waits for client-side return check; home SSR intentionally withholds Outlet. Blocked storage or absent/stale/foreign hint releases normal home without inventing a grant.",
+    "guards": "Location-key and owner bind root decision. Ref prevents effect replay from consuming hint twice or revealing Funnel. Stale navigation failure cannot overwrite a later route.",
+    "tests": "Real React18 renderToString verifies no root Outlet/Funnel; actual layout hook harness verifies first client output and Products/Orders held return vs ordinary home; existing one-use/owner/error controls retained",
+    "sources": ["https://react.dev/reference/react/useEffect"],
+    "native_owner_evidence": "Owner confirmed Orders Cancel, removal with Products retained, and both reconnections reaching Settings, but observed transient home display. New first-paint behavior awaits native owner acceptance.",
+    "native_visual_acceptance": false,
+    "deploy_authorized": false,
+    "merge_authorized": false
+  },
   "Shopify_orders_completion_2026_10_31": {
     "checked_at": "2026-10-31",
     "existing_plan_step": 7,

@@ -1,6 +1,6 @@
 import type {LoaderFunctionArgs} from "react-router";
 import {redirect} from "react-router";
-import {database, providerTokenVault} from "../shopify.server";
+import {database, providerTokenVault, permissionRelease} from "../shopify.server";
 import {createMetaOAuthRuntime} from "../lib/oauth/meta-oauth-runtime.server.js";
 import {
   installedShopifySettingsUrl,
@@ -31,7 +31,8 @@ function publicCode(error: unknown) {
 }
 
 export const loader = async ({request}: LoaderFunctionArgs) => {
-  const runtime = createMetaOAuthRuntime({database, tokenVault: providerTokenVault});
+  const runtime = createMetaOAuthRuntime({database, tokenVault: providerTokenVault,
+    identityAuthorizationEnabled: permissionRelease?.availability.meta === true});
   const url = new URL(request.url);
   let callbackReturn: {shopDomain: string} | null = null;
 

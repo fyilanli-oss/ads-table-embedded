@@ -72,6 +72,16 @@ function fixture(provider, options = {}) {
       now: () => state.now, ...settings}).verify(input)};
 }
 for (const provider of ["google_ads", "meta"]) {
+  test(`${provider}: a stale displayed connection or reporting account cannot start an asset probe`, async () => {
+    for (const expected of [{connectionId: connection, version: 1}, {connectionId: credential, version: 2}]) {
+      const f = fixture(provider);
+      await assert.rejects(f.run({expectedConnection: {...expected, reportingAccountId: f.state.account}}), /CONNECTION_CHANGED/);
+      assert.deepEqual(f.calls, []);
+    }
+    const f = fixture(provider);
+    await assert.rejects(f.run({expectedConnection: {connectionId: connection, version: 2, reportingAccountId: "other"}}), /CONNECTION_CHANGED/);
+    assert.deepEqual(f.calls, []);
+  });
   test(`${provider}: access proof is native, account/epoch bound, and does not complete or persist setup`, async () => {
     const f = fixture(provider), result = await f.run({assetAccessVerified: true, setupComplete: true, provider: "other"});
     assert.equal(result.provider, provider); assert.equal(result.accessState, "verified");

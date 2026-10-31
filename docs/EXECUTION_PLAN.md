@@ -1,3 +1,55 @@
+## 31 Ekim — mevcut07: Google REST hatasında güvenli teknik kayıt
+
+Owner tam-izin sonrası REST_REQUEST_FAILED için önce salt okunur denetimi, sonra
+yalnız dar log düzeltmesi ve sentetik testlerini onayladı. Hata account discovery
+aşamasında; exact HTTP/Google nedeni mevcut kayıttan çıkarılamadı. Gerçek REST
+hatasına WeakMap ile sabit işlem adı, HTTPinteger ve izinli provider status/enum
+bağlanır; mevcut callback sink yalnız bu immutable kanıtı loglar. HTTP200 error
+envelope dahil eski hata semantiği/ilk-hata duruşu/istek sayısı değişmez. Ham veri,
+secret ve provider request-id loglanmaz. UI/token/migration/native ayar değişmez.
+Kod/test yetkisi canlı istek, yayın veya OAuth tekrarı değildir. Brief ve contract
+Google_REST_safe_cause_2026_10_31 kaydı bağlayıcıdır.07 açık;15 başlamadı;22 paused;
+23 Dataset yazımıdır. Exact Google nedeni ve gerçek bağlantı kabulü hâlâ açık.
+
+## 31 Ekim — mevcut07: Google eksik izin dönüşü ve Resume setup
+
+Owner yalnız Ads iznini seçtiğini bildirdi; Google kartı Not connected döndü.
+Salt okunur canlı kayıt failed/genel PROVIDER_EXCHANGE_FAILED; disconnected42 ve
+credential yok. Exact native scope bu kayıttan kanıtlanmaz. Kesin kod kusuru,
+runtime pending_permissions sonucunun callback'te pending'e indirgenmesi ve
+Settings'te sürdürme karşılığının olmamasıdır. Ürün sahibi yalnız bu düzeltme,
+İngilizce açıklama, güvenli callback sınıflandırması ve testleri onayladı.
+Google-only permissions_incomplete dönüş ipucu yalnız açıklama/Resume setup taşır;
+mevcut sunucu bağlantı/hesap kanıtını ezmez veya yetki yaratmaz. Resume mevcut
+açıklamayı açar; otomatik OAuth/status/retry yok. İptal/hata/tam izin ve diğer
+platformlar korunur. Yeni migration yok; deploy/native/merge ayrı onay bekler.
+Brief ve permission-design sözleşmesindeki Google_partial_permission_return_2026_10_31
+kaydı bağlayıcıdır.07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımı.
+
+## 31 Ekim — mevcut07: eksik refresh rolü ve seçili OAuth yayın provası
+
+Onaylı canlı ilk migration denemesi `adstable_refresh_coordinator` yokluğu nedeniyle
+42704 ile durdu; işlem tamamen geri alındı, ikinci migration/yayın yapılmadı.
+Salt okunur denetim rolün pending refresh altyapısına ait olduğunu, OAuth'ta yalnız
+REVOKE hedefi olduğunu gösterdi. Ürün sahibi yalnız dosya düzeltme ve izole testleri
+onayladı. Pending atomic_stage dosyasında koordinatörün REVOKE'u rol varsa çalışır;
+diğer zorunlu REVOKE ve runtime-only grant korunur. Rol veya refresh altyapısı kurulmaz.
+F01 staged/full bütün pending dosyaları içerdiğinden önceki PASS seçili canlı yolu
+kanıtlamıyordu. Üçüncü boş runner DB'sinde canlı40 başlangıç + yalnız atomic_stage/
+reconnect gerçek commit sınırlarıyla ve rol yokken sınanır; ayrı rollback dalında
+rol varsa default EXECUTE dahi kaldırılmalıdır. Gerçek SQL/CAS/receipt/rollback
+probeları iki dalda yeniden kullanılır. Canlı uygulama/yayın/merge/native test için
+yeni onay gerekir. Ayrıntı mevcut07 brief ve permission-design contract kaydındadır.
+07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.
+
+## 31 Ekim — mevcut07: açık Connect ile yeniden bağlanma düzeltmesi
+
+Ürün sahibi dar teşhisten sonra kod, migration dosyası ve izole testleri onayladı. Aktif development mağazasının Google kaydı disconnected/version42; başlangıç kapısı ve atomik commit bu durumu reddediyordu. Hazırlanan ortak Google/Meta akışı, kaldırılması tamamlanmış bağlantıyı exact ID/version ile yeni onaya bağlar. Eski credential/grant/hesap seçimi yeniden etkinleştirilmez. Disconnect_pending/unknown, stale bağlantı ve eksik temizlik kapalı; connected upgrade korumaları ve atomik claim/CAS/receipt korunur. Temiz disconnected için açık Check status, token/native okuma veya yazma yapmadan request_permissions döndürür. Meta'nın canlı yayın anahtarı kapalı kalır.
+
+Sağlayıcı sonucu kendi kartında gösterilir; ortak modal host tek kalır. Genel unknown cevabı korunur. Güvenli log yalnız allowlist kodu/feature/intent ve doğrulanmış requestId içerir; raw hata/SQL/state/credential yoktur. Shopify Products/Orders davranışı korunur.
+
+CLI2.121.0 ile oluşturulan 20261031181313_eo05a_identity_oauth_reconnect.sql yalnız mevcut fonksiyonu aynı imza/yetkilerle değiştirecek adaydır. Lineage pending/applied:false/live_apply_authorized:false. Mevcut F01 izole SQL probe'u temiz yeniden bağlanma, yeni kapsam/hesap seçimi, stale/pending/aktif reporting/replay ve rollback'i sınar. Canlı migration, yayın, native tekrar ve merge yapılmadı; ayrı somut onay gerekir. Bağlayıcı kayıt: contracts/eo-05-permission-explanation-design-v1.json#Explicit_reconnect_2026_10_31.07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımı.
+
 ## 30 Ekim — PMax kaynaklarını mevcut resolver ve arka plan okuyucusuna bağlama
 
 Mevcut 21'in 15 öncesi dar kod dilimi: PMax Asset Group PD, ürün performansı, PMax'e filtreli Cart Data ve güncel Listing Tree ayrı aileler halinde tam sayfalanır. Mevcut ortak okuyucuda açık googlePmax seçeneğiyle aynı mağaza/hesap/nesil/bağlantı kontrolleri ve fiziksel kota hattı kullanılır. Varsayılan akış değişmez; Shopify'da görsel işlem veya OAuth değişikliği yoktur.
@@ -62,7 +114,7 @@ Resmî kontrol 2026-10-30: https://developers.google.com/google-ads/api/docs/rep
 - Kod, test, sözleşme, migration, config, callback/token/oturum, canlı çağrı, temizlik/kaldırma/geri alma/refactor, deploy ve merge de dahildir. Düzeltme veya geri alma amacı kendiliğinden izin oluşturmaz.
 - Genel “devam edelim”, genel onay, önceki başka iş/merge onayı veya önceki plan kararı OAuth yetkisi değildir. Onay yalnız açıkça belirtilen somut iş ve kapsam için geçerlidir. Kapsam değişecekse durulur ve yeni açık izin alınır.
 - Bu kapı, OAuth için önceki bağımsız kodlama veya izole test ilerleme izinlerinin önündedir; teknik olanak, başarılı test, geri alınabilirlik veya ajan takdiri yerine geçmez.
-- #264 kullanıcı tarafından reddedilen katalog seçim adımı nedeniyle durdurulmuştur; merge yetkisi yoktur. Katalog seçimi kodu temizlenmedi veya değiştirilmedi. Temizlik de ayrı açık izin bekler.
+- #264’te katalog seçimi açık temizlik onayıyla kaldırıldı (kaynak a103b25). 31 Ekim’de onaylı arayüzün güncel main ile uyumlandırılması ve üç Settings hatasının düzeltilmesi ayrıca onaylandı. Katalog seçimi geri getirilemez. Gerçek görsel kabul ve ayrı merge onayı beklenir; canlı izin/config/deploy yetkisi yoktur. Önceki temizlenmedi/izin bekliyor ifadeleri 29 Ekim tarihsel durumudur.
 - Bu kuralın AGENTS ve bağlayıcı belgelere kaydı kullanıcı tarafından açıkça istendi. Bu izin yalnız kural kaydına aittir; OAuth inceleme/kodlama/test/temizlik veya provider işlemi yetkisi vermez.
 
 ## 29 Ekim 2026 — Onaylı kararlı Polaris 2.0 hizalaması
@@ -3378,3 +3430,203 @@ reviewed_for_prewrite_only uygulama onayı veya gerçek kurulum tamamlanması de
 404 ilgili test geçti; genel test/tip/derleme ve exact source Actions/F01 ayrıca doğrulanır. OAuth ekran/akış/kapsam/katalog seçimi, canlı sorgu, config/secret/migration/deploy, Sales Role veya Dataset yazımı değişmedi.15 başlamadı;22 duraklatılmış;23 writer.
 
 Bağlayıcı kayıt: contracts/eo-05-start-brief-v1.json#Setup_scope_access_prewrite_binding_2026_10_30. Resmî kontrol30Ekim2026: Shopify AppInstallation, Google OAuth Scopes ve Klaviyo Authenticate API Requests okundu. Merge ayrı açık onay bekler.
+
+
+## 31 Ekim 2026 — mevcut 07: onaylı Settings düzeltmesi
+
+Ürün sahibi salt okunur inceleme sonrası #264’teki onaylı arayüzün güncel main üzerine uyumlandırılmasını ve üç hatanın birlikte düzeltilmesini onayladı: Klaviyo ilk maliyet girişinde alan/modal içi hata, sağlayıcıya özel Working ve gerçek eksik adıma göre Resume setup. Sıfır tutar geçerli, mevcut harcama geçmişi korunur. Merchant/işletme/katalog seçimi veya otomatik seçimi eklenmez. Önceki katalog seçimi/temizlik bekliyor notları son kararla güncellenmiştir.
+
+Somut durum/metin/bileşen ve test özeti: `docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md`. Makine kaydı: `contracts/eo-05-permission-explanation-design-v1.json#Settings_corrections_2026_10_31`. Güncel teknik teslim bağlantıları korunur. Kod/izole test ve CI ile gerçek desktop/mobil kullanıcı kabulü ayrı tutulur; UI Done/PASS veya 07 kapanışı verilmez. #264 taslak kalır; yeni adayın merge onayı ayrıdır. Canlı provider, izin/kapsam, token/config, DB/migration ve deploy değişikliği yoktur. 15 başlamadı;22 duraklatılmış; Overlap22 sonrası;23 Dataset yazımı.
+
+
+## 31 Ekim — mevcut07 akış düzeltmesi, ürün sahibi ret ve yeni kod onayı
+
+Ürün sahibi tek Klaviyo hesabının otomatik geçilmesini ve hesap/spend adımlarının aynı modalda bulunmasını reddetti. Son karar: OAuth → ayrı açık hesap seçimi (tek hesap dahil) → hesap modalı afterhide sonrasında ayrı estimated spend modalı. Cancel/çarpı/Escape ilerletmez; sıfır ve alan içi hata korunur. Önceki tek hesap atlama yönlendirmesi tarihsel ve geçersizdir;3360 test ve önceki yayın görsel kabul oluşturmaz.
+
+Google/Meta ve Shopify sunucu yayın koşullarının kod bağlantısı tamamlanır; başlatma/dönüş aynı koşulu okur. Hiçbir canlı anahtar, app configuration veya izin değiştirilmez. Developer/native izin koşulları doğrulanmış sayılmaz. Somut koşullar ve açık gerçek ortam işleri `docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md`; makine kaydı `contracts/eo-05-permission-explanation-design-v1.json#Owner_flow_restore_2026_10_31`. Bu somut kod/test/karar düzeltmesi açık kullanıcı onayıyla başlatıldı; deploy ve merge ayrıca onay bekler. 15 başlamadı;22 duraklatılmış;23 Dataset yazımı.
+
+## 31 Ekim — mevcut 07 Shopify optional izin adayı (henüz yayımlanmadı)
+
+Ürün sahibinin kodda hazırlama isteğiyle shopify.app.toml dosyasına yalnız
+optional_scopes = ["read_products", "read_orders"] eklendi; required scopes boş
+kaldı. Products ürün kurulumu için gereklidir; Orders ayrı ve isteğe bağlıdır.
+Önceki “yerel TOML optional içermiyor” tespiti bu aday öncesine aittir.
+Bu kayıt Shopify'da yayımlanmış izin veya mağaza onayı kanıtı değildir.
+
+Mevcut uygulama kimliği, adresleri, webhooks ve runtime yayın anahtarları
+korundu. Shopify panelinde işlem/giriş denemesi, CLI app dev/deploy veya
+workflow dispatch yapılmadı. Paneldeki işlemi ürün sahibi yapacak; native
+sürüm yayını ve izin doğrulaması bekleniyor. Yeni uygulama oluşturulmaz.
+
+31 Ekim resmî kontrol: https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration#access_scopes
+ve https://shopify.dev/docs/apps/build/authentication-authorization/manage-access-scopes .
+Bağlayıcı kayıt: contracts/eo-05-permission-explanation-design-v1.json#Shopify_optional_scope_candidate_2026_10_31.
+07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımı. Merge ayrı onay bekler.
+
+## 31 Ekim — mevcut 07: Shopify 401 yanıtının derleme uyumluluğu
+
+Ürün sahibi 1000070104 ekranındaki 401 için önce salt okunur incelemeyi,
+ardından yalnız kod düzeltmesi ve derlenmiş sürüm testini onayladı.
+Shopify SDK 3.0.1 boundary.error sınıf adına bakıyor; Vite üretim derlemesi
+Router hata sınıfını kısaltıyor. Gerçek Router nesnesi ve SDK işleyicisiyle
+minify edilmiş test düzeltme öncesi başarısız, sonrası başarılı oldu.
+
+Düzeltme yalnız vite.config.ts içinde esbuild.keepNames=true ayarıdır.
+SDK işleyicisi değiştirilmez; 401, yönlendirme başlığı ve diğer hataların
+aynı biçimde iletilmesi korunur. Minification açık kalır; sınıf/fonksiyon
+adları korunacağı için paket boyutunda artış olabilir. Yeni arayüz veya
+metin yok; scope/token/izin/hesap seçimi ve runtime yayın anahtarları değişmez.
+
+İlgili 48 test geçti. Tam test/tip/derleme ve exact-commit CI ayrı doğrulanır.
+Canlı denemenin yanıt başlıkları loglarda yok; tekrar üretilen bu kusur,
+canlı 401'in tüm nedenlerinin kesinleştiği anlamına gelmez.
+
+Güncel native durumun önceki aday kaydından farkı: ürün sahibi optional
+read_products/read_orders sürümünü kendisi yayımladı (1000070103). İki
+Shopify runtime anahtarının ayrıca onaylı açılması ve mevcut e086df0 kaynağının
+dpl_9oDokZ3QuHkxVaeh133MH77GXKrX yayını PR277'de kayıtlıdır. Mağaza onayı
+hâlâ doğrulanmadı. Bu yeni düzeltme için deploy, native tekrar veya merge
+onayı verilmedi; Shopify'da görsel işlem yapılmaz.
+
+Resmî kontrol 2026-10-31:
+https://v7.vite.dev/config/shared-options#esbuild
+https://esbuild.github.io/api/#keep-names
+https://api.reactrouter.com/v7/functions/react-router.isRouteErrorResponse.html
+https://shopify.dev/docs/api/shopify-app-react-router/latest/apis/scopes
+Bağlayıcı kayıt: contracts/eo-05-permission-explanation-design-v1.json#Shopify_boundary_build_correction_2026_10_31.
+07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.
+
+## 31 Ekim — mevcut 07: Settings .data yönlendirme başlığı
+
+1000070105 ekranı sonrası salt okunur inceleme ve ardından yalnız kod/test
+onayı alındı. Gerçek Settings action'ı gerçek Router production request handler
+ile POST /settings.data üzerinden çalıştırıldığında 401'in SDK yönlendirme
+başlığı kayboluyordu: Single Fetch hata başlıklarını leaf Settings rotasında
+birleştiriyor; bu rotada headers export yoktu. Parent layout export'u yetmiyor.
+
+Settings artık yalnız mevcut Shopify boundary.headers işlevini dışarı verir.
+Gerçek HTTP yanıtında Products ve Orders yönlendirme başlığı korunur.
+Normal 401/403'e yönlendirme eklenmez, başarı verisi tekrar isteğe çevrilmez.
+İzin talebi ve authentication sentetik bağımlılıktır; ağ veya native izin
+çağrısı yapılmaz. Önceki helper/derleme testi bu leaf aktarımı kapsamıyordu.
+
+Yeni UI, akış, scope, token, hesap seçimi veya runtime flag değişikliği yok.
+Bu düzeltme yayın, native tekrar veya merge onayı içermez; gerçek izin kabulü
+bekler. Önceki derleme düzeltmesi ayrı onayla yayımlanmış tarihsel kayıttır.
+Resmî kontrol31Ekim2026:
+https://shopify.dev/docs/api/shopify-app-react-router/latest/guide-admin#headers
+https://reactrouter.com/how-to/headers
+Kurulu React Router7.18.2 Single Fetch kodu ayrıca okundu.
+Bağlayıcı kayıt: contracts/eo-05-permission-explanation-design-v1.json#Shopify_settings_data_headers_2026_10_31.
+07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.
+
+## 31 Ekim — mevcut 07: Products dönüşü, güncel izin okuması ve kart sonucu
+
+Sahibin açık onayıyla yalnız kod/test/PR: native Products izni sonrası ana sayfaya
+bırakılan kullanıcı, aynı sekme ve doğrulanmış mağazaya bağlı tek kullanımlık
+10 dakikalık gezinme niyetiyle Settings'e döner. Niyet izin kanıtı değildir.
+Settings loader mevcut native afterReturn ile bir kez güncel izin okur.
+Kart doğrulanmış erişimde “Ürün erişimi onaylandı” gösterir ve Connect Products'ı
+kaldırır. Eksik, doğrulanamayan ve yayın kapalı durumları ayrı kalır. Products
+teknik awaiting activation/ikinci Check status gösterimi kaldırılır. Dönüş hatası
+Settings'i aç bağlantısı sunar; otomatik izin isteği veya tekrar yapılmaz.
+Önceki manuel Products kontrol/gösterim kararı bu kapsamda değiştirilmiştir.
+Orders ve diğer sağlayıcı akışları değişmez. Yeni scope/config/token/yayın yoktur.
+Kod testleri native masaüstü/en az320px mobil kabul yerine geçmez; yayın,
+native deneme ve merge ayrıca açık onay bekler. Mevcut Products grant kanıtı
+önceki sürüme aittir; yeni kullanıcı akışı henüz native ortamda doğrulanmadı.
+Bağlayıcı kayıt: contracts/eo-05-permission-explanation-design-v1.json#Shopify_products_completion_2026_10_31.
+Ayrıntı ve 31Ekim resmî kaynakları: docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md.
+07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.
+
+## 31 Ekim — mevcut 07: Products iznini kullanıcı kaldırabilmeli
+
+Önceki hazır kartta kaldırma eylemi eksikti. Ürün sahibinin somut akış onayıyla
+“Ürün erişimini kaldır” ve native onay modalı eklendi. Cancel/çarpı/Escape
+istek yapmaz. Onay → afterhide → tek authenticated sunucu işlemi. Shopify'ın
+kurulu SDK scopes.revoke yöntemi yalnız optional read_products iznini kaldırır;
+başarı yanıtından sonra gerçek izin tekrar okunur. Aynı mağaza ve AppInstallation,
+aktif kurulum ve diğer grant'ların korunması doğrulanmadan başarı gösterilmez.
+Required/write_products erişiminden sahte kaldırma sonucu üretilmez. İlk hata
+belirsizdir; otomatik retry/fallback yoktur. Açık Durumu kontrol et yalnız okur.
+Doğrulanmış kaldırmadan sonra Connect Products görünür; yeni grant açık izin ister.
+Orders/provider izinleri, token ve geçmiş veriler silinmez. Ürün okuyucularının
+mevcut güncel izin kontrolleri korunur. Yeni DB/Dataset/config/yayın yoktur.
+Bağlayıcı kayıt ve31Ekim resmî kaynakları:
+contracts/eo-05-permission-explanation-design-v1.json#Shopify_products_revocation_2026_10_31.
+Tam metin, bileşen ve kabul matrisi: docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md.
+Kod/test onayı canlı revoke, yayın, masaüstü/en az320px mobil kabul veya merge
+onayı değildir.07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.
+
+## 31 Ekim — Products dil ve geçiş düzeltmesi
+
+Ürün sahibi425d2b6 yayını üzerinde Vazgeç, izin kaldırma ve tekrar bağlanma
+sonuçlarını bildirdi; Settings'e dönüş ve hazır Products/kaldırma eylemi görüldü.
+Görünür geçiş mesajı ve Türkçe ürün metinleri kabul edilmedi. Somut düzeltme:
+Settings'e dönüşteki bilgi banner'ını kaldır; bu çalışmada eklenen Products
+metinlerini İngilizce yap; kaldırma başarısını ilk bağlantı eksik metniyle birlikte
+gösterme. Mevcut native bileşenler/yerleşim kalır; grant/revoke/kimlik/provider/
+DB ve yayın ayarları değişmez. Açık hata ve durum kontrolü İngilizce kalır.
+Yeni metinler ve sessiz geçiş için gerçek cihaz kabulü bekler. Önceki yayın
+onayı bu değişikliğin yayın onayı değildir. Bağlayıcı kayıt:
+contracts/eo-05-permission-explanation-design-v1.json#Shopify_products_English_copy_2026_10_31.
+07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.
+
+## 31 Ekim — mevcut07 Orders dönüşü, izin kartı ve kaldırma
+
+Ürün sahibi native Orders onay ekranını ve ardından Funnel'a dönüş/statik Connect
+Orders kusurunu bildirdi. Somut kod/test/PR onayıyla Products'taki tamamlanmış
+kullanıcı akışı Orders'a eklendi: ayrı aynı-mağaza/tek-kullanım dönüş niyetiyle
+mesajsız Settings, tek native scope okumasıyla ayrı Order access approved kartı,
+İngilizce onay modalı ile yalnız read_orders kaldırma, taze izin doğrulaması ve
+tek kaldırma sonucu/reconnect. Check status otomatik tekrar veya revoke yapmaz.
+Orders raw grant'ı Products önkoşulundan ayrı gösterilir; bu Orders verisi/Overlap
+aktivasyonu değildir. Mevcut okuyucu/korumalı veri/geçmiş erişimi guard'ları ve
+Products önkoşulu korunur. Orders kaldırma diğer bütün kapsamları aynen korur.
+Products regresyonları, Orders stale/owner/iptal/çift-event/required/write alias/
+transport/receipt/fresh-read kontrolleri gerekir. Config/token/DB/yayın/canlı
+kaldırma veya yeni native deneme yapılmadı. Native masaüstü/en az320px mobil
+owner kabulü ayrı yayın onayından sonra bekler;07/14 kapanışı değildir.
+Bağlayıcı kayıt ve31Ekim resmî kaynakları:
+contracts/eo-05-permission-explanation-design-v1.json#Shopify_orders_completion_2026_10_31.
+Ayrıntılı metin/component/kabul: docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md.
+15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.
+
+## 31 Ekim — Products/Orders dönüşündeki ana ekran parlaması
+
+Owner Orders Cancel/kaldırma/Products korunması ve iki yeniden bağlanmanın
+Settings'e ulaştığını doğruladı; iki dönüşte de kısa ana ekran görünümü kaldı.
+Onaylı sessiz dönüşün görüntü düzeltmesi: root SSR/ilk client Outlet'i, aynı
+owner/location-key için dönüş kararı verilene kadar çizme; niyet varsa Settings
+replace bitene kadar ana sayfayı gösterme. Niyetsiz normal ana sayfa client
+kontrolünden sonra açılır; bu SSR içeriğinin bekletilmesi açık teknik bedeldir.
+Native OAuth/SDK/scope, izin okuma/kaldırma ve provider/DB davranışı değişmez.
+Yeni caption/banner/toast eklenmedi. React31Ekim belgesi effect'in SSR'de
+çalışmadığını ve paint sonrasında olabileceğini doğrular. Gerçek React SSR ve
+ilk client paint regresyonları gerekir; önceki destination testleri bu kusuru
+kapsamıyordu. Ayrı yayın ve gerçek native parlamasız geçiş kabulü bekler.
+Bağlayıcı kayıt: contracts/eo-05-permission-explanation-design-v1.json#Shopify_return_first_paint_2026_10_31.
+07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.
+
+## 31 Ekim — mevcut07: yerinde Shopify izin penceresi, dönüş yamaları kaldırıldı
+
+Owner Settings vizyonu gereği root/Funnel üzerinden dönüş ve görüntü gizlemeyi
+reddetti. Salt okunur inceleme SDK sunucu request yönteminin tam sayfa install
+akışını kullandığını; resmî App Bridge yönteminin çalışan sayfa üzerinde izin
+penceresi açtığını doğruladı. Owner bu doğru önerinin uygulanmasını açıkça onayladı.
+Yeni akış: mevcut Connect/afterhide → sunucuda sabit scope ön kontrolü → App Bridge
+shopify.scopes.request → gerçek mağza/aktif kurulum/AppInstallation'a bağlı sunucu
+readback → mevcut İngilizce kart. Client sonucu tek başına yetki değildir.
+Sunucudaki optional/config/owner/Products önkoşulları ve native revoke korunur.
+App Bridge yok/hata/bozuk veya stale sonuçta unknown; tam sayfa fallback ve retry
+yoktur. Meta/Google/Klaviyo callbackleri, scope/config/credential ve DB değişmez.
+SessionStorage dönüş modülü ve deklarasyonu, root-to-Settings gezinmesi ve SSR/ilk
+paint gizleme kodları kaldırıldı. Normal AppProvider/Outlet geri geldi. Eski server
+requestProducts/requestOrders yerine salt okunur prepareProducts/prepareOrders
+vardır. Eski redirect/yama testleri yerinde pencere ve sunucu readback testleriyle
+karşılandı. Önceki karar/kanıt kayıtları tarihsel tutulur, güncel akışı belirlemez.
+34bb4ff root gizleme adayı yayınlanmadı; bu yeni aday da ayrı yayın/native owner
+masaüstü/en az320px mobil kabulü ve merge onayı bekler.07 kapanışı değildir.
+Bağlayıcı kayıt ve31Ekim kaynakları:
+contracts/eo-05-permission-explanation-design-v1.json#Shopify_scope_window_2026_10_31.
+15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.

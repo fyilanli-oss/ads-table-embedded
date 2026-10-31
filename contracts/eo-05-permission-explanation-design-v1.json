@@ -1,4 +1,396 @@
 {
+  "Google_REST_safe_cause_2026_10_31": {
+    "existing_plan_step": 7,
+    "authority": "Explicit owner approval for narrow safe REST failure metadata and synthetic tests only; no live request/config/deploy/native retry/merge",
+    "cause_unknown": "19:51 callback account discovery failed with REST_REQUEST_FAILED; previous logger omitted this code and HTTP/provider metadata. Exact live cause cannot be recovered from existing generic records.",
+    "change": "Private WeakMap brands actual REST errors with immutable fixed operation, bounded integer HTTP status, canonical provider status and documented enum allowlist; unknown enum/status null. Callback logger consumes only branded Google permission_callback REST failures.",
+    "operations": ["list_accessible_customers", "search"],
+    "never_logged": ["raw_error", "message", "stack", "body", "headers", "tokens", "state", "scope", "account_or_shop", "query", "provider_request_id"],
+    "unchanged": "HTTP/token/account-selection behavior, error/details semantics, stopOnFirstError and retry policy, UI, native configuration and migrations",
+    "tests": "Synthetic list/search 401/403/429/503, HTTP200 error envelope, first-error call counts, immutable metadata, forged/getter/malformed/oversized input, existing callback loader to safe log",
+    "sources_checked_at": "2026-10-31",
+    "deployed": false,
+    "native_retry": false,
+    "merge_authorized": false
+  },
+  "Google_partial_permission_return_2026_10_31": {
+    "existing_plan_step": 7,
+    "authority": "Explicit owner approval for Google partial-permission return, English explanation, safe callback classification and tests only",
+    "live_audit_limit": "Owner reported Ads-only consent; transaction failed with generic PROVIDER_EXCHANGE_FAILED, disconnected version42 and no credential. Stored/logged evidence does not prove exact native granted scopes.",
+    "defect": "Runtime pending_permissions was collapsed to google_status=pending; Settings without durable account-selection authority rendered disconnected",
+    "correction": "Google-only permissions_incomplete return hint survives callback, loader and card. Current server-read connected/account selection takes precedence; hint grants no authority and performs no writes.",
+    "copy": {"heading": "Google setup is incomplete", "body": "Both Google Ads and Merchant Center access are required. Resume setup and allow both permissions to finish connecting.", "action": "Resume setup"},
+    "components": "Existing Google section/stack, warning s-banner, s-paragraph, s-button disabled while busy or unavailable; click opens existing explanation, no automatic request",
+    "logging": "Existing single allowlisted sink; fixed permission_callback intent and missing-scope/error code; no raw payload/state/token/scope/owner data",
+    "unchanged": "Runtime exchange/finalization/token policy, provider scopes, account/Reporting Account selection, Shopify/Meta/Klaviyo and callback destination",
+    "tests": "Actual callback-to-Settings loader/component, Ads-only and Merchant-only actual runtime cases, cancel/full/error, authority precedence, no automatic retry, closed release, Google-only UI and safe logging",
+    "new_migration": false,
+    "deployed": false,
+    "native_retry": false,
+    "native_visual_acceptance": false,
+    "merge_authorized": false,
+    "sources_checked_at": "2026-10-31",
+    "sources": ["https://developers.google.com/identity/protocols/oauth2/web-server", "https://shopify.dev/docs/api/app-home/latest/web-components/feedback-and-status-indicators/banner", "https://shopify.dev/docs/api/app-home/latest/web-components/actions/button"]
+  },
+  "Explicit_reconnect_2026_10_31": {
+    "scoped_rollout_correction": {
+      "authority": "Owner explicitly approved code/migration correction and isolated tests after read-only dependency audit; no new live apply, deployment, merge or native retry",
+      "failed_live_attempt": "First atomic_stage migration failed with 42704 missing adstable_refresh_coordinator; readback confirmed full rollback, no writer and zero receipt columns. Second migration and deployment not attempted.",
+      "correction": "Only pending atomic_stage SQL changed: core REVOKE targets remain required; optional coordinator REVOKE runs only if role exists. No role creation or refresh infrastructure dependency. Runtime-only grants retained.",
+      "test_gap": "Previous F01 staged/full both included all pending migrations and thus created the coordinator before OAuth SQL; neither proved the exact selected live rollout",
+      "test_path": "Third empty ephemeral database: 38 historical + 2 applied forward then only atomic_stage/reconnect exact files with real commits. Reuse real envelope/CAS/receipt/replay/rollback probes without coordinator. Separate rollback branch with coordinator and default EXECUTE proves both functions revoke it.",
+      "live_applied": false,
+      "deployment_performed": false,
+      "new_native_retry": false
+    },
+    "checked_at": "2026-10-31",
+    "existing_plan_step": 7,
+    "authority": "Explicit owner approval for reconnect code, migration file and isolated tests; no live apply/deploy/native retry/merge",
+    "evidence": "Read-only query: Google disconnected/version42, active development installation. Previous action omitted the technical error log and placed common feedback under Shopify.",
+    "start_callback": "Shared Google/Meta guard accepts only clean disconnected authority with exact ID/version. Pending/unknown remain closed. No old credential, grant or account selection revival.",
+    "SQL": "Same function signature/permissions; locks, claim, CAS, receipt and transaction rollback retained. Clean disconnect/no active reporting binding required. Fresh native scopes enter existing pending account selection; connected upgrade protections unchanged.",
+    "status": "Explicit Check status returns request_permissions for clean disconnected without token/native discovery/write; no automatic reconnect",
+    "UI": "Existing banner/Check status inside its own provider section; single modal host and Shopify cards unchanged",
+    "log": "Fixed event/feature/intent, validated requestId and exact allowlisted error code only. No raw errors/SQL/state/token/payload; native Response preserved.",
+    "migration": "supabase/migrations/20261031181313_eo05a_identity_oauth_reconnect.sql",
+    "migration_prerequisite": "Existing atomic writer and four receipt columns from 20261028164208 must already be installed; candidate fails before replacement otherwise. Lineage still records that prior migration as pending, so live prerequisite application must be verified and separately authorized, never inferred.",
+    "migration_applied": false,
+    "live_apply_authorized": false,
+    "deploy_authorized": false,
+    "merge_authorized": false,
+    "native_retry_performed": false,
+    "native_visual_acceptance": false,
+    "tests": "Actual runtime reconnect full/partial callback, stale/pending guards, actual hook/provider placement/no retry, actual route safe log; isolated real SQL F01 probe extended for reconnect/CAS/replay/rollback/selection",
+    "live_source": "94442309f9071acf629cf3013922477edcb6cd02",
+    "live_deployment": "dpl_2hp5h3AkX5A4sc41WGWjENwbf2eL",
+    "live_Meta_gate": "absent/closed; unchanged",
+    "step15_started": false,
+    "step22": "paused",
+    "step23": "Dataset_FX_writer",
+    "sources": ["https://www.postgresql.org/docs/17/sql-createfunction.html", "https://supabase.com/docs/guides/database/functions", "https://shopify.dev/docs/api/app-home/latest/web-components/feedback-and-status-indicators/banner"]
+  },
+  "Shopify_scope_window_2026_10_31": {
+    "checked_at": "2026-10-31",
+    "existing_plan_step": 7,
+    "authority": "Owner accepted the documented App Bridge permission-window approach and explicitly authorized implementation; code/tests/PR only",
+    "supersedes": "Shopify server scopes.request consent redirects, Products/Orders sessionStorage return hints, root-to-Settings replace, return captions and first-paint home suppression. Previous records remain historical.",
+    "cause": "Installed SDK3.0.1 server scopes.request redirects to admin/oauth/install without a Settings destination. Other provider callbacks explicitly return to Settings. Root hiding treated the visible result rather than selecting the native in-place API.",
+    "flow": [
+      "Explicit Connect in existing explanation, then native afterhide",
+      "Authenticated prepareProducts/prepareOrders reads current grants and declared optional handle under existing release, same shop/active installation and Products prerequisite guards; it never requests consent",
+      "Already-granted or prerequisite status updates the existing card without a native request",
+      "A fixed scope_request preparation contains one scope and shop/AppInstallation/install-generation binding; browser cannot substitute scopes or another provider",
+      "One shopify.scopes.request call opens Shopify's permission window over the running Settings page; no application navigation or fallback redirect",
+      "Recognized granted-all or declined-all is followed by one authenticated readback bound to the same preparation; only actual fresh grants update the card",
+      "Missing API, rejected/malformed response, stale owner/unmounted view, changed installation or read failure remains unknown, without retry/fallback; explicit Check status only reads"
+    ],
+    "security": "Native browser grant result is never server authority. No credential is sent to the browser. Prepared binding is public correlation data, not a token; server identity/grants and active installation are revalidated. Required scopes, protected data/history, role/identity, revoke and Dataset authority remain unchanged.",
+    "cleanup": "Deleted product-permission-return.js/.d.ts; restored normal authenticated AppProvider/Outlet SSR and render; removed server requestProducts/requestOrders redirect implementations and their obsolete redirect/return-gate tests. Kept correct independent card, cancellation and native revoke/readback logic.",
+    "UI": "Existing approved English copy/native Polaris components unchanged. No new message, toast, return screen, root gating, custom styling or new route. Third-provider OAuth behavior unchanged.",
+    "tests": "Actual fixed preparation and Settings .data JSON; negative preflight; scope protocol/owner checks; actual hook with synthetic App Bridge granted/declined/error/unavailable/malformed/stale/unmount/duplicate and bound readback; generation/AppInstallation binding rejection; real SSR normal Outlet; existing cancellation, card and revoke regressions",
+    "sources": ["https://shopify.dev/docs/apps/build/authentication-authorization/manage-access-scopes#request-new-access-scopes-dynamically", "https://shopify.dev/docs/api/app-home/latest/apis/authentication-and-data/scopes-api", "Installed SDK3.0.1 scope request/install helper and current Google/Meta/Klaviyo callback source"],
+    "native_visual_acceptance": false,
+    "native_permission_attempt_performed": false,
+    "deploy_authorized": false,
+    "merge_authorized": false,
+    "dataset_write": false,
+    "step15_started": false,
+    "step22": "paused",
+    "step23": "Dataset_FX_writer"
+  },
+  "Shopify_return_first_paint_2026_10_31": {
+    "existing_plan_step": 7,
+    "checked_at": "2026-10-31",
+    "scope": "Complete the approved quiet Products/Orders Settings return by withholding root Outlet until client return decision; no native OAuth/permission/SDK/provider/DB change",
+    "defect": "Root rendered Funnel in server/initial client output before useEffect consumed return hint and navigated; previous tests covered destination but not first paint",
+    "change": "Server and first hydration root output do not render Outlet. Owner/location-key decision releases ordinary home or holds content through fixed Settings replace. No caption/banner/toast; non-root pages render normally; existing English error recovery retained.",
+    "tradeoff": "Ordinary home content waits for client-side return check; home SSR intentionally withholds Outlet. Blocked storage or absent/stale/foreign hint releases normal home without inventing a grant.",
+    "guards": "Location-key and owner bind root decision. Ref prevents effect replay from consuming hint twice or revealing Funnel. Stale navigation failure cannot overwrite a later route.",
+    "tests": "Real React18 renderToString verifies no root Outlet/Funnel; actual layout hook harness verifies first client output and Products/Orders held return vs ordinary home; existing one-use/owner/error controls retained",
+    "sources": ["https://react.dev/reference/react/useEffect"],
+    "native_owner_evidence": "Owner confirmed Orders Cancel, removal with Products retained, and both reconnections reaching Settings, but observed transient home display. New first-paint behavior awaits native owner acceptance.",
+    "native_visual_acceptance": false,
+    "deploy_authorized": false,
+    "merge_authorized": false
+  },
+  "Shopify_orders_completion_2026_10_31": {
+    "checked_at": "2026-10-31",
+    "existing_plan_step": 7,
+    "authority": "Owner explicitly approved Orders silent Settings return, fresh independent access card and verified removal with confirmation; code/tests/PR only",
+    "evidence": "Owner1000070134 showed native last60day Orders permission.1000070135/136 showed return to Funnel and static Orders Connect; grant itself was not read back in that screen.",
+    "return": "Fixed /settings only; separate Orders sessionStorage key, authenticated shop, ten-minute TTL, consume once. Both Shopify return keys consumed before navigation; no transient message. Hint never authorizes access.",
+    "readback": "One afterReturn read projects Products and Orders raw granted scope independently. ordersScopeState is permission visibility only; existing ordersPermissionState, Products prerequisite, protected-data/history and data-reader authority guards remain unchanged.",
+    "remove": "Authenticated fixed permission_revoke_orders calls native SDK revoke only for optional read_orders after required/write alias and same-owner checks. Receipt plus fresh same AppInstallation/active generation and exact preservation of every other grant required. Products and historical records kept; no retry or fallback.",
+    "exact_copy": {
+      "ready": "Order access approved",
+      "remove": "Remove order access",
+      "missing": "Order access is not connected.",
+      "connect": "Connect Shopify orders",
+      "products_required": "Product access is required to connect orders.",
+      "checking": "Checking order access…",
+      "removing": "Removing order access…",
+      "unknown": "Could not verify order access. Check status to continue.",
+      "removal_unknown": "Could not verify that order access was removed. Check status to continue.",
+      "unavailable": "Order connection is currently unavailable.",
+      "removed": "Order access removed.",
+      "modal_heading": "Remove order access?",
+      "modal_body": "AdsTable's permission to read Shopify orders and purchased products will be removed. Order-based features will need access again. Product access and existing records will be kept.",
+      "confirm": "Remove access",
+      "cancel": "Cancel",
+      "check": "Check status"
+    },
+    "UI": "Existing native s-page/s-stack/s-badge success/s-banner info critical success/s-button/s-modal base/base. One modal afterhide confirmation per owner, no Cancel/Escape/close mutation; no generic activation banner or duplicate Check status for Orders. Verified removal has one result and reconnect action.",
+    "availability": "Orders grant may remain after Products is removed; show/remove its actual permission independently. New Orders request still requires Products. Observed grant is not data access activation or Overlap proof.",
+    "tests": ["tests/shopify-products-completion.test.js", "tests/shopify-progressive-permissions.test.js", "tests/permission-settings.test.js", "tests/step07-settings-corrections.test.js", "tests/eo-01c-preview-shell.test.js"],
+    "sources": ["https://shopify.dev/docs/api/shopify-app-react-router/latest/apis/scopes", "https://shopify.dev/docs/api/admin-graphql/2026-07/mutations/appRevokeAccessScopes", "https://shopify.dev/docs/api/app-home/latest/web-components/overlays/modal", "https://shopify.dev/docs/api/app-home/latest/web-components/actions/button", "Installed SDK3.0.1 scope methods and zero-retry GraphQL client"],
+    "native_visual_acceptance": false,
+    "deploy_authorized": false,
+    "live_revoke_performed": false,
+    "merge_authorized": false,
+    "dataset_write": false,
+    "step15_started": false,
+    "step22": "paused",
+    "step23": "Dataset_FX_writer"
+  },
+  "Shopify_products_English_copy_2026_10_31": {
+    "existing_plan_step": 7,
+    "checked_at": "2026-10-31",
+    "authority": "Owner rejected visible return message and Turkish Products text; remove message, use English and avoid contradictory duplicate removal status; code/tests/PR only",
+    "supersedes": "Earlier Turkish Products visible copy and returning-to-Settings banner; not the authenticated grant/revoke flow",
+    "transition": "Existing native Settings page shell only, without informational message/banner/toast while routing; failure keeps English recovery action",
+    "exact_copy": {
+      "ready": "Product access approved",
+      "remove": "Remove product access",
+      "modal_heading": "Remove product access?",
+      "modal_body": "AdsTable's permission to read Shopify products and variants will be removed. You will need to grant access again for product identity matching. Existing records will not be deleted.",
+      "confirm": "Remove access",
+      "cancel": "Cancel",
+      "removing": "Removing product access…",
+      "checking": "Checking product access…",
+      "removed": "Product access removed.",
+      "missing": "Product access is not connected.",
+      "unknown": "Could not verify product access. Check status to continue.",
+      "removal_unknown": "Could not verify that product access was removed. Check status to continue.",
+      "check": "Check status",
+      "unavailable": "Product connection is currently unavailable.",
+      "return_failed": "Could not return to Settings.",
+      "return_recovery": "Open Settings"
+    },
+    "removed_state": "One success banner plus existing Connect Shopify products; do not also show the initial not-connected paragraph",
+    "native_owner_evidence": "Owner reported Cancel works, verified removal message, Settings return and restored Products access/removal action on deployed425d2b6. Owner rejected transition/copy. New copy and quiet transition remain unverified natively.",
+    "sources": ["https://shopify.dev/docs/api/app-home/latest/web-components/feedback-and-status-indicators/banner", "https://shopify.dev/docs/api/app-home/latest/web-components/overlays/modal", "https://shopify.dev/docs/api/app-home/latest/web-components/actions/button"],
+    "permission_server_behavior_changed": false,
+    "deploy_authorized": false,
+    "merge_authorized": false,
+    "native_visual_acceptance": false
+  },
+  "Shopify_products_revocation_2026_10_31": {
+    "checked_at": "2026-10-31",
+    "existing_plan_step": 7,
+    "authority": "Owner approved Products removal method research, confirmation, actual optional-scope revocation and verified card transition; code/tests/PR only",
+    "supersedes": "Ready Products card without a removal action",
+    "server": "Authenticated fixed permission_revoke_products action; only read_products. Native scope query confirms optional/not required/no write_products. Revoke once with installed SDK3.0.1 scopes.revoke; independently read actual grants after receipt; same shop/AppInstallation/install generation and exact preservation of other grants required. No local disconnect in place of permission removal.",
+    "guards": "Cancel/no explicit revoke/closed release/invalid owner/required or write-derived access/changed installation prevent mutation. Unknown or native error never retries/falls back. Readback action cannot revoke.",
+    "exact_copy": {
+      "action": "Ürün erişimini kaldır",
+      "heading": "Ürün erişimi kaldırılsın mı?",
+      "body": "AdsTable'ın Shopify ürün ve varyantlarını okuma izni kaldırılacak. Ürün kimliği eşleştirmesi için yeniden izin vermeniz gerekecek. Mevcut kayıtlar silinmez.",
+      "confirm": "Erişimi kaldır",
+      "cancel": "Vazgeç",
+      "loading": "Ürün erişimi kaldırılıyor…",
+      "removed": "Ürün erişimi kaldırıldı.",
+      "unknown": "Ürün erişiminin kaldırıldığı doğrulanamadı. Durumu kontrol edin."
+    },
+    "components": "Native s-button critical, s-modal base/base, primary-action primary/critical, secondary-actions secondary, s-paragraph, s-banner info/success/critical",
+    "client": "Confirm captures same owner; consumes intent once on native afterhide. Render/open/cancel/Escape/close do not mutate. Duplicate pending requests and stale owner replies blocked; verified missing reveals existing Connect Products. Unknown only offers explicit status read. New grant remains explicit.",
+    "preserved": "Orders permission and provider grants, tokens, installation, historical records, existing Products reader permission guards; no Dataset writer or migration",
+    "tests": ["tests/shopify-progressive-permissions.test.js", "tests/shopify-products-completion.test.js", "tests/permission-settings.test.js", "tests/step07-settings-corrections.test.js", "tests/eo-01c-preview-shell.test.js"],
+    "sources": ["https://shopify.dev/docs/api/shopify-app-react-router/latest/apis/scopes", "https://shopify.dev/docs/api/admin-graphql/2026-07/mutations/appRevokeAccessScopes", "https://shopify.dev/docs/api/app-home/latest/web-components/overlays/modal", "https://shopify.dev/docs/api/app-home/latest/web-components/actions/button", "Installed SDK3.0.1 revoke and GraphQL client source; default retries0"],
+    "native_visual_acceptance": false,
+    "live_revoke_performed": false,
+    "deploy_authorized": false,
+    "merge_authorized": false,
+    "step15_started": false,
+    "step22": "paused",
+    "step23": "Dataset_FX_writer"
+  },
+  "Shopify_products_completion_2026_10_31": {
+    "checked_at": "2026-10-31",
+    "existing_plan_step": 7,
+    "authority": "Explicit owner approval: Products native return to Settings, automatic fresh permission read and clear card result; code/tests/PR only",
+    "supersedes": "Products manual-only Check status and generic awaiting activation presentation; other provider and Orders flows remain unchanged",
+    "return": "Same-tab sessionStorage navigation hint, authenticated Shop GID, version1, ten-minute TTL, consumed once before fixed /settings navigation; never permission evidence, token or arbitrary address. No native request if storage cannot be verified.",
+    "readback": "Settings loader reads existing native afterReturn once for the verified store when Products is available. No automatic consent request, polling or retry. Native basePermissionState alone determines card status.",
+    "exact_copy": {
+      "ready": "Ürün erişimi onaylandı",
+      "missing": "Ürün erişimi henüz onaylanmadı.",
+      "unknown": "Ürün erişimi doğrulanamadı. Durumu tekrar kontrol edin.",
+      "check": "Durumu kontrol et",
+      "checking": "Ürün erişimi doğrulanıyor…",
+      "returning": "Settings'e dönülüyor…",
+      "return_failed": "Settings'e otomatik dönülemedi.",
+      "return_recovery": "Settings'i aç",
+      "unavailable": "Ürün bağlantısı şu anda kullanılamıyor."
+    },
+    "components": "Existing stable native s-page/s-section/s-stack/s-badge success/s-banner info or critical/s-button/s-link; no custom styling",
+    "states": "Ready removes Connect Products; unknown offers explicit readback instead of repeat consent; missing retains approved explanation; stale or wrong-store intent and stale owner replies cannot verify access; failed navigation offers Settings recovery link without retry",
+    "tests": ["tests/shopify-products-completion.test.js", "tests/permission-settings.test.js", "tests/step07-settings-corrections.test.js"],
+    "acceptance": "Isolated code tests are not native visual acceptance. Existing native Products grant was observed before this change; new return/card grant/cancel/error behavior still requires owner desktop and minimum320px mobile acceptance.",
+    "sources": ["https://shopify.dev/docs/apps/build/authentication-authorization/manage-access-scopes", "https://shopify.dev/docs/api/app-home/latest/web-components/feedback-and-status-indicators/badge", "https://shopify.dev/docs/api/app-home/latest/web-components/feedback-and-status-indicators/banner", "https://api.reactrouter.com/v7/functions/react-router.useNavigate.html", "https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage"],
+    "native_visual_acceptance": false,
+    "deploy_authorized": false,
+    "native_retry_authorized": false,
+    "merge_authorized": false,
+    "dataset_write": false,
+    "step15_started": false,
+    "step22": "paused",
+    "step23": "Dataset_FX_writer"
+  },
+  "Shopify_settings_data_headers_2026_10_31": {
+    "checked_at": "2026-10-31",
+    "existing_plan_step": 7,
+    "authority": "Explicit owner approval after screenshot1000070105 investigation: connect Settings response-header forwarding and test actual settings.data only",
+    "defect": "Router Single Fetch keeps the action error at the leaf Settings route; without its headers export the SDK reauthorization header is omitted even though the parent layout has boundary.headers",
+    "change": "Settings exports HeadersFunction delegating to the existing Shopify SDK boundary.headers; no response rewriting, new scope, account selector or native permission mechanism",
+    "test": "tests/permission-settings.test.js runs actual transpiled Settings action through the real production createRequestHandler and POST /settings.data; native authentication and permission request are isolated synthetic dependencies",
+    "red_green": "Before fix: 401 response has null reauthorization header. After fix: exact native header survives for Products and Orders",
+    "negative_controls": ["Plain auth 401/403 retains status with no invented redirect", "Normal permission status stays data without redirect or repeated request"],
+    "previous_test_limit": "The earlier minified SDK boundary test covered class-name recognition and helper-level headers only, not leaf Single Fetch aggregation",
+    "native_acceptance": "Not verified; no new provider request or browser interaction",
+    "deploy_authorized": false,
+    "native_retry_authorized": false,
+    "merge_authorized": false,
+    "sources": ["https://shopify.dev/docs/api/shopify-app-react-router/latest/guide-admin#headers", "https://reactrouter.com/how-to/headers", "Installed React Router 7.18.2 Single Fetch implementation"]
+  },
+  "Shopify_boundary_build_correction_2026_10_31": {
+    "checked_at": "2026-10-31",
+    "existing_plan_step": 7,
+    "authority": "Explicit owner approval for code correction and production-build tests only, after read-only investigation of screenshot 1000070104.jpg",
+    "defect": "SDK 3.0.1 boundary.error checks ErrorResponse/ErrorResponseImpl constructor names; production minification renames the real Router response class, causing a rethrow to the root error screen",
+    "change": "vite.config.ts esbuild.keepNames=true preserves names without replacing SDK boundary handling or changing response status, headers, scopes or permission flow",
+    "regression_test": "tests/shopify-boundary-production-build.test.js uses real React Router and SDK boundary in a minified Vite production bundle; failed before fix and passed after fix",
+    "assertions": ["Real Router response handled", "401 preserved, not converted to success", "Native redirect header preserved", "Unrelated Error rethrown unchanged"],
+    "cost": "Production bundles retain function/class names and can grow; minification remains enabled",
+    "native_incident_limit": "Server logs show the POST but not its redirect headers; this reproduced defect is proven, not every cause of the owner's live 401",
+    "native_current_state": "Owner published products-orders-permissions with optional read_products/read_orders; separately authorized runtime flags and same-source redeploy recorded in PR277; merchant grant still unverified",
+    "deploy_authorized": false,
+    "native_retry_authorized": false,
+    "merge_authorized": false,
+    "sources": ["https://v7.vite.dev/config/shared-options#esbuild", "https://esbuild.github.io/api/#keep-names", "https://api.reactrouter.com/v7/functions/react-router.isRouteErrorResponse.html", "https://shopify.dev/docs/api/shopify-app-react-router/latest/apis/scopes"]
+  },
+  "Shopify_optional_scope_candidate_2026_10_31": {
+    "checked_at": "2026-10-31",
+    "existing_plan_step": 7,
+    "authority": "Owner requested preparation in code and will handle Shopify Dev manually; no agent Shopify interaction or login attempts",
+    "file": "shopify.app.toml",
+    "required_scopes": "",
+    "optional_scopes": ["read_products", "read_orders"],
+    "status": "repository_candidate_only_native_release_pending",
+    "scope_meaning": "Both declared as dynamically requestable; Products remains required for product setup, Orders remains a separate optional feature permission",
+    "unchanged": ["client_id", "application_url", "redirect_urls", "webhooks", "runtime_release_flags", "progressive_permission_guards"],
+    "native_evidence": "Owner screenshots show the active adstable-2 version with matching embedded address and callback; scopes were not visible, so native declaration remains unverified",
+    "native_release_performed": false,
+    "merchant_permission_requested": false,
+    "deploy_performed": false,
+    "merge_authorized": false,
+    "sources": [
+      "https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration#access_scopes",
+      "https://shopify.dev/docs/apps/build/authentication-authorization/manage-access-scopes"
+    ]
+  },
+  "Owner_flow_restore_2026_10_31": {
+    "checked_at": "2026-10-31",
+    "existing_plan_step": 7,
+    "authority": "Explicit owner instruction after rejecting the single-account skip and merged account/spend modal; owner accepted the concrete per-provider corrections and said Tamam başlayalım Codex",
+    "supersedes": "Settings_corrections_2026_10_31 single-account auto-advance; earlier passing tests or publication are not product acceptance",
+    "Klaviyo": {
+      "sequence": [
+        "OAuth",
+        "Separate explicit account-selection modal, including one account",
+        "Separate estimated spend modal only after account modal native afterhide"
+      ],
+      "auto_select_single_account": false,
+      "account_and_spend_same_modal": false,
+      "zero_valid": true,
+      "field_errors_preserved": true,
+      "cancel_advances": false
+    },
+    "other_platforms": {
+      "code": "Same explicit server release settings are threaded through Settings and Google/Meta callbacks; Shopify request and optional-scope release gates are joined; no catalog selector",
+      "Google": [
+        "ADSTABLE_GOOGLE_IDENTITY_OAUTH_ENABLED"
+      ],
+      "Meta": [
+        "ADSTABLE_META_IDENTITY_OAUTH_ENABLED"
+      ],
+      "Shopify": [
+        "ADSTABLE_SHOPIFY_PERMISSION_REQUESTS_ENABLED",
+        "ADSTABLE_SHOPIFY_OPTIONAL_SCOPES_RELEASED"
+      ],
+      "release_flags_are_native_approval_evidence": false,
+      "live_release_changed": false
+    },
+    "native_evidence": {
+      "Vercel_read": "Matched no entries for the four release keys in visible metadata; decrypt=false; no values or settings changed",
+      "Google_app_scope_approval": "not_verified_in_native_dashboard",
+      "Meta_app_scope_approval": "not_verified_in_native_dashboard",
+      "Shopify_local_TOML": "optional_scopes not declared",
+      "Shopify_released_optional_scopes": "not_verified_in_native_app_version"
+    },
+    "analyst_brief": "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md",
+    "authorization_excludes": [
+      "Live configuration or provider mutations",
+      "Shopify visual automation",
+      "Deploy",
+      "Merge",
+      "Migration/Dataset write"
+    ],
+    "desktop_mobile_acceptance": "pending_owner_after_separately_approved_release",
+    "step15_started": false,
+    "historical22_resumed": false,
+    "Dataset_write": false
+  },
+  "Settings_corrections_2026_10_31": {
+    "checked_at": "2026-10-31",
+    "existing_plan_step": 7,
+    "authority": "Explicit owner approval after read-only review: port approved PR264 UI to current main, fix the three reviewed issues and align records",
+    "base_main": "7568edcf08dd1566211871dbe99d3590e8bdf078",
+    "reviewed_UI_source": "a103b25ec8857ab29ddf9a5cbe750f28a615ed64",
+    "analyst_brief": "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md",
+    "code_changes": [
+      "Initial Klaviyo blank/invalid spend stays in the modal with field feedback; zero remains valid",
+      "One verified Klaviyo account or a still-valid explicit choice resumes spend, otherwise account selection",
+      "Provider-specific pending indicators; unrelated revalidation is not three provider operations",
+      "No catalog selection, discovery UI, automatic catalog selection or replacement step"
+    ],
+    "unchanged": [
+      "OAuth scopes and server availability/release gates",
+      "Credentials, token/callback safeguards and current prewrite integration",
+      "Historical spend, cost formula, Product ID and Sales Role",
+      "15 not started; historical22 paused; Overlap after22; Dataset writer23"
+    ],
+    "acceptance": {
+      "isolated_tests": "192 focused behavior and boundary tests passed; exact-commit full CI pending",
+      "typecheck": "passed",
+      "build": "passed",
+      "CI": "pending",
+      "native_desktop": "pending_owner",
+      "native_mobile_320px": "pending_owner",
+      "owner_visual_acceptance": false,
+      "merge_authorized": false
+    },
+    "live_changes": {
+      "provider_calls": false,
+      "Shopify_visual_automation": false,
+      "config": false,
+      "deploy": false,
+      "database": false
+    },
+    "remaining": [
+      "Owner desktop/mobile acceptance of modal, validation, loading, Cancel and successful return",
+      "Separately authorized Google/Meta and Shopify Products/optional Orders native permission/configuration evidence"
+    ]
+  },
   "OAuth_explicit_owner_approval_gate_2026_10_29": {
     "checked_at": "2026-10-29",
     "authority": "explicit_owner_instruction",
@@ -18,19 +410,26 @@
     "scope_change": "Stop and request fresh explicit owner approval before expanding or changing approved scope. No silent alternative path or cleanup.",
     "current_hold": {
       "PR": 264,
+      "status": "step6_removed_native_visual_acceptance_and_PR_merge_pending",
+      "catalog_selection_step": "removed_by_explicit_owner_authorized_cleanup",
+      "OAuth_cleanup": "code_and_tests_completed_in_commit_629f841f3bb578364a5b35f47407df7e99b3e760",
+      "current_authorization": "2026-10-31: explicitly approved current-main UI integration and the three reviewed Settings corrections; no live permission/config/deploy/DB or merge authorization"
+    },
+    "recording_exception": "The owner explicitly authorized this instruction to be recorded in AGENTS and governing documents; that authorizes documentation/governance recording only, not OAuth investigation, implementation, tests, cleanup or provider operations.",
+    "precedence": "Overrides earlier permission to proceed independently with code or isolated tests in OAuth-related work. Earlier approved documents/technical possibilities do not override this gate.",
+    "historical_hold_before_cleanup": {
+      "PR": 264,
       "status": "stopped_owner_rejected_catalog_selection_not_merge_authorized",
       "catalog_selection_step": "owner_rejected; no removal or replacement was performed",
       "OAuth_cleanup": "not_started; requires separate explicit owner approval",
       "runtime_or_test_changes_in_this_record": false
-    },
-    "recording_exception": "The owner explicitly authorized this instruction to be recorded in AGENTS and governing documents; that authorizes documentation/governance recording only, not OAuth investigation, implementation, tests, cleanup or provider operations.",
-    "precedence": "Overrides earlier permission to proceed independently with code or isolated tests in OAuth-related work. Earlier approved documents/technical possibilities do not override this gate."
+    }
   },
   "contract_id": "eo-05-permission-explanation-design-v1",
   "checked_at": "2026-10-29",
   "existing_plan_step": 7,
   "code_delivery_order": 4,
-  "status": "owner_approved_copy_and_flow_UI_implementation_and_visual_acceptance_pending",
+  "status": "owner_authorized_step6_removal_accounts_only_UI_code_native_acceptance_pending",
   "authority": [
     "docs/EXECUTION_PLAN.md",
     "contracts/eo-05-oauth-setup-permission-policy-v1.json",
@@ -110,14 +509,14 @@
       "permission_breadth": "native_grants_may_allow_writes_app_reads",
       "entry": "Google Connect/reconnect or user-selected permission resume in existing Settings",
       "connect_backend": "runtime.beginCombinedSetup({installationAuthority}); identity_v1 fixed on server, never existing reporting_v1 begin by accident",
-      "return_backend": "combined setup account/reporting selection then native Merchant verification; none alone completes setup",
+      "return_backend": "Existing combined permission callback, advertiser accounts and one Reporting Account selection; existing Connected reporting view; no user Merchant/business/catalog selection or setup asset verification.",
       "missing_copy": "Google Ads or Merchant Center access is still missing. Resume setup to review the connection."
     },
     {
       "id": "meta",
       "heading": "Connect Meta ads and catalog",
       "paragraphs": [
-        "Allow AdsTable to read advertising data and the catalog available to your selected business.",
+        "Allow AdsTable to read advertising and catalog data for reporting and product matching.",
         "Both ad account and catalog access are needed to finish setup. You may also see business and Page permissions.",
         "Some business and catalog permissions also allow changes. AdsTable uses this connection for reporting and product matching; it does not edit those assets."
       ],
@@ -132,7 +531,7 @@
       "permission_breadth": "native_grants_may_allow_writes_app_reads",
       "entry": "Meta Connect/reconnect or user-selected permission resume in existing Settings",
       "connect_backend": "runtime.beginCombinedSetup({installationAuthority}); existing identity_v1 scope set only, native app/dependency readiness separate",
-      "return_backend": "combined account selection and native token/user/business/catalog access proof; no Ad/catalog delivery claim",
+      "return_backend": "Existing combined permission callback, advertiser accounts and one Reporting Account selection; existing Connected reporting view; no user Merchant/business/catalog selection or setup asset verification.",
       "missing_copy": "Ad account or catalog access is still missing. Resume setup to review the connection."
     },
     {
@@ -164,8 +563,8 @@
     "pending": "Explanation is closed, provider section shows Starting connection… and prevents a second Connect. Closing a pending display is not a claim that a started provider request was undone.",
     "native_consent": "Shopify/provider controls their permission screen. No automated native screen interaction, no custom Shopify-look permission prompt.",
     "on_return": "Read current server/native evidence; route by stage. No mount effect or return field automatically restarts OAuth.",
-    "connected": "Only final authorized server setup readiness can show overall Connected. Current prepared access/scope helpers authorizesActivation=false cannot produce it.",
-    "legacy": "Existing reporting_v1 remains separate until explicitly wired. A new incomplete combined setup must not delete/revoke the current reporting connection or claim it has been upgraded."
+    "connected": "Existing Connected card means a reporting connection with a selected Reporting Account. It is not catalog/product identity/role/durable activation or Dataset authority.",
+    "legacy": "Reporting-only scope behavior is unchanged. Pending combined account selection stays bound; connected reporting state uses the existing Connected view without catalog selection."
   },
   "resume_routing": [
     {
@@ -181,16 +580,16 @@
       "action": "Open reporting account selection; no OAuth restart."
     },
     {
-      "stage": "verify_assets",
-      "action": "Select/verify current Merchant or business/catalog targets using trusted server authority; do not request permissions again just because selection is missing."
-    },
-    {
       "stage": "review_setup",
       "action": "Show access verified / activation pending; no Connected or automatic grant. App approval and UI/release acceptance are separate."
     },
     {
       "stage": "klaviyo_cost_missing",
       "action": "Open existing estimated monthly cost step; accept zero, distinguish missing; no OAuth restart."
+    },
+    {
+      "stage": "reporting_selected",
+      "action": "Return to the existing reporting connection view; no Merchant/business/catalog selection or access claim."
     }
   ],
   "states": [
@@ -420,8 +819,136 @@
     "owner_visual_acceptance": "not_given",
     "provider_native_grants": "not_inferred",
     "live_permission_flags_changed": false,
-    "package_Done_or_PASS": false
+    "package_Done_or_PASS": false,
+    "UI_component_prepared": true,
+    "route_wiring": true,
+    "component_record": "contracts/eo-05-start-brief-v1.json#Permission_explanation_component_2026_10_29",
+    "settings_actions_wired": true,
+    "klaviyo_existing_resume_wired": true,
+    "route_wiring_remaining": "Native release/UI acceptance remain separate; no Merchant/business/catalog selection or verification requirement in OAuth.",
+    "combined_selectors_wired": true,
+    "candidate_asset_verification_wired": false,
+    "automatic_asset_inventory_discovery": false,
+    "automatic_asset_inventory_discovery_evidence": "removed_by_explicit_owner_instruction_not_part_of_OAuth"
   },
   "step15_started": false,
-  "Dataset_write": false
+  "Dataset_write": false,
+  "combined_selection_spec": {
+    "checked_at": "2026-10-29",
+    "existing_plan_step": 7,
+    "code_delivery_order": 4,
+    "status": "accounts_only_implemented_step6_removed",
+    "purpose": "Select1–3 advertiser accounts and one Reporting Account, then return to the existing reporting view without Merchant/business/catalog selection.",
+    "exact_copy": {
+      "account_heading": {
+        "google_ads": "Select Google Ads accounts",
+        "meta": "Select Meta accounts"
+      },
+      "account_body": "Choose one to three advertiser accounts.",
+      "account_label": "Advertiser accounts",
+      "reporting_heading": "Select Reporting Account",
+      "reporting_body": "Choose the account to use for reporting.",
+      "reporting_label": "Reporting Account",
+      "primary_accounts": "Save selection",
+      "primary_reporting": "Save selection",
+      "secondary": "Cancel",
+      "empty": "No selectable accounts were returned. Check status before continuing.",
+      "invalid": "Check the selected accounts before continuing.",
+      "working_accounts": "Saving selection…"
+    },
+    "component_mapping": {
+      "modal": {
+        "tag": "s-modal",
+        "size": "base",
+        "padding": "base"
+      },
+      "account_choices": {
+        "tag": "s-choice-list",
+        "multiple": "true for account set; omitted for reporting account",
+        "label": "exact copy above"
+      },
+      "choice": {
+        "tag": "s-choice",
+        "value": "native server account ID",
+        "children": "escaped native name and ID"
+      },
+      "actions": {
+        "tag": "s-button",
+        "slot": "primary-action / secondary-actions",
+        "variant": "primary / secondary"
+      },
+      "content": {
+        "tag": "s-stack / s-paragraph / s-banner",
+        "gap": "base",
+        "direction": "block",
+        "tone": "warning or info"
+      }
+    },
+    "states": [
+      "Explicit Resume with current status opens one selector; no native permission request",
+      "Cancel/hide returns to the current feedback without request/write",
+      "Save captures fixed feature/stage/connection-version/IDs before hide; dispatch only once after native afterhide",
+      "Selection binds the same displayed connection/version in the core before the write; concurrent change fails with no retry",
+      "Write receipt is not an account inventory; next explicit Resume reads fresh current choices"
+    ],
+    "desktop_mobile": "Existing native accounts/Reporting Account choice modal only; real desktop/min320px mobile owner acceptance still pending.",
+    "unchanged": "Server availability switches remain false for Google/Meta; no provider API/scope addition, live grant/config/deploy/token/DB/Dataset change; no agent native Shopify visual operation.",
+    "out_of_scope": [
+      "Any user Merchant/business/catalog selection",
+      "Final setup activation and durable source persistence in step15",
+      "Live developer/config/permission changes and native UI acceptance"
+    ],
+    "official_sources": [
+      "https://shopify.dev/docs/api/app-home/latest/web-components/forms/choice-list",
+      "https://shopify.dev/docs/api/app-home/latest/web-components/forms/text-field",
+      "https://shopify.dev/docs/api/app-home/latest/web-components/overlays/modal"
+    ],
+    "superseded_by": "asset_discovery_spec"
+  },
+  "step6_removal": {
+    "checked_at": "2026-10-29",
+    "owner_authorization": "Tamam başla temizlemeye.",
+    "scope": "Remove only unauthorized OAuth step6, preserve existing steps1–5 and independent product identity readers; no live provider/config/deploy/token/DB changes",
+    "approval_gate": "PR265/AGENTS explicit owner approval governs all OAuth work; this approval covers this removal and its tests/docs only, not new design or merge",
+    "status": "implemented_local_tests_passed_native_visual_acceptance_pending",
+    "flow": [
+      "Keep permission explanation, combined Ads+Merchant/Catalog scopes, callback/token/grant validation and1–3 advertiser selection",
+      "Keep one Reporting Account selection; when the reporting connection exists return to existing Connected reporting view",
+      "No Merchant/business/catalog selection, manual identifiers, discovery, Verify access or catalog-based Resume gate",
+      "Reporting connection state is not product mapping, catalog access, roles, final durable activation or Dataset authority"
+    ],
+    "exact_copy": {
+      "account_heading": {
+        "google_ads": "Select Google Ads accounts",
+        "meta": "Select Meta accounts"
+      },
+      "account_body": "Choose one to three advertiser accounts.",
+      "reporting_heading": "Select Reporting Account",
+      "reporting_body": "Choose the account to use for reporting.",
+      "primary": "Save selection",
+      "secondary": "Cancel",
+      "loading": "Saving selection…",
+      "invalid": "Check the selected accounts before continuing.",
+      "empty": "No selectable accounts were returned. Check status before continuing.",
+      "reporting_result": "Existing Connected reporting card; no new catalog/activation banner",
+      "meta_permission_body": "Allow AdsTable to read advertising and catalog data for reporting and product matching."
+    },
+    "components": "Existing native s-modal size/base padding/base; s-stack block/base; s-choice-list/s-choice only for accounts and Reporting Account; s-button slots unchanged. No new component or style.",
+    "states": "Explicit Resume opens current account choices; Cancel/hide no I/O; successful final selection revalidates current reporting view; errors unknown/no retry; no empty catalog/expiry states remain",
+    "sources": [
+      "https://shopify.dev/docs/api/app-home/latest/web-components/forms/choice-list",
+      "https://shopify.dev/docs/api/app-home/latest/web-components/overlays/modal"
+    ],
+    "acceptance": "Code/tests/typecheck/build/CI plus real native desktop/min320px mobile owner acceptance remain distinct. No agent native Shopify interaction. No merge approval.",
+    "validation": {
+      "full_local_tests": 3064,
+      "passed": 3064,
+      "failed": 0,
+      "targeted_tests": 224,
+      "typecheck": "passed",
+      "build": "passed",
+      "native_visual_acceptance": false,
+      "CI": "exact_head_checked_after_push"
+    }
+  }
 }

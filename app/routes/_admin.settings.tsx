@@ -1,6 +1,15 @@
-import type {ActionFunctionArgs, LoaderFunctionArgs} from "react-router";
+import {usePermissionSettings} from "../components/use-permission-settings";
+import {logPermissionFailure} from "../lib/server-error-log.server.js";
+import {createPermissionSettings, PERMISSION_SETTINGS_AVAILABILITY} from "../lib/shopify/permission-settings.server.js";
+import type {PermissionFeature} from "../lib/ui/permission-explanation-flow.js";
+import type {ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs, ShouldRevalidateFunctionArgs} from "react-router";
+import {boundary} from "@shopify/shopify-app-react-router/server";
+import {readShopifyPermissionStatuses, type ProductPermissionStatus} from "../lib/shopify/product-permission-status.server.js";
+import {ProductAccessRemoval} from "../components/product-access-removal";
+import {OrderAccessRemoval} from "../components/order-access-removal";
 import {
   useActionData,
+  useFetcher,
   useLoaderData,
   useNavigation,
   useRevalidator,
@@ -12,13 +21,16 @@ import {
   authenticate,
   database,
   providerTokenVault,
+  permissionSetup,
+  permissionRelease,
 } from "../shopify.server";
 import {
   resolveShopifyRouteAuthority,
 } from "../lib/shopify/shopify-route-authority.server.js";
 import {createGoogleOAuthRuntime} from "../lib/oauth/google-oauth-runtime.server.js";
 import {createMetaOAuthRuntime} from "../lib/oauth/meta-oauth-runtime.server.js";
-import {createKlaviyoOAuthRuntime} from "../lib/oauth/klaviyo-oauth-runtime.server.js";
+import {createKlaviyoOAuthRuntime, normalizeKlaviyoEstimatedSpend} from "../lib/oauth/klaviyo-oauth-runtime.server.js";
+import {klaviyoSetupAccount, klaviyoSpendError, KLAVIYO_SPEND_ERROR} from "../lib/ui/klaviyo-setup-state.js";
 import {
   buildGoogleAdsAuthorizationUrl,
 } from "../lib/providers/google-ads-rest.server.js";
@@ -34,6 +46,8 @@ type Advertiser = {
 };
 
 type State =
+  | {view: "combined"}
+  | {view: "permissions_incomplete"}
   | {view: "disconnected"; notice: "cancelled" | "disconnected" | null}
   | {view: "pending"; accounts: Advertiser[]}
   | {view: "pending_reporting"; accounts: Advertiser[]}
@@ -43,7 +57,7 @@ type State =
 
 type ActionData =
   | {ok: true; intent: "begin"; provider: Provider; authorizationUrl: string}
-  | {ok: false; provider: Provider; code: string}
+  | {ok: false; provider: Provider; code: string; fieldError?: string}
   | undefined;
 
 type Provider = "google_ads" | "meta" | "klaviyo";
@@ -109,7 +123,9 @@ type KlaviyoState =
   | {view: "reauthorization"}
   | {view: "error"; code: string; retry: "oauth" | "reload"};
 
-type LoaderData = State & {meta: State; klaviyo: KlaviyoState};
+type LoaderData = State & {meta: State; klaviyo: KlaviyoState; permissionAvailability: typeof PERMISSION_SETTINGS_AVAILABILITY;
+  shopifyProductAccess: ProductPermissionStatus; shopifyOrderAccess: ProductPermissionStatus; shopifyPermissionOwner: string | null;
+  permissionUnavailableReasons?: Partial<Record<PermissionFeature, string>>};
 
 function providerCodeOf(provider: Provider, error: unknown) {
   const prefix = provider === "meta"
@@ -182,6 +198,14 @@ async function routeAuthority(request: Request) {
   });
 }
 
+// Pending broader grants require bound account selection. A connected reporting
+// account returns to its existing view without a catalog-selection prerequisite.
+function requiresCombinedSelection(inspected: any) {
+  if (inspected?.state === "connected") return false;
+  const scopes = inspected?.pending?.scopes;
+  return Array.isArray(scopes) && scopes.some(scope => scope === "https://www.googleapis.com/auth/content" || scope === "catalog_management");
+}
+
 async function loadGoogleState(
   verified: Awaited<ReturnType<typeof routeAuthority>>,
   url: URL,
@@ -189,11 +213,13 @@ async function loadGoogleState(
   const runtime = createGoogleOAuthRuntime({
     database,
     tokenVault: providerTokenVault,
+    identityAuthorizationEnabled: permissionRelease?.availability.google_ads === true,
   });
   try {
     const inspected = await runtime.inspect({
       installationAuthority: verified.installationAuthority,
     });
+    if (requiresCombinedSelection(inspected)) return {view: "combined"};
     if (inspected.state === "connected") {
       if (!inspected.connection.reportingAccountId) {
         throw new Error("GOOGLE_REPORTING_ACCOUNT_REQUIRED");
@@ -217,6 +243,9 @@ async function loadGoogleState(
       };
     }
     const status = url.searchParams.get("google_status");
+    // This return hint only explains an unfinished setup. Existing server-read
+    // connected/account-selection authority above always takes precedence.
+    if (status === "permissions_incomplete") return {view: "permissions_incomplete"};
     if (status === "error") {
       const callbackCode = url.searchParams.get("google_error");
       return {
@@ -252,10 +281,12 @@ async function loadMetaState(
     const runtime = createMetaOAuthRuntime({
       database,
       tokenVault: providerTokenVault,
+    identityAuthorizationEnabled: permissionRelease?.availability.meta === true,
     });
     const inspected = await runtime.inspect({
       installationAuthority: verified.installationAuthority,
     });
+    if (requiresCombinedSelection(inspected)) return {view: "combined"};
     if (inspected.state === "connected") {
       if (!inspected.connection.reportingAccountId) {
         throw new Error("META_REPORTING_ACCOUNT_REQUIRED");
@@ -358,29 +389,112 @@ async function loadKlaviyoState(
 export const loader = async ({request}: LoaderFunctionArgs): Promise<LoaderData> => {
   const verified = await routeAuthority(request);
   const url = new URL(request.url);
-  const [google, meta, klaviyo] = await Promise.all([
+  const [google, meta, klaviyo, shopifyAccess] = await Promise.all([
     loadGoogleState(verified, url),
     loadMetaState(verified, url),
     loadKlaviyoState(verified, url),
+    readShopifyPermissionStatuses({verified, setup: permissionSetup,
+      productsAvailable: permissionRelease?.availability.shopify_products === true,
+      ordersAvailable: permissionRelease?.availability.shopify_orders === true}),
   ]);
-  return {...google, meta, klaviyo};
+  return {...google, meta, klaviyo, shopifyProductAccess: shopifyAccess.products, shopifyOrderAccess: shopifyAccess.orders,
+    shopifyPermissionOwner: verified.identity?.shop?.shopId ?? null,
+    permissionAvailability: permissionRelease?.availability ?? PERMISSION_SETTINGS_AVAILABILITY,
+    permissionUnavailableReasons: permissionRelease?.unavailableReasons};
 };
+
+// Single Fetch aggregates thrown action headers at the leaf route. The layout's
+// headers export alone cannot forward the SDK reauthorization header on .data.
+export const headers: HeadersFunction = (args) => boundary.headers(args);
+
+const permissionIntents = new Set(["permission_connect", "permission_status", "permission_revoke_products", "permission_revoke_orders", "permission_select_accounts", "permission_select_reporting"]);
+
+export function shouldRevalidate({formData, actionResult, defaultShouldRevalidate}: ShouldRevalidateFunctionArgs) {
+  const intent = formData?.get("intent");
+  // Permission status reads are explicit; do not implicitly rerun provider loaders.
+  if (typeof intent === "string" && permissionIntents.has(intent)) return false;
+  // A field error or unconfirmed save is not permission to reread providers.
+  if (intent === "complete_klaviyo" && actionResult?.ok === false) return false;
+  return defaultShouldRevalidate;
+}
 
 export const action = async ({request}: ActionFunctionArgs) => {
   const verified = await routeAuthority(request);
   const form = await request.formData();
   const intent = form.get("intent");
+  if (typeof intent === "string" && permissionIntents.has(intent)) {
+    const featureValue = form.get("feature");
+    const requestId = form.get("requestId");
+    if (typeof featureValue !== "string" || !Object.hasOwn(PERMISSION_SETTINGS_AVAILABILITY, featureValue)
+      || typeof requestId !== "string" || !/^[a-f0-9-]{36}$/.test(requestId)) {
+      return new Response("Invalid permission action.", {status: 400});
+    }
+    const feature = featureValue as PermissionFeature;
+    const settings = createPermissionSettings({shopify: permissionSetup,
+      availability: permissionRelease?.availability ?? PERMISSION_SETTINGS_AVAILABILITY,
+      providerRuntime: (provider) => provider === "meta"
+        ? createMetaOAuthRuntime({database, tokenVault: providerTokenVault,
+          identityAuthorizationEnabled: permissionRelease?.availability.meta === true})
+        : provider === "klaviyo" ? createKlaviyoOAuthRuntime({database, tokenVault: providerTokenVault})
+        : createGoogleOAuthRuntime({database, tokenVault: providerTokenVault,
+          identityAuthorizationEnabled: permissionRelease?.availability.google_ads === true}),
+    });
+    try {
+      let result;
+      if (intent === "permission_connect") result = await settings.connect({feature, verified, action: "connect"});
+      else if (intent === "permission_status") {
+        const encoded = form.get("expectedScopeBinding");
+        if (encoded !== null && (typeof encoded !== "string" || encoded.length > 512)) throw new Error("PERMISSION_SETTINGS_SCOPE_BINDING_INVALID");
+        result = await settings.status({feature, verified, ...(typeof encoded === "string" ? {expectedScopeBinding: JSON.parse(encoded)} : {})});
+      }
+      else if (intent === "permission_revoke_products") {
+        if (feature !== "shopify_products") throw new Error("PERMISSION_SETTINGS_FEATURE_INVALID");
+        result = await settings.revokeProducts({feature, verified, action: "revoke"});
+      }
+      else if (intent === "permission_revoke_orders") {
+        if (feature !== "shopify_orders") throw new Error("PERMISSION_SETTINGS_FEATURE_INVALID");
+        result = await settings.revokeOrders({feature, verified, action: "revoke"});
+      }
+      else {
+        const expected = {connectionId: String(form.get("connectionId") ?? ""), version: Number(form.get("version"))};
+        const encoded = String(form.get("selectedAccountIds") ?? "[]");
+        if (encoded.length > 1024) throw new Error("PERMISSION_SETTINGS_ACCOUNTS_INVALID");
+        result = await settings.select({feature, verified, expected,
+          operation: intent === "permission_select_accounts" ? "accounts" : "reporting",
+          selectedAccountIds: JSON.parse(encoded), reportingAccountId: String(form.get("reportingAccountId") ?? "")});
+      }
+      return {...result, requestId};
+    } catch (error) {
+      if (error instanceof Response) throw error;
+      logPermissionFailure({feature, intent, requestId, error});
+      return {kind: "unknown" as const, feature, requestId};
+    }
+  }
+  if (typeof intent === "string" && intent.startsWith("permission_")) {
+    return new Response("Invalid permission action.", {status: 400});
+  }
   const providerValue = form.get("provider");
   const provider: Provider = providerValue === "meta" || providerValue === "klaviyo"
     ? providerValue
     : "google_ads";
 
+  if (provider === "klaviyo" && intent === "complete_klaviyo") {
+    try {
+      normalizeKlaviyoEstimatedSpend(String(form.get("estimatedSpend") ?? ""));
+    } catch {
+      return {ok: false, provider, code: "KLAVIYO_ESTIMATED_SPEND_INVALID",
+        fieldError: KLAVIYO_SPEND_ERROR} satisfies ActionData;
+    }
+  }
+
   try {
     const runtime = provider === "meta"
-      ? createMetaOAuthRuntime({database, tokenVault: providerTokenVault})
+      ? createMetaOAuthRuntime({database, tokenVault: providerTokenVault,
+        identityAuthorizationEnabled: permissionRelease?.availability.meta === true})
       : provider === "klaviyo"
         ? createKlaviyoOAuthRuntime({database, tokenVault: providerTokenVault})
-        : createGoogleOAuthRuntime({database, tokenVault: providerTokenVault});
+        : createGoogleOAuthRuntime({database, tokenVault: providerTokenVault,
+          identityAuthorizationEnabled: permissionRelease?.availability.google_ads === true});
     if (intent === "begin") {
       const started = await runtime.oauthBoundary.begin({
         installationAuthority: verified.installationAuthority,
@@ -522,10 +636,20 @@ function Navigation() {
 
 export default function Settings() {
   const state = useLoaderData<typeof loader>();
+  const [productOverride, setProductOverride] = useState<{source: LoaderData; value: ProductPermissionStatus} | null>(null);
+  const productAccess = productOverride?.source === state ? productOverride.value : state.shopifyProductAccess ?? "unknown";
+  const [orderOverride, setOrderOverride] = useState<{source: LoaderData; value: ProductPermissionStatus} | null>(null);
+  const orderAccess = orderOverride?.source === state ? orderOverride.value : state.shopifyOrderAccess ?? "unknown";
   const actionData = useActionData<typeof action>() as ActionData;
   const submit = useSubmit();
   const navigation = useNavigation();
   const revalidator = useRevalidator();
+  const [refreshProvider, setRefreshProvider] = useState<Provider | null>(null);
+  const initialSpendFetcher = useFetcher<ActionData>();
+  const initialSpendInFlight = useRef(false);
+  const [initialSpendValue, setInitialSpendValue] = useState("");
+  const [initialSpendError, setInitialSpendError] = useState("");
+  const [initialSpendUnknown, setInitialSpendUnknown] = useState(false);
   const choices = useRef<any>(null);
   const reportingChoice = useRef<any>(null);
   const accountModal = useRef<any>(null);
@@ -557,10 +681,12 @@ export default function Settings() {
   const klaviyoInitialSpend = useRef<any>(null);
   const klaviyoAccountChoice = useRef<any>(null);
   const klaviyoSetupModal = useRef<any>(null);
+  const klaviyoSpendModal = useRef<any>(null);
+  const klaviyoAccountTransition = useRef<string | null>(null);
+  const klaviyoShowSpend = useRef(false);
+  const [klaviyoAccountError, setKlaviyoAccountError] = useState("");
   const openedKlaviyoSetup = useRef(false);
   const klaviyoResumeRequested = useRef(false);
-  const [klaviyoSetupStep, setKlaviyoSetupStep] =
-    useState<"account" | "spend">("account");
   const [selectedKlaviyoAccountId, setSelectedKlaviyoAccountId] =
     useState<string | null>(null);
   const klaviyoUpdatedSpend = useRef<any>(null);
@@ -571,12 +697,36 @@ export default function Settings() {
   const pending = navigation.state !== "idle";
   const actionProvider = navigation.formData?.get("provider");
   const revalidating = revalidator.state !== "idle";
-  const googleWorking = revalidating || (pending && actionProvider === "google_ads");
-  const metaWorking = revalidating || (pending && actionProvider === "meta");
-  const klaviyoWorking = revalidating || (pending && actionProvider === "klaviyo");
+  const googleWorking = (revalidating && refreshProvider === "google_ads") || (pending && actionProvider === "google_ads");
+  const metaWorking = (revalidating && refreshProvider === "meta") || (pending && actionProvider === "meta");
+  const klaviyoWorking = (revalidating && refreshProvider === "klaviyo") || (pending && actionProvider === "klaviyo");
+  const initialSpendSaving = initialSpendFetcher.state !== "idle";
+  const pendingKlaviyoAccount = state.klaviyo.view === "pending"
+    ? klaviyoSetupAccount(state.klaviyo.accounts, selectedKlaviyoAccountId) : null;
   const klaviyoPeriods = state.klaviyo.view === "connected"
     ? state.klaviyo.periods
     : [];
+
+  const refreshConnection = (provider: Provider) => {
+    if (revalidator.state !== "idle") return;
+    setRefreshProvider(provider);
+    revalidator.revalidate();
+  };
+
+  useEffect(() => {
+    if (!revalidating) setRefreshProvider(null);
+  }, [revalidating]);
+
+  useEffect(() => {
+    if (initialSpendFetcher.state !== "idle" || !initialSpendInFlight.current) return;
+    initialSpendInFlight.current = false;
+    const reply = initialSpendFetcher.data;
+    if (reply?.ok === false && reply.fieldError) {
+      setInitialSpendError(reply.fieldError);
+    } else if (state.klaviyo.view === "pending") {
+      setInitialSpendUnknown(true);
+    }
+  }, [initialSpendFetcher.state, initialSpendFetcher.data, state.klaviyo.view]);
 
   useEffect(() => {
     const url = new URL(globalThis.location.href);
@@ -664,18 +814,65 @@ export default function Settings() {
     if (state.klaviyo.view !== "pending") {
       openedKlaviyoSetup.current = false;
       klaviyoResumeRequested.current = false;
-      setKlaviyoSetupStep("account");
       setSelectedKlaviyoAccountId(null);
+      setInitialSpendValue("");
+      setInitialSpendError("");
+      setInitialSpendUnknown(false);
+      setKlaviyoAccountError("");
+      klaviyoAccountTransition.current = null;
+      klaviyoShowSpend.current = false;
       return;
     }
     if (klaviyoWorking) return;
-    if (openedKlaviyoSetup.current && !klaviyoResumeRequested.current) return;
+    if (openedKlaviyoSetup.current && !klaviyoResumeRequested.current && !klaviyoShowSpend.current) return;
+    if (klaviyoResumeRequested.current) setInitialSpendUnknown(false);
     openedKlaviyoSetup.current = true;
     klaviyoResumeRequested.current = false;
-    setKlaviyoSetupStep("account");
-    setSelectedKlaviyoAccountId(null);
-    klaviyoSetupModal.current?.showOverlay?.();
-  }, [state.klaviyo.view, klaviyoWorking]);
+    const account = klaviyoSetupAccount(state.klaviyo.accounts, selectedKlaviyoAccountId);
+    if (account) {
+      setSelectedKlaviyoAccountId(account.id);
+    } else {
+      setSelectedKlaviyoAccountId(null);
+    }
+    klaviyoShowSpend.current = false;
+    if (account) klaviyoSpendModal.current?.showOverlay?.();
+    else klaviyoSetupModal.current?.showOverlay?.();
+  }, [state.klaviyo, klaviyoWorking, selectedKlaviyoAccountId]);
+
+  useEffect(() => {
+    const element = klaviyoSetupModal.current;
+    if (!element || state.klaviyo.view !== "pending") return;
+    const accounts = state.klaviyo.accounts;
+    const afterHide = (event: Event) => {
+      if (event.target !== element) return;
+      const id = klaviyoAccountTransition.current;
+      klaviyoAccountTransition.current = null;
+      if (!id) return; // Cancel/Escape/close never advances the flow.
+      const account = klaviyoSetupAccount(accounts, id);
+      if (!account) { setKlaviyoAccountError("Select one Klaviyo account to continue."); return; }
+      klaviyoShowSpend.current = true;
+      setSelectedKlaviyoAccountId(account.id);
+    };
+    element.addEventListener("afterhide", afterHide);
+    return () => element.removeEventListener("afterhide", afterHide);
+  }, [state.klaviyo]);
+
+  const permissions = usePermissionSettings({availability: state.permissionAvailability,
+    unavailableReasons: state.permissionUnavailableReasons,
+    productOwner: state.shopifyPermissionOwner,
+    onProductStatus(value) {setProductOverride({source: state, value});},
+    onOrderStatus(value) {setOrderOverride({source: state, value});},
+    onResume(feature, stage) {
+      if (feature === "klaviyo") {
+        klaviyoResumeRequested.current = true;
+        refreshConnection("klaviyo");
+      }
+      if ((feature === "google_ads" || feature === "meta") && stage === "reporting_selected") {
+        refreshConnection(feature);
+      }
+      // Re-read the normal reporting view after explicit account selection only.
+    },
+  });
 
   const send = (intent: string, provider: Provider = "google_ads") => {
     const form = new FormData();
@@ -686,7 +883,7 @@ export default function Settings() {
 
   const resumeAccountSelection = () => {
     resumeRequested.current = true;
-    revalidator.revalidate();
+    refreshConnection("google_ads");
   };
 
   const select = () => {
@@ -776,7 +973,7 @@ export default function Settings() {
 
   const resumeMetaAccountSelection = () => {
     metaResumeRequested.current = true;
-    revalidator.revalidate();
+    refreshConnection("meta");
   };
 
   const selectMeta = () => {
@@ -801,29 +998,46 @@ export default function Settings() {
   const submitKlaviyoSpend = (
     intent: "complete_klaviyo" | "update_klaviyo_spend",
   ) => {
-    const input = intent === "complete_klaviyo"
-      ? klaviyoInitialSpend.current
-      : klaviyoUpdatedSpend.current;
+    if (intent === "complete_klaviyo") {
+      if (initialSpendInFlight.current || initialSpendSaving || initialSpendUnknown || !pendingKlaviyoAccount) return;
+      const error = klaviyoSpendError(initialSpendValue);
+      setInitialSpendError(error);
+      setInitialSpendUnknown(false);
+      if (error) return;
+      const form = new FormData();
+      form.set("intent", intent);
+      form.set("provider", "klaviyo");
+      form.set("accountId", pendingKlaviyoAccount.id);
+      form.set("estimatedSpend", initialSpendValue);
+      initialSpendInFlight.current = true;
+      initialSpendFetcher.submit(form, {method: "post"});
+      return;
+    }
+    const input = klaviyoUpdatedSpend.current;
     const form = new FormData();
     form.set("intent", intent);
     form.set("provider", "klaviyo");
-    if (intent === "complete_klaviyo" && selectedKlaviyoAccountId) {
-      form.set("accountId", selectedKlaviyoAccountId);
-    }
     form.set("estimatedSpend", String(input?.value ?? ""));
     submit(form, {method: "post"});
   };
 
   const resumeKlaviyoSetup = () => {
     klaviyoResumeRequested.current = true;
-    revalidator.revalidate();
+    refreshConnection("klaviyo");
   };
 
   const continueKlaviyoSetup = () => {
-    const [accountId] = klaviyoAccountChoice.current?.values ?? [];
-    if (!accountId) return;
-    setSelectedKlaviyoAccountId(accountId);
-    setKlaviyoSetupStep("spend");
+    if (klaviyoAccountTransition.current || state.klaviyo.view !== "pending") return;
+    const ids = klaviyoAccountChoice.current?.values ?? [];
+    const account = ids.length === 1 ? klaviyoSetupAccount(state.klaviyo.accounts, ids[0]) : null;
+    if (!account) { setKlaviyoAccountError("Select one Klaviyo account to continue."); return; }
+    setKlaviyoAccountError("");
+    klaviyoAccountTransition.current = account.id;
+    try { klaviyoSetupModal.current.hideOverlay(); }
+    catch {
+      klaviyoAccountTransition.current = null;
+      setKlaviyoAccountError("Select one Klaviyo account to continue.");
+    }
   };
 
   const correctKlaviyoSpend = () => {
@@ -860,8 +1074,43 @@ export default function Settings() {
   return (
     <s-page heading="Settings">
       <Navigation />
+      <s-section heading="Shopify">
+        <s-stack direction="block" gap="base">
+          {permissions.removingProduct ? <s-banner tone="info" heading="Removing product access…" />
+            : permissions.checkingProduct ? <s-banner tone="info" heading="Checking product access…" />
+            : productAccess === "ready" ? <s-badge tone="success">Product access approved</s-badge>
+            : productAccess === "unknown" ? <s-banner tone="critical" heading={permissions.productRemovalResult === "unknown" ? "Could not verify that product access was removed. Check status to continue." : "Could not verify product access. Check status to continue."} />
+            : productAccess === "missing" && permissions.productRemovalResult === "removed" ? <s-banner tone="success" heading="Product access removed." />
+            : <s-paragraph>{productAccess === "missing" ? "Product access is not connected." : "Product connection is currently unavailable."}</s-paragraph>}
+          <ProductAccessRemoval owner={state.shopifyPermissionOwner} ready={productAccess === "ready"} busy={permissions.busy}
+            onConfirm={() => {void permissions.removeProductAccess();}} onUnknown={permissions.productRemovalUnknown} />
+          {productAccess === "missing" || productAccess === "unavailable" ?
+            <s-button disabled={permissions.busy ? true : undefined} onClick={() => permissions.open("shopify_products")}>Connect Shopify products</s-button> : null}
+          {productAccess === "unknown" ? <s-button disabled={permissions.busy ? true : undefined} onClick={() => permissions.checkStatus("shopify_products")}>Check status</s-button> : null}
+          {permissions.removingOrder ? <s-banner tone="info" heading="Removing order access…" />
+            : permissions.checkingOrder ? <s-banner tone="info" heading="Checking order access…" />
+            : orderAccess === "ready" ? <s-badge tone="success">Order access approved</s-badge>
+            : orderAccess === "unknown" ? <s-banner tone="critical" heading={permissions.orderRemovalResult === "unknown" ? "Could not verify that order access was removed. Check status to continue." : "Could not verify order access. Check status to continue."} />
+            : orderAccess === "missing" && permissions.orderRemovalResult === "removed" ? <s-banner tone="success" heading="Order access removed." />
+            : <s-paragraph>{orderAccess === "missing" ? "Order access is not connected." : "Order connection is currently unavailable."}</s-paragraph>}
+          <OrderAccessRemoval owner={state.shopifyPermissionOwner} ready={orderAccess === "ready"} busy={permissions.busy}
+            onConfirm={() => {void permissions.removeOrderAccess();}} onUnknown={permissions.orderRemovalUnknown} />
+          {orderAccess === "missing" || orderAccess === "unavailable" ? <>
+            {productAccess !== "ready" ? <s-paragraph>Product access is required to connect orders.</s-paragraph> : null}
+            <s-button disabled={permissions.busy || productAccess !== "ready" ? true : undefined} onClick={() => permissions.open("shopify_orders")}>Connect Shopify orders</s-button>
+          </> : null}
+          {orderAccess === "unknown" ? <s-button disabled={permissions.busy ? true : undefined} onClick={() => permissions.checkStatus("shopify_orders")}>Check status</s-button> : null}
+        </s-stack>
+      </s-section>
+      {permissions.content}
       <s-section heading="Meta">
         <s-stack direction="block" gap="base">
+          {permissions.providerContent("meta")}
+          {state.meta.view === "combined" ? <>
+            <s-badge tone="warning">Resume setup</s-badge>
+            <s-button onClick={() => permissions.checkStatus("meta", true)}>Resume setup</s-button>
+            <s-button onClick={() => permissions.open("meta")}>Reconnect Meta</s-button>
+          </> : null}
           {actionData?.ok === false && actionData.provider === "meta"
             ? <ErrorBanner provider="meta" code={actionData.code} />
             : null}
@@ -879,14 +1128,10 @@ export default function Settings() {
               <s-button
                 variant="primary"
                 onClick={() => {
-                  if (state.meta.view === "error" && state.meta.retry === "oauth") {
-                    send("begin", "meta");
-                  } else {
-                    revalidator.revalidate();
-                  }
+                  permissions.checkStatus("meta");
                 }}
               >
-                {state.meta.retry === "oauth" ? "Restart Meta setup" : "Try loading accounts again"}
+                Check status
               </s-button>
             </>
           ) : null}
@@ -897,7 +1142,7 @@ export default function Settings() {
               <s-paragraph>
                 Meta authorization is no longer valid. Reconnect to continue.
               </s-paragraph>
-              <s-button variant="primary" onClick={() => send("begin", "meta")}>
+              <s-button variant="primary" onClick={() => permissions.open("meta")}>
                 Reconnect Meta
               </s-button>
             </>
@@ -908,7 +1153,7 @@ export default function Settings() {
               <s-badge>Not connected</s-badge>
               {state.meta.notice === "cancelled" ? (
                 <s-banner tone="warning">
-                  Meta setup was cancelled. No advertiser account was connected.
+                  Setup was not completed. Review the connection status before continuing.
                 </s-banner>
               ) : null}
               {state.meta.notice === "disconnected" ? (
@@ -919,8 +1164,7 @@ export default function Settings() {
               </s-paragraph>
               <s-button
                 variant="primary"
-                commandFor="meta-connect-modal"
-                command="--show"
+                onClick={() => permissions.open("meta")}
               >
                 Connect Meta
               </s-button>
@@ -1140,38 +1384,23 @@ export default function Settings() {
           ) : null}
         </s-stack>
 
-        <s-modal id="meta-connect-modal" heading="Connect Meta">
-          <s-stack direction="block" gap="base">
-            <s-paragraph>
-              Continue with a Facebook account that can access the Meta
-              advertiser accounts you want to report. AdsTable requests read-only
-              advertising access.
-            </s-paragraph>
-            <s-paragraph>
-              If this browser is not signed in, Meta will ask you to sign in and
-              complete any required verification before returning to AdsTable.
-            </s-paragraph>
-          </s-stack>
-          <s-button
-            slot="primary-action"
-            variant="primary"
-            commandFor="meta-connect-modal"
-            command="--hide"
-            onClick={() => send("begin", "meta")}
-          >
-            Continue to Meta
-          </s-button>
-          <s-button
-            slot="secondary-actions"
-            commandFor="meta-connect-modal"
-            command="--hide"
-          >
-            Cancel
-          </s-button>
-        </s-modal>
+
       </s-section>
       <s-section heading="Google Ads">
         <s-stack direction="block" gap="base">
+          {permissions.providerContent("google_ads")}
+          {!googleWorking && state.view === "permissions_incomplete" ? <>
+            <s-banner tone="warning" heading="Google setup is incomplete">
+              <s-paragraph>Both Google Ads and Merchant Center access are required. Resume setup and allow both permissions to finish connecting.</s-paragraph>
+            </s-banner>
+            <s-button disabled={permissions.busy || state.permissionAvailability.google_ads !== true ? true : undefined}
+              onClick={() => permissions.open("google_ads")}>Resume setup</s-button>
+          </> : null}
+          {state.view === "combined" ? <>
+            <s-badge tone="warning">Resume setup</s-badge>
+            <s-button onClick={() => permissions.checkStatus("google_ads", true)}>Resume setup</s-button>
+            <s-button onClick={() => permissions.open("google_ads")}>Reconnect Google Ads</s-button>
+          </> : null}
           {actionData?.ok === false && actionData.provider === "google_ads"
             ? <ErrorBanner provider="google_ads" code={actionData.code} />
             : null}
@@ -1189,11 +1418,10 @@ export default function Settings() {
               <s-button
                 variant="primary"
                 onClick={() => {
-                  if (state.retry === "oauth") send("begin");
-                  else revalidator.revalidate();
+                  permissions.checkStatus("google_ads");
                 }}
               >
-                {state.retry === "oauth" ? "Restart Google Ads setup" : "Try loading accounts again"}
+                Check status
               </s-button>
             </>
           ) : null}
@@ -1204,7 +1432,7 @@ export default function Settings() {
               <s-paragraph>
                 Google authorization is no longer valid. Reconnect to continue.
               </s-paragraph>
-              <s-button variant="primary" onClick={() => send("begin")}>
+              <s-button variant="primary" onClick={() => permissions.open("google_ads")}>
                 Reconnect Google Ads
               </s-button>
             </>
@@ -1215,7 +1443,7 @@ export default function Settings() {
               <s-badge>Not connected</s-badge>
               {state.notice === "cancelled" ? (
                 <s-banner tone="warning">
-                  Google Ads setup was cancelled. No advertiser account was connected.
+                  Setup was not completed. Review the connection status before continuing.
                 </s-banner>
               ) : null}
               {state.notice === "disconnected" ? (
@@ -1227,8 +1455,7 @@ export default function Settings() {
               </s-paragraph>
               <s-button
                 variant="primary"
-                commandFor="google-connect-modal"
-                command="--show"
+                onClick={() => permissions.open("google_ads")}
               >
                 Connect Google Ads
               </s-button>
@@ -1478,37 +1705,11 @@ export default function Settings() {
           ) : null}
         </s-stack>
 
-        <s-modal id="google-connect-modal" heading="Connect Google Ads">
-          <s-stack direction="block" gap="base">
-            <s-paragraph>
-              Continue with a Google account that can access the advertiser
-              accounts you want to report. AdsTable requests read-only Google Ads
-              reporting access.
-            </s-paragraph>
-            <s-paragraph>
-              After authorization, AdsTable will show advertiser accounts only.
-            </s-paragraph>
-          </s-stack>
-          <s-button
-            slot="primary-action"
-            variant="primary"
-            commandFor="google-connect-modal"
-            command="--hide"
-            onClick={() => send("begin")}
-          >
-            Continue to Google
-          </s-button>
-          <s-button
-            slot="secondary-actions"
-            commandFor="google-connect-modal"
-            command="--hide"
-          >
-            Cancel
-          </s-button>
-        </s-modal>
+
       </s-section>
       <s-section heading="Klaviyo">
         <s-stack direction="block" gap="base">
+          {permissions.providerContent("klaviyo")}
           {actionData?.ok === false && actionData.provider === "klaviyo"
             ? <ErrorBanner provider="klaviyo" code={actionData.code} />
             : null}
@@ -1526,16 +1727,10 @@ export default function Settings() {
               <s-button
                 variant="primary"
                 onClick={() => {
-                  if (state.klaviyo.view === "error" && state.klaviyo.retry === "oauth") {
-                    send("begin", "klaviyo");
-                  } else {
-                    revalidator.revalidate();
-                  }
+                  permissions.checkStatus("klaviyo");
                 }}
               >
-                {state.klaviyo.retry === "oauth"
-                  ? "Restart Klaviyo setup"
-                  : "Try loading Klaviyo again"}
+                Check status
               </s-button>
             </>
           ) : null}
@@ -1546,7 +1741,7 @@ export default function Settings() {
               <s-paragraph>
                 Klaviyo authorization is no longer valid. Reconnect to continue.
               </s-paragraph>
-              <s-button variant="primary" onClick={() => send("begin", "klaviyo")}>
+              <s-button variant="primary" onClick={() => permissions.open("klaviyo")}>
                 Reconnect Klaviyo
               </s-button>
             </>
@@ -1557,7 +1752,7 @@ export default function Settings() {
               <s-badge>Not connected</s-badge>
               {state.klaviyo.notice === "cancelled" ? (
                 <s-banner tone="warning">
-                  Klaviyo setup was cancelled. No account was connected.
+                  Setup was not completed. Review the connection status before continuing.
                 </s-banner>
               ) : null}
               {state.klaviyo.notice === "disconnected" ? (
@@ -1569,38 +1764,36 @@ export default function Settings() {
               </s-paragraph>
               <s-button
                 variant="primary"
-                commandFor="klaviyo-connect-modal"
-                command="--show"
+                onClick={() => permissions.open("klaviyo")}
               >
                 Connect Klaviyo
               </s-button>
             </>
           ) : null}
 
-          {!klaviyoWorking && state.klaviyo.view === "pending" ? (
+          {state.klaviyo.view === "pending" ? (
             <>
-              <s-badge tone="info">Account selection required</s-badge>
+              <s-badge tone="info">{pendingKlaviyoAccount ? "Estimated spend required" : "Account selection required"}</s-badge>
               <s-paragraph>
-                Klaviyo authorization is complete. Select the account, then add
-                its estimated 30-day email spend to finish setup.
+                {pendingKlaviyoAccount
+                  ? "Add the estimated 30-day email spend to finish setup. Enter 0 if there is no cost."
+                  : "Klaviyo authorization is complete. Select the account, then add its estimated 30-day email spend to finish setup."}
               </s-paragraph>
-              <s-button variant="primary" onClick={resumeKlaviyoSetup}>
+              <s-button variant="primary" disabled={klaviyoWorking || initialSpendSaving} onClick={resumeKlaviyoSetup}>
                 Resume setup
               </s-button>
               <s-modal
                 ref={klaviyoSetupModal}
                 id="klaviyo-setup-modal"
-                heading={klaviyoSetupStep === "account"
-                  ? "Select Klaviyo account"
-                  : "Add estimated email spend"}
+                heading="Select Klaviyo account"
               >
-                {klaviyoSetupStep === "account" ? (
                   <s-stack direction="block" gap="base">
                     <s-paragraph>
                       Select the Klaviyo account to connect.
                     </s-paragraph>
                     <s-choice-list
                       ref={klaviyoAccountChoice}
+                      error={klaviyoAccountError}
                       label="Klaviyo accounts"
                       name="klaviyoAccountId"
                     >
@@ -1611,7 +1804,19 @@ export default function Settings() {
                       ))}
                     </s-choice-list>
                   </s-stack>
-                ) : (() => {
+                <s-button slot="primary-action" variant="primary" onClick={continueKlaviyoSetup}>
+                  Continue
+                </s-button>
+                <s-button slot="secondary-actions" commandFor="klaviyo-setup-modal" command="--hide">
+                  Cancel
+                </s-button>
+              </s-modal>
+              <s-modal
+                ref={klaviyoSpendModal}
+                id="klaviyo-initial-spend-modal"
+                heading="Add estimated email spend"
+              >
+                {(() => {
                   const account = state.klaviyo.accounts.find(
                     (candidate) => candidate.id === selectedKlaviyoAccountId,
                   );
@@ -1625,6 +1830,13 @@ export default function Settings() {
                       </s-paragraph>
                       <s-number-field
                         ref={klaviyoInitialSpend}
+                        value={initialSpendValue}
+                        error={initialSpendError}
+                        disabled={initialSpendSaving}
+                        onInput={(event) => {
+                          setInitialSpendValue(event.currentTarget.value);
+                          setInitialSpendError("");
+                        }}
                         label="Estimated 30-day Klaviyo email spend"
                         min={0}
                         max={99999999.99}
@@ -1635,27 +1847,28 @@ export default function Settings() {
                     </s-stack>
                   ) : null;
                 })()}
-                {klaviyoSetupStep === "account" ? (
+                {initialSpendUnknown ? (
+                  <s-banner tone="critical">
+                    The save could not be confirmed. Check the connection status before continuing.
+                    <s-button disabled={klaviyoWorking} onClick={resumeKlaviyoSetup}>
+                      Check status
+                    </s-button>
+                  </s-banner>
+                ) : null}
                   <s-button
                     slot="primary-action"
                     variant="primary"
-                    onClick={continueKlaviyoSetup}
-                  >
-                    Continue
-                  </s-button>
-                ) : (
-                  <s-button
-                    slot="primary-action"
-                    variant="primary"
+                    loading={initialSpendSaving}
+                    disabled={initialSpendUnknown || !pendingKlaviyoAccount}
                     onClick={() => submitKlaviyoSpend("complete_klaviyo")}
                   >
                     Save and connect
                   </s-button>
-                )}
                 <s-button
                   slot="secondary-actions"
-                  commandFor="klaviyo-setup-modal"
+                  commandFor="klaviyo-initial-spend-modal"
                   command="--hide"
+                  disabled={initialSpendSaving}
                 >
                   Cancel
                 </s-button>
@@ -1866,34 +2079,7 @@ export default function Settings() {
           ) : null}
         </s-stack>
 
-        <s-modal id="klaviyo-connect-modal" heading="Connect Klaviyo">
-          <s-stack direction="block" gap="base">
-            <s-paragraph>
-              Continue to Klaviyo to authorize one account. AdsTable requests
-              the read-only scopes required for account and reporting access.
-            </s-paragraph>
-            <s-paragraph>
-              After authorization, AdsTable will ask for the estimated 30-day
-              email spend before the connection is completed.
-            </s-paragraph>
-          </s-stack>
-          <s-button
-            slot="primary-action"
-            variant="primary"
-            commandFor="klaviyo-connect-modal"
-            command="--hide"
-            onClick={() => send("begin", "klaviyo")}
-          >
-            Continue to Klaviyo
-          </s-button>
-          <s-button
-            slot="secondary-actions"
-            commandFor="klaviyo-connect-modal"
-            command="--hide"
-          >
-            Cancel
-          </s-button>
-        </s-modal>
+
       </s-section>
     </s-page>
   );

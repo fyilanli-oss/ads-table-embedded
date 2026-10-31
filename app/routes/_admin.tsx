@@ -27,11 +27,7 @@ export const loader = async ({request}: LoaderFunctionArgs) => {
 
 export default function AuthenticatedAdminLayout() {
   const {apiKey, polarisUrl} = useLoaderData<typeof loader>();
-  return (
-    <AppProvider apiKey={apiKey} polarisUrl={polarisUrl}>
-      <Outlet />
-    </AppProvider>
-  );
+  return <AppProvider apiKey={apiKey} polarisUrl={polarisUrl}><Outlet /></AppProvider>;
 }
 
 export function ErrorBoundary() {

@@ -10,7 +10,7 @@ Bu repository temiz Shopify embedded-only AdsTable runtime'ıdır. **Execution P
 - Kod, test, sözleşme, migration, config, callback/token/oturum, canlı çağrı, temizlik/kaldırma/geri alma/refactor, deploy ve merge de dahildir. Düzeltme veya geri alma amacı kendiliğinden izin oluşturmaz.
 - Genel “devam edelim”, genel onay, önceki başka iş/merge onayı veya önceki plan kararı OAuth yetkisi değildir. Onay yalnız açıkça belirtilen somut iş ve kapsam için geçerlidir. Kapsam değişecekse durulur ve yeni açık izin alınır.
 - Bu kapı, OAuth için önceki bağımsız kodlama veya izole test ilerleme izinlerinin önündedir; teknik olanak, başarılı test, geri alınabilirlik veya ajan takdiri yerine geçmez.
-- #264 kullanıcı tarafından reddedilen katalog seçim adımı nedeniyle durdurulmuştur; merge yetkisi yoktur. Katalog seçimi kodu temizlenmedi veya değiştirilmedi. Temizlik de ayrı açık izin bekler.
+- #264’te katalog seçimi açık temizlik onayıyla kaldırıldı (kaynak a103b25). 31 Ekim’de onaylı arayüzün güncel main ile uyumlandırılması ve üç Settings hatasının düzeltilmesi ayrıca onaylandı. Katalog seçimi geri getirilemez. Gerçek görsel kabul ve ayrı merge onayı beklenir; canlı izin/config/deploy yetkisi yoktur. Önceki temizlenmedi/izin bekliyor ifadeleri 29 Ekim tarihsel durumudur.
 - Bu kuralın AGENTS ve bağlayıcı belgelere kaydı kullanıcı tarafından açıkça istendi. Bu izin yalnız kural kaydına aittir; OAuth inceleme/kodlama/test/temizlik veya provider işlemi yetkisi vermez.
 
 ## Zorunlu başlangıç kapısı
@@ -62,3 +62,7 @@ Görsel ve etkileşimli UI yalnız güncel Shopify App Bridge ve stable Polaris 
 
 Production domain, Shopify app config, provider mutation, live token/data carry, database provisioning, cutover ve legacy deletion yalnız kendi ileriki kapılarında ve açık yetkiyle yapılır. Missing, unknown, unsupported, partial, stale ve gerçek zero ayrı durumlardır.
 
+
+## 31 Ekim — açık hesap adımı ve ayrı Klaviyo maliyet modalı
+
+Klaviyo OAuth dönüşünde tek hesap dahi otomatik seçilerek atlanmaz. Açık hesap seçimi ayrı modalda, estimated spend ayrı modalda gösterilir; Continue sonrası native afterhide tamamlanmadan sonraki modal açılmaz. Bu ürün sahibi kararıdır; aynı modalda adım değiştirme veya otomatik geçiş performans/kolaylık gerekçesiyle geri getirilemez. Bu somut düzeltme ve sunucu yayın koşullarının kod bağlantısı onaylıdır; canlı ayar/izin/config/deploy/merge için ayrı açık onay kapısı sürer.

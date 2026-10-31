@@ -114,9 +114,20 @@ language sql stable security definer set search_path = '' as $function$
  and t.status='exchanged' and t.identity_credential_id is not null
 $function$;
 revoke all on function integrations.commit_identity_oauth_credential(uuid,uuid,bigint,text,uuid,uuid,bigint,uuid,text[],jsonb,timestamptz,bytea,bytea,bytea,smallint,timestamptz)
- from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
+ from public,anon,authenticated,service_role,adstable_runtime;
 revoke all on function integrations.read_identity_oauth_commit(uuid,uuid,bigint,text)
- from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
+ from public,anon,authenticated,service_role,adstable_runtime;
+
+-- Refresh infrastructure is optional for this scoped OAuth rollout. Never create
+-- its role here; if already installed, explicitly remove its function privileges.
+do $optional_refresh_role$
+begin
+  if exists(select 1 from pg_catalog.pg_roles where rolname='adstable_refresh_coordinator') then
+    revoke all on function integrations.commit_identity_oauth_credential(uuid,uuid,bigint,text,uuid,uuid,bigint,uuid,text[],jsonb,timestamptz,bytea,bytea,bytea,smallint,timestamptz),
+      integrations.read_identity_oauth_commit(uuid,uuid,bigint,text) from adstable_refresh_coordinator;
+  end if;
+end
+$optional_refresh_role$;
 grant execute on function integrations.commit_identity_oauth_credential(uuid,uuid,bigint,text,uuid,uuid,bigint,uuid,text[],jsonb,timestamptz,bytea,bytea,bytea,smallint,timestamptz),
  integrations.read_identity_oauth_commit(uuid,uuid,bigint,text) to adstable_runtime;
 commit;

@@ -95,8 +95,14 @@ test("Resume setup cannot restart Google OAuth", () => {
   const resumeEnd = settings.indexOf("\n  };", resumeStart);
   assert.ok(resumeStart >= 0 && resumeEnd > resumeStart);
   const resumeSource = settings.slice(resumeStart, resumeEnd);
-  assert.match(resumeSource, /revalidator[.]revalidate\(\)/);
+  assert.match(resumeSource, /refreshConnection\("google_ads"\)/);
   assert.doesNotMatch(resumeSource, /send\("begin"\)|oauthBoundary[.]begin/);
+  const refreshStart = settings.indexOf("const refreshConnection");
+  const refreshEnd = settings.indexOf("\n  };", refreshStart);
+  const refreshSource = settings.slice(refreshStart, refreshEnd);
+  assert.match(refreshSource, /setRefreshProvider\(provider\)/);
+  assert.match(refreshSource, /revalidator[.]revalidate\(\)/);
+  assert.doesNotMatch(refreshSource, /send\(|fetch\(|oauthBoundary/);
 });
 
 test("Reporting Account selection is provider-revalidated before binding", () => {

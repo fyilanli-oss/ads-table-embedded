@@ -1,4 +1,23 @@
 {
+  "Owner_flow_restore_2026_10_31": {
+    "checked_at": "2026-10-31",
+    "existing_plan_step": 7,
+    "record": "contracts/eo-05-permission-explanation-design-v1.json#Owner_flow_restore_2026_10_31",
+    "supersedes_single_account_skip": true,
+    "distinct_Klaviyo_modals": true,
+    "live_release_changed": false,
+    "owner_visual_acceptance": false,
+    "merge_authorized": false
+  },
+  "Settings_corrections_2026_10_31": {
+    "checked_at": "2026-10-31",
+    "existing_plan_step": 7,
+    "authority": "Explicit owner approval after read-only review: port approved PR264 UI to current main, fix the three reviewed issues and align records",
+    "record": "contracts/eo-05-permission-explanation-design-v1.json#Settings_corrections_2026_10_31",
+    "status": "code_prepared_CI_and_native_visual_acceptance_pending",
+    "merge_authorized": false,
+    "live_changes": false
+  },
   "OAuth_explicit_owner_approval_gate_2026_10_29": {
     "checked_at": "2026-10-29",
     "authority": "explicit_owner_instruction",
@@ -18,13 +37,20 @@
     "scope_change": "Stop and request fresh explicit owner approval before expanding or changing approved scope. No silent alternative path or cleanup.",
     "current_hold": {
       "PR": 264,
+      "status": "step6_removed_native_visual_acceptance_and_PR_merge_pending",
+      "catalog_selection_step": "removed_by_explicit_owner_authorized_cleanup",
+      "OAuth_cleanup": "code_and_tests_completed_in_commit_629f841f3bb578364a5b35f47407df7e99b3e760",
+      "current_authorization": "2026-10-31: explicitly approved current-main UI integration and the three reviewed Settings corrections; no live permission/config/deploy/DB or merge authorization"
+    },
+    "recording_exception": "The owner explicitly authorized this instruction to be recorded in AGENTS and governing documents; that authorizes documentation/governance recording only, not OAuth investigation, implementation, tests, cleanup or provider operations.",
+    "precedence": "Overrides earlier permission to proceed independently with code or isolated tests in OAuth-related work. Earlier approved documents/technical possibilities do not override this gate.",
+    "historical_hold_before_cleanup": {
+      "PR": 264,
       "status": "stopped_owner_rejected_catalog_selection_not_merge_authorized",
       "catalog_selection_step": "owner_rejected; no removal or replacement was performed",
       "OAuth_cleanup": "not_started; requires separate explicit owner approval",
       "runtime_or_test_changes_in_this_record": false
-    },
-    "recording_exception": "The owner explicitly authorized this instruction to be recorded in AGENTS and governing documents; that authorizes documentation/governance recording only, not OAuth investigation, implementation, tests, cleanup or provider operations.",
-    "precedence": "Overrides earlier permission to proceed independently with code or isolated tests in OAuth-related work. Earlier approved documents/technical possibilities do not override this gate."
+    }
   },
   "Polaris_stable_2_alignment_2026_10_29": {
     "checked_at": "2026-10-29",
@@ -4028,5 +4054,240 @@
     "OAuth_changed": false,
     "live_calls_performed": false,
     "Dataset_write": false
+  },
+  "OAuth_main_sync_2026_10_30": {
+    "checked_at": "2026-10-30",
+    "PR": 264,
+    "owner_authorized_operation": "Sync PR264 with current main, reconcile document differences and verify CI only",
+    "main_commit": "565abe86ac551a686ad151b60c8b01b8628f9a80",
+    "candidate_before_sync": "629f841f3bb578364a5b35f47407df7e99b3e760",
+    "resolution": "Preserve the permanent explicit OAuth owner-approval gate and completed step6 removal record together; retain the earlier not-started hold as historical metadata",
+    "runtime_or_test_code_changed": false,
+    "package_lock_or_migrations_changed": false,
+    "deployment_or_database_or_permission_change": false,
+    "PR_merge_authorized": false,
+    "native_visual_acceptance": false,
+    "validation": "JSON syntax and semantic gate preservation verified; exact merged commit CI checked after push"
+  },
+  "OAuth_step6_removal_2026_10_29": {
+    "checked_at": "2026-10-29",
+    "existing_plan_step": 7,
+    "code_delivery_order": 4,
+    "PR": 264,
+    "owner_authorization": "Tamam başla temizlemeye.",
+    "authorized_scope": "Remove step6 and its code/tests/docs dependencies only; preserve working OAuth steps1–5 and prior independent product identity readers",
+    "OAuth_approval_rule": "AGENTS.md and PR265: concrete explicit prior owner permission required; this cleanup approval is not new design/provider/live/merge authorization",
+    "status": "step6_removed_account_selection_preserved_native_visual_acceptance_pending",
+    "removed": [
+      "Automatic Merchant/business/catalog discovery module and its runtime wiring",
+      "Manual and automatic asset selection controls; asset fields, loading/expiry states and Continue/Verify",
+      "permission_discover_assets and permission_verify_assets routes, service methods and transport types",
+      "Callback/combined account projection asset-verification prerequisite; no catalog Resume after Reporting Account",
+      "Misleading selected-business permission-copy dependency"
+    ],
+    "preserved": [
+      "Exact combined permission scope sets, token/callback/security validation and closed live flags",
+      "1–3 advertiser selection, one Reporting Account and bound version/concurrency guards",
+      "Normal Connected reporting view after final account selection; not product/role/activation authority",
+      "Existing independent combined-setup-assets and product identity/catalog readers; no new calling path",
+      "Cancel/no I/O, first-error stop, no retry/fallback, Shopify optional Orders and Klaviyo account/cost behavior"
+    ],
+    "remaining": [
+      "Real Shopify Admin desktop/min320px mobile owner acceptance remains pending; agent performs no visual interactions",
+      "Developer/release/native permission evidence remains separate and no live switches were opened",
+      "Step15 durable-source/activation design not started; step22 paused; Dataset/FX write step23"
+    ],
+    "test_scope": "Removed actions reject before native runtime construction;1/3 accounts normal view; no catalog controls; existing callback/security/closed gates preserved",
+    "provider_scope_changed": false,
+    "live_calls": false,
+    "config_or_deploy_changed": false,
+    "token_or_database_or_Dataset_mutation": false,
+    "step15_started": false,
+    "merge_authorized": false,
+    "validation": {
+      "full_local_tests": 3064,
+      "passed": 3064,
+      "failed": 0,
+      "targeted_tests": 224,
+      "typecheck": "passed",
+      "build": "passed",
+      "native_visual_acceptance": false,
+      "CI": "exact_head_checked_after_push"
+    }
+  },
+  "Permission_asset_discovery_2026_10_29": {
+    "checked_at": "2026-10-29",
+    "existing_plan_step": 7,
+    "code_delivery_order": 4,
+    "PR": 264,
+    "status": "automatic_candidate_discovery_and_native_choice_selection_code_prepared_release_visual_and_durable_activation_pending",
+    "outputs": [
+      "Google accounts/v1/accounts lists accessible Merchant accounts with existing content scope and bounded opaque pagination; user quota, not a claim to list all advanced subaccounts",
+      "Meta SDK26.0.0 verified me/businesses plus selected business owned_product_catalogs/client_product_catalogs; business visibility rechecked before catalogs",
+      "Native choices replace manual identifiers; Continue closes before catalog read, Verify closes before existing native access validation",
+      "Every native read pins owner, generation, connection, version, credential, reporting account and grant; first error/invalid cursor/limit/partial response discards candidate list",
+      "Complete fresh list is not access proof, Ads relationship, product mapping, Sales Role, durable storage or activation"
+    ],
+    "sources": [
+      "https://developers.google.com/merchant/api/reference/rest/accounts_v1/accounts/list",
+      "https://developers.google.com/merchant/api/reference/rest/accounts_v1/accounts",
+      "https://raw.githubusercontent.com/facebook/facebook-python-business-sdk/26.0.0/facebook_business/adobjects/user.py",
+      "https://raw.githubusercontent.com/facebook/facebook-python-business-sdk/26.0.0/facebook_business/adobjects/business.py"
+    ],
+    "source_limit": "Meta web references inaccessible/429; official pinned SDK verifies read endpoints and fields, not current developer app approval or merchant grant.",
+    "remaining": [
+      "Developer/release/native install/callback/decline/partial-grant and real desktop/min320px mobile owner acceptance; all new switches stay closed",
+      "Before activation, approved native transport/quota/app-owner inventory must cover the new read endpoints; existing shared transport rejects unconfigured families and is not bypassed",
+      "Final durable selection/proof storage and activation decision remain existing step15; step15 not started, step22 paused, Dataset/FX writer step23"
+    ],
+    "live_permission_flags_changed": false,
+    "provider_scope_added": false,
+    "read_endpoints_added": true,
+    "live_calls": false,
+    "database_or_Dataset_write": false,
+    "step15_started": false,
+    "step22": "paused",
+    "native_visual_acceptance": false,
+    "tests": [
+      "tests/combined-setup-asset-discovery.test.js",
+      "tests/combined-setup-assets.test.js",
+      "tests/permission-setup-selection.test.js",
+      "tests/permission-settings.test.js"
+    ],
+    "validation": {
+      "local_tests": 3087,
+      "passed": 3087,
+      "failed": 0,
+      "typecheck": "passed",
+      "build": "passed",
+      "native_visual_evidence": false,
+      "exact_commit_CI": "checked_separately_after_push"
+    }
+  },
+  "Permission_combined_selectors_2026_10_29": {
+    "checked_at": "2026-10-29",
+    "existing_plan_step": 7,
+    "code_delivery_order": 4,
+    "PR": 264,
+    "status": "combined_account_reporting_selection_and_candidate_asset_verification_wired_native_release_visual_and_durable_activation_pending",
+    "sources": [
+      "app/lib/oauth/combined-setup-accounts.server.js",
+      "app/lib/oauth/combined-setup-assets.server.js"
+    ],
+    "outputs": [
+      "Native server-observed account set and single Reporting Account use bound combined methods only",
+      "Current connection/version captured in displayed selection is checked inside core immediately before guarded write, and during every native asset recheck",
+      "Google Merchant account ID / Meta Business + Catalog ID are candidates validated by existing native probes; no automatic inventory discovery claimed",
+      "New Resume uses fresh status when prior write receipt is not an account inventory",
+      "Save/Verify captures input before hide and dispatches once afterhide; Cancel performs no request",
+      "Proof projected only for same workspace/generation/connection/version/reporting account and same candidate targets, with source expiry; no activation or persistence",
+      "Broader stored grants route to combined UI and cannot take unbound legacy selection path; this is routing, not identity-profile or native-access proof"
+    ],
+    "remaining": [
+      "Automatic Merchant/business/catalog list discovery is not implemented; current UI accepts candidate IDs for native verification",
+      "Developer app/release/native install/callback/decline/partial-grant and actual desktop/min320px mobile owner acceptance; switches remain closed",
+      "Final durable selection/proof storage and activation decision belong to existing step15; Dataset/FX writer is step23"
+    ],
+    "live_permission_flags_changed": false,
+    "provider_API_added": false,
+    "provider_scope_added": false,
+    "live_calls": false,
+    "database_or_Dataset_write": false,
+    "step15_started": false,
+    "step22": "paused",
+    "native_visual_acceptance": false,
+    "tests": [
+      "tests/permission-setup-selection.test.js",
+      "tests/combined-setup-accounts.test.js",
+      "tests/combined-setup-assets.test.js",
+      "tests/permission-settings.test.js"
+    ]
+  },
+  "Permission_settings_wiring_2026_10_29": {
+    "checked_at": "2026-10-29",
+    "existing_plan_step": 7,
+    "code_delivery_order": 4,
+    "base_main": "5887748a8e8d62eea9f61444d3833ac53b4ea6cb",
+    "PR": 264,
+    "status": "Settings_host_fixed_authenticated_actions_and_Klaviyo_resume_wired_combined_selectors_release_and_native_acceptance_pending",
+    "paths": [
+      "app/routes/_admin.settings.tsx",
+      "app/components/use-permission-settings.tsx",
+      "app/components/permission-explanation.tsx",
+      "app/lib/shopify/permission-settings.server.js",
+      "app/lib/ui/permission-settings-response.js"
+    ],
+    "scope": [
+      "One shared native explanation host replaces three old Connect modals and direct Reconnect begin triggers",
+      "Shopify section exposes explicit Products and optional Orders explanations and read-only Check status; no mount permission read or native request",
+      "Existing Settings action authenticates route authority before form read or runtime creation; feature and correlation ID are fixed/validated",
+      "Google/Meta adapters call beginCombinedSetup only; Shopify calls fixed requestProducts/requestOrders; Klaviyo retains exact existing five-scope entry",
+      "Server switches for Google/Meta and Shopify remain false; browser form flags cannot open them; developer/app readiness and config release remain separate",
+      "Permission fetcher actions do not implicitly revalidate existing provider loaders; response is feature/correlation/native-target bound",
+      "Only a same-feature observed status can release a pending/unknown intent; successful adapter is not Connected",
+      "Errors provide Check status rather than direct restart; existing connections are not deleted; optional Orders missing base resumes Products",
+      "Klaviyo account/cost Resume uses existing flow without OAuth; current valid selected account is retained when resuming cost"
+    ],
+    "remaining": [
+      "Combined Google/Meta verified account/reporting/asset selectors must be wired to their own server operations; no legacy reporting fallback or inert Resume button",
+      "Actual developer app readiness and separately authorized optional-scope/config releases; switches stay closed until their own acceptance",
+      "Actual Shopify Admin desktop/minimum320px mobile and explicit owner visual acceptance; no agent native visual operation",
+      "Native auth/callback/request/decline/error/partial-grant/capacity evidence remains pending"
+    ],
+    "legacy_reporting_begin": "Retained separate existing server entry; new UI never calls it for combined setup",
+    "production_config_changed": false,
+    "live_provider_calls": false,
+    "visual_acceptance": false,
+    "step15_started": false,
+    "step22": "paused",
+    "step23": "Dataset_FX_writer",
+    "tests": "tests/permission-settings.test.js plus existing explanation/Meta/Google/Klaviyo/constitution guards",
+    "react_review": {
+      "skill": "vercel:react-best-practices",
+      "checks": [
+        "server-auth-actions",
+        "event listener cleanup and stable callbacks",
+        "minimal type-only server imports in client hook",
+        "no automatic permission request in effect",
+        "native Polaris only; no custom CSS"
+      ],
+      "not_native_visual_evidence": true
+    }
+  },
+  "Permission_explanation_component_2026_10_29": {
+    "checked_at": "2026-10-29",
+    "base_main": "5887748a8e8d62eea9f61444d3833ac53b4ea6cb",
+    "existing_plan_step": 7,
+    "code_delivery_order": 4,
+    "status": "shared_component_and_intent_flow_prepared_not_route_wiring_or_visual_acceptance",
+    "runtime_pr": 263,
+    "runtime_merge": "5887748a8e8d62eea9f61444d3833ac53b4ea6cb",
+    "component": "app/components/permission-explanation.tsx",
+    "flow": "app/lib/ui/permission-explanation-flow.js",
+    "copy": "app/lib/ui/permission-explanation-copy.js",
+    "test": "tests/permission-explanation-flow.test.js",
+    "design": "contracts/eo-05-permission-explanation-design-v1.json",
+    "scope": [
+      "Five exact approved explanations in one native stable Polaris component",
+      "One Settings host owns one flow; immutable session guards reject stale/duplicate events",
+      "Connect intent captured before hide; request waits until native afterhide and rechecks availability",
+      "Default closed availability is UI gating only, never server authority",
+      "Native React18 DOM event listeners with cleanup; no automatic request on render/open",
+      "Request success is awaiting_status, not Connected; error stays unknown without retry or raw payload"
+    ],
+    "remaining": [
+      "Import and host the component in existing Settings/Home setup flow; current component is not mounted on any route",
+      "Fixed authenticated server adapters for combined Google/Meta identity setup and separate Shopify Products/Orders; never attach combined copy to existing reporting-only begin",
+      "Server readback, Resume stages and status reconciliation; new host only after observed status, no automatic retry",
+      "Real Shopify Admin desktop and minimum 320px mobile evidence and explicit owner visual acceptance"
+    ],
+    "UI_package_complete": false,
+    "native_visual_acceptance": false,
+    "live_deployment": false,
+    "permission_flags_changed": false,
+    "dataset_write": false,
+    "step15_started": false,
+    "step22": "paused",
+    "step23": "Dataset_FX_writer"
   }
 }

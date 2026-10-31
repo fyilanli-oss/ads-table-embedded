@@ -17,3 +17,4 @@ export function createKlaviyoCredentialAuthority(input: {
 }): any;
 
 export function selectKlaviyoAccount(accounts: any[], accountId: string): any;
+export function normalizeKlaviyoEstimatedSpend(value: unknown): string;

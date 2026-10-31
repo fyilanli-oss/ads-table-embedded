@@ -3,8 +3,9 @@ import {createPermissionSettings, PERMISSION_SETTINGS_AVAILABILITY} from "../lib
 import type {PermissionFeature} from "../lib/ui/permission-explanation-flow.js";
 import type {ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs, ShouldRevalidateFunctionArgs} from "react-router";
 import {boundary} from "@shopify/shopify-app-react-router/server";
-import {readProductPermissionStatus, type ProductPermissionStatus} from "../lib/shopify/product-permission-status.server.js";
+import {readShopifyPermissionStatuses, type ProductPermissionStatus} from "../lib/shopify/product-permission-status.server.js";
 import {ProductAccessRemoval} from "../components/product-access-removal";
+import {OrderAccessRemoval} from "../components/order-access-removal";
 import {
   useActionData,
   useFetcher,
@@ -121,7 +122,7 @@ type KlaviyoState =
   | {view: "error"; code: string; retry: "oauth" | "reload"};
 
 type LoaderData = State & {meta: State; klaviyo: KlaviyoState; permissionAvailability: typeof PERMISSION_SETTINGS_AVAILABILITY;
-  shopifyProductAccess: ProductPermissionStatus; shopifyPermissionOwner: string | null;
+  shopifyProductAccess: ProductPermissionStatus; shopifyOrderAccess: ProductPermissionStatus; shopifyPermissionOwner: string | null;
   permissionUnavailableReasons?: Partial<Record<PermissionFeature, string>>};
 
 function providerCodeOf(provider: Provider, error: unknown) {
@@ -383,14 +384,15 @@ async function loadKlaviyoState(
 export const loader = async ({request}: LoaderFunctionArgs): Promise<LoaderData> => {
   const verified = await routeAuthority(request);
   const url = new URL(request.url);
-  const [google, meta, klaviyo, shopifyProductAccess] = await Promise.all([
+  const [google, meta, klaviyo, shopifyAccess] = await Promise.all([
     loadGoogleState(verified, url),
     loadMetaState(verified, url),
     loadKlaviyoState(verified, url),
-    readProductPermissionStatus({verified, setup: permissionSetup,
-      available: permissionRelease?.availability.shopify_products === true}),
+    readShopifyPermissionStatuses({verified, setup: permissionSetup,
+      productsAvailable: permissionRelease?.availability.shopify_products === true,
+      ordersAvailable: permissionRelease?.availability.shopify_orders === true}),
   ]);
-  return {...google, meta, klaviyo, shopifyProductAccess,
+  return {...google, meta, klaviyo, shopifyProductAccess: shopifyAccess.products, shopifyOrderAccess: shopifyAccess.orders,
     shopifyPermissionOwner: verified.identity?.shop?.shopId ?? null,
     permissionAvailability: permissionRelease?.availability ?? PERMISSION_SETTINGS_AVAILABILITY,
     permissionUnavailableReasons: permissionRelease?.unavailableReasons};
@@ -400,7 +402,7 @@ export const loader = async ({request}: LoaderFunctionArgs): Promise<LoaderData>
 // headers export alone cannot forward the SDK reauthorization header on .data.
 export const headers: HeadersFunction = (args) => boundary.headers(args);
 
-const permissionIntents = new Set(["permission_connect", "permission_status", "permission_revoke_products", "permission_select_accounts", "permission_select_reporting"]);
+const permissionIntents = new Set(["permission_connect", "permission_status", "permission_revoke_products", "permission_revoke_orders", "permission_select_accounts", "permission_select_reporting"]);
 
 export function shouldRevalidate({formData, actionResult, defaultShouldRevalidate}: ShouldRevalidateFunctionArgs) {
   const intent = formData?.get("intent");
@@ -439,6 +441,10 @@ export const action = async ({request}: ActionFunctionArgs) => {
       else if (intent === "permission_revoke_products") {
         if (feature !== "shopify_products") throw new Error("PERMISSION_SETTINGS_FEATURE_INVALID");
         result = await settings.revokeProducts({feature, verified, action: "revoke"});
+      }
+      else if (intent === "permission_revoke_orders") {
+        if (feature !== "shopify_orders") throw new Error("PERMISSION_SETTINGS_FEATURE_INVALID");
+        result = await settings.revokeOrders({feature, verified, action: "revoke"});
       }
       else {
         const expected = {connectionId: String(form.get("connectionId") ?? ""), version: Number(form.get("version"))};
@@ -622,6 +628,8 @@ export default function Settings() {
   const state = useLoaderData<typeof loader>();
   const [productOverride, setProductOverride] = useState<{source: LoaderData; value: ProductPermissionStatus} | null>(null);
   const productAccess = productOverride?.source === state ? productOverride.value : state.shopifyProductAccess ?? "unknown";
+  const [orderOverride, setOrderOverride] = useState<{source: LoaderData; value: ProductPermissionStatus} | null>(null);
+  const orderAccess = orderOverride?.source === state ? orderOverride.value : state.shopifyOrderAccess ?? "unknown";
   const actionData = useActionData<typeof action>() as ActionData;
   const submit = useSubmit();
   const navigation = useNavigation();
@@ -843,6 +851,7 @@ export default function Settings() {
     unavailableReasons: state.permissionUnavailableReasons,
     productOwner: state.shopifyPermissionOwner,
     onProductStatus(value) {setProductOverride({source: state, value});},
+    onOrderStatus(value) {setOrderOverride({source: state, value});},
     onResume(feature, stage) {
       if (feature === "klaviyo") {
         klaviyoResumeRequested.current = true;
@@ -1068,7 +1077,19 @@ export default function Settings() {
           {productAccess === "missing" || productAccess === "unavailable" ?
             <s-button disabled={permissions.busy ? true : undefined} onClick={() => permissions.open("shopify_products")}>Connect Shopify products</s-button> : null}
           {productAccess === "unknown" ? <s-button disabled={permissions.busy ? true : undefined} onClick={() => permissions.checkStatus("shopify_products")}>Check status</s-button> : null}
-          <s-button onClick={() => permissions.open("shopify_orders")}>Connect Shopify orders</s-button>
+          {permissions.removingOrder ? <s-banner tone="info" heading="Removing order access…" />
+            : permissions.checkingOrder ? <s-banner tone="info" heading="Checking order access…" />
+            : orderAccess === "ready" ? <s-badge tone="success">Order access approved</s-badge>
+            : orderAccess === "unknown" ? <s-banner tone="critical" heading={permissions.orderRemovalResult === "unknown" ? "Could not verify that order access was removed. Check status to continue." : "Could not verify order access. Check status to continue."} />
+            : orderAccess === "missing" && permissions.orderRemovalResult === "removed" ? <s-banner tone="success" heading="Order access removed." />
+            : <s-paragraph>{orderAccess === "missing" ? "Order access is not connected." : "Order connection is currently unavailable."}</s-paragraph>}
+          <OrderAccessRemoval owner={state.shopifyPermissionOwner} ready={orderAccess === "ready"} busy={permissions.busy}
+            onConfirm={() => {void permissions.removeOrderAccess();}} onUnknown={permissions.orderRemovalUnknown} />
+          {orderAccess === "missing" || orderAccess === "unavailable" ? <>
+            {productAccess !== "ready" ? <s-paragraph>Product access is required to connect orders.</s-paragraph> : null}
+            <s-button disabled={permissions.busy || productAccess !== "ready" ? true : undefined} onClick={() => permissions.open("shopify_orders")}>Connect Shopify orders</s-button>
+          </> : null}
+          {orderAccess === "unknown" ? <s-button disabled={permissions.busy ? true : undefined} onClick={() => permissions.checkStatus("shopify_orders")}>Check status</s-button> : null}
         </s-stack>
       </s-section>
       {permissions.content}

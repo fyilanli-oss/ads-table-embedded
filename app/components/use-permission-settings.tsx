@@ -5,7 +5,7 @@ import {PermissionSetupSelection, type SelectionModel, type SelectionInput} from
 import {createPermissionExplanationFlow, permissionResumeTarget, type PermissionFeature} from "../lib/ui/permission-explanation-flow.js";
 import {permissionAuthorizationTarget, permissionResponseMatches} from "../lib/ui/permission-settings-response.js";
 import type {PermissionSettingsResult} from "../lib/shopify/permission-settings.server.js";
-import {rememberProductPermissionReturn, clearProductPermissionReturn} from "../lib/ui/product-permission-return.js";
+import {rememberProductPermissionReturn, clearProductPermissionReturn, rememberOrderPermissionReturn, clearOrderPermissionReturn} from "../lib/ui/product-permission-return.js";
 import type {ProductPermissionStatus} from "../lib/shopify/product-permission-status.server.js";
 
 type Reply = PermissionSettingsResult & {requestId: string};
@@ -14,16 +14,18 @@ type Props = {
   unavailableReasons?: Readonly<Partial<Record<PermissionFeature, string>>>;
   productOwner?: string | null;
   onProductStatus?(value: ProductPermissionStatus): void;
+  onOrderStatus?(value: ProductPermissionStatus): void;
   onResume(feature: PermissionFeature, stage: string): void;
 };
 
 // One host handles all five explanations. No mount effect starts a permission
 // request. Fresh Products status is read by the Settings loader; other status
 // actions remain explicit. The return hint carries navigation intent only.
-export function usePermissionSettings({availability, unavailableReasons, onResume, productOwner, onProductStatus}: Props) {
+const isShopifyPermission = (feature: unknown) => feature === "shopify_products" || feature === "shopify_orders";
+export function usePermissionSettings({availability, unavailableReasons, onResume, productOwner, onProductStatus, onOrderStatus}: Props) {
   const fetcher = useFetcher<Reply>();
-  const callbacks = useRef({availability, onResume, productOwner, onProductStatus, submit: fetcher.submit});
-  callbacks.current = {availability, onResume, productOwner, onProductStatus, submit: fetcher.submit};
+  const callbacks = useRef({availability, onResume, productOwner, onProductStatus, onOrderStatus, submit: fetcher.submit});
+  callbacks.current = {availability, onResume, productOwner, onProductStatus, onOrderStatus, submit: fetcher.submit};
   const pending = useRef<{
     requestId: string; feature: PermissionFeature;
     resolve(reply: Reply): void; reject(): void;
@@ -36,6 +38,10 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
   const [removalNotice, setRemovalNotice] = useState<{owner: string | null | undefined; kind: "removed" | "unknown"} | null>(null);
   const productRemovalResult = removalNotice?.owner === productOwner ? removalNotice?.kind ?? null : null;
   const setProductRemovalResult = (kind: "removed" | "unknown" | null) => setRemovalNotice(kind ? {owner: callbacks.current.productOwner, kind} : null);
+  const [removingOrder, setRemovingOrder] = useState(false);
+  const [orderNotice, setOrderNotice] = useState<{owner: string | null | undefined; kind: "removed" | "unknown"} | null>(null);
+  const orderRemovalResult = orderNotice?.owner === productOwner ? orderNotice?.kind ?? null : null;
+  const setOrderRemovalResult = (kind: "removed" | "unknown" | null) => setOrderNotice(kind ? {owner: callbacks.current.productOwner, kind} : null);
   const productReply = useCallback((reply: PermissionSettingsResult) => {
     if (reply.feature !== "shopify_products") return;
     try { clearProductPermissionReturn(globalThis.sessionStorage, callbacks.current.productOwner); } catch {}
@@ -45,10 +51,19 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
     callbacks.current.onProductStatus?.(value);
     setProductRemovalResult(null);
   }, []);
+  const orderReply = useCallback((reply: PermissionSettingsResult) => {
+    if (reply.feature !== "shopify_orders") return;
+    try {clearOrderPermissionReturn(globalThis.sessionStorage, callbacks.current.productOwner);} catch {}
+    const value = reply.kind === "unavailable" ? "unavailable"
+      : reply.kind === "status" && reply.stage === "review_setup" ? "ready"
+      : reply.kind === "status" && ["request_permissions", "products_required"].includes(reply.stage) ? "missing" : "unknown";
+    callbacks.current.onOrderStatus?.(value);
+    setOrderRemovalResult(null);
+  }, []);
   const [selectionModel, setSelectionModel] = useState<SelectionModel | null>(null);
   const selectionIntent = useRef<{model: SelectionModel; input: SelectionInput | null; failed: boolean} | null>(null);
   const [selectionActivity, setSelectionActivity] = useState<string | null>(null);
-  const execute = useCallback((intent: "permission_connect" | "permission_status" | "permission_revoke_products" | "permission_select_accounts" | "permission_select_reporting", feature: PermissionFeature, fields: Record<string, string> = {}) => {
+  const execute = useCallback((intent: "permission_connect" | "permission_status" | "permission_revoke_products" | "permission_revoke_orders" | "permission_select_accounts" | "permission_select_reporting", feature: PermissionFeature, fields: Record<string, string> = {}) => {
     if (pending.current) return Promise.reject(new Error("PERMISSION_ACTION_PENDING"));
     return new Promise<Reply>((resolve, reject) => {
       const requestId = crypto.randomUUID();
@@ -79,17 +94,18 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
     canRequest: feature => callbacks.current.availability[feature] === true,
     request: async feature => {
       const requestOwner = callbacks.current.productOwner;
-      if (feature === "shopify_products") {
+      if (isShopifyPermission(feature)) {
         let stored = false;
-        try { stored = rememberProductPermissionReturn(globalThis.sessionStorage, callbacks.current.productOwner); } catch {}
+        try { stored = (feature === "shopify_products" ? rememberProductPermissionReturn : rememberOrderPermissionReturn)(globalThis.sessionStorage, callbacks.current.productOwner); } catch {}
         if (!stored) {
-          callbacks.current.onProductStatus?.("unknown");
+          (feature === "shopify_products" ? callbacks.current.onProductStatus : callbacks.current.onOrderStatus)?.("unknown");
           throw new Error("PRODUCT_RETURN_INTENT_UNAVAILABLE");
         }
       }
       const reply = await execute("permission_connect", feature);
-      if (feature === "shopify_products" && requestOwner !== callbacks.current.productOwner) throw new Error("PRODUCT_RETURN_OWNER_CHANGED");
+      if (isShopifyPermission(feature) && requestOwner !== callbacks.current.productOwner) throw new Error("PERMISSION_RETURN_OWNER_CHANGED");
       productReply(reply);
+      orderReply(reply);
       connectReply.current = reply;
       setFeedback(reply);
       if (reply.kind === "authorization") {
@@ -140,8 +156,9 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
     const requestOwner = callbacks.current.productOwner;
     try {
       const reply = await execute("permission_status", feature);
-      if (feature === "shopify_products" && requestOwner !== callbacks.current.productOwner) return;
+      if (isShopifyPermission(feature) && requestOwner !== callbacks.current.productOwner) return;
       productReply(reply);
+      orderReply(reply);
       setFeedback(reply);
       if (reply.kind === "status" || reply.kind === "unavailable") {
         controller.statusObserved(controller.snapshot.session, reply.feature);
@@ -151,7 +168,12 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
           else openSelection(reply);
         }
       }
-    } catch { setFeedback({kind: "unknown", feature}); if (feature === "shopify_products" && requestOwner === callbacks.current.productOwner) callbacks.current.onProductStatus?.("unknown"); }
+    } catch {
+      setFeedback({kind: "unknown", feature});
+      if (isShopifyPermission(feature) && requestOwner === callbacks.current.productOwner) {
+        (feature === "shopify_products" ? callbacks.current.onProductStatus : callbacks.current.onOrderStatus)?.("unknown");
+      }
+    }
     finally { setChecking(false); setCheckingFeature(null); }
   };
   const confirmSelection = useCallback((key: string, input: SelectionInput, hide: () => void) => {
@@ -207,6 +229,23 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
     } catch {if (owner === callbacks.current.productOwner) productRemovalUnknown();}
     finally {setRemovingProduct(false); setChecking(false); setCheckingFeature(null);}
   };
+  const orderRemovalUnknown = () => {
+    callbacks.current.onOrderStatus?.("unknown"); setOrderRemovalResult("unknown");
+  };
+  const removeOrderAccess = async () => {
+    if (pending.current || busy || removingOrder || selectionIntent.current || controller.snapshot.phase === "explaining") return;
+    const owner = callbacks.current.productOwner;
+    if (!owner) return;
+    setRemovingOrder(true); setChecking(true); setCheckingFeature("shopify_orders"); setOrderRemovalResult(null);
+    try {
+      const reply = await execute("permission_revoke_orders", "shopify_orders");
+      if (owner !== callbacks.current.productOwner) return;
+      if (reply.kind === "status" && reply.stage === "request_permissions") {
+        orderReply(reply); setOrderRemovalResult("removed"); setFeedback(reply);
+      } else orderRemovalUnknown();
+    } catch {if (owner === callbacks.current.productOwner) orderRemovalUnknown();}
+    finally {setRemovingOrder(false); setChecking(false); setCheckingFeature(null);}
+  };
   const resume = () => {
     if (feedback?.kind !== "status") return;
     if (feedback.stage === "products_required") open("shopify_products");
@@ -243,11 +282,13 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
   return {
     open, checkStatus, busy, snapshot,
     removeProductAccess, removingProduct, productRemovalResult, productRemovalUnknown,
-    checkingProduct: checkingFeature === "shopify_products" || busy && snapshot.feature === "shopify_products",
+    removeOrderAccess, removingOrder, orderRemovalResult, orderRemovalUnknown,
+    checkingProduct: checking ? checkingFeature === "shopify_products" : busy && snapshot.feature === "shopify_products",
+    checkingOrder: checking ? checkingFeature === "shopify_orders" : busy && snapshot.feature === "shopify_orders",
     content: <>
-      {snapshot.feature === "shopify_products" || feedback?.feature === "shopify_products" ? null : status}
+      {isShopifyPermission(snapshot.feature) || isShopifyPermission(feedback?.feature) ? null : status}
       {(snapshot.feature ?? feedback?.feature) && snapshot.phase !== "explaining"
-        && snapshot.feature !== "shopify_products" && feedback?.feature !== "shopify_products" ? (
+        && !isShopifyPermission(snapshot.feature) && !isShopifyPermission(feedback?.feature) ? (
         <s-button disabled={busy || selectionModel ? true : undefined} onClick={() => checkStatus((snapshot.feature ?? feedback?.feature)!)}>Check status</s-button>
       ) : null}
       {selectionModel ? <PermissionSetupSelection model={selectionModel} busy={busy} onConfirm={confirmSelection} onAfterHide={afterSelectionHide} /> : null}

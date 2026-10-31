@@ -1,7 +1,7 @@
 import type {HeadersFunction, LoaderFunctionArgs} from "react-router";
 import {Outlet, useLoaderData, useRouteError, useLocation, useNavigate} from "react-router";
 import {useEffect, useState} from "react";
-import {consumeProductPermissionReturn} from "../lib/ui/product-permission-return.js";
+import {consumeProductPermissionReturn, consumeOrderPermissionReturn} from "../lib/ui/product-permission-return.js";
 import {AppProvider} from "@shopify/shopify-app-react-router/react";
 import {boundary} from "@shopify/shopify-app-react-router/server";
 import {
@@ -35,7 +35,11 @@ export default function AuthenticatedAdminLayout() {
   useEffect(() => {
     if (pathname !== "/" && pathname !== "/settings") {setReturnState("idle"); return;}
     let pending = false;
-    try { pending = consumeProductPermissionReturn(globalThis.sessionStorage, permissionReturnOwner); } catch {}
+    try {
+      const products = consumeProductPermissionReturn(globalThis.sessionStorage, permissionReturnOwner);
+      const orders = consumeOrderPermissionReturn(globalThis.sessionStorage, permissionReturnOwner);
+      pending = products || orders;
+    } catch {}
     if (pathname === "/" && pending) {
       setReturnState("returning");
       try {

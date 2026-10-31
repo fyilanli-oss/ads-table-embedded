@@ -3,8 +3,8 @@ import test from "node:test";
 import {readFileSync} from "node:fs";
 import {createRequire} from "node:module";
 import ts from "typescript";
-import {rememberProductPermissionReturn, consumeProductPermissionReturn} from "../app/lib/ui/product-permission-return.js";
-import {readProductPermissionStatus} from "../app/lib/shopify/product-permission-status.server.js";
+import {rememberProductPermissionReturn, consumeProductPermissionReturn, rememberOrderPermissionReturn, consumeOrderPermissionReturn} from "../app/lib/ui/product-permission-return.js";
+import {readProductPermissionStatus, readShopifyPermissionStatuses} from "../app/lib/shopify/product-permission-status.server.js";
 
 const owner = "gid://shopify/Shop/123";
 function storage() {
@@ -133,7 +133,7 @@ test("a failed Settings return exposes a native recovery link without retrying n
 });
 
 function permissionHarness() {
-  const h = hooks(), submissions = [], statuses = [];
+  const h = hooks(), submissions = [], statuses = [], orderStatuses = [];
   const fetcher = {state: "idle", data: undefined, submit(fields) {submissions.push(fields);}};
   let value;
   const usePermissionSettings = load("app/components/use-permission-settings.tsx", (id, require) => {
@@ -143,11 +143,11 @@ function permissionHarness() {
     if (id === "./permission-setup-selection") return {PermissionSetupSelection: () => null};
     return require(id);
   }).usePermissionSettings;
-  const props = {availability: {shopify_products: true}, productOwner: owner,
-    onProductStatus: status => statuses.push(status), onResume: () => assert.fail()};
+  const props = {availability: {shopify_products: true, shopify_orders: true}, productOwner: owner,
+    onProductStatus: status => statuses.push(status), onOrderStatus: status => orderStatuses.push(status), onResume: () => assert.fail()};
   const render = () => {h.start(); value = usePermissionSettings(props); h.finish(); return value;};
   render();
-  return {render, submissions, statuses, fetcher, props, get value() {return value;}, modal() {return value.content.props.children.find(e => e?.props?.onConnect).props;}};
+  return {render, submissions, statuses, orderStatuses, fetcher, props, get value() {return value;}, modal() {return value.content.props.children.find(e => e?.props?.onConnect).props;}};
 }
 test("actual Products Connect stores intent after modal confirmation; status updates its card without activation copy", async () => {
   const s = storage();
@@ -250,4 +250,119 @@ test("late removal reply from another store cannot update the current Products c
   h.fetcher.data = {...h.submissions[0], kind: "status", stage: "request_permissions"};
   h.render(); await completed; h.render();
   assert.deepEqual(h.statuses, []); assert.equal(h.value.productRemovalResult, null);
+});
+
+test("Orders return hint is isolated, same-owner, expiring and one-use", () => {
+  const s = storage();
+  rememberOrderPermissionReturn(s, owner, 1000);
+  assert.equal(consumeProductPermissionReturn(s, owner, 1001), false);
+  assert.equal(consumeOrderPermissionReturn(s, owner, 1001), true);
+  assert.equal(consumeOrderPermissionReturn(s, owner, 1002), false);
+  for (const [other, time] of [["gid://shopify/Shop/456", 1001], [owner, 601001]]) {
+    rememberOrderPermissionReturn(s, owner, 1000);
+    assert.equal(consumeOrderPermissionReturn(s, other, time), false);
+  }
+});
+
+test("one native scope read supplies both independent cards without reading order data", async () => {
+  for (const [basePermissionState, ordersScopeState, expected] of [["permission_ready", "permission_ready", {products:"ready",orders:"ready"}], ["resume_setup", "permission_ready", {products:"missing",orders:"ready"}], ["permission_ready", "not_connected", {products:"ready",orders:"missing"}]]) {
+    let reads = 0;
+    const result = await readShopifyPermissionStatuses({verified: {}, productsAvailable: true, ordersAvailable: true,
+      setup: {afterReturn: async () => {reads++; return {basePermissionState, ordersScopeState};}, requestOrders: () => assert.fail()}});
+    assert.deepEqual(result, expected); assert.equal(reads, 1);
+  }
+  const failed = await readShopifyPermissionStatuses({productsAvailable: true, ordersAvailable: true, setup:{afterReturn:()=>{throw Error();}}});
+  assert.deepEqual(failed, {products:"unknown",orders:"unknown"});
+});
+
+test("Orders Connect sets its own return hint after confirmation; verified reply updates only Orders", async () => {
+  await withStorage(storage(), async () => {
+    const h = permissionHarness(); h.value.open("shopify_orders"); h.render();
+    const {session} = h.value.snapshot;
+    h.modal().onConnect(session, () => h.modal().onHide(session));
+    const completed = h.modal().onAfterHide(session);
+    assert.equal(consumeProductPermissionReturn(globalThis.sessionStorage, owner), false);
+    assert.equal(consumeOrderPermissionReturn(globalThis.sessionStorage, owner), true);
+    h.fetcher.data = {...h.submissions[0], kind:"status", stage:"review_setup"};
+    h.render(); await completed; h.render();
+    assert.deepEqual(h.statuses, []); assert.deepEqual(h.orderStatuses, ["ready"]);
+    assert.equal(treeText(h.value.content).includes("awaiting activation"), false);
+    assert.equal(treeText(h.value.content).includes("Check status"), false);
+  });
+});
+
+test("Orders removal is single-shot, cannot revoke Products and updates only its card", async () => {
+  const h = permissionHarness();
+  const completed = h.value.removeOrderAccess();
+  await h.value.removeOrderAccess(); await h.value.removeProductAccess();
+  assert.equal(h.submissions.length, 1); assert.equal(h.submissions[0].intent, "permission_revoke_orders");
+  h.render(); assert.equal(h.value.checkingProduct, false); assert.equal(h.value.checkingOrder, true);
+  h.fetcher.data = {...h.submissions[0], kind:"status", stage:"request_permissions"};
+  h.render(); await completed; h.render();
+  assert.deepEqual(h.statuses, []); assert.deepEqual(h.orderStatuses, ["missing"]);
+  assert.equal(h.value.orderRemovalResult, "removed");
+});
+
+test("unknown Orders removal requires an explicit readback and ignores a different store's late reply", async () => {
+  for (const changeOwner of [false,true]) {
+    const h = permissionHarness(); const completed = h.value.removeOrderAccess();
+    if(changeOwner) h.props.productOwner="gid://shopify/Shop/456";
+    h.fetcher.data={...h.submissions[0],kind:"unknown"}; h.render(); await completed; h.render();
+    assert.deepEqual(h.orderStatuses, changeOwner ? [] : ["unknown"]);
+    assert.equal(h.submissions.length,1);
+    if(!changeOwner) {
+      const checked=h.value.checkStatus("shopify_orders");
+      assert.equal(h.submissions[1].intent,"permission_status");
+      h.fetcher.data={...h.submissions[1],kind:"status",stage:"review_setup"}; h.render(); await checked; h.render();
+      assert.deepEqual(h.orderStatuses,["unknown","ready"]);
+    }
+  }
+});
+
+test("Orders native removal modal cancel/close never revoke; confirm waits for afterhide and consumes once", () => {
+  const h = hooks(), listeners = new Map(); let calls = 0, hides = 0;
+  const element = {addEventListener: (key, fn) => listeners.set(key, fn), removeEventListener: key => listeners.delete(key), hideOverlay: () => hides++};
+  const props = {owner, ready: true, busy: false, onConfirm: () => calls++, onUnknown: () => assert.fail()};
+  const Component = load("app/components/order-access-removal.tsx", (id, require) => id === "react" ? {...require(id), ...h} : require(id)).OrderAccessRemoval;
+  const nodes = value => Array.isArray(value) ? value.flatMap(nodes) : value && typeof value === "object" ? [value, ...nodes(value.props?.children)] : [];
+  let tree;
+  const render = () => {h.start(); tree = Component(props); nodes(tree).find(n => n.type === "s-modal").ref.current = element; h.finish();};
+  const button = label => nodes(tree).find(n => n.type === "s-button" && n.props.children === label);
+  const closed = () => listeners.get("afterhide")({target: element});
+  render(); closed(); assert.equal(calls, 0);
+  button("Cancel").props.onClick(); closed(); assert.equal(calls, 0);
+  button("Remove access").props.onClick(); button("Remove access").props.onClick();
+  assert.equal(hides, 1); assert.equal(calls, 0);
+  closed(); closed(); assert.equal(calls, 1);
+  button("Remove access").props.onClick(); props.owner = "gid://shopify/Shop/456"; render();
+  closed(); assert.equal(calls, 1);
+});
+
+test("Orders authenticated layout returns once to Settings and cannot redirect another store or loop", async () => {
+  const s = storage(), h = hooks(), calls = []; let pathname = "/";
+  const component = load("app/routes/_admin.tsx", (id, require) => {
+    if (id === "react") return {...require(id), ...h};
+    if (id === "react-router") return {...require(id), useLoaderData: () => ({permissionReturnOwner: owner}),
+      useLocation: () => ({pathname}), useNavigate: () => navigate};
+    if (id === "../shopify.server") return {};
+    return require(id);
+  }).default;
+  function navigate(path, options) {calls.push({path, options}); return Promise.resolve();}
+  const render = () => {h.start(); const tree = component(); h.finish(); return tree;};
+  await withStorage(s, async () => {
+    render(); assert.equal(calls.length, 0);
+    rememberOrderPermissionReturn(s, owner);
+    // A fresh layout mounts after Shopify returns to the application root.
+    pathname = "/settings"; render(); pathname = "/";
+    rememberOrderPermissionReturn(s, owner); render();
+    const transition = render();
+    assert.equal(transition.props.children.type, "s-page");
+    assert.equal(transition.props.children.props.heading, "Settings");
+    assert.equal(transition.props.children.props.children, undefined); // No transient message/banner.
+    assert.deepEqual(calls, [{path: "/settings", options: {replace: true}}]);
+    assert.equal(s.rows.size, 0);
+    pathname = "/settings"; render(); assert.equal(treeText(render()).includes("Returning to Settings"), false);
+    rememberOrderPermissionReturn(s, "gid://shopify/Shop/456"); pathname = "/"; render();
+    assert.equal(calls.length, 1);
+  });
 });

@@ -37,6 +37,10 @@ function expectedBinding(value) {
   return Object.freeze({connectionId: value.connectionId, version: value.version});
 }
 function shopifyStatus(feature, result) {
+  if (feature === "shopify_orders" && result?.ordersScopeState) {
+    if (result.ordersScopeState === "permission_ready") return Object.freeze({kind: "status", feature, stage: "review_setup"});
+    if (result.ordersScopeState === "not_connected" && result.basePermissionState !== "resume_setup") return Object.freeze({kind: "status", feature, stage: "request_permissions"});
+  }
   if (feature === "shopify_orders" && result?.basePermissionState === "resume_setup") {
     return Object.freeze({kind: "status", feature, stage: "products_required"});
   }
@@ -64,6 +68,13 @@ export function createPermissionSettings({shopify, providerRuntime, availability
       if (feature !== "shopify_products" || action !== "revoke") throw new Error("PERMISSION_SETTINGS_EXPLICIT_PRODUCTS_REVOKE_REQUIRED");
       if (!check(feature, verified)) return unavailable(feature);
       return shopifyStatus(feature, await shopify.revokeProducts({verified, action: "revoke"}));
+    },
+    async revokeOrders({feature, verified, action}) {
+      if (feature !== "shopify_orders" || action !== "revoke") throw new Error("PERMISSION_SETTINGS_EXPLICIT_ORDERS_REVOKE_REQUIRED");
+      if (!check(feature, verified)) return unavailable(feature);
+      const result = await shopify.revokeOrders({verified, action: "revoke"});
+      if (result?.ordersScopeState === "not_connected") return Object.freeze({kind: "status", feature, stage: "request_permissions"});
+      return Object.freeze({kind: "unknown", feature});
     },
     async connect({feature, verified, action}) {
       if (action !== "connect") throw new Error("PERMISSION_SETTINGS_EXPLICIT_CONNECT_REQUIRED");

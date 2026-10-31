@@ -3519,3 +3519,23 @@ Yeni metinler ve sessiz geçiş için gerçek cihaz kabulü bekler. Önceki yay�
 onayı bu değişikliğin yayın onayı değildir. Bağlayıcı kayıt:
 contracts/eo-05-permission-explanation-design-v1.json#Shopify_products_English_copy_2026_10_31.
 07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.
+
+## 31 Ekim — mevcut07 Orders dönüşü, izin kartı ve kaldırma
+
+Ürün sahibi native Orders onay ekranını ve ardından Funnel'a dönüş/statik Connect
+Orders kusurunu bildirdi. Somut kod/test/PR onayıyla Products'taki tamamlanmış
+kullanıcı akışı Orders'a eklendi: ayrı aynı-mağaza/tek-kullanım dönüş niyetiyle
+mesajsız Settings, tek native scope okumasıyla ayrı Order access approved kartı,
+İngilizce onay modalı ile yalnız read_orders kaldırma, taze izin doğrulaması ve
+tek kaldırma sonucu/reconnect. Check status otomatik tekrar veya revoke yapmaz.
+Orders raw grant'ı Products önkoşulundan ayrı gösterilir; bu Orders verisi/Overlap
+aktivasyonu değildir. Mevcut okuyucu/korumalı veri/geçmiş erişimi guard'ları ve
+Products önkoşulu korunur. Orders kaldırma diğer bütün kapsamları aynen korur.
+Products regresyonları, Orders stale/owner/iptal/çift-event/required/write alias/
+transport/receipt/fresh-read kontrolleri gerekir. Config/token/DB/yayın/canlı
+kaldırma veya yeni native deneme yapılmadı. Native masaüstü/en az320px mobil
+owner kabulü ayrı yayın onayından sonra bekler;07/14 kapanışı değildir.
+Bağlayıcı kayıt ve31Ekim resmî kaynakları:
+contracts/eo-05-permission-explanation-design-v1.json#Shopify_orders_completion_2026_10_31.
+Ayrıntılı metin/component/kabul: docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md.
+15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.

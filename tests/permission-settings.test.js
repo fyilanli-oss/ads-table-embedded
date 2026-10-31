@@ -157,6 +157,7 @@ function loadRoute({authenticate = async () => verified, providerRuntime = () =>
     if (id === "../shopify.server") return {authenticate: {admin: authenticate}, database: {}, providerTokenVault: {}, permissionSetup: shopify, permissionRelease: release};
     if (id === "../components/use-permission-settings") return {usePermissionSettings: () => assert.fail()};
     if (id === "../components/product-access-removal") return {ProductAccessRemoval: () => assert.fail()};
+    if (id === "../components/order-access-removal") return {OrderAccessRemoval: () => assert.fail()};
     if (id.endsWith("/shopify-route-authority.server.js")) return {resolveShopifyRouteAuthority: async ({request, authenticateAdmin}) => authenticateAdmin(request)};
     if (id.endsWith("/google-oauth-runtime.server.js")) return {createGoogleOAuthRuntime: providerRuntime};
     if (id.endsWith("/meta-oauth-runtime.server.js")) return {createMetaOAuthRuntime: providerRuntime};
@@ -382,4 +383,25 @@ test("actual Settings Products removal uses only authenticated fixed runtime and
   }
   const closed = loadRoute({shopify: {revokeProducts: () => assert.fail()}});
   assert.equal((await closed.action({request: formRequest({intent: "permission_revoke_products", feature: "shopify_products", requestId})})).kind, "unavailable");
+});
+
+test("actual Orders action uses only fixed revokeOrders and never Products or provider adapters", async () => {
+  let orders=0;
+  const route=loadRoute({release:shopifyRelease,shopify:{revokeOrders:async args=>{
+    orders++;assert.equal(args.action,"revoke");assert.equal(args.verified,verified);
+    return {ordersScopeState:"not_connected",basePermissionState:"permission_ready"};
+  },revokeProducts:()=>assert.fail()}});
+  const result=await route.action({request:formRequest({intent:"permission_revoke_orders",feature:"shopify_orders",requestId,scopes:"read_products"})});
+  assert.deepEqual(result,{kind:"status",feature:"shopify_orders",stage:"request_permissions",requestId});assert.equal(orders,1);
+  const wrong=await route.action({request:formRequest({intent:"permission_revoke_orders",feature:"shopify_products",requestId})});
+  assert.equal(wrong.kind,"unknown");assert.equal(orders,1);
+});
+
+test("actual Settings loader reads granted Products/Orders once and does not request orders", async()=>{
+  let reads=0;
+  const route=loadRoute({release:shopifyRelease,providerRuntime:()=>({inspect:async()=>({state:"disconnected"})}),shopify:{afterReturn:async()=>{
+    reads++;return{basePermissionState:"permission_ready",ordersScopeState:"permission_ready"};
+  },requestOrders:()=>assert.fail()}});
+  const result=await route.loader({request:new Request("https://embedded.adstable.app/settings")});
+  assert.equal(result.shopifyProductAccess,"ready");assert.equal(result.shopifyOrderAccess,"ready");assert.equal(reads,1);
 });

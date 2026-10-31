@@ -80,6 +80,7 @@ export function createShopifyProgressivePermissions({database, apiKey, requiredS
     return Object.freeze({outcome, nativeRequestInvoked, basePermissionState: base, ordersPermissionState: orders,
       ordersRequiredForBase: false, appInstallationId: result.evidence.appInstallationId,
       observedAt: result.evidence.observedAt, authorizesActivation: false, ordersDataAccessAuthorized: false,
+      ordersScopeState: result.evidence.scopes.some(s => s === "read_orders" || s === "write_orders") ? "permission_ready" : "not_connected",
       overlapVerified: false, historyAccessAuthorized: false});
   }
   async function inspect({verified, signal} = {}) {
@@ -146,16 +147,21 @@ export function createShopifyProgressivePermissions({database, apiKey, requiredS
       return project(after, "native_readback", true);
     });
   }
-  async function revokeProducts({verified, action, signal} = {}) {
+  async function revoke(feature, {verified, action, signal} = {}) {
+    const target = feature === "products" ? "read_products" : "read_orders";
+    const write = feature === "products" ? "write_products" : "write_orders";
+    const label = feature === "products" ? "PRODUCTS" : "ORDERS";
+    const missing = state => feature === "products" ? state.basePermissionState === "resume_setup" : state.ordersScopeState === "not_connected";
     if (action === "cancel") return Object.freeze({outcome: "cancelled", nativeRequestInvoked: false, authorizesActivation: false});
     if (action !== "revoke") fail("EXPLICIT_REVOKE_REQUIRED");
     if (!requestsEnabled || !optionalScopesReleased) fail("REVOKE_DISABLED");
-    if (required.includes("read_products") || required.includes("write_products")) fail("PRODUCTS_REQUIRED");
+    if (required.includes(target) || required.includes(write)) fail(`${label}_REQUIRED`);
     return run(verified, signal, async ({captured, read, current, check}) => {
       const before = await read();
-      if (project(before, "native_readback").basePermissionState === "resume_setup") return project(before, "native_readback");
-      if (project(before, "native_readback").basePermissionState !== "permission_ready") fail("PERMISSION_OBSERVATION_UNCONFIRMED");
-      if (before.evidence.scopes.includes("write_products")) fail("PRODUCTS_WRITE_ACCESS_PRESENT");
+      const state = project(before, "native_readback");
+      if (missing(state)) return state;
+      if ((feature === "products" ? state.basePermissionState : state.ordersScopeState) !== "permission_ready") fail("PERMISSION_OBSERVATION_UNCONFIRMED");
+      if (before.evidence.scopes.includes(write)) fail(`${label}_WRITE_ACCESS_PRESENT`);
       if (!captured.nativeRevoke || !captured.nativeQuery) fail("NATIVE_SCOPE_REVOKE_REQUIRED");
       await current(before.context);
       let detail;
@@ -163,24 +169,25 @@ export function createShopifyProgressivePermissions({database, apiKey, requiredS
       check(); await current(before.context);
       const nativeRequired = scopeList(detail?.required), nativeOptional = scopeList(detail?.optional);
       const nativeGranted = scopeList(detail?.granted);
-      if (nativeRequired.includes("read_products") || nativeRequired.includes("write_products")) fail("PRODUCTS_REQUIRED");
-      if (!nativeOptional.includes("read_products") || !nativeGranted.includes("read_products")
-        || nativeGranted.includes("write_products")) fail("REVOKE_CONFIGURATION_INVALID");
+      if (nativeRequired.includes(target) || nativeRequired.includes(write)) fail(`${label}_REQUIRED`);
+      if (!nativeOptional.includes(target) || !nativeGranted.includes(target)
+        || nativeGranted.includes(write)) fail("REVOKE_CONFIGURATION_INVALID");
       await current(before.context);
       let receipt;
-      try { receipt = await captured.nativeRevoke(["read_products"]); } catch { fail("NATIVE_SCOPE_REVOKE_FAILED"); }
+      try { receipt = await captured.nativeRevoke([target]); } catch { fail("NATIVE_SCOPE_REVOKE_FAILED"); }
       check();
-      if (!receipt || !equalScopes(receipt.revoked, ["read_products"])) fail("NATIVE_SCOPE_REVOKE_RESPONSE_INVALID");
+      if (!receipt || !equalScopes(receipt.revoked, [target])) fail("NATIVE_SCOPE_REVOKE_RESPONSE_INVALID");
       await current(before.context);
       const after = await read();
       await current(before.context);
       if (after.evidence.appInstallationId !== before.evidence.appInstallationId) fail("INSTALLATION_CHANGED");
-      if (project(after, "native_readback").basePermissionState !== "resume_setup") fail("REVOKE_UNCONFIRMED");
-      // Preserve other grants exactly; Products revocation never silently revokes Orders.
-      if (!equalScopes(after.evidence.scopes, before.evidence.scopes.filter(s => s !== "read_products"))) fail("REVOKE_GRANTS_CHANGED");
+      if (!missing(project(after, "native_readback"))) fail("REVOKE_UNCONFIRMED");
+      // Each removal preserves every other grant, including the other Shopify permission.
+      if (!equalScopes(after.evidence.scopes, before.evidence.scopes.filter(s => s !== target))) fail("REVOKE_GRANTS_CHANGED");
       return project(after, "native_readback");
     });
   }
-  return Object.freeze({inspect, afterReturn: inspect, revokeProducts,
+  return Object.freeze({inspect, afterReturn: inspect,
+    revokeProducts: args => revoke("products", args), revokeOrders: args => revoke("orders", args),
     requestProducts: args => request("products", args), requestOrders: args => request("orders", args)});
 }

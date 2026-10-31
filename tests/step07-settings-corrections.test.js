@@ -62,6 +62,7 @@ function harness({accounts = [account], providerRuntime = () => assert.fail("une
       useSubmit: () => () => assert.fail("unexpected navigation submission")};
     if (id === "../components/use-permission-settings") return {usePermissionSettings: props => {h.permissionProps = props; return {busy: false, checkingProduct: false, content: null, ...h.permissionResult};}};
     if (id === "../components/product-access-removal") return {ProductAccessRemoval: "ProductAccessRemoval"};
+    if (id === "../components/order-access-removal") return {OrderAccessRemoval: "OrderAccessRemoval"};
     if (id === "../shopify.server") return {authenticate: {admin: async () => verified}, database: {}, providerTokenVault: {}};
     if (id.endsWith("/shopify-route-authority.server.js")) return {resolveShopifyRouteAuthority: async () => verified};
     if (id.endsWith("/klaviyo-oauth-runtime.server.js")) return {createKlaviyoOAuthRuntime: providerRuntime, normalizeKlaviyoEstimatedSpend};
@@ -279,4 +280,18 @@ test("verified removal has one English result without the initial not-connected 
   assert.equal(nodes(h.tree).filter(e => e.type === "s-banner" && e.props.heading === "Product access removed.").length, 1);
   assert.equal(text(h.tree).includes("Product access is not connected."), false);
   assert.ok(nodes(h.tree).some(e => e.type === "s-button" && text(e) === "Connect Shopify products"));
+});
+
+test("Orders card independently reflects verified grant, removal, unknown and a new loader",()=>{
+  const h=harness();h.state.shopifyProductAccess="ready";h.state.shopifyOrderAccess="ready";h.render();
+  assert.ok(nodes(h.tree).some(e=>e.type==="s-badge"&&text(e)==="Order access approved"));
+  assert.ok(nodes(h.tree).some(e=>e.type==="OrderAccessRemoval"&&e.props.ready===true));
+  assert.equal(nodes(h.tree).some(e=>e.type==="s-button"&&text(e)==="Connect Shopify orders"),false);
+  h.permissionProps.onOrderStatus("missing");h.permissionResult={orderRemovalResult:"removed"};h.render();
+  assert.ok(nodes(h.tree).some(e=>e.type==="s-banner"&&e.props.heading==="Order access removed."));
+  assert.equal(text(h.tree).includes("Order access is not connected."),false);
+  assert.ok(nodes(h.tree).some(e=>e.type==="s-badge"&&text(e)==="Product access approved"));
+  assert.ok(nodes(h.tree).some(e=>e.type==="s-button"&&text(e)==="Connect Shopify orders"));
+  h.state={...h.state,shopifyOrderAccess:"unknown"};h.render();
+  assert.equal(nodes(h.tree).some(e=>e.type==="s-button"&&text(e)==="Connect Shopify orders"),false);
 });

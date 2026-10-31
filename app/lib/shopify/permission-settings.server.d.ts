@@ -15,6 +15,7 @@ export function createPermissionSettings(args: {
   availability?: Readonly<Record<PermissionFeature, boolean>>;
 }): Readonly<{
   revokeProducts(args: {feature: "shopify_products"; verified: any; action: "revoke"}): Promise<PermissionSettingsResult>;
+  revokeOrders(args: {feature: "shopify_orders"; verified: any; action: "revoke"}): Promise<PermissionSettingsResult>;
   connect(args: {feature: PermissionFeature; verified: any; action: "connect"}): Promise<PermissionSettingsResult>;
   status(args: {feature: PermissionFeature; verified: any}): Promise<PermissionSettingsResult>;
   select(args: {feature: PermissionFeature; verified: any; expected: {connectionId: string; version: number};

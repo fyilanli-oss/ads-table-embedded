@@ -303,3 +303,49 @@ s-badge/s-button/s-modal/s-link bileşenleri kullanılır; yeni stil veya proper
 OAuth/grant/revoke/return intent, sahiplik, callback, izin, scope, provider ve DB
 kodları değişmez. Kod/test/PR hazırlanır; yayın/merge ayrıca açık onay ister.
 Gerçek ekranda sessiz dönüş ve İngilizce metin kabulü henüz bekler.
+
+## 31 Ekim — mevcut07: Orders dönüş/durum/kaldırma kullanıcı akışı
+
+Ürün sahibi1000070135/136 görüntülerinde Orders onayından sonra Funnel'a dönüş
+ve statik Connect Shopify orders düğmesini bildirdi; kod/test/PR düzeltmesini
+somut olarak onayladı. Yayın, native tekrar ve merge bu onayın dışındadır.
+Aynı sabit /settings dönüşü, aynı mağaza/sekme/10dk/tek kullanım güvenliği
+Orders için bağımsız anahtarla genişletilir. Geçiş mesajı/banner/toast yoktur.
+Settings bir native kapsam okumasıyla Products ve Orders durumlarını ayrı üretir.
+Orders raw izin durumu uygulamanın Products önkoşulundan ayrıdır: Orders grant'ı
+raporlama/Overlap/Orders veri erişimi aktivasyonu değildir. Mevcut okuyucu guard'ları
+ve Products önkoşulu değişmez. İlk bağlama Products onaylı değilse başlatılamaz;
+mevcut Orders izni Products kaldırılmış olsa da görünür/kaldırılabilir kalır.
+
+Birebir durum/eylem metinleri (tamamı İngilizce):
+- Order access approved / Remove order access
+- Order access is not connected. / Connect Shopify orders
+- Product access is required to connect orders.
+- Checking order access… / Removing order access…
+- Could not verify order access. Check status to continue. / Check status
+- Could not verify that order access was removed. Check status to continue.
+- Order connection is currently unavailable.
+- Order access removed. (tek sonuç; aynı anda not-connected metni yok)
+Modal: Remove order access?; body: AdsTable's permission to read Shopify orders and purchased products will be removed. Order-based features will need access again. Product access and existing records will be kept.
+Primary: Remove access; secondary: Cancel. Native s-modal base/base, s-paragraph,
+s-button primary/critical ve secondary, s-banner info/success/critical, s-badge
+success; mevcut native s-stack içinde Products'tan ayrı Order bölümü/akışı.
+Cancel/Escape/çarpı sıfır istek. Confirm niyeti aynı mağaza için afterhide sonrası
+bir kez tüketilir. İki modal aynı anda açılmaz; bekleyen grant/revoke sırasında
+yeni eylem başlatılmaz. Belirsiz sonuçta otomatik retry yok; Check status yalnız okur.
+Başarı için authenticated sabit read_orders optional/not-required/no-write alias
+önkoşulları, bir native revoke, fresh aynı mağaza/AppInstallation/kurulum okuması
+ve diğer tüm grant'ların aynen korunması gerekir. Products/native providerlar,
+credentials, config ve geçmiş veri silinmez. Yeni DB/Dataset/Overlap yazımı yok.
+Bağlı durum Connect'i kaldırır; kaldırılmış durumda yeniden Connect gösterilir.
+Yerel dönüş kaydı/grant bildirimi native izin kanıtı değildir. Stale/yanlış mağaza
+sonuçları, malformed/transport hataları ve native iptal başarıya çevrilemez.
+
+31Ekim2026 kaynakları: Shopify scopes query/request/revoke ve kuruluSDK3.0.1,
+https://shopify.dev/docs/api/shopify-app-react-router/latest/apis/scopes
+https://shopify.dev/docs/api/admin-graphql/2026-07/mutations/appRevokeAccessScopes
+Önceden31Ekim doğrulanmış native modal/button/badge/banner kaynakları aynıdır.
+Kabul: sentetik SDK ile gerçek Settings loader/action/hook/modal olayları test;
+Products regresyonları; typecheck/build/CI. Sonrasında ayrı yayın onayı ve gerçek
+Shopify Admin masaüstü/en az320px mobil owner grant/cancel/revoke/reconnect kabulü.
+07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.

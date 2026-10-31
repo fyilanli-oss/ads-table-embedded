@@ -257,3 +257,48 @@ for (const mode of ["native_error", "bad_receipt", "still_granted", "readback_er
     assert.equal(f.calls.filter(c => c.kind === "request").length, 0);
   });
 }
+
+test("Orders revoke preserves Products and all other scopes, even when Products is already missing", async () => {
+  for (const grants of [["read_products", "read_orders", "read_all_orders"], ["read_orders"]]) {
+    const f = fixture({grants});
+    const result = await f.setup.revokeOrders({...f.input, action: "revoke"});
+    assert.equal(result.ordersScopeState, "not_connected");
+    assert.equal(result.authorizesActivation, false);
+    assert.deepEqual(f.state.grants, grants.filter(s => s !== "read_orders"));
+    assert.deepEqual(f.calls.filter(c => c.kind === "revoke").map(c => c.scopes), [["read_orders"]]);
+    assert.equal(f.calls.filter(c => c.kind === "request").length, 0);
+  }
+});
+
+test("Orders grant remains visible independently of the Products data-reading prerequisite", async () => {
+  const result = await fixture({grants: ["read_orders"]}).inspect();
+  assert.equal(result.ordersScopeState, "permission_ready");
+  assert.equal(result.ordersPermissionState, "blocked_by_products");
+  assert.equal(result.ordersDataAccessAuthorized, false);
+});
+
+for (const mode of ["cancel", "disabled", "required", "write", "query_error", "changed_owner", "missing"]) {
+  test(`Orders revoke ${mode} never mutates scopes`, async () => {
+    const f = fixture({grants: mode === "missing" ? ["read_products"] : ["read_products", "read_orders", ...(mode === "write" ? ["write_orders"] : [])], enabled: mode !== "disabled"});
+    if (mode === "required") f.hooks.nativeQuery = () => ({required: ["read_orders"], optional: f.state.optional, granted: f.state.grants});
+    if (mode === "query_error") f.hooks.nativeQuery = () => {throw Error("SECRET");};
+    if (mode === "changed_owner") f.hooks.nativeQuery = () => {f.state.generation = 3; return {required: [], optional: f.state.optional, granted: f.state.grants};};
+    try {await f.setup.revokeOrders({...f.input, action: mode === "cancel" ? "cancel" : "revoke"});} catch {}
+    assert.equal(f.calls.filter(c => c.kind === "revoke").length, 0);
+  });
+}
+
+for (const mode of ["native_error", "bad_receipt", "still_granted", "products_changed", "new_install", "readback_error"]) {
+  test(`Orders revoke ${mode} never reports verified removal or retries`, async () => {
+    const f = fixture({grants: ["read_products", "read_orders"]});
+    f.hooks.revoke = () => {
+      if (mode === "native_error") throw Error("SECRET");
+      f.state.grants = mode === "still_granted" ? f.state.grants : mode === "products_changed" ? [] : ["read_products"];
+      if (mode === "new_install") f.state.appId = "gid://shopify/AppInstallation/10";
+      if (mode === "readback_error") f.hooks.graphql = () => {throw Error("SECRET");};
+      return {revoked: mode === "bad_receipt" ? ["read_products"] : ["read_orders"]};
+    };
+    await assert.rejects(f.setup.revokeOrders({...f.input, action: "revoke"}), error => !error.message.includes("SECRET"));
+    assert.equal(f.calls.filter(c => c.kind === "revoke").length, 1);
+  });
+}

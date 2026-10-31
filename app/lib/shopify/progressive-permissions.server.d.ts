@@ -9,6 +9,7 @@ export interface ShopifyPermissionSetupReadback {
   readonly nativeRequestInvoked: boolean;
   readonly basePermissionState: "permission_ready" | "resume_setup" | "unknown";
   readonly ordersPermissionState: "permission_ready" | "not_connected" | "blocked_by_products" | "unknown";
+  readonly ordersScopeState: "permission_ready" | "not_connected";
   readonly ordersRequiredForBase: false;
   readonly appInstallationId: string;
   readonly observedAt: string;
@@ -23,6 +24,7 @@ export interface ShopifyPermissionSetup {
   requestProducts(args: ReadInput & {action: "connect" | "cancel"}): Promise<Readonly<ShopifyPermissionSetupReadback> | Readonly<{outcome: "cancelled"; nativeRequestInvoked: false; authorizesActivation: false}>>;
   requestOrders(args: ReadInput & {action: "connect" | "cancel"}): ReturnType<ShopifyPermissionSetup["requestProducts"]>;
   revokeProducts(args: ReadInput & {action: "revoke" | "cancel"}): ReturnType<ShopifyPermissionSetup["requestProducts"]>;
+  revokeOrders(args: ReadInput & {action: "revoke" | "cancel"}): ReturnType<ShopifyPermissionSetup["requestProducts"]>;
 }
 export function createShopifyProgressivePermissions(args: {
   database: Parameters<typeof inspectShopifyIdentityPermissionScopes>[0]["database"];

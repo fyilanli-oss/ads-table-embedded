@@ -1,5 +1,5 @@
 import {usePermissionSettings} from "../components/use-permission-settings";
-import {logPermissionFailure} from "../lib/oauth/permission-error-log.server.js";
+import {logPermissionFailure} from "../lib/server-error-log.server.js";
 import {createPermissionSettings, PERMISSION_SETTINGS_AVAILABILITY} from "../lib/shopify/permission-settings.server.js";
 import type {PermissionFeature} from "../lib/ui/permission-explanation-flow.js";
 import type {ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs, ShouldRevalidateFunctionArgs} from "react-router";

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import {logPermissionFailure} from "../app/lib/oauth/permission-error-log.server.js";
+import {logPermissionFailure} from "../app/lib/server-error-log.server.js";
 
 test("permission diagnostics contain only allowlisted fields and never raw provider data",()=>{
   const saved=console.error,logs=[];

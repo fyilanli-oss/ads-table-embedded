@@ -44,7 +44,7 @@ const CODES = new Set([
   "COMBINED_SETUP_LIFECYCLE_UNAVAILABLE", "COMBINED_SETUP_CONNECTION_CHANGED",
 ]);
 
-// Only exact allowlisted literals leave this diagnostic. Never log the raw error.
+// Only exact allowlisted literals leave this log. Never log the raw error.
 export function logPermissionFailure({feature, intent, requestId, error}) {
   try {
     let code = "PERMISSION_OPERATION_UNCONFIRMED";

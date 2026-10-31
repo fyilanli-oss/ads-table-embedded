@@ -138,3 +138,36 @@ sürüm yayını ve izin doğrulaması bekleniyor. Yeni uygulama oluşturulmaz.
 ve https://shopify.dev/docs/apps/build/authentication-authorization/manage-access-scopes .
 Bağlayıcı kayıt: contracts/eo-05-permission-explanation-design-v1.json#Shopify_optional_scope_candidate_2026_10_31.
 07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımı. Merge ayrı onay bekler.
+
+## 31 Ekim — mevcut 07: Shopify 401 yanıtının derleme uyumluluğu
+
+Ürün sahibi 1000070104 ekranındaki 401 için önce salt okunur incelemeyi,
+ardından yalnız kod düzeltmesi ve derlenmiş sürüm testini onayladı.
+Shopify SDK 3.0.1 boundary.error sınıf adına bakıyor; Vite üretim derlemesi
+Router hata sınıfını kısaltıyor. Gerçek Router nesnesi ve SDK işleyicisiyle
+minify edilmiş test düzeltme öncesi başarısız, sonrası başarılı oldu.
+
+Düzeltme yalnız vite.config.ts içinde esbuild.keepNames=true ayarıdır.
+SDK işleyicisi değiştirilmez; 401, yönlendirme başlığı ve diğer hataların
+aynı biçimde iletilmesi korunur. Minification açık kalır; sınıf/fonksiyon
+adları korunacağı için paket boyutunda artış olabilir. Yeni arayüz veya
+metin yok; scope/token/izin/hesap seçimi ve runtime yayın anahtarları değişmez.
+
+İlgili 48 test geçti. Tam test/tip/derleme ve exact-commit CI ayrı doğrulanır.
+Canlı denemenin yanıt başlıkları loglarda yok; tekrar üretilen bu kusur,
+canlı 401'in tüm nedenlerinin kesinleştiği anlamına gelmez.
+
+Güncel native durumun önceki aday kaydından farkı: ürün sahibi optional
+read_products/read_orders sürümünü kendisi yayımladı (1000070103). İki
+Shopify runtime anahtarının ayrıca onaylı açılması ve mevcut e086df0 kaynağının
+dpl_9oDokZ3QuHkxVaeh133MH77GXKrX yayını PR277'de kayıtlıdır. Mağaza onayı
+hâlâ doğrulanmadı. Bu yeni düzeltme için deploy, native tekrar veya merge
+onayı verilmedi; Shopify'da görsel işlem yapılmaz.
+
+Resmî kontrol 2026-10-31:
+https://v7.vite.dev/config/shared-options#esbuild
+https://esbuild.github.io/api/#keep-names
+https://api.reactrouter.com/v7/functions/react-router.isRouteErrorResponse.html
+https://shopify.dev/docs/api/shopify-app-react-router/latest/apis/scopes
+Bağlayıcı kayıt: contracts/eo-05-permission-explanation-design-v1.json#Shopify_boundary_build_correction_2026_10_31.
+07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.

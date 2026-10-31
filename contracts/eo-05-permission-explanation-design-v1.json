@@ -1,4 +1,20 @@
 {
+  "Shopify_boundary_build_correction_2026_10_31": {
+    "checked_at": "2026-10-31",
+    "existing_plan_step": 7,
+    "authority": "Explicit owner approval for code correction and production-build tests only, after read-only investigation of screenshot 1000070104.jpg",
+    "defect": "SDK 3.0.1 boundary.error checks ErrorResponse/ErrorResponseImpl constructor names; production minification renames the real Router response class, causing a rethrow to the root error screen",
+    "change": "vite.config.ts esbuild.keepNames=true preserves names without replacing SDK boundary handling or changing response status, headers, scopes or permission flow",
+    "regression_test": "tests/shopify-boundary-production-build.test.js uses real React Router and SDK boundary in a minified Vite production bundle; failed before fix and passed after fix",
+    "assertions": ["Real Router response handled", "401 preserved, not converted to success", "Native redirect header preserved", "Unrelated Error rethrown unchanged"],
+    "cost": "Production bundles retain function/class names and can grow; minification remains enabled",
+    "native_incident_limit": "Server logs show the POST but not its redirect headers; this reproduced defect is proven, not every cause of the owner's live 401",
+    "native_current_state": "Owner published products-orders-permissions with optional read_products/read_orders; separately authorized runtime flags and same-source redeploy recorded in PR277; merchant grant still unverified",
+    "deploy_authorized": false,
+    "native_retry_authorized": false,
+    "merge_authorized": false,
+    "sources": ["https://v7.vite.dev/config/shared-options#esbuild", "https://esbuild.github.io/api/#keep-names", "https://api.reactrouter.com/v7/functions/react-router.isRouteErrorResponse.html", "https://shopify.dev/docs/api/shopify-app-react-router/latest/apis/scopes"]
+  },
   "Shopify_optional_scope_candidate_2026_10_31": {
     "checked_at": "2026-10-31",
     "existing_plan_step": 7,

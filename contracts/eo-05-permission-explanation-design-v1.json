@@ -1,4 +1,18 @@
 {
+  "Google_REST_safe_cause_2026_10_31": {
+    "existing_plan_step": 7,
+    "authority": "Explicit owner approval for narrow safe REST failure metadata and synthetic tests only; no live request/config/deploy/native retry/merge",
+    "cause_unknown": "19:51 callback account discovery failed with REST_REQUEST_FAILED; previous logger omitted this code and HTTP/provider metadata. Exact live cause cannot be recovered from existing generic records.",
+    "change": "Private WeakMap brands actual REST errors with immutable fixed operation, bounded integer HTTP status, canonical provider status and documented enum allowlist; unknown enum/status null. Callback logger consumes only branded Google permission_callback REST failures.",
+    "operations": ["list_accessible_customers", "search"],
+    "never_logged": ["raw_error", "message", "stack", "body", "headers", "tokens", "state", "scope", "account_or_shop", "query", "provider_request_id"],
+    "unchanged": "HTTP/token/account-selection behavior, error/details semantics, stopOnFirstError and retry policy, UI, native configuration and migrations",
+    "tests": "Synthetic list/search 401/403/429/503, HTTP200 error envelope, first-error call counts, immutable metadata, forged/getter/malformed/oversized input, existing callback loader to safe log",
+    "sources_checked_at": "2026-10-31",
+    "deployed": false,
+    "native_retry": false,
+    "merge_authorized": false
+  },
   "Google_partial_permission_return_2026_10_31": {
     "existing_plan_step": 7,
     "authority": "Explicit owner approval for Google partial-permission return, English explanation, safe callback classification and tests only",

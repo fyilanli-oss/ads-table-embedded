@@ -1,3 +1,16 @@
+## 31 Ekim — mevcut07: Google REST hatasında güvenli teknik kayıt
+
+Owner tam-izin sonrası REST_REQUEST_FAILED için önce salt okunur denetimi, sonra
+yalnız dar log düzeltmesi ve sentetik testlerini onayladı. Hata account discovery
+aşamasında; exact HTTP/Google nedeni mevcut kayıttan çıkarılamadı. Gerçek REST
+hatasına WeakMap ile sabit işlem adı, HTTPinteger ve izinli provider status/enum
+bağlanır; mevcut callback sink yalnız bu immutable kanıtı loglar. HTTP200 error
+envelope dahil eski hata semantiği/ilk-hata duruşu/istek sayısı değişmez. Ham veri,
+secret ve provider request-id loglanmaz. UI/token/migration/native ayar değişmez.
+Kod/test yetkisi canlı istek, yayın veya OAuth tekrarı değildir. Brief ve contract
+Google_REST_safe_cause_2026_10_31 kaydı bağlayıcıdır.07 açık;15 başlamadı;22 paused;
+23 Dataset yazımıdır. Exact Google nedeni ve gerçek bağlantı kabulü hâlâ açık.
+
 ## 31 Ekim — mevcut07: Google eksik izin dönüşü ve Resume setup
 
 Owner yalnız Ads iznini seçtiğini bildirdi; Google kartı Not connected döndü.

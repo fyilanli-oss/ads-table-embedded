@@ -4,6 +4,7 @@ import {createRequire} from "node:module";
 import test from "node:test";
 import ts from "typescript";
 import {installedShopifySettingsUrl} from "../app/lib/shopify/installed-app-return.server.js";
+import {discoverGoogleAdsAccounts} from "../app/lib/providers/google-account-discovery.server.js";
 
 function loadRoute(file,overrides){
   const location=new URL(`../app/routes/${file}`,import.meta.url),require=createRequire(location),exports={};
@@ -103,6 +104,18 @@ test("general Google callback error is safely classified and never mislabeled as
   assert.equal(h.state.view,"error");assert.equal(h.logs[0].code,"GOOGLE_ADS_OAUTH_TOKEN_EXCHANGE_FAILED");
   assert.equal(h.logs[0].intent,"permission_callback");assert.doesNotMatch(JSON.stringify(h.logs),/SECRET/);
   assert.deepEqual(h.calls,["claim","complete","inspect"]);assert.deepEqual(h.opened,[]);
+});
+
+test("actual Google REST failure metadata survives callback safe logging without payload or retry",async()=>{
+  let calls=0,error;
+  try{await discoverGoogleAdsAccounts({accessToken:"ACCESS_SECRET",stopOnFirstError:true,fetchFn:async()=>{
+    calls++;return new Response(JSON.stringify({error:{status:"PERMISSION_DENIED",message:"RAW_SECRET",
+      details:[{errors:[{errorCode:{authorizationError:"USER_PERMISSION_DENIED"}}]}]}}),{status:403,headers:{"request-id":"REQUEST_SECRET"}});
+  }});}catch(e){error=e;}
+  const h=harness({error}),r=await h.return();await h.load(r.headers.get("location"));
+  assert.equal(h.state.view,"error");assert.equal(h.state.code,"GOOGLE_ADS_REST_REQUEST_FAILED");
+  assert.deepEqual(h.logs[0].google_rest,{operation:"list_accessible_customers",http_status:403,provider_status:"PERMISSION_DENIED",provider_error_code:"USER_PERMISSION_DENIED"});
+  assert.doesNotMatch(JSON.stringify(h.logs),/SECRET/);assert.equal(calls,1);assert.deepEqual(h.opened,[]);
 });
 
 test("incomplete return hint never grants connection authority or enables a closed Google setup",async()=>{

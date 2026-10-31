@@ -1,3 +1,5 @@
+import {googleAdsRestFailureMetadata} from "./providers/google-ads-rest.server.js";
+
 const ROUTES = new Set(["/", "/ad-analysis", "/settings"]);
 const METHODS = new Set(["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]);
 function emit(record) { console.error(JSON.stringify(record)); }
@@ -40,6 +42,7 @@ const CODES = new Set([
   "OAUTH_IDENTITY_SCOPE_NOT_GRANTED", "OAUTH_IDENTITY_SCOPE_RESPONSE_INVALID",
   "GOOGLE_ADS_OAUTH_TOKEN_EXCHANGE_FAILED", "GOOGLE_ADS_OAUTH_REFRESH_TOKEN_MISSING",
   "IDENTITY_OAUTH_FINALIZATION_UNCONFIRMED", "GOOGLE_CALLBACK_FAILED",
+  "GOOGLE_ADS_REST_REQUEST_FAILED",
   "GOOGLE_ADS_OAUTH_CLIENT_ID_REQUIRED", "GOOGLE_ADS_OAUTH_CLIENT_SECRET_REQUIRED",
   "GOOGLE_ADS_OAUTH_REDIRECT_URI_INVALID", "GOOGLE_ADS_OAUTH_REDIRECT_URI_MISMATCH",
   "PERMISSION_SETTINGS_START_UNCONFIRMED", "PERMISSION_SETTINGS_SCOPE_BINDING_CHANGED",
@@ -56,9 +59,12 @@ export function logPermissionFailure({feature, intent, requestId, error}) {
         if (CODES.has(value)) {code = value; break;}
       }
     }
+    const rest = feature === "google_ads" && intent === "permission_callback" && code === "GOOGLE_ADS_REST_REQUEST_FAILED"
+      ? googleAdsRestFailureMetadata(error) : null;
     emit({event: "adstable_permission_error", code,
       feature: FEATURES.has(feature) ? feature : "unknown",
       intent: INTENTS.has(intent) ? intent : "unknown",
-      requestId: typeof requestId === "string" && /^[a-f0-9-]{36}$/.test(requestId) ? requestId : null});
+      requestId: typeof requestId === "string" && /^[a-f0-9-]{36}$/.test(requestId) ? requestId : null,
+      ...(rest ? {google_rest: rest} : {})});
   } catch { /* Log delivery must not change the existing unknown response. */ }
 }

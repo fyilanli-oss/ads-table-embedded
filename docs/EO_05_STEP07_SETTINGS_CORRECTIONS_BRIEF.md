@@ -1,5 +1,34 @@
 # EO-05 / mevcut 07 — onaylı Settings düzeltmesi
 
+## 31 Ekim — Google hesap okuma hatasında güvenli teknik neden
+
+Owner yalnız dar kod/test hazırlığını onayladı; canlı istek/config/yayın/native
+tekrar/merge yoktur. Son tam-izin denemesi Google REST_REQUEST_FAILED ile account
+discovery'de durdu; mevcut log allowlist bu kodu içermediği için nedeni genel
+unconfirmed'a düşürdü. Kaydın exact HTTP/Google nedeni geriye dönük bulunamadı.
+
+REST katmanının gerçekten oluşturduğu hata nesnesine özel WeakMap kanıtı bağlanır:
+yalnız sabit list_accessible_customers veya search işlem adı, 200–599 HTTP integer,
+canonical Google status ve belgelenmiş izinli hata enum'u; bilinmeyen değer null.
+HTTP200 içindeki mevcut error envelope reddi de aynı kanıtı taşır. Error.details
+sonradan değiştirilse veya sahtesi üretilse log yetkisi olmaz; raw error/message,
+body/header/token/account/query/scope/mağaza/stack ve provider request-id loglanmaz.
+Mevcut tek log sink yalnız Google permission_callback + REST_REQUEST_FAILED için
+bu dar kanıtı alır. Diğer log şekilleri aynı kalır. Çağrı sayısı, timeout,
+stopOnFirstError, izin/hesap seçimi, hata davranışı ve UI değişmez.
+
+Sentetik test: ilk listeleme ve sonraki search401/403/429/503, HTTP200 error
+envelope; ilk hata sonrası sıfır retry/sonraki root sorgusu; metadata immutable,
+sahte/getter/unknown/oversized enum ve ham payload sızmaması; gerçek callback
+loader'dan safe loga taşınma. Token/migration/DB kaydı yapılmaz. Bu hazırlık kök
+Google nedenini çözmüş veya canlı OAuth'u tamamlamış sayılmaz.
+Kaynaklar31Ekim2026: https://developers.google.com/google-ads/api/docs/concepts/call-structure ;
+https://developers.google.com/google-ads/api/reference/rpc/v25/AuthorizationErrorEnum.AuthorizationError ;
+https://developers.google.com/google-ads/api/reference/rpc/v25/AuthenticationErrorEnum.AuthenticationError ;
+https://developers.google.com/google-ads/api/reference/rpc/v25/QuotaErrorEnum.QuotaError ;
+https://developers.google.com/google-ads/api/reference/rpc/v25/RequestErrorEnum.RequestError ;
+https://developers.google.com/google-ads/api/reference/rpc/v25/InternalErrorEnum.InternalError .
+
 ## Güncel ürün sahibi düzeltmesi — 31 Ekim 2026
 
 Önceki tek hesapta adım atlama kararı reddedildi. Kullanıcı aşağıdaki somut

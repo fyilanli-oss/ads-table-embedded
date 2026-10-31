@@ -1,4 +1,12 @@
 {
+  "Google_REST_safe_cause_2026_10_31": {
+    "existing_plan_step": 7,
+    "record": "contracts/eo-05-permission-explanation-design-v1.json#Google_REST_safe_cause_2026_10_31",
+    "authority": "Safe logging code and synthetic tests only; no deploy/native retry/merge",
+    "step15_started": false,
+    "step22": "paused",
+    "step23": "Dataset_FX_writer"
+  },
   "Google_partial_permission_return_2026_10_31": {
     "existing_plan_step": 7,
     "record": "contracts/eo-05-permission-explanation-design-v1.json#Google_partial_permission_return_2026_10_31",

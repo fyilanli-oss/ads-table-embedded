@@ -22,6 +22,30 @@ test("fresh Products status uses one native read and never requests access or ac
   assert.equal(failures, 1);
 });
 
+test("Google failure appears only in its provider feedback and stays stopped until explicit status read",async()=>{
+  const h=permissionHarness();h.props.availability.google_ads=true;h.render();
+  h.value.open("google_ads");h.render();
+  const modal=h.modal();modal.onConnect(modal.snapshot.session,()=>{});h.render();
+  const pending=h.modal().onAfterHide(modal.snapshot.session);h.render();
+  assert.equal(h.submissions.length,1);
+  h.fetcher.data={kind:"unknown",feature:"google_ads",requestId:h.submissions[0].requestId};
+  h.render();await pending;h.render();
+  assert.match(treeText(h.value.providerContent("google_ads")),/We could not confirm the result/);
+  assert.equal(h.value.providerContent("meta"),null);assert.equal(h.value.providerContent("klaviyo"),null);
+  assert.doesNotMatch(treeText(h.value.content),/We could not confirm/);
+  h.value.open("google_ads");h.render();assert.notEqual(h.value.snapshot.phase,"explaining");
+  assert.equal(h.submissions.length,1);
+  assert.deepEqual(h.statuses,[]);assert.deepEqual(h.orderStatuses,[]);
+  h.props.availability.meta=true;h.render();
+  const reading=h.value.checkStatus("meta");h.render();
+  h.fetcher.data={kind:"status",feature:"meta",stage:"reporting_selected",requestId:h.submissions[1].requestId};
+  h.render();await reading;h.render();
+  assert.match(treeText(h.value.providerContent("google_ads")),/We could not confirm the result/);
+  assert.doesNotMatch(treeText(h.value.providerContent("meta")),/We could not confirm/);
+  h.value.open("google_ads");h.render();assert.notEqual(h.value.snapshot.phase,"explaining");
+  assert.equal(h.submissions.length,2);
+});
+
 function load(relative, overrides) {
   const location = new URL(`../${relative}`, import.meta.url), require = createRequire(location);
   const compiled = ts.transpileModule(readFileSync(location, "utf8"), {compilerOptions: {

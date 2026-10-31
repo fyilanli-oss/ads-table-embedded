@@ -1,3 +1,11 @@
+## 31 Ekim — mevcut07: açık Connect ile yeniden bağlanma düzeltmesi
+
+Ürün sahibi dar teşhisten sonra kod, migration dosyası ve izole testleri onayladı. Aktif development mağazasının Google kaydı disconnected/version42; başlangıç kapısı ve atomik commit bu durumu reddediyordu. Hazırlanan ortak Google/Meta akışı, kaldırılması tamamlanmış bağlantıyı exact ID/version ile yeni onaya bağlar. Eski credential/grant/hesap seçimi yeniden etkinleştirilmez. Disconnect_pending/unknown, stale bağlantı ve eksik temizlik kapalı; connected upgrade korumaları ve atomik claim/CAS/receipt korunur. Temiz disconnected için açık Check status, token/native okuma veya yazma yapmadan request_permissions döndürür. Meta'nın canlı yayın anahtarı kapalı kalır.
+
+Sağlayıcı sonucu kendi kartında gösterilir; ortak modal host tek kalır. Genel unknown cevabı korunur. Güvenli log yalnız allowlist kodu/feature/intent ve doğrulanmış requestId içerir; raw hata/SQL/state/credential yoktur. Shopify Products/Orders davranışı korunur.
+
+CLI2.121.0 ile oluşturulan 20261031181313_eo05a_identity_oauth_reconnect.sql yalnız mevcut fonksiyonu aynı imza/yetkilerle değiştirecek adaydır. Lineage pending/applied:false/live_apply_authorized:false. Mevcut F01 izole SQL probe'u temiz yeniden bağlanma, yeni kapsam/hesap seçimi, stale/pending/aktif reporting/replay ve rollback'i sınar. Canlı migration, yayın, native tekrar ve merge yapılmadı; ayrı somut onay gerekir. Bağlayıcı kayıt: contracts/eo-05-permission-explanation-design-v1.json#Explicit_reconnect_2026_10_31.07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımı.
+
 ## 30 Ekim — PMax kaynaklarını mevcut resolver ve arka plan okuyucusuna bağlama
 
 Mevcut 21'in 15 öncesi dar kod dilimi: PMax Asset Group PD, ürün performansı, PMax'e filtreli Cart Data ve güncel Listing Tree ayrı aileler halinde tam sayfalanır. Mevcut ortak okuyucuda açık googlePmax seçeneğiyle aynı mağaza/hesap/nesil/bağlantı kontrolleri ve fiziksel kota hattı kullanılır. Varsayılan akış değişmez; Shopify'da görsel işlem veya OAuth değişikliği yoktur.

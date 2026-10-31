@@ -122,7 +122,7 @@ async function identityOAuthAtomicProbeWithTestMembership(client,{execution}) {
         assert.equal(await vault.readIdentityOAuthCommit(bad),null);
         await client.query("rollback to savepoint provider_upgrade");
       }
-      // Reauthorization/pending and initial setup are still CAS-bound, never revive disconnect.
+      // Reauthorization/pending and initial setup remain CAS-bound.
       for(const mode of ["reauthorization_required","initial"]){
         const v=await input(provider);
         if(mode==="initial"){
@@ -135,6 +135,43 @@ async function identityOAuthAtomicProbeWithTestMembership(client,{execution}) {
       }
       await client.query("release savepoint provider_upgrade");
     }
+    // Fresh explicit reconnect keeps the old connection ID/version, but no old grant or selection.
+    for(const provider of ["google_ads","meta"]){
+      for(const mode of ["success","stale_version","unbound_initial","disconnect_pending","active_reporting"]){
+        await client.query("savepoint identity_reconnect");
+        const v=await input(provider),old=await current(provider);
+        if(mode!=="active_reporting")await client.query("update integrations.reporting_account_bindings set effective_to=statement_timestamp() where connection_id=$1 and effective_to is null",[old.id]);
+        if(mode==="disconnect_pending")await client.query("update integrations.provider_connections set lifecycle_status='disconnect_pending' where id=$1",[old.id]);
+        else await client.query("update integrations.provider_connections set lifecycle_status='disconnected',credential_id=null,disconnected_at=statement_timestamp(),granted_scopes=array['retired-grant']::text[] where id=$1",[old.id]);
+        if(mode==="stale_version")v.binding.version++;
+        if(mode==="unbound_initial")v.binding={connectionId:null,version:null};
+        v.accounts=[{id:"9988776655",kind:"advertiser",reportingEligible:true}];
+        const envelopeCount=(await client.query("select count(*)::int n from integrations.provider_credential_envelopes")).rows[0].n;
+        if(mode==="success"){
+          const r=await vault.commitIdentityOAuthCredential(v);
+          assert.equal(r.connectionId,old.id);assert.equal(r.status,"pending_account_selection");
+          assert.equal(r.version,Number(old.connection_version)+1);
+          const after=await current(provider);
+          assert.deepEqual(after.granted_scopes,v.scopes);assert.equal(after.disconnected_at,null);
+          assert.equal((await client.query("select count(*)::int n from integrations.reporting_account_bindings where connection_id=$1 and effective_to is null",[old.id])).rows[0].n,0);
+          const receipt=await vault.readIdentityOAuthCommit(v);assert.equal(receipt.status,"pending_account_selection");
+          await client.query("savepoint reconnect_replay");
+          await assert.rejects(failureVault.commitIdentityOAuthCredential(v),/IDENTITY_OAUTH_WRITE_UNCONFIRMED/);
+          await client.query("rollback to savepoint reconnect_replay");await client.query("set local role adstable_owner");
+          assert.equal((await current(provider)).connection_version,after.connection_version);
+        }else{
+          const before=await current(provider);
+          await client.query("savepoint reconnect_rejected");
+          await assert.rejects(failureVault.commitIdentityOAuthCredential(v),/IDENTITY_OAUTH_WRITE_UNCONFIRMED/);
+          await client.query("rollback to savepoint reconnect_rejected");await client.query("set local role adstable_owner");
+          assert.deepEqual(await current(provider),before);
+          assert.equal((await client.query("select count(*)::int n from integrations.provider_credential_envelopes")).rows[0].n,envelopeCount);
+          assert.equal(await vault.readIdentityOAuthCommit(v),null);
+        }
+        await client.query("rollback to savepoint identity_reconnect");await client.query("release savepoint identity_reconnect");
+      }
+    }
+    console.log("EO05_IDENTITY_RECONNECT_PASS real_SQL_CAS_fresh_scope_pending_selection=true stale_pending_active_reporting_replay_rejected=true native_HTTP=0");
     for(const role of ["anon","authenticated","service_role","adstable_refresh_coordinator"]){
       assert.equal((await client.query("select has_function_privilege($1,'integrations.read_identity_oauth_commit(uuid,uuid,bigint,text)','EXECUTE') allowed",[role])).rows[0].allowed,false);
     }

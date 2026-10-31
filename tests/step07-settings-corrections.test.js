@@ -22,6 +22,18 @@ const text = element => Array.isArray(element) ? element.map(text).join("")
   : element && typeof element === "object" ? text(element.props?.children)
   : element == null || typeof element === "boolean" ? "" : String(element);
 
+test("Settings places permission feedback inside its own provider section, never under Shopify",()=>{
+  const h=harness();
+  h.permissionResult={providerContent:feature=>require("react").createElement("s-banner",{heading:`feedback-${feature}`})};
+  h.render();
+  const sections=nodes(h.tree).filter(e=>e.type==="s-section");
+  for(const [heading,feature] of [["Meta","meta"],["Google Ads","google_ads"],["Klaviyo","klaviyo"]]){
+    const section=sections.find(e=>e.props.heading===heading);
+    assert.ok(nodes(section).some(e=>e.props?.heading===`feedback-${feature}`));
+    for(const other of sections.filter(e=>e!==section))assert.equal(nodes(other).some(e=>e.props?.heading===`feedback-${feature}`),false);
+  }
+});
+
 // Execute the actual Settings component and handlers with deterministic hooks.
 // This is a logic test, not a native custom-element or visual acceptance test.
 function harness({accounts = [account], providerRuntime = () => assert.fail("unexpected runtime")} = {}) {
@@ -60,7 +72,7 @@ function harness({accounts = [account], providerRuntime = () => assert.fail("une
     if (id === "react-router") return {useLoaderData: () => h.state, useActionData: () => undefined,
       useNavigation: () => h.navigation, useRevalidator: () => h.revalidator, useFetcher: () => h.fetcher,
       useSubmit: () => () => assert.fail("unexpected navigation submission")};
-    if (id === "../components/use-permission-settings") return {usePermissionSettings: props => {h.permissionProps = props; return {busy: false, checkingProduct: false, content: null, ...h.permissionResult};}};
+    if (id === "../components/use-permission-settings") return {usePermissionSettings: props => {h.permissionProps = props; return {busy: false, checkingProduct: false, content: null, providerContent: () => null, ...h.permissionResult};}};
     if (id === "../components/product-access-removal") return {ProductAccessRemoval: "ProductAccessRemoval"};
     if (id === "../components/order-access-removal") return {OrderAccessRemoval: "OrderAccessRemoval"};
     if (id === "../shopify.server") return {authenticate: {admin: async () => verified}, database: {}, providerTokenVault: {}};

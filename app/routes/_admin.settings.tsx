@@ -1,4 +1,5 @@
 import {usePermissionSettings} from "../components/use-permission-settings";
+import {logPermissionFailure} from "../lib/oauth/permission-error-log.server.js";
 import {createPermissionSettings, PERMISSION_SETTINGS_AVAILABILITY} from "../lib/shopify/permission-settings.server.js";
 import type {PermissionFeature} from "../lib/ui/permission-explanation-flow.js";
 import type {ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs, ShouldRevalidateFunctionArgs} from "react-router";
@@ -461,6 +462,7 @@ export const action = async ({request}: ActionFunctionArgs) => {
       return {...result, requestId};
     } catch (error) {
       if (error instanceof Response) throw error;
+      logPermissionFailure({feature, intent, requestId, error});
       return {kind: "unknown" as const, feature, requestId};
     }
   }
@@ -1099,6 +1101,7 @@ export default function Settings() {
       {permissions.content}
       <s-section heading="Meta">
         <s-stack direction="block" gap="base">
+          {permissions.providerContent("meta")}
           {state.meta.view === "combined" ? <>
             <s-badge tone="warning">Resume setup</s-badge>
             <s-button onClick={() => permissions.checkStatus("meta", true)}>Resume setup</s-button>
@@ -1381,6 +1384,7 @@ export default function Settings() {
       </s-section>
       <s-section heading="Google Ads">
         <s-stack direction="block" gap="base">
+          {permissions.providerContent("google_ads")}
           {state.view === "combined" ? <>
             <s-badge tone="warning">Resume setup</s-badge>
             <s-button onClick={() => permissions.checkStatus("google_ads", true)}>Resume setup</s-button>
@@ -1694,6 +1698,7 @@ export default function Settings() {
       </s-section>
       <s-section heading="Klaviyo">
         <s-stack direction="block" gap="base">
+          {permissions.providerContent("klaviyo")}
           {actionData?.ok === false && actionData.provider === "klaviyo"
             ? <ErrorBanner provider="klaviyo" code={actionData.code} />
             : null}

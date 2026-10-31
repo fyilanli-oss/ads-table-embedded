@@ -12,6 +12,7 @@ const owner = oauthInstallationAuthority({workspaceId: id(1), installGeneration:
 const now = () => new Date("2026-10-27T12:00:00.000Z");
 const initial = {connectionId: null, version: null};
 const row = {connectionId: id(2), version: 7, status: "pending_account_selection"};
+const disconnected = {...row, status: "disconnected", credentialId: null, disconnectedAt: "2026-10-27T11:00:00.000Z"};
 const json = (body, status = 200) => new Response(JSON.stringify(body), {status});
 
 test("server gate is closed by default and rejects non-boolean configuration", async () => {
@@ -22,7 +23,7 @@ test("server gate is closed by default and rejects non-boolean configuration", a
   assert.equal(reads, 0);
   for (const enabled of ["true", 1, null]) assert.throws(() => createIdentityOAuthAuthorization({lifecycle, enabled}));
 });
-for (const current of [null, row, {...row, status: "connected"}, {...row, status: "reauthorization_required"}]) {
+for (const current of [null, row, {...row, status: "connected"}, {...row, status: "reauthorization_required"}, disconnected]) {
   test(`server gate reads actual owner/provider lifecycle and admits supported setup: ${current?.status ?? "initial"}`, async () => {
     const gate = createIdentityOAuthAuthorization({enabled: true, lifecycle: {async loadCurrent(input) {
       assert.deepEqual(input, {installationAuthority: owner, provider: "google_ads"}); return current;
@@ -31,12 +32,28 @@ for (const current of [null, row, {...row, status: "connected"}, {...row, status
       current === null ? initial : {connectionId: id(2), version: 7});
   });
 }
-for (const status of ["disconnect_pending", "disconnected", "unknown"]) {
+for (const status of ["disconnect_pending", "unknown"]) {
   test(`no implicit connected upgrade or disconnect revival: ${status}`, async () => {
     const gate = createIdentityOAuthAuthorization({enabled: true, lifecycle: {async loadCurrent() {return {...row, status};}}});
     await assert.rejects(gate.beforeStart({installationAuthority: owner, provider: "meta"}), /IDENTITY_OAUTH_/);
   });
 }
+for (const change of [{credentialId:id(3)}, {credentialId:undefined}, {disconnectedAt:null}, {disconnectedAt:"invalid"}]) {
+  test(`disconnected cleanup must be complete before explicit OAuth: ${JSON.stringify(change)}`,async()=>{
+    const gate=createIdentityOAuthAuthorization({enabled:true,lifecycle:{loadCurrent:async()=>({...disconnected,...change})}});
+    await assert.rejects(gate.beforeStart({installationAuthority:owner,provider:"google_ads"}),/DISCONNECT_INCOMPLETE/);
+  });
+}
+test("disconnected callback retains exact identity/version and never revives changed or pending authority",async()=>{
+  let current=disconnected;
+  const gate=createIdentityOAuthAuthorization({enabled:true,lifecycle:{loadCurrent:async()=>current}});
+  const binding=await gate.beforeStart({installationAuthority:owner,provider:"google_ads"});
+  await gate.beforeCallback({installationAuthority:owner,provider:"google_ads",binding});
+  for(const changed of [{...disconnected,version:8},{...disconnected,connectionId:id(3)},{...disconnected,status:"disconnect_pending"},null]){
+    current=changed;
+    await assert.rejects(gate.beforeCallback({installationAuthority:owner,provider:"google_ads",binding}),/IDENTITY_OAUTH_/);
+  }
+});
 test("callback binding checks initial/connection identity and version, not just provider scopes", async () => {
   let current = row;
   const gate = createIdentityOAuthAuthorization({enabled: true, lifecycle: {async loadCurrent() {return current;}}});
@@ -104,7 +121,8 @@ function runtimeHarness(provider, {enabled = false, changedDuringRead = false, c
   let currentRow = current;
   const database = {async query(sql, values) {
     if (sql.includes("load_provider_connection_lifecycle_by_owner")) {lifecycleReads.push(values); return {rows: currentRow ? [{
-      connection_id: currentRow.connectionId, connection_version: currentRow.version, lifecycle_status: currentRow.status, credential_id: id(4)}] : []};}
+      connection_id: currentRow.connectionId, connection_version: currentRow.version, lifecycle_status: currentRow.status,
+      credential_id: Object.hasOwn(currentRow,"credentialId") ? currentRow.credentialId : id(4), disconnected_at: currentRow.disconnectedAt ?? null}] : []};}
     if (sql.includes("create_oauth_transaction(")) {writes.push("created");return {rows:[{transaction_id:id(3),callback_uri:OAUTH_CALLBACK_URIS[provider],
       pkce_required:provider==="google_ads",expires_at:"2026-10-27T12:05:00.000Z",transaction_status:"created"}]};}
     if (sql.includes("mark_oauth_transaction_redirected")) {writes.push("redirected");return {rows:[{transaction_id:id(3),transaction_status:"redirected"}]};}
@@ -150,6 +168,16 @@ const claimed = {status: "claimed", transactionId: id(3), workspaceId: owner.wor
   permissionProfile: "identity_v1", identityBinding: initial, authorizationCode: "code", pkceVerifier: "verifier"};
 
 for (const provider of ["google_ads", "meta"]) {
+  test(`${provider}: explicit disconnected reconnect binds the old version and ends at fresh account selection`,async()=>{
+    const h=runtimeHarness(provider,{enabled:true,current:disconnected});
+    const start=await h.runtime.beginCombinedSetup({installationAuthority:owner});
+    const state=new URL(start.authorizationUrl).searchParams.get("state");
+    assert.deepEqual(identityOAuthBindingFromState(provider,state),{connectionId:disconnected.connectionId,version:disconnected.version});
+    assert.equal(h.calls.length,0);
+    const result=await h.runtime.completeCallback({claimed:{...claimed,identityBinding:{connectionId:disconnected.connectionId,version:disconnected.version}}});
+    assert.equal(result.outcome,"pending_account_selection");assert.equal(result.setupResumeAction,"select_account");
+    assert.equal(result.setupComplete,false);assert.deepEqual(h.writes,["created","redirected","atomic"]);
+  });
   test(`${provider}: combined setup always binds the full profile to the server-read connection`, async () => {
     const current={...row,status:"connected"};
     const h=runtimeHarness(provider,{enabled:true,current});
@@ -170,7 +198,7 @@ for (const provider of ["google_ads", "meta"]) {
     await assert.rejects(h.runtime.beginCombinedSetup({installationAuthority:owner,identityAuthorizationEnabled:true}),/START_DISABLED/);
     assert.deepEqual(h.writes,[]);assert.equal(h.calls.length,0);assert.equal(h.lifecycleReads.length,0);
   });
-  for(const current of [null,{...row,status:"connected"}]) {
+  for(const current of [null,{...row,status:"connected"},disconnected]) {
     test(`${provider}: partial native grant stays resumable without replacing ${current?"existing":"initial"} authority`, async () => {
       const h=runtimeHarness(provider,{enabled:true,current,grantedScopes:[oauthPermissionScopes(provider,"identity_v1")[0]]});
       const before=JSON.stringify(current);

@@ -1,4 +1,5 @@
 import {validateIdentityOAuthGrantedScopes} from "./oauth-permission-profile.server.js";
+import {identityOAuthBindingForCurrent} from "./identity-oauth-authorization.server.js";
 
 function fail(code) {throw new Error(code);}
 function sameBinding(left, right) {
@@ -32,6 +33,10 @@ export function createCombinedSetupAccounts({provider, enabled, lifecycle, token
     if (!enabled) fail("IDENTITY_OAUTH_START_DISABLED");
     const current = await lifecycle.loadCurrent({installationAuthority, provider});
     if (!current) return null;
+    if (current.status === "disconnected") {
+      identityOAuthBindingForCurrent(current);
+      return current; // Status read only: no old token, discovery or implicit reconnect.
+    }
     if (!["connected", "pending_account_selection", "reauthorization_required"].includes(current.status)) {
       fail("COMBINED_SETUP_LIFECYCLE_UNAVAILABLE");
     }
@@ -102,7 +107,7 @@ export function createCombinedSetupAccounts({provider, enabled, lifecycle, token
   return Object.freeze({
     async inspect({installationAuthority}) {
       const before = await snapshot(installationAuthority);
-      if (!before || before.status === "reauthorization_required") return project(before);
+      if (!before || before.status === "reauthorization_required" || before.status === "disconnected") return project(before);
       const result = await runtime.inspect({installationAuthority});
       const after = await snapshot(installationAuthority);
       const record = result?.state === "connected" ? result.connection : result?.pending;

@@ -265,42 +265,49 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
       else void checkStatus(feedback.feature, true);
     } else callbacks.current.onResume(feedback.feature, feedback.stage);
   };
-  const status = checking ? <s-banner tone="info" heading={selectionActivity ?? "Checking connection status…"} />
-    : feedback?.kind === "unavailable" ? (
+  const providerContent = (feature: "meta" | "google_ads" | "klaviyo") => {
+    const reply = feedback?.feature === feature ? feedback : null;
+    const phase = snapshot.feature === feature ? snapshot.phase : "idle";
+    const ownChecking = checking && checkingFeature === feature;
+    if (!reply && snapshot.feature !== feature && !ownChecking) return null;
+    const status = ownChecking ? <s-banner tone="info" heading={selectionActivity ?? "Checking connection status…"} />
+    : reply?.kind === "unavailable" ? (
     <s-banner tone="warning" heading="Connection setup is not available yet." />
-  ) : feedback?.kind === "unknown" || snapshot.phase === "unknown" ? (
+  ) : reply?.kind === "unknown" || phase === "unknown" ? (
     <s-banner tone="critical" heading="We could not confirm the result. Check the connection status before starting again." />
-  ) : feedback?.kind === "status" && (feedback.stage === "existing_reporting_connection" || feedback.stage === "reporting_selected") ? null
-    : feedback?.kind === "status" ? (
+  ) : reply?.kind === "status" && (reply.stage === "existing_reporting_connection" || reply.stage === "reporting_selected") ? null
+    : reply?.kind === "status" ? (
     <s-stack direction="block" gap="base">
-      <s-banner tone="info" heading={feedback.stage === "review_setup"
+      <s-banner tone="info" heading={reply.stage === "review_setup"
         ? "Access verified. Setup is awaiting activation."
-        : feedback.stage === "products_required" ? "Product access is still missing. Resume setup when you are ready."
-        : feedback.stage === "klaviyo_cost_missing"
+        : reply.stage === "products_required" ? "Product access is still missing. Resume setup when you are ready."
+        : reply.stage === "klaviyo_cost_missing"
           ? "Add the estimated 30-day email spend to finish setup. Enter 0 if there is no cost."
-        : feedback.feature === "klaviyo" && feedback.stage === "select_account"
+        : reply.feature === "klaviyo" && reply.stage === "select_account"
           ? "Finish the remaining Klaviyo setup step with Resume setup."
-        : feedback.stage === "select_account" || feedback.stage === "select_reporting_account"
+        : reply.stage === "select_account" || reply.stage === "select_reporting_account"
           ? "Choose the account to use for reporting." : "Resume setup"} />
-      {feedback.stage === "request_permissions" || feedback.stage === "products_required" || feedback.feature === "klaviyo"
-        || ["select_account", "select_reporting_account"].includes(feedback.stage)
+      {reply.stage === "request_permissions" || reply.stage === "products_required" || reply.feature === "klaviyo"
+        || ["select_account", "select_reporting_account"].includes(reply.stage)
         ? <s-button disabled={busy ? true : undefined} onClick={resume}>Resume setup</s-button> : null}
     </s-stack>
-  ) : busy || snapshot.phase === "awaiting_status" ? (
-    <s-banner tone="info" heading={checking ? "Checking connection status…" : "Starting connection…"} />
+  ) : ["hiding_for_connect", "starting", "awaiting_status"].includes(phase) ? (
+    <s-banner tone="info" heading="Starting connection…" />
   ) : null;
+    return <>
+      {status}
+      {phase !== "explaining" ? (
+        <s-button disabled={busy || selectionModel ? true : undefined} onClick={() => checkStatus(feature)}>Check status</s-button>
+      ) : null}
+    </>;
+  };
   return {
-    open, checkStatus, busy, snapshot,
+    open, checkStatus, busy, snapshot, providerContent,
     removeProductAccess, removingProduct, productRemovalResult, productRemovalUnknown,
     removeOrderAccess, removingOrder, orderRemovalResult, orderRemovalUnknown,
     checkingProduct: checking ? checkingFeature === "shopify_products" : busy && snapshot.feature === "shopify_products",
     checkingOrder: checking ? checkingFeature === "shopify_orders" : busy && snapshot.feature === "shopify_orders",
     content: <>
-      {isShopifyPermission(snapshot.feature) || isShopifyPermission(feedback?.feature) ? null : status}
-      {(snapshot.feature ?? feedback?.feature) && snapshot.phase !== "explaining"
-        && !isShopifyPermission(snapshot.feature) && !isShopifyPermission(feedback?.feature) ? (
-        <s-button disabled={busy || selectionModel ? true : undefined} onClick={() => checkStatus((snapshot.feature ?? feedback?.feature)!)}>Check status</s-button>
-      ) : null}
       {selectionModel ? <PermissionSetupSelection model={selectionModel} busy={busy} onConfirm={confirmSelection} onAfterHide={afterSelectionHide} /> : null}
       <PermissionExplanation snapshot={snapshot} requestsAvailable={snapshot.feature ? availability[snapshot.feature] : false}
         unavailableReason={snapshot.feature ? unavailableReasons?.[snapshot.feature] : undefined}

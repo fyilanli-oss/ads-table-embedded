@@ -224,6 +224,20 @@ test("actual Settings action returns unknown without raw errors and never retrie
   assert.equal(attempts, 1);
 });
 
+test("actual Google failure logs its allowlisted reason while client receives only unknown",async()=>{
+  let attempts=0;const logs=[],saved=console.error;
+  console.error=value=>logs.push(JSON.parse(value));
+  try{
+    const route=loadRoute({release:{availability:{google_ads:true}},providerRuntime:()=>({beginCombinedSetup:async()=>{
+      attempts++;throw Object.assign(new Error("IDENTITY_OAUTH_DISCONNECT_INCOMPLETE"),{detail:"SECRET",token:"SECRET"});
+    }})});
+    const reply=await route.action({request:formRequest({intent:"permission_connect",feature:"google_ads",requestId})});
+    assert.deepEqual(reply,{kind:"unknown",feature:"google_ads",requestId});assert.equal(attempts,1);
+    assert.deepEqual(logs,[{event:"adstable_permission_error",code:"IDENTITY_OAUTH_DISCONNECT_INCOMPLETE",feature:"google_ads",intent:"permission_connect",requestId}]);
+    assert.doesNotMatch(JSON.stringify([reply,logs]),/SECRET/);
+  }finally{console.error=saved;}
+});
+
 test("permission actions do not implicitly rerun existing provider loaders", () => {
   const route = loadRoute();
   for (const intent of ["permission_connect", "permission_status", "permission_revoke_products", "permission_select_accounts", "permission_select_reporting"]) {

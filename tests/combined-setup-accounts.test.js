@@ -5,10 +5,26 @@ import {createMetaOAuthRuntime} from "../app/lib/oauth/meta-oauth-runtime.server
 import {oauthInstallationAuthority, OAUTH_CALLBACK_URIS} from "../app/lib/oauth/oauth-transaction.server.js";
 import {oauthPermissionScopes} from "../app/lib/oauth/oauth-permission-profile.server.js";
 import {stampGoogleIdentityCredential} from "../app/lib/oauth/google-identity-credential.server.js";
+import {createCombinedSetupAccounts} from "../app/lib/oauth/combined-setup-accounts.server.js";
 
 const id = n => `${String(n).repeat(8)}-${String(n).repeat(4)}-4${String(n).repeat(3)}-8${String(n).repeat(3)}-${String(n).repeat(12)}`;
 const owner = oauthInstallationAuthority({workspaceId: id(1), installGeneration: 2, status: "active"});
 const now = () => new Date("2026-10-29T12:00:00.000Z");
+
+for(const provider of ["google_ads","meta"])test(`${provider}: status read of clean disconnected connection offers explicit permissions without token/HTTP/write`,async()=>{
+  let current={connectionId:id(2),version:42,status:"disconnected",credentialId:null,disconnectedAt:"2026-10-31T09:58:00.000Z"};
+  const setup=createCombinedSetupAccounts({provider,enabled:true,lifecycle:{loadCurrent:async()=>current},
+    tokenVault:new Proxy({}, {get(){assert.fail("no old credential read");}}),
+    runtime:{select(){assert.fail("no selection write");},inspect(){assert.fail("no provider discovery");}}});
+  const result=await setup.inspect({installationAuthority:owner});
+  assert.equal(result.setupResumeAction,"request_permissions");assert.equal(result.connectionState,"disconnected");
+  assert.equal(result.setupComplete,false);assert.deepEqual(result.accounts,[]);
+  await assert.rejects(setup.select({installationAuthority:owner,selectedAccountIds:["123"],expectedConnection:{connectionId:id(2),version:42}}),/SELECTION_STATE_INVALID/);
+  current={...current,credentialId:id(3)};
+  await assert.rejects(setup.inspect({installationAuthority:owner}),/DISCONNECT_INCOMPLETE/);
+  current={...current,status:"disconnect_pending",disconnectedAt:null};
+  await assert.rejects(setup.inspect({installationAuthority:owner}),/LIFECYCLE_UNAVAILABLE/);
+});
 
 // Real runtimes, repositories and native validators; only I/O is synthetic.
 function harness(provider, options = {}) {
@@ -187,7 +203,7 @@ for (const provider of ["google_ads", "meta"]) {
   for (const status of ["disconnected", "disconnect_pending", "unknown"]) {
     test(`${provider}: ${status} is not implicitly revived`, async () => {
       const h = harness(provider, {status});
-      await assert.rejects(h.setup.inspect({installationAuthority: owner}), /LIFECYCLE_UNAVAILABLE/);
+      await assert.rejects(h.setup.inspect({installationAuthority: owner}), status === "disconnected" ? /DISCONNECT_INCOMPLETE/ : /LIFECYCLE_UNAVAILABLE/);
       assert.deepEqual(h.calls, []); assert.deepEqual(h.writes, []);
     });
   }

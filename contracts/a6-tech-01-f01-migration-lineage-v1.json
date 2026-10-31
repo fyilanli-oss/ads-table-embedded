@@ -706,7 +706,7 @@
       "name": "eo05a_identity_oauth_reconnect",
       "file": "supabase/migrations/20261031181313_eo05a_identity_oauth_reconnect.sql",
       "created_with": "supabase@2.121.0 migration new eo05a_identity_oauth_reconnect",
-      "repository_sql_sha256": "e0a31fc3cae0d009247ac166be3ac726b77aa69a3577b6f8acb854bf2a9ab6ca",
+      "repository_sql_sha256": "4ca675b0e1e3e2dbe7401948a25ec711e2f1aba7e368b87229c520448b22888c",
       "applied": false,
       "live_apply_authorized": false
     }

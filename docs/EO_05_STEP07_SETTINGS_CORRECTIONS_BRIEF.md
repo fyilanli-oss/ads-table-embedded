@@ -432,4 +432,6 @@ Güvenli log: yalnız sabit olay/feature/intent, allowlist hata kodu ve doğrula
 
 Test: disconnected başlangıç+callback+CAS; boş/bozuk cleanup kanıtı/pending/foreign owner/version reddi; atomik SQL başarı/stale/replay/eksik kapsam/rollback; gerçek Settings provider kartında feedback ve tekrar başlatmama; native Response ve güvenli hata logu. Native desktop/min320px kabulü ileride owner'dadır; izole testler native kabul değildir. SQL yalnız dosyada hazırlanır, canlıya uygulanmaz.
 
+Migration önkoşulu: 20261028164208 atomik yazar ve dört receipt alanı mevcut olmalı; yoksa yeni migration fonksiyonu değiştirmeden durur. Lineage bu önceki dosyayı hâlâ pending gösterdiğinden canlı önkoşul mevcut sayılmaz. İleride ayrı onayla doğrulanıp gerekirse yalnız gerekli önkoşul dosyası değerlendirilir; bütün pending migration'lar topluca uygulanmaz.
+
 31Ekim resmî kaynaklar: https://www.postgresql.org/docs/17/sql-createfunction.html ; https://supabase.com/docs/guides/database/functions ; https://shopify.dev/docs/api/app-home/latest/web-components/feedback-and-status-indicators/banner ; https://api.reactrouter.com/v7/functions/react-router.useFetcher.html . Pinli Polaris2.0 bileşenleri/type değişmez.07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımı.

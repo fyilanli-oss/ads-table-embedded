@@ -3,6 +3,18 @@ set local lock_timeout = '5s';
 set local statement_timeout = '30s';
 set local role adstable_owner;
 
+-- Refuse a partial rollout: this replaces the already installed atomic writer.
+do $precondition$
+begin
+  if to_regprocedure('integrations.commit_identity_oauth_credential(uuid,uuid,bigint,text,uuid,uuid,bigint,uuid,text[],jsonb,timestamptz,bytea,bytea,bytea,smallint,timestamptz)') is null
+    or (select count(*) from pg_catalog.pg_attribute where attrelid='integrations.oauth_transactions'::regclass
+      and attname in ('identity_credential_id','identity_connection_id','identity_connection_version','identity_result_status')
+      and not attisdropped) <> 4 then
+    raise exception 'IDENTITY_OAUTH_RECONNECT_PREREQUISITES_REQUIRED';
+  end if;
+end
+$precondition$;
+
 -- Explicit fresh OAuth reconnect; same signature, ownership and grants preserved.
 create or replace function integrations.commit_identity_oauth_credential(
   p_transaction uuid,p_workspace uuid,p_generation bigint,p_provider text,

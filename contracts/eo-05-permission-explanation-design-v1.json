@@ -10,6 +10,7 @@
     "UI": "Existing banner/Check status inside its own provider section; single modal host and Shopify cards unchanged",
     "log": "Fixed event/feature/intent, validated requestId and exact allowlisted error code only. No raw errors/SQL/state/token/payload; native Response preserved.",
     "migration": "supabase/migrations/20261031181313_eo05a_identity_oauth_reconnect.sql",
+    "migration_prerequisite": "Existing atomic writer and four receipt columns from 20261028164208 must already be installed; candidate fails before replacement otherwise. Lineage still records that prior migration as pending, so live prerequisite application must be verified and separately authorized, never inferred.",
     "migration_applied": false,
     "live_apply_authorized": false,
     "deploy_authorized": false,

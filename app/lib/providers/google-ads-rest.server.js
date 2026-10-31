@@ -16,6 +16,7 @@ const CUSTOMER_RESOURCE_PATTERN = /^customers\/([0-9]+)$/;
 const TOKEN_TYPE_PATTERN = /^Bearer$/i;
 const restFailureMetadata = new WeakMap();
 const customerNotEnabledFailures = new WeakSet();
+const accountDiscoveryExclusionFailures = new WeakSet();
 const REST_OPERATIONS = new Set(["list_accessible_customers", "search"]);
 const GOOGLE_STATUSES = new Set(["CANCELLED", "UNKNOWN", "INVALID_ARGUMENT", "DEADLINE_EXCEEDED", "NOT_FOUND", "ALREADY_EXISTS", "PERMISSION_DENIED", "RESOURCE_EXHAUSTED", "FAILED_PRECONDITION", "ABORTED", "OUT_OF_RANGE", "UNIMPLEMENTED", "INTERNAL", "UNAVAILABLE", "DATA_LOSS", "UNAUTHENTICATED"]);
 // Fixed documented values only; uppercase-looking arbitrary payload is not safe.
@@ -54,19 +55,25 @@ function restRequestFailure(message, details, operation, payload) {
   // Only the actual REST response can grant this narrow discovery exception.
   // Mixed, missing or malformed error details must retain first-error stopping.
   const failureDetails = payload?.error?.details;
+  const exclusionCode = failureDetails?.[0]?.errors?.[0]?.errorCode?.authorizationError;
   if (operation === "search" && details.status === 403
     && payload?.error?.status === "PERMISSION_DENIED"
+    && (exclusionCode === "CUSTOMER_NOT_ENABLED" || exclusionCode === "CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION")
     && Array.isArray(failureDetails) && failureDetails.length > 0
     && failureDetails.every(detail => Array.isArray(detail?.errors) && detail.errors.length > 0
       && detail.errors.every(item => item?.errorCode
         && Object.keys(item.errorCode).length === 1
-        && item.errorCode.authorizationError === "CUSTOMER_NOT_ENABLED"))) {
-    customerNotEnabledFailures.add(error);
+        && item.errorCode.authorizationError === exclusionCode))) {
+    accountDiscoveryExclusionFailures.add(error);
+    if (exclusionCode === "CUSTOMER_NOT_ENABLED") customerNotEnabledFailures.add(error);
   }
   return error;
 }
 export function isGoogleCustomerNotEnabledError(error) {
   return customerNotEnabledFailures.has(error);
+}
+export function isGoogleAccountDiscoveryExclusionError(error) {
+  return accountDiscoveryExclusionFailures.has(error);
 }
 export function googleAdsRestFailureMetadata(error) {
   return restFailureMetadata.get(error) ?? null;

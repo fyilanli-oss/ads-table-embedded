@@ -1,7 +1,7 @@
 import {
   createGoogleAdsRestClient,
   GOOGLE_ADS_OAUTH_SCOPE,
-  isGoogleCustomerNotEnabledError,
+  isGoogleAccountDiscoveryExclusionError,
 } from "./google-ads-rest.server.js";
 
 const MAX_DISCOVERED_ACCOUNTS = 1000;
@@ -109,7 +109,7 @@ export async function discoverGoogleAdsAccounts({
       });
       queriedRootCount += 1;
     } catch (error) {
-      if (isGoogleCustomerNotEnabledError(error)) {
+      if (isGoogleAccountDiscoveryExclusionError(error)) {
         excludedRoots.add(rootId);
         // A manager may have listed this root earlier. It cannot remain selectable.
         accounts.delete(rootId);

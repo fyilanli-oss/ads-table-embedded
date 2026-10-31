@@ -1,5 +1,27 @@
 # EO-05 / mevcut 07 — onaylı Settings düzeltmesi
 
+## 31 Ekim — mevcut07: test ve gerçek hesapların birlikte keşfi
+
+27 Ekim PR192/8074086 ile yeni kimlik yoluna stopOnFirstError ayarını ben ekledim.
+16 Ekim16a54df kaydında test hesabıyla başarı var; eski keşif kök hesap hatasında
+diğer hesaplara devam ediyordu. Son güvenli kayıt search HTTP403/PERMISSION_DENIED/
+CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION; hangi hesapta olduğu kanıtlanmadı.
+
+Owner yalnız dar kod ve sentetik test hazırlığını onayladı. Mevcut gerçek REST
+kanıtına dayalı hesap elemesi iki kesin koda genişler: CUSTOMER_NOT_ENABLED ve
+CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION. Yalnız search HTTP403/PERMISSION_DENIED
+ve tamamı aynı izinli authorizationError olan dolu hata kayıtları kabul edilir.
+Karışık/eksik/bilinmeyen hatalar veya diğer durumlar strict duruşu korur.
+Reddedilen kök tekrar denenmez, adaylardan çıkarılır ve yeniden eklenmez.
+Okunabilen diğer hesaplar korunur; hepsi reddedilirse başarı veya credential
+kaydı yoktur. Hata kodundan hesabın test_account değeri üretilmez.
+
+OAuth ekran/sıra/kapsam, açık1–3 reklam hesabı seçimi, manager yasağı ve Reporting
+Account değişmez. Kod/test yetkisi canlı çağrı, native tekrar, config/env, DB,
+merge veya yayın yetkisi değildir.07 açık;15 başlamadı;22 paused;23 Dataset yazımı.
+31 Ekim2026 resmî kontrol: https://developers.google.com/google-ads/api/reference/rpc/v25/AuthorizationErrorEnum.AuthorizationError
+Bağlayıcı güncel kayıt: contracts/eo-05-permission-explanation-design-v1.json#Google_mixed_account_access_isolation_2026_10_31
+
 ## 31 Ekim — mevcut07: etkin olmayan Google hesabını dar kapsamda eleme
 
 Owner yalnız kod ve sentetik test hazırlığını onayladı. Gerçek search kaydında

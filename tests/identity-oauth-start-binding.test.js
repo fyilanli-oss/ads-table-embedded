@@ -174,10 +174,11 @@ function runtimeHarness(provider, {enabled = false, changedDuringRead = false, c
 const claimed = {status: "claimed", transactionId: id(3), workspaceId: owner.workspaceId, installGeneration: 2,
   permissionProfile: "identity_v1", identityBinding: initial, authorizationCode: "code", pkceVerifier: "verifier"};
 
-test("Google callback excludes unavailable root and stages only valid accounts without connecting", async () => {
+for (const refusalCode of ["CUSTOMER_NOT_ENABLED", "CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION"]) {
+test(`Google callback excludes ${refusalCode} root and stages only valid accounts without connecting`, async () => {
   const h = runtimeHarness("google_ads", {enabled: true, googleRoots: ["customers/111", "customers/222"],
     googleResponses: {
-      111: {status: 403, body: {error: {status: "PERMISSION_DENIED", details: [{errors: [{errorCode: {authorizationError: "CUSTOMER_NOT_ENABLED"}}]}]}}},
+      111: {status: 403, body: {error: {status: "PERMISSION_DENIED", details: [{errors: [{errorCode: {authorizationError: refusalCode}}]}]}}},
       222: {body: {results: [{customerClient: {id: "222", manager: false, level: 0}}]}},
     }});
   const result = await h.runtime.completeCallback({claimed});
@@ -188,9 +189,9 @@ test("Google callback excludes unavailable root and stages only valid accounts w
   assert.deepEqual(h.writes, ["atomic"]);
   assert.equal(h.calls.length, 4);
 });
-test("Google callback with all unavailable roots never stages a credential", async () => {
+test(`Google callback with all ${refusalCode} roots never stages a credential`, async () => {
   const h = runtimeHarness("google_ads", {enabled: true, googleRoots: ["customers/111"], googleResponses: {
-    111: {status: 403, body: {error: {status: "PERMISSION_DENIED", details: [{errors: [{errorCode: {authorizationError: "CUSTOMER_NOT_ENABLED"}}]}]}}},
+    111: {status: 403, body: {error: {status: "PERMISSION_DENIED", details: [{errors: [{errorCode: {authorizationError: refusalCode}}]}]}}},
   }});
   await assert.rejects(h.runtime.completeCallback({claimed}), /Google Ads REST request failed/);
   assert.deepEqual(h.committedAccounts, []);
@@ -198,6 +199,7 @@ test("Google callback with all unavailable roots never stages a credential", asy
   assert.equal(h.writes.includes("atomic"), false);
   assert.equal(h.calls.length, 3);
 });
+}
 
 for (const provider of ["google_ads", "meta"]) {
   test(`${provider}: explicit disconnected reconnect binds the old version and ends at fresh account selection`,async()=>{

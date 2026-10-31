@@ -1,5 +1,15 @@
 {
   "Explicit_reconnect_2026_10_31": {
+    "scoped_rollout_correction": {
+      "authority": "Owner explicitly approved code/migration correction and isolated tests after read-only dependency audit; no new live apply, deployment, merge or native retry",
+      "failed_live_attempt": "First atomic_stage migration failed with 42704 missing adstable_refresh_coordinator; readback confirmed full rollback, no writer and zero receipt columns. Second migration and deployment not attempted.",
+      "correction": "Only pending atomic_stage SQL changed: core REVOKE targets remain required; optional coordinator REVOKE runs only if role exists. No role creation or refresh infrastructure dependency. Runtime-only grants retained.",
+      "test_gap": "Previous F01 staged/full both included all pending migrations and thus created the coordinator before OAuth SQL; neither proved the exact selected live rollout",
+      "test_path": "Third empty ephemeral database: 38 historical + 2 applied forward then only atomic_stage/reconnect exact files with real commits. Reuse real envelope/CAS/receipt/replay/rollback probes without coordinator. Separate rollback branch with coordinator and default EXECUTE proves both functions revoke it.",
+      "live_applied": false,
+      "deployment_performed": false,
+      "new_native_retry": false
+    },
     "checked_at": "2026-10-31",
     "existing_plan_step": 7,
     "authority": "Explicit owner approval for reconnect code, migration file and isolated tests; no live apply/deploy/native retry/merge",

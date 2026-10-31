@@ -1,3 +1,19 @@
+## 31 Ekim — mevcut07: eksik refresh rolü ve seçili OAuth yayın provası
+
+Onaylı canlı ilk migration denemesi `adstable_refresh_coordinator` yokluğu nedeniyle
+42704 ile durdu; işlem tamamen geri alındı, ikinci migration/yayın yapılmadı.
+Salt okunur denetim rolün pending refresh altyapısına ait olduğunu, OAuth'ta yalnız
+REVOKE hedefi olduğunu gösterdi. Ürün sahibi yalnız dosya düzeltme ve izole testleri
+onayladı. Pending atomic_stage dosyasında koordinatörün REVOKE'u rol varsa çalışır;
+diğer zorunlu REVOKE ve runtime-only grant korunur. Rol veya refresh altyapısı kurulmaz.
+F01 staged/full bütün pending dosyaları içerdiğinden önceki PASS seçili canlı yolu
+kanıtlamıyordu. Üçüncü boş runner DB'sinde canlı40 başlangıç + yalnız atomic_stage/
+reconnect gerçek commit sınırlarıyla ve rol yokken sınanır; ayrı rollback dalında
+rol varsa default EXECUTE dahi kaldırılmalıdır. Gerçek SQL/CAS/receipt/rollback
+probeları iki dalda yeniden kullanılır. Canlı uygulama/yayın/merge/native test için
+yeni onay gerekir. Ayrıntı mevcut07 brief ve permission-design contract kaydındadır.
+07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.
+
 ## 31 Ekim — mevcut07: açık Connect ile yeniden bağlanma düzeltmesi
 
 Ürün sahibi dar teşhisten sonra kod, migration dosyası ve izole testleri onayladı. Aktif development mağazasının Google kaydı disconnected/version42; başlangıç kapısı ve atomik commit bu durumu reddediyordu. Hazırlanan ortak Google/Meta akışı, kaldırılması tamamlanmış bağlantıyı exact ID/version ile yeni onaya bağlar. Eski credential/grant/hesap seçimi yeniden etkinleştirilmez. Disconnect_pending/unknown, stale bağlantı ve eksik temizlik kapalı; connected upgrade korumaları ve atomik claim/CAS/receipt korunur. Temiz disconnected için açık Check status, token/native okuma veya yazma yapmadan request_permissions döndürür. Meta'nın canlı yayın anahtarı kapalı kalır.

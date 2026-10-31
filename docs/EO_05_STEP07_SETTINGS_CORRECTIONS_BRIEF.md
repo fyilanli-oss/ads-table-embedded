@@ -420,6 +420,32 @@ https://shopify.dev/docs/apps/build/authentication-authorization/manage-access-s
 https://shopify.dev/docs/api/app-home/latest/apis/authentication-and-data/scopes-api
 Mevcut native modal/button/badge/banner kaynakları ve pinli Polaris2.0 değişmez.
 07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.
+## 31 Ekim — mevcut07: canlı başlangıçtan seçili OAuth migration provası
+
+Ürün sahibi eksik rolün salt okunur denetiminden sonra yalnız düzeltme ve izole
+testleri açıkça onayladı. Canlı migration/yayın/merge/native retry onayı yoktur.
+Önceki onaylı canlı deneme ilk dosyada 42704 ile durdu; geri alma kontrolünde
+atomik yazar yok, receipt kolonları0, rol yok bulundu; ikinci dosya/yayın denenmedi.
+Rol 20261020092429 refresh altyapısına aittir. OAuth onu yalnız REVOKE listesinde
+anıyordu; bu dosya rol oluşturmaz veya ona yetki vermez. Henüz uygulanmamış
+20261028164208 içindeki diğer REVOKE hedefleri korunur; koordinatör için iki
+fonksiyondaki REVOKE yalnız rol varsa çalışır. Runtime-only grant aynı kalır.
+
+F01'in önceki staged/full yolları bütün pending dosyaları da kuruyordu; bu nedenle
+canlı40 + yalnız iki dosya yolunun geçmesi önceki PASS'ten çıkarılamaz. Yeni üçüncü
+boş GitHub runner veritabanı 38historical + 2uygulanmış forward dosyasını, sonra
+yalnız atomic_stage ve reconnect'i gerçek BEGIN/COMMIT sınırlarıyla kurar. Refresh
+rolü/tabloları oluşmamalıdır. Gerçek envelope/SQL CAS, seçimin korunması/yeniden
+istenmesi, eski sürüm/tekrar/eksik izin reddi, geç hata geri alma ve yetkiler aynı
+probe ile sınanır. Ayrı rollback dalında koordinatör önceden vardır; default
+EXECUTE verilmiş olsa da iki fonksiyondan kaldırıldığı doğrulanır. Fixture,
+geçici üyelik ve test rolü geri alınır. Native HTTP ve canlı bağlantı yoktur.
+Migration fingerprint yalnız pending dosyada yenilenir; applied/historical SQL
+değişmez. Bu testlerin sonucu canlı uygulama veya 07 kapanışı değildir.
+31Ekim2026 resmî kaynaklar: https://www.postgresql.org/docs/17/sql-revoke.html ;
+https://www.postgresql.org/docs/17/sql-do.html ;
+https://www.postgresql.org/docs/17/sql-alterdefaultprivileges.html .
+
 ## 31 Ekim — mevcut07: açık Connect ile yeniden bağlanma ve sağlayıcıya ait sonuç
 
 Ürün sahibi salt okunur teşhisten sonra kod, migration dosyası ve izole test hazırlığını açıkça onayladı. Canlı migration, yayın, provider-native deneme ve merge bu onaya dahil değildir. Canlıdaki tek kayıt kontrolünde aktif adstable-development mağazasının Google kaydı disconnected/version42 bulundu. Başlangıç kapısı ve atomik dönüş fonksiyonu disconnected durumunu reddediyordu. Asıl hata route catch içinde kayıtsız unknown'a çevriliyor; ortak feedback host'u Shopify bölümünün hemen altında bulunuyordu.

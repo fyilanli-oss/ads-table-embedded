@@ -73,3 +73,16 @@ jobs:
           if test -f "$RUNNER_TEMP/f01b-staged/supabase/config.toml"; then
             pnpm dlx supabase@2.121.0 stop --no-backup --workdir "$RUNNER_TEMP/f01b-staged"
           fi
+      - name: Start third empty database for exact scoped OAuth rollout
+        run: |
+          mkdir -p "$RUNNER_TEMP/f01b-identity-rollout"
+          pnpm dlx supabase@2.121.0 init --workdir "$RUNNER_TEMP/f01b-identity-rollout"
+          pnpm dlx supabase@2.121.0 db start --workdir "$RUNNER_TEMP/f01b-identity-rollout"
+      - name: Live baseline plus only two OAuth migrations and both role states
+        run: node tools/f01-identity-oauth-rollout.mjs
+      - name: Clean third isolated database
+        if: always()
+        run: |
+          if test -f "$RUNNER_TEMP/f01b-identity-rollout/supabase/config.toml"; then
+            pnpm dlx supabase@2.121.0 stop --no-backup --workdir "$RUNNER_TEMP/f01b-identity-rollout"
+          fi

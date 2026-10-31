@@ -31,7 +31,7 @@ export async function identityOAuthAtomicProbe(client,{execution}) {
   }
 }
 
-async function identityOAuthAtomicProbeWithTestMembership(client,{execution}) {
+export async function identityOAuthAtomicProbeWithTestMembership(client,{execution,coordinatorExpected=true}) {
   const {workspaceId,installGeneration}=execution.claim;
   const owner={authority:"shopify_installation_verified",status:"active",workspaceId,installGeneration:Number(installGeneration)};
   const environment={ADSTABLE_PROVIDER_TOKEN_ACTIVE_KEY_VERSION:"1",
@@ -172,7 +172,8 @@ async function identityOAuthAtomicProbeWithTestMembership(client,{execution}) {
       }
     }
     console.log("EO05_IDENTITY_RECONNECT_PASS real_SQL_CAS_fresh_scope_pending_selection=true stale_pending_active_reporting_replay_rejected=true native_HTTP=0");
-    for(const role of ["anon","authenticated","service_role","adstable_refresh_coordinator"]){
+    assert.equal((await client.query("select exists(select 1 from pg_roles where rolname='adstable_refresh_coordinator') present")).rows[0].present,coordinatorExpected);
+    for(const role of ["anon","authenticated","service_role",...(coordinatorExpected?["adstable_refresh_coordinator"]:[])]){
       assert.equal((await client.query("select has_function_privilege($1,'integrations.read_identity_oauth_commit(uuid,uuid,bigint,text)','EXECUTE') allowed",[role])).rows[0].allowed,false);
     }
     assert.equal((await client.query("select has_table_privilege('adstable_runtime','integrations.oauth_transactions','SELECT,INSERT,UPDATE,DELETE') allowed")).rows[0].allowed,false);

@@ -1,4 +1,16 @@
 {
+  "Google_unavailable_account_exclusion_2026_10_31": {
+    "existing_plan_step": 7,
+    "authority": "Explicit owner approval: narrow code and synthetic tests only. No live request, OAuth retry, config, database, deployment or merge.",
+    "confirmed_cause": "2026-10-31T20:15:54.150Z actual search HTTP403 PERMISSION_DENIED CUSTOMER_NOT_ENABLED; account identity intentionally not logged.",
+    "rule": "Only actual REST search HTTP403 PERMISSION_DENIED with nonempty, exclusively authorizationError CUSTOMER_NOT_ENABLED details excludes that root. Do not retry it; remove prior candidate and prevent re-addition; evaluate other roots. Every other strict discovery error stops immediately. All-unavailable must fail, never connect.",
+    "unchanged": "OAuth screens/order/scopes, manager non-selectability, one-to-three advertiser selection, Reporting Account and atomic selection staging.",
+    "official_checked": "2026-10-31",
+    "source": "https://developers.google.com/google-ads/api/reference/rpc/v25/AuthorizationErrorEnum.AuthorizationError",
+    "status": "code_and_synthetic_tests_preparation_only",
+    "deployed": false,
+    "merge_authorized": false
+  },
   "Google_REST_safe_cause_2026_10_31": {
     "existing_plan_step": 7,
     "authority": "Explicit owner approval for narrow safe REST failure metadata and synthetic tests only; no live request/config/deploy/native retry/merge",

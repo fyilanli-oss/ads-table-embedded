@@ -15,6 +15,7 @@ export const GOOGLE_ADS_REST_VERSION = "v25";
 const CUSTOMER_RESOURCE_PATTERN = /^customers\/([0-9]+)$/;
 const TOKEN_TYPE_PATTERN = /^Bearer$/i;
 const restFailureMetadata = new WeakMap();
+const customerNotEnabledFailures = new WeakSet();
 const REST_OPERATIONS = new Set(["list_accessible_customers", "search"]);
 const GOOGLE_STATUSES = new Set(["CANCELLED", "UNKNOWN", "INVALID_ARGUMENT", "DEADLINE_EXCEEDED", "NOT_FOUND", "ALREADY_EXISTS", "PERMISSION_DENIED", "RESOURCE_EXHAUSTED", "FAILED_PRECONDITION", "ABORTED", "OUT_OF_RANGE", "UNIMPLEMENTED", "INTERNAL", "UNAVAILABLE", "DATA_LOSS", "UNAUTHENTICATED"]);
 // Fixed documented values only; uppercase-looking arbitrary payload is not safe.
@@ -42,7 +43,7 @@ const GOOGLE_FAILURE_CODES = new Set([
 
 // Metadata is derived at the actual REST failure, never from a caller's error
 // details. No header/request-id, endpoint, account, query or payload leaves here.
-function restRequestFailure(message, details, operation) {
+function restRequestFailure(message, details, operation, payload) {
   const error = new GoogleAdsRestError("GOOGLE_ADS_REST_REQUEST_FAILED", message, details);
   restFailureMetadata.set(error, Object.freeze({
     operation: REST_OPERATIONS.has(operation) ? operation : null,
@@ -50,7 +51,22 @@ function restRequestFailure(message, details, operation) {
     provider_status: GOOGLE_STATUSES.has(details.provider_status) ? details.provider_status : null,
     provider_error_code: GOOGLE_FAILURE_CODES.has(details.provider_error_code) ? details.provider_error_code : null,
   }));
+  // Only the actual REST response can grant this narrow discovery exception.
+  // Mixed, missing or malformed error details must retain first-error stopping.
+  const failureDetails = payload?.error?.details;
+  if (operation === "search" && details.status === 403
+    && payload?.error?.status === "PERMISSION_DENIED"
+    && Array.isArray(failureDetails) && failureDetails.length > 0
+    && failureDetails.every(detail => Array.isArray(detail?.errors) && detail.errors.length > 0
+      && detail.errors.every(item => item?.errorCode
+        && Object.keys(item.errorCode).length === 1
+        && item.errorCode.authorizationError === "CUSTOMER_NOT_ENABLED"))) {
+    customerNotEnabledFailures.add(error);
+  }
   return error;
+}
+export function isGoogleCustomerNotEnabledError(error) {
+  return customerNotEnabledFailures.has(error);
 }
 export function googleAdsRestFailureMetadata(error) {
   return restFailureMetadata.get(error) ?? null;
@@ -364,7 +380,7 @@ async function googleJson({ url, method, headers, body, fetchFn, operation }) {
         provider_status: publicProviderError(payload),
         provider_error_code: publicProviderFailureCode(payload),
         request_id: requestId,
-      }, operation,
+      }, operation, payload,
     );
   }
   return Object.freeze({ payload, requestId });

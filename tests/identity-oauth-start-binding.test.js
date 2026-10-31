@@ -116,8 +116,10 @@ for (const provider of ["meta", "google_ads"]) {
 }
 
 function runtimeHarness(provider, {enabled = false, changedDuringRead = false, current = null, commitFails = false, returnFails = false,
-  grantedScopes, finalizeFails = false, finalizeMismatch = null, commitScopeError = false, commitStatus = "pending_account_selection", providerStatus = 200} = {}) {
+  grantedScopes, finalizeFails = false, finalizeMismatch = null, commitScopeError = false, commitStatus = "pending_account_selection", providerStatus = 200,
+  googleRoots = null, googleResponses = null} = {}) {
   const calls = [], writes = [], vault = [], lifecycleReads = [];
+  const committedAccounts = [];
   let currentRow = current;
   const database = {async query(sql, values) {
     if (sql.includes("load_provider_connection_lifecycle_by_owner")) {lifecycleReads.push(values); return {rows: currentRow ? [{
@@ -139,6 +141,7 @@ function runtimeHarness(provider, {enabled = false, changedDuringRead = false, c
   const tokenVault = {async assertReady() {}, async store() {}, async take() {}, async remove() {},
     async storeProviderTokenSet() {vault.push("store"); return {credentialId: id(4)};},
     async commitIdentityOAuthCredential(value) {writes.push("atomic");
+      committedAccounts.push(value.accounts);
       assert.deepEqual(value.binding,current===null?initial:{connectionId:current.connectionId,version:current.version}); assert.ok(value.accounts.length);
       if(commitScopeError) throw new OAuthPermissionProfileError("OAUTH_IDENTITY_SCOPE_NOT_GRANTED");
       if (commitFails) throw Error("IDENTITY_OAUTH_WRITE_UNCONFIRMED");
@@ -155,17 +158,46 @@ function runtimeHarness(provider, {enabled = false, changedDuringRead = false, c
       if (provider === "google_ads") {
         if (calls.length === 1) return json({access_token: "token", refresh_token: "refresh", token_type: "Bearer", expires_in: 3600,
           scope:Array.isArray(nativeScopes)?nativeScopes.join(" "):nativeScopes});
-        if (calls.length === 2) return json({resourceNames: ["customers/123"]});
+        if (calls.length === 2) return json({resourceNames: googleRoots ?? ["customers/123"]});
+        if (googleResponses) {
+          const response = googleResponses[/customers\/(\d+)\//.exec(address)[1]];
+          return json(response.body, response.status ?? 200);
+        }
         return json({results: [{customerClient: {id: "123", level: 0, manager: false}}]});
       }
       if (calls.length < 3) return json({access_token: "token"});
       if (calls.length === 3) return json({data: {app_id: "123", is_valid: true, scopes:nativeScopes, expires_at: 1893456000}});
       return json({data: [{id: "act_123", name: "Shop"}]});
     }});
-  return {runtime, calls, writes, vault, lifecycleReads, current:()=>currentRow};
+  return {runtime, calls, writes, vault, lifecycleReads, committedAccounts, current:()=>currentRow};
 }
 const claimed = {status: "claimed", transactionId: id(3), workspaceId: owner.workspaceId, installGeneration: 2,
   permissionProfile: "identity_v1", identityBinding: initial, authorizationCode: "code", pkceVerifier: "verifier"};
+
+test("Google callback excludes unavailable root and stages only valid accounts without connecting", async () => {
+  const h = runtimeHarness("google_ads", {enabled: true, googleRoots: ["customers/111", "customers/222"],
+    googleResponses: {
+      111: {status: 403, body: {error: {status: "PERMISSION_DENIED", details: [{errors: [{errorCode: {authorizationError: "CUSTOMER_NOT_ENABLED"}}]}]}}},
+      222: {body: {results: [{customerClient: {id: "222", manager: false, level: 0}}]}},
+    }});
+  const result = await h.runtime.completeCallback({claimed});
+  assert.equal(result.outcome, "pending_account_selection");
+  assert.equal(result.setupComplete, false);
+  assert.equal(result.setupResumeAction, "select_account");
+  assert.deepEqual(h.committedAccounts.flat().map(account => account.id), ["222"]);
+  assert.deepEqual(h.writes, ["atomic"]);
+  assert.equal(h.calls.length, 4);
+});
+test("Google callback with all unavailable roots never stages a credential", async () => {
+  const h = runtimeHarness("google_ads", {enabled: true, googleRoots: ["customers/111"], googleResponses: {
+    111: {status: 403, body: {error: {status: "PERMISSION_DENIED", details: [{errors: [{errorCode: {authorizationError: "CUSTOMER_NOT_ENABLED"}}]}]}}},
+  }});
+  await assert.rejects(h.runtime.completeCallback({claimed}), /Google Ads REST request failed/);
+  assert.deepEqual(h.committedAccounts, []);
+  assert.deepEqual(h.vault, []);
+  assert.equal(h.writes.includes("atomic"), false);
+  assert.equal(h.calls.length, 3);
+});
 
 for (const provider of ["google_ads", "meta"]) {
   test(`${provider}: explicit disconnected reconnect binds the old version and ends at fresh account selection`,async()=>{

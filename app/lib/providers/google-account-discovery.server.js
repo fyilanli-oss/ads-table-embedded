@@ -1,6 +1,7 @@
 import {
   createGoogleAdsRestClient,
   GOOGLE_ADS_OAUTH_SCOPE,
+  isGoogleCustomerNotEnabledError,
 } from "./google-ads-rest.server.js";
 
 const MAX_DISCOVERED_ACCOUNTS = 1000;
@@ -90,11 +91,13 @@ export async function discoverGoogleAdsAccounts({
   }
 
   const accounts = new Map();
+  const excludedRoots = new Set();
   let queriedRootCount = 0;
   let lastFailure = null;
 
   for (const accessibleCustomer of accessible.customers) {
     const rootId = customerId(accessibleCustomer.customer_id);
+    if (excludedRoots.has(rootId)) continue;
     let result;
     try {
       // Preserve the proven legacy discovery contract: every directly accessible
@@ -106,6 +109,13 @@ export async function discoverGoogleAdsAccounts({
       });
       queriedRootCount += 1;
     } catch (error) {
+      if (isGoogleCustomerNotEnabledError(error)) {
+        excludedRoots.add(rootId);
+        // A manager may have listed this root earlier. It cannot remain selectable.
+        accounts.delete(rootId);
+        lastFailure = error;
+        continue;
+      }
       if (stopOnFirstError) throw error;
       lastFailure = error;
       continue;
@@ -119,6 +129,7 @@ export async function discoverGoogleAdsAccounts({
         throw new Error("GOOGLE_CUSTOMER_CLIENT_LEVEL_INVALID");
       }
       const account = normalizedAccount(value, rootId);
+      if (excludedRoots.has(account.id)) continue;
       const existing = accounts.get(account.id);
       if (!existing || existing.loginAccountId === null) {
         accounts.set(account.id, account);

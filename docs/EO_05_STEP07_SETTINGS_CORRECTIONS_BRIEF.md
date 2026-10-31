@@ -1,5 +1,23 @@
 # EO-05 / mevcut 07 — onaylı Settings düzeltmesi
 
+## 31 Ekim — mevcut07: etkin olmayan Google hesabını dar kapsamda eleme
+
+Owner yalnız kod ve sentetik test hazırlığını onayladı. Gerçek search kaydında
+HTTP403 / PERMISSION_DENIED / CUSTOMER_NOT_ENABLED doğrulandı. Yalnız gerçek REST
+yanıtındaki bütün hata kayıtları bu authorizationError değerini taşıyorsa ilgili
+kök hesap seçimden çıkarılır; aynı hesap yeniden sorgulanmaz veya başka yönetici
+altından listeye geri eklenmez. Diğer kök hesaplar değerlendirilir. Karışık, eksik,
+farklı HTTP/status/enum veya listAccessibleCustomers hatası strict modda hemen
+durdurur. Bütün hesaplar elenirse başarı veya Connected üretilmez. Geçerli sonuç
+yalnız pending_account_selection aşamasına gider. Ekran, OAuth sırası, scope,
+1–3 reklam hesabı seçimi, manager yasağı ve Reporting Account değişmez.
+
+31 Ekim2026 resmî kontrol: https://developers.google.com/google-ads/api/reference/rpc/v25/AuthorizationErrorEnum.AuthorizationError
+Kod/test hazırlığı canlı istek, native tekrar, config/env, migration/DB, yayın veya
+merge yetkisi değildir.07 açık;15 başlamadı;22 paused;23 Dataset yazımıdır.
+Yeni kayıt önceki genel strict ilk-hata kuralına yalnız bu dar istisnayı ekler.
+
+
 ## 31 Ekim — Google hesap okuma hatasında güvenli teknik neden
 
 Owner yalnız dar kod/test hazırlığını onayladı; canlı istek/config/yayın/native

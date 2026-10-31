@@ -24,18 +24,18 @@ export function ProductAccessRemoval({owner, ready, busy, onConfirm, onUnknown}:
   }, []);
   return <>
     {ready ? <s-button tone="critical" commandFor="shopify-products-revoke-modal" command="--show"
-      disabled={busy || !owner ? true : undefined}>Ürün erişimini kaldır</s-button> : null}
-    <s-modal ref={modal} id="shopify-products-revoke-modal" heading="Ürün erişimi kaldırılsın mı?" size="base" padding="base">
-      <s-paragraph>AdsTable'ın Shopify ürün ve varyantlarını okuma izni kaldırılacak. Ürün kimliği eşleştirmesi için yeniden izin vermeniz gerekecek. Mevcut kayıtlar silinmez.</s-paragraph>
+      disabled={busy || !owner ? true : undefined}>Remove product access</s-button> : null}
+    <s-modal ref={modal} id="shopify-products-revoke-modal" heading="Remove product access?" size="base" padding="base">
+      <s-paragraph>AdsTable's permission to read Shopify products and variants will be removed. You will need to grant access again for product identity matching. Existing records will not be deleted.</s-paragraph>
       <s-button slot="primary-action" variant="primary" tone="critical" disabled={busy || !ready || !owner ? true : undefined}
         onClick={() => {
           if (intent.current || !owner || !ready || busy) return;
           intent.current = {owner};
           try {if (!modal.current) throw new Error("MODAL_UNAVAILABLE"); modal.current.hideOverlay();}
           catch {intent.current = null; onUnknown();}
-        }}>Erişimi kaldır</s-button>
+        }}>Remove access</s-button>
       <s-button slot="secondary-actions" variant="secondary" commandFor="shopify-products-revoke-modal" command="--hide"
-        onClick={() => {intent.current = null;}}>Vazgeç</s-button>
+        onClick={() => {intent.current = null;}}>Cancel</s-button>
     </s-modal>
   </>;
 }

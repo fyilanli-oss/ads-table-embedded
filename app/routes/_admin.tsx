@@ -45,8 +45,8 @@ export default function AuthenticatedAdminLayout() {
   }, [pathname, permissionReturnOwner, navigate]);
   return (
     <AppProvider apiKey={apiKey} polarisUrl={polarisUrl}>
-      {returnState === "returning" ? <s-page heading="Settings"><s-banner tone="info" heading="Settings'e dönülüyor…" /></s-page>
-        : returnState === "failed" ? <s-page heading="Settings"><s-banner tone="critical" heading="Settings'e otomatik dönülemedi."><s-link href="/settings">Settings'i aç</s-link></s-banner></s-page>
+      {returnState === "returning" ? <s-page heading="Settings" />
+        : returnState === "failed" ? <s-page heading="Settings"><s-banner tone="critical" heading="Could not return to Settings."><s-link href="/settings">Open Settings</s-link></s-banner></s-page>
         : <Outlet />}
     </AppProvider>
   );

@@ -60,7 +60,7 @@ function harness({accounts = [account], providerRuntime = () => assert.fail("une
     if (id === "react-router") return {useLoaderData: () => h.state, useActionData: () => undefined,
       useNavigation: () => h.navigation, useRevalidator: () => h.revalidator, useFetcher: () => h.fetcher,
       useSubmit: () => () => assert.fail("unexpected navigation submission")};
-    if (id === "../components/use-permission-settings") return {usePermissionSettings: props => {h.permissionProps = props; return {busy: false, checkingProduct: false, content: null};}};
+    if (id === "../components/use-permission-settings") return {usePermissionSettings: props => {h.permissionProps = props; return {busy: false, checkingProduct: false, content: null, ...h.permissionResult};}};
     if (id === "../components/product-access-removal") return {ProductAccessRemoval: "ProductAccessRemoval"};
     if (id === "../shopify.server") return {authenticate: {admin: async () => verified}, database: {}, providerTokenVault: {}};
     if (id.endsWith("/shopify-route-authority.server.js")) return {resolveShopifyRouteAuthority: async () => verified};
@@ -251,7 +251,7 @@ test("successful setup replaces the pending modal only after server state become
 
 test("Products card shows fresh verified access without Connect or technical activation copy", () => {
   const h = harness(); h.state.shopifyProductAccess = "ready"; h.render();
-  assert.ok(nodes(h.tree).some(e => e.type === "s-badge" && text(e) === "Ürün erişimi onaylandı"));
+  assert.ok(nodes(h.tree).some(e => e.type === "s-badge" && text(e) === "Product access approved"));
   assert.ok(nodes(h.tree).some(e => e.type === "ProductAccessRemoval" && e.props.ready === true));
   assert.equal(nodes(h.tree).some(e => e.type === "s-button" && text(e) === "Connect Shopify products"), false);
   assert.equal(text(h.tree).includes("awaiting activation"), false);
@@ -262,13 +262,21 @@ test("Products missing and unknown remain distinct; unknown offers readback inst
   assert.ok(nodes(h.tree).some(e => e.type === "s-button" && text(e) === "Connect Shopify products"));
   h.state = {...h.state, shopifyProductAccess: "unknown"}; h.render();
   assert.equal(nodes(h.tree).some(e => e.type === "s-button" && text(e) === "Connect Shopify products"), false);
-  assert.ok(nodes(h.tree).some(e => e.type === "s-button" && text(e) === "Durumu kontrol et"));
+  assert.ok(nodes(h.tree).some(e => e.type === "s-button" && text(e) === "Check status"));
 });
 
 test("Products status reply updates its card immediately and a new loader cannot retain stale ready state", () => {
   const h = harness(); h.state.shopifyProductAccess = "missing"; h.render();
   h.permissionProps.onProductStatus("ready"); h.render();
-  assert.ok(nodes(h.tree).some(e => e.type === "s-badge" && text(e) === "Ürün erişimi onaylandı"));
+  assert.ok(nodes(h.tree).some(e => e.type === "s-badge" && text(e) === "Product access approved"));
   h.state = {...h.state, shopifyProductAccess: "missing"}; h.render();
-  assert.equal(nodes(h.tree).some(e => e.type === "s-badge" && text(e) === "Ürün erişimi onaylandı"), false);
+  assert.equal(nodes(h.tree).some(e => e.type === "s-badge" && text(e) === "Product access approved"), false);
+});
+
+test("verified removal has one English result without the initial not-connected message", () => {
+  const h = harness(); h.state.shopifyProductAccess = "missing";
+  h.permissionResult = {productRemovalResult: "removed"}; h.render();
+  assert.equal(nodes(h.tree).filter(e => e.type === "s-banner" && e.props.heading === "Product access removed.").length, 1);
+  assert.equal(text(h.tree).includes("Product access is not connected."), false);
+  assert.ok(nodes(h.tree).some(e => e.type === "s-button" && text(e) === "Connect Shopify products"));
 });

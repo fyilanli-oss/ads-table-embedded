@@ -1057,17 +1057,17 @@ export default function Settings() {
       <Navigation />
       <s-section heading="Shopify">
         <s-stack direction="block" gap="base">
-          {permissions.removingProduct ? <s-banner tone="info" heading="Ürün erişimi kaldırılıyor…" />
-            : permissions.checkingProduct ? <s-banner tone="info" heading="Ürün erişimi doğrulanıyor…" />
-            : productAccess === "ready" ? <s-badge tone="success">Ürün erişimi onaylandı</s-badge>
-            : productAccess === "unknown" ? <s-banner tone="critical" heading={permissions.productRemovalResult === "unknown" ? "Ürün erişiminin kaldırıldığı doğrulanamadı. Durumu kontrol edin." : "Ürün erişimi doğrulanamadı. Durumu tekrar kontrol edin."} />
-            : <s-paragraph>{productAccess === "missing" ? "Ürün erişimi henüz onaylanmadı." : "Ürün bağlantısı şu anda kullanılamıyor."}</s-paragraph>}
-          {permissions.productRemovalResult === "removed" && productAccess === "missing" ? <s-banner tone="success" heading="Ürün erişimi kaldırıldı." /> : null}
+          {permissions.removingProduct ? <s-banner tone="info" heading="Removing product access…" />
+            : permissions.checkingProduct ? <s-banner tone="info" heading="Checking product access…" />
+            : productAccess === "ready" ? <s-badge tone="success">Product access approved</s-badge>
+            : productAccess === "unknown" ? <s-banner tone="critical" heading={permissions.productRemovalResult === "unknown" ? "Could not verify that product access was removed. Check status to continue." : "Could not verify product access. Check status to continue."} />
+            : productAccess === "missing" && permissions.productRemovalResult === "removed" ? <s-banner tone="success" heading="Product access removed." />
+            : <s-paragraph>{productAccess === "missing" ? "Product access is not connected." : "Product connection is currently unavailable."}</s-paragraph>}
           <ProductAccessRemoval owner={state.shopifyPermissionOwner} ready={productAccess === "ready"} busy={permissions.busy}
             onConfirm={() => {void permissions.removeProductAccess();}} onUnknown={permissions.productRemovalUnknown} />
           {productAccess === "missing" || productAccess === "unavailable" ?
             <s-button disabled={permissions.busy ? true : undefined} onClick={() => permissions.open("shopify_products")}>Connect Shopify products</s-button> : null}
-          {productAccess === "unknown" ? <s-button disabled={permissions.busy ? true : undefined} onClick={() => permissions.checkStatus("shopify_products")}>Durumu kontrol et</s-button> : null}
+          {productAccess === "unknown" ? <s-button disabled={permissions.busy ? true : undefined} onClick={() => permissions.checkStatus("shopify_products")}>Check status</s-button> : null}
           <s-button onClick={() => permissions.open("shopify_orders")}>Connect Shopify orders</s-button>
         </s-stack>
       </s-section>

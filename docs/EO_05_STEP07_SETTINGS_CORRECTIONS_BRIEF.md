@@ -276,3 +276,30 @@ https://shopify.dev/docs/api/app-home/latest/web-components/overlays/modal
 https://shopify.dev/docs/api/app-home/latest/web-components/actions/button
 Kurulu SDK3.0.1 scopes.revoke ve GraphQL client kodu okundu: varsayılan retry0.
 07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımı.
+
+## 31 Ekim — Products İngilizce metin ve sessiz Settings dönüşü düzeltmesi
+
+Ürün sahibi gerçek cihazda Vazgeç, kaldırma ve yeniden bağlanma sonucunu bildirdi:
+Settings'e dönüldü, ürün erişimi ve kaldırma eylemi yeniden göründü. Bu somut
+akış kanıtıdır; bütün masaüstü/mobil kabul matrisi tamamlandı anlamına gelmez.
+Sahip geçiş mesajını tekrar görmek istemiyor ve eklenen Türkçe ürün metinlerini
+reddetti. Kapsam yalnız yeni Products metinleri ve gereksiz çift durum gösterimidir.
+Settings dönüşündeki bilgi banner'ı kaldırılır; mevcut native Settings kabuğu
+geçiş boyunca kalır. Yeni yükleme/caption/toast metni eklenmez. Hata durumunda
+“Could not return to Settings.” ve “Open Settings” korunur.
+Birebir İngilizce Products metinleri:
+- Product access approved / Remove product access
+- Remove product access? / Remove access / Cancel
+- AdsTable's permission to read Shopify products and variants will be removed. You will need to grant access again for product identity matching. Existing records will not be deleted.
+- Removing product access… / Checking product access…
+- Product access removed. (yalnız bir başarı banner'ı; üstte ikinci not-connected metni yok)
+- Product access is not connected. (son kaldırma başarı banner'ı yoksa)
+- Could not verify product access. Check status to continue.
+- Could not verify that product access was removed. Check status to continue.
+- Product connection is currently unavailable. / Check status
+Mevcut Connect Shopify products etiketi korunur. Var olan s-page/s-banner/
+s-badge/s-button/s-modal/s-link bileşenleri kullanılır; yeni stil veya property yok.
+31Ekim kontrol edilmiş aynı resmî badge/banner/modal/button kaynakları geçerlidir.
+OAuth/grant/revoke/return intent, sahiplik, callback, izin, scope, provider ve DB
+kodları değişmez. Kod/test/PR hazırlanır; yayın/merge ayrıca açık onay ister.
+Gerçek ekranda sessiz dönüş ve İngilizce metin kabulü henüz bekler.

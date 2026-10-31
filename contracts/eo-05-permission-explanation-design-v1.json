@@ -1,4 +1,36 @@
 {
+  "Shopify_products_English_copy_2026_10_31": {
+    "existing_plan_step": 7,
+    "checked_at": "2026-10-31",
+    "authority": "Owner rejected visible return message and Turkish Products text; remove message, use English and avoid contradictory duplicate removal status; code/tests/PR only",
+    "supersedes": "Earlier Turkish Products visible copy and returning-to-Settings banner; not the authenticated grant/revoke flow",
+    "transition": "Existing native Settings page shell only, without informational message/banner/toast while routing; failure keeps English recovery action",
+    "exact_copy": {
+      "ready": "Product access approved",
+      "remove": "Remove product access",
+      "modal_heading": "Remove product access?",
+      "modal_body": "AdsTable's permission to read Shopify products and variants will be removed. You will need to grant access again for product identity matching. Existing records will not be deleted.",
+      "confirm": "Remove access",
+      "cancel": "Cancel",
+      "removing": "Removing product access…",
+      "checking": "Checking product access…",
+      "removed": "Product access removed.",
+      "missing": "Product access is not connected.",
+      "unknown": "Could not verify product access. Check status to continue.",
+      "removal_unknown": "Could not verify that product access was removed. Check status to continue.",
+      "check": "Check status",
+      "unavailable": "Product connection is currently unavailable.",
+      "return_failed": "Could not return to Settings.",
+      "return_recovery": "Open Settings"
+    },
+    "removed_state": "One success banner plus existing Connect Shopify products; do not also show the initial not-connected paragraph",
+    "native_owner_evidence": "Owner reported Cancel works, verified removal message, Settings return and restored Products access/removal action on deployed425d2b6. Owner rejected transition/copy. New copy and quiet transition remain unverified natively.",
+    "sources": ["https://shopify.dev/docs/api/app-home/latest/web-components/feedback-and-status-indicators/banner", "https://shopify.dev/docs/api/app-home/latest/web-components/overlays/modal", "https://shopify.dev/docs/api/app-home/latest/web-components/actions/button"],
+    "permission_server_behavior_changed": false,
+    "deploy_authorized": false,
+    "merge_authorized": false,
+    "native_visual_acceptance": false
+  },
   "Shopify_products_revocation_2026_10_31": {
     "checked_at": "2026-10-31",
     "existing_plan_step": 7,

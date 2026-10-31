@@ -1,4 +1,14 @@
 {
+  "Shopify_products_English_copy_2026_10_31": {
+    "existing_plan_step": 7,
+    "record": "contracts/eo-05-permission-explanation-design-v1.json#Shopify_products_English_copy_2026_10_31",
+    "status": "Copy_and_transient_message_correction_native_acceptance_pending",
+    "deploy_authorized": false,
+    "merge_authorized": false,
+    "step15_started": false,
+    "step22": "paused",
+    "step23": "Dataset_FX_writer"
+  },
   "Shopify_products_revocation_2026_10_31": {
     "existing_plan_step": 7,
     "record": "contracts/eo-05-permission-explanation-design-v1.json#Shopify_products_revocation_2026_10_31",

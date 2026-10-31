@@ -3505,3 +3505,17 @@ contracts/eo-05-permission-explanation-design-v1.json#Shopify_products_revocatio
 Tam metin, bileşen ve kabul matrisi: docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md.
 Kod/test onayı canlı revoke, yayın, masaüstü/en az320px mobil kabul veya merge
 onayı değildir.07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.
+
+## 31 Ekim — Products dil ve geçiş düzeltmesi
+
+Ürün sahibi425d2b6 yayını üzerinde Vazgeç, izin kaldırma ve tekrar bağlanma
+sonuçlarını bildirdi; Settings'e dönüş ve hazır Products/kaldırma eylemi görüldü.
+Görünür geçiş mesajı ve Türkçe ürün metinleri kabul edilmedi. Somut düzeltme:
+Settings'e dönüşteki bilgi banner'ını kaldır; bu çalışmada eklenen Products
+metinlerini İngilizce yap; kaldırma başarısını ilk bağlantı eksik metniyle birlikte
+gösterme. Mevcut native bileşenler/yerleşim kalır; grant/revoke/kimlik/provider/
+DB ve yayın ayarları değişmez. Açık hata ve durum kontrolü İngilizce kalır.
+Yeni metinler ve sessiz geçiş için gerçek cihaz kabulü bekler. Önceki yayın
+onayı bu değişikliğin yayın onayı değildir. Bağlayıcı kayıt:
+contracts/eo-05-permission-explanation-design-v1.json#Shopify_products_English_copy_2026_10_31.
+07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.

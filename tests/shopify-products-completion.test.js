@@ -96,10 +96,14 @@ test("actual authenticated layout returns once to Settings and cannot redirect a
     rememberProductPermissionReturn(s, owner);
     // A fresh layout mounts after Shopify returns to the application root.
     pathname = "/settings"; render(); pathname = "/";
-    rememberProductPermissionReturn(s, owner); render(); render();
+    rememberProductPermissionReturn(s, owner); render();
+    const transition = render();
+    assert.equal(transition.props.children.type, "s-page");
+    assert.equal(transition.props.children.props.heading, "Settings");
+    assert.equal(transition.props.children.props.children, undefined); // No transient message/banner.
     assert.deepEqual(calls, [{path: "/settings", options: {replace: true}}]);
     assert.equal(s.rows.size, 0);
-    pathname = "/settings"; render(); assert.equal(treeText(render()).includes("Settings'e dönülüyor"), false);
+    pathname = "/settings"; render(); assert.equal(treeText(render()).includes("Returning to Settings"), false);
     rememberProductPermissionReturn(s, "gid://shopify/Shop/456"); pathname = "/"; render();
     assert.equal(calls.length, 1);
   });
@@ -121,7 +125,7 @@ test("a failed Settings return exposes a native recovery link without retrying n
     rememberProductPermissionReturn(globalThis.sessionStorage, owner);
     render(); await Promise.resolve();
     const tree = render();
-    assert.equal(treeText(tree).includes("Settings'e otomatik dönülemedi."), true);
+    assert.equal(treeText(tree).includes("Could not return to Settings."), true);
     assert.equal(attempts, 1); render(); assert.equal(attempts, 1);
     const banner = tree.props.children.props.children;
     assert.equal(banner.props.children.props.href, "/settings");
@@ -200,11 +204,11 @@ test("native removal modal cancel/close never revoke; confirm waits for afterhid
   const button = label => nodes(tree).find(n => n.type === "s-button" && n.props.children === label);
   const closed = () => listeners.get("afterhide")({target: element});
   render(); closed(); assert.equal(calls, 0);
-  button("Vazgeç").props.onClick(); closed(); assert.equal(calls, 0);
-  button("Erişimi kaldır").props.onClick(); button("Erişimi kaldır").props.onClick();
+  button("Cancel").props.onClick(); closed(); assert.equal(calls, 0);
+  button("Remove access").props.onClick(); button("Remove access").props.onClick();
   assert.equal(hides, 1); assert.equal(calls, 0);
   closed(); closed(); assert.equal(calls, 1);
-  button("Erişimi kaldır").props.onClick(); props.owner = "gid://shopify/Shop/456"; render();
+  button("Remove access").props.onClick(); props.owner = "gid://shopify/Shop/456"; render();
   closed(); assert.equal(calls, 1);
 });
 

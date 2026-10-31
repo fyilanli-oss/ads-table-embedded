@@ -30,6 +30,8 @@ Bu repository temiz Shopify embedded-only AdsTable runtime'ıdır. **Execution P
 
 - 31 Ekim owner onaylı dar kod/test istisnası: Google hesap keşfinde yalnız gerçek REST search HTTP403/PERMISSION_DENIED ve tamamı CUSTOMER_NOT_ENABLED authorizationError kayıtlarından oluşan yanıt ilgili hesabı eler; aynı hesap tekrar denenmez, kalan kökler değerlendirilir. Diğer strict hatalar ilk anda durur. Bu hazırlık canlı istek, OAuth tekrarı, config, deploy veya merge yetkisi vermez. Ayrıntı: contracts/eo-05-permission-explanation-design-v1.json#Google_unavailable_account_exclusion_2026_10_31.
 
+- 31 Ekim güncel owner onaylı dar kod/test kapsamı: yukarıdaki hesap elemesi yalnız CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION koduyla genişletilir. Gerçek REST search HTTP403/PERMISSION_DENIED ve tamamı aynı izinli authorizationError olan dolu kayıtlar gerekir; karışık/eksik yanıtlar ve diğer strict hatalar durur. Tek hesap reddi diğer okunabilen hesapları engellemez; bütün hesaplar reddedilirse başarı yoktur. Canlı çağrı/config/merge/yayın yetkisi yoktur. Kayıt: contracts/eo-05-permission-explanation-design-v1.json#Google_mixed_account_access_isolation_2026_10_31.
+
 ## Governing authority
 
 - `docs/EXECUTION_PLAN.md` ve `contracts/a6-eo-implementation-master-v1.json` bağlayıcıdır.

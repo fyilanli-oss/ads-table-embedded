@@ -1,4 +1,13 @@
 {
+  "Google_mixed_account_access_isolation_2026_10_31": {
+    "existing_plan_step": 7,
+    "record": "contracts/eo-05-permission-explanation-design-v1.json#Google_mixed_account_access_isolation_2026_10_31",
+    "authority": "Explicit owner approval for narrow Google account-discovery code and synthetic tests only; no native request, OAuth retry, configuration, database, merge or deployment.",
+    "rule": "Extend the existing branded exclusion to actual search HTTP403 PERMISSION_DENIED with nonempty errors all carrying exactly one authorizationError and the same approved code: CUSTOMER_NOT_ENABLED or CLOUD_PROJECT_NOT_APPROVED_FOR_PRODUCTION. Reject mixed/malformed details. Exclude that root without retry, remove prior manager-listed candidate and prevent re-addition. Preserve other readable roots. All other strict failures stop immediately; all-refused fails without staging. Never infer test_account from the refusal code.",
+    "step15_started": false,
+    "step22": "paused",
+    "step23": "Dataset_FX_writer"
+  },
   "Google_unavailable_account_exclusion_2026_10_31": {
     "existing_plan_step": 7,
     "record": "contracts/eo-05-permission-explanation-design-v1.json#Google_unavailable_account_exclusion_2026_10_31",

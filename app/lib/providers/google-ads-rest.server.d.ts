@@ -12,6 +12,7 @@ export function refreshGoogleAdsAccessToken(input: any): Promise<any>;
 export function revokeGoogleAdsAuthorization(input: any): Promise<any>;
 export function createGoogleAdsRestClient(input?: any): any;
 export function isGoogleCustomerNotEnabledError(error: unknown): boolean;
+export function isGoogleAccountDiscoveryExclusionError(error: unknown): boolean;
 export function googleAdsRestFailureMetadata(error: unknown): Readonly<{
   operation: "list_accessible_customers" | "search" | null;
   http_status: number | null;

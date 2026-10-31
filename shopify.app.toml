@@ -5,6 +5,7 @@ embedded = true
 
 [access_scopes]
 scopes = ""
+optional_scopes = ["read_products", "read_orders"]
 
 [auth]
 redirect_urls = [

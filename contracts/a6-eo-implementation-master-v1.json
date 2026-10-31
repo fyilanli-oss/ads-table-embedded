@@ -1,4 +1,11 @@
 {
+  "Shopify_optional_scope_candidate_2026_10_31": {
+    "existing_plan_step": 7,
+    "record": "contracts/eo-05-permission-explanation-design-v1.json#Shopify_optional_scope_candidate_2026_10_31",
+    "status": "repository_candidate_only_native_release_pending",
+    "native_release_performed": false,
+    "merge_authorized": false
+  },
   "Owner_flow_restore_2026_10_31": {
     "checked_at": "2026-10-31",
     "existing_plan_step": 7,

@@ -120,3 +120,21 @@ doğrulanır. Masaüstü ve en az 320 px gerçek mobilde hata metni, dokunma,
 klavye, odak geri dönüşü, iptal ve başarı ürün sahibi tarafından sınanır.
 Otomatik testler native görsel kabul yerine geçmez. Bu kabul ve açık merge
 onayı gelmeden UI Done/PASS değildir. 15 başlamadı; 22 duraklatılmış; 23 Dataset yazımıdır.
+
+## 31 Ekim — mevcut 07 Shopify optional izin adayı (henüz yayımlanmadı)
+
+Ürün sahibinin kodda hazırlama isteğiyle shopify.app.toml dosyasına yalnız
+optional_scopes = ["read_products", "read_orders"] eklendi; required scopes boş
+kaldı. Products ürün kurulumu için gereklidir; Orders ayrı ve isteğe bağlıdır.
+Önceki “yerel TOML optional içermiyor” tespiti bu aday öncesine aittir.
+Bu kayıt Shopify'da yayımlanmış izin veya mağaza onayı kanıtı değildir.
+
+Mevcut uygulama kimliği, adresleri, webhooks ve runtime yayın anahtarları
+korundu. Shopify panelinde işlem/giriş denemesi, CLI app dev/deploy veya
+workflow dispatch yapılmadı. Paneldeki işlemi ürün sahibi yapacak; native
+sürüm yayını ve izin doğrulaması bekleniyor. Yeni uygulama oluşturulmaz.
+
+31 Ekim resmî kontrol: https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration#access_scopes
+ve https://shopify.dev/docs/apps/build/authentication-authorization/manage-access-scopes .
+Bağlayıcı kayıt: contracts/eo-05-permission-explanation-design-v1.json#Shopify_optional_scope_candidate_2026_10_31.
+07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımı. Merge ayrı onay bekler.

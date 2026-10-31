@@ -1,4 +1,24 @@
 {
+  "Shopify_optional_scope_candidate_2026_10_31": {
+    "checked_at": "2026-10-31",
+    "existing_plan_step": 7,
+    "authority": "Owner requested preparation in code and will handle Shopify Dev manually; no agent Shopify interaction or login attempts",
+    "file": "shopify.app.toml",
+    "required_scopes": "",
+    "optional_scopes": ["read_products", "read_orders"],
+    "status": "repository_candidate_only_native_release_pending",
+    "scope_meaning": "Both declared as dynamically requestable; Products remains required for product setup, Orders remains a separate optional feature permission",
+    "unchanged": ["client_id", "application_url", "redirect_urls", "webhooks", "runtime_release_flags", "progressive_permission_guards"],
+    "native_evidence": "Owner screenshots show the active adstable-2 version with matching embedded address and callback; scopes were not visible, so native declaration remains unverified",
+    "native_release_performed": false,
+    "merchant_permission_requested": false,
+    "deploy_performed": false,
+    "merge_authorized": false,
+    "sources": [
+      "https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration#access_scopes",
+      "https://shopify.dev/docs/apps/build/authentication-authorization/manage-access-scopes"
+    ]
+  },
   "Owner_flow_restore_2026_10_31": {
     "checked_at": "2026-10-31",
     "existing_plan_step": 7,

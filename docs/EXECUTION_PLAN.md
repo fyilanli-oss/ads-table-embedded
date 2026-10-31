@@ -3392,3 +3392,21 @@ Somut durum/metin/bileşen ve test özeti: `docs/EO_05_STEP07_SETTINGS_CORRECTIO
 Ürün sahibi tek Klaviyo hesabının otomatik geçilmesini ve hesap/spend adımlarının aynı modalda bulunmasını reddetti. Son karar: OAuth → ayrı açık hesap seçimi (tek hesap dahil) → hesap modalı afterhide sonrasında ayrı estimated spend modalı. Cancel/çarpı/Escape ilerletmez; sıfır ve alan içi hata korunur. Önceki tek hesap atlama yönlendirmesi tarihsel ve geçersizdir;3360 test ve önceki yayın görsel kabul oluşturmaz.
 
 Google/Meta ve Shopify sunucu yayın koşullarının kod bağlantısı tamamlanır; başlatma/dönüş aynı koşulu okur. Hiçbir canlı anahtar, app configuration veya izin değiştirilmez. Developer/native izin koşulları doğrulanmış sayılmaz. Somut koşullar ve açık gerçek ortam işleri `docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md`; makine kaydı `contracts/eo-05-permission-explanation-design-v1.json#Owner_flow_restore_2026_10_31`. Bu somut kod/test/karar düzeltmesi açık kullanıcı onayıyla başlatıldı; deploy ve merge ayrıca onay bekler. 15 başlamadı;22 duraklatılmış;23 Dataset yazımı.
+
+## 31 Ekim — mevcut 07 Shopify optional izin adayı (henüz yayımlanmadı)
+
+Ürün sahibinin kodda hazırlama isteğiyle shopify.app.toml dosyasına yalnız
+optional_scopes = ["read_products", "read_orders"] eklendi; required scopes boş
+kaldı. Products ürün kurulumu için gereklidir; Orders ayrı ve isteğe bağlıdır.
+Önceki “yerel TOML optional içermiyor” tespiti bu aday öncesine aittir.
+Bu kayıt Shopify'da yayımlanmış izin veya mağaza onayı kanıtı değildir.
+
+Mevcut uygulama kimliği, adresleri, webhooks ve runtime yayın anahtarları
+korundu. Shopify panelinde işlem/giriş denemesi, CLI app dev/deploy veya
+workflow dispatch yapılmadı. Paneldeki işlemi ürün sahibi yapacak; native
+sürüm yayını ve izin doğrulaması bekleniyor. Yeni uygulama oluşturulmaz.
+
+31 Ekim resmî kontrol: https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration#access_scopes
+ve https://shopify.dev/docs/apps/build/authentication-authorization/manage-access-scopes .
+Bağlayıcı kayıt: contracts/eo-05-permission-explanation-design-v1.json#Shopify_optional_scope_candidate_2026_10_31.
+07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımı. Merge ayrı onay bekler.

@@ -171,3 +171,27 @@ https://api.reactrouter.com/v7/functions/react-router.isRouteErrorResponse.html
 https://shopify.dev/docs/api/shopify-app-react-router/latest/apis/scopes
 Bağlayıcı kayıt: contracts/eo-05-permission-explanation-design-v1.json#Shopify_boundary_build_correction_2026_10_31.
 07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.
+
+## 31 Ekim — mevcut 07: Settings .data yönlendirme başlığı
+
+1000070105 ekranı sonrası salt okunur inceleme ve ardından yalnız kod/test
+onayı alındı. Gerçek Settings action'ı gerçek Router production request handler
+ile POST /settings.data üzerinden çalıştırıldığında 401'in SDK yönlendirme
+başlığı kayboluyordu: Single Fetch hata başlıklarını leaf Settings rotasında
+birleştiriyor; bu rotada headers export yoktu. Parent layout export'u yetmiyor.
+
+Settings artık yalnız mevcut Shopify boundary.headers işlevini dışarı verir.
+Gerçek HTTP yanıtında Products ve Orders yönlendirme başlığı korunur.
+Normal 401/403'e yönlendirme eklenmez, başarı verisi tekrar isteğe çevrilmez.
+İzin talebi ve authentication sentetik bağımlılıktır; ağ veya native izin
+çağrısı yapılmaz. Önceki helper/derleme testi bu leaf aktarımı kapsamıyordu.
+
+Yeni UI, akış, scope, token, hesap seçimi veya runtime flag değişikliği yok.
+Bu düzeltme yayın, native tekrar veya merge onayı içermez; gerçek izin kabulü
+bekler. Önceki derleme düzeltmesi ayrı onayla yayımlanmış tarihsel kayıttır.
+Resmî kontrol31Ekim2026:
+https://shopify.dev/docs/api/shopify-app-react-router/latest/guide-admin#headers
+https://reactrouter.com/how-to/headers
+Kurulu React Router7.18.2 Single Fetch kodu ayrıca okundu.
+Bağlayıcı kayıt: contracts/eo-05-permission-explanation-design-v1.json#Shopify_settings_data_headers_2026_10_31.
+07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.

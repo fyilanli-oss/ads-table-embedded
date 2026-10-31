@@ -1,4 +1,20 @@
 {
+  "Shopify_settings_data_headers_2026_10_31": {
+    "checked_at": "2026-10-31",
+    "existing_plan_step": 7,
+    "authority": "Explicit owner approval after screenshot1000070105 investigation: connect Settings response-header forwarding and test actual settings.data only",
+    "defect": "Router Single Fetch keeps the action error at the leaf Settings route; without its headers export the SDK reauthorization header is omitted even though the parent layout has boundary.headers",
+    "change": "Settings exports HeadersFunction delegating to the existing Shopify SDK boundary.headers; no response rewriting, new scope, account selector or native permission mechanism",
+    "test": "tests/permission-settings.test.js runs actual transpiled Settings action through the real production createRequestHandler and POST /settings.data; native authentication and permission request are isolated synthetic dependencies",
+    "red_green": "Before fix: 401 response has null reauthorization header. After fix: exact native header survives for Products and Orders",
+    "negative_controls": ["Plain auth 401/403 retains status with no invented redirect", "Normal permission status stays data without redirect or repeated request"],
+    "previous_test_limit": "The earlier minified SDK boundary test covered class-name recognition and helper-level headers only, not leaf Single Fetch aggregation",
+    "native_acceptance": "Not verified; no new provider request or browser interaction",
+    "deploy_authorized": false,
+    "native_retry_authorized": false,
+    "merge_authorized": false,
+    "sources": ["https://shopify.dev/docs/api/shopify-app-react-router/latest/guide-admin#headers", "https://reactrouter.com/how-to/headers", "Installed React Router 7.18.2 Single Fetch implementation"]
+  },
   "Shopify_boundary_build_correction_2026_10_31": {
     "checked_at": "2026-10-31",
     "existing_plan_step": 7,

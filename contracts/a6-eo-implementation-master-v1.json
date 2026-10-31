@@ -1,4 +1,12 @@
 {
+  "Shopify_settings_data_headers_2026_10_31": {
+    "existing_plan_step": 7,
+    "record": "contracts/eo-05-permission-explanation-design-v1.json#Shopify_settings_data_headers_2026_10_31",
+    "status": "code_and_real_Router_response_tests_native_acceptance_pending",
+    "deploy_authorized": false,
+    "native_retry_authorized": false,
+    "merge_authorized": false
+  },
   "Shopify_boundary_build_correction_2026_10_31": {
     "existing_plan_step": 7,
     "record": "contracts/eo-05-permission-explanation-design-v1.json#Shopify_boundary_build_correction_2026_10_31",

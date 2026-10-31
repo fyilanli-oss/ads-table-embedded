@@ -1,7 +1,8 @@
 import {usePermissionSettings} from "../components/use-permission-settings";
 import {createPermissionSettings, PERMISSION_SETTINGS_AVAILABILITY} from "../lib/shopify/permission-settings.server.js";
 import type {PermissionFeature} from "../lib/ui/permission-explanation-flow.js";
-import type {ActionFunctionArgs, LoaderFunctionArgs, ShouldRevalidateFunctionArgs} from "react-router";
+import type {ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs, ShouldRevalidateFunctionArgs} from "react-router";
+import {boundary} from "@shopify/shopify-app-react-router/server";
 import {
   useActionData,
   useFetcher,
@@ -388,6 +389,10 @@ export const loader = async ({request}: LoaderFunctionArgs): Promise<LoaderData>
     permissionAvailability: permissionRelease?.availability ?? PERMISSION_SETTINGS_AVAILABILITY,
     permissionUnavailableReasons: permissionRelease?.unavailableReasons};
 };
+
+// Single Fetch aggregates thrown action headers at the leaf route. The layout's
+// headers export alone cannot forward the SDK reauthorization header on .data.
+export const headers: HeadersFunction = (args) => boundary.headers(args);
 
 const permissionIntents = new Set(["permission_connect", "permission_status", "permission_select_accounts", "permission_select_reporting"]);
 

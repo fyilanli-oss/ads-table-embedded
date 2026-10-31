@@ -3,6 +3,8 @@ import {createRequire} from "node:module";
 import {readFileSync} from "node:fs";
 import test from "node:test";
 import ts from "typescript";
+import {createRequestHandler} from "react-router";
+import {boundary} from "@shopify/shopify-app-react-router/server";
 import {createPermissionSettings, PERMISSION_SETTINGS_AVAILABILITY} from "../app/lib/shopify/permission-settings.server.js";
 import {permissionAuthorizationTarget, permissionResponseMatches} from "../app/lib/ui/permission-settings-response.js";
 import {createPermissionExplanationFlow} from "../app/lib/ui/permission-explanation-flow.js";
@@ -144,7 +146,7 @@ test("native targets are provider-bound and stale/mismatched transport replies a
   assert.equal(permissionAuthorizationTarget("klaviyo", "https://secret@www.klaviyo.com/oauth/authorize"), null);
 });
 
-function loadRoute({authenticate = async () => verified, providerRuntime = () => assert.fail(), release} = {}) {
+function loadRoute({authenticate = async () => verified, providerRuntime = () => assert.fail(), release, shopify = {}} = {}) {
   const sourceLocation = new URL("../app/routes/_admin.settings.tsx", import.meta.url);
   const require = createRequire(sourceLocation);
   const source = readFileSync(sourceLocation, "utf8");
@@ -152,7 +154,7 @@ function loadRoute({authenticate = async () => verified, providerRuntime = () =>
     module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022}}).outputText;
   const exports = {};
   const imported = id => {
-    if (id === "../shopify.server") return {authenticate: {admin: authenticate}, database: {}, providerTokenVault: {}, permissionSetup: {}, permissionRelease: release};
+    if (id === "../shopify.server") return {authenticate: {admin: authenticate}, database: {}, providerTokenVault: {}, permissionSetup: shopify, permissionRelease: release};
     if (id === "../components/use-permission-settings") return {usePermissionSettings: () => assert.fail()};
     if (id.endsWith("/shopify-route-authority.server.js")) return {resolveShopifyRouteAuthority: async ({request, authenticateAdmin}) => authenticateAdmin(request)};
     if (id.endsWith("/google-oauth-runtime.server.js")) return {createGoogleOAuthRuntime: providerRuntime};
@@ -273,4 +275,72 @@ test("single and multiple connected accounts return to the existing reporting vi
     assert.equal(result.accounts.length, count);
     assert.equal(reads, 3); // Existing Google/Meta/Klaviyo inspect only; no asset reader exists in fixture.
   }
+});
+
+// Use the real production Router Single Fetch pipeline, not only boundary.headers
+// in isolation: a leaf action error has its own header aggregation in .data requests.
+function settingsHttpHandler(route) {
+  return createRequestHandler({
+    entry: {module: {default: () => assert.fail("data request must not render a document"),
+      handleError: () => assert.fail("unexpected Router server error")}},
+    routes: {
+      root: {id: "root", path: "", module: {default: () => null}},
+      "routes/_admin": {id: "routes/_admin", parentId: "root", module: {
+        default: () => null, ErrorBoundary: () => null, headers: boundary.headers,
+      }},
+      "routes/_admin.settings": {id: "routes/_admin.settings", parentId: "routes/_admin",
+        path: "settings", module: {...route, loader: () => null}},
+    },
+    assets: {version: "synthetic", routes: {}, entry: {module: "synthetic", imports: []}},
+    publicPath: "/", assetsBuildDirectory: "synthetic", basename: "/", future: {},
+    ssr: true, isSpaMode: false, prerender: [],
+    routeDiscovery: {mode: "initial", manifestPath: "/__manifest"},
+  }, "production");
+}
+const reauthorizeHeader = "X-Shopify-API-Request-Failure-Reauthorize-Url";
+const shopifyRelease = readPermissionSetupRelease({ADSTABLE_SHOPIFY_PERMISSION_REQUESTS_ENABLED: "true",
+  ADSTABLE_SHOPIFY_OPTIONAL_SCOPES_RELEASED: "true"});
+const settingsDataRequest = feature => new Request("https://embedded.adstable.app/settings.data", {
+  method: "POST", body: new URLSearchParams({intent: "permission_connect", feature, requestId}),
+});
+
+test("real Settings .data response preserves the SDK permission redirect for Products and Orders", async () => {
+  for (const [feature, method, scope] of [["shopify_products", "requestProducts", "read_products"],
+    ["shopify_orders", "requestOrders", "read_orders"]]) {
+    let calls = 0;
+    const address = `https://example.myshopify.com/admin/oauth/install?client_id=synthetic&scope=&optional_scopes=${scope}`;
+    const route = loadRoute({release: shopifyRelease, shopify: {[method]: async () => {
+      calls++; throw new Response(null, {status: 401, headers: {[reauthorizeHeader]: address}});
+    }}});
+    const response = await settingsHttpHandler(route)(settingsDataRequest(feature));
+    assert.equal(calls, 1);
+    assert.equal(response.status, 401);
+    assert.equal(response.headers.get(reauthorizeHeader), address,
+      "the leaf Settings .data response must deliver the SDK redirect to App Bridge");
+    assert.match(response.headers.get("content-type"), /text\/x-script/);
+    await response.text();
+  }
+});
+
+test("Settings .data never invents a redirect or permission success for ordinary auth failures", async () => {
+  for (const status of [401, 403]) {
+    const route = loadRoute({authenticate: async () => {throw new Response(null, {status});}});
+    const response = await settingsHttpHandler(route)(settingsDataRequest("shopify_products"));
+    assert.equal(response.status, status);
+    assert.equal(response.headers.get(reauthorizeHeader), null);
+    await response.text();
+  }
+});
+
+test("Settings .data keeps normal permission status as data without redirecting or re-requesting", async () => {
+  let calls = 0;
+  const route = loadRoute({release: shopifyRelease, shopify: {requestProducts: async () => {
+    calls++; return {basePermissionState: "permission_ready", ordersPermissionState: "not_connected"};
+  }}});
+  const response = await settingsHttpHandler(route)(settingsDataRequest("shopify_products"));
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get(reauthorizeHeader), null);
+  assert.equal(calls, 1);
+  const body = await response.text();
+  assert.ok(body.includes("review_setup"));
 });

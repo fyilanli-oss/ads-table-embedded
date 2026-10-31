@@ -1,4 +1,12 @@
 {
+  "Google_partial_permission_return_2026_10_31": {
+    "existing_plan_step": 7,
+    "record": "contracts/eo-05-permission-explanation-design-v1.json#Google_partial_permission_return_2026_10_31",
+    "authority": "Code and isolated tests only; no deployment/native retry/merge",
+    "step15_started": false,
+    "step22": "paused",
+    "step23": "Dataset_FX_writer"
+  },
   "Explicit_reconnect_2026_10_31": {
     "checked_at": "2026-10-31",
     "existing_plan_step": 7,

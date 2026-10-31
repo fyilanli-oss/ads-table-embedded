@@ -1,3 +1,18 @@
+## 31 Ekim — mevcut07: Google eksik izin dönüşü ve Resume setup
+
+Owner yalnız Ads iznini seçtiğini bildirdi; Google kartı Not connected döndü.
+Salt okunur canlı kayıt failed/genel PROVIDER_EXCHANGE_FAILED; disconnected42 ve
+credential yok. Exact native scope bu kayıttan kanıtlanmaz. Kesin kod kusuru,
+runtime pending_permissions sonucunun callback'te pending'e indirgenmesi ve
+Settings'te sürdürme karşılığının olmamasıdır. Ürün sahibi yalnız bu düzeltme,
+İngilizce açıklama, güvenli callback sınıflandırması ve testleri onayladı.
+Google-only permissions_incomplete dönüş ipucu yalnız açıklama/Resume setup taşır;
+mevcut sunucu bağlantı/hesap kanıtını ezmez veya yetki yaratmaz. Resume mevcut
+açıklamayı açar; otomatik OAuth/status/retry yok. İptal/hata/tam izin ve diğer
+platformlar korunur. Yeni migration yok; deploy/native/merge ayrı onay bekler.
+Brief ve permission-design sözleşmesindeki Google_partial_permission_return_2026_10_31
+kaydı bağlayıcıdır.07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımı.
+
 ## 31 Ekim — mevcut07: eksik refresh rolü ve seçili OAuth yayın provası
 
 Onaylı canlı ilk migration denemesi `adstable_refresh_coordinator` yokluğu nedeniyle

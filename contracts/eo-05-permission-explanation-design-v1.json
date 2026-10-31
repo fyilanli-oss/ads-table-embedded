@@ -1,4 +1,23 @@
 {
+  "Google_partial_permission_return_2026_10_31": {
+    "existing_plan_step": 7,
+    "authority": "Explicit owner approval for Google partial-permission return, English explanation, safe callback classification and tests only",
+    "live_audit_limit": "Owner reported Ads-only consent; transaction failed with generic PROVIDER_EXCHANGE_FAILED, disconnected version42 and no credential. Stored/logged evidence does not prove exact native granted scopes.",
+    "defect": "Runtime pending_permissions was collapsed to google_status=pending; Settings without durable account-selection authority rendered disconnected",
+    "correction": "Google-only permissions_incomplete return hint survives callback, loader and card. Current server-read connected/account selection takes precedence; hint grants no authority and performs no writes.",
+    "copy": {"heading": "Google setup is incomplete", "body": "Both Google Ads and Merchant Center access are required. Resume setup and allow both permissions to finish connecting.", "action": "Resume setup"},
+    "components": "Existing Google section/stack, warning s-banner, s-paragraph, s-button disabled while busy or unavailable; click opens existing explanation, no automatic request",
+    "logging": "Existing single allowlisted sink; fixed permission_callback intent and missing-scope/error code; no raw payload/state/token/scope/owner data",
+    "unchanged": "Runtime exchange/finalization/token policy, provider scopes, account/Reporting Account selection, Shopify/Meta/Klaviyo and callback destination",
+    "tests": "Actual callback-to-Settings loader/component, Ads-only and Merchant-only actual runtime cases, cancel/full/error, authority precedence, no automatic retry, closed release, Google-only UI and safe logging",
+    "new_migration": false,
+    "deployed": false,
+    "native_retry": false,
+    "native_visual_acceptance": false,
+    "merge_authorized": false,
+    "sources_checked_at": "2026-10-31",
+    "sources": ["https://developers.google.com/identity/protocols/oauth2/web-server", "https://shopify.dev/docs/api/app-home/latest/web-components/feedback-and-status-indicators/banner", "https://shopify.dev/docs/api/app-home/latest/web-components/actions/button"]
+  },
   "Explicit_reconnect_2026_10_31": {
     "scoped_rollout_correction": {
       "authority": "Owner explicitly approved code/migration correction and isolated tests after read-only dependency audit; no new live apply, deployment, merge or native retry",

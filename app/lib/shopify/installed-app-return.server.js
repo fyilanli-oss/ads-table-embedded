@@ -3,6 +3,7 @@ import {normalizeShopDomain} from "./installation-authority.server.js";
 export const SHOPIFY_APP_HANDLE = "adstable-1";
 
 const STATUS = new Set(["pending", "cancelled", "error"]);
+const GOOGLE_STATUS = new Set([...STATUS, "permissions_incomplete"]);
 
 export function installedShopifySettingsUrl(
   shopDomain,
@@ -25,7 +26,7 @@ export function installedShopifySettingsUrl(
       + "/settings",
   );
   if (googleStatus !== null) {
-    if (!STATUS.has(googleStatus)) {
+    if (!GOOGLE_STATUS.has(googleStatus)) {
       throw new Error("GOOGLE_RETURN_STATUS_INVALID");
     }
     url.searchParams.set("google_status", googleStatus);

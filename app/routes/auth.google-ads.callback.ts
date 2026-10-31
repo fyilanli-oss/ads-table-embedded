@@ -6,6 +6,7 @@ import {
   permissionRelease,
 } from "../shopify.server";
 import {createGoogleOAuthRuntime} from "../lib/oauth/google-oauth-runtime.server.js";
+import {logPermissionFailure} from "../lib/server-error-log.server.js";
 import {
   installedShopifySettingsUrl,
 } from "../lib/shopify/installed-app-return.server.js";
@@ -61,15 +62,21 @@ export const loader = async ({request}: LoaderFunctionArgs) => {
     });
     callbackReturn = target;
     const completed = await runtime.completeCallback({claimed});
+    if (completed.outcome === "pending_permissions") {
+      logPermissionFailure({feature: "google_ads", intent: "permission_callback", requestId: null,
+        error: new Error("OAUTH_IDENTITY_SCOPE_NOT_GRANTED")});
+    }
 
     return redirect(
       installedShopifySettingsUrl(target.shopDomain, {
         googleStatus:
-          completed.outcome === "denied" ? "cancelled" : "pending",
+          completed.outcome === "denied" ? "cancelled"
+            : completed.outcome === "pending_permissions" ? "permissions_incomplete" : "pending",
       }),
       {headers: {"cache-control": "no-store"}},
     );
   } catch (error) {
+    logPermissionFailure({feature: "google_ads", intent: "permission_callback", requestId: null, error});
     if (callbackReturn) {
       return redirect(
         installedShopifySettingsUrl(callbackReturn.shopDomain, {

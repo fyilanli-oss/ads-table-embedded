@@ -420,6 +420,47 @@ https://shopify.dev/docs/apps/build/authentication-authorization/manage-access-s
 https://shopify.dev/docs/api/app-home/latest/apis/authentication-and-data/scopes-api
 Mevcut native modal/button/badge/banner kaynakları ve pinli Polaris2.0 değişmez.
 07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.
+## 31 Ekim — mevcut07: Google eksik izin dönüşünün Settings'te korunması
+
+Ürün sahibi yalnız bu düzeltme ve testlerini onayladı; yayın/native tekrar/merge
+yoktur. Google'ın kullanıcıya Ads+Merchant seçimini açtığı owner ekranında görüldü;
+yalnız Ads seçildiği bildirildi. Canlı işlem failed/PROVIDER_EXCHANGE_FAILED,
+bağlantı disconnected/version42 ve credential yok; bu genel kayıt exact dönen
+scope'un kanıtı değildir. Kodda doğrulanmış pending_permissions sonucu callback'te
+pending'e indirgeniyor; Settings durable hesap seçimi olmayınca Not connected'a
+iniyor. Eksik mesajın bu kesin kaynak kusuru düzeltilir.
+
+Akış/durum: Runtime yalnız onaylı finalization sonrasında permissions_incomplete
+üretir. Callback bunu Google'a özgü google_status=permissions_incomplete olarak
+sabit dönüş hedefine taşır. Bu parametre grant/credential/hesap yetkisi değildir;
+Settings önce mevcut sunucu durumunu okur. Bağlı veya pending gerçek hesap varsa
+bu kanıt önceliklidir; yalnız eksik/disconnected durumda incomplete görünümü olur.
+Yenilemede aynı nonsecret callback durumu görünür kalır. Hata/cancel/tam izin
+sonuçları korunur; ilk çizim/mount otomatik Connect/Check status başlatmaz.
+
+Birebir Google kartı: s-banner tone=warning heading="Google setup is incomplete";
+s-paragraph="Both Google Ads and Merchant Center access are required. Resume setup and allow both permissions to finish connecting.";
+s-button="Resume setup" (disabled busy veya yayın kapalıysa). Buton yalnız mevcut
+Google açıklama modalını açar; Connect ve native afterhide sırası aynıdır. Ayrı
+katalog seçimi, ek modal/adım, otomatik native istek, yeni stil/HTML control yoktur.
+Masaüstü/mobil aynı Google section/stack; Shopify/Meta/Klaviyo kartları değişmez.
+İlk normal Not connected, tam izin hesap seçimi, bağlı, iptal ve genel hata eski
+yolunda kalır. Genel callback hatası eksik izin diye etiketlenmez.
+
+Safe logger mevcut tek sink kullanır; Google callback için sabit intent ve sınırlı
+allowlist kodu, eksik izin sonucu için sabit OAUTH_IDENTITY_SCOPE_NOT_GRANTED;
+ham error/token/state/scope/hesap/mağaza yok. Callback log teslim hatası dönüşü
+bozmaz. İşlem kaydı veya token politikası/migration/API scope değişmez.
+Test: gerçek callback loader→gerçek Settings loader→component dalı; tek Ads ve
+yalnız Merchant runtime regresyonları; pending_permissions/cancel/tam izin/error,
+eski incomplete parametresinin bağlı/pending yetkiyi ezmemesi, yanlış parametrenin
+Connected yaratmaması, kullanıcı tıklayana kadar sıfır request, İngilizce copy ve
+Google-only yerleşim, hostile error log gizliliği. Native desktop/min320px kabulü
+ayrı yayın onayından sonra owner'dadır; kod testi görsel PASS değildir.
+31Ekim2026 kaynaklar: https://developers.google.com/identity/protocols/oauth2/web-server ;
+https://shopify.dev/docs/api/app-home/latest/web-components/feedback-and-status-indicators/banner ;
+https://shopify.dev/docs/api/app-home/latest/web-components/actions/button .
+
 ## 31 Ekim — mevcut07: canlı başlangıçtan seçili OAuth migration provası
 
 Ürün sahibi eksik rolün salt okunur denetiminden sonra yalnız düzeltme ve izole

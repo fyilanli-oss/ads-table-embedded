@@ -198,9 +198,9 @@ for (const provider of ["google_ads", "meta"]) {
     await assert.rejects(h.runtime.beginCombinedSetup({installationAuthority:owner,identityAuthorizationEnabled:true}),/START_DISABLED/);
     assert.deepEqual(h.writes,[]);assert.equal(h.calls.length,0);assert.equal(h.lifecycleReads.length,0);
   });
-  for(const current of [null,{...row,status:"connected"},disconnected]) {
-    test(`${provider}: partial native grant stays resumable without replacing ${current?"existing":"initial"} authority`, async () => {
-      const h=runtimeHarness(provider,{enabled:true,current,grantedScopes:[oauthPermissionScopes(provider,"identity_v1")[0]]});
+  for(const current of [null,{...row,status:"connected"},disconnected]) for(const grantIndex of provider==="google_ads"?[0,1]:[0]) {
+    test(`${provider}: partial native grant ${grantIndex} stays resumable without replacing ${current?"existing":"initial"} authority`, async () => {
+      const h=runtimeHarness(provider,{enabled:true,current,grantedScopes:[oauthPermissionScopes(provider,"identity_v1")[grantIndex]]});
       const before=JSON.stringify(current);
       const r=await h.runtime.completeCallback({claimed:{...claimed,identityBinding:current?{connectionId:current.connectionId,version:current.version}:initial}});
       assert.equal(r.outcome,"pending_permissions");assert.equal(r.setupState,"resume_setup");

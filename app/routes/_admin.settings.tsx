@@ -47,6 +47,7 @@ type Advertiser = {
 
 type State =
   | {view: "combined"}
+  | {view: "permissions_incomplete"}
   | {view: "disconnected"; notice: "cancelled" | "disconnected" | null}
   | {view: "pending"; accounts: Advertiser[]}
   | {view: "pending_reporting"; accounts: Advertiser[]}
@@ -242,6 +243,9 @@ async function loadGoogleState(
       };
     }
     const status = url.searchParams.get("google_status");
+    // This return hint only explains an unfinished setup. Existing server-read
+    // connected/account-selection authority above always takes precedence.
+    if (status === "permissions_incomplete") return {view: "permissions_incomplete"};
     if (status === "error") {
       const callbackCode = url.searchParams.get("google_error");
       return {
@@ -1385,6 +1389,13 @@ export default function Settings() {
       <s-section heading="Google Ads">
         <s-stack direction="block" gap="base">
           {permissions.providerContent("google_ads")}
+          {!googleWorking && state.view === "permissions_incomplete" ? <>
+            <s-banner tone="warning" heading="Google setup is incomplete">
+              <s-paragraph>Both Google Ads and Merchant Center access are required. Resume setup and allow both permissions to finish connecting.</s-paragraph>
+            </s-banner>
+            <s-button disabled={permissions.busy || state.permissionAvailability.google_ads !== true ? true : undefined}
+              onClick={() => permissions.open("google_ads")}>Resume setup</s-button>
+          </> : null}
           {state.view === "combined" ? <>
             <s-badge tone="warning">Resume setup</s-badge>
             <s-button onClick={() => permissions.checkStatus("google_ads", true)}>Resume setup</s-button>

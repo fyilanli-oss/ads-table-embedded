@@ -1,4 +1,45 @@
 {
+  "Settings_corrections_2026_10_31": {
+    "checked_at": "2026-10-31",
+    "existing_plan_step": 7,
+    "authority": "Explicit owner approval after read-only review: port approved PR264 UI to current main, fix the three reviewed issues and align records",
+    "base_main": "7568edcf08dd1566211871dbe99d3590e8bdf078",
+    "reviewed_UI_source": "a103b25ec8857ab29ddf9a5cbe750f28a615ed64",
+    "analyst_brief": "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md",
+    "code_changes": [
+      "Initial Klaviyo blank/invalid spend stays in the modal with field feedback; zero remains valid",
+      "One verified Klaviyo account or a still-valid explicit choice resumes spend, otherwise account selection",
+      "Provider-specific pending indicators; unrelated revalidation is not three provider operations",
+      "No catalog selection, discovery UI, automatic catalog selection or replacement step"
+    ],
+    "unchanged": [
+      "OAuth scopes and server availability/release gates",
+      "Credentials, token/callback safeguards and current prewrite integration",
+      "Historical spend, cost formula, Product ID and Sales Role",
+      "15 not started; historical22 paused; Overlap after22; Dataset writer23"
+    ],
+    "acceptance": {
+      "isolated_tests": "192 focused behavior and boundary tests passed; exact-commit full CI pending",
+      "typecheck": "passed",
+      "build": "passed",
+      "CI": "pending",
+      "native_desktop": "pending_owner",
+      "native_mobile_320px": "pending_owner",
+      "owner_visual_acceptance": false,
+      "merge_authorized": false
+    },
+    "live_changes": {
+      "provider_calls": false,
+      "Shopify_visual_automation": false,
+      "config": false,
+      "deploy": false,
+      "database": false
+    },
+    "remaining": [
+      "Owner desktop/mobile acceptance of modal, validation, loading, Cancel and successful return",
+      "Separately authorized Google/Meta and Shopify Products/optional Orders native permission/configuration evidence"
+    ]
+  },
   "OAuth_explicit_owner_approval_gate_2026_10_29": {
     "checked_at": "2026-10-29",
     "authority": "explicit_owner_instruction",
@@ -18,19 +59,26 @@
     "scope_change": "Stop and request fresh explicit owner approval before expanding or changing approved scope. No silent alternative path or cleanup.",
     "current_hold": {
       "PR": 264,
+      "status": "step6_removed_native_visual_acceptance_and_PR_merge_pending",
+      "catalog_selection_step": "removed_by_explicit_owner_authorized_cleanup",
+      "OAuth_cleanup": "code_and_tests_completed_in_commit_629f841f3bb578364a5b35f47407df7e99b3e760",
+      "current_authorization": "2026-10-31: explicitly approved current-main UI integration and the three reviewed Settings corrections; no live permission/config/deploy/DB or merge authorization"
+    },
+    "recording_exception": "The owner explicitly authorized this instruction to be recorded in AGENTS and governing documents; that authorizes documentation/governance recording only, not OAuth investigation, implementation, tests, cleanup or provider operations.",
+    "precedence": "Overrides earlier permission to proceed independently with code or isolated tests in OAuth-related work. Earlier approved documents/technical possibilities do not override this gate.",
+    "historical_hold_before_cleanup": {
+      "PR": 264,
       "status": "stopped_owner_rejected_catalog_selection_not_merge_authorized",
       "catalog_selection_step": "owner_rejected; no removal or replacement was performed",
       "OAuth_cleanup": "not_started; requires separate explicit owner approval",
       "runtime_or_test_changes_in_this_record": false
-    },
-    "recording_exception": "The owner explicitly authorized this instruction to be recorded in AGENTS and governing documents; that authorizes documentation/governance recording only, not OAuth investigation, implementation, tests, cleanup or provider operations.",
-    "precedence": "Overrides earlier permission to proceed independently with code or isolated tests in OAuth-related work. Earlier approved documents/technical possibilities do not override this gate."
+    }
   },
   "contract_id": "eo-05-permission-explanation-design-v1",
   "checked_at": "2026-10-29",
   "existing_plan_step": 7,
   "code_delivery_order": 4,
-  "status": "owner_approved_copy_and_flow_UI_implementation_and_visual_acceptance_pending",
+  "status": "owner_authorized_step6_removal_accounts_only_UI_code_native_acceptance_pending",
   "authority": [
     "docs/EXECUTION_PLAN.md",
     "contracts/eo-05-oauth-setup-permission-policy-v1.json",
@@ -110,14 +158,14 @@
       "permission_breadth": "native_grants_may_allow_writes_app_reads",
       "entry": "Google Connect/reconnect or user-selected permission resume in existing Settings",
       "connect_backend": "runtime.beginCombinedSetup({installationAuthority}); identity_v1 fixed on server, never existing reporting_v1 begin by accident",
-      "return_backend": "combined setup account/reporting selection then native Merchant verification; none alone completes setup",
+      "return_backend": "Existing combined permission callback, advertiser accounts and one Reporting Account selection; existing Connected reporting view; no user Merchant/business/catalog selection or setup asset verification.",
       "missing_copy": "Google Ads or Merchant Center access is still missing. Resume setup to review the connection."
     },
     {
       "id": "meta",
       "heading": "Connect Meta ads and catalog",
       "paragraphs": [
-        "Allow AdsTable to read advertising data and the catalog available to your selected business.",
+        "Allow AdsTable to read advertising and catalog data for reporting and product matching.",
         "Both ad account and catalog access are needed to finish setup. You may also see business and Page permissions.",
         "Some business and catalog permissions also allow changes. AdsTable uses this connection for reporting and product matching; it does not edit those assets."
       ],
@@ -132,7 +180,7 @@
       "permission_breadth": "native_grants_may_allow_writes_app_reads",
       "entry": "Meta Connect/reconnect or user-selected permission resume in existing Settings",
       "connect_backend": "runtime.beginCombinedSetup({installationAuthority}); existing identity_v1 scope set only, native app/dependency readiness separate",
-      "return_backend": "combined account selection and native token/user/business/catalog access proof; no Ad/catalog delivery claim",
+      "return_backend": "Existing combined permission callback, advertiser accounts and one Reporting Account selection; existing Connected reporting view; no user Merchant/business/catalog selection or setup asset verification.",
       "missing_copy": "Ad account or catalog access is still missing. Resume setup to review the connection."
     },
     {
@@ -164,8 +212,8 @@
     "pending": "Explanation is closed, provider section shows Starting connection… and prevents a second Connect. Closing a pending display is not a claim that a started provider request was undone.",
     "native_consent": "Shopify/provider controls their permission screen. No automated native screen interaction, no custom Shopify-look permission prompt.",
     "on_return": "Read current server/native evidence; route by stage. No mount effect or return field automatically restarts OAuth.",
-    "connected": "Only final authorized server setup readiness can show overall Connected. Current prepared access/scope helpers authorizesActivation=false cannot produce it.",
-    "legacy": "Existing reporting_v1 remains separate until explicitly wired. A new incomplete combined setup must not delete/revoke the current reporting connection or claim it has been upgraded."
+    "connected": "Existing Connected card means a reporting connection with a selected Reporting Account. It is not catalog/product identity/role/durable activation or Dataset authority.",
+    "legacy": "Reporting-only scope behavior is unchanged. Pending combined account selection stays bound; connected reporting state uses the existing Connected view without catalog selection."
   },
   "resume_routing": [
     {
@@ -181,16 +229,16 @@
       "action": "Open reporting account selection; no OAuth restart."
     },
     {
-      "stage": "verify_assets",
-      "action": "Select/verify current Merchant or business/catalog targets using trusted server authority; do not request permissions again just because selection is missing."
-    },
-    {
       "stage": "review_setup",
       "action": "Show access verified / activation pending; no Connected or automatic grant. App approval and UI/release acceptance are separate."
     },
     {
       "stage": "klaviyo_cost_missing",
       "action": "Open existing estimated monthly cost step; accept zero, distinguish missing; no OAuth restart."
+    },
+    {
+      "stage": "reporting_selected",
+      "action": "Return to the existing reporting connection view; no Merchant/business/catalog selection or access claim."
     }
   ],
   "states": [
@@ -420,8 +468,136 @@
     "owner_visual_acceptance": "not_given",
     "provider_native_grants": "not_inferred",
     "live_permission_flags_changed": false,
-    "package_Done_or_PASS": false
+    "package_Done_or_PASS": false,
+    "UI_component_prepared": true,
+    "route_wiring": true,
+    "component_record": "contracts/eo-05-start-brief-v1.json#Permission_explanation_component_2026_10_29",
+    "settings_actions_wired": true,
+    "klaviyo_existing_resume_wired": true,
+    "route_wiring_remaining": "Native release/UI acceptance remain separate; no Merchant/business/catalog selection or verification requirement in OAuth.",
+    "combined_selectors_wired": true,
+    "candidate_asset_verification_wired": false,
+    "automatic_asset_inventory_discovery": false,
+    "automatic_asset_inventory_discovery_evidence": "removed_by_explicit_owner_instruction_not_part_of_OAuth"
   },
   "step15_started": false,
-  "Dataset_write": false
+  "Dataset_write": false,
+  "combined_selection_spec": {
+    "checked_at": "2026-10-29",
+    "existing_plan_step": 7,
+    "code_delivery_order": 4,
+    "status": "accounts_only_implemented_step6_removed",
+    "purpose": "Select1–3 advertiser accounts and one Reporting Account, then return to the existing reporting view without Merchant/business/catalog selection.",
+    "exact_copy": {
+      "account_heading": {
+        "google_ads": "Select Google Ads accounts",
+        "meta": "Select Meta accounts"
+      },
+      "account_body": "Choose one to three advertiser accounts.",
+      "account_label": "Advertiser accounts",
+      "reporting_heading": "Select Reporting Account",
+      "reporting_body": "Choose the account to use for reporting.",
+      "reporting_label": "Reporting Account",
+      "primary_accounts": "Save selection",
+      "primary_reporting": "Save selection",
+      "secondary": "Cancel",
+      "empty": "No selectable accounts were returned. Check status before continuing.",
+      "invalid": "Check the selected accounts before continuing.",
+      "working_accounts": "Saving selection…"
+    },
+    "component_mapping": {
+      "modal": {
+        "tag": "s-modal",
+        "size": "base",
+        "padding": "base"
+      },
+      "account_choices": {
+        "tag": "s-choice-list",
+        "multiple": "true for account set; omitted for reporting account",
+        "label": "exact copy above"
+      },
+      "choice": {
+        "tag": "s-choice",
+        "value": "native server account ID",
+        "children": "escaped native name and ID"
+      },
+      "actions": {
+        "tag": "s-button",
+        "slot": "primary-action / secondary-actions",
+        "variant": "primary / secondary"
+      },
+      "content": {
+        "tag": "s-stack / s-paragraph / s-banner",
+        "gap": "base",
+        "direction": "block",
+        "tone": "warning or info"
+      }
+    },
+    "states": [
+      "Explicit Resume with current status opens one selector; no native permission request",
+      "Cancel/hide returns to the current feedback without request/write",
+      "Save captures fixed feature/stage/connection-version/IDs before hide; dispatch only once after native afterhide",
+      "Selection binds the same displayed connection/version in the core before the write; concurrent change fails with no retry",
+      "Write receipt is not an account inventory; next explicit Resume reads fresh current choices"
+    ],
+    "desktop_mobile": "Existing native accounts/Reporting Account choice modal only; real desktop/min320px mobile owner acceptance still pending.",
+    "unchanged": "Server availability switches remain false for Google/Meta; no provider API/scope addition, live grant/config/deploy/token/DB/Dataset change; no agent native Shopify visual operation.",
+    "out_of_scope": [
+      "Any user Merchant/business/catalog selection",
+      "Final setup activation and durable source persistence in step15",
+      "Live developer/config/permission changes and native UI acceptance"
+    ],
+    "official_sources": [
+      "https://shopify.dev/docs/api/app-home/latest/web-components/forms/choice-list",
+      "https://shopify.dev/docs/api/app-home/latest/web-components/forms/text-field",
+      "https://shopify.dev/docs/api/app-home/latest/web-components/overlays/modal"
+    ],
+    "superseded_by": "asset_discovery_spec"
+  },
+  "step6_removal": {
+    "checked_at": "2026-10-29",
+    "owner_authorization": "Tamam başla temizlemeye.",
+    "scope": "Remove only unauthorized OAuth step6, preserve existing steps1–5 and independent product identity readers; no live provider/config/deploy/token/DB changes",
+    "approval_gate": "PR265/AGENTS explicit owner approval governs all OAuth work; this approval covers this removal and its tests/docs only, not new design or merge",
+    "status": "implemented_local_tests_passed_native_visual_acceptance_pending",
+    "flow": [
+      "Keep permission explanation, combined Ads+Merchant/Catalog scopes, callback/token/grant validation and1–3 advertiser selection",
+      "Keep one Reporting Account selection; when the reporting connection exists return to existing Connected reporting view",
+      "No Merchant/business/catalog selection, manual identifiers, discovery, Verify access or catalog-based Resume gate",
+      "Reporting connection state is not product mapping, catalog access, roles, final durable activation or Dataset authority"
+    ],
+    "exact_copy": {
+      "account_heading": {
+        "google_ads": "Select Google Ads accounts",
+        "meta": "Select Meta accounts"
+      },
+      "account_body": "Choose one to three advertiser accounts.",
+      "reporting_heading": "Select Reporting Account",
+      "reporting_body": "Choose the account to use for reporting.",
+      "primary": "Save selection",
+      "secondary": "Cancel",
+      "loading": "Saving selection…",
+      "invalid": "Check the selected accounts before continuing.",
+      "empty": "No selectable accounts were returned. Check status before continuing.",
+      "reporting_result": "Existing Connected reporting card; no new catalog/activation banner",
+      "meta_permission_body": "Allow AdsTable to read advertising and catalog data for reporting and product matching."
+    },
+    "components": "Existing native s-modal size/base padding/base; s-stack block/base; s-choice-list/s-choice only for accounts and Reporting Account; s-button slots unchanged. No new component or style.",
+    "states": "Explicit Resume opens current account choices; Cancel/hide no I/O; successful final selection revalidates current reporting view; errors unknown/no retry; no empty catalog/expiry states remain",
+    "sources": [
+      "https://shopify.dev/docs/api/app-home/latest/web-components/forms/choice-list",
+      "https://shopify.dev/docs/api/app-home/latest/web-components/overlays/modal"
+    ],
+    "acceptance": "Code/tests/typecheck/build/CI plus real native desktop/min320px mobile owner acceptance remain distinct. No agent native Shopify interaction. No merge approval.",
+    "validation": {
+      "full_local_tests": 3064,
+      "passed": 3064,
+      "failed": 0,
+      "targeted_tests": 224,
+      "typecheck": "passed",
+      "build": "passed",
+      "native_visual_acceptance": false,
+      "CI": "exact_head_checked_after_push"
+    }
+  }
 }

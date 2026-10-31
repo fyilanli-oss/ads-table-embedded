@@ -6,7 +6,7 @@
 - Kod, test, sözleşme, migration, config, callback/token/oturum, canlı çağrı, temizlik/kaldırma/geri alma/refactor, deploy ve merge de dahildir. Düzeltme veya geri alma amacı kendiliğinden izin oluşturmaz.
 - Genel “devam edelim”, genel onay, önceki başka iş/merge onayı veya önceki plan kararı OAuth yetkisi değildir. Onay yalnız açıkça belirtilen somut iş ve kapsam için geçerlidir. Kapsam değişecekse durulur ve yeni açık izin alınır.
 - Bu kapı, OAuth için önceki bağımsız kodlama veya izole test ilerleme izinlerinin önündedir; teknik olanak, başarılı test, geri alınabilirlik veya ajan takdiri yerine geçmez.
-- #264 kullanıcı tarafından reddedilen katalog seçim adımı nedeniyle durdurulmuştur; merge yetkisi yoktur. Katalog seçimi kodu temizlenmedi veya değiştirilmedi. Temizlik de ayrı açık izin bekler.
+- #264’te katalog seçimi açık temizlik onayıyla kaldırıldı (kaynak a103b25). 31 Ekim’de onaylı arayüzün güncel main ile uyumlandırılması ve üç Settings hatasının düzeltilmesi ayrıca onaylandı. Katalog seçimi geri getirilemez. Gerçek görsel kabul ve ayrı merge onayı beklenir; canlı izin/config/deploy yetkisi yoktur. Önceki temizlenmedi/izin bekliyor ifadeleri 29 Ekim tarihsel durumudur.
 - Bu kuralın AGENTS ve bağlayıcı belgelere kaydı kullanıcı tarafından açıkça istendi. Bu izin yalnız kural kaydına aittir; OAuth inceleme/kodlama/test/temizlik veya provider işlemi yetkisi vermez.
 
 # AdsTable Shopify gömülü arayüz anayasası

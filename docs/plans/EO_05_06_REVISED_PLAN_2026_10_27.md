@@ -46,7 +46,7 @@ Klaviyo görsel bulguları ve Meta/Google native modal kabulü #264'te ayrı aç
 - Kod, test, sözleşme, migration, config, callback/token/oturum, canlı çağrı, temizlik/kaldırma/geri alma/refactor, deploy ve merge de dahildir. Düzeltme veya geri alma amacı kendiliğinden izin oluşturmaz.
 - Genel “devam edelim”, genel onay, önceki başka iş/merge onayı veya önceki plan kararı OAuth yetkisi değildir. Onay yalnız açıkça belirtilen somut iş ve kapsam için geçerlidir. Kapsam değişecekse durulur ve yeni açık izin alınır.
 - Bu kapı, OAuth için önceki bağımsız kodlama veya izole test ilerleme izinlerinin önündedir; teknik olanak, başarılı test, geri alınabilirlik veya ajan takdiri yerine geçmez.
-- #264 kullanıcı tarafından reddedilen katalog seçim adımı nedeniyle durdurulmuştur; merge yetkisi yoktur. Katalog seçimi kodu temizlenmedi veya değiştirilmedi. Temizlik de ayrı açık izin bekler.
+- #264’te katalog seçimi açık temizlik onayıyla kaldırıldı (kaynak a103b25). 31 Ekim’de onaylı arayüzün güncel main ile uyumlandırılması ve üç Settings hatasının düzeltilmesi ayrıca onaylandı. Katalog seçimi geri getirilemez. Gerçek görsel kabul ve ayrı merge onayı beklenir; canlı izin/config/deploy yetkisi yoktur. Önceki temizlenmedi/izin bekliyor ifadeleri 29 Ekim tarihsel durumudur.
 - Bu kuralın AGENTS ve bağlayıcı belgelere kaydı kullanıcı tarafından açıkça istendi. Bu izin yalnız kural kaydına aittir; OAuth inceleme/kodlama/test/temizlik veya provider işlemi yetkisi vermez.
 
 ## 29 Ekim 2026 — Onaylı kararlı Polaris 2.0 hizalaması
@@ -341,3 +341,10 @@ reviewed_for_prewrite_only uygulama onayı veya gerçek kurulum tamamlanması de
 404 ilgili test geçti; genel test/tip/derleme ve exact source Actions/F01 ayrıca doğrulanır. OAuth ekran/akış/kapsam/katalog seçimi, canlı sorgu, config/secret/migration/deploy, Sales Role veya Dataset yazımı değişmedi.15 başlamadı;22 duraklatılmış;23 writer.
 
 Bağlayıcı kayıt: contracts/eo-05-start-brief-v1.json#Setup_scope_access_prewrite_binding_2026_10_30. Resmî kontrol30Ekim2026: Shopify AppInstallation, Google OAuth Scopes ve Klaviyo Authenticate API Requests okundu. Merge ayrı açık onay bekler.
+
+
+## 31 Ekim 2026 — mevcut 07: onaylı Settings düzeltmesi
+
+Ürün sahibi salt okunur inceleme sonrası #264’teki onaylı arayüzün güncel main üzerine uyumlandırılmasını ve üç hatanın birlikte düzeltilmesini onayladı: Klaviyo ilk maliyet girişinde alan/modal içi hata, sağlayıcıya özel Working ve gerçek eksik adıma göre Resume setup. Sıfır tutar geçerli, mevcut harcama geçmişi korunur. Merchant/işletme/katalog seçimi veya otomatik seçimi eklenmez. Önceki katalog seçimi/temizlik bekliyor notları son kararla güncellenmiştir.
+
+Somut durum/metin/bileşen ve test özeti: `docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md`. Makine kaydı: `contracts/eo-05-permission-explanation-design-v1.json#Settings_corrections_2026_10_31`. Güncel teknik teslim bağlantıları korunur. Kod/izole test ve CI ile gerçek desktop/mobil kullanıcı kabulü ayrı tutulur; UI Done/PASS veya 07 kapanışı verilmez. #264 taslak kalır; yeni adayın merge onayı ayrıdır. Canlı provider, izin/kapsam, token/config, DB/migration ve deploy değişikliği yoktur. 15 başlamadı;22 duraklatılmış; Overlap22 sonrası;23 Dataset yazımı.

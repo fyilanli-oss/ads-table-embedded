@@ -1,4 +1,13 @@
 {
+  "Settings_corrections_2026_10_31": {
+    "checked_at": "2026-10-31",
+    "existing_plan_step": 7,
+    "authority": "Explicit owner approval after read-only review: port approved PR264 UI to current main, fix the three reviewed issues and align records",
+    "record": "contracts/eo-05-permission-explanation-design-v1.json#Settings_corrections_2026_10_31",
+    "status": "code_prepared_CI_and_native_visual_acceptance_pending",
+    "merge_authorized": false,
+    "live_changes": false
+  },
   "OAuth_explicit_owner_approval_gate_2026_10_29": {
     "checked_at": "2026-10-29",
     "authority": "explicit_owner_instruction",

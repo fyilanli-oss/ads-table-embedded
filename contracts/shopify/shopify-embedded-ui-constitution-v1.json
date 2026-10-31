@@ -1,4 +1,13 @@
 {
+  "Settings_corrections_2026_10_31": {
+    "checked_at": "2026-10-31",
+    "existing_plan_step": 7,
+    "authority": "Explicit owner approval after read-only review: port approved PR264 UI to current main, fix the three reviewed issues and align records",
+    "record": "contracts/eo-05-permission-explanation-design-v1.json#Settings_corrections_2026_10_31",
+    "status": "code_prepared_CI_and_native_visual_acceptance_pending",
+    "merge_authorized": false,
+    "live_changes": false
+  },
   "OAuth_explicit_owner_approval_gate_2026_10_29": {
     "checked_at": "2026-10-29",
     "authority": "explicit_owner_instruction",
@@ -18,13 +27,20 @@
     "scope_change": "Stop and request fresh explicit owner approval before expanding or changing approved scope. No silent alternative path or cleanup.",
     "current_hold": {
       "PR": 264,
+      "status": "step6_removed_native_visual_acceptance_and_PR_merge_pending",
+      "catalog_selection_step": "removed_by_explicit_owner_authorized_cleanup",
+      "OAuth_cleanup": "code_and_tests_completed_in_commit_629f841f3bb578364a5b35f47407df7e99b3e760",
+      "current_authorization": "2026-10-31: explicitly approved current-main UI integration and the three reviewed Settings corrections; no live permission/config/deploy/DB or merge authorization"
+    },
+    "recording_exception": "The owner explicitly authorized this instruction to be recorded in AGENTS and governing documents; that authorizes documentation/governance recording only, not OAuth investigation, implementation, tests, cleanup or provider operations.",
+    "precedence": "Overrides earlier permission to proceed independently with code or isolated tests in OAuth-related work. Earlier approved documents/technical possibilities do not override this gate.",
+    "historical_hold_before_cleanup": {
+      "PR": 264,
       "status": "stopped_owner_rejected_catalog_selection_not_merge_authorized",
       "catalog_selection_step": "owner_rejected; no removal or replacement was performed",
       "OAuth_cleanup": "not_started; requires separate explicit owner approval",
       "runtime_or_test_changes_in_this_record": false
-    },
-    "recording_exception": "The owner explicitly authorized this instruction to be recorded in AGENTS and governing documents; that authorizes documentation/governance recording only, not OAuth investigation, implementation, tests, cleanup or provider operations.",
-    "precedence": "Overrides earlier permission to proceed independently with code or isolated tests in OAuth-related work. Earlier approved documents/technical possibilities do not override this gate."
+    }
   },
   "contract": "shopify-embedded-ui-constitution-v1",
   "status": "binding",

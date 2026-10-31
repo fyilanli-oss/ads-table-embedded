@@ -1,4 +1,36 @@
 {
+  "Shopify_products_completion_2026_10_31": {
+    "checked_at": "2026-10-31",
+    "existing_plan_step": 7,
+    "authority": "Explicit owner approval: Products native return to Settings, automatic fresh permission read and clear card result; code/tests/PR only",
+    "supersedes": "Products manual-only Check status and generic awaiting activation presentation; other provider and Orders flows remain unchanged",
+    "return": "Same-tab sessionStorage navigation hint, authenticated Shop GID, version1, ten-minute TTL, consumed once before fixed /settings navigation; never permission evidence, token or arbitrary address. No native request if storage cannot be verified.",
+    "readback": "Settings loader reads existing native afterReturn once for the verified store when Products is available. No automatic consent request, polling or retry. Native basePermissionState alone determines card status.",
+    "exact_copy": {
+      "ready": "Ürün erişimi onaylandı",
+      "missing": "Ürün erişimi henüz onaylanmadı.",
+      "unknown": "Ürün erişimi doğrulanamadı. Durumu tekrar kontrol edin.",
+      "check": "Durumu kontrol et",
+      "checking": "Ürün erişimi doğrulanıyor…",
+      "returning": "Settings'e dönülüyor…",
+      "return_failed": "Settings'e otomatik dönülemedi.",
+      "return_recovery": "Settings'i aç",
+      "unavailable": "Ürün bağlantısı şu anda kullanılamıyor."
+    },
+    "components": "Existing stable native s-page/s-section/s-stack/s-badge success/s-banner info or critical/s-button/s-link; no custom styling",
+    "states": "Ready removes Connect Products; unknown offers explicit readback instead of repeat consent; missing retains approved explanation; stale or wrong-store intent and stale owner replies cannot verify access; failed navigation offers Settings recovery link without retry",
+    "tests": ["tests/shopify-products-completion.test.js", "tests/permission-settings.test.js", "tests/step07-settings-corrections.test.js"],
+    "acceptance": "Isolated code tests are not native visual acceptance. Existing native Products grant was observed before this change; new return/card grant/cancel/error behavior still requires owner desktop and minimum320px mobile acceptance.",
+    "sources": ["https://shopify.dev/docs/apps/build/authentication-authorization/manage-access-scopes", "https://shopify.dev/docs/api/app-home/latest/web-components/feedback-and-status-indicators/badge", "https://shopify.dev/docs/api/app-home/latest/web-components/feedback-and-status-indicators/banner", "https://api.reactrouter.com/v7/functions/react-router.useNavigate.html", "https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage"],
+    "native_visual_acceptance": false,
+    "deploy_authorized": false,
+    "native_retry_authorized": false,
+    "merge_authorized": false,
+    "dataset_write": false,
+    "step15_started": false,
+    "step22": "paused",
+    "step23": "Dataset_FX_writer"
+  },
   "Shopify_settings_data_headers_2026_10_31": {
     "checked_at": "2026-10-31",
     "existing_plan_step": 7,

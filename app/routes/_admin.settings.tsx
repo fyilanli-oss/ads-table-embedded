@@ -3,6 +3,7 @@ import {createPermissionSettings, PERMISSION_SETTINGS_AVAILABILITY} from "../lib
 import type {PermissionFeature} from "../lib/ui/permission-explanation-flow.js";
 import type {ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs, ShouldRevalidateFunctionArgs} from "react-router";
 import {boundary} from "@shopify/shopify-app-react-router/server";
+import {readProductPermissionStatus, type ProductPermissionStatus} from "../lib/shopify/product-permission-status.server.js";
 import {
   useActionData,
   useFetcher,
@@ -119,6 +120,7 @@ type KlaviyoState =
   | {view: "error"; code: string; retry: "oauth" | "reload"};
 
 type LoaderData = State & {meta: State; klaviyo: KlaviyoState; permissionAvailability: typeof PERMISSION_SETTINGS_AVAILABILITY;
+  shopifyProductAccess: ProductPermissionStatus; shopifyPermissionOwner: string | null;
   permissionUnavailableReasons?: Partial<Record<PermissionFeature, string>>};
 
 function providerCodeOf(provider: Provider, error: unknown) {
@@ -380,12 +382,15 @@ async function loadKlaviyoState(
 export const loader = async ({request}: LoaderFunctionArgs): Promise<LoaderData> => {
   const verified = await routeAuthority(request);
   const url = new URL(request.url);
-  const [google, meta, klaviyo] = await Promise.all([
+  const [google, meta, klaviyo, shopifyProductAccess] = await Promise.all([
     loadGoogleState(verified, url),
     loadMetaState(verified, url),
     loadKlaviyoState(verified, url),
+    readProductPermissionStatus({verified, setup: permissionSetup,
+      available: permissionRelease?.availability.shopify_products === true}),
   ]);
-  return {...google, meta, klaviyo,
+  return {...google, meta, klaviyo, shopifyProductAccess,
+    shopifyPermissionOwner: verified.identity?.shop?.shopId ?? null,
     permissionAvailability: permissionRelease?.availability ?? PERMISSION_SETTINGS_AVAILABILITY,
     permissionUnavailableReasons: permissionRelease?.unavailableReasons};
 };
@@ -610,6 +615,8 @@ function Navigation() {
 
 export default function Settings() {
   const state = useLoaderData<typeof loader>();
+  const [productOverride, setProductOverride] = useState<{source: LoaderData; value: ProductPermissionStatus} | null>(null);
+  const productAccess = productOverride?.source === state ? productOverride.value : state.shopifyProductAccess ?? "unknown";
   const actionData = useActionData<typeof action>() as ActionData;
   const submit = useSubmit();
   const navigation = useNavigation();
@@ -829,6 +836,8 @@ export default function Settings() {
 
   const permissions = usePermissionSettings({availability: state.permissionAvailability,
     unavailableReasons: state.permissionUnavailableReasons,
+    productOwner: state.shopifyPermissionOwner,
+    onProductStatus(value) {setProductOverride({source: state, value});},
     onResume(feature, stage) {
       if (feature === "klaviyo") {
         klaviyoResumeRequested.current = true;
@@ -1043,9 +1052,14 @@ export default function Settings() {
       <Navigation />
       <s-section heading="Shopify">
         <s-stack direction="block" gap="base">
-          <s-button onClick={() => permissions.open("shopify_products")}>Connect Shopify products</s-button>
+          {permissions.checkingProduct ? <s-banner tone="info" heading="Ürün erişimi doğrulanıyor…" />
+            : productAccess === "ready" ? <s-badge tone="success">Ürün erişimi onaylandı</s-badge>
+            : productAccess === "unknown" ? <s-banner tone="critical" heading="Ürün erişimi doğrulanamadı. Durumu tekrar kontrol edin." />
+            : <s-paragraph>{productAccess === "missing" ? "Ürün erişimi henüz onaylanmadı." : "Ürün bağlantısı şu anda kullanılamıyor."}</s-paragraph>}
+          {productAccess === "missing" || productAccess === "unavailable" ?
+            <s-button disabled={permissions.busy ? true : undefined} onClick={() => permissions.open("shopify_products")}>Connect Shopify products</s-button> : null}
+          {productAccess === "unknown" ? <s-button disabled={permissions.busy ? true : undefined} onClick={() => permissions.checkStatus("shopify_products")}>Durumu kontrol et</s-button> : null}
           <s-button onClick={() => permissions.open("shopify_orders")}>Connect Shopify orders</s-button>
-          <s-button disabled={permissions.busy ? true : undefined} onClick={() => permissions.checkStatus("shopify_products")}>Check status</s-button>
         </s-stack>
       </s-section>
       {permissions.content}

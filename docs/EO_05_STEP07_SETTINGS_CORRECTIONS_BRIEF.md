@@ -195,3 +195,46 @@ https://reactrouter.com/how-to/headers
 Kurulu React Router7.18.2 Single Fetch kodu ayrıca okundu.
 Bağlayıcı kayıt: contracts/eo-05-permission-explanation-design-v1.json#Shopify_settings_data_headers_2026_10_31.
 07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.
+
+## 31 Ekim — mevcut 07: Products kullanıcı akışının tamamlanması (kod/test onaylı)
+
+Amaç: Connect Products → mevcut Shopify izin ekranı → Settings'e otomatik dönüş
+→ sunucunun güncel izin okuması → kartta açık sonuç. Yayın/native deneme/merge
+bu onayın dışındadır. Products rolü raporlama veya Dataset aktivasyonu değildir.
+
+Dönüş: yalnız Products Connect sırasında, native istekten önce, aynı sekmenin
+sessionStorage alanına sürümlü/mağazaya bağlı, 10 dakika geçerli dönüş niyeti
+kaydedilir. Kimlik/token/izin kanıtı değildir; yalnız /settings gezinmesi içindir.
+Authenticated layout ana sayfaya dönüşte aynı mağazanın niyetini bir kez tüketir.
+Saklama başarısızsa izin isteği başlamaz. Yeni callback veya scope parametresi yok.
+
+Settings loader aynı doğrulanmış mağazada mevcut afterReturn üzerinden bir kez
+salt okunur izin okur; otomatik izin isteği, retry, timer veya poll yoktur.
+Güncel izin okuması her Settings girişinde kartı üretir; local niyet başarı sayılmaz.
+Aynı sayfada zaten granted sonucu veya açık Check status da kartı günceller.
+
+| Durum | Birebir metin | Davranış |
+|---|---|---|
+| Doğrulandı | Ürün erişimi onaylandı | s-badge tone=success; Connect Products yok |
+| Eksik/izin verilmemiş | Ürün erişimi henüz onaylanmadı. | s-paragraph; mevcut Connect açıklaması |
+| Doğrulanamadı | Ürün erişimi doğrulanamadı. Durumu tekrar kontrol edin. | s-banner tone=critical; açık Durumu kontrol et; Connect yok |
+| Okuma/başlatma sürüyor | Ürün erişimi doğrulanıyor… | s-banner tone=info; mükerrer eylem engeli |
+| Dönüş yönlendirmesi | Settings'e dönülüyor… | s-page heading=Settings ve s-banner tone=info |
+| Dönüş hatası | Settings'e otomatik dönülemedi. | s-banner tone=critical; s-link Settings'i aç; otomatik tekrar yok |
+| Yayın kapalı | Ürün bağlantısı şu anda kullanılamıyor. | s-paragraph; mevcut açıklama/kapalı yayın koşulu |
+| Açıklama iptali | mevcut Cancel/çarpı/Escape | dönüş niyeti veya istek oluşturmaz |
+| Native iptal | güncel sunucu okumasına göre eksik veya doğrulanamadı | Cancel'ın grant verdiği varsayılmaz; otomatik tekrar yok |
+
+Products için generic awaiting activation banner ve ikinci Check status gösterimi
+kaldırılır; sonuç kendi Shopify kartındadır. Orders, Google, Meta, Klaviyo native
+akışları, hesap seçimi, scope, token, SDK yöntemi ve server grant guard'ları korunur.
+Gerçek masaüstü ve en az320px mobilde grant/iptal/dönüş/yenileme/readonly hata
+kabulü ayrıca ürün sahibinde bekler; otomatik test native kabul değildir.
+
+Native s-page/s-section/s-stack/s-badge/s-banner/s-button kullanılır; özel stil yok.
+Resmî kontrol31Ekim2026: mevcut scope/Polaris kaynakları ve
+https://shopify.dev/docs/api/app-home/latest/web-components/feedback-and-status-indicators/badge
+https://shopify.dev/docs/api/app-home/latest/web-components/feedback-and-status-indicators/banner
+https://api.reactrouter.com/v7/functions/react-router.useNavigate.html
+https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage
+07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımı.

@@ -3467,3 +3467,22 @@ https://reactrouter.com/how-to/headers
 Kurulu React Router7.18.2 Single Fetch kodu ayrıca okundu.
 Bağlayıcı kayıt: contracts/eo-05-permission-explanation-design-v1.json#Shopify_settings_data_headers_2026_10_31.
 07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.
+
+## 31 Ekim — mevcut 07: Products dönüşü, güncel izin okuması ve kart sonucu
+
+Sahibin açık onayıyla yalnız kod/test/PR: native Products izni sonrası ana sayfaya
+bırakılan kullanıcı, aynı sekme ve doğrulanmış mağazaya bağlı tek kullanımlık
+10 dakikalık gezinme niyetiyle Settings'e döner. Niyet izin kanıtı değildir.
+Settings loader mevcut native afterReturn ile bir kez güncel izin okur.
+Kart doğrulanmış erişimde “Ürün erişimi onaylandı” gösterir ve Connect Products'ı
+kaldırır. Eksik, doğrulanamayan ve yayın kapalı durumları ayrı kalır. Products
+teknik awaiting activation/ikinci Check status gösterimi kaldırılır. Dönüş hatası
+Settings'i aç bağlantısı sunar; otomatik izin isteği veya tekrar yapılmaz.
+Önceki manuel Products kontrol/gösterim kararı bu kapsamda değiştirilmiştir.
+Orders ve diğer sağlayıcı akışları değişmez. Yeni scope/config/token/yayın yoktur.
+Kod testleri native masaüstü/en az320px mobil kabul yerine geçmez; yayın,
+native deneme ve merge ayrıca açık onay bekler. Mevcut Products grant kanıtı
+önceki sürüme aittir; yeni kullanıcı akışı henüz native ortamda doğrulanmadı.
+Bağlayıcı kayıt: contracts/eo-05-permission-explanation-design-v1.json#Shopify_products_completion_2026_10_31.
+Ayrıntı ve 31Ekim resmî kaynakları: docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md.
+07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.

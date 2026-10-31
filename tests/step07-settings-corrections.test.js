@@ -60,7 +60,7 @@ function harness({accounts = [account], providerRuntime = () => assert.fail("une
     if (id === "react-router") return {useLoaderData: () => h.state, useActionData: () => undefined,
       useNavigation: () => h.navigation, useRevalidator: () => h.revalidator, useFetcher: () => h.fetcher,
       useSubmit: () => () => assert.fail("unexpected navigation submission")};
-    if (id === "../components/use-permission-settings") return {usePermissionSettings: () => ({busy: false, content: null})};
+    if (id === "../components/use-permission-settings") return {usePermissionSettings: props => {h.permissionProps = props; return {busy: false, checkingProduct: false, content: null};}};
     if (id === "../shopify.server") return {authenticate: {admin: async () => verified}, database: {}, providerTokenVault: {}};
     if (id.endsWith("/shopify-route-authority.server.js")) return {resolveShopifyRouteAuthority: async () => verified};
     if (id.endsWith("/klaviyo-oauth-runtime.server.js")) return {createKlaviyoOAuthRuntime: providerRuntime, normalizeKlaviyoEstimatedSpend};
@@ -246,4 +246,27 @@ test("successful setup replaces the pending modal only after server state become
   h.fetcher.state = "idle"; h.fetcher.data = undefined; h.render();
   assert.equal(h.modal(), undefined);
   assert.equal(nodes(h.tree).filter(e=>e.type === "s-badge" && text(e) === "Connected").length, 3);
+});
+
+test("Products card shows fresh verified access without Connect or technical activation copy", () => {
+  const h = harness(); h.state.shopifyProductAccess = "ready"; h.render();
+  assert.ok(nodes(h.tree).some(e => e.type === "s-badge" && text(e) === "Ürün erişimi onaylandı"));
+  assert.equal(nodes(h.tree).some(e => e.type === "s-button" && text(e) === "Connect Shopify products"), false);
+  assert.equal(text(h.tree).includes("awaiting activation"), false);
+});
+
+test("Products missing and unknown remain distinct; unknown offers readback instead of a repeat grant", () => {
+  const h = harness(); h.state.shopifyProductAccess = "missing"; h.render();
+  assert.ok(nodes(h.tree).some(e => e.type === "s-button" && text(e) === "Connect Shopify products"));
+  h.state = {...h.state, shopifyProductAccess: "unknown"}; h.render();
+  assert.equal(nodes(h.tree).some(e => e.type === "s-button" && text(e) === "Connect Shopify products"), false);
+  assert.ok(nodes(h.tree).some(e => e.type === "s-button" && text(e) === "Durumu kontrol et"));
+});
+
+test("Products status reply updates its card immediately and a new loader cannot retain stale ready state", () => {
+  const h = harness(); h.state.shopifyProductAccess = "missing"; h.render();
+  h.permissionProps.onProductStatus("ready"); h.render();
+  assert.ok(nodes(h.tree).some(e => e.type === "s-badge" && text(e) === "Ürün erişimi onaylandı"));
+  h.state = {...h.state, shopifyProductAccess: "missing"}; h.render();
+  assert.equal(nodes(h.tree).some(e => e.type === "s-badge" && text(e) === "Ürün erişimi onaylandı"), false);
 });

@@ -1,5 +1,7 @@
 import type {HeadersFunction, LoaderFunctionArgs} from "react-router";
-import {Outlet, useLoaderData, useRouteError} from "react-router";
+import {Outlet, useLoaderData, useRouteError, useLocation, useNavigate} from "react-router";
+import {useEffect, useState} from "react";
+import {consumeProductPermissionReturn} from "../lib/ui/product-permission-return.js";
 import {AppProvider} from "@shopify/shopify-app-react-router/react";
 import {boundary} from "@shopify/shopify-app-react-router/server";
 import {
@@ -22,14 +24,30 @@ export const loader = async ({request}: LoaderFunctionArgs) => {
   });
   await createProductionShopifyEntitlementRuntime({database}).reconcile(identity);
 
-  return publicShopifyConfig;
+  return {...publicShopifyConfig, permissionReturnOwner: identity.shop.shopId};
 };
 
 export default function AuthenticatedAdminLayout() {
-  const {apiKey, polarisUrl} = useLoaderData<typeof loader>();
+  const {apiKey, polarisUrl, permissionReturnOwner} = useLoaderData<typeof loader>();
+  const {pathname} = useLocation();
+  const navigate = useNavigate();
+  const [returnState, setReturnState] = useState<"idle" | "returning" | "failed">("idle");
+  useEffect(() => {
+    if (pathname !== "/" && pathname !== "/settings") {setReturnState("idle"); return;}
+    let pending = false;
+    try { pending = consumeProductPermissionReturn(globalThis.sessionStorage, permissionReturnOwner); } catch {}
+    if (pathname === "/" && pending) {
+      setReturnState("returning");
+      try {
+        void Promise.resolve(navigate("/settings", {replace: true})).catch(() => setReturnState("failed"));
+      } catch { setReturnState("failed"); }
+    } else if (pathname === "/settings") setReturnState("idle");
+  }, [pathname, permissionReturnOwner, navigate]);
   return (
     <AppProvider apiKey={apiKey} polarisUrl={polarisUrl}>
-      <Outlet />
+      {returnState === "returning" ? <s-page heading="Settings"><s-banner tone="info" heading="Settings'e dönülüyor…" /></s-page>
+        : returnState === "failed" ? <s-page heading="Settings"><s-banner tone="critical" heading="Settings'e otomatik dönülemedi."><s-link href="/settings">Settings'i aç</s-link></s-banner></s-page>
+        : <Outlet />}
     </AppProvider>
   );
 }

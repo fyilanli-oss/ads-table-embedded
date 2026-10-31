@@ -344,3 +344,22 @@ test("Settings .data keeps normal permission status as data without redirecting 
   const body = await response.text();
   assert.ok(body.includes("review_setup"));
 });
+
+test("actual Settings loader reads fresh Products permission once without starting OAuth", async () => {
+  for (const [nativeState, expected] of [["permission_ready", "ready"], ["resume_setup", "missing"], ["failure", "unknown"]]) {
+    let reads = 0;
+    const owner = {...verified, identity: {shop: {shopId: "gid://shopify/Shop/123"}}};
+    const route = loadRoute({release: shopifyRelease, authenticate: async () => owner,
+      providerRuntime: () => ({inspect: async () => ({state: "disconnected"})}),
+      shopify: {afterReturn: async ({verified: current}) => {
+        assert.equal(current, owner); reads++;
+        if (nativeState === "failure") throw new Error("private detail");
+        return {basePermissionState: nativeState};
+      }, requestProducts: () => assert.fail("loader must never request consent")},
+    });
+    const reply = await route.loader({request: new Request("https://embedded.adstable.app/settings")});
+    assert.equal(reply.shopifyProductAccess, expected);
+    assert.equal(reply.shopifyPermissionOwner, "gid://shopify/Shop/123");
+    assert.equal(reads, 1);
+  }
+});

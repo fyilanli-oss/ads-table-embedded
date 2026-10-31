@@ -1,9 +1,14 @@
 import {identityOAuthBinding, oauthPermissionProfile} from "./oauth-permission-profile.server.js";
 
-function eligibleBinding(current) {
+export function identityOAuthBindingForCurrent(current) {
   if (current === null) return identityOAuthBinding({connectionId: null, version: null});
-  if (!["connected", "pending_account_selection", "reauthorization_required"].includes(current.status)) {
+  if (!["connected", "pending_account_selection", "reauthorization_required", "disconnected"].includes(current.status)) {
     throw new Error("IDENTITY_OAUTH_CONNECTION_STATE_NOT_ELIGIBLE");
+  }
+  // An explicit new OAuth may reuse a retired connection identity, never its grant.
+  if (current.status === "disconnected" && (current.credentialId !== null
+    || typeof current.disconnectedAt !== "string" || !Number.isFinite(Date.parse(current.disconnectedAt)))) {
+    throw new Error("IDENTITY_OAUTH_DISCONNECT_INCOMPLETE");
   }
   return identityOAuthBinding({connectionId: current.connectionId, version: current.version});
 }
@@ -13,7 +18,7 @@ export function createIdentityOAuthAuthorization({lifecycle, enabled = false}) {
   const read = async ({installationAuthority, provider}) => {
     if (!enabled) throw new Error("IDENTITY_OAUTH_START_DISABLED");
     oauthPermissionProfile(provider, "identity_v1");
-    return eligibleBinding(await lifecycle.loadCurrent({installationAuthority, provider}));
+    return identityOAuthBindingForCurrent(await lifecycle.loadCurrent({installationAuthority, provider}));
   };
   return Object.freeze({
     beforeStart: read,

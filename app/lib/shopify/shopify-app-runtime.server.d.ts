@@ -5,6 +5,7 @@ export interface TokenVaultStartup {
 }
 
 export interface ShopifyAppRuntime {
+  permissionRelease: import("./permission-release.server.js").PermissionSetupRelease;
   permissionSetup: import("./progressive-permissions.server.js").ShopifyPermissionSetup;
   database: unknown;
   tokenVault: {

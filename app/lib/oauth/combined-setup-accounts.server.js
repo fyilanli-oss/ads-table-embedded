@@ -1,4 +1,5 @@
 import {validateIdentityOAuthGrantedScopes} from "./oauth-permission-profile.server.js";
+import {identityOAuthBindingForCurrent} from "./identity-oauth-authorization.server.js";
 
 function fail(code) {throw new Error(code);}
 function sameBinding(left, right) {
@@ -10,7 +11,12 @@ function sameBinding(left, right) {
 // Optional only for the unchanged legacy entries. Combined callers bind the exact
 // server-read pending record before any credential discovery or selection write.
 export function assertCombinedSetupAccountBinding(expected, pending) {
-  if (expected === undefined) return;
+  if (expected === undefined) {
+    if (Array.isArray(pending?.scopes) && pending.scopes.some(scope => scope === "https://www.googleapis.com/auth/content" || scope === "catalog_management")) {
+      fail("COMBINED_SETUP_BOUND_ENTRY_REQUIRED");
+    }
+    return;
+  }
   if (!expected || !pending || expected.connectionId !== pending.connectionId
     || expected.version !== pending.version || expected.credentialId !== pending.credentialId) {
     fail("COMBINED_SETUP_CONNECTION_CHANGED");
@@ -27,6 +33,10 @@ export function createCombinedSetupAccounts({provider, enabled, lifecycle, token
     if (!enabled) fail("IDENTITY_OAUTH_START_DISABLED");
     const current = await lifecycle.loadCurrent({installationAuthority, provider});
     if (!current) return null;
+    if (current.status === "disconnected") {
+      identityOAuthBindingForCurrent(current);
+      return current; // Status read only: no old token, discovery or implicit reconnect.
+    }
     if (!["connected", "pending_account_selection", "reauthorization_required"].includes(current.status)) {
       fail("COMBINED_SETUP_LIFECYCLE_UNAVAILABLE");
     }
@@ -46,20 +56,28 @@ export function createCombinedSetupAccounts({provider, enabled, lifecycle, token
   }
   function project(current, accounts = [], reportingAccountId = null, selectionState = current?.status ?? "disconnected") {
     const state = selectionState;
-    const action = state === "connected" ? "verify_assets"
+    const action = state === "connected" ? "reporting_selected"
       : state === "pending_reporting_account_selection" ? "select_reporting_account"
       : state === "pending_account_selection" ? "select_account" : "request_permissions";
     return Object.freeze({provider, connectionState: current?.status ?? "disconnected", selectionState: state,
       setupState: "resume_setup", setupComplete: false,
-      setupReason: action === "verify_assets" ? "asset_verification_required"
+      setupReason: action === "reporting_selected" ? "reporting_account_selected"
         : action === "request_permissions" ? "authorization_required" : "account_selection_required",
       setupResumeAction: action, connectionId: current?.connectionId ?? null,
       connectionVersion: current?.version ?? null, reportingAccountId,
       accounts: Object.freeze(accounts.map(account => Object.freeze({id: account.id, name: account.name}))),
     });
   }
-  async function select(installationAuthority, input, operation, expectedStatus) {
+  async function select(installationAuthority, input, operation, expectedStatus, expectedConnection) {
+    const expected = expectedConnection === undefined ? null : {
+      connectionId: expectedConnection?.connectionId, version: expectedConnection?.version,
+    };
+    if (expected && (typeof expected.connectionId !== "string" || !expected.connectionId
+      || !Number.isSafeInteger(expected.version) || expected.version < 1)) fail("COMBINED_SETUP_BINDING_INVALID");
     const before = await snapshot(installationAuthority);
+    if (expected && (before?.connectionId !== expected.connectionId || before?.version !== expected.version)) {
+      fail("COMBINED_SETUP_CONNECTION_CHANGED");
+    }
     if (before?.status !== expectedStatus) fail("COMBINED_SETUP_SELECTION_STATE_INVALID");
     if (before.version >= Number.MAX_SAFE_INTEGER) fail("COMBINED_SETUP_BINDING_INVALID");
     const receipt = await operation({installationAuthority, ...input, combinedSetupBinding: {
@@ -89,7 +107,7 @@ export function createCombinedSetupAccounts({provider, enabled, lifecycle, token
   return Object.freeze({
     async inspect({installationAuthority}) {
       const before = await snapshot(installationAuthority);
-      if (!before || before.status === "reauthorization_required") return project(before);
+      if (!before || before.status === "reauthorization_required" || before.status === "disconnected") return project(before);
       const result = await runtime.inspect({installationAuthority});
       const after = await snapshot(installationAuthority);
       const record = result?.state === "connected" ? result.connection : result?.pending;
@@ -102,11 +120,11 @@ export function createCombinedSetupAccounts({provider, enabled, lifecycle, token
       }
       return project(after, result.accounts ?? record.accounts ?? [], record.reportingAccountId ?? null, result.state);
     },
-    async select({installationAuthority, selectedAccountIds}) {
-      return select(installationAuthority, {selectedAccountIds}, runtime.select, "pending_account_selection");
+    async select({installationAuthority, selectedAccountIds, expectedConnection}) {
+      return select(installationAuthority, {selectedAccountIds}, runtime.select, "pending_account_selection", expectedConnection);
     },
-    async finishReporting({installationAuthority, reportingAccountId}) {
-      return select(installationAuthority, {reportingAccountId}, runtime.finishReporting, "pending_account_selection");
+    async finishReporting({installationAuthority, reportingAccountId, expectedConnection}) {
+      return select(installationAuthority, {reportingAccountId}, runtime.finishReporting, "pending_account_selection", expectedConnection);
     },
   });
 }

@@ -1,4 +1,56 @@
 {
+  "Google_unavailable_account_exclusion_2026_10_31": {
+    "existing_plan_step": 7,
+    "record": "contracts/eo-05-permission-explanation-design-v1.json#Google_unavailable_account_exclusion_2026_10_31",
+    "authority": "Explicit owner approval: narrow code and synthetic tests only. No live request, OAuth retry, config, database, deployment or merge.",
+    "rule": "Only actual REST search HTTP403 PERMISSION_DENIED with nonempty, exclusively authorizationError CUSTOMER_NOT_ENABLED details excludes that root. Do not retry it; remove prior candidate and prevent re-addition; evaluate other roots. Every other strict discovery error stops immediately. All-unavailable must fail, never connect.",
+    "step15_started": false,
+    "step22": "paused",
+    "step23": "Dataset_FX_writer"
+  },
+  "Google_REST_safe_cause_2026_10_31": {
+    "existing_plan_step": 7,
+    "record": "contracts/eo-05-permission-explanation-design-v1.json#Google_REST_safe_cause_2026_10_31",
+    "rule": "Only actual branded REST failure metadata may reach Google callback logs; no retry, raw error or provider request-id",
+    "deployed": false,
+    "merge_authorized": false
+  },
+  "Google_partial_permission_return_2026_10_31": {
+    "existing_plan_step": 7,
+    "record": "contracts/eo-05-permission-explanation-design-v1.json#Google_partial_permission_return_2026_10_31",
+    "rule": "Confirmed runtime partial-grant result is resumable in Google Settings; public return hint never grants authority or activates a credential. Explicit resume opens existing explanation only.",
+    "deployed": false,
+    "merge_authorized": false
+  },
+  "Explicit_reconnect_2026_10_31": {
+    "checked_at": "2026-10-31",
+    "existing_plan_step": 7,
+    "record": "contracts/eo-05-permission-explanation-design-v1.json#Explicit_reconnect_2026_10_31",
+    "rule": "Explicit fresh OAuth reconnects clean disconnected authority with exact ID/version; old grant/account is not reused. Pending/unknown closed. Status read cannot reconnect.",
+    "migration_applied": false,
+    "live_apply_authorized": false,
+    "deploy_authorized": false,
+    "merge_authorized": false
+  },
+  "Owner_flow_restore_2026_10_31": {
+    "checked_at": "2026-10-31",
+    "existing_plan_step": 7,
+    "record": "contracts/eo-05-permission-explanation-design-v1.json#Owner_flow_restore_2026_10_31",
+    "supersedes_single_account_skip": true,
+    "distinct_Klaviyo_modals": true,
+    "live_release_changed": false,
+    "owner_visual_acceptance": false,
+    "merge_authorized": false
+  },
+  "Settings_corrections_2026_10_31": {
+    "checked_at": "2026-10-31",
+    "existing_plan_step": 7,
+    "authority": "Explicit owner approval after read-only review: port approved PR264 UI to current main, fix the three reviewed issues and align records",
+    "record": "contracts/eo-05-permission-explanation-design-v1.json#Settings_corrections_2026_10_31",
+    "status": "code_prepared_CI_and_native_visual_acceptance_pending",
+    "merge_authorized": false,
+    "live_changes": false
+  },
   "OAuth_explicit_owner_approval_gate_2026_10_29": {
     "checked_at": "2026-10-29",
     "authority": "explicit_owner_instruction",
@@ -18,13 +70,20 @@
     "scope_change": "Stop and request fresh explicit owner approval before expanding or changing approved scope. No silent alternative path or cleanup.",
     "current_hold": {
       "PR": 264,
+      "status": "step6_removed_native_visual_acceptance_and_PR_merge_pending",
+      "catalog_selection_step": "removed_by_explicit_owner_authorized_cleanup",
+      "OAuth_cleanup": "code_and_tests_completed_in_commit_629f841f3bb578364a5b35f47407df7e99b3e760",
+      "current_authorization": "2026-10-31: explicitly approved current-main UI integration and the three reviewed Settings corrections; no live permission/config/deploy/DB or merge authorization"
+    },
+    "recording_exception": "The owner explicitly authorized this instruction to be recorded in AGENTS and governing documents; that authorizes documentation/governance recording only, not OAuth investigation, implementation, tests, cleanup or provider operations.",
+    "precedence": "Overrides earlier permission to proceed independently with code or isolated tests in OAuth-related work. Earlier approved documents/technical possibilities do not override this gate.",
+    "historical_hold_before_cleanup": {
+      "PR": 264,
       "status": "stopped_owner_rejected_catalog_selection_not_merge_authorized",
       "catalog_selection_step": "owner_rejected; no removal or replacement was performed",
       "OAuth_cleanup": "not_started; requires separate explicit owner approval",
       "runtime_or_test_changes_in_this_record": false
-    },
-    "recording_exception": "The owner explicitly authorized this instruction to be recorded in AGENTS and governing documents; that authorizes documentation/governance recording only, not OAuth investigation, implementation, tests, cleanup or provider operations.",
-    "precedence": "Overrides earlier permission to proceed independently with code or isolated tests in OAuth-related work. Earlier approved documents/technical possibilities do not override this gate."
+    }
   },
   "contract_id": "eo-05-oauth-setup-permission-policy-v1",
   "checked_at": "2026-10-29",
@@ -217,5 +276,51 @@
     "release_candidate": "contracts/shopify/shopify-progressive-permissions-release-candidate-v1.json",
     "shopify_app_toml_or_live_release_changed": false,
     "requests_enabled": false
+  },
+  "OAuth_step6_removal_2026_10_29": {
+    "checked_at": "2026-10-29",
+    "existing_plan_step": 7,
+    "code_delivery_order": 4,
+    "PR": 264,
+    "owner_authorization": "Tamam başla temizlemeye.",
+    "authorized_scope": "Remove step6 and its code/tests/docs dependencies only; preserve working OAuth steps1–5 and prior independent product identity readers",
+    "OAuth_approval_rule": "AGENTS.md and PR265: concrete explicit prior owner permission required; this cleanup approval is not new design/provider/live/merge authorization",
+    "status": "step6_removed_account_selection_preserved_native_visual_acceptance_pending",
+    "removed": [
+      "Automatic Merchant/business/catalog discovery module and its runtime wiring",
+      "Manual and automatic asset selection controls; asset fields, loading/expiry states and Continue/Verify",
+      "permission_discover_assets and permission_verify_assets routes, service methods and transport types",
+      "Callback/combined account projection asset-verification prerequisite; no catalog Resume after Reporting Account",
+      "Misleading selected-business permission-copy dependency"
+    ],
+    "preserved": [
+      "Exact combined permission scope sets, token/callback/security validation and closed live flags",
+      "1–3 advertiser selection, one Reporting Account and bound version/concurrency guards",
+      "Normal Connected reporting view after final account selection; not product/role/activation authority",
+      "Existing independent combined-setup-assets and product identity/catalog readers; no new calling path",
+      "Cancel/no I/O, first-error stop, no retry/fallback, Shopify optional Orders and Klaviyo account/cost behavior"
+    ],
+    "remaining": [
+      "Real Shopify Admin desktop/min320px mobile owner acceptance remains pending; agent performs no visual interactions",
+      "Developer/release/native permission evidence remains separate and no live switches were opened",
+      "Step15 durable-source/activation design not started; step22 paused; Dataset/FX write step23"
+    ],
+    "test_scope": "Removed actions reject before native runtime construction;1/3 accounts normal view; no catalog controls; existing callback/security/closed gates preserved",
+    "provider_scope_changed": false,
+    "live_calls": false,
+    "config_or_deploy_changed": false,
+    "token_or_database_or_Dataset_mutation": false,
+    "step15_started": false,
+    "merge_authorized": false,
+    "validation": {
+      "full_local_tests": 3064,
+      "passed": 3064,
+      "failed": 0,
+      "targeted_tests": 224,
+      "typecheck": "passed",
+      "build": "passed",
+      "native_visual_acceptance": false,
+      "CI": "exact_head_checked_after_push"
+    }
   }
 }

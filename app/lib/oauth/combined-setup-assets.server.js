@@ -35,7 +35,7 @@ export function createCombinedSetupAssetAccess({provider, enabled = false, datab
   const nativeConfig = provider === "google_ads" ? {developerToken: config?.developerToken}
     : {appId: config?.appId, appSecret: config?.appSecret, graphVersion: config?.graphVersion};
 
-  return Object.freeze({async verify({installationAuthority, verified, merchantId, businessId, catalogId, signal} = {}) {
+  return Object.freeze({async verify({installationAuthority, verified, merchantId, businessId, catalogId, signal, expectedConnection} = {}) {
     if (!enabled) fail("IDENTITY_OAUTH_START_DISABLED");
     const actual = verified?.installationAuthority;
     if (!installationAuthority || installationAuthority.authority !== "shopify_installation_verified"
@@ -44,6 +44,13 @@ export function createCombinedSetupAssetAccess({provider, enabled = false, datab
     // Scalars are captured here; changing a request object cannot retarget a later read.
     const target = provider === "google_ads" ? {merchantId: numeric(merchantId, true)}
       : {businessId: numeric(businessId), catalogId: numeric(catalogId)};
+    const expected = expectedConnection === undefined ? null : {
+      connectionId: expectedConnection?.connectionId, version: expectedConnection?.version,
+      reportingAccountId: expectedConnection?.reportingAccountId,
+    };
+    if (expected && (typeof expected.connectionId !== "string" || !expected.connectionId
+      || !Number.isSafeInteger(expected.version) || expected.version < 1
+      || typeof expected.reportingAccountId !== "string" || !expected.reportingAccountId)) fail("COMBINED_ASSET_TARGET_INVALID");
     if (provider === "meta" && (nativeConfig.graphVersion !== META_GRAPH_VERSION
       || !/^[1-9][0-9]*$/.test(nativeConfig.appId ?? "") || typeof nativeConfig.appSecret !== "string"
       || !nativeConfig.appSecret)) fail("COMBINED_ASSET_CONFIG_INVALID");
@@ -59,7 +66,11 @@ export function createCombinedSetupAssetAccess({provider, enabled = false, datab
         if (childSignal.aborted) fail("COMBINED_ASSET_ABORTED");
         const time = clock(); if (time < started || time - started > maxElapsedMs) fail("COMBINED_ASSET_OBSERVATION_STALE");
       }
-      async function recheck() {check(); current = await loader.loadCurrent(); check();}
+      async function recheck() {
+        check(); current = await loader.loadCurrent(); check();
+        if (expected && (current.connectionId !== expected.connectionId || current.connectionVersion !== expected.version
+          || current.account.id !== expected.reportingAccountId)) fail("COMBINED_ASSET_CONNECTION_CHANGED");
+      }
       const boundFetch = async (endpoint, init) => {
         await recheck(); let response;
         try {response = await fetchFn(endpoint, {...init, redirect: "error", signal: childSignal});}

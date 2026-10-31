@@ -10,7 +10,7 @@ Bu repository temiz Shopify embedded-only AdsTable runtime'ıdır. **Execution P
 - Kod, test, sözleşme, migration, config, callback/token/oturum, canlı çağrı, temizlik/kaldırma/geri alma/refactor, deploy ve merge de dahildir. Düzeltme veya geri alma amacı kendiliğinden izin oluşturmaz.
 - Genel “devam edelim”, genel onay, önceki başka iş/merge onayı veya önceki plan kararı OAuth yetkisi değildir. Onay yalnız açıkça belirtilen somut iş ve kapsam için geçerlidir. Kapsam değişecekse durulur ve yeni açık izin alınır.
 - Bu kapı, OAuth için önceki bağımsız kodlama veya izole test ilerleme izinlerinin önündedir; teknik olanak, başarılı test, geri alınabilirlik veya ajan takdiri yerine geçmez.
-- #264 kullanıcı tarafından reddedilen katalog seçim adımı nedeniyle durdurulmuştur; merge yetkisi yoktur. Katalog seçimi kodu temizlenmedi veya değiştirilmedi. Temizlik de ayrı açık izin bekler.
+- #264’te katalog seçimi açık temizlik onayıyla kaldırıldı (kaynak a103b25). 31 Ekim’de onaylı arayüzün güncel main ile uyumlandırılması ve üç Settings hatasının düzeltilmesi ayrıca onaylandı. Katalog seçimi geri getirilemez. Gerçek görsel kabul ve ayrı merge onayı beklenir; canlı izin/config/deploy yetkisi yoktur. Önceki temizlenmedi/izin bekliyor ifadeleri 29 Ekim tarihsel durumudur.
 - Bu kuralın AGENTS ve bağlayıcı belgelere kaydı kullanıcı tarafından açıkça istendi. Bu izin yalnız kural kaydına aittir; OAuth inceleme/kodlama/test/temizlik veya provider işlemi yetkisi vermez.
 
 ## Zorunlu başlangıç kapısı
@@ -27,6 +27,8 @@ Bu repository temiz Shopify embedded-only AdsTable runtime'ıdır. **Execution P
 3. Kullanıcının provider arayüzünde kısa sürede tamamlayabileceği işlem için otomasyon ısrarı yapılmaz. Kullanıcıya yalnız exact ekran, exact alan/aksiyon, exact hedef ve tamamlandığında vereceği kısa dönüş söylenir.
 4. İlk hata sonrasında durum tek cümlede sınıflandırılır: ne oluşmadı, nerede değişiklik yapılmadı ve hangi tek manuel adım gerekiyor. Kanıt olmadan izin, rol, hesap veya platform arızası nedeni uydurulmaz.
 5. Kullanıcı alternatif rota istemedikçe çalışma güvenli biçimde durur; arka planda yeni token, secret, oturum, deploy veya provider değişikliği üretilmez.
+
+- 31 Ekim owner onaylı dar kod/test istisnası: Google hesap keşfinde yalnız gerçek REST search HTTP403/PERMISSION_DENIED ve tamamı CUSTOMER_NOT_ENABLED authorizationError kayıtlarından oluşan yanıt ilgili hesabı eler; aynı hesap tekrar denenmez, kalan kökler değerlendirilir. Diğer strict hatalar ilk anda durur. Bu hazırlık canlı istek, OAuth tekrarı, config, deploy veya merge yetkisi vermez. Ayrıntı: contracts/eo-05-permission-explanation-design-v1.json#Google_unavailable_account_exclusion_2026_10_31.
 
 ## Governing authority
 
@@ -62,3 +64,7 @@ Görsel ve etkileşimli UI yalnız güncel Shopify App Bridge ve stable Polaris 
 
 Production domain, Shopify app config, provider mutation, live token/data carry, database provisioning, cutover ve legacy deletion yalnız kendi ileriki kapılarında ve açık yetkiyle yapılır. Missing, unknown, unsupported, partial, stale ve gerçek zero ayrı durumlardır.
 
+
+## 31 Ekim — açık hesap adımı ve ayrı Klaviyo maliyet modalı
+
+Klaviyo OAuth dönüşünde tek hesap dahi otomatik seçilerek atlanmaz. Açık hesap seçimi ayrı modalda, estimated spend ayrı modalda gösterilir; Continue sonrası native afterhide tamamlanmadan sonraki modal açılmaz. Bu ürün sahibi kararıdır; aynı modalda adım değiştirme veya otomatik geçiş performans/kolaylık gerekçesiyle geri getirilemez. Bu somut düzeltme ve sunucu yayın koşullarının kod bağlantısı onaylıdır; canlı ayar/izin/config/deploy/merge için ayrı açık onay kapısı sürer.

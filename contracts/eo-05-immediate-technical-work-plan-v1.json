@@ -1,4 +1,23 @@
 {
+  "Owner_flow_restore_2026_10_31": {
+    "checked_at": "2026-10-31",
+    "existing_plan_step": 7,
+    "record": "contracts/eo-05-permission-explanation-design-v1.json#Owner_flow_restore_2026_10_31",
+    "supersedes_single_account_skip": true,
+    "distinct_Klaviyo_modals": true,
+    "live_release_changed": false,
+    "owner_visual_acceptance": false,
+    "merge_authorized": false
+  },
+  "Settings_corrections_2026_10_31": {
+    "checked_at": "2026-10-31",
+    "existing_plan_step": 7,
+    "authority": "Explicit owner approval after read-only review: port approved PR264 UI to current main, fix the three reviewed issues and align records",
+    "record": "contracts/eo-05-permission-explanation-design-v1.json#Settings_corrections_2026_10_31",
+    "status": "code_prepared_CI_and_native_visual_acceptance_pending",
+    "merge_authorized": false,
+    "live_changes": false
+  },
   "OAuth_explicit_owner_approval_gate_2026_10_29": {
     "checked_at": "2026-10-29",
     "authority": "explicit_owner_instruction",
@@ -18,13 +37,20 @@
     "scope_change": "Stop and request fresh explicit owner approval before expanding or changing approved scope. No silent alternative path or cleanup.",
     "current_hold": {
       "PR": 264,
+      "status": "step6_removed_native_visual_acceptance_and_PR_merge_pending",
+      "catalog_selection_step": "removed_by_explicit_owner_authorized_cleanup",
+      "OAuth_cleanup": "code_and_tests_completed_in_commit_629f841f3bb578364a5b35f47407df7e99b3e760",
+      "current_authorization": "2026-10-31: explicitly approved current-main UI integration and the three reviewed Settings corrections; no live permission/config/deploy/DB or merge authorization"
+    },
+    "recording_exception": "The owner explicitly authorized this instruction to be recorded in AGENTS and governing documents; that authorizes documentation/governance recording only, not OAuth investigation, implementation, tests, cleanup or provider operations.",
+    "precedence": "Overrides earlier permission to proceed independently with code or isolated tests in OAuth-related work. Earlier approved documents/technical possibilities do not override this gate.",
+    "historical_hold_before_cleanup": {
+      "PR": 264,
       "status": "stopped_owner_rejected_catalog_selection_not_merge_authorized",
       "catalog_selection_step": "owner_rejected; no removal or replacement was performed",
       "OAuth_cleanup": "not_started; requires separate explicit owner approval",
       "runtime_or_test_changes_in_this_record": false
-    },
-    "recording_exception": "The owner explicitly authorized this instruction to be recorded in AGENTS and governing documents; that authorizes documentation/governance recording only, not OAuth investigation, implementation, tests, cleanup or provider operations.",
-    "precedence": "Overrides earlier permission to proceed independently with code or isolated tests in OAuth-related work. Earlier approved documents/technical possibilities do not override this gate."
+    }
   },
   "contract_id": "eo-05-immediate-technical-work-plan-v1",
   "checked_at": "2026-10-29",
@@ -86,7 +112,7 @@
       "implementation_record": "contracts/eo-05-start-brief-v1.json#Combined_provider_setup_asset_access_2026_10_29",
       "remaining_in_this_delivery": [
         "Final setup readiness/activation joined to developer approval evidence and accepted UI; access proof alone cannot authorize it",
-        "Settings/return/Resume Setup and Merchant/business/catalog target selection wiring with separately accepted explanation modal in delivery4",
+        "Account/Reporting Account selection wiring is prepared in delivery4; user Merchant/business/catalog selection is rejected and removed",
         "Native app approval/merchant grant/asset access acceptance; isolated tests are not live evidence"
       ],
       "merged_backend_start_callback_PR": 258,
@@ -137,12 +163,12 @@
         2,
         3
       ],
-      "status": "owner_approved_design_and_stable_runtime_aligned_UI_and_native_visual_acceptance_pending",
-      "implementation_record": "contracts/eo-05-start-brief-v1.json#Permission_explanation_design_2026_10_29",
+      "status": "step6_removed_account_selection_preserved_native_visual_acceptance_pending",
+      "implementation_record": "contracts/eo-05-start-brief-v1.json#OAuth_step6_removal_2026_10_29",
       "remaining_in_this_delivery": [
-        "Owner review of concrete copy and stable 2.0 runtime/type alignment decision",
-        "UI component plus existing Settings/Home stage routing and authenticated fixed-action wiring; current gates remain closed until accepted",
-        "Real Shopify Admin desktop/mobile 320px, state/return/cancel acceptance and explicit owner visual acceptance; no agent visual operation on Shopify"
+        "Real Shopify Admin desktop/min320px mobile owner acceptance remains pending; agent performs no visual interactions",
+        "Developer/release/native permission evidence remains separate and no live switches were opened",
+        "Step15 durable-source/activation design not started; step22 paused; Dataset/FX write step23"
       ],
       "runtime_alignment_record": "contracts/eo-05-start-brief-v1.json#Polaris_stable_2_alignment_2026_10_29"
     },

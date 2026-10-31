@@ -12,6 +12,7 @@ const owner = oauthInstallationAuthority({workspaceId: id(1), installGeneration:
 const now = () => new Date("2026-10-27T12:00:00.000Z");
 const initial = {connectionId: null, version: null};
 const row = {connectionId: id(2), version: 7, status: "pending_account_selection"};
+const disconnected = {...row, status: "disconnected", credentialId: null, disconnectedAt: "2026-10-27T11:00:00.000Z"};
 const json = (body, status = 200) => new Response(JSON.stringify(body), {status});
 
 test("server gate is closed by default and rejects non-boolean configuration", async () => {
@@ -22,7 +23,7 @@ test("server gate is closed by default and rejects non-boolean configuration", a
   assert.equal(reads, 0);
   for (const enabled of ["true", 1, null]) assert.throws(() => createIdentityOAuthAuthorization({lifecycle, enabled}));
 });
-for (const current of [null, row, {...row, status: "connected"}, {...row, status: "reauthorization_required"}]) {
+for (const current of [null, row, {...row, status: "connected"}, {...row, status: "reauthorization_required"}, disconnected]) {
   test(`server gate reads actual owner/provider lifecycle and admits supported setup: ${current?.status ?? "initial"}`, async () => {
     const gate = createIdentityOAuthAuthorization({enabled: true, lifecycle: {async loadCurrent(input) {
       assert.deepEqual(input, {installationAuthority: owner, provider: "google_ads"}); return current;
@@ -31,12 +32,28 @@ for (const current of [null, row, {...row, status: "connected"}, {...row, status
       current === null ? initial : {connectionId: id(2), version: 7});
   });
 }
-for (const status of ["disconnect_pending", "disconnected", "unknown"]) {
+for (const status of ["disconnect_pending", "unknown"]) {
   test(`no implicit connected upgrade or disconnect revival: ${status}`, async () => {
     const gate = createIdentityOAuthAuthorization({enabled: true, lifecycle: {async loadCurrent() {return {...row, status};}}});
     await assert.rejects(gate.beforeStart({installationAuthority: owner, provider: "meta"}), /IDENTITY_OAUTH_/);
   });
 }
+for (const change of [{credentialId:id(3)}, {credentialId:undefined}, {disconnectedAt:null}, {disconnectedAt:"invalid"}]) {
+  test(`disconnected cleanup must be complete before explicit OAuth: ${JSON.stringify(change)}`,async()=>{
+    const gate=createIdentityOAuthAuthorization({enabled:true,lifecycle:{loadCurrent:async()=>({...disconnected,...change})}});
+    await assert.rejects(gate.beforeStart({installationAuthority:owner,provider:"google_ads"}),/DISCONNECT_INCOMPLETE/);
+  });
+}
+test("disconnected callback retains exact identity/version and never revives changed or pending authority",async()=>{
+  let current=disconnected;
+  const gate=createIdentityOAuthAuthorization({enabled:true,lifecycle:{loadCurrent:async()=>current}});
+  const binding=await gate.beforeStart({installationAuthority:owner,provider:"google_ads"});
+  await gate.beforeCallback({installationAuthority:owner,provider:"google_ads",binding});
+  for(const changed of [{...disconnected,version:8},{...disconnected,connectionId:id(3)},{...disconnected,status:"disconnect_pending"},null]){
+    current=changed;
+    await assert.rejects(gate.beforeCallback({installationAuthority:owner,provider:"google_ads",binding}),/IDENTITY_OAUTH_/);
+  }
+});
 test("callback binding checks initial/connection identity and version, not just provider scopes", async () => {
   let current = row;
   const gate = createIdentityOAuthAuthorization({enabled: true, lifecycle: {async loadCurrent() {return current;}}});
@@ -99,12 +116,15 @@ for (const provider of ["meta", "google_ads"]) {
 }
 
 function runtimeHarness(provider, {enabled = false, changedDuringRead = false, current = null, commitFails = false, returnFails = false,
-  grantedScopes, finalizeFails = false, finalizeMismatch = null, commitScopeError = false, commitStatus = "pending_account_selection", providerStatus = 200} = {}) {
+  grantedScopes, finalizeFails = false, finalizeMismatch = null, commitScopeError = false, commitStatus = "pending_account_selection", providerStatus = 200,
+  googleRoots = null, googleResponses = null} = {}) {
   const calls = [], writes = [], vault = [], lifecycleReads = [];
+  const committedAccounts = [];
   let currentRow = current;
   const database = {async query(sql, values) {
     if (sql.includes("load_provider_connection_lifecycle_by_owner")) {lifecycleReads.push(values); return {rows: currentRow ? [{
-      connection_id: currentRow.connectionId, connection_version: currentRow.version, lifecycle_status: currentRow.status, credential_id: id(4)}] : []};}
+      connection_id: currentRow.connectionId, connection_version: currentRow.version, lifecycle_status: currentRow.status,
+      credential_id: Object.hasOwn(currentRow,"credentialId") ? currentRow.credentialId : id(4), disconnected_at: currentRow.disconnectedAt ?? null}] : []};}
     if (sql.includes("create_oauth_transaction(")) {writes.push("created");return {rows:[{transaction_id:id(3),callback_uri:OAUTH_CALLBACK_URIS[provider],
       pkce_required:provider==="google_ads",expires_at:"2026-10-27T12:05:00.000Z",transaction_status:"created"}]};}
     if (sql.includes("mark_oauth_transaction_redirected")) {writes.push("redirected");return {rows:[{transaction_id:id(3),transaction_status:"redirected"}]};}
@@ -121,6 +141,7 @@ function runtimeHarness(provider, {enabled = false, changedDuringRead = false, c
   const tokenVault = {async assertReady() {}, async store() {}, async take() {}, async remove() {},
     async storeProviderTokenSet() {vault.push("store"); return {credentialId: id(4)};},
     async commitIdentityOAuthCredential(value) {writes.push("atomic");
+      committedAccounts.push(value.accounts);
       assert.deepEqual(value.binding,current===null?initial:{connectionId:current.connectionId,version:current.version}); assert.ok(value.accounts.length);
       if(commitScopeError) throw new OAuthPermissionProfileError("OAUTH_IDENTITY_SCOPE_NOT_GRANTED");
       if (commitFails) throw Error("IDENTITY_OAUTH_WRITE_UNCONFIRMED");
@@ -137,19 +158,58 @@ function runtimeHarness(provider, {enabled = false, changedDuringRead = false, c
       if (provider === "google_ads") {
         if (calls.length === 1) return json({access_token: "token", refresh_token: "refresh", token_type: "Bearer", expires_in: 3600,
           scope:Array.isArray(nativeScopes)?nativeScopes.join(" "):nativeScopes});
-        if (calls.length === 2) return json({resourceNames: ["customers/123"]});
+        if (calls.length === 2) return json({resourceNames: googleRoots ?? ["customers/123"]});
+        if (googleResponses) {
+          const response = googleResponses[/customers\/(\d+)\//.exec(address)[1]];
+          return json(response.body, response.status ?? 200);
+        }
         return json({results: [{customerClient: {id: "123", level: 0, manager: false}}]});
       }
       if (calls.length < 3) return json({access_token: "token"});
       if (calls.length === 3) return json({data: {app_id: "123", is_valid: true, scopes:nativeScopes, expires_at: 1893456000}});
       return json({data: [{id: "act_123", name: "Shop"}]});
     }});
-  return {runtime, calls, writes, vault, lifecycleReads, current:()=>currentRow};
+  return {runtime, calls, writes, vault, lifecycleReads, committedAccounts, current:()=>currentRow};
 }
 const claimed = {status: "claimed", transactionId: id(3), workspaceId: owner.workspaceId, installGeneration: 2,
   permissionProfile: "identity_v1", identityBinding: initial, authorizationCode: "code", pkceVerifier: "verifier"};
 
+test("Google callback excludes unavailable root and stages only valid accounts without connecting", async () => {
+  const h = runtimeHarness("google_ads", {enabled: true, googleRoots: ["customers/111", "customers/222"],
+    googleResponses: {
+      111: {status: 403, body: {error: {status: "PERMISSION_DENIED", details: [{errors: [{errorCode: {authorizationError: "CUSTOMER_NOT_ENABLED"}}]}]}}},
+      222: {body: {results: [{customerClient: {id: "222", manager: false, level: 0}}]}},
+    }});
+  const result = await h.runtime.completeCallback({claimed});
+  assert.equal(result.outcome, "pending_account_selection");
+  assert.equal(result.setupComplete, false);
+  assert.equal(result.setupResumeAction, "select_account");
+  assert.deepEqual(h.committedAccounts.flat().map(account => account.id), ["222"]);
+  assert.deepEqual(h.writes, ["atomic"]);
+  assert.equal(h.calls.length, 4);
+});
+test("Google callback with all unavailable roots never stages a credential", async () => {
+  const h = runtimeHarness("google_ads", {enabled: true, googleRoots: ["customers/111"], googleResponses: {
+    111: {status: 403, body: {error: {status: "PERMISSION_DENIED", details: [{errors: [{errorCode: {authorizationError: "CUSTOMER_NOT_ENABLED"}}]}]}}},
+  }});
+  await assert.rejects(h.runtime.completeCallback({claimed}), /Google Ads REST request failed/);
+  assert.deepEqual(h.committedAccounts, []);
+  assert.deepEqual(h.vault, []);
+  assert.equal(h.writes.includes("atomic"), false);
+  assert.equal(h.calls.length, 3);
+});
+
 for (const provider of ["google_ads", "meta"]) {
+  test(`${provider}: explicit disconnected reconnect binds the old version and ends at fresh account selection`,async()=>{
+    const h=runtimeHarness(provider,{enabled:true,current:disconnected});
+    const start=await h.runtime.beginCombinedSetup({installationAuthority:owner});
+    const state=new URL(start.authorizationUrl).searchParams.get("state");
+    assert.deepEqual(identityOAuthBindingFromState(provider,state),{connectionId:disconnected.connectionId,version:disconnected.version});
+    assert.equal(h.calls.length,0);
+    const result=await h.runtime.completeCallback({claimed:{...claimed,identityBinding:{connectionId:disconnected.connectionId,version:disconnected.version}}});
+    assert.equal(result.outcome,"pending_account_selection");assert.equal(result.setupResumeAction,"select_account");
+    assert.equal(result.setupComplete,false);assert.deepEqual(h.writes,["created","redirected","atomic"]);
+  });
   test(`${provider}: combined setup always binds the full profile to the server-read connection`, async () => {
     const current={...row,status:"connected"};
     const h=runtimeHarness(provider,{enabled:true,current});
@@ -170,9 +230,9 @@ for (const provider of ["google_ads", "meta"]) {
     await assert.rejects(h.runtime.beginCombinedSetup({installationAuthority:owner,identityAuthorizationEnabled:true}),/START_DISABLED/);
     assert.deepEqual(h.writes,[]);assert.equal(h.calls.length,0);assert.equal(h.lifecycleReads.length,0);
   });
-  for(const current of [null,{...row,status:"connected"}]) {
-    test(`${provider}: partial native grant stays resumable without replacing ${current?"existing":"initial"} authority`, async () => {
-      const h=runtimeHarness(provider,{enabled:true,current,grantedScopes:[oauthPermissionScopes(provider,"identity_v1")[0]]});
+  for(const current of [null,{...row,status:"connected"},disconnected]) for(const grantIndex of provider==="google_ads"?[0,1]:[0]) {
+    test(`${provider}: partial native grant ${grantIndex} stays resumable without replacing ${current?"existing":"initial"} authority`, async () => {
+      const h=runtimeHarness(provider,{enabled:true,current,grantedScopes:[oauthPermissionScopes(provider,"identity_v1")[grantIndex]]});
       const before=JSON.stringify(current);
       const r=await h.runtime.completeCallback({claimed:{...claimed,identityBinding:current?{connectionId:current.connectionId,version:current.version}:initial}});
       assert.equal(r.outcome,"pending_permissions");assert.equal(r.setupState,"resume_setup");
@@ -233,10 +293,10 @@ for (const provider of ["google_ads", "meta"]) {
       const h=runtimeHarness(provider,{enabled:true,current,commitStatus:connected?"connected":"pending_account_selection"});
       const r=await h.runtime.completeCallback({claimed:{...claimed,identityBinding:current?{connectionId:current.connectionId,version:current.version}:initial}});
       assert.equal(r.setupComplete,false);assert.equal(r.setupState,"resume_setup");
-      assert.equal(r.outcome,connected?"pending_asset_verification":"pending_account_selection");
+      assert.equal(r.outcome,connected?"reporting_account_selected":"pending_account_selection");
       assert.equal(r.connectionState,connected?"connected":"pending_account_selection");
-      assert.equal(r.setupReason,connected?"asset_verification_required":"account_selection_required");
-      assert.equal(r.setupResumeAction,connected?"verify_assets":"select_account");
+      assert.equal(r.setupReason,connected?"reporting_account_selected":"account_selection_required");
+      assert.equal(r.setupResumeAction,connected?"reporting_selected":"select_account");
       assert.deepEqual(h.writes,["atomic"]);assert.deepEqual(h.vault,[]);
     });
   }

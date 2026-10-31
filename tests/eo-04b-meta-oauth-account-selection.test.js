@@ -225,8 +225,8 @@ test("Meta Settings reproduces the accepted resumable Reporting Account flow", (
     "Save and finish",
     "Reporting Account",
     "Resume setup",
-    "Continue to Meta",
   ]) assert.match(settings, new RegExp(value));
+  assert.match(settings, /permissions[.]open\("meta"\)/);
   assert.match(settings, /globalThis[.]open\(target[.]toString\(\), "_top"\)/);
   assert.match(settings, /metaResumeRequested[.]current = true/);
   assert.match(settings, /revalidator[.]revalidate\(\)/);

@@ -625,7 +625,7 @@
       "name": "eo05a_identity_oauth_atomic_stage",
       "file": "supabase/migrations/20261028164208_eo05a_identity_oauth_atomic_stage.sql",
       "created_with": "supabase@2.121.0 migration new eo05a_identity_oauth_atomic_stage",
-      "repository_sql_sha256": "e828409dbad0b12f2d407e0507a0c30056f9a0e19264e99d610b642902a1f9d2",
+      "repository_sql_sha256": "2cd83d66ef2451c9a148cd2c232757b448fe6dd4b39e17fe9bc07561ead2ecc4",
       "applied": false,
       "live_apply_authorized": false
     },
@@ -698,6 +698,15 @@
       "file": "supabase/migrations/20261029091041_eo05a_shopify_order_reconciliation.sql",
       "created_with": "supabase@2.121.0 migration new eo05a_shopify_order_reconciliation",
       "repository_sql_sha256": "d25e9f0d1bca6c25dddae693b73a6461e718537443fe723f2f3d089d8c7a893f",
+      "applied": false,
+      "live_apply_authorized": false
+    },
+    {
+      "version": "20261031181313",
+      "name": "eo05a_identity_oauth_reconnect",
+      "file": "supabase/migrations/20261031181313_eo05a_identity_oauth_reconnect.sql",
+      "created_with": "supabase@2.121.0 migration new eo05a_identity_oauth_reconnect",
+      "repository_sql_sha256": "4ca675b0e1e3e2dbe7401948a25ec711e2f1aba7e368b87229c520448b22888c",
       "applied": false,
       "live_apply_authorized": false
     }

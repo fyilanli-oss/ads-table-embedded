@@ -1,5 +1,38 @@
 # EO-05 / mevcut 07 — onaylı Settings düzeltmesi
 
+## Ürün sahibi notları — OAuth testleri sonrası ortak standart hazırlanacak
+
+Bu kayıt yalnız ürün sahibinin gözlem ve taleplerini saklar. Şimdi kod, arayüz,
+izin, config veya sözleşme değişikliği yapılması için yetki oluşturmaz. Ortak
+standart ve bağlayıcı sözleşme, bütün testler bittikten sonra birlikte hazırlanacak.
+
+- Google kartındaki `Reconnect Google Ads`, `Check status` ve aynı aşamada
+  gösterilen iki `Resume setup` düğmesinden birinin kaldırılması istendi.
+- Hesap seçimi kaydedilince kullanıcı tekrar `Resume setup` aramak zorunda
+  kalmamalı; Reporting Account adımına geçiş kullanıcıyı yormamalı.
+- Birden fazla düğmenin aynı anda aynı kurulumu sürdürmeye çalıştığı görünüm
+  kabul edilmedi. Kullanıcı hangi adımda olduğunu ve ne yapacağını açıkça görmeli.
+- Shopify ürün ve sipariş izinlerinin Settings görünümü de karmaşık bulundu;
+  ortak sadeleştirme çalışmasına dahil edilecek.
+- Google, Meta, Klaviyo ve Shopify izinleri için ne yapılacağı/ne yapılmayacağı
+  ortak standartta açıkça yazılacak; kırmızı çizgiler bağlayıcı sözleşmeye alınacak.
+  Sonraki ajanların kendi yorumuyla akışı değiştirmesi kabul edilmiyor.
+- Teknik bağlantının çalışması, mevcut Settings arayüzünün kabul edildiği veya
+  mevcut07'nin Done olduğu anlamına gelmiyor. Nihai kullanıcı/görsel kabulü açık.
+
+Gözlem kaynağı: ürün sahibinin `1000070247`–`1000070257` ekranları ve açıklamaları.
+Google disconnect/revoke doğru çalıştı bilgisi ürün sahibinin teyididir. Kısmi
+izin sonrası eksik-izin uyarısı, ikinci izin sonrası hesap seçimi, ardından açık
+Reporting Account seçimi ve son Connected ekranı gözlendi. Yeniden bağlantı
+tamamlandı; gereksiz Resume adımı, yinelenen düğmeler ve kalabalık kart açık kaldı.
+Bu kayıt yeni bir sağlayıcı çağrısı veya bağımsız sunucu/veritabanı doğrulaması
+değildir. Ekran görüntüleri repository'ye veya GitHub'a yüklenmez.
+
+Sonraki sıra: kalan testler → birlikte sade kullanıcı akışı ve ortak standart →
+bağlayıcı sözleşme/kırmızı çizgiler → ayrıca onaylı uygulama ve görsel kabul.
+Bu notlar sözleşmenin hazırlanmış veya iyileştirmelerin yapılmış olduğu iddiası
+taşımaz. Mevcut07 açık;15 başlamadı;22 paused;23 Dataset yazımıdır.
+
 ## 31 Ekim — mevcut07: test ve gerçek hesapların birlikte keşfi
 
 27 Ekim PR192/8074086 ile yeni kimlik yoluna stopOnFirstError ayarını ben ekledim.

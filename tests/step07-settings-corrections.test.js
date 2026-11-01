@@ -266,15 +266,15 @@ test("Products card shows fresh verified access without Connect or technical act
   const h = harness(); h.state.shopifyProductAccess = "ready"; h.render();
   assert.ok(nodes(h.tree).some(e => e.type === "s-paragraph" && text(e) === "Product access approved"));
   assert.ok(nodes(h.tree).some(e => e.type === "ProductAccessRemoval" && e.props.ready === true));
-  assert.equal(nodes(h.tree).some(e => e.type === "s-button" && text(e) === "Connect Shopify products"), false);
+  assert.equal(nodes(h.tree).some(e => e.type === "s-button" && text(e) === "Connect products"), false);
   assert.equal(text(h.tree).includes("awaiting activation"), false);
 });
 
 test("Products missing and unknown remain distinct; unknown offers readback instead of a repeat grant", () => {
   const h = harness(); h.state.shopifyProductAccess = "missing"; h.render();
-  assert.ok(nodes(h.tree).some(e => e.type === "s-button" && text(e) === "Connect Shopify products"));
+  assert.ok(nodes(h.tree).some(e => e.type === "s-button" && text(e) === "Connect products"));
   h.state = {...h.state, shopifyProductAccess: "unknown"}; h.render();
-  assert.equal(nodes(h.tree).some(e => e.type === "s-button" && text(e) === "Connect Shopify products"), false);
+  assert.equal(nodes(h.tree).some(e => e.type === "s-button" && text(e) === "Connect products"), false);
   assert.ok(nodes(h.tree).some(e => e.type === "s-button" && text(e) === "Check status"));
 });
 
@@ -291,19 +291,19 @@ test("verified removal has one English result without the initial not-connected 
   h.permissionResult = {productRemovalResult: "removed"}; h.render();
   assert.equal(nodes(h.tree).filter(e => e.type === "s-banner" && e.props.heading === "Product access removed.").length, 1);
   assert.equal(text(h.tree).includes("Product access is not connected."), false);
-  assert.ok(nodes(h.tree).some(e => e.type === "s-button" && text(e) === "Connect Shopify products"));
+  assert.ok(nodes(h.tree).some(e => e.type === "s-button" && text(e) === "Connect products"));
 });
 
 test("Orders card independently reflects verified grant, removal, unknown and a new loader",()=>{
   const h=harness();h.state.shopifyProductAccess="ready";h.state.shopifyOrderAccess="ready";h.render();
   assert.ok(nodes(h.tree).some(e=>e.type==="s-paragraph"&&text(e)==="Order access approved"));
   assert.ok(nodes(h.tree).some(e=>e.type==="OrderAccessRemoval"&&e.props.ready===true));
-  assert.equal(nodes(h.tree).some(e=>e.type==="s-button"&&text(e)==="Connect Shopify orders"),false);
+  assert.equal(nodes(h.tree).some(e=>e.type==="s-button"&&text(e)==="Connect orders"),false);
   h.permissionProps.onOrderStatus("missing");h.permissionResult={orderRemovalResult:"removed"};h.render();
   assert.ok(nodes(h.tree).some(e=>e.type==="s-banner"&&e.props.heading==="Order access removed."));
   assert.equal(text(h.tree).includes("Order access is not connected."),false);
   assert.ok(nodes(h.tree).some(e=>e.type==="s-paragraph"&&text(e)==="Product access approved"));
-  assert.ok(nodes(h.tree).some(e=>e.type==="s-button"&&text(e)==="Connect Shopify orders"));
+  assert.ok(nodes(h.tree).some(e=>e.type==="s-button"&&text(e)==="Connect orders"));
   h.state={...h.state,shopifyOrderAccess:"unknown"};h.render();
-  assert.equal(nodes(h.tree).some(e=>e.type==="s-button"&&text(e)==="Connect Shopify orders"),false);
+  assert.equal(nodes(h.tree).some(e=>e.type==="s-button"&&text(e)==="Connect orders"),false);
 });

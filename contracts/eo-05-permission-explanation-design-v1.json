@@ -1,4 +1,28 @@
 {
+  "Settings_disconnected_card_copy_2026_11_01": {
+    "checked_at": "2026-11-01",
+    "existing_plan_step": 7,
+    "authority": "Explicit owner approval of the specified disconnected-card code, checks and PR preparation.",
+    "analyst_brief": "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md",
+    "shopify": {
+      "missing_badge": "Not connected",
+      "product_button": "Connect products",
+      "order_button": "Connect orders",
+      "order_prerequisite": "Product access is required to connect orders.",
+      "preserve": "Independent access states, prerequisite disable guard, unknown/unavailable/loading and removal notices."
+    },
+    "klaviyo": {
+      "remove": "Connect one Klaviyo account and enter its estimated 30-day email spend.",
+      "connect_button": "Existing Connect Klaviyo s-button with default variant, matching other Connect buttons",
+      "preserve": "Notices and all handlers, account and separate spend modals"
+    },
+    "meta_google": "Unchanged",
+    "native_visual_acceptance": false,
+    "step07_done": false,
+    "live_calls": false,
+    "merge_authorized": false,
+    "deploy_authorized": false
+  },
   "Disconnect_transition_correction_2026_11_01": {
     "checked_at": "2026-11-01",
     "existing_plan_step": 7,

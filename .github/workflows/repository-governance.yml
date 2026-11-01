@@ -32,7 +32,7 @@ jobs:
         run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Verify OAuth flow constitution
         env:
-          OAUTH_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          OAUTH_BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
         run: node tools/check-oauth-constitution.mjs
       - name: Run repository governance tests
         run: pnpm test

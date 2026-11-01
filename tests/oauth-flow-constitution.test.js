@@ -38,7 +38,7 @@ test("line ending normalization does not hide meaningful content differences",()
   assert.notEqual(digest("scope\n"),digest("scope changed\n"));
 });
 
-test("state machine rejects Cancel I/O, unknown write replay and a renamed asset-selection effect",()=>{
+test("state machine rejects Cancel I/O, unknown write replay and an asset-selection effect",()=>{
   for(const mutation of [
     c=>c.flows.meta.transitions.find(r=>r.event==="cancel").effects.push("native_authorization"),
     c=>c.flows.google_ads.transitions.find(r=>r.from==="unknown").effects.push("save_selection"),
@@ -79,6 +79,7 @@ test("all documented safety families map to existing behavior tests executed by 
   const workflow=fs.readFileSync(path.join(root,".github/workflows/repository-governance.yml"),"utf8");
   assert.match(workflow,/fetch-depth: 0/);assert.match(workflow,/run: node tools\/check-oauth-constitution\.mjs/);assert.match(workflow,/run: pnpm test/);
   assert.doesNotMatch(workflow,/continue-on-error/);
+  assert.doesNotMatch(workflow,/github.event.before/); // A draft push is reviewed against main, not its previous unmerged draft.
   const agents=fs.readFileSync(path.join(root,"AGENTS.md"),"utf8");assert.ok(agents.includes(c.document));assert.ok(agents.includes(CONTRACT_PATH));
   assert.deepEqual(c.protection.prefixes,PREFIXES);assert.deepEqual(c.protection.exact,EXACT);
 });

@@ -1,6 +1,6 @@
 import {usePermissionSettings} from "../components/use-permission-settings";
 import {logPermissionFailure} from "../lib/server-error-log.server.js";
-import {createPermissionSettings, PERMISSION_SETTINGS_AVAILABILITY} from "../lib/shopify/permission-settings.server.js";
+import {createPermissionSettings, providerStatus, PERMISSION_SETTINGS_AVAILABILITY} from "../lib/shopify/permission-settings.server.js";
 import type {PermissionFeature} from "../lib/ui/permission-explanation-flow.js";
 import type {ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs, ShouldRevalidateFunctionArgs} from "react-router";
 import {boundary} from "@shopify/shopify-app-react-router/server";
@@ -46,7 +46,7 @@ type Advertiser = {
 };
 
 type State =
-  | {view: "combined"}
+  | {view: "combined"; permission?: import("../lib/shopify/permission-settings.server.js").PermissionSettingsResult}
   | {view: "permissions_incomplete"}
   | {view: "disconnected"; notice: "cancelled" | "disconnected" | null}
   | {view: "pending"; accounts: Advertiser[]}
@@ -123,7 +123,7 @@ type KlaviyoState =
   | {view: "reauthorization"}
   | {view: "error"; code: string; retry: "oauth" | "reload"};
 
-type LoaderData = State & {meta: State; klaviyo: KlaviyoState; permissionAvailability: typeof PERMISSION_SETTINGS_AVAILABILITY;
+type LoaderData = State & {permissionViewOwner?: string;meta: State; klaviyo: KlaviyoState; permissionAvailability: typeof PERMISSION_SETTINGS_AVAILABILITY;
   shopifyProductAccess: ProductPermissionStatus; shopifyOrderAccess: ProductPermissionStatus; shopifyPermissionOwner: string | null;
   permissionUnavailableReasons?: Partial<Record<PermissionFeature, string>>};
 
@@ -219,7 +219,11 @@ async function loadGoogleState(
     const inspected = await runtime.inspect({
       installationAuthority: verified.installationAuthority,
     });
-    if (requiresCombinedSelection(inspected)) return {view: "combined"};
+    if (requiresCombinedSelection(inspected)) return {view: "combined", permission: providerStatus("google_ads", {
+      setupResumeAction: inspected.state === "pending_reporting_account_selection" ? "select_reporting_account" : "select_account",
+      connectionId: inspected.pending.connectionId, connectionVersion: inspected.pending.version,
+      reportingAccountId: null, accounts: inspected.accounts,
+    })};
     if (inspected.state === "connected") {
       if (!inspected.connection.reportingAccountId) {
         throw new Error("GOOGLE_REPORTING_ACCOUNT_REQUIRED");
@@ -286,7 +290,11 @@ async function loadMetaState(
     const inspected = await runtime.inspect({
       installationAuthority: verified.installationAuthority,
     });
-    if (requiresCombinedSelection(inspected)) return {view: "combined"};
+    if (requiresCombinedSelection(inspected)) return {view: "combined", permission: providerStatus("meta", {
+      setupResumeAction: inspected.state === "pending_reporting_account_selection" ? "select_reporting_account" : "select_account",
+      connectionId: inspected.pending.connectionId, connectionVersion: inspected.pending.version,
+      reportingAccountId: null, accounts: inspected.accounts,
+    })};
     if (inspected.state === "connected") {
       if (!inspected.connection.reportingAccountId) {
         throw new Error("META_REPORTING_ACCOUNT_REQUIRED");
@@ -399,6 +407,7 @@ export const loader = async ({request}: LoaderFunctionArgs): Promise<LoaderData>
   ]);
   return {...google, meta, klaviyo, shopifyProductAccess: shopifyAccess.products, shopifyOrderAccess: shopifyAccess.orders,
     shopifyPermissionOwner: verified.identity?.shop?.shopId ?? null,
+    permissionViewOwner: [verified.identity?.shop?.shopId, verified.installationAuthority.workspaceId, verified.installationAuthority.installGeneration].join(":"),
     permissionAvailability: permissionRelease?.availability ?? PERMISSION_SETTINGS_AVAILABILITY,
     permissionUnavailableReasons: permissionRelease?.unavailableReasons};
 };
@@ -407,7 +416,7 @@ export const loader = async ({request}: LoaderFunctionArgs): Promise<LoaderData>
 // headers export alone cannot forward the SDK reauthorization header on .data.
 export const headers: HeadersFunction = (args) => boundary.headers(args);
 
-const permissionIntents = new Set(["permission_connect", "permission_status", "permission_revoke_products", "permission_revoke_orders", "permission_select_accounts", "permission_select_reporting"]);
+const permissionIntents = new Set(["permission_connect", "permission_status", "permission_reconcile", "permission_change_reporting", "permission_disconnect", "permission_revoke_products", "permission_revoke_orders", "permission_select_accounts", "permission_select_reporting"]);
 
 export function shouldRevalidate({formData, actionResult, defaultShouldRevalidate}: ShouldRevalidateFunctionArgs) {
   const intent = formData?.get("intent");
@@ -442,6 +451,11 @@ export const action = async ({request}: ActionFunctionArgs) => {
     try {
       let result;
       if (intent === "permission_connect") result = await settings.connect({feature, verified, action: "connect"});
+      else if (intent === "permission_reconcile") result = await settings.reconcile({feature, verified});
+      else if (intent === "permission_change_reporting" || intent === "permission_disconnect") {
+        result = await settings.manage({feature, verified, operation: intent === "permission_disconnect" ? "disconnect" : "reporting",
+          expected: {connectionId: String(form.get("connectionId") ?? ""), version: Number(form.get("version"))}, reportingAccountId: String(form.get("reportingAccountId") ?? "")});
+      }
       else if (intent === "permission_status") {
         const encoded = form.get("expectedScopeBinding");
         if (encoded !== null && (typeof encoded !== "string" || encoded.length > 512)) throw new Error("PERMISSION_SETTINGS_SCOPE_BINDING_INVALID");
@@ -635,11 +649,17 @@ function Navigation() {
 }
 
 export default function Settings() {
-  const state = useLoaderData<typeof loader>();
+  const settingsPage = useRef<HTMLElementTagNameMap["s-page"] | null>(null);
+  const externalLock = useRef<string | null>(null);
+  const [externalModal, setExternalModal] = useState<string | null>(null);
+  const loaded = useLoaderData<typeof loader>();
+  const [providerOverrides, setProviderOverrides] = useState<{source: typeof loaded; google_ads?: State; meta?: State} | null>(null);
+  const overrides = providerOverrides?.source === loaded ? providerOverrides : null;
+  const state = {...loaded, ...(overrides?.google_ads ?? {}), meta: overrides?.meta ?? loaded.meta} as typeof loaded;
   const [productOverride, setProductOverride] = useState<{source: LoaderData; value: ProductPermissionStatus} | null>(null);
-  const productAccess = productOverride?.source === state ? productOverride.value : state.shopifyProductAccess ?? "unknown";
+  const productAccess = productOverride?.source === loaded ? productOverride.value : state.shopifyProductAccess ?? "unknown";
   const [orderOverride, setOrderOverride] = useState<{source: LoaderData; value: ProductPermissionStatus} | null>(null);
-  const orderAccess = orderOverride?.source === state ? orderOverride.value : state.shopifyOrderAccess ?? "unknown";
+  const orderAccess = orderOverride?.source === loaded ? orderOverride.value : state.shopifyOrderAccess ?? "unknown";
   const actionData = useActionData<typeof action>() as ActionData;
   const submit = useSubmit();
   const navigation = useNavigation();
@@ -650,12 +670,6 @@ export default function Settings() {
   const [initialSpendValue, setInitialSpendValue] = useState("");
   const [initialSpendError, setInitialSpendError] = useState("");
   const [initialSpendUnknown, setInitialSpendUnknown] = useState(false);
-  const choices = useRef<any>(null);
-  const reportingChoice = useRef<any>(null);
-  const accountModal = useRef<any>(null);
-  const reportingModal = useRef<any>(null);
-  const openedSetupView = useRef<"pending" | "pending_reporting" | null>(null);
-  const resumeRequested = useRef(false);
   const googleEvidenceAttempted = useRef(false);
   const [googleEvidenceStatus, setGoogleEvidenceStatus] =
     useState<"idle" | "loading" | "complete" | "failed">("idle");
@@ -668,12 +682,6 @@ export default function Settings() {
   const [klaviyoEvidenceResult, setKlaviyoEvidenceResult] =
     useState<KlaviyoEvidenceResult | null>(null);
   const [klaviyoEvidenceError, setKlaviyoEvidenceError] = useState<string | null>(null);
-  const metaChoices = useRef<any>(null);
-  const metaReportingChoice = useRef<any>(null);
-  const metaAccountModal = useRef<any>(null);
-  const metaReportingModal = useRef<any>(null);
-  const openedMetaSetupView = useRef<"pending" | "pending_reporting" | null>(null);
-  const metaResumeRequested = useRef(false);
   const metaProbeRunner = useRef<ReturnType<typeof createMetaProbeButtonRunner> | null>(null);
   if (!metaProbeRunner.current) metaProbeRunner.current = createMetaProbeButtonRunner();
   const [metaProbeStatus, setMetaProbeStatus] = useState<"idle" | "loading" | "complete" | "failed">("idle");
@@ -712,6 +720,19 @@ export default function Settings() {
     setRefreshProvider(provider);
     revalidator.revalidate();
   };
+
+  useEffect(() => {
+    const elements = settingsPage.current?.querySelectorAll?.("s-modal") ?? [];
+    const cleanups: (() => void)[] = [];
+    for (const element of elements) {
+      if (!element.id.startsWith("klaviyo-")) continue;
+      const show = (event: Event) => {if (event.target === element) {externalLock.current = element.id; setExternalModal(element.id);}};
+      const hidden = (event: Event) => {if (event.target === element) {if (externalLock.current === element.id) externalLock.current = null; setExternalModal(current => current === element.id ? null : current);}};
+      element.addEventListener("show", show); element.addEventListener("afterhide", hidden);
+      cleanups.push(() => {element.removeEventListener("show", show); element.removeEventListener("afterhide", hidden);});
+    }
+    return () => {for (const cleanup of cleanups) cleanup();};
+  }, [state.klaviyo.view]);
 
   useEffect(() => {
     if (!revalidating) setRefreshProvider(null);
@@ -776,39 +797,9 @@ export default function Settings() {
     }
   }, [actionData]);
 
-  useEffect(() => {
-    const setupView = state.view === "pending" || state.view === "pending_reporting"
-      ? state.view
-      : null;
-    if (!setupView) {
-      openedSetupView.current = null;
-      resumeRequested.current = false;
-      return;
-    }
-    if (googleWorking) return;
-    if (openedSetupView.current === setupView && !resumeRequested.current) return;
-    openedSetupView.current = setupView;
-    resumeRequested.current = false;
-    if (setupView === "pending") accountModal.current?.showOverlay?.();
-    else reportingModal.current?.showOverlay?.();
-  }, [state.view, googleWorking]);
 
-  useEffect(() => {
-    const setupView = state.meta.view === "pending" || state.meta.view === "pending_reporting"
-      ? state.meta.view
-      : null;
-    if (!setupView) {
-      openedMetaSetupView.current = null;
-      metaResumeRequested.current = false;
-      return;
-    }
-    if (metaWorking) return;
-    if (openedMetaSetupView.current === setupView && !metaResumeRequested.current) return;
-    openedMetaSetupView.current = setupView;
-    metaResumeRequested.current = false;
-    if (setupView === "pending") metaAccountModal.current?.showOverlay?.();
-    else metaReportingModal.current?.showOverlay?.();
-  }, [state.meta.view, metaWorking]);
+
+
 
   useEffect(() => {
     if (state.klaviyo.view !== "pending") {
@@ -859,17 +850,27 @@ export default function Settings() {
 
   const permissions = usePermissionSettings({availability: state.permissionAvailability,
     unavailableReasons: state.permissionUnavailableReasons,
-    productOwner: state.shopifyPermissionOwner,
-    onProductStatus(value) {setProductOverride({source: state, value});},
-    onOrderStatus(value) {setOrderOverride({source: state, value});},
+    externalBusy: pending || initialSpendSaving || externalModal !== null,
+    externalLock,
+    productOwner: state.permissionViewOwner ?? state.shopifyPermissionOwner,
+    initialProviders: {google_ads: state, meta: state.meta},
+    onDisconnected(feature) {
+      setProviderOverrides(current => ({...(current?.source === loaded ? current : {}), source: loaded,
+        [feature]: {view: "disconnected", notice: "disconnected"}}));
+    },
+    onConnection(feature, connection) {
+      const value: State = {view: "connected", reportingAccountId: connection.reportingAccountId!,
+        accounts: connection.accounts.map(account => ({...account, status: null, currency: null, timezone: null}))};
+      setProviderOverrides(current => ({...(current?.source === loaded ? current : {}), source: loaded, [feature]: value}));
+    },
+    onProductStatus(value) {setProductOverride({source: loaded, value});},
+    onOrderStatus(value) {setOrderOverride({source: loaded, value});},
     onResume(feature, stage) {
       if (feature === "klaviyo") {
         klaviyoResumeRequested.current = true;
         refreshConnection("klaviyo");
       }
-      if ((feature === "google_ads" || feature === "meta") && stage === "reporting_selected") {
-        refreshConnection(feature);
-      }
+
       // Re-read the normal reporting view after explicit account selection only.
     },
   });
@@ -878,30 +879,6 @@ export default function Settings() {
     const form = new FormData();
     form.set("intent", intent);
     form.set("provider", provider);
-    submit(form, {method: "post"});
-  };
-
-  const resumeAccountSelection = () => {
-    resumeRequested.current = true;
-    refreshConnection("google_ads");
-  };
-
-  const select = () => {
-    const form = new FormData();
-    form.set("intent", "select");
-    form.set("provider", "google_ads");
-    for (const id of choices.current?.values ?? []) {
-      form.append("accountIds", id);
-    }
-    submit(form, {method: "post"});
-  };
-
-  const saveReporting = (intent: "finish_reporting" | "change_reporting") => {
-    const [reportingAccountId] = reportingChoice.current?.values ?? [];
-    const form = new FormData();
-    form.set("intent", intent);
-    form.set("provider", "google_ads");
-    if (reportingAccountId) form.set("reportingAccountId", reportingAccountId);
     submit(form, {method: "post"});
   };
 
@@ -969,30 +946,6 @@ export default function Settings() {
       setKlaviyoEvidenceError("KLAVIYO_LIVE_EVIDENCE_REQUEST_FAILED");
       setKlaviyoEvidenceStatus("failed");
     }
-  };
-
-  const resumeMetaAccountSelection = () => {
-    metaResumeRequested.current = true;
-    refreshConnection("meta");
-  };
-
-  const selectMeta = () => {
-    const form = new FormData();
-    form.set("intent", "select");
-    form.set("provider", "meta");
-    for (const id of metaChoices.current?.values ?? []) {
-      form.append("accountIds", id);
-    }
-    submit(form, {method: "post"});
-  };
-
-  const saveMetaReporting = (intent: "finish_reporting" | "change_reporting") => {
-    const [reportingAccountId] = metaReportingChoice.current?.values ?? [];
-    const form = new FormData();
-    form.set("intent", intent);
-    form.set("provider", "meta");
-    if (reportingAccountId) form.set("reportingAccountId", reportingAccountId);
-    submit(form, {method: "post"});
   };
 
   const submitKlaviyoSpend = (
@@ -1072,7 +1025,7 @@ export default function Settings() {
   };
 
   return (
-    <s-page heading="Settings">
+    <s-page ref={settingsPage} heading="Settings">
       <Navigation />
       <s-section heading="Shopify">
         <s-stack direction="block" gap="base">
@@ -1106,166 +1059,6 @@ export default function Settings() {
       <s-section heading="Meta">
         <s-stack direction="block" gap="base">
           {permissions.providerContent("meta")}
-          {state.meta.view === "combined" ? <>
-            <s-badge tone="warning">Resume setup</s-badge>
-            <s-button onClick={() => permissions.checkStatus("meta", true)}>Resume setup</s-button>
-            <s-button onClick={() => permissions.open("meta")}>Reconnect Meta</s-button>
-          </> : null}
-          {actionData?.ok === false && actionData.provider === "meta"
-            ? <ErrorBanner provider="meta" code={actionData.code} />
-            : null}
-
-          {metaWorking ? (
-            <>
-              <s-badge tone="info">Working</s-badge>
-              <s-paragraph>Meta setup is being updated…</s-paragraph>
-            </>
-          ) : null}
-
-          {!metaWorking && state.meta.view === "error" ? (
-            <>
-              <ErrorBanner provider="meta" code={state.meta.code} />
-              <s-button
-                variant="primary"
-                onClick={() => {
-                  permissions.checkStatus("meta");
-                }}
-              >
-                Check status
-              </s-button>
-            </>
-          ) : null}
-
-          {!metaWorking && state.meta.view === "reauthorization" ? (
-            <>
-              <s-badge tone="warning">Reauthorization required</s-badge>
-              <s-paragraph>
-                Meta authorization is no longer valid. Reconnect to continue.
-              </s-paragraph>
-              <s-button variant="primary" onClick={() => permissions.open("meta")}>
-                Reconnect Meta
-              </s-button>
-            </>
-          ) : null}
-
-          {!metaWorking && state.meta.view === "disconnected" ? (
-            <>
-              <s-badge>Not connected</s-badge>
-              {state.meta.notice === "cancelled" ? (
-                <s-banner tone="warning">
-                  Setup was not completed. Review the connection status before continuing.
-                </s-banner>
-              ) : null}
-              {state.meta.notice === "disconnected" ? (
-                <s-banner tone="success">Meta was disconnected.</s-banner>
-              ) : null}
-              <s-paragraph>
-                Connect Meta, then select one to three advertiser accounts.
-              </s-paragraph>
-              <s-button
-                variant="primary"
-                onClick={() => permissions.open("meta")}
-              >
-                Connect Meta
-              </s-button>
-            </>
-          ) : null}
-
-          {!metaWorking && state.meta.view === "pending" ? (
-            <>
-              <s-badge tone="info">Select accounts</s-badge>
-              <s-paragraph>
-                Meta authorization is complete. Select one to three advertiser
-                accounts to finish setup.
-              </s-paragraph>
-              <s-button variant="primary" onClick={resumeMetaAccountSelection}>
-                Resume setup
-              </s-button>
-              <s-modal
-                ref={metaAccountModal}
-                id="meta-account-modal"
-                heading="Meta advertiser accounts"
-              >
-                <s-stack direction="block" gap="base">
-                  <s-paragraph>
-                    Choose between one and three advertiser accounts.
-                  </s-paragraph>
-                  <s-choice-list
-                    ref={metaChoices}
-                    label="Advertiser accounts"
-                    name="accountIds"
-                    multiple
-                  >
-                    {state.meta.accounts.map((account) => (
-                      <s-choice key={account.id} value={account.id}>
-                        {account.name} ({account.id})
-                      </s-choice>
-                    ))}
-                  </s-choice-list>
-                </s-stack>
-                <s-button slot="primary-action" variant="primary" onClick={selectMeta}>
-                  Save and connect
-                </s-button>
-                <s-button
-                  slot="secondary-actions"
-                  commandFor="meta-account-modal"
-                  command="--hide"
-                >
-                  Cancel
-                </s-button>
-              </s-modal>
-            </>
-          ) : null}
-
-          {!metaWorking && state.meta.view === "pending_reporting" ? (
-            <>
-              <s-badge tone="info">Choose Reporting Account</s-badge>
-              <s-paragraph>
-                Choose the single connected advertiser account AdsTable will use
-                in reporting.
-              </s-paragraph>
-              <s-button variant="primary" onClick={resumeMetaAccountSelection}>
-                Resume setup
-              </s-button>
-              <s-modal
-                ref={metaReportingModal}
-                id="meta-reporting-modal"
-                heading="Meta Reporting Account"
-              >
-                <s-stack direction="block" gap="base">
-                  <s-paragraph>
-                    Select exactly one account from the connected account set.
-                  </s-paragraph>
-                  <s-choice-list
-                    ref={metaReportingChoice}
-                    label="Reporting Account"
-                    name="reportingAccountId"
-                  >
-                    {state.meta.accounts.map((account) => (
-                      <s-choice key={account.id} value={account.id}>
-                        {account.name} ({account.id})
-                      </s-choice>
-                    ))}
-                  </s-choice-list>
-                </s-stack>
-                <s-button
-                  slot="primary-action"
-                  variant="primary"
-                  onClick={() => saveMetaReporting("finish_reporting")}
-                >
-                  Save and finish
-                </s-button>
-                <s-button
-                  slot="secondary-actions"
-                  commandFor="meta-reporting-modal"
-                  command="--hide"
-                >
-                  Cancel
-                </s-button>
-              </s-modal>
-            </>
-          ) : null}
-
           {!metaWorking && state.meta.view === "connected" ? (
             <>
               <s-badge tone="success">Connected</s-badge>
@@ -1312,74 +1105,8 @@ export default function Settings() {
                   Meta product test stopped. No retry was performed. Error code: {metaProbeResult.code}.
                 </s-paragraph>
               ) : null}
-              <s-button commandFor="meta-reporting-modal" command="--show">
-                Reporting Account
-              </s-button>
-              <s-button
-                tone="critical"
-                commandFor="meta-disconnect-modal"
-                command="--show"
-              >
-                Disconnect
-              </s-button>
-              <s-modal
-                ref={metaReportingModal}
-                id="meta-reporting-modal"
-                heading="Meta Reporting Account"
-              >
-                <s-stack direction="block" gap="base">
-                  <s-paragraph>
-                    Choose the single connected account AdsTable will show in
-                    reporting. Meta OAuth will not restart.
-                  </s-paragraph>
-                  <s-choice-list
-                    ref={metaReportingChoice}
-                    label="Reporting Account"
-                    name="reportingAccountId"
-                  >
-                    {state.meta.accounts.map((account) => (
-                      <s-choice key={account.id} value={account.id}>
-                        {account.name} ({account.id})
-                      </s-choice>
-                    ))}
-                  </s-choice-list>
-                </s-stack>
-                <s-button
-                  slot="primary-action"
-                  variant="primary"
-                  onClick={() => saveMetaReporting("change_reporting")}
-                >
-                  Save Reporting Account
-                </s-button>
-                <s-button
-                  slot="secondary-actions"
-                  commandFor="meta-reporting-modal"
-                  command="--hide"
-                >
-                  Cancel
-                </s-button>
-              </s-modal>
-              <s-modal id="meta-disconnect-modal" heading="Disconnect Meta?">
-                <s-paragraph>
-                  AdsTable will revoke Meta authorization and remove Meta
-                  reporting authority, selected accounts and the encrypted
-                  credential. Historical data remains.
-                </s-paragraph>
-                <s-button
-                  slot="primary-action"
-                  tone="critical"
-                  onClick={() => send("disconnect", "meta")}
-                >
-                  Disconnect Meta
-                </s-button>
-                <s-button
-                  slot="secondary-actions"
-                  commandFor="meta-disconnect-modal"
-                  command="--hide"
-                >
-                  Keep connected
-                </s-button>
-              </s-modal>
+              <s-button disabled={!permissions.canManage("meta") ? true : undefined} onClick={() => permissions.manageProvider("meta", "reporting")}>Reporting Account</s-button>
+              <s-button tone="critical" disabled={!permissions.canManage("meta") ? true : undefined} onClick={() => permissions.manageProvider("meta", "disconnect")}>Disconnect</s-button>
             </>
           ) : null}
         </s-stack>
@@ -1389,178 +1116,6 @@ export default function Settings() {
       <s-section heading="Google Ads">
         <s-stack direction="block" gap="base">
           {permissions.providerContent("google_ads")}
-          {!googleWorking && state.view === "permissions_incomplete" ? <>
-            <s-banner tone="warning" heading="Google setup is incomplete">
-              <s-paragraph>Both Google Ads and Merchant Center access are required. Resume setup and allow both permissions to finish connecting.</s-paragraph>
-            </s-banner>
-            <s-button disabled={permissions.busy || state.permissionAvailability.google_ads !== true ? true : undefined}
-              onClick={() => permissions.open("google_ads")}>Resume setup</s-button>
-          </> : null}
-          {state.view === "combined" ? <>
-            <s-badge tone="warning">Resume setup</s-badge>
-            <s-button onClick={() => permissions.checkStatus("google_ads", true)}>Resume setup</s-button>
-            <s-button onClick={() => permissions.open("google_ads")}>Reconnect Google Ads</s-button>
-          </> : null}
-          {actionData?.ok === false && actionData.provider === "google_ads"
-            ? <ErrorBanner provider="google_ads" code={actionData.code} />
-            : null}
-
-          {googleWorking ? (
-            <>
-              <s-badge tone="info">Working</s-badge>
-              <s-paragraph>Google Ads setup is being updated…</s-paragraph>
-            </>
-          ) : null}
-
-          {!googleWorking && state.view === "error" ? (
-            <>
-              <ErrorBanner provider="google_ads" code={state.code} />
-              <s-button
-                variant="primary"
-                onClick={() => {
-                  permissions.checkStatus("google_ads");
-                }}
-              >
-                Check status
-              </s-button>
-            </>
-          ) : null}
-
-          {!googleWorking && state.view === "reauthorization" ? (
-            <>
-              <s-badge tone="warning">Reauthorization required</s-badge>
-              <s-paragraph>
-                Google authorization is no longer valid. Reconnect to continue.
-              </s-paragraph>
-              <s-button variant="primary" onClick={() => permissions.open("google_ads")}>
-                Reconnect Google Ads
-              </s-button>
-            </>
-          ) : null}
-
-          {!googleWorking && state.view === "disconnected" ? (
-            <>
-              <s-badge>Not connected</s-badge>
-              {state.notice === "cancelled" ? (
-                <s-banner tone="warning">
-                  Setup was not completed. Review the connection status before continuing.
-                </s-banner>
-              ) : null}
-              {state.notice === "disconnected" ? (
-                <s-banner tone="success">Google Ads was disconnected.</s-banner>
-              ) : null}
-              <s-paragraph>
-                Connect Google Ads, then select one to three advertiser accounts.
-                Manager accounts are never selectable.
-              </s-paragraph>
-              <s-button
-                variant="primary"
-                onClick={() => permissions.open("google_ads")}
-              >
-                Connect Google Ads
-              </s-button>
-            </>
-          ) : null}
-
-          {!googleWorking && state.view === "pending" ? (
-            <>
-              <s-badge tone="info">Select accounts</s-badge>
-              <s-paragraph>
-                Google authorization is complete. Select one to three advertiser
-                accounts to finish setup.
-              </s-paragraph>
-              <s-button variant="primary" onClick={resumeAccountSelection}>
-                Resume setup
-              </s-button>
-              <s-modal
-                ref={accountModal}
-                id="google-account-modal"
-                heading="Google Ads accounts"
-              >
-                <s-stack direction="block" gap="base">
-                  <s-paragraph>
-                    Choose between one and three advertiser accounts.
-                  </s-paragraph>
-                  <s-choice-list
-                    ref={choices}
-                    label="Advertiser accounts"
-                    name="accountIds"
-                    multiple
-                  >
-                    {state.accounts.map((account) => (
-                      <s-choice key={account.id} value={account.id}>
-                        {account.name} ({account.id})
-                      </s-choice>
-                    ))}
-                  </s-choice-list>
-                </s-stack>
-                <s-button
-                  slot="primary-action"
-                  variant="primary"
-                  onClick={select}
-                >
-                  Save and connect
-                </s-button>
-                <s-button
-                  slot="secondary-actions"
-                  commandFor="google-account-modal"
-                  command="--hide"
-                >
-                  Cancel
-                </s-button>
-              </s-modal>
-            </>
-          ) : null}
-
-          {!googleWorking && state.view === "pending_reporting" ? (
-            <>
-              <s-badge tone="info">Choose Reporting Account</s-badge>
-              <s-paragraph>
-                Choose the single connected advertiser account AdsTable will use
-                in reporting.
-              </s-paragraph>
-              <s-button variant="primary" onClick={resumeAccountSelection}>
-                Resume setup
-              </s-button>
-              <s-modal
-                ref={reportingModal}
-                id="google-reporting-modal"
-                heading="Google Ads Reporting Account"
-              >
-                <s-stack direction="block" gap="base">
-                  <s-paragraph>
-                    Select exactly one account from the connected account set.
-                  </s-paragraph>
-                  <s-choice-list
-                    ref={reportingChoice}
-                    label="Reporting Account"
-                    name="reportingAccountId"
-                  >
-                    {state.accounts.map((account) => (
-                      <s-choice key={account.id} value={account.id}>
-                        {account.name} ({account.id})
-                      </s-choice>
-                    ))}
-                  </s-choice-list>
-                </s-stack>
-                <s-button
-                  slot="primary-action"
-                  variant="primary"
-                  onClick={() => saveReporting("finish_reporting")}
-                >
-                  Save and finish
-                </s-button>
-                <s-button
-                  slot="secondary-actions"
-                  commandFor="google-reporting-modal"
-                  command="--hide"
-                >
-                  Cancel
-                </s-button>
-              </s-modal>
-            </>
-          ) : null}
-
           {!googleWorking && state.view === "connected" ? (
             <>
               <s-badge tone="success">Connected</s-badge>
@@ -1631,76 +1186,8 @@ export default function Settings() {
                   Google evidence stopped. No retry was performed. Error code: {googleEvidenceError}.
                 </s-banner>
               ) : null}
-              <s-button
-                commandFor="google-reporting-modal"
-                command="--show"
-              >
-                Reporting Account
-              </s-button>
-              <s-button
-                tone="critical"
-                commandFor="google-disconnect-modal"
-                command="--show"
-              >
-                Disconnect
-              </s-button>
-              <s-modal
-                ref={reportingModal}
-                id="google-reporting-modal"
-                heading="Google Ads Reporting Account"
-              >
-                <s-stack direction="block" gap="base">
-                  <s-paragraph>
-                    Choose the single connected account AdsTable will show in
-                    reporting. Google OAuth will not restart.
-                  </s-paragraph>
-                  <s-choice-list
-                    ref={reportingChoice}
-                    label="Reporting Account"
-                    name="reportingAccountId"
-                  >
-                    {state.accounts.map((account) => (
-                      <s-choice key={account.id} value={account.id}>
-                        {account.name} ({account.id})
-                      </s-choice>
-                    ))}
-                  </s-choice-list>
-                </s-stack>
-                <s-button
-                  slot="primary-action"
-                  variant="primary"
-                  onClick={() => saveReporting("change_reporting")}
-                >
-                  Save Reporting Account
-                </s-button>
-                <s-button
-                  slot="secondary-actions"
-                  commandFor="google-reporting-modal"
-                  command="--hide"
-                >
-                  Cancel
-                </s-button>
-              </s-modal>
-              <s-modal id="google-disconnect-modal" heading="Disconnect Google Ads?">
-                <s-paragraph>
-                  AdsTable will remove Google reporting authority, selected
-                  accounts and the encrypted credential. Historical data remains.
-                </s-paragraph>
-                <s-button
-                  slot="primary-action"
-                  tone="critical"
-                  onClick={() => send("disconnect")}
-                >
-                  Disconnect Google Ads
-                </s-button>
-                <s-button
-                  slot="secondary-actions"
-                  commandFor="google-disconnect-modal"
-                  command="--hide"
-                >
-                  Keep connected
-                </s-button>
-              </s-modal>
+              <s-button disabled={!permissions.canManage("google_ads") ? true : undefined} onClick={() => permissions.manageProvider("google_ads", "reporting")}>Reporting Account</s-button>
+              <s-button tone="critical" disabled={!permissions.canManage("google_ads") ? true : undefined} onClick={() => permissions.manageProvider("google_ads", "disconnect")}>Disconnect</s-button>
             </>
           ) : null}
         </s-stack>
@@ -1779,7 +1266,7 @@ export default function Settings() {
                   ? "Add the estimated 30-day email spend to finish setup. Enter 0 if there is no cost."
                   : "Klaviyo authorization is complete. Select the account, then add its estimated 30-day email spend to finish setup."}
               </s-paragraph>
-              <s-button variant="primary" disabled={klaviyoWorking || initialSpendSaving} onClick={resumeKlaviyoSetup}>
+              <s-button variant="primary" disabled={permissions.busy || klaviyoWorking || initialSpendSaving} onClick={resumeKlaviyoSetup}>
                 Resume setup
               </s-button>
               <s-modal
@@ -1930,7 +1417,7 @@ export default function Settings() {
                 </s-banner>
               ) : null}
               <s-stack direction="inline" gap="base">
-                <s-button
+                <s-button disabled={permissions.busy ? true : undefined}
                   variant="secondary"
                   tone="critical"
                   commandFor="klaviyo-disconnect-modal"
@@ -1938,7 +1425,7 @@ export default function Settings() {
                 >
                   Disconnect
                 </s-button>
-                <s-button
+                <s-button disabled={permissions.busy ? true : undefined}
                   variant="secondary"
                   commandFor="klaviyo-update-spend-modal"
                   command="--show"
@@ -1950,7 +1437,7 @@ export default function Settings() {
                   commandFor="klaviyo-change-value-modal"
                   command="--show"
                   onClick={prepareKlaviyoCorrection}
-                  disabled={klaviyoPeriods.length === 0}
+                  disabled={permissions.busy || (klaviyoPeriods.length === 0)}
                 >
                   Change value
                 </s-button>

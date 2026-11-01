@@ -47,7 +47,7 @@ function harness({outcome="pending_permissions",inspect={state:"disconnected"},e
     "../lib/oauth/klaviyo-oauth-runtime.server.js":{createKlaviyoOAuthRuntime:()=>({inspect:async()=>({state:"disconnected"})})},
     "../lib/shopify/shopify-route-authority.server.js":{resolveShopifyRouteAuthority:async()=>verified},
     "../lib/shopify/product-permission-status.server.js":{readShopifyPermissionStatuses:async()=>({products:"missing",orders:"missing"})},
-    "../components/use-permission-settings":{usePermissionSettings:()=>permissions},
+    "../components/use-permission-settings":{usePermissionSettings:props=>{h.permissionProps=props;return permissions;}},
     "../components/product-access-removal":{ProductAccessRemoval:"ProductAccessRemoval"},
     "../components/order-access-removal":{OrderAccessRemoval:"OrderAccessRemoval"},
     react:{...react,useRef:value=>({current:value}),useState:value=>[typeof value==="function"?value():value,()=>{}],useEffect:()=>{}},
@@ -68,14 +68,8 @@ test("actual Google callback → Settings loader → card keeps partial permissi
   assert.equal(new URL(target).searchParams.get("google_status"),"permissions_incomplete");
   assert.equal(new URL(target).pathname,"/store/synthetic-store/apps/adstable-1/settings");
   await h.load(target);assert.equal(h.state.view,"permissions_incomplete");h.render();
-  const section=nodes(h.tree).find(e=>e.type==="s-section"&&e.props.heading==="Google Ads");
-  assert.ok(nodes(section).some(e=>e.type==="s-banner"&&e.props.tone==="warning"&&e.props.heading==="Google setup is incomplete"));
-  assert.match(text(section),/Both Google Ads and Merchant Center access are required/);
-  for(const other of nodes(h.tree).filter(e=>e.type==="s-section"&&e!==section))assert.doesNotMatch(text(other),/Both Google Ads and Merchant Center/);
-  assert.deepEqual(h.opened,[]);assert.deepEqual(h.calls,["claim","complete","inspect"]);
-  const button=nodes(section).find(e=>e.type==="s-button"&&text(e)==="Resume setup");
-  assert.ok(button);assert.equal(button.props.disabled,undefined);
-  button.props.onClick();assert.deepEqual(h.opened,["google_ads"]);assert.deepEqual(h.calls,["claim","complete","inspect"]);
+  assert.equal(h.permissionProps.initialProviders.google_ads.view, "permissions_incomplete");
+  assert.deepEqual(h.opened, []); assert.deepEqual(h.calls, ["claim","complete","inspect"]);
   await h.load(target);assert.equal(h.state.view,"permissions_incomplete","reload preserves explanation");
   assert.deepEqual(h.logs,[{event:"adstable_permission_error",code:"OAUTH_IDENTITY_SCOPE_NOT_GRANTED",feature:"google_ads",intent:"permission_callback",requestId:null}]);
 });
@@ -121,8 +115,8 @@ test("actual Google REST failure metadata survives callback safe logging without
 test("incomplete return hint never grants connection authority or enables a closed Google setup",async()=>{
   const h=harness({enabled:false});await h.load(installedShopifySettingsUrl(shop,{googleStatus:"permissions_incomplete"}));h.render();
   assert.equal(h.state.view,"permissions_incomplete");
-  const section=nodes(h.tree).find(e=>e.type==="s-section"&&e.props.heading==="Google Ads");
-  assert.equal(nodes(section).find(e=>e.type==="s-button"&&text(e)==="Resume setup").props.disabled,true);
+  assert.equal(h.permissionProps.availability.google_ads, false);
+  assert.equal(h.permissionProps.initialProviders.google_ads.view, "permissions_incomplete");
   assert.deepEqual(h.opened,[]);assert.deepEqual(h.calls,["inspect"]);
   for(const feature of ["metaStatus","klaviyoStatus"])assert.throws(()=>installedShopifySettingsUrl(shop,{[feature]:"permissions_incomplete"}),/STATUS_INVALID/);
 });

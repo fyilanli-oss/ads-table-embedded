@@ -21,6 +21,7 @@ export function createPermissionExplanationFlow({request, canRequest = () => fal
   const current = session => session === state.session;
   return Object.freeze({
     get snapshot() { return state; },
+    invalidate() { state = Object.freeze({phase: "idle", feature: null, session: ++sequence}); return state; },
     open(feature) {
       if (typeof feature !== "string" || !Object.hasOwn(PERMISSION_EXPLANATIONS, feature) || state.phase !== "idle") return null;
       state = Object.freeze({phase: "explaining", feature, session: ++sequence});
@@ -58,8 +59,8 @@ export function createPermissionExplanationFlow({request, canRequest = () => fal
         if (canRequest(feature) !== true) { set("unavailable"); return false; }
         await request(feature);
         // A resolved adapter is not proof of a grant or a completed setup.
-        set("awaiting_status");
-      } catch { set("unknown"); }
+        if (current(session)) set("awaiting_status");
+      } catch { if (current(session)) set("unknown"); }
       return true;
     },
     statusObserved(session, feature) {

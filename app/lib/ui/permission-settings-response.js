@@ -23,6 +23,12 @@ export function permissionResponseMatches(reply, pending) {
       "reporting_selected", "review_setup", "klaviyo_cost_missing", "existing_reporting_connection", "products_required"].includes(reply.stage))
     && (reply?.selection === undefined || reply.kind === "status"
       && ["select_account", "select_reporting_account"].includes(reply.stage) && validSelection(reply.selection))
+    && (reply?.connection === undefined || reply.kind === "status" && reply.stage === "reporting_selected"
+      && validSelection(reply.connection) && reply.connection.accounts.length >= 1 && reply.connection.accounts.length <= 3
+      && reply.connection.accounts.some(account => account.id === reply.connection.reportingAccountId))
+    && (!(reply.kind === "status" && ["google_ads", "meta"].includes(reply.feature))
+      || (reply.stage === "reporting_selected" ? reply.connection !== undefined
+        : !["select_account", "select_reporting_account"].includes(reply.stage) || reply.selection !== undefined))
     && reply?.expiresAt === undefined;
 }
 

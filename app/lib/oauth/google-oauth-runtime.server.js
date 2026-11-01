@@ -519,7 +519,7 @@ export function createGoogleOAuthRuntime({
     },
   };
   return Object.freeze({...runtime, combinedSetup: Object.freeze({
-    ...createCombinedSetupAccounts({provider: PROVIDER, enabled: identityAuthorizationEnabled, lifecycle, tokenVault, runtime, accountAuthority}),
+    ...createCombinedSetupAccounts({provider: PROVIDER, enabled: identityAuthorizationEnabled, lifecycle, tokenVault, runtime, accountAuthority, selections}),
     verifyAssets: createCombinedSetupAssetAccess({provider: PROVIDER, enabled: identityAuthorizationEnabled,
       database, tokenVault, config, fetchFn, now}).verify,
   })});

@@ -34,7 +34,7 @@ export function handleServerError(_error, {request}) {
 }
 
 const FEATURES = new Set(["google_ads", "meta", "klaviyo", "shopify_products", "shopify_orders"]);
-const INTENTS = new Set(["permission_connect", "permission_callback", "permission_status", "permission_revoke_products", "permission_revoke_orders", "permission_select_accounts", "permission_select_reporting"]);
+const INTENTS = new Set(["permission_connect", "permission_callback", "permission_status", "permission_reconcile", "permission_change_reporting", "permission_disconnect", "permission_revoke_products", "permission_revoke_orders", "permission_select_accounts", "permission_select_reporting"]);
 const CODES = new Set([
   "IDENTITY_OAUTH_CONNECTION_STATE_NOT_ELIGIBLE", "IDENTITY_OAUTH_DISCONNECT_INCOMPLETE",
   "IDENTITY_OAUTH_CONNECTION_CHANGED", "IDENTITY_OAUTH_START_DISABLED", "ACTIVE_INSTALLATION_REQUIRED",

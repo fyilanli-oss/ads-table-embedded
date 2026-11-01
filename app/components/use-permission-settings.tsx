@@ -1,5 +1,6 @@
 import {useCallback, useEffect, useRef, useState} from "react";
 import {useFetcher} from "react-router";
+import {PermissionProviderDisconnect} from "./permission-provider-disconnect";
 import {PermissionExplanation} from "./permission-explanation";
 import {PermissionSetupSelection, type SelectionModel, type SelectionInput} from "./permission-setup-selection";
 import {createPermissionExplanationFlow, permissionResumeTarget, type PermissionFeature} from "../lib/ui/permission-explanation-flow.js";
@@ -12,9 +13,14 @@ type Reply = PermissionSettingsResult & {requestId: string};
 type Props = {
   availability: Readonly<Record<PermissionFeature, boolean>>;
   unavailableReasons?: Readonly<Partial<Record<PermissionFeature, string>>>;
+  externalBusy?: boolean;
+  externalLock?: {current: string | null};
   productOwner?: string | null;
   onProductStatus?(value: ProductPermissionStatus): void;
   onOrderStatus?(value: ProductPermissionStatus): void;
+  initialProviders?: Partial<Record<"google_ads" | "meta", {view: string; permission?: PermissionSettingsResult}>>;
+  onDisconnected?(feature: "google_ads" | "meta"): void;
+  onConnection?(feature: "google_ads" | "meta", connection: import("../lib/shopify/permission-settings.server.js").PermissionSelection): void;
   onResume(feature: PermissionFeature, stage: string): void;
 };
 
@@ -22,16 +28,22 @@ type Props = {
 // request. Shopify consent stays in Settings through App Bridge; the server
 // prepares a fixed scope and verifies actual grants after the native window.
 const isShopifyPermission = (feature: unknown) => feature === "shopify_products" || feature === "shopify_orders";
-export function usePermissionSettings({availability, unavailableReasons, onResume, productOwner, onProductStatus, onOrderStatus}: Props) {
+export function usePermissionSettings({availability, unavailableReasons, onResume, productOwner, onProductStatus, onOrderStatus, initialProviders, onConnection, onDisconnected, externalBusy = false, externalLock}: Props) {
   const fetcher = useFetcher<Reply>();
   const activeView = useRef(true);
-  const callbacks = useRef({availability, onResume, productOwner, onProductStatus, onOrderStatus, submit: fetcher.submit});
-  callbacks.current = {availability, onResume, productOwner, onProductStatus, onOrderStatus, submit: fetcher.submit};
+  const callbacks = useRef({availability, onResume, productOwner, onProductStatus, onOrderStatus, onConnection, onDisconnected, initialProviders, externalBusy, externalLock, submit: fetcher.submit});
+  callbacks.current = {availability, onResume, productOwner, onProductStatus, onOrderStatus, onConnection, onDisconnected, initialProviders, externalBusy, externalLock, submit: fetcher.submit};
   const pending = useRef<{
     requestId: string; feature: PermissionFeature;
     resolve(reply: Reply): void; reject(): void;
   } | null>(null);
-  const [feedback, setFeedback] = useState<PermissionSettingsResult | null>(null);
+  const [feedback, setFeedbackValue] = useState<PermissionSettingsResult | null>(null);
+  const [providerFeedback, setProviderFeedback] = useState<Partial<Record<PermissionFeature, PermissionSettingsResult>>>({});
+  const setFeedback = useCallback((reply: PermissionSettingsResult | null) => {
+    setFeedbackValue(reply);
+    if (reply) setProviderFeedback(previous => ({...previous, [reply.feature]: reply}));
+  }, []);
+  const hasUnknownResult = Object.values(providerFeedback).some(reply => reply?.kind === "unknown");
   const connectReply = useRef<Reply | null>(null);
   const [checking, setChecking] = useState(false);
   const [checkingFeature, setCheckingFeature] = useState<PermissionFeature | null>(null);
@@ -60,9 +72,11 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
     setOrderRemovalResult(null);
   }, []);
   const [selectionModel, setSelectionModel] = useState<SelectionModel | null>(null);
-  const selectionIntent = useRef<{model: SelectionModel; input: SelectionInput | null; failed: boolean} | null>(null);
+  const [disconnectModel, setDisconnectModel] = useState<{feature: "meta" | "google_ads"; selection: import("../lib/shopify/permission-settings.server.js").PermissionSelection; owner: string | null | undefined} | null>(null);
+  const disconnectIntent = useRef(false);
+  const selectionIntent = useRef<{owner: string | null | undefined; model: SelectionModel; input: SelectionInput | null; failed: boolean} | null>(null);
   const [selectionActivity, setSelectionActivity] = useState<string | null>(null);
-  const execute = useCallback((intent: "permission_connect" | "permission_status" | "permission_revoke_products" | "permission_revoke_orders" | "permission_select_accounts" | "permission_select_reporting", feature: PermissionFeature, fields: Record<string, string> = {}) => {
+  const execute = useCallback((intent: "permission_connect" | "permission_status" | "permission_reconcile" | "permission_change_reporting" | "permission_disconnect" | "permission_revoke_products" | "permission_revoke_orders" | "permission_select_accounts" | "permission_select_reporting", feature: PermissionFeature, fields: Record<string, string> = {}) => {
     if (pending.current) return Promise.reject(new Error("PERMISSION_ACTION_PENDING"));
     return new Promise<Reply>((resolve, reject) => {
       const requestId = crypto.randomUUID();
@@ -99,7 +113,7 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
       let observed = false;
       try {
         let reply = await execute("permission_connect", feature);
-        if (isShopifyPermission(feature) && !current()) throw new Error("PERMISSION_VIEW_CHANGED");
+        if (!current()) throw new Error("PERMISSION_VIEW_CHANGED");
         if (reply.kind === "scope_request") {
           const binding = {...reply.binding};
           await requestShopifyScopeWindow({preparation: reply, owner: requestOwner, isCurrent: current});
@@ -115,6 +129,9 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
         if (reply.kind === "authorization") {
           const target = permissionAuthorizationTarget(feature, reply.authorizationUrl);
           if (!target) throw new Error("PERMISSION_TARGET_INVALID");
+          if (feature === "google_ads" || feature === "meta") {
+            try { sessionStorage.setItem("adstable-permission-return", JSON.stringify({feature, owner: requestOwner, until: Date.now() + 600000})); } catch { /* Resume remains available if storage is disabled. */ }
+          }
           globalThis.open(target, "_top");
         } else if (reply.kind === "unknown" || reply.kind === "unavailable") {
           throw new Error("PERMISSION_RESULT_UNKNOWN");
@@ -130,7 +147,7 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
   const controller = flow.current;
   const [snapshot, setSnapshot] = useState(controller.snapshot);
   const open = (feature: PermissionFeature) => {
-    if (pending.current || checking || selectionIntent.current) return;
+    if (hasUnknownResult || (callbacks.current.externalBusy || callbacks.current.externalLock?.current) || pending.current || checking || selectionIntent.current || selectionModel || disconnectModel) return;
     const next = controller.open(feature);
     if (next) { setFeedback(null); setSnapshot(next); }
   };
@@ -150,15 +167,40 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
     connectReply.current = null;
     setSnapshot(controller.snapshot);
   }, [controller]);
+  const lastSelection = useRef<Partial<Record<"google_ads" | "meta", import("../lib/shopify/permission-settings.server.js").PermissionSelection>>>({});
   const openSelection = useCallback((reply: PermissionSettingsResult) => {
-    if (pending.current || selectionIntent.current || controller.snapshot.phase !== "idle" || reply.kind !== "status" || !reply.selection
+    if ((callbacks.current.externalBusy || callbacks.current.externalLock?.current) || pending.current || selectionIntent.current || controller.snapshot.phase !== "idle" || reply.kind !== "status" || !reply.selection
       || (reply.feature !== "google_ads" && reply.feature !== "meta")
       || !["select_account", "select_reporting_account"].includes(reply.stage)) return;
+    lastSelection.current[reply.feature] = reply.selection;
     const model: SelectionModel = {key: crypto.randomUUID(), feature: reply.feature,
       stage: reply.stage as SelectionModel["stage"], selection: reply.selection};
-    selectionIntent.current = {model, input: null, failed: false};
+    selectionIntent.current = {owner: callbacks.current.productOwner, model, input: null, failed: false};
     setSelectionModel(model);
   }, [controller]);
+  useEffect(() => {
+    // The marker records an explicit Connect in this browser, never a grant.
+    // Only the authenticated loader's version-bound pending inventory can open.
+    let marker;
+    try { marker = JSON.parse(sessionStorage.getItem("adstable-permission-return") ?? "null"); } catch { return; }
+    if (!marker || availability[marker.feature as PermissionFeature] !== true || (callbacks.current.externalBusy || callbacks.current.externalLock?.current) || marker.owner !== productOwner || !Number.isSafeInteger(marker.until) || marker.until < Date.now() || marker.until > Date.now() + 600000 || !["google_ads", "meta"].includes(marker.feature)) return;
+    const reply = initialProviders?.[marker.feature as "google_ads" | "meta"]?.permission;
+    if (reply?.kind !== "status" || !reply.selection) return;
+    if (pending.current || selectionIntent.current || controller.snapshot.phase !== "idle") return;
+    try { sessionStorage.removeItem("adstable-permission-return"); } catch { return; }
+    openSelection(reply);
+  }, [initialProviders?.google_ads?.permission, initialProviders?.meta?.permission, productOwner, externalBusy, controller, openSelection]);
+  const viewOwner = useRef(productOwner);
+  useEffect(() => {
+    if (viewOwner.current === productOwner) return;
+    viewOwner.current = productOwner;
+    pending.current?.reject(); pending.current = null;
+    selectionIntent.current = null; disconnectIntent.current = false;
+    lastSelection.current = {}; connectReply.current = null; setProviderFeedback({});
+    setSelectionModel(null); setDisconnectModel(null); setFeedback(null);
+    setChecking(false); setCheckingFeature(null); setSelectionActivity(null);
+    setSnapshot(controller.invalidate());
+  }, [productOwner, controller]);
   const checkStatus = async (feature: PermissionFeature, openNext = false) => {
     if (pending.current || selectionIntent.current || ["explaining", "hiding_for_cancel", "hiding_for_connect", "starting"].includes(controller.snapshot.phase)) return;
     setChecking(true);
@@ -166,7 +208,7 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
     const requestOwner = callbacks.current.productOwner;
     try {
       const reply = await execute("permission_status", feature);
-      if (isShopifyPermission(feature) && requestOwner !== callbacks.current.productOwner) return;
+      if (!activeView.current || requestOwner !== callbacks.current.productOwner) return;
       productReply(reply);
       orderReply(reply);
       setFeedback(reply);
@@ -179,7 +221,7 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
         }
       }
     } catch {
-      setFeedback({kind: "unknown", feature});
+      if (activeView.current && requestOwner === callbacks.current.productOwner) setFeedback({kind: "unknown", feature});
       if (isShopifyPermission(feature) && requestOwner === callbacks.current.productOwner) {
         (feature === "shopify_products" ? callbacks.current.onProductStatus : callbacks.current.onOrderStatus)?.("unknown");
       }
@@ -188,9 +230,10 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
   };
   const confirmSelection = useCallback((key: string, input: SelectionInput, hide: () => void) => {
     const active = selectionIntent.current;
-    if (!active || active.model.key !== key || active.input || active.failed || pending.current) return;
+    if (!active || active.owner !== callbacks.current.productOwner || active.model.key !== key || active.input || active.failed || pending.current) return;
     active.input = {...input, ...(input.accountIds ? {accountIds: [...input.accountIds]} : {})};
     setChecking(true);
+    setCheckingFeature(active.model.feature);
     setSelectionActivity("Saving selection…");
     try { hide(); } catch {
       active.failed = true;
@@ -200,31 +243,34 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
   }, []);
   const afterSelectionHide = useCallback(async (key: string) => {
     const active = selectionIntent.current;
-    if (!active || active.model.key !== key) return;
+    if (!active || active.owner !== callbacks.current.productOwner || active.model.key !== key) return;
     selectionIntent.current = null;
     setSelectionModel(null);
-    if (!active.input || active.failed) { setChecking(false); setSelectionActivity(null); return; }
+    if (!active.input || active.failed) { setCheckingFeature(null); setChecking(false); setSelectionActivity(null); return; }
     const {model, input} = active;
+    const owner = active.owner;
     setChecking(true);
     setSelectionActivity("Saving selection…");
     try {
-      const intent = model.stage === "select_account" ? "permission_select_accounts" : "permission_select_reporting";
+      const intent = model.stage === "select_account" ? "permission_select_accounts" : model.stage === "change_reporting" ? "permission_change_reporting" : "permission_select_reporting";
       const fields: Record<string, string> = {connectionId: model.selection.connectionId, version: String(model.selection.version)};
       if (model.stage === "select_account") fields.selectedAccountIds = JSON.stringify(input.accountIds ?? []);
       else fields.reportingAccountId = input.accountIds[0] ?? "";
       const reply = await execute(intent, model.feature, fields);
+      if (!activeView.current || owner !== callbacks.current.productOwner) return;
       setFeedback(reply);
-      if (reply.kind === "status" && reply.stage === "reporting_selected") callbacks.current.onResume(reply.feature, reply.stage);
-    } catch { setFeedback({kind: "unknown", feature: model.feature}); }
-    finally { setChecking(false); setSelectionActivity(null); }
-  }, [execute]);
-  const busy = checking || ["hiding_for_connect", "starting"].includes(snapshot.phase);
+      if (reply.kind === "status" && reply.stage === "reporting_selected" && reply.connection) callbacks.current.onConnection?.(model.feature, reply.connection);
+      else openSelection(reply);
+    } catch { if (activeView.current && owner === callbacks.current.productOwner) setFeedback({kind: "unknown", feature: model.feature}); }
+    finally { setChecking(false); setCheckingFeature(null); setSelectionActivity(null); }
+  }, [execute, openSelection]);
+  const busy = externalBusy || checking || selectionModel !== null || disconnectModel !== null || ["explaining", "hiding_for_cancel", "hiding_for_connect", "starting"].includes(snapshot.phase);
   const productRemovalUnknown = () => {
     callbacks.current.onProductStatus?.("unknown");
     setProductRemovalResult("unknown");
   };
   const removeProductAccess = async () => {
-    if (pending.current || busy || removingProduct || selectionIntent.current || controller.snapshot.phase === "explaining") return;
+    if (hasUnknownResult || pending.current || busy || removingProduct || selectionIntent.current || controller.snapshot.phase === "explaining") return;
     const owner = callbacks.current.productOwner;
     if (!owner) return;
     setRemovingProduct(true); setChecking(true); setCheckingFeature("shopify_products");
@@ -243,7 +289,7 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
     callbacks.current.onOrderStatus?.("unknown"); setOrderRemovalResult("unknown");
   };
   const removeOrderAccess = async () => {
-    if (pending.current || busy || removingOrder || selectionIntent.current || controller.snapshot.phase === "explaining") return;
+    if (hasUnknownResult || pending.current || busy || removingOrder || selectionIntent.current || controller.snapshot.phase === "explaining") return;
     const owner = callbacks.current.productOwner;
     if (!owner) return;
     setRemovingOrder(true); setChecking(true); setCheckingFeature("shopify_orders"); setOrderRemovalResult(null);
@@ -265,8 +311,98 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
       else void checkStatus(feedback.feature, true);
     } else callbacks.current.onResume(feedback.feature, feedback.stage);
   };
+  // Resume reconciles uncertain results using only existing durable records.
+  // Pending inventory may be reused only with the identical server-read binding.
+  const resumeProvider = async (feature: "google_ads" | "meta") => {
+    if ((callbacks.current.externalBusy || callbacks.current.externalLock?.current) || pending.current || checking || selectionIntent.current || disconnectModel || controller.snapshot.phase === "explaining") return;
+    const owner = callbacks.current.productOwner;
+    const previous = providerFeedback[feature] ?? callbacks.current.initialProviders?.[feature]?.permission;
+    const uncertain = previous?.kind === "unknown" || controller.snapshot.feature === feature && controller.snapshot.phase === "unknown"
+      || callbacks.current.initialProviders?.[feature]?.view === "error";
+    setChecking(true); setCheckingFeature(feature);
+    try {
+      let reply = await execute(uncertain ? "permission_reconcile" : "permission_status", feature);
+      if (!activeView.current || owner !== callbacks.current.productOwner) return;
+      controller.statusObserved(controller.snapshot.session, feature); setSnapshot(controller.snapshot);
+      if (reply.kind === "status" && reply.stage === "reporting_selected" && reply.connection) {
+        callbacks.current.onConnection?.(feature, reply.connection);
+      } else if (reply.kind === "status" && reply.stage === "request_permissions") {
+        callbacks.current.onDisconnected?.(feature);
+        // A confirmed missing grant opens the explanation, never native consent.
+        setChecking(false); setCheckingFeature(null);
+        const next = controller.open(feature); if (next) setSnapshot(next);
+      } else if (reply.kind === "status" && reply.selection) {
+        if (uncertain && reply.stage === "select_account" && reply.selection.accounts.length === 0) {
+          const old = previous?.kind === "status" ? previous.selection : lastSelection.current[feature];
+          if (old && old.connectionId === reply.selection.connectionId && old.version === reply.selection.version) reply = {...reply, selection: old};
+          else { setFeedback({kind: "unknown", feature}); return; }
+        }
+        openSelection(reply);
+      }
+      if (reply.kind === "unavailable") {const next = controller.open(feature); if (next) setSnapshot(next);}
+      setFeedback(reply);
+    } catch { if (activeView.current && owner === callbacks.current.productOwner) setFeedback({kind: "unknown", feature}); }
+    finally { setChecking(false); setCheckingFeature(null); }
+  };
+  const manageProvider = async (feature: "google_ads" | "meta", operation: "reporting" | "disconnect") => {
+    if (callbacks.current.externalLock?.current || hasUnknownResult || pending.current || busy || selectionIntent.current || disconnectModel) return;
+    const owner = callbacks.current.productOwner;
+    setChecking(true); setCheckingFeature(feature);
+    try {
+      const reply = await execute("permission_reconcile", feature);
+      if (!activeView.current || owner !== callbacks.current.productOwner) return;
+      setFeedback(reply);
+      if (reply.kind !== "status" || reply.stage !== "reporting_selected" || !reply.connection) return;
+      if (operation === "reporting") {
+        const model: SelectionModel = {key: crypto.randomUUID(), feature, stage: "change_reporting", selection: reply.connection};
+        selectionIntent.current = {owner, model, input: null, failed: false}; setSelectionModel(model);
+      } else {disconnectIntent.current = false; setDisconnectModel({feature, selection: reply.connection, owner});}
+    } catch {if (activeView.current && owner === callbacks.current.productOwner) setFeedback({kind: "unknown", feature});}
+    finally {setChecking(false); setCheckingFeature(null);}
+  };
+  const confirmDisconnect = (hide: () => void) => {
+    if (!disconnectModel || disconnectModel.owner !== callbacks.current.productOwner || disconnectIntent.current || pending.current) return;
+    disconnectIntent.current = true;
+    try {hide();} catch {disconnectIntent.current = false; setDisconnectModel(null); setFeedback({kind: "unknown", feature: disconnectModel.feature});}
+  };
+  const afterDisconnectHide = useCallback(async () => {
+    const model = disconnectModel;
+    setDisconnectModel(null);
+    if (!model || !disconnectIntent.current || model.owner !== callbacks.current.productOwner) return;
+    disconnectIntent.current = false;
+    setChecking(true); setCheckingFeature(model.feature); setSelectionActivity("Disconnecting…");
+    try {
+      const reply = await execute("permission_disconnect", model.feature, {connectionId: model.selection.connectionId, version: String(model.selection.version)});
+      if (!activeView.current || model.owner !== callbacks.current.productOwner) return;
+      setFeedback(reply);
+      if (reply.kind === "status" && reply.stage === "request_permissions") {
+        callbacks.current.onDisconnected?.(model.feature); setFeedback(null);
+      }
+    } catch {if (activeView.current && model.owner === callbacks.current.productOwner) setFeedback({kind: "unknown", feature: model.feature});}
+    finally {setChecking(false); setCheckingFeature(null); setSelectionActivity(null);}
+  }, [disconnectModel, execute]);
   const providerContent = (feature: "meta" | "google_ads" | "klaviyo") => {
-    const reply = feedback?.feature === feature ? feedback : null;
+    const reply = providerFeedback[feature] ?? null;
+    if (feature !== "klaviyo") {
+      const phase = snapshot.feature === feature ? snapshot.phase : "idle";
+      const base = callbacks.current.initialProviders?.[feature];
+      if (!base && !reply && phase === "idle") return null;
+      const ownBusy = checkingFeature === feature && checking || ["starting", "hiding_for_connect", "awaiting_status"].includes(phase);
+      if (ownBusy) return <s-banner tone="info" heading={selectionActivity ?? "Verifying access…"} />;
+      if (phase === "explaining" || selectionModel?.feature === feature) return null;
+      if (reply?.kind === "unavailable") return <s-banner tone="warning" heading="Connection setup is not available yet." />;
+      const unknown = reply?.kind === "unknown" || phase === "unknown" || base?.view === "error" && !reply;
+      const connected = reply?.kind === "status" && reply.stage === "reporting_selected" || !reply && base?.view === "connected";
+      if (connected && !unknown) return null;
+      const disconnected = !reply && base?.view === "disconnected";
+      return <s-stack direction="block" gap="base">
+        {unknown ? <s-banner tone="warning" heading="We could not confirm the result. Resume setup to check the current connection status." />
+          : <s-badge tone={disconnected ? undefined : "warning"}>{disconnected ? "Not connected" : "Resume setup"}</s-badge>}
+        <s-button disabled={busy ? true : undefined} onClick={() => disconnected ? open(feature) : void resumeProvider(feature)}>
+          {disconnected ? feature === "meta" ? "Connect Meta" : "Connect Google Ads" : "Resume setup"}
+        </s-button>
+      </s-stack>;
+    }
     const phase = snapshot.feature === feature ? snapshot.phase : "idle";
     const ownChecking = checking && checkingFeature === feature;
     if (!reply && snapshot.feature !== feature && !ownChecking) return null;
@@ -302,13 +438,15 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
     </>;
   };
   return {
-    open, checkStatus, busy, snapshot, providerContent,
+    canManage: (feature: "google_ads" | "meta") => !busy && !hasUnknownResult,
+    open, checkStatus, resumeProvider, manageProvider, busy: busy || hasUnknownResult, snapshot, providerContent,
     removeProductAccess, removingProduct, productRemovalResult, productRemovalUnknown,
     removeOrderAccess, removingOrder, orderRemovalResult, orderRemovalUnknown,
     checkingProduct: checking ? checkingFeature === "shopify_products" : busy && snapshot.feature === "shopify_products",
     checkingOrder: checking ? checkingFeature === "shopify_orders" : busy && snapshot.feature === "shopify_orders",
     content: <>
-      {selectionModel ? <PermissionSetupSelection model={selectionModel} busy={busy} onConfirm={confirmSelection} onAfterHide={afterSelectionHide} /> : null}
+      {disconnectModel ? <PermissionProviderDisconnect feature={disconnectModel.feature} onConfirm={confirmDisconnect} onAfterHide={afterDisconnectHide} /> : null}
+      {selectionModel ? <PermissionSetupSelection key={selectionModel.key} model={selectionModel} busy={checking} onConfirm={confirmSelection} onAfterHide={afterSelectionHide} /> : null}
       <PermissionExplanation snapshot={snapshot} requestsAvailable={snapshot.feature ? availability[snapshot.feature] : false}
         unavailableReason={snapshot.feature ? unavailableReasons?.[snapshot.feature] : undefined}
         onConnect={connect} onHide={hide} onAfterHide={afterHide} />

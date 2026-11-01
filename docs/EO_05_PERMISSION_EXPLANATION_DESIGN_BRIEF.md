@@ -1,3 +1,27 @@
+## 1 Kasım — onaylı Google/Meta uygulama hazırlığı
+
+PR282'deki standardın ardından ürün sahibi Google/Meta Settings kodunu, izole
+testleri ve kod PR'ını açıkça onayladı. Çalışma güncel main
+`cc1b5623203d8e7becba33d53ad00c42e9448560` üzerinden
+`codex/oauth-settings-flow` branch'inde hazırlanır.
+
+Kart eylemleri ortak host'ta birleşir. Hesap kaydından sonra kalıcı yeni sürüm
+okunur; çoklu hesapta Reporting Account modalı önceki modalın native afterhide
+olayından sonra açılır. Başarılı kayıt yalnız ilgili kartı günceller. Belirsiz
+sonuç yalnız lifecycle/hesap kayıtlarını okur; token okuma/yenileme, native çağrı,
+kayıt tekrarı veya yeni izin isteği yapmaz. İlk reklam hesabının seçenek listesi
+DB'de saklanmadığından belirsiz sonuçta önceki liste yalnız aynı connection/version
+ile kullanılabilir; bu kanıt yoksa durum unknown kalır, otomatik fallback yoktur.
+
+Klaviyo'nun açık hesap seçimi ve ayrı maliyet modalı, Shopify Products/optional
+Orders korunur. Evidence/product test düğmeleri OAuth adımı yapılmaz ve kaldırılmaz.
+Katalog/işletme/Merchant seçimi eklenmez. Canlı provider/token/config/DB işlemi,
+migration, merge veya deploy yapılmaz. Gerçek masaüstü/en az320px mobil görsel
+kabul beklenir;07 açık,15 başlamadı,22 paused,23 Dataset yazımıdır.
+
+Aşağıdaki dokümantasyonla sınırlı onay metinleri PR282'nin tarihsel kapsamıdır;
+bu uygulama izni onları kod/test hazırlığı yönünden izler.
+
 ## 1 Kasım 2026 — güncel Google/Meta geçiş otoritesi
 
 Ürün sahibi akış taslağını kabul etti ve yalnız sözleşme/analist brief'i dokümantasyon

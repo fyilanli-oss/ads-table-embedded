@@ -218,18 +218,9 @@ test("Meta disconnect is revoke-first and already-invalid remains idempotent", a
 });
 
 test("Meta Settings reproduces the accepted resumable Reporting Account flow", () => {
-  for (const value of [
-    "meta-account-modal",
-    "meta-reporting-modal",
-    "Save and connect",
-    "Save and finish",
-    "Reporting Account",
-    "Resume setup",
-  ]) assert.match(settings, new RegExp(value));
-  assert.match(settings, /permissions[.]open\("meta"\)/);
-  assert.match(settings, /globalThis[.]open\(target[.]toString\(\), "_top"\)/);
-  assert.match(settings, /metaResumeRequested[.]current = true/);
-  assert.match(settings, /revalidator[.]revalidate\(\)/);
+  assert.match(settings, /permissions[.]providerContent\("meta"\)/);
+  assert.match(settings, /permissions[.]manageProvider\("meta", "reporting"\)/);
+  assert.doesNotMatch(settings, /Reconnect Meta|meta-account-modal|meta-reporting-modal/);
   assert.doesNotMatch(settings, /send\("cancel", "meta"\)/);
   assert.doesNotMatch(runtime, /async cancel\(/);
   assert.match(runtime, /state: "pending_reporting_account_selection"/);
@@ -258,8 +249,8 @@ test("Meta OAuth cannot write Dataset V2 or start scheduling", () => {
 test("Meta implementation leaves Google provider behavior isolated", () => {
   assert.equal(contract.invariants.google_behavior_changed_by_this_contract, false);
   assert.match(settings, /provider: Provider = "google_ads"/);
-  assert.match(settings, /actionData[.]provider === "google_ads"/);
-  assert.match(settings, /actionData[.]provider === "meta"/);
+  assert.match(settings, /permissions[.]providerContent\("google_ads"\)/);
+  assert.match(settings, /permissions[.]providerContent\("meta"\)/);
 });
 
 test("Meta credentials are name-only inventory entries with no committed values", () => {

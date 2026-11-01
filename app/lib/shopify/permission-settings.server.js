@@ -16,7 +16,7 @@ function validScopeBinding(value) {
     && Object.keys(value).length === 3;
 }
 function selectionSnapshot(result) {
-  if (!["select_account", "select_reporting_account"].includes(result?.setupResumeAction)) return undefined;
+  if (!["select_account", "select_reporting_account", "reporting_selected"].includes(result?.setupResumeAction)) return undefined;
   if (typeof result.connectionId !== "string" || !result.connectionId || result.connectionId.length > 128
     || !Number.isSafeInteger(result.connectionVersion) || result.connectionVersion < 1) {
     throw new Error("PERMISSION_SETTINGS_BINDING_INVALID");
@@ -34,6 +34,16 @@ function selectionSnapshot(result) {
   }
   return Object.freeze({connectionId: result.connectionId, version: result.connectionVersion,
     reportingAccountId, accounts: Object.freeze(accounts)});
+}
+export function providerStatus(feature, result) {
+  if (!stages.has(result?.setupResumeAction)) throw new Error("PERMISSION_SETTINGS_STATUS_UNCONFIRMED");
+  const projection = selectionSnapshot(result);
+  if (result.setupResumeAction === "reporting_selected") {
+    if (!projection || projection.accounts.length < 1 || projection.accounts.length > 3
+      || !projection.accounts.some(account => account.id === projection.reportingAccountId)) throw new Error("PERMISSION_SETTINGS_SELECTION_UNCONFIRMED");
+    return Object.freeze({kind: "status", feature, stage: result.setupResumeAction, connection: projection});
+  }
+  return Object.freeze({kind: "status", feature, stage: result.setupResumeAction, ...(projection ? {selection: projection} : {})});
 }
 function expectedBinding(value) {
   if (typeof value?.connectionId !== "string" || !value.connectionId || value.connectionId.length > 128
@@ -70,6 +80,31 @@ export function createPermissionSettings({shopify, providerRuntime, availability
     return enabled[feature];
   }
   return Object.freeze({
+    async manage({feature, verified, expected, operation, reportingAccountId}) {
+      if (!["google_ads", "meta"].includes(feature) || !["reporting", "disconnect"].includes(operation)) throw new Error("PERMISSION_SETTINGS_ACTION_INVALID");
+      if (!check(feature, verified)) return unavailable(feature);
+      const binding = expectedBinding(expected);
+      const runtime = providerRuntime(feature);
+      const before = await runtime.combinedSetup.reconcile({installationAuthority: verified.installationAuthority});
+      if (before.setupResumeAction !== "reporting_selected" || before.connectionId !== binding.connectionId
+        || before.connectionVersion !== binding.version) throw new Error("PERMISSION_SETTINGS_BINDING_INVALID");
+      if (operation === "reporting") {
+        if (!before.accounts.some(account => account.id === reportingAccountId)) throw new Error("PERMISSION_SETTINGS_ACCOUNTS_INVALID");
+        const receipt = await runtime.changeReporting({installationAuthority: verified.installationAuthority, reportingAccountId});
+        if (receipt?.connectionId !== binding.connectionId || receipt.reportingAccountId !== reportingAccountId) throw new Error("PERMISSION_SETTINGS_SELECTION_UNCONFIRMED");
+      } else await runtime.disconnect({installationAuthority: verified.installationAuthority});
+      const after = await runtime.combinedSetup.reconcile({installationAuthority: verified.installationAuthority});
+      if (after.connectionId !== binding.connectionId || after.connectionVersion < binding.version
+        || operation === "disconnect" && after.connectionVersion === binding.version
+        || operation === "reporting" && (after.setupResumeAction !== "reporting_selected" || after.reportingAccountId !== reportingAccountId)
+        || operation === "disconnect" && after.connectionState !== "disconnected") throw new Error("PERMISSION_SETTINGS_SELECTION_UNCONFIRMED");
+      return providerStatus(feature, after);
+    },
+    async reconcile({feature, verified}) {
+      if (!["google_ads", "meta"].includes(feature)) throw new Error("PERMISSION_SETTINGS_FEATURE_INVALID");
+      if (!check(feature, verified)) return unavailable(feature);
+      return providerStatus(feature, await providerRuntime(feature).combinedSetup.reconcile({installationAuthority: verified.installationAuthority}));
+    },
     async revokeProducts({feature, verified, action}) {
       if (feature !== "shopify_products" || action !== "revoke") throw new Error("PERMISSION_SETTINGS_EXPLICIT_PRODUCTS_REVOKE_REQUIRED");
       if (!check(feature, verified)) return unavailable(feature);
@@ -124,9 +159,7 @@ export function createPermissionSettings({shopify, providerRuntime, availability
       const runtime = providerRuntime(feature);
       if (feature !== "klaviyo") {
         const result = await runtime.combinedSetup.inspect({installationAuthority: verified.installationAuthority});
-        if (!stages.has(result?.setupResumeAction)) throw new Error("PERMISSION_SETTINGS_STATUS_UNCONFIRMED");
-        const selection = selectionSnapshot(result);
-        return Object.freeze({kind: "status", feature, stage: result.setupResumeAction, ...(selection ? {selection} : {})});
+        return providerStatus(feature, result);
       }
       const result = await runtime.inspect({installationAuthority: verified.installationAuthority});
       const stage = result.state === "pending_account_selection" ? "select_account"
@@ -157,9 +190,11 @@ export function createPermissionSettings({shopify, providerRuntime, availability
         || result.connectionId !== binding.connectionId || result.connectionVersion !== binding.version + 1) {
         throw new Error("PERMISSION_SETTINGS_SELECTION_UNCONFIRMED");
       }
-      // A receipt without an inventory is not an account list; next Resume reads
-      // the new version before opening the next selector.
-      return Object.freeze({kind: "status", feature, stage: result.setupResumeAction});
+      // Read the committed next step, never repeat a successful selection write.
+      const persisted = await runtime.combinedSetup.reconcile({installationAuthority: verified.installationAuthority});
+      if (persisted.connectionId !== result.connectionId || persisted.connectionVersion !== result.connectionVersion
+        || persisted.setupResumeAction !== result.setupResumeAction) throw new Error("PERMISSION_SETTINGS_SELECTION_UNCONFIRMED");
+      return providerStatus(feature, persisted);
     },
   });
 }

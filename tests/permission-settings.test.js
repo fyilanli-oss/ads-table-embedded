@@ -59,10 +59,10 @@ for (const feature of ["google_ads", "meta"]) {
       beginCombinedSetup: () => assert.fail(), combinedSetup: {inspect: async args => {
         calls++; assert.equal(args.installationAuthority, verified.installationAuthority);
         return {setupResumeAction: "reporting_selected", setupComplete: false, credentialId: "private",
-          connectionId: "displayed-connection", connectionVersion: 7, reportingAccountId: "account-1", accounts: []};
+          connectionId: "displayed-connection", connectionVersion: 7, reportingAccountId: "account-1", accounts: [{id: "account-1", name: "Shop"}]};
       }},
     })});
-    assert.deepEqual(await settings.status({feature, verified}), {kind: "status", feature, stage: "reporting_selected"});
+    assert.deepEqual(await settings.status({feature, verified}), {kind: "status", feature, stage: "reporting_selected", connection: {connectionId: "displayed-connection", version: 7, reportingAccountId: "account-1", accounts: [{id: "account-1", name: "Shop"}]}});
     assert.equal(calls, 1);
   });
 }
@@ -252,7 +252,7 @@ test("permission actions do not implicitly rerun existing provider loaders", () 
 
 test("actual Settings loader keeps pending broader grants in bound account selection", async () => {
   const route = loadRoute({providerRuntime: () => ({inspect: async () => ({state: "pending_account_selection",
-    pending: {scopes: ["catalog_management", "https://www.googleapis.com/auth/content"]},
+    pending: {connectionId: "connection", version: 2, scopes: ["catalog_management", "https://www.googleapis.com/auth/content"]},
     accounts: [{id: "123", name: "Shop", currency: "USD", timezone: "UTC"}],
   })})});
   const result = await route.loader({request: new Request("https://embedded.adstable.app/settings")});

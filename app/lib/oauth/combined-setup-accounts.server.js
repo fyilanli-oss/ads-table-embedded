@@ -25,7 +25,7 @@ export function assertCombinedSetupAccountBinding(expected, pending) {
 
 // Server composition only. Existing reporting entries stay unchanged. This boundary
 // does not issue asset evidence or turn an account-selection receipt into setup approval.
-export function createCombinedSetupAccounts({provider, enabled, lifecycle, tokenVault, runtime, accountAuthority}) {
+export function createCombinedSetupAccounts({provider, enabled, lifecycle, tokenVault, runtime, accountAuthority, selections}) {
   if (!["google_ads", "meta"].includes(provider) || typeof enabled !== "boolean") {
     fail("COMBINED_SETUP_CONFIGURATION_INVALID");
   }
@@ -67,6 +67,27 @@ export function createCombinedSetupAccounts({provider, enabled, lifecycle, token
       connectionVersion: current?.version ?? null, reportingAccountId,
       accounts: Object.freeze(accounts.map(account => Object.freeze({id: account.id, name: account.name}))),
     });
+  }
+  // Existing-result reconciliation deliberately has no token-vault or native
+  // runtime dependency. A lost acknowledgement must never replay a write,
+  // refresh a credential or mark an otherwise connected installation expired.
+  async function reconcile({installationAuthority}) {
+    if (!enabled) fail("IDENTITY_OAUTH_START_DISABLED");
+    const before = await lifecycle.loadCurrent({installationAuthority, provider});
+    if (!before || before.status === "disconnected" || before.status === "reauthorization_required") return project(before);
+    if (!["connected", "pending_account_selection"].includes(before.status)
+      || !Number.isSafeInteger(before.version) || before.version < 1 || !before.credentialId) fail("COMBINED_SETUP_BINDING_INVALID");
+    const owner = {workspaceId: installationAuthority.workspaceId, installGeneration: installationAuthority.installGeneration, provider};
+    const record = before.status === "connected" ? await accountAuthority.load(owner)
+      : await selections.loadPendingReporting(owner) ?? await selections.loadPending(owner);
+    if (!record || record.connectionId !== before.connectionId || record.credentialId !== before.credentialId
+      || before.status !== "connected" && record.version !== before.version
+      || !sameBinding(before, await lifecycle.loadCurrent({installationAuthority, provider}))) fail("COMBINED_SETUP_CONNECTION_CHANGED");
+    const accounts = record.accounts ?? [];
+    if (before.status === "connected" && (accounts.length < 1 || accounts.length > 3
+      || !accounts.some(account => account.id === record.reportingAccountId))) fail("COMBINED_SETUP_SELECTION_UNCONFIRMED");
+    return project(before, accounts, record.reportingAccountId ?? null,
+      before.status === "connected" ? "connected" : record.accounts ? "pending_reporting_account_selection" : "pending_account_selection");
   }
   async function select(installationAuthority, input, operation, expectedStatus, expectedConnection) {
     const expected = expectedConnection === undefined ? null : {
@@ -124,6 +145,7 @@ export function createCombinedSetupAccounts({provider, enabled, lifecycle, token
       after.status === "pending_account_selection" ? "pending_reporting_account_selection" : after.status);
   }
   return Object.freeze({
+    reconcile,
     async inspect({installationAuthority}) {
       const before = await snapshot(installationAuthority);
       if (!before || before.status === "reauthorization_required" || before.status === "disconnected") return project(before);

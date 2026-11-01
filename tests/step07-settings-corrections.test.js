@@ -72,7 +72,7 @@ function harness({accounts = [account], providerRuntime = () => assert.fail("une
     if (id === "react-router") return {useLoaderData: () => h.state, useActionData: () => undefined,
       useNavigation: () => h.navigation, useRevalidator: () => h.revalidator, useFetcher: () => h.fetcher,
       useSubmit: () => () => assert.fail("unexpected navigation submission")};
-    if (id === "../components/use-permission-settings") return {usePermissionSettings: props => {h.permissionProps = props; return {busy: false, checkingProduct: false, content: null, providerContent: () => null, ...h.permissionResult};}};
+    if (id === "../components/use-permission-settings") return {usePermissionSettings: props => {h.permissionProps = props; return {canManage: () => true, busy: false, checkingProduct: false, content: null, providerContent: () => null, ...h.permissionResult};}};
     if (id === "../components/product-access-removal") return {ProductAccessRemoval: "ProductAccessRemoval"};
     if (id === "../components/order-access-removal") return {OrderAccessRemoval: "OrderAccessRemoval"};
     if (id === "../shopify.server") return {authenticate: {admin: async () => verified}, database: {}, providerTokenVault: {}};
@@ -247,7 +247,7 @@ test("navigation and unrelated reloads never mark all three providers Working", 
     h.render();
     const working = nodes(h.tree).filter(e=>e.type === "s-section"
       && nodes(e).some(n=>n.type === "s-badge" && text(n) === "Working"));
-    assert.deepEqual(working.map(e=>e.props.heading), [provider === "google_ads" ? "Google Ads" : provider === "meta" ? "Meta" : "Klaviyo"]);
+    assert.deepEqual(working.map(e=>e.props.heading), provider === "klaviyo" ? ["Klaviyo"] : []);
     h.navigation.state = "idle"; h.revalidator.state = "loading"; h.render();
     assert.equal(nodes(h.tree).filter(e=>e.type === "s-badge" && text(e) === "Working").length, 0);
   }

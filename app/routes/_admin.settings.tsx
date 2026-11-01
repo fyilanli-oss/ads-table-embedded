@@ -871,6 +871,7 @@ export default function Settings() {
     externalBusy: pending || initialSpendSaving || externalModal !== null,
     externalLock,
     productOwner: state.permissionViewOwner ?? state.shopifyPermissionOwner,
+    shopifyShopId: state.shopifyPermissionOwner,
     initialProviders: {google_ads: state, meta: state.meta},
     onDisconnected(feature) {
       setProviderOverrides(current => ({...(current?.source === loaded ? current : {}), source: loaded,

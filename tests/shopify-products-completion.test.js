@@ -84,7 +84,7 @@ function permissionHarness() {
     if (id === "./permission-setup-selection") return {PermissionSetupSelection: () => null};
     return require(id);
   }).usePermissionSettings;
-  const props = {availability: {shopify_products: true, shopify_orders: true}, productOwner: owner,
+  const props = {availability: {shopify_products: true, shopify_orders: true}, productOwner: owner+":workspace:2", shopifyShopId: owner,
     onProductStatus: status => statuses.push(status), onOrderStatus: status => orderStatuses.push(status), onResume: () => assert.fail()};
   const render = () => {h.start(); value = usePermissionSettings(props); h.finish(); return value;};
   render();
@@ -305,4 +305,28 @@ for(const feature of ["shopify_products","shopify_orders"]){
       h.props.productOwner="gid://shopify/Shop/456";h.render();assert.equal(h.value.shopifyFailureCode(feature),null);
     });
   });
+}
+
+for(const feature of ["shopify_products","shopify_orders"]){
+  for(const mode of ["wrong_shop","missing_shop","workspace_changed","generation_changed","shop_changed"]){
+    test(feature+" scope window preserves separate shop and full lifecycle owner: "+mode,async()=>{
+      let windows=0,resolveWindow;
+      await withBridge({scopes:{request:()=>{windows++;return new Promise(resolve=>{resolveWindow=resolve;});}}},async()=>{
+        const h=permissionHarness();
+        if(mode==="wrong_shop")h.props.shopifyShopId="gid://shopify/Shop/456";
+        if(mode==="missing_shop")delete h.props.shopifyShopId;
+        h.render();const {done}=begin(h,feature);reply(h,scopePreparation(feature));await ticks();
+        if(mode==="workspace_changed"||mode==="generation_changed"||mode==="shop_changed"){
+          assert.equal(windows,1);
+          if(mode==="shop_changed")h.props.shopifyShopId="gid://shopify/Shop/456";
+          else h.props.productOwner=owner+(mode==="workspace_changed"?":other-workspace:2":":workspace:3");h.render();
+          resolveWindow({result:"granted-all"});
+        }
+        await done;h.render();
+        assert.equal(h.submissions.length,1);assert.equal(h.props.shopifyShopId,["wrong_shop","shop_changed"].includes(mode)?"gid://shopify/Shop/456":mode==="missing_shop"?undefined:owner);
+        assert.equal(windows,["wrong_shop","missing_shop"].includes(mode)?0:1);
+        assert.deepEqual(feature==="shopify_products"?h.statuses:h.orderStatuses,["wrong_shop","missing_shop"].includes(mode)?["unknown"]:[]);
+      });
+    });
+  }
 }

@@ -1,4 +1,16 @@
 {
+  "Shopify_scope_owner_binding_2026_11_01": {
+    "existing_plan_step": 7,
+    "checked_at": "2026-11-01",
+    "authority": "Explicit owner approval for separating pure Shop GID from composite view owner and testing the real identity shape; code/tests/PR only.",
+    "analyst_brief": "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md",
+    "rule": "Pass shopifyShopId separately; retain full productOwner lifecycle fence. No parsing/fallback, extra calls, changed server binding or native scopes.",
+    "native_visual_acceptance": false,
+    "step07_done": false,
+    "live_calls": false,
+    "merge_authorized": false,
+    "deploy_authorized": false
+  },
   "Shopify_connect_diagnostics_2026_11_01": {
     "existing_plan_step": 7,
     "checked_at": "2026-11-01",

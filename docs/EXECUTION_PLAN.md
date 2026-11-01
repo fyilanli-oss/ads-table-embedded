@@ -1,3 +1,11 @@
+## 1 Kasım — mevcut07: Shopify scope owner bağı
+
+Owner saf Shop GID ile birleşik görünüm owner'ının ayrılması ve gerçek kimlik
+yapısındaki test/PR hazırlığını onayladı. Ayrıntı aktif EO05 sözleşmesindeki
+Shopify_scope_owner_binding_2026_11_01 ve Settings07 brief'inin başındadır.
+Server/kurulum güvenliği ve mevcut UI korunur; canlı işlem/merge/yayın ayrı onay
+ister. Gerçek görsel kabul beklenir,07 açık kalır.
+
 ## 1 Kasım — mevcut07: Shopify Connect tanısı
 
 Owner erken Checking bildirimi ve güvenli hata aşaması kodlarının kod/test/PR

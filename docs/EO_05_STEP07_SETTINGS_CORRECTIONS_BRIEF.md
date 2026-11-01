@@ -1,3 +1,34 @@
+## 1 Kasım — Shopify mağaza kimliği / görünüm sahibi bağının ayrılması
+
+Owner somut kimlik ayrımı düzeltmesini, gerçek bileşik owner yapısıyla test ve PR
+hazırlığını açıkça onayladı. Mevcut07. Settings loader'ın shopifyPermissionOwner
+alanı saf Shop GID'dir; permissionViewOwner Shop/workspace/installGeneration
+birleşimidir. İkincisi scopes.request öncesi saf Shop GID karşılaştırmasına
+verilemez. Hook shopifyShopId alanını ayrı alır; ürün/sipariş window binding bu
+saf alanı kullanır. productOwner birleşik görünüm otoritesi olarak değişmez.
+
+İşlem başında her iki değer yakalanır. Aynı mağazada workspace/generation değişimi,
+mağaza değişimi veya unmount eski işlemi ilerletmez. Yanlış/eksik Shop GID native
+pencereyi açmaz; birleşik owner'dan GID çıkarma/fallback yapılmaz. Sunucuya mevcut
+AppInstallation/Shop/generation binding aynen gönderilir; server doğrulaması,
+explicit Connect, native afterhide, tek hazırlık/tek status ve no-retry korunur.
+
+Görünür metin/Shopify component/prop/yerleşim değişmez. Başlangıç/Cancel 0I/O,
+starting mevcut mavi kontrol bildirimi, hazır/eksik/unknown güvenli kodları ve
+native granted-all/declined-all sonrasında tek server readback korunur.
+Meta/Google/Klaviyo ve removal akışları değiştirilmez. İzin/config, SQL, canlı
+çağrı, deploy/merge yetkisi bu hazırlığa dahil değildir.
+
+Resmî kaynak 2026-11-01 kontrol edildi:
+https://shopify.dev/docs/api/app-home/latest/apis/authentication-and-data/scopes-api
+
+Gerçek Settings prop eşlemesi ve üretim biçimindeki birleşik owner ile Products/
+Orders granted-all/declined-all, yanlış/eksik mağaza, aynı mağazada workspace veya
+installGeneration değişimi ve unmount regresyonları çalıştırılır. UI anayasa,
+typecheck/build ve CI gerekir. Masaüstü/en az320px mobil owner kabulü beklenir;
+07 açık kalır. Ekranlarda eski mesaj/kodsuz hata görülmesinin nedeni ayrıca
+kanıtlanmış sayılmaz; bu paket yalnız somut kimlik uyuşmazlığını giderir.
+
 ## 1 Kasım — erken kontrol göstergesi ve güvenli Shopify Connect tanısı
 
 Owner açıklama modalındaki erken mavi mesajın düzeltilmesini ve başarısız Connect

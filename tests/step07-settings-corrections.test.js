@@ -307,3 +307,9 @@ test("Orders card independently reflects verified grant, removal, unknown and a 
   h.state={...h.state,shopifyOrderAccess:"unknown"};h.render();
   assert.equal(nodes(h.tree).some(e=>e.type==="s-button"&&text(e)==="Connect orders"),false);
 });
+
+test("Settings passes pure Shopify Shop GID separately from composite view ownership",()=>{
+  const h=harness();h.state={...h.state,shopifyPermissionOwner:"gid://shopify/Shop/123",permissionViewOwner:"gid://shopify/Shop/123:workspace:2"};h.render();
+  assert.equal(h.permissionProps.shopifyShopId,"gid://shopify/Shop/123");
+  assert.equal(h.permissionProps.productOwner,"gid://shopify/Shop/123:workspace:2");
+});

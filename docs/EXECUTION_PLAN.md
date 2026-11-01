@@ -1,3 +1,10 @@
+## 1 Kasım — mevcut07: Shopify Connect tanısı
+
+Owner erken Checking bildirimi ve güvenli hata aşaması kodlarının kod/test/PR
+hazırlığını onayladı. Aktif EO05 Shopify_connect_diagnostics_2026_11_01 ve brief
+başındaki dar kapsam uygulanır. Canlı çağrı/izin/config, merge ve yayın yoktur;
+kök neden çözümü ve gerçek görsel kabul iddia edilmez.07 açık kalır.
+
 ## 1 Kasım — mevcut07: bağlı-değil kart tutarlılığı
 
 Owner Shopify Not connected rozetleri ve kısa Connect products/orders düğmeleri,

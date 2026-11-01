@@ -1052,7 +1052,7 @@ export default function Settings() {
             {permissions.removingProduct ? <s-banner tone="info" heading="Removing product access…" />
               : permissions.checkingProduct ? <s-banner tone="info" heading="Checking product access…" />
               : productAccess === "ready" ? <><s-badge tone="success">Connected</s-badge><s-paragraph>Product access approved</s-paragraph></>
-              : productAccess === "unknown" ? <s-banner tone="critical" heading={permissions.productRemovalResult === "unknown" ? "Could not verify that product access was removed. Check status to continue." : "Could not verify product access. Check status to continue."} />
+              : productAccess === "unknown" ? <s-banner tone="critical" heading={permissions.productRemovalResult === "unknown" ? "Could not verify that product access was removed. Check status to continue." : "Could not verify product access. Check status to continue."}>{permissions.shopifyFailureCode?.("shopify_products") ? <s-paragraph>Error code: {permissions.shopifyFailureCode("shopify_products")}</s-paragraph> : null}</s-banner>
               : productAccess === "missing" ? <><s-badge>Not connected</s-badge>{permissions.productRemovalResult === "removed" ? <s-banner tone="success" heading="Product access removed." /> : null}</>
               : <s-paragraph>Product connection is currently unavailable.</s-paragraph>}
             <ProductAccessRemoval owner={state.shopifyPermissionOwner} ready={productAccess === "ready"} busy={permissions.busy}
@@ -1065,7 +1065,7 @@ export default function Settings() {
             {permissions.removingOrder ? <s-banner tone="info" heading="Removing order access…" />
               : permissions.checkingOrder ? <s-banner tone="info" heading="Checking order access…" />
               : orderAccess === "ready" ? <><s-badge tone="success">Connected</s-badge><s-paragraph>Order access approved</s-paragraph></>
-              : orderAccess === "unknown" ? <s-banner tone="critical" heading={permissions.orderRemovalResult === "unknown" ? "Could not verify that order access was removed. Check status to continue." : "Could not verify order access. Check status to continue."} />
+              : orderAccess === "unknown" ? <s-banner tone="critical" heading={permissions.orderRemovalResult === "unknown" ? "Could not verify that order access was removed. Check status to continue." : "Could not verify order access. Check status to continue."}>{permissions.shopifyFailureCode?.("shopify_orders") ? <s-paragraph>Error code: {permissions.shopifyFailureCode("shopify_orders")}</s-paragraph> : null}</s-banner>
               : orderAccess === "missing" ? <><s-badge>Not connected</s-badge>{permissions.orderRemovalResult === "removed" ? <s-banner tone="success" heading="Order access removed." /> : null}</>
               : <s-paragraph>Order connection is currently unavailable.</s-paragraph>}
             <OrderAccessRemoval owner={state.shopifyPermissionOwner} ready={orderAccess === "ready"} busy={permissions.busy}

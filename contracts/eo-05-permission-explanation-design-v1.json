@@ -1,4 +1,16 @@
 {
+  "Shopify_connect_diagnostics_2026_11_01": {
+    "existing_plan_step": 7,
+    "checked_at": "2026-11-01",
+    "authority": "Owner explicitly approved early-checking correction and safe Connect-stage diagnostic code/test/PR preparation.",
+    "analyst_brief": "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md",
+    "rule": "Separate UI lock from actual checking; owner-bound allowlisted preparation/window/readback error codes; no raw errors, extra calls or changed consent behavior.",
+    "root_cause_fixed": false,
+    "native_visual_acceptance": false,
+    "step07_done": false,
+    "merge_authorized": false,
+    "deploy_authorized": false
+  },
   "Settings_disconnected_card_copy_2026_11_01": {
     "checked_at": "2026-11-01",
     "existing_plan_step": 7,

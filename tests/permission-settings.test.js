@@ -455,3 +455,15 @@ test("actual Settings action checks scope binding after an App Bridge result wit
   const result=await route.action({request:formRequest({intent:"permission_status",feature:"shopify_products",requestId,expectedScopeBinding:JSON.stringify(expected),result:"granted-all",granted:"read_products"})});
   assert.deepEqual(result,{kind:"status",feature:"shopify_products",stage:"request_permissions",requestId});
 });
+
+test("Shopify Connect diagnostics log only exact known server failures without raw details",async()=>{
+  const {logPermissionFailure}=await import("../app/lib/server-error-log.server.js");
+  const logs=[],saved=console.error;console.error=value=>logs.push(JSON.parse(value));
+  try{
+    for(const code of ["SHOPIFY_SETUP_OPTIONAL_SCOPE_NOT_DEPLOYED","SHOPIFY_PERMISSION_SCOPES_READ_FAILED","SECRET_PRIVATE_ERROR"]){
+      logPermissionFailure({feature:"shopify_products",intent:"permission_connect",requestId,error:Object.assign(new Error(code),{details:{token:"SECRET"},cause:Error("SECRET")})});
+    }
+    assert.deepEqual(logs.map(x=>x.code),["SHOPIFY_SETUP_OPTIONAL_SCOPE_NOT_DEPLOYED","SHOPIFY_PERMISSION_SCOPES_READ_FAILED","PERMISSION_OPERATION_UNCONFIRMED"]);
+    assert.doesNotMatch(JSON.stringify(logs),/SECRET|token|cause/);
+  }finally{console.error=saved;}
+});

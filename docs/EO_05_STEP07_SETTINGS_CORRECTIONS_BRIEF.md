@@ -1,3 +1,11 @@
+## 1 Kasım — güncel ortak akış otoritesi
+
+Owner onaylı anayasa/CI paketi: docs/OAUTH_FLOW_CONSTITUTION.md ve
+contracts/oauth/oauth-flow-constitution-v1.json. Önce bu ikisi tamamen okunur;
+aşağıdaki tarihlendirilmiş kayıtlar geçmiş karar/uygulama kanıtıdır. Bu paket
+runtime, provider, config veya DB davranışını değiştirmez. Ayrı merge onayı ve
+07'nin gerçek görsel kabul kapısı korunur.
+
 ## 1 Kasım — Klaviyo Resume setup kartının ortak sunumu
 
 Owner1000070400 ekranından sonra somut kart görünümü kod/test/PR hazırlığını

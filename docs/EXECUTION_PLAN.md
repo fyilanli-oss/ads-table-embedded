@@ -1,3 +1,13 @@
+## 1 Kasım — mevcut07: bağlayıcı OAuth akış anayasası ve CI koruması
+
+Owner tüm akış/geçiş/mesaj/kilit ve kırmızı çizgilerin tek anayasa/makine sözleşmesi
+ile AGENTS ve CI'a bağlanmasını açıkça onayladı. Giriş: docs/OAUTH_FLOW_CONSTITUTION.md
+ve contracts/oauth/oauth-flow-constitution-v1.json. Hazırlık yalnız docs/governance/
+test/CI; çalışan OAuth/runtime, izin/config/DB ve canlı provider değişmez.
+Scope/değişiklik onayı ve ayrı merge kapısı sürer. CI teknik değişikliği yakalar;
+gerçek owner onayı/platform bypass'ı kriptografik ispatlamaz. Görsel07 kapanışı yok;
+15 başlamadı,22 paused,23 Dataset writer.
+
 ## 1 Kasım — mevcut07: Klaviyo Resume kartı
 
 Owner1000070400 sonrası Klaviyo pending kartını diğerleriyle eşitleyen turuncu

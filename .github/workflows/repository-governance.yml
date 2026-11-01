@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
       - name: Install pnpm and Node.js
         uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
         with:
@@ -28,6 +30,10 @@ jobs:
           install: false
       - name: Verify frozen dependency graph
         run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Verify OAuth flow constitution
+        env:
+          OAUTH_BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
+        run: node tools/check-oauth-constitution.mjs
       - name: Run repository governance tests
         run: pnpm test
       - name: Verify TypeScript contracts

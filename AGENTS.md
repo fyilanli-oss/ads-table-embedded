@@ -2,6 +2,18 @@
 
 Bu repository temiz Shopify embedded-only AdsTable runtime'ıdır. **Execution Plan anayasadır.**
 
+## OAuth akış anayasası — zorunlu giriş kapısı (1 Kasım 2026)
+
+OAuth'a doğrudan/dolaylı değen HER işten önce [OAuth akış anayasası](docs/OAUTH_FLOW_CONSTITUTION.md)
+ve [makine sözleşmesi](contracts/oauth/oauth-flow-constitution-v1.json) tamamen okunur.
+Codex dahil hiçbir kişi/ajan bu akış, copy, state/transition, scope, hesap/maliyet,
+modal/lock veya güvenlik sınırlarını kendi takdiriyle değiştiremez. Önce somut kapsam
++ owner'ın açık onayı; sonra append-only revision, exact changed_paths ve ilgili
+regresyon kanıtı gerekir. Hash/CI güncellemesi onay yerine geçmez. Runtime, provider,
+SQL/config, merge ve yayın izinleri birbirinden ayrıdır. Korunan dosya/guard/test/CI
+kaldırılamaz veya geçici bypass yapılamaz. Anayasa ile mevcut kayıt çelişirse durulur.
+CI konuşma onayını doğrulayamaz; PR review ve platform bypass sınırı anayasada açıktır.
+
 ## OAuth — işlem öncesi zorunlu açık kullanıcı onayı (29 Ekim 2026)
 
 **OAuth’a doğrudan veya dolaylı değen hiçbir çalışma, yapılacak somut işlem ve kapsam açıklanıp kullanıcıdan önceden açık izin alınmadan başlatılamaz.** Tüm sağlayıcılar ve Shopify dahildir.

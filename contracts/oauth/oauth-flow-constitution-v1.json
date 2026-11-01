@@ -1,0 +1,1722 @@
+{
+  "id": "oauth-flow-constitution-v1",
+  "version": 1,
+  "effective_date": "2026-11-01",
+  "status": "binding_prepared_merge_requires_separate_owner_approval",
+  "baseline_main": "dcdf2d79473655c39a9e6bc38b3003ee38a262b5",
+  "document": "docs/OAUTH_FLOW_CONSTITUTION.md",
+  "authority": {
+    "order": [
+      "Execution Plan and explicit owner decisions",
+      "OAuth flow constitution and machine contract",
+      "Shopify UI/security constitutions",
+      "Historical package records",
+      "Code and tests"
+    ],
+    "ci_proves_owner_approval": false,
+    "native_visual_acceptance_complete": false,
+    "step07_done": false
+  },
+  "states": [
+    "not_connected",
+    "explaining",
+    "explanation_hiding",
+    "native_authorization",
+    "verifying",
+    "permissions_incomplete",
+    "account_required",
+    "reporting_required",
+    "spend_required",
+    "saving",
+    "connected",
+    "disconnect_confirm",
+    "disconnecting",
+    "unknown",
+    "unavailable"
+  ],
+  "red_lines": [
+    {
+      "id": "explicit_owner_approval",
+      "mandatory": true,
+      "text": "Prior concrete scope plus explicit owner approval for every OAuth-related task; Codex included."
+    },
+    {
+      "id": "server_authority",
+      "mandatory": true,
+      "text": "Only authenticated current server evidence grants authority; full view owner distinct from pure Shop GID; request correlation, claim/PKCE, AppInstallation/generation and connection/CAS guards remain."
+    },
+    {
+      "id": "one_operation",
+      "mandatory": true,
+      "text": "No duplicate mutation, double-click, stale reply or cross-provider overlap."
+    },
+    {
+      "id": "native_afterhide",
+      "mandatory": true,
+      "text": "Preserve provider-specific explicit dispatch order. Next modal only after native afterhide; Google/Meta/Shopify dispatch waits for afterhide, Klaviyo account handoff waits for afterhide and existing spend/disconnect handlers remain."
+    },
+    {
+      "id": "no_replay",
+      "mandatory": true,
+      "text": "Unknown stops. Only explicit read-only reconciliation; no automatic write/token/native discovery replay."
+    },
+    {
+      "id": "no_secrets",
+      "mandatory": true,
+      "text": "No raw token, credential, provider body or secret in browser/log/docs/evidence."
+    },
+    {
+      "id": "no_asset_selector",
+      "mandatory": true,
+      "text": "No in-app Merchant/business/catalog selector, manual ID or renamed step6."
+    },
+    {
+      "id": "first_provider_error_stop",
+      "mandatory": true,
+      "text": "Stop first provider mutation error; no alternative route without new owner approval. Preserve only existing exact Google403 same-code account exclusion."
+    },
+    {
+      "id": "separate_release",
+      "mandatory": true,
+      "text": "Provider/config/SQL/live/merge/deploy have distinct approval gates."
+    },
+    {
+      "id": "native_visual_acceptance",
+      "mandatory": true,
+      "text": "CI/native connection success is not full desktop/320px mobile owner acceptance."
+    }
+  ],
+  "flows": {
+    "shopify_products": {
+      "pure_shop_gid_separate_from_full_owner": true,
+      "scope": "read_products",
+      "transitions": [
+        {
+          "from": "not_connected",
+          "event": "connect_click",
+          "to": "explaining",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "explaining",
+          "event": "cancel",
+          "to": "not_connected",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "explaining",
+          "event": "confirm",
+          "to": "explanation_hiding",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "explanation_hiding",
+          "event": "cancel",
+          "to": "not_connected",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "explanation_hiding",
+          "event": "native_afterhide",
+          "to": "verifying",
+          "effects": [
+            "prepare_connect"
+          ],
+          "requires": [
+            "explicit_intent_and_native_afterhide",
+            "current_owner_and_binding"
+          ]
+        },
+        {
+          "from": "verifying",
+          "event": "unconfirmed",
+          "to": "unknown",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "verifying",
+          "event": "unavailable",
+          "to": "unavailable",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "connected",
+          "event": "disconnect_click",
+          "to": "disconnect_confirm",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "disconnect_confirm",
+          "event": "cancel",
+          "to": "connected",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "disconnect_confirm",
+          "event": "confirm_afterhide",
+          "to": "disconnecting",
+          "effects": [
+            "revoke_connection"
+          ],
+          "requires": [
+            "explicit_intent_and_native_afterhide",
+            "current_owner_and_binding"
+          ]
+        },
+        {
+          "from": "disconnecting",
+          "event": "verified_success",
+          "to": "not_connected",
+          "effects": [
+            "render_success_notice"
+          ],
+          "requires": []
+        },
+        {
+          "from": "disconnecting",
+          "event": "unconfirmed",
+          "to": "unknown",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "unknown",
+          "event": "resume",
+          "to": "verifying",
+          "effects": [
+            "read_current_status"
+          ],
+          "requires": [
+            "explicit_resume",
+            "no_write_or_native_discovery"
+          ]
+        },
+        {
+          "from": "verifying",
+          "event": "scope_prepared",
+          "to": "native_authorization",
+          "effects": [
+            "request_native_scope"
+          ],
+          "requires": [
+            "pure_shop_gid",
+            "current_full_view_owner",
+            "server_prepared_binding"
+          ]
+        },
+        {
+          "from": "native_authorization",
+          "event": "granted_or_declined",
+          "to": "verifying",
+          "effects": [
+            "read_bound_scope_status"
+          ],
+          "requires": []
+        },
+        {
+          "from": "verifying",
+          "event": "grant_verified",
+          "to": "connected",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "verifying",
+          "event": "grant_missing",
+          "to": "not_connected",
+          "effects": [],
+          "requires": []
+        }
+      ]
+    },
+    "shopify_orders": {
+      "optional": true,
+      "products_prerequisite": true,
+      "scope": "read_orders",
+      "transitions": [
+        {
+          "from": "not_connected",
+          "event": "connect_click",
+          "to": "explaining",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "explaining",
+          "event": "cancel",
+          "to": "not_connected",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "explaining",
+          "event": "confirm",
+          "to": "explanation_hiding",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "explanation_hiding",
+          "event": "cancel",
+          "to": "not_connected",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "explanation_hiding",
+          "event": "native_afterhide",
+          "to": "verifying",
+          "effects": [
+            "prepare_connect"
+          ],
+          "requires": [
+            "explicit_intent_and_native_afterhide",
+            "current_owner_and_binding"
+          ]
+        },
+        {
+          "from": "verifying",
+          "event": "unconfirmed",
+          "to": "unknown",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "verifying",
+          "event": "unavailable",
+          "to": "unavailable",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "connected",
+          "event": "disconnect_click",
+          "to": "disconnect_confirm",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "disconnect_confirm",
+          "event": "cancel",
+          "to": "connected",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "disconnect_confirm",
+          "event": "confirm_afterhide",
+          "to": "disconnecting",
+          "effects": [
+            "revoke_connection"
+          ],
+          "requires": [
+            "explicit_intent_and_native_afterhide",
+            "current_owner_and_binding"
+          ]
+        },
+        {
+          "from": "disconnecting",
+          "event": "verified_success",
+          "to": "not_connected",
+          "effects": [
+            "render_success_notice"
+          ],
+          "requires": []
+        },
+        {
+          "from": "disconnecting",
+          "event": "unconfirmed",
+          "to": "unknown",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "unknown",
+          "event": "resume",
+          "to": "verifying",
+          "effects": [
+            "read_current_status"
+          ],
+          "requires": [
+            "explicit_resume",
+            "no_write_or_native_discovery"
+          ]
+        },
+        {
+          "from": "verifying",
+          "event": "scope_prepared",
+          "to": "native_authorization",
+          "effects": [
+            "request_native_scope"
+          ],
+          "requires": [
+            "pure_shop_gid",
+            "current_full_view_owner",
+            "server_prepared_binding"
+          ]
+        },
+        {
+          "from": "native_authorization",
+          "event": "granted_or_declined",
+          "to": "verifying",
+          "effects": [
+            "read_bound_scope_status"
+          ],
+          "requires": []
+        },
+        {
+          "from": "verifying",
+          "event": "grant_verified",
+          "to": "connected",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "verifying",
+          "event": "grant_missing",
+          "to": "not_connected",
+          "effects": [],
+          "requires": []
+        }
+      ]
+    },
+    "google_ads": {
+      "scopes": [
+        "https://www.googleapis.com/auth/adwords",
+        "https://www.googleapis.com/auth/content"
+      ],
+      "advertiser_selection": {
+        "minimum": 1,
+        "maximum": 3,
+        "explicit_even_if_one": true,
+        "manager_selectable": false
+      },
+      "reporting_account": "One durable selected advertiser; explicit single-account save retains existing sole-account reporting behavior.",
+      "transitions": [
+        {
+          "from": "not_connected",
+          "event": "connect_click",
+          "to": "explaining",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "explaining",
+          "event": "cancel",
+          "to": "not_connected",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "explaining",
+          "event": "confirm",
+          "to": "explanation_hiding",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "explanation_hiding",
+          "event": "cancel",
+          "to": "not_connected",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "explanation_hiding",
+          "event": "native_afterhide",
+          "to": "verifying",
+          "effects": [
+            "prepare_connect"
+          ],
+          "requires": [
+            "explicit_intent_and_native_afterhide",
+            "current_owner_and_binding"
+          ]
+        },
+        {
+          "from": "verifying",
+          "event": "unconfirmed",
+          "to": "unknown",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "verifying",
+          "event": "unavailable",
+          "to": "unavailable",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "connected",
+          "event": "disconnect_click",
+          "to": "disconnect_confirm",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "disconnect_confirm",
+          "event": "cancel",
+          "to": "connected",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "disconnect_confirm",
+          "event": "confirm_afterhide",
+          "to": "disconnecting",
+          "effects": [
+            "revoke_connection"
+          ],
+          "requires": [
+            "explicit_intent_and_native_afterhide",
+            "current_owner_and_binding"
+          ]
+        },
+        {
+          "from": "disconnecting",
+          "event": "verified_success",
+          "to": "not_connected",
+          "effects": [
+            "render_success_notice"
+          ],
+          "requires": []
+        },
+        {
+          "from": "disconnecting",
+          "event": "unconfirmed",
+          "to": "unknown",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "unknown",
+          "event": "resume",
+          "to": "verifying",
+          "effects": [
+            "read_current_status"
+          ],
+          "requires": [
+            "explicit_resume",
+            "no_write_or_native_discovery"
+          ]
+        },
+        {
+          "from": "verifying",
+          "event": "oauth_started",
+          "to": "native_authorization",
+          "effects": [
+            "navigate_native_authorization"
+          ],
+          "requires": []
+        },
+        {
+          "from": "native_authorization",
+          "event": "verified_return",
+          "to": "verifying",
+          "effects": [
+            "verify_transaction_scope_owner"
+          ],
+          "requires": []
+        },
+        {
+          "from": "verifying",
+          "event": "no_grant",
+          "to": "not_connected",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "verifying",
+          "event": "partial_grant",
+          "to": "permissions_incomplete",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "permissions_incomplete",
+          "event": "resume",
+          "to": "explaining",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "verifying",
+          "event": "accounts_required",
+          "to": "account_required",
+          "effects": [
+            "open_account_modal"
+          ],
+          "requires": [
+            "verified_return_or_explicit_resume",
+            "previous_native_afterhide"
+          ]
+        },
+        {
+          "from": "account_required",
+          "event": "cancel",
+          "to": "account_required",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "account_required",
+          "event": "save_afterhide",
+          "to": "saving",
+          "effects": [
+            "save_selection"
+          ],
+          "requires": [
+            "explicit_intent_and_native_afterhide",
+            "current_owner_and_binding"
+          ]
+        },
+        {
+          "from": "saving",
+          "event": "one_account_verified",
+          "to": "connected",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "saving",
+          "event": "multiple_accounts_verified",
+          "to": "reporting_required",
+          "effects": [
+            "open_reporting_modal"
+          ],
+          "requires": [
+            "current_server_inventory",
+            "previous_native_afterhide"
+          ]
+        },
+        {
+          "from": "saving",
+          "event": "unconfirmed",
+          "to": "unknown",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "reporting_required",
+          "event": "cancel",
+          "to": "reporting_required",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "reporting_required",
+          "event": "save_afterhide",
+          "to": "saving",
+          "effects": [
+            "save_reporting"
+          ],
+          "requires": [
+            "explicit_intent_and_native_afterhide",
+            "current_owner_and_binding"
+          ]
+        },
+        {
+          "from": "saving",
+          "event": "reporting_verified",
+          "to": "connected",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "connected",
+          "event": "change_reporting",
+          "to": "reporting_required",
+          "effects": [
+            "read_current_status"
+          ],
+          "requires": [
+            "current_connection_version"
+          ]
+        },
+        {
+          "from": "account_required",
+          "event": "resume",
+          "to": "account_required",
+          "effects": [
+            "read_current_status"
+          ],
+          "requires": [
+            "explicit_resume",
+            "current_owner_and_binding"
+          ]
+        },
+        {
+          "from": "reporting_required",
+          "event": "resume",
+          "to": "reporting_required",
+          "effects": [
+            "read_current_status"
+          ],
+          "requires": [
+            "explicit_resume",
+            "current_owner_and_binding"
+          ]
+        },
+        {
+          "from": "verifying",
+          "event": "connected_verified",
+          "to": "connected",
+          "effects": [],
+          "requires": [
+            "durable_reporting_account"
+          ]
+        }
+      ]
+    },
+    "meta": {
+      "scopes": [
+        "ads_read",
+        "catalog_management",
+        "business_management",
+        "pages_read_engagement",
+        "pages_show_list"
+      ],
+      "advertiser_selection": {
+        "minimum": 1,
+        "maximum": 3,
+        "explicit_even_if_one": true
+      },
+      "transitions": [
+        {
+          "from": "not_connected",
+          "event": "connect_click",
+          "to": "explaining",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "explaining",
+          "event": "cancel",
+          "to": "not_connected",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "explaining",
+          "event": "confirm",
+          "to": "explanation_hiding",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "explanation_hiding",
+          "event": "cancel",
+          "to": "not_connected",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "explanation_hiding",
+          "event": "native_afterhide",
+          "to": "verifying",
+          "effects": [
+            "prepare_connect"
+          ],
+          "requires": [
+            "explicit_intent_and_native_afterhide",
+            "current_owner_and_binding"
+          ]
+        },
+        {
+          "from": "verifying",
+          "event": "unconfirmed",
+          "to": "unknown",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "verifying",
+          "event": "unavailable",
+          "to": "unavailable",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "connected",
+          "event": "disconnect_click",
+          "to": "disconnect_confirm",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "disconnect_confirm",
+          "event": "cancel",
+          "to": "connected",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "disconnect_confirm",
+          "event": "confirm_afterhide",
+          "to": "disconnecting",
+          "effects": [
+            "revoke_connection"
+          ],
+          "requires": [
+            "explicit_intent_and_native_afterhide",
+            "current_owner_and_binding"
+          ]
+        },
+        {
+          "from": "disconnecting",
+          "event": "verified_success",
+          "to": "not_connected",
+          "effects": [
+            "render_success_notice"
+          ],
+          "requires": []
+        },
+        {
+          "from": "disconnecting",
+          "event": "unconfirmed",
+          "to": "unknown",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "unknown",
+          "event": "resume",
+          "to": "verifying",
+          "effects": [
+            "read_current_status"
+          ],
+          "requires": [
+            "explicit_resume",
+            "no_write_or_native_discovery"
+          ]
+        },
+        {
+          "from": "verifying",
+          "event": "oauth_started",
+          "to": "native_authorization",
+          "effects": [
+            "navigate_native_authorization"
+          ],
+          "requires": []
+        },
+        {
+          "from": "native_authorization",
+          "event": "verified_return",
+          "to": "verifying",
+          "effects": [
+            "verify_transaction_scope_owner"
+          ],
+          "requires": []
+        },
+        {
+          "from": "verifying",
+          "event": "no_grant",
+          "to": "not_connected",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "verifying",
+          "event": "accounts_required",
+          "to": "account_required",
+          "effects": [
+            "open_account_modal"
+          ],
+          "requires": [
+            "verified_return_or_explicit_resume",
+            "previous_native_afterhide"
+          ]
+        },
+        {
+          "from": "account_required",
+          "event": "cancel",
+          "to": "account_required",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "account_required",
+          "event": "save_afterhide",
+          "to": "saving",
+          "effects": [
+            "save_selection"
+          ],
+          "requires": [
+            "explicit_intent_and_native_afterhide",
+            "current_owner_and_binding"
+          ]
+        },
+        {
+          "from": "saving",
+          "event": "one_account_verified",
+          "to": "connected",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "saving",
+          "event": "multiple_accounts_verified",
+          "to": "reporting_required",
+          "effects": [
+            "open_reporting_modal"
+          ],
+          "requires": [
+            "current_server_inventory",
+            "previous_native_afterhide"
+          ]
+        },
+        {
+          "from": "saving",
+          "event": "unconfirmed",
+          "to": "unknown",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "reporting_required",
+          "event": "cancel",
+          "to": "reporting_required",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "reporting_required",
+          "event": "save_afterhide",
+          "to": "saving",
+          "effects": [
+            "save_reporting"
+          ],
+          "requires": [
+            "explicit_intent_and_native_afterhide",
+            "current_owner_and_binding"
+          ]
+        },
+        {
+          "from": "saving",
+          "event": "reporting_verified",
+          "to": "connected",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "connected",
+          "event": "change_reporting",
+          "to": "reporting_required",
+          "effects": [
+            "read_current_status"
+          ],
+          "requires": [
+            "current_connection_version"
+          ]
+        },
+        {
+          "from": "account_required",
+          "event": "resume",
+          "to": "account_required",
+          "effects": [
+            "read_current_status"
+          ],
+          "requires": [
+            "explicit_resume",
+            "current_owner_and_binding"
+          ]
+        },
+        {
+          "from": "reporting_required",
+          "event": "resume",
+          "to": "reporting_required",
+          "effects": [
+            "read_current_status"
+          ],
+          "requires": [
+            "explicit_resume",
+            "current_owner_and_binding"
+          ]
+        },
+        {
+          "from": "verifying",
+          "event": "connected_verified",
+          "to": "connected",
+          "effects": [],
+          "requires": [
+            "durable_reporting_account"
+          ]
+        }
+      ]
+    },
+    "klaviyo": {
+      "scopes": [
+        "accounts:read",
+        "campaigns:read",
+        "flows:read",
+        "events:read",
+        "metrics:read"
+      ],
+      "explicit_account_even_if_one": true,
+      "separate_spend_modal": true,
+      "zero_is_valid": true,
+      "transitions": [
+        {
+          "from": "not_connected",
+          "event": "connect_click",
+          "to": "explaining",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "explaining",
+          "event": "cancel",
+          "to": "not_connected",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "explaining",
+          "event": "confirm",
+          "to": "explanation_hiding",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "explanation_hiding",
+          "event": "cancel",
+          "to": "not_connected",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "explanation_hiding",
+          "event": "native_afterhide",
+          "to": "verifying",
+          "effects": [
+            "prepare_connect"
+          ],
+          "requires": [
+            "explicit_intent_and_native_afterhide",
+            "current_owner_and_binding"
+          ]
+        },
+        {
+          "from": "verifying",
+          "event": "unconfirmed",
+          "to": "unknown",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "verifying",
+          "event": "unavailable",
+          "to": "unavailable",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "connected",
+          "event": "disconnect_click",
+          "to": "disconnect_confirm",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "disconnect_confirm",
+          "event": "cancel",
+          "to": "connected",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "disconnect_confirm",
+          "event": "confirm",
+          "to": "disconnecting",
+          "effects": [
+            "revoke_connection"
+          ],
+          "requires": [
+            "explicit_intent",
+            "current_owner_and_binding"
+          ]
+        },
+        {
+          "from": "disconnecting",
+          "event": "verified_success",
+          "to": "not_connected",
+          "effects": [
+            "render_success_notice"
+          ],
+          "requires": []
+        },
+        {
+          "from": "disconnecting",
+          "event": "unconfirmed",
+          "to": "unknown",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "unknown",
+          "event": "resume",
+          "to": "verifying",
+          "effects": [
+            "read_current_status"
+          ],
+          "requires": [
+            "explicit_resume",
+            "no_write_or_native_discovery"
+          ]
+        },
+        {
+          "from": "verifying",
+          "event": "oauth_started",
+          "to": "native_authorization",
+          "effects": [
+            "navigate_native_authorization"
+          ],
+          "requires": []
+        },
+        {
+          "from": "native_authorization",
+          "event": "verified_return",
+          "to": "account_required",
+          "effects": [
+            "open_account_modal"
+          ],
+          "requires": [
+            "verified_server_inventory",
+            "previous_native_afterhide"
+          ]
+        },
+        {
+          "from": "account_required",
+          "event": "cancel",
+          "to": "account_required",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "account_required",
+          "event": "continue_afterhide",
+          "to": "spend_required",
+          "effects": [
+            "open_spend_modal"
+          ],
+          "requires": [
+            "explicit_selection_even_one",
+            "previous_native_afterhide"
+          ]
+        },
+        {
+          "from": "spend_required",
+          "event": "cancel",
+          "to": "spend_required",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "spend_required",
+          "event": "save_valid_spend",
+          "to": "saving",
+          "effects": [
+            "complete_account_and_spend_once"
+          ],
+          "requires": [
+            "valid_amount_including_zero",
+            "current_owner"
+          ]
+        },
+        {
+          "from": "saving",
+          "event": "field_error",
+          "to": "spend_required",
+          "effects": [
+            "preserve_input"
+          ],
+          "requires": []
+        },
+        {
+          "from": "saving",
+          "event": "unconfirmed",
+          "to": "unknown",
+          "effects": [],
+          "requires": []
+        },
+        {
+          "from": "saving",
+          "event": "connection_verified",
+          "to": "connected",
+          "effects": [
+            "release_removed_modal_lock"
+          ],
+          "requires": []
+        },
+        {
+          "from": "spend_required",
+          "event": "resume",
+          "to": "spend_required",
+          "effects": [
+            "read_current_status"
+          ],
+          "requires": [
+            "no_oauth_restart"
+          ]
+        },
+        {
+          "from": "account_required",
+          "event": "resume",
+          "to": "account_required",
+          "effects": [
+            "read_current_status"
+          ],
+          "requires": []
+        }
+      ],
+      "disconnect_dispatch": "Existing explicit confirmation handler submits once; conditional modal removal releases its lock. No new afterhide gate introduced."
+    }
+  },
+  "presentation": {
+    "technology": "Pinned stable Polaris2.0 + App Bridge only; no raw HTML/custom CSS/inline color.",
+    "resume": {
+      "badge": "Resume setup",
+      "tone": "warning",
+      "button_variant": "default",
+      "messages": {
+        "permissions_incomplete": "Complete your permissions to finish setup.",
+        "account_required_ads": "Select your advertiser accounts to finish setup.",
+        "reporting_required": "Select your reporting account to finish setup.",
+        "klaviyo_account": "Select your account to finish setup.",
+        "klaviyo_spend": "Enter your estimated spend to finish setup."
+      }
+    },
+    "progress": {
+      "component": "s-banner",
+      "tone": "info",
+      "disconnect": "Disconnecting…",
+      "verification": "Verifying access…",
+      "initial_spend": "Saving estimated spend…"
+    },
+    "success": {
+      "component": "s-banner",
+      "tone": "success",
+      "order": [
+        "Not connected",
+        "success notice",
+        "Connect"
+      ],
+      "messages": {
+        "shopify_products": "Product access removed.",
+        "shopify_orders": "Order access removed.",
+        "google_ads": "Google Ads was disconnected.",
+        "meta": "Meta was disconnected.",
+        "klaviyo": "Klaviyo was disconnected."
+      }
+    },
+    "unknown": {
+      "google_meta": "We could not confirm the result. Resume setup to check the current connection status.",
+      "rule": "Preserve missing/unknown/unavailable distinctions; do not claim success or automatically replay."
+    }
+  },
+  "required_tests": [
+    "tests/permission-explanation-flow.test.js",
+    "tests/permission-settings.test.js",
+    "tests/permission-setup-selection.test.js",
+    "tests/permission-error-log.test.js",
+    "tests/permission-release.test.js",
+    "tests/google-meta-settings-flow.test.js",
+    "tests/google-partial-permission-return.test.js",
+    "tests/step07-settings-corrections.test.js",
+    "tests/shopify-products-completion.test.js",
+    "tests/shopify-progressive-permissions.test.js",
+    "tests/oauth-identity-scope-binding.test.js",
+    "tests/identity-oauth-start-binding.test.js",
+    "tests/identity-oauth-atomic-stage.test.js",
+    "tests/eo-03a-oauth-transaction-boundary.test.js",
+    "tests/eo-03c-connection-account-authority.test.js",
+    "tests/eo-03d-provider-connection-lifecycle.test.js",
+    "tests/eo-01c-preview-shell.test.js"
+  ],
+  "protection": {
+    "prefixes": [
+      "app/lib/oauth/",
+      "app/lib/providers/",
+      "app/lib/shopify/",
+      "app/lib/database/",
+      "app/lib/refresh/",
+      "app/lib/ui/",
+      "app/components/",
+      "app/routes/",
+      "supabase/migrations/",
+      "tools/",
+      ".github/workflows/"
+    ],
+    "exact": [
+      "AGENTS.md",
+      "app/shopify.server.ts",
+      "app/root.tsx",
+      "app/lib/server-error-log.server.js",
+      "app/lib/server-error-log.server.d.ts",
+      "package.json",
+      "pnpm-lock.yaml",
+      ".github/workflows/repository-governance.yml",
+      "tools/check-oauth-constitution.mjs",
+      "tests/oauth-flow-constitution.test.js",
+      "tests/a6-docs-01-turkish-standardization.test.js",
+      "docs/OAUTH_FLOW_CONSTITUTION.md",
+      "docs/EXECUTION_PLAN.md",
+      "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md",
+      "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md",
+      "contracts/a6-eo-implementation-master-v1.json",
+      "contracts/eo-05-permission-explanation-design-v1.json",
+      "contracts/eo-05-oauth-setup-permission-policy-v1.json",
+      "contracts/shopify/shopify-embedded-ui-constitution-v1.json"
+    ],
+    "sha256": {
+      ".github/workflows/database-integrity.yml": "f471a58152ab702c71ca9eada67e0e5de6d76b78de85238bfd9946f7a5002c16",
+      ".github/workflows/repository-governance.yml": "2ee32fdaaa9abb0727f18864591706d92992fa4cd85b5b0b816ceed80037d3b6",
+      ".github/workflows/shopify-app-deploy.yml": "ef078addb630fdb624189c0f12625524a7e3dcaf708f2059f95e7a2884cf5d24",
+      "AGENTS.md": "d77d9e1aad1996a7e477e17f460a2c63530e1253cb521c521c6ef3bdd11570a9",
+      "app/components/order-access-removal.tsx": "2c2159052c700ef8c9722e159af64f929a573481662f3fe31fd1e05054d68d7b",
+      "app/components/permission-explanation.tsx": "1ef63742562171225389b0958492f9daea51d9a062b1eefe24e008d27387ad66",
+      "app/components/permission-provider-disconnect.tsx": "0e411efebfd74636308fb4f95b91cb884d5ad8eee93d91eedf2861d8aae4943e",
+      "app/components/permission-setup-selection.tsx": "c624d0a786f16b1c28a65add49368337ea0548fa27ad6f83266c58e4450e194e",
+      "app/components/preview-shell.tsx": "b6f0d8a47abf20ec4b6f0f5f7345feeccc11e5d55b66e757e63b1b71c03b8a79",
+      "app/components/product-access-removal.tsx": "d3910cf122e4e5bb88723d1c10b1561c5d1ee76d4aa8df36f8f4840041be1012",
+      "app/components/use-permission-settings.tsx": "27128cb98219c03cd8cefc39e69c68e2a431d85e2105f4bce81021882c91c33f",
+      "app/lib/database/google-account-selection-repository.server.js": "1155c186cb7a4ac712798033e80c1b5b3214e41e2b91c05de047a85ce378df3e",
+      "app/lib/database/identity-authority-repository.server.js": "a4d157e77dde93c26e2fb28c915f1c5a92fc3ebf11ccc59ca649dca2df032f0c",
+      "app/lib/database/klaviyo-setup-repository.server.js": "91886512d89d098ff42030805f81b38c4875e37ddc2786940b699df3703da546",
+      "app/lib/database/klaviyo-spend-repository.server.js": "6a672b2cc8604bae1e89dff2821b90124bde366e6c405453d26abf58fe620bff",
+      "app/lib/database/meta-account-selection-repository.server.js": "4139b9a5fd828f1a47b306e79fed67700c6d487257a61ac9e49db80736785100",
+      "app/lib/database/oauth-transaction-repository.server.js": "82bfe602c1ff028c3669ac2c82c60ceae9aebe6285ae593a28d170c56b4e1898",
+      "app/lib/database/privacy-lifecycle-repository.server.js": "ccb57e0d92e1106c9cee35b91ee9ba5f90dfb66d366eae398bbd381c2053c2a9",
+      "app/lib/database/provider-account-authority-repository.server.js": "f08167c2cbc131b64cde7e58695a363cb02d7a864cd312f7e398b39b75dc9b7f",
+      "app/lib/database/provider-connection-lifecycle-repository.server.js": "edcc6eb4a3fb0d9329b55ec9122a5ff1838103f8ec8e341fc2cef4951a382310",
+      "app/lib/database/refresh-queue-postgres.server.js": "bbdd98410a5af2bcbded4eb5f396f01574d5609a03d82e39571561f1f9a7e0be",
+      "app/lib/database/refresh-work-repository.server.js": "0956cfcc270ae7ec3684ec90509ea16944f0346429578761e13460443577bb0c",
+      "app/lib/database/runtime-postgres.server.js": "9c24879fd0d2f42c3f04bd2e1b60fabad40b24eb8b44d5cccce39217b76f3df1",
+      "app/lib/database/shared-quota-repository.server.js": "1baad5d112c031a27cfede900074d2e3a959695e29800c0d27a1b6aed226af9f",
+      "app/lib/database/shopify-installation-owner-repository.server.js": "272032bcdf3d446ee84e6085a186cc2afb673c4e51a66a7d07cc7157a9d5fc8d",
+      "app/lib/database/shopify-order-queue-repository.server.js": "30ec348ac980f1208cd2afcf176bd54e74388feceb4fa78c8d5f2f33384b1036",
+      "app/lib/database/shopify-runtime-repositories.server.js": "2bbf7ccb879854c6b9f9665a85da640e3d7ae174eeaedee513aefb29f32001c4",
+      "app/lib/database/shopify-session-repository.server.js": "040e991c8cfa9262a256ad47606c808b5ca089b489b4191803ef215f440b7741",
+      "app/lib/database/supabase-root-ca-2021.server.js": "49a95de46f1b5272a7d5ed5a4cfc1bdb12f00945c51956430e356bbca652bdda",
+      "app/lib/database/token-vault-repository.server.js": "a23b5e78ca372206407f9216f4e01203a771132346ee43e9dbddb859cfe67df2",
+      "app/lib/oauth/combined-setup-accounts.server.js": "0bc1db2994c74e514d08831a99b2552e4930d7e489911641a7e25d6779622adc",
+      "app/lib/oauth/combined-setup-assets.server.js": "2d7caad6805d6ed6a535efeade78f3eab06737632114aee8d2d38dace69573e1",
+      "app/lib/oauth/google-identity-credential.server.js": "c52d8717b9354c062bc46a27cf61d37fc5bc7a523cd068605c7f49c25cfb1341",
+      "app/lib/oauth/google-oauth-runtime.server.d.ts": "204ac6443fdd86405fb6228deb4b382df7d47016a0a4372c441606bee1f0b374",
+      "app/lib/oauth/google-oauth-runtime.server.js": "22e80eaf470218aafac114327f8ca6aefb4f34fca1c61fc6208261489329bdff",
+      "app/lib/oauth/identity-oauth-authorization.server.js": "ae2aa20b0fc33be01fcbf022a400a49cbf8a1d022662bcd5d5ce1819d31db0aa",
+      "app/lib/oauth/identity-permission-preflight.server.d.ts": "d60ccb2f4ed4a0d7ce0f62c59549271d8a9cdca616c8bcccf3683f873e9dbb87",
+      "app/lib/oauth/identity-permission-preflight.server.js": "43e71ce2965d9cfdf84ef6edccd81f5fa603b6dba83481af76a0b5eb0af2d056",
+      "app/lib/oauth/klaviyo-oauth-runtime.server.d.ts": "d6dfb992babd90059b53a42b94df9aa84880efd48b6cefebfb03a04edd1a38f8",
+      "app/lib/oauth/klaviyo-oauth-runtime.server.js": "020bada6e2f17ead3f008c590ca2ce77f778ecd0db7704858922c19eeba4d5a8",
+      "app/lib/oauth/meta-oauth-runtime.server.d.ts": "f9f24553e3d73740075fb09891f4550737ec9e4d2a774dc35d450558a5cdc8a8",
+      "app/lib/oauth/meta-oauth-runtime.server.js": "39e2f8759dfe04d518503fb6ab844e958efed7c7bd89aeb4186b777ccf7005dd",
+      "app/lib/oauth/oauth-permission-profile.server.d.ts": "ddf2763acda232644d7d9bfc1a8c58cc05d5ccb74db4f10ec478057744c02947",
+      "app/lib/oauth/oauth-permission-profile.server.js": "3932b0d3f3a1c26fb2ced807d2f96f6cd61538e3aca3c031236cab4d187fb0f5",
+      "app/lib/oauth/oauth-transaction.server.js": "abc7094b849e7efbfe89019c9abd53c559aa23a4e25d9cc5a8edb95e346f825d",
+      "app/lib/oauth/provider-account-authority.server.js": "fd0bad91317e1ac5bf9a7be029edbec4e71786779c2226ebee53065302780c6e",
+      "app/lib/oauth/provider-connection-lifecycle.server.js": "5ea30ff2a331f1cffb5ff51fafa57767ecd40a179c8a36e305df19c3f8ed5f4a",
+      "app/lib/oauth/token-envelope.server.js": "b06ef4f19c09c0315167808c355e771e61b07ff3ec86b43788e7ba4a07ff0277",
+      "app/lib/oauth/token-vault.server.js": "d5c62e2ed7240b219a6d584ee0a98b2f21529895dc20ce069bc959b7cca0da36",
+      "app/lib/providers/candidate-prewrite.server.js": "bcec7feb677d1a8a86dbd6530871c381c12f595bef58398bfabe5f32e1c17687",
+      "app/lib/providers/catalog-shopify-candidate.server.js": "945a25d5daa23272a1b67c52ac89dabf7da9aecbc50f8b8b4df75421bd421d38",
+      "app/lib/providers/common-adapter.server.d.ts": "bcae2620564cafa93ace211c393a49d23cff7db1efc50c0876383e9a7d053457",
+      "app/lib/providers/common-adapter.server.js": "b7647ac8f124d0ac6fa7682fe3ab61040c71939bb19a3eb6a1c1cf3f9644f1dc",
+      "app/lib/providers/google-account-discovery.server.js": "d7e7ded27e326491d9094a7c3fe814d164a4a59a6da14f3bdc08e077195e2f6d",
+      "app/lib/providers/google-ads-rest.server.d.ts": "128c4d6eda59dcae254979a004880d52df4f1cef8694dd70b5ddbc95776377cb",
+      "app/lib/providers/google-ads-rest.server.js": "7aec3436f5c24f568b86be309ab412e1834f3057212b628f62e1133bbdbc0c06",
+      "app/lib/providers/google-identity-collection.server.js": "7592fac4789b7ed1b8f41cddd7f1407be1b4a068376b00bcf9b86f2abda02857",
+      "app/lib/providers/google-live-evidence.server.d.ts": "64f2a324870f819b7f9416eb5d51cc6b1929c124694d1be49c72cafce01b8ae7",
+      "app/lib/providers/google-live-evidence.server.js": "d6e7435b922636ec956e22d7699b0a93573817170c557b1755167d1c72056c52",
+      "app/lib/providers/google-merchant-account-link.server.js": "24b93b297e47477e2f104624ddd2b3e45f4ae5c23174c9bf6129fcbe6f8890cf",
+      "app/lib/providers/google-pd-composition.server.d.ts": "92255f22f4430c26882b5c53b7bbbdfd13aa231af6a37b5fa9382a20cfd841d3",
+      "app/lib/providers/google-pd-composition.server.js": "09181d6620f6b250f2c2e623ee98a8d435bed0f4e5bd6448d29d31f219bf9203",
+      "app/lib/providers/google-pd-native-metadata.server.d.ts": "25cb38266ea5ffd644acfbaa94f5ceff02d9ddb51a5bc9562e5dbc9343139acc",
+      "app/lib/providers/google-pd-native-metadata.server.js": "6ac4e88610760b4d6ac743f0bb4f1a8b5d2b515b2d48876502b7cabe52af6f62",
+      "app/lib/providers/google-pd-orchestration.server.js": "64fb5cd75b240e2a1aa0c99ec2f8ced763dd20a760e828b3855c386b854d854a",
+      "app/lib/providers/google-pmax-source-links.server.js": "4ea497071d5c49f23c56acf0cba85af39c8c58b457449717e2f16976af629773",
+      "app/lib/providers/google-product-identity-reader.server.js": "af190e29c67f590ee47cd90568a4b713a4fb38b720b50c74bcafdfdcb9a3ce10",
+      "app/lib/providers/google-product-identity-resolution.server.js": "e3ec98f132a4379c2abca55e930d46c9e58989254a2ac2269356205059224ec3",
+      "app/lib/providers/google-reporting-authority.server.d.ts": "ef95d310d6f2b79582f508ddfab7c7007d668ac3f014843f51e0d22ce004670a",
+      "app/lib/providers/google-reporting-authority.server.js": "08b4584c390093ab78fe56389eb9fb237b54e1bc18553ff833f597518d60c860",
+      "app/lib/providers/google-reporting.server.d.ts": "df376bc7e210315d6eba7ece87a0169fea96dc86d0c53c3ef628dda0a762994a",
+      "app/lib/providers/google-reporting.server.js": "c7f5e83f1015ed2cb5694df8b8674e595307f1de3d74785c20e2b04bc64ca7e7",
+      "app/lib/providers/google-source-candidates.server.js": "0acb94c982d8a7d38fe6b42b7433bc19d29b93bca57f1f7f7008ab06390ed539",
+      "app/lib/providers/google-source-links.server.d.ts": "f28b0ee64d246d5eee51ed0f00fd884d1d5e5c45834cb466a01982b3db5d4d33",
+      "app/lib/providers/google-source-links.server.js": "aa6fda1a1259d9576faa6977360ccdf88282a09effdc1364bbec8e992c828ad1",
+      "app/lib/providers/identity-read-deadline.server.js": "39ebcb30202a248e634fce29dbcdd641a9ade0846767687132e3864c765fa89f",
+      "app/lib/providers/identity-runtime-authority.server.js": "b860dfd00f43b609163ec9f593a3501c81bea5a6d7bab5e01430ab4284bd60be",
+      "app/lib/providers/klaviyo-api.server.d.ts": "3d0b768f189f1a7d6b97bb1910b46cb0587ec93bc6473fdb199b3d50008597fe",
+      "app/lib/providers/klaviyo-api.server.js": "3d442ec4fbb3d5bce2a59dc2e82eec113699c190464d73cb37cb6c3deacd933f",
+      "app/lib/providers/klaviyo-attributed-interaction.server.d.ts": "413768d2c8374c88b127adb846871ee04547d4d77e2cc09d4e10afda7bd619cc",
+      "app/lib/providers/klaviyo-attributed-interaction.server.js": "ac29576eaeb2410e342acf642dc3a43edebd475e5a0a30afb55a64eb657f6a03",
+      "app/lib/providers/klaviyo-attribution-resolution.server.d.ts": "8aa33003c710e68e34bb0dee38367e589257670e6cfb8734fa425445934d81ee",
+      "app/lib/providers/klaviyo-attribution-resolution.server.js": "de4dd610f73af19c2a7aab5a53c9bc3e1bbf7003a5c0d9c75bb92da7c4c62152",
+      "app/lib/providers/klaviyo-identity-collection.server.js": "829a171a49439586fdefd629eb6c50c77b48de344fbfe65972dd29fd9e848745",
+      "app/lib/providers/klaviyo-live-evidence.server.d.ts": "d09f02680a76294d59a6825d78bcc225b9a266268dbc27f6452e10ed5eaed40f",
+      "app/lib/providers/klaviyo-live-evidence.server.js": "64035993838993bf44aae8e5db2b75f0e88a4e5e00a2924102541eb10fc56e8c",
+      "app/lib/providers/klaviyo-order-prewrite.server.js": "21ea099d4fb19d6e38ee66f006449e0590f344996b2cf638083c47a7283ae1d4",
+      "app/lib/providers/klaviyo-order-rules.server.js": "5c0d0433eebdd2bf509ed15b4afb8907ded773c32982b02893e4dbe5f7fcf027",
+      "app/lib/providers/klaviyo-pd-composition.server.d.ts": "241b50734f497621366fae6b904ef4941cdc6d1776c23e5ec08f102780bc6b2a",
+      "app/lib/providers/klaviyo-pd-composition.server.js": "92d9b59a684db7dc24ef9beb48a01d5fd39bb8f4c78f9676183ec70ee2a56734",
+      "app/lib/providers/klaviyo-pd-orchestration.server.js": "3df1d04e3c82ff44d399866563e2e9d537cfa5058394e63946b7f16b8752831c",
+      "app/lib/providers/klaviyo-product-identity.server.js": "c81c5a3ecd60d621533a24f88a2480b74e7a2d36fa3d13cb1be8d3e4f0b71bcc",
+      "app/lib/providers/klaviyo-reporting-authority.server.d.ts": "cf54aec285bbaabfe3dadcf3639d25eb0d23ad2b89e83cd95c8c8b958026cdce",
+      "app/lib/providers/klaviyo-reporting-authority.server.js": "51a48a24252a64b658f179a463434a8051a6828f1f9122c6d397970cb23a12d9",
+      "app/lib/providers/klaviyo-reporting.server.d.ts": "176dc0c5418cfb2f0d9619a8ca6e860837626018a0205d34a138b53bdea6d5bb",
+      "app/lib/providers/klaviyo-reporting.server.js": "1047437121c260e9d1fe8e3163a8ea0c130ef99d0a4c6dd0e1a9209f737164b2",
+      "app/lib/providers/meta-adset-catalog-reference.server.js": "13faeb8db23586444b6d10949f9f30b5faf1dd29264d972c24d6760ca308ae2c",
+      "app/lib/providers/meta-catalog-identity-reader.server.js": "5db5e331367ffd1b418f03617cd9ec1b8b425225e6149f007a9d0a1c480ec453",
+      "app/lib/providers/meta-graph.server.d.ts": "472887b68f64a3925987218a160cf5a1819fc3ec01d9da96c42f6ff5f36cfb8b",
+      "app/lib/providers/meta-graph.server.js": "732d2cfb8ad3f5658708d829354bac3b460aec8bb6d23bc5b5460f2184826fb3",
+      "app/lib/providers/meta-identity-collection.server.js": "6dd8eb5abcb287ed85902afee024c3c658f8214c8bfc7e6dd74da6c764238e71",
+      "app/lib/providers/meta-probe-button.d.ts": "eb64c6bf8728bb6ee9a2c0fc651b5d47b7cfb91fea19f5bec284a3c658c606be",
+      "app/lib/providers/meta-probe-button.js": "3c84c056232bdc9f1ebc7aa6fc3d26ddd2a75080833a0d85ea8c7c41bd109c16",
+      "app/lib/providers/meta-product-identity-resolution.server.js": "37530d7aeace5a4cff07ff1ed3c807cb7a348c96db0eab13fb4e68f3a7dbb964",
+      "app/lib/providers/meta-report-candidates.server.js": "a3a855a0936c4d399f4cb1a6a1c5d2b2f61422af2956d8f7681d34aea831404d",
+      "app/lib/providers/meta-reporting-authority.server.d.ts": "a54ef94982c91d49e4a9b2efdc3b71eb8258f6522ed0bf41ad2080ff4e3a272e",
+      "app/lib/providers/meta-reporting-authority.server.js": "a5b5473f6c7861ecee5c57944e34aec65a5a75f033a5fc8cb656f24fa4d2131f",
+      "app/lib/providers/meta-reporting.server.d.ts": "7facfb06832784f89d7fa0993f5b0375211063e50f4ec38fb1d872b03eab8c62",
+      "app/lib/providers/meta-reporting.server.js": "5b7fda975bf85a0e760416eb45c9772e5db99ae6e451940d4d2f5f7094d9c452",
+      "app/lib/providers/meta-source-candidates.server.js": "80771b164ba552f75a555356328af29e71abf60a47f3b0e9bfa4548f4d13ca44",
+      "app/lib/providers/meta-source-links.server.d.ts": "d933c23d0b130eefe7de88d8669a4705dcffc6180bd3face0671176a4accf6fe",
+      "app/lib/providers/meta-source-links.server.js": "35cf0d305eac2910cde68edbd1c269d8f4f4855ba4c1d4a84937ef365c02ff72",
+      "app/lib/providers/pd-canonical-bridge.server.d.ts": "1a65d281a47402986a67fa1984429f698c574e6333ac8cf32864c5b88bf03ef2",
+      "app/lib/providers/pd-canonical-bridge.server.js": "8c84ba728cf054bfc9462a7c8fae5982f28e3f5ac7eb78e0c8f7ea91bfc08899",
+      "app/lib/providers/pd-composition-scope.server.d.ts": "c408a319d7194d1b5696ec47062dcf637d24a65b764aa4c9ef49aae4711fc1b5",
+      "app/lib/providers/pd-composition-scope.server.js": "4340e28bb5a4cc821b35494369d97e6a85ab4b1c484f8df5c5c9d23be23b28fb",
+      "app/lib/providers/pd-native-metadata.server.d.ts": "3e9d2c06af8e8f68529eb96bbc9661f49e8a5a85a529fb9cc4572d9e964971fd",
+      "app/lib/providers/pd-native-metadata.server.js": "f9636be8ba4662c7c04dc11d5ef0a5a536a9d9b6e8451e30b6427a87dc9f83d7",
+      "app/lib/providers/pd-record-orchestration.server.d.ts": "05016fe1c9e085dbed30afc84e21b5d815249122c86964cf9ed830b699274c7b",
+      "app/lib/providers/pd-record-orchestration.server.js": "df056bfd630c7d1c8ed9add9373eb3d8866d0383048a97532d93c2e924f5e023",
+      "app/lib/providers/prewrite-owner.server.js": "60dd3b4d3575c38d384baacf3417396df6e0fa6ce8949dafdcd67fb6ea600221",
+      "app/lib/providers/provider-live-evidence.server.d.ts": "f3bd668a1d2e33fdfacb7c532ba33763ec796b02c94eda28dcce6ff6d2bfa80b",
+      "app/lib/providers/provider-live-evidence.server.js": "075b64c0b28ddf764ce53b92ad598685e86fd0b0158d14164e7950cf7786f989",
+      "app/lib/providers/quota-managed-clients.server.js": "10ce33751ec6dc1689c9cd7a8ae8515cc42521ba2e44baaac9cf8c08588f6cc6",
+      "app/lib/providers/reference-prewrite.server.js": "5647a1e7ccac86267762a014a9ea1b267fab315b04f03145a21e0f57b527f4cb",
+      "app/lib/refresh/admission-policy.server.js": "f3dc10208610c535b45a112dd85eb32259da32810682a9f4c0d653cddbe77825",
+      "app/lib/refresh/chunk-worker.server.js": "8b8b39969e421743302b246a5a29a7a7f3ced62357510f60971a8d6f77d0cb2e",
+      "app/lib/refresh/entitlement-check.server.js": "f9648051b88d2b1c1756bc9a5c94003c7817f8c57af61c042c07f493e4cfd141",
+      "app/lib/refresh/google-quota-observation.server.js": "9eb32e1a3139ee0308e3cf5f47978f680bda37685321f6bdd81b26975e424f2a",
+      "app/lib/refresh/integrated-prewrite-review.server.js": "11a27a0bed237c5a58da9d216d545b7304ad2e240db2a65a4a172bd1f0389313",
+      "app/lib/refresh/native-inventory.server.js": "5d67e8642f4032b90c154b12c43da8c92945d8b223c0494e1c82974739b8b5c6",
+      "app/lib/refresh/pd-prewrite-chunk.server.js": "e785217006c44059831ba733db7ecdc933775d58dee7c2cabbc4d92a8e96f6ef",
+      "app/lib/refresh/pd-source-reader.server.js": "e39b2aa31abd98311380a9b08ae976f024931086de5dc46c3d2dd0a6c8ec6138",
+      "app/lib/refresh/preflight-bridge.server.js": "c327e4aca31e102f00edde808d88f06bfde3d87d3acfe5168158229db69acd7d",
+      "app/lib/refresh/queue-check.server.js": "4795afa7149373d342860a4428b6028252ff475a77716dc2bcba363a2b9105e6",
+      "app/lib/refresh/queue-cron-entry.server.d.ts": "7f78161c378a99cf8c52a905a4a23ebc026fe81fba929d74d2a5104b491efe7b",
+      "app/lib/refresh/queue-cron-entry.server.js": "1667e1f0c3f38394ca52f49e6f018579be7942496102cd98ec65c4fe2e0d72b2",
+      "app/lib/refresh/quota-authority-binding.server.js": "09bf2ea14506a358ca52e4dc81aae9df4041c76228323b9e58395b5418afd59d",
+      "app/lib/refresh/quota-native-fetch.server.js": "151f65a13e48b17ba9975bfb28748922dd3f72172710093c1d08da711351f2d8",
+      "app/lib/refresh/quota-response-feedback.server.js": "5929583f6b1c1eb0d4e0d99c7060d635861a9a60d28468485c7a389853d5e3a8",
+      "app/lib/refresh/quota-scope-resolver.server.js": "ff38b878371213d4ba5047b8bcd0005f75342e9c178281df72f85505fd13507f",
+      "app/lib/refresh/quota-work-wait.server.js": "241ae261ce805bf76fe4c2f027969bbc67be6cf774f511201fb2381308f2cfcd",
+      "app/lib/refresh/scheduled-queue-check.server.js": "4ed4d6832f384eed0568bf5d8f19b104bec1caeea8a941d8728dc1246bd43402",
+      "app/lib/refresh/setup-proof-review.server.js": "4f2c59b4b72c791b944c3bb040fa1531eae96b91ba78b49e92aef2c952aeae91",
+      "app/lib/refresh/shared-quota.server.js": "105a4f5ed3413395701e7f0246557b53de984be0cd68ba43f2225eaf3389852d",
+      "app/lib/refresh/shopify-admin-identity-quota.server.js": "84e33743b3f8b9a8fc7514ab418b3283746470ebb935ef1d566abad4d1655537",
+      "app/lib/refresh/shopify-admin-sdk-bootstrap.server.js": "9ab0faec6946ebcfa7b2a9c17d933c8229c7f2a0a4e5df829fd018cb09997681",
+      "app/lib/refresh/shopify-admin-sdk-quota-bridge.server.js": "bcd30f76224f06ce5d441fe3cd4d5d9dbaea0e207734cf24c2f56fc442ca3c6c",
+      "app/lib/refresh/shopify-order-admin-reader.server.js": "9107c5172328b22b1ae702eda628191bb3382c3b244ebe0c0a27f2352fec02d3",
+      "app/lib/refresh/shopify-order-background-dispatcher.server.js": "b9912171256a003d15621c236e30a758ec43c811be430912c599f28b7ffcbd54",
+      "app/lib/refresh/shopify-order-entitlement.server.js": "6423ffdac0d9b4538122fd02300fb194f688613c1c06abcf02feea1e253dd316",
+      "app/lib/refresh/shopify-order-queue-admission.server.js": "fec8d7745d68d32c890741e6c8051ebc7d27b21d6fb65691d18ece488cbe7907",
+      "app/lib/refresh/shopify-order-range-plan.server.js": "ce5c7f5bc3f77337fe6db30f3c18b7b2ab8eeb2fb6bd19cc47b76aabbff7e932",
+      "app/lib/refresh/shopify-order-reconciliation.server.js": "ce5447273a67f1389f74e11dcc49e9433ae03789b6ad36a0bd1274e2009bb30d",
+      "app/lib/refresh/shopify-order-work-reservation.server.js": "fda53410962e762c15bbfcb3bee2b1514562c4b66a43e86127370421be8add4e",
+      "app/lib/refresh/work-stop-policy.server.js": "807206c9e6532d0f56d0495021ec2cd9647fcdf5b69ba81bc1602b36e2d1bea5",
+      "app/lib/server-error-log.server.d.ts": "88c8ecd0f839ab09c65ab0ec1095b696285f593335d4dd7ceba15b09747d2045",
+      "app/lib/server-error-log.server.js": "62218cac33d6eb6a6b5e81460783aa390f3b3f4ff216fd855db75a11811ca71a",
+      "app/lib/shopify/admin-identity.server.d.ts": "e389f358e688f0ed713c0249a624c049c942250e2f5916e209fb7f0de9195a60",
+      "app/lib/shopify/admin-identity.server.js": "5d2c84795293607c4f863f34bead4bdd8fa3828379476fb349e438aea460fb7a",
+      "app/lib/shopify/app-pricing-entitlement.server.js": "76e44f7f64d46a049900babb56aef3898ae5bca8c26a9fd33fe0973d8362e069",
+      "app/lib/shopify/encrypted-session-storage.server.js": "1a76f7138224a42a7ae6711fb8c9e768218feee6f2b924a65e8e8024d67894e0",
+      "app/lib/shopify/entitlement-runtime.server.d.ts": "62cb15966bae0a2c28e5e595854daaa752fd3372b2ec517356424c73ffbd4a86",
+      "app/lib/shopify/entitlement-runtime.server.js": "b6c0cd9d8d7be0f4dfbd5f9fcacde7edd99d52dc2c55ca5a124ff43b4c795844",
+      "app/lib/shopify/installation-authority.server.js": "94c8f6833202110a51becb2793dae684bbacd61a7b883f64070b428edc6fe1c5",
+      "app/lib/shopify/installed-app-return.server.d.ts": "ff91900f1eeb89c7e395079b5ee93f2a77abf6498c8be3fa9f58be07870c1759",
+      "app/lib/shopify/installed-app-return.server.js": "b90aef537b1ed3deedb315c7150d0c34ed0be25e95f93909f5cb46ca7c83376b",
+      "app/lib/shopify/order-collection.server.js": "46bb64a2e0b4a14b71cc491953bcc9f904cce85bfce2c2d30fa5980947e8e14a",
+      "app/lib/shopify/order-prewrite.server.js": "6b120d5cfd5d9bc1eb19ab745b7f7896e4a81e2c63db93f639a44950b435e84b",
+      "app/lib/shopify/order-read-protocol.server.js": "60731d5731a5bb683f202558d7806e32c04e67fa4facede1631664a4e269e0c6",
+      "app/lib/shopify/partner-api.server.js": "4b6d38beff374098e8aa655943acb18356032d5c9408cfb1c51567c8ff056e7f",
+      "app/lib/shopify/permission-release.server.d.ts": "b6f03ab1ce2827580700d15c3ff9a696efb8bd90ab927367a8ed77e59ae5a4b6",
+      "app/lib/shopify/permission-release.server.js": "a11e835d957d6e0473cfbe83a1be516763a7beee06f384fb0f9a4ca4ad9cbd76",
+      "app/lib/shopify/permission-scope-protocol.server.js": "8eb764eaf4ab827937422d4825f02f1df231333cfb7facf8a8d629c39bc8b60b",
+      "app/lib/shopify/permission-scopes.server.d.ts": "5148afc7a226a373cd69452e2acd96bfeec9315e659497e526012bf9e6d1675c",
+      "app/lib/shopify/permission-scopes.server.js": "7481e5c7189c47ff911ed2a0e3ed36acc496d78e57f1e952b14235d639311cdc",
+      "app/lib/shopify/permission-settings.server.d.ts": "e4bb2ff14edde8fafd775c6f3d57d72108cd85a4162956855b282dde2dcad4a3",
+      "app/lib/shopify/permission-settings.server.js": "2e5e340d003d87ab01728db45f6b4366f4b562681dd19cb602913ad2defdc808",
+      "app/lib/shopify/privacy-lifecycle.server.d.ts": "1353cd9f217b0870833f656000feb8effbabc785a946b8cc73b85bc3c2b47563",
+      "app/lib/shopify/privacy-lifecycle.server.js": "69d22f7f9bb5499bded7dade16dddd4b005c9dec0d45cb6aada74d269b05ca4a",
+      "app/lib/shopify/privacy-webhook.server.d.ts": "49587569d9acf4682d9a65639960720ed366ce31b460d2c9d12f78005a6e4d1c",
+      "app/lib/shopify/privacy-webhook.server.js": "932e3a651cccbc513a3eb38e3bf1753f7f3b46c29af13243a7a64ac3aafa34c0",
+      "app/lib/shopify/product-identity-verification.server.js": "8853492cf247c73f3000df7e0b1f0cdc1c05adb1a2a3c934c7d618c9bfd50d4b",
+      "app/lib/shopify/product-permission-status.server.d.ts": "3aeaaf989e8ced24c068c9e4fb3776e4b9b0f72f07a6aedcabeb6f2c21951fd9",
+      "app/lib/shopify/product-permission-status.server.js": "0a7d822aed42cd613dbd2648c16cf5a4048594e50c4fb1d814d694130bdd3a43",
+      "app/lib/shopify/progressive-permissions.server.d.ts": "82a044b2c1c756ccb6824d698d3ef5b801bbb6344f7ba7f56115d405b30485be",
+      "app/lib/shopify/progressive-permissions.server.js": "00195a7b804cd0fd9052c0d894772629ddbc99e6a09f3b33d8ded5671fe638d8",
+      "app/lib/shopify/provider-claim-prewrite.server.js": "52de309c24267f3ace60a9e025a520c7f859bafe5e108a26d2e12405854c2463",
+      "app/lib/shopify/session-envelope.server.js": "2e9bcc7b2c47240c4cc464f3eb45939763a9501693a5486d0ee21c1f97c805e0",
+      "app/lib/shopify/shop-identity.server.js": "b262c61ea83508b2f95f7036555943dea95d1173ff83aaf2064dcd28db73492e",
+      "app/lib/shopify/shopify-app-config.server.js": "7b59376ca8163161a29db6b76c28d4dad49c766122d218c90a4ff8394e31afcf",
+      "app/lib/shopify/shopify-app-runtime.server.d.ts": "60ec35ecedf9e5a20a2929b078a198a08479921db1676ed463d415ddf455414b",
+      "app/lib/shopify/shopify-app-runtime.server.js": "3f11540ed3c93ef47cb852b9542281cdd7cf83b833083d3cb742bff4393a70e6",
+      "app/lib/shopify/shopify-route-authority.server.d.ts": "bceeb62206efe79790e7743cf741f3ef508a20fbc1198ee78f02ba9d1ea5e1e3",
+      "app/lib/shopify/shopify-route-authority.server.js": "a69d506bd0b85974c13941d4e27db94ddc256edc2fd688b054abe8546707e0ed",
+      "app/lib/ui/klaviyo-setup-state.d.ts": "d68d76189d4badbcbd4989d8244b5c29ee700b6c398cc7d76cba59a975f2cb19",
+      "app/lib/ui/klaviyo-setup-state.js": "74d6e66c793e94f64162a6aa15e6ce9315b6f230ee93b0ecb3aaddf2e9c84fda",
+      "app/lib/ui/permission-explanation-copy.d.ts": "ba96695839e97b495b08f0ab6c6b6e77fc7ea9374b863a21bce2591889dbe1fa",
+      "app/lib/ui/permission-explanation-copy.js": "fdb3cc13306968514843f9e2231cd44ce09b574c7a1690ece273f5bb4def398e",
+      "app/lib/ui/permission-explanation-flow.d.ts": "87f98b5fcff13e7c10f3dac2e4bfa9bc69670585f6cb242e3ac9418ae7fceb00",
+      "app/lib/ui/permission-explanation-flow.js": "a6351e0a7b6985f15edda093af78605e3419c6c903b91956cb1ab4cc845d3b94",
+      "app/lib/ui/permission-settings-response.d.ts": "e3eabe27686e5e7bcaa14550ac9ad4d2c7d4ab9e87fe18d4a1d81c1cc8ff9b6e",
+      "app/lib/ui/permission-settings-response.js": "7fd0fe292e6942aadfdfb9d2600c2484f098e549e553ccb147c405fe30357f20",
+      "app/lib/ui/shopify-scope-window.d.ts": "09123e0170fa35d3a3838fa96918abbe80aba7dd4118d6bb008d7a7719725833",
+      "app/lib/ui/shopify-scope-window.js": "563b4353628a319b39594dacea7ce05d9e4532deb430579d1592a061827d0887",
+      "app/root.tsx": "534c2148909ea96dfbff755572c8a3128c28ecf868abf268470115e989b1bc42",
+      "app/routes/_admin._index.tsx": "a84ffed4dad59f12d8a5f3d820ddb11a5dda73e3103cc111b25e65d980124c7a",
+      "app/routes/_admin.ad-analysis.tsx": "082128424347814f6ebf3aefe72f15f050e311af6cbb18aa0641f8e417e79522",
+      "app/routes/_admin.settings.tsx": "3308c252d0777fad0a328fcdbd06c037022350d40427a14a74e539e30dfaedd9",
+      "app/routes/_admin.tsx": "4d7c102d846e1b2f8c3cf74c3932ac103b4c647ba731769d476e96caf8372690",
+      "app/routes/auth.$.tsx": "10d0342790bd90122f5c57a41cd3c8ad784f6556b095ac8e89cb8bf8b9dec0c7",
+      "app/routes/auth.google-ads.callback.ts": "31117361e75a1af2955afc4762da48a9220ef4044c52e4dcc208eaa3d6543584",
+      "app/routes/auth.klaviyo.callback.ts": "01719e18e1b75d20290ab0c012b104907a6bb8ba8d308acf48664f32b9805705",
+      "app/routes/auth.meta.callback.ts": "29dc37b0f6719c5a24e09ad5566907a36e8cad30e1b1b56916952d3f15a123d3",
+      "app/routes/internal.refresh.queue-check.ts": "d537719743abbba8151940a76976a512178b65561cb1d24b5bb998c573039ac1",
+      "app/routes/settings.google-live-evidence.ts": "27f78463eafc5bf26fe51b8d56376ee4a7e7bc013b07e6aa6a9d18c278d59425",
+      "app/routes/settings.klaviyo-live-evidence.ts": "47dd1d71f04aeaafb6df14924eba1d02ef9eb4c397948429e2ff79233f3d5912",
+      "app/routes/settings.provider-live-evidence.ts": "89fbcb7087fc480fefba708bbc730146f1ba41af48d98f1b0a10fe1427120495",
+      "app/routes/webhooks.shopify.tsx": "eac0ea30fcca28d6bba3c11105a5c4fda7778d1398c23f21fcb02f717d8bd056",
+      "app/shopify.server.ts": "cc5959867dd5c413b222d51c4aad7d9a39c7c3d15e590aada86a1ddfefdc6fad",
+      "contracts/a6-eo-implementation-master-v1.json": "80467e0f4900669c896ff0d811c50291f79c122e1b5be7ad0c3a4b2e9de4ea6f",
+      "contracts/eo-05-oauth-setup-permission-policy-v1.json": "c1914f91011464d3b16b4b0a7710e49878ce6dbb57427e3d0f7c68d9ec4ec681",
+      "contracts/eo-05-permission-explanation-design-v1.json": "ad4753b9ad4a6becd14764b7b33fb917f0cc491ad774cc1f1fe9053c5f189f35",
+      "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
+      "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md": "ebe10a96006be3daf97d0141c2b79dfa10d58636c57eaec2237c968c74c4a58c",
+      "docs/EXECUTION_PLAN.md": "cc630fa704bbda3614f6d7c2f48c4d4d14e3ffda738bbfc6eab6b9ca202619eb",
+      "docs/OAUTH_FLOW_CONSTITUTION.md": "74d7a8f327a9558712c3ac8bb54a6633fff7a7e2045405d236d35f265d124b28",
+      "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md": "49e253b08959faa9f0b2bf208ed5eb6d3c078a0ddf9097e667a9bf1483dc7350",
+      "package.json": "e46285b3a60421e8c338807d7b606afa17f16303b08a2832bed3222a06183fe8",
+      "pnpm-lock.yaml": "048661c323617fbd5d1c72eb5ade45ed11d2690aca9cbe3487c4095f25df10e6",
+      "shopify.app.toml": "6ce5b653102ea4f05fbc8f9777e049da2b34f224cc5499dd0a9ccd5d58b52d4e",
+      "supabase/migrations/20261006133830_eo02a_private_schema_roles.sql": "323797d40efd94cb4a256456e441916a4c13fedf3921d9f73cdb35a339fd31e1",
+      "supabase/migrations/20261006134013_eo02a_runtime_schema_usage.sql": "44cba1bbe756aa448847ee9894dcc09c14d4834942ffee79bde5a861714ba28d",
+      "supabase/migrations/20261006140517_eo02b_workspace_installation_authority.sql": "87c1009fa53b54d072713852cd5b1c35d70d0f580ea3c3a915289475417aca78",
+      "supabase/migrations/20261006140629_eo02b_remove_redundant_indexes.sql": "79d95c185171c6e7e6601571ddb2c0df1cd989cafeda64c7e7ad28cdab954d9a",
+      "supabase/migrations/20261006140828_eo02b_acceptance_probe.sql": "35ae232c69af49c0180411bef42d26f52661760f8e84ab921a3bf44967e88458",
+      "supabase/migrations/20261006142841_eo02c_shopify_app_pricing_entitlement.sql": "b0729684335e6306d386c57fc689cdaf9a560cc35fcf7d95687c1fae7922a9d9",
+      "supabase/migrations/20261006142953_eo02c_disambiguate_upserts.sql": "591ca9ea276d17c53a7b855c587ee32a9b3de1ff8f71f2294f651be116253b78",
+      "supabase/migrations/20261006143039_eo02c_acceptance_probe.sql": "20c767d593067e83202fd188aec3a9a647b19f06aee0c93cc76a281863bf192b",
+      "supabase/migrations/20261008104511_eo02c_encrypted_shopify_runtime_sessions.sql": "19159e7c3a56a21c16ac8f010c2824e16d0661169160cc6529a8b3b9c95d68a7",
+      "supabase/migrations/20261008140818_eo02d_privacy_lifecycle.sql": "6c006d8861b70154f642509f65bdd0d153f19d78d117693f768408d073dd64da",
+      "supabase/migrations/20261009070314_eo02bc_installed_shop_authority.sql": "72acafb0bc30fe1e6b4c7ec2a30f7bf05faf943a77ce930c4a6f6cdbdc15ce82",
+      "supabase/migrations/20261009074901_eo02d_durable_deletion_worker.sql": "a6ea648e259f7b1490964edfef919a5f424fef2fac865005ece08f6047c5600a",
+      "supabase/migrations/20261009075721_eo02d_worker_conditional_expression_fix.sql": "2dc2b4e7de5b5e06cf36174e181c5b6c569c8aa5220d840d7489bad1b86041e7",
+      "supabase/migrations/20261009091622_eo03a_oauth_transaction_boundary.sql": "0bbb57f0ab979c68dd692b6518ae777b9c3433bdc9e43dae52ddbf0972b5199c",
+      "supabase/migrations/20261009092144_eo03a_oauth_installation_fk_index.sql": "9a08c0f94ba3a0b2daa085025d852e2249cd06f6b6466e3d682aa0577ba98359",
+      "supabase/migrations/20261009113645_eo03b_token_vault.sql": "7c6a2a1ad185931d2e9430b282975f62ea548f4146b54ad2b09d043a09aa1729",
+      "supabase/migrations/20261009115314_eo03b_pkce_workspace_fk_index.sql": "e654a24254d1ac4a28d1bb0babe9208c0a15f1db27fbd7703e94bc91364b58a9",
+      "supabase/migrations/20261009130713_eo03c_connection_account_authority.sql": "f04c7bf6644bbef75da96305589b444457019e2cbfe8555f5d1ddff718fca8a0",
+      "supabase/migrations/20261009131339_eo03c_owner_policies_fk_indexes.sql": "8bccdba59fba6f3ea991c55904cbc6fa20b8b144015dacb58bccfb38c3d42af2",
+      "supabase/migrations/20261009141549_eo03d_provider_connection_lifecycle.sql": "97cae937c73979f16afe5121c421629c0ea1e868db31045ba5067b1dca7e14b3",
+      "supabase/migrations/20261009145154_eo03d_qualify_lifecycle_event_columns.sql": "0a4f7c0f5c2fce63bb8cc2f8e34114ac31a0529fb94afa8d3c5aa330c91baadd",
+      "supabase/migrations/20261009150114_eo03d_qualify_lifecycle_update_columns.sql": "85b45ac7bd239183dcffebe611824b66edaac24b7285846d0e20ca8bf6cd23c7",
+      "supabase/migrations/20261009150614_eo03d_qualify_finalize_update_columns.sql": "a2c7f15e9ced373ee73f9b83558066f7434722c639cfbb3e5db737765e849efe",
+      "supabase/migrations/20261009151123_eo03d_disambiguate_reconnect_conflict.sql": "c4577f4afc0d8860d7444f70e4959f6aae8cf28ac700a6a2f4e73579c21905c4",
+      "supabase/migrations/20261011114438_eo04c_provider_authorization_handoff.sql": "d1ee814f5dbdb94243fc14b6c39a795c08c9b00f3d3358a66a9a8db9e023dc72",
+      "supabase/migrations/20261011114809_eo04c_handoff_installation_fk_index.sql": "7f8e9caa5a8ce8a424a770225a12b579899c002326166d085b039faf99d46187",
+      "supabase/migrations/20261011123503_eo04c_callback_return_and_handoff_cancel.sql": "c2ae5bebc01d821013f0035dd160216abdc53acc1e2de624d9cbcda9b4894a62",
+      "supabase/migrations/20261011163811_eo04c_durable_selection_and_reconnect.sql": "00040eb2bc352b5c35d332861c39311dbfe407369afe164cdb483a282a6862e2",
+      "supabase/migrations/20261011170151_eo04c_disconnect_handoff_credential_release.sql": "55776f30137f74578f7d6f9c0400e7894dc1af2393e16efd81bef059213c746e",
+      "supabase/migrations/20261011170441_eo04c_finalize_stranded_invalid_google_disconnects.sql": "2153058f1493f2ff27d31e27722b87db1cc4779cf9979d7e8ed9e31d4a20b98c",
+      "supabase/migrations/20261011181612_eo04c_canonical_google_account_selection.sql": "d1a788f0eebf87d62a6b3110bb9c788d7b50f1cbcb8b5dc2caf62c0fecb47f90",
+      "supabase/migrations/20261011183443_eo04c_qualify_account_selection_columns.sql": "486463cf2aea69c3e77c228c427b7290cb6a1c75cf7d96bad5f7c7580a5bbb15",
+      "supabase/migrations/20261011194721_eo04c_reporting_account_completion.sql": "1ea86aca23d9b9e71b0bfb2d1c3c758f7a37cbd6721ae03a66b125e5bc86f8d0",
+      "supabase/migrations/20261013173301_eo04d_klaviyo_spend_ledger.sql": "d0929c3adac49d3d55deecde30bcdcbdb8045a269693a49d18554a667b3df30a",
+      "supabase/migrations/20261013195248_eo04d_klaviyo_same_day_spend_updates.sql": "cdee49b52f707bde2c0ca7f11292bed1a504b1c1477ffa63e1f1f51978d6cf9e",
+      "supabase/migrations/20261013201049_eo04d_klaviyo_reconnect_same_day_spend.sql": "be3bc3ce3a1f77565c5609f648b4f8fd14cad2312b3079b18cdb4f31a8461800",
+      "supabase/migrations/20261013203128_eo04d_klaviyo_reconnect_timestamp_order.sql": "593335af6e310737a6dbeae9712295e480cbf703a0709431aba56c432baebb82",
+      "supabase/migrations/20261017135321_eo04d_klaviyo_reauthorization_state.sql": "26bf15045bb0cef00794ded47fff91f2fe61de15fdc1be461f63b466f9274d48",
+      "supabase/migrations/20261018152910_a6tech01_retire_provider_authorization_handoffs.sql": "e16eed57c956a0913811e618f61ecdebf986d993ce7a7c3cecb3f41edbb7174e",
+      "supabase/migrations/20261018181906_a6tech01_privacy_workspace_fk_indexes.sql": "5ee943e6052f0973723954a4a10bf963389a7359214fcd38912b3d079d1c1af5",
+      "supabase/migrations/20261020092429_eo05a_refresh_work_tracking.sql": "43aaa3973d01012a52b6b2fdab9034c4405da7a08995265dca4e4cf379c047b2",
+      "supabase/migrations/20261020100851_eo05a_refresh_stop_records.sql": "941315282a4b8f95c313b4508e03c1b6bab92c67be3cefcfba7b3d2a2060d834",
+      "supabase/migrations/20261020111425_eo05a_refresh_chunk_progress.sql": "f06d2dc699a46cc321c5a5ef4fbc5cff20e9352d96a4d44291ff022a111aec3d",
+      "supabase/migrations/20261020120802_eo05a_refresh_queue_check.sql": "2c96f0d80e990b21bde7561b3e1f718345f831138e3c28a305cfcc6928cf977a",
+      "supabase/migrations/20261020122907_eo05a_refresh_entitlement_check.sql": "42de7aed50a4183e9152dc68ffe8fa7958c913a905ca106ad2d4f06d95ac61e5",
+      "supabase/migrations/20261020124834_eo05a_refresh_native_inventory.sql": "1a8a734b1f2e93341ea97ba493c3604e8723fa14319f5161cf1fdaeb95e73f32",
+      "supabase/migrations/20261020131343_eo05a_refresh_preflight_bridge.sql": "1a57f4705e4fa849ba751c5e10761b99e07c3bc857e6adbdecf4abdc5634676a",
+      "supabase/migrations/20261020134823_eo05a_shared_api_quota.sql": "1a4312463fa73e95622051cbd191c9d58cd7b9d016d3c22fc6d2050de7dfbe41",
+      "supabase/migrations/20261020143838_eo05a_quota_work_wait.sql": "0899a6b713237d578a6d6780f6cc961b21e09dfabad3cd2c8677386da692a125",
+      "supabase/migrations/20261020150205_eo05a_quota_stop_scope.sql": "5bad305408cbcd2a47345650db7fe6eca340da68d097e85f7613c5788ce36c3f",
+      "supabase/migrations/20261020152516_eo05a_quota_scope_resolver.sql": "73d8498da535e59677c297b14c475bc04ef06a0bebc2789400712265c282a0a3",
+      "supabase/migrations/20261020161840_eo05a_quota_authority_binding.sql": "a3b1245817534da5b453dba56f8897979c0e6b0d6ab545da904b118e894a2a7c",
+      "supabase/migrations/20261020164124_eo05a_quota_response_feedback.sql": "f021a14264a4a4771360b5ee31297bece8d4545b9762c72576a9e3771215f311",
+      "supabase/migrations/20261020165755_eo05a_google_quota_diagnostic.sql": "8765dc787c78254d0d9ca4a060d3b9aa99b592e4b70f91b15454a483ae3b4d1a",
+      "supabase/migrations/20261020172928_eo05a_refresh_scheduled_queue_check.sql": "dfebbcad90441d2d9c5da34c1de55022a82e57af73f2c36da7e0ab135cf6b67e",
+      "supabase/migrations/20261020184556_eo05a_refresh_interrupted_work.sql": "ad5f2e765ff54ebdc9564cec55fc0c13378a8d43baec1a1b6a942daa95410e82",
+      "supabase/migrations/20261020193814_eo05a_refresh_queue_entry_role.sql": "845f45808775755eb2d50f8309e8d5e91c1930d1195d356de95e728a931dc915",
+      "supabase/migrations/20261028132721_eo05a_admin_quota_context.sql": "de385d571b3632bcb934578d3753278759ebf55877c5437f7a40d7c0b6f4b787",
+      "supabase/migrations/20261028141201_eo05a_admin_cost_budget.sql": "5d95f4f85f3c5bcd0c6847f5be713358de9c278ff8b0db5d3ea6c2635f6a2c22",
+      "supabase/migrations/20261028143322_eo05a_admin_cost_feedback.sql": "a3f8324a3c27bd99f9a052f21cbf008ce81a5712c5b0d4c5613b5115b47ea512",
+      "supabase/migrations/20261028152713_eo05a_merchant_quota_context.sql": "f30b9cac31790dc55df3706197663121017e82662f0a04cf79cff7e1417cb50d",
+      "supabase/migrations/20261028161123_eo05a_identity_authority_snapshot.sql": "94296c9f7a1e82caab5032b6bdacdf45761bd791d6337bf36e2353e3ef3db281",
+      "supabase/migrations/20261028164208_eo05a_identity_oauth_atomic_stage.sql": "7035905dd0cdb14b483bc8986558aa2d807bf3efa274ed2eb489c74048ed6ac4",
+      "supabase/migrations/20261028175738_eo05a_google_identity_renewal_receipt.sql": "03103ec8c09c32622064f2dd50db64314fc650e957fdbb0e5acb7e0d06c275e1",
+      "supabase/migrations/20261028185046_eo05a_shopify_installation_owner_read.sql": "966c483bbd90b35271f314cf28fb17b693030c9257387b7dbf36d5a4f6ab391d",
+      "supabase/migrations/20261028201729_eo05a_shopify_order_pending_queue.sql": "c88d920d633ea5ceff638c5104591bd48bbe88df40844ce654f2b2123e20db8e",
+      "supabase/migrations/20261028204502_eo05a_shopify_order_worker_reservation.sql": "2f442dc843b2d8275a198159737d8e3605021a3d511c112925c1daeb24bf4c2d",
+      "supabase/migrations/20261028212220_eo05a_shopify_order_entitlement_intent.sql": "047f411069b8a6d819b326a113f5ae496804a0c030cb07038f374d943869c65d",
+      "supabase/migrations/20261028220207_eo05a_shopify_order_admin_read.sql": "82b56eeb86e45b6f8646799d48d5e819b1839caab9d35e3bd428582832678c64",
+      "supabase/migrations/20261029083341_eo05a_shopify_order_fair_dispatch.sql": "1ca60d9209094dcf9410c19063b4fd203bf98ba2dcf9185a165cd48537d4abd1",
+      "supabase/migrations/20261029091041_eo05a_shopify_order_reconciliation.sql": "4c8d9870b5e17cafe971cdbd569870cebc040b15aa0b69f3075ae0ec498aa223",
+      "supabase/migrations/20261031181313_eo05a_identity_oauth_reconnect.sql": "d455c0cd905d0d8ef68a2204a91fd963fb9e3fdfa7475f5feaa2bfe0a9b54730",
+      "tests/a6-docs-01-turkish-standardization.test.js": "831f19b957b7d592fe0e8fb39e1b51b63215fada52792b4d9c30e06ffadcd24c",
+      "tests/a6-tech-01-f01c-scoped-recovery.test.js": "3bd869071d5042402215176a99bf14dcebce6d3d0497ffcba946038050701792",
+      "tests/eo-01c-preview-shell.test.js": "c3d67bb6666c19cf5ac12cfcd8a7f2f2acdf399d5a8ac32c0269823b06cbf789",
+      "tests/eo-03a-oauth-transaction-boundary.test.js": "b364193460356370d1128000e6c0b61e975b2d79b896135d97ce648bc30a7747",
+      "tests/eo-03b-token-envelope-startup-guard.test.js": "eaaa49b567183903547fb240dfc184222c1f5ab682c1d299e51f99ec078ca998",
+      "tests/eo-03c-connection-account-authority.test.js": "6affbbfe5b1cce5976f66b1fae157738d8480f04ed3cc3f9dc740fe5d30f9e54",
+      "tests/eo-03d-provider-connection-lifecycle.test.js": "e9cea8b08e03d92f40866fe95b22fcb684f3f25cf315e3de789d51652c3c683d",
+      "tests/eo-04b-meta-oauth-account-selection.test.js": "c7617190ce04902c782cfbcb3a7b5eb4fa37e2d5d1f72abbae4db22a4e1c714b",
+      "tests/eo-04c-google-oauth-corrective-rebuild.test.js": "0b7286b3ce4b0f4a98aac6512d8cdc4e07c7a1f07a96e5eba4853d0c96eadd7f",
+      "tests/eo-04d-klaviyo-oauth-estimated-spend-start-brief.test.js": "337c901b69d5d7f6e9df636d67d4332ba76e5e37143a6980fda7bef08769f399",
+      "tests/eo-04d-klaviyo-oauth-foundation.test.js": "d1c5f3c04f0282a973178cb14b4c0894acfcd721bad7715a90fe5960e03c8a13",
+      "tests/eo-04d-klaviyo-oauth-hardening-contract.test.js": "85b57d1cb657090faef4fc78d7a1ff21e34bd53b5111ec2a79e4adc6f653c0aa",
+      "tests/eo-05a-quota-scope-resolver.test.js": "fe8c3ebd7c709bde4612c0d974823385ca793b5476d6b1ef832ecd259a085627",
+      "tests/eo-05a-quota-stop-scope.test.js": "6b7df8d784ddae894f7000ea040020fc44e6706df99b9353832c942b77e2a3b1",
+      "tests/google-meta-settings-flow.test.js": "a74b262516ff1ce7de12fd9867d47064983855fbf5a5954a04c8c0ce90cbd840",
+      "tests/google-partial-permission-return.test.js": "b3b6a6d80f3dbf56642c263379f86ec37717790d1458ae419c068ea955580495",
+      "tests/google-pd-normal-scope.test.js": "832db70497b9143b1053bb86dc9a92e56f2a157fe34c899ff9c89dc0276c340a",
+      "tests/google-rest-permission-log.test.js": "7c6f3816c4b2bf79e12ddf1b942d548d4fa245dfac00f1f003b767226515686d",
+      "tests/identity-oauth-atomic-stage.test.js": "ac475e7c1622e6502d2321bbd327348ab779c8914340b12a1ed0a3c46a2d181d",
+      "tests/identity-oauth-start-binding.test.js": "53da46cab2b38e9f58650545d97ffdfa7cee5d7989a99479d1f5c3ef26306b3d",
+      "tests/identity-permission-preflight.test.js": "5f74265fe234f4937e5cc7f01c9e11ce052daf3ddbd97ae97196b247685e2354",
+      "tests/klaviyo-scope-provenance.test.js": "73afdd2e1609eec5ab711c19ebee9d30504211ef6b9db329c312c290a971ea53",
+      "tests/oauth-flow-constitution.test.js": "fce1b07e9546637ca5725c85d622c311c2d55ae950fd16542488325d7efaa4ab",
+      "tests/oauth-identity-scope-binding.test.js": "5279059d990df63aed078f1c98401c3eacebd517247e04c2e3cf4065c2583455",
+      "tests/pd-composition-scope.test.js": "0327a5ccd468d32d4a6f77c128e3cd3dd2c5f351a04bb19949bfbaa3fd215a07",
+      "tests/permission-error-log.test.js": "61726f8c201b8b7f9ab4c4ce39c0affe94b83f20434b839999862da2ebc17d22",
+      "tests/permission-explanation-flow.test.js": "67d67b1e452d37b726d38a58168fa2941debc000730db87401ead6fafb2cf6d0",
+      "tests/permission-release.test.js": "1393a4af41192cdc7dc2b58a8a3a275df19c3bcd44eedfd6b8634434717b5b2f",
+      "tests/permission-settings.test.js": "5a53c68e019cfd23042a0b29e7062deee495f8faafec5df24e0283f9e38e481f",
+      "tests/permission-setup-selection.test.js": "c767fed7b7dc4c51fb3a96bba1a8d95162d2e6db873cac0a779401e5f745b132",
+      "tests/shopify-permission-readback.test.js": "2b7500dd9424aa324b2c9a61b5e3d57f1ce1a3fe37a1dc192e63c49fe3e6d21e",
+      "tests/shopify-permission-scope-protocol.test.js": "4f7828c38691a70c656373897be106ab3a757dad75b84515af7d6aa3e8d8f00c",
+      "tests/shopify-products-completion.test.js": "4bb82463a7e175122d0a8a34a74c038d2525942e0dbd03c9b1e8d17ac59053ad",
+      "tests/shopify-progressive-permissions.test.js": "4e6ee536bb7d4626c892c637594f1737a044394f8480c72821955ae3652294e6",
+      "tests/step07-settings-corrections.test.js": "b0c3993eab488a848e28b797ec45ac2da638fd452f82dd7f3fee0a4e2c006319",
+      "tools/check-migration-lineage.mjs": "16661a19ed900ee4f1cf93482ceaaa4aaa23dde2851cacbc6bf0263154848121",
+      "tools/check-oauth-constitution.mjs": "fb7285abc41cd0cc2bbe589dd216ec4043a7923a16a7d24266739c22a2d1dddb",
+      "tools/eo05-admin-cost-budget-probe.mjs": "3754269582b0d201413308cb8a8495928a4e3f197370e93b024195ceb16fab5a",
+      "tools/eo05-admin-cost-feedback-probe.mjs": "3929e29a7ddeef23acb87a7d361289ead0dcd52f7b89e64399c372fba6071071",
+      "tools/eo05-admin-quota-context-probe.mjs": "e67525499cd3d2042298076e17ea2d84618c74781d78bd93fbbe44cfa827e0f9",
+      "tools/eo05-google-identity-renewal-probe.mjs": "2f429c983600225ccdc9cadeede2611de9d48522dc575d5cb583b324b6f07fd1",
+      "tools/eo05-google-quota-probe.mjs": "939dc5d8013c7aae25124a5df1acda577c5394955fb61ff87da57b26311c3c5c",
+      "tools/eo05-identity-authority-snapshot-probe.mjs": "0136e8dc5a5720b78d1cb4dca081f19e8b473812b6d66129b94f64fd5edf672c",
+      "tools/eo05-identity-oauth-atomic-probe.mjs": "89758e82406dd15e94551bf22305ef9845dd6bf009127d119f1f7d618a9a20e5",
+      "tools/eo05-merchant-quota-context-probe.mjs": "392ce955a6bedca8baa932143ae6e99abb0e54756134e98584383c9768636492",
+      "tools/eo05-quota-authority-probe.mjs": "50c1b31cafb78cc774f7ed62af849d79136f39519375076e53f4eac896a2fdd5",
+      "tools/eo05-quota-feedback-probe.mjs": "42b9cf4d7d32ffb4199462f6f04aa13dbff99f33f9b403b388628fff6b73ae5c",
+      "tools/eo05-quota-scope-resolver-probe.mjs": "d48bc100b2a59bb081a04a1b033c73f67ee724a480f3d927063204367200b6b8",
+      "tools/eo05-refresh-entitlement-probe.mjs": "398084b7276f99a73270bb9bc7fa82199664ddc9cddf4680d1216f66176c00ff",
+      "tools/eo05-refresh-interrupted-work-probe.mjs": "b407fd7c3adc7bd24f57282c149bfce95d3a1a6ac6f449b946006e8eaf28642c",
+      "tools/eo05-refresh-native-inventory-probe.mjs": "880074f1f492b50120977f1af4766416252d71a290837df78fb238197c7f3316",
+      "tools/eo05-refresh-preflight-probe.mjs": "55f68acbb19ed7973e96cadd600649daf3ef64fbef3cec3d42717c3b9c02dcf4",
+      "tools/eo05-refresh-queue-check-probe.mjs": "1416ced2fcbc08c20fcd3ec2d4237cee14907b6f0fd44dc191f0f55664ccb97a",
+      "tools/eo05-refresh-queue-cron-entry-probe.mjs": "963eb459cda2dce12759050a431de55096e566049c03c579d3ce6f90fc1373da",
+      "tools/eo05-refresh-scheduled-queue-probe.mjs": "fe524da7d7bdb8cf4851499b216a5e61d35c283cfce81ea6528a32cc8728be0c",
+      "tools/eo05-refresh-small-baseline.mjs": "ccc1611970f1ee2b562979326f9b731f4206f743448bf75042848c0bf0663441",
+      "tools/eo05-refresh-work-chunk-probe.mjs": "f024774bf210deec7cded58194046b3ba818353903a483c2b1372ec5a78f62cf",
+      "tools/eo05-refresh-work-probe.mjs": "c6acab3b3d47a056979bff1047b7290227b4a0480f6d0531896065fec95b75be",
+      "tools/eo05-refresh-work-stops-probe.mjs": "3ca5e3a66981d045fc5004c3f40f984c2a4546246c813ece1887198d7b4f844e",
+      "tools/eo05-shared-quota-probe.mjs": "653dc43e21f5c7f1a9fdd9b7dac4ceea3f96ef4ecce0916438cc27db3fd97290",
+      "tools/eo05-shopify-installation-owner-probe.mjs": "83455ad97e85cae388aeb92b72ab314cc582384233c40fdeb0ed569997ca1668",
+      "tools/eo05-shopify-order-admin-probe.mjs": "0f355c287ae6659f7ba8c83de3c2295cbec76261a453bf84b55eafbe3379db9b",
+      "tools/eo05-shopify-order-entitlement-probe.mjs": "02b9291e443cad2e90b98837dde3ed6a39afcb4c3ca01b2ea227177b1ae91ef9",
+      "tools/eo05-shopify-order-fair-dispatch-probe.mjs": "8d9235325cf6ac6b6050beb9824b49672b1ee4aaecabacf42470d29581f83cfa",
+      "tools/eo05-shopify-order-queue-probe.mjs": "dff88c7186f010381c336ad087abf2ba0ae5539fa4a722f547d5962f0bc21f16",
+      "tools/eo05-shopify-order-reconciliation-probe.mjs": "06eac560b4e00bbcdb2b83cdb5fc7d8c5f980f7589bef8b332794238ab185d24",
+      "tools/eo05-shopify-order-work-probe.mjs": "1b3045b0c28ec2e8acaaa92e1308185becc02a03655ada9accf823cd52445bd9",
+      "tools/eo05-single-account-selection-probe.mjs": "c87be931bf049384ceb339ec77c57f185f8245a9ff7764879c5eafa629bdfbf0",
+      "tools/f01-database-replay.mjs": "51ea2e08771fe03bb12fe283142c8081090e98670ab466fac130d3fc00082481",
+      "tools/f01-identity-oauth-rollout.mjs": "eca29ffeec3750cccb8efd54160a76cdd43e2442d20e55af5e1c5c775e1427a8",
+      "tools/f01-schema-inventory.sql": "83295e72ff5d8fe2e58e57145304ebe7912aaa145d7091a4a0806bae58302825",
+      "tools/f01-scoped-recovery.mjs": "766c68aa43b5b91735f18d75b64c74dc57bcf3d01eb377ce84b3e4062a937726",
+      "tools/f08-privacy-index-probe.mjs": "2f790c86a62b6e51a2486e85f6ddcb2b3284349558b5e88dc566695aa17f28ca"
+    }
+  },
+  "revisions": [
+    {
+      "id": "oauth-constitution-bootstrap-2026-11-01",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Owner explicitly approved the concrete constitution + machine contract + CI protections + PR package in this conversation after accepting PR291 presentation."
+      },
+      "rationale": "Consolidate the owner-tested flows and prohibit unrecorded changes; no OAuth runtime modification.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "merge": false,
+        "deploy": false
+      },
+      "changed_paths": [
+        ".github/workflows/repository-governance.yml",
+        "AGENTS.md",
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/eo-05-oauth-setup-permission-policy-v1.json",
+        "contracts/eo-05-permission-explanation-design-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md",
+        "docs/EXECUTION_PLAN.md",
+        "docs/OAUTH_FLOW_CONSTITUTION.md",
+        "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md",
+        "tests/a6-docs-01-turkish-standardization.test.js",
+        "tests/oauth-flow-constitution.test.js",
+        "tools/check-oauth-constitution.mjs"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ]
+    }
+  ],
+  "coverage": {
+    "explanation_cancel_afterhide": [
+      "tests/permission-explanation-flow.test.js",
+      "tests/permission-setup-selection.test.js"
+    ],
+    "google_meta_one_multi_resume_disconnect": [
+      "tests/google-meta-settings-flow.test.js",
+      "tests/permission-settings.test.js"
+    ],
+    "klaviyo_account_spend_zero_lock": [
+      "tests/step07-settings-corrections.test.js"
+    ],
+    "shopify_independent_scope_owner_readback": [
+      "tests/shopify-products-completion.test.js",
+      "tests/shopify-progressive-permissions.test.js"
+    ],
+    "security_claim_scope_cas": [
+      "tests/eo-03a-oauth-transaction-boundary.test.js",
+      "tests/oauth-identity-scope-binding.test.js",
+      "tests/identity-oauth-atomic-stage.test.js"
+    ],
+    "first_error_no_secrets": [
+      "tests/permission-error-log.test.js",
+      "tests/permission-settings.test.js"
+    ]
+  }
+}

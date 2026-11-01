@@ -196,7 +196,9 @@ test("Settings uses accepted Shopify components and keeps Resume separate from O
     klaviyo,
     /commandFor="klaviyo-change-value-modal"[\s\S]*onClick=\{prepareKlaviyoCorrection\}/,
   );
-  assert.doesNotMatch(klaviyo, /Reporting Account|Ad Account/);
+  // Owner-approved connected-card copy now calls the existing account
+  // "Reporting Account". This must not add an advertiser/reporting selector.
+  assert.doesNotMatch(klaviyo, /label="Reporting Account"|name="reportingAccountId"|Ad Account/);
 });
 
 test("disconnect revokes before local lifecycle authority is removed", () => {

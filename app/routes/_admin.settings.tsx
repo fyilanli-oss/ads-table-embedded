@@ -1032,11 +1032,10 @@ export default function Settings() {
           <s-stack direction="block" gap="base">
             {permissions.removingProduct ? <s-banner tone="info" heading="Removing product access…" />
               : permissions.checkingProduct ? <s-banner tone="info" heading="Checking product access…" />
-              : productAccess === "ready" ? <s-badge tone="success">Product access approved</s-badge>
+              : productAccess === "ready" ? <><s-badge tone="success">Connected</s-badge><s-paragraph>Product access approved</s-paragraph></>
               : productAccess === "unknown" ? <s-banner tone="critical" heading={permissions.productRemovalResult === "unknown" ? "Could not verify that product access was removed. Check status to continue." : "Could not verify product access. Check status to continue."} />
               : productAccess === "missing" && permissions.productRemovalResult === "removed" ? <s-banner tone="success" heading="Product access removed." />
               : <s-paragraph>{productAccess === "missing" ? "Product access is not connected." : "Product connection is currently unavailable."}</s-paragraph>}
-            <s-paragraph>Product access lets AdsTable read products and variants to match product reporting to your Shopify catalog.</s-paragraph>
             <ProductAccessRemoval owner={state.shopifyPermissionOwner} ready={productAccess === "ready"} busy={permissions.busy}
               onConfirm={() => {void permissions.removeProductAccess();}} onUnknown={permissions.productRemovalUnknown} />
             {productAccess === "missing" || productAccess === "unavailable" ?
@@ -1046,11 +1045,10 @@ export default function Settings() {
           <s-stack direction="block" gap="base">
             {permissions.removingOrder ? <s-banner tone="info" heading="Removing order access…" />
               : permissions.checkingOrder ? <s-banner tone="info" heading="Checking order access…" />
-              : orderAccess === "ready" ? <s-badge tone="success">Order access approved</s-badge>
+              : orderAccess === "ready" ? <><s-badge tone="success">Connected</s-badge><s-paragraph>Order access approved</s-paragraph></>
               : orderAccess === "unknown" ? <s-banner tone="critical" heading={permissions.orderRemovalResult === "unknown" ? "Could not verify that order access was removed. Check status to continue." : "Could not verify order access. Check status to continue."} />
               : orderAccess === "missing" && permissions.orderRemovalResult === "removed" ? <s-banner tone="success" heading="Order access removed." />
               : <s-paragraph>{orderAccess === "missing" ? "Order access is not connected." : "Order connection is currently unavailable."}</s-paragraph>}
-            <s-paragraph>Optional order access lets AdsTable read recent orders and purchased products to compare Shopify sales with marketing attribution.</s-paragraph>
             <OrderAccessRemoval owner={state.shopifyPermissionOwner} ready={orderAccess === "ready"} busy={permissions.busy}
               onConfirm={() => {void permissions.removeOrderAccess();}} onUnknown={permissions.orderRemovalUnknown} />
             {orderAccess === "missing" || orderAccess === "unavailable" ? <>

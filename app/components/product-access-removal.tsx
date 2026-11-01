@@ -24,7 +24,7 @@ export function ProductAccessRemoval({owner, ready, busy, onConfirm, onUnknown}:
   }, []);
   return <>
     {ready ? <s-button tone="critical" commandFor="shopify-products-revoke-modal" command="--show"
-      disabled={busy || !owner ? true : undefined}>Remove product access</s-button> : null}
+      disabled={busy || !owner ? true : undefined}>Disconnect</s-button> : null}
     <s-modal ref={modal} id="shopify-products-revoke-modal" heading="Remove product access?" size="base" padding="base">
       <s-paragraph>AdsTable's permission to read Shopify products and variants will be removed. You will need to grant access again for product identity matching. Existing records will not be deleted.</s-paragraph>
       <s-button slot="primary-action" variant="primary" tone="critical" disabled={busy || !ready || !owner ? true : undefined}

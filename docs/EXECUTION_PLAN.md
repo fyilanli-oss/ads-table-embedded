@@ -1,3 +1,11 @@
+## 1 Kasım — mevcut07: Shopify bağlı kart kopyası düzeltmesi
+
+Owner Shopify amaç paragraflarını karttan kaldırıp iki bağımsız grup için
+Connected → Product/Order access approved → Disconnect sırasını istedi.
+Güncel birebir kayıt aktif kart sözleşmesinin shopify alanında ve Settings07
+brief'inin başındadır. Bu dar UI hazırlığı mevcut onay modalını/erişim kaldırmayı
+ve diğer sağlayıcıları değiştirmez; merge/yayın/native kabul değildir.07 açık.
+
 ## 1 Kasım — mevcut07: ürün sahibinin bağlı kart düzeni
 
 Ürün sahibinin birebir silme/metin/eylem sırası talebi,

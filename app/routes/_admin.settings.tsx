@@ -1275,13 +1275,13 @@ export default function Settings() {
 
           {state.klaviyo.view === "pending" ? (
             <>
-              <s-badge tone="info">{pendingKlaviyoAccount ? "Estimated spend required" : "Account selection required"}</s-badge>
+              <s-badge tone="warning">Resume setup</s-badge>
               <s-paragraph>
                 {pendingKlaviyoAccount
-                  ? "Add the estimated 30-day email spend to finish setup. Enter 0 if there is no cost."
-                  : "Klaviyo authorization is complete. Select the account, then add its estimated 30-day email spend to finish setup."}
+                  ? "Enter your estimated spend to finish setup."
+                  : "Select your account to finish setup."}
               </s-paragraph>
-              <s-button variant="primary" disabled={permissions.busy || klaviyoWorking || initialSpendSaving} onClick={resumeKlaviyoSetup}>
+              <s-button disabled={permissions.busy || klaviyoWorking || initialSpendSaving} onClick={resumeKlaviyoSetup}>
                 Resume setup
               </s-button>
               <s-modal

@@ -1,3 +1,27 @@
+## 1 Kasım — Klaviyo Resume setup kartının ortak sunumu
+
+Owner1000070400 ekranından sonra somut kart görünümü kod/test/PR hazırlığını
+onayladı. Mevcut07. Yalnız Klaviyo pending kartı: s-badge tone=warning ile Resume
+setup; hesap seçilmemişse Select your account to finish setup.; hesap seçilmiş ve
+spend eksikse Enter your estimated spend to finish setup.; mevcut s-button Resume
+setup varsayılan variant ile diğer platformlardaki gri görünümü kullanır.
+
+İki ayrı modal, tek hesapta bile explicit account selection, native afterhide,
+estimated spend0 desteği, modal açıklamaları/validasyon, busy/unknown/owner kilitleri,
+server readback ve bütün handler'lar korunur. Connected, disconnected, verifying,
+error/unknown, Cancel, provider/config/izin/token ve diğer platformlar değişmez.
+Kısa kart metni maliyet modalındaki0 açıklamasının yerine geçmez.
+
+Bileşenler mevcut stable Polaris2.0 s-badge tone=warning, s-paragraph ve s-button
+varsayılan variant'tır; custom CSS/renk/HTML yoktur. Resmî kaynaklar2026-11-01:
+https://shopify.dev/docs/api/app-home/latest/web-components/feedback-and-status-indicators/badge
+https://shopify.dev/docs/api/app-home/latest/web-components/actions/button
+
+Mevcut account/spend modal ve kilit/no-replay regresyonları, anayasa, typecheck/build
+ve CI çalıştırılır; salt metin kopyası için yeni test eklenmez. Masaüstü ve en az
+320px mobilde Google ile aynı durum → kısa açıklama → Resume sırası beklenir.
+Native görsel kabul owner'dadır;07 açık. Merge/yayın ve canlı işlem ayrı onay ister.
+
 ## 1 Kasım — eksik kurulum, Klaviyo kilidi ve ortak işlem bildirimi
 
 Owner Connect/Disconnect testlerini tamamladıktan sonra bu üç maddelik sözleşme,

@@ -1,4 +1,33 @@
 {
+  "Settings_transition_feedback_2026_11_01": {
+    "checked_at": "2026-11-01",
+    "existing_plan_step": 7,
+    "authority": "Explicit owner approval of three-item documentation, code/tests and PR package.",
+    "analyst_brief": "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md",
+    "incomplete_copy": {
+      "permissions": "Complete your permissions to finish setup.",
+      "advertiser": "Select your advertiser accounts to finish setup.",
+      "reporting": "Select your reporting account to finish setup."
+    },
+    "progress": {
+      "disconnect": "Disconnecting…",
+      "initial_spend": "Saving estimated spend…",
+      "verification": "Verifying access…",
+      "component": "s-banner tone=info"
+    },
+    "success": {
+      "meta": "Meta was disconnected.",
+      "google_ads": "Google Ads was disconnected.",
+      "preserve": "Existing Shopify Product/Order access removed. and Klaviyo was disconnected. success banners",
+      "component": "s-banner tone=success"
+    },
+    "lock": "Release only removed modal-set ownership on cleanup; preserve native afterhide handoff, active-request fences and no replay.",
+    "native_visual_acceptance": false,
+    "step07_done": false,
+    "live_calls": false,
+    "merge_authorized": false,
+    "deploy_authorized": false
+  },
   "Shopify_scope_owner_binding_2026_11_01": {
     "existing_plan_step": 7,
     "checked_at": "2026-11-01",

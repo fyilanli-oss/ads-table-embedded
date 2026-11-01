@@ -727,6 +727,7 @@ export default function Settings() {
   const metaWorking = (revalidating && refreshProvider === "meta") || (pending && actionProvider === "meta");
   const klaviyoWorking = (revalidating && refreshProvider === "klaviyo") || (pending && actionProvider === "klaviyo");
   const initialSpendSaving = initialSpendFetcher.state !== "idle";
+  const klaviyoConnectedModalsVisible = state.klaviyo.view === "connected" && !klaviyoWorking;
   const pendingKlaviyoAccount = state.klaviyo.view === "pending"
     ? klaviyoSetupAccount(state.klaviyo.accounts, selectedKlaviyoAccountId) : null;
   const klaviyoPeriods = state.klaviyo.view === "connected"
@@ -749,8 +750,15 @@ export default function Settings() {
       element.addEventListener("show", show); element.addEventListener("afterhide", hidden);
       cleanups.push(() => {element.removeEventListener("show", show); element.removeEventListener("afterhide", hidden);});
     }
-    return () => {for (const cleanup of cleanups) cleanup();};
-  }, [state.klaviyo.view]);
+    // Removing a conditional modal cannot emit afterhide. Release only the
+    // lock owned by this removed modal set; never unlock a different dialog.
+    const ownedIds = new Set(Array.from(elements, element => element.id).filter(id => id.startsWith("klaviyo-")));
+    return () => {
+      for (const cleanup of cleanups) cleanup();
+      if (externalLock.current && ownedIds.has(externalLock.current)) externalLock.current = null;
+      setExternalModal(current => current && ownedIds.has(current) ? null : current);
+    };
+  }, [state.klaviyo.view, state.permissionViewOwner, klaviyoConnectedModalsVisible]);
 
   useEffect(() => {
     if (!revalidating) setRefreshProvider(null);
@@ -1210,16 +1218,14 @@ export default function Settings() {
       </s-section>
       <s-section heading="Klaviyo">
         <s-stack direction="block" gap="base">
-          {permissions.providerContent("klaviyo")}
+          {!klaviyoWorking && !initialSpendSaving ? permissions.providerContent("klaviyo") : null}
           {actionData?.ok === false && actionData.provider === "klaviyo"
             ? <ErrorBanner provider="klaviyo" code={actionData.code} />
             : null}
 
-          {klaviyoWorking ? (
-            <>
-              <s-badge tone="info">Working</s-badge>
-              <s-paragraph>Klaviyo setup is being updated…</s-paragraph>
-            </>
+          {klaviyoWorking || initialSpendSaving ? (
+            <s-banner tone="info" heading={initialSpendSaving ? "Saving estimated spend…"
+              : pending && navigation.formData?.get("intent") === "disconnect" ? "Disconnecting…" : "Verifying access…"} />
           ) : null}
 
           {!klaviyoWorking && state.klaviyo.view === "error" ? (

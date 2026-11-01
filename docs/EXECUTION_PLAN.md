@@ -1,3 +1,17 @@
+## 1 Kasım — mevcut07: tek hesap kaydı sonrası yanlış unconfirmed
+
+Owner salt okunur token-free bağlantı metadata doğrulaması ve dar düzeltmenin gerçek
+SQL testleriyle PR hazırlığını onayladı. Meta bağlantısı10:55:07.702UTC connected26,
+bir aktif hesap/bir Reporting Account bağı;10:55:08.044UTC hesap seçimi logu genel
+unconfirmed. SQL hesap-seçim receipt'i Reporting Account döndürmüyor; ortak katman
+tek hesapta bu alanı bekliyordu, test mock'u alanı fazladan içeriyordu. Gerçek receipt
+doğrulanıp Connected sonucunda kalıcı Reporting Account mevcut repository'den okunur;
+bağlantı/credential/hesap/lifecycle sürümü uyuşmazsa durur, retry yoktur. Ortak
+Google/Meta iki bağlantısı ve gerçek SQL fixture/testleri birlikte düzeltilir;
+scope/akış/UI/tek-çok hesap davranışı değişmez. Migration/canlı ayar/OAuth/merge/yayın
+yetkisi yoktur. Ayrıntı mevcut07 brief'indeki tek Meta hesabı kaydıdır.
+07 açık;15 başlamadı;22 paused;23 Dataset yazımıdır.
+
 ## 1 Kasım — mevcut07: Reporting Account yenileme kayıt eksikliği
 
 Owner yalnız canlı fonksiyonları salt okunur doğrulama ve dar düzeltmeyi izole

@@ -47,7 +47,16 @@ function harness(provider, options = {}) {
       assert.deepEqual(values, [owner.workspaceId, owner.installGeneration, provider]);
       return {rows: options.absent ? [] : [row()]};
     }
-    if (sql.includes("load_provider_account_authority")) return {rows: status === "connected" ? [row()] : []};
+    if (sql.includes("load_provider_account_authority")) {
+      if (options.authorityReadError) throw Error("READ_FAILED");
+      const persisted = row();
+      if (options.authorityWrongAccount) persisted.reporting_account_id = "unavailable";
+      if (options.authorityWrongConnection) persisted.connection_id = id(6);
+      if (options.authorityWrongCredential) persisted.credential_id = id(6);
+      if (options.authorityWrongInventory) persisted.accounts = [];
+      if (options.changedDuringAuthorityRead) version++;
+      return {rows: status === "connected" && !options.authorityMissing ? [persisted] : []};
+    }
     if (sql.includes("load_pending_reporting_account_selection")) return {rows: status === "pending_account_selection" && selected.length > 1 ? [row()] : []};
     if (sql.includes("load_pending_provider_account_selection")) {
       if (options.changedBeforeSelection) version++;
@@ -64,7 +73,11 @@ function harness(provider, options = {}) {
       reporting = values[4]; status = "connected"; version++;
     } else throw Error("UNEXPECTED_DATABASE_OPERATION");
     if (options.writeError) throw Error("WRITE_ACK_LOST");
-    const receipt = row();
+    // Mirror the actual SQL return columns; never fabricate reporting_account_id
+    // on complete_pending_provider_account_selection.
+    const receipt = {connection_id: id(2), lifecycle_status: status, connection_version: version,
+      ...(sql.includes("complete_pending_provider_account_selection")
+        ? {connected_account_count: selected.length} : {reporting_account_id: reporting})};
     if (options.receiptMismatch) receipt.connection_version++;
     if (options.receiptWrongAccount) receipt.reporting_account_id = "unavailable";
     if (options.receiptWrongCount) receipt.connected_account_count = 3;
@@ -155,7 +168,9 @@ for (const provider of ["google_ads", "meta"]) {
       assert.deepEqual(h.calls, []); assert.deepEqual(h.writes, []);
     });
   }
-  for (const option of ["writeError", "receiptMismatch", "receiptWrongAccount", "receiptWrongCount", "changedAfterWrite"]) {
+  for (const option of ["writeError", "receiptMismatch", "receiptWrongAccount", "receiptWrongCount", "changedAfterWrite",
+    "authorityReadError", "authorityMissing", "authorityWrongAccount", "authorityWrongConnection",
+    "authorityWrongCredential", "authorityWrongInventory", "changedDuringAuthorityRead"]) {
     test(`${provider}: ${option} is an error after one selection attempt, never completion or retry`, async () => {
       const h = harness(provider, {[option]: true});
       await assert.rejects(h.setup.select({installationAuthority: owner, selectedAccountIds: [first]}));

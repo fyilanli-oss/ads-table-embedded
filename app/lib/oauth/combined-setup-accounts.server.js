@@ -25,7 +25,7 @@ export function assertCombinedSetupAccountBinding(expected, pending) {
 
 // Server composition only. Existing reporting entries stay unchanged. This boundary
 // does not issue asset evidence or turn an account-selection receipt into setup approval.
-export function createCombinedSetupAccounts({provider, enabled, lifecycle, tokenVault, runtime}) {
+export function createCombinedSetupAccounts({provider, enabled, lifecycle, tokenVault, runtime, accountAuthority}) {
   if (!["google_ads", "meta"].includes(provider) || typeof enabled !== "boolean") {
     fail("COMBINED_SETUP_CONFIGURATION_INVALID");
   }
@@ -89,7 +89,7 @@ export function createCombinedSetupAccounts({provider, enabled, lifecycle, token
     const expectedState = expectedAccount === null ? "pending_account_selection" : "connected";
     // Never retry a lost write acknowledgement or report it as a declined permission.
     if (receipt?.connectionId !== before.connectionId || receipt.version !== before.version + 1
-      || receipt.status !== expectedState || receipt.reportingAccountId !== expectedAccount
+      || receipt.status !== expectedState || receipt.reportingAccountId !== (finishing ? expectedAccount : null)
       || !finishing && receipt.connectedAccountCount !== input.selectedAccountIds.length) {
       fail("COMBINED_SETUP_SELECTION_UNCONFIRMED");
     }
@@ -101,7 +101,26 @@ export function createCombinedSetupAccounts({provider, enabled, lifecycle, token
     if (after.status === "pending_account_selection" && !(receipt.connectedAccountCount > 1)) {
       fail("COMBINED_SETUP_SELECTION_UNCONFIRMED");
     }
-    return project(after, [], receipt.reportingAccountId ?? null,
+    let reportingAccountId = null;
+    if (after.status === "connected") {
+      // Account-selection SQL returns only ID/status/version/count, not the
+      // Reporting Account. Verify the durable binding rather than inventing it
+      // from the submitted ID or rejecting a successful write's missing field.
+      const persisted = await accountAuthority.load({workspaceId: installationAuthority.workspaceId,
+        installGeneration: installationAuthority.installGeneration, provider});
+      if (!persisted || persisted.connectionId !== after.connectionId
+        || persisted.credentialId !== after.credentialId || persisted.reportingAccountId !== expectedAccount
+        || !Array.isArray(persisted.accounts) || persisted.accounts.length < 1 || persisted.accounts.length > 3
+        || !persisted.accounts.some(account => account.id === expectedAccount)
+        || !finishing && (persisted.accounts.length !== 1 || persisted.accounts[0].id !== input.selectedAccountIds[0])) {
+        fail("COMBINED_SETUP_SELECTION_UNCONFIRMED");
+      }
+      if (!sameBinding(after, await lifecycle.loadCurrent({installationAuthority, provider}))) {
+        fail("COMBINED_SETUP_SELECTION_UNCONFIRMED");
+      }
+      reportingAccountId = persisted.reportingAccountId;
+    }
+    return project(after, [], reportingAccountId,
       after.status === "pending_account_selection" ? "pending_reporting_account_selection" : after.status);
   }
   return Object.freeze({

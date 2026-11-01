@@ -83,7 +83,18 @@ language sql stable security definer set search_path='' as $function$
 $function$;
 revoke all on function integrations.commit_google_identity_renewal(uuid,uuid,bigint,uuid,bigint,uuid,uuid,text[],timestamptz,bytea,bytea,bytea,smallint,timestamptz),
  integrations.read_google_identity_renewal(uuid,uuid,bigint)
- from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
+ from public,anon,authenticated,service_role,adstable_runtime;
+
+-- This OAuth migration must not install the optional refresh infrastructure.
+-- Revoke inherited defaults when that role already exists, otherwise skip it.
+do $optional_refresh_role$
+begin
+ if exists(select 1 from pg_catalog.pg_roles where rolname='adstable_refresh_coordinator') then
+  revoke all on function integrations.commit_google_identity_renewal(uuid,uuid,bigint,uuid,bigint,uuid,uuid,text[],timestamptz,bytea,bytea,bytea,smallint,timestamptz),
+   integrations.read_google_identity_renewal(uuid,uuid,bigint) from adstable_refresh_coordinator;
+ end if;
+end
+$optional_refresh_role$;
 grant execute on function integrations.commit_google_identity_renewal(uuid,uuid,bigint,uuid,bigint,uuid,uuid,text[],timestamptz,bytea,bytea,bytea,smallint,timestamptz),
  integrations.read_google_identity_renewal(uuid,uuid,bigint) to adstable_runtime;
 commit;

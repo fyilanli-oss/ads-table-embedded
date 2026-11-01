@@ -8,6 +8,7 @@ on:
       - "tools/f01-*"
       - "tools/f08-*"
       - "tools/eo05-refresh-*"
+      - "tools/eo05-google-identity-renewal-probe.mjs"
       - "app/lib/refresh/**"
       - "app/lib/database/refresh-work-repository.server.js"
       - "tests/eo-05a-refresh-work*"
@@ -78,7 +79,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/f01b-identity-rollout"
           pnpm dlx supabase@2.121.0 init --workdir "$RUNNER_TEMP/f01b-identity-rollout"
           pnpm dlx supabase@2.121.0 db start --workdir "$RUNNER_TEMP/f01b-identity-rollout"
-      - name: Live baseline plus only two OAuth migrations and both role states
+      - name: Scoped OAuth and Google renewal rollout with both role states
         run: node tools/f01-identity-oauth-rollout.mjs
       - name: Clean third isolated database
         if: always()

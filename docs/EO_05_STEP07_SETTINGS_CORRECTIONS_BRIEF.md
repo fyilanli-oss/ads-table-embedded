@@ -1,5 +1,40 @@
 # EO-05 / mevcut 07 — onaylı Settings düzeltmesi
 
+## 1 Kasım — Google Reporting Account değişiminde eksik yenileme migration'ı
+
+Ürün sahibi, yalnız ilgili canlı fonksiyonların salt okunur doğrulanmasını ve
+düzeltmenin izole testlerle PR olarak hazırlanmasını açıkça onayladı. Canlı DB
+uygulaması, OAuth tekrarı, provider/config değişikliği, merge ve yayın kapsam dışıdır.
+
+`1000070294` ekranındaki GOOGLE_IDENTITY_RENEWAL_WRITE_UNCONFIRMED için 1 Kasım
+08:49:42.109 UTC Postgres kaydı SQLSTATE42883 döndü: runtime'ın exact imzasıyla
+`integrations.commit_google_identity_renewal(...)` bulunamadı. Salt okunur pg_proc
+ve information_schema denetimi commit/read yenileme fonksiyonlarının ve iki
+identity_credential_before_id/identity_credential_after_id sütununun bulunmadığını,
+adstable_refresh_coordinator rolünün de olmadığını doğruladı. Token veya kullanıcı
+verisi okunmadı; bu hata Google hesabı veya OAuth izin reddi olarak yorumlanamaz.
+
+Eksik yapı repository'deki pending
+`20261028175738_eo05a_google_identity_renewal_receipt.sql` dosyasındadır. Dosyanın
+koordinatör rolüne koşulsuz REVOKE'u, mevcut rol-yok başlangıcıyla uyumsuzdur.
+Hazırlanan dar düzeltme rol varsa REVOKE yapar; yeni rol veya refresh altyapısı
+kurmaz. Diğer REVOKE'lar, runtime-only EXECUTE, atomik yenileme/CAS/receipt ve
+belirsiz sonuçta retry yapmama kuralları korunur. Dosya hâlâ pending ve canlıya
+uygulama yetkisi false; hash yalnız hazırlanan içeriğe göre güncellenir.
+
+F01 izole runner, tarihsel40 + önceden yayımlanan iki OAuth dosyası üzerinde
+eksik RPC42883 durumunu önce yeniden üretir. Sonra yalnız renewal dosyasını gerçek
+commit sınırıyla uygular; rol yokken ve ayrı rollback dalında rol/default EXECUTE
+varken gerçek SQL/crypto/CAS/receipt testlerini çalıştırır. Ayrıca gerçek Google
+runtime'ı, vault ve SQL üzerinden sentetik HTTP ile expired token → tek refresh →
+yenileme → ikinci Reporting Account kaydı sınanır. Gerçek provider HTTP çağrısı,
+canlı anahtar veya mağaza fixture'ı kullanılmaz. CI sonucu ayrıca doğrulanır.
+
+Resmî kontrol 1 Kasım2026: https://supabase.com/docs/guides/database/functions .
+Canlıda eksik fonksiyon hâlâ eksiktir; hazırlık canlı hatanın giderildiği iddiası
+değildir.07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır. Önceki ürün
+sahibi sadeleştirme notları ayrı PR279'da korunur; bu paket UI değiştirmez.
+
 ## 31 Ekim — mevcut07: test ve gerçek hesapların birlikte keşfi
 
 27 Ekim PR192/8074086 ile yeni kimlik yoluna stopOnFirstError ayarını ben ekledim.

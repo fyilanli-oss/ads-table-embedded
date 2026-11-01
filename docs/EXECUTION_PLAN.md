@@ -1,3 +1,17 @@
+## 1 Kasım — mevcut07: Reporting Account yenileme kayıt eksikliği
+
+Owner yalnız canlı fonksiyonları salt okunur doğrulama ve dar düzeltmeyi izole
+testlerle PR hazırlama kapsamını onayladı. 08:49:42.109UTC kaydı SQLSTATE42883:
+commit_google_identity_renewal exact runtime imzasıyla yok. Şema denetimi iki
+yenileme fonksiyonu/receipt sütunları ve optional refresh rolünün yokluğunu doğruladı.
+Pending renewal migration'ındaki optional rol REVOKE'u koşullu hazırlanır; rol,
+refresh altyapısı, OAuth/UI akışı veya canlı durum değiştirilmez. F01, mevcut42
+başlangıcı + yalnız bir renewal migration'ı ve iki rol durumunda SQL/CAS/receipt
+ile expired token sonrası gerçek Reporting Account yazısını sentetik HTTP ile
+sınar. Ayrıntı mevcut07 brief'indeki 1 Kasım kaydıdır. Canlı uygulama/merge/yayın
+ayrı açık onay bekler; hazırlık canlı düzeltme veya görsel kabul değildir.
+07 açık;15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.
+
 ## 31 Ekim — mevcut07: test ve gerçek hesapların birlikte keşfi
 
 27 Ekim PR192/8074086 ile yeni kimlik yoluna stopOnFirstError ayarını ben ekledim.

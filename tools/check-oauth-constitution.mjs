@@ -76,6 +76,9 @@ export function verifyRevision(current, previous, changedPaths) {
 function readGit(root, ref, file) {
   try {return execFileSync("git", ["show", ref + ":" + file], {cwd:root,encoding:"utf8",stdio:["ignore","pipe","pipe"]});} catch {return null;}
 }
+export function parseChangedPaths(...nulSeparated) {
+  return [...new Set(nulSeparated.flatMap(value => value.split("\0")).filter(name => name === CONTRACT_PATH || protectedPath(name)))].filter(Boolean).sort();
+}
 export function verifyRepository(root, baseSha) {
   const contract = JSON.parse(fs.readFileSync(path.join(root, CONTRACT_PATH), "utf8"));
   verifyModel(contract); const actual = collectSnapshot(root); verifySnapshot(contract.protection.sha256, actual);
@@ -84,7 +87,7 @@ export function verifyRepository(root, baseSha) {
   if (!/^[a-f0-9]{40}$/.test(base)) fail("BASE_INVALID");
   git(root, ["cat-file", "-e", base + "^{commit}"]);
   const prior = readGit(root, base, CONTRACT_PATH);
-  const changed = [...new Set([...git(root, ["diff", "--name-only", base, "--"]).split("\n"), ...git(root, ["ls-files", "--others", "--exclude-standard"]).split("\n")].filter(name => name === CONTRACT_PATH || protectedPath(name)))].filter(Boolean).sort();
+  const changed = parseChangedPaths(...[["diff", "--name-only", "-z", base, "--"], ["ls-files", "--others", "--exclude-standard", "-z"]].map(args => execFileSync("git", args, {cwd:root,encoding:"utf8",stdio:["ignore","pipe","pipe"]})));
   if (!prior) {
     if (base !== BOOTSTRAP_BASE || contract.revisions.length !== 1 || contract.revisions[0].scope.runtime_code !== false) fail("BOOTSTRAP_INVALID");
     // The constitution package may not silently change runtime, dependencies or SQL.

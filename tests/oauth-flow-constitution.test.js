@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
-import {CONTRACT_PATH, PREFIXES, EXACT, CRITICAL_TESTS, digest, collectSnapshot, verifySnapshot, verifyModel, verifyRevision, verifyRepository} from "../tools/check-oauth-constitution.mjs";
+import {CONTRACT_PATH, PREFIXES, EXACT, CRITICAL_TESTS, digest, collectSnapshot, verifySnapshot, verifyModel, verifyRevision, verifyRepository, parseChangedPaths} from "../tools/check-oauth-constitution.mjs";
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),"..");
 const read=()=>JSON.parse(fs.readFileSync(path.join(root,CONTRACT_PATH),"utf8"));
 const copy=value=>structuredClone(value);
@@ -82,4 +82,11 @@ test("all documented safety families map to existing behavior tests executed by 
   assert.doesNotMatch(workflow,/github.event.before/); // A draft push is reviewed against main, not its previous unmerged draft.
   const agents=fs.readFileSync(path.join(root,"AGENTS.md"),"utf8");assert.ok(agents.includes(c.document));assert.ok(agents.includes(CONTRACT_PATH));
   assert.deepEqual(c.protection.prefixes,PREFIXES);assert.deepEqual(c.protection.exact,EXACT);
+});
+
+test("Git path inventory preserves Unicode, embedded newlines and whitespace instead of hiding a runtime change",()=>{
+  const names=["app/lib/oauth/izin-şartı.server.js","app/lib/oauth/line\nbreak.server.js","app/lib/oauth/trailing-space.js "];
+  assert.deepEqual(parseChangedPaths(names.join("\0")+"\0",".codex-remote-attachments/ignored.jpg\0"),[...names].sort());
+  const previous=read(),current=copy(previous);current.revisions.push({...copy(previous.revisions.at(-1)),id:"unicode-path-negative-test",changed_paths:[CONTRACT_PATH,...names],scope:{runtime_code:false,live_provider:false,merge:false,deploy:false}});
+  assert.throws(()=>verifyRevision(current,previous,[CONTRACT_PATH,...names]),/RUNTIME_SCOPE_NOT_APPROVED/);
 });

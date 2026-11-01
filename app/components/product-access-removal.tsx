@@ -33,7 +33,7 @@ export function ProductAccessRemoval({owner, ready, busy, onConfirm, onUnknown}:
           intent.current = {owner};
           try {if (!modal.current) throw new Error("MODAL_UNAVAILABLE"); modal.current.hideOverlay();}
           catch {intent.current = null; onUnknown();}
-        }}>Remove access</s-button>
+        }}>Disconnect</s-button>
       <s-button slot="secondary-actions" variant="secondary" commandFor="shopify-products-revoke-modal" command="--hide"
         onClick={() => {intent.current = null;}}>Cancel</s-button>
     </s-modal>

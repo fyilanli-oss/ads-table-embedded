@@ -9,6 +9,7 @@ import type {PermissionSettingsResult} from "../lib/shopify/permission-settings.
 import {requestShopifyScopeWindow} from "../lib/ui/shopify-scope-window.js";
 import type {ProductPermissionStatus} from "../lib/shopify/product-permission-status.server.js";
 
+type DisconnectModel = {key: string; feature: "google_ads" | "meta"; expected: {connectionId: string; version: number}; owner: string | null | undefined};
 type Reply = PermissionSettingsResult & {requestId: string};
 type Props = {
   availability: Readonly<Record<PermissionFeature, boolean>>;
@@ -18,7 +19,7 @@ type Props = {
   productOwner?: string | null;
   onProductStatus?(value: ProductPermissionStatus): void;
   onOrderStatus?(value: ProductPermissionStatus): void;
-  initialProviders?: Partial<Record<"google_ads" | "meta", {view: string; permission?: PermissionSettingsResult}>>;
+  initialProviders?: Partial<Record<"google_ads" | "meta", {view: string; permission?: PermissionSettingsResult; connectionBinding?: {connectionId: string; version: number}}>>;
   onDisconnected?(feature: "google_ads" | "meta"): void;
   onConnection?(feature: "google_ads" | "meta", connection: import("../lib/shopify/permission-settings.server.js").PermissionSelection): void;
   onResume(feature: PermissionFeature, stage: string): void;
@@ -42,6 +43,10 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
   const setFeedback = useCallback((reply: PermissionSettingsResult | null) => {
     setFeedbackValue(reply);
     if (reply) setProviderFeedback(previous => ({...previous, [reply.feature]: reply}));
+  }, []);
+  const clearProviderFeedback = useCallback((feature: PermissionFeature) => {
+    setFeedbackValue(current => current?.feature === feature ? null : current);
+    setProviderFeedback(current => {const next = {...current}; delete next[feature]; return next;});
   }, []);
   const hasUnknownResult = Object.values(providerFeedback).some(reply => reply?.kind === "unknown");
   const connectReply = useRef<Reply | null>(null);
@@ -72,7 +77,8 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
     setOrderRemovalResult(null);
   }, []);
   const [selectionModel, setSelectionModel] = useState<SelectionModel | null>(null);
-  const [disconnectModel, setDisconnectModel] = useState<{feature: "meta" | "google_ads"; selection: import("../lib/shopify/permission-settings.server.js").PermissionSelection; owner: string | null | undefined} | null>(null);
+  const [disconnectModel, setDisconnectModel] = useState<DisconnectModel | null>(null);
+  const disconnectSession = useRef<DisconnectModel | null>(null);
   const disconnectIntent = useRef(false);
   const selectionIntent = useRef<{owner: string | null | undefined; model: SelectionModel; input: SelectionInput | null; failed: boolean} | null>(null);
   const [selectionActivity, setSelectionActivity] = useState<string | null>(null);
@@ -147,7 +153,7 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
   const controller = flow.current;
   const [snapshot, setSnapshot] = useState(controller.snapshot);
   const open = (feature: PermissionFeature) => {
-    if (hasUnknownResult || (callbacks.current.externalBusy || callbacks.current.externalLock?.current) || pending.current || checking || selectionIntent.current || selectionModel || disconnectModel) return;
+    if (hasUnknownResult || (callbacks.current.externalBusy || callbacks.current.externalLock?.current) || pending.current || checking || selectionIntent.current || selectionModel || disconnectSession.current) return;
     const next = controller.open(feature);
     if (next) { setFeedback(null); setSnapshot(next); }
   };
@@ -195,14 +201,14 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
     if (viewOwner.current === productOwner) return;
     viewOwner.current = productOwner;
     pending.current?.reject(); pending.current = null;
-    selectionIntent.current = null; disconnectIntent.current = false;
+    selectionIntent.current = null; disconnectSession.current = null; disconnectIntent.current = false;
     lastSelection.current = {}; connectReply.current = null; setProviderFeedback({});
     setSelectionModel(null); setDisconnectModel(null); setFeedback(null);
     setChecking(false); setCheckingFeature(null); setSelectionActivity(null);
     setSnapshot(controller.invalidate());
   }, [productOwner, controller]);
   const checkStatus = async (feature: PermissionFeature, openNext = false) => {
-    if (pending.current || selectionIntent.current || ["explaining", "hiding_for_cancel", "hiding_for_connect", "starting"].includes(controller.snapshot.phase)) return;
+    if (pending.current || selectionIntent.current || disconnectSession.current || ["explaining", "hiding_for_cancel", "hiding_for_connect", "starting"].includes(controller.snapshot.phase)) return;
     setChecking(true);
     setCheckingFeature(feature);
     const requestOwner = callbacks.current.productOwner;
@@ -345,42 +351,54 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
     finally { setChecking(false); setCheckingFeature(null); }
   };
   const manageProvider = async (feature: "google_ads" | "meta", operation: "reporting" | "disconnect") => {
-    if (callbacks.current.externalLock?.current || hasUnknownResult || pending.current || busy || selectionIntent.current || disconnectModel) return;
+    if (callbacks.current.externalLock?.current || hasUnknownResult || pending.current || busy || selectionIntent.current || disconnectSession.current) return;
     const owner = callbacks.current.productOwner;
+    if (operation === "disconnect") {
+      const current = providerFeedback[feature];
+      const expected = current?.kind === "status" && current.stage === "reporting_selected" && current.connection
+        ? current.connection : callbacks.current.initialProviders?.[feature]?.connectionBinding;
+      if (!expected || !expected.connectionId || !Number.isSafeInteger(expected.version) || expected.version < 1) {
+        setFeedback({kind: "unknown", feature}); return;
+      }
+      const model: DisconnectModel = {key: crypto.randomUUID(), feature, owner,
+        expected: {connectionId: expected.connectionId, version: expected.version}};
+      disconnectIntent.current = false; disconnectSession.current = model; setDisconnectModel(model);
+      return; // Opening and cancelling confirmation perform no I/O.
+    }
     setChecking(true); setCheckingFeature(feature);
     try {
       const reply = await execute("permission_reconcile", feature);
       if (!activeView.current || owner !== callbacks.current.productOwner) return;
       setFeedback(reply);
       if (reply.kind !== "status" || reply.stage !== "reporting_selected" || !reply.connection) return;
-      if (operation === "reporting") {
-        const model: SelectionModel = {key: crypto.randomUUID(), feature, stage: "change_reporting", selection: reply.connection};
-        selectionIntent.current = {owner, model, input: null, failed: false}; setSelectionModel(model);
-      } else {disconnectIntent.current = false; setDisconnectModel({feature, selection: reply.connection, owner});}
+      const model: SelectionModel = {key: crypto.randomUUID(), feature, stage: "change_reporting", selection: reply.connection};
+      selectionIntent.current = {owner, model, input: null, failed: false}; setSelectionModel(model);
     } catch {if (activeView.current && owner === callbacks.current.productOwner) setFeedback({kind: "unknown", feature});}
     finally {setChecking(false); setCheckingFeature(null);}
   };
   const confirmDisconnect = (hide: () => void) => {
-    if (!disconnectModel || disconnectModel.owner !== callbacks.current.productOwner || disconnectIntent.current || pending.current) return;
+    if (!disconnectModel || disconnectSession.current?.key !== disconnectModel.key || disconnectModel.owner !== callbacks.current.productOwner || disconnectIntent.current || pending.current) return;
     disconnectIntent.current = true;
-    try {hide();} catch {disconnectIntent.current = false; setDisconnectModel(null); setFeedback({kind: "unknown", feature: disconnectModel.feature});}
+    try {hide();} catch {disconnectIntent.current = false; disconnectSession.current = null; setDisconnectModel(null); setFeedback({kind: "unknown", feature: disconnectModel.feature});}
   };
   const afterDisconnectHide = useCallback(async () => {
     const model = disconnectModel;
-    setDisconnectModel(null);
-    if (!model || !disconnectIntent.current || model.owner !== callbacks.current.productOwner) return;
-    disconnectIntent.current = false;
+    if (!model || disconnectSession.current?.key !== model.key) return;
+    disconnectSession.current = null; setDisconnectModel(null);
+    const confirmed = disconnectIntent.current; disconnectIntent.current = false;
+    if (!confirmed || model.owner !== callbacks.current.productOwner) return;
     setChecking(true); setCheckingFeature(model.feature); setSelectionActivity("Disconnecting…");
     try {
-      const reply = await execute("permission_disconnect", model.feature, {connectionId: model.selection.connectionId, version: String(model.selection.version)});
+      const reply = await execute("permission_disconnect", model.feature, {connectionId: model.expected.connectionId, version: String(model.expected.version)});
       if (!activeView.current || model.owner !== callbacks.current.productOwner) return;
       setFeedback(reply);
       if (reply.kind === "status" && reply.stage === "request_permissions") {
-        callbacks.current.onDisconnected?.(model.feature); setFeedback(null);
+        delete lastSelection.current[model.feature];
+        clearProviderFeedback(model.feature); callbacks.current.onDisconnected?.(model.feature);
       }
     } catch {if (activeView.current && model.owner === callbacks.current.productOwner) setFeedback({kind: "unknown", feature: model.feature});}
-    finally {setChecking(false); setCheckingFeature(null); setSelectionActivity(null);}
-  }, [disconnectModel, execute]);
+    finally {if (activeView.current && model.owner === callbacks.current.productOwner) {setChecking(false); setCheckingFeature(null); setSelectionActivity(null);}}
+  }, [disconnectModel, execute, clearProviderFeedback]);
   const providerContent = (feature: "meta" | "google_ads" | "klaviyo") => {
     const reply = providerFeedback[feature] ?? null;
     if (feature !== "klaviyo") {
@@ -445,7 +463,7 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
     checkingProduct: checking ? checkingFeature === "shopify_products" : busy && snapshot.feature === "shopify_products",
     checkingOrder: checking ? checkingFeature === "shopify_orders" : busy && snapshot.feature === "shopify_orders",
     content: <>
-      {disconnectModel ? <PermissionProviderDisconnect feature={disconnectModel.feature} onConfirm={confirmDisconnect} onAfterHide={afterDisconnectHide} /> : null}
+      {disconnectModel ? <PermissionProviderDisconnect key={disconnectModel.key} feature={disconnectModel.feature} onConfirm={confirmDisconnect} onAfterHide={afterDisconnectHide} /> : null}
       {selectionModel ? <PermissionSetupSelection key={selectionModel.key} model={selectionModel} busy={checking} onConfirm={confirmSelection} onAfterHide={afterSelectionHide} /> : null}
       <PermissionExplanation snapshot={snapshot} requestsAvailable={snapshot.feature ? availability[snapshot.feature] : false}
         unavailableReason={snapshot.feature ? unavailableReasons?.[snapshot.feature] : undefined}

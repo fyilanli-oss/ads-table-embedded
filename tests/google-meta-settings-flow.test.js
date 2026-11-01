@@ -21,10 +21,14 @@ function harness(feature = "meta", initial = {view: "combined"}) {
   const compiled = ts.transpileModule(readFileSync(location, "utf8"), {compilerOptions: {
     jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022,
   }}).outputText;
-  const h = {cells: [], effects: [], cursor: 0, dirty: false, requests: [], connections: [],
+  const h = {cells: [], effects: [], cursor: 0, dirty: false, requests: [], connections: [], disconnections: [],
     props: {availability: {google_ads: true, meta: true}, productOwner: "shop:workspace:2",
       initialProviders: {[feature]: initial}, onResume: () => assert.fail("must not refresh all providers"),
-      onConnection: (...value) => h.connections.push(value)},
+      onConnection: (...value) => h.connections.push(value),
+      onDisconnected: feature => {
+        h.disconnections.push(feature);
+        h.props = {...h.props, initialProviders: {...h.props.initialProviders, [feature]: {view: "disconnected"}}};
+      }},
     fetcher: {state: "idle", data: undefined, submit(value) {h.requests.push(value); h.fetcher.state = "submitting";}},
   };
   const hooks = {
@@ -70,12 +74,92 @@ function harness(feature = "meta", initial = {view: "combined"}) {
     h.fetcher.data = {...value, requestId: request.requestId}; h.fetcher.state = "idle";
     await h.flush();
   };
+  h.disconnectModal = () => h.result.content.props.children.find(element => element?.type === "PermissionProviderDisconnect");
   h.modal = () => h.result.content.props.children.find(element => element?.type === "PermissionSetupSelection");
   h.render();
   return h;
 }
 
 for (const feature of ["google_ads", "meta"]) {
+  test(`${feature}: Disconnect opens immediately with no read; Cancel and stale hide events do no I/O`, async () => {
+    const initial = {view: "connected", connectionBinding: {connectionId: "connection", version: 7}};
+    const h = harness(feature, initial);
+    void h.result.manageProvider(feature, "disconnect");
+    void h.result.manageProvider(feature, "disconnect");
+    h.render();
+    const modal = h.disconnectModal().props;
+    assert.equal(h.requests.length, 0);
+    assert.doesNotMatch(renderToStaticMarkup(h.result.providerContent(feature)) ?? "", /Verifying access/);
+    assert.equal(h.result.busy, true);
+    await modal.onAfterHide(); h.render();
+    assert.equal(h.disconnectModal(), undefined); assert.equal(h.requests.length, 0);
+    await h.result.manageProvider(feature, "disconnect"); h.render();
+    const next = h.disconnectModal();
+    await modal.onAfterHide(); h.render();
+    assert.equal(h.disconnectModal().key, next.key);
+    assert.equal(h.requests.length, 0); assert.deepEqual(h.disconnections, []);
+  });
+
+  test(`${feature}: confirmed Disconnect posts once after afterhide and immediately renders Not connected + Connect`, async () => {
+    const h = harness(feature, {view: "connected", connectionBinding: {connectionId: "connection", version: 7}});
+    await h.result.manageProvider(feature, "disconnect"); h.render();
+    const modal = h.disconnectModal().props;
+    let hides = 0;
+    modal.onConfirm(() => hides++); modal.onConfirm(() => hides++);
+    assert.equal(hides, 1); assert.equal(h.requests.length, 0);
+    const saving = modal.onAfterHide(); void modal.onAfterHide(); h.render();
+    assert.equal(h.requests.length, 1);
+    assert.equal(h.requests[0].intent, "permission_disconnect");
+    assert.equal(h.requests[0].connectionId, "connection"); assert.equal(h.requests[0].version, "7");
+    assert.match(renderToStaticMarkup(h.result.providerContent(feature)), /Disconnecting/);
+    await h.reply(status(feature, "request_permissions")); await saving; h.render();
+    const html = renderToStaticMarkup(h.result.providerContent(feature));
+    assert.match(html, /Not connected/);
+    assert.match(html, feature === "meta" ? /Connect Meta/ : /Connect Google Ads/);
+    assert.doesNotMatch(html, /Resume setup|Disconnecting|Verifying access/);
+    assert.deepEqual(h.disconnections, [feature]); assert.equal(h.requests.length, 1);
+    assert.equal(h.result.busy, false);
+  });
+
+  test(`${feature}: unknown Disconnect stays unknown and cannot replay or claim success`, async () => {
+    const h = harness(feature, {view: "connected", connectionBinding: {connectionId: "connection", version: 7}});
+    await h.result.manageProvider(feature, "disconnect"); h.render();
+    const modal = h.disconnectModal().props;
+    modal.onConfirm(() => {});
+    const saving = modal.onAfterHide();
+    await h.reply({kind: "unknown", feature}); await saving; h.render();
+    const html = renderToStaticMarkup(h.result.providerContent(feature));
+    assert.match(html, /could not confirm|Resume setup/); assert.doesNotMatch(html, /Not connected/);
+    assert.deepEqual(h.disconnections, []);
+    await h.result.manageProvider(feature, "disconnect"); h.render();
+    assert.equal(h.requests.length, 1); assert.equal(h.disconnectModal(), undefined);
+    const reading = h.result.resumeProvider(feature);
+    assert.equal(h.requests[1].intent, "permission_reconcile");
+    await h.reply({kind: "unknown", feature}); await reading;
+    assert.equal(h.requests.filter(request => request.intent === "permission_disconnect").length, 1);
+  });
+
+  test(`${feature}: changed installation cannot complete Disconnect with an old response`, async () => {
+    const h = harness(feature, {view: "connected", connectionBinding: {connectionId: "connection", version: 7}});
+    await h.result.manageProvider(feature, "disconnect"); h.render();
+    const modal = h.disconnectModal().props;
+    modal.onConfirm(() => {});
+    const saving = modal.onAfterHide();
+    h.props = {...h.props, productOwner: "shop:workspace:3"}; h.render();
+    await h.reply(status(feature, "request_permissions")); await saving; h.render();
+    assert.deepEqual(h.disconnections, []); assert.equal(h.disconnectModal(), undefined);
+  });
+
+  test(`${feature}: server rejects a stale connection version before any disconnect adapter`, async () => {
+    let writes = 0;
+    const runtime = {combinedSetup: {reconcile: async () => ({setupResumeAction: "reporting_selected",
+      connectionId: "connection", connectionVersion: 8, reportingAccountId: "one", accounts})},
+      disconnect: async () => {writes++; assert.fail("stale confirmed binding must not write");}};
+    const settings = createPermissionSettings({availability: {[feature]: true}, providerRuntime: () => runtime});
+    await assert.rejects(settings.manage({feature, verified, expected: {connectionId: "connection", version: 7}, operation: "disconnect"}), /BINDING_INVALID/);
+    assert.equal(writes, 0);
+  });
+
   test(`${feature}: Reporting Account management also waits for afterhide and updates only its card`, async () => {
     const h = harness(feature, {view: "connected"});
     const opening = h.result.manageProvider(feature, "reporting");

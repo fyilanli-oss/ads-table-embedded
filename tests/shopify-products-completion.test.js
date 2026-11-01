@@ -99,13 +99,14 @@ test("native removal modal cancel/close never revoke; confirm waits for afterhid
   let tree;
   const render = () => {h.start(); tree = Component(props); nodes(tree).find(n => n.type === "s-modal").ref.current = element; h.finish();};
   const button = label => nodes(tree).find(n => n.type === "s-button" && n.props.children === label);
+  const confirm = () => nodes(tree).find(n => n.type === "s-button" && n.props.slot === "primary-action");
   const closed = () => listeners.get("afterhide")({target: element});
   render(); closed(); assert.equal(calls, 0);
   button("Cancel").props.onClick(); closed(); assert.equal(calls, 0);
-  button("Remove access").props.onClick(); button("Remove access").props.onClick();
+  confirm().props.onClick(); confirm().props.onClick();
   assert.equal(hides, 1); assert.equal(calls, 0);
   closed(); closed(); assert.equal(calls, 1);
-  button("Remove access").props.onClick(); props.owner = "gid://shopify/Shop/456"; render();
+  confirm().props.onClick(); props.owner = "gid://shopify/Shop/456"; render();
   closed(); assert.equal(calls, 1);
 });
 
@@ -197,13 +198,14 @@ test("Orders native removal modal cancel/close never revoke; confirm waits for a
   let tree;
   const render = () => {h.start(); tree = Component(props); nodes(tree).find(n => n.type === "s-modal").ref.current = element; h.finish();};
   const button = label => nodes(tree).find(n => n.type === "s-button" && n.props.children === label);
+  const confirm = () => nodes(tree).find(n => n.type === "s-button" && n.props.slot === "primary-action");
   const closed = () => listeners.get("afterhide")({target: element});
   render(); closed(); assert.equal(calls, 0);
   button("Cancel").props.onClick(); closed(); assert.equal(calls, 0);
-  button("Remove access").props.onClick(); button("Remove access").props.onClick();
+  confirm().props.onClick(); confirm().props.onClick();
   assert.equal(hides, 1); assert.equal(calls, 0);
   closed(); closed(); assert.equal(calls, 1);
-  button("Remove access").props.onClick(); props.owner = "gid://shopify/Shop/456"; render();
+  confirm().props.onClick(); props.owner = "gid://shopify/Shop/456"; render();
   closed(); assert.equal(calls, 1);
 });
 

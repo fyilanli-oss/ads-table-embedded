@@ -18,7 +18,7 @@ export function PermissionProviderDisconnect({feature, onConfirm, onAfterHide}: 
   const name = feature === "meta" ? "Meta" : "Google Ads";
   return <s-modal ref={modal} id="permission-provider-disconnect" heading={`Disconnect ${name}?`}>
     <s-paragraph>AdsTable will remove {name} authorization, selected accounts and the encrypted credential. Historical data remains.</s-paragraph>
-    <s-button slot="primary-action" tone="critical" onClick={() => onConfirm(() => {
+    <s-button slot="primary-action" variant="primary" tone="critical" onClick={() => onConfirm(() => {
       if (!modal.current) throw new Error("PERMISSION_SELECTION_NOT_MOUNTED");
       modal.current.hideOverlay();
     })}>Disconnect {name}</s-button>

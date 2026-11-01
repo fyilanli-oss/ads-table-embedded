@@ -1,3 +1,45 @@
+## 1 Kasım — onaylı Disconnect modalı ve sonuç geçişi düzeltmesi
+
+Mevcut07. Owner1000070362–1000070366 sonrası somut üç maddelik kod/test/PR
+hazırlığını açıkça onayladı. Shopify modal onayı Disconnect olur. Google/Meta
+Disconnect tıklamasında önce Verifying access gösterilmez; onay modalı hemen açılır.
+
+Başlangıç: doğrulanmış Connected kartı. Loader mevcut salt okunur uzlaştırmadan
+alınan public connectionId/version bağını, aynı hesap kümesi ve Reporting Account
+ile doğrulayarak karta verir; token/private credential browser'a taşınmaz.
+Disconnect tıklaması yalnız owner/feature/connection/version ve tek modal niyetini
+sabitler; sunucu/provider çağrısı yapmaz. Reporting Account'ın mevcut okuma yolu
+aynen korunur.
+
+Onay: mevcut Disconnect Meta / Disconnect Google Ads. Native afterhide tamamlanınca
+tek permission_disconnect gönderilir. Sunucu mevcut read-only/CAS guard'larıyla
+aynı bağlantı/sürümü yeniden doğrular; yalnız ardından mevcut revoke/disconnect
+adapter'ı çalışır. Yükleniyor metni Disconnecting… olur. Cancel/Keep connected,
+çarpı/Escape veya eski/tekrarlanan hide olayı read/write başlatmaz. Çift tıklama,
+diğer sağlayıcı, değişen mağaza/kurulum ve geç gelen yanıt korumaları sürer.
+
+Doğrulanmış başarı: yalnız ilgili kartın eski permission cevabı ve eski seçim
+cache'i temizlenir; yerel provider override Not connected + Connect Meta veya
+Connect Google Ads gösterir. Resume setup/refresh/all-provider loader gerektirmez.
+Belirsiz sonuç unknown kalır; önceki bağlantının kesin kapandığı söylenmez, otomatik
+retry/yeniden bağlanma olmaz. Sonraki Resume yalnız mevcut salt okunur uzlaştırmadır.
+
+Shopify iki mevcut ürün/sipariş modalının yalnız primary label'ı Remove access →
+Disconnect olur; başlık, açıklama, Cancel, ayrı izin/kaldırma ve afterhide guard'ları
+korunur. Klaviyo ve diğer OAuth/hesap/maliyet akışları korunur. Native provider API,
+izin seti, token protokolü, SQL/migration/config ve canlı işlem kapsam dışıdır.
+
+Bileşenler mevcut stable Polaris2.0/App Bridge: s-modal, primary-action s-button
+variant=primary tone=critical; mevcut secondary-action ve kart bileşenleri korunur.
+Modal afterhide/showOverlay ve slot özellikleri2026-11-01 kontrol edildi:
+https://shopify.dev/docs/api/app-home/latest/web-components/overlays/modal
+
+Davranış testleri gerçek hook/route/server adapter'larıyla immediate open +0I/O,
+Cancel +0I/O, afterhide tek write, stale owner/connection, unknown/no-replay ve
+başarı sonrası anlık bağlı-değil sunumunu kapsar. Shopify/Klaviyo mevcut regresyon,
+UI anayasa, typecheck/build ve CI gerekir. Gerçek masaüstü/en az320px mobil kabulü
+owner verir;07 açık kalır. Merge/yayın ayrıca açık izin gerektirir.
+
 ## 1 Kasım — Shopify bağlı kart metninin ürün sahibi düzeltmesi
 
 Mevcut07. Ürün sahibi Shopify amaç paragraflarını kart için reddetti ve aşağıdaki

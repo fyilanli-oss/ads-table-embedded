@@ -51,7 +51,7 @@ type State =
   | {view: "disconnected"; notice: "cancelled" | "disconnected" | null}
   | {view: "pending"; accounts: Advertiser[]}
   | {view: "pending_reporting"; accounts: Advertiser[]}
-  | {view: "connected"; accounts: Advertiser[]; reportingAccountId: string}
+  | {view: "connected"; accounts: Advertiser[]; reportingAccountId: string; connectionBinding?: {connectionId: string; version: number}}
   | {view: "reauthorization"}
   | {view: "error"; code: string; retry: "oauth" | "reload"};
 
@@ -206,6 +206,22 @@ function requiresCombinedSelection(inspected: any) {
   return Array.isArray(scopes) && scopes.some(scope => scope === "https://www.googleapis.com/auth/content" || scope === "catalog_management");
 }
 
+// Public presentation binding is prepared during the existing authenticated
+// load, not when the merchant opens Disconnect. Reconciliation cannot read tokens
+// or invoke native providers. A changed connection fails closed.
+async function managementBinding(runtime: any, verified: Awaited<ReturnType<typeof routeAuthority>>, feature: "google_ads" | "meta", connection: any) {
+  if (permissionRelease?.availability[feature] !== true) return undefined;
+  const result = await runtime.combinedSetup.reconcile({installationAuthority: verified.installationAuthority});
+  const reply = providerStatus(feature, result);
+  if (reply.kind !== "status" || !reply.connection || reply.connection.connectionId !== connection.connectionId
+    || reply.connection.reportingAccountId !== connection.reportingAccountId
+    || reply.connection.accounts.length !== connection.accounts.length
+    || !reply.connection.accounts.every(account => connection.accounts.some((other: any) => other.id === account.id))) {
+    throw new Error("PERMISSION_SETTINGS_BINDING_INVALID");
+  }
+  return {connectionId: reply.connection.connectionId, version: reply.connection.version};
+}
+
 async function loadGoogleState(
   verified: Awaited<ReturnType<typeof routeAuthority>>,
   url: URL,
@@ -232,6 +248,7 @@ async function loadGoogleState(
         view: "connected",
         accounts: inspected.connection.accounts.map(view),
         reportingAccountId: inspected.connection.reportingAccountId,
+        connectionBinding: await managementBinding(runtime, verified, "google_ads", inspected.connection),
       };
     }
     if (inspected.state === "pending_reporting_account_selection") {
@@ -303,6 +320,7 @@ async function loadMetaState(
         view: "connected",
         accounts: inspected.connection.accounts.map(view),
         reportingAccountId: inspected.connection.reportingAccountId,
+        connectionBinding: await managementBinding(runtime, verified, "meta", inspected.connection),
       };
     }
     if (inspected.state === "pending_reporting_account_selection") {
@@ -860,6 +878,7 @@ export default function Settings() {
     },
     onConnection(feature, connection) {
       const value: State = {view: "connected", reportingAccountId: connection.reportingAccountId!,
+        connectionBinding: {connectionId: connection.connectionId, version: connection.version},
         accounts: connection.accounts.map(account => ({...account, status: null, currency: null, timezone: null}))};
       setProviderOverrides(current => ({...(current?.source === loaded ? current : {}), source: loaded, [feature]: value}));
     },

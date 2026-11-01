@@ -293,6 +293,28 @@ test("single and multiple connected accounts return to the existing reporting vi
   }
 });
 
+test("connected Google/Meta loaders prepare public disconnect bindings and reject a changed connection", async () => {
+  for (const changed of [false, true]) {
+    let reads = 0;
+    const accounts = [{id: "one", name: "First"}, {id: "two", name: "Second"}];
+    const route = loadRoute({release: readPermissionSetupRelease({ADSTABLE_GOOGLE_IDENTITY_OAUTH_ENABLED: "true", ADSTABLE_META_IDENTITY_OAUTH_ENABLED: "true"}),
+      providerRuntime: () => ({inspect: async () => ({state: "connected", connection: {
+        connectionId: "connection", credentialId: "PRIVATE-CREDENTIAL", accounts, reportingAccountId: "one",
+      }}), combinedSetup: {reconcile: async ({installationAuthority}) => {
+        reads++; assert.equal(installationAuthority, verified.installationAuthority);
+        return {setupResumeAction: "reporting_selected", connectionId: changed ? "replacement" : "connection",
+          connectionVersion: 7, accounts, reportingAccountId: "one", credentialId: "MUST-NOT-LEAVE"};
+      }}})});
+    const result = await route.loader({request: new Request("https://embedded.adstable.app/settings")});
+    assert.equal(reads, 2);
+    for (const provider of [result, result.meta]) {
+      assert.equal(provider.view, changed ? "error" : "connected");
+      if (!changed) assert.deepEqual(provider.connectionBinding, {connectionId: "connection", version: 7});
+    }
+    assert.doesNotMatch(JSON.stringify(result), /PRIVATE-CREDENTIAL|MUST-NOT-LEAVE/);
+  }
+});
+
 // Use the real production Router Single Fetch pipeline, not only boundary.headers
 // in isolation: a leaf action error has its own header aggregation in .data requests.
 function settingsHttpHandler(route) {

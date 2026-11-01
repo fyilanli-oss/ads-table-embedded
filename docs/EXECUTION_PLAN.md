@@ -1,3 +1,12 @@
+## 1 Kasım — mevcut07: Disconnect geçiş düzeltmesi
+
+Owner Shopify modal onay label'ı, Google/Meta immediate confirmation ve başarılı
+Disconnect sonrası refresh gerektirmeyen Not connected + Connect geçişi için
+kod/test/PR hazırlığını açıkça onayladı. Somut durumlar ve public binding/tek write
+sınırı aktif EO05 sözleşmesindeki Disconnect_transition_correction_2026_11_01 ve
+Settings07 brief'inin başındadır. Klaviyo korunur; canlı işlem/merge/yayın/native
+kabul bu hazırlığa dahil değildir.07 açık kalır.
+
 ## 1 Kasım — mevcut07: Shopify bağlı kart kopyası düzeltmesi
 
 Owner Shopify amaç paragraflarını karttan kaldırıp iki bağımsız grup için

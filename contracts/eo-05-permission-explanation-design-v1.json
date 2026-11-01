@@ -1,4 +1,27 @@
 {
+  "Disconnect_transition_correction_2026_11_01": {
+    "checked_at": "2026-11-01",
+    "existing_plan_step": 7,
+    "authority": "Owner explicitly approved the concrete three-item Disconnect code/test/PR correction after screenshots1000070362–1000070366.",
+    "analyst_brief": "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md",
+    "shopify": "Only the primary confirmation label changes from Remove access to Disconnect in the two existing modals.",
+    "google_meta": [
+      "Verified Connected loader carries a matching public connection/version binding; never private token authority",
+      "Disconnect immediately opens one confirmation with captured owner/feature/connection/version; zero click-time server/provider I/O",
+      "Only explicit confirmation and native afterhide dispatch one existing bound permission_disconnect action",
+      "Existing server reconciliation/CAS and revoke adapter remain; stale binding fails closed",
+      "Confirmed success clears only the matching provider feedback/selection cache and updates Not connected + Connect without refresh",
+      "Cancel sends no request; unknown stays unknown without replay or implicit OAuth"
+    ],
+    "klaviyo": "Existing behavior preserved",
+    "sources_checked_at": "2026-11-01",
+    "source": "https://shopify.dev/docs/api/app-home/latest/web-components/overlays/modal",
+    "native_visual_acceptance": false,
+    "step07_done": false,
+    "live_calls": false,
+    "merge_authorized": false,
+    "deploy_authorized": false
+  },
   "current_connected_card_presentation_contract": "Settings_connected_card_copy_2026_11_01",
   "Settings_connected_card_copy_2026_11_01": {
     "checked_at": "2026-11-01",

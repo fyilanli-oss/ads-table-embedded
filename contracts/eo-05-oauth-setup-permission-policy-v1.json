@@ -1,4 +1,14 @@
 {
+  "OAuth_flow_constitution_2026_11_01": {
+    "existing_plan_step": 7,
+    "document": "docs/OAUTH_FLOW_CONSTITUTION.md",
+    "contract": "contracts/oauth/oauth-flow-constitution-v1.json",
+    "authority": "Owner explicitly approved the constitution, machine contract and CI protections package. Existing OAuth runtime unchanged.",
+    "precedence": "Single current flow entry point with Execution Plan and explicit owner decisions; prior records retained as historical evidence; security/UI constitutions preserved.",
+    "step07_done": false,
+    "merge_authorized": false,
+    "deploy_authorized": false
+  },
   "Google_Meta_flow_standard_2026_11_01": {
     "existing_plan_step": 7,
     "record": "contracts/eo-05-permission-explanation-design-v1.json#Google_Meta_flow_standard_2026_11_01",

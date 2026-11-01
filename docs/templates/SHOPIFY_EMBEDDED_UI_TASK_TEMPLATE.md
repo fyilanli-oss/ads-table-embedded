@@ -72,3 +72,5 @@ Görsel taklit gerekçesi kabul edilmez.
 Bu kutuların tamamı kanıtlanmadan görev `Done`, `PASS` veya `Accepted` olamaz.
 
 
+
+OAuth ile ilgili görevlerde önce docs/OAUTH_FLOW_CONSTITUTION.md ve contracts/oauth/oauth-flow-constitution-v1.json tamamen okunur; somut owner onayı ve revision/güvenlik kapıları bu şablona ek zorunluluktur.

@@ -1,3 +1,23 @@
+## 1 Kasım 2026 — güncel Google/Meta geçiş otoritesi
+
+Ürün sahibi akış taslağını kabul etti ve yalnız sözleşme/analist brief'i dokümantasyon
+PR'ını onayladı. Güncel kayıt
+`contracts/eo-05-permission-explanation-design-v1.json#Google_Meta_flow_standard_2026_11_01`;
+tam durum/eylem/kırmızı çizgi/bileşen/kabul matrisi
+`docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md` içindedir.
+
+Aşağıdaki tarihsel Google/Meta geçiş tariflerinin çelişen kısmı güncel standardın
+yerine geçmez: başarılı hesap kaydı sonrası tekrar Resume aranmaz; yeni adım
+sunucu doğrulaması ve native modal kapanışı sonrasında açılır. Yarım/belirsiz
+kurulumda tek Resume; belirsizlikte önce salt okunur sonuç uzlaştırması vardır.
+Normal karttaki Check status/Reconnect ve yinelenen Resume kaldırılacak tasarım
+kararıdır; henüz kodlanmış/yayımlanmış değildir. Mevcut açıklama paragrafları ve
+izin setleri korunur. Klaviyo ayrı açık hesap/maliyet, Shopify bağımsız Products/
+optional Orders ve AdsTable katalog seçimi yasağı bağlayıcı kalır.
+
+Bu onay kod/test, canlı provider/token/config/DB/migration, merge/deploy veya
+görsel kabul yetkisi değildir. Mevcut07 açık;15 başlamadı;22 paused;23 Dataset yazımı.
+
 ## 30 Ekim 2026 — #264 güncel main ile eşitlendi
 
 Kullanıcının somut onayı yalnız #264’ü güncel main ile eşitlemek, belge farklarını uzlaştırmak ve CI’ı doğrulamak içindir. Main 565abe86ac551a686ad151b60c8b01b8628f9a80 içindeki açık OAuth izin kuralı ile #264’te tamamlanmış 6. adım temizliği birlikte korunur. Temizlik öncesi durdurma/not-started kaydı tarihsel olarak saklanır; güncel durum katalog seçiminin kaldırılmış, gerçek görsel kabulü ve PR merge’ünün bekliyor olmasıdır.

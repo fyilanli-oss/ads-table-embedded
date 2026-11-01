@@ -1,4 +1,15 @@
 {
+  "Google_Meta_flow_standard_2026_11_01": {
+    "existing_plan_step": 7,
+    "record": "contracts/eo-05-permission-explanation-design-v1.json#Google_Meta_flow_standard_2026_11_01",
+    "analyst_brief": "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md",
+    "status": "owner_approved_specification_implementation_not_started",
+    "authority": "Documentation PR only. A later concrete implementation package, native acceptance, merge and deployment each require their own applicable owner approval.",
+    "step07_done": false,
+    "step15_started": false,
+    "step22": "paused",
+    "step23": "Dataset_FX_writer"
+  },
   "Owner_flow_restore_2026_10_31": {
     "checked_at": "2026-10-31",
     "existing_plan_step": 7,

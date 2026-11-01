@@ -1,4 +1,136 @@
 {
+  "current_Google_Meta_transition_contract": "Google_Meta_flow_standard_2026_11_01",
+  "Google_Meta_flow_standard_2026_11_01": {
+    "checked_at": "2026-11-01",
+    "existing_plan_step": 7,
+    "status": "owner_approved_specification_implementation_not_started",
+    "authority": "Owner approved the concrete flow draft and then explicitly approved updating the related contracts and analyst brief as a documentation PR only.",
+    "analyst_brief": "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md",
+    "precedence": {
+      "providers": ["google_ads", "meta"],
+      "supersedes": [
+        "combined_selection_spec.states requirement for another explicit Resume after a known successful account save",
+        "flow, resume_routing and states transition/action text where they conflict with this Google/Meta standard",
+        "Simultaneous old/new card controls, persistent Check status, Reconnect and duplicate Resume setup in Google/Meta cards"
+      ],
+      "preserves": [
+        "Exact existing permission explanation paragraphs and scope sets in modals",
+        "Owner_flow_restore_2026_10_31 separate explicit Klaviyo account and spend modals",
+        "Shopify_scope_window_2026_10_31 independent Products and optional Orders with bound server readback",
+        "step6_removal prohibition on in-app Merchant/business/catalog selection",
+        "Explicit OAuth approval, first provider-error stopping and separate merge/deploy/native acceptance gates"
+      ],
+      "implementation": "This owner-approved specification supersedes only the listed design rules. Existing code/tests and earlier deployment records are baseline evidence, not implementation or acceptance of this specification."
+    },
+    "baseline": {
+      "main": "2e9df14116d40feee98e8937241136ea2ddbfe90",
+      "owner_notes_PR": 279,
+      "owner_notes_PR_merged": false,
+      "findings": [
+        "Settings route renders combined Resume/Reconnect while usePermissionSettings.providerContent can independently render Resume/Check status",
+        "afterSelectionHide advances only reporting_selected; multi-account save returns a stage without inventory and requires another explicit Resume/status read",
+        "Combined callback state does not use the old pending/pending_reporting modal-opening effects",
+        "Loader state, permission feedback and busy state can present competing card controls"
+      ],
+      "technical_connection_evidence": "Owner confirmed Google and Meta Connected and Reporting Account operation. This is not whole-Settings visual acceptance or package07 completion."
+    },
+    "sequence": {
+      "shared": ["Connect", "Permission explanation", "Explicit Connect", "Native provider consent", "Server verification", "Explicit advertiser-account selection"],
+      "one_selected": ["Save selection once", "Verify durable selected account and Reporting Account", "Connected"],
+      "multiple_selected": ["Save selection once", "Read current server-bound Reporting Account choices", "Open Reporting Account modal after previous native afterhide", "Save selection once", "Verify durable Reporting Account", "Connected"],
+      "cardinality": "Choose1-3 advertiser accounts explicitly. A single returned option is not selected by the application; once the owner explicitly saves one account, preserve the existing sole-account Reporting Account behavior. Google manager accounts remain unselectable.",
+      "no_intermediate_resume": "A known successful save advances within the same user-initiated flow. No return to the card to search for Resume between account selection and Reporting Account selection.",
+      "native_selector_boundary": "Business/Page/catalog choices shown by the provider's own consent UI are provider-controlled. They do not authorize an additional AdsTable asset-selection step."
+    },
+    "card_actions": {
+      "not_connected": {"google_ads": ["Connect Google Ads"], "meta": ["Connect Meta"]},
+      "requesting_or_verifying_or_saving": [],
+      "interrupted_setup": ["Resume setup"],
+      "permissions_missing_or_reauthorization_required": ["Resume setup"],
+      "unknown_result": ["Resume setup"],
+      "connected": ["Reporting Account", "Disconnect"],
+      "developer_or_release_unavailable": ["Close"],
+      "forbidden_normal_Google_Meta_controls": ["Reconnect Google Ads", "Reconnect Meta", "Check status", "duplicate Resume setup"],
+      "destructive_action": "Disconnect opens confirmation. Cancel/Keep connected changes nothing; no automatic reconnect follows a completed disconnect.",
+      "diagnostic_controls": "Evidence/product-test controls are not OAuth stages or connection-completion requirements. Their relocation or removal needs a concrete separately approved implementation scope; this documentation does not operate or remove them."
+    },
+    "return_and_resume": {
+      "verified_callback": "On return from the current user-started authorization, verify server state and open the actual missing account step once. Query parameters alone are not proof; no extra Resume click and no automatic OAuth restart.",
+      "cancelled_or_reloaded": "A deliberate Cancel/close/Escape does not advance or reopen a modal. On later page reload, show current server state and one Resume for unfinished setup; do not repeat native consent or reopen a dismissed step automatically.",
+      "resume_account_or_reporting": "Read current owner/installation/connection/version-bound choices and open only that unfinished selector. A write receipt is not an account inventory; never fabricate choices from it.",
+      "resume_missing_permissions": "Open the existing matching explanation. Only another explicit Connect may start a permission request.",
+      "resume_unknown": "First perform authenticated read-only reconciliation of the existing result. Do not re-exchange OAuth, refresh/replace credentials, repeat selection writes, disconnect or start another native permission request. A current status path that can mutate cannot be reused as if read-only.",
+      "reconciled_result": "Current verified Connected updates the card; a verified unfinished selection opens only that step; confirmed missing permission opens the explanation without requesting consent. An unresolved result stays unknown and stops, with no automatic retry/fallback.",
+      "connected_meaning": "Connected identifies a verified reporting connection and durable Reporting Account. It is not proof of catalog/product mapping, Sales Role, activation, scheduled work or Dataset authority."
+    },
+    "exact_copy": {
+      "retain": "Existing approved five permission explanations and account/Reporting Account modal headings, labels and Save selection/Cancel copy remain unchanged.",
+      "resumable_card_status": "Resume setup",
+      "primary_resume": "Resume setup",
+      "verifying": "Verifying access…",
+      "saving": "Saving selection…",
+      "connected": "Connected",
+      "unknown": "We could not confirm the result. Resume setup to check the current connection status.",
+      "empty_choices": "No selectable advertiser accounts were returned. Resume setup to check the current connection status.",
+      "unknown_rule": "Describe the unconfirmed operation, not a permission denial or failed connection. Preserve any previous verified connection separately; do not show mutually contradictory overall success/failure claims."
+    },
+    "red_lines": [
+      "One authoritative presentation state and one primary continuation action for each provider stage; old and new controls cannot render concurrently",
+      "One active setup/selection/mutation across Settings; double clicks, duplicate hide events and other-provider controls cannot start overlapping operations",
+      "Capture user intent and owner/feature/request/connection-version binding before closing; dispatch once after native afterhide",
+      "Open the next modal only after the previous one has completely closed; never stack provider/account/reporting/cost modals",
+      "Cancel before submission sends no write; it preserves earlier successful stages. Closing a display does not claim an already-started operation was undone",
+      "Validate local selection before hiding; known field errors preserve input. Distinguish validation failure from an uncertain submitted write",
+      "A stale reply, foreign shop/install generation, old tab or changed connection cannot update current UI or authorize continuation",
+      "Known success must refresh the matching card and continue the actual next stage without an extra Resume; do not rerun every provider to achieve this",
+      "Unknown, missing, denied, stale, unavailable and a real zero/empty result remain distinct; no automatic retry, permission escalation or provider fallback",
+      "No token/secret in browser state, logs, docs or evidence; IDs and UI success are not permission authority",
+      "No user Merchant/business/catalog selector, manual asset identifier or replacement verification step in AdsTable OAuth",
+      "Only approved stable Polaris2.0/App Bridge components; no raw HTML controls, custom styling or imitation components",
+      "No agent may redesign this flow, add steps, weaken guards or infer provider behavior without fresh explicit owner approval"
+    ],
+    "other_providers": {
+      "klaviyo": "Preserve separate explicit account selection including one account; only Continue plus native afterhide may open separate estimated-spend modal. Zero is valid, missing cost is distinct; cost resume never repeats OAuth.",
+      "shopify": "Preserve independent Products and optional Orders, in-place App Bridge scope window, bound authenticated readback and independent removal. Cancelling/removing Orders preserves Products. Do not copy Google/Meta native redirect behavior into Shopify.",
+      "scope": "Compare both against shared loading/cancel/error/collision rules. This specification does not claim their full desktop/mobile acceptance or independently authorize reimplementation."
+    },
+    "component_mapping": {
+      "modal": "Existing s-modal heading/size=base/padding=base; native afterhide controls handoff",
+      "actions": "Existing s-button primary-action/secondary-actions; primary/secondary variants; loading while pending; critical Disconnect confirmation",
+      "choices": "Existing s-choice-list and s-choice; multiple only for1-3 advertiser selection, single for Reporting Account",
+      "status_and_layout": "Existing s-banner/s-badge/s-paragraph/s-stack; one consistent state without duplicate status or action surfaces"
+    },
+    "sources_checked_at": "2026-11-01",
+    "sources": [
+      "https://shopify.dev/docs/api/app-home/latest/web-components/overlays/modal",
+      "https://shopify.dev/docs/api/app-home/latest/web-components/actions/button",
+      "https://shopify.dev/docs/api/app-home/latest/web-components/forms/choice-list"
+    ],
+    "acceptance_required": [
+      "One-account and multi-account Google/Meta happy paths from fresh consent through durable Connected",
+      "Consent denial/partial grant/cancel; account/reporting cancel, Escape, close and later Resume at exact stage",
+      "Known validation failure vs lost write response with committed and uncommitted server outcomes; no replay",
+      "Reload/back/old tab, stale owner/generation/version, late reply and another-provider attempt during pending operation",
+      "Reporting Account change and disconnect-confirm/cancel, preserving unrelated connections",
+      "Klaviyo account/spend/zero/error/cancel and Shopify Products/Orders grant/removal/cancel regressions",
+      "Real Shopify Admin desktop and real minimum320px mobile, keyboard/touch/focus, one modal, reachable actions and no horizontal overflow",
+      "Explicit owner visual acceptance; CI or successful native connection alone cannot close07"
+    ],
+    "authorization": {
+      "documentation_PR": true,
+      "implementation_code_or_test_changes": false,
+      "native_provider_calls_or_token_reads": false,
+      "live_config_database_or_migration": false,
+      "merge": false,
+      "deployment": false
+    },
+    "implementation_complete": false,
+    "native_visual_acceptance": false,
+    "step07_done": false,
+    "step15_started": false,
+    "step22": "paused",
+    "step23": "Dataset_FX_writer"
+  },
   "Google_mixed_account_access_isolation_2026_10_31": {
     "existing_plan_step": 7,
     "authority": "Explicit owner approval for narrow Google account-discovery code and synthetic tests only; no native request, OAuth retry, configuration, database, merge or deployment.",
@@ -864,6 +996,8 @@
   "step15_started": false,
   "Dataset_write": false,
   "combined_selection_spec": {
+    "transition_authority": "Google_Meta_flow_standard_2026_11_01",
+    "states_status": "Historical29October transition list below; the1November owner-approved standard supersedes repeated Resume after known successful save. This is specification-only, not new implementation.",
     "checked_at": "2026-10-29",
     "existing_plan_step": 7,
     "code_delivery_order": 4,

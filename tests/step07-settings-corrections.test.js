@@ -41,7 +41,7 @@ function harness({accounts = [account], providerRuntime = () => assert.fail("une
     revalidator: {state: "idle", revalidate() { this.state = "loading"; h.dirty = true; }},
     fetcher: {state: "idle", data: undefined, submit(form) {
       h.submissions.push(Object.fromEntries(form)); this.state = "submitting"; h.dirty = true;
-    }}, submissions: [],
+    }}, submissions: [], modalHandles: new Map(),
     state: {view: "connected", accounts: [account], reportingAccountId: account.id,
       meta: {view: "connected", accounts: [account], reportingAccountId: account.id},
       klaviyo: {view: "pending", accounts}, permissionAvailability: {}},
@@ -72,7 +72,7 @@ function harness({accounts = [account], providerRuntime = () => assert.fail("une
     if (id === "react-router") return {useLoaderData: () => h.state, useActionData: () => undefined,
       useNavigation: () => h.navigation, useRevalidator: () => h.revalidator, useFetcher: () => h.fetcher,
       useSubmit: () => () => assert.fail("unexpected navigation submission")};
-    if (id === "../components/use-permission-settings") return {usePermissionSettings: props => {h.permissionProps = props; return {canManage: () => true, busy: false, checkingProduct: false, content: null, providerContent: () => null, ...h.permissionResult};}};
+    if (id === "../components/use-permission-settings") return {usePermissionSettings: props => {h.permissionProps = props; return {canManage: () => !props.externalBusy && !props.externalLock.current, busy: props.externalBusy || !!props.externalLock.current, checkingProduct: false, content: null, providerContent: () => null, ...h.permissionResult};}};
     if (id === "../components/product-access-removal") return {ProductAccessRemoval: "ProductAccessRemoval"};
     if (id === "../components/order-access-removal") return {OrderAccessRemoval: "OrderAccessRemoval"};
     if (id === "../shopify.server") return {authenticate: {admin: async () => verified}, database: {}, providerTokenVault: {}};
@@ -93,14 +93,28 @@ function harness({accounts = [account], providerRuntime = () => assert.fail("une
       for (let run = 0; run < 12; run++) {
         cursor = 0; h.dirty = false; h.pendingEffects = [];
         h.tree = exports.default();
+        const currentModals = [];
         for (const element of nodes(h.tree)) {
+          let modal;
+          if (element.type === "s-modal") {
+            modal = h.modalHandles.get(element.props.id);
+            if (!modal) {
+              modal = {id: element.props.id, value: "", visible: false, handlers: new Map(),
+                addEventListener(name, fn) { if (!this.handlers.has(name)) this.handlers.set(name,new Set()); this.handlers.get(name).add(fn); },
+                removeEventListener(name, fn) { this.handlers.get(name)?.delete(fn); },
+                emit(name) { for (const fn of [...(this.handlers.get(name) ?? [])]) fn({target:this}); },
+                showOverlay() {this.visible=true;this.emit("show");},
+                hideOverlay() {this.hideRequested=true;},
+                emitHidden() {this.visible=false;this.emit("afterhide");},
+              };
+              h.modalHandles.set(element.props.id,modal);
+            }
+            currentModals.push(modal);
+          }
           if (element.ref && typeof element.ref === "object") {
-            element.ref.current ??= {value: "", visible: false, handlers: {},
-              showOverlay() { this.visible = true; }, hideOverlay() { this.hideRequested = true; },
-              addEventListener(name, fn) { this.handlers[name] = fn; },
-              removeEventListener(name, fn) { if (this.handlers[name] === fn) delete this.handlers[name]; },
-              emitHidden() { this.visible = false; this.handlers.afterhide?.({target: this}); },
-            };
+            if (modal) element.ref.current = modal;
+            else element.ref.current ??= {value: ""};
+            if (element.type === "s-page") element.ref.current.querySelectorAll = () => currentModals;
             if (element.props?.value !== undefined) element.ref.current.value = element.props.value;
           }
         }
@@ -216,7 +230,7 @@ test("server field errors preserve the entered value; unknown failures require a
   assert.equal(save.props.disabled, true);
   save.props.onClick(); assert.equal(h.submissions.length, 2);
   nodes(h.modal()).find(e=>e.type === "s-button" && text(e) === "Check status").props.onClick(); h.render();
-  assert.equal(nodes(h.tree).filter(e=>e.type === "s-badge" && text(e) === "Working").length, 1);
+  assert.equal(nodes(h.tree).filter(e=>e.type === "s-banner" && e.props.heading === "Verifying access…").length, 1);
   assert.equal(nodes(h.tree).filter(e=>e.type === "s-badge" && text(e) === "Connected").length, 2);
   h.revalidator.state = "idle"; h.render();
   assert.equal(h.find("s-button", "Save and connect").props.disabled, false);
@@ -246,7 +260,7 @@ test("navigation and unrelated reloads never mark all three providers Working", 
     h.navigation.formData.set("provider", provider);
     h.render();
     const working = nodes(h.tree).filter(e=>e.type === "s-section"
-      && nodes(e).some(n=>n.type === "s-badge" && text(n) === "Working"));
+      && nodes(e).some(n=>n.type === "s-banner" && n.props.heading === "Verifying access…"));
     assert.deepEqual(working.map(e=>e.props.heading), provider === "klaviyo" ? ["Klaviyo"] : []);
     h.navigation.state = "idle"; h.revalidator.state = "loading"; h.render();
     assert.equal(nodes(h.tree).filter(e=>e.type === "s-badge" && text(e) === "Working").length, 0);
@@ -312,4 +326,58 @@ test("Settings passes pure Shopify Shop GID separately from composite view owner
   const h=harness();h.state={...h.state,shopifyPermissionOwner:"gid://shopify/Shop/123",permissionViewOwner:"gid://shopify/Shop/123:workspace:2"};h.render();
   assert.equal(h.permissionProps.shopifyShopId,"gid://shopify/Shop/123");
   assert.equal(h.permissionProps.productOwner,"gid://shopify/Shop/123:workspace:2");
+});
+
+test("Klaviyo save completion removes its modal lock without requiring a fresh Settings view",()=>{
+  const h=harness();h.chooseAccount();
+  assert.equal(h.permissionProps.externalLock.current,"klaviyo-initial-spend-modal");
+  assert.equal(h.permissionProps.externalBusy,true);
+  h.input("49");h.find("s-button","Save and connect").props.onClick();h.render();
+  assert.equal(nodes(h.tree).filter(e=>e.type==="s-banner"&&e.props.heading==="Saving estimated spend…").length,1);
+  assert.equal(h.permissionProps.externalBusy,true);
+  h.state={...h.state,klaviyo:{view:"connected",account,current:{id:"period",amount:"49",currency:"USD",effectiveFrom:"2026-11-01",correctionVersion:0},periods:[]}};
+  h.fetcher.state="idle";h.fetcher.data=undefined;h.render();
+  assert.equal(h.modal(),undefined);assert.equal(h.permissionProps.externalLock.current,null);
+  assert.equal(h.permissionProps.externalBusy,false);
+  assert.equal(h.find("s-button","Disconnect").props.disabled,undefined);
+  assert.equal(h.find("s-button","Update spend").props.disabled,undefined);
+  assert.equal(h.submissions.length,1);
+  // A late native event from the removed modal cannot re-lock the page.
+  h.modalHandles.get("klaviyo-initial-spend-modal").emitHidden();h.render();
+  assert.equal(h.permissionProps.externalBusy,false);
+});
+
+test("Klaviyo modal cleanup releases only its own lock, and owner changes clear an old modal",()=>{
+  const h=harness();h.chooseAccount();
+  h.permissionProps.externalLock.current="another-provider-modal";
+  h.state={...h.state,klaviyo:{view:"disconnected",notice:null}};h.render();
+  assert.equal(h.permissionProps.externalLock.current,"another-provider-modal");
+  const other=harness();other.chooseAccount();
+  other.state={...other.state,permissionViewOwner:"shop:workspace:3"};other.render();
+  assert.equal(other.permissionProps.externalLock.current,null);
+  assert.equal(other.permissionProps.externalBusy,false);
+  assert.equal(other.submissions.length,0);
+});
+
+test("Klaviyo disconnect uses one info progress banner and a verified success notice",()=>{
+  const h=harness();h.state={...h.state,klaviyo:{view:"connected",account,current:{amount:"49",currency:"USD",effectiveFrom:"2026-11-01"},periods:[]}};h.render();
+  h.navigation.state="submitting";h.navigation.formData=new FormData();h.navigation.formData.set("provider","klaviyo");h.navigation.formData.set("intent","disconnect");h.render();
+  assert.equal(nodes(h.tree).filter(e=>e.type==="s-banner"&&e.props.tone==="info"&&e.props.heading==="Disconnecting…").length,1);
+  assert.equal(nodes(h.tree).some(e=>e.type==="s-badge"&&text(e)==="Working"),false);
+  assert.doesNotMatch(text(h.tree),/Klaviyo was disconnected/);
+  h.navigation.state="idle";h.state={...h.state,klaviyo:{view:"disconnected",notice:"disconnected"}};h.render();
+  assert.equal(nodes(h.tree).filter(e=>e.type==="s-banner"&&e.props.tone==="success"&&text(e)==="Klaviyo was disconnected.").length,1);
+  assert.ok(h.find("s-button","Connect Klaviyo"));
+  assert.equal(h.permissionProps.externalBusy,false);
+});
+
+test("Klaviyo management modal lock is rebound after a request removes and restores connected controls",()=>{
+  const h=harness();h.state={...h.state,klaviyo:{view:"connected",account,current:{amount:"49",currency:"USD",effectiveFrom:"2026-11-01"},periods:[]}};h.render();
+  const modal=h.modalHandles.get("klaviyo-disconnect-modal");modal.showOverlay();h.render();
+  assert.equal(h.permissionProps.externalLock.current,"klaviyo-disconnect-modal");
+  h.navigation.state="submitting";h.navigation.formData=new FormData();h.navigation.formData.set("provider","klaviyo");h.navigation.formData.set("intent","disconnect");h.render();
+  assert.equal(h.permissionProps.externalLock.current,null);assert.equal(h.permissionProps.externalBusy,true);
+  h.navigation.state="idle";h.render(); // An unconfirmed request must permit a later explicit dialog, without any auto retry.
+  modal.showOverlay();h.render();assert.equal(h.permissionProps.externalLock.current,"klaviyo-disconnect-modal");
+  modal.emitHidden();h.render();assert.equal(h.permissionProps.externalBusy,false);assert.equal(h.submissions.length,0);
 });

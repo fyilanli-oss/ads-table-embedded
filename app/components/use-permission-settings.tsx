@@ -20,7 +20,7 @@ type Props = {
   shopifyShopId?: string | null;
   onProductStatus?(value: ProductPermissionStatus): void;
   onOrderStatus?(value: ProductPermissionStatus): void;
-  initialProviders?: Partial<Record<"google_ads" | "meta", {view: string; permission?: PermissionSettingsResult; connectionBinding?: {connectionId: string; version: number}}>>;
+  initialProviders?: Partial<Record<"google_ads" | "meta", {view: string; notice?: string | null; permission?: PermissionSettingsResult; connectionBinding?: {connectionId: string; version: number}}>>;
   onDisconnected?(feature: "google_ads" | "meta"): void;
   onConnection?(feature: "google_ads" | "meta", connection: import("../lib/shopify/permission-settings.server.js").PermissionSelection): void;
   onResume(feature: PermissionFeature, stage: string): void;
@@ -431,9 +431,19 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
       const connected = reply?.kind === "status" && reply.stage === "reporting_selected" || !reply && base?.view === "connected";
       if (connected && !unknown) return null;
       const disconnected = !reply && base?.view === "disconnected";
+      const stage = reply?.kind === "status" ? reply.stage
+        : base?.permission?.kind === "status" ? base.permission.stage
+        : base?.view === "pending_reporting" ? "select_reporting_account"
+        : base?.view === "pending" ? "select_account" : null;
+      const explanation = unknown || disconnected ? null
+        : stage === "select_reporting_account" ? "Select your reporting account to finish setup."
+        : stage === "select_account" ? "Select your advertiser accounts to finish setup."
+        : stage === "request_permissions" || base?.view === "permissions_incomplete" ? "Complete your permissions to finish setup." : null;
       return <s-stack direction="block" gap="base">
         {unknown ? <s-banner tone="warning" heading="We could not confirm the result. Resume setup to check the current connection status." />
           : <s-badge tone={disconnected ? undefined : "warning"}>{disconnected ? "Not connected" : "Resume setup"}</s-badge>}
+        {explanation ? <s-paragraph>{explanation}</s-paragraph> : null}
+        {disconnected && base?.notice === "disconnected" ? <s-banner tone="success">{feature === "meta" ? "Meta was disconnected." : "Google Ads was disconnected."}</s-banner> : null}
         <s-button disabled={busy ? true : undefined} onClick={() => disconnected ? open(feature) : void resumeProvider(feature)}>
           {disconnected ? feature === "meta" ? "Connect Meta" : "Connect Google Ads" : "Resume setup"}
         </s-button>

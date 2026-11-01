@@ -1,3 +1,11 @@
+## 1 Kasım — mevcut07: geçiş mesajları ve Klaviyo kilidi
+
+Owner eksik kurulum mesajları, Klaviyo tamamlanma kilidi ve ortak işlem/bitiş
+bildiriminin sözleşme + kod/test/PR paketini onayladı. Aktif EO05
+Settings_transition_feedback_2026_11_01 ve Settings07 brief'i bağlayıcıdır.
+Native seçim/afterhide ve unknown/no-replay korunur; provider/config/DB veya canlı
+izin işlemi yoktur. Merge/yayın ve görsel kabul ayrıdır;07 açık kalır.
+
 ## 1 Kasım — mevcut07: Shopify scope owner bağı
 
 Owner saf Shop GID ile birleşik görünüm owner'ının ayrılması ve gerçek kimlik

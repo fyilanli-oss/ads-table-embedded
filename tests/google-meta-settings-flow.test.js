@@ -27,7 +27,7 @@ function harness(feature = "meta", initial = {view: "combined"}) {
       onConnection: (...value) => h.connections.push(value),
       onDisconnected: feature => {
         h.disconnections.push(feature);
-        h.props = {...h.props, initialProviders: {...h.props.initialProviders, [feature]: {view: "disconnected"}}};
+        h.props = {...h.props, initialProviders: {...h.props.initialProviders, [feature]: {view: "disconnected", notice: "disconnected"}}};
       }},
     fetcher: {state: "idle", data: undefined, submit(value) {h.requests.push(value); h.fetcher.state = "submitting";}},
   };
@@ -284,5 +284,36 @@ for (const feature of ["google_ads", "meta"]) {
       lifecycle: {loadCurrent: async () => ({connectionId: "connection", credentialId: "credential", status: "connected", version: version++})},
       accountAuthority: {load: async () => ({connectionId: "connection", credentialId: "credential", accounts, reportingAccountId: "two"})}});
     await assert.rejects(combined.reconcile({installationAuthority: owner}), /CONNECTION_CHANGED/);
+  });
+}
+
+for(const feature of ["google_ads","meta"]){
+  test(feature+": incomplete card messages follow the existing stage without starting I/O",()=>{
+    for(const [initial,expected] of [
+      [{view:"pending"},"Select your advertiser accounts to finish setup."],
+      [{view:"pending_reporting"},"Select your reporting account to finish setup."],
+      [{view:"combined",permission:status(feature,"select_account",{selection})},"Select your advertiser accounts to finish setup."],
+      [{view:"combined",permission:status(feature,"select_reporting_account",{selection})},"Select your reporting account to finish setup."],
+      ...(feature==="google_ads"?[[{view:"permissions_incomplete"},"Complete your permissions to finish setup."]]:[]),
+    ]){
+      const h=harness(feature,initial);const html=renderToStaticMarkup(h.result.providerContent(feature));
+      assert.ok(html.includes(expected));assert.match(html,/Resume setup/);assert.equal(h.requests.length,0);
+    }
+    for(const initial of [{view:"disconnected"},{view:"error"},{view:"connected"}]){
+      const h=harness(feature,initial);const html=renderToStaticMarkup(h.result.providerContent(feature));
+      assert.doesNotMatch(html,/Select your|Complete your permissions/);assert.equal(h.requests.length,0);
+    }
+  });
+  test(feature+": successful Disconnect renders exactly one success banner after authoritative completion",async()=>{
+    const h=harness(feature,{view:"connected",connectionBinding:{connectionId:"connection",version:7}});
+    void h.result.manageProvider(feature,"disconnect");h.render();
+    const modal=h.disconnectModal().props;modal.onConfirm(()=>{});h.render();
+    const done=h.disconnectModal().props.onAfterHide();h.render();
+    assert.doesNotMatch(renderToStaticMarkup(h.result.providerContent(feature)),/was disconnected/);
+    await h.reply(status(feature,"request_permissions"));await done;h.render();
+    const html=renderToStaticMarkup(h.result.providerContent(feature));
+    assert.match(html,/Not connected/);assert.match(html,/tone="success"/);
+    assert.equal(html.split(feature==="meta"?"Meta was disconnected.":"Google Ads was disconnected.").length-1,1);
+    assert.equal(h.requests.length,1);assert.equal(h.result.busy,false);
   });
 }

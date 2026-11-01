@@ -1,3 +1,53 @@
+## 1 Kasım — eksik kurulum, Klaviyo kilidi ve ortak işlem bildirimi
+
+Owner Connect/Disconnect testlerini tamamladıktan sonra bu üç maddelik sözleşme,
+kod/test/PR paketini açıkça onayladı. Mevcut07; yeni canlı provider/OAuth, izin,
+config/DB/migration, merge ve yayın yetkisi yoktur. Önceki kod yazma bekleme kararı
+bu somut paket için owner tarafından kaldırıldı. Gerçek görsel kabul ayrıca kalır.
+
+Google: izin verilmeden çıkıştaki Not connected korunur. Mevcut permissions_incomplete
+sunumunda ve doğrulanmış request_permissions devam adımında Complete your permissions
+to finish setup. gösterilir. Google/Meta select_account veya pending: Select your
+advertiser accounts to finish setup. Google/Meta select_reporting_account veya
+pending_reporting: Select your reporting account to finish setup. Tek mevcut Resume
+setup düğmesi korunur. Unknown ayrı uyarısı kalır; missing/unknown birbirine çevrilmez.
+Sunucu yetkisi veya URL ipucundan grant çıkarılmaz; yalnız mevcut güvenli sunum
+verisi açıklanır. Başarılı aşamalar yanlış eksik-adım mesajını göstermez.
+
+Google/Meta verified Disconnect başarısı sonrasında Not connected rozetinin altında
+s-banner tone=success ile Meta was disconnected. / Google Ads was disconnected.
+gösterilir; sonra mevcut Connect düğmesi gelir. Shopify Product/Order access removed.
+ve Klaviyo was disconnected. aynı mevcut success bileşeninde korunur. Başarı yalnız
+mevcut doğrulanmış sonuçtan gelir; Cancel/unknown/stale owner başarı üretmez.
+
+Klaviyo Working rozeti + paragraf yerine tek s-banner tone=info kullanır. Disconnect
+sırasında Disconnecting…; initial spend kaydında Saving estimated spend…; diğer mevcut
+setup/status işlemlerinde Verifying access… gösterilir. Ek çağrı, otomatik retry veya
+modal/hesap/maliyet adımı eklenmez; işlem adını navigation intent belirler.
+
+Klaviyo native modal kilidi gerçek show/afterhide ile yönetilmeye devam eder. Pending
+modal seti başarılı Connected veya başka duruma geçerken DOM'dan kalkarsa effect
+cleanup sadece kaldırılan setin sahip olduğu lock'u bırakır; başka modalın lock'u
+silinmez. Aynı mağazada workspace/installGeneration değişiminde de eski modal kilidi
+kalmaz. Account → ayrı spend modalı yalnız native afterhide sonrası açılır; tek hesap
+bile açık seçilir,0 geçerlidir. Pending save/unknown için çift write/replay yoktur.
+Kayıt bitmeden genel kilit açılmaz; tamamlanınca sayfa yenilemeden erişilebilir olur.
+
+Bileşen eşlemesi: mevcut stable Polaris2.0/App Bridge s-section, block/base s-stack,
+s-badge, s-paragraph, s-button ve s-modal korunur; işlem info ve sonuç success
+s-banner ile sunulur. Custom CSS/HTML/renk veya yeni component/property yoktur.
+Resmî kaynaklar 2026-11-01 doğrulandı:
+https://shopify.dev/docs/api/app-home/latest/web-components/feedback-and-status-indicators/banner
+https://shopify.dev/docs/api/app-home/latest/web-components/overlays/modal
+
+Durum/kabul: idle/not connected aynı; explaining/Cancel yeni I/O yok; gerçek pending
+tek platform barı; eksik-adım mesajı gerçek pending aşamasıyla eşleşir; success aynı
+yeşil bar; unknown ve server guard'ları aynı; stale owner sonuçları uygulanmaz.
+Desktop ve en az320px mobilde aynı sıra/doğal Polaris akışı owner tarafından kontrol
+edilecek. Gerçek route/hook testleri native event listener setini ve modal kaldırma
+cleanup'ını kapsar; hidden success uydurmaz. Anayasa, typecheck/build ve CI gerekir.
+07 açık,15 başlamadı,22 paused,23 Dataset writer olarak kalır.
+
 ## 1 Kasım — Shopify mağaza kimliği / görünüm sahibi bağının ayrılması
 
 Owner somut kimlik ayrımı düzeltmesini, gerçek bileşik owner yapısıyla test ve PR

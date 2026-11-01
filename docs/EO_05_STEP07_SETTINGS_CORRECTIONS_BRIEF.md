@@ -1,5 +1,43 @@
 # EO-05 / mevcut 07 — onaylı Settings düzeltmesi
 
+## 1 Kasım — tek Meta hesabı kaydından sonra yanlış unconfirmed
+
+Owner token içermeyen bağlantı kayıtlarının salt okunur doğrulanmasını, dar kod
+düzeltmesini ve gerçek SQL testleriyle PR hazırlığını onayladı. Canlı mutation,
+OAuth tekrarı, migration, config, merge ve yayın kapsam dışıdır.
+
+`1000070310`–`1000070311` gözleminde tek Meta reklam hesabı seçimi sonrası genel
+unconfirmed görüldü. 10:55:08.044UTC uygulama kaydı feature=meta,
+intent=permission_select_accounts, code=PERMISSION_OPERATION_UNCONFIRMED.
+Salt okunur, token içermeyen metadata sorgusu Meta bağlantısında connected/version26,
+updated_at=10:55:07.702UTC, bir aktif hesap ve bir current Reporting Account bağı
+gösterdi. Kayıt yapılmıştı; sonuç doğrulamasında kod/SQL dönüşü uyumsuzdu.
+
+`complete_pending_provider_account_selection` yalnız connection_id, lifecycle_status,
+connection_version ve connected_account_count döndürür. Repository eksik Reporting
+Account alanını null yaparken ortak seçim katmanı tek hesabın ID'sini bekliyordu.
+Mevcut sentetik test gerçek SQL'in döndürmediği alanı eklediği için kusuru gizliyordu.
+
+Dar düzeltme gerçek receipt şeklini doğrular; Connected sonucunda mevcut hesap
+otoritesi repository'sinden kayıtlı Reporting Account ve hesap kümesini salt okunur
+okur. Exact connection/credential/hesap ve son lifecycle sürümü eşleşmelidir.
+Eksik/yanlış/başarısız readback ve eşzamanlı değişiklik unconfirmed kalır; yazma veya
+provider isteği tekrarlanmaz. Seçim ID'sinden varsayımsal başarı üretilmez. Ortak
+Google/Meta katmanının iki runtime bağlantısı aynı kontrolü kullanır; OAuth sırası,
+scope, tek/çok hesap davranışı ve UI değişmez. Yeni migration yoktur.
+
+Test fixture gerçek SQL dönüş sütunlarına daraltılır. Negatif testler eksik/yanlış
+otorite, bağlantı/credential/Reporting Account/inventory farkı, readback hatası ve
+okuma sırasında sürüm değişimini kapsar. F01 dar rollout iki rol dalında gerçek
+runtime/vault/crypto/SQL ile tek Google ve tek Meta hesabı kaydını sınar. Gerçek
+SQL receipt'inde Reporting Account alanının olmadığı ve yalnız bir seçim yazısı
+ardından kalıcı bağın doğrulandığı kanıtlanır; native HTTP sentetiktir, ek native
+istek/retry yoktur. CI sonucu ayrıca doğrulanır; bu hazırlık canlı düzeltme değildir.
+
+Sadeleştirme notları ayrı PR279'da korunur.07 açık;15 başlamadı;22 paused;
+23 Dataset yazımıdır. Resmî kaynak kontrolü1Kasım2026:
+https://supabase.com/docs/guides/database/functions ve https://vercel.com/docs/logs/runtime .
+
 ## 1 Kasım — Google Reporting Account değişiminde eksik yenileme migration'ı
 
 Ürün sahibi, yalnız ilgili canlı fonksiyonların salt okunur doğrulanmasını ve

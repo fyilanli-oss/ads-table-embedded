@@ -8,6 +8,7 @@ import {loadMigrationFiles,validateMigrationLineage} from "./check-migration-lin
 import {identityOAuthAtomicProbeWithTestMembership} from "./eo05-identity-oauth-atomic-probe.mjs";
 import {oauthPermissionScopes} from "../app/lib/oauth/oauth-permission-profile.server.js";
 import {googleIdentityRenewalProbe,googleReportingChangeProbe} from "./eo05-google-identity-renewal-probe.mjs";
+import {singleAccountSelectionProbe} from "./eo05-single-account-selection-probe.mjs";
 
 // Compiled loopback-only connection and runner gate inherited from F01. No live
 // database address, credentials, native provider requests or environment override.
@@ -61,6 +62,7 @@ async function exercise(client,coordinatorExpected){
   await withTestRuntimeMembership(client,async()=>{
     const execution=await scopedIdentityFixture(client);
     await identityOAuthAtomicProbeWithTestMembership(client,{execution,coordinatorExpected});
+    await singleAccountSelectionProbe(client,{execution});
   });
   assert.equal((await client.query("select count(*)::int n from app.workspaces")).rows[0].n,0,"synthetic fixture fully rolled back");
 }
@@ -109,6 +111,7 @@ async function main(){
       await client.query("grant adstable_runtime to postgres with inherit false, set true, admin false");
       const execution=await scopedIdentityFixture(client);
       await identityOAuthAtomicProbeWithTestMembership(client,{execution,coordinatorExpected:true});
+      await singleAccountSelectionProbe(client,{execution});
     }finally{await client.query("rollback");}
     assert.equal((await client.query("select exists(select 1 from pg_roles where rolname='adstable_refresh_coordinator') present")).rows[0].present,false);
     assert.equal((await client.query("select count(*)::int n from app.workspaces")).rows[0].n,0);

@@ -24,7 +24,7 @@ export function OrderAccessRemoval({owner, ready, busy, onConfirm, onUnknown}: P
   }, []);
   return <>
     {ready ? <s-button tone="critical" commandFor="shopify-orders-revoke-modal" command="--show"
-      disabled={busy || !owner ? true : undefined}>Remove order access</s-button> : null}
+      disabled={busy || !owner ? true : undefined}>Disconnect</s-button> : null}
     <s-modal ref={modal} id="shopify-orders-revoke-modal" heading="Remove order access?" size="base" padding="base">
       <s-paragraph>AdsTable's permission to read Shopify orders and purchased products will be removed. Order-based features will need access again. Product access and existing records will be kept.</s-paragraph>
       <s-button slot="primary-action" variant="primary" tone="critical" disabled={busy || !ready || !owner ? true : undefined}

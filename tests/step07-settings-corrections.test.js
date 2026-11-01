@@ -264,7 +264,7 @@ test("successful setup replaces the pending modal only after server state become
 
 test("Products card shows fresh verified access without Connect or technical activation copy", () => {
   const h = harness(); h.state.shopifyProductAccess = "ready"; h.render();
-  assert.ok(nodes(h.tree).some(e => e.type === "s-badge" && text(e) === "Product access approved"));
+  assert.ok(nodes(h.tree).some(e => e.type === "s-paragraph" && text(e) === "Product access approved"));
   assert.ok(nodes(h.tree).some(e => e.type === "ProductAccessRemoval" && e.props.ready === true));
   assert.equal(nodes(h.tree).some(e => e.type === "s-button" && text(e) === "Connect Shopify products"), false);
   assert.equal(text(h.tree).includes("awaiting activation"), false);
@@ -281,9 +281,9 @@ test("Products missing and unknown remain distinct; unknown offers readback inst
 test("Products status reply updates its card immediately and a new loader cannot retain stale ready state", () => {
   const h = harness(); h.state.shopifyProductAccess = "missing"; h.render();
   h.permissionProps.onProductStatus("ready"); h.render();
-  assert.ok(nodes(h.tree).some(e => e.type === "s-badge" && text(e) === "Product access approved"));
+  assert.ok(nodes(h.tree).some(e => e.type === "s-paragraph" && text(e) === "Product access approved"));
   h.state = {...h.state, shopifyProductAccess: "missing"}; h.render();
-  assert.equal(nodes(h.tree).some(e => e.type === "s-badge" && text(e) === "Product access approved"), false);
+  assert.equal(nodes(h.tree).some(e => e.type === "s-paragraph" && text(e) === "Product access approved"), false);
 });
 
 test("verified removal has one English result without the initial not-connected message", () => {
@@ -296,13 +296,13 @@ test("verified removal has one English result without the initial not-connected 
 
 test("Orders card independently reflects verified grant, removal, unknown and a new loader",()=>{
   const h=harness();h.state.shopifyProductAccess="ready";h.state.shopifyOrderAccess="ready";h.render();
-  assert.ok(nodes(h.tree).some(e=>e.type==="s-badge"&&text(e)==="Order access approved"));
+  assert.ok(nodes(h.tree).some(e=>e.type==="s-paragraph"&&text(e)==="Order access approved"));
   assert.ok(nodes(h.tree).some(e=>e.type==="OrderAccessRemoval"&&e.props.ready===true));
   assert.equal(nodes(h.tree).some(e=>e.type==="s-button"&&text(e)==="Connect Shopify orders"),false);
   h.permissionProps.onOrderStatus("missing");h.permissionResult={orderRemovalResult:"removed"};h.render();
   assert.ok(nodes(h.tree).some(e=>e.type==="s-banner"&&e.props.heading==="Order access removed."));
   assert.equal(text(h.tree).includes("Order access is not connected."),false);
-  assert.ok(nodes(h.tree).some(e=>e.type==="s-badge"&&text(e)==="Product access approved"));
+  assert.ok(nodes(h.tree).some(e=>e.type==="s-paragraph"&&text(e)==="Product access approved"));
   assert.ok(nodes(h.tree).some(e=>e.type==="s-button"&&text(e)==="Connect Shopify orders"));
   h.state={...h.state,shopifyOrderAccess:"unknown"};h.render();
   assert.equal(nodes(h.tree).some(e=>e.type==="s-button"&&text(e)==="Connect Shopify orders"),false);

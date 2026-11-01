@@ -1,3 +1,42 @@
+## 1 Kasım — Shopify bağlı kart metninin ürün sahibi düzeltmesi
+
+Mevcut07. Ürün sahibi Shopify amaç paragraflarını kart için reddetti ve aşağıdaki
+birebir sunumu istedi. Bu dar UI kod/test/PR hazırlığı önceki amaç paragrafı
+kararının yalnız Shopify kartına ilişkin bölümünü değiştirir.
+
+Ürün erişimi ready olduğunda:
+Connected
+Product access approved
+Disconnect
+
+Sipariş erişimi ready olduğunda:
+Connected
+Order access approved
+Disconnect
+
+Connected mevcut s-badge tone=success; onay metni s-paragraph; karttaki Disconnect
+mevcut critical s-button'dır. Her bağımsız izin grubu s-stack direction=block
+gap=base içinde aynı sırayı kullanır. Amaç paragrafları kartlardan kaldırılır.
+Kart düğmesi yalnız mevcut kendi ürün/sipariş onay modalını açar; modal başlığı,
+açıklaması, Remove access/Cancel metinleri, native afterhide ve owner/busy/ready
+korumaları değişmez. Ürün erişimi ile optional sipariş erişimi birleştirilmez.
+
+Loading, missing, unknown, unavailable, removal ve Cancel durumları mevcut
+metin/eylemleriyle korunur. Meta/Google/Klaviyo, evidence, bağlantı, OAuth/token,
+provider/config/DB ve Disconnect sonrası davranışlar kapsam dışıdır.
+
+Bileşenler mevcut stable Polaris2.0 ve App Bridge'dir; yeni prop, custom CSS veya
+ham HTML kontrolü yoktur. Badge ve Button resmî belgeleri2026-11-01 kontrol edildi:
+https://shopify.dev/docs/api/app-home/latest/web-components/feedback-and-status-indicators/badge
+https://shopify.dev/docs/api/app-home/latest/web-components/actions/button
+
+Mevcut bağımsız izin/kaldırma, native afterhide, modal iptali ve eski owner yanıtı
+regresyonları, anayasa kontrolü, typecheck/build çalıştırılır. Eski rozet metni
+kontrolleri yeni paragraph sunumuna uyarlanır; sırf kopyayı tekrarlayan yeni test
+yazılmaz. Masaüstü ve en az320px gerçek mobil kabulü owner verir. Merge/yayın
+ayrı açık onay ister;07 ve görsel kabul açık kalır. Aşağıdaki önceki Shopify amaç
+metinleri bu son ürün sahibi kararıyla aşılmış tarihsel kayıttır.
+
 ## 1 Kasım — ürün sahibinin bağlı kart düzeni ve silinecek satırlar listesi
 
 Paket mevcut07 içindedir. Ürün sahibi 1000070350–1000070352 ekranlarından sonra

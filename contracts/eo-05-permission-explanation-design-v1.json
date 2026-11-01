@@ -5,7 +5,7 @@
     "existing_plan_step": 7,
     "authority": "Owner supplied exact connected-card copy, row removals and action order after screenshots1000070350–1000070352.",
     "analyst_brief": "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md",
-    "scope": "Connected-card presentation and Shopify purpose copy only; no lifecycle, permission, account-selection, diagnostic, cost-ledger or provider changes.",
+    "scope": "Connected-card presentation including owner-corrected Shopify Connected/approval/Disconnect rows only; no lifecycle, permission, account-selection, diagnostic, cost-ledger or provider changes.",
     "meta_google": {
       "retain": [
         "Connected",
@@ -34,10 +34,11 @@
     },
     "shopify": {
       "independent_products_optional_orders": true,
-      "status_and_action_copy": "Preserve existing independent status/action meanings",
-      "product_purpose": "Product access lets AdsTable read products and variants to match product reporting to your Shopify catalog.",
-      "order_purpose": "Optional order access lets AdsTable read recent orders and purchased products to compare Shopify sales with marketing attribution.",
-      "layout": "Each permission group uses block/base: existing status, purpose, existing action"
+      "status_and_action_copy": "Ready only: Connected badge, existing approval text as paragraph, Disconnect card trigger. Existing non-ready states and confirmation modals remain unchanged.",
+      "owner_correction": "Owner rejected the card purpose paragraphs and explicitly requested these exact rows; modal copy and behavior stay unchanged.",
+      "product_connected_rows": ["Connected", "Product access approved", "Disconnect"],
+      "order_connected_rows": ["Connected", "Order access approved", "Disconnect"],
+      "layout": "Each independent permission group uses block/base: Connected success badge, approval paragraph, existing confirmation trigger renamed Disconnect"
     },
     "source": "https://shopify.dev/docs/api/app-home/latest/web-components/layout-and-structure/stack",
     "native_visual_acceptance": false,

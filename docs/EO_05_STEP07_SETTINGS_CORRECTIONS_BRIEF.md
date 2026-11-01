@@ -1,3 +1,60 @@
+## 1 Kasım — ürün sahibinin bağlı kart düzeni ve silinecek satırlar listesi
+
+Paket mevcut07 içindedir. Ürün sahibi 1000070350–1000070352 ekranlarından sonra
+birebir bağlı kart düzenini ve silinecek satırları yazdı. Bu somut talep yalnız
+kart metni/yerleşimi, izole kontroller ve PR hazırlığı için uygulanır.
+
+### Amaç ve birebir metin
+
+Shopify Products ve optional Orders bağımsız durum/eylem olarak kalır. Mevcut
+Product access approved / Order access approved rozetleri korunur; iki izin grubu
+aynı block/base yerleşimini kullanır. Her grupta durum → kısa amaç → mevcut eylem:
+
+- Product access lets AdsTable read products and variants to match product reporting to your Shopify catalog.
+- Optional order access lets AdsTable read recent orders and purchased products to compare Shopify sales with marketing attribution.
+
+Meta ve Google Ads: Connected → mevcut gerçek hesap sayısı özeti → mevcut
+Reporting Account adı/fallback ID → geçici evidence alanı → aynı inline/base eylem
+satırında Disconnect | Reporting Account. Karttaki her-hesap ad/ID satırı kaldırılır;
+server hesap kümesi ve seçim modalındaki seçenekler korunur.
+
+Klaviyo: Connected → 1 Klaviyo advertiser account(s) connected. →
+Reporting Account: {account.name} ({account.id}) → mevcut Current estimated 30-day
+email spend: {amount} {currency} · Effective {effectiveFrom} → mevcut evidence
+alanı → mevcut inline/base Disconnect | Update spend | Change value satırı.
+Advertiser kelimesi ürün sahibinin birebir istediği ortak ekran metnidir; yeni
+bir reklam hesabı veya sağlayıcı veri yetkisi tanımlamaz. Currency/Timezone satırı
+yalnız bağlı karttan kaldırılır; maliyet para birimi ve form/hesap verisi korunur.
+
+### Durum matrisi ve korunacak davranış
+
+Connected yalnız yukarıdaki sunumu değiştirir. Shopify loading, missing, unknown,
+unavailable, removed durumları aynı mevcut metin/eylem ve ayrı permission state ile
+kalır; amaç metinleri bağlantı kanıtı değildir. Diğer sağlayıcıların başlangıç,
+loading, empty, resume, error, reauthorization ve Cancel durumları değişmez.
+Evidence/product test düğmeleri ve sonuçları korunur, çalıştırılmaz. OAuth,
+callback/token, hesap seçimi, Reporting Account yazımı, Disconnect sonrası ve
+maliyet formu/ledger davranışları kapsam dışıdır; bunlara yeni test akışı veya
+canlı çağrı başlatılmaz. Modal/izin açıklaması metinleri değişmez.
+
+### Bileşen eşlemesi, kaynak ve kabul
+
+Mevcut s-section, s-stack direction=block gap=base, s-badge tone=success,
+s-paragraph ve s-button davranışları korunur. Google/Meta eylemleri, mevcut
+Klaviyo gibi s-stack direction=inline gap=base içine alınır; critical Disconnect
+ve mevcut disabled/onClick binding'leri korunur. Ham HTML kontrolü, custom CSS,
+inline style, literal renk veya yeni görsel bileşen eklenmez.
+
+Resmî Stack belgesi 2026-11-01 kontrol edildi:
+https://shopify.dev/docs/api/app-home/latest/web-components/layout-and-structure/stack
+
+Masaüstünde yönetim düğmeleri aynı satırdadır. En az320px mobilde doğal Polaris
+akışıyla erişilebilir kalmalı, yatay taşma olmamalıdır. Gerçek masaüstü/mobil
+kabulü ürün sahibi verir. Mevcut Shopify bağımsız izin/kaldırma ve Klaviyo ayrı
+hesap/maliyet modalı regresyonları, UI anayasa kontrolü, typecheck ve build
+çalıştırılır; sırf bu düşük etkili metin/yerleşim değişikliğini kopyalayan yeni test
+yazılmaz. Merge, yayın ve native kabul bu hazırlığa dahil değildir.07 açık kalır.
+
 ## 1 Kasım — onaylı Google/Meta uygulama hazırlığı
 
 PR282'deki standardın ardından ürün sahibi Google/Meta Settings kodunu, izole

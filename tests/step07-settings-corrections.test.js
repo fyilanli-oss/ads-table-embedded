@@ -155,7 +155,7 @@ test("one or multiple Klaviyo accounts always require explicit selection before 
   assert.equal(klaviyoSetupAccount([account,other], "stale"), null);
   assert.equal(klaviyoSetupAccount([account,other], other.id), other);
   const h = harness();
-  assert.match(text(h.tree), /Account selection required/);
+  assert.match(text(h.tree), /Select your account to finish setup\./);
   assert.equal(h.accountModal().props.heading, "Select Klaviyo account");
   assert.equal(h.modal().ref.current.visible, false);
   assert.equal(nodes(h.accountModal()).some(e=>e.type === "s-number-field"), false);
@@ -164,7 +164,7 @@ test("one or multiple Klaviyo accounts always require explicit selection before 
   assert.equal(h.modal().ref.current.visible, true);
   assert.equal(nodes(h.modal()).some(e=>e.type === "s-choice-list"), false);
   const multiple = harness({accounts: [account,other]});
-  assert.match(text(multiple.tree), /Account selection required/);
+  assert.match(text(multiple.tree), /Select your account to finish setup\./);
   assert.equal(multiple.accountModal().props.heading, "Select Klaviyo account");
   multiple.state.klaviyo.accounts = [];
   multiple.render();

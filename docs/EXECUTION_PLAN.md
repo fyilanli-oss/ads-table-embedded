@@ -1,3 +1,11 @@
+## 1 Kasım — mevcut07: Klaviyo Resume kartı
+
+Owner1000070400 sonrası Klaviyo pending kartını diğerleriyle eşitleyen turuncu
+Resume setup rozeti, kısa hesap/spend açıklaması ve standart butonun kod/test/PR
+hazırlığını onayladı. Aktif EO05 Klaviyo_resume_presentation_2026_11_01 ve Settings07
+brief'i geçerlidir. Modal/handler/izin ve diğer platformlar korunur; canlı işlem,
+merge/yayın ve native kabul ayrıdır.07 açık kalır.
+
 ## 1 Kasım — mevcut07: geçiş mesajları ve Klaviyo kilidi
 
 Owner eksik kurulum mesajları, Klaviyo tamamlanma kilidi ve ortak işlem/bitiş

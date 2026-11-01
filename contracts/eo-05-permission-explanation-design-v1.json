@@ -1,4 +1,24 @@
 {
+  "Klaviyo_resume_presentation_2026_11_01": {
+    "existing_plan_step": 7,
+    "checked_at": "2026-11-01",
+    "authority": "Owner explicitly approved narrow pending-card code, checks and PR preparation after screenshot1000070400.",
+    "analyst_brief": "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md",
+    "badge": {
+      "component": "s-badge",
+      "tone": "warning",
+      "text": "Resume setup"
+    },
+    "account_message": "Select your account to finish setup.",
+    "spend_message": "Enter your estimated spend to finish setup.",
+    "button": "Existing Resume setup s-button with default variant; same busy guards and handler.",
+    "preserve": "Separate explicit account/spend modals and native afterhide, zero, validation, owner locks, all server/provider behavior.",
+    "native_visual_acceptance": false,
+    "step07_done": false,
+    "live_calls": false,
+    "merge_authorized": false,
+    "deploy_authorized": false
+  },
   "Settings_transition_feedback_2026_11_01": {
     "checked_at": "2026-11-01",
     "existing_plan_step": 7,

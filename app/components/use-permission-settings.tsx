@@ -17,6 +17,7 @@ type Props = {
   externalBusy?: boolean;
   externalLock?: {current: string | null};
   productOwner?: string | null;
+  shopifyShopId?: string | null;
   onProductStatus?(value: ProductPermissionStatus): void;
   onOrderStatus?(value: ProductPermissionStatus): void;
   initialProviders?: Partial<Record<"google_ads" | "meta", {view: string; permission?: PermissionSettingsResult; connectionBinding?: {connectionId: string; version: number}}>>;
@@ -29,11 +30,11 @@ type Props = {
 // request. Shopify consent stays in Settings through App Bridge; the server
 // prepares a fixed scope and verifies actual grants after the native window.
 const isShopifyPermission = (feature: unknown) => feature === "shopify_products" || feature === "shopify_orders";
-export function usePermissionSettings({availability, unavailableReasons, onResume, productOwner, onProductStatus, onOrderStatus, initialProviders, onConnection, onDisconnected, externalBusy = false, externalLock}: Props) {
+export function usePermissionSettings({availability, unavailableReasons, onResume, productOwner, shopifyShopId, onProductStatus, onOrderStatus, initialProviders, onConnection, onDisconnected, externalBusy = false, externalLock}: Props) {
   const fetcher = useFetcher<Reply>();
   const activeView = useRef(true);
-  const callbacks = useRef({availability, onResume, productOwner, onProductStatus, onOrderStatus, onConnection, onDisconnected, initialProviders, externalBusy, externalLock, submit: fetcher.submit});
-  callbacks.current = {availability, onResume, productOwner, onProductStatus, onOrderStatus, onConnection, onDisconnected, initialProviders, externalBusy, externalLock, submit: fetcher.submit};
+  const callbacks = useRef({availability, onResume, productOwner, shopifyShopId, onProductStatus, onOrderStatus, onConnection, onDisconnected, initialProviders, externalBusy, externalLock, submit: fetcher.submit});
+  callbacks.current = {availability, onResume, productOwner, shopifyShopId, onProductStatus, onOrderStatus, onConnection, onDisconnected, initialProviders, externalBusy, externalLock, submit: fetcher.submit};
   const pending = useRef<{
     requestId: string; feature: PermissionFeature;
     resolve(reply: Reply): void; reject(): void;
@@ -118,7 +119,9 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
     canRequest: feature => callbacks.current.availability[feature] === true,
     request: async feature => {
       const requestOwner = callbacks.current.productOwner;
-      const current = () => activeView.current && requestOwner === callbacks.current.productOwner;
+      const requestShopId = callbacks.current.shopifyShopId;
+      const current = () => activeView.current && requestOwner === callbacks.current.productOwner
+        && (!isShopifyPermission(feature) || requestShopId === callbacks.current.shopifyShopId);
       connectReply.current = null;
       let observed = false;
       let failureCode = "SHOPIFY_CONNECT_PREPARATION_UNCONFIRMED";
@@ -129,7 +132,7 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
         if (reply.kind === "scope_request") {
           const binding = {...reply.binding};
           failureCode = "SHOPIFY_SCOPE_WINDOW_UNKNOWN";
-          try { await requestShopifyScopeWindow({preparation: reply, owner: requestOwner, isCurrent: current}); }
+          try { await requestShopifyScopeWindow({preparation: reply, owner: requestShopId, isCurrent: current}); }
           catch (error) {
             const code = error instanceof Error ? Object.getOwnPropertyDescriptor(error, "message")?.value : null;
             if (["SHOPIFY_SCOPE_WINDOW_BINDING_INVALID", "SHOPIFY_SCOPE_WINDOW_UNAVAILABLE", "SHOPIFY_SCOPE_WINDOW_UNKNOWN"].includes(code)) failureCode = code;

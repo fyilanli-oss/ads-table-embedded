@@ -1,3 +1,12 @@
+## 1 Kasım — mevcut07: bağlı-değil kart tutarlılığı
+
+Owner Shopify Not connected rozetleri ve kısa Connect products/orders düğmeleri,
+Klaviyo disconnected açıklamasının kaldırılması ve standart Connect görünümünün
+kod/test/PR hazırlığını onayladı. Ayrıntı aktif EO05 sözleşmesindeki
+Settings_disconnected_card_copy_2026_11_01 ve Settings07 brief'indedir. Meta/Google,
+OAuth akışı ve sunucu davranışı korunur. Canlı işlem/merge/yayın ayrı onay ister;
+gerçek masaüstü/mobil kabul beklenir,07 açık kalır.
+
 ## 1 Kasım — mevcut07: Disconnect geçiş düzeltmesi
 
 Owner Shopify modal onay label'ı, Google/Meta immediate confirmation ve başarılı

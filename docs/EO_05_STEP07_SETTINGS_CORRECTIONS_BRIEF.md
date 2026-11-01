@@ -1,3 +1,32 @@
+## 1 Kasım — onaylı bağlı-değil kart tutarlılığı
+
+Mevcut07; owner aşağıdaki dar ekran kodu/test/PR kapsamını açıkça onayladı.
+Shopify Products ve optional Orders bağımsız kalır. Missing durumunda her grupta
+s-badge (varsayılan tone) ile Not connected gösterilir. Mevcut doğrulanmış removal
+başarı bildirimi varsa rozetten sonra korunur. Düğmeler Connect products ve
+Connect orders olur. Products ready değilken Product access is required to connect
+orders. ve mevcut disabled Orders düğmesi korunur. Unavailable, unknown, loading,
+checking/removing, ready ve Cancel durumlarının mevcut anlamı/korumaları değişmez;
+unavailable bir Not connected kanıtı sayılmaz.
+
+Klaviyo disconnected kartındaki Connect one Klaviyo account and enter its
+estimated 30-day email spend. paragrafı kaldırılır. Connect Klaviyo mevcut s-button
+varsayılan variant (auto) ile diğer Connect düğmeleri gibi gösterilir. Notice,
+onClick, hesap seçimi ve ayrı maliyet modalı korunur. Meta/Google değişmez.
+
+Bileşen eşlemesi: mevcut s-section / block-base s-stack korunur; missing durumu
+varsayılan s-badge, kısa eylemler s-button; prerequisite s-paragraph. Yeni HTML,
+CSS/renk, component veya sunucu davranışı yok. Button variant varsayılan auto ve
+Badge varsayılan tone auto resmî kaynaklardan 2026-11-01 doğrulandı:
+https://shopify.dev/docs/api/app-home/latest/web-components/actions/button
+https://shopify.dev/docs/api/app-home/latest/web-components/feedback-and-status-indicators/badge
+
+Masaüstü ve en az320px mobilde aynı sıra ve doğal Polaris akışı beklenir. Mevcut
+Shopify state/removal/owner ve Klaviyo modal regresyonları, anayasa, typecheck/build
+ve CI çalıştırılır; salt metin değişikliğini kopyalayan yeni test eklenmez. Gerçek
+Shopify görsel kabul owner'dadır ve henüz verilmemiştir. OAuth akışı incelemesi,
+canlı bağlantı/izin/token/config/DB, merge ve yayın kapsam dışıdır.07 açık kalır.
+
 ## 1 Kasım — onaylı Disconnect modalı ve sonuç geçişi düzeltmesi
 
 Mevcut07. Owner1000070362–1000070366 sonrası somut üç maddelik kod/test/PR

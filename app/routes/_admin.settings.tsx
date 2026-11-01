@@ -1053,12 +1053,12 @@ export default function Settings() {
               : permissions.checkingProduct ? <s-banner tone="info" heading="Checking product access…" />
               : productAccess === "ready" ? <><s-badge tone="success">Connected</s-badge><s-paragraph>Product access approved</s-paragraph></>
               : productAccess === "unknown" ? <s-banner tone="critical" heading={permissions.productRemovalResult === "unknown" ? "Could not verify that product access was removed. Check status to continue." : "Could not verify product access. Check status to continue."} />
-              : productAccess === "missing" && permissions.productRemovalResult === "removed" ? <s-banner tone="success" heading="Product access removed." />
-              : <s-paragraph>{productAccess === "missing" ? "Product access is not connected." : "Product connection is currently unavailable."}</s-paragraph>}
+              : productAccess === "missing" ? <><s-badge>Not connected</s-badge>{permissions.productRemovalResult === "removed" ? <s-banner tone="success" heading="Product access removed." /> : null}</>
+              : <s-paragraph>Product connection is currently unavailable.</s-paragraph>}
             <ProductAccessRemoval owner={state.shopifyPermissionOwner} ready={productAccess === "ready"} busy={permissions.busy}
               onConfirm={() => {void permissions.removeProductAccess();}} onUnknown={permissions.productRemovalUnknown} />
             {productAccess === "missing" || productAccess === "unavailable" ?
-              <s-button disabled={permissions.busy ? true : undefined} onClick={() => permissions.open("shopify_products")}>Connect Shopify products</s-button> : null}
+              <s-button disabled={permissions.busy ? true : undefined} onClick={() => permissions.open("shopify_products")}>Connect products</s-button> : null}
             {productAccess === "unknown" ? <s-button disabled={permissions.busy ? true : undefined} onClick={() => permissions.checkStatus("shopify_products")}>Check status</s-button> : null}
           </s-stack>
           <s-stack direction="block" gap="base">
@@ -1066,13 +1066,13 @@ export default function Settings() {
               : permissions.checkingOrder ? <s-banner tone="info" heading="Checking order access…" />
               : orderAccess === "ready" ? <><s-badge tone="success">Connected</s-badge><s-paragraph>Order access approved</s-paragraph></>
               : orderAccess === "unknown" ? <s-banner tone="critical" heading={permissions.orderRemovalResult === "unknown" ? "Could not verify that order access was removed. Check status to continue." : "Could not verify order access. Check status to continue."} />
-              : orderAccess === "missing" && permissions.orderRemovalResult === "removed" ? <s-banner tone="success" heading="Order access removed." />
-              : <s-paragraph>{orderAccess === "missing" ? "Order access is not connected." : "Order connection is currently unavailable."}</s-paragraph>}
+              : orderAccess === "missing" ? <><s-badge>Not connected</s-badge>{permissions.orderRemovalResult === "removed" ? <s-banner tone="success" heading="Order access removed." /> : null}</>
+              : <s-paragraph>Order connection is currently unavailable.</s-paragraph>}
             <OrderAccessRemoval owner={state.shopifyPermissionOwner} ready={orderAccess === "ready"} busy={permissions.busy}
               onConfirm={() => {void permissions.removeOrderAccess();}} onUnknown={permissions.orderRemovalUnknown} />
             {orderAccess === "missing" || orderAccess === "unavailable" ? <>
               {productAccess !== "ready" ? <s-paragraph>Product access is required to connect orders.</s-paragraph> : null}
-              <s-button disabled={permissions.busy || productAccess !== "ready" ? true : undefined} onClick={() => permissions.open("shopify_orders")}>Connect Shopify orders</s-button>
+              <s-button disabled={permissions.busy || productAccess !== "ready" ? true : undefined} onClick={() => permissions.open("shopify_orders")}>Connect orders</s-button>
             </> : null}
             {orderAccess === "unknown" ? <s-button disabled={permissions.busy ? true : undefined} onClick={() => permissions.checkStatus("shopify_orders")}>Check status</s-button> : null}
           </s-stack>
@@ -1258,12 +1258,7 @@ export default function Settings() {
               {state.klaviyo.notice === "disconnected" ? (
                 <s-banner tone="success">Klaviyo was disconnected.</s-banner>
               ) : null}
-              <s-paragraph>
-                Connect one Klaviyo account and enter its estimated 30-day
-                email spend.
-              </s-paragraph>
               <s-button
-                variant="primary"
                 onClick={() => permissions.open("klaviyo")}
               >
                 Connect Klaviyo

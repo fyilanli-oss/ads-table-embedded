@@ -7,6 +7,7 @@ import {assertReplayEnvironment,executeMigration,replayConnection,withTestRuntim
 import {loadMigrationFiles,validateMigrationLineage} from "./check-migration-lineage.mjs";
 import {identityOAuthAtomicProbeWithTestMembership} from "./eo05-identity-oauth-atomic-probe.mjs";
 import {oauthPermissionScopes} from "../app/lib/oauth/oauth-permission-profile.server.js";
+import {googleIdentityRenewalProbe,googleReportingChangeProbe} from "./eo05-google-identity-renewal-probe.mjs";
 
 // Compiled loopback-only connection and runner gate inherited from F01. No live
 // database address, credentials, native provider requests or environment override.
@@ -14,12 +15,21 @@ const root=fileURLToPath(new URL("../",import.meta.url));
 const read=file=>readFileSync(new URL(`../${file}`,import.meta.url),"utf8").replaceAll("\r\n","\n");
 const manifest=JSON.parse(read("contracts/a6-tech-01-f01-migration-lineage-v1.json"));
 export const selectedMigrationNames=Object.freeze(["eo05a_identity_oauth_atomic_stage","eo05a_identity_oauth_reconnect"]);
+export const renewalMigrationNames=Object.freeze(["eo05a_google_identity_renewal_receipt"]);
 const selected=selectedMigrationNames.map(name=>{
   const entry=manifest.pending_migrations.find(entry=>entry.name===name);
   assert.ok(entry);assert.equal(entry.applied,false);assert.equal(entry.live_apply_authorized,false);return entry;
 });
+const renewal=manifest.pending_migrations.find(entry=>entry.name===renewalMigrationNames[0]);
+assert.ok(renewal);assert.equal(renewal.applied,false);assert.equal(renewal.live_apply_authorized,false);
 
-async function fixture(client){
+async function exerciseRenewal(client,coordinatorExpected){
+  const execution=await scopedIdentityFixture(client);
+  await googleIdentityRenewalProbe(client,{execution,coordinatorExpected});
+  await googleReportingChangeProbe(client,{execution});
+}
+
+export async function scopedIdentityFixture(client){
   await client.query("set local role adstable_runtime");
   const authority=(await client.query("select * from shopify.bootstrap_installation($1,$2,$3,statement_timestamp())",
     [`gid://shopify/Shop/99${Date.now()}`,`scoped-${randomBytes(6).toString('hex')}.myshopify.com`,randomBytes(32)])).rows[0];
@@ -49,7 +59,7 @@ async function fixture(client){
 
 async function exercise(client,coordinatorExpected){
   await withTestRuntimeMembership(client,async()=>{
-    const execution=await fixture(client);
+    const execution=await scopedIdentityFixture(client);
     await identityOAuthAtomicProbeWithTestMembership(client,{execution,coordinatorExpected});
   });
   assert.equal((await client.query("select count(*)::int n from app.workspaces")).rows[0].n,0,"synthetic fixture fully rolled back");
@@ -97,12 +107,46 @@ async function main(){
       // All fixture mutations and temporary test membership stay in this transaction.
       await client.query("set local role postgres");
       await client.query("grant adstable_runtime to postgres with inherit false, set true, admin false");
-      const execution=await fixture(client);
+      const execution=await scopedIdentityFixture(client);
       await identityOAuthAtomicProbeWithTestMembership(client,{execution,coordinatorExpected:true});
     }finally{await client.query("rollback");}
     assert.equal((await client.query("select exists(select 1 from pg_roles where rolname='adstable_refresh_coordinator') present")).rows[0].present,false);
     assert.equal((await client.query("select count(*)::int n from app.workspaces")).rows[0].n,0);
     console.log("F01_SCOPED_IDENTITY_ROLE_PRESENT_PASS inherited_default_execute_revoked=true same_SQL_CAS_rollback_probes=true synthetic_only=true production_mutation=false");
+
+    // The current live shape is the forty-file baseline plus the two OAuth files
+    // above. Prove the missing renewal RPC on that shape before applying only it.
+    assert.equal((await client.query("select to_regprocedure('integrations.commit_google_identity_renewal(uuid,uuid,bigint,uuid,bigint,uuid,uuid,text[],timestamptz,bytea,bytea,bytea,smallint,timestamptz)')::text name")).rows[0].name,null);
+    await client.query("begin");
+    try{
+      await assert.rejects(client.query(`select * from integrations.commit_google_identity_renewal(
+        null::uuid,null::uuid,null::bigint,null::uuid,null::bigint,null::uuid,null::uuid,
+        null::text[],null::timestamptz,null::bytea,null::bytea,null::bytea,null::smallint,null::timestamptz)`),error=>error.code==="42883");
+    }finally{await client.query("rollback");}
+    await executeMigration(client,renewal,read(renewal.file));
+    await withTestRuntimeMembership(client,()=>exerciseRenewal(client,false));
+    assert.equal((await client.query("select exists(select 1 from pg_roles where rolname='adstable_refresh_coordinator') present")).rows[0].present,false);
+    assert.equal((await client.query("select to_regclass('operations.refresh_control')::text name")).rows[0].name,null);
+    assert.equal((await client.query("select count(*)::int n from app.workspaces")).rows[0].n,0);
+    console.log("F01_SCOPED_GOOGLE_RENEWAL_PASS baseline=42 selected=1 missing_RPC_42883_reproduced=true coordinator_absent=true real_commit_boundary=true native_HTTP=0");
+
+    // Independent rollback-only branch: inherited EXECUTE must be removed even
+    // if optional refresh infrastructure already exists when this file runs.
+    await client.query("begin");
+    try{
+      await client.query("create role adstable_refresh_coordinator nologin noinherit nosuperuser nocreatedb nocreaterole noreplication nobypassrls");
+      await client.query("set local role adstable_owner");
+      await client.query("drop function integrations.commit_google_identity_renewal(uuid,uuid,bigint,uuid,bigint,uuid,uuid,text[],timestamptz,bytea,bytea,bytea,smallint,timestamptz),integrations.read_google_identity_renewal(uuid,uuid,bigint)");
+      await client.query("alter table integrations.provider_connection_lifecycle_events drop constraint google_identity_renewal_receipt_shape,drop column identity_credential_before_id,drop column identity_credential_after_id");
+      await client.query("alter default privileges for role adstable_owner in schema integrations grant execute on functions to adstable_refresh_coordinator");
+      await client.query(read(renewal.file).replace(/^begin;\s*$/m,"").replace(/^commit;\s*$/m,""));
+      await client.query("set local role postgres");
+      await client.query("grant adstable_runtime to postgres with inherit false, set true, admin false");
+      await exerciseRenewal(client,true);
+    }finally{await client.query("rollback");}
+    assert.equal((await client.query("select exists(select 1 from pg_roles where rolname='adstable_refresh_coordinator') present")).rows[0].present,false);
+    assert.equal((await client.query("select count(*)::int n from app.workspaces")).rows[0].n,0);
+    console.log("F01_SCOPED_GOOGLE_RENEWAL_ROLE_PRESENT_PASS inherited_default_execute_revoked=true same_SQL_reporting_change_probes=true synthetic_only=true production_mutation=false");
   }finally{await client.end();}
 }
 if(process.argv[1]&&fileURLToPath(import.meta.url)===process.argv[1])main().catch(error=>{

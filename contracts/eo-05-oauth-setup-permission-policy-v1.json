@@ -1,4 +1,14 @@
 {
+  "Google_Meta_flow_standard_2026_11_01": {
+    "existing_plan_step": 7,
+    "record": "contracts/eo-05-permission-explanation-design-v1.json#Google_Meta_flow_standard_2026_11_01",
+    "status": "owner_approved_specification_implementation_not_started",
+    "precedence": "This record supersedes older Google/Meta per-step Resume/Check status/Reconnect presentation rules, not scope/security/native-provider approval or the first-error stop rule.",
+    "rule": "Known successful user-initiated steps continue after native afterhide and current server verification; explicit Resume reconciles unknown without credential mutation or replay. Missing permission still requires explanation and explicit Connect. No Merchant/business/catalog selector. Klaviyo and Shopify owner decisions remain binding.",
+    "implementation_authorized": false,
+    "merge_authorized": false,
+    "deployment_authorized": false
+  },
   "Google_mixed_account_access_isolation_2026_10_31": {
     "existing_plan_step": 7,
     "record": "contracts/eo-05-permission-explanation-design-v1.json#Google_mixed_account_access_isolation_2026_10_31",

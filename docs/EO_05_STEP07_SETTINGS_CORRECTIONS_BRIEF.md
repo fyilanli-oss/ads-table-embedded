@@ -1,5 +1,139 @@
 # EO-05 / mevcut 07 — onaylı Settings düzeltmesi
 
+## 1 Kasım — Google/Meta geçiş standardı
+
+**Durum:** Ürün sahibi akış taslağını kabul etti ve ardından yalnız ilgili sözleşme,
+analist brief'i ve dokümantasyon PR'ını hazırlamayı açıkça onayladı. Uygulama
+başlamadı. Kod/test değişikliği, provider çağrısı, token okuma, canlı ayar/DB,
+migration, merge ve yayın bu onaya dahil değildir.
+
+Bağlayıcı akış kaydı:
+`contracts/eo-05-permission-explanation-design-v1.json#Google_Meta_flow_standard_2026_11_01`.
+Bu bölüm eski Google/Meta geçiş/eylem kurallarının çelişen kısmının üzerindedir.
+Özellikle29Ekim combined_selection_spec içindeki başarılı kayıttan sonra yeniden
+Resume bekleme kuralı tarihsel kalır. Önceki metinler iz bırakmak için korunur;
+izin kapsamı, güvenlik, native provider onayı ve açık işlem onayı kapıları korunur.
+
+### Amaç, mevcut bulgu ve başarı sınırı
+
+Mağaza sahibi kurulumda bir sonraki düğmeyi aramamalı. Aynı kartı tek güncel durum
+ve tek devam eylemi yönetmeli. İnceleme kaynağı main
+`2e9df14116d40feee98e8937241136ea2ddbfe90` ve ayrı açık PR279'daki ürün sahibi
+notlarıdır. PR279 merge edilmiş sayılmaz; bu kayıt oradaki talepleri somut akışa bağlar.
+
+Mevcut Settings route'u combined Resume/Reconnect üretirken ortak permission host'u
+ayrıca Resume/Check status üretebiliyor. Hesap kaydı cevabı yalnız sonraki aşamayı
+döndürüyor; afterSelectionHide yalnız reporting_selected sonucunda kartı yeniliyor.
+Çoklu hesap sonrası seçim listesi için yeni Resume/status isteği bekleniyor.
+Combined callback görünümü de eski pending/pending_reporting modal açma yolunu
+kullanmıyor. Bu yüzden yalnız birkaç düğmeyi gizlemek geçiş sorununu tamamlamaz.
+
+Google ve Meta Connected/Reporting Account çalışması ürün sahibi tarafından
+doğrulandı. Bu teknik başarı, ortak geçiş standardının uygulandığı veya Settings'in
+görsel olarak kabul edildiği anlamına gelmez.07 açık;15 başlamadı;22 paused;
+23 Dataset yazımıdır.
+
+### Kabul edilen sıra ve birebir eylemler
+
+Connect → mevcut izin açıklaması → açık Connect → sağlayıcının native izin ekranı
+→ sunucu doğrulaması → açık reklam hesabı seçimi → gerekiyorsa Reporting Account
+seçimi → kalıcı sonuç doğrulaması → Connected.
+
+| Durum | Kart/modal eylemi | Geçiş ve koruma |
+|---|---|---|
+| Bağlı değil | Connect Google Ads / Connect Meta | Mevcut açıklamayı açar; yalnız açıklamadaki Connect native isteği başlatır. |
+| Başlatma/dönüş doğrulama/kayıt | Yeni devam düğmesi yok | Starting connection… / Verifying access… / Saving selection…; ikinci işlem engellenir. |
+| Doğrulanmış OAuth dönüşü | Mevcut hesap seçim modalı | Güncel kullanıcı işlemine bağlı sunucu sonucu okunur; bir kez açılır, ek Resume aranmaz. URL ipucu yetki değildir. |
+| Açıkça bir hesap seçildi | Save selection / Cancel | Bir kez kaydet; kalıcı tek hesap ve Reporting Account bağını doğrula; Connected. Tek seçenek dahi uygulama tarafından kendiliğinden seçilmez. |
+| Açıkça iki/üç hesap seçildi | Save selection / Cancel | Başarılı kayıt sonrası güncel bağlı seçim listesi okunur; önceki modalın afterhide'ı tamamlanınca Reporting Account modalı açılır. Arada Resume aranmaz. |
+| Reporting Account seçimi | Save selection / Cancel | Bir kez kaydet; kalıcı sonucu doğrula; modal kapanır ve aynı kart güncellenir. |
+| Kullanıcı yarıda bıraktı | Tek Resume setup | Güncel kayıtlı durumu okuyup yalnız eksik seçim adımını açar; OAuth tekrarlanmaz. |
+| İzin eksik/yeniden izin gerekli | Tek Resume setup | Aynı açıklamayı açar; yeni native izin yalnız kullanıcının açık Connect'iyle istenir. |
+| Sonuç belirsiz | Tek Resume setup | Önce mevcut sonuç salt okunur uzlaştırılır; exchange/refresh/credential yazma/seçim tekrarı/disconnect yapılmaz. Belirsizlik sürerse durur. |
+| Bağlı | Reporting Account ve onay isteyen Disconnect | Hesap özeti ve kalıcı Reporting Account gösterilir. Disconnect iptali bağlantıyı korur. |
+| Geliştirici/yayın kapısı kapalı | Close | Eksik geliştirici koşulu kullanıcıya yeniden izin aldırarak çözülmez. |
+
+Normal Google/Meta kartında Reconnect Google Ads, Reconnect Meta, Check status ve
+yinelenen Resume setup bulunmaz. Tamamlanmamış kurulumda rozet ve tek devam düğmesi
+aynı durumu anlatır; farklı host'lardan ikinci kontrol grubu eklenmez. Belirsiz
+sonuçtaki Resume bir durum okumasıdır; mevcut status yolu token yenileme/yazma
+yapabiliyorsa salt okunurmuş gibi kullanılamaz. Bu sınır sonraki uygulamada ayrıca
+kanıtlanmalıdır. Bilinen Connected sonucunda kart güncellenir; kalan adım yalnız
+sunucu kanıtıyla açılır; gerçek izin eksiğinde açıklama açılır fakat consent başlamaz.
+
+Yeni ortak sonuç metinleri:
+
+- `We could not confirm the result. Resume setup to check the current connection status.`
+- `No selectable advertiser accounts were returned. Resume setup to check the current connection status.`
+
+Beş mevcut izin açıklamasının İngilizce paragrafları, hesap/Reporting Account
+başlıkları,1–3 reklam hesabı sınırı, Google manager yasağı ve mevcut tek hesap
+Reporting Account davranışı korunur. Native provider'ın işletme/Sayfa seçimleri,
+AdsTable içinde yeni Merchant/işletme/katalog seçici eklemek için yetki değildir.
+Evidence/ürün-test araçları OAuth aşaması veya bağlantı tamamlanma koşulu değildir;
+taşınması/kaldırılması ayrıca somut uygulama kapsamı gerektirir.
+
+### Kırmızı çizgiler
+
+- Settings'te aynı anda tek etkin kurulum/seçim/yazma; çift tıklama veya diğer
+  sağlayıcının düğmesi ikinci çakışan işlem başlatamaz.
+- Bir modal tamamen kapanmadan diğeri açılmaz. Niyet, özellik, mağaza/kurulum,
+  istek ve bağlantı/sürüm bağı kapanmadan önce sabitlenir; dispatch bir kez olur.
+- Cancel/çarpı/Escape onay yerine geçmez, sonraki aşamayı açmaz; daha önce başarıyla
+  kaydedilmiş adımları silmez. Başlamış isteğin geri alındığı iddia edilmez.
+- Kapatılan modal kendiliğinden yeniden açılmaz. Sonraki sayfa yenilemede güncel
+  durum gösterilir; yarım kurulum tek Resume ile sürer, yeni OAuth başlamaz.
+- Gönderim öncesi alan hatası modalı ve girdiyi korur. Sonucu belirsiz gönderilmiş
+  yazı, henüz gönderilmemiş alan hatasıyla aynı davranışa indirgenmez.
+- Başarılı kayıttan sonra yalnız ilgili kart/sonraki adım güncellenir. Diğer bütün
+  sağlayıcılar sırf ekranı güncellemek için yeniden çalıştırılmaz.
+- Eski sekme/yanıt, değişen mağaza/kurulum nesli veya bağlantı sürümü güncel kartı
+  değiştiremez. Belirsizlikte retry, izin genişletme veya alternatif provider yolu yok.
+- Kayıtlı önceki bağlantı korunurken yeni işlemin belirsizliği ayrı anlatılır;
+  aynı bağlantı için çelişen genel başarı/başarısızlık iddiaları gösterilmez.
+- Missing/unknown/stale/denied/unavailable, gerçek boş sonuç ve0ayrı durumlardır.
+  Connected yalnız raporlama bağlantısıdır; katalog eşleme/aktivasyon/Dataset değildir.
+- Ajan kendi yorumuyla adım, seçici, izin veya istisna ekleyemez; yeni kapsam açık
+  kullanıcı onayına tabidir. Ürün sahibi kabulü olmadan07 Done/PASS olamaz.
+
+### Klaviyo ve Shopify karşılığı
+
+Klaviyo: tek hesap dahil açık hesap seçimi ayrı modal; Continue ve native afterhide
+sonrasında ayrı estimated spend modalı. Sıfır geçerli; maliyet eksiği yeniden OAuth
+istemez. Hesap ve maliyet aynı modalda birleştirilemez.
+
+Shopify: Products ve isteğe bağlı Orders ayrı durum/izin/kaldırma olarak kalır.
+Mevcut yerinde App Bridge izin penceresi ve bağlı sunucu readback'i korunur.
+Orders iptali/kaldırılması Products'ı bozmaz. Google/Meta redirect akışı Shopify'a
+kopyalanmaz. İki sağlayıcı da ortak yükleniyor/iptal/hata/çakışma kabulüne karşı
+kontrol edilir; bu kayıt ayrı bir yeniden uygulama veya tam görsel kabul değildir.
+
+### Bileşen, masaüstü/mobil ve kabul
+
+Mevcut stable Polaris2.0 ve App Bridge korunur: s-modal heading/size=base/padding=base
+ve afterhide; s-button primary-action/secondary-actions, primary/secondary ve loading;
+onaylı critical Disconnect; s-choice-list/s-choice ile reklam hesaplarında multiple,
+Reporting Account'ta tek seçim; s-stack/s-paragraph/s-banner/s-badge ile tek durum
+sunumu. Ham HTML action control, özel CSS, inline style veya literal renk yoktur.
+
+Resmî kaynaklar1Kasım2026 kontrol edildi:
+https://shopify.dev/docs/api/app-home/latest/web-components/overlays/modal ;
+https://shopify.dev/docs/api/app-home/latest/web-components/actions/button ;
+https://shopify.dev/docs/api/app-home/latest/web-components/forms/choice-list .
+
+Sonraki uygulamanın kabulü tek/çok hesap, callback, kısmi izin/ret/iptal, modal
+Cancel/Escape/çarpı, yarım bırakıp Resume, alan hatası, yazılmış/yazılmamış belirsiz
+sonuç, eski sekme/yanıt/sürüm, çift tıklama/diğer sağlayıcı çakışması, Reporting
+Account değişimi ve Disconnect onay/iptalini kapsar. Klaviyo ve Shopify koruma
+senaryoları da çalıştırılır. Gerçek Shopify Admin masaüstü ve en az320px gerçek
+mobilde odak/klavye/dokunma, tek modal, taşmayan içerik ve ulaşılabilir eylemler
+ürün sahibi tarafından doğrulanmadan görsel kabul verilmez; Shopify görsel
+otomasyon yapılmaz. Mevcut CI/code başarısı bu yeni standardın uygulanma kanıtı değildir.
+
+Sıra: bu dokümantasyon PR'ının ayrıca onaylı merge'ü → ayrı somut kod/test onayı
+→ uygulama/CI → ayrıca izinli yayın ve gerçek masaüstü/mobil kabul. Mevcut07 açık;
+15 başlamadı;22 paused;23 Dataset yazımıdır.
+
 ## 1 Kasım — tek Meta hesabı kaydından sonra yanlış unconfirmed
 
 Owner token içermeyen bağlantı kayıtlarının salt okunur doğrulanmasını, dar kod

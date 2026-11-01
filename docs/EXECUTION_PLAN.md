@@ -1,3 +1,29 @@
+## 1 Kasım — mevcut07: ürün sahibi onaylı Google/Meta geçiş standardı
+
+Owner inceleme sonrası somut akış taslağını kabul edip yalnız ilgili sözleşme ve
+analist brief'inin dokümantasyon PR'ını onayladı. Güncel bağlayıcı kayıt:
+`contracts/eo-05-permission-explanation-design-v1.json#Google_Meta_flow_standard_2026_11_01`.
+Detaylı durum/eylem matrisi ve kabul: `docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md`.
+
+Google/Meta: tek durum sunumu, tek devam eylemi. Doğrulanmış OAuth dönüşü hesap
+seçimini açar; başarılı çoklu hesap kaydı ardından güncel Reporting Account adımı
+native modal kapanışı sonrası açılır; arada Resume aranmaz. Açık tek hesap seçimi
+kalıcı Reporting Account doğrulanınca Connected'a gider. Yarım kurulumda tek
+Resume kalır; belirsiz sonuçta önce salt okunur uzlaştırma, retry/mutation yoktur.
+Normal kartta Reconnect/Check status/yinelenen Resume yoktur. Eski sözleşmedeki
+başarılı kayıt sonrası yeni explicit Resume gereği bu tasarım kararıyla aşılır;
+izin setleri, owner/kurulum/sürüm ve sunucu kanıtı kuralları korunur.
+
+Klaviyo açık hesap seçimi ve ayrı maliyet modalı, Shopify bağımsız Products ve
+isteğe bağlı Orders korunur. AdsTable Merchant/işletme/katalog seçimi yasaktır.
+PR279 ürün sahibi notları ayrı açık taslak olarak kalır; bu PR onları merge etmez.
+Google/Meta teknik Connected teyidi yeni geçişlerin görsel kabulü değildir.
+
+Bu paket dokümantasyonla sınırlıdır: kod/test değişikliği, canlı provider/token,
+config/DB/migration, merge veya deploy yetkisi yoktur. Sonraki somut uygulama ve
+gerçek masaüstü/en az320px mobil kabul ayrıca gereklidir.07 açık;15 başlamadı;
+22 paused;23 Dataset yazımıdır.
+
 ## 1 Kasım — mevcut07: tek hesap kaydı sonrası yanlış unconfirmed
 
 Owner salt okunur token-free bağlantı metadata doğrulaması ve dar düzeltmenin gerçek

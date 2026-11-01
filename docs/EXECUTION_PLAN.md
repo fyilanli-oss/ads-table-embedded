@@ -1,3 +1,13 @@
+## 1 Kasım — mevcut07: ürün sahibinin bağlı kart düzeni
+
+Ürün sahibinin birebir silme/metin/eylem sırası talebi,
+contracts/eo-05-permission-explanation-design-v1.json#Settings_connected_card_copy_2026_11_01
+ve docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md başında kaydedildi.
+Meta/Google tekrar hesap satırları ve Klaviyo Currency/Timezone kart satırı kalkar;
+Disconnect önce gelen ortak inline eylem sırası, Klaviyo hesap/Reporting Account
+özeti ve Shopify izin amaçları hazırlanır. Evidence, OAuth ve Disconnect sonrası
+akışlar korunur. Bu hazırlık merge/yayın/native kabul değildir;07 açık kalır.
+
 ## 1 Kasım — onaylı Google/Meta uygulama hazırlığı
 
 PR282'deki standardın ardından ürün sahibi Google/Meta Settings kodunu, izole

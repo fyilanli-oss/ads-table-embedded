@@ -1,4 +1,51 @@
 {
+  "current_connected_card_presentation_contract": "Settings_connected_card_copy_2026_11_01",
+  "Settings_connected_card_copy_2026_11_01": {
+    "checked_at": "2026-11-01",
+    "existing_plan_step": 7,
+    "authority": "Owner supplied exact connected-card copy, row removals and action order after screenshots1000070350–1000070352.",
+    "analyst_brief": "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md",
+    "scope": "Connected-card presentation and Shopify purpose copy only; no lifecycle, permission, account-selection, diagnostic, cost-ledger or provider changes.",
+    "meta_google": {
+      "retain": [
+        "Connected",
+        "Actual advertiser account count",
+        "Reporting Account name or existing ID fallback",
+        "Existing evidence controls and results"
+      ],
+      "remove": "Repeated per-account name/ID paragraphs from the card only",
+      "management_actions_in_order": [
+        "Disconnect",
+        "Reporting Account"
+      ],
+      "management_layout": "s-stack direction=inline gap=base"
+    },
+    "klaviyo": {
+      "account_summary": "1 Klaviyo advertiser account(s) connected.",
+      "reporting_account": "Reporting Account: {name} ({id})",
+      "retain": "Current estimated 30-day email spend, effective date, evidence and existing management actions",
+      "remove": "Standalone Currency/Timezone card paragraph only",
+      "management_actions_in_order": [
+        "Disconnect",
+        "Update spend",
+        "Change value"
+      ],
+      "label_semantics": "Owner-requested advertiser wording is display copy only, not new provider authority."
+    },
+    "shopify": {
+      "independent_products_optional_orders": true,
+      "status_and_action_copy": "Preserve existing independent status/action meanings",
+      "product_purpose": "Product access lets AdsTable read products and variants to match product reporting to your Shopify catalog.",
+      "order_purpose": "Optional order access lets AdsTable read recent orders and purchased products to compare Shopify sales with marketing attribution.",
+      "layout": "Each permission group uses block/base: existing status, purpose, existing action"
+    },
+    "source": "https://shopify.dev/docs/api/app-home/latest/web-components/layout-and-structure/stack",
+    "native_visual_acceptance": false,
+    "step07_complete": false,
+    "live_calls": false,
+    "merge_authorized": false,
+    "deploy_authorized": false
+  },
   "current_Google_Meta_transition_contract": "Google_Meta_flow_standard_2026_11_01",
   "Google_Meta_flow_standard_2026_11_01": {
     "checked_at": "2026-11-01",
@@ -60,7 +107,7 @@
       "interrupted_setup": ["Resume setup"],
       "permissions_missing_or_reauthorization_required": ["Resume setup"],
       "unknown_result": ["Resume setup"],
-      "connected": ["Reporting Account", "Disconnect"],
+      "connected": ["Disconnect", "Reporting Account"],
       "developer_or_release_unavailable": ["Close"],
       "forbidden_normal_Google_Meta_controls": ["Reconnect Google Ads", "Reconnect Meta", "Check status", "duplicate Resume setup"],
       "destructive_action": "Disconnect opens confirmation. Cancel/Keep connected changes nothing; no automatic reconnect follows a completed disconnect.",

@@ -1029,30 +1029,36 @@ export default function Settings() {
       <Navigation />
       <s-section heading="Shopify">
         <s-stack direction="block" gap="base">
-          {permissions.removingProduct ? <s-banner tone="info" heading="Removing product access…" />
-            : permissions.checkingProduct ? <s-banner tone="info" heading="Checking product access…" />
-            : productAccess === "ready" ? <s-badge tone="success">Product access approved</s-badge>
-            : productAccess === "unknown" ? <s-banner tone="critical" heading={permissions.productRemovalResult === "unknown" ? "Could not verify that product access was removed. Check status to continue." : "Could not verify product access. Check status to continue."} />
-            : productAccess === "missing" && permissions.productRemovalResult === "removed" ? <s-banner tone="success" heading="Product access removed." />
-            : <s-paragraph>{productAccess === "missing" ? "Product access is not connected." : "Product connection is currently unavailable."}</s-paragraph>}
-          <ProductAccessRemoval owner={state.shopifyPermissionOwner} ready={productAccess === "ready"} busy={permissions.busy}
-            onConfirm={() => {void permissions.removeProductAccess();}} onUnknown={permissions.productRemovalUnknown} />
-          {productAccess === "missing" || productAccess === "unavailable" ?
-            <s-button disabled={permissions.busy ? true : undefined} onClick={() => permissions.open("shopify_products")}>Connect Shopify products</s-button> : null}
-          {productAccess === "unknown" ? <s-button disabled={permissions.busy ? true : undefined} onClick={() => permissions.checkStatus("shopify_products")}>Check status</s-button> : null}
-          {permissions.removingOrder ? <s-banner tone="info" heading="Removing order access…" />
-            : permissions.checkingOrder ? <s-banner tone="info" heading="Checking order access…" />
-            : orderAccess === "ready" ? <s-badge tone="success">Order access approved</s-badge>
-            : orderAccess === "unknown" ? <s-banner tone="critical" heading={permissions.orderRemovalResult === "unknown" ? "Could not verify that order access was removed. Check status to continue." : "Could not verify order access. Check status to continue."} />
-            : orderAccess === "missing" && permissions.orderRemovalResult === "removed" ? <s-banner tone="success" heading="Order access removed." />
-            : <s-paragraph>{orderAccess === "missing" ? "Order access is not connected." : "Order connection is currently unavailable."}</s-paragraph>}
-          <OrderAccessRemoval owner={state.shopifyPermissionOwner} ready={orderAccess === "ready"} busy={permissions.busy}
-            onConfirm={() => {void permissions.removeOrderAccess();}} onUnknown={permissions.orderRemovalUnknown} />
-          {orderAccess === "missing" || orderAccess === "unavailable" ? <>
-            {productAccess !== "ready" ? <s-paragraph>Product access is required to connect orders.</s-paragraph> : null}
-            <s-button disabled={permissions.busy || productAccess !== "ready" ? true : undefined} onClick={() => permissions.open("shopify_orders")}>Connect Shopify orders</s-button>
-          </> : null}
-          {orderAccess === "unknown" ? <s-button disabled={permissions.busy ? true : undefined} onClick={() => permissions.checkStatus("shopify_orders")}>Check status</s-button> : null}
+          <s-stack direction="block" gap="base">
+            {permissions.removingProduct ? <s-banner tone="info" heading="Removing product access…" />
+              : permissions.checkingProduct ? <s-banner tone="info" heading="Checking product access…" />
+              : productAccess === "ready" ? <s-badge tone="success">Product access approved</s-badge>
+              : productAccess === "unknown" ? <s-banner tone="critical" heading={permissions.productRemovalResult === "unknown" ? "Could not verify that product access was removed. Check status to continue." : "Could not verify product access. Check status to continue."} />
+              : productAccess === "missing" && permissions.productRemovalResult === "removed" ? <s-banner tone="success" heading="Product access removed." />
+              : <s-paragraph>{productAccess === "missing" ? "Product access is not connected." : "Product connection is currently unavailable."}</s-paragraph>}
+            <s-paragraph>Product access lets AdsTable read products and variants to match product reporting to your Shopify catalog.</s-paragraph>
+            <ProductAccessRemoval owner={state.shopifyPermissionOwner} ready={productAccess === "ready"} busy={permissions.busy}
+              onConfirm={() => {void permissions.removeProductAccess();}} onUnknown={permissions.productRemovalUnknown} />
+            {productAccess === "missing" || productAccess === "unavailable" ?
+              <s-button disabled={permissions.busy ? true : undefined} onClick={() => permissions.open("shopify_products")}>Connect Shopify products</s-button> : null}
+            {productAccess === "unknown" ? <s-button disabled={permissions.busy ? true : undefined} onClick={() => permissions.checkStatus("shopify_products")}>Check status</s-button> : null}
+          </s-stack>
+          <s-stack direction="block" gap="base">
+            {permissions.removingOrder ? <s-banner tone="info" heading="Removing order access…" />
+              : permissions.checkingOrder ? <s-banner tone="info" heading="Checking order access…" />
+              : orderAccess === "ready" ? <s-badge tone="success">Order access approved</s-badge>
+              : orderAccess === "unknown" ? <s-banner tone="critical" heading={permissions.orderRemovalResult === "unknown" ? "Could not verify that order access was removed. Check status to continue." : "Could not verify order access. Check status to continue."} />
+              : orderAccess === "missing" && permissions.orderRemovalResult === "removed" ? <s-banner tone="success" heading="Order access removed." />
+              : <s-paragraph>{orderAccess === "missing" ? "Order access is not connected." : "Order connection is currently unavailable."}</s-paragraph>}
+            <s-paragraph>Optional order access lets AdsTable read recent orders and purchased products to compare Shopify sales with marketing attribution.</s-paragraph>
+            <OrderAccessRemoval owner={state.shopifyPermissionOwner} ready={orderAccess === "ready"} busy={permissions.busy}
+              onConfirm={() => {void permissions.removeOrderAccess();}} onUnknown={permissions.orderRemovalUnknown} />
+            {orderAccess === "missing" || orderAccess === "unavailable" ? <>
+              {productAccess !== "ready" ? <s-paragraph>Product access is required to connect orders.</s-paragraph> : null}
+              <s-button disabled={permissions.busy || productAccess !== "ready" ? true : undefined} onClick={() => permissions.open("shopify_orders")}>Connect Shopify orders</s-button>
+            </> : null}
+            {orderAccess === "unknown" ? <s-button disabled={permissions.busy ? true : undefined} onClick={() => permissions.checkStatus("shopify_orders")}>Check status</s-button> : null}
+          </s-stack>
         </s-stack>
       </s-section>
       {permissions.content}
@@ -1068,13 +1074,6 @@ export default function Settings() {
               <s-paragraph>
                 Reporting Account: {reportingAccountName(state.meta)}
               </s-paragraph>
-              <s-stack direction="block" gap="small">
-                {state.meta.accounts.map((account) => (
-                  <s-paragraph key={account.id}>
-                    {account.name} ({account.id})
-                  </s-paragraph>
-                ))}
-              </s-stack>
               <s-button
                 variant="secondary"
                 loading={metaProbeStatus === "loading"}
@@ -1105,8 +1104,10 @@ export default function Settings() {
                   Meta product test stopped. No retry was performed. Error code: {metaProbeResult.code}.
                 </s-paragraph>
               ) : null}
-              <s-button disabled={!permissions.canManage("meta") ? true : undefined} onClick={() => permissions.manageProvider("meta", "reporting")}>Reporting Account</s-button>
-              <s-button tone="critical" disabled={!permissions.canManage("meta") ? true : undefined} onClick={() => permissions.manageProvider("meta", "disconnect")}>Disconnect</s-button>
+              <s-stack direction="inline" gap="base">
+                <s-button tone="critical" disabled={!permissions.canManage("meta") ? true : undefined} onClick={() => permissions.manageProvider("meta", "disconnect")}>Disconnect</s-button>
+                <s-button disabled={!permissions.canManage("meta") ? true : undefined} onClick={() => permissions.manageProvider("meta", "reporting")}>Reporting Account</s-button>
+              </s-stack>
             </>
           ) : null}
         </s-stack>
@@ -1127,13 +1128,6 @@ export default function Settings() {
                   (account) => account.id === state.reportingAccountId,
                 )?.name ?? state.reportingAccountId}
               </s-paragraph>
-              <s-stack direction="block" gap="small">
-                {state.accounts.map((account) => (
-                  <s-paragraph key={account.id}>
-                    {account.name} ({account.id})
-                  </s-paragraph>
-                ))}
-              </s-stack>
               <s-button
                 loading={googleEvidenceStatus === "loading"}
                 disabled={googleEvidenceStatus === "complete" || googleEvidenceStatus === "failed"}
@@ -1186,8 +1180,10 @@ export default function Settings() {
                   Google evidence stopped. No retry was performed. Error code: {googleEvidenceError}.
                 </s-banner>
               ) : null}
-              <s-button disabled={!permissions.canManage("google_ads") ? true : undefined} onClick={() => permissions.manageProvider("google_ads", "reporting")}>Reporting Account</s-button>
-              <s-button tone="critical" disabled={!permissions.canManage("google_ads") ? true : undefined} onClick={() => permissions.manageProvider("google_ads", "disconnect")}>Disconnect</s-button>
+              <s-stack direction="inline" gap="base">
+                <s-button tone="critical" disabled={!permissions.canManage("google_ads") ? true : undefined} onClick={() => permissions.manageProvider("google_ads", "disconnect")}>Disconnect</s-button>
+                <s-button disabled={!permissions.canManage("google_ads") ? true : undefined} onClick={() => permissions.manageProvider("google_ads", "reporting")}>Reporting Account</s-button>
+              </s-stack>
             </>
           ) : null}
         </s-stack>
@@ -1366,15 +1362,13 @@ export default function Settings() {
           {!klaviyoWorking && state.klaviyo.view === "connected" ? (
             <>
               <s-badge tone="success">Connected</s-badge>
+              <s-paragraph>1 Klaviyo advertiser account(s) connected.</s-paragraph>
               <s-paragraph>
-                {state.klaviyo.account.name} ({state.klaviyo.account.id})
+                Reporting Account: {state.klaviyo.account.name} ({state.klaviyo.account.id})
               </s-paragraph>
               <s-paragraph>
                 Current estimated 30-day email spend: {state.klaviyo.current.amount}
                 {" "}{state.klaviyo.current.currency} · Effective {state.klaviyo.current.effectiveFrom}
-              </s-paragraph>
-              <s-paragraph>
-                Currency: {state.klaviyo.account.currency} · Timezone: {state.klaviyo.account.timezone}
               </s-paragraph>
               <s-button
                 loading={klaviyoEvidenceStatus === "loading"}

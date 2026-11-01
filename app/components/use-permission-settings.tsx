@@ -49,6 +49,8 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
     setProviderFeedback(current => {const next = {...current}; delete next[feature]; return next;});
   }, []);
   const hasUnknownResult = Object.values(providerFeedback).some(reply => reply?.kind === "unknown");
+  const [shopifyFailure, setShopifyFailure] = useState<{owner: string | null | undefined; feature: PermissionFeature; code: string} | null>(null);
+  const shopifyFailureCode = (feature: PermissionFeature) => shopifyFailure && shopifyFailure.owner === productOwner && shopifyFailure.feature === feature ? shopifyFailure.code : null;
   const connectReply = useRef<Reply | null>(null);
   const [checking, setChecking] = useState(false);
   const [checkingFeature, setCheckingFeature] = useState<PermissionFeature | null>(null);
@@ -66,6 +68,7 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
       : reply.kind === "status" && reply.stage === "review_setup" ? "ready"
       : reply.kind === "status" && reply.stage === "request_permissions" ? "missing" : "unknown";
     callbacks.current.onProductStatus?.(value);
+    if (value !== "unknown") setShopifyFailure(null);
     setProductRemovalResult(null);
   }, []);
   const orderReply = useCallback((reply: PermissionSettingsResult) => {
@@ -74,6 +77,7 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
       : reply.kind === "status" && reply.stage === "review_setup" ? "ready"
       : reply.kind === "status" && ["request_permissions", "products_required"].includes(reply.stage) ? "missing" : "unknown";
     callbacks.current.onOrderStatus?.(value);
+    if (value !== "unknown") setShopifyFailure(null);
     setOrderRemovalResult(null);
   }, []);
   const [selectionModel, setSelectionModel] = useState<SelectionModel | null>(null);
@@ -117,12 +121,21 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
       const current = () => activeView.current && requestOwner === callbacks.current.productOwner;
       connectReply.current = null;
       let observed = false;
+      let failureCode = "SHOPIFY_CONNECT_PREPARATION_UNCONFIRMED";
+      if (isShopifyPermission(feature)) setShopifyFailure(null);
       try {
         let reply = await execute("permission_connect", feature);
         if (!current()) throw new Error("PERMISSION_VIEW_CHANGED");
         if (reply.kind === "scope_request") {
           const binding = {...reply.binding};
-          await requestShopifyScopeWindow({preparation: reply, owner: requestOwner, isCurrent: current});
+          failureCode = "SHOPIFY_SCOPE_WINDOW_UNKNOWN";
+          try { await requestShopifyScopeWindow({preparation: reply, owner: requestOwner, isCurrent: current}); }
+          catch (error) {
+            const code = error instanceof Error ? Object.getOwnPropertyDescriptor(error, "message")?.value : null;
+            if (["SHOPIFY_SCOPE_WINDOW_BINDING_INVALID", "SHOPIFY_SCOPE_WINDOW_UNAVAILABLE", "SHOPIFY_SCOPE_WINDOW_UNKNOWN"].includes(code)) failureCode = code;
+            throw error;
+          }
+          failureCode = "SHOPIFY_CONNECT_READBACK_UNCONFIRMED";
           reply = await execute("permission_status", feature, {expectedScopeBinding: JSON.stringify(binding)});
           if (!current()) throw new Error("PERMISSION_VIEW_CHANGED");
         }
@@ -143,6 +156,7 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
           throw new Error("PERMISSION_RESULT_UNKNOWN");
         }
       } catch (error) {
+        if (isShopifyPermission(feature) && current()) setShopifyFailure({owner: requestOwner, feature, code: failureCode});
         if (isShopifyPermission(feature) && current() && !observed) {
           (feature === "shopify_products" ? callbacks.current.onProductStatus : callbacks.current.onOrderStatus)?.("unknown");
         }
@@ -200,6 +214,7 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
   useEffect(() => {
     if (viewOwner.current === productOwner) return;
     viewOwner.current = productOwner;
+    setShopifyFailure(null);
     pending.current?.reject(); pending.current = null;
     selectionIntent.current = null; disconnectSession.current = null; disconnectIntent.current = false;
     lastSelection.current = {}; connectReply.current = null; setProviderFeedback({});
@@ -458,10 +473,11 @@ export function usePermissionSettings({availability, unavailableReasons, onResum
   return {
     canManage: (feature: "google_ads" | "meta") => !busy && !hasUnknownResult,
     open, checkStatus, resumeProvider, manageProvider, busy: busy || hasUnknownResult, snapshot, providerContent,
+    shopifyFailureCode,
     removeProductAccess, removingProduct, productRemovalResult, productRemovalUnknown,
     removeOrderAccess, removingOrder, orderRemovalResult, orderRemovalUnknown,
-    checkingProduct: checking ? checkingFeature === "shopify_products" : busy && snapshot.feature === "shopify_products",
-    checkingOrder: checking ? checkingFeature === "shopify_orders" : busy && snapshot.feature === "shopify_orders",
+    checkingProduct: checking ? checkingFeature === "shopify_products" : snapshot.phase === "starting" && snapshot.feature === "shopify_products",
+    checkingOrder: checking ? checkingFeature === "shopify_orders" : snapshot.phase === "starting" && snapshot.feature === "shopify_orders",
     content: <>
       {disconnectModel ? <PermissionProviderDisconnect key={disconnectModel.key} feature={disconnectModel.feature} onConfirm={confirmDisconnect} onAfterHide={afterDisconnectHide} /> : null}
       {selectionModel ? <PermissionSetupSelection key={selectionModel.key} model={selectionModel} busy={checking} onConfirm={confirmSelection} onAfterHide={afterSelectionHide} /> : null}

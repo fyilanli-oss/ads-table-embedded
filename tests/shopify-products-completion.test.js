@@ -252,6 +252,8 @@ for(const mode of ["missing","reject","malformed","wrong_scope","wrong_owner","u
       await done;h.render();assert.equal(h.submissions.length,1);
       assert.deepEqual(h.statuses,["wrong_owner","unmounted"].includes(mode)?[]:["unknown"]);
       assert.equal(count,mode==="missing"||mode==="wrong_scope"?0:1);
+      assert.equal(h.value.shopifyFailureCode("shopify_products"),["wrong_owner","unmounted"].includes(mode)?null:mode==="missing"?"SHOPIFY_SCOPE_WINDOW_UNAVAILABLE":mode==="wrong_scope"?"SHOPIFY_CONNECT_PREPARATION_UNCONFIRMED":"SHOPIFY_SCOPE_WINDOW_UNKNOWN");
+      assert.doesNotMatch(JSON.stringify(h.value.shopifyFailureCode("shopify_products")),/SECRET/);
     });
   });
 }
@@ -259,6 +261,7 @@ for(const mode of ["missing","reject","malformed","wrong_scope","wrong_owner","u
 test("explanation Cancel starts no preparation and an already-granted server reply opens no native window",async()=>{
   let native=0;await withBridge({scopes:{request:()=>{native++;assert.fail();}}},async()=>{
     const h=permissionHarness();h.value.open("shopify_products");h.render();const {session}=h.value.snapshot;
+    assert.equal(h.value.busy,true);assert.equal(h.value.checkingProduct,false);assert.equal(h.submissions.length,0);
     h.modal().onHide(session);await h.modal().onAfterHide(session);h.render();assert.equal(h.submissions.length,0);
     const {done}=begin(h,"shopify_products");reply(h,{kind:"status",stage:"review_setup"});await done;h.render();
     assert.deepEqual(h.statuses,["ready"]);assert.equal(native,0);
@@ -283,3 +286,23 @@ test("a closed server gate remains unavailable without requesting a native windo
     assert.deepEqual(h.statuses,["unavailable"]);assert.equal(h.submissions.length,1);
   });
 });
+
+for(const feature of ["shopify_products","shopify_orders"]){
+  test(feature+" checking waits for afterhide; preparation and readback failures have separate owner-bound codes",async()=>{
+    await withBridge({scopes:{request:async()=>({result:"granted-all"})}},async()=>{
+      const h=permissionHarness();h.value.open(feature);h.render();const {session}=h.value.snapshot;
+      const checking=feature==="shopify_products"?"checkingProduct":"checkingOrder";
+      assert.equal(h.value[checking],false);assert.equal(h.value.busy,true);assert.equal(h.submissions.length,0);
+      h.modal().onConnect(session,()=>{});h.render();assert.equal(h.value[checking],false);assert.equal(h.submissions.length,0);
+      const first=h.modal().onAfterHide(session);h.render();assert.equal(h.value[checking],true);
+      reply(h,{kind:"unknown"});await first;h.render();
+      assert.equal(h.value[checking],false);assert.equal(h.value.shopifyFailureCode(feature),"SHOPIFY_CONNECT_PREPARATION_UNCONFIRMED");
+      const read=h.value.checkStatus(feature);reply(h,{kind:"status",stage:"request_permissions"});await read;h.render();
+      assert.equal(h.value.shopifyFailureCode(feature),null);
+      const next=begin(h,feature);reply(h,scopePreparation(feature));await ticks();
+      assert.equal(h.submissions.at(-1).intent,"permission_status");reply(h,{kind:"unknown"});await next.done;h.render();
+      assert.equal(h.value.shopifyFailureCode(feature),"SHOPIFY_CONNECT_READBACK_UNCONFIRMED");
+      h.props.productOwner="gid://shopify/Shop/456";h.render();assert.equal(h.value.shopifyFailureCode(feature),null);
+    });
+  });
+}

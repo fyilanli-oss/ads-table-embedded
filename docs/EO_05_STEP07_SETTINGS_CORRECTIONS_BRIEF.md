@@ -1,3 +1,37 @@
+## 1 Kasım — erken kontrol göstergesi ve güvenli Shopify Connect tanısı
+
+Owner açıklama modalındaki erken mavi mesajın düzeltilmesini ve başarısız Connect
+adımını ayıran güvenli kodların kod/test/PR hazırlığını açıkça onayladı. Mevcut07.
+Açıklama açıkken / Cancel kapanırken / Connect hide animasyonunda kart kontrol
+bildirimi göstermez; ortak etkileşim kilidi korunur. Ancak mevcut gerçek starting
+veya explicit status read sırasında Checking product/order access… gösterilir.
+
+Shopify Connect başarısızsa kart mevcut unknown mesajını ve Check status eylemini
+korur; s-banner içindeki s-paragraph sabit Error code: {code} ekler. Kod owner'a
+bağlıdır, yeni başarılı/eksik durum veya owner değişimi eski kodu temizler.
+Hazırlık cevabı, App Bridge window unavailable/rejected/invalid response ve son
+readback aşamaları ayrılır. Kullanıcının izin reddi hata sayılmaz; mevcut server
+readback sürer. Yalnız sabit allowlist değerleri kullanılır, ham error/provider
+response/URL/token/hesap verisi yoktur. Mevcut server log allowlist'i somut Shopify
+hazırlık/doğrulama hatalarını ayırır; yeni endpoint veya telemetri isteği yoktur.
+
+Native afterhide ardından mevcut tek Connect hazırlığı, mevcut scopes.request ve
+tek authenticated status read korunur. Retry, fallback, scope/config, SQL veya
+provider değişikliği yapılmaz. Hatanın kök nedeninin düzeldiği iddia edilmez.
+Meta/Google/Klaviyo, removal, hazır bağlı kartlar ve ayrı Klaviyo modalları korunur.
+
+Mevcut stable Polaris2.0 s-modal, s-banner tone=info/critical, s-paragraph kullanılır;
+custom CSS veya yeni native prop yoktur. Resmî kaynaklar 2026-11-01 kontrol edildi:
+https://shopify.dev/docs/api/app-home/latest/apis/authentication-and-data/scopes-api
+https://shopify.dev/docs/api/app-home/latest/web-components/overlays/modal
+
+Mevcut gerçek hook testlerine açıklama/Cancel=0I/O ve erken checking yok, afterhide
+tek dispatch, tüm hata aşamaları, declined-all readback, stale owner/unmount ve
+ham veri sızmaması kontrolleri eklenir. UI anayasa, typecheck/build ve CI gerekir.
+Masaüstü ve en az320px mobilde aynı native durum/metin sırası owner tarafından
+kontrol edilecek; görsel kabul ve07 kapanışı yoktur. Canlı çağrı, merge ve yayın
+ayrı onay kapısında kalır.
+
 ## 1 Kasım — onaylı bağlı-değil kart tutarlılığı
 
 Mevcut07; owner aşağıdaki dar ekran kodu/test/PR kapsamını açıkça onayladı.

@@ -20,12 +20,13 @@ for (const feature of ["google_ads", "meta"]) {
     const settings = createPermissionSettings({availability, providerRuntime: () => ({
       select: () => assert.fail(), finishReporting: () => assert.fail(),
       combinedSetup: {
+        reconcile: async () => ({...receipt(feature), reportingAccountId: "123", accounts: [{id: "123", name: "Shop"}]}),
         select: async input => { calls.push(input); return receipt(feature); },
         finishReporting: async input => { calls.push(input); return receipt(feature); },
       },
     })});
     const result = await settings.select({feature, verified, expected, operation: "accounts", selectedAccountIds: ["123"]});
-    assert.deepEqual(result, {kind: "status", feature, stage: "reporting_selected"});
+    assert.deepEqual(result, {kind: "status", feature, stage: "reporting_selected", connection: {connectionId: "connection", version: 8, reportingAccountId: "123", accounts: [{id: "123", name: "Shop"}]}});
     assert.deepEqual(calls[0], {installationAuthority: verified.installationAuthority,
       expectedConnection: {connectionId: "connection", version: 7}, selectedAccountIds: ["123"]});
     await settings.select({feature, verified, expected, operation: "reporting", reportingAccountId: "123"});

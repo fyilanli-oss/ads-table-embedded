@@ -38,7 +38,7 @@ test("Google failure appears only in its provider feedback and stays stopped unt
   assert.deepEqual(h.statuses,[]);assert.deepEqual(h.orderStatuses,[]);
   h.props.availability.meta=true;h.render();
   const reading=h.value.checkStatus("meta");h.render();
-  h.fetcher.data={kind:"status",feature:"meta",stage:"reporting_selected",requestId:h.submissions[1].requestId};
+  h.fetcher.data={kind:"status",feature:"meta",stage:"reporting_selected",connection:{connectionId:"synthetic",version:1,reportingAccountId:"one",accounts:[{id:"one",name:"First"}]},requestId:h.submissions[1].requestId};
   h.render();await reading;h.render();
   assert.match(treeText(h.value.providerContent("google_ads")),/We could not confirm the result/);
   assert.doesNotMatch(treeText(h.value.providerContent("meta")),/We could not confirm/);
@@ -80,6 +80,7 @@ function permissionHarness() {
     if (id === "react") return {...require(id), ...h};
     if (id === "react-router") return {useFetcher: () => fetcher};
     if (id === "./permission-explanation") return {PermissionExplanation: () => null};
+    if (id === "./permission-provider-disconnect") return {PermissionProviderDisconnect: () => null};
     if (id === "./permission-setup-selection") return {PermissionSetupSelection: () => null};
     return require(id);
   }).usePermissionSettings;

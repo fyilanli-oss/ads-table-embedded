@@ -7,6 +7,7 @@ export function createPermissionExplanationFlow(args?: {
   canRequest?: (feature: PermissionFeature) => boolean;
 }): Readonly<{
   readonly snapshot: PermissionSnapshot;
+  invalidate(): PermissionSnapshot;
   open(feature: PermissionFeature): PermissionSnapshot | null;
   connect(session: number, hideOverlay: () => void): boolean;
   hide(session: number): boolean;

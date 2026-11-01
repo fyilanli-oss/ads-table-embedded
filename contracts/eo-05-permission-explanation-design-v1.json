@@ -2,9 +2,21 @@
   "current_Google_Meta_transition_contract": "Google_Meta_flow_standard_2026_11_01",
   "Google_Meta_flow_standard_2026_11_01": {
     "checked_at": "2026-11-01",
+    "implementation_record": {
+      "branch": "codex/oauth-settings-flow",
+      "baseline_main": "cc1b5623203d8e7becba33d53ad00c42e9448560",
+      "scope": "One Google/Meta card action owner; native afterhide account/reporting handoff; correlated provider-local card updates; database-only uncertain-result reconciliation; shared selection/management lock.",
+      "provider_semantics": "Existing native scopes, advertiser eligibility, single-account durable binding, Reporting Account mutation and revocation adapters remain unchanged. No asset selector or schema migration.",
+      "read_only_limit": "Pending first-account inventory is not durably stored. An uncertain result may reuse the previous public inventory only when the durable connection/version is identical; otherwise it remains unknown without native discovery, consent, refresh or write replay.",
+      "native_visual_acceptance": false,
+      "step07_complete": false,
+      "live_provider_calls": false,
+      "merge_authorized": false,
+      "deploy_authorized": false
+    },
     "existing_plan_step": 7,
-    "status": "owner_approved_specification_implementation_not_started",
-    "authority": "Owner approved the concrete flow draft and then explicitly approved updating the related contracts and analyst brief as a documentation PR only.",
+    "status": "implementation_prepared_native_acceptance_pending",
+    "authority": "After the documentation standard was merged in PR282, the owner explicitly approved Google/Meta Settings code, isolated tests and a code PR. Live provider/token/config/DB, migration, merge and deploy remain outside this approval.",
     "analyst_brief": "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md",
     "precedence": {
       "providers": ["google_ads", "meta"],

@@ -2,8 +2,8 @@
   "Google_Meta_flow_standard_2026_11_01": {
     "existing_plan_step": 7,
     "record": "contracts/eo-05-permission-explanation-design-v1.json#Google_Meta_flow_standard_2026_11_01",
-    "status": "owner_approved_specification_implementation_not_started",
-    "authority": "Explicit owner approval for contract/analyst-brief documentation PR only; no code/test, live provider/config/DB, merge or deploy authority.",
+    "status": "implementation_prepared_native_acceptance_pending",
+    "authority": "After the documentation standard was merged in PR282, the owner explicitly approved Google/Meta Settings code, isolated tests and a code PR. Live provider/token/config/DB, migration, merge and deploy remain outside this approval.",
     "rule": "One stage presentation and continuation action; verified callback/account saves advance to current account/Reporting Account stage without repeated Resume. Interrupted/unknown uses one Resume, unknown first reconciles read-only without mutation/replay. Preserve Klaviyo separate explicit account/cost modals, Shopify independent Products/optional Orders and no in-app asset selector.",
     "step07_done": false,
     "step15_started": false,

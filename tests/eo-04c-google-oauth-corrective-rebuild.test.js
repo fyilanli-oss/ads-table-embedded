@@ -46,15 +46,15 @@ test("canonical pending selection is resumable and fails closed", () => {
 });
 
 test("connected accounts and the single Reporting Account stay distinct", () => {
-  assert.match(settings, />\s*Resume setup\s*</);
-  assert.match(settings, /Manager accounts are never selectable/);
-  assert.match(settings, /Save and connect/);
-  assert.match(settings, /Save and finish/);
+  assert.match(settings, /permissions[.]providerContent\("google_ads"\)/);
+  assert.match(runtime, /advertiserAccounts/);
+  assert.match(settings, /onConnection\(feature, connection\)/);
+  assert.match(settings, /setProviderOverrides/);
   assert.match(settings, /Reporting Account/);
   assert.match(runtime, /reportingAccountId/);
   assert.match(reportingMigration, /p_provider_account_id text/);
   assert.match(decision, /Bağlı hesap kümesi ile tek Reporting Account ayrı yetkilerdir/);
-  assert.match(settings, /send\("disconnect"\)/);
+  assert.match(settings, /permissions[.]manageProvider\("google_ads", "disconnect"\)/);
 });
 
 test("one account auto-binds; two or three require explicit Reporting Account", () => {
@@ -71,38 +71,11 @@ test("one account auto-binds; two or three require explicit Reporting Account", 
   assert.match(runtime, /async changeReporting\(/);
 });
 
-test("pending Google setup auto-opens the correct step and Cancel preserves it", () => {
-  assert.match(settings, /const accountModal = useRef<any>\(null\)/);
-  assert.match(settings, /const reportingModal = useRef<any>\(null\)/);
-  assert.match(settings, /accountModal[.]current[?][.]showOverlay[?][.]\(\)/);
-  assert.match(settings, /reportingModal[.]current[?][.]showOverlay[?][.]\(\)/);
-  assert.match(settings, /const resumeAccountSelection = \(\) =>/);
-  assert.match(settings, /revalidator[.]revalidate\(\)/);
-  assert.match(
-    settings,
-    /commandFor="google-account-modal"[\s\S]*command="--hide"[\s\S]*>\s*Cancel/,
-  );
-  assert.match(
-    settings,
-    /commandFor="google-reporting-modal"[\s\S]*command="--hide"[\s\S]*>\s*Cancel/,
-  );
-  assert.doesNotMatch(settings, /send\("cancel"\)/);
+test("Google setup uses the shared bound selection host and no legacy modal/reload continuation", () => {
+  assert.match(settings, /initialProviders: \{google_ads: state, meta: state.meta\}/);
+  assert.doesNotMatch(settings, /google-account-modal|google-reporting-modal|resumeAccountSelection/);
   assert.doesNotMatch(runtime, /async cancel\(/);
-});
-
-test("Resume setup cannot restart Google OAuth", () => {
-  const resumeStart = settings.indexOf("const resumeAccountSelection");
-  const resumeEnd = settings.indexOf("\n  };", resumeStart);
-  assert.ok(resumeStart >= 0 && resumeEnd > resumeStart);
-  const resumeSource = settings.slice(resumeStart, resumeEnd);
-  assert.match(resumeSource, /refreshConnection\("google_ads"\)/);
-  assert.doesNotMatch(resumeSource, /send\("begin"\)|oauthBoundary[.]begin/);
-  const refreshStart = settings.indexOf("const refreshConnection");
-  const refreshEnd = settings.indexOf("\n  };", refreshStart);
-  const refreshSource = settings.slice(refreshStart, refreshEnd);
-  assert.match(refreshSource, /setRefreshProvider\(provider\)/);
-  assert.match(refreshSource, /revalidator[.]revalidate\(\)/);
-  assert.doesNotMatch(refreshSource, /send\(|fetch\(|oauthBoundary/);
+  // Behavioural afterhide/cancel/no-replay coverage: google-meta-settings-flow.test.js.
 });
 
 test("Reporting Account selection is provider-revalidated before binding", () => {

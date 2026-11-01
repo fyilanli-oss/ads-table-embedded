@@ -4,7 +4,7 @@ import type {PermissionSelection} from "../lib/shopify/permission-settings.serve
 export type SelectionModel = {
   key: string;
   feature: "google_ads" | "meta";
-  stage: "select_account" | "select_reporting_account";
+  stage: "select_account" | "select_reporting_account" | "change_reporting";
   selection: PermissionSelection;
 };
 export type SelectionInput = {accountIds: string[]};
@@ -49,7 +49,7 @@ export function PermissionSetupSelection({model, busy, onConfirm, onAfterHide}: 
     <s-modal ref={modal} id="permission-setup-selection" heading={heading} size="base" padding="base">
       <s-stack direction="block" gap="base">
         <s-paragraph>{multiple ? "Choose one to three advertiser accounts." : "Choose the account to use for reporting."}</s-paragraph>
-        {empty ? <s-banner tone="warning" heading="No selectable accounts were returned. Check status before continuing." /> : null}
+        {empty ? <s-banner tone="warning" heading="No selectable advertiser accounts were returned. Resume setup to check the current connection status." /> : null}
         <s-choice-list ref={choices} label={multiple ? "Advertiser accounts" : "Reporting Account"}
           multiple={multiple ? true : undefined}>
           {visible.map(account => <s-choice key={account.id} value={account.id}>{account.name} ({account.id})</s-choice>)}

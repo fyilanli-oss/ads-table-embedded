@@ -66,6 +66,12 @@ export async function singleAccountSelectionProbe(client,{execution}) {
       assert.equal(queries.filter(sql=>sql.includes("complete_pending_provider_account_selection(")).length,1);
       assert.equal(queries.filter(sql=>sql.includes("load_provider_account_authority(")).length,1);
       assert.equal(calls.length,2,"readback must not issue another native request or repeat OAuth");
+      const readStart=queries.length, httpStart=calls.length;
+      const reconciled=await runtime.combinedSetup.reconcile({installationAuthority:owner});
+      assert.equal(reconciled.reportingAccountId,first);assert.equal(reconciled.connectionVersion,result.connectionVersion);
+      assert.equal(calls.length,httpStart,"uncertain-result reconciliation performs no native HTTP");
+      assert.equal(queries.length-readStart,3);
+      for(const sql of queries.slice(readStart))assert.match(sql,/integrations\.load_(provider_connection_lifecycle_by_owner|provider_account_authority)\(/);
       const durable=(await client.query(`select a.provider_account_id from integrations.reporting_account_bindings b
         join integrations.provider_accounts a on a.id=b.account_id where b.connection_id=$1 and b.effective_to is null`,[before.id])).rows;
       assert.deepEqual(durable.map(row=>row.provider_account_id),[first]);

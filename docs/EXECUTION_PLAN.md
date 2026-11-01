@@ -1,3 +1,32 @@
+## 1 Kasım — mevcut14: birlikte değerlendirme ve 15 tasarım kararı hazırlığı
+
+Güncel main abbaaf78d2a454d4c46e1c7f130308cbe200bdf3 üzerinden yalnız repository
+incelemesi ve karar kaydı hazırlandı. Owner bu somut değerlendirme kapsamını
+“Tamam başlayalım” ile onayladı. 14 kapanmadı; 15 başlamadı. Makine kaydı:
+contracts/a6-eo-implementation-master-v1.json#Step14_design_handoff_review_2026_11_01.
+
+Owner'ın Products/Orders, Google, masaüstü Meta ve Klaviyo Connect/Resume/Disconnect
+ve ortak mesaj/kart kabulü kapsamıyla kaydedildi. Bu, tüm07'nin native izin,
+geliştirici onayı, protected-data/history, gerçek veri okuması veya eksiksiz
+masaüstü/mobil/keyboard/stale-tab matrisi için PASS değildir. OAuth anayasası ve
+CI koruması #292 ile main'dedir; akışlarda değişiklik yapılmadı.
+
+01–13'ün repository hazırlığı ile açık native kaynak/kimlik/kapasite kanıtları
+ayrıldı. Pre15 PMax bağlantısı mevcut PD source reader içinde bağlıdır. Beş mevcut
+source/metadata/setup/orchestration test dosyasında 204/204 test geçti; sentetik
+transport native kabul değildir. Baseline CI 3572/3572'dir. Google Listing Groups
+ve Retail Reporting resmî belgeleri 2026-11-01 kontrol edildi; bağlantılar makine
+kaydındadır. Gerçek period membership, kaynak namespace, quota/capacity ve kalıcı
+continuation/writer kabulü açık kalır. Prewrite incelemesi aktivasyon izni değildir.
+
+Öneri: ayrı owner kararıyla mevcut15'in yalnız tasarımına geçmek. Çıktı kaynak/
+kimlik/özel ham kanıt envanteri, tablo alternatifleri, provenance/version/freshness,
+idempotency/readback/delete/reconnect/retention ve ayrı Shopify Order/LineItem/
+journey ile provider claim sınırlarıdır. Tablo sayısı ve yazma yetkisi owner'a
+sunulur. Bu kayıt runtime, tablo/migration, DB yazımı, canlı API/OAuth/config,
+aktivasyon, merge veya deploy yetkisi vermez. 22 tarihsel listing tree paused;
+23 genel Dataset/FX writer; Overlap 22 sonrasında. Asset selector geri getirilmez.
+
 ## 1 Kasım — mevcut07: bağlayıcı OAuth akış anayasası ve CI koruması
 
 Owner tüm akış/geçiş/mesaj/kilit ve kırmızı çizgilerin tek anayasa/makine sözleşmesi

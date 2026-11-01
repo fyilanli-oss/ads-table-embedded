@@ -1498,12 +1498,12 @@
       "app/routes/settings.provider-live-evidence.ts": "89fbcb7087fc480fefba708bbc730146f1ba41af48d98f1b0a10fe1427120495",
       "app/routes/webhooks.shopify.tsx": "eac0ea30fcca28d6bba3c11105a5c4fda7778d1398c23f21fcb02f717d8bd056",
       "app/shopify.server.ts": "cc5959867dd5c413b222d51c4aad7d9a39c7c3d15e590aada86a1ddfefdc6fad",
-      "contracts/a6-eo-implementation-master-v1.json": "80467e0f4900669c896ff0d811c50291f79c122e1b5be7ad0c3a4b2e9de4ea6f",
+      "contracts/a6-eo-implementation-master-v1.json": "bc93a1d41ba4627ad1b690e41937fda3cb0e1b2639e7c315ac28b426556c9518",
       "contracts/eo-05-oauth-setup-permission-policy-v1.json": "c1914f91011464d3b16b4b0a7710e49878ce6dbb57427e3d0f7c68d9ec4ec681",
       "contracts/eo-05-permission-explanation-design-v1.json": "ad4753b9ad4a6becd14764b7b33fb917f0cc491ad774cc1f1fe9053c5f189f35",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
-      "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md": "ebe10a96006be3daf97d0141c2b79dfa10d58636c57eaec2237c968c74c4a58c",
-      "docs/EXECUTION_PLAN.md": "cc630fa704bbda3614f6d7c2f48c4d4d14e3ffda738bbfc6eab6b9ca202619eb",
+      "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md": "c602fd4d7760e8f32c109e1f0456907c739c12906d71becf88476cad2007d6a1",
+      "docs/EXECUTION_PLAN.md": "5db086c90bc0865fe894ceac975028a0d907add00e7209de78acf09723bcecee",
       "docs/OAUTH_FLOW_CONSTITUTION.md": "74d7a8f327a9558712c3ac8bb54a6633fff7a7e2045405d236d35f265d124b28",
       "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md": "49e253b08959faa9f0b2bf208ed5eb6d3c078a0ddf9097e667a9bf1483dc7350",
       "package.json": "e46285b3a60421e8c338807d7b606afa17f16303b08a2832bed3222a06183fe8",
@@ -1684,6 +1684,32 @@
         "tests/a6-docs-01-turkish-standardization.test.js",
         "tests/oauth-flow-constitution.test.js",
         "tools/check-oauth-constitution.mjs"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ]
+    },
+    {
+      "id": "step14-readonly-review-2026-11-01",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Owner approved the concrete Step14 read-only acceptance/pre15 gate review and documentation package with Tamam başlayalım after the stated scope. No flow/runtime, live provider, merge or deploy authorization."
+      },
+      "rationale": "Record scoped owner UI acceptance and repository/native evidence boundaries for the Step14 owner decision. Flow definitions remain unchanged; Step15 is not started.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "merge": false,
+        "deploy": false
+      },
+      "changed_paths": [
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md",
+        "docs/EXECUTION_PLAN.md"
       ],
       "acceptance_required": [
         "required_CI",

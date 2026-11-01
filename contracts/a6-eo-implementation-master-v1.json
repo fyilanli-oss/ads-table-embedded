@@ -1,4 +1,121 @@
 {
+  "Step14_design_handoff_review_2026_11_01": {
+    "checked_at": "2026-11-01",
+    "baseline_main": "abbaaf78d2a454d4c46e1c7f130308cbe200bdf3",
+    "status": "repository_review_prepared_for_owner_decision",
+    "step14_closed": false,
+    "step15_started": false,
+    "authorization": "Owner accepted the concrete Step14 read-only review and documentation package with Tamam başlayalım after the proposal to review acceptance and pre15 gates. No Step15 implementation, live provider, migration, merge or deploy authorization.",
+    "conclusion": "Recommend a separately approved design-only Step15. Repository preparation and scoped owner UI acceptance do not certify native data access, production capacity, durable persistence or activation.",
+    "evidence": {
+      "baseline_CI": {
+        "tests_passed": 3572,
+        "run": "https://github.com/fyilanli-oss/ads-table-embedded/actions/runs/41335483041",
+        "runtime_unchanged_by_PR292": true
+      },
+      "fresh_readonly_tests": {
+        "passed": 204,
+        "files": [
+          "tests/google-pmax-source-links.test.js",
+          "tests/pd-source-reader.test.js",
+          "tests/combined-setup-assets.test.js",
+          "tests/pd-record-orchestration.test.js",
+          "tests/pd-native-metadata.test.js"
+        ],
+        "classification": "Production modules with synthetic transport/fixtures; not live provider acceptance."
+      },
+      "inspected_runtime": [
+        "app/lib/refresh/pd-source-reader.server.js",
+        "app/lib/refresh/pd-prewrite-chunk.server.js",
+        "app/lib/refresh/setup-proof-review.server.js",
+        "app/lib/providers/google-pmax-source-links.server.js"
+      ]
+    },
+    "owner_UI_acceptance": {
+      "source": "Owner tests and final acceptance in this conversation through PR291; OAuth constitution adopted by separately approved PR292.",
+      "shopify": "Products and Orders connected successfully; Orders then Products disconnected successfully.",
+      "google_ads": "Absent consent returned Not connected; incomplete permissions and unfinished advertiser/reporting selection returned Resume setup; final feedback and Disconnect accepted.",
+      "meta": "Desktop account/reporting cancellation and Resume setup, connected state and Disconnect accepted. Mobile Meta acceptance is not claimed.",
+      "klaviyo": "Explicit account and separate spend steps, incomplete setup, common feedback, completion lock fix, Disconnect and final Resume card accepted.",
+      "shared_disconnect": "Owner confirmed immediate confirmation, cancel retaining connection/actions, and confirmed disconnection reaching Not connected without refresh.",
+      "not_certified": [
+        "full desktop and minimum-320px acceptance matrix",
+        "keyboard/focus and every stale-tab/lost-response native scenario",
+        "developer app approval/protected customer data/history permissions",
+        "actual provider product/order/source identity reads"
+      ],
+      "entire_step07_closed": false
+    },
+    "review_groups": [
+      {
+        "steps": "01-03",
+        "repository": "Existing source/identity contracts and reconciliation remain governing.",
+        "open": "Real source identity proof is separate from code acceptance."
+      },
+      {
+        "steps": "04-06",
+        "repository": "PD source reader, native metadata and record bridge are connected within current authority/fence checks.",
+        "open": "Actual native identity namespaces and product/order reads remain evidence gates."
+      },
+      {
+        "steps": "07",
+        "repository": "Scoped owner UI acceptance is recorded above; binding OAuth constitution and CI guard are on main.",
+        "open": "Entire native permission/developer approval/data proof and exhaustive visual matrix are not certified."
+      },
+      {
+        "steps": "08-11",
+        "repository": "Reader/candidate preparation remains bounded by existing contracts.",
+        "open": "Google Merchant/feed/language/namespace, Meta catalog internal/retailer/Insights namespace and Klaviyo Product/Variant/Order/Message/attribution proofs remain separate."
+      },
+      {
+        "steps": "12-13",
+        "repository": "Existing dispatch/reconciliation and structural prewrite controls remain in place.",
+        "open": "Actual operation profiles, quota/capacity, durable continuation and atomic writer acceptance remain open. Reviewed-for-prewrite is not persistable/publishable/activation approval."
+      },
+      {
+        "steps": "21 pre15",
+        "repository": "Bounded retail PMax source links are wired into the PD source reader; explicit retail_pmax scope and private owner/workspace/account/version/day/fence/quota checks apply.",
+        "open": "Native query/access/capacity and period membership are not proven by synthetic tests; no historical inference from current listing tree."
+      }
+    ],
+    "proposed_step15": {
+      "status": "not_authorized_yet",
+      "scope": "design_only",
+      "outputs": [
+        "Source/mapping/raw-evidence inventory with explicit unknown and unverified states",
+        "Logical and physical storage/table alternatives for owner decision",
+        "Provenance/version/freshness/idempotency/readback/delete/reconnect/retention/encryption design",
+        "Separate Shopify Order/LineItem/journey evidence from provider attribution claims",
+        "Future writer authority and atomic checkpoint acceptance specification"
+      ],
+      "excludes": [
+        "runtime implementation",
+        "new tables or migrations",
+        "DB writes or live apply",
+        "provider calls or OAuth/config changes",
+        "activation",
+        "merge or deploy"
+      ]
+    },
+    "preserved_gates": [
+      "Separate explicit owner decision before Step15 starts",
+      "Separate approved storage/authority design before table or writer implementation",
+      "Native proof, measured capacity and durable continuation before activation",
+      "Step22 historical listing tree remains paused until separate restart approval",
+      "General Dataset/FX writer stays Step23",
+      "Overlap research follows Step22; unknown is not zero",
+      "Klaviyo Campaign Assisted and Flow Triggered roles remain; no reopened role research",
+      "No Merchant/business/catalog asset selector"
+    ],
+    "official_sources_checked": {
+      "date": "2026-11-01",
+      "urls": [
+        "https://developers.google.com/google-ads/api/performance-max/listing-groups",
+        "https://developers.google.com/google-ads/api/performance-max/retail-reporting"
+      ],
+      "limit": "Read-only documentation check; no live access or new provider mutation."
+    }
+  },
   "OAuth_flow_constitution_2026_11_01": {
     "existing_plan_step": 7,
     "document": "docs/OAUTH_FLOW_CONSTITUTION.md",

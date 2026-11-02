@@ -64,6 +64,12 @@ export async function customerSourcePrivacyProbe(client){
    if(mode!=='empty'){const attempt=input.attemptId;input.attemptId=randomUUID();await rejected(client,()=>createSourceEvidenceRepository(client).commit(prepare()));input.attemptId=attempt;}
   }finally{await client.query('rollback to savepoint customer_case');await client.query('release savepoint customer_case');}
  }
+ // Whole-install deletion must also clear newly retained order scopes.
+ await claim('customer_redact');
+ const deletion=(await client.query('select privacy.request_workspace_deletion($1,$2,$3,$4,$5,statement_timestamp()) id',['customer-source-'+randomUUID(),shopId,shopDomain,owner.generation,identity])).rows[0].id;
+ assert.equal((await client.query('select * from privacy.execute_deletion_run($1)',[deletion])).rows[0].deletion_status,'completed');
+ assert.equal((await client.query('select count(*)::int n from privacy.webhook_claims where workspace_id=$1 and source_request_scope is not null',[owner.workspaceId])).rows[0].n,0);
+ assert.equal((await client.query('select count(*)::int n from evidence.source_pages where installation_id=$1',[installation])).rows[0].n,0);
  for(const role of ['anon','authenticated','service_role','adstable_runtime','adstable_refresh_coordinator'])assert.equal((await client.query("select has_function_privilege($1,'privacy.complete_customer_source_run(uuid,text,jsonb,text)','EXECUTE') allowed",[role])).rows[0].allowed,false);
  console.log('EO05_CUSTOMER_SOURCE_PRIVACY_PASS real_SQL=true exact_verified_order_scope=true mixed_page_other_customer_preserved=true disclosure_ack_required=true atomic_rollback=true snapshot_CAS=true lost_reply_no_retry=true tombstone_blocks_resurrection=true owner_only=true native_HTTP=0');
  }finally{await client.query('rollback');}

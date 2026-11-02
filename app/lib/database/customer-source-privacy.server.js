@@ -45,6 +45,15 @@ export async function prepareCustomerSourceRun({database,cipher,runId}){
   const context={owner:batch.authority,attemptId:batch.attempt_id,ordinal:batch.batch_ordinal,page};
   if(!page.available){if(refs.some(r=>[...(subjectByReference.get(String(r.id))??[])].some(x=>wanted.has(x))))fail("PROOF_UNAVAILABLE");continue;}
   let payload;try{payload=cipher.open(context);}catch{fail("DECRYPT_FAILED");}
+  for(const reference of refs){
+   let row=payload;
+   for(const token of reference.record_locator.split('/').slice(1)){
+    const key=token.replaceAll('~1','/').replaceAll('~0','~');
+    if(row===null||typeof row!=='object'||!Object.hasOwn(row,key))fail("LOCATOR_INVALID");
+    row=row[key];
+   }
+   if(sourcePayloadHash(row)!==reference.record_hash)fail("REFERENCE_HASH_CHANGED");
+  }
   const copy=structuredClone(payload);let modified=false;
   if(payload.redacted===true&&Array.isArray(payload.records)&&payload.records.length===0&&refs.length===0)continue;
   const locations=new Map();

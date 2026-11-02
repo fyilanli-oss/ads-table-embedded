@@ -56,11 +56,10 @@ export async function metaSourceCaptureProbe(client, {store, quotaStore, executi
     const source = (await client.query("select operations.refresh_preflight_source($1,$2,'meta','act_101') source", [workspaceId, installGeneration])).rows[0].source;
     assert.ok(source); const accountId = "act_101", scopes = [...oauthPermissionScopes("meta", "identity_v1")];
     await client.query("update integrations.provider_connections set granted_scopes=$1 where id=$2", [scopes, connection.id]);
-    // Rebind the existing synthetic run inside this savepoint to the fixture's
-    // actual Meta connection/selection. No fake loadContext or authority function.
-    for (const table of ["refresh_runs", "refresh_work_progress", "refresh_work_bindings"])
-      await client.query(`update operations.${table} set provider='meta',account_id=$1 where fence=$2`, [accountId, fence]);
-    await client.query("update operations.refresh_work_bindings set source=operations.refresh_preflight_source(workspace_id,install_generation,provider,account_id),deadline_at_ms=$2 where fence=$1", [fence, Date.now() + 600000]);
+    // Actual admitted Meta job; only fixture scopes changed above. Refresh its
+    // bound source inside the savepoint without extending any deadline.
+    assert.equal(original.claim.provider, "meta"); assert.equal(original.claim.accountId, accountId);
+    await client.query("update operations.refresh_work_bindings set source=operations.refresh_preflight_source(workspace_id,install_generation,provider,account_id) where fence=$1", [fence]);
     const hash = () => createHash("sha256").update(randomUUID()).digest("hex");
     await client.query("insert into operations.refresh_quota_contexts(workspace_id,install_generation,provider,installation_id,connection_id,connection_version,account_id,client_scope_key,connection_scope_key,connection_epoch,api_version,enabled) values($1,$2,'meta',$3,$4,$5,$6,$7,$8,1,'v26.0',true)",
       [workspaceId, installGeneration, installation.id, connection.id, connection.connection_version, accountId, hash(), hash()]);

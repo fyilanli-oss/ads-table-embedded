@@ -1635,7 +1635,7 @@
       "tools/eo05-identity-authority-snapshot-probe.mjs": "0136e8dc5a5720b78d1cb4dca081f19e8b473812b6d66129b94f64fd5edf672c",
       "tools/eo05-identity-oauth-atomic-probe.mjs": "89758e82406dd15e94551bf22305ef9845dd6bf009127d119f1f7d618a9a20e5",
       "tools/eo05-merchant-quota-context-probe.mjs": "699aae3f090c490ca59abba882ea3e36fbe25e817d7ce697a55a0cb294269deb",
-      "tools/eo05-meta-source-capture-probe.mjs": "0374b361002e7efec129982e31b802c10c4ae6db6ae24b24598bc10effd267e6",
+      "tools/eo05-meta-source-capture-probe.mjs": "9bb24126ef51c5410c392ed3e5c90cb1ce2c135987cf3ff1284583bc76032bc1",
       "tools/eo05-quota-authority-probe.mjs": "50c1b31cafb78cc774f7ed62af849d79136f39519375076e53f4eac896a2fdd5",
       "tools/eo05-quota-feedback-probe.mjs": "42b9cf4d7d32ffb4199462f6f04aa13dbff99f33f9b403b388628fff6b73ae5c",
       "tools/eo05-quota-scope-resolver-probe.mjs": "d48bc100b2a59bb081a04a1b033c73f67ee724a480f3d927063204367200b6b8",

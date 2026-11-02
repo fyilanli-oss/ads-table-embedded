@@ -715,7 +715,7 @@
       "name": "eo05b_source_evidence_foundation",
       "file": "supabase/migrations/20261102083049_eo05b_source_evidence_foundation.sql",
       "created_with": "supabase@2.122.0 migration new eo05b_source_evidence_foundation",
-      "repository_sql_sha256": "62ac3776511587bbad2e87c940b3f286b3ffde30800427869e1d15b4feeb215c",
+      "repository_sql_sha256": "1d88cef3266312f54f5919cd2ad50995c2ee6b29965c56eca4fee2d0aa40ae8e",
       "applied": false,
       "live_apply_authorized": false
     }

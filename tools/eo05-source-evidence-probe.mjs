@@ -46,12 +46,15 @@ export async function sourceEvidenceProbe(client, connection, environment = proc
     const repository = createSourceEvidenceRepository(client), write = prepare();
     const receipt = await repository.commit(write);
     assert.equal(receipt.status, "committed");
+    assert.equal(receipt.manifest.counts.ordersInserted, 1);
     const same = (await client.query("select evidence.commit_source_batch($1::jsonb,$2,$3,$4::jsonb) as result",
       [JSON.stringify(owner), write.attemptId, 0, JSON.stringify(write.body)])).rows[0].result;
     assert.equal(same.commitId, receipt.commitId, "same operation returns its recorded receipt");
     const replay = sourceStoreFixture({owner, cipher: input.cipher, policy: input.policy});
     const replayReceipt = await repository.commit(replay.prepare());
     assert.equal(replayReceipt.manifest.ids["order:order"], receipt.manifest.ids["order:order"]);
+    assert.equal(replayReceipt.manifest.counts.ordersReused, 1);
+    assert.equal(replayReceipt.manifest.counts.linesReused, 1);
     assert.equal((await client.query("select count(*)::int n from source.shopify_order_versions where installation_id=$1", [owner.installationId])).rows[0].n, 1);
     assert.equal((await client.query("select count(*)::int n from source.shopify_line_versions where installation_id=$1", [owner.installationId])).rows[0].n, 1);
     const pages = await repository.readPages({...write, limit: 10});

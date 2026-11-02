@@ -163,6 +163,7 @@ begin
  foreach k in array array['pages','references','rules','mappings','orders','lines','journeys','claims','links'] loop
   if jsonb_typeof(p->k) is distinct from 'array' or jsonb_array_length(p->k)>1000 then raise exception 'SOURCE_BOUNDS_INVALID'; end if;
  end loop;
+ if (select sum(jsonb_array_length(p->entries.group_name)) from unnest(array['pages','references','rules','mappings','orders','lines','journeys','claims','links']) as entries(group_name))>1000 then raise exception 'SOURCE_BOUNDS_INVALID';end if;
  if coalesce(p->>'sourceState','') not in ('complete','partial','failed') or jsonb_typeof(p->'policy') is distinct from 'object' then raise exception 'SOURCE_POLICY_REQUIRED'; end if;
  policy:=p->'policy';meta_until:=(policy->'metadata'->>'until')::timestamptz;
  foreach k in array array['metadata','raw','identity','order','claim'] loop
@@ -209,8 +210,9 @@ begin
   h:=evidence.source_hash(item->'data');perform pg_advisory_xact_lock(hashtextextended(w::text||iid::text||g::text||(item->>'orderId'),0));
   select * into old from source.shopify_order_versions v where v.workspace_id=w and v.installation_id=iid and v.installation_generation=g and v.order_id=item->>'orderId' and v.order_updated_at=(item->>'updatedAt')::timestamptz;
   if found then
-   if old.native_data is distinct from item->'data' then raise exception 'SOURCE_ORDER_VERSION_CONFLICT'; end if;rid:=old.id;update source.shopify_order_versions set retain_until=greatest(retain_until,(policy->'order'->>'until')::timestamptz) where id=rid;
+   if old.native_data is distinct from item->'data' then raise exception 'SOURCE_ORDER_VERSION_CONFLICT'; end if;counts:=counts||jsonb_build_object('ordersReused',coalesce((counts->>'ordersReused')::int,0)+1);rid:=old.id;update source.shopify_order_versions set retain_until=greatest(retain_until,(policy->'order'->>'until')::timestamptz) where id=rid;
   else
+   counts:=counts||jsonb_build_object('ordersInserted',coalesce((counts->>'ordersInserted')::int,0)+1);
    insert into source.shopify_order_versions(workspace_id,installation_id,installation_generation,shop_id,retention_class,retain_until,source_batch_id,source_reference_id,order_id,order_updated_at,observation_hash,native_data)
    values(w,iid,g,s,'order',(policy->'order'->>'until')::timestamptz,bid,(refs->>('r:'||(item->>'reference')))::bigint,item->>'orderId',(item->>'updatedAt')::timestamptz,h,item->'data') returning id into rid;
   end if;insert into evidence.source_reference_links(workspace_id,installation_id,installation_generation,shop_id,retention_class,retain_until,source_reference_id,role,order_version_id) values(w,iid,g,s,'metadata',meta_until,(refs->>('r:'||(item->>'reference')))::bigint,'primary',rid);
@@ -220,8 +222,9 @@ begin
   parent:=(ids->>('order:'||(item->>'order')))::bigint;h:=evidence.source_hash(item->'data');
   select * into old from source.shopify_line_versions v where v.workspace_id=w and v.installation_id=iid and v.installation_generation=g and v.order_version_id=parent and v.line_item_id=item->>'lineId';
   if found then
-   if old.native_data is distinct from item->'data' then raise exception 'SOURCE_LINE_VERSION_CONFLICT'; end if;rid:=old.id;update source.shopify_line_versions set retain_until=greatest(retain_until,(policy->'order'->>'until')::timestamptz) where id=rid;
+   if old.native_data is distinct from item->'data' then raise exception 'SOURCE_LINE_VERSION_CONFLICT'; end if;counts:=counts||jsonb_build_object('linesReused',coalesce((counts->>'linesReused')::int,0)+1);rid:=old.id;update source.shopify_line_versions set retain_until=greatest(retain_until,(policy->'order'->>'until')::timestamptz) where id=rid;
   else
+   counts:=counts||jsonb_build_object('linesInserted',coalesce((counts->>'linesInserted')::int,0)+1);
    insert into source.shopify_line_versions(workspace_id,installation_id,installation_generation,shop_id,retention_class,retain_until,order_version_id,source_reference_id,line_item_id,observation_hash,native_data)
    values(w,iid,g,s,'order',(policy->'order'->>'until')::timestamptz,parent,(refs->>('r:'||(item->>'reference')))::bigint,item->>'lineId',h,item->'data') returning id into rid;
   end if;insert into evidence.source_reference_links(workspace_id,installation_id,installation_generation,shop_id,retention_class,retain_until,source_reference_id,role,line_version_id) values(w,iid,g,s,'metadata',meta_until,(refs->>('r:'||(item->>'reference')))::bigint,'primary',rid);
@@ -257,28 +260,28 @@ end $fn$;
 
 create function evidence.source_page_deadline(p evidence.source_pages) returns timestamptz
 language sql stable security definer set search_path='' as $fn$
- with recursive roots as (select 'rule'::text as kind,x.id,x.retain_until from evidence.source_reference_links l join identity.source_rule_versions x on x.id=l.source_rule_version_id where l.source_reference_id in(select r.id from evidence.source_references r where r.page_id=p.id)
+ with recursive roots as (select 'rule'::text as kind,x.id,x.retain_until from evidence.source_reference_links l join identity.source_rule_versions x on x.id=l.source_rule_version_id where l.workspace_id=p.workspace_id and l.installation_id=p.installation_id and l.installation_generation=p.installation_generation and l.source_reference_id in(select r.id from evidence.source_references r where r.workspace_id=p.workspace_id and r.installation_id=p.installation_id and r.installation_generation=p.installation_generation and r.page_id=p.id)
  union
-select 'mapping'::text as kind,x.id,x.retain_until from evidence.source_reference_links l join identity.product_identity_mappings x on x.id=l.mapping_id where l.source_reference_id in(select r.id from evidence.source_references r where r.page_id=p.id)
+select 'mapping'::text as kind,x.id,x.retain_until from evidence.source_reference_links l join identity.product_identity_mappings x on x.id=l.mapping_id where l.workspace_id=p.workspace_id and l.installation_id=p.installation_id and l.installation_generation=p.installation_generation and l.source_reference_id in(select r.id from evidence.source_references r where r.workspace_id=p.workspace_id and r.installation_id=p.installation_id and r.installation_generation=p.installation_generation and r.page_id=p.id)
  union
-select 'order'::text as kind,x.id,x.retain_until from evidence.source_reference_links l join source.shopify_order_versions x on x.id=l.order_version_id where l.source_reference_id in(select r.id from evidence.source_references r where r.page_id=p.id)
+select 'order'::text as kind,x.id,x.retain_until from evidence.source_reference_links l join source.shopify_order_versions x on x.id=l.order_version_id where l.workspace_id=p.workspace_id and l.installation_id=p.installation_id and l.installation_generation=p.installation_generation and l.source_reference_id in(select r.id from evidence.source_references r where r.workspace_id=p.workspace_id and r.installation_id=p.installation_id and r.installation_generation=p.installation_generation and r.page_id=p.id)
  union
-select 'line'::text as kind,x.id,x.retain_until from evidence.source_reference_links l join source.shopify_line_versions x on x.id=l.line_version_id where l.source_reference_id in(select r.id from evidence.source_references r where r.page_id=p.id)
+select 'line'::text as kind,x.id,x.retain_until from evidence.source_reference_links l join source.shopify_line_versions x on x.id=l.line_version_id where l.workspace_id=p.workspace_id and l.installation_id=p.installation_id and l.installation_generation=p.installation_generation and l.source_reference_id in(select r.id from evidence.source_references r where r.workspace_id=p.workspace_id and r.installation_id=p.installation_id and r.installation_generation=p.installation_generation and r.page_id=p.id)
  union
-select 'journey'::text as kind,x.id,x.retain_until from evidence.source_reference_links l join source.shopify_journey_versions x on x.id=l.journey_version_id where l.source_reference_id in(select r.id from evidence.source_references r where r.page_id=p.id)
+select 'journey'::text as kind,x.id,x.retain_until from evidence.source_reference_links l join source.shopify_journey_versions x on x.id=l.journey_version_id where l.workspace_id=p.workspace_id and l.installation_id=p.installation_id and l.installation_generation=p.installation_generation and l.source_reference_id in(select r.id from evidence.source_references r where r.workspace_id=p.workspace_id and r.installation_id=p.installation_id and r.installation_generation=p.installation_generation and r.page_id=p.id)
  union
-select 'claim'::text as kind,x.id,x.retain_until from evidence.source_reference_links l join source.provider_claim_versions x on x.id=l.claim_version_id where l.source_reference_id in(select r.id from evidence.source_references r where r.page_id=p.id)
+select 'claim'::text as kind,x.id,x.retain_until from evidence.source_reference_links l join source.provider_claim_versions x on x.id=l.claim_version_id where l.workspace_id=p.workspace_id and l.installation_id=p.installation_id and l.installation_generation=p.installation_generation and l.source_reference_id in(select r.id from evidence.source_references r where r.workspace_id=p.workspace_id and r.installation_id=p.installation_id and r.installation_generation=p.installation_generation and r.page_id=p.id)
  union
-select 'order',x.id,x.retain_until from source.shopify_order_versions x join evidence.source_references r on r.id=x.source_reference_id where r.page_id=p.id
+select 'order',x.id,x.retain_until from source.shopify_order_versions x join evidence.source_references r on r.id=x.source_reference_id where r.workspace_id=p.workspace_id and r.installation_id=p.installation_id and r.installation_generation=p.installation_generation and r.page_id=p.id
  union
-select 'line',x.id,x.retain_until from source.shopify_line_versions x join evidence.source_references r on r.id=x.source_reference_id where r.page_id=p.id
+select 'line',x.id,x.retain_until from source.shopify_line_versions x join evidence.source_references r on r.id=x.source_reference_id where r.workspace_id=p.workspace_id and r.installation_id=p.installation_id and r.installation_generation=p.installation_generation and r.page_id=p.id
  union
-select 'claim',x.id,x.retain_until from source.provider_claim_versions x join evidence.source_references r on r.id=x.source_reference_id where r.page_id=p.id),
+select 'claim',x.id,x.retain_until from source.provider_claim_versions x join evidence.source_references r on r.id=x.source_reference_id where r.workspace_id=p.workspace_id and r.installation_id=p.installation_id and r.installation_generation=p.installation_generation and r.page_id=p.id),
  edges as (
- select 'rule'::text parent_kind,source_rule_version_id parent_id,'mapping'::text child_kind,id,retain_until from identity.product_identity_mappings
- union all select 'order',order_version_id,'line',id,retain_until from source.shopify_line_versions
- union all select 'order',order_version_id,'journey',id,retain_until from source.shopify_journey_versions
- union all select 'order',shopify_order_version_id,'claim',id,retain_until from source.provider_claim_versions),
+ select 'rule'::text parent_kind,source_rule_version_id parent_id,'mapping'::text child_kind,id,retain_until from identity.product_identity_mappings where workspace_id=p.workspace_id and installation_id=p.installation_id and installation_generation=p.installation_generation
+ union all select 'order',order_version_id,'line',id,retain_until from source.shopify_line_versions where workspace_id=p.workspace_id and installation_id=p.installation_id and installation_generation=p.installation_generation
+ union all select 'order',order_version_id,'journey',id,retain_until from source.shopify_journey_versions where workspace_id=p.workspace_id and installation_id=p.installation_id and installation_generation=p.installation_generation
+ union all select 'order',shopify_order_version_id,'claim',id,retain_until from source.provider_claim_versions where workspace_id=p.workspace_id and installation_id=p.installation_id and installation_generation=p.installation_generation),
  dependencies(kind,id,retain_until) as (select * from roots union select e.child_kind,e.id,e.retain_until from dependencies d join edges e on e.parent_kind=d.kind and e.parent_id=d.id)
  select greatest(p.retain_until,coalesce((select max(retain_until) from dependencies),p.retain_until))
 $fn$;
@@ -303,7 +306,7 @@ begin
  return coalesce((select jsonb_agg(jsonb_build_object('id',p.id::text,'family',p.family,'ordinal',p.page_ordinal,'origin',p.origin,'payloadHash',p.payload_hash,
  'captureLayer',p.capture_layer,'numericFidelity',p.numeric_fidelity,'fieldCoverage',p.field_coverage,'schemaVersion',p.payload_schema_version,'sanitizerVersion',p.sanitizer_version,
  'keyVersion',p.key_version,'plainBytes',p.plain_byte_count,'ciphertext',encode(p.ciphertext,'hex'),'nonce',encode(p.nonce,'hex'),'authTag',encode(p.auth_tag,'hex'),'available',p.purged_at is null))
- from (select x.* from evidence.source_pages x join evidence.source_batches b on b.id=x.batch_id where b.workspace_id=(o->>'workspaceId')::uuid and b.installation_id=(o->>'installationId')::bigint and b.installation_generation=(o->>'generation')::bigint and b.authority=o and b.attempt_id=p_attempt and b.batch_ordinal=p_ordinal and b.storage_state='committed' and x.id>p_after order by x.id limit p_limit) p),'[]'::jsonb);
+ from (select x.* from evidence.source_pages x join evidence.source_batches b on b.id=x.batch_id and b.workspace_id=x.workspace_id and b.installation_id=x.installation_id and b.installation_generation=x.installation_generation where b.workspace_id=(o->>'workspaceId')::uuid and b.installation_id=(o->>'installationId')::bigint and b.installation_generation=(o->>'generation')::bigint and b.authority=o and b.attempt_id=p_attempt and b.batch_ordinal=p_ordinal and b.storage_state='committed' and x.id>p_after order by x.id limit p_limit) p),'[]'::jsonb);
 end $fn$;
 create function evidence.delete_installation_sources(p_installation bigint) returns jsonb
 language plpgsql security definer set search_path='' as $fn$

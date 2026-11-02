@@ -16,24 +16,26 @@ const freeze = v => {if (v && typeof v === "object") {Object.values(v).forEach(f
 
 // Canonical application bytes, not a claim about original HTTP wire bytes.
 export function canonicalSourceJson(value) {
-  let nodes = 0;
+  let nodes = 0, characters = 0;
+  const take = s => {characters += s.length; if (characters > 16777216) fail("JSON_BOUNDS"); return s;};
   function visit(v, depth) {
     if (++nodes > 100000 || depth > 32) fail("JSON_BOUNDS");
-    if (v === null || typeof v === "boolean") return JSON.stringify(v);
+    if (v === null || typeof v === "boolean") return take(JSON.stringify(v));
     if (typeof v === "string") {
       if (v.length > 65536 || v.includes("\0")) fail("JSON_BOUNDS");
-      return JSON.stringify(v);
+      return take(JSON.stringify(v));
     }
     if (typeof v === "number") {
       if (!Number.isFinite(v) || !Number.isSafeInteger(v)) fail("LOSSY_NUMBER");
-      return JSON.stringify(v);
+      return take(JSON.stringify(v));
     }
     if (Array.isArray(v)) return "[" + v.map(x => visit(x, depth + 1)).join(",") + "]";
     if (!object(v)) fail("JSON_TYPE");
     return "{" + Object.keys(v).sort().map(k => {
       if (/^(?:__proto__|constructor|prototype)$/i.test(k)
         || /token|secret|password|authorization|cookie|email|phone|address|customer|profile/i.test(k)) fail("PRIVATE_FIELD");
-      return JSON.stringify(k) + ":" + visit(v[k], depth + 1);
+      if (k.length > 512) fail("JSON_BOUNDS");
+      return take(JSON.stringify(k)) + ":" + visit(v[k], depth + 1);
     }).join(",") + "}";
   }
   return visit(value, 0);
@@ -76,6 +78,7 @@ export function createSourceEvidenceCipher({keys, activeVersion, forbiddenKeys})
   return Object.freeze({
     seal({owner, attemptId, ordinal, page, payload}) {
       const bytes = Buffer.from(canonicalSourceJson(payload));
+      if (bytes.length > 8388608) {bytes.fill(0); fail("JSON_BOUNDS");}
       const metadata = {...page, keyVersion: activeVersion, plainBytes: bytes.length,
         payloadHash: createHash("sha256").update(bytes).digest("hex")};
       const nonce = randomBytes(12), cipher = createCipheriv("aes-256-gcm", local.get(activeVersion), nonce);
@@ -144,6 +147,8 @@ export function prepareSourceWrite({owner, attemptId, ordinal, sourceState, poli
   }
   exact(records, groups.filter(k => k !== "pages"));
   const payloads = new Map(), body = {sourceState, policy: structuredClone(policy), pages: []};
+  let preparedBytes = 0, preparedRows = pages.length;
+  const charge = value => {preparedBytes += Buffer.byteLength(canonicalSourceJson(value)); if (preparedBytes > limits.maxBytes) fail("BOUNDS");};
   for (const page of pages) {
     exact(page, ["key", "family", "ordinal", "origin", "captureLayer", "numericFidelity", "fieldCoverage", "schemaVersion", "sanitizerVersion", "payload"]);
     if (!text(page.key, 128) || payloads.has(page.key) || !/^[a-z][a-z0-9_:.-]{0,127}$/.test(page.family)
@@ -154,17 +159,21 @@ export function prepareSourceWrite({owner, attemptId, ordinal, sourceState, poli
       || !text(page.schemaVersion, 128) || !text(page.sanitizerVersion, 128)) fail("PAGE_INVALID");
     const {payload, ...metadata} = page;
     payloads.set(page.key, structuredClone(payload));
-    body.pages.push(cipher.seal({owner: bound, attemptId, ordinal, page: metadata, payload}));
+    const sealed = cipher.seal({owner: bound, attemptId, ordinal, page: metadata, payload});
+    charge(sealed); body.pages.push(sealed);
   }
   const keys = new Map();
   for (const group of groups.filter(k => k !== "pages")) {
     const rows = records[group];
     if (!Array.isArray(rows) || rows.length > limits.maxRows) fail("BOUNDS");
+    preparedRows += rows.length;
+    if (preparedRows > limits.maxRows) fail("BOUNDS");
     keys.set(group, new Set());
     body[group] = rows.map(row => {
       exact(row, schemas[group]);
       if (group !== "links" && (!text(row.key, 128) || keys.get(group).has(row.key))) fail("KEY_DUPLICATE");
       if (group !== "links") keys.get(group).add(row.key);
+      charge(row);
       const copy = structuredClone(row);
       if (group === "references") {
         if (!payloads.has(row.page) || !text(row.nativeType, 128) || (row.nativeId !== null && !text(row.nativeId, 1024))) fail("REFERENCE_INVALID");

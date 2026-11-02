@@ -763,6 +763,15 @@
       "repository_sql_sha256": "e90c086690099f40fc9abbeccd45b0d5b1a728fa22e4e709bdedacd3d787464b",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261102155324",
+      "name": "eo05b_source_retention",
+      "file": "supabase/migrations/20261102155324_eo05b_source_retention.sql",
+      "created_with": "supabase@2.122.0 migration new eo05b_source_retention",
+      "repository_sql_sha256": "35f35a59ed9c04bfe9c04d7dc5e044390a7a25f40742a30bbc13df51b0b576a2",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

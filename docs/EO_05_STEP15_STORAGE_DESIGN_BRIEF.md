@@ -1,3 +1,39 @@
+## 2 Kasım — mevcut15: bağımlılıkları koruyan süreli temizlik
+
+301 main’dedir. Owner; süresi dolan kayıtların, hâlâ gereken kanıt ve teslim
+bekleyen veriler korunarak temizlenmesini; SQL/kod/test/PR paketini onayladı.
+Kayıt: contracts/a6-eo-implementation-master-v1.json#Step15_source_retention_2026_11_02.
+
+Mevcut10 tablo korunur. Temizlik; kayıt/link/üst kayıt süreleri, gerçek foreign
+key bağımlılıkları, kaynak paketlerinin complete+consumed durumu ve supersedes
+zincirini kontrol eder. Süre sonu tek başına silme değildir. Açık/başarısız müşteri
+veri talebi rutin temizliğin önündedir. Eksik, pending veya privacy-invalidated
+paketler teslim edilmiş sayılmaz. Bu paket consumed/handoff/checkpoint yazmaz.
+
+Her explicit çağrı en fazla1000 aday,1000 link ve1000 etkilenen pakettir; bir tür
+ve keyset cursor ile çalışır.32’den derin ilişki güvenli hold olur. Yeni gün sayısı
+uydurulmaz; mevcut retain_until ve ayrı finite audit politikası kullanılır.
+Global-control→installation kilit sırası, son süre, gerçek silinen satır sayısı ve
+atomik makbuz denetlenir. Makbuz yazılamazsa alt silmeler de geri alınır.
+
+Yeni fiziksel tablo yoktur; kurulum kaydındaki sınırlı/süreli makbuz listesi native
+ID veya payload içermez. Dolmuş makbuzlar yeni explicit çağrıda temizlenebilir;
+dolmamış kayıtlar kapasite için üzerine yazılmaz. Yanıt kaybında tekrar yoktur;
+yalnız scoped receipt inspection vardır. not_observed rollback kanıtı değildir.
+
+Kısmen temizlenmiş paket invalidated+retentionPruned olur. Kalan sayfalar yalnız
+tarihsel readback olarak expired/retainUntil/retentionPruned işaretleriyle okunur;
+eski tam kaynak makbuzu veya güncel doğrulanmış kanıt gibi sunulmaz. Eski owner-only
+raw purge test yardımcısı etkinleştirilmez; yeni hazırlığın makbuzlu giriş noktası
+cleanup_source_retention’dır. Hiçbir application rolüne yeni izin verilmez.
+
+15 açık; gerçek downstream teslimi, canlı sınıf politikaları/kapasite/anahtar/grant/
+aktivasyon, native eşleme ve gerçek veri kabulü kalır. Müşteri teslim kanalı ve
+silme defteri saklama/restore kabulü ayrıca açıktır.22 paused; Dataset/FX23 ve
+Overlap ertelenen kapsam korunur. Canlı DB/provider/config/deploy yok; merge ayrı
+onay ister. Supabase changelog/functions, PostgreSQL17 constraints/locking belgeleri
+2 Kasım2026 kontrol edildi; kaynak adresleri makine kaydındadır.
+
 ## 2 Kasım — mevcut15: müşteri bazlı kaynak verisi
 
 300 main’dedir. Owner, mevcut silme motoru içinde müşteri talebinin ilgili sipariş,

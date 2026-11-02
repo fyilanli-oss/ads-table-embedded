@@ -2895,5 +2895,31 @@
     "deployment_authorized": false,
     "native_reference_limit": "Only exact Shopify Order GID or an already verified same-order FK can identify a claim subject. Bare numeric/custom Klaviyo OrderId is not converted into a Shopify Order ID; it holds fulfillment until its namespace is proven. No new source rule or query is inferred.",
     "request_minimization": "On completed source fulfillment, clear the explicit webhook order list. A redaction retains only scoped order-ID digests in the restricted run receipt for same-generation re-ingestion prevention; these are pseudonymous erasure-ledger material, not claimed anonymous data. Its final finite retention/restore policy remains part of the existing pre-live structured-retention gate."
+  },
+  "Step15_source_retention_2026_11_02": {
+    "status": "repository_preparation_not_live",
+    "owner_approval": "Owner explicitly approved the concrete class/dependency-aware expired-source cleanup code/SQL/tests/PR package, preserving still-needed evidence and pending downstream handoff and recording deletion. Source: Onayliyorum on2026-11-02. No live DB/provider/config/deploy or merge authorization.",
+    "base_main": "e4421a0dae3144084bd3740727e12ff4ae6ceccb",
+    "mechanism": "Explicit owner-only bounded per-kind sweep over the existing10 tables. Existing retain_until is a minimum; no default/invented retention days. Source/reference/link/parent and supersedes dependencies, complete consumed support batches and actual incoming FK consumers must permit cleanup. Source links are removed only with an eligible target; parent data cannot cascade-delete live children. Partial, pending, unknown, privacy-invalidated and unresolved handoff stays held. No consumed marker or Dataset checkpoint is written.",
+    "bounds": "At most1000 candidate rows,1000 target links and1000 distinct affected batches per call; recursion depth32 holds rather than guesses. Exact workspace/installation/generation, global-control then installation locks, finite operation deadline, SQL record-count checks and atomic audit update. Existing composite FK predicates remain typed/indexable; real profile/capacity acceptance remains open.",
+    "audit": "No new physical table. Existing installation row gains a bounded <=1000/1MiB operational receipt array. Explicit finite metadata policy version/until/maxReceipts required; expiry never permits overwriting unexpired audit entries. Expired entries are pruned on a new explicit sweep. Full audit capacity stops before data mutation. Receipt has only internal operation/cursor/count/hash/time/policy data, no native IDs or payload. Audit receipt expiry has its own pre-live class policy; no cron activated.",
+    "proof": "A pruned batch is invalidated with retentionPruned=true; it never claims its original full source commit remains. Still-retained pages remain bounded historical readback with explicit expired/retainUntil/retentionPruned flags; available bytes are not current verified proof. Privacy-redacted batches remain excluded from this historical-read exception.",
+    "unknown": "One-use private prepared operation; lost reply is WRITE_UNCONFIRMED, no automatic cleanup/native retry. Explicit scoped historical receipt inspection only; missing receipt is not rollback proof. Identical SQL operation within its deadline returns original audit; different input conflicts.",
+    "privacy": "Open/failed privacy actions take precedence and block routine maintenance. Existing customer/whole-install deletion protocol and erasure digests are untouched. No Disconnect/reconnect UI, source-rule acceptance, native query, grants, key/env, worker/scheduler, live DB or deploy.",
+    "legacy_raw_helper": "The existing owner-only low-level raw-page purge fixture helper is retained for historical test compatibility; this package does not activate it. The prepared audited maintenance entrypoint is cleanup_source_retention. No application role gains either capability.",
+    "remaining": "Step15 open: trusted downstream durable handoff, live finite policies/capacity/key/grant/activation, native mapping proof and real-data acceptance. Customer delivery channel/receipt authority and final erasure-ledger retention/restore acceptance remain open. General Dataset/FX23 and Overlap unchanged;22 paused.",
+    "migration": "supabase/migrations/20261102155324_eo05b_source_retention.sql",
+    "official_checked_at": "2026-11-02",
+    "official_sources": [
+      "https://supabase.com/changelog",
+      "https://supabase.com/docs/guides/database/functions",
+      "https://www.postgresql.org/docs/17/ddl-constraints.html",
+      "https://www.postgresql.org/docs/17/explicit-locking.html"
+    ],
+    "runtime_code_authorized": true,
+    "live_database_authorized": false,
+    "live_provider_authorized": false,
+    "merge_authorized": false,
+    "deployment_authorized": false
   }
 }

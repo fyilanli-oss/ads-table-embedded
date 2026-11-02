@@ -6,6 +6,10 @@ import {reviewShopifyProviderClaimReadiness} from "../app/lib/shopify/provider-c
 import {reviewRefreshReferencePrewrite} from "../app/lib/providers/reference-prewrite.server.js";
 import test,{after} from "node:test";
 import assert from "node:assert/strict";
+import {randomUUID} from "node:crypto";
+import {sourceStoreFixture} from "./fixtures/source-store-fixture.js";
+import {prepareKlaviyoIdentitySourceWrite} from "../app/lib/providers/klaviyo-source-write.server.js";
+import {createSourceEvidenceRepository, sourcePayloadHash} from "../app/lib/database/source-evidence-store.server.js";
 import {collectKlaviyoNativeIdentityEvidence, collectKlaviyoIdentityMessageEvidence,
   collectKlaviyoVerifiedProductCandidateEvidence} from "../app/lib/providers/klaviyo-identity-collection.server.js";
 import {KLAVIYO_OAUTH_SCOPES} from "../app/lib/providers/klaviyo-api.server.js";
@@ -1062,4 +1066,107 @@ test("Klaviyo setup proof binds native account/metric/events and keeps app appro
   f.state.now=new Date(f.state.now.valueOf()+600001);
   const fresh=await shopifyScopeProof(scope,["read_products"],f.state.now.toISOString());
   assert.equal(reviewRefreshSetupProof({...input,shopify:fresh}).reason,"provider_access_evidence_stale_or_future");
+});
+
+
+async function klaviyoSourceFixture(make=fixture, change=()=>{}) {
+ const f=make(),{input}=sourceStoreFixture();f.options.captureSource=true;f.options.maxCaptureBytes=1000000;change(f);
+ const native=f.options.fetchFn;
+ f.options.fetchFn=async(...args)=>{const r=await native(...args);return r instanceof Response?r:Response.json(await r.json(),{status:r.status});};
+ const observation=await f.run(),options={observation,attemptId:randomUUID(),cipher:input.cipher,policy:input.policy,
+  limits:{maxRows:1000,maxBytes:1000000},now:f.options.now().toISOString()};
+ return {f,observation,options,prepare:()=>prepareKlaviyoIdentitySourceWrite(options)};
+}
+function openKlaviyoPages(h,w){return w.body.pages.map(page=>({family:page.family,payload:h.options.cipher.open({owner:w.owner,attemptId:w.attemptId,ordinal:0,page})}));}
+test('Klaviyo source: genuine completed capture is one-use, clones and uncaptured observations are refused',async()=>{
+ const h=await klaviyoSourceFixture();assert.throws(()=>prepareKlaviyoIdentitySourceWrite({...h.options,observation:structuredClone(h.observation)}),/OBSERVATION_REQUIRED/);
+ const uncaptured=await fixture().run();assert.throws(()=>prepareKlaviyoIdentitySourceWrite({...h.options,observation:uncaptured}),/OBSERVATION_REQUIRED/);
+ h.prepare();assert.throws(h.prepare,/OBSERVATION_REQUIRED/);
+});
+test('Klaviyo source: native pages decrypt without profiles/contact/private properties; claims stay unlinked and mappings unresolved',async()=>{
+ const h=await klaviyoSourceFixture(),{write:w}=h.prepare(),opened=openKlaviyoPages(h,w);
+ assert.equal(w.body.pages.length,4);assert.equal(w.body.claims.length,1);assert.equal(w.body.mappings.length,1);assert.equal(w.owner.selectionEpoch,null);
+ assert.equal(w.body.claims[0].linkState,'unlinked');assert.equal(w.body.claims[0].order,null);assert.equal(w.body.mappings[0].state,'unresolved');assert.equal(w.body.mappings[0].productId,null);
+ assert.equal(w.body.rules.length,0);assert.doesNotMatch(JSON.stringify(opened),/private@|private-profile|contact_information|secret-access|secret-refresh|email/);
+ const e=opened.find(p=>p.family==='klaviyo_ordered_product_events').payload.records[0];
+ assert.deepEqual(e.attributes.event_properties.Quantity,{jsonNumber:'2'});assert.equal(e.attributes.event_properties.$value,'30.00');
+ assert.equal(w.body.references.find(r=>r.nativeType==='KlaviyoOrderedProductEvent').hash,sourcePayloadHash(e));
+ assert.ok(w.body.links.some(l=>l.role==='attribution'));assert.ok(w.body.links.some(l=>l.role==='metric'));
+});
+test('Klaviyo source: decimal spelling, exponent, numeric/string types and unsafe integer ID retain actual source lexemes',async()=>{
+ const h=await klaviyoSourceFixture(fixture,f=>{f.hooks.fetch=p=>p.pathname==='/api/events'&&new Response(JSON.stringify({data:[event()],included:[metric(),attribution()],links:{next:null}})
+  .replace('"ProductID":"123"','"ProductID":9007199254740993').replace('"Quantity":2','"Quantity":2e0').replace('"$value":"30.00"','"$value":12.5000'),{headers:{'content-type':'application/json'}});});
+ const {write:w}=h.prepare(),p=openKlaviyoPages(h,w).find(p=>p.family==='klaviyo_ordered_product_events').payload.records[0].attributes.event_properties;
+ assert.deepEqual(p.ProductID,{jsonNumber:'9007199254740993'});assert.deepEqual(p.Quantity,{jsonNumber:'2e0'});assert.deepEqual(p.$value,{jsonNumber:'12.5000'});
+ assert.equal(w.body.mappings[0].nativeId,'9007199254740993');assert.equal(w.body.mappings[0].context.product_id_source_type,'number');
+ assert.equal(h.observation.events[0].attributes.event_properties.$value,12.5);assert.equal(w.body.mappings[0].productId,null);
+});
+test('Klaviyo source: native numeric-tag lookalike cannot impersonate a scalar number',async()=>{
+ await assert.rejects(klaviyoSourceFixture(fixture,f=>{f.hooks.fetch=p=>p.pathname==='/api/events'&&response({data:[{...event(),attributes:{...event().attributes,event_properties:{ProductID:{jsonNumber:'123'}}}}],included:[metric(),attribution()],links:{next:null}});}),/JSON_INVALID|PROPERTY_INVALID/);
+});
+for(const bad of ['duplicate','prototype','utf8'])test('Klaviyo source: '+bad+' native JSON cannot become accepted evidence',async()=>{
+ await assert.rejects(klaviyoSourceFixture(fixture,f=>{f.hooks.fetch=p=>p.pathname==='/api/events'&&new Response(bad==='utf8'?new Uint8Array([255,254]):bad==='prototype'?'{"__proto__":{},"SECRET":"PRIVATE"}':'{"data":[],"data":["PRIVATE"]}',{headers:{'content-type':'application/json'}});}),e=>!/PRIVATE/.test(e.message));
+});
+test('Klaviyo source: two source IDs that decode to the same Number are not silently merged across pages',async()=>{
+ const h=await klaviyoSourceFixture(fixture,f=>{f.hooks.fetch=p=>{
+  if(p.pathname!=='/api/events')return;
+  const second=p.searchParams.has('page[cursor]');return new Response(JSON.stringify({data:[event()],included:[metric(),attribution()],links:{next:second?null:'https://a.klaviyo.com/api/events?page%5Bcursor%5D=next'}})
+   .replace('"ProductID":"123"',second?'"ProductID":9007199254740993':'"ProductID":9007199254740992'),{headers:{'content-type':'application/json'}});
+ };});assert.throws(h.prepare,/EVENT_CONFLICT/);
+});
+test('Klaviyo source: empty event pages persist evidence without invented products or claims',async()=>{
+ const h=await klaviyoSourceFixture(fixture,f=>{f.hooks.fetch=p=>p.pathname==='/api/events'&&response({data:[],links:{next:null}});});
+ const w=h.prepare().write;assert.equal(w.body.claims.length,0);assert.equal(w.body.mappings.length,0);assert.equal(w.body.pages.length,4);
+});
+test('Klaviyo source: identical event duplicates reuse a claim and keep every actual page reference',async()=>{
+ const h=await klaviyoSourceFixture(fixture,f=>{f.hooks.fetch=p=>p.pathname==='/api/events'&&response({data:[event()],included:[metric(),attribution()],links:{next:p.searchParams.has('page[cursor]')?null:'https://a.klaviyo.com/api/events?page%5Bcursor%5D=next'}});});
+ const w=h.prepare().write;assert.equal(w.body.claims.length,1);assert.equal(w.body.references.filter(r=>r.nativeType==='KlaviyoOrderedProductEvent').length,2);
+ assert.equal(w.body.links.filter(l=>l.role==='native_event').length,2);
+});
+test('Klaviyo source: missing/null/empty order and variant references stay distinct without Shopify order matching',async()=>{
+ for(const value of [undefined,null,'']){
+  const h=await klaviyoSourceFixture(fixture,f=>{f.hooks.fetch=p=>{if(p.pathname!=='/api/events')return;const e=event();delete e.attributes.event_properties['Variant ID'];
+   if(value!==undefined){e.attributes.event_properties.OrderId=value;e.attributes.event_properties['Variant ID']=value;}return response({data:[e],included:[metric(),attribution()],links:{next:null}});};});
+  const w=h.prepare().write;assert.equal(w.body.claims[0].nativeOrderId,null);assert.equal(w.body.claims[0].linkState,'unlinked');
+  assert.equal(w.body.mappings[0].context.variant.state,value===undefined?'missing':value===null?'null':'empty');
+ }
+});
+test('Klaviyo source: existing Message reports retain safe native statistics without assigning product sales from totals',async()=>{
+ const h=await klaviyoSourceFixture(messageFixture),{write:w}=h.prepare(),opened=openKlaviyoPages(h,w);
+ assert.ok(opened.some(p=>p.family==='klaviyo_campaign_report'));assert.ok(opened.some(p=>p.family==='klaviyo_flow_report'));
+ assert.ok(w.body.links.some(l=>l.role==='message_context'));assert.equal(w.body.claims[0].data.type,'event');
+ assert.equal(w.body.claims[0].linkState,'unlinked');assert.equal(h.observation.message_evidence.reporting_statistics_used_as_product_sales,false);
+});
+test('Klaviyo source: successful same-shop candidate remains evidence; no accepted rule/mapping',async()=>{
+ const h=await klaviyoSourceFixture(candidateFixture),w=h.prepare().write;assert.equal(w.body.mappings[0].productId,null);assert.equal(w.body.mappings[0].state,'unresolved');
+ assert.equal(w.body.rules.length,0);assert.ok(w.body.links.some(l=>l.role==='candidate_check'));
+});
+test('Klaviyo source: exact attributed interaction is retained and linked as evidence without clicked-product inference',async()=>{
+ const h=await klaviyoSourceFixture(()=>interactionFixture()),w=h.prepare().write;
+ assert.ok(w.body.pages.some(p=>p.family==='klaviyo_interaction'));assert.ok(w.body.links.some(l=>l.role==='observed_interaction'));
+ assert.equal(w.body.claims[0].linkState,'unlinked');assert.equal(h.observation.attributed_interactions.clicked_product_verified,false);
+});
+test('Klaviyo source: bounded native bytes and final package bounds reject without truncation',async()=>{
+ await assert.rejects(klaviyoSourceFixture(fixture,f=>{f.options.maxCaptureBytes=10;}));
+ const h=await klaviyoSourceFixture();assert.throws(()=>prepareKlaviyoIdentitySourceWrite({...h.options,limits:{maxRows:1000,maxBytes:1000}}),/BOUNDS/);
+});
+test('Klaviyo source: bound unknown performs one SQL call and no provider/write/job replay',async()=>{
+ const f=boundFixture(),{input}=sourceStoreFixture();f.config.sourceStorage={cipher:input.cipher,policy:input.policy,limits:{maxRows:1000,maxBytes:1000000}};
+ const reader=f.create();await assert.rejects(reader.readEvidence(),/WRITE_UNCONFIRMED/);assert.equal(f.calls.length,4);
+ assert.equal(f.queries.filter(q=>q.sql.includes('commit_klaviyo_identity_source')).length,1);assert.ok(f.queries.every(q=>!/stop_refresh|finish_refresh/.test(q.sql)));
+ await assert.rejects(reader.readEvidence(),/EXECUTION_USED/);assert.equal(f.calls.length,4);
+});
+test('Klaviyo source: missing read binding cannot fall back to generic SQL',async()=>{
+ const h=await klaviyoSourceFixture(),{write}=h.prepare();let calls=0;const repo=createSourceEvidenceRepository({query:async()=>{calls++;throw Error('unexpected');}});
+ await assert.rejects(repo.commitKlaviyoIdentity(write),/READ_BINDING_INVALID/);await assert.rejects(repo.commitKlaviyoIdentity(write,null),/READ_BINDING_INVALID/);assert.equal(calls,0);
+});
+
+
+test('Klaviyo source: report scalar object cannot impersonate an encoded native numeric token',async()=>{
+ await assert.rejects(klaviyoSourceFixture(messageFixture,f=>{f.rows.campaign[0].statistics.conversion_value={jsonNumber:'12.50'};}),/JSON_INVALID/);
+});
+test('Klaviyo source: stalled bounded body is cancelled at the whole-read deadline without a later provider request',async()=>{
+ let cancelled=0;
+ await assert.rejects(klaviyoSourceFixture(fixture,f=>{f.options.maxElapsedMs=1000;f.hooks.fetch=p=>p.pathname==='/api/events'&&new Response(new ReadableStream({start(c){c.enqueue(new TextEncoder().encode('{"data":['));},cancel(){cancelled++;}}),{headers:{'content-type':'application/json'}});}),/DEADLINE_EXCEEDED/);
+ await new Promise(r=>setTimeout(r,20));assert.equal(cancelled,1);
 });

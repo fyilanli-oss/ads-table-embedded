@@ -9,6 +9,12 @@ import {verifyKlaviyoProductCandidateRows} from "./klaviyo-product-identity.serv
 import {quotaBoundaryControl} from "../refresh/quota-native-fetch.server.js";
 import {runIdentityReadDeadline} from "./identity-read-deadline.server.js";
 import {buildKlaviyoAttributedEventRequest, readKlaviyoAttributedInteractions} from "./klaviyo-attributed-interaction.server.js";
+import {createKlaviyoSourceCapture} from "./klaviyo-source-capture.server.js";
+const sourceCaptures = new WeakMap();
+export function takeKlaviyoIdentitySourceCapture(observation) {
+  const capture = sourceCaptures.get(observation); if (!capture) fail("KLAVIYO_SOURCE_OBSERVATION_REQUIRED");
+  sourceCaptures.delete(observation); return capture;
+}
 
 export class KlaviyoIdentityCollectionError extends Error {
   constructor(code) {super(code); this.name = "KlaviyoIdentityCollectionError"; this.code = code;}
@@ -96,13 +102,14 @@ function cursorOf(body, path, parameter = "page[cursor]") {
 async function collectKlaviyoIdentitySource({verified, database, tokenVault, businessDate,
   fetchFn = fetch, now = () => new Date(), signal, maxPages = 100, maxEvents = 10000,
   maxMetrics = 10000, maxIncluded = 20000, maxMessageRows = 10000, maxElapsedMs = 120000,
-  maxInteractions = 1000, maxInteractionBytes = 2_000_000, withMessages, withShopify, withInteractions} = {}) {
+  maxInteractions = 1000, maxInteractionBytes = 2_000_000, withMessages, withShopify, withInteractions,
+  captureSource = false, maxCaptureBytes} = {}) {
   if (typeof fetchFn !== "function" || typeof now !== "function"
     || ![maxPages, maxEvents, maxMetrics, maxIncluded, maxMessageRows, maxElapsedMs].every(Number.isSafeInteger)
     || maxPages < 1 || maxPages > 1000 || maxEvents < 1 || maxEvents > 100000
     || maxMetrics < 1 || maxMetrics > 100000 || maxIncluded < 1 || maxIncluded > 100000
     || maxMessageRows < 1 || maxMessageRows > 100000
-    || maxElapsedMs < 1 || maxElapsedMs > 600000
+    || maxElapsedMs < 1 || maxElapsedMs > 600000 || typeof captureSource !== "boolean"
     || withInteractions && (!Number.isSafeInteger(maxInteractions) || maxInteractions < 1 || maxInteractions > 10000
       || !Number.isSafeInteger(maxInteractionBytes) || maxInteractionBytes < 1 || maxInteractionBytes > 20_000_000)) fail("KLAVIYO_IDENTITY_COLLECTION_INPUT_INVALID");
   // Validate the requested calendar date before any authority or provider read.
@@ -113,6 +120,7 @@ async function collectKlaviyoIdentitySource({verified, database, tokenVault, bus
     if (signal?.aborted) fail("KLAVIYO_IDENTITY_ABORTED");
     const t = clock(); if (t < start || t - start > maxElapsedMs) fail("KLAVIYO_IDENTITY_OBSERVATION_STALE");
   }
+  const capture = captureSource ? createKlaviyoSourceCapture({maxBytes: maxCaptureBytes, check, signal}) : null;
   const loader = createIdentityRuntimeAuthorityLoader({verified, database, tokenVault, provider: "klaviyo", now, signal});
   const nativeGraphql = withShopify ? verified.context.admin.graphql.bind(verified.context.admin) : null;
   let current, shopifyQuotaControl = null;
@@ -125,7 +133,7 @@ async function collectKlaviyoIdentitySource({verified, database, tokenVault, bus
     const response = await fetchFn(endpoint, {...init, redirect: "error", signal}); check();
     if (!response?.ok) fail("KLAVIYO_IDENTITY_HTTP_FAILED");
     return {ok: true, status: response.status, headers: response.headers, async json() {
-      let body; try {body = await response.json();} catch {fail("KLAVIYO_IDENTITY_JSON_INVALID");}
+      let body; try {body = capture ? await capture.read(response, endpoint) : await response.json();} catch {fail("KLAVIYO_IDENTITY_JSON_INVALID");}
       check();
       if (!body || typeof body !== "object" || Array.isArray(body)
         || (Object.hasOwn(body, "errors") && (!Array.isArray(body.errors) || body.errors.length))) fail("KLAVIYO_IDENTITY_RESPONSE_INVALID");
@@ -251,7 +259,7 @@ async function collectKlaviyoIdentitySource({verified, database, tokenVault, bus
     const after = accountAfter.accounts[0];
     if (after.id !== account.id || after.timezone !== account.timezone || after.currency !== account.currency) fail("KLAVIYO_IDENTITY_ACCOUNT_CHANGED");
     await recheck();
-    return freeze({provider: "klaviyo", source: withInteractions ? "native_identity_message_and_attributed_interaction_collection"
+    const result = freeze({provider: "klaviyo", source: withInteractions ? "native_identity_message_and_attributed_interaction_collection"
       : withShopify ? "native_identity_message_and_shopify_candidate_collection"
       : withMessages ? "native_identity_and_message_collection" : "native_account_metric_and_event_collection", account: {id: account.id,
       timezone: account.timezone, currency: account.currency}, installation: current.installation, shop: current.shop,
@@ -268,6 +276,15 @@ async function collectKlaviyoIdentitySource({verified, database, tokenVault, bus
       remaining: ["canonical_authority_scope_to_source_binding",
         ...(withShopify ? [] : ["Shopify_Admin_candidate_verification_composition"]),
         ...(withMessages ? [] : ["Message_channel_join"])]});
+    if (capture) sourceCaptures.set(result, freeze({owner: {workspaceId: current.installation.workspaceId,
+      installationId: current.installation_id, generation: String(current.installation.installGeneration), shopId: current.shop.shopId,
+      shopDomain: current.shop.myshopifyDomain, provider: "klaviyo", connectionId: current.connectionId,
+      connectionVersion: String(current.connectionVersion), credentialId: current.credentialId, accountId: current.account.id, selectionEpoch: null},
+      pages: capture.finish(), completedAt: result.evidence.completed_at,
+      permissionExpiresAt: new Date(Math.min(Date.parse(current.tokenSet.expires_at), Date.parse(accountBefore.expiresAt), Date.parse(accountAfter.expiresAt))).toISOString(),
+      metricId: metric.id, businessDate, timeframe, account: result.account,
+      mode: withInteractions ? "interaction" : withShopify ? "candidate" : withMessages ? "message" : "native"}));
+    return result;
   } catch (error) {
     if (shopifyQuotaControl !== null) throw shopifyQuotaControl;
     if (quotaBoundaryControl(error)) throw error;

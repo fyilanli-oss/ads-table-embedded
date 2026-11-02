@@ -745,6 +745,15 @@
       "repository_sql_sha256": "3e15f2c2f7d6ec40fb8c45beab93a0c8aedfe1127f7e2d255a44dc07799e7c6a",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261102134448",
+      "name": "eo05b_klaviyo_source_capture",
+      "file": "supabase/migrations/20261102134448_eo05b_klaviyo_source_capture.sql",
+      "created_with": "supabase@2.122.0 migration new eo05b_klaviyo_source_capture",
+      "repository_sql_sha256": "492c0f34a0b1119b2e5dc911500b0027b2f489e1b7bd4ae043d3597eb4f85297",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

@@ -1,3 +1,40 @@
+## 2 Kasım — mevcut15: Klaviyo kaynak/kanıt bağlantısı
+
+299 main’e alındı. Owner Klaviyo incelemesi sonrası mevcut okuyucuların güvenli
+kayıt katmanına bağlanmasını; tutar/adet/büyük kimliklerin korunmasını; mağaza,
+hesap, bağlantı ve iş kontrolleriyle migration/sözleşme/test/PR paketini onayladı.
+Kayıt: contracts/a6-eo-implementation-master-v1.json#Step15_Klaviyo_source_capture_2026_11_02.
+
+Mevcut native/message/candidate/interaction modları korunur. Açık sourceStorage
+seçeneğinde kaynak Response’un sınırlı kopyasındaki seçilmiş sayılar Number’a
+çevrilmeden özgün token metni ve türüyle saklanır. Örneğin12.5000 ile string
+"12.5000" ayrı kalır; büyük sayısal kimlik yuvarlanmaz. Duplicate/prototype key,
+bozuk UTF8 ve byte/row/depth sınırı accepted paketi durdurur. Mevcut okuyucunun
+decoded çıktısı ve API sorguları değişmez. Native response projection / lossless
+numeric token kaydı bütün HTTP gövdesi veya atılan alanın yokluğu kanıtı değildir.
+
+Hesap önce/sonra, metric, Ordered Product olayları ve attributions, mevcut campaign/
+flow raporları ile zaten okunan interaction detayları şifreli allowlist sayfalardır.
+Profile/contact/token ve bilinmeyen property’ler yazılmaz. Müşteri bazlı disclosure/
+redact ilişkilendirmesi canlı ön koşulu olarak açık kalır. Tutarlar kaynak olarak
+korunur; rapor toplamı ürün satışına çevrilmez. Native olaylar unlinked claim içerik
+sürümleridir; OrderId görülmesi Shopify Order/LineItem bağı oluşturmaz. Eşlemeler
+unresolved/conflicting kalır; verified kural veya kabul edilmiş Product/Variant yoktur.
+Gerçek hesap/metric/kaynak/mağaza/claim kanıtının eksikliği saklamayla kapanmaz.
+
+Owner-only SQL; kurulum/privacy, credential/connection/tek hesap, gerçek iş/fence/gün,
+billing, tam kota bağlamı ve okuma/izin süresini kayıt anında yeniden doğrular.
+Claim içerik değişimi predecessor ile korunur; aynı içerik yeni sayfa kanıtlarıyla
+yeniden kullanılabilir. Kayıp cevap otomatik tekrar veya job stop/finish değildir.
+Kaynak makbuzu kapasiteyi/handoff’u veya Dataset/checkpoint’i tamamlamaz.
+İzole SQL matrisi ayrı transaction ve gerçek Klaviyo admission kullanır.
+
+OAuth/UI/scope/selector/config, spend ledger, worker grant/aktivasyon, canlı DB/key/
+provider/deploy değişmez.15 açık;22 paused; genel Dataset/FX23 ve Overlap ertelemeleri
+korunur. Merge ayrı açık onay ister. Resmî Klaviyo2026-10-15 Accounts/Events/detail/
+Campaign/Flow ve Supabase changelog/functions belgeleri2 Kasım kontrol edildi;
+exact adresler makine kaydındadır. Bu kontrol gerçek hesap veri kabulü değildir.
+
 ## 2 Kasım — mevcut15: Meta kaynak/kanıt bağlantısı
 
 298 main’e alındı. Owner Meta incelemesinin ardından mevcut okuyucunun kaynak

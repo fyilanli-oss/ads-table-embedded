@@ -1,4 +1,34 @@
 {
+  "Step15_Klaviyo_source_capture_2026_11_02": {
+    "status": "repository_preparation_not_live",
+    "owner_approval": "Owner explicitly approved Klaviyo existing-reader source/claim/candidate evidence persistence, exact numeric/large-ID preservation, current-owner/connection/job SQL checks, migration/contracts/tests and PR preparation on2026-11-02. No OAuth/UI/query/scope/selector change, live provider/database/config/deploy or merge authority.",
+    "base_main": "6b9e179c971d965ec4bebd72d64c70284d1d882e",
+    "capture": "Explicit sourceStorage option; genuine one-use completed collection in native, message, candidate or interaction mode. Existing quota boundary returns unchanged Response. Bounded clone is parsed without Number coercion, duplicate/prototype keys and invalid UTF8 rejected, decoded view compared to existing parser, allowlist projected before encryption. Numeric source tokens retain exact lexical text/type (including decimal zeroes, exponents and unsafe integer IDs), not reconstructed from Number. No raw-body dump, profile/contact/unknown property/URL/cursor/token storage.",
+    "identity": "Exact account/Ordered Product metric/product-ID representation/observed Variant ID and VariantID context. Missing/null/empty remain distinct. Pending mappings only unresolved/conflicting, null accepted Shopify Product/Variant/rule/verifiedAt. Existing candidate and order-rule guards remain unchanged, no source rule registered by default.",
+    "claims": "Actual readable Ordered Product event observations only. Native event/metric/account claim key; content versions with predecessor and fresh source-reference links on reuse. OrderId preserved as a native reference but order FK remains null and linkState unlinked. No inferred Shopify Order/LineItem match, Overlap, Sales Role recalculation or accepted attribution claim.",
+    "evidence": "Native account before/after, metrics, event/attribution pages, existing campaign/flow reports (known groupings/statistics), exact referenced interaction detail and safe candidate checks. Source links retain needed account/metric/attribution/message/interaction evidence. Report totals never become per-product sales. Complete pagination is not an atomic provider snapshot. No new API query or expansion.",
+    "authority": "Owner-only atomic SQL rechecks installation/privacy, credential/connection/single account, real admitted job/fence/day window, billing receipt, exact quota context and finite read/permission deadlines. Scoped sourceContext preserves native account/timezone/currency and business-day boundaries. No runtime/coordinator grants or activation.",
+    "unknown": "One write; lost response is WRITE_UNCONFIRMED. Explicit historical source receipt inspection only; no native/write retry, job stop/finish, reservation release, handoff acceptance or Dataset checkpoint.",
+    "scope_limits": "Step15 remains open. Customer privacy association/disclosure, structured retention, live key/policy/capacity and trusted runtime grant/activation acceptance remain required. Estimated-spend ledger, OAuth UI, scopes, provider/app config, live DB/provider/deploy, Shopify extra fields, general Dataset/FX23 and Overlap unchanged.",
+    "migration": "supabase/migrations/20261102134448_eo05b_klaviyo_source_capture.sql",
+    "official_checked_at": "2026-11-02",
+    "official_sources": [
+      "https://developers.klaviyo.com/en/reference/get_accounts",
+      "https://developers.klaviyo.com/en/reference/get_events",
+      "https://developers.klaviyo.com/en/reference/get_event",
+      "https://developers.klaviyo.com/en/reference/query_campaign_values",
+      "https://developers.klaviyo.com/en/reference/query_flow_values",
+      "https://developers.klaviyo.com/en/docs/rate_limits_and_error_handling",
+      "https://supabase.com/changelog.md",
+      "https://supabase.com/docs/guides/database/functions"
+    ],
+    "official_limit": "Documentation supports API schemas and storage mechanisms, not tenant source/Shopify integration/claim/native permission or production capacity acceptance. Existing2026-10-15 revision and requests preserved. No live provider calls or project modifications.",
+    "runtime_code_authorized": true,
+    "live_provider_authorized": false,
+    "live_database_authorized": false,
+    "merge_authorized": false,
+    "deployment_authorized": false
+  },
   "Step15_Meta_source_capture_2026_11_02": {
     "status": "repository_preparation_not_live",
     "owner_approval": "Owner explicitly approved Meta existing-reader capture, encrypted source storage, unresolved identity versions, current-owner/job/connection checks, migration/contracts/tests and PR preparation on2026-11-02. No live provider/database/config/deploy or merge authority.",

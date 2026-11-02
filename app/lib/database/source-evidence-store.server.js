@@ -234,12 +234,21 @@ export function createSourceEvidenceRepository(database) {
           ||Object.values(read.target).some(v=>typeof v!=="string"||!/^[1-9][0-9]{0,29}$/.test(v))
           ||!instant(read.observedAt)||!instant(read.completedAt)||!instant(read.deadlineAt)||!instant(read.permissionExpiresAt))fail("READ_BINDING_INVALID");
       }
+      if(read!==null&&kind==="klaviyo"){
+        exact(read,["jobId","fence","window","observedAt","sourceContext","quotaContext","completedAt","deadlineAt","permissionExpiresAt"]);
+        exact(read.sourceContext,["metricId","businessDate","timeframe","account","mode"]);
+        if(write.owner.provider!=="klaviyo"||write.ordinal!==0||!text(read.jobId,256)||!id(read.fence)
+          ||!text(read.sourceContext.metricId,256)||read.sourceContext.account?.id!==write.owner.accountId
+          ||!["native","message","candidate","interaction"].includes(read.sourceContext.mode)
+          ||!instant(read.observedAt)||!instant(read.completedAt)||!instant(read.deadlineAt)||!instant(read.permissionExpiresAt))fail("READ_BINDING_INVALID");
+      }
       state.used = true;
       try {
         const receipt = single(await database.query(read===null
           ?"select evidence.commit_source_batch($1::jsonb,$2::uuid,$3::integer,$4::jsonb) as result"
           :kind==="google"?"select evidence.commit_google_identity_source($1::jsonb,$2::uuid,$3::integer,$4::jsonb,$5::jsonb) as result"
           :kind==="meta"?"select evidence.commit_meta_identity_source($1::jsonb,$2::uuid,$3::integer,$4::jsonb,$5::jsonb) as result"
+          :kind==="klaviyo"?"select evidence.commit_klaviyo_identity_source($1::jsonb,$2::uuid,$3::integer,$4::jsonb,$5::jsonb) as result"
           :"select evidence.commit_shopify_order_source($1::jsonb,$2::uuid,$3::integer,$4::jsonb,$5::jsonb) as result",
           [JSON.stringify(write.owner), write.attemptId, write.ordinal, JSON.stringify(write.body),...read===null?[]:[JSON.stringify(read)]]));
         if (receipt.status !== "committed" || !id(receipt.batchId) || !uuid.test(receipt.commitId) || !hash.test(receipt.digest)
@@ -253,6 +262,7 @@ export function createSourceEvidenceRepository(database) {
     commitShopifyOrder:(write,read)=>commit(write,read),
     async commitGoogleIdentity(write,read){if(read===null||read===undefined)fail("READ_BINDING_INVALID");return commit(write,read,"google");},
     async commitMetaIdentity(write,read){if(read===null||read===undefined)fail("READ_BINDING_INVALID");return commit(write,read,"meta");},
+    async commitKlaviyoIdentity(write,read){if(read===null||read===undefined)fail("READ_BINDING_INVALID");return commit(write,read,"klaviyo");},
     async inspect({owner, attemptId, ordinal}) {
       const bound = sourceStoreOwner(owner);
       if (!uuid.test(attemptId) || !Number.isSafeInteger(ordinal) || ordinal < 0) fail("INPUT_INVALID");

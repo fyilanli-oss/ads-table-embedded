@@ -70,7 +70,7 @@ export async function shopifyIndependentAdminProbe(client,{database,inputs,route
       const result=await reader.readEvidence(),row=(await client.query("select phase,status,order_request_count,order_stats from operations.shopify_order_work_reservations where attempt_id=$1",[reservation.attemptId])).rows[0];
       assert.equal(result.DatasetWritePerformed,false);assert.equal(result.checkpointAdvanced,false);assert.equal(result.resumeAuthorized,false);assert.equal(result.reloadFirstPageAuthorized,false);
       if(sourceMode){
-        assert.equal(sourceCalls,1);assert.equal(row.phase,"order_observed");assert.equal(row.status,"reserved");
+        assert.equal(sourceCalls,1,JSON.stringify({mode,reason:result.reason,preparationCode:result.preparationCode}));assert.equal(row.phase,"order_observed");assert.equal(row.status,"reserved");
         const stored=(await client.query("select * from evidence.source_batches where attempt_id=$1",[reservation.attemptId])).rows;
         if(["source_success","source_partial","source_lost"].includes(mode)){
           assert.equal(stored.length,1);assert.equal(stored[0].handoff_state,"pending");

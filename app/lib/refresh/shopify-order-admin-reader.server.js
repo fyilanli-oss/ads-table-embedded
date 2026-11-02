@@ -34,7 +34,7 @@ export function createIndependentShopifyOrderReader({entitlementCheck,verificati
     const b=binding.take(verification),h=b.h,{database,now}=b;
     const o=h.p.owner,base=[o.installationId,o.workspaceId,o.installGeneration,o.shopId,o.shopDomain,h.p.key,h.attemptId,h.fence];
     const receipt=[{type:"timestamptz",value:b.receipt.observedAt},{type:"text",value:b.receipt.sourceHash}];
-    let begun=false,client,handingOff=false,sourceWriteStarted=false;
+    let begun=false,client,handingOff=false,sourcePreparing=false,sourceWriteStarted=false;
     const started=now(),live=()=>{const n=now();return Number.isSafeInteger(n)&&n>=started&&b.deadlineAt-n>=b.finishReserveMs&&!signal?.aborted;};
     async function one(name,tail=[],withReceipt=true){
       const extras=[...(withReceipt?receipt:[]),...tail],types=["bigint","uuid","bigint","text","text","text","uuid","bigint",...extras.map(x=>x.type)];
@@ -73,9 +73,11 @@ export function createIndependentShopifyOrderReader({entitlementCheck,verificati
       handingOff=true;
       if(await one("observe_shopify_order_read",[{type:"jsonb",value:JSON.stringify(collection.stats)}])!==true||!live())return stop("handoff_unconfirmed","needs_attention");
       if(storage){
+        sourcePreparing=true;
         const sourceOwner={workspaceId:o.workspaceId,installationId:o.installationId,generation:String(o.installGeneration),
           shopId:o.shopId,shopDomain:o.shopDomain,provider:"shopify"};
         const write=prepareShopifyOrderSourceWrite({collection,owner:sourceOwner,attemptId:h.attemptId,...storage,now:new Date(now()).toISOString()});
+        sourcePreparing=false;
         if(!live())return stop("authority_changed","not_current");
         sourceWriteStarted=true;
         const sourceReceipt=await createSourceEvidenceRepository(database).commitShopifyOrder(write,{rangeKey:h.p.key,fence:String(h.fence),
@@ -88,6 +90,13 @@ export function createIndependentShopifyOrderReader({entitlementCheck,verificati
     }catch(error){
       if(sourceWriteStarted)return freeze({status:"needs_attention",reason:"source_write_unconfirmed",rangeKey:h.p.key,
         attemptId:h.attemptId,reservationRetained:true,collection:null,...flags});
+      if(sourcePreparing){
+        const safe=["SOURCE_STORE_INPUT_INVALID","SOURCE_STORE_BOUNDS","SOURCE_STORE_POLICY_INVALID","SOURCE_STORE_PRIVATE_FIELD",
+          "SOURCE_STORE_OWNER_INVALID","SOURCE_STORE_CONTENT_REFERENCE_CONFLICT","SOURCE_STORE_ORDER_INVALID",
+          "SHOPIFY_ORDER_PREWRITE_OWNER_MISMATCH","SHOPIFY_ORDER_PREWRITE_INPUT_INVALID","SHOPIFY_ORDER_COLLECTION_SOURCE_OBSERVATION_REQUIRED"];
+        return freeze({status:"needs_attention",reason:"source_preparation_failed",preparationCode:safe.includes(error.message)?error.message:"SOURCE_PREPARATION_INVALID",
+          rangeKey:h.p.key,attemptId:h.attemptId,reservationRetained:true,collection:null,...flags});
+      }
       if(!begun)return freeze({status:"needs_attention",reason:"order_intent_unconfirmed",rangeKey:h.p.key,attemptId:h.attemptId,reservationRetained:true,collection:null,...flags});
       if(quotaBoundaryControl(error)?.status==="waiting")return stop("quota_not_dispatched","quota_waiting");
       return stop(handingOff?"handoff_unconfirmed":"read_failed","needs_attention");

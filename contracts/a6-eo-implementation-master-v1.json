@@ -1,4 +1,31 @@
 {
+  "Step15_Meta_source_capture_2026_11_02": {
+    "status": "repository_preparation_not_live",
+    "owner_approval": "Owner explicitly approved Meta existing-reader capture, encrypted source storage, unresolved identity versions, current-owner/job/connection checks, migration/contracts/tests and PR preparation on2026-11-02. No live provider/database/config/deploy or merge authority.",
+    "base_main": "171f6b99d9a0908fb3243fa8630697bd19f4aeab",
+    "capture": "Explicit sourceStorage option. One-use branded completed collector; allowlisted product pages, permission metadata, Ad/parent/creative/catalog before-after references, optional Shopify candidate checks and existing report pages/namespace checks. Collector projection / decoded_only, not original HTTP bytes. No debug_token body, request URLs, paging cursors, tokens, secrets, unknown attributes or names.",
+    "identity": "Text native catalog product ID + exact account/catalog/graph-version/namespace/feed presence context. Retailer and group IDs retained as observations, never inferred Shopify IDs. Missing/null/empty remain distinct. Only unresolved/conflicting mappings, null accepted Shopify IDs/rule/verifiedAt; default reviewed rule registries remain empty.",
+    "reports": "Existing product query unchanged, all four converted product fields retained in encrypted allowlist pages. Report product_id namespace stays separate. Complete pagination is not exhaustive product coverage or atomic catalog snapshot. No order claim, report-to-product edge, numerical attribution or Dataset fact accepted.",
+    "versioning": "Stable scoped identity locks and exact canonical tuple/version comparisons; durable latest revision reuse or successor, with predecessor link. Exact operation input/read receipt prevents conflicting replay.",
+    "authority": "Owner-only atomic SQL rechecks installation/privacy, credential/connection/reporting selection, bound job/fence/window, billing receipt, exact Meta quota context, read deadline and permission expiry. No runtime/coordinator grants or activation.",
+    "unknown": "Single write; lost acknowledgement stays WRITE_UNCONFIRMED. Explicit historical source receipt inspection only, not_observed is not rollback proof. No automatic write/native replay, stop/finish, reservation release, handoff completion or checkpoint.",
+    "scope_limits": "Step15 stays open. Customer privacy association/disclosure, structured history retention, live key/policy/capacity, trusted runtime grants and activation acceptance remain open. No OAuth/UI/query/scope/selector, live DB/provider/config/deploy, Shopify extras, general Dataset/FX23 or Overlap changes.",
+    "migration": "supabase/migrations/20261102124704_eo05b_meta_source_capture.sql",
+    "official_checked_at": "2026-11-02",
+    "official_sources": [
+      "https://developers.facebook.com/docs/marketing-api/insights/breakdowns/",
+      "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/productitem.py",
+      "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adsinsights.py",
+      "https://supabase.com/changelog.md",
+      "https://supabase.com/docs/guides/database/postgres/row-level-security"
+    ],
+    "official_limit": "Meta documentation browser fetch returned429. Read-only direct HTTPS fetched the official page with status200; embedded document product_id definition and restrictions inspected. SDK schemas support field availability only, not tenant namespace/effective delivery proof.",
+    "runtime_code_authorized": true,
+    "live_provider_authorized": false,
+    "live_database_authorized": false,
+    "merge_authorized": false,
+    "deployment_authorized": false
+  },
   "Step15_Google_source_capture_2026_11_02": {
     "status": "repository_preparation_not_live",
     "owner_approval": "Owner approved the concrete Google existing-reader source/relationship capture, full product context, pending mappings, current account/connection/job checks and isolated tests on2026-11-02. No native scope/query/UI/selector or live system changes.",

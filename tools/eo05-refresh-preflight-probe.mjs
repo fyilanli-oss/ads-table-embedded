@@ -10,6 +10,7 @@ import {quotaRouteIdentity} from "../app/lib/refresh/quota-scope-resolver.server
 import {quotaAuthorityProbe} from "./eo05-quota-authority-probe.mjs";
 import {refreshInterruptedWorkProbe} from "./eo05-refresh-interrupted-work-probe.mjs";
 import {refreshQueueCronEntryProbe} from "./eo05-refresh-queue-cron-entry-probe.mjs";
+import {metaSourceCaptureRehearsal} from "./eo05-meta-source-capture-probe.mjs";
 
 // Runs within the canonical synthetic fixture. All changes roll back, including billing/queue/claims.
 export async function refreshPreflightProbe(client,{workspace,connections,shopId,shopDomain}) {
@@ -158,4 +159,5 @@ export async function refreshPreflightProbe(client,{workspace,connections,shopId
     console.log("EO05_PREFLIGHT_BRIDGE_PASS native_queue_to_fenced_worker=true missing_and_negative_cache_fresh_check=true fresh_denial_blocks_data=true selection_away_back_invalidates=true connection_change_invalidates=true explicit_period_required=true no_Dataset_commit=true actual_provider_calls=0 live_changes=false");
     console.log("EO05_QUOTA_WORK_WAIT_PASS first_boundary_only=true durable_wait=true fresh_fence=true stale_worker_denied=true same_source_period=true queue_age_preserved=true no_double_debit=true real_SQL=true synthetic_HTTP_only=true actual_provider_calls=0");
   } finally {await client.query("rollback");}
+  await metaSourceCaptureRehearsal(client,{workspace,shopId,shopDomain});
 }

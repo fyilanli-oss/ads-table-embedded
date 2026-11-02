@@ -1,3 +1,32 @@
+## 2 Kasım — mevcut15: Meta kaynak/kanıt bağlantısı
+
+298 main’e alındı. Owner Meta incelemesinin ardından mevcut okuyucunun kaynak
+sayfaları, reklam–katalog kanıtı, ürün raporu ve aday kontrollerinin güvenli kayıt
+katmanına bağlanmasını; migration/sözleşme/test ve PR hazırlığını açıkça onayladı.
+Kayıt: contracts/a6-eo-implementation-master-v1.json#Step15_Meta_source_capture_2026_11_02.
+
+Katalog id, retailer_id ve rapor product_id ayrı anlamlarıyla korunur. Gerçek kaynak
+biçimi ve rapor namespace kanıtı olmadan verified kural/eşleme veya rapor–ürün bağı
+üretilmez. Ürün sayfaları, izin kontrolünün yalnız güvenli metadata’sı, önce/sonra
+reklam–parent–creative–katalog kanıtları, mevcut raporun dört converted alanı ve aday
+kontrolleri şifreli allowlist projection olarak saklanır; orijinal HTTP byte kanıtı
+olduğu söylenmez. Eksik/null/boş alanlar ayrıdır; sayfalama tamamlığı kapsamın veya
+katalog snapshot’ının atomik olduğu anlamına gelmez.
+
+Owner-only SQL; kurulum/privacy, credential/connection/seçim, iş/fence/pencere,
+billing, Meta kota bağlamı, okuma süresi ve izin son tarihini kayıt anında doğrular.
+Eşlemeler unresolved/conflicting kalır; sürüm SQL’de belirlenir. Kayıp cevapta tek
+yazım ve açık salt okunur makbuz kontrolü vardır; otomatik replay/stop/finish yoktur.
+Runtime grant/aktivasyon, OAuth/UI/sorgu/scope/selector, canlı DB/key/config/provider
+ve deploy değişmez. Kaynak makbuzu Dataset/checkpoint/handoff tamamlanması değildir.
+15 açık;22 paused; genel Dataset/FX23, ek Shopify sorguları ve Overlap ertelemeleri
+korunur. Merge ayrı açık onay ister.
+
+Resmî kontrol2 Kasım2026: Meta Insights breakdowns sayfası browser’da429 verdi;
+salt okunur doğrudan HTTPS200 yanıtındaki gömülü belge ve resmî SDK ProductItem/
+AdsInsights şemaları okundu. Bunlar gerçek hesap namespace kanıtı değildir.
+Supabase changelog ve RLS kontrol edildi. Kaynak adresleri makine kaydındadır.
+
 ## 2 Kasım — Google ürün kaynakları için ikinci okuyucu bağlantısı
 
 Shopify bağlantısı297 ile main'dedir. Owner, Google mevcut okuyucusu ve ürün eşleme

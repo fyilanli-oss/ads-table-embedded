@@ -18,6 +18,7 @@ import {SHOPIFY_ORDER_READ_API_VERSION} from "../shopify/order-read-protocol.ser
 import {createShopifyOrderReadExecution} from "../shopify/order-collection.server.js";
 import {randomUUID} from "node:crypto";
 import {prepareGoogleIdentitySourceWrite} from "../providers/google-source-write.server.js";
+import {prepareMetaIdentitySourceWrite} from "../providers/meta-source-write.server.js";
 import {createSourceEvidenceRepository} from "../database/source-evidence-store.server.js";
 const candidateObservations=new WeakMap();
 const candidateReferenceInputs=new WeakMap();
@@ -122,7 +123,7 @@ export function createRefreshMetaIdentityReader(options) {return createMetaIdent
 export function createRefreshMetaCandidateReader(options) {return createMetaIdentityReader(options,"candidate");}
 export function createRefreshMetaReportCandidateReader(options) {return createMetaIdentityReader(options,"report");}
 function createMetaIdentityReader({verified,database,tokenVault,adId,adSetId,campaignId,catalogId,config,signal,sdkBridge,
-  sourceRules,reportIdentityRules,maxReportPages,maxReportRows,readNow=()=>new Date(),maxElapsedMs,maxPages,maxRows,...quotaOptions} = {},kind="native") {
+  sourceRules,reportIdentityRules,maxReportPages,maxReportRows,readNow=()=>new Date(),maxElapsedMs,maxPages,maxRows,sourceStorage=null,...quotaOptions} = {},kind="native") {
   const claim=structuredClone(quotaOptions.claim),window=structuredClone(quotaOptions.window);
   const owner=structuredClone(verified?.installationAuthority),shop=structuredClone(verified?.identity?.shop);
   if(kind==="native"&&(sdkBridge!==undefined||sourceRules!==undefined||reportIdentityRules!==undefined||maxReportPages!==undefined||maxReportRows!==undefined)
@@ -144,18 +145,36 @@ function createMetaIdentityReader({verified,database,tokenVault,adId,adSetId,cam
   const referenceInputs=kind==="report"?Object.freeze({reportRules:reportRuleLoader,
     target:Object.freeze({ad_id:adId,adset_id:adSetId,campaign_id:campaignId,catalog_id:catalogId})}):null;
   const binding=refreshQuotaOptions(quotaOptions,{admin:kind!=="native"}),execution=kind!=="native"?createQuotaReadExecution():undefined;
+  if(sourceStorage!==null&&(!sourceStorage||Object.keys(sourceStorage).sort().join(",")!=="cipher,limits,policy"
+    ||typeof sourceStorage.cipher?.seal!=="function"))throw Error("META_SOURCE_STORAGE_INPUT_INVALID");
+  const storage=sourceStorage===null?null:{cipher:sourceStorage.cipher,policy:structuredClone(sourceStorage.policy),limits:structuredClone(sourceStorage.limits)};
+  const sourceRead=storage?structuredClone({jobId:claim.id,fence:String(claim.fence),window,observedAt:quotaOptions.entitlementReceipt.observedAt,
+    target:{adId,adSetId,campaignId,catalogId}}):null;
   const transport=identityTransport(binding,"meta",claim,undefined,execution);
   const admin=kind!=="native"?createFencedAdminClient({verified:caller,sdkBridge,signal,...quotaOptions},false,null,{binding,readExecution:execution}):null;
   if(admin)caller.context.admin=admin;
   const options={verified:caller,database,tokenVault,adId,adSetId,campaignId,catalogId,config:nativeConfig,
     fetchFn:transport,signal,now:readNow,maxElapsedMs,maxPages,maxRows,...kind!=="native"?{sourceRules:rules}:{},
-    ...kind==="report"?{reportIdentityRules:reportRules,dateWindow:{start:window.from,end:window.to},maxReportPages,maxReportRows}:{}};
+    ...kind==="report"?{reportIdentityRules:reportRules,dateWindow:{start:window.from,end:window.to},maxReportPages,maxReportRows}:{},captureSource:storage!==null};
   const collect=kind==="native"?collectMetaNativeIdentityEvidence:kind==="candidate"?collectMetaVerifiedProductCandidateEvidence:collectMetaReportProductCandidateEvidence;
   let used=false;
   return Object.freeze({async readEvidence(...args){
     if(args.length) throw Error("REFRESH_META_IDENTITY_OVERRIDE_FORBIDDEN");
     if(used) throw Error("REFRESH_META_IDENTITY_EXECUTION_USED");
-    used=true;try{const result=await collect(options);if(kind!=="native")recordCandidateObservation(result,"meta",kind,owner,shop,claim,window,referenceInputs);return result;}
+    used=true;try{
+      const attemptId=storage?randomUUID():null,deadlineAt=storage?new Date(readNow().valueOf()+(maxElapsedMs??120000)).toISOString():null;
+      const initial=storage?structuredClone(await binding.loadContext({provider:"meta"})):null;
+      if(storage&&!initial)throw Error("META_SOURCE_CONTEXT_REQUIRED");
+      const result=await collect(options);let outcome=result;
+      if(storage){
+        if(signal?.aborted||JSON.stringify(await binding.loadContext({provider:"meta"}))!==JSON.stringify(initial))throw Error("META_SOURCE_CONTEXT_CHANGED");
+        const prepared=prepareMetaIdentitySourceWrite({observation:result,attemptId,...storage,now:readNow().toISOString()});
+        const sourceReceipt=await createSourceEvidenceRepository(database).commitMetaIdentity(prepared.write,
+          {...sourceRead,quotaContext:initial,completedAt:prepared.completedAt,permissionExpiresAt:prepared.permissionExpiresAt,deadlineAt});
+        outcome=Object.freeze({...result,sourceStored:true,sourceReceipt,sourceAttemptId:attemptId});
+      }
+      if(kind!=="native")recordCandidateObservation(outcome,"meta",kind,owner,shop,claim,window,referenceInputs);return outcome;
+    }
     finally{if(admin)closeShopifyAdminSdkClient(admin);}
   }});
 }

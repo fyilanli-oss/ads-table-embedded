@@ -4,6 +4,13 @@ on:
   pull_request:
     branches: [main, "codex/step15-storage-foundation-design"]
     paths:
+      - "app/lib/providers/meta-source-write.server.js"
+      - "app/lib/providers/meta-identity-collection.server.js"
+      - "app/lib/providers/meta-catalog-identity-reader.server.js"
+      - "app/lib/providers/meta-report-candidates.server.js"
+      - "tools/eo05-meta-source-capture-probe.mjs"
+      - "tools/eo05-quota-authority-probe.mjs"
+      - "tests/meta-identity-collection.test.js"
       - "app/lib/providers/google-source-write.server.js"
       - "app/lib/providers/google-identity-collection.server.js"
       - "app/lib/providers/google-product-identity-reader.server.js"

@@ -1,4 +1,6 @@
 import {GOOGLE_MERCHANT_OAUTH_SCOPE} from "../oauth/oauth-permission-profile.server.js";
+const capturedPages=new WeakMap();
+export function takeMerchantSourcePages(snapshot){const pages=capturedPages.get(snapshot);if(!pages)fail("MERCHANT_SOURCE_CAPTURE_REQUIRED");capturedPages.delete(snapshot);return pages;}
 
 export class MerchantIdentityReadError extends Error {
   constructor(code, status = null) {
@@ -53,12 +55,13 @@ export function merchantIdentityReadScope(authority) {
 // Native source observation only: no canonical installation scope or Shopify ID is emitted.
 // The composing server binds the credential and Ads/Merchant relationship separately.
 export async function readMerchantProductSourceSnapshot({merchantId, accessToken,
-  fetchFn = fetch, maxPages = 100, maxRows = 10000, signal} = {}) {
+  fetchFn = fetch, maxPages = 100, maxRows = 10000, signal,captureSource=false} = {}) {
   numeric(merchantId);
   text(accessToken, "MERCHANT_IDENTITY_TOKEN_REQUIRED");
   if (typeof fetchFn !== "function" || !Number.isSafeInteger(maxPages) || maxPages < 1 || maxPages > 1000
-    || !Number.isSafeInteger(maxRows) || maxRows < 1 || maxRows > 100000) fail("MERCHANT_IDENTITY_LIMIT_INVALID");
+    || !Number.isSafeInteger(maxRows) || maxRows < 1 || maxRows > 100000||typeof captureSource!=="boolean") fail("MERCHANT_IDENTITY_LIMIT_INVALID");
   const records = [], cursors = new Set(), keys = new Set();
+  const capture=[];
   let pageToken = "", pages = 0;
   for (;;) {
     if (signal?.aborted) fail("MERCHANT_IDENTITY_ABORTED");
@@ -98,14 +101,17 @@ export async function readMerchantProductSourceSnapshot({merchantId, accessToken
         product_context: {merchant_id: merchantId, feed_label: feedLabel, content_language: language,
           data_source: product.dataSource, legacy_local: local}, source_record: structuredClone(product)});
     }
+    if(captureSource)capture.push({family:"merchant_products",payload:{records:products.map(p=>({name:p.name,offerId:p.offerId,
+      feedLabel:p.feedLabel,contentLanguage:p.contentLanguage,dataSource:p.dataSource,...Object.hasOwn(p,"legacyLocal")?{legacyLocal:p.legacyLocal}:{}})),after:pageToken||null}});
     if (!Object.hasOwn(body, "nextPageToken") || body.nextPageToken === "") break;
     pageToken = text(body.nextPageToken, "MERCHANT_IDENTITY_CURSOR_INVALID");
     if (cursors.has(pageToken)) fail("MERCHANT_IDENTITY_CURSOR_REPEATED");
     cursors.add(pageToken);
   }
-  return freeze({version: "1.0.0", context: {merchant_id: merchantId}, complete: true,
+  const result=freeze({version: "1.0.0", context: {merchant_id: merchantId}, complete: true,
     pages, records, shopify_mapping_state: "not_resolved", authorizes_activation: false,
     canonical_scope_ready: false, provider_link_verified: false, persistable: false});
+  if(captureSource)capturedPages.set(result,freeze(capture));return result;
 }
 
 // Existing canonical-scope entry point still validates PK and grant BEFORE native requests.

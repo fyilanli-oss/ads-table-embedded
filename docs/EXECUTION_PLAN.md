@@ -1,3 +1,17 @@
+## 2 Kasım — mevcut15: Google ürün kaynak/kanıt bağlantısı
+
+297 main'e alındı. Owner Google okuyucusunun incelemesi sonrası mevcut bağlantı/ürün
+sayfaları, tam kaynak bağlamı, bekleyen eşleme, güncel yetki/fence kontrolleri ve izole
+testleri içeren kod paketini açıkça onayladı. Kayıt:
+contracts/a6-eo-implementation-master-v1.json#Step15_Google_source_capture_2026_11_02.
+Kaynaklar şifreli allowlist projection olarak saklanır. Reviewed kural/verified eşleme
+üretilmez; unresolved/conflicting kimlik gözlemleri ayrı sürümlenir ve önceki sürüm
+korunur. Generic NATIVE_RECEIPT_REQUIRED kapısı değişmez. Owner-only SQL mevcut
+installation/connection/credential/selection, iş/fence/pencere, billing ve Merchant
+kota bağlamını denetler. Kayıp yanıtın otomatik replay'i ve checkpoint/Dataset yazımı
+yoktur. Native sorgu/scope/UI/config/worker/live DB/deploy değişmez.15 açık;22 paused;
+genel Dataset/FX23 ve mevcut Overlap ertelemeleri korunur. Merge ayrı onay ister.
+
 ## 2 Kasım — mevcut15: Shopify sipariş okuyucusu kaynak/kanıt bağlantısı
 
 295/296 main'e alındı. Owner, Shopify sipariş okuyucusunu mevcut sorgu ve izinlerle

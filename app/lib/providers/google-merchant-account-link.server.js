@@ -2,6 +2,8 @@ import {createGoogleAdsRestClient} from "./google-ads-rest.server.js";
 import {merchantIdentityReadScope, readMerchantProductIdentitySnapshot} from "./google-product-identity-reader.server.js";
 import {inspectGoogleIdentityCredential} from "../oauth/google-identity-credential.server.js";
 import {validateIdentityOAuthGrantedScopes} from "../oauth/oauth-permission-profile.server.js";
+const sourcePages=new WeakMap();
+export function takeGoogleMerchantLinkPages(observation){const pages=sourcePages.get(observation);if(!pages)fail("GOOGLE_LINK_CAPTURE_REQUIRED");sourcePages.delete(observation);return pages;}
 
 export const GOOGLE_MERCHANT_LINK_QUERY = [
   "SELECT product_link.resource_name, product_link.merchant_center.merchant_center_id,",
@@ -33,11 +35,12 @@ function limits(pages, rows) {
 
 // A complete native link read proves only the observed Ads-to-Merchant relationship.
 export async function readGoogleMerchantAccountLink({adsClient, customerId, merchantId,
-  maxPages = 100, maxLinks = 10000, signal} = {}) {
+  maxPages = 100, maxLinks = 10000, signal,captureSource=false} = {}) {
   numeric(customerId); numeric(merchantId);
-  if (typeof adsClient?.search !== "function" || !limits(maxPages, maxLinks)) fail("GOOGLE_MERCHANT_LINK_INPUT_INVALID");
+  if (typeof adsClient?.search !== "function" || !limits(maxPages, maxLinks)||typeof captureSource!=="boolean") fail("GOOGLE_MERCHANT_LINK_INPUT_INVALID");
   let pageToken = null, pages = 0;
   const cursors = new Set(), names = new Set(), links = [];
+  const captured=[];
   for (;;) {
     checkAbort(signal);
     if (pages >= maxPages) fail("GOOGLE_MERCHANT_LINK_PAGE_LIMIT");
@@ -58,6 +61,8 @@ export async function readGoogleMerchantAccountLink({adsClient, customerId, merc
       links.push({resource_name: link.resourceName, product_link_id: id, merchant_id: target,
         source_record: structuredClone(row)});
     }
+    if(captureSource)captured.push({family:"google_merchant_link",payload:{after:pageToken,records:page.results.map(r=>({resourceName:r.productLink.resourceName,
+      productLinkId:r.productLink.productLinkId,type:r.productLink.type,merchantCenter:{merchantCenterId:r.productLink.merchantCenter.merchantCenterId}}))}});
     const next = page.next_page_token;
     if (next === null || next === "") break;
     if (typeof next !== "string" || !next || next !== next.trim() || next.length > 4096) fail("GOOGLE_MERCHANT_LINK_CURSOR_INVALID");
@@ -65,9 +70,10 @@ export async function readGoogleMerchantAccountLink({adsClient, customerId, merc
     cursors.add(next); pageToken = next;
   }
   const matches = links.filter(link => link.merchant_id === merchantId);
-  return freeze({state: matches.length === 1 ? "confirmed" : matches.length ? "ambiguous" : "not_observed",
+  const result=freeze({state: matches.length === 1 ? "confirmed" : matches.length ? "ambiguous" : "not_observed",
     customer_id: customerId, merchant_id: merchantId, complete: true, pages,
     link: matches.length === 1 ? matches[0] : null, authorizes_activation: false});
+  if(captureSource)sourcePages.set(result,freeze(captured));return result;
 }
 
 function clock(now) {

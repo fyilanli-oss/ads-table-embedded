@@ -214,18 +214,24 @@ export function createSourceEvidenceRepository(database) {
     if (result?.rows?.length !== 1 || !object(result.rows[0].result)) fail("RESULT_INVALID");
     return result.rows[0].result;
   }
-  async function commit(write, read = null) {
+  async function commit(write, read = null, kind="shopify") {
       const state = prepared.get(write);
       if (!state || state.used) fail("WRITE_CAPABILITY_REQUIRED");
-      if(read!==null){
+      if(read!==null&&kind==="shopify"){
         exact(read,["rangeKey","fence","observedAt","sourceHash","stats","range"]);
         if(write.owner.provider!=="shopify"||write.ordinal!==0||!text(read.rangeKey,512)||!id(String(read.fence))
           ||!instant(read.observedAt)||!hash.test(read.sourceHash))fail("READ_BINDING_INVALID");
+      }
+      if(read!==null&&kind==="google"){
+        exact(read,["jobId","fence","window","observedAt","merchantId","quotaContext","completedAt","deadlineAt"]);
+        if(write.owner.provider!=="google_ads"||write.ordinal!==0||!text(read.jobId,256)||!id(read.fence)
+          ||!instant(read.observedAt)||!instant(read.completedAt)||!instant(read.deadlineAt))fail("READ_BINDING_INVALID");
       }
       state.used = true;
       try {
         const receipt = single(await database.query(read===null
           ?"select evidence.commit_source_batch($1::jsonb,$2::uuid,$3::integer,$4::jsonb) as result"
+          :kind==="google"?"select evidence.commit_google_identity_source($1::jsonb,$2::uuid,$3::integer,$4::jsonb,$5::jsonb) as result"
           :"select evidence.commit_shopify_order_source($1::jsonb,$2::uuid,$3::integer,$4::jsonb,$5::jsonb) as result",
           [JSON.stringify(write.owner), write.attemptId, write.ordinal, JSON.stringify(write.body),...read===null?[]:[JSON.stringify(read)]]));
         if (receipt.status !== "committed" || !id(receipt.batchId) || !uuid.test(receipt.commitId) || !hash.test(receipt.digest)
@@ -237,6 +243,7 @@ export function createSourceEvidenceRepository(database) {
   return Object.freeze({
     commit:write=>commit(write),
     commitShopifyOrder:(write,read)=>commit(write,read),
+    async commitGoogleIdentity(write,read){if(read===null||read===undefined)fail("READ_BINDING_INVALID");return commit(write,read,"google");},
     async inspect({owner, attemptId, ordinal}) {
       const bound = sourceStoreOwner(owner);
       if (!uuid.test(attemptId) || !Number.isSafeInteger(ordinal) || ordinal < 0) fail("INPUT_INVALID");

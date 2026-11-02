@@ -679,6 +679,30 @@
       "live_database_authorized": false,
       "merge_authorized": false,
       "deployment_authorized": false
+    },
+    "google_source_capture": {
+      "status": "repository_preparation_not_live",
+      "owner_approval": "Owner approved the concrete Google existing-reader source/relationship capture, full product context, pending mappings, current account/connection/job checks and isolated tests on2026-11-02. No native scope/query/UI/selector or live system changes.",
+      "base_main": "a025ae1736af95ce41f9eedaa000900904391349",
+      "capture": "Explicit sourceStorage option; opaque one-use completed collector provenance. Existing Ads link before/after, allowlisted Merchant pages and optional candidate checks; collector_projection and decoded_only, not wire-byte proof. No tokens or raw private attributes.",
+      "identity": "Account/Merchant/feed/language/dataSource/local/offer tuple, text IDs. Only unresolved/conflicting mappings with null accepted Shopify IDs/rule/verifiedAt. No production source rule inferred; generic NATIVE_RECEIPT_REQUIRED unchanged. Candidate success remains evidence, not canonical acceptance.",
+      "versioning": "SQL locks canonical scoped identity hashes in stable order, compares exact tuple/version and durable latest state, reuses equal observations or allocates next revision with predecessor. Caller version cannot overwrite history. Exact operation input/read receipt detects conflicting replay.",
+      "authority": "Owner-only atomic function rechecks current installation/privacy, provider credential/connection/reporting epoch, bound job/fence/window, entitlement and exact Merchant quota context/deadline. No runtime/coordinator grants or activation.",
+      "unknown": "One write; lost acknowledgement is WRITE_UNCONFIRMED. Explicit read_source_receipt only, no native/write replay or SQL stop/finish/checkpoint. Pending handoff retained.",
+      "scope_limits": "No accepted reviewed rules or verified mappings, Dataset/FX writer, new Google queries, Shopify extras, Overlap calculator, live DB/key/provider/config/deploy/scheduler. Customer privacy association/disclosure and structured retention remain live prerequisites;Step15 open.",
+      "official_checked_at": "2026-11-02",
+      "official_sources": [
+        "https://developers.google.com/google-ads/api/reference/rpc/v25/ProductLink",
+        "https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.products/list",
+        "https://supabase.com/changelog.md",
+        "https://supabase.com/docs/guides/database/functions",
+        "https://www.postgresql.org/docs/17/explicit-locking.html"
+      ],
+      "runtime_code_authorized": true,
+      "live_provider_authorized": false,
+      "live_database_authorized": false,
+      "merge_authorized": false,
+      "deployment_authorized": false
     }
   }
 }

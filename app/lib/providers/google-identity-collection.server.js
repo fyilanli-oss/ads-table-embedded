@@ -1,10 +1,12 @@
 import {createIdentityRuntimeAuthorityLoader} from "./identity-runtime-authority.server.js";
 import {createGoogleAdsRestClient} from "./google-ads-rest.server.js";
-import {readGoogleMerchantAccountLink} from "./google-merchant-account-link.server.js";
-import {readMerchantProductSourceSnapshot} from "./google-product-identity-reader.server.js";
+import {readGoogleMerchantAccountLink,takeGoogleMerchantLinkPages} from "./google-merchant-account-link.server.js";
+import {readMerchantProductSourceSnapshot,takeMerchantSourcePages} from "./google-product-identity-reader.server.js";
 import {quotaBoundaryControl} from "../refresh/quota-native-fetch.server.js";
 import {createGoogleCandidateSourceRuleLoader, verifyGoogleMerchantSourceCandidates} from "./google-source-candidates.server.js";
 import {runIdentityReadDeadline} from "./identity-read-deadline.server.js";
+const sourceCaptures=new WeakMap();
+export function takeGoogleIdentitySourceCapture(observation){const capture=sourceCaptures.get(observation);if(!capture)fail("GOOGLE_SOURCE_OBSERVATION_REQUIRED");sourceCaptures.delete(observation);return capture;}
 
 export class GoogleIdentityCollectionError extends Error {
   constructor(code) {super(code); this.name = "GoogleIdentityCollectionError"; this.code = code;}
@@ -22,13 +24,13 @@ function positiveInt64(value) {
 // relationship must match it before source collection. No caller loadCurrent override.
 async function collectGoogleIdentitySource({verified, database, tokenVault, merchantId, developerToken,
   fetchFn = fetch, now = () => new Date(), signal, maxPages = 100, maxRows = 10000,
-  maxLinkPages = 100, maxLinks = 10000, maxElapsedMs = 120000, sourceRules, withShopify} = {}) {
+  maxLinkPages = 100, maxLinks = 10000, maxElapsedMs = 120000, sourceRules, withShopify,captureSource=false} = {}) {
   if (!positiveInt64(merchantId) || typeof developerToken !== "string" || !developerToken || developerToken.length > 256
     || /[\u0000-\u0020\u007f]/.test(developerToken) || typeof fetchFn !== "function" || typeof now !== "function"
     || ![maxPages, maxRows, maxLinkPages, maxLinks, maxElapsedMs].every(Number.isSafeInteger)
     || maxPages < 1 || maxPages > 1000 || maxLinkPages < 1 || maxLinkPages > 1000
     || maxRows < 1 || maxRows > 100000 || maxLinks < 1 || maxLinks > 100000
-    || maxElapsedMs < 1 || maxElapsedMs > 600000) fail("GOOGLE_IDENTITY_COLLECTION_INPUT_INVALID");
+    || maxElapsedMs < 1 || maxElapsedMs > 600000||typeof captureSource!=="boolean") fail("GOOGLE_IDENTITY_COLLECTION_INPUT_INVALID");
   function clock() {
     const value = now(); if (!(value instanceof Date) || !Number.isFinite(value.valueOf())) fail("GOOGLE_IDENTITY_TIME_INVALID");
     return value.valueOf();
@@ -59,12 +61,12 @@ async function collectGoogleIdentitySource({verified, database, tokenVault, merc
     await recheck();
     const adsClient = createGoogleAdsRestClient({accessToken: current.tokenSet.access_token, developerToken,
       loginCustomerId: current.account.login_account_id, fetchFn: boundFetch});
-    const linkOptions = {adsClient, customerId: current.account.id, merchantId, maxPages: maxLinkPages, maxLinks, signal};
+    const linkOptions = {adsClient, customerId: current.account.id, merchantId, maxPages: maxLinkPages, maxLinks, signal,captureSource};
     const before = await readGoogleMerchantAccountLink(linkOptions);
     if (before.state !== "confirmed") fail("GOOGLE_IDENTITY_MERCHANT_LINK_NOT_CONFIRMED");
     await recheck();
     const source = await readMerchantProductSourceSnapshot({merchantId, accessToken: current.tokenSet.access_token,
-      fetchFn: boundFetch, signal, maxPages, maxRows});
+      fetchFn: boundFetch, signal, maxPages, maxRows,captureSource});
     await recheck();
     let productCandidates = null;
     if (withShopify) {
@@ -86,7 +88,7 @@ async function collectGoogleIdentitySource({verified, database, tokenVault, merc
     const after = await readGoogleMerchantAccountLink(linkOptions);
     if (after.state !== "confirmed" || before.link.resource_name !== after.link.resource_name) fail("GOOGLE_IDENTITY_MERCHANT_LINK_CHANGED");
     await recheck();
-    return freeze({provider: "google_ads", source: withShopify ? "native_Ads_Merchant_and_Shopify_candidate_collection" : "native_Ads_Merchant_link_and_product_collection",
+    const result=freeze({provider: "google_ads", source: withShopify ? "native_Ads_Merchant_and_Shopify_candidate_collection" : "native_Ads_Merchant_link_and_product_collection",
       account_id: current.account.id, merchant_id: merchantId, connection_id: current.connectionId,
       connection_version: current.connectionVersion, installation: current.installation, shop: current.shop,
       native_source: source, ...(withShopify ? {product_identity_candidates: productCandidates} : {}), link_evidence: {before, after,
@@ -96,6 +98,14 @@ async function collectGoogleIdentitySource({verified, database, tokenVault, merc
       authorizes_activation: false, persistable: false, mapping_write_performed: false, source_facts_changed: false,
       remaining: ["canonical_authority_scope_to_source_binding", "real_source_format_evidence_and_reviewed_rule_registration",
         ...(withShopify ? [] : ["Shopify_candidate_verification_composition"]), "quota_dispatch_and_prewrite_controls"]});
+    if(captureSource)sourceCaptures.set(result,freeze({owner:{workspaceId:current.installation.workspaceId,
+      installationId:current.installation_id,generation:String(current.installation.installGeneration),shopId:current.shop.shopId,
+      shopDomain:current.shop.myshopifyDomain,provider:"google_ads",connectionId:current.connectionId,connectionVersion:String(current.connectionVersion),
+      accountId:current.account.id,selectionEpoch:current.reporting_selection_epoch,credentialId:current.credentialId},
+      pages:[...takeGoogleMerchantLinkPages(before).map(p=>({...p,phase:"before"})),...takeMerchantSourcePages(source),
+        ...takeGoogleMerchantLinkPages(after).map(p=>({...p,phase:"after"}))],
+      merchantId,completedAt:result.link_evidence.completed_at}));
+    return result;
   } catch (error) {
     if (nativeQuotaControl !== null) throw nativeQuotaControl;
     if (quotaBoundaryControl(error)) throw error;

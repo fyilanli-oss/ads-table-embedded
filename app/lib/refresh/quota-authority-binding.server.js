@@ -16,6 +16,9 @@ import {isShopifyAdminIdentitySdkBridge,closeShopifyAdminOrderSdkClient,closeSho
 import {normalizeShopDomain} from "../shopify/installation-authority.server.js";
 import {SHOPIFY_ORDER_READ_API_VERSION} from "../shopify/order-read-protocol.server.js";
 import {createShopifyOrderReadExecution} from "../shopify/order-collection.server.js";
+import {randomUUID} from "node:crypto";
+import {prepareGoogleIdentitySourceWrite} from "../providers/google-source-write.server.js";
+import {createSourceEvidenceRepository} from "../database/source-evidence-store.server.js";
 const candidateObservations=new WeakMap();
 const candidateReferenceInputs=new WeakMap();
 const interactionObservations=new WeakMap();
@@ -162,7 +165,7 @@ function createMetaIdentityReader({verified,database,tokenVault,adId,adSetId,cam
 export function createRefreshGoogleIdentityReader(options) {return createGoogleIdentityReader(options);}
 export function createRefreshGoogleCandidateReader(options) {return createGoogleIdentityReader(options,true);}
 function createGoogleIdentityReader({verified,database,tokenVault,merchantId,developerToken,signal,sdkBridge,sourceRules,
-  readNow=()=>new Date(),maxElapsedMs,maxPages,maxRows,maxLinkPages,maxLinks,...quotaOptions} = {},candidates=false) {
+  readNow=()=>new Date(),maxElapsedMs,maxPages,maxRows,maxLinkPages,maxLinks,sourceStorage=null,...quotaOptions} = {},candidates=false) {
   const claim=structuredClone(quotaOptions.claim),window=structuredClone(quotaOptions.window);
   const owner=structuredClone(verified?.installationAuthority),shop=structuredClone(verified?.identity?.shop);
   const day=window?.from;
@@ -179,17 +182,34 @@ function createGoogleIdentityReader({verified,database,tokenVault,merchantId,dev
   const rules=candidates&&sourceRules!==undefined?structuredClone(sourceRules):undefined;
   if(candidates)createGoogleCandidateSourceRuleLoader({rules});
   const binding=refreshQuotaOptions(quotaOptions,{admin:candidates}),execution=candidates?createQuotaReadExecution():undefined;
+  if(sourceStorage!==null&&(!sourceStorage||Object.keys(sourceStorage).sort().join(",")!=="cipher,limits,policy"
+    ||typeof sourceStorage.cipher?.seal!=="function"))throw Error("GOOGLE_SOURCE_STORAGE_INPUT_INVALID");
+  const storage=sourceStorage===null?null:{cipher:sourceStorage.cipher,policy:structuredClone(sourceStorage.policy),limits:structuredClone(sourceStorage.limits)};
+  const sourceRead=storage?structuredClone({jobId:claim.id,fence:String(claim.fence),window,observedAt:quotaOptions.entitlementReceipt.observedAt,merchantId}):null;
   const transport=identityTransport(binding,"google_ads",claim,merchantId,execution);
   const admin=candidates?createFencedAdminClient({verified:caller,sdkBridge,signal,...quotaOptions},false,null,{binding,readExecution:execution}):null;
   if(admin)caller.context.admin=admin;
   const options={verified:caller,database,tokenVault,merchantId,developerToken,fetchFn:transport,signal,now:readNow,
-    maxElapsedMs,maxPages,maxRows,maxLinkPages,maxLinks,...candidates?{sourceRules:rules}:{}};
+    maxElapsedMs,maxPages,maxRows,maxLinkPages,maxLinks,...candidates?{sourceRules:rules}:{},captureSource:storage!==null};
   const collect=candidates?collectGoogleVerifiedProductCandidateEvidence:collectGoogleMerchantIdentityEvidence;
   let used=false;
   return Object.freeze({async readEvidence(...args){
     if(args.length) throw Error("REFRESH_GOOGLE_IDENTITY_OVERRIDE_FORBIDDEN");
     if(used) throw Error("REFRESH_GOOGLE_IDENTITY_EXECUTION_USED");
-    used=true;try{const result=await collect(options);if(candidates)recordCandidateObservation(result,"google_ads","candidate",owner,shop,claim,window);return result;}
+    used=true;try{
+      const attemptId=storage?randomUUID():null,deadlineAt=storage?new Date(readNow().valueOf()+(maxElapsedMs??120000)).toISOString():null;
+      const initial=storage?structuredClone(await binding.loadContext({provider:"google_ads"})):null;
+      if(storage&&(!initial||initial.merchant?.targetAccountId!==merchantId))throw Error("GOOGLE_SOURCE_CONTEXT_REQUIRED");
+      const result=await collect(options);let outcome=result;
+      if(storage){
+        if(signal?.aborted||JSON.stringify(await binding.loadContext({provider:"google_ads"}))!==JSON.stringify(initial))throw Error("GOOGLE_SOURCE_CONTEXT_CHANGED");
+        const prepared=prepareGoogleIdentitySourceWrite({observation:result,attemptId,...storage,now:readNow().toISOString()});
+        const sourceReceipt=await createSourceEvidenceRepository(database).commitGoogleIdentity(prepared.write,
+          {...sourceRead,quotaContext:initial,completedAt:prepared.completedAt,deadlineAt});
+        outcome=Object.freeze({...result,sourceStored:true,sourceReceipt,sourceAttemptId:attemptId});
+      }
+      if(candidates)recordCandidateObservation(outcome,"google_ads","candidate",owner,shop,claim,window);return outcome;
+    }
     finally{if(admin)closeShopifyAdminSdkClient(admin);}
   }});
 }

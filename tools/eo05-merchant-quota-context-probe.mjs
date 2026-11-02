@@ -4,6 +4,7 @@ import {createSharedQuotaRepository} from "../app/lib/database/shared-quota-repo
 import {createSharedQuotaGuard} from "../app/lib/refresh/shared-quota.server.js";
 import {createQuotaScopeResolver,quotaRouteIdentity} from "../app/lib/refresh/quota-scope-resolver.server.js";
 import {createQuotaManagedFetch,quotaBoundaryControl} from "../app/lib/refresh/quota-native-fetch.server.js";
+import {googleSourceCaptureProbe} from "./eo05-google-source-capture-probe.mjs";
 
 // Real SQL + existing HTTP boundary in the rollback-only F01 authority fixture.
 export async function merchantQuotaContextProbe(client,{store,execution,connection}){
@@ -84,6 +85,7 @@ export async function merchantQuotaContextProbe(client,{store,execution,connecti
     for(const role of ["anon","authenticated","service_role","adstable_runtime","adstable_refresh_coordinator"])
       assert.equal((await client.query("select has_table_privilege($1,'operations.refresh_quota_contexts','SELECT,INSERT,UPDATE,DELETE') allowed",[role])).rows[0].allowed,false);
     assert.equal((await client.query("select has_function_privilege('adstable_refresh_coordinator','operations.load_refresh_quota_context_before_merchant(uuid,bigint,text,text,text,bigint,date,date,text,timestamptz)','EXECUTE') allowed")).rows[0].allowed,false);
+    await googleSourceCaptureProbe(client,{store,execution,quotaStore,connection});
   }finally{await client.query("rollback to savepoint merchant_context_probe");await client.query("release savepoint merchant_context_probe");}
   assert.deepEqual(await store.loadQuotaContext(input),base);
   console.log("EO05_MERCHANT_QUOTA_CONTEXT_PASS real_SQL_to_route_guard_HTTP=true target_quota_accounts_distinct=true current_credential_content_scope=true monotonic_epoch_away_back=true reserve_await_drift_zero_HTTP=true Ads_unchanged=true private_disabled_and_rolled_back=true native_HTTP=0");

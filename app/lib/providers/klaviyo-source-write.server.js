@@ -1,3 +1,4 @@
+import {bindShopifyProductVerification} from "../shopify/product-identity-verification.server.js";
 import {takeKlaviyoIdentitySourceCapture} from "./klaviyo-identity-collection.server.js";
 import {prepareSourceWrite, sourcePayloadHash} from "../database/source-evidence-store.server.js";
 
@@ -13,6 +14,7 @@ export function prepareKlaviyoIdentitySourceWrite({observation, attemptId, polic
   const records = {references: [], rules: [], mappings: [], orders: [], lines: [], journeys: [], claims: [], links: []};
   const events = new Map(), metrics = new Map(), attributions = new Map(), interactions = new Map(), reports = new Map(), accounts = [], mappings = new Map();
   const links = new Set();
+  const verificationChecks = new Map(capture.productChecks.map(check => [check.eventId, bindShopifyProductVerification(check.verification, capture.owner)]));
   const link = (reference, targetType, target, role) => {const k = JSON.stringify([reference, targetType, target, role]);
     if (!links.has(k)) {links.add(k); records.links.push({reference, targetType, target, role});}};
   function page(family, payload, fidelity = "lossless_token") {
@@ -88,11 +90,17 @@ export function prepareKlaviyoIdentitySourceWrite({observation, attemptId, polic
   if (observation.product_identity_candidates) {
     const rows = observation.product_identity_candidates.rows.map(row => ({eventId: row.provider_event_id,
       state: row.product_identity_verification.state, reason: row.product_identity_verification.reason,
+      shopifyVerification: verificationChecks.get(row.provider_event_id) ?? null,
       productId: row.product_identity_verification.shopify_product_id, variantId: row.product_identity_verification.shopify_variant_id}));
     const key = page("klaviyo_candidate_checks", {records: rows, included: []}, "decoded_only");
+    pages.at(-1).schemaVersion = "klaviyo-candidate-check-v2";
+    pages.at(-1).captureLayer = "collector_projection";
     for (const [i, row] of rows.entries()) {
       const reference = ref(key, "/records/" + i, row, "CandidateCheck", row.eventId), target = records.claims.find(c => c.nativeId === row.eventId);
       if (!target) throw Error("KLAVIYO_SOURCE_CANDIDATE_REFERENCE_INVALID"); link(reference, "claim", target.key, "candidate_check");
+      const eventReferences = new Set(events.get(row.eventId)?.references ?? []);
+      const mappingKeys = records.links.filter(l => l.targetType === "mapping" && l.role === "native_product_observation" && eventReferences.has(l.reference)).map(l => l.target);
+      for (const mappingKey of mappingKeys) link(reference, "mapping", mappingKey, "candidate_check");
     }
   }
   if (observation.attributed_interactions) {

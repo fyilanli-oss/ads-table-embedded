@@ -1,5 +1,6 @@
+import {bindShopifyProductVerification} from "../shopify/product-identity-verification.server.js";
 import {takeMetaIdentitySourceCapture} from "./meta-identity-collection.server.js";
-import {prepareSourceWrite} from "../database/source-evidence-store.server.js";
+import {prepareSourceWrite, sourcePayloadHash} from "../database/source-evidence-store.server.js";
 import {META_GRAPH_VERSION} from "./meta-graph.server.js";
 
 const fieldState = (row, key) => !Object.hasOwn(row, key) ? "missing" : row[key] === null ? "null" : row[key] === "" ? "empty" : "observed";
@@ -11,6 +12,7 @@ export function prepareMetaIdentitySourceWrite({observation, attemptId, policy, 
   const capture = takeMetaIdentitySourceCapture(observation), pages = [];
   const records = {references: [], rules: [], mappings: [], orders: [], lines: [], journeys: [], claims: [], links: []};
   const relationRefs = [], mappings = new Map();
+  const verificationChecks = new Map(capture.productChecks.map(check => [sourcePayloadHash([check.nativeId, check.context]), bindShopifyProductVerification(check.verification, capture.owner)]));
   function page(family, payload) {
     const key = "p" + pages.length;
     pages.push({key, family, ordinal: pages.length, origin: "meta", captureLayer: "collector_projection", numericFidelity: "decoded_only",
@@ -52,10 +54,12 @@ export function prepareMetaIdentitySourceWrite({observation, attemptId, policy, 
       const verification = row.product_identity_verification;
       const candidate = verification.candidate_index === null ? null : observation.product_identity_candidates.candidates[verification.candidate_index];
       return {catalogProductId: row.catalog_product_id, retailerId: row.retailer_id, context: row.product_context,
-        state: verification.state, reason: verification.reason, candidate: candidate === null ? null : {
+        state: verification.state, reason: verification.reason,
+        shopifyVerification: verificationChecks.get(sourcePayloadHash([row.catalog_product_id, row.product_context])) ?? null, candidate: candidate === null ? null : {
           productId: candidate.shopify_product_id, variantId: candidate.shopify_variant_id}};
     });
     const key = page("meta_candidate_checks", {records: rows});
+    pages.at(-1).schemaVersion = "meta-candidate-check-v2";
     for (const [i, row] of rows.entries()) records.links.push({reference: reference(key, i, "CandidateCheck", row.catalogProductId),
       targetType: "mapping", target: mappings.get(row.catalogProductId), role: "candidate_check"});
   }

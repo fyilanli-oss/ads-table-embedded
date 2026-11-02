@@ -1,5 +1,5 @@
 import {normalizeKlaviyoOrderedProductEvent} from "./klaviyo-reporting.server.js";
-import {verifyShopifyProductCandidate} from "../shopify/product-identity-verification.server.js";
+import {verifyShopifyProductCandidate, shopifyProductVerificationEvidence} from "../shopify/product-identity-verification.server.js";
 import {permissionContext} from "../oauth/identity-permission-preflight.server.js";
 
 export class KlaviyoProductIdentityError extends Error {
@@ -53,7 +53,8 @@ function proposedIds(properties) {
 // Same-shop candidate evidence only, independent of a canonical provider/installation DB key.
 // This function cannot return canonical mappings or standardized sale IDs.
 export async function verifyKlaviyoProductCandidateRows({events, metric, context,
-  signal, maxEvents = 10000} = {}) {
+  signal, onVerification, maxEvents = 10000} = {}) {
+  if (onVerification !== undefined && typeof onVerification !== "function") fail("KLAVIYO_PRODUCT_VERIFICATION_SINK_INVALID");
   if (!Number.isSafeInteger(maxEvents) || maxEvents < 1 || maxEvents > 100000
     || !Array.isArray(events) || events.length > maxEvents) fail("KLAVIYO_PRODUCT_IDENTITY_EVENTS_INVALID");
   metric = structuredClone(metric);
@@ -76,7 +77,7 @@ export async function verifyKlaviyoProductCandidateRows({events, metric, context
     if (previous && JSON.stringify(previous) !== JSON.stringify(normalized)) fail("KLAVIYO_PRODUCT_IDENTITY_EVENT_CONFLICT");
     unique.set(normalized.provider_event_id, normalized);
   }
-  const rows = [], candidates = [], checked = new Map();
+  const rows = [], candidates = [], checked = new Map(), observations = new Map();
   for (const row of unique.values()) {
     if (signal?.aborted) fail("KLAVIYO_PRODUCT_IDENTITY_ABORTED");
     const candidate = proposedIds(row.provider_product_properties);
@@ -87,6 +88,7 @@ export async function verifyKlaviyoProductCandidateRows({events, metric, context
       if (!checked.has(key)) {
         const verified = await verifyShopifyProductCandidate({admin, shop, installation,
           productId: candidate.productId, variantId: candidate.variantId, signal});
+        observations.set(key, shopifyProductVerificationEvidence(verified));
         let candidateIndex = null;
         if (verified.state === "candidate_verified_in_shop") {
           candidateIndex = candidates.length;
@@ -103,6 +105,7 @@ export async function verifyKlaviyoProductCandidateRows({events, metric, context
           shopify_product_id: candidateIndex === null ? null : verified.candidate.product_id,
           shopify_variant_id: candidateIndex === null ? null : verified.candidate.variant_id, candidate_index: candidateIndex});
       }
+      if (onVerification) onVerification({eventId: row.provider_event_id, verification: observations.get(key)});
       resolution = {...checked.get(key), variant_observation: candidate.variant_observation};
       if (resolution.candidate_index !== null) candidates[resolution.candidate_index].candidate_evidence.source_event_ids.push(row.provider_event_id);
     }

@@ -772,6 +772,15 @@
       "repository_sql_sha256": "35f35a59ed9c04bfe9c04d7dc5e044390a7a25f40742a30bbc13df51b0b576a2",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261102175402",
+      "name": "eo05b_product_verification_evidence",
+      "file": "supabase/migrations/20261102175402_eo05b_product_verification_evidence.sql",
+      "created_with": "supabase@2.122.0 migration new eo05b_product_verification_evidence",
+      "repository_sql_sha256": "cfbc049ca8f04a21254b6118fd2fe14dd4c4314ad0e30f3a3835e248a9598f8f",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

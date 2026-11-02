@@ -42,6 +42,7 @@ async function collectMetaIdentitySource({verified, database, tokenVault, adId, 
   if (withReport && (!Number.isSafeInteger(maxReportPages) || maxReportPages < 1 || maxReportPages > 1000
     || !Number.isSafeInteger(maxReportRows) || maxReportRows < 1 || maxReportRows > 100000)) fail("META_IDENTITY_REPORT_LIMIT_INVALID");
   const nativeGraphql = withShopify ? verified.context.admin.graphql.bind(verified.context.admin) : null;
+  const productChecks = [];
   let current, permission = null, nativeQuotaControl = null;
   function clock() {
     const t = now(); if (!(t instanceof Date) || !Number.isFinite(t.valueOf())) fail("META_IDENTITY_TIME_INVALID");
@@ -92,7 +93,7 @@ async function collectMetaIdentitySource({verified, database, tokenVault, adId, 
       productCandidates = await verifyMetaCatalogSourceCandidates({source, ownerScope: {
         workspace_id: current.installation.workspaceId, installation_generation: current.installation.installGeneration,
         provider_connection_id: current.connectionId, platform: "meta", platform_account_id: current.account.id},
-      context: {installation: current.installation, shop: current.shop, admin}, sourceRules: rules, signal, maxRows});
+      context: {installation: current.installation, shop: current.shop, admin}, sourceRules: rules, signal, maxRows, ...(captureSource ? {onVerification: value => productChecks.push(value)} : {})});
       await recheck();
     }
     let report = null, reportLinks = null;
@@ -122,7 +123,7 @@ async function collectMetaIdentitySource({verified, database, tokenVault, adId, 
       remaining: ["canonical_authority_scope_to_source_binding", "real_Meta_Insights_identity_namespace_evidence_and_reviewed_rule_registration",
         "real_retailer_source_format_evidence_and_reviewed_rule_registration",
         ...(withShopify ? [] : ["Shopify_candidate_verification_composition"]), "quota_dispatch_and_prewrite_controls"]});
-    if (captureSource) sourceCaptures.set(result, freeze({owner: {
+    if (captureSource) sourceCaptures.set(result, freeze({productChecks, owner: {
       workspaceId: current.installation.workspaceId, installationId: current.installation_id,
       generation: String(current.installation.installGeneration), shopId: current.shop.shopId, shopDomain: current.shop.myshopifyDomain,
       provider: "meta", connectionId: current.connectionId, connectionVersion: String(current.connectionVersion),

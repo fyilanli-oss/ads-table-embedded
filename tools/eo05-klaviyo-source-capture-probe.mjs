@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import {randomUUID, createHash} from "node:crypto";
 import {createRefreshKlaviyoIdentityReader} from "../app/lib/refresh/quota-authority-binding.server.js";
 import {sourceStoreFixture} from "../tests/fixtures/source-store-fixture.js";
-import {createSourceEvidenceRepository} from "../app/lib/database/source-evidence-store.server.js";
+import {createSourceEvidenceRepository, sourcePayloadHash} from "../app/lib/database/source-evidence-store.server.js";
 import {quotaRouteIdentity} from "../app/lib/refresh/quota-scope-resolver.server.js";
 import {KLAVIYO_OAUTH_SCOPES} from "../app/lib/providers/klaviyo-api.server.js";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
@@ -143,6 +143,41 @@ export async function klaviyoSourceCaptureProbe(client, {store, quotaStore, exec
             const payload=input.cipher.open({owner:sourceOwner,attemptId:lastArgs[1],ordinal:0,page});assert.ok(Array.isArray(payload.records));
             assert.doesNotMatch(JSON.stringify(payload),/PRIVATE-EMAIL|PRIVATE-NAME|SYNTHETIC-ONLY/);
             if(mode!=='empty'&&page.family==='klaviyo_ordered_product_events')assert.deepEqual(payload.records[0].attributes.event_properties.$value,{jsonNumber:'12.5000'});
+          }
+          if (mode === "success") {
+            // Real existing SQL writer with a synthetic v2 candidate page. No native proof is asserted.
+            await client.query("savepoint product_verification_projection");
+            const attemptId = randomUUID(), body = JSON.parse(lastArgs[3]);
+            body.pages = body.pages.map(page => input.cipher.seal({owner: sourceOwner, attemptId, ordinal: 0, page,
+              payload: input.cipher.open({owner: sourceOwner, attemptId: lastArgs[1], ordinal: 0, page})}));
+            const row = {eventId: "event1", shopifyVerification: {schemaVersion: "shopify-product-verification-v1",
+              request: {productId: "gid://shopify/Product/123"}, response: {shop: {id: sourceOwner.shopId, myshopifyDomain: sourceOwner.shopDomain},
+                product: {state: "observed", id: "gid://shopify/Product/123", legacyResourceId: "123"}, variant: {state: "not_requested"}},
+              outcome: {state: "candidate_verified_in_shop"}, providerMappingVerified: false}};
+            const page = input.cipher.seal({owner: sourceOwner, attemptId, ordinal: 0,
+              page: {key: "verification-fixture", family: "klaviyo_candidate_checks", ordinal: body.pages.length, origin: "klaviyo",
+                captureLayer: "collector_projection", numericFidelity: "decoded_only", fieldCoverage: ["records", "included"],
+                schemaVersion: "klaviyo-candidate-check-v2", sanitizerVersion: "klaviyo-source-v1"}, payload: {records: [row], included: []}});
+            body.pages.push(page);
+            body.references.push({key: "verification-reference", page: page.key, locatorKind: "row", locator: "/records/0",
+              nativeType: "CandidateCheck", nativeId: "event1", state: "present", hash: sourcePayloadHash(row)});
+            body.links.push({reference: "verification-reference", targetType: "mapping", target: "m0", role: "candidate_check"});
+            const args = [lastArgs[0], attemptId, 0, JSON.stringify(body), lastArgs[4]];
+            await client.query("savepoint verification_bad_layer");
+            const bad = structuredClone(body); bad.pages.at(-1).captureLayer = "native_response_projection";
+            await assert.rejects(client.query("select evidence.commit_klaviyo_identity_source($1::jsonb,$2::uuid,$3::integer,$4::jsonb,$5::jsonb)",
+              [...args.slice(0,3),JSON.stringify(bad),args[4]]), /KLAVIYO_SOURCE_FAMILY_INVALID/);
+            await client.query("rollback to savepoint verification_bad_layer");
+            const committed = (await client.query("select evidence.commit_klaviyo_identity_source($1::jsonb,$2::uuid,$3::integer,$4::jsonb,$5::jsonb) as result", args)).rows[0].result;
+            const observed = await repo.readPages({owner: sourceOwner, attemptId, ordinal: 0, limit: 100});
+            const stored = observed.find(p => p.family === "klaviyo_candidate_checks");
+            assert.equal(stored.captureLayer, "collector_projection");
+            assert.deepEqual(input.cipher.open({owner: sourceOwner, attemptId, ordinal: 0, page: stored}).records[0], row);
+            const mappingId = committed.manifest.ids["mapping:m0"];
+            const linked = (await client.query("select count(*)::integer n from evidence.source_reference_links where mapping_id=$1 and role='candidate_check'",[mappingId])).rows[0];
+            assert.ok(linked.n >= 1); await client.query("set constraints all immediate");await client.query("set constraints all deferred");
+            await client.query("rollback to savepoint product_verification_projection");
+            console.log("EO05_PRODUCT_VERIFICATION_SQL_PASS");
           }
           if(mode!=='empty'){
             const claim=(await client.query('select * from source.provider_claim_versions where id=$1',[receipt.manifest.ids['claim:c0']])).rows[0];

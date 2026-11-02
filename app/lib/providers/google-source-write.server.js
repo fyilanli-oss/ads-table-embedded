@@ -1,5 +1,6 @@
+import {bindShopifyProductVerification} from "../shopify/product-identity-verification.server.js";
 import {takeGoogleIdentitySourceCapture} from "./google-identity-collection.server.js";
-import {prepareSourceWrite} from "../database/source-evidence-store.server.js";
+import {prepareSourceWrite, sourcePayloadHash} from "../database/source-evidence-store.server.js";
 
 // A genuine completed collector is required. This boundary stores observations and
 // unresolved/conflicting identities only; it cannot accept a reviewed rule or verified mapping.
@@ -7,6 +8,7 @@ export function prepareGoogleIdentitySourceWrite({observation,attemptId,policy,c
   if(Object.keys(extra).length)throw Error("GOOGLE_SOURCE_WRITE_INPUT_INVALID");
   const capture=takeGoogleIdentitySourceCapture(observation),pages=[],records={references:[],rules:[],mappings:[],orders:[],lines:[],journeys:[],claims:[],links:[]};
   const mappings=new Map(),linkRefs=[];
+  const verificationChecks = new Map(capture.productChecks.map(check => [sourcePayloadHash([check.nativeId, check.context]), bindShopifyProductVerification(check.verification, capture.owner)]));
   for(const [ordinal,p] of capture.pages.entries()){
     const key="p"+ordinal,payload={...p.payload,...p.phase?{phase:p.phase}:{}};
     pages.push({key,family:p.family,ordinal,origin:"google_ads",captureLayer:"collector_projection",numericFidelity:"decoded_only",
@@ -33,10 +35,11 @@ export function prepareGoogleIdentitySourceWrite({observation,attemptId,policy,c
   if(observation.product_identity_candidates){
     const rows=observation.product_identity_candidates.rows.map(row=>({nativeProductId:row.native_product_id,context:row.product_context,
       state:row.product_identity_verification.state,reason:row.product_identity_verification.reason,
+      shopifyVerification:verificationChecks.get(sourcePayloadHash([row.native_product_id,row.product_context]))??null,
       candidate:row.product_identity_verification.candidate_index===null?null:observation.product_identity_candidates.candidates[row.product_identity_verification.candidate_index]}));
     const key="candidate-checks";
     pages.push({key,family:"google_candidate_checks",ordinal:pages.length,origin:"google_ads",captureLayer:"collector_projection",numericFidelity:"decoded_only",
-      fieldCoverage:["records"],schemaVersion:"google-candidate-check-v1",sanitizerVersion:"google-identity-source-v1",payload:{records:rows}});
+      fieldCoverage:["records"],schemaVersion:"google-candidate-check-v2",sanitizerVersion:"google-identity-source-v1",payload:{records:rows}});
     for(const [i,row] of rows.entries()){
       const ref="candidate"+i;records.references.push({key:ref,page:key,locatorKind:"row",locator:"/records/"+i,nativeType:"CandidateCheck",nativeId:row.nativeProductId,state:"present"});
       const target=records.mappings.find(m=>m.nativeId===row.nativeProductId&&Object.keys(m.context).every(k=>m.context[k]===row.context[k]));

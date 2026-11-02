@@ -1,3 +1,44 @@
+## 2 Kasım — mevcut 15: ürün/varyant kontrolünün kalıcı kanıtı
+
+Owner, mevcut Shopify ürün/varyant kontrolünün kanıtını platform kaydına bağlayan
+kod, SQL ve izole test/PR kapsamını onayladı. Başlangıç main b5b2cec8df188687948c5561cf19376664b97158.
+Kayıt: contracts/a6-eo-implementation-master-v1.json#Step15_product_verification_evidence_2026_11_02.
+
+Aynı mağazada yapılan mevcut kontrolün hangi Product/Variant GID’lerini sorduğu,
+Shopify’ın döndürdüğü Shop/Product/Variant/üst ürün kimlikleri ve kontrol sonucu
+özel kanıt olarak tutulur. Bulunamadı, istenmedi ve yanlış üst ürün ayrı kalır.
+Yanıtın başka alanları alınmaz; bu özgün HTTP baytları değil, decoded_only sınırlı
+collector projection’dır. İstemcinin veya JSON kopyasının verified bayrağı yetki
+oluşturmaz. Gerçek verifier sonucu özel bellek kaydıyla ve mağaza/kurulum nesliyle
+bağlanır; mevcut collector güncel hesap/iş yetkisini ayrıca denetler.
+
+Google/Meta/Klaviyo source capture mevcut şifreli candidate-check sayfasında v2
+kontrol kanıtını saklar. Meta ve Google’da ilgili ürün eşlemesine bağlı referans
+korunur; Klaviyo’da tam native olay üzerinden eşlemeye de gerçek kanıt bağlantısı
+eklenir. Kaynak/claim satırları, tutarlar ve raporlar değişmez. Ortak byte/satır
+sınırları ve tek kullanımlık yazma, hash/AAD, atomik SQL ve unknown kuralları sürer.
+Yeni sorgu, scope, kaynak format kuralı veya native kabul üretilmez.
+
+Klaviyo’nun mevcut SQL yazıcısı v2 kontrol sayfasını collector_projection olarak
+kabul edecek forward migration ile uyarlanır; eski v1 kayıtlar yeniden etiketlenmez.
+Diğer native sayfalar kendi katmanında kalır; v2’yi native diye sunmak reddedilir.
+Yeni tablo, grant, canlı anahtar/politika, worker/route veya temizlik yolu yoktur.
+
+Bu hazırlık doğrulanmış eşleme kabulünü TAMAMLAMAZ. Kuralın güvenilir kaydı,
+canonical doğrulanmış eşlemenin kabul/sürüm/okuma bağlantısı ve gerçek kaynak kanıtı
+15’in açık işleridir. Saklanan aday kontrolü native provider formatı veya Meta
+Insights kimlik alanı kanıtı değildir. productId/variantId/verifiedAt boş, eşleme
+unresolved/conflicting kalır; NATIVE_RECEIPT_REQUIRED gevşetilmez. Genel rapor
+kayıt/teslimi 23’te, 22 duraklatılmış, Overlap ertelemeleri korunmuştur.
+
+Üç sağlayıcıda başarı/bulunamadı/yanlış üst ürün kanıtı ve kopya/başka owner reddi
+izole testlerle; v2 saklama/deşifre/FK ve yanlış katman reddi mevcut F01 gerçek
+PostgreSQL replay’inde sınanır. Sentetik test native veri kabulü değildir. CI sonucu
+ve uzak içerik ayrıca doğrulanır; merge, canlı DB/provider/config/deploy ayrı onaydır.
+Resmî Shopify ProductVariant, Supabase functions ve changelog kaynakları 2 Kasım
+2026 kontrol edildi. Markdown changelog biçimi alınamadığı için resmî HTML okundu;
+adresler makine kaydındadır. Canlı platform veya DB ayarı değiştirilmedi.
+
 ## 2 Kasım — 15 ve 23: kaynak kaydı ile rapora teslimin sınırı
 
 Ürün sahibi salt okunur incelemenin sonucunu kabul etti ve yalnız mevcut plan/

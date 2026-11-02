@@ -879,6 +879,30 @@
       "live_provider_authorized": false,
       "merge_authorized": false,
       "deployment_authorized": false
+    },
+    "product_verification_evidence": {
+      "status": "repository_preparation_not_live",
+      "owner_approval": "Owner approved the concrete Step15 implementation/SQL/isolated tests/PR to persist existing Shopify product/variant verification evidence with provider source records, without new queries/scopes or verified mapping acceptance. Source: Tamam devam edelim onayliyorum on2026-11-02. No live DB/provider/config, merge or deployment authorization.",
+      "base_main": "b5b2cec8df188687948c5561cf19376664b97158",
+      "mechanism": "Existing Shopify verifier retains an allowlisted private WeakMap/WeakSet response observation. Capture-enabled Google/Meta/Klaviyo collectors bind it to exact native product context or event inside their existing one-use source capture. Existing encrypted candidate-check pages v2 retain requested IDs, observed same-shop Product/Variant/parent IDs and explicit null/not_requested/conflicting outcomes. No extra Shopify or provider call.",
+      "authority": "A cloned verifier result/projection cannot supply the private observation; workspace/install generation/Shop GID/domain binding is rechecked before source preparation. Existing provider source SQL rechecks actual installation PK, current connection/credential/account/selection and job/fence/quota/entitlement/deadlines. Private observation alone does not grant source write or native mapping authority.",
+      "links": "Google/Meta candidate references remain linked to their exact contextual unresolved/conflicting mapping. Klaviyo candidate-check reference now also links to its mapping through the exact native event evidence, while preserving its unlinked claim reference. Existing real scoped FK/hash/atomic write/readback and row/byte bounds apply.",
+      "fidelity": "Allowlisted collector projection, decoded_only; not original HTTP bytes or a new native identity guarantee. Shopify response contains only existing requested shop/product/variant/parent identity fields; additional native fields are excluded. No inferred provider product format, Insights namespace, Order join, Sales Role or Dataset fact.",
+      "SQL": "One forward migration replaces the existing owner-only Klaviyo writer only to accept candidate-check-v2 as collector_projection. Old v1 candidate and all native page-family behavior remain compatible; v2 falsely marked native is rejected. No new physical table, grants, role, env, keys, activation or cleanup path.",
+      "remaining": "Step15 open: trusted reviewed-source-rule registration, canonical verified-mapping acceptance/versioned read path, real native source/link/namespace proof and live finite policy/capacity/key/grant/activation acceptance. Customer disclosure and erasure-ledger acceptance remain separate. Step23 durable report delivery stays separate;22 paused and Overlap deferrals unchanged.",
+      "migration": "supabase/migrations/20261102175402_eo05b_product_verification_evidence.sql",
+      "official_checked_at": "2026-11-02",
+      "official_sources": [
+        "https://shopify.dev/docs/api/admin-graphql/latest/objects/ProductVariant",
+        "https://supabase.com/docs/guides/database/functions",
+        "https://supabase.com/changelog"
+      ],
+      "validation": "Existing candidate/query behavior regression suite plus new capture/decrypt/link tests for observed, missing and wrong parent on all3 providers; forged/cross-owner/private projection tests. Existing F01 actual PostgreSQL replay extended with synthetic v2 candidate-page commit/readback/FK and wrong-layer rejection. CI acceptance pending; synthetic tests do not establish real provider proof.",
+      "runtime_code_authorized": true,
+      "live_database_authorized": false,
+      "live_provider_authorized": false,
+      "merge_authorized": false,
+      "deployment_authorized": false
     }
   }
 }

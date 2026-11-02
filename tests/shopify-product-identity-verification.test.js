@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {verifyShopifyProductCandidate as verify} from "../app/lib/shopify/product-identity-verification.server.js";
+import {verifyShopifyProductCandidate as verify, shopifyProductVerificationEvidence, bindShopifyProductVerification} from "../app/lib/shopify/product-identity-verification.server.js";
 import {resolveGoogleProductIdentity as resolve} from "../app/lib/providers/google-product-identity-resolution.server.js";
 import {readMerchantProductIdentitySnapshot} from "../app/lib/providers/google-product-identity-reader.server.js";
 import {GOOGLE_MERCHANT_OAUTH_SCOPE} from "../app/lib/oauth/oauth-permission-profile.server.js";
@@ -213,4 +213,20 @@ test("wrong shop installation generation is rejected before rule lookup or Shopi
   const snapshot = await source(), f = fixture(); f.options.installation.installGeneration++;
   await assert.rejects(resolve(resolver(snapshot, f, () => assert.fail("must not load rule"))), /SHOP_SCOPE_MISMATCH/);
   assert.equal(f.calls.length, 0);
+});
+
+test("private verification observation rejects copied results and cross-owner bindings",async()=>{
+ const f=fixture(),result=await verify(f.options),proof=shopifyProductVerificationEvidence(result);
+ const owner={workspaceId:installation.workspaceId,generation:"2",shopId:shop.shopId,shopDomain:shop.myshopifyDomain};
+ assert.equal(bindShopifyProductVerification(proof,owner),proof);
+ assert.throws(()=>shopifyProductVerificationEvidence(structuredClone(result)),/OBSERVATION_REQUIRED/);
+ assert.throws(()=>bindShopifyProductVerification(structuredClone(proof),owner),/OWNER_MISMATCH/);
+ for(const change of [{generation:"3"},{workspaceId:"other"},{shopId:gid("Shop","2")},{shopDomain:"other.myshopify.com"}])assert.throws(()=>bindShopifyProductVerification(proof,{...owner,...change}),/OWNER_MISMATCH/);
+ assert.ok(Object.isFrozen(proof.response.product));assert.equal(result.shopifyVerification,undefined);
+});
+test("verification evidence distinguishes not-requested from null and strips extra native fields",async()=>{
+ const f=fixture({product:{...native("Product","10"),title:"PRIVATE-TITLE",email:"PRIVATE-EMAIL"}});delete f.options.variantId;
+ const result=await verify(f.options),proof=shopifyProductVerificationEvidence(result);
+ assert.equal(proof.response.variant.state,"not_requested");assert.equal(proof.response.product.state,"observed");
+ assert.doesNotMatch(JSON.stringify(proof),/PRIVATE|email|title/);assert.equal(f.calls.length,1);
 });

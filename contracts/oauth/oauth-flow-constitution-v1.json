@@ -1498,12 +1498,12 @@
       "app/routes/settings.provider-live-evidence.ts": "89fbcb7087fc480fefba708bbc730146f1ba41af48d98f1b0a10fe1427120495",
       "app/routes/webhooks.shopify.tsx": "eac0ea30fcca28d6bba3c11105a5c4fda7778d1398c23f21fcb02f717d8bd056",
       "app/shopify.server.ts": "cc5959867dd5c413b222d51c4aad7d9a39c7c3d15e590aada86a1ddfefdc6fad",
-      "contracts/a6-eo-implementation-master-v1.json": "bc93a1d41ba4627ad1b690e41937fda3cb0e1b2639e7c315ac28b426556c9518",
+      "contracts/a6-eo-implementation-master-v1.json": "5d5a9f65d8583e4bf87cd2a267516474be198a7d6d72893eef95fc91d22d510d",
       "contracts/eo-05-oauth-setup-permission-policy-v1.json": "c1914f91011464d3b16b4b0a7710e49878ce6dbb57427e3d0f7c68d9ec4ec681",
       "contracts/eo-05-permission-explanation-design-v1.json": "ad4753b9ad4a6becd14764b7b33fb917f0cc491ad774cc1f1fe9053c5f189f35",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
       "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md": "c602fd4d7760e8f32c109e1f0456907c739c12906d71becf88476cad2007d6a1",
-      "docs/EXECUTION_PLAN.md": "5db086c90bc0865fe894ceac975028a0d907add00e7209de78acf09723bcecee",
+      "docs/EXECUTION_PLAN.md": "7896b31e47879cef6fc73a325ec0397d2a65b4b11c0bfd51ddb70cd6b58fdb16",
       "docs/OAUTH_FLOW_CONSTITUTION.md": "74d7a8f327a9558712c3ac8bb54a6633fff7a7e2045405d236d35f265d124b28",
       "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md": "49e253b08959faa9f0b2bf208ed5eb6d3c078a0ddf9097e667a9bf1483dc7350",
       "package.json": "e46285b3a60421e8c338807d7b606afa17f16303b08a2832bed3222a06183fe8",
@@ -1581,7 +1581,7 @@
       "supabase/migrations/20261029083341_eo05a_shopify_order_fair_dispatch.sql": "1ca60d9209094dcf9410c19063b4fd203bf98ba2dcf9185a165cd48537d4abd1",
       "supabase/migrations/20261029091041_eo05a_shopify_order_reconciliation.sql": "4c8d9870b5e17cafe971cdbd569870cebc040b15aa0b69f3075ae0ec498aa223",
       "supabase/migrations/20261031181313_eo05a_identity_oauth_reconnect.sql": "d455c0cd905d0d8ef68a2204a91fd963fb9e3fdfa7475f5feaa2bfe0a9b54730",
-      "tests/a6-docs-01-turkish-standardization.test.js": "831f19b957b7d592fe0e8fb39e1b51b63215fada52792b4d9c30e06ffadcd24c",
+      "tests/a6-docs-01-turkish-standardization.test.js": "367ffd43d113d2dae7d35d32fd712a859c72d4c27095ac395b23ae4ef2e2a51c",
       "tests/a6-tech-01-f01c-scoped-recovery.test.js": "3bd869071d5042402215176a99bf14dcebce6d3d0497ffcba946038050701792",
       "tests/eo-01c-preview-shell.test.js": "c3d67bb6666c19cf5ac12cfcd8a7f2f2acdf399d5a8ac32c0269823b06cbf789",
       "tests/eo-03a-oauth-transaction-boundary.test.js": "b364193460356370d1128000e6c0b61e975b2d79b896135d97ce648bc30a7747",
@@ -1710,6 +1710,32 @@
         "contracts/oauth/oauth-flow-constitution-v1.json",
         "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md",
         "docs/EXECUTION_PLAN.md"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ]
+    },
+    {
+      "id": "step15-storage-foundation-design-2026-11-02",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Owner approved the concrete Step15 raw-evidence storage/table allocation/relationship design and staged delivery with Tamam başlayalım. This first package is a reviewable design; existing table-count approval precedes migration/writer implementation. No live provider, DB, config, merge or deploy."
+      },
+      "rationale": "Prepare the first concrete Step15 storage layout and analyst brief using existing decisions. No OAuth transitions, native queries, scopes or runtime modified. Register the new repository brief in the existing documentation inventory.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "merge": false,
+        "deploy": false
+      },
+      "changed_paths": [
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "docs/EXECUTION_PLAN.md",
+        "tests/a6-docs-01-turkish-standardization.test.js"
       ],
       "acceptance_required": [
         "required_CI",

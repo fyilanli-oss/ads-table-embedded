@@ -1,0 +1,647 @@
+{
+  "contract_id": "eo-05-step15-storage-design-v1",
+  "version": "0.1.0",
+  "checked_at": "2026-11-02",
+  "status": "proposal_for_owner_table_design_review_not_implemented",
+  "existing_step": 15,
+  "package": "A6-EO-05-B",
+  "base_main": "9e8030ded82ab3c62cb7bb3aa50dfe90fc830075",
+  "brief": "docs/EO_05_STEP15_STORAGE_DESIGN_BRIEF.md",
+  "authorization": {
+    "source": "Owner explicitly asked whether Step15 defines raw-data storage, table allocation and relationships, received the concrete design/implementation sequence with separate live DB gate, and replied Tamam başlayalım. This first delivery prepares a reviewable table design before the required physical-table approval.",
+    "design_preparation": true,
+    "physical_table_design_accepted": false,
+    "runtime_implementation_in_this_delivery": false,
+    "migration": false,
+    "live_DB": false,
+    "provider_calls": false,
+    "OAuth_UI_or_scope_change": false,
+    "merge": false,
+    "deploy": false
+  },
+  "authority": [
+    "docs/EXECUTION_PLAN.md",
+    "contracts/eo-05-start-brief-v1.json",
+    "contracts/pd-cpd-query-standard-v1.json",
+    "docs/research/PD_CPD_QUERY_WORKING_TABLE_2026-10-22.md",
+    "contracts/a6-eo-cross-cutting-safety-capacity-v1.json",
+    "docs/OAUTH_FLOW_CONSTITUTION.md"
+  ],
+  "owner_overlap_decision": {
+    "source": "Current conversation 2026-11-02; separate plan PR294 remains unmerged and is not used as a code baseline.",
+    "extra_Shopify_UTM_landing_referrer_MarketingEvent": "discussion_at_existing_Overlap_after22_no_new_query_here",
+    "refund_detail": "not_current_agenda_query_or_raw_capture_decision_at_Overlap",
+    "global_raw_evidence_scope_removed": false,
+    "step22": "paused",
+    "step23": "general_Dataset_FX_writer"
+  },
+  "table_count": {
+    "step15_physical_tables_proposed": 10,
+    "existing_logical_five_reused": [
+      "product_identity_mappings"
+    ],
+    "additional_support_source_tables": 9,
+    "logical_Dataset_tables_unchanged": [
+      "pd_facts",
+      "cpd_product_performance_facts",
+      "cpd_product_sales_facts",
+      "product_identity_mappings",
+      "fx_rates"
+    ],
+    "remaining_logical_tables_later": 4,
+    "total_across_this_proposal_and_five_logical_tables": 14,
+    "includes_existing_operational_tables": false,
+    "proposal_not_accepted": true
+  },
+  "common_columns": {
+    "id": "bigint identity; transport canonical positive decimal text without Number conversion",
+    "workspace_id": "uuid existing app.workspaces",
+    "installation_id": "bigint existing shopify.installations",
+    "installation_generation": "bigint current server authority",
+    "shop_id": "verified Shopify Shop GID text",
+    "recorded_at": "timestamptz observation/storage time, never inferred native validity",
+    "tenant_FK": "Every local relationship includes workspace_id, installation_id and generation; bare id FK alone is insufficient",
+    "provider_scope": "When applicable: provider/account/connection id+version/reporting selection epoch and credential reference, never credential content; Shopify independent rows have no invented ad connection",
+    "query_time": "Extraction UTC window, business date/timezone and native attribution time basis are different fields/states; do not infer one from another"
+  },
+  "tables": [
+    {
+      "name": "evidence.source_batches",
+      "label_tr": "Okuma paketi ve kayıt makbuzu",
+      "purpose": "Bound a source read and durable write outcome to actual owner/attempt; not a provider-atomic snapshot.",
+      "columns": [
+        "common_columns",
+        "attempt_id uuid",
+        "batch_ordinal integer",
+        "primary_source text",
+        "provider_scope jsonb validated typed inventory",
+        "job_or_reservation_reference jsonb typed existing authority",
+        "extraction_window jsonb",
+        "source_versions jsonb",
+        "family_manifest jsonb",
+        "source_state staged|complete|partial|failed",
+        "storage_state staged|committed|invalidated",
+        "request_digest text",
+        "manifest_hash text",
+        "commit_id uuid nullable",
+        "committed_at timestamptz nullable",
+        "retention_class text",
+        "retention_policy_version text",
+        "expires_at timestamptz"
+      ],
+      "unique": [
+        "workspace/installation/generation/attempt_id/batch_ordinal",
+        "same operation identity with different request_digest is conflict, never overwrite"
+      ],
+      "relations": [],
+      "indexes": [
+        "owner+attempt+ordinal unique",
+        "owner+storage_state+recorded_at",
+        "retention_class+expires_at"
+      ],
+      "rule": "Commit receipt fields and accepted structured versions change in one bounded transaction. A committed partial source remains partial and never advances a complete-range marker."
+    },
+    {
+      "name": "evidence.source_pages",
+      "label_tr": "Şifreli kaynak sayfaları",
+      "purpose": "Store bounded sanitized request-description/response evidence under a purpose-specific encrypted envelope in PostgreSQL.",
+      "columns": [
+        "common_columns",
+        "batch_id bigint",
+        "family text",
+        "page_ordinal integer",
+        "origin text",
+        "request_fingerprint text",
+        "source_request_id text nullable",
+        "source_response_state text",
+        "payload_schema_version text",
+        "sanitizer_version text",
+        "payload_hash text",
+        "ciphertext bytea",
+        "nonce bytea",
+        "auth_tag bytea",
+        "key_version integer",
+        "plain_byte_count bigint",
+        "retention_class text",
+        "expires_at timestamptz",
+        "capture_layer native_response_projection|collector_projection",
+        "field_coverage jsonb",
+        "numeric_fidelity exact_source_string|lossless_token|decoded_only"
+      ],
+      "unique": [
+        "owner/batch/family/page_ordinal",
+        "same page slot plus different payload is conflict"
+      ],
+      "relations": [
+        {
+          "to": "evidence.source_batches",
+          "via": "batch_id",
+          "cardinality": "many_to_one",
+          "scope": "owner"
+        }
+      ],
+      "indexes": [
+        "owner+batch+family+page_ordinal unique",
+        "owner+batch",
+        "expires_at"
+      ],
+      "rule": "Only query-approved fields enter encrypted payload. No Authorization/cookie/token, signed next URL, profile PII or arbitrary provider error body. Hash refers to the sanitized payload, not an unretained original HTTP body."
+    },
+    {
+      "name": "evidence.source_references",
+      "label_tr": "Kanıtın içindeki kayıt adresleri",
+      "purpose": "Typed page and record locators; local row index is valid only with its exact page/batch/hash.",
+      "columns": [
+        "common_columns",
+        "page_id bigint",
+        "locator_kind text",
+        "record_locator text",
+        "native_record_type text",
+        "native_record_id text nullable",
+        "record_hash text",
+        "observation_state text"
+      ],
+      "unique": [
+        "owner/page/locator_kind/record_locator"
+      ],
+      "relations": [
+        {
+          "to": "evidence.source_pages",
+          "via": "page_id",
+          "cardinality": "many_to_one",
+          "scope": "owner"
+        }
+      ],
+      "indexes": [
+        "owner+page+locator_kind+record_locator unique",
+        "owner+native_record_type+native_record_id"
+      ],
+      "rule": "Reference alone is not native identity/claim proof. Unknown IDs stay in evidence without invented canonical records."
+    },
+    {
+      "name": "identity.source_rule_versions",
+      "label_tr": "Kaynak kimliği yorumlama kuralları",
+      "purpose": "Version already reviewed integration/source-format rules, not guessed formats or user-entered manual mappings.",
+      "columns": [
+        "common_columns",
+        "provider_scope",
+        "rule_key text",
+        "version bigint",
+        "supersedes_id bigint nullable",
+        "rule_kind text",
+        "native_context jsonb",
+        "parser_version text",
+        "review_status reviewed|withdrawn|conflicting",
+        "documented_basis jsonb",
+        "applicability jsonb with explicit unknown validity",
+        "accepted_batch_id bigint"
+      ],
+      "unique": [
+        "owner/rule_key/version"
+      ],
+      "relations": [
+        {
+          "to": "identity.source_rule_versions",
+          "via": "supersedes_id",
+          "cardinality": "optional_predecessor",
+          "scope": "same_rule_key_and_owner"
+        },
+        {
+          "to": "evidence.source_batches",
+          "via": "accepted_batch_id",
+          "cardinality": "many_to_one",
+          "scope": "owner"
+        }
+      ],
+      "indexes": [
+        "owner+rule_key+version unique",
+        "owner+provider account+rule_kind",
+        "owner+accepted_batch_id"
+      ],
+      "rule": "No production rule is registered by accepting this design. Google/Meta source context and Klaviyo documented integration rules remain provider-specific."
+    },
+    {
+      "name": "identity.product_identity_mappings",
+      "label_tr": "Platform ürünü ile Shopify ürünü eşlemesi",
+      "purpose": "Mapping component of the existing five-table proposal, not a second mapping registry.",
+      "columns": [
+        "common_columns",
+        "provider_scope",
+        "native_product_id text",
+        "native_context jsonb",
+        "context_state text",
+        "identity_key_version text",
+        "identity_key_canonical text",
+        "identity_hash text",
+        "revision bigint",
+        "supersedes_id bigint nullable",
+        "source_rule_version_id bigint nullable",
+        "shopify_product_id text nullable",
+        "shopify_variant_id text nullable",
+        "mapping_state verified|unresolved|conflicting|withdrawn",
+        "verified_at timestamptz nullable",
+        "applicability jsonb",
+        "accepted_batch_id bigint"
+      ],
+      "unique": [
+        "owner/identity_hash/revision"
+      ],
+      "relations": [
+        {
+          "to": "identity.source_rule_versions",
+          "via": "source_rule_version_id",
+          "cardinality": "optional_many_to_one",
+          "scope": "owner_and_provider_context"
+        },
+        {
+          "to": "identity.product_identity_mappings",
+          "via": "supersedes_id",
+          "cardinality": "optional_predecessor",
+          "scope": "same_identity_key_and_owner"
+        },
+        {
+          "to": "evidence.source_batches",
+          "via": "accepted_batch_id",
+          "cardinality": "many_to_one",
+          "scope": "owner"
+        }
+      ],
+      "indexes": [
+        "owner+identity_hash+revision",
+        "owner+Shopify product ID",
+        "owner+source_rule_version_id",
+        "owner+accepted_batch_id"
+      ],
+      "rule": "Canonical identity includes provider/account/catalog-feed-language-native context with explicit missing/null states. Verify canonical tuple as well as hash; no SKU/name/price join. Verified requires Product GID and proven Variant parent when present. No native identity means evidence-only, not a guessed mapping key. Lock the scoped hash, compare canonical tuple and serialization version against every prior identity using that hash, and reject a hash collision; unique hash is not identity proof. Serialization is versioned, sorted-key UTF-8 with explicit null/missing/type markers and no numeric ID coercion."
+    },
+    {
+      "name": "source.shopify_order_versions",
+      "label_tr": "Shopify sipariş kayıtları",
+      "purpose": "Separate native Order observations and versions; not a provider-attributed fact.",
+      "columns": [
+        "common_columns",
+        "order_id text",
+        "order_updated_at timestamptz",
+        "observation_hash text",
+        "source_batch_id bigint",
+        "source_reference_id bigint",
+        "created_at_native timestamptz",
+        "processed_at timestamptz",
+        "cancelled_at timestamptz nullable",
+        "test boolean",
+        "financial_status text nullable",
+        "taxes_included boolean",
+        "source_money jsonb exact decimal strings+both currencies",
+        "order_version_state text"
+      ],
+      "unique": [
+        "owner/shop/order_id/order_updated_at/observation_hash"
+      ],
+      "relations": [
+        {
+          "to": "evidence.source_batches",
+          "via": "source_batch_id",
+          "cardinality": "many_to_one",
+          "scope": "owner"
+        },
+        {
+          "to": "evidence.source_references",
+          "via": "source_reference_id",
+          "cardinality": "many_to_one",
+          "scope": "same_batch_and_owner"
+        }
+      ],
+      "indexes": [
+        "owner+shop+order_id+order_updated_at",
+        "owner+source_batch_id",
+        "owner+source_reference_id"
+      ],
+      "rule": "Same native version and same hash is replay. Same version with different content is conflict, never last-write-wins. Preserve observed original/current/refunded totals without defining a new net-sales or refund calculation."
+    },
+    {
+      "name": "source.shopify_line_versions",
+      "label_tr": "Siparişin ürün satırları",
+      "purpose": "One native line belongs to an exact observed Order version.",
+      "columns": [
+        "common_columns",
+        "order_version_id bigint",
+        "line_item_id text",
+        "observation_hash text",
+        "source_reference_id bigint",
+        "product_id text nullable",
+        "variant_id text nullable",
+        "product_identity_state text",
+        "quantity integer",
+        "current_quantity integer",
+        "is_gift_card boolean",
+        "source_money jsonb exact source values"
+      ],
+      "unique": [
+        "owner/order_version_id/line_item_id"
+      ],
+      "relations": [
+        {
+          "to": "source.shopify_order_versions",
+          "via": "order_version_id",
+          "cardinality": "many_to_one",
+          "scope": "owner"
+        },
+        {
+          "to": "evidence.source_references",
+          "via": "source_reference_id",
+          "cardinality": "many_to_one",
+          "scope": "same_batch_and_owner"
+        }
+      ],
+      "indexes": [
+        "owner+order_version_id+line_item_id unique",
+        "owner+product_id",
+        "owner+source_reference_id"
+      ],
+      "rule": "Product/Variant is not the line dedup key. Missing/deleted product does not erase an observed line. No new refund-line query."
+    },
+    {
+      "name": "source.shopify_journey_versions",
+      "label_tr": "Shopify ziyaret ve kaynak gözlemleri",
+      "purpose": "Retain current summary and bounded moment-page observations separately from sales and provider claims.",
+      "columns": [
+        "common_columns",
+        "order_version_id bigint",
+        "source_batch_id bigint",
+        "observation_hash text",
+        "journey_state text",
+        "ready boolean nullable",
+        "part_ordinal integer",
+        "part_kind summary|moments",
+        "moments_complete boolean",
+        "payload_projection jsonb existing safe visit fields only"
+      ],
+      "unique": [
+        "owner/order_version_id/source_batch_id/part_kind/part_ordinal"
+      ],
+      "relations": [
+        {
+          "to": "source.shopify_order_versions",
+          "via": "order_version_id",
+          "cardinality": "many_to_one",
+          "scope": "owner"
+        },
+        {
+          "to": "evidence.source_batches",
+          "via": "source_batch_id",
+          "cardinality": "many_to_one",
+          "scope": "owner"
+        }
+      ],
+      "indexes": [
+        "owner+order_version_id+source_batch_id+part_kind+part_ordinal unique",
+        "owner+source_batch_id"
+      ],
+      "rule": "Pending/null/empty/missing and sales-page completeness remain distinct. Only existing id/time/source/sourceDescription/sourceType; UTM/referrer/landing/MarketingEvent additions deferred to Overlap."
+    },
+    {
+      "name": "source.provider_claim_versions",
+      "label_tr": "Platformun sipariş veya satış atıf iddiası",
+      "purpose": "Retain only actually readable typed native claims, separately from Shopify sales and visits.",
+      "columns": [
+        "common_columns",
+        "provider_scope",
+        "claim_identity_key text",
+        "source_reference_id bigint",
+        "native_event_or_claim_id text",
+        "native_order_reference text nullable",
+        "shopify_order_version_id bigint nullable",
+        "order_link_state text",
+        "attribution_reference jsonb",
+        "message_or_ad_reference jsonb",
+        "reporting_model_window_basis jsonb",
+        "observation_hash text",
+        "supersedes_id bigint nullable"
+      ],
+      "unique": [
+        "owner/provider/account/claim_identity_key/observation_hash"
+      ],
+      "relations": [
+        {
+          "to": "evidence.source_references",
+          "via": "source_reference_id",
+          "cardinality": "many_to_one",
+          "scope": "owner_and_provider"
+        },
+        {
+          "to": "source.shopify_order_versions",
+          "via": "shopify_order_version_id",
+          "cardinality": "optional_many_to_one",
+          "scope": "verified_same_shop_order_and_owner"
+        },
+        {
+          "to": "source.provider_claim_versions",
+          "via": "supersedes_id",
+          "cardinality": "optional_predecessor",
+          "scope": "same_claim_key_and_owner"
+        }
+      ],
+      "indexes": [
+        "owner+provider+account+claim_identity_key",
+        "owner+shopify_order_version_id",
+        "owner+source_reference_id"
+      ],
+      "rule": "No Google/Meta claim fabricated from uploads, success receipts, aggregate totals, amount/date proximity or Shopify journey. Preserve unlinked readable claim as unlinked. No new overlap calculator, reattribution or Sales Role."
+    },
+    {
+      "name": "evidence.source_reference_links",
+      "label_tr": "Bir kaydın birden fazla kanıta bağlantısı",
+      "purpose": "Many-to-many evidence links with concrete scoped foreign keys instead of unchecked polymorphic target strings.",
+      "columns": [
+        "common_columns",
+        "source_reference_id bigint",
+        "role text",
+        "source_rule_version_id bigint nullable",
+        "mapping_id bigint nullable",
+        "order_version_id bigint nullable",
+        "line_version_id bigint nullable",
+        "journey_version_id bigint nullable",
+        "claim_version_id bigint nullable"
+      ],
+      "unique": [
+        "owner/source_reference/target_column/target_id/role via per-target partial indexes"
+      ],
+      "relations": [
+        {
+          "to": "evidence.source_references",
+          "via": "source_reference_id",
+          "cardinality": "many_to_one",
+          "scope": "owner"
+        },
+        {
+          "to": "identity.source_rule_versions",
+          "via": "source_rule_version_id",
+          "cardinality": "optional_target",
+          "scope": "owner"
+        },
+        {
+          "to": "identity.product_identity_mappings",
+          "via": "mapping_id",
+          "cardinality": "optional_target",
+          "scope": "owner"
+        },
+        {
+          "to": "source.shopify_order_versions",
+          "via": "order_version_id",
+          "cardinality": "optional_target",
+          "scope": "owner"
+        },
+        {
+          "to": "source.shopify_line_versions",
+          "via": "line_version_id",
+          "cardinality": "optional_target",
+          "scope": "owner"
+        },
+        {
+          "to": "source.shopify_journey_versions",
+          "via": "journey_version_id",
+          "cardinality": "optional_target",
+          "scope": "owner"
+        },
+        {
+          "to": "source.provider_claim_versions",
+          "via": "claim_version_id",
+          "cardinality": "optional_target",
+          "scope": "owner"
+        }
+      ],
+      "indexes": [
+        "scoped FK index for reference and each nonnull target",
+        "per-target unique reference+target+role"
+      ],
+      "rule": "Exactly one target FK is nonnull; at least one evidence link is required for committed rule/mapping/journey. Source references must belong to either this committing batch or an already committed batch, with exact owner/context/version/hash validation. Reuse of an existing structured native version after a fresh read records a new evidence link only after identical native identity/version/content is proved; arbitrary cross-batch imports are rejected."
+    }
+  ],
+  "payload_allocation": [
+    {
+      "input": "Google/Meta/Klaviyo native performance/conversion/product rows and account/time/currency metadata",
+      "to": [
+        "evidence.source_pages",
+        "evidence.source_references"
+      ],
+      "later": "General canonical PD/CPD facts and FX writer at23; retain native quantity/value variants and support states."
+    },
+    {
+      "input": "Google/Meta reviewed source rules and verified Shopify candidate observations; Klaviyo product/variant integration observations",
+      "to": [
+        "identity.source_rule_versions",
+        "identity.product_identity_mappings",
+        "evidence.source_reference_links"
+      ],
+      "later": "Missing real source proof remains unresolved; no production rule manufactured by storage."
+    },
+    {
+      "input": "Existing Shopify order headers and line pages",
+      "to": [
+        "source.shopify_order_versions",
+        "source.shopify_line_versions"
+      ],
+      "later": "Accounting formulas and additional refund extraction not introduced."
+    },
+    {
+      "input": "Existing Shopify journey summary/moment pages",
+      "to": [
+        "source.shopify_journey_versions",
+        "evidence.source_reference_links"
+      ],
+      "later": "Additional visit fields at Overlap."
+    },
+    {
+      "input": "Actually readable provider Order/Message/attribution claims",
+      "to": [
+        "source.provider_claim_versions"
+      ],
+      "later": "Native absence stays unknown; exact overlap implementation remains later."
+    }
+  ],
+  "security": {
+    "schemas": "Private proposed schemas evidence, identity, source; names await owner table approval, not provisioned.",
+    "roles": "Reuse existing owner/coordinator/runtime separation. Browser/Data API public/anon/authenticated/service_role receive no new table access; runtime no direct DML or arbitrary decrypt endpoint.",
+    "RLS": "ENABLE and FORCE RLS plus scoped internal SQL functions. Server-resolved installation/account/selection/deletion authority is verified inside transaction; no caller-set GUC or user_metadata authority.",
+    "crypto": "Purpose-specific AES-256-GCM envelope with key version, fresh nonce and AAD binding owner/batch/page/schema/hash. Separate key namespace and material from token/session encryption; existing token cipher rejects this purpose and is not called unchanged. Proposed nonce12 bytes, authentication tag16 bytes and256-bit independent key material; no key material enters database rows.",
+    "keys": "No key generation, environment variable or provider config change in this design. Key provisioning/rotation and backup-key restore proof precede live storage.",
+    "minimization": "Versioned per-family allowlist preserves relevant native evidence before business interpretation. Disallowed fields are removed before encryption; no full wire dump. Unknown unsafe/schema fields block accepted capture; no silent guessed projection. Mark capture layer and field coverage explicitly: a collector projection cannot prove an omitted field was absent from the native response. Native decimal strings remain unchanged; JSON numeric tokens need lossless capture for exact fidelity. Existing decoded Number values cannot be reconstructed as exact wire values and are labeled decoded_only.",
+    "decryption": "Authenticated bounded internal evidence reader verifies AAD/hash/owner/manifest/expiry before parsing. Normal reporting DTO does not carry ciphertext, raw body or cursor."
+  },
+  "lifecycle": {
+    "replay": "Within the same source operation, identical digest returns recorded receipt read-only; different digest conflicts. Across reads, exact native version/content resolves to same structured identity but new page observation may exist. Re-observed unchanged native Order/LineItem versions may reference the original immutable structured rows after exact content/owner verification; the fresh batch retains its own source pages and explicit links. Manifest distinguishes inserted versus reused rows; source observations are not summed as independent sales.",
+    "mapping_history": "Append immutable revisions; no catalog-format guess, no retroactive native valid-from inferred from verified_at. Existing fact consumers pin an exact mapping/rule version; later mapping cannot rewrite older report identity automatically.",
+    "current_selection": "Only current accepted revision in exact active owner/connection/account context is eligible; conflicting/withdrawn revision supplies no verified mapping.",
+    "disconnect": "Existing revoke protocol unchanged. Stop new use; retain historical source rows under existing privacy/retention policy; do not cascade-delete history merely on Disconnect.",
+    "reconnect": "New connection version or installation generation cannot automatically activate old mappings/rules/pages. Same native product ID with new authority requires fresh validation; historical rows stay separately scoped.",
+    "deletion": "Attach all10 tables and ciphertext/key references to existing durable privacy manifest/worker in implementation; existing confirmed deletion and shop-redact behavior wins over append-only history. No new deletion scheduler.",
+    "expiry": "Every batch/page requires finite policy-versioned expiry from an approved class policy before live storage. No arbitrary forever or invented fixed-day retention is selected by this table proposal. Policy owner/expiry/capacity are activation settings, not a new source query.",
+    "expiry_effect": "Expired payload is removed/tombstoned by existing controlled cleanup path; proof availability becomes expired. Do not silently claim retained proof or delete still-required content via FK cascade. Referenced retention and nonpersonal tombstones must be explicitly covered by the class policy. Proof-dependent current mapping/rule use is blocked when required evidence expires until fresh evidence is verified; historical observation is not silently relabeled currently verified.",
+    "restore": "Existing deletion-ledger replay precedes service; do not restore deleted payloads or expired keys into active reads."
+  },
+  "write_read_protocol": {
+    "staging": "Existing authentic observation, source family and ownership checks precede a bounded stage write. Page capture is not complete-source proof. New capture hooks/DB functions will be separately implemented after this design is accepted.",
+    "transaction": "Recheck current installation/deletion and provider version/selection/fence under existing consistent lock order. Insert or verify pages/references, rule/mapping/source versions and links; validate manifest; mark batch committed and store commit receipt atomically. Roll back all accepted rows on failure.",
+    "readback": "Return commit_id, manifest_hash, owner and counts from same transaction, then bounded receipt/readback reconciles exact operation and bytes. Verify encrypted evidence independently when used.",
+    "unknown": "Lost write acknowledgement stops; do not repeat write or fetch native pages automatically. Explicit read-only receipt inspection: present exact digest proves recorded commit; absent does not prove rollback or termination.",
+    "partial": "Keep successfully staged prefix evidence classified incomplete, never publishable. Existing capacity/fence holds are not released by storage receipt alone. Continuation requires explicit current authority and complete proven next-state; no replay of failed/unknown outbound calls.",
+    "checkpoint": "Source-batch commit and its local completion manifest are Step15. General Dataset commit/checkpoint/FX is Step23. Do not mutate existing job completed marker or accounting checkpoint ahead of its downstream durable handoff.",
+    "bounds": "Explicit per-page/per-batch row/byte/time/transaction/retention budgets and indexed bounded paging required; values come from existing measured capacity gate before live activation, not unlimited JSON blobs or new guessed defaults."
+  },
+  "alternatives": [
+    {
+      "option": "One JSON table for everything",
+      "rejected_reason": "Opaque identity relationships and no typed parent/claim constraints; structured reporting would require scanning/decrypting all pages."
+    },
+    {
+      "option": "Encrypted object storage plus DB references",
+      "deferred_reason": "Introduces second commit/deletion/orphan boundary; bounded PostgreSQL ciphertext is initial proposal. Revisit only if measured payload volume cannot meet budgets."
+    },
+    {
+      "option": "Per-record-type evidence link tables",
+      "not_selected_reason": "Six extra link tables instead of one typed nullable-FK association. Revisit if query-plan/constraint evidence favors them; count would change explicitly."
+    }
+  ],
+  "acceptance_cases": [
+    "same operation replay yields same receipt and no duplicate line/sale",
+    "same operation digest conflict rejected",
+    "cross-workspace/install/generation/reference association rejected",
+    "credential/version/selection changes before commit reject write",
+    "same Shopify native version with different body remains conflict",
+    "missing/deleted product preserves line and evidence",
+    "missing journey differs from zero visits; partial sales/journey not complete",
+    "verified mapping requires real native rule+same-shop Product/Variant evidence",
+    "unknown namespace stays unresolved; no heuristic claim or overlap",
+    "tampered ciphertext/AAD/hash/key version rejected without logging body",
+    "mid-transaction failure leaves no accepted structured subset",
+    "commit reply lost then explicit read-only receipt inspection, no automatic write replay",
+    "partial source prefix retained with incomplete manifest and no premature capacity release",
+    "Disconnect preserves permitted history but reconnect does not reuse active authority",
+    "deletion worker removes all affected records/links/payload, restore replays deletion ledger",
+    "expiry exposes proof-unavailable rather than pretending evidence retained",
+    "bounded query-plan/byte/memory/connection acceptance under actual profile"
+  ],
+  "delivery_sequence": [
+    "Owner reviews10-table layout and relationships; no DDL in this proposal",
+    "After acceptance prepare repository migration/private writer/readback and focused failure/tenant/crypto tests; keep live apply separate",
+    "Wire only approved source capture and structured identity/Order storage; no extra query fields or Step23 writer",
+    "Separate native evidence/capacity/security/retention/key/deletion acceptance before live activation"
+  ],
+  "official_sources": {
+    "checked_at": "2026-11-02",
+    "read": [
+      "https://supabase.com/docs/guides/database/tables",
+      "https://supabase.com/docs/guides/database/postgres/row-level-security",
+      "https://www.postgresql.org/docs/17/ddl-constraints.html",
+      "https://www.postgresql.org/docs/17/transaction-iso.html",
+      "https://www.postgresql.org/docs/17/ddl-priv.html"
+    ],
+    "not_completed": [
+      {
+        "url": "https://supabase.com/changelog.md",
+        "reason": "reader returned unsupported text/markdown content type; no fallback attempted; full changelog verification remains before implementation/live gate"
+      }
+    ],
+    "limit": "Documentation supports mechanisms, not AdsTable model acceptance or live database version/capacity."
+  }
+}

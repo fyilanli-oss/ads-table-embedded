@@ -5,6 +5,44 @@ import {sourceStoreFixture} from "../tests/fixtures/source-store-fixture.js";
 import {createSourceEvidenceRepository} from "../app/lib/database/source-evidence-store.server.js";
 import {quotaRouteIdentity} from "../app/lib/refresh/quota-scope-resolver.server.js";
 import {oauthPermissionScopes} from "../app/lib/oauth/oauth-permission-profile.server.js";
+import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
+import {createSharedQuotaRepository} from "../app/lib/database/shared-quota-repository.server.js";
+import {createRefreshEntitlementVerifier} from "../app/lib/refresh/entitlement-check.server.js";
+import {dispatchRefreshPreflight} from "../app/lib/refresh/preflight-bridge.server.js";
+
+// Independent transaction and actual Meta admission. Never spend another test's
+// short dispatch deadline on this matrix or widen its production/test limits.
+export async function metaSourceCaptureRehearsal(client, {workspace, shopId, shopDomain}) {
+  await client.query("begin");
+  try {
+    const initial = new Date(Date.now() - 3 * 86400000).toISOString();
+    await client.query("update integrations.provider_connections set connected_at=$1 where workspace_id=$2", [initial, workspace]);
+    await client.query("update integrations.reporting_account_bindings set effective_from=$1 where workspace_id=$2 and effective_to is null", [initial, workspace]);
+    const store = createRefreshWorkRepository(client), quotaStore = createSharedQuotaRepository(client);
+    await store.checkQueueFromAuthority({expectedRevision: (await store.readQueueCheck()).revision});
+    const vector = {requests: 20, dbWrites: 20, connections: 10, rows: 100, bytes: 10000};
+    const accounts = [{provider: "meta", accountId: "act_101"}, {provider: "google_ads", accountId: "111"}, {provider: "klaviyo", accountId: "klaviyo-a"}];
+    const budget = {global: vector, interactiveReserve: {requests: 0, dbWrites: 0, connections: 0, rows: 0, bytes: 0},
+      providers: accounts.map(a => ({provider: a.provider, limit: vector})), workspaces: [{workspaceId: workspace, limit: vector}], accounts: accounts.map(a => ({...a, limit: vector}))};
+    await client.query("update operations.refresh_control set budget=$1::jsonb,bounds=$2::jsonb where singleton", [JSON.stringify(budget), JSON.stringify({maxCandidates: 8, maxClaims: 8, maxAdmissions: 8, maxWorkspaces: 8})]);
+    const day = new Date(Date.now() - 86400000).toISOString().slice(0, 10), window = {from: day, to: day};
+    const limits = {deadlineAt: Date.now() + 120000, requestTimeoutMs: 1000, finishReserveMs: 10};
+    const entitlementVerifier = createRefreshEntitlementVerifier({store, appId: "gid://shopify/App/456", now: Date.now, limits,
+      authorizeRead: async () => true, partnerApi: {appId: "gid://shopify/App/456", activeSubscription: async () => ({data: {activeSubscription: {
+        shop: {id: shopId, myshopifyDomain: shopDomain}, billingPeriod: "EVERY_30_DAYS", cancelAtEndOfCycle: false, trialEndsAt: null,
+        currentBillingCycle: {startTime: initial, endTime: new Date(Date.now() + 10 * 86400000).toISOString()},
+        items: [{handle: "monthly", price: {active: true}}], pendingUpdate: null}}})}});
+    let execution;
+    const result = await dispatchRefreshPreflight({store, now: Date.now, entitlementVerifier,
+      buildWorkPlan: async source => source.provider === "meta" ? {partitionId: "meta-source-matrix", workClass: "hourly_hot_window", window,
+        cost: {requests: 2, dbWrites: 5, connections: 1, rows: 5, bytes: 1000}, limits: {...limits, maxRows: 5, maxBytes: 1000}} : null,
+      readPage: async value => {execution = structuredClone({claim: value.claim, window: value.window, entitlementReceipt: value.entitlementReceipt}); return {kind: "complete", payload: {}};},
+      validatePage: () => ({complete: true, rows: []})});
+    assert.equal(result.status, "awaiting_dataset"); assert.equal(execution.claim.provider, "meta");
+    await client.query("update operations.refresh_work_progress set stage='request_intent',rows_observed=0,bytes_observed=0 where fence=$1", [execution.claim.fence]);
+    await metaSourceCaptureProbe(client, {store, quotaStore, execution});
+  } finally {await client.query("rollback");}
+}
 
 // Rollback-only F01 fixture: real current-owner/job/billing/quota SQL and native
 // HTTP boundary. Tokens and every physical HTTP reply are synthetic.

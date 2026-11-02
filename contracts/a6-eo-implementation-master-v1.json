@@ -1,4 +1,14 @@
 {
+  "Step15_source_foundation_implementation_2026_11_02": {
+    "contract": "contracts/eo-05-step15-storage-design-v1.json",
+    "owner_accepted_layout": true,
+    "status": "repository_preparation_not_live",
+    "step15_complete": false,
+    "live_DB": false,
+    "native_calls": false,
+    "merge_authorized": false,
+    "deploy_authorized": false
+  },
   "Step15_storage_foundation_design_2026_11_02": {
     "checked_at": "2026-11-02",
     "status": "design_proposal_prepared_for_owner_table_review",

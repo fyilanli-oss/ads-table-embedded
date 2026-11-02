@@ -97,18 +97,18 @@ function validate(snapshot,owner,cipher,now){
 export function createVerifiedMappingRepository({database,cipher,now=Date.now}={}){
  if(typeof database?.query!=="function"||typeof cipher?.open!=="function"||typeof now!=="function")fail("CONFIG_INVALID");
  const reviews=new WeakMap(),writes=new WeakMap();
- async function load(input,write){try {const owner=sourceStoreOwner(input.owner),lookup=Object.hasOwn(input,"identity");if(owner.provider==="shopify")fail("INPUT_INVALID");
+ async function load(input,write){try {input=structuredClone(input);const owner=sourceStoreOwner(input.owner),lookup=Object.hasOwn(input,"identity");if(owner.provider==="shopify")fail("INPUT_INVALID");
   if(lookup){if(write||Object.hasOwn(input,"mappingId")||Object.hasOwn(input,"ruleId")||!input.identity||input.identity.provider!==owner.provider||input.identity.accountId!==owner.accountId
     ||Object.keys(input.identity).sort().join()!=="accountId,context,nativeId,provider"||Buffer.byteLength(canonicalSourceJson(input.identity))>8192)fail("INPUT_INVALID");}
   else if(!id(input.mappingId)||!id(input.ruleId))fail("INPUT_INVALID");
-  const snapshot=single(await database.query(lookup?"select identity.lookup_verified_mapping($1::jsonb,$2::jsonb) as result":"select identity.mapping_review_state($1::jsonb,$2::bigint,$3::bigint,$4::boolean) as result",
-   lookup?[JSON.stringify(owner),canonicalSourceJson(input.identity)]:[JSON.stringify(owner),input.mappingId,input.ruleId,write]));
+  const snapshot=structuredClone(single(await database.query(lookup?"select identity.lookup_verified_mapping($1::jsonb,$2::jsonb) as result":"select identity.mapping_review_state($1::jsonb,$2::bigint,$3::bigint,$4::boolean) as result",
+   lookup?[JSON.stringify(owner),canonicalSourceJson(input.identity)]:[JSON.stringify(owner),input.mappingId,input.ruleId,write])));
   if(lookup?!same(JSON.parse(snapshot.mapping?.identityKey??"null"),input.identity):snapshot.mapping?.id!==input.mappingId||snapshot.rule?.id!==input.ruleId)fail("RESULT_INVALID");
   const verified=validate(snapshot,owner,cipher,now());return {snapshot,owner,...verified};
   }catch(error){if(/^(?:MAPPING_STORE_[A-Z_]+|MAPPING_[A-Z_]+|SOURCE_OWNER_CHANGED|SOURCE_PROVIDER_CHANGED)$/.test(error?.message??""))throw error;fail("READ_FAILED");}
  }
  return Object.freeze({
-  async review(input){const state=await load(input,true);if(state.snapshot.mapping.state!=="unresolved")fail("UNRESOLVED_REQUIRED");const review=freeze({mappingId:input.mappingId,ruleId:input.ruleId,status:"reviewed_for_mapping_verification"});reviews.set(review,state);return review;},
+  async review(input){const state=await load(input,true);if(state.snapshot.mapping.state!=="unresolved")fail("UNRESOLVED_REQUIRED");const review=freeze({mappingId:state.snapshot.mapping.id,ruleId:state.snapshot.rule.id,status:"reviewed_for_mapping_verification"});reviews.set(review,state);return review;},
   prepare(review,{policy,deadlineAt}={}){const s=reviews.get(review),time=now();if(!s)fail("REVIEW_REQUIRED");
    const end=Date.parse(deadlineAt),until=Date.parse(policy?.until);if(!Number.isFinite(end)||end<=time||end>time+600000||!Number.isFinite(until)||until<=time||until>s.expiresAt
     ||typeof policy?.version!=="string"||!policy.version.length||policy.version.length>128||Object.keys(policy).sort().join()!=="until,version")fail("POLICY_INVALID");

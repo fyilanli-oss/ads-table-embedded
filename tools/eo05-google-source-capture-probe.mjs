@@ -44,6 +44,7 @@ export async function googleSourceCaptureProbe(client,{store,execution,quotaStor
         writeCalls++;lastArgs=args;
         if(mode==="fence")await client.query("update operations.refresh_runs set fence=fence+1000 where workspace_id=$1 and provider='google_ads' and job_id=$2",[workspaceId,execution.claim.id]);
         if(mode==="disconnect")await client.query("update integrations.provider_connections set lifecycle_status='disconnect_pending' where id=$1",[connection]);
+        if(mode==="context")await client.query("update operations.refresh_quota_contexts set merchant_binding_epoch=merchant_binding_epoch+1 where workspace_id=$1 and provider='google_ads'",[workspaceId]);
         if(mode==="expired"){const r=JSON.parse(args[4]);r.deadlineAt=new Date(Date.now()-1000).toISOString();args=[...args.slice(0,4),JSON.stringify(r)];}
         await client.query("savepoint google_source_rpc");let result;
         try{result=await client.query(sql,args);await client.query("release savepoint google_source_rpc");}
@@ -103,7 +104,7 @@ export async function googleSourceCaptureProbe(client,{store,execution,quotaStor
       const state=(await client.query("select status from operations.refresh_runs where workspace_id=$1 and provider='google_ads' and job_id=$2",[workspaceId,execution.claim.id])).rows[0];assert.equal(state.status,"running");
     }finally{await client.query("rollback to savepoint google_source_case");await client.query("release savepoint google_source_case");}
   }
-  for(const mode of ["success","empty","reuse","new_version","lost","fence","disconnect","expired","late_failure","native_failure"])await scenario(mode);
+  for(const mode of ["success","empty","reuse","new_version","lost","fence","disconnect","context","expired","late_failure","native_failure"])await scenario(mode);
   for(const role of ["anon","authenticated","service_role","adstable_runtime","adstable_refresh_coordinator"])
     assert.equal((await client.query("select has_function_privilege($1,'evidence.commit_google_identity_source(jsonb,uuid,integer,jsonb,jsonb)','EXECUTE') ok",[role])).rows[0].ok,false);
   console.log("EO05_GOOGLE_SOURCE_CAPTURE_PASS real_SQL_quota_REST_synthetic_HTTP=true encrypted_page_readback=true unresolved_not_verified=true durable_revision_and_supersedes=true stale_fence_context_disconnect_expiry_denied=true late_failure_rollback=true lost_ack_explicit_readback=true no_runtime_grants=true no_checkpoint=true");

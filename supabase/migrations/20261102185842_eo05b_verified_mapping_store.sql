@@ -40,8 +40,8 @@ begin
  or b.source_state<>'complete' or rb.source_state<>'complete' or least(b.retain_until,rb.retain_until)<=clock_timestamp()
  then raise exception 'MAPPING_BATCH_NOT_CURRENT';end if;
  if m.mapping_state='verified' then
-  if m.source_rule_version_id is distinct from r.id or b.manifest->>'kind' is distinct from 'mapping_acceptance_v1'
-  then raise exception 'MAPPING_ACCEPTANCE_REQUIRED';end if;
+  if m.source_rule_version_id is distinct from r.id or b.manifest->>'kind' is distinct from 'mapping_verification_v1'
+  then raise exception 'MAPPING_RECEIPT_REQUIRED';end if;
   select * into origin from evidence.source_batches where workspace_id=w and installation_id=iid and installation_generation=g and id=(b.manifest->>'sourceBatchId')::bigint for share;
  else origin:=b;end if;
  if origin.authority is distinct from o or origin.storage_state<>'committed' or origin.source_state<>'complete' or origin.retain_until<=clock_timestamp()
@@ -85,7 +85,7 @@ begin
   pages:=pages||(select jsonb_build_array(jsonb_build_object('id',p.id::text,'batchId',b.id::text,'attemptId',b.attempt_id,'batchOrdinal',b.batch_ordinal,
     'family',p.family,'ordinal',p.page_ordinal,'origin',p.origin,'payloadHash',p.payload_hash,'captureLayer',p.capture_layer,'numericFidelity',p.numeric_fidelity,
     'fieldCoverage',p.field_coverage,'schemaVersion',p.payload_schema_version,'sanitizerVersion',p.sanitizer_version,'keyVersion',p.key_version,'plainBytes',p.plain_byte_count,
-    'ciphertext',encode(p.ciphertext,'hex'),'nonce',encode(p.nonce,'hex'),'authTag',encode(p.auth_tag,'hex'),'retainUntil',p.retain_until)))
+    'ciphertext',encode(p.ciphertext,'hex'),'nonce',encode(p.nonce,'hex'),'authTag',encode(p.auth_tag,'hex'),'retainUntil',p.retain_until))
    from evidence.source_pages p where p.workspace_id=w and p.installation_id=iid and p.installation_generation=g and p.id=page.id and p.purged_at is null);
   if pages is null then raise exception 'MAPPING_EVIDENCE_PURGED';end if;
  end loop;
@@ -115,7 +115,7 @@ begin
  perform pg_advisory_xact_lock(hashtextextended(w::text||iid::text||g::text||p_operation::text,0));
  select * into prior from evidence.source_batches where workspace_id=w and installation_id=iid and installation_generation=g and attempt_id=p_operation and batch_ordinal=0;
  if found then
-  if prior.authority is distinct from o or prior.request_digest<>digest or prior.manifest->>'kind' is distinct from 'mapping_acceptance_v1'
+  if prior.authority is distinct from o or prior.request_digest<>digest or prior.manifest->>'kind' is distinct from 'mapping_verification_v1'
   then raise exception 'MAPPING_OPERATION_CONFLICT';end if;
   return evidence.read_source_receipt(o,p_operation,0);
  end if;
@@ -136,13 +136,13 @@ begin
  insert into identity.product_identity_mappings(workspace_id,installation_id,installation_generation,shop_id,retention_class,retain_until,accepted_batch_id,source_rule_version_id,supersedes_id,
  identity_key_version,identity_key_canonical,identity_hash,revision,native_product_id,native_context,shopify_product_id,shopify_variant_id,mapping_state,verified_at,applicability)
  values(w,iid,g,o->>'shopId','identity',until_time,bid,(p->>'ruleId')::bigint,old.id,old.identity_key_version,old.identity_key_canonical,old.identity_hash,old.revision+1,
- old.native_product_id,old.native_context,p->>'productId',p->>'variantId','verified',clock_timestamp(),jsonb_build_object('acceptanceVersion','product-mapping-v1','operationId',p_operation,'sourceBatchId',s->>'sourceBatchId','snapshotHash',s->>'snapshotHash','policy',p->'policy')) returning id into mid;
+ old.native_product_id,old.native_context,p->>'productId',p->>'variantId','verified',clock_timestamp(),jsonb_build_object('verificationVersion','product-mapping-v1','operationId',p_operation,'sourceBatchId',s->>'sourceBatchId','snapshotHash',s->>'snapshotHash','policy',p->'policy')) returning id into mid;
  insert into evidence.source_reference_links(workspace_id,installation_id,installation_generation,shop_id,retention_class,retain_until,source_reference_id,role,mapping_id)
  select w,iid,g,o->>'shopId','identity',until_time,(x->>'id')::bigint,case when x->>'target'='rule' then 'reviewed_rule' else x->>'role' end,mid
  from jsonb_array_elements(s->'references') x group by x->>'id',case when x->>'target'='rule' then 'reviewed_rule' else x->>'role' end;
  get diagnostics n=row_count;
  update evidence.source_batches set storage_state='committed',commit_id=gen_random_uuid(),committed_at=clock_timestamp(),
- manifest=jsonb_build_object('kind','mapping_acceptance_v1','sourceBatchId',s->>'sourceBatchId','sourceMappingId',old.id::text,'ruleId',p->>'ruleId','policy',p->'policy',
+ manifest=jsonb_build_object('kind','mapping_verification_v1','sourceBatchId',s->>'sourceBatchId','sourceMappingId',old.id::text,'ruleId',p->>'ruleId','policy',p->'policy',
  'counts',jsonb_build_object('pages',0,'references',0,'rules',0,'mappings',1,'orders',0,'lines',0,'journeys',0,'claims',0,'links',n),'ids',jsonb_build_object('mapping:accepted',mid::text))
  where id=bid and workspace_id=w and installation_id=iid and installation_generation=g;
  get diagnostics n=row_count;

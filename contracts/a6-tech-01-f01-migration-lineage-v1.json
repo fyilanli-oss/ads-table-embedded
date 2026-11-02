@@ -787,7 +787,7 @@
       "name": "eo05b_verified_mapping_store",
       "file": "supabase/migrations/20261102185842_eo05b_verified_mapping_store.sql",
       "created_with": "supabase@2.122.0 migration new eo05b_verified_mapping_store",
-      "repository_sql_sha256": "fc0b5a9a8089995e5dd2d258973d5dad3582c8d8bfdf00e3514a3197b37f34c5",
+      "repository_sql_sha256": "d41901cb1c85fd1295d74407539acf459e52892303cf12a81bcb4b2b2d3a7999",
       "applied": false,
       "live_apply_authorized": false
     }

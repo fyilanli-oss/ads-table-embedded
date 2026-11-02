@@ -57,7 +57,7 @@ export async function verifiedMappingProbe(client,{args,cipher}){
     const review=await repository.review(input),prepared=repository.prepare(review,{policy:f.policy,deadlineAt:new Date(Date.now()+20000).toISOString()});
     if(mode==="CAS")await client.query("update identity.source_rule_versions set applicability=applicability||jsonb_build_object('changed',true) where id=$1",[ruleId]);
     if(["late_failure","skip_finalize"].includes(mode)){
-     await client.query("create function pg_temp.mapping_late_failure() returns trigger language plpgsql as $vf$begin if new.manifest->>'kind'='mapping_acceptance_v1' then "+(mode==="skip_finalize"?"return null;":"raise exception 'SYNTHETIC_MAPPING_FAILURE';")+"end if;return new;end$vf$");
+     await client.query("create function pg_temp.mapping_late_failure() returns trigger language plpgsql as $vf$begin if new.manifest->>'kind'='mapping_verification_v1' then "+(mode==="skip_finalize"?"return null;":"raise exception 'SYNTHETIC_MAPPING_FAILURE';")+"end if;return new;end$vf$");
      await client.query("create trigger mapping_late_failure before update on evidence.source_batches for each row execute function pg_temp.mapping_late_failure()");
     }
     if(["CAS","late_failure","skip_finalize"].includes(mode)){

@@ -108,7 +108,7 @@ export function createVerifiedMappingRepository({database,cipher,now=Date.now}={
   }catch(error){if(/^(?:MAPPING_STORE_[A-Z_]+|MAPPING_[A-Z_]+|SOURCE_OWNER_CHANGED|SOURCE_PROVIDER_CHANGED)$/.test(error?.message??""))throw error;fail("READ_FAILED");}
  }
  return Object.freeze({
-  async review(input){const state=await load(input,true);if(state.snapshot.mapping.state!=="unresolved")fail("UNRESOLVED_REQUIRED");const review=freeze({mappingId:input.mappingId,ruleId:input.ruleId,status:"reviewed_for_mapping_acceptance"});reviews.set(review,state);return review;},
+  async review(input){const state=await load(input,true);if(state.snapshot.mapping.state!=="unresolved")fail("UNRESOLVED_REQUIRED");const review=freeze({mappingId:input.mappingId,ruleId:input.ruleId,status:"reviewed_for_mapping_verification"});reviews.set(review,state);return review;},
   prepare(review,{policy,deadlineAt}={}){const s=reviews.get(review),time=now();if(!s)fail("REVIEW_REQUIRED");
    const end=Date.parse(deadlineAt),until=Date.parse(policy?.until);if(!Number.isFinite(end)||end<=time||end>time+600000||!Number.isFinite(until)||until<=time||until>s.expiresAt
     ||typeof policy?.version!=="string"||!policy.version.length||policy.version.length>128||Object.keys(policy).sort().join()!=="until,version")fail("POLICY_INVALID");
@@ -118,7 +118,7 @@ export function createVerifiedMappingRepository({database,cipher,now=Date.now}={
   },
   async commit(value){const s=writes.get(value);if(!s||s.used)fail("PREPARED_WRITE_REQUIRED");s.used=true;
    try{const receipt=single(await database.query("select identity.commit_verified_mapping($1::jsonb,$2::uuid,$3::jsonb) as result",[JSON.stringify(s.owner),value.operationId,JSON.stringify(s.p)]));
-    if(receipt.status!=="committed"||!id(receipt.batchId)||!uuid(receipt.commitId)||!hash(receipt.digest)||receipt.manifest?.kind!=="mapping_acceptance_v1"
+    if(receipt.status!=="committed"||!id(receipt.batchId)||!uuid(receipt.commitId)||!hash(receipt.digest)||receipt.manifest?.kind!=="mapping_verification_v1"
      ||receipt.manifest.sourceBatchId!==s.snapshot.sourceBatchId||receipt.manifest.sourceMappingId!==value.mappingId||receipt.manifest.ruleId!==value.ruleId||!id(receipt.manifest.ids?.["mapping:accepted"])||receipt.manifest.counts?.mappings!==1)fail("RESULT_INVALID");
     return freeze({...receipt,historical:true,authorizesActivation:false,DatasetWritePerformed:false});
    }catch{fail("WRITE_UNCONFIRMED");}
@@ -126,6 +126,6 @@ export function createVerifiedMappingRepository({database,cipher,now=Date.now}={
   async readCurrent(input){const s=await load(input,false);if(s.snapshot.mapping.state!=="verified")fail("NOT_VERIFIED");return freeze({status:"verified",mappingId:s.snapshot.mapping.id,ruleId:s.snapshot.rule.id,revision:s.snapshot.mapping.revision,...s.accepted,context:s.snapshot.mapping.context,owner:s.owner,reportNamespaceVerified:false,authorizesActivation:false,DatasetWritePerformed:false});},
   async inspect({owner,operationId}){try {owner=sourceStoreOwner(owner);if(!uuid(operationId))fail("INPUT_INVALID");const r=single(await database.query("select evidence.read_source_receipt($1::jsonb,$2::uuid,0) as result",[JSON.stringify(owner),operationId]));
    if(r.status==="not_observed")return freeze({status:"not_observed",rollbackProven:false});
-   if(!["committed","invalidated"].includes(r.status)||r.manifest?.kind!=="mapping_acceptance_v1")fail("RECEIPT_INVALID");return freeze({...r,historical:true,currentMappingVerified:false});}catch(error){if(/^MAPPING_STORE_[A-Z_]+$/.test(error?.message??""))throw error;fail("READ_FAILED");}}
+   if(!["committed","invalidated"].includes(r.status)||r.manifest?.kind!=="mapping_verification_v1")fail("RECEIPT_INVALID");return freeze({...r,historical:true,currentMappingVerified:false});}catch(error){if(/^MAPPING_STORE_[A-Z_]+$/.test(error?.message??""))throw error;fail("READ_FAILED");}}
  });
 }

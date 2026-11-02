@@ -1278,7 +1278,7 @@
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json"
     ],
     "sha256": {
-      ".github/workflows/database-integrity.yml": "12e5709bfd7f131e31b96b2735fca53c4e810240ac825a18c4703b0ecdc3b197",
+      ".github/workflows/database-integrity.yml": "9f62f03e5601575bda13daaa749cff339c9fce7f1a61499d20ca8a4ed9a6451f",
       ".github/workflows/repository-governance.yml": "331b11ca8da69182216874ff4efc4c8488111252835296ee495d7bc1a96b3759",
       ".github/workflows/shopify-app-deploy.yml": "ef078addb630fdb624189c0f12625524a7e3dcaf708f2059f95e7a2884cf5d24",
       "AGENTS.md": "d77d9e1aad1996a7e477e17f460a2c63530e1253cb521c521c6ef3bdd11570a9",
@@ -1308,6 +1308,7 @@
       "app/lib/database/shopify-runtime-repositories.server.js": "2bbf7ccb879854c6b9f9665a85da640e3d7ae174eeaedee513aefb29f32001c4",
       "app/lib/database/shopify-session-repository.server.js": "040e991c8cfa9262a256ad47606c808b5ca089b489b4191803ef215f440b7741",
       "app/lib/database/source-evidence-store.server.js": "8b513921c38b3654339ab81a4baa4434e7862a2ee0bdc9cc82f8bb1777a598b6",
+      "app/lib/database/source-retention.server.js": "93946205de16d88c9908c922c3d0b7df60aeae4b02fac71a7f4470da55d60e11",
       "app/lib/database/supabase-root-ca-2021.server.js": "49a95de46f1b5272a7d5ed5a4cfc1bdb12f00945c51956430e356bbca652bdda",
       "app/lib/database/token-vault-repository.server.js": "a23b5e78ca372206407f9216f4e01203a771132346ee43e9dbddb859cfe67df2",
       "app/lib/oauth/combined-setup-accounts.server.js": "0bc1db2994c74e514d08831a99b2552e4930d7e489911641a7e25d6779622adc",
@@ -1505,12 +1506,12 @@
       "app/routes/settings.provider-live-evidence.ts": "89fbcb7087fc480fefba708bbc730146f1ba41af48d98f1b0a10fe1427120495",
       "app/routes/webhooks.shopify.tsx": "eac0ea30fcca28d6bba3c11105a5c4fda7778d1398c23f21fcb02f717d8bd056",
       "app/shopify.server.ts": "cc5959867dd5c413b222d51c4aad7d9a39c7c3d15e590aada86a1ddfefdc6fad",
-      "contracts/a6-eo-implementation-master-v1.json": "c37534611e5148f54b267202be40dfa0655054acd4cc4fa80489fa9b25340292",
+      "contracts/a6-eo-implementation-master-v1.json": "94a57dcabc1c6cb716c3b9969c8250a434118be666986f7ef5fe9d3ff6305e83",
       "contracts/eo-05-oauth-setup-permission-policy-v1.json": "c1914f91011464d3b16b4b0a7710e49878ce6dbb57427e3d0f7c68d9ec4ec681",
       "contracts/eo-05-permission-explanation-design-v1.json": "ad4753b9ad4a6becd14764b7b33fb917f0cc491ad774cc1f1fe9053c5f189f35",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
       "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md": "c602fd4d7760e8f32c109e1f0456907c739c12906d71becf88476cad2007d6a1",
-      "docs/EXECUTION_PLAN.md": "2057fef2667500a9d2021c5aed7af4c78d29b43c60f1f3a68accaf3b14d3eb61",
+      "docs/EXECUTION_PLAN.md": "549c54a2f303546b2bff0ba7e2fb2d11d19c64b6632df230efdbce68728f3947",
       "docs/OAUTH_FLOW_CONSTITUTION.md": "74d7a8f327a9558712c3ac8bb54a6633fff7a7e2045405d236d35f265d124b28",
       "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md": "49e253b08959faa9f0b2bf208ed5eb6d3c078a0ddf9097e667a9bf1483dc7350",
       "package.json": "e46285b3a60421e8c338807d7b606afa17f16303b08a2832bed3222a06183fe8",
@@ -1594,6 +1595,7 @@
       "supabase/migrations/20261102124704_eo05b_meta_source_capture.sql": "856fe9054957dd7663c6e2ba229ee7ab8daa79e81e6c870db3b6a66c80cbf025",
       "supabase/migrations/20261102134448_eo05b_klaviyo_source_capture.sql": "f49fbbb96427270e690b94ab3d32bf76e5ec661815f08684b9194ed5351ea1e1",
       "supabase/migrations/20261102143502_eo05b_customer_source_privacy.sql": "a8125f7f02c5d6fb7cf22532e2d62d4b1c363f08f42e8774cc67d8a40b6503ac",
+      "supabase/migrations/20261102155324_eo05b_source_retention.sql": "eb22dc6eb0aab56bf6de7a58109ec12a8babcb67363e402acac8e23dd45f9f6e",
       "tests/a6-docs-01-turkish-standardization.test.js": "367ffd43d113d2dae7d35d32fd712a859c72d4c27095ac395b23ae4ef2e2a51c",
       "tests/a6-tech-01-f01c-scoped-recovery.test.js": "3bd869071d5042402215176a99bf14dcebce6d3d0497ffcba946038050701792",
       "tests/eo-01c-preview-shell.test.js": "c3d67bb6666c19cf5ac12cfcd8a7f2f2acdf399d5a8ac32c0269823b06cbf789",
@@ -1666,7 +1668,8 @@
       "tools/eo05-shopify-order-reconciliation-probe.mjs": "06eac560b4e00bbcdb2b83cdb5fc7d8c5f980f7589bef8b332794238ab185d24",
       "tools/eo05-shopify-order-work-probe.mjs": "1b3045b0c28ec2e8acaaa92e1308185becc02a03655ada9accf823cd52445bd9",
       "tools/eo05-single-account-selection-probe.mjs": "c87be931bf049384ceb339ec77c57f185f8245a9ff7764879c5eafa629bdfbf0",
-      "tools/eo05-source-evidence-probe.mjs": "26dba23d15eb29ade1d5567f45c7e0f7daf9ffccf05f92313af1520ddda6338b",
+      "tools/eo05-source-evidence-probe.mjs": "89e62633df7d31026e9cb9c357fb3d95febfed810e8bc65b341f7af19f4ed2c5",
+      "tools/eo05-source-retention-probe.mjs": "621641d587b4622bf6b72e526932b83963ec46a57df4e346a17b6d78141f0d29",
       "tools/f01-database-replay.mjs": "d91fcd623ea444364b509f023d0f1f41a7224b192e77588c5fb36d50f740e8b6",
       "tools/f01-identity-oauth-rollout.mjs": "eca29ffeec3750cccb8efd54160a76cdd43e2442d20e55af5e1c5c775e1427a8",
       "tools/f01-schema-inventory.sql": "2cc26575e74ca29f61adaf26e79981b6c5e67c5598962cc102f903aea0f18a4d",
@@ -1955,6 +1958,36 @@
         "supabase/migrations/20261102143502_eo05b_customer_source_privacy.sql",
         "tools/eo05-customer-source-privacy-probe.mjs",
         "tools/eo05-source-evidence-probe.mjs"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ]
+    },
+    {
+      "id": "step15-source-retention-2026-11-02",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Owner explicitly approved the concrete class/dependency-aware expired-source cleanup code/SQL/tests/PR package, preserving still-needed evidence and pending downstream handoff and recording deletion. Source: Onayliyorum on2026-11-02. No live DB/provider/config/deploy or merge authorization."
+      },
+      "rationale": "Prepare bounded dependency-aware source maintenance and atomic finite cleanup audit; no OAuth flow/query/activation change.",
+      "scope": {
+        "runtime_code": true,
+        "live_provider": false,
+        "merge": false,
+        "deploy": false
+      },
+      "changed_paths": [
+        ".github/workflows/database-integrity.yml",
+        "app/lib/database/source-retention.server.js",
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "docs/EXECUTION_PLAN.md",
+        "supabase/migrations/20261102155324_eo05b_source_retention.sql",
+        "tools/eo05-source-evidence-probe.mjs",
+        "tools/eo05-source-retention-probe.mjs"
       ],
       "acceptance_required": [
         "required_CI",

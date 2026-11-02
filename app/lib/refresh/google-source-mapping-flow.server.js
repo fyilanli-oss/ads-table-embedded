@@ -27,7 +27,8 @@ export function createGoogleSourceMappingFlow({readerOptions,plan,reviewAuthorit
   ||!instant(plan.deadlineAt)||Date.parse(plan.deadlineAt)<=time||Date.parse(plan.deadlineAt)>time+600000
   ||!policy(plan.rulePolicy,time)||!policy(plan.mappingPolicy,time))fail("PLAN_INVALID");
  const database=readerOptions.database,cipher=readerOptions.sourceStorage.cipher,external=readerOptions.signal,abort=new AbortController();
- const reader=createRefreshGoogleCandidateReader({...readerOptions,signal:abort.signal});
+ const sourceDeadline=readerOptions.executionDeadlineAt==null?plan.deadlineAt:new Date(Math.min(Date.parse(readerOptions.executionDeadlineAt),Date.parse(plan.deadlineAt))).toISOString();
+ const reader=createRefreshGoogleCandidateReader({...readerOptions,signal:abort.signal,executionDeadlineAt:sourceDeadline});
  const rules=createSourceRuleRepository({database,cipher,reviewAuthority,now}),mappings=createVerifiedMappingRepository({database,cipher,now});
  const state={source:null,rule:null,mapping:null};let used=false,running=false,owner=null,stage="source",sourceMappingId=null,ruleId=null,acceptedMappingId=null;
  function check(){if(now()>=Date.parse(plan.deadlineAt))fail("DEADLINE_EXCEEDED");if(external?.aborted||abort.signal.aborted)fail("ABORTED");}

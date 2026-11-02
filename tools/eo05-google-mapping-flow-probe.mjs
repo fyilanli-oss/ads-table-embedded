@@ -102,6 +102,7 @@ export async function googleMappingFlowRehearsal(client,{workspace,shopId,shopDo
     if(mode==="success"){
      assert.equal(r.status,"verified",JSON.stringify({mode,stage:r.stage,reason:r.reason,counts}));assert.equal(r.current.productId,"gid://shopify/Product/123");assert.equal(r.current.variantId,"gid://shopify/ProductVariant/456");assert.equal(r.current.revision,"2");assert.equal(decisionCalls,1);
      assert.equal(counts.source,1);assert.equal(counts.rule,1);assert.equal(counts.mapping,1);assert.equal(r.reportNamespaceVerified,false);assert.equal(r.authorizesActivation,false);
+     assert.equal((await client.query("select manifest->'googleRead'->>'deadlineAt' value from evidence.source_batches where id=$1",[r.source.batchId])).rows[0].value,plan.deadlineAt,"actual source SQL deadline is bounded by the whole flow");
      const old=(await client.query("select mapping_state,shopify_product_id from identity.product_identity_mappings where id=$1",[r.sourceMappingId])).rows[0];assert.deepEqual(old,{mapping_state:"unresolved",shopify_product_id:null});
      assert.equal((await client.query("select source_rule_version_id::text,supersedes_id::text from identity.product_identity_mappings where id=$1",[r.acceptedMappingId])).rows[0].source_rule_version_id,r.ruleId);
      assert.equal((await client.query("select count(*)::int n from evidence.source_batches where workspace_id=$1 and handoff_state<>'pending'",[workspace])).rows[0].n,0);

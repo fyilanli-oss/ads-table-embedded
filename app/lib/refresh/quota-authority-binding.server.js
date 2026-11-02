@@ -208,7 +208,7 @@ function createMetaIdentityReader({verified,database,tokenVault,adId,adSetId,cam
 export function createRefreshGoogleIdentityReader(options) {return createGoogleIdentityReader(options);}
 export function createRefreshGoogleCandidateReader(options) {return createGoogleIdentityReader(options,true);}
 function createGoogleIdentityReader({verified,database,tokenVault,merchantId,developerToken,signal,sdkBridge,sourceRules,
-  readNow=()=>new Date(),maxElapsedMs,maxPages,maxRows,maxLinkPages,maxLinks,sourceStorage=null,...quotaOptions} = {},candidates=false) {
+  readNow=()=>new Date(),maxElapsedMs,maxPages,maxRows,maxLinkPages,maxLinks,sourceStorage=null,executionDeadlineAt=null,...quotaOptions} = {},candidates=false) {
   const claim=structuredClone(quotaOptions.claim),window=structuredClone(quotaOptions.window);
   const owner=structuredClone(verified?.installationAuthority),shop=structuredClone(verified?.identity?.shop);
   const day=window?.from;
@@ -218,6 +218,7 @@ function createGoogleIdentityReader({verified,database,tokenVault,merchantId,dev
     ||typeof merchantId!=="string"||!/^\d{1,19}$/.test(merchantId)||merchantId.startsWith("0")||BigInt(merchantId)>9223372036854775807n
     ||owner?.authority!=="shopify_installation_verified"||owner.status!=="active"||owner.workspaceId!==claim.workspaceId
     ||String(owner.installGeneration)!==claim.installGeneration||typeof verified?.context?.admin?.graphql!=="function"
+    ||(executionDeadlineAt!==null&&(typeof executionDeadlineAt!=="string"||!Number.isFinite(Date.parse(executionDeadlineAt))))
     ||typeof readNow!=="function"||typeof quotaOptions.entitlementReceipt?.observedAt!=="string"
     ||!Number.isFinite(Date.parse(quotaOptions.entitlementReceipt.observedAt))) throw Error("REFRESH_GOOGLE_IDENTITY_INPUT_INVALID");
   const caller={installationAuthority:owner,identity:{shop,session:{authority:verified.identity?.session?.authority,
@@ -225,7 +226,7 @@ function createGoogleIdentityReader({verified,database,tokenVault,merchantId,dev
   const rules=candidates&&sourceRules!==undefined?structuredClone(sourceRules):undefined;
   if(candidates)createGoogleCandidateSourceRuleLoader({rules});
   const binding=refreshQuotaOptions(quotaOptions,{admin:candidates}),execution=candidates?createQuotaReadExecution():undefined;
-  if(sourceStorage!==null&&(!sourceStorage||Object.keys(sourceStorage).sort().join(",")!=="cipher,limits,policy"
+  if((executionDeadlineAt!==null&&sourceStorage===null)||sourceStorage!==null&&(!sourceStorage||Object.keys(sourceStorage).sort().join(",")!=="cipher,limits,policy"
     ||typeof sourceStorage.cipher?.seal!=="function"))throw Error("GOOGLE_SOURCE_STORAGE_INPUT_INVALID");
   const storage=sourceStorage===null?null:{cipher:sourceStorage.cipher,policy:structuredClone(sourceStorage.policy),limits:structuredClone(sourceStorage.limits)};
   const sourceRead=storage?structuredClone({jobId:claim.id,fence:String(claim.fence),window,observedAt:quotaOptions.entitlementReceipt.observedAt,merchantId}):null;
@@ -240,13 +241,15 @@ function createGoogleIdentityReader({verified,database,tokenVault,merchantId,dev
     if(args.length) throw Error("REFRESH_GOOGLE_IDENTITY_OVERRIDE_FORBIDDEN");
     if(used) throw Error("REFRESH_GOOGLE_IDENTITY_EXECUTION_USED");
     used=true;try{
-      const attemptId=storage?randomUUID():null,deadlineAt=storage?new Date(readNow().valueOf()+(maxElapsedMs??120000)).toISOString():null;
+      const attemptId=storage?randomUUID():null,deadlineAt=storage?new Date(Math.min(readNow().valueOf()+(maxElapsedMs??120000),executionDeadlineAt===null?Infinity:Date.parse(executionDeadlineAt))).toISOString():null;
+      if(storage&&readNow().valueOf()>=Date.parse(deadlineAt))throw Error("GOOGLE_SOURCE_DEADLINE_EXCEEDED");
       const initial=storage?structuredClone(await binding.loadContext({provider:"google_ads"})):null;
       if(storage&&(!initial||initial.merchant?.targetAccountId!==merchantId))throw Error("GOOGLE_SOURCE_CONTEXT_REQUIRED");
       const result=await collect(options);let outcome=result;
       if(storage){
         if(signal?.aborted||JSON.stringify(await binding.loadContext({provider:"google_ads"}))!==JSON.stringify(initial))throw Error("GOOGLE_SOURCE_CONTEXT_CHANGED");
         const prepared=prepareGoogleIdentitySourceWrite({observation:result,attemptId,...storage,now:readNow().toISOString()});
+        if(signal?.aborted||readNow().valueOf()>=Date.parse(deadlineAt))throw Error("GOOGLE_SOURCE_DEADLINE_EXCEEDED");
         const context=Object.freeze({owner:prepared.write.owner,attemptId,targets:Object.freeze(prepared.write.body.mappings.map(m=>Object.freeze({key:m.key,identity:m.identity,state:m.state})))});
         googleSourceStorageContexts.set(reader,Object.freeze({...context,status:"unconfirmed"}));
         let sourceReceipt;

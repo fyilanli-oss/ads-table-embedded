@@ -41,25 +41,25 @@ begin
  if i.shop_identity_sha256 is distinct from r.shop_identity_sha256 then raise exception 'SOURCE_PRIVACY_OWNER_CHANGED';end if;
  select source_request_scope into scope from privacy.webhook_claims where id=r.claim_id;
  if not privacy.valid_source_request_scope(scope) then raise exception 'SOURCE_PRIVACY_SCOPE_REQUIRED';end if;
- if (select count(*) from source.shopify_order_versions where installation_id=i.id)>5000
- or (select count(*) from source.shopify_line_versions where installation_id=i.id)>5000
- or (select count(*) from source.shopify_journey_versions where installation_id=i.id)>5000
- or (select count(*) from source.provider_claim_versions where installation_id=i.id)>5000
- or (select count(*) from evidence.source_pages where installation_id=i.id)>1000
- or (select coalesce(sum(plain_byte_count),0) from evidence.source_pages where installation_id=i.id)>16777216
- or (select count(*) from evidence.source_references where installation_id=i.id)>5000
- or (select count(*) from evidence.source_reference_links where installation_id=i.id)>10000
+ if (select count(*) from source.shopify_order_versions where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i.id)>5000
+ or (select count(*) from source.shopify_line_versions where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i.id)>5000
+ or (select count(*) from source.shopify_journey_versions where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i.id)>5000
+ or (select count(*) from source.provider_claim_versions where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i.id)>5000
+ or (select count(*) from evidence.source_pages where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i.id)>1000
+ or (select coalesce(sum(plain_byte_count),0) from evidence.source_pages where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i.id)>16777216
+ or (select count(*) from evidence.source_references where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i.id)>5000
+ or (select count(*) from evidence.source_reference_links where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i.id)>10000
  then raise exception 'SOURCE_PRIVACY_SNAPSHOT_BOUNDS';end if;
- select coalesce(jsonb_agg(to_jsonb(x)||jsonb_build_object('id',x.id::text,'installation_id',x.installation_id::text,'installation_generation',x.installation_generation::text) order by x.id),'[]') into b from evidence.source_batches x where installation_id=i.id;
+ select coalesce(jsonb_agg(to_jsonb(x)||jsonb_build_object('id',x.id::text,'installation_id',x.installation_id::text,'installation_generation',x.installation_generation::text) order by x.id),'[]') into b from evidence.source_batches x where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i.id;
  select coalesce(jsonb_agg(jsonb_build_object('id',x.id::text,'batchId',x.batch_id::text,'family',x.family,'ordinal',x.page_ordinal,'origin',x.origin,'payloadHash',x.payload_hash,
  'captureLayer',x.capture_layer,'numericFidelity',x.numeric_fidelity,'fieldCoverage',x.field_coverage,'schemaVersion',x.payload_schema_version,'sanitizerVersion',x.sanitizer_version,
- 'keyVersion',x.key_version,'plainBytes',x.plain_byte_count,'ciphertext',encode(x.ciphertext,'hex'),'nonce',encode(x.nonce,'hex'),'authTag',encode(x.auth_tag,'hex'),'available',x.purged_at is null) order by x.id),'[]') into pages from evidence.source_pages x where installation_id=i.id;
- select coalesce(jsonb_agg(to_jsonb(x)||jsonb_build_object('id',x.id::text,'page_id',x.page_id::text,'installation_id',x.installation_id::text,'installation_generation',x.installation_generation::text) order by x.id),'[]') into refs from evidence.source_references x where installation_id=i.id;
- select coalesce(jsonb_agg(to_jsonb(x)||jsonb_build_object('id',x.id::text,'source_reference_id',x.source_reference_id::text,'source_rule_version_id',x.source_rule_version_id::text,'mapping_id',x.mapping_id::text,'order_version_id',x.order_version_id::text,'line_version_id',x.line_version_id::text,'journey_version_id',x.journey_version_id::text,'claim_version_id',x.claim_version_id::text) order by x.id),'[]') into links from evidence.source_reference_links x where installation_id=i.id;
- select coalesce(jsonb_agg(to_jsonb(x)||jsonb_build_object('id',x.id::text,'source_batch_id',x.source_batch_id::text,'source_reference_id',x.source_reference_id::text) order by x.id),'[]') into orders from source.shopify_order_versions x where installation_id=i.id;
- select coalesce(jsonb_agg(to_jsonb(x)||jsonb_build_object('id',x.id::text,'order_version_id',x.order_version_id::text,'source_reference_id',x.source_reference_id::text) order by x.id),'[]') into lines from source.shopify_line_versions x where installation_id=i.id;
- select coalesce(jsonb_agg(to_jsonb(x)||jsonb_build_object('id',x.id::text,'order_version_id',x.order_version_id::text,'source_batch_id',x.source_batch_id::text) order by x.id),'[]') into journeys from source.shopify_journey_versions x where installation_id=i.id;
- select coalesce(jsonb_agg(to_jsonb(x)||jsonb_build_object('id',x.id::text,'source_reference_id',x.source_reference_id::text,'shopify_order_version_id',x.shopify_order_version_id::text,'supersedes_id',x.supersedes_id::text) order by x.id),'[]') into claims from source.provider_claim_versions x where installation_id=i.id;
+ 'keyVersion',x.key_version,'plainBytes',x.plain_byte_count,'ciphertext',encode(x.ciphertext,'hex'),'nonce',encode(x.nonce,'hex'),'authTag',encode(x.auth_tag,'hex'),'available',x.purged_at is null) order by x.id),'[]') into pages from evidence.source_pages x where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i.id;
+ select coalesce(jsonb_agg(to_jsonb(x)||jsonb_build_object('id',x.id::text,'page_id',x.page_id::text,'installation_id',x.installation_id::text,'installation_generation',x.installation_generation::text) order by x.id),'[]') into refs from evidence.source_references x where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i.id;
+ select coalesce(jsonb_agg(to_jsonb(x)||jsonb_build_object('id',x.id::text,'source_reference_id',x.source_reference_id::text,'source_rule_version_id',x.source_rule_version_id::text,'mapping_id',x.mapping_id::text,'order_version_id',x.order_version_id::text,'line_version_id',x.line_version_id::text,'journey_version_id',x.journey_version_id::text,'claim_version_id',x.claim_version_id::text) order by x.id),'[]') into links from evidence.source_reference_links x where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i.id;
+ select coalesce(jsonb_agg(to_jsonb(x)||jsonb_build_object('id',x.id::text,'source_batch_id',x.source_batch_id::text,'source_reference_id',x.source_reference_id::text) order by x.id),'[]') into orders from source.shopify_order_versions x where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i.id;
+ select coalesce(jsonb_agg(to_jsonb(x)||jsonb_build_object('id',x.id::text,'order_version_id',x.order_version_id::text,'source_reference_id',x.source_reference_id::text) order by x.id),'[]') into lines from source.shopify_line_versions x where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i.id;
+ select coalesce(jsonb_agg(to_jsonb(x)||jsonb_build_object('id',x.id::text,'order_version_id',x.order_version_id::text,'source_batch_id',x.source_batch_id::text) order by x.id),'[]') into journeys from source.shopify_journey_versions x where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i.id;
+ select coalesce(jsonb_agg(to_jsonb(x)||jsonb_build_object('id',x.id::text,'source_reference_id',x.source_reference_id::text,'shopify_order_version_id',x.shopify_order_version_id::text,'supersedes_id',x.supersedes_id::text) order by x.id),'[]') into claims from source.provider_claim_versions x where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i.id;
  result:=jsonb_build_object('runId',r.id,'kind',r.kind,'scope',scope,'installationId',i.id::text,'workspaceId',r.workspace_id,'generation',r.install_generation::text,'shopId',i.shop_id,
  'batches',b,'pages',pages,'references',refs,'links',links,'orders',orders,'lines',lines,'journeys',journeys,'claims',claims);
  if octet_length(result::text)>40000000 then raise exception 'SOURCE_PRIVACY_SNAPSHOT_BOUNDS';end if;
@@ -78,16 +78,16 @@ begin
  if snap->>'digest' is distinct from p_digest then raise exception 'SOURCE_PRIVACY_SNAPSHOT_CHANGED';end if;
  if jsonb_typeof(p_changes) is distinct from 'object' or not p_changes ?& array['pages','removedReferences'] or (select count(*) from jsonb_object_keys(p_changes))<>2 then raise exception 'SOURCE_PRIVACY_PLAN_INVALID';end if;
  i:=(snap->>'installationId')::bigint;requested:=snap->'scope'->'orders';
- select coalesce(array_agg(id),'{}') into order_ids from source.shopify_order_versions where installation_id=i and requested ? order_id;
- select coalesce(array_agg(id),'{}') into line_ids from source.shopify_line_versions where installation_id=i and order_version_id=any(order_ids);
- select coalesce(array_agg(id),'{}') into journey_ids from source.shopify_journey_versions where installation_id=i and order_version_id=any(order_ids);
- select coalesce(array_agg(id),'{}') into claim_ids from source.provider_claim_versions where installation_id=i and
+ select coalesce(array_agg(id),'{}') into order_ids from source.shopify_order_versions where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i and requested ? order_id;
+ select coalesce(array_agg(id),'{}') into line_ids from source.shopify_line_versions where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i and order_version_id=any(order_ids);
+ select coalesce(array_agg(id),'{}') into journey_ids from source.shopify_journey_versions where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i and order_version_id=any(order_ids);
+ select coalesce(array_agg(id),'{}') into claim_ids from source.provider_claim_versions where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i and
  (shopify_order_version_id=any(order_ids) or requested ? native_order_reference or requested ? ('gid://shopify/Order/'||native_order_reference));
  select coalesce(array_agg(value::bigint),'{}') into ref_ids from jsonb_array_elements_text(p_changes->'removedReferences');
  select coalesce(array_agg((value->>'id')::bigint),'{}') into page_ids from jsonb_array_elements(p_changes->'pages');
  if cardinality(ref_ids)>5000 or cardinality(page_ids)>1000
  or exists(select 1 from unnest(ref_ids) x where not exists(select 1 from evidence.source_references t where t.id=x and t.installation_id=i and t.page_id=any(page_ids)))
- or exists(select 1 from evidence.source_reference_links l where l.source_reference_id=any(ref_ids) and
+ or exists(select 1 from evidence.source_reference_links l where l.workspace_id=r.workspace_id and l.installation_generation=r.install_generation and l.installation_id=i and l.source_reference_id=any(ref_ids) and
  (l.source_rule_version_id is not null or (l.order_version_id is not null and not l.order_version_id=any(order_ids)) or (l.line_version_id is not null and not l.line_version_id=any(line_ids))
  or (l.journey_version_id is not null and not l.journey_version_id=any(journey_ids)) or (l.claim_version_id is not null and not l.claim_version_id=any(claim_ids))))
  then raise exception 'SOURCE_PRIVACY_CROSS_SUBJECT_DEPENDENCY';end if;
@@ -104,15 +104,15 @@ begin
    if not found then raise exception 'SOURCE_PRIVACY_PAGE_CHANGED';end if;
   end loop;
   update identity.product_identity_mappings set mapping_state='unresolved',verified_at=null,applicability=jsonb_build_object('state','privacy_proof_removed')
-   where installation_id=i and id in(select mapping_id from evidence.source_reference_links where source_reference_id=any(ref_ids));
-  delete from evidence.source_reference_links where installation_id=i and (source_reference_id=any(ref_ids) or order_version_id=any(order_ids) or line_version_id=any(line_ids) or journey_version_id=any(journey_ids) or claim_version_id=any(claim_ids));
-  delete from source.provider_claim_versions where installation_id=i and id=any(claim_ids);
-  delete from source.shopify_journey_versions where installation_id=i and id=any(journey_ids);
-  delete from source.shopify_line_versions where installation_id=i and id=any(line_ids);
-  delete from source.shopify_order_versions where installation_id=i and id=any(order_ids);
-  delete from evidence.source_references where installation_id=i and id=any(ref_ids);
+   where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i and id in(select mapping_id from evidence.source_reference_links where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i and source_reference_id=any(ref_ids));
+  delete from evidence.source_reference_links where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i and (source_reference_id=any(ref_ids) or order_version_id=any(order_ids) or line_version_id=any(line_ids) or journey_version_id=any(journey_ids) or claim_version_id=any(claim_ids));
+  delete from source.provider_claim_versions where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i and id=any(claim_ids);
+  delete from source.shopify_journey_versions where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i and id=any(journey_ids);
+  delete from source.shopify_line_versions where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i and id=any(line_ids);
+  delete from source.shopify_order_versions where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i and id=any(order_ids);
+  delete from evidence.source_references where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i and id=any(ref_ids);
   update evidence.source_batches set storage_state='invalidated',commit_id=null,committed_at=null,
-   manifest=manifest||jsonb_build_object('privacyRedacted',true) where installation_id=i and id in(select batch_id from evidence.source_pages where id=any(page_ids));
+   manifest=manifest||jsonb_build_object('privacyRedacted',true) where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i and id in(select batch_id from evidence.source_pages where id=any(page_ids));
   c:=jsonb_build_object('orderVersions',cardinality(order_ids),'lineVersions',cardinality(line_ids),'journeyVersions',cardinality(journey_ids),'claimVersions',cardinality(claim_ids),'sourceRecords',cardinality(ref_ids),'pagesRewritten',cardinality(page_ids));
  end if;
  insert into privacy.deletion_manifests(deletion_run_id,workspace_id,install_generation,shop_identity_sha256,kind,deleted_families,retained_families,row_counts,result,completed_at)
@@ -131,7 +131,10 @@ create function privacy.block_redacted_source_order() returns trigger language p
 declare native_id text;
 begin
  native_id:=case when tg_table_name='shopify_order_versions' then to_jsonb(new)->>'order_id' else to_jsonb(new)->>'native_order_reference' end;
- if tg_table_name='provider_claim_versions' and (native_id is null or native_id !~ '^(gid://shopify/Order/)?[1-9][0-9]{0,29} and r.install_generation=new.installation_generation and r.kind='customer_redact' and r.status='completed'
+ if tg_table_name='provider_claim_versions' and (native_id is null or native_id !~ '^(gid://shopify/Order/)?[1-9][0-9]{0,29}$')
+ and exists(select 1 from privacy.deletion_runs r join privacy.webhook_claims c on c.id=r.claim_id where r.workspace_id=new.workspace_id and r.install_generation=new.installation_generation and r.kind='customer_redact' and r.status='completed' and jsonb_array_length(c.source_request_scope->'orders')>0)
+ then raise exception 'SOURCE_PRIVACY_SUBJECT_UNRESOLVED';end if;
+ if exists(select 1 from privacy.deletion_runs r join privacy.webhook_claims c on c.id=r.claim_id where r.workspace_id=new.workspace_id and r.install_generation=new.installation_generation and r.kind='customer_redact' and r.status='completed'
  and (c.source_request_scope->'orders' ? native_id or c.source_request_scope->'orders' ? ('gid://shopify/Order/'||native_id))) then raise exception 'SOURCE_PRIVACY_REDACTED_ORDER';end if;
  return new;
 end $fn$;
@@ -144,19 +147,6 @@ begin
  end if;return new;
 end $fn$;
 create trigger clear_deleted_source_scopes after update of status on privacy.deletion_runs for each row execute function privacy.clear_deleted_source_scopes();
-revoke all on function privacy.clear_deleted_source_scopes() from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
-revoke all on function privacy.valid_source_request_scope(jsonb),privacy.claim_shopify_customer_webhook(text,text,text,text,text,bytea,text,text,timestamptz,timestamptz,jsonb),privacy.customer_source_snapshot(uuid),privacy.complete_customer_source_run(uuid,text,jsonb,text),privacy.block_redacted_source_order() from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
-reset role;
-commit;
-)
- and exists(select 1 from privacy.deletion_runs r join privacy.webhook_claims c on c.id=r.claim_id where r.workspace_id=new.workspace_id and r.install_generation=new.installation_generation and r.kind='customer_redact' and r.status='completed' and jsonb_array_length(c.source_request_scope->'orders')>0)
- then raise exception 'SOURCE_PRIVACY_SUBJECT_UNRESOLVED';end if;
- if exists(select 1 from privacy.deletion_runs r join privacy.webhook_claims c on c.id=r.claim_id where r.workspace_id=new.workspace_id and r.install_generation=new.installation_generation and r.kind='customer_redact' and r.status='completed'
- and (c.source_request_scope->'orders' ? native_id or c.source_request_scope->'orders' ? ('gid://shopify/Order/'||native_id))) then raise exception 'SOURCE_PRIVACY_REDACTED_ORDER';end if;
- return new;
-end $fn$;
-create trigger source_order_privacy_tombstone before insert or update on source.shopify_order_versions for each row execute function privacy.block_redacted_source_order();
-create trigger source_claim_privacy_tombstone before insert or update on source.provider_claim_versions for each row execute function privacy.block_redacted_source_order();
-revoke all on function privacy.valid_source_request_scope(jsonb),privacy.claim_shopify_customer_webhook(text,text,text,text,text,bytea,text,text,timestamptz,timestamptz,jsonb),privacy.customer_source_snapshot(uuid),privacy.complete_customer_source_run(uuid,text,jsonb,text),privacy.block_redacted_source_order() from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
+revoke all on function privacy.clear_deleted_source_scopes(),privacy.valid_source_request_scope(jsonb),privacy.claim_shopify_customer_webhook(text,text,text,text,text,bytea,text,text,timestamptz,timestamptz,jsonb),privacy.customer_source_snapshot(uuid),privacy.complete_customer_source_run(uuid,text,jsonb,text),privacy.block_redacted_source_order() from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
 reset role;
 commit;

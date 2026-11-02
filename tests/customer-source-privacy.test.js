@@ -70,3 +70,25 @@ test('verified webhook distinguishes missing from empty scope and rejects lossy,
 test('scope persistence is explicit internal composition; default existing ingress and native calls unchanged',async()=>{
  for(const enabled of [false,true]){let sql,args;const repo=createPrivacyLifecycleRepository({query:async(s,a)=>{sql=s;args=a;return {rows:[{claim_id:randomUUID(),workspace_id:randomUUID(),install_generation:'1',outcome:'queued',duplicate:false}]};}},{customerSourceScope:enabled});await repo.claimWebhook(await webhook({orders_to_redact:[101]}));assert.equal(sql.includes('claim_shopify_customer_webhook'),enabled);assert.equal(args.length,enabled?11:10);}
 });
+
+function klaviyoFixture(kind='customer_redact'){
+ const f=fixture(kind),batch=f.snapshot.batches[0],events=[101,102].map((n,i)=>({id:'event-'+n,type:'event',attributes:{event_properties:{OrderId:gid(n),ProductID:'456',Quantity:{jsonNumber:'2'},$value:{jsonNumber:i?'9.990':'12.5000'}}},relationships:{attributions:{data:[{id:'attr-'+n,type:'attribution'}]}}}));
+ const included=[101,102].map(n=>({id:'attr-'+n,type:'attribution',relationships:{campaign:{data:{id:'camp-1',type:'campaign'}}}}));
+ const add=(id,family,payload)=>{const page=f.input.cipher.seal({owner:f.input.owner,attemptId:batch.attempt_id,ordinal:0,page:{family,ordinal:Number(id)-1,origin:'klaviyo',captureLayer:'native_response_projection',numericFidelity:'lossless_token',fieldCoverage:Object.keys(payload),schemaVersion:'v1',sanitizerVersion:'v1'},payload});f.snapshot.pages.push({...page,id,batchId:'1',available:true});};
+ add('2','klaviyo_ordered_product_events',{records:events,included});add('3','klaviyo_account',{records:[{id:'account-1',attributes:{timezone:'UTC',preferred_currency:'USD'}}],included:[]});
+ for(const [i,e]of events.entries()){
+  const ref=String(3+i),attr=String(5+i),claim=String(10+i);f.snapshot.references.push({id:ref,page_id:'2',record_locator:'/records/'+i,record_hash:sourcePayloadHash(e),native_record_type:'KlaviyoOrderedProductEvent'},{id:attr,page_id:'2',record_locator:'/included/'+i,record_hash:sourcePayloadHash(included[i]),native_record_type:'KlaviyoAttribution'});
+  f.snapshot.claims.push({id:claim,source_reference_id:ref,native_order_reference:gid(101+i),shopify_order_version_id:null,native_data:e});f.snapshot.links.push({source_reference_id:attr,claim_version_id:claim},{source_reference_id:'7',claim_version_id:claim});
+ }
+ f.snapshot.references.push({id:'7',page_id:'3',record_locator:'/records/0',record_hash:sourcePayloadHash({id:'account-1',attributes:{timezone:'UTC',preferred_currency:'USD'}}),native_record_type:'KlaviyoAccount'});return f;
+}
+test('customer source: Klaviyo exact order reference removes only target event/attribution and preserves shared account evidence and numeric tokens',async()=>{
+ const f=klaviyoFixture(),run=await f.prepare();await completeCustomerSourceRun({database:f.database,preparedRun:run});const changes=JSON.parse(f.calls[1].args[2]);assert.deepEqual(changes.removedReferences.sort(),['1','3','5']);assert.equal(changes.pages.length,2);
+ const page=changes.pages.find(p=>p.id==='2'),payload=f.input.cipher.open({owner:f.input.owner,attemptId:f.snapshot.batches[0].attempt_id,ordinal:0,page});assert.equal(payload.records[0],null);assert.equal(payload.included[0],null);assert.equal(payload.records[1].attributes.event_properties.$value.jsonNumber,'9.990');assert.equal(payload.included[1].id,'attr-102');
+});
+test('customer source: Klaviyo disclosure includes the targeted event and native amount without another order/event/attribution',async()=>{
+ const f=klaviyoFixture('customer_data_request'),run=await f.prepare();const json=JSON.stringify(run.artifact);assert.ok(json.includes('12.5000'));assert.ok(!json.includes('event-102'));assert.ok(!json.includes('attr-102'));assert.ok(!json.includes(gid(102)));
+});
+test('customer source: native event lacking exact order reference is held even when another event is resolved',async()=>{
+ const f=klaviyoFixture();f.snapshot.claims[1].native_order_reference=null;await assert.rejects(f.prepare(),/SUBJECT_UNRESOLVED/);assert.equal(f.calls.length,1);
+});

@@ -2,6 +2,12 @@ import {createHash, createHmac, timingSafeEqual} from "node:crypto";
 import {normalizeShopDomain} from "./installation-authority.server.js";
 import {shopIdentitySha256} from "./shop-identity.server.js";
 
+const verifiedScopes = new WeakMap();
+export function verifiedSourceRequestScope(claim) {
+  if (!verifiedScopes.has(claim)) throw new Error("VERIFIED_SOURCE_REQUEST_SCOPE_REQUIRED");
+  return verifiedScopes.get(claim);
+}
+
 const TOPICS = new Set([
   "app/uninstalled",
   "customers/data_request",
@@ -118,7 +124,7 @@ export async function verifyShopifyWebhookRequest(
     throw new TypeError("receivedAt must be a valid Date");
   }
 
-  return Object.freeze({
+  const claim = Object.freeze({
     verified: true,
     webhookId: requiredHeader(request.headers, "x-shopify-webhook-id"),
     eventId: request.headers.get("x-shopify-event-id")?.trim() || null,
@@ -136,4 +142,6 @@ export async function verifyShopifyWebhookRequest(
     ),
     receivedAt: receivedAt.toISOString(),
   });
+  verifiedScopes.set(claim, claim.sourceRequestScope);
+  return claim;
 }

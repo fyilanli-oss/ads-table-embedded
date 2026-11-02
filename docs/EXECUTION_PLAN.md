@@ -1,3 +1,16 @@
+## 2 Kasım — mevcut15: Shopify sipariş okuyucusu kaynak/kanıt bağlantısı
+
+295/296 main'e alındı. Owner, Shopify sipariş okuyucusunu mevcut sorgu ve izinlerle
+özel kaynak tablolarına bağlayan kod/SQL ve izole test paketini açıkça onayladı.
+Güncel kayıt: contracts/a6-eo-implementation-master-v1.json#Step15_Shopify_source_capture_2026_11_02.
+Parser allowlist sayfaları ve kontrol okumaları şifreli collector projection olarak
+korunur; sipariş/satır/ziyaret kayıtları kanıtlarıyla yazılır. Owner-only fonksiyon
+kurulum, reservation/fence, aralık, entitlement ve deadline'ı yeniden doğrular.
+Kayıp yanıt otomatik tekrar yazma değildir; tamamlanan kaynak kaydı Dataset/checkpoint
+veya handoff tamamlandı anlamına gelmez. Hiçbir worker, runtime grant, canlı DB/key,
+provider/config/deploy açılmaz.15 açık;22 paused; genel Dataset/FX23; ek Shopify
+ziyaret/iade sorguları Overlap kararında kalır. Merge için ayrı açık onay gerekir.
+
 ## 2 Kasım — mevcut15: kaynak/kanıt temeli repository uygulaması
 
 Owner10 tablo tasarımını okuyup teknik uygulamayı başlattı. Bu operasyonel rapor DB'si

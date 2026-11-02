@@ -718,6 +718,15 @@
       "repository_sql_sha256": "1d88cef3266312f54f5919cd2ad50995c2ee6b29965c56eca4fee2d0aa40ae8e",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261102095846",
+      "name": "eo05b_shopify_order_source_capture",
+      "file": "supabase/migrations/20261102095846_eo05b_shopify_order_source_capture.sql",
+      "created_with": "supabase@2.122.0 migration new eo05b_shopify_order_source_capture",
+      "repository_sql_sha256": "e1b562629691100d0d48bcf405f5f6ada619c685f637c1795f1c52a9e6b09bfc",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

@@ -654,6 +654,31 @@
     "testing": "Node failure/crypto/owner tests plus real two-pass isolated F01 PostgreSQL source probe, not live data acceptance.",
     "capture": "Internal already-sanitized projection storage boundary; generic bundle is not a native proof. No native capture hook or new query registered.",
     "deferred": "No source fact/FX writer, overlap calculator, added refund/visit fields, new keys/config/live DB apply.",
-    "merge_authorized": false
+    "merge_authorized": false,
+    "shopify_source_capture": {
+      "status": "repository_preparation_not_live",
+      "owner_approval": "Explicit approval of Shopify reader capture, source evidence/order/line/journey storage, current-owner/read-fence SQL and isolated tests in this conversation on2026-11-02. No query/scope/live DB/scheduler/config/deploy/merge authority.",
+      "base_main": "c7005ad7fc88d5998be1fe92336a09a040a88514",
+      "capture": "One-use branded completed collection retains existing parsed-page allowlist including consistency rereads. Collector projection / decoded_only, not original HTTP bytes or native absence proof. Exact native money strings and original timestamps remain unchanged; metadata timestamps normalize the same instant.",
+      "storage": "Explicit internal sourceStorage composition only; bounded single atomic package, no truncation. Orders, lines and journey observations link to actual page record hashes; consistency references retain dependencies. Unavailable/pending journey is partial, empty complete extraction remains genuine zero.",
+      "authority": "Owner-only forward SQL wrapper rechecks installation/privacy, reservation/range/fence, queue epoch, entitlement receipt/stats and read deadline under locks. No coordinator/runtime schema or EXECUTE grants; no reader/worker activation.",
+      "unknown": "One write; lost/malformed response stays source_write_unconfirmed, no automatic retry or stop mutation. Explicit read_source_receipt reconciliation only; not_observed is not rollback proof.",
+      "completion": "Source receipt alone never advances reservation, downstream handoff, accounting checkpoint or Dataset. Incomplete pages remain held.",
+      "remaining": "Other providers; customer association/disclosure and structured retention; live key/policy/capacity and runtime grant/activation acceptance remain open. No new Shopify visit/refund fields, Overlap or general Dataset/FX writer.",
+      "official_checked_at": "2026-11-02",
+      "official_sources": [
+        "https://shopify.dev/docs/api/admin-graphql/2026-10/queries/orders",
+        "https://shopify.dev/docs/api/admin-graphql/2026-10/objects/Order",
+        "https://shopify.dev/docs/api/usage/pagination-graphql",
+        "https://supabase.com/changelog.md",
+        "https://supabase.com/docs/guides/database/functions",
+        "https://www.postgresql.org/docs/17/explicit-locking.html"
+      ],
+      "runtime_code_authorized": true,
+      "live_provider_authorized": false,
+      "live_database_authorized": false,
+      "merge_authorized": false,
+      "deployment_authorized": false
+    }
   }
 }

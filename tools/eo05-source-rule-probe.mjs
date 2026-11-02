@@ -46,7 +46,12 @@ export async function sourceRuleProbe(client,{owner,mappingId,proposal,policy,ci
     await client.query("savepoint rule_operation_conflict");const changed=JSON.parse(lastWrite[2]);changed.policy.version="different";
     await assert.rejects(client.query("select identity.commit_reviewed_source_rule($1::jsonb,$2::uuid,$3::jsonb)",[lastWrite[0],lastWrite[1],JSON.stringify(changed)]),/SOURCE_RULE_OPERATION_CONFLICT/);await client.query("rollback to savepoint rule_operation_conflict");
    }
-   if(mode==="predecessor")await assert.rejects(r.review(input));
+   if(mode==="predecessor"){
+    await client.query("savepoint rejected_rule_predecessor");
+    await assert.rejects(r.review(input));
+    await client.query("rollback to savepoint rejected_rule_predecessor");
+    await client.query("release savepoint rejected_rule_predecessor");
+   }
    if(mode==="version"){
     const nextInput={...input,proposal:{...proposal,previousRuleId:rid}},review=await r.review(nextInput),next=r.prepare(review,{policy,deadlineAt:new Date(Date.now()+20000).toISOString()}),nextReceipt=await r.commit(next);
     const second=(await client.query("select version::text,supersedes_id::text from identity.source_rule_versions where id=$1",[nextReceipt.manifest.ids["rule:reviewed"]])).rows[0];

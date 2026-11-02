@@ -97,7 +97,7 @@ function validate(snapshot,owner,cipher,now){
 export function createVerifiedMappingRepository({database,cipher,now=Date.now}={}){
  if(typeof database?.query!=="function"||typeof cipher?.open!=="function"||typeof now!=="function")fail("CONFIG_INVALID");
  const reviews=new WeakMap(),writes=new WeakMap();
- async function load(input,write){const owner=sourceStoreOwner(input.owner),lookup=Object.hasOwn(input,"identity");if(owner.provider==="shopify")fail("INPUT_INVALID");
+ async function load(input,write){try {const owner=sourceStoreOwner(input.owner),lookup=Object.hasOwn(input,"identity");if(owner.provider==="shopify")fail("INPUT_INVALID");
   if(lookup){if(write||Object.hasOwn(input,"mappingId")||Object.hasOwn(input,"ruleId")||!input.identity||input.identity.provider!==owner.provider||input.identity.accountId!==owner.accountId
     ||Object.keys(input.identity).sort().join()!=="accountId,context,nativeId,provider"||Buffer.byteLength(canonicalSourceJson(input.identity))>8192)fail("INPUT_INVALID");}
   else if(!id(input.mappingId)||!id(input.ruleId))fail("INPUT_INVALID");
@@ -105,6 +105,7 @@ export function createVerifiedMappingRepository({database,cipher,now=Date.now}={
    lookup?[JSON.stringify(owner),canonicalSourceJson(input.identity)]:[JSON.stringify(owner),input.mappingId,input.ruleId,write]));
   if(lookup?!same(JSON.parse(snapshot.mapping?.identityKey??"null"),input.identity):snapshot.mapping?.id!==input.mappingId||snapshot.rule?.id!==input.ruleId)fail("RESULT_INVALID");
   const verified=validate(snapshot,owner,cipher,now());return {snapshot,owner,...verified};
+  }catch(error){if(/^(?:MAPPING_STORE_[A-Z_]+|MAPPING_[A-Z_]+|SOURCE_OWNER_CHANGED|SOURCE_PROVIDER_CHANGED)$/.test(error?.message??""))throw error;fail("READ_FAILED");}
  }
  return Object.freeze({
   async review(input){const state=await load(input,true);if(state.snapshot.mapping.state!=="unresolved")fail("UNRESOLVED_REQUIRED");const review=freeze({mappingId:input.mappingId,ruleId:input.ruleId,status:"reviewed_for_mapping_acceptance"});reviews.set(review,state);return review;},
@@ -123,8 +124,8 @@ export function createVerifiedMappingRepository({database,cipher,now=Date.now}={
    }catch{fail("WRITE_UNCONFIRMED");}
   },
   async readCurrent(input){const s=await load(input,false);if(s.snapshot.mapping.state!=="verified")fail("NOT_VERIFIED");return freeze({status:"verified",mappingId:s.snapshot.mapping.id,ruleId:s.snapshot.rule.id,revision:s.snapshot.mapping.revision,...s.accepted,context:s.snapshot.mapping.context,owner:s.owner,reportNamespaceVerified:false,authorizesActivation:false,DatasetWritePerformed:false});},
-  async inspect({owner,operationId}){owner=sourceStoreOwner(owner);if(!uuid(operationId))fail("INPUT_INVALID");const r=single(await database.query("select evidence.read_source_receipt($1::jsonb,$2::uuid,0) as result",[JSON.stringify(owner),operationId]));
+  async inspect({owner,operationId}){try {owner=sourceStoreOwner(owner);if(!uuid(operationId))fail("INPUT_INVALID");const r=single(await database.query("select evidence.read_source_receipt($1::jsonb,$2::uuid,0) as result",[JSON.stringify(owner),operationId]));
    if(r.status==="not_observed")return freeze({status:"not_observed",rollbackProven:false});
-   if(!["committed","invalidated"].includes(r.status)||r.manifest?.kind!=="mapping_acceptance_v1")fail("RECEIPT_INVALID");return freeze({...r,historical:true,currentMappingVerified:false});}
+   if(!["committed","invalidated"].includes(r.status)||r.manifest?.kind!=="mapping_acceptance_v1")fail("RECEIPT_INVALID");return freeze({...r,historical:true,currentMappingVerified:false});}catch(error){if(/^MAPPING_STORE_[A-Z_]+$/.test(error?.message??""))throw error;fail("READ_FAILED");}}
  });
 }

@@ -1,3 +1,35 @@
+## 2 Kasım — ilk okuyucu bağlantısı: Shopify sipariş kaynakları
+
+Tasarım295 ve temel296 main'e alındı. Owner, mevcut Shopify sipariş okuyucusunun
+kaynak/kanıt katmanına bağlanacağı somut kod ve izole test kapsamını açıkça onayladı.
+Bu teslim güncel main c7005ad7fc88d5998be1fe92336a09a040a88514 üzerindedir.
+
+Okuyucuda açık sourceStorage seçilirse mevcut sipariş, ürün satırı ve ziyaret
+sayfalarının parser allowlist çıktıları, tutarlılık tekrar okumalarıyla korunur.
+Bu collector_projection / decoded_only kaydıdır; orijinal HTTP baytları, atılan
+native alanın yokluğu veya ham sayısal token doğruluğu iddia edilmez. Tutar stringleri
+ve kaynak timestamp metinleri korunur. Hassas ek alanlar ve hata gövdeleri alınmaz.
+
+Tek kullanımlık gerçek collection nesnesi yazma hazırlığına girer; kopya JSON veya
+istemcinin persistable/native flag'i yetki oluşturmaz. Sipariş ve satır verisi gerçek
+sayfa referans hash'iyle eşleşir. Ziyaret özeti ve momentleri ile kontrol okumaları
+da ilişkilidir. Paket byte/row sınırını aşarsa kırpılmaz, güvenli biçimde durur.
+Boş tam aralık sıfırdır; hazır olmayan ziyaret kısmi kaynak kaydıdır.
+
+Yeni owner-only SQL fonksiyonu mağaza/kurulum, silme durumu, okuma reservation/fence,
+aralık, kuyruk/billing makbuzu, istatistik ve süreyi kilit altında kontrol eder.
+Yazma atomiktir; yanıt kaybolduğunda ikinci write veya otomatik stop yapılmaz.
+Yalnız açık salt okunur makbuz kontrolü yapılabilir. not_observed rollback kanıtı değildir.
+Reservation, source handoff pending ve Dataset/checkpoint bu kayıtla tamamlanmaz.
+
+Runtime/coordinator'a schema/EXECUTE izni, canlı anahtar/politika veya worker verilmez.
+Mevcut sorgular/izinler değişmez. Ek ziyaret/iade alanları Overlap'ta; genel Dataset/FX
+23'te kalır.15 tamamlanmadı. Müşteri bazlı gizlilik eşlemesi, structured retention ve
+gerçek kapasite/canlı kabul hâlâ ön koşuldur. Merge ayrı açık onay ister.
+
+Resmî kontrol2 Kasım2026: Shopify2026-10 Orders/Order/sayfalama, Supabase changelog ve
+database functions, PostgreSQL17 locking. Exact kaynaklar makine sözleşmesindedir.
+
 ## 2 Kasım — kabul edilen yerleşimin ilk repository uygulaması
 
 Ürün sahibi tasarımı okudu; bu yapının operasyonel raporlama DB'sine güvenli veri

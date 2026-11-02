@@ -205,8 +205,8 @@ export function createRefreshShopifyAdminOrderClient(options) {return createFenc
 
 // One-shot prepared native collection. Explicit extraction instants remain separate
 // from the job's business dates; permission/history/timezone proof is not inferred.
-export function createRefreshShopifyOrderReader({range,limits,includeOrderHistory=false,...options}={}) {
-  return createFencedAdminClient(options,true,{range,limits,includeOrderHistory});
+export function createRefreshShopifyOrderReader({range,limits,includeOrderHistory=false,captureSource=false,...options}={}) {
+  return createFencedAdminClient(options,true,{range,limits,includeOrderHistory,captureSource});
 }
 
 function createFencedAdminClient({verified,database,sdkBridge,signal,timeoutMs,...quotaOptions}={},orders=false,collection=null,internal=null) {
@@ -242,7 +242,7 @@ function createFencedAdminClient({verified,database,sdkBridge,signal,timeoutMs,.
     return createShopifyOrderReadExecution({client,shop:{id:shop.shopId,myshopifyDomain:shop.myshopifyDomain},
       scope:{workspace_id:owner.workspaceId,installation_generation:owner.installGeneration,installation_id:null,
         job:{provider:claim.provider,account_id:claim.accountId,id:claim.id,fence:claim.fence,window}},
-      range:collection.range,limits:collection.limits,includeOrderHistory:collection.includeOrderHistory,signal,
+      range:collection.range,limits:collection.limits,includeOrderHistory:collection.includeOrderHistory,captureSource:collection.captureSource,signal,
       loadInstallationOwner:()=>installationOwner.load({workspaceId:owner.workspaceId,installGeneration:owner.installGeneration,
         shopId:shop.shopId,shopDomain:shop.myshopifyDomain}),
       checkCurrent:async()=>{

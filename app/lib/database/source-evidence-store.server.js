@@ -190,7 +190,8 @@ export function prepareSourceWrite({owner, attemptId, ordinal, sourceState, poli
   const referenceHashes = new Map(body.references.map(r => [r.key, r.hash]));
   for (const group of ["orders", "lines", "claims"]) for (const row of body[group]) {
     if (sourcePayloadHash(row.data) !== referenceHashes.get(row.reference)) fail("CONTENT_REFERENCE_CONFLICT");
-    if (group === "orders" && (row.data.id !== row.orderId || row.data.updatedAt !== row.updatedAt)) fail("ORDER_INVALID");
+    if (group === "orders" && (row.data.id !== row.orderId || typeof row.data.updatedAt !== "string"
+      || Date.parse(row.data.updatedAt) !== Date.parse(row.updatedAt))) fail("ORDER_INVALID");
     if (group === "lines" && row.data.id !== row.lineId) fail("LINE_INVALID");
   }
   const targets = {rule: "rules", mapping: "mappings", order: "orders", line: "lines", journey: "journeys", claim: "claims"};
@@ -213,20 +214,29 @@ export function createSourceEvidenceRepository(database) {
     if (result?.rows?.length !== 1 || !object(result.rows[0].result)) fail("RESULT_INVALID");
     return result.rows[0].result;
   }
-  return Object.freeze({
-    async commit(write) {
+  async function commit(write, read = null) {
       const state = prepared.get(write);
       if (!state || state.used) fail("WRITE_CAPABILITY_REQUIRED");
+      if(read!==null){
+        exact(read,["rangeKey","fence","observedAt","sourceHash","stats","range"]);
+        if(write.owner.provider!=="shopify"||write.ordinal!==0||!text(read.rangeKey,512)||!id(String(read.fence))
+          ||!instant(read.observedAt)||!hash.test(read.sourceHash))fail("READ_BINDING_INVALID");
+      }
       state.used = true;
       try {
-        const receipt = single(await database.query("select evidence.commit_source_batch($1::jsonb,$2::uuid,$3::integer,$4::jsonb) as result",
-          [JSON.stringify(write.owner), write.attemptId, write.ordinal, JSON.stringify(write.body)]));
+        const receipt = single(await database.query(read===null
+          ?"select evidence.commit_source_batch($1::jsonb,$2::uuid,$3::integer,$4::jsonb) as result"
+          :"select evidence.commit_shopify_order_source($1::jsonb,$2::uuid,$3::integer,$4::jsonb,$5::jsonb) as result",
+          [JSON.stringify(write.owner), write.attemptId, write.ordinal, JSON.stringify(write.body),...read===null?[]:[JSON.stringify(read)]]));
         if (receipt.status !== "committed" || !id(receipt.batchId) || !uuid.test(receipt.commitId) || !hash.test(receipt.digest)
           || receipt.sourceState !== write.body.sourceState
           || groups.some(k => receipt.manifest?.counts?.[k] !== write.body[k].length)) fail("RESULT_INVALID");
         return freeze(receipt);
       } catch {fail("WRITE_UNCONFIRMED");}
-    },
+  }
+  return Object.freeze({
+    commit:write=>commit(write),
+    commitShopifyOrder:(write,read)=>commit(write,read),
     async inspect({owner, attemptId, ordinal}) {
       const bound = sourceStoreOwner(owner);
       if (!uuid.test(attemptId) || !Number.isSafeInteger(ordinal) || ordinal < 0) fail("INPUT_INVALID");

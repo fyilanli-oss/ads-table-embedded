@@ -14,17 +14,24 @@ const freeze=v=>{if(v&&typeof v==="object"){Object.values(v).forEach(freeze);Obj
 const signature=v=>JSON.stringify(v);
 const journeySummary=p=>({state:p.state,ready:p.ready??null,firstVisit:p.firstVisit??null,lastVisit:p.lastVisit??null});
 const observations=new WeakSet();
+const sourceObservations=new WeakMap();
+// One-use parsed-page provenance. It is not wire-byte, scope or persistence authority.
+export function takeShopifyOrderSourceObservation(collection){
+  const capture=sourceObservations.get(collection);
+  if(!capture)fail("SOURCE_OBSERVATION_REQUIRED");
+  sourceObservations.delete(collection);return capture;
+}
 // In-process provenance only, never permission, persistence or snapshot authority.
 export function isShopifyOrderCollectionObservation(value){return observations.has(value);}
 
 // Trusted server composition only. checkCurrent is supplied by the private fenced
 // factory, never by a product route/user or as a replacement for HTTP quota/permission.
 // A genuine SDK client brand proves construction only, not owner or live access proof.
-export function createShopifyOrderReadExecution({client,shop,scope,range,limits,signal,checkCurrent,loadInstallationOwner,includeOrderHistory=false,...extra}={}) {
+export function createShopifyOrderReadExecution({client,shop,scope,range,limits,signal,checkCurrent,loadInstallationOwner,includeOrderHistory=false,captureSource=false,...extra}={}) {
   if(Object.keys(extra).length||!isShopifyAdminOrderSdkClient(client)||typeof checkCurrent!=="function"||typeof loadInstallationOwner!=="function"
     ||!limits||typeof limits!=="object"||Array.isArray(limits)
     ||Object.keys(limits).sort().join(",")!=="maxBytes,maxElapsedMs,maxRequests,maxRows,pageSize"
-    ||typeof includeOrderHistory!=="boolean"||signal!==undefined&&!(signal instanceof AbortSignal))fail("INPUT_INVALID");
+    ||typeof includeOrderHistory!=="boolean"||typeof captureSource!=="boolean"||signal!==undefined&&!(signal instanceof AbortSignal))fail("INPUT_INVALID");
   const caps=structuredClone(limits),expectedShop=structuredClone(shop),owner=structuredClone(scope),window=structuredClone(range);
   const maxima={maxElapsedMs:600000,maxRequests:10000,maxRows:1000000,maxBytes:134217728,pageSize:100};
   if(Object.entries(maxima).some(([key,max])=>!Number.isSafeInteger(caps[key])||caps[key]<1||caps[key]>max))fail("LIMITS_INVALID");
@@ -40,6 +47,7 @@ export function createShopifyOrderReadExecution({client,shop,scope,range,limits,
     let closed=false;
     const started=performance.now();
     const stats={requests:0,rows:0,SDKResponseBytes:0};
+    const captured=[];
     try {
       return await runIdentityReadDeadline({signal,timeoutMs:caps.maxElapsedMs,run:async child=>{
         const check=()=>{
@@ -83,6 +91,9 @@ export function createShopifyOrderReadExecution({client,shop,scope,range,limits,
         async function page(request){
           const parsed=parseShopifyOrderPage({request,body:await payload(request)});
           if(parsed.rows.length>caps.maxRows-stats.rows)fail("ROW_LIMIT");stats.rows+=parsed.rows.length;
+          if(captureSource)captured.push(freeze({family:request.family,after:request.variables.after,
+            orderId:parsed.orderId,state:parsed.state,rows:parsed.rows,pagination:parsed.pagination,
+            ...(request.family==="order_journey"?{summary:journeySummary(parsed)}:{})}));
           await current();return parsed;
         }
         async function scopes(){
@@ -151,7 +162,9 @@ export function createShopifyOrderReadExecution({client,shop,scope,range,limits,
             atomicSnapshotVerified:false,journeyMiddleUnchangedVerified:false},
           nativePermissionVerified:false,historicalCoverageVerified:false,providerClaimVerified:false,exactOverlapVerified:false,
           canonicalScopeReady:false,authorizesActivation:false,persistable:false,DatasetWritePerformed:false});
-        check();observations.add(result);return result;
+        check();observations.add(result);
+        if(captureSource)sourceObservations.set(result,freeze(captured));
+        return result;
       }});
     } catch(error){
       if(quotaBoundaryControl(error)||error instanceof IdentityReadDeadlineError||error instanceof ShopifyOrderCollectionError)throw error;

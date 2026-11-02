@@ -1377,7 +1377,7 @@
       "app/lib/providers/klaviyo-reporting.server.d.ts": "176dc0c5418cfb2f0d9619a8ca6e860837626018a0205d34a138b53bdea6d5bb",
       "app/lib/providers/klaviyo-reporting.server.js": "1047437121c260e9d1fe8e3163a8ea0c130ef99d0a4c6dd0e1a9209f737164b2",
       "app/lib/providers/klaviyo-source-capture.server.js": "d8a8267374df2b3d2c08aa9132fd583f8adaf81ab259bdb8b56964a6c37fbbcd",
-      "app/lib/providers/klaviyo-source-write.server.js": "4aedc9f898ea0ca434c31097a56f18937d295e4dd64c2020c1345083040c7a59",
+      "app/lib/providers/klaviyo-source-write.server.js": "794110269fff1f8940be4560b98db85b5c25bddbcc8b1710e99309653ada2e63",
       "app/lib/providers/meta-adset-catalog-reference.server.js": "13faeb8db23586444b6d10949f9f30b5faf1dd29264d972c24d6760ca308ae2c",
       "app/lib/providers/meta-catalog-identity-reader.server.js": "0ee1a187afecfc6dba1a7a1e8161320f13ea462b4e22b1aedcff464005b87751",
       "app/lib/providers/meta-graph.server.d.ts": "472887b68f64a3925987218a160cf5a1819fc3ec01d9da96c42f6ff5f36cfb8b",

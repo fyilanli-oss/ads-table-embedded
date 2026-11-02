@@ -79,7 +79,7 @@ export function prepareKlaviyoIdentitySourceWrite({observation, attemptId, polic
       records.mappings.push({key: mapping, rule: null, identity, revision: "1", nativeId: nativeProduct, context,
         productId: null, variantId: null, state: conflicting ? "conflicting" : "unresolved", verifiedAt: null,
         applicability: {state: "verification_pending", reason: conflicting ? "observed_variant_conflict"
-          : "native_source_and_same_shop_mapping_acceptance_required"}});
+          : "native_source_and_same_shop_mapping_review_required"}});
       for (const r of accounts) link(r, "mapping", mapping, "account");
       for (const r of metrics.get(capture.metricId) ?? []) link(r, "mapping", mapping, "metric");
     }

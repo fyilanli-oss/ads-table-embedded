@@ -1,3 +1,24 @@
+## 2 Kasım — Shopify ek sorgu ayrıntıları Overlap görüşmesine bırakıldı
+
+Ürün sahibi mevcut kapsamda Google, Meta ve Klaviyo için yeni sorgu geliştirme işi
+istemediğini; açık konunun gerçek verilerle kanıt olduğunu netleştirdi. Bu karar
+bütün API alanlarının eksiksizliği veya native kabul iddiası değildir; mevcut sonraki
+rol/PMax/Spend işleri kapanmaz.
+
+Shopify ziyaret ayrıntıları (UTM, giriş sayfası, yönlendiren adres ve uygulanabilir
+MarketingEvent bağı) teknik konu olarak mevcut Overlap görüşmesine kaydedildi.
+İadeler şu an gündemde değildir. Ek ziyaret/iade ayrıntılarının gerekli olup olmadığı,
+sorgulanması ve ham kanıt olarak alınıp tutulması aynı görüşmede kararlaştırılır;
+bu kayıt sorgu veya iade özelliği geliştirmesi başlatmaz. Mevcut toplam iade ve
+sipariş/satır alanları değişmez; tam ürün-satırı iade defteri iddia edilmez.
+
+Yer: mevcut24 başvurusuyla, önceki karara uygun22 sonrası Overlap.22 duraklaması
+ve ayrı yeniden başlatma onayı korunur. Yeni sıra yok; bunlar15 öncesi yeni şart
+değildir.15'in mevcut özel ham kanıt saklama kapsamı değişmez; ek Shopify ayrıntıları
+hakkındaki erteleme bütün provider ham kanıtının kaldırılması anlamına gelmez.
+Runtime, OAuth/UI/izin, canlı API/config/DB, migration ve yayın değişmedi.15 başlamadı.
+Karar kaydı: contracts/eo-05-start-brief-v1.json#Shopify_visit_and_refund_overlap_deferral_2026_11_02.
+
 ## 30 Ekim — PMax kaynaklarını mevcut resolver ve arka plan okuyucusuna bağlama
 
 Mevcut 21'in 15 öncesi dar kod dilimi: PMax Asset Group PD, ürün performansı, PMax'e filtreli Cart Data ve güncel Listing Tree ayrı aileler halinde tam sayfalanır. Mevcut ortak okuyucuda açık googlePmax seçeneğiyle aynı mağaza/hesap/nesil/bağlantı kontrolleri ve fiziksel kota hattı kullanılır. Varsayılan akış değişmez; Shopify'da görsel işlem veya OAuth değişikliği yoktur.

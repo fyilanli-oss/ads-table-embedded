@@ -1,4 +1,54 @@
 {
+"Shopify_visit_and_refund_overlap_deferral_2026_11_02": {
+    "checked_at": "2026-11-02",
+    "status": "owner_directed_plan_record_only",
+    "base_main": "9e8030ded82ab3c62cb7bb3aa50dfe90fc830075",
+    "owner_decision": "Within the currently agreed scope, no new Meta/Google/Klaviyo query development is requested; remaining work is real-data evidence. Record Shopify visit detail as technical work to discuss at Overlap. Refunds are not on the current agenda; decide whether extra Shopify detail should be queried/retained as raw evidence during that same discussion.",
+    "provider_queries": {
+      "providers": [
+        "meta",
+        "google_ads",
+        "klaviyo"
+      ],
+      "new_query_work_requested": false,
+      "real_data_identity_namespace_and_access_proof_remains_open": true,
+      "limit": "Not a universal API completeness claim or native acceptance. Existing later role/PMax/Spend work and pauses are not closed."
+    },
+    "shopify_visit_detail": {
+      "existing": "Current reader retains visit id/time/source/sourceDescription/sourceType and first/last/journey observations.",
+      "discussion": "Assess UTM, landing page, referrer and applicable MarketingEvent detail against the Overlap requirement; decide necessary fields and evidence treatment before any query change.",
+      "implementation_authorized": false
+    },
+    "shopify_refund_detail": {
+      "current_agenda": false,
+      "existing": "Order-level totalRefundedSet and current order/line amounts remain unchanged; no complete refund-line ledger claim.",
+      "discussion": "Whether refund detail is needed at all, and whether any such detail should be read/retained as raw evidence, is deferred to Overlap. No refund feature or accounting policy selected.",
+      "implementation_authorized": false
+    },
+    "placement": {
+      "existing_reference": 24,
+      "timing": "Overlap discussion after existing Step22, per Pre15_PMax_and_overlap_owner_decision_2026_10_30. Step22 stays paused; no automatic restart.",
+      "not_a_pre15_requirement": true,
+      "new_numbered_item": false
+    },
+    "raw_evidence_boundary": "This deferral concerns additional Shopify visit/refund evidence. Existing Step15 private raw-evidence persistence scope and bounded/sanitized/no-secret rules remain unchanged; no global decision to stop retaining provider evidence.",
+    "unchanged": [
+      "Existing 01-26 numbering",
+      "Current source readers and accepted OAuth UI/flows/scopes",
+      "Step15 not started by this plan record",
+      "Step22 historical listing tree paused",
+      "Step23 general Dataset/FX writer",
+      "Shopify evidence does not prove provider conversion claim; unknown overlap is not zero"
+    ],
+    "runtime_changed": false,
+    "new_query": false,
+    "OAuth_changed": false,
+    "live_provider_calls": false,
+    "migration": false,
+    "DB_write": false,
+    "merge_authorized": false,
+    "deploy_authorized": false
+  },
   "Google_Meta_flow_standard_2026_11_01": {
     "existing_plan_step": 7,
     "record": "contracts/eo-05-permission-explanation-design-v1.json#Google_Meta_flow_standard_2026_11_01",

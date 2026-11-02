@@ -1,4 +1,17 @@
 {
+"Shopify_visit_and_refund_overlap_deferral_2026_11_02": {
+    "record": "contracts/eo-05-start-brief-v1.json#Shopify_visit_and_refund_overlap_deferral_2026_11_02",
+    "status": "owner_directed_plan_record_only",
+    "existing_reference": 24,
+    "timing": "Overlap after22; historical22 remains paused",
+    "new_query_work_requested": false,
+    "real_data_proof_open": true,
+    "Shopify_visit_detail": "technical discussion at Overlap",
+    "Shopify_refund_detail": "not current agenda; query/raw-evidence decision at Overlap",
+    "Step15_existing_raw_evidence_scope_unchanged": true,
+    "runtime_changed": false,
+    "live_provider_calls": false
+  },
   "Owner_flow_restore_2026_10_31": {
     "checked_at": "2026-10-31",
     "existing_plan_step": 7,

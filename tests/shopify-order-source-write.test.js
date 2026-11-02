@@ -23,6 +23,8 @@ test("genuine SDK collection binds exact parsed pages, records and consistency r
   assert.equal(write.body.orders[0].updatedAt,"2026-10-01T12:00:00.000Z");
   assert.ok(write.body.links.some(r=>r.role==="consistency"));
   const refs=new Map(write.body.references.map(r=>[r.key,r]));
+  assert.equal(new Set(write.body.references.map(r=>r.page+":"+r.locatorKind+":"+r.locator)).size,write.body.references.length,
+    "one physical record reference is shared by primary and consistency links");
   for(const row of [...write.body.orders,...write.body.lines])assert.equal(sourcePayloadHash(row.data),refs.get(row.reference).hash);
   for(const page of write.body.pages){
     assert.equal(page.captureLayer,"collector_projection");assert.equal(page.numericFidelity,"decoded_only");

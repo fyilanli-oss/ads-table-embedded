@@ -17,7 +17,7 @@ export async function shopifyIndependentAdminProbe(client,{database,inputs,route
   async function scenario(mode){
     await client.query("savepoint independent_admin_case");
     const f=fixture({shop:{id:owner.shopId,myshopifyDomain:owner.shopDomain},updatedAt:"2026-10-01T00:30:00Z"});
-    const sourceMode=mode.startsWith("source_"),{input:sourceConfig}=sourceStoreFixture();let sourceCalls=0,sourceArgs;
+    const sourceMode=mode.startsWith("source_"),{input:sourceConfig}=sourceStoreFixture();let sourceCalls=0,sourceArgs,sourceErrorCode;
     try{
       await client.query("update operations.shopify_order_queue_control set worker_cost=$1::jsonb,worker_epoch=worker_epoch+1",[JSON.stringify(costs)]);
       const budget=(await client.query("select budget from operations.refresh_control")).rows[0].budget;
@@ -31,7 +31,7 @@ export async function shopifyIndependentAdminProbe(client,{database,inputs,route
           if(mode==="source_fence")await client.query("update operations.shopify_order_work_reservations set fence=fence+1 where attempt_id=$1",[args[1]]);
           await client.query("savepoint source_commit_call");let result;
           try{result=await client.query(sql,args);await client.query("release savepoint source_commit_call");}
-          catch(error){await client.query("rollback to savepoint source_commit_call");await client.query("release savepoint source_commit_call");throw error;}
+          catch(error){sourceErrorCode=error.code;await client.query("rollback to savepoint source_commit_call");await client.query("release savepoint source_commit_call");throw error;}
           if(mode==="source_lost")throw Error("synthetic lost source acknowledgement");return result;
         }
         const r=await database.query(sql,args);
@@ -73,7 +73,7 @@ export async function shopifyIndependentAdminProbe(client,{database,inputs,route
         assert.equal(sourceCalls,1,JSON.stringify({mode,reason:result.reason,preparationCode:result.preparationCode}));assert.equal(row.phase,"order_observed");assert.equal(row.status,"reserved");
         const stored=(await client.query("select * from evidence.source_batches where attempt_id=$1",[reservation.attemptId])).rows;
         if(["source_success","source_partial","source_lost"].includes(mode)){
-          assert.equal(stored.length,1);assert.equal(stored[0].handoff_state,"pending");
+          assert.equal(stored.length,1,JSON.stringify({mode,reason:result.reason,sourceErrorCode}));assert.equal(stored[0].handoff_state,"pending");
           const w=JSON.parse(sourceArgs[0]),repo=createSourceEvidenceRepository(client);
           const pages=await repo.readPages({owner:w,attemptId:reservation.attemptId,ordinal:0,limit:100});assert.ok(pages.length>0);
           const payloads=pages.map(page=>sourceConfig.cipher.open({owner:w,attemptId:reservation.attemptId,ordinal:0,page}));

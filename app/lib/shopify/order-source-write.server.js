@@ -27,8 +27,13 @@ export function prepareShopifyOrderSourceWrite({collection,owner,attemptId,polic
       const entry=journeys.get(page.orderId)??[];entry.push({page:key,summary:page.summary,rows:page.rows,after:page.after});journeys.set(page.orderId,entry);
     }
   }
+  const referenceLocations=new Map();
   function reference(key,location,nativeType,nativeId){
-    if(!location)fail();records.references.push({key,...location,locatorKind:"row",nativeType,nativeId,state:"present"});return key;
+    if(!location)fail();
+    const address=location.page+":"+location.locator,existing=referenceLocations.get(address);
+    if(existing){if(existing.nativeType!==nativeType||existing.nativeId!==nativeId)fail();return existing.key;}
+    const row={key,...location,locatorKind:location.locator==="/summary"?"object":"row",nativeType,nativeId,state:"present"};
+    records.references.push(row);referenceLocations.set(address,row);return key;
   }
   for(const [index,order] of collection.orders.entries()){
     const key="o"+index,header=order.header,ref=reference(key,headers.get(header.id),"Order",header.id);

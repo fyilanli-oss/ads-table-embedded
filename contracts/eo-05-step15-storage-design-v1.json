@@ -783,7 +783,8 @@
       "live_provider_authorized": false,
       "live_database_authorized": false,
       "merge_authorized": false,
-      "deployment_authorized": false
+      "deployment_authorized": false,
+      "native_reference_limit": "Only exact Shopify Order GID or an already verified same-order FK can identify a claim subject. Bare numeric/custom Klaviyo OrderId is not converted into a Shopify Order ID; it holds fulfillment until its namespace is proven. No new source rule or query is inferred."
     }
   }
 }

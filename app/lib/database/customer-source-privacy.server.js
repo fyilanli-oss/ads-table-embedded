@@ -2,7 +2,7 @@ import {canonicalSourceJson,sourcePayloadHash} from "./source-evidence-store.ser
 const prepared=new WeakMap();
 const fail=code=>{throw Error("SOURCE_PRIVACY_"+code);};
 const orderId=value=>typeof value==="string"&&/^gid:\/\/shopify\/Order\/[1-9][0-9]{0,29}$/.test(value)?value
- :typeof value==="string"&&/^[1-9][0-9]{0,29}$/.test(value)?"gid://shopify/Order/"+value:null;
+:null;
 const freeze=v=>{if(v&&typeof v==="object"){Object.values(v).forEach(freeze);Object.freeze(v);}return v;};
 function bound(snapshot){
  if(!snapshot||!['customer_redact','customer_data_request'].includes(snapshot.kind)||snapshot.scope?.version!==1||!Array.isArray(snapshot.scope.orders)
@@ -21,7 +21,10 @@ export async function prepareCustomerSourceRun({database,cipher,runId}){
  const wanted=new Set(s.scope.orders),selectedOrders=new Set(s.orders.filter(x=>wanted.has(x.order_id)).map(x=>String(x.id)));
  const claims=new Map(s.claims.map(x=>[String(x.id),x]));
  const orderByVersion=new Map(s.orders.map(x=>[String(x.id),x.order_id]));
- const claimScope=c=>c.shopify_order_version_id?orderByVersion.get(String(c.shopify_order_version_id)):orderId(c.native_order_reference);
+ const claimScope=c=>{
+  const native=orderId(c.native_order_reference),linked=c.order_link_state==='verified'&&c.shopify_order_version_id?orderByVersion.get(String(c.shopify_order_version_id)):null;
+  if(native&&linked&&native!==linked)fail("SUBJECT_CONFLICT");return linked||native;
+ };
  // An unmapped native OrderId is not proof of another customer's identity.
  if(s.claims.some(c=>!claimScope(c)))fail("SUBJECT_UNRESOLVED");
  const subjectByReference=new Map();

@@ -92,3 +92,11 @@ test('customer source: Klaviyo disclosure includes the targeted event and native
 test('customer source: native event lacking exact order reference is held even when another event is resolved',async()=>{
  const f=klaviyoFixture();f.snapshot.claims[1].native_order_reference=null;await assert.rejects(f.prepare(),/SUBJECT_UNRESOLVED/);assert.equal(f.calls.length,1);
 });
+
+test('customer source: a numeric Klaviyo reference is not assumed to be the Shopify Order ID',async()=>{
+ const f=klaviyoFixture();f.snapshot.claims[0].native_order_reference='101';await assert.rejects(f.prepare(),/SUBJECT_UNRESOLVED/);assert.equal(f.calls.length,1);
+});
+test('scope persistence: fabricated verified flag or copied claim cannot provide source scope',async()=>{
+ const claim=await webhook({orders_to_redact:[101]});let calls=0;const repo=createPrivacyLifecycleRepository({query:async()=>{calls++;throw Error('must not execute');}},{customerSourceScope:true});
+ await assert.rejects(repo.claimWebhook(structuredClone(claim)),/VERIFIED_SOURCE_REQUEST_SCOPE_REQUIRED/);assert.equal(calls,0);
+});

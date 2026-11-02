@@ -82,7 +82,7 @@ begin
  select coalesce(array_agg(id),'{}') into line_ids from source.shopify_line_versions where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i and order_version_id=any(order_ids);
  select coalesce(array_agg(id),'{}') into journey_ids from source.shopify_journey_versions where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i and order_version_id=any(order_ids);
  select coalesce(array_agg(id),'{}') into claim_ids from source.provider_claim_versions where workspace_id=r.workspace_id and installation_generation=r.install_generation and installation_id=i and
- (shopify_order_version_id=any(order_ids) or requested ? native_order_reference or requested ? ('gid://shopify/Order/'||native_order_reference));
+ ((order_link_state='verified' and shopify_order_version_id=any(order_ids)) or requested ? native_order_reference);
  select coalesce(array_agg(value::bigint),'{}') into ref_ids from jsonb_array_elements_text(p_changes->'removedReferences');
  select coalesce(array_agg((value->>'id')::bigint),'{}') into page_ids from jsonb_array_elements(p_changes->'pages');
  if cardinality(ref_ids)>5000 or cardinality(page_ids)>1000
@@ -131,11 +131,11 @@ create function privacy.block_redacted_source_order() returns trigger language p
 declare native_id text;
 begin
  native_id:=case when tg_table_name='shopify_order_versions' then to_jsonb(new)->>'order_id' else to_jsonb(new)->>'native_order_reference' end;
- if tg_table_name='provider_claim_versions' and (native_id is null or native_id !~ '^(gid://shopify/Order/)?[1-9][0-9]{0,29}$')
+ if tg_table_name='provider_claim_versions' and (native_id is null or native_id !~ '^gid://shopify/Order/[1-9][0-9]{0,29}$')
  and exists(select 1 from privacy.deletion_runs r join privacy.webhook_claims c on c.id=r.claim_id where r.workspace_id=new.workspace_id and r.install_generation=new.installation_generation and r.kind='customer_redact' and r.status='completed' and jsonb_array_length(c.source_request_scope->'orders')>0)
  then raise exception 'SOURCE_PRIVACY_SUBJECT_UNRESOLVED';end if;
  if exists(select 1 from privacy.deletion_runs r join privacy.webhook_claims c on c.id=r.claim_id where r.workspace_id=new.workspace_id and r.install_generation=new.installation_generation and r.kind='customer_redact' and r.status='completed'
- and (c.source_request_scope->'orders' ? native_id or c.source_request_scope->'orders' ? ('gid://shopify/Order/'||native_id))) then raise exception 'SOURCE_PRIVACY_REDACTED_ORDER';end if;
+ and c.source_request_scope->'orders' ? native_id) then raise exception 'SOURCE_PRIVACY_REDACTED_ORDER';end if;
  return new;
 end $fn$;
 create trigger source_order_privacy_tombstone before insert or update on source.shopify_order_versions for each row execute function privacy.block_redacted_source_order();

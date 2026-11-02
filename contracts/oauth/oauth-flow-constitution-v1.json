@@ -1673,7 +1673,7 @@
       "tools/eo05-single-account-selection-probe.mjs": "c87be931bf049384ceb339ec77c57f185f8245a9ff7764879c5eafa629bdfbf0",
       "tools/eo05-source-evidence-probe.mjs": "89e62633df7d31026e9cb9c357fb3d95febfed810e8bc65b341f7af19f4ed2c5",
       "tools/eo05-source-retention-probe.mjs": "621641d587b4622bf6b72e526932b83963ec46a57df4e346a17b6d78141f0d29",
-      "tools/eo05-verified-mapping-probe.mjs": "86c8659a3500032cad425b59cee561b83e09c5e4a1114248996c0ee73a6bd54f",
+      "tools/eo05-verified-mapping-probe.mjs": "fe5ce73c56da24ab7e534e87a5fc7e5fa600e7e46307eb27388ca4d27d363606",
       "tools/f01-database-replay.mjs": "d91fcd623ea444364b509f023d0f1f41a7224b192e77588c5fb36d50f740e8b6",
       "tools/f01-identity-oauth-rollout.mjs": "eca29ffeec3750cccb8efd54160a76cdd43e2442d20e55af5e1c5c775e1427a8",
       "tools/f01-schema-inventory.sql": "2cc26575e74ca29f61adaf26e79981b6c5e67c5598962cc102f903aea0f18a4d",

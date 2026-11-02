@@ -41,7 +41,7 @@ export async function verifiedMappingProbe(client,{args,cipher}){
     const repository=createVerifiedMappingRepository({database,cipher});
     if(mode==="connection_version")await client.query("update integrations.provider_connections set connection_version=connection_version+1 where id=$1",[owner.connectionId]);
     if(mode==="disconnect")await client.query("update integrations.provider_connections set lifecycle_status='disconnect_pending' where id=$1",[owner.connectionId]);
-    if(mode==="scopes")await client.query("update integrations.provider_connections set granted_scopes='{}'::text[] where id=$1",[owner.connectionId]);
+    if(mode==="scopes")await client.query("update integrations.provider_connections set granted_scopes=granted_scopes[1:1] where id=$1",[owner.connectionId]);
     if(mode==="expired")await client.query("update evidence.source_pages set retain_until=clock_timestamp()-interval '1 second' where id=(select page_id from evidence.source_references where id=(select source_reference_id from evidence.source_reference_links where mapping_id=$1 and role='candidate_check' limit 1))",[mappingId]);
     if(mode==="partial")await client.query("update evidence.source_batches set source_state='partial' where id=(select accepted_batch_id from identity.product_identity_mappings where id=$1)",[mappingId]);
     if(mode==="withdrawn")await client.query("update identity.source_rule_versions set review_status='withdrawn' where id=$1",[ruleId]);

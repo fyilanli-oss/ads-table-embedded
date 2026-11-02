@@ -1636,7 +1636,7 @@
       "tools/eo05-identity-oauth-atomic-probe.mjs": "89758e82406dd15e94551bf22305ef9845dd6bf009127d119f1f7d618a9a20e5",
       "tools/eo05-merchant-quota-context-probe.mjs": "699aae3f090c490ca59abba882ea3e36fbe25e817d7ce697a55a0cb294269deb",
       "tools/eo05-meta-source-capture-probe.mjs": "09aa25657601bb0fff0823b5131daff9c96991647db5add10a7454ea65e818a2",
-      "tools/eo05-quota-authority-probe.mjs": "05c1bc6a823742735497a8612953f6a522fe608013cf1d6b5bc4ddd7418ffce5",
+      "tools/eo05-quota-authority-probe.mjs": "ee4599ebe3bc45ef1a45102b46f30a4bb47e19207bf5aa511cb23bfc0c684a38",
       "tools/eo05-quota-feedback-probe.mjs": "42b9cf4d7d32ffb4199462f6f04aa13dbff99f33f9b403b388628fff6b73ae5c",
       "tools/eo05-quota-scope-resolver-probe.mjs": "d48bc100b2a59bb081a04a1b033c73f67ee724a480f3d927063204367200b6b8",
       "tools/eo05-refresh-entitlement-probe.mjs": "398084b7276f99a73270bb9bc7fa82199664ddc9cddf4680d1216f66176c00ff",

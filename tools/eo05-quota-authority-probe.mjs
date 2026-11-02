@@ -16,7 +16,6 @@ export async function quotaAuthorityProbe(client,{store,quotaStore,execution,con
   await adminQuotaContextProbe(client,{store,execution,connection});
   await adminCostBudgetProbe(client);
   await merchantQuotaContextProbe(client,{store,execution,connection});
-  await metaSourceCaptureProbe(client,{store,quotaStore,execution});
   await identityAuthoritySnapshotProbe(client,{execution});
   await identityOAuthAtomicProbe(client,{execution});
   assert.equal(await store.loadQuotaContext({...input,entitlementReceipt:undefined}),null,"provider data needs fresh billing proof");
@@ -56,5 +55,8 @@ export async function quotaAuthorityProbe(client,{store,quotaStore,execution,con
     assert.equal((await client.query("select has_table_privilege($1,'operations.refresh_quota_contexts','SELECT,INSERT,UPDATE,DELETE') allowed",[role])).rows[0].allowed,false);
   for(const role of ["anon","authenticated","service_role","adstable_runtime"])
     assert.equal((await client.query("select has_function_privilege($1,'operations.load_refresh_quota_context(uuid,bigint,text,text,text,bigint,date,date,text,timestamptz)','EXECUTE') allowed",[role])).rows[0].allowed,false);
+  // Keep all original dispatch assertions inside their original short deadline.
+  // Meta's rollback-only job fixture owns its separate test window and runs last.
+  await metaSourceCaptureProbe(client,{store,quotaStore,execution});
   console.log("EO05_QUOTA_AUTHORITY_BINDING_PASS current_fenced_SQL_authority=true fresh_billing_required_for_data=true account_away_back_blocked=true connection_change_blocked=true quota_await_change_zero_HTTP=true private_scope_inventory=true actual_provider_calls=0");
 }

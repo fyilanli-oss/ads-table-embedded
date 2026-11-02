@@ -903,6 +903,46 @@
       "live_provider_authorized": false,
       "merge_authorized": false,
       "deployment_authorized": false
+    },
+    "verified_mapping_store": {
+      "status": "repository_preparation_not_live",
+      "owner_approval": "Owner explicitly approved Step15 versioned verified-product-mapping storage/current-read code, SQL, isolated tests and PR using existing tables and valid source-rule/native/Shopify evidence. Source: Onayliyorum on2026-11-02 after concrete scope. No real account rule registration, live DB/provider/config, merge or deployment authorization.",
+      "base_main": "9e82d912b21c73b78188ddb1eea8e5590f5865aa",
+      "boundary": "Consumer of a pre-existing durably reviewed source rule, not a rule registration/approval API. No real rules are seeded, no caller verified flag grants acceptance, and the generic NATIVE_RECEIPT_REQUIRED guard remains unchanged. Source-rule registration/native tenant/namespace acceptance remains a separate open Step15 prerequisite.",
+      "review_protocol": "Private owner-only SQL returns a bounded snapshot of latest exact mapping, latest reviewed rule and every linked mapping/rule reference plus at most100 distinct encrypted pages/16MiB plain bytes. The existing installation/privacy/connection/credential/account/reporting binding and stored identity scopes are rechecked. Write review additionally rechecks the original actual admitted job/fence/billing/quota/read deadline context; current read does not resurrect/complete a job.",
+      "semantic_validation": "Application purpose-keyed AES/AAD decryption, exact record hashes/locators, immutable native identity tuple/context, reviewed rule document projection and same-shop request/Product/Variant/parent proof are all checked. Native and candidate page schema versions/families are allowlisted. Every linked native observation and candidate check must agree, not a cherry-picked favorable sample. Missing/partial/invalidated/expired/corrupt/conflicting evidence fails closed; no fallback to an older verified version.",
+      "trust_boundary": "Existing private schemas/FORCE RLS and owner-only EXECUTE stay in force; no browser/runtime/coordinator/service-role grant or route is added. SQL cannot decrypt the purpose-keyed AES evidence: semantic attestation belongs to the trusted server repository with a same-factory private one-use review/write capability. SQL independently rechecks durable evidence membership, latest rule/version, current authority, expiry and snapshot CAS. The database owner can already alter tables directly and is an administrative trust boundary; raw owner SQL is not an untrusted-user API.",
+      "rule_projection": {
+        "family": "source_rule_review",
+        "schema": "source-rule-review-v1",
+        "parser_version": "product-mapping-v1",
+        "rule_kind": "product_identity",
+        "basis": {
+          "version": "product-source-rule-v1",
+          "provider": "exact provider",
+          "format": "existing Shopify product/variant/market parser or klaviyo_shopify_ordered_product"
+        },
+        "applicability": "Exact current source owner plus explicit finite from/until and maxObservationAgeMs1..86400000; native_context equals the exact source mapping context. No defaults or real account rule is registered. Unknown validity cannot authorize current mapping."
+      },
+      "write_protocol": "One-use prepared operation UUID and detached finite policy/deadline. Global refresh-control then installation/connection locks; exact snapshot CAS and scoped operation/identity locking. Insert next mapping revision with predecessor, copy actual evidence links, reference the reviewed rule, and commit an independent mapping-acceptance source batch atomically. Existing source rows/manifests/receipts are not rewritten. Original source batch and new acceptance batch stay handoff pending; no job finish, reservation release, checkpoint, Dataset/FX or Sales Role change.",
+      "read_protocol": "Current reads recheck latest mapping/rule, original source completeness, current installation/connection/account/selection/scopes, finite validity/age, all referenced TTLs and AES/hash/semantic evidence. Meta catalog mapping does not prove Insights report product namespace; reportNamespaceVerified and activation authority remain false. Historical operation receipt inspection is explicitly separate and cannot certify current mapping. Exact native provider/account/context identity lookup uses the scoped identity hash index and compares canonical tuple/version. It selects the newest revision before verifying state; no older verified fallback.",
+      "uncertainty": "Lost or malformed write reply consumes capability and returns WRITE_UNCONFIRMED. No automatic write/native replay. Explicit scoped source receipt inspection may prove historical commit; not_observed is not rollback or termination proof. Identical private SQL operation within its deadline returns original receipt; changed input conflicts.",
+      "bounds": "At most100 linked references and100 distinct pages/16MiB decrypted evidence; existing per-page8MiB cipher bound remains. Explicit operation deadline at most10 minutes and retention never exceeds any supporting reference/page/mapping/rule expiry or rule applicability. Query-plan/production capacity remains an actual measurement gate; no scheduler/worker or runtime grant is activated.",
+      "validation": "26 initial unit cases cover all3 providers and semantic/crypto/ownership/stale/result/capability/unknown controls. Existing F01 actual PostgreSQL replay extended for Google/Meta/Klaviyo with synthetic source/rule/Shopify proof and real current job/quota/authority. Version/history/current-read, same-op replay/conflict, CAS, expiry/partial/withdrawn/new-rule/conflict/owner/disconnect/scopes/crypto/hash/late failure/lost reply and role restrictions are checked. CI acceptance pending; synthetic reviewed rows are fixtures, never native evidence.",
+      "migration": "supabase/migrations/20261102185842_eo05b_verified_mapping_store.sql",
+      "official_checked_at": "2026-11-02",
+      "official_sources": [
+        "https://supabase.com/docs/guides/database/functions",
+        "https://www.postgresql.org/docs/17/explicit-locking.html",
+        "https://www.postgresql.org/docs/17/ddl-constraints.html",
+        "https://supabase.com/changelog"
+      ],
+      "remaining": "Step15 remains open: trusted real source-rule producer/registration and native identity/link/namespace proof, live finite policies/key/grants/activation/capacity, real-data acceptance, customer disclosure/erasure-ledger acceptance. Step23 general Dataset/FX and downstream durable delivery;22 paused and Overlap deferrals unchanged.",
+      "runtime_code_authorized": true,
+      "live_database_authorized": false,
+      "live_provider_authorized": false,
+      "merge_authorized": false,
+      "deployment_authorized": false
     }
   }
 }

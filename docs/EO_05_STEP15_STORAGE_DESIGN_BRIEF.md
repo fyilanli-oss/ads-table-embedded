@@ -1,3 +1,54 @@
+## 2 Kasım — mevcut 15: doğrulanmış eşlemenin kayıt ve okuma yolu
+
+Owner, geçerli kaynak kuralı/ürün kontrolü/mağaza-hesap kanıtı birlikte doğrulanınca
+sürümlü eşleme kaydı ve güncel okuma için kod, SQL, izole test/PR kapsamını onayladı.
+Başlangıç main9e82d912b21c73b78188ddb1eea8e5590f5865aa. Makine karşılığı:
+contracts/a6-eo-implementation-master-v1.json#Step15_verified_mapping_store_2026_11_02.
+
+Bu yol depoda önceden güvenilir biçimde incelenmiş bir kaynak kuralını tüketir.
+Kural oluşturma/onaylama veya gerçek hesaba kural tanımlama API’si değildir.
+Generic NATIVE_RECEIPT_REQUIRED değişmez. Gerçek kural yoksa kabul yolu kapalıdır.
+İncelenmiş kuralın source_rule_review/source-rule-review-v1 sayfası, tam owner ve
+native context bağı, parser sürümü, sonlu geçerlilik ve açık gözlem yaşı gerekir.
+Kural kabulünü veya native hesap kanıtını verified bayrağından türetmeyiz.
+
+Özel SQL en çok100 bağlı referans/100 şifreli sayfa ve16MiB düz içerik için güncel
+snapshot verir. Uygulama mevcut amaç anahtarıyla AES/AAD’yi açar; her kayıt hash’i,
+kuralın belge kaydı, kaynak kimliği/bağlamı ve aynı mağazanın sorulan/dönen ürün,
+varyant/üst ürün yanıtı birlikte doğrulanır. İlgili tüm native gözlemler ve aday
+kontrolleri uyuşmalıdır; olumlu tek bir örnek seçilemez. Eksik/kısmi/geçersiz,
+süresi dolmuş veya bozulmuş kanıt kabul edilmez.
+
+İnceleme ve yazma yetkisi aynı repository örneğine ait özel tek kullanımlık bellek
+kaydında tutulur. SQL purpose-keyed AES içeriğini çözmez: anlam kontrolü güvenilir
+sunucu repository’sinin sorumluluğudur. SQL gerçek owner/kurulum/connection/
+credential/hesap/seçim/scope, güncel kural-sürüm ve kanıt ilişkileri/son süre/snapshot
+CAS’ını tekrar doğrular. Kabulde ayrıca mevcut job/fence/billing/quota ve okuma son
+süresi denetlenir. DB owner zaten doğrudan tablo yönetebilir; idari güven sınırıdır.
+Runtime/coordinator/service_role/browser için hiçbir yeni grant veya route yoktur.
+
+Kabul, eski eşlemeyi değiştirmek yerine yeni revision/supersedes, gerçek kanıt
+bağlantıları ve ayrı atomik kabul paketi/makbuzu yazar. Eski kaynak manifesti ve
+makbuzu korunur. Tekrar cevabı kaybolursa ikinci write yapılmaz; açık tarihsel
+makbuz kontrolü mümkündür, yokluğu rollback kanıtı değildir. Sonlu saklama/süre
+politikası açık verilir; desteğin son tarihini aşamaz. Hiçbir paket consumed olmaz.
+Kabul rapor teslimi, kapasite bırakma, iş bitişi veya Dataset/checkpoint değildir.
+
+Güncel okuma aynı kanıtları tekrar denetler. Daha yeni çelişkili kaynak veya
+çekilmiş/yeni kural, değişmiş bağlantı, süre sonu veya gizlilik geçersizleştirmesinde
+eski başarılı sürüme dönülmez. Meta katalog ürün eşlemesi Insights ürün kimlik alanı
+kanıtı değildir; reportNamespaceVerified ve activation yetkisi false kalır.
+
+Üç sağlayıcının birim kontrolleri ve mevcut F01 gerçek PostgreSQL replay’inde
+sentetik kaynak/kural/Shopify kanıtıyla sürüm, geri okuma, CAS, crypto/hash/süre,
+yanlış owner/bağlantı/scope, rollback ve kayıp yanıt sınanır. Gerçek hesap kuralı
+kaydedilmez; sentetik test native kabul değildir. CI/uzak içerik ayrıca doğrulanır.
+15’in gerçek kaynak kuralı üreticisi/kaydı ve native kabul, canlı süre/kapasite/
+anahtar/yetki/aktivasyon ile gizlilik kabul işleri açıktır.23 genel Dataset/FX ve
+kalıcı rapor teslimi;22 duraklatılmış ve Overlap ertelemeleri korunmuştur.
+Resmî Supabase functions/changelog ve PostgreSQL17 constraints/locking belgeleri
+2 Kasım2026 kontrol edildi. Canlı DB/provider/config/deploy yok; merge ayrı onaydır.
+
 ## 2 Kasım — mevcut 15: ürün/varyant kontrolünün kalıcı kanıtı
 
 Owner, mevcut Shopify ürün/varyant kontrolünün kanıtını platform kaydına bağlayan

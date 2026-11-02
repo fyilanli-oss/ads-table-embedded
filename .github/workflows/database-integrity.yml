@@ -4,6 +4,9 @@ on:
   pull_request:
     branches: [main, "codex/step15-storage-foundation-design"]
     paths:
+      - "app/lib/database/source-rule-store.server.js"
+      - "tools/eo05-source-rule-probe.mjs"
+      - "tests/source-rule-store.test.js"
       - "app/lib/database/verified-mapping-store.server.js"
       - "tools/eo05-verified-mapping-probe.mjs"
       - "tests/verified-mapping-store.test.js"

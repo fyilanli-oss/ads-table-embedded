@@ -4,6 +4,22 @@ export class ShopifyProductVerificationError extends Error {
   constructor(code) { super(code); this.name = "ShopifyProductVerificationError"; this.code = code; }
 }
 function fail(code) { throw new ShopifyProductVerificationError(code); }
+const verificationEvidence = new WeakMap();
+const observations = new WeakSet();
+// Only a genuine completed verifier result can expose this allowlisted observation.
+// It proves the observed same-shop response, never a provider mapping or source rule.
+export function shopifyProductVerificationEvidence(result) {
+  const evidence = verificationEvidence.get(result);
+  if (!evidence) fail("SHOPIFY_PRODUCT_OBSERVATION_REQUIRED");
+  return evidence;
+}
+export function bindShopifyProductVerification(evidence, owner) {
+  if (!observations.has(evidence) || evidence.scope.workspace_id !== owner.workspaceId
+    || String(evidence.scope.installation_generation) !== owner.generation
+    || evidence.scope.shop_id !== owner.shopId || evidence.scope.shop_domain !== owner.shopDomain)
+    fail("SHOPIFY_PRODUCT_OBSERVATION_OWNER_MISMATCH");
+  return evidence;
+}
 function freeze(value) {
   if (value && typeof value === "object") {
     for (const child of Object.values(value)) freeze(child);
@@ -52,6 +68,7 @@ export async function verifyShopifyProductCandidate({admin, shop, installation,
   const productRequested = product !== null;
   const query = SHOPIFY_PRODUCT_CANDIDATE_QUERIES[productRequested ? variant ? "identity_product_variant" : "identity_product" : "identity_variant"];
   const variables = {...(product ? {productId: product.gid} : {}), ...(variant ? {variantId: variant.gid} : {})};
+  const requested = {...variables};
   if (signal?.aborted) fail("SHOPIFY_PRODUCT_ABORTED");
   let response, body;
   try {
@@ -74,7 +91,8 @@ export async function verifyShopifyProductCandidate({admin, shop, installation,
     parent = identity(data.productVariant.product, "Product");
     if (product === null) product = parent;
   }
-  const result = (state, reason) => freeze({version: "1.0.0", state, reason,
+  const result = (state, reason) => {
+    const value = freeze({version: "1.0.0", state, reason,
     scope: {workspace_id: installation.workspaceId, installation_generation: installation.installGeneration,
       shop_id: shop.shopId, shop_domain: domain},
     candidate: {product_id: product?.gid ?? null, variant_id: variant?.gid ?? null},
@@ -83,6 +101,16 @@ export async function verifyShopifyProductCandidate({admin, shop, installation,
         legacyResourceId: data.productVariant.legacyResourceId,
         product: {id: parent.gid, legacyResourceId: parent.legacy}} : null},
     provider_link_verified: false, authorizes_activation: false, mapping_write_performed: false});
+    const observation = freeze({schemaVersion: "shopify-product-verification-v1",
+      scope: {...value.scope}, request: requested,
+      response: {shop: {id: data.shop.id, myshopifyDomain: data.shop.myshopifyDomain},
+        product: productRequested ? data.product === null ? {state: "null"} : {state: "observed", ...value.evidence.product} : {state: "not_requested"},
+        variant: variant ? data.productVariant === null ? {state: "null"} : {state: "observed", ...value.evidence.variant} : {state: "not_requested"}},
+      outcome: {state, reason}, providerMappingVerified: false});
+    observations.add(observation);
+    verificationEvidence.set(value, observation);
+    return value;
+  };
   if (parent && parent.gid !== product.gid) return result("conflicting", "variant_parent_mismatch");
   if ((productRequested && data.product === null) || (variant && data.productVariant === null)) {
     return result("unresolved", "candidate_not_observed");

@@ -1,5 +1,5 @@
 import {checkedCatalogSourceRule, exactIdentityContext, extractShopifyCandidate} from "./catalog-shopify-candidate.server.js";
-import {verifyShopifyProductCandidate} from "../shopify/product-identity-verification.server.js";
+import {verifyShopifyProductCandidate, shopifyProductVerificationEvidence} from "../shopify/product-identity-verification.server.js";
 import {permissionContext} from "../oauth/identity-permission-preflight.server.js";
 
 // No tenant/source format has been proven and registered. Never add a rule from ID shape alone.
@@ -57,8 +57,9 @@ export function createGoogleCandidateSourceRuleLoader({rules = REVIEWED_SOURCE_R
 }
 
 // Native Merchant records + source rule + same-shop observation, without canonical mapping.
-export async function verifyGoogleMerchantSourceCandidates({source, ownerScope, context, sourceRules, signal,
+export async function verifyGoogleMerchantSourceCandidates({source, ownerScope, context, sourceRules, signal, onVerification,
   maxRows = 10000} = {}) {
+  if (onVerification !== undefined && typeof onVerification !== "function") fail("PRODUCT_VERIFICATION_SINK_INVALID");
   const scope = scopeOf(ownerScope), shop = structuredClone(context?.shop), installation = structuredClone(context?.installation);
   if (shop?.authority !== "shopify_admin_verified" || installation?.authority !== "shopify_installation_verified"
     || installation.status !== "active" || installation.workspaceId !== scope.workspace_id
@@ -101,6 +102,8 @@ export async function verifyGoogleMerchantSourceCandidates({source, ownerScope, 
         const candidateKey = JSON.stringify([proposed.productId, proposed.variantId]);
         if (!checks.has(candidateKey)) checks.set(candidateKey, await verifyShopifyProductCandidate({admin, shop, installation, ...proposed, signal}));
         const verified = checks.get(candidateKey);
+        if (onVerification) onVerification({nativeId: record.native_product_id, context: record.product_context,
+          verification: shopifyProductVerificationEvidence(verified)});
         resolution = {state: verified.state, reason: verified.reason, candidate_index: null};
         if (verified.state === "candidate_verified_in_shop") {
           resolution = {state: verified.state, reason: "source_rule_and_same_shop_candidate_checked_not_canonical_mapping", candidate_index: candidates.length};

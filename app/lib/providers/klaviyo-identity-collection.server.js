@@ -123,6 +123,7 @@ async function collectKlaviyoIdentitySource({verified, database, tokenVault, bus
   const capture = captureSource ? createKlaviyoSourceCapture({maxBytes: maxCaptureBytes, check, signal}) : null;
   const loader = createIdentityRuntimeAuthorityLoader({verified, database, tokenVault, provider: "klaviyo", now, signal});
   const nativeGraphql = withShopify ? verified.context.admin.graphql.bind(verified.context.admin) : null;
+  const productChecks = [];
   let current, shopifyQuotaControl = null;
   async function recheck() {
     check(); current = await loader.loadCurrent(); check();
@@ -225,7 +226,7 @@ async function collectKlaviyoIdentitySource({verified, database, tokenVault, bus
         }};
       }};
       productCandidates = await verifyKlaviyoProductCandidateRows({events: [...events.values()], metric,
-        context: {installation: current.installation, shop: current.shop, admin}, signal, maxEvents});
+        context: {installation: current.installation, shop: current.shop, admin}, signal, maxEvents, ...(capture ? {onVerification: value => productChecks.push(value)} : {})});
       await recheck();
     }
     let messageEvidence = null;
@@ -276,7 +277,7 @@ async function collectKlaviyoIdentitySource({verified, database, tokenVault, bus
       remaining: ["canonical_authority_scope_to_source_binding",
         ...(withShopify ? [] : ["Shopify_Admin_candidate_verification_composition"]),
         ...(withMessages ? [] : ["Message_channel_join"])]});
-    if (capture) sourceCaptures.set(result, freeze({owner: {workspaceId: current.installation.workspaceId,
+    if (capture) sourceCaptures.set(result, freeze({productChecks, owner: {workspaceId: current.installation.workspaceId,
       installationId: current.installation_id, generation: String(current.installation.installGeneration), shopId: current.shop.shopId,
       shopDomain: current.shop.myshopifyDomain, provider: "klaviyo", connectionId: current.connectionId,
       connectionVersion: String(current.connectionVersion), credentialId: current.credentialId, accountId: current.account.id, selectionEpoch: null},

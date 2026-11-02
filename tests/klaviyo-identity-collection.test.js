@@ -1170,3 +1170,26 @@ test('Klaviyo source: stalled bounded body is cancelled at the whole-read deadli
  await assert.rejects(klaviyoSourceFixture(fixture,f=>{f.options.maxElapsedMs=1000;f.hooks.fetch=p=>p.pathname==='/api/events'&&new Response(new ReadableStream({start(c){c.enqueue(new TextEncoder().encode('{"data":['));},cancel(){cancelled++;}}),{headers:{'content-type':'application/json'}});}),/DEADLINE_EXCEEDED/);
  await new Promise(r=>setTimeout(r,20));assert.equal(cancelled,1);
 });
+
+for (const proofCase of ["observed", "missing", "wrong_parent"]) test("klaviyo source verification: durable requested IDs and actual same-shop response / " + proofCase, async () => {
+ const h = await klaviyoSourceFixture(candidateFixture, f => {if(proofCase!=="observed") f.shopHooks.graphql = (_q,o) => {
+  const productId=o.variables.productId.split("/").at(-1),variantId=o.variables.variantId.split("/").at(-1);
+  return response({data:{shop:{id:"gid://shopify/Shop/12",myshopifyDomain:"test.myshopify.com"},
+   product:proofCase==="missing"?null:{id:o.variables.productId,legacyResourceId:productId},
+   productVariant:proofCase==="missing"?null:{id:o.variables.variantId,legacyResourceId:variantId,
+    product:{id:"gid://shopify/Product/999",legacyResourceId:"999"}}}});
+ };});
+ const w=h.prepare().write,pages=openKlaviyoPages(h,w);
+ const page=pages.find(p=>p.family==="klaviyo_candidate_checks"),check=page.payload.records[0],proof=check.shopifyVerification;
+ assert.equal(proof.schemaVersion,"shopify-product-verification-v1");assert.equal(proof.scope.workspace_id,w.owner.workspaceId);
+ assert.equal(proof.scope.shop_id,w.owner.shopId);assert.equal(proof.response.shop.id,w.owner.shopId);
+ assert.equal(proof.response.shop.myshopifyDomain,w.owner.shopDomain);assert.ok(proof.request.productId.startsWith("gid://shopify/Product/"));
+ assert.equal(proof.providerMappingVerified,false);
+ assert.equal(proof.outcome.state,proofCase==="observed"?"candidate_verified_in_shop":proofCase==="missing"?"unresolved":"conflicting");
+ if(proofCase==="missing"){assert.equal(proof.response.product.state,"null");assert.equal(proof.response.variant.state,"null");}
+ if(proofCase==="wrong_parent")assert.equal(proof.response.variant.product.id,"gid://shopify/Product/999");
+ const metadata=w.body.pages.find(p=>p.family==="klaviyo_candidate_checks");assert.equal(metadata.captureLayer,"collector_projection");
+ const ref=w.body.references.find(r=>r.page===metadata.key);assert.ok(w.body.links.some(l=>l.reference===ref.key&&l.targetType==="mapping"&&l.role==="candidate_check"));
+ assert.equal(h.f.shopCalls.length,1);assert.equal(w.body.rules.length,0);assert.equal(w.body.mappings[0].productId,null);assert.equal(w.body.mappings[0].verifiedAt,null);
+ assert.throws(h.prepare,/OBSERVATION_REQUIRED/);
+});

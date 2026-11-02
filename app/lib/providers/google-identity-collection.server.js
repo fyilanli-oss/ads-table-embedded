@@ -39,6 +39,7 @@ async function collectGoogleIdentitySource({verified, database, tokenVault, merc
   // Reviewed server entries are detached before the first await. Default registry is empty.
   const rules = withShopify ? createGoogleCandidateSourceRuleLoader({rules: sourceRules}) : null;
   const nativeGraphql = withShopify ? verified.context.admin.graphql.bind(verified.context.admin) : null;
+  const productChecks = [];
   let current, nativeQuotaControl = null;
   function check() {
     if (signal?.aborted) fail("GOOGLE_IDENTITY_ABORTED");
@@ -82,7 +83,7 @@ async function collectGoogleIdentitySource({verified, database, tokenVault, merc
       productCandidates = await verifyGoogleMerchantSourceCandidates({source, ownerScope: {
         workspace_id: current.installation.workspaceId, installation_generation: current.installation.installGeneration,
         provider_connection_id: current.connectionId, platform: "google_ads", platform_account_id: current.account.id},
-      context: {installation: current.installation, shop: current.shop, admin}, sourceRules: rules, signal, maxRows});
+      context: {installation: current.installation, shop: current.shop, admin}, sourceRules: rules, signal, maxRows, ...(captureSource ? {onVerification: value => productChecks.push(value)} : {})});
       await recheck();
     }
     const after = await readGoogleMerchantAccountLink(linkOptions);
@@ -98,7 +99,7 @@ async function collectGoogleIdentitySource({verified, database, tokenVault, merc
       authorizes_activation: false, persistable: false, mapping_write_performed: false, source_facts_changed: false,
       remaining: ["canonical_authority_scope_to_source_binding", "real_source_format_evidence_and_reviewed_rule_registration",
         ...(withShopify ? [] : ["Shopify_candidate_verification_composition"]), "quota_dispatch_and_prewrite_controls"]});
-    if(captureSource)sourceCaptures.set(result,freeze({owner:{workspaceId:current.installation.workspaceId,
+    if(captureSource)sourceCaptures.set(result,freeze({productChecks, owner:{workspaceId:current.installation.workspaceId,
       installationId:current.installation_id,generation:String(current.installation.installGeneration),shopId:current.shop.shopId,
       shopDomain:current.shop.myshopifyDomain,provider:"google_ads",connectionId:current.connectionId,connectionVersion:String(current.connectionVersion),
       accountId:current.account.id,selectionEpoch:current.reporting_selection_epoch,credentialId:current.credentialId},

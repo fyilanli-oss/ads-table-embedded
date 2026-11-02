@@ -1,3 +1,48 @@
+## 2 Kasım — mevcut 15: kanıta bağlı kaynak kuralı kaydı
+
+Owner, kaynak kimliğini yorumlayan kuralın kanıtıyla güvenli kaydı için kod,
+SQL, izole test ve PR kapsamını açıkça onayladı. Başlangıç main e5cb47a469efc5990890bc6a22376f09bdbff2af.
+Bağlayıcı kayıt: contracts/a6-eo-implementation-master-v1.json#Step15_source_rule_registration_2026_11_02.
+
+Kural biçimi tahmin edilerek kabul edilmez. Mevcut şifreli kaynak ve aynı mağaza
+Shopify ürün/varyant kanıtları denetlenir. Bağımsız kaynak biçimi/yapılandırma
+incelemesini yapan güvenilir sunucu reviewAuthority, tam snapshot/proposal hash'ine
+bağlı decisionId ve sonlu geçerlilik ile açık onay vermelidir. Varsayılan reviewer,
+gerçek tenant kuralı veya canlı inceleme servisi bu paketle kurulmaz. Yalnız biçim
+ve Shopify'da ürün bulunması, kaynağın gerçekten o biçimi kullandığının kanıtı değildir.
+
+İlk sürümde previousRuleId açık null; sonraki sürümde son kuralın exact id'si gerekir.
+Yeni kural yalnız incelenen tam owner ve provider/account/nativeId/context kimliğine
+uygulanır. Tek örnekten bütün katalog/feed için kural çıkarılmaz. En çok32 kaynak
+referansı ve16MiB eksi64KiB düz kanıt kabul edilir; böylece mevcut100 referanslı eşleme okuma
+sınırı içinde review projection ve kural destek bağlantıları da korunur.
+
+Amaç anahtarlı AES/AAD, kayıt hash'i, tüm native/Shopify aday kontrolleri, kaynak
+bütünlüğü, güncel bağlantı ve gerçek admitted job/fence/quota/okuma süresi denetlenir.
+Açık inceleme kararı olmadan hazırlık olmaz. Sunucu girdileri ve SQL snapshot'ı kopyalar;
+review/write yalnız aynı repository örneğinin tek kullanımlık belleğinde yetkilidir.
+SQL authority ve predecessor/snapshot'ı yeniden kontrol eder; yeni version/supersedes,
+şifreli karar/kural projection'ı, kaynak FK bağlantıları ve bağımsız makbuz atomiktir.
+Eski kaynak/makbuz/kural/eşleme değiştirilmez. Kayıp yanıt otomatik tekrar yazılmaz;
+açık tarihsel makbuz okuması güncel kural veya rollback kanıtı sayılmaz.
+
+SQL AES içeriğini veya review kararının dış otoritesini doğrulayamaz; bu, özel güvenilir
+sunucu bileşiminin sorumluluğudur. DB owner mevcut idari güven sınırıdır. RLS/özel şema
+ve owner-only EXECUTE sürer; runtime/coordinator/service_role/browser grant'i ve route yok.
+Kural kaydı ürün eşlemesi veya rapor namespace/activation/Dataset yetkisi vermez.
+Handoff pending; checkpoint/job finish/reservation release/Sales Role değişmez.
+
+Sonlu açık saklama ve geçerlilik, bütün destek kanıtı ve inceleme kararının süresini
+aşamaz. Generic NATIVE_RECEIPT_REQUIRED korunur.29 yeni unit testi ve mevcut eşleme
+testleri; F01'de üç sağlayıcı için15 kural senaryosu ve devamında gerçek SQL eşleme
+kabul/okuma zinciri sınanır. Kaynaklar, reviewer ve Shopify kanıtları sentetiktir.
+
+15'in gerçek kaynak yapılandırması incelemesi/native kabulü, canlı süre/anahtar/yetki/
+kapasite/aktivasyon ve gizlilik kabulü açık;23 genel Dataset/FX/kalıcı rapor teslimi,
+22 duraklatılmış ve Overlap ertelemeleri korunmuştur. Canlı işlem veya merge yapılmaz.
+Resmî Supabase functions/changelog ve PostgreSQL17 locking/constraints belgeleri
+2 Kasım2026 kontrol edildi. CLI2.122.0 migration new kullanıldı; v3 bildirimi upgrade değildir.
+
 ## 2 Kasım — mevcut 15: doğrulanmış eşlemenin kayıt ve okuma yolu
 
 Owner, geçerli kaynak kuralı/ürün kontrolü/mağaza-hesap kanıtı birlikte doğrulanınca

@@ -34,10 +34,10 @@ export async function refreshPreflightProbe(client,{workspace,connections,shopId
     let billingCalls=0,adCalls=0;
     const payload={data:{activeSubscription:{shop:{id:shopId,myshopifyDomain:shopDomain},billingPeriod:"EVERY_30_DAYS",cancelAtEndOfCycle:false,
       trialEndsAt:null,currentBillingCycle:{startTime:initial,endTime:new Date(Date.now()+10*86400000).toISOString()},items:[{handle:"monthly",price:{active:true}}],pendingUpdate:null}}};
-    const verifier=createRefreshEntitlementVerifier({store,appId:"gid://shopify/App/456",now:Date.now,
+    const verifier=()=>createRefreshEntitlementVerifier({store,appId:"gid://shopify/App/456",now:Date.now,
       limits:{deadlineAt:Date.now()+30000,requestTimeoutMs:1000,finishReserveMs:10},authorizeRead:async()=>true,
       partnerApi:{appId:"gid://shopify/App/456",activeSubscription:async()=>{billingCalls++;return payload;}}});
-    const args={store,buildWorkPlan:async s=>s.provider==="google_ads"?plan():null,entitlementVerifier:verifier,now:Date.now,
+    const args={store,buildWorkPlan:async s=>s.provider==="google_ads"?plan():null,entitlementVerifier:verifier(),now:Date.now,
       readPage:async()=>{adCalls++;return {kind:"complete",payload:{}};},validatePage:()=>({complete:true,rows:[{product:"synthetic-bracelet"}]})};
     assert.equal((await client.query("select count(*)::int n from billing.workspace_entitlements where workspace_id=$1",[workspace])).rows[0].n,0);
     // Wrong source/window and lost queue revision cannot reserve anything, and do not consume a turn.
@@ -127,7 +127,6 @@ export async function refreshPreflightProbe(client,{workspace,connections,shopId
     assert.equal(await store.isClaimCurrent({claim:repeatedWait.claim}),false);
     assert.equal(await store.advanceStage({claim:repeatedWait.claim,window,expectedStage:"request_intent",stage:"response_received"}),false);
     assert.equal(await store.finishClaim({claim:repeatedWait.claim,outcome:"completed"}),false);
-    args.entitlementVerifier=verifier;
     assert.equal(await store.isClaimCurrent({claim:result.claim}),true);
     await refreshInterruptedWorkProbe(client,{store,claim:result.claim,window});
     assert.equal(await store.isClaimCurrent({claim:{...result.claim,fence:result.claim.fence+1}}),false);
@@ -141,11 +140,15 @@ export async function refreshPreflightProbe(client,{workspace,connections,shopId
     // An old negative cache still permits a fresh check for the next account; a fresh denial blocks data.
     payload.data.activeSubscription=null;
     args.buildWorkPlan=async s=>s.provider==="meta"?plan():null;
+    // The long rollback-only SQL matrix is not part of this new dispatch's
+    // entitlement request. Preserve its original30s/1s limits, starting now.
+    args.entitlementVerifier=verifier();
     const denied=await dispatchRefreshPreflight(args);assert.equal(denied.reason,"entitlement_required");assert.equal(adCalls,1);
     assert.equal((await client.query("select entitlement_status from billing.workspace_entitlements where workspace_id=$1",[workspace])).rows[0].entitlement_status,"subscription_required");
     args.buildWorkPlan=async s=>s.provider==="klaviyo"?plan():null;
     payload.data.activeSubscription={shop:{id:shopId,myshopifyDomain:shopDomain},billingPeriod:"EVERY_30_DAYS",cancelAtEndOfCycle:false,
       trialEndsAt:null,currentBillingCycle:{startTime:initial,endTime:new Date(Date.now()+10*86400000).toISOString()},items:[{handle:"monthly",price:{active:true}}],pendingUpdate:null};
+    args.entitlementVerifier=verifier();
     const recovered=await dispatchRefreshPreflight(args);assert.equal(recovered.status,"awaiting_dataset","cached denial does not require merchant UI");assert.equal(adCalls,2);
     await client.query("update integrations.provider_connections set lifecycle_status='reauthorization_required' where id=$1",[connections.klaviyo]);
     assert.equal(await store.isClaimCurrent({claim:recovered.claim}),false);

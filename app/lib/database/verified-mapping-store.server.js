@@ -47,7 +47,7 @@ function verifyProof(proof,owner,proposed){
  if(!variant&&v?.state!=="not_requested")fail("VARIANT_MISMATCH");
  return {productId:product??v.product.id,variantId:variant};
 }
-function validate(snapshot,owner,cipher,now){
+function validate(snapshot,owner,cipher,now,requireRuleEvidence=true){
  if(!snapshot||!same(snapshot.owner,owner)||!hash(snapshot.snapshotHash)||!id(snapshot.mapping?.id)||!id(snapshot.rule?.id)
   ||!id(snapshot.sourceBatchId)||!uuid(snapshot.sourceCommitId)||!hash(snapshot.sourceDigest)||!Array.isArray(snapshot.references)||snapshot.references.length<2||snapshot.references.length>100
   ||!Array.isArray(snapshot.pages)||snapshot.pages.length<1||snapshot.pages.length>100
@@ -57,6 +57,7 @@ function validate(snapshot,owner,cipher,now){
   ||!future(m.retainUntil,now)||!future(r.retainUntil,now)||m.identityVersion!=="1"||r.parserVersion!=="product-mapping-v1"||r.kind!=="product_identity"||!same(r.context,m.context)
   ||r.basis.version!=="product-source-rule-v1"||r.basis.provider!==owner.provider||!same(r.applicability.owner,owner)
   ||!["unresolved","verified"].includes(m.state)||!id(m.revision)||!id(r.version))fail("CONTEXT_INVALID");
+ if(Object.hasOwn(r.applicability,"identity")&&!same(r.applicability.identity,identity))fail("RULE_IDENTITY_MISMATCH");
  const from=Date.parse(r.applicability.from),until=Date.parse(r.applicability.until),completed=Date.parse(snapshot.completedAt),age=r.applicability.maxObservationAgeMs;
  if(!Number.isSafeInteger(now)||![from,until,completed].every(Number.isFinite)||from>now||until<=now||completed>now||completed<from
   ||!Number.isSafeInteger(age)||age<1||age>86400000||now-completed>=age)fail("STALE");
@@ -67,9 +68,9 @@ function validate(snapshot,owner,cipher,now){
   pages.set(page.id,{metadata:page,payload:cipher.open({owner,attemptId:page.attemptId,ordinal:page.batchOrdinal,page})});
  }
  const records=snapshot.references.map(ref=>{const p=pages.get(ref.pageId);if(!p||!id(ref.id)||!future(ref.retainUntil,now))fail("REFERENCE_INVALID");const row=at(p.payload,ref.locator);if(sourcePayloadHash(row)!==ref.recordHash)fail("RECORD_HASH_MISMATCH");return {ref,page:p.metadata,row};});
- const ruleRows=records.filter(x=>x.ref.target==="rule");
+ const ruleRows=records.filter(x=>x.ref.target==="rule"&&x.ref.role==="review_basis");
  const ruleProjection={ruleKey:r.ruleKey,version:r.version,kind:r.kind,context:r.context,parserVersion:r.parserVersion,basis:r.basis,applicability:r.applicability};
- if(!ruleRows.length||ruleRows.some(x=>x.page.family!=="source_rule_review"||x.page.schemaVersion!=="source-rule-review-v1"||!same(x.row,ruleProjection)))fail("RULE_EVIDENCE_REQUIRED");
+ if(requireRuleEvidence&&(!ruleRows.length||ruleRows.some(x=>x.page.family!=="source_rule_review"||x.page.schemaVersion!=="source-rule-review-v1"||!same(x.row,ruleProjection))))fail("RULE_EVIDENCE_REQUIRED");
  if(owner.provider==="klaviyo"&&!records.some(x=>x.ref.role==="metric"&&x.row.id===m.context.metric_id&&x.row.attributes?.name==="Ordered Product"&&x.row.attributes.integration?.name==="Shopify"))fail("METRIC_EVIDENCE_REQUIRED");
  const natives=records.filter(x=>x.ref.target==="mapping"&&["native_product","native_product_observation"].includes(x.ref.role));
  const checks=records.filter(x=>x.ref.target==="mapping"&&x.ref.role==="candidate_check");
@@ -93,6 +94,12 @@ function validate(snapshot,owner,cipher,now){
  if(checks.some(x=>!used.has(x.ref.id)))fail("UNMATCHED_CHECK");
  if(m.state==="verified"&&!same(accepted,{productId:m.productId,variantId:m.variantId}))fail("ACCEPTED_ID_MISMATCH");
  return {accepted,expiresAt:Math.min(until,completed+age,Date.parse(m.retainUntil),Date.parse(r.retainUntil),...snapshot.references.map(x=>Date.parse(x.retainUntil)),...snapshot.pages.map(x=>Date.parse(x.retainUntil)))};
+}
+// Pure observation validation for the separate explicit rule-review writer.
+// It grants no reviewed rule, mapping, namespace or activation capability.
+export function validateRuleSourceObservation(snapshot,owner,cipher,now){
+ if(snapshot.mapping?.state!=="unresolved"||snapshot.references?.some(x=>x.target!=="mapping"))fail("RULE_SOURCE_INVALID");
+ return validate(snapshot,owner,cipher,now,false);
 }
 export function createVerifiedMappingRepository({database,cipher,now=Date.now}={}){
  if(typeof database?.query!=="function"||typeof cipher?.open!=="function"||typeof now!=="function")fail("CONFIG_INVALID");

@@ -1,3 +1,4 @@
+import {sourceRuleProbe} from "./eo05-source-rule-probe.mjs";
 import assert from "node:assert/strict";
 import {randomUUID} from "node:crypto";
 import {verifiedMappingFixture} from "../tests/fixtures/verified-mapping-fixture.js";
@@ -27,12 +28,9 @@ export async function verifiedMappingProbe(client,{args,cipher}){
   const captured=(await client.query("select evidence.commit_source_batch($1::jsonb,$2::uuid,0,$3::jsonb) as result",[args[0],sourceAttempt,JSON.stringify(body)])).rows[0].result;
   const mappingId=captured.manifest.ids["mapping:m0"],readKey=provider==="google_ads"?"googleRead":provider==="meta"?"metaRead":"klaviyoRead";
   await client.query("update evidence.source_batches set manifest=manifest||jsonb_build_object($1::text,$2::jsonb) where id=$3",[readKey,args[4],captured.batchId]);
-  const ruleAttempt=randomUUID(),entry=f.entries.find(x=>x.target==="rule"),rulePage={key:"rule",family:entry.family,ordinal:0,origin:owner.provider,captureLayer:"collector_projection",numericFidelity:"decoded_only",fieldCoverage:["records"],schemaVersion:entry.schema,sanitizerVersion:"synthetic-v1"};
-  const ruleBody={sourceState:"complete",policy:body.policy,pages:[cipher.seal({owner,attemptId:ruleAttempt,ordinal:0,page:rulePage,payload:{records:[entry.row]}})],
-   references:[{key:"rule-ref",page:"rule",locatorKind:"row",locator:"/records/0",nativeType:"ReviewedSourceRule",nativeId:null,state:"present",hash:sourcePayloadHash(entry.row)}],
-   rules:[{key:"r",...entry.row,state:"reviewed"}],mappings:[],orders:[],lines:[],journeys:[],claims:[],links:[{reference:"rule-ref",targetType:"rule",target:"r",role:"review_basis"}]};
-  const ruleReceipt=(await client.query("select evidence.commit_source_batch($1::jsonb,$2::uuid,0,$3::jsonb) as result",[args[0],ruleAttempt,JSON.stringify(ruleBody)])).rows[0].result;
-  const ruleId=ruleReceipt.manifest.ids["rule:r"],input={owner,mappingId,ruleId};
+  const ruleReceipt=await sourceRuleProbe(client,{owner,mappingId,cipher,policy:f.policy,
+   proposal:{ruleKey:f.rule.ruleKey,previousRuleId:null,basis:f.rule.basis,from:f.rule.applicability.from,until:f.rule.applicability.until,maxObservationAgeMs:f.rule.applicability.maxObservationAgeMs}});
+  const ruleId=ruleReceipt.manifest.ids["rule:reviewed"],input={owner,mappingId,ruleId};
   for(const mode of ["success","lost","replay","CAS","expired","partial","withdrawn","new_rule","conflicting","wrong_owner","missing_rule","account","connection_version","disconnect","scopes","crypto","hash","late_failure","skip_finalize"]){
    await client.query("savepoint verified_mapping_case");
    try{

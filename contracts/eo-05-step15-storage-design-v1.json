@@ -943,6 +943,35 @@
       "live_provider_authorized": false,
       "merge_authorized": false,
       "deployment_authorized": false
+    },
+    "source_rule_registration": {
+      "status": "repository_preparation_not_live",
+      "base_main": "e5cb47a469efc5990890bc6a22376f09bdbff2af",
+      "owner_approval": "Owner explicitly approved the concrete Step15 source-rule producer/registration code and isolated tests/PR after the scope was described: Onayliyorum Codex on2026-11-02. No live account rule, provider call, OAuth/UI/config, merge or deployment authority.",
+      "scope": "Private trusted-server source-rule review and versioned durable registration using existing source pages/mapping/native context and Shopify proof. No new tables, routes, queries, scopes or runtime grants.",
+      "review": "No format inference grants authority. A required injected trusted-server reviewAuthority must explicitly approve the exact SQL snapshotHash/proposalHash with a decision UUID and finite validUntil after independent source-format/configuration review. No default reviewer, real review service or tenant rule is installed. Shape and Shopify existence are necessary observations, never proof of source configuration. Synthetic reviewers exist only in tests.",
+      "identity": "New rules are restricted to the exact current owner and exact provider/account/nativeId/context tuple, not an entire feed/catalog based on one sample. All linked source and Shopify candidate observations must agree; AES/AAD, hashes, expiry and original admitted job/quota binding are checked. This is a deliberately bounded first producer, not a bulk format policy.",
+      "versions": "Explicit previousRuleId is required, including null for the first version. Owner-only SQL locks current authority then rechecks predecessor/current source snapshot. New version/supersedes, encrypted review projection, original evidence FK links and independent receipt commit atomically. Existing source/mapping/rule history is preserved. Concurrent predecessor or evidence change fails closed.",
+      "evidence": "At most32 source references and16MiB minus64KiB plain evidence, leaving room for the reviewed projection and both rule support plus copied accepted-mapping support within the existing100-reference mapping reader. Decision metadata and sourceMappingId are encrypted within rule applicability. Source-reference links are durable FKs. Reviewer input and driver results are detached/frozen.",
+      "consumer": "Existing mapping validator is shared for observations without pretending a persisted rule already exists. That pure helper returns no capability. Normal mapping review still requires the actual encrypted review projection and current durable rule; new exact identity restriction is checked. Source-basis references are hash/decryption checked separately from the review projection. Generic NATIVE_RECEIPT_REQUIRED is unchanged.",
+      "trust_boundary": "Existing owner-only private SQL/FORCE RLS administrative boundary. SQL cannot decrypt AES or validate the external review decision issuer; semantic checks and reviewAuthority belong to the trusted server composition. No browser/service_role/runtime/coordinator grant. No activation/namespace/Dataset/checkpoint/job finish/reservation release authority. Handoff remains pending.",
+      "uncertainty": "One-use same-factory review/write. Lost or malformed response consumes write and returns WRITE_UNCONFIRMED; no automatic retry. Explicit historical receipt inspection cannot certify current rule or rollback. Same private SQL operation returns original receipt; changed body conflicts.",
+      "policy": "Explicit finite rule applicability, maxObservationAgeMs1..86400000, retention version/until and at most10-minute deadline. Retention cannot outlive any page/reference/source mapping/origin batch, observation age, applicability or review decision. Source key creation, policy defaults and production capacity are not inferred.",
+      "validation": "29 unit cases plus existing mapping tests. Existing F01 real PostgreSQL replay will exercise15 rule scenarios for each provider, then consume the resulting real rule through the versioned mapping path. Test source/config/reviewer/native observations remain synthetic, never real-data acceptance.",
+      "migration": "supabase/migrations/20261102201443_eo05b_source_rule_review.sql",
+      "official_checked_at": "2026-11-02",
+      "official_sources": [
+        "https://supabase.com/docs/guides/database/functions",
+        "https://www.postgresql.org/docs/17/explicit-locking.html",
+        "https://www.postgresql.org/docs/17/ddl-constraints.html",
+        "https://supabase.com/changelog"
+      ],
+      "remaining": "Step15 real source-configuration review decision and native/link/namespace acceptance, live finite policies/key/grants/activation/capacity and customer privacy acceptance remain open. Step23 general Dataset/FX/durable downstream delivery;22 paused and Overlap deferrals unchanged.",
+      "runtime_code_authorized": true,
+      "live_database_authorized": false,
+      "live_provider_authorized": false,
+      "merge_authorized": false,
+      "deployment_authorized": false
     }
   }
 }

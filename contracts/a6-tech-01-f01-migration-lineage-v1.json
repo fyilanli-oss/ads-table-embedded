@@ -790,6 +790,15 @@
       "repository_sql_sha256": "d41901cb1c85fd1295d74407539acf459e52892303cf12a81bcb4b2b2d3a7999",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261102201443",
+      "name": "eo05b_source_rule_review",
+      "file": "supabase/migrations/20261102201443_eo05b_source_rule_review.sql",
+      "created_with": "supabase@2.122.0 migration new eo05b_source_rule_review",
+      "repository_sql_sha256": "7e09bff64aedc1dcab964cdd76dcd892203353f5d4c8e1fe6550ed9dba6d4dbf",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

@@ -2893,6 +2893,7 @@
     "live_database_authorized": false,
     "merge_authorized": false,
     "deployment_authorized": false,
-    "native_reference_limit": "Only exact Shopify Order GID or an already verified same-order FK can identify a claim subject. Bare numeric/custom Klaviyo OrderId is not converted into a Shopify Order ID; it holds fulfillment until its namespace is proven. No new source rule or query is inferred."
+    "native_reference_limit": "Only exact Shopify Order GID or an already verified same-order FK can identify a claim subject. Bare numeric/custom Klaviyo OrderId is not converted into a Shopify Order ID; it holds fulfillment until its namespace is proven. No new source rule or query is inferred.",
+    "request_minimization": "On completed source fulfillment, clear the explicit webhook order list. A redaction retains only scoped order-ID digests in the restricted run receipt for same-generation re-ingestion prevention; these are pseudonymous erasure-ledger material, not claimed anonymous data. Its final finite retention/restore policy remains part of the existing pre-live structured-retention gate."
   }
 }

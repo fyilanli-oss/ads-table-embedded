@@ -119,7 +119,12 @@ begin
  values(r.id,r.workspace_id,r.install_generation,r.shop_identity_sha256,r.kind,
  case when r.kind='customer_redact' then array['customer_scoped_source_records'] else '{}'::text[] end,
  array['unrelated_source_records'],c,case when r.kind='customer_redact' then 'deleted' else 'disclosed' end,clock_timestamp()) returning id into mid;
- update privacy.deletion_runs set status='completed',completed_at=clock_timestamp(),last_error_code=null,source_customer_receipt=jsonb_build_object('manifestId',mid,'digest',p_digest,'disclosureReceipt',p_disclosure,'counts',c) where id=p_run;
+ update privacy.deletion_runs set status='completed',completed_at=clock_timestamp(),last_error_code=null,
+  source_customer_receipt=jsonb_build_object('manifestId',mid,'digest',p_digest,'disclosureReceipt',p_disclosure,'counts',c,
+   'redactedOrderHashes',case when r.kind='customer_redact' then
+    (select coalesce(jsonb_agg(evidence.source_hash(value) order by value),'[]') from jsonb_array_elements(requested)) else '[]'::jsonb end)
+  where id=p_run;
+ update privacy.webhook_claims set source_request_scope=null where id=r.claim_id;
  return jsonb_build_object('status','completed','manifestId',mid,'counts',c);
 end $fn$;
 alter table privacy.deletion_manifests drop constraint deletion_manifests_result_check;
@@ -132,10 +137,10 @@ declare native_id text;
 begin
  native_id:=case when tg_table_name='shopify_order_versions' then to_jsonb(new)->>'order_id' else to_jsonb(new)->>'native_order_reference' end;
  if tg_table_name='provider_claim_versions' and (native_id is null or native_id !~ '^gid://shopify/Order/[1-9][0-9]{0,29}$')
- and exists(select 1 from privacy.deletion_runs r join privacy.webhook_claims c on c.id=r.claim_id where r.workspace_id=new.workspace_id and r.install_generation=new.installation_generation and r.kind='customer_redact' and r.status='completed' and jsonb_array_length(c.source_request_scope->'orders')>0)
+ and exists(select 1 from privacy.deletion_runs r where r.workspace_id=new.workspace_id and r.install_generation=new.installation_generation and r.kind='customer_redact' and r.status='completed' and jsonb_array_length(r.source_customer_receipt->'redactedOrderHashes')>0)
  then raise exception 'SOURCE_PRIVACY_SUBJECT_UNRESOLVED';end if;
- if exists(select 1 from privacy.deletion_runs r join privacy.webhook_claims c on c.id=r.claim_id where r.workspace_id=new.workspace_id and r.install_generation=new.installation_generation and r.kind='customer_redact' and r.status='completed'
- and c.source_request_scope->'orders' ? native_id) then raise exception 'SOURCE_PRIVACY_REDACTED_ORDER';end if;
+ if exists(select 1 from privacy.deletion_runs r where r.workspace_id=new.workspace_id and r.install_generation=new.installation_generation and r.kind='customer_redact' and r.status='completed'
+ and r.source_customer_receipt->'redactedOrderHashes' ? evidence.source_hash(to_jsonb(native_id))) then raise exception 'SOURCE_PRIVACY_REDACTED_ORDER';end if;
  return new;
 end $fn$;
 create trigger source_order_privacy_tombstone before insert or update on source.shopify_order_versions for each row execute function privacy.block_redacted_source_order();

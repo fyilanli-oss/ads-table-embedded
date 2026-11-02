@@ -39,6 +39,7 @@ export async function customerSourcePrivacyProbe(client){
     const conflict=[...c.args];conflict[6]='b'.repeat(64);await rejected(client,()=>client.query('select * from privacy.claim_shopify_customer_webhook($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb)',conflict));
    }
    if(mode==='scope_missing'){await client.query('update privacy.webhook_claims set source_request_scope=null where id=$1',[c.claim.claim_id]);await rejected(client,()=>prepareCustomerSourceRun({database:client,cipher:input.cipher,runId:c.runId}));continue;}
+   const beforeSnapshot=(await client.query('select privacy.customer_source_snapshot($1) result',[c.runId])).rows[0].result;
    const prepared=await prepareCustomerSourceRun({database:client,cipher:input.cipher,runId:c.runId});
    if(mode==='no_receipt'){await assert.rejects(completeCustomerSourceRun({database:client,preparedRun:prepared}),/DISCLOSURE_RECEIPT_REQUIRED/);assert.equal((await client.query('select count(*)::int n from privacy.deletion_manifests where deletion_run_id=$1',[c.runId])).rows[0].n,0);continue;}
    if(mode==='disclose'){assert.equal(prepared.artifact.orders.length,1);assert.equal(prepared.artifact.lines.length,1);assert.equal(prepared.artifact.journeys.length,1);assert.ok(!JSON.stringify(prepared.artifact).includes(gid(102)));await completeCustomerSourceRun({database:client,preparedRun:prepared,disclosureReceipt:'b'.repeat(64)});assert.equal((await client.query('select count(*)::int n from source.shopify_order_versions where installation_id=$1',[installation])).rows[0].n,2);continue;}
@@ -57,8 +58,11 @@ export async function customerSourcePrivacyProbe(client){
    const remains=(await client.query('select order_id from source.shopify_order_versions where installation_id=$1 order by order_id',[installation])).rows.map(x=>x.order_id);
    assert.deepEqual(remains,mode==='empty'?[gid(101),gid(102)]:[gid(102)]);
    for(const t of ['shopify_line_versions','shopify_journey_versions'])assert.equal((await client.query('select count(*)::int n from source.'+t+' where installation_id=$1',[installation])).rows[0].n,mode==='empty'?2:1);
-   const snap=(await client.query('select privacy.customer_source_snapshot($1) result',[c.runId])).rows[0].result;
-   const page=snap.pages[0],batch=snap.batches[0],plain=input.cipher.open({owner:batch.authority,attemptId:batch.attempt_id,ordinal:batch.batch_ordinal,page});
+   const stored=(await client.query("select payload_hash,encode(ciphertext,'hex') ciphertext,encode(nonce,'hex') nonce,encode(auth_tag,'hex') auth_tag,key_version,plain_byte_count,sanitizer_version,field_coverage from evidence.source_pages where id=$1",[beforeSnapshot.pages[0].id])).rows[0];
+   const page={...beforeSnapshot.pages[0],payloadHash:stored.payload_hash,ciphertext:stored.ciphertext,nonce:stored.nonce,authTag:stored.auth_tag,keyVersion:stored.key_version,plainBytes:stored.plain_byte_count,sanitizerVersion:stored.sanitizer_version,fieldCoverage:stored.field_coverage},batch=beforeSnapshot.batches[0],plain=input.cipher.open({owner:batch.authority,attemptId:batch.attempt_id,ordinal:batch.batch_ordinal,page});
+   assert.equal((await client.query('select source_request_scope from privacy.webhook_claims where id=$1',[c.claim.claim_id])).rows[0].source_request_scope,null);
+   const receipt=(await client.query('select source_customer_receipt from privacy.deletion_runs where id=$1',[c.runId])).rows[0].source_customer_receipt;
+   assert.ok(!JSON.stringify(receipt).includes(gid(101)));
    assert.equal(plain.records[1].id,gid(102));assert.equal(plain.records[1].amount,'9.99');if(mode!=='empty')assert.equal(plain.records[0],null);
    assert.equal((await client.query('select * from privacy.execute_deletion_run($1)',[c.runId])).rows[0].deletion_status,'completed');
    if(mode!=='empty'){const attempt=input.attemptId;input.attemptId=randomUUID();await rejected(client,()=>createSourceEvidenceRepository(client).commit(prepare()));input.attemptId=attempt;}

@@ -1,3 +1,40 @@
+## 2 Kasım — Google ürün kaynakları için ikinci okuyucu bağlantısı
+
+Shopify bağlantısı297 ile main'dedir. Owner, Google mevcut okuyucusu ve ürün eşleme
+kodunun incelemesini; ardından bağlantı/ürün sayfalarını, tam kaynak bağlamını,
+bekleyen eşleşmeleri, güncel yetki kontrolünü ve hata testlerini içeren somut kod
+paketini açıkça onayladı. Başlangıç main a025ae1736af95ce41f9eedaa000900904391349.
+
+Google okuyucusuna açık sourceStorage seçeneği eklenir. Mevcut Ads–Merchant bağlantısı
+önce/sonra, Merchant ürün sayfaları ve varsa Shopify aday kontrolleri allowlist
+projection olarak şifrelenir. collector_projection/decoded_only işaretleri orijinal
+HTTP baytı veya atılan alanın yokluğu iddiasını önler. Ürün tutar/başlık/kişisel ek
+alanlar bu kimlik kaydına taşınmaz. Sayısal kimlikler kaynak string'i olarak kalır.
+
+Ürün kimliği hesap+Merchant+feed+dil+dataSource+local bağlamıyla saklanır. Üretim kaynak
+kuralı uydurulmaz. Bu paket reviewed kural veya verified eşleme yazamaz: aday kontrolü
+başarılı olsa bile kalıcı eşleme unresolved; gerçek aday çatışması conflicting kalır.
+Product/Variant GID ve verifiedAt kabul edilmiş eşleme alanlarında null'dır. Mevcut
+generic NATIVE_RECEIPT_REQUIRED kapısı korunur. Adayın gözlenen kanıtı ayrıca saklanır.
+
+Owner-only SQL fonksiyonu installation/connection/credential/Reporting Account epoch,
+iş/fence/pencere, billing makbuzu ve tam Merchant kota bağlamını yeniden doğrular.
+Aynı kimliğin aynı gözlemi yeniden kullanılır; değişen yetki veya durum için sürümü
+veritabanı belirler, önceki sürüm supersedes ile korunur. Caller revision1 önceki
+kaydı ezemez. Aynı işlem başka içerikle tekrarlanamaz. Yanıt kaybı otomatik replay,
+finish/stop, checkpoint veya Dataset tamamlandı işareti üretmez; açık readback gerekir.
+
+Kaynak paketi sınır aşarsa kırpılmaz. Boş ürün listesi gerçek sıfırdır; eksik/başarısız
+native okuma tamamlanmış kaynak paketi yayımlamaz. Mapping ilişkileri ürün, bağlantı
+ve aday kanıtlarının bağımlı saklama süresini korur. Genel structured retention ve
+müşteri disclosure/redact işleri canlı ön koşulu olarak açık kalır.
+
+Mevcut Google sorguları, token/OAuth akışı, scope, selector veya ürün UI değişmez.
+Runtime/coordinator EXECUTE, canlı DB/key/config/deploy veya scheduler açılmaz.
+15 açık;22 paused; Dataset/FX23. Merge ayrı açık onay ister. Resmî Google Ads v25
+ProductLink, Merchant products/v1 list, Supabase changelog/functions ve PostgreSQL17
+locking belgeleri2 Kasım2026 kontrol edildi; exact linkler makine sözleşmesindedir.
+
 ## 2 Kasım — ilk okuyucu bağlantısı: Shopify sipariş kaynakları
 
 Tasarım295 ve temel296 main'e alındı. Owner, mevcut Shopify sipariş okuyucusunun

@@ -4,6 +4,15 @@ on:
   pull_request:
     branches: [main, "codex/step15-storage-foundation-design"]
     paths:
+      - "app/lib/providers/google-source-write.server.js"
+      - "app/lib/providers/google-identity-collection.server.js"
+      - "app/lib/providers/google-product-identity-reader.server.js"
+      - "app/lib/providers/google-merchant-account-link.server.js"
+      - "app/lib/database/source-evidence-store.server.js"
+      - "app/lib/refresh/quota-authority-binding.server.js"
+      - "tools/eo05-google-source-capture-probe.mjs"
+      - "tools/eo05-merchant-quota-context-probe.mjs"
+      - "tests/google-identity-collection.test.js"
       - "supabase/migrations/**"
       - "tools/f01-*"
       - "tools/f08-*"

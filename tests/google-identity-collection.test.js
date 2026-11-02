@@ -20,6 +20,10 @@ import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repo
 import {refreshQuotaWait} from "../app/lib/refresh/quota-work-wait.server.js";
 import {candidatePrewriteCases} from "./helpers/candidate-prewrite-cases.js";
 import {reviewRefreshCandidatePrewrite} from "../app/lib/providers/candidate-prewrite.server.js";
+import {randomUUID} from "node:crypto";
+import {prepareGoogleIdentitySourceWrite} from "../app/lib/providers/google-source-write.server.js";
+import {sourceStoreFixture} from "./fixtures/source-store-fixture.js";
+import {createSourceEvidenceRepository} from "../app/lib/database/source-evidence-store.server.js";
 
 const workspace = "11111111-1111-4111-8111-111111111111", connection = "22222222-2222-4222-8222-222222222222",
   credential = "33333333-3333-4333-8333-333333333333";
@@ -680,3 +684,59 @@ providerClaimPrewriteCases({provider:"google_ads",fixture:candidateBoundFixture,
 
 import {integratedPrewriteCases} from "./helpers/integrated-prewrite-cases.js";
 integratedPrewriteCases({provider:"google_ads",fixture:candidateBoundFixture,expected:candidatePrewriteOwner});
+
+async function sourceFixture(factory=fixture,mutate=()=>{}){
+ const f=factory();f.options.captureSource=true;mutate(f);const observation=await f.run(),{input}=sourceStoreFixture();
+ const options={observation,attemptId:randomUUID(),policy:input.policy,cipher:input.cipher,limits:{maxBytes:1000000,maxRows:1000},now:f.state.now.toISOString()};
+ return {f,observation,options,prepare:()=>prepareGoogleIdentitySourceWrite(options)};
+}
+test("Google source: genuine completed collection binds allowlisted pages and unresolved context without guessing Shopify IDs",async()=>{
+ const {f,options,prepare}=await sourceFixture(),before=f.calls.length,{write}=prepare();
+ assert.equal(f.calls.length,before);assert.equal(write.body.pages.length,3);assert.equal(write.body.mappings.length,1);
+ const m=write.body.mappings[0];assert.equal(m.state,"unresolved");assert.equal(m.productId,null);assert.equal(m.variantId,null);assert.equal(m.rule,null);
+ assert.equal(write.body.rules.length,0);assert.equal(write.owner.credentialId,credential);
+ assert.deepEqual(m.context,{merchant_id:"99",feed_label:"US",content_language:"en",data_source:"accounts/99/dataSources/7",legacy_local:false});
+ assert.equal(m.nativeId,"shopify_US_123_456");assert.equal(write.body.links.filter(x=>x.role==="relationship").length,2);
+ for(const page of write.body.pages){assert.equal(page.captureLayer,"collector_projection");assert.equal(page.numericFidelity,"decoded_only");
+  const value=options.cipher.open({owner:write.owner,attemptId:write.attemptId,ordinal:0,page});assert.ok(Array.isArray(value.records));}
+ assert.doesNotMatch(JSON.stringify(write),/secret-access|secret-refresh|secret-developer/);assert.throws(prepare,/SOURCE_OBSERVATION_REQUIRED/);
+});
+test("Google source: copied JSON and uncaptured observations cannot manufacture source provenance",async()=>{
+ const {options}=await sourceFixture();assert.throws(()=>prepareGoogleIdentitySourceWrite({...options,observation:structuredClone(options.observation)}),/SOURCE_OBSERVATION_REQUIRED/);
+ const f=fixture();assert.throws(()=>prepareGoogleIdentitySourceWrite({...options,observation:f.run}),/SOURCE_OBSERVATION_REQUIRED/);
+ const plain=await f.run();assert.throws(()=>prepareGoogleIdentitySourceWrite({...options,observation:plain}),/SOURCE_OBSERVATION_REQUIRED/);
+});
+test("Google source: native empty products and empty intermediate pages retain actual coverage",async()=>{
+ const empty=await sourceFixture(fixture,f=>{f.hooks.fetch=p=>p.hostname==="merchantapi.googleapis.com"&&response({products:[]});});
+ assert.equal(empty.prepare().write.body.mappings.length,0);
+ const paged=await sourceFixture(fixture,f=>{f.hooks.fetch=p=>p.hostname==="merchantapi.googleapis.com"&&response(p.searchParams.has("pageToken")?{products:[product()]}:{products:[],nextPageToken:"next"});});
+ const w=paged.prepare().write;assert.equal(w.body.pages.length,4);assert.equal(w.body.mappings.length,1);
+});
+test("Google source: same offer in distinct language contexts remains distinct and extra private fields are excluded",async()=>{
+ const other={...product(),contentLanguage:"fr",name:"accounts/99/products/fr~US~shopify_US_123_456"};
+ const h=await sourceFixture(fixture,f=>{f.hooks.fetch=p=>p.hostname==="merchantapi.googleapis.com"&&response({products:[{...product(),email:"PRIVATE-EMAIL",productAttributes:{title:"PRIVATE-TITLE"}},other]});});
+ const {write}=h.prepare();assert.equal(write.body.mappings.length,2);assert.notDeepEqual(write.body.mappings[0].identity,write.body.mappings[1].identity);
+ const opened=write.body.pages.map(page=>h.options.cipher.open({owner:write.owner,attemptId:write.attemptId,ordinal:0,page}));
+ assert.doesNotMatch(JSON.stringify(opened),/PRIVATE-EMAIL|PRIVATE-TITLE|productAttributes|email/);
+});
+test("Google source: successful candidate check remains evidence and does not accept a verified rule or mapping",async()=>{
+ const h=await sourceFixture(candidateFixture),w=h.prepare().write;assert.equal(w.body.rules.length,0);assert.equal(w.body.mappings[0].state,"unresolved");
+ assert.equal(w.body.mappings[0].productId,null);assert.ok(w.body.pages.some(p=>p.family==="google_candidate_checks"));
+ assert.ok(w.body.links.some(l=>l.role==="candidate_check"));
+});
+test("Google source: explicit package limits fail without truncation",async()=>{
+ const h=await sourceFixture();assert.throws(()=>prepareGoogleIdentitySourceWrite({...h.options,limits:{maxRows:1000,maxBytes:1000}}),/BOUNDS/);
+});
+test("Google source: native failure discards the prefix and final relationship drift cannot yield a source write",async()=>{
+ for(const final of [false,true]){const f=fixture();f.options.captureSource=true;f.hooks.fetch=(p,init,n)=>{
+  if(!final&&p.hostname==="merchantapi.googleapis.com")return response({error:{message:"private"}},500);
+  if(final&&n===3)return response({results:[link("8")]});};
+  await assert.rejects(f.run());assert.equal(f.calls.length,final?3:2);}
+});
+test("Google source: bound reader unknown write has no automatic SQL stop, provider replay or reusable execution",async()=>{
+ const f=boundFixture(),{input}=sourceStoreFixture();f.config.sourceStorage={cipher:input.cipher,policy:input.policy,limits:{maxRows:1000,maxBytes:1000000}};
+ const reader=f.create();await assert.rejects(reader.readEvidence(),/WRITE_UNCONFIRMED/);
+ assert.equal(f.calls.length,3);assert.equal(f.queries.filter(q=>q.sql.includes("commit_google_identity_source")).length,1);
+ assert.ok(f.queries.every(q=>!q.sql.includes("stop_refresh")&&!q.sql.includes("finish_refresh")));
+ await assert.rejects(reader.readEvidence(),/EXECUTION_USED/);assert.equal(f.calls.length,3);
+});

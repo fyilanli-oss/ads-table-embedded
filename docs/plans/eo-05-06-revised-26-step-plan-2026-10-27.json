@@ -1,4 +1,25 @@
 {
+  "Step15_storage_foundation_design_2026_11_02": {
+    "checked_at": "2026-11-02",
+    "status": "design_proposal_prepared_for_owner_table_review",
+    "existing_step": 15,
+    "contract": "contracts/eo-05-step15-storage-design-v1.json",
+    "brief": "docs/EO_05_STEP15_STORAGE_DESIGN_BRIEF.md",
+    "owner_authorization": "Concrete Step15 raw storage/table allocation/relationships and staged design-to-implementation scope explained, owner replied Tamam başlayalım. Physical layout is proposed for required table-count approval first.",
+    "step15_design_started": true,
+    "storage_implementation_started": false,
+    "proposed_physical_tables": 10,
+    "mapping_component_of_existing_five": 1,
+    "additional_support_tables": 9,
+    "physical_table_design_accepted": false,
+    "repository_runtime_changed": false,
+    "migration": false,
+    "live_provider": false,
+    "live_DB": false,
+    "merge_authorized": false,
+    "deploy_authorized": false,
+    "limits": "Only design/contract/documentation preparation in this delivery. No OAuth flow/scope/query change; extra Shopify visit/refund detail at Overlap by current owner decision; historical22 paused; general Dataset/FX writer23."
+  },
   "Owner_flow_restore_2026_10_31": {
     "checked_at": "2026-10-31",
     "existing_plan_step": 7,
@@ -216,7 +237,7 @@
       "work": "Onaydan sonra kalıcı kimlik eşlemesi, kaynak kuralları ve özel ham kanıt saklama bağlantısını kurmak.",
       "boundary": "Tablo, writer, tekrar okuma, geçmiş/sürüm, silinme/yeniden bağlantı ve gerçek referanslar. Kimlik akışı uçtan uca sınanacak.",
       "addition": "Shopify ek işi: sipariş/satır kayıtları ve Shopify atfı ile sağlayıcı iddiaları için ayrı kalıcı kaynak kayıtları; writer/tekrar okuma ve sürüm geçmişi. Fiziksel tablo sayısı burada tasarlanıp onaylanacak; mevcut beş tabloya sessiz ek yapılmayacak.",
-      "status": "14 sonrası açık onayla kodlanacak. Kimlik ve Shopify kalıcılığı henüz kurulmadı.",
+      "status": "2 Kasım: tablo/ilişki tasarım önerisi hazır;10 fiziksel tablo (1 mevcut mapping +9 destek) owner incelemesinde. Fiziksel tasarım kabulü sonrası repository uygulaması; SQL/migration/writer ve canlı apply henüz başlamadı.",
       "package": "EO-05-B"
     },
     {

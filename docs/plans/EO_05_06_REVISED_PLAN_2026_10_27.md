@@ -1,3 +1,29 @@
+## 2 Kasım — mevcut15: veritabanı temeli için somut tasarım önerisi
+
+Owner ham kaynakların saklanması, hangi verinin hangi tabloya yazılması ve ilişkilerin
+çıkarılması kapsamını açıkça onayladı.15'in tasarımına başlandı; uygulamasına değil.
+Tek okunabilir belge docs/EO_05_STEP15_STORAGE_DESIGN_BRIEF.md; alan/ilişki/tekillik
+karşılığı contracts/eo-05-step15-storage-design-v1.json. Mevcut kararlar yeniden
+ürün kararına açılmadan kullanılır. Fiziksel tablo sayısı owner incelemesindedir.
+
+Öneri10 tablo:3 kanıt,2 kaynak-kuralı/eşleme,4 sipariş/atıf ve1 typed kanıt bağlantısı.
+Mapping önceki beş mantıksal tablodan biridir;9 ek destek tablosu açıkça gösterilir.
+Üç rapor fact tablosu ve FX bu teslimde kurulmaz; genel writer23'te kalır. Şifreli
+sayfa/typed referans/gerçek owner FK'ları, sürüm/tekrar/unknown readback, mevcut silme
+worker'ına bağlama ve reconnect yetki ayrımı tasarımda tariflidir. Gün/süre/boyut
+limitleri ölçüm/politika kabulünden önce canlı varsayılan yapılmaz.
+
+Tablo düzeni kabul edilince repository migration/private writer/readback ve davranış
+kontrolleri hazırlanabilir; bu teslim SQL veya runtime yazmaz. Mevcut15 satırı gereği
+fiziksel tasarım onayı önce gelir. Merge ve canlı DB/config/provider/deploy ayrı
+kapılardır. Native erişim/kimlik/kapasite kabulü tamamlanmış sayılmaz.22 paused;
+Overlap22 sonrasında; ek Shopify ziyaret/iade sorguları bu teslimde yoktur.
+PR294 plan kaydı ayrı ve henüz birleşmemiştir; yeni görev güncel main'den açıldı.
+
+Resmî Supabase tablolar/RLS ve PostgreSQL17 constraints/transaction/privileges kaynakları
+2 Kasım kontrol edildi. Supabase changelog.md desteklenmeyen text/markdown nedeniyle
+alınamadı; tam kontrol uygulama öncesi açık. Kaynak/izler makine sözleşmesindedir.
+
 ## 30 Ekim — PMax kaynaklarını mevcut resolver ve arka plan okuyucusuna bağlama
 
 Mevcut 21'in 15 öncesi dar kod dilimi: PMax Asset Group PD, ürün performansı, PMax'e filtreli Cart Data ve güncel Listing Tree ayrı aileler halinde tam sayfalanır. Mevcut ortak okuyucuda açık googlePmax seçeneğiyle aynı mağaza/hesap/nesil/bağlantı kontrolleri ve fiziksel kota hattı kullanılır. Varsayılan akış değişmez; Shopify'da görsel işlem veya OAuth değişikliği yoktur.

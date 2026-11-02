@@ -11,6 +11,7 @@ import {quotaAuthorityProbe} from "./eo05-quota-authority-probe.mjs";
 import {refreshInterruptedWorkProbe} from "./eo05-refresh-interrupted-work-probe.mjs";
 import {refreshQueueCronEntryProbe} from "./eo05-refresh-queue-cron-entry-probe.mjs";
 import {metaSourceCaptureRehearsal} from "./eo05-meta-source-capture-probe.mjs";
+import {klaviyoSourceCaptureRehearsal} from "./eo05-klaviyo-source-capture-probe.mjs";
 
 // Runs within the canonical synthetic fixture. All changes roll back, including billing/queue/claims.
 export async function refreshPreflightProbe(client,{workspace,connections,shopId,shopDomain}) {
@@ -160,4 +161,5 @@ export async function refreshPreflightProbe(client,{workspace,connections,shopId
     console.log("EO05_QUOTA_WORK_WAIT_PASS first_boundary_only=true durable_wait=true fresh_fence=true stale_worker_denied=true same_source_period=true queue_age_preserved=true no_double_debit=true real_SQL=true synthetic_HTTP_only=true actual_provider_calls=0");
   } finally {await client.query("rollback");}
   await metaSourceCaptureRehearsal(client,{workspace,shopId,shopDomain});
+  await klaviyoSourceCaptureRehearsal(client,{workspace,shopId,shopDomain});
 }

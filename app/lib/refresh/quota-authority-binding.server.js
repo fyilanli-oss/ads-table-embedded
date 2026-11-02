@@ -19,6 +19,7 @@ import {createShopifyOrderReadExecution} from "../shopify/order-collection.serve
 import {randomUUID} from "node:crypto";
 import {prepareGoogleIdentitySourceWrite} from "../providers/google-source-write.server.js";
 import {prepareMetaIdentitySourceWrite} from "../providers/meta-source-write.server.js";
+import {prepareKlaviyoIdentitySourceWrite} from "../providers/klaviyo-source-write.server.js";
 import {createSourceEvidenceRepository} from "../database/source-evidence-store.server.js";
 const candidateObservations=new WeakMap();
 const candidateReferenceInputs=new WeakMap();
@@ -80,7 +81,7 @@ export function createRefreshKlaviyoIdentityReader(options) {return createKlaviy
 export function createRefreshKlaviyoCandidateReader(options) {return createKlaviyoIdentityReader(options,true);}
 export function createRefreshKlaviyoInteractionReader(options) {return createKlaviyoIdentityReader(options,false,true);}
 function createKlaviyoIdentityReader({verified,database,tokenVault,mode,signal,sdkBridge,orderIdentityRules,
-  readNow=()=>new Date(),maxElapsedMs,maxPages,maxEvents,maxMetrics,maxIncluded,maxMessageRows,maxInteractions,maxInteractionBytes,...quotaOptions} = {},candidates=false,interactions=false) {
+  readNow=()=>new Date(),maxElapsedMs,maxPages,maxEvents,maxMetrics,maxIncluded,maxMessageRows,maxInteractions,maxInteractionBytes,sourceStorage=null,...quotaOptions} = {},candidates=false,interactions=false) {
   const claim=structuredClone(quotaOptions.claim),window=structuredClone(quotaOptions.window);
   const owner=structuredClone(verified?.installationAuthority),shop=structuredClone(verified?.identity?.shop);
   if((candidates?mode!==undefined||!isShopifyAdminIdentitySdkBridge(sdkBridge):interactions?mode!==undefined||sdkBridge!==undefined||orderIdentityRules!==undefined:!["native","message"].includes(mode)||sdkBridge!==undefined||orderIdentityRules!==undefined)
@@ -95,24 +96,43 @@ function createKlaviyoIdentityReader({verified,database,tokenVault,mode,signal,s
   const caller={installationAuthority:owner,identity:{shop,session:{authority:verified.identity?.session?.authority,
     shopDomain:verified.identity?.session?.shopDomain}},context:{admin:{graphql:verified.context.admin.graphql.bind(verified.context.admin)}}};
   const binding=refreshQuotaOptions(quotaOptions,{admin:candidates});
+  if(sourceStorage!==null&&(!sourceStorage||Object.keys(sourceStorage).sort().join(",")!=="cipher,limits,policy"
+    ||typeof sourceStorage.cipher?.seal!=="function"||!Number.isSafeInteger(sourceStorage.limits?.maxBytes)
+    ||sourceStorage.limits.maxBytes<1||sourceStorage.limits.maxBytes>16777216||!Number.isSafeInteger(sourceStorage.limits.maxRows)
+    ||sourceStorage.limits.maxRows<1||sourceStorage.limits.maxRows>1000))throw Error("KLAVIYO_SOURCE_STORAGE_INPUT_INVALID");
+  const storage=sourceStorage===null?null:{cipher:sourceStorage.cipher,policy:structuredClone(sourceStorage.policy),limits:structuredClone(sourceStorage.limits)};
+  const sourceRead=storage?structuredClone({jobId:claim.id,fence:String(claim.fence),window,observedAt:quotaOptions.entitlementReceipt.observedAt}):null;
   const execution=candidates||interactions?createQuotaReadExecution():undefined;
   const transport=identityTransport(binding,"klaviyo",claim,undefined,execution);
   const admin=candidates?createFencedAdminClient({verified:caller,sdkBridge,signal,...quotaOptions},false,null,{binding,readExecution:execution}):null;
   if(admin)caller.context.admin=admin;
   const collect=interactions?collectKlaviyoInteractionEvidence:candidates?collectKlaviyoVerifiedProductCandidateEvidence:mode==="native"?collectKlaviyoNativeIdentityEvidence:collectKlaviyoIdentityMessageEvidence;
   const options={verified:caller,database,tokenVault,businessDate:window.from,fetchFn:transport,signal,now:readNow,
-    maxElapsedMs,maxPages,maxEvents,maxMetrics,maxIncluded,maxMessageRows,...interactions?{maxInteractions,maxInteractionBytes}:{}};
+    maxElapsedMs,maxPages,maxEvents,maxMetrics,maxIncluded,maxMessageRows,...interactions?{maxInteractions,maxInteractionBytes}:{},
+    captureSource:storage!==null,...storage?{maxCaptureBytes:storage.limits.maxBytes}:{}};
   let used=false;
   return Object.freeze({async readEvidence(...args){
     if(args.length) throw Error("REFRESH_KLAVIYO_IDENTITY_OVERRIDE_FORBIDDEN");
     if(used) throw Error("REFRESH_KLAVIYO_IDENTITY_EXECUTION_USED");
     used=true;
-    try{const result=await collect(options);if(candidates)recordCandidateObservation(result,"klaviyo","candidate",owner,shop,claim,window,referenceInputs);
-      if(interactions)interactionObservations.set(result,Object.freeze({provider:"klaviyo",workspaceId:owner.workspaceId,
+    try{
+      const attemptId=storage?randomUUID():null,deadlineAt=storage?new Date(readNow().valueOf()+(maxElapsedMs??120000)).toISOString():null;
+      const initial=storage?structuredClone(await binding.loadContext({provider:"klaviyo"})):null;
+      if(storage&&!initial)throw Error("KLAVIYO_SOURCE_CONTEXT_REQUIRED");
+      const result=await collect(options);let outcome=result;
+      if(storage){
+        if(signal?.aborted||JSON.stringify(await binding.loadContext({provider:"klaviyo"}))!==JSON.stringify(initial))throw Error("KLAVIYO_SOURCE_CONTEXT_CHANGED");
+        const prepared=prepareKlaviyoIdentitySourceWrite({observation:result,attemptId,...storage,now:readNow().toISOString()});
+        const sourceReceipt=await createSourceEvidenceRepository(database).commitKlaviyoIdentity(prepared.write,
+          {...sourceRead,sourceContext:prepared.sourceContext,quotaContext:initial,completedAt:prepared.completedAt,permissionExpiresAt:prepared.permissionExpiresAt,deadlineAt});
+        outcome=Object.freeze({...result,sourceStored:true,sourceReceipt,sourceAttemptId:attemptId});
+      }
+      if(candidates)recordCandidateObservation(outcome,"klaviyo","candidate",owner,shop,claim,window,referenceInputs);
+      if(interactions)interactionObservations.set(outcome,Object.freeze({provider:"klaviyo",workspaceId:owner.workspaceId,
         installGeneration:owner.installGeneration,installationId:result.installation_id,shopId:shop.shopId,shopDomain:shop.myshopifyDomain,
         accountId:claim.accountId,connectionId:result.connection_id,connectionVersion:result.connection_version,
         reportingSelectionEpoch:result.reporting_selection_epoch,job:Object.freeze({id:claim.id,fence:claim.fence,window:Object.freeze({...window})})}));
-      return result;}
+      return outcome;}
     finally{if(admin)closeShopifyAdminSdkClient(admin);}
   }});
 }

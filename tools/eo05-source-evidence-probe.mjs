@@ -1,3 +1,4 @@
+import {customerSourcePrivacyProbe} from "./eo05-customer-source-privacy-probe.mjs";
 import assert from "node:assert/strict";
 import {randomBytes, randomUUID} from "node:crypto";
 import pg from "pg";
@@ -109,5 +110,6 @@ export async function sourceEvidenceProbe(client, connection, environment = proc
     const manifest = (await client.query("select row_counts from privacy.deletion_manifests where deletion_run_id=$1", [deletion])).rows[0].row_counts;
     assert.ok(manifest["evidence.source_batches"] > 0, "existing privacy manifest records the deleted source families");
   } finally {await client.query("rollback");}
+  await customerSourcePrivacyProbe(client);
   console.log("SOURCE_EVIDENCE_SQL_PASS atomic-replay-owner-fk-crypto-retention-privacy");
 }

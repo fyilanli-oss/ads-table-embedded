@@ -2,6 +2,12 @@ import {createHash, createHmac, timingSafeEqual} from "node:crypto";
 import {normalizeShopDomain} from "./installation-authority.server.js";
 import {shopIdentitySha256} from "./shop-identity.server.js";
 
+const verifiedScopes = new WeakMap();
+export function verifiedSourceRequestScope(claim) {
+  if (!verifiedScopes.has(claim)) throw new Error("VERIFIED_SOURCE_REQUEST_SCOPE_REQUIRED");
+  return verifiedScopes.get(claim);
+}
+
 const TOPICS = new Set([
   "app/uninstalled",
   "customers/data_request",
@@ -58,6 +64,21 @@ function optionalTimestamp(value) {
   return date.toISOString();
 }
 
+function sourceRequestScope(payload, topic) {
+  if (!topic.startsWith("customers/")) return null;
+  const key = topic === "customers/data_request" ? "orders_requested" : "orders_to_redact";
+  if (!Object.hasOwn(payload, key)) return null;
+  const rows = payload[key];
+  if (!Array.isArray(rows) || rows.length > 1000) throw new InvalidShopifyWebhookError("SHOPIFY_WEBHOOK_ORDER_SCOPE_INVALID");
+  const orders = rows.map(value => {
+    if (!(typeof value === "string" && /^[1-9][0-9]{0,29}$/.test(value))
+      && !(typeof value === "number" && Number.isSafeInteger(value) && value > 0)) throw new InvalidShopifyWebhookError("SHOPIFY_WEBHOOK_ORDER_SCOPE_INVALID");
+    return "gid://shopify/Order/" + String(value);
+  });
+  if (new Set(orders).size !== orders.length) throw new InvalidShopifyWebhookError("SHOPIFY_WEBHOOK_ORDER_SCOPE_INVALID");
+  return Object.freeze({version: 1, orders: Object.freeze(orders.sort())});
+}
+
 export async function verifyShopifyWebhookRequest(
   request,
   {environment = process.env, receivedAt = new Date()} = {},
@@ -103,7 +124,7 @@ export async function verifyShopifyWebhookRequest(
     throw new TypeError("receivedAt must be a valid Date");
   }
 
-  return Object.freeze({
+  const claim = Object.freeze({
     verified: true,
     webhookId: requiredHeader(request.headers, "x-shopify-webhook-id"),
     eventId: request.headers.get("x-shopify-event-id")?.trim() || null,
@@ -115,9 +136,12 @@ export async function verifyShopifyWebhookRequest(
     shopIdentitySha256: shopIdentitySha256(shopId),
     payloadSha256: createHash("sha256").update(rawBody, "utf8").digest("hex"),
     apiVersion,
+    sourceRequestScope: sourceRequestScope(payload, topic),
     triggeredAt: optionalTimestamp(
       request.headers.get("x-shopify-triggered-at"),
     ),
     receivedAt: receivedAt.toISOString(),
   });
+  verifiedScopes.set(claim, claim.sourceRequestScope);
+  return claim;
 }

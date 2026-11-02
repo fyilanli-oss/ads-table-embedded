@@ -754,6 +754,15 @@
       "repository_sql_sha256": "492c0f34a0b1119b2e5dc911500b0027b2f489e1b7bd4ae043d3597eb4f85297",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261102143502",
+      "name": "eo05b_customer_source_privacy",
+      "file": "supabase/migrations/20261102143502_eo05b_customer_source_privacy.sql",
+      "created_with": "supabase@2.122.0 migration new eo05b_customer_source_privacy",
+      "repository_sql_sha256": "e90c086690099f40fc9abbeccd45b0d5b1a728fa22e4e709bdedacd3d787464b",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

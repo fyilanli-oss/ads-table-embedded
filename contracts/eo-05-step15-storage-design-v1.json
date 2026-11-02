@@ -760,6 +760,32 @@
       "live_database_authorized": false,
       "merge_authorized": false,
       "deployment_authorized": false
+    },
+    "customer_source_privacy": {
+      "status": "repository_preparation_not_live",
+      "owner_approval": "Owner explicitly accepted the concrete next package: customer-scoped source discovery/disclosure/redaction within the existing privacy engine, repository code/SQL/tests/PR, no new provider query or live action. Source: Onerini kabul ediyorum Codex on2026-11-02.",
+      "base_main": "fde2c1baff3c26430ed8109a46fa0de190683ec9",
+      "scope": "Verified webhook order list preserved only by explicit internal composition. Missing scope distinct from empty; no customer profile/contact stored. No new physical tables. Existing claims/runs/manifests retain authority.",
+      "source_processing": "Owner-only bounded installation/generation snapshot; decrypt verified envelopes, use exact Order ID/native reference/link evidence. Mixed-page record locators remain stable; only requested records are replaced with null and encrypted again. Other subjects retain exact row hashes and source numeric strings. Unknown subject, unavailable required proof, unsupported locator/family or a shared cross-subject dependency stops without mutation.",
+      "redaction": "One current-snapshot CAS transaction: resealed pages, related structured rows and references removed together; dependencies retained or rejected, stale mapping proof invalidated. Affected batch is explicitly invalidated and cannot masquerade as the original complete commit. Exact redacted Order IDs are tombstones against re-ingestion in the same installation generation. Whole-install deletion remains existing worker behavior.",
+      "disclosure": "Only requested source/structured records become an internal bounded artifact. No browser export/email/transport added. Data request remains open without explicit durable external delivery receipt; no false no_customer_data receipt. Actual delivery channel and receipt authority are pre-live acceptance, not automatically created by preparation.",
+      "limits": "No source-rule/product canonical promotion, no accepted claim join or Overlap. Existing default webhook ingress and SQL queue remain unchanged until separately approved internal sourcePrivacy composition, grants/key/policy and activation. Existing fail-closed historical missing-scope behavior remains. Shared/ambiguous associations require explicit resolution; no broad deletion.",
+      "unknown": "Prepared capability is private and one-use; a lost write reply is WRITE_UNCONFIRMED and cannot be replayed. Historical existing manifest inspection is separate. Restore must replay retained privacy ledger before service opens; no backup/restore activation in this package.",
+      "migration": "supabase/migrations/20261102143502_eo05b_customer_source_privacy.sql",
+      "official_checked_at": "2026-11-02",
+      "official_sources": [
+        "https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance",
+        "https://supabase.com/changelog",
+        "https://supabase.com/docs/guides/database/functions",
+        "https://www.postgresql.org/docs/17/explicit-locking.html"
+      ],
+      "runtime_code_authorized": true,
+      "live_provider_authorized": false,
+      "live_database_authorized": false,
+      "merge_authorized": false,
+      "deployment_authorized": false,
+      "native_reference_limit": "Only exact Shopify Order GID or an already verified same-order FK can identify a claim subject. Bare numeric/custom Klaviyo OrderId is not converted into a Shopify Order ID; it holds fulfillment until its namespace is proven. No new source rule or query is inferred.",
+      "request_minimization": "On completed source fulfillment, clear the explicit webhook order list. A redaction retains only scoped order-ID digests in the restricted run receipt for same-generation re-ingestion prevention; these are pseudonymous erasure-ledger material, not claimed anonymous data. Its final finite retention/restore policy remains part of the existing pre-live structured-retention gate."
     }
   }
 }

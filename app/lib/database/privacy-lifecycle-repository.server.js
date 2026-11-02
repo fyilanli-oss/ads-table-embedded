@@ -1,3 +1,4 @@
+import {verifiedSourceRequestScope} from "../shopify/privacy-webhook.server.js";
 function requiredQuery(database) {
   if (!database || typeof database.query !== "function") {
     throw new TypeError("database.query is required");
@@ -12,16 +13,17 @@ function exactlyOneRow(result, operation) {
   return result.rows[0];
 }
 
-export function createPrivacyLifecycleRepository(database) {
+export function createPrivacyLifecycleRepository(database, {customerSourceScope = false} = {}) {
   const query = requiredQuery(database);
 
   return Object.freeze({
     async claimWebhook(claim) {
+      const sourceScope = customerSourceScope ? verifiedSourceRequestScope(claim) : null;
       const row = exactlyOneRow(
         await query(
-          `select * from privacy.claim_shopify_webhook(
+          `select * from privacy.${sourceScope ? "claim_shopify_customer_webhook" : "claim_shopify_webhook"}(
             $1::text, $2::text, $3::text, $4::text, $5::text,
-            $6::bytea, $7::text, $8::text, $9::timestamptz, $10::timestamptz
+            $6::bytea, $7::text, $8::text, $9::timestamptz, $10::timestamptz${sourceScope ? ", $11::jsonb" : ""}
           )`,
           [
             claim.webhookId,
@@ -34,6 +36,7 @@ export function createPrivacyLifecycleRepository(database) {
             claim.apiVersion,
             claim.triggeredAt,
             claim.receivedAt,
+            ...sourceScope ? [JSON.stringify(sourceScope)] : [],
           ],
         ),
         "PRIVACY_WEBHOOK_CLAIM",

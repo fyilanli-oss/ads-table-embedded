@@ -36,11 +36,12 @@ export function createSourceRuleRepository({database,cipher,reviewAuthority,now=
  return Object.freeze({
   async review(input){try{
    input=structuredClone(input);const owner=sourceStoreOwner(input.owner),time=now();
-   if(owner.provider==="shopify"||!id(input.mappingId))fail("INPUT_INVALID");
+   if(owner.provider==="shopify"||!id(input.mappingId)||(Object.hasOwn(input,"expectedSourceBatchId")&&!id(input.expectedSourceBatchId)))fail("INPUT_INVALID");
    const proposal=proposalInput(input.proposal,owner,time);
    const snapshot=structuredClone(single(await database.query("select identity.source_rule_review_state($1::jsonb,$2::bigint,$3::jsonb) as result",
     [JSON.stringify(owner),input.mappingId,canonicalSourceJson(proposal)])));
    const r=snapshot.rule,identity=JSON.parse(snapshot.mapping?.identityKey??"null");
+   if(Object.hasOwn(input,"expectedSourceBatchId")&&snapshot.sourceBatchId!==input.expectedSourceBatchId)fail("SOURCE_BATCH_CHANGED");
    if(snapshot.mapping?.id!==input.mappingId||!hash(snapshot.proposalHash)||!same(snapshot.proposal,proposal)
     ||!Array.isArray(snapshot.references)||snapshot.references.length>32||!Array.isArray(snapshot.pages)
     ||snapshot.pages.reduce((n,p)=>n+p.plainBytes,0)>16711680

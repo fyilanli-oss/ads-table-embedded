@@ -24,6 +24,8 @@ import {randomUUID} from "node:crypto";
 import {prepareGoogleIdentitySourceWrite} from "../app/lib/providers/google-source-write.server.js";
 import {sourceStoreFixture} from "./fixtures/source-store-fixture.js";
 import {createSourceEvidenceRepository} from "../app/lib/database/source-evidence-store.server.js";
+import {createGoogleSourceMappingFlow} from "../app/lib/refresh/google-source-mapping-flow.server.js";
+import {refreshGoogleSourceStorageContext} from "../app/lib/refresh/quota-authority-binding.server.js";
 
 const workspace = "11111111-1111-4111-8111-111111111111", connection = "22222222-2222-4222-8222-222222222222",
   credential = "33333333-3333-4333-8333-333333333333";
@@ -769,4 +771,57 @@ for (const proofCase of ["observed", "missing", "wrong_parent"]) test("google so
  const ref=w.body.references.find(r=>r.page===metadata.key);assert.ok(w.body.links.some(l=>l.reference===ref.key&&l.targetType==="mapping"&&l.role==="candidate_check"));
  assert.equal(h.f.shopCalls.length,1);assert.equal(w.body.rules.length,0);assert.equal(w.body.mappings[0].productId,null);assert.equal(w.body.mappings[0].verifiedAt,null);
  assert.throws(h.prepare,/OBSERVATION_REQUIRED/);
+});
+
+function flowFixture(){
+ const f=candidateBoundFixture(),{input}=sourceStoreFixture(),db=f.config.database,sourceCalls=[],otherCalls=[];
+ const controller=new AbortController();f.config.signal=controller.signal;f.config.sourceStorage={cipher:input.cipher,policy:input.policy,limits:{maxRows:1000,maxBytes:1000000}};
+ f.config.database={async query(sql,args){
+  if(sql.includes('commit_google_identity_source')){sourceCalls.push(args);if(f.q.sourceLost)throw Error('SYNTHETIC-PRIVATE');
+   const body=JSON.parse(args[3]);if(f.q.abortAfterSource){controller.abort();return new Promise(()=>{});}
+   return {rows:[{result:{status:'committed',batchId:'1',commitId:randomUUID(),digest:'a'.repeat(64),sourceState:'complete',manifest:{counts:Object.fromEntries(['pages','references','rules','mappings','orders','lines','journeys','claims','links'].map(k=>[k,body[k].length])),ids:{'mapping:m0':'9'}}}}]};}
+  if(sql.includes('read_source_receipt'))return {rows:[{result:{status:'not_observed',rollbackProven:false}}]};
+  otherCalls.push(sql);return db.query(sql,args);
+ }};
+ const t=f.state.now.valueOf(),plan={identity:{provider:'google_ads',accountId:'123',nativeId:'shopify_US_123_456',context:rule().product_context},
+  ruleProposal:{ruleKey:'synthetic-rule',previousRuleId:null,basis:{version:'product-source-rule-v1',provider:'google_ads',format:'shopify_market_product_variant',market:'US'},from:new Date(t-1000).toISOString(),until:new Date(t+60000).toISOString(),maxObservationAgeMs:60000},
+  rulePolicy:{version:'synthetic',until:new Date(t+30000).toISOString()},mappingPolicy:{version:'synthetic',until:new Date(t+30000).toISOString()},deadlineAt:new Date(t+60000).toISOString()};
+ const options={readerOptions:f.config,plan,now:()=>f.state.now.valueOf(),reviewAuthority:async()=>{throw Error('No synthetic reviewer required before source test stop');}};
+ return {...f,sourceCalls,otherCalls,controller,plan,options,flow:()=>createGoogleSourceMappingFlow(options)};
+}
+for(const change of [x=>delete x.options.reviewAuthority,x=>delete x.config.sourceStorage,x=>x.plan.identity.provider='meta',x=>x.plan.identity.accountId='other',x=>x.plan.deadlineAt='infinity',x=>x.plan.mappingPolicy.until='2000-01-01T00:00:00.000Z',x=>x.plan.extra=true])test('Google flow rejects invalid authority/plan before IO',()=>{
+ const f=flowFixture();change(f);assert.throws(f.flow);assert.equal(f.calls.length,0);assert.equal(f.sourceCalls.length,0);assert.equal(f.adminCalls.length,0);
+});
+test('Google flow target must occur in its genuine captured source; run cannot replay',async()=>{
+ const f=flowFixture();f.plan.identity.nativeId='not-in-capture';const flow=f.flow(),r=await flow.run();
+ assert.equal(r.status,'stopped');assert.equal(r.stage,'selection');assert.equal(r.source.status,'committed');assert.equal(r.rule,null);assert.equal(f.sourceCalls.length,1);assert.equal(f.adminCalls.length,1);
+ await assert.rejects(flow.run(),/EXECUTION_USED/);assert.throws(()=>createGoogleSourceMappingFlow({...f.options,readerOptions:{}}),/CONFIG_INVALID/);
+});
+test('Google flow source uncertainty exposes only explicit historical inspection, never next write',async()=>{
+ const f=flowFixture();f.q.sourceLost=true;const flow=f.flow(),r=await flow.run();assert.equal(r.status,'unconfirmed');assert.equal(r.stage,'source');
+ assert.equal(r.source.status,'unconfirmed');assert.equal(r.rule,null);assert.equal(r.mapping,null);assert.equal(f.sourceCalls.length,1);
+ const inspected=await flow.inspect('source');assert.equal(inspected.flowAdvanced,false);assert.equal(inspected.receipt.rollbackProven,false);await assert.rejects(flow.run(),/EXECUTION_USED/);
+ await assert.rejects(flow.inspect('mapping'),/INSPECTION_UNAVAILABLE/);assert.doesNotMatch(JSON.stringify(r),/SYNTHETIC-PRIVATE|secret-access|secret-refresh|secret-developer/);
+});
+test('Google flow source membership metadata cannot be registered by copied JSON',async()=>{
+ const f=flowFixture(),observation=await createRefreshGoogleCandidateReader(f.config).readEvidence(),context=refreshGoogleSourceStorageContext(observation);
+ assert.equal(context.status,'committed');assert.equal(context.targets[0].identity.nativeId,'shopify_US_123_456');assert.ok(Object.isFrozen(context.owner));
+ assert.equal(refreshGoogleSourceStorageContext(structuredClone(observation)),null);assert.equal(refreshGoogleSourceStorageContext({sourceStored:true}),null);
+});
+test('Google flow invalid proposal stops after stored evidence with no reviewed rule write',async()=>{
+ const f=flowFixture();delete f.plan.ruleProposal.previousRuleId;const r=await f.flow().run();assert.equal(r.stage,'rule_review');assert.equal(r.status,'stopped');assert.equal(r.rule,null);assert.equal(f.sourceCalls.length,1);
+});
+test('Google flow pre-abort performs no SQL or physical HTTP',async()=>{
+ const f=flowFixture();f.controller.abort();const r=await f.flow().run();assert.equal(r.status,'stopped');assert.equal(r.source,null);assert.equal(f.sourceCalls.length,0);assert.equal(f.calls.length,0);assert.equal(f.adminCalls.length,0);
+});
+test('Google flow abort during a stalled source acknowledgement retains explicit uncertain operation',async()=>{
+ const f=flowFixture();f.q.abortAfterSource=true;const flow=f.flow(),r=await flow.run();assert.equal(r.status,'unconfirmed');assert.equal(r.source.status,'unconfirmed');assert.equal(r.rule,null);assert.equal(r.mapping,null);assert.equal(f.sourceCalls.length,1);
+ assert.equal((await flow.inspect('source')).receipt.rollbackProven,false);
+});
+test('Google flow detaches the trusted work plan before collection',async()=>{
+ const f=flowFixture();delete f.plan.ruleProposal.previousRuleId;const flow=f.flow();f.plan.identity.nativeId='mutated';const r=await flow.run();assert.equal(r.stage,'rule_review');assert.equal(r.sourceMappingId,'9');
+});
+test('Google flow overall deadline returns even when a native dependency never settles',async()=>{
+ const f=flowFixture();f.config.fetchFn=async()=>new Promise(()=>{});f.plan.deadlineAt=new Date(f.state.now.valueOf()+30).toISOString();
+ const flow=f.flow(),r=await flow.run();assert.equal(r.status,'stopped');assert.equal(r.source,null);assert.equal(r.rule,null);assert.equal(f.sourceCalls.length,0);await assert.rejects(flow.run(),/EXECUTION_USED/);
 });

@@ -24,6 +24,10 @@ import {createSourceEvidenceRepository} from "../database/source-evidence-store.
 const candidateObservations=new WeakMap();
 const candidateReferenceInputs=new WeakMap();
 const interactionObservations=new WeakMap();
+const googleSourceStorageContexts=new WeakMap();
+// Private in-process provenance of an actual Google source write/result. This
+// getter cannot register a receipt, turn JSON into evidence or grant authority.
+export function refreshGoogleSourceStorageContext(value){return googleSourceStorageContexts.get(value)??null;}
 export function refreshInteractionObservationContext(value){return interactionObservations.get(value)??null;}
 // In-process collection provenance only. No public registrar or permission proof.
 export function refreshCandidateObservationContext(value){return candidateObservations.get(value)??null;}
@@ -232,7 +236,7 @@ function createGoogleIdentityReader({verified,database,tokenVault,merchantId,dev
     maxElapsedMs,maxPages,maxRows,maxLinkPages,maxLinks,...candidates?{sourceRules:rules}:{},captureSource:storage!==null};
   const collect=candidates?collectGoogleVerifiedProductCandidateEvidence:collectGoogleMerchantIdentityEvidence;
   let used=false;
-  return Object.freeze({async readEvidence(...args){
+  const reader=Object.freeze({async readEvidence(...args){
     if(args.length) throw Error("REFRESH_GOOGLE_IDENTITY_OVERRIDE_FORBIDDEN");
     if(used) throw Error("REFRESH_GOOGLE_IDENTITY_EXECUTION_USED");
     used=true;try{
@@ -243,14 +247,21 @@ function createGoogleIdentityReader({verified,database,tokenVault,merchantId,dev
       if(storage){
         if(signal?.aborted||JSON.stringify(await binding.loadContext({provider:"google_ads"}))!==JSON.stringify(initial))throw Error("GOOGLE_SOURCE_CONTEXT_CHANGED");
         const prepared=prepareGoogleIdentitySourceWrite({observation:result,attemptId,...storage,now:readNow().toISOString()});
-        const sourceReceipt=await createSourceEvidenceRepository(database).commitGoogleIdentity(prepared.write,
-          {...sourceRead,quotaContext:initial,completedAt:prepared.completedAt,deadlineAt});
+        const context=Object.freeze({owner:prepared.write.owner,attemptId,targets:Object.freeze(prepared.write.body.mappings.map(m=>Object.freeze({key:m.key,identity:m.identity,state:m.state})))});
+        googleSourceStorageContexts.set(reader,Object.freeze({...context,status:"unconfirmed"}));
+        let sourceReceipt;
+        try{sourceReceipt=await createSourceEvidenceRepository(database).commitGoogleIdentity(prepared.write,
+          {...sourceRead,quotaContext:initial,completedAt:prepared.completedAt,deadlineAt});}
+        catch(error){googleSourceStorageContexts.set(error,Object.freeze({...context,status:"unconfirmed"}));throw error;}
         outcome=Object.freeze({...result,sourceStored:true,sourceReceipt,sourceAttemptId:attemptId});
+        googleSourceStorageContexts.set(outcome,Object.freeze({...context,status:"committed",receipt:sourceReceipt}));
+        googleSourceStorageContexts.set(reader,googleSourceStorageContexts.get(outcome));
       }
       if(candidates)recordCandidateObservation(outcome,"google_ads","candidate",owner,shop,claim,window);return outcome;
     }
     finally{if(admin)closeShopifyAdminSdkClient(admin);}
   }});
+  return reader;
 }
 
 // Inactive Admin-only client for an existing fenced provider job. SQL requires an

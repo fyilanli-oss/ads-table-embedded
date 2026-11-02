@@ -25,7 +25,8 @@ export async function sourceRetentionProbe(client){
  async function expire(consumed=true){for(const table of tables)await client.query('update '+table+" set retain_until=statement_timestamp()-interval '1 second' where installation_id=$1",[installationId]);if(consumed)await client.query("update evidence.source_batches set handoff_state='consumed',handoff_receipt=repeat('a',64) where installation_id=$1",[installationId]);}
  const audit=()=>({version:'synthetic-test-policy',until:new Date(Date.now()+86400000).toISOString(),maxReceipts:1000});
  const plan=(kind,patch={})=>prepareSourceRetentionSweep({workspaceId:owner.workspaceId,installationId,generation:owner.generation,kind,after:'0',limit:100,deadlineAt:new Date(Date.now()+60000).toISOString(),auditPolicy:audit(),...patch});
- const retention=createSourceRetentionRepository(client);
+ async function validateForeignKeys(){await client.query('set constraints all immediate');await client.query('set constraints all deferred');}
+ const retention=createSourceRetentionRepository({async query(sql,args){const result=await client.query(sql,args);if(sql.includes('evidence.cleanup_source_retention'))await validateForeignKeys();return result;}});
  const count=async table=>(await client.query('select count(*)::int n from '+table+' where installation_id=$1',[installationId])).rows[0].n;
  for(const mode of ['pending','partial','future','long_parent','fresh_pending','privacy','cycle','success','lost','replay','audit_capacity','late_failure','skip_delete','wrong_owner','expired_deadline','budget','external_pin','link_consumer','historical_read']){
   await client.query('savepoint retention_case');try{
@@ -71,7 +72,7 @@ export async function sourceRetentionProbe(client){
     const inspected=await repository.inspect({owner,attemptId:input.attemptId,ordinal:0});assert.equal(inspected.status,'invalidated');
     const pages=await repository.readPages({owner,attemptId:input.attemptId,ordinal:0,limit:10});assert.equal(pages.length,1);assert.equal(pages[0].retentionPruned,true);assert.equal(pages[0].expired,true);assert.equal(input.cipher.open({owner,attemptId:input.attemptId,ordinal:0,page:pages[0]}).records[0].id,'gid://shopify/Order/101');continue;
    }
-   let args;const db={async query(sql,a){args=a;const r=await client.query(sql,a);if(mode==='lost')throw Error('synthetic lost cleanup reply');return r;}};const r=createSourceRetentionRepository(db),p=plan('claim');
+   let args;const db={async query(sql,a){args=a;const r=await client.query(sql,a);await validateForeignKeys();if(mode==='lost')throw Error('synthetic lost cleanup reply');return r;}};const r=createSourceRetentionRepository(db),p=plan('claim');
    if(mode==='lost'){await assert.rejects(r.cleanup(p),/WRITE_UNCONFIRMED/);await assert.rejects(r.cleanup(p),/CAPABILITY_REQUIRED/);}else await r.cleanup(p);
    const inspection=await retention.inspect({workspaceId:owner.workspaceId,installationId,generation:owner.generation,operationId:p.operationId});assert.equal(inspection.status,'recorded');assert.equal(inspection.receipt.deleted,1);assert.equal(await count('source.provider_claim_versions'),0);
    if(mode==='replay'){const replay=(await client.query('select evidence.cleanup_source_retention($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb) result',args)).rows[0].result;assert.deepEqual(replay,inspection.receipt);const changed=[...args];changed[6]=99;await rejected(client,()=>client.query('select evidence.cleanup_source_retention($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb)',changed));}

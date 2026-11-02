@@ -1669,7 +1669,7 @@
       "tools/eo05-shopify-order-work-probe.mjs": "1b3045b0c28ec2e8acaaa92e1308185becc02a03655ada9accf823cd52445bd9",
       "tools/eo05-single-account-selection-probe.mjs": "c87be931bf049384ceb339ec77c57f185f8245a9ff7764879c5eafa629bdfbf0",
       "tools/eo05-source-evidence-probe.mjs": "89e62633df7d31026e9cb9c357fb3d95febfed810e8bc65b341f7af19f4ed2c5",
-      "tools/eo05-source-retention-probe.mjs": "afbb64fd9f24e7cc8b098c37148cffb2f623d41fdb68af3026a0ecbd275554ac",
+      "tools/eo05-source-retention-probe.mjs": "621641d587b4622bf6b72e526932b83963ec46a57df4e346a17b6d78141f0d29",
       "tools/f01-database-replay.mjs": "d91fcd623ea444364b509f023d0f1f41a7224b192e77588c5fb36d50f740e8b6",
       "tools/f01-identity-oauth-rollout.mjs": "eca29ffeec3750cccb8efd54160a76cdd43e2442d20e55af5e1c5c775e1427a8",
       "tools/f01-schema-inventory.sql": "2cc26575e74ca29f61adaf26e79981b6c5e67c5598962cc102f903aea0f18a4d",

@@ -243,7 +243,7 @@ export function createSourceEvidenceRepository(database) {
   return Object.freeze({
     commit:write=>commit(write),
     commitShopifyOrder:(write,read)=>commit(write,read),
-    commitGoogleIdentity:(write,read)=>commit(write,read,"google"),
+    async commitGoogleIdentity(write,read){if(read===null||read===undefined)fail("READ_BINDING_INVALID");return commit(write,read,"google");},
     async inspect({owner, attemptId, ordinal}) {
       const bound = sourceStoreOwner(owner);
       if (!uuid.test(attemptId) || !Number.isSafeInteger(ordinal) || ordinal < 0) fail("INPUT_INVALID");

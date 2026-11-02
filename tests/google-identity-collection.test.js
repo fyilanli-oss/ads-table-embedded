@@ -740,3 +740,10 @@ test("Google source: bound reader unknown write has no automatic SQL stop, provi
  assert.ok(f.queries.every(q=>!q.sql.includes("stop_refresh")&&!q.sql.includes("finish_refresh")));
  await assert.rejects(reader.readEvidence(),/EXECUTION_USED/);assert.equal(f.calls.length,3);
 });
+
+test("Google source: missing read binding cannot fall back to the generic writer or consume the write",async()=>{
+ const h=await sourceFixture(),{write}=h.prepare();let calls=0;const repository=createSourceEvidenceRepository({query:async()=>{calls++;throw Error("synthetic");}});
+ await assert.rejects(repository.commitGoogleIdentity(write),/READ_BINDING_INVALID/);await assert.rejects(repository.commitGoogleIdentity(write,null),/READ_BINDING_INVALID/);assert.equal(calls,0);
+ const read={jobId:"job",fence:"1",window:{from:"2026-10-27",to:"2026-10-27"},observedAt:h.options.now,merchantId:"99",quotaContext:{},completedAt:h.options.now,deadlineAt:new Date(Date.parse(h.options.now)+120000).toISOString()};
+ await assert.rejects(repository.commitGoogleIdentity(write,read),/WRITE_UNCONFIRMED/);assert.equal(calls,1);
+});

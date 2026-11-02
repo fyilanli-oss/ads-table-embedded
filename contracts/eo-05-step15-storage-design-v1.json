@@ -812,6 +812,73 @@
       "live_provider_authorized": false,
       "merge_authorized": false,
       "deployment_authorized": false
+    },
+    "downstream_delivery_boundary": {
+      "status": "owner_approved_documented_boundary_implementation_dependency_open",
+      "checked_at": "2026-11-02",
+      "base_main": "fedcf8003f81055f91d8404c7aa9061d67ca1c4e",
+      "owner_approval": "Owner approved recording the reviewed Step15/Step23 source delivery boundary in existing plan/contracts and preparing a PR only: Dogru olan bu onayliyorum on2026-11-02. No runtime/test implementation, migration, live operation, merge or deployment authorization.",
+      "step15": {
+        "responsibility": "Preserve scoped source pages, typed records and evidence links with atomic source commit/readback, explicit source completeness and dependency-aware retention. Source storage does not establish report delivery.",
+        "delivery_state": "pending_until_trusted_downstream_durable_receipt_is_verified",
+        "complete": false
+      },
+      "step23": {
+        "responsibility": "Implement the general Dataset/FX writer, durable report commit and checkpoint protocol, and the authoritative downstream receipt linkage back to the exact source batches. Coordinate source-side acknowledgement with that real consumer; do not build a placeholder consumer in Step15.",
+        "started_by_this_record": false
+      },
+      "receipt_acceptance": {
+        "required": [
+          "A real durable downstream report commit exists and can be independently read back from its authoritative store.",
+          "Receipt is bound to exact workspace, installation/generation, source batch/commit and manifest, consumer operation/version and covered scope; stale or mismatched receipts cannot acknowledge a different source.",
+          "Source completeness and downstream committed coverage are explicit. Partial, failed, invalidated or unknown source is never promoted to complete by a receipt.",
+          "Receipt verification and acknowledgement must be crash-safe and duplicate-safe; report checkpoint/job completion or reservation release cannot precede their required durable downstream confirmation.",
+          "Current privacy/deletion and proof/dependency rules still apply; a receipt is not permission to restore deleted data, use expired proof or bypass native acceptance."
+        ],
+        "not_sufficient": [
+          "sourceStored=true",
+          "source_committed",
+          "source commitId or manifest hash alone",
+          "ready_for_dataset or awaiting_dataset in-memory handoff",
+          "caller-supplied consumed=true, arbitrary64hex hash, synthetic SQL fixture or successful CI"
+        ],
+        "exact_downstream_schema_and_atomic_protocol": "To be implemented and tested with the real Step23 consumer; this documentation creates no SQL function, table, grant, writer or receipt authority."
+      },
+      "uncertainty": "Without a verified downstream durable receipt, source stays pending and routine expiry cleanup remains held. Lost acknowledgement requires explicit scoped read-only reconciliation; missing receipt is not rollback proof and does not authorize automatic write/native replay.",
+      "retention_boundary": "Downstream consumption is only one cleanup prerequisite, not an immediate delete command. Existing class deadlines, transitive/foreign-key consumers and audit rules remain required. Confirmed privacy erasure takes precedence; finite policies and capacity controls remain pre-live gates, so pending is not an unlimited production retention policy.",
+      "code_observations": [
+        {
+          "path": "supabase/migrations/20261102083049_eo05b_source_evidence_foundation.sql",
+          "finding": "source_batches defaults handoff_state to pending; consumed requires a receipt-shaped hash, but that shape alone does not prove downstream delivery."
+        },
+        {
+          "path": "app/lib/database/source-evidence-store.server.js",
+          "finding": "Source commit/readback repository exposes no function that marks source consumed."
+        },
+        {
+          "path": "app/lib/refresh/chunk-worker.server.js",
+          "finding": "ready_for_dataset returns awaiting_dataset with reservationRetained=true; comment explicitly identifies in-memory handoff only."
+        },
+        {
+          "path": "tools/eo05-source-retention-probe.mjs",
+          "finding": "Manual consumed/hash values are isolated synthetic retention fixtures, not a production receipt issuer."
+        }
+      ],
+      "closure": "Step15 remains open. Source-side safeguards can be prepared within15; end-to-end delivery acceptance depends on the real Step23 consumer. This dependency does not move other Step15 privacy, native mapping, finite policy/capacity/key/grant/activation and real-data acceptance work to23 or certify it complete.",
+      "unchanged": "Step22 remains paused; Overlap and extra Shopify visit/refund query deferrals stand. Customer disclosure transport/receipt authority is a separate privacy dependency, not satisfied by a Dataset receipt.",
+      "official_checked_at": "2026-11-02",
+      "official_sources": [
+        "https://docs.github.com/en/rest/pulls/pulls#create-a-pull-request",
+        "https://supabase.com/docs/guides/database/functions",
+        "https://www.postgresql.org/docs/17/ddl-constraints.html"
+      ],
+      "runtime_code_authorized": false,
+      "test_implementation_authorized": false,
+      "migration_authorized": false,
+      "live_database_authorized": false,
+      "live_provider_authorized": false,
+      "merge_authorized": false,
+      "deployment_authorized": false
     }
   }
 }

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import {sourceEvidenceProbe} from "./eo05-source-evidence-probe.mjs";
 import {createHash, randomBytes, randomUUID} from "node:crypto";
 import {readFileSync, writeFileSync} from "node:fs";
 import path from "node:path";
@@ -254,13 +255,13 @@ async function rolePreflight(client) {
 
 async function securityProbes(client) {
   const unsafeTables=await client.query(`select n.nspname,c.relname from pg_class c join pg_namespace n on n.oid=c.relnamespace
-    where n.nspname in ('app','shopify','integrations','analytics','operations','privacy','billing') and c.relkind='r'
+    where n.nspname in ('app','shopify','integrations','analytics','operations','privacy','billing','evidence','identity','source') and c.relkind='r'
     and (not c.relrowsecurity or not c.relforcerowsecurity or exists (
       select 1 from unnest(array['anon','authenticated','service_role','adstable_runtime']) as r(name)
       where has_table_privilege(r.name,c.oid,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER'))) `);
   assert.deepEqual(unsafeTables.rows,[],"private tables must remain forced-RLS and function-only");
   const unsafeFunctions=await client.query(`select n.nspname,p.proname from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-    where n.nspname in ('app','shopify','integrations','analytics','operations','privacy','billing') and p.prokind='f'
+    where n.nspname in ('app','shopify','integrations','analytics','operations','privacy','billing','evidence','identity','source') and p.prokind='f'
     and (exists (select 1 from unnest(array['anon','authenticated','service_role']) as r(name)
       where has_function_privilege(r.name,p.oid,'EXECUTE'))
       or (p.prosecdef and not coalesce(p.proconfig @> array['search_path=""'],false)))`);
@@ -495,6 +496,7 @@ async function main() {
     if ([...manifest.forward_migrations,...manifest.pending_migrations].some(entry => entry.name === "eo05a_shared_api_quota")) {
       await sharedQuotaProbe(client, replayConnection);
     }
+    if (manifest.pending_migrations.some(entry => entry.name === "eo05b_source_evidence_foundation")) await sourceEvidenceProbe(client,replayConnection);
     const after=await inventory(client);
     await securityProbes(client);
     const output=path.join(process.env.RUNNER_TEMP,"f01b-staged-schema.json");

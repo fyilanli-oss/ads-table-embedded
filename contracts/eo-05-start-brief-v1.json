@@ -1,4 +1,15 @@
 {
+  "Step15_source_foundation_implementation_2026_11_02": {
+    "contract": "contracts/eo-05-step15-storage-design-v1.json#implementation",
+    "owner_accepted_layout": true,
+    "scope": "repository10-table owner-only landing store, cipher, receipt/readback, retention/deletion and isolated tests; no native query/flow/activation",
+    "status": "repository_preparation_native_integration_and_live_acceptance_open",
+    "step15_complete": false,
+    "live_DB": false,
+    "provider_calls": false,
+    "merge_authorized": false,
+    "deploy_authorized": false
+  },
   "Step15_storage_foundation_design_2026_11_02": {
     "checked_at": "2026-11-02",
     "status": "design_proposal_prepared_for_owner_table_review",
@@ -1069,7 +1080,17 @@
     "package_summary": "docs/plans/eo-05-06-package-summary-2026-10-27.json",
     "workbook": "docs/plans/AdsTable_26_Adim_ve_EO05_EO06_2026-10-27.xlsx",
     "existing_26_numbers_preserved": true,
-    "Shopify_added_subwork_at": [7, 12, 13, 14, 15, 20, 23, 24, 26],
+    "Shopify_added_subwork_at": [
+      7,
+      12,
+      13,
+      14,
+      15,
+      20,
+      23,
+      24,
+      26
+    ],
     "review_at_ordered_step": 14,
     "review_before_identity_sublist_step": 12,
     "historical_PMax_paused_at_ordered_step": 22,
@@ -2300,20 +2321,38 @@
     "new_synthetic_tests": 30,
     "existing_Klaviyo_and_quota_regressions": 143,
     "official_check_date": "2026-10-27",
-    "sources": ["https://developers.klaviyo.com/en/reference/get_accounts", "https://developers.klaviyo.com/en/reference/get_events", "https://developers.klaviyo.com/en/reference/query_campaign_values", "https://developers.klaviyo.com/en/reference/query_flow_values", "https://developers.klaviyo.com/en/docs/rate_limits_and_error_handling"],
+    "sources": [
+      "https://developers.klaviyo.com/en/reference/get_accounts",
+      "https://developers.klaviyo.com/en/reference/get_events",
+      "https://developers.klaviyo.com/en/reference/query_campaign_values",
+      "https://developers.klaviyo.com/en/reference/query_flow_values",
+      "https://developers.klaviyo.com/en/docs/rate_limits_and_error_handling"
+    ],
     "native_quota_limits_or_profiles_configured": false,
     "new_SQL_live_DB_provider_token_config_Dataset_or_Sales_Role_mutation": false,
     "route_or_existing_reporting_runtime_activated": false,
     "native_report_completion_or_real_identity_evidence_accepted": false,
     "step_11_complete": false,
     "step_12_complete": false,
-    "remaining": ["actual_owner_verified_account_app_scope_inventory_and_complete_profiles", "real_Klaviyo_access_metric_variant_and_report_completion_acceptance", "distinct_Shopify_Admin_quota_then_third_candidate_mode", "Meta_Google_identity_constructor_scope_bindings_and_Merchant_SQL_inventory_review", "durable_work_wait_safe_partial_continuation", "Shopify_Order_LineItem_journey_reader", "existing_prewrite_and_step_14_pre_durable_SQL_review"],
+    "remaining": [
+      "actual_owner_verified_account_app_scope_inventory_and_complete_profiles",
+      "real_Klaviyo_access_metric_variant_and_report_completion_acceptance",
+      "distinct_Shopify_Admin_quota_then_third_candidate_mode",
+      "Meta_Google_identity_constructor_scope_bindings_and_Merchant_SQL_inventory_review",
+      "durable_work_wait_safe_partial_continuation",
+      "Shopify_Order_LineItem_journey_reader",
+      "existing_prewrite_and_step_14_pre_durable_SQL_review"
+    ],
     "historical_PMax_pause_preserved": true
   },
   "Google_Merchant_identity_quota_2026_10_27": {
     "ordered_plan_step": 12,
     "status": "prepared_strict_products_v1_HTTP_route_with_explicit_Merchant_target_quota_account_and_epoch_no_native_configuration_or_live_activation",
-    "runtime": ["app/lib/refresh/quota-native-fetch.server.js", "app/lib/refresh/quota-scope-resolver.server.js", "app/lib/refresh/quota-authority-binding.server.js"],
+    "runtime": [
+      "app/lib/refresh/quota-native-fetch.server.js",
+      "app/lib/refresh/quota-scope-resolver.server.js",
+      "app/lib/refresh/quota-authority-binding.server.js"
+    ],
     "HTTP_family": "google_ads_provider_merchant_products_GET_merchantapi_googleapis_com_products_v1_accounts_numeric_products_existing_pageSize_1000_optional_pageToken_only_no_body_no_other_subapi_version_or_field_selector",
     "descriptor": "family_merchant_products_version_products_slash_v1_accountId_is_native_Merchant_target_not_Ads_customer_ID_token_query_pageToken_and_body_not_forwarded",
     "trusted_context": "existing_seven_field_context_preserved_optional_google_ads_only_merchant_object_requires_exact_targetAccountId_quotaAccountId_apiVersion_products_slash_v1_and_positive_bindingEpoch",
@@ -2329,14 +2368,24 @@
     "new_synthetic_tests": 35,
     "existing_Google_Meta_and_quota_regressions": 243,
     "official_check_date": "2026-10-27",
-    "sources": ["https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.products/list", "https://developers.google.com/merchant/api/guides/quotas-limits/quotas"],
+    "sources": [
+      "https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.products/list",
+      "https://developers.google.com/merchant/api/guides/quotas-limits/quotas"
+    ],
     "native_limits_or_quota_group_mapping_configured": false,
     "native_quota_account_proven_from_synthetic_tests": false,
     "new_SQL_live_DB_provider_token_config_Dataset_or_Sales_Role_mutation": false,
     "route_or_existing_reporting_runtime_activated": false,
     "step_11_complete": false,
     "step_12_complete": false,
-    "remaining": ["trusted_native_Merchant_target_actual_quota_account_evidence_inventory_and_epoch_read_at_step_14_review", "complete_owner_approved_real_method_group_limits_and_profiles", "identity_constructor_to_trusted_scope_dispatch_and_durable_work_wait_binding", "Klaviyo_constructor_and_distinct_Shopify_Admin_quota", "Shopify_Order_LineItem_journey_reader", "existing_real_identity_evidence_and_prewrite_review_gates"],
+    "remaining": [
+      "trusted_native_Merchant_target_actual_quota_account_evidence_inventory_and_epoch_read_at_step_14_review",
+      "complete_owner_approved_real_method_group_limits_and_profiles",
+      "identity_constructor_to_trusted_scope_dispatch_and_durable_work_wait_binding",
+      "Klaviyo_constructor_and_distinct_Shopify_Admin_quota",
+      "Shopify_Order_LineItem_journey_reader",
+      "existing_real_identity_evidence_and_prewrite_review_gates"
+    ],
     "historical_PMax_pause_preserved": true
   },
   "Meta_identity_quota_families_2026_10_27": {
@@ -2344,7 +2393,13 @@
     "status": "prepared_strict_Meta_identity_HTTP_family_recognition_and_scope_routing_no_owner_profile_or_native_quota_configuration",
     "transport": "app/lib/refresh/quota-native-fetch.server.js",
     "scope_resolver": "app/lib/refresh/quota-scope-resolver.server.js",
-    "families": ["identity_ad", "identity_adset", "identity_creative", "identity_product_set", "catalog_products"],
+    "families": [
+      "identity_ad",
+      "identity_adset",
+      "identity_creative",
+      "identity_product_set",
+      "catalog_products"
+    ],
     "request_classification": "exact_Graph_HTTPS_GET_numeric_object_or_catalog_products_path_known_current_field_sets_only_no_generic_Graph_access_body_field_expansion_duplicate_fields_or_query_modifiers_unknown_fields_rejected_before_resolver",
     "catalog_paging": "existing_exact_five_fields_limit_100_optional_after_each_actual_HTTP_page_debited_separately_no_zero_cost_cursor_assumption",
     "account_authority": "object_catalog_ID_not_Ads_account_descriptor_account_null_current_account_client_connection_epoch_and_graph_version_come_from_trusted_loader_and_approved_profile_native_collector_checks_still_required",
@@ -2358,14 +2413,28 @@
     "new_synthetic_tests": 30,
     "existing_Meta_and_quota_regressions": 149,
     "official_check_date": "2026-10-27",
-    "sources": ["https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/ad.py", "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adset.py", "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adcreative.py", "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/productset.py", "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/productcatalog.py"],
+    "sources": [
+      "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/ad.py",
+      "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adset.py",
+      "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adcreative.py",
+      "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/productset.py",
+      "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/productcatalog.py"
+    ],
     "new_SQL_live_DB_provider_token_config_Dataset_or_Sales_Role_mutation": false,
     "route_or_existing_reporting_runtime_activated": false,
     "native_owner_profile_configuration_inserted": false,
     "native_quota_values_selected": false,
     "step_11_complete": false,
     "step_12_complete": false,
-    "remaining": ["trusted_identity_constructor_to_scope_context_and_approved_complete_owner_profiles", "Google_Merchant_native_quota_target_scope_and_HTTP_family_binding", "Klaviyo_identity_constructor_quota_dispatch_binding", "Shopify_Admin_product_and_order_quota_binding_distinct_from_Partner_API", "durable_work_wait_without_replaying_errors_or_unknown_outcomes", "Shopify_Order_LineItem_journey_reader", "existing_real_identity_evidence_and_step_14_SQL_review_gates"],
+    "remaining": [
+      "trusted_identity_constructor_to_scope_context_and_approved_complete_owner_profiles",
+      "Google_Merchant_native_quota_target_scope_and_HTTP_family_binding",
+      "Klaviyo_identity_constructor_quota_dispatch_binding",
+      "Shopify_Admin_product_and_order_quota_binding_distinct_from_Partner_API",
+      "durable_work_wait_without_replaying_errors_or_unknown_outcomes",
+      "Shopify_Order_LineItem_journey_reader",
+      "existing_real_identity_evidence_and_step_14_SQL_review_gates"
+    ],
     "historical_PMax_pause_preserved": true
   },
   "identity_execution_deadline_2026_10_27": {
@@ -2373,7 +2442,11 @@
     "identity_sublist_step_12_review_gate_crossed": false,
     "status": "prepared_common_collection_wall_timer_and_child_cancellation_no_live_activation_or_complete_quota_dispatch",
     "runtime": "app/lib/providers/identity-read-deadline.server.js#runIdentityReadDeadline",
-    "bound_collectors": ["all_two_Google_identity_modes", "all_three_Meta_identity_modes", "all_three_Klaviyo_identity_modes"],
+    "bound_collectors": [
+      "all_two_Google_identity_modes",
+      "all_three_Meta_identity_modes",
+      "all_three_Klaviyo_identity_modes"
+    ],
     "deadline_budget": "existing_maxElapsedMs_default_120000_max_600000_one_total_timer_per_collection_not_reset_per_page_or_request_observational_now_checks_preserved",
     "timer_lifecycle": "synchronous_callback_invocation_preserves_preawait_config_rule_Admin_capture_try_finally_clears_timer_and_external_abort_listener_on_all_exits",
     "cancellation": "caller_abort_and_total_timer_stop_child_AbortController_propagated_to_SQL_vault_authority_checks_native_fetches_body_read_checks_and_Shopify_Admin_calls",
@@ -2381,11 +2454,18 @@
     "SQL_continuation": "abort_rechecked_immediately_after_each_existing_installation_lifecycle_account_SQL_read_and_vault_return_no_followup_dependency_after_late_response_no_SQL_statement_or_schema_change",
     "first_error": "original_error_and_authentic_quota_control_identity_preserved_before_deadline_timeout_or_abort_has_static_sanitized_code_no_retry_refresh_fallback_or_partial_result",
     "limits": "cooperative_abort_not_remote_request_rollback_or_SQL_statement_termination_not_proof_not_sent_timer_runs_on_event_loop_not_preemption_of_synchronous_blocking_JS",
-    "deadline_errors": ["IDENTITY_READ_DEADLINE_EXCEEDED", "IDENTITY_READ_ABORTED", "IDENTITY_READ_INPUT_INVALID"],
+    "deadline_errors": [
+      "IDENTITY_READ_DEADLINE_EXCEEDED",
+      "IDENTITY_READ_ABORTED",
+      "IDENTITY_READ_INPUT_INVALID"
+    ],
     "new_synthetic_tests": 22,
     "existing_collection_and_authority_regressions": 256,
     "official_check_date": "2026-10-27",
-    "sources": ["https://nodejs.org/api/globals.html#class-abortcontroller", "https://nodejs.org/api/timers.html#cancelling-timers"],
+    "sources": [
+      "https://nodejs.org/api/globals.html#class-abortcontroller",
+      "https://nodejs.org/api/timers.html#cancelling-timers"
+    ],
     "runtime_or_dependency_upgrade": false,
     "new_SQL_live_DB_provider_token_config_Dataset_or_Sales_Role_mutation": false,
     "route_or_existing_reporting_runtime_activated": false,
@@ -2393,7 +2473,13 @@
     "authorizes_activation": false,
     "step_11_complete": false,
     "step_12_complete": false,
-    "remaining": ["step_11_real_source_and_namespace_rules_access_and_canonical_SQL_scope_gates", "ordered_step_12_identity_endpoint_family_quota_scope_registry_dispatch_and_work_wait_binding", "ordered_step_12_Shopify_Order_LineItem_and_journey_reader", "step_13_prewrite_controls", "step_14_review_before_identity_sublist_step_12_and_durable_tables"],
+    "remaining": [
+      "step_11_real_source_and_namespace_rules_access_and_canonical_SQL_scope_gates",
+      "ordered_step_12_identity_endpoint_family_quota_scope_registry_dispatch_and_work_wait_binding",
+      "ordered_step_12_Shopify_Order_LineItem_and_journey_reader",
+      "step_13_prewrite_controls",
+      "step_14_review_before_identity_sublist_step_12_and_durable_tables"
+    ],
     "historical_PMax_pause_preserved": true
   },
   "Meta_report_candidate_bridge_2026_10_27": {
@@ -2425,9 +2511,20 @@
     "new_synthetic_tests": 31,
     "existing_Meta_Shopify_authority_reporting_regressions": 296,
     "official_check_date": "2026-10-27",
-    "official_sources": ["https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adsinsights.py", "https://developers.facebook.com/docs/marketing-api/insights/breakdowns/"],
+    "official_sources": [
+      "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adsinsights.py",
+      "https://developers.facebook.com/docs/marketing-api/insights/breakdowns/"
+    ],
     "official_read_result": "SDK_fields_four_converted_metrics_and_product_id_breakdown_read_breakdowns_page_returned_429_not_retried_no_namespace_semantics_inferred",
-    "remaining": ["real_Meta_report_namespace_evidence_and_reviewed_rule_registration", "real_Meta_retailer_source_format_evidence_and_reviewed_rule_registration", "real_access_acceptance_and_product_report_coverage_review", "step_12_quota_dispatch_inflight_timeout_and_Shopify_orders_reader", "step_13_prewrite_checks", "step_14_scoped_SQL_installation_PK_and_selection_epoch_review", "canonical_mapping_and_durable_write_after_existing_review_gate"],
+    "remaining": [
+      "real_Meta_report_namespace_evidence_and_reviewed_rule_registration",
+      "real_Meta_retailer_source_format_evidence_and_reviewed_rule_registration",
+      "real_access_acceptance_and_product_report_coverage_review",
+      "step_12_quota_dispatch_inflight_timeout_and_Shopify_orders_reader",
+      "step_13_prewrite_checks",
+      "step_14_scoped_SQL_installation_PK_and_selection_epoch_review",
+      "canonical_mapping_and_durable_write_after_existing_review_gate"
+    ],
     "step_11_complete": false,
     "historical_PMax_pause_preserved": true
   },
@@ -2438,7 +2535,13 @@
     "registry_and_candidate_API": "app/lib/providers/meta-source-candidates.server.js#createMetaCandidateSourceRuleLoader_and_verifyMetaCatalogSourceCandidates",
     "default_reviewed_rule_registry": "empty_no_production_retailer_format_proven_or_registered",
     "rule_authority": "trusted_reviewed_server_entries_cloned_and_frozen_before_first_await_factory_WeakSet_provenance_no_arbitrary_load_callback",
-    "candidate_rule_scope": ["workspace_id", "installation_generation", "provider_connection_id", "platform", "platform_account_id"],
+    "candidate_rule_scope": [
+      "workspace_id",
+      "installation_generation",
+      "provider_connection_id",
+      "platform",
+      "platform_account_id"
+    ],
     "candidate_rule_scope_is_canonical_scope": false,
     "rule_context": "exact_owner_generation_connection_Meta_account_catalog_optional_product_feed_and_Shopify_shop_no_cross_context_or_feed_presence_fallback",
     "rule_format": "existing_checkedCatalogSourceRule_extractShopifyCandidate_three_conditional_formats_only_retailer_id_parsed_never_internal_Meta_ID_group_ID_custom_fields_or_variant_zero",
@@ -2462,8 +2565,19 @@
     "new_synthetic_tests": 30,
     "existing_Meta_Shopify_authority_regressions": 239,
     "official_check_date": "2026-10-27",
-    "sources": ["https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/productitem.py", "https://shopify.dev/docs/api/admin-graphql/2026-07/objects/ProductVariant"],
-    "remaining": ["real_Meta_native_retailer_source_format_evidence_and_reviewed_rule_registration", "Meta_Insights_product_id_namespace_evidence_and_reporting_bridge", "step_12_quota_dispatch_inflight_timeout_and_Shopify_orders_reader", "step_13_prewrite_checks", "step_14_scoped_SQL_installation_PK_and_Ads_selection_epoch_review", "real_permission_access_and_provider_acceptance", "canonical_mapping_and_durable_write_after_existing_review_gate"],
+    "sources": [
+      "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/productitem.py",
+      "https://shopify.dev/docs/api/admin-graphql/2026-07/objects/ProductVariant"
+    ],
+    "remaining": [
+      "real_Meta_native_retailer_source_format_evidence_and_reviewed_rule_registration",
+      "Meta_Insights_product_id_namespace_evidence_and_reporting_bridge",
+      "step_12_quota_dispatch_inflight_timeout_and_Shopify_orders_reader",
+      "step_13_prewrite_checks",
+      "step_14_scoped_SQL_installation_PK_and_Ads_selection_epoch_review",
+      "real_permission_access_and_provider_acceptance",
+      "canonical_mapping_and_durable_write_after_existing_review_gate"
+    ],
     "step_11_complete": false,
     "historical_PMax_pause_preserved": true
   },
@@ -2471,7 +2585,10 @@
     "ordered_plan_step": 11,
     "status": "prepared_concrete_SQL_vault_native_Meta_token_Ad_creative_catalog_collection_no_canonical_mapping_or_activation",
     "runtime": "app/lib/providers/meta-identity-collection.server.js#collectMetaNativeIdentityEvidence",
-    "shared_source_readers": ["readMetaAdCatalogSourceReference", "readMetaCatalogSourceSnapshot"],
+    "shared_source_readers": [
+      "readMetaAdCatalogSourceReference",
+      "readMetaCatalogSourceSnapshot"
+    ],
     "existing_full_scope_entries": "canonical_installation_PK_and_grant_preflight_preserved_readers_reuse_same_native_core_old_matcher_rejects_source_only_snapshot",
     "authority_dependency": "concrete_createIdentityRuntimeAuthorityLoader_no_caller_loadCurrent_override_active_installation_lifecycle_selected_Meta_account_and_identity_v1_vault_rechecked_before_every_native_request_after_JSON_and_final_return",
     "native_token_authority": "actual_debug_token_app_validity_identity_scopes_and_deadlines_existing_inspector_stored_scopes_cannot_pad_native_grants",
@@ -2492,8 +2609,22 @@
     "new_synthetic_tests": 30,
     "existing_Meta_authority_regressions": 160,
     "official_check_date": "2026-10-27",
-    "sources": ["https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/ad.py", "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adset.py", "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adcreative.py", "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/productset.py", "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/productitem.py"],
-    "remaining": ["Meta_Insights_identity_namespace_evidence_and_real_retailer_source_format", "Meta_reviewed_source_rule_and_Shopify_candidate_composition", "step_12_quota_dispatch_inflight_timeout_and_Shopify_orders_reader", "step_13_prewrite_checks", "step_14_scoped_SQL_installation_PK_and_Ads_selection_epoch_review", "real_permission_access_and_provider_acceptance", "canonical_mapping_and_durable_write_after_existing_review_gate"],
+    "sources": [
+      "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/ad.py",
+      "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adset.py",
+      "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adcreative.py",
+      "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/productset.py",
+      "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/productitem.py"
+    ],
+    "remaining": [
+      "Meta_Insights_identity_namespace_evidence_and_real_retailer_source_format",
+      "Meta_reviewed_source_rule_and_Shopify_candidate_composition",
+      "step_12_quota_dispatch_inflight_timeout_and_Shopify_orders_reader",
+      "step_13_prewrite_checks",
+      "step_14_scoped_SQL_installation_PK_and_Ads_selection_epoch_review",
+      "real_permission_access_and_provider_acceptance",
+      "canonical_mapping_and_durable_write_after_existing_review_gate"
+    ],
     "step_11_complete": false,
     "historical_PMax_pause_preserved": true
   },
@@ -2504,9 +2635,21 @@
     "registry_and_candidate_API": "app/lib/providers/google-source-candidates.server.js#createGoogleCandidateSourceRuleLoader_and_verifyGoogleMerchantSourceCandidates",
     "default_reviewed_rule_registry": "empty_no_production_source_format_proven_or_registered",
     "rule_authority": "trusted_reviewed_server_entries_not_request_payloads_or_shape_detection_cloned_before_first_await_immutable_factory_loader_WeakSet_provenance_no_arbitrary_load_callback",
-    "candidate_rule_scope": ["workspace_id", "installation_generation", "provider_connection_id", "platform", "platform_account_id"],
+    "candidate_rule_scope": [
+      "workspace_id",
+      "installation_generation",
+      "provider_connection_id",
+      "platform",
+      "platform_account_id"
+    ],
     "candidate_rule_scope_is_canonical_scope": false,
-    "rule_product_context": ["merchant_id", "feed_label", "content_language", "data_source", "legacy_local"],
+    "rule_product_context": [
+      "merchant_id",
+      "feed_label",
+      "content_language",
+      "data_source",
+      "legacy_local"
+    ],
     "rule_other_keys": "same_shop_ID_required_existing_verified_source_rule_source_reference_and_three_conditional_formats_only_market_required_for_market_product_variant",
     "rule_matching": "exact_owner_generation_connection_Ads_account_native_product_context_shop_missing_rule_unresolved_no_parse_duplicate_rule_context_rejected_before_native_read_no_cross_context_fallback",
     "existing_full_scope_rules_or_resolver_weakened": false,
@@ -2530,8 +2673,19 @@
     "new_synthetic_tests": 31,
     "existing_Google_Meta_Shopify_authority_regressions": 204,
     "official_check_date": "2026-10-27",
-    "sources": ["https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.products/list", "https://shopify.dev/docs/api/admin-graphql/2026-07/objects/ProductVariant"],
-    "remaining": ["real_Google_native_source_format_evidence_and_reviewed_rule_registration", "step_11_Meta_concrete_lifecycle_source_rule_and_Admin_composition", "step_12_quota_dispatch_inflight_timeout_and_Shopify_orders_reader", "step_13_prewrite_checks", "step_14_scoped_SQL_installation_PK_and_Ads_selection_epoch_review", "steps_7_8_9_10_real_permission_access_namespace_metric_variant_and_report_completion_acceptance", "canonical_mapping_and_durable_write_after_existing_review_gate"],
+    "sources": [
+      "https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.products/list",
+      "https://shopify.dev/docs/api/admin-graphql/2026-07/objects/ProductVariant"
+    ],
+    "remaining": [
+      "real_Google_native_source_format_evidence_and_reviewed_rule_registration",
+      "step_11_Meta_concrete_lifecycle_source_rule_and_Admin_composition",
+      "step_12_quota_dispatch_inflight_timeout_and_Shopify_orders_reader",
+      "step_13_prewrite_checks",
+      "step_14_scoped_SQL_installation_PK_and_Ads_selection_epoch_review",
+      "steps_7_8_9_10_real_permission_access_namespace_metric_variant_and_report_completion_acceptance",
+      "canonical_mapping_and_durable_write_after_existing_review_gate"
+    ],
     "step_11_complete": false,
     "historical_PMax_pause_preserved": true
   },
@@ -2565,9 +2719,20 @@
     "new_synthetic_tests": 29,
     "existing_Google_reader_link_authority_and_Shopify_candidate_regressions": 145,
     "official_check_date": "2026-10-27",
-    "sources": ["https://developers.google.com/google-ads/api/fields/v25/product_link", "https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.products/list"],
+    "sources": [
+      "https://developers.google.com/google-ads/api/fields/v25/product_link",
+      "https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.products/list"
+    ],
     "documentation_limit": "Product_resource_page_redirected_to_Google_access_challenge_no_claim_of_unsupported_fields_existing_product_parser_unchanged_list_and_product_link_docs_read",
-    "remaining": ["step_11_Google_verified_source_rule_and_Shopify_Admin_binding", "step_11_Meta_concrete_lifecycle_source_rule_and_Admin_composition", "step_12_quota_dispatch_inflight_timeout_and_Shopify_orders_reader", "step_13_prewrite_checks", "step_14_scoped_SQL_installation_PK_and_Ads_selection_epoch_review", "steps_7_8_9_10_real_permission_access_source_namespace_metric_variant_and_report_completion_acceptance", "canonical_mapping_and_durable_write_after_existing_review_gate"],
+    "remaining": [
+      "step_11_Google_verified_source_rule_and_Shopify_Admin_binding",
+      "step_11_Meta_concrete_lifecycle_source_rule_and_Admin_composition",
+      "step_12_quota_dispatch_inflight_timeout_and_Shopify_orders_reader",
+      "step_13_prewrite_checks",
+      "step_14_scoped_SQL_installation_PK_and_Ads_selection_epoch_review",
+      "steps_7_8_9_10_real_permission_access_source_namespace_metric_variant_and_report_completion_acceptance",
+      "canonical_mapping_and_durable_write_after_existing_review_gate"
+    ],
     "step_11_complete": false,
     "historical_PMax_pause_preserved": true
   },
@@ -2602,8 +2767,19 @@
     "new_synthetic_tests": 18,
     "existing_identity_Message_reporting_and_shared_Shopify_Google_regressions": 200,
     "official_check_date": "2026-10-27",
-    "sources": ["https://shopify.dev/docs/api/admin-graphql/2026-07/objects/Product", "https://shopify.dev/docs/api/admin-graphql/2026-07/objects/ProductVariant", "https://help.klaviyo.com/hc/en-us/articles/115005080447"],
-    "remaining": ["step_11_Google_Meta_trusted_source_rule_and_Admin_composition", "step_12_quota_dispatch_inflight_timeout_and_Shopify_orders_reader", "step_13_prewrite_checks", "step_14_scoped_SQL_installation_PK_and_Ads_selection_epoch_review", "steps_7_8_9_10_real_scope_access_native_source_format_Meta_namespace_Klaviyo_variant_and_report_completion_acceptance", "canonical_mapping_and_durable_write_after_existing_review_gate"],
+    "sources": [
+      "https://shopify.dev/docs/api/admin-graphql/2026-07/objects/Product",
+      "https://shopify.dev/docs/api/admin-graphql/2026-07/objects/ProductVariant",
+      "https://help.klaviyo.com/hc/en-us/articles/115005080447"
+    ],
+    "remaining": [
+      "step_11_Google_Meta_trusted_source_rule_and_Admin_composition",
+      "step_12_quota_dispatch_inflight_timeout_and_Shopify_orders_reader",
+      "step_13_prewrite_checks",
+      "step_14_scoped_SQL_installation_PK_and_Ads_selection_epoch_review",
+      "steps_7_8_9_10_real_scope_access_native_source_format_Meta_namespace_Klaviyo_variant_and_report_completion_acceptance",
+      "canonical_mapping_and_durable_write_after_existing_review_gate"
+    ],
     "step_11_complete": false,
     "Klaviyo_Advertised_Cross_Sell_stays_closed": true,
     "historical_PMax_pause_preserved": true
@@ -2643,10 +2819,21 @@
     "existing_native_collection_tests": 38,
     "existing_authority_candidate_reporting_attribution_tests": 94,
     "official_check_date": "2026-10-27",
-    "sources": ["https://developers.klaviyo.com/en/reference/query_campaign_values", "https://developers.klaviyo.com/en/reference/query_flow_values", "https://raw.githubusercontent.com/klaviyo/openapi/main/openapi/stable/apis/query_campaign_values.json", "https://raw.githubusercontent.com/klaviyo/openapi/main/openapi/stable/apis/query_flow_values.json"],
+    "sources": [
+      "https://developers.klaviyo.com/en/reference/query_campaign_values",
+      "https://developers.klaviyo.com/en/reference/query_flow_values",
+      "https://raw.githubusercontent.com/klaviyo/openapi/main/openapi/stable/apis/query_campaign_values.json",
+      "https://raw.githubusercontent.com/klaviyo/openapi/main/openapi/stable/apis/query_flow_values.json"
+    ],
     "report_rate_limits_before_activation": "step_12_dispatch_quota_1_per_second_2_per_minute_225_per_day_per_official_family_docs_no_sleep_retry_or_shared_bucket_assumption",
     "new_SQL_live_DB_provider_token_config_or_Dataset_mutation": false,
-    "remaining": ["step_11_canonical_scope_source_rules_and_Shopify_Admin_candidate_verification", "step_12_quota_dispatch_timeout_and_Shopify_orders_reader", "step_13_prewrite_checks", "step_14_scoped_SQL_PK_and_selection_epoch_review", "steps_7_8_9_10_real_access_source_namespace_metric_variant_and_reporting_completion_evidence"],
+    "remaining": [
+      "step_11_canonical_scope_source_rules_and_Shopify_Admin_candidate_verification",
+      "step_12_quota_dispatch_timeout_and_Shopify_orders_reader",
+      "step_13_prewrite_checks",
+      "step_14_scoped_SQL_PK_and_selection_epoch_review",
+      "steps_7_8_9_10_real_access_source_namespace_metric_variant_and_reporting_completion_evidence"
+    ],
     "step_11_complete": false,
     "historical_PMax_pause_preserved": true
   },
@@ -2681,11 +2868,24 @@
     "quota_dispatch_and_active_inflight_timeout": "existing_step_12_before_any_activation_Accounts_1_per_second_15_per_minute_limits_observed_in_docs_no_sleep_or_retry_added",
     "observation_window": "default_120_seconds_checks_between_calls_not_atomic_snapshot_or_inflight_timeout",
     "official_check_date": "2026-10-27",
-    "sources": ["https://developers.klaviyo.com/en/reference/get_accounts", "https://developers.klaviyo.com/en/reference/get_metrics", "https://developers.klaviyo.com/en/reference/get_events", "https://help.klaviyo.com/hc/en-us/articles/115005080447"],
+    "sources": [
+      "https://developers.klaviyo.com/en/reference/get_accounts",
+      "https://developers.klaviyo.com/en/reference/get_metrics",
+      "https://developers.klaviyo.com/en/reference/get_events",
+      "https://help.klaviyo.com/hc/en-us/articles/115005080447"
+    ],
     "new_synthetic_tests": 38,
     "existing_authority_candidate_reporting_attribution_tests": 94,
     "new_SQL_live_DB_provider_token_config_or_Dataset_mutation": false,
-    "remaining": ["step_7_live_permission_and_atomic_OAuth_write_gates", "steps_8_9_source_and_Meta_namespace_evidence", "step_10_real_Klaviyo_metric_variant_field_access_evidence", "step_11_canonical_scope_source_rules_Shopify_Admin_verification_and_Message_channel_join", "step_12_quota_dispatch_timeout_and_Shopify_orders_reader", "step_13_prewrite_checks", "step_14_SQL_interface_and_durable_table_review"],
+    "remaining": [
+      "step_7_live_permission_and_atomic_OAuth_write_gates",
+      "steps_8_9_source_and_Meta_namespace_evidence",
+      "step_10_real_Klaviyo_metric_variant_field_access_evidence",
+      "step_11_canonical_scope_source_rules_Shopify_Admin_verification_and_Message_channel_join",
+      "step_12_quota_dispatch_timeout_and_Shopify_orders_reader",
+      "step_13_prewrite_checks",
+      "step_14_SQL_interface_and_durable_table_review"
+    ],
     "step_11_complete": false,
     "Klaviyo_Advertised_Cross_Sell_stays_closed": true,
     "historical_PMax_pause_preserved": true
@@ -2696,7 +2896,12 @@
     "runtime": "app/lib/providers/identity-runtime-authority.server.js",
     "tests": "tests/identity-runtime-authority.test.js",
     "trusted_input": "authenticated_read_only_Shopify_authority_server_dependency_only_never_browser_JSON",
-    "concrete_read_dependencies": ["shopify.resolve_active_installation", "integrations.load_provider_connection_lifecycle_by_owner", "integrations.load_provider_account_authority", "tokenVault.loadProviderTokenSet"],
+    "concrete_read_dependencies": [
+      "shopify.resolve_active_installation",
+      "integrations.load_provider_connection_lifecycle_by_owner",
+      "integrations.load_provider_account_authority",
+      "tokenVault.loadProviderTokenSet"
+    ],
     "protocol": "installation_lifecycle_account_then_scoped_vault_then_all_three_reads_again_no_metadata_or_token_cache",
     "checks": "same_active_workspace_generation_connected_connection_version_credential_selected_eligible_account_manager_and_scope_list_before_after_vault_and_between_successful_loads",
     "Google": "identity_v1_native_token_scope_exactly_matches_stored_list_existing_expiry_validator_no_refresh",
@@ -2707,7 +2912,11 @@
     "canonical_scope_ready": false,
     "installation_id": "null_existing_resolve_active_installation_SQL_returns_only_workspace_generation_status_never_derive_PK_or_take_from_caller",
     "reporting_selection_epoch": "existing_account_authority_reader_returns_current_account_ID_not_binding_epoch_same_account_switch_away_back_not_detectable_here",
-    "step_14_SQL_review_requirements": ["scoped_read_of_real_installation_primary_key", "scoped_read_of_reporting_account_binding_epoch_for_Ads_providers", "preserve_runtime_role_execute_only_boundary_no_direct_table_fallback"],
+    "step_14_SQL_review_requirements": [
+      "scoped_read_of_real_installation_primary_key",
+      "scoped_read_of_reporting_account_binding_epoch_for_Ads_providers",
+      "preserve_runtime_role_execute_only_boundary_no_direct_table_fallback"
+    ],
     "before_after_reads_are_atomic_or_detect_every_intermediate_change": false,
     "provider_context_and_source_rules_bound": false,
     "Shopify_Admin_and_native_Klaviyo_metric_Message_join_composed": false,
@@ -2720,8 +2929,21 @@
     "new_synthetic_tests": 33,
     "existing_reader_candidate_tests": 64,
     "official_check_date": "2026-10-27",
-    "sources": ["https://supabase.com/docs/guides/database/functions", "https://supabase.com/docs/guides/database/postgres/roles", "https://supabase.com/changelog.md", "https://shopify.dev/docs/api/admin-graphql/2026-07/objects/ProductVariant"],
-    "remaining_existing_steps": ["step_7_live_access_and_atomic_OAuth_write_gates", "steps_8_9_source_format_and_Meta_report_namespace_evidence", "step_10_real_native_metric_variant_field_evidence", "step_11_canonical_scope_provider_rules_and_Admin_metric_Message_composition", "step_12_quota_dispatch_timeout_and_Shopify_orders_reader", "step_13_prewrite_checks", "step_14_review_before_identity_sublist_step_12_and_durable_tables_including_authority_SQL_read_gaps"],
+    "sources": [
+      "https://supabase.com/docs/guides/database/functions",
+      "https://supabase.com/docs/guides/database/postgres/roles",
+      "https://supabase.com/changelog.md",
+      "https://shopify.dev/docs/api/admin-graphql/2026-07/objects/ProductVariant"
+    ],
+    "remaining_existing_steps": [
+      "step_7_live_access_and_atomic_OAuth_write_gates",
+      "steps_8_9_source_format_and_Meta_report_namespace_evidence",
+      "step_10_real_native_metric_variant_field_evidence",
+      "step_11_canonical_scope_provider_rules_and_Admin_metric_Message_composition",
+      "step_12_quota_dispatch_timeout_and_Shopify_orders_reader",
+      "step_13_prewrite_checks",
+      "step_14_review_before_identity_sublist_step_12_and_durable_tables_including_authority_SQL_read_gaps"
+    ],
     "step_11_complete": false,
     "historical_PMax_pause_preserved": true
   },
@@ -2737,7 +2959,14 @@
     "input": "native_events_and_native_metric_from_trusted_collection_not_arbitrary_normalized_rows_or_browser_DTO",
     "native_metric": "type_metric_name_Ordered_Product_integration_name_Shopify_each_event_metric_relationship_must_match_exact_id",
     "normalizer_metric_reference": "provider_metric_id_from_native_relationship_only_absence_null_not_request_filter_fill",
-    "scope": ["workspace_id", "installation_id", "installation_generation", "provider_connection_id", "platform", "platform_account_id"],
+    "scope": [
+      "workspace_id",
+      "installation_id",
+      "installation_generation",
+      "provider_connection_id",
+      "platform",
+      "platform_account_id"
+    ],
     "scope_DTO_alone_proves_live_account_or_shop_integration": false,
     "ProductID": "documented_Shopify_product_candidate_positive_exact_decimal_string_or_safe_positive_JSON_integer_then_same_shop_verification",
     "Variant_ID_with_space": "documented_Ordered_Product_variant_field_preserved_separately_and_same_shop_parent_verified",
@@ -2759,11 +2988,22 @@
     "runtime_route_lifecycle_vault_collector_and_message_join_wired": false,
     "live_provider_token_config_SQL_Dataset_or_new_scope_changed": false,
     "official_check_date": "2026-10-27",
-    "sources": ["https://help.klaviyo.com/hc/en-us/articles/115005080447", "https://developers.klaviyo.com/en/reference/get_events"],
+    "sources": [
+      "https://help.klaviyo.com/hc/en-us/articles/115005080447",
+      "https://developers.klaviyo.com/en/reference/get_events"
+    ],
     "real_native_metric_variant_field_and_Shopify_access_test": "not_performed_synthetic_tests_are_not_live_acceptance",
     "new_tests": 29,
     "existing_Klaviyo_reporting_authority_attribution_tests": 32,
-    "remaining": ["step_7_real_scopes_and_application_access_gates", "steps_8_9_Google_Meta_source_evidence", "step_10_real_Ordered_Product_metric_and_variant_key_evidence_legacy_alias_if_observed", "step_11_trusted_lifecycle_vault_native_collector_metric_Shopify_Admin_and_Message_join_composition", "step_12_quota_dispatch_timeout_and_Shopify_orders_reader", "step_13_prewrite_checks", "step_14_review_before_identity_sublist_step_12_and_durable_tables"],
+    "remaining": [
+      "step_7_real_scopes_and_application_access_gates",
+      "steps_8_9_Google_Meta_source_evidence",
+      "step_10_real_Ordered_Product_metric_and_variant_key_evidence_legacy_alias_if_observed",
+      "step_11_trusted_lifecycle_vault_native_collector_metric_Shopify_Admin_and_Message_join_composition",
+      "step_12_quota_dispatch_timeout_and_Shopify_orders_reader",
+      "step_13_prewrite_checks",
+      "step_14_review_before_identity_sublist_step_12_and_durable_tables"
+    ],
     "step_10_complete": false,
     "step_11_complete": false,
     "historical_PMax_pause_preserved": true
@@ -2796,14 +3036,27 @@
     "new_tests": 30,
     "Google_shared_Shopify_and_Meta_reader_regression_tests": 83,
     "official_check_date": "2026-10-27",
-    "sources": ["https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/productitem.py", "https://shopify.dev/docs/api/admin-graphql/2026-07/objects/ProductVariant", "https://shopify.dev/docs/api/admin-graphql/2026-07/scalars/UnsignedInt64"],
+    "sources": [
+      "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/productitem.py",
+      "https://shopify.dev/docs/api/admin-graphql/2026-07/objects/ProductVariant",
+      "https://shopify.dev/docs/api/admin-graphql/2026-07/scalars/UnsignedInt64"
+    ],
     "official_fields_prove_report_namespace_or_Shopify_source_format": false,
     "production_report_identity_rule_registered": false,
     "production_source_format_rule_registered": false,
     "trusted_rule_loader_or_live_runtime_binding": "still_required_in_existing_step_11",
     "native_Ad_reference_composition_inherited_automatically": false,
     "route_live_call_token_config_SQL_or_Dataset_changed": false,
-    "remaining": ["step_7_live_permission_review_and_atomic_write_gates", "step_8_Google_actual_source_format_evidence", "step_9_Meta_actual_report_namespace_and_source_format_evidence", "step_10_Klaviyo_identity_reader", "step_11_trusted_lifecycle_vault_Ad_reference_rule_loader_and_shared_Shopify_composition", "step_12_quota_dispatch_timeout", "step_13_prewrite_checks", "step_14_review_before_identity_sublist_step_12_and_durable_tables"],
+    "remaining": [
+      "step_7_live_permission_review_and_atomic_write_gates",
+      "step_8_Google_actual_source_format_evidence",
+      "step_9_Meta_actual_report_namespace_and_source_format_evidence",
+      "step_10_Klaviyo_identity_reader",
+      "step_11_trusted_lifecycle_vault_Ad_reference_rule_loader_and_shared_Shopify_composition",
+      "step_12_quota_dispatch_timeout",
+      "step_13_prewrite_checks",
+      "step_14_review_before_identity_sublist_step_12_and_durable_tables"
+    ],
     "step_9_complete": false,
     "step_11_complete": false,
     "historical_PMax_pause_preserved": true
@@ -2814,8 +3067,18 @@
     "runtime": "app/lib/providers/meta-adset-catalog-reference.server.js#readMetaAdCatalogReference_and_readAdReferencedMetaCatalogIdentitySnapshot",
     "tests": "tests/meta-ad-creative-catalog-reference.test.js",
     "official_check_date": "2026-10-27",
-    "native_Ad_fields": ["id", "account_id", "campaign_id", "adset_id", "creative"],
-    "native_creative_fields": ["id", "account_id", "product_set_id"],
+    "native_Ad_fields": [
+      "id",
+      "account_id",
+      "campaign_id",
+      "adset_id",
+      "creative"
+    ],
+    "native_creative_fields": [
+      "id",
+      "account_id",
+      "product_set_id"
+    ],
     "hierarchy": "selected_Ad_and_native_account_Campaign_AdSet_identifiers_must_match_server_context_AdSet_campaign_checked_when_requested",
     "creative_owner": "native_creative_id_and_account_must_match_Ad_reference_and_selected_account",
     "creative_product_set": "if_observed_read_ProductSet_catalog_or_reuse_same_ID_already_verified_parent_set_evidence",
@@ -2825,21 +3088,45 @@
     "parent_reference_absent_creative_explicit": "native_creative_set_catalog_may_confirm_reference_without_invented_inheritance",
     "no_observed_catalog_reference": "not_observed_no_product_collection",
     "relationship_scope": "current_ad_parent_and_observed_creative_catalog_references_only",
-    "does_not_prove": ["effective_catalog_for_every_Ad_type", "all_possible_creative_overrides", "historical_product_delivery_or_membership", "Insights_product_id_namespace", "Shopify_Product_ID", "Advertised_Cross_Sell"],
+    "does_not_prove": [
+      "effective_catalog_for_every_Ad_type",
+      "all_possible_creative_overrides",
+      "historical_product_delivery_or_membership",
+      "Insights_product_id_namespace",
+      "Shopify_Product_ID",
+      "Advertised_Cross_Sell"
+    ],
     "composition": "existing_PR201_native_token_inspection_context_reload_before_after_references_Merchant_free_Meta_catalog_reader_first_error_and_deadline_guards_reused",
-    "server_context_comparison_additions": ["ad_id", "campaign_id"],
+    "server_context_comparison_additions": [
+      "ad_id",
+      "campaign_id"
+    ],
     "entry_points": "Ad_and_AdSet_exports_lock_internal_reference_level_browser_option_cannot_relabel_evidence",
     "raw_sensitive_Ad_or_creative_fields_retained": false,
     "old_AdSet_entry_point": "retained_with_optional_campaign_check_and_unchanged_reference_scope_no_silent_Ad_proof_upgrade",
     "new_tests": 28,
     "existing_Meta_regression_tests": 104,
-    "sources": ["https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/ad.py", "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adcreative.py", "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adset.py", "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/productset.py"],
+    "sources": [
+      "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/ad.py",
+      "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adcreative.py",
+      "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adset.py",
+      "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/productset.py"
+    ],
     "SDK_field_presence_proves_live_access_or_universal_campaign_support": false,
     "actual_lifecycle_vault_Reporting_Account_loader_or_route_wired": false,
     "shopify_mapping_state": "not_resolved",
     "authorizes_activation": false,
     "live_token_config_SQL_or_Dataset_changed": false,
-    "remaining": ["step_7_live_permission_review_and_atomic_write_gates", "step_8_Google_source_format_evidence", "step_9_Meta_Insights_namespace_and_source_format_evidence_and_Shopify_candidate_resolution", "step_10_Klaviyo_identity_reader", "step_11_trusted_runtime_and_shared_Shopify_composition", "step_12_quota_dispatch_timeout", "step_13_prewrite_checks", "step_14_review_before_identity_sublist_step_12_and_durable_tables"],
+    "remaining": [
+      "step_7_live_permission_review_and_atomic_write_gates",
+      "step_8_Google_source_format_evidence",
+      "step_9_Meta_Insights_namespace_and_source_format_evidence_and_Shopify_candidate_resolution",
+      "step_10_Klaviyo_identity_reader",
+      "step_11_trusted_runtime_and_shared_Shopify_composition",
+      "step_12_quota_dispatch_timeout",
+      "step_13_prewrite_checks",
+      "step_14_review_before_identity_sublist_step_12_and_durable_tables"
+    ],
     "step_9_complete": false,
     "historical_PMax_pause_preserved": true
   },
@@ -2852,7 +3139,14 @@
     "verified_native_path": "AdSet_GET_id_account_id_promoted_object_product_catalog_id_and_or_product_set_id_then_ProductSet_GET_id_product_catalog",
     "not_assumed": "AdAccount_product_catalogs_global_assignment_edge_not_found_in_current_official_SDK_not_claimed_unsupported",
     "relationship_scope": "current_adset_catalog_reference_only",
-    "does_not_prove": ["all_catalogs_assigned_to_account", "specific_Ad_or_creative_catalog_override", "product_set_membership_or_historical_delivery", "Insights_product_id_namespace", "Shopify_identity", "Advertised_Cross_Sell"],
+    "does_not_prove": [
+      "all_catalogs_assigned_to_account",
+      "specific_Ad_or_creative_catalog_override",
+      "product_set_membership_or_historical_delivery",
+      "Insights_product_id_namespace",
+      "Shopify_identity",
+      "Advertised_Cross_Sell"
+    ],
     "explicit_native_reference": "only_matching_AdSet_id_and_selected_account_id_plus_exact_target_catalog_reference_confirms",
     "direct_catalog_and_product_set_catalog_conflict": "reject_no_precedence_guess",
     "missing_native_reference": "not_observed_no_catalog_enumeration",
@@ -2860,22 +3154,58 @@
     "malformed_or_missing_requested_fields": "error_not_no_reference_or_unsupported",
     "token_inspection": "reuse_inspectMetaAccessToken_identity_v1_app_validity_full_actual_scope_and_native_deadlines_once_before_reference_reads",
     "native_scope_not_cached": "catalog_reader_receives_actual_inspected_scopes_no_requested_or_stored_scope_padding",
-    "sequence": ["load_current_server_context", "native_token_inspection", "reload_compare_context", "native_AdSet_and_optional_ProductSet_reference", "reload_compare_context", "catalog_product_collection", "reload_compare_context", "native_reference_recheck", "reload_compare_context_and_time"],
-    "context_comparison": ["workspace", "installation_id", "installation_generation", "provider_connection_id", "connection_version", "credential_id", "Ads_account", "AdSet", "catalog", "access_token", "server_granted_scope_list"],
+    "sequence": [
+      "load_current_server_context",
+      "native_token_inspection",
+      "reload_compare_context",
+      "native_AdSet_and_optional_ProductSet_reference",
+      "reload_compare_context",
+      "catalog_product_collection",
+      "reload_compare_context",
+      "native_reference_recheck",
+      "reload_compare_context_and_time"
+    ],
+    "context_comparison": [
+      "workspace",
+      "installation_id",
+      "installation_generation",
+      "provider_connection_id",
+      "connection_version",
+      "credential_id",
+      "Ads_account",
+      "AdSet",
+      "catalog",
+      "access_token",
+      "server_granted_scope_list"
+    ],
     "source_evidence_projection": "identity_reference_fields_only_no_unrelated_promoted_object_signals_or_sensitive_fields",
     "time": "bounded_start_end_default_120_seconds_and_native_token_deadline_checked_before_each_fetch_and_after_reads_not_an_inflight_timeout_or_atomic_history_proof",
     "transport": "existing_Graph_v26_0_GET_only_redirect_error_signal_forwarded_first_error_stop_no_exchange_refresh_retry_or_alternate_account_catalog",
     "provider_link_verified_true_scope": "same_current_AdSet_account_catalog_reference_observed_before_and_after_products_not_global_assignment_or_delivered_product_proof",
     "new_tests": 35,
     "existing_Meta_regression_tests": 69,
-    "sources": ["https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adset.py", "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adpromotedobject.py", "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/productset.py", "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adaccount.py"],
+    "sources": [
+      "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adset.py",
+      "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adpromotedobject.py",
+      "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/productset.py",
+      "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adaccount.py"
+    ],
     "SDK_field_presence_proves_actual_access_or_all_campaign_compatibility": false,
     "trusted_loadCurrent_lifecycle_vault_Reporting_Account_binding": "required_in_existing_step_11_not_wired_here",
     "route_or_live_trigger_wired": false,
     "shopify_mapping_state": "not_resolved",
     "authorizes_activation": false,
     "live_token_config_SQL_or_Dataset_changed": false,
-    "remaining": ["step_7_live_permission_review_and_atomic_write_gates", "step_8_Google_source_format_evidence", "step_9_Meta_Ad_channel_to_reference_and_report_namespace_source_format_evidence", "step_10_Klaviyo_reader", "step_11_source_rule_shared_Shopify_and_trusted_runtime_composition", "step_12_quota_dispatch_timeout", "step_13_prewrite_checks", "step_14_review_before_identity_sublist_step_12_and_durable_tables"],
+    "remaining": [
+      "step_7_live_permission_review_and_atomic_write_gates",
+      "step_8_Google_source_format_evidence",
+      "step_9_Meta_Ad_channel_to_reference_and_report_namespace_source_format_evidence",
+      "step_10_Klaviyo_reader",
+      "step_11_source_rule_shared_Shopify_and_trusted_runtime_composition",
+      "step_12_quota_dispatch_timeout",
+      "step_13_prewrite_checks",
+      "step_14_review_before_identity_sublist_step_12_and_durable_tables"
+    ],
     "step_9_complete": false,
     "historical_PMax_pause_preserved": true
   },
@@ -2888,7 +3218,15 @@
     "native_read": "GET_graph_facebook_com_v26_0_selected_catalog_products_fields_id_retailer_id_retailer_product_group_id_product_catalog_product_feed_limit_100",
     "credential": "Bearer_header_plus_existing_server_HMAC_appsecret_proof_no_access_token_query_parameter",
     "scope_check": "existing_Meta_identity_profile_actual_list_required_no_new_permission_or_declared_scope_as_fresh_token_proof",
-    "context": ["workspace_id", "installation_id", "installation_generation", "provider_connection_id", "platform_account_id", "catalog_id", "product_feed_id_when_observed"],
+    "context": [
+      "workspace_id",
+      "installation_id",
+      "installation_generation",
+      "provider_connection_id",
+      "platform_account_id",
+      "catalog_id",
+      "product_feed_id_when_observed"
+    ],
     "source_identity": "same_catalog_product_catalog_id_required_catalog_internal_id_and_retailer_id_are_separate_namespaces",
     "group_and_feed": "raw_missing_null_and_empty_group_values_preserved_without_inferred_Shopify_parent_or_feed",
     "lookup": "explicit_catalog_product_id_or_retailer_id_namespace_and_catalog_required_optional_exact_feed_filter_no_numeric_cross_namespace_fallback",
@@ -2909,9 +3247,23 @@
     "reference_site_observation": "developers_facebook_com_product_catalog_products_reference_returned_HTTP_429_not_provider_API_behavior_evidence",
     "official_primary_source": "Meta_owned_Business_SDK_ProductCatalog_GET_products_ProductItem_fields_and_types_Cursor_paging_implementation",
     "SDK_version_observed": "official_Python_SDK_v26_0_2_API_v26_0_matches_existing_runtime_version_no_dependency_added",
-    "sources": ["https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/productcatalog.py", "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/productitem.py", "https://github.com/facebook/facebook-nodejs-business-sdk/blob/main/src/cursor.js", "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/apiconfig.py"],
+    "sources": [
+      "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/productcatalog.py",
+      "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/productitem.py",
+      "https://github.com/facebook/facebook-nodejs-business-sdk/blob/main/src/cursor.js",
+      "https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/apiconfig.py"
+    ],
     "SDK_proves_Shopify_format_Insights_namespace_or_token_permission_acceptance": false,
-    "remaining_existing_steps": ["step_7_live_permission_review_and_atomic_write_gates", "step_8_Google_source_format_proof_still_open", "step_9_native_Ads_account_catalog_link_and_Insights_product_id_namespace_evidence_and_source_format", "step_10_Klaviyo_identity_reader", "step_11_trusted_runtime_source_rule_and_shared_Shopify_verifier_composition", "step_12_quota_dispatch_timeout", "step_13_prewrite_checks", "step_14_review_before_durable_tables"],
+    "remaining_existing_steps": [
+      "step_7_live_permission_review_and_atomic_write_gates",
+      "step_8_Google_source_format_proof_still_open",
+      "step_9_native_Ads_account_catalog_link_and_Insights_product_id_namespace_evidence_and_source_format",
+      "step_10_Klaviyo_identity_reader",
+      "step_11_trusted_runtime_source_rule_and_shared_Shopify_verifier_composition",
+      "step_12_quota_dispatch_timeout",
+      "step_13_prewrite_checks",
+      "step_14_review_before_durable_tables"
+    ],
     "step_9_complete": false,
     "historical_PMax_pause_preserved": true
   },
@@ -2926,7 +3278,11 @@
     "scope_validation_is_permission_proof": false,
     "source_rule_dependency": "trusted_server_loadSourceRule_exact_workspace_installation_generation_connection_Ads_account_Merchant_feed_language_dataSource_local_and_shop_context",
     "production_source_rule_registered": false,
-    "supported_conditional_rule_formats": ["shopify_market_product_variant", "shopify_product_id", "shopify_variant_id"],
+    "supported_conditional_rule_formats": [
+      "shopify_market_product_variant",
+      "shopify_product_id",
+      "shopify_variant_id"
+    ],
     "formats_are_universal_provider_guarantees": false,
     "missing_rule": "unresolved_no_ID_parse_or_Shopify_call",
     "absent_or_ambiguous_native_record": "preserve_state_no_rule_or_Shopify_call",
@@ -2949,9 +3305,22 @@
     "new_tests": 49,
     "Google_reader_and_link_regression_tests": 63,
     "official_check_date": "2026-10-27",
-    "sources": ["https://shopify.dev/docs/api/admin-graphql/2026-07/objects/Product", "https://shopify.dev/docs/api/admin-graphql/2026-07/objects/ProductVariant", "https://shopify.dev/docs/api/admin-graphql/2026-07/scalars/UnsignedInt64", "https://shopify.dev/docs/api/admin-graphql/latest/queries/product", "https://shopify.dev/docs/api/admin-graphql/latest/queries/productVariant"],
+    "sources": [
+      "https://shopify.dev/docs/api/admin-graphql/2026-07/objects/Product",
+      "https://shopify.dev/docs/api/admin-graphql/2026-07/objects/ProductVariant",
+      "https://shopify.dev/docs/api/admin-graphql/2026-07/scalars/UnsignedInt64",
+      "https://shopify.dev/docs/api/admin-graphql/latest/queries/product",
+      "https://shopify.dev/docs/api/admin-graphql/latest/queries/productVariant"
+    ],
     "SDK_check": "installed_shopify_app_react_router_3_0_1_GraphQLQueryOptions_tries_and_signal_verified_no_dependency_or_API_version_change",
-    "remaining": ["real_Google_source_format_evidence_and_reviewed_rule", "Meta_step_9_and_Klaviyo_step_10_readers", "step_11_concrete_source_rule_lifecycle_vault_and_Admin_composition", "step_12_quota_dispatch_timeout", "step_13_prewrite_checks", "step_14_review_before_identity_sublist_step_12_and_durable_tables"],
+    "remaining": [
+      "real_Google_source_format_evidence_and_reviewed_rule",
+      "Meta_step_9_and_Klaviyo_step_10_readers",
+      "step_11_concrete_source_rule_lifecycle_vault_and_Admin_composition",
+      "step_12_quota_dispatch_timeout",
+      "step_13_prewrite_checks",
+      "step_14_review_before_identity_sublist_step_12_and_durable_tables"
+    ],
     "step_7_complete": false,
     "step_8_complete": false,
     "step_11_complete": false,
@@ -2966,8 +3335,30 @@
     "existing_Ads_transport": "Google_Ads_REST_v25_search_same_identity_credential_and_explicit_login_customer_no_alternate_root_retry_or_refresh",
     "native_relationship": "active_direct_link_observed_for_exact_selected_customer_and_target_Merchant_not_pending_invitation_or_campaign_setting",
     "non_confirmed": "not_observed_or_ambiguous_do_not_read_products_do_not_infer_global_provider_unsupported",
-    "sequence": ["load_current_server_context_and_identity_token_metadata", "complete_native_active_link_read", "reload_compare_current_context", "complete_Merchant_product_read", "reload_compare_current_context", "complete_native_active_link_recheck_same_resource", "reload_compare_current_context_and_check_elapsed_time"],
-    "context_comparison": ["workspace", "installation_id", "installation_generation", "provider_connection_id", "connection_version", "credential_id", "Ads_customer", "Merchant", "login_customer", "actual_granted_scopes", "access_token", "scope_observed_at", "credential_expiry"],
+    "sequence": [
+      "load_current_server_context_and_identity_token_metadata",
+      "complete_native_active_link_read",
+      "reload_compare_current_context",
+      "complete_Merchant_product_read",
+      "reload_compare_current_context",
+      "complete_native_active_link_recheck_same_resource",
+      "reload_compare_current_context_and_check_elapsed_time"
+    ],
+    "context_comparison": [
+      "workspace",
+      "installation_id",
+      "installation_generation",
+      "provider_connection_id",
+      "connection_version",
+      "credential_id",
+      "Ads_customer",
+      "Merchant",
+      "login_customer",
+      "actual_granted_scopes",
+      "access_token",
+      "scope_observed_at",
+      "credential_expiry"
+    ],
     "credential_policy": "identity_v1_only_existing_metadata_inspection_both_native_scopes_required_exact_authority_scope_match_refresh_required_stops",
     "source_context": "existing_Merchant_reader_preserves_feed_language_dataSource_offerId_and_legacy_local",
     "observation": "bounded_start_end_timestamps_default_120_seconds_not_atomic_or_historical_proof_not_future_write_authority",
@@ -2980,10 +3371,21 @@
     "authorizes_activation": false,
     "new_tests": 35,
     "previous_product_reader_regression_tests": 28,
-    "remaining_existing_steps": ["step_7_live_permission_review_and_atomic_write_gates", "step_8_source_format_rule_proof", "step_11_concrete_trusted_lifecycle_vault_loader_binding_and_Shopify_product_variant_parent_verification", "step_12_quota_dispatch_timeout_controls", "step_13_prewrite_checks", "step_14_review_before_durable_identity_tables"],
+    "remaining_existing_steps": [
+      "step_7_live_permission_review_and_atomic_write_gates",
+      "step_8_source_format_rule_proof",
+      "step_11_concrete_trusted_lifecycle_vault_loader_binding_and_Shopify_product_variant_parent_verification",
+      "step_12_quota_dispatch_timeout_controls",
+      "step_13_prewrite_checks",
+      "step_14_review_before_durable_identity_tables"
+    ],
     "database_live_config_or_token_mutation": false,
     "official_check_date": "2026-10-27",
-    "sources": ["https://developers.google.com/google-ads/api/docs/shopping-ads/merchant-center", "https://developers.google.com/google-ads/api/fields/v25/product_link", "https://developers.google.com/google-ads/api/rest/common/search"],
+    "sources": [
+      "https://developers.google.com/google-ads/api/docs/shopping-ads/merchant-center",
+      "https://developers.google.com/google-ads/api/fields/v25/product_link",
+      "https://developers.google.com/google-ads/api/rest/common/search"
+    ],
     "step_7_complete": false,
     "step_8_complete": false,
     "historical_PMax_pause_preserved": true
@@ -2996,7 +3398,18 @@
     "reference_review": "Google_reader_subset_of_open_PR179_head_ffc51bdf6ebd46f9e79b07bb186fb2da82884044_reviewed_then_reimplemented_on_current_main_no_PR179_merge",
     "native_api": "GET_products_v1_accounts_products_list_pageSize_1000_fixed_origin",
     "input_boundary": "server_only_context_DTO_not_authenticated_owner_or_Ads_to_Merchant_link_proof",
-    "context": ["workspace_id", "installation_id", "installation_generation", "provider_connection_id", "platform_account_id", "merchant_id", "feed_label", "content_language", "data_source", "legacy_local"],
+    "context": [
+      "workspace_id",
+      "installation_id",
+      "installation_generation",
+      "provider_connection_id",
+      "platform_account_id",
+      "merchant_id",
+      "feed_label",
+      "content_language",
+      "data_source",
+      "legacy_local"
+    ],
     "scope": "existing_content_scope_required_no_permission_request",
     "source_identity": "exact_offerId_feed_language_local_identity_with_product_name_and_same_Merchant_dataSource_validation",
     "raw_source": "detached_deep_frozen_source_record_including_productAttributes_and_customAttributes_no_automatic_Shopify_ID_parse",
@@ -3009,9 +3422,19 @@
     "authorizes_activation": false,
     "route_or_credential_runtime_wired": false,
     "live_call_or_token_config_or_database_changed": false,
-    "remaining_existing_steps": ["step_7_live_permissions_reviews_and_atomic_write_gates", "step_8_trusted_Ads_account_to_Merchant_link_and_source_format_rule_proof", "step_11_source_rule_and_Shopify_product_variant_parent_verification_composition", "step_12_dispatch_quota_timeout_and_full_reader_family_controls", "step_13_prewrite_checks", "step_14_review_before_identity_sublist_step_12_and_durable_tables"],
+    "remaining_existing_steps": [
+      "step_7_live_permissions_reviews_and_atomic_write_gates",
+      "step_8_trusted_Ads_account_to_Merchant_link_and_source_format_rule_proof",
+      "step_11_source_rule_and_Shopify_product_variant_parent_verification_composition",
+      "step_12_dispatch_quota_timeout_and_full_reader_family_controls",
+      "step_13_prewrite_checks",
+      "step_14_review_before_identity_sublist_step_12_and_durable_tables"
+    ],
     "official_check_date": "2026-10-27",
-    "sources": ["https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.products/list", "https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.products"],
+    "sources": [
+      "https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.products/list",
+      "https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.products"
+    ],
     "step_7_complete": false,
     "step_8_complete": false,
     "historical_PMax_pause_preserved": true
@@ -3040,8 +3463,17 @@
     "live_token_or_provider_configuration_changed": false,
     "Klaviyo_Advertised_Cross_Sell_closed_scope": "preserved_no_role_work",
     "official_check_date": "2026-10-27",
-    "sources": ["https://developers.klaviyo.com/en/docs/set_up_oauth", "https://www.rfc-editor.org/rfc/rfc6749#section-5.1", "https://www.rfc-editor.org/rfc/rfc6749#section-6"],
-    "remaining_step_7": ["authorized_Shopify_scope_declaration_release_and_merchant_consent", "application_access_reviews_and_real_scope_asset_read_tests", "atomic_credential_staging_connected_upgrade_and_uncertain_write_reconciliation_under_existing_review_gate", "trusted_runtime_source_composition_under_existing_later_steps"],
+    "sources": [
+      "https://developers.klaviyo.com/en/docs/set_up_oauth",
+      "https://www.rfc-editor.org/rfc/rfc6749#section-5.1",
+      "https://www.rfc-editor.org/rfc/rfc6749#section-6"
+    ],
+    "remaining_step_7": [
+      "authorized_Shopify_scope_declaration_release_and_merchant_consent",
+      "application_access_reviews_and_real_scope_asset_read_tests",
+      "atomic_credential_staging_connected_upgrade_and_uncertain_write_reconciliation_under_existing_review_gate",
+      "trusted_runtime_source_composition_under_existing_later_steps"
+    ],
     "step_7_complete": false,
     "identity_prewrite_review_and_historical_PMax_pause": "preserved"
   },
@@ -3052,11 +3484,22 @@
     "tests": "tests/shopify-permission-readback.test.js",
     "caller": "trusted_server_verified_Shopify_Admin_identity_session_and_active_installation_result_not_browser_context",
     "sequence": "resolve_current_active_installation_read_native_scopes_once_resolve_current_installation_again_then_assess",
-    "context_checks": ["session_shop_domain", "Admin_shop_ID_and_domain", "workspace", "active_install_generation"],
+    "context_checks": [
+      "session_shop_domain",
+      "Admin_shop_ID_and_domain",
+      "workspace",
+      "active_install_generation"
+    ],
     "installation_change_or_unavailable": "discard_no_scope_result_no_retry_or_bootstrap",
     "native_error": "stop_after_one_tries_1_GraphQL_read_no_refresh_or_fallback",
-    "feature_minimum_scopes": ["read_products", "read_orders"],
-    "conditional_scopes": {"historical_orders_older_than_60_days": "read_all_orders", "MarketingEvent_path_if_selected": "read_marketing_events"},
+    "feature_minimum_scopes": [
+      "read_products",
+      "read_orders"
+    ],
+    "conditional_scopes": {
+      "historical_orders_older_than_60_days": "read_all_orders",
+      "MarketingEvent_path_if_selected": "read_marketing_events"
+    },
     "existing_write_grant": "may_satisfy_corresponding_read_no_write_scope_requested",
     "slow_or_incomplete_observation": "unknown_not_missing_or_zero",
     "scope_result_authorizes_activation": false,
@@ -3069,9 +3512,19 @@
     "scope_config_deploy_App_Review_or_product_order_read_acceptance": false,
     "database_operations": "existing_read_only_resolve_active_installation_function_only_no_new_SQL_or_persistence",
     "later_use_requires": "revalidate_current_installation_before_product_order_work_or_write_no_atomic_future_authority_claim",
-    "remaining": ["authorized_scope_declaration_and_app_release", "conditional_application_approvals_and_protected_data_review", "merchant_consent_and_live_scope_readback", "product_order_and_journey_read_tests", "trusted_source_reader_runtime_composition_in_existing_later_steps"],
+    "remaining": [
+      "authorized_scope_declaration_and_app_release",
+      "conditional_application_approvals_and_protected_data_review",
+      "merchant_consent_and_live_scope_readback",
+      "product_order_and_journey_read_tests",
+      "trusted_source_reader_runtime_composition_in_existing_later_steps"
+    ],
     "official_check_date": "2026-10-27",
-    "sources": ["https://shopify.dev/docs/apps/build/authentication-authorization/manage-access-scopes", "https://shopify.dev/docs/api/admin-graphql/2026-07/queries/currentAppInstallation", "https://shopify.dev/docs/apps/launch/protected-customer-data"],
+    "sources": [
+      "https://shopify.dev/docs/apps/build/authentication-authorization/manage-access-scopes",
+      "https://shopify.dev/docs/api/admin-graphql/2026-07/queries/currentAppInstallation",
+      "https://shopify.dev/docs/apps/launch/protected-customer-data"
+    ],
     "step_7_complete": false,
     "identity_prewrite_review_and_historical_PMax_pause": "preserved"
   },
@@ -3085,7 +3538,11 @@
     "factory_true_is_permission_or_app_review_proof": false,
     "current_runtime_or_settings_passes_true": false,
     "start_source": "fresh_existing_owner_and_install_generation_scoped_lifecycle_read",
-    "supported_setup_states_in_isolated_tests": ["no_connection", "pending_account_selection", "reauthorization_required"],
+    "supported_setup_states_in_isolated_tests": [
+      "no_connection",
+      "pending_account_selection",
+      "reauthorization_required"
+    ],
     "connected_upgrade": "rejected_existing_stage_function_cannot_upgrade_connected_connection",
     "disconnect_or_unknown_states": "rejected_no_implicit_reconnect",
     "state_binding": "original_32_random_bytes_plus_identity_v1_and_initial_or_exact_connection_UUID_and_version_full_digest_persisted",
@@ -3097,9 +3554,17 @@
     "known_atomic_write_gap": "read_check_and_existing_stage_are_not_atomic_existing_SQL_has_no_expected_version_no_claim_that_final_race_is_solved",
     "atomic_write_followup": "before_live_identity_activation_and_subject_to_existing_ordered_14_review_before_identity_sublist_12_no_migration_authorized_now",
     "live_activation_is_ready": false,
-    "remaining": ["atomic_credential_staging_and_connected_scope_upgrade", "uncertain_Google_credential_write_reconciliation", "authorized_runtime_caller_and_selected_asset_access", "Shopify_scope_configuration_grant_readback_reviews_and_real_consent_tests"],
+    "remaining": [
+      "atomic_credential_staging_and_connected_scope_upgrade",
+      "uncertain_Google_credential_write_reconciliation",
+      "authorized_runtime_caller_and_selected_asset_access",
+      "Shopify_scope_configuration_grant_readback_reviews_and_real_consent_tests"
+    ],
     "official_check_date": "2026-10-27",
-    "sources": ["https://developers.google.com/identity/protocols/oauth2/web-server", "https://github.com/facebook/agentic-tools/blob/main/plugins/devtools/skills/debug-access-token/SKILL.md"],
+    "sources": [
+      "https://developers.google.com/identity/protocols/oauth2/web-server",
+      "https://github.com/facebook/agentic-tools/blob/main/plugins/devtools/skills/debug-access-token/SKILL.md"
+    ],
     "identity_prewrite_review_and_historical_PMax_pause": "preserved"
   },
   "Meta_identity_credential_reinspection_2026_10_27": {
@@ -3111,8 +3576,20 @@
     "identity_purpose": "transaction_bound_callback_stores_identity_v1_marker_in_encrypted_credential",
     "old_unmarked_reporting_tokens": "remain_reporting_even_with_historical_catalog_permissions_not_eligible_as_identity_authority",
     "unknown_credential_profile": "reject_before_provider_read",
-    "reinspection_paths": ["pending_account_selection_inspect", "pending_account_selection_complete", "pending_reporting_selection_inspect", "pending_reporting_selection_complete", "connected_inspect", "connected_reporting_change"],
-    "native_checks": ["is_valid_true", "app_id_matches_configured_application", "actual_full_required_scope_array", "bounded_token_and_data_access_deadlines"],
+    "reinspection_paths": [
+      "pending_account_selection_inspect",
+      "pending_account_selection_complete",
+      "pending_reporting_selection_inspect",
+      "pending_reporting_selection_complete",
+      "connected_inspect",
+      "connected_reporting_change"
+    ],
+    "native_checks": [
+      "is_valid_true",
+      "app_id_matches_configured_application",
+      "actual_full_required_scope_array",
+      "bounded_token_and_data_access_deadlines"
+    ],
     "old_cached_scope_is_current_grant_evidence": false,
     "identity_expiry_policy": "native_zero_is_unbounded_one_positive_deadline_required_malformed_values_rejected",
     "discovery_evidence_deadline": "minimum_of_native_expiry_discovery_deadline_and_ten_minutes_from_scope_inspection_reject_if_expired_before_selection_write",
@@ -3125,9 +3602,18 @@
     "live_token_config_DB_or_schema_change": false,
     "official_check_date": "2026-10-27",
     "official_reference_access": "developers_reference_inaccessible_via_web_reader_no_live_token_probe_used_official_Meta_repository_documentation_and_example",
-    "sources": ["https://developers.facebook.com/docs/graph-api/reference/debug_token/", "https://github.com/facebook/agentic-tools/blob/main/plugins/devtools/skills/debug-access-token/SKILL.md", "https://github.com/facebook/agentic-tools/blob/main/plugins/devtools/skills/debug-access-token/scripts/debug_token_probe.py"],
+    "sources": [
+      "https://developers.facebook.com/docs/graph-api/reference/debug_token/",
+      "https://github.com/facebook/agentic-tools/blob/main/plugins/devtools/skills/debug-access-token/SKILL.md",
+      "https://github.com/facebook/agentic-tools/blob/main/plugins/devtools/skills/debug-access-token/scripts/debug_token_probe.py"
+    ],
     "activation_and_reauthorization_followup": "identity_OAuth_start_connection_binding_2026_10_27_repository_guard_only_not_live_activation",
-    "remaining": ["atomic_credential_staging_and_connected_scope_upgrade", "Merchant_catalog_asset_authority", "uncertain_Google_credential_write_reconciliation_before_live_activation", "Shopify_scope_config_grant_readback_reviews_and_real_consent_tests"],
+    "remaining": [
+      "atomic_credential_staging_and_connected_scope_upgrade",
+      "Merchant_catalog_asset_authority",
+      "uncertain_Google_credential_write_reconciliation_before_live_activation",
+      "Shopify_scope_config_grant_readback_reviews_and_real_consent_tests"
+    ],
     "identity_prewrite_review_and_historical_PMax_pause": "preserved"
   },
   "Google_identity_credential_lifecycle_2026_10_27": {
@@ -3147,9 +3633,18 @@
     "Settings_or_route_identity_activation": false,
     "live_token_config_DB_or_schema_change": false,
     "Meta_credential_reinspection_followup": "Meta_identity_credential_reinspection_2026_10_27_repository_slice_not_live",
-    "remaining": ["trusted_server_activation_and_reauthorization_policy", "Merchant_catalog_asset_authority", "uncertain_credential_write_reconciliation_before_live_activation", "Shopify_scope_config_grant_readback_reviews_and_real_consent_tests"],
+    "remaining": [
+      "trusted_server_activation_and_reauthorization_policy",
+      "Merchant_catalog_asset_authority",
+      "uncertain_credential_write_reconciliation_before_live_activation",
+      "Shopify_scope_config_grant_readback_reviews_and_real_consent_tests"
+    ],
     "official_check_date": "2026-10-27",
-    "sources": ["https://developers.google.com/identity/protocols/oauth2/web-server", "https://supabase.com/docs/guides/database/functions", "https://supabase.com/changelog"],
+    "sources": [
+      "https://developers.google.com/identity/protocols/oauth2/web-server",
+      "https://supabase.com/docs/guides/database/functions",
+      "https://supabase.com/changelog"
+    ],
     "identity_prewrite_review_and_historical_PMax_pause": "preserved"
   },
   "identity_OAuth_scope_binding_2026_10_27": {
@@ -3157,9 +3652,15 @@
     "status": "repository_request_and_callback_scope_binding_prepared_routes_not_activated",
     "runtime": "app/lib/oauth/oauth-permission-profile.server.js",
     "tests": "tests/oauth-identity-scope-binding.test.js",
-    "profiles": ["reporting_v1", "identity_v1"],
+    "profiles": [
+      "reporting_v1",
+      "identity_v1"
+    ],
     "default": "reporting_v1_original_scopes_no_route_change",
-    "identity_profile_providers": ["google_ads", "meta"],
+    "identity_profile_providers": [
+      "google_ads",
+      "meta"
+    ],
     "Klaviyo_identity_profile": "rejected_existing_scopes_unchanged",
     "profile_selection": "explicit_trusted_server_oauthBoundary_begin_argument_only",
     "state_binding": "full_random_32_byte_state_plus_versioned_marker_hashed_in_existing_transaction_digest",
@@ -3183,7 +3684,12 @@
     "identity_profile_wired_in_current_settings_or_routes": false,
     "Shopify_config_or_live_provider_mutation": false,
     "step_7_complete": false,
-    "remaining": ["trusted_server_profile_activation_and_reauthorization_policy", "fresh_credential_scope_rotation_and_asset_authority", "Shopify_scope_request_configuration_and_callback_readback", "application_reviews_and_actual_consent_product_order_read_tests"],
+    "remaining": [
+      "trusted_server_profile_activation_and_reauthorization_policy",
+      "fresh_credential_scope_rotation_and_asset_authority",
+      "Shopify_scope_request_configuration_and_callback_readback",
+      "application_reviews_and_actual_consent_product_order_read_tests"
+    ],
     "identity_prewrite_review_and_historical_PMax_pause": "preserved"
   },
   "identity_permission_preparation_2026_10_27": {
@@ -3194,28 +3700,71 @@
     "runtime": "app/lib/oauth/identity-permission-preflight.server.js",
     "Shopify_grant_reader": "app/lib/shopify/permission-scopes.server.js",
     "tests": "tests/identity-permission-preflight.test.js",
-    "Google_required_scopes": ["https://www.googleapis.com/auth/adwords", "https://www.googleapis.com/auth/content"],
-    "Meta_required_permissions": ["ads_read", "catalog_management", "business_management", "pages_read_engagement", "pages_show_list"],
+    "Google_required_scopes": [
+      "https://www.googleapis.com/auth/adwords",
+      "https://www.googleapis.com/auth/content"
+    ],
+    "Meta_required_permissions": [
+      "ads_read",
+      "catalog_management",
+      "business_management",
+      "pages_read_engagement",
+      "pages_show_list"
+    ],
     "Meta_dependencies": {
-      "catalog_management": ["business_management"],
-      "business_management": ["pages_read_engagement", "pages_show_list"],
-      "pages_read_engagement": ["pages_show_list"]
+      "catalog_management": [
+        "business_management"
+      ],
+      "business_management": [
+        "pages_read_engagement",
+        "pages_show_list"
+      ],
+      "pages_read_engagement": [
+        "pages_show_list"
+      ]
     },
-    "Shopify_base_scopes": ["read_products", "read_orders"],
-    "Shopify_conditional_scopes": {"older_than_60_days": "read_all_orders", "MarketingEvent_selected": "read_marketing_events"},
+    "Shopify_base_scopes": [
+      "read_products",
+      "read_orders"
+    ],
+    "Shopify_conditional_scopes": {
+      "older_than_60_days": "read_all_orders",
+      "MarketingEvent_selected": "read_marketing_events"
+    },
     "Shopify_existing_write_grants": "corresponding_read_equivalence_only_no_new_write_requests",
     "Klaviyo_target": "existing_five_reporting_scopes_unchanged_events_read_and_metrics_read_cover_selected_identity_path",
-    "scope_statuses": ["unknown", "observed_missing", "observed_sufficient"],
+    "scope_statuses": [
+      "unknown",
+      "observed_missing",
+      "observed_sufficient"
+    ],
     "native_scope_evidence": "complete_fresh_same_workspace_shop_generation_provider_connection_account_not_config_or_requested_scope_fallback",
     "freshness_max_age_ms": 600000,
     "scope_comparison_is_authorization_gate": false,
     "other_provider_scope_evidence_readers": "not_added_scope_input_must_be_trusted_native_server_evidence",
     "Shopify_grant_read": "currentAppInstallation_id_accessScopes_handles_plus_same_shop_id_domain_single_read_tries_1_no_reader_retry_or_token_renewal",
     "application_checks": {
-      "google": ["Merchant_API_enabled", "developer_registration_once_per_application_GCP_project", "OAuth_app_verification", "selected_Merchant_asset_product_read"],
-      "meta": ["App_Review_for_other_business_data", "Business_Verification_for_Advanced_Access", "selected_catalog_admin_access_and_product_read"],
-      "shopify": ["protected_customer_data_access_for_minimum_order_data", "conditional_all_orders_application_approval", "conditional_MarketingEvent_visibility", "product_order_line_and_journey_read"],
-      "klaviyo": ["selected_account", "verified_Shopify_Ordered_Product_metric_and_event_read"]
+      "google": [
+        "Merchant_API_enabled",
+        "developer_registration_once_per_application_GCP_project",
+        "OAuth_app_verification",
+        "selected_Merchant_asset_product_read"
+      ],
+      "meta": [
+        "App_Review_for_other_business_data",
+        "Business_Verification_for_Advanced_Access",
+        "selected_catalog_admin_access_and_product_read"
+      ],
+      "shopify": [
+        "protected_customer_data_access_for_minimum_order_data",
+        "conditional_all_orders_application_approval",
+        "conditional_MarketingEvent_visibility",
+        "product_order_line_and_journey_read"
+      ],
+      "klaviyo": [
+        "selected_account",
+        "verified_Shopify_Ordered_Product_metric_and_event_read"
+      ]
     },
     "official_sources_checked_at": "2026-10-27",
     "Meta_document_updated_at": "2026-10-19",
@@ -3232,7 +3781,13 @@
       "https://developers.klaviyo.com/en/reference/get_events",
       "https://developers.klaviyo.com/en/reference/get_metrics"
     ],
-    "remaining_step_7_work": ["trusted_server_profile_activation_and_fresh_credential_scope_rotation", "trusted_runtime_caller_and_fresh_credential_binding", "authorized_configuration_and_application_reviews", "merchant_consent_and_scope_readback", "selected_asset_product_and_order_read_tests"],
+    "remaining_step_7_work": [
+      "trusted_server_profile_activation_and_fresh_credential_scope_rotation",
+      "trusted_runtime_caller_and_fresh_credential_binding",
+      "authorized_configuration_and_application_reviews",
+      "merchant_consent_and_scope_readback",
+      "selected_asset_product_and_order_read_tests"
+    ],
     "existing_authorization_builders_or_callbacks_changed": false,
     "Shopify_config_or_live_scope_changed": false,
     "live_calls_or_credentials_used": false,
@@ -3264,7 +3819,10 @@
     "mandatory_gate_execution_status": "paused_by_product_owner_2026_10_20_not_passed",
     "mandatory_gate_blocks_independent_refresh_work": false,
     "historical_design_outputs_execution": "paused_not_required_for_independent_refresh_design",
-    "prerequisites": ["workload_budget_contract", "index_and_query_plan_baseline"],
+    "prerequisites": [
+      "workload_budget_contract",
+      "index_and_query_plan_baseline"
+    ],
     "implementation_next_requires": "explicit_product_owner_approval_of_scoped_design",
     "continuity_proof_source": "not_yet_verified_do_not_infer",
     "observation_time_is_validity_interval": false,
@@ -3287,16 +3845,36 @@
     "snapshot_capture_alone_closes_gate": false
   },
   "children_in_order": [
-    {"id": "A6-EO-05-A", "scope": "hourly_staggered_scheduler_shard_lease_checkpoint_single_flight_and_backpressure"},
-    {"id": "A6-EO-05-B", "scope": "Dataset_V2_source_currency_FX_lineage_and_versioned_synthetic_fixture"},
-    {"id": "A6-EO-05-C", "scope": "provider_configured_maturity_attribution_horizon_and_finality"},
-    {"id": "A6-EO-05-D", "scope": "yesterday_then_today_bootstrap_idempotent_upsert_reconciliation_and_reauthorization_gap_recovery"},
-    {"id": "A6-EO-05-E", "scope": "secret_free_operational_capacity_freshness_and_failure_observability"}
+    {
+      "id": "A6-EO-05-A",
+      "scope": "hourly_staggered_scheduler_shard_lease_checkpoint_single_flight_and_backpressure"
+    },
+    {
+      "id": "A6-EO-05-B",
+      "scope": "Dataset_V2_source_currency_FX_lineage_and_versioned_synthetic_fixture"
+    },
+    {
+      "id": "A6-EO-05-C",
+      "scope": "provider_configured_maturity_attribution_horizon_and_finality"
+    },
+    {
+      "id": "A6-EO-05-D",
+      "scope": "yesterday_then_today_bootstrap_idempotent_upsert_reconciliation_and_reauthorization_gap_recovery"
+    },
+    {
+      "id": "A6-EO-05-E",
+      "scope": "secret_free_operational_capacity_freshness_and_failure_observability"
+    }
   ],
   "shopify_sales_attribution_work_order_2026_10_27": {
     "authority": "explicit_owner_acceptance_of_independent_Shopify_sales_and_separate_attribution",
     "decision": "contracts/pd-cpd-query-standard-v1.json#shopify_order_attribution_decision_2026_10_27",
-    "OAuth_preparation_includes": ["read_orders", "conditional_read_all_orders", "read_marketing_events_visibility_review", "protected_customer_data_review"],
+    "OAuth_preparation_includes": [
+      "read_orders",
+      "conditional_read_all_orders",
+      "read_marketing_events_visibility_review",
+      "protected_customer_data_review"
+    ],
     "EO05B_includes": "order_line_identity_idempotency_refunds_sales_basis_and_separate_attribution_storage_design",
     "EO05C_includes": "distinct_models_windows_readiness_and_maturity",
     "live_scope_change_database_or_backfill_authorized": false,
@@ -3307,7 +3885,10 @@
     "verified_install_generation_and_reporting_authority_required": true,
     "non_entitled_or_reauthorization_required_jobs_run": false,
     "stale_job_can_write_after_account_or_generation_change": false,
-    "hourly_dates": ["yesterday", "today"],
+    "hourly_dates": [
+      "yesterday",
+      "today"
+    ],
     "hourly_full_history_fetch": false,
     "deep_reconciliation_frequency_hours": 24,
     "attribution_horizon": "verified_provider_configuration_never_global_constant",
@@ -3344,8 +3925,20 @@
     "runtime_migration_live_or_deployment_authorized_by_work_order": false
   },
   "acceptance": {
-    "repository": ["positive_and_negative_contract_tests", "tenant_and_generation_isolation", "replay_and_idempotency", "time_gap_DST_and_conflict_tests", "full_test_typecheck_build_CI", "explicit_product_owner_acceptance", "remote_content_parity_and_local_only_inventory"],
-    "capacity": ["2000_workspace_hourly_scheduler_test", "4000_workspace_compressed_stress_test", "24_hour_2000_workspace_soak"],
+    "repository": [
+      "positive_and_negative_contract_tests",
+      "tenant_and_generation_isolation",
+      "replay_and_idempotency",
+      "time_gap_DST_and_conflict_tests",
+      "full_test_typecheck_build_CI",
+      "explicit_product_owner_acceptance",
+      "remote_content_parity_and_local_only_inventory"
+    ],
+    "capacity": [
+      "2000_workspace_hourly_scheduler_test",
+      "4000_workspace_compressed_stress_test",
+      "24_hour_2000_workspace_soak"
+    ],
     "capacity_runs_authorized_now": false,
     "live_acceptance_separate_from_repository_readiness": true,
     "package_delta_integrity_required": true

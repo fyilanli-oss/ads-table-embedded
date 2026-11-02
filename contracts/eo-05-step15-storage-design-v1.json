@@ -1,8 +1,8 @@
 {
   "contract_id": "eo-05-step15-storage-design-v1",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "checked_at": "2026-11-02",
-  "status": "proposal_for_owner_table_design_review_not_implemented",
+  "status": "accepted_layout_repository_foundation_in_progress_not_live",
   "existing_step": 15,
   "package": "A6-EO-05-B",
   "base_main": "9e8030ded82ab3c62cb7bb3aa50dfe90fc830075",
@@ -10,14 +10,15 @@
   "authorization": {
     "source": "Owner explicitly asked whether Step15 defines raw-data storage, table allocation and relationships, received the concrete design/implementation sequence with separate live DB gate, and replied Tamam başlayalım. This first delivery prepares a reviewable table design before the required physical-table approval.",
     "design_preparation": true,
-    "physical_table_design_accepted": false,
-    "runtime_implementation_in_this_delivery": false,
-    "migration": false,
+    "physical_table_design_accepted": true,
+    "runtime_implementation_in_this_delivery": true,
+    "migration": true,
     "live_DB": false,
     "provider_calls": false,
     "OAuth_UI_or_scope_change": false,
     "merge": false,
-    "deploy": false
+    "deploy": false,
+    "implementation_source": "Owner reviewed the full design, delegated advanced technical decisions, required a safe source/evidence landing layer with class-specific dependency-aware retention, then explicitly said Tamamdır Codex başlayabiliriz."
   },
   "authority": [
     "docs/EXECUTION_PLAN.md",
@@ -634,14 +635,25 @@
       "https://supabase.com/docs/guides/database/postgres/row-level-security",
       "https://www.postgresql.org/docs/17/ddl-constraints.html",
       "https://www.postgresql.org/docs/17/transaction-iso.html",
-      "https://www.postgresql.org/docs/17/ddl-priv.html"
+      "https://www.postgresql.org/docs/17/ddl-priv.html",
+      "https://supabase.com/changelog.md",
+      "https://supabase.com/changelog/postgres-15-19-17-11-breaking-changes",
+      "https://supabase.com/changelog/cbc-tls-ciphers-deprecated",
+      "https://github.com/supabase/cli/releases/tag/v2.122.0"
     ],
-    "not_completed": [
-      {
-        "url": "https://supabase.com/changelog.md",
-        "reason": "reader returned unsupported text/markdown content type; no fallback attempted; full changelog verification remains before implementation/live gate"
-      }
-    ],
-    "limit": "Documentation supports mechanisms, not AdsTable model acceptance or live database version/capacity."
+    "not_completed": [],
+    "limit": "Documentation supports mechanisms, not AdsTable model acceptance or live database version/capacity. Changelog retrieved as a read-only HTTPS document after the browser content-type limitation; relevant breaking changes reviewed. No legacy pgcrypto cipher, custom operator or hosted API TLS configuration used or modified."
+  },
+  "implementation": {
+    "status": "repository_foundation_preparing_tests",
+    "migration": "supabase/migrations/20261102083049_eo05b_source_evidence_foundation.sql",
+    "runtime": "app/lib/database/source-evidence-store.server.js",
+    "capability": "Owner-only SQL functions. No runtime/coordinator EXECUTE or schema grants, no route/worker/provider capture activation. Trusted native producer adapters and scoped integration grants remain separate readiness work within Step15.",
+    "retention": "Class-specific explicit finite dates; expiry alone never purges. Pending downstream handoff, incomplete source or transitive longer-lived dependency holds ciphertext. No automatic handoff acceptance, no new reporting checkpoint.",
+    "privacy": "Existing whole-install deletion worker extended with exact per-table counts. A customer-scoped request with source records is fail-closed, not falsely no_customer_data. Customer association/disclosure handling remains a required pre-live gate; no broad deletion of unrelated customer data is invented.",
+    "testing": "Node failure/crypto/owner tests plus real two-pass isolated F01 PostgreSQL source probe, not live data acceptance.",
+    "capture": "Internal already-sanitized projection storage boundary; generic bundle is not a native proof. No native capture hook or new query registered.",
+    "deferred": "No source fact/FX writer, overlap calculator, added refund/visit fields, new keys/config/live DB apply.",
+    "merge_authorized": false
   }
 }

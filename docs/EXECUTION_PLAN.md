@@ -1,3 +1,16 @@
+## 2 Kasım — mevcut15: kaynak/kanıt temeli repository uygulaması
+
+Owner10 tablo tasarımını okuyup teknik uygulamayı başlattı. Bu operasyonel rapor DB'si
+değil, ona güvenli kaynak/kanıt sağlayan katmandır. Sınıf bazlı son tarih, transitive
+kanıt bağımlılıkları ve pending handoff ayrı tutulur; süre dolması tek başına silmez.
+Owner-only SQL/private cipher/repository ve izole PostgreSQL test hazırlığı yapılır;
+route/worker/coordinator yetkisi, native çağrı, canlı DB/config ve merge/deploy yoktur.
+Mevcut müşteri no_customer_data yolunun source kayıtları varken yanlış başarı
+vermemesi ve tüm-kurulum silmesinin10 tabloyu sayması uygulama kapsamındadır. Native
+capture/grant, müşteri bazlı ilişkilendirme, structured geçmiş temizliği ve gerçek
+handoff kanıtı tamamlanmadan15 bitti veya canlı saklama hazır denmez. Ayrıntı:
+contracts/eo-05-step15-storage-design-v1.json#implementation. Kod PR'ı295'e bağlıdır.
+
 ## 2 Kasım — mevcut15: veritabanı temeli için somut tasarım önerisi
 
 Owner ham kaynakların saklanması, hangi verinin hangi tabloya yazılması ve ilişkilerin

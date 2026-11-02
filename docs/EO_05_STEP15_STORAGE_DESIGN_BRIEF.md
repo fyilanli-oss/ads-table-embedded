@@ -1,3 +1,38 @@
+## 2 Kasım — kabul edilen yerleşimin ilk repository uygulaması
+
+Ürün sahibi tasarımı okudu; bu yapının operasyonel raporlama DB'sine güvenli veri
+sağlayan kaynak/kanıt katmanı olduğunu ve saklama süresinin veri sınıfı/bağımlılığa
+göre değişmesini istedi. Teknik kararları devretti ve somut uygulamayı başlattı.
+10 tablo yerleşimi kabul edildi. Bu kayıt önceki öneri/onay bekliyor alanlarını
+kendi tarihleri için korur; güncel uygulama durumu makine sözleşmesindedir.
+
+İlk hazırlık10 özel tablo, kapsamlı FK/RLS/indeksler, atomik owner-only yazma/makbuz,
+şifreli sayfa tekrar okuma, aynı Order/LineItem sürümünün tekilleştirilmesi ve mevcut
+silme worker'ına bağlantıdır. Native durum/tutarlar sınırlı native_data JSONB içinde
+korunur; rapor fact veya muhasebe formülüne çevrilmez. Generic paket native kanıt
+veya source-rule kabulü üretmez. Uygulama/coordinator rollerine schema/EXECUTE/DML
+izni verilmez; hiçbir route/worker/provider adaptörü etkinleştirilmez.
+
+Süre sonu adaylık koşuludur. Aktarım bekleyen veya eksik paket ile daha uzun yaşayan
+ilişkili kural/eşleme/sipariş/iddia, kanıtı korur. Handoff consumed işaretçisi için
+bu teslimde uygulama fonksiyonu yoktur; gelecekteki gerçek durable downstream makbuz
+bağlantısı olmadan aktarım tamamlandı denmez. Metadata/structured geçmiş temizliğinin
+nihai politikası ve native producer capture bağlantıları, canlı aktivasyon öncesi
+Step15'in açık işleridir; yalnız ham ciphertext temizliği bu dilimde kontrollüdür.
+
+Gizlilikte tüm-kurulum silmesi10 tabloyu mevcut manifestte sayar. Müşteri bazlı
+request/redact geldiğinde source kayıtları varsa artık no_customer_data diye yanlış
+makbuz üretilemez; SOURCE_CUSTOMER_PRIVACY_REVIEW_REQUIRED ile işlem açık kalır.
+Müşteri ilişkilendirme/disclosure çözümü canlı ön koşuldur; ilgisiz müşterilerin
+verisini keyfî toplu silme kararı alınmadı.
+
+Tasarım PR295 henüz main'de değil; kod ayrı branch/PR ile ona bağlı incelenir. CI'ın
+stacked PR'ı sınaması için yalnız bu tasarım branch'i ek base olarak tanımlandı;
+OAuth guard hâlâ gerçek PR base SHA'sıyla çalışır, push main karşılaştırması korunur.
+Merge, canlı DB, key/config/provider veya deploy yapılmadı. Supabase changelog HTTPS
+okuması ve ilgili breaking-change belgeleri2 Kasım tamamlandı; önceki biçim hatası
+tarihsel kayıttır. Native veri/kapasite/retention anahtar politikası kabulü değildir.
+
 # 15. madde — veritabanının ilk temeli
 
 Tarih: 2 Kasım 2026. Durum: ürün sahibine sunulan tablo ve ilişki önerisi.

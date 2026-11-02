@@ -1,4 +1,15 @@
 {
+  "Step15_source_foundation_implementation_2026_11_02": {
+    "contract": "contracts/eo-05-step15-storage-design-v1.json#implementation",
+    "owner_accepted_layout": true,
+    "scope": "repository10-table owner-only landing store, cipher, receipt/readback, retention/deletion and isolated tests; no native query/flow/activation",
+    "status": "repository_preparation_native_integration_and_live_acceptance_open",
+    "step15_complete": false,
+    "live_DB": false,
+    "provider_calls": false,
+    "merge_authorized": false,
+    "deploy_authorized": false
+  },
   "Step15_storage_foundation_design_2026_11_02": {
     "checked_at": "2026-11-02",
     "status": "design_proposal_prepared_for_owner_table_review",
@@ -237,7 +248,7 @@
       "work": "Onaydan sonra kalıcı kimlik eşlemesi, kaynak kuralları ve özel ham kanıt saklama bağlantısını kurmak.",
       "boundary": "Tablo, writer, tekrar okuma, geçmiş/sürüm, silinme/yeniden bağlantı ve gerçek referanslar. Kimlik akışı uçtan uca sınanacak.",
       "addition": "Shopify ek işi: sipariş/satır kayıtları ve Shopify atfı ile sağlayıcı iddiaları için ayrı kalıcı kaynak kayıtları; writer/tekrar okuma ve sürüm geçmişi. Fiziksel tablo sayısı burada tasarlanıp onaylanacak; mevcut beş tabloya sessiz ek yapılmayacak.",
-      "status": "2 Kasım: tablo/ilişki tasarım önerisi hazır;10 fiziksel tablo (1 mevcut mapping +9 destek) owner incelemesinde. Fiziksel tasarım kabulü sonrası repository uygulaması; SQL/migration/writer ve canlı apply henüz başlamadı.",
+      "status": "2 Kasım: owner10 tablo yerleşimini kabul etti; owner-only kaynak/kanıt SQL/private writer/readback repository hazırlığı ve izole testler. Native producer/grant, müşteri bazlı privacy, structured retention ve live kabul açık;15 tamamlanmadı.",
       "package": "EO-05-B"
     },
     {

@@ -2,7 +2,7 @@ name: F01 Database Integrity
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, "codex/step15-storage-foundation-design"]
     paths:
       - "supabase/migrations/**"
       - "tools/f01-*"

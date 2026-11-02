@@ -1,3 +1,4 @@
+import {verifiedMappingProbe} from "./eo05-verified-mapping-probe.mjs";
 import assert from "node:assert/strict";
 import {randomUUID} from "node:crypto";
 import {createRefreshGoogleIdentityReader} from "../app/lib/refresh/quota-authority-binding.server.js";
@@ -81,6 +82,7 @@ export async function googleSourceCaptureProbe(client,{store,execution,quotaStor
           const m=(await client.query("select * from identity.product_identity_mappings where id=$1",[receipt.manifest.ids["mapping:m0"]])).rows[0];
           assert.equal(m.mapping_state,"unresolved");assert.equal(m.shopify_product_id,null);assert.equal(m.source_rule_version_id,null);
         }
+        if(mode==="success")await verifiedMappingProbe(client,{args:lastArgs,cipher:input.cipher,mappingId:receipt.manifest.ids["mapping:m0"]});
         if(["reuse","new_version"].includes(mode)){
           if(mode==="new_version"){
             await client.query("update integrations.provider_connections set connection_version=connection_version+1 where id=$1",[connection]);

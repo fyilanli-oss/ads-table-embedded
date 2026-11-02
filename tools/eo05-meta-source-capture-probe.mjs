@@ -1,3 +1,4 @@
+import {verifiedMappingProbe} from "./eo05-verified-mapping-probe.mjs";
 import assert from "node:assert/strict";
 import {randomUUID, createHash} from "node:crypto";
 import {createRefreshMetaIdentityReader} from "../app/lib/refresh/quota-authority-binding.server.js";
@@ -135,6 +136,7 @@ export async function metaSourceCaptureProbe(client, {store, quotaStore, executi
           const sourceOwner = JSON.parse(lastArgs[0]), repo = createSourceEvidenceRepository(client);
           const pages = await repo.readPages({owner: sourceOwner, attemptId: lastArgs[1], ordinal: 0, limit: 100}); assert.equal(pages.length, 4);
           for (const page of pages) assert.ok(Array.isArray(input.cipher.open({owner: sourceOwner, attemptId: lastArgs[1], ordinal: 0, page}).records));
+          if (mode === "success") await verifiedMappingProbe(client,{args:lastArgs,cipher:input.cipher});
           if (mode !== "empty") {
             const m = (await client.query("select * from identity.product_identity_mappings where id=$1", [receipt.manifest.ids["mapping:m0"]])).rows[0];
             assert.equal(m.mapping_state, "unresolved"); assert.equal(m.shopify_product_id, null); assert.equal(m.source_rule_version_id, null);

@@ -781,6 +781,15 @@
       "repository_sql_sha256": "cfbc049ca8f04a21254b6118fd2fe14dd4c4314ad0e30f3a3835e248a9598f8f",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261102185842",
+      "name": "eo05b_verified_mapping_store",
+      "file": "supabase/migrations/20261102185842_eo05b_verified_mapping_store.sql",
+      "created_with": "supabase@2.122.0 migration new eo05b_verified_mapping_store",
+      "repository_sql_sha256": "fc0b5a9a8089995e5dd2d258973d5dad3582c8d8bfdf00e3514a3197b37f34c5",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

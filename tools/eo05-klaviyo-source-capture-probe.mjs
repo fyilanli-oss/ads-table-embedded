@@ -1,3 +1,4 @@
+import {verifiedMappingProbe} from "./eo05-verified-mapping-probe.mjs";
 import assert from "node:assert/strict";
 import {randomUUID, createHash} from "node:crypto";
 import {createRefreshKlaviyoIdentityReader} from "../app/lib/refresh/quota-authority-binding.server.js";
@@ -183,6 +184,7 @@ export async function klaviyoSourceCaptureProbe(client, {store, quotaStore, exec
             const claim=(await client.query('select * from source.provider_claim_versions where id=$1',[receipt.manifest.ids['claim:c0']])).rows[0];
             assert.equal(claim.order_link_state,'unlinked');assert.equal(claim.shopify_order_version_id,null);assert.equal(claim.native_order_reference,'gid://shopify/Order/101');
           }
+          if (mode === "success") await verifiedMappingProbe(client,{args:lastArgs,cipher:input.cipher});
           if (mode !== "empty") {
             const m = (await client.query("select * from identity.product_identity_mappings where id=$1", [receipt.manifest.ids["mapping:m0"]])).rows[0];
             assert.equal(m.mapping_state, "unresolved"); assert.equal(m.shopify_product_id, null); assert.equal(m.source_rule_version_id, null);

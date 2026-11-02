@@ -4,6 +4,10 @@ on:
   pull_request:
     branches: [main, "codex/step15-storage-foundation-design"]
     paths:
+      - "app/lib/database/verified-mapping-store.server.js"
+      - "tools/eo05-verified-mapping-probe.mjs"
+      - "tests/verified-mapping-store.test.js"
+      - "tests/fixtures/verified-mapping-fixture.js"
       - "app/lib/shopify/product-identity-verification.server.js"
       - "app/lib/providers/google-source-candidates.server.js"
       - "app/lib/providers/meta-source-candidates.server.js"

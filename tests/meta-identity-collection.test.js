@@ -928,7 +928,8 @@ test("Meta source: one-use completed collector required; clones and uncaptured o
   assert.throws(() => prepareMetaIdentitySourceWrite({...h.options, observation: structuredClone(h.observation)}), /OBSERVATION_REQUIRED/);
   h.prepare(); assert.throws(h.prepare, /OBSERVATION_REQUIRED/);
   assert.throws(() => prepareMetaIdentitySourceWrite({...h.options, observation: {}}), /OBSERVATION_REQUIRED/);
-  const f = fixture(); assert.throws(() => prepareMetaIdentitySourceWrite({...h.options, observation: f}), /OBSERVATION_REQUIRED/);
+  const f = fixture(), uncaptured = await f.run();
+  assert.throws(() => prepareMetaIdentitySourceWrite({...h.options, observation: uncaptured}), /OBSERVATION_REQUIRED/);
 });
 test("Meta source: actual bounded catalog and before/after references decrypt; private extras and credentials excluded", async () => {
   const h = await metaSourceFixture(fixture, f => { f.native.products.data[0].email = "PRIVATE-EMAIL";

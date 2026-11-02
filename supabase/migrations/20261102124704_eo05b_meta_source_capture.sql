@@ -31,6 +31,8 @@ begin
  ctx:=operations.load_refresh_quota_context(w,g,'meta',o->>'accountId',p_read->>'jobId',(p_read->>'fence')::bigint,
   (p_read->'window'->>'from')::date,(p_read->'window'->>'to')::date,'meta',(p_read->>'observedAt')::timestamptz);
  if ctx is null or ctx is distinct from p_read->'quotaContext'
+ or not coalesce(isfinite((p_read->>'completedAt')::timestamptz) and isfinite((p_read->>'observedAt')::timestamptz)
+  and isfinite((p_read->>'permissionExpiresAt')::timestamptz) and isfinite((p_read->>'deadlineAt')::timestamptz),false)
  or (p_read->>'completedAt')::timestamptz<(p_read->>'observedAt')::timestamptz
  or (p_read->>'completedAt')::timestamptz>clock_timestamp()
  or (p_read->>'permissionExpiresAt')::timestamptz<=clock_timestamp()

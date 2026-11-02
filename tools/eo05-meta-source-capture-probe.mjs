@@ -60,6 +60,7 @@ export async function metaSourceCaptureProbe(client, {store, quotaStore, executi
           if (mode === "context") await client.query("update operations.refresh_quota_contexts set connection_epoch=connection_epoch+1 where workspace_id=$1 and provider='meta'", [workspaceId]);
           if (mode === "selection") await client.query("update integrations.reporting_account_bindings set effective_to=clock_timestamp() where connection_id=$1 and effective_to is null", [connection.id]);
           if (["expired", "permission_expired"].includes(mode)) {const read = JSON.parse(args[4]); read[mode === "expired" ? "deadlineAt" : "permissionExpiresAt"] = new Date(Date.now() - 1000).toISOString(); args = [...args.slice(0, 4), JSON.stringify(read)];}
+          if (mode === "permission_missing") {const read = JSON.parse(args[4]); read.permissionExpiresAt = null; args = [...args.slice(0, 4), JSON.stringify(read)];}
           await client.query("savepoint meta_source_rpc"); let result;
           try {result = await client.query(sql, args); await client.query("release savepoint meta_source_rpc");}
           catch (error) {sqlCode = error.code; await client.query("rollback to savepoint meta_source_rpc"); await client.query("release savepoint meta_source_rpc"); throw error;}
@@ -124,7 +125,7 @@ export async function metaSourceCaptureProbe(client, {store, quotaStore, executi
         const run = (await client.query("select status from operations.refresh_runs where workspace_id=$1 and provider='meta' and job_id=$2", [workspaceId, execution.claim.id])).rows[0]; assert.equal(run.status, "running");
       } finally {await client.query("rollback to savepoint meta_source_case"); await client.query("release savepoint meta_source_case");}
     }
-    for (const mode of ["success", "empty", "reuse", "new_version", "lost", "fence", "disconnect", "context", "selection", "expired", "permission_expired", "late_failure", "native_failure"]) await scenario(mode);
+    for (const mode of ["success", "empty", "reuse", "new_version", "lost", "fence", "disconnect", "context", "selection", "expired", "permission_expired", "permission_missing", "late_failure", "native_failure"]) await scenario(mode);
     for (const role of ["anon", "authenticated", "service_role", "adstable_runtime", "adstable_refresh_coordinator"])
       assert.equal((await client.query("select has_function_privilege($1,'evidence.commit_meta_identity_source(jsonb,uuid,integer,jsonb,jsonb)','EXECUTE') ok", [role])).rows[0].ok, false);
     console.log("EO05_META_SOURCE_CAPTURE_PASS real_SQL_quota_native_boundary_synthetic_HTTP=true encrypted_page_readback=true unresolved_not_verified=true durable_revision_supersedes=true stale_fence_context_selection_disconnect_expiry_denied=true late_failure_rollback=true lost_ack_explicit_readback=true no_runtime_grants=true no_checkpoint=true");

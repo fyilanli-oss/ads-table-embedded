@@ -1600,7 +1600,7 @@
       "supabase/migrations/20261102155324_eo05b_source_retention.sql": "eb22dc6eb0aab56bf6de7a58109ec12a8babcb67363e402acac8e23dd45f9f6e",
       "supabase/migrations/20261102175402_eo05b_product_verification_evidence.sql": "7c25ca75b8065ec050309ea6c34f2469dd0f0e48555969e556fe4c748dc0c576",
       "supabase/migrations/20261102185842_eo05b_verified_mapping_store.sql": "18872d0bc0466d0d9a9fdd9ed7c7c786cb19bd84d0d9ba0975469d0bffa1fa7c",
-      "supabase/migrations/20261102201443_eo05b_source_rule_review.sql": "00f2cddf17c6c43e9baccc6dd61ec185051bf89adde86bd169ee19936d8f0281",
+      "supabase/migrations/20261102201443_eo05b_source_rule_review.sql": "53a348f1535e759e0b3b3e64a6e15939ab7b3c28fd3cbfa09d7477d2795581dd",
       "tests/a6-docs-01-turkish-standardization.test.js": "367ffd43d113d2dae7d35d32fd712a859c72d4c27095ac395b23ae4ef2e2a51c",
       "tests/a6-tech-01-f01c-scoped-recovery.test.js": "3bd869071d5042402215176a99bf14dcebce6d3d0497ffcba946038050701792",
       "tests/eo-01c-preview-shell.test.js": "c3d67bb6666c19cf5ac12cfcd8a7f2f2acdf399d5a8ac32c0269823b06cbf789",

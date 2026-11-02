@@ -134,7 +134,7 @@ begin
  or (p->'page'->>'plainBytes')::bigint not between 1 and 65536
  or coalesce(p->>'projectionHash','') !~ '^[a-f0-9]{64}$'
  then raise exception 'SOURCE_RULE_PAGE_INVALID';end if;
- projection:=(s->'rule'-'id'-'retainUntil')||jsonb_build_object('applicability',(s->'rule'->'applicability')||jsonb_build_object('review',decision||jsonb_build_object('sourceMappingId',p->>'mappingId')));
+ projection:=((s->'rule')-'id'-'retainUntil')||jsonb_build_object('applicability',(s->'rule'->'applicability')||jsonb_build_object('review',decision||jsonb_build_object('sourceMappingId',p->>'mappingId')));
  policy:=jsonb_build_object('metadata',p->'policy','raw',p->'policy','identity',p->'policy','order',p->'policy','claim',p->'policy');
  bundle:=jsonb_build_object('sourceState','complete','policy',policy,'pages',jsonb_build_array(p->'page'),
  'references',jsonb_build_array(jsonb_build_object('key','review-ref','page','review','locatorKind','row','locator','/records/0','nativeType','ReviewedSourceRule','nativeId',null,'state','present','hash',p->>'projectionHash')),

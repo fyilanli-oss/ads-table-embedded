@@ -6,6 +6,7 @@ import {adminCostBudgetProbe} from "./eo05-admin-cost-budget-probe.mjs";
 import {merchantQuotaContextProbe} from "./eo05-merchant-quota-context-probe.mjs";
 import {identityAuthoritySnapshotProbe} from "./eo05-identity-authority-snapshot-probe.mjs";
 import {identityOAuthAtomicProbe} from "./eo05-identity-oauth-atomic-probe.mjs";
+import {metaSourceCaptureProbe} from "./eo05-meta-source-capture-probe.mjs";
 
 // Called while the real fenced worker is at request_intent, AFTER fresh billing proof.
 // All native data/provider tokens are synthetic. Each authority mutation rolls back to a savepoint.
@@ -15,6 +16,7 @@ export async function quotaAuthorityProbe(client,{store,quotaStore,execution,con
   await adminQuotaContextProbe(client,{store,execution,connection});
   await adminCostBudgetProbe(client);
   await merchantQuotaContextProbe(client,{store,execution,connection});
+  await metaSourceCaptureProbe(client,{store,quotaStore,execution});
   await identityAuthoritySnapshotProbe(client,{execution});
   await identityOAuthAtomicProbe(client,{execution});
   assert.equal(await store.loadQuotaContext({...input,entitlementReceipt:undefined}),null,"provider data needs fresh billing proof");

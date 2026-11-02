@@ -1,5 +1,21 @@
 import {createMetaAppSecretProof, META_GRAPH_VERSION} from "./meta-graph.server.js";
 import {validateIdentityOAuthGrantedScopes} from "../oauth/oauth-permission-profile.server.js";
+const sourcePages = new WeakMap();
+export function takeMetaCatalogSourcePages(observation) {
+  const pages = sourcePages.get(observation);
+  if (!pages) fail("META_SOURCE_OBSERVATION_REQUIRED");
+  sourcePages.delete(observation); return pages;
+}
+// Preserve absent/null/empty fields without unknown attributes or paging URLs.
+function sourceProduct(product) {
+  const row = {};
+  for (const name of META_CATALOG_IDENTITY_FIELDS) if (Object.hasOwn(product, name)) {
+    const value = product[name];
+    row[name] = ["product_catalog", "product_feed"].includes(name) && value !== null
+      ? {id: value.id} : structuredClone(value);
+  }
+  return row;
+}
 
 export const META_CATALOG_IDENTITY_FIELDS = Object.freeze([
   "id", "retailer_id", "retailer_product_group_id", "product_catalog", "product_feed",
@@ -47,7 +63,7 @@ function nextCursor(body) {
 
 // Native source only; declared grants alone never prove token freshness or an Ad/catalog link.
 export async function readMetaCatalogSourceSnapshot({catalogId, grantedScopes, accessToken, appSecret,
-  fetchFn = fetch, maxPages = 100, maxRows = 10000, signal} = {}) {
+  fetchFn = fetch, maxPages = 100, maxRows = 10000, signal, captureSource = false} = {}) {
   numeric(catalogId);
   validateIdentityOAuthGrantedScopes("meta", grantedScopes);
   const token = text(accessToken, "META_CATALOG_IDENTITY_TOKEN_REQUIRED");
@@ -55,7 +71,8 @@ export async function readMetaCatalogSourceSnapshot({catalogId, grantedScopes, a
   const proof = createMetaAppSecretProof({accessToken: token, appSecret});
   if (typeof fetchFn !== "function" || !Number.isSafeInteger(maxPages) || maxPages < 1 || maxPages > 1000
     || !Number.isSafeInteger(maxRows) || maxRows < 1 || maxRows > 100000) fail("META_CATALOG_IDENTITY_LIMIT_INVALID");
-  const records = [], keys = new Set(), cursors = new Set();
+  if (typeof captureSource !== "boolean") fail("META_CATALOG_IDENTITY_LIMIT_INVALID");
+  const records = [], keys = new Set(), cursors = new Set(), captured = [];
   let pages = 0, after = null;
   for (;;) {
     if (signal?.aborted) fail("META_CATALOG_IDENTITY_ABORTED");
@@ -92,14 +109,19 @@ export async function readMetaCatalogSourceSnapshot({catalogId, grantedScopes, a
       records.push({key, catalog_product_id: id, retailer_id: retailerId,
         product_context: productContext, source_record: structuredClone(product)});
     }
-    after = nextCursor(body);
+    const next = nextCursor(body);
+    if (captureSource) captured.push({family: "meta_catalog_products", payload: {records: body.data.map(sourceProduct),
+      pagination: {page: pages, hasNext: next !== null}}});
+    after = next;
     if (after === null) break;
     if (cursors.has(after)) fail("META_CATALOG_IDENTITY_CURSOR_REPEATED");
     cursors.add(after);
   }
-  return freeze({version: "1.0.0", context: {catalog_id: catalogId, graph_version: META_GRAPH_VERSION},
+  const result = freeze({version: "1.0.0", context: {catalog_id: catalogId, graph_version: META_GRAPH_VERSION},
     complete: true, pages, records, shopify_mapping_state: "not_resolved",
     provider_link_verified: false, authorizes_activation: false, canonical_scope_ready: false, persistable: false});
+  if (captureSource) sourcePages.set(result, freeze(captured));
+  return result;
 }
 
 // Existing canonical reader retains its PK/grant gate and output contract.

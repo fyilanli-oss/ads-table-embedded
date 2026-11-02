@@ -736,6 +736,15 @@
       "repository_sql_sha256": "cb25df481354c31716732fd7da093240a0f50936f294b5280493e7441435cd05",
       "applied": false,
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261102124704",
+      "name": "eo05b_meta_source_capture",
+      "file": "supabase/migrations/20261102124704_eo05b_meta_source_capture.sql",
+      "created_with": "supabase@2.122.0 migration new eo05b_meta_source_capture",
+      "repository_sql_sha256": "b06648701c06986f5c483e4056987b2bd3a20bff9c5a403b47fd47a2ea93db37",
+      "applied": false,
+      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [

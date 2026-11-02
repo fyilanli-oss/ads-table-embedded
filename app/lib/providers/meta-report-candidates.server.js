@@ -6,6 +6,15 @@ import {exactIdentityContext} from "./catalog-shopify-candidate.server.js";
 // Neither SDK field availability nor a matching string proves the report namespace.
 const REVIEWED_REPORT_RULES = Object.freeze([]), loaders = new WeakSet();
 const REPORT = Object.freeze({source_family: "ad_product_breakdown_daily_insights", graph_version: META_GRAPH_VERSION});
+const sourcePages = new WeakMap();
+export function takeMetaReportSourcePages(observation) {
+  const pages = sourcePages.get(observation);
+  if (!pages) fail("META_REPORT_SOURCE_OBSERVATION_REQUIRED");
+  sourcePages.delete(observation); return pages;
+}
+const SOURCE_FIELDS = ["account_id", "campaign_id", "adset_id", "ad_id", "date_start", "date_stop", "product_id",
+  "impressions", "clicks", "spend", "converted_product_quantity", "converted_product_value",
+  "converted_promoted_product_quantity", "converted_promoted_product_value"];
 export class MetaReportCandidateError extends Error {
   constructor(code) {super(code); this.name = "MetaReportCandidateError"; this.code = code;}
 }
@@ -46,8 +55,9 @@ export function createMetaReportIdentityRuleLoader({rules = REVIEWED_REPORT_RULE
 // Reuse the existing complete product query unchanged, including all four converted fields.
 // Transport/authority/time/quota controls are supplied by the concrete collector's bound fetch.
 export async function readMetaIdentityProductReport({adAccountId, dateWindow, accessToken, appSecret, fetchFn,
-  signal, maxPages = 100, maxRows = 10000} = {}) {
+  signal, maxPages = 100, maxRows = 10000, captureSource = false} = {}) {
   const window = metaIdentityReportWindow(dateWindow);
+  if (typeof captureSource !== "boolean") fail("META_REPORT_CANDIDATE_INPUT_INVALID");
   if (!Number.isSafeInteger(maxPages) || maxPages < 1 || maxPages > 1000 || !Number.isSafeInteger(maxRows)
     || maxRows < 1 || maxRows > 100000 || typeof fetchFn !== "function"
     || typeof adAccountId !== "string" || !/^act_[1-9][0-9]{0,29}$/.test(adAccountId)) fail("META_REPORT_CANDIDATE_INPUT_INVALID");
@@ -59,7 +69,7 @@ export async function readMetaIdentityProductReport({adAccountId, dateWindow, ac
       return body;
     }};
   };
-  const rows = [], pageEvidence = [], seen = new Set(), keys = new Set(); let after = null, pages = 0;
+  const rows = [], pageEvidence = [], seen = new Set(), keys = new Set(), captured = []; let after = null, pages = 0;
   for (;;) {
     if (signal?.aborted) fail("META_REPORT_CANDIDATE_ABORTED");
     if (pages >= maxPages) fail("META_REPORT_CANDIDATE_PAGE_LIMIT");
@@ -76,14 +86,20 @@ export async function readMetaIdentityProductReport({adAccountId, dateWindow, ac
       if (keys.has(k)) fail("META_REPORT_CANDIDATE_DUPLICATE_ROW"); keys.add(k);
       if (rows.length >= maxRows) fail("META_REPORT_CANDIDATE_ROW_LIMIT"); rows.push(r);
     }
+    if (captureSource) captured.push({family: "meta_product_report", payload: {
+      records: page.rows.map(row => Object.fromEntries(SOURCE_FIELDS.filter(k => Object.hasOwn(row, k)).map(k => [k, structuredClone(row[k])]))),
+      pagination: {page: pages, hasNext: page.next_cursor !== null}, dateWindow: window, context: REPORT,
+      productIdLimit: META_PRODUCT_BREAKDOWN_ID_LIMIT, exhaustiveProductCoverageProven: false}});
     if (page.next_cursor === null) break;
     if (seen.has(page.next_cursor)) fail("META_REPORT_CANDIDATE_CURSOR_REPEATED");
     seen.add(page.next_cursor); after = page.next_cursor;
   }
   if (signal?.aborted) fail("META_REPORT_CANDIDATE_ABORTED");
-  return freeze({rows, pages, page_evidence: pageEvidence, date_window: window, report_context: REPORT, pagination_complete: true,
+  const result = freeze({rows, pages, page_evidence: pageEvidence, date_window: window, report_context: REPORT, pagination_complete: true,
     product_id_limit: META_PRODUCT_BREAKDOWN_ID_LIMIT, exhaustive_product_coverage_proven: false,
     metrics_interpreted: false, publishable: false});
+  if (captureSource) sourcePages.set(result, freeze(captured));
+  return result;
 }
 
 // Internal candidate references only; caller data is never installation or mapping authority.

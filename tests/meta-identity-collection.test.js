@@ -2,6 +2,10 @@ import {providerClaimPrewriteCases} from "./helpers/provider-claim-prewrite-case
 import {reviewRefreshReferencePrewrite} from "../app/lib/providers/reference-prewrite.server.js";
 import test,{after} from "node:test";
 import assert from "node:assert/strict";
+import {randomUUID} from "node:crypto";
+import {sourceStoreFixture} from "./fixtures/source-store-fixture.js";
+import {prepareMetaIdentitySourceWrite} from "../app/lib/providers/meta-source-write.server.js";
+import {createSourceEvidenceRepository, sourcePayloadHash} from "../app/lib/database/source-evidence-store.server.js";
 import {collectMetaNativeIdentityEvidence, collectMetaVerifiedProductCandidateEvidence, collectMetaReportProductCandidateEvidence} from "../app/lib/providers/meta-identity-collection.server.js";
 import {createMetaCandidateSourceRuleLoader, verifyMetaCatalogSourceCandidates} from "../app/lib/providers/meta-source-candidates.server.js";
 import {createMetaReportIdentityRuleLoader} from "../app/lib/providers/meta-report-candidates.server.js";
@@ -908,3 +912,95 @@ providerClaimPrewriteCases({provider:"meta",fixture:candidateBoundFixture,expect
 
 import {integratedPrewriteCases} from "./helpers/integrated-prewrite-cases.js";
 integratedPrewriteCases({provider:"meta",fixture:candidateBoundFixture,expected:candidatePrewriteOwner});
+
+async function metaSourceFixture(make = fixture, change = () => {}) {
+  const f = make(), {input} = sourceStoreFixture(); f.options.captureSource = true; change(f);
+  const observation = await f.run(), options = {observation, attemptId: randomUUID(), cipher: input.cipher, policy: input.policy,
+    limits: {maxRows: 1000, maxBytes: 1000000}, now: f.options.now().toISOString()};
+  return {f, observation, options, prepare: () => prepareMetaIdentitySourceWrite(options)};
+}
+function openMetaPages(h, write) {
+  return write.body.pages.map(page => ({family: page.family,
+    payload: h.options.cipher.open({owner: write.owner, attemptId: write.attemptId, ordinal: 0, page})}));
+}
+test("Meta source: one-use completed collector required; clones and uncaptured observations are not native evidence", async () => {
+  const h = await metaSourceFixture();
+  assert.throws(() => prepareMetaIdentitySourceWrite({...h.options, observation: structuredClone(h.observation)}), /OBSERVATION_REQUIRED/);
+  h.prepare(); assert.throws(h.prepare, /OBSERVATION_REQUIRED/);
+  assert.throws(() => prepareMetaIdentitySourceWrite({...h.options, observation: {}}), /OBSERVATION_REQUIRED/);
+  const f = fixture(); assert.throws(() => prepareMetaIdentitySourceWrite({...h.options, observation: f}), /OBSERVATION_REQUIRED/);
+});
+test("Meta source: actual bounded catalog and before/after references decrypt; private extras and credentials excluded", async () => {
+  const h = await metaSourceFixture(fixture, f => { f.native.products.data[0].email = "PRIVATE-EMAIL";
+    f.native.products.data[0].product_catalog.name = "PRIVATE-NAME"; f.native.products.paging = {cursors: {before: "PRIVATE-CURSOR"}}; });
+  const {write} = h.prepare(), opened = openMetaPages(h, write);
+  assert.equal(write.body.pages.length, 4); assert.equal(write.body.mappings.length, 1); assert.equal(write.body.rules.length, 0);
+  assert.doesNotMatch(JSON.stringify(opened), /PRIVATE-|secret-access|secret-app|appsecret_proof|input_token/);
+  const product = opened.find(p => p.family === "meta_catalog_products").payload.records[0];
+  assert.equal(product.id, "900"); assert.equal(product.retailer_id, "shopify_US_10_20");
+  const ref = write.body.references.find(r => r.nativeType === "MetaCatalogProduct"); assert.equal(ref.hash, sourcePayloadHash(product));
+  assert.equal(write.body.mappings[0].state, "unresolved"); assert.equal(write.body.mappings[0].productId, null);
+  assert.equal(write.body.links.filter(l => l.role === "relationship").length, 3);
+});
+test("Meta source: native IDs remain text beyond bigint and never parse retailer/group IDs as accepted Shopify IDs", async () => {
+  const nativeId = "123456789012345678901234567890";
+  const h = await metaSourceFixture(fixture, f => {f.native.products.data[0].id = nativeId; f.native.products.data[0].retailer_product_group_id = "shopify_US_10_20";});
+  const m = h.prepare().write.body.mappings[0]; assert.equal(m.nativeId, nativeId); assert.equal(m.productId, null);
+  assert.equal(m.context.identity_namespace, "catalog_product_id"); assert.equal(m.applicability.retailerGroupId, "shopify_US_10_20");
+});
+test("Meta source: missing/null feed and missing/null/empty group remain distinguishable", async () => {
+  for (const state of ["missing", "null", "observed"]) {
+    const h = await metaSourceFixture(fixture, f => {const row = f.native.products.data[0];
+      if (state === "missing") delete row.product_feed; if (state === "null") row.product_feed = null;
+      if (state === "null") row.retailer_product_group_id = null; if (state === "observed") row.retailer_product_group_id = "";});
+    const m = h.prepare().write.body.mappings[0]; assert.equal(m.context.product_feed_state, state);
+    assert.equal(m.applicability.groupState, state === "observed" ? "empty" : state);
+  }
+});
+test("Meta source: empty and intermediate catalog pages retained without fabricated products", async () => {
+  const empty = await metaSourceFixture(fixture, f => {f.native.products.data = [];});
+  assert.equal(empty.prepare().write.body.mappings.length, 0);
+  const paged = await metaSourceFixture(fixture, f => {f.hooks.fetch = p => p.pathname.endsWith("/products") && !p.searchParams.has("after")
+    && response({data: [], paging: {cursors: {after: "next"}, next: "https://private.invalid/?access_token=PRIVATE"}});});
+  const {write} = paged.prepare(); assert.equal(write.body.pages.length, 5); assert.equal(write.body.mappings.length, 1);
+  assert.doesNotMatch(JSON.stringify(openMetaPages(paged, write)), /PRIVATE|private.invalid|access_token/);
+});
+test("Meta source: successful Shopify candidate is evidence only; generic acceptance guard stays closed", async () => {
+  const h = await metaSourceFixture(candidateFixture), {write} = h.prepare();
+  assert.equal(write.body.mappings[0].state, "unresolved"); assert.equal(write.body.mappings[0].productId, null);
+  const check = openMetaPages(h, write).find(p => p.family === "meta_candidate_checks").payload.records[0];
+  assert.equal(check.candidate.productId, "gid://shopify/Product/10"); assert.equal(write.body.rules.length, 0);
+});
+test("Meta source: existing report fields, arrays and exact strings retained without namespace inference or order claims", async () => {
+  const h = await metaSourceFixture(reportFixture, f => {delete f.options.reportIdentityRules; f.native.insights.data[0].email = "PRIVATE-EMAIL";});
+  const {write} = h.prepare(), opened = openMetaPages(h, write), report = opened.find(p => p.family === "meta_product_report").payload;
+  assert.equal(report.records[0].spend, "7.89"); assert.deepEqual(report.records[0].converted_product_quantity, [{action_type: "purchase", value: "4"}]);
+  assert.ok(Object.hasOwn(report.records[0], "converted_promoted_product_value")); assert.equal(report.exhaustiveProductCoverageProven, false);
+  assert.equal(opened.find(p => p.family === "meta_report_identity_checks").payload.records[0].identityNamespace, null);
+  assert.equal(write.body.claims.length, 0); assert.equal(write.body.orders.length, 0); assert.equal(write.body.mappings[0].state, "unresolved");
+  assert.doesNotMatch(JSON.stringify(opened), /PRIVATE-EMAIL/); assert.equal(write.body.references.filter(r => r.nativeType === "MetaProductReportRow").length, 1);
+});
+test("Meta source: explicit byte/row limits reject the whole package without truncation", async () => {
+  const h = await metaSourceFixture(); assert.throws(() => prepareMetaIdentitySourceWrite({...h.options, limits: {maxRows: 1000, maxBytes: 1000}}), /BOUNDS/);
+});
+test("Meta source: failed page or changed final relationship cannot yield a completed source capability", async () => {
+  for (const final of [false, true]) {const f = fixture(); f.options.captureSource = true; f.hooks.fetch = (p, init, n) => {
+    if (!final && p.pathname.endsWith("/products")) return response({error: {message: "PRIVATE"}}, 500);
+    if (final && n > 6 && p.pathname.endsWith("/99")) return response({...f.native["99"], product_set_id: "89"});};
+    await assert.rejects(f.run(), e => !/PRIVATE/.test(e.message));}
+});
+test("Meta source: bound write unknown makes one SQL attempt and cannot replay native reads or finish the job", async () => {
+  const f = boundFixture(), {input} = sourceStoreFixture(); f.config.sourceStorage = {cipher: input.cipher, policy: input.policy, limits: {maxRows: 1000, maxBytes: 1000000}};
+  const reader = f.create(); await assert.rejects(reader.readEvidence(), /WRITE_UNCONFIRMED/);
+  assert.equal(f.calls.length, 10); assert.equal(f.queries.filter(q => q.sql.includes("commit_meta_identity_source")).length, 1);
+  assert.ok(f.queries.every(q => !/stop_refresh|finish_refresh/.test(q.sql))); await assert.rejects(reader.readEvidence(), /EXECUTION_USED/); assert.equal(f.calls.length, 10);
+});
+test("Meta source: missing read binding cannot use generic SQL or consume a prepared package", async () => {
+  const h = await metaSourceFixture(), {write} = h.prepare(); let calls = 0;
+  const repo = createSourceEvidenceRepository({query: async () => {calls++; throw Error("synthetic");}});
+  await assert.rejects(repo.commitMetaIdentity(write), /READ_BINDING_INVALID/); await assert.rejects(repo.commitMetaIdentity(write, null), /READ_BINDING_INVALID/); assert.equal(calls, 0);
+  await assert.rejects(repo.commitMetaIdentity(write, {jobId: "job", fence: "1", window: {from: "2026-10-01", to: "2026-10-01"}, observedAt: h.options.now,
+    target: {adId: "66", adSetId: "77", campaignId: "55", catalogId: "456"}, quotaContext: {}, completedAt: h.options.now,
+    deadlineAt: new Date(Date.parse(h.options.now) + 120000).toISOString(), permissionExpiresAt: new Date(Date.parse(h.options.now) + 3600000).toISOString()}), /WRITE_UNCONFIRMED/);
+  assert.equal(calls, 1);
+});

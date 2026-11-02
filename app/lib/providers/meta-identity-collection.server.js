@@ -1,12 +1,18 @@
 import {createIdentityRuntimeAuthorityLoader} from "./identity-runtime-authority.server.js";
 import {inspectMetaAccessToken, META_GRAPH_VERSION} from "./meta-graph.server.js";
 import {readMetaAdCatalogSourceReference} from "./meta-adset-catalog-reference.server.js";
-import {readMetaCatalogSourceSnapshot} from "./meta-catalog-identity-reader.server.js";
+import {readMetaCatalogSourceSnapshot, takeMetaCatalogSourcePages} from "./meta-catalog-identity-reader.server.js";
 import {quotaBoundaryControl} from "../refresh/quota-native-fetch.server.js";
 import {createMetaCandidateSourceRuleLoader, verifyMetaCatalogSourceCandidates} from "./meta-source-candidates.server.js";
 import {runIdentityReadDeadline} from "./identity-read-deadline.server.js";
 import {createMetaReportIdentityRuleLoader, readMetaIdentityProductReport, attachMetaReportCandidateReferences,
-  metaIdentityReportWindow} from "./meta-report-candidates.server.js";
+  metaIdentityReportWindow, takeMetaReportSourcePages} from "./meta-report-candidates.server.js";
+const sourceCaptures = new WeakMap();
+export function takeMetaIdentitySourceCapture(observation) {
+  const capture = sourceCaptures.get(observation);
+  if (!capture) fail("META_SOURCE_OBSERVATION_REQUIRED");
+  sourceCaptures.delete(observation); return capture;
+}
 
 export class MetaIdentityCollectionError extends Error {
   constructor(code) {super(code); this.name = "MetaIdentityCollectionError"; this.code = code;}
@@ -22,12 +28,12 @@ function nodeId(value) {return typeof value === "string" && /^[1-9][0-9]{0,29}$/
 // Prepared server collection only; no browser-supplied authority or loadCurrent override.
 async function collectMetaIdentitySource({verified, database, tokenVault, adId, adSetId, campaignId, catalogId,
   config, fetchFn = fetch, now = () => new Date(), signal, maxPages = 100, maxRows = 10000, maxElapsedMs = 120000,
-  sourceRules, withShopify, withReport, dateWindow, reportIdentityRules, maxReportPages = 100, maxReportRows = 10000} = {}) {
+  sourceRules, withShopify, withReport, dateWindow, reportIdentityRules, maxReportPages = 100, maxReportRows = 10000, captureSource = false} = {}) {
   if (![adId, adSetId, campaignId, catalogId].every(nodeId) || config?.graphVersion !== META_GRAPH_VERSION
     || !nodeId(config?.appId) || typeof config?.appSecret !== "string" || !config.appSecret || config.appSecret.length > 512
     || typeof fetchFn !== "function" || typeof now !== "function" || ![maxPages, maxRows, maxElapsedMs].every(Number.isSafeInteger)
     || maxPages < 1 || maxPages > 1000 || maxRows < 1 || maxRows > 100000
-    || maxElapsedMs < 1 || maxElapsedMs > 600000) fail("META_IDENTITY_COLLECTION_INPUT_INVALID");
+    || maxElapsedMs < 1 || maxElapsedMs > 600000 || typeof captureSource !== "boolean") fail("META_IDENTITY_COLLECTION_INPUT_INVALID");
   config = Object.freeze({appId: config.appId, appSecret: config.appSecret, graphVersion: config.graphVersion});
   const loader = createIdentityRuntimeAuthorityLoader({verified, database, tokenVault, provider: "meta", now, signal});
   const rules = withShopify ? createMetaCandidateSourceRuleLoader({rules: sourceRules}) : null;
@@ -70,7 +76,7 @@ async function collectMetaIdentitySource({verified, database, tokenVault, adId, 
     const before = await readMetaAdCatalogSourceReference(target);
     if (before.state !== "confirmed") fail("META_IDENTITY_CATALOG_REFERENCE_NOT_CONFIRMED");
     await recheck();
-    const source = await readMetaCatalogSourceSnapshot({...target, maxPages, maxRows});
+    const source = await readMetaCatalogSourceSnapshot({...target, maxPages, maxRows, captureSource});
     await recheck();
     let productCandidates = null;
     if (withShopify) {
@@ -93,7 +99,7 @@ async function collectMetaIdentitySource({verified, database, tokenVault, adId, 
     if (withReport) {
       report = await readMetaIdentityProductReport({adAccountId: current.account.id, dateWindow: reportWindow,
         accessToken: current.tokenSet.access_token, appSecret: config.appSecret, fetchFn: boundFetch,
-        signal, maxPages: maxReportPages, maxRows: maxReportRows});
+        signal, maxPages: maxReportPages, maxRows: maxReportRows, captureSource});
       await recheck();
       reportLinks = attachMetaReportCandidateReferences({report, source, productCandidates,
         ownerScope: {workspace_id: current.installation.workspaceId, installation_generation: current.installation.installGeneration,
@@ -103,7 +109,7 @@ async function collectMetaIdentitySource({verified, database, tokenVault, adId, 
     const after = await readMetaAdCatalogSourceReference(target);
     if (after.state !== "confirmed" || JSON.stringify(before.evidence) !== JSON.stringify(after.evidence)) fail("META_IDENTITY_CATALOG_REFERENCE_CHANGED");
     await recheck();
-    return freeze({provider: "meta", source: withReport ? "native_Ad_catalog_Shopify_candidate_and_product_report_collection"
+    const result = freeze({provider: "meta", source: withReport ? "native_Ad_catalog_Shopify_candidate_and_product_report_collection"
       : withShopify ? "native_Ad_catalog_and_Shopify_candidate_collection" : "native_token_Ad_catalog_and_product_collection",
       account_id: current.account.id, connection_id: current.connectionId, connection_version: current.connectionVersion,
       installation: current.installation, shop: current.shop, native_source: source,
@@ -116,6 +122,17 @@ async function collectMetaIdentitySource({verified, database, tokenVault, adId, 
       remaining: ["canonical_authority_scope_to_source_binding", "real_Meta_Insights_identity_namespace_evidence_and_reviewed_rule_registration",
         "real_retailer_source_format_evidence_and_reviewed_rule_registration",
         ...(withShopify ? [] : ["Shopify_candidate_verification_composition"]), "quota_dispatch_and_prewrite_controls"]});
+    if (captureSource) sourceCaptures.set(result, freeze({owner: {
+      workspaceId: current.installation.workspaceId, installationId: current.installation_id,
+      generation: String(current.installation.installGeneration), shopId: current.shop.shopId, shopDomain: current.shop.myshopifyDomain,
+      provider: "meta", connectionId: current.connectionId, connectionVersion: String(current.connectionVersion),
+      accountId: current.account.id, selectionEpoch: current.reporting_selection_epoch, credentialId: current.credentialId},
+      target: {adId, adSetId, campaignId, catalogId}, completedAt: result.link_evidence.completed_at, permissionExpiresAt: permission.expiresAt,
+      pages: [{family: "meta_permission_check", payload: {records: [{scopes: permission.scopes, expiresAt: permission.expiresAt, verifiedAt: permission.verifiedAt}]}},
+        {family: "meta_catalog_reference", payload: {phase: "before", records: [before.evidence]}},
+        ...takeMetaCatalogSourcePages(source), ...(withReport ? takeMetaReportSourcePages(report) : []),
+        {family: "meta_catalog_reference", payload: {phase: "after", records: [after.evidence]}}]}));
+    return result;
   } catch (error) {
     if (nativeQuotaControl !== null) throw nativeQuotaControl;
     if (quotaBoundaryControl(error)) throw error;

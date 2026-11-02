@@ -12,16 +12,16 @@ function exactlyOneRow(result, operation) {
   return result.rows[0];
 }
 
-export function createPrivacyLifecycleRepository(database) {
+export function createPrivacyLifecycleRepository(database, {customerSourceScope = false} = {}) {
   const query = requiredQuery(database);
 
   return Object.freeze({
     async claimWebhook(claim) {
       const row = exactlyOneRow(
         await query(
-          `select * from privacy.claim_shopify_webhook(
+          `select * from privacy.${customerSourceScope && claim.sourceRequestScope ? "claim_shopify_customer_webhook" : "claim_shopify_webhook"}(
             $1::text, $2::text, $3::text, $4::text, $5::text,
-            $6::bytea, $7::text, $8::text, $9::timestamptz, $10::timestamptz
+            $6::bytea, $7::text, $8::text, $9::timestamptz, $10::timestamptz${customerSourceScope && claim.sourceRequestScope ? ", $11::jsonb" : ""}
           )`,
           [
             claim.webhookId,
@@ -34,6 +34,7 @@ export function createPrivacyLifecycleRepository(database) {
             claim.apiVersion,
             claim.triggeredAt,
             claim.receivedAt,
+            ...customerSourceScope && claim.sourceRequestScope ? [JSON.stringify(claim.sourceRequestScope)] : [],
           ],
         ),
         "PRIVACY_WEBHOOK_CLAIM",

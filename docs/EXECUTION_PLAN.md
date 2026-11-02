@@ -1,3 +1,36 @@
+## 2 Kasım — mevcut15: müşteri bazlı kaynak verisi
+
+300 main’dedir. Owner, mevcut silme motoru içinde müşteri talebinin ilgili sipariş,
+olay ve kanıtlara bağlanması; diğer müşterilerin korunması; kod/SQL/test/PR
+hazırlığını onayladı. Yeni tablo yok; mevcut webhook claim/run/manifest genişler.
+
+Doğrulanmış Shopify orders_requested/orders_to_redact listesi yalnız explicit iç
+bileşimde saklanır. Eksik liste boş liste değildir. Kişi/profil/contact eklenmez.
+Owner-only bounded snapshot gerçek kurulum/nesil ve şifreli sayfaları doğrular.
+Tam Order ID, native sipariş referansı ve gerçek kanıt bağlantıları kullanılır.
+Bilinmeyen ilişki, gerekli kanıt kaybı, desteklenmeyen alan veya farklı müşteriler
+arasında ortak kanıt varsa hiçbir şey silinmeden durulur.
+
+Karma sayfada yalnız ilgili satırlar null olur; diğer satırların locator/hash/tutarı
+korunur. Sayfa yeniden şifrelenir; ilgili yapılandırılmış kayıt ve referanslar
+aynı CAS transaction’da silinir. Etkilenen paket eski tam makbuz gibi görünmemesi
+için invalidated olur. Exact silinmiş sipariş aynı nesilde yeniden yazılamaz.
+Tüm-kurulum silmesi mevcut motorla kalır.
+
+Veri talebi yalnız ilgili kayıtları özel bir artifact olarak hazırlar; teslim
+makbuzu olmadan tamamlanmaz. Yeni ekran, e-posta, paylaşım veya export route yoktur.
+Gerçek teslim kanalı/makbuz otoritesi ve yedekten dönüşte silme defteri uygulaması
+canlı kabul koşuludur. Kayıp write yanıtı otomatik replay değildir.
+
+Default ingress/queue değişmez; yeni bileşim ve owner-only fonksiyonlar anahtar,
+grants ve canlı aktivasyon yetkisi vermez. Scope’suz eski talepler güvenli biçimde
+açık kalır.15 hâlâ açık; süreli structured temizlik, handoff, native eşleme kabulü,
+kapasite/anahtar/aktivasyon ve gerçek veri kabulü ayrı kalan işlerdir.22 paused;
+genel Dataset/FX23 ve Overlap sınırları korunur. Merge ayrıca onay ister.
+
+Resmî Shopify gizlilik webhook’ları, Supabase changelog/functions ve PostgreSQL17
+locking belgeleri2 Kasım2026 kontrol edildi; adresler makine kaydındadır.
+
 ## 2 Kasım — mevcut15: Klaviyo kaynak/kanıt bağlantısı
 
 299 main’e alındı. Owner Klaviyo incelemesi sonrası mevcut okuyucuların güvenli

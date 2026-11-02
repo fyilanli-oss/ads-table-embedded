@@ -1,3 +1,4 @@
+import {prepareCustomerSourceRun,completeCustomerSourceRun} from "../database/customer-source-privacy.server.js";
 import {randomUUID} from "node:crypto";
 import {
   createPrivacyLifecycleRepository,
@@ -15,8 +16,8 @@ function verifiedShop(value) {
   };
 }
 
-export function createPrivacyLifecycleRuntime({database, repository} = {}) {
-  const persistence = repository ?? createPrivacyLifecycleRepository(database);
+export function createPrivacyLifecycleRuntime({database, repository, sourcePrivacy = null} = {}) {
+  const persistence = repository ?? createPrivacyLifecycleRepository(database, {customerSourceScope: sourcePrivacy !== null});
 
   return Object.freeze({
     async claimVerifiedWebhook(claim) {
@@ -48,6 +49,14 @@ export function createPrivacyLifecycleRuntime({database, repository} = {}) {
       });
     },
 
+    prepareCustomerSourceRun(runId) {
+      if (sourcePrivacy === null) throw Error("SOURCE_PRIVACY_NOT_CONFIGURED");
+      return prepareCustomerSourceRun({database,cipher:sourcePrivacy.cipher,runId});
+    },
+    completeCustomerSourceRun(preparedRun,disclosureReceipt=null) {
+      if (sourcePrivacy === null) throw Error("SOURCE_PRIVACY_NOT_CONFIGURED");
+      return completeCustomerSourceRun({database,preparedRun,disclosureReceipt});
+    },
     executeDeletionRun(deletionRunId) {
       if (
         typeof deletionRunId !== "string"

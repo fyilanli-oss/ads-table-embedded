@@ -1,3 +1,48 @@
+## 2 Kasım — 15 ve 23: kaynak kaydı ile rapora teslimin sınırı
+
+Ürün sahibi salt okunur incelemenin sonucunu kabul etti ve yalnız mevcut plan/
+sözleşme kaydı ile PR hazırlığını onayladı: “Doğru olan bu onayliyorum”. İncelenen
+main: fedcf8003f81055f91d8404c7aa9061d67ca1c4e. Bu kayıt önceki tarihsel handoff açıklamalarını
+netleştirir; mevcut iş sırasını değiştirmez. Bağlayıcı makine karşılığı:
+contracts/a6-eo-implementation-master-v1.json#Step15_Step23_delivery_boundary_2026_11_02.
+
+| Sorumlu madde | Görev | Tamamlanma kanıtı |
+|---|---|---|
+| 15 — kaynak/kanıt katmanı | Kaynağı doğru mağaza/kurulum kapsamında saklamak, tekrar okuyabilmek ve teslim beklerken korumak. | Kaynak kayıt makbuzu yalnız bu saklamayı doğrular. |
+| 23 — genel Dataset/FX yazıcısı | Veriyi rapor tablolarına kalıcı yazmak; rapor kaydı, checkpoint ve gerçek teslim makbuzu bağlantısını kurmak. | Gerçek alıcının kalıcı kaydı yetkili deposundan doğrulanır. |
+
+Örnek: Google kaynak paketi kaydedildiğinde rapor tablosuna aktarılmış sayılmaz.
+Kaynak commitId/manifest hash’i veya sourceStored=true, rapor teslim makbuzu değildir.
+ready_for_dataset/awaiting_dataset yalnız bellekte hazırlıktır; rezervasyon korunur.
+Uygulamada consumed yazan bir işlev bulunmuyor. Testte elle verilen consumed ve hash
+sentetik fixture’dır; gerçek teslim yetkisi veya native kanıt değildir.
+
+23’te alıcı yapılırken makbuzun exact mağaza/kurulum nesli, kaynak paket/commit/
+manifest, alıcı işlem/sürüm ve kapsadığı veriye bağlılığı doğrulanacak. Başka paketin
+veya eski sürümün makbuzu kabul edilmeyecek. Kalıcı rapor kaydı ve kaynak tarafındaki
+teyit arasındaki kesinti/tekrar güvenliği birlikte sınanacak. Kısmi/başarısız veya
+geçersiz kaynak makbuzla tam kaynağa dönüşemez; checkpoint/iş bitişi ve kapasite
+serbest bırakma kendi kalıcı teslim koşullarından önce ilerlemeyecek.
+
+Gerçek makbuz doğrulanana kadar kaynak pending kalır; rutin süre sonu temizliği
+bu korumayı aşamaz. Makbuz bulunsa da sınıf süreleri, diğer tüketiciler, kanıt
+bağımlılıkları ve temizlik makbuzu şartları ayrıca gerekir. Yanıt kaybında otomatik
+tekrar yoktur; açık, ilgili kayda bağlı salt okunur uzlaştırma gerekir. Makbuz yokluğu rollback
+kanıtı değildir. Onaylanmış gizlilik silmesi önceliklidir. Pending koruması canlıda
+sınırsız biriktirme politikası değildir; süre/kapasite kapıları ayrıca açıktır.
+
+15 açık kalır: kaynak tarafı korumaları 15’te hazırlanabilir; uçtan uca teslim kabulü
+23’te gerçek alıcıya bağlıdır. Bu bağımlılık diğer 15 işlerini 23’e taşımaz. Native
+kimlik/eşleme ve gerçek veri kabulü, canlı sonlu saklama politikaları/kapasite/
+anahtar/yetki/aktivasyon ile müşteri teslim kanalı ve silme defteri saklama/restore
+kabulü ayrıca açıktır. Müşteri veri talebinin teslim makbuzu, rapor tesliminden ayrı
+gizlilik işidir. 22 duraklatılmıştır; Overlap ve ek Shopify ziyaret/iade sorguları ertelenmiştir.
+
+Bu paket yalnız belge/sözleşme kaydıdır; yeni kod, test uygulaması, SQL/migration,
+makbuz üreticisi veya canlı işlem hazırlamaz. Birleştirme ayrı açık onay ister.
+Resmî GitHub PR, Supabase database functions ve PostgreSQL17 constraints kaynakları
+2 Kasım 2026 kontrol edildi; adresler makine kaydındadır.
+
 ## 2 Kasım — mevcut15: bağımlılıkları koruyan süreli temizlik
 
 301 main’dedir. Owner; süresi dolan kayıtların, hâlâ gereken kanıt ve teslim

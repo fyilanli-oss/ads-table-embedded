@@ -1,3 +1,40 @@
+## 3 Kasım — Google paket1/3: çalıştırıcı bağlantısı
+
+Ürün sahibi Google gerçek kabulünü başarılı isteğin0 kayıt döndürmesi olarak
+sabitledi: gerçek hesaplar boş. Üç ana paket vardır, ayrı alt paket yoktur:
+1) çalıştırıcı bağlantısı,2) kontrollü canlı ayarlar,3) gerçek boş hesap kabulü.
+Her paketin iç işleri başlamadan açıklanır; yeni paket/kapsam genişlemesi owner
+onayı ister. Saklama süreleri Google gerçek0 görüldükten sonra kararlaştırılır;
+ardından Meta ve Klaviyo'ya geçilir. Ortak depo yeniden kurulmaz.
+
+Bağlayıcı kapsam contracts/eo-05-step15-google-live-acceptance-v1.json'dedir.
+Paket1'in okuyucu bağlantısı, mevcut yetki/kota kontrolleri, gerçek0/hata ayrımı,
+izole test ve PR işi açıkça onaylandı. Başlangıç main28d3cff8630c56cfec03b79cd32726f0fd829567.
+Yeni giriş app/lib/refresh/google-read-runner.server.js mevcut admitted claim,
+window, fresh entitlement, doğrulanmış mağaza caller'ı ve native Ads/Merchant
+okuyucusunu mevcut dar DB rolüne bağlar. Web route/scheduler veya iş üretimi yoktur.
+
+Native gözlem sourceStorage null kullanır. Şifreleme anahtarı, saklama süresi,
+kaynak biçim kuralı, eşleme veya Shopify ürün çağrısı bu bağlantının ön koşulu
+olmaz. Bu, mevcut kaynak saklama/eşleme yolunu değiştirmez; yazma etkinleştirilmez.
+Yalnız tam başarılı kaynak yanıtı read_complete ve gerçek kayıt sayısı verir;
+0 ile hata/izin/eksik sayfa/belirsiz sonuç ayrıdır. Merchant ilişkisi yoksa ürün0
+üretilemez. Dolu yanıtta gerçek sayı döner; ürün payload'ı dışarı taşınmaz.
+
+Girdi/context await öncesi yakalanır; başlangıç ve son SQL kota yetkisi karşılaştırılır.
+Mevcut her-boundary quota/claim/identity/token/link kontrolleri korunur. Tüm native
+response stream'lerinin toplam decoded byte sınırı JSON parse/clone öncesi uygulanır.
+Sayfa/satır/toplam süre sınırları açıktır. Tek run; otomatik retry/refresh, kalıcı
+source yazımı, job finish veya Dataset kabulü yoktur. Hata çıktısı kayıt sayısını
+null bırakır; hata metni/token/private body döndürülmez.
+
+16 unit ve15 bağımsız gerçek SQL/rol/native-reader senaryosu zorunlu F01'in üç
+ortamında sınanır. HTTP/credential sentetiktir; canlı0 kabulü sayılmaz. Paket2/3
+başlamadı; canlı SQL/key/login/config/native/deploy ve merge yetkisi yoktur.
+15 açık;22 paused;23 Dataset/FX/kalıcı teslim. Resmî Google Search/Merchant list
+ve Shopify Admin belgeleri3 Kasım2026 kontrol edildi. Mevcut v25 sorgu/scope'ları
+korunur; güncel doküman nedeniyle sürüm yükseltmesi yapılmaz.
+
 ## 3 Kasım — 15. madde: Google rolünün onaylı canlı kurulumu
 
 Google'a özel adstable_google_source_runner rolü, onaylı SQL dosyasıyla bir kez

@@ -4,6 +4,9 @@ on:
   pull_request:
     branches: [main, "codex/step15-storage-foundation-design"]
     paths:
+      - "app/lib/refresh/google-read-runner.server.js"
+      - "tests/google-read-runner.test.js"
+      - "tests/fixtures/google-read-runner-fixture.js"
       - "tools/eo05-google-source-role-*"
       - "tools/sql/eo05-google-source-role-install.sql"
       - "contracts/eo-05-step15-google-source-role-v1.json"

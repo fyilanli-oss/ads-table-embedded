@@ -3253,5 +3253,19 @@
     "additional_live_mutation_authorized": false,
     "merge_authorized": false,
     "deployment_authorized": false
+  },
+  "Step15_Google_package1_read_runner_2026_11_03": {
+    "status": "implementation_isolated_CI_pending",
+    "base_main": "28d3cff8630c56cfec03b79cd32726f0fd829567",
+    "contract": "contracts/eo-05-step15-google-live-acceptance-v1.json",
+    "owner_approval": "Owner explicitly approved the disclosed code/test/PR scope: bind existing Google reader to a runner, preserve shop/account/permission/quota, distinguish successful zero from failure. No live native call/config/deploy/merge authority.",
+    "entry": "app/lib/refresh/google-read-runner.server.js",
+    "scope": "Three explicit Google packages, no subpackages. This package completes the single-run native observation connection; retention is explicitly deferred until real Google0 acceptance. Existing empty-account read path does not require source keys, source rules, evidence writes or mapping approval.",
+    "runtime": "Build exact existing Google source Postgres client and work/quota repositories from trusted server inputs. Initial/final SQL quota context plus existing native identity/credential/link rechecks. No role widening or live configuration. Existing selected Ads/Merchant target is required; missing relationship is not product zero.",
+    "validation": "16 focused unit cases plus independent15-mode actualSQL/limited-role/native-reader runner proof in each existing F01 environment. Real provider HTTP and credentials remain synthetic. Historical82 baseline and installed83 live ledger are not rewritten.",
+    "boundaries": "No native live request, SQL migration, key/login/config/deploy/merge, UI/OAuth/scope/query change, source persistence, Dataset or job completion. Existing source mapping writer path preserved.2/3 not started;15 open;22 paused;23 Dataset/FX/durable delivery.",
+    "live_authorized": false,
+    "merge_authorized": false,
+    "deploy_authorized": false
   }
 }

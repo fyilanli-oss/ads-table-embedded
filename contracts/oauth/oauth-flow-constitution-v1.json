@@ -1278,7 +1278,7 @@
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json"
     ],
     "sha256": {
-      ".github/workflows/database-integrity.yml": "725000107273e1d57d5864c8482cb4fab6a01ba8c71b107d4a84f0adc3032896",
+      ".github/workflows/database-integrity.yml": "aa95c5af09db72fe5cd302a59d96b0be0361ea4a53cbb426685d4d50550e4e0e",
       ".github/workflows/repository-governance.yml": "331b11ca8da69182216874ff4efc4c8488111252835296ee495d7bc1a96b3759",
       ".github/workflows/shopify-app-deploy.yml": "ef078addb630fdb624189c0f12625524a7e3dcaf708f2059f95e7a2884cf5d24",
       "AGENTS.md": "d77d9e1aad1996a7e477e17f460a2c63530e1253cb521c521c6ef3bdd11570a9",
@@ -1509,12 +1509,12 @@
       "app/routes/settings.provider-live-evidence.ts": "89fbcb7087fc480fefba708bbc730146f1ba41af48d98f1b0a10fe1427120495",
       "app/routes/webhooks.shopify.tsx": "eac0ea30fcca28d6bba3c11105a5c4fda7778d1398c23f21fcb02f717d8bd056",
       "app/shopify.server.ts": "cc5959867dd5c413b222d51c4aad7d9a39c7c3d15e590aada86a1ddfefdc6fad",
-      "contracts/a6-eo-implementation-master-v1.json": "9ec26cf45d29ce1f52b59f3a251d2467fedaa0396e1e5e835935786b4b18a729",
+      "contracts/a6-eo-implementation-master-v1.json": "2a6021eaf9f5ee80ed1396843cd9226d062aefdc42452da0f8a8d8b346cbc28d",
       "contracts/eo-05-oauth-setup-permission-policy-v1.json": "c1914f91011464d3b16b4b0a7710e49878ce6dbb57427e3d0f7c68d9ec4ec681",
       "contracts/eo-05-permission-explanation-design-v1.json": "ad4753b9ad4a6becd14764b7b33fb917f0cc491ad774cc1f1fe9053c5f189f35",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
       "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md": "c602fd4d7760e8f32c109e1f0456907c739c12906d71becf88476cad2007d6a1",
-      "docs/EXECUTION_PLAN.md": "b46378464227f5c78a75d980b309eaa7fca5183c765e7e8208021b4fc5e486a6",
+      "docs/EXECUTION_PLAN.md": "f9d1e3a962c8b1f7e3753f7a283b3526f9fc98fea8ead227291456e8a27fc0bd",
       "docs/OAUTH_FLOW_CONSTITUTION.md": "74d7a8f327a9558712c3ac8bb54a6633fff7a7e2045405d236d35f265d124b28",
       "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md": "49e253b08959faa9f0b2bf208ed5eb6d3c078a0ddf9097e667a9bf1483dc7350",
       "package.json": "e46285b3a60421e8c338807d7b606afa17f16303b08a2832bed3222a06183fe8",
@@ -1680,7 +1680,9 @@
       "tools/eo05-source-rule-probe.mjs": "bdba143e69a0ac680687dfbfce815bf8c97c7fa2228179e22cc5d5d4626477ab",
       "tools/eo05-verified-mapping-probe.mjs": "6e9e75738475a081380fb1285960ada3bd579ccb6189eaefba9a7efa990ea7f0",
       "tools/f01-database-replay.mjs": "d91fcd623ea444364b509f023d0f1f41a7224b192e77588c5fb36d50f740e8b6",
-      "tools/f01-identity-oauth-rollout.mjs": "eca29ffeec3750cccb8efd54160a76cdd43e2442d20e55af5e1c5c775e1427a8",
+      "tools/f01-identity-oauth-rollout.mjs": "5894b9ae54363fcf31372ed0a1abf39d3c0e1dfea428190232a0420b0b11f787",
+      "tools/f01-live-readiness-plan.mjs": "d4eb8e8ca9d80d6e99cea8c9cf475b388db46a756e2e7a631c5c245e8e7bb25b",
+      "tools/f01-live-readiness-rehearsal.mjs": "d5d2b8510551b7f99e7669a37072636bab135a6bef90b0da51bf9ef185aac17e",
       "tools/f01-schema-inventory.sql": "2cc26575e74ca29f61adaf26e79981b6c5e67c5598962cc102f903aea0f18a4d",
       "tools/f01-scoped-recovery.mjs": "766c68aa43b5b91735f18d75b64c74dc57bcf3d01eb377ce84b3e4062a937726",
       "tools/f08-privacy-index-probe.mjs": "2f790c86a62b6e51a2486e85f6ddcb2b3284349558b5e88dc566695aa17f28ca"
@@ -2155,6 +2157,35 @@
         "docs/EXECUTION_PLAN.md",
         "tools/eo05-google-mapping-flow-probe.mjs",
         "tools/eo05-refresh-preflight-probe.mjs"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ]
+    },
+    {
+      "id": "step15-live-migration-readiness-2026-11-03",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Owner explicitly approved the three exact SQL/version alias records, remaining39 ordered steps and isolated43+39 PostgreSQL rehearsal with PR preparation on2026-11-03: Onayliyorum Codex. No application/OAuth behavior or live SQL/history/key/grant/config/provider/deployment/merge authority."
+      },
+      "rationale": "Preserve historical40+42 manifest while recording a dated exact43 ledger overlay; exclude only three explicitly verified aliases and rehearse remaining39 against independent82 schema with committed synthetic connection preservation and existing functional probes. No live state or OAuth transitions change.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "merge": false,
+        "deploy": false
+      },
+      "changed_paths": [
+        ".github/workflows/database-integrity.yml",
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "docs/EXECUTION_PLAN.md",
+        "tools/f01-identity-oauth-rollout.mjs",
+        "tools/f01-live-readiness-plan.mjs",
+        "tools/f01-live-readiness-rehearsal.mjs"
       ],
       "acceptance_required": [
         "required_CI",

@@ -1,3 +1,38 @@
+## 3 Kasım — mevcut15: canlı migration kayıtlarının uzlaştırılması ve43+39 izole prova
+
+Ürün sahibi üç farklı numaralı canlı kaydın exact SQL karşılaştırmasını, ardından
+sonucun/kesin eksik listenin repository kaydını ve ayrı test veritabanında43+39
+provası ile PR hazırlanmasını açıkça onayladı. Başlangıç main
+0cb359e420cd6a505ae2b0faf4287e30ac755926. Bağlayıcı kayıt:
+contracts/a6-eo-implementation-master-v1.json#Step15_live_migration_readiness_2026_11_03.
+Kanıt: docs/evidence/EO05_STEP15_MIGRATION_READINESS_2026-11-03.json.
+
+Canlı ledger43 kayıttır. Atomic identity OAuth, reconnect ve Google renewal SQL'leri
+GitHub main dosyalarıyla tam metin olarak birebir aynıdır; yalnız version numaraları
+farklıdır. Bu3 tekrar uygulanmaz. Önceki40 kaydın SQL/schema bütünü bugün yeniden
+incelenmiş değildir. Eski40+42 manifest/snapshot tarihsel olarak korunur; yeni ayrı
+gözlem katmanı exact43 ledger, üç izinli numara/isim/hash eşlemesi ve kalan39 dosyanın
+sıra/hash'ini denetler. İsim benzerliğinden atlama, canlı history repair veya renaming yok.
+
+Eksik sıranın17 adımı refresh/kuyruk/kota,5 adımı API kota/maliyet ve kimlik,
+7 adımı Shopify order altyapısı ve10 adımı kaynak/kanıt/gizlilik/eşleme katmanıdır.
+Bütün dosyalar mevcut main'de vardır; yeni migration veya uygulama kodu üretilmez.
+
+Mevcut üçüncü geçici F01 veritabanı40+3 kurulumunu gerçek commit sınırlarıyla hazırlar.
+Sentetik Google/Meta credential/account/Reporting Account kayıtları commit edilir;
+üzerine exact39 SQL uygulanır. Üç alias tekrar çalıştırılmaz;82 benzersiz adım tamamlanır.
+Bağlantı kayıtları değişmeden kalmalı; son schema/fonksiyon/grant/RLS/trigger/index
+bütünlüğü bağımsız82 tam kurulumla aynı olmalıdır. Mevcut source ve native-inventory/
+eşleme davranış testleri bu sıradan sonra da çalışır. Gerçek hesap/dump/token taşınmaz.
+
+Bu prova canlı schema/data eşitliği veya canlı kurulum onayı değildir.15 açıktır;
+canlı preflight, sonlu politika/amaç anahtarı/yetki/kapasite/sunucu bağlantısı ve gerçek
+Google kabulü ayrı kalır.23 Dataset/FX/kalıcı rapor teslimi;22 paused ve Overlap
+ertelenen kapsamı değişmez. OAuth/UI/scope/sorgu, canlı SQL/history/config/key/grant,
+provider/deploy/merge yapılmaz. İzole prova sonucu CI'dan doğrulanır.
+Resmî Supabase migrations, PostgreSQL17 CREATE TABLE ve GitHub PR belgeleri
+3 Kasım2026 kontrol edildi; adresler makine kaydındadır.
+
 ## 2 Kasım — mevcut 15: kontrollü Google kaynak–kural–eşleme akışı
 
 Owner, hazırlık incelemesi sonrası bu tek Google akışının kod ve izole uçtan uca

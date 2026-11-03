@@ -1,0 +1,462 @@
+{
+  "schema_version": 1,
+  "checked_at": "2026-11-03",
+  "source_main": "0cb359e420cd6a505ae2b0faf4287e30ac755926",
+  "project": {
+    "id": "podpwkrpmjiksskxhwsu",
+    "name": "ads-table-embedded"
+  },
+  "method": "Read-only Supabase migration ledger SELECT; each of the three complete stored SQL strings compared byte-for-byte to GitHub content at source_main. No secret/customer payload read. Historical forty SQL bodies/schema were not freshly audited.",
+  "live_schema_parity_verified": false,
+  "live_database_mutation": false,
+  "live_apply_authorized": false,
+  "baseline_count": 43,
+  "ledger": [
+    {
+      "version": "20261006133830",
+      "name": "eo02a_private_schema_roles"
+    },
+    {
+      "version": "20261006134013",
+      "name": "eo02a_runtime_schema_usage"
+    },
+    {
+      "version": "20261006140517",
+      "name": "eo02b_workspace_installation_authority"
+    },
+    {
+      "version": "20261006140629",
+      "name": "eo02b_remove_redundant_indexes"
+    },
+    {
+      "version": "20261006140828",
+      "name": "eo02b_acceptance_probe"
+    },
+    {
+      "version": "20261006142841",
+      "name": "eo02c_shopify_app_pricing_entitlement"
+    },
+    {
+      "version": "20261006142953",
+      "name": "eo02c_disambiguate_upserts"
+    },
+    {
+      "version": "20261006143039",
+      "name": "eo02c_acceptance_probe"
+    },
+    {
+      "version": "20261008104511",
+      "name": "eo02c_encrypted_shopify_runtime_sessions"
+    },
+    {
+      "version": "20261008140818",
+      "name": "eo02d_privacy_lifecycle"
+    },
+    {
+      "version": "20261009070314",
+      "name": "eo02bc_installed_shop_authority"
+    },
+    {
+      "version": "20261009074901",
+      "name": "eo02d_durable_deletion_worker"
+    },
+    {
+      "version": "20261009075721",
+      "name": "eo02d_worker_conditional_expression_fix"
+    },
+    {
+      "version": "20261009091622",
+      "name": "eo03a_oauth_transaction_boundary"
+    },
+    {
+      "version": "20261009092144",
+      "name": "eo03a_oauth_installation_fk_index"
+    },
+    {
+      "version": "20261009113645",
+      "name": "eo03b_token_vault"
+    },
+    {
+      "version": "20261009115314",
+      "name": "eo03b_pkce_workspace_fk_index"
+    },
+    {
+      "version": "20261009130713",
+      "name": "eo03c_connection_account_authority"
+    },
+    {
+      "version": "20261009131339",
+      "name": "eo03c_owner_policies_fk_indexes"
+    },
+    {
+      "version": "20261009141549",
+      "name": "eo03d_provider_connection_lifecycle"
+    },
+    {
+      "version": "20261009145154",
+      "name": "eo03d_qualify_lifecycle_event_columns"
+    },
+    {
+      "version": "20261009150114",
+      "name": "eo03d_qualify_lifecycle_update_columns"
+    },
+    {
+      "version": "20261009150614",
+      "name": "eo03d_qualify_finalize_update_columns"
+    },
+    {
+      "version": "20261009151123",
+      "name": "eo03d_disambiguate_reconnect_conflict"
+    },
+    {
+      "version": "20261011114438",
+      "name": "eo04c_provider_authorization_handoff"
+    },
+    {
+      "version": "20261011114809",
+      "name": "eo04c_handoff_installation_fk_index"
+    },
+    {
+      "version": "20261011123503",
+      "name": "eo04c_callback_return_and_handoff_cancel"
+    },
+    {
+      "version": "20261011163811",
+      "name": "eo04c_durable_selection_and_reconnect"
+    },
+    {
+      "version": "20261011170151",
+      "name": "eo04c_disconnect_handoff_credential_release"
+    },
+    {
+      "version": "20261011170441",
+      "name": "eo04c_finalize_stranded_invalid_google_disconnects"
+    },
+    {
+      "version": "20261011181612",
+      "name": "eo04c_canonical_google_account_selection"
+    },
+    {
+      "version": "20261011183443",
+      "name": "eo04c_qualify_account_selection_columns"
+    },
+    {
+      "version": "20261011194721",
+      "name": "eo04c_reporting_account_completion"
+    },
+    {
+      "version": "20261013173301",
+      "name": "eo04d_klaviyo_spend_ledger"
+    },
+    {
+      "version": "20261013195248",
+      "name": "eo04d_klaviyo_same_day_spend_updates"
+    },
+    {
+      "version": "20261013201049",
+      "name": "eo04d_klaviyo_reconnect_same_day_spend"
+    },
+    {
+      "version": "20261013203128",
+      "name": "eo04d_klaviyo_reconnect_timestamp_order"
+    },
+    {
+      "version": "20261017135321",
+      "name": "eo04d_klaviyo_reauthorization_state"
+    },
+    {
+      "version": "20261018152910",
+      "name": "a6tech01_retire_provider_authorization_handoffs"
+    },
+    {
+      "version": "20261018181906",
+      "name": "a6tech01_privacy_workspace_fk_indexes"
+    },
+    {
+      "version": "20261031190928",
+      "name": "eo05a_identity_oauth_atomic_stage"
+    },
+    {
+      "version": "20261031190941",
+      "name": "eo05a_identity_oauth_reconnect"
+    },
+    {
+      "version": "20261101093615",
+      "name": "eo05a_google_identity_renewal_receipt"
+    }
+  ],
+  "aliases": [
+    {
+      "live_version": "20261031190928",
+      "name": "eo05a_identity_oauth_atomic_stage",
+      "repository_version": "20261028164208",
+      "file": "supabase/migrations/20261028164208_eo05a_identity_oauth_atomic_stage.sql",
+      "repository_sql_sha256": "2cd83d66ef2451c9a148cd2c232757b448fe6dd4b39e17fe9bc07561ead2ecc4",
+      "applied_sql_sha256": "2cd83d66ef2451c9a148cd2c232757b448fe6dd4b39e17fe9bc07561ead2ecc4",
+      "exact_complete_sql_equal": true,
+      "sql_character_length": 9184
+    },
+    {
+      "live_version": "20261031190941",
+      "name": "eo05a_identity_oauth_reconnect",
+      "repository_version": "20261031181313",
+      "file": "supabase/migrations/20261031181313_eo05a_identity_oauth_reconnect.sql",
+      "repository_sql_sha256": "4ca675b0e1e3e2dbe7401948a25ec711e2f1aba7e368b87229c520448b22888c",
+      "applied_sql_sha256": "4ca675b0e1e3e2dbe7401948a25ec711e2f1aba7e368b87229c520448b22888c",
+      "exact_complete_sql_equal": true,
+      "sql_character_length": 7273
+    },
+    {
+      "live_version": "20261101093615",
+      "name": "eo05a_google_identity_renewal_receipt",
+      "repository_version": "20261028175738",
+      "file": "supabase/migrations/20261028175738_eo05a_google_identity_renewal_receipt.sql",
+      "repository_sql_sha256": "d27a305888f14b22de05c73b1fe249ca6434dd08a129412b8b3e06e48fe55611",
+      "applied_sql_sha256": "d27a305888f14b22de05c73b1fe249ca6434dd08a129412b8b3e06e48fe55611",
+      "exact_complete_sql_equal": true,
+      "sql_character_length": 6874
+    }
+  ],
+  "remaining_count": 39,
+  "remaining_migrations": [
+    {
+      "version": "20261020092429",
+      "name": "eo05a_refresh_work_tracking",
+      "file": "supabase/migrations/20261020092429_eo05a_refresh_work_tracking.sql",
+      "repository_sql_sha256": "e34ccb3591a8a52f3599add786a2abd97b070dd3a18d3ba79f027ad8fdb056e7"
+    },
+    {
+      "version": "20261020100851",
+      "name": "eo05a_refresh_stop_records",
+      "file": "supabase/migrations/20261020100851_eo05a_refresh_stop_records.sql",
+      "repository_sql_sha256": "c70e306b1a203efa203809a32d819c59efbba62b7f97762b48d2598a9ac8e83f"
+    },
+    {
+      "version": "20261020111425",
+      "name": "eo05a_refresh_chunk_progress",
+      "file": "supabase/migrations/20261020111425_eo05a_refresh_chunk_progress.sql",
+      "repository_sql_sha256": "28d199530f2c63099ec68d7011b105a1a4c1ef7c7fb4818861e428d26df0ad22"
+    },
+    {
+      "version": "20261020120802",
+      "name": "eo05a_refresh_queue_check",
+      "file": "supabase/migrations/20261020120802_eo05a_refresh_queue_check.sql",
+      "repository_sql_sha256": "31962c71387f370705771b51db93c0dadbd6debc802b51b7d6610dd247f29867"
+    },
+    {
+      "version": "20261020122907",
+      "name": "eo05a_refresh_entitlement_check",
+      "file": "supabase/migrations/20261020122907_eo05a_refresh_entitlement_check.sql",
+      "repository_sql_sha256": "d0614b7490c4ceb3103fbd77f765588187db2ead49b58798334500f26ffb5cc2"
+    },
+    {
+      "version": "20261020124834",
+      "name": "eo05a_refresh_native_inventory",
+      "file": "supabase/migrations/20261020124834_eo05a_refresh_native_inventory.sql",
+      "repository_sql_sha256": "6fbfa2a0704184d249dbb8abc7c0b2979c11270c1d5052871271f223ca80eea4"
+    },
+    {
+      "version": "20261020131343",
+      "name": "eo05a_refresh_preflight_bridge",
+      "file": "supabase/migrations/20261020131343_eo05a_refresh_preflight_bridge.sql",
+      "repository_sql_sha256": "88d3fe9b62364f90711d4e710f9241a57b67e6738c87d6e2a750d6f4a7f84706"
+    },
+    {
+      "version": "20261020134823",
+      "name": "eo05a_shared_api_quota",
+      "file": "supabase/migrations/20261020134823_eo05a_shared_api_quota.sql",
+      "repository_sql_sha256": "31c946223870dcab626141c9a4222b31b6a41ba1affc548c790cde45bac90483"
+    },
+    {
+      "version": "20261020143838",
+      "name": "eo05a_quota_work_wait",
+      "file": "supabase/migrations/20261020143838_eo05a_quota_work_wait.sql",
+      "repository_sql_sha256": "fced695101b031ee14a5cfe928f508514d55650e1b07a0a9984e2baa9f39ea50"
+    },
+    {
+      "version": "20261020150205",
+      "name": "eo05a_quota_stop_scope",
+      "file": "supabase/migrations/20261020150205_eo05a_quota_stop_scope.sql",
+      "repository_sql_sha256": "6c2f31d6d776f57ad0efc44a10ec8198c280be39fa12fbfa43da365ae0627c87"
+    },
+    {
+      "version": "20261020152516",
+      "name": "eo05a_quota_scope_resolver",
+      "file": "supabase/migrations/20261020152516_eo05a_quota_scope_resolver.sql",
+      "repository_sql_sha256": "5ef61f43447bca5f1a16e52a92408ced354e56d3d6d8322a2310cc2088a777ba"
+    },
+    {
+      "version": "20261020161840",
+      "name": "eo05a_quota_authority_binding",
+      "file": "supabase/migrations/20261020161840_eo05a_quota_authority_binding.sql",
+      "repository_sql_sha256": "b79c05bd94bc61b0f05dc4b4eede4e59df88d3c7ac63990a1ee30dce22e79823"
+    },
+    {
+      "version": "20261020164124",
+      "name": "eo05a_quota_response_feedback",
+      "file": "supabase/migrations/20261020164124_eo05a_quota_response_feedback.sql",
+      "repository_sql_sha256": "10900ae17957bc48b649836508e27c4fc8dc045a9df53a4d8b7b62f574016655"
+    },
+    {
+      "version": "20261020165755",
+      "name": "eo05a_google_quota_diagnostic",
+      "file": "supabase/migrations/20261020165755_eo05a_google_quota_diagnostic.sql",
+      "repository_sql_sha256": "abd5aec6c1a5f9c4681964ce9e9b1d381a996bb63fc7d7344d2bb0434cbe7e6e"
+    },
+    {
+      "version": "20261020172928",
+      "name": "eo05a_refresh_scheduled_queue_check",
+      "file": "supabase/migrations/20261020172928_eo05a_refresh_scheduled_queue_check.sql",
+      "repository_sql_sha256": "2c2eaa0461f043df08aa967a68aa7264502b05b3f6f2b66e03282cd3d3608c70"
+    },
+    {
+      "version": "20261020184556",
+      "name": "eo05a_refresh_interrupted_work",
+      "file": "supabase/migrations/20261020184556_eo05a_refresh_interrupted_work.sql",
+      "repository_sql_sha256": "c4f9c80c85256f33f5f70182f9c7c2ba942f8030e95b0b917d91c4a612f0ca19"
+    },
+    {
+      "version": "20261020193814",
+      "name": "eo05a_refresh_queue_entry_role",
+      "file": "supabase/migrations/20261020193814_eo05a_refresh_queue_entry_role.sql",
+      "repository_sql_sha256": "ea937916f5a13e84a61bfdde5b5171163cf923bc23dbf98e43e191322d87e777"
+    },
+    {
+      "version": "20261028132721",
+      "name": "eo05a_admin_quota_context",
+      "file": "supabase/migrations/20261028132721_eo05a_admin_quota_context.sql",
+      "repository_sql_sha256": "9ce1c2021a339933005888f0e4e2cbab51520ada044c18a84d8b0aabf563d83c"
+    },
+    {
+      "version": "20261028141201",
+      "name": "eo05a_admin_cost_budget",
+      "file": "supabase/migrations/20261028141201_eo05a_admin_cost_budget.sql",
+      "repository_sql_sha256": "e60f87398caf9bf82b9414ab08afe808c35cc334713702214bf927bc9084a969"
+    },
+    {
+      "version": "20261028143322",
+      "name": "eo05a_admin_cost_feedback",
+      "file": "supabase/migrations/20261028143322_eo05a_admin_cost_feedback.sql",
+      "repository_sql_sha256": "19fcc7baff1f51795e40321ef6200f0a149e0e19fd13b034aff454eae05ef41d"
+    },
+    {
+      "version": "20261028152713",
+      "name": "eo05a_merchant_quota_context",
+      "file": "supabase/migrations/20261028152713_eo05a_merchant_quota_context.sql",
+      "repository_sql_sha256": "8d5e8df045f137267361cca86462819a521602568254afd526409ab8dd8b5305"
+    },
+    {
+      "version": "20261028161123",
+      "name": "eo05a_identity_authority_snapshot",
+      "file": "supabase/migrations/20261028161123_eo05a_identity_authority_snapshot.sql",
+      "repository_sql_sha256": "aa6f363301b4a840bebb12990b983828d72f46e07af3f5c7cf4a475e46194cfd"
+    },
+    {
+      "version": "20261028185046",
+      "name": "eo05a_shopify_installation_owner_read",
+      "file": "supabase/migrations/20261028185046_eo05a_shopify_installation_owner_read.sql",
+      "repository_sql_sha256": "4601df4e0f6bac24489b762e87284528f6d21e81768eb4de7d59365224ffe8eb"
+    },
+    {
+      "version": "20261028201729",
+      "name": "eo05a_shopify_order_pending_queue",
+      "file": "supabase/migrations/20261028201729_eo05a_shopify_order_pending_queue.sql",
+      "repository_sql_sha256": "9511f837ddc66610b4fb0c6893aeca55d5b2e4d2a33bfd8e0fbdefaf65949673"
+    },
+    {
+      "version": "20261028204502",
+      "name": "eo05a_shopify_order_worker_reservation",
+      "file": "supabase/migrations/20261028204502_eo05a_shopify_order_worker_reservation.sql",
+      "repository_sql_sha256": "2f971fbe0de4e9fb0788a4896b205cd5554ad0027eef138d764ecbb96076c6a8"
+    },
+    {
+      "version": "20261028212220",
+      "name": "eo05a_shopify_order_entitlement_intent",
+      "file": "supabase/migrations/20261028212220_eo05a_shopify_order_entitlement_intent.sql",
+      "repository_sql_sha256": "2bb84b76831d459788879fa255c72b3496f2a37c652a4946e244137745cfad04"
+    },
+    {
+      "version": "20261028220207",
+      "name": "eo05a_shopify_order_admin_read",
+      "file": "supabase/migrations/20261028220207_eo05a_shopify_order_admin_read.sql",
+      "repository_sql_sha256": "e61d60e610fd6cb78ff3b7ae8b5c3877054f6fcb708bf02c6876dd53e7f9289b"
+    },
+    {
+      "version": "20261029083341",
+      "name": "eo05a_shopify_order_fair_dispatch",
+      "file": "supabase/migrations/20261029083341_eo05a_shopify_order_fair_dispatch.sql",
+      "repository_sql_sha256": "58e20d2358dd553ef827396c9d838ae553598d064dea48cb7d57597abb529d71"
+    },
+    {
+      "version": "20261029091041",
+      "name": "eo05a_shopify_order_reconciliation",
+      "file": "supabase/migrations/20261029091041_eo05a_shopify_order_reconciliation.sql",
+      "repository_sql_sha256": "d25e9f0d1bca6c25dddae693b73a6461e718537443fe723f2f3d089d8c7a893f"
+    },
+    {
+      "version": "20261102083049",
+      "name": "eo05b_source_evidence_foundation",
+      "file": "supabase/migrations/20261102083049_eo05b_source_evidence_foundation.sql",
+      "repository_sql_sha256": "1d88cef3266312f54f5919cd2ad50995c2ee6b29965c56eca4fee2d0aa40ae8e"
+    },
+    {
+      "version": "20261102095846",
+      "name": "eo05b_shopify_order_source_capture",
+      "file": "supabase/migrations/20261102095846_eo05b_shopify_order_source_capture.sql",
+      "repository_sql_sha256": "e1b562629691100d0d48bcf405f5f6ada619c685f637c1795f1c52a9e6b09bfc"
+    },
+    {
+      "version": "20261102105726",
+      "name": "eo05b_google_source_capture",
+      "file": "supabase/migrations/20261102105726_eo05b_google_source_capture.sql",
+      "repository_sql_sha256": "cb25df481354c31716732fd7da093240a0f50936f294b5280493e7441435cd05"
+    },
+    {
+      "version": "20261102124704",
+      "name": "eo05b_meta_source_capture",
+      "file": "supabase/migrations/20261102124704_eo05b_meta_source_capture.sql",
+      "repository_sql_sha256": "3e15f2c2f7d6ec40fb8c45beab93a0c8aedfe1127f7e2d255a44dc07799e7c6a"
+    },
+    {
+      "version": "20261102134448",
+      "name": "eo05b_klaviyo_source_capture",
+      "file": "supabase/migrations/20261102134448_eo05b_klaviyo_source_capture.sql",
+      "repository_sql_sha256": "492c0f34a0b1119b2e5dc911500b0027b2f489e1b7bd4ae043d3597eb4f85297"
+    },
+    {
+      "version": "20261102143502",
+      "name": "eo05b_customer_source_privacy",
+      "file": "supabase/migrations/20261102143502_eo05b_customer_source_privacy.sql",
+      "repository_sql_sha256": "e90c086690099f40fc9abbeccd45b0d5b1a728fa22e4e709bdedacd3d787464b"
+    },
+    {
+      "version": "20261102155324",
+      "name": "eo05b_source_retention",
+      "file": "supabase/migrations/20261102155324_eo05b_source_retention.sql",
+      "repository_sql_sha256": "35f35a59ed9c04bfe9c04d7dc5e044390a7a25f40742a30bbc13df51b0b576a2"
+    },
+    {
+      "version": "20261102175402",
+      "name": "eo05b_product_verification_evidence",
+      "file": "supabase/migrations/20261102175402_eo05b_product_verification_evidence.sql",
+      "repository_sql_sha256": "cfbc049ca8f04a21254b6118fd2fe14dd4c4314ad0e30f3a3835e248a9598f8f"
+    },
+    {
+      "version": "20261102185842",
+      "name": "eo05b_verified_mapping_store",
+      "file": "supabase/migrations/20261102185842_eo05b_verified_mapping_store.sql",
+      "repository_sql_sha256": "d41901cb1c85fd1295d74407539acf459e52892303cf12a81bcb4b2b2d3a7999"
+    },
+    {
+      "version": "20261102201443",
+      "name": "eo05b_source_rule_review",
+      "file": "supabase/migrations/20261102201443_eo05b_source_rule_review.sql",
+      "repository_sql_sha256": "7e09bff64aedc1dcab964cdd76dcd892203353f5d4c8e1fe6550ed9dba6d4dbf"
+    }
+  ],
+  "limits": [
+    "Ledger snapshot and three body comparisons are not a current full live-schema or business-data audit.",
+    "Ephemeral rehearsal uses synthetic data only and never imports a live database dump or secrets.",
+    "No live migration history repair, alias renaming, OAuth/UI/runtime change, key/grant/config/deployment or merge authorization."
+  ]
+}

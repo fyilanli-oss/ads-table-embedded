@@ -58,7 +58,7 @@ for(const [name,change]of [
 ])test("source database config rejects "+name,()=>{const e=environment();change(e);assert.throws(()=>readGoogleSourceDatabaseConfig(e),/CONFIGURATION_REQUIRED/);});
 test("one checked-out connection binds role, timeout, RPC and commit with verified TLS",async()=>{
  const f=fixture();let config;const db=createGoogleSourcePostgresClient({environment:environment(),poolFactory:c=>{config=c;return f.poolFactory();}});
- await db.query(receipt,["{}","id",0]);assert.equal(config.max,1);assert.equal(config.ssl.rejectUnauthorized,true);
+ await db.query(receipt,["{}","id",0]);assert.equal(config.max,1);assert.equal(config.ssl.rejectUnauthorized,true);assert.equal(config.query_timeout,1000);
  assert.deepEqual(f.calls.map(x=>x[0]),["connect","begin","select pg_catalog.set_config('statement_timeout',$1,true),pg_catalog.set_config('lock_timeout',$1,true)",GOOGLE_SOURCE_ROLE_CHECK_SQL,receipt,"commit"]);
  assert.deepEqual(f.releases,[false]);await db.close();
 });

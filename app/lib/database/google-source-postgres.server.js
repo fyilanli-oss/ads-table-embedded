@@ -59,8 +59,10 @@ export function readGoogleSourceDatabaseConfig(environment) {
 // No table SQL, DDL, OAuth mutation, cleanup, claim finish or arbitrary SET ROLE.
 export function createGoogleSourcePostgresClient({environment,poolFactory=config=>new pg.Pool(config),inspectionOnly=false}) {
  if(typeof inspectionOnly!=="boolean"||typeof poolFactory!=="function")throw failure();
- const c=readGoogleSourceDatabaseConfig(environment),pool=poolFactory({connectionString:c.connectionString,ssl:c.ssl,max:1,
-  connectionTimeoutMillis:c.timeoutMs,idleTimeoutMillis:10000,allowExitOnIdle:true,application_name:"adstable-google-source"});
+ const c=readGoogleSourceDatabaseConfig(environment);let pool;
+ try{pool=poolFactory({connectionString:c.connectionString,ssl:c.ssl,max:1,query_timeout:c.timeoutMs,
+  connectionTimeoutMillis:c.timeoutMs,idleTimeoutMillis:10000,allowExitOnIdle:true,application_name:"adstable-google-source"});}
+ catch{throw failure();}
  let stopped=false,closed=false,busy=false;
  pool.on("error",()=>{stopped=true;});
  return Object.freeze({

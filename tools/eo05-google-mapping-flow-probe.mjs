@@ -85,6 +85,7 @@ export async function googleMappingFlowRehearsal(client,{workspace,shopId,shopDo
   await client.query(googleSourceRoleInstallationBodyForRehearsal());
   // Fixture-only SET ROLE authority for the outer rollback transaction, never installed by the artifact.
   await client.query("grant adstable_google_source_runner to adstable_owner with inherit false, set true, admin false");
+  if(refreshRenewal)await client.query("grant adstable_runtime to adstable_owner with inherit false, set true, admin false");
   await client.query("set local role adstable_owner");
   assert.equal((await client.query("select has_table_privilege('adstable_google_source_runner','identity.product_identity_mappings','SELECT,INSERT,UPDATE,DELETE') allowed")).rows[0].allowed,false);
   const profileSignatures=[...new Set(GOOGLE_SOURCE_RPC.map(x=>x[1]))];
@@ -124,7 +125,7 @@ export async function googleMappingFlowRehearsal(client,{workspace,shopId,shopDo
      const privateSql=kind||sql.includes("source_rule_review_state")||sql.includes("mapping_review_state")||sql.includes("lookup_verified_mapping");
      if(privateSql)await client.query("savepoint google_flow_rpc");let r;
      try{if(server)await client.query("set local role adstable_google_source_runner");r=await client.query(sql,args);if(server)await client.query("set local role adstable_owner");if(privateSql)await client.query("release savepoint google_flow_rpc");}
-     catch(error){if(privateSql){await client.query("rollback to savepoint google_flow_rpc");await client.query("release savepoint google_flow_rpc");}throw error;}
+     catch(error){if(refreshRenewal)console.error("EO05_GOOGLE_REFRESH_SQL_STOP",JSON.stringify({mode,role:"source",code:error.code,routine:error.routine,.../^[A-Z_]{1,100}$/.test(error.message)?{reason:error.message}:{}}));if(privateSql){await client.query("rollback to savepoint google_flow_rpc");await client.query("release savepoint google_flow_rpc");}throw error;}
      if(!server&&mode===kind+"_lost")throw Error("SYNTHETIC-PRIVATE-LOST");
      if(!server&&kind==="mapping"&&mode==="mapping_abort"){controller.abort();return new Promise(resolve=>setTimeout(()=>resolve(r),20));}return r;
     }};
@@ -187,6 +188,7 @@ export async function googleMappingFlowRehearsal(client,{workspace,shopId,shopDo
        try{await client.query("set local role adstable_runtime");result=await client.query(sql,args);
         await client.query("set local role adstable_owner");await client.query("release savepoint google_renewal_rpc");}
        catch(error){await client.query("rollback to savepoint google_renewal_rpc");await client.query("release savepoint google_renewal_rpc");
+        console.error("EO05_GOOGLE_REFRESH_SQL_STOP",JSON.stringify({mode,role:"runtime",code:error.code,routine:error.routine,.../^[A-Z_]{1,100}$/.test(error.message)?{reason:error.message}:{}}));
         await client.query("set local role adstable_owner");throw error;}
        if(renewal&&mode==="renew_lost")throw Error("SYNTHETIC-PRIVATE-LOST");
        return result;

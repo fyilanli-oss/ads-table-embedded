@@ -189,8 +189,11 @@ export async function googleMappingFlowRehearsal(client,{workspace,shopId,shopDo
      assert.equal(r.sourceStored,false);assert.equal(r.mappingVerified,false);assert.equal(r.DatasetWritePerformed,false);
      if(["role_drift","fence_before_native","expired_token","lost_quota_ack"].includes(mode))assert.equal(counts.ads+counts.merchant,0);
      if(mode==="link_missing")assert.equal(counts.merchant,0);
+     // A deadline can return while its last SQL RPC is still draining. Close
+     // the runner before issuing owner-only assertions on this shared fixture.
+     await flow.close();
      assert.equal((await client.query("select status from operations.refresh_runs where workspace_id=$1 and job_id=$2",[workspace,execution.claim.id])).rows[0].status,"running");
-     await flow.close();continue;
+     continue;
     }
     if(mode==="success"){
      assert.equal(r.status,"verified",JSON.stringify({mode,stage:r.stage,reason:r.reason,counts}));assert.equal(r.current.productId,"gid://shopify/Product/123");assert.equal(r.current.variantId,"gid://shopify/ProductVariant/456");assert.equal(r.current.revision,"2");assert.equal(decisionCalls,1);

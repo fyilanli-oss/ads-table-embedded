@@ -1,3 +1,55 @@
+3 Kasım ek doğrulama: shared runtime/vault salt okunur beklemeleri de5s ile sınırlı;
+geç veya abort edilmiş yanıt akışı ilerletemez. Paused finish sonrası hesap/yetki
+son kez okunur; sonradan drift başarılı0 sayılmaz. HTTP auth hataları sanitize
+edilir; yeni deneme veya coordinator açılışı yapılmaz.
+
+## 3 Kasım — onaylı kod bağlantısı güncellemesi
+
+Hazırlık PR314 merge3d80b93 ile teslim edildi; owner aynı2. paketin
+başlatma/koordinatör/kapanış kod ve izole testlerini ayrıca açıkça onayladı.
+Aşağıdaki ilk inceleme tarihsel durumdur; bu bölüm yeni kod durumunu kaydeder.
+Canlı ayar, SQL, secret veya gerçek provider çağrısı yapılmadı;2 tamamlanmadı.
+
+Uygulama: app/lib/refresh/google-acceptance-server.server.js ve request.server.js;
+mevcut POST /settings/google-live-evidence içinde yalnız
+x-adstable-google-acceptance:v1 header'ı yeni moda yönlenir.
+Content-Type application/json; gövde yalnız mode=step15_google_zero_acceptance ve
+operationId'dir. Client plan/ID/claim/receipt/caller gönderemez. Kapalı veya
+geçersiz giriş yeni auth/SQL/native işlemi başlatmaz. Açık mod mevcut authenticated
+Shopify resolver'ını kullanır; Admin identity sorgusu tries:1 alır. JSX/copy/modal/
+buton veya eski report mode değişmedi; yeni görsel kabul iddiası yoktur.
+
+ADSTABLE_GOOGLE_ACCEPTANCE_ENABLED tam true olmalı.
+ADSTABLE_GOOGLE_ACCEPTANCE_PLAN strict JSON: operationId,workspaceId,installGeneration,
+shopId,shopDomain,accountId,connectionId,connectionVersion,credentialId,selectionId,
+merchantId,merchantQuotaAccountId,merchantBindingEpoch,window ve expiresAt.
+En çok15 dakika geçerli olabilir; tek gün ve exact sunucu bağları zorunludur.
+Bu isimler yalnız şema tanımıdır, canlı değer veya uygulama yetkisi değildir.
+
+Yeni coordinator URL/timeout adları:
+ADSTABLE_GOOGLE_ACCEPTANCE_COORDINATOR_DATABASE_URL ve
+ADSTABLE_GOOGLE_ACCEPTANCE_COORDINATOR_DB_TIMEOUT_MS. Exact mevcut
+adstable_refresh_coordinator.project-ref kullanıcı/proje/TLS/pooler kuralları;
+tek bağlantı,1–5000ms. Sadece17 mevcut RPC kabul edilir; ek SQL/grant/rol kurulmaz.
+Mevcut rolün broader server-side SQL yetkisi runtime veya Google rolüne taşınmaz.
+
+Gerçek preflight SQL CAS kullanılır; sabit operation job ID aynı işi paused
+sonrasında bile yeniden üretmez. Fresh entitlement + native reader sonucu ardından
+role drain, tekrar yetki kontrolü ve response_received doğrulanır; yalnız paused
+finish vardır. Unknown commit/finish sonucu tekrarlanmaz. Hold/expiry/permission/
+partial veya stale durum başarılı0 sayılamaz. Kaynak gözlemi rapor sayfasına
+çevrilmez, Dataset aşaması ilerletilmez.
+
+Önceki öneri sınırları kodda sabitlendi. İlave tüm iş rezervi: requests5,dbWrites64,
+connections3,rows1000,bytes1048576. Üç Google HTTP'ye ilave Partner ve Shopify kimlik
+trafiği vardır; UI/report/native query sayısı uydurulmaz. Canlı job bütçeleri ve
+quota policy'leri halen eksik/güncel doğrulanmamış durumdadır.
+
+61 odaklı kontrol geçti;26 yeni kabul testi vardır. F01'e gerçek token kasası ve
+iki gerçek rolü kullanan10 senaryo eklendi:0/tekrar,dolu,403,kısmi,yanlış rol,eksik
+context,süresi dolmuş token,admission cevabı kaybı,finish cevabı kaybı,sonradan hold.
+Fiziksel HTTP/credentials sentetik kalır. Zorunlu CI sonucu PR'da doğrulanır.
+
 # Google 2. paket — kontrollü canlı sınama hazırlığı
 
 Tarih: 3 Kasım 2026. Kaynak main: `8325670b6518b3cb7c639dc0f99ceb7b4e6c5b20`.

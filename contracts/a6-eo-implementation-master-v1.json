@@ -3294,5 +3294,76 @@
     "merge_authorized": false,
     "deploy_authorized": false,
     "documentation_validation": "New Turkish preparation note explicitly registered in existing DOCS-01 later-document inventory. Historical63-file accepted ledger unchanged; current total71. No runtime test or guard weakened."
+  },
+  "Step15_Google_package2_invocation_2026_11_03": {
+    "status": "code_isolated_CI_pending_package2_live_setup_open",
+    "source_main": "3d80b93b7247c1cda98086b736aa567066b21968",
+    "contract": "contracts/eo-05-step15-google-live-acceptance-v1.json",
+    "owner_approval": "Owner explicitly approved PR314 merge and the disclosed package2 server invocation, limited coordinator connection, guarded closure code and isolated tests: Onayliyorum Codex. No live setting, SQL/grant/role/key/login, native call, deploy or subsequent merge authorization.",
+    "preparation_delivery": {
+      "PR": 314,
+      "head": "3dafaf7085f71a59f151dfba8e611cda83864cc3",
+      "merge_commit": "3d80b93b7247c1cda98086b736aa567066b21968",
+      "governance_run": 41672705702
+    },
+    "implementation": {
+      "source_main": "3d80b93b7247c1cda98086b736aa567066b21968",
+      "owner_approval": "Owner explicitly approved PR314 merge and the disclosed package2 server invocation, limited coordinator connection, guarded closure code and isolated tests: Onayliyorum Codex. No live setting, SQL/grant/role/key/login, native call, deploy or subsequent merge authorization.",
+      "entry": "app/lib/refresh/google-acceptance-server.server.js",
+      "HTTP": "Existing POST /settings/google-live-evidence only when x-adstable-google-acceptance:v1 header is present. Operator-only mode in a default-off bounded server plan; existing reporting/UI mode remains.",
+      "configuration": {
+        "enabled": "ADSTABLE_GOOGLE_ACCEPTANCE_ENABLED=true",
+        "plan": "ADSTABLE_GOOGLE_ACCEPTANCE_PLAN",
+        "coordinator_URL": "ADSTABLE_GOOGLE_ACCEPTANCE_COORDINATOR_DATABASE_URL",
+        "coordinator_timeout": "ADSTABLE_GOOGLE_ACCEPTANCE_COORDINATOR_DB_TIMEOUT_MS",
+        "plan_lifetime_max_ms": 900000,
+        "DB_timeout_max_ms": 5000,
+        "job_deadline_ms": 90000,
+        "reader_limits": {
+          "maxElapsedMs": 60000,
+          "maxBytes": 1048576,
+          "maxPages": 1,
+          "maxRows": 1000,
+          "maxLinkPages": 1,
+          "maxLinks": 1000
+        },
+        "work_cost": {
+          "requests": 5,
+          "dbWrites": 64,
+          "connections": 3,
+          "rows": 1000,
+          "bytes": 1048576
+        }
+      },
+      "plan_binding_fields": [
+        "operationId",
+        "workspaceId",
+        "installGeneration",
+        "shopId",
+        "shopDomain",
+        "accountId",
+        "connectionId",
+        "connectionVersion",
+        "credentialId",
+        "selectionId",
+        "merchantId",
+        "merchantQuotaAccountId",
+        "merchantBindingEpoch",
+        "window",
+        "expiresAt"
+      ],
+      "lifecycle": "Existing runtime authority/vault -> configured SQL preflight -> exact target -> stable operation job ID -> real CAS admission -> checking_authority -> request_intent -> fresh quota-bound Partner entitlement -> real Google runner -> drain -> current owner/entitlement recheck -> response_received -> guarded paused finish. No fake page/stage reset, ready_for_dataset or completed outcome.",
+      "unknown": "No automatic retry/release. SQL commit/finish acknowledgement loss or hold leaves a stopped nonzero-acceptance result and reservationMayExist. Durable job ID prevents another native attempt.",
+      "coordinator_RPC_count": 17,
+      "role_or_grants_installed": false,
+      "unit_tests_new": 26,
+      "actual_SQL_scenarios": 10,
+      "real_provider_HTTP": false,
+      "UI_changed": false,
+      "live_settings_verified": false
+    },
+    "validation": "61 focused cases passed:26 new acceptance plus existing16 reader,14 report-trigger and5 negative controls. Full CI and10 actual SQL/vault/two-role invocation cases in each F01 environment required. Physical HTTP/credentials synthetic. Read-only vault/authority waits capped at5s; late result cannot advance after abort. Post-paused authority recheck prevents stale accepted zero; known paused status retained on later read failure.",
+    "boundaries": "No live SQL, role/grants, passwords/keys/env configuration, real provider calls, deployment or this code PR merge. No UI/OAuth flow/scopes/native query, storage/retention or Dataset change. Package2 remains open,3 not started; exactly3 packages, no subpackages.",
+    "guard_registration": "Keep forbidden route/token negative control intact; register acceptance token only in the five approved default-off mode files. No new route, UI surface or general operator/debug exception. Added post-paused current authority check; known paused status is preserved on later read failure."
   }
 }

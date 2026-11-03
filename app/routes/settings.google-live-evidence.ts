@@ -1,4 +1,5 @@
 import type {ActionFunctionArgs, LoaderFunctionArgs} from "react-router";
+import {GOOGLE_ACCEPTANCE_HEADER, handleGoogleAcceptanceRequest} from "../lib/refresh/google-acceptance-request.server.js";
 import {
   authenticate,
   database,
@@ -41,6 +42,11 @@ export const loader = async ({request}: LoaderFunctionArgs) => {
 
 export const action = async ({request}: ActionFunctionArgs) => {
   if (request.method !== "POST") return methodNotAllowed();
+
+  if (request.headers.has(GOOGLE_ACCEPTANCE_HEADER)) {
+    return handleGoogleAcceptanceRequest({request, authenticateAdmin: authenticate.admin,
+      database, tokenVault: providerTokenVault});
+  }
 
   const verified = await resolveReadOnlyShopifyRouteAuthority({
     request,

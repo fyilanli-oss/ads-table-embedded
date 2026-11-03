@@ -1,3 +1,33 @@
+## 3 Kasım — Google paket2/3: onaylı başlatma bağlantısı kodu
+
+Hazırlık PR314 açık owner onayıyla main 3d80b93b7247c1cda98086b736aa567066b21968 olarak birleşti.
+Aynı onay,2. paketin doğrulanmış sunucu girişi, sınırlı koordinatör bağlantısı,
+güvenli kapanış kodu ve izole testlerini kapsar. Bu kod PR'ının merge'i, canlı
+ayarlar/SQL/role/login/key/native çağrı ve deploy bu onaya dahil değildir.
+
+Yeni google-acceptance-server.server.js mevcut SQL preflight/CAS, gerçek fresh
+entitlement, ayrı mevcut token kasası ve1. paketin native reader'ını bağlar.
+Mevcut Google evidence POST'una ayrı x-adstable-google-acceptance:v1 modu eklenir;
+varsayılan kapalı server planında exact owner/account/connection/credential/selection/
+Merchant/window/operation/expiry gerekir. HTTP JSON yalnız mode + operationId alır.
+Mevcut Settings düğmesi/rapor modu ve görünüm değişmez; yeni OAuth seçicisi yoktur.
+
+Koordinatör adapter'ı mevcut adstable_refresh_coordinator rolünde17 exact RPC ile
+sınırlıdır. Rol/grant kurulmaz; Google rolü token kasası veya admission için
+genişletilmez. Aynı operation ID kararlı SQL job ID'sine bağlıdır: tekrar veya
+concurrent POST ikinci native çağrı üretemez. İşin gerçek yanıtı ve drain doğrulanırsa
+response_received sonrası guarded finish paused kullanılır. Dataset/ready_for_dataset/
+completed veya fixture stage reset yoktur. Unknown/hold/lost acknowledgement
+otomatik tekrar veya rezerv bırakma yetkisi değildir.
+
+61 odaklı test geçti;26 yeni test ve F01'de10 gerçek SQL/vault/iki rol senaryosu
+zorunlu CI'da sınanır. HTTP/credential sentetik; canlı kabul değildir. Önerilen
+5s DB,60s reader,90s iş,1MiB ve en çok3 Google HTTP sınırları korunur; tüm
+iş rezervi ayrıca identity/Partner trafiğini kapsayan5 request/64 DB-write/3
+connection/1000 row/1MiB tavanıdır. Canlı policy ve secret değerleri atanmadı.
+2 açık: canlı metadata, yetkili bağlantı/login/config ve sonlu bütçe uygulaması
+bekler.3 gerçek boş hesap0 kabulüdür. Alt paket yok; saklama gerçek0'dan sonra.
+
 ## 3 Kasım — Google paket2/3: inceleme ve hazırlık kaydı
 
 1. paket PR313 ile main 8325670b6518b3cb7c639dc0f99ceb7b4e6c5b20 olarak birleşti.

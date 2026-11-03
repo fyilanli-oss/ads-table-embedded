@@ -1,4 +1,5 @@
 import {googleMappingFlowRehearsal} from "./eo05-google-mapping-flow-probe.mjs";
+import {googleAcceptanceRehearsal} from "./eo05-google-acceptance-probe.mjs";
 import {googleSourceRoleProvisioningProbe} from "./eo05-google-source-role-probe.mjs";
 import assert from "node:assert/strict";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
@@ -166,6 +167,7 @@ export async function refreshPreflightProbe(client,{workspace,connections,shopId
     console.log("EO05_PREFLIGHT_BRIDGE_PASS native_queue_to_fenced_worker=true missing_and_negative_cache_fresh_check=true fresh_denial_blocks_data=true selection_away_back_invalidates=true connection_change_invalidates=true explicit_period_required=true no_Dataset_commit=true actual_provider_calls=0 live_changes=false");
     console.log("EO05_QUOTA_WORK_WAIT_PASS first_boundary_only=true durable_wait=true fresh_fence=true stale_worker_denied=true same_source_period=true queue_age_preserved=true no_double_debit=true real_SQL=true synthetic_HTTP_only=true actual_provider_calls=0");
   } finally {await client.query("rollback");}
+  await googleAcceptanceRehearsal(client,{workspace,shopId,shopDomain});
   await googleMappingFlowRehearsal(client,{server:true,nativeRead:true,workspace,shopId,shopDomain});
   await metaSourceCaptureRehearsal(client,{workspace,shopId,shopDomain});
   await klaviyoSourceCaptureRehearsal(client,{workspace,shopId,shopDomain});

@@ -54,7 +54,7 @@
     {
       "id": 2,
       "name": "Google kontrollü canlı test ayarları",
-      "status": "preparation_recorded_runtime_and_live_work_pending",
+      "status": "invocation_code_prepared_isolated_CI_pending_live_settings_not_applied",
       "included_work": [
         "Separately approved existing-role connection/login and credential configuration; use existing scoped identity token vault.",
         "Explicit trusted Merchant/account binding, admitted period/job and current entitlement/quota/rate/capacity limits. No production values invented from synthetic tests.",
@@ -88,6 +88,62 @@
         "new_package": false,
         "live_changes_applied": false,
         "runtime_changes_applied": false
+      },
+      "implementation": {
+        "source_main": "3d80b93b7247c1cda98086b736aa567066b21968",
+        "owner_approval": "Owner explicitly approved PR314 merge and the disclosed package2 server invocation, limited coordinator connection, guarded closure code and isolated tests: Onayliyorum Codex. No live setting, SQL/grant/role/key/login, native call, deploy or subsequent merge authorization.",
+        "entry": "app/lib/refresh/google-acceptance-server.server.js",
+        "HTTP": "Existing POST /settings/google-live-evidence only when x-adstable-google-acceptance:v1 header is present. Operator-only mode in a default-off bounded server plan; existing reporting/UI mode remains.",
+        "configuration": {
+          "enabled": "ADSTABLE_GOOGLE_ACCEPTANCE_ENABLED=true",
+          "plan": "ADSTABLE_GOOGLE_ACCEPTANCE_PLAN",
+          "coordinator_URL": "ADSTABLE_GOOGLE_ACCEPTANCE_COORDINATOR_DATABASE_URL",
+          "coordinator_timeout": "ADSTABLE_GOOGLE_ACCEPTANCE_COORDINATOR_DB_TIMEOUT_MS",
+          "plan_lifetime_max_ms": 900000,
+          "DB_timeout_max_ms": 5000,
+          "job_deadline_ms": 90000,
+          "reader_limits": {
+            "maxElapsedMs": 60000,
+            "maxBytes": 1048576,
+            "maxPages": 1,
+            "maxRows": 1000,
+            "maxLinkPages": 1,
+            "maxLinks": 1000
+          },
+          "work_cost": {
+            "requests": 5,
+            "dbWrites": 64,
+            "connections": 3,
+            "rows": 1000,
+            "bytes": 1048576
+          }
+        },
+        "plan_binding_fields": [
+          "operationId",
+          "workspaceId",
+          "installGeneration",
+          "shopId",
+          "shopDomain",
+          "accountId",
+          "connectionId",
+          "connectionVersion",
+          "credentialId",
+          "selectionId",
+          "merchantId",
+          "merchantQuotaAccountId",
+          "merchantBindingEpoch",
+          "window",
+          "expiresAt"
+        ],
+        "lifecycle": "Existing runtime authority/vault -> configured SQL preflight -> exact target -> stable operation job ID -> real CAS admission -> checking_authority -> request_intent -> fresh quota-bound Partner entitlement -> real Google runner -> drain -> current owner/entitlement recheck -> response_received -> guarded paused finish. No fake page/stage reset, ready_for_dataset or completed outcome.",
+        "unknown": "No automatic retry/release. SQL commit/finish acknowledgement loss or hold leaves a stopped nonzero-acceptance result and reservationMayExist. Durable job ID prevents another native attempt.",
+        "coordinator_RPC_count": 17,
+        "role_or_grants_installed": false,
+        "unit_tests_new": 23,
+        "actual_SQL_scenarios": 10,
+        "real_provider_HTTP": false,
+        "UI_changed": false,
+        "live_settings_verified": false
       }
     },
     {

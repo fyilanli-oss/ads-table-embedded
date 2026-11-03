@@ -5,6 +5,14 @@ on:
     branches: [main, "codex/step15-storage-foundation-design"]
     paths:
       - "app/lib/refresh/google-read-runner.server.js"
+      - "app/lib/database/google-acceptance-coordinator-postgres.server.js"
+      - "app/lib/refresh/google-acceptance-server.server.js"
+      - "app/lib/refresh/google-acceptance-request.server.js"
+      - "app/lib/refresh/google-acceptance-request.server.d.ts"
+      - "app/routes/settings.google-live-evidence.ts"
+      - "tests/google-acceptance.test.js"
+      - "tests/fixtures/google-acceptance-fixture.js"
+      - "tools/eo05-google-acceptance-probe.mjs"
       - "tests/google-read-runner.test.js"
       - "tests/fixtures/google-read-runner-fixture.js"
       - "tools/eo05-google-source-role-*"

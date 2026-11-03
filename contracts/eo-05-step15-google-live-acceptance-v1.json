@@ -54,7 +54,7 @@
     {
       "id": 2,
       "name": "Google kontrollü canlı test ayarları",
-      "status": "invocation_code_prepared_isolated_CI_pending_live_settings_not_applied",
+      "status": "code_merged_live_precheck_partial_not_ready_connection_disconnected_and_settings_missing",
       "included_work": [
         "Separately approved existing-role connection/login and credential configuration; use existing scoped identity token vault.",
         "Explicit trusted Merchant/account binding, admitted period/job and current entitlement/quota/rate/capacity limits. No production values invented from synthetic tests.",
@@ -144,6 +144,34 @@
         "real_provider_HTTP": false,
         "UI_changed": false,
         "live_settings_verified": false
+      },
+      "code_delivery": {
+        "PR": 315,
+        "head": "7226589cc16a89c5bcc1f766cac3e9ebaf415c86",
+        "merge_commit": "11e075a95ff692897df1099002ad68e18b5c8f1f",
+        "governance_run": 41678301274,
+        "SQL_run": 41678301253,
+        "tests_passed": 3833,
+        "SQL_environments": 3,
+        "invocation_SQL_scenarios_per_environment": 10
+      },
+      "live_precheck": {
+        "checked_at": "2026-11-03T17:14:54.439624+00:00",
+        "evidence": "docs/evidence/EO05_GOOGLE_PACKAGE2_LIVE_PRECHECK_2026-11-03.json",
+        "owner_approval": "Owner explicitly approved the disclosed read-only live precheck of Supabase role/connection/quota metadata and runtime environment-key presence without secret decryption, changes or Google requests: Onayliyorum. No OAuth execution, live mutation/config/deploy or merge authority.",
+        "status": "partial_precheck_completed_not_ready_for_live_run",
+        "google_connected": false,
+        "current_credential_present": false,
+        "active_reporting_binding_count": 0,
+        "Google_and_coordinator_NOLOGIN": true,
+        "quota_policy_count": 0,
+        "work_budget_configured": false,
+        "source_and_acceptance_environment_key_count": 0,
+        "expected_source_and_acceptance_environment_keys": 6,
+        "existing_runtime_and_provider_key_presence": "required names present in Production; values and validity not inspected",
+        "exact_RPC_profile": "not_confirmed_single_tool_error_no_retry_no_grant_inference",
+        "mutations": false,
+        "ready": false
       }
     },
     {

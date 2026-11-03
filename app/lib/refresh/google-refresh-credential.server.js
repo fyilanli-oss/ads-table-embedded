@@ -12,16 +12,21 @@ const scopes = value => [...validateIdentityOAuthGrantedScopes("google_ads",valu
 // Internal admitted-job preparation only. The caller supplies the existing fenced
 // quota transport, never an HTTP/body/account override or an interactive action.
 export async function prepareGoogleRefreshCredential({verified,database,tokenVault,workStore,execution,
-  environment,fetchFn,signal,now=Date.now}) {
+  environment,fetchFn,signal,now=Date.now,minimumValidityMs=60000}) {
+  if(!Number.isSafeInteger(minimumValidityMs)||minimumValidityMs<60000||minimumValidityMs>660000)fail();
   const env={...environment},scope=structuredClone(execution),owner=structuredClone(verified.installationAuthority),
     shop=structuredClone(verified.identity.shop);
   const repository=createIdentityAuthorityRepository(database);
+  let activeSignal=signal;
   const current=async()=>{
+    if(activeSignal?.aborted)fail();
     const value=await repository.load({workspaceId:owner.workspaceId,installGeneration:owner.installGeneration,
       provider:"google_ads",shopId:shop.shopId,shopDomain:shop.myshopifyDomain});
+    if(activeSignal?.aborted)fail();
     return value?{...value,grantedScopes:scopes(value.grantedScopes?.join(" "))}:null;
   };
   return runIdentityReadDeadline({signal,timeoutMs:20000,run:async child=>{
+    activeSignal=child;
     const guard=()=>{if(child.aborted)fail();};
     guard();
     const before=await current();guard();
@@ -35,7 +40,7 @@ export async function prepareGoogleRefreshCredential({verified,database,tokenVau
     if(!equal(scopes(token?.scope),before.grantedScopes))fail();
     const timing=inspectGoogleIdentityCredential(token,()=>new Date(now()));
     if(!equal(before,await current()))fail();guard();
-    if(!timing.needsRefresh)return Object.freeze({renewed:false});
+    if(!timing.needsRefresh&&Date.parse(token.expires_at)-now()>minimumValidityMs)return Object.freeze({renewed:false});
     if(typeof tokenVault.renewGoogleIdentityCredential!=="function"||typeof token.refresh_token!=="string"
       ||!token.refresh_token||token.refresh_token.length>16384||/[\u0000-\u0020\u007f]/.test(token.refresh_token))fail();
     const config=readGoogleAdsOAuthConfig(env);let sent=false;
@@ -54,7 +59,8 @@ export async function prepareGoogleRefreshCredential({verified,database,tokenVau
         }finally{child.removeEventListener("abort",cancel);reader.releaseLock();}
       }});guard();
     if(!equal(scopes(replacement.scope),before.grantedScopes)
-      ||inspectGoogleIdentityCredential(replacement,()=>new Date(now())).needsRefresh)fail();
+      ||inspectGoogleIdentityCredential(replacement,()=>new Date(now())).needsRefresh
+      ||Date.parse(replacement.expires_at)-now()<=minimumValidityMs)fail();
     for(const [key,max] of [["access_token",4096],["refresh_token",16384]])
       if(typeof replacement[key]!=="string"||!replacement[key]||replacement[key].length>max
         ||/[\u0000-\u0020\u007f]/.test(replacement[key]))fail();

@@ -248,7 +248,7 @@ function createGoogleIdentityReader({verified,database,tokenVault,merchantId,dev
       if(storage&&(!initial||initial.merchant?.targetAccountId!==merchantId))throw Error("GOOGLE_SOURCE_CONTEXT_REQUIRED");
       if(environment!==undefined)await prepareGoogleRefreshCredential({verified:caller,database,tokenVault,
         workStore:quotaOptions.workStore,execution:{claim,window,entitlementReceipt:quotaOptions.entitlementReceipt},
-        environment,fetchFn:transport,signal,now:()=>readNow().valueOf()});
+        environment,fetchFn:transport,signal,now:()=>readNow().valueOf(),minimumValidityMs:Math.max(60000,(maxElapsedMs??120000)+20000)});
       const result=await collect(options);let outcome=result;
       if(storage){
         if(signal?.aborted||JSON.stringify(await binding.loadContext({provider:"google_ads"}))!==JSON.stringify(initial))throw Error("GOOGLE_SOURCE_CONTEXT_CHANGED");

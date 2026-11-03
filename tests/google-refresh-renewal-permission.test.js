@@ -48,6 +48,19 @@ test("valid token is reused by refresh without any renewal or token HTTP",async(
   const x=fixture(false);assert.equal((await x.run()).status,"read_complete");assert.equal(x.renewals.length,0);
   assert.ok(x.f.httpCalls.every(u=>u.hostname!=="oauth2.googleapis.com"));
 });
+test("a token that expires inside the bounded read window is renewed before the first page",async()=>{
+  const x=fixture();x.options.configuration={...x.options.configuration,
+    limits:{...x.options.configuration.limits,maxElapsedMs:120000}};
+  x.f.token.scope_verified_at=new Date(x.options.now()-3510000).toISOString();
+  x.f.token.expires_at=new Date(x.options.now()+90000).toISOString();
+  assert.equal((await x.run()).status,"read_complete");assert.equal(x.renewals.length,1);
+});
+test("an aborted authority read cannot start a late token or quota operation",async()=>{
+  const x=fixture(),controller=new AbortController();x.options.signal=controller.signal;
+  x.f.hooks.sql=async sql=>{if(sql.includes("load_provider_identity_authority"))controller.abort();};
+  assert.equal((await x.run()).status,"read_stopped");await new Promise(r=>setImmediate(r));
+  assert.equal(x.f.httpCalls.length,0);assert.equal(x.renewals.length,0);
+});
 for(const mode of ["provider_rejection","network","missing_scope","scope_changed","bad_token","short_expiry",
   "oversize","scope_before","missing_refresh","drift_before","drift_after","lost_commit","bad_commit","readback_drift","abort"]){
   test("expired refresh stops before data reads, without retry or fake zero: "+mode,async()=>{

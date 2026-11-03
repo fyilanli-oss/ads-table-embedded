@@ -1,3 +1,39 @@
+## 3 Kasım — 15. madde: Google rolünün onaylı canlı kurulumu
+
+Google'a özel adstable_google_source_runner rolü, onaylı SQL dosyasıyla bir kez
+kuruldu. Kaynak main:df4b0b1e7d914319096149bc46c95beb3414284d. Kullanıcı önce canlı
+kurulumu, sonra eski82 kaydı koruyarak Supabase aracının83. kayıt eklemesini açıkça
+onayladı. Bu ikinci onay, eski hazırlık kaydındaki yalnız ledger eklememe kuralının
+yerine geçer. Diğer güvenlik, parola ve aktivasyon sınırları aynen korunur.
+
+Kaynak dosya tools/sql/eo05-google-source-role-install.sql değiştirilmedi. SQL
+SHA256:9ac79f009c2a79282f07cf8f3ba87b1bb14e44b10b14583ca0f46f6ef62deca4.
+Supabase apply_migration kaydı:20261103140321 / eo05b_google_source_role_install.
+Eski82 version/name/SQL hash'i aynıdır; yeni kayıt exact dosyayla eşleşir. Eski
+migration dizileri ve önceki kanıtlar tarihsel olarak korunur. Bu operasyonel dosya
+normal migration keşfine eklenmez;83. kayıt tarihli lineage katmanında bağlıdır.
+
+Kanıt: docs/evidence/EO05_GOOGLE_SOURCE_ROLE_INSTALLATION_2026-11-03.json.
+Önceki kanıtla aynı şema üzerinde ön koşullar geçti; rol yoktu ve güvenlik taraması
+boştu. Kurulum sonrası gerçek runtime profil kontrolü true; rol girişe kapalı; LOGIN ve bütün geniş
+yetki bayrakları false. Önceki5 uygulama rolünün özellikleri değişmedi. PostgreSQL'in
+creator postgres için doğal ADMIN true / SET false / INHERIT false üyeliği ayrıca
+kaydedildi. Yeni rol mevcut rollere üye değildir; açık SET ROLE yetkisi eklenmedi.
+
+Katalog farkı yalnız4 schema USAGE ve16 function EXECUTE ekidir. Diğer kategoriler,
+169 fonksiyonun gövde/owner/config değerleri,54 tablo ve zorunlu RLS korunur.
+Canlı yeni şema SHA256:9d965a218e3e1462f2b38a89e468b0f798fcaa37003dfa58e8a7e7b5287f67f9.
+İzole CI rolü rollback ettiği için eski82 şema hash'ini korur; bu canlı committed
+ACL durumu ile aynı hash iddiası değildir. Son güvenlik taraması da bulgusuzdur.
+
+Parola/anahtar/config/login veya native provider işlemi yoktur. İş, kaynak paketi
+ve kota politikası sayıları0'dır. Bu onaylı canlı kapsam tamamlandı; yeni canlı yetki
+bırakmaz. Sonraki parola/amaç anahtarı/sonlu politika, güvenilir kaynak incelemesi,
+SDK ve iş/kota/kapasite ile gerçek veri kabulü ayrı kapılardır.15 açık;23 Dataset/FX/
+kalıcı teslim;22 paused ve Overlap ertelemeleri korunur. Bu PR yalnız sonuç ve
+sözleşme kaydıdır; merge ayrı onay ister. Supabase migrations ve PostgreSQL17
+CREATE ROLE belgeleri3 Kasım2026 yeniden kontrol edildi.
+
 ## 3 Kasım — 15. madde: Google'a özel veritabanı erişiminin hazırlığı
 
 Ürün sahibi, özel rolün kurulum dosyası, salt okunur ön kontrolleri, izole testleri

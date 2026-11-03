@@ -4,6 +4,11 @@ on:
   pull_request:
     branches: [main, "codex/step15-storage-foundation-design"]
     paths:
+      - "app/lib/refresh/google-source-server.server.js"
+      - "app/lib/database/google-source-postgres.server.js"
+      - "app/lib/database/source-evidence-config.server.js"
+      - "tests/google-source-server.test.js"
+      - "tests/source-evidence-store.test.js"
       - "app/lib/refresh/google-source-mapping-flow.server.js"
       - "tools/eo05-google-mapping-flow-probe.mjs"
       - "app/lib/database/source-rule-store.server.js"

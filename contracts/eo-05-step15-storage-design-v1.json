@@ -1008,6 +1008,20 @@
       "live_provider_authorized": false,
       "merge_authorized": false,
       "deployment_authorized": false
+    },
+    "google_source_server": {
+      "entry": "app/lib/refresh/google-source-server.server.js",
+      "database": "app/lib/database/google-source-postgres.server.js",
+      "key_and_policy": "app/lib/database/source-evidence-config.server.js",
+      "record": "contracts/a6-eo-implementation-master-v1.json#Step15_Google_source_server_composition_2026_11_03",
+      "status": "prepared_inactive_not_provisioned",
+      "role": "adstable_google_source_runner",
+      "live_role_installed": false,
+      "live_keys_or_policies_installed": false,
+      "SDK_hook_auto_install": false,
+      "reviewer_default": false,
+      "live_provider_authorized": false,
+      "merge_authorized": false
     }
   }
 }

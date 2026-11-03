@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
-import {randomUUID,createHash} from "node:crypto";
+import {randomUUID,createHash,randomBytes} from "node:crypto";
 import "@shopify/shopify-api/adapters/node";
 import {shopifyApi,ApiVersion,LogSeverity,Session} from "@shopify/shopify-api";
 import {abstractFetch,setAbstractFetchFunc} from "@shopify/shopify-api/runtime";
 import {createShopifyAdminIdentitySdkBridge} from "../app/lib/refresh/shopify-admin-sdk-quota-bridge.server.js";
+import {createGoogleSourceServerExecution} from "../app/lib/refresh/google-source-server.server.js";
+import {GOOGLE_SOURCE_RPC,GOOGLE_SOURCE_ROLE,GOOGLE_SOURCE_ROLE_CHECK_SQL} from "../app/lib/database/google-source-postgres.server.js";
 import {createGoogleSourceMappingFlow} from "../app/lib/refresh/google-source-mapping-flow.server.js";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 import {createSharedQuotaRepository} from "../app/lib/database/shared-quota-repository.server.js";
@@ -21,7 +23,7 @@ const {handleClientErrorFactory}=await import(new URL("./authenticate/admin/help
 // Real SQL, real SDK/REST/quota/collection/writers. Only physical HTTP responses,
 // credentials and explicit source-review decisions are synthetic. No snapshot,
 // source manifest, review page, mapping ID or rule row is fabricated/rewritten.
-export async function googleMappingFlowRehearsal(client,{workspace,shopId,shopDomain}){
+export async function googleMappingFlowRehearsal(client,{workspace,shopId,shopDomain,server=false}){
  assert.equal(process.env.GITHUB_ACTIONS,"true");assert.ok(process.env.RUNNER_TEMP);
  const previous=abstractFetch;await client.query("begin");
  try{
@@ -65,6 +67,37 @@ export async function googleMappingFlowRehearsal(client,{workspace,shopId,shopDo
   const verified={installationAuthority:{authority:"shopify_installation_verified",status:"active",workspaceId:workspace,installGeneration:1},
    identity:{session:{authority:"shopify_id_token_verified",shopDomain},shop:{authority:"shopify_admin_verified",shopId,myshopifyDomain:shopDomain}},context:{admin}};
   const context={merchant_id:"99",feed_label:"US",content_language:"en",data_source:"accounts/99/dataSources/7",legacy_local:false};
+  await client.query("set local role postgres");
+  assert.equal((await client.query("select exists(select 1 from pg_roles where rolname=$1) present",[GOOGLE_SOURCE_ROLE])).rows[0].present,false);
+  await client.query("create role adstable_google_source_runner nologin noinherit nosuperuser nocreatedb nocreaterole noreplication nobypassrls");
+  await client.query("grant adstable_google_source_runner to adstable_owner with inherit false, set true, admin false");
+  await client.query("set local role adstable_owner");
+  await client.query("grant usage on schema integrations,operations,evidence,identity to adstable_google_source_runner");
+  for(const signature of new Set(GOOGLE_SOURCE_RPC.map(x=>x[1]))){
+   assert.match(signature,/^[a-z_]+\.[a-z_]+\([a-z,]*\)$/);
+   await client.query("grant execute on function "+signature+" to adstable_google_source_runner");
+  }
+  assert.equal((await client.query("select has_table_privilege('adstable_google_source_runner','identity.product_identity_mappings','SELECT,INSERT,UPDATE,DELETE') allowed")).rows[0].allowed,false);
+  const profileSignatures=[...new Set(GOOGLE_SOURCE_RPC.map(x=>x[1]))];
+  async function profileReady(){await client.query("set local role adstable_google_source_runner");try{return (await client.query(GOOGLE_SOURCE_ROLE_CHECK_SQL,[profileSignatures])).rows[0].profile_ready;}finally{await client.query("set local role adstable_owner");}}
+  assert.equal(await profileReady(),true,"exact dedicated role profile");
+  await client.query("savepoint missing_rpc");
+  await client.query("revoke execute on function identity.commit_verified_mapping(jsonb,uuid,jsonb) from adstable_google_source_runner");
+  assert.equal(await profileReady(),false,"missing write grant must refuse startup before native I/O");
+  await client.query("rollback to savepoint missing_rpc");await client.query("release savepoint missing_rpc");
+
+  await client.query("savepoint unsafe_profile");
+  await client.query("grant select on identity.product_identity_mappings to adstable_google_source_runner");
+  assert.equal(await profileReady(),false,"a direct table grant must refuse startup");
+  await client.query("rollback to savepoint unsafe_profile");await client.query("release savepoint unsafe_profile");
+  await client.query("savepoint extra_rpc");
+  await client.query("grant execute on function evidence.cleanup_source_retention(uuid,bigint,bigint,uuid,text,bigint,integer,timestamptz,jsonb) to adstable_google_source_runner");
+  assert.equal(await profileReady(),false,"an unrelated private RPC must refuse startup");
+  await client.query("rollback to savepoint extra_rpc");await client.query("release savepoint extra_rpc");
+  assert.equal(await profileReady(),true);
+
+  assert.equal((await client.query("select has_function_privilege('adstable_google_source_runner','evidence.cleanup_source_retention(uuid,bigint,bigint,uuid,text,bigint,integer,timestamptz,jsonb)','EXECUTE') allowed")).rows[0].allowed,false);
+
   for(const mode of ["success","source_lost","rule_lost","mapping_lost","read_failed","denied","wrong_parent","partial_native","native_error","fence_before_rule","abort_after_source","target_missing","review_timeout","mapping_abort"]){
    await client.query("savepoint google_flow_case");
    try{
@@ -77,17 +110,17 @@ export async function googleMappingFlowRehearsal(client,{workspace,shopId,shopDo
      if(mode==="read_failed"&&sql.includes("lookup_verified_mapping"))throw Error("SYNTHETIC-PRIVATE-READ");
      const privateSql=kind||sql.includes("source_rule_review_state")||sql.includes("mapping_review_state")||sql.includes("lookup_verified_mapping");
      if(privateSql)await client.query("savepoint google_flow_rpc");let r;
-     try{r=await client.query(sql,args);if(privateSql)await client.query("release savepoint google_flow_rpc");}
+     try{if(server)await client.query("set local role adstable_google_source_runner");r=await client.query(sql,args);if(server)await client.query("set local role adstable_owner");if(privateSql)await client.query("release savepoint google_flow_rpc");}
      catch(error){if(privateSql){await client.query("rollback to savepoint google_flow_rpc");await client.query("release savepoint google_flow_rpc");}throw error;}
-     if(mode===kind+"_lost")throw Error("SYNTHETIC-PRIVATE-LOST");
-     if(kind==="mapping"&&mode==="mapping_abort"){controller.abort();return new Promise(resolve=>setTimeout(()=>resolve(r),20));}return r;
+     if(!server&&mode===kind+"_lost")throw Error("SYNTHETIC-PRIVATE-LOST");
+     if(!server&&kind==="mapping"&&mode==="mapping_abort"){controller.abort();return new Promise(resolve=>setTimeout(()=>resolve(r),20));}return r;
     }};
     const issued=Date.now(),bridge=createShopifyAdminIdentitySdkBridge();setAbstractFetchFunc(bridge.fetch);
     const rule={state:"verified_source_rule",source_reference:"synthetic-reviewed-native-configuration",scope:{workspace_id:workspace,installation_generation:1,provider_connection_id:connection.id,platform:"google_ads",platform_account_id:"111"},product_context:context,shop_id:shopId,format:"shopify_market_product_variant",market:"US"};
     const plan={identity:{provider:"google_ads",accountId:"111",nativeId:mode==="target_missing"?"not-present":"shopify_US_123_456",context},
      ruleProposal:{ruleKey:"synthetic-google-flow",previousRuleId:null,basis:{version:"product-source-rule-v1",provider:"google_ads",format:rule.format,market:rule.market},from:new Date(issued-1000).toISOString(),until:new Date(issued+60000).toISOString(),maxObservationAgeMs:60000},
      rulePolicy:{version:"synthetic",until:new Date(issued+30000).toISOString()},mappingPolicy:{version:"synthetic",until:new Date(issued+30000).toISOString()},deadlineAt:new Date(issued+60000).toISOString()};
-    const flow=createGoogleSourceMappingFlow({plan,reviewAuthority:async request=>{decisionCalls++;if(mode==="abort_after_source")controller.abort();if(mode==="review_timeout"){controller.abort();return new Promise(()=>{});}return {status:mode==="denied"?"denied":"approved",decisionId:randomUUID(),snapshotHash:request.snapshotHash,proposalHash:request.proposalHash,validUntil:request.expiresAt};},
+    const options={plan,reviewAuthority:async request=>{decisionCalls++;if(mode==="abort_after_source")controller.abort();if(mode==="review_timeout"){controller.abort();return new Promise(()=>{});}return {status:mode==="denied"?"denied":"approved",decisionId:randomUUID(),snapshotHash:request.snapshotHash,proposalHash:request.proposalHash,validUntil:request.expiresAt};},
      readerOptions:{verified,database,tokenVault:{loadProviderTokenSet:async()=>({access_token:"SYNTHETIC-ACCESS",refresh_token:"SYNTHETIC-REFRESH",permission_profile:"identity_v1",scope:scopes.join(" "),expires_in:3600,scope_verified_at:new Date(issued).toISOString(),expires_at:new Date(issued+3600000).toISOString()})},
       merchantId:"99",developerToken:"SYNTHETIC-DEVELOPER",sdkBridge:bridge,sourceRules:[rule],...execution,workStore:store,quotaStore,now:Date.now,readNow:()=>new Date(),signal:controller.signal,
       maxPages:mode==="partial_native"?1:10,sourceStorage:{cipher:input.cipher,policy:input.policy,limits:{maxRows:1000,maxBytes:1000000}},fetchFn:async(endpoint)=>{
@@ -96,7 +129,42 @@ export async function googleMappingFlowRehearsal(client,{workspace,shopId,shopDo
        if(u.hostname==="merchantapi.googleapis.com"){counts.merchant++;return mode==="native_error"?Response.json({error:{message:"SYNTHETIC-PRIVATE"}},{status:500}):Response.json({products:[{name:"accounts/99/products/en~US~shopify_US_123_456",offerId:"shopify_US_123_456",feedLabel:"US",contentLanguage:"en",dataSource:context.data_source}],...(mode==="partial_native"?{nextPageToken:"more"}:{})});}
        assert.equal(u.hostname,shopDomain);counts.admin++;return Response.json({data:{shop:{id:shopId,myshopifyDomain:shopDomain},product:{id:"gid://shopify/Product/123",legacyResourceId:"123"},productVariant:{id:"gid://shopify/ProductVariant/456",legacyResourceId:"456",product:{id:mode==="wrong_parent"?"gid://shopify/Product/999":"gid://shopify/Product/123",legacyResourceId:mode==="wrong_parent"?"999":"123"}}},
         extensions:{cost:{requestedQueryCost:8,actualQueryCost:5,throttleStatus:{maximumAvailable:1000,currentlyAvailable:995,restoreRate:50}}}});
-      }}});
+      }}};
+    let flow;
+    if(server){
+     const key=()=>randomBytes(32).toString("base64url"),environment={
+      ADSTABLE_SOURCE_EVIDENCE_ACTIVE_KEY_VERSION:"1",ADSTABLE_SOURCE_EVIDENCE_ENCRYPTION_KEY_V1:key(),
+      ADSTABLE_PROVIDER_TOKEN_ACTIVE_KEY_VERSION:"1",ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_V1:key(),ADSTABLE_SESSION_ENCRYPTION_KEY_V1:key(),
+      GOOGLE_ADS_DEVELOPER_TOKEN:"SYNTHETIC-DEVELOPER",ADSTABLE_GOOGLE_SOURCE_DB_TIMEOUT_MS:"30000",
+      ADSTABLE_GOOGLE_SOURCE_DATABASE_URL:"postgresql://adstable_google_source_runner.podpwkrpmjiksskxhwsu:"+"x".repeat(32)+"@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require"};
+     // Test-only adapter retains the outer rollback fixture. Each actual RPC runs
+     // as the exact narrow role with only the published function grants. Lost
+     // acknowledgement is injected AFTER releasing the successful SQL savepoint.
+     let poolOrdinal=0;
+     const poolFactory=()=>({on(){},async end(){},async connect(){
+      const name="server_rpc_"+(++poolOrdinal);let committed=false,lastKind=null;
+      return {release(){},async query(sql,args){
+       if(sql==="begin")return client.query("savepoint "+name);
+       if(sql==="commit"){
+        await client.query("set local role adstable_owner");await client.query("release savepoint "+name);committed=true;
+        if(lastKind&&mode===lastKind+"_lost")throw Error("SYNTHETIC-PRIVATE-LOST");
+        if(lastKind==="mapping"&&mode==="mapping_abort"){controller.abort();return new Promise(resolve=>setTimeout(()=>resolve({rows:[]}),20));}
+        return {rows:[]};
+       }
+       if(sql==="rollback"){if(!committed){await client.query("rollback to savepoint "+name);await client.query("release savepoint "+name);}await client.query("set local role adstable_owner");return {rows:[]};}
+       if(sql===GOOGLE_SOURCE_ROLE_CHECK_SQL){
+        await client.query("set local role adstable_google_source_runner");const r=await client.query(sql,args);await client.query("set local role adstable_owner");return r;
+       }
+       if(sql.startsWith("select pg_catalog.set_config"))return client.query(sql,args);
+       lastKind=sql.includes("commit_google_identity_source")?"source":sql.includes("commit_reviewed_source_rule")?"rule":sql.includes("commit_verified_mapping")?"mapping":null;
+       return database.query(sql,args);
+      }};
+     }});
+     flow=createGoogleSourceServerExecution({environment,verified,tokenVault:options.readerOptions.tokenVault,sdkBridge:bridge,
+      execution,configuration:{merchantId:"99",sourceRules:[rule],plan,sourcePolicy:input.policy,
+       limits:{maxRows:1000,maxBytes:1000000,maxPages:mode==="partial_native"?1:10,maxLinkPages:10,maxLinks:1000,maxElapsedMs:120000}},
+      reviewAuthority:options.reviewAuthority,signal:controller.signal,poolFactory,fetchFn:options.readerOptions.fetchFn});
+    }else flow=createGoogleSourceMappingFlow(options);
     const r=await flow.run();assert.doesNotMatch(JSON.stringify(r),/SYNTHETIC-PRIVATE|SYNTHETIC-ACCESS|SYNTHETIC-ADMIN|SYNTHETIC-REFRESH/);
     await assert.rejects(flow.run(),/EXECUTION_USED/);
     if(mode==="success"){
@@ -118,9 +186,11 @@ export async function googleMappingFlowRehearsal(client,{workspace,shopId,shopDo
      if(["partial_native","native_error"].includes(mode))assert.equal(counts.source,0);
      if(mode==="abort_after_source")assert.equal(r.source.status,"committed");
     }
+    if(server)await flow.close();
     assert.equal((await client.query("select status from operations.refresh_runs where workspace_id=$1 and job_id=$2",[workspace,execution.claim.id])).rows[0].status,"running");
    }finally{await client.query("rollback to savepoint google_flow_case");await client.query("release savepoint google_flow_case");}
   }
-  console.log("EO05_GOOGLE_MAPPING_FLOW_SQL_PASS actual_source_capture_to_review_to_mapping_to_current_read=true real_SQL_and_SDK=true source_rule_mapping_lost_replies_stop=true explicit_inspection_only=true no_fixture_snapshot_or_manifest_rewrite=true native_evidence_synthetic=true no_Dataset_or_job_finish=true");
+  if(server)console.log("EO05_GOOGLE_SOURCE_SERVER_SQL_PASS scenarios=14 exact_limited_role_RPC=true separate_source_key=true explicit_policy_and_review=true lost_commit_inspection_readonly=true native_evidence_synthetic=true live_grants=false");
+  else console.log("EO05_GOOGLE_MAPPING_FLOW_SQL_PASS actual_source_capture_to_review_to_mapping_to_current_read=true real_SQL_and_SDK=true source_rule_mapping_lost_replies_stop=true explicit_inspection_only=true no_fixture_snapshot_or_manifest_rewrite=true native_evidence_synthetic=true no_Dataset_or_job_finish=true");
  }finally{setAbstractFetchFunc(previous);await client.query("rollback");}
 }

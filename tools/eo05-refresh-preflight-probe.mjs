@@ -167,4 +167,5 @@ export async function refreshPreflightProbe(client,{workspace,connections,shopId
   await metaSourceCaptureRehearsal(client,{workspace,shopId,shopDomain});
   await klaviyoSourceCaptureRehearsal(client,{workspace,shopId,shopDomain});
   await googleMappingFlowRehearsal(client,{workspace,shopId,shopDomain});
+  await googleMappingFlowRehearsal(client,{server:true,workspace,shopId,shopDomain});
 }

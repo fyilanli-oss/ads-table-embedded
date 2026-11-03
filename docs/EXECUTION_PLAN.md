@@ -1,3 +1,50 @@
+## 3 Kasım — mevcut15: Google özel sunucu bağlantısı
+
+Owner, salt okunur canlı incelemenin ardından dar DB erişimi, ayrı kanıt anahtarı,
+sonlu politikalar, mevcut doğrulanmış iş/kota ve açık inceleme kararını bağlayan
+kod/izole test/PR paketini açıkça onayladı. Başlangıç main
+93e221278de84a1ccb4ad4be719a3dbb279b567a. Makine karşılığı:
+contracts/a6-eo-implementation-master-v1.json#Step15_Google_source_server_composition_2026_11_03.
+
+Yeni inactive sunucu girişi mevcut Google kaynak–kural–eşleme akışını, gerçek iş/kota
+repository'lerini ve özel SQL istemcisini kurar. Mevcut doğrulanmış Shopify caller,
+gerçek kurulmuş SDK köprüsü, token vault, admitted claim/fence/window/entitlement,
+explicit kaynak kuralı/hedef planı ve reviewAuthority zorunludur. Varsayılan inceleme
+onayı, yetki bayrağından iş üretme, route/scheduler veya global SDK setter eklenmez.
+
+Özel adstable_google_source_runner rolü yalnız hazırlanmış bir profildir. Yeni DB
+istemcisi pinned proje/region transaction pooler, doğrulanmış TLS/CA, max1 bağlantı
+ve açık timeout ister. Her RPC gerçek rolü, geniş ayrıcalıkları/üyelikleri, doğrudan
+tablo erişimini, eksik/fazla özel function EXECUTE yetkisini denetler.17 exact SQL
+biçimi16 mevcut RPC'ye bağlıdır; genel SQL, temizlik, OAuth write ve iş bitişi yoktur.
+Bir RPC tek checked-out connection/transaction kullanır. SQL/COMMIT/idle hatası
+istemciyi durdurur; raw hata veya otomatik tekrar yoktur. Parametreler await öncesi kopyalanır.
+
+Kanıt anahtarı environment'tan açık aktif sürüm ve Vn anahtarlarıyla okunur; bütün
+token/session anahtarlarından farklı olmalıdır. En çok16 sürüm; canonical32-byte
+base64url; varsayılan/yeni key üretimi yoktur. Geçici owned buffer'lar silinir.
+Beş kaynak sınıfının version/until değerleri açık ve sonludur; metadata önce dolamaz.
+Gün sayısı/canlı değer uydurulmaz. İşlem veya açıklama modalı başlatılmaz.
+
+Bir run yalnız bir kez. Unknown sonrası explicit inspect, aynı rol denetimiyle
+ayrı yeni receipt-only bağlantı açar; yazmayı tekrarlamaz, güncel eşleme okumaz,
+akışı sıfırlamaz. Asıl flow'un owner/fence/quota/abort/deadline ve review hash/süre
+kontrolleri korunur. Anahtar/config veya genel DB yüzeyi döndürülmez.
+
+29 yerel odaklı kontrol; F01'de mevcut14 gerçek SQL/REST/SDK senaryosu hem doğrudan
+hem yeni giriş üzerinden exact dar rol altında sınanır. Fazla tablo/RPC grant'i
+katalog denetimiyle reddedilir. Native yanıt/credential/review sentetiktir. Test pool'u
+outer rollback fixture için savepoint kullanır; kayıp cevap successful release'ten
+sonra üretilir. Bu, production fiziksel COMMIT ağı veya gerçek hesap kanıtı değildir.
+
+Bu paket yeni migration üretmez;39 eksik adım planı değişmez. Rol/grant yalnız izole
+rollback testinde hazırlanır. Canlı rol/key/policy/config, SDK bootstrap kurulumu,
+gerçek kaynak yapılandırma incelemesi/issuer, admitted work/kota/kapasite ve gerçek
+Google kabulü ayrı kapılardır. OAuth/UI/scope/sorgu, canlı SQL/provider/deploy/merge yok.
+15 açık;23 genel Dataset/FX/kalıcı teslim;22 paused ve Overlap ertelemeleri korunur.
+Resmî Supabase bağlantı/fonksiyon ve node-postgres transaction belgeleri3 Kasım2026
+kontrol edildi. CI/uzak içerik ayrıca doğrulanır; merge ayrıca açık onay ister.
+
 ## 3 Kasım — mevcut15: canlı migration kayıtlarının uzlaştırılması ve43+39 izole prova
 
 Ürün sahibi üç farklı numaralı canlı kaydın exact SQL karşılaştırmasını, ardından

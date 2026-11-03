@@ -3142,5 +3142,41 @@
     "history_repair_authorized": false,
     "merge_authorized": false,
     "deployment_authorized": false
+  },
+  "Step15_Google_source_server_composition_2026_11_03": {
+    "status": "repository_preparation_isolated_acceptance_pending",
+    "base_main": "93e221278de84a1ccb4ad4be719a3dbb279b567a",
+    "owner_approval": "Owner explicitly approved the concrete Google trusted-server composition: narrow database access, separate evidence key, finite policies, existing verified job/quota inputs and explicit source-review decision binding; code/isolated tests/PR only. Source: Onayliyorum on2026-11-03. No live SQL/key/grant/config/provider/deploy or merge authority.",
+    "entry": "app/lib/refresh/google-source-server.server.js",
+    "database": "app/lib/database/google-source-postgres.server.js",
+    "configuration": "app/lib/database/source-evidence-config.server.js",
+    "scope": "Inactive server-only one-run execution consumes existing authenticated Shopify caller, genuine installed SDK bridge, token vault, admitted fenced job/window/fresh entitlement, exact trusted merchant/source-rule/target plan, required explicit reviewAuthority and finite source/rule/mapping policies. It builds real work/quota repositories and the existing source-to-rule-to-mapping flow. No route, worker/scheduler, admission shortcut, native query/scope, OAuth/UI or SDK global-hook setter.",
+    "database_boundary": "Dedicated prepared role adstable_google_source_runner; pinned eu-central-1 transaction pooler/project, verified CA/TLS,max1 connection, explicit1..30000ms timeout. Exact17 statement forms for16 existing RPC signatures. Every RPC checks current role, unsafe attributes/role memberships, direct table access, missing expected EXECUTE and extra private-function EXECUTE. No app/coordinator/owner role fallback, table query, DDL, claim finish, cleanup or OAuth mutation. Each RPC uses one checked-out connection and one bounded transaction; arguments detached before acquisition. Any SQL/COMMIT/idle error poisons instance and is sanitized; no retry.",
+    "key_boundary": "Explicit ADSTABLE_SOURCE_EVIDENCE_ACTIVE_KEY_VERSION and ADSTABLE_SOURCE_EVIDENCE_ENCRYPTION_KEY_Vn canonical32-byte base64url keys,max16 versions. All provider-token versions and session key are required exclusions. No default/generated/reused key; owned temporary buffers wiped. Policies require exact five classes, explicit version and finite future until; metadata cannot expire first. No production values or day-count policy invented.",
+    "failure_boundary": "One run; no public raw database, keys or configuration returned. Unknown write stops all progression. Explicit inspect after the stopped run opens a fresh historical-receipt-only transport with the same role/profile checks; it cannot retry any write, perform current mapping lookup or reset the run. Existing deadlines/abort/current owner/fence/quota and explicit review hash/expiry checks remain. No Dataset/job finish/activation.",
+    "provisioning_boundary": "This package deliberately does not create a migration or change the39-step captured plan. The new role and exact grant profile exist only inside rollback-only isolated test setup; none is installed live. Production role provisioning and reviewed configuration, actual SDK bootstrap installation, trusted review issuer/source configuration, admitted work and route/quota/capacity policies need separately approved live preparation. This code is not live readiness or real-account acceptance.",
+    "required_configuration_names": [
+      "ADSTABLE_GOOGLE_SOURCE_DATABASE_URL",
+      "ADSTABLE_GOOGLE_SOURCE_DB_TIMEOUT_MS",
+      "ADSTABLE_SOURCE_EVIDENCE_ACTIVE_KEY_VERSION",
+      "ADSTABLE_SOURCE_EVIDENCE_ENCRYPTION_KEY_Vn",
+      "ADSTABLE_PROVIDER_TOKEN_ACTIVE_KEY_VERSION",
+      "ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_Vn",
+      "ADSTABLE_SESSION_ENCRYPTION_KEY_V1",
+      "GOOGLE_ADS_DEVELOPER_TOKEN"
+    ],
+    "validation": "29 focused configuration/TLS/key-reuse/role/SQL-allowlist/argument-detachment/concurrency/unknown/inspection cases. Existing F01 genuine Google SQL/REST/SDK/source/rule/mapping rehearsal runs its14 modes both directly and through the new server entry under the exact limited SQL role. Extra table/private-function grants are rejected by actual catalog profile checks. Test pools use SQL savepoints to retain outer rollback fixtures and inject acknowledgement loss only after successful savepoint release; this is not physical production network commit acknowledgement proof. Only native HTTP/credentials/review decisions are synthetic. Required CI pending. The two14-mode runs each obtain independent actual120-second Google admission; no deadline is borrowed or extended.",
+    "official_checked_at": "2026-11-03",
+    "official_sources": [
+      "https://supabase.com/docs/guides/database/connecting-to-postgres",
+      "https://supabase.com/docs/guides/database/functions",
+      "https://node-postgres.com/features/transactions"
+    ],
+    "remaining": "Separate live role/key/policy/server bootstrap and39 migrations, actual source-configuration review issuer, capacity and real Google acceptance remain. Meta/Klaviyo production compositions separate;15 open;23 Dataset/FX/durable handoff,22 paused and Overlap deferrals preserved.",
+    "runtime_code_authorized": true,
+    "live_database_authorized": false,
+    "live_provider_authorized": false,
+    "merge_authorized": false,
+    "deployment_authorized": false
   }
 }

@@ -835,5 +835,19 @@
     "shopify.resolve_active_installation_callback_return(uuid,bigint)",
     "integrations.finalize_provider_disconnect(uuid,uuid,uuid,bigint,text,bigint,text,text,timestamptz)"
   ],
-  "required_remaining_gates": []
+  "required_remaining_gates": [],
+  "live_readiness_2026_11_03": {
+    "status": "captured_ledger_and_three_exact_SQL_aliases_rehearsal_preparation",
+    "source_main": "0cb359e420cd6a505ae2b0faf4287e30ac755926",
+    "evidence": "docs/evidence/EO05_STEP15_MIGRATION_READINESS_2026-11-03.json",
+    "planner": "tools/f01-live-readiness-plan.mjs",
+    "rehearsal": "tools/f01-live-readiness-rehearsal.mjs",
+    "captured_live_count": 43,
+    "exact_SQL_aliases": 3,
+    "remaining_count": 39,
+    "historical_manifest_preserved": true,
+    "live_history_repair_authorized": false,
+    "live_apply_authorized": false,
+    "live_schema_parity_verified": false
+  }
 }

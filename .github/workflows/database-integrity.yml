@@ -129,7 +129,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/f01b-identity-rollout"
           pnpm dlx supabase@2.121.0 init --workdir "$RUNNER_TEMP/f01b-identity-rollout"
           pnpm dlx supabase@2.121.0 db start --workdir "$RUNNER_TEMP/f01b-identity-rollout"
-      - name: Scoped OAuth and Google renewal rollout with both role states
+      - name: Scoped OAuth renewal and captured43 plus remaining39 readiness rehearsal
         run: node tools/f01-identity-oauth-rollout.mjs
       - name: Clean third isolated database
         if: always()

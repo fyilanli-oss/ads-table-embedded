@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import {liveReadinessRehearsal} from "./f01-live-readiness-rehearsal.mjs";
 import {randomBytes,randomUUID} from "node:crypto";
 import {readFileSync} from "node:fs";
 import {fileURLToPath} from "node:url";
@@ -150,6 +151,7 @@ async function main(){
     assert.equal((await client.query("select exists(select 1 from pg_roles where rolname='adstable_refresh_coordinator') present")).rows[0].present,false);
     assert.equal((await client.query("select count(*)::int n from app.workspaces")).rows[0].n,0);
     console.log("F01_SCOPED_GOOGLE_RENEWAL_ROLE_PRESENT_PASS inherited_default_execute_revoked=true same_SQL_reporting_change_probes=true synthetic_only=true production_mutation=false");
+    await liveReadinessRehearsal(client,()=>scopedIdentityFixture(client));
   }finally{await client.end();}
 }
 if(process.argv[1]&&fileURLToPath(import.meta.url)===process.argv[1])main().catch(error=>{

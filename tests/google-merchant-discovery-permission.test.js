@@ -127,8 +127,12 @@ for (const kind of ["account", "selection", "version", "credential", "workspace"
     if (kind === "generation") x.plan.installGeneration = "4";
     if (kind === "shop") x.plan.shopId = "gid://shopify/Shop/13";
     if (kind === "missing_permission") x.f.f.token.scope = "https://www.googleapis.com/auth/adwords";
-    if (kind === "expired_token") x.f.f.token.expires_at = new Date(x.options.now() - 1).toISOString();
+    if (kind === "expired_token") {
+      x.f.f.token.expires_at = new Date(x.options.now() - 1).toISOString();
+      x.f.f.token.scope_verified_at = new Date(x.options.now() - 3600001).toISOString();
+    }
     x.setPlan(); const {body} = await run(x); safeStopped(body); noProvider(x);
+    if (kind === "expired_token") assert.equal(body.reason, "credential_refresh_required");
   });
 }
 
@@ -163,6 +167,7 @@ for (const kind of ["permission", "network", "pagination", "wrong_customer", "du
       assert.equal(body.reason, "provider_error"); assert.equal(body.provider_error.http_status, 403);
       assert.equal(body.provider_error.provider_error_code, "CUSTOMER_NOT_ENABLED");
     }
+    if (kind === "drift") assert.equal(body.reason, "authority_changed");
   });
 }
 

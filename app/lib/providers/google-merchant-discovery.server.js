@@ -1,4 +1,4 @@
-import {createIdentityRuntimeAuthorityLoader} from "./identity-runtime-authority.server.js";
+import {createIdentityRuntimeAuthorityLoader, IdentityRuntimeAuthorityError} from "./identity-runtime-authority.server.js";
 import {createGoogleAdsRestClient, googleAdsRestFailureMetadata} from "./google-ads-rest.server.js";
 import {GOOGLE_MERCHANT_LINK_QUERY} from "./google-merchant-account-link.server.js";
 import {runIdentityReadDeadline} from "./identity-read-deadline.server.js";
@@ -200,6 +200,11 @@ export async function handleGoogleMerchantDiscoveryRequest({request, authenticat
   } catch (error) {
     if (error instanceof Response) throw error;
     if (error instanceof DiscoveryError) return stopped(error.code, error.code === "request_contract_invalid" ? 400 : 409);
+    if (error instanceof IdentityRuntimeAuthorityError) {
+      if (error.code === "IDENTITY_RUNTIME_CREDENTIAL_REFRESH_REQUIRED") return stopped("credential_refresh_required");
+      if (["IDENTITY_RUNTIME_AUTHORITY_CHANGED", "IDENTITY_RUNTIME_INSTALLATION_CHANGED"].includes(error.code)) return stopped("authority_changed");
+      if (error.code === "IDENTITY_RUNTIME_ABORTED") return stopped("stopped");
+    }
     const metadata = googleAdsRestFailureMetadata(error);
     return stopped(metadata ? "provider_error" : "read_unconfirmed", 409, metadata ? {provider_error: metadata} : {});
   }

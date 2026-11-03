@@ -1,3 +1,28 @@
+## 3 Kasım — Google paket2/3: inceleme ve hazırlık kaydı
+
+1. paket PR313 ile main 8325670b6518b3cb7c639dc0f99ceb7b4e6c5b20 olarak birleşti.
+3.807 test ve üç SQL ortamında15'er yeni senaryo başarılı; gerçek provider çağrısı yok.
+Owner,2. paketin yalnız inceleme/hazırlığını açıkça onayladı. Somut sonuç ve
+önerilen sınırlar docs/EO_05_GOOGLE_PACKAGE2_PREPARATION.md içindedir.
+
+2. paket tamamlanmadı: mevcut rapor evidence düğmesi yeni runner'ı çağırmıyor.
+Gerçek authenticated caller/admission/fresh entitlement ve güvenli kapanış için
+tek seferlik başlatma/koordinatör bağlantısının kod ve test işi açıkça kaydedildi;
+bu incelemede uygulanmadı. Dar Google rolü token kasası/iş kabulü için genişletilmez.
+Mevcut yetkili token kasası ve ayrı koordinatör kullanılır. Tarihli kurulum kanıtı
+güncel canlı kontrol sayılamaz; canlı hesap/Merchant/credential/ayarlar incelenmedi.
+
+Öneri: tek iş,90s toplam deadline,60s reader,5s DB timeout,1MiB toplam Google yanıtı,
+1 Merchant sayfası ve her ilişki okumasında1 sayfa: en çok3 Google isteği. Fresh
+Partner/Shopify kimlik çağrıları ayrıca bütçelenir. Sonlu bütçe gerçek adapter'ın
+tam maliyetinden çıkarılmadan canlıya yazılmaz. Kimliği/tarihi/scope'u uydurma,
+fixture stage reset veya boş rapor sayfası canlı hazırlık yerine kullanılamaz.
+
+Runtime kodu/test kapsamı, salt okunur canlı ön kontrol, rol/parola/config uygulaması,
+merge/yayın ve3. paketteki gerçek Google isteği kendi açık onay kapılarındadır.
+Üç ana paket ve sıralama değişmedi; alt paket yok. Saklama gerçek Google0'dan sonra.
+15 açık;22 paused;23 Dataset/FX/kalıcı rapor teslimi.
+
 ## 3 Kasım — Google paket1/3: çalıştırıcı bağlantısı
 
 Ürün sahibi Google gerçek kabulünü başarılı isteğin0 kayıt döndürmesi olarak

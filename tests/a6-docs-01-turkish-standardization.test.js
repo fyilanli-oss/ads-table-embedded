@@ -33,11 +33,12 @@ test("DOCS-01 preserves its accepted historical inventory and explicitly account
     "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md",
     "docs/OAUTH_FLOW_CONSTITUTION.md",
     "docs/EO_05_STEP15_STORAGE_DESIGN_BRIEF.md",
+    "docs/EO_05_GOOGLE_PACKAGE2_PREPARATION.md",
   ];
   const baseline = contract.inventory.map((row) => row.path).sort();
   assert.deepEqual(actual, [...baseline, ...laterDocuments].sort());
   assert.equal(new Set(baseline).size, 63);
-  assert.equal(new Set(actual).size, 70);
+  assert.equal(new Set(actual).size, 71);
   assert.deepEqual(contract.inventory_counts, {
     total_markdown: 63, human_markdown: 62, excluded_agent_instructions: 1,
     translated_review_pending: 0, pending_language_review: 0,

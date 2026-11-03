@@ -1,5 +1,9 @@
 import {createIdentityRuntimeAuthorityLoader, IdentityRuntimeAuthorityError} from "./identity-runtime-authority.server.js";
-import {createGoogleAdsRestClient, googleAdsRestFailureMetadata} from "./google-ads-rest.server.js";
+import {createGoogleAdsRestClient, googleAdsRestFailureMetadata, readGoogleAdsOAuthConfig,
+  refreshGoogleAdsAccessToken} from "./google-ads-rest.server.js";
+import {createIdentityAuthorityRepository} from "../database/identity-authority-repository.server.js";
+import {inspectGoogleIdentityCredential} from "../oauth/google-identity-credential.server.js";
+import {validateIdentityOAuthGrantedScopes} from "../oauth/oauth-permission-profile.server.js";
 import {GOOGLE_MERCHANT_LINK_QUERY} from "./google-merchant-account-link.server.js";
 import {runIdentityReadDeadline} from "./identity-read-deadline.server.js";
 import {resolveReadOnlyShopifyRouteAuthority} from "../shopify/shopify-route-authority.server.js";
@@ -26,7 +30,9 @@ export function readGoogleMerchantDiscoveryPlan(environment, now = Date.now()) {
   let plan;
   try {plan = JSON.parse(raw);} catch {fail("configuration_required");}
   if (!exact(plan, ["operationId", "workspaceId", "installGeneration", "shopId", "shopDomain", "connectionId",
-    "connectionVersion", "credentialId", "selectionId", "accountId", "expiresAt"])
+    "connectionVersion", "credentialId", "selectionId", "accountId", "expiresAt",
+    ...(Object.hasOwn(plan ?? {}, "purpose") ? ["purpose"] : [])])
+    || Object.hasOwn(plan, "purpose") && !["merchant_links", "renew_credential"].includes(plan.purpose)
     || ![plan.operationId, plan.workspaceId, plan.connectionId, plan.credentialId].every(v => typeof v === "string" && UUID.test(v))
     || ![plan.installGeneration, plan.selectionId, plan.accountId].every(numeric)
     || !Number.isSafeInteger(plan.connectionVersion) || plan.connectionVersion < 1
@@ -65,7 +71,7 @@ async function readInput(request, signal) {
 }
 
 // Bounds decoded response bytes even when content-length is absent or misleading.
-async function boundedResponse(response, signal) {
+async function boundedResponse(response, signal, tokenResponse = false) {
   if (!response || typeof response.status !== "number" || !response.body?.getReader) fail("response_invalid");
   const reader = response.body.getReader();
   const cancel = () => {void reader.cancel().catch(() => {});};
@@ -77,14 +83,14 @@ async function boundedResponse(response, signal) {
       const part = await reader.read();
       if (part.done) break;
       bytes += part.value.byteLength;
-      if (bytes > limits.maxBytes) {cancel(); fail("response_limit");}
+      if (bytes > (tokenResponse ? 65536 : limits.maxBytes)) {cancel(); fail("response_limit");}
       chunks.push(part.value);
     }
     if (signal.aborted) fail("stopped");
     const bodyBytes = Buffer.concat(chunks);
     let payload;
     try {payload = JSON.parse(new TextDecoder("utf-8", {fatal: true}).decode(bodyBytes));} catch {fail("response_invalid");}
-    if (response.ok && !Object.hasOwn(payload ?? {}, "error")) {
+    if (!tokenResponse && response.ok && !Object.hasOwn(payload ?? {}, "error")) {
       if (!payload || typeof payload !== "object" || Array.isArray(payload)) fail("response_invalid");
       // Proto JSON may omit an empty results array. An unrelated object is not empty links.
       if (!Object.hasOwn(payload, "results") && Object.keys(payload).some(key =>
@@ -158,6 +164,83 @@ async function discover({verified, database, tokenVault, environment, plan, sign
   return {status: "observed", complete: true, has_linked_merchant: links.link_count > 0, ...links, ...boundary};
 }
 
+// Explicit renewal is separate from discovery. It never discovers or saves accounts.
+// The current version/credential fence is also enforced by the existing atomic vault RPC.
+async function renewCredential({verified, database, tokenVault, environment, plan, signal, now, fetchFn}) {
+  const owner = verified.installationAuthority, shop = verified.identity.shop;
+  if (owner.workspaceId !== plan.workspaceId || String(owner.installGeneration) !== plan.installGeneration
+    || shop.shopId !== plan.shopId || shop.myshopifyDomain !== plan.shopDomain) fail("authority_required");
+  const read = task => runIdentityReadDeadline({signal, timeoutMs: limits.readTimeoutMs, run: async child => {
+    guard(child, plan, now); const result = await task(); guard(child, plan, now); return result;
+  }});
+  const repository = createIdentityAuthorityRepository({query: (sql, args) => read(() => database.query(sql, args))});
+  const current = async () => {
+    const value = await repository.load({workspaceId: owner.workspaceId, installGeneration: owner.installGeneration,
+      provider: "google_ads", shopId: shop.shopId, shopDomain: shop.myshopifyDomain});
+    // Scope order is not authority. The native token response may reorder the same grant.
+    return value ? {...value, grantedScopes: [...value.grantedScopes].sort()} : null;
+  };
+  const before = await current();
+  const account = before?.accounts?.find(a => a.id === plan.accountId);
+  if (!before || before.installationStatus !== "active" || before.workspaceId !== owner.workspaceId
+    || before.installGeneration !== owner.installGeneration || before.shopId !== shop.shopId || before.shopDomain !== shop.myshopifyDomain
+    || before.status !== "connected" || before.connectionId !== plan.connectionId
+    || before.connectionVersion !== plan.connectionVersion || before.credentialId !== plan.credentialId
+    || before.selectionEpoch !== plan.selectionId || before.reportingAccountId !== plan.accountId
+    || !Array.isArray(before.accounts) || before.accounts.length > 3
+    || new Set(before.accounts.map(a => a.id)).size !== before.accounts.length
+    || account?.kind !== "advertiser" || account.reporting_eligible !== true) fail("authority_required");
+  const granted = [...validateIdentityOAuthGrantedScopes("google_ads", before.grantedScopes?.join(" "))].sort();
+  const token = structuredClone(await read(() => tokenVault.loadProviderTokenSet({credentialId: before.credentialId,
+    installationAuthority: owner, provider: "google_ads"})));
+  const sameScopes = value => JSON.stringify([...validateIdentityOAuthGrantedScopes("google_ads", value)].sort()) === JSON.stringify(granted);
+  if (!sameScopes(token?.scope) || !inspectGoogleIdentityCredential(token, () => new Date(now())).needsRefresh
+    || typeof token.refresh_token !== "string" || !token.refresh_token || token.refresh_token.length > 16384
+    || /[\u0000-\u0020\u007f]/.test(token.refresh_token)) fail("renewal_not_allowed");
+  const unchanged = async () => {
+    if (JSON.stringify(before) !== JSON.stringify(await current())) fail("authority_changed");
+    guard(signal, plan, now);
+  };
+  await unchanged();
+  const config = readGoogleAdsOAuthConfig(environment);
+  let sent = false;
+  const replacement = await refreshGoogleAdsAccessToken({config, refreshToken: token.refresh_token,
+    permissionProfile: "identity_v1", now: () => new Date(now()), fetchFn: async (url, init) => {
+      guard(signal, plan, now);
+      const form = new URLSearchParams(init.body);
+      if (sent || url !== "https://oauth2.googleapis.com/token" || init.method !== "POST"
+        || [...form.keys()].sort().join() !== "client_id,client_secret,grant_type,refresh_token"
+        || form.get("grant_type") !== "refresh_token" || form.get("refresh_token") !== token.refresh_token)
+        fail("request_contract_invalid");
+      sent = true;
+      return boundedResponse(await fetchFn(url, {...init, signal, redirect: "error"}), signal, true);
+    }});
+  guard(signal, plan, now);
+  if (!sameScopes(replacement.scope) || inspectGoogleIdentityCredential(replacement, () => new Date(now())).needsRefresh)
+    fail("renewal_not_allowed");
+  for (const [key, max] of [["access_token", 4096], ["refresh_token", 16384]]) {
+    if (typeof replacement[key] !== "string" || !replacement[key] || replacement[key].length > max
+      || /[\u0000-\u0020\u007f]/.test(replacement[key])) fail("renewal_not_allowed");
+  }
+  await unchanged();
+  let committed;
+  try {
+    // Unknown write outcome is never retried, deleted, or followed by a provider request.
+    committed = await read(() => tokenVault.renewGoogleIdentityCredential({installationAuthority: owner,
+      renewalId: plan.operationId, connectionId: before.connectionId, expectedVersion: before.connectionVersion,
+      expectedCredentialId: before.credentialId, tokenSet: replacement}));
+  } catch {fail("renewal_write_unconfirmed");}
+  if (committed?.renewalId !== plan.operationId || committed.connectionId !== before.connectionId
+    || committed.status !== "connected" || committed.version !== before.connectionVersion + 1
+    || !UUID.test(committed.credentialId ?? "") || committed.credentialId === before.credentialId)
+    fail("renewal_write_unconfirmed");
+  const after = await current();
+  const expected = {...before, credentialId: committed.credentialId, connectionVersion: committed.version};
+  if (JSON.stringify(after) !== JSON.stringify(expected)) fail("renewal_write_unconfirmed");
+  return {status: "credential_renewed", complete: true, account_selection_changed: false,
+    merchant_read_performed: false, ...boundary};
+}
+
 export async function handleGoogleMerchantDiscoveryRequest({request, authenticateAdmin, database, tokenVault,
   environment = process.env, fetchFn = globalThis.fetch, now = Date.now}) {
   const json = (body, status) => new Response(JSON.stringify(body), {status,
@@ -168,15 +251,20 @@ export async function handleGoogleMerchantDiscoveryRequest({request, authenticat
   const env = {...environment}; let plan;
   try {plan = readGoogleMerchantDiscoveryPlan(env, now());} catch {return stopped("configuration_required", 503);}
   if (!plan) return stopped("not_enabled", 503);
+  const renewal = plan.purpose === "renew_credential";
   if (request.method !== "POST" || request.headers.get(GOOGLE_MERCHANT_DISCOVERY_HEADER) !== "v1"
     || request.headers.has("x-adstable-google-acceptance")
     || !request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) return stopped("request_contract_invalid", 400);
-  if (typeof env.GOOGLE_ADS_DEVELOPER_TOKEN !== "string" || !env.GOOGLE_ADS_DEVELOPER_TOKEN
-    || env.GOOGLE_ADS_DEVELOPER_TOKEN.length > 256 || /[\u0000-\u0020\u007f]/.test(env.GOOGLE_ADS_DEVELOPER_TOKEN)) return stopped("configuration_required", 503);
+  if (!renewal && (typeof env.GOOGLE_ADS_DEVELOPER_TOKEN !== "string" || !env.GOOGLE_ADS_DEVELOPER_TOKEN
+    || env.GOOGLE_ADS_DEVELOPER_TOKEN.length > 256 || /[\u0000-\u0020\u007f]/.test(env.GOOGLE_ADS_DEVELOPER_TOKEN))) return stopped("configuration_required", 503);
+  if (renewal) {
+    try {readGoogleAdsOAuthConfig(env);} catch {return stopped("configuration_required", 503);}
+  }
   try {
     return await runIdentityReadDeadline({signal: request.signal, timeoutMs: limits.timeoutMs, run: async signal => {
       const input = await readInput(request, signal);
-      if (!exact(input, ["mode", "operationId"]) || input.mode !== "google_merchant_links_v1" || input.operationId !== plan.operationId)
+      if (!exact(input, ["mode", "operationId"]) || input.mode !== (renewal ? "google_identity_token_refresh_v1" : "google_merchant_links_v1")
+        || input.operationId !== plan.operationId)
         fail("request_contract_invalid");
       guard(signal, plan, now);
       const verified = await resolveReadOnlyShopifyRouteAuthority({request,
@@ -194,7 +282,7 @@ export async function handleGoogleMerchantDiscoveryRequest({request, authenticat
         }}};
       }});
       guard(signal, plan, now);
-      const result = await discover({verified, database, tokenVault, environment: env, plan, signal, now, fetchFn});
+      const result = await (renewal ? renewCredential : discover)({verified, database, tokenVault, environment: env, plan, signal, now, fetchFn});
       return json(result, 200);
     }});
   } catch (error) {
@@ -206,6 +294,7 @@ export async function handleGoogleMerchantDiscoveryRequest({request, authenticat
       if (error.code === "IDENTITY_RUNTIME_ABORTED") return stopped("stopped");
     }
     const metadata = googleAdsRestFailureMetadata(error);
-    return stopped(metadata ? "provider_error" : "read_unconfirmed", 409, metadata ? {provider_error: metadata} : {});
+    return stopped(metadata ? "provider_error" : renewal ? "renewal_unconfirmed" : "read_unconfirmed", 409,
+      metadata ? {provider_error: metadata} : {});
   }
 }

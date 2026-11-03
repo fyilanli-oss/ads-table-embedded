@@ -42,6 +42,123 @@ function safeStopped(body) {
   assert.doesNotMatch(JSON.stringify(body), /SYNTHETIC|PRIVATE|refresh_token|credentialId|request_id|request-id/);
 }
 
+function renewalFixture() {
+  const x = fixture();
+  x.plan.purpose = "renew_credential"; x.setPlan();
+  Object.assign(x.environment, {GOOGLE_ADS_OAUTH_CLIENT_ID: "SYNTHETIC-CLIENT",
+    GOOGLE_ADS_OAUTH_CLIENT_SECRET: "SYNTHETIC-SECRET",
+    GOOGLE_ADS_OAUTH_REDIRECT_URI: "https://embedded.adstable.app/auth/google-ads/callback"});
+  x.f.f.token.scope_verified_at = new Date(x.options.now() - 3600001).toISOString();
+  x.f.f.token.expires_at = new Date(x.options.now() - 1).toISOString();
+  x.renewals = [];
+  const query = x.options.database.query.bind(x.options.database);
+  let replacementId = null;
+  x.options.database = {async query(sql, args) {
+    const result = await query(sql, args);
+    if (replacementId && sql.includes("load_provider_identity_authority")) result.rows[0].credential_id = replacementId;
+    return result;
+  }};
+  x.options.tokenVault.renewGoogleIdentityCredential = async args => {
+    x.renewals.push(args);
+    replacementId = "55555555-5555-4555-8555-555555555555";
+    x.f.f.state.version++;
+    return {renewalId: args.renewalId, connectionId: args.connectionId,
+      credentialId: replacementId, version: x.f.f.state.version, status: "connected"};
+  };
+  x.f.f.hooks.fetch = (url, init) => {
+    assert.equal(url.toString(), "https://oauth2.googleapis.com/token");
+    assert.equal(init.method, "POST"); assert.equal(init.redirect, "error");
+    assert.ok(init.signal instanceof AbortSignal);
+    assert.deepEqual(Object.fromEntries(new URLSearchParams(init.body)), {client_id: "SYNTHETIC-CLIENT",
+      client_secret: "SYNTHETIC-SECRET", grant_type: "refresh_token", refresh_token: "SYNTHETIC-REFRESH"});
+    return Response.json({access_token: "SYNTHETIC-NEW", token_type: "Bearer", expires_in: 3600, scope: x.f.f.token.scope});
+  };
+  x.renewRequest = extra => x.request({mode: "google_identity_token_refresh_v1", operationId: x.plan.operationId}, extra);
+  return x;
+}
+
+test("explicit server renewal purpose calls only token grant and atomically replaces the pinned credential", async () => {
+  const x = renewalFixture(); delete x.environment.GOOGLE_ADS_DEVELOPER_TOKEN;
+  const {response, body} = await run(x, x.renewRequest());
+  assert.equal(response.status, 200); assert.equal(body.status, "credential_renewed");
+  assert.equal(body.complete, true); assert.equal(body.account_selection_changed, false);
+  assert.equal(body.merchant_read_performed, false); assert.equal(body.product_read_performed, false);
+  assert.equal(body.authorizes_activation, false);
+  assert.equal(x.f.f.httpCalls.length, 1); assert.equal(x.renewals.length, 1);
+  assert.equal(x.renewals[0].expectedCredentialId, x.plan.credentialId);
+  assert.equal(x.renewals[0].expectedVersion, x.plan.connectionVersion);
+  assert.equal(x.renewals[0].renewalId, x.plan.operationId);
+  assert.equal(x.renewals[0].tokenSet.permission_profile, "identity_v1");
+  assert.equal(x.renewals[0].tokenSet.refresh_token, "SYNTHETIC-REFRESH");
+  assert.doesNotMatch(JSON.stringify(body), /SYNTHETIC|credentialId|refresh_token|access_token|client_secret/);
+  assert.ok(x.f.f.sqlCalls.every(c => c.sql.includes("load_provider_identity_authority")));
+  assert.equal(x.f.calls.length, 0); assert.equal(x.f.state.admissions, 0);
+  // A committed version cannot be renewed again using the old plan.
+  safeStopped((await run(x, x.renewRequest())).body);
+  assert.equal(x.f.f.httpCalls.length, 1); assert.equal(x.renewals.length, 1);
+});
+
+for (const kind of ["missing_purpose", "wrong_purpose", "wrong_mode", "unknown_purpose", "missing_config",
+  "not_expired", "missing_refresh", "bad_scope", "wrong_version", "wrong_selection", "wrong_credential", "unauthenticated"]) {
+  test("renewal fails closed without a native grant: " + kind, async () => {
+    const x = renewalFixture();
+    if (kind === "missing_purpose") delete x.plan.purpose;
+    if (kind === "wrong_purpose") x.plan.purpose = "merchant_links";
+    if (kind === "unknown_purpose") x.plan.purpose = "anything";
+    if (kind === "missing_config") delete x.environment.GOOGLE_ADS_OAUTH_CLIENT_SECRET;
+    if (kind === "not_expired") {x.f.f.token.scope_verified_at = new Date(x.options.now()).toISOString();
+      x.f.f.token.expires_at = new Date(x.options.now() + 3600000).toISOString();}
+    if (kind === "missing_refresh") delete x.f.f.token.refresh_token;
+    if (kind === "bad_scope") x.f.f.token.scope = "https://www.googleapis.com/auth/adwords";
+    if (kind === "wrong_version") x.plan.connectionVersion++;
+    if (kind === "wrong_selection") x.plan.selectionId = "72";
+    if (kind === "wrong_credential") x.plan.credentialId = "55555555-5555-4555-8555-555555555555";
+    if (kind === "unauthenticated") x.options.authenticateAdmin = async () => {throw new Response(null, {status: 401});};
+    x.setPlan();
+    const task = () => run(x, kind === "wrong_mode" ? x.request() : x.renewRequest());
+    if (kind === "unauthenticated") await assert.rejects(task, e => e instanceof Response && e.status === 401);
+    else safeStopped((await task()).body);
+    noProvider(x); assert.equal(x.renewals.length, 0);
+  });
+}
+
+for (const kind of ["provider_error", "network", "oversize", "missing_scope", "changed_scope", "short_expiry",
+  "drift_before", "drift_after", "write_lost", "write_invalid", "readback_changed", "abort"]) {
+  test("renewal failure cannot retry, discover accounts, publish success or start Merchant reads: " + kind, async () => {
+    const x = renewalFixture(), native = x.f.f.hooks.fetch, controller = new AbortController();
+    x.f.f.hooks.fetch = (url, init) => {
+      if (kind === "provider_error") return Response.json({error: "invalid_grant", error_description: "PRIVATE"}, {status: 400});
+      if (kind === "network") throw Error("PRIVATE SYNTHETIC-SECRET");
+      if (kind === "oversize") return new Response("x".repeat(65537));
+      if (["missing_scope", "changed_scope", "short_expiry"].includes(kind)) return Response.json({access_token: "SYNTHETIC-NEW",
+        token_type: "Bearer", expires_in: kind === "short_expiry" ? 30 : 3600,
+        scope: kind === "missing_scope" ? undefined : x.f.f.token.scope + (kind === "changed_scope" ? " extra" : "")});
+      if (kind === "drift_after") x.f.f.state.version++;
+      if (kind === "abort") controller.abort();
+      return native(url, init);
+    };
+    if (kind === "drift_before") {
+      const load = x.options.tokenVault.loadProviderTokenSet;
+      x.options.tokenVault.loadProviderTokenSet = async args => {x.f.f.state.version++; return load(args);};
+    }
+    const commit = x.options.tokenVault.renewGoogleIdentityCredential;
+    if (kind === "write_lost") x.options.tokenVault.renewGoogleIdentityCredential = async args => {
+      await commit(args); throw Error("PRIVATE response lost after commit");
+    };
+    if (kind === "write_invalid") x.options.tokenVault.renewGoogleIdentityCredential = async args => {
+      const value = await commit(args); return {...value, version: value.version + 1};
+    };
+    if (kind === "readback_changed") x.options.tokenVault.renewGoogleIdentityCredential = async args => {
+      const value = await commit(args); x.f.f.state.version++; return value;
+    };
+    const {body} = await run(x, x.renewRequest({signal: controller.signal})); safeStopped(body);
+    assert.equal(x.f.f.httpCalls.length, kind === "drift_before" ? 0 : 1);
+    assert.equal(x.renewals.length, ["write_lost", "write_invalid", "readback_changed"].includes(kind) ? 1 : 0);
+    if (kind.startsWith("write_") || kind === "readback_changed") assert.equal(body.reason, "renewal_write_unconfirmed");
+    assert.equal(x.f.state.admissions, 0); assert.equal(x.f.calls.length, 0);
+  });
+}
+
 test("authenticated current Reporting Account discovers links without any Merchant/quota/window input", async () => {
   const x = fixture(); let sent;
   x.f.f.hooks.fetch = (url, init) => {

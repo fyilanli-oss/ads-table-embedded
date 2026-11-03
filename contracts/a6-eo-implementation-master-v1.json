@@ -3458,5 +3458,42 @@
       "https://developers.google.com/google-ads/api/rest/common/search",
       "https://shopify.dev/docs/api/shopify-app-react-router/latest/authenticate/admin"
     ]
+  },
+  "Step15_Google_renewal_only_entry_2026_11_03": {
+    "owner_approval": "Owner explicitly approved renewal-only server mode, isolated code/tests/PR on 2026-11-03: Onaylıyorum. No live renewal, merge or deployment.",
+    "package": 2,
+    "new_package": false,
+    "status": "code_only_pending_required_CI_and_separate_merge",
+    "server_plan": {
+      "key": "ADSTABLE_GOOGLE_MERCHANT_DISCOVERY_PLAN",
+      "purpose": "renew_credential",
+      "default": "absent/empty closed; absent purpose preserves read-only merchant_links",
+      "request_mode": "google_identity_token_refresh_v1",
+      "existing_header": "x-adstable-google-merchant-discovery: v1",
+      "request_fields": [
+        "mode",
+        "operationId"
+      ],
+      "pins": "existing workspace/install generation/shop/connection/version/credential/Reporting Account/selection/expiry"
+    },
+    "behavior": [
+      "Authenticate existing Shopify caller; read current authority and encrypted vault only.",
+      "Require valid identity_v1 metadata, exact current scopes, expired or <=60s credential.",
+      "One native refresh grant per invocation through existing primitive, redirects disabled, decoded response <=64KiB, total deadline20s.",
+      "Recheck complete nonsecret authority before grant and before existing atomic vault renewal; operationId is existing receipt ID.",
+      "Existing CAS persists encrypted envelope + connection version + renewal receipt atomically; re-read authority before safe success.",
+      "Never discover/save advertiser or Reporting Accounts; never request Merchant/product/report data, quota, job or Dataset writes.",
+      "No retry, deletion, fallback or second provider operation after error/unknown."
+    ],
+    "concurrency_limit": "At most one native grant per invocation. Existing SQL CAS prevents stale/replayed commits; no distributed exactly-once native refresh guarantee or durable pre-dispatch claim is introduced. Concurrent independent requests must not be dispatched.",
+    "unknown": "Native/network/timeout and SQL response loss remain unconfirmed, never success or retry permission; historical receipt reconciliation remains separately explicit.",
+    "official_checked_at": "2026-11-03",
+    "official_source": "https://developers.google.com/identity/protocols/oauth2/web-server#offline",
+    "live_provider": false,
+    "config_changed": false,
+    "sql_migration": false,
+    "UI_changed": false,
+    "package2_complete": false,
+    "package3_started": false
   }
 }

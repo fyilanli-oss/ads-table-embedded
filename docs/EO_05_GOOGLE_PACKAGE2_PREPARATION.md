@@ -1,3 +1,5 @@
+> 3 Kasım 2026 — 2. paket / yalnız token yenileme: owner açık kod/test/PR onayıyla mevcut Merchant sunucu girişine ayrı, varsayılan kapalı renew_credential amacı eklenir. Mevcut identity_v1 refresh + atomik şifreli credential/receipt kaydı kullanılır; hesap keşfi veya Reporting Account kaydı çalışmaz. Tek çağrıda en fazla bir native refresh; SQL CAS eski/tekrar kaydı engeller, dağıtık native exactly-once iddiası yoktur ve bağımsız eşzamanlı çağrı gönderilmez. Belirsiz sonuç tekrar edilmez. UI, SQL migration ve canlı config değişikliği yok; canlı yenileme/merge/yayın ayrı izinli. 2. paket açık; 3. paket başlamadı. Resmî kaynak kontrolü 2026-11-03: https://developers.google.com/identity/protocols/oauth2/web-server#offline
+
 ## 3 Kasım — Google ikinci paket: bağımsız Merchant bağlantısı okuma girişi
 
 Owner yalnız bu eksik sunucu girişi, kod/test ve PR hazırlığını açıkça onayladı.

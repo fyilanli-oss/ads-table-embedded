@@ -1,0 +1,78 @@
+{
+  "id": "eo05-step15-google-live-acceptance-v1",
+  "version": 1,
+  "source_main": "28d3cff8630c56cfec03b79cd32726f0fd829567",
+  "owner_decisions": {
+    "scope": "Google successful real request returning0 records is the acceptance target because the real accounts are empty. No requirement to create products or synthetic provider data.",
+    "package_count": 3,
+    "subpackages": [],
+    "new_package_or_scope_expansion_requires_explicit_owner_approval": true,
+    "internal_work_must_be_disclosed_before_start": true,
+    "retention_after_google_zero": true,
+    "provider_order": [
+      "google_ads",
+      "meta",
+      "klaviyo"
+    ],
+    "reuse_common_storage_foundation": true
+  },
+  "packages": [
+    {
+      "id": 1,
+      "name": "Google çalıştırıcı bağlantısı",
+      "status": "implementation_isolated_CI_pending",
+      "owner_approval": "Owner explicitly approved the disclosed code/test/PR scope: bind existing Google reader to a runner, preserve shop/account/permission/quota, distinguish successful zero from failure. No live native call/config/deploy/merge authority.",
+      "included_work": [
+        "One-run trusted background entry consuming an existing admitted claim/window/fresh entitlement and verified Shopify caller. Build existing narrow Postgres/work/quota dependencies; no route or job-admission shortcut.",
+        "Use existing native Ads/Merchant reader, before/after relationship and credential/owner checks; sourceStorage null. No Shopify product lookup, source-rule issuer, mapping or evidence writer required for zero.",
+        "Separate complete zero, nonempty, incomplete, permission, quota wait, authority drift, timeout and unknown outcomes. No automatic refresh/retry, fake zero or report publication.",
+        "Aggregate decoded response stream budget; explicit page/row/time/byte bounds; detached caller/plan and terminal one-run/close lifecycle.",
+        "Unit negative controls and real SQL limited-role/fenced quota/native-reader rehearsal on3 isolated databases; PR/CI/exact remote delivery."
+      ],
+      "done_when": "Runnable trusted server entry calls the real existing reader under existing DB role/fence/quota dependencies in isolated integration; zero only on complete native source. All required CI passes and PR ready. This is code readiness, not live activation.",
+      "excluded": [
+        "live SQL/role/login/key or environment changes",
+        "real provider HTTP",
+        "retention decisions or encrypted source writes",
+        "new native queries/scopes/OAuth/UI/selectors",
+        "merge/deploy",
+        "Dataset/job completion"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Google kontrollü canlı test ayarları",
+      "status": "not_started_not_authorized",
+      "included_work": [
+        "Separately approved existing-role connection/login and credential configuration; use existing scoped identity token vault.",
+        "Explicit trusted Merchant/account binding, admitted period/job and current entitlement/quota/rate/capacity limits. No production values invented from synthetic tests.",
+        "Validate prerequisites and controlled execution configuration; no source storage/retention activation required for observation-only zero."
+      ],
+      "done_when": "Exact controlled live request can be safely authorized and invoked with current credentials, owner/fence/quota and finite execution bounds."
+    },
+    {
+      "id": 3,
+      "name": "Boş gerçek Google hesabıyla kabul",
+      "status": "not_started_not_authorized",
+      "included_work": [
+        "Explicitly approved real call through the prepared runner.",
+        "Verify successful complete native response with recordCount0. Permission failure, missing Merchant relationship, incomplete pages, timeout or unknown are not zero.",
+        "Record nonsecret outcome/verification; no provider test-data creation."
+      ],
+      "done_when": "Real successful complete source response with0 records observed for the authorized target. This proves only the read and its zero result, not nonempty product mapping or production volume."
+    }
+  ],
+  "post_acceptance": "After Google real0: decide retention/storage policy, then proceed to Meta and Klaviyo native acceptance using the shared foundation. These are not hidden subpackages inside the three Google packages.",
+  "zero_source_scope": "Existing processed Merchant products reader after confirmed current direct Ads/Merchant relationship. No new reporting query is introduced. Missing relationship is blocked, never product zero.",
+  "implementation": "app/lib/refresh/google-read-runner.server.js",
+  "native_HTTP_during_CI": "synthetic_only",
+  "live_authorized": false,
+  "merge_authorized": false,
+  "deploy_authorized": false,
+  "official_checked_at": "2026-11-03",
+  "official_sources": [
+    "https://developers.google.com/google-ads/api/rest/common/search",
+    "https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.products/list",
+    "https://shopify.dev/docs/api/shopify-app-react-router/latest/authenticate/admin"
+  ]
+}

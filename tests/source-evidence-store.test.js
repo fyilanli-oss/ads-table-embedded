@@ -19,7 +19,7 @@ test("source evidence encryption binds actual owner, attempt, page metadata and 
   assert.throws(() => open(write.owner, randomUUID()), /ENVELOPE_INVALID/);
   assert.throws(() => open(write.owner, write.attemptId, 1), /ENVELOPE_INVALID/);
   for (const changed of [{...page, family: "other"}, {...page, payloadHash: "0".repeat(64)}, {...page, fieldCoverage: []},
-    {...page, authTag: "0".repeat(32)}, {...page, ciphertext: "00" + page.ciphertext.slice(2)}]) {
+    {...page, authTag: "0".repeat(32)}, {...page, ciphertext: (parseInt(page.ciphertext.slice(0,2),16)^1).toString(16).padStart(2,"0") + page.ciphertext.slice(2)}]) {
     assert.throws(() => open(write.owner, write.attemptId, 0, changed), /ENVELOPE_INVALID/);
   }
 });

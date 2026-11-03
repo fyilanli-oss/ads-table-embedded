@@ -16,6 +16,11 @@ export async function googleSourceRoleProvisioningProbe(client){
  const before=await inventory();let scenarios=0;
  await client.query("begin");
  try{
+  // Prior F01 scenarios can leave the session's default role as adstable_owner.
+  // Provisioning requires postgres; select it only inside this rollback fixture.
+  await client.query("set local role postgres");
+  assert.equal((await client.query("select current_user as role")).rows[0].role,"postgres");
+  assert.equal(await roleExists(),false);
   async function scenario(run){
    await client.query("savepoint role_case");
    try{await run();scenarios++;}finally{await client.query("rollback to savepoint role_case");await client.query("release savepoint role_case");}

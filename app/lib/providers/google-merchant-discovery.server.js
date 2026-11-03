@@ -81,7 +81,23 @@ async function boundedResponse(response, signal) {
       chunks.push(part.value);
     }
     if (signal.aborted) fail("stopped");
-    return new Response(Buffer.concat(chunks), {status: response.status, headers: {"content-type": "application/json"}});
+    const bodyBytes = Buffer.concat(chunks);
+    let payload;
+    try {payload = JSON.parse(new TextDecoder("utf-8", {fatal: true}).decode(bodyBytes));} catch {fail("response_invalid");}
+    if (response.ok && !Object.hasOwn(payload ?? {}, "error")) {
+      if (!payload || typeof payload !== "object" || Array.isArray(payload)) fail("response_invalid");
+      // Proto JSON may omit an empty results array. An unrelated object is not empty links.
+      if (!Object.hasOwn(payload, "results") && Object.keys(payload).some(key =>
+        !["fieldMask", "nextPageToken", "totalResultsCount", "queryResourceConsumption"].includes(key))) fail("response_invalid");
+      if (Object.hasOwn(payload, "fieldMask") && typeof payload.fieldMask !== "string") fail("response_invalid");
+      if (Object.hasOwn(payload, "totalResultsCount")) {
+        const count = payload.totalResultsCount;
+        if (!(typeof count === "string" && /^[0-9]{1,19}$/.test(count)
+          || Number.isSafeInteger(count) && count >= 0)) fail("response_invalid");
+        if (BigInt(count) > BigInt(limits.maxLinks)) fail("response_limit");
+      }
+    }
+    return new Response(bodyBytes, {status: response.status, headers: {"content-type": "application/json"}});
   } finally {signal.removeEventListener("abort", cancel); reader.releaseLock();}
 }
 
@@ -89,6 +105,7 @@ function linksFromPage(page, accountId) {
   if (!Array.isArray(page?.results)) fail("response_invalid");
   if (page.next_page_token !== null && page.next_page_token !== "") fail("incomplete_response");
   if (page.results.length > limits.maxLinks) fail("response_limit");
+  if (page.total_results_count !== null && page.total_results_count !== page.results.length) fail("incomplete_response");
   const names = new Set(), merchants = new Set();
   for (const row of page.results) {
     const link = row?.productLink;

@@ -229,7 +229,7 @@
         "read_only": "No new SQL writes/grants/migration, job admission, quota configuration, rule/mapping/source/Dataset persistence or session fallback. Existing Shopify authentication semantics retained.",
         "limits_of_proof": "Mocked physical HTTP/SQL/vault in unit tests; existing runtime authority RPC reused, no real provider query. No durable exactly-once/idempotency claim across separate requests/processes: this is explicit link-only reading, no auto caller/retry; invocation budget1, short server plan, remove plan after separately authorized use.",
         "tests": "tests/google-merchant-discovery-permission.test.js",
-        "new_unit_tests": 44,
+        "new_unit_tests": 47,
         "UI_changed": false,
         "package2_complete": false,
         "package3_started": false,

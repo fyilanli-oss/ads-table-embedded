@@ -26,7 +26,7 @@ arasında durable exactly-once garantisi iddia edilmez; otomatik çağıran/retr
 Canlı kullanım tek açık onaylı invocation olarak yürütülüp kısa plan kaldırılır.
 Gerçek hesap sorgusu/config/merge/deploy yapılmadı ve ayrıca onay bekler.
 İkinci paket kapanmadı; üçüncü başlamadı; yeni paket veya saklama kararı yok.
-44 yeni izole HTTP-handler güvenlik testi hazırlanmıştır; zorunlu CI sonucu PRdadır.
+47 yeni izole HTTP-handler güvenlik testi hazırlanmıştır; zorunlu CI sonucu PRdadır.
 Resmî kontrol2026-11-03: Google v25 product_link, REST search ve Shopify
 authenticate.admin dokümanları. Tam kayıt:
 contracts/a6-eo-implementation-master-v1.json#Step15_Google_package2_Merchant_discovery_entry_2026_11_03.

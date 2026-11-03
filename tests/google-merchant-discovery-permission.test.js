@@ -138,7 +138,7 @@ test("Shopify authentication failure does not read the vault or call Google", as
   assert.equal(x.state.vault, 0); noProvider(x);
 });
 
-for (const kind of ["permission", "network", "pagination", "wrong_customer", "duplicate", "shape", "oversize", "rows", "drift"]) {
+for (const kind of ["permission", "network", "pagination", "wrong_customer", "duplicate", "shape", "unknown_shape", "total_mismatch", "total_overflow", "oversize", "rows", "drift"]) {
   test("native error, partial or stale response is never an empty observation: " + kind, async () => {
     const x = fixture();
     x.f.f.hooks.fetch = () => {
@@ -147,6 +147,9 @@ for (const kind of ["permission", "network", "pagination", "wrong_customer", "du
       if (kind === "network") throw Error("PRIVATE token SYNTHETIC-ACCESS");
       if (kind === "pagination") return Response.json({results: [], nextPageToken: "PRIVATE-CURSOR"});
       if (kind === "shape") return Response.json({results: null});
+      if (kind === "unknown_shape") return Response.json({unrelated: "PRIVATE"});
+      if (kind === "total_mismatch") return Response.json({results: [], totalResultsCount: "9"});
+      if (kind === "total_overflow") return Response.json({results: [], totalResultsCount: "9007199254740993"});
       if (kind === "oversize") return new Response("x".repeat(1048577));
       if (kind === "rows") return Response.json({results: Array.from({length: 1001}, (_, n) => ({productLink: {
         resourceName: `customers/123/productLinks/${n + 1}`, productLinkId: String(n + 1), type: "MERCHANT_CENTER", merchantCenter: {merchantCenterId: "99"}}}))});

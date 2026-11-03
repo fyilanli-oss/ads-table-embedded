@@ -3202,5 +3202,28 @@
     "additional_live_mutation_authorized": false,
     "merge_authorized": false,
     "deployment_authorized": false
+  },
+  "Step15_Google_source_role_preparation_2026_11_03": {
+    "status": "prepared_isolated_acceptance_pending",
+    "base_main": "672b49e4e43ca9811bcf0ef906b37e26c68e5355",
+    "owner_approval": "Owner approved the concrete role installation file, read-only prechecks, isolated tests and PR only after the readiness review. Source: Onayliyorum. No live DB, credential/key/config/native provider/deploy or merge authorization.",
+    "contract": "contracts/eo-05-step15-google-source-role-v1.json",
+    "installation": "tools/sql/eo05-google-source-role-install.sql",
+    "scope": "Separate operational provisioning artifact, outside immutable82 migration history. Atomic NOLOGIN/PASSWORD NULL role with four private-schema USAGE and exact16 existing RPC EXECUTE grants; no table/column/sequence access or membership in existing roles. No change to application transport, OAuth/UI/native queries or existing roles.",
+    "preflight": "Postgres17/postgres executor, absent target role, exact16 definition SHA256/owner/security-definer/empty-search-path proofs, public/client-role EXECUTE denied and forced RLS prerequisites. Read-only inspector never authorizes installation. Existing role always stops install; no repair or retry.",
+    "postflight": "Actual server role profile plus NOLOGIN, no MAINTAIN/column/sequence access.5s local lock and30s local statement timeout; any failed assertion rolls back role and grants. No password provision, login enablement, database ledger insertion or automatic installation path.",
+    "isolated_validation": "Existing direct and server14-mode Google SQL/SDK source-rule-mapping rehearsal now obtains its exact role from the reviewed SQL artifact. Fixture-only owner SET ROLE authority stays inside outer rollback, never in installation artifact. Additional8 real-SQL prerequisite/existing-role/public privilege/RLS/late-failure cases; catalogue-only inspection unit cases; all3 ephemeral F01 databases must preserve canonical82 schema. Initial CI found SQLSTATE42809 because SQL planner evaluated a sequence privilege function on an index before its WHERE relkind filter. Type-specific catalogue calls now use CASE, which guards evaluation; no runtime authority changed. Full real SQL matrix repeated on the corrected artifact. The next CI passed direct/server mapping scenarios but the independent8-case fixture inherited the earlier owner session role and was correctly blocked by the postgres-only prerequisite. Fixture now explicitly selects postgres with SET LOCAL inside its rollback transaction; installation prerequisites unchanged. The next CI correctly denied a redundant direct SET ROLE attempt: CREATEROLE does not grant SET permission to the creator. Removed that unsupported fixture assumption instead of widening grants; actual role execution remains proven by the independent14-mode server fixture. The8 catalogue/atomicity scenarios now run first for faster diagnostics. Negative DDL fixtures explicitly SET LOCAL ROLE adstable_owner for object changes and restore postgres before prechecks, respecting existing NOINHERIT membership; no new membership or live privilege is added.",
+    "boundaries": "Only repository code/SQL/tests/contracts/PR. Live role remains absent; no real collection, key/password/config, role login, provider operation or deployment. Original82 live installation evidence and lineage unchanged.15 open;23 Dataset/FX/durable delivery;22 paused.",
+    "official_checked_at": "2026-11-03",
+    "official_sources": [
+      "https://www.postgresql.org/docs/17/sql-createrole.html",
+      "https://www.postgresql.org/docs/17/sql-grant.html",
+      "https://supabase.com/docs/guides/database/postgres/roles"
+    ],
+    "live_database_authorized": false,
+    "credentials_or_keys_authorized": false,
+    "provider_calls_authorized": false,
+    "merge_authorized": false,
+    "deploy_authorized": false
   }
 }

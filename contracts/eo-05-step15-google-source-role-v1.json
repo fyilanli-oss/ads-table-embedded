@@ -1,0 +1,121 @@
+{
+  "id": "eo05-step15-google-source-role-v1",
+  "version": 1,
+  "status": "prepared_only_not_installed",
+  "source_main": "672b49e4e43ca9811bcf0ef906b37e26c68e5355",
+  "owner_approval": "Owner approved only the dedicated-role installation artifact, read-only prechecks, isolated tests and PR. No live execution, credentials, keys, configuration, native calls, deployment or merge authority.",
+  "role": "adstable_google_source_runner",
+  "installation_file": "tools/sql/eo05-google-source-role-install.sql",
+  "placement": "Separately reviewed operational provisioning artifact, outside the immutable82 historical migration ledger. It is never discovered/applied by ordinary migration replay or application startup.",
+  "functions": [
+    {
+      "signature": "integrations.load_provider_identity_authority(uuid,bigint,text,text,text)",
+      "definition_sha256": "363600cc8bb2212cc89e5c505700553639e353944a4349bf1413001fad105cad"
+    },
+    {
+      "signature": "operations.load_refresh_quota_context(uuid,bigint,text,text,text,bigint,date,date,text,timestamptz)",
+      "definition_sha256": "b52508bac61f17b7ba075f68b706b9204adf2e0694f435a269990ad41d867684"
+    },
+    {
+      "signature": "operations.resolve_shared_api_quota_route(text,text,text)",
+      "definition_sha256": "9f6677b764889772617a5d83ecba206019828269c41617412952171a2cfe1d82"
+    },
+    {
+      "signature": "operations.reserve_shared_api_quota(text,uuid,text)",
+      "definition_sha256": "a52181cc42196b6c0cde53264b5c7f29fd95542279251208a53bbd81442518cb"
+    },
+    {
+      "signature": "operations.stop_shared_api_quota_scoped(text,uuid,boolean,boolean,text)",
+      "definition_sha256": "50b28305d030269367cfb3c9a804613634e610fb732debb86aae307b003bcdab"
+    },
+    {
+      "signature": "operations.stop_shared_api_quota_google_observed(text,uuid,text,text)",
+      "definition_sha256": "dce553ea773a10aaf682e2816bf9e42445ca0bdfc3e49c1a09cfc8e7b817291c"
+    },
+    {
+      "signature": "operations.settle_shared_api_quota(text,uuid)",
+      "definition_sha256": "5ddf973625e3b6d823fbfe0e360889d0d545c8430dec1f43ab2a067f5e1318db"
+    },
+    {
+      "signature": "operations.record_shared_api_quota_feedback(text,uuid,jsonb)",
+      "definition_sha256": "bee5ea01cda8968c1f3056576230c098e6eae8094d96bd30763ae46805068ede"
+    },
+    {
+      "signature": "operations.record_shopify_admin_quota_feedback(text,uuid,jsonb)",
+      "definition_sha256": "747217ec800673bd970002b91a527e92f8baf0a535bd42d1398c099f60971c06"
+    },
+    {
+      "signature": "evidence.commit_google_identity_source(jsonb,uuid,integer,jsonb,jsonb)",
+      "definition_sha256": "213a54227bfd2fe48ddb3c1a2d238a727e9b51f96da37db63998a3c9ca1535d7"
+    },
+    {
+      "signature": "evidence.read_source_receipt(jsonb,uuid,integer)",
+      "definition_sha256": "b07c0786eef25c0cb8acf01c59930d94eec7d7ae8368c223f4085bbf3c683b75"
+    },
+    {
+      "signature": "identity.source_rule_review_state(jsonb,bigint,jsonb)",
+      "definition_sha256": "a2427a5aaead678d819e33496f31db3d8e9fd966d75a933acfff0e3ec66341a8"
+    },
+    {
+      "signature": "identity.commit_reviewed_source_rule(jsonb,uuid,jsonb)",
+      "definition_sha256": "e43d88621bacaf17d0c613b49f0e18fbe4c372c7697dd89507f94ac0dd59e9fd"
+    },
+    {
+      "signature": "identity.mapping_review_state(jsonb,bigint,bigint,boolean)",
+      "definition_sha256": "6e17863eea7d09a829e8f8fd2a167ed18d28a936db73366c643ff2f9cf7c2c95"
+    },
+    {
+      "signature": "identity.commit_verified_mapping(jsonb,uuid,jsonb)",
+      "definition_sha256": "0e57ccac788bc033e82ffa7059990cca65d183b582728efc46b540703d27460f"
+    },
+    {
+      "signature": "identity.lookup_verified_mapping(jsonb,jsonb)",
+      "definition_sha256": "f6c28582fa4730b3e2c0a453ff502b0e9712e703a849b2a6d24dc7bd8673bb15"
+    }
+  ],
+  "profile": {
+    "login": false,
+    "password": null,
+    "inherit": false,
+    "superuser": false,
+    "create_database": false,
+    "create_role": false,
+    "replication": false,
+    "bypass_rls": false,
+    "member_of_existing_roles": false,
+    "schema_usage": [
+      "integrations",
+      "operations",
+      "evidence",
+      "identity"
+    ],
+    "direct_table_column_sequence_access": false,
+    "extra_private_rpc": false,
+    "existing_role_repair": false
+  },
+  "preconditions": [
+    "postgres executor, PostgreSQL17",
+    "role absent",
+    "exact16 owner/security-definer/empty-search-path/function-definition fingerprints",
+    "no PUBLIC/anon/authenticated/service_role EXECUTE on expected RPCs",
+    "four existing private schemas owned by adstable_owner",
+    "all existing private tables forced RLS"
+  ],
+  "atomicity": "One transaction with local5s lock/30s statement bounds. Preexisting role or failed pre/postcheck aborts; stop-on-error client must rollback and stop. No IF NOT EXISTS repair, retry, role replacement, membership expansion or catch-and-continue.",
+  "read_only_inspection": "ready_to_install is only a catalogue fact, never authorization. installed_inactive means the exact profile with NOLOGIN; existing role is never reinstalled or repaired.",
+  "credential_boundary": "NOLOGIN and PASSWORD NULL. A separate explicitly approved credential/login provisioning step and authenticated pooler check are required later. No password/key generation, secret output or environment change in this package.",
+  "validation": "Isolated exact-artifact SQL and existing real SDK/source/rule/mapping server scenarios; native responses remain synthetic. Live authentication, pooler connectivity and native account acceptance are not proven.",
+  "official_checked_at": "2026-11-03",
+  "official_sources": [
+    "https://www.postgresql.org/docs/17/sql-createrole.html",
+    "https://www.postgresql.org/docs/17/sql-grant.html",
+    "https://supabase.com/docs/guides/database/postgres/roles"
+  ],
+  "boundaries": {
+    "live_database_authorized": false,
+    "credentials_or_keys_authorized": false,
+    "config_or_native_calls_authorized": false,
+    "merge_authorized": false,
+    "deploy_authorized": false
+  }
+}

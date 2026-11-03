@@ -14,6 +14,7 @@ import {dispatchRefreshPreflight} from "../app/lib/refresh/preflight-bridge.serv
 import {oauthPermissionScopes} from "../app/lib/oauth/oauth-permission-profile.server.js";
 import {quotaRouteIdentity} from "../app/lib/refresh/quota-scope-resolver.server.js";
 import {sourceStoreFixture} from "../tests/fixtures/source-store-fixture.js";
+import {googleSourceRoleInstallationBodyForRehearsal} from "./eo05-google-source-role-plan.mjs";
 
 const sdkRoot=import.meta.resolve("@shopify/shopify-app-react-router/server");
 const {graphqlClientFactory}=await import(new URL("./clients/admin/graphql.mjs",sdkRoot));
@@ -69,14 +70,10 @@ export async function googleMappingFlowRehearsal(client,{workspace,shopId,shopDo
   const context={merchant_id:"99",feed_label:"US",content_language:"en",data_source:"accounts/99/dataSources/7",legacy_local:false};
   await client.query("set local role postgres");
   assert.equal((await client.query("select exists(select 1 from pg_roles where rolname=$1) present",[GOOGLE_SOURCE_ROLE])).rows[0].present,false);
-  await client.query("create role adstable_google_source_runner nologin noinherit nosuperuser nocreatedb nocreaterole noreplication nobypassrls");
+  await client.query(googleSourceRoleInstallationBodyForRehearsal());
+  // Fixture-only SET ROLE authority for the outer rollback transaction, never installed by the artifact.
   await client.query("grant adstable_google_source_runner to adstable_owner with inherit false, set true, admin false");
   await client.query("set local role adstable_owner");
-  await client.query("grant usage on schema integrations,operations,evidence,identity to adstable_google_source_runner");
-  for(const signature of new Set(GOOGLE_SOURCE_RPC.map(x=>x[1]))){
-   assert.match(signature,/^[a-z_]+\.[a-z_]+\([a-z,]*\)$/);
-   await client.query("grant execute on function "+signature+" to adstable_google_source_runner");
-  }
   assert.equal((await client.query("select has_table_privilege('adstable_google_source_runner','identity.product_identity_mappings','SELECT,INSERT,UPDATE,DELETE') allowed")).rows[0].allowed,false);
   const profileSignatures=[...new Set(GOOGLE_SOURCE_RPC.map(x=>x[1]))];
   async function profileReady(){await client.query("set local role adstable_google_source_runner");try{return (await client.query(GOOGLE_SOURCE_ROLE_CHECK_SQL,[profileSignatures])).rows[0].profile_ready;}finally{await client.query("set local role adstable_owner");}}

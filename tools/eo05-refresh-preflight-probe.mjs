@@ -1,4 +1,5 @@
 import {googleMappingFlowRehearsal} from "./eo05-google-mapping-flow-probe.mjs";
+import {googleSourceRoleProvisioningProbe} from "./eo05-google-source-role-probe.mjs";
 import assert from "node:assert/strict";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 import {createRefreshEntitlementVerifier,createAuthorityQuotaEntitlementVerifier} from "../app/lib/refresh/entitlement-check.server.js";
@@ -16,6 +17,7 @@ import {klaviyoSourceCaptureRehearsal} from "./eo05-klaviyo-source-capture-probe
 
 // Runs within the canonical synthetic fixture. All changes roll back, including billing/queue/claims.
 export async function refreshPreflightProbe(client,{workspace,connections,shopId,shopDomain}) {
+  await googleSourceRoleProvisioningProbe(client);
   await client.query("begin");
   try {
     const initial=new Date(Date.now()-3*86400000).toISOString();

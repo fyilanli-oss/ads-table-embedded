@@ -1,3 +1,36 @@
+## 3 Kasım — 15. madde: Google'a özel veritabanı erişiminin hazırlığı
+
+Ürün sahibi, özel rolün kurulum dosyası, salt okunur ön kontrolleri, izole testleri
+ve PR hazırlığını açıkça onayladı. Başlangıç main:672b49e4e43ca9811bcf0ef906b37e26c68e5355.
+Bağlayıcı kapsam: contracts/eo-05-step15-google-source-role-v1.json ve master
+Step15_Google_source_role_preparation_2026_11_03. Canlı uygulama yetkisi yoktur.
+
+Kurulum dosyası tools/sql/eo05-google-source-role-install.sql'dir. Bu, ayrı onayla
+uygulanabilecek operasyonel erişim hazırlığıdır; kurulu82 migration'ın tarihini veya
+43+39 provasını değiştirmez. Migration discovery veya uygulama açılışında çalışmaz.
+Rol NOLOGIN/PASSWORD NULL oluşturulur: parola, kullanılabilir bağlantı veya veri
+toplama aktivasyonu oluşmaz. Dört özel schema için USAGE, yalnız mevcut16 RPC için
+EXECUTE verilir. Eski uygulama/coordinator/owner rolleri genişletilmez; yeni rol bu
+rollerden birine üye yapılmaz. Tablo, sütun, sequence veya ek RPC erişimi yoktur.
+
+Ön kontrol, PostgreSQL17/postgres yürütücüsü, rolün yokluğu,16 fonksiyonun tam
+SHA256/owner/SECURITY DEFINER/boş search_path bilgisi, public/client izinleri ve
+zorunlu RLS koşullarını doğrular. Rol zaten varsa onarım veya tekrar kurulum yoktur.
+Salt okunur ön kontrolün ready sonucu, işlem izni değildir. Kurulum tek transaction;
+5s lock/30s statement sınırları ve son gerçek runtime yetki kontrolü vardır. Hata
+halinde stop-on-error ile durulur; rollback gerekir, devam veya otomatik retry yoktur.
+
+Mevcut Google kaynak-kural-eşleme testleri artık elle grant üretmek yerine exact
+kurulum dosyasını kullanır. Fixture'a özel owner SET ROLE yetkisi yalnız rollback
+içinde kalır. Ek8 gerçek SQL senaryosu eksik/değişmiş fonksiyon, eski rol, public
+EXECUTE, bozuk RLS ve son adımdaki hatada bütün rol/grant değişikliklerinin geri
+alınmasını sınar. Üç F01 ortamı sonunda tarihsel82 schema aynen kalmalıdır.
+
+Bu paket canlı rol/parola/anahtar/config, native çağrı, SDK aktivasyonu, veri toplama,
+deploy veya merge içermez. Gerçek parola/login ve pooler doğrulaması ayrı onaylı
+ileriki işlemdir.15 açık;23 Dataset/FX/kalıcı teslim;22 paused ve Overlap ertelemeleri
+korunur. PostgreSQL17 CREATE ROLE/GRANT ve Supabase rol belgeleri3 Kasım2026 okundu.
+
 ## 3 Kasım — mevcut15:39 dosyanın onaylı canlı kurulumu
 
 Ürün sahibi exact39 migration'ın canlı AdsTable Supabase veritabanına kurulmasını,

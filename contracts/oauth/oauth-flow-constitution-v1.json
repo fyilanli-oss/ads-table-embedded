@@ -1513,7 +1513,7 @@
       "app/routes/settings.provider-live-evidence.ts": "89fbcb7087fc480fefba708bbc730146f1ba41af48d98f1b0a10fe1427120495",
       "app/routes/webhooks.shopify.tsx": "eac0ea30fcca28d6bba3c11105a5c4fda7778d1398c23f21fcb02f717d8bd056",
       "app/shopify.server.ts": "cc5959867dd5c413b222d51c4aad7d9a39c7c3d15e590aada86a1ddfefdc6fad",
-      "contracts/a6-eo-implementation-master-v1.json": "b178c0b1538653fb9abf9c66e81c740ca5369c755e24ec4fa1cc0a370b500014",
+      "contracts/a6-eo-implementation-master-v1.json": "ee3afe0e4433c75b34701bac936b93ef4c37a28a21c71227bbb00de53b967588",
       "contracts/eo-05-oauth-setup-permission-policy-v1.json": "c1914f91011464d3b16b4b0a7710e49878ce6dbb57427e3d0f7c68d9ec4ec681",
       "contracts/eo-05-permission-explanation-design-v1.json": "ad4753b9ad4a6becd14764b7b33fb917f0cc491ad774cc1f1fe9053c5f189f35",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
@@ -1606,7 +1606,7 @@
       "supabase/migrations/20261102175402_eo05b_product_verification_evidence.sql": "7c25ca75b8065ec050309ea6c34f2469dd0f0e48555969e556fe4c748dc0c576",
       "supabase/migrations/20261102185842_eo05b_verified_mapping_store.sql": "18872d0bc0466d0d9a9fdd9ed7c7c786cb19bd84d0d9ba0975469d0bffa1fa7c",
       "supabase/migrations/20261102201443_eo05b_source_rule_review.sql": "53a348f1535e759e0b3b3e64a6e15939ab7b3c28fd3cbfa09d7477d2795581dd",
-      "tests/a6-docs-01-turkish-standardization.test.js": "367ffd43d113d2dae7d35d32fd712a859c72d4c27095ac395b23ae4ef2e2a51c",
+      "tests/a6-docs-01-turkish-standardization.test.js": "8a73bbaf8389b10a7ec252bd0bb682c89a2d389c26bd73657f8ea5fa8cee02c8",
       "tests/a6-tech-01-f01c-scoped-recovery.test.js": "3bd869071d5042402215176a99bf14dcebce6d3d0497ffcba946038050701792",
       "tests/eo-01c-preview-shell.test.js": "c3d67bb6666c19cf5ac12cfcd8a7f2f2acdf399d5a8ac32c0269823b06cbf789",
       "tests/eo-03a-oauth-transaction-boundary.test.js": "b364193460356370d1128000e6c0b61e975b2d79b896135d97ce648bc30a7747",
@@ -2358,7 +2358,8 @@
       "changed_paths": [
         "contracts/a6-eo-implementation-master-v1.json",
         "contracts/oauth/oauth-flow-constitution-v1.json",
-        "docs/EXECUTION_PLAN.md"
+        "docs/EXECUTION_PLAN.md",
+        "tests/a6-docs-01-turkish-standardization.test.js"
       ],
       "acceptance_required": [
         "required_CI",

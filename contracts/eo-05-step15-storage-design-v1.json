@@ -972,6 +972,42 @@
       "live_provider_authorized": false,
       "merge_authorized": false,
       "deployment_authorized": false
+    },
+    "google_source_mapping_flow": {
+      "status": "repository_preparation_not_live",
+      "base_main": "26659126eb0944ea8560f251169533e2ea270e99",
+      "owner_approval": "Owner explicitly approved the concrete Google source-to-rule-to-mapping controlled flow and isolated end-to-end tests/PR: Onayliyorum after the readiness review on2026-11-02. No live Google/Shopify/DB/key/grant/config, OAuth/UI, merge or deployment authority.",
+      "scope": "Inactive server-only createGoogleSourceMappingFlow composes the existing fenced Google+Merchant+real Shopify SDK candidate collector and source write, source-rule review/write, verified mapping review/write, and exact current native identity lookup. One trusted work-plan target; no asset selector or route.",
+      "provenance": "Only the actual Google source writer registers immutable private WeakMap context for its successful result or unconfirmed error: exact owner/attempt/typed source mappings/receipt. Copied JSON or caller flags cannot register provenance. Target must occur exactly once and be unresolved in that captured write; mapping ID comes from its actual SQL receipt. Rule review must match expectedSourceBatchId before invoking reviewer, preventing an old reused mapping from substituting another source batch.",
+      "review": "Existing reviewed source format registry plus independent explicit trusted-server reviewAuthority are injected; no default reviewer or real rule is seeded. Shape/Shopify existence never substitutes for native source configuration review. Policies, target identity, rule proposal and deadline are explicit detached/frozen work-plan values.",
+      "stages": [
+        "source",
+        "selection",
+        "rule_review",
+        "rule_write",
+        "mapping_review",
+        "mapping_write",
+        "current_read",
+        "complete"
+      ],
+      "failure": "One run only, including concurrent/failed replay. Every stage checks abort/deadline; overall abort is forwarded to native collector without widening existing limits. A lost source/rule/mapping acknowledgement stops all next stages. Known committed receipts are preserved even when abort/expiry arrives immediately afterward. Arbitrary error bodies are not exposed. Current-read error or changed current mapping never claims full success. Abort/deadline races bound stalled native, SQL or reviewer promises. Late completion cannot advance stages; an issued write remains unconfirmed until explicit historical inspection. The source writer uses the minimum of its existing limit and flow deadline, checks again before dispatch, and carries that same bound into the existing SQL deadline check. No late source write can use a wider native-only deadline.",
+      "inspection": "Explicit same-flow inspect(source|rule|mapping) only after run stops, only for an issued stage. Uses exact private owner and stage operation/attempt. Historical read only, never advances/reset/retries the flow. not_observed remains not rollback proof. No automatic reconciliation write or source replay.",
+      "result": "Success requires newest current read to match this exact accepted mapping/rule/owner/context. Returns minimal IDs, receipt references and requested Product/Variant, not raw pages/tokens. reportNamespaceVerified/authorizesActivation/DatasetWritePerformed=false. Source/rule/mapping batches stay handoff pending; job finish, checkpoint and capacity release remain outside this flow.",
+      "trust_boundary": "Existing owner-only source SQL and actual current job/fence/billing/connection/selection/permissions/quota guards remain. No migration, grant, key/environment provisioning, worker/scheduler activation, native query/scope or OAuth flow change. Database owner/server composition still trusted; live role/key/policy and reviewer acceptance remain separate prerequisites.",
+      "validation": "15 new Google unit scenarios plus one source-rule expected-batch test; local Google/source-rule256 cases passed. New independent F01 actual Google admission + real quota/REST/SDK/collectors/source cipher/SQL chain,14 cases: success; lost source/rule/mapping replies; read failure; denied review; wrong parent; partial/native error; stale fence; abort after known source commit; target absent, stalled review and abort during mapping acknowledgement. No fabricated/relabelled mapping snapshot or rewritten source manifest in this new chain. Native replies/credentials/review decisions remain synthetic. Required CI pending.",
+      "official_checked_at": "2026-11-02",
+      "official_sources": [
+        "https://supabase.com/docs/guides/database/functions",
+        "https://supabase.com/docs/guides/database/postgres/roles",
+        "https://developers.google.com/merchant/api/guides/products/overview",
+        "https://developers.google.com/google-ads/api/docs/shopping-ads/merchant-center"
+      ],
+      "remaining": "Step15 real Google source configuration review and live key/policy/grant/migration/activation/native acceptance remain; Meta/Klaviyo production compositions require their own scoped work. Step23 Dataset/FX/durable report handoff,22 paused,Overlap deferrals unchanged.",
+      "runtime_code_authorized": true,
+      "live_database_authorized": false,
+      "live_provider_authorized": false,
+      "merge_authorized": false,
+      "deployment_authorized": false
     }
   }
 }

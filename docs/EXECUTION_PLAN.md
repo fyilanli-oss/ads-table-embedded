@@ -1,3 +1,50 @@
+## 2 Kasım — mevcut 15: kontrollü Google kaynak–kural–eşleme akışı
+
+Owner, hazırlık incelemesi sonrası bu tek Google akışının kod ve izole uçtan uca
+test/PR paketini açıkça onayladı. Başlangıç main26659126eb0944ea8560f251169533e2ea270e99.
+Kayıt: contracts/a6-eo-implementation-master-v1.json#Step15_Google_source_mapping_flow_2026_11_02.
+
+Yeni özel sunucu bileşimi mevcut fenced Google/Merchant/Shopify SDK aday okuması
+ve kaynak kaydını, kaynak kuralı inceleme/kaydını, eşleme inceleme/kaydını ve en yeni
+native kimlikle geri okumayı birleştirir. Hedef, mevcut kaynakta bulunması gereken
+tam güvenilir iş planı kimliğidir; yeni UI/asset seçicisi veya route değildir.
+
+Gerçek Google kaynak yazıcısı başarılı sonuç veya belirsiz yazma hatası için özel
+WeakMap kaydı oluşturur. Owner, attempt, yazılan typed kaynak kimlikleri ve gerçek
+SQL makbuzu bu kayıtta bağlıdır. JSON kopyası veya bayrak bu kaydı üretemez. Hedef
+tam bir kez bulunmalı ve unresolved olmalıdır; mapping id gerçek makbuzdan gelir.
+Kural incelemesi reviewer çağrısından önce exact expectedSourceBatchId karşılaştırır;
+eski mapping'in başka bir kaynak paketini yeni kanıt yerine geçirmesine izin verilmez.
+
+Plan/kimlik/kural önerisi/süre/politikalar kopyalanıp dondurulur. Bir run yalnız bir
+kez çalışır. Her sınırda deadline/abort; native collector'a aynı abort iletilir.
+Kaynak, kural veya eşleme yazma cevabı kaybolursa sonraki aşama başlamaz. Bilinen
+commit'ten hemen sonra abort gelirse makbuz korunur; işlem geri alındı denmez.
+Geri okuma başarısızsa veya newest mapping bu çalıştırmanın kaydından farklıysa
+başarı yoktur. Arbitrary hata body/token/log çıktısı döndürülmez.
+
+Açık inspect(source|rule|mapping), durmuş aynı akışın gerçekten gönderilmiş işlemine
+salt okunur tarihsel kontroldür. Akışı ilerletmez, sıfırlamaz, otomatik tekrar yazmaz.
+not_observed rollback kanıtı değildir. En yeni okuma exact accepted mapping/rule/
+owner/context ile eşleşmelidir. Namespace/activation/Dataset yetkisi false; job finish,
+checkpoint veya kapasite bırakma yoktur. Paketler handoff pending kalır.
+
+Gerçek kaynak biçimi/kural inceleme kararı ve amaç anahtarı açık sunucu girdileridir;
+varsayılan reviewer veya gerçek hesap kuralı kurulmaz. Native sorgu/scope, OAuth/UI,
+SQL grant/migration/key/config, worker/scheduler/deploy değişikliği yapılmaz.
+
+Yerel15 yeni Google testi ve1 expected-batch testiyle Google/kural256 test geçti.
+F01 ayrı gerçek Google admission ve gerçek quota/REST/Shopify SDK/kayıt/geri okuma
+zincirini14 senaryoda sınar. Yeni zincirde mapping snapshot'ı, rule row veya kaynak
+manifesti uydurulmaz/değiştirilmez; yalnız fiziksel HTTP, credential ve inceleme kararı
+sentetiktir. CI/uzak içerik kabulü ayrıca doğrulanır; gerçek native kabul sayılmaz.
+
+15'in canlı Google kaynak biçimi, anahtar/politika/yetki/migration/aktivasyon ve
+native kabulü açıktır. Meta/Klaviyo bileşimleri ayrı somut kapsam;23 genel Dataset/FX/
+kalıcı rapor teslimi,22 duraklatılmış ve Overlap ertelemeleri korunmuştur.
+Resmî Supabase functions/roles ve Google Merchant/products/account-link belgeleri
+2 Kasım2026 kontrol edildi. Merge ayrıca açık kullanıcı onayı gerektirir.
+
 ## 2 Kasım — mevcut 15: kanıta bağlı kaynak kuralı kaydı
 
 Owner, kaynak kimliğini yorumlayan kuralın kanıtıyla güvenli kaydı için kod,

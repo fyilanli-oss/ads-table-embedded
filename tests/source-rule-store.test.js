@@ -88,3 +88,6 @@ test("evidence expiring during the read cannot reach the reviewer",async()=>{
  const f=fixture(),query=f.database.query;f.database.query=async(...args)=>{const result=await query(...args);f.tick(600001);return result;};
  await assert.rejects(f.repository.review(f.input));assert.equal(f.decisions.length,0);
 });
+test("explicit captured source batch must match before reviewer or write",async()=>{
+ const f=fixture();await assert.rejects(f.repository.review({...f.input,expectedSourceBatchId:"999"}),/SOURCE_BATCH_CHANGED/);assert.equal(f.decisions.length,0);assert.equal(f.calls.length,1);
+});

@@ -1,3 +1,31 @@
+## 3 Kasım — Google paket2/3: salt okunur canlı ön kontrol
+
+Owner Supabase rol/bağlantı/kota metadata'sı ve ortam ayarlarının yalnız varlığı
+için açık izin verdi. Kaynak main11e075a95ff692897df1099002ad68e18b5c8f1f; PR315 kodu
+birleşti,3.833 test ve üç ortamda10'ar yeni SQL senaryosu başarılı.
+
+Güncel canlı Google bağlantısı disconnected(version83), credential yok, aktif
+Reporting Account bağı yok; saklanan3 hesap inactive. Bu durum boş hesabın
+başarılı0 cevabı değildir. Google/koordinatör rolleri NOLOGIN; geniş yetkiler
+false. İş/kaynak/kota/policy/route sayıları0; admission budget/bounds ve queue
+kontrolleri null. Altı yeni source/acceptance ortam anahtarı yok. Mevcut
+runtime/Google/Partner anahtar adları Production'da var; değerleri açılmadı.
+
+Ayrıntılı rol/RPC/definition profil sorgusu tek denemede araç hatası döndürdü;
+hata kodu/gerekçesi teyit edilmedi, sorgu tekrarlanmadı ve alternatif rota yok.
+Yerel inceleme, sorgu oluşturucunun ikinci $1 yer tutucusunu değiştirmediğini
+doğruladı. Düzeltilmiş salt okunur sorgu kanıtta hash ve0 unbound parameter ile
+hazırdır; çalıştırılmadı. Bu alan doğrulanmış sayılmaz; eksik grant/rol arızası yoktur
+diye de var diye de çıkarım yapılmaz.
+
+Kanıt:docs/evidence/EO05_GOOGLE_PACKAGE2_LIVE_PRECHECK_2026-11-03.json. Kayıt yalnız rol özellikleri,
+varlık/sayı/durum ve env adlarıdır; müşteri/hesap/credential kimlikleri, domain,
+ciphertext veya secret içermez. Canlı SQL/config/role/login/deploy/native işlem
+yapılmadı. Sonraki gerçek adım owner'ın mevcut Settings Google bağlantısını
+kurup Reporting Account seçmesidir; Codex OAuth çalıştırmadı. Bu eylem ve
+sonraki kontrol/config kendi somut onay kapılarında kalır.2 tamamlanmadı;3
+başlamadı; üç ana paket/alt paket yok ve gerçek0 sonrası saklama sırası korunur.
+
 ## 3 Kasım — Google paket2/3: onaylı başlatma bağlantısı kodu
 
 Hazırlık PR314 açık owner onayıyla main 3d80b93b7247c1cda98086b736aa567066b21968 olarak birleşti.

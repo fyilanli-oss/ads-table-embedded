@@ -1,0 +1,268 @@
+{
+  "schema_version": 1,
+  "checked_at": "2026-11-03T17:14:54.439624+00:00",
+  "source_main": "11e075a95ff692897df1099002ad68e18b5c8f1f",
+  "scope": "Owner-approved read-only Google package2 live precheck only. No secret decryption, raw credential access, native provider call or mutation.",
+  "status": "partial_precheck_completed_not_ready_for_live_run",
+  "projects": {
+    "supabase": {
+      "id": "podpwkrpmjiksskxhwsu",
+      "name": "ads-table-embedded",
+      "status": "ACTIVE_HEALTHY"
+    },
+    "vercel": {
+      "id": "prj_RVvXZGLuj9ItUAqvMJvb1GOTd8Lr",
+      "name": "ads-table-embedded",
+      "accountId": "team_Rl3EGl1rI43g4DgWXRQQppL0"
+    }
+  },
+  "roles": [
+    {
+      "name": "adstable_runtime",
+      "login": true,
+      "inherit": false,
+      "superuser": false,
+      "create_database": false,
+      "create_role": false,
+      "replication": false,
+      "bypass_rls": false,
+      "connection_limit": -1,
+      "valid_until": null
+    },
+    {
+      "name": "adstable_refresh_coordinator",
+      "login": false,
+      "inherit": false,
+      "superuser": false,
+      "create_database": false,
+      "create_role": false,
+      "replication": false,
+      "bypass_rls": false,
+      "connection_limit": -1,
+      "valid_until": null
+    },
+    {
+      "name": "adstable_google_source_runner",
+      "login": false,
+      "inherit": false,
+      "superuser": false,
+      "create_database": false,
+      "create_role": false,
+      "replication": false,
+      "bypass_rls": false,
+      "connection_limit": -1,
+      "valid_until": null
+    }
+  ],
+  "connection_summary": {
+    "active_installations": 1,
+    "google_connections": [
+      {
+        "status": "disconnected",
+        "version": 83,
+        "credential_present": false,
+        "granted_scopes": [
+          "https://www.googleapis.com/auth/adwords",
+          "https://www.googleapis.com/auth/content"
+        ]
+      }
+    ],
+    "stored_google_accounts": 3,
+    "active_google_accounts": 0,
+    "active_reporting_bindings": 0,
+    "merchant_contexts": 0,
+    "token_validity": "not_checked_no_current_credential_envelope_and_no_decryption_authorized"
+  },
+  "counts": {
+    "jobs": 0,
+    "quota_routes": 0,
+    "running_jobs": 0,
+    "quota_policies": 0,
+    "source_batches": 0,
+    "quota_operations": 0
+  },
+  "work_control": {
+    "bounds": null,
+    "budget": null,
+    "revision": 0
+  },
+  "queue_control": {
+    "revision": 0,
+    "singleton": true,
+    "max_accounts": null,
+    "max_workspaces": null,
+    "activated_at_ms": null,
+    "checked_accounts": null,
+    "checked_workspaces": null,
+    "last_success_at_ms": null,
+    "max_snapshot_bytes": null,
+    "last_observed_at_ms": null,
+    "max_snapshot_age_ms": null
+  },
+  "environment_metadata": {
+    "decrypt_requested": false,
+    "values_opened": false,
+    "project_variable_count": 26,
+    "keys": [
+      {
+        "key": "ADSTABLE_GOOGLE_SOURCE_DATABASE_URL",
+        "entries": []
+      },
+      {
+        "key": "ADSTABLE_GOOGLE_SOURCE_DB_TIMEOUT_MS",
+        "entries": []
+      },
+      {
+        "key": "ADSTABLE_GOOGLE_ACCEPTANCE_COORDINATOR_DATABASE_URL",
+        "entries": []
+      },
+      {
+        "key": "ADSTABLE_GOOGLE_ACCEPTANCE_COORDINATOR_DB_TIMEOUT_MS",
+        "entries": []
+      },
+      {
+        "key": "ADSTABLE_GOOGLE_ACCEPTANCE_ENABLED",
+        "entries": []
+      },
+      {
+        "key": "ADSTABLE_GOOGLE_ACCEPTANCE_PLAN",
+        "entries": []
+      },
+      {
+        "key": "GOOGLE_ADS_DEVELOPER_TOKEN",
+        "entries": [
+          {
+            "type": "sensitive",
+            "target": [
+              "production"
+            ],
+            "gitBranch": null,
+            "customEnvironmentIds": []
+          }
+        ]
+      },
+      {
+        "key": "ADSTABLE_RUNTIME_DATABASE_URL",
+        "entries": [
+          {
+            "type": "sensitive",
+            "target": [
+              "production"
+            ],
+            "gitBranch": null,
+            "customEnvironmentIds": []
+          }
+        ]
+      },
+      {
+        "key": "ADSTABLE_PROVIDER_TOKEN_ACTIVE_KEY_VERSION",
+        "entries": [
+          {
+            "type": "sensitive",
+            "target": [
+              "production"
+            ],
+            "gitBranch": null,
+            "customEnvironmentIds": []
+          }
+        ]
+      },
+      {
+        "key": "ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_V1",
+        "entries": [
+          {
+            "type": "sensitive",
+            "target": [
+              "production"
+            ],
+            "gitBranch": null,
+            "customEnvironmentIds": []
+          }
+        ]
+      },
+      {
+        "key": "SHOPIFY_PARTNER_ORG_ID",
+        "entries": [
+          {
+            "type": "plain",
+            "target": [
+              "production"
+            ],
+            "gitBranch": null,
+            "customEnvironmentIds": []
+          }
+        ]
+      },
+      {
+        "key": "SHOPIFY_PARTNER_API_ACCESS_TOKEN",
+        "entries": [
+          {
+            "type": "sensitive",
+            "target": [
+              "production"
+            ],
+            "gitBranch": null,
+            "customEnvironmentIds": []
+          }
+        ]
+      },
+      {
+        "key": "SHOPIFY_APP_GID",
+        "entries": [
+          {
+            "type": "plain",
+            "target": [
+              "production"
+            ],
+            "gitBranch": null,
+            "customEnvironmentIds": []
+          }
+        ]
+      }
+    ]
+  },
+  "detailed_role_profile": {
+    "status": "not_confirmed_tool_error",
+    "attempts": 1,
+    "retried": false,
+    "error_code": null,
+    "error_reason": "provider_reason_not_verified_local_query_preparation_defect_identified",
+    "local_diagnosis": "Original read orchestration replaced only the first $1::text[] placeholder in the Google catalogue profile query; offline reconstruction confirms one unbound parameter remained. Provider error code/message was not retained; this local query-preparation defect is verified and is not evidence of incorrect database grants.",
+    "prepared_retry": {"query":"select jsonb_build_object('google_profile',(select to_jsonb(p) from (select 'adstable_google_source_runner' as role,\n (not r.rolsuper and not r.rolinherit and not r.rolbypassrls and not r.rolcreatedb and not r.rolcreaterole and not r.rolreplication\n and not exists(select 1 from pg_auth_members m where m.member=r.oid)\n and not has_database_privilege('adstable_google_source_runner',current_database(),'CREATE')\n and not exists(select 1 from unnest(array['integrations','operations','evidence','identity']) s(name)\n  where not has_schema_privilege('adstable_google_source_runner',s.name,'USAGE'))\n and not exists(select 1 from pg_namespace n where n.nspname in ('public','app','shopify','integrations','operations','billing','privacy','analytics','evidence','identity','source')\n  and has_schema_privilege('adstable_google_source_runner',n.oid,'CREATE'))\n and not exists(select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace\n  where n.nspname in ('app','shopify','integrations','operations','billing','privacy','analytics','evidence','identity','source')\n   and c.relkind in ('r','p') and has_table_privilege('adstable_google_source_runner',c.oid,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER'))\n and not exists(select 1 from unnest(array['integrations.load_provider_identity_authority(uuid,bigint,text,text,text)','operations.load_refresh_quota_context(uuid,bigint,text,text,text,bigint,date,date,text,timestamptz)','operations.resolve_shared_api_quota_route(text,text,text)','operations.reserve_shared_api_quota(text,uuid,text)','operations.stop_shared_api_quota_scoped(text,uuid,boolean,boolean,text)','operations.stop_shared_api_quota_google_observed(text,uuid,text,text)','operations.settle_shared_api_quota(text,uuid)','operations.record_shared_api_quota_feedback(text,uuid,jsonb)','operations.record_shopify_admin_quota_feedback(text,uuid,jsonb)','evidence.commit_google_identity_source(jsonb,uuid,integer,jsonb,jsonb)','evidence.read_source_receipt(jsonb,uuid,integer)','identity.source_rule_review_state(jsonb,bigint,jsonb)','identity.commit_reviewed_source_rule(jsonb,uuid,jsonb)','identity.mapping_review_state(jsonb,bigint,bigint,boolean)','identity.commit_verified_mapping(jsonb,uuid,jsonb)','identity.lookup_verified_mapping(jsonb,jsonb)']::text[]) s(signature) where to_regprocedure(s.signature) is null\n   or not coalesce(has_function_privilege('adstable_google_source_runner',to_regprocedure(s.signature)::oid,'EXECUTE'),false))\n and not exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace\n  where n.nspname in ('app','shopify','integrations','operations','billing','privacy','analytics','evidence','identity','source')\n   and has_function_privilege('adstable_google_source_runner',p.oid,'EXECUTE') and p.oid not in\n    (select to_regprocedure(s.signature)::oid from unnest(array['integrations.load_provider_identity_authority(uuid,bigint,text,text,text)','operations.load_refresh_quota_context(uuid,bigint,text,text,text,bigint,date,date,text,timestamptz)','operations.resolve_shared_api_quota_route(text,text,text)','operations.reserve_shared_api_quota(text,uuid,text)','operations.stop_shared_api_quota_scoped(text,uuid,boolean,boolean,text)','operations.stop_shared_api_quota_google_observed(text,uuid,text,text)','operations.settle_shared_api_quota(text,uuid)','operations.record_shared_api_quota_feedback(text,uuid,jsonb)','operations.record_shopify_admin_quota_feedback(text,uuid,jsonb)','evidence.commit_google_identity_source(jsonb,uuid,integer,jsonb,jsonb)','evidence.read_source_receipt(jsonb,uuid,integer)','identity.source_rule_review_state(jsonb,bigint,jsonb)','identity.commit_reviewed_source_rule(jsonb,uuid,jsonb)','identity.mapping_review_state(jsonb,bigint,bigint,boolean)','identity.commit_verified_mapping(jsonb,uuid,jsonb)','identity.lookup_verified_mapping(jsonb,jsonb)']::text[]) s(signature)))\n ) as profile_ready from pg_roles r where r.rolname='adstable_google_source_runner') p),'coordinator_profile',(select to_jsonb(p) from (select 'adstable_refresh_coordinator' as role,\n (not r.rolsuper and not r.rolinherit and not r.rolbypassrls and not r.rolcreatedb and not r.rolcreaterole and not r.rolreplication\n and not exists(select 1 from pg_auth_members m where m.member=r.oid)\n and not has_database_privilege('adstable_refresh_coordinator',current_database(),'CREATE')\n and not exists(select 1 from unnest(array['operations']) s(name)\n  where not has_schema_privilege('adstable_refresh_coordinator',s.name,'USAGE'))\n and not exists(select 1 from pg_namespace n where n.nspname in ('public','app','shopify','integrations','operations','billing','privacy','analytics','evidence','identity','source')\n  and has_schema_privilege('adstable_refresh_coordinator',n.oid,'CREATE'))\n and not exists(select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace\n  where n.nspname in ('app','shopify','integrations','operations','billing','privacy','analytics','evidence','identity','source')\n   and c.relkind in ('r','p') and has_table_privilege('adstable_refresh_coordinator',c.oid,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER'))\n and not exists(select 1 from unnest(array['operations.read_refresh_preflight_snapshot()','operations.commit_refresh_preflight_with_deadline(bigint,bigint,jsonb,jsonb,jsonb,text,bigint)','operations.load_refresh_bound_authority(uuid,bigint,text,text,text,bigint,date,date)','operations.advance_refresh_work_stage(uuid,bigint,text,text,text,bigint,text,text,bigint,bigint,date,date)','operations.refresh_claim_is_current(uuid,bigint,text,text,text,bigint)','operations.load_refresh_entitlement_installation(uuid,bigint,text,text,text,bigint)','operations.apply_refresh_entitlement_snapshot(uuid,bigint,text,text,text,bigint,jsonb)','operations.refresh_entitlement_is_current(uuid,bigint,text,text,text,bigint,timestamptz)','operations.load_refresh_quota_context(uuid,bigint,text,text,text,bigint,date,date,text,timestamptz)','operations.read_refresh_admission_snapshot()','operations.record_refresh_work_stop(uuid,bigint,text,text,text,bigint,text,bigint)','operations.finish_refresh_work(uuid,bigint,text,text,text,bigint,text)','operations.resolve_shared_api_quota_route(text,text,text)','operations.reserve_shared_api_quota(text,uuid,text)','operations.stop_shared_api_quota_scoped(text,uuid,boolean,boolean,text)','operations.settle_shared_api_quota(text,uuid)','operations.record_shared_api_quota_feedback(text,uuid,jsonb)']::text[]) s(signature) where to_regprocedure(s.signature) is null\n   or not coalesce(has_function_privilege('adstable_refresh_coordinator',to_regprocedure(s.signature)::oid,'EXECUTE'),false))\n ) as profile_ready from pg_roles r where r.rolname='adstable_refresh_coordinator') p)) as profiles;","sha256":"2151e72e6939eb3a6bc184718444137d332315072288818ed90f28edae8f5e25","unbound_parameters":0,"executed":false,"requires_separate_explicit_retry_approval":true},
+    "inference": "Do not infer missing grants or widen/repair roles. Catalogue role attributes above were verified in a separate successful read; exact RPC profiles/definitions were not confirmed by this attempt."
+  },
+  "required_next_actions": [
+    {
+      "action": "Reconnect Google and explicitly choose Reporting Account through existing Settings flow",
+      "executor": "owner",
+      "status": "pending_separate_concrete_OAuth_action_scope"
+    },
+    {
+      "action": "After connection, separately approved nonsecret current connection/account/credential/Merchant preflight; exact RPC profile must be confirmed",
+      "executor": "Codex_read_only",
+      "status": "pending"
+    },
+    {
+      "action": "Prepare and separately approve scoped role login/credentials, environment settings and finite quota/admission policy changes using current real target metadata",
+      "executor": "owner_approved_configuration",
+      "status": "not_applied"
+    }
+  ],
+  "boundaries": {
+    "provider_calls": false,
+    "secret_values_read": false,
+    "SQL_mutation": false,
+    "role_login_changed": false,
+    "grant_changed": false,
+    "environment_changed": false,
+    "deploy": false,
+    "merge_authorized": false,
+    "Google_zero_acceptance": false
+  },
+  "data_classification": "nonsecret_role_attributes_presence_counts_and_variable_names_only; customer/account/credential identifiers, shop domain, ciphertext and secret values omitted",
+  "package_count": 3,
+  "new_packages": 0,
+  "retention_decision": "after real Google0 acceptance",
+  "package2_complete": false,
+  "package3_started": false
+}

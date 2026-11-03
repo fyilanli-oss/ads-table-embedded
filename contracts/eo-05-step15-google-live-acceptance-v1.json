@@ -20,7 +20,7 @@
     {
       "id": 1,
       "name": "Google çalıştırıcı bağlantısı",
-      "status": "implementation_isolated_CI_pending",
+      "status": "code_readiness_merged_real_acceptance_pending",
       "owner_approval": "Owner explicitly approved the disclosed code/test/PR scope: bind existing Google reader to a runner, preserve shop/account/permission/quota, distinguish successful zero from failure. No live native call/config/deploy/merge authority.",
       "included_work": [
         "One-run trusted background entry consuming an existing admitted claim/window/fresh entitlement and verified Shopify caller. Build existing narrow Postgres/work/quota dependencies; no route or job-admission shortcut.",
@@ -37,18 +37,58 @@
         "new native queries/scopes/OAuth/UI/selectors",
         "merge/deploy",
         "Dataset/job completion"
-      ]
+      ],
+      "delivery": {
+        "PR": 313,
+        "head": "90c7b77f080f7a6231e49f551b2f9304cc8d547e",
+        "merge_commit": "8325670b6518b3cb7c639dc0f99ceb7b4e6c5b20",
+        "owner_merge_approval": "Onayliyorum Codex after concrete PR313 merge request",
+        "governance_run": 41666839961,
+        "SQL_run": 41666839889,
+        "tests_passed": 3807,
+        "SQL_environments": 3,
+        "new_SQL_cases_per_environment": 15,
+        "real_provider_calls": 0
+      }
     },
     {
       "id": 2,
       "name": "Google kontrollü canlı test ayarları",
-      "status": "not_started_not_authorized",
+      "status": "preparation_recorded_runtime_and_live_work_pending",
       "included_work": [
         "Separately approved existing-role connection/login and credential configuration; use existing scoped identity token vault.",
         "Explicit trusted Merchant/account binding, admitted period/job and current entitlement/quota/rate/capacity limits. No production values invented from synthetic tests.",
         "Validate prerequisites and controlled execution configuration; no source storage/retention activation required for observation-only zero."
       ],
-      "done_when": "Exact controlled live request can be safely authorized and invoked with current credentials, owner/fence/quota and finite execution bounds."
+      "done_when": "Exact controlled live request can be safely authorized and invoked with current credentials, owner/fence/quota and finite execution bounds.",
+      "preparation": {
+        "source_main": "8325670b6518b3cb7c639dc0f99ceb7b4e6c5b20",
+        "owner_approval": "Owner explicitly approved disclosed package2 inspection and preparation only: Onayliyorum. No runtime implementation, live changes, secret reading/generation, native calls, deployment or merge authorized.",
+        "document": "docs/EO_05_GOOGLE_PACKAGE2_PREPARATION.md",
+        "inspection_source": "repository_and_existing_dated_nonsecret_evidence_only",
+        "live_readiness_verified": false,
+        "reader_limits_proposed": {
+          "maxElapsedMs": 60000,
+          "maxBytes": 1048576,
+          "maxPages": 1,
+          "maxRows": 1000,
+          "maxLinkPages": 1,
+          "maxLinks": 1000
+        },
+        "database_timeout_ms_proposed": 5000,
+        "job_deadline_ms_proposed": 90000,
+        "max_Google_native_requests": 3,
+        "pending_inside_package2": [
+          "trusted one-shot authenticated invocation and coordinator adapter code/test proof; existing evidence route is not wired to this reader",
+          "fresh nonsecret target/account/Merchant/credential and current authority metadata verification",
+          "separately approved role login/password and secure runtime configuration",
+          "finite current admission/quota contexts and budgets; actual complete work cost from adapter proof",
+          "guarded known-settled pause/close; unknown outcomes never replay or release automatically"
+        ],
+        "new_package": false,
+        "live_changes_applied": false,
+        "runtime_changes_applied": false
+      }
     },
     {
       "id": 3,

@@ -20,7 +20,7 @@ response_received sonrası guarded finish paused kullanılır. Dataset/ready_for
 completed veya fixture stage reset yoktur. Unknown/hold/lost acknowledgement
 otomatik tekrar veya rezerv bırakma yetkisi değildir.
 
-53 odaklı test geçti;23 yeni test ve F01'de10 gerçek SQL/vault/iki rol senaryosu
+61 odaklı test geçti;26 yeni test ve F01'de10 gerçek SQL/vault/iki rol senaryosu
 zorunlu CI'da sınanır. HTTP/credential sentetik; canlı kabul değildir. Önerilen
 5s DB,60s reader,90s iş,1MiB ve en çok3 Google HTTP sınırları korunur; tüm
 iş rezervi ayrıca identity/Partner trafiğini kapsayan5 request/64 DB-write/3

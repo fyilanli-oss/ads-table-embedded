@@ -28,10 +28,11 @@ export async function handleGoogleAcceptanceRequest({request,authenticateAdmin,d
  try{readGoogleAcceptancePlan(env,now());}catch{return rejected("configuration_missing",503);}
  // Accept only the existing authenticated Shopify resolver result. No caller,
  // account or job object from the HTTP body can enter the internal execution.
- const verified=await resolveReadOnlyShopifyRouteAuthority({request,database,authenticateAdmin:async req=>{
+ let verified;
+ try{verified=await resolveReadOnlyShopifyRouteAuthority({request,database,authenticateAdmin:async req=>{
   const context=await authenticateAdmin(req);
   return {...context,admin:{...context.admin,graphql:(query,options)=>context.admin.graphql(query,{...options,tries:1})}};
- }});
+ }});}catch(error){if(error instanceof Response)throw error;return rejected("authority_unavailable",503);}
  let execution;
  try{
   execution=createGoogleAcceptanceExecution({environment:env,verified,database,tokenVault,operationId:input.operationId,

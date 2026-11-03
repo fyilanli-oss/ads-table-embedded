@@ -43,7 +43,7 @@ export function readGoogleAcceptancePlan(environment,now=Date.now()){
 export function createGoogleAcceptanceExecution({environment,verified,database,tokenVault,operationId,
  coordinatorPoolFactory,readerPoolFactory,fetchFn=globalThis.fetch,now=Date.now,signal}={}){
  const env={...environment},plan=readGoogleAcceptancePlan(env,now());
- if(!plan||operationId!==plan.operationId||typeof database?.query!=="function"||typeof now!=="function"
+ if(!plan||operationId!==plan.operationId||typeof database?.query!=="function"||typeof tokenVault?.loadProviderTokenSet!=="function"||typeof now!=="function"
   ||typeof fetchFn!=="function"||signal!==undefined&&!(signal instanceof AbortSignal))fail();
  readGoogleSourceDatabaseConfig(env);readShopifyPartnerRuntimeConfig(env);
  if(Number(env.ADSTABLE_GOOGLE_SOURCE_DB_TIMEOUT_MS)>5000||Number(env.ADSTABLE_GOOGLE_ACCEPTANCE_COORDINATOR_DB_TIMEOUT_MS)>5000
@@ -55,7 +55,10 @@ export function createGoogleAcceptanceExecution({environment,verified,database,t
  if(caller.installationAuthority.workspaceId!==plan.workspaceId||String(caller.installationAuthority.installGeneration)!==plan.installGeneration
   ||caller.identity.shop.shopId!==plan.shopId||caller.identity.shop.myshopifyDomain!==plan.shopDomain)fail();
  // The loader rejects structurally unverified caller/session/installation inputs.
- const authority=createIdentityRuntimeAuthorityLoader({verified:caller,database,tokenVault,provider:"google_ads",now:()=>new Date(now()),signal});
+ const controller=new AbortController(),query=database.query.bind(database),loadToken=tokenVault.loadProviderTokenSet.bind(tokenVault);
+ let read;
+ const authority=createIdentityRuntimeAuthorityLoader({verified:caller,database:{query:(sql,args)=>read(()=>query(sql,args))},
+  tokenVault:{loadProviderTokenSet:args=>read(()=>loadToken(args))},provider:"google_ads",now:()=>new Date(now()),signal:controller.signal});
  const coordinator=createGoogleAcceptanceCoordinatorPostgresClient({environment:env,poolFactory:coordinatorPoolFactory});
  const work=createRefreshWorkRepository(coordinator),quota=createSharedQuotaRepository(coordinator);
  const bound=a=>a?.connectionId===plan.connectionId&&a.connectionVersion===plan.connectionVersion
@@ -69,10 +72,21 @@ export function createGoogleAcceptanceExecution({environment,verified,database,t
  return Object.freeze({async run(...args){
   if(used||args.length)throw Error("GOOGLE_ACCEPTANCE_EXECUTION_USED");used=true;
   let claim,reader,result,phase=null,admissionSent=false,paused=false;
-  const start=now(),deadline=Math.min(start+90000,Date.parse(plan.expiresAt)),controller=new AbortController();
+  const start=now(),deadline=Math.min(start+90000,Date.parse(plan.expiresAt));
   const abort=()=>controller.abort();signal?.addEventListener("abort",abort,{once:true});if(signal?.aborted)abort();
   const timer=setTimeout(abort,Math.max(1,deadline-start));
   const current=()=>{const t=now();return Number.isSafeInteger(t)&&t>=start&&t<deadline&&!controller.signal.aborted;};
+  // The shared runtime/vault is read-only here and must never be closed by this
+  // execution. A late read can settle but cannot advance the stopped operation.
+  read=task=>new Promise((resolve,reject)=>{
+   if(!current()){reject(Error("ACCEPTANCE_READ_STOPPED"));return;}
+   let settled=false,timer;
+   const finish=(ok,value)=>{if(settled)return;settled=true;clearTimeout(timer);controller.signal.removeEventListener("abort",aborted);ok?resolve(value):reject(value);};
+   const aborted=()=>finish(false,Error("ACCEPTANCE_READ_STOPPED"));
+   controller.signal.addEventListener("abort",aborted,{once:true});
+   timer=setTimeout(aborted,Math.max(1,Math.min(5000,deadline-now())));
+   Promise.resolve().then(task).then(value=>finish(true,value),error=>finish(false,error));
+  });
   const context=()=>({claim,window:plan.window});
   async function stop(reason){
    if(!claim)return stopped(reason,{reservationMayExist:admissionSent});

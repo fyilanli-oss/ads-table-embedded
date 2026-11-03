@@ -3356,13 +3356,13 @@
       "unknown": "No automatic retry/release. SQL commit/finish acknowledgement loss or hold leaves a stopped nonzero-acceptance result and reservationMayExist. Durable job ID prevents another native attempt.",
       "coordinator_RPC_count": 17,
       "role_or_grants_installed": false,
-      "unit_tests_new": 24,
+      "unit_tests_new": 26,
       "actual_SQL_scenarios": 10,
       "real_provider_HTTP": false,
       "UI_changed": false,
       "live_settings_verified": false
     },
-    "validation": "53 focused tests passed (23 new acceptance cases plus existing reader/report-trigger). Full CI and ten actual-SQL/vault/two-role invocation scenarios in each F01 environment required. All physical HTTP/credentials synthetic.",
+    "validation": "61 focused cases passed:26 new acceptance plus existing16 reader,14 report-trigger and5 negative controls. Full CI and10 actual SQL/vault/two-role invocation cases in each F01 environment required. Physical HTTP/credentials synthetic. Read-only vault/authority waits capped at5s; late result cannot advance after abort. Post-paused authority recheck prevents stale accepted zero; known paused status retained on later read failure.",
     "boundaries": "No live SQL, role/grants, passwords/keys/env configuration, real provider calls, deployment or this code PR merge. No UI/OAuth flow/scopes/native query, storage/retention or Dataset change. Package2 remains open,3 not started; exactly3 packages, no subpackages.",
     "guard_registration": "Keep forbidden route/token negative control intact; register acceptance token only in the five approved default-off mode files. No new route, UI surface or general operator/debug exception. Added post-paused current authority check; known paused status is preserved on later read failure."
   }

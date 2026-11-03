@@ -93,3 +93,15 @@ test("selection drift immediately after paused finish cannot return an accepted 
  const f=googleAcceptanceFixture();f.hooks.sql=sql=>{if(sql.includes("finish_refresh_work")){f.state.paused++;f.f.state.version++;return {rows:[{result:true}]};}};
  const r=await run(f);assert.equal(r.status,"stopped");assert.equal(r.recordCount,null);assert.equal(r.jobPaused,true);assert.equal(r.reservationMayExist,false);assert.equal(f.http.length,4);
 });
+test("an aborted vault read settles the operation and a late vault value cannot start admission",async()=>{
+ const f=googleAcceptanceFixture(),controller=new AbortController();let release;
+ f.options.signal=controller.signal;f.options.tokenVault={loadProviderTokenSet(){controller.abort();return new Promise(resolve=>release=resolve);}};
+ const r=await run(f);assert.equal(r.status,"stopped");assert.equal(f.state.admissions,0);assert.equal(f.http.length,0);
+ release(f.f.token);await new Promise(resolve=>setImmediate(resolve));assert.equal(f.state.admissions,0);assert.equal(f.http.length,0);
+});
+test("HTTP authority errors are sanitized, never retried, and cannot open a coordinator pool",async()=>{
+ const f=googleAcceptanceFixture();let auth=0;
+ const request=new Request("https://example.com/settings/google-live-evidence",{method:"POST",headers:{[GOOGLE_ACCEPTANCE_HEADER]:"v1","content-type":"application/json"},body:JSON.stringify({mode:"step15_google_zero_acceptance",operationId:f.plan.operationId})});
+ const response=await handleGoogleAcceptanceRequest({...f.options,request,authenticateAdmin:async()=>{auth++;throw Error("SYNTHETIC-PRIVATE-CREDENTIAL");}});
+ assert.equal(response.status,503);assert.doesNotMatch(await response.text(),/SYNTHETIC|PRIVATE|CREDENTIAL/);assert.equal(auth,1);assert.equal(f.calls.length,0);assert.equal(f.http.length,0);
+});

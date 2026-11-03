@@ -1,4 +1,5 @@
 import {googleMappingFlowRehearsal} from "./eo05-google-mapping-flow-probe.mjs";
+import {googleSourceRoleProvisioningProbe} from "./eo05-google-source-role-probe.mjs";
 import assert from "node:assert/strict";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 import {createRefreshEntitlementVerifier,createAuthorityQuotaEntitlementVerifier} from "../app/lib/refresh/entitlement-check.server.js";
@@ -168,4 +169,5 @@ export async function refreshPreflightProbe(client,{workspace,connections,shopId
   await klaviyoSourceCaptureRehearsal(client,{workspace,shopId,shopDomain});
   await googleMappingFlowRehearsal(client,{workspace,shopId,shopDomain});
   await googleMappingFlowRehearsal(client,{server:true,workspace,shopId,shopDomain});
+  await googleSourceRoleProvisioningProbe(client);
 }

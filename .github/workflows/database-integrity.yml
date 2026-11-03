@@ -4,6 +4,10 @@ on:
   pull_request:
     branches: [main, "codex/step15-storage-foundation-design"]
     paths:
+      - "tools/eo05-google-source-role-*"
+      - "tools/sql/eo05-google-source-role-install.sql"
+      - "contracts/eo-05-step15-google-source-role-v1.json"
+      - "tests/google-source-role-plan.test.js"
       - "app/lib/refresh/google-source-server.server.js"
       - "app/lib/database/google-source-postgres.server.js"
       - "app/lib/database/source-evidence-config.server.js"

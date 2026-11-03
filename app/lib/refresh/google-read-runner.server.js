@@ -12,13 +12,13 @@ const freeze=x=>Object.freeze(x);
 const boundary=freeze({sourceStored:false,mappingVerified:false,DatasetWritePerformed:false,authorizesActivation:false});
 
 // Dedicated trusted background entry for one ALREADY admitted job. It does not
-// create/admit/finish jobs, install an SDK hook, refresh tokens or publish reports.
+// create/admit/finish jobs, install an SDK hook or publish reports.
 // No source key, retention policy, parser rule or Merchant selector is introduced.
 export function createGoogleReadRunner({environment,verified,tokenVault,execution,configuration,signal,
  now=Date.now,poolFactory,fetchFn=globalThis.fetch}={}){
  if(typeof now!=="function"||typeof fetchFn!=="function"||typeof tokenVault?.loadProviderTokenSet!=="function"
   ||signal!==undefined&&!(signal instanceof AbortSignal))invalid();
- let config,scope,env,caller,loadToken;
+ let config,scope,env,caller,loadToken,renewToken;
  try{
   config=structuredClone(configuration);scope=structuredClone(execution);env={...environment};
   caller={installationAuthority:structuredClone(verified?.installationAuthority),identity:{
@@ -26,6 +26,7 @@ export function createGoogleReadRunner({environment,verified,tokenVault,executio
     shop:{authority:verified?.identity?.shop?.authority,shopId:verified?.identity?.shop?.shopId,myshopifyDomain:verified?.identity?.shop?.myshopifyDomain}},
    context:{admin:{graphql:verified.context.admin.graphql.bind(verified.context.admin)}}};
   loadToken=tokenVault.loadProviderTokenSet.bind(tokenVault);
+  renewToken=typeof tokenVault.renewGoogleIdentityCredential==="function"?tokenVault.renewGoogleIdentityCredential.bind(tokenVault):null;
   refreshWorkIdentity(scope.claim,{claimRequired:true});
   permissionContext({provider:"shopify",workspaceId:caller.installationAuthority.workspaceId,
    installGeneration:caller.installationAuthority.installGeneration,shopId:caller.identity.shop.shopId,shopDomain:caller.identity.shop.myshopifyDomain});
@@ -85,7 +86,8 @@ export function createGoogleReadRunner({environment,verified,tokenVault,executio
      }finally{child.removeEventListener("abort",cancel);reader.releaseLock();}
     };
     const reader=createRefreshGoogleIdentityReader({verified:caller,database,
-     tokenVault:freeze({loadProviderTokenSet:loadToken}),
+     tokenVault:freeze({loadProviderTokenSet:loadToken,
+      ...renewToken?{renewGoogleIdentityCredential:renewToken}:{}}),environment:env,
      ...scope,merchantId:config.merchantId,developerToken:env.GOOGLE_ADS_DEVELOPER_TOKEN,
      workStore,quotaStore,signal:child,now,readNow:()=>new Date(now()),fetchFn:boundedFetch,
      maxElapsedMs:l.maxElapsedMs,maxPages:l.maxPages,maxRows:l.maxRows,maxLinkPages:l.maxLinkPages,maxLinks:l.maxLinks});

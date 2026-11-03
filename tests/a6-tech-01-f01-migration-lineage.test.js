@@ -11,6 +11,18 @@ const evidence = JSON.parse(read(manifest.live_ledger_evidence));
 const files = loadMigrationFiles(root);
 const validate = (overrides = {}) => validateMigrationLineage({manifest, files, liveLedger: evidence.migrations, ...overrides});
 
+test("prepared renewal migration is hash checked without rewriting the dated82 replay or claiming live installation",()=>{
+  const row=manifest.prepared_migrations.find(x=>x.name==="eo05_google_refresh_credential_handoff");
+  assert.ok(row);assert.equal(row.applied,false);assert.equal(row.live_apply_authorized,false);
+  assert.equal(manifest.historical_migrations.length+manifest.forward_migrations.length+manifest.pending_migrations.length,82);
+  assert.deepEqual(validate(),[]);
+  assert.ok(validate({files:{...files,[row.file]:files[row.file]+"\nselect 1;"}}).includes("SQL_CONTENT_CHANGED:"+row.file));
+  for(const key of ["applied","live_apply_authorized"]){const altered=structuredClone(manifest);
+    altered.prepared_migrations[0][key]=true;
+    assert.ok(validate({manifest:altered}).some(x=>x.startsWith("PREPARED_MIGRATION_GATE_INVALID:")));}
+  assert.ok(validate({liveLedger:[...evidence.migrations,{version:row.version,name:row.name}]}).some(x=>x.startsWith("UNREGISTERED_LIVE_MIGRATION:")));
+});
+
 test("lineage rejects missing owner context and context assigned to an unrelated migration", () => {
   const changed = structuredClone(manifest);
   const owner = changed.historical_migrations.find(entry => entry.execution_context);

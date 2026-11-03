@@ -3495,5 +3495,48 @@
     "UI_changed": false,
     "package2_complete": false,
     "package3_started": false
+  },
+  "Step15_Google_refresh_renewal_wiring_2026_11_03": {
+    "owner_approval": "Owner explicitly approved connecting existing refresh to token renewal, including code, database migration file, isolated tests and one PR: Onaylıyorum Codex on2026-11-03. No live SQL, provider requests, merge or deploy.",
+    "package": 2,
+    "new_package": false,
+    "goal": "Existing admitted Google raw-data refresh automatically reuses a valid token or renews an expired identity_v1 token once, then continues native collection and encrypted source storage. No merchant UI/Console or new OAuth step.",
+    "implementation": {
+      "helper": "app/lib/refresh/google-refresh-credential.server.js",
+      "entries": [
+        "app/lib/refresh/google-read-runner.server.js",
+        "app/lib/refresh/google-source-server.server.js"
+      ],
+      "vault": "Existing envelope encryption and Google identity renewal; a job-bound atomic SQL wrapper updates only the exact fenced job and matching current queue/quota credential version.",
+      "preserved": [
+        "same installation/generation, account, Reporting Account selection and exact scopes",
+        "all quota scope keys, connection/Merchant epochs, native limits, reservations and queue age",
+        "all other jobs/fences, source rules, OAuth screens, callbacks and existing read-only discovery behavior"
+      ],
+      "failure": "No retry or data read after native rejection, drift, timeout or unconfirmed write. Late transaction failure rolls back envelope, renewal receipt and metadata together; lost acknowledgement cannot advance to data collection."
+    },
+    "migration": {
+      "file": "supabase/migrations/20261103221715_eo05_google_refresh_credential_handoff.sql",
+      "classification": "prepared_migrations; historical40+42/43+39 rehearsal remains unchanged",
+      "live_applied": false,
+      "new_tables": 0,
+      "proof": "Only existing lifecycle receipt gains two nonsecret job/fence fields; old quota guard exceptions require exact marked receipt and current job source. New EXECUTE is runtime-only; dedicated source16RPC profile unchanged."
+    },
+    "verification": {
+      "unit": "valid reuse, expired renewal followed by native pages; rejected/changed scope, transport/abort/unknown failures stop",
+      "PostgreSQL": "Existing actual SDK/native quota/source/mapping rehearsal extended with9 renewal cases, actual token vault/encryption, exact narrow role, nonempty source commit and late failure rollback. Native HTTP and credentials synthetic only."
+    },
+    "official_checked_at": "2026-11-03",
+    "official_sources": [
+      "https://developers.google.com/identity/protocols/oauth2/web-server#offline",
+      "https://www.postgresql.org/docs/17/explicit-locking.html",
+      "https://www.postgresql.org/docs/17/sql-createfunction.html"
+    ],
+    "live_authorized": false,
+    "live_SQL_applied": false,
+    "merge_authorized": false,
+    "deploy_authorized": false,
+    "package2_complete": false,
+    "package3_started": false
   }
 }

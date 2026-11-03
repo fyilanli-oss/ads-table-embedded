@@ -5,6 +5,8 @@ on:
     branches: [main, "codex/step15-storage-foundation-design"]
     paths:
       - "app/lib/refresh/google-read-runner.server.js"
+      - "app/lib/refresh/google-refresh-credential.server.js"
+      - "tests/google-refresh-renewal-permission.test.js"
       - "app/lib/database/google-acceptance-coordinator-postgres.server.js"
       - "app/lib/refresh/google-acceptance-server.server.js"
       - "app/lib/refresh/google-acceptance-request.server.js"

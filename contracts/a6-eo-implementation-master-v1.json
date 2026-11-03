@@ -3178,5 +3178,29 @@
     "live_provider_authorized": false,
     "merge_authorized": false,
     "deployment_authorized": false
+  },
+  "Step15_live_installation_2026_11_03": {
+    "status": "live39_installed_schema_verified_not_collection_activated",
+    "base_main": "10b7e9b945603d74e3bcbb6588524ca5c278449e",
+    "owner_approval": "Owner explicitly approved the live39 migration installation after the stated concrete scope: Kurulunu onayliyorum Codex. Approval covers fresh43-record/schema preflight, exact39 files, normal migration-contained DB roles/grants and postverification only. Google source runtime role/keys/config/deploy/native provider calls excluded.",
+    "evidence": "docs/evidence/EO05_STEP15_LIVE_INSTALLATION_2026-11-03.json",
+    "source": "Existing39 exact files from main, captured in PR308 and rehearsed with committed synthetic bindings, direct Google mapping and new limited-role server entry. Three separately installed OAuth/renewal aliases excluded.",
+    "application": "Supabase MCP apply_migration executed39 files once each, in their approved order. Every successful reply was followed by full ledger count/name/SHA256 readback and prior-ledger preservation check before the next file. Tool-generated live versions are captured explicitly; no history repair or SQL rewrite.",
+    "preflight": "Correct ads-table-embedded project/ref/region, healthyPostgres17.11.0.003, GitHub main/Connector/branch/inventory checked. All43 previous SQL hashes and complete scoped schema inventory unchanged from read-only preflight; security advisors empty.39 repository source hashes and remote blob identities verified before dispatch.",
+    "postflight": "82 unique migration names, all82 expected SQL hashes match. Canonical live schema SHA256 equals independent staged/full/43+39 SQL rehearsals: 8198cd522dc6cff31780cd72068736acdd6da314d13f1245e3f7d12abc906a69.54 private tables forced-RLS/function-only,169 functions,10 private schemas; security lints empty. No new Google source role, budget, quota policies, jobs or source batches.",
+    "local_read_pause": "Before23, one local Git read had not completed; no SQL was dispatched for that step. A completed pinned-commit read was verified before continuing. No provider error, migration retry or alternative provider route occurred.",
+    "boundaries": "Only migration-defined schema/internal roles/grants and initialization occurred. No Google/Meta/Klaviyo/Shopify native request, OAuth flow/app config, source runtime role, secret/key/finite policy provisioning, scheduler/data collection, deployment or merge. Database schema installation is not native evidence, report publication or Step15 closure.",
+    "remaining": "Provision separately reviewed Google source service role and its exact RPC grants, independent purpose key and finite policies, trusted source configuration/reviewer and SDK bootstrap/server composition, admitted work/quota/capacity and real Google acceptance. Meta/Klaviyo production compositions separate.15 open;23 Dataset/FX/durable report delivery;22 paused and Overlap deferrals unchanged.",
+    "official_checked_at": "2026-11-03",
+    "official_sources": [
+      "https://supabase.com/docs/guides/deployment/database-migrations",
+      "https://supabase.com/docs/guides/database/postgres/roles",
+      "https://supabase.com/changelog"
+    ],
+    "live_database_scope_completed": true,
+    "live_provider_authorized": false,
+    "additional_live_mutation_authorized": false,
+    "merge_authorized": false,
+    "deployment_authorized": false
   }
 }

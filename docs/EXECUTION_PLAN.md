@@ -1,3 +1,44 @@
+## 3 Kasım — mevcut15:39 dosyanın onaylı canlı kurulumu
+
+Ürün sahibi exact39 migration'ın canlı AdsTable Supabase veritabanına kurulmasını,
+43 kayıt/şema ön kontrolünü ve sonuç doğrulamasını açıkça onayladı: “Kurulunu
+onayliyorum Codex”. Kaynak main10b7e9b945603d74e3bcbb6588524ca5c278449e.
+Bağlayıcı kayıt: contracts/a6-eo-implementation-master-v1.json#Step15_live_installation_2026_11_03.
+Tam nonsecret ledger/şema kanıtı: docs/evidence/EO05_STEP15_LIVE_INSTALLATION_2026-11-03.json.
+
+Doğru proje/region/PG17, GitHub Connector/main/branch/envanter ve güncel resmî
+belgeler kontrol edildi. Önceki43 kaydın SQL hash'leri ve bütün scoped schema
+aynıydı; güvenlik taraması boştu.39 kaynak dosyanın hash/uzak blob'u doğrulandı.
+
+39 dosya MCP apply_migration ile tek tek, birer kez ve onaylı sırada uygulandı.
+Her adımda tam ledger sayısı/isim/SHA256 ve önceki kayıtların değişmediği doğrulandı.
+Üç eski OAuth/renewal dosyası tekrar uygulanmadı. Supabase'in ürettiği yeni version
+numaraları evidence'de kaynak dosyaya bağlıdır; history repair/SQL değişikliği yoktur.
+23 öncesi yalnız geciken yerel Git okuması SQL dispatch edilmeden durduruldu;
+tamamlanmış pinned-commit okumasıyla devam edildi. Provider hatası veya tekrar yoktur.
+
+Canlı ledger82 kayıt ve82 beklenen SQL hash'i ile eşleşir. Son scoped schema hash'i:
+8198cd522dc6cff31780cd72068736acdd6da314d13f1245e3f7d12abc906a69.
+Bu, bağımsız staged/full/43+39 provasıyla birebirdir.54 özel tablo forced-RLS ve
+function-only;10 schema/169 function. Son güvenlik taraması da bulgusuzdur.
+
+Bu kayıt yeni canlı yetki vermez. Tarihsel40+42 manifest/rehearsal dizileri eski
+kayıtları değiştirmemek için korunur; güncel uygulanmış durum manifestteki ayrı
+live_installation_2026_11_03 alanı ve bu evidence'dir. Eski pending/applied bayrakları
+bugünkü canlı durumu tek başına göstermez ve yeniden kurulum yetkisi oluşturmaz.
+
+Yalnız migration'ların tanımlı schema/internal role/grant ve başlangıç kayıtları
+kuruldu. Yeni Google source runtime rolü, anahtar, sonlu politika, kota politikası,
+iş bütçesi veya veri toplama kurulmadı: job/source batch/quota policy sayısı0,
+budget/bounds null. Native provider çağrısı, OAuth/app config/deploy veya gerçek
+veri taşıma yoktur. Gerçek veri kabulü ya da15 kapanışı sayılmaz.
+
+Sırada ayrı onaylı source rol/key/policy, gerçek kaynak yapılandırması/reviewer,
+SDK bootstrap/sunucu ve admitted work/kota/kapasite hazırlığı ile Google gerçek
+veri kabulü vardır.23 Dataset/FX/kalıcı teslim;22 paused ve Overlap ertelemeleri
+korunur. Bu PR yalnız kurulum kanıtı/sözleşme kaydıdır; merge ayrı açık onay ister.
+Resmî Supabase migrations/roles/changelog belgeleri3 Kasım2026 kontrol edildi.
+
 ## 3 Kasım — mevcut15: Google özel sunucu bağlantısı
 
 Owner, salt okunur canlı incelemenin ardından dar DB erişimi, ayrı kanıt anahtarı,

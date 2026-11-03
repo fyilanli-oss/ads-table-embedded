@@ -3389,5 +3389,74 @@
     "merge_authorized": false,
     "deploy_authorized": false,
     "local_profile_query_diagnosis": "Verified offline: original builder replaced only first placeholder, leaving one unbound $1. Corrected read-only catalogue query prepared/hash recorded with zero placeholders; not executed. No role/grant defect inferred. Explicit retry approval required."
+  },
+  "Step15_Google_package2_Merchant_discovery_entry_2026_11_03": {
+    "checked_at": "2026-11-03",
+    "source_main": "e3248f3a9157f75d98e291d43283f6dd902a343c",
+    "existing_package": 2,
+    "new_package": false,
+    "status": "code_prepared_not_deployed_no_live_call",
+    "owner_approval": "Owner explicitly approved the concrete secure server entry to read only the selected Google advertiser Merchant relationship, code/tests/PR: Tamam onayliyorum Codex on2026-11-03. No live Google call, secret/config/SQL mutation, merge or deployment authorization.",
+    "entry": "app/lib/providers/google-merchant-discovery.server.js",
+    "route": "Existing POST /settings/google-live-evidence with x-adstable-google-merchant-discovery:v1; no new product surface/UI/button or OAuth transition.",
+    "request": {
+      "mode": "google_merchant_links_v1",
+      "keys": [
+        "mode",
+        "operationId"
+      ],
+      "max_bytes": 1024
+    },
+    "server_plan": {
+      "key": "ADSTABLE_GOOGLE_MERCHANT_DISCOVERY_PLAN",
+      "default": "absent_closed",
+      "max_lifetime_ms": 900000,
+      "fields": [
+        "operationId",
+        "workspaceId",
+        "installGeneration",
+        "shopId",
+        "shopDomain",
+        "connectionId",
+        "connectionVersion",
+        "credentialId",
+        "selectionId",
+        "accountId",
+        "expiresAt"
+      ],
+      "Merchant_input": false,
+      "client_identity_override": false
+    },
+    "authority": "Existing read-only authenticated Shopify resolver (Admin tries1) then existing identity authority RPC + server vault, exact current owner/generation/connection/version/credential/selection/Reporting Account; authority checked again after native response.",
+    "native": {
+      "query_source": "Existing GOOGLE_MERCHANT_LINK_QUERY, Google Ads v25 product_link MERCHANT_CENTER only",
+      "max_requests_per_invocation": 1,
+      "max_pages": 1,
+      "max_links": 1000,
+      "max_decoded_bytes": 1048576,
+      "total_timeout_ms": 20000,
+      "read_timeout_ms": 5000,
+      "redirects": false,
+      "retry": false,
+      "token_refresh": false,
+      "product_read": false,
+      "scope_change": false
+    },
+    "result": "Only IDs/count of a complete current native link page; multiple IDs not automatically selected, no links differs from product0. Partial/error/drift/abort returns no IDs. Merchant quota owner is not inferred and remains separate verification.",
+    "read_only": "No new SQL writes/grants/migration, job admission, quota configuration, rule/mapping/source/Dataset persistence or session fallback. Existing Shopify authentication semantics retained.",
+    "limits_of_proof": "Mocked physical HTTP/SQL/vault in unit tests; existing runtime authority RPC reused, no real provider query. No durable exactly-once/idempotency claim across separate requests/processes: this is explicit link-only reading, no auto caller/retry; invocation budget1, short server plan, remove plan after separately authorized use.",
+    "tests": "tests/google-merchant-discovery-permission.test.js",
+    "new_unit_tests": 47,
+    "UI_changed": false,
+    "package2_complete": false,
+    "package3_started": false,
+    "merge_authorized": false,
+    "deploy_authorized": false,
+    "live_authorized": false,
+    "official_sources": [
+      "https://developers.google.com/google-ads/api/fields/v25/product_link",
+      "https://developers.google.com/google-ads/api/rest/common/search",
+      "https://shopify.dev/docs/api/shopify-app-react-router/latest/authenticate/admin"
+    ]
   }
 }

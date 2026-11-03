@@ -1,3 +1,36 @@
+## 3 Kasım — Google ikinci paket: bağımsız Merchant bağlantısı okuma girişi
+
+Owner yalnız bu eksik sunucu girişi, kod/test ve PR hazırlığını açıkça onayladı.
+Mevcut authenticated POST /settings/google-live-evidence içinde ayrı
+x-adstable-google-merchant-discovery:v1 header ve google_merchant_links_v1 modu
+kullanılır. İstemci yalnız mode + operationId gönderir; hesap/Merchant/kimlik
+gönderemez. UI, OAuth, izin, scope, hesap seçimi ve callback değişmez.
+
+ADSTABLE_GOOGLE_MERCHANT_DISCOVERY_PLAN yoksa giriş kapalıdır. Bu ek geçici
+sunucu ayarı mevcut altı çalışma ayarına ilavedir; secret içermez, exact
+workspace/generation/shop/connection/version/credential/selection/Reporting
+Account ve en çok15dk expiresAt taşır; Merchant ön bilgisi istemez.
+Mevcut salt okunur Shopify resolver (tek Admin denemesi), mevcut authority RPC
+ve sunucu token kasası kullanılır. Kimlik/token drift sonrası sonuç yayımlanmaz.
+Secret/token veya ham provider cevabı response/loga taşınmaz.
+
+Yalnız mevcut Google Ads v25 product_link sorgusu, tek HTTP ve tek sayfa;
+20s toplam, DB/vault/body5s, decoded1MiB,1000 ilişki üst sınırı. Redirect/retry/
+otomatik token refresh yok. Tam boş ilişki cevabı Merchant bağı gözlenmedi demektir;
+ürün0 kabulü değildir. Birden çok Merchant ID dönebilir; otomatik seçim veya
+Merchant kota hesabı eşitliği çıkarımı yapılmaz. Kısmi/hata/stale/abort yanıtında
+ID listesi null kalır. Tarih penceresi/00:00 bu keşif için gerekmez.
+
+Bu salt okunur giriş job/kota/source/Dataset yazmaz. Ayrı istekler/processler
+arasında durable exactly-once garantisi iddia edilmez; otomatik çağıran/retry yok.
+Canlı kullanım tek açık onaylı invocation olarak yürütülüp kısa plan kaldırılır.
+Gerçek hesap sorgusu/config/merge/deploy yapılmadı ve ayrıca onay bekler.
+İkinci paket kapanmadı; üçüncü başlamadı; yeni paket veya saklama kararı yok.
+47 yeni izole HTTP-handler güvenlik testi hazırlanmıştır; zorunlu CI sonucu PRdadır.
+Resmî kontrol2026-11-03: Google v25 product_link, REST search ve Shopify
+authenticate.admin dokümanları. Tam kayıt:
+contracts/a6-eo-implementation-master-v1.json#Step15_Google_package2_Merchant_discovery_entry_2026_11_03.
+
 ## 3 Kasım — Google paket2/3: salt okunur canlı ön kontrol
 
 Owner Supabase rol/bağlantı/kota metadata'sı ve ortam ayarlarının yalnız varlığı

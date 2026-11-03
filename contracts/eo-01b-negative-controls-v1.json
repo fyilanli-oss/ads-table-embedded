@@ -74,6 +74,11 @@
       "file": "app/routes/settings.google-live-evidence.ts",
       "token": "acceptance",
       "reason": "Owner-approved Step15 package2 default-off one-shot source-read mode inside the existing authenticated Google evidence POST; exact server binding and17-RPC adapter, no new product/UI route or live activation. Approval recorded in Step15_Google_package2_invocation_2026_11_03."
+    },
+    {
+      "file": "app/lib/providers/google-merchant-discovery.server.js",
+      "token": "acceptance",
+      "reason": "Only rejects conflicting existing x-adstable-google-acceptance header; authenticated default-closed link-only discovery, no product call or new UI route. Owner approved code/tests/PR only on2026-11-03."
     }
   ],
   "forbiddenPaths": [
@@ -105,7 +110,8 @@
     "ADSTABLE_GOOGLE_ACCEPTANCE_ENABLED",
     "ADSTABLE_GOOGLE_ACCEPTANCE_PLAN",
     "ADSTABLE_GOOGLE_ACCEPTANCE_COORDINATOR_DATABASE_URL",
-    "ADSTABLE_GOOGLE_ACCEPTANCE_COORDINATOR_DB_TIMEOUT_MS"
+    "ADSTABLE_GOOGLE_ACCEPTANCE_COORDINATOR_DB_TIMEOUT_MS",
+    "ADSTABLE_GOOGLE_MERCHANT_DISCOVERY_PLAN"
   ],
   "requiredActivePolarisRuntime": "polaris-2.0-rc.js",
   "forbiddenObsoletePolarisRuntime": "polaris-1.js",

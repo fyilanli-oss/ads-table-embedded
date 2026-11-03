@@ -15,6 +15,7 @@ for(const [name,body,status]of [["missing repeated field",{},200],["permission",
  const f=googleReadRunnerFixture();f.hooks.fetch=u=>u.hostname==="merchantapi.googleapis.com"&&Response.json(body,{status});
  const r=await run(f);if(name==="missing repeated field"){assert.equal(r.status,"read_complete");assert.equal(r.recordCount,0);}else{assert.equal(r.status,"read_stopped");assert.equal(r.recordCount,null);assert.equal(r.empty,null);assert.equal(f.httpCalls.length,2);}
  assert.doesNotMatch(JSON.stringify(r),/PRIVATE|SYNTHETIC/);
+ if(name==="permission")assert.equal(r.reason,"provider_permission_denied");
 });
 test("nonempty response reports its true count and returns no product payload",async()=>{
  const f=googleReadRunnerFixture();f.hooks.fetch=u=>u.hostname==="merchantapi.googleapis.com"&&Response.json({products:[product]});const r=await run(f);
@@ -36,7 +37,9 @@ test("expired credential and lost quota acknowledgement never produce zero or re
   else f.hooks.sql=sql=>{if(sql.includes("reserve_shared_api_quota"))throw Error("PRIVATE-LOST");};const r=await run(f);assert.equal(r.status,"read_stopped");assert.equal(r.recordCount,null);assert.equal(f.httpCalls.length,0);}
 });
 test("current authority is checked after the native response",async()=>{
- const f=googleReadRunnerFixture();f.hooks.fetch=(u,i,n)=>{if(n===3)f.state.contextMissing=true;};const r=await run(f);assert.equal(r.status,"read_stopped");assert.equal(r.recordCount,null);
+ for(const kind of ["context","clock"]){const f=googleReadRunnerFixture();let time=f.options.now();f.options.now=()=>time;
+  f.hooks.fetch=(u,i,n)=>{if(n===3){if(kind==="context")f.state.contextMissing=true;else time--;}};
+  const r=await run(f);assert.equal(r.status,"read_stopped");assert.equal(r.recordCount,null);}
 });
 test("bounded deadline settles a hung native call without a second attempt",async()=>{
  const f=googleReadRunnerFixture();f.options.configuration.limits.maxElapsedMs=30;f.hooks.fetch=()=>new Promise(()=>{});const r=await run(f);assert.equal(r.status,"read_stopped");assert.equal(r.recordCount,null);assert.equal(f.httpCalls.length,1);

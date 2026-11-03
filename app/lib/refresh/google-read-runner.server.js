@@ -52,8 +52,11 @@ export function createGoogleReadRunner({environment,verified,tokenVault,executio
  return freeze({
   async run(...args){
    if(args.length||used||closed)throw Error("GOOGLE_READ_RUNNER_EXECUTION_USED");
-   used=true;running=true;let bytes=0,limited=false;
+   used=true;running=true;let bytes=0,limited=false,httpFailure=null;
    try{return await runIdentityReadDeadline({signal,timeoutMs:l.maxElapsedMs,run:async child=>{
+    const started=now();
+    const checkTime=()=>{const t=now();if(child.aborted||!Number.isSafeInteger(started)||!Number.isSafeInteger(t)||started<0||t<started||t-started>=l.maxElapsedMs)throw Error("IDENTITY_READ_DEADLINE_EXCEEDED");};
+    checkTime();
     const initial=await workStore.loadQuotaContext({...scope,provider:"google_ads"});
     if(child.aborted||!initial||initial.accountId!==scope.claim.accountId||initial.merchant?.targetAccountId!==config.merchantId)
      throw Error("GOOGLE_READ_RUNNER_AUTHORITY_REQUIRED");
@@ -64,6 +67,7 @@ export function createGoogleReadRunner({environment,verified,tokenVault,executio
      const response=await fetchFn(input,init);
      if(child.aborted)throw Error("GOOGLE_READ_RUNNER_ABORTED");
      if(!(response instanceof Response))throw Error("GOOGLE_READ_RUNNER_RESPONSE_INVALID");
+     if(!response.ok&&httpFailure===null)httpFailure=[401,403].includes(response.status)?"provider_permission_denied":response.status===429?"provider_throttled":"provider_http_error";
      if(!response.body)return response;
      const reader=response.body.getReader(),chunks=[];
      const cancel=()=>{void reader.cancel().catch(()=>{});};
@@ -87,6 +91,7 @@ export function createGoogleReadRunner({environment,verified,tokenVault,executio
      maxElapsedMs:l.maxElapsedMs,maxPages:l.maxPages,maxRows:l.maxRows,maxLinkPages:l.maxLinkPages,maxLinks:l.maxLinks});
     const observation=await reader.readEvidence();
     const current=await workStore.loadQuotaContext({...scope,provider:"google_ads"});
+    checkTime();
     if(child.aborted||JSON.stringify(initial)!==JSON.stringify(current))throw Error("GOOGLE_READ_RUNNER_AUTHORITY_CHANGED");
     const source=observation?.native_source;
     if(observation.provider!=="google_ads"||observation.account_id!==scope.claim.accountId||observation.merchant_id!==config.merchantId
@@ -97,9 +102,9 @@ export function createGoogleReadRunner({environment,verified,tokenVault,executio
      pages:source.pages,responseBytes:bytes,completedAt:observation.link_evidence.completed_at,...boundary});
    }});}catch(error){
     const control=quotaBoundaryControl(error);
-    const reason=limited?"response_limit":control?"quota_"+control.status:
+    const reason=limited?"response_limit":httpFailure??(control?"quota_"+control.status:
      ["GOOGLE_READ_RUNNER_AUTHORITY_REQUIRED","GOOGLE_READ_RUNNER_AUTHORITY_CHANGED","GOOGLE_READ_RUNNER_RESULT_INVALID",
-      "IDENTITY_READ_ABORTED","IDENTITY_READ_DEADLINE_EXCEEDED"].includes(error?.message)?error.message:"read_not_confirmed";
+      "IDENTITY_READ_ABORTED","IDENTITY_READ_DEADLINE_EXCEEDED"].includes(error?.message)?error.message:"read_not_confirmed");
     return freeze({status:"read_stopped",provider:"google_ads",recordCount:null,empty:null,reason,...boundary});
    }finally{running=false;}
   },

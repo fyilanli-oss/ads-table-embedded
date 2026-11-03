@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {GOOGLE_SOURCE_ROLE_CHECK_SQL,GOOGLE_SOURCE_RPC} from "../app/lib/database/google-source-postgres.server.js";
 import {inspectGoogleSourceRole,renderGoogleSourceRoleInstallation,roleInstallationPath} from "./eo05-google-source-role-plan.mjs";
 
 // Only the existing ephemeral F01 caller invokes this. Never opens a DB URL.
@@ -34,9 +33,8 @@ export async function googleSourceRoleProvisioningProbe(client){
    assert.equal((await inspectGoogleSourceRole(client)).status,"ready_to_install");
    await client.query(body);
    assert.equal((await inspectGoogleSourceRole(client)).status,"installed_inactive");
-   await client.query("set local role adstable_google_source_runner");
-   assert.equal((await client.query(GOOGLE_SOURCE_ROLE_CHECK_SQL,[[...new Set(GOOGLE_SOURCE_RPC.map(x=>x[1]))]])).rows[0].profile_ready,true);
-   await client.query("set local role postgres");
+   // Actual SET ROLE execution is covered by the independent14-mode server
+   // rehearsal's explicit fixture-only grant. Provisioning grants none here.
    await rejected(/GOOGLE_SOURCE_ROLE_ALREADY_EXISTS/);
    assert.equal((await inspectGoogleSourceRole(client)).status,"installed_inactive");
   });

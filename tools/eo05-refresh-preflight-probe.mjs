@@ -17,6 +17,7 @@ import {klaviyoSourceCaptureRehearsal} from "./eo05-klaviyo-source-capture-probe
 
 // Runs within the canonical synthetic fixture. All changes roll back, including billing/queue/claims.
 export async function refreshPreflightProbe(client,{workspace,connections,shopId,shopDomain}) {
+  await googleSourceRoleProvisioningProbe(client);
   await client.query("begin");
   try {
     const initial=new Date(Date.now()-3*86400000).toISOString();
@@ -169,5 +170,4 @@ export async function refreshPreflightProbe(client,{workspace,connections,shopId
   await klaviyoSourceCaptureRehearsal(client,{workspace,shopId,shopDomain});
   await googleMappingFlowRehearsal(client,{workspace,shopId,shopDomain});
   await googleMappingFlowRehearsal(client,{server:true,workspace,shopId,shopDomain});
-  await googleSourceRoleProvisioningProbe(client);
 }

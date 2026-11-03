@@ -50,10 +50,11 @@ const inactiveRoleSql=`select not r.rolcanlogin and not r.rolsuper and not r.rol
  and not r.rolcreatedb and not r.rolcreaterole and not r.rolreplication
  and not exists(select 1 from pg_auth_members m where m.member=r.oid)
  and not exists(select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
-  where n.nspname in (${privateSchemas}) and c.relkind in ('r','p')
-  and (has_table_privilege(r.oid,c.oid,'MAINTAIN') or has_any_column_privilege(r.oid,c.oid,'SELECT,INSERT,UPDATE,REFERENCES')))
+  where case when n.nspname in (${privateSchemas}) and c.relkind in ('r','p')
+   then has_table_privilege(r.oid,c.oid,'MAINTAIN') or has_any_column_privilege(r.oid,c.oid,'SELECT,INSERT,UPDATE,REFERENCES') else false end)
  and not exists(select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
-  where n.nspname in (${privateSchemas}) and c.relkind='S' and has_sequence_privilege(r.oid,c.oid,'USAGE,SELECT,UPDATE'))
+  where case when n.nspname in (${privateSchemas}) and c.relkind='S'
+   then has_sequence_privilege(r.oid,c.oid,'USAGE,SELECT,UPDATE') else false end)
  as inactive from pg_roles r where r.rolname='adstable_google_source_runner'`;
 
 // Read-only catalogue inspection, no execution of installation SQL or repair path.

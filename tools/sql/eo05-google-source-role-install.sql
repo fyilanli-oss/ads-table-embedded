@@ -93,10 +93,11 @@ begin
  and not r.rolcreatedb and not r.rolcreaterole and not r.rolreplication
  and not exists(select 1 from pg_auth_members m where m.member=r.oid)
  and not exists(select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
-  where n.nspname in ('app','shopify','integrations','operations','billing','privacy','analytics','evidence','identity','source') and c.relkind in ('r','p')
-  and (has_table_privilege(r.oid,c.oid,'MAINTAIN') or has_any_column_privilege(r.oid,c.oid,'SELECT,INSERT,UPDATE,REFERENCES')))
+  where case when n.nspname in ('app','shopify','integrations','operations','billing','privacy','analytics','evidence','identity','source') and c.relkind in ('r','p')
+   then has_table_privilege(r.oid,c.oid,'MAINTAIN') or has_any_column_privilege(r.oid,c.oid,'SELECT,INSERT,UPDATE,REFERENCES') else false end)
  and not exists(select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
-  where n.nspname in ('app','shopify','integrations','operations','billing','privacy','analytics','evidence','identity','source') and c.relkind='S' and has_sequence_privilege(r.oid,c.oid,'USAGE,SELECT,UPDATE'))
+  where case when n.nspname in ('app','shopify','integrations','operations','billing','privacy','analytics','evidence','identity','source') and c.relkind='S'
+   then has_sequence_privilege(r.oid,c.oid,'USAGE,SELECT,UPDATE') else false end)
  as inactive from pg_roles r where r.rolname='adstable_google_source_runner') q;
  if valid is distinct from true or inactive is distinct from true then
   raise exception 'GOOGLE_SOURCE_ROLE_POSTFLIGHT_FAILED';

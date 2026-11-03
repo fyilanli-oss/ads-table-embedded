@@ -865,5 +865,33 @@
     "new_google_source_runtime_role": false,
     "provider_calls": false,
     "key_or_config_or_deployment": false
+  },
+  "google_source_role_live_installation_2026_11_03": {
+    "status": "installed_inactive_no_login_83_records_verified",
+    "source_main": "df4b0b1e7d914319096149bc46c95beb3414284d",
+    "evidence": "docs/evidence/EO05_GOOGLE_SOURCE_ROLE_INSTALLATION_2026-11-03.json",
+    "source_file": "tools/sql/eo05-google-source-role-install.sql",
+    "source_blob": "daaef8933461cda51a7981c68836c37bfc4075a2",
+    "source_sql_sha256": "9ac79f009c2a79282f07cf8f3ba87b1bb14e44b10b14583ca0f46f6ef62deca4",
+    "live_version": "20261103140321",
+    "migration_name": "eo05b_google_source_role_install",
+    "prior_count": 82,
+    "final_count": 83,
+    "pre_schema_sha256": "8198cd522dc6cff31780cd72068736acdd6da314d13f1245e3f7d12abc906a69",
+    "post_schema_sha256": "9d965a218e3e1462f2b38a89e468b0f798fcaa37003dfa58e8a7e7b5287f67f9",
+    "scope": "Exact approved operational SQL applied once via Supabase apply_migration; no SQL/file rewrite or history repair. New dated record takes precedence over the historical no-ledger-insertion preparation note only.",
+    "owner_approval": "Owner explicitly approved the exact NOLOGIN role installation and then the83rd migration record while preserving previous82. No password/key/config/login/data collection/native call/deploy or merge authority.",
+    "verification": "Every previous82 version/name/SQL hash unchanged; new SQL hash equals exact approved artifact. Existing5 role attributes preserved; only expected4 schema USAGE and16 function EXECUTE additions. All other scoped catalogue state and169 function bodies/owners/config unchanged. Full runtime profile true; LOGIN and all unsafe attributes false, NOLOGIN enforced. Security advisors empty before and after; jobs/source batches/quota policies remain0.",
+    "creator_membership": "Only normal PostgreSQL creator grant to postgres: ADMIN true, SET false, INHERIT false. New role has no membership in an existing role; application/coordinator/owner/queue roles not widened.",
+    "evidence_boundary": "Committed live post hash includes20 expected ACL additions. The CI three-environment rehearsal deliberately rolls role/grants back and preserves the historical82 baseline hash; it does not claim identical activated/live state or real native evidence.",
+    "historical_records_preserved": true,
+    "existing82_reapplied": false,
+    "history_repair": false,
+    "role_login": false,
+    "collection_active": false,
+    "live_scope_completed": true,
+    "additional_live_mutation_authorized": false,
+    "merge_authorized": false,
+    "deployment_authorized": false
   }
 }

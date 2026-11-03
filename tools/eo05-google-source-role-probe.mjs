@@ -29,6 +29,13 @@ export async function googleSourceRoleProvisioningProbe(client){
    try{await assert.rejects(client.query(attempt),pattern);}
    finally{await client.query("rollback to savepoint rejected_install");await client.query("release savepoint rejected_install");}
   }
+  async function ownerMutation(sql){
+   // postgres has NOINHERIT membership in the object owner, so fixture DDL also
+   // needs an explicit local owner scope. This grants no new role membership.
+   await client.query("set local role adstable_owner");
+   await client.query(sql);
+   await client.query("set local role postgres");
+  }
   await scenario(async()=>{
    assert.equal((await inspectGoogleSourceRole(client)).status,"ready_to_install");
    await client.query(body);
@@ -50,14 +57,14 @@ export async function googleSourceRoleProvisioningProbe(client){
    "grant execute on function identity.lookup_verified_mapping(jsonb,jsonb) to public",
    "alter table evidence.source_batches no force row level security",
   ])await scenario(async()=>{
-   await client.query(mutation);
+   await ownerMutation(mutation);
    assert.equal((await inspectGoogleSourceRole(client)).status,"blocked");
    await rejected(/GOOGLE_SOURCE_ROLE_PREREQUISITES_CHANGED/);
    assert.equal(await roleExists(),false);
   });
   await scenario(async()=>{
    // Inherited PUBLIC privilege on an unrelated RPC is not repairable by this artifact.
-   await client.query("grant execute on function evidence.cleanup_source_retention(uuid,bigint,bigint,uuid,text,bigint,integer,timestamptz,jsonb) to public");
+   await ownerMutation("grant execute on function evidence.cleanup_source_retention(uuid,bigint,bigint,uuid,text,bigint,integer,timestamptz,jsonb) to public");
    await rejected(/GOOGLE_SOURCE_ROLE_POSTFLIGHT_FAILED/);
    assert.equal(await roleExists(),false,"late postcheck must undo role and all grants");
   });

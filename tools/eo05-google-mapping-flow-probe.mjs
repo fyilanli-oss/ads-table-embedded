@@ -101,6 +101,7 @@ export async function googleMappingFlowRehearsal(client,{workspace,shopId,shopDo
    ["success","source_lost","rule_lost","mapping_lost","read_failed","denied","wrong_parent","partial_native","native_error","fence_before_rule","abort_after_source","target_missing","review_timeout","mapping_abort"];
   for(const mode of modes){
    await client.query("savepoint google_flow_case");
+   let flow;
    try{
     const {input}=sourceStoreFixture(),counts={source:0,rule:0,mapping:0,current:0,ads:0,merchant:0,admin:0},controller=new AbortController();let decisionCalls=0;
     const database={async query(sql,args){
@@ -136,7 +137,6 @@ export async function googleMappingFlowRehearsal(client,{workspace,shopId,shopDo
        assert.equal(u.hostname,shopDomain);counts.admin++;return Response.json({data:{shop:{id:shopId,myshopifyDomain:shopDomain},product:{id:"gid://shopify/Product/123",legacyResourceId:"123"},productVariant:{id:"gid://shopify/ProductVariant/456",legacyResourceId:"456",product:{id:mode==="wrong_parent"?"gid://shopify/Product/999":"gid://shopify/Product/123",legacyResourceId:mode==="wrong_parent"?"999":"123"}}},
         extensions:{cost:{requestedQueryCost:8,actualQueryCost:5,throttleStatus:{maximumAvailable:1000,currentlyAvailable:995,restoreRate:50}}}});
       }}};
-    let flow;
     if(server){
      const key=()=>randomBytes(32).toString("base64url"),environment={
       ADSTABLE_SOURCE_EVIDENCE_ACTIVE_KEY_VERSION:"1",ADSTABLE_SOURCE_EVIDENCE_ENCRYPTION_KEY_V1:key(),
@@ -147,9 +147,10 @@ export async function googleMappingFlowRehearsal(client,{workspace,shopId,shopDo
      // as the exact narrow role with only the published function grants. Lost
      // acknowledgement is injected AFTER releasing the successful SQL savepoint.
      let poolOrdinal=0;
-     const poolFactory=()=>({on(){},async end(){},async connect(){
+     const poolFactory=()=>{let active=0,drained;return {on(){},async end(){if(active)await new Promise(resolve=>{drained=resolve;});},async connect(){
+      active++;
       const name="server_rpc_"+(++poolOrdinal);let committed=false,lastKind=null;
-      return {release(){},async query(sql,args){
+      return {release(){active--;if(!active)drained?.();},async query(sql,args){
        if(sql==="begin")return client.query("savepoint "+name);
        if(sql==="commit"){
         await client.query("set local role adstable_owner");await client.query("release savepoint "+name);committed=true;
@@ -166,7 +167,7 @@ export async function googleMappingFlowRehearsal(client,{workspace,shopId,shopDo
        lastKind=sql.includes("reserve_shared_api_quota")?"quota":sql.includes("commit_google_identity_source")?"source":sql.includes("commit_reviewed_source_rule")?"rule":sql.includes("commit_verified_mapping")?"mapping":null;
        return database.query(sql,args);
       }};
-     }});
+     }};};
      if(nativeRead){
       for(const k of Object.keys(environment))if(k.startsWith("ADSTABLE_SOURCE_EVIDENCE_"))delete environment[k];
       if(mode==="role_drift")await client.query("revoke execute on function identity.lookup_verified_mapping(jsonb,jsonb) from adstable_google_source_runner");
@@ -212,7 +213,8 @@ export async function googleMappingFlowRehearsal(client,{workspace,shopId,shopDo
     }
     if(server)await flow.close();
     assert.equal((await client.query("select status from operations.refresh_runs where workspace_id=$1 and job_id=$2",[workspace,execution.claim.id])).rows[0].status,"running");
-   }finally{await client.query("rollback to savepoint google_flow_case");await client.query("release savepoint google_flow_case");}
+   }catch(error){if(nativeRead)console.error("EO05_GOOGLE_PACKAGE1_CASE_STOP",JSON.stringify({mode,code:error.code??"ASSERTION_FAILED",...(error.code==="ERR_ASSERTION"?{assertion:error.message}:{})}));throw error;
+   }finally{if(server&&flow)await flow.close();await client.query("rollback to savepoint google_flow_case");await client.query("release savepoint google_flow_case");}
   }
   if(nativeRead)console.log("EO05_GOOGLE_PACKAGE1_READ_RUNNER_SQL_PASS scenarios=15 actual_reader_and_limited_role=true native_zero_and_nonzero_distinct=true errors_missing_links_partial_and_unknown_never_zero=true no_source_key_or_retention_policy=true no_source_mapping_Dataset_or_job_finish=true native_HTTP=synthetic live_changes=false");
   else if(server)console.log("EO05_GOOGLE_SOURCE_SERVER_SQL_PASS scenarios=14 exact_limited_role_RPC=true separate_source_key=true explicit_policy_and_review=true lost_commit_inspection_readonly=true native_evidence_synthetic=true live_grants=false");

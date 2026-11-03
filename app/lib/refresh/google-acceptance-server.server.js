@@ -68,7 +68,7 @@ export function createGoogleAcceptanceExecution({environment,verified,database,t
  let used=false;
  return Object.freeze({async run(...args){
   if(used||args.length)throw Error("GOOGLE_ACCEPTANCE_EXECUTION_USED");used=true;
-  let claim,reader,result,phase=null,admissionSent=false;
+  let claim,reader,result,phase=null,admissionSent=false,paused=false;
   const start=now(),deadline=Math.min(start+90000,Date.parse(plan.expiresAt)),controller=new AbortController();
   const abort=()=>controller.abort();signal?.addEventListener("abort",abort,{once:true});if(signal?.aborted)abort();
   const timer=setTimeout(abort,Math.max(1,deadline-start));
@@ -130,13 +130,15 @@ export function createGoogleAcceptanceExecution({environment,verified,database,t
    // Count metadata is returned below; it is not a report page or Dataset payload.
    await advance("response_received");
    if(!current()||await work.finishClaim({claim,outcome:"paused"})!==true)return stopped("closure_unconfirmed",{reservationMayExist:true});
+   paused=true;
+   if(!current()||!bound(await authority.loadCurrent()))return stopped("authority_check_failed_after_request",{jobPaused:true,reservationMayExist:false});
    return Object.freeze({...observation,status:"observed",operationId:plan.operationId,jobPaused:true});
   }
-  try{result=await execute();}catch{result=stopped(claim?"execution_unconfirmed":"admission_unconfirmed",{reservationMayExist:admissionSent});}
+  try{result=await execute();}catch{result=stopped(claim?"execution_unconfirmed":"admission_unconfirmed",{reservationMayExist:admissionSent&&!paused,...paused?{jobPaused:true}:{}});}
   finally{
    clearTimeout(timer);signal?.removeEventListener("abort",abort);
    const closed=await Promise.allSettled([reader?.close(),coordinator.close()]);
-   if(closed.some(x=>x.status==="rejected"))result=stopped("closure_unconfirmed",{reservationMayExist:admissionSent});
+   if(closed.some(x=>x.status==="rejected"))result=stopped("closure_unconfirmed",{reservationMayExist:admissionSent&&!paused,...paused?{jobPaused:true}:{}});
   }
   return result;
  }});

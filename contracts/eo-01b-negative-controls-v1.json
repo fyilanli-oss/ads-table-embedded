@@ -49,6 +49,31 @@
       "file": "app/lib/refresh/quota-scope-resolver.server.js",
       "token": "debug",
       "reason": "existing_Meta_token_debug_endpoint_family_exact_scope_match_not_new_UI_or_operator_route"
+    },
+    {
+      "file": "app/lib/database/google-acceptance-coordinator-postgres.server.js",
+      "token": "acceptance",
+      "reason": "Owner-approved Step15 package2 default-off one-shot source-read mode inside the existing authenticated Google evidence POST; exact server binding and17-RPC adapter, no new product/UI route or live activation. Approval recorded in Step15_Google_package2_invocation_2026_11_03."
+    },
+    {
+      "file": "app/lib/refresh/google-acceptance-server.server.js",
+      "token": "acceptance",
+      "reason": "Owner-approved Step15 package2 default-off one-shot source-read mode inside the existing authenticated Google evidence POST; exact server binding and17-RPC adapter, no new product/UI route or live activation. Approval recorded in Step15_Google_package2_invocation_2026_11_03."
+    },
+    {
+      "file": "app/lib/refresh/google-acceptance-request.server.js",
+      "token": "acceptance",
+      "reason": "Owner-approved Step15 package2 default-off one-shot source-read mode inside the existing authenticated Google evidence POST; exact server binding and17-RPC adapter, no new product/UI route or live activation. Approval recorded in Step15_Google_package2_invocation_2026_11_03."
+    },
+    {
+      "file": "app/lib/refresh/google-acceptance-request.server.d.ts",
+      "token": "acceptance",
+      "reason": "Owner-approved Step15 package2 default-off one-shot source-read mode inside the existing authenticated Google evidence POST; exact server binding and17-RPC adapter, no new product/UI route or live activation. Approval recorded in Step15_Google_package2_invocation_2026_11_03."
+    },
+    {
+      "file": "app/routes/settings.google-live-evidence.ts",
+      "token": "acceptance",
+      "reason": "Owner-approved Step15 package2 default-off one-shot source-read mode inside the existing authenticated Google evidence POST; exact server binding and17-RPC adapter, no new product/UI route or live activation. Approval recorded in Step15_Google_package2_invocation_2026_11_03."
     }
   ],
   "forbiddenPaths": [
@@ -76,7 +101,11 @@
     "SHOPIFY_APP_GID",
     "SHOPIFY_APP_URL",
     "SHOPIFY_PARTNER_API_ACCESS_TOKEN",
-    "SHOPIFY_PARTNER_ORG_ID"
+    "SHOPIFY_PARTNER_ORG_ID",
+    "ADSTABLE_GOOGLE_ACCEPTANCE_ENABLED",
+    "ADSTABLE_GOOGLE_ACCEPTANCE_PLAN",
+    "ADSTABLE_GOOGLE_ACCEPTANCE_COORDINATOR_DATABASE_URL",
+    "ADSTABLE_GOOGLE_ACCEPTANCE_COORDINATOR_DB_TIMEOUT_MS"
   ],
   "requiredActivePolarisRuntime": "polaris-2.0-rc.js",
   "forbiddenObsoletePolarisRuntime": "polaris-1.js",

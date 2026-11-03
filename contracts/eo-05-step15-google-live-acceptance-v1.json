@@ -139,7 +139,7 @@
         "unknown": "No automatic retry/release. SQL commit/finish acknowledgement loss or hold leaves a stopped nonzero-acceptance result and reservationMayExist. Durable job ID prevents another native attempt.",
         "coordinator_RPC_count": 17,
         "role_or_grants_installed": false,
-        "unit_tests_new": 23,
+        "unit_tests_new": 24,
         "actual_SQL_scenarios": 10,
         "real_provider_HTTP": false,
         "UI_changed": false,

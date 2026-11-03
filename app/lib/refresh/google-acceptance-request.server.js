@@ -14,13 +14,18 @@ export async function handleGoogleAcceptanceRequest({request,authenticateAdmin,d
   ||!request.headers.get("content-type")?.toLowerCase().startsWith("application/json"))return rejected("request_contract_invalid");
  let input;
  try{
-  const reader=request.body?.getReader();if(!reader)throw Error();const chunks=[];let bytes=0;
-  try{for(;;){const part=await reader.read();if(part.done)break;bytes+=part.value.byteLength;if(bytes>1024){await reader.cancel();throw Error();}chunks.push(part.value);}}
-  finally{reader.releaseLock();}
+  const reader=request.body?.getReader();if(!reader)throw Error();const chunks=[];let bytes=0,expired=false;
+  const cancel=()=>{void reader.cancel().catch(()=>{});};
+  const timer=setTimeout(()=>{expired=true;cancel();},5000);
+  request.signal.addEventListener("abort",cancel,{once:true});if(request.signal.aborted)cancel();
+  try{for(;;){const part=await reader.read();if(part.done)break;bytes+=part.value.byteLength;if(bytes>1024){await reader.cancel();throw Error();}chunks.push(part.value);}
+   if(expired||request.signal.aborted)throw Error();}
+  finally{clearTimeout(timer);request.signal.removeEventListener("abort",cancel);reader.releaseLock();}
   input=JSON.parse(Buffer.concat(chunks).toString("utf8"));
  }catch{return rejected("request_contract_invalid");}
  if(!input||Object.keys(input).sort().join()!=="mode,operationId"||input.mode!=="step15_google_zero_acceptance"
   ||input.operationId!==plan.operationId)return rejected("request_contract_invalid");
+ try{readGoogleAcceptancePlan(env,now());}catch{return rejected("configuration_missing",503);}
  // Accept only the existing authenticated Shopify resolver result. No caller,
  // account or job object from the HTTP body can enter the internal execution.
  const verified=await resolveReadOnlyShopifyRouteAuthority({request,database,authenticateAdmin:async req=>{

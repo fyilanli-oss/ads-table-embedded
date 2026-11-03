@@ -40,7 +40,7 @@ connections3,rows1000,bytes1048576. Üç Google HTTP'ye ilave Partner ve Shopify
 trafiği vardır; UI/report/native query sayısı uydurulmaz. Canlı job bütçeleri ve
 quota policy'leri halen eksik/güncel doğrulanmamış durumdadır.
 
-53 odaklı test geçti;23 yeni kabul testi vardır. F01'e gerçek token kasası ve
+54 odaklı kontrol kapsamı vardır;24 yeni kabul testi vardır. F01'e gerçek token kasası ve
 iki gerçek rolü kullanan10 senaryo eklendi:0/tekrar,dolu,403,kısmi,yanlış rol,eksik
 context,süresi dolmuş token,admission cevabı kaybı,finish cevabı kaybı,sonradan hold.
 Fiziksel HTTP/credentials sentetik kalır. Zorunlu CI sonucu PR'da doğrulanır.

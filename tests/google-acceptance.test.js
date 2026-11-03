@@ -89,3 +89,7 @@ test("missing source configuration and overlong DB deadlines reject before creat
   assert.throws(()=>createGoogleAcceptanceExecution(f.options));assert.equal(f.calls.length,0);assert.equal(f.http.length,0);
  }
 });
+test("selection drift immediately after paused finish cannot return an accepted zero",async()=>{
+ const f=googleAcceptanceFixture();f.hooks.sql=sql=>{if(sql.includes("finish_refresh_work")){f.state.paused++;f.f.state.version++;return {rows:[{result:true}]};}};
+ const r=await run(f);assert.equal(r.status,"stopped");assert.equal(r.recordCount,null);assert.equal(r.jobPaused,true);assert.equal(r.reservationMayExist,false);assert.equal(f.http.length,4);
+});

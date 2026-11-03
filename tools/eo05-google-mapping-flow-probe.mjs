@@ -165,6 +165,11 @@ export async function googleMappingFlowRehearsal(client,{workspace,shopId,shopDo
       GOOGLE_ADS_DEVELOPER_TOKEN:"SYNTHETIC-DEVELOPER",ADSTABLE_GOOGLE_SOURCE_DB_TIMEOUT_MS:"30000",
       ADSTABLE_GOOGLE_SOURCE_DATABASE_URL:"postgresql://adstable_google_source_runner.podpwkrpmjiksskxhwsu:"+"x".repeat(32)+"@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require"};
      if(refreshRenewal){
+      // Historical fixtures can contain envelopes under several key versions.
+      // The real vault checks that complete inventory before opening this case's
+      // credential; supply synthetic keys without changing those historical rows.
+      for(const {v} of (await client.query("select distinct key_version v from integrations.provider_credential_envelopes union select distinct key_version v from integrations.oauth_pkce_envelopes")).rows)
+       if(Number(v)!==1)environment[`ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_V${v}`]=key();
       Object.assign(environment,{GOOGLE_ADS_OAUTH_CLIENT_ID:"SYNTHETIC-CLIENT",GOOGLE_ADS_OAUTH_CLIENT_SECRET:"SYNTHETIC-SECRET",
        GOOGLE_ADS_OAUTH_REDIRECT_URI:"https://embedded.adstable.app/auth/google-ads/callback"});
       const token={access_token:"SYNTHETIC-ACCESS",refresh_token:"SYNTHETIC-REFRESH",permission_profile:"identity_v1",scope:scopes.join(" "),
@@ -187,6 +192,7 @@ export async function googleMappingFlowRehearsal(client,{workspace,shopId,shopDo
        return result;
       }};
       options.readerOptions.tokenVault=createTokenVault({database:runtimeDatabase,environment});
+      await options.readerOptions.tokenVault.assertRuntimeReady();
       if(mode==="renew_stale_fence")await client.query("update operations.refresh_runs set fence=fence+1 where workspace_id=$1 and job_id=$2",[workspace,execution.claim.id]);
       if(mode==="renew_stale_selection")await client.query("update integrations.reporting_account_bindings set effective_to=clock_timestamp() where workspace_id=$1 and provider='google_ads' and effective_to is null",[workspace]);
       if(mode==="renew_late_failure")await client.query("alter table operations.refresh_work_bindings add constraint test_no_renewed_version check((source->>'connectionVersion')::bigint<>"+(Number(connection.connection_version)+1)+") not valid");

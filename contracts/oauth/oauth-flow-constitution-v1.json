@@ -2488,9 +2488,6 @@
     "first_error_no_secrets": [
       "tests/permission-error-log.test.js",
       "tests/permission-settings.test.js"
-    ],
-    "google_merchant_link_discovery": [
-      "tests/google-merchant-discovery-permission.test.js"
     ]
   }
 }

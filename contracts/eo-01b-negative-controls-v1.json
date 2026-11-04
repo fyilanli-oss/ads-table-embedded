@@ -94,6 +94,16 @@
       "file": "app/lib/database/meta-raw-coordinator-postgres.server.js",
       "token": "acceptance",
       "reason": "Owner-approved Meta first-day raw correction reuses existing coordinator connection env names only. Separate Meta RPC allowlist; no new product/UI/operator route, env name or live activation."
+    },
+    {
+      "file": "app/lib/database/klaviyo-raw-coordinator-postgres.server.js",
+      "token": "acceptance",
+      "reason": "Owner-approved Klaviyo raw reader reuses existing coordinator env names only; no UI/OAuth/acceptance route or live activation."
+    },
+    {
+      "file": "app/lib/refresh/klaviyo-raw-server.server.js",
+      "token": "acceptance",
+      "reason": "Owner-approved Klaviyo raw reader reuses existing coordinator env names only; no UI/OAuth/acceptance route or live activation."
     }
   ],
   "forbiddenPaths": [
@@ -134,7 +144,12 @@
     "ADSTABLE_META_RAW_CAPTURE_PLAN",
     "ADSTABLE_META_RAW_CAPTURE_SERVER_SECRET",
     "ADSTABLE_META_SOURCE_DATABASE_URL",
-    "ADSTABLE_META_SOURCE_DB_TIMEOUT_MS"
+    "ADSTABLE_META_SOURCE_DB_TIMEOUT_MS",
+    "ADSTABLE_KLAVIYO_RAW_CAPTURE_ENABLED",
+    "ADSTABLE_KLAVIYO_RAW_CAPTURE_PLAN",
+    "ADSTABLE_KLAVIYO_RAW_CAPTURE_SERVER_SECRET",
+    "ADSTABLE_KLAVIYO_SOURCE_DATABASE_URL",
+    "ADSTABLE_KLAVIYO_SOURCE_DB_TIMEOUT_MS"
   ],
   "requiredActivePolarisRuntime": "polaris-2.0-rc.js",
   "forbiddenObsoletePolarisRuntime": "polaris-1.js",

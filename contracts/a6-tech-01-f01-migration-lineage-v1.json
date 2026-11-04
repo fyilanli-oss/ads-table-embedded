@@ -930,6 +930,15 @@
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261104181254",
+      "name": "eo05_klaviyo_raw_datasets",
+      "file": "supabase/migrations/20261104181254_eo05_klaviyo_raw_datasets.sql",
+      "repository_sql_sha256": "731e4fa44c6800a1c4a9409de39ccedf9509bfc4e9fa3ecdecc92bc33d660ae1",
+      "applied": false,
+      "replay_scope": "isolated_rollback_only",
+      "live_apply_authorized": false
     }
   ]
 }

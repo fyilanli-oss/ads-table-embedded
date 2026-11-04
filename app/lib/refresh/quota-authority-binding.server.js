@@ -80,6 +80,11 @@ export function createRefreshMetaRawTransport(options) {
  return identityTransport(refreshQuotaOptions(options),"meta",options.claim,undefined);
 }
 
+export function createRefreshKlaviyoRawTransport(options) {
+ if(options?.claim?.provider!=="klaviyo")throw Error("KLAVIYO_RAW_CLAIM_REQUIRED");
+ return identityTransport(refreshQuotaOptions(options),"klaviyo",options.claim,undefined);
+}
+
 function identityTransport(binding,provider,claim,merchantTarget,readExecution) {
   const resolve=createQuotaScopeResolver({store:binding.store,loadContext:async input=>{
     if(input.provider!==provider) return null;

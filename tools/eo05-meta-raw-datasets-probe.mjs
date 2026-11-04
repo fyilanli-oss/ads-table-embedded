@@ -10,12 +10,14 @@ import {sourceStoreFixture} from "../tests/fixtures/source-store-fixture.js";
 export async function metaRawDatasetProbe(client,{execution,connection,installation,scopes}){
  assert.equal(process.env.GITHUB_ACTIONS,"true");assert.ok(process.env.RUNNER_TEMP);
  await client.query("savepoint meta_raw_outer");
+ let phase="migration";
  try{
   const sql=readFileSync(new URL("../supabase/migrations/20261104142557_eo05_meta_raw_datasets.sql",import.meta.url),"utf8");
   await client.query(sql.trim().replace(/^begin;/," ").replace(/commit;$/," "));
-  await client.query("set local role postgres");
+  phase="role_install";await client.query("set local role postgres");
   const role=readFileSync(new URL("./sql/eo05-meta-source-role-install.sql",import.meta.url),"utf8");
   await client.query(role.trim().replace(/^begin;/," ").replace(/commit;$/," "));
+  await client.query("set local role postgres");
   await client.query("grant adstable_meta_source_runner,adstable_runtime to adstable_owner with inherit false,set true,admin false");
   await client.query("set local role adstable_owner");
   const workspace=execution.claim.workspaceId,generation=execution.claim.installGeneration;
@@ -32,9 +34,9 @@ export async function metaRawDatasetProbe(client,{execution,connection,installat
    await client.query("insert into operations.api_quota_route_profiles(operation_key,domain_id,quota_fingerprint,enabled) select $1,$2,operations.shared_api_quota_fingerprint($1),true on conflict(operation_key) do update set quota_fingerprint=excluded.quota_fingerprint,enabled=true",[r.routeKey,ctx.connectionScopeKey]);
    await client.query("insert into operations.api_quota_routes(route_key,operation_key,enabled) values($1,$1,true) on conflict(route_key) do update set enabled=true",[r.routeKey]);
   }
-  let ordinal=0;
+  phase="scenarios";let ordinal=0;
   for(const mode of ["zero","nonempty","permission","lost_write","tampered","fence","selection","permission_expired"]){
-   await client.query("savepoint meta_raw_case");let reader;
+   phase=mode;await client.query("savepoint meta_raw_case");let reader;
    try{
     let writes=0,reads=0,calls=0;
     const poolFactory=()=>({on(){},async end(){},async connect(){const name="meta_rpc_"+(++ordinal);let committed=false;
@@ -77,5 +79,5 @@ export async function metaRawDatasetProbe(client,{execution,connection,installat
     assert.equal((await client.query("select has_function_privilege($1,'evidence.commit_meta_dataset_source(jsonb,uuid,integer,jsonb,jsonb)','EXECUTE') ok",[role])).rows[0].ok,false);
   }
   console.log("EO05_META_RAW_DATASETS_PASS scenarios=8 actual_SQL_narrow_role=true synthetic_HTTP_only=true receipt_decryption=true no_live_changes=true");
- }finally{await client.query("rollback to savepoint meta_raw_outer");await client.query("release savepoint meta_raw_outer");}
+ }catch(error){console.log("EO05_META_RAW_DATASETS_SQL_STOP "+JSON.stringify({phase,code:error.code??"ASSERTION_FAILED"}));throw error;}finally{await client.query("rollback to savepoint meta_raw_outer");await client.query("release savepoint meta_raw_outer");}
 }

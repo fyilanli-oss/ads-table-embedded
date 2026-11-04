@@ -1705,7 +1705,7 @@
       "tools/eo05-identity-oauth-atomic-probe.mjs": "89758e82406dd15e94551bf22305ef9845dd6bf009127d119f1f7d618a9a20e5",
       "tools/eo05-klaviyo-source-capture-probe.mjs": "c9b9f604a72611fb0f39a8e6a178dadd72fcc6ee2f340a4396d0d6058bbaf5ab",
       "tools/eo05-merchant-quota-context-probe.mjs": "699aae3f090c490ca59abba882ea3e36fbe25e817d7ce697a55a0cb294269deb",
-      "tools/eo05-meta-raw-datasets-probe.mjs": "f9c7d028269ec6d64a7170f3f341bcd270b1495322a1ce3e5b85d0c39976f625",
+      "tools/eo05-meta-raw-datasets-probe.mjs": "b915ee5d1331c6312565a3bce3880d949bb90e9b8b8fe2019589e662b5aa65ab",
       "tools/eo05-meta-source-capture-probe.mjs": "a8cea28c2c80ced0436fe660dd201b73351d02336a4a3bcba5540cb63f2135b4",
       "tools/eo05-quota-authority-probe.mjs": "50c1b31cafb78cc774f7ed62af849d79136f39519375076e53f4eac896a2fdd5",
       "tools/eo05-quota-feedback-probe.mjs": "42b9cf4d7d32ffb4199462f6f04aa13dbff99f33f9b403b388628fff6b73ae5c",
@@ -1744,7 +1744,7 @@
       "tools/run-google-raw-capture.mjs": "6c7c06d59f913a6214ce83ea6260b0ef5420fcebbfce8d999c7968892269b24e",
       "tools/sql/eo05-google-dataset-source-role-extension.sql": "509f4b11cb0d93ddfacc9096e3b8d631bf9aa4ae89a4f5da296be7c7f6c719a1",
       "tools/sql/eo05-google-source-role-install.sql": "f16adefa038f6781bf2e718946a566281090403437b739ab71dfece99ca7a6ea",
-      "tools/sql/eo05-meta-source-role-install.sql": "32f49c570d3cb56675577e0cb15c9f1d9ad49934694a4e0c1d10efcca12401bc"
+      "tools/sql/eo05-meta-source-role-install.sql": "748c28dc0d42b9efb48fddf3e2c0ddebb4daecb410202aba522b025680a50071"
     }
   },
   "revisions": [

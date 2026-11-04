@@ -4,6 +4,7 @@ set local statement_timeout='30s';
 -- Prepared only. Apply under separate owner approval. No password or LOGIN.
 do $fn$ begin if exists(select 1 from pg_roles where rolname='adstable_meta_source_runner') then raise exception 'META_ROLE_ALREADY_EXISTS';end if;end $fn$;
 create role adstable_meta_source_runner nologin noinherit nosuperuser nocreatedb nocreaterole noreplication nobypassrls password null;
+set local role adstable_owner;
 grant usage on schema integrations,operations,evidence to adstable_meta_source_runner;
 grant execute on function integrations.load_provider_identity_authority(uuid,bigint,text,text,text) to adstable_meta_source_runner;
 grant execute on function operations.load_refresh_quota_context(uuid,bigint,text,text,text,bigint,date,date,text,timestamptz) to adstable_meta_source_runner;

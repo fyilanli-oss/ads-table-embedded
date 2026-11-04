@@ -25,7 +25,7 @@ Okuma en çok60s, dış iş90s, private route120s ve fra1; aynı mevcut Frankfur
 
 Yeni tablolar yoktur. Migration yalnız evidence.commit_meta_dataset_source RPC'sini hazırlar: owner/privacy/current credential/selection, fenced job/window/current entitlement ve quota snapshot'ı, bounded deadline ve izin expiry tekrar kontrol edilir. Başka dataset family, kimlik/sipariş/rule/mapping/claim/link yazımı reddedilir. RPC public/anon/authenticated/service_role/runtime/coordinator'a kapalıdır.
 
-Ayrı prepared rol adstable_meta_source_runner NOLOGIN, parolasız, NOINHERIT, yetkisiz tablo erişimi ve rol üyeliği olmadan yalnız11 exact RPC EXECUTE alır. SQL istemcisi her RPC öncesi bütün profil/ACL'yi ve exact kullanıcıyı doğrular, TLS doğrulanmış Transaction pooler kullanır. Owner SQL veya genel table query gönderemez. Kurulum betiği mevcut rolü bulursa durur; canlıda çalıştırılmaz.
+Ayrı prepared rol adstable_meta_source_runner NOLOGIN, parolasız, NOINHERIT, yetkisiz tablo erişimi ve rol üyeliği olmadan yalnız11 exact RPC EXECUTE alır. SQL istemcisi her RPC öncesi bütün profil/ACL'yi ve exact kullanıcıyı doğrular, TLS doğrulanmış Transaction pooler kullanır. Owner SQL veya genel table query gönderemez. Kurulum betiği mevcut rolü bulursa durur; grant öncesi mevcut fonksiyon sahibi adstable_owner rolüne geçer (mevcut Google kurulumuyla aynı sıra). Canlıda çalıştırılmaz.
 
 Mevcut runtime/koordinatör bağlantı istemcileri yeniden kullanılır (Google adlı modüllerdeki provider bağımsız RPC altyapısı). Google owner capability Meta için geçerli değildir; ayrı private Meta kanıtı gerekir. Google sorgu ve OAuth akışı değişmez.
 

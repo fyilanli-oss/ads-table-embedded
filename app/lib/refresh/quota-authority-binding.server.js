@@ -75,6 +75,11 @@ export function createRefreshGoogleRawTransport(options) {
   return identityTransport(binding,"google_ads",options.claim,undefined);
 }
 
+export function createRefreshMetaRawTransport(options) {
+ if(options?.claim?.provider!=="meta")throw Error("META_RAW_CLAIM_REQUIRED");
+ return identityTransport(refreshQuotaOptions(options),"meta",options.claim,undefined);
+}
+
 function identityTransport(binding,provider,claim,merchantTarget,readExecution) {
   const resolve=createQuotaScopeResolver({store:binding.store,loadContext:async input=>{
     if(input.provider!==provider) return null;

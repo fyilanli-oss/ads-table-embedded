@@ -1,4 +1,20 @@
 {
+  "Step15_Meta_raw_datasets_2026_11_04": {
+    "status": "code_and_isolated_test_preparation_not_live_acceptance",
+    "owner_approval": "Metayı bağladım. Onaylıyorum. Concrete prior scope: two existing reports, encrypted source receipt/content verification, private server entry, narrow SQL role preparation, isolated tests and one PR.",
+    "baseline_main": "569f0b76164c2a3f250866b49a6dc6a59668340a",
+    "datasets": [
+      "account_performance",
+      "product_performance"
+    ],
+    "catalogue_identity_verified": false,
+    "reference": "docs/EO_05_META_RAW_DATASETS_V1.md",
+    "live_provider": false,
+    "live_SQL": false,
+    "merge": false,
+    "deploy": false,
+    "retention_application": "after Meta and Klaviyo acceptance, together; accepted90/365 decision not activated"
+  },
   "Step15_retention_owner_agreement_2026_11_04": {
     "record": "contracts/eo-05-step15-storage-design-v1.json#accepted_retention_policy_2026_11_04",
     "status": "owner_accepted_decision_not_implemented",

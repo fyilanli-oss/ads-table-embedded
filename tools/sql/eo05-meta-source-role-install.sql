@@ -1,0 +1,19 @@
+begin;
+set local lock_timeout='5s';
+set local statement_timeout='30s';
+-- Prepared only. Apply under separate owner approval. No password or LOGIN.
+do $fn$ begin if exists(select 1 from pg_roles where rolname='adstable_meta_source_runner') then raise exception 'META_ROLE_ALREADY_EXISTS';end if;end $fn$;
+create role adstable_meta_source_runner nologin noinherit nosuperuser nocreatedb nocreaterole noreplication nobypassrls password null;
+grant usage on schema integrations,operations,evidence to adstable_meta_source_runner;
+grant execute on function integrations.load_provider_identity_authority(uuid,bigint,text,text,text) to adstable_meta_source_runner;
+grant execute on function operations.load_refresh_quota_context(uuid,bigint,text,text,text,bigint,date,date,text,timestamptz) to adstable_meta_source_runner;
+grant execute on function operations.resolve_shared_api_quota_route(text,text,text) to adstable_meta_source_runner;
+grant execute on function operations.reserve_shared_api_quota(text,uuid,text) to adstable_meta_source_runner;
+grant execute on function operations.stop_shared_api_quota_scoped(text,uuid,boolean,boolean,text) to adstable_meta_source_runner;
+grant execute on function operations.settle_shared_api_quota(text,uuid) to adstable_meta_source_runner;
+grant execute on function operations.record_shared_api_quota_feedback(text,uuid,jsonb) to adstable_meta_source_runner;
+grant execute on function operations.record_shopify_admin_quota_feedback(text,uuid,jsonb) to adstable_meta_source_runner;
+grant execute on function evidence.read_source_receipt(jsonb,uuid,integer) to adstable_meta_source_runner;
+grant execute on function evidence.read_source_pages(jsonb,uuid,integer,bigint,integer) to adstable_meta_source_runner;
+grant execute on function evidence.commit_meta_dataset_source(jsonb,uuid,integer,jsonb,jsonb) to adstable_meta_source_runner;
+commit;

@@ -84,6 +84,11 @@
       "file": "app/lib/providers/google-merchant-discovery.server.js",
       "token": "acceptance",
       "reason": "Only rejects conflicting existing x-adstable-google-acceptance header; authenticated default-closed link-only discovery, no product call or new UI route. Owner approved code/tests/PR only on2026-11-03."
+    },
+    {
+      "file": "app/lib/refresh/meta-raw-server.server.js",
+      "token": "acceptance",
+      "reason": "Owner-approved2026-11-04 Meta two-report raw capture reuses existing provider-independent coordinator by its existing Google-acceptance module/env names. No product UI, acceptance/debug/operator route, browser control or live activation is added."
     }
   ],
   "forbiddenPaths": [
@@ -119,7 +124,12 @@
     "ADSTABLE_GOOGLE_ACCEPTANCE_PLAN",
     "ADSTABLE_GOOGLE_ACCEPTANCE_COORDINATOR_DATABASE_URL",
     "ADSTABLE_GOOGLE_ACCEPTANCE_COORDINATOR_DB_TIMEOUT_MS",
-    "ADSTABLE_GOOGLE_MERCHANT_DISCOVERY_PLAN"
+    "ADSTABLE_GOOGLE_MERCHANT_DISCOVERY_PLAN",
+    "ADSTABLE_META_RAW_CAPTURE_ENABLED",
+    "ADSTABLE_META_RAW_CAPTURE_PLAN",
+    "ADSTABLE_META_RAW_CAPTURE_SERVER_SECRET",
+    "ADSTABLE_META_SOURCE_DATABASE_URL",
+    "ADSTABLE_META_SOURCE_DB_TIMEOUT_MS"
   ],
   "requiredActivePolarisRuntime": "polaris-2.0-rc.js",
   "forbiddenObsoletePolarisRuntime": "polaris-1.js",

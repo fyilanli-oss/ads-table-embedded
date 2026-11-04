@@ -39,8 +39,10 @@ export async function metaFirstDayRehearsal(client,{workspace,shopId,shopDomain}
    phase=mode;await client.query("savepoint first_day_case");let execution;
    try{
     const scopes=oauthPermissionScopes("meta","identity_v1"),issued=Date.now();
-    const c=(await client.query("update integrations.provider_connections set connected_at=statement_timestamp(),last_verified_at=statement_timestamp(),updated_at=statement_timestamp(),granted_scopes=$2 where workspace_id=$1 and provider='meta' returning id,credential_id,connection_version",[workspace,scopes])).rows[0];
-    await client.query("update integrations.reporting_account_bindings set effective_from=clock_timestamp() where connection_id=$1 and effective_to is null",[c.id]);
+    // More than one jittered hour has elapsed, without fabricating a pending row.
+    // Always query the connection native day, including runs crossing midnight.
+    const c=(await client.query("update integrations.provider_connections set connected_at=date_trunc('hour',statement_timestamp())-interval '2 hours'+interval '1 millisecond',last_verified_at=statement_timestamp(),updated_at=statement_timestamp(),granted_scopes=$2 where workspace_id=$1 and provider='meta' returning id,credential_id,connection_version",[workspace,scopes])).rows[0];
+    await client.query("update integrations.reporting_account_bindings set effective_from=(select connected_at from integrations.provider_connections where id=$1) where connection_id=$1 and effective_to is null",[c.id]);
     await client.query("update integrations.provider_accounts set timezone_name='America/Los_Angeles' where connection_id=$1",[c.id]);
     const installation=(await client.query("select id::text from shopify.installations where workspace_id=$1 and status='active'",[workspace])).rows[0];
     const store=createRefreshWorkRepository(client),vector={requests:100,dbWrites:20000,connections:10,rows:10000,bytes:16777216};
@@ -68,7 +70,7 @@ export async function metaFirstDayRehearsal(client,{workspace,shopId,shopDomain}
       await client.query("insert into operations.api_quota_routes values($1,$1,true)",[r.routeKey]);
      }
     }
-    const dates=(await client.query("select (clock_timestamp() at time zone 'America/Los_Angeles')::date::text today,((clock_timestamp() at time zone 'America/Los_Angeles')::date-1)::text yesterday,((clock_timestamp() at time zone 'America/Los_Angeles')::date+1)::text tomorrow")).rows[0];
+    const dates=(await client.query("select (connected_at at time zone 'America/Los_Angeles')::date::text today,((connected_at at time zone 'America/Los_Angeles')::date-1)::text yesterday,((clock_timestamp() at time zone 'America/Los_Angeles')::date+1)::text tomorrow from integrations.provider_connections where id=$1",[c.id])).rows[0];
     const operationId=randomUUID(),window={from:dates.today,to:dates.today},cost={requests:6,dbWrites:4068,connections:3,rows:2100,bytes:3145728};
     const id=createHash("sha256").update(JSON.stringify(["meta_raw_capture_v1",operationId,workspace,source.installGeneration,"act_101"])).digest("hex");
     const proposal=planRefreshPreflightAdmissions({...snapshot,now:Date.now(),candidates:[{id,workspaceId:workspace,installGeneration:source.installGeneration,provider:"meta",accountId:"act_101",scheduledHour:source.scheduledHour,queuedAt:source.queuedAt,workClass:"bootstrap",cost,authority:{installationVerified:true,connected:true,setupComplete:true,allowedWindow:true}}]});assert.equal(proposal.status,"proposed");

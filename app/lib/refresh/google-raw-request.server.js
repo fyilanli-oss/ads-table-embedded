@@ -21,7 +21,8 @@ export async function handleGoogleRawCaptureRequest(request,{environment=process
  if(plan.version===2){
   const names=["account_performance","product_performance","merchant_identity"],datasets={};
   const safeReasons=new Set(["merchant_link_absent","merchant_context_required","capture_unconfirmed","not_attempted","provider_permission_denied","provider_throttled","provider_http_error",
-   "response_invalid","response_limit","page_limit","row_limit","request_limit","merchant_link_changed","merchant_target_not_linked","authority_changed","configuration_missing"]);
+   "response_invalid","response_limit","page_limit","row_limit","request_limit","merchant_link_changed","merchant_target_not_linked","authority_changed","configuration_missing",
+   "read_deadline_exceeded","read_aborted"]);
   for(const name of names){const v=result?.datasets?.[name];
    const known=["stored","unavailable"].includes(v?.status)&&v.receiptVerified===true&&v.contentVerified===true
     &&/^[1-9][0-9]{0,18}$/.test(v.batchId??"")&&/^[0-9a-f-]{36}$/i.test(v.commitId??"")&&/^[a-f0-9]{64}$/.test(v.digest??"");

@@ -131,7 +131,9 @@ export function createGoogleRawDatasetReader({environment,verified,tokenVault,ex
    return {status:complete?"stored":"partial",sourceStored:true,receiptVerified:true,contentVerified:true,datasets,
     recordCount:complete?totalRows:null,empty:complete?totalRows===0:null,responseBytes:bytes,...boundary};
   }});}catch(error){
-   const reason=httpFailure??(safeReasons.has(error?.message)?error.message:error?.message==="GOOGLE_RAW_RESPONSE_INVALID"?"response_invalid":"capture_unconfirmed");
+   const reason=httpFailure??(error?.code==="IDENTITY_READ_DEADLINE_EXCEEDED"?"read_deadline_exceeded"
+    :error?.code==="IDENTITY_READ_ABORTED"?"read_aborted"
+    :safeReasons.has(error?.message)?error.message:error?.message==="GOOGLE_RAW_RESPONSE_INVALID"?"response_invalid":"capture_unconfirmed");
    if(activeDataset&&datasets[activeDataset].status==="not_attempted")datasets[activeDataset]={status:writeSent?"unconfirmed":"failed",reason,recordCount:null,empty:null};
    return {status:writeSent&&!writeKnown?"unconfirmed":"stopped",reason,
     sourceStored:writeSent&&!writeKnown?null:writeSent&&writeKnown||Object.values(datasets).some(v=>v.status==="stored"||v.status==="unavailable"),

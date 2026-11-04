@@ -1,4 +1,16 @@
 {
+  "Google_raw_duration_fix_2026_11_04": {
+    "status": "code_preparation_live_acceptance_failed",
+    "baseline_main": "b97360dd48d57f6f6deee8cb9eb1bac93802b70b",
+    "owner_approval": "Explicit approval to fix the raw read duration path and report timeout after failed single live capture; code, isolated tests and one PR only.",
+    "change": "Only private raw-capture bundle regions fra1 near existing eu-central-1 database; preserve every role/authority/quota check and existing time limits; explicit deadline/abort reasons.",
+    "live_evidence": "PR324: six settled reports, seventh uncertain reservation, zero source batches; durable uncertain stop preserved.",
+    "live_provider": false,
+    "live_SQL": false,
+    "merge": false,
+    "deploy": false,
+    "reference": "docs/EO_05_GOOGLE_RAW_DATASETS_V2.md"
+  },
   "Step15_Klaviyo_source_capture_2026_11_02": {
     "status": "repository_preparation_not_live",
     "owner_approval": "Owner explicitly approved Klaviyo existing-reader source/claim/candidate evidence persistence, exact numeric/large-ID preservation, current-owner/connection/job SQL checks, migration/contracts/tests and PR preparation on2026-11-02. No OAuth/UI/query/scope/selector change, live provider/database/config/deploy or merge authority.",

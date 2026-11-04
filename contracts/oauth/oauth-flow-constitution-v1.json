@@ -1432,10 +1432,10 @@
       "app/lib/refresh/google-private-request.server.js": "7b0478039ba92f5edf5c885ff73f7d8c47b68372114f1b095b4454cc11bf4dfd",
       "app/lib/refresh/google-quota-observation.server.js": "9eb32e1a3139ee0308e3cf5f47978f680bda37685321f6bdd81b26975e424f2a",
       "app/lib/refresh/google-raw-dataset-plan.server.js": "029d9fbbf42a496cd67caa2637196a627f4e89b0ac03b6a5b562fc155b9f4d0b",
-      "app/lib/refresh/google-raw-datasets.server.js": "adda8e36c9e62adda4032d216f08f26446a2a702242355fd4ad5747ffab2ebd8",
+      "app/lib/refresh/google-raw-datasets.server.js": "2f51b0a6d7b0560bf2d89496453b7f82e1133789bf1add9469efdafe73f49773",
       "app/lib/refresh/google-raw-reader.server.js": "6c9a848346cd759cda862f74f2894c95671f1544d02fcf33e67b5856b96d8578",
       "app/lib/refresh/google-raw-request.server.d.ts": "40a61ee0a5d38fe8f35b942073215641702826d76ba7fac375bd014445e80f7f",
-      "app/lib/refresh/google-raw-request.server.js": "2c19d071ce5d83ecc55d672ed5604f515b6cc6c1377965ca020b84c92e7efd18",
+      "app/lib/refresh/google-raw-request.server.js": "75a32d5c57e4d6fdc2ad7c25f17ac3ec2d0b27572122a8f318a4e93ba83fa25b",
       "app/lib/refresh/google-raw-server.server.js": "05b4df5452f6da437fac4df19052a3d3b94fe913decd4537a883fb4f7d470882",
       "app/lib/refresh/google-read-runner.server.js": "062c18a85b675190e2847fe7129132b0852f5643923419a001cc5504153d80d4",
       "app/lib/refresh/google-refresh-credential.server.js": "b6cbd4b836cd9a5aa2c904ce651928017ac18122bcaeace3aa651f2c68f03b1c",
@@ -1529,19 +1529,19 @@
       "app/routes/auth.klaviyo.callback.ts": "01719e18e1b75d20290ab0c012b104907a6bb8ba8d308acf48664f32b9805705",
       "app/routes/auth.meta.callback.ts": "29dc37b0f6719c5a24e09ad5566907a36e8cad30e1b1b56916952d3f15a123d3",
       "app/routes/internal.google.merchant-links.ts": "2f674df9642dfe6efb11b9601ac39619fed5d2def18841ced32be74da6f72114",
-      "app/routes/internal.google.raw-capture.ts": "d644ac9268c9b7bf167840796fb58f5f873faf17a6f27288cd227dc0021b85d6",
+      "app/routes/internal.google.raw-capture.ts": "213cea04488999ac67dbc24c959c99ebfbe3dd63955f25fef477b34defa95c83",
       "app/routes/internal.refresh.queue-check.ts": "d537719743abbba8151940a76976a512178b65561cb1d24b5bb998c573039ac1",
       "app/routes/settings.google-live-evidence.ts": "d26e1858abcc920d203bc83c37a255b4d193b3867920c93ceef0ca57ac93d7aa",
       "app/routes/settings.klaviyo-live-evidence.ts": "47dd1d71f04aeaafb6df14924eba1d02ef9eb4c397948429e2ff79233f3d5912",
       "app/routes/settings.provider-live-evidence.ts": "89fbcb7087fc480fefba708bbc730146f1ba41af48d98f1b0a10fe1427120495",
       "app/routes/webhooks.shopify.tsx": "eac0ea30fcca28d6bba3c11105a5c4fda7778d1398c23f21fcb02f717d8bd056",
       "app/shopify.server.ts": "cc5959867dd5c413b222d51c4aad7d9a39c7c3d15e590aada86a1ddfefdc6fad",
-      "contracts/a6-eo-implementation-master-v1.json": "4a93239dceec1fb7680bca305b44f1d37d394215afd07472c7e8e4600da8d843",
+      "contracts/a6-eo-implementation-master-v1.json": "ed07c0cb12e0d424e3e4c1301e34e0884c13e4c5b887827ba9b53ca2d36f41f4",
       "contracts/eo-05-oauth-setup-permission-policy-v1.json": "c1914f91011464d3b16b4b0a7710e49878ce6dbb57427e3d0f7c68d9ec4ec681",
       "contracts/eo-05-permission-explanation-design-v1.json": "ad4753b9ad4a6becd14764b7b33fb917f0cc491ad774cc1f1fe9053c5f189f35",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
       "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md": "c602fd4d7760e8f32c109e1f0456907c739c12906d71becf88476cad2007d6a1",
-      "docs/EXECUTION_PLAN.md": "3a745ce5efe51db3e5fb232128893628c79267cf67ba78b65a700ce344c73f19",
+      "docs/EXECUTION_PLAN.md": "1ba4f02a05350753e51a715543c3ab7b476f14eb342e7972707957414cb867fd",
       "docs/OAUTH_FLOW_CONSTITUTION.md": "74d7a8f327a9558712c3ac8bb54a6633fff7a7e2045405d236d35f265d124b28",
       "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md": "49e253b08959faa9f0b2bf208ed5eb6d3c078a0ddf9097e667a9bf1483dc7350",
       "package.json": "e46285b3a60421e8c338807d7b606afa17f16303b08a2832bed3222a06183fe8",
@@ -1651,6 +1651,7 @@
       "tests/google-partial-permission-return.test.js": "b3b6a6d80f3dbf56642c263379f86ec37717790d1458ae419c068ea955580495",
       "tests/google-pd-normal-scope.test.js": "832db70497b9143b1053bb86dc9a92e56f2a157fe34c899ff9c89dc0276c340a",
       "tests/google-raw-datasets-permission.test.js": "19134b03792e1e9d18ed3e0c82ecb88f7fa400c244a93ec8462b926d1f0b9833",
+      "tests/google-raw-duration-permission.test.js": "b7301f5715d047aca658b7569d57a303501876289ac930ea082039fb0ffd1507",
       "tests/google-raw-request-permission.test.js": "dc68dee80c52dedb248990525b7b6fac4138586f5aa08835facc08d4c0dee799",
       "tests/google-raw-server-permission.test.js": "c688067f233bd73bbd7261ed81ac4f7aa94512cefef10ac060c40c59aaf7f0eb",
       "tests/google-refresh-renewal-permission.test.js": "f48d684ce014702119237dcd87d10414bdb3045d52b35c9e8b6086eb56ad29c7",
@@ -2689,6 +2690,36 @@
         "tools/eo05-google-acceptance-probe.mjs",
         "tools/eo05-refresh-preflight-probe.mjs",
         "tools/sql/eo05-google-dataset-source-role-extension.sql"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ]
+    },
+    {
+      "id": "step15-google-raw-duration-fix-2026-11-04",
+      "date": "2026-11-04",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Owner: Tamam devam edelim onaylıyorum Codex, directly after concrete duration and explicit timeout correction proposal."
+      },
+      "rationale": "Private raw reader placement near existing Frankfurt DB reduces cross-region round trips without caching/skipping current authority/quota/profile checks. Preserve 60/90/120s limits, fixed queries, scopes, identity, no replay/lock release; expose typed read deadline and abort. No UI/SQL/live provider/config/merge/deploy changes.",
+      "scope": {
+        "runtime_code": true,
+        "live_provider": false,
+        "merge": false,
+        "deploy": false
+      },
+      "changed_paths": [
+        "app/lib/refresh/google-raw-datasets.server.js",
+        "app/lib/refresh/google-raw-request.server.js",
+        "app/routes/internal.google.raw-capture.ts",
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "docs/EXECUTION_PLAN.md",
+        "tests/google-raw-duration-permission.test.js"
       ],
       "acceptance_required": [
         "required_CI",

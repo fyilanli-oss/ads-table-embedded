@@ -3733,5 +3733,21 @@
       "https://vercel.com/docs/rest-api/projects/create-one-or-more-environment-variables"
     ],
     "three_approved_live_items_complete": true
+  },
+  "Step15_Google_Production_release_2026_11_04": {
+    "date": "2026-11-04",
+    "owner_approval": "Owner explicitly approved publishing the current code to Production: Tamam Codex, güncel kodu Production’a yayımlamanı onaylıyorum. Scope is Vercel publication and read-only post-publication checks only; no Google capture, configuration/policy changes or subsequent merge.",
+    "evidence": "docs/evidence/EO05_GOOGLE_PRODUCTION_RELEASE_2026-11-04.json",
+    "source_main": "e641bab725b4f7b6860ad2e6b8d3897e5b4f13a5",
+    "source_tree": "ce894853fd971b87ddf3613fab211ae3dcc7411e",
+    "deployment_id": "dpl_3heQzZEyFXb4SLDtmULSaN8t6V9y",
+    "state": "READY",
+    "production_url": "https://embedded.adstable.app",
+    "source_alias_and_commit_verified": true,
+    "google_request_performed": false,
+    "source_data_collection_started": false,
+    "package2_complete": false,
+    "official_checked_at": "2026-11-04",
+    "official_source": "https://vercel.com/docs/rest-api/deployments/create-a-new-deployment"
   }
 }

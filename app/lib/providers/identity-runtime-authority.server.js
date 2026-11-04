@@ -2,6 +2,7 @@ import {createIdentityAuthorityRepository} from "../database/identity-authority-
 import {permissionContext} from "../oauth/identity-permission-preflight.server.js";
 import {validateIdentityOAuthGrantedScopes} from "../oauth/oauth-permission-profile.server.js";
 import {inspectGoogleIdentityCredential} from "../oauth/google-identity-credential.server.js";
+import {isGoogleBackgroundOwner} from "../refresh/google-background-owner.server.js";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const KLAVIYO_SCOPES = ["campaigns:read", "events:read", "flows:read", "metrics:read"];
@@ -50,10 +51,11 @@ export function createIdentityRuntimeAuthorityLoader({verified, database, tokenV
   const installation = freeze({authority: callerOwner?.authority, status: callerOwner?.status,
     workspaceId: callerOwner?.workspaceId, installGeneration: callerOwner?.installGeneration});
   const shop = freeze({authority: callerShop?.authority, shopId: callerShop?.shopId, myshopifyDomain: callerShop?.myshopifyDomain});
+  const background=provider==="google_ads"&&isGoogleBackgroundOwner(verified);
   if (installation?.authority !== "shopify_installation_verified" || installation.status !== "active"
-    || verified?.identity?.session?.authority !== "shopify_id_token_verified"
+    || !background&&(verified?.identity?.session?.authority !== "shopify_id_token_verified"
     || shop?.authority !== "shopify_admin_verified" || verified.identity.session.shopDomain !== shop.myshopifyDomain
-    || typeof verified?.context?.admin?.graphql !== "function") fail("IDENTITY_RUNTIME_VERIFIED_CALLER_REQUIRED");
+    || typeof verified?.context?.admin?.graphql !== "function")) fail("IDENTITY_RUNTIME_VERIFIED_CALLER_REQUIRED");
   // Reuse the canonical shop/workspace/generation validator, without fabricating account authority.
   const shopContext = permissionContext({provider: "shopify", workspaceId: installation.workspaceId,
     installGeneration: installation.installGeneration, shopId: shop.shopId, shopDomain: shop.myshopifyDomain});

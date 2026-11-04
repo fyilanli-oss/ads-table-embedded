@@ -347,5 +347,42 @@
     "deploy_authorized": false,
     "package2_complete": false,
     "package3_started": false
+  },
+  "Step15_Google_raw_server_capture_2026_11_04": {
+    "date": "2026-11-04",
+    "owner_approval": "Owner explicitly approved item1 from the disclosed raw-data-only remaining-work list: Tamam Codex 1.iş ten başlayalım. Scope: browser/Console-free single Google raw capture server composition, existing native reader and encrypted source store, isolated tests and one PR. No live SQL/config/provider/deploy/merge or hourly refresh/report writer.",
+    "package": 2,
+    "item": 1,
+    "status": "code_and_isolated_tests_prepared_required_CI_pending",
+    "goal": "Read native Google source projections once, persist in the existing private encrypted landing store, verify the durable receipt and stop. Successful empty responses are stored; missing/failed/unknown never become zero.",
+    "entry": "tools/run-google-raw-capture.mjs --operation-id <server-plan UUID>",
+    "server": "app/lib/refresh/google-raw-server.server.js",
+    "reader": "app/lib/refresh/google-raw-reader.server.js",
+    "authority": "Private in-process Google-only capability from existing runtime-only shopify.load_active_installation_owner RPC; no fabricated Shopify ID token/Admin proof, no session/browser dependency and no acceptance by Meta/Klaviyo or candidate/product lookup paths. Existing active installation and selected account/scopes/credential rechecks remain.",
+    "execution": "Existing atomic admission, fresh Partner entitlement, scoped native quotas, one-run Google collector and fenced encrypted source writer. Existing automatic token renewal is reused inside the same admitted job; only its confirmed replacement can advance plan version. Exact receipt reloaded only after known successful write; unknown write never auto-replayed or auto-inspected. Known success closes the job paused, not completed or Dataset-ready.",
+    "configuration": "New default-closed ADSTABLE_GOOGLE_RAW_CAPTURE_ENABLED and strict short-lived ADSTABLE_GOOGLE_RAW_CAPTURE_PLAN: target uses the existing exact Google acceptance identity/window validator, plus explicit native limits, storage bounds and finite existing source policy. No values, secrets, keys, roles or quota policies created. Existing runtime/coordinator/source connections and distinct source key must be configured at later approved live-preparation items.",
+    "raw_fidelity": "Existing allowlisted collector_projection with decoded_only numeric fidelity and native source references; no new native query, parser, schema or byte-for-byte/full-response claim. Rules stay empty and product identities remain unresolved; no reviewed mapping is created.",
+    "verification": {
+      "unit": "23 new browser-free/zero/nonempty/renewal/authority forgery/invalid config/negative/unknown cases; existing provider/renewal regressions unchanged.",
+      "PostgreSQL": "Existing F01 isolated rehearsal extended with13 headless capture cases, actual runtime/vault/coordinator/source functions and real ciphertext persistence/decryption; native HTTP and credentials synthetic. Prepared renewal migration applied only in outer rollback transaction; historical82 and installed83 ledger/artifact remain unchanged."
+    },
+    "official_checked_at": "2026-11-04",
+    "official_sources": [
+      "https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.products/list",
+      "https://developers.google.com/identity/protocols/oauth2/web-server#offline",
+      "https://supabase.com/docs/guides/database/connecting-to-postgres",
+      "https://www.postgresql.org/docs/17/explicit-locking.html"
+    ],
+    "new_migration": false,
+    "new_role_or_grant": false,
+    "new_table": false,
+    "UI_changed": false,
+    "live_calls_performed": false,
+    "live_changes_applied": false,
+    "merge_authorized": false,
+    "deploy_authorized": false,
+    "hourly_refresh_activated": false,
+    "Dataset_writer_activated": false,
+    "package2_complete": false
   }
 }

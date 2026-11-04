@@ -22,6 +22,7 @@ import {prepareMetaIdentitySourceWrite} from "../providers/meta-source-write.ser
 import {prepareKlaviyoIdentitySourceWrite} from "../providers/klaviyo-source-write.server.js";
 import {createSourceEvidenceRepository} from "../database/source-evidence-store.server.js";
 import {prepareGoogleRefreshCredential} from "./google-refresh-credential.server.js";
+import {isGoogleBackgroundOwner} from "./google-background-owner.server.js";
 const candidateObservations=new WeakMap();
 const candidateReferenceInputs=new WeakMap();
 const interactionObservations=new WeakMap();
@@ -210,20 +211,22 @@ export function createRefreshGoogleIdentityReader(options) {return createGoogleI
 export function createRefreshGoogleCandidateReader(options) {return createGoogleIdentityReader(options,true);}
 function createGoogleIdentityReader({verified,database,tokenVault,merchantId,developerToken,signal,sdkBridge,sourceRules,environment,
   readNow=()=>new Date(),maxElapsedMs,maxPages,maxRows,maxLinkPages,maxLinks,sourceStorage=null,executionDeadlineAt=null,...quotaOptions} = {},candidates=false) {
+  const background=isGoogleBackgroundOwner(verified);
   const claim=structuredClone(quotaOptions.claim),window=structuredClone(quotaOptions.window);
   const owner=structuredClone(verified?.installationAuthority),shop=structuredClone(verified?.identity?.shop);
   const day=window?.from;
-  if((candidates?!isShopifyAdminIdentitySdkBridge(sdkBridge):sdkBridge!==undefined||sourceRules!==undefined)
+  if((candidates?background||!isShopifyAdminIdentitySdkBridge(sdkBridge):sdkBridge!==undefined||sourceRules!==undefined)
     ||claim?.provider!=="google_ads"||typeof day!=="string"||day!==window.to||!/^\d{4}-\d{2}-\d{2}$/.test(day)
     ||!Number.isFinite(Date.parse(day))||new Date(day).toISOString().slice(0,10)!==day
     ||typeof merchantId!=="string"||!/^\d{1,19}$/.test(merchantId)||merchantId.startsWith("0")||BigInt(merchantId)>9223372036854775807n
     ||owner?.authority!=="shopify_installation_verified"||owner.status!=="active"||owner.workspaceId!==claim.workspaceId
-    ||String(owner.installGeneration)!==claim.installGeneration||typeof verified?.context?.admin?.graphql!=="function"
+    ||String(owner.installGeneration)!==claim.installGeneration||!background&&typeof verified?.context?.admin?.graphql!=="function"
     ||(executionDeadlineAt!==null&&(typeof executionDeadlineAt!=="string"||!Number.isFinite(Date.parse(executionDeadlineAt))))
     ||typeof readNow!=="function"||typeof quotaOptions.entitlementReceipt?.observedAt!=="string"
     ||!Number.isFinite(Date.parse(quotaOptions.entitlementReceipt.observedAt))) throw Error("REFRESH_GOOGLE_IDENTITY_INPUT_INVALID");
   const caller={installationAuthority:owner,identity:{shop,session:{authority:verified.identity?.session?.authority,
-    shopDomain:verified.identity?.session?.shopDomain}},context:{admin:{graphql:verified.context.admin.graphql.bind(verified.context.admin)}}};
+    shopDomain:verified.identity?.session?.shopDomain}},...background?{backgroundAuthority:verified.backgroundAuthority}:
+    {context:{admin:{graphql:verified.context.admin.graphql.bind(verified.context.admin)}}}};
   const rules=candidates&&sourceRules!==undefined?structuredClone(sourceRules):undefined;
   if(candidates)createGoogleCandidateSourceRuleLoader({rules});
   const binding=refreshQuotaOptions(quotaOptions,{admin:candidates}),execution=candidates?createQuotaReadExecution():undefined;

@@ -4,6 +4,12 @@ on:
   pull_request:
     branches: [main, "codex/step15-storage-foundation-design"]
     paths:
+      - "app/routes/internal.google.raw-capture.ts"
+      - "tests/google-raw-request-permission.test.js"
+      - "app/lib/providers/identity-runtime-authority.server.js"
+      - "tools/run-google-raw-capture.mjs"
+      - "tests/google-raw-server-permission.test.js"
+      - "tests/fixtures/google-raw-server-fixture.js"
       - "app/lib/refresh/google-read-runner.server.js"
       - "app/lib/refresh/google-refresh-credential.server.js"
       - "tests/google-refresh-renewal-permission.test.js"

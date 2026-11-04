@@ -542,5 +542,40 @@
       "https://vercel.com/docs/rest-api/projects/create-one-or-more-environment-variables"
     ],
     "three_approved_live_items_complete": true
+  },
+  "Step15_Google_browser_free_Merchant_reader_2026_11_04": {
+    "date": "2026-11-04",
+    "owner_approval": "Owner explicitly approved connecting the existing Merchant reader to the existing secure server entry, code/isolated tests/one PR: Onaylıyorum Codex. Previous live Merchant query approval remains unused; this code scope does not authorize deploy, live configuration, native calls or merge.",
+    "status": "code_and_isolated_tests_prepared_required_CI_pending",
+    "base_main": "e641bab725b4f7b6860ad2e6b8d3897e5b4f13a5",
+    "purpose": "Read only the selected Google advertiser Merchant links without browser session, without needing a Merchant ID or source/job configuration first.",
+    "entry": "POST /internal/google/merchant-links",
+    "authentication": "Same Production-only constant-time ADSTABLE_GOOGLE_RAW_CAPTURE_SERVER_SECRET Bearer gate, exact SHOPIFY_APP_URL origin/path, no query or forwarded host, operationId-only JSON body bounded1024bytes/5s. Shared gate preserves raw-capture behavior.",
+    "authority": "Existing private in-process Google-only loadGoogleBackgroundOwner capability from runtime-only active installation RPC; exact workspace/generation/shop/connection/version/credential/Reporting Account/selection and scope checks remain. No fabricated Shopify ID token or Admin caller.",
+    "configuration": "Reuse existing strict ADSTABLE_GOOGLE_MERCHANT_DISCOVERY_PLAN, at most15min. Missing/expired/invalid plan is closed. No new env name, secret, role, table, migration, grant or live setting.",
+    "execution": "Existing Merchant link query/parser/byte and row limits reused. One native Ads link read per execution, preceded only when necessary by one existing identity_v1 token renewal with canonical atomic vault CAS and exact durable readback. Only confirmed replacement can advance internal version/credential; unknown renewal never follows with discovery. Existing browser route and standalone renewal purpose preserved; new private entry rejects standalone renewal purpose.",
+    "timeout": "Core20s wall deadline with abort guards around dependencies; existing runtime transport uses5s transaction-local statement/lock limits. New route maxDuration60 code configuration only; no provider setting applied.",
+    "results": "Known complete empty links mean no observed Merchant relationship, never product-zero acceptance. Multiple IDs returned without selection or quota-owner inference. Safe projection only; incomplete/stale/provider/unknown results carry null IDs/counts. No provider response body, token or credential metadata in public result.",
+    "single_run_boundary": "Core instances are single-use and have no automatic retry. No distributed/durable exactly-once claim across independent HTTP requests/processes. Operator sends one approved invocation; unknown requires review and explicit renewed authorization before any repeat.",
+    "no_product_job_source_or_Dataset_writes": true,
+    "UI_changed": false,
+    "verification": {
+      "focused_unit": 29,
+      "existing_regression_and_negative_combined": 149,
+      "PostgreSQL": "8 new actual-runtime/vault/private-HTTP scenarios in each existing disposable F01 environment: linked, empty, expired token,403, partial, wrong role, lost renewal acknowledgement, authority drift. Real SQL roles/encrypted vault and HTTP handler; physical HTTP and credentials synthetic. Assert source/job counts unchanged; rollback-only."
+    },
+    "official_checked_at": "2026-11-04",
+    "official_sources": [
+      "https://developers.google.com/google-ads/api/fields/v25/product_link",
+      "https://developers.google.com/identity/protocols/oauth2/web-server#offline",
+      "https://reactrouter.com/how-to/resource-routes",
+      "https://vercel.com/docs/frameworks/frontend/react-router",
+      "https://supabase.com/docs/guides/database/postgres/timeouts"
+    ],
+    "live_calls_performed": false,
+    "live_changes_applied": false,
+    "merge_authorized": false,
+    "deploy_authorized": false,
+    "package2_complete": false
   }
 }

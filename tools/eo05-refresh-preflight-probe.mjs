@@ -168,6 +168,7 @@ export async function refreshPreflightProbe(client,{workspace,connections,shopId
     console.log("EO05_QUOTA_WORK_WAIT_PASS first_boundary_only=true durable_wait=true fresh_fence=true stale_worker_denied=true same_source_period=true queue_age_preserved=true no_double_debit=true real_SQL=true synthetic_HTTP_only=true actual_provider_calls=0");
   } finally {await client.query("rollback");}
   await googleAcceptanceRehearsal(client,{rawCapture:true,workspace,shopId,shopDomain});
+  await (await import("./eo05-google-merchant-server-probe.mjs")).googleMerchantServerRehearsal(client,{workspace,shopId,shopDomain});
   await googleMappingFlowRehearsal(client,{server:true,refreshRenewal:true,workspace,shopId,shopDomain});
   await googleAcceptanceRehearsal(client,{workspace,shopId,shopDomain});
   await googleMappingFlowRehearsal(client,{server:true,nativeRead:true,workspace,shopId,shopDomain});

@@ -4,6 +4,10 @@ on:
   pull_request:
     branches: [main, "codex/step15-storage-foundation-design"]
     paths:
+      - "app/routes/internal.google.merchant-links.ts"
+      - "app/lib/providers/google-merchant-discovery.server.js"
+      - "tests/google-merchant-server-permission.test.js"
+      - "tools/eo05-google-merchant-server-probe.mjs"
       - "app/routes/internal.google.raw-capture.ts"
       - "tests/google-raw-request-permission.test.js"
       - "app/lib/providers/identity-runtime-authority.server.js"

@@ -125,7 +125,7 @@ function linksFromPage(page, accountId) {
 
 // One invocation uses only the existing current authority RPC and token-vault read.
 // No jobs, dates, Merchant quota config, token renewal, persistence or SQL writes.
-async function discover({verified, database, tokenVault, environment, plan, signal, now, fetchFn}) {
+export async function discoverGoogleMerchantLinks({verified, database, tokenVault, environment, plan, signal, now, fetchFn}) {
   guard(signal, plan, now);
   const owner = verified.installationAuthority, shop = verified.identity.shop;
   if (owner.workspaceId !== plan.workspaceId || String(owner.installGeneration) !== plan.installGeneration
@@ -166,7 +166,7 @@ async function discover({verified, database, tokenVault, environment, plan, sign
 
 // Explicit renewal is separate from discovery. It never discovers or saves accounts.
 // The current version/credential fence is also enforced by the existing atomic vault RPC.
-async function renewCredential({verified, database, tokenVault, environment, plan, signal, now, fetchFn}) {
+export async function renewGoogleMerchantCredential({verified, database, tokenVault, environment, plan, signal, now, fetchFn}) {
   const owner = verified.installationAuthority, shop = verified.identity.shop;
   if (owner.workspaceId !== plan.workspaceId || String(owner.installGeneration) !== plan.installGeneration
     || shop.shopId !== plan.shopId || shop.myshopifyDomain !== plan.shopDomain) fail("authority_required");
@@ -282,7 +282,7 @@ export async function handleGoogleMerchantDiscoveryRequest({request, authenticat
         }}};
       }});
       guard(signal, plan, now);
-      const result = await (renewal ? renewCredential : discover)({verified, database, tokenVault, environment: env, plan, signal, now, fetchFn});
+      const result = await (renewal ? renewGoogleMerchantCredential : discoverGoogleMerchantLinks)({verified, database, tokenVault, environment: env, plan, signal, now, fetchFn});
       return json(result, 200);
     }});
   } catch (error) {

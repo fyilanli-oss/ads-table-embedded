@@ -1,4 +1,4 @@
-import {timingSafeEqual} from "node:crypto";
+import {readGooglePrivateRequest} from "./google-private-request.server.js";
 import {createGoogleRawCaptureExecution,readGoogleRawCapturePlan} from "./google-raw-server.server.js";
 
 export const GOOGLE_RAW_CAPTURE_PATH="/internal/google/raw-capture";
@@ -8,27 +8,10 @@ export async function handleGoogleRawCaptureRequest(request,{environment=process
  const env={...environment};
  const json=(status,value)=>Response.json(value,{status,headers:{"cache-control":"no-store, max-age=0","cdn-cache-control":"no-store","x-content-type-options":"nosniff"}});
  const stop=(status,reason)=>json(status,{status:"stopped",reason,sourceStored:null,recordCount:null,empty:null});
- if(request.method!=="POST")return stop(405,"method_not_allowed");
- if(env.VERCEL_ENV!=="production"||env.ADSTABLE_GOOGLE_RAW_CAPTURE_ENABLED!=="true")return stop(503,"not_enabled");
- const secret=env.ADSTABLE_GOOGLE_RAW_CAPTURE_SERVER_SECRET,auth=request.headers.get("authorization");
- if(typeof secret!=="string"||!/^[A-Za-z0-9_-]{32,256}$/.test(secret)||typeof auth!=="string"||!/^Bearer [A-Za-z0-9_-]{32,256}$/.test(auth)||auth.length!==secret.length+7
-  ||!timingSafeEqual(Buffer.from(auth),Buffer.from(`Bearer ${secret}`)))return stop(401,"unauthorized");
- let url;
- try{url=new URL(request.url);const app=new URL(env.SHOPIFY_APP_URL);
-  if(app.protocol!=="https:"||app.origin!==env.SHOPIFY_APP_URL||url.origin!==app.origin||url.pathname!==GOOGLE_RAW_CAPTURE_PATH||url.search)throw Error();
- }catch{return stop(400,"request_not_allowed");}
- if(request.headers.get("content-type")?.split(";")[0].trim().toLowerCase()!=="application/json")return stop(400,"request_contract_invalid");
- let input,plan;
- try{
-  plan=readGoogleRawCapturePlan(env,now());
-  const reader=request.body?.getReader();if(!reader)throw Error();let size=0,expired=false;const chunks=[];
-  const cancel=()=>{void reader.cancel().catch(()=>{});},timer=setTimeout(()=>{expired=true;cancel();},5000);
-  request.signal.addEventListener("abort",cancel,{once:true});if(request.signal.aborted)cancel();
-  try{for(;;){const part=await reader.read();if(part.done)break;size+=part.value.byteLength;if(size>1024){cancel();throw Error();}chunks.push(part.value);}
-   if(expired||request.signal.aborted)throw Error();input=JSON.parse(Buffer.concat(chunks).toString("utf8"));
-  }finally{clearTimeout(timer);request.signal.removeEventListener("abort",cancel);reader.releaseLock();}
- }catch{return stop(400,"request_contract_invalid");}
- if(!input||Object.keys(input).join()!=="operationId"||input.operationId!==plan?.target.operationId||request.signal.aborted)return stop(400,"request_contract_invalid");
+ const gate=await readGooglePrivateRequest(request,{environment:env,path:GOOGLE_RAW_CAPTURE_PATH,
+  enabled:env.ADSTABLE_GOOGLE_RAW_CAPTURE_ENABLED==="true",readPlan:readGoogleRawCapturePlan,operationId:p=>p?.target.operationId,now});
+ if(!gate.ok)return stop(gate.status,gate.reason);
+ const {input,plan}=gate;
  let execution,result;
  try{
   execution=createExecution({environment:env,operationId:input.operationId,signal:request.signal,now});

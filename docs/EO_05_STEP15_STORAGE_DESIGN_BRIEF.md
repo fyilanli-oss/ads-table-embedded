@@ -1,3 +1,13 @@
+## 4 Kasım — tarayıcısız Merchant sunucu girişi analist özeti
+
+Owner yalnız mevcut okuyucunun güvenli sunucuya bağlanması, kod/izole test/tek PR kapsamını onayladı. Başlangıç: mevcut Merchant-only yol Shopify browser authority ister; ham kayıt yolu ise Merchant hedefini önceden ister. Sonuç: özel sunucu POST, hazır private Google kurulum yetkisiyle seçili hesabın gerçek Merchant bağlantılarını okur.
+
+Başlangıç/kapalı: plan, Production, Bearer veya input geçersizse DB/native0. Süresi dolmuş token: mevcut atomik identity yenilemesi bir kez, exact readback; sonra bir ilişki sorgusu. Başarı: complete ve güvenli ID/count; boş bağlantı ürün0 değildir. Çok bağlantı: liste, seçim yok. Hata/partial/stale/unknown: IDs/count null, retry veya ürün okuması yok. Abort/deadline: sonradan yanıt başarı yayımlamaz. Eski browser açıklama/seçim/modal/copy davranışları aynı kalır.
+
+Görünür öğe, layout, copy veya Shopify component/property yok; bu yalnız görünmez resource route. Görsel veya EO07 kabulü üretilmez. Ortak özel request gate ve bounded runtime transaction kapıları yeniden kullanılır. Native sorgu/parser, token kasası/CAS, roller/grant'lar ve ham kayıt protokolü korunur. Kod route maxDuration60, çekirdek20s ve DB5s sınırındadır.
+
+Kapsam dışı: yeni OAuth adımı/asset seçicisi, SQL migration/rol/tablo/anahtar/config, kaynak veya rapor yazımı, job/admission/scheduler, canlı Google çağrısı, deploy ve merge. Kabul:29 yeni odaklı test, eski Merchant/ham kayıt ve negatif regresyonlar; gerçek runtime/vault fonksiyonlarıyla8 SQL senaryosu üç mevcut F01 ortamında. Resmî Google product_link/refresh, React Router resource route ve Vercel preset belgeleri4 Kasım2026 kontrol edildi; linkler makine kaydında.
+
 ## 2 Kasım — mevcut 15: kontrollü Google kaynak–kural–eşleme akışı
 
 Owner, hazırlık incelemesi sonrası bu tek Google akışının kod ve izole uçtan uca

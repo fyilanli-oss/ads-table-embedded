@@ -1718,7 +1718,7 @@
       "tools/eo05-refresh-entitlement-probe.mjs": "398084b7276f99a73270bb9bc7fa82199664ddc9cddf4680d1216f66176c00ff",
       "tools/eo05-refresh-interrupted-work-probe.mjs": "b407fd7c3adc7bd24f57282c149bfce95d3a1a6ac6f449b946006e8eaf28642c",
       "tools/eo05-refresh-native-inventory-probe.mjs": "880074f1f492b50120977f1af4766416252d71a290837df78fb238197c7f3316",
-      "tools/eo05-refresh-preflight-probe.mjs": "02abdd6a717e0be6701778d9445fafa679459529e6be6c94cff44ffa2e655156",
+      "tools/eo05-refresh-preflight-probe.mjs": "c63f06ae2392f75fe04c4636312bc542b33cfda4cc24d887d179f541bb807311",
       "tools/eo05-refresh-queue-check-probe.mjs": "1416ced2fcbc08c20fcd3ec2d4237cee14907b6f0fd44dc191f0f55664ccb97a",
       "tools/eo05-refresh-queue-cron-entry-probe.mjs": "963eb459cda2dce12759050a431de55096e566049c03c579d3ce6f90fc1373da",
       "tools/eo05-refresh-scheduled-queue-probe.mjs": "fe524da7d7bdb8cf4851499b216a5e61d35c283cfce81ea6528a32cc8728be0c",

@@ -1,4 +1,18 @@
 {
+  "Step15_retention_owner_agreement_2026_11_04": {
+    "record": "contracts/eo-05-step15-storage-design-v1.json#accepted_retention_policy_2026_11_04",
+    "status": "owner_accepted_decision_not_implemented",
+    "owner_approval": "Codex mutabikiz. İlerleyen dönemde bunların nasıl veri yükü getireceğini de konuşuruz.",
+    "source_days": 90,
+    "metadata_days": 365,
+    "uncertain_review_target_days": 30,
+    "erasure_prevention": "last relevant backup expiry plus30 days; actual inventory, no assumed backup duration",
+    "capacity_discussion": "deferred_by_owner_not_measured",
+    "runtime_or_live_changes": false,
+    "temporary_live_policy_unchanged": "7-day raw /30-day metadata",
+    "merge_authorized": false,
+    "deploy_authorized": false
+  },
   "Google_raw_duration_fix_2026_11_04": {
     "status": "code_preparation_live_acceptance_failed",
     "baseline_main": "b97360dd48d57f6f6deee8cb9eb1bac93802b70b",

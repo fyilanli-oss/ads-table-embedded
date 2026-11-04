@@ -1,5 +1,6 @@
 import {parseGoogleRawJson,googleRawScalar} from "./google-raw-projection.server.js";
-import {META_AD_CHANNEL_INSIGHTS_FIELDS,META_PRODUCT_BREAKDOWN_INSIGHTS_FIELDS} from "./meta-reporting.server.js";
+import {META_AD_CHANNEL_INSIGHTS_FIELDS,META_PRODUCT_BREAKDOWN_INSIGHTS_FIELDS,META_PRODUCT_BREAKDOWN_ID_LIMIT} from "./meta-reporting.server.js";
+import {META_GRAPH_VERSION} from "./meta-graph.server.js";
 
 // Reuse the strict lexical JSON parser, without passing Meta numbers through
 // Number or admitting arbitrary native fields, URLs, paging links or credentials.
@@ -27,6 +28,11 @@ export function projectMetaRawPage(body,{family,ordinal,accountId,window,request
  if(next!==undefined&&(typeof next!=="string"||!next))fail();
  const cursor=next===undefined?null:body.paging?.cursors?.after;
  if(cursor!==null&&(typeof cursor!=="string"||!cursor||cursor.length>4096||/[\u0000-\u001f\u007f]/.test(cursor)))fail();
+ const product=family==="ad_product_breakdown_daily_insights";
  return {page:{family,ordinal,records,selectedFields:fields,hasNextPage:cursor!==null,
+  request:{graphVersion:META_GRAPH_VERSION,level:"ad",timeIncrement:1,window:{...window},limit:100,
+   breakdowns:product?["product_id"]:[],actionBreakdowns:product?[]:["action_type"],
+   productIdLimit:product?META_PRODUCT_BREAKDOWN_ID_LIMIT:null,attributionParameters:"existing_native_defaults",
+   coverage:"native_query_result_not_catalogue_inventory"},
   requestId:typeof requestId==="string"&&/^[A-Za-z0-9_-]{1,256}$/.test(requestId)?requestId:null},cursor};
 }

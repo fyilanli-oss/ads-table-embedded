@@ -66,7 +66,7 @@ export function createMetaRawDatasetReader({environment,verified,tokenVault,exec
      if(projected.cursor===null)break;if(seen.has(projected.cursor))fail("cursor_loop");seen.add(projected.cursor);after=projected.cursor;
     }
     const count=pages.reduce((n,p)=>n+p.records.length,0);
-    pages.unshift({family:"meta_permission_check",ordinal:0,records:[],selectedFields:["scopes","verifiedAt","expiresAt"],scopes:permission.scopes,verifiedAt:permission.verifiedAt,expiresAt:permission.expiresAt});
+    pages.unshift({family:"meta_permission_check",ordinal:0,records:[],selectedFields:["appId","scopes","verifiedAt","expiresAt"],appId:env.META_APP_ID,scopes:permission.scopes,verifiedAt:permission.verifiedAt,expiresAt:permission.expiresAt});
     await guard();checkPermission();writeSent=true;
     const receipt=await storeMetaRawDataset({database,owner,attemptId:randomUUID(),dataset,pages,complete:true,cipher,policy:c.sourcePolicy,limits:c.storageLimits,now:new Date(now()).toISOString(),onCommitted:()=>{writeKnown=true;},
      read:{jobId:scope.claim.id,fence:String(scope.claim.fence),window:scope.window,observedAt:scope.entitlementReceipt.observedAt,operationId:c.operationId,quotaContext:initial,

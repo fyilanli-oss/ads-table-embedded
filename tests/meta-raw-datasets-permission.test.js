@@ -19,6 +19,9 @@ test("Meta native numeric tokens and string decimals survive encrypted roundtrip
  const r=await createMetaRawCaptureExecution(x.options).run();assert.equal(r.status,"stored",JSON.stringify(r));assert.equal(r.recordCount,2);
  const w=x.writes[0],p=w.pages[1],plain=createConfiguredSourceEvidenceCipher(x.environment).open({owner:w.owner,attemptId:w.attemptId,ordinal:0,page:p});
  assert.deepEqual(plain.records[0].fields.find(f=>f.field==="clicks").value,{jsonNumber:"9007199254740993"});
+ assert.equal(plain.request.coverage,"native_query_result_not_catalogue_inventory");assert.deepEqual(plain.request.window,x.plan.target.window);
+ const product=x.writes[1],productPlain=createConfiguredSourceEvidenceCipher(x.environment).open({owner:product.owner,attemptId:product.attemptId,ordinal:0,page:product.pages[1]});
+ assert.equal(productPlain.request.productIdLimit,100);assert.deepEqual(productPlain.request.breakdowns,["product_id"]);
  assert.equal(plain.records[0].fields.find(f=>f.field==="spend").value,"0.1234567890123456789");assert.doesNotMatch(JSON.stringify(plain),/SECRET|private_email/);
  assert.ok(x.writes.every(w=>!JSON.stringify(w.body).includes("9007199254740993")));
 });

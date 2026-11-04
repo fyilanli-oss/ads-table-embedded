@@ -5,6 +5,12 @@ import {createMetaRawDatasetReader} from "../app/lib/refresh/meta-raw-datasets.s
 import {loadMetaBackgroundOwner} from "../app/lib/refresh/meta-background-owner.server.js";
 import {sourceStoreFixture} from "../tests/fixtures/source-store-fixture.js";
 
+export function metaRawRehearsalEnvironment(){
+ return {META_APP_ID:"123",META_APP_SECRET:"SYNTHETIC",ADSTABLE_META_SOURCE_DATABASE_URL:"postgresql://adstable_meta_source_runner.podpwkrpmjiksskxhwsu:"+"x".repeat(32)+"@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require",ADSTABLE_META_SOURCE_DB_TIMEOUT_MS:"5000",
+  ADSTABLE_SOURCE_EVIDENCE_ACTIVE_KEY_VERSION:"1",ADSTABLE_SOURCE_EVIDENCE_ENCRYPTION_KEY_V1:randomBytes(32).toString("base64url"),
+  ADSTABLE_PROVIDER_TOKEN_ACTIVE_KEY_VERSION:"1",ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_V1:randomBytes(32).toString("base64url"),ADSTABLE_SESSION_ENCRYPTION_KEY_V1:randomBytes(32).toString("base64url")};
+}
+
 // Actual F01 owner/job/quota/source RPCs and per-RPC narrow role checks. Only the
 // physical Meta response and token are synthetic. Entire migration/role rolls back.
 export async function metaRawDatasetProbe(client,{execution,connection,installation,scopes}){
@@ -59,7 +65,7 @@ export async function metaRawDatasetProbe(client,{execution,connection,installat
     }});
     const runtime={query:async(q,args)=>{await client.query("set local role adstable_runtime");try{return await client.query(q,args);}finally{await client.query("set local role adstable_owner");}}};
     const verified=await loadMetaBackgroundOwner({database:runtime,owner:{workspaceId:workspace,installGeneration:Number(generation),shopId:installation.shop_id,shopDomain:installation.shop_domain}});
-    const issued=Date.now(),environment={META_APP_ID:"123",META_APP_SECRET:"SYNTHETIC",ADSTABLE_META_SOURCE_DATABASE_URL:"postgresql://adstable_meta_source_runner.podpwkrpmjiksskxhwsu:"+"x".repeat(32)+"@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require",ADSTABLE_META_SOURCE_DB_TIMEOUT_MS:"5000",ADSTABLE_SOURCE_EVIDENCE_ACTIVE_KEY_VERSION:"1",ADSTABLE_SOURCE_EVIDENCE_ENCRYPTION_KEY_V1:randomBytes(32).toString("base64url")};
+    const issued=Date.now(),environment=metaRawRehearsalEnvironment();
     reader=createMetaRawDatasetReader({environment,verified,execution,configuration:{operationId:randomUUID(),limits:{maxElapsedMs:60000,maxBytes:1048576,maxRequests:5,maxPages:1,maxRows:100},storageLimits:{maxRows:1000,maxBytes:1048576},sourcePolicy:sourceStoreFixture().input.policy},
      tokenVault:{loadProviderTokenSet:async()=>({access_token:"SYNTHETIC",permission_profile:"identity_v1",scopes})},poolFactory,
      fetchFn:async(endpoint)=>{calls++;const u=new URL(endpoint);

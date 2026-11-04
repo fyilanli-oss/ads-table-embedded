@@ -4,6 +4,13 @@ import {metaRawDatasetsFixture} from "./fixtures/meta-raw-datasets-fixture.js";
 import {createMetaRawCaptureExecution,readMetaRawCapturePlan} from "../app/lib/refresh/meta-raw-server.server.js";
 import {createConfiguredSourceEvidenceCipher} from "../app/lib/database/source-evidence-config.server.js";
 import {META_SOURCE_ROLE_CHECK_SQL,createMetaSourcePostgresClient} from "../app/lib/database/meta-source-postgres.server.js";
+import {metaRawRehearsalEnvironment} from "../tools/eo05-meta-raw-datasets-probe.mjs";
+
+test("actual SQL rehearsal configuration passes the unchanged independent-key guard before database execution",()=>{
+ const env=metaRawRehearsalEnvironment();assert.doesNotThrow(()=>createConfiguredSourceEvidenceCipher(env));
+ const reused={...env,ADSTABLE_SOURCE_EVIDENCE_ENCRYPTION_KEY_V1:env.ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_V1};
+ assert.throws(()=>createConfiguredSourceEvidenceCipher(reused),/CONFIGURATION_REQUIRED/);
+});
 
 test("Meta two successful empty reports produce two encrypted verified envelopes, not catalogue identity",async()=>{
  const x=metaRawDatasetsFixture(),e=createMetaRawCaptureExecution(x.options),r=await e.run();await e.close();

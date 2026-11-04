@@ -62,7 +62,7 @@ export async function klaviyoFirstDayRehearsal(client,{workspace,shopId,shopDoma
      const policy=randomUUID();await client.query("insert into operations.api_quota_failure_domains(id,provider) values($1,$2)",[ctx.connectionScopeKey,ctx.provider]);
      await client.query("insert into operations.api_quota_policies(id,provider,window_ms,max_units,interactive_reserve,dispatch_delay_ms,max_outstanding) values($1,$2,60000,100,1,5000,1)",[policy,ctx.provider]);
      for(const family of ctx===klaviyo?["account_discovery","metrics","campaign_values","flow_values","events"]:["partner_graphql"]){
-      const r=quotaRouteIdentity(ctx,{provider:ctx.provider,family,accountId:ctx.accountId,organizationId:ctx.organizationId,version:ctx.apiVersion,includes:family==="events"?["attributions","metric"]:[]});
+      const r=quotaRouteIdentity(ctx,{provider:ctx.provider,family,accountId:null,organizationId:ctx.organizationId,version:ctx.apiVersion,includes:family==="events"?["attributions","metric"]:[]});
       await client.query("insert into operations.api_quota_operations(operation_key,provider,enabled,route_required) values($1,$2,true,true)",[r.routeKey,ctx.provider]);
       await client.query("insert into operations.api_quota_bindings values($1,$2,1)",[r.routeKey,policy]);
       await client.query("insert into operations.api_quota_failure_bindings values($1,$2)",[r.routeKey,ctx.connectionScopeKey]);

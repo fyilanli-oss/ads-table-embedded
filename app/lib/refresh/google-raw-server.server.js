@@ -15,6 +15,8 @@ import {loadGoogleBackgroundOwner} from "./google-background-owner.server.js";
 import {planRefreshPreflightAdmissions} from "./admission-policy.server.js";
 import {createAuthorityQuotaEntitlementVerifier} from "./entitlement-check.server.js";
 import {createGoogleRawReader} from "./google-raw-reader.server.js";
+import {readGoogleRawDatasetPlan} from "./google-raw-dataset-plan.server.js";
+import {createGoogleRawDatasetReader} from "./google-raw-datasets.server.js";
 
 const fail=()=>{throw Error("GOOGLE_RAW_CAPTURE_CONFIGURATION_REQUIRED");};
 const exact=(v,keys)=>v&&typeof v==="object"&&!Array.isArray(v)&&Object.keys(v).sort().join()===keys.slice().sort().join();
@@ -26,6 +28,7 @@ export function readGoogleRawCapturePlan(environment,now=Date.now()) {
  const raw=environment.ADSTABLE_GOOGLE_RAW_CAPTURE_PLAN;
  if(typeof raw!=="string"||Buffer.byteLength(raw)>16384)fail();
  let p;try{p=JSON.parse(raw);}catch{fail();}
+ if(p?.version===2)return readGoogleRawDatasetPlan(p,now);
  if(!exact(p,["target","limits","storageLimits","sourcePolicy"]))fail();
  const target=readGoogleAcceptancePlan({ADSTABLE_GOOGLE_ACCEPTANCE_ENABLED:"true",ADSTABLE_GOOGLE_ACCEPTANCE_PLAN:JSON.stringify(p.target)},now);
  const l=p.limits,s=p.storageLimits;
@@ -65,10 +68,12 @@ export function createGoogleRawCaptureExecution({environment,operationId,signal,
   const start=now(),deadline=Math.min(start+90000,Date.parse(p.expiresAt)),timer=setTimeout(forward,Math.max(1,deadline-start));
   // Reserve both native observations and the bounded encrypted write. These are
   // derived worst-case costs of this single plan, never provider quota defaults.
+  const datasetMode=configuration.version===2;
   const cost={...GOOGLE_ACCEPTANCE_WORK_COST,
-   rows:configuration.limits.maxRows+2*configuration.limits.maxLinks+configuration.storageLimits.maxRows,
-   bytes:configuration.limits.maxBytes+configuration.storageLimits.maxBytes,
-   dbWrites:GOOGLE_ACCEPTANCE_WORK_COST.dbWrites+2*configuration.storageLimits.maxRows+2};
+   requests:datasetMode?configuration.limits.maxRequests+2:GOOGLE_ACCEPTANCE_WORK_COST.requests,
+   rows:configuration.limits.maxRows+2*configuration.limits.maxLinks+(datasetMode?3:1)*configuration.storageLimits.maxRows,
+   bytes:configuration.limits.maxBytes+(datasetMode?3:1)*configuration.storageLimits.maxBytes,
+   dbWrites:GOOGLE_ACCEPTANCE_WORK_COST.dbWrites+(datasetMode?6:2)*configuration.storageLimits.maxRows+(datasetMode?6:2)};
   let claim,phase=null,admissionSent=false,paused=false,captured=null,renewal=null;
   const current=()=>{const t=now();return !controller.signal.aborted&&Number.isSafeInteger(t)&&t>=start&&t<deadline;};
   const stopped=(reason)=>Object.freeze({status:captured?.status==="unconfirmed"||captured?.sourceStored===true?"unconfirmed":"stopped",reason,sourceStored:captured?captured.sourceStored:false,
@@ -110,7 +115,8 @@ export function createGoogleRawCaptureExecution({environment,operationId,signal,
    const entitlement=await verifier.verify(context());
    if(entitlement?.status!=="verified")return stop(entitlement?.externalOutcome==="unknown"?"request_outcome_unknown":"entitlement_required");
    const execution={...context(),entitlementReceipt:entitlement.receipt},q=await work.loadQuotaContext({...execution,provider:"google_ads"});
-   if(q?.merchant?.targetAccountId!==p.merchantId||q.merchant.quotaAccountId!==p.merchantQuotaAccountId
+   if(datasetMode){if(!q||configuration.merchant!==null&&Object.keys(configuration.merchant).some(k=>q.merchant?.[k]!==configuration.merchant[k]))return stop("configuration_missing");}
+   else if(q?.merchant?.targetAccountId!==p.merchantId||q.merchant.quotaAccountId!==p.merchantQuotaAccountId
     ||q.merchant.bindingEpoch!==p.merchantBindingEpoch||q.merchant.apiVersion!=="products/v1")return stop("configuration_missing");
    if(!current()||deadline-now()<70000||!bound(await readIdentity())||!current())return stop("authority_required");
    const tokenVault=Object.freeze({loadProviderTokenSet:v=>vault.loadProviderTokenSet(v),async renewGoogleIdentityCredential(v){
@@ -118,11 +124,12 @@ export function createGoogleRawCaptureExecution({environment,operationId,signal,
      throw Error("GOOGLE_RAW_CAPTURE_RENEWAL_UNCONFIRMED");
     const result=await vault.renewGoogleIdentityCredential(v);renewal=result;return result;
    }});
-   reader=createGoogleRawReader({environment:env,verified,tokenVault,execution,configuration:{merchantId:p.merchantId,
+   reader=datasetMode?createGoogleRawDatasetReader({environment:env,verified,tokenVault,execution,configuration:{...configuration,operationId:p.operationId},
+    signal:controller.signal,now,fetchFn,poolFactory:readerPoolFactory}):createGoogleRawReader({environment:env,verified,tokenVault,execution,configuration:{merchantId:p.merchantId,
     limits:configuration.limits,storageLimits:configuration.storageLimits,sourcePolicy:configuration.sourcePolicy},
     signal:controller.signal,now,fetchFn,poolFactory:readerPoolFactory});
    captured=await reader.run();await reader.close();
-   if(captured.status!=="stored")return stop(["provider_permission_denied","provider_throttled"].includes(captured.reason)?captured.reason:"request_outcome_unknown");
+   if(captured.status!=="stored"&&!(datasetMode&&captured.status==="partial"))return {...await stop(["provider_permission_denied","provider_throttled"].includes(captured.reason)?captured.reason:"request_outcome_unknown"),...datasetMode?{datasets:captured.datasets,reason:captured.reason}: {}};
    if(!current()||deadline-now()<10000||!bound(await readIdentity())||!await work.loadBoundAuthority(context())
     ||await work.isEntitlementCurrent({...context(),receipt:entitlement.receipt})!==true)return stop("authority_check_failed_after_request");
    await advance("response_received");

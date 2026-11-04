@@ -227,6 +227,12 @@ export function createSourceEvidenceRepository(database) {
         if(write.owner.provider!=="google_ads"||write.ordinal!==0||!text(read.jobId,256)||!id(read.fence)
           ||!instant(read.observedAt)||!instant(read.completedAt)||!instant(read.deadlineAt))fail("READ_BINDING_INVALID");
       }
+      if(read!==null&&kind==="google_dataset"){
+        exact(read,["jobId","fence","window","observedAt","operationId","quotaContext","completedAt","deadlineAt","dataset"]);
+        if(write.owner.provider!=="google_ads"||write.ordinal!==0||!uuid.test(read.operationId)||!text(read.jobId,256)||!id(read.fence)
+          ||!["account_performance","product_performance","merchant_identity"].includes(read.dataset)
+          ||!instant(read.observedAt)||!instant(read.completedAt)||!instant(read.deadlineAt))fail("READ_BINDING_INVALID");
+      }
       if(read!==null&&kind==="meta"){
         exact(read,["jobId","fence","window","observedAt","target","quotaContext","completedAt","deadlineAt","permissionExpiresAt"]);
         exact(read.target,["adId","adSetId","campaignId","catalogId"]);
@@ -246,6 +252,7 @@ export function createSourceEvidenceRepository(database) {
       try {
         const receipt = single(await database.query(read===null
           ?"select evidence.commit_source_batch($1::jsonb,$2::uuid,$3::integer,$4::jsonb) as result"
+          :kind==="google_dataset"?"select evidence.commit_google_dataset_source($1::jsonb,$2::uuid,$3::integer,$4::jsonb,$5::jsonb) as result"
           :kind==="google"?"select evidence.commit_google_identity_source($1::jsonb,$2::uuid,$3::integer,$4::jsonb,$5::jsonb) as result"
           :kind==="meta"?"select evidence.commit_meta_identity_source($1::jsonb,$2::uuid,$3::integer,$4::jsonb,$5::jsonb) as result"
           :kind==="klaviyo"?"select evidence.commit_klaviyo_identity_source($1::jsonb,$2::uuid,$3::integer,$4::jsonb,$5::jsonb) as result"
@@ -261,6 +268,7 @@ export function createSourceEvidenceRepository(database) {
     commit:write=>commit(write),
     commitShopifyOrder:(write,read)=>commit(write,read),
     async commitGoogleIdentity(write,read){if(read===null||read===undefined)fail("READ_BINDING_INVALID");return commit(write,read,"google");},
+    async commitGoogleDataset(write,read){if(read===null||read===undefined)fail("READ_BINDING_INVALID");return commit(write,read,"google_dataset");},
     async commitMetaIdentity(write,read){if(read===null||read===undefined)fail("READ_BINDING_INVALID");return commit(write,read,"meta");},
     async commitKlaviyoIdentity(write,read){if(read===null||read===undefined)fail("READ_BINDING_INVALID");return commit(write,read,"klaviyo");},
     async inspect({owner, attemptId, ordinal}) {

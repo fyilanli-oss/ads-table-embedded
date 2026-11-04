@@ -68,6 +68,13 @@ export function createRefreshQuotaClients(options) {
   return createScopeResolvedQuotaClients(refreshQuotaOptions(options));
 }
 
+// Same fenced, current inventory and per-HTTP guard as other background readers.
+// No Merchant target is imposed on ordinary Ads queries.
+export function createRefreshGoogleRawTransport(options) {
+  const binding=refreshQuotaOptions(options);
+  return identityTransport(binding,"google_ads",options.claim,undefined);
+}
+
 function identityTransport(binding,provider,claim,merchantTarget,readExecution) {
   const resolve=createQuotaScopeResolver({store:binding.store,loadContext:async input=>{
     if(input.provider!==provider) return null;

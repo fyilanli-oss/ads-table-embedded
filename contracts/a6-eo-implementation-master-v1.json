@@ -3768,5 +3768,24 @@
     "merge_authorized": false,
     "deploy_authorized": false,
     "package2_complete": false
+  },
+  "Step15_Google_raw_datasets_v2_2026_11_04": {
+    "status": "prepared_code_and_isolated_tests_live_acceptance_open",
+    "source_main": "5f3232cf1dacb0ed9ae6aab2961de6bf50f405e5",
+    "owner_approval": "Owner approved binding the three disclosed Google datasets in one code change, separate envelopes/states and decrypted content readback. Owner resumed the same work after an accidental interruption. Code, prepared SQL, isolated tests and one PR only; no live config/provider/deploy/merge.",
+    "brief": "docs/EO_05_GOOGLE_RAW_DATASETS_V2.md",
+    "entry": "Existing private POST /internal/google/raw-capture; explicit version2 plan; existing Secret/env names; no browser, UI or new OAuth action.",
+    "datasets": {
+      "account_performance": "9 existing account/campaign/channel/conversion queries",
+      "product_performance": "8 existing product/cart-sales/PMax queries",
+      "merchant_identity": "Native link observation; catalogue identity fields only with separately explicit current linked Merchant context. Missing link/context is unavailable/null, never product zero."
+    },
+    "integrity": "Existing encrypted source store; independent envelope per dataset linked by operation/job/fence/owner/window. Exact selected GAQL fields and lossless numeric tokens. Receipt plus ordered page decrypt/hash/content readback; no auto inspection/replay after an unknown write.",
+    "prepared_migration": "supabase/migrations/20261104110401_eo05_google_raw_datasets.sql",
+    "prepared_role_extension": "tools/sql/eo05-google-dataset-source-role-extension.sql",
+    "live_changes": false,
+    "Dataset_write": false,
+    "hourly_activation": false,
+    "step15_complete": false
   }
 }

@@ -8,7 +8,8 @@ const product={name:"accounts/99/products/en~US~real-looking",offerId:"real-look
 test("existing admitted Google reader reaches native zero without source keys, policies, mapping or Shopify HTTP",async()=>{
  const f=googleReadRunnerFixture(),r=await run(f);assert.equal(r.status,"read_complete");assert.equal(r.recordCount,0);assert.equal(r.empty,true);
  assert.equal(f.httpCalls.length,3);assert.equal(r.sourceStored,false);assert.equal(r.mappingVerified,false);assert.equal(r.DatasetWritePerformed,false);
- assert.ok(!f.sqlCalls.some(x=>/evidence\.|identity\.|finish_refresh|commit_refresh/.test(x.sql)));assert.equal(f.state.closed,1);
+ // Catalogue profile SQL mentions permitted signatures; it does not execute them.
+ assert.ok(!f.sqlCalls.some(x=>/^select (?:evidence\.|identity\.|operations\.(?:finish_refresh|commit_refresh))/.test(x.sql)));assert.equal(f.state.closed,1);
 });
 for(const [name,body,status]of [["missing repeated field",{},200],["permission",{error:{message:"PRIVATE-DIAGNOSTIC"}},403],
  ["HTTP success with error",{error:{message:"PRIVATE-DIAGNOSTIC"}},200],["malformed repeated field",{products:null},200],["array body",[],200]])test("native "+name+" is classified correctly",async()=>{

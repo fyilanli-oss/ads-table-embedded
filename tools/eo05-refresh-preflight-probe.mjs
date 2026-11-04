@@ -174,6 +174,7 @@ export async function refreshPreflightProbe(client,{workspace,connections,shopId
   await googleAcceptanceRehearsal(client,{workspace,shopId,shopDomain});
   await googleMappingFlowRehearsal(client,{server:true,nativeRead:true,workspace,shopId,shopDomain});
   await metaSourceCaptureRehearsal(client,{workspace,shopId,shopDomain});
+  await (await import("./eo05-meta-first-day-probe.mjs")).metaFirstDayRehearsal(client,{workspace,shopId,shopDomain});
   await klaviyoSourceCaptureRehearsal(client,{workspace,shopId,shopDomain});
   await googleMappingFlowRehearsal(client,{workspace,shopId,shopDomain});
   await googleMappingFlowRehearsal(client,{server:true,workspace,shopId,shopDomain});

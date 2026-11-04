@@ -47,6 +47,13 @@ export function createRefreshWorkRepository(database) {
       return await result("select operations.commit_refresh_preflight_with_deadline($1::bigint,$2::bigint,$3::jsonb,$4::jsonb,$5::jsonb,$6::text,$7::bigint) as result",
         [expectedRevision,queueRevision,JSON.stringify(nextState),JSON.stringify(source),JSON.stringify(window),partitionId,deadlineAt])===true;
     },
+    async commitMetaRawPreflight({expectedRevision,queueRevision,nextState,source,window,operationId,deadlineAt}) {
+      if(![expectedRevision,queueRevision].every(n=>Number.isSafeInteger(n)&&n>=0)||!Number.isSafeInteger(deadlineAt)||deadlineAt<1||!nextState
+        ||source?.provider!=="meta"||window?.from!==window?.to||typeof window?.from!=="string"
+        ||typeof operationId!=="string"||!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(operationId))throw new Error("REFRESH_WORK_INPUT_INVALID");
+      return await result("select operations.commit_meta_raw_preflight_with_deadline($1::bigint,$2::bigint,$3::jsonb,$4::jsonb,$5::jsonb,$6::uuid,$7::bigint) as result",
+        [expectedRevision,queueRevision,JSON.stringify(nextState),JSON.stringify(source),JSON.stringify(window),operationId,deadlineAt])===true;
+    },
     async loadBoundAuthority({claim,window}) {
       if(!window||typeof window.from!=="string"||typeof window.to!=="string") throw new Error("REFRESH_WORK_INPUT_INVALID");
       return result("select operations.load_refresh_bound_authority($1::uuid,$2::bigint,$3::text,$4::text,$5::text,$6::bigint,$7::date,$8::date) as result",

@@ -921,6 +921,15 @@
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261104161732",
+      "name": "eo05_meta_raw_first_day",
+      "file": "supabase/migrations/20261104161732_eo05_meta_raw_first_day.sql",
+      "repository_sql_sha256": "7d7d842638e0f246ea623de7e9c9df55a0d3d0f8e24cf5703287350ffef6e993",
+      "applied": false,
+      "replay_scope": "isolated_rollback_only",
+      "live_apply_authorized": false
     }
   ]
 }

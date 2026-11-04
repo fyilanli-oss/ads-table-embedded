@@ -3829,5 +3829,38 @@
     "Dataset_write": false,
     "hourly_activation": false,
     "step15_complete": false
+  },
+  "Step15_Meta_raw_first_day_2026_11_04": {
+    "status": "prepared_code_SQL_isolated_tests_native_acceptance_open",
+    "base_main": "3e860b3edec66bcd6c9ebb398a5ab5967671f1df",
+    "owner_approval": "Explicit Onaylıyorum after concrete Meta first-connection-day correction: code, prepared SQL, isolated tests and one PR only. No new live attempt, SQL application, credentials/config, deployment or merge.",
+    "prior_native_attempt": {
+      "operationId": "fab628d3-4c38-4e42-826b-983b601f9737",
+      "time": "2026-11-04T16:00:29.367Z",
+      "HTTP": 409,
+      "reason": "admission_not_accepted",
+      "Meta_API_calls": 0,
+      "Meta_jobs": 0,
+      "Meta_source_batches": 0,
+      "evidence": "https://github.com/fyilanli-oss/ads-table-embedded/pull/327",
+      "cause": "Native America/Los_Angeles day start08:00Z precedes connection eligibility14:18:31.168Z. Existing generic full-day admission rejected before Meta HTTP. First-error stop preserved."
+    },
+    "correction": "Dedicated Meta raw-only commit_meta_raw_preflight_with_deadline admits the connection native calendar day or a later nonfuture single day. Exact owner/source/selection/version/CAS/quota/fence and operation-derived job ID retained; prior job prevents replay. Deadline at most120s SQL,90s caller. Generic refresh/Google/Klaviyo function definitions and OAuth flows unchanged.",
+    "provenance": "Database-derived metaRawEligibility stores native business date/timezone/day-start/connection eligibility and includesPreConnectionHours. authorizesReportingDataset=false always; native daily aggregates are not clipped to connection timestamp. Both verified envelopes require this metadata before private success/paused closure.",
+    "prepared_migration": "supabase/migrations/20261104161732_eo05_meta_raw_first_day.sql",
+    "privilege": "One additional exact EXECUTE for existing coordinator only; Meta source remains11 RPC; no new role, login, table, env name or policy.",
+    "verification": "72 focused Meta tests; actual private HTTP/vault/coordinator/source SQL first-day zero/nonzero, prior/future/multiday/wrong-provider/operation/stale-source/revision/expired-deadline, permission and lost-admission scenarios in three rollback-only F01 databases. Generic admission rejects first-day both before/after unchanged function definitions.",
+    "official_checked_at": "2026-11-04",
+    "official_sources": [
+      "https://www.postgresql.org/docs/17/functions-datetime.html",
+      "https://raw.githubusercontent.com/facebook/facebook-python-business-sdk/main/facebook_business/adobjects/adaccount.py"
+    ],
+    "live_changes": false,
+    "new_native_attempt": false,
+    "retention_changes": false,
+    "Dataset_write": false,
+    "hourly_activation": false,
+    "merge_authorized": false,
+    "deploy_authorized": false
   }
 }

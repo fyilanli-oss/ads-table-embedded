@@ -1,5 +1,6 @@
 import {readMetaPrivateRequest} from "./meta-private-request.server.js";
 import {createMetaRawCaptureExecution,readMetaRawCapturePlan} from "./meta-raw-server.server.js";
+import {validateMetaRawEligibility} from "./meta-raw-eligibility.server.js";
 export const META_RAW_CAPTURE_PATH="/internal/meta/raw-capture";
 const reasons=new Set(["capture_unconfirmed","not_attempted","provider_permission_denied","provider_throttled","provider_http_error","provider_api_error",
  "response_invalid","response_limit","page_limit","row_limit","request_limit","cursor_loop","permission_expired","authority_changed","configuration_missing",
@@ -17,11 +18,12 @@ export async function handleMetaRawCaptureRequest(request,{environment=process.e
  finally{try{await execution?.close();}catch{result={status:"unconfirmed",reason:"close_unconfirmed",sourceStored:result?.sourceStored??null};}}
  const datasets={};
  for(const name of ["account_performance","product_performance"]){const v=result?.datasets?.[name];
-  const known=v?.status==="stored"&&v.receiptVerified===true&&v.contentVerified===true
+  let eligibility;try{eligibility=validateMetaRawEligibility(v?.eligibility,{window:gate.plan.target.window});}catch{}
+  const known=!!eligibility&&v?.status==="stored"&&v.receiptVerified===true&&v.contentVerified===true
    &&/^[1-9][0-9]{0,18}$/.test(v.batchId??"")&&/^[0-9a-f-]{36}$/i.test(v.commitId??"")&&/^[a-f0-9]{64}$/.test(v.digest??"")
    &&Number.isSafeInteger(v.recordCount)&&v.recordCount>=0&&v.recordCount<=gate.plan.limits.maxRows;
   datasets[name]=known?{status:"stored",recordCount:v.recordCount,empty:v.recordCount===0,receiptVerified:true,contentVerified:true,
-   receipt:{batchId:v.batchId,commitId:v.commitId,digest:v.digest}}:{status:["failed","unconfirmed"].includes(v?.status)?v.status:"not_attempted",
+   receipt:{batchId:v.batchId,commitId:v.commitId,digest:v.digest},eligibility}:{status:["failed","unconfirmed"].includes(v?.status)?v.status:"not_attempted",
     reason:reasons.has(v?.reason)?v.reason:null,recordCount:null,empty:null};
  }
  const complete=result?.status==="stored"&&result.sourceStored===true&&result.jobPaused===true&&Object.values(datasets).every(v=>v.status==="stored");

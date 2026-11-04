@@ -37,7 +37,9 @@ export function metaRawDatasetsFixture(){
   if(/settle_shared_api_quota|record_shared_api_quota_feedback|stop_shared_api_quota/.test(sql))return result(true);
   if(sql.includes("commit_meta_dataset_source")){
    const body=JSON.parse(args[3]),read=JSON.parse(args[4]),receipt={status:"committed",batchId:String(91+writes.length),commitId:randomUUID(),digest:createHash("sha256").update(args[3]).digest("hex"),sourceState:body.sourceState,
-    manifest:{counts:Object.fromEntries(["pages","references","rules","mappings","orders","lines","journeys","claims","links"].map(k=>[k,body[k].length]))}};
+    manifest:{counts:Object.fromEntries(["pages","references","rules","mappings","orders","lines","journeys","claims","links"].map(k=>[k,body[k].length])),
+     metaRawEligibility:{kind:"meta_raw_native_business_day_v1",businessDate:read.window.from,timezone:f.source.timezone,eligibleFromMs:f.source.eligibleFromMs,
+      nativeDayStartMs:Date.parse(read.window.from+"T00:00:00Z"),includesPreConnectionHours:Date.parse(read.window.from+"T00:00:00Z")<f.source.eligibleFromMs,authorizesReportingDataset:false}}};
    const w={body,read,receipt,owner:JSON.parse(args[0]),attemptId:args[1],pages:body.pages.map(p=>({...p,id:String(++pageId),available:true,expired:false,retentionPruned:false}))};writes.push(w);receipts.set(args[1],w);return result(receipt);
   }
   if(sql.includes("read_source_receipt"))return result(receipts.get(args[1])?.receipt);
@@ -49,5 +51,10 @@ export function metaRawDatasetsFixture(){
   if(u.hostname==="graph.facebook.com"){f.http.push(u);return u.pathname.endsWith("/debug_token")?Response.json({data:{is_valid:true,app_id:environment.META_APP_ID,scopes,expires_at:Math.floor(now()/1000)+3600,data_access_expires_at:Math.floor(now()/1000)+7200}}):Response.json({data:[]});}
   return f.options.fetchFn(url,init);
  };
- return {f,environment,plan,hooks,writes,calls,context,setPlan,options:{environment,operationId:target.operationId,now,fetchFn,runtimePoolFactory:pool("runtime"),readerPoolFactory:pool("source"),coordinatorPoolFactory:f.options.coordinatorPoolFactory}};
+ const coordinatorPoolFactory=options=>{const p=f.options.coordinatorPoolFactory(options);return {...p,async connect(){const c=await p.connect();return {...c,async query(sql,args){
+  const custom=await hooks.coordinator?.(sql,args);if(custom)return custom;
+  if(sql.includes("commit_meta_raw_preflight_with_deadline")){calls.push({role:"coordinator",sql,args});return c.query(sql.replace("commit_meta_raw_preflight_with_deadline","commit_refresh_preflight_with_deadline").replace("$6::uuid","$6::text"),[...args.slice(0,5),"meta-raw-capture:"+args[5],args[6]]);}
+  return c.query(sql,args);
+ }};}};};
+ return {f,environment,plan,hooks,writes,calls,context,setPlan,options:{environment,operationId:target.operationId,now,fetchFn,runtimePoolFactory:pool("runtime"),readerPoolFactory:pool("source"),coordinatorPoolFactory}};
 }

@@ -4647,3 +4647,9 @@ masaüstü/en az320px mobil kabulü ve merge onayı bekler.07 kapanışı değil
 Bağlayıcı kayıt ve31Ekim kaynakları:
 contracts/eo-05-permission-explanation-design-v1.json#Shopify_scope_window_2026_10_31.
 15 başlamadı;22 duraklatılmış;23 Dataset yazımıdır.
+
+## 4 Kasım 2026 — Step15 Meta ilk bağlantı günü düzeltmesi
+
+Owner somut kod/SQL hazırlığı, izole test ve tek PR kapsamını onayladı. PR327 sonrası ilk canlı giriş admission_not_accepted ile Meta HTTP öncesi durdu: Meta çağrısı/işi/zarfı0. Hesabın America/Los_Angeles gün başlangıcı08:00Z, bağlantı uygunluk saati14:18:31.168Z. Genel tam-gün refresh kuralı değiştirilmez. Ayrı Meta ham kabul RPC’si yalnız bağlantının yerel takvim gününü veya sonraki gelecekte olmayan tek günü, exact operation/job/fence/kaynak/sürüm/seçim/kota ve deadline bağında kabul eder.
+
+Zarflara SQL kaynaklı gün/saat dilimi/bağlantı başlangıcı ve bağlantı öncesi saat içerir işareti eklenir; authorizesReportingDataset=false. Bu gözlem rapor Dataset’i yetkisi değildir. Mevcut iki sabit Meta sorgusu ve OAuth aynı kalır. Üç geçici F01 veritabanında ilk gün uçtan uca sunucu/kabul/vault/kota/şifreli kayıt/geri okuma/paused kapanış ve olumsuz durumlar sınanır; transaction geri alınır. Canlı SQL/ayar/anahtar/yayın/yeniden deneme/merge yetkisi yoktur. Saklama uygulaması Meta+Klaviyo kabulü sonrasındadır. Ayrıntı: docs/EO_05_META_RAW_DATASETS_V1.md ve master Step15_Meta_raw_first_day_2026_11_04.

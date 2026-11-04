@@ -42,7 +42,7 @@ begin
  expected_job:=encode(extensions.digest(convert_to('["meta_raw_capture_v1","'||p_operation::text||'","'||q.workspace_id::text||'","'||q.install_generation::text||'","'||q.account_id||'"]','UTF8'),'sha256'),'hex');
  if selected->>'workspaceId' is distinct from q.workspace_id::text or selected->>'installGeneration' is distinct from q.install_generation::text
   or selected->>'provider' is distinct from 'meta' or selected->>'accountId' is distinct from q.account_id
-  or selected->>'workClass' is distinct from 'bootstrap' or selected->>'id' is distinct from expected_job
+  or selected->>'id' is distinct from expected_job
   or coalesce((selected->'cost'->>'requests')::bigint,0)<2
   or exists(select 1 from operations.refresh_runs r where r.workspace_id=q.workspace_id and r.install_generation=q.install_generation
    and r.provider='meta' and r.account_id=q.account_id and r.job_id=expected_job) then return false;end if;

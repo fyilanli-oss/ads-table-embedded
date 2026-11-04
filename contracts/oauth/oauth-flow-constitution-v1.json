@@ -1645,7 +1645,7 @@
       "supabase/migrations/20261103221715_eo05_google_refresh_credential_handoff.sql": "7ba86b44f662c1b8dd4fc69f196fa149ca4161bc4279da88d073ff8769eef318",
       "supabase/migrations/20261104110401_eo05_google_raw_datasets.sql": "28a893c81c8366f7bd97b5059d5f8ccfcfe158418df1aa2693a80342a5adac75",
       "supabase/migrations/20261104142557_eo05_meta_raw_datasets.sql": "df6408971681fdf8e8cd1a0aa62d5e550de4d87e2d497f1e7be77a7f7a28258d",
-      "supabase/migrations/20261104161732_eo05_meta_raw_first_day.sql": "a6f1994e5f48a5d7fa879d69442f0d65571867e9cb5fbacbf8010f21422bd201",
+      "supabase/migrations/20261104161732_eo05_meta_raw_first_day.sql": "a3ecd04923e6be9513b0a006d7e67ce89383e3b3d6e21c87ea1add417bff8109",
       "tests/a6-docs-01-turkish-standardization.test.js": "45a9d9d8a830914ef6d5a91b3399f32c11fccae8575fc36115b86502f046a624",
       "tests/a6-tech-01-f01c-scoped-recovery.test.js": "3bd869071d5042402215176a99bf14dcebce6d3d0497ffcba946038050701792",
       "tests/eo-01c-preview-shell.test.js": "c3d67bb6666c19cf5ac12cfcd8a7f2f2acdf399d5a8ac32c0269823b06cbf789",

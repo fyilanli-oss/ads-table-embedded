@@ -89,16 +89,16 @@ export async function klaviyoFirstDayRehearsal(client,{workspace,shopId,shopDoma
      assert.equal(r.rows[0].result,false,mode);
      assert.equal((await client.query("select count(*)::int n from operations.refresh_runs where job_id=$1",[id])).rows[0].n,0);continue;
     }
-    let klaviyoCalls=0,partnerCalls=0,admissionCalls=0,sourceCommits=0;
+    let klaviyoCalls=0,partnerCalls=0,admissionCalls=0,sourceCommits=0;const sourceWrites=[];
     function poolFactory(role){return ()=>({on(){},async end(){},async connect(){const name="first_rpc_"+(++ordinal);let committed=false,lastSql="";return {release(){},async query(sql,args){
      if(sql==="begin")return client.query("savepoint "+name);
-     if(sql==="commit"){await client.query("set local role adstable_owner");await client.query("release savepoint "+name);committed=true;if(mode==="lost_admission"&&lastSql.includes("commit_klaviyo_raw_preflight"))throw Error("SYNTHETIC-LOST");return {rows:[]};}
+     if(sql==="commit"){await client.query("set local role adstable_owner");await client.query("release savepoint "+name);committed=true;if(mode==="lost_admission"&&lastSql.includes("commit_klaviyo_raw_preflight")||mode==="lost_write"&&sourceCommits===2&&lastSql.includes("commit_klaviyo_dataset_source"))throw Error("SYNTHETIC-LOST");return {rows:[]};}
      if(sql==="rollback"){if(!committed){await client.query("rollback to savepoint "+name);await client.query("release savepoint "+name);}await client.query("set local role adstable_owner");return {rows:[]};}
      if(sql.startsWith("select pg_catalog.set_config"))return client.query(sql,args);
      assert.ok(!sql.includes("commit_refresh_preflight"),"private Klaviyo path cannot call generic admission");
      await client.query("set local role "+role);let result;try{result=await client.query(sql,args);}catch(error){console.error("EO05_KLAVIYO_FIRST_DAY_RPC_STOP "+JSON.stringify({role,rpc:sql.match(/^select ([a-z_]+\.[a-z_]+)/)?.[1]??"profile",code:error.code??"UNCONFIRMED",routine:error.routine,constraint:error.constraint}));throw error;}await client.query("set local role adstable_owner");lastSql=sql;
      if(sql.includes("commit_klaviyo_raw_preflight"))admissionCalls++;
-     if(sql.includes("commit_klaviyo_dataset_source")){sourceCommits++;if(mode==="lost_write"&&sourceCommits===2)throw Error("SYNTHETIC-LOST");}
+     if(sql.includes("commit_klaviyo_dataset_source")){sourceCommits++;sourceWrites.push(structuredClone(args));}
      if(mode==="tampered_page"&&sourceCommits===2&&sql.includes("read_source_pages")&&result.rows[0]?.result?.length)result.rows[0].result[0].ciphertext="00";
      return result;
     }};}});}
@@ -125,6 +125,14 @@ export async function klaviyoFirstDayRehearsal(client,{workspace,shopId,shopDoma
      for(const dataset of Object.values(result.datasets)){assert.equal(dataset.contentVerified,true);assert.equal(dataset.eligibility.timezone,"UTC");assert.equal(dataset.eligibility.businessDate,dates.today);assert.equal(dataset.eligibility.includesPreConnectionHours,true);assert.equal(dataset.eligibility.authorizesReportingDataset,false);}
      if(mode==="zero_repeat"){assert.notEqual((await run()).status,"stored");assert.equal(klaviyoCalls,11);assert.equal(partnerCalls,1);}
     }else{assert.notEqual(result.status,"stored");assert.equal(result.recordCount,null);assert.equal(result.empty,null);if(mode==="lost_admission"){assert.equal(klaviyoCalls+partnerCalls,0);assert.equal(admissionCalls,1);}if(["permission","throttled"].includes(mode))assert.equal(klaviyoCalls,1);}
+    if(["zero_repeat","nonempty","missing_all","partial_metrics"].includes(mode))for(const bad of ["owner","family","coverage","non_raw_write"]){
+     await client.query("savepoint raw_contract_denial");
+     const args=structuredClone(sourceWrites.at(-1)),o=JSON.parse(args[0]),p=JSON.parse(args[3]),r=JSON.parse(args[4]);
+     args[1]=randomUUID();if(bad==="owner")o.provider="google_ads";if(bad==="family")p.pages[0].family="foreign";
+     if(bad==="coverage")r.coverage=[];if(bad==="non_raw_write")p.orders=[{}];args[0]=JSON.stringify(o);args[3]=JSON.stringify(p);args[4]=JSON.stringify(r);
+     try{await assert.rejects(client.query("select evidence.commit_klaviyo_dataset_source($1::jsonb,$2::uuid,$3::integer,$4::jsonb,$5::jsonb)",args),error=>/KLAVIYO_DATASET_(BINDING|FAMILY|COVERAGE)_INVALID/.test(error.message));}
+     finally{await client.query("rollback to savepoint raw_contract_denial");await client.query("release savepoint raw_contract_denial");}
+    }
     assert.equal(result.DatasetWritePerformed,false);assert.equal(result.hourlyRefreshActivated,false);
     assert.equal((await client.query("select count(*)::int n from evidence.source_batches where workspace_id=$1",[workspace])).rows[0].n,["zero_repeat","nonempty","missing_all","partial_metrics"].includes(mode)?3:["lost_write","tampered_page"].includes(mode)?2:0);
    }finally{await execution?.close();await client.query("rollback to savepoint first_day_case");await client.query("release savepoint first_day_case");}

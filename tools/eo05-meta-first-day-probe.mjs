@@ -39,7 +39,7 @@ export async function metaFirstDayRehearsal(client,{workspace,shopId,shopDomain}
    phase=mode;await client.query("savepoint first_day_case");let execution;
    try{
     const scopes=oauthPermissionScopes("meta","identity_v1"),issued=Date.now();
-    const c=(await client.query("update integrations.provider_connections set connected_at=clock_timestamp(),granted_scopes=$2 where workspace_id=$1 and provider='meta' returning id,credential_id,connection_version",[workspace,scopes])).rows[0];
+    const c=(await client.query("update integrations.provider_connections set connected_at=statement_timestamp(),last_verified_at=statement_timestamp(),updated_at=statement_timestamp(),granted_scopes=$2 where workspace_id=$1 and provider='meta' returning id,credential_id,connection_version",[workspace,scopes])).rows[0];
     await client.query("update integrations.reporting_account_bindings set effective_from=clock_timestamp() where connection_id=$1 and effective_to is null",[c.id]);
     await client.query("update integrations.provider_accounts set timezone_name='America/Los_Angeles' where connection_id=$1",[c.id]);
     const installation=(await client.query("select id::text from shopify.installations where workspace_id=$1 and status='active'",[workspace])).rows[0];
@@ -122,5 +122,5 @@ export async function metaFirstDayRehearsal(client,{workspace,shopId,shopDomain}
    assert.equal((await client.query("select has_function_privilege($1,'operations.commit_meta_raw_preflight_with_deadline(bigint,bigint,jsonb,jsonb,jsonb,uuid,bigint)','EXECUTE') allowed",[role])).rows[0].allowed,false);
   assert.deepEqual(await definitions(),before);
   console.log("EO05_META_FIRST_DAY_SQL_PASS scenarios=12 actual_private_server_vault_roles_quota_source_decrypt_close=true generic_refresh_unchanged_rejects_first_day=true LA_native_day_provenance=true prior_future_stale_wrong_operation_denied=true native_HTTP=synthetic live_changes=false");
- }catch(error){console.error("EO05_META_FIRST_DAY_SQL_STOP "+JSON.stringify({phase,code:error.code??"ASSERTION_FAILED",message:error.code==="ERR_ASSERTION"?error.message:undefined}));throw error;}finally{await client.query("rollback");}
+ }catch(error){console.error("EO05_META_FIRST_DAY_SQL_STOP "+JSON.stringify({phase,constraint:error.constraint??undefined,code:error.code??"ASSERTION_FAILED",message:error.code==="ERR_ASSERTION"?error.message:undefined}));throw error;}finally{await client.query("rollback");}
 }

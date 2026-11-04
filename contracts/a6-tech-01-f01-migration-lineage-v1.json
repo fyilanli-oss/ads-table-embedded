@@ -903,6 +903,15 @@
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261104110401",
+      "name": "eo05_google_raw_datasets",
+      "file": "supabase/migrations/20261104110401_eo05_google_raw_datasets.sql",
+      "repository_sql_sha256": "757ec9cc53c384341cc9ef5537b86adb8103eeef5edf80530a81ab326a5cd366",
+      "applied": false,
+      "replay_scope": "isolated_rollback_only",
+      "live_apply_authorized": false
     }
   ]
 }

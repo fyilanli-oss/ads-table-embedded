@@ -1,3 +1,5 @@
+> 4 Kasım 2026 — owner onaylı üç Google ham veri seti: mevcut17 rapor sorgusu account_performance(9) ve product_performance(8), ayrı Merchant ilişki/katalog kimliğiyle aynı özel raw-capture işine version2 planında bağlanır. Üç zarf aynı operation/job/fence/owner/gün bağına sahiptir; Merchant yokluğu Ads sorgularını engellemez ve ürün0 yapılmaz. Bilinen kayıt sonrası receipt ve şifre çözülmüş sayfa içeriği doğrulanır; ilk hata/unknown sonrası replay yok. Yeni depo/tablo/OAuth ekranı yok. İki dar EXECUTE izni ve yeni commit RPC yalnız prepared SQL/izole prova kapsamındadır, canlıya uygulanmadı.15 gerçek kabulü, canlı ayar/sorgu/yayın/merge ve saatlik refresh açık. Ayrıntı docs/EO_05_GOOGLE_RAW_DATASETS_V2.md.
+
 ## 4 Kasım — tarayıcısız Merchant sunucu girişi analist özeti
 
 Owner yalnız mevcut okuyucunun güvenli sunucuya bağlanması, kod/izole test/tek PR kapsamını onayladı. Başlangıç: mevcut Merchant-only yol Shopify browser authority ister; ham kayıt yolu ise Merchant hedefini önceden ister. Sonuç: özel sunucu POST, hazır private Google kurulum yetkisiyle seçili hesabın gerçek Merchant bağlantılarını okur.

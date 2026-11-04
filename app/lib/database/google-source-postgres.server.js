@@ -22,6 +22,9 @@ export const GOOGLE_SOURCE_RPC=Object.freeze([
  ["select identity.commit_verified_mapping($1::jsonb,$2::uuid,$3::jsonb) as result","identity.commit_verified_mapping(jsonb,uuid,jsonb)"],
  ["select identity.lookup_verified_mapping($1::jsonb,$2::jsonb) as result","identity.lookup_verified_mapping(jsonb,jsonb)"],
 ].map(Object.freeze));
+export const GOOGLE_DATASET_SOURCE_RPC=Object.freeze([...GOOGLE_SOURCE_RPC,
+ Object.freeze(["select evidence.commit_google_dataset_source($1::jsonb,$2::uuid,$3::integer,$4::jsonb,$5::jsonb) as result","evidence.commit_google_dataset_source(jsonb,uuid,integer,jsonb,jsonb)"]),
+ Object.freeze(["select evidence.read_source_pages($1::jsonb,$2::uuid,$3::integer,$4::bigint,$5::integer) as result","evidence.read_source_pages(jsonb,uuid,integer,bigint,integer)"])]);
 const queries=new Map(GOOGLE_SOURCE_RPC.map(([sql])=>[sql,Math.max(...[...sql.matchAll(/\$(\d+)/g)].map(x=>Number(x[1])))]));
 const receiptQueries=new Set(GOOGLE_SOURCE_RPC.filter(([,name])=>name==="evidence.read_source_receipt(jsonb,uuid,integer)").map(([sql])=>sql));
 const signatures=Object.freeze([...new Set(GOOGLE_SOURCE_RPC.map(x=>x[1]))]);
@@ -57,8 +60,11 @@ export function readGoogleSourceDatabaseConfig(environment) {
 
 // Each admitted RPC is one bounded transaction on one checked-out connection.
 // No table SQL, DDL, OAuth mutation, cleanup, claim finish or arbitrary SET ROLE.
-export function createGoogleSourcePostgresClient({environment,poolFactory=config=>new pg.Pool(config),inspectionOnly=false}) {
- if(typeof inspectionOnly!=="boolean"||typeof poolFactory!=="function")throw failure();
+export function createGoogleSourcePostgresClient({environment,poolFactory=config=>new pg.Pool(config),inspectionOnly=false,datasetMode=false}) {
+ if(typeof inspectionOnly!=="boolean"||typeof datasetMode!=="boolean"||typeof poolFactory!=="function")throw failure();
+ const rpc=datasetMode?GOOGLE_DATASET_SOURCE_RPC:GOOGLE_SOURCE_RPC;
+ const allowedQueries=datasetMode?new Map(rpc.map(([sql])=>[sql,Math.max(...[...sql.matchAll(/\$(\d+)/g)].map(x=>Number(x[1])))])):queries;
+ const requiredSignatures=datasetMode?[...new Set(rpc.map(x=>x[1]))]:signatures;
  const c=readGoogleSourceDatabaseConfig(environment);let pool;
  try{pool=poolFactory({connectionString:c.connectionString,ssl:c.ssl,max:1,query_timeout:c.timeoutMs,
   connectionTimeoutMillis:c.timeoutMs,idleTimeoutMillis:10000,allowExitOnIdle:true,application_name:"adstable-google-source"});}
@@ -67,14 +73,14 @@ export function createGoogleSourcePostgresClient({environment,poolFactory=config
  pool.on("error",()=>{stopped=true;});
  return Object.freeze({
   async query(sql,parameters=[]){
-   if(stopped||closed||busy||!queries.has(sql)||inspectionOnly&&!receiptQueries.has(sql)
-    ||!Array.isArray(parameters)||parameters.length!==queries.get(sql))throw failure();
+   if(stopped||closed||busy||!allowedQueries.has(sql)||inspectionOnly&&!receiptQueries.has(sql)
+    ||!Array.isArray(parameters)||parameters.length!==allowedQueries.get(sql))throw failure();
    // Detach before the first asynchronous pool acquisition.
    let args;try{args=structuredClone(parameters);}catch{throw failure();}busy=true;let client,broken=false;
    try{
     client=await pool.connect();if(stopped||closed)throw failure();await client.query("begin");
     await client.query("select pg_catalog.set_config('statement_timeout',$1,true),pg_catalog.set_config('lock_timeout',$1,true)",[`${c.timeoutMs}ms`]);
-    const identity=(await client.query(GOOGLE_SOURCE_ROLE_CHECK_SQL,[signatures])).rows;
+    const identity=(await client.query(GOOGLE_SOURCE_ROLE_CHECK_SQL,[requiredSignatures])).rows;
     if(stopped||closed||identity?.length!==1||identity[0].role!==GOOGLE_SOURCE_ROLE||identity[0].profile_ready!==true)throw failure();
     const result=await client.query(sql,args);await client.query("commit");return result;
    }catch{

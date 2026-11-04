@@ -2,7 +2,7 @@ import pg from "pg";
 import {createHash} from "node:crypto";
 import {readRuntimeDatabaseConfig} from "../database/runtime-postgres.server.js";
 import {createGoogleServerRuntime} from "./google-server-runtime.server.js";
-import {createGoogleAcceptanceCoordinatorPostgresClient} from "../database/google-acceptance-coordinator-postgres.server.js";
+import {createMetaRawCoordinatorPostgresClient} from "../database/meta-raw-coordinator-postgres.server.js";
 import {readMetaSourceDatabaseConfig} from "../database/meta-source-postgres.server.js";
 import {createIdentityAuthorityRepository} from "../database/identity-authority-repository.server.js";
 import {createRefreshWorkRepository} from "../database/refresh-work-repository.server.js";
@@ -15,6 +15,7 @@ import {planRefreshPreflightAdmissions} from "./admission-policy.server.js";
 import {createAuthorityQuotaEntitlementVerifier} from "./entitlement-check.server.js";
 import {readMetaRawDatasetPlan} from "./meta-raw-dataset-plan.server.js";
 import {createMetaRawDatasetReader} from "./meta-raw-datasets.server.js";
+import {validateMetaRawEligibility} from "./meta-raw-eligibility.server.js";
 
 const fail=()=>{throw Error("META_RAW_CAPTURE_CONFIGURATION_REQUIRED");};
 const boundary=Object.freeze({mappingVerified:false,DatasetWritePerformed:false,authorizesActivation:false,hourlyRefreshActivated:false});
@@ -41,7 +42,7 @@ export function createMetaRawCaptureExecution({environment,operationId,signal,no
  let runtime,coordinator;
  try{
   runtime=createGoogleServerRuntime({environment:env,poolFactory:runtimePoolFactory});
-  coordinator=createGoogleAcceptanceCoordinatorPostgresClient({environment:env,poolFactory:coordinatorPoolFactory});
+  coordinator=createMetaRawCoordinatorPostgresClient({environment:env,poolFactory:coordinatorPoolFactory});
  }catch{void runtime?.close().catch(()=>{});fail();}
  const work=createRefreshWorkRepository(coordinator),quota=createSharedQuotaRepository(coordinator),identity=createIdentityAuthorityRepository(runtime);
  const vault=createTokenVault({database:runtime,environment:env,now:()=>new Date(now())});
@@ -92,8 +93,8 @@ export function createMetaRawCaptureExecution({environment,operationId,signal,no
    if(proposal.status!=="proposed")return stopped("admission_waiting");
    if(!current()||deadline-now()<80000)return stopped("stopped_before_call");
    admissionSent=true;
-   if(await work.commitPreflight({expectedRevision:snapshot.state.revision,queueRevision:snapshot.queueRevision,nextState:proposal.nextState,
-    source,window:p.window,partitionId:"meta-raw-capture:"+p.operationId,deadlineAt:deadline})!==true)return stopped("admission_not_accepted");
+   if(await work.commitMetaRawPreflight({expectedRevision:snapshot.state.revision,queueRevision:snapshot.queueRevision,nextState:proposal.nextState,
+    source,window:p.window,operationId:p.operationId,deadlineAt:deadline})!==true)return stopped("admission_not_accepted");
    claim=proposal.admitted[0];await advance("checking_authority");
    if(!current()||!bound(await readIdentity())||!current()||!await work.loadBoundAuthority(context())||!current())return stop("authority_required");
    await advance("request_intent");
@@ -109,6 +110,7 @@ export function createMetaRawCaptureExecution({environment,operationId,signal,no
     signal:controller.signal,now,fetchFn,poolFactory:readerPoolFactory});
    captured=await reader.run();await reader.close();
    if(captured.status!=="stored")return {...await stop(["provider_permission_denied","provider_throttled"].includes(captured.reason)?captured.reason:"request_outcome_unknown"),datasets:captured.datasets,reason:captured.reason};
+   for(const dataset of Object.values(captured.datasets))validateMetaRawEligibility(dataset.eligibility,{window:p.window,source});
    if(!current()||deadline-now()<10000||!bound(await readIdentity())||!await work.loadBoundAuthority(context())
     ||await work.isEntitlementCurrent({...context(),receipt:entitlement.receipt})!==true)return stop("authority_check_failed_after_request");
    await advance("response_received");

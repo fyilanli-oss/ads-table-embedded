@@ -1,4 +1,5 @@
 import {prepareSourceWrite,createSourceEvidenceRepository,canonicalSourceJson,sourcePayloadHash} from "./source-evidence-store.server.js";
+import {validateMetaRawEligibility} from "../refresh/meta-raw-eligibility.server.js";
 
 const fail=()=>{throw Error("META_DATASET_READBACK_UNCONFIRMED");};
 // A separate envelope per dataset, joined by operation/job/window in the SQL
@@ -36,5 +37,7 @@ export async function storeMetaRawDataset({database,owner,attemptId,dataset,page
   }
  }
  const extra=await repository.readPages({owner,attemptId,ordinal:0,after:cursor,limit:1});if(extra.length)fail();
- return Object.freeze({batchId:receipt.batchId,commitId:receipt.commitId,digest:receipt.digest,receiptVerified:true,contentVerified:true});
+ const eligibility=receipt.manifest?.metaRawEligibility;
+ return Object.freeze({batchId:receipt.batchId,commitId:receipt.commitId,digest:receipt.digest,receiptVerified:true,contentVerified:true,
+  ...eligibility===undefined?{}:{eligibility:validateMetaRawEligibility(eligibility,{window:read.window})}});
 }

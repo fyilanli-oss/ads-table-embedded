@@ -32,7 +32,8 @@ export function createGoogleSourceServerExecution({environment,verified,tokenVau
  let flow;
  try{
   flow=createGoogleSourceMappingFlow({plan:config.plan,reviewAuthority,now,readerOptions:{verified,database,
-   tokenVault:Object.freeze({loadProviderTokenSet:tokenVault.loadProviderTokenSet.bind(tokenVault)}),sdkBridge,
+   tokenVault:Object.freeze({loadProviderTokenSet:tokenVault.loadProviderTokenSet.bind(tokenVault),
+    ...typeof tokenVault.renewGoogleIdentityCredential==="function"?{renewGoogleIdentityCredential:tokenVault.renewGoogleIdentityCredential.bind(tokenVault)}:{}}),sdkBridge,environment:env,
    ...scope,workStore:createRefreshWorkRepository(database),quotaStore:createSharedQuotaRepository(database),
    merchantId:config.merchantId,developerToken,sourceRules:config.sourceRules,signal,now,readNow:()=>new Date(now()),fetchFn,
    maxElapsedMs:config.limits.maxElapsedMs,maxPages:config.limits.maxPages,maxRows:config.limits.maxRows,

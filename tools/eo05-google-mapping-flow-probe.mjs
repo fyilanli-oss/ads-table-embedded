@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
 import {randomUUID,createHash,randomBytes} from "node:crypto";
+import {readFileSync} from "node:fs";
+import {createTokenVault} from "../app/lib/oauth/token-vault.server.js";
+import {createTokenEnvelopeCipher,readProviderTokenKeyring} from "../app/lib/oauth/token-envelope.server.js";
 import "@shopify/shopify-api/adapters/node";
 import {shopifyApi,ApiVersion,LogSeverity,Session} from "@shopify/shopify-api";
 import {abstractFetch,setAbstractFetchFunc} from "@shopify/shopify-api/runtime";
@@ -25,11 +28,17 @@ const {handleClientErrorFactory}=await import(new URL("./authenticate/admin/help
 // Real SQL, real SDK/REST/quota/collection/writers. Only physical HTTP responses,
 // credentials and explicit source-review decisions are synthetic. No snapshot,
 // source manifest, review page, mapping ID or rule row is fabricated/rewritten.
-export async function googleMappingFlowRehearsal(client,{workspace,shopId,shopDomain,server=false,nativeRead=false}){
+export async function googleMappingFlowRehearsal(client,{workspace,shopId,shopDomain,server=false,nativeRead=false,refreshRenewal=false}){
  assert.equal(process.env.GITHUB_ACTIONS,"true");assert.ok(process.env.RUNNER_TEMP);
  assert.ok(!nativeRead||server,"native runner uses actual limited-role transport");
  const previous=abstractFetch;await client.query("begin");
  try{
+  if(refreshRenewal){
+   assert.ok(server&&!nativeRead);
+   const sql=readFileSync(new URL("../supabase/migrations/20261103221715_eo05_google_refresh_credential_handoff.sql",import.meta.url),"utf8");
+   await client.query(sql.trim().replace(/^begin;/," ").replace(/commit;$/," "));
+   await client.query("set local role adstable_owner");
+  }
   const initial=new Date(Date.now()-3*86400000).toISOString();
   await client.query("update integrations.provider_connections set connected_at=$1 where workspace_id=$2",[initial,workspace]);
   await client.query("update integrations.reporting_account_bindings set effective_from=$1 where workspace_id=$2 and effective_to is null",[initial,workspace]);
@@ -64,6 +73,7 @@ export async function googleMappingFlowRehearsal(client,{workspace,shopId,shopDo
    await client.query("insert into operations.api_quota_routes values($1,$1,true) on conflict(route_key) do update set enabled=true",[r.routeKey]);
   }
   await route("google_ads","reporting_query","111","v25");await route("google_ads","merchant_products","99","products/v1");await route("shopify_admin","identity_product_variant",shopDomain,"2026-10");
+  if(refreshRenewal)await route("google_ads","token",null,null);
   const api=shopifyApi({apiKey:"a".repeat(32),apiSecretKey:"b".repeat(32),hostName:"example.com",apiVersion:ApiVersion.October26,isEmbeddedApp:true,logger:{level:LogSeverity.Error,log:()=>{}}});
   const session=new Session({id:"offline_"+shopDomain,shop:shopDomain,state:"synthetic",isOnline:false,accessToken:"SYNTHETIC-ADMIN",scope:"read_products"});
   const admin={graphql:graphqlClientFactory({params:{api,logger:{debug:()=>{}}},session,handleClientError:handleClientErrorFactory({request:new Request("https://example.com"),onError:async()=>{}})})};
@@ -75,6 +85,7 @@ export async function googleMappingFlowRehearsal(client,{workspace,shopId,shopDo
   await client.query(googleSourceRoleInstallationBodyForRehearsal());
   // Fixture-only SET ROLE authority for the outer rollback transaction, never installed by the artifact.
   await client.query("grant adstable_google_source_runner to adstable_owner with inherit false, set true, admin false");
+  if(refreshRenewal)await client.query("grant adstable_runtime to adstable_owner with inherit false, set true, admin false");
   await client.query("set local role adstable_owner");
   assert.equal((await client.query("select has_table_privilege('adstable_google_source_runner','identity.product_identity_mappings','SELECT,INSERT,UPDATE,DELETE') allowed")).rows[0].allowed,false);
   const profileSignatures=[...new Set(GOOGLE_SOURCE_RPC.map(x=>x[1]))];
@@ -97,13 +108,14 @@ export async function googleMappingFlowRehearsal(client,{workspace,shopId,shopDo
 
   assert.equal((await client.query("select has_function_privilege('adstable_google_source_runner','evidence.cleanup_source_retention(uuid,bigint,bigint,uuid,text,bigint,integer,timestamptz,jsonb)','EXECUTE') allowed")).rows[0].allowed,false);
 
-  const modes=nativeRead?["empty","empty_omitted","nonempty","permission","malformed","link_missing","partial_native","response_limit","role_drift","fence_before_native","expired_token","native_error","deadline","lost_quota_ack","post_context_drift"]:
+  const modes=refreshRenewal?["renew_success","valid_reuse","renew_denied","renew_lost","renew_scope","renew_stale_fence","renew_stale_selection","renew_quota_drift","renew_late_failure"]:
+   nativeRead?["empty","empty_omitted","nonempty","permission","malformed","link_missing","partial_native","response_limit","role_drift","fence_before_native","expired_token","native_error","deadline","lost_quota_ack","post_context_drift"]:
    ["success","source_lost","rule_lost","mapping_lost","read_failed","denied","wrong_parent","partial_native","native_error","fence_before_rule","abort_after_source","target_missing","review_timeout","mapping_abort"];
   for(const mode of modes){
    await client.query("savepoint google_flow_case");
    let flow;
    try{
-    const {input}=sourceStoreFixture(),counts={source:0,rule:0,mapping:0,current:0,ads:0,merchant:0,admin:0},controller=new AbortController();let decisionCalls=0;
+    const {input}=sourceStoreFixture(),counts={source:0,rule:0,mapping:0,current:0,ads:0,merchant:0,admin:0,token:0,renewal:0},controller=new AbortController();let decisionCalls=0;
     const database={async query(sql,args){
      const kind=sql.includes("commit_google_identity_source")?"source":sql.includes("commit_reviewed_source_rule")?"rule":sql.includes("commit_verified_mapping")?"mapping":null;
      if(kind)counts[kind]++;
@@ -113,7 +125,7 @@ export async function googleMappingFlowRehearsal(client,{workspace,shopId,shopDo
      const privateSql=kind||sql.includes("source_rule_review_state")||sql.includes("mapping_review_state")||sql.includes("lookup_verified_mapping");
      if(privateSql)await client.query("savepoint google_flow_rpc");let r;
      try{if(server)await client.query("set local role adstable_google_source_runner");r=await client.query(sql,args);if(server)await client.query("set local role adstable_owner");if(privateSql)await client.query("release savepoint google_flow_rpc");}
-     catch(error){if(privateSql){await client.query("rollback to savepoint google_flow_rpc");await client.query("release savepoint google_flow_rpc");}throw error;}
+     catch(error){if(refreshRenewal)console.error("EO05_GOOGLE_REFRESH_SQL_STOP",JSON.stringify({mode,role:"source",code:error.code,routine:error.routine,.../^[A-Z_]{1,100}$/.test(error.message)?{reason:error.message}:{}}));if(privateSql){await client.query("rollback to savepoint google_flow_rpc");await client.query("release savepoint google_flow_rpc");}throw error;}
      if(!server&&mode===kind+"_lost")throw Error("SYNTHETIC-PRIVATE-LOST");
      if(!server&&kind==="mapping"&&mode==="mapping_abort"){controller.abort();return new Promise(resolve=>setTimeout(()=>resolve(r),20));}return r;
     }};
@@ -125,8 +137,18 @@ export async function googleMappingFlowRehearsal(client,{workspace,shopId,shopDo
     const options={plan,reviewAuthority:async request=>{decisionCalls++;if(mode==="abort_after_source")controller.abort();if(mode==="review_timeout"){controller.abort();return new Promise(()=>{});}return {status:mode==="denied"?"denied":"approved",decisionId:randomUUID(),snapshotHash:request.snapshotHash,proposalHash:request.proposalHash,validUntil:request.expiresAt};},
      readerOptions:{verified,database,tokenVault:{loadProviderTokenSet:async()=>({access_token:"SYNTHETIC-ACCESS",refresh_token:"SYNTHETIC-REFRESH",permission_profile:"identity_v1",scope:scopes.join(" "),expires_in:3600,scope_verified_at:new Date(issued).toISOString(),expires_at:new Date(issued+(mode==="expired_token"?-1:3600000)).toISOString()})},
       merchantId:"99",developerToken:"SYNTHETIC-DEVELOPER",sdkBridge:bridge,sourceRules:[rule],...execution,workStore:store,quotaStore,now:Date.now,readNow:()=>new Date(),signal:controller.signal,
-      maxPages:mode==="partial_native"?1:10,sourceStorage:{cipher:input.cipher,policy:input.policy,limits:{maxRows:1000,maxBytes:1000000}},fetchFn:async(endpoint)=>{
+      maxPages:mode==="partial_native"?1:10,sourceStorage:{cipher:input.cipher,policy:input.policy,limits:{maxRows:1000,maxBytes:1000000}},fetchFn:async(endpoint,init)=>{
        const u=new URL(endpoint);
+       if(u.hostname==="oauth2.googleapis.com"){
+        assert.ok(refreshRenewal);counts.token++;
+        assert.equal(new URLSearchParams(init.body).get("grant_type"),"refresh_token");
+        if(mode==="renew_denied")return Response.json({error:"invalid_grant"},{status:400});
+        if(mode==="renew_quota_drift")await client.query("update operations.refresh_quota_contexts set merchant_binding_epoch=merchant_binding_epoch+1 where workspace_id=$1 and provider='google_ads'",[workspace]);
+        return Response.json({access_token:"SYNTHETIC-NEW",token_type:"Bearer",expires_in:3600,
+         scope:mode==="renew_scope"?scopes[0]:scopes.join(" ")});
+       }
+       if(refreshRenewal&&mode!=="valid_reuse"&&["googleads.googleapis.com","merchantapi.googleapis.com"].includes(u.hostname))
+        assert.equal(new Headers(init.headers).get("authorization"),"Bearer SYNTHETIC-NEW");
        if(u.hostname==="googleads.googleapis.com"){counts.ads++;if(mode==="deadline")return new Promise(()=>{});
         if(mode==="post_context_drift"&&counts.ads===2)await client.query("update operations.refresh_quota_contexts set merchant_binding_epoch=merchant_binding_epoch+1 where workspace_id=$1 and provider='google_ads'",[workspace]);
         return Response.json({results:mode==="link_missing"?[]:[{productLink:{resourceName:"customers/111/productLinks/7",productLinkId:"7",type:"MERCHANT_CENTER",merchantCenter:{merchantCenterId:"99"}}}]});}
@@ -143,6 +165,40 @@ export async function googleMappingFlowRehearsal(client,{workspace,shopId,shopDo
       ADSTABLE_PROVIDER_TOKEN_ACTIVE_KEY_VERSION:"1",ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_V1:key(),ADSTABLE_SESSION_ENCRYPTION_KEY_V1:key(),
       GOOGLE_ADS_DEVELOPER_TOKEN:"SYNTHETIC-DEVELOPER",ADSTABLE_GOOGLE_SOURCE_DB_TIMEOUT_MS:"30000",
       ADSTABLE_GOOGLE_SOURCE_DATABASE_URL:"postgresql://adstable_google_source_runner.podpwkrpmjiksskxhwsu:"+"x".repeat(32)+"@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require"};
+     if(refreshRenewal){
+      // Historical fixtures can contain envelopes under several key versions.
+      // The real vault checks that complete inventory before opening this case's
+      // credential; supply synthetic keys without changing those historical rows.
+      for(const {v} of (await client.query("select distinct key_version v from integrations.provider_credential_envelopes union select distinct key_version v from integrations.oauth_pkce_envelopes")).rows)
+       if(Number(v)!==1)environment[`ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_V${v}`]=key();
+      Object.assign(environment,{GOOGLE_ADS_OAUTH_CLIENT_ID:"SYNTHETIC-CLIENT",GOOGLE_ADS_OAUTH_CLIENT_SECRET:"SYNTHETIC-SECRET",
+       GOOGLE_ADS_OAUTH_REDIRECT_URI:"https://embedded.adstable.app/auth/google-ads/callback"});
+      const token={access_token:"SYNTHETIC-ACCESS",refresh_token:"SYNTHETIC-REFRESH",permission_profile:"identity_v1",scope:scopes.join(" "),
+       expires_in:3600,scope_verified_at:new Date(issued-(mode==="valid_reuse"?0:3600001)).toISOString(),
+       expires_at:new Date(issued+(mode==="valid_reuse"?3600000:-1)).toISOString()};
+      const cipher=createTokenEnvelopeCipher({keyring:readProviderTokenKeyring(environment)});
+      const sealed=cipher.seal({identity:{recordId:connection.credential_id,workspaceId:workspace,installGeneration:1,
+       provider:"google_ads",purpose:"provider_token_set"},secret:JSON.stringify(token)});
+      await client.query("update integrations.provider_credential_envelopes set payload_ciphertext=$2,nonce=$3,auth_tag=$4,key_version=$5,expires_at=$6 where id=$1",
+       [connection.credential_id,sealed.ciphertext,sealed.nonce,sealed.authTag,sealed.keyVersion,token.expires_at]);
+      const runtimeDatabase={async query(sql,args){
+       const renewal=sql.includes("commit_google_refresh_renewal");if(renewal)counts.renewal++;
+       await client.query("savepoint google_renewal_rpc");
+       let result;
+       try{await client.query("set local role adstable_runtime");result=await client.query(sql,args);
+        await client.query("set local role adstable_owner");await client.query("release savepoint google_renewal_rpc");}
+       catch(error){await client.query("rollback to savepoint google_renewal_rpc");await client.query("release savepoint google_renewal_rpc");
+        console.error("EO05_GOOGLE_REFRESH_SQL_STOP",JSON.stringify({mode,role:"runtime",code:error.code,routine:error.routine,.../^[A-Z_]{1,100}$/.test(error.message)?{reason:error.message}:{}}));
+        await client.query("set local role adstable_owner");throw error;}
+       if(renewal&&mode==="renew_lost")throw Error("SYNTHETIC-PRIVATE-LOST");
+       return result;
+      }};
+      options.readerOptions.tokenVault=createTokenVault({database:runtimeDatabase,environment});
+      await options.readerOptions.tokenVault.assertRuntimeReady();
+      if(mode==="renew_stale_fence")await client.query("update operations.refresh_runs set fence=fence+1 where workspace_id=$1 and job_id=$2",[workspace,execution.claim.id]);
+      if(mode==="renew_stale_selection")await client.query("update integrations.reporting_account_bindings set effective_to=clock_timestamp() where workspace_id=$1 and provider='google_ads' and effective_to is null",[workspace]);
+      if(mode==="renew_late_failure")await client.query("alter table operations.refresh_work_bindings add constraint test_no_renewed_version check((source->>'connectionVersion')::bigint<>"+(Number(connection.connection_version)+1)+") not valid");
+     }
      // Test-only adapter retains the outer rollback fixture. Each actual RPC runs
      // as the exact narrow role with only the published function grants. Lost
      // acknowledgement is injected AFTER releasing the successful SQL savepoint.
@@ -182,6 +238,28 @@ export async function googleMappingFlowRehearsal(client,{workspace,shopId,shopDo
     }else flow=createGoogleSourceMappingFlow(options);
     const r=await flow.run();assert.doesNotMatch(JSON.stringify(r),/SYNTHETIC-PRIVATE|SYNTHETIC-ACCESS|SYNTHETIC-ADMIN|SYNTHETIC-REFRESH/);
     await assert.rejects(flow.run(),/EXECUTION_USED/);
+    if(refreshRenewal){
+     const current=(await client.query("select credential_id,connection_version from integrations.provider_connections where id=$1",[connection.id])).rows[0];
+     const changed=["renew_success","renew_lost"].includes(mode);
+     assert.equal(Number(current.connection_version),Number(connection.connection_version)+(changed?1:0),JSON.stringify({mode,r,counts}));
+     assert.equal(current.credential_id===connection.credential_id,!changed);
+     assert.ok(counts.token<=1&&counts.renewal<=1,"no native or SQL replay");
+     if(["renew_success","valid_reuse"].includes(mode)){
+      assert.equal(r.status,"verified",JSON.stringify({mode,r,counts}));assert.equal(r.source.status,"committed");assert.equal(counts.source,1);
+      assert.equal(counts.token,mode==="valid_reuse"?0:1);assert.equal(counts.renewal,mode==="valid_reuse"?0:1);
+      const quota=(await client.query("select connection_version,merchant_credential_id,connection_epoch,merchant_binding_epoch from operations.refresh_quota_contexts where workspace_id=$1 and provider='google_ads'",[workspace])).rows[0];
+      assert.equal(Number(quota.connection_version),Number(current.connection_version));assert.equal(quota.merchant_credential_id,current.credential_id);
+      assert.equal(Number(quota.connection_epoch),1);assert.equal(Number(quota.merchant_binding_epoch),1);
+      assert.equal(r.DatasetWritePerformed,false);
+     }else{
+      assert.equal(r.status,"stopped",JSON.stringify({mode,r,counts}));assert.equal(counts.ads+counts.merchant+counts.admin+counts.source,0);
+     }
+     if(mode==="renew_late_failure"){
+      assert.equal(counts.renewal,1,"late failure reached atomic transaction");
+      assert.equal((await client.query("select count(*)::int n from integrations.provider_credential_envelopes where id=$1",[connection.credential_id])).rows[0].n,1,"old encrypted credential survives rollback");
+     }
+     await flow.close();continue;
+    }
     if(nativeRead){
      if(["empty","empty_omitted","nonempty"].includes(mode)){assert.equal(r.status,"read_complete",JSON.stringify({mode,r,counts}));assert.equal(r.recordCount,mode==="nonempty"?1:0);assert.equal(r.empty,mode!=="nonempty");}
      else{assert.equal(r.status,"read_stopped",JSON.stringify({mode,r,counts}));assert.equal(r.recordCount,null);assert.equal(r.empty,null);}
@@ -216,10 +294,11 @@ export async function googleMappingFlowRehearsal(client,{workspace,shopId,shopDo
     }
     if(server)await flow.close();
     assert.equal((await client.query("select status from operations.refresh_runs where workspace_id=$1 and job_id=$2",[workspace,execution.claim.id])).rows[0].status,"running");
-   }catch(error){if(nativeRead)console.error("EO05_GOOGLE_PACKAGE1_CASE_STOP",JSON.stringify({mode,code:error.code??"ASSERTION_FAILED",...(error.code==="ERR_ASSERTION"?{assertion:error.message}:{})}));throw error;
+   }catch(error){if(nativeRead||refreshRenewal)console.error("EO05_GOOGLE_REFRESH_CASE_STOP",JSON.stringify({mode,code:error.code??"ASSERTION_FAILED",...(error.code==="ERR_ASSERTION"?{assertion:error.message}:{})}));throw error;
    }finally{if(server&&flow)await flow.close();await client.query("rollback to savepoint google_flow_case");await client.query("release savepoint google_flow_case");}
   }
-  if(nativeRead)console.log("EO05_GOOGLE_PACKAGE1_READ_RUNNER_SQL_PASS scenarios=15 actual_reader_and_limited_role=true native_zero_and_nonzero_distinct=true errors_missing_links_partial_and_unknown_never_zero=true no_source_key_or_retention_policy=true no_source_mapping_Dataset_or_job_finish=true native_HTTP=synthetic live_changes=false");
+  if(refreshRenewal)console.log("EO05_GOOGLE_REFRESH_RENEWAL_SQL_PASS scenarios=9 actual_vault_and_fenced_job_and_quota_and_source_write=true expired_renews_once_valid_reuses=true unchanged_quota_epochs=true late_failure_atomic_rollback=true native_HTTP=synthetic live_changes=false");
+  else if(nativeRead)console.log("EO05_GOOGLE_PACKAGE1_READ_RUNNER_SQL_PASS scenarios=15 actual_reader_and_limited_role=true native_zero_and_nonzero_distinct=true errors_missing_links_partial_and_unknown_never_zero=true no_source_key_or_retention_policy=true no_source_mapping_Dataset_or_job_finish=true native_HTTP=synthetic live_changes=false");
   else if(server)console.log("EO05_GOOGLE_SOURCE_SERVER_SQL_PASS scenarios=14 exact_limited_role_RPC=true separate_source_key=true explicit_policy_and_review=true lost_commit_inspection_readonly=true native_evidence_synthetic=true live_grants=false");
   else console.log("EO05_GOOGLE_MAPPING_FLOW_SQL_PASS actual_source_capture_to_review_to_mapping_to_current_read=true real_SQL_and_SDK=true source_rule_mapping_lost_replies_stop=true explicit_inspection_only=true no_fixture_snapshot_or_manifest_rewrite=true native_evidence_synthetic=true no_Dataset_or_job_finish=true");
  }finally{setAbstractFetchFunc(previous);await client.query("rollback");}

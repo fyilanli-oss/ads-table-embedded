@@ -893,5 +893,16 @@
     "additional_live_mutation_authorized": false,
     "merge_authorized": false,
     "deployment_authorized": false
-  }
+  },
+  "prepared_migrations": [
+    {
+      "version": "20261103221715",
+      "name": "eo05_google_refresh_credential_handoff",
+      "file": "supabase/migrations/20261103221715_eo05_google_refresh_credential_handoff.sql",
+      "repository_sql_sha256": "cf6fe8a3572363f66f30e4a0dd89d266a1f10f3c65da09a351d1e8d3eb771440",
+      "applied": false,
+      "replay_scope": "isolated_rollback_only",
+      "live_apply_authorized": false
+    }
+  ]
 }

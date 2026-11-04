@@ -21,6 +21,7 @@ import {prepareGoogleIdentitySourceWrite} from "../providers/google-source-write
 import {prepareMetaIdentitySourceWrite} from "../providers/meta-source-write.server.js";
 import {prepareKlaviyoIdentitySourceWrite} from "../providers/klaviyo-source-write.server.js";
 import {createSourceEvidenceRepository} from "../database/source-evidence-store.server.js";
+import {prepareGoogleRefreshCredential} from "./google-refresh-credential.server.js";
 const candidateObservations=new WeakMap();
 const candidateReferenceInputs=new WeakMap();
 const interactionObservations=new WeakMap();
@@ -207,7 +208,7 @@ function createMetaIdentityReader({verified,database,tokenVault,adId,adSetId,cam
 // quotaAccountId/default Ads ID. Existing SQL needs its separately reviewed inventory read.
 export function createRefreshGoogleIdentityReader(options) {return createGoogleIdentityReader(options);}
 export function createRefreshGoogleCandidateReader(options) {return createGoogleIdentityReader(options,true);}
-function createGoogleIdentityReader({verified,database,tokenVault,merchantId,developerToken,signal,sdkBridge,sourceRules,
+function createGoogleIdentityReader({verified,database,tokenVault,merchantId,developerToken,signal,sdkBridge,sourceRules,environment,
   readNow=()=>new Date(),maxElapsedMs,maxPages,maxRows,maxLinkPages,maxLinks,sourceStorage=null,executionDeadlineAt=null,...quotaOptions} = {},candidates=false) {
   const claim=structuredClone(quotaOptions.claim),window=structuredClone(quotaOptions.window);
   const owner=structuredClone(verified?.installationAuthority),shop=structuredClone(verified?.identity?.shop);
@@ -245,6 +246,9 @@ function createGoogleIdentityReader({verified,database,tokenVault,merchantId,dev
       if(storage&&readNow().valueOf()>=Date.parse(deadlineAt))throw Error("GOOGLE_SOURCE_DEADLINE_EXCEEDED");
       const initial=storage?structuredClone(await binding.loadContext({provider:"google_ads"})):null;
       if(storage&&(!initial||initial.merchant?.targetAccountId!==merchantId))throw Error("GOOGLE_SOURCE_CONTEXT_REQUIRED");
+      if(environment!==undefined)await prepareGoogleRefreshCredential({verified:caller,database,tokenVault,
+        workStore:quotaOptions.workStore,execution:{claim,window,entitlementReceipt:quotaOptions.entitlementReceipt},
+        environment,fetchFn:transport,signal,now:()=>readNow().valueOf(),minimumValidityMs:Math.max(60000,(maxElapsedMs??120000)+20000)});
       const result=await collect(options);let outcome=result;
       if(storage){
         if(signal?.aborted||JSON.stringify(await binding.loadContext({provider:"google_ads"}))!==JSON.stringify(initial))throw Error("GOOGLE_SOURCE_CONTEXT_CHANGED");

@@ -1,5 +1,6 @@
 import {identityOAuthBinding, validateIdentityOAuthGrantedScopes} from "./oauth-permission-profile.server.js";
 import {inspectGoogleIdentityCredential} from "./google-identity-credential.server.js";
+import {refreshWorkIdentity} from "../refresh/work-stop-policy.server.js";
 import {
   createTokenEnvelopeCipher,
   readProviderTokenKeyring,
@@ -183,8 +184,21 @@ export function createTokenVault({
     },
 
     async renewGoogleIdentityCredential({installationAuthority,renewalId,connectionId,
-      expectedVersion,expectedCredentialId,tokenSet}) {
+      expectedVersion,expectedCredentialId,tokenSet,refreshExecution}) {
       const owner=authority(installationAuthority);
+      let execution;
+      if (refreshExecution !== undefined) {
+        execution=structuredClone(refreshExecution);
+        refreshWorkIdentity(execution.claim,{claimRequired:true});
+        if (Object.keys(execution).sort().join()!=="claim,entitlementReceipt,window"
+          || execution.claim.provider!=="google_ads" || execution.claim.workspaceId!==owner.workspaceId
+          || execution.claim.installGeneration!==String(owner.installGeneration)
+          || execution.window?.from!==execution.window?.to
+          || !/^\d{4}-\d{2}-\d{2}$/.test(execution.window?.from??"")
+          || !Number.isFinite(Date.parse(execution.entitlementReceipt?.observedAt))) {
+          throw Error("GOOGLE_REFRESH_RENEWAL_INPUT_INVALID");
+        }
+      }
       if (![renewalId,connectionId,expectedCredentialId].every(v=>UUID_PATTERN.test(v || ""))
         || !Number.isSafeInteger(expectedVersion) || expectedVersion<1 || expectedVersion>=Number.MAX_SAFE_INTEGER) {
         throw new Error("GOOGLE_IDENTITY_RENEWAL_INPUT_INVALID");
@@ -200,10 +214,12 @@ export function createTokenVault({
         installGeneration:owner.installGeneration,provider:"google_ads",purpose:"provider_token_set"},
         secret:tokenSetJson(tokenSet)});
       const value={...sealed,renewalId,connectionId,expectedVersion,expectedCredentialId,scopes,
-        verifiedAt:tokenSet.scope_verified_at,expiresAt:tokenSet.expires_at};
+        verifiedAt:tokenSet.scope_verified_at,expiresAt:tokenSet.expires_at,
+        ...(execution?{refreshExecution:execution}:{})};
       await assertReady("google_ads");
       try {
-        const row=await envelopes.commitGoogleIdentityRenewal(value);
+        const row=execution ? await envelopes.commitGoogleRefreshRenewal(value)
+          : await envelopes.commitGoogleIdentityRenewal(value);
         if (row.renewal_id!==renewalId || row.connection_id!==connectionId
           || row.lifecycle_status!=="connected" || Number(row.connection_version)!==expectedVersion+1
           || row.credential_id!==recordId) throw new Error("GOOGLE_IDENTITY_RENEWAL_RESULT_INVALID");

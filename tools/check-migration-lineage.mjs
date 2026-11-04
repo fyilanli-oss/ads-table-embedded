@@ -26,7 +26,12 @@ export function sqlHash(sql) {
 
 export function validateMigrationLineage({manifest, files, liveLedger}) {
   const errors = [];
-  const expected = [...manifest.historical_migrations, ...(manifest.forward_migrations ?? []), ...manifest.pending_migrations];
+  const expected = [...manifest.historical_migrations, ...(manifest.forward_migrations ?? []), ...manifest.pending_migrations,
+    ...(manifest.prepared_migrations ?? [])];
+  for (const entry of manifest.prepared_migrations ?? []) {
+    if (entry.applied !== false || entry.live_apply_authorized !== false
+      || entry.replay_scope !== "isolated_rollback_only") errors.push(`PREPARED_MIGRATION_GATE_INVALID:${entry.name}`);
+  }
   for (const key of ["version", "name", "file"]) {
     if (new Set(expected.map((entry) => entry[key])).size !== expected.length) {
       errors.push(`DUPLICATE_${key.toUpperCase()}`);
@@ -90,6 +95,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     for (const error of errors) console.error(error);
     process.exitCode = 1;
   } else {
-    console.log(`Migration lineage PASS: ${manifest.historical_migrations.length} historical, ${manifest.forward_migrations?.length ?? 0} forward, ${manifest.pending_migrations.length} pending. Ledger source: ${suppliedLedger ?? manifest.live_ledger_evidence ?? "2026-10-18 snapshot"}. Live schema and replay are not verified by this check.`);
+    console.log(`Migration lineage PASS: ${manifest.historical_migrations.length} historical, ${manifest.forward_migrations?.length ?? 0} forward, ${manifest.pending_migrations.length} pending, ${manifest.prepared_migrations?.length ?? 0} prepared (rollback-only). Ledger source: ${suppliedLedger ?? manifest.live_ledger_evidence ?? "2026-10-18 snapshot"}. Live schema and replay are not verified by this check.`);
   }
 }

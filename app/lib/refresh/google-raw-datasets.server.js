@@ -21,7 +21,7 @@ export const GOOGLE_RAW_DATASETS=Object.freeze({
  merchant_identity:Object.freeze(["google_merchant_link","merchant_products"]),
 });
 const fail=code=>{throw Error(code);};
-const safeReasons=new Set(["response_limit","page_limit","row_limit","request_limit","merchant_link_changed","merchant_target_not_linked","authority_changed","configuration_missing"]);
+const safeReasons=new Set(["response_invalid","response_limit","page_limit","row_limit","request_limit","merchant_link_changed","merchant_target_not_linked","authority_changed","configuration_missing"]);
 const boundary={mappingVerified:false,DatasetWritePerformed:false,authorizesActivation:false};
 
 // Fixed three datasets, no caller query/family/URL selector and no report writes.
@@ -36,12 +36,14 @@ export function createGoogleRawDatasetReader({environment,verified,tokenVault,ex
  return Object.freeze({async run(){
   if(used||closed)fail("GOOGLE_RAW_DATASET_EXECUTION_USED");used=true;running=true;
   const datasets=Object.fromEntries(Object.keys(GOOGLE_RAW_DATASETS).map(k=>[k,{status:"not_attempted",recordCount:null,empty:null}]));
-  let bytes=0,requests=0,totalRows=0,writeSent=false,writeKnown=false,activeDataset=null;
+  let bytes=0,requests=0,totalRows=0,writeSent=false,writeKnown=false,activeDataset=null,httpFailure=null;
   try{return await runIdentityReadDeadline({signal,timeoutMs:l.maxElapsedMs,run:async child=>{
+   const started=now();
    const check=()=>{if(child.aborted)fail("stopped");};
    const transport=createRefreshGoogleRawTransport({workStore,quotaStore,...scope,now,fetchFn:async(url,init)=>{
     check();if(++requests>l.maxRequests)fail("request_limit");
     const response=await fetchFn(url,{...init,signal:child,redirect:"error"});check();
+    if(!response.ok)httpFailure=[401,403].includes(response.status)?"provider_permission_denied":response.status===429?"provider_throttled":"provider_http_error";
     const stream=response.body?.getReader();if(!stream)fail("response_invalid");const chunks=[];
     const cancel=()=>{void stream.cancel().catch(()=>{});};child.addEventListener("abort",cancel,{once:true});
     try{for(;;){check();const part=await stream.read();check();if(part.done)break;
@@ -76,11 +78,10 @@ export function createGoogleRawDatasetReader({environment,verified,tokenVault,ex
     writeSent=true;writeKnown=false;
     const receipt=await storeGoogleRawDataset({database,owner,attemptId:randomUUID(),dataset,pages,complete,cipher,policy:c.sourcePolicy,limits:c.storageLimits,now:new Date(now()).toISOString(),onCommitted:()=>{writeKnown=true;},
      read:{jobId:scope.claim.id,fence:String(scope.claim.fence),window:scope.window,observedAt:scope.entitlementReceipt.observedAt,
-      operationId:c.operationId,quotaContext:initial,completedAt:new Date(now()).toISOString(),deadlineAt:new Date(now()+Math.max(1,l.maxElapsedMs-(now()-started))).toISOString()}});
+      operationId:c.operationId,quotaContext:initial,completedAt:new Date(now()).toISOString(),deadlineAt:new Date(started+l.maxElapsedMs).toISOString()}});
     writeKnown=true;await guard();
     datasets[dataset]={status:complete?"stored":"unavailable",reason,recordCount:complete?recordCount:null,empty:complete?recordCount===0:null,...receipt};
    };
-   const started=now();
    for(const dataset of ["account_performance","product_performance"]){activeDataset=dataset;writeSent=false;writeKnown=false;const pages=[];
     for(const family of GOOGLE_RAW_DATASETS[dataset]){let cursor=null,queryRows=0,expectedTotal=null;const seen=new Set();
      for(let n=0;;n++){
@@ -130,8 +131,9 @@ export function createGoogleRawDatasetReader({environment,verified,tokenVault,ex
    return {status:complete?"stored":"partial",sourceStored:true,receiptVerified:true,contentVerified:true,datasets,
     recordCount:complete?totalRows:null,empty:complete?totalRows===0:null,responseBytes:bytes,...boundary};
   }});}catch(error){
-   if(activeDataset&&datasets[activeDataset].status==="not_attempted")datasets[activeDataset]={status:writeSent?"unconfirmed":"failed",recordCount:null,empty:null};
-   return {status:writeSent&&!writeKnown?"unconfirmed":"stopped",reason:safeReasons.has(error?.message)?error.message:"capture_unconfirmed",
+   const reason=httpFailure??(safeReasons.has(error?.message)?error.message:error?.message==="GOOGLE_RAW_RESPONSE_INVALID"?"response_invalid":"capture_unconfirmed");
+   if(activeDataset&&datasets[activeDataset].status==="not_attempted")datasets[activeDataset]={status:writeSent?"unconfirmed":"failed",reason,recordCount:null,empty:null};
+   return {status:writeSent&&!writeKnown?"unconfirmed":"stopped",reason,
     sourceStored:writeSent&&!writeKnown?null:writeSent&&writeKnown||Object.values(datasets).some(v=>v.status==="stored"||v.status==="unavailable"),
     receiptVerified:false,contentVerified:false,recordCount:null,empty:null,datasets,...boundary};
   }finally{running=false;}

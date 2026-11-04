@@ -59,6 +59,7 @@ test("first failure stops, retains known earlier envelopes and never claims zero
  const r=await createGoogleRawCaptureExecution(x.options).run();assert.notEqual(r.status,"stored");assert.notEqual(r.status,"partial");assert.equal(r.recordCount,null);assert.equal(r.empty,null);
  assert.equal(r.datasets.account_performance.status,"stored",JSON.stringify(r));assert.equal(r.datasets.merchant_identity.status,"not_attempted");
  assert.ok(writeCalls<=2);assert.ok(calls<=17);
+ if(mode==="403"){assert.equal(r.reason,"provider_permission_denied");assert.equal(r.datasets.product_performance.reason,"provider_permission_denied");}
  if(mode==="lost_write")assert.equal(x.calls.filter(c=>c.sql.startsWith("select evidence.read_source_receipt(")&&x.writes.some(w=>w.read.dataset==="product_performance"&&w.attemptId===c.args[1])).length,0);
 });
 

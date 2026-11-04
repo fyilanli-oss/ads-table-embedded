@@ -129,7 +129,7 @@ export function createGoogleRawCaptureExecution({environment,operationId,signal,
     limits:configuration.limits,storageLimits:configuration.storageLimits,sourcePolicy:configuration.sourcePolicy},
     signal:controller.signal,now,fetchFn,poolFactory:readerPoolFactory});
    captured=await reader.run();await reader.close();
-   if(captured.status!=="stored"&&!(datasetMode&&captured.status==="partial"))return {...await stop(["provider_permission_denied","provider_throttled"].includes(captured.reason)?captured.reason:"request_outcome_unknown"),...datasetMode?{datasets:captured.datasets}: {}};
+   if(captured.status!=="stored"&&!(datasetMode&&captured.status==="partial"))return {...await stop(["provider_permission_denied","provider_throttled"].includes(captured.reason)?captured.reason:"request_outcome_unknown"),...datasetMode?{datasets:captured.datasets,reason:captured.reason}: {}};
    if(!current()||deadline-now()<10000||!bound(await readIdentity())||!await work.loadBoundAuthority(context())
     ||await work.isEntitlementCurrent({...context(),receipt:entitlement.receipt})!==true)return stop("authority_check_failed_after_request");
    await advance("response_received");

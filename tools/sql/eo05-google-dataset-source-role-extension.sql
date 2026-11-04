@@ -14,6 +14,8 @@ begin
  where p.oid is null or r.rolname<>'adstable_owner' or not p.prosecdef or not coalesce(p.proconfig @> array['search_path=""'],false))
  then raise exception 'GOOGLE_DATASET_ROLE_PREREQUISITE_FAILED';end if;
 end $guard$;
+set local role adstable_owner;
 grant execute on function evidence.commit_google_dataset_source(jsonb,uuid,integer,jsonb,jsonb),
  evidence.read_source_pages(jsonb,uuid,integer,bigint,integer) to adstable_google_source_runner;
+reset role;
 commit;

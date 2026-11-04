@@ -1,3 +1,4 @@
+import {isMetaBackgroundOwner} from "../refresh/meta-background-owner.server.js";
 import {createIdentityAuthorityRepository} from "../database/identity-authority-repository.server.js";
 import {permissionContext} from "../oauth/identity-permission-preflight.server.js";
 import {validateIdentityOAuthGrantedScopes} from "../oauth/oauth-permission-profile.server.js";
@@ -51,7 +52,7 @@ export function createIdentityRuntimeAuthorityLoader({verified, database, tokenV
   const installation = freeze({authority: callerOwner?.authority, status: callerOwner?.status,
     workspaceId: callerOwner?.workspaceId, installGeneration: callerOwner?.installGeneration});
   const shop = freeze({authority: callerShop?.authority, shopId: callerShop?.shopId, myshopifyDomain: callerShop?.myshopifyDomain});
-  const background=provider==="google_ads"&&isGoogleBackgroundOwner(verified);
+  const background=provider==="google_ads"&&isGoogleBackgroundOwner(verified)||provider==="meta"&&isMetaBackgroundOwner(verified);
   if (installation?.authority !== "shopify_installation_verified" || installation.status !== "active"
     || !background&&(verified?.identity?.session?.authority !== "shopify_id_token_verified"
     || shop?.authority !== "shopify_admin_verified" || verified.identity.session.shopDomain !== shop.myshopifyDomain

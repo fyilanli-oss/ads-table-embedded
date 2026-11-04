@@ -1,3 +1,4 @@
+import {metaRawDatasetProbe} from "./eo05-meta-raw-datasets-probe.mjs";
 import {verifiedMappingProbe} from "./eo05-verified-mapping-probe.mjs";
 import assert from "node:assert/strict";
 import {randomUUID, createHash} from "node:crypto";
@@ -165,6 +166,7 @@ export async function metaSourceCaptureProbe(client, {store, quotaStore, executi
       } finally {await client.query("rollback to savepoint meta_source_case"); await client.query("release savepoint meta_source_case");}
     }
     for (const mode of ["success", "empty", "reuse", "new_version", "lost", "fence", "disconnect", "context", "selection", "expired", "permission_expired", "permission_missing", "late_failure", "native_failure"]) await scenario(mode);
+    await metaRawDatasetProbe(client,{execution,connection,installation,scopes});
     for (const role of ["anon", "authenticated", "service_role", "adstable_runtime", "adstable_refresh_coordinator"])
       assert.equal((await client.query("select has_function_privilege($1,'evidence.commit_meta_identity_source(jsonb,uuid,integer,jsonb,jsonb)','EXECUTE') ok", [role])).rows[0].ok, false);
     console.log("EO05_META_SOURCE_CAPTURE_PASS real_SQL_quota_native_boundary_synthetic_HTTP=true encrypted_page_readback=true unresolved_not_verified=true durable_revision_supersedes=true stale_fence_context_selection_disconnect_expiry_denied=true late_failure_rollback=true lost_ack_explicit_readback=true no_runtime_grants=true no_checkpoint=true");

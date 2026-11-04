@@ -4,6 +4,14 @@ on:
   pull_request:
     branches: [main, "codex/step15-storage-foundation-design"]
     paths:
+      - "app/lib/refresh/meta-*"
+      - "app/lib/database/meta-*"
+      - "app/lib/providers/meta-raw-projection.server.js"
+      - "app/routes/internal.meta.raw-capture.ts"
+      - "tests/meta-raw-*-permission.test.js"
+      - "tests/fixtures/meta-raw-datasets-fixture.js"
+      - "tools/eo05-meta-raw-datasets-probe.mjs"
+      - "tools/sql/eo05-meta-source-role-install.sql"
       - "tests/google-raw-datasets-permission.test.js"
       - "tests/fixtures/google-raw-datasets-fixture.js"
       - "app/lib/providers/google-raw-projection.server.js"

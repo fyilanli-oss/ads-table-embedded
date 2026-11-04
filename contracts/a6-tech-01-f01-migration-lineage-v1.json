@@ -912,6 +912,15 @@
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261104142557",
+      "name": "eo05_meta_raw_datasets",
+      "file": "supabase/migrations/20261104142557_eo05_meta_raw_datasets.sql",
+      "repository_sql_sha256": "d5526596542b334c2d405a736ec38ce7ecc807920346f161a4e849780657c6e6",
+      "applied": false,
+      "replay_scope": "isolated_rollback_only",
+      "live_apply_authorized": false
     }
   ]
 }

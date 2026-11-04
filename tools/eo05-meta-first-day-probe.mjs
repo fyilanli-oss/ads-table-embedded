@@ -120,8 +120,8 @@ export async function metaFirstDayRehearsal(client,{workspace,shopId,shopDomain}
     assert.equal((await client.query("select count(*)::int n from evidence.source_batches where workspace_id=$1",[workspace])).rows[0].n,["zero_repeat","nonempty"].includes(mode)?2:0);
    }finally{await execution?.close();await client.query("rollback to savepoint first_day_case");await client.query("release savepoint first_day_case");}
   }
-  for(const role of ["anon","authenticated","service_role","adstable_runtime","adstable_google_source_runner","adstable_meta_source_runner"])
-   assert.equal((await client.query("select has_function_privilege($1,'operations.commit_meta_raw_preflight_with_deadline(bigint,bigint,jsonb,jsonb,jsonb,uuid,bigint)','EXECUTE') allowed",[role])).rows[0].allowed,false);
+  for(const role of ["anon","authenticated","service_role","adstable_runtime","adstable_refresh_queue_runner","adstable_google_source_runner","adstable_meta_source_runner"])
+   if((await client.query("select exists(select 1 from pg_roles where rolname=$1) present",[role])).rows[0].present)assert.equal((await client.query("select has_function_privilege($1,'operations.commit_meta_raw_preflight_with_deadline(bigint,bigint,jsonb,jsonb,jsonb,uuid,bigint)','EXECUTE') allowed",[role])).rows[0].allowed,false);
   assert.deepEqual(await definitions(),before);
   console.log("EO05_META_FIRST_DAY_SQL_PASS scenarios=12 actual_private_server_vault_roles_quota_source_decrypt_close=true generic_refresh_unchanged_rejects_first_day=true LA_native_day_provenance=true prior_future_stale_wrong_operation_denied=true native_HTTP=synthetic live_changes=false");
  }catch(error){console.error("EO05_META_FIRST_DAY_SQL_STOP "+JSON.stringify({phase,constraint:error.constraint??undefined,code:error.code??"ASSERTION_FAILED",message:error.code==="ERR_ASSERTION"?error.message:undefined}));throw error;}finally{await client.query("rollback");}

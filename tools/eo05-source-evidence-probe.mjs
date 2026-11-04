@@ -1,3 +1,4 @@
+import {sourceRetentionPolicyProbe} from "./eo05-source-retention-policy-probe.mjs";
 import {sourceRetentionProbe} from "./eo05-source-retention-probe.mjs";
 import {customerSourcePrivacyProbe} from "./eo05-customer-source-privacy-probe.mjs";
 import assert from "node:assert/strict";
@@ -113,5 +114,6 @@ export async function sourceEvidenceProbe(client, connection, environment = proc
   } finally {await client.query("rollback");}
   await customerSourcePrivacyProbe(client);
   await sourceRetentionProbe(client);
+  await sourceRetentionPolicyProbe(client);
   console.log("SOURCE_EVIDENCE_SQL_PASS atomic-replay-owner-fk-crypto-retention-privacy");
 }

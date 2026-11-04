@@ -3862,5 +3862,31 @@
     "hourly_activation": false,
     "merge_authorized": false,
     "deploy_authorized": false
+  },
+  "Step15_Klaviyo_raw_datasets_2026_11_04": {
+    "owner_approval": "Onaylıyorum başlayalım Codex — concrete existing-query/encrypted-source/receipt+decrypt/prepared SQL/isolated tests/one PR scope.",
+    "status": "prepared_code_and_SQL_pending_CI_and_owner_merge",
+    "design": "docs/EO_05_KLAVIYO_RAW_DATASETS_V1.md",
+    "datasets": [
+      "configuration",
+      "account_performance",
+      "product_performance"
+    ],
+    "queries": "Existing six Campaign/Flow report families plus account, complete Shopify metric discovery and Ordered Product events. Native revision2026-10-15; fixed builders unchanged.",
+    "missing": "Missing metrics are configuration_missing, partial/unavailable with unknown counts, never synthetic zeros.",
+    "credential": "Existing valid credential required; expiry stops before native data call; no new Klaviyo OAuth/token renewal protocol.",
+    "migration": "supabase/migrations/20261104181254_eo05_klaviyo_raw_datasets.sql",
+    "prepared_role": "tools/sql/eo05-klaviyo-source-role-install.sql",
+    "retention_applied": false,
+    "live_changes": false,
+    "native_calls": false,
+    "merge_authorized": false,
+    "deploy_authorized": false,
+    "official_checked_at": "2026-11-04",
+    "official_sources": [
+      "https://developers.klaviyo.com/en/reference/query_campaign_values",
+      "https://developers.klaviyo.com/en/reference/query_flow_values",
+      "https://developers.klaviyo.com/en/reference/get_events"
+    ]
   }
 }

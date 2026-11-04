@@ -77,3 +77,40 @@ Resmî kontrol 4 Kasım2026: [Google Ads sayfalama](https://developers.google.co
 [ProductLink](https://developers.google.com/google-ads/api/fields/v25/product_link),
 [PostgreSQL17 CREATE FUNCTION](https://www.postgresql.org/docs/17/sql-createfunction.html).
 İzole SQL/HTTP testlerindeki native yanıtlar sentetiktir; gerçek kaynak kabulü değildir.
+
+## 4 Kasım — canlı süre hatasının dar kod düzeltmesi
+
+Owner, başarısız tek canlı okuma ardından süre yolunun düzeltilmesini ve süre aşımının
+açık raporlanmasını onayladı. Başlangıç main `b97360d`; kod/test/tek PR kapsamı.
+Yeni canlı istek, eski işin kilidini kaldırma, SQL/credential/config mutation,
+merge veya yayın yetkisi yoktur. Bu bölüm yeni bir iş paketi değildir.
+
+Canlı çağrı 12:28:54–12:30:08 UTC arasında HTTP409 döndü. Altı rapor çağrısının
+kota kaydı settled, yedinci rezervasyon unsettled; depoda sıfır zarf var. Bu son
+rezervasyon isteğin gönderildiğini veya Google yanıtı alındığını kanıtlamaz. İş
+uncertain/request_outcome_unknown kilidinde bırakıldı. Zaman çizelgesi 60 saniyelik
+okuma sınırına uyuyor; eski catch kesin nedeni capture_unconfirmed içine sakladığı
+için geçmiş çağrının kesin hatası sonradan kanıtlanmış sayılmaz. Ayrıntılı canlı
+kanıt PR324 gövdesindedir; bu hazırlık canlı kabulü başarılıya çevirmez.
+
+Başarısız yayının Vercel deployment metadata'sında `regions:["iad1"]` vardır.
+Yalnız `internal.google.raw-capture` route config'i `regions:["fra1"]` olur;
+Transaction pooler ve veritabanı eu-central-1 konumundadır. Mevcut Vercel React
+Router preset'i bu config'i ayrı server bundle'a taşır. Settings, callback,
+Merchant keşfi ve diğer route'ların bölge ayarı değişmez. Bölge seçimi uzak SQL
+gidiş dönüşlerini azaltmayı hedefler; yeni canlı ölçüm olmadan 60 saniyeye kesin
+sığdığı iddia edilmez. Per-RPC rol/profil/transaction, güncel yetki/kota kontrolleri,
+sorgu sırası, 60 saniyelik okuma/90 saniyelik iş/120 saniyelik route sınırı korunur.
+
+Deadline hatası `read_deadline_exceeded`, üst işten iptal `read_aborted` olarak
+özel HTTP409 cevabına taşınır. Null sayı/empty, tamamlanmayan set ve belirsiz yazma
+anlamları korunur. İlk provider hata nedeni varsa bu neden önceliklidir. Otomatik
+tekrar veya kilit açma yoktur. Installed preset testi bölgenin yalnız bu bundle'a
+gittiğini; sanal zaman testi süre dolarken native HTTP sinyalinin iptal edildiğini,
+sonraki setlere/yazmaya geçilmediğini ve tekrar run'ın reddedildiğini doğrular.
+Ürün yüzeyi veya görünür UI değişmediği için yeni görsel kabul iddiası yoktur.
+
+Resmî kontrol 4 Kasım 2026:
+[Vercel region](https://vercel.com/docs/functions/configuring-functions/region),
+[React Router preset](https://vercel.com/docs/frameworks/frontend/react-router),
+[node-postgres queries](https://node-postgres.com/features/queries).

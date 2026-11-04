@@ -5,6 +5,19 @@ import {createGoogleRawCaptureExecution,readGoogleRawCapturePlan} from "../app/l
 import {isGoogleBackgroundOwner,loadGoogleBackgroundOwner} from "../app/lib/refresh/google-background-owner.server.js";
 import {createIdentityRuntimeAuthorityLoader} from "../app/lib/providers/identity-runtime-authority.server.js";
 
+test("runtime timeout is transaction-local and a lost commit stops without retry or native HTTP",async()=>{
+ const x=googleRawServerFixture();
+ x.hooks.runtime=sql=>{if(sql==="commit")throw Error("SYNTHETIC-LOST-COMMIT");};
+ const e=createGoogleRawCaptureExecution(x.options),r=await e.run();await e.close();
+ assert.notEqual(r.status,"stored");assert.equal(x.f.http.length,0);
+ const calls=x.calls.filter(c=>c.role==="runtime");
+ assert.equal(calls.filter(c=>c.sql==="begin").length,1);
+ const timeout=calls.find(c=>c.sql.startsWith("select pg_catalog.set_config"));
+ assert.deepEqual(timeout.args,["5000ms"]);assert.match(timeout.sql,/statement_timeout.*true.*lock_timeout.*true/);
+ assert.equal(calls.filter(c=>c.sql==="commit").length,1);
+ assert.equal(calls.filter(c=>c.sql==="rollback").length,1);
+});
+
 for(const nonempty of [false,true])test("browser-free single capture persists "+(nonempty?"a native product":"a successful empty response")+" and verifies its receipt",async()=>{
  const x=googleRawServerFixture();
  if(nonempty)x.hooks.fetch=u=>u.hostname==="merchantapi.googleapis.com"?Response.json({products:[{name:"accounts/99/products/en~US~sku",offerId:"sku",feedLabel:"US",contentLanguage:"en",dataSource:"accounts/99/dataSources/7"}]}):undefined;

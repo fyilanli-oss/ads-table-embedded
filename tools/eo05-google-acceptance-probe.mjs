@@ -129,7 +129,7 @@ export async function googleAcceptanceRehearsal(client,{workspace,shopId,shopDom
      environment.ADSTABLE_GOOGLE_RAW_CAPTURE_PLAN=JSON.stringify({target:plan,limits:{maxElapsedMs:60000,maxBytes:1048576,maxPages:1,maxRows:100,maxLinkPages:1,maxLinks:100},
       storageLimits:{maxRows:1000,maxBytes:1048576},sourcePolicy:sourceStoreFixture().input.policy});
      const rawOptions={environment,operationId:plan.operationId,coordinatorPoolFactory:options.coordinatorPoolFactory,readerPoolFactory:options.readerPoolFactory,
-      runtimePoolFactory:()=>({query:({text,values})=>database.query(text,values),end:async()=>{}}),fetchFn:options.fetchFn};
+      runtimePoolFactory:poolFactory("adstable_runtime"),fetchFn:options.fetchFn};
      const runRequest=async()=>{
       const request=new Request("https://embedded.adstable.app/internal/google/raw-capture",{method:"POST",headers:{"content-type":"application/json",authorization:`Bearer ${environment.ADSTABLE_GOOGLE_RAW_CAPTURE_SERVER_SECRET}`},body:JSON.stringify({operationId:plan.operationId})});
       const response=await handleGoogleRawCaptureRequest(request,{environment,createExecution:args=>{execution=createGoogleRawCaptureExecution({...rawOptions,...args});return execution;}});

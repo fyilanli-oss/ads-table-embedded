@@ -49,7 +49,20 @@ export function createGoogleRawCaptureExecution({environment,operationId,signal,
  if(Number(env.ADSTABLE_GOOGLE_SOURCE_DB_TIMEOUT_MS)>5000||Number(env.ADSTABLE_GOOGLE_ACCEPTANCE_COORDINATOR_DB_TIMEOUT_MS)>5000)fail();
  let runtime,coordinator;
  try{
-  runtime=createRuntimePostgresClient({environment:env,poolFactory:options=>runtimePoolFactory({...options,query_timeout:5000,statement_timeout:5000})});
+  runtime=createRuntimePostgresClient({environment:env,poolFactory:options=>{
+   const pool=runtimePoolFactory({...options,query_timeout:5000});let stopped=false,busy=false;
+   pool.on?.("error",()=>{stopped=true;});
+   return {async query({text,values}){
+    if(stopped||busy)throw Error("GOOGLE_RAW_RUNTIME_DATABASE_UNAVAILABLE");
+    busy=true;let client,broken=false;
+    try{
+     client=await pool.connect();await client.query("begin");
+     await client.query("select pg_catalog.set_config('statement_timeout',$1,true),pg_catalog.set_config('lock_timeout',$1,true)",["5000ms"]);
+     const result=await client.query(text,values);await client.query("commit");return result;
+    }catch{stopped=true;broken=true;if(client){try{await client.query("rollback");}catch{}}throw Error("GOOGLE_RAW_RUNTIME_DATABASE_UNAVAILABLE");}
+    finally{busy=false;client?.release(broken);}
+   },end:()=>pool.end()};
+  }});
   coordinator=createGoogleAcceptanceCoordinatorPostgresClient({environment:env,poolFactory:coordinatorPoolFactory});
  }catch{void runtime?.close().catch(()=>{});fail();}
  const work=createRefreshWorkRepository(coordinator),quota=createSharedQuotaRepository(coordinator),identity=createIdentityAuthorityRepository(runtime);

@@ -38,8 +38,9 @@ export function googleRawServerFixture(){
  const readerPoolFactory=()=>{const p=pool();return {...p,async connect(){const c=await p.connect();return {...c,query:async(sql,args)=>{
   calls.push({role:"source",sql,args});return sourceQuery(sql,args);
  }};}};};
- const runtimePoolFactory=()=>({async end(){calls.push({role:"runtime",sql:"end"});},async query({text:sql,values:args}){
+ const runtimePoolFactory=options=>{if("statement_timeout" in options)throw Error("No session startup timeout in transaction pooler");return {async end(){calls.push({role:"runtime",sql:"end"});},async connect(){return {release(){},async query(sql,args){
   calls.push({role:"runtime",sql,args});const custom=await hooks.runtime?.(sql,args);if(custom)return custom;
+  if(["begin","commit","rollback"].includes(sql)||sql.startsWith("select pg_catalog.set_config"))return {rows:[]};
   if(sql.includes("load_active_installation_owner"))return {rows:[{installation_id:"42",workspace_id:f.plan.workspaceId,install_generation:3,
    shop_id:f.plan.shopId,shop_domain:f.plan.shopDomain,installation_status:"active"}]};
   if(sql.includes("token_vault_runtime_guard"))return {rows:[{contract_version:1,used_key_versions:[1]}]};
@@ -52,7 +53,7 @@ export function googleRawServerFixture(){
   }
   if(sql.includes("load_provider_identity_authority"))return sourceQuery(sql,args);
   throw Error("Unexpected runtime query");
- }});
+ }}}};};
  const fetchFn=async(url,init)=>{
   const u=new URL(url),custom=await hooks.fetch?.(u,init);if(custom)return custom;
   if(u.hostname==="oauth2.googleapis.com"){f.http.push(u);return Response.json({access_token:"SYNTHETIC-NEW",expires_in:3600,token_type:"Bearer",scope:f.f.token.scope});}

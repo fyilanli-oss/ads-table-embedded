@@ -1,0 +1,65 @@
+{
+  "checked_at": "2026-11-04",
+  "base_main": "9fdb49f26b0c5afa02fe2d368afd37e2b073cfd2",
+  "approval": "Owner explicitly approved two limited DB logins/server connections, distinct source encryption and server-call keys, and applying the prepared token renewal SQL. No deploy or Google request authorized.",
+  "renewal": {
+    "applied": true,
+    "repository_version": "20261103221715",
+    "supabase_applied_version": "20261104082306",
+    "name": "eo05_google_refresh_credential_handoff",
+    "sql_sha256": "7ba86b44f662c1b8dd4fc69f196fa149ca4161bc4279da88d073ff8769eef318",
+    "exact_repository_and_applied_hash_match": true,
+    "prior83LedgerUnchanged": true,
+    "ledger_count": 84,
+    "runtimeExecute": true,
+    "publicExecute": false,
+    "coordinatorExecute": false,
+    "receiptColumns": 2
+  },
+  "keys": {
+    "created": [
+      "ADSTABLE_SOURCE_EVIDENCE_ENCRYPTION_KEY_V1",
+      "ADSTABLE_GOOGLE_RAW_CAPTURE_SERVER_SECRET",
+      "ADSTABLE_SOURCE_EVIDENCE_ACTIVE_KEY_VERSION"
+    ],
+    "target": [
+      "production"
+    ],
+    "secretType": "sensitive",
+    "secretValuesRecorded": false,
+    "existingProviderSessionKeysReadOrRotated": false
+  },
+  "connections": {
+    "status": "waiting_for_verified_pooler_host",
+    "roles": [
+      {
+        "role": "adstable_refresh_coordinator",
+        "login": false,
+        "super": false,
+        "inherit": false,
+        "create_db": false,
+        "bypass_rls": false,
+        "create_role": false,
+        "memberships": 0,
+        "replication": false
+      },
+      {
+        "role": "adstable_google_source_runner",
+        "login": false,
+        "super": false,
+        "inherit": false,
+        "create_db": false,
+        "bypass_rls": false,
+        "create_role": false,
+        "memberships": 0,
+        "replication": false
+      }
+    ],
+    "role_function_grants_unchanged": true,
+    "credentialsGenerated": false,
+    "URLCreated": false
+  },
+  "deployment_performed": false,
+  "google_request_performed": false,
+  "data_collection_started": false
+}

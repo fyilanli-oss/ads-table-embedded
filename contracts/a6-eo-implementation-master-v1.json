@@ -3580,5 +3580,79 @@
     "package2_complete": false,
     "server_auth": "New separate ADSTABLE_GOOGLE_RAW_CAPTURE_SERVER_SECRET schema only; no value generated or installed. Default-closed flags and short-lived exact plan required before execution. Resource route config maxDuration120, core deadline90; existing Vercel React Router preset used, no hosting/service provisioned.",
     "runtime_timeout": "Runtime RPCs use bounded begin/set_config-local/query/commit transactions; no session startup statement_timeout on the transaction pooler; lost acknowledgement stops without retry."
+  },
+  "Step15_Google_live_connections_2026_11_04": {
+    "date": "2026-11-04",
+    "owner_approval": "Owner explicitly approved two limited DB logins/server connections, distinct source encryption and server-call keys, and applying the prepared token renewal SQL. No deploy or Google request authorized.",
+    "evidence": "docs/evidence/EO05_GOOGLE_LIVE_CONNECTIONS_2026-11-04.json",
+    "status": "renewal_SQL_and_distinct_Production_keys_verified_connection_host_pending",
+    "renewal": {
+      "applied": true,
+      "repository_version": "20261103221715",
+      "supabase_applied_version": "20261104082306",
+      "name": "eo05_google_refresh_credential_handoff",
+      "sql_sha256": "7ba86b44f662c1b8dd4fc69f196fa149ca4161bc4279da88d073ff8769eef318",
+      "exact_repository_and_applied_hash_match": true,
+      "prior83LedgerUnchanged": true,
+      "ledger_count": 84,
+      "runtimeExecute": true,
+      "publicExecute": false,
+      "coordinatorExecute": false,
+      "receiptColumns": 2
+    },
+    "keys": {
+      "created": [
+        "ADSTABLE_SOURCE_EVIDENCE_ENCRYPTION_KEY_V1",
+        "ADSTABLE_GOOGLE_RAW_CAPTURE_SERVER_SECRET",
+        "ADSTABLE_SOURCE_EVIDENCE_ACTIVE_KEY_VERSION"
+      ],
+      "target": [
+        "production"
+      ],
+      "secretType": "sensitive",
+      "secretValuesRecorded": false,
+      "existingProviderSessionKeysReadOrRotated": false
+    },
+    "connections": {
+      "status": "waiting_for_verified_pooler_host",
+      "roles": [
+        {
+          "role": "adstable_refresh_coordinator",
+          "login": false,
+          "super": false,
+          "inherit": false,
+          "create_db": false,
+          "bypass_rls": false,
+          "create_role": false,
+          "memberships": 0,
+          "replication": false
+        },
+        {
+          "role": "adstable_google_source_runner",
+          "login": false,
+          "super": false,
+          "inherit": false,
+          "create_db": false,
+          "bypass_rls": false,
+          "create_role": false,
+          "memberships": 0,
+          "replication": false
+        }
+      ],
+      "role_function_grants_unchanged": true,
+      "credentialsGenerated": false,
+      "URLCreated": false
+    },
+    "provider_calls_performed": false,
+    "deploy_performed": false,
+    "package2_complete": false,
+    "retention_quota_scheduler_report_changes": false,
+    "official_checked_at": "2026-11-04",
+    "official_sources": [
+      "https://supabase.com/docs/guides/database/postgres/roles",
+      "https://www.postgresql.org/docs/17/sql-alterrole.html",
+      "https://vercel.com/docs/environment-variables/sensitive-environment-variables",
+      "https://vercel.com/docs/rest-api/projects/create-one-or-more-environment-variables"
+    ]
   }
 }

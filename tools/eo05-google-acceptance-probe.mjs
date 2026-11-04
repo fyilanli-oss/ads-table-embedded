@@ -13,6 +13,7 @@ import {readFileSync} from "node:fs";
 import {createGoogleRawCaptureExecution} from "../app/lib/refresh/google-raw-server.server.js";
 import {createConfiguredSourceEvidenceCipher} from "../app/lib/database/source-evidence-config.server.js";
 import {sourceStoreFixture} from "../tests/fixtures/source-store-fixture.js";
+import {handleGoogleRawCaptureRequest} from "../app/lib/refresh/google-raw-request.server.js";
 
 // Existing F01 isolated databases only. Real SQL admission, role checks, vault,
 // quota, native reader and paused closure. Physical provider HTTP is synthetic.
@@ -124,11 +125,17 @@ export async function googleAcceptanceRehearsal(client,{workspace,shopId,shopDom
      return Response.json({products:["nonempty","late_source_failure"].includes(mode)?[{name:"accounts/99/products/en~US~sku",offerId:"sku",feedLabel:"US",contentLanguage:"en",dataSource:"accounts/99/dataSources/7"}]:[],...mode==="partial"?{nextPageToken:"more"}:{}});
     }};
     if(rawCapture){
+     Object.assign(environment,{VERCEL_ENV:"production",SHOPIFY_APP_URL:"https://embedded.adstable.app",ADSTABLE_GOOGLE_RAW_CAPTURE_SERVER_SECRET:randomBytes(32).toString("base64url")});
      environment.ADSTABLE_GOOGLE_RAW_CAPTURE_PLAN=JSON.stringify({target:plan,limits:{maxElapsedMs:60000,maxBytes:1048576,maxPages:1,maxRows:100,maxLinkPages:1,maxLinks:100},
       storageLimits:{maxRows:1000,maxBytes:1048576},sourcePolicy:sourceStoreFixture().input.policy});
      const rawOptions={environment,operationId:plan.operationId,coordinatorPoolFactory:options.coordinatorPoolFactory,readerPoolFactory:options.readerPoolFactory,
       runtimePoolFactory:()=>({query:({text,values})=>database.query(text,values),end:async()=>{}}),fetchFn:options.fetchFn};
-     execution=createGoogleRawCaptureExecution(rawOptions);const result=await execution.run();
+     const runRequest=async()=>{
+      const request=new Request("https://embedded.adstable.app/internal/google/raw-capture",{method:"POST",headers:{"content-type":"application/json",authorization:`Bearer ${environment.ADSTABLE_GOOGLE_RAW_CAPTURE_SERVER_SECRET}`},body:JSON.stringify({operationId:plan.operationId})});
+      const response=await handleGoogleRawCaptureRequest(request,{environment,createExecution:args=>{execution=createGoogleRawCaptureExecution({...rawOptions,...args});return execution;}});
+      return response.json();
+     };
+     const result=await runRequest();
      assert.doesNotMatch(JSON.stringify(result),/SYNTHETIC|payload|ciphertext|access_token|credentialId/);
      if(["zero_repeat","nonempty","expired_token"].includes(mode)){
       assert.equal(result.status,"stored",JSON.stringify({mode,result,googleCalls,partnerCalls,tokenCalls,rpcCalls}));
@@ -142,7 +149,7 @@ export async function googleAcceptanceRehearsal(client,{workspace,shopId,shopDom
       assert.equal(restored[1].records.length,result.recordCount);assert.ok(restored.every(p=>Array.isArray(p.records)));
       if(mode==="nonempty")assert.equal(restored[1].records[0].offerId,"sku");
       assert.equal((await client.query("select count(*)::int n from identity.product_identity_mappings where accepted_batch_id=$1 and mapping_state='verified'",[b.id])).rows[0].n,0);
-      if(mode==="zero_repeat"){const repeated=await createGoogleRawCaptureExecution(rawOptions).run();assert.notEqual(repeated.status,"stored");assert.equal(googleCalls,3);assert.equal(partnerCalls,1);}
+      if(mode==="zero_repeat"){const repeated=await runRequest();assert.notEqual(repeated.status,"stored");assert.equal(googleCalls,3);assert.equal(partnerCalls,1);}
      }else{
       assert.notEqual(result.status,"stored",JSON.stringify({mode,result,googleCalls,partnerCalls,tokenCalls,rpcCalls}));assert.equal(result.recordCount,null);assert.equal(result.empty,null);
       const n=(await client.query("select count(*)::int n from evidence.source_batches where workspace_id=$1",[workspace])).rows[0].n;

@@ -38,7 +38,7 @@
     {
       "file": "app/lib/refresh/google-raw-server.server.js",
       "token": "acceptance",
-      "reason": "Owner-approved 2026-11-04 raw-only headless server entry reuses existing Google plan validation, fixed work cost and narrow coordinator adapter by their existing module names. No HTTP/product route, browser mode, UI or live activation is introduced; boundary remains app/lib server process only."
+      "reason": "Owner-approved 2026-11-04 raw-only headless server entry reuses existing Google plan validation and narrow coordinator adapter by their existing module names. The private authenticated internal resource has no product UI, browser mode or live activation; existing acceptance route is not enabled."
     },
     {
       "file": "app/lib/providers/meta-graph.server.js",
@@ -91,6 +91,7 @@
     "server.js"
   ],
   "allowedEnvironmentKeys": [
+    "ADSTABLE_GOOGLE_RAW_CAPTURE_SERVER_SECRET",
     "ADSTABLE_GOOGLE_RAW_CAPTURE_ENABLED",
     "ADSTABLE_GOOGLE_RAW_CAPTURE_PLAN",
     "CRON_SECRET",

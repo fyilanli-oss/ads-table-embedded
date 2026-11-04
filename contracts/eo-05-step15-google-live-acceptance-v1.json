@@ -355,7 +355,7 @@
     "item": 1,
     "status": "code_and_isolated_tests_prepared_required_CI_pending",
     "goal": "Read native Google source projections once, persist in the existing private encrypted landing store, verify the durable receipt and stop. Successful empty responses are stored; missing/failed/unknown never become zero.",
-    "entry": "tools/run-google-raw-capture.mjs --operation-id <server-plan UUID>",
+    "entry": "POST /internal/google/raw-capture; private server-to-server Bearer authentication, production/exact origin/path, bounded operationId-only body; independent of browser/session. Same core also has an optional dedicated-server CLI.",
     "server": "app/lib/refresh/google-raw-server.server.js",
     "reader": "app/lib/refresh/google-raw-reader.server.js",
     "authority": "Private in-process Google-only capability from existing runtime-only shopify.load_active_installation_owner RPC; no fabricated Shopify ID token/Admin proof, no session/browser dependency and no acceptance by Meta/Klaviyo or candidate/product lookup paths. Existing active installation and selected account/scopes/credential rechecks remain.",
@@ -363,7 +363,7 @@
     "configuration": "New default-closed ADSTABLE_GOOGLE_RAW_CAPTURE_ENABLED and strict short-lived ADSTABLE_GOOGLE_RAW_CAPTURE_PLAN: target uses the existing exact Google acceptance identity/window validator, plus explicit native limits, storage bounds and finite existing source policy. No values, secrets, keys, roles or quota policies created. Existing runtime/coordinator/source connections and distinct source key must be configured at later approved live-preparation items.",
     "raw_fidelity": "Existing allowlisted collector_projection with decoded_only numeric fidelity and native source references; no new native query, parser, schema or byte-for-byte/full-response claim. Rules stay empty and product identities remain unresolved; no reviewed mapping is created.",
     "verification": {
-      "unit": "25 new browser-free/zero/nonempty/renewal/authority forgery/invalid config/negative/unknown cases; existing provider/renewal regressions unchanged.",
+      "unit": "42 focused HTTP/headless tests, including no-I/O authorization/input rejection and safe response projection; existing provider regressions unchanged.",
       "PostgreSQL": "Existing F01 isolated rehearsal extended with13 headless capture cases, actual runtime/vault/coordinator/source functions and real ciphertext persistence/decryption; native HTTP and credentials synthetic. Prepared renewal migration applied only in outer rollback transaction; historical82 and installed83 ledger/artifact remain unchanged."
     },
     "official_checked_at": "2026-11-04",
@@ -371,7 +371,9 @@
       "https://developers.google.com/merchant/api/reference/rest/products_v1/accounts.products/list",
       "https://developers.google.com/identity/protocols/oauth2/web-server#offline",
       "https://supabase.com/docs/guides/database/connecting-to-postgres",
-      "https://www.postgresql.org/docs/17/explicit-locking.html"
+      "https://www.postgresql.org/docs/17/explicit-locking.html",
+      "https://vercel.com/docs/frameworks/frontend/react-router",
+      "https://reactrouter.com/how-to/resource-routes"
     ],
     "new_migration": false,
     "new_role_or_grant": false,
@@ -383,6 +385,7 @@
     "deploy_authorized": false,
     "hourly_refresh_activated": false,
     "Dataset_writer_activated": false,
-    "package2_complete": false
+    "package2_complete": false,
+    "server_auth": "New separate ADSTABLE_GOOGLE_RAW_CAPTURE_SERVER_SECRET schema only; no value generated or installed. Default-closed flags and short-lived exact plan required before execution. Resource route config maxDuration120, core deadline90; existing Vercel React Router preset used, no hosting/service provisioned."
   }
 }

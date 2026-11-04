@@ -1,3 +1,40 @@
+## 4 Kasım 2026 — ürün sahibiyle kabul edilen saklama kararı
+
+Ürün sahibi tabloyu kabul etti: “Codex mutabikiz. İlerleyen dönemde bunların nasıl
+veri yükü getireceğini de konuşuruz.” Bu kayıt mevcut15'in kaynak/kanıt deposu
+kararıdır; rapor/Dataset tablolarının saklama süresini belirlemez. Uygulama veya
+canlı ayar yetkisi değildir. Makine karşılığı storage contract içindeki
+`accepted_retention_policy_2026_11_04` alanıdır.
+
+| Veri grubu | Kabul edilen süre | Süre sonu koşulu |
+|---|---|---|
+| Şifreli kaynak yanıtları; başarılı boş yanıtlar dahil | 90 gün | Doğrulanmış aktarım ve bağımlılık kontrolünden sonra temizliğe aday |
+| Ürün kimliği, eşleme ve kural sürümleri | Her sürüm için90 gün | Destek kanıtıyla birlikte; saklama güncel kullanım yetkisi değildir |
+| Sipariş, satır, ziyaret ve platform iddiası sürümleri | Her sürüm için90 gün | Mevcut alınan alanlar; aktarım/ilişki kontrolü, yeni sorgu veya iade alanı yok |
+| Kanıt adresleri ve bağlantıları | Destekledikleri kayıtlar kadar | Saklanan tüketici kanıtsız bırakılamaz |
+| Okuma, silme makbuzları ve gerekli denetim izleri | 365 gün | Kaynak içeriği silinse de işlem geçmişi açıklanır; içerik varmış gibi gösterilmez |
+| Belirsiz/tamamlanmamış işlemler | 30 gün içinde inceleme hedefi | Otomatik silme yok; kapatma veya gerekçeli sonlu saklama kararı |
+| Silinen verinin geri gelmesini önleyen asgari fiş | İlgili son yedeğin ömrü +30 gün | İlgili yedeklerden geri gelme olasılığı sona erince temizlik |
+
+Süre sonu tek başına silme izni değildir. Pending aktarım, eksik/belirsiz kaynak
+ve daha uzun yaşayan ilişkili kayıtlar mevcut bağımlılık korumasında kalır.
+Gizlilik silme talepleri rutin saklamadan üstündür. Saklama tarihi ile kanıtın
+güncellik/geçerlilik süresi ayrıdır; eski eşleme taze kanıt olmadan etkinleşmez.
+Belirsiz kayıtlar gerekçesiz ve süresiz uzatılmaz.
+
+Veri yükü, kapasite ve maliyet görüşmesi owner kararıyla ileride yapılacaktır;
+bu karar90 günlük yükün ölçüldüğü, kapasitenin kanıtlandığı veya limitsiz toplama
+izni verildiği anlamına gelmez. Yeni paket/depo, SQL, runtime, izin, OAuth, provider,
+silme worker'ı veya saatlik çalışma bu kayıtla değiştirilmez. Canlı geçici7/30
+günlük politika korunur. Uygulama/canlı ayar/silme ve merge/yayın ayrı kapsamdır.
+
+Resmî kontrol4 Kasım2026: [Supabase backups](https://supabase.com/docs/guides/platform/backups).
+Son yedek ömrü mevcut gerçek yedek envanterinden alınacaktır; proje planına veya
+yedek süresine ilişkin sayı uydurulmaz.30 günlük ek süre AdsTable'ın kabul edilen
+teknik kararıdır, Supabase'in zorunlu tuttuğu bir süre değildir.
+
+---
+
 > 4 Kasım 2026 — owner onaylı üç Google ham veri seti: mevcut17 rapor sorgusu account_performance(9) ve product_performance(8), ayrı Merchant ilişki/katalog kimliğiyle aynı özel raw-capture işine version2 planında bağlanır. Üç zarf aynı operation/job/fence/owner/gün bağına sahiptir; Merchant yokluğu Ads sorgularını engellemez ve ürün0 yapılmaz. Bilinen kayıt sonrası receipt ve şifre çözülmüş sayfa içeriği doğrulanır; ilk hata/unknown sonrası replay yok. Yeni depo/tablo/OAuth ekranı yok. İki dar EXECUTE izni ve yeni commit RPC yalnız prepared SQL/izole prova kapsamındadır, canlıya uygulanmadı.15 gerçek kabulü, canlı ayar/sorgu/yayın/merge ve saatlik refresh açık. Ayrıntı docs/EO_05_GOOGLE_RAW_DATASETS_V2.md.
 
 ## 4 Kasım — tarayıcısız Merchant sunucu girişi analist özeti

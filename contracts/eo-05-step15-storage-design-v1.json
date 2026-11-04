@@ -1023,5 +1023,77 @@
       "live_provider_authorized": false,
       "merge_authorized": false
     }
+  },
+  "accepted_retention_policy_2026_11_04": {
+    "id": "source-retention-owner-agreement-2026-11-04",
+    "status": "owner_accepted_decision_not_implemented",
+    "accepted_at": "2026-11-04",
+    "owner_source": "Codex mutabikiz. İlerleyen dönemde bunların nasıl veri yükü getireceğini de konuşuruz.",
+    "scope": "Source/evidence landing layer only; report Dataset retention is separate.",
+    "class_days": {
+      "raw": 90,
+      "identity": 90,
+      "order": 90,
+      "claim": 90,
+      "metadata": 365
+    },
+    "groups": [
+      {
+        "kind": "encrypted_source_responses",
+        "days": 90
+      },
+      {
+        "kind": "product_identity_mapping_and_rule_versions",
+        "days_per_version": 90
+      },
+      {
+        "kind": "order_line_journey_and_provider_claim_versions",
+        "days_per_version": 90
+      },
+      {
+        "kind": "evidence_references_and_links",
+        "rule": "Retain as long as the records/evidence they support; never strand a retained consumer."
+      },
+      {
+        "kind": "read_and_cleanup_receipts",
+        "days": 365
+      },
+      {
+        "kind": "uncertain_or_incomplete_operations",
+        "review_target_days": 30,
+        "automatic_deletion": false,
+        "extension_requires": "Explicit rationale and finite new deadline; no unexplained indefinite renewal."
+      },
+      {
+        "kind": "erasure_prevention_ledger",
+        "retain_until": "expiry of the last relevant recoverable backup plus 30 days",
+        "backup_inventory_required": true,
+        "assumed_backup_days": null
+      }
+    ],
+    "rules": [
+      "Expiry is cleanup eligibility only, not deletion authority.",
+      "Pending downstream delivery or retained transitive evidence dependencies block ordinary cleanup.",
+      "Retention is not freshness/validity; expired evidence cannot authorize current mapping or reporting.",
+      "Confirmed privacy deletion takes precedence over routine retention and dependency holds.",
+      "Retained metadata does not prove that removed raw payload remains available.",
+      "Source history, deletion evidence and restoration replay rules remain explicit."
+    ],
+    "data_volume_capacity_cost": {
+      "discussion": "deferred_by_explicit_owner_instruction",
+      "measured": false,
+      "capacity_or_unlimited_capture_approval": false
+    },
+    "implementation_authorized": false,
+    "live_policy_changed": false,
+    "automatic_cleanup_enabled": false,
+    "provider_calls_authorized": false,
+    "merge_authorized": false,
+    "deploy_authorized": false,
+    "current_live_temporary_policy": {
+      "raw_days": 7,
+      "metadata_days": 30,
+      "changed_by_this_record": false
+    }
   }
 }

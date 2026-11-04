@@ -96,7 +96,7 @@ export async function metaFirstDayRehearsal(client,{workspace,shopId,shopDomain}
      if(sql==="rollback"){if(!committed){await client.query("rollback to savepoint "+name);await client.query("release savepoint "+name);}await client.query("set local role adstable_owner");return {rows:[]};}
      if(sql.startsWith("select pg_catalog.set_config"))return client.query(sql,args);
      assert.ok(!sql.includes("commit_refresh_preflight"),"private Meta path cannot call generic admission");
-     await client.query("set local role "+role);const result=await client.query(sql,args);await client.query("set local role adstable_owner");lastSql=sql;
+     await client.query("set local role "+role);let result;try{result=await client.query(sql,args);}catch(error){console.error("EO05_META_FIRST_DAY_RPC_STOP "+JSON.stringify({role,rpc:sql.match(/^select ([a-z_]+\.[a-z_]+)/)?.[1]??"profile",code:error.code??"UNCONFIRMED",routine:error.routine,constraint:error.constraint}));throw error;}await client.query("set local role adstable_owner");lastSql=sql;
      if(sql.includes("commit_meta_raw_preflight"))admissionCalls++;return result;
     }};}});}
     const target={operationId,workspaceId:workspace,installGeneration:source.installGeneration,shopId,shopDomain,accountId:"act_101",connectionId:c.id,connectionVersion:Number(c.connection_version),credentialId:c.credential_id,selectionId:source.selectionId,window,expiresAt:new Date(issued+600000).toISOString()};

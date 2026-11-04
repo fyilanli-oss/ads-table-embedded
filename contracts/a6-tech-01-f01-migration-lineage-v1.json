@@ -926,7 +926,7 @@
       "version": "20261104161732",
       "name": "eo05_meta_raw_first_day",
       "file": "supabase/migrations/20261104161732_eo05_meta_raw_first_day.sql",
-      "repository_sql_sha256": "8a8ba4d72b79d370e37fe8f3e9529946985c2315abac64394ff4dd7330672c7b",
+      "repository_sql_sha256": "6f86251d4b9cc55c2f569567c2299d52403f8968b6d6033839e674dd80a2d774",
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false

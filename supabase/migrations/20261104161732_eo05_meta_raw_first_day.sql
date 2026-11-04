@@ -39,7 +39,7 @@ begin
  if additions<>1 then return false;end if;
  select value into selected from jsonb_array_elements(p_state->'claims') c(value)
   where not exists(select 1 from operations.refresh_runs r where r.fence=(c.value->>'fence')::bigint and r.status='running');
- expected_job:=encode(extensions.digest(convert_to('["meta_raw_capture_v1","'||p_operation::text||'","'||q.workspace_id::text||'","'||q.install_generation::text||'","'||q.account_id||'"]','UTF8'),'sha256'),'hex');
+ expected_job:=encode(sha256(convert_to('["meta_raw_capture_v1","'||p_operation::text||'","'||q.workspace_id::text||'","'||q.install_generation::text||'","'||q.account_id||'"]','UTF8')),'hex');
  if selected->>'workspaceId' is distinct from q.workspace_id::text or selected->>'installGeneration' is distinct from q.install_generation::text
   or selected->>'provider' is distinct from 'meta' or selected->>'accountId' is distinct from q.account_id
   or selected->>'id' is distinct from expected_job

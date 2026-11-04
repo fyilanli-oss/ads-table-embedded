@@ -46,7 +46,7 @@ export function googleRawServerFixture(){
   if(sql.includes("token_vault_runtime_guard"))return {rows:[{contract_version:1,used_key_versions:[1]}]};
   if(sql.includes("load_provider_credential_envelope"))return {rows:[{record_id:credential,workspace_id:f.plan.workspaceId,
    install_generation:3,provider:"google_ads",payload_ciphertext:sealed.ciphertext,nonce:sealed.nonce,auth_tag:sealed.authTag,key_version:1,expires_at:token.expires_at}]};
-  if(sql.includes("commit_google_refresh_renewal")){
+  if(sql.includes("commit_google_refresh_renewal")||sql.includes("commit_google_identity_renewal")){
    credential=args[6];sealed={ciphertext:args[9],nonce:args[10],authTag:args[11]};
    f.authority.connectionVersion++;f.source.connectionVersion++;
    return {rows:[{renewal_id:args[0],connection_id:f.plan.connectionId,lifecycle_status:"connected",connection_version:f.authority.connectionVersion,credential_id:credential}]};
@@ -55,7 +55,7 @@ export function googleRawServerFixture(){
   throw Error("Unexpected runtime query");
  }}}};};
  const fetchFn=async(url,init)=>{
-  const u=new URL(url),custom=await hooks.fetch?.(u,init);if(custom)return custom;
+  const u=new URL(url),custom=await hooks.fetch?.(u,init);if(custom){f.http.push(u);return custom;}
   if(u.hostname==="oauth2.googleapis.com"){f.http.push(u);return Response.json({access_token:"SYNTHETIC-NEW",expires_in:3600,token_type:"Bearer",scope:f.f.token.scope});}
   return f.options.fetchFn(url,init);
  };

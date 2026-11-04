@@ -1,0 +1,145 @@
+{
+  "checked_at": "2026-11-04",
+  "base_main": "9fdb49f26b0c5afa02fe2d368afd37e2b073cfd2",
+  "approval": "Owner explicitly approved two limited DB logins/server connections, distinct source encryption and server-call keys, and applying the prepared token renewal SQL. No deploy or Google request authorized.",
+  "renewal": {
+    "applied": true,
+    "repository_version": "20261103221715",
+    "supabase_applied_version": "20261104082306",
+    "name": "eo05_google_refresh_credential_handoff",
+    "sql_sha256": "7ba86b44f662c1b8dd4fc69f196fa149ca4161bc4279da88d073ff8769eef318",
+    "exact_repository_and_applied_hash_match": true,
+    "prior83LedgerUnchanged": true,
+    "ledger_count": 84,
+    "runtimeExecute": true,
+    "publicExecute": false,
+    "coordinatorExecute": false,
+    "receiptColumns": 2
+  },
+  "keys": {
+    "created": [
+      "ADSTABLE_SOURCE_EVIDENCE_ENCRYPTION_KEY_V1",
+      "ADSTABLE_GOOGLE_RAW_CAPTURE_SERVER_SECRET",
+      "ADSTABLE_SOURCE_EVIDENCE_ACTIVE_KEY_VERSION"
+    ],
+    "target": [
+      "production"
+    ],
+    "secretType": "sensitive",
+    "secretValuesRecorded": false,
+    "existingProviderSessionKeysReadOrRotated": false
+  },
+  "connections": {
+    "status": "complete_TLS_and_exact_role_profiles_verified",
+    "host": "aws-1-eu-central-1.pooler.supabase.com",
+    "port": 6543,
+    "database": "postgres",
+    "host_source": "Owner supplied actual Supabase Connect / Transaction pooler screen values",
+    "roles": [
+      {
+        "role": "adstable_google_source_runner",
+        "login": true,
+        "super": false,
+        "inherit": false,
+        "create_db": false,
+        "bypass_rls": false,
+        "create_role": false,
+        "memberships": 0,
+        "replication": false
+      },
+      {
+        "role": "adstable_refresh_coordinator",
+        "login": true,
+        "super": false,
+        "inherit": false,
+        "create_db": false,
+        "bypass_rls": false,
+        "create_role": false,
+        "memberships": 0,
+        "replication": false
+      }
+    ],
+    "role_function_grants_unchanged": true,
+    "credentialsGenerated": true,
+    "URLCreated": true,
+    "passwords": "Two independently generated 256-bit passwords; SCRAM-SHA-256 verifiers configured in one guarded administrative transaction; no plaintext/verifier recorded in repository or migration ledger",
+    "secretTarget": [
+      "production"
+    ],
+    "settings": [
+      {
+        "key": "ADSTABLE_GOOGLE_SOURCE_DATABASE_URL",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ]
+      },
+      {
+        "key": "ADSTABLE_GOOGLE_SOURCE_DB_TIMEOUT_MS",
+        "type": "plain",
+        "target": [
+          "production"
+        ]
+      },
+      {
+        "key": "ADSTABLE_GOOGLE_ACCEPTANCE_COORDINATOR_DATABASE_URL",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ]
+      },
+      {
+        "key": "ADSTABLE_GOOGLE_ACCEPTANCE_COORDINATOR_DB_TIMEOUT_MS",
+        "type": "plain",
+        "target": [
+          "production"
+        ]
+      },
+      {
+        "key": "ADSTABLE_SOURCE_EVIDENCE_ENCRYPTION_KEY_V1",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ]
+      },
+      {
+        "key": "ADSTABLE_GOOGLE_RAW_CAPTURE_SERVER_SECRET",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ]
+      },
+      {
+        "key": "ADSTABLE_SOURCE_EVIDENCE_ACTIVE_KEY_VERSION",
+        "type": "plain",
+        "target": [
+          "production"
+        ]
+      }
+    ],
+    "verification": {
+      "connection_verification": [
+        {
+          "role": "adstable_google_source_runner",
+          "connected": true,
+          "TLS_certificate_verified": true,
+          "profile_ready": true
+        },
+        {
+          "role": "adstable_refresh_coordinator",
+          "connected": true,
+          "TLS_certificate_verified": true,
+          "profile_ready": true
+        }
+      ],
+      "native_provider_calls": 0,
+      "database_writes": 0
+    },
+    "verification_origin": "Existing local coding environment, actual TLS PostgreSQL connection to supplied transaction pooler; deployed-server execution awaits separately authorized publication"
+  },
+  "deployment_performed": false,
+  "google_request_performed": false,
+  "data_collection_started": false,
+  "three_approved_live_items_complete": true,
+  "remaining_deployment_and_native_call_requires_separate_approval": true
+}

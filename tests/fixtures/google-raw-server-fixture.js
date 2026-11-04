@@ -5,6 +5,7 @@ import {createTokenEnvelopeCipher,readProviderTokenKeyring} from "../../app/lib/
 
 export function googleRawServerFixture(){
  const f=googleAcceptanceFixture(),key=()=>randomBytes(32).toString("base64url"),hooks={},calls=[];
+ for(const vector of [f.budget.global,...f.budget.providers.map(x=>x.limit),...f.budget.workspaces.map(x=>x.limit),...f.budget.accounts.map(x=>x.limit)])vector.dbWrites=4096;
  const environment={...f.options.environment,ADSTABLE_GOOGLE_RAW_CAPTURE_ENABLED:"true",
   ADSTABLE_RUNTIME_DATABASE_URL:"postgresql://adstable_runtime.podpwkrpmjiksskxhwsu:"+"r".repeat(32)+"@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require",
   ADSTABLE_SOURCE_EVIDENCE_ACTIVE_KEY_VERSION:"1",ADSTABLE_SOURCE_EVIDENCE_ENCRYPTION_KEY_V1:key(),

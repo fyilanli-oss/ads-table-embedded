@@ -36,6 +36,11 @@
   ],
   "allowedProviderProtocolTokenOccurrences": [
     {
+      "file": "app/lib/refresh/google-raw-server.server.js",
+      "token": "acceptance",
+      "reason": "Owner-approved 2026-11-04 raw-only headless server entry reuses existing Google plan validation, fixed work cost and narrow coordinator adapter by their existing module names. No HTTP/product route, browser mode, UI or live activation is introduced; boundary remains app/lib server process only."
+    },
+    {
       "file": "app/lib/providers/meta-graph.server.js",
       "token": "debug",
       "reason": "official_Meta_debug_token_protocol_endpoint_not_a_product_or_operator_route"
@@ -86,6 +91,8 @@
     "server.js"
   ],
   "allowedEnvironmentKeys": [
+    "ADSTABLE_GOOGLE_RAW_CAPTURE_ENABLED",
+    "ADSTABLE_GOOGLE_RAW_CAPTURE_PLAN",
     "CRON_SECRET",
     "ADSTABLE_REFRESH_QUEUE_MODE",
     "ADSTABLE_REFRESH_QUEUE_GENERATION",

@@ -18,7 +18,7 @@ export function createGoogleRawReader({environment,verified,tokenVault,execution
  const env={...environment},scope=structuredClone(execution),c=structuredClone(configuration),l=c?.limits,s=c?.storageLimits;
  if(!c||Object.keys(c).sort().join()!=="limits,merchantId,sourcePolicy,storageLimits"||scope?.claim?.provider!=="google_ads"
   ||!l||Object.keys(l).sort().join()!=="maxBytes,maxElapsedMs,maxLinkPages,maxLinks,maxPages,maxRows"
-  ||Object.values(l).some(v=>!Number.isSafeInteger(v)||v<1)||l.maxBytes>16777216||l.maxElapsedMs>60000
+  ||Object.values(l).some(v=>!Number.isSafeInteger(v)||v<1)||l.maxBytes>16777216||l.maxElapsedMs>60000||l.maxPages!==1||l.maxLinkPages!==1
   ||["maxPages","maxRows","maxLinks","maxLinkPages"].some(k=>l[k]>1000)
   ||!s||Object.keys(s).sort().join()!=="maxBytes,maxRows"||!Number.isSafeInteger(s.maxRows)||s.maxRows<1||s.maxRows>1000
   ||!Number.isSafeInteger(s.maxBytes)||s.maxBytes<1||s.maxBytes>16777216)fail();

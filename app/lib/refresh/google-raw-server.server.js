@@ -30,6 +30,7 @@ export function readGoogleRawCapturePlan(environment,now=Date.now()) {
  const l=p.limits,s=p.storageLimits;
  if(!exact(l,["maxBytes","maxElapsedMs","maxLinkPages","maxLinks","maxPages","maxRows"])
   ||Object.values(l).some(v=>!Number.isSafeInteger(v)||v<1)||l.maxElapsedMs>60000||l.maxBytes>GOOGLE_ACCEPTANCE_WORK_COST.bytes
+  ||l.maxPages!==1||l.maxLinkPages!==1
   ||["maxPages","maxRows","maxLinks","maxLinkPages"].some(k=>l[k]>1000)
   ||!exact(s,["maxRows","maxBytes"])||!Number.isSafeInteger(s.maxRows)||s.maxRows<1||s.maxRows>GOOGLE_ACCEPTANCE_WORK_COST.rows
   ||!Number.isSafeInteger(s.maxBytes)||s.maxBytes<1||s.maxBytes>GOOGLE_ACCEPTANCE_WORK_COST.bytes)fail();
@@ -61,6 +62,12 @@ export function createGoogleRawCaptureExecution({environment,operationId,signal,
   if(args.length||used||closed)throw Error("GOOGLE_RAW_CAPTURE_EXECUTION_USED");used=true;running=true;
   const controller=new AbortController(),forward=()=>controller.abort();signal?.addEventListener("abort",forward,{once:true});if(signal?.aborted)forward();
   const start=now(),deadline=Math.min(start+90000,Date.parse(p.expiresAt)),timer=setTimeout(forward,Math.max(1,deadline-start));
+  // Reserve both native observations and the bounded encrypted write. These are
+  // derived worst-case costs of this single plan, never provider quota defaults.
+  const cost={...GOOGLE_ACCEPTANCE_WORK_COST,
+   rows:configuration.limits.maxRows+2*configuration.limits.maxLinks+configuration.storageLimits.maxRows,
+   bytes:configuration.limits.maxBytes+configuration.storageLimits.maxBytes,
+   dbWrites:GOOGLE_ACCEPTANCE_WORK_COST.dbWrites+2*configuration.storageLimits.maxRows+2};
   let claim,phase=null,admissionSent=false,paused=false,captured=null,renewal=null;
   const current=()=>{const t=now();return !controller.signal.aborted&&Number.isSafeInteger(t)&&t>=start&&t<deadline;};
   const stopped=(reason)=>Object.freeze({status:captured?.status==="unconfirmed"||captured?.sourceStored===true?"unconfirmed":"stopped",reason,sourceStored:captured?captured.sourceStored:false,
@@ -88,7 +95,7 @@ export function createGoogleRawCaptureExecution({environment,operationId,signal,
    const source=candidates[0],jobId=createHash("sha256").update(JSON.stringify(["google_raw_capture_v1",p.operationId,p.workspaceId,p.installGeneration,p.accountId])).digest("hex");
    const proposal=planRefreshPreflightAdmissions({...snapshot,now:now(),candidates:[{id:jobId,workspaceId:p.workspaceId,installGeneration:p.installGeneration,
     provider:"google_ads",accountId:p.accountId,scheduledHour:source.scheduledHour,queuedAt:source.queuedAt,workClass:"bootstrap",
-    cost:GOOGLE_ACCEPTANCE_WORK_COST,authority:{installationVerified:true,connected:true,setupComplete:true,allowedWindow:true}}]});
+    cost,authority:{installationVerified:true,connected:true,setupComplete:true,allowedWindow:true}}]});
    if(proposal.status!=="proposed")return stopped("admission_waiting");
    if(!current()||deadline-now()<80000)return stopped("stopped_before_call");
    admissionSent=true;

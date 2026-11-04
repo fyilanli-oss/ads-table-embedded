@@ -34,7 +34,7 @@ test("background owner cannot be supplied as JSON or reused for Meta authority",
  assert.throws(()=>createIdentityRuntimeAuthorityLoader({verified:v,provider:"meta",database:{query(){}},tokenVault:{loadProviderTokenSet(){}}}),/VERIFIED_CALLER/);
 });
 
-for(const mode of ["disabled","expired_plan","extra_plan","wrong_operation","missing_source_key","too_many_bytes","unknown_policy"])
+for(const mode of ["disabled","expired_plan","extra_plan","wrong_operation","missing_source_key","too_many_bytes","unknown_policy","product_pagination","link_pagination"])
  test("invalid headless configuration performs no I/O: "+mode,()=>{
  const x=googleRawServerFixture();let options=x.options;
  if(mode==="disabled")x.environment.ADSTABLE_GOOGLE_RAW_CAPTURE_ENABLED="false";
@@ -44,6 +44,8 @@ for(const mode of ["disabled","expired_plan","extra_plan","wrong_operation","mis
  if(mode==="missing_source_key")delete x.environment.ADSTABLE_SOURCE_EVIDENCE_ENCRYPTION_KEY_V1;
  if(mode==="too_many_bytes")x.plan.limits.maxBytes=1048577;
  if(mode==="unknown_policy")delete x.plan.sourcePolicy.raw;
+ if(mode==="product_pagination")x.plan.limits.maxPages=2;
+ if(mode==="link_pagination")x.plan.limits.maxLinkPages=2;
  x.setPlan();assert.throws(()=>createGoogleRawCaptureExecution(options));assert.equal(x.calls.length,0);assert.equal(x.f.http.length,0);
  if(mode==="disabled")assert.equal(readGoogleRawCapturePlan(x.environment),null);
 });
@@ -65,7 +67,10 @@ for(const mode of ["owner_missing","identity_drift","config_missing","missing_me
  const r=await createGoogleRawCaptureExecution(x.options).run();assert.notEqual(r.status,"stored",JSON.stringify(r));
  assert.equal(r.recordCount,null);assert.equal(r.empty,null);assert.equal(r.DatasetWritePerformed,false);
  assert.ok(x.calls.filter(c=>c.sql.includes("commit_google_identity_source")).length<=1);
- if(mode==="lost_source")assert.equal(r.sourceStored,null);
+ if(mode==="lost_source"){
+  assert.equal(r.sourceStored,null);
+  assert.equal(x.calls.filter(c=>c.sql.includes("read_source_receipt")).length,0,"unknown write must not trigger automatic inspection");
+ }
  if(mode==="readback_missing"){assert.equal(r.sourceStored,true);assert.equal(r.receiptVerified,false);}
  if(["owner_missing","identity_drift","config_missing","lost_admission","abort"].includes(mode))assert.equal(x.f.http.length,0);
  assert.doesNotMatch(JSON.stringify(r),/SYNTHETIC|ciphertext|access_token|refresh_token/);

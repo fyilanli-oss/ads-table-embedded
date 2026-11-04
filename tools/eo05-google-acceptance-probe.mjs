@@ -37,7 +37,7 @@ export async function googleAcceptanceRehearsal(client,{workspace,shopId,shopDom
     const c=(await client.query("update integrations.provider_connections set granted_scopes=$2 where workspace_id=$1 and provider='google_ads' returning id,credential_id,connection_version",[workspace,scopes])).rows[0];
     const installation=(await client.query("select id::text from shopify.installations where workspace_id=$1 and status='active'",[workspace])).rows[0];
     const store=createRefreshWorkRepository(client);
-    const vector={requests:10,dbWrites:128,connections:6,rows:2000,bytes:4194304};
+    const vector={requests:10,dbWrites:rawCapture?4096:128,connections:6,rows:2000,bytes:4194304};
     const budget={global:vector,interactiveReserve:{requests:1,dbWrites:8,connections:1,rows:0,bytes:131072},providers:[{provider:"google_ads",limit:vector}],
      workspaces:[{workspaceId:workspace,limit:vector}],accounts:[{provider:"google_ads",accountId:"111",limit:vector}]};
     await client.query("update operations.refresh_control set budget=$1::jsonb,bounds=$2::jsonb where singleton",[JSON.stringify(budget),JSON.stringify({maxCandidates:8,maxClaims:8,maxAdmissions:1,maxWorkspaces:8})]);

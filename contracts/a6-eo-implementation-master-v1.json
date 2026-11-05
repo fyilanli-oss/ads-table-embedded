@@ -3888,5 +3888,29 @@
       "https://developers.klaviyo.com/en/reference/query_flow_values",
       "https://developers.klaviyo.com/en/reference/get_events"
     ]
+  },
+  "Step15_retention_application_preparation_2026_11_04": {
+    "status": "prepared_code_SQL_isolated_tests_requires_CI_and_separate_merge",
+    "owner_approval": "Onaylıyorum after concrete new-write90/365 duration, controlled existing-row SQL preserving receipts, isolated normal-vs-privacy deletion tests, one PR; no live apply/delete/cron/merge/deploy.",
+    "base_main": "585c9b020864435b3f03a904a21d65fd1c12565e",
+    "policy_version": "source-retention-90-365-v1",
+    "new_write_anchor": "immutable write preparation now, elapsed UTC days; not reporting day, deployment day or access refresh",
+    "existing_row_anchor": "recorded_at; extend only under expected exact row deadline, no expired/pruned resurrection",
+    "source_days": 90,
+    "metadata_days": 365,
+    "privacy_precedes_normal_retention": true,
+    "existing_receipt_cipher_and_validity_unchanged": true,
+    "migration": "supabase/migrations/20261104213905_eo05_source_retention_policy.sql",
+    "tests": [
+      "tests/source-retention-policy-permission.test.js",
+      "tools/eo05-source-retention-policy-probe.mjs",
+      "tools/eo05-source-retention-probe.mjs"
+    ],
+    "live_policy_changed": false,
+    "automatic_cleanup_enabled": false,
+    "provider_calls_authorized": false,
+    "merge_authorized": false,
+    "deploy_authorized": false,
+    "klaviyo_native_performance_acceptance": "open_environment_not_ready_shopify_metrics_absent_owner_accepted"
   }
 }

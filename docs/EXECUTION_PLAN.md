@@ -4658,3 +4658,8 @@ Zarflara SQL kaynaklı gün/saat dilimi/bağlantı başlangıcı ve bağlantı �
 ### 4 Kasım 2026 — 15 / Klaviyo ham sorgu zarfları
 
 Açık somut owner onayıyla mevcut Klaviyo sorgularının üç şifreli kaynak zarfına bağlanması, receipt/decrypt doğrulaması, dar hazırlanmış SQL/NOLOGIN rolü, izole test ve tek PR hazırlanır. Ayrıntı: [Klaviyo ham veri brief](EO_05_KLAVIYO_RAW_DATASETS_V1.md). Eksik metrikler sıfır değildir; OAuth ekranları/token yenileme protokolü değişmez. Bu kayıt canlı SQL, ayar, provider çağrısı, yayın veya merge onayı değildir. Saklama kararı Meta ve Klaviyo canlı kabulünden sonra uygulanır.
+
+
+### 4 Kasım 2026 — 15 / normal saklama ve zorunlu silme
+
+Somut owner onayıyla90/365 günün her yeni kaynak yazımına bağlanması, mevcut kayıtlar için eski makbuzu/şifreyi koruyan beklenen-kayıt kontrollü SQL ve rutin/zorunlu silme ayrımı testleri hazırlanır. Aynı kaynak deposu kullanılır. Ayrıntı: docs/EO_05_STEP15_STORAGE_DESIGN_BRIEF.md son bölümü ve master Step15_retention_application_preparation_2026_11_04. Normal temizliği aktarım/kanıt ilişkileri engelleyebilir; zorunlu gizlilik silmesini engelleyemez. Canlı ayar/SQL, gerçek silme, cron, provider çağrısı, merge ve yayın onayı yoktur. Klaviyo native performans kabulü Shopify metrikleri beklediği için açık kalır; bu sınır owner tarafından kabul edildi.

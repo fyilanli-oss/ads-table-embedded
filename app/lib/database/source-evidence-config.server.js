@@ -1,3 +1,4 @@
+import {readSourceRetentionDurationPolicy} from "./source-retention-policy.server.js";
 import {createSourceEvidenceCipher} from "./source-evidence-store.server.js";
 import {readProviderTokenKeyring} from "../oauth/token-envelope.server.js";
 import {readSessionEncryptionKey} from "../shopify/session-envelope.server.js";
@@ -25,6 +26,8 @@ export function createConfiguredSourceEvidenceCipher(environment) {
 
 export function readSourceStoragePolicy(input,now) {
  try{
+  if(!Number.isSafeInteger(now))fail();
+  if(input&&Object.hasOwn(input,"version"))return readSourceRetentionDurationPolicy(input);
   const p=structuredClone(input),kinds=["claim","identity","metadata","order","raw"];
   if(!p||Object.keys(p).sort().join()!==kinds.join()||!Number.isSafeInteger(now))fail();
   for(const kind of kinds){const row=p[kind];

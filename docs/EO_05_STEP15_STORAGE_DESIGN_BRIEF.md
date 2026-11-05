@@ -720,3 +720,17 @@ Resmî kontrol tarihi2 Kasım2026: [Supabase tablolar](https://supabase.com/docs
 Supabase changelog.md araçta desteklenmeyen text/markdown biçimi nedeniyle okunamadı;
 alternatif rota denenmedi. Tam changelog kontrolü uygulama öncesi açık kalır. Kaynaklar
 mekanizmaları açıklar; bu AdsTable modelini veya canlı kapasiteyi onaylamaz.
+
+## 4 Kasım 2026 — süre uygulaması ve zorunlu silme ayrımı: kod/test hazırlığı
+
+Ürün sahibi üç somut işi onayladı: yeni yazımlara90/365 günlük hesap bağlamak, mevcut kayıtların sürelerini eski kanıtı bozmadan güncelleyecek SQL hazırlamak ve rutin/zorunlu silme ayrımını izole test etmek. Bu yeni depo veya paket değildir. Canlı uygulama, gerçek silme, otomatik temizlik, merge ve yayın ayrı açık onay ister.
+
+Yeni sourcePolicy biçimi yalnız source-retention-90-365-v1 sürümü ve tam raw/identity/order/claim90, metadata365 gün matrisini kabul eder. readSourceStoragePolicy süre tarifini korur; ortak prepareSourceWrite bunu her hazırlanmış yazımın now anında tek kez UTC geçen günlere çevirir. Eski mutlak tarihler sessizce uzatılmaz; aynı kaydın okunması veya kullanılması ömrünü yenilemez. Bu başlangıç rapor günü veya OAuth tarihi değildir; kayıt hazırlama anıdır. Mevcut expired planlar açılmaz; yeni biçimin canlıya seçilmesi ayrı yetkidir.
+
+Mevcut kayıtlar için evidence.apply_source_retention_policy yalnız adstable_owner tarafından; tek workspace/installation/generation, açık operationId, beklenen tür/ID/eski tarih listesi (en çok1000 kayıt), on dakikadan kısa son süre ve atomik denetim makbuzuyla çağrılır. Kayıtların recorded_at zamanından90/365 gün hesaplar; mevcut daha uzun süreyi kısaltmaz. Süresi geçmiş, silinmiş, privacy-invalidated veya kanıtı eksik kayıt diriltilmez. Aktif silme/veri talebi sırasında çalışmaz. Orijinal request_digest, commitId/manifest, şifreli içerik ve geçerlilik/handoff değişmez. Yeni makbuz yalnız sayım ve işlemle tuzlanmış değişiklik özeti içerir; kaynak ID veya veri içeriği taşımaz. Kaybolan yanıtta otomatik yeniden deneme yok; ayrı scoped inspect_source_retention_policy sonucu kontrol edilir.
+
+Normal süre bitimi temizlik adaylığıdır: complete+consumed, ilişki ve bağımlılık korumaları sürer. Zorunlu shop/redact ve Delete my Data ayrı mevcut executor üzerinden bu süreleri/teslim beklemesini beklemez. Mağaza silinince kurulum üzerindeki yeni politika makbuzu da kalkar.365 gün, kişisel/mağazaya bağlı denetim verisini silme talebinden muaf tutmaz. Doğrulanmış silme ve yedekten geri dönüş engeli normal saklamadan üstündür. Yedek ömrü varsayılmaz; silme defterinin sonlu politikası ve restore kabulü kendi mevcut açık kapısında kalır.
+
+Resmî belgeler4Kasım2026: [Shopify privacy](https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance) shop/redact bildirimini kaldırmadan48 saat sonra gönderir; bildirim alındıktan sonraki30 gün içinde tamamlanma gerekir.48 saat bir silme tamamlama taahhüdü değildir. [Supabase changelog](https://supabase.com/changelog) CLI3 değişikliği incelendi; mevcut2.121.0 sabit sürüm korundu. [PostgreSQL zaman işlemleri](https://www.postgresql.org/docs/current/functions-datetime.html): geçen24 saatlik günler kullanılır, DST ile takvim günü farkı saklama süresini değiştirmez.
+
+Hazırlanan migration: supabase/migrations/20261104213905_eo05_source_retention_policy.sql. Yeni grant, cron, provider isteği, token/izin veya UI değişikliği yok. Klaviyo native performans kabulü Shopify metrikleri yokluğu nedeniyle açık; saklama hazırlığı bunu başarılı sorgu kabulüne çevirmez.

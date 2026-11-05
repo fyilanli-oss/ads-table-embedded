@@ -17,6 +17,8 @@ export async function privacySourceWorkerProbe(client,connection,environment){
   await client.query(prepared('supabase/migrations/20261105111527_eo05_private_customer_source_worker.sql'));
   await client.query('reset role');
   await client.query(prepared('tools/sql/eo05-privacy-source-role-install.sql'));
+  // Isolated rollback-only harness membership, never part of the role installer.
+  await client.query('grant adstable_privacy_source_runner to postgres with inherit false, set true, admin false');
   await client.query('set local role adstable_privacy_source_runner');
   const profile=(await client.query(PRIVACY_SOURCE_ROLE_CHECK_SQL,[rpc.map(x=>x[1])])).rows[0];
   assert.equal(profile.profile_ready,true);assert.equal(profile.role,'adstable_privacy_source_runner');

@@ -1738,7 +1738,7 @@
       "tools/eo05-meta-first-day-probe.mjs": "54759310dd8a25fbacd710ef3ed130e62a862d498b8e81b2e1ebd7d9154e4abe",
       "tools/eo05-meta-raw-datasets-probe.mjs": "edf8ec0ed2e9c5b854f4f5c3c54fd96478f777ef92140d0afbba9152613df3a1",
       "tools/eo05-meta-source-capture-probe.mjs": "a8cea28c2c80ced0436fe660dd201b73351d02336a4a3bcba5540cb63f2135b4",
-      "tools/eo05-privacy-source-worker-probe.mjs": "2ad67fbad8867fd13bd2c8c7b94adf7cc11546018fe7ce5aa2c199267e07ef24",
+      "tools/eo05-privacy-source-worker-probe.mjs": "c120d7f57b50390e8da14c4975994759a662dd87333bb6dbaaee36eec4e0adfd",
       "tools/eo05-quota-authority-probe.mjs": "50c1b31cafb78cc774f7ed62af849d79136f39519375076e53f4eac896a2fdd5",
       "tools/eo05-quota-feedback-probe.mjs": "42b9cf4d7d32ffb4199462f6f04aa13dbff99f33f9b403b388628fff6b73ae5c",
       "tools/eo05-quota-scope-resolver-probe.mjs": "d48bc100b2a59bb081a04a1b033c73f67ee724a480f3d927063204367200b6b8",

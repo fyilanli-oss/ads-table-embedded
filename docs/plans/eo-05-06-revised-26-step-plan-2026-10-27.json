@@ -256,7 +256,7 @@
       "work": "Google Shopping/PMax rol sınıflandırıcısını esas ürün satış raporuna bağlamak.",
       "boundary": "Mevcut kod tamamlanacak; normal lead/cross-sell kapsamı korunacak. Gerçek veri doğrulaması ayrıca yapılacak.",
       "addition": "",
-      "status": "Eksik bağlantı kodlanacak; gerçek veri kabulü ayrıca yapılacak.",
+      "status": "5 Kasım: Shopping/PMax sınıflandırıcısı bağımsız ürün satış çıktısına ve gerçek yazma öncesi işleyiciye bağlandı; izole testli kod/PR hazırlığı. Zorunlu CI ve ayrı merge onayı beklenir; gerçek satış verisi kabulü ayrıca yapılacak.",
       "package": "EO-05-B"
     },
     {
@@ -973,5 +973,9 @@
     "status": "closed_current_implementation_scope_with_named_deferrals_and_environment_holds",
     "next_step": 16,
     "next_step_started": false
+  },
+  "Step16_google_sales_role_binding_2026_11_05": {
+    "reference": "contracts/a6-eo-implementation-master-v1.json#Step16_google_sales_role_binding_2026_11_05",
+    "status": "repository_prepared_pending_required_CI_and_owner_merge_native_acceptance_separate"
   }
 }

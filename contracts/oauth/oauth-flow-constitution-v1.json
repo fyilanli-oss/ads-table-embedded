@@ -1366,9 +1366,10 @@
       "app/lib/providers/google-pmax-source-links.server.js": "4ea497071d5c49f23c56acf0cba85af39c8c58b457449717e2f16976af629773",
       "app/lib/providers/google-product-identity-reader.server.js": "ada44bab4f0b2b9b3a2938927fe2c850cea2a0bfd6e3b228b11d53198e60f534",
       "app/lib/providers/google-product-identity-resolution.server.js": "e3ec98f132a4379c2abca55e930d46c9e58989254a2ac2269356205059224ec3",
+      "app/lib/providers/google-product-sales.server.js": "42e54198a0a2b2752c818c5eb1fae3ff8820657402ad1bac4e15126447ee1a39",
       "app/lib/providers/google-raw-projection.server.js": "1c7f06a2eaa7e603fd90a1404a97e262ed70821af125a607442947aa435fb643",
-      "app/lib/providers/google-reporting-authority.server.d.ts": "ef95d310d6f2b79582f508ddfab7c7007d668ac3f014843f51e0d22ce004670a",
-      "app/lib/providers/google-reporting-authority.server.js": "08b4584c390093ab78fe56389eb9fb237b54e1bc18553ff833f597518d60c860",
+      "app/lib/providers/google-reporting-authority.server.d.ts": "c37c5216ba36379e09a5dfdeb3749ebc65e00825f4b3132de1a15b0d0ff8aa95",
+      "app/lib/providers/google-reporting-authority.server.js": "6b572c92c202930f5fdbd707e04ebcc3e43b9f6515620e80a35a99f5c7aca5ad",
       "app/lib/providers/google-reporting.server.d.ts": "df376bc7e210315d6eba7ece87a0169fea96dc86d0c53c3ef628dda0a762994a",
       "app/lib/providers/google-reporting.server.js": "c7f5e83f1015ed2cb5694df8b8674e595307f1de3d74785c20e2b04bc64ca7e7",
       "app/lib/providers/google-source-candidates.server.js": "6335720b3e58274e833b343a6d3c4c3a8a51c41b473507632647fa652ff4dba3",
@@ -1471,8 +1472,8 @@
       "app/lib/refresh/meta-raw-request.server.js": "051410814e2f50462e848b47b24b1423599e046a7cfc3d69e67f3f13b1bd33cf",
       "app/lib/refresh/meta-raw-server.server.js": "8da974d7829ad7c7c89d08e49fb6c6493fa1c649bd42ef287f1f0871673511ef",
       "app/lib/refresh/native-inventory.server.js": "5d67e8642f4032b90c154b12c43da8c92945d8b223c0494e1c82974739b8b5c6",
-      "app/lib/refresh/pd-prewrite-chunk.server.js": "e785217006c44059831ba733db7ecdc933775d58dee7c2cabbc4d92a8e96f6ef",
-      "app/lib/refresh/pd-source-reader.server.js": "e39b2aa31abd98311380a9b08ae976f024931086de5dc46c3d2dd0a6c8ec6138",
+      "app/lib/refresh/pd-prewrite-chunk.server.js": "1834ec96c0aff7f54fa58a2142c15165da686680a2645caee33cc064282d0453",
+      "app/lib/refresh/pd-source-reader.server.js": "c37e5c0af3046822632f7fbf1669af32556b677e177063eaaccc6b31c7d9f5d9",
       "app/lib/refresh/preflight-bridge.server.js": "c327e4aca31e102f00edde808d88f06bfde3d87d3acfe5168158229db69acd7d",
       "app/lib/refresh/queue-check.server.js": "4795afa7149373d342860a4428b6028252ff475a77716dc2bcba363a2b9105e6",
       "app/lib/refresh/queue-cron-entry.server.d.ts": "7f78161c378a99cf8c52a905a4a23ebc026fe81fba929d74d2a5104b491efe7b",
@@ -1566,12 +1567,12 @@
       "app/routes/settings.provider-live-evidence.ts": "89fbcb7087fc480fefba708bbc730146f1ba41af48d98f1b0a10fe1427120495",
       "app/routes/webhooks.shopify.tsx": "eac0ea30fcca28d6bba3c11105a5c4fda7778d1398c23f21fcb02f717d8bd056",
       "app/shopify.server.ts": "cc5959867dd5c413b222d51c4aad7d9a39c7c3d15e590aada86a1ddfefdc6fad",
-      "contracts/a6-eo-implementation-master-v1.json": "13c436b8c5f77d4b690874ad70effbaba133c7ed7baa3aec94406bb4128963e8",
+      "contracts/a6-eo-implementation-master-v1.json": "639f8e6ad46306652b7e263be27b4d147f459aabbcff41e3def7e24135b4919f",
       "contracts/eo-05-oauth-setup-permission-policy-v1.json": "c1914f91011464d3b16b4b0a7710e49878ce6dbb57427e3d0f7c68d9ec4ec681",
       "contracts/eo-05-permission-explanation-design-v1.json": "ad4753b9ad4a6becd14764b7b33fb917f0cc491ad774cc1f1fe9053c5f189f35",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
       "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md": "c602fd4d7760e8f32c109e1f0456907c739c12906d71becf88476cad2007d6a1",
-      "docs/EXECUTION_PLAN.md": "2e65b54904c9798f58aa79802fa9e2c9c5dffc79dbc5bbfb2c0043a1f208c525",
+      "docs/EXECUTION_PLAN.md": "cad5ef84833f5425382f0412c61c966d5bc292955a0da79d3c833cf34c48eb54",
       "docs/OAUTH_FLOW_CONSTITUTION.md": "74d7a8f327a9558712c3ac8bb54a6633fff7a7e2045405d236d35f265d124b28",
       "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md": "49e253b08959faa9f0b2bf208ed5eb6d3c078a0ddf9097e667a9bf1483dc7350",
       "package.json": "e46285b3a60421e8c338807d7b606afa17f16303b08a2832bed3222a06183fe8",
@@ -3133,6 +3134,38 @@
         "contracts/oauth/oauth-flow-constitution-v1.json",
         "docs/EXECUTION_PLAN.md",
         "tests/a6-docs-01-turkish-standardization.test.js"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "visual_acceptance": "not_applicable_no_UI_change"
+    },
+    {
+      "id": "step16-google-sales-role-binding-2026-11-05",
+      "date": "2026-11-05",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Onaylıyorum Codex, 16. madde için açıkladığın kod, test ve PR çalışmasına başlayalım. Concrete scope: existing Shopping/PMax classifier to independent main sales output, preserve native metrics/provenance, isolated tests and one PR only."
+      },
+      "rationale": "Bind existing Google Cart Data roles to the fenced reader and actual prewrite output. No OAuth UI/permission/account/Reporting Account/token behavior change, provider call, SQL/config, deploy or merge.",
+      "scope": {
+        "runtime_code": true,
+        "live_provider": false,
+        "merge": false,
+        "deploy": false
+      },
+      "changed_paths": [
+        "app/lib/providers/google-product-sales.server.js",
+        "app/lib/providers/google-reporting-authority.server.d.ts",
+        "app/lib/providers/google-reporting-authority.server.js",
+        "app/lib/refresh/pd-prewrite-chunk.server.js",
+        "app/lib/refresh/pd-source-reader.server.js",
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "docs/EXECUTION_PLAN.md"
       ],
       "acceptance_required": [
         "required_CI",

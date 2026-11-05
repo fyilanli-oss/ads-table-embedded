@@ -265,24 +265,42 @@ export function createGoogleReportingAuthorityRuntime({
         reporting_account_currency: context.reportingAccount.currency, reporting_account_timezone: context.reportingAccount.timezone,
       }), results: Object.freeze(results), source_links: sourceLinks, publishable: false});
     },
-    async readShoppingSourceEvidenceSnapshot({installationAuthority, dateWindow}) {
-      const installation = owner(installationAuthority);
-      buildGoogleReportingQueries({dateWindow});
-      const context = await prepareEvidenceExecution({installationAuthority});
-      const results = {};
-      // The scoped cart report replaces, never adds to, the general cart report here.
-      for (const family of ["ad_group_channel_daily", "shopping_product_daily", "shopping_cart_data_product_sales_daily"]) {
-        results[family] = await collect(context, family, dateWindow);
-      }
-      const sourceLinks = buildGoogleShoppingSourceLinks({scope: {
-        workspace_id: installation.workspaceId, install_generation: installation.installGeneration,
-        connection_id: context.connection.connectionId, reporting_account_id: context.reportingAccount.id,
-      }, dateWindow, pdRows: results.ad_group_channel_daily.rows,
-      productRows: results.shopping_product_daily.rows, saleRows: results.shopping_cart_data_product_sales_daily.rows});
-      return Object.freeze({provider: PROVIDER, authority: Object.freeze({
-        connection_id: context.connection.connectionId, reporting_account_id: context.reportingAccount.id,
-        reporting_account_currency: context.reportingAccount.currency, reporting_account_timezone: context.reportingAccount.timezone,
-      }), results: Object.freeze(results), source_links: sourceLinks, publishable: false});
+    async readShoppingSourceEvidenceSnapshot({installationAuthority, dateWindow, limits = null, signal, maxElapsedMs = 120000, ...extra}) {
+      if (Object.keys(extra).length || limits !== null && (!limits
+        || !["maxPages", "maxRows", "maxBytes"].every(k => Number.isSafeInteger(limits[k]) && limits[k] > 0)
+        || limits.maxPages > 20 || limits.maxRows > 20_000 || dateWindow?.start !== dateWindow?.end))
+        throw new GoogleReportingError("GOOGLE_SHOPPING_SOURCE_INPUT_INVALID", "Invalid Shopping read bounds");
+      const bounds = limits === null ? null : Object.freeze({...limits});
+      dateWindow = Object.freeze({...dateWindow});
+      return runIdentityReadDeadline({signal, timeoutMs: maxElapsedMs, run: async attemptSignal => {
+        const check = () => {if (attemptSignal.aborted) throw new GoogleReportingError("GOOGLE_SHOPPING_SOURCE_ABORTED", "Shopping source read stopped");};
+        check();
+        const installation = owner(installationAuthority);
+        buildGoogleReportingQueries({dateWindow});
+        const context = await prepareEvidenceExecution({installationAuthority});
+        check();
+        const results = {}; let rows = 0, bytes = 0;
+        // The scoped cart report replaces, never adds to, the general cart report here.
+        for (const family of ["ad_group_channel_daily", "shopping_product_daily", "shopping_cart_data_product_sales_daily"]) {
+          results[family] = await collect(context, family, dateWindow, bounds ? {...bounds,
+            maxRows: bounds.maxRows - rows, maxBytes: bounds.maxBytes - bytes} : null, false, check);
+          rows += results[family].rows.length; bytes = Buffer.byteLength(JSON.stringify(results), "utf8");
+          if (bounds && bytes > bounds.maxBytes) throw new GoogleReportingError("GOOGLE_SHOPPING_SOURCE_BOUND_EXCEEDED", "Shopping result bound exceeded");
+        }
+        const sourceLinks = buildGoogleShoppingSourceLinks({scope: {
+          workspace_id: installation.workspaceId, install_generation: installation.installGeneration,
+          connection_id: context.connection.connectionId, reporting_account_id: context.reportingAccount.id,
+        }, dateWindow, pdRows: results.ad_group_channel_daily.rows,
+        productRows: results.shopping_product_daily.rows, saleRows: results.shopping_cart_data_product_sales_daily.rows});
+        const snapshot = {provider: PROVIDER, date_window: dateWindow, authority: Object.freeze({
+          connection_id: context.connection.connectionId, reporting_account_id: context.reportingAccount.id,
+          reporting_account_currency: context.reportingAccount.currency, reporting_account_timezone: context.reportingAccount.timezone,
+        }), results: Object.freeze(results), source_links: sourceLinks, publishable: false};
+        if (bounds && Buffer.byteLength(JSON.stringify(snapshot), "utf8") > bounds.maxBytes)
+          throw new GoogleReportingError("GOOGLE_SHOPPING_SOURCE_BOUND_EXCEEDED", "Shopping result bound exceeded");
+        check();
+        return Object.freeze(snapshot);
+      }});
     },
     async readEvidencePage({
       installationAuthority,

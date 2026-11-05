@@ -1,3 +1,15 @@
+## 5 Kasım 2026 — 16: Google satış rollerinin ana çıktıya bağlanması
+
+Ürün sahibi, 16 için açıklanan kod, test ve tek PR çalışmasını açıkça onayladı. Shopping ve PMax satışları mevcut sınıflandırıcıdan geçerek ana okuyucunun ve yazma öncesi işleyicinin ayrı ürün satış çıktısına bağlandı. Her satırda rol, yerel adet/tutar, ham satır ve sorgu/sayfa/yanıt referansı korunur. PD toplamlarıyla birleştirme, maliyet dağıtma veya ürün kimliği tahmini yapılmaz.
+
+Shopping mevcut üç kaynak sorgusunu sınırlı biçimde kullanır; PMax mevcut okumasını yeniden kullanır. Bu bağlantı yalnız sunucunun açık seçeneğiyle çalışır. normal ve all_* ayrımı değişmez; toplam adet ile lead/cross-sell parçaları üst üste eklenmez. Kanıt eksik veya çelişkiliyse mevcut Unclassified/Assisted davranışı korunur. PMax Channel eksikliği ayrı gösterilir; tarihsel Listing Tree işi22'de duraklatılmış kalır.
+
+İzole testler rol ve değişmeyen metrikler, kaynak/sayfa referansı, boş başarılı sonuç, ilk hata durma, yetki değişimi, süre/veri sınırları ve gerçek ana işleyici teslimini kapsar. Son yetki veya doğrulama geçmezse satış çıktısı teslim edilmez. Test verisi gerçek satış kabulü sayılmaz. Zorunlu CI ve ayrı merge onayı beklenir; canlı istek, SQL/config, OAuth ekranı/izin/token davranışı veya deploy bu çalışmaya dahil değildir.
+
+Kalıcı Dataset/rapor yazımı23'te; Search17, Meta18, Klaviyo19 ve ortak kontroller20'de kalır. Yeni paket/alt paket açılmadı.
+Resmî kaynak kontrolü5 Kasım2026: [Google Shopping reporting](https://developers.google.com/google-ads/api/docs/shopping-ads/reporting), [PMax retail reporting](https://developers.google.com/google-ads/api/performance-max/retail-reporting). API sürümü değiştirilmedi.
+Bağlayıcı kayıt: contracts/a6-eo-implementation-master-v1.json#Step16_google_sales_role_binding_2026_11_05.
+
 ## 5 Kasım 2026 — 15’in kabul edilen geliştirme kapsamı kapandı
 
 Ürün sahibi, “15’te yeni geliştirme işi kalmadı; PR335 ve kapanış kaydı” açıklamasından sonra “Tamam onaylıyorum” dedi. Mevcut15'in kaynak/kanıt deposu geliştirme kapsamı kapalıdır. Sonraki numara16’dır; bu kayıt16'yı veya başka paketi başlatmaz. Yeni iş/alt paket açılmadı. Kapanış, açıkça ertelenen işleri veya gerçek kayıt/ortam yokluğundan kanıtlanamayan native senaryoları PASS yapmaz.

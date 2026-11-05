@@ -136,8 +136,17 @@
     "purpose": "independent_Shopify_sales_with_separate_Shopify_and_provider_attribution",
     "fourth_ad_provider_added": false,
     "source_population": "all_authorized_orders_not_only_paid_ad_labelled_orders",
-    "logical_order_key": ["workspace_id", "shop_identity", "Shopify_Order_ID"],
-    "logical_line_key": ["workspace_id", "shop_identity", "Shopify_Order_ID", "Shopify_LineItem_ID"],
+    "logical_order_key": [
+      "workspace_id",
+      "shop_identity",
+      "Shopify_Order_ID"
+    ],
+    "logical_line_key": [
+      "workspace_id",
+      "shop_identity",
+      "Shopify_Order_ID",
+      "Shopify_LineItem_ID"
+    ],
     "product_or_variant_id_is_order_dedup_key": false,
     "replay_or_update_counts_as_new_sale": false,
     "refund_cancel_edit_reconciliation": "required_in_EO05B_before_sales_totals_acceptance",
@@ -149,7 +158,13 @@
     "MarketingEvent_remoteId_equals_native_ad_or_message_id": "unproven_no_automatic_join",
     "exact_overlap": "requires_readable_provider_claim_and_verified_same_Shopify_order_identity",
     "aggregate_difference_is_exact_overlap": false,
-    "comparison_basis": ["business_date_and_reporting_time_basis", "currency_and_FX", "order_count_vs_product_units", "discount_tax_shipping_and_refunds", "attribution_model_window_and_maturity"],
+    "comparison_basis": [
+      "business_date_and_reporting_time_basis",
+      "currency_and_FX",
+      "order_count_vs_product_units",
+      "discount_tax_shipping_and_refunds",
+      "attribution_model_window_and_maturity"
+    ],
     "permission_review": {
       "read_orders": "required_for_proposed_orders_and_journey_feature_merchant_consent_and_app_access_review_pending",
       "read_all_orders": "conditional_for_more_than_60_days_with_applicable_Shopify_approval",
@@ -188,10 +203,23 @@
   "authority": "accepted_query_targets_not_provider_support_or_completed_runtime_proof",
   "adapter_contract_version": "3.0.0",
   "pd_metrics": [
-    "impression", "ad_click", "spend_value", "add_to_cart", "add_to_cart_value",
-    "checkout", "checkout_value", "purchase", "purchase_value"
+    "impression",
+    "ad_click",
+    "spend_value",
+    "add_to_cart",
+    "add_to_cart_value",
+    "checkout",
+    "checkout_value",
+    "purchase",
+    "purchase_value"
   ],
-  "cpd_metric_columns": ["Impression", "Click", "Spend", "Satış adedi / türü", "Satış değeri / türü"],
+  "cpd_metric_columns": [
+    "Impression",
+    "Click",
+    "Spend",
+    "Satış adedi / türü",
+    "Satış değeri / türü"
+  ],
   "fact_boundaries": {
     "pd": "provider_leaf_performance_and_ancestor_rollups",
     "cpd_product_performance": "native_product_delivery_and_cost_not_a_copy_of_pd_leaf",
@@ -201,15 +229,105 @@
     "same_native_fact_counted_twice_across_product_families": false,
     "pd_cost_copied_to_every_product": false,
     "physical_dataset_schema_selected": false,
-    "implementation_items": ["17", "18", "19", "20"]
+    "implementation_items": [
+      "17",
+      "18",
+      "19",
+      "20"
+    ]
   },
   "hierarchy_targets": [
-    {"provider": "meta", "flow": "ads", "levels": ["campaign", "adset", "ad"], "channel_key": "ad_id", "native_source_reference_implemented_item": "04", "pending_join_items": ["04"]},
-    {"provider": "google_ads", "flow": "search", "levels": ["campaign", "ad_group", "ad"], "pd_leaf_key": "ad_id", "channel_key": "ad_group_id", "implemented_query_items": ["06"], "native_source_reference_implemented_item": "12", "pending_join_items": ["12"]},
-    {"provider": "google_ads", "flow": "shopping", "levels": ["campaign", "ad_group"], "channel_key": "ad_group_id", "implemented_query_items": ["07"], "native_source_reference_implemented_item": "09", "pending_join_items": ["09"]},
-    {"provider": "google_ads", "flow": "retail_pmax", "levels": ["campaign", "asset_group"], "channel_key": "asset_group_id", "implemented_query_items": ["07"], "pending_join_items": ["10", "11"], "product_owner_reconfirmation_required_before_next_pmax_work": true},
-    {"provider": "klaviyo", "flow": "campaign", "levels": ["campaign", "campaign_message"], "channel_key": "campaign_message_id", "implemented_mapping_items": ["13", "14"]},
-    {"provider": "klaviyo", "flow": "flow", "levels": ["flow", "flow_message"], "channel_key": "flow_message_id", "implemented_mapping_items": ["13", "14"]}
+    {
+      "provider": "meta",
+      "flow": "ads",
+      "levels": [
+        "campaign",
+        "adset",
+        "ad"
+      ],
+      "channel_key": "ad_id",
+      "native_source_reference_implemented_item": "04",
+      "pending_join_items": [
+        "04"
+      ]
+    },
+    {
+      "provider": "google_ads",
+      "flow": "search",
+      "levels": [
+        "campaign",
+        "ad_group",
+        "ad"
+      ],
+      "pd_leaf_key": "ad_id",
+      "channel_key": "ad_group_id",
+      "implemented_query_items": [
+        "06"
+      ],
+      "native_source_reference_implemented_item": "12",
+      "pending_join_items": [
+        "12"
+      ]
+    },
+    {
+      "provider": "google_ads",
+      "flow": "shopping",
+      "levels": [
+        "campaign",
+        "ad_group"
+      ],
+      "channel_key": "ad_group_id",
+      "implemented_query_items": [
+        "07"
+      ],
+      "native_source_reference_implemented_item": "09",
+      "pending_join_items": [
+        "09"
+      ]
+    },
+    {
+      "provider": "google_ads",
+      "flow": "retail_pmax",
+      "levels": [
+        "campaign",
+        "asset_group"
+      ],
+      "channel_key": "asset_group_id",
+      "implemented_query_items": [
+        "07"
+      ],
+      "pending_join_items": [
+        "10",
+        "11"
+      ],
+      "product_owner_reconfirmation_required_before_next_pmax_work": true
+    },
+    {
+      "provider": "klaviyo",
+      "flow": "campaign",
+      "levels": [
+        "campaign",
+        "campaign_message"
+      ],
+      "channel_key": "campaign_message_id",
+      "implemented_mapping_items": [
+        "13",
+        "14"
+      ]
+    },
+    {
+      "provider": "klaviyo",
+      "flow": "flow",
+      "levels": [
+        "flow",
+        "flow_message"
+      ],
+      "channel_key": "flow_message_id",
+      "implemented_mapping_items": [
+        "13",
+        "14"
+      ]
+    }
   ],
   "pd_composition_review": {
     "inventory_item": "17",
@@ -218,7 +336,10 @@
       "runtime": "app/lib/providers/pd-canonical-bridge.server.js",
       "entrypoint": "bridgePdSourceToCanonical",
       "repository_implemented": true,
-      "tested_composer_inputs": ["google_ads", "klaviyo"],
+      "tested_composer_inputs": [
+        "google_ads",
+        "klaviyo"
+      ],
       "expected_scope_and_enrichment_scope_required": true,
       "same_scope_guard_called": true,
       "native_metric_lineage_must_resolve": true,
@@ -305,12 +426,32 @@
           ]
         },
         "family_pairs": [
-          ["search_ad_channel_daily", "search_ad_conversion_action_daily"],
-          ["ad_group_channel_daily", "shopping_ad_group_conversion_action_daily"],
-          ["pmax_asset_group_channel_daily", "pmax_asset_group_conversion_action_daily"]
+          [
+            "search_ad_channel_daily",
+            "search_ad_conversion_action_daily"
+          ],
+          [
+            "ad_group_channel_daily",
+            "shopping_ad_group_conversion_action_daily"
+          ],
+          [
+            "pmax_asset_group_channel_daily",
+            "pmax_asset_group_conversion_action_daily"
+          ]
         ],
-        "performance_metrics": ["impression", "ad_click", "spend_value"],
-        "conversion_metrics": ["add_to_cart", "add_to_cart_value", "checkout", "checkout_value", "purchase", "purchase_value"],
+        "performance_metrics": [
+          "impression",
+          "ad_click",
+          "spend_value"
+        ],
+        "conversion_metrics": [
+          "add_to_cart",
+          "add_to_cart_value",
+          "checkout",
+          "checkout_value",
+          "purchase",
+          "purchase_value"
+        ],
         "conversion_detail_identity": "native_conversion_action_and_category_retained_until_verified_reduction",
         "reduction_of_multiple_conversion_actions": "requires_complete_unique_disjoint_source_detail_not_blind_sum",
         "performance_conversions_or_campaign_helper_as_purchase_fallback": false,
@@ -351,7 +492,10 @@
         "delivery_and_purchase_source": "Placed Order",
         "add_to_cart_source": "Added to Cart",
         "checkout_source": "Checkout Started",
-        "detail_checks": ["send_channel", "variation"],
+        "detail_checks": [
+          "send_channel",
+          "variation"
+        ],
         "detail_policy": "preserve_native_detail_no_message_totals_joined_to_each_variation",
         "variation_is_channel": false,
         "ordered_product_events_as_pd_fallback": false,
@@ -376,10 +520,10 @@
     "publishable": false,
     "items_18_19_closed": false,
     "deferred_items": {
-      "05": "four_meta_fields_retained_semantics_and_roles_pending_real_data",
       "15": "Klaviyo_advertised_cross_sell_investigation_closed_by_owner_2026_10_26_keep_Assisted_Triggered",
-      "10_11": "product_asset_group_link_open_google_support_reply_pending_history_still_paused",
-      "16": "physical_identity_mapping_remains_EO05B"
+      "16": "physical_identity_mapping_remains_EO05B",
+      "05": "four_meta_fields_retained_semantics_and_roles_pending_real_data",
+      "10_11": "product_asset_group_link_open_google_support_reply_pending_history_still_paused"
     },
     "acceptance": "source_composition_and_canonical_bridge_repository_only_native_enrichment_orchestration_rollup_and_live_acceptance_not_complete"
   },
@@ -388,10 +532,18 @@
     "parent_plus_child_double_count": false,
     "campaign_conversion_action_helper_is_hierarchy_level": false,
     "klaviyo_variation_is_channel": false,
-    "implementation_items": ["17", "18", "19", "21"]
+    "implementation_items": [
+      "17",
+      "18",
+      "19",
+      "21"
+    ]
   },
   "hierarchy_channel_review": {
-    "inventory_items": ["18", "19"],
+    "inventory_items": [
+      "18",
+      "19"
+    ],
     "status": "design_proposed_for_owner_review_not_runtime_implemented",
     "compatibility_basis": "pd_composition_review.compatibility_checks_plus_metric_specific_source_coverage",
     "pd_rollup": {
@@ -463,9 +615,21 @@
     "persistence_package": "A6-EO-05-B"
   },
   "source_link_design": {
-    "inventory_items": ["04", "09", "10", "11", "12", "16"],
+    "inventory_items": [
+      "04",
+      "09",
+      "10",
+      "11",
+      "12",
+      "16"
+    ],
     "status": "joint_design_recorded_meta_shopping_and_search_native_references_only",
-    "scope": ["workspace", "installation_generation", "provider", "verified_reporting_account"],
+    "scope": [
+      "workspace",
+      "installation_generation",
+      "provider",
+      "verified_reporting_account"
+    ],
     "native_reference": "same_native_leaf_and_business_date_with_consistent_ancestor_ids",
     "names_are_join_keys": false,
     "pd_and_cpd": "independent_native_families_linked_by_references_not_metric_copy",
@@ -475,8 +639,15 @@
     "meta": {
       "inventory_item": "04",
       "implemented": "readDailyEvidenceSnapshot.source_links_after_both_families_complete",
-      "key": ["account_id", "ad_id", "date_start_equals_date_stop"],
-      "ancestor_checks": ["campaign_id", "adset_id"],
+      "key": [
+        "account_id",
+        "ad_id",
+        "date_start_equals_date_stop"
+      ],
+      "ancestor_checks": [
+        "campaign_id",
+        "adset_id"
+      ],
       "duplicate_pd_ad_day": "ambiguous_no_selected_row",
       "hierarchy_conflict": "conflicting_no_selected_row",
       "product_identity": "native_product_id_preserved_catalog_and_shopify_mapping_pending",
@@ -485,8 +656,10 @@
       "publishable": false
     },
     "google_ads": {
-      "09": "scoped_shopping_cart_query_and_complete_snapshot_native_ad_group_reference_repository_implemented_live_pending",
       "10": "v25_shopping_performance_view_has_no_asset_group_segment_direct_link_not_implemented",
+      "11": "historical_pmax_listing_work_paused_no_capture_persistence_or_resolver_integration_started",
+      "12": "owner_changed_search_cpd_channel_to_ad_group_pd_ad_preserved_native_reference_repository_implemented_live_pending",
+      "09": "scoped_shopping_cart_query_and_complete_snapshot_native_ad_group_reference_repository_implemented_live_pending",
       "product_performance_query_split": {
         "shopping": "shopping_product_daily_shopping_only_with_ad_group",
         "retail_pmax": "pmax_product_daily_pmax_only_without_ad_group_or_asset_group",
@@ -496,8 +669,6 @@
         "new_family_added_to_live_trigger": false,
         "live_acceptance": "pending"
       },
-      "11": "historical_pmax_listing_work_paused_no_capture_persistence_or_resolver_integration_started",
-      "12": "owner_changed_search_cpd_channel_to_ad_group_pd_ad_preserved_native_reference_repository_implemented_live_pending",
       "new_google_query_in_this_slice": true,
       "new_query_family": "shopping_cart_data_product_sales_daily",
       "entrypoint": "readShoppingSourceEvidenceSnapshot",
@@ -525,7 +696,13 @@
       "new_attribution_or_product_interaction_path": false
     },
     "identity_design_item_16": {
-      "logical_mapping_scope": ["workspace", "provider", "verified_account", "catalog_or_feed_context", "native_product_id"],
+      "logical_mapping_scope": [
+        "workspace",
+        "provider",
+        "verified_account",
+        "catalog_or_feed_context",
+        "native_product_id"
+      ],
       "reporting_identity": "shopify_product_id",
       "variant_identity": "optional_source_detail_verified_belongs_to_product",
       "required_proof": "official_integration_source_and_verified_shopify_product_variant_relationship",
@@ -545,11 +722,19 @@
     "pd_mapping_scope": "website_pixel_action_types_only_no_omni_fallback",
     "pd_mapping_live_acceptance": "pending",
     "cpd_product_fields_target": [
-      "impressions", "clicks", "spend", "converted_product_quantity", "converted_product_value",
-      "converted_promoted_product_quantity", "converted_promoted_product_value"
+      "impressions",
+      "clicks",
+      "spend",
+      "converted_product_quantity",
+      "converted_product_value",
+      "converted_promoted_product_quantity",
+      "converted_promoted_product_value"
     ],
     "promoted_fields_default_query_implemented_item": "02",
-    "sales_role_proof_pending_items": ["05", "24"],
+    "sales_role_proof_pending_items": [
+      "05",
+      "24"
+    ],
     "empty_product_response_proves_support_or_zero": false,
     "pd_actions_and_action_values_mapping_complete": true,
     "current_official_docs_check": "read_in_browser_2026-10-23_user_authorized_after_HTTP_429",
@@ -558,17 +743,36 @@
   "google_ads": {
     "inventory_item": "08",
     "scope_decision": "normal",
-    "pd_purchase": {"count": "conversions", "value": "conversions_value", "filter": "purchase_conversion_action_required"},
-    "cpd_sales": {"quantity": "units_sold", "value": "revenue_micros"},
-    "cpd_role_fields": ["lead_units_sold", "lead_revenue_micros", "cross_sell_units_sold", "cross_sell_revenue_micros"],
+    "pd_purchase": {
+      "count": "conversions",
+      "value": "conversions_value",
+      "filter": "purchase_conversion_action_required"
+    },
+    "cpd_sales": {
+      "quantity": "units_sold",
+      "value": "revenue_micros"
+    },
+    "cpd_role_fields": [
+      "lead_units_sold",
+      "lead_revenue_micros",
+      "cross_sell_units_sold",
+      "cross_sell_revenue_micros"
+    ],
     "all_fields_policy": "raw_only_never_add_or_use_as_missing_normal_fallback",
     "normal_mapping_and_acceptance_complete": false,
-    "leaf_queries_and_per_family_projections_implemented_items": ["06", "07", "08"],
+    "leaf_queries_and_per_family_projections_implemented_items": [
+      "06",
+      "07",
+      "08"
+    ],
     "combined_pd_publication_and_live_acceptance": "pending_later_gates",
     "historical_pmax_gate": "paused_work_not_reopened_by_this_contract"
   },
   "klaviyo": {
-    "pd_repository_implemented_items": ["13", "14"],
+    "pd_repository_implemented_items": [
+      "13",
+      "14"
+    ],
     "pd_entrypoint": "readPdEvidenceSnapshot",
     "live_acceptance_and_combined_dataset": "pending",
     "pd_impression_target": "delivered",
@@ -1146,5 +1350,57 @@
     "step15_started": false,
     "step22_resumed": false,
     "Overlap_work_started": false
+  },
+  "Step16_google_sales_role_binding_2026_11_05": {
+    "reference": "contracts/a6-eo-implementation-master-v1.json#Step16_google_sales_role_binding_2026_11_05",
+    "status": "repository_prepared_pending_required_CI_and_owner_merge_native_acceptance_separate",
+    "ordered_plan_step": 16,
+    "package": "EO-05-B",
+    "base_main": "12e6b30ae3036b5c1def130eb6cf81b8bd390d97",
+    "owner_approval": {
+      "explicit": true,
+      "source": "Onaylıyorum Codex, 16. madde için açıkladığın kod, test ve PR çalışmasına başlayalım."
+    },
+    "scope": "Existing Google Shopping/PMax Cart Data classifier connected to independent product_sales output of the private fenced reader and actual prewrite chunk; one code/test/PR delivery.",
+    "entrypoints": [
+      "createRefreshPdSourceReader({googlePd:{flow:shopping|retail_pmax,includeProductSales:true},...})",
+      "runRefreshPdPrewriteChunk({worker,source})"
+    ],
+    "runtime_details": [
+      "Server-owned opt-in only; Shopping uses existing three source families with combined row/byte/page/deadline bounds; retail PMax reuses existing googlePmax source read and requires that explicit option.",
+      "One output row per scoped cart row; existing normalizeGoogleCartDataSale unchanged; normal six metrics remain native strings/numbers/null, no FX or sales aggregation.",
+      "all_* remains raw evidence; units_sold is never added to lead/cross-sell components; general cart family is not added to scoped cart.",
+      "Each row retains full native row, family/query fingerprint/source row/page-local index/request ID and existing Channel source link; unresolved PMax Channel does not erase separately evidenced sales role.",
+      "Main handoff carries separate product_sales only after successful awaiting_dataset and private source review; failed final authority/entitlement/byte bounds cannot promote sales.",
+      "PD metrics and canonical rows remain separate; no cost allocation, product mapping, Listing Tree historical loader, Dataset writer, scheduler or report publication."
+    ],
+    "tests": "tests/pd-source-reader.test.js: Shopping/PMax roles including Assisted/Unclassified, missing/conflicting/zero/all-only evidence, exact native quantities/revenue, mutation detachment, paginated provenance, empty successful read, first error stop, authority drift, limits/cancellation, actual worker output and blocked promotion.",
+    "official_documentation": {
+      "checked_on": "2026-11-05",
+      "sources": [
+        "https://developers.google.com/google-ads/api/docs/shopping-ads/reporting",
+        "https://developers.google.com/google-ads/api/performance-max/retail-reporting",
+        "https://developers.google.com/google-ads/api/fields/v25/shopping_performance_view"
+      ],
+      "api_upgrade": false,
+      "runtime_api": "v25"
+    },
+    "acceptance_boundaries": {
+      "native_positive_sales": false,
+      "UI_changed": false,
+      "OAuth_behavior_changed": false,
+      "live_provider_called": false,
+      "SQL_or_live_config_changed": false,
+      "deploy_authorized": false,
+      "merge_authorized": false
+    },
+    "remaining_existing_steps": {
+      "Search": 17,
+      "Meta": 18,
+      "Klaviyo": 19,
+      "shared_checks": 20,
+      "historical_listing_tree": "22 remains paused",
+      "Dataset_and_report_persistence": 23
+    }
   }
 }

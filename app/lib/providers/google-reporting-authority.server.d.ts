@@ -46,6 +46,9 @@ export function createGoogleReportingAuthorityRuntime(input: {
       status: "active";
     };
     dateWindow: {start: string; end: string};
+    limits?: {maxPages: number; maxRows: number; maxBytes: number};
+    signal?: AbortSignal;
+    maxElapsedMs?: number;
   }): Promise<Readonly<Record<string, any>>>;
   readSearchSourceEvidenceSnapshot(input: {
     installationAuthority: {

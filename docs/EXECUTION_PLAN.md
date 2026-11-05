@@ -1,3 +1,15 @@
+## 5 Kasım 2026 — müşteri talebinde kanıtlı boş sonuç ve özel işleyici bağlantısı
+
+Ürün sahibi; doğrulanmış Shopify sipariş kapsamının mevcut gizlilik yoluna bağlanmasını, ilgili kayıt bulunmadığı kanıtlanırsa no_customer_data sonucunu, yalnız ilgili kayıtların silinmesini ve dolu veri paylaşma talebinin teslim yapılmadan kapanmamasını kod/hazır SQL/izole test/tek PR kapsamında onayladı. Yeni müşteri profili, UI/indirme/e-posta/teslim kanalı veya provider sorgusu yoktur.
+
+Tamamen boş kaynak deposunda mevcut SQL kuyruğu yalnız geçerli doğrulanmış kapsamla no_customer_data tamamlar; yeni tamamlama trigger’ı sipariş silme özetlerini korur ve açık sipariş listesini temizler. Eksik kapsamda işlem atomik durur. Tamamlanmış talebin özel runtime üzerinden tekrarı mevcut makbuzu döndürür. Mevcut webhook runtime’ı orders_requested/orders_to_redact kapsamını korur. sourcePrivacy açıkça yapılandırılmış yetkili özel sunucu runtime’ında executeDeletionRun, müşteri taleplerini mevcut sınırlı snapshot/deşifre/projeksiyon/tamamlama yoluna gönderir. Tüm-kurulum silmesi eski yoldadır. Kanıtı eksik, çözülemeyen veya bilinmeyen aileler sıfır sayılmaz. Tanınan Google/Meta toplu reklam sayfaları yalnız sabit üretici şeması/aile/alan/sorgu biçimiyle değerlendirilir.
+
+İstenen siparişin yapılandırılmış veya ham kaydı yoksa teslim makbuzu uydurmadan no_customer_data yazılabilir. Kayıt varsa mevcut atomik dar silme diğer siparişleri korur; dolu veri paylaşma talebi makbuz olmadan tamamlanmaz. Teslim makbuzunun gerçek yetkili üreticisi/teslim kanalı bu hazırlıkla kurulmuş sayılmaz.
+
+Canlı sınır: mevcut veritabanı cron’u şifre çözemez ve kaynak bulunan taleplerde güvenli inceleme kapısını korur. Bu PR cron’un özel JavaScript yolunu otomatik çalıştırdığı iddiasında değildir. Özel çalıştırıcının canlı bağlantısı/yetkisi, çağrılması ve kabulü ayrıca açıktır. Migration yalnız hazırlanmıştır; mevcut uygulama rolüne dar doğrulanmış-kapsam claim RPC iznini tarif eder, kaynak snapshot/tamamlama/tür fonksiyonları owner-only kalır. Canlı grant, silme, ayar, yayın veya merge yapılmaz. Yedekten dönüş EO-08-C ertelemesi, 23 Dataset sınırı ve kalan 15 kabul koşulları değişmez.
+
+Bağlayıcı kayıt: contracts/a6-eo-implementation-master-v1.json#Step15_customer_request_completion_2026_11_05. Resmî kaynaklar 5 Kasım 2026: [Shopify privacy](https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance), [Supabase functions](https://supabase.com/docs/guides/database/functions).
+
 ## 5 Kasım 2026 — yedekleme ve yedekten dönüş kabulünün EO-08-C’ye ertelenmesi
 
 Ürün sahibi, yedekleme kurulumunu ve yedekten dönüşte silinen verilerin yeniden kullanıma açılmasını engelleyen çalışmanın tamamlanmasını mevcut 15. madde sırasından alıp mevcut **A6-EO-08-C — Failure injection and rollback rehearsal** başlığına erteledi. Yeni paket veya alt paket açılmadı. Bu işler tamamlanmış/PASS sayılmaz; diğer 15. madde kabul koşulları kendiliğinden kapanmaz.

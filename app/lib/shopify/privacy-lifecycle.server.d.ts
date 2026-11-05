@@ -33,4 +33,6 @@ export interface PrivacyLifecycleRuntime {
 export function createPrivacyLifecycleRuntime(options?: {
   database?: unknown;
   repository?: PrivacyLifecycleRepository;
+  customerSourceScope?: boolean;
+  sourcePrivacy?: {cipher: {open(input: unknown): unknown; seal(input: unknown): unknown}} | null;
 }): PrivacyLifecycleRuntime;

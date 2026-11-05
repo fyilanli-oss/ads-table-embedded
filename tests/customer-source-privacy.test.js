@@ -6,6 +6,8 @@ import {sourcePayloadHash} from '../app/lib/database/source-evidence-store.serve
 import {prepareCustomerSourceRun,completeCustomerSourceRun} from '../app/lib/database/customer-source-privacy.server.js';
 import {verifyShopifyWebhookRequest} from '../app/lib/shopify/privacy-webhook.server.js';
 import {createPrivacyLifecycleRepository} from '../app/lib/database/privacy-lifecycle-repository.server.js';
+import {createPrivacyLifecycleRuntime} from '../app/lib/shopify/privacy-lifecycle.server.js';
+import {buildGoogleReportingQueries} from '../app/lib/providers/google-reporting.server.js';
 const gid=n=>'gid://shopify/Order/'+n;
 function fixture(kind='customer_redact'){
  const {input}=sourceStoreFixture(),runId=randomUUID(),attempt=randomUUID();
@@ -99,4 +101,55 @@ test('customer source: a numeric Klaviyo reference is not assumed to be the Shop
 test('scope persistence: fabricated verified flag or copied claim cannot provide source scope',async()=>{
  const claim=await webhook({orders_to_redact:[101]});let calls=0;const repo=createPrivacyLifecycleRepository({query:async()=>{calls++;throw Error('must not execute');}},{customerSourceScope:true});
  await assert.rejects(repo.claimWebhook(structuredClone(claim)),/VERIFIED_SOURCE_REQUEST_SCOPE_REQUIRED/);assert.equal(calls,0);
+});
+
+test('customer source: a non-matching requested order completes without a fabricated delivery receipt',async()=>{
+ for(const kind of ['customer_data_request','customer_redact']){
+  const f=fixture(kind);f.snapshot.scope.orders=[gid(999)];
+  const run=await f.prepare();assert.equal(run.noCustomerData,true);
+  await completeCustomerSourceRun({database:f.database,preparedRun:run});
+  const changes=JSON.parse(f.calls[1].args[2]);
+  assert.deepEqual(changes,{pages:[],removedReferences:[],matchedSourceRecords:0});
+  assert.equal(f.calls[1].args[3],null);
+ }
+});
+test('customer source: missing proof cannot become no data even when indexed orders do not match',async()=>{
+ const f=fixture('customer_data_request');f.snapshot.scope.orders=[gid(999)];f.snapshot.pages[0].available=false;
+ await assert.rejects(f.prepare(),/PROOF_UNAVAILABLE/);assert.equal(f.calls.length,1);
+});
+test('customer source: a redacted flag cannot hide unknown unindexed content as no data',async()=>{
+ const f=fixture('customer_data_request');f.snapshot.orders=[];f.snapshot.references=[];
+ const batch=f.snapshot.batches[0],page=f.input.cipher.seal({owner:f.input.owner,attemptId:batch.attempt_id,ordinal:0,
+  page:f.snapshot.pages[0],payload:{records:[],redacted:true,other:{orderId:gid(101)}}});
+ f.snapshot.pages=[{...page,id:'1',batchId:'1',available:true}];await assert.rejects(f.prepare(),/REDACTED_PROOF_INVALID/);
+});
+test('customer source: current fixed Google aggregate reports do not force a customer-data result',async()=>{
+ const f=fixture('customer_data_request'),query=buildGoogleReportingQueries({dateWindow:{start:'2026-01-01',end:'2026-01-01'}}).account_identity;
+ const fields=/^SELECT\s+([\s\S]+?)\s+FROM\s/i.exec(query)[1].split(',').map(s=>s.trim());
+ const payload={family:'account_identity',ordinal:0,query,requestId:null,records:[{fields:[{field:'customer.id',value:'123'}]}],selectedFields:fields,hasNextPage:false,declaredTotal:null};
+ const batch=f.snapshot.batches[0];const page=f.input.cipher.seal({owner:f.input.owner,attemptId:batch.attempt_id,ordinal:0,
+  page:{family:'account_identity',ordinal:0,origin:'google_ads',captureLayer:'native_response_projection',numericFidelity:'lossless_token',fieldCoverage:fields,schemaVersion:'google-raw-datasets-v2',sanitizerVersion:'google-query-fields-v1'},payload});
+ f.snapshot.pages=[{...page,id:'1',batchId:'1',available:true}];f.snapshot.references=[];f.snapshot.orders=[];
+ const run=await f.prepare();assert.equal(run.noCustomerData,true);await completeCustomerSourceRun({database:f.database,preparedRun:run});
+ const lookalike=f.input.cipher.seal({owner:f.input.owner,attemptId:batch.attempt_id,ordinal:0,page:{...page,captureLayer:'collector_projection'},payload});
+ f.snapshot.pages=[{...lookalike,id:'1',batchId:'1',available:true}];await assert.rejects(f.prepare(),/FAMILY_UNSUPPORTED/);
+ // An unreviewed field under a familiar report label is held, never called empty.
+ payload.selectedFields.push('customer.email');payload.records[0].fields.push({field:'customer.email',value:'private@example.com'});
+ const bad=f.input.cipher.seal({owner:f.input.owner,attemptId:batch.attempt_id,ordinal:0,page,payload});
+ f.snapshot.pages=[{...bad,id:'1',batchId:'1',available:true}];await assert.rejects(f.prepare(),/FAMILY_UNSUPPORTED/);
+});
+test('privacy runtime: real verified customer ingress keeps scope without needing a source decryption key',async()=>{
+ let sql,args;const runtime=createPrivacyLifecycleRuntime({database:{async query(s,a){sql=s;args=a;return {rows:[{claim_id:randomUUID(),workspace_id:randomUUID(),install_generation:'1',outcome:'queued',duplicate:false}]};}}});
+ await runtime.claimVerifiedWebhook(await webhook({orders_requested:[101]},'customers/data_request'));
+ assert.match(sql,/claim_shopify_customer_webhook/);assert.deepEqual(JSON.parse(args[10]),{version:1,orders:[gid(101)]});
+});
+test('privacy runtime: configured private executor handles no-data/redact and holds non-empty disclosure',async()=>{
+ for(const mode of ['no_data','redact','disclose']){
+  const f=fixture(mode==='redact'?'customer_redact':'customer_data_request');if(mode==='no_data')f.snapshot.scope.orders=[gid(999)];
+  let writes=0;const database={async query(sql,args){if(sql.includes('customer_source_run_kind'))return {rows:[{kind:f.snapshot.kind}]};
+   if(sql.includes('snapshot'))return f.database.query(sql,args);writes++;return {rows:[{result:{status:'completed',manifestId:randomUUID(),result:mode==='no_data'?'no_customer_data':'deleted'}}]};}};
+  const runtime=createPrivacyLifecycleRuntime({database,sourcePrivacy:{cipher:f.input.cipher}});
+  if(mode==='disclose'){await assert.rejects(runtime.executeDeletionRun(f.runId),/DISCLOSURE_RECEIPT_REQUIRED/);assert.equal(writes,0);}
+  else{const result=await runtime.executeDeletionRun(f.runId);assert.equal(result.status,'completed');assert.equal(result.result,mode==='no_data'?'no_customer_data':'deleted');assert.equal(writes,1);}
+ }
 });

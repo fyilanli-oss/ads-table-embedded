@@ -1,13 +1,17 @@
 import assert from 'node:assert/strict';
 import {randomBytes,randomUUID} from 'node:crypto';
+import {readFileSync} from 'node:fs';
 import {sourceStoreFixture} from '../tests/fixtures/source-store-fixture.js';
 import {createSourceEvidenceRepository} from '../app/lib/database/source-evidence-store.server.js';
 import {prepareCustomerSourceRun,completeCustomerSourceRun} from '../app/lib/database/customer-source-privacy.server.js';
+import {createPrivacyLifecycleRuntime} from '../app/lib/shopify/privacy-lifecycle.server.js';
 const gid=n=>'gid://shopify/Order/'+n;
 async function rejected(client,action){await client.query('savepoint customer_expected');let error;try{await action();}catch(e){error=e;}await client.query('rollback to savepoint customer_expected');await client.query('release savepoint customer_expected');assert.ok(error);return error;}
 export async function customerSourcePrivacyProbe(client){
  await client.query('begin');try{
  await client.query('set local role adstable_owner');
+ // Prepared only: apply inside this rollback-only isolated transaction, never live.
+ await client.query(readFileSync(new URL('../supabase/migrations/20261105100338_eo05_customer_request_completion.sql',import.meta.url),'utf8').replace(/^begin;\s*$/m,'').replace(/^commit;\s*$/m,''));
  const identity=randomBytes(32),shopId='gid://shopify/Shop/'+BigInt('0x'+randomBytes(6).toString('hex')),shopDomain='privacy-'+randomBytes(6).toString('hex')+'.myshopify.com';
  const boot=(await client.query('select * from shopify.bootstrap_installation($1,$2,$3,statement_timestamp())',[shopId,shopDomain,identity])).rows[0];
  const installation=(await client.query('select id::text from shopify.installations where workspace_id=$1',[boot.workspace_id])).rows[0].id;
@@ -25,15 +29,50 @@ export async function customerSourcePrivacyProbe(client){
   input.records.journeys.push({key:jp,order:order.key,kind:'summary',ordinal:0,state:'ready',ready:true,complete:true,data:summary});
   input.records.links.push({reference:jr,targetType:'journey',target:jp,role:'summary'});
  }
+ // Existing SQL queue: empty landing store still preserves verified order
+ // erasure hashes, clears plaintext scope, and remains idempotent.
+ for(const kind of ['customer_data_request','customer_redact']){
+  await client.query('savepoint empty_source_case');try{
+   const c=await claim(kind);
+   const runtime=createPrivacyLifecycleRuntime({database:client,sourcePrivacy:{cipher:input.cipher}});
+   const first=(await client.query('select * from privacy.execute_deletion_run($1)',[c.runId])).rows[0];assert.equal(first.manifest_result,'no_customer_data');
+   const again=await runtime.executeDeletionRun(c.runId);assert.equal(again.manifestId,first.manifest_id);
+   assert.equal((await client.query('select source_request_scope from privacy.webhook_claims where id=$1',[c.claim.claim_id])).rows[0].source_request_scope,null);
+   if(kind==='customer_redact')await rejected(client,()=>createSourceEvidenceRepository(client).commit(prepare()));
+  }finally{await client.query('rollback to savepoint empty_source_case');await client.query('release savepoint empty_source_case');}
+ }
+ await client.query('savepoint empty_scope_missing');try{
+  const c=await claim('customer_redact');await client.query('update privacy.webhook_claims set source_request_scope=null where id=$1',[c.claim.claim_id]);
+  await rejected(client,()=>client.query('select * from privacy.execute_deletion_run($1)',[c.runId]));
+  assert.equal((await client.query('select count(*)::int n from privacy.deletion_manifests where deletion_run_id=$1',[c.runId])).rows[0].n,0);
+ }finally{await client.query('rollback to savepoint empty_scope_missing');await client.query('release savepoint empty_scope_missing');}
  await createSourceEvidenceRepository(client).commit(prepare());
  async function claim(kind,scope={version:1,orders:[gid(101)]},webhook=randomUUID()){
   const topic=kind==='customer_data_request'?'customers/data_request':'customers/redact';
   const args=[webhook,null,topic,shopId,shopDomain,identity,'a'.repeat(64),'2026-10',null,new Date().toISOString(),JSON.stringify(scope)];
   const r=(await client.query('select * from privacy.claim_shopify_customer_webhook($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb)',args)).rows[0];return {runId:r.deletion_run_id,claim:r,args};
  }
- for(const mode of ['redact','disclose','no_receipt','changed','lost','late_failure','duplicate','cross_subject','empty','scope_missing']){
+ for(const mode of ['redact','disclose','no_receipt','changed','lost','late_failure','duplicate','cross_subject','empty','scope_missing','no_match_request','no_match_redact','runtime_redact','runtime_disclosure_hold']){
   await client.query('savepoint customer_case');try{
-   const c=await claim(mode==='disclose'||mode==='no_receipt'?'customer_data_request':'customer_redact',mode==='empty'?{version:1,orders:[]}:undefined);
+   const c=await claim(['disclose','no_receipt','no_match_request','runtime_disclosure_hold'].includes(mode)?'customer_data_request':'customer_redact',mode==='empty'?{version:1,orders:[]}:mode.startsWith('no_match')?{version:1,orders:[gid(999)]}:undefined);
+   if(mode.startsWith('no_match')||mode.startsWith('runtime_')){
+    const before=(await client.query('select jsonb_agg(to_jsonb(p) order by id) data from evidence.source_pages p where installation_id=$1',[installation])).rows[0].data;
+    const runtime=createPrivacyLifecycleRuntime({database:client,sourcePrivacy:{cipher:input.cipher}});
+    if(mode==='runtime_disclosure_hold'){
+     await assert.rejects(runtime.executeDeletionRun(c.runId),/DISCLOSURE_RECEIPT_REQUIRED/);
+     assert.equal((await client.query('select count(*)::int n from privacy.deletion_manifests where deletion_run_id=$1',[c.runId])).rows[0].n,0);
+     assert.equal((await client.query('select status from privacy.deletion_runs where id=$1',[c.runId])).rows[0].status,'pending');
+    }else{
+     const result=await runtime.executeDeletionRun(c.runId);assert.equal(result.status,'completed');
+     assert.equal(result.result,mode==='runtime_redact'?'deleted':'no_customer_data');
+     const manifest=(await client.query('select result from privacy.deletion_manifests where deletion_run_id=$1',[c.runId])).rows[0];assert.equal(manifest.result,result.result);
+    }
+    if(mode!=='runtime_redact'){
+     assert.deepEqual((await client.query('select jsonb_agg(to_jsonb(p) order by id) data from evidence.source_pages p where installation_id=$1',[installation])).rows[0].data,before);
+     assert.equal((await client.query('select count(*)::int n from source.shopify_order_versions where installation_id=$1',[installation])).rows[0].n,2);
+    }else assert.deepEqual((await client.query('select order_id from source.shopify_order_versions where installation_id=$1',[installation])).rows.map(x=>x.order_id),[gid(102)]);
+    continue;
+   }
    if(mode==='duplicate'){
     const again=(await client.query('select * from privacy.claim_shopify_customer_webhook($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb)',c.args)).rows[0];assert.equal(again.duplicate,true);assert.equal(again.deletion_run_id,c.runId);
     const conflict=[...c.args];conflict[6]='b'.repeat(64);await rejected(client,()=>client.query('select * from privacy.claim_shopify_customer_webhook($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb)',conflict));
@@ -75,6 +114,6 @@ export async function customerSourcePrivacyProbe(client){
  assert.equal((await client.query('select count(*)::int n from privacy.webhook_claims where workspace_id=$1 and source_request_scope is not null',[owner.workspaceId])).rows[0].n,0);
  assert.equal((await client.query('select count(*)::int n from evidence.source_pages where installation_id=$1',[installation])).rows[0].n,0);
  for(const role of ['anon','authenticated','service_role','adstable_runtime','adstable_refresh_coordinator'])assert.equal((await client.query("select has_function_privilege($1,'privacy.complete_customer_source_run(uuid,text,jsonb,text)','EXECUTE') allowed",[role])).rows[0].allowed,false);
- console.log('EO05_CUSTOMER_SOURCE_PRIVACY_PASS real_SQL=true exact_verified_order_scope=true mixed_page_other_customer_preserved=true disclosure_ack_required=true atomic_rollback=true snapshot_CAS=true lost_reply_no_retry=true tombstone_blocks_resurrection=true owner_only=true native_HTTP=0');
+ console.log('EO05_CUSTOMER_SOURCE_PRIVACY_PASS real_SQL=true exact_verified_order_scope=true mixed_page_other_customer_preserved=true no_matching_order_no_customer_data=true private_runtime_composition=true disclosure_ack_required=true atomic_rollback=true snapshot_CAS=true lost_reply_no_retry=true tombstone_blocks_resurrection=true owner_only=true native_HTTP=0');
  }finally{await client.query('rollback');}
 }

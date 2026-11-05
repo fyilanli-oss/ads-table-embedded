@@ -1,3 +1,4 @@
+import {privacySourceWorkerProbe} from "./eo05-privacy-source-worker-probe.mjs";
 import {sourceRetentionPolicyProbe} from "./eo05-source-retention-policy-probe.mjs";
 import {sourceRetentionProbe} from "./eo05-source-retention-probe.mjs";
 import {customerSourcePrivacyProbe} from "./eo05-customer-source-privacy-probe.mjs";
@@ -113,6 +114,7 @@ export async function sourceEvidenceProbe(client, connection, environment = proc
     assert.ok(manifest["evidence.source_batches"] > 0, "existing privacy manifest records the deleted source families");
   } finally {await client.query("rollback");}
   await customerSourcePrivacyProbe(client);
+  await privacySourceWorkerProbe(client,connection,environment);
   await sourceRetentionProbe(client);
   await sourceRetentionPolicyProbe(client);
   console.log("SOURCE_EVIDENCE_SQL_PASS atomic-replay-owner-fk-crypto-retention-privacy");

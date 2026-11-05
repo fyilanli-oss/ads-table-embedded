@@ -1151,5 +1151,52 @@
       "https://supabase.com/docs/guides/database/functions"
     ],
     "empty_store_queue": "The existing SQL executor may complete no_customer_data only with a valid verified scope and no source batch. A new completion trigger preserves requested-order erasure hashes and clears plaintext scope; missing scope fails atomically. Completed private-runtime calls return existing SQL manifest without a second projection/write."
+  },
+  "private_customer_source_worker_2026_11_05": {
+    "status": "prepared_code_and_rollback_only_SQL_not_live",
+    "owner_authorization": "Explicit Onaylıyorum Codex after concrete private queue entry, least-privilege role, integrated no-data/scoped-redaction/disclosure-hold/replay tests; one PR. No live provisioning, keys, settings, scheduling, deletion, delivery, deploy or merge.",
+    "entry": "POST /internal/privacy/source-worker; Production + explicit server enable + independent Bearer; JSON-only, no browser cookie/origin, <=1024 bytes/5 seconds; server chooses <=1 verified pending customer request, no caller workspace/order/run authority.",
+    "execution": "Existing createPrivacyLifecycleRuntime sourcePrivacy composition through operation-bound SQL wrappers. No new native/provider read, OAuth state/token/selector/UI change.",
+    "outcomes": {
+      "idle": "Durable idle operation; replay cannot acquire later work.",
+      "completed": "Proven no_customer_data or scoped deleted plus manifest; no source content returned.",
+      "held": "Nonempty disclosure_required or pre-write proof review_required; no fabricated receipt/delivery.",
+      "unknown": "Lost acknowledgement/deadline/DB error: no retry, requeue, extension or automatic inspect. Separate inspect only; not_observed does not prove rollback."
+    },
+    "authority": {
+      "role": "adstable_privacy_source_runner",
+      "prepared_login": false,
+      "connection_limit": 1,
+      "allowed_RPC": [
+        "privacy.reserve_customer_source_work(uuid,timestamptz)",
+        "privacy.worker_customer_source_snapshot(uuid)",
+        "privacy.complete_customer_source_work(uuid,text,jsonb)",
+        "privacy.hold_customer_source_work(uuid,text)",
+        "privacy.inspect_customer_source_work(uuid)"
+      ],
+      "direct_tables": false,
+      "base_snapshot_or_completion": false,
+      "whole_erasure": false,
+      "role_membership": false
+    },
+    "safety": "Global existing queue advisory lock + refresh_control; one unresolved reservation per workspace/generation; atomic CAS/manifest/operation receipt. Existing SQL queue skips reserved/held jobs. Whole-install deletion has priority and removes linked worker receipts, supersedes unfinished customer requests.",
+    "retention": "Minimal worker receipt metadata is eligible after 365 elapsed UTC days; unresolved review target 30 days, no automatic purge/extension. No source/native/order IDs in receipt. Mandatory whole-install erasure clears workspace/generation receipts regardless of normal life. Erasure-prevention ledger/backup replay remains EO-08-C.",
+    "prepared_migration": "supabase/migrations/20261105111527_eo05_private_customer_source_worker.sql",
+    "operator": "tools/run-customer-source-worker.mjs --run | --inspect UUID; explicit operator enable, fixed Production origin, secret from environment only, one request/no retry. No scheduler activated.",
+    "deployment_environment_names": [
+      "ADSTABLE_PRIVACY_SOURCE_WORKER_ENABLED",
+      "ADSTABLE_PRIVACY_SOURCE_SERVER_SECRET",
+      "ADSTABLE_PRIVACY_SOURCE_DATABASE_URL",
+      "ADSTABLE_PRIVACY_SOURCE_DB_TIMEOUT_MS"
+    ],
+    "activation_remaining": "Separate explicit owner gate for prior customer completion SQL + worker SQL + NOLOGIN role install, role credentials/server config, production deployment and controlled live acceptance. No activation claimed.",
+    "delivery_remaining": "Nonempty customer data request stays held until a separately approved genuine delivery channel/receipt authority exists.",
+    "official_docs_checked": "2026-11-05",
+    "official_sources": [
+      "https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance",
+      "https://supabase.com/docs/guides/database/functions",
+      "https://vercel.com/docs/functions"
+    ],
+    "acceptance": "Local unit/security and isolated PostgreSQL proof required before merge proposal; no UI visual acceptance claimed. Step15 remains open."
   }
 }

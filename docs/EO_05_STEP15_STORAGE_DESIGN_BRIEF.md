@@ -1,3 +1,22 @@
+## 5 Kasım 2026 — kuyruktaki müşteri talebinin özel sunucu girişi
+
+Ürün sahibi şu somut hazırlığı onayladı: kuyruktaki talebi mevcut işleyiciye gönderen kalıcı özel sunucu girişi, en az yetkili veritabanı rolü ve birlikte çalışan testler. Tek PR; canlı kurulum/anahtar/ayar/zamanlayıcı/silme/teslim/yayın/merge yok.
+
+POST /internal/privacy/source-worker kapalı başlar. Production, ayrı sunucu anahtarı ve açık enable olmadan çalışmaz. Tarayıcı cookie/Origin kabul edilmez. En fazla1024 bayt JSON ve5 saniye gövde okuması; run için UUID ve en çok45 saniyelik son tarih, inspect için yalnız UUID. Hesap/mağaza/müşteri/sipariş/runId istemciden seçilemez. Kuyruktan bir doğrulanmış kapsamlı talep alınır; aynı mağaza/nesilde belirsiz rezervasyon varken başka talep alınmaz. Boş kuyruk sonucu da kalıcıdır; aynı çağrı sonradan yeni iş alamaz.
+
+Mevcut gizlilik runtime'ı kullanılır. İlgili veri yokluğu kanıtlanırsa no_customer_data; dar silme atomik makbuzla deleted olur. Dolu veri paylaşma talebi disclosure_required, çözülemeyen kanıt review_required beklemesinde kalır. Teslim yapılmış sayılmaz. Veritabanı veya yazma yanıtı belirsizse ikinci işlem/otomatik kontrol yapılmaz; ayrı inspect yalnız mevcut makbuzu okur. Süresi dolmuş rezervasyon unknown'dur; süre yenileme veya otomatik yeniden kuyruklama yoktur.
+
+Hazır rol adstable_privacy_source_runner NOLOGIN, bağlantı1, miras/üyelik/owner/table erişimi olmadan yalnız beş operation-bound RPC çalıştırabilir. Inspect read-only transaction kullanır. Şifreleme anahtarı rezervasyondan önce doğrulanır; mevcut anahtar ayrılığı korunur. HTTP/operatör çıktısı yalnız durum, işlem kimliği ve makbuz özeti içerir. Açık sipariş kapsamı, yerel kayıt kimlikleri, plaintext/ciphertext/artifact dönmez.
+
+Mevcut SQL kuyruğu reserved/held talepleri atlar; retry sayısını tüketmez. Tüm-kurulum silmesi önceliklidir; ilişkili worker makbuzları temizlenir ve bekleyen müşteri talepleri superseded olur. İşlem meta verisi365 gün sonra temizliğe adaydır; belirsizler30 gün içinde inceleme hedefindedir. Otomatik temizlik açılmaz. Geri gelmeyi engelleyen silme fişi ve yedekten dönüş EO-08-C kararında kalır.
+
+Operatör çağrısı tools/run-customer-source-worker.mjs içinde kalıcıdır; açık operatör enable ile --run veya --inspect UUID, tek istek, tekrar yok. Zamanlayıcı kurulmaz. Önceki hazır customer_request_completion SQL'inden sonra yeni SQL ve rol hazırlığı uygulanmalıdır; bunların canlı uygulanması, bağlantı/secret, yayın ve kontrollü kabul ayrıca onay bekler. Dolu talebin gerçek teslim kanalı halen açık iştir. 15 tamamlandı denmez.
+
+Görünür UI/eylem/component/property yoktur; native masaüstü/mobil görsel kabulü uygulanmaz. OAuth sözleşmesindeki korunan yüzey kaydı yalnız bu görünmez sunucu hazırlığına aittir; OAuth davranışı değişmez.
+
+Resmî kontrol5 Kasım2026: [Shopify privacy](https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance), [Supabase functions](https://supabase.com/docs/guides/database/functions), [Vercel functions](https://vercel.com/docs/functions).
+Bağlayıcı kayıt: contracts/a6-eo-implementation-master-v1.json#Step15_private_customer_source_worker_2026_11_05.
+
 ## 5 Kasım 2026 — müşteri talebinde kanıtlı boş sonuç ve özel işleyici bağlantısı
 
 Ürün sahibi; doğrulanmış Shopify sipariş kapsamının mevcut gizlilik yoluna bağlanmasını, ilgili kayıt bulunmadığı kanıtlanırsa no_customer_data sonucunu, yalnız ilgili kayıtların silinmesini ve dolu veri paylaşma talebinin teslim yapılmadan kapanmamasını kod/hazır SQL/izole test/tek PR kapsamında onayladı. Yeni müşteri profili, UI/indirme/e-posta/teslim kanalı veya provider sorgusu yoktur.

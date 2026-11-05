@@ -170,7 +170,7 @@ export async function googleAcceptanceRehearsal(client,{workspace,shopId,shopDom
        assert.equal((await client.query("select count(*)::int n from evidence.source_batches where workspace_id=$1",[workspace])).rows[0].n,3);
        assert.equal(googleCalls,mode==="no_merchant"?18:20);
        if(["zero_repeat","nonempty"].includes(mode))await googlePmaxHistoryProbe(client,{environment,poolFactory:poolFactory("adstable_google_source_runner"),
-        batchId:result.datasets.product_performance.batchId,businessDate:plan.window.from,expectedListingRows:mode==="nonempty"?1:0});
+        batchId:result.datasets.product_performance.receipt.batchId,businessDate:plan.window.from,expectedListingRows:mode==="nonempty"?1:0});
        if(mode==="zero_repeat"){const again=await runRequest();assert.notEqual(again.status,"stored");assert.equal(googleCalls,20);}
       }else{
        assert.notEqual(result.status,"stored",JSON.stringify({mode,result,googleCalls,partnerCalls,rpcCalls}));assert.notEqual(result.status,"partial");

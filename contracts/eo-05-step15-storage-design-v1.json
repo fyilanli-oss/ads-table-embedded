@@ -1124,5 +1124,31 @@
     "activation": "Before first restored data is served, complete this gate; EO-08-C cannot pass without recovery/privacy proof. Any earlier backup activation requires its own explicit scope and approval.",
     "authorized_now": "Documentation only: no upgrade, subscription, backup, export, restore, ledger purge, provider call, OAuth/UI/runtime/SQL/config change, merge or deployment.",
     "master_reference": "contracts/a6-eo-implementation-master-v1.json#Step15_backup_restore_deferral_2026_11_05"
+  },
+  "customer_request_completion_2026_11_05": {
+    "status": "prepared_requires_isolated_SQL_CI_and_separate_merge",
+    "date": "2026-11-05",
+    "base_main": "3a574dcf2b56b7a10097359b88a95ab176e744c1",
+    "owner_approval": "Onaylıyorum after exact verified order scope, proven no-data completion, scoped redaction and non-empty disclosure hold; code/prepared SQL/isolated tests/one PR only.",
+    "ingress": "The existing verified webhook runtime persists exact orders_requested/orders_to_redact via the existing customer-scope claim RPC. No customer contact/profile or new native query.",
+    "executor": "Existing createPrivacyLifecycleRuntime.executeDeletionRun dispatches customer runs to bounded authenticated decrypt/projector only when sourcePrivacy is explicitly configured with an authorized private database/cipher. Whole-install execution keeps the existing path.",
+    "no_data": "A private prepared projection with zero requested structured/native records can complete as no_customer_data without a fabricated delivery receipt. Missing/unavailable/unknown evidence is held, not zero. Existing fixed Google/Meta aggregate raw projections are recognized only by reviewed schema/family/field/query shape.",
+    "redaction": "Existing per-order page reseal, exact record removal, snapshot CAS, tombstones, unrelated record preservation and unknown/no-retry remain.",
+    "disclosure": "Non-empty customer_data_request is held without delivery receipt. No download UI, email, delivery channel or receipt authority is created.",
+    "live_boundary": "Prepared only. Existing database cron cannot decrypt source pages; it retains its fail-closed source review gate. This PR does not claim that cron now executes the private JS path. Live authorized private-executor invocation/configuration and acceptance remain open. Prepared migration adds only verified-scope claim EXECUTE to runtime; source snapshot/completion/kind remain owner-only.",
+    "migration": "supabase/migrations/20261105100338_eo05_customer_request_completion.sql",
+    "backup_restore": "Deferred owner-approved EO-08-C gate unchanged.",
+    "authorized_now": {
+      "live_database": false,
+      "provider_calls": false,
+      "send_data": false,
+      "merge": false,
+      "deploy": false
+    },
+    "sources_checked_at": "2026-11-05",
+    "sources": [
+      "https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance",
+      "https://supabase.com/docs/guides/database/functions"
+    ]
   }
 }

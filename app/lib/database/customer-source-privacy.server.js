@@ -1,4 +1,5 @@
 import {canonicalSourceJson,sourcePayloadHash} from "./source-evidence-store.server.js";
+import {isReviewedNonOrderRawPage} from './customer-source-non-order.server.js';
 const prepared=new WeakMap();
 const fail=code=>{throw Error("SOURCE_PRIVACY_"+code);};
 const orderId=value=>typeof value==="string"&&/^gid:\/\/shopify\/Order\/[1-9][0-9]{0,29}$/.test(value)?value
@@ -43,7 +44,7 @@ export async function prepareCustomerSourceRun({database,cipher,runId}){
   const batch=s.batches.find(x=>String(x.id)===page.batchId);if(!batch)fail("SNAPSHOT_INVALID");
   const refs=s.references.filter(r=>String(r.page_id)===page.id);
   const context={owner:batch.authority,attemptId:batch.attempt_id,ordinal:batch.batch_ordinal,page};
-  if(!page.available){if(refs.some(r=>[...(subjectByReference.get(String(r.id))??[])].some(x=>wanted.has(x))))fail("PROOF_UNAVAILABLE");continue;}
+  if(!page.available)fail("PROOF_UNAVAILABLE");
   let payload;try{payload=cipher.open(context);}catch{fail("DECRYPT_FAILED");}
   for(const reference of refs){
    let row=payload;
@@ -55,7 +56,14 @@ export async function prepareCustomerSourceRun({database,cipher,runId}){
    if(sourcePayloadHash(row)!==reference.record_hash)fail("REFERENCE_HASH_CHANGED");
   }
   const copy=structuredClone(payload);let modified=false;
-  if(payload.redacted===true&&Array.isArray(payload.records)&&payload.records.length===0&&refs.length===0)continue;
+  if(isReviewedNonOrderRawPage(page,payload)){
+   if(refs.some(r=>subjectByReference.has(String(r.id))))fail('NON_ORDER_SUBJECT_CONFLICT');
+   continue;
+  }
+  if(payload.redacted===true){
+   if(Object.keys(payload).sort().join()!=='records,redacted'||!Array.isArray(payload.records)||payload.records.length!==0||refs.length!==0)fail('REDACTED_PROOF_INVALID');
+   continue;
+  }
   const locations=new Map();
   function at(locator,subjects){
    const set=locations.get(locator)??new Set();for(const x of subjects)set.add(x);locations.set(locator,set);
@@ -79,7 +87,7 @@ export async function prepareCustomerSourceRun({database,cipher,runId}){
    else if(['klaviyo_interaction','klaviyo_candidate_checks','klaviyo_interaction_checks'].includes(page.family)){
     for(const [n,row]of payload.records.entries())if(row!==null&&!locations.has('/records/'+n))fail("SUBJECT_UNRESOLVED");
    }else if(!['klaviyo_account','klaviyo_metrics','klaviyo_campaign_report','klaviyo_flow_report'].includes(page.family))fail("FAMILY_UNSUPPORTED");
-  }else if(page.origin==='google_ads') {if(!['google_merchant_link','merchant_products','google_candidate_checks'].includes(page.family))fail("FAMILY_UNSUPPORTED");}
+  }else if(page.origin==='google_ads') {if(!['google_merchant_link','google_merchant_status','merchant_products','google_candidate_checks'].includes(page.family))fail("FAMILY_UNSUPPORTED");}
   else if(page.origin==='meta') {if(!['meta_permission_check','meta_catalog_reference','meta_catalog_products','meta_product_report','meta_candidate_checks','meta_report_identity_checks'].includes(page.family))fail("FAMILY_UNSUPPORTED");}
   else fail("FAMILY_UNSUPPORTED");
   if(!modified)for(const [locator,set]of locations){
@@ -106,13 +114,15 @@ export async function prepareCustomerSourceRun({database,cipher,runId}){
   journeys:s.journeys.filter(x=>selectedOrders.has(String(x.order_version_id))).map(x=>x.payload_projection),
   claims:s.claims.filter(x=>wanted.has(claimScope(x))).map(x=>x.native_data),sourceRecords});
  canonicalSourceJson(artifact); // Bounds and private-field rejection still apply.
- const result=Object.freeze({kind:s.kind,artifact:s.kind==='customer_data_request'?artifact:null});
- prepared.set(result,{runId,digest:s.digest,changes:{pages:changes,removedReferences:[...removedReferences]},used:false});return result;
+ const noCustomerData=Object.values(artifact).every(rows=>rows.length===0);
+ const result=Object.freeze({kind:s.kind,noCustomerData,artifact:s.kind==='customer_data_request'?artifact:null});
+ prepared.set(result,{runId,digest:s.digest,noCustomerData,changes:{pages:changes,removedReferences:[...removedReferences],matchedSourceRecords:sourceRecords.length},used:false});return result;
 }
 
 export async function completeCustomerSourceRun({database,preparedRun,disclosureReceipt=null}){
  const state=prepared.get(preparedRun);if(!state||state.used)fail("PREPARED_RUN_REQUIRED");
- if(preparedRun.kind==='customer_data_request'&&!disclosureReceipt?.match(/^[a-f0-9]{64}$/))fail("DISCLOSURE_RECEIPT_REQUIRED");
+ if(preparedRun.kind==='customer_data_request'&&!state.noCustomerData&&!disclosureReceipt?.match(/^[a-f0-9]{64}$/))fail("DISCLOSURE_RECEIPT_REQUIRED");
+ if(state.noCustomerData&&disclosureReceipt!==null)fail("INPUT_INVALID");
  if(preparedRun.kind==='customer_redact'&&disclosureReceipt!==null)fail("INPUT_INVALID");
  state.used=true;
  try{const r=await database.query("select privacy.complete_customer_source_run($1::uuid,$2::text,$3::jsonb,$4::text) as result",[state.runId,state.digest,JSON.stringify(state.changes),disclosureReceipt]);

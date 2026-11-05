@@ -16,8 +16,8 @@ function verifiedShop(value) {
   };
 }
 
-export function createPrivacyLifecycleRuntime({database, repository, sourcePrivacy = null} = {}) {
-  const persistence = repository ?? createPrivacyLifecycleRepository(database, {customerSourceScope: sourcePrivacy !== null});
+export function createPrivacyLifecycleRuntime({database, repository, sourcePrivacy = null, customerSourceScope = true} = {}) {
+  const persistence = repository ?? createPrivacyLifecycleRepository(database, {customerSourceScope: customerSourceScope || sourcePrivacy !== null});
 
   return Object.freeze({
     async claimVerifiedWebhook(claim) {
@@ -57,12 +57,22 @@ export function createPrivacyLifecycleRuntime({database, repository, sourcePriva
       if (sourcePrivacy === null) throw Error("SOURCE_PRIVACY_NOT_CONFIGURED");
       return completeCustomerSourceRun({database,preparedRun,disclosureReceipt});
     },
-    executeDeletionRun(deletionRunId) {
+    async executeDeletionRun(deletionRunId) {
       if (
         typeof deletionRunId !== "string"
         || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(deletionRunId)
       ) {
         throw new TypeError("deletionRunId must be a UUID");
+      }
+      if (sourcePrivacy !== null) {
+        const response=await database.query("select privacy.customer_source_run_kind($1::uuid) as kind",[deletionRunId]);
+        if(response.rows?.length!==1)throw Error("SOURCE_PRIVACY_RUN_INVALID");
+        if(response.rows[0].kind!==null){
+          const run=await prepareCustomerSourceRun({database,cipher:sourcePrivacy.cipher,runId:deletionRunId});
+          // Non-empty disclosure is held. This worker never invents a delivery receipt.
+          const result=await completeCustomerSourceRun({database,preparedRun:run});
+          return Object.freeze({deletionRunId,status:result.status,manifestId:result.manifestId,result:result.result});
+        }
       }
       return persistence.executeDeletionRun(deletionRunId);
     },

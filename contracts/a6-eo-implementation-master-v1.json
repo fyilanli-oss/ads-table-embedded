@@ -4212,5 +4212,56 @@
     "step16_execution_authorized": false,
     "document": "docs/EO_05_STEP15_CLOSURE_2026_11_05.md",
     "authorized_now": "Documentation/closure and expressly approved PR335 merge only; no runtime/SQL/config/provider/deploy/delete/disclose/restore/scheduler change."
+  },
+  "Step16_google_sales_role_binding_2026_11_05": {
+    "status": "repository_prepared_pending_required_CI_and_owner_merge_native_acceptance_separate",
+    "ordered_plan_step": 16,
+    "package": "EO-05-B",
+    "base_main": "12e6b30ae3036b5c1def130eb6cf81b8bd390d97",
+    "owner_approval": {
+      "explicit": true,
+      "source": "Onaylıyorum Codex, 16. madde için açıkladığın kod, test ve PR çalışmasına başlayalım."
+    },
+    "scope": "Existing Google Shopping/PMax Cart Data classifier connected to independent product_sales output of the private fenced reader and actual prewrite chunk; one code/test/PR delivery.",
+    "entrypoints": [
+      "createRefreshPdSourceReader({googlePd:{flow:shopping|retail_pmax,includeProductSales:true},...})",
+      "runRefreshPdPrewriteChunk({worker,source})"
+    ],
+    "runtime_details": [
+      "Server-owned opt-in only; Shopping uses existing three source families with combined row/byte/page/deadline bounds; retail PMax reuses existing googlePmax source read and requires that explicit option.",
+      "One output row per scoped cart row; existing normalizeGoogleCartDataSale unchanged; normal six metrics remain native strings/numbers/null, no FX or sales aggregation.",
+      "all_* remains raw evidence; units_sold is never added to lead/cross-sell components; general cart family is not added to scoped cart.",
+      "Each row retains full native row, family/query fingerprint/source row/page-local index/request ID and existing Channel source link; unresolved PMax Channel does not erase separately evidenced sales role.",
+      "Main handoff carries separate product_sales only after successful awaiting_dataset and private source review; failed final authority/entitlement/byte bounds cannot promote sales.",
+      "PD metrics and canonical rows remain separate; no cost allocation, product mapping, Listing Tree historical loader, Dataset writer, scheduler or report publication."
+    ],
+    "tests": "tests/pd-source-reader.test.js: Shopping/PMax roles including Assisted/Unclassified, missing/conflicting/zero/all-only evidence, exact native quantities/revenue, mutation detachment, paginated provenance, empty successful read, first error stop, authority drift, limits/cancellation, actual worker output and blocked promotion.",
+    "official_documentation": {
+      "checked_on": "2026-11-05",
+      "sources": [
+        "https://developers.google.com/google-ads/api/docs/shopping-ads/reporting",
+        "https://developers.google.com/google-ads/api/performance-max/retail-reporting",
+        "https://developers.google.com/google-ads/api/fields/v25/shopping_performance_view"
+      ],
+      "api_upgrade": false,
+      "runtime_api": "v25"
+    },
+    "acceptance_boundaries": {
+      "native_positive_sales": false,
+      "UI_changed": false,
+      "OAuth_behavior_changed": false,
+      "live_provider_called": false,
+      "SQL_or_live_config_changed": false,
+      "deploy_authorized": false,
+      "merge_authorized": false
+    },
+    "remaining_existing_steps": {
+      "Search": 17,
+      "Meta": 18,
+      "Klaviyo": 19,
+      "shared_checks": 20,
+      "historical_listing_tree": "22 remains paused",
+      "Dataset_and_report_persistence": 23
+    }
   }
 }

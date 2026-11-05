@@ -43,7 +43,7 @@ export async function runRefreshPdPrewriteChunk({worker, source, prewrite, setup
     || source.limits.maxElapsedMs > limits.requestTimeoutMs || source.limits.maxRows > limits.maxRows
     || source.limits.maxBytes > limits.maxBytes) fail();
   const config = {...source};
-  for (const k of ["verified", "limits", "googlePd", "klaviyoPd", "recordBridge", "environment"])
+  for (const k of ["verified", "limits", "googlePd", "googlePmax", "klaviyoPd", "recordBridge", "environment"])
     if (config[k] !== undefined) config[k] = structuredClone(config[k]);
   const loadAuthority = worker.loadAuthority, now = worker.now, entitlementCurrent=worker.isEntitlementCurrent;
   config.database = {query: source.database.query.bind(source.database)};
@@ -101,16 +101,17 @@ export async function runRefreshPdPrewriteChunk({worker, source, prewrite, setup
       }
       // Account for both retained source and cloned canonical rows before the
       // worker advances. This bounds serialized output, not peak memory.
-      if (Buffer.byteLength(JSON.stringify({source_observation: snapshot, rows: review.rows, integration_review:integration,setup_review:setupReview}), "utf8") + 2048 > limits.maxBytes)
+      if (Buffer.byteLength(JSON.stringify({source_observation: snapshot, product_sales: snapshot?.product_sales ?? null, rows: review.rows, integration_review:integration,setup_review:setupReview}), "utf8") + 2048 > limits.maxBytes)
         review = {status: "blocked", reason: "prewrite_result_bound_exceeded", complete: false, rows: [], ...flags};
       return review;
     }});
-  const output = {...result, source_review: review ? {status: review.status, reason: review.reason} : null,
+  const productSales = result.status === "awaiting_dataset" && review?.complete === true ? snapshot?.product_sales ?? null : null;
+  const output = {...result, product_sales: productSales, source_review: review ? {status: review.status, reason: review.reason} : null,
     ...(bundle?{integration_review:integration}:{}),...(setupInput?{setup_review:setupReview}:{}),source_observation: snapshot,
     handoff_kind: bundle?"integrated_prewrite_review":"pd_prewrite_only", ...flags};
   if (Buffer.byteLength(JSON.stringify(output), "utf8") > limits.maxBytes)
     return {...result, rows: undefined, status: "needs_attention", reason: "prewrite_result_bound_exceeded",
-      source_review: {status: "blocked", reason: "prewrite_result_bound_exceeded"}, source_observation: null,
+      source_review: {status: "blocked", reason: "prewrite_result_bound_exceeded"}, source_observation: null, product_sales: null,
       handoff_kind: "pd_prewrite_only", ...flags};
   return output;
 }

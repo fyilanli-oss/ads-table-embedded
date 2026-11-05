@@ -30,7 +30,7 @@ test("opt-in PMax source links run through the existing fenced reader and physic
   assert.equal(f.state.reserves, f.state.http); assert.equal(result.publishable, false);
   assert.equal(result.rows_observed, 5);
   const g = fixture("google_ads"); delete g.config.queryFamily;
-  g.config.googlePd = {flow: "retail_pmax"}; g.config.limits.maxPages = 3; g.hooks.response = f.hooks.response;
+  g.config.googlePd = {flow: "retail_pmax", includeProductSales: true}; g.config.limits.maxPages = 3; g.hooks.response = f.hooks.response;
   const binding = {workspace_id: workspace, installation_id: "42", installation_generation: 1, provider: "google_ads",
     provider_connection_id: connection, connection_version: 2, reporting_selection_epoch: "71", platform_account_id: "123",
     credential_id: credential, business_date: "2026-10-01", source_timezone: "Europe/Istanbul", source_currency: "USD",
@@ -46,6 +46,8 @@ test("opt-in PMax source links run through the existing fenced reader and physic
   const bound = await g.create().readEvidence();
   assert.equal(bound.pmax_membership_state, "bound_for_review_only");
   assert.equal(bound.pmax_source_evidence.source_links.product_sales_links[0].channel_id, "40");
+  assert.equal(bound.product_sales.rows[0].channel_reference.channel_id, "40");
+  assert.equal(bound.product_sales.rows[0].sales_role, "Cross-sell");
   assert.ok(!JSON.stringify(bound).includes(credential));
   binding.claim_fence = 2;
   const replay = await g.create().readEvidence();
@@ -417,4 +419,210 @@ test("PD retained envelope plus canonical rows cannot exceed worker serialized b
   assert.equal(r.source_review.reason,"prewrite_result_bound_exceeded");
   assert.equal(r.rows, undefined);assert.ok(!w.stages.includes("ready_for_dataset"));
   assert.ok(Buffer.byteLength(JSON.stringify(r), "utf8") <= budget);
+});
+
+
+import {projectGoogleProductSales} from "../app/lib/providers/google-product-sales.server.js";
+
+function productSalesFixture(flow = "shopping") {
+  const f = fixture("google_ads"); delete f.config.queryFamily;
+  f.config.googlePd = {flow, includeProductSales: true};
+  if (flow === "retail_pmax") f.config.googlePmax = {};
+  Object.assign(f.config.limits, {maxPages: 3, maxBytes: 300000});
+  const native = (segments, metrics) => ({customer: {id: "123"},
+    campaign: {id: "10", advertisingChannelType: flow === "shopping" ? "SHOPPING" : "PERFORMANCE_MAX"},
+    ...(flow === "shopping" ? {adGroup: {id: "20"}} : {assetGroup: {id: "40"}}),
+    segments: {date: "2026-10-01", ...segments}, metrics});
+  const sale = (advertised, sold, metrics) => native({productMerchantId: "50", productFeedLabel: "TR",
+    ...(advertised === null ? {} : {productItemId: advertised}), productSoldItemId: sold}, metrics);
+  f.sales = [
+    sale("A", "A", {unitsSold: "2", revenueMicros: "123456789012345678", leadUnitsSold: "2", leadRevenueMicros: "123456789012345678", allUnitsSold: "900"}),
+    sale("A", "B", {unitsSold: "0.5", revenueMicros: "1500000", crossSellUnitsSold: "0.5", crossSellRevenueMicros: "1500000"}),
+    sale(null, "C", {unitsSold: 1, revenueMicros: "0"}),
+    sale("A", "B", {leadUnitsSold: "1", crossSellUnitsSold: "1", revenueMicros: "300"}),
+    sale("A", "A", {allLeadUnitsSold: "50", allRevenueMicros: "99999"}),
+    sale("A", "A", {unitsSold: "0", revenueMicros: "0", leadUnitsSold: "0"}),
+  ];
+  f.readQueries = [];
+  f.hooks.response = (address, init) => {
+    if (address.includes("oauth2")) return json({access_token: "synthetic-access", token_type: "Bearer", expires_in: 3600});
+    const body = JSON.parse(init.body), query = body.query; f.readQueries.push(query);
+    let results;
+    if (/FROM cart_data_sales_view/.test(query)) results = f.sales;
+    else if (/FROM asset_group_listing_group_filter/.test(query)) results = [];
+    else if (/segments.conversion_action_category/.test(query)) results =
+      ["PURCHASE", "ADD_TO_CART", "BEGIN_CHECKOUT"].map((category, i) => native({
+        conversionActionCategory: category, conversionAction: "customers/123/conversionActions/" + (100 + i)},
+        {conversions: "0", conversionsValue: "0"}));
+    else if (/FROM shopping_performance_view/.test(query)) results = [sale("A", "A", {clicks: "1"})];
+    else results = [native({}, {clicks: "7", impressions: "10", costMicros: "3000000"})];
+    return new Response(JSON.stringify({results}), {headers: {"content-type": "application/json", "request-id": "synthetic-sales-request"}});
+  };
+  return f;
+}
+
+for (const flow of ["shopping", "retail_pmax"]) test(flow + ": existing classifier reaches independent main sales output with exact native metrics and provenance", async () => {
+  const f = productSalesFixture(flow), r = await f.create().readEvidence(), sales = r.product_sales;
+  assert.deepEqual(sales.rows.map(s => s.sales_role), ["Advertised", "Cross-sell", "Assisted", "Unclassified", "Unclassified", "Unclassified"]);
+  assert.equal(sales.rows[0].raw_metrics.units_sold, "2");
+  assert.equal(sales.rows[0].raw_metrics.revenue_micros, "123456789012345678");
+  assert.equal(sales.rows[1].raw_metrics.units_sold, "0.5"); assert.equal(sales.rows[2].raw_metrics.units_sold, 1);
+  assert.equal(sales.rows[4].raw_metrics.units_sold, null); assert.equal(sales.rows[5].raw_metrics.units_sold, "0");
+  assert.equal(sales.rows[0].raw_row.metrics.allUnitsSold, "900");
+  assert.equal(sales.rows[0].raw_metrics.all_units_sold, undefined);
+  assert.equal(sales.rows[0].source_reference.query_family, flow === "shopping" ? "shopping_cart_data_product_sales_daily" : "pmax_cart_data_product_sales_daily");
+  assert.equal(sales.rows[1].source_reference.source_row_index, 1);
+  assert.equal(sales.rows[1].source_reference.page_row_index, 1);
+  assert.equal(sales.rows[0].source_reference.provider_request_id, "synthetic-sales-request");
+  assert.match(sales.rows[0].source_reference.query_fingerprint, /^[a-f0-9]{64}$/);
+  assert.equal(sales.rows[0].channel_reference.channel_id ?? null, null);
+  if (flow === "shopping") assert.equal(sales.rows[0].channel_reference.native_leaf_key.ad_group_id, "20");
+  else assert.equal(sales.rows[0].channel_reference.channel_type, "Unclassified Channel");
+  assert.equal(sales.publishable, false); assert.equal(sales.persistable, false);
+  assert.equal(sales.totals_computed, false); assert.equal(sales.metrics_allocated, false);
+  assert.equal(sales.source_context.claim_fence, 1);
+  assert.equal(f.state.reserves, f.state.http);
+  assert.equal(f.readQueries.filter(q => /FROM cart_data_sales_view/.test(q)).length, 1);
+  assert.ok(f.readQueries.every(q => !/FROM cart_data_sales_view/.test(q) || /campaign.advertising_channel_type/.test(q)));
+  f.sales[0].metrics.unitsSold = "999"; assert.equal(sales.rows[0].raw_row.metrics.unitsSold, "2");
+  assert.equal(Object.isFrozen(sales.rows[0].raw_row.metrics), true);
+  assert.ok(!JSON.stringify(r).includes("synthetic-access")); assert.ok(!JSON.stringify(r).includes(credential));
+});
+
+test("product sales require explicit internal opt-in and cannot be enabled on Search or a different provider", async () => {
+  for (const flow of ["shopping", "retail_pmax"]) {
+    const f = productSalesFixture(flow); delete f.config.googlePd.includeProductSales;
+    const r = await f.create().readEvidence(); assert.equal(r.product_sales, undefined);
+    if (flow === "shopping") assert.equal(f.readQueries.length, 2);
+  }
+  for (const options of [{flow: "search", includeProductSales: true}, {flow: "shopping", includeProductSales: "true"}, {flow: "retail_pmax", includeProductSales: true}]) {
+    const f = fixture("google_ads"); delete f.config.queryFamily;
+    assert.throws(() => createRefreshPdSourceReader({...f.config, googlePd: options}), /INPUT_INVALID/);
+  }
+  assert.throws(() => createRefreshPdSourceReader({...fixture().config, googlePd: {flow: "shopping", includeProductSales: true}}), /INPUT_INVALID/);
+});
+
+for (const flow of ["shopping", "retail_pmax"]) test(flow + ": successful empty cart read is no observation, never a fabricated zero sale", async () => {
+  const f = productSalesFixture(flow); f.sales.length = 0;
+  const r = await f.create().readEvidence(); assert.equal(r.product_sales.status, "not_observed");
+  assert.deepEqual(r.product_sales.rows, []);
+});
+
+for (const change of [
+  e => e.authority.reporting_account_id = "999",
+  e => e.authority.reporting_account_currency = "TRY",
+  e => e.source_links.scope.install_generation = 2,
+  e => e.results.shopping_cart_data_product_sales_daily.next_cursor = "partial",
+  e => e.results.shopping_cart_data_product_sales_daily.evidence.page_spans[0].row_count--,
+  e => e.results.shopping_cart_data_product_sales_daily.evidence.page_spans[0].query_fingerprint = "0".repeat(64),
+  e => e.results.shopping_cart_data_product_sales_daily.rows[0].segments.date = "2026-10-02",
+  e => e.source_links.product_sales_links[0].source_row_index = 99,
+]) test("sales projection rejects foreign, partial or mismatched provenance: " + change, async () => {
+  const r = await productSalesFixture().create().readEvidence(), e = structuredClone(r.shopping_source_evidence);
+  change(e); assert.throws(() => projectGoogleProductSales({sourceContext: r.source_context, evidence: e}), /EVIDENCE_INVALID/);
+});
+
+for (const flow of ["shopping", "retail_pmax"]) test(flow + ": first source failure stops all later families and cannot return partial sales", async () => {
+  const f = productSalesFixture(flow), original = f.hooks.response;
+  f.hooks.response = (address, init) => !address.includes("oauth2") && /FROM shopping_performance_view/.test(JSON.parse(init.body).query)
+    ? json({error: {message: "private"}}, 403) : original(address, init);
+  await assert.rejects(f.create().readEvidence(), /READ_FAILED/);
+  assert.equal(f.readQueries.filter(q => /FROM cart_data_sales_view/.test(q)).length, 0);
+  assert.equal(f.state.stopped, 1); assert.ok(f.readQueries.length >= 3);
+});
+
+test("Shopping source row limit stops before cart read and authority drift discards sales", async () => {
+  const f = productSalesFixture(); f.config.limits.maxRows = 4;
+  await assert.rejects(f.create().readEvidence(), /RESULT_BOUND_EXCEEDED/); assert.equal(f.readQueries.length, 2);
+  const g = productSalesFixture(), original = g.hooks.response;
+  g.hooks.response = (address, init) => {
+    const result = original(address, init);
+    if (!address.includes("oauth2") && /FROM cart_data_sales_view/.test(JSON.parse(init.body).query)) g.state.row.connection_version++;
+    return result;
+  };
+  await assert.rejects(g.create().readEvidence(), /READ_FAILED/);
+  assert.ok(g.readQueries.some(q => /FROM cart_data_sales_view/.test(q)));
+});
+
+async function composedProductSalesFixture(flow) {
+  const f = productSalesFixture(flow), observed = await f.create().readEvidence();
+  f.config.googlePd.compositionContext = {binding: observed.source_context, flow, conversion_scope: "normal",
+    reporting_time_basis: "interaction_date", composition_attempt_id: workspace, snapshot_id: "synthetic-sales-snapshot",
+    attribution_fingerprint: "a".repeat(64), metric_units_fingerprint: "b".repeat(64),
+    references: {attribution: "synthetic-attribution", metric_units: "synthetic-units"}};
+  const composed = await f.create().readEvidence();
+  assert.equal(composed.composition.status, "composed");
+  f.config.recordBridge = {metadata: recordMetadata(composed.source_context, composed.composition.rows)};
+  return f;
+}
+for (const flow of ["shopping", "retail_pmax"]) test(flow + ": actual prewrite handoff carries sales independently of PD and suppresses them after final authority failure", async () => {
+  const f = await composedProductSalesFixture(flow), w = prewriteWorker(f);
+  w.worker.limits.maxBytes = 300000; w.worker.claim.cost.bytes = 300000;
+  const r = await runRefreshPdPrewriteChunk({worker: w.worker, source: w.source});
+  assert.equal(r.status, "awaiting_dataset"); assert.equal(r.source_review.status, "reviewed_not_written");
+  assert.equal(r.product_sales.rows[1].sales_role, "Cross-sell");
+  assert.equal(r.product_sales.rows[1].raw_metrics.revenue_micros, "1500000");
+  assert.equal(r.rows[0].raw_metrics.spend_value, 3);
+  assert.equal(r.rows[0].raw_metrics.purchase, 0);
+  assert.equal(r.rows[0].sales_role, undefined);
+  assert.equal(r.Dataset_write_performed, false);
+  const stopped = prewriteWorker(f), original = stopped.worker.loadAuthority; let calls = 0;
+  stopped.worker.limits.maxBytes = 300000; stopped.worker.claim.cost.bytes = 300000;
+  stopped.worker.loadAuthority = async input => {
+    const authority = await original(input); if (++calls === 3) f.state.row.connection_version++; return authority;
+  };
+  const denied = await runRefreshPdPrewriteChunk({worker: stopped.worker, source: stopped.source});
+  assert.equal(denied.reason, "authority_check_failed_after_request"); assert.equal(denied.product_sales, null); assert.equal(denied.rows, undefined);
+});
+
+for (const flow of ["shopping", "retail_pmax"]) test(flow + ": paginated cart rows keep exact page-local provenance", async () => {
+  const f = productSalesFixture(flow), original = f.hooks.response;
+  f.hooks.response = (address, init) => {
+    if (address.includes("oauth2")) return original(address, init);
+    const body = JSON.parse(init.body);
+    if (!/FROM cart_data_sales_view/.test(body.query)) return original(address, init);
+    f.readQueries.push(body.query);
+    return new Response(JSON.stringify({results: body.pageToken ? f.sales.slice(1) : f.sales.slice(0, 1),
+      ...(body.pageToken ? {} : {nextPageToken: "cart-next"})}),
+      {headers: {"content-type": "application/json", "request-id": body.pageToken ? "cart-page-2" : "cart-page-1"}});
+  };
+  const r = await f.create().readEvidence(), rows = r.product_sales.rows;
+  assert.equal(rows.length, 6);
+  assert.equal(rows[0].source_reference.provider_request_id, "cart-page-1");
+  assert.deepEqual([rows[1].source_reference.source_row_index, rows[1].source_reference.page_index, rows[1].source_reference.page_row_index], [1, 1, 0]);
+  assert.equal(rows[1].source_reference.provider_request_id, "cart-page-2");
+  assert.equal(f.readQueries.filter(q => /FROM cart_data_sales_view/.test(q)).length, 2);
+});
+
+test("Shopping cart cursor loop, byte overflow and cancellation never produce accepted sales", async () => {
+  const loop = productSalesFixture(), original = loop.hooks.response;
+  loop.hooks.response = (address, init) => address.includes("oauth2") || !/FROM cart_data_sales_view/.test(JSON.parse(init.body).query)
+    ? original(address, init) : json({results: [loop.sales[0]], nextPageToken: "repeat"});
+  await assert.rejects(loop.create().readEvidence(), /READ_FAILED/);
+  const big = productSalesFixture(); big.sales[0].segments.productSoldTitle = "x".repeat(400000);
+  await assert.rejects(big.create().readEvidence(), /READ_FAILED/);
+  const cancelled = productSalesFixture(), controller = new AbortController(); cancelled.config.signal = controller.signal;
+  const response = cancelled.hooks.response;
+  cancelled.hooks.response = (address, init) => {
+    const result = response(address, init);
+    if (!address.includes("oauth2") && /FROM cart_data_sales_view/.test(JSON.parse(init.body).query)) controller.abort();
+    return result;
+  };
+  await assert.rejects(cancelled.create().readEvidence(), /EXECUTION_STOPPED/);
+});
+
+test("failed PD composition and serialized handoff bounds cannot promote product sales", async () => {
+  const f = productSalesFixture(), w = prewriteWorker(f);
+  w.worker.limits.maxBytes = w.worker.claim.cost.bytes = 300000;
+  const denied = await runRefreshPdPrewriteChunk({worker: w.worker, source: w.source});
+  assert.equal(denied.reason, "validation_failed_after_request"); assert.equal(denied.product_sales, null);
+  const g = await composedProductSalesFixture("shopping"), first = prewriteWorker(g);
+  first.worker.limits.maxBytes = first.worker.claim.cost.bytes = 300000;
+  const observed = await runRefreshPdPrewriteChunk({worker: first.worker, source: first.source});
+  const budget = Buffer.byteLength(JSON.stringify(observed.source_observation)) + 100;
+  const bounded = prewriteWorker(g);
+  bounded.worker.limits.maxBytes = bounded.worker.claim.cost.bytes = bounded.source.limits.maxBytes = budget;
+  const rejected = await runRefreshPdPrewriteChunk({worker: bounded.worker, source: bounded.source});
+  assert.equal(rejected.product_sales, null); assert.equal(rejected.rows, undefined);
+  assert.ok(!bounded.stages.includes("ready_for_dataset"));
 });

@@ -8,6 +8,7 @@ import {GOOGLE_PD_FLOW_FAMILIES, composeGooglePdSnapshot} from "../providers/goo
 import {composeKlaviyoPdSnapshot} from "../providers/klaviyo-pd-orchestration.server.js";
 import {bridgePdReadSnapshot} from "../providers/pd-record-orchestration.server.js";
 import {preparePdNativeMetadata, bindNativePdRecordMetadata} from "../providers/pd-native-metadata.server.js";
+import {projectGoogleProductSales} from "../providers/google-product-sales.server.js";
 import {stableJson} from "../providers/common-adapter.server.js";
 
 // Private in-process proof. A serialized snapshot cannot become an observation.
@@ -52,7 +53,7 @@ function date(value) {
 }
 
 /** Internal, explicit background entry. It does not mount a route, schedule work,
- * compose metrics, resolve product identity, classify roles or write a Dataset.
+ * publish metrics, resolve product identity or write a Dataset.
  * All dependencies are server-owned; none may be supplied from request JSON.
  */
 export function createRefreshPdSourceReader({verified, database, tokenVault, workStore, quotaStore,
@@ -90,9 +91,12 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
     || limits.maxElapsedMs > 2_147_483_647
     || (claim.provider === "google_ads" ? googlePd === undefined ? !GOOGLE_PD_QUERY_FAMILIES.includes(queryFamily)
       : queryFamily !== undefined || !Object.hasOwn(GOOGLE_PD_FLOW_FAMILIES, googlePd?.flow ?? "")
-        || Object.keys(googlePd).some(k => !["flow", "compositionContext"].includes(k))
+        || Object.keys(googlePd).some(k => !["flow", "compositionContext", "includeProductSales"].includes(k))
         || !Number.isSafeInteger(limits?.maxPages) || limits.maxPages < 1 || limits.maxPages > 20 || limits.maxRows > 20_000
       : queryFamily !== undefined || googlePd !== undefined)) fail("INPUT_INVALID");
+  if (googlePd?.includeProductSales !== undefined && (typeof googlePd.includeProductSales !== "boolean"
+    || googlePd.includeProductSales && (!["shopping", "retail_pmax"].includes(googlePd.flow)
+      || googlePd.flow === "retail_pmax" && googlePmax === undefined))) fail("INPUT_INVALID");
   const boundLimits = copy(limits), env = {...environment}, receipt = structuredClone(entitlementReceipt);
   const pd = googlePd === undefined ? null : copy(googlePd);
   const pmax = googlePmax === undefined ? null : copy(googlePmax);
@@ -194,12 +198,27 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
           return structuredClone(token);
         }}, environment: env, now: readNow};
         const dateWindow = {start: window.from, end: window.to};
-        let evidence, pmaxEvidence = null, pmaxMembershipState = null;
+        let evidence, pmaxEvidence = null, shoppingEvidence = null, pmaxMembershipState = null;
         if (claim.provider === "google_ads") {
           const client = clients.google(config);
           evidence = pd ? await client.readPdEvidenceSnapshot({installationAuthority: owner, dateWindow, flow: pd.flow,
             limits: {maxPages: boundLimits.maxPages, maxRows: boundLimits.maxRows, maxBytes: boundLimits.maxBytes}, nativeMetadata})
             : await client.readEvidencePage({installationAuthority: owner, queryFamily, dateWindow});
+          if (pd?.includeProductSales && pd.flow === "shopping") {
+            const usedRows = evidence.results.performance.rows.length + evidence.results.conversions.rows.length
+              + (evidence.native_metadata ? [evidence.native_metadata.before, evidence.native_metadata.after]
+                .reduce((n, m) => n + m.account.rows.length + m.actions.rows.length, 0) : 0);
+            const remaining = {maxPages: boundLimits.maxPages, maxRows: boundLimits.maxRows - usedRows,
+              maxBytes: boundLimits.maxBytes - Buffer.byteLength(JSON.stringify(evidence), "utf8")};
+            if (remaining.maxRows < 1 || remaining.maxBytes < 1) fail("RESULT_BOUND_EXCEEDED");
+            await currentContext();
+            shoppingEvidence = await client.readShoppingSourceEvidenceSnapshot({installationAuthority: owner, dateWindow,
+              limits: remaining, signal: controller.signal, maxElapsedMs: boundLimits.maxElapsedMs});
+            await currentContext();
+            for (const page of Object.values(shoppingEvidence.results)) for (const row of page.rows)
+              if (row.customer?.id !== claim.accountId || row.segments?.date !== window.from
+                || row.campaign?.advertisingChannelType !== "SHOPPING") fail("NATIVE_SCOPE_MISMATCH");
+          }
           if (pmax) {
             const membership = pmax.listingEvidence ?? null;
             const binding = {...baseline, business_date: window.from, job_or_run_id: claim.id, claim_fence: claim.fence};
@@ -255,7 +274,8 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
             || row.account_currency != null && row.account_currency !== baseline.source_currency) fail("NATIVE_SCOPE_MISMATCH");
         }
         const rows = pages.reduce((n, p) => n + p.rows.length, 0)
-          + (pmaxEvidence ? Object.values(pmaxEvidence.results).reduce((n, p) => n + p.rows.length, 0) : 0);
+          + (pmaxEvidence ? Object.values(pmaxEvidence.results).reduce((n, p) => n + p.rows.length, 0) : 0)
+          + (shoppingEvidence ? Object.values(shoppingEvidence.results).reduce((n, p) => n + p.rows.length, 0) : 0);
         if (rows > boundLimits.maxRows || Buffer.byteLength(JSON.stringify(evidence), "utf8") > boundLimits.maxBytes) fail("RESULT_BOUND_EXCEEDED");
         // Do not fabricate Meta attribution settings/time basis or a common fingerprint.
         // Ancestor IDs, metric units and request evidence remain in the native envelope.
@@ -265,6 +285,7 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
           reporting_time_basis: claim.provider === "klaviyo" ? "send_date" : claim.provider === "google_ads" ? "interaction_date" : null,
           attribution_fingerprint: null, metric_units_fingerprint: null,
           metadata_state: "native_rows_and_request_evidence_preserved_not_composition_ready"};
+        const productSales = pd?.includeProductSales ? projectGoogleProductSales({sourceContext, evidence: shoppingEvidence ?? pmaxEvidence}) : null;
         const prepared = nativeMetadata ? preparePdNativeMetadata({sourceContext, evidence}) : null;
         if (prepared?.status === "prepared") {
           sourceContext.metadata_state = claim.provider === "klaviyo" ? "native_account_with_documented_default_attribution_reference"
@@ -283,6 +304,8 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
         check();
         const result = copy({status: "source_read", source_context: sourceContext, evidence,
           ...(pmaxEvidence ? {pmax_source_evidence: pmaxEvidence, pmax_membership_state: pmaxMembershipState} : {}),
+          ...(shoppingEvidence ? {shopping_source_evidence: shoppingEvidence} : {}),
+          ...(productSales ? {product_sales: productSales} : {}),
           ...(composition ? {composition} : {}),
           ...(records ? {records} : {}),
           ...(prepared ? {native_metadata: prepared} : {}),

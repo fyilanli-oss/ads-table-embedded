@@ -2,11 +2,51 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {createRefreshPdSourceReader} from "../app/lib/refresh/pd-source-reader.server.js";
 import {runRefreshPdPrewriteChunk, reviewRefreshPdPrewrite} from "../app/lib/refresh/pd-prewrite-chunk.server.js";
+import {pmaxHistoryFixture} from "./fixtures/pmax-history-fixture.js";
 
 const workspace = "11111111-1111-4111-8111-111111111111";
 const connection = "22222222-2222-4222-8222-222222222222";
 const credential = "33333333-3333-4333-8333-333333333333";
 const json = (data, status = 200) => new Response(JSON.stringify(data), {status, headers: {"content-type": "application/json"}});
+
+test("stored listing history reaches the actual PMax reader without assigning past Channel", async () => {
+  const f=fixture("google_ads");delete f.config.queryFamily;f.config.googlePd={flow:"retail_pmax",includeProductSales:true};
+  const r=f.state.row,owner={workspaceId:r.workspace_id,installationId:r.installation_id,generation:r.install_generation,
+    shopId:r.shop_id,shopDomain:r.shop_domain,provider:"google_ads",connectionId:r.connection_id,
+    connectionVersion:String(r.connection_version),credentialId:r.credential_id,accountId:r.reporting_account_id,selectionEpoch:r.reporting_selection_epoch};
+  const history=pmaxHistoryFixture({owner,now:f.config.now});
+  f.config.googlePmax={historyLoader:history.create()};f.config.limits.maxPages=3;
+  f.hooks.response=(address,init)=>{
+    if(address.includes("oauth2"))return json({access_token:"synthetic-access",token_type:"Bearer",expires_in:3600});
+    const query=JSON.parse(init.body).query;
+    return json({results:/conversion_action/.test(query)?[]:[{customer:{id:"123"},campaign:{id:"10",advertisingChannelType:"PERFORMANCE_MAX"},
+      assetGroup:{id:"40"},segments:{date:"2026-10-01",productMerchantId:"50",productFeedLabel:"TR",productLanguage:"tr",productItemId:"A",productSoldItemId:"B"},
+      metrics:{clicks:"1",unitsSold:"1",revenueMicros:"25000000",crossSellUnitsSold:"1"}}]});
+  };
+  const result=await f.create().readEvidence();
+  assert.equal(result.pmax_membership_state,"observed_history_only");
+  assert.equal(result.pmax_membership_history.snapshots[0].rows[0].assetGroup.id,"40");
+  assert.equal(result.pmax_source_evidence.source_links.product_sales_links[0].channel_id,null);
+  assert.equal(result.product_sales.rows[0].sales_role,"Cross-sell");
+  assert.equal(result.product_sales.rows[0].channel_reference.channel_id,null);
+  assert.ok(!JSON.stringify(result).includes(credential));
+  assert.throws(()=>createRefreshPdSourceReader({...f.config,googlePmax:{historyLoader:{load(){return {};}}}}),/INPUT_INVALID/);
+  assert.throws(()=>createRefreshPdSourceReader({...f.config,googlePmax:{historyLoader:history.create(),listingEvidence:{}}}),/INPUT_INVALID/);
+});
+
+test("authority changes during stored history loading stop before PMax requests",async()=>{
+ const f=fixture("google_ads");delete f.config.queryFamily;f.config.googlePd={flow:"retail_pmax"};
+ const history=pmaxHistoryFixture({now:f.config.now});
+ let beforeHistory;
+ history.hooks.query=()=>{beforeHistory=f.state.http;f.state.row.reporting_selection_epoch="72";return {rows:[{result:[]}]};};
+ f.config.googlePmax={historyLoader:history.create()};f.config.limits.maxPages=3;
+ f.hooks.response=(address,init)=>address.includes("oauth2")?json({access_token:"synthetic-access",token_type:"Bearer",expires_in:3600})
+  :json({results:/conversion_action/.test(JSON.parse(init.body).query)?[]:[{customer:{id:"123"},
+    campaign:{id:"10",advertisingChannelType:"PERFORMANCE_MAX"},assetGroup:{id:"40"},segments:{date:"2026-10-01"},metrics:{clicks:"1"}}]});
+ await assert.rejects(f.create().readEvidence(),/PD_SOURCE_AUTHORITY_CHANGED/);
+ assert.equal(history.calls.length,1); // no retry or follow-up historical query
+ assert.equal(f.state.http,beforeHistory);
+});
 
 test("opt-in PMax source links run through the existing fenced reader and physical quota transport", async () => {
   const f = fixture("google_ads"), queries = [];

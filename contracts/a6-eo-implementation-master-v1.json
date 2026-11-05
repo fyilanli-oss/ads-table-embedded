@@ -4469,5 +4469,72 @@
       ],
       "query_or_API_version_changed": false
     }
+  },
+  "Step22_PMax_history_loader_2026_11_05": {
+    "checked_at": "2026-11-05",
+    "ordered_plan_step": 22,
+    "status": "repository_prepared_required_CI_and_owner_merge_pending",
+    "owner_authorization": "Başlat Codex authorized inspection; Onaylıyorum after the concrete existing-shelf/account-date lookup, verified readback, resolver handoff and fail-closed scope. One code/test/PR; no live provider/DB/config/OAuth/merge/deploy.",
+    "base_main": "3210a90c2e5893f3e2c4602b70348df9b41b636f",
+    "existing_shelves": [
+      "evidence.source_batches",
+      "evidence.source_pages"
+    ],
+    "new_physical_tables": 0,
+    "entrypoints": [
+      "createGooglePmaxHistoryLoader",
+      "createRefreshPdSourceReader googlePmax.historyLoader"
+    ],
+    "implementation": [
+      "Owner-exact indexed bounded lookup of product_performance envelopes by requested report day; that day is not current-tree validity.",
+      "Existing receipt/page RPCs, AES-GCM AAD/hash verification, page counts/order/final cursor, selected query fields and native account/resource namespace checks.",
+      "One-use private loader, shared wall deadline/abort, current authority/fence before and after, accumulated row/byte bounds, no native/write retry.",
+      "Retained immutable observations with source references and tree hash; missing/unavailable/observed-empty distinct. Receipt invalidation, pruning, privacy and expiry fail closed.",
+      "Loaded observations reach the actual PMax reader; full-day continuity is not proven so no exact historical Channel is granted. Existing sale/role/metrics are preserved."
+    ],
+    "SQL_preparation": {
+      "migration": "supabase/migrations/20261105193000_eo05_pmax_history_lookup.sql",
+      "prepared_isolated_rollback_only": true,
+      "new_tables": 0,
+      "new_indexes": 1,
+      "new_read_functions": 1,
+      "live_grants": false,
+      "existing_profile_optional_known_read_only_function": true,
+      "existing_role_install_artifact": "Derived profile check only; no new grant, password, membership or activation."
+    },
+    "evidence_boundaries": {
+      "snapshot_observed_time_is_validity": false,
+      "matching_hashes_prove_continuity": false,
+      "requested_report_day_is_capture_day": false,
+      "provider_observation_window_is_tree_specific": false,
+      "native_timezone_or_product_attribute_history_verified": false,
+      "full_business_day_membership_proven": false,
+      "exact_historical_Channel_accepted": false,
+      "step22_complete": false
+    },
+    "remaining_existing_step22": "Proven complete business-day continuity and period-specific product dimensions; collection scheduling/activation and native acceptance stay explicit existing22/EO05 gates. No new numbered package. This PR does not satisfy the full historical exact Channel gate.",
+    "limits": {
+      "max_batches": 10,
+      "max_pages": 100,
+      "max_rows": 20000,
+      "max_bytes": 8388608,
+      "max_elapsed_ms": 120000,
+      "SQL_lookup_limit_includes_one_overflow_sentinel": 11
+    },
+    "retention": "Existing90-day raw/365-day metadata policies and privacy precedence unchanged; no new retention grant or payload copy. Expired/deleted source cannot authorize Channel.",
+    "later": {
+      "Dataset_writer": 23,
+      "Meta18": "open_waiting_nonempty_native_evidence"
+    },
+    "live_provider": false,
+    "live_SQL": false,
+    "OAuth_UI_permission_token_change": false,
+    "merge_authorized": false,
+    "deploy_authorized": false,
+    "sources": [
+      "https://developers.google.com/google-ads/api/performance-max/listing-groups",
+      "https://developers.google.com/google-ads/api/docs/change-event",
+      "https://supabase.com/docs/guides/database/postgres/row-level-security"
+    ]
   }
 }

@@ -13,6 +13,7 @@ import {readFileSync} from "node:fs";
 import {createGoogleRawCaptureExecution} from "../app/lib/refresh/google-raw-server.server.js";
 import {createConfiguredSourceEvidenceCipher} from "../app/lib/database/source-evidence-config.server.js";
 import {sourceStoreFixture} from "../tests/fixtures/source-store-fixture.js";
+import {googlePmaxHistoryProbe} from "./eo05-pmax-history-probe.mjs";
 import {handleGoogleRawCaptureRequest} from "../app/lib/refresh/google-raw-request.server.js";
 
 // Existing F01 isolated databases only. Real SQL admission, role checks, vault,
@@ -24,6 +25,8 @@ export async function googleAcceptanceRehearsal(client,{workspace,shopId,shopDom
   if(rawCapture){const sql=readFileSync(new URL("../supabase/migrations/20261103221715_eo05_google_refresh_credential_handoff.sql",import.meta.url),"utf8");
    await client.query(sql.trim().replace(/^begin;/," ").replace(/commit;$/," "));}
   if(datasetMode){const sql=readFileSync(new URL("../supabase/migrations/20261104110401_eo05_google_raw_datasets.sql",import.meta.url),"utf8");
+   await client.query(sql.trim().replace(/^begin;/," ").replace(/commit;$/," "));}
+  if(datasetMode){const sql=readFileSync(new URL("../supabase/migrations/20261105193000_eo05_pmax_history_lookup.sql",import.meta.url),"utf8");
    await client.query(sql.trim().replace(/^begin;/," ").replace(/commit;$/," "));}
   await client.query("set local role postgres");await client.query(googleSourceRoleInstallationBodyForRehearsal());
   if(datasetMode){const sql=readFileSync(new URL("./sql/eo05-google-dataset-source-role-extension.sql",import.meta.url),"utf8");
@@ -129,6 +132,10 @@ export async function googleAcceptanceRehearsal(client,{workspace,shopId,shopDom
       if(datasetMode){const query=JSON.parse(init.body).query;
        if(!query.includes("FROM product_link")){
         if(googleCalls===10&&mode==="permission")return Response.json({error:{message:"SYNTHETIC-PRIVATE"}},{status:403});
+        if(mode==="nonempty"&&query.includes("FROM asset_group_listing_group_filter"))return Response.json({results:[{
+         customer:{id:"111"},campaign:{id:"222"},assetGroup:{id:"333",name:"Synthetic group",status:"ENABLED"},
+         assetGroupListingGroupFilter:{resourceName:"customers/111/assetGroupListingGroupFilters/333~1",id:"1",
+          assetGroup:"customers/111/assetGroups/333",path:{dimensions:[]},type:"UNIT_INCLUDED",listingSource:"SHOPPING"}}]});
         return Response.json({results:mode==="nonempty"&&query.includes("FROM customer")?[{customer:{id:"111",currencyCode:"USD",timeZone:"UTC"}}]:[],...mode==="partial"&&googleCalls===10?{nextPageToken:"more"}:{}});
        }
        if(mode==="no_merchant")return Response.json({results:[]});
@@ -162,6 +169,8 @@ export async function googleAcceptanceRehearsal(client,{workspace,shopId,shopDom
        assert.equal(result.datasets.merchant_identity.status,mode==="no_merchant"?"unavailable":"stored");
        assert.equal((await client.query("select count(*)::int n from evidence.source_batches where workspace_id=$1",[workspace])).rows[0].n,3);
        assert.equal(googleCalls,mode==="no_merchant"?18:20);
+       if(["zero_repeat","nonempty"].includes(mode))await googlePmaxHistoryProbe(client,{environment,poolFactory:poolFactory("adstable_google_source_runner"),
+        batchId:result.datasets.product_performance.receipt.batchId,businessDate:plan.window.from,expectedListingRows:mode==="nonempty"?1:0});
        if(mode==="zero_repeat"){const again=await runRequest();assert.notEqual(again.status,"stored");assert.equal(googleCalls,20);}
       }else{
        assert.notEqual(result.status,"stored",JSON.stringify({mode,result,googleCalls,partnerCalls,rpcCalls}));assert.notEqual(result.status,"partial");

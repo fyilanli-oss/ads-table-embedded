@@ -1,3 +1,18 @@
+## 5 Kasım 2026 — 22: mevcut PMax ham kanıtının tarihli yüklenmesi
+
+Ürün sahibi inceleme sonrası somut hesap/tarih araması, doğrulanmış okuma ve resolver bağlantısını tek kod/test/PR olarak onaylayarak22 hazırlığını yeniden başlattı. Bu dar yeniden başlatma önceki duraklama kayıtlarının üstündedir; önceki tarihsel kararlar silinmez.20, PR339 ile main’e birleşti;4253 test/tip/derleme ve üç izole SQL aşaması geçti.
+
+Yeni depo veya fiziksel tablo yoktur. Mevcut şifreli source_batches/source_pages kullanılır; bir özel salt okuma SQL fonksiyonu ve aynı raf üzerinde bir indeks hazırlanır. Arama aynı mağaza/kurulum/nesil/bağlantı/sürüm/credential/seçim/hesap ve istenen rapor gününe bağlıdır. Gerçek SQL tarafında güncel owner/mahremiyet kontrolü, uygulama tarafında dekrypt/AAD/hash, sayfa sayısı/sırası/son cursor, sabit alanlar ve native kaynak kimliği kontrol edilir. Hata veya belirsizlikte tekrar yoktur.
+
+Yüklenen ağaç, kaynağın gözlendiği zaman ve kaynak referanslarıyla ana PMax okuyucusuna taşınır. source envelope’un rapor günü, ağacın o tarihte geçerli olduğunun kanıtı değildir. Operasyonun gözlem aralığı ağaç sorgusunun kesin gözlem aralığı değildir. Gözlem veya iki eşit hash arasına valid_from/valid_to yazılmaz. Tam gün süreklilik ve tarihsel ürün boyutları doğrulanmadığı için bu yol kesin geçmiş Asset Group atamaz; satış, Sales Role ve adet/tutar korunur, Channel Unclassified kalır. Eksik, observed-empty, expired/unavailable ve bozuk kayıt ayrıdır.
+
+Tek kullanımlık private loader, toplam süre/iptal ve sayfa/kayıt/boyut sınırlarıyla çalışır; ana okuyucu yükleme öncesi/sonrası güncel yetki ve fence bağını kontrol eder. Varsayılan yol değişmez; yükleyici yalnız açık server composition seçeneğidir, JSON veya browser kaydı loader olamaz. Mevcut kısıtlı Google DB istemcisinde ayrı salt okuma modu hazırlanır. Yeni fonksiyonun canlı role grant’i yapılmaz; eski dataset profilinin yalnız bu bilinen salt okuma fonksiyonuyla uyumu izole SQL’de sınanır. Kurulum artifact’indeki türetilmiş profil kontrolü güncellenir; yeni grant/parola/üyelik yoktur.
+
+Migration yalnız prepared/isolated rollback kaydıdır; tarihsel82 migration kabulü ve canlı96 ledger’i değiştirilmez. Gerçek şifreleme ve SQL fixture’ı ile boş/dolu gözlem, scope, rol reddi, expiry/mahremiyet ve teslim sınaması zorunludur; native HTTP sentetiktir.90/365 gün saklama ve zorunlu silme önceliği korunur.22’nin tam gün süreklilik, tarihsel ürün ve native kesin Channel kabulü açık kalır; zamanlayıcı/aktivasyon veya paket kapanışı iddia edilmez.18 açık, Dataset23’tedir. OAuth/UI/izin/token, canlı provider/SQL/config/deploy/merge yoktur.
+
+Resmî kontrol5 Kasım2026: [Google Listing Groups](https://developers.google.com/google-ads/api/performance-max/listing-groups), [Change Event sınırları](https://developers.google.com/google-ads/api/docs/change-event#limitations), [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security). Mevcut sabit API/sorgu ve CLI sürümü korunur.
+Bağlayıcı kayıt: contracts/a6-eo-implementation-master-v1.json#Step22_PMax_history_loader_2026_11_05.
+
 ## 5 Kasım 2026 — 20: satış rollerinin ortak yazım öncesi kontrolleri
 
 Ürün sahibi20'nin doğru kaynak/ürün bağı, çelişki/tekrar ve sıfır/eksik veri kontrolünü onayladı. Ortak salt yapısal kontrol, mevcut özel Google satış gözlemi ve Klaviyo Message/referans doğrulamasından sonra bağlandı. Kendi başına JSON doğrulayıcı kaynak yetkisi veya yazım izni vermez. Yeni rol kuralı, sorgu, formül veya alt paket eklenmedi.

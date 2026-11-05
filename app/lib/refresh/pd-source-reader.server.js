@@ -10,6 +10,7 @@ import {bridgePdReadSnapshot} from "../providers/pd-record-orchestration.server.
 import {preparePdNativeMetadata, bindNativePdRecordMetadata} from "../providers/pd-native-metadata.server.js";
 import {projectGoogleProductSales} from "../providers/google-product-sales.server.js";
 import {stableJson} from "../providers/common-adapter.server.js";
+import {isGooglePmaxHistoryLoader} from "../database/google-pmax-history.server.js";
 
 // Private in-process proof. A serialized snapshot cannot become an observation.
 const observedReads = new WeakMap();
@@ -63,7 +64,9 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
   if (Object.keys(extra).length) fail("INPUT_INVALID");
   if (googlePmax !== undefined && (suppliedClaim?.provider !== "google_ads" || googlePd?.flow !== "retail_pmax"
     || !googlePmax || typeof googlePmax !== "object" || Array.isArray(googlePmax)
-    || Object.keys(googlePmax).some(k => k !== "listingEvidence"))) fail("INPUT_INVALID");
+    || Object.keys(googlePmax).some(k => !["listingEvidence", "historyLoader"].includes(k))
+    || googlePmax.historyLoader !== undefined && (!isGooglePmaxHistoryLoader(googlePmax.historyLoader)
+      || googlePmax.listingEvidence !== undefined))) fail("INPUT_INVALID");
   if (typeof nativeMetadata !== "boolean" || nativeMetadata && (googlePd?.compositionContext !== undefined
     || klaviyoPd?.compositionContexts !== undefined || suppliedClaim?.provider === "google_ads" && !googlePd
     || suppliedClaim?.provider === "klaviyo" && !klaviyoPd)) fail("INPUT_INVALID");
@@ -99,7 +102,8 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
       || googlePd.flow === "retail_pmax" && googlePmax === undefined))) fail("INPUT_INVALID");
   const boundLimits = copy(limits), env = {...environment}, receipt = structuredClone(entitlementReceipt);
   const pd = googlePd === undefined ? null : copy(googlePd);
-  const pmax = googlePmax === undefined ? null : copy(googlePmax);
+  const pmaxHistory = googlePmax?.historyLoader ?? null;
+  const pmax = googlePmax === undefined ? null : copy(googlePmax.listingEvidence === undefined ? {} : {listingEvidence: googlePmax.listingEvidence});
   const kpd = klaviyoPd === undefined ? null : copy(klaviyoPd);
   const bridge = recordBridge === undefined ? null : copy(recordBridge);
   const query = database.query.bind(database), loadToken = tokenVault.loadProviderTokenSet.bind(tokenVault);
@@ -198,7 +202,7 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
           return structuredClone(token);
         }}, environment: env, now: readNow};
         const dateWindow = {start: window.from, end: window.to};
-        let evidence, pmaxEvidence = null, shoppingEvidence = null, searchEvidence = null, pmaxMembershipState = null;
+        let evidence, pmaxEvidence = null, shoppingEvidence = null, searchEvidence = null, pmaxMembershipState = null, pmaxHistoryEvidence = null;
         if (claim.provider === "google_ads") {
           const client = clients.google(config);
           evidence = pd ? await client.readPdEvidenceSnapshot({installationAuthority: owner, dateWindow, flow: pd.flow,
@@ -208,8 +212,9 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
             const usedRows = evidence.results.performance.rows.length + evidence.results.conversions.rows.length
               + (evidence.native_metadata ? [evidence.native_metadata.before, evidence.native_metadata.after]
                 .reduce((n, m) => n + m.account.rows.length + m.actions.rows.length, 0) : 0);
-            const remaining = {maxPages: boundLimits.maxPages, maxRows: boundLimits.maxRows - usedRows,
-              maxBytes: boundLimits.maxBytes - Buffer.byteLength(JSON.stringify(evidence), "utf8")};
+            const remaining = {maxPages: boundLimits.maxPages, maxRows: boundLimits.maxRows - usedRows - (pmaxHistoryEvidence?.counts.rows ?? 0),
+              maxBytes: boundLimits.maxBytes - Buffer.byteLength(JSON.stringify(evidence), "utf8")
+                - (pmaxHistoryEvidence ? Buffer.byteLength(JSON.stringify(pmaxHistoryEvidence), "utf8") : 0)};
             if (remaining.maxRows < 1 || remaining.maxBytes < 1) fail("RESULT_BOUND_EXCEEDED");
             await currentContext();
             const sourceEvidence = await client[pd.flow === "search" ? "readSearchSourceEvidenceSnapshot" : "readShoppingSourceEvidenceSnapshot"]({installationAuthority: owner, dateWindow,
@@ -221,13 +226,29 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
                 || row.campaign?.advertisingChannelType !== (pd.flow === "search" ? "SEARCH" : "SHOPPING")) fail("NATIVE_SCOPE_MISMATCH");
           }
           if (pmax) {
-            const membership = pmax.listingEvidence ?? null;
+            if (pmaxHistory) {
+              await currentContext();
+              pmaxHistoryEvidence = await pmaxHistory.load({owner: {workspaceId: baseline.workspace_id,
+                installationId: String(baseline.installation_id), generation: String(baseline.installation_generation),
+                shopId: baseline.shop_id, shopDomain: baseline.shop_domain, provider: "google_ads",
+                connectionId: baseline.provider_connection_id, connectionVersion: String(baseline.connection_version),
+                credentialId: baseline.credential_id, accountId: baseline.platform_account_id,
+                selectionEpoch: String(baseline.reporting_selection_epoch)}, businessDate: window.from,
+                timezone: baseline.source_timezone, signal: controller.signal, deadlineAt: started + boundLimits.maxElapsedMs});
+              await currentContext();
+            }
+            // Stored current-tree observations lack a proven validity interval.
+            // Loading them never upgrades legacy reviewed input or grants exact Channel.
             const binding = {...baseline, business_date: window.from, job_or_run_id: claim.id, claim_fence: claim.fence};
+            const membership = pmaxHistoryEvidence ? {complete: false, snapshots: [], binding,
+              scope: {workspace_id: baseline.workspace_id, install_generation: Number(baseline.installation_generation),
+                connection_id: baseline.provider_connection_id, reporting_account_id: baseline.platform_account_id},
+              timezone: baseline.source_timezone} : pmax.listingEvidence ?? null;
             const boundMembership = membership !== null && ["workspace_id", "installation_id", "installation_generation",
               "provider", "provider_connection_id", "connection_version", "reporting_selection_epoch", "platform_account_id",
               "credential_id", "business_date", "source_timezone", "source_currency", "job_or_run_id", "claim_fence"]
               .every(k => binding[k] !== undefined && stableJson(membership.binding?.[k]) === stableJson(binding[k]));
-            pmaxMembershipState = membership === null ? "not_supplied" : boundMembership ? "bound_for_review_only" : "source_binding_mismatch";
+            pmaxMembershipState = pmaxHistoryEvidence ? pmaxHistoryEvidence.status : membership === null ? "not_supplied" : boundMembership ? "bound_for_review_only" : "source_binding_mismatch";
             const usedRows = evidence.results.performance.rows.length + evidence.results.conversions.rows.length
               + (evidence.native_metadata ? [evidence.native_metadata.before, evidence.native_metadata.after]
                 .reduce((n, m) => n + m.account.rows.length + m.actions.rows.length, 0) : 0);
@@ -274,7 +295,7 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
           } else if (row.account_id !== claim.accountId.slice(4) || row.date_start !== window.from || row.date_stop !== window.from
             || row.account_currency != null && row.account_currency !== baseline.source_currency) fail("NATIVE_SCOPE_MISMATCH");
         }
-        const rows = pages.reduce((n, p) => n + p.rows.length, 0)
+        const rows = pages.reduce((n, p) => n + p.rows.length, 0) + (pmaxHistoryEvidence?.counts.rows ?? 0)
           + (pmaxEvidence ? Object.values(pmaxEvidence.results).reduce((n, p) => n + p.rows.length, 0) : 0)
           + (shoppingEvidence ? Object.values(shoppingEvidence.results).reduce((n, p) => n + p.rows.length, 0) : 0)
           + (searchEvidence ? Object.values(searchEvidence.results).reduce((n, p) => n + p.rows.length, 0) : 0);
@@ -306,6 +327,7 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
         check();
         const result = copy({status: "source_read", source_context: sourceContext, evidence,
           ...(pmaxEvidence ? {pmax_source_evidence: pmaxEvidence, pmax_membership_state: pmaxMembershipState} : {}),
+          ...(pmaxHistoryEvidence ? {pmax_membership_history: pmaxHistoryEvidence} : {}),
           ...(shoppingEvidence ? {shopping_source_evidence: shoppingEvidence} : {}),
           ...(searchEvidence ? {search_source_evidence: searchEvidence} : {}),
           ...(productSales ? {product_sales: productSales} : {}),

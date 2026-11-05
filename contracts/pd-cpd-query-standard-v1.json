@@ -1436,5 +1436,16 @@
     "durable_Dataset_key": false,
     "Meta18": "open_waiting_native_evidence",
     "Dataset_write": false
+  },
+  "Step22_PMax_history_loader_2026_11_05": {
+    "reference": "contracts/a6-eo-implementation-master-v1.json#Step22_PMax_history_loader_2026_11_05",
+    "ordered_plan_step": 22,
+    "history_preparation_resumed": true,
+    "current_observation_is_historical_validity": false,
+    "exact_historical_Channel_accepted": false,
+    "step22_complete": false,
+    "new_queries": false,
+    "new_tables": 0,
+    "Dataset_write": false
   }
 }

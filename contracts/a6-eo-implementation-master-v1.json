@@ -1554,7 +1554,7 @@
         "google_pd_source_composition": "merged_PR185_f01d31ee7f741e70513bfe96e8750d4f405580a5",
         "klaviyo_pd_source_composition": "merged_PR186_99f6474bc49ff70a084ca5916bc3631f05187ba1",
         "pd_canonical_bridge": "merged_PR187_5657ce49c2c93b4d018c4606e08134a311754c33",
-        "current_slice": "ordered_step14_identity_PK_selection_snapshot_repository_prepared_OAuth_CAS_next_not_live",
+        "current_slice": "ordered_step15_scoped_closed_explicit_deferrals_environment_holds_step16_not_started",
         "permission_preflight": "contracts/eo-05-start-brief-v1.json#identity_permission_preparation_2026_10_27",
         "permission_preflight_merged": "PR190_ee28856c1260dffd18725eeb85718d195a5ce3de",
         "identity_OAuth_scope_binding": "contracts/eo-05-start-brief-v1.json#identity_OAuth_scope_binding_2026_10_27",
@@ -1748,7 +1748,8 @@
         {
           "id": "A6-EO-07-A",
           "title": "Settings surface",
-          "objective": "Preserve the proven Settings interaction flow while building currency, provider/account authority, read-only installed-shop context, Klaviyo cost, billing and privacy; no charts and no store selector."
+          "objective": "Preserve the proven Settings interaction flow while building currency, provider/account authority, read-only installed-shop context, Klaviyo cost, billing and privacy; no charts and no store selector.",
+          "deferred_step15_customer_disclosure_gate": "Step15_customer_disclosure_deferral_2026_11_05"
         },
         {
           "id": "A6-EO-07-B",
@@ -1818,7 +1819,8 @@
         {
           "id": "A6-EO-08-D",
           "title": "Review evidence and review-ready decision",
-          "objective": "Prove the embedded app in a dedicated Shopify dev store, assemble truthful lifecycle/product evidence and require an explicit human review-ready gate."
+          "objective": "Prove the embedded app in a dedicated Shopify dev store, assemble truthful lifecycle/product evidence and require an explicit human review-ready gate.",
+          "required_customer_disclosure_acceptance": "Step15_customer_disclosure_deferral_2026_11_05"
         }
       ],
       "outputs": [
@@ -4085,5 +4087,130 @@
     "scope_completed": true,
     "additional_live_mutation_authorized": false,
     "merge_authorized": false
+  },
+  "Step15_customer_disclosure_deferral_2026_11_05": {
+    "status": "deferred_by_product_owner_not_implemented_not_accepted",
+    "decided_at": "2026-11-05",
+    "owner_decision": "Eksik olanlarıda yedekleme gibi at EO paketlerinden birine",
+    "authorized_scope": "Document the deferral of the two explicitly discussed remaining nonempty customer data-request delivery outcomes; no implementation, OAuth/UI/SQL/config/provider/live/deploy or merge.",
+    "from": "A6-EO-05 step15",
+    "to": "A6-EO-07-A",
+    "review_acceptance_gate": "A6-EO-08-D",
+    "destination_reason": "Existing EO07A Settings objective already includes privacy; implement the chosen private store-owner delivery path and authoritative receipt there. EO08D already assembles lifecycle/review evidence.",
+    "scope": [
+      "Secure delivery of held requested records to the verified store owner, when matching records actually exist.",
+      "Durable authoritative proof of actual delivery; only then complete a nonempty customer_data_request."
+    ],
+    "current_evidence": {
+      "source_private_worker": "Live private entry, narrow role/TLS and durable idle receipt accepted in PR333/PR334 evidence. No genuine customer request existed; not live disclosure acceptance.",
+      "source_matching_and_redaction": "Already-implemented scoped projection/no-data/redaction and fail-closed hold remain; isolated SQL proofs passed.",
+      "nonempty_disclosure": "Held as disclosure_required; genuine delivery channel/receipt authority not implemented."
+    },
+    "retained_rules": [
+      "No-data completion requires proof; missing/unknown/unavailable evidence is not zero.",
+      "A nonempty customer_data_request is never completed/disclosed solely from webhook2xx, source-storage receipt, operator assertion or fabricated hash.",
+      "Existing verified scope, store ownership, encryption, narrow role, redaction/whole-install erasure priority and replay protection remain unchanged.",
+      "Planning deferral does not extend the existing platform deadline for an actual request. If one arrives earlier, it remains open and needs explicit handling within its original deadline; no false completion."
+    ],
+    "not_in_scope": [
+      "No customer-facing portal, download UI, email channel or extra stored customer/profile fields selected or authorized now.",
+      "No new EO parent/child package or count increase.",
+      "Backup/restore remains independently deferred to EO08C; source-to-report Dataset delivery remains step23."
+    ],
+    "closure": "Remove only these two delivery outcomes from the current step15 work sequence. Not PASS, not implemented, not automatic overall step15 closure. Other existing step15 evidence/deferrals remain.",
+    "destination_acceptance": "EO07A privacy delivery acceptance and EO08D review-ready decision cannot pass while actual nonempty delivery and authoritative receipt proof remain missing. No native/real delivery acceptance inferred from isolated tests.",
+    "additional_live_mutation_authorized": false,
+    "merge_authorized": false,
+    "official_documentation_checked_at": "2026-11-05",
+    "official_sources": [
+      "https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance"
+    ]
+  },
+  "Step15_scope_closure_2026_11_05": {
+    "status": "closed_current_implementation_scope_with_named_deferrals_and_environment_holds",
+    "closed_at": "2026-11-05",
+    "owner_approval": "Tamam onaylıyorum after the concrete proposal to merge PR335 and update Step15 closure with completed work, named deferrals and evidence unavailable because actual data/environment is absent; no new subtask.",
+    "ordered_step": 15,
+    "accepted_scope": "Permanent source/evidence landing store and scoped identity/order support: capture, encrypted persistence, readback/integrity, version/replay boundaries, finite retention and mandatory erasure protections.",
+    "implementation_work_remaining_in_current_scope": false,
+    "universal_native_acceptance": false,
+    "completed": [
+      {
+        "area": "Foundation and integrity",
+        "evidence": "Existing ten source/evidence tables, private writer/readback, AES-GCM/AAD/hash and bounded receipts; real isolated PostgreSQL replay, tenant/CAS/rollback/unknown/replay tests. Source-rule/mapping/order support is implemented; real tenant rule/product acceptance is not inferred."
+      },
+      {
+        "area": "Google raw capture",
+        "evidence": "PR325 actual native17 reporting families plus Merchant-link observation;19 encrypted pages and all3 receipt/decrypted-content checks. Account/product sets stored; Merchant identity held unavailable rather than product0.",
+        "reference": "https://github.com/fyilanli-oss/ads-table-embedded/pull/325"
+      },
+      {
+        "area": "Meta raw capture",
+        "evidence": "PR328 actual first-day read, two stored report envelopes,4 encrypted pages; receipt/decrypted-content proof. No catalogue/Shopify identity acceptance.",
+        "reference": "https://github.com/fyilanli-oss/ads-table-embedded/pull/328"
+      },
+      {
+        "area": "Klaviyo available configuration capture",
+        "evidence": "PR329 account/configuration and full metric discovery evidence stored,8 encrypted pages with receipt/decrypted-content checks. Performance sets remain explicitly unavailable because Shopify metrics are absent; not successful zero performance.",
+        "reference": "https://github.com/fyilanli-oss/ads-table-embedded/pull/329"
+      },
+      {
+        "area": "Retention and deletion safeguards",
+        "evidence": "Owner accepted90-day source/365-day metadata policy; prepared source policy applied as live20261105061843. Existing45 rows controlled45/45 update and bounded no-eligible-row cleanup acceptance; no content/cipher/receipt change or actual customer erasure inferred. Mandatory privacy erasure priority and same-generation tombstones retained.",
+        "reference": "contracts/eo-05-step15-storage-design-v1.json#accepted_retention_policy_2026_11_04"
+      },
+      {
+        "area": "Private customer-source worker",
+        "evidence": "PR333:4174 tests/typecheck/build and3 real isolated SQL phases. PR334 actual Production narrow role/TLS, run+inspect idle receipt and unchanged45 source records; no real customer request or disclosure.",
+        "reference": "docs/evidence/EO05_PRIVATE_PRIVACY_WORKER_LIVE_2026-11-05.json"
+      }
+    ],
+    "deferred": [
+      {
+        "scope": "Backup inventory/setup, backup-aware erasure ledger and restore deletion replay/acceptance",
+        "to": "A6-EO-08-C",
+        "record": "Step15_backup_restore_deferral_2026_11_05",
+        "state": "not_implemented_not_passed"
+      },
+      {
+        "scope": "Secure nonempty store-owner customer data delivery and authoritative actual-delivery proof",
+        "to": "A6-EO-07-A",
+        "acceptance_gate": "A6-EO-08-D",
+        "record": "Step15_customer_disclosure_deferral_2026_11_05",
+        "state": "not_implemented_not_passed"
+      }
+    ],
+    "environment_holds": [
+      {
+        "case": "Google Merchant catalogue",
+        "state": "merchant_link_absent_unavailable_not_zero",
+        "rule": "No readable product catalogue or native namespace/Shopify mapping acceptance inferred."
+      },
+      {
+        "case": "Klaviyo native performance",
+        "state": "shopify_metrics_absent_owner_accepted_environment_hold",
+        "rule": "Configuration discovery is stored; unavailable performance is not0 and is not complete performance acceptance."
+      },
+      {
+        "case": "Nonempty source-rule/product mapping and Shopify order/line/claim scenarios",
+        "state": "native_real_record_acceptance_not_proven",
+        "rule": "Existing isolated implementation proof is retained; unresolved remains unresolved. Any future use needs actual same-shop/current native evidence and reviewed source rule."
+      },
+      {
+        "case": "Real customer privacy request",
+        "state": "no_genuine_request_observed",
+        "rule": "Actual live idle receipt is not live scoped erasure/disclosure proof; isolated SQL proofs and fail-closed held states remain."
+      }
+    ],
+    "downstream_boundaries": {
+      "report_Dataset_FX_and_durable_handoff": "Existing ordered step23; source batches remain pending until an actual consumer receipt. No synthetic completed/consumed state.",
+      "hourly_execution_and_capacity": "Existing refresh and later certified-load/cost acceptance, not activated/certified by Step15 closure.",
+      "historical_PMax_and_overlap": "Existing step22 pause and Overlap deferrals unchanged.",
+      "scope": "Only ordered step15 current implementation scope is closed. Entire EO05/EO06, all native scenarios, UI/review or Production scale are not marked complete."
+    },
+    "next_ordered_step": 16,
+    "step16_execution_authorized": false,
+    "document": "docs/EO_05_STEP15_CLOSURE_2026_11_05.md",
+    "authorized_now": "Documentation/closure and expressly approved PR335 merge only; no runtime/SQL/config/provider/deploy/delete/disclose/restore/scheduler change."
   }
 }

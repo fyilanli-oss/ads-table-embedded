@@ -1566,12 +1566,12 @@
       "app/routes/settings.provider-live-evidence.ts": "89fbcb7087fc480fefba708bbc730146f1ba41af48d98f1b0a10fe1427120495",
       "app/routes/webhooks.shopify.tsx": "eac0ea30fcca28d6bba3c11105a5c4fda7778d1398c23f21fcb02f717d8bd056",
       "app/shopify.server.ts": "cc5959867dd5c413b222d51c4aad7d9a39c7c3d15e590aada86a1ddfefdc6fad",
-      "contracts/a6-eo-implementation-master-v1.json": "f1d23009ed061e14bea38b108e5dbe8078cbbc76c383dcf0b8c356c054b57e16",
+      "contracts/a6-eo-implementation-master-v1.json": "13c436b8c5f77d4b690874ad70effbaba133c7ed7baa3aec94406bb4128963e8",
       "contracts/eo-05-oauth-setup-permission-policy-v1.json": "c1914f91011464d3b16b4b0a7710e49878ce6dbb57427e3d0f7c68d9ec4ec681",
       "contracts/eo-05-permission-explanation-design-v1.json": "ad4753b9ad4a6becd14764b7b33fb917f0cc491ad774cc1f1fe9053c5f189f35",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
       "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md": "c602fd4d7760e8f32c109e1f0456907c739c12906d71becf88476cad2007d6a1",
-      "docs/EXECUTION_PLAN.md": "c68cf10970ea09319a37ea1d85f88594b43e87d7ab2640b6036b0d9eb55d673b",
+      "docs/EXECUTION_PLAN.md": "2e65b54904c9798f58aa79802fa9e2c9c5dffc79dbc5bbfb2c0043a1f208c525",
       "docs/OAUTH_FLOW_CONSTITUTION.md": "74d7a8f327a9558712c3ac8bb54a6633fff7a7e2045405d236d35f265d124b28",
       "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md": "49e253b08959faa9f0b2bf208ed5eb6d3c078a0ddf9097e667a9bf1483dc7350",
       "package.json": "e46285b3a60421e8c338807d7b606afa17f16303b08a2832bed3222a06183fe8",
@@ -1667,7 +1667,7 @@
       "supabase/migrations/20261104213905_eo05_source_retention_policy.sql": "29c1c381593df3275a3512c2b00abb8b55e0bbaba9d9bc5808cf3ba0090153e5",
       "supabase/migrations/20261105100338_eo05_customer_request_completion.sql": "fb480a61694b9db3ebc10aa1df0d7c7b85206f6443206647bb7040fb33e24ab1",
       "supabase/migrations/20261105111527_eo05_private_customer_source_worker.sql": "aedb5df472ee80aa0e1dd65f6a02dcbc31aa3ec3709b0c51b07bef9dd23a6646",
-      "tests/a6-docs-01-turkish-standardization.test.js": "ad86394867aa9631dd429dcfc8863b4a328621c69d4e7c535c27ecfd522c9f58",
+      "tests/a6-docs-01-turkish-standardization.test.js": "8a49d5bdff1e22069a8a438cd790f83d9ce6d139b66af4358b423fb2fbf4b8ad",
       "tests/a6-tech-01-f01c-scoped-recovery.test.js": "3bd869071d5042402215176a99bf14dcebce6d3d0497ffcba946038050701792",
       "tests/eo-01c-preview-shell.test.js": "c3d67bb6666c19cf5ac12cfcd8a7f2f2acdf399d5a8ac32c0269823b06cbf789",
       "tests/eo-03a-oauth-transaction-boundary.test.js": "b364193460356370d1128000e6c0b61e975b2d79b896135d97ce648bc30a7747",
@@ -3105,6 +3105,34 @@
         "contracts/a6-eo-implementation-master-v1.json",
         "contracts/oauth/oauth-flow-constitution-v1.json",
         "docs/EXECUTION_PLAN.md"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "visual_acceptance": "not_applicable_no_UI_change"
+    },
+    {
+      "id": "step15-scope-closure-and-disclosure-deferral-2026-11-05",
+      "date": "2026-11-05",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Owner first directed Eksik olanlarıda yedekleme gibi at EO paketlerinden birine; then explicitly replied Tamam onaylıyorum after the concrete proposal to merge PR335 and update the scoped Step15 closure, separating completed work, named deferrals and unproven actual-data scenarios. Same documentation-only scope, no new implementation or live action."
+      },
+      "rationale": "Close only the agreed current Step15 implementation scope; record actual source-store/native-capture/private-worker proof, explicit EO07A/EO08D disclosure and EO08C backup deferrals, unavailable native acceptance and unchanged downstream scope. No blanket native PASS, new package, step16 execution or runtime/OAuth/SQL/config change.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "merge": false,
+        "deploy": false
+      },
+      "changed_paths": [
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "docs/EXECUTION_PLAN.md",
+        "tests/a6-docs-01-turkish-standardization.test.js"
       ],
       "acceptance_required": [
         "required_CI",

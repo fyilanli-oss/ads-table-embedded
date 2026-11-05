@@ -248,7 +248,7 @@
       "work": "Onaydan sonra kalıcı kimlik eşlemesi, kaynak kuralları ve özel ham kanıt saklama bağlantısını kurmak.",
       "boundary": "Tablo, writer, tekrar okuma, geçmiş/sürüm, silinme/yeniden bağlantı ve gerçek referanslar. Kimlik akışı uçtan uca sınanacak.",
       "addition": "Shopify ek işi: sipariş/satır kayıtları ve Shopify atfı ile sağlayıcı iddiaları için ayrı kalıcı kaynak kayıtları; writer/tekrar okuma ve sürüm geçmişi. Fiziksel tablo sayısı burada tasarlanıp onaylanacak; mevcut beş tabloya sessiz ek yapılmayacak.",
-      "status": "2 Kasım: owner10 tablo yerleşimini kabul etti; owner-only kaynak/kanıt SQL/private writer/readback repository hazırlığı ve izole testler. Native producer/grant, müşteri bazlı privacy, structured retention ve live kabul açık;15 tamamlanmadı.",
+      "status": "5 Kasım: kabul edilen kaynak/kanıt depo geliştirme kapsamı kapandı. Yedek/restore EO-08-C; dolu veri teslimi ve kanıtı EO-07-A/EO-08-D. Veri/ortam yokluğundaki native kabuller PASS değil; açık kanıt sınırı olarak kayıtlı. Sonraki sıra16; başlamadı.",
       "package": "EO-05-B"
     },
     {
@@ -967,5 +967,11 @@
     "step15_started": false,
     "step22_resumed": false,
     "Overlap_work_started": false
+  },
+  "Step15_scope_closure_2026_11_05": {
+    "record": "contracts/a6-eo-implementation-master-v1.json#Step15_scope_closure_2026_11_05",
+    "status": "closed_current_implementation_scope_with_named_deferrals_and_environment_holds",
+    "next_step": 16,
+    "next_step_started": false
   }
 }

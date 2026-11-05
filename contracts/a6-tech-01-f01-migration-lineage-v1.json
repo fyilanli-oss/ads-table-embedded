@@ -957,6 +957,15 @@
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261105111527",
+      "name": "eo05_private_customer_source_worker",
+      "file": "supabase/migrations/20261105111527_eo05_private_customer_source_worker.sql",
+      "repository_sql_sha256": "70fc71ccd613d344b9b6f720ca4dfdd6489be17a29c328921274777e3b26f1dc",
+      "applied": false,
+      "replay_scope": "isolated_rollback_only",
+      "live_apply_authorized": false
     }
   ]
 }

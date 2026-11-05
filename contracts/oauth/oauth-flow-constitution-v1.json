@@ -1289,6 +1289,7 @@
       "app/components/preview-shell.tsx": "b6f0d8a47abf20ec4b6f0f5f7345feeccc11e5d55b66e757e63b1b71c03b8a79",
       "app/components/product-access-removal.tsx": "d3910cf122e4e5bb88723d1c10b1561c5d1ee76d4aa8df36f8f4840041be1012",
       "app/components/use-permission-settings.tsx": "27128cb98219c03cd8cefc39e69c68e2a431d85e2105f4bce81021882c91c33f",
+      "app/lib/database/customer-source-non-order.server.js": "d65745481ff8cc4a0d741487e335146c59d814bc085e6914e00757a837dabd35",
       "app/lib/database/customer-source-privacy.server.js": "07c9445cf9e4440b995a7f2dc5665229dd17794015e2c06518bcb33931e317ea",
       "app/lib/database/google-acceptance-coordinator-postgres.server.js": "fac80e170cbff24d73c1c40201dee3371d6f4f6c549634e14b7d230cd94a038d",
       "app/lib/database/google-account-selection-repository.server.js": "1155c186cb7a4ac712798033e80c1b5b3214e41e2b91c05de047a85ce378df3e",
@@ -1306,6 +1307,7 @@
       "app/lib/database/meta-source-postgres.server.js": "f1d80fefa9dde1902383be41d4022099ceb8dd1f84698e7748874ffc6a93e812",
       "app/lib/database/oauth-transaction-repository.server.js": "82bfe602c1ff028c3669ac2c82c60ceae9aebe6285ae593a28d170c56b4e1898",
       "app/lib/database/privacy-lifecycle-repository.server.js": "1d9346d8a47c49a972e344c3b72547516d68077e5d5ff384b996aeb77ef0570f",
+      "app/lib/database/privacy-source-postgres.server.js": "23885879353398705823bcae4825c2e19cdd922b22f773f9f99c544d8da58b98",
       "app/lib/database/provider-account-authority-repository.server.js": "f08167c2cbc131b64cde7e58695a363cb02d7a864cd312f7e398b39b75dc9b7f",
       "app/lib/database/provider-connection-lifecycle-repository.server.js": "edcc6eb4a3fb0d9329b55ec9122a5ff1838103f8ec8e341fc2cef4951a382310",
       "app/lib/database/refresh-queue-postgres.server.js": "bbdd98410a5af2bcbded4eb5f396f01574d5609a03d82e39571561f1f9a7e0be",
@@ -1557,18 +1559,19 @@
       "app/routes/internal.google.raw-capture.ts": "213cea04488999ac67dbc24c959c99ebfbe3dd63955f25fef477b34defa95c83",
       "app/routes/internal.klaviyo.raw-capture.ts": "fed092b0ac878ea7e5a5b71b84c4c91bc2b6a5e743a92c7decf791d023565bd7",
       "app/routes/internal.meta.raw-capture.ts": "c06dee0498b0dfc5b0f09a0f46572ac3943bae5961b6d438ed0a8aa4e3d84df1",
+      "app/routes/internal.privacy.source-worker.ts": "5135c9b2fc38070cfaa4e1aba82aecf2be2617df26569401adcea935c02bf5b1",
       "app/routes/internal.refresh.queue-check.ts": "d537719743abbba8151940a76976a512178b65561cb1d24b5bb998c573039ac1",
       "app/routes/settings.google-live-evidence.ts": "d26e1858abcc920d203bc83c37a255b4d193b3867920c93ceef0ca57ac93d7aa",
       "app/routes/settings.klaviyo-live-evidence.ts": "47dd1d71f04aeaafb6df14924eba1d02ef9eb4c397948429e2ff79233f3d5912",
       "app/routes/settings.provider-live-evidence.ts": "89fbcb7087fc480fefba708bbc730146f1ba41af48d98f1b0a10fe1427120495",
       "app/routes/webhooks.shopify.tsx": "eac0ea30fcca28d6bba3c11105a5c4fda7778d1398c23f21fcb02f717d8bd056",
       "app/shopify.server.ts": "cc5959867dd5c413b222d51c4aad7d9a39c7c3d15e590aada86a1ddfefdc6fad",
-      "contracts/a6-eo-implementation-master-v1.json": "f2fa1995a515e84bc4af29fc95189a7c3c71a6a7598299a8b6270bb019a95e26",
+      "contracts/a6-eo-implementation-master-v1.json": "c9cae558e1bb764a5d841721418cb199755efd80006de92850dfb05de19d74b3",
       "contracts/eo-05-oauth-setup-permission-policy-v1.json": "c1914f91011464d3b16b4b0a7710e49878ce6dbb57427e3d0f7c68d9ec4ec681",
       "contracts/eo-05-permission-explanation-design-v1.json": "ad4753b9ad4a6becd14764b7b33fb917f0cc491ad774cc1f1fe9053c5f189f35",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
       "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md": "c602fd4d7760e8f32c109e1f0456907c739c12906d71becf88476cad2007d6a1",
-      "docs/EXECUTION_PLAN.md": "501e016aeb435ee9d26ce362c519e943804d78e348d391ff1b20847f15c7b797",
+      "docs/EXECUTION_PLAN.md": "f9fb14414d2a2a48ee6cd76486aa67ced589f8e535a64e787002c6724cc99b31",
       "docs/OAUTH_FLOW_CONSTITUTION.md": "74d7a8f327a9558712c3ac8bb54a6633fff7a7e2045405d236d35f265d124b28",
       "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md": "49e253b08959faa9f0b2bf208ed5eb6d3c078a0ddf9097e667a9bf1483dc7350",
       "package.json": "e46285b3a60421e8c338807d7b606afa17f16303b08a2832bed3222a06183fe8",
@@ -1662,6 +1665,8 @@
       "supabase/migrations/20261104161732_eo05_meta_raw_first_day.sql": "629a86a6dc6b28c7eb4ec05afb4eadcb12e2bf1fe07d63e7df733f8450bf82ac",
       "supabase/migrations/20261104181254_eo05_klaviyo_raw_datasets.sql": "557c3de20f8fcd90d1276d6ec9828f9afb46bc63d14faaeb7bc7379414ae6e42",
       "supabase/migrations/20261104213905_eo05_source_retention_policy.sql": "29c1c381593df3275a3512c2b00abb8b55e0bbaba9d9bc5808cf3ba0090153e5",
+      "supabase/migrations/20261105100338_eo05_customer_request_completion.sql": "fb480a61694b9db3ebc10aa1df0d7c7b85206f6443206647bb7040fb33e24ab1",
+      "supabase/migrations/20261105111527_eo05_private_customer_source_worker.sql": "aedb5df472ee80aa0e1dd65f6a02dcbc31aa3ec3709b0c51b07bef9dd23a6646",
       "tests/a6-docs-01-turkish-standardization.test.js": "ad86394867aa9631dd429dcfc8863b4a328621c69d4e7c535c27ecfd522c9f58",
       "tests/a6-tech-01-f01c-scoped-recovery.test.js": "3bd869071d5042402215176a99bf14dcebce6d3d0497ffcba946038050701792",
       "tests/eo-01c-preview-shell.test.js": "c3d67bb6666c19cf5ac12cfcd8a7f2f2acdf399d5a8ac32c0269823b06cbf789",
@@ -1733,6 +1738,7 @@
       "tools/eo05-meta-first-day-probe.mjs": "54759310dd8a25fbacd710ef3ed130e62a862d498b8e81b2e1ebd7d9154e4abe",
       "tools/eo05-meta-raw-datasets-probe.mjs": "edf8ec0ed2e9c5b854f4f5c3c54fd96478f777ef92140d0afbba9152613df3a1",
       "tools/eo05-meta-source-capture-probe.mjs": "a8cea28c2c80ced0436fe660dd201b73351d02336a4a3bcba5540cb63f2135b4",
+      "tools/eo05-privacy-source-worker-probe.mjs": "c120d7f57b50390e8da14c4975994759a662dd87333bb6dbaaee36eec4e0adfd",
       "tools/eo05-quota-authority-probe.mjs": "50c1b31cafb78cc774f7ed62af849d79136f39519375076e53f4eac896a2fdd5",
       "tools/eo05-quota-feedback-probe.mjs": "42b9cf4d7d32ffb4199462f6f04aa13dbff99f33f9b403b388628fff6b73ae5c",
       "tools/eo05-quota-scope-resolver-probe.mjs": "d48bc100b2a59bb081a04a1b033c73f67ee724a480f3d927063204367200b6b8",
@@ -1756,7 +1762,7 @@
       "tools/eo05-shopify-order-reconciliation-probe.mjs": "06eac560b4e00bbcdb2b83cdb5fc7d8c5f980f7589bef8b332794238ab185d24",
       "tools/eo05-shopify-order-work-probe.mjs": "1b3045b0c28ec2e8acaaa92e1308185becc02a03655ada9accf823cd52445bd9",
       "tools/eo05-single-account-selection-probe.mjs": "c87be931bf049384ceb339ec77c57f185f8245a9ff7764879c5eafa629bdfbf0",
-      "tools/eo05-source-evidence-probe.mjs": "d2cf5513a0dfa9f12fc99b6499d67afb19fd3899a7d891757af9c122245d1ca9",
+      "tools/eo05-source-evidence-probe.mjs": "1a3e0245c32a6478c3ec5d845f01eea5b496fa0e7eec361802e0dbb6a809c718",
       "tools/eo05-source-retention-policy-probe.mjs": "8a137f4325fd407abf97deb721f1f81b3ac197f8b42d35273bb5927b08426d57",
       "tools/eo05-source-retention-probe.mjs": "621641d587b4622bf6b72e526932b83963ec46a57df4e346a17b6d78141f0d29",
       "tools/eo05-source-rule-probe.mjs": "bdba143e69a0ac680687dfbfce815bf8c97c7fa2228179e22cc5d5d4626477ab",
@@ -1768,13 +1774,13 @@
       "tools/f01-schema-inventory.sql": "2cc26575e74ca29f61adaf26e79981b6c5e67c5598962cc102f903aea0f18a4d",
       "tools/f01-scoped-recovery.mjs": "766c68aa43b5b91735f18d75b64c74dc57bcf3d01eb377ce84b3e4062a937726",
       "tools/f08-privacy-index-probe.mjs": "2f790c86a62b6e51a2486e85f6ddcb2b3284349558b5e88dc566695aa17f28ca",
+      "tools/run-customer-source-worker.mjs": "748749d7c4c7b0b24dd12e481adf53dcc99c4f3d3c92a89b4b3eaf109f85419e",
       "tools/run-google-raw-capture.mjs": "6c7c06d59f913a6214ce83ea6260b0ef5420fcebbfce8d999c7968892269b24e",
       "tools/sql/eo05-google-dataset-source-role-extension.sql": "509f4b11cb0d93ddfacc9096e3b8d631bf9aa4ae89a4f5da296be7c7f6c719a1",
       "tools/sql/eo05-google-source-role-install.sql": "f16adefa038f6781bf2e718946a566281090403437b739ab71dfece99ca7a6ea",
       "tools/sql/eo05-klaviyo-source-role-install.sql": "c2749c46c4c5026d2eb3c55e16d9e87d60a7d1cbe74bb16f0bd8ff783b6a156f",
       "tools/sql/eo05-meta-source-role-install.sql": "748c28dc0d42b9efb48fddf3e2c0ddebb4daecb410202aba522b025680a50071",
-      "app/lib/database/customer-source-non-order.server.js": "d65745481ff8cc4a0d741487e335146c59d814bc085e6914e00757a837dabd35",
-      "supabase/migrations/20261105100338_eo05_customer_request_completion.sql": "fb480a61694b9db3ebc10aa1df0d7c7b85206f6443206647bb7040fb33e24ab1"
+      "tools/sql/eo05-privacy-source-role-install.sql": "a2e8a8cc6ce37be9d2c84e34b3a1a8614b194c348c6af72e7385d5c5bafdf6f5"
     }
   },
   "revisions": [
@@ -3036,6 +3042,41 @@
         "docs/EXECUTION_PLAN.md",
         "supabase/migrations/20261105100338_eo05_customer_request_completion.sql",
         "tools/eo05-customer-source-privacy-probe.mjs"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "real_isolated_SQL_proof",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "visual_acceptance": "not_applicable_no_UI_change"
+    },
+    {
+      "id": "step15-private-customer-source-worker-2026-11-05",
+      "date": "2026-11-05",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Onaylıyorum Codex after concrete private server queue entry, least-privilege NOLOGIN role and integrated no-data/redaction/disclosure-hold/replay tests; code/prepared SQL/isolated tests/one PR only."
+      },
+      "rationale": "Bind existing customer-source processor to a private server entry and operation-bound queue reservation; preserve OAuth UI/selection/token behavior, no live changes.",
+      "scope": {
+        "runtime_code": true,
+        "live_provider": false,
+        "merge": false,
+        "deploy": false
+      },
+      "changed_paths": [
+        "app/lib/database/privacy-source-postgres.server.js",
+        "app/routes/internal.privacy.source-worker.ts",
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "docs/EXECUTION_PLAN.md",
+        "supabase/migrations/20261105111527_eo05_private_customer_source_worker.sql",
+        "tools/eo05-privacy-source-worker-probe.mjs",
+        "tools/eo05-source-evidence-probe.mjs",
+        "tools/run-customer-source-worker.mjs",
+        "tools/sql/eo05-privacy-source-role-install.sql"
       ],
       "acceptance_required": [
         "required_CI",

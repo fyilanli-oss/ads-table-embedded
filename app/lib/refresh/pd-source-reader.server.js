@@ -287,13 +287,13 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
           reporting_time_basis: claim.provider === "klaviyo" ? "send_date" : claim.provider === "google_ads" ? "interaction_date" : null,
           attribution_fingerprint: null, metric_units_fingerprint: null,
           metadata_state: "native_rows_and_request_evidence_preserved_not_composition_ready"};
-        const productSales = pd?.includeProductSales ? projectGoogleProductSales({sourceContext, evidence: shoppingEvidence ?? searchEvidence ?? pmaxEvidence}) : null;
         const prepared = nativeMetadata ? preparePdNativeMetadata({sourceContext, evidence}) : null;
         if (prepared?.status === "prepared") {
           sourceContext.metadata_state = claim.provider === "klaviyo" ? "native_account_with_documented_default_attribution_reference"
             : "native_read_time_metadata_prepared_not_historical_authority";
           sourceContext.reporting_time_basis = claim.provider === "meta" ? "impression_date" : sourceContext.reporting_time_basis;
         }
+        const productSales = pd?.includeProductSales ? projectGoogleProductSales({sourceContext, evidence: shoppingEvidence ?? searchEvidence ?? pmaxEvidence}) : null;
         const blocked = prepared?.status === "blocked" ? {status: "blocked", reason: prepared.reason, rows: [], publishable: false} : null;
         const composition = blocked ?? (pd ? composeGooglePdSnapshot({sourceContext, evidence, compositionContext: prepared?.composition_context ?? pd.compositionContext})
           : kpd ? composeKlaviyoPdSnapshot({sourceContext, evidence, compositionContexts: prepared?.composition_contexts ?? kpd.compositionContexts}) : null);

@@ -1,3 +1,5 @@
+import {reviewSalesRoleCohort} from "./sales-role-prewrite.server.js";
+import {stableJson} from "./common-adapter.server.js";
 import {normalizeGoogleCartDataSale} from "./google-reporting.server.js";
 
 const fail = () => {throw Error("GOOGLE_PRODUCT_SALES_EVIDENCE_INVALID");};
@@ -57,4 +59,26 @@ export function projectGoogleProductSales({sourceContext: s, evidence: e} = {}) 
     source_context: s, rows, conversion_scope: "normal", totals_computed: false, metrics_allocated: false,
     shopify_identity_resolved: false, canonical_scope_ready: false, persistable: false, publishable: false,
     Dataset_write_performed: false});
+}
+
+
+// Called only after the worker verifies its private source observation. Rebuild the
+// projection from that same complete evidence before reviewing the sales cohort.
+export function reviewGoogleProductSales({sourceContext, evidence, projected} = {}) {
+  const checked = projectGoogleProductSales({sourceContext, evidence});
+  if (stableJson(checked) !== stableJson(projected)) throw Error("GOOGLE_PRODUCT_SALES_PROJECTION_MISMATCH");
+  const s = sourceContext, family = evidence.source_links.product_sales_fact_family;
+  const cohort = {workspace_id: s.workspace_id, installation_id: s.installation_id,
+    installation_generation: s.installation_generation, provider_connection_id: s.provider_connection_id,
+    provider: s.provider, platform_account_id: s.platform_account_id, business_date: s.business_date,
+    source_currency: s.source_currency, source_timezone: s.source_timezone, reporting_time_basis: s.reporting_time_basis,
+    fact_family: family, conversion_scope: "normal", unit_kind: "product_unit"};
+  return reviewSalesRoleCohort({cohort, rows: checked.rows.map(sale => {
+    const row = sale.raw_row, p = sale.provider_product_key;
+    return {cohort, native_identity: {campaign_id: sale.campaign_id, ad_group_id: family === "pmax_cart_data_product_sales_daily" ? null : row.adGroup?.id ?? null,
+      merchant_id: p.merchant_id, feed_label: p.feed_label, language: family === "pmax_cart_data_product_sales_daily" ? row.segments?.productLanguage ?? null : null,
+      advertised_item_id: p.advertised_item_id, sold_item_id: p.sold_item_id},
+    source_product_id: p.sold_item_id, sales_role: sale.sales_role, metrics: {quantity: sale.raw_metrics.units_sold, value: sale.raw_metrics.revenue_micros, ...sale.raw_metrics},
+    source_reference: {family, native_reference: stableJson(sale.source_reference)}, source_payload: row, observed: sale};
+  })});
 }

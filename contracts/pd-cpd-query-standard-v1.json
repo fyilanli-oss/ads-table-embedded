@@ -1427,5 +1427,14 @@
     "scope": "Existing Campaign Assisted, Flow Triggered, missing/conflicting Unclassified; no Advertised/Cross-sell work.",
     "runtime_changed": false,
     "native_acceptance": "separate"
+  },
+  "Step20_sales_role_prewrite_guards_2026_11_05": {
+    "reference": "contracts/a6-eo-implementation-master-v1.json#Step20_sales_role_prewrite_guards_2026_11_05",
+    "ordered_plan_step": 20,
+    "status": "repository_prepared_pending_required_CI_and_owner_merge_native_acceptance_separate",
+    "scope": "Source-native product-unit cohort checks; no arithmetic or new role policy.",
+    "durable_Dataset_key": false,
+    "Meta18": "open_waiting_native_evidence",
+    "Dataset_write": false
   }
 }

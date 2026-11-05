@@ -4408,5 +4408,66 @@
     "merge_authorized": false,
     "deploy_authorized": false,
     "next_existing_step": 20
+  },
+  "Step20_sales_role_prewrite_guards_2026_11_05": {
+    "status": "repository_prepared_pending_required_CI_and_owner_merge_native_acceptance_separate",
+    "ordered_plan_step": 20,
+    "package": "EO-05-B",
+    "base_main": "287fe0d3f2b38a199ada1a94de42a55d5f2ccdd8",
+    "owner_approval": {
+      "explicit": true,
+      "source": "Onaylıyorum devam edelim Komutan after the concrete step20 proposal: source/product identity, conflict/repeat and zero/missing checks before writing; no extra sales or cost."
+    },
+    "scope": "One code/test/PR delivery connecting a shared pure sales-role cohort guard to the existing private Google and Klaviyo prewrite paths. No new classifier, query, arithmetic, source table or Dataset writer.",
+    "entrypoints": [
+      "reviewSalesRoleCohort",
+      "reviewGoogleProductSales",
+      "reviewRefreshPdPrewrite",
+      "reviewRefreshReferencePrewrite",
+      "reviewRefreshIntegratedPrewrite",
+      "runRefreshPdPrewriteChunk"
+    ],
+    "invariants": [
+      "Private Google PD observation or Klaviyo candidate/reference observation is required by existing entrypoints before the pure structural checker. The checker is never source/identity/native/write authority.",
+      "One exact workspace, installation/generation, connection, provider/account, business date, source-currency context, timezone, reporting basis, family, conversion scope and product-unit cohort per review. Different cohorts or order-count input are rejected; no FX/time-range equivalence or cross-family aggregation.",
+      "Google projection rebuilt from same complete source and compared before role review. Sales context is now captured after native metadata preparation so the exact metadata state matches.",
+      "Native in-memory uniqueness uses only queried dimensions: Google campaign/Ad Group where selected/Merchant/feed/PMax language/advertised/sold identity; Klaviyo event ID. No metric value, role, name, resolved Channel/Shopify mapping, page index or run ID in uniqueness.",
+      "Identical repeated native fact is carried once with all source references. Same key with differing raw evidence/metrics/role is conflict; full conflict observations and raw source remain, no accepted handoff.",
+      "Missing/invalid native product identity or quantity/value holds the row; unsafe numeric values never round or become zero. Native decimal strings and finite safe numeric representations are unchanged; no totals, component addition, FX or cost allocation.",
+      "Zero remains an independent metric state, never a Sales Role or proof of missing data. A/B/C/D product facts remain independent; repeated source identity is not a new role sale.",
+      "Search sold-only Assisted/Unclassified and Klaviyo Campaign Assisted/Flow Triggered/Unclassified stay unchanged; unrequested identity fields cannot disguise a duplicate.",
+      "Worker and integrated prewrite block held/conflicting sales before ready_for_dataset. Final owner/claim/fence/entitlement/deadline and combined serialized-size gates remain.",
+      "Shopify visits/last touch do not establish a provider role or provider conversion claim; Shopify order count and product quantity remain separate."
+    ],
+    "tests": [
+      "tests/sales-role-prewrite.test.js",
+      "tests/pd-source-reader.test.js",
+      "tests/klaviyo-identity-collection.test.js"
+    ],
+    "synthetic_fixture_correction": "Positive handoff fixtures use unique, complete native cart grains. Existing missing/all-only/invalid/ambiguous source tests remain; new explicit cases verify that these facts are retained as evidence and blocked at the actual prewrite gate.",
+    "boundaries": {
+      "Meta_step18": "open_waiting_nonempty_native_sales_relationship_evidence_no_decoder_or_role_acceptance",
+      "Shopify_identity": "existing native/candidate guards preserved; no canonical product mapping assigned",
+      "native_attribution": "existing read-time metadata only; no historical or atomic snapshot proof",
+      "currency": "same source-account context; no claim of native order-currency/FX acceptance",
+      "durable_idempotence": "not implemented; native in-memory duplicate review is not a Dataset unique key or cross-run ledger",
+      "Dataset_and_report_persistence": 23,
+      "historical_listing_tree": "22 remains paused",
+      "new_package": false,
+      "live_provider": false,
+      "SQL_or_config_change": false,
+      "OAuth_behavior_changed": false,
+      "UI_changed": false,
+      "merge_authorized": false,
+      "deploy_authorized": false
+    },
+    "official_documentation": {
+      "checked_on": "2026-11-05",
+      "sources": [
+        "https://developers.google.com/google-ads/api/fields/v25/cart_data_sales_view",
+        "https://developers.klaviyo.com/en/reference/get_event"
+      ],
+      "query_or_API_version_changed": false
+    }
   }
 }

@@ -95,7 +95,7 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
         || !Number.isSafeInteger(limits?.maxPages) || limits.maxPages < 1 || limits.maxPages > 20 || limits.maxRows > 20_000
       : queryFamily !== undefined || googlePd !== undefined)) fail("INPUT_INVALID");
   if (googlePd?.includeProductSales !== undefined && (typeof googlePd.includeProductSales !== "boolean"
-    || googlePd.includeProductSales && (!["shopping", "retail_pmax"].includes(googlePd.flow)
+    || googlePd.includeProductSales && (!["search", "shopping", "retail_pmax"].includes(googlePd.flow)
       || googlePd.flow === "retail_pmax" && googlePmax === undefined))) fail("INPUT_INVALID");
   const boundLimits = copy(limits), env = {...environment}, receipt = structuredClone(entitlementReceipt);
   const pd = googlePd === undefined ? null : copy(googlePd);
@@ -198,13 +198,13 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
           return structuredClone(token);
         }}, environment: env, now: readNow};
         const dateWindow = {start: window.from, end: window.to};
-        let evidence, pmaxEvidence = null, shoppingEvidence = null, pmaxMembershipState = null;
+        let evidence, pmaxEvidence = null, shoppingEvidence = null, searchEvidence = null, pmaxMembershipState = null;
         if (claim.provider === "google_ads") {
           const client = clients.google(config);
           evidence = pd ? await client.readPdEvidenceSnapshot({installationAuthority: owner, dateWindow, flow: pd.flow,
             limits: {maxPages: boundLimits.maxPages, maxRows: boundLimits.maxRows, maxBytes: boundLimits.maxBytes}, nativeMetadata})
             : await client.readEvidencePage({installationAuthority: owner, queryFamily, dateWindow});
-          if (pd?.includeProductSales && pd.flow === "shopping") {
+          if (pd?.includeProductSales && ["shopping", "search"].includes(pd.flow)) {
             const usedRows = evidence.results.performance.rows.length + evidence.results.conversions.rows.length
               + (evidence.native_metadata ? [evidence.native_metadata.before, evidence.native_metadata.after]
                 .reduce((n, m) => n + m.account.rows.length + m.actions.rows.length, 0) : 0);
@@ -212,12 +212,13 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
               maxBytes: boundLimits.maxBytes - Buffer.byteLength(JSON.stringify(evidence), "utf8")};
             if (remaining.maxRows < 1 || remaining.maxBytes < 1) fail("RESULT_BOUND_EXCEEDED");
             await currentContext();
-            shoppingEvidence = await client.readShoppingSourceEvidenceSnapshot({installationAuthority: owner, dateWindow,
+            const sourceEvidence = await client[pd.flow === "search" ? "readSearchSourceEvidenceSnapshot" : "readShoppingSourceEvidenceSnapshot"]({installationAuthority: owner, dateWindow,
               limits: remaining, signal: controller.signal, maxElapsedMs: boundLimits.maxElapsedMs});
             await currentContext();
-            for (const page of Object.values(shoppingEvidence.results)) for (const row of page.rows)
+            if (pd.flow === "search") searchEvidence = sourceEvidence; else shoppingEvidence = sourceEvidence;
+            for (const page of Object.values(sourceEvidence.results)) for (const row of page.rows)
               if (row.customer?.id !== claim.accountId || row.segments?.date !== window.from
-                || row.campaign?.advertisingChannelType !== "SHOPPING") fail("NATIVE_SCOPE_MISMATCH");
+                || row.campaign?.advertisingChannelType !== (pd.flow === "search" ? "SEARCH" : "SHOPPING")) fail("NATIVE_SCOPE_MISMATCH");
           }
           if (pmax) {
             const membership = pmax.listingEvidence ?? null;
@@ -275,7 +276,8 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
         }
         const rows = pages.reduce((n, p) => n + p.rows.length, 0)
           + (pmaxEvidence ? Object.values(pmaxEvidence.results).reduce((n, p) => n + p.rows.length, 0) : 0)
-          + (shoppingEvidence ? Object.values(shoppingEvidence.results).reduce((n, p) => n + p.rows.length, 0) : 0);
+          + (shoppingEvidence ? Object.values(shoppingEvidence.results).reduce((n, p) => n + p.rows.length, 0) : 0)
+          + (searchEvidence ? Object.values(searchEvidence.results).reduce((n, p) => n + p.rows.length, 0) : 0);
         if (rows > boundLimits.maxRows || Buffer.byteLength(JSON.stringify(evidence), "utf8") > boundLimits.maxBytes) fail("RESULT_BOUND_EXCEEDED");
         // Do not fabricate Meta attribution settings/time basis or a common fingerprint.
         // Ancestor IDs, metric units and request evidence remain in the native envelope.
@@ -285,7 +287,7 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
           reporting_time_basis: claim.provider === "klaviyo" ? "send_date" : claim.provider === "google_ads" ? "interaction_date" : null,
           attribution_fingerprint: null, metric_units_fingerprint: null,
           metadata_state: "native_rows_and_request_evidence_preserved_not_composition_ready"};
-        const productSales = pd?.includeProductSales ? projectGoogleProductSales({sourceContext, evidence: shoppingEvidence ?? pmaxEvidence}) : null;
+        const productSales = pd?.includeProductSales ? projectGoogleProductSales({sourceContext, evidence: shoppingEvidence ?? searchEvidence ?? pmaxEvidence}) : null;
         const prepared = nativeMetadata ? preparePdNativeMetadata({sourceContext, evidence}) : null;
         if (prepared?.status === "prepared") {
           sourceContext.metadata_state = claim.provider === "klaviyo" ? "native_account_with_documented_default_attribution_reference"
@@ -305,6 +307,7 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
         const result = copy({status: "source_read", source_context: sourceContext, evidence,
           ...(pmaxEvidence ? {pmax_source_evidence: pmaxEvidence, pmax_membership_state: pmaxMembershipState} : {}),
           ...(shoppingEvidence ? {shopping_source_evidence: shoppingEvidence} : {}),
+          ...(searchEvidence ? {search_source_evidence: searchEvidence} : {}),
           ...(productSales ? {product_sales: productSales} : {}),
           ...(composition ? {composition} : {}),
           ...(records ? {records} : {}),

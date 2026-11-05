@@ -489,13 +489,13 @@ for (const flow of ["shopping", "retail_pmax"]) test(flow + ": existing classifi
   assert.ok(!JSON.stringify(r).includes("synthetic-access")); assert.ok(!JSON.stringify(r).includes(credential));
 });
 
-test("product sales require explicit internal opt-in and cannot be enabled on Search or a different provider", async () => {
+test("product sales require explicit internal opt-in and cannot be enabled on unsupported flows or a different provider", async () => {
   for (const flow of ["shopping", "retail_pmax"]) {
     const f = productSalesFixture(flow); delete f.config.googlePd.includeProductSales;
     const r = await f.create().readEvidence(); assert.equal(r.product_sales, undefined);
     if (flow === "shopping") assert.equal(f.readQueries.length, 2);
   }
-  for (const options of [{flow: "search", includeProductSales: true}, {flow: "shopping", includeProductSales: "true"}, {flow: "retail_pmax", includeProductSales: true}]) {
+  for (const options of [{flow: "unsupported", includeProductSales: true}, {flow: "shopping", includeProductSales: "true"}, {flow: "retail_pmax", includeProductSales: true}]) {
     const f = fixture("google_ads"); delete f.config.queryFamily;
     assert.throws(() => createRefreshPdSourceReader({...f.config, googlePd: options}), /INPUT_INVALID/);
   }
@@ -625,4 +625,163 @@ test("failed PD composition and serialized handoff bounds cannot promote product
   const rejected = await runRefreshPdPrewriteChunk({worker: bounded.worker, source: bounded.source});
   assert.equal(rejected.product_sales, null); assert.equal(rejected.rows, undefined);
   assert.ok(!bounded.stages.includes("ready_for_dataset"));
+});
+
+function searchSalesFixture() {
+  const f = fixture("google_ads"); delete f.config.queryFamily;
+  f.config.googlePd = {flow: "search", includeProductSales: true};
+  Object.assign(f.config.limits, {maxPages: 3, maxBytes: 300000});
+  const native = (segments, metrics) => ({customer: {id: "123"}, campaign: {id: "10", advertisingChannelType: "SEARCH"},
+    adGroup: {id: "20"}, segments: {date: "2026-10-01", ...segments}, metrics});
+  const sale = (sold, metrics, extra = {}) => native({productMerchantId: "50", productFeedLabel: "TR", productSoldItemId: sold, ...extra}, metrics);
+  f.sales = [
+    sale("A", {unitsSold: "1.5", revenueMicros: "123456789012345678", allUnitsSold: "999"}),
+    sale("B", {unitsSold: "0", revenueMicros: "0"}),
+    sale("C", {allUnitsSold: "5", allRevenueMicros: "5000000"}),
+    sale(null, {unitsSold: "1", revenueMicros: "200"}),
+    sale("A", {unitsSold: "2", revenueMicros: "100", leadUnitsSold: "2"}, {productItemId: "A"}),
+    sale("B", {unitsSold: 3, revenueMicros: "200", crossSellUnitsSold: "3"}, {productItemId: "A"}),
+    sale("D", {unitsSold: "malformed"}),
+    sale("E", {leadUnitsSold: "1", crossSellUnitsSold: "1"}),
+  ];
+  f.ads = ["30", "31"]; f.readQueries = [];
+  f.hooks.response = (address, init) => {
+    if (address.includes("oauth2")) return json({access_token: "synthetic-access", token_type: "Bearer", expires_in: 3600});
+    const {query} = JSON.parse(init.body); f.readQueries.push(query);
+    const results = /FROM cart_data_sales_view/.test(query) ? f.sales
+      : f.ads.flatMap((id, i) => /segments.conversion_action_category/.test(query)
+        ? ["PURCHASE", "ADD_TO_CART", "BEGIN_CHECKOUT"].map((category, n) => ({
+          ...native({conversionActionCategory: category, conversionAction: "customers/123/conversionActions/" + (100 + n)}, {conversions: "0", conversionsValue: "0"}),
+          adGroupAd: {ad: {id}}}))
+        : [{...native({}, {clicks: String(i + 1), impressions: "10", costMicros: "3000000"}), adGroupAd: {ad: {id}}}]);
+    return new Response(JSON.stringify({results}), {headers: {"content-type": "application/json", "request-id": "search-native-request"}});
+  };
+  return f;
+}
+
+test("Search sold-only evidence reaches main sales output once at Ad Group grain, never one sale per Ad", async () => {
+  const f = searchSalesFixture(), r = await f.create().readEvidence(), rows = r.product_sales.rows;
+  assert.deepEqual(rows.map(s => s.sales_role), ["Assisted", "Assisted", "Unclassified", "Unclassified", "Assisted", "Assisted", "Unclassified", "Unclassified"]);
+  assert.equal(rows.length, f.sales.length);
+  assert.equal(rows[0].raw_metrics.units_sold, "1.5"); assert.equal(rows[0].raw_metrics.revenue_micros, "123456789012345678");
+  assert.equal(rows[1].raw_metrics.units_sold, "0"); assert.equal(rows[2].raw_metrics.units_sold, null);
+  assert.equal(rows[5].raw_metrics.units_sold, 3);
+  assert.equal(rows[4].raw_metrics.lead_units_sold, null); assert.equal(rows[5].raw_metrics.cross_sell_units_sold, null);
+  assert.equal(rows[0].raw_row.metrics.allUnitsSold, "999");
+  assert.equal(rows[4].raw_row.segments.productItemId, "A"); assert.equal(rows[4].raw_row.metrics.leadUnitsSold, "2");
+  assert.equal(rows[4].provider_product_key.advertised_item_id, null);
+  assert.equal(rows[6].raw_metrics.units_sold, "malformed");
+  for (const row of rows) {
+    assert.equal(row.role_evidence_scope, "search_sold_product_only");
+    assert.equal(row.advertised_cross_sell_evidence, "not_established_by_current_query");
+    assert.equal(row.channel_reference.pd_parent_context.product_sales_attributed_to_these_ads, false);
+  }
+  assert.equal(rows[0].channel_reference.channel_type, "ad_group");
+  assert.equal(rows[0].channel_reference.native_leaf_key.ad_group_id, "20");
+  assert.deepEqual(rows[0].channel_reference.pd_parent_context.ad_row_indexes, [0, 1]);
+  assert.equal(rows[0].source_reference.query_family, "search_cart_data_product_sales_daily");
+  assert.equal(rows[0].source_reference.provider_request_id, "search-native-request");
+  assert.match(rows[0].source_reference.query_fingerprint, /^[a-f0-9]{64}$/);
+  const cart = f.readQueries.filter(q => /FROM cart_data_sales_view/.test(q));
+  assert.equal(cart.length, 1);
+  assert.doesNotMatch(cart[0], /segments[.]product_item_id|metrics[.](all_)?(lead|cross_sell)_|ad_group_ad[.]|metrics[.](impressions|clicks|cost_micros)/);
+  assert.match(cart[0], /advertising_channel_type = 'SEARCH'/);
+  assert.equal(f.state.reserves, f.state.http); assert.equal(r.product_sales.metrics_allocated, false);
+  f.sales[0].metrics.unitsSold = "999"; assert.equal(rows[0].raw_row.metrics.unitsSold, "1.5");
+  assert.equal(Object.isFrozen(rows[0].raw_row.metrics), true); assert.equal(r.product_sales.publishable, false);
+});
+
+test("Search sales preserve exact Ad Group without PD Ads and ambiguous PD context does not distribute sales", async () => {
+  const f = searchSalesFixture(); f.ads = [];
+  const emptyPd = await f.create().readEvidence();
+  assert.equal(emptyPd.product_sales.rows[0].sales_role, "Assisted");
+  assert.equal(emptyPd.product_sales.rows[0].channel_reference.channel_state, "exact_native_ad_group_reference");
+  assert.equal(emptyPd.product_sales.rows[0].channel_reference.pd_parent_context.state, "not_observed");
+  const g = searchSalesFixture(); g.ads = ["30", "30"];
+  const ambiguous = await g.create().readEvidence();
+  assert.equal(ambiguous.product_sales.rows.length, g.sales.length);
+  assert.equal(ambiguous.product_sales.rows[0].channel_reference.pd_parent_context.state, "ambiguous_pd_ad_rows");
+  assert.equal(ambiguous.product_sales.rows[0].sales_role, "Assisted");
+});
+
+test("Search empty successful cart read and absent opt-in cannot fabricate a sale", async () => {
+  const f = searchSalesFixture(); f.sales.length = 0;
+  const empty = await f.create().readEvidence(); assert.equal(empty.product_sales.status, "not_observed"); assert.deepEqual(empty.product_sales.rows, []);
+  const g = searchSalesFixture(); delete g.config.googlePd.includeProductSales;
+  const ordinary = await g.create().readEvidence(); assert.equal(ordinary.product_sales, undefined); assert.equal(g.readQueries.length, 2);
+});
+
+test("Search paginated sales retain exact source page and query provenance", async () => {
+  const f = searchSalesFixture(), original = f.hooks.response;
+  f.hooks.response = (address, init) => {
+    if (address.includes("oauth2") || !/FROM cart_data_sales_view/.test(JSON.parse(init.body).query)) return original(address, init);
+    const body = JSON.parse(init.body); f.readQueries.push(body.query);
+    return new Response(JSON.stringify({results: body.pageToken ? f.sales.slice(1) : f.sales.slice(0, 1),
+      ...(body.pageToken ? {} : {nextPageToken: "search-cart-next"})}),
+      {headers: {"content-type": "application/json", "request-id": body.pageToken ? "search-page-2" : "search-page-1"}});
+  };
+  const r = await f.create().readEvidence();
+  assert.equal(r.product_sales.rows.length, f.sales.length);
+  assert.equal(r.product_sales.rows[0].source_reference.provider_request_id, "search-page-1");
+  assert.equal(r.product_sales.rows[1].source_reference.provider_request_id, "search-page-2");
+  assert.deepEqual([r.product_sales.rows[1].source_reference.page_index, r.product_sales.rows[1].source_reference.page_row_index], [1, 0]);
+});
+
+for (const scenario of ["first_error", "cursor_loop", "row_bound", "byte_bound", "cancel", "authority_drift"])
+test("Search " + scenario + " stops without partial accepted sales", async () => {
+  const f = searchSalesFixture(), original = f.hooks.response;
+  const controller = new AbortController(); f.config.signal = controller.signal;
+  if (scenario === "row_bound") f.config.limits.maxRows = 10;
+  if (scenario === "byte_bound") f.sales[0].segments.productSoldTitle = "x".repeat(400000);
+  f.hooks.response = (address, init) => {
+    if (address.includes("oauth2")) return original(address, init);
+    const q = JSON.parse(init.body).query, cart = /FROM cart_data_sales_view/.test(q);
+    if (scenario === "first_error" && f.readQueries.length >= 2) return json({error: {message: "private-error"}}, 403);
+    if (scenario === "cursor_loop" && cart) return json({results: [f.sales[0]], nextPageToken: "repeat"});
+    const result = original(address, init);
+    if (cart && scenario === "cancel") controller.abort();
+    if (cart && scenario === "authority_drift") f.state.row.reporting_selection_epoch = "72";
+    return result;
+  };
+  await assert.rejects(f.create().readEvidence());
+  if (scenario === "first_error") assert.equal(f.readQueries.filter(q => /FROM cart_data_sales_view/.test(q)).length, 0);
+});
+
+for (const change of [
+  e => e.authority.reporting_account_id = "999",
+  e => e.source_links.scope.connection_id = workspace,
+  e => e.results.search_cart_data_product_sales_daily.next_cursor = "partial",
+  e => e.results.search_cart_data_product_sales_daily.evidence.page_spans[0].row_count--,
+  e => e.results.search_cart_data_product_sales_daily.rows[0].campaign.advertisingChannelType = "SHOPPING",
+  e => e.results.search_cart_data_product_sales_daily.rows[0].segments.date = "2026-09-30",
+]) test("Search projection rejects foreign or incomplete source proof: " + change, async () => {
+  const r = await searchSalesFixture().create().readEvidence(), e = structuredClone(r.search_source_evidence);
+  change(e); assert.throws(() => projectGoogleProductSales({sourceContext: r.source_context, evidence: e}), /EVIDENCE_INVALID/);
+});
+
+async function composedSearchSalesFixture() {
+  const f = searchSalesFixture(), observed = await f.create().readEvidence();
+  f.config.googlePd.compositionContext = {binding: observed.source_context, flow: "search", conversion_scope: "normal",
+    reporting_time_basis: "interaction_date", composition_attempt_id: workspace, snapshot_id: "synthetic-search-sales",
+    attribution_fingerprint: "a".repeat(64), metric_units_fingerprint: "b".repeat(64),
+    references: {attribution: "synthetic-attribution", metric_units: "synthetic-units"}};
+  const composed = await f.create().readEvidence(); assert.equal(composed.composition.status, "composed");
+  f.config.recordBridge = {metadata: recordMetadata(composed.source_context, composed.composition.rows)};
+  return f;
+}
+test("Search actual main worker handoff separates two PD Ads from one Ad Group sales set and blocks late authority drift", async () => {
+  const f = await composedSearchSalesFixture(), w = prewriteWorker(f);
+  w.worker.limits.maxBytes = w.worker.claim.cost.bytes = 300000;
+  const r = await runRefreshPdPrewriteChunk({worker: w.worker, source: w.source});
+  assert.equal(r.status, "awaiting_dataset"); assert.equal(r.rows.length, 2);
+  assert.equal(r.rows[0].entity.entity_type, "ad");
+  assert.equal(r.product_sales.rows.length, f.sales.length); assert.equal(r.product_sales.rows[0].sales_role, "Assisted");
+  assert.equal(r.product_sales.rows[0].channel_reference.native_leaf_key.ad_group_id, "20");
+  assert.equal(r.rows[0].raw_metrics.spend_value, 3); assert.equal(r.rows[1].raw_metrics.spend_value, 3);
+  assert.equal(r.product_sales.rows[0].raw_metrics.revenue_micros, "123456789012345678"); assert.equal(r.Dataset_write_performed, false);
+  const stopped = prewriteWorker(f), original = stopped.worker.loadAuthority; let calls = 0;
+  stopped.worker.limits.maxBytes = stopped.worker.claim.cost.bytes = 300000;
+  stopped.worker.loadAuthority = async input => {const a = await original(input); if (++calls === 3) f.state.row.connection_version++; return a;};
+  const denied = await runRefreshPdPrewriteChunk({worker: stopped.worker, source: stopped.source});
+  assert.equal(denied.reason, "authority_check_failed_after_request"); assert.equal(denied.product_sales, null); assert.equal(denied.rows, undefined);
 });

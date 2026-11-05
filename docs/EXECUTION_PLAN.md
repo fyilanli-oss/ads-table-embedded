@@ -1,3 +1,15 @@
+## 5 Kasım 2026 — 17: Google Search satış yolunun ana çıktıya bağlanması
+
+Ürün sahibi, Google Search satış rollerinin desteklenen yolunu bağlama önerisinden sonra açıkça başlayalım dedi. Mevcut Search sorgusu ve sınıflandırıcı korunarak, satılan ürün ve normal adet/tutar kanıtı ana okuyucunun bağımsız ürün satış çıktısına ve gerçek yazma öncesi işleyiciye bağlandı. Bu iş tek kod/test/PR kapsamındadır.
+
+Mevcut sorgu reklamı yapılan ürün kimliğini ve lead/cross-sell ayrımını istemez. Bu nedenle yalnız sorgunun getirdiği satılan ürün ile normal adet/tutar rol kanıtı olur: mevcut Assisted yolu korunur; eksik kanıt Unclassified kalır. Beklenmedik ek alanlar ham satırda saklanır fakat Advertised/Cross-sell yetkisi vermez. Bu sınır, Google'ın bu rolleri hiçbir koşulda desteklemediği iddiası veya gerçek veri kabulü değildir.
+
+Search PD Ad düzeyinde, ürün satışının kanalı Ad Group düzeyinde kalır. Grupta iki reklam olması bir satışı ikiye katlamaz; satış, ürün metriği veya maliyet reklamlara dağıtılmaz. Ad satırı eksikliği/tekrarı ayrı bağlam durumudur. Ana teslim mevcut PD doğrulaması ve son güncel yetki kontrollerinden geçer; başarısız/yarım okuma satış çıktısını teslim edemez.
+
+İzole testler roller, değişmeyen adet/tutar, kaynak/sayfa referansları, boş sonuç, ilk hata durma, yetki değişimi, sınırlar, iptal ve gerçek ana teslimi kapsar. Zorunlu CI ve ayrı merge onayı beklenir. OAuth ekranı/izin/hesap/token davranışı, canlı çağrı, SQL/config veya yayın yapılmaz. Dataset/rapor yazımı23'te, sonraki sağlayıcı Meta18'de kalır; yeni paket/alt paket yoktur.
+Resmî kontrol5 Kasım2026: [Google Cart Data alanları](https://developers.google.com/google-ads/api/fields/v25/cart_data_sales_view), [Shopping reporting](https://developers.google.com/google-ads/api/docs/shopping-ads/reporting). Alan seçilebilirliği tek başına gerçek Search satırı veya rol ayrımı kanıtı sayılmadı; API sürümü değiştirilmedi.
+Bağlayıcı kayıt: contracts/a6-eo-implementation-master-v1.json#Step17_google_search_sales_role_binding_2026_11_05.
+
 ## 5 Kasım 2026 — 16: Google satış rollerinin ana çıktıya bağlanması
 
 Ürün sahibi, 16 için açıklanan kod, test ve tek PR çalışmasını açıkça onayladı. Shopping ve PMax satışları mevcut sınıflandırıcıdan geçerek ana okuyucunun ve yazma öncesi işleyicinin ayrı ürün satış çıktısına bağlandı. Her satırda rol, yerel adet/tutar, ham satır ve sorgu/sayfa/yanıt referansı korunur. PD toplamlarıyla birleştirme, maliyet dağıtma veya ürün kimliği tahmini yapılmaz.

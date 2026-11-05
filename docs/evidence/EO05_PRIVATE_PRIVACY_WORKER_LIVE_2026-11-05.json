@@ -1,0 +1,163 @@
+{
+  "checked_at": "2026-11-05",
+  "base_main": "1ad741115763673ddf30d85ca602f8e7569d63e7",
+  "approval": "Owner replied onaylıyorum devam edelim Codex immediately after concrete next step: live installation and controlled verification of merged PR333 privacy worker. No automatic schedule or real customer deletion/disclosure performed.",
+  "status": "live_private_entry_installed_and_idle_receipt_verified",
+  "database": {
+    "project": "podpwkrpmjiksskxhwsu",
+    "prior_migration_count": 92,
+    "final_migration_count": 96,
+    "prior92_version_names_preserved": true,
+    "prior92_SQL_hashes_not_rechecked": true,
+    "migrations": [
+      {
+        "version": "20261105115910",
+        "name": "eo05_customer_request_completion",
+        "sql_sha256": "e884be256c36916903575dd2179dd7ecc76c31e84f21a1746d628bc0207f9dbb",
+        "repository_file": "supabase/migrations/20261105100338_eo05_customer_request_completion.sql",
+        "exact_repository_hash_match": true
+      },
+      {
+        "version": "20261105115917",
+        "name": "eo05_private_customer_source_worker",
+        "sql_sha256": "70fc71ccd613d344b9b6f720ca4dfdd6489be17a29c328921274777e3b26f1dc",
+        "repository_file": "supabase/migrations/20261105111527_eo05_private_customer_source_worker.sql",
+        "exact_repository_hash_match": true
+      },
+      {
+        "version": "20261105115923",
+        "name": "eo05_privacy_source_role_install",
+        "sql_sha256": "2801602a3d82e9ebdbd115f2ecb0f48dc527f5e88913757676ee1c0b729be1f2",
+        "repository_file": "tools/sql/eo05-privacy-source-role-install.sql",
+        "exact_repository_hash_match": true
+      },
+      {
+        "version": "20261105120138",
+        "name": "eo05_privacy_source_login",
+        "sql_sha256": "d35a2bda209979dec195721511b8297db7760bb2d6aba05b27a64916cbe42146",
+        "repository_file": null
+      }
+    ],
+    "operational_login_SQL": "begin;\nset local lock_timeout='5s';\nset local statement_timeout='30s';\ndo $activation$ begin\n if not exists(select 1 from pg_roles r where r.rolname='adstable_privacy_source_runner' and not r.rolcanlogin and not r.rolsuper and not r.rolinherit and not r.rolcreatedb and not r.rolcreaterole and not r.rolreplication and not r.rolbypassrls and r.rolconnlimit=1 and not exists(select 1 from pg_auth_members m where m.member=r.oid)) then raise exception 'PRIVACY_ROLE_ACTIVATION_GUARD';end if;\n alter role adstable_privacy_source_runner login;\nend $activation$;\ncommit;\n",
+    "credentials": "Independent 256-bit generated password, SCRAM-SHA-256 verifier configured in guarded administrative credential transaction; no plaintext/verifier in repository or migration ledger.",
+    "role": {
+      "rolname": "adstable_privacy_source_runner",
+      "rolcanlogin": true,
+      "rolsuper": false,
+      "rolinherit": false,
+      "rolcreatedb": false,
+      "rolcreaterole": false,
+      "rolreplication": false,
+      "rolbypassrls": false,
+      "rolconnlimit": 1,
+      "memberships": 0
+    },
+    "profile_ready": true,
+    "TLS_CA_verified": true,
+    "inspection_read_only": true,
+    "base_snapshot_completion_or_whole_erasure_granted": false,
+    "direct_tables_granted": false
+  },
+  "environment": {
+    "scope": [
+      "production"
+    ],
+    "existing_source_provider_session_keys_read_or_rotated": false,
+    "created": [
+      {
+        "key": "ADSTABLE_PRIVACY_SOURCE_DATABASE_URL",
+        "id": "ehiqq8cYAUOiHRNA",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ]
+      },
+      {
+        "key": "ADSTABLE_PRIVACY_SOURCE_SERVER_SECRET",
+        "id": "4YrlwcIsPGEj9LZU",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ]
+      },
+      {
+        "key": "ADSTABLE_PRIVACY_SOURCE_DB_TIMEOUT_MS",
+        "id": "psDRnzryeNeC3Tqs",
+        "type": "plain",
+        "target": [
+          "production"
+        ]
+      },
+      {
+        "key": "ADSTABLE_PRIVACY_SOURCE_WORKER_ENABLED",
+        "id": "56TXeQux1zlosKwG",
+        "type": "plain",
+        "target": [
+          "production"
+        ]
+      }
+    ],
+    "values_recorded": false
+  },
+  "deployment": {
+    "id": "dpl_3rAHKTGTVyo1QVfkQULtiGuLGWmE",
+    "state": "READY",
+    "target": "production",
+    "framework": "react-router",
+    "source_commit": "1ad741115763673ddf30d85ca602f8e7569d63e7",
+    "url": "https://embedded.adstable.app",
+    "deployment_url": "https://ads-table-embedded-bcldd529x-firats-projects-d22284db.vercel.app",
+    "native_OAuth_config_changed": false
+  },
+  "controlled_verification": {
+    "operation_id": "759de9f6-c425-4b82-962a-062d516fef6b",
+    "pre_queue_open_requests": 0,
+    "pre_operations": 0,
+    "POST_run": "idle",
+    "separate_POST_inspect": "idle",
+    "database_receipt": {
+      "operation_id": "759de9f6-c425-4b82-962a-062d516fef6b",
+      "status": "idle",
+      "no_customer_run": true,
+      "no_customer_workspace": true,
+      "receipt": {},
+      "retention_interval": "365 days"
+    },
+    "source_before": {
+      "records": 45,
+      "fingerprint": "3fd18187ebbeb7afcb9c0f69837b9f496e53300eaf78507bb7a5673e124d9fdf"
+    },
+    "source_after": {
+      "records": 45,
+      "fingerprint": "3fd18187ebbeb7afcb9c0f69837b9f496e53300eaf78507bb7a5673e124d9fdf"
+    },
+    "source_unchanged": true,
+    "customer_requests_created": 0,
+    "source_records_deleted": 0,
+    "customer_data_disclosed": false,
+    "native_provider_reads": 0,
+    "automatic_schedule_activated": false
+  },
+  "observability": {
+    "runtime_error_fatal_scan": "no_matching_logs",
+    "deployment_id": "dpl_3rAHKTGTVyo1QVfkQULtiGuLGWmE",
+    "window": "2026-11-05T11:50:57.905Z/2026-11-05T12:05:57.905Z",
+    "supabase_security_advisors": {
+      "lints": []
+    }
+  },
+  "limits": {
+    "proof": "Real server gate, exact narrow DB role/TLS and durable idle receipt verified. No real customer request existed; scoped deletion, nonempty disclosure hold and replay remain the already-passed isolated SQL proofs, not new live customer acceptance.",
+    "open": "Genuine nonempty disclosure delivery/receipt authority remains open. Automatic privacy scheduling not installed. Step15 is not declared complete. Backup/restore remains EO08C."
+  },
+  "official_docs_checked": "2026-11-05",
+  "official_sources": [
+    "https://supabase.com/changelog.md",
+    "https://supabase.com/docs/guides/database/postgres/roles",
+    "https://supabase.com/docs/guides/database/functions",
+    "https://vercel.com/docs/environment-variables",
+    "https://vercel.com/docs/deployments"
+  ],
+  "no_residual_live_authority": true,
+  "merge_authorized": false
+}

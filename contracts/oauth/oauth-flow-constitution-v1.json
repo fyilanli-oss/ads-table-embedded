@@ -1278,7 +1278,7 @@
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json"
     ],
     "sha256": {
-      ".github/workflows/database-integrity.yml": "013bcc1a654379a47a426991716fd20887e4c7864b43b579bf8fa3f805694f8c",
+      ".github/workflows/database-integrity.yml": "60240d5dca5be421b1d3fdd01ded8a311a0bceb22783b6ee5457bf510a3c31d8",
       ".github/workflows/repository-governance.yml": "331b11ca8da69182216874ff4efc4c8488111252835296ee495d7bc1a96b3759",
       ".github/workflows/shopify-app-deploy.yml": "ef078addb630fdb624189c0f12625524a7e3dcaf708f2059f95e7a2884cf5d24",
       "AGENTS.md": "d77d9e1aad1996a7e477e17f460a2c63530e1253cb521c521c6ef3bdd11570a9",
@@ -2938,7 +2938,15 @@
       "date": "2026-11-04",
       "owner_approval": {
         "explicit": true,
-        "source": "Owner Onaylıyorum after concrete new-write90/365, controlled existing-row SQL, normal/mandatory erasure isolated tests and PR; live apply/delete/cron/merge/deploy excluded."
+        "source": "Owner Onaylıyorum after concrete new-write90/365, controlled existing-row SQL, normal/mandatory erasure isolated tests and PR; live apply/delete/cron/merge/deploy excluded.",
+        "additional_approvals": [
+          {
+            "date": "2026-11-05",
+            "explicit": true,
+            "source": "Owner: Codex günaydın. Onaylıyorum after exact proposal to change F01 CI timeout from20 to30 minutes and rerun the same unchanged tests.",
+            "scope": "Only F01 job timeout20->30 and corresponding protected inventory/approval record. No test weakening, runtime/SQL change, live settings/data/deletion, merge or deploy."
+          }
+        ]
       },
       "rationale": "Shared opt-in duration preserves temporary absolute policies; each prepared write has one UTC anchor. Owner-only expected-row extension keeps original ciphertext/receipt/validity; separate privacy executor bypasses normal lifetimes and handoff. No OAuth UI/permission/token/selection behavior changes.",
       "scope": {
@@ -2948,6 +2956,7 @@
         "deploy": false
       },
       "changed_paths": [
+        ".github/workflows/database-integrity.yml",
         "app/lib/database/source-evidence-config.server.js",
         "app/lib/database/source-evidence-store.server.js",
         "app/lib/database/source-retention-policy.server.js",

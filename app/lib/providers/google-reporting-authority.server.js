@@ -265,8 +265,10 @@ export function createGoogleReportingAuthorityRuntime({
         reporting_account_currency: context.reportingAccount.currency, reporting_account_timezone: context.reportingAccount.timezone,
       }), results: Object.freeze(results), source_links: sourceLinks, publishable: false});
     },
-    async readShoppingSourceEvidenceSnapshot({installationAuthority, dateWindow, limits = null, signal, maxElapsedMs = 120000, ...extra}) {
-      if (Object.keys(extra).length || limits !== null && (!limits
+    async readShoppingSourceEvidenceSnapshot({installationAuthority, dateWindow, limits = null, signal, maxElapsedMs = 120000}) {
+      // Legacy caller owner/account fields remain ignored; authority comes only
+      // from the verified installation and server repository, never overrides.
+      if (limits !== null && (!limits
         || !["maxPages", "maxRows", "maxBytes"].every(k => Number.isSafeInteger(limits[k]) && limits[k] > 0)
         || limits.maxPages > 20 || limits.maxRows > 20_000 || dateWindow?.start !== dateWindow?.end))
         throw new GoogleReportingError("GOOGLE_SHOPPING_SOURCE_INPUT_INVALID", "Invalid Shopping read bounds");

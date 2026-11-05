@@ -1369,7 +1369,7 @@
       "app/lib/providers/google-product-sales.server.js": "42e54198a0a2b2752c818c5eb1fae3ff8820657402ad1bac4e15126447ee1a39",
       "app/lib/providers/google-raw-projection.server.js": "1c7f06a2eaa7e603fd90a1404a97e262ed70821af125a607442947aa435fb643",
       "app/lib/providers/google-reporting-authority.server.d.ts": "c37c5216ba36379e09a5dfdeb3749ebc65e00825f4b3132de1a15b0d0ff8aa95",
-      "app/lib/providers/google-reporting-authority.server.js": "6b572c92c202930f5fdbd707e04ebcc3e43b9f6515620e80a35a99f5c7aca5ad",
+      "app/lib/providers/google-reporting-authority.server.js": "bc24468498fce5bebd013250393232c1afd725d710a50418fbd27e9f71ffec1d",
       "app/lib/providers/google-reporting.server.d.ts": "df376bc7e210315d6eba7ece87a0169fea96dc86d0c53c3ef628dda0a762994a",
       "app/lib/providers/google-reporting.server.js": "c7f5e83f1015ed2cb5694df8b8674e595307f1de3d74785c20e2b04bc64ca7e7",
       "app/lib/providers/google-source-candidates.server.js": "6335720b3e58274e833b343a6d3c4c3a8a51c41b473507632647fa652ff4dba3",

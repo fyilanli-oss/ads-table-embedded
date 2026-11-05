@@ -86,7 +86,9 @@ begin
    or not coalesce(has_function_privilege('adstable_google_source_runner',to_regprocedure(s.signature)::oid,'EXECUTE'),false))
  and not exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
   where n.nspname in ('app','shopify','integrations','operations','billing','privacy','analytics','evidence','identity','source')
-   and has_function_privilege('adstable_google_source_runner',p.oid,'EXECUTE') and p.oid not in
+   and has_function_privilege('adstable_google_source_runner',p.oid,'EXECUTE')
+   and p.oid<>coalesce(to_regprocedure('evidence.find_google_pmax_source_batches(jsonb,date,integer)')::oid,0)
+   and p.oid not in
     (select to_regprocedure(s.signature)::oid from unnest(array['integrations.load_provider_identity_authority(uuid,bigint,text,text,text)','operations.load_refresh_quota_context(uuid,bigint,text,text,text,bigint,date,date,text,timestamptz)','operations.resolve_shared_api_quota_route(text,text,text)','operations.reserve_shared_api_quota(text,uuid,text)','operations.stop_shared_api_quota_scoped(text,uuid,boolean,boolean,text)','operations.stop_shared_api_quota_google_observed(text,uuid,text,text)','operations.settle_shared_api_quota(text,uuid)','operations.record_shared_api_quota_feedback(text,uuid,jsonb)','operations.record_shopify_admin_quota_feedback(text,uuid,jsonb)','evidence.commit_google_identity_source(jsonb,uuid,integer,jsonb,jsonb)','evidence.read_source_receipt(jsonb,uuid,integer)','identity.source_rule_review_state(jsonb,bigint,jsonb)','identity.commit_reviewed_source_rule(jsonb,uuid,jsonb)','identity.mapping_review_state(jsonb,bigint,bigint,boolean)','identity.commit_verified_mapping(jsonb,uuid,jsonb)','identity.lookup_verified_mapping(jsonb,jsonb)']::text[]) s(signature)))
  ) as profile_ready from pg_roles r where r.rolname='adstable_google_source_runner') q;
  select q.inactive into inactive from (select not r.rolcanlogin and not r.rolsuper and not r.rolinherit and not r.rolbypassrls

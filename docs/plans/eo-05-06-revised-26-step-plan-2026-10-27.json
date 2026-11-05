@@ -288,7 +288,7 @@
       "work": "Roller için yazım öncesi son kontroller: doğru kaynak satış/kimlik referansı, A/B/C/D, aynı küme, çelişki, tekrar ve sıfır değer.",
       "boundary": "Rol ek satış veya ek maliyet üretmeyecek.",
       "addition": "Shopify ek işi: Shopify’ın kaynak/son temas bilgisi provider Sales Role yerine geçirilmeyecek. Sipariş adedi ile ürün adedi karıştırılmayacak; Shopify ziyareti tek başına provider’ın dönüşüm iddiası kabul edilmeyecek.",
-      "status": "5 Kasım: ortak kaynak/ürün/aynı küme/tekrar/çelişki/sıfır kontrolü Google ve Klaviyo yazım öncesi yoluna bağlandı; eksik/çelişkili kayıt teslimi durur, ham kanıt korunur. Zorunlu CI ve ayrı merge onayı beklenir;18 native kanıt bekliyor. Yeni rol, hesaplama veya Dataset writer yok.",
+      "status": "5 Kasım: PR339 main ile birleşti (3210a90c2e5893f3e2c4602b70348df9b41b636f). 4253 test, tip/derleme ve üç izole SQL aşaması geçti; native pozitif kabul ve18 ayrı açık.",
       "package": "EO-05-B"
     },
     {
@@ -304,7 +304,7 @@
       "work": "PMax tarihsel satış Channel’ının kanıt saklama/yükleme ve resolver bağlantısı.",
       "boundary": "Duraklatılmış. Ayrı açık yeniden başlatma onayı olmadan kodlama/aktivasyon yapılmayacak.",
       "addition": "",
-      "status": "DURAKLATILDI — ayrı açık yeniden başlatma onayı gerekiyor.",
+      "status": "5 Kasım: owner tarihli ham kayıt arama/doğrulama/yükleme ve resolver bağlantısını yeniden başlattı. Kod ve izole sınama hazırlanıyor; tam gün süreklilik ve gerçek tarihsel Channel kanıtı açık.22 tamamlanmadı.",
       "package": "EO-05 tarihsel PMax kapısı"
     },
     {
@@ -995,5 +995,12 @@
   "Step20_sales_role_prewrite_guards_2026_11_05": {
     "reference": "contracts/a6-eo-implementation-master-v1.json#Step20_sales_role_prewrite_guards_2026_11_05",
     "status": "repository_prepared_pending_required_CI_and_owner_merge_native_acceptance_separate"
+  },
+  "Step22_PMax_history_loader_2026_11_05": {
+    "reference": "contracts/a6-eo-implementation-master-v1.json#Step22_PMax_history_loader_2026_11_05",
+    "status": "repository_prepared_required_CI_and_owner_merge_pending",
+    "owner_resumed_concrete_preparation": true,
+    "exact_historical_Channel_accepted": false,
+    "complete": false
   }
 }

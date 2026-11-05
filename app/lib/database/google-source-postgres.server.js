@@ -1,5 +1,6 @@
 import pg from "pg";
 import {SUPABASE_ROOT_CA_2021} from "./supabase-root-ca-2021.server.js";
+import {GOOGLE_PMAX_HISTORY_FIND_SQL} from "./google-pmax-history.server.js";
 
 // Prepared role/profile only. No role, grant, password or migration is installed.
 export const GOOGLE_SOURCE_ROLE="adstable_google_source_runner";
@@ -26,6 +27,10 @@ export const GOOGLE_DATASET_SOURCE_RPC=Object.freeze([...GOOGLE_SOURCE_RPC,
  Object.freeze(["select evidence.commit_google_dataset_source($1::jsonb,$2::uuid,$3::integer,$4::jsonb,$5::jsonb) as result","evidence.commit_google_dataset_source(jsonb,uuid,integer,jsonb,jsonb)"]),
  Object.freeze(["select evidence.read_source_pages($1::jsonb,$2::uuid,$3::integer,$4::bigint,$5::integer) as result","evidence.read_source_pages(jsonb,uuid,integer,bigint,integer)"])]);
 const queries=new Map(GOOGLE_SOURCE_RPC.map(([sql])=>[sql,Math.max(...[...sql.matchAll(/\$(\d+)/g)].map(x=>Number(x[1])))]));
+export const GOOGLE_PMAX_HISTORY_RPC=Object.freeze([
+ Object.freeze([GOOGLE_PMAX_HISTORY_FIND_SQL,"evidence.find_google_pmax_source_batches(jsonb,date,integer)"]),
+ ...GOOGLE_DATASET_SOURCE_RPC.filter(([sql])=>sql.startsWith("select evidence.read_source_")),
+]);
 const receiptQueries=new Set(GOOGLE_SOURCE_RPC.filter(([,name])=>name==="evidence.read_source_receipt(jsonb,uuid,integer)").map(([sql])=>sql));
 const signatures=Object.freeze([...new Set(GOOGLE_SOURCE_RPC.map(x=>x[1]))]);
 export const GOOGLE_SOURCE_ROLE_CHECK_SQL=`select current_user as role,
@@ -43,7 +48,9 @@ export const GOOGLE_SOURCE_ROLE_CHECK_SQL=`select current_user as role,
    or not coalesce(has_function_privilege(current_user,to_regprocedure(s.signature)::oid,'EXECUTE'),false))
  and not exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
   where n.nspname in ('app','shopify','integrations','operations','billing','privacy','analytics','evidence','identity','source')
-   and has_function_privilege(current_user,p.oid,'EXECUTE') and p.oid not in
+   and has_function_privilege(current_user,p.oid,'EXECUTE')
+   and p.oid<>coalesce(to_regprocedure('evidence.find_google_pmax_source_batches(jsonb,date,integer)')::oid,0)
+   and p.oid not in
     (select to_regprocedure(s.signature)::oid from unnest($1::text[]) s(signature)))
  ) as profile_ready from pg_roles r where r.rolname=current_user`;
 const failure=()=>Error("GOOGLE_SOURCE_DATABASE_UNAVAILABLE");
@@ -60,11 +67,13 @@ export function readGoogleSourceDatabaseConfig(environment) {
 
 // Each admitted RPC is one bounded transaction on one checked-out connection.
 // No table SQL, DDL, OAuth mutation, cleanup, claim finish or arbitrary SET ROLE.
-export function createGoogleSourcePostgresClient({environment,poolFactory=config=>new pg.Pool(config),inspectionOnly=false,datasetMode=false}) {
- if(typeof inspectionOnly!=="boolean"||typeof datasetMode!=="boolean"||typeof poolFactory!=="function")throw failure();
- const rpc=datasetMode?GOOGLE_DATASET_SOURCE_RPC:GOOGLE_SOURCE_RPC;
- const allowedQueries=datasetMode?new Map(rpc.map(([sql])=>[sql,Math.max(...[...sql.matchAll(/\$(\d+)/g)].map(x=>Number(x[1])))])):queries;
- const requiredSignatures=datasetMode?[...new Set(rpc.map(x=>x[1]))]:signatures;
+export function createGoogleSourcePostgresClient({environment,poolFactory=config=>new pg.Pool(config),inspectionOnly=false,datasetMode=false,historyMode=false}) {
+ if(typeof inspectionOnly!=="boolean"||typeof datasetMode!=="boolean"||typeof historyMode!=="boolean"
+  ||historyMode&&(datasetMode||inspectionOnly)||typeof poolFactory!=="function")throw failure();
+ const rpc=historyMode?GOOGLE_PMAX_HISTORY_RPC:datasetMode?GOOGLE_DATASET_SOURCE_RPC:GOOGLE_SOURCE_RPC;
+ const allowedQueries=datasetMode||historyMode?new Map(rpc.map(([sql])=>[sql,Math.max(...[...sql.matchAll(/\$(\d+)/g)].map(x=>Number(x[1])))])):queries;
+ const requiredSignatures=historyMode?[...new Set([...GOOGLE_DATASET_SOURCE_RPC,...GOOGLE_PMAX_HISTORY_RPC].map(x=>x[1]))]
+  :datasetMode?[...new Set(rpc.map(x=>x[1]))]:signatures;
  const c=readGoogleSourceDatabaseConfig(environment);let pool;
  try{pool=poolFactory({connectionString:c.connectionString,ssl:c.ssl,max:1,query_timeout:c.timeoutMs,
   connectionTimeoutMillis:c.timeoutMs,idleTimeoutMillis:10000,allowExitOnIdle:true,application_name:"adstable-google-source"});}

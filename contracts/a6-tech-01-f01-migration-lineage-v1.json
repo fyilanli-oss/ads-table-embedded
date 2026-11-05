@@ -966,6 +966,16 @@
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261105193000",
+      "name": "eo05_pmax_history_lookup",
+      "file": "supabase/migrations/20261105193000_eo05_pmax_history_lookup.sql",
+      "created_with": "supabase@2.121.0 migration new eo05_pmax_history_lookup",
+      "repository_sql_sha256": "ac87da3414c0a02a522a29a453a644648d36fc671d9a3e51263b1fe58218bac9",
+      "applied": false,
+      "replay_scope": "isolated_rollback_only",
+      "live_apply_authorized": false
     }
   ]
 }

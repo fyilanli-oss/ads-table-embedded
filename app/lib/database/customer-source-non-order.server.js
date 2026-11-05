@@ -12,6 +12,7 @@ const fieldRows=(payload,fields)=>Array.isArray(payload.selectedFields)&&same(pa
 // Only the existing, fixed aggregate-report producers. A label, missing record,
 // unknown family/schema or collector-shaped lookalike is not absence proof.
 export function isReviewedNonOrderRawPage(page,payload){
+ if(page.captureLayer!=='native_response_projection'||page.numericFidelity!=='lossless_token')return false;
  if(page.origin==='google_ads'&&page.schemaVersion==='google-raw-datasets-v2'
   &&page.sanitizerVersion==='google-query-fields-v1'&&GOOGLE_REPORTING_QUERY_FAMILIES.includes(page.family)){
   const query=queries[page.family],fields=/^SELECT\s+([\s\S]+?)\s+FROM\s/i.exec(query)[1].split(',').map(s=>s.trim());

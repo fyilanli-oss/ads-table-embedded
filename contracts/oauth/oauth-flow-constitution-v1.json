@@ -1773,7 +1773,7 @@
       "tools/sql/eo05-google-source-role-install.sql": "f16adefa038f6781bf2e718946a566281090403437b739ab71dfece99ca7a6ea",
       "tools/sql/eo05-klaviyo-source-role-install.sql": "c2749c46c4c5026d2eb3c55e16d9e87d60a7d1cbe74bb16f0bd8ff783b6a156f",
       "tools/sql/eo05-meta-source-role-install.sql": "748c28dc0d42b9efb48fddf3e2c0ddebb4daecb410202aba522b025680a50071",
-      "app/lib/database/customer-source-non-order.server.js": "c4c34fdabc52c45d88f0bca42d081e7e57dac33c67901571e6ffa8e5e2350b60",
+      "app/lib/database/customer-source-non-order.server.js": "d65745481ff8cc4a0d741487e335146c59d814bc085e6914e00757a837dabd35",
       "supabase/migrations/20261105100338_eo05_customer_request_completion.sql": "fb480a61694b9db3ebc10aa1df0d7c7b85206f6443206647bb7040fb33e24ab1"
     }
   },

@@ -131,6 +131,8 @@ test('customer source: current fixed Google aggregate reports do not force a cus
   page:{family:'account_identity',ordinal:0,origin:'google_ads',captureLayer:'native_response_projection',numericFidelity:'lossless_token',fieldCoverage:fields,schemaVersion:'google-raw-datasets-v2',sanitizerVersion:'google-query-fields-v1'},payload});
  f.snapshot.pages=[{...page,id:'1',batchId:'1',available:true}];f.snapshot.references=[];f.snapshot.orders=[];
  const run=await f.prepare();assert.equal(run.noCustomerData,true);await completeCustomerSourceRun({database:f.database,preparedRun:run});
+ const lookalike=f.input.cipher.seal({owner:f.input.owner,attemptId:batch.attempt_id,ordinal:0,page:{...page,captureLayer:'collector_projection'},payload});
+ f.snapshot.pages=[{...lookalike,id:'1',batchId:'1',available:true}];await assert.rejects(f.prepare(),/FAMILY_UNSUPPORTED/);
  // An unreviewed field under a familiar report label is held, never called empty.
  payload.selectedFields.push('customer.email');payload.records[0].fields.push({field:'customer.email',value:'private@example.com'});
  const bad=f.input.cipher.seal({owner:f.input.owner,attemptId:batch.attempt_id,ordinal:0,page,payload});

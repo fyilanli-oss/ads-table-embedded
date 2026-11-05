@@ -433,15 +433,15 @@ function productSalesFixture(flow = "shopping") {
     campaign: {id: "10", advertisingChannelType: flow === "shopping" ? "SHOPPING" : "PERFORMANCE_MAX"},
     ...(flow === "shopping" ? {adGroup: {id: "20"}} : {assetGroup: {id: "40"}}),
     segments: {date: "2026-10-01", ...segments}, metrics});
-  const sale = (advertised, sold, metrics) => native({productMerchantId: "50", productFeedLabel: "TR",
+  const sale = (advertised, sold, metrics) => native({productMerchantId: "50", productFeedLabel: "TR", ...(flow === "retail_pmax" ? {productLanguage: "tr"} : {}),
     ...(advertised === null ? {} : {productItemId: advertised}), productSoldItemId: sold}, metrics);
   f.sales = [
     sale("A", "A", {unitsSold: "2", revenueMicros: "123456789012345678", leadUnitsSold: "2", leadRevenueMicros: "123456789012345678", allUnitsSold: "900"}),
     sale("A", "B", {unitsSold: "0.5", revenueMicros: "1500000", crossSellUnitsSold: "0.5", crossSellRevenueMicros: "1500000"}),
     sale(null, "C", {unitsSold: 1, revenueMicros: "0"}),
-    sale("A", "B", {leadUnitsSold: "1", crossSellUnitsSold: "1", revenueMicros: "300"}),
-    sale("A", "A", {allLeadUnitsSold: "50", allRevenueMicros: "99999"}),
-    sale("A", "A", {unitsSold: "0", revenueMicros: "0", leadUnitsSold: "0"}),
+    sale("A3", "B3", {unitsSold: "1", leadUnitsSold: "1", crossSellUnitsSold: "1", revenueMicros: "300"}),
+    sale("A4", "A4", {allLeadUnitsSold: "50", allRevenueMicros: "99999"}),
+    sale("A5", "A5", {unitsSold: "0", revenueMicros: "0", leadUnitsSold: "0"}),
   ];
   f.readQueries = [];
   f.hooks.response = (address, init) => {
@@ -545,7 +545,9 @@ test("Shopping source row limit stops before cart read and authority drift disca
 });
 
 async function composedProductSalesFixture(flow) {
-  const f = productSalesFixture(flow), observed = await f.create().readEvidence();
+  const f = productSalesFixture(flow);
+  f.sales = f.sales.filter(s => s.metrics.unitsSold !== undefined && s.metrics.revenueMicros !== undefined);
+  const observed = await f.create().readEvidence();
   f.config.googlePd.compositionContext = {binding: observed.source_context, flow, conversion_scope: "normal",
     reporting_time_basis: "interaction_date", composition_attempt_id: workspace, snapshot_id: "synthetic-sales-snapshot",
     attribution_fingerprint: "a".repeat(64), metric_units_fingerprint: "b".repeat(64),
@@ -760,7 +762,10 @@ for (const change of [
 });
 
 async function composedSearchSalesFixture() {
-  const f = searchSalesFixture(), observed = await f.create().readEvidence();
+  const f = searchSalesFixture();
+  f.sales = f.sales.filter(s => s.segments.productSoldItemId && s.metrics.unitsSold !== undefined && s.metrics.unitsSold !== "malformed" && s.metrics.revenueMicros !== undefined)
+    .filter((s, i, all) => all.findIndex(other => other.segments.productSoldItemId === s.segments.productSoldItemId) === i);
+  const observed = await f.create().readEvidence();
   f.config.googlePd.compositionContext = {binding: observed.source_context, flow: "search", conversion_scope: "normal",
     reporting_time_basis: "interaction_date", composition_attempt_id: workspace, snapshot_id: "synthetic-search-sales",
     attribution_fingerprint: "a".repeat(64), metric_units_fingerprint: "b".repeat(64),
@@ -784,4 +789,86 @@ test("Search actual main worker handoff separates two PD Ads from one Ad Group s
   stopped.worker.loadAuthority = async input => {const a = await original(input); if (++calls === 3) f.state.row.connection_version++; return a;};
   const denied = await runRefreshPdPrewriteChunk({worker: stopped.worker, source: stopped.source});
   assert.equal(denied.reason, "authority_check_failed_after_request"); assert.equal(denied.product_sales, null); assert.equal(denied.rows, undefined);
+});
+
+async function roleWorkerFixture(flow) {
+  const f = flow === "search" ? await composedSearchSalesFixture() : await composedProductSalesFixture(flow);
+  const w = prewriteWorker(f); w.worker.limits.maxBytes = w.worker.claim.cost.bytes = 300000;
+  return {f, w};
+}
+for (const flow of ["shopping", "retail_pmax", "search"]) {
+  test(flow + ": actual worker deduplicates an identical native sale across pages without losing raw source", async () => {
+    const {f, w} = await roleWorkerFixture(flow);
+    f.sales = [f.sales[0], structuredClone(f.sales[0])];
+    const r = await runRefreshPdPrewriteChunk({worker: w.worker, source: w.source});
+    assert.equal(r.status, "awaiting_dataset"); assert.equal(r.product_sales.rows.length, 1);
+    assert.equal(r.source_observation.product_sales.rows.length, 2);
+    assert.equal(r.sales_role_review.counts.duplicate_rows, 1);
+    assert.equal(r.sales_role_review.rows[0].source_references.length, 2);
+    assert.equal(r.product_sales.rows[0].raw_metrics.units_sold, f.sales[0].metrics.unitsSold);
+  });
+  test(flow + ": same native sale with different amount blocks actual handoff and retains conflict evidence", async () => {
+    const {f, w} = await roleWorkerFixture(flow), a = structuredClone(f.sales[0]), b = structuredClone(a);
+    b.metrics.revenueMicros = "77"; f.sales = [a, b];
+    const r = await runRefreshPdPrewriteChunk({worker: w.worker, source: w.source});
+    assert.equal(r.source_review.reason, "sales_role_prewrite_blocked");
+    assert.equal(r.product_sales, null); assert.equal(r.rows, undefined);
+    assert.equal(r.sales_role_review.counts.conflicting_rows, 1);
+    assert.equal(r.sales_role_review.rows[0].conflicting_observations[0].raw_metrics.revenue_micros, "77");
+    assert.ok(!w.stages.includes("ready_for_dataset"));
+  });
+}
+for (const [name, change] of [
+  ["missing quantity", s => delete s.metrics.unitsSold],
+  ["invalid quantity", s => s.metrics.unitsSold = "bad"],
+  ["unsafe integer", s => s.metrics.unitsSold = 9007199254740992],
+  ["missing sold identity", s => delete s.segments.productSoldItemId],
+]) test("Google actual role guard holds " + name + " without turning it into zero", async () => {
+  const {f, w} = await roleWorkerFixture("shopping"), a = structuredClone(f.sales[0]); change(a); f.sales = [a];
+  const r = await runRefreshPdPrewriteChunk({worker: w.worker, source: w.source});
+  assert.equal(r.source_review.reason, "sales_role_prewrite_blocked"); assert.equal(r.product_sales, null);
+  assert.equal(r.sales_role_review.rows[0].state, "held"); assert.ok(!w.stages.includes("ready_for_dataset"));
+});
+test("Google explicit zero stays a native metric while role and Channel remain separate", async () => {
+  const {f, w} = await roleWorkerFixture("retail_pmax");
+  const a = structuredClone(f.sales[0]); a.metrics.unitsSold = "0"; a.metrics.revenueMicros = "0";
+  a.metrics.leadUnitsSold = "0"; a.metrics.leadRevenueMicros = "0"; f.sales = [a];
+  const r = await runRefreshPdPrewriteChunk({worker: w.worker, source: w.source});
+  assert.equal(r.status, "awaiting_dataset"); assert.equal(r.sales_role_review.rows[0].metric_states.quantity, "zero");
+  assert.equal(r.product_sales.rows[0].raw_metrics.units_sold, "0"); assert.equal(r.product_sales.rows[0].sales_role, "Unclassified");
+  assert.equal(r.product_sales.rows[0].channel_reference.channel_type, "Unclassified Channel");
+});
+test("Google native metadata stays bound to the exact post-metadata source context during role review", async () => {
+  const f = productSalesFixture("shopping"); f.sales = [f.sales[0]]; f.config.nativeMetadata = true;
+  const original = f.hooks.response;
+  f.hooks.response = (address, init) => {
+    if (address.includes("oauth2")) return original(address, init);
+    const query = JSON.parse(init.body).query;
+    if (/FROM customer$/.test(query)) return json({results: [{customer: {id: "123", currencyCode: "USD", timeZone: "Europe/Istanbul"}}]});
+    if (/FROM conversion_action/.test(query)) return json({results: ["PURCHASE", "ADD_TO_CART", "BEGIN_CHECKOUT"].map((category, i) => ({
+      conversionAction: {resourceName: "customers/123/conversionActions/" + (100 + i), ownerCustomer: "customers/123", category,
+        attributionModelSettings: {attributionModel: "GOOGLE_SEARCH_ATTRIBUTION_DATA_DRIVEN"},
+        clickThroughLookbackWindowDays: 30, viewThroughLookbackWindowDays: 1, countingType: "MANY_PER_CLICK"}}))});
+    return original(address, init).json().then(payload => {
+      for (const row of payload.results ?? []) {if (row.campaign) row.campaign.name = "Root"; if (row.adGroup) row.adGroup.name = "Leaf";}
+      return json(payload);
+    });
+  };
+  const observed = await f.create().readEvidence();
+  assert.equal(observed.native_metadata.status, "prepared");
+  assert.deepEqual(observed.product_sales.source_context, observed.source_context);
+  f.config.recordBridge = {metadata: recordMetadata(observed.source_context, observed.composition.rows)};
+  const w = prewriteWorker(f); w.worker.limits.maxBytes = w.worker.claim.cost.bytes = 300000;
+  const r = await runRefreshPdPrewriteChunk({worker: w.worker, source: w.source});
+  assert.equal(r.status, "awaiting_dataset", JSON.stringify({review:r.source_review,records:r.source_observation?.records?.reason,decisions:r.source_observation?.records?.decisions?.map(d=>d.reason),composition:r.source_observation?.composition?.reason})); assert.equal(r.sales_role_review.complete, true);
+});
+
+
+for (const flow of ["shopping", "retail_pmax"]) test(flow + ": unrequested identity fields cannot disguise a duplicate source sale", async () => {
+  const {f, w} = await roleWorkerFixture(flow), a = structuredClone(f.sales[0]), b = structuredClone(a);
+  if (flow === "shopping") b.segments.productLanguage = "unrequested"; else b.adGroup = {id: "999"};
+  f.sales = [a, b];
+  const r = await runRefreshPdPrewriteChunk({worker: w.worker, source: w.source});
+  assert.equal(r.source_review.reason, "sales_role_prewrite_blocked"); assert.equal(r.product_sales, null);
+  assert.equal(r.sales_role_review.counts.conflicting_rows, 1);
 });

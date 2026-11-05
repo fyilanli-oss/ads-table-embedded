@@ -280,7 +280,7 @@
       "work": "Klaviyo’nun mevcut rollerini korumak.",
       "boundary": "Araştırma kapalı: Campaign Assisted, Flow Triggered. Yeni Advertised/Cross-sell geliştirmesi yok.",
       "addition": "",
-      "status": "5 Kasım: mevcut Campaign Assisted / Flow Triggered / Unclassified kuralları ve gerçek koleksiyon→referans→yazım öncesi kod yolu incelendi; mevcut testlerle doğrulanıyor. Runtime/sorgu/rol kuralı değişikliği yok. Zorunlu CI ve ayrı merge onayı beklenir; native kabul ayrıca.",
+      "status": "5 Kasım: PR338 main'e birleşti (287fe0d3f2b38a199ada1a94de42a55d5f2ccdd8). Mevcut Assisted/Triggered/Unclassified kuralları ve yazım öncesi yolu4213 test/tip/derleme ile doğrulandı; runtime değişmedi. Gerçek dolu satış kabulü ayrıca;18 açık.",
       "package": "EO-05-B kapsam kararı"
     },
     {
@@ -288,7 +288,7 @@
       "work": "Roller için yazım öncesi son kontroller: doğru kaynak satış/kimlik referansı, A/B/C/D, aynı küme, çelişki, tekrar ve sıfır değer.",
       "boundary": "Rol ek satış veya ek maliyet üretmeyecek.",
       "addition": "Shopify ek işi: Shopify’ın kaynak/son temas bilgisi provider Sales Role yerine geçirilmeyecek. Sipariş adedi ile ürün adedi karıştırılmayacak; Shopify ziyareti tek başına provider’ın dönüşüm iddiası kabul edilmeyecek.",
-      "status": "Kodlanacak — rol ve sipariş/ürün kapsamı yazım öncesi kontrolü.",
+      "status": "5 Kasım: ortak kaynak/ürün/aynı küme/tekrar/çelişki/sıfır kontrolü Google ve Klaviyo yazım öncesi yoluna bağlandı; eksik/çelişkili kayıt teslimi durur, ham kanıt korunur. Zorunlu CI ve ayrı merge onayı beklenir;18 native kanıt bekliyor. Yeni rol, hesaplama veya Dataset writer yok.",
       "package": "EO-05-B"
     },
     {
@@ -991,5 +991,9 @@
   "Step19_Klaviyo_role_preservation_2026_11_05": {
     "reference": "contracts/a6-eo-implementation-master-v1.json#Step19_Klaviyo_role_preservation_2026_11_05",
     "status": "existing_role_scope_verified_pending_required_CI_and_owner_merge_native_acceptance_separate"
+  },
+  "Step20_sales_role_prewrite_guards_2026_11_05": {
+    "reference": "contracts/a6-eo-implementation-master-v1.json#Step20_sales_role_prewrite_guards_2026_11_05",
+    "status": "repository_prepared_pending_required_CI_and_owner_merge_native_acceptance_separate"
   }
 }

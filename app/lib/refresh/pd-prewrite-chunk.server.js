@@ -1,3 +1,4 @@
+import {reviewGoogleProductSales} from "../providers/google-product-sales.server.js";
 import {runRefreshChunk} from "./chunk-worker.server.js";
 import {createRefreshPdSourceReader, isRefreshPdSourceObservation, refreshPdSourceAuthorityMatches} from "./pd-source-reader.server.js";
 import {createIdentityAuthorityRepository} from "../database/identity-authority-repository.server.js";
@@ -24,7 +25,14 @@ export function reviewRefreshPdPrewrite({claim, window, authority, observation})
   if (observation.status !== "source_read" || !records || records.status !== "validated" || records.canonical_validated !== true
     || !Array.isArray(records.rows) || records.rows.length === 0) return blocked(records?.reason ?? "validated_records_required");
   if (observation.composition && !["composed", "not_observed"].includes(observation.composition.status)) return blocked("source_composition_incomplete");
-  return {status: "reviewed_not_written", reason: null, complete: true, rows: records.rows, ...flags};
+  let salesRoleReview = null;
+  if (observation.product_sales) {
+    const evidence = observation.shopping_source_evidence ?? observation.search_source_evidence ?? observation.pmax_source_evidence;
+    try {salesRoleReview = reviewGoogleProductSales({sourceContext: s, evidence, projected: observation.product_sales});}
+    catch {return blocked("sales_role_source_mismatch");}
+    if (!salesRoleReview.complete) return {...blocked("sales_role_prewrite_blocked"), sales_role_review: salesRoleReview};
+  }
+  return {status: "reviewed_not_written", reason: null, complete: true, rows: records.rows, sales_role_review: salesRoleReview, ...flags};
 }
 
 /** Explicit internal worker binding only. No scheduler, route or writer is wired.
@@ -63,7 +71,7 @@ export async function runRefreshPdPrewriteChunk({worker, source, prewrite, setup
   if(setup!==undefined && (!setup || Object.keys(setup).some(k=>!["shopify","assets","identity"].includes(k))))fail();
   const setupInput=setup===undefined?null:{shopify:setup.shopify??null,assets:setup.assets??null,identity:setup.identity??null};
   const setupNow=config.readNow??(()=>new Date());
-  let snapshot = null, review = null, integration = null, setupReview=null;
+  let snapshot = null, review = null, integration = null, setupReview=null, salesRoleReview=null;
   function checkSetup() {
     if(!setupInput)return true;
     const orders=bundle?.shopify?.current;
@@ -92,26 +100,29 @@ export async function runRefreshPdPrewriteChunk({worker, source, prewrite, setup
     validatePage: ({claim, window, authority, payload}) => {
       if (payload !== snapshot) return {complete: false, rows: []};
       review = reviewRefreshPdPrewrite({claim, window, authority, observation: snapshot});
+      salesRoleReview = review.sales_role_review ?? null;
       if(!checkSetup())review={status:"blocked",reason:setupReview.reason,complete:false,rows:[],...flags};
       if(bundle && review.complete) {
         try {integration=reviewRefreshIntegratedPrewrite({claim,window,pdObservation:snapshot,...bundle});
+          if (integration.referenceReview.salesRoleReview?.complete === false) throw Error("INTEGRATED_PREWRITE_SALES_ROLE_BLOCKED");
           if(integration.interactionReview.state==="conflicting_references") throw Error("INTEGRATED_PREWRITE_INTERACTION_CONFLICT");
         } catch(error) {review={status:"blocked",reason:/^INTEGRATED_PREWRITE_[A-Z_]+$/.test(error?.message??"")
           ?error.message:"integrated_prewrite_failed",complete:false,rows:[],...flags};}
       }
       // Account for both retained source and cloned canonical rows before the
       // worker advances. This bounds serialized output, not peak memory.
-      if (Buffer.byteLength(JSON.stringify({source_observation: snapshot, product_sales: snapshot?.product_sales ?? null, rows: review.rows, integration_review:integration,setup_review:setupReview}), "utf8") + 2048 > limits.maxBytes)
+      if (Buffer.byteLength(JSON.stringify({source_observation: snapshot, product_sales: snapshot?.product_sales ?? null, rows: review.rows, sales_role_review: salesRoleReview, integration_review:integration,setup_review:setupReview}), "utf8") + 2048 > limits.maxBytes)
         review = {status: "blocked", reason: "prewrite_result_bound_exceeded", complete: false, rows: [], ...flags};
       return review;
     }});
-  const productSales = result.status === "awaiting_dataset" && review?.complete === true ? snapshot?.product_sales ?? null : null;
-  const output = {...result, product_sales: productSales, source_review: review ? {status: review.status, reason: review.reason} : null,
+  const productSales = result.status === "awaiting_dataset" && review?.complete === true && snapshot?.product_sales
+    ? {...snapshot.product_sales, rows: salesRoleReview.rows.map(row => row.observed), prewrite_state: "role_reviewed_not_written"} : null;
+  const output = {...result, product_sales: productSales, sales_role_review: salesRoleReview, source_review: review ? {status: review.status, reason: review.reason} : null,
     ...(bundle?{integration_review:integration}:{}),...(setupInput?{setup_review:setupReview}:{}),source_observation: snapshot,
     handoff_kind: bundle?"integrated_prewrite_review":"pd_prewrite_only", ...flags};
   if (Buffer.byteLength(JSON.stringify(output), "utf8") > limits.maxBytes)
     return {...result, rows: undefined, status: "needs_attention", reason: "prewrite_result_bound_exceeded",
-      source_review: {status: "blocked", reason: "prewrite_result_bound_exceeded"}, source_observation: null, product_sales: null,
+      source_review: {status: "blocked", reason: "prewrite_result_bound_exceeded"}, source_observation: null, product_sales: null, sales_role_review: null,
       handoff_kind: "pd_prewrite_only", ...flags};
   return output;
 }

@@ -30,6 +30,7 @@ export function reviewRefreshIntegratedPrewrite({claim,window,pdObservation,iden
       scope.connectionId,scope.connectionVersion,scope.reportingSelectionEpoch,scope.accountId,claim.id,claim.fence,window.from])
     || window.from!==window.to) fail("PD_IDENTITY_SCOPE_MISMATCH");
   const referenceReview=reviewRefreshReferencePrewrite(identity);
+  if (referenceReview.salesRoleReview?.complete === false) fail("SALES_ROLE_BLOCKED");
   const orderReview=shopify===null?null:reviewShopifyProviderClaimReadiness({
     expected:Object.fromEntries(["workspaceId","installGeneration","installationId","shopId","shopDomain"].map(k=>[k,scope[k]])),
     current:shopify.current,previous:shopify.previous??null,providers:[identity]});

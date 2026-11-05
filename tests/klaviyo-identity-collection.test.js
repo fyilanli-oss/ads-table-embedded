@@ -1193,3 +1193,49 @@ for (const proofCase of ["observed", "missing", "wrong_parent"]) test("klaviyo s
  assert.equal(h.f.shopCalls.length,1);assert.equal(w.body.rules.length,0);assert.equal(w.body.mappings[0].productId,null);assert.equal(w.body.mappings[0].verifiedAt,null);
  assert.throws(h.prepare,/OBSERVATION_REQUIRED/);
 });
+
+
+for (const [name, mutate] of [
+  ["missing product", e => delete e.attributes.event_properties.ProductID],
+  ["missing quantity", e => delete e.attributes.event_properties.Quantity],
+  ["invalid quantity", e => e.attributes.event_properties.Quantity = "bad"],
+]) test("Klaviyo common role guard retains raw " + name + " and blocks integrated handoff", async () => {
+  const f = candidateBoundFixture(), e = event(); mutate(e);
+  f.hooks.fetch = p => p.pathname === "/api/events" ? response({data: [e], included: [attribution()], links: {next: null}}) : f.baseFetch(p);
+  const observation = await f.create().readEvidence(), expected = candidatePrewriteOwner();
+  const references = reviewRefreshReferencePrewrite({expected, observation});
+  assert.equal(references.salesRoleReview.complete, false);
+  assert.equal(references.referenceReview.rows[0].reference.attribution_resolution.sales_role, "Assisted");
+  assert.deepEqual(references.salesRoleReview.rows[0].observed.provider_product_properties.Quantity,
+    observation.message_evidence.resolved_product_sales.rows[0].provider_product_properties.Quantity);
+  const {job} = candidateContext(observation), pd = await pdSourceObservation(expected, job, job.window);
+  assert.throws(() => integratedReview({claim: {workspaceId: expected.workspaceId, installGeneration: String(expected.installGeneration),
+    provider: "klaviyo", accountId: expected.accountId, id: job.id, fence: job.fence}, window: job.window,
+    pdObservation: pd.observation, identity: {expected, observation}}), /SALES_ROLE_BLOCKED/);
+});
+test("Klaviyo common role guard preserves explicit zero and never uses Placed Order report totals", async () => {
+  const f = candidateBoundFixture(), e = event(); e.attributes.event_properties.Quantity = 0; e.attributes.event_properties.$value = "0.00";
+  f.hooks.fetch = p => p.pathname === "/api/events" ? response({data: [e], included: [attribution()], links: {next: null}}) : f.baseFetch(p);
+  const r = reviewRefreshReferencePrewrite({expected: candidatePrewriteOwner(), observation: await f.create().readEvidence()});
+  assert.equal(r.salesRoleReview.complete, true); assert.equal(r.salesRoleReview.rows[0].metric_states.quantity, "zero");
+  assert.equal(r.salesRoleReview.rows[0].metric_states.value, "zero"); assert.equal(r.salesRoleReview.rows[0].sales_role, "Assisted");
+  assert.equal(r.salesRoleReview.rows[0].observed.provider_product_properties.$value.value, "0.00");
+  assert.equal(r.salesRoleReview.order_counts_used_as_product_units, false);
+});
+
+
+test("Shopify visits and order counts remain independent from provider role and product quantity", async () => {
+  const f = candidateBoundFixture(), observation = await f.create().readEvidence(), expected = candidatePrewriteOwner();
+  const {job} = candidateContext(observation), pd = await pdSourceObservation(expected, job, job.window);
+  const s = ShopifyOrderFixture(); assert.ok(s.rows.moments.every(m => m.source === "facebook"));
+  const current = await s.create().readEvidence();
+  const r = integratedReview({claim: {workspaceId: expected.workspaceId, installGeneration: String(expected.installGeneration),
+    provider: "klaviyo", accountId: expected.accountId, id: job.id, fence: job.fence}, window: job.window,
+    pdObservation: pd.observation, identity: {expected, observation}, shopify: {current}});
+  const sale = r.referenceReview.salesRoleReview.rows[0];
+  assert.equal(sale.sales_role, "Assisted"); assert.equal(sale.observed.provider_product_properties.Quantity.value, 2);
+  assert.equal(r.orderReview.orderReview.orders.length, 1); assert.equal(r.orderReview.orderReview.orders[0].lines.length, 2);
+  assert.equal(r.referenceReview.salesRoleReview.order_counts_used_as_product_units, false);
+  assert.equal(r.referenceReview.salesRoleReview.Shopify_last_touch_used_as_role, false);
+  assert.equal(r.providerClaimVerified, false); assert.equal(r.exactOverlapVerified, false);
+});

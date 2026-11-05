@@ -1366,7 +1366,7 @@
       "app/lib/providers/google-pmax-source-links.server.js": "4ea497071d5c49f23c56acf0cba85af39c8c58b457449717e2f16976af629773",
       "app/lib/providers/google-product-identity-reader.server.js": "ada44bab4f0b2b9b3a2938927fe2c850cea2a0bfd6e3b228b11d53198e60f534",
       "app/lib/providers/google-product-identity-resolution.server.js": "e3ec98f132a4379c2abca55e930d46c9e58989254a2ac2269356205059224ec3",
-      "app/lib/providers/google-product-sales.server.js": "a86914850aee304e5b2a363b3bcb99aebc5d9f439b67a3e0118823bb1b4534e6",
+      "app/lib/providers/google-product-sales.server.js": "530c30c649be77eebee872e1e280d2f22da5334d55c8573e13e5bb855ee2110d",
       "app/lib/providers/google-raw-projection.server.js": "1c7f06a2eaa7e603fd90a1404a97e262ed70821af125a607442947aa435fb643",
       "app/lib/providers/google-reporting-authority.server.d.ts": "70107ae21296bcdb87561efadf2ea79316eacfb4e5a3d60275836cb18cc8a828",
       "app/lib/providers/google-reporting-authority.server.js": "580024dd12f72c21291c7483810cd564d524e1c2b69edc6f60582b9038e9492d",
@@ -1429,7 +1429,8 @@
       "app/lib/providers/provider-live-evidence.server.d.ts": "f3bd668a1d2e33fdfacb7c532ba33763ec796b02c94eda28dcce6ff6d2bfa80b",
       "app/lib/providers/provider-live-evidence.server.js": "075b64c0b28ddf764ce53b92ad598685e86fd0b0158d14164e7950cf7786f989",
       "app/lib/providers/quota-managed-clients.server.js": "10ce33751ec6dc1689c9cd7a8ae8515cc42521ba2e44baaac9cf8c08588f6cc6",
-      "app/lib/providers/reference-prewrite.server.js": "5647a1e7ccac86267762a014a9ea1b267fab315b04f03145a21e0f57b527f4cb",
+      "app/lib/providers/reference-prewrite.server.js": "c449e44090d787149c3c11a1586de514933072701818cfbbf2c3c770a65f2bab",
+      "app/lib/providers/sales-role-prewrite.server.js": "5359c43623adeb8d53f432d5f7f003447e2817154e8f279f9ee5bff0a02d4e24",
       "app/lib/refresh/admission-policy.server.js": "f3dc10208610c535b45a112dd85eb32259da32810682a9f4c0d653cddbe77825",
       "app/lib/refresh/chunk-worker.server.js": "8b8b39969e421743302b246a5a29a7a7f3ced62357510f60971a8d6f77d0cb2e",
       "app/lib/refresh/entitlement-check.server.js": "f9648051b88d2b1c1756bc9a5c94003c7817f8c57af61c042c07f493e4cfd141",
@@ -1453,7 +1454,7 @@
       "app/lib/refresh/google-server-runtime.server.js": "e6d28533aa6ed11badaef879bfada59b29249ad6b033c7f304b6c48e4750fd4a",
       "app/lib/refresh/google-source-mapping-flow.server.js": "bc77433b9d69d923f73fe916ebd5a0f78c74ea7a3207994764e46983c280e870",
       "app/lib/refresh/google-source-server.server.js": "84f9fbcf04ccd7db003ca14e82fa5a21322c4f0350a8f0cd0aad9b4fc443ea1b",
-      "app/lib/refresh/integrated-prewrite-review.server.js": "11a27a0bed237c5a58da9d216d545b7304ad2e240db2a65a4a172bd1f0389313",
+      "app/lib/refresh/integrated-prewrite-review.server.js": "f528e47829307d3db235a3395f1cce8d72cba92ce507d7ab6d62fa94388a14f0",
       "app/lib/refresh/klaviyo-background-owner.server.js": "d6965d0331b0904aff7161b273db6ee4d1d956ddc56ae36300942b718e543756",
       "app/lib/refresh/klaviyo-private-request.server.js": "34240888886b864f79f862e5260ef3dc2dadfe2eb1207653dcf372162e39aedb",
       "app/lib/refresh/klaviyo-raw-collection.server.js": "85f85cc1ef3b9824e3ac9e886e140cf6e7fd488af8f7eed182da90a193df1bd5",
@@ -1472,8 +1473,8 @@
       "app/lib/refresh/meta-raw-request.server.js": "051410814e2f50462e848b47b24b1423599e046a7cfc3d69e67f3f13b1bd33cf",
       "app/lib/refresh/meta-raw-server.server.js": "8da974d7829ad7c7c89d08e49fb6c6493fa1c649bd42ef287f1f0871673511ef",
       "app/lib/refresh/native-inventory.server.js": "5d67e8642f4032b90c154b12c43da8c92945d8b223c0494e1c82974739b8b5c6",
-      "app/lib/refresh/pd-prewrite-chunk.server.js": "1834ec96c0aff7f54fa58a2142c15165da686680a2645caee33cc064282d0453",
-      "app/lib/refresh/pd-source-reader.server.js": "b52fdf2a2d152afb0a0dca5289519feb0a1cc4af9324676bdac513ee267f5dc3",
+      "app/lib/refresh/pd-prewrite-chunk.server.js": "29b295aa601c9e687dd95636a4023a8613a5e34179189635c057b9e5df77a201",
+      "app/lib/refresh/pd-source-reader.server.js": "ab11200941df5186cfe1937a7a7a18790d8d6e3a9d5a0ba02c971da38f64826f",
       "app/lib/refresh/preflight-bridge.server.js": "c327e4aca31e102f00edde808d88f06bfde3d87d3acfe5168158229db69acd7d",
       "app/lib/refresh/queue-check.server.js": "4795afa7149373d342860a4428b6028252ff475a77716dc2bcba363a2b9105e6",
       "app/lib/refresh/queue-cron-entry.server.d.ts": "7f78161c378a99cf8c52a905a4a23ebc026fe81fba929d74d2a5104b491efe7b",
@@ -1567,12 +1568,12 @@
       "app/routes/settings.provider-live-evidence.ts": "89fbcb7087fc480fefba708bbc730146f1ba41af48d98f1b0a10fe1427120495",
       "app/routes/webhooks.shopify.tsx": "eac0ea30fcca28d6bba3c11105a5c4fda7778d1398c23f21fcb02f717d8bd056",
       "app/shopify.server.ts": "cc5959867dd5c413b222d51c4aad7d9a39c7c3d15e590aada86a1ddfefdc6fad",
-      "contracts/a6-eo-implementation-master-v1.json": "ae31a87b0f8f2f02182862d0037b8af5d45baa797633c82fed285a9507c33582",
+      "contracts/a6-eo-implementation-master-v1.json": "a0d8eaaf702c68392755a75266a59fc627c6404b7e950ae3694ac6bd9d95e471",
       "contracts/eo-05-oauth-setup-permission-policy-v1.json": "c1914f91011464d3b16b4b0a7710e49878ce6dbb57427e3d0f7c68d9ec4ec681",
       "contracts/eo-05-permission-explanation-design-v1.json": "ad4753b9ad4a6becd14764b7b33fb917f0cc491ad774cc1f1fe9053c5f189f35",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
       "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md": "c602fd4d7760e8f32c109e1f0456907c739c12906d71becf88476cad2007d6a1",
-      "docs/EXECUTION_PLAN.md": "e961a2b606e61a38fa6ffdf20250850848ef0e7705455edc5ad3e8e5a6b1ac1c",
+      "docs/EXECUTION_PLAN.md": "99c836ec5028b8cd0c79854fbcce37b0968b24dfeab18bd00fa4a64730ee82c9",
       "docs/OAUTH_FLOW_CONSTITUTION.md": "74d7a8f327a9558712c3ac8bb54a6633fff7a7e2045405d236d35f265d124b28",
       "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md": "49e253b08959faa9f0b2bf208ed5eb6d3c078a0ddf9097e667a9bf1483dc7350",
       "package.json": "e46285b3a60421e8c338807d7b606afa17f16303b08a2832bed3222a06183fe8",
@@ -3221,6 +3222,39 @@
         "deploy": false
       },
       "changed_paths": [
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "docs/EXECUTION_PLAN.md"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "visual_acceptance": "not_applicable_no_UI_change"
+    },
+    {
+      "id": "step20-sales-role-prewrite-guards-2026-11-05",
+      "date": "2026-11-05",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Onaylıyorum devam edelim Komutan after concrete step20 source/product-reference, conflict/repeat and zero/missing prewrite checks; code, isolated tests and one PR only."
+      },
+      "rationale": "Shared pure product-unit cohort review bound after existing private Google and Klaviyo source proof. Preserve native values/roles/raw evidence; deduplicate exact source repeats, block conflicts/missing/invalid facts at actual handoff. No new provider semantics/query, OAuth/UI/permission/account/token, SQL/config, live call, merge or deploy. Meta18 remains open.",
+      "scope": {
+        "runtime_code": true,
+        "live_provider": false,
+        "merge": false,
+        "deploy": false
+      },
+      "changed_paths": [
+        "app/lib/providers/google-product-sales.server.js",
+        "app/lib/providers/reference-prewrite.server.js",
+        "app/lib/providers/sales-role-prewrite.server.js",
+        "app/lib/refresh/integrated-prewrite-review.server.js",
+        "app/lib/refresh/pd-prewrite-chunk.server.js",
+        "app/lib/refresh/pd-source-reader.server.js",
         "contracts/a6-eo-implementation-master-v1.json",
         "contracts/oauth/oauth-flow-constitution-v1.json",
         "docs/EXECUTION_PLAN.md"

@@ -1,3 +1,19 @@
+## 5 Kasım 2026 — 20: satış rollerinin ortak yazım öncesi kontrolleri
+
+Ürün sahibi20'nin doğru kaynak/ürün bağı, çelişki/tekrar ve sıfır/eksik veri kontrolünü onayladı. Ortak salt yapısal kontrol, mevcut özel Google satış gözlemi ve Klaviyo Message/referans doğrulamasından sonra bağlandı. Kendi başına JSON doğrulayıcı kaynak yetkisi veya yazım izni vermez. Yeni rol kuralı, sorgu, formül veya alt paket eklenmedi.
+
+Her kontrol tek workspace/kurulum/nesil/bağlantı/provider/hesap/gün/para birimi bağlamı/saat dilimi/raporlama zamanı/kaynak ailesi/dönüşüm kapsamı/ürün birimi kümesinde çalışır. Farklı kümeler birleştirilmez. Kaynak-native tekillikte yalnız sorgulanan boyutlar kullanılır; miktar, tutar, rol, isim, sonradan çözülen Channel/ürün eşlemesi, sayfa indeksi ve run ID kimliğe katılmaz. Birebir tekrar bir kez taşınır, tüm kaynak izleri korunur. Aynı kimlikte farklı kanıt çelişki olur ve gerçek ana teslim kapısını durdurur.
+
+Eksik ürün kimliği veya adet/tutar, bozuk ya da güvenle temsil edilemeyen sayı held olarak kalır; ham kanıt silinmez,0 üretilmez. Açık0 metrik durumudur; rol veya eksik veri değildir. A/B/C/D satırları ayrı native olgular olarak korunur. Adet/tutarlar değiştirilmez; toplam adet lead/cross-sell parçalarıyla yeniden toplanmaz, rol ek satış veya ek maliyet üretmez.
+
+Google satış projeksiyonu aynı tamamlanmış native kanıttan yeniden kurularak karşılaştırılır. Kaynak bağlamı native metadata hazırlığı sonrasında yakalanır; eski metadata durumu karşılaştırmaya girmez. Klaviyo'nun mevcut resolver/Message bağı yeniden doğrulanır. Search ve Klaviyo rol kararları değişmez. Meta18 dolu gerçek ilişki kanıtı beklemeye devam eder; Meta için decoder veya satış rolü kabulü eklenmedi.
+
+Shopify ziyaret/son temas bilgisi provider Sales Role veya dönüşüm iddiası yerine konmaz; sipariş sayısı ürün adedine eklenmez. Gerçek koleksiyon ve bütünleşik yazım öncesi test bu sınırı kontrol eder. Mevcut ürün aday/eşleme kontrolleri korunur; canonical Shopify ürün kimliği atanmıyor.
+
+Bu tek PR kod/izole test/sözleşme hazırlığıdır; zorunlu CI ve ayrı merge onayı beklenir. Son yetki/fence/entitlement/süre ve serileştirilmiş toplam boyut kontrolü geçmeden teslim yoktur. Bellek içi tekrar kontrolü kalıcı Dataset tekillik anahtarı veya çalıştırmalar arası ledger değildir. Native pozitif satış, tarihsel atıf, FX, kalıcı rapor yazımı veya kapasite kabulü iddia edilmez; Dataset işi23'te, tarihsel Listing Tree22'deki duraklamasında kalır. OAuth/UI/token, SQL/config, canlı çağrı veya deploy yoktur.
+Resmî kaynak kontrolü5 Kasım2026: [Google Cart Data](https://developers.google.com/google-ads/api/fields/v25/cart_data_sales_view), [Klaviyo Event](https://developers.klaviyo.com/en/reference/get_event). Alanlar ve API revizyonları değişmedi.
+Bağlayıcı kayıt: contracts/a6-eo-implementation-master-v1.json#Step20_sales_role_prewrite_guards_2026_11_05.
+
 ## 5 Kasım 2026 — 18 açık kanıt bekler; 19 mevcut Klaviyo rolleri korunur
 
 Ürün sahibi,18'in dolu gerçek Meta satış yanıtı beklediğini açık kaydedip19'a geçmeyi onayladı.18 tamamlanmadı: dört ham converted/promoted adet/tutar alanı mevcut sorguda ve kaynak deposunda korunuyor; bunlardan satış ilişkisi çıkaran Meta decoder/sınıflandırıcısı henüz yok. PR328'de4 Kasım'da iki rapor başarıyla boş dönmüş ve şifreli makbuz/içerik doğrulanmıştı. Bu, alanların satış rolü anlamını veya katalog/Shopify kimliğini kanıtlamaz. Dolu gerçek ürün satış yanıtı ile alan/ilişki anlamı doğrulanana kadar rol tahmini kodlanmayacak. Yeni canlı çağrı veya yeni paket yoktur.

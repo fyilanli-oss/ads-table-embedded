@@ -1,3 +1,4 @@
+import {reviewSalesRoleCohort} from "./sales-role-prewrite.server.js";
 import {reviewRefreshCandidatePrewrite,reviewRefreshCandidatePrewriteCurrent} from "./candidate-prewrite.server.js";
 import {refreshCandidateReferenceInputs} from "../refresh/quota-authority-binding.server.js";
 import {attachMetaReportCandidateReferences} from "./meta-report-candidates.server.js";
@@ -57,7 +58,21 @@ export function reviewRefreshReferencePrewrite({expected,observation,...extra}={
       reference:row,observed:native.get(row.provider_event_id)});
     family="klaviyo_Message";observed=message;state="structurally_reviewed_open_gates";
   }
-  return freeze({status:"structurally_reviewed_open_gates",scope,provenance,candidateReview,
+  let salesRoleReview = null;
+  if (scope.provider === "klaviyo") {
+    const cohort = {workspace_id: scope.workspaceId, installation_id: scope.installationId,
+      installation_generation: scope.installGeneration, provider_connection_id: scope.connectionId,
+      provider: scope.provider, platform_account_id: scope.accountId, business_date: provenance.job.window.from,
+      source_currency: observation.account.currency, source_timezone: observation.account.timezone,
+      reporting_time_basis: "event_time", fact_family: "ordered_product_event", conversion_scope: "event_attribution", unit_kind: "product_unit"};
+    salesRoleReview = reviewSalesRoleCohort({cohort, rows: rows.map(row => ({
+      cohort, native_identity: {event_id: row.sourceReference.nativeKey}, source_product_id: row.reference.provider_product_properties.ProductID.value, sales_role: row.reference.attribution_resolution.sales_role,
+      metrics: {quantity: row.reference.provider_product_properties.Quantity.value, value: row.reference.provider_product_properties.$value.value},
+      source_reference: {family: cohort.fact_family, native_reference: row.sourceReference.nativeKey},
+      source_payload: row.reference, observed: row.reference,
+    }))});
+  }
+  return freeze({status:"structurally_reviewed_open_gates",scope,provenance,candidateReview,salesRoleReview,
     referenceReview:{state,family,rows,observed,observedEmpty:observed===null?null:rows.length===0},
     referenceLinksReviewed:observed!==null,providerClaimsReviewed:false,
     providerClaimState:"not_collected_in_identity_observation",providerClaimVerified:false,

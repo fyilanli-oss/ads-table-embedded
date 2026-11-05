@@ -1,3 +1,16 @@
+## 5 Kasım 2026 — kalan müşteri veri tesliminin EO-07-A’ya ertelenmesi
+
+Ürün sahibi, “Eksik olanlarıda yedekleme gibi at EO paketlerinden birine” diyerek konuşulan iki eksik sonucun mevcut ileriki pakete taşınmasını istedi. Bunlar: ilgili kayıt gerçekten varsa doğrulanmış mağaza sahibine güvenli teslim ve gerçekleşmiş teslimin kalıcı yetkili kanıtı. İş mevcut **A6-EO-07-A — Settings surface** içindeki gizlilik kapsamına taşındı. Review öncesi kabul mevcut **A6-EO-08-D — Review evidence and review-ready decision** kapısına bağlandı. Yeni paket/alt paket açılmadı; sayılar ve diğer paket durumları değiştirilmedi.
+
+Bu iki iş15'in şu anki çalışma sırasından çıkarıldı; tamamlandı/PASS sayılmıyor. Diğer15 kabul koşulları kendiliğinden kapanmıyor. Yedekleme/restore mevcut EO-08-C kaydında, genel Dataset/rapora teslim23'te kalıyor. Tarihsel hazırlık ve canlı kabul kayıtları korunur; onların “teslim açık” ifadesinin güncel plan karşılığı bu ertelemedir.
+
+Mevcut kayıt bulma/ayırma, kanıtlı no_customer_data, dar silme ve replay korumaları sürer. Dolu veri paylaşma talebi gerçek teslim kanıtı olmadan disclosure_required beklemesinde kalır; webhook2xx veya kaynak saklama makbuzu teslim sayılmaz. Yeni müşteri profili, ekran/portal/indirme, e-posta veya ek veri alanı seçilmedi; yöntem EO-07-A başında o paketin somut planıyla belirlenecek. Bu kayıt uygulama, OAuth/UI/SQL/config, canlı/provider, deploy veya merge yetkisi vermez.
+
+Plan ertelemesi gerçek bir talebin mevcut platform süresini uzatmaz. Erken gerçek talep gelirse asıl süresi içinde ele alınmalı; tamamlanmadığı halde kapatılmamalı. EO-07-A gizlilik teslim kabulü ve EO-08-D review-ready kararı, gerçek dolu talebin güvenli teslimi ve yetkili makbuz kanıtı tamamlanmadan geçemez. İzole test veya boş kuyruk canlı kabulü bunun yerine konmaz.
+
+Resmî kontrol5 Kasım2026: [Shopify privacy requirements](https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance).
+Bağlayıcı kayıt: contracts/a6-eo-implementation-master-v1.json#Step15_customer_disclosure_deferral_2026_11_05 ve contracts/eo-05-step15-storage-design-v1.json#customer_disclosure_deferral_2026_11_05.
+
 ## 5 Kasım 2026 — özel gizlilik işleyicisinin canlı bağlantısı doğrulandı
 
 Ürün sahibi, PR333 birleşmesi sonrasında açıklanan canlı kurulum ve kontrollü doğrulamayı açıkça onayladı. Birleştirilmiş 1ad7411 kaynağının iki SQL adımı ve dar rol kurulumu tam kaynak özetleriyle canlıya uygulandı. Rolün bağımsız bağlantı şifresi migration geçmişine veya repository'ye yazılmadan yapılandırıldı; nonsensitive LOGIN adımı ayrı migration kaydıdır. Önceki92 version/name kaydı korunur; geçmiş92 SQL içerik özeti bu işlemde tekrar karşılaştırılmadı. Toplam96 migration vardır. Önceki prepared_migrations kayıtları tarihsel hazırlıktır; bu canlı uygulamanın alias/hash karşılığı aşağıdaki yeni kanıttadır.

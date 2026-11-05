@@ -1748,7 +1748,8 @@
         {
           "id": "A6-EO-07-A",
           "title": "Settings surface",
-          "objective": "Preserve the proven Settings interaction flow while building currency, provider/account authority, read-only installed-shop context, Klaviyo cost, billing and privacy; no charts and no store selector."
+          "objective": "Preserve the proven Settings interaction flow while building currency, provider/account authority, read-only installed-shop context, Klaviyo cost, billing and privacy; no charts and no store selector.",
+          "deferred_step15_customer_disclosure_gate": "Step15_customer_disclosure_deferral_2026_11_05"
         },
         {
           "id": "A6-EO-07-B",
@@ -1818,7 +1819,8 @@
         {
           "id": "A6-EO-08-D",
           "title": "Review evidence and review-ready decision",
-          "objective": "Prove the embedded app in a dedicated Shopify dev store, assemble truthful lifecycle/product evidence and require an explicit human review-ready gate."
+          "objective": "Prove the embedded app in a dedicated Shopify dev store, assemble truthful lifecycle/product evidence and require an explicit human review-ready gate.",
+          "required_customer_disclosure_acceptance": "Step15_customer_disclosure_deferral_2026_11_05"
         }
       ],
       "outputs": [
@@ -4085,5 +4087,43 @@
     "scope_completed": true,
     "additional_live_mutation_authorized": false,
     "merge_authorized": false
+  },
+  "Step15_customer_disclosure_deferral_2026_11_05": {
+    "status": "deferred_by_product_owner_not_implemented_not_accepted",
+    "decided_at": "2026-11-05",
+    "owner_decision": "Eksik olanlarıda yedekleme gibi at EO paketlerinden birine",
+    "authorized_scope": "Document the deferral of the two explicitly discussed remaining nonempty customer data-request delivery outcomes; no implementation, OAuth/UI/SQL/config/provider/live/deploy or merge.",
+    "from": "A6-EO-05 step15",
+    "to": "A6-EO-07-A",
+    "review_acceptance_gate": "A6-EO-08-D",
+    "destination_reason": "Existing EO07A Settings objective already includes privacy; implement the chosen private store-owner delivery path and authoritative receipt there. EO08D already assembles lifecycle/review evidence.",
+    "scope": [
+      "Secure delivery of held requested records to the verified store owner, when matching records actually exist.",
+      "Durable authoritative proof of actual delivery; only then complete a nonempty customer_data_request."
+    ],
+    "current_evidence": {
+      "source_private_worker": "Live private entry, narrow role/TLS and durable idle receipt accepted in PR333/PR334 evidence. No genuine customer request existed; not live disclosure acceptance.",
+      "source_matching_and_redaction": "Already-implemented scoped projection/no-data/redaction and fail-closed hold remain; isolated SQL proofs passed.",
+      "nonempty_disclosure": "Held as disclosure_required; genuine delivery channel/receipt authority not implemented."
+    },
+    "retained_rules": [
+      "No-data completion requires proof; missing/unknown/unavailable evidence is not zero.",
+      "A nonempty customer_data_request is never completed/disclosed solely from webhook2xx, source-storage receipt, operator assertion or fabricated hash.",
+      "Existing verified scope, store ownership, encryption, narrow role, redaction/whole-install erasure priority and replay protection remain unchanged.",
+      "Planning deferral does not extend the existing platform deadline for an actual request. If one arrives earlier, it remains open and needs explicit handling within its original deadline; no false completion."
+    ],
+    "not_in_scope": [
+      "No customer-facing portal, download UI, email channel or extra stored customer/profile fields selected or authorized now.",
+      "No new EO parent/child package or count increase.",
+      "Backup/restore remains independently deferred to EO08C; source-to-report Dataset delivery remains step23."
+    ],
+    "closure": "Remove only these two delivery outcomes from the current step15 work sequence. Not PASS, not implemented, not automatic overall step15 closure. Other existing step15 evidence/deferrals remain.",
+    "destination_acceptance": "EO07A privacy delivery acceptance and EO08D review-ready decision cannot pass while actual nonempty delivery and authoritative receipt proof remain missing. No native/real delivery acceptance inferred from isolated tests.",
+    "additional_live_mutation_authorized": false,
+    "merge_authorized": false,
+    "official_documentation_checked_at": "2026-11-05",
+    "official_sources": [
+      "https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance"
+    ]
   }
 }

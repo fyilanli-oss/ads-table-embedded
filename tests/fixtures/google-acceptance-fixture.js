@@ -6,8 +6,9 @@ export function googleAcceptanceFixture(){
   shopId:"gid://shopify/Shop/12",shopDomain:"test.myshopify.com",accountId:"123",connectionId:"22222222-2222-4222-8222-222222222222",
   connectionVersion:2,credentialId:"33333333-3333-4333-8333-333333333333",selectionId:"71",merchantId:"99",merchantQuotaAccountId:"98",
   merchantBindingEpoch:1,window:{from:"2026-11-01",to:"2026-11-01"},expiresAt:new Date(now+600000).toISOString()};
+ // Synthetic connection belongs to the selected report day, independent of the host calendar.
  const source={workspaceId:plan.workspaceId,installGeneration:"3",provider:"google_ads",accountId:"123",connectionId:plan.connectionId,
-  connectionVersion:2,selectionId:"71",accountRowId:"72",eligibleFromMs:now-86400000*3,timezone:"UTC",currency:"USD",
+  connectionVersion:2,selectionId:"71",accountRowId:"72",eligibleFromMs:Date.parse(plan.window.from+"T01:00:00Z"),timezone:"UTC",currency:"USD",
   scheduledHour:Math.floor(now/3600000)*3600000-3600000,queuedAt:now-3600000};
  const vector={requests:100,dbWrites:1000,connections:10,rows:10000,bytes:10000000};
  const budget={global:vector,interactiveReserve:{requests:0,dbWrites:0,connections:0,rows:0,bytes:0},

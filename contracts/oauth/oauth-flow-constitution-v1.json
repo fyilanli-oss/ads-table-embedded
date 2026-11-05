@@ -1704,6 +1704,7 @@
       "tests/permission-release.test.js": "1393a4af41192cdc7dc2b58a8a3a275df19c3bcd44eedfd6b8634434717b5b2f",
       "tests/permission-settings.test.js": "5a53c68e019cfd23042a0b29e7062deee495f8faafec5df24e0283f9e38e481f",
       "tests/permission-setup-selection.test.js": "c767fed7b7dc4c51fb3a96bba1a8d95162d2e6db873cac0a779401e5f745b132",
+      "tests/raw-fixture-calendar-permission.test.js": "352a2467a5f724d13e08dd873d3c397521bbd301be9e1f2cc9fbbedb2d54f9e6",
       "tests/shopify-permission-readback.test.js": "2b7500dd9424aa324b2c9a61b5e3d57f1ce1a3fe37a1dc192e63c49fe3e6d21e",
       "tests/shopify-permission-scope-protocol.test.js": "4f7828c38691a70c656373897be106ab3a757dad75b84515af7d6aa3e8d8f00c",
       "tests/shopify-products-completion.test.js": "4bb82463a7e175122d0a8a34a74c038d2525942e0dbd03c9b1e8d17ac59053ad",
@@ -2945,6 +2946,12 @@
             "explicit": true,
             "source": "Owner: Codex günaydın. Onaylıyorum after exact proposal to change F01 CI timeout from20 to30 minutes and rerun the same unchanged tests.",
             "scope": "Only F01 job timeout20->30 and corresponding protected inventory/approval record. No test weakening, runtime/SQL change, live settings/data/deletion, merge or deploy."
+          },
+          {
+            "date": "2026-11-05",
+            "explicit": true,
+            "source": "Owner Onaylıyorum to the specific async question: fix only the shared fixture connection date so it is bound to the selected reporting day, add calendar-change regression tests and verify on the same PR. No runtime/SQL/OAuth behavior or live settings/data changes.",
+            "scope": "tests/fixtures/google-acceptance-fixture.js and tests/raw-fixture-calendar-permission.test.js plus protected inventory/approval record; preserve production eligibility rejection."
           }
         ]
       },
@@ -2964,6 +2971,7 @@
         "contracts/oauth/oauth-flow-constitution-v1.json",
         "docs/EXECUTION_PLAN.md",
         "supabase/migrations/20261104213905_eo05_source_retention_policy.sql",
+        "tests/raw-fixture-calendar-permission.test.js",
         "tests/source-retention-policy-permission.test.js",
         "tools/eo05-source-evidence-probe.mjs",
         "tools/eo05-source-retention-policy-probe.mjs"

@@ -1149,6 +1149,7 @@
     "sources": [
       "https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance",
       "https://supabase.com/docs/guides/database/functions"
-    ]
+    ],
+    "empty_store_queue": "The existing SQL executor may complete no_customer_data only with a valid verified scope and no source batch. A new completion trigger preserves requested-order erasure hashes and clears plaintext scope; missing scope fails atomically. Completed private-runtime calls return existing SQL manifest without a second projection/write."
   }
 }

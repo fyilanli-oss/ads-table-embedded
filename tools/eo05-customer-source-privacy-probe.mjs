@@ -29,6 +29,23 @@ export async function customerSourcePrivacyProbe(client){
   input.records.journeys.push({key:jp,order:order.key,kind:'summary',ordinal:0,state:'ready',ready:true,complete:true,data:summary});
   input.records.links.push({reference:jr,targetType:'journey',target:jp,role:'summary'});
  }
+ // Existing SQL queue: empty landing store still preserves verified order
+ // erasure hashes, clears plaintext scope, and remains idempotent.
+ for(const kind of ['customer_data_request','customer_redact']){
+  await client.query('savepoint empty_source_case');try{
+   const c=await claim(kind);
+   const runtime=createPrivacyLifecycleRuntime({database:client,sourcePrivacy:{cipher:input.cipher}});
+   const first=(await client.query('select * from privacy.execute_deletion_run($1)',[c.runId])).rows[0];assert.equal(first.manifest_result,'no_customer_data');
+   const again=await runtime.executeDeletionRun(c.runId);assert.equal(again.manifestId,first.manifest_id);
+   assert.equal((await client.query('select source_request_scope from privacy.webhook_claims where id=$1',[c.claim.claim_id])).rows[0].source_request_scope,null);
+   if(kind==='customer_redact')await rejected(client,()=>createSourceEvidenceRepository(client).commit(prepare()));
+  }finally{await client.query('rollback to savepoint empty_source_case');await client.query('release savepoint empty_source_case');}
+ }
+ await client.query('savepoint empty_scope_missing');try{
+  const c=await claim('customer_redact');await client.query('update privacy.webhook_claims set source_request_scope=null where id=$1',[c.claim.claim_id]);
+  await rejected(client,()=>client.query('select * from privacy.execute_deletion_run($1)',[c.runId]));
+  assert.equal((await client.query('select count(*)::int n from privacy.deletion_manifests where deletion_run_id=$1',[c.runId])).rows[0].n,0);
+ }finally{await client.query('rollback to savepoint empty_scope_missing');await client.query('release savepoint empty_scope_missing');}
  await createSourceEvidenceRepository(client).commit(prepare());
  async function claim(kind,scope={version:1,orders:[gid(101)]},webhook=randomUUID()){
   const topic=kind==='customer_data_request'?'customers/data_request':'customers/redact';

@@ -71,10 +71,28 @@ end $fn$;
 create function privacy.customer_source_run_kind(p_run uuid) returns text language plpgsql stable security definer set search_path='' as $fn$
 declare kind text;
 begin
- select r.kind into strict kind from privacy.deletion_runs r where r.id=p_run;
+ select case when r.status='completed' then null else r.kind end into strict kind from privacy.deletion_runs r where r.id=p_run;
  return case when kind in ('customer_data_request','customer_redact') then kind else null end;
 end $fn$;
 revoke all on function privacy.customer_source_run_kind(uuid) from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
 -- Preserve owner-only snapshot/completion. Ingress receives only the existing verified-scope claim RPC.
 grant execute on function privacy.claim_shopify_customer_webhook(text,text,text,text,text,bytea,text,text,timestamptz,timestamptz,jsonb) to adstable_runtime;
+
+-- The existing SQL queue can prove absence only in a completely empty source store.
+-- Keep exact order tombstones even then, and never retain the plaintext order scope.
+create function privacy.complete_empty_source_scope() returns trigger
+language plpgsql security definer set search_path='' as $fn$
+declare scope jsonb; mid uuid;
+begin
+ if new.status='completed' and new.kind in ('customer_data_request','customer_redact') and new.source_customer_receipt is null then
+  select source_request_scope into scope from privacy.webhook_claims where id=new.claim_id for update;
+  if not privacy.valid_source_request_scope(scope) or exists(select 1 from evidence.source_batches where workspace_id=new.workspace_id and installation_generation=new.install_generation) then raise exception 'SOURCE_PRIVACY_SCOPE_OR_PROOF_REQUIRED';end if;
+  select id into strict mid from privacy.deletion_manifests where deletion_run_id=new.id and result='no_customer_data';
+  update privacy.deletion_runs set source_customer_receipt=jsonb_build_object('manifestId',mid,'result','no_customer_data','disclosureReceipt',null,
+   'redactedOrderHashes',case when new.kind='customer_redact' then (select coalesce(jsonb_agg(evidence.source_hash(value) order by value),'[]') from jsonb_array_elements(scope->'orders')) else '[]'::jsonb end) where id=new.id;
+  update privacy.webhook_claims set source_request_scope=null where id=new.claim_id;
+ end if;return new;
+end $fn$;
+create trigger complete_empty_source_scope after update of status on privacy.deletion_runs for each row execute function privacy.complete_empty_source_scope();
+revoke all on function privacy.complete_empty_source_scope() from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
 commit;

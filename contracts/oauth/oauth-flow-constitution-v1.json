@@ -1563,12 +1563,12 @@
       "app/routes/settings.provider-live-evidence.ts": "89fbcb7087fc480fefba708bbc730146f1ba41af48d98f1b0a10fe1427120495",
       "app/routes/webhooks.shopify.tsx": "eac0ea30fcca28d6bba3c11105a5c4fda7778d1398c23f21fcb02f717d8bd056",
       "app/shopify.server.ts": "cc5959867dd5c413b222d51c4aad7d9a39c7c3d15e590aada86a1ddfefdc6fad",
-      "contracts/a6-eo-implementation-master-v1.json": "bb2161d684dbe0864951ac46ca93fbf5174fa48f8f73bf7dd754690e22643373",
+      "contracts/a6-eo-implementation-master-v1.json": "f2fa1995a515e84bc4af29fc95189a7c3c71a6a7598299a8b6270bb019a95e26",
       "contracts/eo-05-oauth-setup-permission-policy-v1.json": "c1914f91011464d3b16b4b0a7710e49878ce6dbb57427e3d0f7c68d9ec4ec681",
       "contracts/eo-05-permission-explanation-design-v1.json": "ad4753b9ad4a6becd14764b7b33fb917f0cc491ad774cc1f1fe9053c5f189f35",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
       "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md": "c602fd4d7760e8f32c109e1f0456907c739c12906d71becf88476cad2007d6a1",
-      "docs/EXECUTION_PLAN.md": "9652ace0960f694bd1fd1adeb6025d65fc5c03a18f49e79823793f76b6c32cc4",
+      "docs/EXECUTION_PLAN.md": "501e016aeb435ee9d26ce362c519e943804d78e348d391ff1b20847f15c7b797",
       "docs/OAUTH_FLOW_CONSTITUTION.md": "74d7a8f327a9558712c3ac8bb54a6633fff7a7e2045405d236d35f265d124b28",
       "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md": "49e253b08959faa9f0b2bf208ed5eb6d3c078a0ddf9097e667a9bf1483dc7350",
       "package.json": "e46285b3a60421e8c338807d7b606afa17f16303b08a2832bed3222a06183fe8",
@@ -1716,7 +1716,7 @@
       "tools/eo05-admin-cost-budget-probe.mjs": "3754269582b0d201413308cb8a8495928a4e3f197370e93b024195ceb16fab5a",
       "tools/eo05-admin-cost-feedback-probe.mjs": "3929e29a7ddeef23acb87a7d361289ead0dcd52f7b89e64399c372fba6071071",
       "tools/eo05-admin-quota-context-probe.mjs": "e67525499cd3d2042298076e17ea2d84618c74781d78bd93fbbe44cfa827e0f9",
-      "tools/eo05-customer-source-privacy-probe.mjs": "c63c2b3a5fda1180fa0be384da0bfc0be4dae023d23092f104aa3f518d363b09",
+      "tools/eo05-customer-source-privacy-probe.mjs": "df854e763301a99f8ae21212bb84d5dca379647f735c51db4910bf1fc517e20d",
       "tools/eo05-google-acceptance-probe.mjs": "b9682e491e5733c6869ebd73c6183f6145f41964c84c53c97a89d3f391167d26",
       "tools/eo05-google-identity-renewal-probe.mjs": "2f429c983600225ccdc9cadeede2611de9d48522dc575d5cb583b324b6f07fd1",
       "tools/eo05-google-mapping-flow-probe.mjs": "4cbdd4f19fb6db6ae199daa1ffcc5921ec885e467d45a1ec4abf2e6e14650d2d",
@@ -1774,7 +1774,7 @@
       "tools/sql/eo05-klaviyo-source-role-install.sql": "c2749c46c4c5026d2eb3c55e16d9e87d60a7d1cbe74bb16f0bd8ff783b6a156f",
       "tools/sql/eo05-meta-source-role-install.sql": "748c28dc0d42b9efb48fddf3e2c0ddebb4daecb410202aba522b025680a50071",
       "app/lib/database/customer-source-non-order.server.js": "c4c34fdabc52c45d88f0bca42d081e7e57dac33c67901571e6ffa8e5e2350b60",
-      "supabase/migrations/20261105100338_eo05_customer_request_completion.sql": "2be8146f25e242f57017bdfda6e5412869c3245b79a4f9fd227dba0cb9a897b9"
+      "supabase/migrations/20261105100338_eo05_customer_request_completion.sql": "fb480a61694b9db3ebc10aa1df0d7c7b85206f6443206647bb7040fb33e24ab1"
     }
   },
   "revisions": [

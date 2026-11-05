@@ -1,3 +1,18 @@
+## 5 Kasım 2026 — özel gizlilik işleyicisinin canlı bağlantısı doğrulandı
+
+Ürün sahibi, PR333 birleşmesi sonrasında açıklanan canlı kurulum ve kontrollü doğrulamayı açıkça onayladı. Birleştirilmiş 1ad7411 kaynağının iki SQL adımı ve dar rol kurulumu tam kaynak özetleriyle canlıya uygulandı. Rolün bağımsız bağlantı şifresi migration geçmişine veya repository'ye yazılmadan yapılandırıldı; nonsensitive LOGIN adımı ayrı migration kaydıdır. Önceki92 version/name kaydı korunur; geçmiş92 SQL içerik özeti bu işlemde tekrar karşılaştırılmadı. Toplam96 migration vardır. Önceki prepared_migrations kayıtları tarihsel hazırlıktır; bu canlı uygulamanın alias/hash karşılığı aşağıdaki yeni kanıttadır.
+
+Dar rol gerçek TLS bağlantısında kendi tam profiliyle doğrulandı: bağlantı1, rol üyeliği0, super/inherit/createDB/createRole/replication/bypassRLS kapalı, tablo ve eski geniş RPC yetkisi yok. Yalnız dört yeni Production ayarı oluşturuldu; mevcut kaynak şifreleme, provider ve session anahtarları okunmadı veya değiştirilmedi.
+
+Production yayını dpl_3rAHKTGTVyo1QVfkQULtiGuLGWmE READY; kaynak1ad741115763673ddf30d85ca602f8e7569d63e7, alan adı https://embedded.adstable.app. Gerçek özel POST run çağrısı kuyruk boş olduğu için idle verdi; ayrı read-only inspect aynı sonucu doğruladı. İşlem759de9f6-c425-4b82-962a-062d516fef6b kalıcı,365 günlük metadata makbuzudur; müşteri veya mağaza seçilmedi. Mevcut45 kaynak kaydının sayısı ve bütünlük özeti değişmedi. Yeni sürüme ait15 dakikalık error/fatal taramasında kayıt yok; Supabase security advisor listesi boş.
+
+Bu kabul gerçek sunucu girişi/dar rol/TLS/kalıcı boş-kuyruk sonucunu kanıtlar. Gerçek müşteri talebi yoktu; canlıda talep oluşturulmadı, kayıt silinmedi veya veri teslim edilmedi. Gerçek dar silme/teslim/replay kabulü diye sunulmaz; ilgili izole SQL testleri PR333'te üç aşamada geçti. Otomatik zamanlayıcı kurulmadı. Dolu veri paylaşma talebi hâlâ gerçek teslim kanalı/makbuz otoritesi kurulmadan held kalır.15 tamamlandı sayılmaz; yedek/restore EO-08-C kararı sürer.
+
+Kanıt: docs/evidence/EO05_PRIVATE_PRIVACY_WORKER_LIVE_2026-11-05.json.
+Bağlayıcı kayıt: contracts/a6-eo-implementation-master-v1.json#Step15_private_customer_source_live_2026_11_05.
+Resmî kontrol5 Kasım2026: [Supabase roles](https://supabase.com/docs/guides/database/postgres/roles), [Vercel environment variables](https://vercel.com/docs/environment-variables), [Vercel deployments](https://vercel.com/docs/deployments).
+Bu kayıt ek canlı işlem/yayın veya kendi merge'i için yetki vermez.
+
 ## 5 Kasım 2026 — kuyruktaki müşteri talebinin özel sunucu girişi
 
 Ürün sahibi şu somut hazırlığı onayladı: kuyruktaki talebi mevcut işleyiciye gönderen kalıcı özel sunucu girişi, en az yetkili veritabanı rolü ve birlikte çalışan testler. Tek PR; canlı kurulum/anahtar/ayar/zamanlayıcı/silme/teslim/yayın/merge yok.

@@ -4317,5 +4317,96 @@
     },
     "next_existing_step": 18,
     "Dataset_and_report_persistence_step": 23
+  },
+  "Step18_Meta_role_evidence_hold_2026_11_05": {
+    "status": "open_waiting_nonempty_native_Meta_product_sales_response",
+    "ordered_plan_step": 18,
+    "owner_approval": {
+      "explicit": true,
+      "source": "Onaylıyorum after concrete proposal to record step18 open awaiting a nonempty Meta sales response and proceed to existing step19 Klaviyo role preservation."
+    },
+    "base_main": "d1f656aa005663ef8652b36ac9a1e057cba08b23",
+    "finding": "The four raw converted/promoted quantity/value fields are requested and retained; no Meta sales relationship decoder/classifier currently exists. Previous wording existing classifier was corrected to owner before this decision.",
+    "native_evidence": {
+      "source": "https://github.com/fyilanli-oss/ads-table-embedded/pull/328",
+      "business_date": "2026-11-04",
+      "timezone": "America/Los_Angeles",
+      "account_report_rows": 0,
+      "product_report_rows": 0,
+      "receipt_and_content_verified": true,
+      "scope": "Successful empty fixed report queries; no sale relationship, field semantics, native catalogue or Shopify identity acceptance."
+    },
+    "required_before_role_decoder": "Readable nonempty native product-sales response with a verifiable relationship and authoritative interpretation of the four fields. SDK field existence, product catalogue membership or a synthetic fixture does not establish role semantics.",
+    "four_fields_preserved": [
+      "converted_product_quantity",
+      "converted_product_value",
+      "converted_promoted_product_quantity",
+      "converted_promoted_product_value"
+    ],
+    "official_checked_on": "2026-11-05",
+    "official_sources": [
+      "https://raw.githubusercontent.com/facebook/facebook-python-business-sdk/main/facebook_business/adobjects/adsinsights.py",
+      "https://raw.githubusercontent.com/facebook/facebook-python-business-sdk/main/facebook_business/adobjects/adsactionstats.py"
+    ],
+    "documentation_limit": "Insights documentation HTTP429/inaccessible; official SDK confirms field/type existence only. No unsupported or role-semantic claim inferred.",
+    "code_changed": false,
+    "new_native_request": false,
+    "live_SQL_or_config_changed": false,
+    "new_package": false,
+    "complete": false,
+    "next_existing_step": 19
+  },
+  "Step19_Klaviyo_role_preservation_2026_11_05": {
+    "status": "existing_role_scope_verified_pending_required_CI_and_owner_merge_native_acceptance_separate",
+    "ordered_plan_step": 19,
+    "package": "EO-05-B scope decision",
+    "owner_approval": {
+      "explicit": true,
+      "source": "Onaylıyorum to record18 as open awaiting real nonempty Meta evidence and continue19; concrete existing Campaign Assisted/Flow Triggered/Unclassified preservation only."
+    },
+    "base_main": "d1f656aa005663ef8652b36ac9a1e057cba08b23",
+    "scope": "Review and preserve existing Klaviyo rules and their existing source/reference/prewrite path. No new runtime implementation is necessary or introduced.",
+    "existing_entrypoints": [
+      "classifyKlaviyoCampaignSalesRole",
+      "resolveKlaviyoOrderedProductSales",
+      "collectKlaviyoIdentityMessageEvidence",
+      "reviewRefreshReferencePrewrite",
+      "reviewRefreshIntegratedPrewrite"
+    ],
+    "role_rules": {
+      "Campaign": "Assisted; content membership or nonmembership cannot become Advertised/Cross-sell",
+      "Flow": "Triggered when attribution establishes source; variation and medium resolution stay separate",
+      "missing_or_conflicting_attribution": "Unclassified",
+      "missing_Message_catalog_metadata": "Existing exact source/Message role is retained; no name or medium fabricated"
+    },
+    "metric_boundaries": [
+      "Ordered Product events are the sales facts; Placed Order reporting statistics are not product sales.",
+      "Event IDs/attribution/Message references and native Quantity/value stay intact through reference/prewrite review.",
+      "Duplicate/conflicting references follow existing guards; product mapping, Channel/medium metadata and sales role remain separate.",
+      "No new clicked-product proof, Advertised/Cross-sell refinement, Shopify identity, order claim, overlap, Dataset write or publication."
+    ],
+    "existing_regression_tests": [
+      "tests/eo-04d-klaviyo-attribution-resolution.test.js",
+      "tests/eo-04d-klaviyo-attribution-resolution-contract.test.js",
+      "tests/klaviyo-identity-collection.test.js"
+    ],
+    "validation": "Existing resolver, contract and actual identity/candidate/reference/integrated prewrite regression tests passed locally. Full required CI must pass on exact PR head. No new mirror tests or runtime changes.",
+    "official_checked_on": "2026-11-05",
+    "official_sources": [
+      "https://developers.klaviyo.com/en/reference/get_event",
+      "https://developers.klaviyo.com/en/reference/get_campaigns",
+      "https://developers.klaviyo.com/en/reference/get_flows"
+    ],
+    "native_acceptance": "Still separate. Account/metric discovery is not positive attributed product-sales evidence.",
+    "runtime_changed": false,
+    "queries_changed": false,
+    "OAuth_changed": false,
+    "UI_changed": false,
+    "SQL_or_config_changed": false,
+    "live_provider_called": false,
+    "new_package": false,
+    "merge_authorized": false,
+    "deploy_authorized": false,
+    "next_existing_step": 20
   }
 }

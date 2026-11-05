@@ -1413,5 +1413,19 @@
     "CPD_channel_grain": "ad_group",
     "sale_attributed_to_PD_Ads": false,
     "Dataset_write": false
+  },
+  "Step18_Meta_role_evidence_hold_2026_11_05": {
+    "reference": "contracts/a6-eo-implementation-master-v1.json#Step18_Meta_role_evidence_hold_2026_11_05",
+    "status": "open_waiting_nonempty_native_Meta_product_sales_response",
+    "complete": false,
+    "four_fields_retained": true,
+    "role_semantics_proven": false
+  },
+  "Step19_Klaviyo_role_preservation_2026_11_05": {
+    "reference": "contracts/a6-eo-implementation-master-v1.json#Step19_Klaviyo_role_preservation_2026_11_05",
+    "status": "existing_role_scope_verified_pending_required_CI_and_owner_merge_native_acceptance_separate",
+    "scope": "Existing Campaign Assisted, Flow Triggered, missing/conflicting Unclassified; no Advertised/Cross-sell work.",
+    "runtime_changed": false,
+    "native_acceptance": "separate"
   }
 }

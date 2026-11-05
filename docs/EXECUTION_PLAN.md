@@ -1,3 +1,15 @@
+## 5 Kasım 2026 — 18 açık kanıt bekler; 19 mevcut Klaviyo rolleri korunur
+
+Ürün sahibi,18'in dolu gerçek Meta satış yanıtı beklediğini açık kaydedip19'a geçmeyi onayladı.18 tamamlanmadı: dört ham converted/promoted adet/tutar alanı mevcut sorguda ve kaynak deposunda korunuyor; bunlardan satış ilişkisi çıkaran Meta decoder/sınıflandırıcısı henüz yok. PR328'de4 Kasım'da iki rapor başarıyla boş dönmüş ve şifreli makbuz/içerik doğrulanmıştı. Bu, alanların satış rolü anlamını veya katalog/Shopify kimliğini kanıtlamaz. Dolu gerçek ürün satış yanıtı ile alan/ilişki anlamı doğrulanana kadar rol tahmini kodlanmayacak. Yeni canlı çağrı veya yeni paket yoktur.
+
+19'un mevcut kararı: Campaign Assisted; Flow Triggered; eksik/çelişkili atıfta Unclassified. Bu kurallar mevcut sınıflandırıcı, Ordered Product çözümleyicisi, Message koleksiyonu, referans ve bütünleşik yazım öncesi kontrolde zaten uygulanıyor. İnceleme yeni runtime kodu veya sorgu gerektiren bir açık bulmadı; mevcut testler geçti. Mesaj içeriğinde satılan ürünün bulunması/bulunmaması Advertised/Cross-sell üretmez; Medium/Variation veya katalog adı eksikliği ayrı durumdur.
+
+Satış olgusu Ordered Product olayıdır; Placed Order rapor toplamı ikinci kez ürün satışı sayılmaz. Olay/Message/atıf referansı ile native Quantity/value korunur;0 ile eksik ayrı kalır. Ürün eşlemesi, tıklanan ürün, Shopify sipariş iddiası veya Overlap kabulü türetilmez. Gerçek dolu satış kabulü, saatlik çalışma ve Dataset/rapor kalıcılığı tamamlandı sayılmaz; kalıcı yazım23'te kalır.
+
+Bu teslim18 kararını kaydeden ve19'un mevcut rol kapsamını doğrulayan tek PR'dir. Runtime, test dosyası, UI/OAuth, SQL/config, sağlayıcı çağrısı veya yayın değişmez. Mevcut regresyonlar ve zorunlu GitHub CI ile doğrulanır; merge için ayrı açık onay gerekir. Sonraki mevcut numara20'dir;18 açık olarak listede durur, yeni alt paket açılmaz.
+Resmî kontrol5 Kasım2026: [Klaviyo Event](https://developers.klaviyo.com/en/reference/get_event), [Campaign](https://developers.klaviyo.com/en/reference/get_campaigns), [Flow](https://developers.klaviyo.com/en/reference/get_flows); mevcut API revizyonu2026-10-15 korunur. Meta'nın resmî SDK'sı alan/type varlığını gösterir; bugün erişilemeyen/429 dönen Insights sayfası yerine rol anlamı varsayılmadı.
+Bağlayıcı kayıtlar: contracts/a6-eo-implementation-master-v1.json#Step18_Meta_role_evidence_hold_2026_11_05 ve #Step19_Klaviyo_role_preservation_2026_11_05.
+
 ## 5 Kasım 2026 — 17: Google Search satış yolunun ana çıktıya bağlanması
 
 Ürün sahibi, Google Search satış rollerinin desteklenen yolunu bağlama önerisinden sonra açıkça başlayalım dedi. Mevcut Search sorgusu ve sınıflandırıcı korunarak, satılan ürün ve normal adet/tutar kanıtı ana okuyucunun bağımsız ürün satış çıktısına ve gerçek yazma öncesi işleyiciye bağlandı. Bu iş tek kod/test/PR kapsamındadır.

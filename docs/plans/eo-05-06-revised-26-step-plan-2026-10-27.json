@@ -264,7 +264,7 @@
       "work": "Google Search’ün rol kapsamını doğrulamak ve desteklenen yolu bağlamak.",
       "boundary": "Kanıt bekliyor. Mevcut özel sorgu ayrımı üretmiyor; Assisted yolu korunacak.",
       "addition": "",
-      "status": "5 Kasım: mevcut Search sorgusunun Assisted/Unclassified yolu ana satış çıktısına bağlandı; izole kod/test/PR hazırlığı. Zorunlu CI ve ayrı merge onayı beklenir. Advertised/Cross-sell ayrımı bu sorguyla kanıtlanmış veya sağlayıcı tarafından desteklenmiyor sayılmaz; gerçek veri kabulü ayrıca yapılacak.",
+      "status": "5 Kasım: PR337 main'e birleşti (d1f656aa005663ef8652b36ac9a1e057cba08b23). Mevcut Search Assisted/Unclassified yolu bağlandı;4213 test, tip/derleme ve üç izole SQL aşaması geçti. Yeni Advertised/Cross-sell desteği veya gerçek satış kabulü iddiası yok.",
       "package": "EO-05-B"
     },
     {
@@ -272,7 +272,7 @@
       "work": "Meta’nın ham yanıtından doğrulanmış satış ilişkisi çıkarma ve sınıflandırıcı bağlantısı.",
       "boundary": "Kanıt bekliyor. Dört alan sorguda kalacak; gerçek istek/yanıt incelendikten sonra mümkün olan çözüm kodlanacak.",
       "addition": "",
-      "status": "Kanıt bekliyor — dört alan sorguda; decoder/ilişki bağlantısı tamamlanmadı.",
+      "status": "5 Kasım owner kararı: açık — dolu gerçek Meta ürün satış yanıtı ve doğrulanmış alan/ilişki anlamı bekleniyor. PR328'deki başarılı ürün yanıtı0 satır; decoder/sınıflandırıcı yok, alan adlarından rol üretilmeyecek. Dört alan korunur;19'a geçiş onaylı. Yeni paket açılmadı.",
       "package": "EO-05-B"
     },
     {
@@ -280,7 +280,7 @@
       "work": "Klaviyo’nun mevcut rollerini korumak.",
       "boundary": "Araştırma kapalı: Campaign Assisted, Flow Triggered. Yeni Advertised/Cross-sell geliştirmesi yok.",
       "addition": "",
-      "status": "Kapsam kararı kapalı — Campaign Assisted / Flow Triggered / Unclassified. Yeni Advertised/Cross-sell işi yok.",
+      "status": "5 Kasım: mevcut Campaign Assisted / Flow Triggered / Unclassified kuralları ve gerçek koleksiyon→referans→yazım öncesi kod yolu incelendi; mevcut testlerle doğrulanıyor. Runtime/sorgu/rol kuralı değişikliği yok. Zorunlu CI ve ayrı merge onayı beklenir; native kabul ayrıca.",
       "package": "EO-05-B kapsam kararı"
     },
     {
@@ -982,5 +982,14 @@
     "reference": "contracts/a6-eo-implementation-master-v1.json#Step17_google_search_sales_role_binding_2026_11_05",
     "status": "repository_prepared_pending_required_CI_and_owner_merge_native_acceptance_separate",
     "previous_step16_merged_main": "f20021f082600285dc36cac657da1fa8c92821ec"
+  },
+  "Step18_Meta_role_evidence_hold_2026_11_05": {
+    "reference": "contracts/a6-eo-implementation-master-v1.json#Step18_Meta_role_evidence_hold_2026_11_05",
+    "status": "open_waiting_nonempty_native_Meta_product_sales_response",
+    "complete": false
+  },
+  "Step19_Klaviyo_role_preservation_2026_11_05": {
+    "reference": "contracts/a6-eo-implementation-master-v1.json#Step19_Klaviyo_role_preservation_2026_11_05",
+    "status": "existing_role_scope_verified_pending_required_CI_and_owner_merge_native_acceptance_separate"
   }
 }

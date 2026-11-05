@@ -256,7 +256,7 @@
       "work": "Google Shopping/PMax rol sınıflandırıcısını esas ürün satış raporuna bağlamak.",
       "boundary": "Mevcut kod tamamlanacak; normal lead/cross-sell kapsamı korunacak. Gerçek veri doğrulaması ayrıca yapılacak.",
       "addition": "",
-      "status": "5 Kasım: Shopping/PMax sınıflandırıcısı bağımsız ürün satış çıktısına ve gerçek yazma öncesi işleyiciye bağlandı; izole testli kod/PR hazırlığı. Zorunlu CI ve ayrı merge onayı beklenir; gerçek satış verisi kabulü ayrıca yapılacak.",
+      "status": "5 Kasım: PR336 main'e birleşti (f20021f082600285dc36cac657da1fa8c92821ec). Shopping/PMax ana satış bağlantısı,4196 test, tip/derleme ve üç izole SQL aşaması geçti. Gerçek satış verisi kabulü ayrıca yapılacak.",
       "package": "EO-05-B"
     },
     {
@@ -264,7 +264,7 @@
       "work": "Google Search’ün rol kapsamını doğrulamak ve desteklenen yolu bağlamak.",
       "boundary": "Kanıt bekliyor. Mevcut özel sorgu ayrımı üretmiyor; Assisted yolu korunacak.",
       "addition": "",
-      "status": "Kanıt bekliyor — özel sorgu mevcut haliyle ayrım üretmiyor; Assisted korunur.",
+      "status": "5 Kasım: mevcut Search sorgusunun Assisted/Unclassified yolu ana satış çıktısına bağlandı; izole kod/test/PR hazırlığı. Zorunlu CI ve ayrı merge onayı beklenir. Advertised/Cross-sell ayrımı bu sorguyla kanıtlanmış veya sağlayıcı tarafından desteklenmiyor sayılmaz; gerçek veri kabulü ayrıca yapılacak.",
       "package": "EO-05-B"
     },
     {
@@ -977,5 +977,10 @@
   "Step16_google_sales_role_binding_2026_11_05": {
     "reference": "contracts/a6-eo-implementation-master-v1.json#Step16_google_sales_role_binding_2026_11_05",
     "status": "repository_prepared_pending_required_CI_and_owner_merge_native_acceptance_separate"
+  },
+  "Step17_google_search_sales_role_binding_2026_11_05": {
+    "reference": "contracts/a6-eo-implementation-master-v1.json#Step17_google_search_sales_role_binding_2026_11_05",
+    "status": "repository_prepared_pending_required_CI_and_owner_merge_native_acceptance_separate",
+    "previous_step16_merged_main": "f20021f082600285dc36cac657da1fa8c92821ec"
   }
 }

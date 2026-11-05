@@ -10,7 +10,8 @@ const copy = value => value === null || typeof value !== "object" ? value
 export function projectGoogleProductSales({sourceContext: s, evidence: e} = {}) {
   const links = e?.source_links, family = links?.product_sales_fact_family;
   const shopping = family === "shopping_cart_data_product_sales_daily";
-  if (!shopping && family !== "pmax_cart_data_product_sales_daily") fail();
+  const search = family === "search_cart_data_product_sales_daily";
+  if (!shopping && !search && family !== "pmax_cart_data_product_sales_daily") fail();
   const scope = links?.scope, page = e?.results?.[family];
   if (s?.provider !== "google_ads" || !/^\d{4}-\d{2}-\d{2}$/.test(s.business_date ?? "")
     || !s.workspace_id || !s.provider_connection_id || !Number.isSafeInteger(s.installation_generation)
@@ -37,11 +38,16 @@ export function projectGoogleProductSales({sourceContext: s, evidence: e} = {}) 
     const link = links.product_sales_links[index];
     if (link.source_row_index !== index || row.customer?.id !== s.platform_account_id
       || row.segments?.date !== s.business_date || !/^[1-9][0-9]*$/.test(row.campaign?.id ?? "")
-      || row.campaign?.advertisingChannelType !== (shopping ? "SHOPPING" : "PERFORMANCE_MAX")) fail();
-    const sale = normalizeGoogleCartDataSale(row);
+      || row.campaign?.advertisingChannelType !== (shopping ? "SHOPPING" : search ? "SEARCH" : "PERFORMANCE_MAX")) fail();
+    // The existing Search query selects sold identity and total normal metrics
+    // only. Unrequested advertised/lead/cross-sell fields cannot grant a role.
+    const roleRow = search ? {...row, segments: {...row.segments, productItemId: undefined},
+      metrics: {unitsSold: row.metrics?.unitsSold, revenueMicros: row.metrics?.revenueMicros}} : row;
+    const sale = normalizeGoogleCartDataSale(roleRow);
     const span = spans.find(p => index >= p.row_start && index < p.row_start + p.row_count);
-    if (!span || !shopping && link.sales_role !== sale.sales_role) fail();
-    return {...sale, channel_reference: link, source_reference: {
+    if (!span || !shopping && !search && link.sales_role !== sale.sales_role) fail();
+    return {...sale, raw_row: row, ...(search ? {role_evidence_scope: "search_sold_product_only",
+      advertised_cross_sell_evidence: "not_established_by_current_query"} : {}), channel_reference: link, source_reference: {
       query_family: family, source_row_index: index, page_index: span.page_index,
       page_row_index: index - span.row_start, query_fingerprint: span.query_fingerprint,
       provider_request_id: span.provider_request_id ?? null,

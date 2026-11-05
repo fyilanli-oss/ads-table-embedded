@@ -1402,5 +1402,16 @@
       "historical_listing_tree": "22 remains paused",
       "Dataset_and_report_persistence": 23
     }
+  },
+  "Step17_google_search_sales_role_binding_2026_11_05": {
+    "reference": "contracts/a6-eo-implementation-master-v1.json#Step17_google_search_sales_role_binding_2026_11_05",
+    "ordered_plan_step": 17,
+    "status": "repository_prepared_pending_required_CI_and_owner_merge_native_acceptance_separate",
+    "role_evidence_scope": "search_sold_product_only",
+    "native_Advertised_Cross_sell_support": "not_established_not_claimed_unsupported",
+    "PD_grain": "ad",
+    "CPD_channel_grain": "ad_group",
+    "sale_attributed_to_PD_Ads": false,
+    "Dataset_write": false
   }
 }

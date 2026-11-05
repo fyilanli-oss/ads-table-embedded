@@ -4263,5 +4263,59 @@
       "historical_listing_tree": "22 remains paused",
       "Dataset_and_report_persistence": 23
     }
+  },
+  "Step17_google_search_sales_role_binding_2026_11_05": {
+    "status": "repository_prepared_pending_required_CI_and_owner_merge_native_acceptance_separate",
+    "ordered_plan_step": 17,
+    "package": "EO-05-B",
+    "base_main": "f20021f082600285dc36cac657da1fa8c92821ec",
+    "owner_approval": {
+      "explicit": true,
+      "source": "Onaylıyorum başlayalım Codex after the proposal to bind the supported Google Search sales-role path; concrete implementation limited to existing Search query/classifier and independent main sales output, isolated tests and one PR."
+    },
+    "scope": "Bind the existing Search sold-product-only query to the step16 independent product_sales output and actual private prewrite chunk. Preserve existing Assisted path and unknown evidence without claiming new native support.",
+    "entrypoints": [
+      "createRefreshPdSourceReader({googlePd:{flow:search,includeProductSales:true},...})",
+      "runRefreshPdPrewriteChunk({worker,source})"
+    ],
+    "runtime_details": [
+      "Existing search_ad_channel_daily and search_cart_data_product_sales_daily source entry gains optional shared page/row/byte/deadline bounds; no query field, filter, API version or native read protocol change.",
+      "Only sold identity plus normal unitsSold/revenueMicros from current Search query are role evidence. Existing normalizer returns Assisted when observed, Unclassified when product/normal evidence is absent. Unexpected advertised/lead/cross-sell fields remain raw evidence and cannot promote Advertised/Cross-sell.",
+      "Each native cart row appears once in independent main sales output, with unchanged string/number/null metrics and complete raw row, scoped family/query fingerprint/page/row/request provenance.",
+      "CPD Channel remains native Ad Group. PD stays Ad grain; child Ad context is not attribution and never receives duplicated sales or allocated product cost.",
+      "Missing/duplicate PD Ads affect parent context only; a native Ad Group sale can remain evidenced without PD Ads. Private final handoff still requires the existing independent PD/canonical/authority review.",
+      "Actual prewrite output uses the existing step16 final authority/entitlement/serialized-size gates. Failures, cancellation, cursor loop, scope drift or partial read cannot promote accepted sales."
+    ],
+    "evidence_boundary": {
+      "advertised_cross_sell_support": "not_established_by_current_query_not_claimed_provider_unsupported",
+      "native_positive_Search_sales": false,
+      "current_query_native_acceptance": "separate_no_live_call",
+      "general_cart_not_added": true,
+      "normal_all_separate": true,
+      "source_amounts_not_converted": true
+    },
+    "tests": "tests/pd-source-reader.test.js: actual Search reader and worker, Assisted/Unclassified, exact metrics/raw evidence, no role promotion from unrequested fields, two Ads versus one sales set, absent/ambiguous PD, paging, empty/no opt-in, native failure, cursor loop, bounds, cancellation, authority drift and invalid source proof.",
+    "official_documentation": {
+      "checked_on": "2026-11-05",
+      "sources": [
+        "https://developers.google.com/google-ads/api/fields/v25/cart_data_sales_view",
+        "https://developers.google.com/google-ads/api/docs/shopping-ads/reporting"
+      ],
+      "interpretation": "Reference documents Cart Data field definitions; field selectability is not proof of positive Search data or Advertised/Cross-sell semantics. Existing sold-only query is preserved.",
+      "runtime_api": "v25"
+    },
+    "boundaries": {
+      "OAuth_behavior_changed": false,
+      "UI_changed": false,
+      "SQL_or_live_config_changed": false,
+      "live_provider_called": false,
+      "deploy_authorized": false,
+      "merge_authorized": false,
+      "Dataset_write": false,
+      "listing_tree_work": false,
+      "new_package": false
+    },
+    "next_existing_step": 18,
+    "Dataset_and_report_persistence_step": 23
   }
 }

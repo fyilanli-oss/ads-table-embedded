@@ -1667,7 +1667,7 @@
       "supabase/migrations/20261104213905_eo05_source_retention_policy.sql": "29c1c381593df3275a3512c2b00abb8b55e0bbaba9d9bc5808cf3ba0090153e5",
       "supabase/migrations/20261105100338_eo05_customer_request_completion.sql": "fb480a61694b9db3ebc10aa1df0d7c7b85206f6443206647bb7040fb33e24ab1",
       "supabase/migrations/20261105111527_eo05_private_customer_source_worker.sql": "aedb5df472ee80aa0e1dd65f6a02dcbc31aa3ec3709b0c51b07bef9dd23a6646",
-      "tests/a6-docs-01-turkish-standardization.test.js": "ad86394867aa9631dd429dcfc8863b4a328621c69d4e7c535c27ecfd522c9f58",
+      "tests/a6-docs-01-turkish-standardization.test.js": "8a49d5bdff1e22069a8a438cd790f83d9ce6d139b66af4358b423fb2fbf4b8ad",
       "tests/a6-tech-01-f01c-scoped-recovery.test.js": "3bd869071d5042402215176a99bf14dcebce6d3d0497ffcba946038050701792",
       "tests/eo-01c-preview-shell.test.js": "c3d67bb6666c19cf5ac12cfcd8a7f2f2acdf399d5a8ac32c0269823b06cbf789",
       "tests/eo-03a-oauth-transaction-boundary.test.js": "b364193460356370d1128000e6c0b61e975b2d79b896135d97ce648bc30a7747",
@@ -3131,7 +3131,8 @@
       "changed_paths": [
         "contracts/a6-eo-implementation-master-v1.json",
         "contracts/oauth/oauth-flow-constitution-v1.json",
-        "docs/EXECUTION_PLAN.md"
+        "docs/EXECUTION_PLAN.md",
+        "tests/a6-docs-01-turkish-standardization.test.js"
       ],
       "acceptance_required": [
         "required_CI",

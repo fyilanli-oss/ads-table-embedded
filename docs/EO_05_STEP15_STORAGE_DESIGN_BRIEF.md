@@ -1,3 +1,15 @@
+## 5 Kasım 2026 — yedekleme ve yedekten dönüş kabulünün EO-08-C’ye ertelenmesi
+
+Ürün sahibi, yedekleme kurulumunu ve yedekten dönüşte silinen verilerin yeniden kullanıma açılmasını engelleyen çalışmanın tamamlanmasını mevcut 15. madde sırasından alıp mevcut **A6-EO-08-C — Failure injection and rollback rehearsal** başlığına erteledi. Yeni paket veya alt paket açılmadı. Bu işler tamamlanmış/PASS sayılmaz; diğer 15. madde kabul koşulları kendiliğinden kapanmaz.
+
+Ertelenen kapsam: yedekleme kurulumu ve gerçek yedek envanteri, silme fişinin son ilgili geri döndürülebilir yedeğin ömrü +30 gün kuralına göre sonlu saklama bağlantısı, geri yükleme sonrası güncel silme kayıtlarının yeniden uygulanması ve hizmet açılmadan doğrulanması, izole prova ve gerçek yedekten dönüş kabulü. Mevcut EO-08-C bu kanıtlar olmadan geçemez; daha önce bir geri dönüş yapılırsa veriler doğrulama tamamlanmadan hizmete açılamaz.
+
+Mevcut kanıt: kullanıcının gönderdiği Database Backups ekranında Free Plan için zamanlanmış proje yedeği yok; kullanıcı haricî yedek almadığını bildirdi. Ajanın önceki çalışmalarından veritabanı kopyası kalıp kalmadığı doğrulanmadı. Bu yüzden tüm kopyalar yok denmez ve yedek ömrü uydurulmaz. Yedek görünmemesi silme fişlerini silme veya sürelerini kısaltma yetkisi değildir.
+
+Mevcut silme ve aynı nesilde silinen siparişin yeniden yazılmasını engelleme korumaları sürer. Shopify zorunlu silmesi normal90/365 günlük saklamayı beklemez. Upgrade/ödeme, yedek alma/dışa aktarma, restore, silme fişi temizliği veya canlı ayar bu kararın kapsamında değildir. Bu yalnız belge kaydıdır; kod/SQL/OAuth/UI, provider, yayın ve merge değişikliği yapmaz.
+
+Bağlayıcı kayıt: contracts/a6-eo-implementation-master-v1.json#Step15_backup_restore_deferral_2026_11_05 ve contracts/eo-05-step15-storage-design-v1.json#backup_restore_deferral_2026_11_05.
+
 ## 4 Kasım 2026 — ürün sahibiyle kabul edilen saklama kararı
 
 Ürün sahibi tabloyu kabul etti: “Codex mutabikiz. İlerleyen dönemde bunların nasıl

@@ -1095,5 +1095,34 @@
       "metadata_days": 30,
       "changed_by_this_record": false
     }
+  },
+  "backup_restore_deferral_2026_11_05": {
+    "status": "deferred_by_product_owner_not_implemented_not_accepted",
+    "decided_at": "2026-11-05",
+    "owner_decision": "Bence yedeklemeyi daha ileri bir yere alalım. ilgili bu maddeye de belirtelim ve devam edelim. ilerleyen EO paketlerinde bir yere ekleyelim",
+    "from": "A6-EO-05 step15",
+    "to": "A6-EO-08-C",
+    "scope": [
+      "backup setup and approved recovery inventory",
+      "backup-aware finite erasure-ledger lifetime binding",
+      "reapply verified deletions after restore before service opens",
+      "isolated recovery rehearsal and real-backup acceptance"
+    ],
+    "current_evidence": {
+      "scheduled_backups": "owner-provided Database Backups screenshot: Free Plan does not include project backups",
+      "owner_external_backups": "owner reports none",
+      "agent_created_database_copies": "not_yet_verified_no_blanket_absence_claim"
+    },
+    "retained_rules": [
+      "Confirmed Shopify/privacy erasure remains higher priority than normal90/365 retention.",
+      "Existing same-generation redacted-order re-ingestion protection remains.",
+      "Erasure-ledger rule remains last relevant recoverable backup expiry plus30 days; no assumed7/14/30-day backup life and no invented expiry without inventory.",
+      "No ledger deletion or shorter lifetime is authorized by absence of scheduled backups.",
+      "Restored data must remain unavailable until verified deletion replay and acceptance complete."
+    ],
+    "closure": "This deferral removes these recovery tasks from the current step15 work sequence; it is not a PASS and does not close other step15 obligations.",
+    "activation": "Before first restored data is served, complete this gate; EO-08-C cannot pass without recovery/privacy proof. Any earlier backup activation requires its own explicit scope and approval.",
+    "authorized_now": "Documentation only: no upgrade, subscription, backup, export, restore, ledger purge, provider call, OAuth/UI/runtime/SQL/config change, merge or deployment.",
+    "master_reference": "contracts/a6-eo-implementation-master-v1.json#Step15_backup_restore_deferral_2026_11_05"
   }
 }

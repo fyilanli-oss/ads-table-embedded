@@ -1563,12 +1563,12 @@
       "app/routes/settings.provider-live-evidence.ts": "89fbcb7087fc480fefba708bbc730146f1ba41af48d98f1b0a10fe1427120495",
       "app/routes/webhooks.shopify.tsx": "eac0ea30fcca28d6bba3c11105a5c4fda7778d1398c23f21fcb02f717d8bd056",
       "app/shopify.server.ts": "cc5959867dd5c413b222d51c4aad7d9a39c7c3d15e590aada86a1ddfefdc6fad",
-      "contracts/a6-eo-implementation-master-v1.json": "5fb007eed45a7803808aef0e88e21811056a8824ab66bc3c28e98a7d2d7f5a9e",
+      "contracts/a6-eo-implementation-master-v1.json": "4e6ba5b31890b76ac1d93d7db9bc9b1da554548e218e62e90333aec2a1a6a48d",
       "contracts/eo-05-oauth-setup-permission-policy-v1.json": "c1914f91011464d3b16b4b0a7710e49878ce6dbb57427e3d0f7c68d9ec4ec681",
       "contracts/eo-05-permission-explanation-design-v1.json": "ad4753b9ad4a6becd14764b7b33fb917f0cc491ad774cc1f1fe9053c5f189f35",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
       "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md": "c602fd4d7760e8f32c109e1f0456907c739c12906d71becf88476cad2007d6a1",
-      "docs/EXECUTION_PLAN.md": "1a2d91dc218bf55668e2f3590e80566d5cbbb12fbbae6d4c4400e0aaf6c0b99f",
+      "docs/EXECUTION_PLAN.md": "e65357aaf7c4c6ccfad75314a6cc44a2864502626b8ed1277b689e7a1aeb948c",
       "docs/OAUTH_FLOW_CONSTITUTION.md": "74d7a8f327a9558712c3ac8bb54a6633fff7a7e2045405d236d35f265d124b28",
       "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md": "49e253b08959faa9f0b2bf208ed5eb6d3c078a0ddf9097e667a9bf1483dc7350",
       "package.json": "e46285b3a60421e8c338807d7b606afa17f16303b08a2832bed3222a06183fe8",
@@ -2982,6 +2982,33 @@
         "native_desktop_mobile_owner_review",
         "separate_merge_approval"
       ]
+    },
+    {
+      "id": "step15-backup-restore-deferral-2026-11-05",
+      "date": "2026-11-05",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Bence yedeklemeyi daha ileri bir yere alalım. ilgili bu maddeye de belirtelim ve devam edelim. ilerleyen EO paketlerinde bir yere ekleyelim"
+      },
+      "rationale": "Documentation-only owner deferral to existing EO-08-C; OAuth states, transitions, copy, permission/account/token and runtime behavior are unchanged.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "merge": false,
+        "deploy": false
+      },
+      "changed_paths": [
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "docs/EXECUTION_PLAN.md"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "visual_acceptance": "not_applicable_documentation_only_no_UI_change_no_existing_visual_acceptance_claim"
     }
   ],
   "coverage": {

@@ -37,6 +37,10 @@ jobs:
         env:
           OAUTH_BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
         run: node tools/check-oauth-constitution.mjs
+      - name: Verify raw source constitution
+        env:
+          RAW_SOURCE_BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
+        run: node tools/check-raw-source-constitution.mjs
       - name: Run repository governance tests
         run: pnpm test
       - name: Verify TypeScript contracts

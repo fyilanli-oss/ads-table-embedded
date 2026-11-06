@@ -1,3 +1,15 @@
+## 6 Kasım 2026 — ham kayıt akışı anayasası ve zorunlu koruma
+
+Ürün sahibi, Codex dahil kimsenin kurulmuş ham kayıt akışını kendi takdiriyle bozamaması için OAuth benzeri bağlayıcı sözleşme istedi. Aynı denetimin kapanış işidir; yeni paket açılmaz. [Anayasa](RAW_SOURCE_CONSTITUTION.md), [makine sözleşmesi](../contracts/raw-source/raw-source-constitution-v1.json), AGENTS giriş kapısı, negatif/regresyon testleri ve mevcut Repository Governance CI bağlantısı hazırlanır.
+
+Sabit sorgu/projection, current owner/connection/account/job-fence, owner-bound encryption, atomic receipt/decrypt/hash readback, zero/missing ayrımı, kaynak90/metaveri365, zorunlu silme önceliği ve consumer receipt sınırı korunur. Runtime, sorgu, SQL, OAuth ekranı/akışı, canlı ayar veya provider işlemi değişmez. Sağlayıcılarla yazışma bu işin parçası değildir.
+
+Kayıtsız ekleme/silme/rename/içerik farkı CI’ı durdurur. Somut owner onayı, append-only revizyon, exact korunan dosya listesi ve test kanıtı zorunludur; hash güncellemesi onay yerine geçmez. CI konuşma onayını veya GitHub admin bypass yetkisini ispatlayamaz/engelleyemez; gerçek owner review ve ayrı merge kapısı kalır.
+
+EO-08-C backup/restore, EO-07-A/EO-08-D gerçek teslim, Meta18, tarihsel PMax22 ve native eşleme/politika kabul açıkları yerlerinde kalır; anayasa bunları PASS yapmaz. Genel Dataset/FX/kalıcı tüketim23 ve saatlik refresh başlamaz. Sonuç CI/PR ile teslim edilir, merge/yayın ayrı onay gerektirir.
+
+Resmî kontrol6 Kasım2026: [GitHub branch koruması](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches), [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security).
+
 ## 6 Kasım 2026 — denetimin iki teknik bulgusu için onaylı düzeltme
 
 Ürün sahibi, rapor PR341’in birleşmesini ve rapordaki iki teknik eksiğin giderilmesini açıkça onayladı. PR341 güncel main2a73f57d3aae45d2d23672078d8834878bfeb2c0 olarak birleşti; kaynak/tam geçmiş arşivi ve uzak ağaç eşdeğeri doğrulandı. Bu düzeltme aynı iki bulguyla sınırlıdır; yeni paket açılmaz. Yeni kodun merge/yayını ayrı onaylıdır.

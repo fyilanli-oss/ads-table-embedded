@@ -4536,5 +4536,21 @@
       "https://developers.google.com/google-ads/api/docs/change-event",
       "https://supabase.com/docs/guides/database/postgres/row-level-security"
     ]
+  },
+  "Pre23_code_policy_audit_2026_11_06": {
+    "status": "findings_report_not_remediated",
+    "owner_approval": "Onaylıyorum Codex başlayalım. Concrete preceding scope: one comprehensive existing code/platform-policy audit; read-only OAuth-to-raw-reader authority inspection; report/PR only.",
+    "baseline": "95e985791dd95ef9820bc232e69a12cfa89391ca",
+    "report": "docs/evidence/PRE23_CODE_POLICY_AUDIT_2026-11-06.json",
+    "confirmed_technical_findings": [
+      "F01 PMax history shared-budget accounting",
+      "F02 pinned dependency security patches"
+    ],
+    "policy_holds": [
+      "Meta current official documents unavailable",
+      "Klaviyo competing-service aggregation written-permission evidence not inspected",
+      "Native app/access/privacy disclosure configuration not inspected"
+    ],
+    "boundaries": "No runtime/UI/SQL/provider/config/token/deploy/merge. Existing18/22 native holds,23+ plan and EO07A/EO08C deferrals preserved. No new package. Raw-record constitution follows agreed remediation; not completed by this report."
   }
 }

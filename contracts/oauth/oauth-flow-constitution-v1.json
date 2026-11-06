@@ -1713,7 +1713,7 @@
       "tests/permission-release.test.js": "1393a4af41192cdc7dc2b58a8a3a275df19c3bcd44eedfd6b8634434717b5b2f",
       "tests/permission-settings.test.js": "5a53c68e019cfd23042a0b29e7062deee495f8faafec5df24e0283f9e38e481f",
       "tests/permission-setup-selection.test.js": "c767fed7b7dc4c51fb3a96bba1a8d95162d2e6db873cac0a779401e5f745b132",
-      "tests/pre23-oauth-route-dependency-compatibility.test.js": "09d96f91e5a09b786ded0481eebbabc868215b237f530fb9b545393df15de2f7",
+      "tests/pre23-oauth-route-dependency-compatibility.test.js": "65dc7a0fe2d1b16683ec8808991a7abb1dec7dcd2d08623c5c3ee706fac450f4",
       "tests/raw-fixture-calendar-permission.test.js": "352a2467a5f724d13e08dd873d3c397521bbd301be9e1f2cc9fbbedb2d54f9e6",
       "tests/shopify-permission-readback.test.js": "2b7500dd9424aa324b2c9a61b5e3d57f1ce1a3fe37a1dc192e63c49fe3e6d21e",
       "tests/shopify-permission-scope-protocol.test.js": "4f7828c38691a70c656373897be106ab3a757dad75b84515af7d6aa3e8d8f00c",

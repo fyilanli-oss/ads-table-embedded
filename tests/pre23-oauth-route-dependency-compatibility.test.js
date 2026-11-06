@@ -10,12 +10,16 @@ const routesRequire=createRequire(require.resolve("@react-router/fs-routes"));
 const adapterRequire=createRequire(require.resolve("@vercel/react-router/package.json"));
 async function routesAt(directory,options){const previous=globalThis.__reactRouterAppDirectory;globalThis.__reactRouterAppDirectory=directory;try{return await require("@react-router/fs-routes").flatRoutes(options);}finally{if(previous===undefined)delete globalThis.__reactRouterAppDirectory;else globalThis.__reactRouterAppDirectory=previous;}}
 const flatten=routes=>routes.flatMap(r=>[r.file,...flatten(r.children??[])]).sort();
+// fs-routes leaves equal-length sibling ties in platform filesystem order.
+// Compare every route property and parent/child relationship by stable route ID.
+const routeGraph=rows=>rows.map(({children,...row})=>({...row,...children?{children:routeGraph(children)}:{}}))
+ .sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0);
 test("patched real fs-routes preserves the complete existing route tree",async()=>{
  assert.equal(routesRequire("minimatch/package.json").version,"11.0.1");
  assert.equal(routesRequire("minimatch").makeRe,undefined);
  const expected=JSON.parse(readFileSync(new URL("fixtures/pre23-route-config-baseline.json",import.meta.url),"utf8"));
  // The captured baseline is JSON: omit undefined optional properties on both sides.
- assert.deepEqual(JSON.parse(JSON.stringify(await routesAt(path.join(root,"app")))),expected);
+ assert.deepEqual(routeGraph(JSON.parse(JSON.stringify(await routesAt(path.join(root,"app"))))),routeGraph(expected));
 });
 test("real route discovery retains default hidden-file and explicit file/folder ignores",async()=>{
  const directory=mkdtempSync(path.join(tmpdir(),"adstable-routes-compat-"));

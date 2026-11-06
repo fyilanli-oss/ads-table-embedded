@@ -117,6 +117,11 @@
       "failed": 0,
       "skipped": 0,
       "limit": "Before the owner-approved compatibility follow-up; fresh complete CI still required for final head."
+    },
+    "platform_route_test_correction": {
+      "run": 42187177485,
+      "failure": "Windows and Linux expose equal-length siblings auth catch-all and pathless admin in different order; every route and parent/child binding was identical.",
+      "fix": "Canonical compare all route properties/child edges by stable ID; baseline fixture unchanged; no application/runtime/patch change."
     }
   },
   "actual_changed_paths": [

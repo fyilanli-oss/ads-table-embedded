@@ -1,0 +1,135 @@
+{
+  "id": "pre23-policy-verification-2026-11-06",
+  "checked_at": "2026-11-06",
+  "baseline": "07c2708e1efafeaeb6a1f2b95ed8548489ffdf7b",
+  "follows": "docs/evidence/PRE23_CODE_POLICY_AUDIT_2026-11-06.json",
+  "authorization": {
+    "owner_reply": "Onaylıyorum Codex",
+    "scope": "Current official Meta policies and Klaviyo competitor/combined-report permission applicability; read-only verification and evidence record within existing pre23 audit.",
+    "runtime_changes": false,
+    "provider_calls": false,
+    "native_configuration": false,
+    "external_messages": false,
+    "merge": false,
+    "deploy": false
+  },
+  "status": "official_sources_verified_app_specific_policy_acceptance_not_certified",
+  "sources": [
+    {
+      "id": "M1",
+      "url": "https://developers.facebook.com/terms/",
+      "last_updated": "2026-02-03",
+      "access": "Anonymous official public page read through in-app browser accessibility tree; external text reader had failed.",
+      "sections": [
+        "3(a)-(e)",
+        "4",
+        "5(a)-(b)",
+        "6",
+        "7",
+        "12"
+      ],
+      "summary": "Use only permitted purposes; client-directed processing and tenant separation for Tech Providers; appropriate contractual limits on clients/service providers; public accessible privacy and deletion information; security and deletion obligations. Derived/aggregated data remains Platform Data."
+    },
+    {
+      "id": "M2",
+      "url": "https://developers.facebook.com/devpolicy/",
+      "last_updated": "2026-02-03",
+      "access": "Anonymous official public page read through in-app browser accessibility tree.",
+      "sections": [
+        "General policies",
+        "10 Ads, items 4-8"
+      ],
+      "summary": "Ads section explicitly introduces items 4-8 as applying to ad buying solutions. Item 7 restricts cross-platform advertising-data mixing unless product terms permit it. Item 6 transparency changes are effective 2027-02-03, after this check date. Reporting-only status is not an automatic exemption from Platform Terms or permission-specific policies."
+    },
+    {
+      "id": "M3",
+      "url": "https://developers.facebook.com/terms/3e/",
+      "last_updated": "2025-02-03",
+      "summary": "Specific exceptions concern Messenger communication, lead-form data and Shops user-provided data. A Shopify merchant/catalog does not automatically make Marketing API insights Shops User Data."
+    },
+    {
+      "id": "M4",
+      "url": "https://developers.facebook.com/terms/12n/",
+      "last_updated": "2020-07-01",
+      "summary": "Linked current restricted-data definition has category exceptions. This review does not infer classification of every current permission or waive general Platform Data obligations."
+    },
+    {
+      "id": "M5",
+      "url": "https://developers.facebook.com/documentation/ads-commerce/marketing-api/insights",
+      "last_updated": "2026-04-27",
+      "summary": "Official Insights documentation describes performance reporting, requires ads_read, and directs reporting solutions to Platform Terms and Marketing API Developer Policies. Technical read access is not proof of permission to combine publishers' reporting."
+    },
+    {
+      "id": "K1",
+      "url": "https://www.klaviyo.com/legal/api-terms",
+      "last_updated": "2020-07-20",
+      "sections": [
+        "Access and Use restrictions (v)-(vii)",
+        "Privacy and Security"
+      ],
+      "summary": "Competitor aggregated offerings/views and competitor-data aggregation require explicit Klaviyo written permission. The wording does not say every other platform. Express account-owner permission, security, privacy and deletion duties also apply."
+    },
+    {
+      "id": "K2",
+      "url": "https://www.klaviyo.com/legal/technology-partner-agreement",
+      "last_updated": "2025-11-13",
+      "sections": [
+        "Introduction",
+        "2",
+        "5",
+        "10(j)"
+      ],
+      "summary": "Partner agreement incorporates API Terms, provides application/review/acceptance procedures and document precedence when terms conflict. Partner membership or omission of an older restriction is not by itself an explicit written waiver."
+    }
+  ],
+  "conclusions": [
+    {
+      "id": "H01",
+      "previous": "current_document_access_hold",
+      "status": "source_access_resolved",
+      "result": "Current official Meta Terms and Developer Policies have now been read. The original audit's inaccessible-source entry is historical and preserved. This does not certify native app review, applicable client/provider agreements or published privacy settings."
+    },
+    {
+      "id": "H02",
+      "status": "app_specific_applicability_or_written_permission_not_verified",
+      "result": "No AdsTable-specific competitor aggregation permission/exception is established by the inspected repository evidence or public terms. This is not evidence that no private agreement exists. Google/Meta are not assumed competitors for this clause merely because they are other platforms. Account-owner OAuth consent is not Klaviyo's explicit written exception.",
+      "existing_gate": "EO-06 report acceptance and EO-08-D provider review; no new package or raw-store rebuild."
+    },
+    {
+      "id": "H03",
+      "status": "unchanged_native_configuration_not_inspected",
+      "result": "Public documentation cannot prove AdsTable's actual dashboard acceptance, access level, public privacy disclosure, client agreements or service-provider agreements. Existing EO-07/EO-08-D verification gates remain."
+    },
+    {
+      "id": "META_REPORTING_APPLICABILITY",
+      "status": "requires_app_specific_confirmation_before_combined_report_acceptance",
+      "result": "Insights documentation explicitly refers reporting solutions to Developer Policies. Section 10's ad-buying qualification and item 7 restriction must not be converted into either a blanket reporting ban or an unsupported exemption. No official AdsTable-specific permission or exception was established.",
+      "existing_gate": "Existing EO-06 report acceptance and EO-08-D provider review."
+    }
+  ],
+  "existing_code_evidence": {
+    "basis": "Prior audit positive observations, evaluated at its recorded baseline; technical fixes merged in PR342. No new live test or whole-code recertification in this policy follow-up.",
+    "areas": [
+      "Owner-bound identity/installation/generation/account authority",
+      "Separate provider source envelopes and owner-bound AEAD storage",
+      "Schema/field projection and token/profile exclusion",
+      "Deletion priority distinct from ordinary retention"
+    ],
+    "limitations": [
+      "These controls do not prove purpose, client contract, published notice or platform approval.",
+      "Current separate raw capture and future cross-provider derived reports are distinct processing steps.",
+      "No new conclusion about actual campaign conversion field semantics, listing-tree historical coverage or native positive data."
+    ]
+  },
+  "provider_questions_prepared_not_sent": [
+    {
+      "provider": "Meta",
+      "question": "AdsTable is a reporting-only Shopify embedded application. Each merchant explicitly authorizes access to their own advertising account; AdsTable does not buy ads, create/manage campaigns, retarget, or share one merchant's data with another. It plans to show that merchant's Meta, Google Ads and Klaviyo metrics in a reporting product, preserving source attribution. Does Developer Policies section 10 item 7 apply to this reporting-only use case, and what product-term permission or review approval, if any, is required for the proposed combined reporting?"
+    },
+    {
+      "provider": "Klaviyo",
+      "question": "AdsTable is a merchant-authorized reporting application, not an email/SMS delivery or campaign-automation service. It plans to show one merchant's Klaviyo campaign/flow performance alongside that same merchant's Google Ads and Meta advertising metrics, preserving source attribution and tenant isolation. Do API Terms restrictions (v) and (vi) apply to this use case? If so, please confirm the explicit written permission or agreement provision required for AdsTable."
+    }
+  ],
+  "delivery_boundary": "Research/evidence only. No policy text is silently implemented as a new feature or architectural redesign. No provider contact sent. A future raw-record constitution must preserve these unresolved acceptance gates; this record does not authorize or complete that constitution or step23."
+}

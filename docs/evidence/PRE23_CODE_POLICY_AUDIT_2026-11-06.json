@@ -1,0 +1,726 @@
+{
+  "id": "pre23-code-policy-audit-2026-11-06",
+  "date": "2026-11-06",
+  "status": "findings_report_not_remediation_or_policy_certification",
+  "package_count": 1,
+  "baseline": {
+    "repository": "fyilanli-oss/ads-table-embedded",
+    "main": "95e985791dd95ef9820bc232e69a12cfa89391ca",
+    "tree": "abc1cc2bee21c641730d35ba6dd26723b60e9ca2",
+    "branch": "codex/pre23-code-policy-audit"
+  },
+  "authorization": {
+    "source": "Onaylıyorum Codex başlayalım.",
+    "scope": "Önceden açıklanan tek kapsamlı mevcut kod/politika denetimi ve salt okunur OAuth–ham okuyucu yetki bağlantıları; bulgu raporu ve PR. Runtime düzeltmesi, canlı SQL/provider/token/config/deploy/merge yok.",
+    "runtime_changes": false
+  },
+  "method": {
+    "inventory": "Tracked runtime, sözleşme, plan, SQL, test ve CI envanteri; dosya hash’leri kapsam ekinde.",
+    "manual": "Aktif giriş → mağaza/hesap yetkisi → native transport → ham projection → şifreli commit/readback → kimlik/satış prewrite → saklama/gizlilik yolları izlenmiştir. Her envanter dosyasının her satırının elle okunduğu iddia edilmez.",
+    "automated": "Mevcut tüm testler; typegen/tsc; production build; OAuth constitution; pnpm audit. Sentetik, canlı çağrısız F01 tekrar üretimi.",
+    "not_performed": [
+      "Canlı provider isteği veya OAuth/config değişimi",
+      "Production DB bağlantısı/migration/grant/silme",
+      "Native dolu veri kabulü veya masaüstü/mobil görsel kabulü",
+      "Yeni özellik/felaket senaryosu/paket tasarımı",
+      "Runtime düzeltmesi veya ham-kayıt anayasasını erken PASS etme"
+    ]
+  },
+  "findings": [
+    {
+      "id": "F01",
+      "priority": "P2",
+      "kind": "confirmed_code_defect",
+      "status": "open_no_fix_authorized",
+      "title": "PMax geçmişi sonraki okuyucunun kalan satır/bayt bütçesinden düşülmüyor",
+      "locations": [
+        {
+          "path": "app/lib/refresh/pd-source-reader.server.js",
+          "from": 228,
+          "to": 261
+        },
+        {
+          "path": "app/lib/database/google-pmax-history.server.js",
+          "from": 20,
+          "to": 22
+        }
+      ],
+      "evidence": "Geçmiş yükleyicisi kendi fabrika sınırlarıyla çalışıyor. load çağrısında kalan ortak satır/bayt sınırı taşınmıyor. Sonraki PMax remaining hesabı yalnız evidence boyutunu ve canlı PD satırlarını düşüyor; pmaxHistoryEvidence düşülmüyor. Satır toplamı 298–302 ve sonuç boyutu 338 sonunda reddediyor.",
+      "reproduction": {
+        "basis": "tests/pd-source-reader.test.js:107-152 fixture + tests/fixtures/pmax-history-fixture.js, gerçek createRefreshPdSourceReader ve markalı history loader; tüm HTTP/SQL cevapları sentetik",
+        "result": {
+          "maxRows": 2,
+          "historyRows": 3,
+          "httpAtHistory": 3,
+          "httpAfterHistory": 2,
+          "outcome": "PD_SOURCE_READ_FAILED",
+          "syntheticOnly": true
+        },
+        "probe_sha256": "920668c917415a4a9c5c0f7a3da04bb344c17bfecd3714654c08734d3f10151f",
+        "setup": "\nconst f=fixture('google_ads');delete f.config.queryFamily;f.config.googlePd={flow:'retail_pmax',includeProductSales:true};f.config.limits.maxPages=3;f.config.limits.maxRows=2;\nconst r=f.state.row;const owner={workspaceId:r.workspace_id,installationId:r.installation_id,generation:r.install_generation,shopId:r.shop_id,shopDomain:r.shop_domain,provider:'google_ads',connectionId:r.connection_id,connectionVersion:String(r.connection_version),credentialId:r.credential_id,accountId:r.reporting_account_id,selectionEpoch:r.reporting_selection_epoch};\nconst h=pmaxHistoryFixture({owner,now:f.config.now});h.state.pages=[h.encode([1,2,3].map(n=>({...h.row,assetGroupListingGroupFilter:{...h.row.assetGroupListingGroupFilter,id:String(n),resourceName:'customers/123/assetGroupListingGroupFilters/40~'+n}})))];let atHistory=null;h.hooks.query=()=>{if(atHistory===null)atHistory=f.state.http;};f.config.googlePmax={historyLoader:h.create()};\nf.hooks.response=(address,init)=>address.includes('oauth2')?json({access_token:'synthetic-access',token_type:'Bearer',expires_in:3600}):json({results:/conversion_action/.test(JSON.parse(init.body).query)?[]:[{customer:{id:'123'},campaign:{id:'10',advertisingChannelType:'PERFORMANCE_MAX'},assetGroup:{id:'40'},segments:{date:'2026-10-01',productMerchantId:'50',productFeedLabel:'TR',productLanguage:'tr',productItemId:'A',productSoldItemId:'B'},metrics:{clicks:'1',unitsSold:'1',revenueMicros:'25000000',crossSellUnitsSold:'1'}}]});\nlet outcome;try{await f.create().readEvidence();outcome='returned';}catch(e){outcome=e.message;}console.log(JSON.stringify({maxRows:2,historyRows:3,httpAtHistory:atHistory,httpAfterHistory:f.state.http-atHistory,outcome,syntheticOnly:true}));"
+      },
+      "impact": "Yanlış rapor veya Dataset yazımı kanıtlanmadı; sonuç kapısı kapalı kalıyor. Fakat ortak okuma sınırı aşılmışken ek fiziksel Google istekleri ve depo okumaları yapılabiliyor.",
+      "necessary_correction": "Kalan ortak satır/bayt bütçesini geçmiş yükleyicisine bağla; mevcut kanıt ve geçmiş tüketimini sonraki PMax remaining hesabından düş; bütçe tüketilmişse sonraki istekten önce dur. Gerçek markalı yükleyiciyle regresyon testi. Yeni zamanlayıcı, kota politikası, tablo veya native sorgu yok.",
+      "production_claim": "Bu kodun Production’a yayımlandığı bu denetimde doğrulanmadı; bulgu denetlenen main sürümüne aittir."
+    },
+    {
+      "id": "F02",
+      "priority": "P2",
+      "kind": "confirmed_dependency_maintenance_gap",
+      "status": "open_no_fix_authorized",
+      "title": "Kilitli bağımlılıklarda yayımlanmış güvenlik yamaları eksik",
+      "locations": [
+        {
+          "path": "package.json"
+        },
+        {
+          "path": "pnpm-lock.yaml"
+        }
+      ],
+      "audit": {
+        "tool": "pnpm audit --json",
+        "exit": 1,
+        "metadata": {
+          "vulnerabilities": {
+            "info": 0,
+            "low": 3,
+            "moderate": 7,
+            "high": 2,
+            "critical": 0
+          },
+          "dependencies": 119,
+          "devDependencies": 186,
+          "optionalDependencies": 79,
+          "totalDependencies": 306
+        },
+        "advisories": [
+          {
+            "package": "vite",
+            "severity": "moderate",
+            "id": "GHSA-698v-4r3x-3vcv",
+            "installed": [
+              "7.3.6"
+            ],
+            "dev": true,
+            "patched": ">=7.3.7",
+            "title": "launch-editor: escapeCmdArgs() omits % escaping on Windows"
+          },
+          {
+            "package": "vite",
+            "severity": "moderate",
+            "id": "GHSA-r825-w8mm-5pxw",
+            "installed": [
+              "7.3.6"
+            ],
+            "dev": true,
+            "patched": ">=7.3.7",
+            "title": "launch-editor: Editor CLI flag misinterpretation causing arbitrary command execution for some editors"
+          },
+          {
+            "package": "vite",
+            "severity": "high",
+            "id": "GHSA-587h-7wmj-h5pm",
+            "installed": [
+              "7.3.6"
+            ],
+            "dev": true,
+            "patched": ">=7.3.7",
+            "title": "launch-editor: `fs.existsSync()` existence check can be bypassed on Windows"
+          },
+          {
+            "package": "vite",
+            "severity": "low",
+            "id": "GHSA-9jrq-w75r-8gcw",
+            "installed": [
+              "7.3.6"
+            ],
+            "dev": true,
+            "patched": ">=7.3.7",
+            "title": "Vite: Cross origin script execution through Vite custom middleware"
+          },
+          {
+            "package": "vite",
+            "severity": "moderate",
+            "id": "GHSA-rq7h-c2jc-7f22",
+            "installed": [
+              "7.3.6"
+            ],
+            "dev": true,
+            "patched": ">=7.3.7",
+            "title": "Vite: Files outside `server.fs.allow` could be served when project paths match system paths on non-Windows machine"
+          },
+          {
+            "package": "body-parser",
+            "severity": "high",
+            "id": "GHSA-27r3-jxmh-p828",
+            "installed": [
+              "1.20.8"
+            ],
+            "dev": false,
+            "patched": ">=1.20.9",
+            "title": "body-parser vulnerable to Denial of Service via trailing bytes after a compressed request body"
+          },
+          {
+            "package": "fast-uri",
+            "severity": "moderate",
+            "id": "GHSA-w74x-v6f9-j3xg",
+            "installed": [
+              "3.1.8"
+            ],
+            "dev": true,
+            "patched": ">=3.1.9",
+            "title": "fast-uri vulnerable to URI scheme spoofing via percent-encoded scheme decoding"
+          },
+          {
+            "package": "fast-uri",
+            "severity": "low",
+            "id": "GHSA-xhq7-xmqj-769h",
+            "installed": [
+              "3.1.8"
+            ],
+            "dev": true,
+            "patched": ">=3.1.9",
+            "title": "fast-uri vulnerable to improper path equivalence in relative reference normalization"
+          },
+          {
+            "package": "fast-uri",
+            "severity": "moderate",
+            "id": "GHSA-wjr9-j795-jxcr",
+            "installed": [
+              "3.1.8"
+            ],
+            "dev": true,
+            "patched": ">=3.1.9",
+            "title": "fast-uri vulnerable to host confusion via unchecked WHATWG host canonicalization"
+          },
+          {
+            "package": "fast-uri",
+            "severity": "low",
+            "id": "GHSA-333x-w4r6-6crp",
+            "installed": [
+              "3.1.8"
+            ],
+            "dev": true,
+            "patched": ">=3.1.9",
+            "title": "fast-uri vulnerable to scheme injection via an unescaped first-segment colon in suffix references"
+          },
+          {
+            "package": "qs",
+            "severity": "moderate",
+            "id": "GHSA-6pq8-jhm2-2vcw",
+            "installed": [
+              "6.16.0"
+            ],
+            "dev": false,
+            "patched": ">=6.16.1",
+            "title": "qs : qs.stringify with arrayFormat 'comma' throws an uncaught TypeError on array elements carrying a non-callable own toString (DoS)"
+          },
+          {
+            "package": "minimatch",
+            "severity": "moderate",
+            "id": "GHSA-g3hv-75wg-m249",
+            "installed": [
+              "9.0.9"
+            ],
+            "dev": true,
+            "patched": ">=11.0.1",
+            "title": "minimatch has potential denial of service via globparts amplification"
+          }
+        ]
+      },
+      "reachability": {
+        "vite": "7.3.6 geliştirme bağımlılığı; Windows launch-editor yolu için üretici yüksek önem uyarısı var. Vite ≥7.3.7 yamalı. Geliştirme sunucusu/attacker kontrollü editor girdisi gerekir; Production Vercel SSR istismarı gösterilmedi.",
+        "body_parser": "1.20.8 @react-router/serve → @react-router/express → express altındadır; ≥1.20.9 yamalı. İncelenen serve CLI yalnız static middleware ve createRequestHandler kuruyor, body-parser json/urlencoded middleware kurmuyor. Vercel preset farklı üretim adaptörü. Etkilenen sürüm kurulu; çalışan uygulamada sıkıştırılmış gövde crash yolu kanıtlanmadı.",
+        "qs": "6.16.0 Express zincirinde; ≥6.16.1 yamalı. Uyarı stringify comma/own toString yoluna ait; uygulamada bu çağrı görülmedi. Kurulu sürüm uyarısı etkin Production DoS kanıtı değildir.",
+        "fast_uri": "3.1.8 geliştirme/derleme bağımlılığı (@vercel/static-config/ajv); ≥3.1.9 yamalı. Üretim request yolu kanıtlanmadı.",
+        "minimatch": "9.0.9 geliştirme/route keşfi zincirinde; audit ≥11.0.1 öneriyor. Ana sürüm override uyumluluğu doğrulanmadan uygulanamaz; kullanıcı kontrollü glob yoluna rastlanmadı."
+      },
+      "sources": [
+        "https://github.com/vitejs/launch-editor/security/advisories/GHSA-587h-7wmj-h5pm",
+        "https://github.com/expressjs/body-parser/security/advisories/GHSA-27r3-jxmh-p828"
+      ],
+      "necessary_correction": "Uyumlu güvenlik yamalarını tek bağımlılık düzeltme kapsamıyla seç, kilit dosyasını güncelle, audit/type/build/test tekrarını yap. Zorla ana sürüm override veya framework göçü yok. İstisna kalırsa sürüm ve erişilebilir yol gerekçesi açık kaydedilir.",
+      "limitations": "12 advisory, 12 ayrı geliştirme paketi veya 12 kanıtlanmış üretim açığı anlamına gelmez."
+    }
+  ],
+  "policy_verification": [
+    {
+      "platform": "Shopify",
+      "url": "https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance",
+      "checked": "2026-11-06",
+      "status": "read",
+      "rules": [
+        "Zorunlu üç gizlilik webhook’u; POST JSON ve geçersiz HMAC için401.",
+        "Alınan talebi30 gün içinde tamamla; shop/redact kaldırmadan48 saat sonra gönderilir.48 saat ile30 gün aynı sayaç değildir.",
+        "Sipariş kimlikleri kişisel kapsamdan peşinen muaf sayılamaz; veri varsa mağaza sahibine sağlanır."
+      ]
+    },
+    {
+      "platform": "Google",
+      "url": "https://support.google.com/adspolicy/answer/6169371?hl=en",
+      "checked": "2026-11-06",
+      "status": "read",
+      "rules": [
+        "Reporting kullanım amacı ve başvurudaki kullanım biçimi korunur.",
+        "Reporting-only için creation/management RMF uydurulmaz; RMF Standard Access bağlamına bağlıdır.",
+        "Ayrı Google rapor görünürlüğü ve açıklama kuralları rapor yüzeyinin mevcut ileriki kabul kapısında doğrulanır."
+      ]
+    },
+    {
+      "platform": "Google",
+      "url": "https://developers.google.com/terms/api-services-user-data-policy",
+      "checked": "2026-11-06",
+      "status": "read",
+      "rules": [
+        "Gerekli izin, açık veri kullanım bildirimi, gizli credential ve aktarımda/depolamada koruma.",
+        "Kapsam/app erişim düzeyi native panelden bu denetimde doğrulanmadı; Sensitive/Restricted/CASA gerekliliği kanıtsız genellenmez."
+      ]
+    },
+    {
+      "platform": "Klaviyo",
+      "url": "https://www.klaviyo.com/legal/api-terms",
+      "checked": "2026-11-06",
+      "status": "read",
+      "rules": [
+        "Açık hesap izni; credential gizliliği; silme talebi/hesap sona ermesinde silme; oran sınırına uyma.",
+        "Rekabet eden hizmetlerle birleştirilmiş görünüm/veri için yazılı izin şartı var. Mevcut ayrı ham zarf toplama ile henüz tamamlanmamış ortak rapor birbirine karıştırılmaz."
+      ]
+    },
+    {
+      "platform": "Klaviyo",
+      "url": "https://raw.githubusercontent.com/klaviyo/openapi/main/openapi/stable/apis/get_events.json",
+      "checked": "2026-11-06",
+      "status": "read",
+      "rules": [
+        "2026-10-15 revision, datetime filtre operatörleri ve sayfalama doğrulandı. Milisaniyeli event dönüşü bu kaynakla kanıtlanmadığından gün-sonu aday bulgusu tutulmadı."
+      ]
+    },
+    {
+      "platform": "Meta",
+      "url": "https://developers.facebook.com/terms/",
+      "checked": "2026-11-06",
+      "status": "unavailable",
+      "reason": "Resmî terms sayfası araçta erişilemedi; devpolicy/data-deletion sayfaları429. Login sayfası politika metni değildir. Üçüncü taraf ayna kullanılmadı."
+    },
+    {
+      "platform": "Supabase",
+      "url": "https://supabase.com/docs/guides/database/postgres/row-level-security",
+      "checked": "2026-11-06",
+      "status": "read",
+      "rules": [
+        "Özel şema/rol, RLS, dar RPC yetkileri ve security-definer search_path birlikte değerlendirildi; owner-only fonksiyona auth.uid varsayımı dayatılmadı."
+      ]
+    }
+  ],
+  "external_verification_holds": [
+    {
+      "id": "H01",
+      "kind": "current_document_access_hold",
+      "subject": "Meta güncel platform politika metni",
+      "status": "not_verified",
+      "next": "Resmî güncel metin erişilebilir olduğunda mevcut kod/kontratla karşılaştırma tamamlanmalı; Meta uygunluğu PASS değil. Bu erişim sorunu kod arızası olarak sunulmaz."
+    },
+    {
+      "id": "H02",
+      "kind": "permission_evidence_not_observed",
+      "subject": "Klaviyo rekabet eden servislerle toplu görünüm/veri koşulu",
+      "status": "not_verified_not_current_raw_capture_violation",
+      "next": "Mevcut EO-06 rapor kabulü öncesinde yazılı izin veya uygulanabilir resmî anlaşma istisnası belgelenmeli. Bu denetim dış yazışma göndermedi, izin yoktur hükmü vermedi veya yeni rapor üretmedi."
+    },
+    {
+      "id": "H03",
+      "kind": "native_configuration_not_inspected",
+      "subject": "Platform başvuru/erişim seviyesi ve yayımlı privacy disclosure",
+      "status": "not_verified",
+      "next": "Mevcut EO-07/EO-08-D platform review kapılarında gerçek panel/URL ve başvuru kanıtıyla karşılaştırılır. Repo içindeki izin açıklamaları tek başına yayımlı politika ya da platform onayı değildir."
+    }
+  ],
+  "existing_boundaries_preserved": [
+    {
+      "step": "15",
+      "status": "scoped_closed",
+      "evidence": "docs/evidence/EO05_STEP15_SCOPED_CLOSURE_2026-11-05.json",
+      "limits": "Ham zarf/kanıt/silme temelinin kayıtlı kapsam kapanışı; tüm EO05/06 tamamlandı anlamına gelmez."
+    },
+    {
+      "step": "18",
+      "status": "native_Meta_sales_relationship_evidence_open",
+      "limits": "Dört conversion alanının dolu native anlam kanıtı yok; classifier eklenmedi, SQL/boş sonuç native satış rolü PASS değildir."
+    },
+    {
+      "step": "22",
+      "status": "history_loader_prepared_original_exact_history_acceptance_open",
+      "limits": "Current-tree gözlemi tam geçmiş geçerlilik aralığı değildir; exact Channel yetkisi üretmiyor."
+    },
+    {
+      "step": "23+",
+      "status": "planned_not_reopened",
+      "limits": "Kalıcı Dataset/FX/handoff/replay, rapor toplamları ve sonraki formüller mevcut sırada."
+    },
+    {
+      "step": "EO-07-A / EO-08-D",
+      "status": "owner_deferred_nonempty_disclosure",
+      "limits": "Dolu müşteri verisinin güvenli mağaza sahibi teslimi/gerçek teslim makbuzu ertelendi;30 günlük gerçek yükümlülük uzatılmadı."
+    },
+    {
+      "step": "EO-08-C",
+      "status": "owner_deferred_backup_restore",
+      "limits": "Yedekleme, restore sonrası silme replay’i ve son ilgili yedek ömrü+30 gün bağlantısı yeni denetim düzeltmesi gibi geri açılmadı."
+    }
+  ],
+  "positive_observations": [
+    {
+      "area": "Owner/tenant",
+      "evidence": [
+        "app/lib/providers/identity-runtime-authority.server.js",
+        "app/lib/shopify/shopify-route-authority.server.js",
+        "supabase/migrations/20261102083049_eo05b_source_evidence_foundation.sql"
+      ],
+      "result": "Kurulum/nesil/bağlantı sürümü/credential/seçili hesap öncesi-sonrası kontrol; istemcinin gönderdiği owner tek başına otorite değil."
+    },
+    {
+      "area": "Ham kanıt",
+      "evidence": [
+        "app/lib/providers/google-raw-projection.server.js",
+        "app/lib/providers/klaviyo-source-capture.server.js",
+        "app/lib/database/source-evidence-store.server.js"
+      ],
+      "result": "Kayıt tam HTTP gövdesi diye sunulmuyor: seçili alan projection’ı, numeric fidelity ve schema bilgisi saklanıyor. Token/profil sızıntısı için whitelist/forbidden key ve bounded parse var."
+    },
+    {
+      "area": "Şifreli saklama",
+      "evidence": [
+        "app/lib/database/google-dataset-source-store.server.js",
+        "app/lib/database/meta-dataset-source-store.server.js",
+        "app/lib/database/klaviyo-dataset-source-store.server.js"
+      ],
+      "result": "Owner-bound AEAD, içerik hash’i, exact commit receipt ve decrypt readback; kayıp yazma cevabında otomatik ikinci commit yok."
+    },
+    {
+      "area": "Zero/missing",
+      "evidence": [
+        "app/lib/refresh/klaviyo-raw-collection.server.js",
+        "app/lib/refresh/meta-raw-datasets.server.js",
+        "app/lib/refresh/google-raw-datasets.server.js"
+      ],
+      "result": "Eksik Shopify metric/merchant/native kanıt gerçek performans0 yapılmıyor; partial ve complete ayrı."
+    },
+    {
+      "area": "Kimlik/rol",
+      "evidence": [
+        "app/lib/database/source-rule-store.server.js",
+        "app/lib/database/verified-mapping-store.server.js",
+        "app/lib/providers/google-product-sales.server.js",
+        "app/lib/providers/sales-role-prewrite.server.js"
+      ],
+      "result": "Native kanıt ve güncel source-rule doğrulaması; SKU/isimden canonical ürün uydurulmuyor. Search sold-only; Google/Klaviyo rolleri ve duplicate/conflict/explicit zero ayrı; aritmetik/FX yok."
+    },
+    {
+      "area": "Silme/saklama",
+      "evidence": [
+        "app/lib/database/customer-source-privacy.server.js",
+        "app/lib/shopify/privacy-webhook.server.js",
+        "app/lib/database/source-retention-policy.server.js",
+        "supabase/migrations/20261102155324_eo05b_source_retention.sql"
+      ],
+      "result": "HMAC doğrulaması ve verified scope, silme önceliği, müşteri sipariş kapsamı, no-data/delivery ayrımı; olağan90/365 politika bağımlılık/consumed kontrolünden ayrı otomatik silme yetkisi değil."
+    },
+    {
+      "area": "SQL/CI",
+      "evidence": [
+        ".github/workflows/repository-governance.yml",
+        ".github/workflows/database-integrity.yml",
+        "tools/check-oauth-constitution.mjs"
+      ],
+      "result": "Özel şema, forced RLS, boş search_path, parametreli dar RPC ve rol denetimleri; mevcut anayasa508 dosyayı kapsıyor. Bu inceleme yeni canlı SQL yetkisi vermedi."
+    }
+  ],
+  "rejected_candidates": [
+    {
+      "candidate": "Klaviyo son saniyede milisaniyeli event kaybı",
+      "decision": "not_a_confirmed_finding",
+      "why": "Datetime filtreleri var; gerçek API’nin bu event alanında kesirli saniye verdiği güncel resmî kaynakla kanıtlanmadı. Varsayımı yeni geliştirmeye dönüştürmedik."
+    },
+    {
+      "candidate": "Kurulu body-parser yüksek uyarısı kesin Production crash demektir",
+      "decision": "rejected_overstatement",
+      "why": "Kurulu sürüm etkileniyor fakat middleware yolu kullanılan serve CLI’da kurulmamış; Vercel preset var. Sürüm düzeltmesi F02’de, aktif exploit iddiası yok."
+    },
+    {
+      "candidate": "PMax current tree ile eski günün exact Channel’ı kesinleştirilebilir",
+      "decision": "rejected",
+      "why": "Mevcut loader zaten continuity/validity yetkisi vermiyor; açık22 native kapısı korunuyor."
+    }
+  ],
+  "checks": {
+    "full_existing_tests": {
+      "status": "pass",
+      "command": "node --test --test-reporter=dot tests/*.test.js",
+      "exit": 0,
+      "local_session": 27059,
+      "limit": "Test sayısı dot çıktısından ayrıca sayılmadı; PR CI sayısı ayrıca doğrulanır."
+    },
+    "typecheck": {
+      "status": "pass",
+      "command": "react-router typegen && tsc --noEmit",
+      "exit": 0
+    },
+    "constitution_baseline": {
+      "status": "pass",
+      "protected_files": 508,
+      "base": "95e985791dd95ef9820bc232e69a12cfa89391ca"
+    },
+    "production_build": {
+      "status": "pass",
+      "command": "react-router build",
+      "exit": 0,
+      "notes": "Client ve SSR tamamlandı; boş server-only route chunk ve mevcut React Router future-flag uyarıları yeni çalışma olarak açılmadı."
+    },
+    "dependency_audit": {
+      "status": "findings",
+      "exit": 1
+    },
+    "database_replay": {
+      "status": "not_rerun_no_SQL_runtime_change",
+      "basis": "Denetlenen95e985 main, PR340 F01 izolasyon kabulünün squash sürümü; rapor SQL/hash değişimi yapmaz. Yeni canlı kabul iddiası yok."
+    }
+  },
+  "coverage": {
+    "numbered_manual_read_ranges": {
+      "app/lib/database/privacy-lifecycle-repository.server.js": [
+        [
+          1,
+          92
+        ]
+      ],
+      "app/routes/webhooks.shopify.tsx": [
+        [
+          1,
+          23
+        ]
+      ],
+      "app/lib/shopify/privacy-lifecycle.server.js": [
+        [
+          1,
+          81
+        ]
+      ],
+      "app/lib/shopify/privacy-webhook.server.js": [
+        [
+          1,
+          135
+        ],
+        [
+          131,
+          148
+        ]
+      ],
+      "app/lib/providers/klaviyo-source-capture.server.js": [
+        [
+          1,
+          132
+        ]
+      ],
+      "app/lib/refresh/klaviyo-raw-datasets.server.js": [
+        [
+          1,
+          70
+        ]
+      ],
+      "app/lib/providers/identity-runtime-authority.server.js": [
+        [
+          1,
+          130
+        ]
+      ],
+      "app/lib/refresh/google-refresh-credential.server.js": [
+        [
+          1,
+          80
+        ]
+      ],
+      "app/lib/database/customer-source-privacy.server.js": [
+        [
+          1,
+          132
+        ]
+      ],
+      "app/lib/database/source-retention.server.js": [
+        [
+          1,
+          54
+        ]
+      ],
+      "app/lib/providers/klaviyo-reporting.server.js": [
+        [
+          131,
+          177
+        ],
+        [
+          321,
+          350
+        ]
+      ],
+      "app/lib/database/source-rule-store.server.js": [
+        [
+          1,
+          92
+        ]
+      ],
+      "app/lib/database/verified-mapping-store.server.js": [
+        [
+          1,
+          125
+        ],
+        [
+          125,
+          139
+        ],
+        [
+          125,
+          139
+        ]
+      ],
+      "app/lib/refresh/google-private-request.server.js": [
+        [
+          1,
+          29
+        ],
+        [
+          1,
+          29
+        ]
+      ],
+      "app/lib/refresh/meta-raw-request.server.js": [
+        [
+          1,
+          37
+        ],
+        [
+          1,
+          37
+        ]
+      ],
+      "app/lib/database/source-evidence-store.server.js": [
+        [
+          146,
+          255
+        ],
+        [
+          256,
+          313
+        ]
+      ],
+      "app/lib/database/meta-dataset-source-store.server.js": [
+        [
+          1,
+          44
+        ]
+      ],
+      "app/lib/database/klaviyo-dataset-source-store.server.js": [
+        [
+          1,
+          44
+        ]
+      ],
+      "app/lib/refresh/pd-source-reader.server.js": [
+        [
+          186,
+          345
+        ]
+      ],
+      "app/lib/database/source-retention-policy.server.js": [
+        [
+          1,
+          19
+        ]
+      ],
+      "supabase/migrations/20261102155324_eo05b_source_retention.sql": [
+        [
+          16,
+          160
+        ]
+      ],
+      "tests/pd-source-reader.test.js": [
+        [
+          1,
+          108
+        ],
+        [
+          107,
+          206
+        ]
+      ],
+      "tests/fixtures/pmax-history-fixture.js": [
+        [
+          1,
+          41
+        ]
+      ],
+      "app/lib/database/google-pmax-history.server.js": [
+        [
+          119,
+          135
+        ]
+      ],
+      "app/lib/shopify/shopify-route-authority.server.js": [
+        [
+          1,
+          65
+        ]
+      ],
+      "app/lib/database/runtime-postgres.server.js": [
+        [
+          26,
+          93
+        ]
+      ],
+      "app/lib/providers/sales-role-prewrite.server.js": [
+        [
+          1,
+          87
+        ]
+      ],
+      "app/lib/providers/google-product-sales.server.js": [
+        [
+          1,
+          85
+        ]
+      ],
+      "supabase/migrations/20261102083049_eo05b_source_evidence_foundation.sql": [
+        [
+          126,
+          171
+        ],
+        [
+          329,
+          402
+        ]
+      ],
+      "app/lib/refresh/klaviyo-raw-collection.server.js": [
+        [
+          1,
+          94
+        ]
+      ]
+    },
+    "tracked_inventory_sha256": "03a4a10f71d5270c0d31b96aee4c00b106daaccaf5cfba1793d80431c1060ea6",
+    "tracked_inventory_count": 916,
+    "inventory_by_top_level": {
+      ".github": 3,
+      "AGENTS.md": 1,
+      "app": 292,
+      "contracts": 83,
+      "docs": 150,
+      "package.json": 1,
+      "pnpm-lock.yaml": 1,
+      "react-router.config.ts": 1,
+      "shopify.app.toml": 1,
+      "supabase": 91,
+      "tests": 225,
+      "tools": 66,
+      "vite.config.ts": 1
+    }
+  },
+  "next_decision": "İki teknik düzeltmenin somut kapsamı owner’a sunulur. Politika doğrulama açıkları ayrı ve dürüst tutulur. Düzeltmelerden sonra ham-kayıt sözleşmesi, koruma testleri ve CI kapısı hazırlanır; bu rapor bunları tamamlandı saymaz."
+}

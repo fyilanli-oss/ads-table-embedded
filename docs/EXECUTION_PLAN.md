@@ -1,3 +1,16 @@
+## 6 Kasım 2026 — 23 öncesi tek kod bütünlüğü ve platform politikası denetimi
+
+Ürün sahibi kapsamlı mevcut kod/politika denetimini ve OAuth–ham okuyucu yetki bağlantılarının salt okunur incelenmesini somut kapsamla onayladı. Denetlenen main95e985791dd95ef9820bc232e69a12cfa89391ca. Runtime düzeltmesi veya canlı işlem yapılmadı; yeni paket/özellik/felaket senaryosu açılmadı.
+
+Rapor iki teknik eksik kaydetti: PMax geçmişinin ortak satır/bayt bütçesine sonraki istekten önce yansıtılmaması ve kilitli bağımlılıkların güvenlik yamaları. İlk bulgu gerçek markalı okuyucular ve yalnız sentetik SQL/HTTP ile tekrarlandı: maxRows2 iken geçmiş3 satır yüklenince iki ek HTTP çağrısı başladı; sonuç kapısı başarısız kaldı, Dataset yazılmadı. Bağımlılık taraması12 advisory verdi; kurulu sürüm ile erişilebilir üretim açığı birbirine eşit sayılmadı. Düzeltme kapsamı owner’a ayrıca sunulacak; bu rapor kodu değiştirme yetkisi değildir.
+
+Mevcut tüm yerel testler, tip kontrolü, derleme ve508 dosyalık OAuth koruması geçti. Meta güncel resmî politika sayfaları erişim/429 nedeniyle doğrulanamadı; genel platform uygunluğu PASS değildir. Klaviyo’nun rekabet eden servislerle veri/toplu görünüm için yazılı izin koşulu rapora açık doğrulama konusu olarak işlendi; bu izin yoktur veya mevcut ayrı ham toplama ihlaldir hükmü verilmedi. Native başvuru/erişim düzeyi/yayımlı privacy bildirimi bu repo incelemesiyle kanıtlanmadı.
+
+18’in dolu Meta satış ilişkisi kanıtı,22’nin tam tarihsel geçerlilik kapısı,23+ mevcut plan ve owner’ın EO-07-A/EO-08-C ertelemeleri korunur. Shopify talebi alındıktan30 gün içinde tamamlama kuralı sürer;48 saat shop/redact gönderim zamanıdır. Düzeltmelerden sonra ham-kayıt sözleşmesi ve CI koruması gelecek; bu rapor o sözleşmeyi tamamlandı saymaz.
+
+Kaynak kontrolü6 Kasım2026: [Shopify gizlilik](https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance), [Google Ads politikaları](https://support.google.com/adspolicy/answer/6169371?hl=en), [Google veri politikası](https://developers.google.com/terms/api-services-user-data-policy), [Klaviyo API koşulları](https://www.klaviyo.com/legal/api-terms), [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security). Ayrıntı ve kod konumları: docs/evidence/PRE23_CODE_POLICY_AUDIT_2026-11-06.json.
+Bağlayıcı kayıt: contracts/a6-eo-implementation-master-v1.json#Pre23_code_policy_audit_2026_11_06.
+
 ## 5 Kasım 2026 — 22: mevcut PMax ham kanıtının tarihli yüklenmesi
 
 Ürün sahibi inceleme sonrası somut hesap/tarih araması, doğrulanmış okuma ve resolver bağlantısını tek kod/test/PR olarak onaylayarak22 hazırlığını yeniden başlattı. Bu dar yeniden başlatma önceki duraklama kayıtlarının üstündedir; önceki tarihsel kararlar silinmez.20, PR339 ile main’e birleşti;4253 test/tip/derleme ve üç izole SQL aşaması geçti.

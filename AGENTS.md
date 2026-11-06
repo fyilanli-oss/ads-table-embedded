@@ -2,6 +2,18 @@
 
 Bu repository temiz Shopify embedded-only AdsTable runtime'ıdır. **Execution Plan anayasadır.**
 
+## Ham kayıt akış anayasası — zorunlu giriş kapısı (6 Kasım 2026)
+
+Ham kayıt toplama, projection, sahiplik/kimlik, şifreli depolama, makbuz/readback,
+eşleme, kaynak tüketimi, saklama veya silmeye doğrudan/dolaylı değen HER işten önce
+[ham kayıt anayasası](docs/RAW_SOURCE_CONSTITUTION.md) ve
+[makine sözleşmesi](contracts/raw-source/raw-source-constitution-v1.json) tamamen okunur.
+Codex dahil hiçbir kişi/ajan somut kapsam ve önceden açık owner onayı olmadan bu
+akışı değiştiremez. Append-only revizyon, exact changed_paths ve ilgili test kanıtı
+zorunludur. Hash yenilemek onay değildir; guard/test/CI kaldırılamaz veya bypass
+edilemez. OAuth kapısı ayrıca geçerlidir. Runtime, canlı DB/provider, merge ve yayın
+ayrı yetkilerdir. CI onayın gerçekliğini ispatlamaz; owner review zorunludur.
+
 ## OAuth akış anayasası — zorunlu giriş kapısı (1 Kasım 2026)
 
 OAuth'a doğrudan/dolaylı değen HER işten önce [OAuth akış anayasası](docs/OAUTH_FLOW_CONSTITUTION.md)

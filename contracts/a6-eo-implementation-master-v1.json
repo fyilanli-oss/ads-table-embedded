@@ -1,4 +1,26 @@
 {
+  "Raw_source_constitution_2026_11_06": {
+    "checked_at": "2026-11-06",
+    "status": "constitution_guard_and_regression_preparation_separate_merge_required",
+    "baseline_main": "07c2708e1efafeaeb6a1f2b95ed8548489ffdf7b",
+    "owner_instruction": "Evet şimdi gelelim ham kayıt sözleşmesine aynı OAuth gibi sen dahil artık kimse akışı bozmamalı burada çok ciddi bir iş yapıldı",
+    "scope": "Freeze the existing raw source flow, authority, query/projection, encryption/readback, finite retention and mandatory deletion rules; human/machine constitution, AGENTS entry, guard, regression tests and existing CI integration only.",
+    "document": "docs/RAW_SOURCE_CONSTITUTION.md",
+    "contract": "contracts/raw-source/raw-source-constitution-v1.json",
+    "guard": "tools/check-raw-source-constitution.mjs",
+    "tests": "tests/raw-source-constitution.test.js",
+    "new_package": false,
+    "source_runtime_changed": false,
+    "SQL_changed": false,
+    "OAuth_flow_changed": false,
+    "provider_contact": false,
+    "live_provider": false,
+    "live_database": false,
+    "merge_authorized": false,
+    "deploy_authorized": false,
+    "next": "Required CI and exact remote content verification, separate merge approval; step23 not started.",
+    "policy_followup": "PR343 is separately prepared policy evidence, not assumed merged or app-specific provider approval. No provider correspondence required to prepare this constitution."
+  },
   "Step15_Meta_raw_datasets_2026_11_04": {
     "status": "code_and_isolated_test_preparation_not_live_acceptance",
     "owner_approval": "Metayı bağladım. Onaylıyorum. Concrete prior scope: two existing reports, encrypted source receipt/content verification, private server entry, narrow SQL role preparation, isolated tests and one PR.",

@@ -1279,9 +1279,9 @@
     ],
     "sha256": {
       ".github/workflows/database-integrity.yml": "60240d5dca5be421b1d3fdd01ded8a311a0bceb22783b6ee5457bf510a3c31d8",
-      ".github/workflows/repository-governance.yml": "331b11ca8da69182216874ff4efc4c8488111252835296ee495d7bc1a96b3759",
+      ".github/workflows/repository-governance.yml": "d0c6feecc08f145588c72fac541040ca2e14949af7785961e5df27c01628b852",
       ".github/workflows/shopify-app-deploy.yml": "ef078addb630fdb624189c0f12625524a7e3dcaf708f2059f95e7a2884cf5d24",
-      "AGENTS.md": "d77d9e1aad1996a7e477e17f460a2c63530e1253cb521c521c6ef3bdd11570a9",
+      "AGENTS.md": "01ef3b2e4fd58cb77b30b030a87562b0436986e200bc342f77f929b34eb19d51",
       "app/components/order-access-removal.tsx": "2c2159052c700ef8c9722e159af64f929a573481662f3fe31fd1e05054d68d7b",
       "app/components/permission-explanation.tsx": "1ef63742562171225389b0958492f9daea51d9a062b1eefe24e008d27387ad66",
       "app/components/permission-provider-disconnect.tsx": "0e411efebfd74636308fb4f95b91cb884d5ad8eee93d91eedf2861d8aae4943e",
@@ -1569,12 +1569,12 @@
       "app/routes/settings.provider-live-evidence.ts": "89fbcb7087fc480fefba708bbc730146f1ba41af48d98f1b0a10fe1427120495",
       "app/routes/webhooks.shopify.tsx": "eac0ea30fcca28d6bba3c11105a5c4fda7778d1398c23f21fcb02f717d8bd056",
       "app/shopify.server.ts": "cc5959867dd5c413b222d51c4aad7d9a39c7c3d15e590aada86a1ddfefdc6fad",
-      "contracts/a6-eo-implementation-master-v1.json": "5decea343ed3d9cb1e6c2fa45fcb0fbc804adf76f73850aeafbb0314c6e3d3f6",
+      "contracts/a6-eo-implementation-master-v1.json": "5c3bf57f05d8b1fa76f233765d0936101df9ce27d0e0d684cee3d925e752cb8b",
       "contracts/eo-05-oauth-setup-permission-policy-v1.json": "c1914f91011464d3b16b4b0a7710e49878ce6dbb57427e3d0f7c68d9ec4ec681",
       "contracts/eo-05-permission-explanation-design-v1.json": "ad4753b9ad4a6becd14764b7b33fb917f0cc491ad774cc1f1fe9053c5f189f35",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
       "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md": "c602fd4d7760e8f32c109e1f0456907c739c12906d71becf88476cad2007d6a1",
-      "docs/EXECUTION_PLAN.md": "01561b801eb6f593f3d2e9c4c2901d680d5bf9a2fe05feefe87286ae90b335ca",
+      "docs/EXECUTION_PLAN.md": "0be4edd22a6d84ce8c5280a91eaccd4c2f071417dbb1e6566d4da6fe47454385",
       "docs/OAUTH_FLOW_CONSTITUTION.md": "74d7a8f327a9558712c3ac8bb54a6633fff7a7e2045405d236d35f265d124b28",
       "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md": "49e253b08959faa9f0b2bf208ed5eb6d3c078a0ddf9097e667a9bf1483dc7350",
       "package.json": "a99953eda0b9270c5c7c282e8f517210f11759acd7dbbe25737824dc6288f730",
@@ -1671,7 +1671,7 @@
       "supabase/migrations/20261105100338_eo05_customer_request_completion.sql": "fb480a61694b9db3ebc10aa1df0d7c7b85206f6443206647bb7040fb33e24ab1",
       "supabase/migrations/20261105111527_eo05_private_customer_source_worker.sql": "aedb5df472ee80aa0e1dd65f6a02dcbc31aa3ec3709b0c51b07bef9dd23a6646",
       "supabase/migrations/20261105193000_eo05_pmax_history_lookup.sql": "407a99795cdf6f975e37cd28f2accff6d51f14b0fa1a0f72fac4a41f908d41a2",
-      "tests/a6-docs-01-turkish-standardization.test.js": "8a49d5bdff1e22069a8a438cd790f83d9ce6d139b66af4358b423fb2fbf4b8ad",
+      "tests/a6-docs-01-turkish-standardization.test.js": "660acd2b9227035285673468678cc07b037fddecde5b80ee923be60a8bec6d6b",
       "tests/a6-tech-01-f01c-scoped-recovery.test.js": "3bd869071d5042402215176a99bf14dcebce6d3d0497ffcba946038050701792",
       "tests/eo-01c-preview-shell.test.js": "c3d67bb6666c19cf5ac12cfcd8a7f2f2acdf399d5a8ac32c0269823b06cbf789",
       "tests/eo-03a-oauth-transaction-boundary.test.js": "b364193460356370d1128000e6c0b61e975b2d79b896135d97ce648bc30a7747",
@@ -1723,6 +1723,7 @@
       "tests/step07-settings-corrections.test.js": "b0c3993eab488a848e28b797ec45ac2da638fd452f82dd7f3fee0a4e2c006319",
       "tools/check-migration-lineage.mjs": "ce5c6da06ecaed0b031be6314bdc0bfe1623293de92f40a633c0176fd684bae7",
       "tools/check-oauth-constitution.mjs": "fb7285abc41cd0cc2bbe589dd216ec4043a7923a16a7d24266739c22a2d1dddb",
+      "tools/check-raw-source-constitution.mjs": "e531e73b7abf1bfa34ada84faab23a6858f881e3c43e33d9dc624b4c0ed6e312",
       "tools/eo05-admin-cost-budget-probe.mjs": "3754269582b0d201413308cb8a8495928a4e3f197370e93b024195ceb16fab5a",
       "tools/eo05-admin-cost-feedback-probe.mjs": "3929e29a7ddeef23acb87a7d361289ead0dcd52f7b89e64399c372fba6071071",
       "tools/eo05-admin-quota-context-probe.mjs": "e67525499cd3d2042298076e17ea2d84618c74781d78bd93fbbe44cfa827e0f9",
@@ -3359,6 +3360,42 @@
         "package.json",
         "pnpm-lock.yaml",
         "tests/pre23-oauth-route-dependency-compatibility.test.js"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "visual_acceptance": "not_applicable_no_UI_change"
+    },
+    {
+      "id": "raw-source-constitution-2026-11-06",
+      "date": "2026-11-06",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Evet şimdi gelelim ham kayıt sözleşmesine aynı OAuth gibi sen dahil artık kimse akışı bozmamalı burada çok ciddi bir iş yapıldı — explicit requested human/machine source constitution and guard/test/CI enforcement analogous to OAuth; no OAuth runtime/flow change."
+      },
+      "rationale": "Record the owner-requested source constitution guard, AGENTS/plan and existing CI integration. OAuth flow/runtime, SQL, UI, scopes, credential protocol and live behavior remain unchanged. Existing OAuth guard and history are retained.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "merge": false,
+        "deploy": false
+      },
+      "changed_paths": [
+        ".github/workflows/repository-governance.yml",
+        "AGENTS.md",
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "docs/EXECUTION_PLAN.md",
+        "tests/a6-docs-01-turkish-standardization.test.js",
+        "tools/check-raw-source-constitution.mjs"
+      ],
+      "tests": [
+        "tests/raw-source-constitution.test.js",
+        "tests/oauth-flow-constitution.test.js",
+        "tests/a6-docs-01-turkish-standardization.test.js"
       ],
       "acceptance_required": [
         "required_CI",

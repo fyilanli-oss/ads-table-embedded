@@ -4552,5 +4552,20 @@
       "Native app/access/privacy disclosure configuration not inspected"
     ],
     "boundaries": "No runtime/UI/SQL/provider/config/token/deploy/merge. Existing18/22 native holds,23+ plan and EO07A/EO08C deferrals preserved. No new package. Raw-record constitution follows agreed remediation; not completed by this report."
+  },
+  "Pre23_technical_remediation_2026_11_06": {
+    "status": "both_technical_fixes_prepared_final_CI_pending",
+    "owner_approval": "Onaylıyorum ve önerinde belirttiğin iki teknik eksiği düzelteyide onaylıyorum",
+    "baseline": "2a73f57d3aae45d2d23672078d8834878bfeb2c0",
+    "evidence": "docs/evidence/PRE23_TECHNICAL_REMEDIATION_2026-11-06.json",
+    "scope": {
+      "F01": "PMax shared remaining rows/bytes into branded history loader and following native reader; no new query/storage/role behavior",
+      "F02": "Compatible dependency security patches; no framework migration or unreviewed major override",
+      "live": false,
+      "merge": false,
+      "deploy": false
+    },
+    "limits": "No new package, framework migration, role/query/Dataset/SQL, native provider/config/token, merge or deploy. Exact two development minimatch consumers and one compiled route-ignore compatibility patch are separately owner-approved. Existing policy holds and native18/22 acceptance unchanged.",
+    "owner_compatibility_approval": "Dar uyumluluk yamasını da ekle (Önerilen) — explicit reply to the specific route-discovery compatibility patch/test scope; no new package, UI/URL/OAuth/live/config/merge/deploy."
   }
 }

@@ -1,0 +1,93 @@
+[
+  {
+    "id": "routes/settings.provider-live-evidence",
+    "file": "routes/settings.provider-live-evidence.ts",
+    "path": "settings/provider-live-evidence"
+  },
+  {
+    "id": "routes/internal.google.merchant-links",
+    "file": "routes/internal.google.merchant-links.ts",
+    "path": "internal/google/merchant-links"
+  },
+  {
+    "id": "routes/internal.privacy.source-worker",
+    "file": "routes/internal.privacy.source-worker.ts",
+    "path": "internal/privacy/source-worker"
+  },
+  {
+    "id": "routes/settings.klaviyo-live-evidence",
+    "file": "routes/settings.klaviyo-live-evidence.ts",
+    "path": "settings/klaviyo-live-evidence"
+  },
+  {
+    "id": "routes/settings.google-live-evidence",
+    "file": "routes/settings.google-live-evidence.ts",
+    "path": "settings/google-live-evidence"
+  },
+  {
+    "id": "routes/internal.klaviyo.raw-capture",
+    "file": "routes/internal.klaviyo.raw-capture.ts",
+    "path": "internal/klaviyo/raw-capture"
+  },
+  {
+    "id": "routes/internal.refresh.queue-check",
+    "file": "routes/internal.refresh.queue-check.ts",
+    "path": "internal/refresh/queue-check"
+  },
+  {
+    "id": "routes/internal.google.raw-capture",
+    "file": "routes/internal.google.raw-capture.ts",
+    "path": "internal/google/raw-capture"
+  },
+  {
+    "id": "routes/internal.meta.raw-capture",
+    "file": "routes/internal.meta.raw-capture.ts",
+    "path": "internal/meta/raw-capture"
+  },
+  {
+    "id": "routes/auth.google-ads.callback",
+    "file": "routes/auth.google-ads.callback.ts",
+    "path": "auth/google-ads/callback"
+  },
+  {
+    "id": "routes/auth.klaviyo.callback",
+    "file": "routes/auth.klaviyo.callback.ts",
+    "path": "auth/klaviyo/callback"
+  },
+  {
+    "id": "routes/auth.meta.callback",
+    "file": "routes/auth.meta.callback.ts",
+    "path": "auth/meta/callback"
+  },
+  {
+    "id": "routes/webhooks.shopify",
+    "file": "routes/webhooks.shopify.tsx",
+    "path": "webhooks/shopify"
+  },
+  {
+    "id": "routes/auth.$",
+    "file": "routes/auth.$.tsx",
+    "path": "auth/*"
+  },
+  {
+    "id": "routes/_admin",
+    "file": "routes/_admin.tsx",
+    "children": [
+      {
+        "id": "routes/_admin.ad-analysis",
+        "file": "routes/_admin.ad-analysis.tsx",
+        "path": "ad-analysis"
+      },
+      {
+        "id": "routes/_admin.settings",
+        "file": "routes/_admin.settings.tsx",
+        "path": "settings"
+      },
+      {
+        "id": "routes/_admin._index",
+        "file": "routes/_admin._index.tsx",
+        "index": true
+      }
+    ]
+  }
+]

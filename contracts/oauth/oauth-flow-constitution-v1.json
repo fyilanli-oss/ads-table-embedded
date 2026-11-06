@@ -1294,7 +1294,7 @@
       "app/lib/database/google-acceptance-coordinator-postgres.server.js": "fac80e170cbff24d73c1c40201dee3371d6f4f6c549634e14b7d230cd94a038d",
       "app/lib/database/google-account-selection-repository.server.js": "1155c186cb7a4ac712798033e80c1b5b3214e41e2b91c05de047a85ce378df3e",
       "app/lib/database/google-dataset-source-store.server.js": "5d957ae5d96474ae5161f96eb9b7fb5b15909388b042d41031db34cf998fd057",
-      "app/lib/database/google-pmax-history.server.js": "d0b9d69369504a6077fe9c9c6b8d9c356b729da1587d1da8eb39783446a86abf",
+      "app/lib/database/google-pmax-history.server.js": "d880bab9f8bf60ffec3e8e5e9a4546bb78cfbf1ed43a66611dc2d1994a7aba7c",
       "app/lib/database/google-source-postgres.server.js": "905d54bfc18cc3f73683ff4768757fd0d81597d690f0250b55dd8439d53eed18",
       "app/lib/database/identity-authority-repository.server.js": "a4d157e77dde93c26e2fb28c915f1c5a92fc3ebf11ccc59ca649dca2df032f0c",
       "app/lib/database/klaviyo-dataset-source-store.server.js": "b9538c408bfcf7f29734350f867c7c9a03aaa9e0cf50e7539356ea16e6e776a8",
@@ -1475,7 +1475,7 @@
       "app/lib/refresh/meta-raw-server.server.js": "8da974d7829ad7c7c89d08e49fb6c6493fa1c649bd42ef287f1f0871673511ef",
       "app/lib/refresh/native-inventory.server.js": "5d67e8642f4032b90c154b12c43da8c92945d8b223c0494e1c82974739b8b5c6",
       "app/lib/refresh/pd-prewrite-chunk.server.js": "29b295aa601c9e687dd95636a4023a8613a5e34179189635c057b9e5df77a201",
-      "app/lib/refresh/pd-source-reader.server.js": "a185221743a9342b49ea00944a71356b19a4097ce07d1b60abf8f4ae6a0c0de5",
+      "app/lib/refresh/pd-source-reader.server.js": "0426feb24ecf0137c0bff211d5b8e7b63602c4b54f5bed9331504730569e51c2",
       "app/lib/refresh/preflight-bridge.server.js": "c327e4aca31e102f00edde808d88f06bfde3d87d3acfe5168158229db69acd7d",
       "app/lib/refresh/queue-check.server.js": "4795afa7149373d342860a4428b6028252ff475a77716dc2bcba363a2b9105e6",
       "app/lib/refresh/queue-cron-entry.server.d.ts": "7f78161c378a99cf8c52a905a4a23ebc026fe81fba929d74d2a5104b491efe7b",
@@ -1569,16 +1569,16 @@
       "app/routes/settings.provider-live-evidence.ts": "89fbcb7087fc480fefba708bbc730146f1ba41af48d98f1b0a10fe1427120495",
       "app/routes/webhooks.shopify.tsx": "eac0ea30fcca28d6bba3c11105a5c4fda7778d1398c23f21fcb02f717d8bd056",
       "app/shopify.server.ts": "cc5959867dd5c413b222d51c4aad7d9a39c7c3d15e590aada86a1ddfefdc6fad",
-      "contracts/a6-eo-implementation-master-v1.json": "938accb8fba0c73979ded5181d4bca736d420b259a10bdf81f33e300ea23f407",
+      "contracts/a6-eo-implementation-master-v1.json": "5decea343ed3d9cb1e6c2fa45fcb0fbc804adf76f73850aeafbb0314c6e3d3f6",
       "contracts/eo-05-oauth-setup-permission-policy-v1.json": "c1914f91011464d3b16b4b0a7710e49878ce6dbb57427e3d0f7c68d9ec4ec681",
       "contracts/eo-05-permission-explanation-design-v1.json": "ad4753b9ad4a6becd14764b7b33fb917f0cc491ad774cc1f1fe9053c5f189f35",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
       "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md": "c602fd4d7760e8f32c109e1f0456907c739c12906d71becf88476cad2007d6a1",
-      "docs/EXECUTION_PLAN.md": "cb3db8cad9cbbed0a45fc2c02c0d8f7cec805e3e14a80b79fd97d1ca4c54db79",
+      "docs/EXECUTION_PLAN.md": "01561b801eb6f593f3d2e9c4c2901d680d5bf9a2fe05feefe87286ae90b335ca",
       "docs/OAUTH_FLOW_CONSTITUTION.md": "74d7a8f327a9558712c3ac8bb54a6633fff7a7e2045405d236d35f265d124b28",
       "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md": "49e253b08959faa9f0b2bf208ed5eb6d3c078a0ddf9097e667a9bf1483dc7350",
-      "package.json": "e46285b3a60421e8c338807d7b606afa17f16303b08a2832bed3222a06183fe8",
-      "pnpm-lock.yaml": "048661c323617fbd5d1c72eb5ade45ed11d2690aca9cbe3487c4095f25df10e6",
+      "package.json": "a99953eda0b9270c5c7c282e8f517210f11759acd7dbbe25737824dc6288f730",
+      "pnpm-lock.yaml": "2dd20878142080655beac2c99f862826370f9c5a30cab2c6bae9f7bf8111e6db",
       "shopify.app.toml": "6ce5b653102ea4f05fbc8f9777e049da2b34f224cc5499dd0a9ccd5d58b52d4e",
       "supabase/migrations/20261006133830_eo02a_private_schema_roles.sql": "323797d40efd94cb4a256456e441916a4c13fedf3921d9f73cdb35a339fd31e1",
       "supabase/migrations/20261006134013_eo02a_runtime_schema_usage.sql": "44cba1bbe756aa448847ee9894dcc09c14d4834942ffee79bde5a861714ba28d",
@@ -1713,6 +1713,7 @@
       "tests/permission-release.test.js": "1393a4af41192cdc7dc2b58a8a3a275df19c3bcd44eedfd6b8634434717b5b2f",
       "tests/permission-settings.test.js": "5a53c68e019cfd23042a0b29e7062deee495f8faafec5df24e0283f9e38e481f",
       "tests/permission-setup-selection.test.js": "c767fed7b7dc4c51fb3a96bba1a8d95162d2e6db873cac0a779401e5f745b132",
+      "tests/pre23-oauth-route-dependency-compatibility.test.js": "65dc7a0fe2d1b16683ec8808991a7abb1dec7dcd2d08623c5c3ee706fac450f4",
       "tests/raw-fixture-calendar-permission.test.js": "352a2467a5f724d13e08dd873d3c397521bbd301be9e1f2cc9fbbedb2d54f9e6",
       "tests/shopify-permission-readback.test.js": "2b7500dd9424aa324b2c9a61b5e3d57f1ce1a3fe37a1dc192e63c49fe3e6d21e",
       "tests/shopify-permission-scope-protocol.test.js": "4f7828c38691a70c656373897be106ab3a757dad75b84515af7d6aa3e8d8f00c",
@@ -3322,6 +3323,42 @@
         "contracts/a6-eo-implementation-master-v1.json",
         "contracts/oauth/oauth-flow-constitution-v1.json",
         "docs/EXECUTION_PLAN.md"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "visual_acceptance": "not_applicable_no_UI_change"
+    },
+    {
+      "id": "pre23-two-technical-fixes-2026-11-06",
+      "date": "2026-11-06",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Onaylıyorum ve önerinde belirttiğin iki teknik eksiği düzelteyide onaylıyorum Concrete preceding F01 shared-budget and F02 compatible dependency security patches, code/tests/PR only. PR341 merge authorized separately in same message; new correction merge is not authorized.",
+        "compatibility_followup": {
+          "explicit": true,
+          "source": "Dar uyumluluk yamasını da ekle (Önerilen) — explicit reply to the specific route-discovery compatibility patch/test scope; no new package, UI/URL/OAuth/live/config/merge/deploy."
+        }
+      },
+      "rationale": "Preserve F01 shared-budget fix; apply compatible security patches and separately owner-approved exact two-consumer minimatch11 plus single fs-routes compiled matcher compatibility patch. Real route tree and ignore semantics, ts-morph selection and Vercel config extraction are tested. No OAuth/UI/URL/scopes/token/native/SQL/config/live changes.",
+      "scope": {
+        "runtime_code": true,
+        "live_provider": false,
+        "merge": false,
+        "deploy": false
+      },
+      "changed_paths": [
+        "app/lib/database/google-pmax-history.server.js",
+        "app/lib/refresh/pd-source-reader.server.js",
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "docs/EXECUTION_PLAN.md",
+        "package.json",
+        "pnpm-lock.yaml",
+        "tests/pre23-oauth-route-dependency-compatibility.test.js"
       ],
       "acceptance_required": [
         "required_CI",

@@ -226,6 +226,12 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
                 || row.campaign?.advertisingChannelType !== (pd.flow === "search" ? "SEARCH" : "SHOPPING")) fail("NATIVE_SCOPE_MISMATCH");
           }
           if (pmax) {
+            const usedRows = evidence.results.performance.rows.length + evidence.results.conversions.rows.length
+              + (evidence.native_metadata ? [evidence.native_metadata.before, evidence.native_metadata.after]
+                .reduce((n, m) => n + m.account.rows.length + m.actions.rows.length, 0) : 0);
+            const remaining = {maxPages: boundLimits.maxPages, maxRows: boundLimits.maxRows - usedRows,
+              maxBytes: boundLimits.maxBytes - Buffer.byteLength(JSON.stringify(evidence), "utf8")};
+            if (remaining.maxRows < 1 || remaining.maxBytes < 1) fail("RESULT_BOUND_EXCEEDED");
             if (pmaxHistory) {
               await currentContext();
               pmaxHistoryEvidence = await pmaxHistory.load({owner: {workspaceId: baseline.workspace_id,
@@ -234,8 +240,13 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
                 connectionId: baseline.provider_connection_id, connectionVersion: String(baseline.connection_version),
                 credentialId: baseline.credential_id, accountId: baseline.platform_account_id,
                 selectionEpoch: String(baseline.reporting_selection_epoch)}, businessDate: window.from,
-                timezone: baseline.source_timezone, signal: controller.signal, deadlineAt: started + boundLimits.maxElapsedMs});
+                timezone: baseline.source_timezone, signal: controller.signal, deadlineAt: started + boundLimits.maxElapsedMs,
+                limits: {maxRows: remaining.maxRows, maxBytes: remaining.maxBytes}});
               await currentContext();
+              remaining.maxRows -= pmaxHistoryEvidence.counts.rows;
+              remaining.maxBytes -= Math.max(pmaxHistoryEvidence.counts.bytes,
+                Buffer.byteLength(JSON.stringify(pmaxHistoryEvidence), "utf8"));
+              if (remaining.maxRows < 1 || remaining.maxBytes < 1) fail("RESULT_BOUND_EXCEEDED");
             }
             // Stored current-tree observations lack a proven validity interval.
             // Loading them never upgrades legacy reviewed input or grants exact Channel.
@@ -249,12 +260,6 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
               "credential_id", "business_date", "source_timezone", "source_currency", "job_or_run_id", "claim_fence"]
               .every(k => binding[k] !== undefined && stableJson(membership.binding?.[k]) === stableJson(binding[k]));
             pmaxMembershipState = pmaxHistoryEvidence ? pmaxHistoryEvidence.status : membership === null ? "not_supplied" : boundMembership ? "bound_for_review_only" : "source_binding_mismatch";
-            const usedRows = evidence.results.performance.rows.length + evidence.results.conversions.rows.length
-              + (evidence.native_metadata ? [evidence.native_metadata.before, evidence.native_metadata.after]
-                .reduce((n, m) => n + m.account.rows.length + m.actions.rows.length, 0) : 0);
-            const remaining = {maxPages: boundLimits.maxPages, maxRows: boundLimits.maxRows - usedRows,
-              maxBytes: boundLimits.maxBytes - Buffer.byteLength(JSON.stringify(evidence), "utf8")};
-            if (remaining.maxRows < 1 || remaining.maxBytes < 1) fail("RESULT_BOUND_EXCEEDED");
             await currentContext();
             pmaxEvidence = await client.readPmaxSourceEvidenceSnapshot({installationAuthority: owner, dateWindow,
               limits: remaining, listingEvidence: boundMembership ? membership : null, signal: controller.signal,

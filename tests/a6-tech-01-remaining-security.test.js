@@ -18,16 +18,26 @@ test("remaining-security scope binds exact pins and complete lock graph without 
   const evidence = JSON.parse(read("docs/evidence/A6_TECH_01_REMAINING_SECURITY_REMEDIATION_2026-10-18.json"));
   const manifest = JSON.parse(read("package.json"));
   const registry = JSON.parse(read("contracts/eo-01b-dependency-registry-v1.json"));
-  assert.equal(manifest.devDependencies.vite, "7.3.6");
-  assert.equal(registry.packages.find(item => item.name === "vite").version, "7.3.6");
-  const workspace = read("pnpm-workspace.yaml");
+  const current = JSON.parse(read("docs/evidence/PRE23_TECHNICAL_REMEDIATION_2026-11-06.json"));
+  assert.equal(manifest.devDependencies.vite, "7.3.7");
+  assert.equal(registry.packages.find(item => item.name === "vite").version, "7.3.7");
+  assert.equal(current.findings.F02.patches.vite, "7.3.6 → 7.3.7");
+  const workspace = read("pnpm-workspace.yaml").replaceAll("\r\n", "\n");
   const overrides = Object.fromEntries([...workspace.matchAll(/^  '([^']+)': '([^']+)'$/gm)].map(([, key, value]) => [key, value]));
-  assert.deepEqual(overrides, evidence.scoped_overrides);
+  assert.deepEqual(overrides, current.scoped_overrides);
+  assert.deepEqual(Object.keys(evidence.scoped_overrides).filter(k => !k.startsWith("vite@")),
+    Object.keys(overrides).filter(k => !k.startsWith("vite@") && !k.endsWith(">minimatch")));
+  for (const [key, value] of Object.entries(evidence.scoped_overrides))
+    assert.equal(overrides[key.replace("vite@7.3.6>", "vite@7.3.7>")], value);
+  for (const parent of ["@react-router/fs-routes@7.18.2", "@ts-morph/common@0.25.0"])
+    assert.equal(overrides[parent + ">minimatch"], "11.0.1");
+  assert.equal(createHash("sha256").update(read(current.findings.F02.compatibility_patch.path).replaceAll("\r\n", "\n")).digest("hex"), current.findings.F02.compatibility_patch.sha256_lf);
   assert.doesNotMatch(workspace, /auditConfig|ignoreCves|ignoreGhsas|ignoredAdvisories|ignoreUnfixable/);
   const lock = read("pnpm-lock.yaml").replaceAll("\r\n", "\n");
   const alignment = JSON.parse(read("contracts/eo-05-start-brief-v1.json")).Polaris_stable_2_alignment_2026_10_29;
   assert.equal(alignment.lockfile.previous_sha256_lf, evidence.lockfile.sha256_lf);
-  assert.equal(createHash("sha256").update(lock).digest("hex"), alignment.lockfile.sha256_lf);
+  assert.equal(current.lockfile.previous_sha256_lf, alignment.lockfile.sha256_lf);
+  assert.equal(createHash("sha256").update(lock).digest("hex"), current.lockfile.sha256_lf);
   assert.equal(manifest.devDependencies["@shopify/polaris-types"], alignment.types);
   assert.doesNotMatch(workspace, /minimumReleaseAgeExclude/);
   assert.doesNotMatch(lock, /(?:braces|micromatch|fast-glob)@/);

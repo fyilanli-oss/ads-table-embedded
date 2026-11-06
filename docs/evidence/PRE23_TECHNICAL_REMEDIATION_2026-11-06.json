@@ -20,26 +20,24 @@
       "proof": "152 focused tests passed including original 2-row/3-history-row reproduction with zero subsequent HTTP, exact exhaustion, shared bytes, immutable narrowing and factory cap."
     },
     "F02": {
-      "status": "eleven_of_twelve_advisories_removed_remaining_compatibility_scope_pending",
+      "status": "patched_no_advisories_full_CI_pending",
       "patches": {
         "vite": "7.3.6 → 7.3.7",
         "body-parser": "1.20.8 → 1.20.9",
         "qs": "6.16.0 → 6.16.2",
-        "fast-uri": "3.1.8 → 3.1.9"
+        "fast-uri": "3.1.8 → 3.1.9",
+        "minimatch": "9.0.9 → 11.0.1 (exact two development consumers; owner-approved fs-routes compatibility patch)"
       },
-      "remaining": {
-        "package": "minimatch",
-        "installed": "9.0.9",
-        "advisory": "GHSA-g3hv-75wg-m249",
-        "severity": "moderate",
-        "dev": true,
-        "source": "https://github.com/isaacs/minimatch/security/advisories/GHSA-g3hv-75wg-m249",
-        "patch": "11.0.1",
-        "compatibility": "11 removes makeRe; @react-router/fs-routes@7.18.2 uses makeRe. A blind override would break typegen/build. No override/patch applied; explicit narrow compatibility-scope question pending.",
-        "consumers": [
-          "@react-router/fs-routes@7.18.2: makeRe + RegExp.test",
-          "@ts-morph/common@0.25.0: minimatch(path,pattern)"
-        ]
+      "compatibility_patch": {
+        "path": "patches/@react-router__fs-routes@7.18.2.patch",
+        "sha256_lf": "8db744b341f8258e57f41105d65d493974e6ba6253608c0bba031d46751437f5",
+        "scope": "Single compiled makeRe call becomes a compiled Minimatch.match wrapper; framework version, application routes and configuration unchanged.",
+        "registration": "pnpm patchedDependencies exact version and frozen lock patch hash; no ignore/suppression or globally forced major override",
+        "tests": [
+          "tests/pre23-oauth-route-dependency-compatibility.test.js",
+          "tests/fixtures/pre23-route-config-baseline.json"
+        ],
+        "result": "3 real-consumer tests passed: pre-patch route tree, hidden/default and explicit file/folder ignores, ts-morph glob selection"
       }
     }
   },
@@ -48,7 +46,10 @@
     "https://github.com/vitejs/launch-editor/security/advisories/GHSA-587h-7wmj-h5pm",
     "https://github.com/expressjs/body-parser/security/advisories/GHSA-27r3-jxmh-p828",
     "https://raw.githubusercontent.com/isaacs/minimatch/v11.0.1/src/index.ts",
-    "https://pnpm.io/cli/update"
+    "https://pnpm.io/cli/update",
+    "https://pnpm.io/cli/patch",
+    "https://pnpm.io/cli/patch-commit",
+    "https://raw.githubusercontent.com/remix-run/react-router/react-router@7.18.2/packages/react-router-fs-routes/flatRoutes.ts"
   ],
   "unchanged_holds": [
     "Meta current policy text access",
@@ -56,16 +57,18 @@
     "Native18/22 acceptance",
     "EO07A customer disclosure / EO08C backup deferrals"
   ],
-  "closure": "F02 not closed while the remaining advisory/compatibility choice is pending. No general policy/native acceptance or raw-record constitution completion claimed.",
+  "closure": "Both technical fixes prepared; final-head CI/merge remain required. No general platform-policy/native acceptance or raw-record constitution completion claimed.",
   "lockfile": {
     "previous_sha256_lf": "048661c323617fbd5d1c72eb5ade45ed11d2690aca9cbe3487c4095f25df10e6",
-    "sha256_lf": "58f7018a320ee2929e060a9dab9b4ff4013fa5e05812fe9baa842ea32ee035f3"
+    "sha256_lf": "2dd20878142080655beac2c99f862826370f9c5a30cab2c6bae9f7bf8111e6db"
   },
   "scoped_overrides": {
     "vite@7.3.7>esbuild": "0.28.1",
     "@vercel/static-config@3.4.4>ajv": "8.18.0",
     "@vercel/static-config@3.4.4>ts-morph": "24.0.0",
-    "@vercel/react-router@1.3.7>ts-morph": "24.0.0"
+    "@vercel/react-router@1.3.7>ts-morph": "24.0.0",
+    "@react-router/fs-routes@7.18.2>minimatch": "11.0.1",
+    "@ts-morph/common@0.25.0>minimatch": "11.0.1"
   },
   "verification": {
     "focused_tests": {
@@ -73,14 +76,14 @@
       "failed": 0,
       "skipped": 0
     },
-    "typecheck": "passed",
+    "typecheck": "passed_after_compatibility_patch",
     "full_tests": "Initial local run exposed two stale current-pin/registry assertions. Registry and current lock-chain assertions were updated; focused security and negative-control suites passed. Fresh complete PR CI is required; not claimed here.",
-    "build": "passed_client_and_SSR",
+    "build": "passed_client_and_SSR_after_compatibility_patch",
     "current_security_regression": {
-      "passed": 5,
+      "passed": 13,
       "failed": 0,
       "skipped": 0,
-      "notes": "Vite pin, lock chain, actual Vercel parser/native-unavailable fallback/preset"
+      "notes": "Exact pins/lock/patch hash, actual Vercel parser/fallback/preset, registry controls, real route graph/ignores and real ts-morph selection"
     },
     "production_audit": {
       "exit_code": 0,
@@ -93,18 +96,27 @@
       }
     },
     "complete_audit": {
-      "exit_code": 1,
+      "exit_code": 0,
       "vulnerabilities": {
         "info": 0,
         "low": 0,
-        "moderate": 1,
+        "moderate": 0,
         "high": 0,
         "critical": 0
       },
-      "remaining": [
-        "GHSA-g3hv-75wg-m249"
-      ],
       "suppression_used": false
+    },
+    "compatibility": {
+      "passed": 3,
+      "failed": 0
+    },
+    "pre_compatibility_PR_CI": {
+      "commit": "f89350dd3a7c29d296ab6007e997a945406bb89e",
+      "run": 42185755229,
+      "tests": 4301,
+      "failed": 0,
+      "skipped": 0,
+      "limit": "Before the owner-approved compatibility follow-up; fresh complete CI still required for final head."
     }
   },
   "actual_changed_paths": [
@@ -116,10 +128,14 @@
     "docs/EXECUTION_PLAN.md",
     "docs/evidence/PRE23_TECHNICAL_REMEDIATION_2026-11-06.json",
     "package.json",
+    "patches/@react-router__fs-routes@7.18.2.patch",
     "pnpm-lock.yaml",
     "pnpm-workspace.yaml",
     "tests/a6-tech-01-remaining-security.test.js",
+    "tests/fixtures/pre23-route-config-baseline.json",
     "tests/google-pmax-history.test.js",
-    "tests/pd-source-reader.test.js"
-  ]
+    "tests/pd-source-reader.test.js",
+    "tests/pre23-oauth-route-dependency-compatibility.test.js"
+  ],
+  "owner_compatibility_approval": "Dar uyumluluk yamasını da ekle (Önerilen) — explicit reply to the specific route-discovery compatibility patch/test scope; no new package, UI/URL/OAuth/live/config/merge/deploy."
 }

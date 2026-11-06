@@ -26,9 +26,12 @@ test("remaining-security scope binds exact pins and complete lock graph without 
   const overrides = Object.fromEntries([...workspace.matchAll(/^  '([^']+)': '([^']+)'$/gm)].map(([, key, value]) => [key, value]));
   assert.deepEqual(overrides, current.scoped_overrides);
   assert.deepEqual(Object.keys(evidence.scoped_overrides).filter(k => !k.startsWith("vite@")),
-    Object.keys(overrides).filter(k => !k.startsWith("vite@")));
+    Object.keys(overrides).filter(k => !k.startsWith("vite@") && !k.endsWith(">minimatch")));
   for (const [key, value] of Object.entries(evidence.scoped_overrides))
     assert.equal(overrides[key.replace("vite@7.3.6>", "vite@7.3.7>")], value);
+  for (const parent of ["@react-router/fs-routes@7.18.2", "@ts-morph/common@0.25.0"])
+    assert.equal(overrides[parent + ">minimatch"], "11.0.1");
+  assert.equal(createHash("sha256").update(read(current.findings.F02.compatibility_patch.path).replaceAll("\r\n", "\n")).digest("hex"), current.findings.F02.compatibility_patch.sha256_lf);
   assert.doesNotMatch(workspace, /auditConfig|ignoreCves|ignoreGhsas|ignoredAdvisories|ignoreUnfixable/);
   const lock = read("pnpm-lock.yaml").replaceAll("\r\n", "\n");
   const alignment = JSON.parse(read("contracts/eo-05-start-brief-v1.json")).Polaris_stable_2_alignment_2026_10_29;

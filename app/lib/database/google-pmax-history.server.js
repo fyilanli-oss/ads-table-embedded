@@ -22,12 +22,18 @@ export function createGooglePmaxHistoryLoader({database,cipher,limits,now=Date.n
  ||limits.maxRows>20000||limits.maxBytes>8388608||limits.maxElapsedMs>120000)fail("INPUT_INVALID");
  const bounds=copy(limits),query=database.query.bind(database),open=cipher.open.bind(cipher),repository=createSourceEvidenceRepository({query});
  let used=false;
- const loader=Object.freeze({async load({owner,businessDate,timezone,signal,deadlineAt}={}) {
+ const loader=Object.freeze({async load({owner,businessDate,timezone,signal,deadlineAt,limits:readLimits}={}) {
   const bound=sourceStoreOwner(owner);
   if(bound.provider!=="google_ads"||typeof businessDate!=="string"||!/^\d{4}-\d\d-\d\d$/.test(businessDate)
    ||!Number.isFinite(Date.parse(businessDate))||new Date(businessDate).toISOString().slice(0,10)!==businessDate
    ||typeof timezone!=="string"||!Number.isSafeInteger(deadlineAt)||deadlineAt<=now())fail("INPUT_INVALID");
   try{new Intl.DateTimeFormat("en",{timeZone:timezone});}catch{fail("INPUT_INVALID");}
+  // A parent read can only tighten this loader's factory bounds. Snapshot the
+  // remaining budget before any asynchronous SQL or caller mutation.
+  if(readLimits!==undefined&&(!readLimits||Object.keys(readLimits).sort().join()!=="maxBytes,maxRows"
+   ||Object.values(readLimits).some(v=>!Number.isSafeInteger(v)||v<1)))fail("INPUT_INVALID");
+  const maxRows=Math.min(bounds.maxRows,readLimits?.maxRows??bounds.maxRows);
+  const maxBytes=Math.min(bounds.maxBytes,readLimits?.maxBytes??bounds.maxBytes);
   if(used)fail("EXECUTION_USED");used=true;
   const timeoutMs=Math.min(bounds.maxElapsedMs,deadlineAt-now());
   return runIdentityReadDeadline({signal,timeoutMs,run:async child=>{
@@ -71,10 +77,10 @@ export function createGooglePmaxHistoryLoader({database,cipher,limits,now=Date.n
       if(page.origin!=="google_ads"||page.schemaVersion!=="google-raw-datasets-v2"||page.sanitizerVersion!=="google-query-fields-v1"
        ||page.numericFidelity!=="lossless_token"||page.captureLayer!=="native_response_projection"
        ||!Number.isSafeInteger(page.plainBytes)||page.plainBytes<1)fail("PAGE_METADATA_INVALID");
-      bytesRead+=page.plainBytes;if(bytesRead>bounds.maxBytes)fail("BYTE_BOUND_EXCEEDED");
+      bytesRead+=page.plainBytes;if(bytesRead>maxBytes)fail("BYTE_BOUND_EXCEEDED");
       const payload=open({...ref,page});check();
       if(payload.family!==page.family||!Array.isArray(payload.records))fail("PAGE_PAYLOAD_INVALID");
-      rowsRead+=payload.records.length;if(rowsRead>bounds.maxRows)fail("ROW_BOUND_EXCEEDED");
+      rowsRead+=payload.records.length;if(rowsRead>maxRows)fail("ROW_BOUND_EXCEEDED");
       if(page.family==="pmax_listing_tree_current"){
        if(!Number.isSafeInteger(payload.ordinal)||payload.ordinal<0||typeof payload.hasNextPage!=="boolean"
         ||canonicalSourceJson(payload.selectedFields)!==canonicalSourceJson(page.fieldCoverage))fail("LISTING_PAGE_INVALID");

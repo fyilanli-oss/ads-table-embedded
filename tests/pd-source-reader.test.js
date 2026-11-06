@@ -912,3 +912,40 @@ for (const flow of ["shopping", "retail_pmax"]) test(flow + ": unrequested ident
   assert.equal(r.source_review.reason, "sales_role_prewrite_blocked"); assert.equal(r.product_sales, null);
   assert.equal(r.sales_role_review.counts.conflicting_rows, 1);
 });
+
+function sharedPmaxHistoryFixture(){
+ const f=fixture("google_ads");delete f.config.queryFamily;f.config.googlePd={flow:"retail_pmax",includeProductSales:true};f.config.limits.maxPages=3;
+ const r=f.state.row,owner={workspaceId:r.workspace_id,installationId:r.installation_id,generation:r.install_generation,shopId:r.shop_id,shopDomain:r.shop_domain,provider:"google_ads",connectionId:r.connection_id,connectionVersion:String(r.connection_version),credentialId:r.credential_id,accountId:r.reporting_account_id,selectionEpoch:r.reporting_selection_epoch};
+ const history=pmaxHistoryFixture({owner,now:f.config.now});f.config.googlePmax={historyLoader:history.create()};
+ const observations={httpAtHistory:null};history.hooks.query=()=>{if(observations.httpAtHistory===null)observations.httpAtHistory=f.state.http;};
+ f.hooks.response=(address,init)=>address.includes("oauth2")?json({access_token:"synthetic-access",token_type:"Bearer",expires_in:3600}):json({results:/conversion_action/.test(JSON.parse(init.body).query)?[]:[{customer:{id:"123"},campaign:{id:"10",advertisingChannelType:"PERFORMANCE_MAX"},assetGroup:{id:"40"},segments:{date:"2026-10-01",productMerchantId:"50",productFeedLabel:"TR",productLanguage:"tr",productItemId:"A",productSoldItemId:"B"},metrics:{clicks:"1",unitsSold:"1",revenueMicros:"25000000",crossSellUnitsSold:"1"}}]});
+ return {f,history,observations};
+}
+test("full PD row budget stops before any history SQL or subsequent PMax HTTP",async()=>{
+ const {f,history}=sharedPmaxHistoryFixture();f.config.limits.maxRows=1;
+ await assert.rejects(f.create().readEvidence(),/PD_SOURCE_RESULT_BOUND_EXCEEDED/);assert.equal(history.calls.length,0);
+});
+test("history receives remaining rows and rejects the audit reproduction before subsequent PMax HTTP",async()=>{
+ const {f,history,observations}=sharedPmaxHistoryFixture();f.config.limits.maxRows=2;
+ history.state.pages=[history.encode([1,2,3].map(n=>({...history.row,assetGroupListingGroupFilter:{...history.row.assetGroupListingGroupFilter,id:String(n),resourceName:"customers/123/assetGroupListingGroupFilters/40~"+n}})))];
+ await assert.rejects(f.create().readEvidence(),/PD_SOURCE_READ_FAILED/);assert.ok(history.calls.some(c=>c.sql.includes("read_source_pages")));
+ assert.ok(observations.httpAtHistory>0);assert.equal(f.state.http,observations.httpAtHistory);
+});
+test("history that exactly consumes remaining rows stops before subsequent PMax HTTP",async()=>{
+ const {f,observations}=sharedPmaxHistoryFixture();f.config.limits.maxRows=2;
+ await assert.rejects(f.create().readEvidence(),/PD_SOURCE_RESULT_BOUND_EXCEEDED/);assert.equal(f.state.http,observations.httpAtHistory);
+});
+test("subsequent PMax families use the row budget after both PD and stored history",async()=>{
+ const {f,observations}=sharedPmaxHistoryFixture();f.config.limits.maxRows=3;
+ await assert.rejects(f.create().readEvidence());
+ // One returned row fits; the second returned row exceeds the remaining one.
+ // No third/fourth source family may be requested.
+ assert.equal(f.state.http-observations.httpAtHistory,2);
+});
+for(const delta of [-1,0])test("history obeys the shared remaining byte budget "+delta,async()=>{
+ const control=sharedPmaxHistoryFixture();delete control.f.config.googlePmax;control.f.config.googlePd.includeProductSales=false;
+ const baseline=await control.f.create().readEvidence();const used=Buffer.byteLength(JSON.stringify(baseline.evidence),"utf8");
+ const {f,history,observations}=sharedPmaxHistoryFixture();f.config.limits.maxBytes=used+history.state.pages[0].plainBytes+delta;
+ await assert.rejects(f.create().readEvidence(),delta<0?/PD_SOURCE_READ_FAILED/:/PD_SOURCE_RESULT_BOUND_EXCEEDED/);
+ assert.ok(history.calls.some(c=>c.sql.includes("read_source_pages")));assert.equal(f.state.http,observations.httpAtHistory);
+});

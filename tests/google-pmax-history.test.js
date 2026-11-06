@@ -79,3 +79,19 @@ test("invalid date, malformed limits and JSON copied loader never become authori
  const f=pmaxHistoryFixture();await assert.rejects(f.create().load({...f.input(),businessDate:"2026-02-30"}),/INPUT_INVALID/);
  assert.throws(()=>createGooglePmaxHistoryLoader({database:{},cipher:f.cipher,limits:f.limits}),/INPUT_INVALID/);
 });
+
+for(const [field,error] of [["maxRows","ROW"],["maxBytes","BYTE"]])test(`parent remaining ${field} tightens factory bounds`,async()=>{
+ const f=pmaxHistoryFixture();const limits={maxRows:100,maxBytes:1000000,[field]:1};
+ if(field==="maxRows")f.state.pages=[f.encode([f.row,{...f.row,assetGroupListingGroupFilter:{...f.row.assetGroupListingGroupFilter,id:"2",resourceName:"customers/123/assetGroupListingGroupFilters/40~2"}}])];
+ await assert.rejects(f.create().load({...f.input(),limits}),new RegExp(error+"_BOUND_EXCEEDED"));
+ assert.equal(f.calls.filter(c=>c.sql.includes("find_google_pmax")).length,1);
+});
+test("parent budget cannot enlarge factory bounds or change while SQL waits",async()=>{
+ const f=pmaxHistoryFixture();f.state.pages=[f.encode([f.row,{...f.row,assetGroupListingGroupFilter:{...f.row.assetGroupListingGroupFilter,id:"2",resourceName:"customers/123/assetGroupListingGroupFilters/40~2"}}])];
+ await assert.rejects(f.create({limits:{...f.limits,maxRows:1}}).load({...f.input(),limits:{maxRows:9999,maxBytes:9999999}}),/ROW_BOUND_EXCEEDED/);
+ const g=pmaxHistoryFixture(),limits={maxRows:100,maxBytes:1};g.hooks.query=()=>{limits.maxBytes=1000000;};
+ await assert.rejects(g.create().load({...g.input(),limits}),/BYTE_BOUND_EXCEEDED/);
+});
+for(const limits of [{maxRows:0,maxBytes:1},{maxRows:1,maxBytes:0},{maxRows:1,maxBytes:2.5},{maxRows:1,maxBytes:1,extra:true}])test("invalid parent budget stops before SQL "+JSON.stringify(limits),async()=>{
+ const f=pmaxHistoryFixture();await assert.rejects(f.create().load({...f.input(),limits}),/INPUT_INVALID/);assert.equal(f.calls.length,0);
+});

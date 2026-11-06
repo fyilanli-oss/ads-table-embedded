@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "package": "A6-EO-01-B",
-  "checkedAt": "2026-10-06",
+  "checkedAt": "2026-11-06",
   "versionPolicy": "exact_direct_versions_and_frozen_transitive_lockfile",
   "packages": [
     {"name":"@react-router/node","version":"7.18.2","ownedCapability":"React Router server runtime","nativeAlternativeRationale":"Official Shopify template framework runtime","scope":"runtime","execution":"server","secretAndTenantEffect":"none_by_itself","license":"MIT","maintenance":"remix-run/react-router","removalAndRollback":"Remove with React Router framework replacement"},
@@ -19,6 +19,6 @@
     {"name":"@types/react","version":"18.3.25","ownedCapability":"React TypeScript declarations","nativeAlternativeRationale":"Required for typed React 18 source","scope":"development","execution":"build","secretAndTenantEffect":"none","license":"MIT","maintenance":"DefinitelyTyped","removalAndRollback":"Remove with React or TypeScript"},
     {"name":"@types/react-dom","version":"18.3.7","ownedCapability":"React DOM TypeScript declarations","nativeAlternativeRationale":"Required for typed React DOM 18 source","scope":"development","execution":"build","secretAndTenantEffect":"none","license":"MIT","maintenance":"DefinitelyTyped","removalAndRollback":"Remove with React DOM or TypeScript"},
     {"name":"typescript","version":"5.9.3","ownedCapability":"Static type checking","nativeAlternativeRationale":"Official template language toolchain","scope":"development","execution":"build","secretAndTenantEffect":"none","license":"Apache-2.0","maintenance":"microsoft/TypeScript","removalAndRollback":"Remove only after language/toolchain decision"},
-    {"name":"vite","version":"7.3.6","ownedCapability":"Application bundling and development build","nativeAlternativeRationale":"Official React Router template bundler","scope":"development","execution":"build","secretAndTenantEffect":"environment_exposure_guarded_by_CI","license":"MIT","maintenance":"vitejs/vite","removalAndRollback":"Remove with selected framework build replacement"}
+    {"name":"vite","version":"7.3.7","ownedCapability":"Application bundling and development build","nativeAlternativeRationale":"Official React Router template bundler","scope":"development","execution":"build","secretAndTenantEffect":"environment_exposure_guarded_by_CI","license":"MIT","maintenance":"vitejs/vite","removalAndRollback":"Remove with selected framework build replacement"}
   ]
 }

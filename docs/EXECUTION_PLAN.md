@@ -1,3 +1,14 @@
+## 6 Kasım 2026 — denetimin iki teknik bulgusu için onaylı düzeltme
+
+Ürün sahibi, rapor PR341’in birleşmesini ve rapordaki iki teknik eksiğin giderilmesini açıkça onayladı. PR341 güncel main2a73f57d3aae45d2d23672078d8834878bfeb2c0 olarak birleşti; kaynak/tam geçmiş arşivi ve uzak ağaç eşdeğeri doğrulandı. Bu düzeltme aynı iki bulguyla sınırlıdır; yeni paket açılmaz. Yeni kodun merge/yayını ayrı onaylıdır.
+
+F01: Ana PMax okuyucusu, önceki native kanıtın tüketimini düşerek kalan satır/bayt bütçesini gerçek markalı geçmiş yükleyicisine taşır. Yükleyici fabrika sınırını yalnız daraltır ve bekleme öncesi sabitler. Dönen geçmişin satırları ve ham/serileştirilmiş boyutunun büyüğü sonraki isteğin bütçesinden düşer; tükenmişse sonraki istek başlamaz. Mevcut yetki/fence/iptal, geçerlilik ve Unclassified sınırları değişmez.152 odak test geçti; iki satır bütçe/üç geçmiş satırı örneği artık ek native istek yapmıyor.
+
+F02: Vite7.3.7, body-parser1.20.9, qs6.16.2 ve fast-uri3.1.9 ile12 advisory’nin11’i giderildi. React Router/Shopify sürümleri değişmedi; esbuild0.28.1 kilidi korunur. Kalan minimatch9.0.9 uyarısı geliştirme zincirindedir. Yamalı11.0.1, mevcut fs-routes aracının kullandığı makeRe fonksiyonunu kaldırmıştır; kör override derlemeyi bozar. Dar framework uyumluluk yaması ve testi için somut ek onay sorusu bekliyor; bu yama/override uygulanmadı ve F02 kapatılmadı.
+
+Kaynak kontrolü6 Kasım2026: [Vite üretici duyurusu](https://github.com/vitejs/launch-editor/security/advisories/GHSA-587h-7wmj-h5pm), [body-parser üretici duyurusu](https://github.com/expressjs/body-parser/security/advisories/GHSA-27r3-jxmh-p828), [minimatch üretici duyurusu](https://github.com/isaacs/minimatch/security/advisories/GHSA-g3hv-75wg-m249), [minimatch11 kaynak API’si](https://raw.githubusercontent.com/isaacs/minimatch/v11.0.1/src/index.ts), [pnpm güncelleme](https://pnpm.io/cli/update).
+Bağlayıcı kayıt: contracts/a6-eo-implementation-master-v1.json#Pre23_technical_remediation_2026_11_06.
+
 ## 6 Kasım 2026 — 23 öncesi tek kod bütünlüğü ve platform politikası denetimi
 
 Ürün sahibi kapsamlı mevcut kod/politika denetimini ve OAuth–ham okuyucu yetki bağlantılarının salt okunur incelenmesini somut kapsamla onayladı. Denetlenen main95e985791dd95ef9820bc232e69a12cfa89391ca. Runtime düzeltmesi veya canlı işlem yapılmadı; yeni paket/özellik/felaket senaryosu açılmadı.

@@ -27,6 +27,16 @@ export async function sourceDatasetBindingProbe(client, {ownerFixture}) {
   for (const provider of ["google_ads", "meta", "klaviyo"]) {
     const owner = await ownerFixture(client, provider), input = await storedBindingFixture(client, owner, {mixedMetrics: provider === "klaviyo"}), fixture = input;
     const before = (await client.query("select id::text,request_digest,commit_id from evidence.source_batches where installation_id=$1 order by id", [owner.installationId])).rows;
+    if (provider === "google_ads") {
+      const observed = await readStoredDatasetSources(input), invalid = projectStoredGoogleDataset(observed);
+      invalid.rows.at(-1).row.provenance.sources[0].payload_hash = "f".repeat(64);
+      const write = prepareDatasetWrite({owner, rows: invalid.rows, policy: fixture.policy, now: new Date().toISOString()});
+      await client.query("savepoint retention_atomic_failure");
+      await assert.rejects(createDatasetStorageRepository(client).commit(write), /WRITE_UNCONFIRMED/);
+      await client.query("rollback to savepoint retention_atomic_failure"); await client.query("release savepoint retention_atomic_failure");
+      assert.equal((await client.query("select count(*)::int n from evidence.source_batches where installation_id=$1 and manifest ? 'reportRetention'", [owner.installationId])).rows[0].n, 0, "later invalid proof rolls back earlier source promotion");
+      assert.equal((await client.query("select count(*)::int n from analytics.pd_facts where installation_id=$1", [owner.installationId])).rows[0].n, 0);
+    }
     const result = await bindStoredDatasetSources(input);
     assert.equal(result.rowsStored, provider === "google_ads" ? 3 : 2);
     assert.equal(result.consumerReceipt, false); assert.equal(result.publishable, false);
@@ -67,6 +77,11 @@ export async function sourceDatasetBindingProbe(client, {ownerFixture}) {
       assert.equal(readsAfterLoss, 0);
       assert.equal((await client.query("select count(*)::int n from analytics.pd_facts where installation_id=$1", [owner.installationId])).rows[0].n, 1);
     }
+    // Real three-year facts cannot block a verified installation erase.
+    await client.query("select evidence.delete_installation_sources($1::bigint)", [owner.installationId]);
+    for (const table of ["pd_facts", "cpd_product_performance_facts", "cpd_product_sales_facts"])
+      assert.equal((await client.query(`select count(*)::int n from analytics.${table} where installation_id=$1`, [owner.installationId])).rows[0].n, 0);
+    assert.equal((await client.query("select count(*)::int n from evidence.source_batches where installation_id=$1", [owner.installationId])).rows[0].n, 0);
   }
   console.log("EO05B_SOURCE_DATASET_BINDING_PASS synthetic_only=true native_acceptance=false consumer_receipt=false live_mutation=false");
 }

@@ -104,7 +104,7 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
     if (sql.includes("read_source_receipt")) return {rows: [{result: structuredClone(envelopes.get(args[1])?.receipt)}]};
     if (sql.includes("read_source_pages")) return {rows: [{result: structuredClone(envelopes.get(args[1])?.pages.filter(p => BigInt(p.id) > BigInt(args[3])).slice(0, args[4]) ?? [])}]};
     if (sql.includes("commit_dataset_empty_retention")) {
-      const body = JSON.parse(args[1]), receipt = {status: "retained_empty", operationId: body.operationId, until: body.policy.until, consumerReceipt: false};
+      const body = JSON.parse(args[1]), receipt = {status: "retained_empty", operationId: body.operationId, digest: sourcePayloadHash(body), sources: body.sources, until: body.policy.until, consumerReceipt: false};
       storageReceipts.set(body.operationId, receipt); return {rows: [{result: structuredClone(receipt)}]};
     }
     if (sql.includes("inspect_dataset_empty_retention")) return {rows: [{result: structuredClone(storageReceipts.get(args[2]) ?? null)}]};

@@ -50,11 +50,29 @@ test("successful empty physical sources retain their evidence without a placehol
   assert.equal(result.retentionReceipt.until, "2029-11-02T00:00:00.000Z"); assert.equal(result.consumerReceipt, false); assert.equal(f.writes.length, 0);
 });
 
+test("Klaviyo retains its separate verified account/metric interpretation evidence with every report", async () => {
+  const f = await datasetSourceBindingFixture("klaviyo"), configuration = [...f.envelopes.values()].find(e => e.dataset === "configuration");
+  await bindStoredDatasetSources(f);
+  for (const item of f.writes[0].rows) {
+    for (const page of configuration.pages)
+      assert.ok(item.row.provenance.sources.some(ref => ref.batch_id === configuration.receipt.batchId && ref.page_id === page.id));
+  }
+});
+
 test("partial empty source is held and cannot be certified as a complete zero", async () => {
   const f = await datasetSourceBindingFixture("google_ads", {nonempty: false});
   f.envelopes.get(f.batches[0].attemptId).receipt.sourceState = "partial";
   const result = await bindStoredDatasetSources(f); assert.equal(result.status, "held"); assert.equal(result.empty, null);
   assert.equal(f.queries.some(q => q.includes("commit_dataset_empty_retention")), false);
+});
+
+test("an incomplete empty-retention acknowledgement is unknown and cannot trigger inspection", async () => {
+  for (const field of ["digest", "sources"]) {
+    const f = await datasetSourceBindingFixture("google_ads", {nonempty: false}), database = f.database;
+    f.database = {async query(sql, args) {const r = await database.query(sql, args); if (sql.includes("commit_dataset_empty_retention")) delete r.rows[0].result[field]; return r;}};
+    await assert.rejects(bindStoredDatasetSources(f), /WRITE_UNCONFIRMED/);
+    assert.equal(f.queries.some(q => q.includes("inspect_dataset_empty_retention")), false);
+  }
 });
 
 test("lost empty-retention write is unknown without automatic readback or replay", async () => {

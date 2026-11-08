@@ -18,6 +18,12 @@ export async function bindStoredDatasetSources({database, cipher, owner, batches
   readReportRetentionPolicy(policy);
   const source = await readStoredDatasetSources({database, cipher, owner, batches, limits, signal, now});
   const projection = projectors[source.owner.provider](source);
+  // Klaviyo's separate configuration envelope participates in metric/account
+  // interpretation. Keep that physically verified proof with every derived row.
+  const configuration = source.datasets.filter(d => d.dataset === "configuration").flatMap(d => d.pages.map(p => p.ref));
+  if (configuration.length) for (const {row} of projection.rows) {
+    row.provenance.sources = [...new Map([...row.provenance.sources, ...configuration].map(ref => [ref.batch_id + ":" + ref.page_id, ref])).values()];
+  }
   const boundary = {sourceVerified: true, consumerReceipt: false, publishable: false, authorizesActivation: false,
     holds: projection.holds, auxiliary: projection.auxiliary};
   if (!projection.rows.length) {
@@ -28,7 +34,8 @@ export async function bindStoredDatasetSources({database, cipher, owner, batches
     if (signal?.aborted || now() >= limits.deadlineAt || Date.parse(p.policy.until) <= now()) throw Error("DATASET_BINDING_LIMIT_OR_STOP");
     let receipt;
     try {receipt = (await database.query("select analytics.commit_dataset_empty_retention($1::jsonb,$2::jsonb) as result", [JSON.stringify(source.owner), JSON.stringify(p)])).rows?.[0]?.result;
-      if (receipt?.status !== "retained_empty" || receipt.operationId !== p.operationId || receipt.consumerReceipt !== false || receipt.until !== p.policy.until) throw Error();
+      if (receipt?.status !== "retained_empty" || receipt.operationId !== p.operationId || receipt.consumerReceipt !== false || receipt.until !== p.policy.until
+        || !/^[a-f0-9]{64}$/.test(receipt.digest ?? "") || canonicalSourceJson(receipt.sources) !== canonicalSourceJson(p.sources)) throw Error();
     } catch {throw Error("DATASET_EMPTY_RETENTION_WRITE_UNCONFIRMED");}
     let readback;
     try {readback = (await database.query("select analytics.inspect_dataset_empty_retention($1::jsonb,$2::bigint,$3::uuid) as result", [JSON.stringify(source.owner), p.sources[0].batch_id, p.operationId])).rows?.[0]?.result;} catch {throw Error("DATASET_EMPTY_RETENTION_READ_UNCONFIRMED");}

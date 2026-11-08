@@ -64,6 +64,14 @@ test("same native row twice in one write is rejected; original caller mutations 
   x.rows.push(structuredClone(x.rows[0])); assert.throws(() => prepareDatasetWrite(x), /DUPLICATE_NATIVE_KEY/);
 });
 
+test("query labels, missing entity type and unreviewed breakdown dimensions cannot create another native grain", () => {
+  for (const mutate of [
+    r => {r.source_identity.namespace = "another_query_for_same_sale";},
+    r => {delete r.source_identity.native.entity_type;},
+    r => {r.source_identity.native.country = "US";},
+  ]) {const x = datasetStorageFixture(); mutate(x.rows[0].row); assert.throws(() => prepareDatasetWrite(x), /IDENTITY/);}
+});
+
 test("lost acknowledgement is unknown: a write is not retried or inspected automatically, and forged capabilities fail", async () => {
   let calls = 0; const repo = createDatasetStorageRepository({async query() {calls++; throw Error("synthetic lost reply");}});
   const write = prepareDatasetWrite(datasetStorageFixture());

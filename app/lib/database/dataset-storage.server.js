@@ -51,15 +51,19 @@ function validateIdentity(table, row) {
   // reviewed native identity. No inferred Channel/mapping/role/name in this key.
   const identity = row.source_identity;
   exact(identity, ["kind", "namespace", "native"]);
+  const nativeKeys = ["entity_type", "entity_id", "campaign_id", "ad_group_id", "asset_group_id", "merchant_id", "catalog_id", "feed_label", "language",
+    "product_id", "sold_product_id", "advertised_product_id", "event_id"];
   if (!["daily", "event"].includes(identity.kind) || !text(identity.namespace) || !object(identity.native)
     || !Object.keys(identity.native).length || Object.keys(identity.native).length > 16
-    || Object.entries(identity.native).some(([k, v]) => !/^[a-z][a-z0-9_]{0,63}$/.test(k) || !text(v, true)
+    || Object.entries(identity.native).some(([k, v]) => !nativeKeys.includes(k) || !/^[a-z][a-z0-9_]{0,63}$/.test(k) || !text(v, true)
       || /(?:amount|value|name|mapping|role|channel|currency|version|epoch|connection|credential|job|attempt|receipt|cursor)/.test(k))) fail("IDENTITY_INVALID");
   if (identity.kind === "event") {
     if (table !== "cpd_product_sales_facts" || identity.namespace !== "ordered_product" || Object.keys(identity.native).length !== 1
       || identity.native.event_id !== row.provider_event_id || !text(row.provider_event_id)) fail("EVENT_IDENTITY_INVALID");
   } else if (!date(row.business_date) || !text(row.source_timezone) || !object(row.reporting_scope) || !Object.keys(row.reporting_scope).length) fail("DAILY_SCOPE_REQUIRED");
-  if (table === "pd_facts" && identity.native.entity_id !== row.entity_id
+  const namespace = {pd_facts: "entity_performance", cpd_product_performance_facts: "product_performance", cpd_product_sales_facts: "product_sales"};
+  if (identity.kind === "daily" && identity.namespace !== namespace[table]) fail("IDENTITY_INVALID");
+  if (table === "pd_facts" && (identity.native.entity_id !== row.entity_id || identity.native.entity_type !== row.entity_type)
     || table === "cpd_product_performance_facts" && identity.native.product_id !== row.native_product_id
     || table === "cpd_product_sales_facts" && identity.kind === "daily" && identity.native.sold_product_id !== row.native_sold_product_id) fail("IDENTITY_INVALID");
 }
@@ -121,7 +125,8 @@ function validateRow(owner, table, row) {
   if (table === "cpd_product_sales_facts") {
     if (!["Advertised", "Cross-sell", "Assisted", "Triggered", "Unclassified"].includes(row.sales_role)
       || row.sales_role !== "Unclassified" && !Object.keys(row.sales_role_evidence).length
-      || owner.provider === "klaviyo" && (row.source_identity.kind !== "event" || row.occurred_at === null)) fail("SALES_EVIDENCE_REQUIRED");
+      || owner.provider === "klaviyo" && (row.source_identity.kind !== "event" || row.occurred_at === null)
+      || owner.provider !== "klaviyo" && row.source_identity.kind === "event") fail("SALES_EVIDENCE_REQUIRED");
   }
   const key = datasetNativeKey({owner, table, row});
   // Bounded sanitizer rejects PII/secret keys anywhere, including extensions.

@@ -101,7 +101,7 @@ create table analytics.pd_facts (
  check(fx_state in ('identity','verified','missing','unsupported','conflicting')),
  check((fx_state='verified')=(fx_rate_id is not null)),
  check(fx_state<>'identity' or (source_currency is not null and source_currency=target_currency and fx_rate_id is null)),
- check(extension_schema_version='eo05b-extensions-v1' and metric_extensions='{}'::jsonb),
+ check(length(extension_schema_version) between 1 and 128 and jsonb_typeof(metric_extensions)='object' and octet_length(metric_extensions::text)<=16384),
  check(jsonb_typeof(reporting_scope)='object' and jsonb_typeof(source_identity)='object'),
  check(jsonb_typeof(provenance)='object' and octet_length(provenance::text)<=32768),
  check(jsonb_typeof(metric_support)='object' and jsonb_typeof(observation_state)='object'),
@@ -212,7 +212,7 @@ create table analytics.cpd_product_performance_facts (
  check(fx_state in ('identity','verified','missing','unsupported','conflicting')),
  check((fx_state='verified')=(fx_rate_id is not null)),
  check(fx_state<>'identity' or (source_currency is not null and source_currency=target_currency and fx_rate_id is null)),
- check(extension_schema_version='eo05b-extensions-v1' and metric_extensions='{}'::jsonb),
+ check(length(extension_schema_version) between 1 and 128 and jsonb_typeof(metric_extensions)='object' and octet_length(metric_extensions::text)<=16384),
  check(jsonb_typeof(reporting_scope)='object' and jsonb_typeof(source_identity)='object'),
  check(jsonb_typeof(provenance)='object' and octet_length(provenance::text)<=32768),
  check(jsonb_typeof(metric_support)='object' and jsonb_typeof(observation_state)='object'),
@@ -316,7 +316,7 @@ create table analytics.cpd_product_sales_facts (
  check(fx_state in ('identity','verified','missing','unsupported','conflicting')),
  check((fx_state='verified')=(fx_rate_id is not null)),
  check(fx_state<>'identity' or (source_currency is not null and source_currency=target_currency and fx_rate_id is null)),
- check(extension_schema_version='eo05b-extensions-v1' and metric_extensions='{}'::jsonb),
+ check(length(extension_schema_version) between 1 and 128 and jsonb_typeof(metric_extensions)='object' and octet_length(metric_extensions::text)<=16384),
  check(jsonb_typeof(reporting_scope)='object' and jsonb_typeof(source_identity)='object'),
  check(jsonb_typeof(provenance)='object' and octet_length(provenance::text)<=32768),
  check(jsonb_typeof(metric_support)='object' and jsonb_typeof(observation_state)='object'),
@@ -413,6 +413,10 @@ begin
  for ref in select value from jsonb_array_elements(new.provenance->'sources') loop perform analytics.assert_dataset_source(o,ref);end loop;
  if not exists(select 1 from jsonb_array_elements(new.provenance->'sources') r where r->>'batch_id'=new.source_batch_id::text)
  then raise exception 'DATASET_PRIMARY_SOURCE_REQUIRED';end if;
+ -- Registry changes replace this validator; the tables retain their generic
+ -- same-grain JSONB shape and do not need a new per-provider column/table.
+ if new.extension_schema_version<>'eo05b-extensions-v1' or new.metric_extensions<>'{}'::jsonb
+ or (select count(*) from jsonb_object_keys(new.metric_extensions))>32 then raise exception 'DATASET_EXTENSION_UNREGISTERED';end if;
  keys:=case tg_table_name when 'pd_facts' then array['impression','ad_click','spend_value','add_to_cart','add_to_cart_value','checkout','checkout_value','purchase','purchase_value']
  when 'cpd_product_performance_facts' then array['impression','click','spend_value'] else array['sales_quantity','sales_value'] end;
  if (select count(*) from jsonb_object_keys(new.metric_support))<>cardinality(keys)
@@ -427,14 +431,16 @@ begin
  or (select count(*) from jsonb_object_keys(new.source_identity))<>3 or not new.source_identity ?& array['kind','namespace','native']
  or coalesce(new.source_identity->>'namespace','')='' or identity_kind not in ('daily','event') or identity_kind is null
  or exists(select 1 from jsonb_each(native) where key !~ '^[a-z][a-z0-9_]{0,63}$' or key ~ 'amount|value|name|mapping|role|channel|currency|version|epoch|connection|credential|job|attempt|receipt|cursor'
+ or key not in ('entity_type','entity_id','campaign_id','ad_group_id','asset_group_id','merchant_id','catalog_id','feed_label','language','product_id','sold_product_id','advertised_product_id','event_id')
  or jsonb_typeof(value) not in ('string','null')) then raise exception 'DATASET_IDENTITY_INVALID';end if;
- if (tg_table_name='pd_facts' and native->>'entity_id' is distinct from j->>'entity_id')
+ if (tg_table_name='pd_facts' and (native->>'entity_id' is distinct from j->>'entity_id' or native->>'entity_type' is distinct from j->>'entity_type'))
  or (tg_table_name='cpd_product_performance_facts' and native->>'product_id' is distinct from j->>'native_product_id')
  or (tg_table_name='cpd_product_sales_facts' and identity_kind='daily' and native->>'sold_product_id' is distinct from j->>'native_sold_product_id')
  or (identity_kind='event' and new.platform<>'klaviyo') then raise exception 'DATASET_IDENTITY_INVALID';end if;
  expected:=jsonb_build_array(new.grain_version,new.workspace_id::text,new.installation_id::text,new.installation_generation::text,new.platform,new.platform_account_id,tg_table_name,
  identity_kind,new.source_identity->>'namespace',native);
  if identity_kind='daily' then
+  if new.source_identity->>'namespace' is distinct from (case tg_table_name when 'pd_facts' then 'entity_performance' when 'cpd_product_performance_facts' then 'product_performance' else 'product_sales' end) then raise exception 'DATASET_IDENTITY_INVALID';end if;
   if new.business_date is null or coalesce(new.source_timezone,'')='' or new.reporting_scope='{}' then raise exception 'DATASET_DAILY_SCOPE_REQUIRED';end if;
   expected:=expected||jsonb_build_array(new.business_date::text,new.source_timezone,new.reporting_scope,new.source_currency);
  else
@@ -451,7 +457,7 @@ begin
    select * into strict m from identity.product_identity_mappings where workspace_id=new.workspace_id and installation_id=new.installation_id
    and installation_generation=new.installation_generation and id=(j->>k)::bigint for share;
    if m.mapping_state<>'verified' or m.source_rule_version_id is null or m.native_context is distinct from j->'product_context'
-   or m.native_product_id is distinct from j->>case k when 'product_mapping_id' then 'native_product_id' when 'sold_product_mapping_id' then 'native_sold_product_id' else 'native_advertised_product_id' end
+   or m.native_product_id is distinct from j->>(case k when 'product_mapping_id' then 'native_product_id' when 'sold_product_mapping_id' then 'native_sold_product_id' else 'native_advertised_product_id' end)
    then raise exception 'DATASET_MAPPING_INVALID';end if;
    perform identity.mapping_review_state(o,m.id,m.source_rule_version_id,false);
   end if;
@@ -603,8 +609,10 @@ language plpgsql security definer set search_path='' as $fn$
 declare result jsonb:='{}'; n bigint;
 begin
  set constraints all deferred;
- select analytics.erase_dataset_batches(workspace_id,id,install_generation,null) into result from shopify.installations where id=p_installation;
- result:=coalesce(result,'{}');
+ delete from analytics.pd_facts where installation_id=p_installation;get diagnostics n=row_count;result:=result||jsonb_build_object('analytics.pd_facts',n);
+ delete from analytics.cpd_product_performance_facts where installation_id=p_installation;get diagnostics n=row_count;result:=result||jsonb_build_object('analytics.cpd_product_performance_facts',n);
+ delete from analytics.cpd_product_sales_facts where installation_id=p_installation;get diagnostics n=row_count;result:=result||jsonb_build_object('analytics.cpd_product_sales_facts',n);
+ if exists(select 1 from analytics.pd_facts where installation_id=p_installation) or exists(select 1 from analytics.cpd_product_performance_facts where installation_id=p_installation) or exists(select 1 from analytics.cpd_product_sales_facts where installation_id=p_installation) then raise exception 'DATASET_ERASURE_INCOMPLETE';end if;
  delete from evidence.source_reference_links where installation_id=p_installation;get diagnostics n=row_count;result:=result||jsonb_build_object('evidence.source_reference_links',n);
  delete from source.provider_claim_versions where installation_id=p_installation;get diagnostics n=row_count;result:=result||jsonb_build_object('source.provider_claim_versions',n);
  delete from source.shopify_journey_versions where installation_id=p_installation;get diagnostics n=row_count;result:=result||jsonb_build_object('source.shopify_journey_versions',n);

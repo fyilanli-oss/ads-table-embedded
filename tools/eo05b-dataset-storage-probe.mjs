@@ -104,6 +104,16 @@ export async function datasetStorageProbe(client, connection, environment = proc
           if (table === "cpd_product_sales_facts") {x.rows[0].row.sales_quantity = "0.125"; x.rows[0].row.sales_value = null; x.rows[0].row.observation_state.sales_value = "missing";}
           const result = await repository.commit(prepareDatasetWrite(x)); assert.ok(result.rows[0].id);
         }
+      } else {
+        const event = datasetStorageFixture({owner, source, table: "cpd_product_sales_facts"}), row = event.rows[0].row;
+        row.provider_event_id = "ordered-product-1"; row.occurred_at = "2026-11-01T12:34:56Z"; row.business_date = null;
+        row.source_identity = {kind: "event", namespace: "ordered_product", native: {event_id: row.provider_event_id}};
+        row.sales_quantity = "0.125";
+        const saved = await repository.commit(prepareDatasetWrite(event));
+        assert.equal((await client.query("select business_date from analytics.cpd_product_sales_facts where id=$1", [saved.rows[0].id])).rows[0].business_date, null);
+        row.business_date = "2026-11-01";
+        await rejected(client, () => repository.commit(prepareDatasetWrite(event)), /WRITE_UNCONFIRMED/);
+        assert.equal((await client.query("select count(*)::int n from analytics.cpd_product_sales_facts where installation_id=$1", [owner.installationId])).rows[0].n, 1, "later day resolution must not duplicate an event");
       }
       // Lost acknowledgement after actual SQL write: explicit inspection recovers it.
       const lost = datasetStorageFixture({owner, source}); lost.rows[0].row.source_identity.native.entity_id = "lost-ad"; lost.rows[0].row.entity_id = "lost-ad";
@@ -122,6 +132,18 @@ export async function datasetStorageProbe(client, connection, environment = proc
     assert.equal(rate.fx_rate, "0.9234567890123456789");
     await rejected(client, () => client.query("update analytics.fx_rates set fx_rate=1 where id=$1", [rate.id]), /FX_IMMUTABLE/);
     await rejected(client, () => client.query("update analytics.fx_rates set fx_rate='NaN' where id=$1", [rate.id]));
+    const fxOwner = await ownerFixture(client), fxSource = await sourceFixture(client, fxOwner), converted = datasetStorageFixture({owner: fxOwner, source: fxSource});
+    Object.assign(converted.rows[0].row, {target_currency: "EUR", fx_rate_id: rate.id, fx_state: "verified", fx_engine_version: "synthetic-v1"});
+    await fxRepo.commit(prepareDatasetWrite(converted));
+    converted.rows[0].row.business_date = "2026-11-02";
+    await rejected(client, () => fxRepo.commit(prepareDatasetWrite(converted)), /WRITE_UNCONFIRMED/);
+    await rejected(client, () => client.query("delete from analytics.fx_rates where id=$1", [rate.id]));
+    const foreign = await ownerFixture(client), foreignSource = await sourceFixture(client, foreign);
+    await fxRepo.commit(prepareDatasetWrite(datasetStorageFixture({owner: foreign, source: foreignSource})));
+    await client.query("select analytics.erase_dataset_batches($1,$2,$3,$4::bigint[])", [fxOwner.workspaceId, fxOwner.installationId, fxOwner.generation, [fxSource.batch_id]]);
+    assert.equal((await client.query("select count(*)::int n from analytics.pd_facts where installation_id=$1", [foreign.installationId])).rows[0].n, 1, "scoped erasure must preserve another installation");
+    await client.query("update evidence.source_batches set storage_state='invalidated',commit_id=null,committed_at=null where id=$1", [fxSource.batch_id]);
+    await rejected(client, () => fxRepo.commit(prepareDatasetWrite(datasetStorageFixture({owner: fxOwner, source: fxSource}))), /WRITE_UNCONFIRMED/);
     for (const role of ["anon", "authenticated", "service_role", "adstable_runtime", "adstable_refresh_coordinator"]) {
       assert.equal((await client.query("select has_function_privilege($1,'analytics.commit_dataset_storage(jsonb,jsonb)','EXECUTE') yes", [role])).rows[0].yes, false);
       for (const table of ["pd_facts", "cpd_product_performance_facts", "cpd_product_sales_facts", "fx_rates"]) assert.equal((await client.query("select has_table_privilege($1,$2,'SELECT,INSERT,UPDATE,DELETE') yes", [role, "analytics." + table])).rows[0].yes, false);

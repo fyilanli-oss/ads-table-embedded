@@ -12,7 +12,7 @@ export function datasetStorageFixture({owner, source, table = "pd_facts"} = {}) 
   const row = Object.fromEntries(metadata.columns.map(c => [c.name, null]));
   const metrics = metadata.columns.filter(c => c.type === "numeric").map(c => c.name);
   Object.assign(row, {business_date: "2026-11-01", source_timezone: "UTC", reporting_scope: {time_basis: "interaction_date", units: "native", attribution: "native"},
-    source_identity: {kind: "daily", namespace: table === "pd_facts" ? "ad_performance" : "product", native: {entity_id: "ad-1", product_id: "product-1"}},
+    source_identity: {kind: "daily", namespace: table === "pd_facts" ? "entity_performance" : table === "cpd_product_performance_facts" ? "product_performance" : "product_sales", native: {entity_type: "ad", entity_id: "ad-1", product_id: "product-1"}},
     metric_support: Object.fromEntries(metrics.map(k => [k, "supported"])), observation_state: Object.fromEntries(metrics.map(k => [k, "present"])),
     metric_extensions: {}, extension_schema_version: DATASET_EXTENSION_VERSION,
     provenance: {projection_version: "synthetic-only-v1", sources: [source]}, source_batch_id: source.batch_id, source_completeness: "complete",

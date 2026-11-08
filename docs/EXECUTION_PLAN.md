@@ -1,3 +1,14 @@
+## 8 Kasım 2026 — EO-05-B senkron üç yıllık saklama kararı
+
+Ürün sahibi rapor ile ona gerekli ham kaynak/kanıt metaverisini üç yıl birlikte
+tutmayı seçti; önceki birleştirilmemiş ayırma önerisi kaldırıldı. Mevcut kaynak
+FK/makbuz/pin bağları korunur. Rapora bağlı kaynak sınıfı üç yıllık politikaya
+alınacak; rapora bağlı olmayan kaynak/metaveri için 90/365 varsayılanı kalır.
+Zorunlu silme ilgili bütün katmanlarda önceliklidir. [Karar ve mevcut bağlantılar](EO_05B_REPORT_RETENTION.md).
+Bu PR kararı kaydeder; üç yıllık runtime/SQL uygulaması ve kabulü açıktır. Maliyet
+konuşması owner isteğiyle veritabanı işi sonrasına bırakıldı. Aynı EO-05-B /
+Ayrıntılı kontrol listesi23; yeni paket yoktur.
+
 ## 8 Kasım 2026 — EO-05-B depodaki ham zarfları tablo yazıcısına bağlama
 
 PR #346 sonrası ürün sahibinin açıkladığımız kod/test/PR kapsamına açık onayıyla,

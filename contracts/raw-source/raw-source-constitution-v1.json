@@ -770,7 +770,7 @@
       "contracts/a6-eo-f5-product-route-map-v1.json": "cfae8b77fa44f27978db120865852ece9d3ea03cfc83600f7576e71f9d34067b",
       "contracts/a6-eo-f6-effort-risk-comparison-v1.json": "94ead4504333f50bd1379e3f13e4fa68c5f19bf256c5e4006033fa73dc3e9f3e",
       "contracts/a6-eo-f7-go-decision-v1.json": "c3ed10cfca08ebeab27ebd63c17be60e912b36904accce0e2e38ae174f0d4aa9",
-      "contracts/a6-eo-implementation-master-v1.json": "60c7fa6fe0c5106e166b2a9e4fd18aa2477f70835b7cd6c6b882faea455f97d0",
+      "contracts/a6-eo-implementation-master-v1.json": "bd4b2154c6badabad5f2bc9881c01057e2bbd9d25b3fb3701e019f7d40a6f07e",
       "contracts/a6-eo-secret-inventory-recovery-v1.json": "e8a3e0cc74b446507a3e8f79a9338eee28b3cea7e2ccfd5737d77be182ce7299",
       "contracts/a6-ops-local-01-safe-cleanup-v1.json": "30a77abdc5a4ed9bc92bfac8d4c14ac3e96ed2432eecf2110dc227747ea43e83",
       "contracts/a6-ops-shopify-01-isolated-preproduction-v1.json": "a6f76b340227c6bbce22e4c59959e8e8247e99204e8da773f2a55c3282f42e06",
@@ -838,15 +838,16 @@
       "contracts/eo-05a-refresh-scheduled-queue-check-v1.json": "790bf18194a8c1b8bdf2269c012d1345086ac03598f15dc5a1a6b8475c07967a",
       "contracts/eo-05a-shared-api-quota-v1.json": "266bdad178678880396db00245d27acf32c50245cb354d0b1c8664e376b7a849",
       "contracts/eo-05b-five-table-design-v1.json": "878caf60a18bddf05e154c996e56e80aafa51ae45db9647ce7c8a39e22309182",
-      "contracts/oauth/oauth-flow-constitution-v1.json": "989fe3066c14e2df54fa5bd18675a1e67d913e51d19fa2b30a3cb30d4c319be1",
+      "contracts/eo-05b-report-retention-v1.json": "fbb71af1a18f05d4d8b26a1628cd66dcc7941720a319b5785ba6033a4e83d5bd",
+      "contracts/oauth/oauth-flow-constitution-v1.json": "31252c9ee9329220966d6d7681ee4b940ff29ae11fe6a89aa48130b41d379f1f",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
       "contracts/repository-delivery-workflow-v1.json": "f214c83b6ec65b11fb9b974ae52ebbdf6ae7183bc69bc835320ec25619af4b7f",
       "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json": "18a54cf7d47cddc4b2dcac24320a0f27f3d1112264a023acc33152a80ae745c6",
       "contracts/shopify/a6-eo-07-three-surface-ui-product-freeze-v1.json": "015e7946219fb40669514e965681358e1d32b53781447197f9493b47191ddcb1",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
       "contracts/shopify/shopify-progressive-permissions-release-candidate-v1.json": "204cc1deb525bc47cb14d769d30701cd716fe0db1a56b11be2d083314477adc7",
-      "docs/EXECUTION_PLAN.md": "4486c3d5d903cb332b513150b1eb9a197166c8aac9e3d5c558ddd439ff86e607",
-      "docs/RAW_SOURCE_CONSTITUTION.md": "26d426c4d621ed1942b1300bad2eb69b75df78d5e4c3859b61fabff319936bcb",
+      "docs/EXECUTION_PLAN.md": "3542d9f036dce31e131f264da0fccd10996dba9f4c58ff4086f6b9fb6118ded7",
+      "docs/RAW_SOURCE_CONSTITUTION.md": "8cb806f28d8b4c2ffa39c9d08ba9ff0b210af28fd726d28d3376966b79cf1422",
       "package.json": "a99953eda0b9270c5c7c282e8f517210f11759acd7dbbe25737824dc6288f730",
       "patches/@react-router__fs-routes@7.18.2.patch": "8db744b341f8258e57f41105d65d493974e6ba6253608c0bba031d46751437f5",
       "pnpm-lock.yaml": "2dd20878142080655beac2c99f862826370f9c5a30cab2c6bae9f7bf8111e6db",
@@ -946,7 +947,7 @@
       "supabase/migrations/20261108085004_eo05b_dataset_storage.sql": "67723982a7175f2098e2fb04d68754c6951114aae6fdca80b2e2b1ac41856ce3",
       "supabase/migrations/20261108103823_eo05b_source_dataset_binding.sql": "834ad179767d9a9021d784f22ace77ec4586ed513d17612eea1e3ac84bdf3c05",
       "tests/a6-docs-01-text-integrity.test.js": "7fc1daa89371488ea5c1a74ed9eae65b0de5d6b4bfa08887dc5a62ffc3357d24",
-      "tests/a6-docs-01-turkish-standardization.test.js": "ff95a6e6ad68b67282a5489b1e3350d09fa589e887156230f777c1074f40c95f",
+      "tests/a6-docs-01-turkish-standardization.test.js": "ad25b6bc4ed59629905b0528e8eccd65c5e49274621b2b29dd5da43eaf0de4ef",
       "tests/a6-eo-07-funnel-visualization-reference.test.js": "9b049ced97ee895f82c44338b3c13389d4d4c99dbf998402a9963e009d496c0b",
       "tests/a6-eo-07-three-surface-ui-product-freeze.test.js": "07b4e29380c0d7dcc3e456e6b8b934d8f68778f93f2f4b53276381479c427945",
       "tests/a6-eo-cross-cutting-safety-capacity.test.js": "f2482db931736d2ab6aa1c15f06de4da79a2d23cb096cb41659caa16a89686b7",
@@ -1489,6 +1490,79 @@
         "separate_merge_approval"
       ],
       "visual_acceptance": "not_applicable_no_UI_change"
+    },
+    {
+      "id": "eo05b-report-retention-decision-2026-11-08",
+      "date": "2026-11-08",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Son karar önerinde mutabikiz Codex, followed by Tamam başlayalım Codex for the stated three-year selected-report policy, historical context, normal raw expiry preserving reports and mandatory scoped erasure; current scope is decision record and read-only dependency review."
+      },
+      "rationale": "Record the accepted independent three-year report policy and exact current FK/expiry/receipt/pin/mapping/customer-erasure dependencies. No runtime or SQL behavior changes, source-body copying, expiry extension, OAuth flow or activation.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "live_database": false,
+        "merge": false,
+        "deploy": false
+      },
+      "changed_paths": [
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/eo-05b-report-retention-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json",
+        "docs/EXECUTION_PLAN.md",
+        "docs/RAW_SOURCE_CONSTITUTION.md",
+        "tests/a6-docs-01-turkish-standardization.test.js"
+      ],
+      "artifact_paths": [
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/eo-05b-report-retention-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json",
+        "docs/EO_05B_REPORT_RETENTION.md",
+        "docs/EXECUTION_PLAN.md",
+        "docs/RAW_SOURCE_CONSTITUTION.md",
+        "docs/evidence/EO05B_REPORT_RETENTION_DEPENDENCIES_2026-11-08.json",
+        "tests/a6-docs-01-turkish-standardization.test.js"
+      ],
+      "tests": [
+        "tests/a6-docs-01-turkish-standardization.test.js",
+        "tests/raw-source-constitution.test.js",
+        "tests/oauth-flow-constitution.test.js"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "visual_acceptance": "not_applicable_no_UI_change",
+      "three_year_runtime_acceptance": false,
+      "owner_scope_amendments": [
+        {
+          "date": "2026-11-08",
+          "owner_approval": {
+            "explicit": true,
+            "source": "Codex bence senkron tutalım, ayırma başlı başına bir karmaşa getirecek. Veri maliyetleri Supabase üst sınırlar zaten bunlar şu veritabanı isi bitsin konuşmak istediğim şeyler."
+          },
+          "supersedes": "Only the pending PR348 independent source/report lifetime and separation proposal; prior main revisions remain immutable.",
+          "current_scope": "Record synchronized three-year report and necessary approved raw/proof retention; retain source FK/receipt/pin and mandatory erasure. No runtime/SQL/live/merge/deploy or cost benchmark.",
+          "prior_pending_commit": "006cbfca7ebb65c847d5818d13f748ae0e928b39"
+        }
+      ]
     }
-  ]
+  ],
+  "dataset_retention_decision": {
+    "contract": "contracts/eo-05b-report-retention-v1.json",
+    "model": "synchronized_report_and_required_source_lifetime",
+    "report_calendar_years": 3,
+    "linked_source_and_required_proof_calendar_years": 3,
+    "unlinked_source_days": 90,
+    "unlinked_metadata_days": 365,
+    "source_separation_required": false,
+    "existing_source_dependency_guards_preserved": true,
+    "mandatory_erasure_overrides_report_and_source_retention": true,
+    "runtime_activated": false
+  }
 }

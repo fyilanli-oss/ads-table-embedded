@@ -97,6 +97,15 @@ yerine kullanılamaz. Kaynak toplama satış rolü veya Channel için yeni yetki
 
 ## Saklama ve zorunlu silme
 
+8 Kasım 2026 güncel owner kararı: seçilmiş rapor verisi ile ona gerekli mevcut
+onaylı ham zarf/sayfalar, kaynak makbuzu ve gerekli tarihsel kimlik/kur/sürüm bağı
+üç yıllık senkron düzende tutulur. Kaynak ve rapor ayrılmaz; FK/readback/pin
+korumaları sürer. [Senkron saklama kararı](EO_05B_REPORT_RETENTION.md) bağlayıcı
+girdidir. Zorunlu silme rapor ve kaynak dahil ilgili bütün katmanlarda önceliklidir.
+Bu kayıt runtime/SQL sürelerini etkinleştirmez. Aşağıdaki 90/365 günlük varsayılan,
+rapora bağlı olmayan kayıtlar içindir; bağlı rapor kaynağına uygulanacak özel
+üç yıllık politika uygulama ve regresyon kabulü gerektirir.
+
 Kabul edilen normal politika kaynak/kimlik/sipariş/claim için 90 gün, metaveri için
 365 gündür. Kayıt başına sabit başlangıç korunur; okuma veya yeniden kullanım ömrü
 uzatmaz. Süre dolması körlemesine silme yetkisi değildir: mevcut bağımlılık, consumer

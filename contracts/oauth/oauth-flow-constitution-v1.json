@@ -1576,12 +1576,12 @@
       "app/routes/settings.provider-live-evidence.ts": "89fbcb7087fc480fefba708bbc730146f1ba41af48d98f1b0a10fe1427120495",
       "app/routes/webhooks.shopify.tsx": "eac0ea30fcca28d6bba3c11105a5c4fda7778d1398c23f21fcb02f717d8bd056",
       "app/shopify.server.ts": "cc5959867dd5c413b222d51c4aad7d9a39c7c3d15e590aada86a1ddfefdc6fad",
-      "contracts/a6-eo-implementation-master-v1.json": "60c7fa6fe0c5106e166b2a9e4fd18aa2477f70835b7cd6c6b882faea455f97d0",
+      "contracts/a6-eo-implementation-master-v1.json": "bd4b2154c6badabad5f2bc9881c01057e2bbd9d25b3fb3701e019f7d40a6f07e",
       "contracts/eo-05-oauth-setup-permission-policy-v1.json": "c1914f91011464d3b16b4b0a7710e49878ce6dbb57427e3d0f7c68d9ec4ec681",
       "contracts/eo-05-permission-explanation-design-v1.json": "ad4753b9ad4a6becd14764b7b33fb917f0cc491ad774cc1f1fe9053c5f189f35",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
       "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md": "c602fd4d7760e8f32c109e1f0456907c739c12906d71becf88476cad2007d6a1",
-      "docs/EXECUTION_PLAN.md": "4486c3d5d903cb332b513150b1eb9a197166c8aac9e3d5c558ddd439ff86e607",
+      "docs/EXECUTION_PLAN.md": "3542d9f036dce31e131f264da0fccd10996dba9f4c58ff4086f6b9fb6118ded7",
       "docs/OAUTH_FLOW_CONSTITUTION.md": "74d7a8f327a9558712c3ac8bb54a6633fff7a7e2045405d236d35f265d124b28",
       "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md": "49e253b08959faa9f0b2bf208ed5eb6d3c078a0ddf9097e667a9bf1483dc7350",
       "package.json": "a99953eda0b9270c5c7c282e8f517210f11759acd7dbbe25737824dc6288f730",
@@ -1680,7 +1680,7 @@
       "supabase/migrations/20261105193000_eo05_pmax_history_lookup.sql": "407a99795cdf6f975e37cd28f2accff6d51f14b0fa1a0f72fac4a41f908d41a2",
       "supabase/migrations/20261108085004_eo05b_dataset_storage.sql": "67723982a7175f2098e2fb04d68754c6951114aae6fdca80b2e2b1ac41856ce3",
       "supabase/migrations/20261108103823_eo05b_source_dataset_binding.sql": "834ad179767d9a9021d784f22ace77ec4586ed513d17612eea1e3ac84bdf3c05",
-      "tests/a6-docs-01-turkish-standardization.test.js": "ff95a6e6ad68b67282a5489b1e3350d09fa589e887156230f777c1074f40c95f",
+      "tests/a6-docs-01-turkish-standardization.test.js": "ad25b6bc4ed59629905b0528e8eccd65c5e49274621b2b29dd5da43eaf0de4ef",
       "tests/a6-tech-01-f01c-scoped-recovery.test.js": "3bd869071d5042402215176a99bf14dcebce6d3d0497ffcba946038050701792",
       "tests/eo-01c-preview-shell.test.js": "c3d67bb6666c19cf5ac12cfcd8a7f2f2acdf399d5a8ac32c0269823b06cbf789",
       "tests/eo-03a-oauth-transaction-boundary.test.js": "b364193460356370d1128000e6c0b61e975b2d79b896135d97ce648bc30a7747",
@@ -3588,6 +3588,64 @@
         "separate_merge_approval"
       ],
       "visual_acceptance": "not_applicable_no_UI_change"
+    },
+    {
+      "id": "eo05b-report-retention-decision-2026-11-08",
+      "date": "2026-11-08",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Son karar önerinde mutabikiz Codex, followed by Tamam başlayalım Codex for the stated three-year selected-report policy, historical context, normal raw expiry preserving reports and mandatory scoped erasure; current scope is decision record and read-only dependency review."
+      },
+      "rationale": "Record the accepted independent three-year report policy and exact current FK/expiry/receipt/pin/mapping/customer-erasure dependencies. No runtime or SQL behavior changes, source-body copying, expiry extension, OAuth flow or activation.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "live_database": false,
+        "merge": false,
+        "deploy": false
+      },
+      "changed_paths": [
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "docs/EXECUTION_PLAN.md",
+        "tests/a6-docs-01-turkish-standardization.test.js"
+      ],
+      "artifact_paths": [
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/eo-05b-report-retention-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json",
+        "docs/EO_05B_REPORT_RETENTION.md",
+        "docs/EXECUTION_PLAN.md",
+        "docs/RAW_SOURCE_CONSTITUTION.md",
+        "docs/evidence/EO05B_REPORT_RETENTION_DEPENDENCIES_2026-11-08.json",
+        "tests/a6-docs-01-turkish-standardization.test.js"
+      ],
+      "tests": [
+        "tests/a6-docs-01-turkish-standardization.test.js",
+        "tests/raw-source-constitution.test.js",
+        "tests/oauth-flow-constitution.test.js"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "visual_acceptance": "not_applicable_no_UI_change",
+      "three_year_runtime_acceptance": false,
+      "owner_scope_amendments": [
+        {
+          "date": "2026-11-08",
+          "owner_approval": {
+            "explicit": true,
+            "source": "Codex bence senkron tutalım, ayırma başlı başına bir karmaşa getirecek. Veri maliyetleri Supabase üst sınırlar zaten bunlar şu veritabanı isi bitsin konuşmak istediğim şeyler."
+          },
+          "supersedes": "Only the pending PR348 independent source/report lifetime and separation proposal; prior main revisions remain immutable.",
+          "current_scope": "Record synchronized three-year report and necessary approved raw/proof retention; retain source FK/receipt/pin and mandatory erasure. No runtime/SQL/live/merge/deploy or cost benchmark.",
+          "prior_pending_commit": "006cbfca7ebb65c847d5818d13f748ae0e928b39"
+        }
+      ]
     }
   ],
   "coverage": {

@@ -115,3 +115,12 @@ test("lost Dataset write acknowledgement causes no inspection, second write or n
   const retry = createDatasetServerExecution({...f, operationId: f.plan.operationId}); await assert.rejects(retry.run()); await retry.close();
   assert.equal(f.writes.length, 1, "a new process/execution cannot replay the same durable plan");
 });
+test("a lost durable-start reply cannot reach source inspection or be restarted by another execution", async () => {
+  const f = await datasetServerFixture("google_ads"), original = f.database.query.bind(f.database);
+  f.database.query = async (sql, args) => {const result = await original(sql, args); if (sql.includes("begin_dataset_storage_operation")) throw Error("lost start reply"); return result;};
+  for (let i = 0; i < 2; i++) {
+    const e = createDatasetServerExecution({...f, operationId: f.plan.operationId}); await assert.rejects(e.run()); await e.close();
+  }
+  assert.equal(f.writes.length, 0); assert.equal(f.trace.some(q => q.startsWith("select evidence.read_source_receipt(")), false);
+  assert.equal(f.counts().native, 0);
+});

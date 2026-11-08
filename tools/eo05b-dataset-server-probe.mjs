@@ -43,7 +43,16 @@ export async function datasetServerProbe(client, {ownerFixture}) {
           if (sql === "commit") {await client.query("set local role adstable_owner"); await client.query("release savepoint " + savepoint); committed = true; return {rows: []};}
           if (sql === "rollback") {if (!committed) {await client.query("rollback to savepoint " + savepoint); await client.query("release savepoint " + savepoint);} await client.query("set local role adstable_owner"); return {rows: []};}
           if (sql.startsWith("select pg_catalog.set_config")) return client.query(sql, args);
-          await client.query("set local role " + role); const result = await client.query(sql, args); await client.query("set local role adstable_owner"); return result;
+          await client.query("set local role " + role);
+          let result;
+          try {result = await client.query(sql, args);} catch (error) {
+            console.error("EO05B_DATASET_SERVER_SQL_DIAGNOSTIC", JSON.stringify({provider, code: error.code, message: error.message, where: error.where})); throw error;
+          }
+          if (sql.includes("as profile_ready") && result.rows[0]?.profile_ready !== true) {
+            const missing = await client.query("select s.signature from unnest($1::text[]) s(signature) where to_regprocedure(s.signature) is null or not coalesce(has_function_privilege(current_user,to_regprocedure(s.signature)::oid,'EXECUTE'),false)", args);
+            console.error("EO05B_DATASET_PROFILE_DIAGNOSTIC", JSON.stringify({provider, profile: result.rows, missing: missing.rows}));
+          }
+          await client.query("set local role adstable_owner"); return result;
         }};
       }});
       const execution = createDatasetServerExecution({environment, operationId: plan.operationId, poolFactory, fetchFn: async () => {native++; throw Error("NATIVE_FORBIDDEN");}});
@@ -59,6 +68,11 @@ export async function datasetServerProbe(client, {ownerFixture}) {
       await client.query("rollback to savepoint dataset_context_denied"); await client.query("release savepoint dataset_context_denied");
       assert.equal((await client.query("select count(*)::int n from evidence.source_batches where installation_id=$1 and handoff_state<>'pending'", [owner.installationId])).rows[0].n, 0);
       assert.equal((await client.query("select has_table_privilege($1,'evidence.source_pages','SELECT') yes", [role])).rows[0].yes, false);
+      await client.query("savepoint dataset_column_privilege");
+      await client.query("grant select(id) on evidence.source_pages to " + role);
+      const unsafe = createDatasetServerExecution({environment, operationId: plan.operationId, poolFactory});
+      await assert.rejects(unsafe.run()); await unsafe.close();
+      await client.query("rollback to savepoint dataset_column_privilege"); await client.query("release savepoint dataset_column_privilege");
     }
     for (const role of ["anon", "authenticated", "service_role", "adstable_runtime", "adstable_refresh_coordinator"]) for (const [, signature] of DATASET_STORAGE_RPC) {
       assert.equal((await client.query("select has_function_privilege($1,$2,'EXECUTE') yes", [role, signature])).rows[0].yes, false);

@@ -17,7 +17,13 @@ export function createDatasetPostgresClient({environment, provider, deadlineAt, 
   const spec = providers[provider];
   if (!spec || typeof poolFactory !== "function" || typeof now !== "function" || !Number.isSafeInteger(deadlineAt) || deadlineAt <= now()) throw failure();
   const config = spec.config(environment), signatures = [...new Set([...spec.rpc, ...DATASET_STORAGE_RPC].map(x => x[1]))];
-  const profile = spec.check.replace(") as profile_ready", "and has_schema_privilege(current_user,'analytics','USAGE') and has_schema_privilege(current_user,'app','USAGE')) as profile_ready");
+  const profile = spec.check.replace(") as profile_ready", `and has_schema_privilege(current_user,'analytics','USAGE') and has_schema_privilege(current_user,'app','USAGE')
+    and not exists(select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
+      where n.nspname in ('app','shopify','integrations','operations','billing','privacy','analytics','evidence','identity','source')
+      and c.relkind in ('r','p') and has_any_column_privilege(current_user,c.oid,'SELECT,INSERT,UPDATE,REFERENCES'))
+    and not exists(select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
+      where n.nspname in ('app','shopify','integrations','operations','billing','privacy','analytics','evidence','identity','source')
+      and c.relkind='S' and has_sequence_privilege(current_user,c.oid,'USAGE,SELECT,UPDATE'))) as profile_ready`);
   const pool = poolFactory({...config, max: 1, query_timeout: config.timeoutMs, connectionTimeoutMillis: Math.min(config.timeoutMs, deadlineAt - now()),
     idleTimeoutMillis: 10000, allowExitOnIdle: true, application_name: "adstable-dataset-storage"});
   let stopped = false, closed = false, busy = false;

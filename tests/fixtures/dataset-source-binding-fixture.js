@@ -33,7 +33,7 @@ async function nativeKlaviyoPage(path, body, request = null) {
 
 /** All native responses/credentials/owners are synthetic. Real capture projection,
  * AEAD and decrypt paths are used; this fake DB is not SQL/native acceptance. */
-export async function datasetSourceBindingFixture(provider = "google_ads", {nonempty = true, missingMetric = false, mixedMetrics = false, owner: givenOwner = null} = {}) {
+export async function datasetSourceBindingFixture(provider = "google_ads", {nonempty = true, missingMetric = false, mixedMetrics = false, eventOrderId = null, owner: givenOwner = null} = {}) {
   const owner = givenOwner ? structuredClone(givenOwner) : datasetStorageFixture().owner;
   if (!givenOwner) {owner.installationId = "1"; owner.provider = provider; owner.accountId = provider === "meta" ? "act_123" : provider === "klaviyo" ? "account-1" : "123";}
   if (provider === "klaviyo") owner.selectionEpoch = null;
@@ -78,6 +78,7 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
     }
     const event = {type: "event", id: "event-1", attributes: {datetime: day + "T12:00:00Z", event_properties: {ProductID: "product-1", Quantity: "2.5", $value: "12.500000000000000001"}},
       relationships: {metric: {data: {type: "metric", id: "product"}}, attributions: {data: [{type: "attribution", id: "attribution-1"}]}}};
+    if (eventOrderId !== null) event.attributes.event_properties.OrderId = eventOrderId;
     const events = await nativeKlaviyoPage("/api/events", {data: nonempty ? [event] : [], included: nonempty ? [{type: "attribution", id: "attribution-1", relationships: {
       campaign: {data: {type: "campaign", id: "campaign-1"}}, "campaign-message": {data: {type: "campaign-message", id: "message-1"}}, event: {data: {type: "event", id: "event-1"}}}}] : [], links: {next: null}});
     native.push({dataset: "configuration", pages: proof, coverage: [{family: "accounts", state: "present"}, {family: "metrics", state: "present"}]},

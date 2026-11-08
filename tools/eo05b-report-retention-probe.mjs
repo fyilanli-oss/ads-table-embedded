@@ -7,6 +7,7 @@ import {prepareDatasetRetentionSweep, createDatasetRetentionRepository} from "..
 import {prepareDatasetWrite, createDatasetStorageRepository} from "../app/lib/database/dataset-storage.server.js";
 import {datasetStorageFixture} from "../tests/fixtures/dataset-storage-fixture.js";
 import {readFileSync} from "node:fs";
+import {createPrivacyLifecycleRuntime} from "../app/lib/shopify/privacy-lifecycle.server.js";
 
 // Invoked in the existing verified-mapping probe's nested rollback case, with
 // a genuinely accepted synthetic reviewed rule/mapping and admitted job context.
@@ -72,6 +73,20 @@ export async function reportRetentionProbe(client, {ownerFixture, sourceFixture}
   // merchant's complete retained proof must survive another merchant's erase.
   await client.query("select evidence.delete_installation_sources($1::bigint)", [retained[0].installationId]);
   assert.equal((await client.query("select count(*)::int n from evidence.source_batches where installation_id=$1", [retained[0].installationId])).rows[0].n, 0);
+  assert.ok((await client.query("select count(*)::int n from evidence.source_batches where installation_id=$1", [retained[1].installationId])).rows[0].n > 0);
+
+  // A real customer-scoped redaction of a synthetic native event removes its
+  // three-year sale and raw record, while unrelated PD and merchants remain.
+  const customerOwner = await ownerFixture(client, "klaviyo"), orderId = "gid://shopify/Order/101";
+  const customerInput = await storedBindingFixture(client, customerOwner, {eventOrderId: orderId});
+  await bindStoredDatasetSources(customerInput);
+  const shopIdentity = (await client.query("select shop_identity_sha256 from shopify.installations where id=$1", [customerOwner.installationId])).rows[0].shop_identity_sha256;
+  const claim = (await client.query("select * from privacy.claim_shopify_customer_webhook($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb)",
+    [randomUUID(), null, "customers/redact", customerOwner.shopId, customerOwner.shopDomain, shopIdentity, "a".repeat(64), "2026-10", null, new Date().toISOString(), JSON.stringify({version: 1, orders: [orderId]})])).rows[0];
+  const erased = await createPrivacyLifecycleRuntime({database: client, sourcePrivacy: {cipher: customerInput.cipher}}).executeDeletionRun(claim.deletion_run_id);
+  assert.equal(erased.status, "completed"); assert.equal(erased.result, "deleted");
+  assert.equal((await client.query("select count(*)::int n from analytics.cpd_product_sales_facts where installation_id=$1", [customerOwner.installationId])).rows[0].n, 0);
+  assert.equal((await client.query("select count(*)::int n from analytics.pd_facts where installation_id=$1", [customerOwner.installationId])).rows[0].n, 1);
   assert.ok((await client.query("select count(*)::int n from evidence.source_batches where installation_id=$1", [retained[1].installationId])).rows[0].n > 0);
 
   // Expiry cleanup uses an honestly short legacy synthetic policy and actual

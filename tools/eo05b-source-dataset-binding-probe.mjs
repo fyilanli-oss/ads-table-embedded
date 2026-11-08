@@ -24,11 +24,15 @@ export async function storedBindingFixture(client, owner, options = {}) {
 /** Called only inside the existing F01 localhost rollback transaction. Native
  * HTTP bodies and admission metadata below are SYNTHETIC, not live acceptance. */
 export async function sourceDatasetBindingProbe(client, {ownerFixture}) {
+  const raw = client;
+  client = {async query(sql, args) {try {return await raw.query(sql, args);} catch (error) {
+    console.error("EO05B_BINDING_SQL_DIAGNOSTIC", JSON.stringify({code: error.code, message: error.message, where: error.where, position: error.position})); throw error;
+  }}};
   for (const provider of ["google_ads", "meta", "klaviyo"]) {
     const owner = await ownerFixture(client, provider), input = await storedBindingFixture(client, owner, {mixedMetrics: provider === "klaviyo"}), fixture = input;
     const before = (await client.query("select id::text,request_digest,commit_id from evidence.source_batches where installation_id=$1 order by id", [owner.installationId])).rows;
     if (provider === "google_ads") {
-      const observed = await readStoredDatasetSources(input), invalid = projectStoredGoogleDataset(observed);
+      const observed = await readStoredDatasetSources(input), invalid = structuredClone(projectStoredGoogleDataset(observed));
       invalid.rows.at(-1).row.provenance.sources[0].payload_hash = "f".repeat(64);
       const write = prepareDatasetWrite({owner, rows: invalid.rows, policy: fixture.policy, now: new Date().toISOString()});
       await client.query("savepoint retention_atomic_failure");

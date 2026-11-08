@@ -37,7 +37,7 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
   if (!givenOwner) {owner.installationId = "1"; owner.provider = provider; owner.accountId = provider === "meta" ? "act_123" : provider === "klaviyo" ? "account-1" : "123";}
   if (provider === "klaviyo") owner.selectionEpoch = null;
   const operationId = randomUUID(), jobId = "synthetic-binding-job", fence = "1", source = {workspaceId: owner.workspaceId, installGeneration: owner.generation,
-    provider, accountId: owner.accountId, connectionId: owner.connectionId, connectionVersion: 1, accountRowId: "1", selectionId: owner.selectionEpoch,
+    provider, accountId: owner.accountId, connectionId: owner.connectionId, connectionVersion: owner.connectionVersion, accountRowId: "1", selectionId: owner.selectionEpoch,
     eligibleFromMs: Date.parse("2026-10-31T00:00:00Z"), timezone: "UTC", currency: "USD"};
   const spec = provider === "google_ads" ? {read: "googleDatasetRead", digest: "googleDatasetInputDigest", schema: "google-raw-datasets-v2", sanitizer: "google-query-fields-v1"}
     : provider === "meta" ? {read: "metaDatasetRead", digest: "metaDatasetInputDigest", schema: "meta-raw-datasets-v1", sanitizer: "meta-query-fields-v1"}

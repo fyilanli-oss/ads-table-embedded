@@ -49,14 +49,19 @@ export async function datasetServerProbe(client, {ownerFixture}) {
             console.error("EO05B_DATASET_SERVER_SQL_DIAGNOSTIC", JSON.stringify({provider, code: error.code, message: error.message, where: error.where})); throw error;
           }
           if (sql.includes("as profile_ready") && result.rows[0]?.profile_ready !== true) {
-            const missing = await client.query("select s.signature from unnest($1::text[]) s(signature) where to_regprocedure(s.signature) is null or not coalesce(has_function_privilege(current_user,to_regprocedure(s.signature)::oid,'EXECUTE'),false)", args);
-            console.error("EO05B_DATASET_PROFILE_DIAGNOSTIC", JSON.stringify({provider, profile: result.rows, missing: missing.rows}));
+            console.error("EO05B_DATASET_PROFILE_DIAGNOSTIC", JSON.stringify({provider, profile: result.rows}));
+            try {
+              const missing = await client.query("select s.signature from unnest($1::text[]) s(signature) where to_regprocedure(s.signature) is null or not coalesce(has_function_privilege(current_user,to_regprocedure(s.signature)::oid,'EXECUTE'),false)", args);
+              console.error("EO05B_DATASET_PROFILE_MISSING", JSON.stringify({provider, missing: missing.rows}));
+            } catch (error) {console.error("EO05B_DATASET_PROFILE_LOOKUP_ERROR", JSON.stringify({code: error.code, message: error.message})); throw error;}
           }
           await client.query("set local role adstable_owner"); return result;
         }};
       }});
       const execution = createDatasetServerExecution({environment, operationId: plan.operationId, poolFactory, fetchFn: async () => {native++; throw Error("NATIVE_FORBIDDEN");}});
-      const result = await execution.run(); await execution.close();
+      let result;
+      try {result = await execution.run();} catch (error) {console.error("EO05B_DATASET_EXECUTION_STOP", JSON.stringify({provider, checkouts: ordinal, message: error.message})); throw error;}
+      await execution.close();
       assert.equal(result.rowsStored, provider === "google_ads" ? 3 : 2); assert.equal(result.consumerReceipt, false); assert.equal(native, 0);
       assert.equal(result.storageReceipt.operationId, plan.operationId);
       const repeated = createDatasetServerExecution({environment, operationId: plan.operationId, poolFactory, fetchFn: async () => {native++; throw Error("NATIVE_FORBIDDEN");}});

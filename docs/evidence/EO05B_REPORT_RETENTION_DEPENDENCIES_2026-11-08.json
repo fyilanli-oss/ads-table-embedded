@@ -153,5 +153,10 @@
     "SQL_run": 42475280330,
     "scope": "Synthetic temporary PostgreSQL evidence for current source/store/pin/erasure behavior only; does not validate the new three-year policy."
   },
-  "conclusion": "Accepted product policy requires source-lifetime-independent historical report proof and erasure addressability before runtime activation; merely changing policy.until is insufficient. No guard removal, raw-body duplication, expiry extension or new table is authorized by this review."
+  "conclusion": "The owner chose synchronized retention. Keep current source FK/live receipt/page/pin and mapping/FX dependencies; apply one three-year reporting-source class to required raw/proof and reports. Existing short source expiry defaults cannot govern linked reporting rows. No source separation or new archive is required. Runtime policy, cleanup and mandatory-erasure acceptance remain pending; no guard is removed or bypassed.",
+  "owner_policy_update": {
+    "decision": "Codex bence senkron tutalım, ayırma başlı başına bir karmaşa getirecek. Veri maliyetleri Supabase üst sınırlar zaten bunlar şu veritabanı isi bitsin konuşmak istediğim şeyler.",
+    "supersedes_unmerged_separation_commit": "006cbfca7ebb65c847d5818d13f748ae0e928b39",
+    "model": "synchronized_report_and_required_source_lifetime"
+  }
 }

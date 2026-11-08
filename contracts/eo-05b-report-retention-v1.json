@@ -5,11 +5,12 @@
   "parent_package": "A6-EO-05-B",
   "detail_checklist_step": 23,
   "baseline_main": "009570183f7cfd4a7781a61dc2d1ecd1e599f07f",
-  "status": "owner_policy_accepted_dependency_review_complete_runtime_not_implemented",
+  "status": "owner_synchronized_policy_accepted_dependency_review_complete_runtime_not_implemented",
   "owner_approval": {
     "policy": "Son karar önerinde mutabikiz Codex",
     "start": "Tamam başlayalım Codex",
-    "scope": "Three-year selected report history, necessary identity/FX/calculation context, normal raw expiry preserving reports and mandatory scoped erasure across layers. This delivery records the decision and current dependency review; no runtime/live action."
+    "scope": "Supersedes the unmerged separation proposal: retain selected report data and its necessary approved raw envelopes/proof metadata together for three years; mandatory scoped erasure across layers. Cost discussion deferred by owner. Decision/compatibility record only in this PR.",
+    "latest_decision": "Codex bence senkron tutalım, ayırma başlı başına bir karmaşa getirecek. Veri maliyetleri Supabase üst sınırlar zaten bunlar şu veritabanı isi bitsin konuşmak istediğim şeyler."
   },
   "brief": "docs/EO_05B_REPORT_RETENTION.md",
   "dependency_evidence": "docs/evidence/EO05B_REPORT_RETENTION_DEPENDENCIES_2026-11-08.json",
@@ -20,32 +21,37 @@
     "read_extends_lifetime": false,
     "replay_extends_lifetime": false,
     "correction_extends_lifetime": false,
-    "applies_to": "Selected report-required fields plus necessary historical identity, FX and calculation/projection versions; not every field in a Dataset row.",
+    "applies_to": "Selected necessary report fields and original approved raw envelopes, source receipts/proof metadata and identity/FX/version dependencies required by those reports.",
     "date_filter_changed": false,
     "source_retention_inherited": false,
-    "calendar_boundary_tests_required": true
+    "calendar_boundary_tests_required": true,
+    "required_sources_share_report_lifetime": true
   },
   "source_retention": {
-    "source_days": 90,
-    "metadata_days": 365,
-    "changed": false,
-    "raw_body_copied_to_report_archive": false,
-    "global_source_metadata_extended_to_three_years": false
+    "report_linked_calendar_years": 3,
+    "required_raw_and_proof_metadata_synchronized": true,
+    "report_linked_90_365_default_overridden": true,
+    "unlinked_source_days": 90,
+    "unlinked_metadata_days": 365,
+    "all_source_classes_globally_changed": false,
+    "additional_raw_body_copy": false,
+    "new_source_fields_or_queries": false,
+    "supported_report_expiry_is_minimum_dependency_lifetime": true
   },
   "field_selection": {
     "report_values": "Necessary approved measurements at their approved native grain; exact units/decimals/support/observation/completeness preserved.",
     "historical_context": "Only necessary owner/account/product/channel identity, original business date/timezone/source currency and actual applied FX/projection/formula/version and minimum immutable proof summary.",
     "not_automatically_approved": [
-      "individual_order_detail",
-      "individual_event_detail",
-      "personal_data",
       "arbitrary_native_JSON",
-      "full_raw_payload",
-      "all_source_metadata"
+      "full_unfiltered_HTTP_payload",
+      "new_customer_profile_fields",
+      "unnecessary_personal_data",
+      "unrelated_source_records"
     ],
     "native_ids_not_anonymous_by_default": true,
     "klaviyo_event_grain_must_not_silently_become_daily": true,
-    "classification_required_before_runtime_activation": true
+    "classification_required_before_runtime_activation": true,
+    "individual_records": "Existing necessary order/event identities and approved raw projection fields follow the linked source policy only when required for the accepted report/native grain and erasure scope; being inside a Dataset does not approve arbitrary extra fields."
   },
   "mandatory_erasure": {
     "overrides_three_years": true,
@@ -57,21 +63,24 @@
     "source_pruning_must_not_erase_subject_addressability": true
   },
   "normal_cleanup": {
-    "must_preserve_report_values_and_meaning": true,
-    "must_preserve_necessary_historical_proof": true,
-    "source_expired_does_not_mean_prior_verified_report_false": true,
-    "raw_reconstruction_after_purge_claimed": false,
+    "early_source_purge_while_report_retained": false,
+    "existing_source_FK_receipt_and_pin_model_preserved": true,
+    "normal_source_expiry_does_not_make_still_retained_report_unreadable": true,
+    "expiration_order": "Expire/delete eligible report rows first; remove source/proof/mapping dependencies only when no retained dependent record remains and existing consumer/partial/unknown gates allow.",
+    "required_source_and_receipt_readback_available_for_report_lifetime": true,
+    "report_original_lifetime_extended_by_read_or_replay": false,
+    "new_independent_archive": false,
     "guard_removal_or_bypass": false,
-    "infinite_source_pin_not_solution": true,
-    "private_atomic_dependency_protocol_required": true
+    "three_year_period_is_finite": true
   },
   "implementation_acceptance": [
-    "Selected report field and erasure-address classification reviewed at existing native grain.",
-    "Original verified source-to-report proof remains authenticated and owner-bound after normal raw/page/manifest expiry; no raw-body duplicate.",
-    "Report values, dates, currency, support/completeness, identity/FX/version context survive normal source cleanup.",
-    "Native source acceptance retains current fresh owner, receipt, AEAD, mapping, scope and expiry checks; historical proof is not fresh write authority.",
-    "Immutable three-calendar-year boundary tests including leap dates, timezones and replay/correction; no ingestion-based clock.",
-    "Mandatory installation and customer erasure after source cleanup, unrelated merchant isolation and no-reingestion remain proven."
+    "One versioned calendar-year policy yields the report expiry and protects every necessary linked raw page/batch/receipt/identity dependency through that expiry.",
+    "Current source foreign keys, live source receipt/page readback and evidence pins remain in place; no independent historical-proof archive or source separation.",
+    "Linked reporting sources/proof metadata use the accepted three-year class; unlinked 90/365 defaults remain and are not accidentally applied to linked rows.",
+    "Exact approved raw projection fields, original native fact grain, decimal accuracy, source completeness and existing role/mapping/FX proof gates remain.",
+    "Calendar boundary, timezone/leap-day, original data date and replay/correction non-extension checks pass.",
+    "Expired normal report data is removed before its now-unneeded evidence; other retained dependents and existing consumer/partial/unknown guards block premature cleanup.",
+    "Mandatory installation/customer erasure still removes in-scope linked report/source/identity layers before normal expiry; unrelated merchants preserved."
   ],
   "claims": {
     "runtime_changed": false,
@@ -86,7 +95,9 @@
     "config": false,
     "merge": false,
     "deploy": false,
-    "EO05B_complete": false
+    "EO05B_complete": false,
+    "source_separation_implemented": false,
+    "cost_benchmark_performed": false
   },
   "official_checked_at": "2026-11-08",
   "official_sources": [
@@ -96,5 +107,12 @@
     "https://www.shopify.com/legal/api-terms",
     "https://shopify.dev/docs/apps/launch/protected-customer-data#requirements",
     "https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance"
-  ]
+  ],
+  "decision_model": "synchronized_report_and_required_source_lifetime",
+  "supersedes_unmerged_proposal": {
+    "pr": 348,
+    "commit": "006cbfca7ebb65c847d5818d13f748ae0e928b39",
+    "proposal": "Independent report lifetime and source/report separation",
+    "owner_changed_to": "Synchronized retention; keep existing evidence dependencies."
+  }
 }

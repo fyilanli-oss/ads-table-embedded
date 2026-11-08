@@ -4,6 +4,10 @@ on:
   pull_request:
     branches: [main, "codex/step15-storage-foundation-design"]
     paths:
+      - "app/lib/database/dataset-fx-*.server.js"
+      - "app/lib/database/reporting-currency.server.js"
+      - "tests/dataset-fx.test.js"
+      - "tools/eo05b-fx-reporting-currency-probe.mjs"
       - "app/lib/database/report-retention-policy.server.js"
       - "app/lib/database/dataset-retention.server.js"
       - "tests/report-retention.test.js"

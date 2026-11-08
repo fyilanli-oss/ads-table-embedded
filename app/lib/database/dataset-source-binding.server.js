@@ -6,6 +6,7 @@ import {prepareDatasetWrite, createDatasetStorageRepository} from "./dataset-sto
 import {canonicalSourceJson} from "./source-evidence-store.server.js";
 import {reportRetentionPolicy, readReportRetentionPolicy, resolveReportRetentionPolicy} from "./report-retention-policy.server.js";
 import {randomUUID} from "node:crypto";
+import {applyStoredDatasetFx} from "./dataset-fx-resolver.server.js";
 
 const projectors = Object.freeze({google_ads: projectStoredGoogleDataset, meta: projectStoredMetaDataset, klaviyo: projectStoredKlaviyoDataset});
 
@@ -13,7 +14,7 @@ const projectors = Object.freeze({google_ads: projectStoredGoogleDataset, meta: 
  * No caller projection/canonical row, native request, OAuth mutation, FX source,
  * scheduler, consumed marker or report checkpoint is accepted here.
  */
-export async function bindStoredDatasetSources({database, cipher, owner, batches, limits, policy = reportRetentionPolicy(), signal, now = Date.now}) {
+export async function bindStoredDatasetSources({database, cipher, owner, batches, limits, policy = reportRetentionPolicy(), fxResolver, signal, now = Date.now}) {
   batches = structuredClone(batches); limits = structuredClone(limits); policy = structuredClone(policy);
   readReportRetentionPolicy(policy);
   const source = await readStoredDatasetSources({database, cipher, owner, batches, limits, signal, now});
@@ -23,6 +24,11 @@ export async function bindStoredDatasetSources({database, cipher, owner, batches
   const configuration = source.datasets.filter(d => d.dataset === "configuration").flatMap(d => d.pages.map(p => p.ref));
   if (configuration.length) for (const {row} of projection.rows) {
     row.provenance.sources = [...new Map([...row.provenance.sources, ...configuration].map(ref => [ref.batch_id + ":" + ref.page_id, ref])).values()];
+  }
+  if (projection.rows.length > 200 || signal?.aborted || now() >= limits.deadlineAt) throw Error("DATASET_BINDING_LIMIT_OR_STOP");
+  if (projection.rows.length && fxResolver !== undefined) {
+    const fx = await applyStoredDatasetFx({resolver: fxResolver, database, source, rows: projection.rows, deadlineAt: limits.deadlineAt, signal});
+    projection.holds.push(...fx.holds);
   }
   const boundary = {sourceVerified: true, consumerReceipt: false, publishable: false, authorizesActivation: false,
     holds: projection.holds, auxiliary: projection.auxiliary};

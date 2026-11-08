@@ -1,0 +1,126 @@
+{
+  "id": "eo-05b-fx-reporting-currency-v1",
+  "version": 1,
+  "date": "2026-11-08",
+  "parent_package": "A6-EO-05-B",
+  "detail_checklist_step": 23,
+  "baseline_main": "3327c0265d6ece8c374c5c693ffbba431860b924",
+  "status": "code_and_isolated_CI_preparation_not_live",
+  "owner_approval": {
+    "source": "Tamam devam edelim Codex — specific existing FX/currency review; then Haftasonu kuralını kabul ediyorum Codex — response to the concrete fixed-source/currency binding code, isolated test and PR proposal requiring acceptance of weekend date behavior.",
+    "weekend_rule_explicit": "Haftasonu kuralını kabul ediyorum Codex",
+    "scope": "Backend merchant-currency record, fixed Frankfurter/ECB reader, existing Dataset FX reference binding, weekend publication date policy, prepared migration and isolated tests/PR. No Settings/OAuth flow, live SQL/provider/config/grant/deploy or merge."
+  },
+  "brief": "docs/EO_05B_DATASET_STORAGE.md",
+  "source": {
+    "endpoint": "https://api.frankfurter.dev/v2/providers/ECB/rate/{source}/{target}?date={publicationDate}",
+    "provider": "frankfurter_ecb_v2",
+    "schema": "frankfurter-ecb-proof-v1",
+    "blend": false,
+    "pair_requested_explicitly": true,
+    "local_cross_rate_arithmetic": false,
+    "maximum_HTTP_requests_per_binding": 1,
+    "maximum_response_bytes": 16384,
+    "redirects": false,
+    "automatic_retry": false,
+    "lexical_decimal": true,
+    "proof": "Original published date/pair/decimal value, fixed request URL, projection hash and stable revision; no user/provider credentials.",
+    "native_acceptance": false
+  },
+  "calendar": {
+    "policy": "frankfurter-ecb-weekend-v1",
+    "Saturday": "previous Friday",
+    "Sunday": "previous Friday",
+    "weekday": "exact requested business date",
+    "actual_rate_date_preserved": true,
+    "business_date_relabelled": false,
+    "older_or_future_response": "stop; no fact write",
+    "missing_holiday_weekday_quote": "hold/stop, no unapproved nearest-date search",
+    "current_or_future_rate_substitution": false
+  },
+  "reporting_currency": {
+    "source": "merchant_selected",
+    "choices": [
+      "USD",
+      "EUR",
+      "TRY",
+      "GBP",
+      "JPY",
+      "CNY",
+      "AUD",
+      "CAD",
+      "CHF",
+      "SEK",
+      "NOK",
+      "DKK",
+      "PLN"
+    ],
+    "table": "app.workspace_settings",
+    "classification": "Previously planned workspace configuration; not a sixth Dataset family.",
+    "owner": "Current verified workspace + Shopify installation/generation/shop/domain; no browser owner authority.",
+    "first_choice_only": true,
+    "immutable": true,
+    "configuration_version": 1,
+    "change": "Requires separate owner-approved reprocessing/version policy, not implicit rewrite.",
+    "new_generation": "No automatic inheritance of old-generation configuration.",
+    "Shopify_or_provider_currency_default": false,
+    "UI_or_OAuth_gate_added": false
+  },
+  "binding": {
+    "entry": "app/lib/database/dataset-source-binding.server.js",
+    "capability": "createDatasetFxResolver private database-bound one-execution resolver; explicit trusted-server injection. Existing native-only unready path remains.",
+    "same_currency": "identity; no external call or fabricated rate row",
+    "native_amounts": "Unchanged source decimals; no converted metric/KPI materialization in EO05B.",
+    "references": "Merchant choice/version/operation + FX policy in provenance; target currency and immutable fx_rate_id outside native identity.",
+    "missing_choice": "Preserve native facts with reporting_currency_required hold; no guessed target.",
+    "known_cache": "Reuse exact immutable pair/date/provider proof. More than one revision holds for review; no latest-wins.",
+    "lost_write": "Unknown; no automatic repeat or readback after lost acknowledgement.",
+    "consumer_receipt": false,
+    "publishable": false,
+    "authorizes_activation": false
+  },
+  "privacy_retention": {
+    "three_year_report_source_policy_unchanged": true,
+    "settings": "Mandatory installation erasure removes settings with merchant facts/sources; unrelated merchants preserved.",
+    "public_FX": "Shared independent public proof retained for remaining dependents, not blindly erased with one merchant.",
+    "customer_scope": "Existing customer source worker remains; settings are not customer-specific data."
+  },
+  "migration": "supabase/migrations/20261108150218_eo05b_fx_reporting_currency.sql",
+  "tests": [
+    "tests/dataset-fx.test.js",
+    "tests/dataset-storage.test.js",
+    "tests/dataset-source-binding.test.js",
+    "tests/report-retention.test.js"
+  ],
+  "SQL_probe": "tools/eo05b-fx-reporting-currency-probe.mjs",
+  "claims": {
+    "new_Dataset_family": false,
+    "new_package": false,
+    "live_database": false,
+    "live_provider": false,
+    "live_config": false,
+    "grants": false,
+    "deploy": false,
+    "merge": false,
+    "EO05B_complete": false
+  },
+  "official_checked_at": "2026-11-08",
+  "official_sources": [
+    "https://frankfurter.dev/",
+    "https://api.frankfurter.dev/v2/openapi.json",
+    "https://frankfurter.dev/license/",
+    "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html",
+    "https://www.postgresql.org/docs/17/datatype-numeric.html",
+    "https://supabase.com/docs/guides/database/postgres/row-level-security"
+  ],
+  "legacy_reference": {
+    "repository": "fyilanli-oss/ads-table-dev",
+    "commit": "6d79fbb8d975be550d5611d682ae1ad2a97594d7",
+    "files": [
+      "server.js",
+      "src/providers/workspace-settings-store.js",
+      "contracts/r2-workspace-currency-v1.json"
+    ],
+    "use": "Read-only behavioral reference; no runtime/history/table/data copy. Old Number conversion, missing-currency default and arbitrary nearest-date lookup not adopted."
+  }
+}

@@ -1,3 +1,13 @@
+## 8 Kasım 2026 — EO-05-B kur ve rapor para birimi bağlantısı
+
+Ürün sahibinin hafta sonu kuralı kabulüyle mevcut kur tablosuna sabit Frankfurter/ECB
+okuyucusu, önceden planlanan merchant rapor para birimi kaydı ve özel Dataset
+yazıcısı bağlantısı hazırlanır. Cumartesi/Pazar için önceki Cuma yayını kullanılır;
+rapor ve gerçek kur tarihleri ayrı kalır. Kaynak tutar ve üç yıllık saklama
+değişmez. [Kapsam ve kabul sınırları](EO_05B_DATASET_STORAGE.md). Aynı EO-05-B /
+Ayrıntılı kontrol listesi23. Kod, izole test, hazırlanan SQL ve PR; canlı
+DB/provider/config/grant, Settings/OAuth akışı, merge veya deploy yetkisi yoktur.
+
 ## 8 Kasım 2026 — EO-05-B senkron saklama kodu
 
 Ürün sahibinin “Tamam Cidex onaylıyorum başlayalım” onayıyla PR #348 birleştirildi.

@@ -1006,6 +1006,16 @@
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261108150218",
+      "name": "eo05b_fx_reporting_currency",
+      "file": "supabase/migrations/20261108150218_eo05b_fx_reporting_currency.sql",
+      "created_with": "supabase@2.121.0 migration new eo05b_fx_reporting_currency",
+      "repository_sql_sha256": "20267f1463177f53f0bf95f80b7a34d51b378d047ba9f0530b30aec10d89ce39",
+      "applied": false,
+      "replay_scope": "isolated_rollback_only",
+      "live_apply_authorized": false
     }
   ]
 }

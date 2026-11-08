@@ -19,6 +19,10 @@ export async function datasetServerProbe(client, {ownerFixture}) {
       const role = "adstable_" + short + "_source_runner";
       await client.query("set local role postgres");
       if (!(await client.query("select exists(select 1 from pg_roles where rolname=$1) yes", [role])).rows[0].yes) await client.query("create role " + role + " nologin noinherit");
+      // Same rollback-only role-switch authority as the existing native-reader
+      // probes. A real pool authenticates as the source role; this harness uses
+      // one outer owner connection so it must explicitly be allowed to switch.
+      await client.query("grant " + role + " to adstable_owner with inherit false,set true,admin false");
       await client.query("set local role adstable_owner");
       await client.query("grant usage on schema integrations,operations,evidence,identity to " + role);
       await client.query("grant execute on function " + [...new Set(rpc.map(x => x[1]))].join(",") + " to " + role);

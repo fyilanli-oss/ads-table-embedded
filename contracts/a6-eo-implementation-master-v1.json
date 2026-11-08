@@ -4615,5 +4615,22 @@
     },
     "limits": "No new package, framework migration, role/query/Dataset/SQL, native provider/config/token, merge or deploy. Exact two development minimatch consumers and one compiled route-ignore compatibility patch are separately owner-approved. Existing policy holds and native18/22 acceptance unchanged.",
     "owner_compatibility_approval": "Dar uyumluluk yamasını da ekle (Önerilen) — explicit reply to the specific route-discovery compatibility patch/test scope; no new package, UI/URL/OAuth/live/config/merge/deploy."
+  },
+  "EO05B_dataset_storage_2026_11_08": {
+    "parent_package": "A6-EO-05-B",
+    "detail_checklist_step": 23,
+    "baseline_main": "5775b1e4dbf39a148e773c800b157da7d22454b5",
+    "owner_approval": "Onaylıyorum Codex — PR345 layout and merge; Tamam devam edelim Codex — preceding concrete four-table migration, writer, existing mapping reuse and isolated PostgreSQL code/test/PR scope.",
+    "brief": "docs/EO_05B_DATASET_STORAGE.md",
+    "migration": "supabase/migrations/20261108085004_eo05b_dataset_storage.sql",
+    "new_tables": 4,
+    "mapping_reused": "identity.product_identity_mappings",
+    "runtime_grants": false,
+    "source_receipt_is_consumer_receipt": false,
+    "live_database": false,
+    "provider_call": false,
+    "merge": false,
+    "deploy": false,
+    "completion": "Storage code and isolated rehearsal only; native projection binding, Dataset retention/ordinary cleanup activation, FX source acceptance, EO05C/D consumer/correction and current native holds are not completed by this delivery."
   }
 }

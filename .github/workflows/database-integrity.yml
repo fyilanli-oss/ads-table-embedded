@@ -4,6 +4,10 @@ on:
   pull_request:
     branches: [main, "codex/step15-storage-foundation-design"]
     paths:
+      - "app/lib/database/dataset-storage.server.js"
+      - "tests/dataset-storage.test.js"
+      - "tests/fixtures/dataset-storage-fixture.js"
+      - "tools/eo05b-dataset-storage-probe.mjs"
       - "app/lib/refresh/meta-*"
       - "app/lib/database/meta-*"
       - "app/lib/providers/meta-raw-projection.server.js"

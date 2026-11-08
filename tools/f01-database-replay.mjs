@@ -1,3 +1,4 @@
+import {datasetStorageProbe} from "./eo05b-dataset-storage-probe.mjs";
 import assert from "node:assert/strict";
 import {sourceEvidenceProbe} from "./eo05-source-evidence-probe.mjs";
 import {createHash, randomBytes, randomUUID} from "node:crypto";
@@ -497,6 +498,7 @@ async function main() {
       await sharedQuotaProbe(client, replayConnection);
     }
     if (manifest.pending_migrations.some(entry => entry.name === "eo05b_source_evidence_foundation")) await sourceEvidenceProbe(client,replayConnection);
+    if (manifest.pending_migrations.some(entry => entry.name === "eo05b_dataset_storage")) await datasetStorageProbe(client,replayConnection);
     const after=await inventory(client);
     await securityProbes(client);
     const output=path.join(process.env.RUNNER_TEMP,"f01b-staged-schema.json");

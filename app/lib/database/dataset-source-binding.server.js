@@ -4,6 +4,8 @@ import {projectStoredMetaDataset} from "../providers/stored-meta-dataset.server.
 import {projectStoredKlaviyoDataset} from "../providers/stored-klaviyo-dataset.server.js";
 import {prepareDatasetWrite, createDatasetStorageRepository} from "./dataset-storage.server.js";
 import {canonicalSourceJson} from "./source-evidence-store.server.js";
+import {reportRetentionPolicy, readReportRetentionPolicy, resolveReportRetentionPolicy} from "./report-retention-policy.server.js";
+import {randomUUID} from "node:crypto";
 
 const projectors = Object.freeze({google_ads: projectStoredGoogleDataset, meta: projectStoredMetaDataset, klaviyo: projectStoredKlaviyoDataset});
 
@@ -11,14 +13,28 @@ const projectors = Object.freeze({google_ads: projectStoredGoogleDataset, meta: 
  * No caller projection/canonical row, native request, OAuth mutation, FX source,
  * scheduler, consumed marker or report checkpoint is accepted here.
  */
-export async function bindStoredDatasetSources({database, cipher, owner, batches, limits, policy, signal, now = Date.now}) {
+export async function bindStoredDatasetSources({database, cipher, owner, batches, limits, policy = reportRetentionPolicy(), signal, now = Date.now}) {
   batches = structuredClone(batches); limits = structuredClone(limits); policy = structuredClone(policy);
+  readReportRetentionPolicy(policy);
   const source = await readStoredDatasetSources({database, cipher, owner, batches, limits, signal, now});
   const projection = projectors[source.owner.provider](source);
   const boundary = {sourceVerified: true, consumerReceipt: false, publishable: false, authorizesActivation: false,
     holds: projection.holds, auxiliary: projection.auxiliary};
-  if (!projection.rows.length) return Object.freeze({...boundary, status: projection.holds.length ? "held" : "empty",
-    rowsStored: 0, empty: projection.holds.length ? null : true, storageReceipt: null});
+  if (!projection.rows.length) {
+    if (projection.holds.length || source.datasets.some(d => d.receipt.sourceState !== "complete")) return Object.freeze({...boundary, status: "held", rowsStored: 0, empty: null, storageReceipt: null});
+    const p = {version: "eo05b-empty-retention-v1", operationId: randomUUID(),
+      policy: resolveReportRetentionPolicy({businessDate: source.scope.window.from, timeZone: source.datasets[0].source.timezone}),
+      sourceContext: source.datasets[0].sourceContext, sources: source.datasets.flatMap(d => d.pages.map(page => page.ref))};
+    if (signal?.aborted || now() >= limits.deadlineAt || Date.parse(p.policy.until) <= now()) throw Error("DATASET_BINDING_LIMIT_OR_STOP");
+    let receipt;
+    try {receipt = (await database.query("select analytics.commit_dataset_empty_retention($1::jsonb,$2::jsonb) as result", [JSON.stringify(source.owner), JSON.stringify(p)])).rows?.[0]?.result;
+      if (receipt?.status !== "retained_empty" || receipt.operationId !== p.operationId || receipt.consumerReceipt !== false || receipt.until !== p.policy.until) throw Error();
+    } catch {throw Error("DATASET_EMPTY_RETENTION_WRITE_UNCONFIRMED");}
+    let readback;
+    try {readback = (await database.query("select analytics.inspect_dataset_empty_retention($1::jsonb,$2::bigint,$3::uuid) as result", [JSON.stringify(source.owner), p.sources[0].batch_id, p.operationId])).rows?.[0]?.result;} catch {throw Error("DATASET_EMPTY_RETENTION_READ_UNCONFIRMED");}
+    if (canonicalSourceJson(readback) !== canonicalSourceJson(receipt)) throw Error("DATASET_EMPTY_RETENTION_READ_UNCONFIRMED");
+    return Object.freeze({...boundary, status: "empty", rowsStored: 0, empty: true, storageReceipt: null, retentionReceipt: Object.freeze(receipt)});
+  }
   if (projection.rows.length > 200 || signal?.aborted || now() >= limits.deadlineAt) throw Error("DATASET_BINDING_LIMIT_OR_STOP");
   const write = prepareDatasetWrite({owner: source.owner, rows: projection.rows, policy, now: new Date(now()).toISOString()});
   const repository = createDatasetStorageRepository(database);

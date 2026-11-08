@@ -996,6 +996,16 @@
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261108133633",
+      "name": "eo05b_synchronized_report_retention",
+      "file": "supabase/migrations/20261108133633_eo05b_synchronized_report_retention.sql",
+      "created_with": "supabase@2.121.0 migration new eo05b_synchronized_report_retention",
+      "repository_sql_sha256": "560b7334225c564b205d6cc0af6844299db7cd404c932575612be987926c7405",
+      "applied": false,
+      "replay_scope": "isolated_rollback_only",
+      "live_apply_authorized": false
     }
   ]
 }

@@ -5,27 +5,38 @@ import {bindStoredDatasetSources} from "../app/lib/database/dataset-source-bindi
 import {readStoredDatasetSources} from "../app/lib/database/dataset-source-reader.server.js";
 import {projectStoredGoogleDataset} from "../app/lib/providers/stored-dataset-projection.server.js";
 import {prepareDatasetWrite, createDatasetStorageRepository} from "../app/lib/database/dataset-storage.server.js";
+import {resolveReportRetentionPolicy} from "../app/lib/database/report-retention-policy.server.js";
+
+export async function storedBindingFixture(client, owner, options = {}) {
+  const fixture = await datasetSourceBindingFixture(owner.provider, {owner, ...options});
+  for (const envelope of fixture.envelopes.values()) {
+    const receipt = await createSourceEvidenceRepository(client).commit(envelope.sourceWrite);
+    const metadata = Object.fromEntries(Object.entries(envelope.receipt.manifest).filter(([key]) => key !== "counts"));
+    // Synthetic admission only, never native HTTP acceptance.
+    await client.query("update evidence.source_batches set manifest=manifest || $2::jsonb where id=$1", [receipt.batchId, JSON.stringify(metadata)]);
+  }
+  await client.query(`insert into operations.refresh_work_bindings(workspace_id,install_generation,provider,account_id,job_id,fence,source,from_date,to_date,partition_id)
+    values($1,$2,$3,$4,'synthetic-binding-job',1,$5::jsonb,'2026-11-01','2026-11-01','synthetic-only')`,
+  [owner.workspaceId, owner.generation, owner.provider, owner.accountId, JSON.stringify(fixture.source)]);
+  return {...fixture, database: client};
+}
 
 /** Called only inside the existing F01 localhost rollback transaction. Native
  * HTTP bodies and admission metadata below are SYNTHETIC, not live acceptance. */
 export async function sourceDatasetBindingProbe(client, {ownerFixture}) {
   for (const provider of ["google_ads", "meta", "klaviyo"]) {
-    const owner = await ownerFixture(client, provider), fixture = await datasetSourceBindingFixture(provider, {owner, mixedMetrics: provider === "klaviyo"});
-    const repository = createSourceEvidenceRepository(client);
-    for (const envelope of fixture.envelopes.values()) {
-      const receipt = await repository.commit(envelope.sourceWrite);
-      const metadata = Object.fromEntries(Object.entries(envelope.receipt.manifest).filter(([key]) => key !== "counts"));
-      // Fixture setup only: production metadata is written by the existing
-      // native dataset admission RPC, never by this private reader/binder.
-      await client.query("update evidence.source_batches set manifest=manifest || $2::jsonb where id=$1", [receipt.batchId, JSON.stringify(metadata)]);
-    }
-    await client.query(`insert into operations.refresh_work_bindings(workspace_id,install_generation,provider,account_id,job_id,fence,source,from_date,to_date,partition_id)
-      values($1,$2,$3,$4,'synthetic-binding-job',1,$5::jsonb,'2026-11-01','2026-11-01','synthetic-only')`,
-    [owner.workspaceId, owner.generation, provider, owner.accountId, JSON.stringify(fixture.source)]);
-    const input = {...fixture, database: client};
+    const owner = await ownerFixture(client, provider), input = await storedBindingFixture(client, owner, {mixedMetrics: provider === "klaviyo"}), fixture = input;
+    const before = (await client.query("select id::text,request_digest,commit_id from evidence.source_batches where installation_id=$1 order by id", [owner.installationId])).rows;
     const result = await bindStoredDatasetSources(input);
     assert.equal(result.rowsStored, provider === "google_ads" ? 3 : 2);
     assert.equal(result.consumerReceipt, false); assert.equal(result.publishable, false);
+    const until = resolveReportRetentionPolicy({businessDate: "2026-11-01", timeZone: "UTC"}).until;
+    const linked = (await client.query("select retain_until,retention_policy_version from analytics.pd_facts where installation_id=$1", [owner.installationId])).rows;
+    assert.ok(linked.every(r => r.retain_until.toISOString() === until && r.retention_policy_version === "report-source-3y-v1"));
+    assert.deepEqual((await client.query("select id::text,request_digest,commit_id from evidence.source_batches where installation_id=$1 order by id", [owner.installationId])).rows, before);
+    assert.equal((await client.query("select count(*)::int n from evidence.source_pages where installation_id=$1 and retain_until < $2::timestamptz", [owner.installationId, until])).rows[0].n, 0);
+    // Extended TTL must not alter AEAD payloads or frozen native context.
+    await readStoredDatasetSources(input);
     const pd = (await client.query("select impression::text,spend_value::text,source_currency,source_timezone,provenance from analytics.pd_facts where installation_id=$1", [owner.installationId])).rows;
     assert.equal(pd.length, 1); assert.equal(pd[0].impression, "9007199254740993");
     assert.equal(pd[0].source_currency, "USD"); assert.equal(pd[0].source_timezone, "UTC");

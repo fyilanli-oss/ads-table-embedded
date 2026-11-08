@@ -4,6 +4,7 @@ import {randomUUID} from "node:crypto";
 import {verifiedMappingFixture} from "../tests/fixtures/verified-mapping-fixture.js";
 import {createVerifiedMappingRepository} from "../app/lib/database/verified-mapping-store.server.js";
 import {sourcePayloadHash} from "../app/lib/database/source-evidence-store.server.js";
+import {reportMappingRetentionProbe} from "./eo05b-report-retention-probe.mjs";
 // Actual private SQL with synthetic reviewed rule and source/Shopify proof. No
 // production registration, native acceptance, HTTP or runtime grant is performed.
 export async function verifiedMappingProbe(client,{args,cipher}){
@@ -31,7 +32,7 @@ export async function verifiedMappingProbe(client,{args,cipher}){
   const ruleReceipt=await sourceRuleProbe(client,{owner,mappingId,cipher,policy:f.policy,
    proposal:{ruleKey:f.rule.ruleKey,previousRuleId:null,basis:f.rule.basis,from:f.rule.applicability.from,until:f.rule.applicability.until,maxObservationAgeMs:f.rule.applicability.maxObservationAgeMs}});
   const ruleId=ruleReceipt.manifest.ids["rule:reviewed"],input={owner,mappingId,ruleId};
-  for(const mode of ["success","lost","replay","CAS","expired","partial","withdrawn","new_rule","conflicting","wrong_owner","missing_rule","account","connection_version","disconnect","scopes","crypto","hash","late_failure","skip_finalize"]){
+  for(const mode of ["success","report_retention","lost","replay","CAS","expired","partial","withdrawn","new_rule","conflicting","wrong_owner","missing_rule","account","connection_version","disconnect","scopes","crypto","hash","late_failure","skip_finalize"]){
    await client.query("savepoint verified_mapping_case");
    try{
     let lastWrite;
@@ -70,6 +71,7 @@ export async function verifiedMappingProbe(client,{args,cipher}){
     const accepted=receipt.manifest.ids["mapping:accepted"],identity=JSON.parse(baseline.identityKey),current=await repository.readCurrent({owner,identity});
     assert.equal(current.mappingId,accepted);
     assert.equal(current.productId,"gid://shopify/Product/123");assert.equal(current.variantId,"gid://shopify/ProductVariant/456");assert.equal(current.revision,"2");assert.equal(current.reportNamespaceVerified,false);
+    if(mode==="report_retention") {await reportMappingRetentionProbe(client,{owner,mappingId:accepted});continue;}
     if(mode==="replay"){
      const again=(await client.query("select identity.commit_verified_mapping($1::jsonb,$2::uuid,$3::jsonb) as result",lastWrite)).rows[0].result;assert.equal(again.commitId,receipt.commitId);
      await client.query("savepoint conflicting_mapping_operation");const changed=JSON.parse(lastWrite[2]);changed.productId="gid://shopify/Product/999";

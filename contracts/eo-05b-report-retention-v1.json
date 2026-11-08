@@ -5,7 +5,7 @@
   "parent_package": "A6-EO-05-B",
   "detail_checklist_step": 23,
   "baseline_main": "009570183f7cfd4a7781a61dc2d1ecd1e599f07f",
-  "status": "owner_synchronized_policy_accepted_dependency_review_complete_runtime_not_implemented",
+  "status": "runtime_implemented_isolated_SQL_CI_required_not_activated",
   "owner_approval": {
     "policy": "Son karar önerinde mutabikiz Codex",
     "start": "Tamam başlayalım Codex",
@@ -83,8 +83,8 @@
     "Mandatory installation/customer erasure still removes in-scope linked report/source/identity layers before normal expiry; unrelated merchants preserved."
   ],
   "claims": {
-    "runtime_changed": false,
-    "SQL_changed": false,
+    "runtime_changed": true,
+    "SQL_changed": true,
     "three_year_SQL_tested": false,
     "three_year_activated": false,
     "source_cleanup_enabled": false,
@@ -114,5 +114,25 @@
     "commit": "006cbfca7ebb65c847d5818d13f748ae0e928b39",
     "proposal": "Independent report lifetime and source/report separation",
     "owner_changed_to": "Synchronized retention; keep existing evidence dependencies."
+  },
+  "runtime_implementation": {
+    "baseline_main": "06cdc5ca043ec4563514aea1d93cff93f32126b0",
+    "owner_approval": "Tamam Cidex onaylıyorum başlayalım — merge PR348 then synchronized three-year writer/source dependencies, normal expiry and mandatory erasure code, isolated tests and PR; no live DB/provider/deploy.",
+    "policy_version": "report-source-3y-v1",
+    "expiry": "Through third local business-day anniversary; Feb29 clamps to Feb28; expire at following local midnight. Original admission timezone; no ingestion/read/replay renewal.",
+    "binding": "Atomic Dataset write promotes fresh physical source batches/pages/references/links and required verified identity/rule proof in place; no raw copy or global update.",
+    "empty": "Complete physically verified empty source retains proof only; no zero fact or consumer receipt.",
+    "cleanup": "Private bounded Dataset expiry first; existing complete/consumed source gates and future FK dependents hold. No scheduling or runtime grant.",
+    "migration": "supabase/migrations/20261108133633_eo05b_synchronized_report_retention.sql",
+    "unit_tests": "tests/report-retention.test.js",
+    "SQL_probes": [
+      "tools/eo05b-report-retention-probe.mjs",
+      "tools/eo05b-source-dataset-binding-probe.mjs",
+      "tools/eo05-verified-mapping-probe.mjs"
+    ],
+    "SQL_acceptance": "Required current PR F01 isolated replay/old-storage/new-migration; exact run results recorded in PR, never live acceptance.",
+    "unlinked_source_defaults_changed": false,
+    "new_table": false,
+    "live_activated": false
   }
 }

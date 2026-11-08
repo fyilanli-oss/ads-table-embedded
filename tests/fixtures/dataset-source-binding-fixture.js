@@ -2,6 +2,7 @@ import {randomUUID} from "node:crypto";
 import {sourceStoreFixture} from "./source-store-fixture.js";
 import {datasetStorageFixture} from "./dataset-storage-fixture.js";
 import {sourcePayloadHash} from "../../app/lib/database/source-evidence-store.server.js";
+import {reportRetentionPolicy} from "../../app/lib/database/report-retention-policy.server.js";
 import {buildGoogleReportingQueries, GOOGLE_REPORTING_QUERY_FAMILIES} from "../../app/lib/providers/google-reporting.server.js";
 import {parseGoogleRawJson, projectGoogleRawPage} from "../../app/lib/providers/google-raw-projection.server.js";
 import {parseMetaRawJson, projectMetaRawPage} from "../../app/lib/providers/meta-raw-projection.server.js";
@@ -102,6 +103,11 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
     if (sql.includes("from operations.refresh_work_bindings")) return {rows: [{source: structuredClone(source), snapshot_hash: "a".repeat(64)}]};
     if (sql.includes("read_source_receipt")) return {rows: [{result: structuredClone(envelopes.get(args[1])?.receipt)}]};
     if (sql.includes("read_source_pages")) return {rows: [{result: structuredClone(envelopes.get(args[1])?.pages.filter(p => BigInt(p.id) > BigInt(args[3])).slice(0, args[4]) ?? [])}]};
+    if (sql.includes("commit_dataset_empty_retention")) {
+      const body = JSON.parse(args[1]), receipt = {status: "retained_empty", operationId: body.operationId, until: body.policy.until, consumerReceipt: false};
+      storageReceipts.set(body.operationId, receipt); return {rows: [{result: structuredClone(receipt)}]};
+    }
+    if (sql.includes("inspect_dataset_empty_retention")) return {rows: [{result: structuredClone(storageReceipts.get(args[2]) ?? null)}]};
     if (sql.includes("commit_dataset_storage")) {
       const body = JSON.parse(args[1]); writes.push(body);
       const receipt = {status: "stored", operationId: body.operationId, digest: sourcePayloadHash(body), consumerReceipt: false,
@@ -113,5 +119,5 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
   }};
   return {database, cipher, owner, batches, envelopes, native, source, hooks, writes, queries,
     limits: {maxPages: 100, maxRows: 1000, maxBytes: 1000000, deadlineAt: Date.now() + 60000},
-    policy: {version: "synthetic-only-policy", until: new Date(Date.now() + 86400000).toISOString()}};
+    policy: reportRetentionPolicy()};
 }

@@ -10,7 +10,7 @@ import {prepareDatasetWrite, createDatasetStorageRepository} from "../app/lib/da
  * HTTP bodies and admission metadata below are SYNTHETIC, not live acceptance. */
 export async function sourceDatasetBindingProbe(client, {ownerFixture}) {
   for (const provider of ["google_ads", "meta", "klaviyo"]) {
-    const owner = await ownerFixture(client, provider), fixture = await datasetSourceBindingFixture(provider, {owner});
+    const owner = await ownerFixture(client, provider), fixture = await datasetSourceBindingFixture(provider, {owner, mixedMetrics: provider === "klaviyo"});
     const repository = createSourceEvidenceRepository(client);
     for (const envelope of fixture.envelopes.values()) {
       const receipt = await repository.commit(envelope.sourceWrite);

@@ -39,7 +39,7 @@ export function projectStoredKlaviyoDataset(bundle) {
       accountPages.set(dataset.dataset, page);
     }
     if (page.family === "klaviyo_metrics") for (const m of page.payload.records) {
-      if (m.type !== "metric" || m.attributes?.integration?.name !== "Shopify") fail("METRIC_CONTEXT_INVALID");
+      if (m.type !== "metric" || typeof m.id !== "string" || !m.id || typeof m.attributes?.name !== "string") fail("METRIC_CONTEXT_INVALID");
       const prior = metricMap.get(m.id); if (prior && canonicalSourceJson(prior) !== canonicalSourceJson(m)) fail("METRIC_CONTEXT_INVALID"); metricMap.set(m.id, m);
     }
     for (const a of page.payload.included ?? []) if (a.type === "attribution") {
@@ -85,7 +85,7 @@ export function projectStoredKlaviyoDataset(bundle) {
   }
   for (const [name, state] of Object.entries(selected)) if (state.state !== "present") holds.push({reason: "klaviyo_metric_unavailable", metric: name});
   for (const group of groups.values()) rows.push({table: "pd_facts", row: group.row});
-  const ordered = [...metricMap.values()].filter(m => m.attributes.name === "Ordered Product");
+  const ordered = [...metricMap.values()].filter(m => m.attributes.name === "Ordered Product" && m.attributes.integration?.name === "Shopify");
   if (ordered.length > 1) fail("METRIC_CONTEXT_INVALID");
   if (!ordered.length) holds.push({reason: "klaviyo_ordered_product_unavailable"});
   else {

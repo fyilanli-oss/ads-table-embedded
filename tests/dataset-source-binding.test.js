@@ -45,6 +45,13 @@ test("Klaviyo composes only matching native message/variation/medium fragments a
   assert.equal(f.writes[0].rows.some(x => x.table === "cpd_product_performance_facts"), false);
 });
 
+test("Klaviyo keeps unrelated native metrics as evidence without using them as Shopify sales", async () => {
+  const f = await datasetSourceBindingFixture("klaviyo", {mixedMetrics: true}), r = await bindStoredDatasetSources(f);
+  assert.equal(r.status, "stored"); assert.equal(r.rowsStored, 2);
+  const sale = f.writes[0].rows.find(x => x.table === "cpd_product_sales_facts").row;
+  assert.equal(sale.product_context.metric_id, "product");
+});
+
 test("Klaviyo missing metric remains unknown/partial rather than zero", async () => {
   const f = await datasetSourceBindingFixture("klaviyo", {missingMetric: true}), r = await bindStoredDatasetSources(f);
   assert.equal(r.status, "partially_stored");

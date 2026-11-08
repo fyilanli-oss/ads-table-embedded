@@ -32,7 +32,7 @@ async function nativeKlaviyoPage(path, body, request = null) {
 
 /** All native responses/credentials/owners are synthetic. Real capture projection,
  * AEAD and decrypt paths are used; this fake DB is not SQL/native acceptance. */
-export async function datasetSourceBindingFixture(provider = "google_ads", {nonempty = true, missingMetric = false, owner: givenOwner = null} = {}) {
+export async function datasetSourceBindingFixture(provider = "google_ads", {nonempty = true, missingMetric = false, mixedMetrics = false, owner: givenOwner = null} = {}) {
   const owner = givenOwner ? structuredClone(givenOwner) : datasetStorageFixture().owner;
   if (!givenOwner) {owner.installationId = "1"; owner.provider = provider; owner.accountId = provider === "meta" ? "act_123" : provider === "klaviyo" ? "account-1" : "123";}
   if (provider === "klaviyo") owner.selectionEpoch = null;
@@ -61,6 +61,8 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
   } else {
     const metrics = [["order", "Placed Order"], ["cart", "Added to Cart"], ...missingMetric ? [] : [["checkout", "Checkout Started"]], ["product", "Ordered Product"]]
       .map(([id, name]) => ({type: "metric", id, attributes: {name, integration: {name: "Shopify"}}}));
+    if (mixedMetrics) metrics.push({type: "metric", id: "other-order", attributes: {name: "Ordered Product", integration: {name: "Other"}}},
+      {type: "metric", id: "other-purchase", attributes: {name: "Placed Order", integration: {name: "Other"}}});
     const account = await nativeKlaviyoPage("/api/accounts/", {data: [{type: "account", id: owner.accountId, attributes: {timezone: "UTC", preferred_currency: "USD"}}]});
     const m = await nativeKlaviyoPage("/api/metrics", {data: metrics, links: {next: null}}), proof = [account, m], reports = [], coverage = [];
     for (const [name, id] of [["Placed Order", "order"], ["Added to Cart", "cart"], ["Checkout Started", "checkout"]]) for (const kind of ["campaign", "flow"]) {

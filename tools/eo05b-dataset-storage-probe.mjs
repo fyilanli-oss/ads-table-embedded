@@ -65,7 +65,12 @@ export async function datasetStorageProbe(client, connection, environment = proc
     for (const provider of ["google_ads", "meta", "klaviyo"]) {
       const owner = await ownerFixture(client, provider), source = await sourceFixture(client, owner);
       const input = datasetStorageFixture({owner, source}); input.rows[0].row.spend_value = "9007199254740993.1234567890123456789";
-      const repository = createDatasetStorageRepository(client), prepared = prepareDatasetWrite(input), receipt = await repository.commit(prepared);
+      // Only this rollback-only probe prints bounded SQL diagnostics. Production
+      // repository errors remain opaque and never log a native payload/secret.
+      const database = {async query(sql, args) {try {return await client.query(sql, args);} catch (error) {
+        console.error("EO05B_DATASET_SQL_FAILURE", JSON.stringify({code: error.code, message: error.message, where: error.where, position: error.position})); throw error;
+      }}};
+      const repository = createDatasetStorageRepository(database), prepared = prepareDatasetWrite(input), receipt = await repository.commit(prepared);
       assert.equal(receipt.consumerReceipt, false);
       const stored = (await client.query("select id::text,spend_value::text,impression::text,retain_until,revision::text from analytics.pd_facts where id=$1", [receipt.rows[0].id])).rows[0];
       assert.equal(stored.spend_value, input.rows[0].row.spend_value); assert.equal(stored.impression, "0"); assert.equal(stored.revision, "1");

@@ -1,3 +1,4 @@
+import {readFileSync} from "node:fs";
 import assert from "node:assert/strict";
 import {randomBytes, randomUUID} from "node:crypto";
 import {sourceStoreFixture} from "../tests/fixtures/source-store-fixture.js";
@@ -50,6 +51,16 @@ export async function datasetStorageProbe(client, connection, environment = proc
   assert.equal(connection.host, "127.0.0.1"); assert.equal(connection.port, 54322);
   await client.query("begin");
   try {
+    await client.query("set local role adstable_owner");
+    const lineage=JSON.parse(readFileSync(new URL("../contracts/a6-tech-01-f01-migration-lineage-v1.json",import.meta.url),"utf8"));
+    for (const entry of lineage.prepared_migrations) {
+      const sql=readFileSync(new URL("../"+entry.file,import.meta.url),"utf8").trim().replace(/^begin;/," ").replace(/commit;$/," ");
+      try {await client.query(sql);} catch (error) {
+        const pos=Number(error.position??error.internalPosition??0);
+        console.error("EO05B_DATASET_MIGRATION_FAILURE",JSON.stringify({name:entry.name,code:error.code,position:pos,line:pos?sql.slice(0,pos).split("\n").length:null,message:error.message,where:error.where}));
+        throw error;
+      }
+    }
     await client.query("set local role adstable_owner");
     for (const provider of ["google_ads", "meta", "klaviyo"]) {
       const owner = await ownerFixture(client, provider), source = await sourceFixture(client, owner);

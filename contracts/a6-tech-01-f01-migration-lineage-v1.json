@@ -799,16 +799,6 @@
       "repository_sql_sha256": "7e09bff64aedc1dcab964cdd76dcd892203353f5d4c8e1fe6550ed9dba6d4dbf",
       "applied": false,
       "live_apply_authorized": false
-    },
-    {
-      "version": "20261108085004",
-      "name": "eo05b_dataset_storage",
-      "file": "supabase/migrations/20261108085004_eo05b_dataset_storage.sql",
-      "created_with": "supabase@2.121.0 migration new eo05b_dataset_storage",
-      "repository_sql_sha256": "76d64e6793cf0bacf4831ae4b5b31598e0852f8f2af4fd2e983298a7f35f2f41",
-      "applied": false,
-      "replay_scope": "isolated_rollback_only",
-      "live_apply_authorized": false
     }
   ],
   "forward_migrations": [
@@ -983,6 +973,16 @@
       "file": "supabase/migrations/20261105193000_eo05_pmax_history_lookup.sql",
       "created_with": "supabase@2.121.0 migration new eo05_pmax_history_lookup",
       "repository_sql_sha256": "ac87da3414c0a02a522a29a453a644648d36fc671d9a3e51263b1fe58218bac9",
+      "applied": false,
+      "replay_scope": "isolated_rollback_only",
+      "live_apply_authorized": false
+    },
+    {
+      "version": "20261108085004",
+      "name": "eo05b_dataset_storage",
+      "file": "supabase/migrations/20261108085004_eo05b_dataset_storage.sql",
+      "created_with": "supabase@2.121.0 migration new eo05b_dataset_storage",
+      "repository_sql_sha256": "1f0062a1fa1408eaf35defa37266f8662ba6c905a4311563a2627c1c6284a330",
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false

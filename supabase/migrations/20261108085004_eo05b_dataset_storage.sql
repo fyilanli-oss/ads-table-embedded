@@ -5,6 +5,30 @@ set local role adstable_owner;
 
 -- Owner-only dormant storage. No runtime/source runner grant, scheduler, route,
 -- native field acceptance, FX provider choice or consumer checkpoint activation.
+create table analytics.fx_rates (
+ id bigint generated always as identity primary key not null,
+ source_currency text not null,
+ target_currency text not null,
+ fx_rate_date date not null,
+ fx_rate numeric not null,
+ fx_provider text not null,
+ rate_version text not null,
+ source_reference jsonb not null,
+ fetched_at timestamptz not null,
+ fx_schema_version text not null,
+ unique(source_currency,target_currency,fx_rate_date,fx_provider,rate_version),
+ check(source_currency ~ '^[A-Z]{3}$' and target_currency ~ '^[A-Z]{3}$'),
+ check(fx_rate>0 and fx_rate::text not in ('NaN','Infinity','-Infinity') and length(fx_rate::text)<=128),
+ check(isfinite(fx_rate_date) and isfinite(fetched_at)),
+ check(jsonb_typeof(source_reference)='object' and source_reference<>'{}' and octet_length(source_reference::text)<=16384)
+
+);
+alter table analytics.fx_rates enable row level security;
+alter table analytics.fx_rates force row level security;
+create policy owner_only on analytics.fx_rates to adstable_owner using(true) with check(true);
+revoke all on analytics.fx_rates from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
+revoke all on sequence analytics.fx_rates_id_seq from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
+
 create table analytics.pd_facts (
  id bigint generated always as identity primary key not null,
  workspace_id uuid not null,
@@ -323,30 +347,6 @@ create index cpd_product_sales_facts_fx on analytics.cpd_product_sales_facts(fx_
 create index cpd_product_sales_facts_sold_product_mapping_id_idx on analytics.cpd_product_sales_facts(workspace_id,installation_id,installation_generation,sold_product_mapping_id) where sold_product_mapping_id is not null;
 create index cpd_product_sales_facts_advertised_product_mapping_id_idx on analytics.cpd_product_sales_facts(workspace_id,installation_id,installation_generation,advertised_product_mapping_id) where advertised_product_mapping_id is not null;
 
-create table analytics.fx_rates (
- id bigint generated always as identity primary key not null,
- source_currency text not null,
- target_currency text not null,
- fx_rate_date date not null,
- fx_rate numeric not null,
- fx_provider text not null,
- rate_version text not null,
- source_reference jsonb not null,
- fetched_at timestamptz not null,
- fx_schema_version text not null,
- unique(source_currency,target_currency,fx_rate_date,fx_provider,rate_version),
- check(source_currency ~ '^[A-Z]{3}$' and target_currency ~ '^[A-Z]{3}$'),
- check(fx_rate>0 and fx_rate::text not in ('NaN','Infinity','-Infinity') and length(fx_rate::text)<=128),
- check(isfinite(fx_rate_date) and isfinite(fetched_at)),
- check(jsonb_typeof(source_reference)='object' and source_reference<>'{}' and octet_length(source_reference::text)<=16384)
-
-);
-alter table analytics.fx_rates enable row level security;
-alter table analytics.fx_rates force row level security;
-create policy owner_only on analytics.fx_rates to adstable_owner using(true) with check(true);
-revoke all on analytics.fx_rates from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
-revoke all on sequence analytics.fx_rates_id_seq from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
-
 -- Deterministic JSON for the private DTO (decimal values travel as strings).
 -- Keys are ASCII schema keys; values keep their exact Unicode text.
 create function analytics.dataset_json(p jsonb,depth integer default 0) returns text
@@ -528,31 +528,7 @@ begin
   and attname not in ('id','workspace_id','installation_id','installation_generation','provider_connection_id','platform','platform_account_id','canonical_reporting_account_id','revision','created_at','updated_at','retention_policy_version','retain_until');
   if (select count(*) from jsonb_object_keys(r))<>cardinality(allowed) or not r ?& allowed then raise exception 'DATASET_ROW_SHAPE_INVALID';end if;
   for k in select attname::text from pg_catalog.pg_attribute where attrelid=('analytics.'||name)::regclass and atttypid='numeric'::regtype and attnum>0 loop
-   if r->k<>'null'::jsonb and (jsonb_typeof(r->k)<>'string' or length(r->>k)>128 or r->>k !~ '^(0|[1-9][0-9]*)(\.[0-9]*[1-9])?['native_key_canonical','native_key_hash','grain_version','row_schema_version','payload_digest'];
-  if r->>'payload_digest' is distinct from analytics.dataset_digest(row_input) then raise exception 'DATASET_PAYLOAD_DIGEST_INVALID';end if;
-  injected:=r||jsonb_build_object('workspace_id',o->>'workspaceId','installation_id',o->>'installationId','installation_generation',o->>'generation',
-   'provider_connection_id',o->>'connectionId','platform',o->>'provider','platform_account_id',o->>'accountId',
-   'canonical_reporting_account_id',case when o->>'provider'='klaviyo' then null else o->>'accountId' end,
-   'retention_policy_version',p->'policy'->>'version','retain_until',p->'policy'->>'until');
-  -- Serialize all accepted writes against current installation/control authority.
-  -- Different content is a conflict; EO05C/D correction is never guessed here.
-  execute format('select to_jsonb(x) from analytics.%I x where workspace_id=$1 and installation_id=$2 and installation_generation=$3 and platform=$4 and platform_account_id=$5 and grain_version=$6 and native_key_hash=$7 for update',name)
-   into found_row using (o->>'workspaceId')::uuid,(o->>'installationId')::bigint,(o->>'generation')::bigint,o->>'provider',o->>'accountId',r->>'grain_version',r->>'native_key_hash';
-  if found_row is not null then
-   if found_row->>'native_key_canonical' is distinct from r->>'native_key_canonical' or found_row->>'payload_digest' is distinct from r->>'payload_digest'
-   or (found_row->>'retain_until')::timestamptz<=clock_timestamp() then raise exception 'DATASET_NATIVE_CONFLICT';end if;
-   rid:=(found_row->>'id')::bigint;
-  else
-   select string_agg(quote_ident(key),',' order by key) into cols from jsonb_object_keys(injected) key;
-   execute format('insert into analytics.%I(%s) select %s from jsonb_populate_record(null::analytics.%I,$1) returning id',name,cols,cols,name) into rid using injected;
-  end if;
-  ids:=ids||jsonb_build_array(jsonb_build_object('table',name,'id',rid::text,'nativeKeyHash',r->>'native_key_hash'));
- end loop;
- result:=jsonb_build_object('status','stored','operationId',operation,'digest',h,'rows',ids,'consumerReceipt',false);
- update evidence.source_batches set manifest=jsonb_set(manifest,'{datasetStorageReceipts}',coalesce(manifest->'datasetStorageReceipts','{}')||jsonb_build_object(operation::text,result)) where id=primary_id;
- return result;
-end $fn$;
-) then raise exception 'DATASET_DECIMAL_INVALID';end if;
+   if r->k<>'null'::jsonb and (jsonb_typeof(r->k)<>'string' or length(r->>k)>128 or r->>k !~ '^(0|[1-9][0-9]*)(\.[0-9]*[1-9])?$') then raise exception 'DATASET_DECIMAL_INVALID';end if;
   end loop;
   row_input:=r-array['native_key_canonical','native_key_hash','grain_version','row_schema_version','payload_digest'];
   if r->>'payload_digest' is distinct from analytics.dataset_digest(row_input) then raise exception 'DATASET_PAYLOAD_DIGEST_INVALID';end if;
@@ -720,14 +696,7 @@ declare f analytics.fx_rates%rowtype;
 begin
  if jsonb_typeof(p) is distinct from 'object' or (select count(*) from jsonb_object_keys(p))<>9
  or not p ?& array['source_currency','target_currency','fx_rate_date','fx_rate','fx_provider','rate_version','source_reference','fetched_at','fx_schema_version']
- or jsonb_typeof(p->'fx_rate') is distinct from 'string' or p->>'fx_rate' !~ '^(0|[1-9][0-9]*)(\.[0-9]*[1-9])?
- for f in select p.oid::regprocedure signature from pg_catalog.pg_proc p join pg_catalog.pg_namespace n on n.oid=p.pronamespace
- where n.nspname='analytics' and (p.proname like '%dataset%' or p.proname='reject_fx_mutation') loop
-  execute format('revoke all on function %s from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator',f.signature);
- end loop;
-end $acl$;
-commit;
-
+ or jsonb_typeof(p->'fx_rate') is distinct from 'string' or p->>'fx_rate' !~ '^(0|[1-9][0-9]*)(\.[0-9]*[1-9])?$'
  or (p->>'fx_rate')::numeric<=0 or length(p->>'fx_rate')>128 or p->>'source_currency'=p->>'target_currency'
  or coalesce(p->>'fx_provider','')='' or coalesce(p->>'rate_version','')='' or coalesce(p->>'fx_schema_version','')=''
  or octet_length(analytics.dataset_json(p))>32768 then raise exception 'DATASET_FX_INVALID';end if;

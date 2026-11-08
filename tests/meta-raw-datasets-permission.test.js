@@ -58,8 +58,8 @@ test("Meta first failure stops, no replay or invented zero: "+mode,async()=>{
  x.hooks.source=(sql,args)=>{
   if(sql.includes("commit_meta_dataset_source")){writes++;if(mode==="lost_write"&&writes===2)throw Error("SECRET");}
   if(mode==="profile_drift"&&x.writes.length===1&&sql===META_SOURCE_ROLE_CHECK_SQL)return {rows:[{role:"adstable_meta_source_runner",profile_ready:false}]};
-  if(x.writes.length===2&&sql.includes("read_source_receipt")&&mode==="lost_receipt")return {rows:[{result:{status:"unknown"}}]};
-  if(x.writes.length===2&&sql.includes("read_source_pages")){
+  if(x.writes.length===2&&sql.startsWith("select evidence.read_source_receipt(")&&mode==="lost_receipt")return {rows:[{result:{status:"unknown"}}]};
+  if(x.writes.length===2&&sql.startsWith("select evidence.read_source_pages(")){
    if(mode==="tampered_page")x.writes[1].pages[0].ciphertext="00";
    if(mode==="missing_page")return {rows:[{result:[]}]};
    if(mode==="extra_page"&&BigInt(args[3])>=BigInt(x.writes[1].pages.at(-1).id))return {rows:[{result:[{...x.writes[1].pages[0],id:"9999"}]}]};
@@ -68,7 +68,7 @@ test("Meta first failure stops, no replay or invented zero: "+mode,async()=>{
  const r=await createMetaRawCaptureExecution(x.options).run();assert.notEqual(r.status,"stored",JSON.stringify(r));assert.equal(r.empty,null);assert.equal(r.recordCount,null);
  if(mode!=="profile_drift")assert.equal(r.datasets.account_performance.status,"stored",JSON.stringify(r));
  assert.ok(writes<=2);assert.doesNotMatch(JSON.stringify(r),/SECRET|SYNTHETIC|ciphertext/);assert.equal(x.f.state.paused,0);
- if(mode==="lost_write")assert.equal(x.calls.filter(c=>c.sql.includes("read_source_receipt")).length,1);
+ if(mode==="lost_write")assert.equal(x.calls.filter(c=>c.sql.startsWith("select evidence.read_source_receipt(")).length,1);
 });
 for(const mode of ["extra_target","wrong_account","expiry","bounds","query_selector","bad_date"])
 test("Meta plan rejects unbounded/foreign input before SQL: "+mode,()=>{

@@ -1,3 +1,4 @@
+import {DATASET_OPTIONAL_PRIVILEGES_SQL} from "./dataset-rpc.server.js";
 import pg from "pg";
 import {SUPABASE_ROOT_CA_2021} from "./supabase-root-ca-2021.server.js";
 import {GOOGLE_PMAX_HISTORY_FIND_SQL} from "./google-pmax-history.server.js";
@@ -48,7 +49,7 @@ export const GOOGLE_SOURCE_ROLE_CHECK_SQL=`select current_user as role,
    or not coalesce(has_function_privilege(current_user,to_regprocedure(s.signature)::oid,'EXECUTE'),false))
  and not exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
   where n.nspname in ('app','shopify','integrations','operations','billing','privacy','analytics','evidence','identity','source')
-   and has_function_privilege(current_user,p.oid,'EXECUTE')
+   and has_function_privilege(current_user,p.oid,'EXECUTE') ${DATASET_OPTIONAL_PRIVILEGES_SQL}
    and p.oid<>coalesce(to_regprocedure('evidence.find_google_pmax_source_batches(jsonb,date,integer)')::oid,0)
    and p.oid not in
     (select to_regprocedure(s.signature)::oid from unnest($1::text[]) s(signature)))

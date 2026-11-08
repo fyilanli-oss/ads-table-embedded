@@ -1,3 +1,5 @@
+import {handleDatasetWriteRequest} from "./dataset-request.server.js";
+import {createDatasetServerExecution} from "./dataset-server.server.js";
 import {readKlaviyoPrivateRequest} from "./klaviyo-private-request.server.js";
 import {createKlaviyoRawCaptureExecution,readKlaviyoRawCapturePlan} from "./klaviyo-raw-server.server.js";
 import {validateKlaviyoRawEligibility} from "./klaviyo-raw-eligibility.server.js";
@@ -6,8 +8,10 @@ const reasons=new Set(["capture_unconfirmed","not_attempted","provider_permissio
  "response_invalid","response_limit","page_limit","row_limit","request_limit","cursor_loop","credential_refresh_required","authority_changed","configuration_missing",
  "read_deadline_exceeded","read_aborted","stopped_before_call","authority_required","admission_waiting","admission_not_accepted","request_outcome_unknown",
  "entitlement_required","authority_check_failed_after_request","closure_unconfirmed","execution_unconfirmed","admission_unconfirmed","close_unconfirmed"]);
-export async function handleKlaviyoRawCaptureRequest(request,{environment=process.env,createExecution=createKlaviyoRawCaptureExecution,now=Date.now}={}){
- const env={...environment},json=(status,value)=>Response.json(value,{status,headers:{"cache-control":"no-store, max-age=0","cdn-cache-control":"no-store","x-content-type-options":"nosniff"}});
+export async function handleKlaviyoRawCaptureRequest(request,{environment=process.env,createExecution=createKlaviyoRawCaptureExecution,now=Date.now,createDatasetExecution=createDatasetServerExecution}={}){
+ const env={...environment};
+ if(env.ADSTABLE_DATASET_WRITE_ENABLED==="true")return handleDatasetWriteRequest(request,{environment:env,provider:"klaviyo",path:KLAVIYO_RAW_CAPTURE_PATH,readPrivateRequest:readKlaviyoPrivateRequest,now,createExecution:createDatasetExecution});
+ const json=(status,value)=>Response.json(value,{status,headers:{"cache-control":"no-store, max-age=0","cdn-cache-control":"no-store","x-content-type-options":"nosniff"}});
  const stop=(status,reason)=>json(status,{status:"stopped",reason,sourceStored:null,recordCount:null,empty:null});
  const gate=await readKlaviyoPrivateRequest(request,{environment:env,path:KLAVIYO_RAW_CAPTURE_PATH,enabled:env.ADSTABLE_KLAVIYO_RAW_CAPTURE_ENABLED==="true",
   readPlan:readKlaviyoRawCapturePlan,operationId:p=>p?.target.operationId,now});

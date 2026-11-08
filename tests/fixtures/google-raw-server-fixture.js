@@ -22,6 +22,9 @@ export function googleRawServerFixture(){
  const pool=f.options.readerPoolFactory,base=pool().connect();
  async function sourceQuery(sql,args){
   const custom=await hooks.source?.(sql,args);if(custom)return custom;
+  // The role catalogue query can mention admitted RPC names. It is a profile
+  // read, not execution of any of those business functions.
+  if(sql.includes("as profile_ready"))return (await base).query(sql,args);
   if(sql.includes("commit_google_identity_source")){
    storedBody=JSON.parse(args[3]);receipt={status:"committed",batchId:"91",commitId:randomUUID(),
     digest:createHash("sha256").update(args[3]).digest("hex"),sourceState:"complete",

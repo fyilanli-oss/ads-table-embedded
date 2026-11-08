@@ -1016,6 +1016,16 @@
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261108170735",
+      "name": "eo05b_dataset_server_context",
+      "file": "supabase/migrations/20261108170735_eo05b_dataset_server_context.sql",
+      "created_with": "supabase@2.121.0 migration new eo05b_dataset_server_context",
+      "repository_sql_sha256": "687d7c280cb2bc73f51f73ddad505033d673780304767e78925f13785119d10c",
+      "applied": false,
+      "replay_scope": "isolated_rollback_only",
+      "live_apply_authorized": false
     }
   ]
 }

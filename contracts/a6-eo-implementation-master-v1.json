@@ -4740,5 +4740,16 @@
     "merge": false,
     "deploy": false,
     "new_package": false
+  },
+  "EO05B_Dataset_server_binding_2026_11_08": {
+    "parent_package": "A6-EO-05-B",
+    "contract": "contracts/eo-05b-dataset-server-v1.json",
+    "owner_approval": "Onaylıyorum Codex — explicit response to shared Google/Meta/Klaviyo stored-envelope validation, report storage and readback server binding, code/tests/PR proposal.",
+    "status": "code_and_isolated_tests_PR_preparation_not_live",
+    "entry": "Three existing private handlers, one dataset-only shared execution; fixed finite server plan, existing bearer/TLS/cipher.",
+    "security": "No direct operational table reads. Current-owner context RPC and bounded durable one-start marker, poisoned transport on unknown, exact storage/readback. No new table, native ads request, credential/owner-role fallback, consumer receipt or checkpoint.",
+    "prior_live_installation": "PR350 recorded four exact live SQL installations, 100 ledger entries, 29 function bodies and five FORCE-RLS empty tables. No claim of active Dataset population.",
+    "live_scope": false,
+    "remaining": "New context/start RPC migration and narrow role extensions remain prepared; activation/config/deploy/native acceptance and EO05C/D are separate."
   }
 }

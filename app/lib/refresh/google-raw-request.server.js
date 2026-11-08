@@ -1,11 +1,14 @@
+import {handleDatasetWriteRequest} from "./dataset-request.server.js";
+import {createDatasetServerExecution} from "./dataset-server.server.js";
 import {readGooglePrivateRequest} from "./google-private-request.server.js";
 import {createGoogleRawCaptureExecution,readGoogleRawCapturePlan} from "./google-raw-server.server.js";
 
 export const GOOGLE_RAW_CAPTURE_PATH="/internal/google/raw-capture";
 // Private server-to-server resource only. No cookies, browser auth, caller IDs,
 // forwarded origins, native permission request, or automatic retry.
-export async function handleGoogleRawCaptureRequest(request,{environment=process.env,createExecution=createGoogleRawCaptureExecution,now=Date.now}={}) {
+export async function handleGoogleRawCaptureRequest(request,{environment=process.env,createExecution=createGoogleRawCaptureExecution,now=Date.now,createDatasetExecution=createDatasetServerExecution}={}) {
  const env={...environment};
+ if(env.ADSTABLE_DATASET_WRITE_ENABLED==="true")return handleDatasetWriteRequest(request,{environment:env,provider:"google_ads",path:GOOGLE_RAW_CAPTURE_PATH,readPrivateRequest:readGooglePrivateRequest,now,createExecution:createDatasetExecution});
  const json=(status,value)=>Response.json(value,{status,headers:{"cache-control":"no-store, max-age=0","cdn-cache-control":"no-store","x-content-type-options":"nosniff"}});
  const stop=(status,reason)=>json(status,{status:"stopped",reason,sourceStored:null,recordCount:null,empty:null});
  const gate=await readGooglePrivateRequest(request,{environment:env,path:GOOGLE_RAW_CAPTURE_PATH,

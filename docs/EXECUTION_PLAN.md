@@ -1,3 +1,7 @@
+## 8 Kasım 2026 — EO-05-B ortak özel tablo aktarımı
+
+Ürün sahibi üç provider için mevcut ham zarf doğrulama, tablo yazımı ve readback sunucu bağlantısının kod/test/PR kapsamını açıkça onayladı. Üç mevcut özel giriş ortak dataset-only yola bağlanır; sabit plan, owner-kontrollü RPC ve mevcut dar TLS/cipher korunur. Tek planın tekrar başlaması mevcut kaynak manifestindeki sınırlı marker ile engellenir. [Kapsam](EO_05B_SOURCE_DATASET_BINDING.md), [sözleşme](../contracts/eo-05b-dataset-server-v1.json). Yeni tablo/paket/UI/OAuth adımı yoktur. Hazırlanan iki RPC ve rol uzantısı canlı uygulanmaz; grant/config/provider/yayın/merge ayrı onaylıdır. Tüketim/checkpoint ve EO05C/D sınırları korunur.
+
 ## 8 Kasım 2026 — EO-05-B kur ve rapor para birimi bağlantısı
 
 Ürün sahibinin hafta sonu kuralı kabulüyle mevcut kur tablosuna sabit Frankfurter/ECB

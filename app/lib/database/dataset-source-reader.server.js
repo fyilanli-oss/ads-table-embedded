@@ -1,4 +1,5 @@
 import {canonicalSourceJson, sourceStoreOwner, createSourceEvidenceRepository} from "./source-evidence-store.server.js";
+import {DATASET_SOURCE_CONTEXT_SQL} from "./dataset-rpc.server.js";
 
 const verified = new WeakMap();
 const fail = code => {throw Error("DATASET_SOURCE_" + code);};
@@ -15,10 +16,7 @@ const freeze = v => {if (v && typeof v === "object") {Object.values(v).forEach(f
  * It does not reserve a new job or reauthorize an old provider request. A missing
  * historical binding is a hold, never permission to use today's account settings.
  */
-const contextSql = `select source,evidence.source_hash(source) as snapshot_hash,from_date::text as from_date,to_date::text as to_date
-from operations.refresh_work_bindings
-where workspace_id=$1::uuid and install_generation=$2::bigint and provider=$3 and account_id=$4
-and job_id=$5 and fence=$6::bigint and from_date=$7::date and to_date=$8::date`;
+const contextSql = DATASET_SOURCE_CONTEXT_SQL;
 
 export async function readStoredDatasetSources({database, cipher, owner, batches, limits, signal, now = Date.now}) {
   batches = structuredClone(batches); limits = structuredClone(limits);
@@ -48,8 +46,7 @@ export async function readStoredDatasetSources({database, cipher, owner, batches
     const currentScope = {operationId: read.operationId, jobId: read.jobId, fence: read.fence, window: read.window};
     if (scope && canonicalSourceJson(scope) !== canonicalSourceJson(currentScope)) fail("SCOPE_MISMATCH");
     scope ??= structuredClone(currentScope); seenDatasets.add(read.dataset);
-    const context = await database.query(contextSql, [bound.workspaceId, bound.generation, bound.provider, bound.accountId,
-      read.jobId, read.fence, read.window.from, read.window.to]); stop();
+    const context = await database.query(contextSql, [JSON.stringify(bound), read.jobId, read.fence, read.window.from, read.window.to]); stop();
     if (context?.rows?.length !== 1 || !hash.test(context.rows[0].snapshot_hash)) fail("CONTEXT_UNAVAILABLE");
     const source = context.rows[0].source;
     if (!source || source.workspaceId !== bound.workspaceId || String(source.installGeneration) !== bound.generation

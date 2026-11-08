@@ -33,7 +33,7 @@ async function nativeKlaviyoPage(path, body, request = null) {
 
 /** All native responses/credentials/owners are synthetic. Real capture projection,
  * AEAD and decrypt paths are used; this fake DB is not SQL/native acceptance. */
-export async function datasetSourceBindingFixture(provider = "google_ads", {nonempty = true, missingMetric = false, mixedMetrics = false, eventOrderId = null, owner: givenOwner = null} = {}) {
+export async function datasetSourceBindingFixture(provider = "google_ads", {nonempty = true, missingMetric = false, mixedMetrics = false, eventOrderId = null, owner: givenOwner = null, cipher: givenCipher = null} = {}) {
   const owner = givenOwner ? structuredClone(givenOwner) : datasetStorageFixture().owner;
   if (!givenOwner) {owner.installationId = "1"; owner.provider = provider; owner.accountId = provider === "meta" ? "act_123" : provider === "klaviyo" ? "account-1" : "123";}
   if (provider === "klaviyo") owner.selectionEpoch = null;
@@ -85,7 +85,7 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
       {dataset: "account_performance", pages: [...proof, ...reports], partial: missingMetric, coverage},
       {dataset: "product_performance", pages: [...proof, events], coverage: [{family: "ordered_product_events", metricId: "product", state: "present", pageCount: 1, recordCount: nonempty ? 1 : 0}]});
   }
-  const seed = sourceStoreFixture({owner}), cipher = seed.input.cipher, batches = [], envelopes = new Map(); let nextId = 100;
+  const seed = sourceStoreFixture({owner, ...givenCipher ? {cipher: givenCipher} : {}}), cipher = seed.input.cipher, batches = [], envelopes = new Map(); let nextId = 100;
   for (const item of native) {
     const attemptId = randomUUID(), pages = item.pages.map((page, ordinal) => ({key: "p" + ordinal, family: page.family, ordinal, origin: provider,
       captureLayer: "native_response_projection", numericFidelity: "lossless_token", fieldCoverage: page.selectedFields ?? ["records"], schemaVersion: spec.schema, sanitizerVersion: spec.sanitizer, payload: page}));
@@ -101,7 +101,7 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
   const database = {async query(sql, args) {
     queries.push(sql); const custom = await hooks.query?.(sql, args); if (custom) return custom;
     if (sql.includes("assert_source_owner")) return {rows: [{result: null}]};
-    if (sql.includes("from operations.refresh_work_bindings")) return {rows: [{source: structuredClone(source), snapshot_hash: "a".repeat(64)}]};
+    if (sql.includes("evidence.read_dataset_source_context")) return {rows: [{source: structuredClone(source), snapshot_hash: "a".repeat(64)}]};
     if (sql.includes("read_source_receipt")) return {rows: [{result: structuredClone(envelopes.get(args[1])?.receipt)}]};
     if (sql.includes("read_source_pages")) return {rows: [{result: structuredClone(envelopes.get(args[1])?.pages.filter(p => BigInt(p.id) > BigInt(args[3])).slice(0, args[4]) ?? [])}]};
     if (sql.includes("commit_dataset_empty_retention")) {

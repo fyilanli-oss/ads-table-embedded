@@ -5,6 +5,13 @@ on:
     branches: [main, "codex/step15-storage-foundation-design"]
     paths:
       - "app/lib/database/dataset-fx-*.server.js"
+      - "app/lib/database/dataset-rpc.server.js"
+      - "app/lib/database/dataset-postgres.server.js"
+      - "app/lib/refresh/dataset-server.server.js"
+      - "app/lib/refresh/dataset-request.server.js"
+      - "tests/dataset-server.test.js"
+      - "tools/eo05b-dataset-server-probe.mjs"
+      - "tools/sql/eo05b-dataset-role-extension.sql"
       - "app/lib/database/reporting-currency.server.js"
       - "tests/dataset-fx.test.js"
       - "tools/eo05b-fx-reporting-currency-probe.mjs"

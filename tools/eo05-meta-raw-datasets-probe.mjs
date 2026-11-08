@@ -56,10 +56,10 @@ export async function metaRawDatasetProbe(client,{execution,connection,installat
        if(mode==="selection")await client.query("update integrations.reporting_account_bindings set effective_to=clock_timestamp() where connection_id=$1 and effective_to is null",[connection.id]);
        if(mode==="permission_expired"){const r=JSON.parse(args[4]);r.permissionExpiresAt=new Date(Date.now()-1000).toISOString();args=[...args.slice(0,4),JSON.stringify(r)];}
       }
-      if(q.includes("read_source_receipt"))reads++;
+      if(q.startsWith("select evidence.read_source_receipt("))reads++;
       await client.query("set local role adstable_meta_source_runner");const result=await client.query(q,args);await client.query("set local role adstable_owner");
       if(mode==="lost_write"&&q.includes("commit_meta_dataset_source")){await client.query("release savepoint "+name);committed=true;throw Error("synthetic lost acknowledgement");}
-      if(mode==="tampered"&&q.includes("read_source_pages")&&result.rows[0].result.length)result.rows[0].result[0].ciphertext="00";
+      if(mode==="tampered"&&q.startsWith("select evidence.read_source_pages(")&&result.rows[0].result.length)result.rows[0].result[0].ciphertext="00";
       return result;
      }};
     }});

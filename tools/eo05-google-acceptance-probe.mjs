@@ -102,7 +102,7 @@ export async function googleAcceptanceRehearsal(client,{workspace,shopId,shopDom
       }
       if(sql==="rollback"){if(!committed){await client.query("rollback to savepoint "+name);await client.query("release savepoint "+name);}await client.query("set local role adstable_owner");return {rows:[]};}
       if(sql.startsWith("select pg_catalog.set_config"))return client.query(sql,args);
-      if(mode==="lost_readback"&&sql.includes("read_source_receipt"))throw Error("SYNTHETIC-LOST");
+      if(mode==="lost_readback"&&sql.startsWith("select evidence.read_source_receipt("))throw Error("SYNTHETIC-LOST");
       await client.query("set local role "+(mode==="wrong_role"&&role==="adstable_refresh_coordinator"?"adstable_runtime":role));
       const r=await client.query(sql,args);await client.query("set local role adstable_owner");
       if(datasetMode&&mode==="tampered_content"&&sql.startsWith("select evidence.read_source_pages(")&&r.rows[0].result.length)r.rows[0].result[0].ciphertext="00";

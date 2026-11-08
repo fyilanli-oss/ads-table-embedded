@@ -67,3 +67,15 @@ Meta developer sayfası erişilemedi; mevcut alanlar
 [resmî Meta SDK](https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/adsinsights.py)
 ve [Meta Postman koleksiyonu](https://www.postman.com/meta/facebook-marketing-api/request/u07tack/get-ad-insights-l1)
 ile karşılaştırıldı. Yeni sorgu veya alan eklenmedi.
+
+## 8 Kasım 2026 — ortak özel sunucu bağlantısı
+
+Mevcut üç özel raw-capture girişinde yalnız açık DATASET_WRITE modu seçilirse ortak tablo aktarımı çalışır. Yeni URL, UI veya OAuth adımı yoktur. Sunucudaki sabit planın providerı adresle eşleşir; istek yalnız operationId taşır. Mevcut bearer, origin ve gövde sınırları korunur. Bu modda native reklam okuyucusu çağrılmaz.
+
+Mevcut provider TLS rolleri kullanılır; yalnız sabit özel RPC listesi kabul edilir. Önceden doğrudan okunan admission bağlamı, güncel owner kontrolü yapan özel RPCye taşındı; tablo SELECT yetkisi açılmaz. Rol uzantısı ve iki yeni özel RPC yalnız hazırlanır, canlıya uygulanmaz. Google kurulum artifactinin türetilmiş profil kontrolü yeni bilinen opsiyonel yüzeyi tanır; eski native istemci sorgu listesi genişlemez.
+
+Tek sunucu planı, ilk kaynak zarfının mevcut manifestinde en fazla32 kayıtlı işlem alanında bir kez başlatılır. Marker ömrü yenilemez, yeni tablo değildir. Kayıp yanıt veya sonradan hata markerı sıfırlamaz; başka process aynı operationId ile tekrar başlayamaz. Aynı operationId özel yazım makbuzuna da bağlanır. Başarılı yazım ve bilinen makbuz yeniden okunur; belirsiz yazımdan sonra otomatik inspection veya retry yoktur.
+
+Varsayılan native-only değerler korunur; useFx açıkken mevcut sabit kur bağlantısı kullanılır. Merchant para birimi seçilmemişse tahmin yapılmaz. Özel yanıt yalnız durum/sayı/doğrulama sınırını döndürür; owner, token, zarf ve ham metrik içermez. source consumed, checkpoint, publishable ve saatlik refresh bu teslimle başlamaz.
+
+Kod/izole test/PR kapsamı: contracts/eo-05b-dataset-server-v1.json. Gerçek PostgreSQL denemesi mevcut F01 içinde sentetik source/credential ile gerçek dar rol, AEAD, yazım/readback ve işlem tekrar reddini sınar; sonunda rollback olur. Canlı kurulum/rol/config/provider/yayın/merge ayrı onaylıdır. Aynı EO-05-B ve kontrol listesi23; yeni paket yoktur.

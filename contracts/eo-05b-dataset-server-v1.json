@@ -1,0 +1,78 @@
+{
+  "id": "eo-05b-dataset-server-v1",
+  "version": 1,
+  "date": "2026-11-08",
+  "package": "A6-EO-05-B",
+  "detail_checklist_step": 23,
+  "baseline_main": "4e5f29432e0c819e3c7ff22e1dbc5b53d873ba50",
+  "owner_approval": "Onaylıyorum Codex — explicit response to shared Google/Meta/Klaviyo stored-envelope validation, report storage and readback server binding, code/tests/PR proposal.",
+  "scope": {
+    "runtime_code": true,
+    "prepared_SQL": true,
+    "live_database": false,
+    "live_grants": false,
+    "live_provider": false,
+    "merge": false,
+    "deploy": false
+  },
+  "entry": {
+    "existing_paths": [
+      "/internal/google/raw-capture",
+      "/internal/meta/raw-capture",
+      "/internal/klaviyo/raw-capture"
+    ],
+    "mode": "Explicit ADSTABLE_DATASET_WRITE_ENABLED=true selects the dataset-only handler; existing native capture remains default when disabled. The fixed server plan must match the path provider.",
+    "plan": "ADSTABLE_DATASET_WRITE_PLAN: exact version/operationId/expiresAt/owner/batches/limits/useFx; POST body contains only matching operationId.",
+    "authorization": "Existing provider-specific private bearer secret, production/exact origin/path, bounded 1KiB body. No cookie/browser owner or row authority.",
+    "credentials": "Existing provider source-role TLS connection and distinct source cipher configuration; no new role, password or secret provisioned."
+  },
+  "flow": [
+    "authenticate existing private gate",
+    "read exact finite server-owned plan",
+    "validate existing narrow source-role profile and required storage extension",
+    "persist a bounded one-start operation marker in the primary existing source manifest",
+    "assert current owner and read original admitted context through fixed owner-checked RPC",
+    "read exact receipt/pages and AEAD/hash/projection",
+    "optional fixed FX resolver using existing immutable merchant currency",
+    "atomic storage/retention write under the fixed plan operationId",
+    "known acknowledgement only: exact receipt readback",
+    "close checked transport and return minimal no-store summary"
+  ],
+  "unknown": "First error poisons transport; no automatic retry, alternate auth/role or unknown-write inspection. A lost start acknowledgement stays unknown. Durable source-manifest marker prevents same-plan restart across processes even if no Dataset receipt was received. Existing explicit historical inspection remains separate.",
+  "profile": "Only fixed DATASET_STORAGE_RPC; no direct table, credential, currency selection, cleanup, grant, job finish or checkpoint SQL. Existing capture clients recognize only this reviewed optional extension and still cannot issue its SQL.",
+  "limits": {
+    "max_batched_envelopes": 3,
+    "max_source_pages": 300,
+    "max_source_rows": 20000,
+    "max_source_bytes": 16777216,
+    "max_fact_rows": 200,
+    "max_elapsed_ms": 120000,
+    "max_plan_future_ms": 600000,
+    "max_start_markers_per_primary_batch": 32
+  },
+  "proofs": "Missing/partial/empty/unknown remain distinct. No fake zero. Native values, source refs, three-year linked retention and mandatory erasure preserved. A storage receipt never marks source consumed or report publishable.",
+  "migration": "supabase/migrations/20261108170735_eo05b_dataset_server_context.sql",
+  "prepared_role_artifact": "tools/sql/eo05b-dataset-role-extension.sql",
+  "tests": [
+    "tests/dataset-server.test.js",
+    "tests/dataset-source-binding.test.js",
+    "tests/dataset-fx.test.js",
+    "tests/report-retention.test.js",
+    "tools/eo05b-dataset-server-probe.mjs"
+  ],
+  "claims": {
+    "new_table": false,
+    "new_package": false,
+    "new_UI_or_OAuth_flow": false,
+    "live_acceptance": false,
+    "consumer_receipt": false,
+    "hourly_refresh": false,
+    "EO05C_D_complete": false
+  },
+  "official_checked_at": "2026-11-08",
+  "official_sources": [
+    "https://supabase.com/docs/guides/database/functions",
+    "https://node-postgres.com/features/transactions",
+    "https://nodejs.org/api/crypto.html#cryptotimingsafeequala-b"
+  ]
+}

@@ -15,7 +15,7 @@ export function datasetStorageFixture({owner, source, table = "pd_facts"} = {}) 
     source_identity: {kind: "daily", namespace: table === "pd_facts" ? "entity_performance" : table === "cpd_product_performance_facts" ? "product_performance" : "product_sales", native: {entity_type: "ad", entity_id: "ad-1", product_id: "product-1"}},
     metric_support: Object.fromEntries(metrics.map(k => [k, "supported"])), observation_state: Object.fromEntries(metrics.map(k => [k, "present"])),
     metric_extensions: {}, extension_schema_version: DATASET_EXTENSION_VERSION,
-    provenance: {projection_version: "synthetic-only-v1", sources: [source]}, source_batch_id: source.batch_id, source_completeness: "complete",
+    provenance: {projection_version: "synthetic-only-v1", sources: [structuredClone(source)]}, source_batch_id: source.batch_id, source_completeness: "complete",
     source_currency: "USD", target_currency: "USD", fx_rate_id: null, fx_state: "identity", fx_engine_version: null,
     ...Object.fromEntries(metrics.map(k => [k, "0"]))});
   if (table === "pd_facts") Object.assign(row, {entity_type: "ad", entity_id: "ad-1", entity_name: null});

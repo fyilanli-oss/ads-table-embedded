@@ -356,7 +356,7 @@ begin
  if depth>32 then raise exception 'DATASET_JSON_BOUNDS';end if;
  if jsonb_typeof(p)='object' then
   for k,v in select key,value from jsonb_each(p) order by key collate "C" loop
-   if k !~ '^[ -~]{1,512}$' or k ~* 'token|secret|password|authorization|cookie|email|phone|address|customer|profile|__proto__|constructor|prototype'
+   if length(k) not between 1 and 512 or k !~ '^[ -~]+$' or k ~* 'token|secret|password|authorization|cookie|email|phone|address|customer|profile|__proto__|constructor|prototype'
    then raise exception 'DATASET_PRIVATE_FIELD';end if;
    pieces:=pieces||(to_jsonb(k)::text||':'||analytics.dataset_json(v,depth+1));
   end loop;

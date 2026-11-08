@@ -36,8 +36,8 @@ test("Klaviyo first failure stops with unknown counts and no replay: "+mode,asyn
  };
  x.hooks.source=(sql,args)=>{
   if(sql.includes("commit_klaviyo_dataset_source")){commits++;if(mode==="lost_write"&&commits===2)throw Error("SECRET");}
-  if(x.writes.length===2&&sql.includes("read_source_receipt")&&mode==="lost_receipt")return {rows:[{result:{status:"unknown"}}]};
-  if(x.writes.length===2&&sql.includes("read_source_pages")){
+  if(x.writes.length===2&&sql.startsWith("select evidence.read_source_receipt(")&&mode==="lost_receipt")return {rows:[{result:{status:"unknown"}}]};
+  if(x.writes.length===2&&sql.startsWith("select evidence.read_source_pages(")){
    if(mode==="tampered_page")x.writes[1].pages[0].ciphertext="00";
    if(mode==="missing_page")return {rows:[{result:[]}]};
    if(mode==="extra_page"&&BigInt(args[3])>=BigInt(x.writes[1].pages.at(-1).id))return {rows:[{result:[{...x.writes[1].pages[0],id:"9999"}]}]};
@@ -46,7 +46,7 @@ test("Klaviyo first failure stops with unknown counts and no replay: "+mode,asyn
  const r=await createKlaviyoRawCaptureExecution(x.options).run();assert.notEqual(r.status,"stored",JSON.stringify(r));assert.equal(r.recordCount,null);assert.equal(r.empty,null);
  assert.equal(x.f.state.paused,0);assert.ok(commits<=3);assert.doesNotMatch(JSON.stringify(r),/SECRET|SYNTHETIC|ciphertext/);
  if(["403","429","errors"].includes(mode))assert.equal(requests,1);
- if(mode==="lost_write")assert.equal(x.calls.filter(c=>c.sql.includes("read_source_receipt")).length,1);
+ if(mode==="lost_write")assert.equal(x.calls.filter(c=>c.sql.startsWith("select evidence.read_source_receipt(")).length,1);
 });
 test("per-endpoint pacing is 31 seconds; abort stops before another report",async()=>{
  let time=0;const waits=[],controller=new AbortController(),pace=createKlaviyoRawPacer({now:()=>time,signal:controller.signal,delay:async ms=>{waits.push(ms);time+=ms;}});

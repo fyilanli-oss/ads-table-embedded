@@ -74,7 +74,7 @@ for(const mode of ["owner_missing","identity_drift","config_missing","missing_me
  if(mode==="partial")x.hooks.fetch=u=>u.hostname==="merchantapi.googleapis.com"?Response.json({products:[],nextPageToken:"more"}):undefined;
  if(mode==="oversize"){x.plan.limits.maxBytes=8;x.setPlan();}
  if(mode==="lost_source")x.hooks.source=sql=>{if(sql.includes("commit_google_identity_source"))throw Error("SYNTHETIC-PRIVATE-LOST");};
- if(mode==="readback_missing")x.hooks.source=sql=>sql.includes("read_source_receipt")?{rows:[{result:{status:"not_observed",rollbackProven:false}}]}:undefined;
+ if(mode==="readback_missing")x.hooks.source=sql=>sql.startsWith("select evidence.read_source_receipt(")?{rows:[{result:{status:"not_observed",rollbackProven:false}}]}:undefined;
  if(["lost_admission","lost_finish"].includes(mode))x.f.hooks.sql=sql=>{if(sql.includes(mode==="lost_finish"?"finish_refresh_work":"commit_refresh_preflight_with_deadline"))throw Error("SYNTHETIC-PRIVATE-LOST");};
  if(mode==="abort")x.hooks.runtime=sql=>{if(sql.includes("load_active_installation_owner"))controller.abort();};
  const r=await createGoogleRawCaptureExecution(x.options).run();assert.notEqual(r.status,"stored",JSON.stringify(r));
@@ -82,7 +82,7 @@ for(const mode of ["owner_missing","identity_drift","config_missing","missing_me
  assert.ok(x.calls.filter(c=>c.sql.includes("commit_google_identity_source")).length<=1);
  if(mode==="lost_source"){
   assert.equal(r.sourceStored,null);
-  assert.equal(x.calls.filter(c=>c.sql.includes("read_source_receipt")).length,0,"unknown write must not trigger automatic inspection");
+  assert.equal(x.calls.filter(c=>c.sql.startsWith("select evidence.read_source_receipt(")).length,0,"unknown write must not trigger automatic inspection");
  }
  if(mode==="readback_missing"){assert.equal(r.sourceStored,true);assert.equal(r.receiptVerified,false);}
  if(["owner_missing","identity_drift","config_missing","lost_admission","abort"].includes(mode))assert.equal(x.f.http.length,0);

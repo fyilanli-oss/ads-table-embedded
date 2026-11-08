@@ -14,7 +14,8 @@ const projectors = Object.freeze({google_ads: projectStoredGoogleDataset, meta: 
  * No caller projection/canonical row, native request, OAuth mutation, FX source,
  * scheduler, consumed marker or report checkpoint is accepted here.
  */
-export async function bindStoredDatasetSources({database, cipher, owner, batches, limits, policy = reportRetentionPolicy(), fxResolver, signal, now = Date.now}) {
+export async function bindStoredDatasetSources({database, cipher, owner, batches, limits, policy = reportRetentionPolicy(), fxResolver, operationId, signal, now = Date.now}) {
+  if (operationId !== undefined && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(operationId)) throw Error("DATASET_OPERATION_INVALID");
   batches = structuredClone(batches); limits = structuredClone(limits); policy = structuredClone(policy);
   readReportRetentionPolicy(policy);
   const source = await readStoredDatasetSources({database, cipher, owner, batches, limits, signal, now});
@@ -34,7 +35,7 @@ export async function bindStoredDatasetSources({database, cipher, owner, batches
     holds: projection.holds, auxiliary: projection.auxiliary};
   if (!projection.rows.length) {
     if (projection.holds.length || source.datasets.some(d => d.receipt.sourceState !== "complete")) return Object.freeze({...boundary, status: "held", rowsStored: 0, empty: null, storageReceipt: null});
-    const p = {version: "eo05b-empty-retention-v1", operationId: randomUUID(),
+    const p = {version: "eo05b-empty-retention-v1", operationId: operationId ?? randomUUID(),
       policy: resolveReportRetentionPolicy({businessDate: source.scope.window.from, timeZone: source.datasets[0].source.timezone}),
       sourceContext: source.datasets[0].sourceContext, sources: source.datasets.flatMap(d => d.pages.map(page => page.ref))};
     if (signal?.aborted || now() >= limits.deadlineAt || Date.parse(p.policy.until) <= now()) throw Error("DATASET_BINDING_LIMIT_OR_STOP");
@@ -49,7 +50,7 @@ export async function bindStoredDatasetSources({database, cipher, owner, batches
     return Object.freeze({...boundary, status: "empty", rowsStored: 0, empty: true, storageReceipt: null, retentionReceipt: Object.freeze(receipt)});
   }
   if (projection.rows.length > 200 || signal?.aborted || now() >= limits.deadlineAt) throw Error("DATASET_BINDING_LIMIT_OR_STOP");
-  const write = prepareDatasetWrite({owner: source.owner, rows: projection.rows, policy, now: new Date(now()).toISOString()});
+  const write = prepareDatasetWrite({owner: source.owner, rows: projection.rows, policy, now: new Date(now()).toISOString(), ...operationId === undefined ? {} : {operationId}});
   const repository = createDatasetStorageRepository(database);
   // A lost write reply throws here. It never enters automatic readback/replay.
   const receipt = await repository.commit(write);

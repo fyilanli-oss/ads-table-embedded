@@ -4,7 +4,11 @@ import {createDatasetServerExecution, readDatasetWritePlan} from "./dataset-serv
 // The body can name only the fixed server plan's operation, never owner/rows.
 export async function handleDatasetWriteRequest(request, {environment, provider, path, readPrivateRequest, now = Date.now, createExecution = createDatasetServerExecution}) {
   const json = (status, body) => Response.json(body, {status, headers: {"cache-control": "no-store, max-age=0", "cdn-cache-control": "no-store", "x-content-type-options": "nosniff"}});
-  const stop = (status, reason) => json(status, {status: "stopped", reason, DatasetWritePerformed: false, rowsStored: null, consumerReceipt: false, hourlyRefreshActivated: false});
+  const stop = (status, reason) => {
+    const unknown = reason === "dataset_execution_unconfirmed";
+    return json(status, {status: unknown ? "unconfirmed" : "stopped", reason, DatasetWritePerformed: unknown ? null : false,
+      rowsStored: null, consumerReceipt: false, hourlyRefreshActivated: false});
+  };
   const gate = await readPrivateRequest(request, {environment, path, enabled: environment.ADSTABLE_DATASET_WRITE_ENABLED === "true",
     readPlan: (env, time) => {const p = readDatasetWritePlan(env, time); if (p?.owner.provider !== provider) throw Error("DATASET_PROVIDER_MISMATCH"); return p;},
     operationId: p => p?.operationId, now});

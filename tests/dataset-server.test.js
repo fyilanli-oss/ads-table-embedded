@@ -124,3 +124,11 @@ test("a lost durable-start reply cannot reach source inspection or be restarted 
   assert.equal(f.writes.length, 0); assert.equal(f.trace.some(q => q.startsWith("select evidence.read_source_receipt(")), false);
   assert.equal(f.counts().native, 0);
 });
+test("private HTTP lost-write response reports unknown, never a fabricated no-write/rollback", async () => {
+  const f = await datasetServerFixture("google_ads"), original = f.database.query.bind(f.database);
+  f.database.query = async (sql, args) => {const result = await original(sql, args); if (sql.includes("commit_dataset_storage")) throw Error("lost acknowledgement"); return result;};
+  const response = await f.handle(f.request()), body = await response.json();
+  assert.equal(response.status, 503); assert.equal(body.status, "unconfirmed"); assert.equal(body.DatasetWritePerformed, null); assert.equal(body.rowsStored, null);
+  assert.equal(f.writes.length, 1); assert.equal(f.trace.some(q => q.startsWith("select analytics.inspect_dataset_storage(")), false);
+  assert.equal(f.counts().ended, 1); assert.equal(f.counts().native, 0);
+});

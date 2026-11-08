@@ -35,19 +35,21 @@ export async function datasetServerProbe(client, {ownerFixture}) {
       const plan = {version: 1, operationId: randomUUID(), expiresAt: new Date(Date.now() + 60000).toISOString(), owner, batches: input.batches,
         limits: {maxPages: 100, maxRows: 1000, maxBytes: 1000000, maxElapsedMs: 60000}, useFx: false};
       environment.ADSTABLE_DATASET_WRITE_PLAN = JSON.stringify(plan);
-      let ordinal = 0, native = 0;
+      let ordinal = 0, native = 0; const trace = [];
       const poolFactory = () => ({on() {}, async end() {}, async connect() {
         const savepoint = "dataset_rpc_" + (++ordinal); let committed = false;
         return {release() {}, async query(sql, args) {
+          trace.push(sql === "begin" || sql === "commit" || sql === "rollback" ? sql : sql.startsWith("select pg_catalog.set_config") ? "local_limits" : sql.includes("as profile_ready") ? "role_profile" : "business_RPC");
           if (sql === "begin") return client.query("savepoint " + savepoint);
           if (sql === "commit") {await client.query("set local role adstable_owner"); await client.query("release savepoint " + savepoint); committed = true; return {rows: []};}
           if (sql === "rollback") {if (!committed) {await client.query("rollback to savepoint " + savepoint); await client.query("release savepoint " + savepoint);} await client.query("set local role adstable_owner"); return {rows: []};}
           if (sql.startsWith("select pg_catalog.set_config")) return client.query(sql, args);
-          await client.query("set local role " + role);
+          try {await client.query("set local role " + role);} catch (error) {console.error("EO05B_DATASET_ROLE_TEST_ERROR", JSON.stringify({code: error.code, message: error.message})); throw error;}
           let result;
           try {result = await client.query(sql, args);} catch (error) {
             console.error("EO05B_DATASET_SERVER_SQL_DIAGNOSTIC", JSON.stringify({provider, code: error.code, message: error.message, where: error.where})); throw error;
           }
+          if (sql.includes("as profile_ready")) console.log("EO05B_DATASET_PROFILE_RESULT", JSON.stringify({provider, rows: result.rows}));
           if (sql.includes("as profile_ready") && result.rows[0]?.profile_ready !== true) {
             console.error("EO05B_DATASET_PROFILE_DIAGNOSTIC", JSON.stringify({provider, profile: result.rows}));
             try {
@@ -60,7 +62,7 @@ export async function datasetServerProbe(client, {ownerFixture}) {
       }});
       const execution = createDatasetServerExecution({environment, operationId: plan.operationId, poolFactory, fetchFn: async () => {native++; throw Error("NATIVE_FORBIDDEN");}});
       let result;
-      try {result = await execution.run();} catch (error) {console.error("EO05B_DATASET_EXECUTION_STOP", JSON.stringify({provider, checkouts: ordinal, message: error.message})); throw error;}
+      try {result = await execution.run();} catch (error) {console.error("EO05B_DATASET_EXECUTION_STOP", JSON.stringify({provider, checkouts: ordinal, trace, remainingMs: Date.parse(plan.expiresAt) - Date.now(), message: error.message})); throw error;}
       await execution.close();
       assert.equal(result.rowsStored, provider === "google_ads" ? 3 : 2); assert.equal(result.consumerReceipt, false); assert.equal(native, 0);
       assert.equal(result.storageReceipt.operationId, plan.operationId);

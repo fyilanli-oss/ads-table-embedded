@@ -374,6 +374,16 @@ function hasPositiveMetric(metrics, names) {
   });
 }
 
+// Shared decision only; callers derive these booleans from their native numeric
+// representation. The rule is identical for the legacy and lossless paths.
+export function classifyGoogleCartDataRole({advertisedItemId,soldItemId,normalObserved,leadEvidence,crossSellEvidence}) {
+  if (![normalObserved,leadEvidence,crossSellEvidence].every(v=>typeof v==='boolean')) throw new GoogleReportingError('GOOGLE_CART_DATA_ROW_INVALID','Invalid role evidence');
+  if (normalObserved && soldItemId && !advertisedItemId) return 'Assisted';
+  if (advertisedItemId && soldItemId && advertisedItemId===soldItemId && leadEvidence && !crossSellEvidence) return 'Advertised';
+  if (advertisedItemId && soldItemId && advertisedItemId!==soldItemId && crossSellEvidence && !leadEvidence) return 'Cross-sell';
+  return 'Unclassified';
+}
+
 export function normalizeGoogleCartDataSale(row) {
   if (!row || typeof row !== "object" || Array.isArray(row)) {
     throw new GoogleReportingError(
@@ -392,28 +402,9 @@ export function normalizeGoogleCartDataSale(row) {
     "crossSellRevenueMicros",
   ]);
 
-  let salesRole = "Unclassified";
   const normalObserved = ["unitsSold", "revenueMicros", "leadUnitsSold", "leadRevenueMicros",
     "crossSellUnitsSold", "crossSellRevenueMicros"].some(name => numericEvidence(metrics[name]) !== null);
-  if (normalObserved && soldItemId && !advertisedItemId) {
-    salesRole = "Assisted";
-  } else if (
-    advertisedItemId
-    && soldItemId
-    && advertisedItemId === soldItemId
-    && leadEvidence
-    && !crossSellEvidence
-  ) {
-    salesRole = "Advertised";
-  } else if (
-    advertisedItemId
-    && soldItemId
-    && advertisedItemId !== soldItemId
-    && crossSellEvidence
-    && !leadEvidence
-  ) {
-    salesRole = "Cross-sell";
-  }
+  const salesRole = classifyGoogleCartDataRole({advertisedItemId,soldItemId,normalObserved,leadEvidence,crossSellEvidence});
 
   return Object.freeze({
     provider: "google_ads",

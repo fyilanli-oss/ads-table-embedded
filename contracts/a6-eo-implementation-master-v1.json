@@ -4632,5 +4632,27 @@
     "merge": false,
     "deploy": false,
     "completion": "Storage code and isolated rehearsal only; native projection binding, Dataset retention/ordinary cleanup activation, FX source acceptance, EO05C/D consumer/correction and current native holds are not completed by this delivery."
+  },
+  "EO05B_source_dataset_binding_2026_11_08": {
+    "parent_package": "A6-EO-05-B",
+    "detail_checklist_step": 23,
+    "baseline_main": "efbb5a8e604f0dd28e43a96d84375fb5b4584f81",
+    "owner_approval": "Tamam devam edelim onaylıyorum Codex — specific existing stored raw-envelope to private Dataset writer code, isolated tests and PR scope stated after PR346.",
+    "brief": "docs/EO_05B_SOURCE_DATASET_BINDING.md",
+    "entry": "app/lib/database/dataset-source-binding.server.js",
+    "migration": "supabase/migrations/20261108103823_eo05b_source_dataset_binding.sql",
+    "providers": [
+      "google_ads",
+      "meta",
+      "klaviyo"
+    ],
+    "proof": "Original admission snapshot + owner/receipt/page AEAD readback + native lossless projection + SQL context check + storage readback. Synthetic SQL rehearsal is not live native acceptance.",
+    "runtime_grants": false,
+    "source_receipt_is_consumer_receipt": false,
+    "provider_call": false,
+    "live_database": false,
+    "merge": false,
+    "deploy": false,
+    "completion": "Source binding code/test only. Existing Dataset retention/ordinary cleanup and FX acceptance, EO05C/D consumer/correction and native18/22 holds remain open; no new package."
   }
 }

@@ -1,3 +1,12 @@
+## 8 Kasım 2026 — EO-05-B depodaki ham zarfları tablo yazıcısına bağlama
+
+PR #346 sonrası ürün sahibinin açıkladığımız kod/test/PR kapsamına açık onayıyla,
+mevcut Google/Meta/Klaviyo şifreli zarfları doğrulanmış readback ve kayıpsız native
+projection üzerinden özel Dataset yazıcısına bağlanır. [Kapsam ve sınırlar](EO_05B_SOURCE_DATASET_BINDING.md).
+Canlı DB/provider/config/grant, OAuth akışı, tüketim/checkpoint, merge/yayın yoktur.
+Mevcut EO-05-B saklama/normal temizlik ve FX kabul kapıları ile 18/22 native
+kanıt beklemeleri korunur. Ayrıntılı kontrol listesi 23; yeni paket yoktur.
+
 ## 8 Kasım 2026 — EO-05-B beş tablo yerleşimi ve genişletilebilir alanlar
 
 Ürün sahibi beş ana tablo kararını korudu; temel alanların tipli kolonlarda, isteğe bağlı provider metriklerinin doğrulanan/sürümlü JSONB bölümünde tasarlanmasını kabul ederek “Tamam başlayalım Codex” dedi. Önce alanlar, ilişkiler ve genişletilebilir bölümler somut incelemeye sunulur; bu tasarımın kabulünden sonra dört yeni tablo/yazıcı kodlanır. Mevcut identity.product_identity_mappings yeniden kullanılır.

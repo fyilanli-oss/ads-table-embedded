@@ -5,6 +5,12 @@ on:
     branches: [main, "codex/step15-storage-foundation-design"]
     paths:
       - "app/lib/database/dataset-storage.server.js"
+      - "app/lib/database/dataset-source-*.server.js"
+      - "app/lib/providers/stored-*-dataset.server.js"
+      - "app/lib/providers/stored-dataset-projection.server.js"
+      - "tests/dataset-source-binding.test.js"
+      - "tests/fixtures/dataset-source-binding-fixture.js"
+      - "tools/eo05b-source-dataset-binding-probe.mjs"
       - "tests/dataset-storage.test.js"
       - "tests/fixtures/dataset-storage-fixture.js"
       - "tools/eo05b-dataset-storage-probe.mjs"

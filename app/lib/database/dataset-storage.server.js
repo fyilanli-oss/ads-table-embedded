@@ -27,6 +27,14 @@ const hash = /^[a-f0-9]{64}$/;
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 const prepared = new WeakMap();
 const preparedFx = new WeakMap();
+export function emptyDatasetStorageRow(table) {
+  if (!metrics[table]) fail("TABLE_INVALID");
+  return Object.fromEntries([...common, ...specific[table], ...metrics[table]].map(key => [key, null]));
+}
+export function datasetMetricNames(table) {
+  if (!metrics[table]) fail("TABLE_INVALID");
+  return Object.freeze([...metrics[table]]);
+}
 const fail = code => {throw Error("DATASET_" + code);};
 const digest = value => createHash("sha256").update(value).digest("hex");
 const object = value => value !== null && typeof value === "object" && !Array.isArray(value) && Object.getPrototypeOf(value) === Object.prototype;
@@ -96,7 +104,13 @@ function validateRow(owner, table, row) {
   // is a reviewed registry revision, never an arbitrary JSON passthrough.
   if (row.extension_schema_version !== DATASET_EXTENSION_VERSION || !object(row.metric_extensions)
     || Object.keys(row.metric_extensions).length || Buffer.byteLength(canonicalSourceJson(row.metric_extensions)) > 16384) fail("EXTENSION_UNREGISTERED");
-  exact(row.provenance, ["projection_version", "sources"]);
+  exact(row.provenance, ["projection_version", "sources", ...(Object.hasOwn(row.provenance ?? {}, "source_context") ? ["source_context"] : [])]);
+  if (Object.hasOwn(row.provenance, "source_context")) {
+    exact(row.provenance.source_context, ["version", "snapshot", "digest", "job_id", "fence", "window"]);
+    const context = row.provenance.source_context;
+    if (context.version !== "eo05b-source-context-v1" || !object(context.snapshot) || !hash.test(context.digest)
+      || !text(context.job_id) || !id(context.fence) || !object(context.window)) fail("CONTEXT_INVALID");
+  }
   if (!text(row.provenance.projection_version) || !Array.isArray(row.provenance.sources) || !row.provenance.sources.length
     || row.provenance.sources.length > 32) fail("PROVENANCE_INVALID");
   for (const ref of row.provenance.sources) {

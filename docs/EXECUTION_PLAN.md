@@ -1,3 +1,12 @@
+## 8 Kasım 2026 — EO-05-B senkron saklama kodu
+
+Ürün sahibinin “Tamam Cidex onaylıyorum başlayalım” onayıyla PR #348 birleştirildi.
+Aynı EO-05-B kapsamında üç yıllık politika rapor yazıcısına ve gerekli mevcut ham
+kanıt/eşleme bağlarına atomik olarak uygulanır. Normal temizlikte rapor önce gelir;
+mevcut tüketim/partial/unknown sınırları ve zorunlu silme önceliği korunur.
+[Uygulama ve kabul sınırları](EO_05B_REPORT_RETENTION.md). İzole CI zorunludur;
+canlı DB/provider, grant, config, yayın veya bu kodun merge yetkisi yoktur.
+
 ## 8 Kasım 2026 — EO-05-B senkron üç yıllık saklama kararı
 
 Ürün sahibi rapor ile ona gerekli ham kaynak/kanıt metaverisini üç yıl birlikte

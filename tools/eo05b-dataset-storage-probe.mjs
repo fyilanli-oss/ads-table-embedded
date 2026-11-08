@@ -6,6 +6,7 @@ import {datasetStorageFixture} from "../tests/fixtures/dataset-storage-fixture.j
 import {createSourceEvidenceRepository} from "../app/lib/database/source-evidence-store.server.js";
 import {prepareDatasetWrite, prepareDatasetFx, createDatasetStorageRepository} from "../app/lib/database/dataset-storage.server.js";
 import {sourceDatasetBindingProbe} from "./eo05b-source-dataset-binding-probe.mjs";
+import {reportRetentionProbe} from "./eo05b-report-retention-probe.mjs";
 
 async function rejected(client, action, pattern) {
   await client.query("savepoint dataset_expected_failure"); let error;
@@ -64,6 +65,7 @@ export async function datasetStorageProbe(client, connection, environment = proc
     }
     await client.query("set local role adstable_owner");
     await sourceDatasetBindingProbe(client, {ownerFixture});
+    await reportRetentionProbe(client, {ownerFixture, sourceFixture});
     for (const provider of ["google_ads", "meta", "klaviyo"]) {
       const owner = await ownerFixture(client, provider), source = await sourceFixture(client, owner);
       const input = datasetStorageFixture({owner, source}); input.rows[0].row.spend_value = "9007199254740993.1234567890123456789";

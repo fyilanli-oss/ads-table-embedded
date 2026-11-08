@@ -92,3 +92,43 @@ Resmî kontrol: 8 Kasım 2026. [PostgreSQL 17 foreign keys](https://www.postgres
 Shopify üç yıllık genel izin vermez; gerekli amaç ve veri minimizasyonu gerekir.
 Kaldırma sonrası 30 gün API sözleşmesinde kaldırmadan başlar; 48 saat shop/redact
 bildiriminin gönderim zamanıdır. Zorunlu silme süresi bu kararla uzatılmaz.
+
+## Karar sonrası uygulama — 8 Kasım 2026
+
+PR #348 kararı main 06cdc5ca043ec4563514aea1d93cff93f32126b0 ile kaydetti.
+Ürün sahibinin “Tamam Cidex onaylıyorum başlayalım” onayı bu kararı yazıcıya ve
+gerekli kaynak kanıtlarına bağlayan kod, izole test ve PR içindir.
+
+`report-source-3y-v1` özgün iş gününün üçüncü yıl dönümü gününün sonuna kadar
+korur; 29 Şubat üçüncü yılda 28 Şubata sıkıştırılır, takip eden yerel gece
+yarısında süre dolar. Kaynak kabulündeki özgün saat dilimi kullanılır; indirme,
+okuma veya tekrar yazım yeni bir üç yıl başlatmaz. Tarih/saat dilimi yoksa yazılmaz.
+
+Yeni geçerli rapor yazımı, aynı transaction içinde gerekli mevcut ham paket,
+sayfa, referans, link ve doğrulanmış eşleme/kural kanıtını en az rapor ömrüne
+kadar korur. Şifreli gövde, AAD, kaynak hash/commit ve özgün sorgu kapsamı
+değişmez. Ölü/silinmiş kanıt yeniden canlandırılmaz; toplu geçmiş güncellemesi
+yoktur. Rapora bağlanmamış kaynağın 90/365 varsayılanı korunur. Uzun saklama
+eski eşlemenin güncel yetki veya kural geçerliliğini uzatmaz.
+
+Tam ve gerçekten boş kaynakta yalnız kanıt saklama makbuzu oluşur; sahte sıfır
+fact, tüketim makbuzu veya checkpoint oluşmaz. Partial/unknown boşluk başarı
+sayılmaz. Kayıp yazım cevabında otomatik tekrar veya doğrulama çağrısı yoktur.
+
+Özel süre dolumu yazıcısı en fazla 200 satır tarar. Süresi dolmuş raporu ancak
+bağlı kaynaklar committed/complete/consumed ise, bekleyen gizlilik işi ve başka
+FK bağımlısı yoksa siler. Kaynak silmez veya consumed durumunu kendisi üretmez;
+sonraki mevcut kaynak temizliği kendi sınırlarıyla çalışır. Zorunlu mağaza/müşteri
+silme yolları normal süreden bağımsızdır ve aynı kapsamdaki Dataset kayıtlarını
+kaynaktan önce kaldırmaya devam eder. Yeni fiziksel tablo veya arşiv yoktur.
+
+`tests/report-retention.test.js` takvim, saat dilimi, tekrar, boş/partial/unknown
+ve bounded bakım sınırlarını sınar. Mevcut F01 rollback denemesi gerçek PostgreSQL
+üzerinde üç provider sentetik şifreli kaynak yazımı, boş kanıt, erken temizlik
+engeli, sahiplik ayrımı, zorunlu silme ve mevcut doğrulanmış eşleme/kural kanıtının
+saklanmasını sınar. Bu testler native provider kabulü değildir. Kesin CI sonucu
+PR üzerinde kayıt edilir; hazırlanan migration canlıda uygulanmaz.
+
+Kod mevcut beş tablo ailesini korur. FX sağlayıcı kabulü, EO-05-C/D gerçek
+tüketim/düzeltme, native18/22 ve önceki erteleme kapıları kapanmış değildir.
+Maliyet konuşması veritabanı işi sonrasında kalır; yeni paket açılmaz.

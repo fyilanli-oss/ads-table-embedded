@@ -4,6 +4,14 @@ on:
   pull_request:
     branches: [main, "codex/step15-storage-foundation-design"]
     paths:
+      - "app/lib/database/report-retention-policy.server.js"
+      - "app/lib/database/dataset-retention.server.js"
+      - "tests/report-retention.test.js"
+      - "tools/eo05b-report-retention-probe.mjs"
+      - "app/lib/database/report-retention-policy.server.js"
+      - "app/lib/database/dataset-retention.server.js"
+      - "tests/report-retention.test.js"
+      - "tools/eo05b-report-retention-probe.mjs"
       - "app/lib/database/dataset-storage.server.js"
       - "app/lib/database/dataset-source-*.server.js"
       - "app/lib/providers/stored-*-dataset.server.js"

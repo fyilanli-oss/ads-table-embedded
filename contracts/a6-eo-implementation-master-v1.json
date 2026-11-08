@@ -4683,5 +4683,32 @@
     "unlinked_metadata_days": 365,
     "source_separation_required": false,
     "cost_discussion_deferred_by_owner": true
+  },
+  "EO05B_synchronized_retention_runtime_2026_11_08": {
+    "parent_package": "A6-EO-05-B",
+    "detail_checklist_step": 23,
+    "baseline_main": "06cdc5ca043ec4563514aea1d93cff93f32126b0",
+    "owner_approval": "Tamam Cidex onaylıyorum başlayalım — merge PR348 then synchronized three-year writer/source dependencies, normal expiry and mandatory erasure code, isolated tests and PR; no live DB/provider/deploy.",
+    "policy_version": "report-source-3y-v1",
+    "expiry": "Through third local business-day anniversary; Feb29 clamps to Feb28; expire at following local midnight. Original admission timezone; no ingestion/read/replay renewal.",
+    "binding": "Atomic Dataset write promotes fresh physical source batches/pages/references/links and required verified identity/rule proof in place; no raw copy or global update.",
+    "empty": "Complete physically verified empty source retains proof only; no zero fact or consumer receipt.",
+    "cleanup": "Private bounded Dataset expiry first; existing complete/consumed source gates and future FK dependents hold. No scheduling or runtime grant.",
+    "migration": "supabase/migrations/20261108133633_eo05b_synchronized_report_retention.sql",
+    "unit_tests": "tests/report-retention.test.js",
+    "SQL_probes": [
+      "tools/eo05b-report-retention-probe.mjs",
+      "tools/eo05b-source-dataset-binding-probe.mjs",
+      "tools/eo05-verified-mapping-probe.mjs"
+    ],
+    "SQL_acceptance": "Required current PR F01 isolated replay/old-storage/new-migration; exact run results recorded in PR, never live acceptance.",
+    "unlinked_source_defaults_changed": false,
+    "new_table": false,
+    "live_activated": false,
+    "provider_call": false,
+    "live_database": false,
+    "merge": false,
+    "deploy": false,
+    "new_package": false
   }
 }

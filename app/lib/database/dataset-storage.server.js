@@ -1,5 +1,6 @@
 import {createHash, randomUUID} from "node:crypto";
 import {canonicalSourceJson, sourceStoreOwner} from "./source-evidence-store.server.js";
+import {resolveReportWritePolicy} from "./report-retention-policy.server.js";
 
 // Private storage boundary, deliberately not a provider projector or report
 // publisher. Only reviewed server projections may construct this DTO. A source
@@ -155,6 +156,7 @@ export function prepareDatasetWrite({owner, rows, policy, now, operationId = ran
   const bound = sourceStoreOwner(owner);
   if (bound.provider === "shopify" || !uuid.test(operationId) || !Array.isArray(rows) || rows.length < 1 || rows.length > 200
     || !instant(now)) fail("INPUT_INVALID");
+  policy = resolveReportWritePolicy(policy, rows);
   exact(policy, ["version", "until"]);
   if (!text(policy.version) || !instant(policy.until) || Date.parse(policy.until) <= Date.parse(now)) fail("RETENTION_REQUIRED");
   const keys = new Set();

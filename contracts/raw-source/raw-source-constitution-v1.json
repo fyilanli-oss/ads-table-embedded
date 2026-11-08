@@ -763,7 +763,7 @@
       "contracts/a6-eo-f5-product-route-map-v1.json": "cfae8b77fa44f27978db120865852ece9d3ea03cfc83600f7576e71f9d34067b",
       "contracts/a6-eo-f6-effort-risk-comparison-v1.json": "94ead4504333f50bd1379e3f13e4fa68c5f19bf256c5e4006033fa73dc3e9f3e",
       "contracts/a6-eo-f7-go-decision-v1.json": "c3ed10cfca08ebeab27ebd63c17be60e912b36904accce0e2e38ae174f0d4aa9",
-      "contracts/a6-eo-implementation-master-v1.json": "5c3bf57f05d8b1fa76f233765d0936101df9ce27d0e0d684cee3d925e752cb8b",
+      "contracts/a6-eo-implementation-master-v1.json": "376bae925f333e54a241f63a47396fb14eaf649934871f1dc3fdf5d29ff4aa5b",
       "contracts/a6-eo-secret-inventory-recovery-v1.json": "e8a3e0cc74b446507a3e8f79a9338eee28b3cea7e2ccfd5737d77be182ce7299",
       "contracts/a6-ops-local-01-safe-cleanup-v1.json": "30a77abdc5a4ed9bc92bfac8d4c14ac3e96ed2432eecf2110dc227747ea43e83",
       "contracts/a6-ops-shopify-01-isolated-preproduction-v1.json": "a6f76b340227c6bbce22e4c59959e8e8247e99204e8da773f2a55c3282f42e06",
@@ -830,14 +830,15 @@
       "contracts/eo-05a-refresh-queue-cron-entry-v1.json": "5521a8d5e56d43a9cabd1d2e756bddfc48bb7e4a5545ae47f17c37b133ff447c",
       "contracts/eo-05a-refresh-scheduled-queue-check-v1.json": "790bf18194a8c1b8bdf2269c012d1345086ac03598f15dc5a1a6b8475c07967a",
       "contracts/eo-05a-shared-api-quota-v1.json": "266bdad178678880396db00245d27acf32c50245cb354d0b1c8664e376b7a849",
-      "contracts/oauth/oauth-flow-constitution-v1.json": "b12356be81ed1d32e20200b7cbbabe7bc70fa2e58c45fe761cf712d16ab15c1a",
+      "contracts/eo-05b-five-table-design-v1.json": "878caf60a18bddf05e154c996e56e80aafa51ae45db9647ce7c8a39e22309182",
+      "contracts/oauth/oauth-flow-constitution-v1.json": "42550706745d898a4f49b8e9eeb5713076d8da2a59011f8275703c4381d75bf7",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
       "contracts/repository-delivery-workflow-v1.json": "f214c83b6ec65b11fb9b974ae52ebbdf6ae7183bc69bc835320ec25619af4b7f",
       "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json": "18a54cf7d47cddc4b2dcac24320a0f27f3d1112264a023acc33152a80ae745c6",
       "contracts/shopify/a6-eo-07-three-surface-ui-product-freeze-v1.json": "015e7946219fb40669514e965681358e1d32b53781447197f9493b47191ddcb1",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
       "contracts/shopify/shopify-progressive-permissions-release-candidate-v1.json": "204cc1deb525bc47cb14d769d30701cd716fe0db1a56b11be2d083314477adc7",
-      "docs/EXECUTION_PLAN.md": "0be4edd22a6d84ce8c5280a91eaccd4c2f071417dbb1e6566d4da6fe47454385",
+      "docs/EXECUTION_PLAN.md": "f2e268159e43b5135b44d6db1a00933372efcc0dcf4f718abc7191d58cb4f2b1",
       "docs/RAW_SOURCE_CONSTITUTION.md": "26d426c4d621ed1942b1300bad2eb69b75df78d5e4c3859b61fabff319936bcb",
       "package.json": "a99953eda0b9270c5c7c282e8f517210f11759acd7dbbe25737824dc6288f730",
       "patches/@react-router__fs-routes@7.18.2.patch": "8db744b341f8258e57f41105d65d493974e6ba6253608c0bba031d46751437f5",
@@ -936,7 +937,7 @@
       "supabase/migrations/20261105111527_eo05_private_customer_source_worker.sql": "aedb5df472ee80aa0e1dd65f6a02dcbc31aa3ec3709b0c51b07bef9dd23a6646",
       "supabase/migrations/20261105193000_eo05_pmax_history_lookup.sql": "407a99795cdf6f975e37cd28f2accff6d51f14b0fa1a0f72fac4a41f908d41a2",
       "tests/a6-docs-01-text-integrity.test.js": "7fc1daa89371488ea5c1a74ed9eae65b0de5d6b4bfa08887dc5a62ffc3357d24",
-      "tests/a6-docs-01-turkish-standardization.test.js": "660acd2b9227035285673468678cc07b037fddecde5b80ee923be60a8bec6d6b",
+      "tests/a6-docs-01-turkish-standardization.test.js": "e39c823595c26ed1d4a1810cfaed806786b07bf29409cb7bca9cd7e9f3e24d97",
       "tests/a6-eo-07-funnel-visualization-reference.test.js": "9b049ced97ee895f82c44338b3c13389d4d4c99dbf998402a9963e009d496c0b",
       "tests/a6-eo-07-three-surface-ui-product-freeze.test.js": "07b4e29380c0d7dcc3e456e6b8b934d8f68778f93f2f4b53276381479c427945",
       "tests/a6-eo-cross-cutting-safety-capacity.test.js": "f2482db931736d2ab6aa1c15f06de4da79a2d23cb096cb41659caa16a89686b7",
@@ -1290,6 +1291,51 @@
       "acceptance_required": [
         "required_CI",
         "exact_remote_content_verification",
+        "separate_merge_approval"
+      ]
+    },
+    {
+      "id": "eo05b-five-table-design-2026-11-08",
+      "date": "2026-11-08",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Tamam başlayalım Codex. — concrete preceding EO05B scope: first prepare five-table fields, relationships and versioned extensible sections for review; existing mapping reuse and four-table/writer implementation follows layout acceptance. Current delivery is design/contract/plan/mandatory guard enrollment and PR only."
+      },
+      "rationale": "Five logical Dataset families with four proposed new tables, existing mapping reuse, explicit source/FX lineage, same-grain typed versioned metric extensions and no false completion. Design only; no schema/runtime/SQL/native/activation.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "live_database": false,
+        "merge": false,
+        "deploy": false
+      },
+      "changed_paths": [
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/eo-05b-five-table-design-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json",
+        "docs/EXECUTION_PLAN.md",
+        "tests/a6-docs-01-turkish-standardization.test.js"
+      ],
+      "artifact_paths": [
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/eo-05b-five-table-design-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json",
+        "docs/EO_05B_FIVE_TABLE_DESIGN.md",
+        "docs/EXECUTION_PLAN.md",
+        "docs/research/PD_CPD_QUERY_WORKING_TABLE_2026-10-22.md",
+        "tests/a6-docs-01-turkish-standardization.test.js"
+      ],
+      "tests": [
+        "tests/dataset-column-dictionary-design.test.js",
+        "tests/a6-docs-01-turkish-standardization.test.js",
+        "tests/raw-source-constitution.test.js"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "owner_five_table_layout_review",
         "separate_merge_approval"
       ]
     }

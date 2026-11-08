@@ -1,3 +1,7 @@
+## 8 Kasım 2026 EO-05-B güncel yerleşim önerisi
+
+Beşli mantıksal mimari korunur. Güncel kolon/ilişki ve sürümlü ek metrik önerisi [EO-05-B tasarımındadır](../EO_05B_FIVE_TABLE_DESIGN.md). Önceki sözlük ve inceleme kayıtları tarihsel olarak aşağıda aynen kalır. Kaynak katmanında uygulanmış identity.product_identity_mappings yeniden kullanılır; diğer dört tablo/yazıcı henüz uygulanmadı.
+
 # PD ve CPD sorgu çalışma tablosu
 
 ## Güncel durum düzeltmesi — 27 Ekim 2026

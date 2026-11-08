@@ -1,3 +1,15 @@
+## 8 Kasım 2026 — EO-05-B beş tablo yerleşimi ve genişletilebilir alanlar
+
+Ürün sahibi beş ana tablo kararını korudu; temel alanların tipli kolonlarda, isteğe bağlı provider metriklerinin doğrulanan/sürümlü JSONB bölümünde tasarlanmasını kabul ederek “Tamam başlayalım Codex” dedi. Önce alanlar, ilişkiler ve genişletilebilir bölümler somut incelemeye sunulur; bu tasarımın kabulünden sonra dört yeni tablo/yazıcı kodlanır. Mevcut identity.product_identity_mappings yeniden kullanılır.
+
+[Tasarım belgesi](EO_05B_FIVE_TABLE_DESIGN.md) ve [makine sözleşmesi](../contracts/eo-05b-five-table-design-v1.json): üç fact ailesi + mevcut eşleme + kur; metrikten bağımsız native kimlik; owner-composite kaynak/eşleme bağları; exact decimal ve kur sürümü; eski şema okuma; yeni ek alanın satır kimliğini değiştirmemesi. Yeni kimlik/breakdown boyutu ek metrik gibi gizlenemez. Bu teslim SQL/migration/writer, mevcut adaptör gevşetmesi, provider sorgusu, OAuth/UI, canlı ayar/yayın veya merge değildir. Beş tablo ve ek alan tasarımı henüz uygulanmış sayılmaz.
+
+1–26 kaydı **Ayrıntılı kontrol listesi** adını korur; bağımsız yeni paket değildir. Her tamamlanan iş ilgili EO paketine PR/test kanıtıyla anında işlenir; bütün26 bittikten sonra toplu taşıma yoktur.23 mevcut EO-05-B/C/D işlerine bağlıdır. İlk çalışma EO-05-B; C/D olgunluk, düzeltme, bootstrap/tekrar/checkpoint ve uzlaştırma kendi kapsamlarında kalır.
+
+Beşli mimari için10 kaynak/kanıt tablosu yerinde kalır, eşleme ortaktır; iki katman14 fiziksel tablo olur (operasyon tabloları hariç). FX kaynağı/raporlama para birimi ve Dataset katmanının sonlu saklama politikası mevcut EO-05-B uygulama/aktivasyon kapılarında doğrulanır; kaynak90/metadata365 kararı değiştirilmez. Önceden açık native kanıtlar ve owner ertelemeleri korunur. Yeni paket açılmaz.
+
+Resmî kontrol8 Kasım2026: [PostgreSQL JSONB](https://www.postgresql.org/docs/current/datatype-json.html#JSON-DOC-DESIGN), [constraints](https://www.postgresql.org/docs/current/ddl-constraints.html), [numeric](https://www.postgresql.org/docs/current/datatype-numeric.html), [Supabase JSON](https://supabase.com/docs/guides/database/json) ve güncel changelog. Mekanizma kaynağı provider/uygulama kabulü değildir.
+
 ## 6 Kasım 2026 — ham kayıt akışı anayasası ve zorunlu koruma
 
 Ürün sahibi, Codex dahil kimsenin kurulmuş ham kayıt akışını kendi takdiriyle bozamaması için OAuth benzeri bağlayıcı sözleşme istedi. Aynı denetimin kapanış işidir; yeni paket açılmaz. [Anayasa](RAW_SOURCE_CONSTITUTION.md), [makine sözleşmesi](../contracts/raw-source/raw-source-constitution-v1.json), AGENTS giriş kapısı, negatif/regresyon testleri ve mevcut Repository Governance CI bağlantısı hazırlanır.

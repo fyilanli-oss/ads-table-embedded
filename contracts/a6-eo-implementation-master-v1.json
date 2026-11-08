@@ -1,4 +1,30 @@
 {
+  "EO05B_five_table_design_2026_11_08": {
+    "date": "2026-11-08",
+    "parent": "A6-EO-05-B",
+    "detail_checklist": {
+      "name": "Ayrıntılı kontrol listesi",
+      "number": 23,
+      "rollup": "Update EO package with PR/test proof as each task completes, not after all26."
+    },
+    "owner_approval": "Tamam başlayalım Codex. — after concrete proposal: first present fields/relationships/extendible sections, then implement four tables with existing mapping reused.",
+    "status": "five_family_layout_proposed_owner_review_required",
+    "contract": "contracts/eo-05b-five-table-design-v1.json",
+    "brief": "docs/EO_05B_FIVE_TABLE_DESIGN.md",
+    "scope": "Five-family columns/grains/relations, fixed core and typed versioned metric extensions; documentation/contract/mandatory constitution enrollment/PR only.",
+    "new_Dataset_tables_proposed": 4,
+    "existing_mapping_reused": true,
+    "source_foundation_unchanged": true,
+    "runtime": false,
+    "SQL_migration": false,
+    "live_database": false,
+    "provider_call": false,
+    "OAuth_flow_change": false,
+    "new_package": false,
+    "merge_authorized": false,
+    "deploy_authorized": false,
+    "remaining_existing_EO05B": "After layout review, implement schema/writer, verify FX/reporting-currency source policy, native-grain keys, storage-to-canonical precision bridge and derived-data privacy/retention enrollment with isolated tests; this is not executed by this design PR."
+  },
   "Raw_source_constitution_2026_11_06": {
     "checked_at": "2026-11-06",
     "status": "constitution_guard_and_regression_preparation_separate_merge_required",

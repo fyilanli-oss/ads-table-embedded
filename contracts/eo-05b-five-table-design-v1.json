@@ -1,0 +1,939 @@
+{
+  "id": "eo-05b-five-table-design-v1",
+  "version": 1,
+  "date": "2026-11-08",
+  "status": "proposed_layout_for_owner_review_not_implemented",
+  "parent_package": "A6-EO-05-B",
+  "detail_checklist_step": 23,
+  "detail_checklist_name": "Ayrıntılı kontrol listesi",
+  "baseline_main": "49c43f4830dd91fb8a2d37890d1244278a4a3e56",
+  "brief": "docs/EO_05B_FIVE_TABLE_DESIGN.md",
+  "authority": [
+    "docs/EXECUTION_PLAN.md",
+    "contracts/a6-eo-implementation-master-v1.json",
+    "contracts/raw-source/raw-source-constitution-v1.json",
+    "contracts/oauth/oauth-flow-constitution-v1.json",
+    "contracts/pd-cpd-query-standard-v1.json",
+    "docs/research/PD_CPD_QUERY_WORKING_TABLE_2026-10-22.md"
+  ],
+  "authorization": {
+    "owner": "Tamam başlayalım Codex.",
+    "preceding_scope": "Owner accepted fixed core + validated/versioned extension design and asked to build it while creating five tables. First prepare fields, relationships and extendible layout for review; then implement existing mapping reuse and other four tables/writer.",
+    "current_delivery": "Design, contract, plan and mandatory governance enrollment/PR only.",
+    "layout_accepted": false,
+    "runtime": false,
+    "SQL_migration": false,
+    "live_database": false,
+    "provider_call": false,
+    "OAuth_change": false,
+    "merge": false,
+    "deploy": false
+  },
+  "table_count": {
+    "logical": 5,
+    "new_Dataset_tables_proposed": 4,
+    "existing_mapping_reused": 1,
+    "source_layer_existing": 10,
+    "mapping_shared_between_layers": true,
+    "total_source_plus_Dataset": 14,
+    "operational_tables_excluded": true,
+    "new_provider_specific_tables": 0,
+    "extra_aggregate_table": 0
+  },
+  "common_fact_columns": [
+    {
+      "name": "id",
+      "type": "bigint generated always as identity",
+      "nullable": false,
+      "rule": "DB row ID, never replay identity."
+    },
+    {
+      "name": "workspace_id",
+      "type": "uuid",
+      "nullable": false,
+      "rule": "Current app.workspaces scope."
+    },
+    {
+      "name": "installation_id",
+      "type": "bigint",
+      "nullable": false,
+      "rule": "Current shopify.installations.id; transport positive canonical decimal text, no Number conversion."
+    },
+    {
+      "name": "installation_generation",
+      "type": "bigint",
+      "nullable": false,
+      "rule": "Verified install_generation; no cross-generation adoption."
+    },
+    {
+      "name": "provider_connection_id",
+      "type": "uuid",
+      "nullable": false,
+      "rule": "Current verified connection in owner/account scope; authority, not stable native event identity."
+    },
+    {
+      "name": "platform",
+      "type": "text",
+      "nullable": false,
+      "rule": "meta | google_ads | klaviyo; no unreviewed provider."
+    },
+    {
+      "name": "platform_account_id",
+      "type": "text",
+      "nullable": false,
+      "rule": "Verified native account, never name."
+    },
+    {
+      "name": "canonical_reporting_account_id",
+      "type": "text",
+      "nullable": true,
+      "rule": "Native text identifier for Meta/Google, null for Klaviyo; not internal binding bigint ID."
+    },
+    {
+      "name": "business_date",
+      "type": "date",
+      "nullable": true,
+      "rule": "Required for daily aggregate identity; unresolved event date stays null and is not included in daily totals."
+    },
+    {
+      "name": "source_timezone",
+      "type": "text",
+      "nullable": true,
+      "rule": "Verified IANA/native timezone; never infer from fetched_at."
+    },
+    {
+      "name": "reporting_scope",
+      "type": "jsonb",
+      "nullable": false,
+      "rule": "Versioned explicit time basis, attribution/model/window, conversion scope, units and native dimension coverage; strict schema."
+    },
+    {
+      "name": "source_identity",
+      "type": "jsonb",
+      "nullable": false,
+      "rule": "Typed exact native grain fields; not amount, label, mapping or inferred Channel."
+    },
+    {
+      "name": "grain_version",
+      "type": "text",
+      "nullable": false,
+      "rule": "Versioned native-grain descriptor; changing grain is a reviewed migration, not an optional extension."
+    },
+    {
+      "name": "native_key_canonical",
+      "type": "text",
+      "nullable": false,
+      "rule": "Server-generated canonical typed tuple; required values cannot be missing. Hash equality also compares this exact value."
+    },
+    {
+      "name": "native_key_hash",
+      "type": "text",
+      "nullable": false,
+      "rule": "SHA256 lowercase 64 hex from native_key_canonical; never trust caller hash."
+    },
+    {
+      "name": "row_schema_version",
+      "type": "text",
+      "nullable": false,
+      "rule": "Versioned physical storage DTO, distinct from current common adapter 3.0.0."
+    },
+    {
+      "name": "metric_support",
+      "type": "jsonb",
+      "nullable": false,
+      "rule": "Per core metric supported/unsupported/unknown from existing contract."
+    },
+    {
+      "name": "observation_state",
+      "type": "jsonb",
+      "nullable": false,
+      "rule": "Per metric existing observation semantics; null does not become zero."
+    },
+    {
+      "name": "extension_schema_version",
+      "type": "text",
+      "nullable": false,
+      "rule": "Explicit registry version for extensions; old versions remain readable."
+    },
+    {
+      "name": "metric_extensions",
+      "type": "jsonb",
+      "nullable": false,
+      "rule": "Bounded registered optional metrics only; default empty object, not automatic zero."
+    },
+    {
+      "name": "provenance",
+      "type": "jsonb",
+      "nullable": false,
+      "rule": "Bounded source references, query/adapter/schema versions, evidence digest and metric-level lineage; no provider-body copy or secrets."
+    },
+    {
+      "name": "source_batch_id",
+      "type": "bigint",
+      "nullable": false,
+      "rule": "Owner-composite FK to the primary committed source batch; all contributing batches remain in provenance and are validated transactionally."
+    },
+    {
+      "name": "source_completeness",
+      "type": "text",
+      "nullable": false,
+      "rule": "Original complete/partial status preserved; persistence is not report acceptance."
+    },
+    {
+      "name": "source_currency",
+      "type": "text",
+      "nullable": true,
+      "rule": "Three-letter verified source currency; unknown money stays unavailable for currency-safe totals."
+    },
+    {
+      "name": "target_currency",
+      "type": "text",
+      "nullable": true,
+      "rule": "Verified workspace reporting configuration, not provider account currency or client input."
+    },
+    {
+      "name": "fx_rate_id",
+      "type": "bigint",
+      "nullable": true,
+      "rule": "Nullable FK to a particular immutable analytics.fx_rates row; never last-rate lookup."
+    },
+    {
+      "name": "fx_state",
+      "type": "text",
+      "nullable": false,
+      "rule": "identity | verified | missing | unsupported | conflicting; explicit ready gate."
+    },
+    {
+      "name": "fx_engine_version",
+      "type": "text",
+      "nullable": true,
+      "rule": "Required when applying FX or explicit same-currency identity operation."
+    },
+    {
+      "name": "payload_digest",
+      "type": "text",
+      "nullable": false,
+      "rule": "Canonical normalized content SHA256, including extension values/states/version; separate from native identity."
+    },
+    {
+      "name": "revision",
+      "type": "bigint",
+      "nullable": false,
+      "rule": "Positive CAS version; conflicting same-key content cannot silently win."
+    },
+    {
+      "name": "created_at",
+      "type": "timestamptz",
+      "nullable": false,
+      "rule": "AdsTable write time, not event or validity start."
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamptz",
+      "nullable": false,
+      "rule": "Accepted update time, not freshness/finality proof."
+    },
+    {
+      "name": "retention_policy_version",
+      "type": "text",
+      "nullable": false,
+      "rule": "Explicit approved Dataset-layer policy. Source90/metadata365 and UI90-day range do not silently choose a new fact lifetime."
+    },
+    {
+      "name": "retain_until",
+      "type": "timestamptz",
+      "nullable": false,
+      "rule": "Finite per-record expiry under that policy; no read-based renewal. No cleanup activated in this proposal."
+    }
+  ],
+  "tables": [
+    {
+      "name": "pd_facts",
+      "physical": "analytics.pd_facts",
+      "action": "propose_create",
+      "grain": "One compatible native/composed PD leaf scope and day; no parent+child duplicate aggregation.",
+      "inherits": "common_fact_columns",
+      "columns": [
+        {
+          "name": "entity_type",
+          "type": "text",
+          "nullable": false,
+          "rule": "Existing leaf type per provider/flow."
+        },
+        {
+          "name": "entity_id",
+          "type": "text",
+          "nullable": false,
+          "rule": "Verified native leaf identifier."
+        },
+        {
+          "name": "entity_name",
+          "type": "text",
+          "nullable": true,
+          "rule": "Label optional in storage DTO; current adapter name requirement is not relaxed by this design."
+        },
+        {
+          "name": "root_entity_type",
+          "type": "text",
+          "nullable": true,
+          "rule": "Native hierarchy only; names are labels, not key authority."
+        },
+        {
+          "name": "root_entity_id",
+          "type": "text",
+          "nullable": true,
+          "rule": "Native hierarchy only; names are labels, not key authority."
+        },
+        {
+          "name": "root_entity_name",
+          "type": "text",
+          "nullable": true,
+          "rule": "Native hierarchy only; names are labels, not key authority."
+        },
+        {
+          "name": "parent_entity_type",
+          "type": "text",
+          "nullable": true,
+          "rule": "Native hierarchy only; names are labels, not key authority."
+        },
+        {
+          "name": "parent_entity_id",
+          "type": "text",
+          "nullable": true,
+          "rule": "Native hierarchy only; names are labels, not key authority."
+        },
+        {
+          "name": "parent_entity_name",
+          "type": "text",
+          "nullable": true,
+          "rule": "Native hierarchy only; names are labels, not key authority."
+        },
+        {
+          "name": "campaign_type",
+          "type": "text",
+          "nullable": true,
+          "rule": "Native hierarchy only; names are labels, not key authority."
+        },
+        {
+          "name": "impression",
+          "type": "numeric",
+          "nullable": true,
+          "rule": "Source-unit exact decimal; no forced integer conversion/early rounding; support and observation state required."
+        },
+        {
+          "name": "ad_click",
+          "type": "numeric",
+          "nullable": true,
+          "rule": "Source-unit exact decimal; no forced integer conversion/early rounding; support and observation state required."
+        },
+        {
+          "name": "spend_value",
+          "type": "numeric",
+          "nullable": true,
+          "rule": "Source-unit exact decimal; no forced integer conversion/early rounding; support and observation state required."
+        },
+        {
+          "name": "add_to_cart",
+          "type": "numeric",
+          "nullable": true,
+          "rule": "Source-unit exact decimal; no forced integer conversion/early rounding; support and observation state required."
+        },
+        {
+          "name": "add_to_cart_value",
+          "type": "numeric",
+          "nullable": true,
+          "rule": "Source-unit exact decimal; no forced integer conversion/early rounding; support and observation state required."
+        },
+        {
+          "name": "checkout",
+          "type": "numeric",
+          "nullable": true,
+          "rule": "Source-unit exact decimal; no forced integer conversion/early rounding; support and observation state required."
+        },
+        {
+          "name": "checkout_value",
+          "type": "numeric",
+          "nullable": true,
+          "rule": "Source-unit exact decimal; no forced integer conversion/early rounding; support and observation state required."
+        },
+        {
+          "name": "purchase",
+          "type": "numeric",
+          "nullable": true,
+          "rule": "Source-unit exact decimal; no forced integer conversion/early rounding; support and observation state required."
+        },
+        {
+          "name": "purchase_value",
+          "type": "numeric",
+          "nullable": true,
+          "rule": "Source-unit exact decimal; no forced integer conversion/early rounding; support and observation state required."
+        }
+      ],
+      "indexes": [
+        "owner+business_date+platform+account+entity_type/entity_id",
+        "owner+source_batch_id",
+        "retain_until"
+      ],
+      "key_rule": "daily_pd_scope"
+    },
+    {
+      "name": "cpd_product_performance_facts",
+      "physical": "analytics.cpd_product_performance_facts",
+      "action": "propose_create",
+      "grain": "One native product performance scope/day with actual native dimensions; no invented allocation.",
+      "inherits": "common_fact_columns",
+      "columns": [
+        {
+          "name": "channel_type",
+          "type": "text",
+          "nullable": true,
+          "rule": "Resolved reporting link, not required PD fact FK."
+        },
+        {
+          "name": "channel_id",
+          "type": "text",
+          "nullable": true,
+          "rule": "Native/verified applicable Channel; unresolved has null, never copied Campaign as Asset Group."
+        },
+        {
+          "name": "channel_resolution",
+          "type": "text",
+          "nullable": false,
+          "rule": "verified | unresolved | conflicting | not_applicable; independent of product mapping."
+        },
+        {
+          "name": "root_entity_type",
+          "type": "text",
+          "nullable": true,
+          "rule": "Native hierarchy only; names are labels, not key authority."
+        },
+        {
+          "name": "root_entity_id",
+          "type": "text",
+          "nullable": true,
+          "rule": "Native hierarchy only; names are labels, not key authority."
+        },
+        {
+          "name": "root_entity_name",
+          "type": "text",
+          "nullable": true,
+          "rule": "Native hierarchy only; names are labels, not key authority."
+        },
+        {
+          "name": "parent_entity_type",
+          "type": "text",
+          "nullable": true,
+          "rule": "Native hierarchy only; names are labels, not key authority."
+        },
+        {
+          "name": "parent_entity_id",
+          "type": "text",
+          "nullable": true,
+          "rule": "Native hierarchy only; names are labels, not key authority."
+        },
+        {
+          "name": "parent_entity_name",
+          "type": "text",
+          "nullable": true,
+          "rule": "Native hierarchy only; names are labels, not key authority."
+        },
+        {
+          "name": "campaign_type",
+          "type": "text",
+          "nullable": true,
+          "rule": "Native hierarchy only; names are labels, not key authority."
+        },
+        {
+          "name": "native_product_id",
+          "type": "text",
+          "nullable": true,
+          "rule": "Present native product identity or alternative complete proven native grain; missing necessary key remains only raw evidence."
+        },
+        {
+          "name": "product_context",
+          "type": "jsonb",
+          "nullable": false,
+          "rule": "Versioned native Merchant/feed/language/catalog namespace where applicable; missing namespace is not verified empty context."
+        },
+        {
+          "name": "product_mapping_id",
+          "type": "bigint",
+          "nullable": true,
+          "rule": "Owner-composite FK to existing identity.product_identity_mappings; only verified applicable mapping is eligible for Shopify reporting."
+        },
+        {
+          "name": "impression",
+          "type": "numeric",
+          "nullable": true,
+          "rule": "Source-unit exact decimal; no forced integer conversion/early rounding; support and observation state required."
+        },
+        {
+          "name": "click",
+          "type": "numeric",
+          "nullable": true,
+          "rule": "Source-unit exact decimal; no forced integer conversion/early rounding; support and observation state required."
+        },
+        {
+          "name": "spend_value",
+          "type": "numeric",
+          "nullable": true,
+          "rule": "Source-unit exact decimal; no forced integer conversion/early rounding; support and observation state required."
+        }
+      ],
+      "indexes": [
+        "owner+business_date+platform+account+channel_id",
+        "owner+product_mapping_id+business_date",
+        "owner+source_batch_id",
+        "retain_until"
+      ],
+      "key_rule": "daily_native_product_performance",
+      "forbidden": [
+        "Copying Search PD spend to product performance",
+        "Synthetic Klaviyo product Impression/Click/performance row",
+        "Repeating product sales in performance table"
+      ]
+    },
+    {
+      "name": "cpd_product_sales_facts",
+      "physical": "analytics.cpd_product_sales_facts",
+      "action": "propose_create",
+      "grain": "One original native daily sales observation or native Ordered Product event; Channel/role/mapping resolution does not create another sale.",
+      "inherits": "common_fact_columns",
+      "columns": [
+        {
+          "name": "channel_type",
+          "type": "text",
+          "nullable": true,
+          "rule": "Resolved reporting link, not required PD fact FK."
+        },
+        {
+          "name": "channel_id",
+          "type": "text",
+          "nullable": true,
+          "rule": "Native/verified applicable Channel; unresolved has null, never copied Campaign as Asset Group."
+        },
+        {
+          "name": "channel_resolution",
+          "type": "text",
+          "nullable": false,
+          "rule": "verified | unresolved | conflicting | not_applicable; independent of product mapping."
+        },
+        {
+          "name": "root_entity_type",
+          "type": "text",
+          "nullable": true,
+          "rule": "Native hierarchy only; names are labels, not key authority."
+        },
+        {
+          "name": "root_entity_id",
+          "type": "text",
+          "nullable": true,
+          "rule": "Native hierarchy only; names are labels, not key authority."
+        },
+        {
+          "name": "root_entity_name",
+          "type": "text",
+          "nullable": true,
+          "rule": "Native hierarchy only; names are labels, not key authority."
+        },
+        {
+          "name": "parent_entity_type",
+          "type": "text",
+          "nullable": true,
+          "rule": "Native hierarchy only; names are labels, not key authority."
+        },
+        {
+          "name": "parent_entity_id",
+          "type": "text",
+          "nullable": true,
+          "rule": "Native hierarchy only; names are labels, not key authority."
+        },
+        {
+          "name": "parent_entity_name",
+          "type": "text",
+          "nullable": true,
+          "rule": "Native hierarchy only; names are labels, not key authority."
+        },
+        {
+          "name": "campaign_type",
+          "type": "text",
+          "nullable": true,
+          "rule": "Native hierarchy only; names are labels, not key authority."
+        },
+        {
+          "name": "provider_event_id",
+          "type": "text",
+          "nullable": true,
+          "rule": "Required for Klaviyo Ordered Product; never fabricate for aggregate reports."
+        },
+        {
+          "name": "occurred_at",
+          "type": "timestamptz",
+          "nullable": true,
+          "rule": "Actual event instant only; no midnight placeholder."
+        },
+        {
+          "name": "native_sold_product_id",
+          "type": "text",
+          "nullable": true,
+          "rule": "Only when source meaning is verified; unresolved Meta product meaning stays native evidence."
+        },
+        {
+          "name": "native_advertised_product_id",
+          "type": "text",
+          "nullable": true,
+          "rule": "Independent native advertised identity; not inferred from sold product."
+        },
+        {
+          "name": "product_context",
+          "type": "jsonb",
+          "nullable": false,
+          "rule": "Versioned native product context; Shopify Product is reporting spine, Variant is retained detail."
+        },
+        {
+          "name": "sold_product_mapping_id",
+          "type": "bigint",
+          "nullable": true,
+          "rule": "Owner-composite mapping FK, separate sold role."
+        },
+        {
+          "name": "advertised_product_mapping_id",
+          "type": "bigint",
+          "nullable": true,
+          "rule": "Owner-composite mapping FK, separate advertised role."
+        },
+        {
+          "name": "sales_quantity",
+          "type": "numeric",
+          "nullable": true,
+          "rule": "Source-unit exact decimal; no forced integer conversion/early rounding; support and observation state required."
+        },
+        {
+          "name": "sales_value",
+          "type": "numeric",
+          "nullable": true,
+          "rule": "Source-unit exact decimal; no forced integer conversion/early rounding; support and observation state required."
+        },
+        {
+          "name": "sales_role",
+          "type": "text",
+          "nullable": false,
+          "rule": "Advertised | Cross-sell | Assisted | Triggered | Unclassified under existing provider proof rules."
+        },
+        {
+          "name": "sales_role_evidence",
+          "type": "jsonb",
+          "nullable": false,
+          "rule": "Source-specific role proof, not Shopify last-touch inference."
+        },
+        {
+          "name": "native_sales_metrics",
+          "type": "jsonb",
+          "nullable": false,
+          "rule": "Exact native normal/all/cross-sell/promoted fields with units/scopes/states; not extra normalized sales rows."
+        }
+      ],
+      "indexes": [
+        "owner+business_date+platform+account",
+        "owner+sold_product_mapping_id+business_date",
+        "owner+provider_event_id where non-null",
+        "owner+source_batch_id",
+        "retain_until"
+      ],
+      "key_rule": "native_sale_or_event",
+      "forbidden": [
+        "Meta four-field normal-sale interpretation before existing evidence gate",
+        "A/B/C/D role-based duplicate sales",
+        "Adding provider-attributed totals to produce unique Shopify store sales"
+      ]
+    },
+    {
+      "name": "product_identity_mappings",
+      "physical": "identity.product_identity_mappings",
+      "action": "reuse_unchanged",
+      "inherits": null,
+      "columns_policy": "The existing source foundation migration and verified-mapping store remain authoritative; no second analytics mapping table and no automatic ALTER in this delivery.",
+      "existing_columns": [
+        "id",
+        "workspace_id",
+        "installation_id",
+        "installation_generation",
+        "shop_id",
+        "recorded_at",
+        "retention_class",
+        "retain_until",
+        "accepted_batch_id",
+        "source_rule_version_id",
+        "supersedes_id",
+        "identity_key_version",
+        "identity_key_canonical",
+        "identity_hash",
+        "revision",
+        "native_product_id",
+        "native_context",
+        "shopify_product_id",
+        "shopify_variant_id",
+        "mapping_state",
+        "verified_at",
+        "applicability"
+      ],
+      "existing_states": [
+        "verified",
+        "unresolved",
+        "conflicting",
+        "withdrawn"
+      ],
+      "existing_uniqueness": [
+        "workspace_id",
+        "installation_id",
+        "installation_generation",
+        "identity_hash",
+        "revision"
+      ],
+      "rule": "Account/connection/version/source-rule context comes from existing accepted batch and applicability proof, not invented duplicate columns. Verify current applicable mapping on write/read; preserve superseded/conflicting history. Do not migrate the old draft mapping-column list over the implemented table."
+    },
+    {
+      "name": "fx_rates",
+      "physical": "analytics.fx_rates",
+      "action": "propose_create",
+      "inherits": null,
+      "grain": "One immutable evidence-backed pair/date/provider/rate revision; shared currency evidence, not a merchant fact.",
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint generated always as identity",
+          "nullable": false,
+          "rule": "Particular accepted rate revision."
+        },
+        {
+          "name": "source_currency",
+          "type": "text",
+          "nullable": false,
+          "rule": "Validated source ISO currency code."
+        },
+        {
+          "name": "target_currency",
+          "type": "text",
+          "nullable": false,
+          "rule": "Validated target code; conversion direction explicit."
+        },
+        {
+          "name": "fx_rate_date",
+          "type": "date",
+          "nullable": false,
+          "rule": "Actual published rate date, not fetch date."
+        },
+        {
+          "name": "fx_rate",
+          "type": "numeric",
+          "nullable": false,
+          "rule": "Finite strictly positive exact decimal; no NaN/Infinity/zero, no early rounding."
+        },
+        {
+          "name": "fx_provider",
+          "type": "text",
+          "nullable": false,
+          "rule": "Actual verified source; no provider chosen by this proposal."
+        },
+        {
+          "name": "rate_version",
+          "type": "text",
+          "nullable": false,
+          "rule": "Stable evidence revision, not every poll/fetched_at."
+        },
+        {
+          "name": "source_reference",
+          "type": "jsonb",
+          "nullable": false,
+          "rule": "Bounded non-secret published rate proof and hash; immutable."
+        },
+        {
+          "name": "fetched_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "rule": "Actual retrieval time, distinct from rate date."
+        },
+        {
+          "name": "fx_schema_version",
+          "type": "text",
+          "nullable": false,
+          "rule": "Rate-proof schema, not fact/extension schema."
+        }
+      ],
+      "unique": [
+        "source_currency",
+        "target_currency",
+        "fx_rate_date",
+        "fx_provider",
+        "rate_version"
+      ],
+      "indexes": [
+        "source_currency+target_currency+fx_rate_date"
+      ],
+      "rule": "Dedicated private role/RPC only, no public or browser read/write path. No automatic provider switch, reciprocal rate, previous-day fallback, current-rate substitution or retrospective repricing."
+    }
+  ],
+  "relations": [
+    {
+      "from": "three fact tables.source_batch_id",
+      "to": "evidence.source_batches.id",
+      "scope": [
+        "workspace_id",
+        "installation_id",
+        "installation_generation"
+      ],
+      "cardinality": "many_to_one",
+      "delete": "restrict; mandatory erasure removes dependent facts first using existing manifest/worker before deleting evidence."
+    },
+    {
+      "from": "CPD product_mapping_id/sold_product_mapping_id/advertised_product_mapping_id",
+      "to": "identity.product_identity_mappings.id",
+      "scope": [
+        "workspace_id",
+        "installation_id",
+        "installation_generation"
+      ],
+      "cardinality": "many_to_one_nullable",
+      "delete": "No blind cascade on normal expiry. Dependency-aware cleanup and explicit privacy purge order."
+    },
+    {
+      "from": "three fact tables.fx_rate_id",
+      "to": "analytics.fx_rates.id",
+      "scope": "shared proof; row pair/date/provider revision must match fact reporting context",
+      "cardinality": "many_to_one_nullable",
+      "delete": "restrict while referenced; no automatic replacement with latest revision."
+    }
+  ],
+  "fact_identity": {
+    "version": "eo05b-native-grain-v1-proposal",
+    "unique": [
+      "workspace_id",
+      "installation_id",
+      "installation_generation",
+      "platform",
+      "platform_account_id",
+      "grain_version",
+      "native_key_hash"
+    ],
+    "serialization": "Ordered tagged tuple -> deterministic UTF8 JSON -> SHA256; string/native IDs remain exact text, explicit null distinct from omitted. Required missing identity is held, never guessed. Hash collision or same hash/different canonical identity is conflict.",
+    "include": "Family-specific original native grain plus semantic reporting scope. Daily aggregate identity includes actual business_date/timezone/time basis and relevant attribution/units/native breakdown dimensions. Ordered Product event identity uses native event ID; later day/Channel/role/mapping resolution cannot create a second event.",
+    "exclude": [
+      "metric values",
+      "metric_extensions",
+      "extension_schema_version",
+      "row_schema_version",
+      "payload_digest",
+      "display names",
+      "Sales Role",
+      "resolved Shopify mapping IDs",
+      "inferred Channel",
+      "target currency/FX result",
+      "job/attempt/cursor/snapshot/receipt IDs",
+      "credential/connection revision/selection epoch"
+    ],
+    "connection_rule": "provider_connection_id and versions are freshly verified authority, not an automatic duplicate key for the same native account. Reconnect does not authorize disconnected-interval backfill; existing EO05D rule remains.",
+    "family_rule": "Query family labels alone cannot distinguish overlapping observations of the same native sale. Native grain equivalence must be proven per family before persistence; unresolved equivalence blocks accepted facts.",
+    "updates": "Native identity stable; same key+same content is replay, changed content is CAS revision/conflict under existing EO05C/D correction protocol. No blind last-write-wins. This proposal does not implement that protocol.",
+    "grain_version_change": "A reviewed grain migration selects one authoritative version/projection for reporting. Coexisting old/new grain rows are not additive and must not both contribute."
+  },
+  "extensions": {
+    "storage": "metric_extensions JSONB on three fact tables; no extension table.",
+    "registry": "Versioned checked-in schema per table/provider/grain; SQL/writer allow only registered keys under selected version. Not a user-defined field or arbitrary provider-payload bag.",
+    "entry_shape": {
+      "meta.example_optional_metric": {
+        "value": "12.25",
+        "value_type": "decimal",
+        "unit": "registered source unit",
+        "support": "supported",
+        "observation": "present",
+        "source_references": [
+          "existing bounded source reference"
+        ]
+      }
+    },
+    "rules": [
+      "Decimal values travel as exact strings; supported states and source unit/attribution meaning are validated before numeric interpretation.",
+      "A key cannot shadow a core metric, owner, identity dimension, currency, source proof, native Sales Role or security field.",
+      "New optional same-grain metric requires approved provider query/projection and typed registry/reader support; often no table migration, never zero code or automatic intake.",
+      "New identity/grouping dimension requires separate grain/key and aggregation review; cannot be hidden in metric_extensions.",
+      "Old schema remains readable; a field absent from prior requested coverage is unavailable/not_requested, not zero and not retroactively fabricated.",
+      "Re-reading old raw projection can recover only fields actually collected and retained with permission; a newly requested field may require separately approved native read.",
+      "Core promotion requires reviewed SQL/index/backfill compatibility and one authoritative metric read path; core and extension copies cannot both contribute.",
+      "No new derived KPI/arithmetic/cost allocation or user formula goes into source metric extension."
+    ],
+    "bounds_proposed": {
+      "max_keys_per_row": 32,
+      "max_utf8_bytes_per_row": 16384,
+      "unknown_key": "reject_or_hold_not_silently_store",
+      "oversize": "stop_no_truncation"
+    },
+    "compatibility": [
+      "Adding optional same-grain field retains native key and existing rows; payload digest/version changes only on supported actual enrichment.",
+      "Rename/type/unit/attribution/semantic change uses a new definition/version; cannot reinterpret historical values in place.",
+      "Registry version does not enter the native fact key."
+    ]
+  },
+  "numeric_policy": {
+    "SQL": "Unconstrained numeric initially, with explicit writer/SQL finite-format/range/length checks per metric definition; no fixed typmod that rounds provider values silently.",
+    "transport": "Canonical decimal text without JS Number conversion; safe existing number values must prove losslessness. Current common adapter JS number output is not precision proof.",
+    "counter_rule": "Source conversion quantities may be fractional; no unconditional bigint/integer cast.",
+    "rounding": "Only approved EO06 presentation/formula policy rounds; original amounts and source currency remain unchanged."
+  },
+  "FX_policy": {
+    "source_amounts_unchanged": true,
+    "rate_reference": "Exact immutable row by pair/date/provider/version; no hidden nearest/latest fallback.",
+    "same_currency": "Proposed explicit identity state with multiplier 1 in versioned engine, fx_rate_id null; no fabricated remote-provider rate row.",
+    "missing": "Native facts may be stored with FX state missing, but currency-converted totals/report-ready output remain blocked.",
+    "reporting_configuration": "Server-verified workspace currency configuration version in reporting scope. Existing currency lock/source claims must be verified in EO05B before writer activation; no client/default-account inference.",
+    "source_selection": "Existing EO05B verification of FX source, supported currency coverage and date/weekend policy remains; no new external request/provider selected here.",
+    "old_rates": "New revisions do not silently overwrite old rate evidence or reprice facts."
+  },
+  "persistence_boundary": {
+    "storage_DTO": "Separate versioned storage input; not validateCanonicalFunnelFact with rules weakened to accept missing FX/name. Existing adapter and PD bridge remain unchanged in this delivery.",
+    "source_to_fact": "Require committed verified owner-bound source, all relevant native proof, current authority/fence and no pending mandatory deletion. A fact receipt is not source receipt; handoff must be atomic with actual accepted consumer outcome.",
+    "pending": "Native missing identity remains in raw evidence. Product mapping/Channel/FX states independent; storage does not turn held provider proof into validated output.",
+    "privacy": "Before new table activation, enroll actual facts/provenance/extension contents in existing erasure manifest, scoped worker, retention dependency checks and no-reingestion rules. No second privacy engine.",
+    "retention": "Source90/metadata365 stays unchanged. Dataset fact expiry requires an explicit approved policy version/finite retain_until before activation; 90-day UI range is not a new retention policy. Read/replay/extension enrichment does not auto-renew the original lifetime.",
+    "operational": "Existing queue/checkpoint/reconciliation/lease tables serve operations; five means logical Dataset families, not five tables in entire application."
+  },
+  "existing_open_gates": [
+    "Meta four-field role semantics step18",
+    "PMax full-day historical Channel step22",
+    "Native source-rule/Shopify mapping evidence",
+    "Klaviyo Shopify metrics unavailable, not zero",
+    "Backup/restore EO08C and real customer delivery EO07A/EO08D",
+    "App-specific cross-provider reporting/native review EO06/EO07/EO08D"
+  ],
+  "not_changed": [
+    "OAuth/UI/scopes/selection/modal/credential protocol",
+    "Provider query or API revision",
+    "Step15 encrypted source foundation/mapping schema",
+    "EO05A scheduler/quota and live authorization",
+    "EO05C maturity and EO05D replay/correction implementation",
+    "EO06 KPI/aggregate/Overlap/Klaviyo spend formula",
+    "Live SQL/config/provider/deployment/merge"
+  ],
+  "acceptance_before_implementation": [
+    "Owner reviews this concrete five-family layout and extension rules.",
+    "Exact mapping to existing canonical/source fields and native grain is checked before writing each family; missing proof never becomes ready.",
+    "SQL writer implementation must test numeric precision, cross-owner FK, same-native-key extension update, source receipt versus actual consumer receipt, rollback/unknown/CAS and mandatory erasure of derived contents.",
+    "Register optional synthetic new-metric compatibility test and type/unit rejection when writer/registry is implemented. These behavioral tests are not claimed by this document-only PR."
+  ],
+  "official_checked_at": "2026-11-08",
+  "official_sources": [
+    "https://www.postgresql.org/docs/current/datatype-json.html#JSON-DOC-DESIGN",
+    "https://www.postgresql.org/docs/current/ddl-constraints.html",
+    "https://www.postgresql.org/docs/current/datatype-numeric.html",
+    "https://supabase.com/docs/guides/database/json",
+    "https://supabase.com/changelog"
+  ],
+  "claims": {
+    "implemented": false,
+    "SQL_tested": false,
+    "source_runtime_changed": false,
+    "provider_accepted": false,
+    "owner_layout_accepted": false,
+    "step23_complete": false,
+    "EO05B_complete": false
+  }
+}

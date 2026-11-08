@@ -4864,3 +4864,8 @@ Açık somut owner onayıyla mevcut Klaviyo sorgularının üç şifreli kaynak 
 ### 4 Kasım 2026 — 15 / normal saklama ve zorunlu silme
 
 Somut owner onayıyla90/365 günün her yeni kaynak yazımına bağlanması, mevcut kayıtlar için eski makbuzu/şifreyi koruyan beklenen-kayıt kontrollü SQL ve rutin/zorunlu silme ayrımı testleri hazırlanır. Aynı kaynak deposu kullanılır. Ayrıntı: docs/EO_05_STEP15_STORAGE_DESIGN_BRIEF.md son bölümü ve master Step15_retention_application_preparation_2026_11_04. Normal temizliği aktarım/kanıt ilişkileri engelleyebilir; zorunlu gizlilik silmesini engelleyemez. Canlı ayar/SQL, gerçek silme, cron, provider çağrısı, merge ve yayın onayı yoktur. Klaviyo native performans kabulü Shopify metrikleri beklediği için açık kalır; bu sınır owner tarafından kabul edildi.
+
+
+### 8 Kasım 2026 — EO-05-B / dört yeni Dataset tablosu ve özel kayıt katmanı
+
+PR #345 yerleşim kabulünden sonra aynı EO-05-B içinde dört yeni tablo, mevcut eşleme tablosunun kullanımı, özel yazıcı ve izole PostgreSQL sınamaları hazırlanır. Ayrıntı: [kayıt katmanı](EO_05B_DATASET_STORAGE.md). Bu teslim native projection, FX kaynağı, Dataset saklama/olağan temizlik aktivasyonu veya EO-05-C/D tüketim/düzeltme işlerini bitmiş saymaz. Runtime yetkisi, canlı DB/provider/config, merge ve yayın yoktur. Kaynak90/365 ve mevcut native kanıt/teslim/yedek kapıları korunur. Yeni paket açılmaz.

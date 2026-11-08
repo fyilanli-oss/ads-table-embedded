@@ -1,3 +1,4 @@
+import {datasetStorageProbe} from "./eo05b-dataset-storage-probe.mjs";
 import assert from "node:assert/strict";
 import {sourceEvidenceProbe} from "./eo05-source-evidence-probe.mjs";
 import {createHash, randomBytes, randomUUID} from "node:crypto";
@@ -473,6 +474,7 @@ async function main() {
     if ([...manifest.forward_migrations, ...manifest.pending_migrations].some(entry => entry.name === "a6tech01_privacy_workspace_fk_indexes")) {
       await assertPrivacyIndexes(client);
     }
+    if (manifest.prepared_migrations.some(entry => entry.name === "eo05b_dataset_storage")) await datasetStorageProbe(client,replayConnection);
     await credentialReplacementRegression(client);
     if ([...manifest.forward_migrations,...manifest.pending_migrations].some(entry => entry.name === "eo05a_refresh_work_tracking")) {
       await refreshWorkTrackingProbe(client, replayConnection);

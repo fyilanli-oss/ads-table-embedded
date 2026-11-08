@@ -99,7 +99,7 @@ export async function klaviyoFirstDayRehearsal(client,{workspace,shopId,shopDoma
      await client.query("set local role "+role);let result;try{result=await client.query(sql,args);}catch(error){console.error("EO05_KLAVIYO_FIRST_DAY_RPC_STOP "+JSON.stringify({role,rpc:sql.match(/^select ([a-z_]+\.[a-z_]+)/)?.[1]??"profile",code:error.code??"UNCONFIRMED",routine:error.routine,constraint:error.constraint}));throw error;}await client.query("set local role adstable_owner");lastSql=sql;
      if(sql.includes("commit_klaviyo_raw_preflight"))admissionCalls++;
      if(sql.includes("commit_klaviyo_dataset_source")){sourceCommits++;sourceWrites.push(structuredClone(args));}
-     if(mode==="tampered_page"&&sourceCommits===2&&sql.includes("read_source_pages")&&result.rows[0]?.result?.length)result.rows[0].result[0].ciphertext="00";
+     if(mode==="tampered_page"&&sourceCommits===2&&sql.startsWith("select evidence.read_source_pages(")&&result.rows[0]?.result?.length)result.rows[0].result[0].ciphertext="00";
      return result;
     }};}});}
     const target={operationId,workspaceId:workspace,installGeneration:source.installGeneration,shopId,shopDomain,accountId:"klaviyo-a",connectionId:c.id,connectionVersion:Number(c.connection_version),credentialId:c.credential_id,selectionId:source.selectionId,window,expiresAt:new Date(issued+600000).toISOString()};

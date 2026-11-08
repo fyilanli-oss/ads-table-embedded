@@ -35,8 +35,8 @@ async function ownerFixture(client, provider = "google_ads") {
   return owner;
 }
 
-async function sourceFixture(client, owner) {
-  const x = sourceStoreFixture({owner});
+async function sourceFixture(client, owner, sourceState = "complete") {
+  const x = sourceStoreFixture({owner, sourceState});
   for (const key of Object.keys(x.input.records)) x.input.records[key] = [];
   x.input.pages = [{key: "native", family: "synthetic_dataset", ordinal: 0, origin: owner.provider, captureLayer: "collector_projection", numericFidelity: "exact_source_string",
     fieldCoverage: ["records"], schemaVersion: "synthetic-v1", sanitizerVersion: "synthetic-v1", payload: {records: [{entity_id: "ad-1", spend: "9007199254740993.1234567890123456789"}]}}];
@@ -120,13 +120,22 @@ export async function datasetStorageProbe(client, connection, environment = proc
         await rejected(client, () => repository.commit(prepareDatasetWrite(event)), /WRITE_UNCONFIRMED/);
         assert.equal((await client.query("select count(*)::int n from analytics.cpd_product_sales_facts where installation_id=$1", [owner.installationId])).rows[0].n, 1, "later day resolution must not duplicate an event");
       }
+      // A complete primary batch cannot hide a partial contributing batch.
+      const secondary = await sourceFixture(client, owner, "partial"), mixed = datasetStorageFixture({owner, source});
+      mixed.rows[0].row.entity_id = "mixed-ad"; mixed.rows[0].row.source_identity.native.entity_id = "mixed-ad";
+      mixed.rows[0].row.provenance.sources.push(secondary);
+      await rejected(client, () => repository.commit(prepareDatasetWrite(mixed)), /WRITE_UNCONFIRMED/);
+      mixed.rows[0].row.source_completeness = "partial";
+      const mixedReceipt = await repository.commit(prepareDatasetWrite(mixed));
+      assert.equal((await client.query("select source_completeness from analytics.pd_facts where id=$1", [mixedReceipt.rows[0].id])).rows[0].source_completeness, "partial");
+      await rejected(client, () => client.query("update evidence.source_pages set purged_at=statement_timestamp() where id=$1", [secondary.page_id]), /EVIDENCE_PINNED/);
       // Lost acknowledgement after actual SQL write: explicit inspection recovers it.
       const lost = datasetStorageFixture({owner, source}); lost.rows[0].row.source_identity.native.entity_id = "lost-ad"; lost.rows[0].row.entity_id = "lost-ad";
       const w = prepareDatasetWrite(lost), uncertain = createDatasetStorageRepository({async query(sql, args) {await client.query(sql, args); throw Error("synthetic lost acknowledgement");}});
       await assert.rejects(uncertain.commit(w), /WRITE_UNCONFIRMED/);
       assert.equal((await repository.inspect({owner, sourceBatchId: source.batch_id, operationId: w.body.operationId})).status, "stored");
       const erased = (await client.query("select evidence.delete_installation_sources($1) result", [owner.installationId])).rows[0].result;
-      assert.equal(erased["analytics.pd_facts"], 2);
+      assert.equal(erased["analytics.pd_facts"], 3);
       for (const table of ["pd_facts", "cpd_product_performance_facts", "cpd_product_sales_facts"]) assert.equal((await client.query("select count(*)::int n from analytics." + table + " where installation_id=$1", [owner.installationId])).rows[0].n, 0);
     }
     // FX stays immutable and referentially typed; no real provider is selected.

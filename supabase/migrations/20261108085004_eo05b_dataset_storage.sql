@@ -395,14 +395,14 @@ end $fn$;
 create function analytics.validate_dataset_fact() returns trigger
 language plpgsql security definer set search_path='' as $fn$
 declare j jsonb:=to_jsonb(new); b evidence.source_batches%rowtype; o jsonb; ref jsonb; m identity.product_identity_mappings%rowtype;
- f analytics.fx_rates%rowtype; k text; keys text[]; expected jsonb; identity_kind text; native jsonb;
+ f analytics.fx_rates%rowtype; k text; keys text[]; expected jsonb; identity_kind text; native jsonb; all_complete boolean:=true;
 begin
  if tg_op='UPDATE' then raise exception 'DATASET_REVISION_PROTOCOL_REQUIRED';end if;
  select * into strict b from evidence.source_batches where workspace_id=new.workspace_id and installation_id=new.installation_id
  and installation_generation=new.installation_generation and id=new.source_batch_id for share;
  o:=b.authority; perform evidence.assert_source_owner(o);
  if o->>'provider'='shopify' or new.platform is distinct from o->>'provider' or new.platform_account_id is distinct from o->>'accountId'
- or new.provider_connection_id::text is distinct from o->>'connectionId' or new.source_completeness is distinct from b.source_state
+ or new.provider_connection_id::text is distinct from o->>'connectionId'
  or new.retain_until>b.retain_until or new.retain_until<=clock_timestamp() then raise exception 'DATASET_OWNER_OR_POLICY_INVALID';end if;
  if new.platform<>'klaviyo' and new.canonical_reporting_account_id is distinct from o->>'accountId' then raise exception 'DATASET_ACCOUNT_INVALID';end if;
  if octet_length(analytics.dataset_json(j))>65536 or jsonb_typeof(new.provenance->'sources') is distinct from 'array'
@@ -410,7 +410,12 @@ begin
  or (select count(*) from jsonb_object_keys(new.provenance))<>2
  or not new.provenance ?& array['projection_version','sources'] or coalesce(new.provenance->>'projection_version','')=''
  then raise exception 'DATASET_PROVENANCE_INVALID';end if;
- for ref in select value from jsonb_array_elements(new.provenance->'sources') loop perform analytics.assert_dataset_source(o,ref);end loop;
+ for ref in select value from jsonb_array_elements(new.provenance->'sources') loop
+  perform analytics.assert_dataset_source(o,ref);
+  if exists(select 1 from evidence.source_batches x where x.id=(ref->>'batch_id')::bigint and x.source_state<>'complete') then all_complete:=false;end if;
+  if exists(select 1 from evidence.source_batches x where x.id=(ref->>'batch_id')::bigint and x.retain_until<new.retain_until) then raise exception 'DATASET_SOURCE_POLICY_INVALID';end if;
+ end loop;
+ if new.source_completeness is distinct from (case when all_complete then 'complete' else 'partial' end) then raise exception 'DATASET_COMPLETENESS_INVALID';end if;
  if not exists(select 1 from jsonb_array_elements(new.provenance->'sources') r where r->>'batch_id'=new.source_batch_id::text)
  then raise exception 'DATASET_PRIMARY_SOURCE_REQUIRED';end if;
  -- Registry changes replace this validator; the tables retain their generic

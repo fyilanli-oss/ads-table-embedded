@@ -1,6 +1,7 @@
 import {createHash, randomUUID} from "node:crypto";
 import {canonicalSourceJson, sourceStoreOwner} from "./source-evidence-store.server.js";
 import {resolveReportWritePolicy} from "./report-retention-policy.server.js";
+import {DATASET_FX_POLICY, datasetFxPublicationDate} from "./dataset-fx-policy.server.js";
 
 // Private storage boundary, deliberately not a provider projector or report
 // publisher. Only reviewed server projections may construct this DTO. A source
@@ -105,7 +106,18 @@ function validateRow(owner, table, row) {
   // is a reviewed registry revision, never an arbitrary JSON passthrough.
   if (row.extension_schema_version !== DATASET_EXTENSION_VERSION || !object(row.metric_extensions)
     || Object.keys(row.metric_extensions).length || Buffer.byteLength(canonicalSourceJson(row.metric_extensions)) > 16384) fail("EXTENSION_UNREGISTERED");
-  exact(row.provenance, ["projection_version", "sources", ...(Object.hasOwn(row.provenance ?? {}, "source_context") ? ["source_context"] : [])]);
+  const reportingProof = Object.hasOwn(row.provenance ?? {}, "reporting_currency"), fxProof = Object.hasOwn(row.provenance ?? {}, "fx_policy");
+  if (reportingProof !== fxProof) fail("FX_PROOF_REQUIRED");
+  exact(row.provenance, ["projection_version", "sources", ...(Object.hasOwn(row.provenance ?? {}, "source_context") ? ["source_context"] : []), ...(reportingProof ? ["reporting_currency", "fx_policy"] : [])]);
+  if (reportingProof) {
+    const c = row.provenance.reporting_currency, p = row.provenance.fx_policy;
+    exact(c, ["version", "workspaceId", "installationId", "generation", "currency", "currencyVersion", "selectionOperationId", "source"]);
+    exact(p, ["version", "businessDate", "rateDate"]);
+    if (c.version !== "reporting-currency-v1" || c.source !== "merchant_selected" || c.currencyVersion !== "1" || !uuid.test(c.selectionOperationId)
+      || ["workspaceId", "installationId", "generation"].some(k => c[k] !== owner[k]) || c.currency !== row.target_currency
+      || p.version !== DATASET_FX_POLICY || row.fx_engine_version !== DATASET_FX_POLICY || p.businessDate !== row.business_date
+      || !["verified", "identity"].includes(row.fx_state) || p.rateDate !== (row.fx_state === "identity" ? row.business_date : datasetFxPublicationDate(row.business_date))) fail("FX_PROOF_INVALID");
+  }
   if (Object.hasOwn(row.provenance, "source_context")) {
     exact(row.provenance.source_context, ["version", "snapshot", "digest", "job_id", "fence", "window"]);
     const context = row.provenance.source_context;

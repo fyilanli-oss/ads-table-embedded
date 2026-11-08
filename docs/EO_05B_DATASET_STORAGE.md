@@ -63,3 +63,60 @@ Resmî mekanizma kontrolü 8 Kasım 2026: [PostgreSQL constraints](https://www.p
 [numeric](https://www.postgresql.org/docs/current/datatype-numeric.html),
 [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security).
 Migration mevcut CI ile aynı `supabase@2.121.0 migration new` komutuyla oluşturuldu.
+
+## 8 Kasım 2026 — kur ve rapor para birimi bağlantısı
+
+Ürün sahibi mevcut kur incelemesinden sonra önerilen kod/test/PR kapsamındaki
+hafta sonu kararı için “Haftasonu kuralını kabul ediyorum Codex” dedi. Aynı
+EO-05-B içindeki [somut sözleşme](../contracts/eo-05b-fx-reporting-currency-v1.json)
+bu uygulamanın yetki, tarih ve kabul sınırlarını kaydeder.
+
+Frankfurter v2 üzerinde kaynak açıkça ECB ile sınırlandırılır; karışık sağlayıcı
+kuru veya latest kullanılmaz. İstenen para çifti ve tarih sabittir, tek çağrı ve
+16 KiB yanıt sınırı vardır. Kurun ondalık basamakları JS Number üzerinden geçirilmez.
+Orijinal kaynak tutarı değiştirilmez; rapor satırı belirli değişmez kur kaydına
+bağlanır. Gerçek çevrim/toplama/yuvarlama EO-06 rapor kurallarında kalır.
+
+Kabul edilen hafta sonu istisnası: Cumartesi ve Pazar için önceki Cuma yayını
+istenir. Rapor günü ile gerçek kur tarihi ayrı tutulur; Cuma kuru Pazar tarihli
+gibi yazılmaz. Bu, önceki genel tarih-eşitliği şartının yalnız açık hafta sonu
+istisnasıdır. Hafta içi/tatil için rastgele eski veya güncel kur araması açılmaz.
+Cuma günü de yayın yoksa farklı tarihli yanıt kabul edilmez; kaynak korunur ve
+çevrim bekler. İleri tarihli, eksik, çelişkili veya yanlış çiftli yanıt durur.
+
+Önceden planda bulunan app.workspace_settings, merchant-selected rapor para birimini
+kurulum/nesil ile saklar. Bu mağaza ayarıdır; altıncı Dataset ailesi değildir.
+İlk seçim immutable sürüm1 kaydıdır; değişim ayrıca yeniden işleme kararı ister.
+Eski neslin seçimi yeni kuruluma otomatik aktarılmaz. Shopify/provider para birimi
+veya varsayılan TRY merchant seçiminin yerine geçmez. Bu teslimde Settings ekranı,
+onboarding veya OAuth kapısı eklenmez; ilerideki UI mevcut özel sunucu kayıt yoluna
+bağlanacaktır. Tarayıcıya doğrudan tablo/RPC yetkisi verilmez.
+
+createDatasetFxResolver gerçek DBye bağlı tek kullanımlık sunucu yeteneğidir.
+Mevcut bindStoredDatasetSources girişine açık sunucu enjeksiyonuyla bağlanır;
+sahte resolver/JSON yetki sayılmaz. Merchant seçimi yoksa native değerler FX
+missing ve reporting_currency_required beklemesiyle korunur. Aynı para biriminde
+identity kullanılır; HTTP ve sahte kur satırı yoktur. Bilinen cache kaydı tekrar
+indirilmez. Bir çift/gün için birden fazla sürüm varsa en yeni sessizce seçilmez.
+Kayıp yazım cevabından sonra otomatik readback/retry yoktur.
+
+Para birimi seçimi ve kur politikası provenance içinde saklanır, native tekillik
+anahtarını değiştirmez. SQL gerçek güncel merchant seçimi, nesil, çift, yayın tarihi
+ve immutable kur kanıtını yeniden kontrol eder. Kurun gerçek tarihi ve özgün
+kaynak tutarı korunur. Üç yıllık rapor/kaynak ömrü ve consumer pending değişmez.
+
+Zorunlu installation silmesi ayar kaydını ve bağlı merchant raporlarını kaldırır.
+Diğer mağazalar ve onların kullandığı ortak bağımsız kamuya açık kur kanıtı
+körlemesine silinmez. Müşteri scoped worker kendi kapsamını korur.
+
+Migration hazırlanmıştır; canlıya uygulanmaz. İzole unit testler ve F01 içindeki
+eo05b-fx-reporting-currency-probe.mjs gerçek SQL/AEAD ile sentetik HTTPyi sınar.
+Bu, native Frankfurter cevabı veya canlı provider/DB kabulü değildir. Runtime
+grant, route, saatlik çalışma, deploy ve merge ayrı kapılardadır. Yeni paket yoktur.
+
+Resmî kontrol 8 Kasım 2026: [Frankfurter](https://frankfurter.dev/),
+[OpenAPI](https://api.frankfurter.dev/v2/openapi.json),
+[ECB yayın günleri](https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html),
+[PostgreSQL numeric](https://www.postgresql.org/docs/17/datatype-numeric.html).
+Eski repo yalnız exact commit üzerinden davranış referansı olarak okundu; eski
+Number/varsayılan/nearest-date/service-role kodu veya tabloları taşınmadı.

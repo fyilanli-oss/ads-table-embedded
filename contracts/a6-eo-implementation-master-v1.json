@@ -4710,5 +4710,35 @@
     "merge": false,
     "deploy": false,
     "new_package": false
+  },
+  "EO05B_FX_reporting_currency_2026_11_08": {
+    "parent_package": "A6-EO-05-B",
+    "detail_checklist_step": 23,
+    "baseline_main": "3327c0265d6ece8c374c5c693ffbba431860b924",
+    "owner_approval": {
+      "source": "Tamam devam edelim Codex — specific existing FX/currency review; then Haftasonu kuralını kabul ediyorum Codex — response to the concrete fixed-source/currency binding code, isolated test and PR proposal requiring acceptance of weekend date behavior.",
+      "weekend_rule_explicit": "Haftasonu kuralını kabul ediyorum Codex",
+      "scope": "Backend merchant-currency record, fixed Frankfurter/ECB reader, existing Dataset FX reference binding, weekend publication date policy, prepared migration and isolated tests/PR. No Settings/OAuth flow, live SQL/provider/config/grant/deploy or merge."
+    },
+    "contract": "contracts/eo-05b-fx-reporting-currency-v1.json",
+    "brief": "docs/EO_05B_DATASET_STORAGE.md",
+    "migration": "supabase/migrations/20261108150218_eo05b_fx_reporting_currency.sql",
+    "weekend_rule": {
+      "policy": "frankfurter-ecb-weekend-v1",
+      "Saturday": "previous Friday",
+      "Sunday": "previous Friday",
+      "weekday": "exact requested business date",
+      "actual_rate_date_preserved": true,
+      "business_date_relabelled": false,
+      "older_or_future_response": "stop; no fact write",
+      "missing_holiday_weekday_quote": "hold/stop, no unapproved nearest-date search",
+      "current_or_future_rate_substitution": false
+    },
+    "status": "code_and_isolated_CI_preparation_not_live",
+    "live_database": false,
+    "live_provider": false,
+    "merge": false,
+    "deploy": false,
+    "new_package": false
   }
 }

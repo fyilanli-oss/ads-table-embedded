@@ -1,3 +1,13 @@
+## 8 Kasım 2026 — EO-05-B üç yıllık rapor saklama kararı
+
+Ürün sahibi seçilmiş rapor verisi için üç yılı kabul etti. Normal ham kaynak
+temizliği geçmiş raporu bozmamalı; zorunlu silme ilgili mağazanın bütün veri
+katmanlarında önceliklidir. Kaynak90/metadata365 kararı Dataset süresi değildir.
+[Karar ve bağımlılık incelemesi](EO_05B_REPORT_RETENTION.md), uygulama sınırlarını
+ve mevcut kaynak FK/TTL/makbuz/pin/mapping/silme bağlarını gösterir. Bu kayıt süreyi
+koda/canlıya uygulamaz; üç yıllık davranışın runtime/SQL kabulü açık kalır. Aynı
+EO-05-B / Ayrıntılı kontrol listesi23; yeni paket yoktur.
+
 ## 8 Kasım 2026 — EO-05-B depodaki ham zarfları tablo yazıcısına bağlama
 
 PR #346 sonrası ürün sahibinin açıkladığımız kod/test/PR kapsamına açık onayıyla,

@@ -1,0 +1,157 @@
+{
+  "id": "eo05b-report-retention-dependencies-2026-11-08",
+  "baseline_main": "009570183f7cfd4a7781a61dc2d1ecd1e599f07f",
+  "kind": "read_only_static_repository_review",
+  "live_database_queried": false,
+  "synthetic_SQL_executed_this_review": false,
+  "three_year_policy_implemented": false,
+  "source_files": [
+    {
+      "path": "supabase/migrations/20261108085004_eo05b_dataset_storage.sql",
+      "blob": "9274fa0af0bad0c35d99f65f14b0dc02666a808f",
+      "sha256": "67723982a7175f2098e2fb04d68754c6951114aae6fdca80b2e2b1ac41856ce3",
+      "anchors": [
+        {
+          "line": 54,
+          "contains": "source_batch_id bigint not null"
+        },
+        {
+          "line": 406,
+          "contains": "new.retain_until>b.retain_until"
+        },
+        {
+          "line": 482,
+          "contains": "create function analytics.inspect_dataset_storage"
+        },
+        {
+          "line": 591,
+          "contains": "create function analytics.guard_dataset_evidence"
+        },
+        {
+          "line": 612,
+          "contains": "create or replace function evidence.delete_installation_sources"
+        },
+        {
+          "line": 636,
+          "contains": "create or replace function privacy.complete_customer_source_run"
+        },
+        {
+          "line": 467,
+          "contains": "perform identity.mapping_review_state"
+        }
+      ]
+    },
+    {
+      "path": "supabase/migrations/20261108103823_eo05b_source_dataset_binding.sql",
+      "blob": "54713e016995c5170259b2ce6f1732e26c37d187",
+      "sha256": "834ad179767d9a9021d784f22ace77ec4586ed513d17612eea1e3ac84bdf3c05",
+      "anchors": [
+        {
+          "line": 18,
+          "contains": "new.retain_until>b.retain_until"
+        },
+        {
+          "line": 31,
+          "contains": "select source into original_source"
+        },
+        {
+          "line": 49,
+          "contains": "perform analytics.assert_dataset_source"
+        },
+        {
+          "line": 102,
+          "contains": "perform identity.mapping_review_state"
+        }
+      ]
+    },
+    {
+      "path": "app/lib/database/customer-source-privacy.server.js",
+      "blob": "7af5642b9097ce3fd756cfde8dba712a60ef9b00",
+      "sha256": "07c9445cf9e4440b995a7f2dc5665229dd17794015e2c06518bcb33931e317ea",
+      "anchors": [
+        {
+          "line": 47,
+          "contains": "if(!page.available)fail"
+        },
+        {
+          "line": 84,
+          "contains": "const raw=row.attributes?.event_properties?.OrderId"
+        }
+      ]
+    },
+    {
+      "path": "app/lib/database/verified-mapping-store.server.js",
+      "blob": "618fb63ceb8c8ff9ddaf7a0f3cf98b22b0de38af",
+      "sha256": "409964cb85e1e059fa4a7bf71a8c5afc6dd8711ae5a59bc352317508ae0a9038",
+      "anchors": [
+        {
+          "line": 57,
+          "contains": "!future(m.retainUntil,now)"
+        },
+        {
+          "line": 133,
+          "contains": "async readCurrent"
+        }
+      ]
+    },
+    {
+      "path": "app/lib/providers/stored-klaviyo-dataset.server.js",
+      "blob": "ced47c68bc0878ed0310d230a085c047e9aea5b0",
+      "sha256": "8196ef7593bf6b8d08d7ef804da99d40591007e8849cc020370fb7515c55faec",
+      "anchors": [
+        {
+          "line": 111,
+          "contains": "provider_event_id: event.provider_event_id"
+        },
+        {
+          "line": 113,
+          "contains": "source_identity: {kind: \"event\""
+        }
+      ]
+    },
+    {
+      "path": "app/lib/database/dataset-source-binding.server.js",
+      "blob": "ce6225d68372e6ca9d3d247c115255101ea97263",
+      "sha256": "f5a2fbe1b75809195ab04e4a7ce6342feceda51537f351a88010f0e33bd06500",
+      "anchors": [
+        {
+          "line": 27,
+          "contains": "const readback = await repository.inspect"
+        }
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "source_expiry_caps_fact",
+      "fact": "All three fact tables require live source batch FK; latest validator bounds fact retain_until by contributing source batch expiry."
+    },
+    {
+      "id": "receipt_readback_coupled_to_source",
+      "fact": "Storage acknowledgement lives in source manifest; inspect requires live batch and source pages. It is not an independent historical report proof."
+    },
+    {
+      "id": "source_cleanup_pinned",
+      "fact": "Dataset pin trigger prevents page purge or source deletion while fact references remain; removing it would lose existing evidence safety."
+    },
+    {
+      "id": "historical_identity_dependencies",
+      "fact": "Mapping FK/current mapping_review_state and immutable FX FK must be distinguished from historical context required for reports."
+    },
+    {
+      "id": "erasure_addressability",
+      "fact": "Whole installation deletes facts before sources. Customer erase locates affected Dataset rows through source page/batch linkage; after normal raw deletion the same scope needs retained authoritative addressability."
+    },
+    {
+      "id": "event_grain",
+      "fact": "Klaviyo product sales is per Ordered Product event, not a daily anonymous aggregate. Event-ID retention/grain/privacy cannot be silently reclassified."
+    }
+  ],
+  "prior_evidence": {
+    "pr": 347,
+    "head": "70435305ed6caf31e84c9453ffeb7ca3df906bc2",
+    "SQL_run": 42475280330,
+    "scope": "Synthetic temporary PostgreSQL evidence for current source/store/pin/erasure behavior only; does not validate the new three-year policy."
+  },
+  "conclusion": "Accepted product policy requires source-lifetime-independent historical report proof and erasure addressability before runtime activation; merely changing policy.until is insufficient. No guard removal, raw-body duplication, expiry extension or new table is authorized by this review."
+}

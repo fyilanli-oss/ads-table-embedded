@@ -97,6 +97,13 @@ yerine kullanılamaz. Kaynak toplama satış rolü veya Channel için yeni yetki
 
 ## Saklama ve zorunlu silme
 
+8 Kasım 2026 owner kararı: seçilmiş rapor verisi ve gerekli tarihsel bağlam için
+üç yıllık normal saklama, ham kaynak politikasından ayrıdır. Normal kaynak
+temizliği geçmiş raporu bozmaz; zorunlu silme rapor dahil ilgili bütün katmanlarda
+önceliklidir. [Dataset kararı ve mevcut bağımlılıklar](EO_05B_REPORT_RETENTION.md)
+bağlayıcı girdidir. Bu kayıt üç yıllık runtime/SQL davranışını etkinleştirmez;
+kaynak korumaları uygulama ve regresyon kanıtı olmadan gevşetilemez.
+
 Kabul edilen normal politika kaynak/kimlik/sipariş/claim için 90 gün, metaveri için
 365 gündür. Kayıt başına sabit başlangıç korunur; okuma veya yeniden kullanım ömrü
 uzatmaz. Süre dolması körlemesine silme yetkisi değildir: mevcut bağımlılık, consumer

@@ -4654,5 +4654,29 @@
     "merge": false,
     "deploy": false,
     "completion": "Source binding code/test only. Existing Dataset retention/ordinary cleanup and FX acceptance, EO05C/D consumer/correction and native18/22 holds remain open; no new package."
+  },
+  "EO05B_report_retention_decision_2026_11_08": {
+    "parent_package": "A6-EO-05-B",
+    "detail_checklist_step": 23,
+    "owner_approval": {
+      "policy": "Son karar önerinde mutabikiz Codex",
+      "start": "Tamam başlayalım Codex",
+      "scope": "Three-year selected report history, necessary identity/FX/calculation context, normal raw expiry preserving reports and mandatory scoped erasure across layers. This delivery records the decision and current dependency review; no runtime/live action."
+    },
+    "contract": "contracts/eo-05b-report-retention-v1.json",
+    "brief": "docs/EO_05B_REPORT_RETENTION.md",
+    "evidence": "docs/evidence/EO05B_REPORT_RETENTION_DEPENDENCIES_2026-11-08.json",
+    "status": "owner_policy_accepted_dependency_review_complete_runtime_not_implemented",
+    "report_calendar_years": 3,
+    "source_days_unchanged": 90,
+    "source_metadata_days_unchanged": 365,
+    "normal_raw_cleanup_preserves_reports": true,
+    "mandatory_erasure_overrides_retention": true,
+    "runtime_implemented": false,
+    "SQL_acceptance": false,
+    "live": false,
+    "merge": false,
+    "deploy": false,
+    "new_package": false
   }
 }

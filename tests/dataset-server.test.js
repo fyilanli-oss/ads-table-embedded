@@ -5,6 +5,8 @@ import {createConfiguredSourceEvidenceCipher} from "../app/lib/database/source-e
 import {createDatasetServerExecution, readDatasetWritePlan} from "../app/lib/refresh/dataset-server.server.js";
 import {createDatasetPostgresClient} from "../app/lib/database/dataset-postgres.server.js";
 import {datasetSourceBindingFixture} from "./fixtures/dataset-source-binding-fixture.js";
+import {sourcePayloadHash} from "../app/lib/database/source-evidence-store.server.js";
+import {DATASET_RECONCILE_SQL, DATASET_RECONCILE_READ_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
 import {handleGoogleRawCaptureRequest} from "../app/lib/refresh/google-raw-request.server.js";
 import {handleMetaRawCaptureRequest} from "../app/lib/refresh/meta-raw-request.server.js";
 import {handleKlaviyoRawCaptureRequest} from "../app/lib/refresh/klaviyo-raw-request.server.js";
@@ -131,4 +133,32 @@ test("private HTTP lost-write response reports unknown, never a fabricated no-wr
   assert.equal(response.status, 503); assert.equal(body.status, "unconfirmed"); assert.equal(body.DatasetWritePerformed, null); assert.equal(body.rowsStored, null);
   assert.equal(f.writes.length, 1); assert.equal(f.trace.some(q => q.startsWith("select analytics.inspect_dataset_storage(")), false);
   assert.equal(f.counts().ended, 1); assert.equal(f.counts().native, 0);
+});
+
+for (const provider of Object.keys(providers)) test(`${provider}: version2 HTTP reports actual consumption, known mismatch and unknown distinctly`, async () => {
+  for (const mode of ["success", "mismatch", "unknown"]) {
+    const f = await datasetServerFixture(provider, {nonempty: provider !== "meta"});
+    Object.assign(f.plan, {version: 2, expectedRevision: 0}); f.environment.ADSTABLE_DATASET_WRITE_PLAN = JSON.stringify(f.plan);
+    const key = provider === "google_ads" ? "googleDatasetRead" : provider === "meta" ? "metaDatasetRead" : "klaviyoDatasetRead";
+    for (const b of f.envelopes.values()) Object.assign(b.receipt.manifest[key], {observedAt: "2026-11-02T00:00:00.000Z", completedAt: "2026-11-02T00:01:00.000Z"});
+    let receipt, lost = false, after = 0;
+    f.hooks.query = (sql, args) => {
+      if (lost) after++;
+      if (sql === DATASET_RECONCILE_SQL) {
+        const write = JSON.parse(args[1]), context = JSON.parse(args[2]);
+        receipt = {status: "consumed", operationId: write.operationId, requestDigest: sourcePayloadHash({write, context}), revision: 1, rowCount: write.rows.length,
+          changes: write.rows.map(() => ({action: "inserted"})), consumerReceipt: true, checkpointAdvanced: true, comparison: "matched"};
+        if (mode === "unknown") {lost = true;throw Error("lost acknowledgement");}
+        if (mode === "mismatch") Object.assign(receipt, {status: "mismatch", comparison: "mismatch", consumerReceipt: false, checkpointAdvanced: false});
+        return {rows: [{result: structuredClone(receipt)}]};
+      }
+      if (sql === DATASET_RECONCILE_READ_SQL) return {rows: [{result: structuredClone(receipt)}]};
+    };
+    const r = await f.handle(f.request()), b = await r.json();
+    assert.equal(r.status, mode === "success" ? 200 : mode === "mismatch" ? 207 : 503);
+    assert.equal(b.consumerReceipt, mode === "success" ? true : mode === "mismatch" ? false : null);
+    assert.equal(b.checkpointAdvanced, mode === "success" ? true : mode === "mismatch" ? false : null);
+    assert.equal(after, 0);assert.equal(f.counts().native, 0);
+    for (const secret of [f.owner.workspaceId, f.owner.credentialId, f.environment.ADSTABLE_SOURCE_EVIDENCE_ENCRYPTION_KEY_V1]) assert.ok(!JSON.stringify(b).includes(secret));
+  }
 });

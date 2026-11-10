@@ -1773,7 +1773,9 @@
         {
           "id": "A6-EO-05-D",
           "title": "Bootstrap, idempotent upsert and reconciliation",
-          "objective": "Yesterday+today bootstrap, replay and raw-to-canonical mismatch ledger."
+          "objective": "Yesterday+today bootstrap, replay and raw-to-canonical mismatch ledger.",
+          "current_record": "EO05D_reconciliation_2026_11_10",
+          "current_contract": "contracts/eo-05d-reconciliation-v1.json"
         },
         {
           "id": "A6-EO-05-E",
@@ -4812,5 +4814,20 @@
     "prior_live_installation": "PR350 recorded four exact live SQL installations, 100 ledger entries, 29 function bodies and five FORCE-RLS empty tables. No claim of active Dataset population.",
     "live_scope": false,
     "remaining": "New context/start RPC migration and narrow role extensions remain prepared; activation/config/deploy/native acceptance and EO05C/D are separate."
+  },
+  "EO05D_reconciliation_2026_11_10": {
+    "contract": "contracts/eo-05d-reconciliation-v1.json",
+    "parent_package": "A6-EO-05-D",
+    "scope": {
+      "runtime_code": true,
+      "live_provider": false,
+      "live_database": false,
+      "config": false,
+      "merge": false,
+      "deploy": false,
+      "hourly_activation": false
+    },
+    "prepared": true,
+    "native_acceptance": false
   }
 }

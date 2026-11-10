@@ -4,14 +4,14 @@ import {readFileSync} from "node:fs";
 import {storedBindingFixture} from "./eo05b-source-dataset-binding-probe.mjs";
 import {createConfiguredSourceEvidenceCipher} from "../app/lib/database/source-evidence-config.server.js";
 import {createDatasetServerExecution} from "../app/lib/refresh/dataset-server.server.js";
-import {DATASET_STORAGE_RPC, DATASET_SOURCE_CONTEXT_SQL} from "../app/lib/database/dataset-rpc.server.js";
+import {DATASET_STORAGE_RPC, DATASET_RECONCILIATION_RPC, DATASET_SOURCE_CONTEXT_SQL} from "../app/lib/database/dataset-rpc.server.js";
 import {GOOGLE_DATASET_SOURCE_RPC} from "../app/lib/database/google-source-postgres.server.js";
 import {META_SOURCE_RPC} from "../app/lib/database/meta-source-postgres.server.js";
 import {KLAVIYO_SOURCE_RPC} from "../app/lib/database/klaviyo-source-postgres.server.js";
 
 // Actual narrow-role SQL, AEAD and common server composition, only within the
 // existing localhost F01 transaction. No provider/network or live grants.
-export async function datasetServerProbe(client, {ownerFixture}) {
+export async function datasetServerProbe(client, {ownerFixture, reconciliation = false}) {
   await client.query("savepoint dataset_server_outer");
   try {
     const providers = [["google_ads", "google", GOOGLE_DATASET_SOURCE_RPC], ["meta", "meta", META_SOURCE_RPC], ["klaviyo", "klaviyo", KLAVIYO_SOURCE_RPC]];
@@ -29,14 +29,24 @@ export async function datasetServerProbe(client, {ownerFixture}) {
     }
     const extension = readFileSync(new URL("./sql/eo05b-dataset-role-extension.sql", import.meta.url), "utf8").trim().replace(/^--[^\n]*\n/, "").replace(/^begin;/, " ").replace(/commit;$/, " ");
     await client.query(extension); await client.query("set local role adstable_owner");
+    if (reconciliation) {
+      const extra = readFileSync(new URL("./sql/eo05d-reconciliation-role-extension.sql", import.meta.url), "utf8").trim()
+        .replace(/^(?:--[^\n]*\n)*/, "").replace(/^begin;/, " ").replace(/commit;$/, " ");
+      await client.query(extra); await client.query("set local role adstable_owner");
+    }
     for (const [provider, short] of providers) {
       const role = "adstable_" + short + "_source_runner", prefix = short.toUpperCase(), key = () => randomBytes(32).toString("base64url");
       const environment = {ADSTABLE_SOURCE_EVIDENCE_ACTIVE_KEY_VERSION: "1", ADSTABLE_SOURCE_EVIDENCE_ENCRYPTION_KEY_V1: key(),
         ADSTABLE_PROVIDER_TOKEN_ACTIVE_KEY_VERSION: "1", ADSTABLE_PROVIDER_TOKEN_ENCRYPTION_KEY_V1: key(), ADSTABLE_SESSION_ENCRYPTION_KEY_V1: key(),
         ADSTABLE_DATASET_WRITE_ENABLED: "true", ["ADSTABLE_" + prefix + "_SOURCE_DATABASE_URL"]: "postgresql://" + role + ".podpwkrpmjiksskxhwsu:" + "x".repeat(32) + "@aws-1-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require",
         ["ADSTABLE_" + prefix + "_SOURCE_DB_TIMEOUT_MS"]: "1000"};
-      const owner = await ownerFixture(client, provider), input = await storedBindingFixture(client, owner, {cipher: createConfiguredSourceEvidenceCipher(environment)});
-      const plan = {version: 1, operationId: randomUUID(), expiresAt: new Date(Date.now() + 60000).toISOString(), owner, batches: input.batches,
+      const owner = await ownerFixture(client, provider), input = await storedBindingFixture(client, owner, {cipher: createConfiguredSourceEvidenceCipher(environment), nonempty: !reconciliation || provider !== "meta"});
+      if (reconciliation) {
+        const readKey = provider === "google_ads" ? "googleDatasetRead" : provider === "meta" ? "metaDatasetRead" : "klaviyoDatasetRead";
+        for (const b of input.batches) await client.query("update evidence.source_batches set manifest=jsonb_set(jsonb_set(manifest,$3::text[],to_jsonb($4::text)),$5::text[],to_jsonb($4::text)) where authority=$1::jsonb and attempt_id=$2::uuid",
+          [JSON.stringify(owner), b.attemptId, [readKey, "observedAt"], new Date(Date.now() - 5000).toISOString(), [readKey, "completedAt"]]);
+      }
+      const plan = {version: reconciliation ? 2 : 1, ...reconciliation ? {expectedRevision: 0} : {}, operationId: randomUUID(), expiresAt: new Date(Date.now() + 60000).toISOString(), owner, batches: input.batches,
         limits: {maxPages: 100, maxRows: 1000, maxBytes: 1000000, maxElapsedMs: 60000}, useFx: false};
       environment.ADSTABLE_DATASET_WRITE_PLAN = JSON.stringify(plan);
       let ordinal = 0, native = 0; const trace = [];
@@ -68,16 +78,16 @@ export async function datasetServerProbe(client, {ownerFixture}) {
       let result;
       try {result = await execution.run();} catch (error) {console.error("EO05B_DATASET_EXECUTION_STOP", JSON.stringify({provider, checkouts: ordinal, trace, remainingMs: Date.parse(plan.expiresAt) - Date.now(), message: error.message})); throw error;}
       await execution.close();
-      assert.equal(result.rowsStored, provider === "google_ads" ? 3 : 2); assert.equal(result.consumerReceipt, false); assert.equal(native, 0);
-      assert.equal(result.storageReceipt.operationId, plan.operationId);
+      assert.equal(reconciliation ? result.rowCount : result.rowsStored, provider === "google_ads" ? 3 : reconciliation && provider === "meta" ? 0 : 2); assert.equal(result.consumerReceipt, reconciliation); assert.equal(native, 0);
+      assert.equal(reconciliation ? result.operationId : result.storageReceipt.operationId, plan.operationId);
       const repeated = createDatasetServerExecution({environment, operationId: plan.operationId, poolFactory, fetchFn: async () => {native++; throw Error("NATIVE_FORBIDDEN");}});
       await assert.rejects(repeated.run()); await repeated.close();
-      assert.equal((await client.query("select count(*)::int n from analytics.pd_facts where installation_id=$1", [owner.installationId])).rows[0].n, 1);
+      assert.equal((await client.query("select count(*)::int n from analytics.pd_facts where installation_id=$1", [owner.installationId])).rows[0].n, reconciliation && provider === "meta" ? 0 : 1);
       // Exact current owner is checked before a historical context is returned.
       await client.query("savepoint dataset_context_denied");
       await assert.rejects(client.query(DATASET_SOURCE_CONTEXT_SQL, [JSON.stringify({...owner, generation: "999"}), "synthetic-binding-job", "1", "2026-11-01", "2026-11-01"]));
       await client.query("rollback to savepoint dataset_context_denied"); await client.query("release savepoint dataset_context_denied");
-      assert.equal((await client.query("select count(*)::int n from evidence.source_batches where installation_id=$1 and handoff_state<>'pending'", [owner.installationId])).rows[0].n, 0);
+      assert.equal((await client.query("select count(*)::int n from evidence.source_batches where installation_id=$1 and handoff_state<>'pending'", [owner.installationId])).rows[0].n, reconciliation ? input.batches.length : 0);
       assert.equal((await client.query("select has_table_privilege($1,'evidence.source_pages','SELECT') yes", [role])).rows[0].yes, false);
       await client.query("savepoint dataset_column_privilege");
       await client.query("grant select(id) on evidence.source_pages to " + role);
@@ -85,9 +95,9 @@ export async function datasetServerProbe(client, {ownerFixture}) {
       await assert.rejects(unsafe.run()); await unsafe.close();
       await client.query("rollback to savepoint dataset_column_privilege"); await client.query("release savepoint dataset_column_privilege");
     }
-    for (const role of ["anon", "authenticated", "service_role", "adstable_runtime", "adstable_refresh_coordinator"]) for (const [, signature] of DATASET_STORAGE_RPC) {
+    for (const role of ["anon", "authenticated", "service_role", "adstable_runtime", "adstable_refresh_coordinator"]) for (const [, signature] of [...DATASET_STORAGE_RPC, ...reconciliation ? DATASET_RECONCILIATION_RPC : []]) {
       assert.equal((await client.query("select has_function_privilege($1,$2,'EXECUTE') yes", [role, signature])).rows[0].yes, false);
     }
-    console.log("EO05B_DATASET_SERVER_PASS three_provider=true actual_narrow_role_SQL=true actual_AEAD=true receipts_readback=true native_HTTP=0 live_mutation=false");
+    console.log((reconciliation ? "EO05D_RECONCILIATION_SERVER_PASS" : "EO05B_DATASET_SERVER_PASS") + " three_provider=true actual_narrow_role_SQL=true actual_AEAD=true receipts_readback=true native_HTTP=0 live_mutation=false");
   } finally {await client.query("rollback to savepoint dataset_server_outer"); await client.query("release savepoint dataset_server_outer"); await client.query("set local role adstable_owner");}
 }

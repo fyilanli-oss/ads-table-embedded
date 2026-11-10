@@ -3,6 +3,7 @@ import {createConfiguredSourceEvidenceCipher} from "../database/source-evidence-
 import {createDatasetPostgresClient} from "../database/dataset-postgres.server.js";
 import {bindStoredDatasetSources} from "../database/dataset-source-binding.server.js";
 import {createDatasetFxResolver} from "../database/dataset-fx-resolver.server.js";
+import {reconcileStoredDatasetSources} from "../database/dataset-reconciliation.server.js";
 const fail = () => {throw Error("DATASET_SERVER_CONFIGURATION_REQUIRED");};
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const exact = (v, keys) => v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).sort().join() === keys.slice().sort().join();
@@ -13,7 +14,8 @@ export function readDatasetWritePlan(environment, now = Date.now()) {
     const text = environment.ADSTABLE_DATASET_WRITE_PLAN;
     if (typeof text !== "string" || Buffer.byteLength(text) > 16384 || !Number.isSafeInteger(now)) fail();
     const p = JSON.parse(text);
-    if (!exact(p, ["version", "operationId", "expiresAt", "owner", "batches", "limits", "useFx"]) || p.version !== 1 || !uuid.test(p.operationId)
+    if (!exact(p, ["version", "operationId", "expiresAt", "owner", "batches", "limits", "useFx", ...p.version === 2 ? ["expectedRevision"] : []])
+      || ![1, 2].includes(p.version) || p.version === 2 && (!Number.isSafeInteger(p.expectedRevision) || p.expectedRevision < 0 || p.expectedRevision > 999999999) || !uuid.test(p.operationId)
       || typeof p.expiresAt !== "string" || new Date(p.expiresAt).toISOString() !== p.expiresAt || Date.parse(p.expiresAt) <= now
       || Date.parse(p.expiresAt) > now + 600000 || typeof p.useFx !== "boolean") fail();
     p.owner = sourceStoreOwner(p.owner);
@@ -34,7 +36,7 @@ export function createDatasetServerExecution({environment, operationId, signal, 
   if (!plan || plan.operationId !== operationId || typeof now !== "function" || typeof fetchFn !== "function" || signal !== undefined && !(signal instanceof AbortSignal)) fail();
   const cipher = createConfiguredSourceEvidenceCipher(env);
   const controller = new AbortController(), deadlineAt = Math.min(Date.parse(plan.expiresAt), now() + plan.limits.maxElapsedMs);
-  const database = createDatasetPostgresClient({environment: env, provider: plan.owner.provider, deadlineAt, signal: controller.signal, now, poolFactory});
+  const database = createDatasetPostgresClient({environment: env, provider: plan.owner.provider, deadlineAt, signal: controller.signal, reconciliation: plan.version === 2, now, poolFactory});
   let used = false, running = false, closed = false;
   return Object.freeze({
     async run(...args) {
@@ -47,7 +49,9 @@ export function createDatasetServerExecution({environment, operationId, signal, 
           [JSON.stringify(plan.owner), plan.batches[0].attemptId, operationId, digest, new Date(deadlineAt).toISOString()])).rows?.[0]?.result;
         if (claim?.status !== "accepted" || claim.operationId !== operationId || claim.digest !== digest) throw Error("DATASET_SERVER_WRITE_UNCONFIRMED");
         const {maxElapsedMs, ...limits} = plan.limits;
-        const result = await bindStoredDatasetSources({database, cipher, owner: plan.owner, batches: plan.batches, limits: {...limits, deadlineAt}, operationId, signal: controller.signal, now,
+        const writer = plan.version === 2 ? reconcileStoredDatasetSources : bindStoredDatasetSources;
+        const result = await writer({database, cipher, owner: plan.owner, batches: plan.batches, limits: {...limits, deadlineAt}, operationId, signal: controller.signal, now,
+          ...plan.version === 2 ? {expectedRevision: plan.expectedRevision} : {},
           ...plan.useFx ? {fxResolver: createDatasetFxResolver({database, fetchImpl: fetchFn, now})} : {}});
         return Object.freeze({...result, operationId, hourlyRefreshActivated: false});
       } finally {clearTimeout(timer); signal?.removeEventListener("abort", forward); running = false; controller.abort();}

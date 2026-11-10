@@ -15,12 +15,17 @@ export const DATASET_STORAGE_RPC = Object.freeze([
   ["select analytics.lookup_dataset_fx($1::text,$2::text,$3::date) as result", "analytics.lookup_dataset_fx(text,text,date)"],
   ["select analytics.record_dataset_fx($1::jsonb) as result", "analytics.record_dataset_fx(jsonb)"],
 ].map(Object.freeze));
+// Explicit version2 private reconciliation surface; prepared grants remain separate.
+export const DATASET_RECONCILIATION_RPC = Object.freeze([
+  ["select analytics.commit_dataset_reconciliation($1::jsonb,$2::jsonb,$3::jsonb,$4::timestamptz) as result", "analytics.commit_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz)"],
+  ["select analytics.inspect_dataset_reconciliation($1::jsonb,$2::uuid) as result", "analytics.inspect_dataset_reconciliation(jsonb,uuid)"],
+].map(Object.freeze));
 // Existing source clients still issue only their own fixed RPCs. Recognizing
 // this exact future extension avoids breaking capture when its separate grant
 // is installed; it does not grant or enable any storage call.
 // Resolve only built-in argument types. Looking up a new function via
 // to_regprocedure would require schema USAGE even for the unchanged old role.
-export const DATASET_OPTIONAL_PRIVILEGES_SQL = "and not (" + [...new Set(DATASET_STORAGE_RPC.map(x => x[1]))].map(signature => {
+export const DATASET_OPTIONAL_PRIVILEGES_SQL = "and not (" + [...new Set([...DATASET_STORAGE_RPC, ...DATASET_RECONCILIATION_RPC].map(x => x[1]))].map(signature => {
   const [, schema, name, types] = signature.match(/^([a-z_]+)\.([a-z_]+)\((.*)\)$/);
   const oids = types.split(",").map(type => "pg_catalog.to_regtype('" + type + "')::oid::text").join("||' '||");
   return "(n.nspname='" + schema + "' and p.proname='" + name + "' and p.proargtypes::text=(" + oids + "))";

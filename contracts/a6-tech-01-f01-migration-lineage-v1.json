@@ -1032,7 +1032,7 @@
       "name": "eo05c_maturity_finality",
       "file": "supabase/migrations/20261110175346_eo05c_maturity_finality.sql",
       "created_with": "supabase@2.121.0 migration new eo05c_maturity_finality",
-      "repository_sql_sha256": "16ddd103e31aeac777e2b81d78c8221a34a587ac2c50da122a658ae60a2f3c20",
+      "repository_sql_sha256": "259a7adfa6bf78a6c7faa3c26704cdc35e4b2632b9b78a1d6cee41a12a047df7",
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false

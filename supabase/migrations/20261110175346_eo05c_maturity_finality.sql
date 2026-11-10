@@ -42,7 +42,7 @@ begin
  if valid and cardinality(windows)>0 then select max(x) into h from unnest(windows) x;end if;
  reason:=case when h is not null then null when p->>'provider'='klaviyo' then 'account_attribution_not_observed' else 'native_settings_unverified' end;
  return jsonb_build_object('version','eo05c-maturity-v1','state',case when h is null then 'unknown' else 'known' end,
- 'horizonDays',h,'reason',reason,'fingerprint',evidence.source_hash(jsonb_build_object('version','eo05c-maturity-v1','provider',p->>'provider','timeZone',p->>'timeZone','native',n)),'timeZone',p->>'timeZone');
+ 'horizonDays',h,'reason',reason,'fingerprint',analytics.dataset_digest(jsonb_build_object('version','eo05c-maturity-v1','provider',p->>'provider','timeZone',p->>'timeZone','native',n)),'timeZone',p->>'timeZone');
 end $fn$;
 
 create function evidence.register_maturity_configuration(o jsonb,a uuid,p jsonb,d timestamptz) returns jsonb
@@ -66,7 +66,9 @@ begin
  if page.family<>'maturity_configuration' or page.origin<>o->>'provider' or page.payload_schema_version<>'eo05c-native-configuration-v1'
  or page.sanitizer_version<>'eo05c-attribution-fields-v1' or page.capture_layer<>'collector_projection'
  or page.numeric_fidelity<>'decoded_only' or page.purged_at is not null or page.retain_until<=clock_timestamp()
- or page.payload_hash is distinct from evidence.source_hash(p) then raise exception 'MATURITY_CONFIGURATION_PROOF_INVALID';end if;
+ -- Encrypted source pages use compact canonical application JSON, unlike the
+ -- existing SQL-only receipt hash over PostgreSQL's spaced jsonb rendering.
+ or page.payload_hash is distinct from analytics.dataset_digest(p) then raise exception 'MATURITY_CONFIGURATION_PROOF_INVALID';end if;
  result:=jsonb_build_object('batchId',b.id::text,'pageId',page.id::text,'payloadHash',page.payload_hash,'fingerprint',policy->>'fingerprint','policy',policy,'observedAt',p->>'observedAt');
  m:=b.manifest||jsonb_build_object('maturityConfiguration',result);
  if octet_length(m::text)>1048576 or d<=clock_timestamp() then raise exception 'MATURITY_CONFIGURATION_LIMIT';end if;

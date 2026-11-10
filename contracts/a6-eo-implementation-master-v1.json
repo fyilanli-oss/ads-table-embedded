@@ -1,4 +1,23 @@
 {
+  "EO05C_maturity_finality_2026_11_10": {
+    "parent_package": "A6-EO-05-C",
+    "owner_approval": "Tamam onaylıyorum Codex — explicit reply to three EO05C jobs: native setting/source binding, maturity decision and durable proof, code/SQL preparation/isolated tests/one PR",
+    "status": "repository_implementation_prepared_required_CI_exact_remote_and_separate_owner_merge_pending_not_live",
+    "contract": "contracts/eo-05c-maturity-v1.json",
+    "brief": "docs/EO_05C_MATURITY_FINALITY.md",
+    "storage": "Existing source manifests; no new Dataset family; encrypted single-use authentic reader setting capture, CAS day head and bounded configuration audit",
+    "states": "unknown/provisional/final, verified effective native horizon + one full provider calendar day + successful matching post-window report readback",
+    "current_native_holds": "Meta raw native-default reporting parameters are not assumed equal to opt-in unified attribution; Klaviyo default5 is not observed account settings. Both holds stay truthful.",
+    "no_report_update_delay": true,
+    "EO05D_report_replacement_consumption_checkpoint_unchanged": true,
+    "capacity_reference": "EO05_refresh_reconciliation_capacity_note_2026_11_10",
+    "new_package": false,
+    "live_provider": false,
+    "live_database": false,
+    "OAuth_UI_or_scope_change": false,
+    "merge_authorized": false,
+    "deploy_authorized": false
+  },
   "EO05_refresh_reconciliation_capacity_note_2026_11_10": {
     "owner_instruction": "O maddeye Bu yükü de eklemeliyiz — explicit request to record hourly today/yesterday and daily older nonfinal re-query load in existing capacity calculation/tests",
     "contract": "contracts/a6-eo-cross-cutting-safety-capacity-v1.json#capacity_envelope.refresh_reconciliation_workload_2026_11_10",
@@ -1747,7 +1766,9 @@
         {
           "id": "A6-EO-05-C",
           "title": "Maturity, attribution windows and finality",
-          "objective": "Apply provider-config-derived rolling correction windows, post-window reconciliation and truthful provisional/final freshness."
+          "objective": "Apply provider-config-derived rolling correction windows, post-window reconciliation and truthful provisional/final freshness.",
+          "current_record": "EO05C_maturity_finality_2026_11_10",
+          "current_contract": "contracts/eo-05c-maturity-v1.json"
         },
         {
           "id": "A6-EO-05-D",

@@ -1,3 +1,19 @@
+## 10 Kasım 2026 — EO-05-C olgunluk ve kesinleşme uygulaması
+
+Ürün sahibi üç somut işin kod, gerekli SQL hazırlığı, izole test ve tek PR
+kapsamını “Tamam onaylıyorum Codex” diyerek onayladı. [Kapsam ve kabul sınırları](EO_05C_MATURITY_FINALITY.md),
+[sözleşme](../contracts/eo-05c-maturity-v1.json). Mevcut private reader gözleminden
+şifreli atıf ayarı kanıtı alınır; pencere + bir tam provider günü + başarılı
+rapor/boş makbuz kontrolüyle unknown/provisional/final hesaplanır ve mevcut source
+manifest'lerine CAS ile kaydedilir. Google opt-in action sorgusuna yalnız status
+eklenir; Meta ham native-default semantiği opt-in unified ile eşit varsayılmaz,
+Klaviyo5 gün gerçek hesap ayarı yapılmaz. Değer güncellemesi bekletilmez; rapor
+devralma/tüketim/checkpoint EO-05-D'de kalır. Üç yıllık bağlı kanıt ve zorunlu
+silme önceliği, birleşik kapasite testi ile önceki native18/22 kapıları korunur.
+Yeni Dataset tablosu veya paket yoktur. SQL yalnız hazırlanır ve mevcut F01'de
+sentetik HTTP/sahiplikle gerçek PostgreSQL rollback testine girer. Canlı DB/
+provider/config/yayın ve merge bu onayda yoktur.
+
 ## 10 Kasım 2026 — refresh tekrarlarının kapasite hesabına açık kaydı
 
 Ürün sahibinin “O maddeye Bu yükü de eklemeliyiz” talimatıyla mevcut

@@ -14,6 +14,16 @@ import {isGooglePmaxHistoryLoader} from "../database/google-pmax-history.server.
 
 // Private in-process proof. A serialized snapshot cannot become an observation.
 const observedReads = new WeakMap();
+/** Private observation ownership and actual read clock for EO05C; JSON is not a capability. */
+export function refreshPdMaturityObservation(value, owner) {
+  const b = observedReads.get(value);
+  if (!b || !owner || b.workspace_id !== owner.workspaceId || String(b.installation_id) !== owner.installationId
+    || String(b.installation_generation) !== owner.generation || b.provider !== owner.provider
+    || b.provider_connection_id !== owner.connectionId || String(b.connection_version) !== owner.connectionVersion
+    || b.credential_id !== owner.credentialId || b.platform_account_id !== owner.accountId
+    || b.reporting_selection_epoch !== owner.selectionEpoch || b.shop_id !== owner.shopId || b.shop_domain !== owner.shopDomain) return null;
+  return Object.freeze({observedAt: b.maturity_observed_at});
+}
 export const isRefreshPdSourceObservation = value => observedReads.has(value);
 export function refreshPdStoredPermissionScopes(value) {return observedReads.get(value)?.granted_scopes??null;}
 export function refreshPdSetupBindingMatches(value,other) {
@@ -341,7 +351,7 @@ export function createRefreshPdSourceReader({verified, database, tokenVault, wor
           ...(prepared ? {native_metadata: prepared} : {}),
           rows_observed: rows, canonical_scope_ready: false, authorizes_activation: false, persistable: false, publishable: false});
         if ((pd || kpd || bridge || nativeMetadata) && Buffer.byteLength(JSON.stringify(result), "utf8") > boundLimits.maxBytes) fail("RESULT_BOUND_EXCEEDED");
-        observedReads.set(result, baseline);
+        observedReads.set(result, {...baseline, maturity_observed_at: new Date(readNow()).toISOString()});
         return result;
       })();
       return await Promise.race([operation, deadline, cancelled]);

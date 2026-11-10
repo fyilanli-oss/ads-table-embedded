@@ -10,6 +10,7 @@ import {reportRetentionProbe} from "./eo05b-report-retention-probe.mjs";
 import {fxReportingCurrencyProbe} from "./eo05b-fx-reporting-currency-probe.mjs";
 import {datasetServerProbe} from "./eo05b-dataset-server-probe.mjs";
 import {maturityProbe} from "./eo05c-maturity-probe.mjs";
+import {reconciliationProbe} from "./eo05d-reconciliation-probe.mjs";
 
 async function rejected(client, action, pattern) {
   await client.query("savepoint dataset_expected_failure"); let error;
@@ -72,6 +73,7 @@ export async function datasetStorageProbe(client, connection, environment = proc
     await fxReportingCurrencyProbe(client, {ownerFixture});
     await datasetServerProbe(client, {ownerFixture});
     await maturityProbe(client, {ownerFixture});
+    await reconciliationProbe(client, {ownerFixture});
     for (const provider of ["google_ads", "meta", "klaviyo"]) {
       const owner = await ownerFixture(client, provider), source = await sourceFixture(client, owner);
       const input = datasetStorageFixture({owner, source}); input.rows[0].row.spend_value = "9007199254740993.1234567890123456789";

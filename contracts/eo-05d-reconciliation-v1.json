@@ -1,0 +1,110 @@
+{
+  "contract_id": "eo-05d-reconciliation-v1",
+  "version": 1,
+  "date": "2026-11-10",
+  "parent_package": "A6-EO-05-D",
+  "status": "implementation_prepared_required_CI_and_separate_owner_merge_not_live",
+  "owner_approval": {
+    "explicit": true,
+    "source": "Tamam onayliyorum Codex — explicit approval after the concrete four EO05D jobs were listed: yesterday/today bootstrap; replace same-day value3 with5 rather than sum8; duplicate-safe durable completion; raw-to-physical report comparison/mismatch record. Code, necessary SQL preparation, isolated tests and ONE PR; no live DB/provider/config/merge/deploy."
+  },
+  "brief": "docs/EO_05D_RECONCILIATION.md",
+  "approved_tasks": [
+    "yesterday_then_today_bootstrap",
+    "same_day_value_replacement",
+    "duplicate_safe_source_consumption_and_day_checkpoint",
+    "raw_projection_to_physical_report_comparison_and_mismatch_ledger"
+  ],
+  "runtime": [
+    "app/lib/refresh/dataset-bootstrap.server.js",
+    "app/lib/database/dataset-reconciliation.server.js",
+    "app/lib/refresh/dataset-server.server.js"
+  ],
+  "migration": "supabase/migrations/20261110191004_eo05d_dataset_reconciliation.sql",
+  "schema": {
+    "new_Dataset_tables": 0,
+    "existing_fact_tables": 3,
+    "ledger": "existing evidence.source_batches manifests",
+    "source_bytes_changed": false
+  },
+  "bootstrap": {
+    "order": [
+      "yesterday",
+      "today"
+    ],
+    "timezone": "actual IANA provider calendar",
+    "eligibility": "Day crossing eligibleFromMs is unavailable; no fabricated partial-day or disconnected backfill policy",
+    "advance": "Only current DB-confirmed exact owner/date/timezone receipt; clone or unknown stops",
+    "native_dispatch": "existing admitted reader supplied by trusted server composition; no new HTTP/scheduler activation"
+  },
+  "reconciliation": {
+    "input": "Actual current-owner physical AEAD/source/context validation and existing fixed provider projectors; no caller rows",
+    "coverage": "All complete two/three datasets and every page; existing holds cannot consume or replace",
+    "CAS": "Expected prior day revision, unique source/operation, actual source read clocks newer than previous completion",
+    "replacement": "Replace same native key value, never add; remove vanished rows only for verified complete same-owner/provider/account/connection/day/timezone scope",
+    "physical_verification": "Recompute canonical digest from actual typed fact values after write, then atomic source consumed + consumer receipt + day checkpoint",
+    "checkpoint_scope": "Exact source-to-Dataset day acceptance, not scheduler job completion/release",
+    "unknown": "One write; lost reply never triggers automatic inspect/retry/new attempt",
+    "mismatch": "Subtransaction rolls fact/consumption/head back; minimal mismatch ledger remains on pending new source",
+    "history": "Previous encrypted source untouched; superseded storage/empty/D consumer receipts cannot claim current data or finality"
+  },
+  "bounds": {
+    "new_rows": 200,
+    "old_rows": 200,
+    "pages": 300,
+    "source_batches": 3,
+    "request_bytes": 1048576,
+    "receipt_bytes": 262144,
+    "manifest_bytes": 1048576,
+    "SQL_deadline_seconds": 120
+  },
+  "privacy_retention": "Existing synchronized3-year fixed report/source retention, source proof and mandatory scoped erasure remain binding; no new PII/archive/cleanup activation",
+  "server": {
+    "version1": "unchanged storage-only",
+    "version2": "explicit expectedRevision; reconciliation RPC/private profile",
+    "role_extension": "tools/sql/eo05d-reconciliation-role-extension.sql",
+    "live_grants": false
+  },
+  "native_holds": {
+    "meta_nonempty_sales": "Existing meta_sales_semantics_unproven holds; empty read is separately provable",
+    "klaviyo_absent_metrics": "Unavailable/held, never zero or consumed",
+    "native_acceptance": false
+  },
+  "verification": {
+    "unit": [
+      "tests/dataset-bootstrap.test.js",
+      "tests/dataset-reconciliation.test.js",
+      "tests/dataset-server.test.js"
+    ],
+    "SQL": "tools/eo05d-reconciliation-probe.mjs inside existing F01 rollback; actual SQL/AEAD/private-role profiles, synthetic native/owner/keys",
+    "required": [
+      "full_tests",
+      "both_constitutions",
+      "typecheck",
+      "build",
+      "F01_all_stages",
+      "exact_remote_content",
+      "separate_owner_merge"
+    ]
+  },
+  "official_checked_at": "2026-11-10",
+  "official_sources": [
+    "https://www.postgresql.org/docs/17/tutorial-transactions.html",
+    "https://www.postgresql.org/docs/17/sql-insert.html",
+    "https://www.postgresql.org/docs/17/explicit-locking.html",
+    "https://supabase.com/docs/guides/database/postgres/row-level-security",
+    "https://supabase.com/changelog"
+  ],
+  "scope": {
+    "runtime_code": true,
+    "live_provider": false,
+    "live_database": false,
+    "config": false,
+    "merge": false,
+    "deploy": false,
+    "hourly_activation": false
+  },
+  "new_package": false,
+  "OAuth_UI_or_scope_change": false,
+  "formula_fixture_redesign": false
+}

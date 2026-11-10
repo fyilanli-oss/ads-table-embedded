@@ -1,0 +1,67 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import {randomUUID} from "node:crypto";
+import {datasetSourceBindingFixture} from "./fixtures/dataset-source-binding-fixture.js";
+import {sourcePayloadHash} from "../app/lib/database/source-evidence-store.server.js";
+import {reconcileStoredDatasetSources, DATASET_RECONCILE_SQL, DATASET_RECONCILE_READ_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
+import {readDatasetWritePlan} from "../app/lib/refresh/dataset-server.server.js";
+
+async function fixture(provider = "google_ads", options = {}) {
+  const f = await datasetSourceBindingFixture(provider, options); const key = provider === "google_ads" ? "googleDatasetRead" : provider === "meta" ? "metaDatasetRead" : "klaviyoDatasetRead";
+  for (const b of f.envelopes.values()) Object.assign(b.receipt.manifest[key], {observedAt: "2026-11-02T00:00:00.000Z", completedAt: "2026-11-02T00:01:00.000Z"});
+  let receipt, request;
+  f.hooks.query = (sql, args) => {
+    if (sql === DATASET_RECONCILE_SQL) {
+      const write = JSON.parse(args[1]), context = JSON.parse(args[2]); request = {write, context};
+      receipt = {status: "consumed", operationId: write.operationId, requestDigest: sourcePayloadHash(request), revision: context.expectedRevision + 1,
+        rowCount: write.rows.length, consumerReceipt: true, checkpointAdvanced: true, comparison: "matched", businessDate: context.businessDate, timeZone: context.timeZone};
+      return {rows: [{result: structuredClone(receipt)}]};
+    }
+    if (sql === DATASET_RECONCILE_READ_SQL) return {rows: [{result: structuredClone(receipt)}]};
+  };
+  return {...f, expectedRevision: 0, request: () => request};
+}
+for (const provider of ["google_ads", "meta", "klaviyo"]) test("reconciliation projects actual source pages and confirms receipt: " + provider, async () => {
+  const f = await fixture(provider, {nonempty: provider !== "meta"}), r = await reconcileStoredDatasetSources(f);
+  assert.equal(r.consumerReceipt, true); assert.equal(r.checkpointAdvanced, true); assert.equal(r.publishable, false);
+  assert.equal(f.request().context.sources.length, [...f.envelopes.values()].reduce((n, b) => n + b.pages.length, 0));
+  assert.equal(f.request().write.rows.length, provider === "google_ads" ? 3 : provider === "meta" ? 0 : 2);
+});
+test("Meta's existing nonempty sales evidence hold is preserved, never consumed", async () => {
+  const f = await fixture("meta"); const r = await reconcileStoredDatasetSources(f);
+  assert.equal(r.status, "held");assert.equal(r.consumerReceipt, false);assert.equal(f.request(), undefined);
+});
+test("verified empty submits no fake zero rows; missing metric never consumes", async () => {
+  const e = await fixture("google_ads", {nonempty: false});
+  assert.equal((await reconcileStoredDatasetSources(e)).rowCount, 0); assert.deepEqual(e.request().write.rows, []);
+  const p = await fixture("klaviyo", {missingMetric: true});
+  const r = await reconcileStoredDatasetSources(p); assert.equal(r.status, "held"); assert.equal(r.checkpointAdvanced, false); assert.equal(p.request(), undefined);
+});
+test("missing clocks, cancellation, limits and tampered ciphertext stop before writes", async () => {
+  for (const mode of ["clock", "abort", "bytes", "cipher"]) {
+    const f = await fixture();
+    if (mode === "clock") delete f.envelopes.values().next().value.receipt.manifest.googleDatasetRead.observedAt;
+    if (mode === "cipher") f.envelopes.values().next().value.pages[0].authTag = "0".repeat(32);
+    await assert.rejects(reconcileStoredDatasetSources({...f, ...mode === "abort" ? {signal: AbortSignal.abort()} : {}, ...mode === "bytes" ? {limits: {...f.limits, maxBytes: 1}} : {}}));
+    assert.equal(f.request(), undefined);
+  }
+});
+test("unknown writes stop without any following readback or retry", async () => {
+  const f = await fixture(); let lost = false, after = 0; const hook = f.hooks.query;
+  f.hooks.query = (sql, args) => {if (lost) after++; if (sql === DATASET_RECONCILE_SQL) {lost = true; throw Error("lost");}return hook(sql, args);};
+  await assert.rejects(reconcileStoredDatasetSources(f), /WRITE_UNCONFIRMED/); assert.equal(after, 0);
+});
+test("physical mismatch result is held and cannot claim consumption or checkpoint", async () => {
+  const f = await fixture(), hook = f.hooks.query;
+  f.hooks.query = (sql, args) => {const r = hook(sql, args);if (sql === DATASET_RECONCILE_SQL) Object.assign(r.rows[0].result, {status: "mismatch", comparison: "mismatch", consumerReceipt: false, checkpointAdvanced: false});return r;};
+  const r = await reconcileStoredDatasetSources(f);assert.equal(r.status, "mismatch");assert.equal(r.checkpointAdvanced, false);
+  assert.equal(f.queries.filter(q => q === DATASET_RECONCILE_READ_SQL).length, 0);
+});
+test("plan v1 remains storage-only; v2 explicitly requires expected revision", async () => {
+  const f = await fixture();const p = {version: 2, operationId: randomUUID(), expiresAt: new Date(Date.now() + 60000).toISOString(), owner: f.owner, batches: f.batches,
+    limits: {maxPages: 100, maxRows: 1000, maxBytes: 1000000, maxElapsedMs: 60000}, useFx: false, expectedRevision: 0};
+  const env = {ADSTABLE_DATASET_WRITE_ENABLED: "true", ADSTABLE_DATASET_WRITE_PLAN: JSON.stringify(p)};
+  assert.equal(readDatasetWritePlan(env).version, 2);
+  for (const expectedRevision of [undefined, -1, 1.2, 1000000000]) assert.throws(() => readDatasetWritePlan({...env, ADSTABLE_DATASET_WRITE_PLAN: JSON.stringify({...p, expectedRevision})}));
+  delete p.expectedRevision;p.version = 1;assert.equal(readDatasetWritePlan({...env, ADSTABLE_DATASET_WRITE_PLAN: JSON.stringify(p)}).version, 1);
+});

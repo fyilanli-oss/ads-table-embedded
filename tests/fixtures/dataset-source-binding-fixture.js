@@ -10,13 +10,13 @@ import {createKlaviyoSourceCapture} from "../../app/lib/providers/klaviyo-source
 import {buildKlaviyoCampaignValuesRequest, buildKlaviyoFlowValuesRequest, buildKlaviyoPdValuesRequest} from "../../app/lib/providers/klaviyo-reporting.server.js";
 
 const day = "2026-11-01", window = {from: day, to: day};
-function nativeGoogle(family, account, nonempty) {
+function nativeGoogle(family, account, nonempty, purchase = "2.5") {
   if (family === "account_identity") return [{customer: {id: account, currencyCode: "USD", timeZone: "UTC", descriptiveName: "Synthetic"}}];
   if (!nonempty) return [];
   const base = {customer: {id: account}, campaign: {id: "10", name: "Synthetic Shopping", advertisingChannelType: "SHOPPING"},
     adGroup: {id: "20", name: "Synthetic Group"}, segments: {date: day}};
   if (family === "ad_group_channel_daily") return [{...base, metrics: {impressions: "9007199254740993", clicks: "4", costMicros: "1234567"}}];
-  if (family === "shopping_ad_group_conversion_action_daily") return [{...base, segments: {...base.segments, conversionAction: "customers/123/conversionActions/1", conversionActionCategory: "PURCHASE"}, metrics: {conversions: "2.5", conversionsValue: "12.250000000000000001"}}];
+  if (family === "shopping_ad_group_conversion_action_daily") return [{...base, segments: {...base.segments, conversionAction: "customers/123/conversionActions/1", conversionActionCategory: "PURCHASE"}, metrics: {conversions: purchase, conversionsValue: "12.250000000000000001"}}];
   if (family === "shopping_product_daily") return [{...base, segments: {...base.segments, productMerchantId: "99", productFeedLabel: "US", productItemId: "product-1"}, metrics: {impressions: "7", clicks: "2", costMicros: "1234567"}}];
   if (["shopping_cart_data_product_sales_daily", "cart_data_product_sales_daily"].includes(family)) return [{...base,
     segments: {...base.segments, productMerchantId: "99", productFeedLabel: "US", productItemId: "product-1", productSoldItemId: "product-1"},
@@ -33,7 +33,7 @@ async function nativeKlaviyoPage(path, body, request = null) {
 
 /** All native responses/credentials/owners are synthetic. Real capture projection,
  * AEAD and decrypt paths are used; this fake DB is not SQL/native acceptance. */
-export async function datasetSourceBindingFixture(provider = "google_ads", {nonempty = true, missingMetric = false, mixedMetrics = false, eventOrderId = null, owner: givenOwner = null, cipher: givenCipher = null} = {}) {
+export async function datasetSourceBindingFixture(provider = "google_ads", {nonempty = true, missingMetric = false, mixedMetrics = false, eventOrderId = null, googlePurchase = "2.5", owner: givenOwner = null, cipher: givenCipher = null} = {}) {
   const owner = givenOwner ? structuredClone(givenOwner) : datasetStorageFixture().owner;
   if (!givenOwner) {owner.installationId = "1"; owner.provider = provider; owner.accountId = provider === "meta" ? "act_123" : provider === "klaviyo" ? "account-1" : "123";}
   if (provider === "klaviyo") owner.selectionEpoch = null;
@@ -47,7 +47,7 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
   if (provider === "google_ads") {
     const queries = buildGoogleReportingQueries({dateWindow: {start: day, end: day}});
     for (const [dataset, families] of [["account_performance", GOOGLE_REPORTING_QUERY_FAMILIES.slice(0, 9)], ["product_performance", GOOGLE_REPORTING_QUERY_FAMILIES.slice(9)]]) {
-      native.push({dataset, pages: families.map(family => projectGoogleRawPage(parseGoogleRawJson(JSON.stringify({results: nativeGoogle(family, owner.accountId, nonempty)})),
+      native.push({dataset, pages: families.map(family => projectGoogleRawPage(parseGoogleRawJson(JSON.stringify({results: nativeGoogle(family, owner.accountId, nonempty, googlePurchase)})),
         {family, query: queries[family], ordinal: 0, accountId: owner.accountId, requestId: "synthetic"}))});
     }
   } else if (provider === "meta") {

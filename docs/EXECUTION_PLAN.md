@@ -1,3 +1,22 @@
+## EO-05-D — Onaylı ilk yükleme, düzeltme ve kaynak kabulü, 10 Kasım 2026
+
+PR354 sonrasında owner dört mevcut işi açıkça onayladı: önce dün/bugün sırası,
+aynı gün3→5 değer değişiminin5 olması, tekrar güvenliği/kalıcı tamamlanma ve ham
+kaynak–fiziksel tablo karşılaştırması. [Bağlayıcı kapsam](EO_05D_RECONCILIATION.md)
+ve `contracts/eo-05d-reconciliation-v1.json` kod/SQL hazırlığı, izole test ve tek
+PR'ı kapsar; canlı DB/provider/config, merge, deploy ve saatlik aktivasyon yoktur.
+Mevcut storage-only version1 korunur; explicit version2 mevcut private handler'larda
+doğrulanmış zarf/projector üzerinden bounded CAS day replacement, fiziksel digest
+readback, atomik source consumed/consumer makbuzu/gün checkpoint'i hazırlar.
+Mismatch'te fact/consumption/head rollback, minimal pending-source kaydı; unknown'da
+otomatik tekrar/inspect yoktur. Dün→bugün tek kullanımlı planda gerçek exact day
+makbuzu gerekir; eligible olmayan/kısmi gün veya disconnected geçmişi doldurulmaz.
+Beş mantıksal Dataset ailesi, sabit sorgular, kaynak baytları, mevcut rol/FX kanıtı,
+üç yıllık senkron saklama ve zorunlu silme korunur. Meta nonempty anlamsal hold,
+Klaviyo eksik Shopify metric ve EO-06 formüller/güncel sentetik set açık kalır.
+CI/F01 ve exact uzak içerik doğrulanmadan teslim tamamlandı sayılmaz. Native/canlı
+kabul, scheduler finish/release ve kapasite kabulü bu kodun sonucu değildir.
+
 ## 10 Kasım 2026 — EO-05-C olgunluk ve kesinleşme uygulaması
 
 Ürün sahibi üç somut işin kod, gerekli SQL hazırlığı, izole test ve tek PR
@@ -4953,3 +4972,4 @@ Somut owner onayıyla90/365 günün her yeni kaynak yazımına bağlanması, mev
 ### 8 Kasım 2026 — EO-05-B / dört yeni Dataset tablosu ve özel kayıt katmanı
 
 PR #345 yerleşim kabulünden sonra aynı EO-05-B içinde dört yeni tablo, mevcut eşleme tablosunun kullanımı, özel yazıcı ve izole PostgreSQL sınamaları hazırlanır. Ayrıntı: [kayıt katmanı](EO_05B_DATASET_STORAGE.md). Bu teslim native projection, FX kaynağı, Dataset saklama/olağan temizlik aktivasyonu veya EO-05-C/D tüketim/düzeltme işlerini bitmiş saymaz. Runtime yetkisi, canlı DB/provider/config, merge ve yayın yoktur. Kaynak90/365 ve mevcut native kanıt/teslim/yedek kapıları korunur. Yeni paket açılmaz.
+

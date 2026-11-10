@@ -321,50 +321,8 @@ begin
  if jsonb_typeof(p) is distinct from 'object' or (select count(*) from jsonb_object_keys(p))<>14
  or p->>'version' is distinct from 'eo05c-maturity-v1' or octet_length(p::text)>1048576
  or d is null or not isfinite(d) or d<=clock_timestamp() or d>clock_timestamp()+interval '120 seconds'
- or coalesce(p->>'businessDate','')!~ '^\d{4}-\d\d-\d\d on evidence.source_batches(workspace_id,installation_id,installation_generation,primary_source,
- ((authority->>'accountId')),((manifest->'datasetReconciliation'->>'businessDate')),((manifest->'datasetReconciliation'->>'timeZone')),
- (((manifest->'datasetReconciliation'->>'revision')::bigint)) desc,id desc) where manifest ? 'datasetReconciliation';
-create index source_batches_dataset_receipt_operation on evidence.source_batches(workspace_id,installation_id,installation_generation,
- ((manifest->'datasetReconciliation'->>'operationId'))) where manifest ? 'datasetReconciliation';
-create index source_batches_dataset_mismatch_operation on evidence.source_batches(workspace_id,installation_id,installation_generation,
- ((manifest->'datasetReconciliationMismatch'->>'operationId'))) where manifest ? 'datasetReconciliationMismatch';
-
-revoke all on function analytics.reconciliation_fact_digest(text,jsonb),analytics.inspect_dataset_reconciliation(jsonb,uuid),
- analytics._commit_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz),analytics.commit_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz)
- from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
-do $roles$
-declare r text;
-begin
- foreach r in array array['adstable_google_source_runner','adstable_meta_source_runner','adstable_klaviyo_source_runner'] loop
-  if exists(select 1 from pg_roles where rolname=r) then execute format('revoke all on function analytics.reconciliation_fact_digest(text,jsonb),analytics.inspect_dataset_reconciliation(jsonb,uuid),analytics._commit_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz),analytics.commit_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz) from %I',r);end if;
- end loop;
-end $roles$;
-reset role;
-commit;
-
- or (p->>'businessDate')::date not between date '1900-01-01' and date '9990-12-31'
- or coalesce(p->>'expectedRevision','')!~ '^(0|[1-9][0-9]{0,8}) on evidence.source_batches(workspace_id,installation_id,installation_generation,primary_source,
- ((authority->>'accountId')),((manifest->'datasetReconciliation'->>'businessDate')),((manifest->'datasetReconciliation'->>'timeZone')),
- (((manifest->'datasetReconciliation'->>'revision')::bigint)) desc,id desc) where manifest ? 'datasetReconciliation';
-create index source_batches_dataset_receipt_operation on evidence.source_batches(workspace_id,installation_id,installation_generation,
- ((manifest->'datasetReconciliation'->>'operationId'))) where manifest ? 'datasetReconciliation';
-create index source_batches_dataset_mismatch_operation on evidence.source_batches(workspace_id,installation_id,installation_generation,
- ((manifest->'datasetReconciliationMismatch'->>'operationId'))) where manifest ? 'datasetReconciliationMismatch';
-
-revoke all on function analytics.reconciliation_fact_digest(text,jsonb),analytics.inspect_dataset_reconciliation(jsonb,uuid),
- analytics._commit_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz),analytics.commit_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz)
- from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
-do $roles$
-declare r text;
-begin
- foreach r in array array['adstable_google_source_runner','adstable_meta_source_runner','adstable_klaviyo_source_runner'] loop
-  if exists(select 1 from pg_roles where rolname=r) then execute format('revoke all on function analytics.reconciliation_fact_digest(text,jsonb),analytics.inspect_dataset_reconciliation(jsonb,uuid),analytics._commit_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz),analytics.commit_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz) from %I',r);end if;
- end loop;
-end $roles$;
-reset role;
-commit;
-
- or jsonb_typeof(p->'complete') is distinct from 'boolean'
+ or coalesce(p->>'businessDate','')!~ '^\d{4}-\d\d-\d\d$' or (p->>'businessDate')::date not between date '1900-01-01' and date '9990-12-31'
+ or coalesce(p->>'expectedRevision','')!~ '^(0|[1-9][0-9]{0,8})$' or jsonb_typeof(p->'complete') is distinct from 'boolean'
  or jsonb_typeof(p->'reportBatchIds') is distinct from 'array' or jsonb_array_length(p->'reportBatchIds') not between 2 and 3
  or jsonb_typeof(p->'sources') is distinct from 'array' or jsonb_array_length(p->'sources') not between 1 and 300
  or not exists(select 1 from pg_catalog.pg_timezone_names where name=p->>'timeZone')
@@ -438,50 +396,8 @@ commit;
   if not (p->'reportBatchIds' ? (ref->>'batch_id')) then raise exception 'MATURITY_REFERENCE_SCOPE_INVALID';end if;
   perform analytics.assert_dataset_source(o,ref);
  end loop;
- if coalesce(p->>'startedAt','')!~ '^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z on evidence.source_batches(workspace_id,installation_id,installation_generation,primary_source,
- ((authority->>'accountId')),((manifest->'datasetReconciliation'->>'businessDate')),((manifest->'datasetReconciliation'->>'timeZone')),
- (((manifest->'datasetReconciliation'->>'revision')::bigint)) desc,id desc) where manifest ? 'datasetReconciliation';
-create index source_batches_dataset_receipt_operation on evidence.source_batches(workspace_id,installation_id,installation_generation,
- ((manifest->'datasetReconciliation'->>'operationId'))) where manifest ? 'datasetReconciliation';
-create index source_batches_dataset_mismatch_operation on evidence.source_batches(workspace_id,installation_id,installation_generation,
- ((manifest->'datasetReconciliationMismatch'->>'operationId'))) where manifest ? 'datasetReconciliationMismatch';
-
-revoke all on function analytics.reconciliation_fact_digest(text,jsonb),analytics.inspect_dataset_reconciliation(jsonb,uuid),
- analytics._commit_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz),analytics.commit_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz)
- from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
-do $roles$
-declare r text;
-begin
- foreach r in array array['adstable_google_source_runner','adstable_meta_source_runner','adstable_klaviyo_source_runner'] loop
-  if exists(select 1 from pg_roles where rolname=r) then execute format('revoke all on function analytics.reconciliation_fact_digest(text,jsonb),analytics.inspect_dataset_reconciliation(jsonb,uuid),analytics._commit_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz),analytics.commit_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz) from %I',r);end if;
- end loop;
-end $roles$;
-reset role;
-commit;
-
-
- or coalesce(p->>'completedAt','')!~ '^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z on evidence.source_batches(workspace_id,installation_id,installation_generation,primary_source,
- ((authority->>'accountId')),((manifest->'datasetReconciliation'->>'businessDate')),((manifest->'datasetReconciliation'->>'timeZone')),
- (((manifest->'datasetReconciliation'->>'revision')::bigint)) desc,id desc) where manifest ? 'datasetReconciliation';
-create index source_batches_dataset_receipt_operation on evidence.source_batches(workspace_id,installation_id,installation_generation,
- ((manifest->'datasetReconciliation'->>'operationId'))) where manifest ? 'datasetReconciliation';
-create index source_batches_dataset_mismatch_operation on evidence.source_batches(workspace_id,installation_id,installation_generation,
- ((manifest->'datasetReconciliationMismatch'->>'operationId'))) where manifest ? 'datasetReconciliationMismatch';
-
-revoke all on function analytics.reconciliation_fact_digest(text,jsonb),analytics.inspect_dataset_reconciliation(jsonb,uuid),
- analytics._commit_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz),analytics.commit_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz)
- from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
-do $roles$
-declare r text;
-begin
- foreach r in array array['adstable_google_source_runner','adstable_meta_source_runner','adstable_klaviyo_source_runner'] loop
-  if exists(select 1 from pg_roles where rolname=r) then execute format('revoke all on function analytics.reconciliation_fact_digest(text,jsonb),analytics.inspect_dataset_reconciliation(jsonb,uuid),analytics._commit_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz),analytics.commit_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz) from %I',r);end if;
- end loop;
-end $roles$;
-reset role;
-commit;
-
-
+ if coalesce(p->>'startedAt','')!~ '^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$'
+ or coalesce(p->>'completedAt','')!~ '^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$'
  or (p->>'completedAt')::timestamptz<(p->>'startedAt')::timestamptz or (p->>'completedAt')::timestamptz>clock_timestamp()
  then raise exception 'MATURITY_READ_CLOCK_INVALID';end if;
  if policy->>'state'='unknown' then state:='unknown';reason:=policy->>'reason';

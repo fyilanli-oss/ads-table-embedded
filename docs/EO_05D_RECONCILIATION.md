@@ -40,6 +40,10 @@ completedDates, hata veya belirsiz cevap ilerleme yetkisi değildir. Yeni provid
    200 yeni ve200 eski fact,300 kaynak sayfası,1MiB istek ve120 saniye deadline ile
    sınırlıdır. Büyük tam gün sessizce kesilmez; limitte durur.
 4. Mevcut native key ve fact doğrulayıcıları korunarak aynı kimlik güncellenir;
+   mevcut UPDATE engeli yalnız aynı SQL transaction'ındaki exact satır/önceki ve
+   yeni revizyon/önceki ve yeni digest izniyle açılır. Bu geçici permit kaynak
+   manifest'inden update hemen sonrasında kaldırılır; kalan validator bütünüyle
+   çalışır. GUC, trigger kapatma veya genel UPDATE yetkisi kullanılmaz.
    yeni tam okumada kaybolan satırlar yalnız aynı hesap/kurulum/connection/gün/saat
    dilimi kapsamında ve bağımlılık kontrolüyle kaldırılır. Başka hesap veya gün
    değişmez. Eski encrypted zarf/sayfa ve tarihsel FX/kimlik kanıtı silinmez.

@@ -51,6 +51,9 @@ export async function reconciliationProbe(client, {ownerFixture}) {
     await rejected(client, () => reconcileStoredDatasetSources(second));scenarios++;
     const corrected = await reconcileStoredDatasetSources({...second, expectedRevision: 1});
     assert.equal(corrected.revision, 2);assert.equal(corrected.comparison, "matched");scenarios++;
+    if (nonempty) {
+      await rejected(client, () => client.query("update analytics.pd_facts set purchase=purchase+1,revision=revision+1 where installation_id=$1", [owner.installationId]));scenarios++;
+    }
     const rowAfter = (await client.query("select id,purchase::text from analytics.pd_facts where installation_id=$1", [owner.installationId])).rows[0];
     if (provider === "google_ads") {assert.equal(rowAfter.purchase, "5");assert.equal(rowAfter.id, rowBefore.id);}
     const old = await inspectDatasetReconciliation({database, owner, operationId: initial.operationId});
@@ -79,13 +82,14 @@ export async function reconciliationProbe(client, {ownerFixture}) {
   await reconcileStoredDatasetSources(first);
   const changed = await source(owner, {googlePurchase: "5"});
   await client.query(`create function analytics.synthetic_reconciliation_corrupt() returns trigger language plpgsql set search_path='' as $f$ begin
-    if pg_trigger_depth()=1 and new.workspace_id='${owner.workspaceId}'::uuid then update analytics.pd_facts set purchase=purchase+1 where id=new.id;end if;return new;end $f$;
-    create trigger synthetic_reconciliation_corrupt after insert or update on analytics.pd_facts for each row execute function analytics.synthetic_reconciliation_corrupt()`);
+    if new.workspace_id='${owner.workspaceId}'::uuid then new.purchase:=new.purchase+1;end if;return new;end $f$;
+    create trigger zzz_synthetic_reconciliation_corrupt before insert or update on analytics.pd_facts for each row execute function analytics.synthetic_reconciliation_corrupt()`);
   const mismatch = await reconcileStoredDatasetSources({...changed, expectedRevision: 1});
   assert.equal(mismatch.status, "mismatch");assert.equal(mismatch.checkpointAdvanced, false);scenarios++;
-  await client.query("drop trigger synthetic_reconciliation_corrupt on analytics.pd_facts; drop function analytics.synthetic_reconciliation_corrupt()");
+  await client.query("drop trigger zzz_synthetic_reconciliation_corrupt on analytics.pd_facts; drop function analytics.synthetic_reconciliation_corrupt()");
   assert.equal((await client.query("select purchase::text from analytics.pd_facts where installation_id=$1", [owner.installationId])).rows[0].purchase, "3");
   assert.equal((await client.query("select count(*)::int n from evidence.source_batches where authority=$1::jsonb and handoff_state='pending' and manifest ? 'datasetReconciliationMismatch'", [JSON.stringify(owner)])).rows[0].n, 1);
+  assert.equal((await client.query("select count(*)::int n from evidence.source_batches where manifest ? 'datasetRevisionPermit'")).rows[0].n, 0);
   for (const role of ["anon", "authenticated", "service_role", "adstable_runtime", "adstable_refresh_coordinator"]) {
     assert.equal((await client.query("select has_function_privilege($1,'analytics.commit_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz)','EXECUTE') allowed", [role])).rows[0].allowed, false);scenarios++;
   }

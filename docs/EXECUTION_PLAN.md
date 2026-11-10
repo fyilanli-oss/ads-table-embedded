@@ -1,3 +1,16 @@
+## 10 Kasım 2026 — EO-05-B sürümlü demo ve kapanış kontrolü
+
+Ürün sahibi, önceden açıklanan dördüncü iş için “Onaylıyorum Codex devam edelim”
+dedi. Dondurulmuş legacy kaynağın yalnız JSON verisi, sürümlü golden/rolling
+sentetik örnek, üretici/şema/doğrulayıcı ve testlerle çıkarılır. [Güncel kapanış
+kontrolü](EO_05B_DEMO_AND_CLOSURE.md) önceki üç işin canlı kanıtını ve sınırlarını
+kaydeder: Google/Meta doğrulanmış boş sonuç; Klaviyo eksik metrik nedeniyle held.
+Nonempty canlı fact/FX, rapor yayını, tüketim/checkpoint ve saatlik refresh
+kanıtlanmış sayılmaz. Aynı EO-05-B / Ayrıntılı kontrol listesi23; yeni paket yoktur.
+Bu işte canlı DB/provider/config/deploy veya UI/OAuth değişikliği yoktur. Zorunlu
+CI, exact uzak içerik doğrulaması ve ayrı merge onayı gerekir. Önceki tarihsel
+kayıtların o günkü kabul sınırları değiştirilmez.
+
 ## 8 Kasım 2026 — EO-05-B ortak özel tablo aktarımı
 
 Ürün sahibi üç provider için mevcut ham zarf doğrulama, tablo yazımı ve readback sunucu bağlantısının kod/test/PR kapsamını açıkça onayladı. Üç mevcut özel giriş ortak dataset-only yola bağlanır; sabit plan, owner-kontrollü RPC ve mevcut dar TLS/cipher korunur. Tek planın tekrar başlaması mevcut kaynak manifestindeki sınırlı marker ile engellenir. [Kapsam](EO_05B_SOURCE_DATASET_BINDING.md), [sözleşme](../contracts/eo-05b-dataset-server-v1.json). Yeni tablo/paket/UI/OAuth adımı yoktur. Hazırlanan iki RPC ve rol uzantısı canlı uygulanmaz; grant/config/provider/yayın/merge ayrı onaylıdır. Tüketim/checkpoint ve EO05C/D sınırları korunur.

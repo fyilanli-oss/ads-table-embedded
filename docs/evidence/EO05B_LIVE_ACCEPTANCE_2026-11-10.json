@@ -1,0 +1,113 @@
+{
+  "recorded_at": "2026-11-10",
+  "basis": "Previously authorized and verified PR351 live execution; no new provider/DB call in demo task",
+  "source_pr": "https://github.com/fyilanli-oss/ads-table-embedded/pull/351",
+  "source_commit": "6f0aa1053875ba8e94ec818d0f28078a664385b4",
+  "google": {
+    "source_day": "2026-11-04",
+    "status": "empty",
+    "source_verified": true,
+    "empty_receipt_verified": true
+  },
+  "meta": {
+    "source_day": "2026-11-09",
+    "status": "empty",
+    "source_verified": true,
+    "empty_receipt_verified": true
+  },
+  "klaviyo": {
+    "source_day": "2026-11-09",
+    "native_status": "partial",
+    "account_records": 1,
+    "metric_records": 0,
+    "configuration_source": "complete",
+    "account_performance": "unavailable",
+    "product_performance": "unavailable",
+    "dataset_result": {
+      "startedAt": "2026-11-10T15:35:55.259Z",
+      "finishedAt": "2026-11-10T15:35:56.101Z",
+      "httpStatus": 207,
+      "body": {
+        "status": "held",
+        "rowsStored": 0,
+        "sourceVerified": true,
+        "receiptVerified": false,
+        "empty": null,
+        "DatasetWritePerformed": false,
+        "consumerReceipt": false,
+        "publishable": false,
+        "authorizesActivation": false,
+        "hourlyRefreshActivated": false
+      }
+    },
+    "batches": [
+      11,
+      12,
+      13
+    ],
+    "pages": 8,
+    "storage_receipt_created": false,
+    "empty_receipt_created": false,
+    "report_retention_extended": false
+  },
+  "proofs": {
+    "oldSourcesPreserved": true,
+    "klaviyoSourceVerified": true,
+    "klaviyoHeldTruthful": true,
+    "noInventedFacts": true,
+    "googleMetaEmptyReceiptsVerified": true,
+    "totalBatches": 13,
+    "totalPages": 43,
+    "nonemptyLiveFactWriteProven": false,
+    "consumerReceipt": false,
+    "hourlyRefresh": false
+  },
+  "live_installation": {
+    "applied_migrations": [
+      {
+        "version": "20261110142358",
+        "name": "eo05b_dataset_server_context"
+      },
+      {
+        "version": "20261110142443",
+        "name": "eo05b_dataset_role_extension"
+      }
+    ],
+    "artifacts": [
+      {
+        "path": "supabase/migrations/20261108170735_eo05b_dataset_server_context.sql",
+        "sha256": "88740431ee691acb9b1db492c736cff29ef33b8fabefad9624cfabf2838bbe07"
+      },
+      {
+        "path": "tools/sql/eo05b-dataset-role-extension.sql",
+        "sha256": "3cf368e3c381e6cd8365104a1465a035d00ceb280bea0a98c699c823ef960813"
+      }
+    ],
+    "function_bodies_exact": [
+      {
+        "name": "begin_dataset_storage_operation",
+        "exactBody": true,
+        "transportEscaped": false
+      },
+      {
+        "name": "read_dataset_source_context",
+        "exactBody": true,
+        "transportEscaped": false
+      }
+    ],
+    "execute_checks": 36,
+    "forbidden_execute": 0,
+    "direct_table_access": 0,
+    "ledger_after": 102
+  },
+  "closed_state": {
+    "mode": "false/closed",
+    "production_deployment": "dpl_Gm9k8dYQcVxu31yhRrJYPGeJGytL",
+    "state": "READY",
+    "domain": "embedded.adstable.app",
+    "post_close_GET": "405 method_not_allowed; native/default response shape; zero DB/provider I/O",
+    "security_lints": [],
+    "temporary_caller_secrets_discarded": true
+  },
+  "limits": "Google/Meta acceptance is actual empty-source execution, not nonempty live fact/FX proof. Klaviyo source verified but report held because metric discovery returned0; downstream campaign/flow/event queries were not sent without required metric IDs. No publishable/report/consumer/checkpoint/hourly claim. EO05B full closure/demo remains separate."
+}

@@ -1,0 +1,487 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:adstable:demo:eo05b-v1",
+  "title": "EO-05-B isolated synthetic fixture; never provider acceptance",
+  "type": "object",
+  "properties": {
+    "fixture_version": {
+      "const": "eo05b-demo-v1"
+    },
+    "workspace_kind": {
+      "const": "demo"
+    },
+    "data_origin": {
+      "const": "synthetic_demo"
+    },
+    "provider_truth": {
+      "const": false
+    },
+    "mode": {
+      "enum": [
+        "golden",
+        "rolling_demo"
+      ]
+    },
+    "workspace_key": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,47}$"
+    },
+    "demo_clock": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "display_label": {
+      "const": "Synthetic demo data — not live provider data"
+    },
+    "source": {
+      "const": {
+        "repository": "fyilanli-oss/ads-table-dev",
+        "path": "codex-input/adstable_one_funnel_compare_all_v2_75_safe_clean_pass8_markup_cleanup-1.html",
+        "git_blob_sha": "87413af1318cbdb3efbe1104e283d7294bc0c219",
+        "sha256": "fece0e65ac8c2d20c440d0f98cd510449bd170cf5beccf33e4a6c2cab4db9c35",
+        "file_bytes": 751960,
+        "source_json_sha256": "c769f354fa2d4ae5b75dd7758156c00f48d69bc22ba1f00ff2b68b9ed1066f9c",
+        "source_json_bytes": 458500
+      }
+    },
+    "numeric_semantics": {
+      "const": "legacy_JSON_IEEE754_values_not_native_decimal_precision_evidence"
+    },
+    "calculated_metrics": {
+      "const": "archive_expected_values_only_recompute_in_EO06A"
+    },
+    "product_evidence": {
+      "const": false
+    },
+    "runtime_seed_authorized": {
+      "const": false
+    },
+    "rows": {
+      "type": "array",
+      "minItems": 500,
+      "maxItems": 500,
+      "items": {
+        "type": "object",
+        "properties": {
+          "fixture_version": {
+            "const": "eo05b-demo-v1"
+          },
+          "workspace_kind": {
+            "const": "demo"
+          },
+          "data_origin": {
+            "const": "synthetic_demo"
+          },
+          "provider_truth": {
+            "const": false
+          },
+          "workspace_id": {
+            "type": "string"
+          },
+          "installed_shop_id": {
+            "type": "string"
+          },
+          "provider": {
+            "enum": [
+              "meta",
+              "google_ads",
+              "klaviyo"
+            ]
+          },
+          "provider_account_id": {
+            "type": "string"
+          },
+          "provider_business_date": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "installed_shop_timezone": {
+            "const": "UTC"
+          },
+          "source_currency": {
+            "const": "USD"
+          },
+          "reporting_currency": {
+            "const": "USD"
+          },
+          "fx": {
+            "const": {
+              "kind": "same_currency_identity",
+              "rate": "1",
+              "provider": null
+            }
+          },
+          "metric_support_state": {
+            "type": "object",
+            "properties": {
+              "impression": {
+                "enum": [
+                  "supported",
+                  "unsupported",
+                  "unknown"
+                ]
+              },
+              "ad_click": {
+                "enum": [
+                  "supported",
+                  "unsupported",
+                  "unknown"
+                ]
+              },
+              "spend_value": {
+                "enum": [
+                  "supported",
+                  "unsupported",
+                  "unknown"
+                ]
+              },
+              "add_to_cart": {
+                "enum": [
+                  "supported",
+                  "unsupported",
+                  "unknown"
+                ]
+              },
+              "add_to_cart_value": {
+                "enum": [
+                  "supported",
+                  "unsupported",
+                  "unknown"
+                ]
+              },
+              "checkout": {
+                "enum": [
+                  "supported",
+                  "unsupported",
+                  "unknown"
+                ]
+              },
+              "checkout_value": {
+                "enum": [
+                  "supported",
+                  "unsupported",
+                  "unknown"
+                ]
+              },
+              "purchase": {
+                "enum": [
+                  "supported",
+                  "unsupported",
+                  "unknown"
+                ]
+              },
+              "purchase_value": {
+                "enum": [
+                  "supported",
+                  "unsupported",
+                  "unknown"
+                ]
+              }
+            },
+            "required": [
+              "impression",
+              "ad_click",
+              "spend_value",
+              "add_to_cart",
+              "add_to_cart_value",
+              "checkout",
+              "checkout_value",
+              "purchase",
+              "purchase_value"
+            ],
+            "additionalProperties": false
+          },
+          "observation_state": {
+            "type": "object",
+            "properties": {
+              "impression": {
+                "enum": [
+                  "present",
+                  "zero",
+                  "unsupported",
+                  "absent"
+                ]
+              },
+              "ad_click": {
+                "enum": [
+                  "present",
+                  "zero",
+                  "unsupported",
+                  "absent"
+                ]
+              },
+              "spend_value": {
+                "enum": [
+                  "present",
+                  "zero",
+                  "unsupported",
+                  "absent"
+                ]
+              },
+              "add_to_cart": {
+                "enum": [
+                  "present",
+                  "zero",
+                  "unsupported",
+                  "absent"
+                ]
+              },
+              "add_to_cart_value": {
+                "enum": [
+                  "present",
+                  "zero",
+                  "unsupported",
+                  "absent"
+                ]
+              },
+              "checkout": {
+                "enum": [
+                  "present",
+                  "zero",
+                  "unsupported",
+                  "absent"
+                ]
+              },
+              "checkout_value": {
+                "enum": [
+                  "present",
+                  "zero",
+                  "unsupported",
+                  "absent"
+                ]
+              },
+              "purchase": {
+                "enum": [
+                  "present",
+                  "zero",
+                  "unsupported",
+                  "absent"
+                ]
+              },
+              "purchase_value": {
+                "enum": [
+                  "present",
+                  "zero",
+                  "unsupported",
+                  "absent"
+                ]
+              }
+            },
+            "required": [
+              "impression",
+              "ad_click",
+              "spend_value",
+              "add_to_cart",
+              "add_to_cart_value",
+              "checkout",
+              "checkout_value",
+              "purchase",
+              "purchase_value"
+            ],
+            "additionalProperties": false
+          },
+          "raw_metrics": {
+            "type": "object",
+            "properties": {
+              "impression": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "ad_click": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "spend_value": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "add_to_cart": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "add_to_cart_value": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "checkout": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "checkout_value": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "purchase": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "purchase_value": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              }
+            },
+            "required": [
+              "impression",
+              "ad_click",
+              "spend_value",
+              "add_to_cart",
+              "add_to_cart_value",
+              "checkout",
+              "checkout_value",
+              "purchase",
+              "purchase_value"
+            ],
+            "additionalProperties": false
+          },
+          "freshness_state": {
+            "const": "synthetic_fixture"
+          },
+          "hierarchy": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "enum": [
+                  "meta",
+                  "google_standard",
+                  "klaviyo_flow"
+                ]
+              },
+              "mapping_basis": {
+                "const": "explicit_synthetic_overlay_not_native_evidence"
+              },
+              "nodes": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 3,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "enum": [
+                        "campaign",
+                        "ad_set",
+                        "ad",
+                        "ad_group",
+                        "flow",
+                        "flow_message"
+                      ]
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "id",
+                    "name"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "kind",
+              "mapping_basis",
+              "nodes"
+            ],
+            "additionalProperties": false
+          },
+          "source": {
+            "type": "object",
+            "properties": {
+              "archive_row_index": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "original_business_date": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+              },
+              "row_sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            },
+            "required": [
+              "archive_row_index",
+              "original_business_date",
+              "row_sha256"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "fixture_version",
+          "workspace_kind",
+          "data_origin",
+          "provider_truth",
+          "workspace_id",
+          "installed_shop_id",
+          "provider",
+          "provider_account_id",
+          "provider_business_date",
+          "installed_shop_timezone",
+          "source_currency",
+          "reporting_currency",
+          "fx",
+          "metric_support_state",
+          "observation_state",
+          "raw_metrics",
+          "freshness_state",
+          "hierarchy",
+          "source"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "fixture_version",
+    "workspace_kind",
+    "data_origin",
+    "provider_truth",
+    "mode",
+    "workspace_key",
+    "demo_clock",
+    "display_label",
+    "source",
+    "numeric_semantics",
+    "calculated_metrics",
+    "product_evidence",
+    "runtime_seed_authorized",
+    "rows"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,73 @@
+{
+  "contract_id": "eo-05b-demo-closure-v1",
+  "version": 1,
+  "date": "2026-11-10",
+  "parent_package": "A6-EO-05-B",
+  "detail_checklist": 23,
+  "task": "fourth_previously_agreed_work_item_versioned_demo_and_closure_check",
+  "status": "implementation_prepared_required_CI_remote_verification_and_owner_merge_pending",
+  "owner_approval": {
+    "explicit": true,
+    "source": "Onaylıyorum Codex devam edelim — reply to the concrete fourth task: versioned synthetic demo example, tests and EO-05-B closure record, code/PR only; no live system change."
+  },
+  "historical_reference": "contracts/a6-eo-demo-fixture-export-reference-v1.json",
+  "brief": "docs/EO_05B_DEMO_AND_CLOSURE.md",
+  "live_evidence": "docs/evidence/EO05B_LIVE_ACCEPTANCE_2026-11-10.json",
+  "fixtures": {
+    "source": "contracts/demo/eo05b-v1/source-rows.json",
+    "golden": "contracts/demo/eo05b-v1/golden.json",
+    "rolling_example": "contracts/demo/eo05b-v1/rolling-2026-11-10.json",
+    "schema": "contracts/demo/eo05b-v1/schema.json",
+    "generator_validator": "tools/eo05b-demo-fixture.mjs",
+    "tests": "tests/eo05b-demo-fixture.test.js",
+    "original_rows": 1000,
+    "normalized_rows": 500,
+    "provider_rows": {"google_ads": 200, "meta": 200, "klaviyo": 100},
+    "golden_interval": ["2026-06-01", "2026-07-20"],
+    "rolling_clock_is_explicit_inclusive_last_day": true,
+    "golden_mutation_allowed": false,
+    "data_origin": "synthetic_demo",
+    "provider_truth": false,
+    "workspace_kind": "demo",
+    "direct_authorized_Dataset_DTO": false,
+    "runtime_seed": false,
+    "calculated_metrics": "original_expected_values_only_EO06A_recomputes",
+    "native_decimal_precision_evidence": false,
+    "cross_currency_FX_evidence": false,
+    "product_or_cross_sell_evidence": false,
+    "hierarchy_basis": "explicit_synthetic_overlay_only; Google Standard, Meta, Klaviyo Flow; no invented PMax or Campaign evidence",
+    "klaviyo_spend": "unsupported; original value preserved in immutable archive; impression/ad_click are synthetic delivery/click values under existing metric naming"
+  },
+  "current_acceptance": {
+    "server_code_and_closed_mode_release": "verified_PR351",
+    "prepared_RPC_and_narrow_roles": "live_installed_verified_2026-11-10",
+    "google": "source_verified_actual_empty_and_durable_empty_receipt_verified",
+    "meta": "source_verified_actual_empty_and_durable_empty_receipt_verified",
+    "klaviyo": "source_verified_metric_discovery_zero_missing_required_metric_IDs_report_held_not_empty_success",
+    "nonempty_live_fact_write_proven": false,
+    "live_cross_currency_FX_proven": false,
+    "merchant_currency_selected": false,
+    "consumer_receipt": false,
+    "publishable": false,
+    "hourly_refresh": false,
+    "full_EO05_complete": false,
+    "further_EO05B_code_work_identified_by_this_check": false,
+    "demo_implementation_acceptance": "required_CI_remote_content_and_separate_owner_merge"
+  },
+  "preserved_boundaries": [
+    "Existing five table families, source integrity and three-year synchronized report retention",
+    "Mandatory privacy erasure overrides normal retention",
+    "EO05C maturity/finality and EO05D consumption/checkpoint/correction",
+    "Step18 Meta sales and step22 historical PMax Channel native-evidence holds",
+    "EO07C product/cross-sell fixture; EO08C capacity/backup; EO08D dev-store visual acceptance",
+    "No native field changes, UI/OAuth changes, export, production fixture seed or fabricated zero"
+  ],
+  "scope": {"runtime_code": false, "live_provider": false, "live_database": false, "merge": false, "deploy": false},
+  "official_sources_checked_at": "2026-11-10",
+  "official_sources": [
+    "https://nodejs.org/api/crypto.html#cryptocreatehashalgorithm-options",
+    "https://nodejs.org/api/test.html",
+    "https://json-schema.org/draft/2020-12/json-schema-validation",
+    "https://docs.github.com/en/rest/git/blobs#get-a-blob"
+  ]
+}

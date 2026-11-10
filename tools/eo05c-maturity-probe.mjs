@@ -18,20 +18,28 @@ async function rejected(client, action) {
  * are synthetic; actual AEAD, source/readback, SQL/CAS/ACL/retention are exercised. */
 export async function maturityProbe(client, {ownerFixture}) {
   assert.equal(process.env.GITHUB_ACTIONS, "true");
+  const database = {async query(sql, args) {
+    try {return await client.query(sql, args);} catch (error) {
+      if (/evidence\.(register_maturity_configuration|commit_maturity_decision|read_maturity_decision)/.test(sql)) {
+        console.error("EO05C_SQL_DIAGNOSTIC", JSON.stringify({code: error.code, message: error.message, where: error.where}));
+      }
+      throw error;
+    }
+  }};
   let scenarios = 0;
   for (const provider of ["google_ads", "meta", "klaviyo"]) {
     const owner = await ownerFixture(client, provider), source = await storedBindingFixture(client, owner, {nonempty: false});
     const limits = {maxBytes: 1000000, maxRows: 1000, deadlineAt: Date.now() + 60000, maxObservationAgeMs: 60000};
     const configuration = async setting => {
       const f = maturityObservationFixture(provider, {owner, setting, clickDays: "0"});
-      return storeMaturityConfiguration({database: client, cipher: source.cipher, owner, observation: await f.read(),
+      return storeMaturityConfiguration({database, cipher: source.cipher, owner, observation: await f.read(),
         policy: source.envelopes.values().next().value.sourceWrite.body.policy, limits: {...limits, deadlineAt: Date.now() + 60000}});
     };
     const config = await configuration("1d_click");
     assert.equal(config.policy.state, provider === "klaviyo" ? "unknown" : "known");
     assert.equal(config.policy.horizonDays, provider === "google_ads" ? 0 : provider === "meta" ? 1 : null);
     const anchorAttemptId = source.batches[0].attemptId;
-    const input = {database: client, cipher: source.cipher, owner, configurationAttemptId: config.attemptId, anchorAttemptId,
+    const input = {database, cipher: source.cipher, owner, configurationAttemptId: config.attemptId, anchorAttemptId,
       batches: source.batches, expectedRevision: 0, limits: {...source.limits, deadlineAt: Date.now() + 60000}};
     const pending = await recordMaturityDecision(input);
     assert.equal(pending.state, provider === "klaviyo" ? "unknown" : "provisional");

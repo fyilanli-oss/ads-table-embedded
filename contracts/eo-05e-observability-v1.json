@@ -1,0 +1,95 @@
+{
+  "contract_id": "eo-05e-observability-v1",
+  "version": 1,
+  "date": "2026-11-10",
+  "parent_package": "A6-EO-05-E",
+  "status": "code_SQL_and_isolated_tests_prepared_not_live",
+  "owner_approval": {
+    "explicit": true,
+    "source": "Çok net anlaşıldı onaylıyorum devam Codex — explicit approval after EO05E five existing jobs were explained: Dataset freshness, stage/wait lag, reconciliation age, resource use, measured cost inputs; existing alarm matrix/dedup/independent witness prepared. Code, necessary SQL preparation, isolated tests and ONE PR; notification recipient/channel/live activation selected separately. No live DB/provider/config/notification/vendor/paid service/deploy/merge."
+  },
+  "brief": "docs/EO_05E_OBSERVABILITY.md",
+  "prior_alarm_design": "contracts/eo-05-refresh-alarm-matrix-v1.json",
+  "approved_tasks": [
+    "Dataset_freshness_from_known_consumed_physical_receipt",
+    "job_and_partition_wait_stage_lag",
+    "older_nonfinal_reconciliation_age",
+    "shared_process_and_database_resource_measurements",
+    "exact_instrumented_cost_inputs"
+  ],
+  "runtime": [
+    "app/lib/refresh/observability.server.js",
+    "app/lib/refresh/dataset-server.server.js"
+  ],
+  "migration": "supabase/migrations/20261110202849_eo05e_operational_observability.sql",
+  "SQL": {
+    "mutation": false,
+    "new_tables": 0,
+    "scope": "assert current source owner including generation/selection/privacy; exact businessDate/timeZone; current consumed day only",
+    "bounds": "101 jobs/101 prior maturity receipts; truncation and existing-receipt coverage explicit; no whole-tenant scans or raw payload returned",
+    "ACL": "both new functions owner-only, PUBLIC/runtime/coordinator/source roles receive no grant",
+    "unknown_operation": "never read/settle ambiguous pending operation or free its reservation"
+  },
+  "metrics": {
+    "process": "monotonic elapsed, processCPU delta, endpointRSS shared-process not per-job CPU or peakRSS",
+    "counter_coverage": "instrumented calls only; SQL budget explicitly reserved not actual",
+    "database": "size/backends/reset-bound cumulative counters; no querytext/account/shop/token/rawerror",
+    "unconnected_platform_fields": [
+      "poolerConnections",
+      "diskIOPS",
+      "WALBytes",
+      "queryLatency"
+    ],
+    "money": "unknown; approved rates/full coverage and EO06 calculation separate",
+    "reconciliation": "existing validated maturity receipts and complete expected-date manifest required; missing/truncated unknown"
+  },
+  "alarms": {
+    "classes": "existing AL01-AL16 stage/severity; existing guard failures enter as trusted classified signal",
+    "queue_silence": "elapsed strictly greater than120000ms, no extra grace/startup reset; duplicate/future/foreign signal rejected",
+    "stage_limits": "explicit approved per-stage milliseconds, no universal120s default",
+    "manifest": "complete expected eligible scope refs; one healthy scope cannot mask missing/stale scope",
+    "independent_witness": "load existing independent durable state then single CAS; primaryDB failure still evaluates stored heartbeat; CAS unknown stops no retry",
+    "dedup": "env+generation+opaque scope+reason/stage; first/last/count; repeats retain notification state and expiry",
+    "notification": "pure reducer only, acceptance!=delivery!=humanACK!=recovery",
+    "expiry": "explicit expiry input required; live storage requires approved class/owner/expiry/deletion adapter; no default forever",
+    "recovery": "verified evidence plus authorized resolution; no business retry/checkpoint/release"
+  },
+  "activation_holds": [
+    "complete expected partition/date manifest",
+    "measured approved per-stage thresholds",
+    "independent deployed observer/store/witness and accepted failure domains",
+    "approved primary_backup_channels_recipients_ACK_escalation",
+    "approved telemetry_retention_and_scoped_deletion_adapter",
+    "actual delivery_canary_and_human_ACK",
+    "full_matrix_live_fault_and_capacity_evidence",
+    "explicit_owner_live_activation"
+  ],
+  "tests": [
+    "tests/observability.test.js",
+    "tests/dataset-server.test.js",
+    "tools/eo05e-observability-probe.mjs"
+  ],
+  "verification": "unit/real F01 rollback SQL with synthetic owners/pages/keys; no real notification delivery or live independence acceptance",
+  "official_checked_at": "2026-11-10",
+  "official_sources": [
+    "https://www.postgresql.org/docs/17/monitoring-stats.html",
+    "https://nodejs.org/docs/latest-v24.x/api/process.html#processcpuusagepreviousvalue",
+    "https://supabase.com/docs/guides/observability/metrics",
+    "https://supabase.com/changelog"
+  ],
+  "scope": {
+    "runtime_code": true,
+    "live_database": false,
+    "live_provider": false,
+    "config": false,
+    "notification": false,
+    "new_service": false,
+    "merge": false,
+    "deploy": false,
+    "hourly_activation": false
+  },
+  "new_package": false,
+  "native_acceptance": false,
+  "capacity_acceptance": false,
+  "OAuth_UI_or_scope_change": false
+}

@@ -1780,7 +1780,9 @@
         {
           "id": "A6-EO-05-E",
           "title": "Operational observability",
-          "objective": "Monitor job lag, reconciliation age, CPU, memory, connections, disk IO, database growth and cost per active workspace without secrets or PII."
+          "objective": "Monitor job lag, reconciliation age, CPU, memory, connections, disk IO, database growth and cost per active workspace without secrets or PII.",
+          "current_record": "EO05E_observability_2026_11_10",
+          "current_contract": "contracts/eo-05e-observability-v1.json"
         }
       ],
       "outputs": [
@@ -4823,6 +4825,23 @@
       "live_provider": false,
       "live_database": false,
       "config": false,
+      "merge": false,
+      "deploy": false,
+      "hourly_activation": false
+    },
+    "prepared": true,
+    "native_acceptance": false
+  },
+  "EO05E_observability_2026_11_10": {
+    "contract": "contracts/eo-05e-observability-v1.json",
+    "parent_package": "A6-EO-05-E",
+    "scope": {
+      "runtime_code": true,
+      "live_database": false,
+      "live_provider": false,
+      "config": false,
+      "notification": false,
+      "new_service": false,
       "merge": false,
       "deploy": false,
       "hourly_activation": false

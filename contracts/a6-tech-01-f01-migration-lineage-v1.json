@@ -1046,6 +1046,16 @@
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261110202849",
+      "name": "eo05e_operational_observability",
+      "file": "supabase/migrations/20261110202849_eo05e_operational_observability.sql",
+      "created_with": "supabase@2.121.0 migration new eo05e_operational_observability",
+      "repository_sql_sha256": "b950f36018e36ad3b69c66bd71e8bb746cc0504c910aacabbd6124afd5e0dcc7",
+      "applied": false,
+      "replay_scope": "isolated_rollback_only",
+      "live_apply_authorized": false
     }
   ]
 }

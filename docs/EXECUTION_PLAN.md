@@ -1,3 +1,18 @@
+## EO-05-E — Onaylı iş sağlığı ve tüketim ölçümleri, 10 Kasım 2026
+
+Fırat beş mevcut başlığın açıklamasından sonra açıkça onayladı. [Somut kapsam](EO_05E_OBSERVABILITY.md)
+ve `contracts/eo-05e-observability-v1.json` kod/SQL hazırlığı, izole test ve tek PR'ı
+kapsar. Mevcut tüketilmiş gün makbuzundan fiziksel güncellik; iş/aşama/kapsam
+gecikmesi; kesinleşmemiş gün yaşı; paylaşılan süreç ve DB ölçümleri; tam fiyat
+hesabı icat etmeden maliyet girdileri hazırlanır. Mevcut AL01–AL16 sınıfları,
+120 saniyeyi aşan kuyruk sessizliği, bağımsız kalıcı CAS tanığı ve güvenli alarm
+yaşam döngüsü korunur. Unknown yazı sonrası yeni sorgu, tekrar, recovery,
+rezervasyon bırakma veya checkpoint ilerletme yapılmaz. Yeni Dataset/telemetry
+tablosu, arayüz, provider sorgusu ve OAuth değişikliği yoktur. SQL ve çalışma
+bağlantıları canlıya uygulanmaz. Bildirim kanalı/alıcı, bağımsız canlı hizmet,
+ölçülmüş eşikler, retention/silme adapter'ı, canary ve canlı aktivasyon mevcut
+ayrı kapılardır; bu kod bunları geçmiş göstermez. Native/kapasite kabulü yoktur.
+
 ## EO-05-D — Onaylı ilk yükleme, düzeltme ve kaynak kabulü, 10 Kasım 2026
 
 PR354 sonrasında owner dört mevcut işi açıkça onayladı: önce dün/bugün sırası,

@@ -4,6 +4,7 @@ import {createDatasetPostgresClient} from "../database/dataset-postgres.server.j
 import {bindStoredDatasetSources} from "../database/dataset-source-binding.server.js";
 import {createDatasetFxResolver} from "../database/dataset-fx-resolver.server.js";
 import {reconcileStoredDatasetSources} from "../database/dataset-reconciliation.server.js";
+import {createResourceMeter} from "./observability.server.js";
 const fail = () => {throw Error("DATASET_SERVER_CONFIGURATION_REQUIRED");};
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const exact = (v, keys) => v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).sort().join() === keys.slice().sort().join();
@@ -36,11 +37,14 @@ export function createDatasetServerExecution({environment, operationId, signal, 
   if (!plan || plan.operationId !== operationId || typeof now !== "function" || typeof fetchFn !== "function" || signal !== undefined && !(signal instanceof AbortSignal)) fail();
   const cipher = createConfiguredSourceEvidenceCipher(env);
   const controller = new AbortController(), deadlineAt = Math.min(Date.parse(plan.expiresAt), now() + plan.limits.maxElapsedMs);
-  const database = createDatasetPostgresClient({environment: env, provider: plan.owner.provider, deadlineAt, signal: controller.signal, reconciliation: plan.version === 2, now, poolFactory});
+  const transport = createDatasetPostgresClient({environment: env, provider: plan.owner.provider, deadlineAt, signal: controller.signal, reconciliation: plan.version === 2, now, poolFactory});
+  let meter, measurement = null, outcome = "unknown";
+  const database = {query(sql, args) {meter?.count("databaseQueries"); return transport.query(sql, args);}};
   let used = false, running = false, closed = false;
   return Object.freeze({
     async run(...args) {
       if (args.length || used || closed) throw Error("DATASET_SERVER_EXECUTION_USED"); used = true; running = true;
+      meter = createResourceMeter();
       const forward = () => controller.abort(), timer = setTimeout(forward, Math.max(1, deadlineAt - now()));
       signal?.addEventListener("abort", forward, {once: true}); if (signal?.aborted) forward();
       try {
@@ -53,9 +57,15 @@ export function createDatasetServerExecution({environment, operationId, signal, 
         const result = await writer({database, cipher, owner: plan.owner, batches: plan.batches, limits: {...limits, deadlineAt}, operationId, signal: controller.signal, now,
           ...plan.version === 2 ? {expectedRevision: plan.expectedRevision} : {},
           ...plan.useFx ? {fxResolver: createDatasetFxResolver({database, fetchImpl: fetchFn, now})} : {}});
+        outcome = result.consumerReceipt === true ? "verified" : "held";
         return Object.freeze({...result, operationId, hourlyRefreshActivated: false});
-      } finally {clearTimeout(timer); signal?.removeEventListener("abort", forward); running = false; controller.abort();}
+      } finally {
+        // Process-only sampling: NEVER another database call after an unknown write.
+        try {measurement = meter.finish(outcome);} catch {measurement = null;}
+        clearTimeout(timer); signal?.removeEventListener("abort", forward); running = false; controller.abort();
+      }
     },
-    async close() {if (running) throw Error("DATASET_SERVER_BUSY"); if (closed) return; closed = true; controller.abort(); await database.close();},
+    measurement() {return measurement;},
+    async close() {if (running) throw Error("DATASET_SERVER_BUSY"); if (closed) return; closed = true; controller.abort(); await transport.close();},
   });
 }

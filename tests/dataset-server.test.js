@@ -14,6 +14,13 @@ import {handleKlaviyoRawCaptureRequest} from "../app/lib/refresh/klaviyo-raw-req
 const providers = {google_ads: {name: "google", role: "adstable_google_source_runner", handle: handleGoogleRawCaptureRequest},
   meta: {name: "meta", role: "adstable_meta_source_runner", handle: handleMetaRawCaptureRequest},
   klaviyo: {name: "klaviyo", role: "adstable_klaviyo_source_runner", handle: handleKlaviyoRawCaptureRequest}};
+test("private execution samples process/query attempts without another SQL call or public telemetry",async()=>{
+  const f=await datasetServerFixture("google_ads"), execution=createDatasetServerExecution({environment:f.environment,operationId:f.plan.operationId,poolFactory:f.poolFactory,fetchFn:f.fetchFn});
+  assert.equal(execution.measurement(),null);await execution.run();const count=f.trace.length;
+  const m=execution.measurement();assert.equal(m.version,"eo05e-observability-v1");assert.ok(m.counters.databaseQueries>0);
+  assert.equal(m.outcome,"held","version1 storage receipt never claims Dataset consumption");assert.equal(m.counters.providerRequests,0);
+  assert.equal(f.trace.length,count);assert.equal(Object.hasOwn(m,"owner"),false);await execution.close();
+});
 export async function datasetServerFixture(provider, options = {}) {
   const spec = providers[provider], key = () => randomBytes(32).toString("base64url"), prefix = spec.name.toUpperCase();
   const environment = {VERCEL_ENV: "production", SHOPIFY_APP_URL: "https://embedded.adstable.app",

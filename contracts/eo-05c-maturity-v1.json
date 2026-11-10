@@ -1,0 +1,98 @@
+{
+  "contract_id": "eo-05c-maturity-v1",
+  "version": 1,
+  "date": "2026-11-10",
+  "parent_package": "A6-EO-05-C",
+  "status": "repository_implementation_prepared_required_CI_and_owner_merge_pending_not_live",
+  "owner_approval": {
+    "explicit": true,
+    "source": "Tamam onaylıyorum Codex — explicit reply to the concrete EO05C code, necessary SQL preparation, isolated tests and one PR scope: bind attribution settings to source evidence; derive provisional/final/unknown; persist the decision with proof."
+  },
+  "brief": "docs/EO_05C_MATURITY_FINALITY.md",
+  "authority": "contracts/a6-eo-cross-cutting-safety-capacity-v1.json#reconciliation",
+  "runtime": [
+    "app/lib/refresh/maturity-policy.server.js",
+    "app/lib/database/maturity-store.server.js"
+  ],
+  "migration": "supabase/migrations/20261110175346_eo05c_maturity_finality.sql",
+  "storage": "Existing source manifests: encrypted one-page configuration snapshot, maturityConfiguration registration, one CAS maturityHead on report-day anchor, bounded per-configuration maturityDecisions audit",
+  "new_Dataset_table": false,
+  "source_observation": {
+    "entry": "Existing createRefreshPdSourceReader with nativeMetadata:true and its private WeakMap observation",
+    "captured_at": "Actual existing reader clock after successful authority recheck; fresh within explicit1..60000ms at capture",
+    "single_use": true,
+    "request_JSON_or_copied_snapshot_is_authority": false,
+    "owner": "Full current shop/workspace/installation/generation/provider/connection/version/credential/account/selection binding",
+    "google": "Existing opt-in before/after account+conversion-action metadata query additionally selects conversion_action.status; enabled actions only; normal conversion scope. No new scope, manager traversal or provider settings write.",
+    "meta": "Existing opt-in explicit unified-attribution/impression-date PD read; per-Ad actual setting labels. Never infer that existing raw native-default requests used the same reporting parameters.",
+    "klaviyo": "Existing documented email default remains a comparison reference. Actual account attribution unobserved -> unknown; no global5-day finality, no new UI/OAuth/manual setting flow.",
+    "capture_layer": "collector_projection",
+    "numeric_fidelity": "decoded_only_native_small_integer_window_fields_not_financial_precision_proof"
+  },
+  "decision": {
+    "states": ["unknown", "provisional", "final"],
+    "horizon": "Verified current native settings; Google max enabled click/view action window, Meta max supported per-Ad label; missing/changed/empty/unsupported settings stay unknown",
+    "not_before": "Next local midnight after source business day + horizon calendar days + one full provider business day; computed using actual IANA timezone, not fixed24-hour addition",
+    "final_requires": [
+      "Current owner and newest registered settings fingerprint, available AEAD/source proof and unchanged report timezone",
+      "Complete fixed-family report source coverage and matching attribution semantics; partial/failed/quota-limited/held cannot advance",
+      "Successful read beginning on/after the boundary, finished before decision clock",
+      "Actual stored-report or retained-empty receipt revalidated against current source; source receipt alone is insufficient"
+    ],
+    "policy_change": "Read path compares newest registered settings. Different fingerprint immediately withholds stale finality in an explicitly inspection-only view; next bounded CAS decision records the new revision. No unbounded bulk rewrite.",
+    "final_is_provider_immutability_guarantee": false,
+    "new_values_wait_for_finality": false,
+    "EO05D": "Report-value replacement, consumption/checkpoint, bootstrap and retry/reconciliation semantics remain separate; no changed fact upsert here"
+  },
+  "current_native_boundaries": {
+    "google_empty_actions": "unknown, never horizon0",
+    "meta_stored_native_default_reports": "provisional until equivalence to verified native settings/request semantics is proven; current opt-in PD metadata does not silently reinterpret those reports",
+    "klaviyo_actual_settings": "unknown until actual account setting evidence exists; account/report existence does not establish attribution configuration",
+    "native_provider_acceptance": false,
+    "live_finality_activated": false
+  },
+  "atomicity_and_limits": {
+    "configuration_bytes": 1048576,
+    "max_configuration_observation_age_ms": 60000,
+    "decision_source_pages": 300,
+    "decision_source_batches": 3,
+    "decision_audit_entries_per_configuration": 200,
+    "manifest_bytes": 1048576,
+    "SQL_deadline_max_seconds": 120,
+    "owner_account_serialization": "transaction advisory lock plus bounded ordered source row locks",
+    "CAS_revision_required": true,
+    "operation_reuse": "reject; no automatic replay",
+    "unknown_write": "stop without automatic readback, retry, reset or alternative route",
+    "consumer_receipt": false,
+    "checkpoint_advanced": false,
+    "publishable": false
+  },
+  "retention_and_privacy": {
+    "no_new_policy": true,
+    "report_linked_configuration_proof": "Existing hold_report_source_batch promotes required configuration proof to existing reportRetention floor; no new read-based expiry extension",
+    "normal_unlinked_source_policy": "Caller explicitly supplies existing finite source policy",
+    "mandatory_erasure": "Existing source-batch removal deletes embedded decision/config audit; source/page redaction or expiry blocks reads. No new external table or PII/customer archive.",
+    "capacity": "Existing combined hourly/deep reconciliation accounting from PR353 includes additional source/config/readback/manifest versions"
+  },
+  "verification": {
+    "unit": ["tests/maturity-policy.test.js", "tests/maturity-store.test.js", "tests/pd-native-metadata.test.js", "tests/pd-source-reader.test.js"],
+    "SQL": "tools/eo05c-maturity-probe.mjs inside existing F01 localhost CI rollback transaction; synthetic HTTP/owner/key only",
+    "CI": "Required full tests, both constitutions, typecheck/build, existing F01 stages and exact remote content verification"
+  },
+  "official_sources_checked_at": "2026-11-10",
+  "official_sources": [
+    "https://developers.google.com/google-ads/api/docs/conversions/getting-started",
+    "https://developers.google.com/google-ads/api/reference/rpc/v25/ConversionAction",
+    "https://raw.githubusercontent.com/facebook/facebook-python-business-sdk/main/facebook_business/adobjects/adsinsights.py",
+    "https://developers.klaviyo.com/en/reference/reporting_api_overview",
+    "https://help.klaviyo.com/hc/en-us/articles/11118357030555",
+    "https://www.postgresql.org/docs/17/functions-datetime.html",
+    "https://supabase.com/docs/guides/database/postgres/row-level-security",
+    "https://supabase.com/changelog"
+  ],
+  "scope": {"runtime_code": true, "live_provider": false, "live_database": false, "merge": false, "deploy": false},
+  "new_package": false,
+  "OAuth_UI_or_scope_change": false,
+  "capacity_certified": false,
+  "formula_or_demo_fixture_change": false
+}

@@ -3,7 +3,7 @@ import {stableJson} from "./common-adapter.server.js";
 
 export const GOOGLE_PD_METADATA_QUERIES = Object.freeze({
   account: "SELECT customer.id, customer.currency_code, customer.time_zone FROM customer",
-  actions: "SELECT conversion_action.resource_name, conversion_action.category, conversion_action.owner_customer, conversion_action.attribution_model_settings.attribution_model, conversion_action.click_through_lookback_window_days, conversion_action.view_through_lookback_window_days, conversion_action.counting_type FROM conversion_action WHERE conversion_action.category IN ('ADD_TO_CART', 'BEGIN_CHECKOUT', 'PURCHASE')",
+  actions: "SELECT conversion_action.resource_name, conversion_action.category, conversion_action.owner_customer, conversion_action.attribution_model_settings.attribution_model, conversion_action.click_through_lookback_window_days, conversion_action.view_through_lookback_window_days, conversion_action.counting_type, conversion_action.status FROM conversion_action WHERE conversion_action.category IN ('ADD_TO_CART', 'BEGIN_CHECKOUT', 'PURCHASE')",
 });
 const hash = v => createHash("sha256").update(stableJson(v)).digest("hex");
 const fail = () => {throw new Error("GOOGLE_PD_NATIVE_METADATA_READ_INVALID");};
@@ -30,7 +30,8 @@ export async function readGooglePdNativeMetadata({client, accountId, currency, t
         : {conversionAction: {resourceName: row.conversionAction?.resourceName, ownerCustomer: row.conversionAction?.ownerCustomer,
           category: row.conversionAction?.category, attributionModelSettings: {attributionModel: row.conversionAction?.attributionModelSettings?.attributionModel},
           clickThroughLookbackWindowDays: row.conversionAction?.clickThroughLookbackWindowDays,
-          viewThroughLookbackWindowDays: row.conversionAction?.viewThroughLookbackWindowDays, countingType: row.conversionAction?.countingType}}));
+          viewThroughLookbackWindowDays: row.conversionAction?.viewThroughLookbackWindowDays, countingType: row.conversionAction?.countingType,
+          status: row.conversionAction?.status ?? null}}));
       if (page.request_id) request_ids.push(page.request_id);
       const next = page.next_page_token;
       if (next === null || next === "") {complete = true; break;}

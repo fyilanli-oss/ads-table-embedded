@@ -771,7 +771,7 @@
       "app/routes/webhooks.shopify.tsx": "eac0ea30fcca28d6bba3c11105a5c4fda7778d1398c23f21fcb02f717d8bd056",
       "app/shopify.server.ts": "cc5959867dd5c413b222d51c4aad7d9a39c7c3d15e590aada86a1ddfefdc6fad",
       "contracts/a6-docs-01-turkish-standardization-v1.json": "06abcfeecd61a8c8b944ec2f50a03c038b4edf7f104199b24737a14a57391934",
-      "contracts/a6-eo-cross-cutting-safety-capacity-v1.json": "f90e398cc7e6c43fb6e0736b2fd5d984e46df9c48c6e5bc87b18c3680d232aef",
+      "contracts/a6-eo-cross-cutting-safety-capacity-v1.json": "48ef23cd7c4f640a4a7e75208f01d768e59115ef1e98ede48eb5c5fcc8988b96",
       "contracts/a6-eo-demo-fixture-export-reference-v1.json": "d0fb18a554f1bdaca205ed473b7236787e5bbf2f8e7f275927ad470ff7ffb242",
       "contracts/a6-eo-f1-f2-authority-project-boundary-v1.json": "7f618884432ebf3f5d3973a58271b933d83ebe4cac3375909a893e9bd3889a8f",
       "contracts/a6-eo-f3-code-dependency-carry-allowlist-v1.json": "2fb32f659b3aa3f05258c58f41e2d94fe5e34c7872660ca3ece3742d78b5f2ae",
@@ -779,7 +779,7 @@
       "contracts/a6-eo-f5-product-route-map-v1.json": "cfae8b77fa44f27978db120865852ece9d3ea03cfc83600f7576e71f9d34067b",
       "contracts/a6-eo-f6-effort-risk-comparison-v1.json": "94ead4504333f50bd1379e3f13e4fa68c5f19bf256c5e4006033fa73dc3e9f3e",
       "contracts/a6-eo-f7-go-decision-v1.json": "c3ed10cfca08ebeab27ebd63c17be60e912b36904accce0e2e38ae174f0d4aa9",
-      "contracts/a6-eo-implementation-master-v1.json": "f3271a1e1be9adb0e56f3ca5454dc70c80107e3a1f2729e9dc19bb1372fa624a",
+      "contracts/a6-eo-implementation-master-v1.json": "1ab7461e7fd2e4e1ebd6bcd2a4f83c6fdc2fac4fc23dd87cf37230592e5d56ba",
       "contracts/a6-eo-secret-inventory-recovery-v1.json": "e8a3e0cc74b446507a3e8f79a9338eee28b3cea7e2ccfd5737d77be182ce7299",
       "contracts/a6-ops-local-01-safe-cleanup-v1.json": "30a77abdc5a4ed9bc92bfac8d4c14ac3e96ed2432eecf2110dc227747ea43e83",
       "contracts/a6-ops-shopify-01-isolated-preproduction-v1.json": "a6f76b340227c6bbce22e4c59959e8e8247e99204e8da773f2a55c3282f42e06",
@@ -855,14 +855,14 @@
       "contracts/eo-05b-five-table-design-v1.json": "878caf60a18bddf05e154c996e56e80aafa51ae45db9647ce7c8a39e22309182",
       "contracts/eo-05b-fx-reporting-currency-v1.json": "f8971fc94bc63d89d3eea1b7916fae94de4fd5f1e4ed8fa32914464d1a28f332",
       "contracts/eo-05b-report-retention-v1.json": "cc4673fe9be0f77567bc6f2c0171a93eb95d1a4f637d0ccb10481de28bcb67d4",
-      "contracts/oauth/oauth-flow-constitution-v1.json": "907ea14909ce9e6a6f77e8216af011cd935eff851cf52d4d058ab91399df2170",
+      "contracts/oauth/oauth-flow-constitution-v1.json": "e70e6fe920cc706057a2d099268f5f1b6ba99f0fa12aff00a34ac11396a96202",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
       "contracts/repository-delivery-workflow-v1.json": "f214c83b6ec65b11fb9b974ae52ebbdf6ae7183bc69bc835320ec25619af4b7f",
       "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json": "18a54cf7d47cddc4b2dcac24320a0f27f3d1112264a023acc33152a80ae745c6",
       "contracts/shopify/a6-eo-07-three-surface-ui-product-freeze-v1.json": "015e7946219fb40669514e965681358e1d32b53781447197f9493b47191ddcb1",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
       "contracts/shopify/shopify-progressive-permissions-release-candidate-v1.json": "204cc1deb525bc47cb14d769d30701cd716fe0db1a56b11be2d083314477adc7",
-      "docs/EXECUTION_PLAN.md": "4e674fe7af511b17dec48f2308bfc75b4206799bcfbbaea2a25a473858d880ee",
+      "docs/EXECUTION_PLAN.md": "0620f52ff4462b5582d66936ceb79cf26fb8613cca49170017e587189f921bb9",
       "docs/RAW_SOURCE_CONSTITUTION.md": "8cb806f28d8b4c2ffa39c9d08ba9ff0b210af28fd726d28d3376966b79cf1422",
       "package.json": "a99953eda0b9270c5c7c282e8f517210f11759acd7dbbe25737824dc6288f730",
       "patches/@react-router__fs-routes@7.18.2.patch": "8db744b341f8258e57f41105d65d493974e6ba6253608c0bba031d46751437f5",
@@ -1904,6 +1904,50 @@
         "separate_merge_approval"
       ],
       "visual_acceptance": "not_applicable_no_UI_change_or_demo_store_seed"
+    },
+    {
+      "id": "eo05-refresh-reconciliation-capacity-note-2026-11-10",
+      "date": "2026-11-10",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Bu bize yeni bir veri yükü daha getirdi. Hatırladığım bir pakette Bu veri yuklerini hesaplayıp test edecektik. O maddeye Bu yükü de eklemeliyiz — explicit instruction to record hourly today/yesterday plus daily older nonfinal-date reread load in the existing capacity calculation/test requirement."
+      },
+      "rationale": "Clarify existing deep_reconciliation_amplification workload budget and combined EO05 capacity acceptance / EO08C final rehearsal. Count provider requests/quota/pages/rows/bytes, empty/unchanged/changed rereads, encryption/readback, DB locks/connections/WAL/IO, immutable raw-proof version growth/retention, report corrections and interactive headroom. Documentation/contract only; cadence, thresholds, source runtime, OAuth flow, queries and infrastructure unchanged. No new package or EO05C runtime approval.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "live_database": false,
+        "merge": false,
+        "deploy": false
+      },
+      "changed_paths": [
+        "contracts/a6-eo-cross-cutting-safety-capacity-v1.json",
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json",
+        "docs/EXECUTION_PLAN.md"
+      ],
+      "artifact_paths": [
+        "contracts/a6-eo-cross-cutting-safety-capacity-v1.json",
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json",
+        "docs/A6_EO_CROSS_CUTTING_SAFETY_CAPACITY_FREEZE.md",
+        "docs/EXECUTION_PLAN.md"
+      ],
+      "tests": [
+        "tests/a6-eo-cross-cutting-safety-capacity.test.js",
+        "tests/a6-docs-01-turkish-standardization.test.js",
+        "tests/raw-source-constitution.test.js",
+        "tests/oauth-flow-constitution.test.js"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "visual_acceptance": "not_applicable_no_UI_or_runtime_change"
     }
   ],
   "dataset_retention_decision": {

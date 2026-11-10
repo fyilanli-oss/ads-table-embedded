@@ -1585,12 +1585,12 @@
       "app/routes/settings.provider-live-evidence.ts": "89fbcb7087fc480fefba708bbc730146f1ba41af48d98f1b0a10fe1427120495",
       "app/routes/webhooks.shopify.tsx": "eac0ea30fcca28d6bba3c11105a5c4fda7778d1398c23f21fcb02f717d8bd056",
       "app/shopify.server.ts": "cc5959867dd5c413b222d51c4aad7d9a39c7c3d15e590aada86a1ddfefdc6fad",
-      "contracts/a6-eo-implementation-master-v1.json": "f3271a1e1be9adb0e56f3ca5454dc70c80107e3a1f2729e9dc19bb1372fa624a",
+      "contracts/a6-eo-implementation-master-v1.json": "1ab7461e7fd2e4e1ebd6bcd2a4f83c6fdc2fac4fc23dd87cf37230592e5d56ba",
       "contracts/eo-05-oauth-setup-permission-policy-v1.json": "c1914f91011464d3b16b4b0a7710e49878ce6dbb57427e3d0f7c68d9ec4ec681",
       "contracts/eo-05-permission-explanation-design-v1.json": "ad4753b9ad4a6becd14764b7b33fb917f0cc491ad774cc1f1fe9053c5f189f35",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
       "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md": "c602fd4d7760e8f32c109e1f0456907c739c12906d71becf88476cad2007d6a1",
-      "docs/EXECUTION_PLAN.md": "4e674fe7af511b17dec48f2308bfc75b4206799bcfbbaea2a25a473858d880ee",
+      "docs/EXECUTION_PLAN.md": "0620f52ff4462b5582d66936ceb79cf26fb8613cca49170017e587189f921bb9",
       "docs/OAUTH_FLOW_CONSTITUTION.md": "74d7a8f327a9558712c3ac8bb54a6633fff7a7e2045405d236d35f265d124b28",
       "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md": "49e253b08959faa9f0b2bf208ed5eb6d3c078a0ddf9097e667a9bf1483dc7350",
       "package.json": "a99953eda0b9270c5c7c282e8f517210f11759acd7dbbe25737824dc6288f730",
@@ -3966,6 +3966,48 @@
         "separate_merge_approval"
       ],
       "visual_acceptance": "not_applicable_no_UI_change_or_demo_store_seed"
+    },
+    {
+      "id": "eo05-refresh-reconciliation-capacity-note-2026-11-10",
+      "date": "2026-11-10",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Bu bize yeni bir veri yükü daha getirdi. Hatırladığım bir pakette Bu veri yuklerini hesaplayıp test edecektik. O maddeye Bu yükü de eklemeliyiz — explicit instruction to record hourly today/yesterday plus daily older nonfinal-date reread load in the existing capacity calculation/test requirement."
+      },
+      "rationale": "Clarify existing deep_reconciliation_amplification workload budget and combined EO05 capacity acceptance / EO08C final rehearsal. Count provider requests/quota/pages/rows/bytes, empty/unchanged/changed rereads, encryption/readback, DB locks/connections/WAL/IO, immutable raw-proof version growth/retention, report corrections and interactive headroom. Documentation/contract only; cadence, thresholds, source runtime, OAuth flow, queries and infrastructure unchanged. No new package or EO05C runtime approval.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "live_database": false,
+        "merge": false,
+        "deploy": false
+      },
+      "changed_paths": [
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "docs/EXECUTION_PLAN.md"
+      ],
+      "artifact_paths": [
+        "contracts/a6-eo-cross-cutting-safety-capacity-v1.json",
+        "contracts/a6-eo-implementation-master-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json",
+        "docs/A6_EO_CROSS_CUTTING_SAFETY_CAPACITY_FREEZE.md",
+        "docs/EXECUTION_PLAN.md"
+      ],
+      "tests": [
+        "tests/a6-eo-cross-cutting-safety-capacity.test.js",
+        "tests/a6-docs-01-turkish-standardization.test.js",
+        "tests/raw-source-constitution.test.js",
+        "tests/oauth-flow-constitution.test.js"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "visual_acceptance": "not_applicable_no_UI_or_runtime_change"
     }
   ],
   "coverage": {

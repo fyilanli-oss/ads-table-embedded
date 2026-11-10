@@ -1,3 +1,15 @@
+## 10 Kasım 2026 — refresh tekrarlarının kapasite hesabına açık kaydı
+
+Ürün sahibinin “O maddeye Bu yükü de eklemeliyiz” talimatıyla mevcut
+`deep_reconciliation_amplification` yükü açıklaştırılır: bugün/dün saatlik
+okumalar ile daha eski, kesinleşmemiş günlerin günlük tekrarları aynı kapasite
+hesabına ve birleşik teste girer. [Ayrıntı ve mevcut test sahipleri](A6_EO_CROSS_CUTTING_SAFETY_CAPACITY_FREEZE.md#10-kasım-2026--tekrar-sorgulama-yükünün-açık-kapasite-kaydı).
+Ana kabul mevcut EO-05 2000/4000 çalışma alanı ve24 saat testindedir; EO-08-C
+son provası aynı yükü korur. API/kota/sayfa/byte, şifreleme/readback, DB/WAL/IO,
+tekrar okumalardan doğan değişmez ham kanıt/saklama büyümesi ve rapor düzeltme
+maliyeti birlikte ölçülür. Mevcut eşikler ve sıklık değişmez. Yalnız karar kaydıdır;
+EO-05-C runtime, canlı test/provider/DB/config/yayın/merge onayı veya yeni paket değildir.
+
 ## 10 Kasım 2026 — EO-05-B sürümlü demo ve kapanış kontrolü
 
 Ürün sahibi, önceden açıklanan dördüncü iş için “Onaylıyorum Codex devam edelim”

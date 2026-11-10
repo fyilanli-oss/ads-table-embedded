@@ -258,7 +258,37 @@
       "reconciliation_age",
       "export_queue_and_bytes",
       "cost_per_active_workspace"
-    ]
+    ],
+    "refresh_reconciliation_workload_2026_11_10": {
+      "owner_instruction": "Bu bize yeni bir veri yükü daha getirdi. Hatırladığım bir pakette Bu veri yuklerini hesaplayıp test edecektik. O maddeye Bu yükü de eklemeliyiz",
+      "scope": "Explicit workload accounting and future acceptance requirement only; existing cadence, thresholds, provider queries and infrastructure unchanged",
+      "existing_budget_field": "deep_reconciliation_amplification",
+      "hourly_hot_dates": ["today", "yesterday"],
+      "older_nonfinal_dates": "Daily bounded reconciliation under each verified effective provider attribution horizon, followed by the existing successful post-window check; no global7/28/5 assumption",
+      "combined_load_test_required": true,
+      "primary_acceptance": "Existing A6-EO-05 2000-workspace hourly / 4000-workspace compressed stress / 24-hour2000-workspace soak, including both work classes together",
+      "final_rehearsal": "A6-EO-08-C production-shape load/restore rehearsal retains this same workload",
+      "required_inputs": [
+        "Active provider accounts per workspace, actual supported effective horizons and nonfinal-day count",
+        "Fixed query families, pagination, rows and response bytes per date/range; date count is not HTTP request count",
+        "Scheduled versus actually executed work, coalesced overlapping dates and same-plan duplicate suppression",
+        "Complete empty responses, unchanged rereads and changed results measured separately"
+      ],
+      "required_measurements": [
+        "Provider requests, quota/rate-limit units, pages, rows and transferred bytes for hourly hot dates and daily older dates",
+        "Decode/project/encrypt/hash/readback work, elapsed time, CPU and peak memory",
+        "Database reads/writes/receipt operations, locks, connections, WAL, IOPS and throughput",
+        "New immutable source envelopes/pages and retained proof versions from repeated reads, including unchanged or empty results; synchronized retention growth and storage cost",
+        "Report inserts versus changed-value corrections versus unchanged rereads; repeated results cannot inflate report totals",
+        "Queue lag, completion age and interactive-query latency when hourly and daily work overlap, using the existing headroom and pass thresholds"
+      ],
+      "arithmetic_boundary": "Existing144000 three-provider daily job starts for2000 workspaces is scheduler arithmetic only, not total provider requests, rows, bytes, storage or certified capacity",
+      "acceptance_boundary": "An hourly-only benchmark cannot certify the combined refresh workload; modelled estimates and measured results remain distinct",
+      "new_package": false,
+      "runtime_activation": false,
+      "capacity_test_executed": false,
+      "infrastructure_change_authorized": false
+    }
   },
   "portability": {
     "canonical_data_plane": "standard_PostgreSQL_first",

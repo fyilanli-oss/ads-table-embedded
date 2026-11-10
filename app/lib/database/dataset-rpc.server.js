@@ -15,7 +15,7 @@ export const DATASET_STORAGE_RPC = Object.freeze([
   ["select analytics.lookup_dataset_fx($1::text,$2::text,$3::date) as result", "analytics.lookup_dataset_fx(text,text,date)"],
   ["select analytics.record_dataset_fx($1::jsonb) as result", "analytics.record_dataset_fx(jsonb)"],
 ].map(Object.freeze));
-// Existing source clients still issue only their own fixed RPCs. Recognizing
+// Explicit version2 private reconciliation surface; prepared grants remain separate.
 export const DATASET_RECONCILIATION_RPC = Object.freeze([
   ["select analytics.commit_dataset_reconciliation($1::jsonb,$2::jsonb,$3::jsonb,$4::timestamptz) as result", "analytics.commit_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz)"],
   ["select analytics.inspect_dataset_reconciliation($1::jsonb,$2::uuid) as result", "analytics.inspect_dataset_reconciliation(jsonb,uuid)"],

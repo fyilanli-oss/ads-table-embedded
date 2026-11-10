@@ -38,7 +38,7 @@ export async function reconcileStoredDatasetSources({database, cipher, owner, ba
     projection.holds.push(...fx.holds);
   }
   if (projection.holds.length || source.datasets.some(d => d.receipt.sourceState !== "complete")) return freezeMaturity({status: "held", holds: projection.holds,
-    consumerReceipt: false, checkpointAdvanced: false, reportValuesChanged: false, publishable: false});
+    sourceVerified: true, rowsStored: 0, consumerReceipt: false, checkpointAdvanced: false, reportValuesChanged: false, publishable: false, authorizesActivation: false});
   const businessDate = maturityDate(source.scope.window.from), timeZone = source.datasets[0].source.timezone;
   if (source.datasets.some(d => d.source.timezone !== timeZone)) fail("TIMEZONE_MISMATCH");
   const clocks = source.datasets.map(d => ({started: maturityInstant(d.read.observedAt), completed: maturityInstant(d.read.completedAt)}));
@@ -56,7 +56,7 @@ export async function reconcileStoredDatasetSources({database, cipher, owner, ba
   try {
     receipt = (await database.query(DATASET_RECONCILE_SQL, [JSON.stringify(bound), JSON.stringify(write), JSON.stringify(context), new Date(limits.deadlineAt).toISOString()])).rows?.[0]?.result;
     if (receipt?.status === "mismatch" && receipt.operationId === operationId && receipt.requestDigest === requestDigest
-      && receipt.comparison === "mismatch" && receipt.consumerReceipt === false && receipt.checkpointAdvanced === false) return freezeMaturity(receipt);
+      && receipt.comparison === "mismatch" && receipt.consumerReceipt === false && receipt.checkpointAdvanced === false) return freezeMaturity({...receipt, rowsStored: 0, sourceVerified: true, publishable: false, authorizesActivation: false});
     if (!receipt || receipt.status !== "consumed" || receipt.operationId !== operationId || receipt.requestDigest !== requestDigest
       || receipt.revision !== expectedRevision + 1 || receipt.consumerReceipt !== true || receipt.checkpointAdvanced !== true
       || receipt.rowCount !== write.rows.length || receipt.comparison !== "matched") fail("RESULT_INVALID");
@@ -64,7 +64,8 @@ export async function reconcileStoredDatasetSources({database, cipher, owner, ba
   stop();
   const readback = await inspectDatasetReconciliation({database, owner: bound, operationId});
   if (canonicalSourceJson(readback) !== canonicalSourceJson(receipt)) fail("READBACK_UNCONFIRMED");
-  const result = freezeMaturity({...receipt, hourlyRefreshActivated: false, authorizesActivation: false, publishable: false});
+  const result = freezeMaturity({...receipt, sourceVerified: true, rowsStored: receipt.rowCount, reportValuesChanged: receipt.changes?.length > 0,
+    hourlyRefreshActivated: false, authorizesActivation: false, publishable: false});
   confirmed.set(result, bound); return result;
 }
 

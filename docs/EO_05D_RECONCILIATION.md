@@ -66,6 +66,9 @@ mismatch ile aynı değildir; otomatik tekrar veya alternatif rota yoktur.
 Önceki consumer makbuzu tarihsel kalır, fakat superseded makbuz güncel checkpoint
 sayılmaz. Önceki storage/empty-retention makbuzları da supersession sonrası güncel
 rapor doğrulaması vermez; EO-05-C eski bir raporu final göstermek için kullanamaz.
+EO-05-C yeni gerçek consumer makbuzunu aynı fiziksel readback ile tanır; eski
+makbuz superseded olduğunda eski final kararı provisional olur. Yeni okuma aynı
+mevcut native atıf/olgunluk koşullarını ayrıca sağlamalıdır.
 Okumalar kaynak gizlilik/TTL ve gerçek fact digest'lerini yeniden kontrol eder.
 Mevcut mandatory scoped erasure bütün rapor/source katmanlarında önceliklidir;
 yeni PII, dış audit tablosu veya özel silme istisnası eklenmez.

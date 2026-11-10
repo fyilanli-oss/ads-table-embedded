@@ -3,6 +3,8 @@ import {randomUUID} from "node:crypto";
 import {storedBindingFixture} from "./eo05b-source-dataset-binding-probe.mjs";
 import {datasetServerProbe} from "./eo05b-dataset-server-probe.mjs";
 import {reconcileStoredDatasetSources, inspectDatasetReconciliation, DATASET_RECONCILE_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
+import {storeMaturityConfiguration, recordMaturityDecision, inspectMaturityDecision} from "../app/lib/database/maturity-store.server.js";
+import {maturityObservationFixture} from "../tests/fixtures/maturity-fixture.js";
 
 async function rejected(client, action) {
   await client.query("savepoint reconciliation_expected_failure"); let error;
@@ -36,6 +38,15 @@ export async function reconciliationProbe(client, {ownerFixture}) {
     await rejected(client, () => reconcileStoredDatasetSources(first));scenarios++;
     const rowBefore = (await client.query("select id,purchase::text from analytics.pd_facts where installation_id=$1", [owner.installationId])).rows[0];
     if (provider === "google_ads") assert.equal(rowBefore.purchase, "3");
+    if (provider === "google_ads") {
+      const observation = maturityObservationFixture(provider, {owner, clickDays: "0"});
+      const cfg = await storeMaturityConfiguration({database, cipher: first.cipher, owner, observation: await observation.read(),
+        policy: first.envelopes.values().next().value.sourceWrite.body.policy,
+        limits: {maxBytes: 1000000, maxRows: 1000, maxObservationAgeMs: 60000, deadlineAt: Date.now() + 60000}});
+      const maturity = await recordMaturityDecision({...first, configurationAttemptId: cfg.attemptId, anchorAttemptId: first.batches[0].attemptId,
+        reportOperationId: initial.operationId, expectedRevision: 0});
+      assert.equal(maturity.state, "final");assert.equal(maturity.reportVerified, true);scenarios++;
+    }
     const second = await source(owner, {nonempty, googlePurchase: "5"});
     await rejected(client, () => reconcileStoredDatasetSources(second));scenarios++;
     const corrected = await reconcileStoredDatasetSources({...second, expectedRevision: 1});
@@ -44,6 +55,10 @@ export async function reconciliationProbe(client, {ownerFixture}) {
     if (provider === "google_ads") {assert.equal(rowAfter.purchase, "5");assert.equal(rowAfter.id, rowBefore.id);}
     const old = await inspectDatasetReconciliation({database, owner, operationId: initial.operationId});
     assert.equal(old.status, "superseded");assert.equal(old.checkpointAdvanced, false);scenarios++;
+    if (provider === "google_ads") {
+      const previousFinal = await inspectMaturityDecision({database, owner, anchorAttemptId: first.batches[0].attemptId});
+      assert.equal(previousFinal.state, "provisional");assert.equal(previousFinal.reason, "report_receipt_unavailable");scenarios++;
+    }
     const stale = await source(owner, {nonempty}, true);
     await rejected(client, () => reconcileStoredDatasetSources({...stale, expectedRevision: 2}));scenarios++;
     const empty = await source(owner, {nonempty: false});

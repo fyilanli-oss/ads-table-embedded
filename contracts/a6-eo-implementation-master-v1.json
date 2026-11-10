@@ -1,4 +1,20 @@
 {
+  "EO05_refresh_reconciliation_capacity_note_2026_11_10": {
+    "owner_instruction": "O maddeye Bu yükü de eklemeliyiz — explicit request to record hourly today/yesterday and daily older nonfinal re-query load in existing capacity calculation/tests",
+    "contract": "contracts/a6-eo-cross-cutting-safety-capacity-v1.json#capacity_envelope.refresh_reconciliation_workload_2026_11_10",
+    "brief": "docs/A6_EO_CROSS_CUTTING_SAFETY_CAPACITY_FREEZE.md#10-kasım-2026--tekrar-sorgulama-yükünün-açık-kapasite-kaydı",
+    "primary_owner": "A6-EO-05 existing write-path/scheduler capacity acceptance",
+    "final_rehearsal": "A6-EO-08-C",
+    "status": "documentation_contract_requirement_only_no_capacity_execution_or_acceptance",
+    "scope": "Include combined hourly hot-date and daily older nonfinal-date workload: real provider requests/quota/pages/rows/bytes, encryption/readback, DB I/O/WAL/locks, repeated immutable evidence storage/retention, report corrections and shared interactive headroom",
+    "existing_thresholds_and_cadence_unchanged": true,
+    "new_package": false,
+    "EO05C_runtime_implementation_authorized": false,
+    "live_provider": false,
+    "live_database": false,
+    "merge_authorized": false,
+    "deploy_authorized": false
+  },
   "EO05B_demo_and_current_closure_2026_11_10": {
     "parent_package": "A6-EO-05-B",
     "detail_checklist": 23,

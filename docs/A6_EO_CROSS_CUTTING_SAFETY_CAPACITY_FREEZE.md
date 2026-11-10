@@ -137,3 +137,49 @@ Bu karar yeni ana paket oluşturmaz, paket durumunu ilerletmez; canlı ortam de�
 - [Meta resmî Marketing API koleksiyonu](https://www.postman.com/meta/facebook-marketing-api/documentation/0zr4mes/facebook-marketing-api-mapi)
 - [Shopify gizlilik uyumu](https://shopify.dev/docs/apps/build/compliance/privacy-law-compliance)
 - [Vercel geri alma](https://vercel.com/docs/cli/rollback)
+
+## 10 Kasım 2026 — tekrar sorgulama yükünün açık kapasite kaydı
+
+Ürün sahibi, “Bu bize yeni bir veri yükü daha getirdi. ... O maddeye Bu yükü de
+eklemeliyiz” diyerek mevcut kapasite hesabı ve testlerine bu yükün açıkça
+eklenmesini istedi. Önceki genel `deep_reconciliation_amplification` bütçesi
+korunur; aşağıdaki ayrıntı onun ölçülebilir kapsamıdır. Yeni paket açılmaz.
+
+Bugün ve dünün saatlik tekrarları, daha eski ama kesinleşmemiş günlerin günlük
+geriye dönük kontrolüyle **aynı testte** çalıştırılacaktır. Etkin pencere gerçek
+sağlayıcı ayarına bağlıdır; örnek verilen Meta7/Google28/Klaviyo5 gün değerleri
+genel sabit veya kapasite kanıtı değildir. Pencere sonrası başarılı son kontrolün
+maliyeti de dahildir. Gün sayısı HTTP istek sayısı değildir: sorgu aileleri,
+sayfalama ve desteklenen tarih aralığına göre gerçek istekler ölçülür.
+
+Hesap ve ölçüm birlikte şunları kapsar:
+
+- Çalışma alanı başına bağlı provider/hesap sayısı, açık günler, sorgu aileleri,
+  sayfalar, okunan satır/byte, gerçek istek ve kota tüketimi. Bugün/dün ile günlük
+  taramanın çakışan tarihleri ve birleştirilen işler açıkça gösterilir; aynı
+  gerçekleşen istek iki kez sayılmaz, ayrıca yapılan tekrar da gizlenmez.
+- Boş cevap, değişmemiş sonuç ve değişmiş sonuç ayrı ölçülür. Sonuç değişmese
+  bile HTTP, şifreleme/hash/readback, makbuz ve kaynak kayıt maliyeti yok sayılamaz.
+- Veritabanı okuma/yazma, kilit ve bağlantı kullanımı, WAL, disk IO ve aktarım;
+  iş süresi, CPU ve tepe bellek birlikte ölçülür.
+- Tekrar okumalardan doğan değişmez ham zarf/sayfa ve kanıt sürümlerinin sayısı,
+  byte büyümesi, bağlı rapor için senkron saklama etkisi ve depolama maliyeti
+  hesaplanır. Aynı rapor satırının korunması ham kanıt deposunun büyümediği
+  anlamına gelmez. Saklama veya silme politikası bu kayıtla değiştirilmez.
+- Yeni rapor satırı, mevcut değerin düzeltmesi ve değişmeden tekrar okuma ayrılır.
+  Aynı günün tekrar okunması rapor toplamını artırmamalıdır; düzeltmenin mevcut
+  EO-05-D protokolü ayrı kalır.
+- Saatlik ve günlük işlerin çakıştığı yükte kuyruk yaşı, tamamlanma süresi ve
+  eşzamanlı kullanıcı sorgularının gecikmesi ölçülür. Mevcut eşikler ve en az%30
+  boş kapasite şartı korunur.
+
+**Testin yeri:** Ana yazma/zamanlayıcı kabulü mevcut EO-05'teki 2000 çalışma alanı
+saatlik test,4000 çalışma alanı sıkıştırılmış stres ve24 saat2000 çalışma alanı
+uzun süre testidir. EO-08-C canlı biçime yakın son yük/geri yükleme provası aynı
+birleşik yükü taşır. Yalnız saatlik işler çalıştırılarak toplam refresh kapasitesi
+PASS sayılamaz. Mevcut144000 günlük üç-provider iş başlangıcı hesabı toplam API
+isteği, byte, veritabanı işi veya ölçülmüş kapasite değildir.
+
+Bu ek yalnız owner'ın istediği sözleşme/plan kaydıdır; test çalıştırmaz, kapasite
+kabulünü ilerletmez, yeni sorgu/sıklık, EO-05-C kodlaması veya canlı DB/provider/
+config/altyapı değişikliği başlatmaz. Merge ayrıca onaylanır.

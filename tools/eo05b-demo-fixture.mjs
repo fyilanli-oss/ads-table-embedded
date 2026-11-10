@@ -100,7 +100,7 @@ function hierarchy(provider, dimensions, id) {
 }
 
 function build(rows, {mode = "golden", workspace = "default", demoClock = null} = {}) {
-  if (!/^[a-z0-9][a-z0-9-]{0,47}$/.test(workspace)) fail("WORKSPACE");
+  if (typeof workspace !== "string" || !/^[a-z0-9][a-z0-9-]{0,47}$/.test(workspace)) fail("WORKSPACE");
   if (!["golden", "rolling_demo"].includes(mode) || (mode === "golden" && demoClock !== null)) fail("MODE");
   const offset = mode === "rolling_demo" ? (dateValue(demoClock) - dateValue("2026-07-20")) / 86400000 : 0;
   const workspaceId = `demo:${VERSION}:${workspace}`;

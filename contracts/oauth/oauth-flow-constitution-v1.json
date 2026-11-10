@@ -1797,7 +1797,7 @@
       "tools/eo05-verified-mapping-probe.mjs": "875aadd0c47e64d66f5fef187b2a803cd9716ff04b0ac0871f17cc97f84f88eb",
       "tools/eo05b-dataset-server-probe.mjs": "cb4dc77e30d4aece78458e0be3d8e00164f942109ac3fa2361f416e24129d357",
       "tools/eo05b-dataset-storage-probe.mjs": "6c850346bd6a155cf64f143f7e01b0f5a281469e14347b2fec13f5b4e140bc60",
-      "tools/eo05b-demo-fixture.mjs": "03ef0b043308dce7f19b2e687e86bb0d2262b4b869343d7dc548ba0c810dcc0b",
+      "tools/eo05b-demo-fixture.mjs": "c91cf0e2b82ae6bb4db46d4dfa4ffbc0e1415877075995a5bf5cbc1f30afdd73",
       "tools/eo05b-fx-reporting-currency-probe.mjs": "c5decd13fad2a1aebccacbdf6229bcfec590c429db8ab3380008c318c479a9d5",
       "tools/eo05b-report-retention-probe.mjs": "ed1015ae7b31557a03a575d4786125cdff3f4f7c63524485455a5dbdeda676a8",
       "tools/eo05b-source-dataset-binding-probe.mjs": "d9aa68f202922f0978a05b411781fcbc4685b86337b56cfcab32964316713d79",

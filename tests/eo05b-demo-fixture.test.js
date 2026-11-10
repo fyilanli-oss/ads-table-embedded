@@ -136,7 +136,7 @@ test("synthetic identities cannot collide across demo workspaces or providers an
   validateFixture(other, archive);
   const ids = new Set(golden.rows.flatMap(r => [r.workspace_id, r.installed_shop_id, r.provider_account_id, ...r.hierarchy.nodes.map(n => n.id)]));
   for (const row of other.rows) for (const id of [row.workspace_id, row.installed_shop_id, row.provider_account_id, ...row.hierarchy.nodes.map(n => n.id)]) assert.equal(ids.has(id), false);
-  for (const workspace of ["", "live/shop", "../real", "PRODUCTION", "a".repeat(49)]) assert.throws(() => createGolden(archive, {workspace}), /WORKSPACE/);
+  for (const workspace of [null, 123, "", "live/shop", "../real", "PRODUCTION", "a".repeat(49)]) assert.throws(() => createGolden(archive, {workspace}), /WORKSPACE/);
   assert.equal(golden.runtime_seed_authorized, false);
 });
 

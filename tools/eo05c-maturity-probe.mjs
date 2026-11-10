@@ -29,6 +29,11 @@ export async function maturityProbe(client, {ownerFixture}) {
   let scenarios = 0;
   for (const provider of ["google_ads", "meta", "klaviyo"]) {
     const owner = await ownerFixture(client, provider), source = await storedBindingFixture(client, owner, {nonempty: false});
+    const key = provider === "google_ads" ? "googleDatasetRead" : provider === "meta" ? "metaDatasetRead" : "klaviyoDatasetRead";
+    // The shared Dataset fixture predates maturity and intentionally omits read
+    // clocks. Supply explicit synthetic clocks here, not a production fallback.
+    for (const batch of source.batches) await client.query(`update evidence.source_batches set manifest=jsonb_set(jsonb_set(manifest,$3::text[],to_jsonb($4::text)),$5::text[],to_jsonb($4::text)) where authority=$1::jsonb and attempt_id=$2::uuid`,
+      [JSON.stringify(owner), batch.attemptId, [key, "observedAt"], "2026-11-01T12:00:00.000Z", [key, "completedAt"]]);
     const limits = {maxBytes: 1000000, maxRows: 1000, deadlineAt: Date.now() + 60000, maxObservationAgeMs: 60000};
     const configuration = async setting => {
       const f = maturityObservationFixture(provider, {owner, setting, clickDays: "0"});
@@ -48,7 +53,7 @@ export async function maturityProbe(client, {ownerFixture}) {
     await rejected(client, () => recordMaturityDecision(input)); scenarios++;
     // Fictional successful reread of the SAME provider business date after the
     // window. Only test metadata clocks change; no claimed real provider read.
-    const stamp = new Date().toISOString(), key = provider === "google_ads" ? "googleDatasetRead" : provider === "meta" ? "metaDatasetRead" : "klaviyoDatasetRead";
+    const stamp = new Date().toISOString();
     for (const batch of source.batches) await client.query(`update evidence.source_batches set manifest=jsonb_set(jsonb_set(manifest,$3::text[],to_jsonb($4::text)),$5::text[],to_jsonb($4::text)) where authority=$1::jsonb and attempt_id=$2::uuid`,
       [JSON.stringify(owner), batch.attemptId, [key, "observedAt"], stamp, [key, "completedAt"]]);
     const written = await bindStoredDatasetSources({...source, database: client, limits: {...source.limits, deadlineAt: Date.now() + 60000}});

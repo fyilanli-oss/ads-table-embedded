@@ -1,4 +1,26 @@
 {
+  "EO05B_demo_and_current_closure_2026_11_10": {
+    "parent_package": "A6-EO-05-B",
+    "detail_checklist": 23,
+    "task": "Fourth agreed work item; versioned synthetic demo and current closure check",
+    "owner_approval": "Onaylıyorum Codex devam edelim — concrete demo/code/tests/PR/closure scope, no live changes",
+    "status": "implementation_prepared_required_CI_remote_verification_and_separate_owner_merge_pending",
+    "contract": "contracts/eo-05b-demo-closure-v1.json",
+    "brief": "docs/EO_05B_DEMO_AND_CLOSURE.md",
+    "live_evidence": "docs/evidence/EO05B_LIVE_ACCEPTANCE_2026-11-10.json",
+    "current_live_status": "PR351 released; two prepared RPC/role extensions installed; Google/Meta verified actual empty; Klaviyo source verified/report held because metric discovery returned0",
+    "demo": "Pinned immutable1000-row archive;500 active paid rows; golden and explicit-clock rolling JSON; generator/schema/validator/tests; never native provider evidence",
+    "further_EO05B_code_work_identified": false,
+    "nonempty_live_fact_and_cross_currency_FX_proven": false,
+    "full_EO05_complete": false,
+    "remaining_existing_owner_packages": "EO05C/D maturity/finality/consumption/checkpoint/correction and prior native18/22 holds remain separate; no new task/package inferred from empty accounts",
+    "runtime_seed": false,
+    "OAuth_flow_change": false,
+    "live_provider": false,
+    "live_database": false,
+    "merge_authorized": false,
+    "deploy_authorized": false
+  },
   "EO05B_five_table_design_2026_11_08": {
     "date": "2026-11-08",
     "parent": "A6-EO-05-B",
@@ -1702,7 +1724,9 @@
         {
           "id": "A6-EO-05-B",
           "title": "Dataset V2, FX and provenance",
-          "objective": "Persist installed-shop-bound canonical facts, source currency and exact FX lineage; extract a versioned synthetic demo fixture without presenting it as provider truth."
+          "objective": "Persist installed-shop-bound canonical facts, source currency and exact FX lineage; extract a versioned synthetic demo fixture without presenting it as provider truth.",
+          "current_record": "EO05B_demo_and_current_closure_2026_11_10",
+          "current_contract": "contracts/eo-05b-demo-closure-v1.json"
         },
         {
           "id": "A6-EO-05-C",

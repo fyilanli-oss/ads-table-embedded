@@ -1819,7 +1819,7 @@
       "tools/run-customer-source-worker.mjs": "748749d7c4c7b0b24dd12e481adf53dcc99c4f3d3c92a89b4b3eaf109f85419e",
       "tools/run-google-raw-capture.mjs": "6c7c06d59f913a6214ce83ea6260b0ef5420fcebbfce8d999c7968892269b24e",
       "tools/sql/eo05-google-dataset-source-role-extension.sql": "509f4b11cb0d93ddfacc9096e3b8d631bf9aa4ae89a4f5da296be7c7f6c719a1",
-      "tools/sql/eo05-google-source-role-install.sql": "9c1db15803ec23285004645e772dfaa33b85f45ff0562108fc91f7e0183519a6",
+      "tools/sql/eo05-google-source-role-install.sql": "283be64d0de7944111639a4646758ef7bc91c1b853f0dc4d91870d31366f2ed1",
       "tools/sql/eo05-klaviyo-source-role-install.sql": "c2749c46c4c5026d2eb3c55e16d9e87d60a7d1cbe74bb16f0bd8ff783b6a156f",
       "tools/sql/eo05-meta-source-role-install.sql": "748c28dc0d42b9efb48fddf3e2c0ddebb4daecb410202aba522b025680a50071",
       "tools/sql/eo05-privacy-source-role-install.sql": "a2e8a8cc6ce37be9d2c84e34b3a1a8614b194c348c6af72e7385d5c5bafdf6f5",
@@ -4122,6 +4122,7 @@
         "tools/eo05b-dataset-server-probe.mjs",
         "tools/eo05b-dataset-storage-probe.mjs",
         "tools/eo05d-reconciliation-probe.mjs",
+        "tools/sql/eo05-google-source-role-install.sql",
         "tools/sql/eo05d-reconciliation-role-extension.sql"
       ],
       "artifact_paths": [
@@ -4147,6 +4148,7 @@
         "tools/eo05b-dataset-server-probe.mjs",
         "tools/eo05b-dataset-storage-probe.mjs",
         "tools/eo05d-reconciliation-probe.mjs",
+        "tools/sql/eo05-google-source-role-install.sql",
         "tools/sql/eo05d-reconciliation-role-extension.sql"
       ],
       "tests": [

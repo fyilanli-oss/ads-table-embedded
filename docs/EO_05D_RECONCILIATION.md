@@ -44,12 +44,15 @@ completedDates, hata veya belirsiz cevap ilerleme yetkisi değildir. Yeni provid
    yeni revizyon/önceki ve yeni digest izniyle açılır. Bu geçici permit kaynak
    manifest'inden update hemen sonrasında kaldırılır; kalan validator bütünüyle
    çalışır. GUC, trigger kapatma veya genel UPDATE yetkisi kullanılmaz.
-   yeni tam okumada kaybolan satırlar yalnız aynı hesap/kurulum/connection/gün/saat
+   Yeni tam okumada kaybolan satırlar yalnız aynı hesap/kurulum/connection/gün/saat
    dilimi kapsamında ve bağımlılık kontrolüyle kaldırılır. Başka hesap veya gün
    değişmez. Eski encrypted zarf/sayfa ve tarihsel FX/kimlik kanıtı silinmez.
 5. SQL fiziksel tablodan bütün DTO değerlerini okuyup exact canonical digest'i
-   yeniden hesaplar; yalnız stored payload_digest kolonuna güvenmez. Beklenen
-   projection ile eşitse aynı transaction içinde exact source handoff consumed,
+   yeniden hesaplar; yalnız stored payload_digest kolonuna güvenmez.
+   Event zamanı UTC/sabit altı kesir basamağına getirilir; native kaynağın özgün
+   metni değiştirilmez. Kesir Number/Date üzerinden yuvarlanmaz; PostgreSQL'in
+   mikro-saniye hassasiyetinden uzun kesir sessizce kesilmez, işlem durur.
+   Beklenen projection ile eşitse aynı transaction içinde exact source handoff consumed,
    bağımsız consumer makbuzu ve gün checkpoint revizyonu kaydedilir. Kaynak makbuzu
    tek başına consumer makbuzu değildir. Sonuç kesin bilindikten sonra JS makbuzu
    yeniden okur; kayıp write cevabında otomatik inspect/retry yoktur.

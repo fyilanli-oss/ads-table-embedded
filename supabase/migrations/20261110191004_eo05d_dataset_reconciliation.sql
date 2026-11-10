@@ -14,7 +14,7 @@ begin
  for k in select attname::text from pg_catalog.pg_attribute where attrelid=('analytics.'||t)::regclass and atttypid in ('numeric'::regtype,'bigint'::regtype) and attnum>0 and not attisdropped loop
   if v ? k and v->k<>'null'::jsonb then v:=jsonb_set(v,array[k],to_jsonb(v->>k));end if;
  end loop;
- if v->>'occurred_at' is not null then v:=jsonb_set(v,'{occurred_at}',to_jsonb(to_char((v->>'occurred_at')::timestamptz at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')));end if;
+ if v->>'occurred_at' is not null then v:=jsonb_set(v,'{occurred_at}',to_jsonb(to_char((v->>'occurred_at')::timestamptz at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"')));end if;
  return analytics.dataset_digest(v);
 end $fn$;
 

@@ -17,6 +17,19 @@ const confirmed = new WeakMap();
 const uuid = x => typeof x === "string" && /^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(x);
 const fail = code => {throw Error("DATASET_RECONCILIATION_" + code);};
 
+/** Postgres timestamptz retains microseconds. Normalize timezone/zero-padding
+ * without converting the fractional part through Date/Number or truncating it.
+ * The original native timestamp stays in its immutable encrypted source page. */
+export function canonicalDatasetEventTime(value) {
+  if (typeof value !== "string") fail("EVENT_TIME_INVALID");
+  const m = value.match(/^(\d{4}-\d\d-\d\dT(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d)(?:\.(\d{1,6}))?(Z|[+-]\d\d:\d\d)$/);
+  if (!m) fail("EVENT_TIME_INVALID");
+  maturityDate(value.slice(0, 10));
+  const seconds = Date.parse(m[1] + m[3]);
+  if (!Number.isFinite(seconds)) fail("EVENT_TIME_INVALID");
+  return new Date(seconds).toISOString().slice(0, 19) + "." + (m[2] ?? "").padEnd(6, "0") + "Z";
+}
+
 /** Fixed private projection of actual AEAD-verified source pages only. The SQL
  * transaction revalidates full coverage, CAS, read order, rows and exact hashes
  * before atomically issuing the real source-consumption/day checkpoint receipt.
@@ -30,6 +43,7 @@ export async function reconcileStoredDatasetSources({database, cipher, owner, ba
   stop();
   const source = await readStoredDatasetSources({database, cipher, owner: bound, batches, limits, now, signal});
   const projection = projectors[bound.provider](source);
+  for (const {row} of projection.rows) if (row.occurred_at !== null && row.occurred_at !== undefined) row.occurred_at = canonicalDatasetEventTime(row.occurred_at);
   const configuration = source.datasets.filter(d => d.dataset === "configuration").flatMap(d => d.pages.map(p => p.ref));
   if (configuration.length) for (const {row} of projection.rows) row.provenance.sources = [...new Map([...row.provenance.sources, ...configuration].map(r => [r.page_id, r])).values()];
   if (projection.rows.length > 200) fail("ROW_LIMIT");

@@ -3,7 +3,7 @@ import test from "node:test";
 import {randomUUID} from "node:crypto";
 import {datasetSourceBindingFixture} from "./fixtures/dataset-source-binding-fixture.js";
 import {sourcePayloadHash} from "../app/lib/database/source-evidence-store.server.js";
-import {reconcileStoredDatasetSources, DATASET_RECONCILE_SQL, DATASET_RECONCILE_READ_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
+import {reconcileStoredDatasetSources, canonicalDatasetEventTime, DATASET_RECONCILE_SQL, DATASET_RECONCILE_READ_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
 import {readDatasetWritePlan} from "../app/lib/refresh/dataset-server.server.js";
 
 async function fixture(provider = "google_ads", options = {}) {
@@ -21,6 +21,12 @@ async function fixture(provider = "google_ads", options = {}) {
   };
   return {...f, expectedRevision: 0, request: () => request};
 }
+test("event-time canonicalization preserves exact microseconds and timezone without changing source bytes", () => {
+  assert.equal(canonicalDatasetEventTime("2026-11-01T12:00:00Z"), "2026-11-01T12:00:00.000000Z");
+  assert.equal(canonicalDatasetEventTime("2026-11-01T12:00:00.123Z"), "2026-11-01T12:00:00.123000Z");
+  assert.equal(canonicalDatasetEventTime("2026-11-01T15:00:00.123456+03:00"), "2026-11-01T12:00:00.123456Z");
+  for (const value of ["2026-11-01T12:00:00.1234567Z", "2026-02-30T12:00:00Z", "2026-11-01T24:00:00Z", null, "invalid"]) assert.throws(() => canonicalDatasetEventTime(value));
+});
 for (const provider of ["google_ads", "meta", "klaviyo"]) test("reconciliation projects actual source pages and confirms receipt: " + provider, async () => {
   const f = await fixture(provider, {nonempty: provider !== "meta"}), r = await reconcileStoredDatasetSources(f);
   assert.equal(r.consumerReceipt, true); assert.equal(r.checkpointAdvanced, true); assert.equal(r.publishable, false);

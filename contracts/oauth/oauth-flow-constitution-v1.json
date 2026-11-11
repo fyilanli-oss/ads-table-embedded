@@ -1595,7 +1595,7 @@
       "contracts/eo-05-permission-explanation-design-v1.json": "ad4753b9ad4a6becd14764b7b33fb917f0cc491ad774cc1f1fe9053c5f189f35",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
       "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md": "c602fd4d7760e8f32c109e1f0456907c739c12906d71becf88476cad2007d6a1",
-      "docs/EXECUTION_PLAN.md": "1759233fb482fbe241a2639947722919a70365ee0fc24090b417754c85879121",
+      "docs/EXECUTION_PLAN.md": "9eef98239c211a961658287abb7dc9727747a4a947b97b144c405b79e138c452",
       "docs/OAUTH_FLOW_CONSTITUTION.md": "74d7a8f327a9558712c3ac8bb54a6633fff7a7e2045405d236d35f265d124b28",
       "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md": "49e253b08959faa9f0b2bf208ed5eb6d3c078a0ddf9097e667a9bf1483dc7350",
       "package.json": "a99953eda0b9270c5c7c282e8f517210f11759acd7dbbe25737824dc6288f730",
@@ -1700,7 +1700,7 @@
       "supabase/migrations/20261110175346_eo05c_maturity_finality.sql": "4995f862267cae0bb8d391b439566885a0ed0b39360fb217c5b4c4e1ebfc9391",
       "supabase/migrations/20261110191004_eo05d_dataset_reconciliation.sql": "07492d30d61552e06749a3800e75ec35f10a39d1e475baba2220e656b504b0de",
       "supabase/migrations/20261110202849_eo05e_operational_observability.sql": "01b38ad0d70f63b6151e7edfb0544ce058e89150d5084faa98bba53e048c407e",
-      "supabase/migrations/20261111131821_eo05_refresh_fenced_dataset_commit.sql": "f1c278dde816729f84598b1d33537c1c3440e10faf577da0cf4301cb7ae6a48b",
+      "supabase/migrations/20261111131821_eo05_refresh_fenced_dataset_commit.sql": "08408fb499d2b92b85011b2604afa4d94a9744e0ad9ad86703c94252ba977eeb",
       "tests/a6-docs-01-turkish-standardization.test.js": "5dcaa387ca679f75339510ca9d9856fcfb98eadf2510e31f94afd0599c9f870d",
       "tests/a6-tech-01-f01c-scoped-recovery.test.js": "3bd869071d5042402215176a99bf14dcebce6d3d0497ffcba946038050701792",
       "tests/eo-01c-preview-shell.test.js": "c3d67bb6666c19cf5ac12cfcd8a7f2f2acdf399d5a8ac32c0269823b06cbf789",
@@ -1811,7 +1811,7 @@
       "tools/eo05b-report-retention-probe.mjs": "ed1015ae7b31557a03a575d4786125cdff3f4f7c63524485455a5dbdeda676a8",
       "tools/eo05b-source-dataset-binding-probe.mjs": "d9aa68f202922f0978a05b411781fcbc4685b86337b56cfcab32964316713d79",
       "tools/eo05c-maturity-probe.mjs": "e66c2379b2f6781bb4b1ac2207bfe73edeb9ce5c1c01cb8cc7bde06f69fe5b47",
-      "tools/eo05d-reconciliation-probe.mjs": "a7bf74409e6282930a6f5276327f2f8029909e7318163197f25b82894c3759c2",
+      "tools/eo05d-reconciliation-probe.mjs": "d8f4ebced8762bdde0f64fc049f7858d54bfc422aca4643333c50b7730600027",
       "tools/eo05e-observability-probe.mjs": "f9aad28c4b2c062915f18dc2d000680e33afe6ca8de9714f59cccb881a291273",
       "tools/f01-database-replay.mjs": "11e8736bc46f76dd3476a79fae8d18d21d19d375e4c8534c4ad67eccf6f5a98b",
       "tools/f01-identity-oauth-rollout.mjs": "5894b9ae54363fcf31372ed0a1abf39d3c0e1dfea428190232a0420b0b11f787",
@@ -4255,9 +4255,9 @@
       "date": "2026-11-11",
       "owner_approval": {
         "explicit": true,
-        "source": "Tamam başlayalım Codex — refresh-to-report receipt rehearsal; Harika devam edelim Codex — verify current claim and Dataset write in one PostgreSQL transaction; Tamam devam edelim Codex onaylıyorum — complete the same job and release reservation after the verified receipt. Isolated code/SQL/test in the same draft PR."
+        "source": "Tamam başlayalım Codex — refresh-to-report receipt rehearsal; Harika devam edelim Codex — atomic claim and Dataset write; Tamam devam edelim Codex onaylıyorum — completion after verified receipt; Tamam onaylıyorum devam edelim Codex — prepare narrow scheduled Dataset runner authority and verify its isolated SQL connection. Same draft PR; no live credentials or grants."
       },
-      "rationale": "Bind scheduled source to the admitted job, fence and day. Owner-only scheduled write records receipt binding in the existing source manifest. After a known write and physical readback, an owner-only completion RPC rechecks the receipt/current claim and releases the reservation under the existing control lock. Unknown writes never call completion; unknown completion is not repeated. Manual RPC, HTTP entry, OAuth/token/projection and live activation are unchanged.",
+      "rationale": "Bind scheduled source to the admitted job, fence and day. Scheduled write stores the receipt binding; completion rechecks it after a known write/readback and releases the reservation under the control lock. Unknown writes never call completion; unknown completion is not repeated. Prepared NOLOGIN runner has two scheduled operations and fixed prerequisite reads only. F01 executes with actual current_user runner, rejects direct table and manual writes. No live role application, login, activation, HTTP or OAuth changes.",
       "scope": {
         "runtime_code": true,
         "live_provider": false,

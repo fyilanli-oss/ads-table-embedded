@@ -11,6 +11,7 @@ async function rejected(client, action) {
   try {await action();} catch (e) {error = e;}
   await client.query("rollback to savepoint reconciliation_expected_failure");await client.query("release savepoint reconciliation_expected_failure");
   assert.ok(error, "invalid reconciliation must fail");
+  return error;
 }
 
 /** Existing F01 rollback transaction. Owners, native pages, clocks and keys below
@@ -100,6 +101,21 @@ export async function reconciliationProbe(client, {ownerFixture}) {
   await datasetServerProbe(client, {ownerFixture, reconciliation: true});
   await client.query("savepoint scheduled_dataset_rehearsal");
   try {
+    const scheduledRole = "adstable_refresh_dataset_runner";
+    const flags = (await client.query(`select rolcanlogin,rolinherit,rolsuper,rolcreatedb,rolcreaterole,rolreplication,rolbypassrls
+      from pg_roles where rolname=$1`, [scheduledRole])).rows[0];
+    assert.ok(flags && Object.values(flags).every(value => value === false));
+    const asScheduledRunner = async (sql, parameters) => {
+      await client.query("set local role " + scheduledRole);
+      try {
+        assert.equal((await client.query("select current_user as role")).rows[0].role, scheduledRole);
+        return await database.query(sql, parameters);
+      } finally {
+        // A failed statement leaves this fixture's savepoint aborted. The caller
+        // rolls it back before restoring the role in that case.
+        try {await client.query("set local role adstable_owner");} catch {}
+      }
+    };
     const scheduledOwner = await ownerFixture(client, "google_ads");
     const args = [scheduledOwner.workspaceId, scheduledOwner.generation, scheduledOwner.provider, scheduledOwner.accountId];
     await client.query("update integrations.provider_connections set connected_at='2026-10-31' where id=$1", [scheduledOwner.connectionId]);
@@ -117,7 +133,7 @@ export async function reconciliationProbe(client, {ownerFixture}) {
     await client.query(`insert into operations.refresh_runs(workspace_id,install_generation,provider,account_id,job_id,fence,cost,status)
       values ($1,$2,$3,$4,$5,$6,'{"requests":2,"rows":1000,"bytes":1000000,"connections":1,"dbWrites":5}','running')`, [...args,job,fence]);
     const options = {...input, scheduled: true, admittedScope: {jobId: job, fence, from: "2026-11-01", to: "2026-11-01"}};
-    await rejected(client, () => reconcileStoredDatasetSources(options));
+    await rejected(client, () => reconcileStoredDatasetSources({...options,database:{query:asScheduledRunner}}));
     await client.query(`insert into operations.refresh_work_progress(workspace_id,install_generation,provider,account_id,job_id,fence,stage,from_date,to_date)
       values ($1,$2,$3,$4,$5,$6,'ready_for_dataset','2026-11-01','2026-11-01')`, [...args,job,fence]);
     const jobStatus = async () => (await client.query("select status from operations.refresh_runs where fence=$1", [fence])).rows[0].status;
@@ -126,16 +142,24 @@ export async function reconciliationProbe(client, {ownerFixture}) {
       if (sql === SCHEDULED_DATASET_FINISH_SQL) {
         finishArgs = parameters;
         assert.equal(await jobStatus(), "running");
-        assert.equal((await client.query(sql,[...parameters.slice(0,4),"f".repeat(64)])).rows[0].result,false);
+        assert.equal((await asScheduledRunner(sql,[...parameters.slice(0,4),"f".repeat(64)])).rows[0].result,false);
         assert.equal(await jobStatus(), "running");
       }
-      return database.query(sql,parameters);
+      return asScheduledRunner(sql,parameters);
     }};
     const completed = await reconcileStoredDatasetSources({...options,database:completingDatabase});
     assert.equal(completed.consumerReceipt, true);
     assert.equal(completed.jobCompleted, true);
     assert.equal(await jobStatus(), "completed");
-    assert.equal((await client.query(SCHEDULED_DATASET_FINISH_SQL,finishArgs)).rows[0].result,false);
+    assert.equal((await asScheduledRunner(SCHEDULED_DATASET_FINISH_SQL,finishArgs)).rows[0].result,false);
+    assert.equal((await rejected(client, () => asScheduledRunner("select * from analytics.pd_facts limit 1"))).code,"42501");
+    assert.equal((await rejected(client, () => asScheduledRunner(DATASET_RECONCILE_SQL,[JSON.stringify(scheduledOwner),"{}","{}",new Date(input.limits.deadlineAt).toISOString()]))).code,"42501");
+    const unsafe = (await client.query(`select exists(select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
+      where n.nspname in ('app','shopify','integrations','operations','billing','privacy','analytics','evidence','identity','source')
+      and ((c.relkind in ('r','p','v','m','f') and (has_table_privilege($1,c.oid,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+        or has_any_column_privilege($1,c.oid,'SELECT,INSERT,UPDATE,REFERENCES')))
+      or (c.relkind='S' and has_sequence_privilege($1,c.oid,'USAGE,SELECT,UPDATE')))) as allowed`, [scheduledRole])).rows[0].allowed;
+    assert.equal(unsafe,false);
     for (const role of ["anon","authenticated","service_role","adstable_runtime","adstable_refresh_coordinator"]) {
       assert.equal((await client.query("select has_function_privilege($1,'analytics.commit_scheduled_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz)','EXECUTE') as allowed", [role])).rows[0].allowed, false);
       assert.equal((await client.query("select has_function_privilege($1,'analytics.finish_scheduled_dataset_reconciliation(jsonb,text,bigint,uuid,text)','EXECUTE') as allowed", [role])).rows[0].allowed, false);
@@ -144,7 +168,7 @@ export async function reconciliationProbe(client, {ownerFixture}) {
     await client.query("rollback to savepoint scheduled_dataset_rehearsal");
     await client.query("release savepoint scheduled_dataset_rehearsal");
   }
-  console.log("EO05_SCHEDULED_DATASET_PROBE current_claim=true ready_stage=true verified_completion=true invalid_receipt_rejected=true duplicate_finish_rejected=true rollback_only=true");
+  console.log("EO05_SCHEDULED_DATASET_PROBE current_claim=true ready_stage=true verified_completion=true invalid_receipt_rejected=true duplicate_finish_rejected=true narrow_role=true manual_write_denied=true direct_table_denied=true rollback_only=true");
   console.log("EO05D_RECONCILIATION_PROBE", JSON.stringify({scenarios, rollbackOnly: true, synthetic: true, actualAEAD: true, physicalReadback: true,
     replacement3to5: true, emptyRemovesOldFacts: true, mismatchRollbackAndLedger: true, unknownStops: true, liveAcceptance: false}));
 }

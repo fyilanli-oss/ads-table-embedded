@@ -18,7 +18,10 @@ bağlar. Uygulama kesin makbuz ve fiziksel readback aldıktan sonra ayrı tamaml
 isteği gönderir. Veritabanı bu bağı ve rapor kanıtını kontrol kilidi altında tekrar
 doğrular, işi tamamlar ve rezervasyonu bırakır. Yazma cevabı kayıpsa tamamlama
 çağrılmaz. Tamamlama cevabı kayıpsa rezervasyon durumu belirsizdir ve çağrı
-tekrarlanmaz. Canlı çalıştırıcı yetkisi ve izleyici bağlantısı bekler.
+tekrarlanmaz. “Tamam onaylıyorum devam edelim Codex” ile iki zamanlanmış işleme
+ve bunların mevcut kaynak/makbuz okumalarına erişen ayrı `NOLOGIN` rolü hazırlanır.
+F01 sentetik işi bu rolle tamamlar; doğrudan tablo ve manuel yazma izinleri
+reddedilir. Canlı giriş, kimlik bilgisi, zamanlayıcı ve izleyici bağlantısı bekler.
 
 ## EO-05-E — Onaylı iş sağlığı ve tüketim ölçümleri, 10 Kasım 2026
 

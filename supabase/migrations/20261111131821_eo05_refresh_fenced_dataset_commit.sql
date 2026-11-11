@@ -82,4 +82,19 @@ revoke all on function analytics.commit_scheduled_dataset_reconciliation(jsonb,j
 revoke all on function analytics.finish_scheduled_dataset_reconciliation(jsonb,text,bigint,uuid,text)
   from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
 reset role;
+
+-- Dedicated refresh Dataset role. Provisioning a login is a separate operation.
+create role adstable_refresh_dataset_runner nologin noinherit nosuperuser
+  nocreatedb nocreaterole noreplication nobypassrls;
+set local role adstable_owner;
+grant usage on schema analytics,evidence to adstable_refresh_dataset_runner;
+grant execute on function evidence.assert_source_owner(jsonb),
+  evidence.read_source_receipt(jsonb,uuid,integer),
+  evidence.read_source_pages(jsonb,uuid,integer,bigint,integer),
+  evidence.read_dataset_source_context(jsonb,text,bigint,date,date),
+  analytics.inspect_dataset_reconciliation(jsonb,uuid),
+  analytics.commit_scheduled_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz),
+  analytics.finish_scheduled_dataset_reconciliation(jsonb,text,bigint,uuid,text)
+  to adstable_refresh_dataset_runner;
+reset role;
 commit;

@@ -1596,7 +1596,7 @@
       "contracts/eo-05-permission-explanation-design-v1.json": "ad4753b9ad4a6becd14764b7b33fb917f0cc491ad774cc1f1fe9053c5f189f35",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
       "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md": "c602fd4d7760e8f32c109e1f0456907c739c12906d71becf88476cad2007d6a1",
-      "docs/EXECUTION_PLAN.md": "59afb96bb97446ecc0b899f94b4006c90df5b8e556277fa0bd371971743524b1",
+      "docs/EXECUTION_PLAN.md": "ebade02d9793a3cb5ff904d6247769d18648154a6c38d301d6518cfb849456f3",
       "docs/OAUTH_FLOW_CONSTITUTION.md": "74d7a8f327a9558712c3ac8bb54a6633fff7a7e2045405d236d35f265d124b28",
       "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md": "49e253b08959faa9f0b2bf208ed5eb6d3c078a0ddf9097e667a9bf1483dc7350",
       "package.json": "a99953eda0b9270c5c7c282e8f517210f11759acd7dbbe25737824dc6288f730",
@@ -1822,8 +1822,8 @@
       "tools/f01-scoped-recovery.mjs": "766c68aa43b5b91735f18d75b64c74dc57bcf3d01eb377ce84b3e4062a937726",
       "tools/f08-privacy-index-probe.mjs": "2f790c86a62b6e51a2486e85f6ddcb2b3284349558b5e88dc566695aa17f28ca",
       "tools/queue-observer/Dockerfile": "4a5f244596f731a48f89eb529191324f0682ebdd5081be555402ee4e246c3b35",
-      "tools/queue-observer/README.md": "07825872ddfd49a8bbbcf88400d88d3a4c6739ad577be15d756a7ecf908f8c32",
-      "tools/queue-observer/service.mjs": "0768995ad1321a53e0a9ae80da35b6ed2fc57852ebcc7a589c30ac77d417d457",
+      "tools/queue-observer/README.md": "13fea457607d4b2dd0fd0722ae91c025b24b8ea3250f257399d29244559611b6",
+      "tools/queue-observer/service.mjs": "588e87f30606e681a44e6652877b17375913f79743018a64c2452d43aca77085",
       "tools/run-customer-source-worker.mjs": "748749d7c4c7b0b24dd12e481adf53dcc99c4f3d3c92a89b4b3eaf109f85419e",
       "tools/run-google-raw-capture.mjs": "6c7c06d59f913a6214ce83ea6260b0ef5420fcebbfce8d999c7968892269b24e",
       "tools/sql/eo05-google-dataset-source-role-extension.sql": "509f4b11cb0d93ddfacc9096e3b8d631bf9aa4ae89a4f5da296be7c7f6c719a1",
@@ -4356,6 +4356,50 @@
         "tools/queue-observer/README.md",
         "tools/queue-observer/service.mjs",
         "tools/sql/eo05-queue-observer-role.sql"
+      ],
+      "tests": [
+        "tests/queue-observer-canary.test.js",
+        "tests/observability.test.js"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "visual_acceptance": "not_applicable_no_UI_change",
+      "native_acceptance": false
+    },
+    {
+      "id": "eo05-queue-canary-synthetic-2026-11-11",
+      "date": "2026-11-11",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Onaylıyorum — explicit approval to add only a synthetic receipt option to the Cloud Run test service while keeping the Supabase reader separate."
+      },
+      "rationale": "Exercise delayed and recovered queue receipts without a new Supabase project. Bind test witness generation and activation, refuse mixed DB configuration, and identify synthetic results.",
+      "scope": {
+        "runtime_code": true,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "notification": false,
+        "deploy": false,
+        "merge": false
+      },
+      "changed_paths": [
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "docs/EXECUTION_PLAN.md",
+        "tools/queue-observer/README.md",
+        "tools/queue-observer/service.mjs"
+      ],
+      "artifact_paths": [
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json",
+        "docs/EXECUTION_PLAN.md",
+        "tests/queue-observer-canary.test.js",
+        "tools/queue-observer/README.md",
+        "tools/queue-observer/service.mjs"
       ],
       "tests": [
         "tests/queue-observer-canary.test.js",

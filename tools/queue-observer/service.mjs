@@ -8,6 +8,8 @@ const timestamp = /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,9})?Z$/;
 const unavailable = () => new Error("QUEUE_OBSERVER_UNAVAILABLE");
 const timeoutMs = 5_000;
 const retentionMs = 86_400_000;
+const minuteMs = 60_000;
+const syntheticRecoveryDelayMs = 5 * minuteMs;
 
 export function firestoreStores({project, database, scopeRef, stopAt, getToken, fetchFn = fetch}) {
   if (!/^[a-z][a-z0-9-]{4,28}[a-z0-9]$/.test(project) ||
@@ -84,20 +86,49 @@ export function queueCanaryTick({environment, database, getToken, fetchFn = fetc
   const stopAt = Date.parse(environment.ADSTABLE_QUEUE_OBSERVER_STOP_AT);
   const startAt = now();
   if (!Number.isFinite(stopAt) || stopAt - startAt > retentionMs / 2) throw unavailable();
+  const mode = environment.ADSTABLE_QUEUE_OBSERVER_MODE ?? "supabase";
+  const generation = environment.ADSTABLE_QUEUE_OBSERVER_SYNTHETIC_GENERATION;
+  const activatedAtMs = Date.parse(environment.ADSTABLE_QUEUE_OBSERVER_SYNTHETIC_START_AT);
+  let readReceipt;
+  if (mode === "synthetic") {
+    if (database || environment.ADSTABLE_QUEUE_OBSERVER_TEST_DATABASE_URL ||
+        environment.ADSTABLE_QUEUE_OBSERVER_DATABASE_CA || !uuid.test(generation) ||
+        !Number.isFinite(activatedAtMs) || stopAt - activatedAtMs < 7 * minuteMs) throw unavailable();
+    readReceipt = () => {
+      const elapsed = now() - activatedAtMs - syntheticRecoveryDelayMs;
+      if (elapsed < 0) return undefined;
+      const minute = Math.floor(elapsed / minuteMs);
+      return {environment: "test", generation, sequence: minute + 1, queueRevision: minute + 1,
+        checkedAtMs: activatedAtMs + syntheticRecoveryDelayMs + minute * minuteMs};
+    };
+  } else {
+    if (mode !== "supabase" || typeof database?.query !== "function" ||
+        generation !== undefined || environment.ADSTABLE_QUEUE_OBSERVER_SYNTHETIC_START_AT !== undefined) throw unavailable();
+    readReceipt = () => readQueueWitness({database, environment: "test"});
+  }
 
   return async () => {
     if (now() + 7 * timeoutMs >= stopAt) return {status: "canary_expired"};
+    if (mode === "synthetic" && now() < activatedAtMs) return {status: "canary_waiting"};
     const stores = firestoreStores({
       project: environment.GOOGLE_CLOUD_PROJECT, database: environment.ADSTABLE_FIRESTORE_DATABASE,
       scopeRef, stopAt, getToken, fetchFn,
     });
+    const witnessStore = mode === "synthetic" ? {
+      async read(options) {
+        const saved = await stores.witnessStore.read(options);
+        if (saved.state.generation !== generation || saved.state.activatedAtMs !== activatedAtMs) throw unavailable();
+        return saved;
+      },
+      commit: stores.witnessStore.commit,
+    } : stores.witnessStore;
     const result = await runGmailQueueCanary({
-      ...stores, environment, fetchFn, now, scopeRef, timeoutMs, retentionMs,
-      readReceipt: () => readQueueWitness({database, environment: "test"}),
+      ...stores, witnessStore, environment, fetchFn, now, scopeRef, timeoutMs, retentionMs, readReceipt,
     });
     return {status: result.status, durableWitness: result.durableWitness,
       receiptAccepted: result.accepted, primaryAvailable: result.primaryAvailable,
-      notification: result.notification, recoveryObserved: result.recoveryObserved};
+      notification: result.notification, recoveryObserved: result.recoveryObserved,
+      ...(mode === "synthetic" ? {receiptSource: "synthetic"} : {})};
   };
 }
 
@@ -110,7 +141,7 @@ async function metadataToken(signal) {
   return result.access_token;
 }
 
-async function start(environment) {
+async function openTestDatabase(environment) {
   const {Pool} = await import("pg");
   const url = new URL(environment.ADSTABLE_QUEUE_OBSERVER_TEST_DATABASE_URL);
   if (url.protocol !== "postgresql:" || url.search || url.hash ||
@@ -121,7 +152,13 @@ async function start(environment) {
     max: 1, connectionTimeoutMillis: 2_000, query_timeout: 2_000,
   });
   pool.on("error", () => console.error("QUEUE_OBSERVER_DATABASE_UNAVAILABLE"));
-  const tick = queueCanaryTick({environment, database: pool, getToken: metadataToken});
+  return pool;
+}
+
+async function start(environment) {
+  const database = environment.ADSTABLE_QUEUE_OBSERVER_MODE === "synthetic" ?
+    undefined : await openTestDatabase(environment);
+  const tick = queueCanaryTick({environment, database, getToken: metadataToken});
   createServer(async (request, response) => {
     if (request.method !== "POST" || request.url !== "/tick") {
       response.writeHead(404).end();
@@ -130,7 +167,8 @@ async function start(environment) {
     request.resume();
     try {
       const result = await tick();
-      const ok = result.status === "canary_expired" || (result.durableWitness && result.notification !== "unconfirmed");
+      const ok = result.status === "canary_expired" || result.status === "canary_waiting" ||
+        (result.durableWitness && result.notification !== "unconfirmed");
       console.log(JSON.stringify(result));
       response.writeHead(ok ? 200 : 503, {"content-type": "application/json"}).end(JSON.stringify(result));
     } catch {

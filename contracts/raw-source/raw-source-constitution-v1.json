@@ -864,14 +864,14 @@
       "contracts/eo-05c-maturity-v1.json": "81132731eda010e9e675b30c736a29c6f776a9ed0e236cb38ab3a791a8ce2eaf",
       "contracts/eo-05d-reconciliation-v1.json": "6575f6f48b6c3cfd71eb3cd20325aeffd73ba2c09090d1d87a67dd7dee3ab478",
       "contracts/eo-05e-observability-v1.json": "3c3ee6073f1141973d5c08830765b13cb37d5a5e77250d3d4671af1e51c6838f",
-      "contracts/oauth/oauth-flow-constitution-v1.json": "98f1bb00aeda22d01ff445a35b98370d19db31c5dee8226bece73ff3112a7532",
+      "contracts/oauth/oauth-flow-constitution-v1.json": "aa555339106370e64e068a6d4bb58523255b6b5da73f50208b113c273ce39e57",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
       "contracts/repository-delivery-workflow-v1.json": "f214c83b6ec65b11fb9b974ae52ebbdf6ae7183bc69bc835320ec25619af4b7f",
       "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json": "18a54cf7d47cddc4b2dcac24320a0f27f3d1112264a023acc33152a80ae745c6",
       "contracts/shopify/a6-eo-07-three-surface-ui-product-freeze-v1.json": "015e7946219fb40669514e965681358e1d32b53781447197f9493b47191ddcb1",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
       "contracts/shopify/shopify-progressive-permissions-release-candidate-v1.json": "204cc1deb525bc47cb14d769d30701cd716fe0db1a56b11be2d083314477adc7",
-      "docs/EXECUTION_PLAN.md": "59afb96bb97446ecc0b899f94b4006c90df5b8e556277fa0bd371971743524b1",
+      "docs/EXECUTION_PLAN.md": "ebade02d9793a3cb5ff904d6247769d18648154a6c38d301d6518cfb849456f3",
       "docs/RAW_SOURCE_CONSTITUTION.md": "8cb806f28d8b4c2ffa39c9d08ba9ff0b210af28fd726d28d3376966b79cf1422",
       "package.json": "a99953eda0b9270c5c7c282e8f517210f11759acd7dbbe25737824dc6288f730",
       "patches/@react-router__fs-routes@7.18.2.patch": "8db744b341f8258e57f41105d65d493974e6ba6253608c0bba031d46751437f5",
@@ -1188,7 +1188,7 @@
       "tests/permission-settings.test.js": "5a53c68e019cfd23042a0b29e7062deee495f8faafec5df24e0283f9e38e481f",
       "tests/permission-setup-selection.test.js": "c767fed7b7dc4c51fb3a96bba1a8d95162d2e6db873cac0a779401e5f745b132",
       "tests/pre23-oauth-route-dependency-compatibility.test.js": "65dc7a0fe2d1b16683ec8808991a7abb1dec7dcd2d08623c5c3ee706fac450f4",
-      "tests/queue-observer-canary.test.js": "08356e05aa2f82bbf466b42ca4ffa9a052974f79c8d5714d4d77b331381b9b84",
+      "tests/queue-observer-canary.test.js": "baa8ab2bf40c5e51470c7e12626c99061f3dc68e5f527a1efd9b01888ce8b51b",
       "tests/raw-fixture-calendar-permission.test.js": "352a2467a5f724d13e08dd873d3c397521bbd301be9e1f2cc9fbbedb2d54f9e6",
       "tests/raw-source-constitution.test.js": "d90035e96f45ae5daec7c2beb13db25d44ce0aa00a80864a9215b2b2f5cb4c02",
       "tests/report-retention.test.js": "123df4139af531c18ae40b06bac5a06d8784b8c3dd2d2bb8dc6763445effc02d",
@@ -1291,8 +1291,8 @@
       "tools/f01-scoped-recovery.mjs": "766c68aa43b5b91735f18d75b64c74dc57bcf3d01eb377ce84b3e4062a937726",
       "tools/f08-privacy-index-probe.mjs": "2f790c86a62b6e51a2486e85f6ddcb2b3284349558b5e88dc566695aa17f28ca",
       "tools/queue-observer/Dockerfile": "4a5f244596f731a48f89eb529191324f0682ebdd5081be555402ee4e246c3b35",
-      "tools/queue-observer/README.md": "07825872ddfd49a8bbbcf88400d88d3a4c6739ad577be15d756a7ecf908f8c32",
-      "tools/queue-observer/service.mjs": "0768995ad1321a53e0a9ae80da35b6ed2fc57852ebcc7a589c30ac77d417d457",
+      "tools/queue-observer/README.md": "13fea457607d4b2dd0fd0722ae91c025b24b8ea3250f257399d29244559611b6",
+      "tools/queue-observer/service.mjs": "588e87f30606e681a44e6652877b17375913f79743018a64c2452d43aca77085",
       "tools/run-customer-source-worker.mjs": "748749d7c4c7b0b24dd12e481adf53dcc99c4f3d3c92a89b4b3eaf109f85419e",
       "tools/run-google-raw-capture.mjs": "6c7c06d59f913a6214ce83ea6260b0ef5420fcebbfce8d999c7968892269b24e",
       "tools/sql/eo05-google-dataset-source-role-extension.sql": "509f4b11cb0d93ddfacc9096e3b8d631bf9aa4ae89a4f5da296be7c7f6c719a1",
@@ -2331,6 +2331,52 @@
         "tools/queue-observer/README.md",
         "tools/queue-observer/service.mjs",
         "tools/sql/eo05-queue-observer-role.sql"
+      ],
+      "tests": [
+        "tests/queue-observer-canary.test.js",
+        "tests/observability.test.js"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "visual_acceptance": "not_applicable_no_UI_change",
+      "native_acceptance": false
+    },
+    {
+      "id": "eo05-queue-canary-synthetic-2026-11-11",
+      "date": "2026-11-11",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Onaylıyorum — explicit approval to add only a synthetic receipt option to the Cloud Run test service while keeping the Supabase reader separate."
+      },
+      "rationale": "Exercise delayed and recovered queue receipts without a new Supabase project. Bind test witness generation and activation, refuse mixed DB configuration, and identify synthetic results.",
+      "scope": {
+        "runtime_code": true,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "notification": false,
+        "deploy": false,
+        "merge": false
+      },
+      "changed_paths": [
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json",
+        "docs/EXECUTION_PLAN.md",
+        "tests/queue-observer-canary.test.js",
+        "tools/queue-observer/README.md",
+        "tools/queue-observer/service.mjs"
+      ],
+      "artifact_paths": [
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json",
+        "docs/EXECUTION_PLAN.md",
+        "tests/queue-observer-canary.test.js",
+        "tools/queue-observer/README.md",
+        "tools/queue-observer/service.mjs"
       ],
       "tests": [
         "tests/queue-observer-canary.test.js",

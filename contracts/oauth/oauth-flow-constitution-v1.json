@@ -1494,7 +1494,7 @@
       "app/lib/refresh/meta-raw-request.server.js": "eb26d86a1f40682ff0797f66cd7b25cf45ae91422c2e94a1c966313d17a70458",
       "app/lib/refresh/meta-raw-server.server.js": "8da974d7829ad7c7c89d08e49fb6c6493fa1c649bd42ef287f1f0871673511ef",
       "app/lib/refresh/native-inventory.server.js": "5d67e8642f4032b90c154b12c43da8c92945d8b223c0494e1c82974739b8b5c6",
-      "app/lib/refresh/observability.server.js": "71ac2b6b40ac6d012e84710772e819cf74218ade77bbd260627e8e687c76e68d",
+      "app/lib/refresh/observability.server.js": "b0bf872acd3fa98c8a39a80b7e6fce8b203256af8cdc4ad86d3e9ab3476ccae9",
       "app/lib/refresh/pd-prewrite-chunk.server.js": "29b295aa601c9e687dd95636a4023a8613a5e34179189635c057b9e5df77a201",
       "app/lib/refresh/pd-source-reader.server.js": "4e041c3521f858b3b7df6830ee781ddd9ea25290eaf7ace1173c05e59581c471",
       "app/lib/refresh/preflight-bridge.server.js": "4a6453318bffbdd471b20977d5c192f3bce0025ed4152627fc173c4caf94ca27",
@@ -1595,7 +1595,7 @@
       "contracts/eo-05-permission-explanation-design-v1.json": "ad4753b9ad4a6becd14764b7b33fb917f0cc491ad774cc1f1fe9053c5f189f35",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
       "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md": "c602fd4d7760e8f32c109e1f0456907c739c12906d71becf88476cad2007d6a1",
-      "docs/EXECUTION_PLAN.md": "735fca40a3ab9fc1171729f5125a80d12fda69c570510f71498b1ca278c2636b",
+      "docs/EXECUTION_PLAN.md": "dbbbfa03b4d76c562353b5036fa321874edf46e0c426bd3ed2e5d39f0b41caa7",
       "docs/OAUTH_FLOW_CONSTITUTION.md": "74d7a8f327a9558712c3ac8bb54a6633fff7a7e2045405d236d35f265d124b28",
       "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md": "49e253b08959faa9f0b2bf208ed5eb6d3c078a0ddf9097e667a9bf1483dc7350",
       "package.json": "a99953eda0b9270c5c7c282e8f517210f11759acd7dbbe25737824dc6288f730",
@@ -4255,9 +4255,9 @@
       "date": "2026-11-11",
       "owner_approval": {
         "explicit": true,
-        "source": "Tamam başlayalım Codex — refresh-to-report receipt rehearsal; Harika devam edelim Codex — atomic claim and Dataset write; Tamam devam edelim Codex onaylıyorum — completion after verified receipt; Tamam onaylıyorum devam edelim Codex — narrow runner authority; Onaylıyorum devam edelim Codex — prepare its server connection and scheduler integration in isolated code and tests. Same draft PR; no live credentials or grants."
+        "source": "Tamam başlayalım Codex — refresh-to-report receipt rehearsal; Harika devam edelim Codex — atomic claim and Dataset write; Tamam devam edelim Codex onaylıyorum — completion after verified receipt; Tamam onaylıyorum devam edelim Codex — narrow runner authority; Onaylıyorum devam edelim Codex — isolated server connection/scheduler integration, and subsequent same approval for independent observer and test notification preparation. Live channel/recipient/store still require selection."
       },
-      "rationale": "Bind scheduled source and receipt to current job and release its reservation only after verified completion. Prepare dedicated NOLOGIN role, exact seven RPC TLS client and trusted scheduler composition with bounded one-client transactions and fail-closed role profile. Prove the transport against actual PostgreSQL in F01. No manual writer, direct table, FX write, new HTTP dispatch, OAuth changes or live activation.",
+      "rationale": "Bind scheduled source and receipt to current job and release its reservation only after verified completion. Prepare dedicated NOLOGIN role and exact seven-RPC TLS client. Connect the independent queue observer to fixed receipt reader and injected durable witness/incident and notification adapters with bounded IO. Reserve a single notification by CAS before sending; no duplicate send on unknown outcomes. Synthetic rehearsal only; no vendor, credentials, production route, OAuth or live activation.",
       "scope": {
         "runtime_code": true,
         "live_provider": false,
@@ -4271,6 +4271,7 @@
         "app/lib/database/dataset-postgres.server.js",
         "app/lib/database/dataset-reconciliation.server.js",
         "app/lib/database/dataset-rpc.server.js",
+        "app/lib/refresh/observability.server.js",
         "app/lib/refresh/preflight-bridge.server.js",
         "app/lib/refresh/scheduled-queue-check.server.js",
         "contracts/oauth/oauth-flow-constitution-v1.json",
@@ -4282,6 +4283,7 @@
         "app/lib/database/dataset-postgres.server.js",
         "app/lib/database/dataset-reconciliation.server.js",
         "app/lib/database/dataset-rpc.server.js",
+        "app/lib/refresh/observability.server.js",
         "app/lib/refresh/preflight-bridge.server.js",
         "app/lib/refresh/scheduled-queue-check.server.js",
         "contracts/a6-tech-01-f01-migration-lineage-v1.json",
@@ -4291,6 +4293,7 @@
         "docs/EXECUTION_PLAN.md",
         "supabase/migrations/20261111131821_eo05_refresh_fenced_dataset_commit.sql",
         "tests/dataset-reconciliation.test.js",
+        "tests/observability.test.js",
         "tools/eo05d-reconciliation-probe.mjs"
       ],
       "tests": [
@@ -4299,6 +4302,8 @@
         "tests/eo-01b-negative-controls.test.js",
         "tests/eo-05a-refresh-scheduled-queue-check.test.js",
         "tests/eo-05a-refresh-preflight-bridge.test.js",
+        "tests/observability.test.js",
+        "tests/eo-05-refresh-alarm-matrix.test.js",
         "tools/eo05d-reconciliation-probe.mjs"
       ],
       "acceptance_required": [

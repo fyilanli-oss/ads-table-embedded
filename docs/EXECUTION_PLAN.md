@@ -27,7 +27,12 @@ kontrol eder, kalan süreyi ve tek bağlantı sınırını uygular. İç zamanla
 planını ve kaynak girdilerini sağlar; Dataset bağlantısı yalnız devir aşamasında
 açılır ve kapatılır. Bu dar rol mevcut kur yazım fonksiyonuna erişmez; zamanlanmış
 kur bağlantısı ayrı tasarım kapısında kalır. Canlı giriş, kimlik bilgisi,
-zamanlayıcı kaydı ve izleyici bağlantısı bekler.
+zamanlayıcı kaydı bekler. Bir sonraki “Onaylıyorum devam edelim Codex” onayıyla
+bağımsız kuyruk izleyicisinin çağrı sınırları ve bildirim rezervasyonu bağlanır.
+İzleyici ana okuma zaman aşımında önceki kalıcı makbuzu kullanır. 120 saniyeyi
+aşan sessizlikte bildirimden önce bağımsız depoda CAS ile tek gönderim rezerve
+edilir. Belirsiz rezervasyon gönderim başlatmaz; belirsiz gönderim tekrar edilmez.
+Alıcı kanalı, kalıcı depo ve gerçek teslim provası için canlı bağlantılar bekler.
 
 ## EO-05-E — Onaylı iş sağlığı ve tüketim ölçümleri, 10 Kasım 2026
 

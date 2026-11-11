@@ -678,7 +678,7 @@
       "app/lib/refresh/meta-raw-request.server.js": "eb26d86a1f40682ff0797f66cd7b25cf45ae91422c2e94a1c966313d17a70458",
       "app/lib/refresh/meta-raw-server.server.js": "8da974d7829ad7c7c89d08e49fb6c6493fa1c649bd42ef287f1f0871673511ef",
       "app/lib/refresh/native-inventory.server.js": "5d67e8642f4032b90c154b12c43da8c92945d8b223c0494e1c82974739b8b5c6",
-      "app/lib/refresh/observability.server.js": "71ac2b6b40ac6d012e84710772e819cf74218ade77bbd260627e8e687c76e68d",
+      "app/lib/refresh/observability.server.js": "b0bf872acd3fa98c8a39a80b7e6fce8b203256af8cdc4ad86d3e9ab3476ccae9",
       "app/lib/refresh/pd-prewrite-chunk.server.js": "29b295aa601c9e687dd95636a4023a8613a5e34179189635c057b9e5df77a201",
       "app/lib/refresh/pd-source-reader.server.js": "4e041c3521f858b3b7df6830ee781ddd9ea25290eaf7ace1173c05e59581c471",
       "app/lib/refresh/preflight-bridge.server.js": "4a6453318bffbdd471b20977d5c192f3bce0025ed4152627fc173c4caf94ca27",
@@ -863,14 +863,14 @@
       "contracts/eo-05c-maturity-v1.json": "81132731eda010e9e675b30c736a29c6f776a9ed0e236cb38ab3a791a8ce2eaf",
       "contracts/eo-05d-reconciliation-v1.json": "6575f6f48b6c3cfd71eb3cd20325aeffd73ba2c09090d1d87a67dd7dee3ab478",
       "contracts/eo-05e-observability-v1.json": "3c3ee6073f1141973d5c08830765b13cb37d5a5e77250d3d4671af1e51c6838f",
-      "contracts/oauth/oauth-flow-constitution-v1.json": "cb99aa09dd3ea796c122a0d9633f49cb8464b31b3908083be7f47f52bab6cf5d",
+      "contracts/oauth/oauth-flow-constitution-v1.json": "a9fd81975eba4e9068a5eb7dbc45c6f5e70e5a7870f6181eff0a5ff44deee045",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
       "contracts/repository-delivery-workflow-v1.json": "f214c83b6ec65b11fb9b974ae52ebbdf6ae7183bc69bc835320ec25619af4b7f",
       "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json": "18a54cf7d47cddc4b2dcac24320a0f27f3d1112264a023acc33152a80ae745c6",
       "contracts/shopify/a6-eo-07-three-surface-ui-product-freeze-v1.json": "015e7946219fb40669514e965681358e1d32b53781447197f9493b47191ddcb1",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
       "contracts/shopify/shopify-progressive-permissions-release-candidate-v1.json": "204cc1deb525bc47cb14d769d30701cd716fe0db1a56b11be2d083314477adc7",
-      "docs/EXECUTION_PLAN.md": "735fca40a3ab9fc1171729f5125a80d12fda69c570510f71498b1ca278c2636b",
+      "docs/EXECUTION_PLAN.md": "dbbbfa03b4d76c562353b5036fa321874edf46e0c426bd3ed2e5d39f0b41caa7",
       "docs/RAW_SOURCE_CONSTITUTION.md": "8cb806f28d8b4c2ffa39c9d08ba9ff0b210af28fd726d28d3376966b79cf1422",
       "package.json": "a99953eda0b9270c5c7c282e8f517210f11759acd7dbbe25737824dc6288f730",
       "patches/@react-router__fs-routes@7.18.2.patch": "8db744b341f8258e57f41105d65d493974e6ba6253608c0bba031d46751437f5",
@@ -1173,7 +1173,7 @@
       "tests/meta-source-links.test.js": "3c0688c920641e3fc1112bc29300b386d152f63847500df96a6f613bce92bd87",
       "tests/oauth-flow-constitution.test.js": "fce1b07e9546637ca5725c85d622c311c2d55ae950fd16542488325d7efaa4ab",
       "tests/oauth-identity-scope-binding.test.js": "5279059d990df63aed078f1c98401c3eacebd517247e04c2e3cf4065c2583455",
-      "tests/observability.test.js": "9e48944816e2fe7d3e6e9a72e8f689c4d6a3335c08b21dade3ece7ce0e5e02a3",
+      "tests/observability.test.js": "871a3aa831b2f4089c27f8d346e70c4f2f0bcb9f4536b186e689fa8eae4c36cb",
       "tests/pd-canonical-bridge.test.js": "d5081b53893a101e57b1f8b753aae769a30143c2dcb876fafe286a51cd2a4a38",
       "tests/pd-composition-design.test.js": "ce8943624c05ced93496b113abcfec73d1720b219d60eda005ea1fd1dc672add",
       "tests/pd-composition-scope.test.js": "0327a5ccd468d32d4a6f77c128e3cd3dd2c5f351a04bb19949bfbaa3fd215a07",
@@ -2222,9 +2222,9 @@
       "date": "2026-11-11",
       "owner_approval": {
         "explicit": true,
-        "source": "Tamam başlayalım Codex — refresh-to-report receipt rehearsal; Harika devam edelim Codex — atomic claim and Dataset write; Tamam devam edelim Codex onaylıyorum — completion after verified receipt; Tamam onaylıyorum devam edelim Codex — narrow runner authority; Onaylıyorum devam edelim Codex — prepare its server connection and scheduler integration in isolated code and tests. Same draft PR; no live credentials or grants."
+        "source": "Tamam başlayalım Codex — refresh-to-report receipt rehearsal; Harika devam edelim Codex — atomic claim and Dataset write; Tamam devam edelim Codex onaylıyorum — completion after verified receipt; Tamam onaylıyorum devam edelim Codex — narrow runner authority; Onaylıyorum devam edelim Codex — isolated server connection/scheduler integration, and subsequent same approval for independent observer and test notification preparation. Live channel/recipient/store still require selection."
       },
-      "rationale": "Bind scheduled source and receipt to current job and release its reservation only after verified completion. Prepare dedicated NOLOGIN role, exact seven RPC TLS client and trusted scheduler composition with bounded one-client transactions and fail-closed role profile. Prove the transport against actual PostgreSQL in F01. No manual writer, direct table, FX write, new HTTP dispatch, OAuth changes or live activation.",
+      "rationale": "Bind scheduled source and receipt to current job and release its reservation only after verified completion. Prepare dedicated NOLOGIN role and exact seven-RPC TLS client. Connect the independent queue observer to fixed receipt reader and injected durable witness/incident and notification adapters with bounded IO. Reserve a single notification by CAS before sending; no duplicate send on unknown outcomes. Synthetic rehearsal only; no vendor, credentials, production route, OAuth or live activation.",
       "scope": {
         "runtime_code": true,
         "live_provider": false,
@@ -2238,6 +2238,7 @@
         "app/lib/database/dataset-postgres.server.js",
         "app/lib/database/dataset-reconciliation.server.js",
         "app/lib/database/dataset-rpc.server.js",
+        "app/lib/refresh/observability.server.js",
         "app/lib/refresh/preflight-bridge.server.js",
         "app/lib/refresh/scheduled-queue-check.server.js",
         "contracts/a6-tech-01-f01-migration-lineage-v1.json",
@@ -2247,12 +2248,14 @@
         "docs/EXECUTION_PLAN.md",
         "supabase/migrations/20261111131821_eo05_refresh_fenced_dataset_commit.sql",
         "tests/dataset-reconciliation.test.js",
+        "tests/observability.test.js",
         "tools/eo05d-reconciliation-probe.mjs"
       ],
       "artifact_paths": [
         "app/lib/database/dataset-postgres.server.js",
         "app/lib/database/dataset-reconciliation.server.js",
         "app/lib/database/dataset-rpc.server.js",
+        "app/lib/refresh/observability.server.js",
         "app/lib/refresh/preflight-bridge.server.js",
         "app/lib/refresh/scheduled-queue-check.server.js",
         "contracts/a6-tech-01-f01-migration-lineage-v1.json",
@@ -2262,6 +2265,7 @@
         "docs/EXECUTION_PLAN.md",
         "supabase/migrations/20261111131821_eo05_refresh_fenced_dataset_commit.sql",
         "tests/dataset-reconciliation.test.js",
+        "tests/observability.test.js",
         "tools/eo05d-reconciliation-probe.mjs"
       ],
       "tests": [
@@ -2270,6 +2274,8 @@
         "tests/eo-01b-negative-controls.test.js",
         "tests/eo-05a-refresh-scheduled-queue-check.test.js",
         "tests/eo-05a-refresh-preflight-bridge.test.js",
+        "tests/observability.test.js",
+        "tests/eo-05-refresh-alarm-matrix.test.js",
         "tools/eo05d-reconciliation-probe.mjs"
       ],
       "acceptance_required": [

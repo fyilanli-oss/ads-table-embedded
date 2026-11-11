@@ -1,3 +1,12 @@
+## EO-05 — Bağımsız kuyruk izleme ve Gmail denemesi, 11 Kasım 2026
+
+Yerel Gmail denemesi dev@adstable.app gelen kutusunda doğrulandı. Owner onayıyla
+tek PR'da izole Supabase makbuz rolü, Cloud Run test servisi, Firestore koşullu
+alarm kaydı ve dakikalık zamanlayıcı tanımı hazırlanır. 120 saniye aşımı, tek
+gönderim ve yeni makbuzla toparlanma izole test kapsamıdır. Canlı kurulum ve
+gerçek kuyruk bildirim rotası açık kalır.
+[Kısa kurulum ve kabul akışı](../tools/queue-observer/README.md).
+
 ## EO-05 — Refresh işinden Dataset makbuzuna izole bağlantı, 11 Kasım 2026
 
 Fırat, kuyruktan iş başlatma ve sentetik bir işi rapor makbuzuna kadar sınama

@@ -1596,7 +1596,7 @@
       "contracts/eo-05-permission-explanation-design-v1.json": "ad4753b9ad4a6becd14764b7b33fb917f0cc491ad774cc1f1fe9053c5f189f35",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
       "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md": "c602fd4d7760e8f32c109e1f0456907c739c12906d71becf88476cad2007d6a1",
-      "docs/EXECUTION_PLAN.md": "4fc8749c5ed939a70042dd48ca0d308c7cc02d53c9fcda4762dc81d566c823cc",
+      "docs/EXECUTION_PLAN.md": "59afb96bb97446ecc0b899f94b4006c90df5b8e556277fa0bd371971743524b1",
       "docs/OAUTH_FLOW_CONSTITUTION.md": "74d7a8f327a9558712c3ac8bb54a6633fff7a7e2045405d236d35f265d124b28",
       "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md": "49e253b08959faa9f0b2bf208ed5eb6d3c078a0ddf9097e667a9bf1483dc7350",
       "package.json": "a99953eda0b9270c5c7c282e8f517210f11759acd7dbbe25737824dc6288f730",
@@ -1821,6 +1821,9 @@
       "tools/f01-schema-inventory.sql": "2cc26575e74ca29f61adaf26e79981b6c5e67c5598962cc102f903aea0f18a4d",
       "tools/f01-scoped-recovery.mjs": "766c68aa43b5b91735f18d75b64c74dc57bcf3d01eb377ce84b3e4062a937726",
       "tools/f08-privacy-index-probe.mjs": "2f790c86a62b6e51a2486e85f6ddcb2b3284349558b5e88dc566695aa17f28ca",
+      "tools/queue-observer/Dockerfile": "4a5f244596f731a48f89eb529191324f0682ebdd5081be555402ee4e246c3b35",
+      "tools/queue-observer/README.md": "07825872ddfd49a8bbbcf88400d88d3a4c6739ad577be15d756a7ecf908f8c32",
+      "tools/queue-observer/service.mjs": "0768995ad1321a53e0a9ae80da35b6ed2fc57852ebcc7a589c30ac77d417d457",
       "tools/run-customer-source-worker.mjs": "748749d7c4c7b0b24dd12e481adf53dcc99c4f3d3c92a89b4b3eaf109f85419e",
       "tools/run-google-raw-capture.mjs": "6c7c06d59f913a6214ce83ea6260b0ef5420fcebbfce8d999c7968892269b24e",
       "tools/sql/eo05-google-dataset-source-role-extension.sql": "509f4b11cb0d93ddfacc9096e3b8d631bf9aa4ae89a4f5da296be7c7f6c719a1",
@@ -1828,6 +1831,7 @@
       "tools/sql/eo05-klaviyo-source-role-install.sql": "c2749c46c4c5026d2eb3c55e16d9e87d60a7d1cbe74bb16f0bd8ff783b6a156f",
       "tools/sql/eo05-meta-source-role-install.sql": "748c28dc0d42b9efb48fddf3e2c0ddebb4daecb410202aba522b025680a50071",
       "tools/sql/eo05-privacy-source-role-install.sql": "a2e8a8cc6ce37be9d2c84e34b3a1a8614b194c348c6af72e7385d5c5bafdf6f5",
+      "tools/sql/eo05-queue-observer-role.sql": "4b6d282917d5595fe9ae63eedb1faa220540a056d1b58b3a5cbd46c08857fa35",
       "tools/sql/eo05b-dataset-role-extension.sql": "3cf368e3c381e6cd8365104a1465a035d00ceb280bea0a98c699c823ef960813",
       "tools/sql/eo05d-reconciliation-role-extension.sql": "4b6f01ae4551dc4774f05dee08dbb840e3578b413adc0ae86d827bf9f5fed1c4"
     }
@@ -4308,6 +4312,54 @@
         "tests/observability.test.js",
         "tests/eo-05-refresh-alarm-matrix.test.js",
         "tools/eo05d-reconciliation-probe.mjs"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ],
+      "visual_acceptance": "not_applicable_no_UI_change",
+      "native_acceptance": false
+    },
+    {
+      "id": "eo05-queue-observer-canary-2026-11-11",
+      "date": "2026-11-11",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Onaylıyorum Codex — after the exact three-part queue-only scope: Supabase witness-only role, Cloud Run and Firestore one-send observer, and minute scheduler definition with isolated delay/single notification/recovery test in one PR."
+      },
+      "rationale": "Connect the existing test-only Gmail AL01 canary and witness reader to an isolated Cloud Run service with single-attempt Firestore preconditions and a time-limited runbook. No merchant OAuth, source processing or live activation.",
+      "scope": {
+        "runtime_code": true,
+        "live_provider": false,
+        "live_database": false,
+        "config": false,
+        "notification": false,
+        "deploy": false,
+        "merge": false
+      },
+      "changed_paths": [
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "docs/EXECUTION_PLAN.md",
+        "tools/queue-observer/Dockerfile",
+        "tools/queue-observer/README.md",
+        "tools/queue-observer/service.mjs",
+        "tools/sql/eo05-queue-observer-role.sql"
+      ],
+      "artifact_paths": [
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json",
+        "docs/EXECUTION_PLAN.md",
+        "tests/queue-observer-canary.test.js",
+        "tools/queue-observer/Dockerfile",
+        "tools/queue-observer/README.md",
+        "tools/queue-observer/service.mjs",
+        "tools/sql/eo05-queue-observer-role.sql"
+      ],
+      "tests": [
+        "tests/queue-observer-canary.test.js",
+        "tests/observability.test.js"
       ],
       "acceptance_required": [
         "required_CI",

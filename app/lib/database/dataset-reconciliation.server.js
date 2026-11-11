@@ -8,6 +8,8 @@ import {projectStoredMetaDataset} from "../providers/stored-meta-dataset.server.
 import {projectStoredKlaviyoDataset} from "../providers/stored-klaviyo-dataset.server.js";
 import {applyStoredDatasetFx} from "./dataset-fx-resolver.server.js";
 import {maturityInstant, maturityDate, freezeMaturity} from "../refresh/maturity-policy.server.js";
+import {SCHEDULED_DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL} from "./dataset-rpc.server.js";
+export {SCHEDULED_DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL};
 
 export const DATASET_RECONCILIATION_VERSION = "eo05d-reconciliation-v1";
 export const DATASET_RECONCILE_SQL = "select analytics.commit_dataset_reconciliation($1::jsonb,$2::jsonb,$3::jsonb,$4::timestamptz) as result";
@@ -33,15 +35,20 @@ export function canonicalDatasetEventTime(value) {
 /** Fixed private projection of actual AEAD-verified source pages only. The SQL
  * transaction revalidates full coverage, CAS, read order, rows and exact hashes
  * before atomically issuing the real source-consumption/day checkpoint receipt.
- * It neither dispatches native HTTP nor completes/releases a scheduler job. */
+ * The scheduled path completes its job only after the known write and readback. */
 export async function reconcileStoredDatasetSources({database, cipher, owner, batches, limits, expectedRevision,
-  operationId = randomUUID(), fxResolver, now = Date.now, signal}) {
+  operationId = randomUUID(), fxResolver, now = Date.now, signal, admittedScope, scheduled = false}) {
   batches = structuredClone(batches); limits = structuredClone(limits);
+  admittedScope = structuredClone(admittedScope);
   const bound = sourceStoreOwner(owner);
-  if (!uuid(operationId) || !Number.isSafeInteger(expectedRevision) || expectedRevision < 0 || expectedRevision > 999999999) fail("INPUT_INVALID");
+  if (!uuid(operationId) || !Number.isSafeInteger(expectedRevision) || expectedRevision < 0 || expectedRevision > 999999999
+    || typeof scheduled !== "boolean" || (scheduled && !admittedScope)) fail("INPUT_INVALID");
   const stop = () => {if (signal?.aborted || now() >= limits.deadlineAt) fail("STOPPED");};
   stop();
   const source = await readStoredDatasetSources({database, cipher, owner: bound, batches, limits, now, signal});
+  if (admittedScope !== undefined && (source.scope.jobId !== admittedScope?.jobId
+    || source.scope.fence !== admittedScope.fence || source.scope.window.from !== admittedScope.from
+    || source.scope.window.to !== admittedScope.to)) fail("ADMITTED_SCOPE_MISMATCH");
   const projection = projectors[bound.provider](source);
   for (const {row} of projection.rows) if (row.occurred_at !== null && row.occurred_at !== undefined) row.occurred_at = canonicalDatasetEventTime(row.occurred_at);
   const configuration = source.datasets.filter(d => d.dataset === "configuration").flatMap(d => d.pages.map(p => p.ref));
@@ -68,7 +75,8 @@ export async function reconcileStoredDatasetSources({database, cipher, owner, ba
   const requestDigest = sourcePayloadHash({write, context});
   stop(); let receipt;
   try {
-    receipt = (await database.query(DATASET_RECONCILE_SQL, [JSON.stringify(bound), JSON.stringify(write), JSON.stringify(context), new Date(limits.deadlineAt).toISOString()])).rows?.[0]?.result;
+    const sql = scheduled ? SCHEDULED_DATASET_RECONCILE_SQL : DATASET_RECONCILE_SQL;
+    receipt = (await database.query(sql, [JSON.stringify(bound), JSON.stringify(write), JSON.stringify(context), new Date(limits.deadlineAt).toISOString()])).rows?.[0]?.result;
     if (receipt?.status === "mismatch" && receipt.operationId === operationId && receipt.requestDigest === requestDigest
       && receipt.comparison === "mismatch" && receipt.consumerReceipt === false && receipt.checkpointAdvanced === false) return freezeMaturity({...receipt, rowsStored: 0, sourceVerified: true, publishable: false, authorizesActivation: false});
     if (!receipt || receipt.status !== "consumed" || receipt.operationId !== operationId || receipt.requestDigest !== requestDigest
@@ -78,7 +86,18 @@ export async function reconcileStoredDatasetSources({database, cipher, owner, ba
   stop();
   const readback = await inspectDatasetReconciliation({database, owner: bound, operationId});
   if (canonicalSourceJson(readback) !== canonicalSourceJson(receipt)) fail("READBACK_UNCONFIRMED");
+  if (scheduled) {
+    stop();
+    if (typeof receipt.digest !== "string" || !/^[0-9a-f]{64}$/.test(receipt.digest)) fail("READBACK_UNCONFIRMED");
+    let finished;
+    try {
+      finished = (await database.query(SCHEDULED_DATASET_FINISH_SQL, [JSON.stringify(bound), admittedScope.jobId,
+        admittedScope.fence, operationId, receipt.digest])).rows?.[0]?.result;
+    } catch {fail("FINISH_UNCONFIRMED");}
+    if (finished !== true) fail("FINISH_UNCONFIRMED");
+  }
   const result = freezeMaturity({...receipt, sourceVerified: true, rowsStored: receipt.rowCount, reportValuesChanged: receipt.changes?.length > 0,
+    ...(scheduled ? {jobCompleted: true} : {}),
     hourlyRefreshActivated: false, authorizesActivation: false, publishable: false});
   confirmed.set(result, bound); return result;
 }

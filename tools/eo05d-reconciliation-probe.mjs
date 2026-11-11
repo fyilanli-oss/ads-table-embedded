@@ -2,15 +2,17 @@ import assert from "node:assert/strict";
 import {randomUUID} from "node:crypto";
 import {storedBindingFixture} from "./eo05b-source-dataset-binding-probe.mjs";
 import {datasetServerProbe} from "./eo05b-dataset-server-probe.mjs";
-import {reconcileStoredDatasetSources, inspectDatasetReconciliation, DATASET_RECONCILE_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
+import {reconcileStoredDatasetSources, inspectDatasetReconciliation, DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
 import {storeMaturityConfiguration, recordMaturityDecision, inspectMaturityDecision} from "../app/lib/database/maturity-store.server.js";
 import {maturityObservationFixture} from "../tests/fixtures/maturity-fixture.js";
+import {createScheduledDatasetPostgresClient} from "../app/lib/database/dataset-postgres.server.js";
 
 async function rejected(client, action) {
   await client.query("savepoint reconciliation_expected_failure"); let error;
   try {await action();} catch (e) {error = e;}
   await client.query("rollback to savepoint reconciliation_expected_failure");await client.query("release savepoint reconciliation_expected_failure");
   assert.ok(error, "invalid reconciliation must fail");
+  return error;
 }
 
 /** Existing F01 rollback transaction. Owners, native pages, clocks and keys below
@@ -32,7 +34,11 @@ export async function reconciliationProbe(client, {ownerFixture}) {
   for (const provider of ["google_ads", "meta", "klaviyo"]) {
     const owner = await ownerFixture(client, provider), nonempty = provider !== "meta";
     const first = await source(owner, {nonempty, googlePurchase: "3"});
-    const initial = await reconcileStoredDatasetSources(first);
+    const admittedScope = {jobId: "synthetic-binding-job", fence: "1", from: "2026-11-01", to: "2026-11-01"};
+    await assert.rejects(reconcileStoredDatasetSources({...first, admittedScope: {...admittedScope, fence: "2"}}), /ADMITTED_SCOPE_MISMATCH/);
+    await rejected(client, () => reconcileStoredDatasetSources({...first, admittedScope, scheduled: true}));
+    assert.equal((await client.query("select count(*)::int n from evidence.source_batches where authority=$1::jsonb and handoff_state='consumed'", [JSON.stringify(owner)])).rows[0].n, 0);
+    const initial = await reconcileStoredDatasetSources({...first, admittedScope});
     assert.equal(initial.revision, 1);assert.equal(initial.consumerReceipt, true);scenarios++;
     assert.equal((await client.query("select count(*)::int n from evidence.source_batches where authority=$1::jsonb and handoff_state='consumed'", [JSON.stringify(owner)])).rows[0].n, first.batches.length);
     await rejected(client, () => reconcileStoredDatasetSources(first));scenarios++;
@@ -94,6 +100,99 @@ export async function reconciliationProbe(client, {ownerFixture}) {
     assert.equal((await client.query("select has_function_privilege($1,'analytics.commit_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz)','EXECUTE') allowed", [role])).rows[0].allowed, false);scenarios++;
   }
   await datasetServerProbe(client, {ownerFixture, reconciliation: true});
+  await client.query("savepoint scheduled_dataset_rehearsal");
+  try {
+    const scheduledRole = "adstable_refresh_dataset_runner";
+    // The fixture connects through the owner session. Allow an explicit role
+    // switch only inside this savepoint, without granting inherited access.
+    await client.query("set local role postgres");
+    await client.query("grant adstable_refresh_dataset_runner to adstable_owner with inherit false,set true,admin false");
+    await client.query("set local role adstable_owner");
+    const flags = (await client.query(`select rolcanlogin,rolinherit,rolsuper,rolcreatedb,rolcreaterole,rolreplication,rolbypassrls
+      from pg_roles where rolname=$1`, [scheduledRole])).rows[0];
+    assert.ok(flags && Object.values(flags).every(value => value === false));
+    const asScheduledRunner = async (sql, parameters) => {
+      await client.query("set local role " + scheduledRole);
+      try {
+        assert.equal((await client.query("select current_user as role")).rows[0].role, scheduledRole);
+        return await database.query(sql, parameters);
+      } finally {
+        // A failed statement leaves this fixture's savepoint aborted. The caller
+        // rolls it back before restoring the role in that case.
+        try {await client.query("set local role adstable_owner");} catch {}
+      }
+    };
+    const scheduledOwner = await ownerFixture(client, "google_ads");
+    const args = [scheduledOwner.workspaceId, scheduledOwner.generation, scheduledOwner.provider, scheduledOwner.accountId];
+    await client.query("update integrations.provider_connections set connected_at='2026-10-31' where id=$1", [scheduledOwner.connectionId]);
+    await client.query("update integrations.reporting_account_bindings set effective_from='2026-10-31' where connection_id=$1", [scheduledOwner.connectionId]);
+    const input = await source(scheduledOwner);
+    const fence = (await client.query("select (coalesce(max(fence),0)+1)::text as n from operations.refresh_runs")).rows[0].n;
+    const job = "synthetic-binding-job";
+    await client.query(`update operations.refresh_work_bindings set fence=$5,deadline_at_ms=$6,
+      source=operations.refresh_preflight_source($1,$2,$3,$4)
+      where workspace_id=$1 and install_generation=$2 and provider=$3 and account_id=$4`, [...args,fence,input.limits.deadlineAt]);
+    for (const batch of input.batches) {
+      await client.query("update evidence.source_batches set manifest=jsonb_set(manifest,'{googleDatasetRead,fence}',to_jsonb($3::text)) where authority=$1::jsonb and attempt_id=$2::uuid",
+        [JSON.stringify(scheduledOwner),batch.attemptId,fence]);
+    }
+    await client.query(`insert into operations.refresh_runs(workspace_id,install_generation,provider,account_id,job_id,fence,cost,status)
+      values ($1,$2,$3,$4,$5,$6,'{"requests":2,"rows":1000,"bytes":1000000,"connections":1,"dbWrites":5}','running')`, [...args,job,fence]);
+    const options = {...input, scheduled: true, admittedScope: {jobId: job, fence, from: "2026-11-01", to: "2026-11-01"}};
+    await rejected(client, () => reconcileStoredDatasetSources({...options,database:{query:asScheduledRunner}}));
+    await client.query(`insert into operations.refresh_work_progress(workspace_id,install_generation,provider,account_id,job_id,fence,stage,from_date,to_date)
+      values ($1,$2,$3,$4,$5,$6,'ready_for_dataset','2026-11-01','2026-11-01')`, [...args,job,fence]);
+    const jobStatus = async () => (await client.query("select status from operations.refresh_runs where fence=$1", [fence])).rows[0].status;
+    let transportSequence = 0;
+    const transport = createScheduledDatasetPostgresClient({deadlineAt: input.limits.deadlineAt,
+      environment: {ADSTABLE_REFRESH_DATASET_DATABASE_URL: "postgresql://" + scheduledRole + ".podpwkrpmjiksskxhwsu:" + "x".repeat(32) + "@aws-1-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require",
+        ADSTABLE_REFRESH_DATASET_DB_TIMEOUT_MS: "5000"}, poolFactory: () => ({on() {}, async end() {}, async connect() {
+        const savepoint = "scheduled_transport_" + (++transportSequence);
+        return {release() {}, async query(sql, parameters) {
+          if (sql === "begin") return client.query("savepoint " + savepoint);
+          if (sql === "commit") return client.query("release savepoint " + savepoint);
+          if (sql === "rollback") {
+            await client.query("rollback to savepoint " + savepoint);
+            return client.query("release savepoint " + savepoint);
+          }
+          if (sql.startsWith("select pg_catalog.set_config")) return client.query(sql, parameters);
+          return asScheduledRunner(sql, parameters);
+        }};
+      }})});
+    let finishArgs;
+    const completingDatabase = {async query(sql, parameters) {
+      if (sql === SCHEDULED_DATASET_FINISH_SQL) {
+        finishArgs = parameters;
+        assert.equal(await jobStatus(), "running");
+        assert.equal((await asScheduledRunner(sql,[...parameters.slice(0,4),"f".repeat(64)])).rows[0].result,false);
+        assert.equal(await jobStatus(), "running");
+      }
+      return transport.query(sql,parameters);
+    }};
+    let completed;
+    try { completed = await reconcileStoredDatasetSources({...options,database:completingDatabase}); }
+    finally { await transport.close(); }
+    assert.equal(completed.consumerReceipt, true);
+    assert.equal(completed.jobCompleted, true);
+    assert.equal(await jobStatus(), "completed");
+    assert.equal((await asScheduledRunner(SCHEDULED_DATASET_FINISH_SQL,finishArgs)).rows[0].result,false);
+    assert.equal((await rejected(client, () => asScheduledRunner("select * from analytics.pd_facts limit 1"))).code,"42501");
+    assert.equal((await rejected(client, () => asScheduledRunner(DATASET_RECONCILE_SQL,[JSON.stringify(scheduledOwner),"{}","{}",new Date(input.limits.deadlineAt).toISOString()]))).code,"42501");
+    const unsafe = (await client.query(`select exists(select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
+      where n.nspname in ('app','shopify','integrations','operations','billing','privacy','analytics','evidence','identity','source')
+      and ((c.relkind in ('r','p','v','m','f') and (has_table_privilege($1,c.oid,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+        or has_any_column_privilege($1,c.oid,'SELECT,INSERT,UPDATE,REFERENCES')))
+      or (c.relkind='S' and has_sequence_privilege($1,c.oid,'USAGE,SELECT,UPDATE')))) as allowed`, [scheduledRole])).rows[0].allowed;
+    assert.equal(unsafe,false);
+    for (const role of ["anon","authenticated","service_role","adstable_runtime","adstable_refresh_coordinator"]) {
+      assert.equal((await client.query("select has_function_privilege($1,'analytics.commit_scheduled_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz)','EXECUTE') as allowed", [role])).rows[0].allowed, false);
+      assert.equal((await client.query("select has_function_privilege($1,'analytics.finish_scheduled_dataset_reconciliation(jsonb,text,bigint,uuid,text)','EXECUTE') as allowed", [role])).rows[0].allowed, false);
+    }
+  } finally {
+    await client.query("rollback to savepoint scheduled_dataset_rehearsal");
+    await client.query("release savepoint scheduled_dataset_rehearsal");
+  }
+  console.log("EO05_SCHEDULED_DATASET_PROBE current_claim=true ready_stage=true verified_completion=true invalid_receipt_rejected=true duplicate_finish_rejected=true narrow_role=true checked_transport=true manual_write_denied=true direct_table_denied=true rollback_only=true");
   console.log("EO05D_RECONCILIATION_PROBE", JSON.stringify({scenarios, rollbackOnly: true, synthetic: true, actualAEAD: true, physicalReadback: true,
     replacement3to5: true, emptyRemovesOldFacts: true, mismatchRollbackAndLedger: true, unknownStops: true, liveAcceptance: false}));
 }

@@ -1,3 +1,43 @@
+## EO-05 — Refresh işinden Dataset makbuzuna izole bağlantı, 11 Kasım 2026
+
+Fırat, kuyruktan iş başlatma ve sentetik bir işi rapor makbuzuna kadar sınama
+kapsamına “Tamam başlayalım Codex” diyerek onay verdi. İç zamanlayıcı bileşimi
+doğrulanmış `awaiting_dataset` aşamasından sonra açık sunucu girdi yükleyicisiyle
+mevcut Dataset uzlaştırmasını çağırabilir. Yazımdan önce kaynak job/fence ve tek
+gün aralığı seçilmiş işe bağlanır. Çalışma alanı, nesil, sağlayıcı, hesap, bağlantı
+sürümü ve seçim bağı eşleşir. Makbuz için mevcut fiziksel readback zorunludur.
+Belirsiz yazım izlenmez veya yeniden denenmez. Makbuz işi kapatmaz ve rezervasyonu
+bırakmaz. İzole test geçişi, canlı saatlik çalışmanın veya gerçek alarm tesliminin
+kabulü değildir. HTTP girişinde `queue_only` sürer. “Harika devam edelim Codex”
+onayıyla zamanlanmış yazıma özel PostgreSQL fonksiyonu hazırlanır. Fonksiyon
+refresh kontrol kilidini alır ve mevcut claim, gün, kaynak bağı, aşama ve son
+süreyi rapor yazımıyla aynı işlemde doğrular. Migration izole F01 kapsamındadır.
+“Tamam devam edelim Codex onaylıyorum” ile doğrulanmış makbuza bağlı tamamlama
+eklenir. Zamanlanmış yazım, iş kimliği ve fence ile makbuz özetini aynı işlemde
+bağlar. Uygulama kesin makbuz ve fiziksel readback aldıktan sonra ayrı tamamlama
+isteği gönderir. Veritabanı bu bağı ve rapor kanıtını kontrol kilidi altında tekrar
+doğrular, işi tamamlar ve rezervasyonu bırakır. Yazma cevabı kayıpsa tamamlama
+çağrılmaz. Tamamlama cevabı kayıpsa rezervasyon durumu belirsizdir ve çağrı
+tekrarlanmaz. “Tamam onaylıyorum devam edelim Codex” ile iki zamanlanmış işleme
+ve bunların mevcut kaynak/makbuz okumalarına erişen ayrı `NOLOGIN` rolü hazırlanır.
+F01 sentetik işi bu rolle tamamlar; doğrudan tablo ve manuel yazma izinleri
+reddedilir. Sonraki “Onaylıyorum devam edelim Codex” onayıyla güvenilir zamanlayıcı
+bileşimine ayrı TLS istemcisi bağlanır. İstemci tam rol ve yedi fonksiyon iznini
+kontrol eder, kalan süreyi ve tek bağlantı sınırını uygular. İç zamanlayıcı iş
+planını ve kaynak girdilerini sağlar; Dataset bağlantısı yalnız devir aşamasında
+açılır ve kapatılır. Bu dar rol mevcut kur yazım fonksiyonuna erişmez; zamanlanmış
+kur bağlantısı ayrı tasarım kapısında kalır. Canlı giriş, kimlik bilgisi,
+zamanlayıcı kaydı bekler. Bir sonraki “Onaylıyorum devam edelim Codex” onayıyla
+bağımsız kuyruk izleyicisinin çağrı sınırları ve bildirim rezervasyonu bağlanır.
+İzleyici ana okuma zaman aşımında önceki kalıcı makbuzu kullanır. 120 saniyeyi
+aşan sessizlikte bildirimden önce bağımsız depoda CAS ile tek gönderim rezerve
+edilir. Belirsiz rezervasyon gönderim başlatmaz; belirsiz gönderim tekrar edilmez.
+Google Workspace Gmail deneme kanalı ve `dev@adstable.app` gönderici/alıcı olarak
+“Onaylıyorum Codex” ile kabul edildi. Ayrı OAuth istemcisi yalnız `gmail.send`
+izniyle yetkilendirilir. Test bileşimi yalnız test ortamında AL01 olayını işler
+ve Gmail API kabulünü teslimden ayrı tutar. Tokenlar sunucuda sağlanır; Google
+Cloud ayarı, kalıcı depo ve gerçek teslim provası bekler.
+
 ## EO-05-E — Onaylı iş sağlığı ve tüketim ölçümleri, 10 Kasım 2026
 
 Fırat beş mevcut başlığın açıklamasından sonra açıkça onayladı. [Somut kapsam](EO_05E_OBSERVABILITY.md)

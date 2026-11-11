@@ -10,6 +10,17 @@ const stages = ["checking_authority","request_intent","response_received","ready
 const frozen = o => Object.freeze(o);
 export const OBSERVABILITY_VERSION = "eo05e-observability-v1";
 export const OBSERVABILITY_SQL = "select operations.read_refresh_observation($1::jsonb,$2::date,$3::text) as result";
+export const QUEUE_WITNESS_SQL = "select operations.read_refresh_queue_witness() as result";
+
+export async function readQueueWitness({database, environment}) {
+  if (typeof database?.query !== "function" || !["production","preview","test"].includes(environment)) bad();
+  const rows = (await database.query(QUEUE_WITNESS_SQL)).rows;
+  if (rows?.length !== 1) bad();
+  const receipt = rows[0].result;
+  if (receipt === null) return undefined;
+  if (!exact(receipt,["generation","sequence","queueRevision","checkedAtMs"])) bad();
+  return frozen({...receipt,environment});
+}
 
 // The adapter performs ONE read. Failure never dispatches work, retries, settles an
 // ambiguous write, advances a checkpoint, or frees an account/reservation.
@@ -87,14 +98,14 @@ export function observeQueueWitness({state, receipt, nowMs}) {
 // Adapter contract: read independent durable state, read a verified primary queue
 // receipt, then compare-and-swap the independent state ONCE. Never initialize or
 // reset activation here. Adapter selection/independence/canary remain live gates.
-export async function runIndependentObservation({store, readReceipt, nowMs}) {
+export async function runIndependentObservation({store, readReceipt, nowMs, now = () => nowMs}) {
   if (typeof store?.read !== "function" || typeof store?.commit !== "function" || typeof readReceipt !== "function") bad();
   let saved, observed, primaryAvailable = true;
   try {
     saved = await store.read();
     if (!exact(saved, ["revision", "state"]) || !integer(saved.revision)) throw Error();
     let receipt; try {receipt = await readReceipt();} catch {primaryAvailable = false;}
-    observed = observeQueueWitness({state:saved.state,receipt,nowMs});
+    observed = observeQueueWitness({state:saved.state,receipt,nowMs:now()});
     const ack = await store.commit({expectedRevision:saved.revision,state:observed.state});
     if (!exact(ack, ["committed", "revision"]) || ack.committed !== true || ack.revision !== saved.revision + 1) throw Error();
   } catch {return frozen({status:"unavailable",rule:"AL15",durableWitness:false});}
@@ -178,4 +189,64 @@ export function transitionAlarm(incident, action, {verified = false, authorized 
   if (action !== next[incident.state] || action === "human_acknowledged" && (!verified || !authorized)) bad();
   return frozen({...incident,state:action,...action === "delivery_verified_or_unknown" ? {delivery: verified ? "verified" : "unknown"} : {},
     ...action === "human_acknowledged" ? {acknowledged:true} : {}});
+}
+
+async function boundedObserverCall(timeoutMs, operation) {
+  const controller = new AbortController();
+  let timer;
+  try {
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(() => { reject(Error("OBSERVER_IO_TIMEOUT")); controller.abort(); }, timeoutMs);
+    });
+    return await Promise.race([timeout, Promise.resolve().then(() => operation(controller.signal))]);
+  } finally { clearTimeout(timer); }
+}
+
+// Trusted observer entry. The deployment supplies a separately hosted store,
+// durable queue reader and approved notification route. Store CAS must be atomic.
+export async function runQueueSilenceAlarm({witnessStore, incidentStore, readReceipt, sendNotification, now, scopeRef, timeoutMs, retentionMs}) {
+  if (![witnessStore?.read,witnessStore?.commit,incidentStore?.read,incidentStore?.commit,readReceipt,sendNotification,now].every(fn => typeof fn === "function")
+    || !uuid(scopeRef) || !integer(timeoutMs) || timeoutMs < 1 || timeoutMs > 30000 || !integer(retentionMs) || retentionMs < 1) bad();
+  const bounded = operation => boundedObserverCall(timeoutMs, operation);
+  const observation = await runIndependentObservation({now,
+    store: {read: () => bounded(signal => witnessStore.read({signal})), commit: input => bounded(signal => witnessStore.commit({...input,signal}))},
+    readReceipt: () => bounded(signal => readReceipt({signal}))});
+  if (!observation.durableWitness) return observation;
+
+  const observedAtMs = observation.state.lastObserverAtMs;
+  const event = alarmSignal({rule:"AL01",environment:observation.state.environment,generation:observation.state.generation,scopeRef,nowMs:observedAtMs});
+  const fingerprint = event.fingerprint;
+  const commit = async (expectedRevision, incident) => {
+    const ack = await bounded(signal => incidentStore.commit({fingerprint,expectedRevision,incident,signal}));
+    if (!exact(ack,["committed","revision"]) || ack.committed !== true || ack.revision !== expectedRevision + 1) throw Error();
+    return ack.revision;
+  };
+  try {
+    const saved = await bounded(signal => incidentStore.read({fingerprint,signal}));
+    if (!exact(saved,["revision","incident"]) || !integer(saved.revision)) throw Error();
+    if (saved.incident !== null) {
+      validateIncident(saved.incident);
+      if (saved.incident.fingerprint !== fingerprint) throw Error();
+    }
+    if (observation.status !== "critical") return frozen({...observation,notification:"not_due",
+      recoveryObserved: observation.accepted && saved.incident !== null && saved.incident.state !== "resolved" && observedAtMs < saved.incident.expiresAtMs});
+
+    const previous = saved.incident;
+    const incident = recordAlarm(previous?.state === "resolved" ? null : previous,event,{expiresAtMs:observedAtMs + retentionMs});
+    if (incident.state !== "detected") {
+      await commit(saved.revision,incident);
+      return frozen({...observation,notification:"already_reserved"});
+    }
+    const pending = transitionAlarm(incident,"dispatch_pending");
+    const revision = await commit(saved.revision,pending);
+    // A crash or lost response after reserving leaves the incident pending for
+    // manual review. A later tick cannot send the same incident again.
+    const sent = await bounded(signal => sendNotification({event,signal}));
+    if (!exact(sent,["accepted"]) || sent.accepted !== true) throw Error();
+    const accepted = transitionAlarm(pending,"notification_accepted");
+    await commit(revision,transitionAlarm(accepted,"delivery_verified_or_unknown"));
+    return frozen({...observation,notification:"accepted",delivery:"unknown"});
+  } catch {
+    return frozen({...observation,notification:"unconfirmed",rules:[...observation.rules,"AL14"]});
+  }
 }

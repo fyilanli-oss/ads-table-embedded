@@ -3,21 +3,24 @@ import test from "node:test";
 import {randomUUID} from "node:crypto";
 import {datasetSourceBindingFixture} from "./fixtures/dataset-source-binding-fixture.js";
 import {sourcePayloadHash} from "../app/lib/database/source-evidence-store.server.js";
-import {reconcileStoredDatasetSources, canonicalDatasetEventTime, DATASET_RECONCILE_SQL, DATASET_RECONCILE_READ_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
+import {reconcileStoredDatasetSources, canonicalDatasetEventTime, DATASET_RECONCILE_SQL, DATASET_RECONCILE_READ_SQL, SCHEDULED_DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
 import {readDatasetWritePlan} from "../app/lib/refresh/dataset-server.server.js";
+import {runScheduledRefreshWithDataset} from "../app/lib/refresh/scheduled-queue-check.server.js";
 
 async function fixture(provider = "google_ads", options = {}) {
   const f = await datasetSourceBindingFixture(provider, options); const key = provider === "google_ads" ? "googleDatasetRead" : provider === "meta" ? "metaDatasetRead" : "klaviyoDatasetRead";
   for (const b of f.envelopes.values()) Object.assign(b.receipt.manifest[key], {observedAt: "2026-11-02T00:00:00.000Z", completedAt: "2026-11-02T00:01:00.000Z"});
   let receipt, request;
   f.hooks.query = (sql, args) => {
-    if (sql === DATASET_RECONCILE_SQL) {
+    if (sql === DATASET_RECONCILE_SQL || sql === SCHEDULED_DATASET_RECONCILE_SQL) {
       const write = JSON.parse(args[1]), context = JSON.parse(args[2]); request = {write, context};
       receipt = {status: "consumed", operationId: write.operationId, requestDigest: sourcePayloadHash(request), revision: context.expectedRevision + 1,
         rowCount: write.rows.length, consumerReceipt: true, checkpointAdvanced: true, comparison: "matched", businessDate: context.businessDate, timeZone: context.timeZone};
+      if (sql === SCHEDULED_DATASET_RECONCILE_SQL) receipt.digest = sourcePayloadHash(receipt);
       return {rows: [{result: structuredClone(receipt)}]};
     }
     if (sql === DATASET_RECONCILE_READ_SQL) return {rows: [{result: structuredClone(receipt)}]};
+    if (sql === SCHEDULED_DATASET_FINISH_SQL) return {rows: [{result: args[3] === receipt.operationId && args[4] === receipt.digest}]};
   };
   return {...f, expectedRevision: 0, request: () => request};
 }
@@ -56,6 +59,66 @@ test("unknown writes stop without any following readback or retry", async () => 
   const f = await fixture(); let lost = false, after = 0; const hook = f.hooks.query;
   f.hooks.query = (sql, args) => {if (lost) after++; if (sql === DATASET_RECONCILE_SQL) {lost = true; throw Error("lost");}return hook(sql, args);};
   await assert.rejects(reconcileStoredDatasetSources(f), /WRITE_UNCONFIRMED/); assert.equal(after, 0);
+});
+test("scheduled handoff consumes only its own admitted source and verifies readback", async () => {
+  for (const mode of ["verified", "wrong_fence", "lost_write", "lost_finish", "wrong_role"]) {
+    const input = await fixture();
+    const {owner} = input;
+    const generation = randomUUID();
+    const time = Date.parse("2026-11-02T00:02:00.000Z");
+    const window = {from: "2026-11-01", to: "2026-11-01"};
+    const source = {...input.source, connectionVersion: Number(owner.connectionVersion), queuedAt: time, scheduledHour: time - time % 3600000 - 3600000};
+    const cost = {requests: 2, dbWrites: 5, connections: 1, rows: 1000, bytes: 1000000};
+    const snapshot = {configured: true, queueRevision: 2, candidates: [source],
+      state: {revision: 3, nextFence: 1, nextTurn: 1, claims: [], lastServed: []},
+      bounds: {maxCandidates: 5, maxClaims: 5, maxAdmissions: 5, maxWorkspaces: 5},
+      budget: {global: cost, interactiveReserve: {requests: 0, dbWrites: 0, connections: 0, rows: 0, bytes: 0},
+        providers: [{provider: owner.provider, limit: cost}], workspaces: [{workspaceId: owner.workspaceId, limit: cost}],
+        accounts: [{provider: owner.provider, accountId: owner.accountId, limit: cost}]}};
+    const store = {checkScheduledQueue: async () => ({status: "checked", generation, sequence: 1, queueRevision: 2, checkedAtMs: time}),
+      reviewInterruptedWork: async () => ({status: "reviewed", stopped: 0, uncertain: 0}), readPreflightSnapshot: async () => snapshot,
+      commitPreflight: async () => true, loadBoundAuthority: async () => ({...source, installationVerified: true, connected: true, setupComplete: true, allowedWindow: true}),
+      advanceStage: async () => true, isClaimCurrent: async () => true, readAdmissionSnapshot: async () => snapshot,
+      recordStop: async () => ({recorded: true})};
+    const hook = input.hooks.query;
+    input.hooks.query = (sql, args) => {
+      if (mode === "lost_write" && sql === SCHEDULED_DATASET_RECONCILE_SQL) throw Error("lost commit acknowledgement");
+      if (mode === "lost_finish" && sql === SCHEDULED_DATASET_FINISH_SQL) throw Error("lost completion acknowledgement");
+      return hook(sql, args);
+    };
+    const work = {buildWorkPlan: async () => ({partitionId: "synthetic-one-day", workClass: "hourly_hot_window", window, cost,
+      limits: {deadlineAt: time + 60000, requestTimeoutMs: 1000, finishReserveMs: 100, maxRows: cost.rows, maxBytes: cost.bytes}}),
+      now: () => time, entitlementVerifier: {verify: async () => ({status: "verified", receipt: {}}), isCurrent: async () => true},
+      readPage: async () => ({kind: "complete", payload: {}}), validatePage: () => ({complete: true, rows: []}),
+      loadDatasetInputs: async ({claim}) => {
+        for (const envelope of input.envelopes.values()) {
+          Object.assign(envelope.receipt.manifest.googleDatasetRead, {jobId: claim.id, fence: String(claim.fence + (mode === "wrong_fence" ? 1 : 0))});
+        }
+        return input;
+      }};
+    let opens = 0, closes = 0;
+    const environment = {ADSTABLE_REFRESH_DATASET_DATABASE_URL: "postgresql://adstable_refresh_dataset_runner.podpwkrpmjiksskxhwsu:" + "x".repeat(32) + "@aws-1-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require",
+      ADSTABLE_REFRESH_DATASET_DB_TIMEOUT_MS: "1000"};
+    const result = await runScheduledRefreshWithDataset({store, generation, work, environment, poolFactory: config => {
+      opens++;
+      assert.equal(config.ssl.rejectUnauthorized,true);
+      return {on() {}, async end() {closes++;}, async connect() {return {release() {}, async query(sql, args) {
+        if (sql.includes("as profile_ready")) return {rows: [{role: mode === "wrong_role" ? "adstable_owner" : "adstable_refresh_dataset_runner", profile_ready: true}]};
+        if (["begin","commit","rollback"].includes(sql) || sql.startsWith("select pg_catalog.set_config")) return {rows: []};
+        return input.database.query(sql, args);
+      }};}};
+    }});
+    assert.deepEqual([opens,closes],[1,1]);
+    assert.equal(result.status, "queue_checked");
+    assert.equal(result.work.status, mode === "verified" ? "completed" : "needs_attention");
+    assert.equal(input.queries.filter(sql => sql === DATASET_RECONCILE_SQL).length, 0);
+    assert.equal(input.queries.filter(sql => sql === SCHEDULED_DATASET_RECONCILE_SQL).length, ["wrong_fence","wrong_role"].includes(mode) ? 0 : 1);
+    const reachesFinish = mode === "verified" || mode === "lost_finish";
+    assert.equal(input.queries.filter(sql => sql === DATASET_RECONCILE_READ_SQL).length, reachesFinish ? 1 : 0);
+    assert.equal(input.queries.filter(sql => sql === SCHEDULED_DATASET_FINISH_SQL).length, reachesFinish ? 1 : 0);
+    if (mode === "verified") assert.equal(result.work.reservationRetained, false);
+    if (mode === "lost_finish") assert.equal(result.work.reservationMayExist, true);
+  }
 });
 test("physical mismatch result is held and cannot claim consumption or checkpoint", async () => {
   const f = await fixture(), hook = f.hooks.query;

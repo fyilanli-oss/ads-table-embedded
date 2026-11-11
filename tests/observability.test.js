@@ -1,8 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
+import {createGmailCanarySender, runGmailQueueCanary} from "../app/lib/refresh/gmail-canary.server.js";
 import {OBSERVABILITY_VERSION,OBSERVABILITY_SQL,readRefreshObservation,createResourceMeter,costMeasurementInputs,
- observeQueueWitness,runIndependentObservation,evaluateRefreshHealth,alarmSignal,recordAlarm,transitionAlarm} from "../app/lib/refresh/observability.server.js";
+ observeQueueWitness,runIndependentObservation,evaluateRefreshHealth,alarmSignal,recordAlarm,transitionAlarm,runQueueSilenceAlarm,readQueueWitness,QUEUE_WITNESS_SQL} from "../app/lib/refresh/observability.server.js";
 const generation="11111111-1111-4111-8111-111111111111",scopeRef="22222222-2222-4222-8222-222222222222",other="33333333-3333-4333-8333-333333333333";
 const state=()=>({environment:"test",generation,activatedAtMs:1000,sequence:0,checkedAtMs:null,queueRevision:0,lastObserverAtMs:1000});
 const receipt=(time=2000)=>({environment:"test",generation,sequence:1,queueRevision:1,checkedAtMs:time});
@@ -37,6 +38,60 @@ test("primaryDB outage remains observable from independent store; unknown witnes
 test("missing durable independent activation never manufactures a startup grace or reads primary",async()=>{
  let calls=0;const result=await runIndependentObservation({store:{async read(){return null;},async commit(){calls++;}},readReceipt:async()=>{calls++;},nowMs:1000});
  assert.equal(result.rule,"AL15");assert.equal(calls,0);
+});
+test("independent observer alarms once during a stalled primary, then observes recovery", async () => {
+  let witness = {revision:0,state:state()}, saved = {revision:0,incident:null};
+  let time = 2000, primary = receipt(), sends = 0, timedOut = false;
+  const run = () => runQueueSilenceAlarm({scopeRef,timeoutMs:20,retentionMs:60000,now:()=>time,
+    witnessStore:{read:async()=>witness,commit:async ({expectedRevision,state})=>{
+      assert.equal(expectedRevision,witness.revision); witness={revision:expectedRevision+1,state};
+      return {committed:true,revision:witness.revision};
+    }},
+    incidentStore:{read:async()=>saved,commit:async ({expectedRevision,incident})=>{
+      assert.equal(expectedRevision,saved.revision); saved={revision:expectedRevision+1,incident};
+      return {committed:true,revision:saved.revision};
+    }},
+    readReceipt:async ({signal})=>{
+      if (primary) return primary;
+      return new Promise(resolve=>signal.addEventListener("abort",()=>{timedOut=true;resolve(undefined);},{once:true}));
+    },
+    sendNotification:async ({event})=>{
+      assert.equal(saved.incident.state,"dispatch_pending");
+      assert.equal(event.rule,"AL01"); assert.equal(event.scopeRef,scopeRef);
+      sends++; return {accepted:true};
+    }});
+  assert.equal((await run()).notification,"not_due");
+  time = 122000;
+  assert.equal((await run()).notification,"not_due");
+  primary = null; time++;
+  const alarm = await run();
+  assert.equal(timedOut,true); assert.equal(alarm.primaryAvailable,false);
+  assert.equal(alarm.notification,"accepted"); assert.equal(alarm.delivery,"unknown");
+  time++;
+  assert.equal((await run()).notification,"already_reserved"); assert.equal(sends,1);
+  time++;
+  primary = {...receipt(time),sequence:2,queueRevision:2};
+  assert.equal((await run()).recoveryObserved,true);
+  assert.equal(saved.incident.state,"delivery_verified_or_unknown");
+});
+
+test("an uncertain incident reservation or notification response never triggers a duplicate send", async () => {
+  for (const failAt of ["reserve", "send"]) {
+    let witness = {revision:0,state:state()}, saved = {revision:0,incident:null}, sends = 0;
+    const run = () => runQueueSilenceAlarm({scopeRef,timeoutMs:100,retentionMs:60000,now:()=>121001,
+      witnessStore:{read:async()=>witness,commit:async ({expectedRevision,state})=>{
+        witness={revision:expectedRevision+1,state}; return {committed:true,revision:witness.revision};
+      }},
+      incidentStore:{read:async()=>saved,commit:async ({expectedRevision,incident})=>{
+        saved={revision:expectedRevision+1,incident};
+        if (failAt==="reserve" && expectedRevision===0) throw Error("lost acknowledgement");
+        return {committed:true,revision:saved.revision};
+      }},
+      readReceipt:async()=>undefined,sendNotification:async()=>{sends++;throw Error("lost delivery response");}});
+    assert.equal((await run()).notification,"unconfirmed");
+    assert.equal((await run()).notification,"already_reserved");
+    assert.equal(sends,failAt==="reserve"?0:1);
+  }
 });
 test("one healthy partition cannot hide an omitted eligible partition or staleDataset",()=>{
  let results=evaluateRefreshHealth({nowMs:2000,expected:[scopeRef,other],observations:[observation()],limits});
@@ -96,4 +151,60 @@ test("SQL observation is one scoped read and failed reads do not retry, recover,
  const result=await readRefreshObservation({...input,database:{async query(sql){calls++;assert.equal(sql,OBSERVABILITY_SQL);throw Error("secret");}}});
  assert.deepEqual(result,{status:"unavailable",reason:"durable_tracking_unavailable"});assert.equal(calls,1);
  const ok=await readRefreshObservation({...input,database:{async query(){return {rows:[{result:{version:OBSERVABILITY_VERSION,observedAtMs:1000,freshness:{status:"missing"}}}]};}}});assert.equal(ok.status,"observed");assert.equal(ok.snapshot.freshness.status,"missing");
+});
+test("primary witness reader only accepts the fixed durable SQL result",async()=>{
+ const {environment,...raw}=receipt();
+ let reads=0;
+ const query = result => async sql => {reads++; assert.equal(sql,QUEUE_WITNESS_SQL);return {rows:[{result}]};};
+ assert.deepEqual(await readQueueWitness({database:{query:query(raw)},environment}),receipt());
+ assert.equal(await readQueueWitness({database:{query:query(null)},environment}),undefined);
+ await assert.rejects(readQueueWitness({database:{query:query({...raw,secret:"unexpected"})},environment}));
+ assert.equal(reads,3);
+});
+test("Workspace canary sends one fixed self-addressed test message and reports Gmail acceptance",async()=>{
+ const calls=[];
+ const environment={ADSTABLE_GMAIL_CANARY_CLIENT_ID:"synthetic-client",ADSTABLE_GMAIL_CANARY_CLIENT_SECRET:"synthetic-secret",ADSTABLE_GMAIL_CANARY_REFRESH_TOKEN:"synthetic-refresh"};
+ const send=createGmailCanarySender({environment,fetchFn:async (url,init)=>{
+  calls.push([url,init]);
+  return Response.json(calls.length===1 ? {token_type:"Bearer",access_token:"synthetic-access-token",scope:"https://www.googleapis.com/auth/gmail.send"} : {id:"synthetic-message-id"});
+ }});
+ const request={event:signal(),signal:new AbortController().signal};
+ assert.deepEqual(await send(request),{accepted:true});
+ assert.equal(calls[0][0],"https://oauth2.googleapis.com/token");
+ assert.equal(calls[0][1].body.get("grant_type"),"refresh_token");
+ assert.equal(calls[1][0],"https://gmail.googleapis.com/gmail/v1/users/dev%40adstable.app/messages/send");
+ assert.match(Buffer.from(JSON.parse(calls[1][1].body).raw,"base64url").toString(),/^From: dev@adstable\.app\r\nTo: dev@adstable\.app\r\n/);
+ assert.ok(calls.every(([,init])=>init.redirect==="error"&&init.signal===request.signal));
+ await assert.rejects(send(request),/GMAIL_CANARY_UNCONFIRMED/);assert.equal(calls.length,2);
+});
+test("Workspace canary stops on an unrelated event, token scope mismatch or unknown send",async()=>{
+ const environment={ADSTABLE_GMAIL_CANARY_CLIENT_ID:"synthetic-client",ADSTABLE_GMAIL_CANARY_CLIENT_SECRET:"synthetic-secret",ADSTABLE_GMAIL_CANARY_REFRESH_TOKEN:"synthetic-refresh"};
+ for(const mode of ["unrelated","scope","send"]){
+  let calls=0;
+  const send=createGmailCanarySender({environment,fetchFn:async ()=>{
+   calls++;
+   if(calls===2) throw Error("unconfirmed transport response");
+   return Response.json({token_type:"Bearer",access_token:"synthetic-access-token",scope:"https://www.googleapis.com/auth/gmail."+(mode==="scope"?"modify":"send")});
+  }});
+  const request={event:mode==="unrelated"?signal("AL10"):signal(),signal:new AbortController().signal};
+  await assert.rejects(send(request),/GMAIL_CANARY_UNCONFIRMED/);
+  await assert.rejects(send(request),/GMAIL_CANARY_UNCONFIRMED/);
+  assert.equal(calls,mode==="unrelated"?0:mode==="scope"?1:2);
+ }
+});
+test("Workspace observer sends only after a test incident is reserved",async()=>{
+ const environment={ADSTABLE_GMAIL_CANARY_CLIENT_ID:"synthetic-client",ADSTABLE_GMAIL_CANARY_CLIENT_SECRET:"synthetic-secret",ADSTABLE_GMAIL_CANARY_REFRESH_TOKEN:"synthetic-refresh"};
+ for(const name of ["test","production"]){
+  let calls=0,writes=0,pending;
+  const result=await runGmailQueueCanary({environment,scopeRef,timeoutMs:100,retentionMs:60000,now:()=>121001,
+   witnessStore:{read:async()=>({revision:0,state:{...state(),environment:name}}),commit:async()=>{writes++;return {committed:true,revision:1};}},
+   incidentStore:{read:async()=>({revision:0,incident:null}),commit:async ({expectedRevision,incident})=>{pending=incident;return {committed:true,revision:expectedRevision+1};}},
+   readReceipt:async()=>undefined,fetchFn:async()=>{
+    assert.equal(pending.state,"dispatch_pending");
+    return Response.json(++calls===1?{token_type:"Bearer",access_token:"synthetic-access-token"}:{id:"synthetic-id"});
+   }});
+  assert.equal(calls,name==="test"?2:0); assert.equal(writes,name==="test"?1:0);
+  if(name==="test") assert.equal(result.delivery,"unknown");
+  else assert.equal(result.durableWitness,false);
+ }
 });

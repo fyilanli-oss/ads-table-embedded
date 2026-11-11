@@ -102,6 +102,11 @@ export async function reconciliationProbe(client, {ownerFixture}) {
   await client.query("savepoint scheduled_dataset_rehearsal");
   try {
     const scheduledRole = "adstable_refresh_dataset_runner";
+    // The fixture connects through the owner session. Allow an explicit role
+    // switch only inside this savepoint, without granting inherited access.
+    await client.query("set local role postgres");
+    await client.query("grant adstable_refresh_dataset_runner to adstable_owner with inherit false,set true,admin false");
+    await client.query("set local role adstable_owner");
     const flags = (await client.query(`select rolcanlogin,rolinherit,rolsuper,rolcreatedb,rolcreaterole,rolreplication,rolbypassrls
       from pg_roles where rolname=$1`, [scheduledRole])).rows[0];
     assert.ok(flags && Object.values(flags).every(value => value === false));

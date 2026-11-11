@@ -58,7 +58,7 @@ export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlemen
       || await store.isClaimCurrent({claim})!==true) throw Error("REFRESH_DATASET_SCOPE_INVALID");
     const receipt=await reconcileStoredDatasetSources({owner,database,cipher,batches,expectedRevision,fxResolver,now,
       limits:{maxPages:300,maxRows:limits.maxRows,maxBytes:limits.maxBytes,deadlineAt:limits.deadlineAt},
-      admittedScope:{jobId:claim.id,fence:String(claim.fence),from:window.from,to:window.to}});
+      scheduled:true,admittedScope:{jobId:claim.id,fence:String(claim.fence),from:window.from,to:window.to}});
     return {status:receipt.status==="consumed"?"dataset_verified":"awaiting_dataset",claim:structuredClone(claim),
       dataset:{status:receipt.status,consumerReceipt:receipt.consumerReceipt,checkpointAdvanced:receipt.checkpointAdvanced},reservationRetained:true};
   } catch {

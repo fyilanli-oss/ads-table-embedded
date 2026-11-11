@@ -3,7 +3,7 @@ import test from "node:test";
 import {randomUUID} from "node:crypto";
 import {datasetSourceBindingFixture} from "./fixtures/dataset-source-binding-fixture.js";
 import {sourcePayloadHash} from "../app/lib/database/source-evidence-store.server.js";
-import {reconcileStoredDatasetSources, canonicalDatasetEventTime, DATASET_RECONCILE_SQL, DATASET_RECONCILE_READ_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
+import {reconcileStoredDatasetSources, canonicalDatasetEventTime, DATASET_RECONCILE_SQL, DATASET_RECONCILE_READ_SQL, SCHEDULED_DATASET_RECONCILE_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
 import {readDatasetWritePlan} from "../app/lib/refresh/dataset-server.server.js";
 import {runScheduledRefreshCheck} from "../app/lib/refresh/scheduled-queue-check.server.js";
 
@@ -12,7 +12,7 @@ async function fixture(provider = "google_ads", options = {}) {
   for (const b of f.envelopes.values()) Object.assign(b.receipt.manifest[key], {observedAt: "2026-11-02T00:00:00.000Z", completedAt: "2026-11-02T00:01:00.000Z"});
   let receipt, request;
   f.hooks.query = (sql, args) => {
-    if (sql === DATASET_RECONCILE_SQL) {
+    if (sql === DATASET_RECONCILE_SQL || sql === SCHEDULED_DATASET_RECONCILE_SQL) {
       const write = JSON.parse(args[1]), context = JSON.parse(args[2]); request = {write, context};
       receipt = {status: "consumed", operationId: write.operationId, requestDigest: sourcePayloadHash(request), revision: context.expectedRevision + 1,
         rowCount: write.rows.length, consumerReceipt: true, checkpointAdvanced: true, comparison: "matched", businessDate: context.businessDate, timeZone: context.timeZone};
@@ -80,7 +80,7 @@ test("scheduled handoff consumes only its own admitted source and verifies readb
       recordStop: async () => ({recorded: true})};
     const hook = input.hooks.query;
     input.hooks.query = (sql, args) => {
-      if (mode === "lost_write" && sql === DATASET_RECONCILE_SQL) throw Error("lost commit acknowledgement");
+      if (mode === "lost_write" && sql === SCHEDULED_DATASET_RECONCILE_SQL) throw Error("lost commit acknowledgement");
       return hook(sql, args);
     };
     const work = {buildWorkPlan: async () => ({partitionId: "synthetic-one-day", workClass: "hourly_hot_window", window, cost,
@@ -96,7 +96,8 @@ test("scheduled handoff consumes only its own admitted source and verifies readb
     const result = await runScheduledRefreshCheck({store, generation, work});
     assert.equal(result.status, "queue_checked");
     assert.equal(result.work.status, mode === "verified" ? "dataset_verified" : "needs_attention");
-    assert.equal(input.queries.filter(sql => sql === DATASET_RECONCILE_SQL).length, mode === "wrong_fence" ? 0 : 1);
+    assert.equal(input.queries.filter(sql => sql === DATASET_RECONCILE_SQL).length, 0);
+    assert.equal(input.queries.filter(sql => sql === SCHEDULED_DATASET_RECONCILE_SQL).length, mode === "wrong_fence" ? 0 : 1);
     assert.equal(input.queries.filter(sql => sql === DATASET_RECONCILE_READ_SQL).length, mode === "verified" ? 1 : 0);
     if (mode === "verified") assert.equal(result.work.dataset.checkpointAdvanced, true);
   }

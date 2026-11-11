@@ -8,8 +8,11 @@ gün aralığı seçilmiş işe bağlanır. Çalışma alanı, nesil, sağlayıc
 sürümü ve seçim bağı eşleşir. Makbuz için mevcut fiziksel readback zorunludur.
 Belirsiz yazım izlenmez veya yeniden denenmez. Makbuz işi kapatmaz ve rezervasyonu
 bırakmaz. İzole test geçişi, canlı saatlik çalışmanın veya gerçek alarm tesliminin
-kabulü değildir. HTTP girişinde `queue_only` sürer. Canlı bağlantıda claim kontrolü
-ile yazma/iş sonlandırma arasındaki veritabanı sözleşmesi ayrıca doğrulanmalıdır.
+kabulü değildir. HTTP girişinde `queue_only` sürer. “Harika devam edelim Codex”
+onayıyla zamanlanmış yazıma özel PostgreSQL fonksiyonu hazırlanır. Fonksiyon
+refresh kontrol kilidini alır ve mevcut claim, gün, kaynak bağı, aşama ve son
+süreyi rapor yazımıyla aynı işlemde doğrular. Migration izole F01 kapsamındadır.
+İş sonlandırma ve canlı çalıştırıcı yetkisi sonraki adımdadır.
 
 ## EO-05-E — Onaylı iş sağlığı ve tüketim ölçümleri, 10 Kasım 2026
 

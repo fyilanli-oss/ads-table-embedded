@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
+import {createGmailCanarySender, runGmailQueueCanary} from "../app/lib/refresh/gmail-canary.server.js";
 import {OBSERVABILITY_VERSION,OBSERVABILITY_SQL,readRefreshObservation,createResourceMeter,costMeasurementInputs,
  observeQueueWitness,runIndependentObservation,evaluateRefreshHealth,alarmSignal,recordAlarm,transitionAlarm,runQueueSilenceAlarm,readQueueWitness,QUEUE_WITNESS_SQL} from "../app/lib/refresh/observability.server.js";
 const generation="11111111-1111-4111-8111-111111111111",scopeRef="22222222-2222-4222-8222-222222222222",other="33333333-3333-4333-8333-333333333333";
@@ -159,4 +160,51 @@ test("primary witness reader only accepts the fixed durable SQL result",async()=
  assert.equal(await readQueueWitness({database:{query:query(null)},environment}),undefined);
  await assert.rejects(readQueueWitness({database:{query:query({...raw,secret:"unexpected"})},environment}));
  assert.equal(reads,3);
+});
+test("Workspace canary sends one fixed self-addressed test message and reports Gmail acceptance",async()=>{
+ const calls=[];
+ const environment={ADSTABLE_GMAIL_CANARY_CLIENT_ID:"synthetic-client",ADSTABLE_GMAIL_CANARY_CLIENT_SECRET:"synthetic-secret",ADSTABLE_GMAIL_CANARY_REFRESH_TOKEN:"synthetic-refresh"};
+ const send=createGmailCanarySender({environment,fetchFn:async (url,init)=>{
+  calls.push([url,init]);
+  return Response.json(calls.length===1 ? {token_type:"Bearer",access_token:"synthetic-access-token",scope:"https://www.googleapis.com/auth/gmail.send"} : {id:"synthetic-message-id"});
+ }});
+ const request={event:signal(),signal:new AbortController().signal};
+ assert.deepEqual(await send(request),{accepted:true});
+ assert.equal(calls[0][0],"https://oauth2.googleapis.com/token");
+ assert.equal(calls[0][1].body.get("grant_type"),"refresh_token");
+ assert.equal(calls[1][0],"https://gmail.googleapis.com/gmail/v1/users/dev%40adstable.app/messages/send");
+ assert.match(Buffer.from(JSON.parse(calls[1][1].body).raw,"base64url").toString(),/^From: dev@adstable\.app\r\nTo: dev@adstable\.app\r\n/);
+ assert.ok(calls.every(([,init])=>init.redirect==="error"&&init.signal===request.signal));
+ await assert.rejects(send(request),/GMAIL_CANARY_UNCONFIRMED/);assert.equal(calls.length,2);
+});
+test("Workspace canary stops on an unrelated event, token scope mismatch or unknown send",async()=>{
+ const environment={ADSTABLE_GMAIL_CANARY_CLIENT_ID:"synthetic-client",ADSTABLE_GMAIL_CANARY_CLIENT_SECRET:"synthetic-secret",ADSTABLE_GMAIL_CANARY_REFRESH_TOKEN:"synthetic-refresh"};
+ for(const mode of ["unrelated","scope","send"]){
+  let calls=0;
+  const send=createGmailCanarySender({environment,fetchFn:async ()=>{
+   calls++;
+   if(calls===2) throw Error("unconfirmed transport response");
+   return Response.json({token_type:"Bearer",access_token:"synthetic-access-token",scope:"https://www.googleapis.com/auth/gmail."+(mode==="scope"?"modify":"send")});
+  }});
+  const request={event:mode==="unrelated"?signal("AL10"):signal(),signal:new AbortController().signal};
+  await assert.rejects(send(request),/GMAIL_CANARY_UNCONFIRMED/);
+  await assert.rejects(send(request),/GMAIL_CANARY_UNCONFIRMED/);
+  assert.equal(calls,mode==="unrelated"?0:mode==="scope"?1:2);
+ }
+});
+test("Workspace observer sends only after a test incident is reserved",async()=>{
+ const environment={ADSTABLE_GMAIL_CANARY_CLIENT_ID:"synthetic-client",ADSTABLE_GMAIL_CANARY_CLIENT_SECRET:"synthetic-secret",ADSTABLE_GMAIL_CANARY_REFRESH_TOKEN:"synthetic-refresh"};
+ for(const name of ["test","production"]){
+  let calls=0,writes=0,pending;
+  const result=await runGmailQueueCanary({environment,scopeRef,timeoutMs:100,retentionMs:60000,now:()=>121001,
+   witnessStore:{read:async()=>({revision:0,state:{...state(),environment:name}}),commit:async()=>{writes++;return {committed:true,revision:1};}},
+   incidentStore:{read:async()=>({revision:0,incident:null}),commit:async ({expectedRevision,incident})=>{pending=incident;return {committed:true,revision:expectedRevision+1};}},
+   readReceipt:async()=>undefined,fetchFn:async()=>{
+    assert.equal(pending.state,"dispatch_pending");
+    return Response.json(++calls===1?{token_type:"Bearer",access_token:"synthetic-access-token"}:{id:"synthetic-id"});
+   }});
+  assert.equal(calls,name==="test"?2:0); assert.equal(writes,name==="test"?1:0);
+  if(name==="test") assert.equal(result.delivery,"unknown");
+  else assert.equal(result.durableWitness,false);
+ }
 });

@@ -32,7 +32,11 @@ bağımsız kuyruk izleyicisinin çağrı sınırları ve bildirim rezervasyonu 
 İzleyici ana okuma zaman aşımında önceki kalıcı makbuzu kullanır. 120 saniyeyi
 aşan sessizlikte bildirimden önce bağımsız depoda CAS ile tek gönderim rezerve
 edilir. Belirsiz rezervasyon gönderim başlatmaz; belirsiz gönderim tekrar edilmez.
-Alıcı kanalı, kalıcı depo ve gerçek teslim provası için canlı bağlantılar bekler.
+Google Workspace Gmail deneme kanalı ve `dev@adstable.app` gönderici/alıcı olarak
+“Onaylıyorum Codex” ile kabul edildi. Ayrı OAuth istemcisi yalnız `gmail.send`
+izniyle yetkilendirilir. Test bileşimi yalnız test ortamında AL01 olayını işler
+ve Gmail API kabulünü teslimden ayrı tutar. Tokenlar sunucuda sağlanır; Google
+Cloud ayarı, kalıcı depo ve gerçek teslim provası bekler.
 
 ## EO-05-E — Onaylı iş sağlığı ve tüketim ölçümleri, 10 Kasım 2026
 

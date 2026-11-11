@@ -1454,6 +1454,7 @@
       "app/lib/refresh/dataset-request.server.js": "564d08ccf10a31cca4a485a90cb6f65d98d209e1b4efbe0bdc724ca63f9a3594",
       "app/lib/refresh/dataset-server.server.js": "45aa42f80e9c260e41011bacf02a9e9c1c262c6505b4567d832c33bc07fd1e44",
       "app/lib/refresh/entitlement-check.server.js": "f9648051b88d2b1c1756bc9a5c94003c7817f8c57af61c042c07f493e4cfd141",
+      "app/lib/refresh/gmail-canary.server.js": "99fb2fda6d1f9219d7c4ff2a11bef53f69d16a4f5429c5e33b38e434b2761542",
       "app/lib/refresh/google-acceptance-request.server.d.ts": "95b7af8c1d3f8bac687960b532700eae15791568693f87d7c784d17986f8849c",
       "app/lib/refresh/google-acceptance-request.server.js": "b5d891c2fbeb89cc8e12a6da7bf60b977d8aecfdc45e20fb99f59b9a18750d8b",
       "app/lib/refresh/google-acceptance-server.server.js": "36cec756e8743858f1d75f86a8952a8853e5c3781fb2eed5ff00b493ad421b85",
@@ -1595,7 +1596,7 @@
       "contracts/eo-05-permission-explanation-design-v1.json": "ad4753b9ad4a6becd14764b7b33fb917f0cc491ad774cc1f1fe9053c5f189f35",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
       "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md": "c602fd4d7760e8f32c109e1f0456907c739c12906d71becf88476cad2007d6a1",
-      "docs/EXECUTION_PLAN.md": "dbbbfa03b4d76c562353b5036fa321874edf46e0c426bd3ed2e5d39f0b41caa7",
+      "docs/EXECUTION_PLAN.md": "4fc8749c5ed939a70042dd48ca0d308c7cc02d53c9fcda4762dc81d566c823cc",
       "docs/OAUTH_FLOW_CONSTITUTION.md": "74d7a8f327a9558712c3ac8bb54a6633fff7a7e2045405d236d35f265d124b28",
       "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md": "49e253b08959faa9f0b2bf208ed5eb6d3c078a0ddf9097e667a9bf1483dc7350",
       "package.json": "a99953eda0b9270c5c7c282e8f517210f11759acd7dbbe25737824dc6288f730",
@@ -4255,9 +4256,9 @@
       "date": "2026-11-11",
       "owner_approval": {
         "explicit": true,
-        "source": "Tamam başlayalım Codex — refresh-to-report receipt rehearsal; Harika devam edelim Codex — atomic claim and Dataset write; Tamam devam edelim Codex onaylıyorum — completion after verified receipt; Tamam onaylıyorum devam edelim Codex — narrow runner authority; Onaylıyorum devam edelim Codex — isolated server connection/scheduler integration, and subsequent same approval for independent observer and test notification preparation. Live channel/recipient/store still require selection."
+        "source": "Tamam başlayalım Codex — refresh-to-report receipt; Harika devam edelim Codex — atomic claim and write; Tamam devam edelim Codex onaylıyorum — verified completion; Tamam onaylıyorum devam edelim Codex — narrow runner; Onaylıyorum devam edelim Codex — scheduler connection and later independent observer; Onaylıyorum Codex — prepare Google Workspace Gmail send-only test connection with dev@adstable.app as sender and recipient."
       },
-      "rationale": "Bind scheduled source and receipt to current job and release its reservation only after verified completion. Prepare dedicated NOLOGIN role and exact seven-RPC TLS client. Connect the independent queue observer to fixed receipt reader and injected durable witness/incident and notification adapters with bounded IO. Reserve a single notification by CAS before sending; no duplicate send on unknown outcomes. Synthetic rehearsal only; no vendor, credentials, production route, OAuth or live activation.",
+      "rationale": "Bind scheduled report and receipt to current job, verified completion and narrow TLS role. Independent observer uses bounded IO, durable CAS and single notification reservation. Fixed Google Workspace canary only sends AL01 in test, using a dedicated send-only OAuth grant and fixed self-addressed mailbox. The access token and response are not persisted or logged. Existing merchant OAuth and production remain outside this preparation.",
       "scope": {
         "runtime_code": true,
         "live_provider": false,
@@ -4271,6 +4272,7 @@
         "app/lib/database/dataset-postgres.server.js",
         "app/lib/database/dataset-reconciliation.server.js",
         "app/lib/database/dataset-rpc.server.js",
+        "app/lib/refresh/gmail-canary.server.js",
         "app/lib/refresh/observability.server.js",
         "app/lib/refresh/preflight-bridge.server.js",
         "app/lib/refresh/scheduled-queue-check.server.js",
@@ -4283,6 +4285,7 @@
         "app/lib/database/dataset-postgres.server.js",
         "app/lib/database/dataset-reconciliation.server.js",
         "app/lib/database/dataset-rpc.server.js",
+        "app/lib/refresh/gmail-canary.server.js",
         "app/lib/refresh/observability.server.js",
         "app/lib/refresh/preflight-bridge.server.js",
         "app/lib/refresh/scheduled-queue-check.server.js",

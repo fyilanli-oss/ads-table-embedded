@@ -1494,7 +1494,7 @@
       "app/lib/refresh/meta-raw-request.server.js": "eb26d86a1f40682ff0797f66cd7b25cf45ae91422c2e94a1c966313d17a70458",
       "app/lib/refresh/meta-raw-server.server.js": "8da974d7829ad7c7c89d08e49fb6c6493fa1c649bd42ef287f1f0871673511ef",
       "app/lib/refresh/native-inventory.server.js": "5d67e8642f4032b90c154b12c43da8c92945d8b223c0494e1c82974739b8b5c6",
-      "app/lib/refresh/observability.server.js": "b0bf872acd3fa98c8a39a80b7e6fce8b203256af8cdc4ad86d3e9ab3476ccae9",
+      "app/lib/refresh/observability.server.js": "30843c9fbe753b2d689756c63482035ba29d500381d9596a59892067ec155246",
       "app/lib/refresh/pd-prewrite-chunk.server.js": "29b295aa601c9e687dd95636a4023a8613a5e34179189635c057b9e5df77a201",
       "app/lib/refresh/pd-source-reader.server.js": "4e041c3521f858b3b7df6830ee781ddd9ea25290eaf7ace1173c05e59581c471",
       "app/lib/refresh/preflight-bridge.server.js": "4a6453318bffbdd471b20977d5c192f3bce0025ed4152627fc173c4caf94ca27",

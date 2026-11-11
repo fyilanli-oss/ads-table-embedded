@@ -240,7 +240,7 @@ export async function runQueueSilenceAlarm({witnessStore, incidentStore, readRec
     const pending = transitionAlarm(incident,"dispatch_pending");
     const revision = await commit(saved.revision,pending);
     // A crash or lost response after reserving leaves the incident pending for
-    // operator review. A later tick cannot send the same incident again.
+    // manual review. A later tick cannot send the same incident again.
     const sent = await bounded(signal => sendNotification({event,signal}));
     if (!exact(sent,["accepted"]) || sent.accepted !== true) throw Error();
     const accepted = transitionAlarm(pending,"notification_accepted");

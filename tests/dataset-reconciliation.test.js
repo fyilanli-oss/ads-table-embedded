@@ -5,6 +5,7 @@ import {datasetSourceBindingFixture} from "./fixtures/dataset-source-binding-fix
 import {sourcePayloadHash} from "../app/lib/database/source-evidence-store.server.js";
 import {reconcileStoredDatasetSources, canonicalDatasetEventTime, DATASET_RECONCILE_SQL, DATASET_RECONCILE_READ_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
 import {readDatasetWritePlan} from "../app/lib/refresh/dataset-server.server.js";
+import {runScheduledRefreshCheck} from "../app/lib/refresh/scheduled-queue-check.server.js";
 
 async function fixture(provider = "google_ads", options = {}) {
   const f = await datasetSourceBindingFixture(provider, options); const key = provider === "google_ads" ? "googleDatasetRead" : provider === "meta" ? "metaDatasetRead" : "klaviyoDatasetRead";
@@ -56,6 +57,49 @@ test("unknown writes stop without any following readback or retry", async () => 
   const f = await fixture(); let lost = false, after = 0; const hook = f.hooks.query;
   f.hooks.query = (sql, args) => {if (lost) after++; if (sql === DATASET_RECONCILE_SQL) {lost = true; throw Error("lost");}return hook(sql, args);};
   await assert.rejects(reconcileStoredDatasetSources(f), /WRITE_UNCONFIRMED/); assert.equal(after, 0);
+});
+test("scheduled handoff consumes only its own admitted source and verifies readback", async () => {
+  for (const mode of ["verified", "wrong_fence", "lost_write"]) {
+    const input = await fixture();
+    const {owner} = input;
+    const generation = randomUUID();
+    const time = Date.parse("2026-11-02T00:02:00.000Z");
+    const window = {from: "2026-11-01", to: "2026-11-01"};
+    const source = {...input.source, connectionVersion: Number(owner.connectionVersion), queuedAt: time, scheduledHour: time - time % 3600000 - 3600000};
+    const cost = {requests: 2, dbWrites: 5, connections: 1, rows: 1000, bytes: 1000000};
+    const snapshot = {configured: true, queueRevision: 2, candidates: [source],
+      state: {revision: 3, nextFence: 1, nextTurn: 1, claims: [], lastServed: []},
+      bounds: {maxCandidates: 5, maxClaims: 5, maxAdmissions: 5, maxWorkspaces: 5},
+      budget: {global: cost, interactiveReserve: {requests: 0, dbWrites: 0, connections: 0, rows: 0, bytes: 0},
+        providers: [{provider: owner.provider, limit: cost}], workspaces: [{workspaceId: owner.workspaceId, limit: cost}],
+        accounts: [{provider: owner.provider, accountId: owner.accountId, limit: cost}]}};
+    const store = {checkScheduledQueue: async () => ({status: "checked", generation, sequence: 1, queueRevision: 2, checkedAtMs: time}),
+      reviewInterruptedWork: async () => ({status: "reviewed", stopped: 0, uncertain: 0}), readPreflightSnapshot: async () => snapshot,
+      commitPreflight: async () => true, loadBoundAuthority: async () => ({...source, installationVerified: true, connected: true, setupComplete: true, allowedWindow: true}),
+      advanceStage: async () => true, isClaimCurrent: async () => true, readAdmissionSnapshot: async () => snapshot,
+      recordStop: async () => ({recorded: true})};
+    const hook = input.hooks.query;
+    input.hooks.query = (sql, args) => {
+      if (mode === "lost_write" && sql === DATASET_RECONCILE_SQL) throw Error("lost commit acknowledgement");
+      return hook(sql, args);
+    };
+    const work = {buildWorkPlan: async () => ({partitionId: "synthetic-one-day", workClass: "hourly_hot_window", window, cost,
+      limits: {deadlineAt: time + 60000, requestTimeoutMs: 1000, finishReserveMs: 100, maxRows: cost.rows, maxBytes: cost.bytes}}),
+      now: () => time, entitlementVerifier: {verify: async () => ({status: "verified", receipt: {}}), isCurrent: async () => true},
+      readPage: async () => ({kind: "complete", payload: {}}), validatePage: () => ({complete: true, rows: []}),
+      loadDatasetInputs: async ({claim}) => {
+        for (const envelope of input.envelopes.values()) {
+          Object.assign(envelope.receipt.manifest.googleDatasetRead, {jobId: claim.id, fence: String(claim.fence + (mode === "wrong_fence" ? 1 : 0))});
+        }
+        return input;
+      }};
+    const result = await runScheduledRefreshCheck({store, generation, work});
+    assert.equal(result.status, "queue_checked");
+    assert.equal(result.work.status, mode === "verified" ? "dataset_verified" : "needs_attention");
+    assert.equal(input.queries.filter(sql => sql === DATASET_RECONCILE_SQL).length, mode === "wrong_fence" ? 0 : 1);
+    assert.equal(input.queries.filter(sql => sql === DATASET_RECONCILE_READ_SQL).length, mode === "verified" ? 1 : 0);
+    if (mode === "verified") assert.equal(result.work.dataset.checkpointAdvanced, true);
+  }
 });
 test("physical mismatch result is held and cannot claim consumption or checkpoint", async () => {
   const f = await fixture(), hook = f.hooks.query;

@@ -32,7 +32,9 @@ export async function reconciliationProbe(client, {ownerFixture}) {
   for (const provider of ["google_ads", "meta", "klaviyo"]) {
     const owner = await ownerFixture(client, provider), nonempty = provider !== "meta";
     const first = await source(owner, {nonempty, googlePurchase: "3"});
-    const initial = await reconcileStoredDatasetSources(first);
+    const admittedScope = {jobId: "synthetic-binding-job", fence: "1", from: "2026-11-01", to: "2026-11-01"};
+    await assert.rejects(reconcileStoredDatasetSources({...first, admittedScope: {...admittedScope, fence: "2"}}), /ADMITTED_SCOPE_MISMATCH/);
+    const initial = await reconcileStoredDatasetSources({...first, admittedScope});
     assert.equal(initial.revision, 1);assert.equal(initial.consumerReceipt, true);scenarios++;
     assert.equal((await client.query("select count(*)::int n from evidence.source_batches where authority=$1::jsonb and handoff_state='consumed'", [JSON.stringify(owner)])).rows[0].n, first.batches.length);
     await rejected(client, () => reconcileStoredDatasetSources(first));scenarios++;

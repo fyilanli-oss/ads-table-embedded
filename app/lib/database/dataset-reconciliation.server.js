@@ -35,13 +35,17 @@ export function canonicalDatasetEventTime(value) {
  * before atomically issuing the real source-consumption/day checkpoint receipt.
  * It neither dispatches native HTTP nor completes/releases a scheduler job. */
 export async function reconcileStoredDatasetSources({database, cipher, owner, batches, limits, expectedRevision,
-  operationId = randomUUID(), fxResolver, now = Date.now, signal}) {
+  operationId = randomUUID(), fxResolver, now = Date.now, signal, admittedScope}) {
   batches = structuredClone(batches); limits = structuredClone(limits);
+  admittedScope = structuredClone(admittedScope);
   const bound = sourceStoreOwner(owner);
   if (!uuid(operationId) || !Number.isSafeInteger(expectedRevision) || expectedRevision < 0 || expectedRevision > 999999999) fail("INPUT_INVALID");
   const stop = () => {if (signal?.aborted || now() >= limits.deadlineAt) fail("STOPPED");};
   stop();
   const source = await readStoredDatasetSources({database, cipher, owner: bound, batches, limits, now, signal});
+  if (admittedScope !== undefined && (source.scope.jobId !== admittedScope?.jobId
+    || source.scope.fence !== admittedScope.fence || source.scope.window.from !== admittedScope.from
+    || source.scope.window.to !== admittedScope.to)) fail("ADMITTED_SCOPE_MISMATCH");
   const projection = projectors[bound.provider](source);
   for (const {row} of projection.rows) if (row.occurred_at !== null && row.occurred_at !== undefined) row.occurred_at = canonicalDatasetEventTime(row.occurred_at);
   const configuration = source.datasets.filter(d => d.dataset === "configuration").flatMap(d => d.pages.map(p => p.ref));

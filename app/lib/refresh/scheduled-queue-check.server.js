@@ -30,8 +30,8 @@ export async function runScheduledRefreshCheck({store,generation,work}) {
   if(interruptions.status!=="reviewed") return {status:"queue_checked",queue,interruptions,work:{status:"not_configured"}};
   // Explicitly pick inputs. A work object cannot replace the store or inject a dispatch callback.
   try {
-    const {buildWorkPlan,entitlementVerifier,readPage,validatePage,now}=work;
-    return {status:"queue_checked",queue,interruptions,work:await dispatchRefreshPreflight({store,buildWorkPlan,entitlementVerifier,readPage,validatePage,now})};
+    const {buildWorkPlan,entitlementVerifier,readPage,validatePage,now,loadDatasetInputs}=work;
+    return {status:"queue_checked",queue,interruptions,work:await dispatchRefreshPreflight({store,buildWorkPlan,entitlementVerifier,readPage,validatePage,now,loadDatasetInputs})};
   } catch {
     return {status:"queue_checked",queue,work:{status:"needs_attention",reason:"work_policy_invalid"}};
   }

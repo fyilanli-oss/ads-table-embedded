@@ -1,13 +1,15 @@
 import {createHash} from "node:crypto";
 import {planRefreshPreflightAdmissions} from "./admission-policy.server.js";
 import {runRefreshChunk} from "./chunk-worker.server.js";
+import {reconcileStoredDatasetSources} from "../database/dataset-reconciliation.server.js";
 
-// Internal composition only. No route, scheduler, native provider, date policy or Dataset writer.
-export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlementVerifier, readPage, validatePage, now}) {
+// Internal composition for a trusted work plan. The existing HTTP queue entry is queue-only.
+export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlementVerifier, readPage, validatePage, now, loadDatasetInputs}) {
   if (!["readPreflightSnapshot","commitPreflight","loadBoundAuthority"].every(key=>typeof store?.[key]==="function")
     || [buildWorkPlan,readPage,validatePage,now,entitlementVerifier?.verify,entitlementVerifier?.isCurrent].some(fn=>typeof fn!=="function")) {
     throw new Error("REFRESH_PREFLIGHT_INPUT_INVALID");
   }
+  if (loadDatasetInputs !== undefined && typeof loadDatasetInputs !== "function") throw Error("REFRESH_DATASET_INPUT_INVALID");
   let claim;
   try {
     const snapshot=await store.readPreflightSnapshot();
@@ -28,7 +30,7 @@ export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlemen
         || !["rows","bytes"].every(k=>Number.isSafeInteger(plan.cost?.[k])&&plan.cost[k]>=0)
         || l.maxRows>plan.cost.rows||l.maxBytes>plan.cost.bytes
         || ![w?.from,w?.to].every(d=>typeof d==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(d)&&new Date(`${d}T00:00:00Z`).toISOString().slice(0,10)===d)
-        || w.from>w.to) return {status:"work_plan_required"};
+        || w.from>w.to || loadDatasetInputs!==undefined && w.from!==w.to) return {status:"work_plan_required"};
       const id=createHash("sha256").update(JSON.stringify([source,plan.partitionId,w])).digest("hex");
       const job={id,workspaceId:source.workspaceId,installGeneration:source.installGeneration,provider:source.provider,accountId:source.accountId,
         scheduledHour:source.scheduledHour,queuedAt:source.queuedAt,workClass:plan.workClass,cost:plan.cost,
@@ -42,9 +44,23 @@ export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlemen
       nextState:proposal.nextState,source:binding.source,window:binding.plan.window,partitionId:binding.plan.partitionId,deadlineAt:binding.plan.limits.deadlineAt});
     if(accepted!==true) return {status:"conflict"};
     claim=selected;
-    return {claim:structuredClone(claim),...await runRefreshChunk({claim,window:binding.plan.window,limits:binding.plan.limits,store,
+    const result=await runRefreshChunk({claim,window:binding.plan.window,limits:binding.plan.limits,store,
       loadAuthority:context=>store.loadBoundAuthority(context),verifyEntitlement:context=>entitlementVerifier.verify(context),
-      isEntitlementCurrent:context=>entitlementVerifier.isCurrent(context),readPage,validatePage,now})};
+      isEntitlementCurrent:context=>entitlementVerifier.isCurrent(context),readPage,validatePage,now});
+    if (result.status!=="awaiting_dataset" || loadDatasetInputs===undefined) return {claim:structuredClone(claim),...result};
+
+    const {window,limits}=binding.plan;
+    const inputs=await loadDatasetInputs({claim:structuredClone(claim),window:structuredClone(window),deadlineAt:limits.deadlineAt});
+    const {owner,database,cipher,batches,expectedRevision,fxResolver}=inputs;
+    if (owner?.workspaceId!==claim.workspaceId || owner.generation!==claim.installGeneration || owner.provider!==claim.provider
+      || owner.accountId!==claim.accountId || owner.connectionId!==binding.source.connectionId
+      || owner.connectionVersion!==String(binding.source.connectionVersion) || owner.selectionEpoch!==(binding.source.selectionId ?? null)
+      || await store.isClaimCurrent({claim})!==true) throw Error("REFRESH_DATASET_SCOPE_INVALID");
+    const receipt=await reconcileStoredDatasetSources({owner,database,cipher,batches,expectedRevision,fxResolver,now,
+      limits:{maxPages:300,maxRows:limits.maxRows,maxBytes:limits.maxBytes,deadlineAt:limits.deadlineAt},
+      admittedScope:{jobId:claim.id,fence:String(claim.fence),from:window.from,to:window.to}});
+    return {status:receipt.status==="consumed"?"dataset_verified":"awaiting_dataset",claim:structuredClone(claim),
+      dataset:{status:receipt.status,consumerReceipt:receipt.consumerReceipt,checkpointAdvanced:receipt.checkpointAdvanced},reservationRetained:true};
   } catch {
     // An unknown commit outcome cannot authorize execution or automatic reservation release.
     return {status:"needs_attention",reason:"preflight_unavailable",reservationMayExist:true,...claim?{claim}: {}};

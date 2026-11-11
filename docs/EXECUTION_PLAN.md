@@ -1,3 +1,16 @@
+## EO-05 — Refresh işinden Dataset makbuzuna izole bağlantı, 11 Kasım 2026
+
+Fırat, kuyruktan iş başlatma ve sentetik bir işi rapor makbuzuna kadar sınama
+kapsamına “Tamam başlayalım Codex” diyerek onay verdi. İç zamanlayıcı bileşimi
+doğrulanmış `awaiting_dataset` aşamasından sonra açık sunucu girdi yükleyicisiyle
+mevcut Dataset uzlaştırmasını çağırabilir. Yazımdan önce kaynak job/fence ve tek
+gün aralığı seçilmiş işe bağlanır. Çalışma alanı, nesil, sağlayıcı, hesap, bağlantı
+sürümü ve seçim bağı eşleşir. Makbuz için mevcut fiziksel readback zorunludur.
+Belirsiz yazım izlenmez veya yeniden denenmez. Makbuz işi kapatmaz ve rezervasyonu
+bırakmaz. İzole test geçişi, canlı saatlik çalışmanın veya gerçek alarm tesliminin
+kabulü değildir. HTTP girişinde `queue_only` sürer. Canlı bağlantıda claim kontrolü
+ile yazma/iş sonlandırma arasındaki veritabanı sözleşmesi ayrıca doğrulanmalıdır.
+
 ## EO-05-E — Onaylı iş sağlığı ve tüketim ölçümleri, 10 Kasım 2026
 
 Fırat beş mevcut başlığın açıklamasından sonra açıkça onayladı. [Somut kapsam](EO_05E_OBSERVABILITY.md)

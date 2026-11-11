@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import {randomUUID} from "node:crypto";
 import {storedBindingFixture} from "./eo05b-source-dataset-binding-probe.mjs";
 import {datasetServerProbe} from "./eo05b-dataset-server-probe.mjs";
-import {reconcileStoredDatasetSources, inspectDatasetReconciliation, DATASET_RECONCILE_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
+import {reconcileStoredDatasetSources, inspectDatasetReconciliation, DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
 import {storeMaturityConfiguration, recordMaturityDecision, inspectMaturityDecision} from "../app/lib/database/maturity-store.server.js";
 import {maturityObservationFixture} from "../tests/fixtures/maturity-fixture.js";
 
@@ -120,16 +120,31 @@ export async function reconciliationProbe(client, {ownerFixture}) {
     await rejected(client, () => reconcileStoredDatasetSources(options));
     await client.query(`insert into operations.refresh_work_progress(workspace_id,install_generation,provider,account_id,job_id,fence,stage,from_date,to_date)
       values ($1,$2,$3,$4,$5,$6,'ready_for_dataset','2026-11-01','2026-11-01')`, [...args,job,fence]);
-    assert.equal((await reconcileStoredDatasetSources(options)).consumerReceipt, true);
-    assert.equal((await client.query("select status from operations.refresh_runs where fence=$1", [fence])).rows[0].status, "running");
+    const jobStatus = async () => (await client.query("select status from operations.refresh_runs where fence=$1", [fence])).rows[0].status;
+    let finishArgs;
+    const completingDatabase = {async query(sql, parameters) {
+      if (sql === SCHEDULED_DATASET_FINISH_SQL) {
+        finishArgs = parameters;
+        assert.equal(await jobStatus(), "running");
+        assert.equal((await client.query(sql,[...parameters.slice(0,4),"f".repeat(64)])).rows[0].result,false);
+        assert.equal(await jobStatus(), "running");
+      }
+      return database.query(sql,parameters);
+    }};
+    const completed = await reconcileStoredDatasetSources({...options,database:completingDatabase});
+    assert.equal(completed.consumerReceipt, true);
+    assert.equal(completed.jobCompleted, true);
+    assert.equal(await jobStatus(), "completed");
+    assert.equal((await client.query(SCHEDULED_DATASET_FINISH_SQL,finishArgs)).rows[0].result,false);
     for (const role of ["anon","authenticated","service_role","adstable_runtime","adstable_refresh_coordinator"]) {
       assert.equal((await client.query("select has_function_privilege($1,'analytics.commit_scheduled_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz)','EXECUTE') as allowed", [role])).rows[0].allowed, false);
+      assert.equal((await client.query("select has_function_privilege($1,'analytics.finish_scheduled_dataset_reconciliation(jsonb,text,bigint,uuid,text)','EXECUTE') as allowed", [role])).rows[0].allowed, false);
     }
   } finally {
     await client.query("rollback to savepoint scheduled_dataset_rehearsal");
     await client.query("release savepoint scheduled_dataset_rehearsal");
   }
-  console.log("EO05_SCHEDULED_DATASET_PROBE current_claim=true ready_stage=true reservation_retained=true rollback_only=true");
+  console.log("EO05_SCHEDULED_DATASET_PROBE current_claim=true ready_stage=true verified_completion=true invalid_receipt_rejected=true duplicate_finish_rejected=true rollback_only=true");
   console.log("EO05D_RECONCILIATION_PROBE", JSON.stringify({scenarios, rollbackOnly: true, synthetic: true, actualAEAD: true, physicalReadback: true,
     replacement3to5: true, emptyRemovesOldFacts: true, mismatchRollbackAndLedger: true, unknownStops: true, liveAcceptance: false}));
 }

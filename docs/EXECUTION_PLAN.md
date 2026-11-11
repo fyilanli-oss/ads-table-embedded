@@ -12,7 +12,13 @@ kabulü değildir. HTTP girişinde `queue_only` sürer. “Harika devam edelim C
 onayıyla zamanlanmış yazıma özel PostgreSQL fonksiyonu hazırlanır. Fonksiyon
 refresh kontrol kilidini alır ve mevcut claim, gün, kaynak bağı, aşama ve son
 süreyi rapor yazımıyla aynı işlemde doğrular. Migration izole F01 kapsamındadır.
-İş sonlandırma ve canlı çalıştırıcı yetkisi sonraki adımdadır.
+“Tamam devam edelim Codex onaylıyorum” ile doğrulanmış makbuza bağlı tamamlama
+eklenir. Zamanlanmış yazım, iş kimliği ve fence ile makbuz özetini aynı işlemde
+bağlar. Uygulama kesin makbuz ve fiziksel readback aldıktan sonra ayrı tamamlama
+isteği gönderir. Veritabanı bu bağı ve rapor kanıtını kontrol kilidi altında tekrar
+doğrular, işi tamamlar ve rezervasyonu bırakır. Yazma cevabı kayıpsa tamamlama
+çağrılmaz. Tamamlama cevabı kayıpsa rezervasyon durumu belirsizdir ve çağrı
+tekrarlanmaz. Canlı çalıştırıcı yetkisi ve izleyici bağlantısı bekler.
 
 ## EO-05-E — Onaylı iş sağlığı ve tüketim ölçümleri, 10 Kasım 2026
 

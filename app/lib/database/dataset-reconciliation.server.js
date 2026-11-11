@@ -12,6 +12,7 @@ import {maturityInstant, maturityDate, freezeMaturity} from "../refresh/maturity
 export const DATASET_RECONCILIATION_VERSION = "eo05d-reconciliation-v1";
 export const DATASET_RECONCILE_SQL = "select analytics.commit_dataset_reconciliation($1::jsonb,$2::jsonb,$3::jsonb,$4::timestamptz) as result";
 export const SCHEDULED_DATASET_RECONCILE_SQL = "select analytics.commit_scheduled_dataset_reconciliation($1::jsonb,$2::jsonb,$3::jsonb,$4::timestamptz) as result";
+export const SCHEDULED_DATASET_FINISH_SQL = "select analytics.finish_scheduled_dataset_reconciliation($1::jsonb,$2::text,$3::bigint,$4::uuid,$5::text) as result";
 export const DATASET_RECONCILE_READ_SQL = "select analytics.inspect_dataset_reconciliation($1::jsonb,$2::uuid) as result";
 const projectors = {google_ads: projectStoredGoogleDataset, meta: projectStoredMetaDataset, klaviyo: projectStoredKlaviyoDataset};
 const confirmed = new WeakMap();
@@ -34,7 +35,7 @@ export function canonicalDatasetEventTime(value) {
 /** Fixed private projection of actual AEAD-verified source pages only. The SQL
  * transaction revalidates full coverage, CAS, read order, rows and exact hashes
  * before atomically issuing the real source-consumption/day checkpoint receipt.
- * It neither dispatches native HTTP nor completes/releases a scheduler job. */
+ * The scheduled path completes its job only after the known write and readback. */
 export async function reconcileStoredDatasetSources({database, cipher, owner, batches, limits, expectedRevision,
   operationId = randomUUID(), fxResolver, now = Date.now, signal, admittedScope, scheduled = false}) {
   batches = structuredClone(batches); limits = structuredClone(limits);
@@ -85,7 +86,18 @@ export async function reconcileStoredDatasetSources({database, cipher, owner, ba
   stop();
   const readback = await inspectDatasetReconciliation({database, owner: bound, operationId});
   if (canonicalSourceJson(readback) !== canonicalSourceJson(receipt)) fail("READBACK_UNCONFIRMED");
+  if (scheduled) {
+    stop();
+    if (typeof receipt.digest !== "string" || !/^[0-9a-f]{64}$/.test(receipt.digest)) fail("READBACK_UNCONFIRMED");
+    let finished;
+    try {
+      finished = (await database.query(SCHEDULED_DATASET_FINISH_SQL, [JSON.stringify(bound), admittedScope.jobId,
+        admittedScope.fence, operationId, receipt.digest])).rows?.[0]?.result;
+    } catch {fail("FINISH_UNCONFIRMED");}
+    if (finished !== true) fail("FINISH_UNCONFIRMED");
+  }
   const result = freezeMaturity({...receipt, sourceVerified: true, rowsStored: receipt.rowCount, reportValuesChanged: receipt.changes?.length > 0,
+    ...(scheduled ? {jobCompleted: true} : {}),
     hourlyRefreshActivated: false, authorizesActivation: false, publishable: false});
   confirmed.set(result, bound); return result;
 }

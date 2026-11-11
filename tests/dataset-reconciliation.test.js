@@ -3,7 +3,7 @@ import test from "node:test";
 import {randomUUID} from "node:crypto";
 import {datasetSourceBindingFixture} from "./fixtures/dataset-source-binding-fixture.js";
 import {sourcePayloadHash} from "../app/lib/database/source-evidence-store.server.js";
-import {reconcileStoredDatasetSources, canonicalDatasetEventTime, DATASET_RECONCILE_SQL, DATASET_RECONCILE_READ_SQL, SCHEDULED_DATASET_RECONCILE_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
+import {reconcileStoredDatasetSources, canonicalDatasetEventTime, DATASET_RECONCILE_SQL, DATASET_RECONCILE_READ_SQL, SCHEDULED_DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
 import {readDatasetWritePlan} from "../app/lib/refresh/dataset-server.server.js";
 import {runScheduledRefreshCheck} from "../app/lib/refresh/scheduled-queue-check.server.js";
 
@@ -16,9 +16,11 @@ async function fixture(provider = "google_ads", options = {}) {
       const write = JSON.parse(args[1]), context = JSON.parse(args[2]); request = {write, context};
       receipt = {status: "consumed", operationId: write.operationId, requestDigest: sourcePayloadHash(request), revision: context.expectedRevision + 1,
         rowCount: write.rows.length, consumerReceipt: true, checkpointAdvanced: true, comparison: "matched", businessDate: context.businessDate, timeZone: context.timeZone};
+      if (sql === SCHEDULED_DATASET_RECONCILE_SQL) receipt.digest = sourcePayloadHash(receipt);
       return {rows: [{result: structuredClone(receipt)}]};
     }
     if (sql === DATASET_RECONCILE_READ_SQL) return {rows: [{result: structuredClone(receipt)}]};
+    if (sql === SCHEDULED_DATASET_FINISH_SQL) return {rows: [{result: args[3] === receipt.operationId && args[4] === receipt.digest}]};
   };
   return {...f, expectedRevision: 0, request: () => request};
 }
@@ -59,7 +61,7 @@ test("unknown writes stop without any following readback or retry", async () => 
   await assert.rejects(reconcileStoredDatasetSources(f), /WRITE_UNCONFIRMED/); assert.equal(after, 0);
 });
 test("scheduled handoff consumes only its own admitted source and verifies readback", async () => {
-  for (const mode of ["verified", "wrong_fence", "lost_write"]) {
+  for (const mode of ["verified", "wrong_fence", "lost_write", "lost_finish"]) {
     const input = await fixture();
     const {owner} = input;
     const generation = randomUUID();
@@ -81,6 +83,7 @@ test("scheduled handoff consumes only its own admitted source and verifies readb
     const hook = input.hooks.query;
     input.hooks.query = (sql, args) => {
       if (mode === "lost_write" && sql === SCHEDULED_DATASET_RECONCILE_SQL) throw Error("lost commit acknowledgement");
+      if (mode === "lost_finish" && sql === SCHEDULED_DATASET_FINISH_SQL) throw Error("lost completion acknowledgement");
       return hook(sql, args);
     };
     const work = {buildWorkPlan: async () => ({partitionId: "synthetic-one-day", workClass: "hourly_hot_window", window, cost,
@@ -95,11 +98,14 @@ test("scheduled handoff consumes only its own admitted source and verifies readb
       }};
     const result = await runScheduledRefreshCheck({store, generation, work});
     assert.equal(result.status, "queue_checked");
-    assert.equal(result.work.status, mode === "verified" ? "dataset_verified" : "needs_attention");
+    assert.equal(result.work.status, mode === "verified" ? "completed" : "needs_attention");
     assert.equal(input.queries.filter(sql => sql === DATASET_RECONCILE_SQL).length, 0);
     assert.equal(input.queries.filter(sql => sql === SCHEDULED_DATASET_RECONCILE_SQL).length, mode === "wrong_fence" ? 0 : 1);
-    assert.equal(input.queries.filter(sql => sql === DATASET_RECONCILE_READ_SQL).length, mode === "verified" ? 1 : 0);
-    if (mode === "verified") assert.equal(result.work.dataset.checkpointAdvanced, true);
+    const reachesFinish = mode === "verified" || mode === "lost_finish";
+    assert.equal(input.queries.filter(sql => sql === DATASET_RECONCILE_READ_SQL).length, reachesFinish ? 1 : 0);
+    assert.equal(input.queries.filter(sql => sql === SCHEDULED_DATASET_FINISH_SQL).length, reachesFinish ? 1 : 0);
+    if (mode === "verified") assert.equal(result.work.reservationRetained, false);
+    if (mode === "lost_finish") assert.equal(result.work.reservationMayExist, true);
   }
 });
 test("physical mismatch result is held and cannot claim consumption or checkpoint", async () => {

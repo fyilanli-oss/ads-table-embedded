@@ -8,11 +8,11 @@ import {projectStoredMetaDataset} from "../providers/stored-meta-dataset.server.
 import {projectStoredKlaviyoDataset} from "../providers/stored-klaviyo-dataset.server.js";
 import {applyStoredDatasetFx} from "./dataset-fx-resolver.server.js";
 import {maturityInstant, maturityDate, freezeMaturity} from "../refresh/maturity-policy.server.js";
+import {SCHEDULED_DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL} from "./dataset-rpc.server.js";
+export {SCHEDULED_DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL};
 
 export const DATASET_RECONCILIATION_VERSION = "eo05d-reconciliation-v1";
 export const DATASET_RECONCILE_SQL = "select analytics.commit_dataset_reconciliation($1::jsonb,$2::jsonb,$3::jsonb,$4::timestamptz) as result";
-export const SCHEDULED_DATASET_RECONCILE_SQL = "select analytics.commit_scheduled_dataset_reconciliation($1::jsonb,$2::jsonb,$3::jsonb,$4::timestamptz) as result";
-export const SCHEDULED_DATASET_FINISH_SQL = "select analytics.finish_scheduled_dataset_reconciliation($1::jsonb,$2::text,$3::bigint,$4::uuid,$5::text) as result";
 export const DATASET_RECONCILE_READ_SQL = "select analytics.inspect_dataset_reconciliation($1::jsonb,$2::uuid) as result";
 const projectors = {google_ads: projectStoredGoogleDataset, meta: projectStoredMetaDataset, klaviyo: projectStoredKlaviyoDataset};
 const confirmed = new WeakMap();

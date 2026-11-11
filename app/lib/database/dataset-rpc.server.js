@@ -20,6 +20,14 @@ export const DATASET_RECONCILIATION_RPC = Object.freeze([
   ["select analytics.commit_dataset_reconciliation($1::jsonb,$2::jsonb,$3::jsonb,$4::timestamptz) as result", "analytics.commit_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz)"],
   ["select analytics.inspect_dataset_reconciliation($1::jsonb,$2::uuid) as result", "analytics.inspect_dataset_reconciliation(jsonb,uuid)"],
 ].map(Object.freeze));
+export const SCHEDULED_DATASET_RECONCILE_SQL = "select analytics.commit_scheduled_dataset_reconciliation($1::jsonb,$2::jsonb,$3::jsonb,$4::timestamptz) as result";
+export const SCHEDULED_DATASET_FINISH_SQL = "select analytics.finish_scheduled_dataset_reconciliation($1::jsonb,$2::text,$3::bigint,$4::uuid,$5::text) as result";
+export const SCHEDULED_DATASET_RPC = Object.freeze([
+  ...DATASET_STORAGE_RPC.filter(([, signature]) => signature.startsWith("evidence.") && !signature.startsWith("evidence.begin_")),
+  ...DATASET_RECONCILIATION_RPC.filter(([, signature]) => signature.startsWith("analytics.inspect_")),
+  Object.freeze([SCHEDULED_DATASET_RECONCILE_SQL, "analytics.commit_scheduled_dataset_reconciliation(jsonb,jsonb,jsonb,timestamptz)"]),
+  Object.freeze([SCHEDULED_DATASET_FINISH_SQL, "analytics.finish_scheduled_dataset_reconciliation(jsonb,text,bigint,uuid,text)"]),
+]);
 // Existing source clients still issue only their own fixed RPCs. Recognizing
 // this exact future extension avoids breaking capture when its separate grant
 // is installed; it does not grant or enable any storage call.

@@ -21,7 +21,13 @@ doğrular, işi tamamlar ve rezervasyonu bırakır. Yazma cevabı kayıpsa tamam
 tekrarlanmaz. “Tamam onaylıyorum devam edelim Codex” ile iki zamanlanmış işleme
 ve bunların mevcut kaynak/makbuz okumalarına erişen ayrı `NOLOGIN` rolü hazırlanır.
 F01 sentetik işi bu rolle tamamlar; doğrudan tablo ve manuel yazma izinleri
-reddedilir. Canlı giriş, kimlik bilgisi, zamanlayıcı ve izleyici bağlantısı bekler.
+reddedilir. Sonraki “Onaylıyorum devam edelim Codex” onayıyla güvenilir zamanlayıcı
+bileşimine ayrı TLS istemcisi bağlanır. İstemci tam rol ve yedi fonksiyon iznini
+kontrol eder, kalan süreyi ve tek bağlantı sınırını uygular. İç zamanlayıcı iş
+planını ve kaynak girdilerini sağlar; Dataset bağlantısı yalnız devir aşamasında
+açılır ve kapatılır. Bu dar rol mevcut kur yazım fonksiyonuna erişmez; zamanlanmış
+kur bağlantısı ayrı tasarım kapısında kalır. Canlı giriş, kimlik bilgisi,
+zamanlayıcı kaydı ve izleyici bağlantısı bekler.
 
 ## EO-05-E — Onaylı iş sağlığı ve tüketim ölçümleri, 10 Kasım 2026
 

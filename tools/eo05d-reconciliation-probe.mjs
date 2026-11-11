@@ -5,6 +5,7 @@ import {datasetServerProbe} from "./eo05b-dataset-server-probe.mjs";
 import {reconcileStoredDatasetSources, inspectDatasetReconciliation, DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
 import {storeMaturityConfiguration, recordMaturityDecision, inspectMaturityDecision} from "../app/lib/database/maturity-store.server.js";
 import {maturityObservationFixture} from "../tests/fixtures/maturity-fixture.js";
+import {createScheduledDatasetPostgresClient} from "../app/lib/database/dataset-postgres.server.js";
 
 async function rejected(client, action) {
   await client.query("savepoint reconciliation_expected_failure"); let error;
@@ -142,6 +143,22 @@ export async function reconciliationProbe(client, {ownerFixture}) {
     await client.query(`insert into operations.refresh_work_progress(workspace_id,install_generation,provider,account_id,job_id,fence,stage,from_date,to_date)
       values ($1,$2,$3,$4,$5,$6,'ready_for_dataset','2026-11-01','2026-11-01')`, [...args,job,fence]);
     const jobStatus = async () => (await client.query("select status from operations.refresh_runs where fence=$1", [fence])).rows[0].status;
+    let transportSequence = 0;
+    const transport = createScheduledDatasetPostgresClient({deadlineAt: input.limits.deadlineAt,
+      environment: {ADSTABLE_REFRESH_DATASET_DATABASE_URL: "postgresql://" + scheduledRole + ".podpwkrpmjiksskxhwsu:" + "x".repeat(32) + "@aws-1-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require",
+        ADSTABLE_REFRESH_DATASET_DB_TIMEOUT_MS: "5000"}, poolFactory: () => ({on() {}, async end() {}, async connect() {
+        const savepoint = "scheduled_transport_" + (++transportSequence);
+        return {release() {}, async query(sql, parameters) {
+          if (sql === "begin") return client.query("savepoint " + savepoint);
+          if (sql === "commit") return client.query("release savepoint " + savepoint);
+          if (sql === "rollback") {
+            await client.query("rollback to savepoint " + savepoint);
+            return client.query("release savepoint " + savepoint);
+          }
+          if (sql.startsWith("select pg_catalog.set_config")) return client.query(sql, parameters);
+          return asScheduledRunner(sql, parameters);
+        }};
+      }})});
     let finishArgs;
     const completingDatabase = {async query(sql, parameters) {
       if (sql === SCHEDULED_DATASET_FINISH_SQL) {
@@ -150,9 +167,11 @@ export async function reconciliationProbe(client, {ownerFixture}) {
         assert.equal((await asScheduledRunner(sql,[...parameters.slice(0,4),"f".repeat(64)])).rows[0].result,false);
         assert.equal(await jobStatus(), "running");
       }
-      return asScheduledRunner(sql,parameters);
+      return transport.query(sql,parameters);
     }};
-    const completed = await reconcileStoredDatasetSources({...options,database:completingDatabase});
+    let completed;
+    try { completed = await reconcileStoredDatasetSources({...options,database:completingDatabase}); }
+    finally { await transport.close(); }
     assert.equal(completed.consumerReceipt, true);
     assert.equal(completed.jobCompleted, true);
     assert.equal(await jobStatus(), "completed");
@@ -173,7 +192,7 @@ export async function reconciliationProbe(client, {ownerFixture}) {
     await client.query("rollback to savepoint scheduled_dataset_rehearsal");
     await client.query("release savepoint scheduled_dataset_rehearsal");
   }
-  console.log("EO05_SCHEDULED_DATASET_PROBE current_claim=true ready_stage=true verified_completion=true invalid_receipt_rejected=true duplicate_finish_rejected=true narrow_role=true manual_write_denied=true direct_table_denied=true rollback_only=true");
+  console.log("EO05_SCHEDULED_DATASET_PROBE current_claim=true ready_stage=true verified_completion=true invalid_receipt_rejected=true duplicate_finish_rejected=true narrow_role=true checked_transport=true manual_write_denied=true direct_table_denied=true rollback_only=true");
   console.log("EO05D_RECONCILIATION_PROBE", JSON.stringify({scenarios, rollbackOnly: true, synthetic: true, actualAEAD: true, physicalReadback: true,
     replacement3to5: true, emptyRemovesOldFacts: true, mismatchRollbackAndLedger: true, unknownStops: true, liveAcceptance: false}));
 }

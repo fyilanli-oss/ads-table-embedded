@@ -1293,10 +1293,10 @@
       "app/lib/database/customer-source-privacy.server.js": "07c9445cf9e4440b995a7f2dc5665229dd17794015e2c06518bcb33931e317ea",
       "app/lib/database/dataset-fx-policy.server.js": "bf1bc27e567b192d3aee2ccfd9bbe3ecab01fd6b972a177339b154a996eb3a4c",
       "app/lib/database/dataset-fx-resolver.server.js": "cf69147f9ab92250a581dd877a73749fcbab03e539ab1616861dc083b5293556",
-      "app/lib/database/dataset-postgres.server.js": "93781f66a6dffe7c8d910cbca3271d7b7209720214466dee840e772003d31ac3",
-      "app/lib/database/dataset-reconciliation.server.js": "86b21af01a939e31454c103defacd66ac227cb48d5fe76124bf0a534aa9ada4d",
+      "app/lib/database/dataset-postgres.server.js": "5800f261590524eb5b043b73296b62d91e8034b5da216df115db91a0f5eebeed",
+      "app/lib/database/dataset-reconciliation.server.js": "c78ffd9e0b07d97c6b789a032188b781b6dc34cd5bdd799f50cf9a3379069592",
       "app/lib/database/dataset-retention.server.js": "16ac5cef4b05ba9ee2f1fb8b961fcca04361f5070a308331d8e57c443e265584",
-      "app/lib/database/dataset-rpc.server.js": "67a938e1acb29479e7ca5fbd25c6d2d7388d444124400992fe39d30246725339",
+      "app/lib/database/dataset-rpc.server.js": "97ddafbeb0a07ba89bd9f79d62f97c948e987a6261f71aeb1be74839e88b591a",
       "app/lib/database/dataset-source-binding.server.js": "e005569543005e15fda73bd03d8662355c736ae7f5c15bb5d6c1235e4b0b26cb",
       "app/lib/database/dataset-source-reader.server.js": "73053469912adea8f4581d7e7516a73272e46af7e5a0393c89be9e8d19d5d56a",
       "app/lib/database/dataset-source-values.server.js": "a8c10fcd26223597d7d1ae6c6c5e3f3a6304022c171159f34a2585357342f8c4",
@@ -1506,7 +1506,7 @@
       "app/lib/refresh/quota-response-feedback.server.js": "5929583f6b1c1eb0d4e0d99c7060d635861a9a60d28468485c7a389853d5e3a8",
       "app/lib/refresh/quota-scope-resolver.server.js": "ff38b878371213d4ba5047b8bcd0005f75342e9c178281df72f85505fd13507f",
       "app/lib/refresh/quota-work-wait.server.js": "241ae261ce805bf76fe4c2f027969bbc67be6cf774f511201fb2381308f2cfcd",
-      "app/lib/refresh/scheduled-queue-check.server.js": "5fd6799f759d52cef9e08f61f29363598642285c8d2d01ca7f68f2473cfbf049",
+      "app/lib/refresh/scheduled-queue-check.server.js": "61c4f6350959beee7c5c883ffedd83ec32215495ef26cac7e29378fe6be7c334",
       "app/lib/refresh/setup-proof-review.server.js": "4f2c59b4b72c791b944c3bb040fa1531eae96b91ba78b49e92aef2c952aeae91",
       "app/lib/refresh/shared-quota.server.js": "105a4f5ed3413395701e7f0246557b53de984be0cd68ba43f2225eaf3389852d",
       "app/lib/refresh/shopify-admin-identity-quota.server.js": "84e33743b3f8b9a8fc7514ab418b3283746470ebb935ef1d566abad4d1655537",
@@ -1595,7 +1595,7 @@
       "contracts/eo-05-permission-explanation-design-v1.json": "ad4753b9ad4a6becd14764b7b33fb917f0cc491ad774cc1f1fe9053c5f189f35",
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json": "7e3fbf118e2d7067635a1bf93113633363e2b3dee67a965349a6465a318dd32c",
       "docs/EO_05_STEP07_SETTINGS_CORRECTIONS_BRIEF.md": "c602fd4d7760e8f32c109e1f0456907c739c12906d71becf88476cad2007d6a1",
-      "docs/EXECUTION_PLAN.md": "9eef98239c211a961658287abb7dc9727747a4a947b97b144c405b79e138c452",
+      "docs/EXECUTION_PLAN.md": "735fca40a3ab9fc1171729f5125a80d12fda69c570510f71498b1ca278c2636b",
       "docs/OAUTH_FLOW_CONSTITUTION.md": "74d7a8f327a9558712c3ac8bb54a6633fff7a7e2045405d236d35f265d124b28",
       "docs/templates/SHOPIFY_EMBEDDED_UI_TASK_TEMPLATE.md": "49e253b08959faa9f0b2bf208ed5eb6d3c078a0ddf9097e667a9bf1483dc7350",
       "package.json": "a99953eda0b9270c5c7c282e8f517210f11759acd7dbbe25737824dc6288f730",
@@ -1811,7 +1811,7 @@
       "tools/eo05b-report-retention-probe.mjs": "ed1015ae7b31557a03a575d4786125cdff3f4f7c63524485455a5dbdeda676a8",
       "tools/eo05b-source-dataset-binding-probe.mjs": "d9aa68f202922f0978a05b411781fcbc4685b86337b56cfcab32964316713d79",
       "tools/eo05c-maturity-probe.mjs": "e66c2379b2f6781bb4b1ac2207bfe73edeb9ce5c1c01cb8cc7bde06f69fe5b47",
-      "tools/eo05d-reconciliation-probe.mjs": "5b86aec2899e6468764dfa483813e95c0bef8c389b5f471357392c45049a7fb3",
+      "tools/eo05d-reconciliation-probe.mjs": "dc3b91451a057b2621d09378948dcd4e80ca7ce52221061dc774b1be9c400608",
       "tools/eo05e-observability-probe.mjs": "f9aad28c4b2c062915f18dc2d000680e33afe6ca8de9714f59cccb881a291273",
       "tools/f01-database-replay.mjs": "11e8736bc46f76dd3476a79fae8d18d21d19d375e4c8534c4ad67eccf6f5a98b",
       "tools/f01-identity-oauth-rollout.mjs": "5894b9ae54363fcf31372ed0a1abf39d3c0e1dfea428190232a0420b0b11f787",
@@ -4255,9 +4255,9 @@
       "date": "2026-11-11",
       "owner_approval": {
         "explicit": true,
-        "source": "Tamam başlayalım Codex — refresh-to-report receipt rehearsal; Harika devam edelim Codex — atomic claim and Dataset write; Tamam devam edelim Codex onaylıyorum — completion after verified receipt; Tamam onaylıyorum devam edelim Codex — prepare narrow scheduled Dataset runner authority and verify its isolated SQL connection. Same draft PR; no live credentials or grants."
+        "source": "Tamam başlayalım Codex — refresh-to-report receipt rehearsal; Harika devam edelim Codex — atomic claim and Dataset write; Tamam devam edelim Codex onaylıyorum — completion after verified receipt; Tamam onaylıyorum devam edelim Codex — narrow runner authority; Onaylıyorum devam edelim Codex — prepare its server connection and scheduler integration in isolated code and tests. Same draft PR; no live credentials or grants."
       },
-      "rationale": "Bind scheduled source to the admitted job, fence and day. Scheduled write stores the receipt binding; completion rechecks it after a known write/readback and releases the reservation under the control lock. Unknown writes never call completion; unknown completion is not repeated. Prepared NOLOGIN runner has two scheduled operations and fixed prerequisite reads only. F01 executes with actual current_user runner, rejects direct table and manual writes. No live role application, login, activation, HTTP or OAuth changes.",
+      "rationale": "Bind scheduled source and receipt to current job and release its reservation only after verified completion. Prepare dedicated NOLOGIN role, exact seven RPC TLS client and trusted scheduler composition with bounded one-client transactions and fail-closed role profile. Prove the transport against actual PostgreSQL in F01. No manual writer, direct table, FX write, new HTTP dispatch, OAuth changes or live activation.",
       "scope": {
         "runtime_code": true,
         "live_provider": false,
@@ -4268,7 +4268,9 @@
         "merge": false
       },
       "changed_paths": [
+        "app/lib/database/dataset-postgres.server.js",
         "app/lib/database/dataset-reconciliation.server.js",
+        "app/lib/database/dataset-rpc.server.js",
         "app/lib/refresh/preflight-bridge.server.js",
         "app/lib/refresh/scheduled-queue-check.server.js",
         "contracts/oauth/oauth-flow-constitution-v1.json",
@@ -4277,10 +4279,13 @@
         "tools/eo05d-reconciliation-probe.mjs"
       ],
       "artifact_paths": [
+        "app/lib/database/dataset-postgres.server.js",
         "app/lib/database/dataset-reconciliation.server.js",
+        "app/lib/database/dataset-rpc.server.js",
         "app/lib/refresh/preflight-bridge.server.js",
         "app/lib/refresh/scheduled-queue-check.server.js",
         "contracts/a6-tech-01-f01-migration-lineage-v1.json",
+        "contracts/eo-01b-negative-controls-v1.json",
         "contracts/oauth/oauth-flow-constitution-v1.json",
         "contracts/raw-source/raw-source-constitution-v1.json",
         "docs/EXECUTION_PLAN.md",
@@ -4290,6 +4295,8 @@
       ],
       "tests": [
         "tests/dataset-reconciliation.test.js",
+        "tests/dataset-server.test.js",
+        "tests/eo-01b-negative-controls.test.js",
         "tests/eo-05a-refresh-scheduled-queue-check.test.js",
         "tests/eo-05a-refresh-preflight-bridge.test.js",
         "tools/eo05d-reconciliation-probe.mjs"

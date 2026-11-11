@@ -5,7 +5,7 @@ import {datasetSourceBindingFixture} from "./fixtures/dataset-source-binding-fix
 import {sourcePayloadHash} from "../app/lib/database/source-evidence-store.server.js";
 import {reconcileStoredDatasetSources, canonicalDatasetEventTime, DATASET_RECONCILE_SQL, DATASET_RECONCILE_READ_SQL, SCHEDULED_DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
 import {readDatasetWritePlan} from "../app/lib/refresh/dataset-server.server.js";
-import {runScheduledRefreshCheck} from "../app/lib/refresh/scheduled-queue-check.server.js";
+import {runScheduledRefreshWithDataset} from "../app/lib/refresh/scheduled-queue-check.server.js";
 
 async function fixture(provider = "google_ads", options = {}) {
   const f = await datasetSourceBindingFixture(provider, options); const key = provider === "google_ads" ? "googleDatasetRead" : provider === "meta" ? "metaDatasetRead" : "klaviyoDatasetRead";
@@ -61,7 +61,7 @@ test("unknown writes stop without any following readback or retry", async () => 
   await assert.rejects(reconcileStoredDatasetSources(f), /WRITE_UNCONFIRMED/); assert.equal(after, 0);
 });
 test("scheduled handoff consumes only its own admitted source and verifies readback", async () => {
-  for (const mode of ["verified", "wrong_fence", "lost_write", "lost_finish"]) {
+  for (const mode of ["verified", "wrong_fence", "lost_write", "lost_finish", "wrong_role"]) {
     const input = await fixture();
     const {owner} = input;
     const generation = randomUUID();
@@ -96,11 +96,23 @@ test("scheduled handoff consumes only its own admitted source and verifies readb
         }
         return input;
       }};
-    const result = await runScheduledRefreshCheck({store, generation, work});
+    let opens = 0, closes = 0;
+    const environment = {ADSTABLE_REFRESH_DATASET_DATABASE_URL: "postgresql://adstable_refresh_dataset_runner.podpwkrpmjiksskxhwsu:" + "x".repeat(32) + "@aws-1-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require",
+      ADSTABLE_REFRESH_DATASET_DB_TIMEOUT_MS: "1000"};
+    const result = await runScheduledRefreshWithDataset({store, generation, work, environment, poolFactory: config => {
+      opens++;
+      assert.equal(config.ssl.rejectUnauthorized,true);
+      return {on() {}, async end() {closes++;}, async connect() {return {release() {}, async query(sql, args) {
+        if (sql.includes("as profile_ready")) return {rows: [{role: mode === "wrong_role" ? "adstable_owner" : "adstable_refresh_dataset_runner", profile_ready: true}]};
+        if (["begin","commit","rollback"].includes(sql) || sql.startsWith("select pg_catalog.set_config")) return {rows: []};
+        return input.database.query(sql, args);
+      }};}};
+    }});
+    assert.deepEqual([opens,closes],[1,1]);
     assert.equal(result.status, "queue_checked");
     assert.equal(result.work.status, mode === "verified" ? "completed" : "needs_attention");
     assert.equal(input.queries.filter(sql => sql === DATASET_RECONCILE_SQL).length, 0);
-    assert.equal(input.queries.filter(sql => sql === SCHEDULED_DATASET_RECONCILE_SQL).length, mode === "wrong_fence" ? 0 : 1);
+    assert.equal(input.queries.filter(sql => sql === SCHEDULED_DATASET_RECONCILE_SQL).length, ["wrong_fence","wrong_role"].includes(mode) ? 0 : 1);
     const reachesFinish = mode === "verified" || mode === "lost_finish";
     assert.equal(input.queries.filter(sql => sql === DATASET_RECONCILE_READ_SQL).length, reachesFinish ? 1 : 0);
     assert.equal(input.queries.filter(sql => sql === SCHEDULED_DATASET_FINISH_SQL).length, reachesFinish ? 1 : 0);

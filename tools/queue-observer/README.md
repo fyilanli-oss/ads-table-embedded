@@ -4,7 +4,16 @@ Hazırlık paketi. Canlı kaynak kurulumu, rol girişi, Gmail çağrısı ve zam
 açılışı ayrı onaydan sonra yapılır. Müşteri kuyruğu veya gerçek hesap verileri bu
 denemeye bağlanmaz.
 
-1. İzole Supabase test veritabanında mevcut EO-05E kuyruk makbuzu fonksiyonu
+1. Denemede `ADSTABLE_QUEUE_OBSERVER_MODE=synthetic` kullan. Bu modda Supabase
+   bağlantısı ve CA alanlarını boş bırak. `ADSTABLE_QUEUE_OBSERVER_SYNTHETIC_GENERATION`
+   için yeni test UUID'sini, `ADSTABLE_QUEUE_OBSERVER_SYNTHETIC_START_AT` için UTC
+   başlangıç zamanını ayarla. Firestore başlangıç kaydına aynı nesil ve zamanı
+   yaz. Zamanlayıcıyı başlangıçtan önce hazırla. Makbuz beşinci dakikada gelir
+   ve sonra dakikada bir yenilenir. Bitiş zamanını başlangıçtan en az yedi
+   dakika sonraya ayarla.
+
+   Ayrı Supabase doğrulamasında varsayılan `supabase` modunu kullan. İzole
+   test veritabanında mevcut EO-05E kuyruk makbuzu fonksiyonu
    bulunmalı. `tools/sql/eo05-queue-observer-role.sql` yalnız o fonksiyona izin
    veren, girişi kapalı rolü hazırlar. Bağlantı öncesi rolün yalnız makbuz
    okuyabildiğini ve operasyon tablolarına erişemediğini doğrula. Sonra yalnız
@@ -51,10 +60,11 @@ gcloud scheduler jobs create http adstable-queue-observer-canary \
   --attempt-deadline=45s --max-retry-attempts=0
 ```
 
-Kabulde önce test kuyruğunu 120 saniyeden uzun süre makbuzsuz bırak. Gmail
+Kabulde test kuyruğunun 120 saniyeden uzun süre makbuzsuz kaldığını gör. Gmail
 kabulü ile gelen kutusu teslimini ayrı doğrula. Sonraki dakikada ikinci e-posta
-gelmediğini kontrol et. Yeni doğrulanmış kuyruk makbuzu üret ve zamanlanmış
-çağrıda toparlanmanın görüldüğünü doğrula. Cloud Run hizmetinin uygulama logunda
+gelmediğini kontrol et. Beşinci dakika ve sonrasındaki çağrıda toparlanmanın
+görüldüğünü doğrula. Sentetik deneme logunda `receiptSource: "synthetic"`
+bulunur ve bu sonuç Supabase bağlantı kabulü olarak kaydedilmez. Cloud Run hizmetinin uygulama logunda
 yalnız durum alanları kullanılabilir. Test biter bitmez zamanlayıcıyı duraklat.
 Bitiş zamanı geçen servis bir daha e-posta gönderemez. Firestore TTL silmesi
 arka planda gerçekleşir. Gerçek kuyruk için Gmail gönderim yetkisi bu denemenin
@@ -65,4 +75,5 @@ Resmî belge kontrolü 11 Kasım 2026.
 [Firestore koşullu yazım](https://docs.cloud.google.com/firestore/docs/reference/rest/v1/projects.databases.documents/patch),
 [Firestore TTL](https://docs.cloud.google.com/firestore/native/docs/ttl),
 [Cloud Run secrets](https://docs.cloud.google.com/run/docs/configuring/services/secrets),
+[Cloud Run ortam ayarları](https://docs.cloud.google.com/run/docs/configuring/services/environment-variables),
 [Supabase roller](https://supabase.com/docs/guides/database/postgres/roles).

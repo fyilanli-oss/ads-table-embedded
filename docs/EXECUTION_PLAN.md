@@ -7,6 +7,10 @@ gönderim ve yeni makbuzla toparlanma izole test kapsamıdır. Canlı kurulum ve
 gerçek kuyruk bildirim rotası açık kalır.
 [Kısa kurulum ve kabul akışı](../tools/queue-observer/README.md).
 
+Owner'ın “Onaylıyorum” yanıtıyla Cloud Run denemesine açık sentetik makbuz
+modu eklenir. İlk beş dakika makbuz yoktur; ardından sentetik makbuz dakikada
+bir yenilenir. Gerçek Supabase bağlantısı için ayrı kabul gerekir.
+
 ## EO-05 — Refresh işinden Dataset makbuzuna izole bağlantı, 11 Kasım 2026
 
 Fırat, kuyruktan iş başlatma ve sentetik bir işi rapor makbuzuna kadar sınama

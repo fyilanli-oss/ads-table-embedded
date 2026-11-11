@@ -12,8 +12,8 @@ const stamp = n => new Date(activatedAtMs + n).toISOString();
 const response = (payload, status = 200) => Response.json(payload, {status});
 const getToken = async () => "fake-metadata-token";
 
-function fixture({seed = true, loseSendReply = false} = {}) {
-  let now = activatedAtMs, receipt, sends = 0, version = 0;
+function fixture({seed = true, loseSendReply = false, mode, syntheticGeneration = generation, databaseUrl} = {}) {
+  let now = activatedAtMs - 1, receipt, sends = 0, version = 0;
   const documents = new Map();
   const witnessPath = `queueObserverWitnesses/${scopeRef}`;
   if (seed) documents.set(witnessPath, {updateTime: stamp(version++), fields: {
@@ -49,7 +49,13 @@ function fixture({seed = true, loseSendReply = false} = {}) {
     ADSTABLE_GMAIL_CANARY_CLIENT_ID: "fake-client-id",
     ADSTABLE_GMAIL_CANARY_CLIENT_SECRET: "fake-client-secret",
     ADSTABLE_GMAIL_CANARY_REFRESH_TOKEN: "fake-refresh-token",
-  }, database: {query: async sql => {
+    ADSTABLE_QUEUE_OBSERVER_MODE: mode,
+    ADSTABLE_QUEUE_OBSERVER_TEST_DATABASE_URL: databaseUrl,
+    ...(mode === "synthetic" ? {
+      ADSTABLE_QUEUE_OBSERVER_SYNTHETIC_GENERATION: syntheticGeneration,
+      ADSTABLE_QUEUE_OBSERVER_SYNTHETIC_START_AT: stamp(0),
+    } : {}),
+  }, database: mode === "synthetic" ? undefined : {query: async sql => {
     assert.equal(sql, "select operations.read_refresh_queue_witness() as result");
     if (receipt instanceof Error) throw receipt;
     return {rows: [{result: receipt ?? null}]};
@@ -101,4 +107,30 @@ test("unseeded witness and unknown send result never cause a second send", async
   uncertain.time(240_000);
   assert.equal((await uncertain.tick()).notification, "already_reserved");
   assert.equal(uncertain.sends(), 1);
+});
+
+test("synthetic mode waits for activation, sends once and recovers without a database", async () => {
+  const f = fixture({mode: "synthetic"});
+  assert.deepEqual(await f.tick(), {status: "canary_waiting"});
+  f.time(120_000);
+  assert.equal((await f.tick()).status, "within_window");
+  f.time(180_000);
+  const late = await f.tick();
+  assert.equal(late.receiptSource, "synthetic");
+  assert.equal(late.notification, "accepted");
+  f.time(240_000);
+  assert.equal((await f.tick()).notification, "already_reserved");
+  f.time(300_000);
+  assert.equal((await f.tick()).recoveryObserved, true);
+  f.time(360_000);
+  assert.equal((await f.tick()).receiptAccepted, true);
+  assert.equal(f.sends(), 1);
+});
+
+test("synthetic mode rejects a database URL and a witness from a different generation", async () => {
+  assert.throws(() => fixture({mode: "synthetic", databaseUrl: "postgresql://example.invalid"}), /QUEUE_OBSERVER_UNAVAILABLE/);
+  const f = fixture({mode: "synthetic", syntheticGeneration: scopeRef});
+  f.time(180_000);
+  assert.equal((await f.tick()).durableWitness, false);
+  assert.equal(f.sends(), 0);
 });

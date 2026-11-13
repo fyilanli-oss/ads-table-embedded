@@ -185,62 +185,74 @@ export async function reconciliationProbe(client, {ownerFixture, connection}) {
         try {await client.query("set local role adstable_owner");} catch {}
       }
     };
-    const scheduledOwner = await ownerFixture(client, "google_ads");
-    const args = [scheduledOwner.workspaceId, scheduledOwner.generation, scheduledOwner.provider, scheduledOwner.accountId];
-    await client.query("update integrations.provider_connections set connected_at='2026-10-31' where id=$1", [scheduledOwner.connectionId]);
-    await client.query("update integrations.reporting_account_bindings set effective_from='2026-10-31' where connection_id=$1", [scheduledOwner.connectionId]);
-    const input = await source(scheduledOwner);
-    const fence = (await client.query("select (coalesce(max(fence),0)+1)::text as n from operations.refresh_runs")).rows[0].n;
-    const job = "synthetic-binding-job";
-    await client.query(`update operations.refresh_work_bindings set fence=$5,deadline_at_ms=$6,
-      source=operations.refresh_preflight_source($1,$2,$3,$4)
-      where workspace_id=$1 and install_generation=$2 and provider=$3 and account_id=$4`, [...args,fence,input.limits.deadlineAt]);
-    for (const batch of input.batches) {
-      await client.query("update evidence.source_batches set manifest=jsonb_set(manifest,'{googleDatasetRead,fence}',to_jsonb($3::text)) where authority=$1::jsonb and attempt_id=$2::uuid",
-        [JSON.stringify(scheduledOwner),batch.attemptId,fence]);
-    }
-    await client.query(`insert into operations.refresh_runs(workspace_id,install_generation,provider,account_id,job_id,fence,cost,status)
-      values ($1,$2,$3,$4,$5,$6,'{"requests":2,"rows":1000,"bytes":1000000,"connections":1,"dbWrites":5}','running')`, [...args,job,fence]);
-    const options = {...input, scheduled: true, admittedScope: {jobId: job, fence, from: "2026-11-01", to: "2026-11-01"}};
-    await rejected(client, () => reconcileStoredDatasetSources({...options,database:{query:asScheduledRunner}}));
-    await client.query(`insert into operations.refresh_work_progress(workspace_id,install_generation,provider,account_id,job_id,fence,stage,from_date,to_date)
-      values ($1,$2,$3,$4,$5,$6,'ready_for_dataset','2026-11-01','2026-11-01')`, [...args,job,fence]);
-    const jobStatus = async () => (await client.query("select status from operations.refresh_runs where fence=$1", [fence])).rows[0].status;
-    let transportSequence = 0;
-    const transport = createScheduledDatasetPostgresClient({deadlineAt: input.limits.deadlineAt,
-      environment: {ADSTABLE_REFRESH_DATASET_DATABASE_URL: "postgresql://" + scheduledRole + ".podpwkrpmjiksskxhwsu:" + "x".repeat(32) + "@aws-1-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require",
-        ADSTABLE_REFRESH_DATASET_DB_TIMEOUT_MS: "5000"}, poolFactory: () => ({on() {}, async end() {}, async connect() {
-        const savepoint = "scheduled_transport_" + (++transportSequence);
-        return {release() {}, async query(sql, parameters) {
-          if (sql === "begin") return client.query("savepoint " + savepoint);
-          if (sql === "commit") return client.query("release savepoint " + savepoint);
-          if (sql === "rollback") {
-            await client.query("rollback to savepoint " + savepoint);
-            return client.query("release savepoint " + savepoint);
+    for (const provider of ["google_ads", "meta", "klaviyo"]) {
+      const scheduledOwner = await ownerFixture(client, provider);
+      const manifestKey = {google_ads: "googleDatasetRead", meta: "metaDatasetRead", klaviyo: "klaviyoDatasetRead"}[provider];
+      const args = [scheduledOwner.workspaceId, scheduledOwner.generation, scheduledOwner.provider, scheduledOwner.accountId];
+      await client.query("update integrations.provider_connections set connected_at='2026-10-31' where id=$1", [scheduledOwner.connectionId]);
+      await client.query("update integrations.reporting_account_bindings set effective_from='2026-10-31' where connection_id=$1", [scheduledOwner.connectionId]);
+      for (const day of ["2026-11-01", "2026-11-02"]) {
+        const input = await source(scheduledOwner, {businessDate: day});
+        const fence = (await client.query("select (coalesce(max(fence),0)+1)::text as n from operations.refresh_runs")).rows[0].n;
+        const job = input.jobId;
+        await client.query(`update operations.refresh_work_bindings set fence=$5,deadline_at_ms=$6,
+          source=operations.refresh_preflight_source($1,$2,$3,$4)
+          where workspace_id=$1 and install_generation=$2 and provider=$3 and account_id=$4 and job_id=$7`, [...args,fence,input.limits.deadlineAt,job]);
+        for (const batch of input.batches) {
+          await client.query("update evidence.source_batches set manifest=jsonb_set(manifest,$4::text[],to_jsonb($3::text)) where authority=$1::jsonb and attempt_id=$2::uuid",
+            [JSON.stringify(scheduledOwner),batch.attemptId,fence,[manifestKey,"fence"]]);
+        }
+        await client.query(`insert into operations.refresh_runs(workspace_id,install_generation,provider,account_id,job_id,fence,cost,status)
+          values ($1,$2,$3,$4,$5,$6,'{"requests":2,"rows":1000,"bytes":1000000,"connections":1,"dbWrites":5}','running')`, [...args,job,fence]);
+        const options = {...input, scheduled: true, admittedScope: {jobId: job, fence, from: day, to: day}};
+        if (provider !== "meta") await rejected(client, () => reconcileStoredDatasetSources({...options,database:{query:asScheduledRunner}}));
+        await client.query(`insert into operations.refresh_work_progress(workspace_id,install_generation,provider,account_id,job_id,fence,stage,from_date,to_date)
+          values ($1,$2,$3,$4,$5,$6,'ready_for_dataset',$7,$7)`, [...args,job,fence,day]);
+        const jobStatus = async () => (await client.query("select status from operations.refresh_runs where fence=$1", [fence])).rows[0].status;
+        let transportSequence = 0;
+        const transport = createScheduledDatasetPostgresClient({deadlineAt: input.limits.deadlineAt,
+          environment: {ADSTABLE_REFRESH_DATASET_DATABASE_URL: "postgresql://" + scheduledRole + ".podpwkrpmjiksskxhwsu:" + "x".repeat(32) + "@aws-1-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require",
+            ADSTABLE_REFRESH_DATASET_DB_TIMEOUT_MS: "5000"}, poolFactory: () => ({on() {}, async end() {}, async connect() {
+            const savepoint = "scheduled_transport_" + (++transportSequence);
+            return {release() {}, async query(sql, parameters) {
+              if (sql === "begin") return client.query("savepoint " + savepoint);
+              if (sql === "commit") return client.query("release savepoint " + savepoint);
+              if (sql === "rollback") {
+                await client.query("rollback to savepoint " + savepoint);
+                return client.query("release savepoint " + savepoint);
+              }
+              if (sql.startsWith("select pg_catalog.set_config")) return client.query(sql, parameters);
+              return asScheduledRunner(sql, parameters);
+            }};
+          }})});
+        let finishArgs;
+        const completingDatabase = {async query(sql, parameters) {
+          if (sql === SCHEDULED_DATASET_FINISH_SQL) {
+            finishArgs = parameters;
+            assert.equal(await jobStatus(), "running");
+            assert.equal((await asScheduledRunner(sql,[...parameters.slice(0,4),"f".repeat(64)])).rows[0].result,false);
+            assert.equal(await jobStatus(), "running");
           }
-          if (sql.startsWith("select pg_catalog.set_config")) return client.query(sql, parameters);
-          return asScheduledRunner(sql, parameters);
+          return transport.query(sql,parameters);
         }};
-      }})});
-    let finishArgs;
-    const completingDatabase = {async query(sql, parameters) {
-      if (sql === SCHEDULED_DATASET_FINISH_SQL) {
-        finishArgs = parameters;
-        assert.equal(await jobStatus(), "running");
-        assert.equal((await asScheduledRunner(sql,[...parameters.slice(0,4),"f".repeat(64)])).rows[0].result,false);
-        assert.equal(await jobStatus(), "running");
+        let completed;
+        try { completed = await reconcileStoredDatasetSources({...options,database:completingDatabase}); }
+        finally { await transport.close(); }
+        if (provider === "meta") {
+          assert.equal(completed.status, "held");
+          assert.equal(completed.consumerReceipt, false);
+          assert.equal(finishArgs, undefined);
+          assert.equal(await jobStatus(), "running");
+          continue;
+        }
+        assert.equal(completed.consumerReceipt, true);
+        assert.equal(completed.jobCompleted, true);
+        assert.equal(await jobStatus(), "completed");
+        assert.equal((await asScheduledRunner(SCHEDULED_DATASET_FINISH_SQL,finishArgs)).rows[0].result,false);
+        assert.equal((await rejected(client, () => asScheduledRunner("select * from analytics.pd_facts limit 1"))).code,"42501");
+        assert.equal((await rejected(client, () => asScheduledRunner(DATASET_RECONCILE_SQL,[JSON.stringify(scheduledOwner),"{}","{}",new Date(input.limits.deadlineAt).toISOString()]))).code,"42501");
       }
-      return transport.query(sql,parameters);
-    }};
-    let completed;
-    try { completed = await reconcileStoredDatasetSources({...options,database:completingDatabase}); }
-    finally { await transport.close(); }
-    assert.equal(completed.consumerReceipt, true);
-    assert.equal(completed.jobCompleted, true);
-    assert.equal(await jobStatus(), "completed");
-    assert.equal((await asScheduledRunner(SCHEDULED_DATASET_FINISH_SQL,finishArgs)).rows[0].result,false);
-    assert.equal((await rejected(client, () => asScheduledRunner("select * from analytics.pd_facts limit 1"))).code,"42501");
-    assert.equal((await rejected(client, () => asScheduledRunner(DATASET_RECONCILE_SQL,[JSON.stringify(scheduledOwner),"{}","{}",new Date(input.limits.deadlineAt).toISOString()]))).code,"42501");
+    }
     const unsafe = (await client.query(`select exists(select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
       where n.nspname in ('app','shopify','integrations','operations','billing','privacy','analytics','evidence','identity','source')
       and ((c.relkind in ('r','p','v','m','f') and (has_table_privilege($1,c.oid,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')

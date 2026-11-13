@@ -192,6 +192,7 @@ export async function reconciliationProbe(client, {ownerFixture, connection}) {
       await client.query("update integrations.provider_connections set connected_at='2026-10-31' where id=$1", [scheduledOwner.connectionId]);
       await client.query("update integrations.reporting_account_bindings set effective_from='2026-10-31' where connection_id=$1", [scheduledOwner.connectionId]);
       for (const day of ["2026-11-01", "2026-11-02"]) {
+        if (provider === "meta") await client.query("savepoint isolated_meta_day");
         const input = await source(scheduledOwner, {businessDate: day});
         const fence = (await client.query("select (coalesce(max(fence),0)+1)::text as n from operations.refresh_runs")).rows[0].n;
         const job = input.jobId;
@@ -243,6 +244,10 @@ export async function reconciliationProbe(client, {ownerFixture, connection}) {
           assert.equal(completed.consumerReceipt, false);
           assert.equal(finishArgs, undefined);
           assert.equal(await jobStatus(), "running");
+          // The account still holds its claim. Reset this independent fixture
+          // before testing another day's response for the same account.
+          await client.query("rollback to savepoint isolated_meta_day");
+          await client.query("release savepoint isolated_meta_day");
           continue;
         }
         assert.equal(completed.consumerReceipt, true);

@@ -175,7 +175,7 @@ begin
    if old_fact->>'source_timezone' is distinct from scope_tz or old_fact->>'provider_connection_id' is distinct from o->>'connectionId'
    or (old_fact->>'retain_until')::timestamptz<=clock_timestamp() then raise exception 'DATASET_RECONCILIATION_SCOPE_CONFLICT';end if;
    for ref in select value from jsonb_array_elements(old_fact->'provenance'->'sources') loop
-    if checked_old_refs @> jsonb_build_array(ref) then continue; end if;
+    if exists(select 1 from jsonb_array_elements(checked_old_refs) seen where seen=ref) then continue;end if;
     perform analytics.assert_dataset_source(o,ref);obsolete:=array_append(obsolete,(ref->>'batch_id')::bigint);
     select manifest->read_key into native_read from evidence.source_batches where id=(ref->>'batch_id')::bigint;
     if native_read->>'completedAt' is null or (native_read->>'completedAt')::timestamptz>(c->>'startedAt')::timestamptz then raise exception 'DATASET_RECONCILIATION_STALE_READ';end if;

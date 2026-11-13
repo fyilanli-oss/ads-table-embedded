@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {randomUUID} from "node:crypto";
 import {performance} from "node:perf_hooks";
+import pg from "pg";
 import {storedBindingFixture} from "./eo05b-source-dataset-binding-probe.mjs";
 import {datasetServerProbe} from "./eo05b-dataset-server-probe.mjs";
 import {reconcileStoredDatasetSources, inspectDatasetReconciliation, DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
@@ -18,7 +19,7 @@ async function rejected(client, action) {
 
 /** Existing F01 rollback transaction. Owners, native pages, clocks and keys below
  * are explicitly synthetic; SQL, AEAD, physical facts/CAS/ACL are actual. */
-export async function reconciliationProbe(client, {ownerFixture}) {
+export async function reconciliationProbe(client, {ownerFixture, connection}) {
   assert.equal(process.env.GITHUB_ACTIONS, "true"); let scenarios = 0;
   const database = {async query(sql, args) {try {return await client.query(sql, args);} catch (e) {
     if (/dataset_reconciliation/.test(sql)) console.error("EO05D_SQL_DIAGNOSTIC", JSON.stringify({code: e.code, message: e.message, where: e.where}));throw e;
@@ -101,6 +102,21 @@ export async function reconciliationProbe(client, {ownerFixture}) {
     [largeOwner.installationId],
   );
   assert.equal(persisted.rows[0].n, 500);
+  const otherOwner = await ownerFixture(client, "google_ads");
+  const observer = new pg.Client(connection);
+  await observer.connect();
+  try {
+    await observer.query("begin");
+    const tryLock = async workspace => (await observer.query(
+      "select pg_catalog.pg_try_advisory_xact_lock(pg_catalog.hashtextextended('adstable-dataset:'||$1::uuid::text,0)) acquired",
+      [workspace],
+    )).rows[0].acquired;
+    assert.equal(await tryLock(largeOwner.workspaceId), false);
+    assert.equal(await tryLock(otherOwner.workspaceId), true);
+    await observer.query("rollback");
+  } finally {
+    await observer.end();
+  }
   const correctedLargeDay = await source(largeOwner, {googleProductCount: 500, googlePurchase: "5"});
   assert.equal((await reconcileStoredDatasetSources({...correctedLargeDay, database: timedDatabase, expectedRevision: 1})).rowCount, 502);
   const [insertMs, correctionMs] = durations;

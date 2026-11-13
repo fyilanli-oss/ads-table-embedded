@@ -89,7 +89,7 @@ declare item jsonb; r jsonb; row_input jsonb; injected jsonb; b evidence.source_
  batch_text text; obsolete bigint[]:='{}'; old_count int:=0; incoming_keys text[]; checked_old_refs jsonb:='[]'; checked_provenance jsonb:='[]'; held_batches bigint[]:='{}'; pages int:=0; old_id bigint; changes jsonb:='[]'; actual jsonb; summary jsonb:='[]';
  start_at text; finish_at text; prev_time timestamptz; removed int:=0; modified int:=0; scope_date date; scope_tz text;
 begin
- perform 1 from operations.refresh_control where singleton for update;
+ -- The public-to-server wrapper holds the shared control and workspace locks.
  perform evidence.assert_source_owner(o);
  if o->>'provider'='shopify' or jsonb_typeof(p) is distinct from 'object' or (select count(*) from jsonb_object_keys(p))<>4
  or not p ?& array['version','operationId','policy','rows'] or p->>'version'<>'eo05b-storage-v1'
@@ -286,6 +286,69 @@ begin
  if exists(select 1 from evidence.source_batches where id in(select value::bigint from jsonb_array_elements_text(c->'batchIds')) and octet_length(manifest::text)>1048576)
  then raise exception 'DATASET_RECONCILIATION_MANIFEST_LIMIT';end if;
  return result;
+end $fn$;
+
+create or replace function analytics.commit_dataset_reconciliation(o jsonb,p jsonb,c jsonb,d timestamptz) returns jsonb
+language plpgsql security definer set search_path='' as $fn$
+declare r jsonb;bid bigint;
+begin
+ perform 1 from operations.refresh_control where singleton for share;
+ perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended('adstable-dataset:'||(o->>'workspaceId')::uuid::text,0));
+ perform evidence.assert_source_owner(o);
+ begin
+  return analytics._commit_dataset_reconciliation(o,p,c,d);
+ exception when raise_exception then
+  if sqlerrm<>'DATASET_RECONCILIATION_READBACK_MISMATCH' then raise;end if;
+ end;
+ bid:=(c->'batchIds'->>0)::bigint;
+ r:=jsonb_build_object('version','eo05d-reconciliation-v1','status','mismatch','comparison','mismatch','operationId',p->>'operationId',
+ 'requestDigest',encode(sha256(convert_to(analytics.daily_reconciliation_json(jsonb_build_object('write',p,'context',c)), 'UTF8')), 'hex'),'consumerReceipt',false,'checkpointAdvanced',false,'reportValuesChanged',false);
+ update evidence.source_batches set manifest=manifest||jsonb_build_object('datasetReconciliationMismatch',r)
+ where id=bid and authority=o and storage_state='committed' and handoff_state='pending';
+ if not found then raise exception 'DATASET_RECONCILIATION_MISMATCH_UNRECORDED';end if;
+ return r;
+end $fn$;
+
+create or replace function analytics.commit_scheduled_dataset_reconciliation(o jsonb,p jsonb,c jsonb,d timestamptz) returns jsonb
+language plpgsql security definer set search_path='' set jit=off as $fn$
+declare
+  workspace uuid := (o->>'workspaceId')::uuid;
+  generation bigint := (o->>'generation')::bigint;
+  provider_name text := o->>'provider';
+  account text := o->>'accountId';
+  job text := c->'sourceContext'->>'job_id';
+  claim_fence bigint := (c->'sourceContext'->>'fence')::bigint;
+  day date := (c->>'businessDate')::date;
+  receipt jsonb;
+begin
+  perform 1 from operations.refresh_control where singleton for share;
+  if not found then raise exception 'SCHEDULED_DATASET_CLAIM_REQUIRED'; end if;
+  perform evidence.assert_source_owner(o);
+
+  if d is null or d<=clock_timestamp()
+    or operations.refresh_claim_is_current(workspace,generation,provider_name,account,job,claim_fence) is not true
+    or not exists (
+      select 1 from operations.refresh_work_bindings b
+      join operations.refresh_work_progress s on s.fence=b.fence and s.workspace_id=b.workspace_id
+        and s.install_generation=b.install_generation and s.provider=b.provider and s.account_id=b.account_id and s.job_id=b.job_id
+      where b.workspace_id=workspace and b.install_generation=generation and b.provider=provider_name
+        and b.account_id=account and b.job_id=job and b.fence=claim_fence
+        and b.from_date=day and b.to_date=day and s.from_date=day and s.to_date=day
+        and s.stage='ready_for_dataset' and b.source=c->'sourceContext'->'snapshot'
+        and extract(epoch from d)*1000<=b.deadline_at_ms
+    ) then raise exception 'SCHEDULED_DATASET_CLAIM_REQUIRED'; end if;
+
+  receipt:=analytics.commit_dataset_reconciliation(o,p,c,d);
+  if receipt->>'status'='consumed' then
+    update evidence.source_batches set manifest=manifest||jsonb_build_object('scheduledDatasetClaim',
+      jsonb_build_object('job',job,'fence',claim_fence::text,'digest',receipt->>'digest'))
+    where authority=o and manifest->'datasetReconciliation'=receipt
+      and id in (select value::bigint from jsonb_array_elements_text(receipt->'batchIds'));
+    if not found then raise exception 'SCHEDULED_DATASET_RECEIPT_REQUIRED'; end if;
+    if exists(select 1 from evidence.source_batches where authority=o and manifest->'datasetReconciliation'=receipt
+      and octet_length(manifest::text)>1048576) then raise exception 'SCHEDULED_DATASET_RECEIPT_LIMIT'; end if;
+  end if;
+  return receipt;
 end $fn$;
 
 reset role;

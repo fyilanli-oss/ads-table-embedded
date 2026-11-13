@@ -1702,7 +1702,7 @@
       "supabase/migrations/20261110191004_eo05d_dataset_reconciliation.sql": "07492d30d61552e06749a3800e75ec35f10a39d1e475baba2220e656b504b0de",
       "supabase/migrations/20261110202849_eo05e_operational_observability.sql": "01b38ad0d70f63b6151e7edfb0544ce058e89150d5084faa98bba53e048c407e",
       "supabase/migrations/20261111131821_eo05_refresh_fenced_dataset_commit.sql": "08408fb499d2b92b85011b2604afa4d94a9744e0ad9ad86703c94252ba977eeb",
-      "supabase/migrations/20261113080017_eo05d_daily_write_capacity.sql": "838f054ecc3f9478d55b024235accff64327fe913838d24dea901778ee7cc6f2",
+      "supabase/migrations/20261113080017_eo05d_daily_write_capacity.sql": "c975d1b501ea0394d21820dcb41604caf296a66d652d3b8dcad20631f0fb808a",
       "tests/a6-docs-01-turkish-standardization.test.js": "5dcaa387ca679f75339510ca9d9856fcfb98eadf2510e31f94afd0599c9f870d",
       "tests/a6-tech-01-f01c-scoped-recovery.test.js": "3bd869071d5042402215176a99bf14dcebce6d3d0497ffcba946038050701792",
       "tests/eo-01c-preview-shell.test.js": "c3d67bb6666c19cf5ac12cfcd8a7f2f2acdf399d5a8ac32c0269823b06cbf789",
@@ -1807,13 +1807,13 @@
       "tools/eo05-source-rule-probe.mjs": "bdba143e69a0ac680687dfbfce815bf8c97c7fa2228179e22cc5d5d4626477ab",
       "tools/eo05-verified-mapping-probe.mjs": "875aadd0c47e64d66f5fef187b2a803cd9716ff04b0ac0871f17cc97f84f88eb",
       "tools/eo05b-dataset-server-probe.mjs": "d6177954ab377f697209d5753651f7403e82b1c1349e0425405187ce33c3b02c",
-      "tools/eo05b-dataset-storage-probe.mjs": "1cf22bd4e53190939b7dd25d191a26e55c32382531e861e9dbeb843311d929b2",
+      "tools/eo05b-dataset-storage-probe.mjs": "061935787f77177d8e6368772c1b5ac6678343c61a716447b7dbf0c66da5052f",
       "tools/eo05b-demo-fixture.mjs": "c91cf0e2b82ae6bb4db46d4dfa4ffbc0e1415877075995a5bf5cbc1f30afdd73",
       "tools/eo05b-fx-reporting-currency-probe.mjs": "c5decd13fad2a1aebccacbdf6229bcfec590c429db8ab3380008c318c479a9d5",
       "tools/eo05b-report-retention-probe.mjs": "ed1015ae7b31557a03a575d4786125cdff3f4f7c63524485455a5dbdeda676a8",
       "tools/eo05b-source-dataset-binding-probe.mjs": "d9aa68f202922f0978a05b411781fcbc4685b86337b56cfcab32964316713d79",
       "tools/eo05c-maturity-probe.mjs": "e66c2379b2f6781bb4b1ac2207bfe73edeb9ce5c1c01cb8cc7bde06f69fe5b47",
-      "tools/eo05d-reconciliation-probe.mjs": "fde3ff3252e63d66e6c1a8ed1bc27ed25956fc259e62b6aecd19b6271da43fa3",
+      "tools/eo05d-reconciliation-probe.mjs": "1cbea361e2fedfceb2aa128a59ab74f43f4a7f8a5b452789693590bbc6aed200",
       "tools/eo05e-observability-probe.mjs": "f9aad28c4b2c062915f18dc2d000680e33afe6ca8de9714f59cccb881a291273",
       "tools/f01-database-replay.mjs": "11e8736bc46f76dd3476a79fae8d18d21d19d375e4c8534c4ad67eccf6f5a98b",
       "tools/f01-identity-oauth-rollout.mjs": "5894b9ae54363fcf31372ed0a1abf39d3c0e1dfea428190232a0420b0b11f787",
@@ -4420,7 +4420,7 @@
       "date": "2026-11-13",
       "owner_approval": {
         "explicit": true,
-        "source": "Onaylıyorum devam edelim Codex — 500 ürünlük günlük yazım ve 500 mağazalık dar test. Explicit follow-up approval for bounded SQL batching and the same 500-workspace test."
+        "source": "Onaylıyorum devam edelim Codex — 500 ürünlük günlük yazım ve 500 mağazalık dar test. Explicit follow-up approval for bounded SQL batching and the same 500-workspace test. Follow-up approved workspace-scoped serialization and isolated concurrency validation."
       },
       "rationale": "Raise bounded daily reconciliation limits for the 500-product case and verify full-day physical writes and corrections in isolated replay.",
       "scope": {
@@ -4436,6 +4436,7 @@
         "contracts/oauth/oauth-flow-constitution-v1.json",
         "docs/EXECUTION_PLAN.md",
         "supabase/migrations/20261113080017_eo05d_daily_write_capacity.sql",
+        "tools/eo05b-dataset-storage-probe.mjs",
         "tools/eo05d-reconciliation-probe.mjs"
       ],
       "artifact_paths": [
@@ -4448,11 +4449,13 @@
         "supabase/migrations/20261113080017_eo05d_daily_write_capacity.sql",
         "tests/dataset-reconciliation.test.js",
         "tests/fixtures/dataset-source-binding-fixture.js",
+        "tools/eo05b-dataset-storage-probe.mjs",
         "tools/eo05d-reconciliation-probe.mjs"
       ],
       "tests": [
         "tests/dataset-reconciliation.test.js",
-        "tools/eo05d-reconciliation-probe.mjs"
+        "tools/eo05d-reconciliation-probe.mjs",
+        "tools/eo05b-dataset-storage-probe.mjs"
       ],
       "acceptance_required": [
         "required_CI",

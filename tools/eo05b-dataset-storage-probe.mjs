@@ -74,7 +74,7 @@ export async function datasetStorageProbe(client, connection, environment = proc
     await fxReportingCurrencyProbe(client, {ownerFixture});
     await datasetServerProbe(client, {ownerFixture});
     await maturityProbe(client, {ownerFixture});
-    await reconciliationProbe(client, {ownerFixture});
+    await reconciliationProbe(client, {ownerFixture, connection});
     await observabilityProbe(client, {ownerFixture});
     for (const provider of ["google_ads", "meta", "klaviyo"]) {
       const owner = await ownerFixture(client, provider), source = await sourceFixture(client, owner);

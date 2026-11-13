@@ -10,7 +10,7 @@ import {reportRetentionProbe} from "./eo05b-report-retention-probe.mjs";
 import {fxReportingCurrencyProbe} from "./eo05b-fx-reporting-currency-probe.mjs";
 import {datasetServerProbe} from "./eo05b-dataset-server-probe.mjs";
 import {maturityProbe} from "./eo05c-maturity-probe.mjs";
-import {reconciliationProbe, reconciliationCapacityProbe, installReconciliationTiming} from "./eo05d-reconciliation-probe.mjs";
+import {reconciliationProbe, reconciliationCapacityProbe, installReconciliationTiming, hourlyRefreshCapacityProbe} from "./eo05d-reconciliation-probe.mjs";
 import {observabilityProbe} from "./eo05e-observability-probe.mjs";
 
 async function rejected(client, action, pattern) {
@@ -20,10 +20,12 @@ async function rejected(client, action, pattern) {
   assert.ok(error, "invalid SQL operation must fail"); if (pattern) assert.match(error.message, pattern);
 }
 
-async function ownerFixture(client, provider = "google_ads") {
-  const shopId = "gid://shopify/Shop/" + BigInt("0x" + randomBytes(6).toString("hex")), shopDomain = "dataset-" + randomBytes(6).toString("hex") + ".myshopify.com";
-  const boot = (await client.query("select * from shopify.bootstrap_installation($1,$2,$3,statement_timestamp())", [shopId, shopDomain, randomBytes(32)])).rows[0];
-  const iid = (await client.query("select id::text from shopify.installations where workspace_id=$1", [boot.workspace_id])).rows[0].id;
+async function ownerFixture(client, provider = "google_ads", existing) {
+  const shopId = existing?.shopId ?? "gid://shopify/Shop/" + BigInt("0x" + randomBytes(6).toString("hex"));
+  const shopDomain = existing?.shopDomain ?? "dataset-" + randomBytes(6).toString("hex") + ".myshopify.com";
+  const boot = existing ? {workspace_id: existing.workspaceId, install_generation: existing.generation}
+    : (await client.query("select * from shopify.bootstrap_installation($1,$2,$3,statement_timestamp())", [shopId, shopDomain, randomBytes(32)])).rows[0];
+  const iid = existing?.installationId ?? (await client.query("select id::text from shopify.installations where workspace_id=$1", [boot.workspace_id])).rows[0].id;
   const credential = randomUUID(), connection = randomUUID(), accountId = provider === "google_ads" ? "123" : provider === "meta" ? "act_123" : "account-123";
   await client.query("insert into integrations.provider_credential_envelopes(id,installation_id,workspace_id,install_generation,provider,purpose,payload_ciphertext,nonce,auth_tag,key_version) values($1,$2,$3,$4,$5,'provider_token_set',$6,$7,$8,1)",
     [credential, iid, boot.workspace_id, boot.install_generation, provider, randomBytes(32), randomBytes(12), randomBytes(16)]);
@@ -182,7 +184,7 @@ export async function datasetStorageProbe(client, connection, environment = proc
 }
 
 // Run only after F01 has verified the clean schema, on the database CI discards.
-export async function datasetCapacityProbe(client, connection, {timingOnly}) {
+export async function datasetCapacityProbe(client, connection, {timingOnly, hourly}) {
   assert.equal(process.env.GITHUB_ACTIONS, "true");
   assert.ok(process.env.RUNNER_TEMP);
   assert.equal(connection.host, "127.0.0.1");
@@ -192,6 +194,9 @@ export async function datasetCapacityProbe(client, connection, {timingOnly}) {
   for (const entry of lineage.prepared_migrations) {
     await client.query(readFileSync(new URL("../" + entry.file, import.meta.url), "utf8"));
   }
-  if (timingOnly) await installReconciliationTiming(client);
-  await reconciliationCapacityProbe(client, {ownerFixture, connection, timingOnly});
+  if (hourly) await hourlyRefreshCapacityProbe(client, {ownerFixture, connection});
+  else {
+    if (timingOnly) await installReconciliationTiming(client);
+    await reconciliationCapacityProbe(client, {ownerFixture, connection, timingOnly});
+  }
 }

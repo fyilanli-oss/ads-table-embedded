@@ -9,6 +9,103 @@ import {reconcileStoredDatasetSources, inspectDatasetReconciliation, DATASET_REC
 import {storeMaturityConfiguration, recordMaturityDecision, inspectMaturityDecision} from "../app/lib/database/maturity-store.server.js";
 import {maturityObservationFixture} from "../tests/fixtures/maturity-fixture.js";
 import {createScheduledDatasetPostgresClient} from "../app/lib/database/dataset-postgres.server.js";
+import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
+import {dispatchHourlyRefresh, runScheduledRefreshCheck} from "../app/lib/refresh/scheduled-queue-check.server.js";
+
+export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connection}) {
+  const storeCount = 500;
+  const providers = ["google_ads", "meta", "klaviyo"];
+  const concurrency = 8;
+  const owners = new Map();
+  await admin.query("set role adstable_owner");
+  for (let index = 0; index < storeCount; index++) {
+    const google = await ownerFixture(admin);
+    for (const owner of [google, await ownerFixture(admin, "meta", google), await ownerFixture(admin, "klaviyo", google)]) {
+      owners.set(owner.workspaceId + ":" + owner.provider, owner);
+    }
+  }
+  await admin.query("update integrations.provider_connections set connected_at=clock_timestamp()-interval '3 days'");
+  await admin.query("update integrations.reporting_account_bindings set effective_from=clock_timestamp()-interval '3 days'");
+  const cost = {requests: 2, dbWrites: 5, connections: 1, rows: 2000, bytes: 4_000_000};
+  const global = Object.fromEntries(Object.entries(cost).map(([key, value]) => [key, value * (storeCount + concurrency)]));
+  const budget = {global, interactiveReserve: {requests: 0, dbWrites: 0, connections: 0, rows: 0, bytes: 0},
+    providers: providers.map(provider => ({provider, limit: global})),
+    workspaces: [...owners.values()].filter(o => o.provider === "google_ads").map(o => ({workspaceId: o.workspaceId, limit: global})),
+    accounts: [...new Map([...owners.values()].map(o => [o.provider, {provider: o.provider, accountId: o.accountId, limit: global}])).values()]};
+  const bounds = {maxCandidates: owners.size, maxClaims: storeCount + concurrency, maxAdmissions: 1, maxWorkspaces: storeCount};
+  await admin.query("update operations.refresh_control set budget=$1,bounds=$2 where singleton", [budget, bounds]);
+  await admin.query("update operations.refresh_queue_control set max_workspaces=$1,max_accounts=$2,max_snapshot_bytes=4000000,max_snapshot_age_ms=3600000 where singleton", [storeCount, owners.size]);
+  const generation = randomUUID();
+  await admin.query("update operations.refresh_tick_control set enabled=true,generation=$1 where singleton", [generation]);
+  const store = createRefreshWorkRepository(admin);
+  const tick = await runScheduledRefreshCheck({store, generation});
+  assert.equal(tick.status, "queue_checked", JSON.stringify(tick));
+  const snapshot = await store.readQueueCheck();
+  assert.equal(snapshot.checkedAccounts, owners.size);
+  const hour = Math.floor(tick.queue.checkedAtMs / 3600000) * 3600000;
+  const start = performance.now();
+  const outcomes = new Map();
+  let unexpected;
+  async function worker() {
+    const client = new pg.Client({...connection, statement_timeout: 120_000});
+    await client.connect();
+    try {
+      const coordinator = createRefreshWorkRepository({async query(sql, args) {
+        await client.query("set role adstable_refresh_coordinator");
+        try {return await client.query(sql, args);}
+        finally {await client.query("reset role");}
+      }});
+      while (!unexpected && performance.now() - start < 3_600_000 && Date.now() < hour + 3600000) {
+        const result = await dispatchHourlyRefresh({store: coordinator, work: {
+          now: Date.now,
+          buildWorkPlan: async () => ({cost, limits: {deadlineAt: Date.now() + 115000,
+            requestTimeoutMs: 1000, finishReserveMs: 100, maxRows: cost.rows, maxBytes: cost.bytes}}),
+          entitlementVerifier: {verify: async () => ({status: "verified", receipt: {}}), isCurrent: async () => true},
+          readPage: async () => ({kind: "complete", payload: {}}),
+          validatePage: () => ({complete: true, rows: []}),
+          async loadDatasetInputs({claim, window}) {
+            const owner = owners.get(claim.workspaceId + ":" + claim.provider);
+            await client.query("set role adstable_owner");
+            let input;
+            try {
+              input = await storedBindingFixture(client, owner, {claim, businessDate: window.from, googleProductCount: 500});
+              const key = {google_ads: "googleDatasetRead", meta: "metaDatasetRead", klaviyo: "klaviyoDatasetRead"}[claim.provider];
+              await client.query("update evidence.source_batches set manifest=jsonb_set(jsonb_set(manifest,$3::text[],to_jsonb($5::text)),$4::text[],to_jsonb($5::text)) where authority=$1::jsonb and attempt_id=any($2::uuid[])",
+                [JSON.stringify(owner), input.batches.map(b => b.attemptId), [key, "observedAt"], [key, "completedAt"], new Date().toISOString()]);
+            } finally {await client.query("reset role");}
+            return {...input, expectedRevision: 0, database: {async query(sql, args) {
+              await client.query("set role adstable_refresh_dataset_runner");
+              try {return await client.query(sql, args);}
+              finally {await client.query("reset role");}
+            }}};
+          },
+        }});
+        if (result.status === "waiting") break;
+        if (result.status === "conflict") continue;
+        if (result.status !== "completed" && result.dataset?.status !== "held") {
+          unexpected = {status: result.status, reason: result.reason, provider: result.claim?.provider};
+          break;
+        }
+        const provider = result.claim.provider;
+        const key = provider + ":" + result.status;
+        outcomes.set(key, (outcomes.get(key) ?? 0) + 1);
+      }
+    } finally {await client.end();}
+  }
+  const workers = await Promise.allSettled(Array.from({length: concurrency}, worker));
+  const rows = (await admin.query("select provider,status,count(*)::int n from operations.refresh_runs group by provider,status")).rows;
+  const fullyCompleted = (await admin.query("select count(*)::int n from (select workspace_id from operations.refresh_runs where status='completed' group by workspace_id having count(*)=6) x")).rows[0].n;
+  const counts = Object.fromEntries(providers.map(provider => {
+    const completed = rows.find(row => row.provider === provider && row.status === "completed")?.n ?? 0;
+    const held = outcomes.get(provider + ":awaiting_dataset") ?? 0;
+    const running = rows.find(row => row.provider === provider && row.status === "running")?.n ?? 0;
+    return [provider, {completed, held, unconfirmed: running - held, notStarted: storeCount * 2 - rows.filter(row => row.provider === provider).reduce((sum, row) => sum + row.n, 0)}];
+  }));
+  console.log("EO05_HOURLY_CAPACITY_RESULT", JSON.stringify({storeCount, concurrency, fullyCompleted, counts, elapsedMs: Math.round(performance.now() - start), unexpected,
+    workerErrors: workers.filter(w => w.status === "rejected").map(w => w.reason.code ?? w.reason.message), syntheticProviderIO: true, hosted: false}));
+  assert.ok(workers.every(w => w.status === "fulfilled"));
+  assert.equal(unexpected, undefined);
+}
 
 async function rejected(client, action) {
   await client.query("savepoint reconciliation_expected_failure"); let error;

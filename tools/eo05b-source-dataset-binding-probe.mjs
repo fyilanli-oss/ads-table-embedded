@@ -15,7 +15,7 @@ export async function storedBindingFixture(client, owner, options = {}) {
     // Synthetic admission only, never native HTTP acceptance.
     await client.query("update evidence.source_batches set manifest=manifest || $2::jsonb where id=$1", [receipt.batchId, JSON.stringify(metadata)]);
   }
-  await client.query(`insert into operations.refresh_work_bindings(workspace_id,install_generation,provider,account_id,job_id,fence,source,from_date,to_date,partition_id)
+  if (!options.claim) await client.query(`insert into operations.refresh_work_bindings(workspace_id,install_generation,provider,account_id,job_id,fence,source,from_date,to_date,partition_id)
     values($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$8,'synthetic-only')`,
   [owner.workspaceId, owner.generation, owner.provider, owner.accountId, fixture.jobId, fixture.fence, JSON.stringify(fixture.source), fixture.businessDate]);
   return {...fixture, database: client};

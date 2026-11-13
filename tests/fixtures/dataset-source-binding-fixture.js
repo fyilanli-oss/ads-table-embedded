@@ -32,12 +32,12 @@ async function nativeKlaviyoPage(path, body, request = null) {
 
 /** All native responses/credentials/owners are synthetic. Real capture projection,
  * AEAD and decrypt paths are used; this fake DB is not SQL/native acceptance. */
-export async function datasetSourceBindingFixture(provider = "google_ads", {nonempty = true, missingMetric = false, mixedMetrics = false, eventOrderId = null, googlePurchase = "2.5", googleProductCount = 1, businessDate: day = "2026-11-01", owner: givenOwner = null, cipher: givenCipher = null} = {}) {
+export async function datasetSourceBindingFixture(provider = "google_ads", {nonempty = true, missingMetric = false, mixedMetrics = false, eventOrderId = null, googlePurchase = "2.5", googleProductCount = 1, businessDate: day = "2026-11-01", owner: givenOwner = null, cipher: givenCipher = null, claim} = {}) {
   const window = {from: day, to: day};
   const owner = givenOwner ? structuredClone(givenOwner) : datasetStorageFixture().owner;
   if (!givenOwner) {owner.installationId = "1"; owner.provider = provider; owner.accountId = provider === "meta" ? "act_123" : provider === "klaviyo" ? "account-1" : "123";}
   if (provider === "klaviyo") owner.selectionEpoch = null;
-  const operationId = randomUUID(), jobId = day === "2026-11-01" ? "synthetic-binding-job" : "synthetic-binding-job-" + day, fence = "1", source = {workspaceId: owner.workspaceId, installGeneration: owner.generation,
+  const operationId = randomUUID(), jobId = claim?.id ?? (day === "2026-11-01" ? "synthetic-binding-job" : "synthetic-binding-job-" + day), fence = String(claim?.fence ?? 1), source = {workspaceId: owner.workspaceId, installGeneration: owner.generation,
     provider, accountId: owner.accountId, connectionId: owner.connectionId, connectionVersion: owner.connectionVersion, accountRowId: "1", selectionId: owner.selectionEpoch,
     eligibleFromMs: Date.parse("2026-10-31T00:00:00Z"), timezone: "UTC", currency: "USD"};
   const spec = provider === "google_ads" ? {read: "googleDatasetRead", digest: "googleDatasetInputDigest", schema: "google-raw-datasets-v2", sanitizer: "google-query-fields-v1"}

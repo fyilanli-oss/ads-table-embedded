@@ -513,8 +513,9 @@ async function main() {
     assert.equal(beforeDifferences.length,0,"historical replay differs from captured live schema; review required");
     if (mode === "full") {
       const timingOnly = process.argv.includes("--dataset-timing");
-      if (timingOnly || process.argv.includes("--dataset-capacity")) {
-        await datasetCapacityProbe(client, replayConnection, {timingOnly});
+      const hourly = process.argv.includes("--hourly-capacity");
+      if (hourly || timingOnly || process.argv.includes("--dataset-capacity")) {
+        await datasetCapacityProbe(client, replayConnection, {timingOnly, hourly});
       }
     }
   } finally { await client.end(); }

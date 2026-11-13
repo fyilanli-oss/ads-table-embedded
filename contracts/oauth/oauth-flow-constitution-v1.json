@@ -1278,7 +1278,7 @@
       "contracts/shopify/shopify-embedded-ui-constitution-v1.json"
     ],
     "sha256": {
-      ".github/workflows/database-integrity.yml": "224a8eaba8c5dfa2fc790de6c4ff101fd2e853f16c55e0ca528bafcf554f1f4c",
+      ".github/workflows/database-integrity.yml": "fe7a204ee8d52a031cfdc5f548bfda9028e6c0acf9640df97b31f4055396a953",
       ".github/workflows/repository-governance.yml": "d0c6feecc08f145588c72fac541040ca2e14949af7785961e5df27c01628b852",
       ".github/workflows/shopify-app-deploy.yml": "ef078addb630fdb624189c0f12625524a7e3dcaf708f2059f95e7a2884cf5d24",
       "AGENTS.md": "01ef3b2e4fd58cb77b30b030a87562b0436986e200bc342f77f929b34eb19d51",
@@ -1807,15 +1807,15 @@
       "tools/eo05-source-rule-probe.mjs": "bdba143e69a0ac680687dfbfce815bf8c97c7fa2228179e22cc5d5d4626477ab",
       "tools/eo05-verified-mapping-probe.mjs": "875aadd0c47e64d66f5fef187b2a803cd9716ff04b0ac0871f17cc97f84f88eb",
       "tools/eo05b-dataset-server-probe.mjs": "d6177954ab377f697209d5753651f7403e82b1c1349e0425405187ce33c3b02c",
-      "tools/eo05b-dataset-storage-probe.mjs": "b235ad7a756bb6c0957242ac181108557b6088fd9d0ba1b2d2acea4a7368cd5c",
+      "tools/eo05b-dataset-storage-probe.mjs": "1dd8e1e79144042cabd2ee9fe39d5a2ce74f3efe88405aabd6e0edbd17352b5b",
       "tools/eo05b-demo-fixture.mjs": "c91cf0e2b82ae6bb4db46d4dfa4ffbc0e1415877075995a5bf5cbc1f30afdd73",
       "tools/eo05b-fx-reporting-currency-probe.mjs": "c5decd13fad2a1aebccacbdf6229bcfec590c429db8ab3380008c318c479a9d5",
       "tools/eo05b-report-retention-probe.mjs": "ed1015ae7b31557a03a575d4786125cdff3f4f7c63524485455a5dbdeda676a8",
-      "tools/eo05b-source-dataset-binding-probe.mjs": "a4b97c33cd0b85679319b08742a4940e7e2c2c62081f336f4b150574b1430a5c",
+      "tools/eo05b-source-dataset-binding-probe.mjs": "deaf023ca21abf2c301e2424233a40f648101fd05013776b9e9c9c177072cadb",
       "tools/eo05c-maturity-probe.mjs": "e66c2379b2f6781bb4b1ac2207bfe73edeb9ce5c1c01cb8cc7bde06f69fe5b47",
-      "tools/eo05d-reconciliation-probe.mjs": "22c87dc249f2085619df262803995011c5b0a318174181a1c7e937b02280628f",
+      "tools/eo05d-reconciliation-probe.mjs": "dfc7cddaa6667f88289ba284fb054751217f4844e8de4594cd1f7187db7bca1d",
       "tools/eo05e-observability-probe.mjs": "f9aad28c4b2c062915f18dc2d000680e33afe6ca8de9714f59cccb881a291273",
-      "tools/f01-database-replay.mjs": "d7ee6d5eb179ee18bb1692229a07ec8b2230e11b3a01b51a75a8354add8f7851",
+      "tools/f01-database-replay.mjs": "00d0888ff2e1c3284120bc1418d05131c49ebf65f925b3bf06aa0dea3ae702d0",
       "tools/f01-identity-oauth-rollout.mjs": "5894b9ae54363fcf31372ed0a1abf39d3c0e1dfea428190232a0420b0b11f787",
       "tools/f01-live-readiness-plan.mjs": "d4eb8e8ca9d80d6e99cea8c9cf475b388db46a756e2e7a631c5c245e8e7bb25b",
       "tools/f01-live-readiness-rehearsal.mjs": "d5d2b8510551b7f99e7669a37072636bab135a6bef90b0da51bf9ef185aac17e",
@@ -4420,7 +4420,7 @@
       "date": "2026-11-13",
       "owner_approval": {
         "explicit": true,
-        "source": "Onaylıyorum devam edelim Codex — 500 ürünlük günlük yazım ve 500 mağazalık dar test. Explicit follow-up approval for bounded SQL batching and the same 500-workspace test. Follow-up approved workspace-scoped serialization and isolated concurrency validation. Follow-up approved the measured 500-workspace parallel write screen in isolated CI. Follow-up explicitly approved a short isolated stage timing run without runtime changes. Follow-up explicitly approved profiling the SQL stages only in isolated CI. Follow-up approved reuse of identical day/source checks while retaining per-row validation, and comparison in isolated CI. Follow-up approved an isolated test-only three-provider, two-day scheduled handoff without live scheduler or evidence changes. Owner explicitly approved hourly tracking of today and yesterday with verified completion, code and isolated tests only."
+        "source": "Onaylıyorum devam edelim Codex — 500 ürünlük günlük yazım ve 500 mağazalık dar test. Explicit follow-up approval for bounded SQL batching and the same 500-workspace test. Follow-up approved workspace-scoped serialization and isolated concurrency validation. Follow-up approved the measured 500-workspace parallel write screen in isolated CI. Follow-up explicitly approved a short isolated stage timing run without runtime changes. Follow-up explicitly approved profiling the SQL stages only in isolated CI. Follow-up approved reuse of identical day/source checks while retaining per-row validation, and comparison in isolated CI. Follow-up approved an isolated test-only three-provider, two-day scheduled handoff without live scheduler or evidence changes. Owner explicitly approved hourly tracking of today and yesterday with verified completion, code and isolated tests only. Follow-up approved the isolated hourly tick rehearsal with 500 stores and three synthetic providers."
       },
       "rationale": "Raise bounded daily reconciliation limits for the 500-product case and verify full-day physical writes and corrections in isolated replay.",
       "scope": {

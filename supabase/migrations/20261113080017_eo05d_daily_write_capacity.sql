@@ -3,21 +3,39 @@ set local lock_timeout='5s';
 set local statement_timeout='30s';
 set local role adstable_owner;
 
-create function analytics.daily_reconciliation_json(p jsonb,depth integer default 0) returns text
+create or replace function analytics.dataset_json(p jsonb,depth integer default 0) returns text
 language plpgsql immutable set search_path='' as $fn$
-declare result text; k text; v jsonb; pieces text[]:='{}';
+declare result text;
 begin
  if depth>32 then raise exception 'DATASET_JSON_BOUNDS';end if;
  if jsonb_typeof(p)='object' then
-  for k,v in select key,value from jsonb_each(p) order by key collate "C" loop
-   if length(k) not between 1 and 512 or k !~ '^[ -~]+$' or k ~* 'token|secret|password|authorization|cookie|email|phone|address|customer|profile|__proto__|constructor|prototype'
-   then raise exception 'DATASET_PRIVATE_FIELD';end if;
-   pieces:=pieces||(to_jsonb(k)::text||':'||analytics.daily_reconciliation_json(v,depth+1));
-  end loop;
-  result:='{'||array_to_string(pieces,',')||'}';
+  if exists(select 1 from jsonb_object_keys(p) k where length(k) not between 1 and 512
+   or k !~ '^[ -~]+$' or k ~* 'token|secret|password|authorization|cookie|email|phone|address|customer|profile|__proto__|constructor|prototype')
+  then raise exception 'DATASET_PRIVATE_FIELD';end if;
+  select '{'||coalesce(string_agg(to_jsonb(key)::text||':'||analytics.dataset_json(value,depth+1),',' order by key collate "C"),'')||'}'
+   into result from jsonb_each(p);
  elsif jsonb_typeof(p)='array' then
-  for v in select value from jsonb_array_elements(p) loop pieces:=pieces||analytics.daily_reconciliation_json(v,depth+1);end loop;
-  result:='['||array_to_string(pieces,',')||']';
+  select '['||coalesce(string_agg(analytics.dataset_json(value,depth+1),',' order by ord),'')||']'
+   into result from jsonb_array_elements(p) with ordinality as entries(value,ord);
+ else result:=p::text;end if;
+ if octet_length(result)>1048576 then raise exception 'DATASET_JSON_BOUNDS';end if;
+ return result;
+end $fn$;
+
+create function analytics.daily_reconciliation_json(p jsonb,depth integer default 0) returns text
+language plpgsql immutable set search_path='' as $fn$
+declare result text;
+begin
+ if depth>32 then raise exception 'DATASET_JSON_BOUNDS';end if;
+ if jsonb_typeof(p)='object' then
+  if exists(select 1 from jsonb_object_keys(p) k where length(k) not between 1 and 512
+   or k !~ '^[ -~]+$' or k ~* 'token|secret|password|authorization|cookie|email|phone|address|customer|profile|__proto__|constructor|prototype')
+  then raise exception 'DATASET_PRIVATE_FIELD';end if;
+  select '{'||coalesce(string_agg(to_jsonb(key)::text||':'||analytics.daily_reconciliation_json(value,depth+1),',' order by key collate "C"),'')||'}'
+   into result from jsonb_each(p);
+ elsif jsonb_typeof(p)='array' then
+  select '['||coalesce(string_agg(analytics.daily_reconciliation_json(value,depth+1),',' order by ord),'')||']'
+   into result from jsonb_array_elements(p) with ordinality as entries(value,ord);
  else result:=p::text;end if;
  if octet_length(result)>4194304 then raise exception 'DATASET_JSON_BOUNDS';end if;
  return result;
@@ -68,7 +86,7 @@ language plpgsql security definer set search_path='' as $fn$
 declare item jsonb; r jsonb; row_input jsonb; injected jsonb; b evidence.source_batches%rowtype; primary_id bigint;
  operation uuid; h text; prior jsonb; result jsonb; ids jsonb:='[]'; found_row jsonb; rid bigint; name text; cols text; allowed text[]; k text;
  head jsonb; old_fact jsonb; ref jsonb; native_read jsonb; read_key text; sets text[]:='{}'; expected_sets text[];
- batch_text text; obsolete bigint[]:='{}'; old_count int:=0; pages int:=0; old_id bigint; changes jsonb:='[]'; actual jsonb; summary jsonb:='[]';
+ batch_text text; obsolete bigint[]:='{}'; old_count int:=0; incoming_keys text[]; pages int:=0; old_id bigint; changes jsonb:='[]'; actual jsonb; summary jsonb:='[]';
  start_at text; finish_at text; prev_time timestamptz; removed int:=0; modified int:=0; scope_date date; scope_tz text;
 begin
  perform 1 from operations.refresh_control where singleton for update;
@@ -148,6 +166,8 @@ begin
  or scope_date>(clock_timestamp() at time zone scope_tz)::date then raise exception 'DATASET_RECONCILIATION_ELIGIBILITY';end if;
  -- Bounded complete-day replacement. Never erase rows from another owner,
  -- timezone, date, connection or a partial/unavailable projection.
+ select coalesce(array_agg(value->>'table'||':'||(value->'row'->>'native_key_hash')),array[]::text[])
+ into incoming_keys from jsonb_array_elements(p->'rows');
  foreach name in array array['pd_facts','cpd_product_performance_facts','cpd_product_sales_facts'] loop
   for old_fact in execute format('select to_jsonb(x) from analytics.%I x where workspace_id=$1 and installation_id=$2 and installation_generation=$3 and platform=$4 and platform_account_id=$5 and business_date=$6 order by id limit 1025 for update',name)
    using (o->>'workspaceId')::uuid,(o->>'installationId')::bigint,(o->>'generation')::bigint,o->>'provider',o->>'accountId',scope_date loop
@@ -159,7 +179,7 @@ begin
     select manifest->read_key into native_read from evidence.source_batches where id=(ref->>'batch_id')::bigint;
     if native_read->>'completedAt' is null or (native_read->>'completedAt')::timestamptz>(c->>'startedAt')::timestamptz then raise exception 'DATASET_RECONCILIATION_STALE_READ';end if;
    end loop;
-   if not exists(select 1 from jsonb_array_elements(p->'rows') x where x->>'table'=name and x->'row'->>'native_key_hash'=old_fact->>'native_key_hash') then
+   if not coalesce((name||':'||(old_fact->>'native_key_hash'))=any(incoming_keys),false) then
     if analytics.dataset_retention_has_dependents(name,old_fact) then raise exception 'DATASET_RECONCILIATION_DEPENDENT';end if;
     changes:=changes||jsonb_build_array(jsonb_build_object('table',name,'id',old_fact->>'id','before',old_fact->>'payload_digest','after',null,'action','removed'));
     execute format('delete from analytics.%I where id=$1',name) using (old_fact->>'id')::bigint;removed:=removed+1;

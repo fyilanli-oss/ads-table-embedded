@@ -14,9 +14,9 @@ import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repo
 import {dispatchHourlyRefresh, runScheduledRefreshCheck} from "../app/lib/refresh/scheduled-queue-check.server.js";
 
 async function profileHourlyQueue(client, hour) {
-  const {rows: [{body}]} = await client.query(
-    "select prosrc as body from pg_proc where oid='operations.read_refresh_preflight_snapshot()'::regprocedure",
-  );
+  const legacy = readFileSync(new URL("../supabase/migrations/20261020131343_eo05a_refresh_preflight_bridge.sql", import.meta.url), "utf8").replaceAll("\r\n", "\n");
+  const body = legacy.match(/create function operations\.read_refresh_preflight_snapshot\(\)[^\n]*\n[^\n]*\$fn\$\n([\s\S]+?)\n\$fn\$;/)?.[1];
+  assert.ok(body);
   const candidateStart = body.indexOf("    select q.*,operations.refresh_preflight_source");
   const candidateEnd = body.indexOf("\n  )", candidateStart);
   assert.ok(candidateStart >= 0 && candidateEnd > candidateStart);
@@ -27,10 +27,17 @@ async function profileHourlyQueue(client, hour) {
   const phases = [
     ["candidateSelection", selectCandidates(withoutAuthority), []],
     ["candidatesWithAuthority", selectCandidates(candidates), []],
-    ["preflightSnapshot", body, []],
-    ["hourlySnapshot", "select operations.read_hourly_refresh_snapshot($1::bigint)", [hour]],
+    ["legacyPreflightSnapshot", body, []],
+    ["bulkPreflightSnapshot", "select operations.read_refresh_preflight_snapshot()", []],
+    ["bulkHourlySnapshot", "select operations.read_hourly_refresh_snapshot($1::bigint)", [hour]],
   ];
+  const parity = async () => {
+    const {rows: [result]} = await client.query(`select
+      (select old.snapshot from (${body}) old(snapshot))=operations.read_refresh_preflight_snapshot() as matched`);
+    assert.equal(result.matched, true);
+  };
   try {
+    await parity();
     for (const jit of ["on", "off"]) {
       await client.query("set jit=" + jit);
       for (const [phase, sql, args] of phases) {
@@ -41,6 +48,16 @@ async function profileHourlyQueue(client, hour) {
           jitFunctions: result.JIT?.Functions ?? 0}));
       }
     }
+    await client.query("begin");
+    try {
+      const changed = await client.query(`update integrations.provider_connections set lifecycle_status='reauthorization_required'
+        where id in (select distinct on (provider) id from integrations.provider_connections order by provider,id)`);
+      assert.equal(changed.rowCount, 3);
+      const {rows: [{count}]} = await client.query("select jsonb_array_length(operations.read_refresh_preflight_snapshot()->'candidates') as count");
+      assert.equal(count, 1497);
+      await parity();
+    } finally {await client.query("rollback");}
+    console.log("EO05_HOURLY_QUEUE_PARITY", JSON.stringify({activeAccounts: 1500, ineligibleExcluded: 3, fullSnapshotMatch: true}));
   } finally {await client.query("reset jit");}
 }
 

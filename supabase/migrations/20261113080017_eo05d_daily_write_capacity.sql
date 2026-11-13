@@ -357,6 +357,56 @@ begin
   return receipt;
 end $fn$;
 
+-- Resolve authority in bulk after the same bounded queue selection.
+create or replace function operations.read_refresh_preflight_snapshot() returns jsonb
+language sql stable security definer set search_path = '' as $fn$
+  with cfg as materialized(select * from operations.refresh_queue_control where singleton),
+  admission as materialized(select operations.read_refresh_admission_snapshot() as value),
+  pending as materialized(
+    select q.*
+    from operations.refresh_queue_accounts q left join operations.refresh_service_order so on so.workspace_id=q.workspace_id
+    where q.state='pending' and q.connection_open
+      and not operations.refresh_account_is_held(q.workspace_id,q.install_generation,q.provider,q.account_id)
+      and not exists(select 1 from operations.refresh_runs r where r.workspace_id=q.workspace_id and r.install_generation=q.install_generation
+        and r.provider=q.provider and r.account_id=q.account_id and r.status='running')
+    order by coalesce(so.turn,-1),q.first_queued_at_ms,q.workspace_id,q.provider,q.account_id
+    limit coalesce((select (value->'bounds'->>'maxCandidates')::integer from admission),0)
+  ), valid_timezones as materialized(select name from pg_catalog.pg_timezone_names),
+  verified as (
+    select jsonb_build_object('workspaceId',w.id::text,'installGeneration',i.install_generation::text,'provider',c.provider,
+      'accountId',a.provider_account_id,'connectionId',c.id::text,'connectionVersion',c.connection_version,
+      'accountRowId',a.id::text,'selectionId',b.id::text,'eligibleFromMs',floor(extract(epoch from greatest(c.connected_at,b.effective_from))*1000)::bigint,
+      'timezone',a.timezone_name,'currency',a.currency_code) as source,
+      q.first_due_hour_ms,q.first_queued_at_ms,q.workspace_id,q.provider,q.account_id,
+      q.connection_id,q.connection_version,q.eligible_from_ms
+    from pending q join app.workspaces w on w.id=q.workspace_id
+      join shopify.installations i on i.workspace_id=w.id and i.install_generation=q.install_generation
+      join integrations.provider_connections c on c.installation_id=i.id and c.workspace_id=w.id and c.install_generation=i.install_generation
+      join integrations.provider_accounts a on a.connection_id=c.id and a.workspace_id=w.id and a.install_generation=i.install_generation and a.provider=c.provider
+      left join integrations.reporting_account_bindings b on b.connection_id=c.id and b.workspace_id=w.id and b.install_generation=i.install_generation
+        and b.provider=c.provider and b.account_id=a.id and b.effective_to is null
+    where c.provider=q.provider and a.provider_account_id=q.account_id
+      and w.status='active' and i.status='active' and c.lifecycle_status='connected' and a.active
+      and c.connected_at<=statement_timestamp() and (b.effective_from is null or b.effective_from<=statement_timestamp())
+      and exists(select 1 from integrations.provider_credential_envelopes ce where ce.id=c.credential_id and ce.installation_id=i.id
+        and ce.workspace_id=w.id and ce.install_generation=i.install_generation and ce.provider=c.provider)
+      and a.currency_code is not null and exists(select 1 from valid_timezones tz where tz.name=a.timezone_name)
+      and ((c.provider='meta' and b.id is not null and a.account_kind='advertiser' and a.reporting_eligible and a.provider_account_id ~ '^act_[0-9]+$' and c.granted_scopes @> array['ads_read'])
+        or (c.provider='google_ads' and b.id is not null and a.account_kind='advertiser' and a.reporting_eligible and a.provider_account_id ~ '^[0-9]+$' and c.granted_scopes @> array['https://www.googleapis.com/auth/adwords'])
+        or (c.provider='klaviyo' and a.account_kind='account' and a.provider_status='active'
+          and c.granted_scopes @> array['campaigns:read','events:read','flows:read','metrics:read']
+          and (select count(*) from (select 1 from integrations.provider_accounts ka where ka.connection_id=c.id and ka.active limit 2) k)=1))
+  )
+  select admission.value || jsonb_build_object('queueRevision',cfg.revision,'configured',
+    coalesce(admission.value->'budget'<>'null'::jsonb and admission.value->'bounds'<>'null'::jsonb and cfg.max_snapshot_age_ms is not null
+      and cfg.last_success_at_ms<=floor(extract(epoch from statement_timestamp())*1000)::bigint
+      and floor(extract(epoch from statement_timestamp())*1000)::bigint-cfg.last_success_at_ms<=cfg.max_snapshot_age_ms,false),
+    'candidates',coalesce((select jsonb_agg(source||jsonb_build_object('scheduledHour',first_due_hour_ms,'queuedAt',first_queued_at_ms)
+      order by first_queued_at_ms,workspace_id,provider,account_id) from verified where source is not null
+      and source->>'connectionId'=connection_id and (source->>'connectionVersion')::bigint=connection_version
+      and (source->>'eligibleFromMs')::bigint=eligible_from_ms),'[]'::jsonb)) from admission,cfg
+$fn$;
+
 -- Keep hourly progress in the verified work records. A held or unconfirmed
 -- job still owns its account slot and cannot appear as a completed day.
 create function operations.read_hourly_refresh_snapshot(p_hour bigint) returns jsonb

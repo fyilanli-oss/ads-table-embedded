@@ -1090,7 +1090,7 @@
       "tests/eo05b-demo-fixture.test.js": "d63b2bbb733d25c1f4585314f4094b010e4b6de2ca23032fc2b2d36f1aabde41",
       "tests/f01-live-readiness.test.js": "5225024e104f9087337452827f674961944f4dd1d53b808a0a0ac66bdef0a6eb",
       "tests/fixtures/customer-worker-fixture.js": "11b10dbd255ff34d6af9b11496866c3ad22145f21e60343ca0d50587eba21352",
-      "tests/fixtures/dataset-source-binding-fixture.js": "1ea811037dee73636e8765829ce3717c0ab76f3f11ce0ed0a6102d6ce81f358e",
+      "tests/fixtures/dataset-source-binding-fixture.js": "b4fa977f9ff9c57c3d9e1f0a0b7db22929cf86cd5821f746e7d877ba9a6f25f7",
       "tests/fixtures/dataset-storage-fixture.js": "33592e181bc429d3032548b6b27fff70f802323699ca1d9dfcd2d3606e33761e",
       "tests/fixtures/google-acceptance-fixture.js": "e7bf9aa5faf8094f87366f197bfdbbf0ca65f13e9c7909be0473d96c6460cf2c",
       "tests/fixtures/google-raw-datasets-fixture.js": "01a12e2ef0926ee6860060f4420da164f6bd57a03700306e3702644a04d33c86",

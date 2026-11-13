@@ -87,11 +87,12 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
       reports.push(await nativeKlaviyoPage("/api/" + kind + "-values-reports", {data: {type: kind + "-values-report", attributes: {results: records}}, links: {next: null}}, request));
       coverage.push({family: kind + ":" + name, metricId: id, state: "present", pageCount: 1, recordCount: records.length});
     }
-    const event = {type: "event", id: "event-1", attributes: {datetime: day + "T12:00:00Z", event_properties: {ProductID: "product-1", Quantity: "2.5", $value: "12.500000000000000001"}},
+    const eventId = day === "2026-11-01" ? "event-1" : "event-" + day;
+    const event = {type: "event", id: eventId, attributes: {datetime: day + "T12:00:00Z", event_properties: {ProductID: "product-1", Quantity: "2.5", $value: "12.500000000000000001"}},
       relationships: {metric: {data: {type: "metric", id: "product"}}, attributions: {data: [{type: "attribution", id: "attribution-1"}]}}};
     if (eventOrderId !== null) event.attributes.event_properties.OrderId = eventOrderId;
     const events = await nativeKlaviyoPage("/api/events", {data: nonempty ? [event] : [], included: nonempty ? [{type: "attribution", id: "attribution-1", relationships: {
-      campaign: {data: {type: "campaign", id: "campaign-1"}}, "campaign-message": {data: {type: "campaign-message", id: "message-1"}}, event: {data: {type: "event", id: "event-1"}}}}] : [], links: {next: null}});
+      campaign: {data: {type: "campaign", id: "campaign-1"}}, "campaign-message": {data: {type: "campaign-message", id: "message-1"}}, event: {data: {type: "event", id: eventId}}}}] : [], links: {next: null}});
     native.push({dataset: "configuration", pages: proof, coverage: [{family: "accounts", state: "present"}, {family: "metrics", state: "present"}]},
       {dataset: "account_performance", pages: [...proof, ...reports], partial: missingMetric, coverage},
       {dataset: "product_performance", pages: [...proof, events], coverage: [{family: "ordered_product_events", metricId: "product", state: "present", pageCount: 1, recordCount: nonempty ? 1 : 0}]});

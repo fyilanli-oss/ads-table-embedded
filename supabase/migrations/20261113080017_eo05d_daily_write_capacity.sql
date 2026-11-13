@@ -44,7 +44,7 @@ end $fn$;
 revoke all on function analytics.daily_reconciliation_json(jsonb,integer) from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
 
 create or replace function analytics.inspect_dataset_reconciliation(o jsonb,op uuid) returns jsonb
-language plpgsql security definer set search_path='' as $fn$
+language plpgsql security definer set search_path='' set jit=off as $fn$
 declare b evidence.source_batches%rowtype;r jsonb;item jsonb;fact jsonb;ref jsonb;t text;n int;total_rows int:=0;
 begin
  perform evidence.assert_source_owner(o);
@@ -82,7 +82,7 @@ begin
 end $fn$;
 
 create or replace function analytics._commit_dataset_reconciliation(o jsonb,p jsonb,c jsonb,d timestamptz) returns jsonb
-language plpgsql security definer set search_path='' as $fn$
+language plpgsql security definer set search_path='' set jit=off as $fn$
 declare item jsonb; r jsonb; row_input jsonb; injected jsonb; b evidence.source_batches%rowtype; primary_id bigint;
  operation uuid; h text; prior jsonb; result jsonb; ids jsonb:='[]'; found_row jsonb; rid bigint; name text; cols text; allowed text[]; k text;
  head jsonb; old_fact jsonb; ref jsonb; native_read jsonb; read_key text; sets text[]:='{}'; expected_sets text[];

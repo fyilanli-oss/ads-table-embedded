@@ -1702,7 +1702,7 @@
       "supabase/migrations/20261110191004_eo05d_dataset_reconciliation.sql": "07492d30d61552e06749a3800e75ec35f10a39d1e475baba2220e656b504b0de",
       "supabase/migrations/20261110202849_eo05e_operational_observability.sql": "01b38ad0d70f63b6151e7edfb0544ce058e89150d5084faa98bba53e048c407e",
       "supabase/migrations/20261111131821_eo05_refresh_fenced_dataset_commit.sql": "08408fb499d2b92b85011b2604afa4d94a9744e0ad9ad86703c94252ba977eeb",
-      "supabase/migrations/20261113080017_eo05d_daily_write_capacity.sql": "3b6f941ea6321d41812624480a8ba74ce6c7843993f619409bc40160b58e2f03",
+      "supabase/migrations/20261113080017_eo05d_daily_write_capacity.sql": "c08a9f60f80517def0dee2b7e84e45623b1d97a8b4329695e58fcb43109169d4",
       "tests/a6-docs-01-turkish-standardization.test.js": "5dcaa387ca679f75339510ca9d9856fcfb98eadf2510e31f94afd0599c9f870d",
       "tests/a6-tech-01-f01c-scoped-recovery.test.js": "3bd869071d5042402215176a99bf14dcebce6d3d0497ffcba946038050701792",
       "tests/eo-01c-preview-shell.test.js": "c3d67bb6666c19cf5ac12cfcd8a7f2f2acdf399d5a8ac32c0269823b06cbf789",

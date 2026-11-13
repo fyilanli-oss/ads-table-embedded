@@ -42,6 +42,10 @@ export function createRefreshWorkRepository(database) {
     async readPreflightSnapshot() {
       return result("select operations.read_refresh_preflight_snapshot() as result");
     },
+    async readHourlyPreflightSnapshot({hour}) {
+      if (!Number.isSafeInteger(hour) || hour < 0 || hour % 3600000 !== 0) throw Error("REFRESH_WORK_INPUT_INVALID");
+      return result("select operations.read_hourly_refresh_snapshot($1::bigint) as result", [hour]);
+    },
     async commitPreflight({expectedRevision,queueRevision,nextState,source,window,partitionId,deadlineAt}) {
       if(![expectedRevision,queueRevision].every(n=>Number.isSafeInteger(n)&&n>=0)||!Number.isSafeInteger(deadlineAt)||deadlineAt<1||!nextState||!source||!window||typeof partitionId!=="string") throw new Error("REFRESH_WORK_INPUT_INVALID");
       return await result("select operations.commit_refresh_preflight_with_deadline($1::bigint,$2::bigint,$3::jsonb,$4::jsonb,$5::jsonb,$6::text,$7::bigint) as result",

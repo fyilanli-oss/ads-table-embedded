@@ -357,5 +357,31 @@ begin
   return receipt;
 end $fn$;
 
+-- Keep hourly progress in the verified work records. A held or unconfirmed
+-- job still owns its account slot and cannot appear as a completed day.
+create function operations.read_hourly_refresh_snapshot(p_hour bigint) returns jsonb
+language plpgsql stable security definer set search_path='' as $fn$
+declare snapshot jsonb; completed jsonb;
+begin
+ if p_hour is null or p_hour<0 or p_hour%3600000<>0
+  or p_hour<>floor(extract(epoch from statement_timestamp())/3600)::bigint*3600000
+ then raise exception 'REFRESH_HOUR_INVALID';end if;
+ snapshot:=operations.read_refresh_preflight_snapshot();
+ select coalesce(jsonb_agg(jsonb_build_array(b.workspace_id::text,b.install_generation::text,b.provider,b.account_id,b.from_date::text)), '[]'::jsonb)
+ into completed
+ from jsonb_array_elements(snapshot->'candidates') s
+ join operations.refresh_work_bindings b on b.workspace_id=(s->>'workspaceId')::uuid
+  and b.install_generation=(s->>'installGeneration')::bigint and b.provider=s->>'provider'
+  and b.account_id=s->>'accountId' and b.source=(s-array['scheduledHour','queuedAt'])
+  and b.partition_id='hourly:'||p_hour::text and b.from_date=b.to_date
+ join operations.refresh_runs r using (workspace_id,install_generation,provider,account_id,job_id,fence)
+ join operations.refresh_work_progress w using (workspace_id,install_generation,provider,account_id,job_id,fence)
+ where r.status='completed' and w.stage='ready_for_dataset' and w.from_date=b.from_date and w.to_date=b.to_date;
+ return snapshot||jsonb_build_object('completedHourlyDays',completed);
+end $fn$;
+revoke all on function operations.read_hourly_refresh_snapshot(bigint)
+ from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_queue_runner;
+grant execute on function operations.read_hourly_refresh_snapshot(bigint) to adstable_refresh_coordinator;
+
 reset role;
 commit;

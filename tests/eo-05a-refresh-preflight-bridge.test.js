@@ -4,6 +4,7 @@ import {readFileSync} from "node:fs";
 import {dispatchRefreshPreflight} from "../app/lib/refresh/preflight-bridge.server.js";
 import {planRefreshAdmissions,planRefreshPreflightAdmissions} from "../app/lib/refresh/admission-policy.server.js";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
+import {dispatchHourlyRefresh} from "../app/lib/refresh/scheduled-queue-check.server.js";
 
 function fixture() {
   const vector={requests:10,dbWrites:10,connections:10,rows:100,bytes:10000};
@@ -33,6 +34,36 @@ test("preflight reserves at most one without pretending a cached subscription is
   candidate.authority.connected=false;assert.equal(planRefreshPreflightAdmissions({...input,candidates:[candidate]}).admitted.length,0);
   candidate.authority.connected=true;input.budget.interactiveReserve={...input.budget.global};
   assert.equal(planRefreshPreflightAdmissions(input).admitted.length,0,"interactive reserve is not consumed");
+});
+
+test("hourly dispatch chooses yesterday, then today only after confirmed completion", async () => {
+  const f = fixture();
+  const now = Date.parse("2026-11-02T14:15:00Z");
+  const hour = Date.parse("2026-11-02T14:00:00Z");
+  Object.assign(f.source, {timezone: "UTC", eligibleFromMs: Date.parse("2026-10-31T00:00:00Z"), scheduledHour: hour, queuedAt: hour});
+  f.args.now = () => now;
+  f.plan.limits.deadlineAt = now + 1000;
+  const owner = [f.source.workspaceId, f.source.installGeneration, f.source.provider, f.source.accountId];
+  let completedHourlyDays = [];
+  f.args.store.readHourlyPreflightSnapshot = async args => {
+    assert.deepEqual(args, {hour});
+    return {...f.snapshot, completedHourlyDays};
+  };
+  const days = [];
+  f.args.store.commitPreflight = async ({window, partitionId}) => {
+    assert.equal(partitionId, "hourly:" + hour);
+    assert.equal(window.from, window.to);
+    days.push(window.from);
+    return true;
+  };
+  const dispatch = () => dispatchHourlyRefresh({store: f.args.store, work: f.args});
+  assert.equal((await dispatch()).status, "awaiting_dataset");
+  assert.equal((await dispatch()).status, "awaiting_dataset");
+  completedHourlyDays = [[...owner, "2026-11-01"]];
+  assert.equal((await dispatch()).status, "awaiting_dataset");
+  completedHourlyDays.push([...owner, "2026-11-02"]);
+  assert.equal((await dispatch()).status, "waiting");
+  assert.deepEqual(days, ["2026-11-01", "2026-11-01", "2026-11-02"]);
 });
 
 test("native reservation precedes mandatory fresh billing and bounded worker; no Dataset completion",async()=>{

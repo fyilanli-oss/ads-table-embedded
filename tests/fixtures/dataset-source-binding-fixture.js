@@ -9,8 +9,7 @@ import {parseMetaRawJson, projectMetaRawPage} from "../../app/lib/providers/meta
 import {createKlaviyoSourceCapture} from "../../app/lib/providers/klaviyo-source-capture.server.js";
 import {buildKlaviyoCampaignValuesRequest, buildKlaviyoFlowValuesRequest, buildKlaviyoPdValuesRequest} from "../../app/lib/providers/klaviyo-reporting.server.js";
 
-const day = "2026-11-01", window = {from: day, to: day};
-function nativeGoogle(family, account, nonempty, purchase = "2.5") {
+function nativeGoogle(family, account, nonempty, purchase, day) {
   if (family === "account_identity") return [{customer: {id: account, currencyCode: "USD", timeZone: "UTC", descriptiveName: "Synthetic"}}];
   if (!nonempty) return [];
   const base = {customer: {id: account}, campaign: {id: "10", name: "Synthetic Shopping", advertisingChannelType: "SHOPPING"},
@@ -33,11 +32,12 @@ async function nativeKlaviyoPage(path, body, request = null) {
 
 /** All native responses/credentials/owners are synthetic. Real capture projection,
  * AEAD and decrypt paths are used; this fake DB is not SQL/native acceptance. */
-export async function datasetSourceBindingFixture(provider = "google_ads", {nonempty = true, missingMetric = false, mixedMetrics = false, eventOrderId = null, googlePurchase = "2.5", googleProductCount = 1, owner: givenOwner = null, cipher: givenCipher = null} = {}) {
+export async function datasetSourceBindingFixture(provider = "google_ads", {nonempty = true, missingMetric = false, mixedMetrics = false, eventOrderId = null, googlePurchase = "2.5", googleProductCount = 1, businessDate: day = "2026-11-01", owner: givenOwner = null, cipher: givenCipher = null} = {}) {
+  const window = {from: day, to: day};
   const owner = givenOwner ? structuredClone(givenOwner) : datasetStorageFixture().owner;
   if (!givenOwner) {owner.installationId = "1"; owner.provider = provider; owner.accountId = provider === "meta" ? "act_123" : provider === "klaviyo" ? "account-1" : "123";}
   if (provider === "klaviyo") owner.selectionEpoch = null;
-  const operationId = randomUUID(), jobId = "synthetic-binding-job", fence = "1", source = {workspaceId: owner.workspaceId, installGeneration: owner.generation,
+  const operationId = randomUUID(), jobId = day === "2026-11-01" ? "synthetic-binding-job" : "synthetic-binding-job-" + day, fence = "1", source = {workspaceId: owner.workspaceId, installGeneration: owner.generation,
     provider, accountId: owner.accountId, connectionId: owner.connectionId, connectionVersion: owner.connectionVersion, accountRowId: "1", selectionId: owner.selectionEpoch,
     eligibleFromMs: Date.parse("2026-10-31T00:00:00Z"), timezone: "UTC", currency: "USD"};
   const spec = provider === "google_ads" ? {read: "googleDatasetRead", digest: "googleDatasetInputDigest", schema: "google-raw-datasets-v2", sanitizer: "google-query-fields-v1"}
@@ -48,7 +48,7 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
     const queries = buildGoogleReportingQueries({dateWindow: {start: day, end: day}});
     for (const [dataset, families] of [["account_performance", GOOGLE_REPORTING_QUERY_FAMILIES.slice(0, 9)], ["product_performance", GOOGLE_REPORTING_QUERY_FAMILIES.slice(9)]]) {
       native.push({dataset, pages: families.flatMap(family => {
-        const original = nativeGoogle(family, owner.accountId, nonempty, googlePurchase);
+        const original = nativeGoogle(family, owner.accountId, nonempty, googlePurchase, day);
         const pages = [original];
         if (family === "shopping_product_daily" && original.length && googleProductCount > 1) {
           pages.length = 0;
@@ -130,7 +130,7 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
     if (sql.includes("inspect_dataset_storage")) return {rows: [{result: structuredClone(storageReceipts.get(args[2]) ?? null)}]};
     throw Error("UNEXPECTED_SYNTHETIC_DATABASE_QUERY");
   }};
-  return {database, cipher, owner, batches, envelopes, native, source, hooks, writes, queries,
+  return {database, cipher, owner, batches, envelopes, native, source, hooks, writes, queries, jobId, fence, businessDate: day,
     limits: {maxPages: 100, maxRows: googleProductCount > 1 ? 2000 : 1000, maxBytes: 1000000, deadlineAt: Date.now() + 60000},
     policy: reportRetentionPolicy()};
 }

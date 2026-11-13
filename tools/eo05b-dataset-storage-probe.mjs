@@ -10,7 +10,7 @@ import {reportRetentionProbe} from "./eo05b-report-retention-probe.mjs";
 import {fxReportingCurrencyProbe} from "./eo05b-fx-reporting-currency-probe.mjs";
 import {datasetServerProbe} from "./eo05b-dataset-server-probe.mjs";
 import {maturityProbe} from "./eo05c-maturity-probe.mjs";
-import {reconciliationProbe} from "./eo05d-reconciliation-probe.mjs";
+import {reconciliationProbe, reconciliationCapacityProbe} from "./eo05d-reconciliation-probe.mjs";
 import {observabilityProbe} from "./eo05e-observability-probe.mjs";
 
 async function rejected(client, action, pattern) {
@@ -179,4 +179,18 @@ export async function datasetStorageProbe(client, connection, environment = proc
     await client.query("set constraints all immediate");
     console.log("EO05B_DATASET_STORAGE_PASS synthetic_only=true live_mutation=false consumer_receipt=false");
   } finally {await client.query("rollback");}
+}
+
+// Run only after F01 has verified the clean schema, on the database CI discards.
+export async function datasetCapacityProbe(client, connection) {
+  assert.equal(process.env.GITHUB_ACTIONS, "true");
+  assert.ok(process.env.RUNNER_TEMP);
+  assert.equal(connection.host, "127.0.0.1");
+  assert.equal(connection.port, 54322);
+  assert.equal((await client.query("select count(*)::int n from app.workspaces")).rows[0].n, 0);
+  const lineage = JSON.parse(readFileSync(new URL("../contracts/a6-tech-01-f01-migration-lineage-v1.json", import.meta.url), "utf8"));
+  for (const entry of lineage.prepared_migrations) {
+    await client.query(readFileSync(new URL("../" + entry.file, import.meta.url), "utf8"));
+  }
+  await reconciliationCapacityProbe(client, {ownerFixture, connection});
 }

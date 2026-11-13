@@ -242,3 +242,85 @@ export async function reconciliationProbe(client, {ownerFixture, connection}) {
   console.log("EO05D_RECONCILIATION_PROBE", JSON.stringify({scenarios, rollbackOnly: true, synthetic: true, actualAEAD: true, physicalReadback: true,
     replacement3to5: true, emptyRemovesOldFacts: true, mismatchRollbackAndLedger: true, unknownStops: true, liveAcceptance: false}));
 }
+
+export async function reconciliationCapacityProbe(client, {ownerFixture, connection}) {
+  const storeCount = 500;
+  const productsPerStore = 500;
+  const dates = ["2026-11-01", "2026-11-02"];
+  const concurrency = 8;
+  const hourlyBudgetMs = 3_600_000;
+  await client.query("set role adstable_owner");
+  const owners = [];
+  for (let index = 0; index < storeCount; index++) {
+    owners.push(await ownerFixture(client));
+  }
+
+  let nextStore = 0;
+  let confirmedDays = 0;
+  let completedStores = 0;
+  const errors = new Map();
+  const start = performance.now();
+  async function worker() {
+    const database = new pg.Client({...connection, statement_timeout: 120_000});
+    await database.connect();
+    try {
+      await database.query("set role adstable_owner");
+      while (!errors.size && nextStore < owners.length && performance.now() - start < hourlyBudgetMs) {
+        const storeNumber = ++nextStore;
+        const owner = owners[storeNumber - 1];
+        let confirmed = 0;
+        for (const businessDate of dates) {
+          if (performance.now() - start >= hourlyBudgetMs) break;
+          try {
+            const input = await storedBindingFixture(database, owner, {googleProductCount: productsPerStore, businessDate});
+            const stamp = new Date().toISOString();
+            await database.query(
+              "update evidence.source_batches set manifest=jsonb_set(jsonb_set(manifest,'{googleDatasetRead,observedAt}',to_jsonb($3::text)),'{googleDatasetRead,completedAt}',to_jsonb($3::text)) where authority=$1::jsonb and attempt_id=any($2::uuid[])",
+              [JSON.stringify(owner), input.batches.map(batch => batch.attemptId), stamp],
+            );
+            const receipt = await reconcileStoredDatasetSources({
+              ...input, database: {async query(sql, args) {
+                try {return await database.query(sql, args);} catch (error) {
+                  console.error("EO05D_CAPACITY_SQL_FAILURE", JSON.stringify({storeNumber, businessDate, code: error.code, message: error.message}));
+                  throw error;
+                }
+              }}, expectedRevision: 0, limits: {...input.limits, deadlineAt: Date.now() + 115_000},
+            });
+            assert.equal(receipt.rowCount, productsPerStore + 2);
+            assert.equal(receipt.checkpointAdvanced, true);
+            confirmed++;
+            confirmedDays++;
+          } catch (error) {
+            const code = error.code ?? error.message;
+            errors.set(code, (errors.get(code) ?? 0) + 1);
+            break;
+          }
+        }
+        if (confirmed === dates.length) completedStores++;
+        if (storeNumber % 50 === 0) {
+          console.log("EO05D_CAPACITY_PROGRESS", JSON.stringify({assignedStores: nextStore, completedStores, confirmedDays, elapsedMs: Math.round(performance.now() - start)}));
+        }
+      }
+    } finally {
+      await database.end();
+    }
+  }
+  const workers = await Promise.allSettled(Array.from({length: concurrency}, worker));
+  const elapsedMs = Math.round(performance.now() - start);
+  const perStoreDay = (await client.query(
+    "select workspace_id, business_date, count(*)::int rows from analytics.cpd_product_performance_facts group by workspace_id,business_date",
+  )).rows;
+  const malformedDays = perStoreDay.filter(day => day.rows !== productsPerStore).length;
+  const verifiedProductRows = perStoreDay.reduce((count, day) => count + day.rows, 0);
+  const withinHour = elapsedMs <= hourlyBudgetMs && completedStores === storeCount && confirmedDays === storeCount * dates.length;
+  const summary = {provider: "google_ads", storeCount, productsPerStore, dates, concurrency, completedStores,
+    confirmedDays, verifiedProductRows, malformedDays, elapsedMs, hourlyBudgetMs, withinHour, errors: Object.fromEntries(errors),
+    workerFailures: workers.filter(result => result.status === "rejected").length,
+    includesAttributionRechecks: false, includesHostedSupabase: false};
+  console.log("EO05D_PARALLEL_CAPACITY_RESULT", JSON.stringify(summary));
+  assert.equal(summary.workerFailures, 0);
+  assert.equal(errors.size, 0);
+  assert.equal(malformedDays, 0);
+  assert.equal(perStoreDay.length, confirmedDays);
+  assert.equal(verifiedProductRows, confirmedDays * productsPerStore);
+}

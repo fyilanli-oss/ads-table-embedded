@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import {randomUUID} from "node:crypto";
+import {performance} from "node:perf_hooks";
 import {storedBindingFixture} from "./eo05b-source-dataset-binding-probe.mjs";
 import {datasetServerProbe} from "./eo05b-dataset-server-probe.mjs";
 import {reconcileStoredDatasetSources, inspectDatasetReconciliation, DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
@@ -84,7 +85,15 @@ export async function reconciliationProbe(client, {ownerFixture}) {
   }
   const largeOwner = await ownerFixture(client, "google_ads");
   const largeDay = await source(largeOwner, {googleProductCount: 500});
-  const largeReceipt = await reconcileStoredDatasetSources(largeDay);
+  const durations = [];
+  const timedDatabase = {async query(sql, args) {
+    if (sql !== DATASET_RECONCILE_SQL) return database.query(sql, args);
+    const start = performance.now();
+    const result = await database.query(sql, args);
+    durations.push(Math.round(performance.now() - start));
+    return result;
+  }};
+  const largeReceipt = await reconcileStoredDatasetSources({...largeDay, database: timedDatabase});
   assert.equal(largeReceipt.rowCount, 502);
   assert.equal(largeReceipt.checkpointAdvanced, true);
   const persisted = await client.query(
@@ -93,7 +102,14 @@ export async function reconciliationProbe(client, {ownerFixture}) {
   );
   assert.equal(persisted.rows[0].n, 500);
   const correctedLargeDay = await source(largeOwner, {googleProductCount: 500, googlePurchase: "5"});
-  assert.equal((await reconcileStoredDatasetSources({...correctedLargeDay, expectedRevision: 1})).rowCount, 502);
+  assert.equal((await reconcileStoredDatasetSources({...correctedLargeDay, database: timedDatabase, expectedRevision: 1})).rowCount, 502);
+  const [insertMs, correctionMs] = durations;
+  console.log("EO05D_CAPACITY_SCREEN", JSON.stringify({
+    products: 500, measuredWorkspaceCount: 1, insertMs, correctionMs,
+    modeledWorkspaces: 500, modeledDaysPerHour: 2, hourlyBudgetMs: 3_600_000,
+    modeledGoogleOnlySerialCorrectionMs: correctionMs * 500 * 2,
+    includesAttributionRechecks: false, includesHostedSupabase: false,
+  }));
   scenarios += 2;
 
   // Deliberate corruption AFTER the normal validator proves that readback uses

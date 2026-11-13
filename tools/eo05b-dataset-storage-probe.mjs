@@ -182,7 +182,7 @@ export async function datasetStorageProbe(client, connection, environment = proc
 }
 
 // Run only after F01 has verified the clean schema, on the database CI discards.
-export async function datasetCapacityProbe(client, connection) {
+export async function datasetCapacityProbe(client, connection, {timingOnly}) {
   assert.equal(process.env.GITHUB_ACTIONS, "true");
   assert.ok(process.env.RUNNER_TEMP);
   assert.equal(connection.host, "127.0.0.1");
@@ -192,5 +192,5 @@ export async function datasetCapacityProbe(client, connection) {
   for (const entry of lineage.prepared_migrations) {
     await client.query(readFileSync(new URL("../" + entry.file, import.meta.url), "utf8"));
   }
-  await reconciliationCapacityProbe(client, {ownerFixture, connection});
+  await reconciliationCapacityProbe(client, {ownerFixture, connection, timingOnly});
 }

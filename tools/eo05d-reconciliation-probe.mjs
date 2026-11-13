@@ -4,7 +4,7 @@ import {performance} from "node:perf_hooks";
 import pg from "pg";
 import {storedBindingFixture} from "./eo05b-source-dataset-binding-probe.mjs";
 import {datasetServerProbe} from "./eo05b-dataset-server-probe.mjs";
-import {reconcileStoredDatasetSources, inspectDatasetReconciliation, DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
+import {reconcileStoredDatasetSources, inspectDatasetReconciliation, DATASET_RECONCILE_SQL, DATASET_RECONCILE_READ_SQL, SCHEDULED_DATASET_FINISH_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
 import {storeMaturityConfiguration, recordMaturityDecision, inspectMaturityDecision} from "../app/lib/database/maturity-store.server.js";
 import {maturityObservationFixture} from "../tests/fixtures/maturity-fixture.js";
 import {createScheduledDatasetPostgresClient} from "../app/lib/database/dataset-postgres.server.js";
@@ -243,8 +243,8 @@ export async function reconciliationProbe(client, {ownerFixture, connection}) {
     replacement3to5: true, emptyRemovesOldFacts: true, mismatchRollbackAndLedger: true, unknownStops: true, liveAcceptance: false}));
 }
 
-export async function reconciliationCapacityProbe(client, {ownerFixture, connection}) {
-  const storeCount = 500;
+export async function reconciliationCapacityProbe(client, {ownerFixture, connection, timingOnly}) {
+  const storeCount = timingOnly ? 24 : 500;
   const productsPerStore = 500;
   const dates = ["2026-11-01", "2026-11-02"];
   const concurrency = 8;
@@ -259,6 +259,7 @@ export async function reconciliationCapacityProbe(client, {ownerFixture, connect
   let confirmedDays = 0;
   let completedStores = 0;
   const errors = new Map();
+  const timings = [];
   const start = performance.now();
   async function worker() {
     const database = new pg.Client({...connection, statement_timeout: 120_000});
@@ -272,22 +273,37 @@ export async function reconciliationCapacityProbe(client, {ownerFixture, connect
         for (const businessDate of dates) {
           if (performance.now() - start >= hourlyBudgetMs) break;
           try {
+            const preparationStarted = performance.now();
             const input = await storedBindingFixture(database, owner, {googleProductCount: productsPerStore, businessDate});
             const stamp = new Date().toISOString();
             await database.query(
               "update evidence.source_batches set manifest=jsonb_set(jsonb_set(manifest,'{googleDatasetRead,observedAt}',to_jsonb($3::text)),'{googleDatasetRead,completedAt}',to_jsonb($3::text)) where authority=$1::jsonb and attempt_id=any($2::uuid[])",
               [JSON.stringify(owner), input.batches.map(batch => batch.attemptId), stamp],
             );
+            const reconciliationStarted = performance.now();
+            let writeStarted, writeFinished, readbackStarted, readbackFinished;
             const receipt = await reconcileStoredDatasetSources({
               ...input, database: {async query(sql, args) {
+                if (sql === DATASET_RECONCILE_SQL) writeStarted = performance.now();
+                if (sql === DATASET_RECONCILE_READ_SQL) readbackStarted = performance.now();
                 try {return await database.query(sql, args);} catch (error) {
                   console.error("EO05D_CAPACITY_SQL_FAILURE", JSON.stringify({storeNumber, businessDate, code: error.code, message: error.message}));
                   throw error;
+                } finally {
+                  if (sql === DATASET_RECONCILE_SQL) writeFinished = performance.now();
+                  if (sql === DATASET_RECONCILE_READ_SQL) readbackFinished = performance.now();
                 }
               }}, expectedRevision: 0, limits: {...input.limits, deadlineAt: Date.now() + 115_000},
             });
             assert.equal(receipt.rowCount, productsPerStore + 2);
             assert.equal(receipt.checkpointAdvanced, true);
+            timings.push({
+              sourceFixtureMs: reconciliationStarted - preparationStarted,
+              sourceReadAndProjectionMs: writeStarted - reconciliationStarted,
+              sqlWriteMs: writeFinished - writeStarted,
+              readbackSqlMs: readbackFinished - readbackStarted,
+              receiptProcessingMs: readbackStarted - writeFinished + performance.now() - readbackFinished,
+            });
             confirmed++;
             confirmedDays++;
           } catch (error) {
@@ -318,9 +334,22 @@ export async function reconciliationCapacityProbe(client, {ownerFixture, connect
     workerFailures: workers.filter(result => result.status === "rejected").length,
     includesAttributionRechecks: false, includesHostedSupabase: false};
   console.log("EO05D_PARALLEL_CAPACITY_RESULT", JSON.stringify(summary));
+  if (timingOnly && timings.length) {
+    const stages = Object.fromEntries(Object.keys(timings[0]).map(stage => {
+      const values = timings.map(sample => sample[stage]).sort((a, b) => a - b);
+      assert.ok(values.every(value => Number.isFinite(value) && value >= 0));
+      return [stage, {
+        totalMs: Math.round(values.reduce((sum, value) => sum + value, 0)),
+        medianMs: Math.round(values[Math.ceil(values.length / 2) - 1]),
+        p95Ms: Math.round(values[Math.ceil(values.length * 0.95) - 1]),
+      }];
+    }));
+    console.log("EO05D_STAGE_TIMING", JSON.stringify({samples: timings.length, stages}));
+  }
   assert.equal(summary.workerFailures, 0);
   assert.equal(errors.size, 0);
   assert.equal(malformedDays, 0);
   assert.equal(perStoreDay.length, confirmedDays);
   assert.equal(verifiedProductRows, confirmedDays * productsPerStore);
+  if (timingOnly) assert.equal(timings.length, storeCount * dates.length);
 }

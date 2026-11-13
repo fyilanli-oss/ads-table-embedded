@@ -511,7 +511,12 @@ async function main() {
       schema_sha256:hash(after),live_parity:beforeDifferences.length===0,live_difference_categories:beforeDifferences.map(d=>d.category),
       business_data_source:"synthetic_only",production_mutation:false})}`);
     assert.equal(beforeDifferences.length,0,"historical replay differs from captured live schema; review required");
-    if (mode === "full" && process.argv.includes("--dataset-capacity")) await datasetCapacityProbe(client, replayConnection);
+    if (mode === "full") {
+      const timingOnly = process.argv.includes("--dataset-timing");
+      if (timingOnly || process.argv.includes("--dataset-capacity")) {
+        await datasetCapacityProbe(client, replayConnection, {timingOnly});
+      }
+    }
   } finally { await client.end(); }
 }
 

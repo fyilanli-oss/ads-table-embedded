@@ -43,6 +43,10 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
   const snapshot = await store.readQueueCheck();
   assert.equal(snapshot.checkedAccounts, owners.size);
   const hour = Math.floor(tick.queue.checkedAtMs / 3600000) * 3600000;
+  // Supabase's disposable postgres login needs SET-only membership for these
+  // synthetic connections. The earlier ACL checks run before this fixture.
+  await admin.query("reset role");
+  await admin.query("grant adstable_refresh_coordinator, adstable_refresh_dataset_runner to postgres with inherit false, set true, admin false");
   await admin.query("set role adstable_refresh_coordinator");
   try {
     const initial = await admin.query("select operations.read_hourly_refresh_snapshot($1::bigint) as result", [hour]);

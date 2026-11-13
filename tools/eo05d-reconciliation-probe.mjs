@@ -5,7 +5,8 @@ import {readFileSync} from "node:fs";
 import pg from "pg";
 import {storedBindingFixture} from "./eo05b-source-dataset-binding-probe.mjs";
 import {datasetServerProbe} from "./eo05b-dataset-server-probe.mjs";
-import {reconcileStoredDatasetSources, inspectDatasetReconciliation, DATASET_RECONCILE_SQL, DATASET_RECONCILE_READ_SQL, SCHEDULED_DATASET_FINISH_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
+import {reconcileStoredDatasetSources, inspectDatasetReconciliation, DATASET_RECONCILE_SQL, DATASET_RECONCILE_READ_SQL, SCHEDULED_DATASET_RECONCILE_SQL, SCHEDULED_DATASET_FINISH_SQL} from "../app/lib/database/dataset-reconciliation.server.js";
+import {durationSummary} from "./eo05-refresh-small-baseline.mjs";
 import {storeMaturityConfiguration, recordMaturityDecision, inspectMaturityDecision} from "../app/lib/database/maturity-store.server.js";
 import {maturityObservationFixture} from "../tests/fixtures/maturity-fixture.js";
 import {createScheduledDatasetPostgresClient} from "../app/lib/database/dataset-postgres.server.js";
@@ -55,22 +56,43 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
     await admin.query("set role adstable_owner");
   }
   const start = performance.now();
+  const profile = process.argv.includes("--short-hourly-profile");
+  const budgetMs = profile ? 180_000 : 3_600_000;
+  const stages = Object.fromEntries(["queueRead", "plan", "reservation", "workerChecks", "sourcePreparation", "datasetReads", "write", "readback", "finish"].map(name => [name, []]));
+  const attempts = new Map();
   const outcomes = new Map();
   let unexpected;
   async function worker() {
     const client = new pg.Client({...connection, statement_timeout: 120_000});
     await client.connect();
     try {
+      let snapshotFinished;
+      async function timed(stage, operation) {
+        const started = performance.now();
+        try {return await operation();}
+        finally {if (profile) stages[stage].push(performance.now() - started);}
+      }
       const coordinator = createRefreshWorkRepository({async query(sql, args) {
         await client.query("set role adstable_refresh_coordinator");
-        try {return await client.query(sql, args);}
+        try {
+          if (sql.includes("read_hourly_refresh_snapshot")) {
+            const response = await timed("queueRead", () => client.query(sql, args));
+            snapshotFinished = performance.now();
+            return response;
+          }
+          if (sql.includes("commit_refresh_preflight_with_deadline")) {
+            if (profile) stages.plan.push(performance.now() - snapshotFinished);
+            return await timed("reservation", () => client.query(sql, args));
+          }
+          return await timed("workerChecks", () => client.query(sql, args));
+        }
         catch (error) {
           console.error("EO05_HOURLY_COORDINATOR_ERROR", JSON.stringify({code: error.code, message: error.message, where: error.where}));
           throw error;
         }
         finally {await client.query("reset role");}
       }});
-      while (!unexpected && performance.now() - start < 3_600_000 && Date.now() < hour + 3600000) {
+      while (!unexpected && performance.now() - start < budgetMs && Date.now() < hour + 3600000) {
         const result = await dispatchHourlyRefresh({store: coordinator, work: {
           now: Date.now,
           buildWorkPlan: async () => ({cost, limits: {deadlineAt: Date.now() + 115000,
@@ -83,18 +105,24 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
             await client.query("set role adstable_owner");
             let input;
             try {
-              input = await storedBindingFixture(client, owner, {claim, businessDate: window.from, googleProductCount: 500});
+              input = await timed("sourcePreparation", () => storedBindingFixture(client, owner, {claim, businessDate: window.from, googleProductCount: 500}));
               const key = {google_ads: "googleDatasetRead", meta: "metaDatasetRead", klaviyo: "klaviyoDatasetRead"}[claim.provider];
               await client.query("update evidence.source_batches set manifest=jsonb_set(jsonb_set(manifest,$3::text[],to_jsonb($5::text)),$4::text[],to_jsonb($5::text)) where authority=$1::jsonb and attempt_id=any($2::uuid[])",
                 [JSON.stringify(owner), input.batches.map(b => b.attemptId), [key, "observedAt"], [key, "completedAt"], new Date().toISOString()]);
             } finally {await client.query("reset role");}
             return {...input, expectedRevision: 0, database: {async query(sql, args) {
               await client.query("set role adstable_refresh_dataset_runner");
-              try {return await client.query(sql, args);}
+              try {
+                const stage = sql === SCHEDULED_DATASET_RECONCILE_SQL ? "write"
+                  : sql === DATASET_RECONCILE_READ_SQL ? "readback"
+                  : sql === SCHEDULED_DATASET_FINISH_SQL ? "finish" : "datasetReads";
+                return await timed(stage, () => client.query(sql, args));
+              }
               finally {await client.query("reset role");}
             }}};
           },
         }});
+        attempts.set(result.status, (attempts.get(result.status) ?? 0) + 1);
         if (result.status === "waiting") break;
         if (result.status === "conflict") continue;
         if (result.status !== "completed" && result.dataset?.status !== "held") {
@@ -108,6 +136,8 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
     } finally {await client.end();}
   }
   const workers = await Promise.allSettled(Array.from({length: concurrency}, worker));
+  if (profile) console.log("EO05_HOURLY_STAGE_TIMING", JSON.stringify({budgetMs, attempts: Object.fromEntries(attempts),
+    stages: Object.fromEntries(Object.entries(stages).map(([name, values]) => [name, durationSummary(values)]))}));
   const rows = (await admin.query("select provider,status,count(*)::int n from operations.refresh_runs group by provider,status")).rows;
   const fullyCompleted = (await admin.query("select count(*)::int n from (select workspace_id from operations.refresh_runs where status='completed' group by workspace_id having count(*)=6) x")).rows[0].n;
   const counts = Object.fromEntries(providers.map(provider => {

@@ -1072,7 +1072,7 @@
       "name": "eo05d_daily_write_capacity",
       "file": "supabase/migrations/20261113080017_eo05d_daily_write_capacity.sql",
       "created_with": "supabase@2.121.0 migration new eo05d_daily_write_capacity",
-      "repository_sql_sha256": "022aefb80b3591b067e339603fa20bc9af95e479e51851f46a98139672f125af",
+      "repository_sql_sha256": "174bfc76751969b2d696532c1be1e50dd07457c0355a1adde739c67d4d12dc8b",
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false

@@ -43,6 +43,13 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
   const snapshot = await store.readQueueCheck();
   assert.equal(snapshot.checkedAccounts, owners.size);
   const hour = Math.floor(tick.queue.checkedAtMs / 3600000) * 3600000;
+  await admin.query("set role adstable_refresh_coordinator");
+  try {
+    const initial = await admin.query("select operations.read_hourly_refresh_snapshot($1::bigint) as result", [hour]);
+    assert.equal(initial.rows[0].result.candidates.length, owners.size);
+  } finally {
+    await admin.query("set role adstable_owner");
+  }
   const start = performance.now();
   const outcomes = new Map();
   let unexpected;
@@ -53,6 +60,10 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
       const coordinator = createRefreshWorkRepository({async query(sql, args) {
         await client.query("set role adstable_refresh_coordinator");
         try {return await client.query(sql, args);}
+        catch (error) {
+          console.error("EO05_HOURLY_COORDINATOR_ERROR", JSON.stringify({code: error.code, message: error.message, where: error.where}));
+          throw error;
+        }
         finally {await client.query("reset role");}
       }});
       while (!unexpected && performance.now() - start < 3_600_000 && Date.now() < hour + 3600000) {

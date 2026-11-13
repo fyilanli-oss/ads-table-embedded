@@ -10,7 +10,7 @@ import {reportRetentionProbe} from "./eo05b-report-retention-probe.mjs";
 import {fxReportingCurrencyProbe} from "./eo05b-fx-reporting-currency-probe.mjs";
 import {datasetServerProbe} from "./eo05b-dataset-server-probe.mjs";
 import {maturityProbe} from "./eo05c-maturity-probe.mjs";
-import {reconciliationProbe, reconciliationCapacityProbe} from "./eo05d-reconciliation-probe.mjs";
+import {reconciliationProbe, reconciliationCapacityProbe, installReconciliationTiming} from "./eo05d-reconciliation-probe.mjs";
 import {observabilityProbe} from "./eo05e-observability-probe.mjs";
 
 async function rejected(client, action, pattern) {
@@ -192,5 +192,6 @@ export async function datasetCapacityProbe(client, connection, {timingOnly}) {
   for (const entry of lineage.prepared_migrations) {
     await client.query(readFileSync(new URL("../" + entry.file, import.meta.url), "utf8"));
   }
+  if (timingOnly) await installReconciliationTiming(client);
   await reconciliationCapacityProbe(client, {ownerFixture, connection, timingOnly});
 }

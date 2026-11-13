@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {randomUUID} from "node:crypto";
 import {performance} from "node:perf_hooks";
+import {readFileSync} from "node:fs";
 import pg from "pg";
 import {storedBindingFixture} from "./eo05b-source-dataset-binding-probe.mjs";
 import {datasetServerProbe} from "./eo05b-dataset-server-probe.mjs";
@@ -243,6 +244,41 @@ export async function reconciliationProbe(client, {ownerFixture, connection}) {
     replacement3to5: true, emptyRemovesOldFacts: true, mismatchRollbackAndLedger: true, unknownStops: true, liveAcceptance: false}));
 }
 
+// Instrument a copy of the function in the disposable CI database only.
+export async function installReconciliationTiming(client) {
+  const sql = readFileSync(new URL("../supabase/migrations/20261113080017_eo05d_daily_write_capacity.sql", import.meta.url), "utf8").replaceAll("\r\n", "\n");
+  const definition = sql.match(/create or replace function analytics\._commit_dataset_reconciliation\([\s\S]+?end \$fn\$;/)?.[0];
+  assert.ok(definition);
+  let instrumented = definition.replace("declare item", `declare profile_start timestamptz := clock_timestamp();
+    profile_mark timestamptz := profile_start; profile_now timestamptz;
+    profile_ms double precision[] := array_fill(0::double precision, array[8]);
+    item`);
+  assert.notEqual(instrumented, definition);
+  const markers = [
+    " read_key:=case",
+    " -- Bounded complete-day replacement.",
+    " if p->'policy'->>'version'='report-source-3y-v1' then",
+    " for item in select value from jsonb_array_elements(p->'rows') loop\n  name:=",
+    "  if found_row is not null then",
+    "  execute format('select to_jsonb(x) from analytics.%I x where id=$1'",
+    " end loop;\n old_count:=0;",
+    " return result;",
+  ];
+  for (const [index, marker] of markers.entries()) {
+    const offset = instrumented.indexOf(marker);
+    assert.ok(offset >= 0 && instrumented.indexOf(marker, offset + marker.length) < 0, marker);
+    const bucket = index + 1;
+    const mark = ` profile_now:=clock_timestamp();
+ profile_ms[${bucket}]:=profile_ms[${bucket}]+extract(epoch from profile_now-profile_mark)*1000;
+ profile_mark:=profile_now;
+`;
+    const report = index === 7 ? " raise notice 'EO05D_SQL_PROFILE %', array_to_json(profile_ms);\n" : "";
+    instrumented = instrumented.slice(0, offset) + mark + report + instrumented.slice(offset);
+  }
+  await client.query("set role adstable_owner");
+  await client.query(instrumented);
+}
+
 export async function reconciliationCapacityProbe(client, {ownerFixture, connection, timingOnly}) {
   const storeCount = timingOnly ? 24 : 500;
   const productsPerStore = 500;
@@ -260,9 +296,13 @@ export async function reconciliationCapacityProbe(client, {ownerFixture, connect
   let completedStores = 0;
   const errors = new Map();
   const timings = [];
+  const sqlProfiles = [];
   const start = performance.now();
   async function worker() {
     const database = new pg.Client({...connection, statement_timeout: 120_000});
+    if (timingOnly) database.on("notice", notice => {
+      if (notice.message.startsWith("EO05D_SQL_PROFILE ")) sqlProfiles.push(JSON.parse(notice.message.slice("EO05D_SQL_PROFILE ".length)));
+    });
     await database.connect();
     try {
       await database.query("set role adstable_owner");
@@ -352,4 +392,15 @@ export async function reconciliationCapacityProbe(client, {ownerFixture, connect
   assert.equal(perStoreDay.length, confirmedDays);
   assert.equal(verifiedProductRows, confirmedDays * productsPerStore);
   if (timingOnly) assert.equal(timings.length, storeCount * dates.length);
+  if (timingOnly) {
+    assert.equal(sqlProfiles.length, timings.length);
+    const names = ["requestAndRevision", "sourceValidation", "existingRows", "rowSourceValidation",
+      "rowShapeDigestAndLookup", "rowMutation", "transactionalRowReadback", "finalReceipt"];
+    const totalMs = Object.fromEntries(names.map((name, index) => {
+      const values = sqlProfiles.map(sample => sample[index]);
+      assert.ok(values.every(value => Number.isFinite(value) && value >= 0));
+      return [name, Math.round(values.reduce((sum, value) => sum + value, 0))];
+    }));
+    console.log("EO05D_SQL_STAGE_TIMING", JSON.stringify({samples: sqlProfiles.length, totalMs}));
+  }
 }

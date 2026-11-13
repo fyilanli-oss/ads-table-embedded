@@ -864,7 +864,7 @@
       "contracts/eo-05c-maturity-v1.json": "81132731eda010e9e675b30c736a29c6f776a9ed0e236cb38ab3a791a8ce2eaf",
       "contracts/eo-05d-reconciliation-v1.json": "6575f6f48b6c3cfd71eb3cd20325aeffd73ba2c09090d1d87a67dd7dee3ab478",
       "contracts/eo-05e-observability-v1.json": "3c3ee6073f1141973d5c08830765b13cb37d5a5e77250d3d4671af1e51c6838f",
-      "contracts/oauth/oauth-flow-constitution-v1.json": "6a4198e7f192e812d3eb40fd6937402c0c2b5ef16e6fabc5d31dec0bb14654af",
+      "contracts/oauth/oauth-flow-constitution-v1.json": "5329d9ebc234850c0952999180678031d66cd9daeb8fd537767668de7aa31d24",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
       "contracts/repository-delivery-workflow-v1.json": "f214c83b6ec65b11fb9b974ae52ebbdf6ae7183bc69bc835320ec25619af4b7f",
       "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json": "18a54cf7d47cddc4b2dcac24320a0f27f3d1112264a023acc33152a80ae745c6",
@@ -1276,13 +1276,13 @@
       "tools/eo05-source-rule-probe.mjs": "bdba143e69a0ac680687dfbfce815bf8c97c7fa2228179e22cc5d5d4626477ab",
       "tools/eo05-verified-mapping-probe.mjs": "875aadd0c47e64d66f5fef187b2a803cd9716ff04b0ac0871f17cc97f84f88eb",
       "tools/eo05b-dataset-server-probe.mjs": "d6177954ab377f697209d5753651f7403e82b1c1349e0425405187ce33c3b02c",
-      "tools/eo05b-dataset-storage-probe.mjs": "2aba6d6ebd3532535ba5e2531a7f3aa7d885b99b2dd99bc17f82f8f102dfc3f1",
+      "tools/eo05b-dataset-storage-probe.mjs": "b235ad7a756bb6c0957242ac181108557b6088fd9d0ba1b2d2acea4a7368cd5c",
       "tools/eo05b-demo-fixture.mjs": "c91cf0e2b82ae6bb4db46d4dfa4ffbc0e1415877075995a5bf5cbc1f30afdd73",
       "tools/eo05b-fx-reporting-currency-probe.mjs": "c5decd13fad2a1aebccacbdf6229bcfec590c429db8ab3380008c318c479a9d5",
       "tools/eo05b-report-retention-probe.mjs": "ed1015ae7b31557a03a575d4786125cdff3f4f7c63524485455a5dbdeda676a8",
       "tools/eo05b-source-dataset-binding-probe.mjs": "a4b97c33cd0b85679319b08742a4940e7e2c2c62081f336f4b150574b1430a5c",
       "tools/eo05c-maturity-probe.mjs": "e66c2379b2f6781bb4b1ac2207bfe73edeb9ce5c1c01cb8cc7bde06f69fe5b47",
-      "tools/eo05d-reconciliation-probe.mjs": "b14bb55e6f20a64fed07f7023cd14c009e6fed6f07d25814a9c05e19987c56f1",
+      "tools/eo05d-reconciliation-probe.mjs": "6b9de4dd73a8705134f231c46c0f90d91518fb8e8dd6e0f195e6d04e4e9e3ee1",
       "tools/eo05e-observability-probe.mjs": "f9aad28c4b2c062915f18dc2d000680e33afe6ca8de9714f59cccb881a291273",
       "tools/f01-database-replay.mjs": "d7ee6d5eb179ee18bb1692229a07ec8b2230e11b3a01b51a75a8354add8f7851",
       "tools/f01-identity-oauth-rollout.mjs": "5894b9ae54363fcf31372ed0a1abf39d3c0e1dfea428190232a0420b0b11f787",
@@ -2397,7 +2397,7 @@
       "date": "2026-11-13",
       "owner_approval": {
         "explicit": true,
-        "source": "Onaylıyorum devam edelim Codex — 500 ürünlük günlük yazım ve 500 mağazalık dar test. Explicit follow-up approval for bounded SQL batching and the same 500-workspace test. Follow-up approved workspace-scoped serialization and isolated concurrency validation. Follow-up approved the measured 500-workspace parallel write screen in isolated CI. Follow-up explicitly approved a short isolated stage timing run without runtime changes."
+        "source": "Onaylıyorum devam edelim Codex — 500 ürünlük günlük yazım ve 500 mağazalık dar test. Explicit follow-up approval for bounded SQL batching and the same 500-workspace test. Follow-up approved workspace-scoped serialization and isolated concurrency validation. Follow-up approved the measured 500-workspace parallel write screen in isolated CI. Follow-up explicitly approved a short isolated stage timing run without runtime changes. Follow-up explicitly approved profiling the SQL stages only in isolated CI."
       },
       "rationale": "Raise bounded daily reconciliation limits for the 500-product case and verify full-day physical writes and corrections in isolated replay.",
       "scope": {

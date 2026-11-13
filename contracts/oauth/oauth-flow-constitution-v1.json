@@ -1702,7 +1702,7 @@
       "supabase/migrations/20261110191004_eo05d_dataset_reconciliation.sql": "07492d30d61552e06749a3800e75ec35f10a39d1e475baba2220e656b504b0de",
       "supabase/migrations/20261110202849_eo05e_operational_observability.sql": "01b38ad0d70f63b6151e7edfb0544ce058e89150d5084faa98bba53e048c407e",
       "supabase/migrations/20261111131821_eo05_refresh_fenced_dataset_commit.sql": "08408fb499d2b92b85011b2604afa4d94a9744e0ad9ad86703c94252ba977eeb",
-      "supabase/migrations/20261113080017_eo05d_daily_write_capacity.sql": "c975d1b501ea0394d21820dcb41604caf296a66d652d3b8dcad20631f0fb808a",
+      "supabase/migrations/20261113080017_eo05d_daily_write_capacity.sql": "012e68b2a19dba5c4d89232d19898dd5303558733263a59ba056f8df7d29559b",
       "tests/a6-docs-01-turkish-standardization.test.js": "5dcaa387ca679f75339510ca9d9856fcfb98eadf2510e31f94afd0599c9f870d",
       "tests/a6-tech-01-f01c-scoped-recovery.test.js": "3bd869071d5042402215176a99bf14dcebce6d3d0497ffcba946038050701792",
       "tests/eo-01c-preview-shell.test.js": "c3d67bb6666c19cf5ac12cfcd8a7f2f2acdf399d5a8ac32c0269823b06cbf789",
@@ -1813,7 +1813,7 @@
       "tools/eo05b-report-retention-probe.mjs": "ed1015ae7b31557a03a575d4786125cdff3f4f7c63524485455a5dbdeda676a8",
       "tools/eo05b-source-dataset-binding-probe.mjs": "a4b97c33cd0b85679319b08742a4940e7e2c2c62081f336f4b150574b1430a5c",
       "tools/eo05c-maturity-probe.mjs": "e66c2379b2f6781bb4b1ac2207bfe73edeb9ce5c1c01cb8cc7bde06f69fe5b47",
-      "tools/eo05d-reconciliation-probe.mjs": "6b9de4dd73a8705134f231c46c0f90d91518fb8e8dd6e0f195e6d04e4e9e3ee1",
+      "tools/eo05d-reconciliation-probe.mjs": "c58f9a885e788a511d595528f500ed3936b4b1926a7da36be8aac43b2bf8aada",
       "tools/eo05e-observability-probe.mjs": "f9aad28c4b2c062915f18dc2d000680e33afe6ca8de9714f59cccb881a291273",
       "tools/f01-database-replay.mjs": "d7ee6d5eb179ee18bb1692229a07ec8b2230e11b3a01b51a75a8354add8f7851",
       "tools/f01-identity-oauth-rollout.mjs": "5894b9ae54363fcf31372ed0a1abf39d3c0e1dfea428190232a0420b0b11f787",
@@ -4420,7 +4420,7 @@
       "date": "2026-11-13",
       "owner_approval": {
         "explicit": true,
-        "source": "Onaylıyorum devam edelim Codex — 500 ürünlük günlük yazım ve 500 mağazalık dar test. Explicit follow-up approval for bounded SQL batching and the same 500-workspace test. Follow-up approved workspace-scoped serialization and isolated concurrency validation. Follow-up approved the measured 500-workspace parallel write screen in isolated CI. Follow-up explicitly approved a short isolated stage timing run without runtime changes. Follow-up explicitly approved profiling the SQL stages only in isolated CI."
+        "source": "Onaylıyorum devam edelim Codex — 500 ürünlük günlük yazım ve 500 mağazalık dar test. Explicit follow-up approval for bounded SQL batching and the same 500-workspace test. Follow-up approved workspace-scoped serialization and isolated concurrency validation. Follow-up approved the measured 500-workspace parallel write screen in isolated CI. Follow-up explicitly approved a short isolated stage timing run without runtime changes. Follow-up explicitly approved profiling the SQL stages only in isolated CI. Follow-up approved reuse of identical day/source checks while retaining per-row validation, and comparison in isolated CI."
       },
       "rationale": "Raise bounded daily reconciliation limits for the 500-product case and verify full-day physical writes and corrections in isolated replay.",
       "scope": {

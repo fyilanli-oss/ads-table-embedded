@@ -103,6 +103,22 @@ export async function reconciliationProbe(client, {ownerFixture, connection}) {
     [largeOwner.installationId],
   );
   assert.equal(persisted.rows[0].n, 500);
+  const invalidDay = await source(await ownerFixture(client), {googleProductCount: 3});
+  let invalidSourceError;
+  const invalidDatabase = {query(sql, args) {
+    if (sql !== DATASET_RECONCILE_SQL) return client.query(sql, args);
+    const write = JSON.parse(args[1]);
+    const last = write.rows.at(-1).row;
+    last.provenance.sources[0].payload_hash = "f".repeat(64);
+    return client.query(sql, [args[0], JSON.stringify(write), ...args.slice(2)]).catch(error => {
+      invalidSourceError = error.message;
+      throw error;
+    });
+  }};
+  await rejected(client, () => reconcileStoredDatasetSources({...invalidDay, database: invalidDatabase}));
+  assert.match(invalidSourceError, /DATASET_RECONCILIATION_ROW_SCOPE/);
+  assert.equal((await client.query("select count(*)::int n from analytics.cpd_product_performance_facts where installation_id=$1",
+    [invalidDay.owner.installationId])).rows[0].n, 0);
   const otherOwner = await ownerFixture(client, "google_ads");
   const observer = new pg.Client(connection);
   await observer.connect();

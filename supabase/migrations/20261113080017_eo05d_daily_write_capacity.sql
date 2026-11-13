@@ -88,6 +88,7 @@ declare item jsonb; r jsonb; row_input jsonb; injected jsonb; b evidence.source_
  head jsonb; old_fact jsonb; ref jsonb; native_read jsonb; read_key text; sets text[]:='{}'; expected_sets text[];
  batch_text text; obsolete bigint[]:='{}'; old_count int:=0; incoming_keys text[]; checked_old_refs jsonb:='[]'; checked_provenance jsonb:='[]'; held_batches bigint[]:='{}'; pages int:=0; old_id bigint; changes jsonb:='[]'; actual jsonb; summary jsonb:='[]';
  start_at text; finish_at text; prev_time timestamptz; removed int:=0; modified int:=0; scope_date date; scope_tz text;
+ scope_day text; scope_context jsonb; scope_sources jsonb; retain_to timestamptz; provenance jsonb; row_sources jsonb;
 begin
  -- The public-to-server wrapper holds the shared control and workspace locks.
  perform evidence.assert_source_owner(o);
@@ -118,6 +119,7 @@ begin
  or p->'policy'->>'version' is distinct from 'report-source-3y-v1'
  then raise exception 'DATASET_RECONCILIATION_INPUT_INVALID';end if;
  scope_date:=(c->>'businessDate')::date;scope_tz:=c->>'timeZone';
+ scope_day:=c->>'businessDate';scope_context:=c->'sourceContext';scope_sources:=c->'sources';retain_to:=(p->'policy'->>'until')::timestamptz;
  if scope_date::text is distinct from c->>'businessDate' or scope_date not between date '1900-01-01' and date '9990-12-31'
  or not exists(select 1 from pg_catalog.pg_timezone_names z where z.name=scope_tz)
  or analytics.report_retention_until(scope_date,scope_tz) is distinct from (p->'policy'->>'until')::timestamptz
@@ -192,26 +194,30 @@ begin
   if exists(select 1 from privacy.deletion_runs where workspace_id=(o->>'workspaceId')::uuid and install_generation=(o->>'generation')::bigint and status in ('pending','running','failed')) then raise exception 'REPORT_RETENTION_PRIVACY_PENDING';end if;
   for item in select value from jsonb_array_elements(p->'rows') loop
    r:=item->'row';
-   if r->>'business_date' is distinct from c->>'businessDate' or r->>'source_timezone' is distinct from scope_tz
-   or r->'provenance'->'source_context' is distinct from c->'sourceContext' or r->>'source_completeness' is distinct from 'complete'
-   or exists(select 1 from jsonb_array_elements(r->'provenance'->'sources') x where not (c->'sources' @> jsonb_build_array(x)))
+   provenance:=r->'provenance';
+   if r->>'business_date' is distinct from scope_day or r->>'source_timezone' is distinct from scope_tz
+   or provenance->'source_context' is distinct from scope_context or r->>'source_completeness' is distinct from 'complete'
    then raise exception 'DATASET_RECONCILIATION_ROW_SCOPE';end if;
-   if analytics.report_retention_until((r->>'business_date')::date,r->>'source_timezone') is distinct from (p->'policy'->>'until')::timestamptz
-    or r->>'business_date' is distinct from r->'provenance'->'source_context'->'window'->>'from'
-    or r->>'source_timezone' is distinct from r->'provenance'->'source_context'->'snapshot'->>'timezone'
-   then raise exception 'REPORT_RETENTION_POLICY_MISMATCH';end if;
-   if not exists(select 1 from jsonb_array_elements(checked_provenance) x where x=r->'provenance') then
-    perform analytics.assert_report_source_context(o,r->'provenance'->'source_context',(p->'policy'->>'until')::timestamptz,r->'provenance'->'sources');
-    checked_provenance:=checked_provenance||jsonb_build_array(r->'provenance');
+   -- Membership and retention are identical only for exactly equal provenance.
+   -- The day, timezone, scope and completeness above are checked on every row.
+   if not exists(select 1 from jsonb_array_elements(checked_provenance) x where x=provenance) then
+    row_sources:=provenance->'sources';
+    if exists(select 1 from jsonb_array_elements(row_sources) x where not (scope_sources @> jsonb_build_array(x)))
+    then raise exception 'DATASET_RECONCILIATION_ROW_SCOPE';end if;
+    if scope_day is distinct from scope_context->'window'->>'from'
+     or scope_tz is distinct from scope_context->'snapshot'->>'timezone'
+    then raise exception 'REPORT_RETENTION_POLICY_MISMATCH';end if;
+    perform analytics.assert_report_source_context(o,scope_context,retain_to,row_sources);
+    for k in select distinct x->>'batch_id' from jsonb_array_elements(row_sources) x loop
+     if not k::bigint=any(held_batches) then
+      perform analytics.hold_report_source_batch(o,k::bigint,retain_to);
+      held_batches:=array_append(held_batches,k::bigint);
+     end if;
+    end loop;
+    checked_provenance:=checked_provenance||jsonb_build_array(provenance);
    end if;
-   for k in select distinct x->>'batch_id' from jsonb_array_elements(r->'provenance'->'sources') x loop
-    if not k::bigint=any(held_batches) then
-     perform analytics.hold_report_source_batch(o,k::bigint,(p->'policy'->>'until')::timestamptz);
-     held_batches:=array_append(held_batches,k::bigint);
-    end if;
-   end loop;
    foreach k in array array['product_mapping_id','sold_product_mapping_id','advertised_product_mapping_id'] loop
-    if r->>k is not null then perform analytics.hold_report_mapping(o,(r->>k)::bigint,(p->'policy'->>'until')::timestamptz);end if;
+    if r->>k is not null then perform analytics.hold_report_mapping(o,(r->>k)::bigint,retain_to);end if;
    end loop;
   end loop;
  end if;

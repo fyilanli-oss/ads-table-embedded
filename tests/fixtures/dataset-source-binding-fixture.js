@@ -33,7 +33,7 @@ async function nativeKlaviyoPage(path, body, request = null) {
 
 /** All native responses/credentials/owners are synthetic. Real capture projection,
  * AEAD and decrypt paths are used; this fake DB is not SQL/native acceptance. */
-export async function datasetSourceBindingFixture(provider = "google_ads", {nonempty = true, missingMetric = false, mixedMetrics = false, eventOrderId = null, googlePurchase = "2.5", owner: givenOwner = null, cipher: givenCipher = null} = {}) {
+export async function datasetSourceBindingFixture(provider = "google_ads", {nonempty = true, missingMetric = false, mixedMetrics = false, eventOrderId = null, googlePurchase = "2.5", googleProductCount = 1, owner: givenOwner = null, cipher: givenCipher = null} = {}) {
   const owner = givenOwner ? structuredClone(givenOwner) : datasetStorageFixture().owner;
   if (!givenOwner) {owner.installationId = "1"; owner.provider = provider; owner.accountId = provider === "meta" ? "act_123" : provider === "klaviyo" ? "account-1" : "123";}
   if (provider === "klaviyo") owner.selectionEpoch = null;
@@ -47,8 +47,19 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
   if (provider === "google_ads") {
     const queries = buildGoogleReportingQueries({dateWindow: {start: day, end: day}});
     for (const [dataset, families] of [["account_performance", GOOGLE_REPORTING_QUERY_FAMILIES.slice(0, 9)], ["product_performance", GOOGLE_REPORTING_QUERY_FAMILIES.slice(9)]]) {
-      native.push({dataset, pages: families.map(family => projectGoogleRawPage(parseGoogleRawJson(JSON.stringify({results: nativeGoogle(family, owner.accountId, nonempty, googlePurchase)})),
-        {family, query: queries[family], ordinal: 0, accountId: owner.accountId, requestId: "synthetic"}))});
+      native.push({dataset, pages: families.flatMap(family => {
+        const original = nativeGoogle(family, owner.accountId, nonempty, googlePurchase);
+        const pages = [original];
+        if (family === "shopping_product_daily" && original.length && googleProductCount > 1) {
+          pages.length = 0;
+          for (let start = 0; start < googleProductCount; start += 25) {
+            pages.push(Array.from({length: Math.min(25, googleProductCount - start)}, (_, i) =>
+              ({...original[0], segments: {...original[0].segments, productItemId: "product-" + (start + i + 1)}})));
+          }
+        }
+        return pages.map((results, ordinal) => projectGoogleRawPage(parseGoogleRawJson(JSON.stringify({results})),
+          {family, query: queries[family], ordinal, accountId: owner.accountId, requestId: "synthetic"}));
+      })});
     }
   } else if (provider === "meta") {
     for (const [dataset, family] of [["account_performance", "ad_channel_daily_insights"], ["product_performance", "ad_product_breakdown_daily_insights"]]) {
@@ -90,7 +101,8 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
     const attemptId = randomUUID(), pages = item.pages.map((page, ordinal) => ({key: "p" + ordinal, family: page.family, ordinal, origin: provider,
       captureLayer: "native_response_projection", numericFidelity: "lossless_token", fieldCoverage: page.selectedFields ?? ["records"], schemaVersion: spec.schema, sanitizerVersion: spec.sanitizer, payload: page}));
     const records = Object.fromEntries(["references", "rules", "mappings", "orders", "lines", "journeys", "claims", "links"].map(k => [k, []]));
-    const f = sourceStoreFixture({owner, cipher, attemptId, sourceState: item.partial ? "partial" : "complete", pages, records});
+    const f = sourceStoreFixture({owner, cipher, attemptId, sourceState: item.partial ? "partial" : "complete", pages, records,
+      ...(googleProductCount > 1 ? {limits: {maxBytes: 4_000_000, maxRows: 1000}} : {})});
     const write = f.prepare(), batchId = String(++nextId), read = {jobId, fence, window, operationId, dataset: item.dataset, ...(item.coverage ? {coverage: item.coverage} : {})};
     const receipt = {status: "committed", batchId, commitId: randomUUID(), digest: sourcePayloadHash(write.body), sourceState: write.body.sourceState,
       manifest: {counts: {pages: pages.length}, [spec.read]: read, [spec.digest]: sourcePayloadHash(write.body)}};
@@ -119,6 +131,6 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
     throw Error("UNEXPECTED_SYNTHETIC_DATABASE_QUERY");
   }};
   return {database, cipher, owner, batches, envelopes, native, source, hooks, writes, queries,
-    limits: {maxPages: 100, maxRows: 1000, maxBytes: 1000000, deadlineAt: Date.now() + 60000},
+    limits: {maxPages: 100, maxRows: googleProductCount > 1 ? 2000 : 1000, maxBytes: 1000000, deadlineAt: Date.now() + 60000},
     policy: reportRetentionPolicy()};
 }

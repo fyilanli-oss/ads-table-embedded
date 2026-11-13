@@ -82,6 +82,20 @@ export async function reconciliationProbe(client, {ownerFixture}) {
     assert.equal(after, 0);scenarios++;
     await rejected(client, () => inspectDatasetReconciliation({database, owner: {...owner, generation: "999"}, operationId: zero.operationId}));scenarios++;
   }
+  const largeOwner = await ownerFixture(client, "google_ads");
+  const largeDay = await source(largeOwner, {googleProductCount: 500});
+  const largeReceipt = await reconcileStoredDatasetSources(largeDay);
+  assert.equal(largeReceipt.rowCount, 502);
+  assert.equal(largeReceipt.checkpointAdvanced, true);
+  const persisted = await client.query(
+    "select count(*)::int n from analytics.cpd_product_performance_facts where installation_id=$1",
+    [largeOwner.installationId],
+  );
+  assert.equal(persisted.rows[0].n, 500);
+  const correctedLargeDay = await source(largeOwner, {googleProductCount: 500, googlePurchase: "5"});
+  assert.equal((await reconcileStoredDatasetSources({...correctedLargeDay, expectedRevision: 1})).rowCount, 502);
+  scenarios += 2;
+
   // Deliberate corruption AFTER the normal validator proves that readback uses
   // physical values, and that facts/consumption/head rollback before mismatch audit.
   const owner = await ownerFixture(client, "google_ads"), first = await source(owner, {googlePurchase: "3"});

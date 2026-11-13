@@ -40,6 +40,13 @@ test("Meta's existing nonempty sales evidence hold is preserved, never consumed"
   const f = await fixture("meta"); const r = await reconcileStoredDatasetSources(f);
   assert.equal(r.status, "held");assert.equal(r.consumerReceipt, false);assert.equal(f.request(), undefined);
 });
+test("a 500-product day reaches the reconciliation write without dropping rows", async () => {
+  const f = await fixture("google_ads", {googleProductCount: 500});
+  const result = await reconcileStoredDatasetSources(f);
+  assert.equal(result.rowCount, 502);
+  assert.equal(result.checkpointAdvanced, true);
+  assert.equal(f.request().write.rows.filter(item => item.table === "cpd_product_performance_facts").length, 500);
+});
 test("verified empty submits no fake zero rows; missing metric never consumes", async () => {
   const e = await fixture("google_ads", {nonempty: false});
   assert.equal((await reconcileStoredDatasetSources(e)).rowCount, 0); assert.deepEqual(e.request().write.rows, []);

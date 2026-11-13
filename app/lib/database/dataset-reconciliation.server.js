@@ -1,6 +1,6 @@
 import {randomUUID} from "node:crypto";
 import {readStoredDatasetSources} from "./dataset-source-reader.server.js";
-import {prepareDatasetWrite} from "./dataset-storage.server.js";
+import {DAILY_DATASET_BYTE_LIMIT, DAILY_DATASET_ROW_LIMIT, prepareDailyDatasetWrite} from "./dataset-storage.server.js";
 import {canonicalSourceJson, sourceStoreOwner, sourcePayloadHash} from "./source-evidence-store.server.js";
 import {reportRetentionPolicy, resolveReportRetentionPolicy} from "./report-retention-policy.server.js";
 import {projectStoredGoogleDataset} from "../providers/stored-dataset-projection.server.js";
@@ -53,7 +53,7 @@ export async function reconcileStoredDatasetSources({database, cipher, owner, ba
   for (const {row} of projection.rows) if (row.occurred_at !== null && row.occurred_at !== undefined) row.occurred_at = canonicalDatasetEventTime(row.occurred_at);
   const configuration = source.datasets.filter(d => d.dataset === "configuration").flatMap(d => d.pages.map(p => p.ref));
   if (configuration.length) for (const {row} of projection.rows) row.provenance.sources = [...new Map([...row.provenance.sources, ...configuration].map(r => [r.page_id, r])).values()];
-  if (projection.rows.length > 200) fail("ROW_LIMIT");
+  if (projection.rows.length > DAILY_DATASET_ROW_LIMIT) fail("ROW_LIMIT");
   if (projection.rows.length && fxResolver !== undefined) {
     const fx = await applyStoredDatasetFx({resolver: fxResolver, database, source, rows: projection.rows, deadlineAt: limits.deadlineAt, signal});
     projection.holds.push(...fx.holds);
@@ -65,13 +65,13 @@ export async function reconcileStoredDatasetSources({database, cipher, owner, ba
   const clocks = source.datasets.map(d => ({started: maturityInstant(d.read.observedAt), completed: maturityInstant(d.read.completedAt)}));
   if (clocks.some(c => c.completed < c.started || Date.parse(c.completed) > now())) fail("CLOCK_INVALID");
   const policy = resolveReportRetentionPolicy({businessDate, timeZone});
-  const write = projection.rows.length ? prepareDatasetWrite({owner: bound, rows: projection.rows, policy: reportRetentionPolicy(), operationId, now: new Date(now()).toISOString()}).body
+  const write = projection.rows.length ? prepareDailyDatasetWrite({owner: bound, rows: projection.rows, policy: reportRetentionPolicy(), operationId, now: new Date(now()).toISOString()})
     : {version: "eo05b-storage-v1", operationId, policy, rows: []};
   const context = {version: DATASET_RECONCILIATION_VERSION, expectedRevision, businessDate, timeZone,
     sourceContext: source.datasets[0].sourceContext, sources: source.datasets.flatMap(d => d.pages.map(p => p.ref)),
     batchIds: source.datasets.map(d => d.receipt.batchId),
     startedAt: clocks.map(c => c.started).sort()[0], completedAt: clocks.map(c => c.completed).sort().at(-1)};
-  if (Buffer.byteLength(canonicalSourceJson({write, context})) > 1048576) fail("BYTE_LIMIT");
+  if (Buffer.byteLength(canonicalSourceJson({write, context})) > DAILY_DATASET_BYTE_LIMIT) fail("BYTE_LIMIT");
   const requestDigest = sourcePayloadHash({write, context});
   stop(); let receipt;
   try {

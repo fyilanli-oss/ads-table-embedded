@@ -86,7 +86,7 @@ language plpgsql security definer set search_path='' set jit=off as $fn$
 declare item jsonb; r jsonb; row_input jsonb; injected jsonb; b evidence.source_batches%rowtype; primary_id bigint;
  operation uuid; h text; prior jsonb; result jsonb; ids jsonb:='[]'; found_row jsonb; rid bigint; name text; cols text; allowed text[]; k text;
  head jsonb; old_fact jsonb; ref jsonb; native_read jsonb; read_key text; sets text[]:='{}'; expected_sets text[];
- batch_text text; obsolete bigint[]:='{}'; old_count int:=0; incoming_keys text[]; pages int:=0; old_id bigint; changes jsonb:='[]'; actual jsonb; summary jsonb:='[]';
+ batch_text text; obsolete bigint[]:='{}'; old_count int:=0; incoming_keys text[]; checked_old_refs jsonb:='[]'; checked_provenance jsonb:='[]'; held_batches bigint[]:='{}'; pages int:=0; old_id bigint; changes jsonb:='[]'; actual jsonb; summary jsonb:='[]';
  start_at text; finish_at text; prev_time timestamptz; removed int:=0; modified int:=0; scope_date date; scope_tz text;
 begin
  perform 1 from operations.refresh_control where singleton for update;
@@ -175,9 +175,11 @@ begin
    if old_fact->>'source_timezone' is distinct from scope_tz or old_fact->>'provider_connection_id' is distinct from o->>'connectionId'
    or (old_fact->>'retain_until')::timestamptz<=clock_timestamp() then raise exception 'DATASET_RECONCILIATION_SCOPE_CONFLICT';end if;
    for ref in select value from jsonb_array_elements(old_fact->'provenance'->'sources') loop
+    if checked_old_refs @> jsonb_build_array(ref) then continue; end if;
     perform analytics.assert_dataset_source(o,ref);obsolete:=array_append(obsolete,(ref->>'batch_id')::bigint);
     select manifest->read_key into native_read from evidence.source_batches where id=(ref->>'batch_id')::bigint;
     if native_read->>'completedAt' is null or (native_read->>'completedAt')::timestamptz>(c->>'startedAt')::timestamptz then raise exception 'DATASET_RECONCILIATION_STALE_READ';end if;
+    checked_old_refs:=checked_old_refs||jsonb_build_array(ref);
    end loop;
    if not coalesce((name||':'||(old_fact->>'native_key_hash'))=any(incoming_keys),false) then
     if analytics.dataset_retention_has_dependents(name,old_fact) then raise exception 'DATASET_RECONCILIATION_DEPENDENT';end if;
@@ -198,9 +200,15 @@ begin
     or r->>'business_date' is distinct from r->'provenance'->'source_context'->'window'->>'from'
     or r->>'source_timezone' is distinct from r->'provenance'->'source_context'->'snapshot'->>'timezone'
    then raise exception 'REPORT_RETENTION_POLICY_MISMATCH';end if;
-   perform analytics.assert_report_source_context(o,r->'provenance'->'source_context',(p->'policy'->>'until')::timestamptz,r->'provenance'->'sources');
+   if not exists(select 1 from jsonb_array_elements(checked_provenance) x where x=r->'provenance') then
+    perform analytics.assert_report_source_context(o,r->'provenance'->'source_context',(p->'policy'->>'until')::timestamptz,r->'provenance'->'sources');
+    checked_provenance:=checked_provenance||jsonb_build_array(r->'provenance');
+   end if;
    for k in select distinct x->>'batch_id' from jsonb_array_elements(r->'provenance'->'sources') x loop
-    perform analytics.hold_report_source_batch(o,k::bigint,(p->'policy'->>'until')::timestamptz);
+    if not k::bigint=any(held_batches) then
+     perform analytics.hold_report_source_batch(o,k::bigint,(p->'policy'->>'until')::timestamptz);
+     held_batches:=array_append(held_batches,k::bigint);
+    end if;
    end loop;
    foreach k in array array['product_mapping_id','sold_product_mapping_id','advertised_product_mapping_id'] loop
     if r->>k is not null then perform analytics.hold_report_mapping(o,(r->>k)::bigint,(p->'policy'->>'until')::timestamptz);end if;

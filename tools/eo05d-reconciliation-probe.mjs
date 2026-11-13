@@ -13,6 +13,37 @@ import {createScheduledDatasetPostgresClient} from "../app/lib/database/dataset-
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 import {dispatchHourlyRefresh, runScheduledRefreshCheck} from "../app/lib/refresh/scheduled-queue-check.server.js";
 
+async function profileHourlyQueue(client, hour) {
+  const {rows: [{body}]} = await client.query(
+    "select prosrc as body from pg_proc where oid='operations.read_refresh_preflight_snapshot()'::regprocedure",
+  );
+  const candidateStart = body.indexOf("    select q.*,operations.refresh_preflight_source");
+  const candidateEnd = body.indexOf("\n  )", candidateStart);
+  assert.ok(candidateStart >= 0 && candidateEnd > candidateStart);
+  const candidates = body.slice(candidateStart, candidateEnd);
+  const withoutAuthority = candidates.replace(/,operations\.refresh_preflight_source\([^\n]+?\) as source/, "");
+  assert.notEqual(candidates, withoutAuthority);
+  const selectCandidates = query => "with admission as materialized(select operations.read_refresh_admission_snapshot() as value) " + query;
+  const phases = [
+    ["candidateSelection", selectCandidates(withoutAuthority), []],
+    ["candidatesWithAuthority", selectCandidates(candidates), []],
+    ["preflightSnapshot", body, []],
+    ["hourlySnapshot", "select operations.read_hourly_refresh_snapshot($1::bigint)", [hour]],
+  ];
+  try {
+    for (const jit of ["on", "off"]) {
+      await client.query("set jit=" + jit);
+      for (const [phase, sql, args] of phases) {
+        const {rows} = await client.query("explain (analyze, buffers, timing off, format json) " + sql, args);
+        const result = rows[0]["QUERY PLAN"][0];
+        console.log("EO05_HOURLY_QUEUE_PROFILE", JSON.stringify({phase, jit, executionMs: result["Execution Time"],
+          planningMs: result["Planning Time"], rows: result.Plan["Actual Rows"], buffers: result.Plan["Shared Hit Blocks"],
+          jitFunctions: result.JIT?.Functions ?? 0}));
+      }
+    }
+  } finally {await client.query("reset jit");}
+}
+
 export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connection}) {
   const storeCount = 500;
   const providers = ["google_ads", "meta", "klaviyo"];
@@ -54,6 +85,10 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
     assert.equal(initial.rows[0].result.candidates.length, owners.size);
   } finally {
     await admin.query("set role adstable_owner");
+  }
+  if (process.argv.includes("--hourly-queue-profile")) {
+    await profileHourlyQueue(admin, hour);
+    return;
   }
   const start = performance.now();
   const profile = process.argv.includes("--short-hourly-profile");

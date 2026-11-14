@@ -100,6 +100,37 @@ test("one hourly coordinator serializes reservation while workers overlap", asyn
   assert.deepEqual(results.map(r => r.status), ["awaiting_dataset","awaiting_dataset"]);
 });
 
+test("hourly admission reuses a plan once after a known conflict and checks current authority and capacity", async () => {
+  for (const change of ["revision", "authority", "capacity", "completed", "unknown"]) {
+    const f = fixture();
+    const now = Date.parse("2026-11-02T14:15:00Z");
+    Object.assign(f.source, {timezone:"UTC", eligibleFromMs:0});
+    f.args.now = () => now;
+    f.plan.limits.deadlineAt = now + 5000;
+    let reads = 0, commits = 0, plans = 0;
+    f.args.buildWorkPlan = async () => {plans++; return f.plan;};
+    f.args.store.readHourlyPreflightSnapshot = async () => {
+      const snapshot = {...structuredClone(f.snapshot), completedHourlyDays:[]};
+      if (++reads === 1) return snapshot;
+      snapshot.state.revision++;
+      if (change === "authority") snapshot.candidates[0].connectionVersion++;
+      if (change === "capacity") snapshot.budget.global.requests = 0;
+      if (change === "completed") snapshot.completedHourlyDays.push(["w","1","meta","act_1","2026-11-01"]);
+      return snapshot;
+    };
+    f.args.store.commitPreflight = async ({expectedRevision}) => {
+      commits++;
+      if (change === "unknown") throw Error("lost response");
+      return expectedRevision === 4;
+    };
+    const result = await createHourlyRefreshCoordinator()({store:f.args.store, work:f.args});
+    assert.equal(result.status, change === "revision" ? "awaiting_dataset" : change === "unknown" ? "needs_attention" : "conflict");
+    assert.equal(plans, 1);
+    assert.equal(commits, change === "revision" ? 2 : 1);
+    assert.equal(reads, change === "unknown" ? 1 : 2);
+  }
+});
+
 test("missing configuration, missing plan, invalid bounds, conflicts and unknown commits never execute or retry",async()=>{
   const a=fixture();a.snapshot.configured=false;assert.equal((await dispatchRefreshPreflight(a.args)).status,"not_configured");assert.equal(a.commits(),0);
   const b=fixture();b.args.buildWorkPlan=async()=>null;assert.equal((await dispatchRefreshPreflight(b.args)).status,"waiting");assert.equal(b.commits(),0);

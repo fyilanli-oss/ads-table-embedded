@@ -1,11 +1,12 @@
 import {createHash} from "node:crypto";
+import {isDeepStrictEqual} from "node:util";
 import {planRefreshPreflightAdmissions} from "./admission-policy.server.js";
 import {runRefreshChunk} from "./chunk-worker.server.js";
 import {reconcileStoredDatasetSources} from "../database/dataset-reconciliation.server.js";
 
 // Internal composition for a trusted work plan. The existing HTTP queue entry is queue-only.
 export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlementVerifier, readPage, validatePage, now, loadDatasetInputs,
-  coordinateAdmission = reserve => reserve(), coordinateCommit = commit => commit()}) {
+  coordinateAdmission = reserve => reserve(), coordinateCommit = commit => commit(), revalidateSelection}) {
   if (!["readPreflightSnapshot","commitPreflight","loadBoundAuthority"].every(key=>typeof store?.[key]==="function")
     || [buildWorkPlan,readPage,validatePage,now,entitlementVerifier?.verify,entitlementVerifier?.isCurrent].some(fn=>typeof fn!=="function")) {
     throw new Error("REFRESH_PREFLIGHT_INPUT_INVALID");
@@ -42,10 +43,21 @@ export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlemen
       const proposal=planRefreshPreflightAdmissions({...snapshot,candidates,now:now()});
       if(proposal.status!=="proposed") return {status:proposal.status,deferred:proposal.deferred};
       const selected=proposal.admitted[0],binding=plans.get(selected.id);
-      const accepted=await coordinateCommit(() => store.commitPreflight({expectedRevision:snapshot.state.revision,queueRevision:snapshot.queueRevision,
-        nextState:proposal.nextState,source:binding.source,window:binding.plan.window,partitionId:binding.plan.partitionId,deadlineAt:binding.plan.limits.deadlineAt}));
-      if(accepted!==true) return {status:"conflict"};
-      return {status:"reserved", claim:selected, binding};
+      return coordinateCommit(async () => {
+        const commit = (state, nextState) => store.commitPreflight({expectedRevision:state.state.revision,queueRevision:state.queueRevision,
+          nextState,source:binding.source,window:binding.plan.window,partitionId:binding.plan.partitionId,deadlineAt:binding.plan.limits.deadlineAt});
+        if (await commit(snapshot, proposal.nextState) === true) return {status:"reserved", claim:selected, binding};
+        if (!revalidateSelection) return {status:"conflict"};
+        const current = await store.readPreflightSnapshot();
+        // Reuse planned jobs only while the same account candidates and their
+        // authority are still visible. Changed candidates need a fresh plan.
+        if (current?.configured !== true || !isDeepStrictEqual(current.candidates, snapshot.candidates)
+          || !revalidateSelection(binding.source, binding.plan)) return {status:"conflict"};
+        const refreshed = planRefreshPreflightAdmissions({...current,candidates,now:now()});
+        const claim = refreshed.admitted[0];
+        if (claim?.id !== selected.id || await commit(current, refreshed.nextState) !== true) return {status:"conflict"};
+        return {status:"reserved", claim, binding};
+      });
     });
     if (reservation.status !== "reserved") return reservation;
     const {binding} = reservation;

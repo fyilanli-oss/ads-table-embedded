@@ -108,6 +108,11 @@ export function dispatchHourlyRefresh({store, work, coordinateAdmission, coordin
     ...work,
     coordinateAdmission,
     coordinateCommit,
+    ...(coordinateCommit && {revalidateSelection(source, plan) {
+      const owner = [source.workspaceId, source.installGeneration, source.provider, source.accountId];
+      return plan.limits.deadlineAt - work.now() >= plan.limits.requestTimeoutMs + plan.limits.finishReserveMs
+        && !completed.has(JSON.stringify([...owner, plan.window.from]));
+    }}),
     store: {...store, async readPreflightSnapshot() {
       const snapshot = await store.readHourlyPreflightSnapshot({hour});
       if (!Array.isArray(snapshot?.completedHourlyDays)) throw Error("REFRESH_HOUR_INVALID");

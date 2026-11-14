@@ -112,6 +112,8 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
   const budgetMs = profile ? 180_000 : 3_600_000;
   const stages = Object.fromEntries(["queueRead", "plan", "reservation", "workerChecks", "sourcePreparation", "datasetReads", "write", "readback", "finish"].map(name => [name, []]));
   const attempts = new Map();
+  const conflicts = {finishObserved: 0, noFinishObserved: 0};
+  let finishedWrites = 0;
   const outcomes = new Map();
   const dispatchHourlyRefresh = createHourlyRefreshCoordinator();
   let unexpected;
@@ -119,7 +121,7 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
     const client = new pg.Client({...connection, statement_timeout: 120_000});
     await client.connect();
     try {
-      let snapshotFinished;
+      let snapshotFinished, finishesAtRead;
       async function timed(stage, operation) {
         const started = performance.now();
         try {return await operation();}
@@ -129,13 +131,18 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
         await client.query("set role adstable_refresh_coordinator");
         try {
           if (sql.includes("read_hourly_refresh_snapshot")) {
+            finishesAtRead = finishedWrites;
             const response = await timed("queueRead", () => client.query(sql, args));
             snapshotFinished = performance.now();
             return response;
           }
           if (sql.includes("commit_refresh_preflight_with_deadline")) {
             if (profile) stages.plan.push(performance.now() - snapshotFinished);
-            return await timed("reservation", () => client.query(sql, args));
+            const response = await timed("reservation", () => client.query(sql, args));
+            if (profile && response.rows[0]?.result === false) {
+              conflicts[finishedWrites > finishesAtRead ? "finishObserved" : "noFinishObserved"]++;
+            }
+            return response;
           }
           return await timed("workerChecks", () => client.query(sql, args));
         }
@@ -169,7 +176,9 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
                 const stage = sql === SCHEDULED_DATASET_RECONCILE_SQL ? "write"
                   : sql === DATASET_RECONCILE_READ_SQL ? "readback"
                   : sql === SCHEDULED_DATASET_FINISH_SQL ? "finish" : "datasetReads";
-                return await timed(stage, () => client.query(sql, args));
+                const response = await timed(stage, () => client.query(sql, args));
+                if (stage === "finish" && response.rows[0]?.result === true) finishedWrites++;
+                return response;
               }
               finally {await client.query("reset role");}
             }}};
@@ -189,7 +198,7 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
     } finally {await client.end();}
   }
   const workers = await Promise.allSettled(Array.from({length: concurrency}, worker));
-  if (profile) console.log("EO05_HOURLY_STAGE_TIMING", JSON.stringify({budgetMs, attempts: Object.fromEntries(attempts),
+  if (profile) console.log("EO05_HOURLY_STAGE_TIMING", JSON.stringify({budgetMs, conflicts, attempts: Object.fromEntries(attempts),
     stages: Object.fromEntries(Object.entries(stages).map(([name, values]) => [name, durationSummary(values)]))}));
   const rows = (await admin.query("select provider,status,count(*)::int n from operations.refresh_runs group by provider,status")).rows;
   const fullyCompleted = (await admin.query("select count(*)::int n from (select workspace_id from operations.refresh_runs where status='completed' group by workspace_id having count(*)=6) x")).rows[0].n;
@@ -431,6 +440,7 @@ export async function reconciliationProbe(client, {ownerFixture, connection}) {
           }
           return transport.query(sql,parameters);
         }};
+        const revisionBeforeFinish = (await client.query("select revision from operations.refresh_control where singleton")).rows[0].revision;
         let completed;
         try { completed = await reconcileStoredDatasetSources({...options,database:completingDatabase}); }
         finally { await transport.close(); }
@@ -448,6 +458,13 @@ export async function reconciliationProbe(client, {ownerFixture, connection}) {
         assert.equal(completed.consumerReceipt, true);
         assert.equal(completed.jobCompleted, true);
         assert.equal(await jobStatus(), "completed");
+        const revisionAfterFinish = (await client.query("select revision from operations.refresh_control where singleton")).rows[0].revision;
+        assert.equal(BigInt(revisionAfterFinish), BigInt(revisionBeforeFinish) + 1n);
+        const staleAdmission = await createRefreshWorkRepository(client).commitPreflight({
+          expectedRevision: Number(revisionBeforeFinish), queueRevision: (await createRefreshWorkRepository(client).readQueueCheck()).revision,
+          nextState: {}, source: scheduledOwner, window: {from: day, to: day}, partitionId: "stale-finish-probe", deadlineAt: Date.now() + 5000,
+        });
+        assert.equal(staleAdmission, false);
         assert.equal((await asScheduledRunner(SCHEDULED_DATASET_FINISH_SQL,finishArgs)).rows[0].result,false);
         assert.equal((await rejected(client, () => asScheduledRunner("select * from analytics.pd_facts limit 1"))).code,"42501");
         assert.equal((await rejected(client, () => asScheduledRunner(DATASET_RECONCILE_SQL,[JSON.stringify(scheduledOwner),"{}","{}",new Date(input.limits.deadlineAt).toISOString()]))).code,"42501");

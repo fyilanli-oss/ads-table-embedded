@@ -1,6 +1,7 @@
 import {dispatchRefreshPreflight} from "./preflight-bridge.server.js";
 import {createScheduledDatasetPostgresClient} from "../database/dataset-postgres.server.js";
 import {planDatasetBootstrap} from "./dataset-bootstrap.server.js";
+import {SCHEDULED_DATASET_FINISH_SQL} from "../database/dataset-rpc.server.js";
 
 export const refreshTickGenerationValid=value=>typeof value==="string"&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(value);
 const stopped=new Set(["not_configured","not_current_generation","clock_invalid","duplicate"]);
@@ -70,14 +71,29 @@ export async function runScheduledRefreshWithDataset({store, generation, work, e
 export function createHourlyRefreshCoordinator() {
   let tail = Promise.resolve();
   let failed = false;
-  return ({store, work}) => dispatchHourlyRefresh({store, work, coordinateAdmission(reserve) {
-    const next = tail.then(async () => {
+  function serialize(update) {
+    const next = tail.then(update);
+    tail = next.catch(() => {});
+    return next;
+  }
+  return ({store, work}) => dispatchHourlyRefresh({store, work: {
+    ...work,
+    ...(work.loadDatasetInputs && {async loadDatasetInputs(scope) {
+      const inputs = await work.loadDatasetInputs(scope);
+      return {...inputs, database: {query(sql, args) {
+        if (sql !== SCHEDULED_DATASET_FINISH_SQL) return inputs.database.query(sql, args);
+        return serialize(() => {
+          if (work.now() >= scope.deadlineAt) throw Error("REFRESH_DATASET_FINISH_DEADLINE");
+          return inputs.database.query(sql, args);
+        });
+      }}};
+    }}),
+  }, coordinateAdmission(reserve) {
+    return serialize(async () => {
       if (failed) return {status:"needs_attention",reason:"admission_unavailable",reservationMayExist:true};
       try {return await reserve();}
       catch (error) {failed = true; throw error;}
     });
-    tail = next.catch(() => {});
-    return next;
   }});
 }
 

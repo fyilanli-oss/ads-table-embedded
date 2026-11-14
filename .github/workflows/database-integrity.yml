@@ -192,7 +192,7 @@ jobs:
           pnpm dlx supabase@2.121.0 init --workdir "$RUNNER_TEMP/f01b-full"
           pnpm dlx supabase@2.121.0 db start --workdir "$RUNNER_TEMP/f01b-full"
       - name: Full clean replay and final schema comparison
-        run: node tools/f01-database-replay.mjs full --hourly-capacity --full-hour
+        run: node tools/f01-database-replay.mjs full --hourly-capacity --short-hourly-profile
       - name: Clean second isolated database
         if: always()
         run: |

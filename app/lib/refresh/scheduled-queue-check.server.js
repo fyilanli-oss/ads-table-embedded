@@ -103,26 +103,37 @@ export function createHourlyRefreshCoordinator() {
 export function dispatchHourlyRefresh({store, work, coordinateAdmission, coordinateCommit}) {
   const startedAt = work.now();
   const hour = startedAt - startedAt % 3600000;
+  const cutoff = hour + 3600000;
+  const now = new Date(startedAt).toISOString();
+  const daysByEligibility = new Map();
   let completed;
   return dispatchRefreshPreflight({
     ...work,
     coordinateAdmission,
     coordinateCommit,
     store: {...store, async readPreflightSnapshot() {
+      if (work.now() >= cutoff) return {hourEnded:true};
       const snapshot = await store.readHourlyPreflightSnapshot({hour});
+      if (snapshot?.hourEnded === true) return snapshot;
       if (!Array.isArray(snapshot?.completedHourlyDays)) throw Error("REFRESH_HOUR_INVALID");
       completed = new Set(snapshot.completedHourlyDays.map(day => JSON.stringify(day)));
       return snapshot;
     }},
     async buildWorkPlan(source) {
-      const {days} = planDatasetBootstrap({now: new Date(startedAt).toISOString(), timeZone: source.timezone, eligibleFromMs: source.eligibleFromMs});
+      if (work.now() >= cutoff) return null;
+      const key = JSON.stringify([source.timezone, source.eligibleFromMs]);
+      if (!daysByEligibility.has(key)) {
+        const {days} = planDatasetBootstrap({now, timeZone: source.timezone, eligibleFromMs: source.eligibleFromMs});
+        daysByEligibility.set(key, days);
+      }
+      const days = daysByEligibility.get(key);
       const owner = [source.workspaceId, source.installGeneration, source.provider, source.accountId];
       const day = days.find(d => d.state === "requires_current_admission" && !completed.has(JSON.stringify([...owner, d.businessDate])));
-      if (!day || work.now() >= hour + 3600000) return null;
+      if (!day) return null;
       const window = {from: day.businessDate, to: day.businessDate};
       const plan = await work.buildWorkPlan(source, window);
-      if (plan === null || work.now() >= hour + 3600000) return null;
-      const deadlineAt = Math.min(plan.limits?.deadlineAt, hour + 3600000);
+      if (plan === null || work.now() >= cutoff) return null;
+      const deadlineAt = Math.min(plan.limits?.deadlineAt, cutoff);
       if (deadlineAt - work.now() < plan.limits?.requestTimeoutMs + plan.limits?.finishReserveMs) return null;
       return {...plan, limits: {...plan.limits, deadlineAt}, window, partitionId: "hourly:" + hour, workClass: "hourly_hot_window"};
     },

@@ -412,10 +412,12 @@ $fn$;
 create function operations.read_hourly_refresh_snapshot(p_hour bigint) returns jsonb
 language plpgsql stable security definer set search_path='' as $fn$
 declare snapshot jsonb; completed jsonb;
+ current_hour bigint:=floor(extract(epoch from statement_timestamp())/3600)::bigint*3600000;
 begin
  if p_hour is null or p_hour<0 or p_hour%3600000<>0
-  or p_hour<>floor(extract(epoch from statement_timestamp())/3600)::bigint*3600000
+  or p_hour>current_hour
  then raise exception 'REFRESH_HOUR_INVALID';end if;
+ if p_hour<current_hour then return jsonb_build_object('hourEnded',true);end if;
  snapshot:=operations.read_refresh_preflight_snapshot();
  select coalesce(jsonb_agg(jsonb_build_array(b.workspace_id::text,b.install_generation::text,b.provider,b.account_id,b.from_date::text)), '[]'::jsonb)
  into completed

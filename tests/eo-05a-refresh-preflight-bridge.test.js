@@ -66,6 +66,22 @@ test("hourly dispatch chooses yesterday, then today only after confirmed complet
   assert.deepEqual(days, ["2026-11-01", "2026-11-01", "2026-11-02"]);
 });
 
+test("an hourly check crossing the cutoff does not reserve or call a provider", async () => {
+  const f = fixture();
+  const cutoff = Date.parse("2026-11-02T15:00:00Z");
+  let now = cutoff - 1;
+  f.args.now = () => now;
+  f.args.store.readHourlyPreflightSnapshot = async () => ({hourEnded:true});
+  assert.deepEqual(await dispatchHourlyRefresh({store:f.args.store, work:f.args}), {status:"hour_ended"});
+  f.args.store.readHourlyPreflightSnapshot = async () => assert.fail("expired hour reached the database");
+  assert.deepEqual(await dispatchHourlyRefresh({store:f.args.store, work:f.args, coordinateAdmission:reserve => {
+    now = cutoff;
+    return reserve();
+  }}), {status:"hour_ended"});
+  assert.equal(f.commits(), 0);
+  assert.equal(f.calls(), 0);
+});
+
 test("native reservation precedes mandatory fresh billing and bounded worker; no Dataset completion",async()=>{
   const f=fixture(),r=await dispatchRefreshPreflight(f.args);
   assert.equal(r.status,"awaiting_dataset");assert.equal(f.commits(),1);assert.equal(f.checks(),1);assert.equal(f.calls(),1);

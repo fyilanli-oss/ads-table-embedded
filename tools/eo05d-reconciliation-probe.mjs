@@ -108,6 +108,8 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
   try {
     const initial = await admin.query("select operations.read_hourly_refresh_snapshot($1::bigint) as result", [hour]);
     assert.equal(initial.rows[0].result.candidates.length, owners.size);
+    const past = await admin.query("select operations.read_hourly_refresh_snapshot($1::bigint) as result", [hour - 3600000]);
+    assert.deepEqual(past.rows[0].result, {hourEnded:true});
   } finally {
     await admin.query("set role adstable_owner");
   }
@@ -193,7 +195,7 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
           },
         }});
         attempts.set(result.status, (attempts.get(result.status) ?? 0) + 1);
-        if (result.status === "waiting") break;
+        if (result.status === "waiting" || result.status === "hour_ended") break;
         if (result.status === "conflict") continue;
         if (result.status !== "completed" && result.dataset?.status !== "held") {
           unexpected = {status: result.status, reason: result.reason, provider: result.claim?.provider};
@@ -220,7 +222,10 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
     const held = outcomes.get(provider + ":awaiting_dataset") ?? 0;
     const running = rows.find(row => row.provider === provider && row.status === "running")?.n ?? 0;
     const completedAfterCutoff = rows.find(row => row.provider === provider && row.status === "completed_after_cutoff")?.n ?? 0;
-    return [provider, {completed, completedAfterCutoff, held, unconfirmed: running - held, notStarted: storeCount * 2 - rows.filter(row => row.provider === provider).reduce((sum, row) => sum + row.n, 0)}];
+    const other = Object.fromEntries(rows.filter(row => row.provider === provider
+      && !["completed", "completed_after_cutoff", "running"].includes(row.status)).map(row => [row.status, row.n]));
+    return [provider, {completed, completedAfterCutoff, held, unconfirmed: running - held, other,
+      notStarted: storeCount * 2 - rows.filter(row => row.provider === provider).reduce((sum, row) => sum + row.n, 0)}];
   }));
   console.log("EO05_HOURLY_CAPACITY_RESULT", JSON.stringify({storeCount, concurrency, fullyCompleted, counts, hourStart: new Date(hour), cutoff, elapsedMs: Math.round(performance.now() - start), unexpected,
     workerErrors: workers.filter(w => w.status === "rejected").map(w => w.reason.code ?? w.reason.message), syntheticProviderIO: true, hosted: false}));

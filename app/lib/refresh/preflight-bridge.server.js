@@ -15,6 +15,7 @@ export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlemen
   try {
     const reservation = await coordinateAdmission(async () => {
       const snapshot=await store.readPreflightSnapshot();
+      if(snapshot?.hourEnded===true) return {status:"hour_ended"};
       if(snapshot?.configured!==true) return {status:"not_configured"};
       const candidates=[];
       const plans=new Map();

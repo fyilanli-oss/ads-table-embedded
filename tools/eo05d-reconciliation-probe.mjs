@@ -89,6 +89,15 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
   await admin.query("update operations.refresh_tick_control set enabled=true,generation=$1 where singleton", [generation]);
   const store = createRefreshWorkRepository(admin);
   const fullHour = process.argv.includes("--full-hour");
+  const shortProfile = process.argv.includes("--short-hourly-profile");
+  const profile = fullHour || shortProfile;
+  const profileWrites = process.argv.includes("--hourly-write-timing");
+  const reservation = process.argv.find(arg => arg.startsWith("--reservation="))?.split("=")[1] ?? "current";
+  assert.ok(["baseline", "current"].includes(reservation) && !(fullHour && shortProfile));
+  if (profileWrites) {
+    assert.ok(profile && connection.host === "127.0.0.1");
+    await installReconciliationTiming(admin, {includeScheduledLocks:true});
+  }
   const expectedHour = Math.ceil(Date.now() / 3600000) * 3600000;
   if (fullHour) {
     console.log("EO05_HOURLY_CAPACITY_START", JSON.stringify({startAt: new Date(expectedHour).toISOString()}));
@@ -118,13 +127,7 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
     return;
   }
   const start = performance.now();
-  const profile = process.argv.includes("--short-hourly-profile");
-  const profileWrites = process.argv.includes("--hourly-write-timing");
-  if (profileWrites) {
-    assert.ok(profile && connection.host === "127.0.0.1");
-    await installReconciliationTiming(admin, {includeScheduledLocks:true});
-  }
-  const budgetMs = profile ? 180_000 : 3_600_000;
+  const budgetMs = shortProfile ? 180_000 : 3_600_000;
   const stages = Object.fromEntries(["queueRead", "plan", "reservation", "workerChecks", "sourcePreparation", "datasetReads", "write", "readback", "finish"].map(name => [name, []]));
   const attempts = new Map();
   const conflicts = {finishObserved: 0, noFinishObserved: 0};
@@ -161,7 +164,10 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
           }
           if (sql.includes("commit_hourly_refresh_preflight")) {
             if (profile) stages.plan.push(performance.now() - snapshotFinished);
-            const response = await timed("reservation", () => client.query(sql, args));
+            const reservationSql = reservation === "baseline"
+              ? sql.replace("operations.commit_hourly_refresh_preflight", "operations.commit_refresh_preflight_with_deadline")
+              : sql;
+            const response = await timed("reservation", () => client.query(reservationSql, args));
             if (profile && response.rows[0]?.result === false) {
               conflicts[finishedWrites > finishesAtRead ? "finishObserved" : "noFinishObserved"]++;
             }
@@ -250,7 +256,7 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
       console.log("EO05_HOURLY_SQL_WRITE_TIMING", JSON.stringify({provider, samples:samples.length, stages}));
     }
   }
-  if (profile) console.log("EO05_HOURLY_STAGE_TIMING", JSON.stringify({budgetMs, conflicts, acceptedAfterFinish, attempts: Object.fromEntries(attempts),
+  if (profile) console.log("EO05_HOURLY_STAGE_TIMING", JSON.stringify({reservation, budgetMs, conflicts, acceptedAfterFinish, attempts: Object.fromEntries(attempts),
     stages: Object.fromEntries(Object.entries(stages).map(([name, values]) => [name, durationSummary(values)]))}));
   const cutoff = new Date(hour + 3600000);
   const rows = (await admin.query(`select provider,
@@ -269,7 +275,7 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
     return [provider, {completed, completedAfterCutoff, held, unconfirmed: running - held, other,
       notStarted: storeCount * 2 - rows.filter(row => row.provider === provider).reduce((sum, row) => sum + row.n, 0)}];
   }));
-  console.log("EO05_HOURLY_CAPACITY_RESULT", JSON.stringify({storeCount, concurrency, fullyCompleted, counts, hourStart: new Date(hour), cutoff, elapsedMs: Math.round(performance.now() - start), unexpected,
+  console.log("EO05_HOURLY_CAPACITY_RESULT", JSON.stringify({reservation, storeCount, concurrency, fullyCompleted, counts, hourStart: new Date(hour), cutoff, elapsedMs: Math.round(performance.now() - start), unexpected,
     workerErrors: workers.filter(w => w.status === "rejected").map(w => w.reason.code ?? w.reason.message), syntheticProviderIO: true, hosted: false}));
   assert.ok(workers.every(w => w.status === "fulfilled"));
   assert.equal(unexpected, undefined);

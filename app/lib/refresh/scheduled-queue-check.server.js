@@ -69,11 +69,12 @@ export async function runScheduledRefreshWithDataset({store, generation, work, e
 
 // Trusted hourly worker. Keep the HTTP heartbeat and its narrow role separate.
 export function createHourlyRefreshCoordinator() {
-  let tail = Promise.resolve();
+  let writes = Promise.resolve();
+  let admissions = Promise.resolve();
   let failed = false;
   function serialize(update) {
-    const next = tail.then(update);
-    tail = next.catch(() => {});
+    const next = writes.then(update);
+    writes = next.catch(() => {});
     return next;
   }
   return ({store, work}) => dispatchHourlyRefresh({store, work: {
@@ -88,22 +89,25 @@ export function createHourlyRefreshCoordinator() {
         });
       }}};
     }}),
-  }, coordinateAdmission(reserve) {
-    return serialize(async () => {
+  }, coordinateCommit: serialize, coordinateAdmission(reserve) {
+    const next = admissions.then(async () => {
       if (failed) return {status:"needs_attention",reason:"admission_unavailable",reservationMayExist:true};
       try {return await reserve();}
       catch (error) {failed = true; throw error;}
     });
+    admissions = next.catch(() => {});
+    return next;
   }});
 }
 
-export function dispatchHourlyRefresh({store, work, coordinateAdmission}) {
+export function dispatchHourlyRefresh({store, work, coordinateAdmission, coordinateCommit}) {
   const startedAt = work.now();
   const hour = startedAt - startedAt % 3600000;
   let completed;
   return dispatchRefreshPreflight({
     ...work,
     coordinateAdmission,
+    coordinateCommit,
     store: {...store, async readPreflightSnapshot() {
       const snapshot = await store.readHourlyPreflightSnapshot({hour});
       if (!Array.isArray(snapshot?.completedHourlyDays)) throw Error("REFRESH_HOUR_INVALID");

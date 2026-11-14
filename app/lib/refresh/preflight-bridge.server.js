@@ -5,7 +5,7 @@ import {reconcileStoredDatasetSources} from "../database/dataset-reconciliation.
 
 // Internal composition for a trusted work plan. The existing HTTP queue entry is queue-only.
 export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlementVerifier, readPage, validatePage, now, loadDatasetInputs,
-  coordinateAdmission = reserve => reserve()}) {
+  coordinateAdmission = reserve => reserve(), coordinateCommit = commit => commit()}) {
   if (!["readPreflightSnapshot","commitPreflight","loadBoundAuthority"].every(key=>typeof store?.[key]==="function")
     || [buildWorkPlan,readPage,validatePage,now,entitlementVerifier?.verify,entitlementVerifier?.isCurrent].some(fn=>typeof fn!=="function")) {
     throw new Error("REFRESH_PREFLIGHT_INPUT_INVALID");
@@ -42,8 +42,8 @@ export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlemen
       const proposal=planRefreshPreflightAdmissions({...snapshot,candidates,now:now()});
       if(proposal.status!=="proposed") return {status:proposal.status,deferred:proposal.deferred};
       const selected=proposal.admitted[0],binding=plans.get(selected.id);
-      const accepted=await store.commitPreflight({expectedRevision:snapshot.state.revision,queueRevision:snapshot.queueRevision,
-        nextState:proposal.nextState,source:binding.source,window:binding.plan.window,partitionId:binding.plan.partitionId,deadlineAt:binding.plan.limits.deadlineAt});
+      const accepted=await coordinateCommit(() => store.commitPreflight({expectedRevision:snapshot.state.revision,queueRevision:snapshot.queueRevision,
+        nextState:proposal.nextState,source:binding.source,window:binding.plan.window,partitionId:binding.plan.partitionId,deadlineAt:binding.plan.limits.deadlineAt}));
       if(accepted!==true) return {status:"conflict"};
       return {status:"reserved", claim:selected, binding};
     });

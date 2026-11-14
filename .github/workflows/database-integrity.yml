@@ -161,8 +161,13 @@ concurrency:
 
 jobs:
   isolated-replay:
+    name: ${{ matrix.reservation == 'current' && 'isolated-replay' || 'isolated-replay (baseline)' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        reservation: [baseline, current]
     steps:
       - name: Checkout exact commit
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -192,7 +197,7 @@ jobs:
           pnpm dlx supabase@2.121.0 init --workdir "$RUNNER_TEMP/f01b-full"
           pnpm dlx supabase@2.121.0 db start --workdir "$RUNNER_TEMP/f01b-full"
       - name: Full clean replay and final schema comparison
-        run: node tools/f01-database-replay.mjs full
+        run: node tools/f01-database-replay.mjs full --hourly-capacity ${{ matrix.reservation == 'current' && '--full-hour' || '--short-hourly-profile' }} --hourly-write-timing --reservation=${{ matrix.reservation }}
       - name: Clean second isolated database
         if: always()
         run: |

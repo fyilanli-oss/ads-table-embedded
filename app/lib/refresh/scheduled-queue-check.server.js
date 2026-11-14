@@ -1,5 +1,7 @@
 import {dispatchRefreshPreflight} from "./preflight-bridge.server.js";
 import {createScheduledDatasetPostgresClient} from "../database/dataset-postgres.server.js";
+import {planDatasetBootstrap} from "./dataset-bootstrap.server.js";
+import {SCHEDULED_DATASET_FINISH_SQL} from "../database/dataset-rpc.server.js";
 
 export const refreshTickGenerationValid=value=>typeof value==="string"&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(value);
 const stopped=new Set(["not_configured","not_current_generation","clock_invalid","duplicate"]);
@@ -21,6 +23,10 @@ export async function runScheduledRefreshCheck({store,generation,work}) {
   const queue={generation:receipt.generation,sequence:receipt.sequence,queueRevision:receipt.queueRevision,checkedAtMs:receipt.checkedAtMs};
   let interruptions;
   try {
+    if (work?.hourly === true) {
+      const recovered = await store.recoverHourlyRefreshReceipts();
+      if (!Number.isSafeInteger(recovered) || recovered < 0) throw Error();
+    }
     interruptions=await store.reviewInterruptedWork();
     if(interruptions?.status!=="not_configured" && (interruptions?.status!=="reviewed"
       || ![interruptions.stopped,interruptions.uncertain].every(n=>Number.isSafeInteger(n)&&n>=0))) throw new Error();
@@ -32,7 +38,12 @@ export async function runScheduledRefreshCheck({store,generation,work}) {
   // Explicitly pick inputs. A work object cannot replace the store or inject a dispatch callback.
   try {
     const {buildWorkPlan,entitlementVerifier,readPage,validatePage,now,loadDatasetInputs}=work;
-    return {status:"queue_checked",queue,interruptions,work:await dispatchRefreshPreflight({store,buildWorkPlan,entitlementVerifier,readPage,validatePage,now,loadDatasetInputs})};
+    if (work.hourly === true && typeof loadDatasetInputs !== "function") throw Error("REFRESH_DATASET_INPUT_INVALID");
+    const inputs = {buildWorkPlan,entitlementVerifier,readPage,validatePage,now,loadDatasetInputs};
+    const result = work.hourly === true
+      ? await dispatchHourlyRefresh({store, work: inputs})
+      : await dispatchRefreshPreflight({store, ...inputs});
+    return {status:"queue_checked",queue,interruptions,work:result};
   } catch {
     return {status:"queue_checked",queue,work:{status:"needs_attention",reason:"work_policy_invalid"}};
   }
@@ -58,4 +69,77 @@ export async function runScheduledRefreshWithDataset({store, generation, work, e
     }
   }
   return result;
+}
+
+// Trusted hourly worker. Keep the HTTP heartbeat and its narrow role separate.
+export function createHourlyRefreshCoordinator() {
+  let writes = Promise.resolve();
+  let admissions = Promise.resolve();
+  let failed = false;
+  function serialize(update) {
+    const next = writes.then(update);
+    writes = next.catch(() => {});
+    return next;
+  }
+  return ({store, work}) => dispatchHourlyRefresh({store, work: {
+    ...work,
+    ...(work.loadDatasetInputs && {async loadDatasetInputs(scope) {
+      const inputs = await work.loadDatasetInputs(scope);
+      return {...inputs, database: {query(sql, args) {
+        if (sql !== SCHEDULED_DATASET_FINISH_SQL) return inputs.database.query(sql, args);
+        return serialize(() => {
+          if (work.now() >= scope.deadlineAt) throw Error("REFRESH_DATASET_FINISH_DEADLINE");
+          return inputs.database.query(sql, args);
+        });
+      }}};
+    }}),
+  }, coordinateCommit: serialize, coordinateAdmission(reserve) {
+    const next = admissions.then(async () => {
+      if (failed) return {status:"needs_attention",reason:"admission_unavailable",reservationMayExist:true};
+      try {return await reserve();}
+      catch (error) {failed = true; throw error;}
+    });
+    admissions = next.catch(() => {});
+    return next;
+  }});
+}
+
+export function dispatchHourlyRefresh({store, work, coordinateAdmission, coordinateCommit}) {
+  const startedAt = work.now();
+  const hour = startedAt - startedAt % 3600000;
+  const cutoff = hour + 3600000;
+  const now = new Date(startedAt).toISOString();
+  const daysByEligibility = new Map();
+  let completed;
+  return dispatchRefreshPreflight({
+    ...work,
+    coordinateAdmission,
+    coordinateCommit,
+    store: {...store, commitPreflight:store.commitHourlyPreflight, async readPreflightSnapshot() {
+      if (work.now() >= cutoff) return {hourEnded:true};
+      const snapshot = await store.readHourlyPreflightSnapshot({hour});
+      if (snapshot?.hourEnded === true) return snapshot;
+      if (!Array.isArray(snapshot?.completedHourlyDays)) throw Error("REFRESH_HOUR_INVALID");
+      completed = new Set(snapshot.completedHourlyDays.map(day => JSON.stringify(day)));
+      return snapshot;
+    }},
+    async buildWorkPlan(source) {
+      if (work.now() >= cutoff) return null;
+      const key = JSON.stringify([source.timezone, source.eligibleFromMs]);
+      if (!daysByEligibility.has(key)) {
+        const {days} = planDatasetBootstrap({now, timeZone: source.timezone, eligibleFromMs: source.eligibleFromMs});
+        daysByEligibility.set(key, days);
+      }
+      const days = daysByEligibility.get(key);
+      const owner = [source.workspaceId, source.installGeneration, source.provider, source.accountId];
+      const day = days.find(d => d.state === "requires_current_admission" && !completed.has(JSON.stringify([...owner, d.businessDate])));
+      if (!day) return null;
+      const window = {from: day.businessDate, to: day.businessDate};
+      const plan = await work.buildWorkPlan(source, window);
+      if (plan === null || work.now() >= cutoff) return null;
+      const deadlineAt = Math.min(plan.limits?.deadlineAt, cutoff);
+      if (deadlineAt - work.now() < plan.limits?.requestTimeoutMs + plan.limits?.finishReserveMs) return null;
+      return {...plan, limits: {...plan.limits, deadlineAt}, window, partitionId: "hourly:" + hour, workClass: "hourly_hot_window"};
+    },
+  });
 }

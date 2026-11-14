@@ -4,6 +4,7 @@ import {readFileSync} from "node:fs";
 import {dispatchRefreshPreflight} from "../app/lib/refresh/preflight-bridge.server.js";
 import {planRefreshAdmissions,planRefreshPreflightAdmissions} from "../app/lib/refresh/admission-policy.server.js";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
+import {createHourlyRefreshCoordinator, dispatchHourlyRefresh} from "../app/lib/refresh/scheduled-queue-check.server.js";
 
 function fixture() {
   const vector={requests:10,dbWrites:10,connections:10,rows:100,bytes:10000};
@@ -35,11 +36,85 @@ test("preflight reserves at most one without pretending a cached subscription is
   assert.equal(planRefreshPreflightAdmissions(input).admitted.length,0,"interactive reserve is not consumed");
 });
 
+test("hourly dispatch chooses yesterday, then today only after confirmed completion", async () => {
+  const f = fixture();
+  const now = Date.parse("2026-11-02T14:15:00Z");
+  const hour = Date.parse("2026-11-02T14:00:00Z");
+  Object.assign(f.source, {timezone: "UTC", eligibleFromMs: Date.parse("2026-10-31T00:00:00Z"), scheduledHour: hour, queuedAt: hour});
+  f.args.now = () => now;
+  f.plan.limits.deadlineAt = now + 1000;
+  const owner = [f.source.workspaceId, f.source.installGeneration, f.source.provider, f.source.accountId];
+  let completedHourlyDays = [];
+  f.args.store.readHourlyPreflightSnapshot = async args => {
+    assert.deepEqual(args, {hour});
+    return {...f.snapshot, completedHourlyDays};
+  };
+  const days = [];
+  f.args.store.commitHourlyPreflight = async ({window, partitionId}) => {
+    assert.equal(partitionId, "hourly:" + hour);
+    assert.equal(window.from, window.to);
+    days.push(window.from);
+    return true;
+  };
+  const dispatch = () => dispatchHourlyRefresh({store: f.args.store, work: f.args});
+  assert.equal((await dispatch()).status, "awaiting_dataset");
+  assert.equal((await dispatch()).status, "awaiting_dataset");
+  completedHourlyDays = [[...owner, "2026-11-01"]];
+  assert.equal((await dispatch()).status, "awaiting_dataset");
+  completedHourlyDays.push([...owner, "2026-11-02"]);
+  assert.equal((await dispatch()).status, "waiting");
+  assert.deepEqual(days, ["2026-11-01", "2026-11-01", "2026-11-02"]);
+});
+
+test("an hourly check crossing the cutoff does not reserve or call a provider", async () => {
+  const f = fixture();
+  const cutoff = Date.parse("2026-11-02T15:00:00Z");
+  let now = cutoff - 1;
+  f.args.now = () => now;
+  f.args.store.commitHourlyPreflight = async () => assert.fail("expired hour reserved work");
+  f.args.store.readHourlyPreflightSnapshot = async () => ({hourEnded:true});
+  assert.deepEqual(await dispatchHourlyRefresh({store:f.args.store, work:f.args}), {status:"hour_ended"});
+  f.args.store.readHourlyPreflightSnapshot = async () => assert.fail("expired hour reached the database");
+  assert.deepEqual(await dispatchHourlyRefresh({store:f.args.store, work:f.args, coordinateAdmission:reserve => {
+    now = cutoff;
+    return reserve();
+  }}), {status:"hour_ended"});
+  assert.equal(f.commits(), 0);
+  assert.equal(f.calls(), 0);
+});
+
 test("native reservation precedes mandatory fresh billing and bounded worker; no Dataset completion",async()=>{
   const f=fixture(),r=await dispatchRefreshPreflight(f.args);
   assert.equal(r.status,"awaiting_dataset");assert.equal(f.commits(),1);assert.equal(f.checks(),1);assert.equal(f.calls(),1);
   assert.equal(r.reservationRetained,true);assert.equal(r.claim.id.length,64);
   assert.deepEqual(f.stages,["checking_authority","request_intent","response_received","ready_for_dataset"]);
+});
+
+test("one hourly coordinator serializes reservation while workers overlap", async () => {
+  const coordinator = createHourlyRefreshCoordinator();
+  const now = Date.parse("2026-11-02T14:15:00Z");
+  let active = 0, peak = 0, pages = 0;
+  let releasePages;
+  const bothPages = new Promise(resolve => {releasePages = resolve;});
+  const results = await Promise.all([fixture(), fixture()].map(f => {
+    Object.assign(f.source, {timezone:"UTC", eligibleFromMs:0});
+    f.args.now = () => now;
+    f.plan.limits.deadlineAt = now + 5000;
+    f.args.store.readHourlyPreflightSnapshot = async () => {
+      peak = Math.max(peak, ++active);
+      await new Promise(resolve => setImmediate(resolve));
+      return {...f.snapshot, completedHourlyDays:[]};
+    };
+    f.args.store.commitHourlyPreflight = async () => {active--; return true;};
+    f.args.readPage = async () => {
+      if (++pages === 2) releasePages();
+      await bothPages;
+      return {kind:"complete",payload:{}};
+    };
+    return coordinator({store:f.args.store, work:f.args});
+  }));
+  assert.equal(peak, 1);
+  assert.deepEqual(results.map(r => r.status), ["awaiting_dataset","awaiting_dataset"]);
 });
 
 test("missing configuration, missing plan, invalid bounds, conflicts and unknown commits never execute or retry",async()=>{

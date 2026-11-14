@@ -40,6 +40,13 @@ test("Meta's existing nonempty sales evidence hold is preserved, never consumed"
   const f = await fixture("meta"); const r = await reconcileStoredDatasetSources(f);
   assert.equal(r.status, "held");assert.equal(r.consumerReceipt, false);assert.equal(f.request(), undefined);
 });
+test("a 500-product day reaches the reconciliation write without dropping rows", async () => {
+  const f = await fixture("google_ads", {googleProductCount: 500});
+  const result = await reconcileStoredDatasetSources(f);
+  assert.equal(result.rowCount, 502);
+  assert.equal(result.checkpointAdvanced, true);
+  assert.equal(f.request().write.rows.filter(item => item.table === "cpd_product_performance_facts").length, 500);
+});
 test("verified empty submits no fake zero rows; missing metric never consumes", async () => {
   const e = await fixture("google_ads", {nonempty: false});
   assert.equal((await reconcileStoredDatasetSources(e)).rowCount, 0); assert.deepEqual(e.request().write.rows, []);
@@ -61,12 +68,20 @@ test("unknown writes stop without any following readback or retry", async () => 
   await assert.rejects(reconcileStoredDatasetSources(f), /WRITE_UNCONFIRMED/); assert.equal(after, 0);
 });
 test("scheduled handoff consumes only its own admitted source and verifies readback", async () => {
-  for (const mode of ["verified", "wrong_fence", "lost_write", "lost_finish", "wrong_role"]) {
-    const input = await fixture();
+  const scenarios = ["verified", "wrong_fence", "lost_write", "lost_finish", "wrong_role"].map(mode => ({
+    mode, provider: "google_ads", day: "2026-11-01",
+  }));
+  for (const provider of ["google_ads", "meta", "klaviyo"]) {
+    for (const day of ["2026-11-01", "2026-11-02"]) {
+      scenarios.push({mode: provider === "meta" ? "held" : "verified", provider, day});
+    }
+  }
+  for (const {mode, provider, day} of scenarios) {
+    const input = await fixture(provider, {businessDate: day});
     const {owner} = input;
     const generation = randomUUID();
     const time = Date.parse("2026-11-02T00:02:00.000Z");
-    const window = {from: "2026-11-01", to: "2026-11-01"};
+    const window = {from: day, to: day};
     const source = {...input.source, connectionVersion: Number(owner.connectionVersion), queuedAt: time, scheduledHour: time - time % 3600000 - 3600000};
     const cost = {requests: 2, dbWrites: 5, connections: 1, rows: 1000, bytes: 1000000};
     const snapshot = {configured: true, queueRevision: 2, candidates: [source],
@@ -92,7 +107,8 @@ test("scheduled handoff consumes only its own admitted source and verifies readb
       readPage: async () => ({kind: "complete", payload: {}}), validatePage: () => ({complete: true, rows: []}),
       loadDatasetInputs: async ({claim}) => {
         for (const envelope of input.envelopes.values()) {
-          Object.assign(envelope.receipt.manifest.googleDatasetRead, {jobId: claim.id, fence: String(claim.fence + (mode === "wrong_fence" ? 1 : 0))});
+          const key = {google_ads: "googleDatasetRead", meta: "metaDatasetRead", klaviyo: "klaviyoDatasetRead"}[provider];
+          Object.assign(envelope.receipt.manifest[key], {jobId: claim.id, fence: String(claim.fence + (mode === "wrong_fence" ? 1 : 0))});
         }
         return input;
       }};
@@ -110,9 +126,10 @@ test("scheduled handoff consumes only its own admitted source and verifies readb
     }});
     assert.deepEqual([opens,closes],[1,1]);
     assert.equal(result.status, "queue_checked");
-    assert.equal(result.work.status, mode === "verified" ? "completed" : "needs_attention");
+    assert.equal(result.work.status, mode === "verified" ? "completed" : mode === "held" ? "awaiting_dataset" : "needs_attention", provider + " " + day);
+    if (mode === "held") assert.deepEqual(result.work.dataset, {status: "held", consumerReceipt: false, checkpointAdvanced: false});
     assert.equal(input.queries.filter(sql => sql === DATASET_RECONCILE_SQL).length, 0);
-    assert.equal(input.queries.filter(sql => sql === SCHEDULED_DATASET_RECONCILE_SQL).length, ["wrong_fence","wrong_role"].includes(mode) ? 0 : 1);
+    assert.equal(input.queries.filter(sql => sql === SCHEDULED_DATASET_RECONCILE_SQL).length, ["wrong_fence","wrong_role","held"].includes(mode) ? 0 : 1);
     const reachesFinish = mode === "verified" || mode === "lost_finish";
     assert.equal(input.queries.filter(sql => sql === DATASET_RECONCILE_READ_SQL).length, reachesFinish ? 1 : 0);
     assert.equal(input.queries.filter(sql => sql === SCHEDULED_DATASET_FINISH_SQL).length, reachesFinish ? 1 : 0);

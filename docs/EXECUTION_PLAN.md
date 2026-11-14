@@ -1,3 +1,7 @@
+## EO-05-D — Günlük yazım kapasitesi, 13 Kasım 2026
+
+Owner onayıyla dar kapasite testinden önce günlük düzeltme yazımı 500 ürünlük sentetik günle sınanır. Günlük işlem üst sınırları 1024 satır, 4 MiB istek ve 512 KiB makbuz olarak hazırlanır. Atomik gün, kaynak kanıtı ve fiziksel doğrulama korunur. Canlı Supabase kapasitesi bu regresyondan çıkarılmaz.
+
 ## EO-05 — Bağımsız kuyruk izleme ve Gmail denemesi, 11 Kasım 2026
 
 Yerel Gmail denemesi dev@adstable.app gelen kutusunda doğrulandı. Owner onayıyla

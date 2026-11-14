@@ -165,8 +165,18 @@ function validateRow(owner, table, row) {
 
 /** Single-use capability; policy is explicit and not inferred from UI range. */
 export function prepareDatasetWrite({owner, rows, policy, now, operationId = randomUUID()} = {}) {
+  return prepareWrite({owner, rows, policy, now, operationId}, 200, 1048576);
+}
+
+export const DAILY_DATASET_ROW_LIMIT = 1024;
+export const DAILY_DATASET_BYTE_LIMIT = 4 * 1048576;
+export function prepareDailyDatasetWrite(input) {
+  return prepareWrite(input, DAILY_DATASET_ROW_LIMIT, DAILY_DATASET_BYTE_LIMIT).body;
+}
+
+function prepareWrite({owner, rows, policy, now, operationId}, maxRows, maxBytes) {
   const bound = sourceStoreOwner(owner);
-  if (bound.provider === "shopify" || !uuid.test(operationId) || !Array.isArray(rows) || rows.length < 1 || rows.length > 200
+  if (bound.provider === "shopify" || !uuid.test(operationId) || !Array.isArray(rows) || rows.length < 1 || rows.length > maxRows
     || !instant(now)) fail("INPUT_INVALID");
   policy = resolveReportWritePolicy(policy, rows);
   exact(policy, ["version", "until"]);
@@ -180,9 +190,10 @@ export function prepareDatasetWrite({owner, rows, policy, now, operationId = ran
     return {table: item.table, row};
   });
   const body = {version: DATASET_STORAGE_VERSION, operationId, policy: structuredClone(policy), rows: normalized};
-  if (Buffer.byteLength(canonicalSourceJson(body)) > 1048576) fail("WRITE_TOO_LARGE");
+  if (Buffer.byteLength(canonicalSourceJson(body)) > maxBytes) fail("WRITE_TOO_LARGE");
   const capability = frozen({owner: bound, body: frozen(body)});
-  prepared.set(capability, {used: false}); return capability;
+  if (maxRows === 200) prepared.set(capability, {used: false});
+  return capability;
 }
 
 export function createDatasetStorageRepository(database) {

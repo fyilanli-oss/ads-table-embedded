@@ -17,6 +17,10 @@ export function createRefreshWorkRepository(database) {
     if (!snapshot?.state || !snapshot.budget || !snapshot.bounds) throw new Error("REFRESH_WORK_NOT_CONFIGURED");
     return structuredClone(snapshot);
   }
+  function commitPreflight(rpc, {expectedRevision,queueRevision,nextState,source,window,partitionId,deadlineAt}) {
+    if(![expectedRevision,queueRevision].every(n=>Number.isSafeInteger(n)&&n>=0)||!Number.isSafeInteger(deadlineAt)||deadlineAt<1||!nextState||!source||!window||typeof partitionId!=="string") throw new Error("REFRESH_WORK_INPUT_INVALID");
+    return result(rpc,[expectedRevision,queueRevision,JSON.stringify(nextState),JSON.stringify(source),JSON.stringify(window),partitionId,deadlineAt]);
+  }
   return Object.freeze({
     readAdmissionSnapshot,
     async reviewInterruptedWork() {
@@ -46,10 +50,11 @@ export function createRefreshWorkRepository(database) {
       if (!Number.isSafeInteger(hour) || hour < 0 || hour % 3600000 !== 0) throw Error("REFRESH_WORK_INPUT_INVALID");
       return result("select operations.read_hourly_refresh_snapshot($1::bigint) as result", [hour]);
     },
-    async commitPreflight({expectedRevision,queueRevision,nextState,source,window,partitionId,deadlineAt}) {
-      if(![expectedRevision,queueRevision].every(n=>Number.isSafeInteger(n)&&n>=0)||!Number.isSafeInteger(deadlineAt)||deadlineAt<1||!nextState||!source||!window||typeof partitionId!=="string") throw new Error("REFRESH_WORK_INPUT_INVALID");
-      return await result("select operations.commit_refresh_preflight_with_deadline($1::bigint,$2::bigint,$3::jsonb,$4::jsonb,$5::jsonb,$6::text,$7::bigint) as result",
-        [expectedRevision,queueRevision,JSON.stringify(nextState),JSON.stringify(source),JSON.stringify(window),partitionId,deadlineAt])===true;
+    async commitPreflight(input) {
+      return await commitPreflight("select operations.commit_refresh_preflight_with_deadline($1::bigint,$2::bigint,$3::jsonb,$4::jsonb,$5::jsonb,$6::text,$7::bigint) as result",input)===true;
+    },
+    async commitHourlyPreflight(input) {
+      return await commitPreflight("select operations.commit_hourly_refresh_preflight($1::bigint,$2::bigint,$3::jsonb,$4::jsonb,$5::jsonb,$6::text,$7::bigint) as result",input)===true;
     },
     async commitMetaRawPreflight({expectedRevision,queueRevision,nextState,source,window,operationId,deadlineAt}) {
       if(![expectedRevision,queueRevision].every(n=>Number.isSafeInteger(n)&&n>=0)||!Number.isSafeInteger(deadlineAt)||deadlineAt<1||!nextState

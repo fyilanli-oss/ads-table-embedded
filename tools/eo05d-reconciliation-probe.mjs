@@ -128,6 +128,7 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
   const stages = Object.fromEntries(["queueRead", "plan", "reservation", "workerChecks", "sourcePreparation", "datasetReads", "write", "readback", "finish"].map(name => [name, []]));
   const attempts = new Map();
   const conflicts = {finishObserved: 0, noFinishObserved: 0};
+  let acceptedAfterFinish = 0;
   let finishedWrites = 0;
   const outcomes = new Map();
   const writeProfiles = new Map();
@@ -158,12 +159,13 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
             snapshotFinished = performance.now();
             return response;
           }
-          if (sql.includes("commit_refresh_preflight_with_deadline")) {
+          if (sql.includes("commit_hourly_refresh_preflight")) {
             if (profile) stages.plan.push(performance.now() - snapshotFinished);
             const response = await timed("reservation", () => client.query(sql, args));
             if (profile && response.rows[0]?.result === false) {
               conflicts[finishedWrites > finishesAtRead ? "finishObserved" : "noFinishObserved"]++;
             }
+            if (profile && response.rows[0]?.result === true && finishedWrites > finishesAtRead) acceptedAfterFinish++;
             return response;
           }
           return await timed("workerChecks", () => client.query(sql, args));
@@ -248,7 +250,7 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
       console.log("EO05_HOURLY_SQL_WRITE_TIMING", JSON.stringify({provider, samples:samples.length, stages}));
     }
   }
-  if (profile) console.log("EO05_HOURLY_STAGE_TIMING", JSON.stringify({budgetMs, conflicts, attempts: Object.fromEntries(attempts),
+  if (profile) console.log("EO05_HOURLY_STAGE_TIMING", JSON.stringify({budgetMs, conflicts, acceptedAfterFinish, attempts: Object.fromEntries(attempts),
     stages: Object.fromEntries(Object.entries(stages).map(([name, values]) => [name, durationSummary(values)]))}));
   const cutoff = new Date(hour + 3600000);
   const rows = (await admin.query(`select provider,

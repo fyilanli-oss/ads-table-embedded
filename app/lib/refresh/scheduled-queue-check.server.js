@@ -111,7 +111,7 @@ export function dispatchHourlyRefresh({store, work, coordinateAdmission, coordin
     ...work,
     coordinateAdmission,
     coordinateCommit,
-    store: {...store, async readPreflightSnapshot() {
+    store: {...store, commitPreflight:store.commitHourlyPreflight, async readPreflightSnapshot() {
       if (work.now() >= cutoff) return {hourEnded:true};
       const snapshot = await store.readHourlyPreflightSnapshot({hour});
       if (snapshot?.hourEnded === true) return snapshot;

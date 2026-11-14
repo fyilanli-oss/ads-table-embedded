@@ -435,5 +435,48 @@ revoke all on function operations.read_hourly_refresh_snapshot(bigint)
  from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_queue_runner;
 grant execute on function operations.read_hourly_refresh_snapshot(bigint) to adstable_refresh_coordinator;
 
+-- Finishing an unrelated job releases capacity. Under the existing lock,
+-- keep the selected order and recheck it against the current reservations.
+create function operations.commit_hourly_refresh_preflight(p_revision bigint,p_queue_revision bigint,p_state jsonb,
+ p_source jsonb,p_window jsonb,p_partition text,p_deadline bigint) returns boolean
+language plpgsql security definer set search_path='' as $fn$
+declare c operations.refresh_control%rowtype; current_state jsonb; selected jsonb;
+ hour_start bigint; write_state jsonb;
+begin
+ select * into strict c from operations.refresh_control where singleton for update;
+ hour_start:=floor(extract(epoch from clock_timestamp())/3600)::bigint*3600000;
+ if p_partition is distinct from 'hourly:'||hour_start::text or p_deadline>hour_start+3600000
+  or p_window->>'from' is distinct from p_window->>'to'
+  or p_revision is null or p_revision>c.revision
+  or p_state->>'revision' is distinct from (p_revision+1)::text then return false;end if;
+ if p_revision=c.revision then
+  return operations.commit_refresh_preflight_with_deadline(p_revision,p_queue_revision,p_state,p_source,p_window,p_partition,p_deadline);
+ end if;
+ -- Another admission changes the fence or the service order and needs a fresh plan.
+ if p_state->>'nextFence' is distinct from (c.next_fence+1)::text
+  or p_state->>'nextTurn' is distinct from (c.next_turn+1)::text then return false;end if;
+ current_state:=operations.read_refresh_admission_snapshot()->'state';
+ selected:=p_state->'claims'->-1;
+ if selected->>'fence' is distinct from c.next_fence::text
+  or not (p_state->'claims' @> current_state->'claims')
+  or (p_state->'externalClaims' is distinct from current_state->'externalClaims')
+  or (p_state->'holds' is distinct from current_state->'holds')
+  or c.revision-p_revision <> jsonb_array_length(p_state->'claims')-jsonb_array_length(current_state->'claims')-1
+  or exists(select 1 from jsonb_array_elements(p_state->'claims') a
+    where a is distinct from selected and not (current_state->'claims' @> jsonb_build_array(a))
+      and not exists(select 1 from operations.refresh_runs r
+        where r.fence=(a->>'fence')::bigint and r.status='completed'))
+  or exists(select 1 from jsonb_array_elements(current_state->'claims') a
+    where a->>'workspaceId'=selected->>'workspaceId' and a->>'installGeneration'=selected->>'installGeneration'
+      and a->>'provider'=selected->>'provider' and a->>'accountId'=selected->>'accountId')
+  then return false;end if;
+ write_state:=p_state||jsonb_build_object('revision',c.revision+1,'claims',(current_state->'claims')||jsonb_build_array(selected));
+ return operations.commit_refresh_preflight_with_deadline(c.revision,p_queue_revision,write_state,p_source,p_window,p_partition,p_deadline);
+end $fn$;
+revoke all on function operations.commit_hourly_refresh_preflight(bigint,bigint,jsonb,jsonb,jsonb,text,bigint)
+ from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_queue_runner;
+grant execute on function operations.commit_hourly_refresh_preflight(bigint,bigint,jsonb,jsonb,jsonb,text,bigint)
+ to adstable_refresh_coordinator;
+
 reset role;
 commit;

@@ -458,12 +458,12 @@ begin
  current_state:=operations.read_refresh_admission_snapshot()->'state';
  selected:=p_state->'claims'->-1;
  if selected->>'fence' is distinct from c.next_fence::text
-  or not (p_state->'claims' @> current_state->'claims')
+  or not ((p_state->'claims') @> (current_state->'claims'))
   or (p_state->'externalClaims' is distinct from current_state->'externalClaims')
   or (p_state->'holds' is distinct from current_state->'holds')
   or c.revision-p_revision <> jsonb_array_length(p_state->'claims')-jsonb_array_length(current_state->'claims')-1
   or exists(select 1 from jsonb_array_elements(p_state->'claims') a
-    where a is distinct from selected and not (current_state->'claims' @> jsonb_build_array(a))
+    where a is distinct from selected and not ((current_state->'claims') @> jsonb_build_array(a))
       and not exists(select 1 from operations.refresh_runs r
         where r.fence=(a->>'fence')::bigint and r.status='completed'))
   or exists(select 1 from jsonb_array_elements(current_state->'claims') a

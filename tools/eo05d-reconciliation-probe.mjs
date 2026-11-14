@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import {randomUUID} from "node:crypto";
 import {performance} from "node:perf_hooks";
 import {readFileSync} from "node:fs";
+import {setTimeout as delay} from "node:timers/promises";
 import pg from "pg";
 import {storedBindingFixture} from "./eo05b-source-dataset-binding-probe.mjs";
 import {datasetServerProbe} from "./eo05b-dataset-server-probe.mjs";
@@ -87,11 +88,18 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
   const generation = randomUUID();
   await admin.query("update operations.refresh_tick_control set enabled=true,generation=$1 where singleton", [generation]);
   const store = createRefreshWorkRepository(admin);
+  const fullHour = process.argv.includes("--full-hour");
+  const expectedHour = Math.ceil(Date.now() / 3600000) * 3600000;
+  if (fullHour) {
+    console.log("EO05_HOURLY_CAPACITY_START", JSON.stringify({startAt: new Date(expectedHour).toISOString()}));
+    await delay(Math.max(0, expectedHour - Date.now()));
+  }
   const tick = await runScheduledRefreshCheck({store, generation});
   assert.equal(tick.status, "queue_checked", JSON.stringify(tick));
   const snapshot = await store.readQueueCheck();
   assert.equal(snapshot.checkedAccounts, owners.size);
   const hour = Math.floor(tick.queue.checkedAtMs / 3600000) * 3600000;
+  if (fullHour) assert.equal(hour, expectedHour);
   // Supabase's disposable postgres login needs SET-only membership for these
   // synthetic connections. The earlier ACL checks run before this fixture.
   await admin.query("reset role");
@@ -200,15 +208,21 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
   const workers = await Promise.allSettled(Array.from({length: concurrency}, worker));
   if (profile) console.log("EO05_HOURLY_STAGE_TIMING", JSON.stringify({budgetMs, conflicts, attempts: Object.fromEntries(attempts),
     stages: Object.fromEntries(Object.entries(stages).map(([name, values]) => [name, durationSummary(values)]))}));
-  const rows = (await admin.query("select provider,status,count(*)::int n from operations.refresh_runs group by provider,status")).rows;
-  const fullyCompleted = (await admin.query("select count(*)::int n from (select workspace_id from operations.refresh_runs where status='completed' group by workspace_id having count(*)=6) x")).rows[0].n;
+  const cutoff = new Date(hour + 3600000);
+  const rows = (await admin.query(`select provider,
+    case when status='completed' and finished_at >= $1::timestamptz then 'completed_after_cutoff' else status end as status,
+    count(*)::int n from operations.refresh_runs group by 1,2`, [cutoff])).rows;
+  const fullyCompleted = (await admin.query(`select count(*)::int n from (
+    select workspace_id from operations.refresh_runs where status='completed' and finished_at < $1::timestamptz
+    group by workspace_id having count(*)=6) x`, [cutoff])).rows[0].n;
   const counts = Object.fromEntries(providers.map(provider => {
     const completed = rows.find(row => row.provider === provider && row.status === "completed")?.n ?? 0;
     const held = outcomes.get(provider + ":awaiting_dataset") ?? 0;
     const running = rows.find(row => row.provider === provider && row.status === "running")?.n ?? 0;
-    return [provider, {completed, held, unconfirmed: running - held, notStarted: storeCount * 2 - rows.filter(row => row.provider === provider).reduce((sum, row) => sum + row.n, 0)}];
+    const completedAfterCutoff = rows.find(row => row.provider === provider && row.status === "completed_after_cutoff")?.n ?? 0;
+    return [provider, {completed, completedAfterCutoff, held, unconfirmed: running - held, notStarted: storeCount * 2 - rows.filter(row => row.provider === provider).reduce((sum, row) => sum + row.n, 0)}];
   }));
-  console.log("EO05_HOURLY_CAPACITY_RESULT", JSON.stringify({storeCount, concurrency, fullyCompleted, counts, elapsedMs: Math.round(performance.now() - start), unexpected,
+  console.log("EO05_HOURLY_CAPACITY_RESULT", JSON.stringify({storeCount, concurrency, fullyCompleted, counts, hourStart: new Date(hour), cutoff, elapsedMs: Math.round(performance.now() - start), unexpected,
     workerErrors: workers.filter(w => w.status === "rejected").map(w => w.reason.code ?? w.reason.message), syntheticProviderIO: true, hosted: false}));
   assert.ok(workers.every(w => w.status === "fulfilled"));
   assert.equal(unexpected, undefined);

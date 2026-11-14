@@ -162,7 +162,7 @@ concurrency:
 jobs:
   isolated-replay:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 150
     steps:
       - name: Checkout exact commit
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -192,7 +192,7 @@ jobs:
           pnpm dlx supabase@2.121.0 init --workdir "$RUNNER_TEMP/f01b-full"
           pnpm dlx supabase@2.121.0 db start --workdir "$RUNNER_TEMP/f01b-full"
       - name: Full clean replay and final schema comparison
-        run: node tools/f01-database-replay.mjs full --hourly-capacity --short-hourly-profile
+        run: node tools/f01-database-replay.mjs full --hourly-capacity --full-hour
       - name: Clean second isolated database
         if: always()
         run: |

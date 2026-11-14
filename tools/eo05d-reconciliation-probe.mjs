@@ -525,7 +525,11 @@ export async function reconciliationProbe(client, {ownerFixture, connection}) {
         }};
         const revisionBeforeFinish = (await client.query("select revision from operations.refresh_control where singleton")).rows[0].revision;
         let completed;
-        try { completed = await reconcileStoredDatasetSources({...options,database:completingDatabase}); }
+        try {
+          if (recoverAtBoundary) {
+            await assert.rejects(reconcileStoredDatasetSources({...options,database:completingDatabase}), /FINISH_UNCONFIRMED/);
+          } else completed = await reconcileStoredDatasetSources({...options,database:completingDatabase});
+        }
         finally { await transport.close(); }
         if (provider === "meta") {
           assert.equal(completed.status, "held");
@@ -538,11 +542,10 @@ export async function reconciliationProbe(client, {ownerFixture, connection}) {
           await client.query("release savepoint isolated_meta_day");
           continue;
         }
-        assert.equal(completed.consumerReceipt, true);
         if (recoverAtBoundary) {
-          assert.equal(completed.jobCompleted, false);
+          assert.ok(finishArgs);
           const hour = Math.floor(Date.now()/3600000)*3600000;
-          await client.query("update operations.refresh_control set bounds=$1 where singleton",
+          await client.query("update operations.refresh_control set bounds=$1,budget=coalesce(budget,'{}'::jsonb) where singleton",
             [{maxClaims:20,maxCandidates:20,maxAdmissions:1,maxWorkspaces:20}]);
           await client.query("update operations.refresh_work_bindings set deadline_at_ms=$2,partition_id=$3 where fence=$1",
             [fence,hour-1,"hourly:"+(hour-3600000)]);
@@ -567,6 +570,7 @@ export async function reconciliationProbe(client, {ownerFixture, connection}) {
           console.log("EO05_HOURLY_HANDOFF valid=closed missing=retained mismatched=retained repeat=zero late=true");
           continue;
         }
+        assert.equal(completed.consumerReceipt, true);
         assert.equal(completed.jobCompleted, true);
         assert.equal(await jobStatus(), "completed");
         const revisionAfterFinish = (await client.query("select revision from operations.refresh_control where singleton")).rows[0].revision;

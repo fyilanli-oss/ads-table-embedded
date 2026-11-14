@@ -4,7 +4,7 @@ import {readFileSync} from "node:fs";
 import {dispatchRefreshPreflight} from "../app/lib/refresh/preflight-bridge.server.js";
 import {planRefreshAdmissions,planRefreshPreflightAdmissions} from "../app/lib/refresh/admission-policy.server.js";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
-import {dispatchHourlyRefresh} from "../app/lib/refresh/scheduled-queue-check.server.js";
+import {createHourlyRefreshCoordinator, dispatchHourlyRefresh} from "../app/lib/refresh/scheduled-queue-check.server.js";
 
 function fixture() {
   const vector={requests:10,dbWrites:10,connections:10,rows:100,bytes:10000};
@@ -71,6 +71,33 @@ test("native reservation precedes mandatory fresh billing and bounded worker; no
   assert.equal(r.status,"awaiting_dataset");assert.equal(f.commits(),1);assert.equal(f.checks(),1);assert.equal(f.calls(),1);
   assert.equal(r.reservationRetained,true);assert.equal(r.claim.id.length,64);
   assert.deepEqual(f.stages,["checking_authority","request_intent","response_received","ready_for_dataset"]);
+});
+
+test("one hourly coordinator serializes reservation while workers overlap", async () => {
+  const coordinator = createHourlyRefreshCoordinator();
+  const now = Date.parse("2026-11-02T14:15:00Z");
+  let active = 0, peak = 0, pages = 0;
+  let releasePages;
+  const bothPages = new Promise(resolve => {releasePages = resolve;});
+  const results = await Promise.all([fixture(), fixture()].map(f => {
+    Object.assign(f.source, {timezone:"UTC", eligibleFromMs:0});
+    f.args.now = () => now;
+    f.plan.limits.deadlineAt = now + 5000;
+    f.args.store.readHourlyPreflightSnapshot = async () => {
+      peak = Math.max(peak, ++active);
+      await new Promise(resolve => setImmediate(resolve));
+      return {...f.snapshot, completedHourlyDays:[]};
+    };
+    f.args.store.commitPreflight = async () => {active--; return true;};
+    f.args.readPage = async () => {
+      if (++pages === 2) releasePages();
+      await bothPages;
+      return {kind:"complete",payload:{}};
+    };
+    return coordinator({store:f.args.store, work:f.args});
+  }));
+  assert.equal(peak, 1);
+  assert.deepEqual(results.map(r => r.status), ["awaiting_dataset","awaiting_dataset"]);
 });
 
 test("missing configuration, missing plan, invalid bounds, conflicts and unknown commits never execute or retry",async()=>{

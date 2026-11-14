@@ -11,7 +11,7 @@ import {storeMaturityConfiguration, recordMaturityDecision, inspectMaturityDecis
 import {maturityObservationFixture} from "../tests/fixtures/maturity-fixture.js";
 import {createScheduledDatasetPostgresClient} from "../app/lib/database/dataset-postgres.server.js";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
-import {dispatchHourlyRefresh, runScheduledRefreshCheck} from "../app/lib/refresh/scheduled-queue-check.server.js";
+import {createHourlyRefreshCoordinator, runScheduledRefreshCheck} from "../app/lib/refresh/scheduled-queue-check.server.js";
 
 async function profileHourlyQueue(client, hour) {
   const legacy = readFileSync(new URL("../supabase/migrations/20261020131343_eo05a_refresh_preflight_bridge.sql", import.meta.url), "utf8").replaceAll("\r\n", "\n");
@@ -113,6 +113,7 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
   const stages = Object.fromEntries(["queueRead", "plan", "reservation", "workerChecks", "sourcePreparation", "datasetReads", "write", "readback", "finish"].map(name => [name, []]));
   const attempts = new Map();
   const outcomes = new Map();
+  const dispatchHourlyRefresh = createHourlyRefreshCoordinator();
   let unexpected;
   async function worker() {
     const client = new pg.Client({...connection, statement_timeout: 120_000});

@@ -119,16 +119,28 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
   }
   const start = performance.now();
   const profile = process.argv.includes("--short-hourly-profile");
+  const profileWrites = process.argv.includes("--hourly-write-timing");
+  if (profileWrites) {
+    assert.ok(profile && connection.host === "127.0.0.1");
+    await installReconciliationTiming(admin, {includeScheduledLocks:true});
+  }
   const budgetMs = profile ? 180_000 : 3_600_000;
   const stages = Object.fromEntries(["queueRead", "plan", "reservation", "workerChecks", "sourcePreparation", "datasetReads", "write", "readback", "finish"].map(name => [name, []]));
   const attempts = new Map();
   const conflicts = {finishObserved: 0, noFinishObserved: 0};
   let finishedWrites = 0;
   const outcomes = new Map();
+  const writeProfiles = new Map();
   const dispatchHourlyRefresh = createHourlyRefreshCoordinator();
   let unexpected;
   async function worker() {
     const client = new pg.Client({...connection, statement_timeout: 120_000});
+    let writeNotices;
+    if (profileWrites) client.on("notice", ({message}) => {
+      for (const prefix of ["EO05D_SQL_PROFILE ", "EO05D_SCHEDULED_LOCK_PROFILE "]) {
+        if (writeNotices && message.startsWith(prefix)) writeNotices.set(prefix.trim(), JSON.parse(message.slice(prefix.length)));
+      }
+    });
     await client.connect();
     try {
       let snapshotFinished, finishesAtRead;
@@ -186,7 +198,17 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
                 const stage = sql === SCHEDULED_DATASET_RECONCILE_SQL ? "write"
                   : sql === DATASET_RECONCILE_READ_SQL ? "readback"
                   : sql === SCHEDULED_DATASET_FINISH_SQL ? "finish" : "datasetReads";
-                const response = await timed(stage, () => client.query(sql, args));
+                const capture = profileWrites && stage === "write";
+                if (capture) writeNotices = new Map();
+                let response;
+                try {
+                  response = await timed(stage, () => client.query(sql, args));
+                  if (capture && response.rows[0]?.result?.status === "consumed") {
+                    const samples = writeProfiles.get(claim.provider) ?? [];
+                    samples.push(writeNotices);
+                    writeProfiles.set(claim.provider, samples);
+                  }
+                } finally {writeNotices = undefined;}
                 if (stage === "finish" && response.rows[0]?.result === true) finishedWrites++;
                 return response;
               }
@@ -208,6 +230,24 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
     } finally {await client.end();}
   }
   const workers = await Promise.allSettled(Array.from({length: concurrency}, worker));
+  if (profileWrites) {
+    const writeCount = [...writeProfiles.values()].reduce((total, samples) => total + samples.length, 0);
+    assert.equal(writeCount, stages.write.length);
+    assert.ok(writeCount > 0);
+    for (const [provider, samples] of writeProfiles) {
+      const timings = [
+        ["EO05D_SQL_PROFILE", ["requestAndRevision", "sourceValidation", "existingRows", "rowSourceValidation",
+          "rowShapeDigestAndLookup", "rowMutation", "transactionalRowReadback", "finalReceipt"]],
+        ["EO05D_SCHEDULED_LOCK_PROFILE", ["scheduledControlLock", "reconciliationControlLock", "workspaceLock"]],
+      ];
+      const stages = Object.fromEntries(timings.flatMap(([key, names]) => names.map((name, index) => {
+        const values = samples.map(sample => sample.get(key)?.[index]);
+        assert.ok(values.every(value => Number.isFinite(value) && value >= 0), name);
+        return [name, durationSummary(values)];
+      })));
+      console.log("EO05_HOURLY_SQL_WRITE_TIMING", JSON.stringify({provider, samples:samples.length, stages}));
+    }
+  }
   if (profile) console.log("EO05_HOURLY_STAGE_TIMING", JSON.stringify({budgetMs, conflicts, attempts: Object.fromEntries(attempts),
     stages: Object.fromEntries(Object.entries(stages).map(([name, values]) => [name, durationSummary(values)]))}));
   const cutoff = new Date(hour + 3600000);
@@ -509,7 +549,7 @@ export async function reconciliationProbe(client, {ownerFixture, connection}) {
 }
 
 // Instrument a copy of the function in the disposable CI database only.
-export async function installReconciliationTiming(client) {
+export async function installReconciliationTiming(client, {includeScheduledLocks = false} = {}) {
   const sql = readFileSync(new URL("../supabase/migrations/20261113080017_eo05d_daily_write_capacity.sql", import.meta.url), "utf8").replaceAll("\r\n", "\n");
   const definition = sql.match(/create or replace function analytics\._commit_dataset_reconciliation\([\s\S]+?end \$fn\$;/)?.[0];
   assert.ok(definition);
@@ -541,6 +581,28 @@ export async function installReconciliationTiming(client) {
   }
   await client.query("set role adstable_owner");
   await client.query(instrumented);
+  if (includeScheduledLocks) {
+    const inner = sql.match(/create or replace function analytics\.commit_dataset_reconciliation\([\s\S]+?end \$fn\$;/)?.[0];
+    const scheduled = sql.match(/create or replace function analytics\.commit_scheduled_dataset_reconciliation\([\s\S]+?end \$fn\$;/)?.[0];
+    assert.ok(inner && scheduled);
+    const control = " perform 1 from operations.refresh_control where singleton for share;";
+    const instrumentedInner = inner
+      .replace("declare r jsonb", "declare profile_start timestamptz := clock_timestamp(); profile_control timestamptz; r jsonb")
+      .replace(control, control + "\n profile_control:=clock_timestamp();")
+      .replace(" perform evidence.assert_source_owner(o);", ` perform set_config('adstable.probe_inner_lock_times',
+        jsonb_build_array(extract(epoch from profile_control-profile_start)*1000,
+          extract(epoch from clock_timestamp()-profile_control)*1000)::text,true);
+ perform evidence.assert_source_owner(o);`);
+    const instrumentedScheduled = scheduled
+      .replace("declare\n", "declare\n  profile_start timestamptz := clock_timestamp(); profile_control timestamptz;\n")
+      .replace(control, control + "\n  profile_control:=clock_timestamp();")
+      .replace("  receipt:=analytics.commit_dataset_reconciliation(o,p,c,d);", `  receipt:=analytics.commit_dataset_reconciliation(o,p,c,d);
+  raise notice 'EO05D_SCHEDULED_LOCK_PROFILE %',
+    jsonb_build_array(extract(epoch from profile_control-profile_start)*1000) ||
+      current_setting('adstable.probe_inner_lock_times')::jsonb;`);
+    await client.query(instrumentedInner);
+    await client.query(instrumentedScheduled);
+  }
 }
 
 export async function reconciliationCapacityProbe(client, {ownerFixture, connection, timingOnly}) {

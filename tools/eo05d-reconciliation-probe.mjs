@@ -240,8 +240,9 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
   const workers = await Promise.allSettled(Array.from({length: concurrency}, worker));
   if (profileWrites) {
     const writeCount = [...writeProfiles.values()].reduce((total, samples) => total + samples.length, 0);
-    assert.equal(writeCount, stages.write.length);
     assert.ok(writeCount > 0);
+    console.log("EO05_HOURLY_WRITE_RECEIPTS", JSON.stringify({reservation, attempts:stages.write.length,
+      consumed:writeCount, withoutConsumedReceipt:stages.write.length-writeCount}));
     for (const [provider, samples] of writeProfiles) {
       const timings = [
         ["EO05D_SQL_PROFILE", ["requestAndRevision", "sourceValidation", "existingRows", "rowSourceValidation",
@@ -279,6 +280,10 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
     workerErrors: workers.filter(w => w.status === "rejected").map(w => w.reason.code ?? w.reason.message), syntheticProviderIO: true, hosted: false}));
   assert.ok(workers.every(w => w.status === "fulfilled"));
   assert.equal(unexpected, undefined);
+  if (profileWrites) {
+    assert.equal([...writeProfiles.values()].reduce((total, samples) => total + samples.length, 0),
+      stages.write.length, "every write attempt must have a consumed receipt in a clean run");
+  }
 }
 
 async function rejected(client, action) {

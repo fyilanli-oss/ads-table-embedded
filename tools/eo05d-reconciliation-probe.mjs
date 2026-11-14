@@ -260,6 +260,15 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
   if (profile) console.log("EO05_HOURLY_STAGE_TIMING", JSON.stringify({reservation, budgetMs, conflicts, acceptedAfterFinish, attempts: Object.fromEntries(attempts),
     stages: Object.fromEntries(Object.entries(stages).map(([name, values]) => [name, durationSummary(values)]))}));
   const cutoff = new Date(hour + 3600000);
+  if (fullHour && reservation === "current" && Date.now() >= cutoff.getTime()) {
+    const before = (await admin.query("select count(*)::int n from operations.refresh_runs where status='completed' and finished_at<$1::timestamptz", [cutoff])).rows[0].n;
+    const recovered = await store.recoverHourlyRefreshReceipts();
+    const reviewed = await store.reviewInterruptedWork();
+    const after = (await admin.query("select count(*)::int n from operations.refresh_runs where status='completed' and finished_at<$1::timestamptz", [cutoff])).rows[0].n;
+    assert.equal(after, before, "handoff cannot add completions to the previous hour");
+    assert.equal(await store.recoverHourlyRefreshReceipts(), 0);
+    console.log("EO05_HOURLY_HANDOFF_RESULT", JSON.stringify({recovered, reviewed, completedBeforeCutoff:after}));
+  }
   const rows = (await admin.query(`select provider,
     case when status='completed' and finished_at >= $1::timestamptz then 'completed_after_cutoff' else status end as status,
     count(*)::int n from operations.refresh_runs group by 1,2`, [cutoff])).rows;
@@ -486,6 +495,7 @@ export async function reconciliationProbe(client, {ownerFixture, connection}) {
         await client.query(`insert into operations.refresh_work_progress(workspace_id,install_generation,provider,account_id,job_id,fence,stage,from_date,to_date)
           values ($1,$2,$3,$4,$5,$6,'ready_for_dataset',$7,$7)`, [...args,job,fence,day]);
         const jobStatus = async () => (await client.query("select status from operations.refresh_runs where fence=$1", [fence])).rows[0].status;
+        const recoverAtBoundary = provider === "google_ads" && day === "2026-11-02";
         let transportSequence = 0;
         const transport = createScheduledDatasetPostgresClient({deadlineAt: input.limits.deadlineAt,
           environment: {ADSTABLE_REFRESH_DATASET_DATABASE_URL: "postgresql://" + scheduledRole + ".podpwkrpmjiksskxhwsu:" + "x".repeat(32) + "@aws-1-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require",
@@ -509,6 +519,7 @@ export async function reconciliationProbe(client, {ownerFixture, connection}) {
             assert.equal(await jobStatus(), "running");
             assert.equal((await asScheduledRunner(sql,[...parameters.slice(0,4),"f".repeat(64)])).rows[0].result,false);
             assert.equal(await jobStatus(), "running");
+            if (recoverAtBoundary) return {rows:[{result:false}]};
           }
           return transport.query(sql,parameters);
         }};
@@ -528,6 +539,34 @@ export async function reconciliationProbe(client, {ownerFixture, connection}) {
           continue;
         }
         assert.equal(completed.consumerReceipt, true);
+        if (recoverAtBoundary) {
+          assert.equal(completed.jobCompleted, false);
+          const hour = Math.floor(Date.now()/3600000)*3600000;
+          await client.query("update operations.refresh_control set bounds=$1 where singleton",
+            [{maxClaims:20,maxCandidates:20,maxAdmissions:1,maxWorkspaces:20}]);
+          await client.query("update operations.refresh_work_bindings set deadline_at_ms=$2,partition_id=$3 where fence=$1",
+            [fence,hour-1,"hourly:"+(hour-3600000)]);
+          const recover = async () => (await client.query("select operations.recover_hourly_refresh_receipts() n")).rows[0].n;
+          await client.query("savepoint receipt_mismatch");
+          await client.query("update evidence.source_batches set manifest=jsonb_set(manifest,'{scheduledDatasetClaim,digest}',to_jsonb($2::text)) where authority=$1::jsonb and manifest ? 'datasetReconciliation'",
+            [JSON.stringify(scheduledOwner),"f".repeat(64)]);
+          assert.equal(await recover(),0);
+          assert.equal(await jobStatus(),"running");
+          await client.query("rollback to savepoint receipt_mismatch");
+          await client.query("release savepoint receipt_mismatch");
+          await client.query("savepoint receipt_missing");
+          await client.query("update evidence.source_batches set manifest=manifest-'scheduledDatasetClaim' where authority=$1::jsonb",[JSON.stringify(scheduledOwner)]);
+          assert.equal(await recover(),0);
+          assert.equal(await jobStatus(),"running");
+          await client.query("rollback to savepoint receipt_missing");
+          await client.query("release savepoint receipt_missing");
+          assert.equal(await recover(),1);
+          assert.equal(await recover(),0);
+          assert.equal(await jobStatus(),"completed");
+          assert.equal((await client.query("select finished_at >= to_timestamp($2::double precision/1000) late from operations.refresh_runs where fence=$1",[fence,hour])).rows[0].late,true);
+          console.log("EO05_HOURLY_HANDOFF valid=closed missing=retained mismatched=retained repeat=zero late=true");
+          continue;
+        }
         assert.equal(completed.jobCompleted, true);
         assert.equal(await jobStatus(), "completed");
         const revisionAfterFinish = (await client.query("select revision from operations.refresh_control where singleton")).rows[0].revision;

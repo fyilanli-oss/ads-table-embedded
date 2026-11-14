@@ -26,6 +26,9 @@ export function createRefreshWorkRepository(database) {
     async reviewInterruptedWork() {
       return result("select operations.review_refresh_interrupted_work() as result");
     },
+    async recoverHourlyRefreshReceipts() {
+      return result("select operations.recover_hourly_refresh_receipts() as result");
+    },
     async checkScheduledQueue({generation}) {
       if(!refreshTickGenerationValid(generation)) throw new Error("REFRESH_WORK_INPUT_INVALID");
       return result("select operations.check_refresh_queue_on_tick($1::uuid) as result",[generation]);

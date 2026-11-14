@@ -23,6 +23,10 @@ export async function runScheduledRefreshCheck({store,generation,work}) {
   const queue={generation:receipt.generation,sequence:receipt.sequence,queueRevision:receipt.queueRevision,checkedAtMs:receipt.checkedAtMs};
   let interruptions;
   try {
+    if (work?.hourly === true) {
+      const recovered = await store.recoverHourlyRefreshReceipts();
+      if (!Number.isSafeInteger(recovered) || recovered < 0) throw Error();
+    }
     interruptions=await store.reviewInterruptedWork();
     if(interruptions?.status!=="not_configured" && (interruptions?.status!=="reviewed"
       || ![interruptions.stopped,interruptions.uncertain].every(n=>Number.isSafeInteger(n)&&n>=0))) throw new Error();

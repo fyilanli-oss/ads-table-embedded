@@ -458,7 +458,7 @@
       "docs/RAW_SOURCE_CONSTITUTION.md"
     ],
     "sha256": {
-      ".github/workflows/database-integrity.yml": "a5274090052682c4c41062c2145c1eab53cd54a4239dbc5c38aab31cc19b9c29",
+      ".github/workflows/database-integrity.yml": "1484f6f5137f6dc99a8dc839001702e47da743569f0c9368f68b0cfa17e7b9ce",
       ".github/workflows/repository-governance.yml": "d0c6feecc08f145588c72fac541040ca2e14949af7785961e5df27c01628b852",
       ".github/workflows/shopify-app-deploy.yml": "ef078addb630fdb624189c0f12625524a7e3dcaf708f2059f95e7a2884cf5d24",
       "AGENTS.md": "01ef3b2e4fd58cb77b30b030a87562b0436986e200bc342f77f929b34eb19d51",
@@ -504,7 +504,7 @@
       "app/lib/database/provider-account-authority-repository.server.js": "f08167c2cbc131b64cde7e58695a363cb02d7a864cd312f7e398b39b75dc9b7f",
       "app/lib/database/provider-connection-lifecycle-repository.server.js": "edcc6eb4a3fb0d9329b55ec9122a5ff1838103f8ec8e341fc2cef4951a382310",
       "app/lib/database/refresh-queue-postgres.server.js": "bbdd98410a5af2bcbded4eb5f396f01574d5609a03d82e39571561f1f9a7e0be",
-      "app/lib/database/refresh-work-repository.server.js": "97fcdc8b9f5157be8a9b5b4544fd51c5b80bbb257066610f93207688abcb7d3f",
+      "app/lib/database/refresh-work-repository.server.js": "8b17d83352ab49c4c3c7b31ff787e273d251e582c939efc8378152a7b47962b7",
       "app/lib/database/report-retention-policy.server.js": "369c5b51461e187dc606a5b4a49ef9e6fc2744f39f6f952276f99fda75d42f41",
       "app/lib/database/reporting-currency.server.js": "7595178b57397bab9e187341421489e84555e80af196d635992b9e7a3fabe640",
       "app/lib/database/runtime-postgres.server.js": "9c24879fd0d2f42c3f04bd2e1b60fabad40b24eb8b44d5cccce39217b76f3df1",
@@ -691,7 +691,7 @@
       "app/lib/refresh/quota-response-feedback.server.js": "5929583f6b1c1eb0d4e0d99c7060d635861a9a60d28468485c7a389853d5e3a8",
       "app/lib/refresh/quota-scope-resolver.server.js": "ff38b878371213d4ba5047b8bcd0005f75342e9c178281df72f85505fd13507f",
       "app/lib/refresh/quota-work-wait.server.js": "241ae261ce805bf76fe4c2f027969bbc67be6cf774f511201fb2381308f2cfcd",
-      "app/lib/refresh/scheduled-queue-check.server.js": "b49a4b3e70cf6a3d2f0564b0e9fd2a0fcef0c48690aac226dbc296e7d9bcfb95",
+      "app/lib/refresh/scheduled-queue-check.server.js": "76ae5b5ae539f392c0d29cad19c209c80f5cbf6ec0455c92849fd5a7caa327d8",
       "app/lib/refresh/setup-proof-review.server.js": "4f2c59b4b72c791b944c3bb040fa1531eae96b91ba78b49e92aef2c952aeae91",
       "app/lib/refresh/shared-quota.server.js": "105a4f5ed3413395701e7f0246557b53de984be0cd68ba43f2225eaf3389852d",
       "app/lib/refresh/shopify-admin-identity-quota.server.js": "84e33743b3f8b9a8fc7514ab418b3283746470ebb935ef1d566abad4d1655537",
@@ -792,7 +792,7 @@
       "contracts/a6-parent-package-analysis-design-closure-v1.json": "54b606afd64eefc65edb7c322de7649e9e550737619426f1ce774ede997a1f60",
       "contracts/a6-quality-and-assurance-gates-v1.json": "707c38761519d4ac5e17b7b3cd32ae30dcfc306f406baa6c4676f74c152af81e",
       "contracts/a6-tech-01-engineering-integrity-audit-v1.json": "ab5fa0d88157a5710630560c11a97089dfc4cc047a19ab7cb32bf94a40072949",
-      "contracts/a6-tech-01-f01-migration-lineage-v1.json": "3b4828278196f9a66df9f935441c8ac4befac4d164baab2cc34eca41e78dd2e1",
+      "contracts/a6-tech-01-f01-migration-lineage-v1.json": "0471ef6d98cfe574fe45a949689021359de77706ab0bbfffffead723ef961ef6",
       "contracts/a6-tech-01-f01c-scoped-recovery-v1.json": "05173e82d2576d81fe5d93f0edb3193c5e053db28416d9b0d128e08d6dea941f",
       "contracts/demo/eo05b-v1/golden.json": "08b58ade3ed14843f25f9453710d8f1d15c01810c00556ae38718751f034befc",
       "contracts/demo/eo05b-v1/rolling-2026-11-10.json": "a482b2d1e9faebc4d768c437378b05a85ec9433312e904f9900158f7e65f8bc2",
@@ -864,7 +864,7 @@
       "contracts/eo-05c-maturity-v1.json": "81132731eda010e9e675b30c736a29c6f776a9ed0e236cb38ab3a791a8ce2eaf",
       "contracts/eo-05d-reconciliation-v1.json": "6575f6f48b6c3cfd71eb3cd20325aeffd73ba2c09090d1d87a67dd7dee3ab478",
       "contracts/eo-05e-observability-v1.json": "3c3ee6073f1141973d5c08830765b13cb37d5a5e77250d3d4671af1e51c6838f",
-      "contracts/oauth/oauth-flow-constitution-v1.json": "2ef5fad20ac62a34def6b584ebdd3d45984500cd9cd30c0534a45d54093eb0f8",
+      "contracts/oauth/oauth-flow-constitution-v1.json": "05773af408c03c99be3b2bbf1a217d938fefcf63bde31678b77a0f69dd1192b2",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
       "contracts/repository-delivery-workflow-v1.json": "f214c83b6ec65b11fb9b974ae52ebbdf6ae7183bc69bc835320ec25619af4b7f",
       "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json": "18a54cf7d47cddc4b2dcac24320a0f27f3d1112264a023acc33152a80ae745c6",
@@ -978,7 +978,7 @@
       "supabase/migrations/20261110191004_eo05d_dataset_reconciliation.sql": "07492d30d61552e06749a3800e75ec35f10a39d1e475baba2220e656b504b0de",
       "supabase/migrations/20261110202849_eo05e_operational_observability.sql": "01b38ad0d70f63b6151e7edfb0544ce058e89150d5084faa98bba53e048c407e",
       "supabase/migrations/20261111131821_eo05_refresh_fenced_dataset_commit.sql": "08408fb499d2b92b85011b2604afa4d94a9744e0ad9ad86703c94252ba977eeb",
-      "supabase/migrations/20261113080017_eo05d_daily_write_capacity.sql": "2f48de8445a714812a70a47427c6a1c8004966b7d0c692f75f6f84fdb798d640",
+      "supabase/migrations/20261113080017_eo05d_daily_write_capacity.sql": "fb4fcd6a5bf0e5d916c5cbd238bd0cc5f33ce26a3af68c35a3053a9d349c4258",
       "tests/a6-docs-01-text-integrity.test.js": "7fc1daa89371488ea5c1a74ed9eae65b0de5d6b4bfa08887dc5a62ffc3357d24",
       "tests/a6-docs-01-turkish-standardization.test.js": "5dcaa387ca679f75339510ca9d9856fcfb98eadf2510e31f94afd0599c9f870d",
       "tests/a6-eo-07-funnel-visualization-reference.test.js": "9b049ced97ee895f82c44338b3c13389d4d4c99dbf998402a9963e009d496c0b",
@@ -1282,7 +1282,7 @@
       "tools/eo05b-report-retention-probe.mjs": "ed1015ae7b31557a03a575d4786125cdff3f4f7c63524485455a5dbdeda676a8",
       "tools/eo05b-source-dataset-binding-probe.mjs": "deaf023ca21abf2c301e2424233a40f648101fd05013776b9e9c9c177072cadb",
       "tools/eo05c-maturity-probe.mjs": "e66c2379b2f6781bb4b1ac2207bfe73edeb9ce5c1c01cb8cc7bde06f69fe5b47",
-      "tools/eo05d-reconciliation-probe.mjs": "c1fb5d5c03f5f6af398bbfb86e5aa0e4ea7f63dc9dcfaea917f8df1260941f60",
+      "tools/eo05d-reconciliation-probe.mjs": "5cc52de51ce1e7c530b26d71804ca7bb0945ea3a6042f8193b2e5dcfbe6609b5",
       "tools/eo05e-observability-probe.mjs": "f9aad28c4b2c062915f18dc2d000680e33afe6ca8de9714f59cccb881a291273",
       "tools/f01-database-replay.mjs": "00d0888ff2e1c3284120bc1418d05131c49ebf65f925b3bf06aa0dea3ae702d0",
       "tools/f01-identity-oauth-rollout.mjs": "5894b9ae54363fcf31372ed0a1abf39d3c0e1dfea428190232a0420b0b11f787",
@@ -2397,7 +2397,7 @@
       "date": "2026-11-13",
       "owner_approval": {
         "explicit": true,
-        "source": "Onaylıyorum devam edelim Codex — 500 ürünlük günlük yazım ve 500 mağazalık dar test. Explicit follow-up approval for bounded SQL batching and the same 500-workspace test. Follow-up approved workspace-scoped serialization and isolated concurrency validation. Follow-up approved the measured 500-workspace parallel write screen in isolated CI. Follow-up explicitly approved a short isolated stage timing run without runtime changes. Follow-up explicitly approved profiling the SQL stages only in isolated CI. Follow-up approved reuse of identical day/source checks while retaining per-row validation, and comparison in isolated CI. Follow-up approved an isolated test-only three-provider, two-day scheduled handoff without live scheduler or evidence changes. Owner explicitly approved hourly tracking of today and yesterday with verified completion, code and isolated tests only. Follow-up approved the isolated hourly tick rehearsal with 500 stores and three synthetic providers. Follow-up approved short hourly stage timing in isolated CI. Follow-up approved isolated SQL queue profiling only. Owner approved batched authority snapshot checks, exact parity and isolated performance measurement. Owner approved repeating the isolated eight-worker short profile after bulk queue reads. Owner approved a single hourly admission coordinator and eight parallel workers in isolated replay. Owner approved diagnosing admission conflicts from confirmed completion in isolated replay. Owner approved coordinating verified finish with hourly admission and rerunning isolated timing. Owner approved separating hourly planning from serialized writes and repeating the isolated short run. Owner approved the full clock-aligned isolated 500-store hourly rehearsal. Owner approved continuing isolated hourly profiling and AdsTable-side optimization, including normal hour rollover handling. The same isolated optimization scope includes removing repeated queue sorts when workspace order has not changed. Owner approved profiling SQL write phases and lock wait in the same isolated hourly rehearsal. Owner explicitly approved keeping the prepared hourly reservation across unrelated verified completion when current capacity and binding rechecks allow it, with isolated verification. Owner approved a paired full-hour isolated rehearsal comparing the previous and current reservation function with the same workload and timing instrumentation."
+        "source": "Onaylıyorum devam edelim Codex — 500 ürünlük günlük yazım ve 500 mağazalık dar test. Explicit follow-up approval for bounded SQL batching and the same 500-workspace test. Follow-up approved workspace-scoped serialization and isolated concurrency validation. Follow-up approved the measured 500-workspace parallel write screen in isolated CI. Follow-up explicitly approved a short isolated stage timing run without runtime changes. Follow-up explicitly approved profiling the SQL stages only in isolated CI. Follow-up approved reuse of identical day/source checks while retaining per-row validation, and comparison in isolated CI. Follow-up approved an isolated test-only three-provider, two-day scheduled handoff without live scheduler or evidence changes. Owner explicitly approved hourly tracking of today and yesterday with verified completion, code and isolated tests only. Follow-up approved the isolated hourly tick rehearsal with 500 stores and three synthetic providers. Follow-up approved short hourly stage timing in isolated CI. Follow-up approved isolated SQL queue profiling only. Owner approved batched authority snapshot checks, exact parity and isolated performance measurement. Owner approved repeating the isolated eight-worker short profile after bulk queue reads. Owner approved a single hourly admission coordinator and eight parallel workers in isolated replay. Owner approved diagnosing admission conflicts from confirmed completion in isolated replay. Owner approved coordinating verified finish with hourly admission and rerunning isolated timing. Owner approved separating hourly planning from serialized writes and repeating the isolated short run. Owner approved the full clock-aligned isolated 500-store hourly rehearsal. Owner approved continuing isolated hourly profiling and AdsTable-side optimization, including normal hour rollover handling. The same isolated optimization scope includes removing repeated queue sorts when workspace order has not changed. Owner approved profiling SQL write phases and lock wait in the same isolated hourly rehearsal. Owner explicitly approved keeping the prepared hourly reservation across unrelated verified completion when current capacity and binding rechecks allow it, with isolated verification. Owner approved a paired full-hour isolated rehearsal comparing the previous and current reservation function with the same workload and timing instrumentation. Owner explicitly approved hourly handoff by verifying already committed receipts without rewriting source or dataset facts, with isolated cutoff evidence."
       },
       "rationale": "Raise bounded daily reconciliation limits for the 500-product case and verify full-day physical writes and corrections in isolated replay.",
       "scope": {

@@ -478,5 +478,62 @@ revoke all on function operations.commit_hourly_refresh_preflight(bigint,bigint,
 grant execute on function operations.commit_hourly_refresh_preflight(bigint,bigint,jsonb,jsonb,jsonb,text,bigint)
  to adstable_refresh_coordinator;
 
+-- Reconcile expired hourly claims before the interruption detector fences them.
+-- Recovery reads the existing receipt and facts and only writes a completion.
+create function operations.recover_hourly_refresh_receipts() returns integer
+language plpgsql security definer set search_path='' as $fn$
+declare item record; candidate record; receipt jsonb; recovered integer:=0; cap integer; seen integer:=0;
+ cutoff bigint:=floor(extract(epoch from statement_timestamp())/3600)::bigint*3600000;
+begin
+ select (bounds->>'maxClaims')::integer into cap from operations.refresh_control where singleton for update;
+ if cap is null then return 0;end if;
+ if cap<1 then raise exception 'REFRESH_REVIEW_BOUNDS_INVALID';end if;
+ for item in
+  select r.*, b.source, b.from_date, b.to_date
+  from operations.refresh_runs r join operations.refresh_work_bindings b
+    using(workspace_id,install_generation,provider,account_id,job_id,fence)
+  join operations.refresh_work_progress p using(workspace_id,install_generation,provider,account_id,job_id,fence)
+  where r.status='running' and b.deadline_at_ms<=cutoff and b.partition_id~'^hourly:[0-9]{1,16}$'
+    and case when b.partition_id~'^hourly:[0-9]{1,16}$' then substring(b.partition_id from 8)::bigint<cutoff else false end
+    and p.stage='ready_for_dataset' and p.from_date=b.from_date and p.to_date=b.to_date
+    and not operations.refresh_account_is_held(r.workspace_id,r.install_generation,r.provider,r.account_id)
+  order by r.fence
+ loop
+  seen:=seen+1;
+  if seen>cap then raise exception 'REFRESH_REVIEW_OVER_BOUND';end if;
+  begin
+   select x.authority, x.manifest->'datasetReconciliation'->>'operationId' as operation,
+     x.manifest->'scheduledDatasetClaim'->>'digest' as digest
+   into candidate
+   from evidence.source_batches x
+   where x.workspace_id=item.workspace_id and x.installation_generation=item.install_generation
+     and x.primary_source=item.provider and x.authority->>'accountId'=item.account_id
+     and x.authority->>'connectionId'=item.source->>'connectionId'
+     and x.authority->>'connectionVersion'=item.source->>'connectionVersion'
+     and x.authority->>'selectionEpoch' is not distinct from item.source->>'selectionId'
+     and x.handoff_state='consumed' and x.manifest->'scheduledDatasetClaim'->>'job'=item.job_id
+     and x.manifest->'scheduledDatasetClaim'->>'fence'=item.fence::text
+     and x.manifest->'datasetConsumerReceipt'->>'anchorBatchId'=x.id::text
+   limit 1;
+   if not found then continue;end if;
+   receipt:=analytics.inspect_dataset_reconciliation(candidate.authority,candidate.operation::uuid);
+   if receipt->>'status' is distinct from 'consumed' or receipt->>'digest' is distinct from candidate.digest
+    or receipt->>'businessDate' is distinct from item.from_date::text or item.from_date<>item.to_date
+    or receipt->'consumerReceipt' is distinct from 'true'::jsonb
+    or receipt->'checkpointAdvanced' is distinct from 'true'::jsonb
+    or receipt->>'comparison' is distinct from 'matched' then continue;end if;
+   if operations.finish_refresh_work_before_stops(item.workspace_id,item.install_generation,item.provider,item.account_id,
+    item.job_id,item.fence,'completed') then recovered:=recovered+1;end if;
+  exception when raise_exception then
+   if sqlerrm not in ('SOURCE_OWNER_CHANGED','SOURCE_PROVIDER_CHANGED','DATASET_RECONCILIATION_UNAVAILABLE',
+      'DATASET_RECONCILIATION_RECEIPT_INVALID','DATASET_RECONCILIATION_CONSUMPTION_INVALID') then raise;end if;
+  end;
+ end loop;
+ return recovered;
+end $fn$;
+revoke all on function operations.recover_hourly_refresh_receipts()
+ from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_queue_runner;
+grant execute on function operations.recover_hourly_refresh_receipts() to adstable_refresh_coordinator;
+
 reset role;
 commit;

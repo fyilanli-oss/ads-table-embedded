@@ -93,8 +93,10 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
   const profile = fullHour || shortProfile;
   const profileWrites = process.argv.includes("--hourly-write-timing");
   const reservation = process.argv.find(arg => arg.startsWith("--reservation="))?.split("=")[1] ?? "current";
-  const minimumRemainingMs = fullHour && reservation === "current" ? 25_000 : 0;
-  assert.ok(["baseline", "current"].includes(reservation) && !(fullHour && shortProfile));
+  const compareCutoff = process.argv.includes("--compare-cutoff");
+  const minimumRemainingMs = (fullHour || compareCutoff) && reservation !== "baseline" ? 25_000 : 0;
+  assert.ok(!compareCutoff || shortProfile);
+  assert.ok(["baseline", "current", "application"].includes(reservation) && !(fullHour && shortProfile));
   if (profileWrites) {
     assert.ok(profile && connection.host === "127.0.0.1");
     await installReconciliationTiming(admin, {includeScheduledLocks:true});
@@ -104,11 +106,18 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
     console.log("EO05_HOURLY_CAPACITY_START", JSON.stringify({startAt: new Date(expectedHour).toISOString()}));
     await delay(Math.max(0, expectedHour - Date.now()));
   }
+  if (compareCutoff && expectedHour - Date.now() < 210_000) {
+    await delay(Math.max(0, expectedHour - Date.now()));
+  }
   const tick = await runScheduledRefreshCheck({store, generation});
   assert.equal(tick.status, "queue_checked", JSON.stringify(tick));
   const snapshot = await store.readQueueCheck();
   assert.equal(snapshot.checkedAccounts, owners.size);
   const hour = Math.floor(tick.queue.checkedAtMs / 3600000) * 3600000;
+  if (compareCutoff) {
+    await admin.query("update operations.refresh_queue_accounts set first_due_hour_ms=$1,first_queued_at_ms=$1",
+      [hour - 3600000]);
+  }
   if (fullHour) assert.equal(hour, expectedHour);
   // Supabase's disposable postgres login needs SET-only membership for these
   // synthetic connections. The earlier ACL checks run before this fixture.
@@ -128,12 +137,17 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
   } finally {
     await admin.query("set role adstable_owner");
   }
+  if (reservation === "application") {
+    // Recreate the previous SQL permission in this disposable test database.
+    await admin.query("grant execute on function operations.commit_hourly_refresh_preflight(bigint,bigint,jsonb,jsonb,jsonb,text,bigint) to adstable_refresh_coordinator");
+  }
   if (process.argv.includes("--hourly-queue-profile")) {
     await profileHourlyQueue(admin, hour);
     return;
   }
   const start = performance.now();
   const budgetMs = shortProfile ? 180_000 : 3_600_000;
+  const comparisonCutoff = compareCutoff ? Math.min(Date.now() + budgetMs, hour + 3600000) : Infinity;
   const stages = Object.fromEntries(["queueRead", "plan", "reservation", "workerChecks", "sourcePreparation", "datasetReads", "write", "readback", "finish"].map(name => [name, []]));
   const attempts = new Map();
   const conflicts = {finishObserved: 0, noFinishObserved: 0};
@@ -173,9 +187,14 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
           if (sql.includes("commit_timed_hourly_refresh_preflight")) {
             if (profile) stages.plan.push(performance.now() - snapshotFinished);
             selectedJobId = JSON.parse(args[2]).claims.at(-1).id;
-            const response = await timed("reservation", () => reservation === "baseline"
-              ? client.query("select operations.commit_refresh_preflight_with_deadline($1::bigint,$2::bigint,$3::jsonb,$4::jsonb,$5::jsonb,$6::text,$7::bigint) as result", args.slice(0,7))
-              : client.query(sql, args));
+            const response = await timed("reservation", () => {
+              if (reservation === "current") return client.query(sql,args);
+              if (reservation === "application" && args[6] - Date.now() < args[7]) {
+                return {rows:[{result:"deferred_at_cutoff"}]};
+              }
+              const procedure = reservation === "baseline" ? "commit_refresh_preflight_with_deadline" : "commit_hourly_refresh_preflight";
+              return client.query(`select operations.${procedure}($1::bigint,$2::bigint,$3::jsonb,$4::jsonb,$5::jsonb,$6::text,$7::bigint) as result`, args.slice(0,7));
+            });
             if (profile && response.rows[0]?.result === false) {
               conflicts[finishedWrites > finishesAtRead ? "finishObserved" : "noFinishObserved"]++;
             }
@@ -193,7 +212,7 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
       while (!unexpected && performance.now() - start < budgetMs && Date.now() < hour + 3600000) {
         const result = await dispatchHourlyRefresh({store: coordinator, work: {
           now: Date.now,
-          buildWorkPlan: async () => ({cost, minimumJobMs: minimumRemainingMs || 1100, limits: {deadlineAt: Date.now() + 115000,
+          buildWorkPlan: async () => ({cost, minimumJobMs: minimumRemainingMs || 1100, limits: {deadlineAt: Math.min(Date.now() + 115000, comparisonCutoff),
             requestTimeoutMs: 1000, finishReserveMs: 100, maxRows: cost.rows, maxBytes: cost.bytes}}),
           entitlementVerifier: {verify: async () => ({status: "verified", receipt: {}}), isCurrent: async () => true},
           readPage: async () => ({kind: "complete", payload: {}}),
@@ -275,8 +294,8 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
   }
   if (profile) console.log("EO05_HOURLY_STAGE_TIMING", JSON.stringify({reservation, budgetMs, conflicts, acceptedAfterFinish, attempts: Object.fromEntries(attempts),
     stages: Object.fromEntries(Object.entries(stages).map(([name, values]) => [name, durationSummary(values)]))}));
-  const cutoff = new Date(hour + 3600000);
-  if (minimumRemainingMs && deferredAtCutoff.size && !unexpected) {
+  const cutoff = new Date(Math.min(hour + 3600000, comparisonCutoff));
+  if (fullHour && minimumRemainingMs && deferredAtCutoff.size && !unexpected) {
     await delay(Math.max(0, cutoff.getTime() - Date.now()));
   }
   if (minimumRemainingMs) {

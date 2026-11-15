@@ -166,9 +166,13 @@ function planAdmissions({state, candidates, budget, now, bounds}, preflight) {
   const pending = [...candidates];
   const admitted = [];
   const deferred = [];
+  let reorder = true;
   while (pending.length > 0) {
-    pending.sort((a, b) => compare(turns.get(a.workspaceId) ?? -1, turns.get(b.workspaceId) ?? -1)
-      || compare(a.queuedAt, b.queuedAt) || compare(a.workspaceId, b.workspaceId) || compare(a.id, b.id));
+    if (reorder) {
+      pending.sort((a, b) => compare(turns.get(a.workspaceId) ?? -1, turns.get(b.workspaceId) ?? -1)
+        || compare(a.queuedAt, b.queuedAt) || compare(a.workspaceId, b.workspaceId) || compare(a.id, b.id));
+      reorder = false;
+    }
     const job = pending.shift();
     let reason;
     if (!authorityAllows(job, preflight)) reason = "authority_required";
@@ -197,6 +201,7 @@ function planAdmissions({state, candidates, budget, now, bounds}, preflight) {
     nextState.claims.push(claim);
     admitted.push(structuredClone(claim));
     turns.set(job.workspaceId, nextState.nextTurn++);
+    reorder = true;
   }
   nextState.lastServed = [...turns].map(([workspaceId, turn]) => ({workspaceId, turn}));
   if (admitted.length > 0) {

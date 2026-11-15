@@ -1066,6 +1066,16 @@
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261113080017",
+      "name": "eo05d_daily_write_capacity",
+      "file": "supabase/migrations/20261113080017_eo05d_daily_write_capacity.sql",
+      "created_with": "supabase@2.121.0 migration new eo05d_daily_write_capacity",
+      "repository_sql_sha256": "c6e2a94cda710bfd35b1a555313dadda352f92a04a6b721a0040c5937b8604a8",
+      "applied": false,
+      "replay_scope": "isolated_rollback_only",
+      "live_apply_authorized": false
     }
   ]
 }

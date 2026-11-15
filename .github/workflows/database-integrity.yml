@@ -161,8 +161,13 @@ concurrency:
 
 jobs:
   isolated-replay:
+    name: ${{ matrix.reservation == 'current' && 'isolated-replay' || 'isolated-replay (baseline)' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        reservation: [baseline, current]
     steps:
       - name: Checkout exact commit
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -187,12 +192,19 @@ jobs:
         id: stop-staged
         run: pnpm dlx supabase@2.121.0 stop --no-backup --workdir "$RUNNER_TEMP/f01b-staged"
       - name: Start second empty local Supabase database
+        id: start-full
         run: |
           mkdir -p "$RUNNER_TEMP/f01b-full"
           pnpm dlx supabase@2.121.0 init --workdir "$RUNNER_TEMP/f01b-full"
           pnpm dlx supabase@2.121.0 db start --workdir "$RUNNER_TEMP/f01b-full"
       - name: Full clean replay and final schema comparison
-        run: node tools/f01-database-replay.mjs full
+        run: node tools/f01-database-replay.mjs full --hourly-capacity --hourly-write-timing ${{ matrix.reservation == 'current' && '--full-hour --compare-cutoff' || '--short-hourly-profile' }} --reservation=${{ matrix.reservation }}
+      - name: Compare the application cutoff on the same runner
+        if: "!cancelled() && matrix.reservation == 'current' && steps.start-full.outcome == 'success'"
+        run: |
+          pnpm dlx supabase@2.121.0 stop --no-backup --workdir "$RUNNER_TEMP/f01b-full"
+          pnpm dlx supabase@2.121.0 db start --workdir "$RUNNER_TEMP/f01b-full"
+          node tools/f01-database-replay.mjs full --hourly-capacity --full-hour --hourly-write-timing --compare-cutoff --reservation=application
       - name: Clean second isolated database
         if: always()
         run: |

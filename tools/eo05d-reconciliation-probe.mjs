@@ -93,6 +93,7 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
   const profile = fullHour || shortProfile;
   const profileWrites = process.argv.includes("--hourly-write-timing");
   const reservation = process.argv.find(arg => arg.startsWith("--reservation="))?.split("=")[1] ?? "current";
+  const minimumRemainingMs = fullHour && reservation === "current" ? 25_000 : 0;
   assert.ok(["baseline", "current"].includes(reservation) && !(fullHour && shortProfile));
   if (profileWrites) {
     assert.ok(profile && connection.host === "127.0.0.1");
@@ -135,6 +136,7 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
   let finishedWrites = 0;
   const outcomes = new Map();
   const boundaryOutcomes = new Map();
+  const deferredAtCutoff = new Set();
   const writeProfiles = new Map();
   const dispatchHourlyRefresh = createHourlyRefreshCoordinator();
   let unexpected;
@@ -148,7 +150,7 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
     });
     await client.connect();
     try {
-      let snapshotFinished, finishesAtRead;
+      let snapshotFinished, finishesAtRead, cutoffDeferred;
       async function timed(stage, operation) {
         const started = performance.now();
         try {return await operation();}
@@ -165,6 +167,11 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
           }
           if (sql.includes("commit_hourly_refresh_preflight")) {
             if (profile) stages.plan.push(performance.now() - snapshotFinished);
+            if (minimumRemainingMs && hour + 3600000 - Date.now() < minimumRemainingMs) {
+              deferredAtCutoff.add(JSON.parse(args[2]).claims.at(-1).id);
+              cutoffDeferred = true;
+              return {rows:[{result:false}]};
+            }
             const reservationSql = reservation === "baseline"
               ? sql.replace("operations.commit_hourly_refresh_preflight", "operations.commit_refresh_preflight_with_deadline")
               : sql;
@@ -225,6 +232,11 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
             }}};
           },
         }});
+        if (cutoffDeferred) {
+          assert.equal(result.status, "conflict");
+          attempts.set("deferred_at_cutoff", (attempts.get("deferred_at_cutoff") ?? 0) + 1);
+          break;
+        }
         attempts.set(result.status, (attempts.get(result.status) ?? 0) + 1);
         if (result.status === "waiting" || result.status === "hour_ended") break;
         if (result.status === "conflict") continue;
@@ -264,6 +276,18 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
   if (profile) console.log("EO05_HOURLY_STAGE_TIMING", JSON.stringify({reservation, budgetMs, conflicts, acceptedAfterFinish, attempts: Object.fromEntries(attempts),
     stages: Object.fromEntries(Object.entries(stages).map(([name, values]) => [name, durationSummary(values)]))}));
   const cutoff = new Date(hour + 3600000);
+  if (minimumRemainingMs && deferredAtCutoff.size && !unexpected) {
+    await delay(Math.max(0, cutoff.getTime() - Date.now()));
+  }
+  if (minimumRemainingMs) {
+    const completed = (await admin.query(`select provider,
+      extract(epoch from (finished_at-started_at))::float8*1000 as ms
+      from operations.refresh_runs where status='completed' and finished_at<$1::timestamptz`, [cutoff])).rows;
+    console.log("EO05_HOURLY_ADMISSION_THRESHOLD", JSON.stringify({minimumRemainingMs,
+      selectedButDeferred:deferredAtCutoff.size,
+      completedDurations:Object.fromEntries(providers.map(provider => [provider,
+        durationSummary(completed.filter(row => row.provider===provider).map(row => row.ms))]))}));
+  }
   if (fullHour && reservation === "current" && Date.now() >= cutoff.getTime()) {
     const before = (await admin.query("select count(*)::int n from operations.refresh_runs where status='completed' and finished_at<$1::timestamptz", [cutoff])).rows[0].n;
     const recovered = await store.recoverHourlyRefreshReceipts();

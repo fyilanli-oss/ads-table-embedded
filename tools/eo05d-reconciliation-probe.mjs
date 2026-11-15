@@ -95,7 +95,7 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
   const reservation = process.argv.find(arg => arg.startsWith("--reservation="))?.split("=")[1] ?? "current";
   const compareCutoff = process.argv.includes("--compare-cutoff");
   const minimumRemainingMs = (fullHour || compareCutoff) && reservation !== "baseline" ? 25_000 : 0;
-  assert.ok(!compareCutoff || shortProfile);
+  assert.ok(!compareCutoff || profile);
   assert.ok(["baseline", "current", "application"].includes(reservation) && !(fullHour && shortProfile));
   if (profileWrites) {
     assert.ok(profile && connection.host === "127.0.0.1");
@@ -106,7 +106,7 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
     console.log("EO05_HOURLY_CAPACITY_START", JSON.stringify({startAt: new Date(expectedHour).toISOString()}));
     await delay(Math.max(0, expectedHour - Date.now()));
   }
-  if (compareCutoff && expectedHour - Date.now() < 210_000) {
+  if (compareCutoff && shortProfile && expectedHour - Date.now() < 210_000) {
     await delay(Math.max(0, expectedHour - Date.now()));
   }
   const tick = await runScheduledRefreshCheck({store, generation});
@@ -307,7 +307,7 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
       completedDurations:Object.fromEntries(providers.map(provider => [provider,
         durationSummary(completed.filter(row => row.provider===provider).map(row => row.ms))]))}));
   }
-  if (fullHour && reservation === "current" && Date.now() >= cutoff.getTime()) {
+  if (fullHour && reservation !== "baseline" && Date.now() >= cutoff.getTime()) {
     const before = (await admin.query("select count(*)::int n from operations.refresh_runs where status='completed' and finished_at<$1::timestamptz", [cutoff])).rows[0].n;
     const recovered = await store.recoverHourlyRefreshReceipts();
     const open = (await admin.query(`select r.job_id as "jobId", r.fence::text, r.provider,

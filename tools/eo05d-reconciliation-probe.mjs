@@ -134,6 +134,7 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
   let acceptedAfterFinish = 0;
   let finishedWrites = 0;
   const outcomes = new Map();
+  const boundaryOutcomes = new Map();
   const writeProfiles = new Map();
   const dispatchHourlyRefresh = createHourlyRefreshCoordinator();
   let unexpected;
@@ -228,7 +229,10 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
         if (result.status === "waiting" || result.status === "hour_ended") break;
         if (result.status === "conflict") continue;
         if (result.status !== "completed" && result.dataset?.status !== "held") {
-          unexpected = {status: result.status, reason: result.reason, provider: result.claim?.provider};
+          const outcome = {status: result.status, reason: result.reason, provider: result.claim?.provider,
+            phase: result.phase, remainingMs: hour + 3600000 - Date.now()};
+          if (result.claim) boundaryOutcomes.set(String(result.claim.fence), outcome);
+          unexpected ??= outcome;
           break;
         }
         const provider = result.claim.provider;
@@ -263,6 +267,13 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
   if (fullHour && reservation === "current" && Date.now() >= cutoff.getTime()) {
     const before = (await admin.query("select count(*)::int n from operations.refresh_runs where status='completed' and finished_at<$1::timestamptz", [cutoff])).rows[0].n;
     const recovered = await store.recoverHourlyRefreshReceipts();
+    const open = (await admin.query(`select r.job_id as "jobId", r.fence::text, r.provider,
+      coalesce(p.stage,'reserved') as "lastStage",
+      round(extract(epoch from ($1::timestamptz-coalesce(p.observed_at,r.started_at)))*1000)::float8 as "remainingAtLastStageMs"
+      from operations.refresh_runs r left join operations.refresh_work_progress p
+        using(workspace_id,install_generation,provider,account_id,job_id,fence)
+      where r.status='running' and r.provider in ('google_ads','klaviyo') order by r.fence`, [cutoff])).rows;
+    console.log("EO05_HOURLY_OPEN_ORDERS", JSON.stringify(open.map(row => ({...row, outcome:boundaryOutcomes.get(row.fence)}))));
     const reviewed = await store.reviewInterruptedWork();
     const after = (await admin.query("select count(*)::int n from operations.refresh_runs where status='completed' and finished_at<$1::timestamptz", [cutoff])).rows[0].n;
     assert.equal(after, before, "handoff cannot add completions to the previous hour");

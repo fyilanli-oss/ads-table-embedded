@@ -57,7 +57,10 @@ export function createRefreshWorkRepository(database) {
       return await commitPreflight("select operations.commit_refresh_preflight_with_deadline($1::bigint,$2::bigint,$3::jsonb,$4::jsonb,$5::jsonb,$6::text,$7::bigint) as result",input)===true;
     },
     async commitHourlyPreflight(input) {
-      return await commitPreflight("select operations.commit_hourly_refresh_preflight($1::bigint,$2::bigint,$3::jsonb,$4::jsonb,$5::jsonb,$6::text,$7::bigint) as result",input)===true;
+      if (!Number.isSafeInteger(input.minimumJobMs) || input.minimumJobMs < 1 || input.minimumJobMs > 3600000) throw Error("REFRESH_WORK_INPUT_INVALID");
+      const {expectedRevision,queueRevision,nextState,source,window,partitionId,deadlineAt,minimumJobMs} = input;
+      return result("select operations.commit_timed_hourly_refresh_preflight($1::bigint,$2::bigint,$3::jsonb,$4::jsonb,$5::jsonb,$6::text,$7::bigint,$8::bigint) as result",
+        [expectedRevision,queueRevision,JSON.stringify(nextState),JSON.stringify(source),JSON.stringify(window),partitionId,deadlineAt,minimumJobMs]);
     },
     async commitMetaRawPreflight({expectedRevision,queueRevision,nextState,source,window,operationId,deadlineAt}) {
       if(![expectedRevision,queueRevision].every(n=>Number.isSafeInteger(n)&&n>=0)||!Number.isSafeInteger(deadlineAt)||deadlineAt<1||!nextState

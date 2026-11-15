@@ -476,6 +476,22 @@ end $fn$;
 revoke all on function operations.commit_hourly_refresh_preflight(bigint,bigint,jsonb,jsonb,jsonb,text,bigint)
  from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_queue_runner;
 grant execute on function operations.commit_hourly_refresh_preflight(bigint,bigint,jsonb,jsonb,jsonb,text,bigint)
+ to adstable_owner;
+
+create function operations.commit_timed_hourly_refresh_preflight(p_revision bigint,p_queue_revision bigint,p_state jsonb,
+ p_source jsonb,p_window jsonb,p_partition text,p_deadline bigint,p_minimum_ms bigint) returns jsonb
+language plpgsql security definer set search_path='' as $fn$
+begin
+ if p_minimum_ms is null or p_minimum_ms not between 1 and 3600000 or p_deadline is null
+ then raise exception 'REFRESH_HOURLY_TIME_BUDGET_INVALID';end if;
+ perform 1 from operations.refresh_control where singleton for update;
+ if p_deadline-floor(extract(epoch from clock_timestamp())*1000)::bigint<p_minimum_ms
+ then return '"deferred_at_cutoff"'::jsonb;end if;
+ return to_jsonb(operations.commit_hourly_refresh_preflight(p_revision,p_queue_revision,p_state,p_source,p_window,p_partition,p_deadline));
+end $fn$;
+revoke all on function operations.commit_timed_hourly_refresh_preflight(bigint,bigint,jsonb,jsonb,jsonb,text,bigint,bigint)
+ from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_queue_runner;
+grant execute on function operations.commit_timed_hourly_refresh_preflight(bigint,bigint,jsonb,jsonb,jsonb,text,bigint,bigint)
  to adstable_refresh_coordinator;
 
 -- Reconcile expired hourly claims before the interruption detector fences them.

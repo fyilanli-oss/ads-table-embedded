@@ -13,7 +13,7 @@ function fixture() {
     bounds:{maxCandidates:5,maxClaims:5,maxAdmissions:5,maxWorkspaces:5},
     budget:{global:vector,interactiveReserve:{requests:0,dbWrites:0,connections:0,rows:0,bytes:0},providers:[{provider:"meta",limit:vector}],
       workspaces:[{workspaceId:"w",limit:vector}],accounts:[{provider:"meta",accountId:"act_1",limit:vector}]},candidates:[source]};
-  const plan={partitionId:"one-page",workClass:"hourly_hot_window",window:{from:"2026-10-19",to:"2026-10-19"},
+  const plan={minimumJobMs:500,partitionId:"one-page",workClass:"hourly_hot_window",window:{from:"2026-10-19",to:"2026-10-19"},
     cost:{requests:2,dbWrites:5,connections:1,rows:5,bytes:1000},limits:{deadlineAt:3601000,requestTimeoutMs:100,finishReserveMs:10,maxRows:5,maxBytes:1000}};
   let calls=0,checks=0,commits=0;const stages=[];
   const store={readPreflightSnapshot:async()=>snapshot,commitPreflight:async args=>{commits++;assert.equal(args.expectedRevision,3);assert.equal(args.queueRevision,2);return true;},
@@ -81,6 +81,22 @@ test("an hourly check crossing the cutoff does not reserve or call a provider", 
   }}), {status:"hour_ended"});
   assert.equal(f.commits(), 0);
   assert.equal(f.calls(), 0);
+});
+
+test("a timed reservation deferred by the database starts no work", async () => {
+  const f = fixture();
+  const now = Date.parse("2026-11-02T14:15:00Z");
+  Object.assign(f.source,{timezone:"UTC",eligibleFromMs:0});
+  f.args.now = () => now;
+  f.plan.limits.deadlineAt = now + 5000;
+  f.args.store.readHourlyPreflightSnapshot = async () => ({...f.snapshot,completedHourlyDays:[]});
+  f.args.store.commitHourlyPreflight = async input => {
+    assert.equal(input.minimumJobMs,500);
+    return "deferred_at_cutoff";
+  };
+  assert.deepEqual(await dispatchHourlyRefresh({store:f.args.store,work:f.args}),{status:"deferred_at_cutoff"});
+  assert.equal(f.checks(),0);
+  assert.equal(f.calls(),0);
 });
 
 test("native reservation precedes mandatory fresh billing and bounded worker; no Dataset completion",async()=>{

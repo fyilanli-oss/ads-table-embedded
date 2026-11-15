@@ -137,6 +137,9 @@ export function dispatchHourlyRefresh({store, work, coordinateAdmission, coordin
       const window = {from: day.businessDate, to: day.businessDate};
       const plan = await work.buildWorkPlan(source, window);
       if (plan === null || work.now() >= cutoff) return null;
+      const minimumJobMs = plan.minimumJobMs;
+      if (!Number.isSafeInteger(minimumJobMs) || minimumJobMs < plan.limits?.requestTimeoutMs + plan.limits?.finishReserveMs
+        || minimumJobMs > 3600000) throw Error("REFRESH_HOURLY_TIME_BUDGET_INVALID");
       const deadlineAt = Math.min(plan.limits?.deadlineAt, cutoff);
       if (deadlineAt - work.now() < plan.limits?.requestTimeoutMs + plan.limits?.finishReserveMs) return null;
       return {...plan, limits: {...plan.limits, deadlineAt}, window, partitionId: "hourly:" + hour, workClass: "hourly_hot_window"};

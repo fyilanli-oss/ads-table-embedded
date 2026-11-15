@@ -44,7 +44,9 @@ export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlemen
       if(proposal.status!=="proposed") return {status:proposal.status,deferred:proposal.deferred};
       const selected=proposal.admitted[0],binding=plans.get(selected.id);
       const accepted=await coordinateCommit(() => store.commitPreflight({expectedRevision:snapshot.state.revision,queueRevision:snapshot.queueRevision,
-        nextState:proposal.nextState,source:binding.source,window:binding.plan.window,partitionId:binding.plan.partitionId,deadlineAt:binding.plan.limits.deadlineAt}));
+        nextState:proposal.nextState,source:binding.source,window:binding.plan.window,partitionId:binding.plan.partitionId,
+        deadlineAt:binding.plan.limits.deadlineAt,minimumJobMs:binding.plan.minimumJobMs}));
+      if(accepted==="deferred_at_cutoff") return {status:accepted};
       if(accepted!==true) return {status:"conflict"};
       return {status:"reserved", claim:selected, binding};
     });

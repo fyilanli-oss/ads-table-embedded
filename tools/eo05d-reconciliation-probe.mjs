@@ -120,6 +120,11 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
     assert.equal(initial.rows[0].result.candidates.length, owners.size);
     const past = await admin.query("select operations.read_hourly_refresh_snapshot($1::bigint) as result", [hour - 3600000]);
     assert.deepEqual(past.rows[0].result, {hourEnded:true});
+    const deferred = await store.commitHourlyPreflight({expectedRevision:initial.rows[0].result.state.revision,
+      queueRevision:initial.rows[0].result.queueRevision, nextState:{}, source:{}, window:{},
+      partitionId:"hourly:"+hour, deadlineAt:Date.now()+1000, minimumJobMs:25000});
+    assert.equal(deferred,"deferred_at_cutoff");
+    assert.deepEqual((await store.readAdmissionSnapshot()).state,initial.rows[0].result.state);
   } finally {
     await admin.query("set role adstable_owner");
   }
@@ -150,7 +155,7 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
     });
     await client.connect();
     try {
-      let snapshotFinished, finishesAtRead, cutoffDeferred;
+      let snapshotFinished, finishesAtRead, selectedJobId;
       async function timed(stage, operation) {
         const started = performance.now();
         try {return await operation();}
@@ -165,17 +170,12 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
             snapshotFinished = performance.now();
             return response;
           }
-          if (sql.includes("commit_hourly_refresh_preflight")) {
+          if (sql.includes("commit_timed_hourly_refresh_preflight")) {
             if (profile) stages.plan.push(performance.now() - snapshotFinished);
-            if (minimumRemainingMs && hour + 3600000 - Date.now() < minimumRemainingMs) {
-              deferredAtCutoff.add(JSON.parse(args[2]).claims.at(-1).id);
-              cutoffDeferred = true;
-              return {rows:[{result:false}]};
-            }
-            const reservationSql = reservation === "baseline"
-              ? sql.replace("operations.commit_hourly_refresh_preflight", "operations.commit_refresh_preflight_with_deadline")
-              : sql;
-            const response = await timed("reservation", () => client.query(reservationSql, args));
+            selectedJobId = JSON.parse(args[2]).claims.at(-1).id;
+            const response = await timed("reservation", () => reservation === "baseline"
+              ? client.query("select operations.commit_refresh_preflight_with_deadline($1::bigint,$2::bigint,$3::jsonb,$4::jsonb,$5::jsonb,$6::text,$7::bigint) as result", args.slice(0,7))
+              : client.query(sql, args));
             if (profile && response.rows[0]?.result === false) {
               conflicts[finishedWrites > finishesAtRead ? "finishObserved" : "noFinishObserved"]++;
             }
@@ -193,7 +193,7 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
       while (!unexpected && performance.now() - start < budgetMs && Date.now() < hour + 3600000) {
         const result = await dispatchHourlyRefresh({store: coordinator, work: {
           now: Date.now,
-          buildWorkPlan: async () => ({cost, limits: {deadlineAt: Date.now() + 115000,
+          buildWorkPlan: async () => ({cost, minimumJobMs: minimumRemainingMs || 1100, limits: {deadlineAt: Date.now() + 115000,
             requestTimeoutMs: 1000, finishReserveMs: 100, maxRows: cost.rows, maxBytes: cost.bytes}}),
           entitlementVerifier: {verify: async () => ({status: "verified", receipt: {}}), isCurrent: async () => true},
           readPage: async () => ({kind: "complete", payload: {}}),
@@ -232,8 +232,8 @@ export async function hourlyRefreshCapacityProbe(admin, {ownerFixture, connectio
             }}};
           },
         }});
-        if (cutoffDeferred) {
-          assert.equal(result.status, "conflict");
+        if (result.status === "deferred_at_cutoff") {
+          deferredAtCutoff.add(selectedJobId);
           attempts.set("deferred_at_cutoff", (attempts.get("deferred_at_cutoff") ?? 0) + 1);
           break;
         }

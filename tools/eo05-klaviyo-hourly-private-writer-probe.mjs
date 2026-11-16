@@ -9,6 +9,7 @@ import {commitKlaviyoHourlyEventReport, commitKlaviyoHourlySourceBatch,
   prepareKlaviyoHourlySourceBatch} from "../app/lib/database/klaviyo-hourly-source-page.server.js";
 import {createRefreshEntitlementVerifier} from "../app/lib/refresh/entitlement-check.server.js";
 import {dispatchRefreshPreflight} from "../app/lib/refresh/preflight-bridge.server.js";
+import {planKlaviyoHourlySource} from "../app/lib/refresh/incremental-report-plan.server.js";
 
 export async function klaviyoHourlyPrivateWriterProbe(client, {store,workspace,shopId,shopDomain,connection,installation}) {
   await client.query("savepoint klaviyo_hourly_private_writer");
@@ -21,13 +22,12 @@ export async function klaviyoHourlyPrivateWriterProbe(client, {store,workspace,s
       [connection.id]);
     await store.checkQueueFromAuthority({expectedRevision:(await store.readQueueCheck()).revision});
     const current = Date.now();
-    const endMs = Math.floor(current/3_600_000)*3_600_000;
+    const {start,end,partitionId,window} = planKlaviyoHourlySource({tickAt:new Date(current).toISOString(),timeZone:"UTC"});
+    const endMs = Date.parse(end);
     await client.query(`
       update operations.refresh_queue_accounts set first_due_hour_ms=$2, first_queued_at_ms=$2
       where workspace_id=$1 and provider='klaviyo' and account_id='klaviyo-a' and state='pending'
     `, [workspace,endMs-3_600_000]);
-    const end = new Date(endMs).toISOString(), start = new Date(endMs-7_200_000).toISOString();
-    const window = {from:start.slice(0,10),to:new Date(endMs-1).toISOString().slice(0,10)};
     const deadlineAt = current+90_000;
     let sourceWritten = false;
     const verifier = createRefreshEntitlementVerifier({
@@ -44,7 +44,7 @@ export async function klaviyoHourlyPrivateWriterProbe(client, {store,workspace,s
     const run = await dispatchRefreshPreflight({
       store, now:Date.now,
       buildWorkPlan:async candidate => candidate.provider==="klaviyo" ? {
-        window, partitionId:`klaviyo-hourly-source:${start}/${end}`, workClass:"hourly_hot_window",
+        window, partitionId, workClass:"hourly_hot_window",
         cost:{requests:4,dbWrites:8,connections:1,rows:10,bytes:10000},
         limits:{deadlineAt,requestTimeoutMs:10000,finishReserveMs:1000,maxRows:10,maxBytes:10000},
       } : null,

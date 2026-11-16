@@ -1,9 +1,25 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import {planIncrementalReport, replaceVerifiedReportHours} from "../app/lib/refresh/incremental-report-plan.server.js";
+import {planIncrementalReport, planKlaviyoHourlySource, replaceVerifiedReportHours} from "../app/lib/refresh/incremental-report-plan.server.js";
 
 const timeZone = "Europe/Istanbul";
 const planAt = tickAt => planIncrementalReport({tickAt, timeZone, hourlySupported: true});
+
+test("delayed queue ticks keep a stable hourly binding and the local date at midnight", () => {
+  const planned = tickAt => planKlaviyoHourlySource({tickAt, timeZone});
+  const binding = planned("2026-11-16T21:00:17.123Z");
+  assert.deepEqual(binding, planned("2026-11-16T21:59:59.999Z"));
+  assert.deepEqual(binding.window, {from: "2026-11-16", to: "2026-11-16"});
+  assert.equal(binding.partitionId, "klaviyo-hourly-source:2026-11-16T19:00:00.000Z/2026-11-16T21:00:00.000Z");
+  assert.deepEqual(planned("2026-11-16T22:00:01.000Z").window, {from: "2026-11-16", to: "2026-11-17"});
+});
+
+test("hourly binding handles fractional time zones and skips partial DST hours", () => {
+  assert.equal(planKlaviyoHourlySource({tickAt: "2026-11-16T00:20:00.000Z",
+    timeZone: "Asia/Kathmandu"}).end, "2026-11-16T00:15:00.000Z");
+  assert.equal(planKlaviyoHourlySource({tickAt: "2026-10-03T16:01:00.000Z",
+    timeZone: "Australia/Lord_Howe"}), null);
+});
 
 test("provider midnight keeps the prior day's final two hours separate from daily jobs", () => {
   const tickAt = "2026-11-16T21:00:00.000Z";

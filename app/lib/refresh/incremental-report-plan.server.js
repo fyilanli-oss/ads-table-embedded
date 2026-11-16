@@ -14,6 +14,35 @@ function iso(milliseconds) {
   return new Date(milliseconds).toISOString();
 }
 
+// Derive the binding from a queue tick, which can arrive after the hour boundary.
+export function planKlaviyoHourlySource({tickAt, timeZone}) {
+  const tick = instant(tickAt);
+  if (typeof timeZone !== "string" || !timeZone) throw Error("REPORT_PLAN_TIMEZONE_INVALID");
+  const calendar = new Intl.DateTimeFormat("en-CA", {
+    timeZone, year: "numeric", month: "2-digit", day: "2-digit",
+    minute: "2-digit", second: "2-digit",
+  });
+  const partsAt = ms => Object.fromEntries(calendar.formatToParts(ms).map(part => [part.type, part.value]));
+  const localDate = ms => {
+    const {year, month, day} = partsAt(ms);
+    return [year, month, day].join("-");
+  };
+  const {minute, second} = partsAt(tick);
+  const endMs = tick - Number(minute) * 60_000 - Number(second) * 1_000 - tick % 1_000;
+  const startMs = endMs - 2 * HOUR_MS;
+  // Some offset transitions skip part of an hour. Require two whole local buckets.
+  if (![startMs, startMs + HOUR_MS, endMs].every(ms => {
+    const parts = partsAt(ms);
+    return Number(parts.minute) === 0 && Number(parts.second) === 0;
+  })) return null;
+  const start = iso(startMs), end = iso(endMs);
+  return {
+    start, end,
+    partitionId: `klaviyo-hourly-source:${start}/${end}`,
+    window: {from: localDate(startMs), to: localDate(endMs - 1)},
+  };
+}
+
 // Plans dates and intervals only. Provider admission owns capability evidence,
 // while the daily writer owns eligibility, revision checks and receipts.
 export function planIncrementalReport({tickAt, timeZone, hourlySupported, dailyWindows = {}}) {

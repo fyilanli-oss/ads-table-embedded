@@ -41,6 +41,11 @@ export async function runScheduledRefreshCheck({store,generation,work}) {
     if (finishKlaviyoHourlyReport !== undefined
       && (typeof finishKlaviyoHourlyReport !== "function" || typeof buildWorkPlan !== "function")) throw Error("REFRESH_HOURLY_REPORT_POLICY_INVALID");
     if (drainReadyWork !== undefined && typeof drainReadyWork !== "boolean") throw Error("REFRESH_TICK_DRAIN_POLICY_INVALID");
+    const entitlementRequestTimeoutMs=entitlementVerifier?.requestTimeoutMs;
+    if (drainReadyWork && (!Number.isSafeInteger(entitlementRequestTimeoutMs)
+      || entitlementRequestTimeoutMs<1 || entitlementRequestTimeoutMs>2_147_483_647)) {
+      throw Error("REFRESH_TICK_ENTITLEMENT_BUDGET_REQUIRED");
+    }
     const tickAt = new Date(queue.checkedAtMs).toISOString();
     const planDaily = async source => {
       const schedule = await loadDailyReportSchedule(structuredClone(source));
@@ -83,7 +88,7 @@ export async function runScheduledRefreshCheck({store,generation,work}) {
 
     const deadlineAt=(Math.floor(queue.checkedAtMs/MINUTE_MS)+1)*MINUTE_MS;
     const completed=new Set();
-    const tickBudget={queueRevision:queue.queueRevision,deadlineAt,completed};
+    const tickBudget={queueRevision:queue.queueRevision,deadlineAt,completed,entitlementRequestTimeoutMs};
     let result;
     for (;;) {
       const current=now();

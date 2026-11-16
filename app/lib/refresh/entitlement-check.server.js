@@ -16,6 +16,7 @@ export function createRefreshEntitlementVerifier({store,partnerApi,appId,authori
   if(limits.requestTimeoutMs>2147483647) throw new Error("REFRESH_ENTITLEMENT_INPUT_INVALID");
   const configured=structuredClone(limits);
   return Object.freeze({
+    requestTimeoutMs:configured.requestTimeoutMs,
     async verify({claim:input}) {
       const claim=structuredClone(input);refreshWorkIdentity(claim,{claimRequired:true});
       let attempted=false,returned=false;
@@ -78,10 +79,12 @@ export function createRefreshEntitlementVerifier({store,partnerApi,appId,authori
 // request history or a first-boundary wait from being reused. No routes/credentials are configured here.
 export function createQuotaRefreshEntitlementVerifier({store,appId,guard,resolveOperation,environment,fetchFn,now,limits,authorizeRead}) {
   if(authorizeRead!==undefined) throw new Error("REFRESH_ENTITLEMENT_DOUBLE_QUOTA_FORBIDDEN");
+  const configured=structuredClone(limits);
   return Object.freeze({
+    requestTimeoutMs:configured?.requestTimeoutMs,
     async verify(context) {
       const partnerApi=createQuotaManagedClients({guard,resolveOperation,lane:"background",fetchFn}).shopify({environment});
-      return createRefreshEntitlementVerifier({store,partnerApi,appId,now,limits}).verify(context);
+      return createRefreshEntitlementVerifier({store,partnerApi,appId,now,limits:configured}).verify(context);
     },
     async isCurrent({claim,receipt}) {
       try {return await store.isEntitlementCurrent({claim,receipt})===true;} catch {return false;}
@@ -92,10 +95,12 @@ export function createQuotaRefreshEntitlementVerifier({store,appId,guard,resolve
 // Current fenced work/window is reloaded before AND after quota reservation on each HTTP call.
 export function createAuthorityQuotaEntitlementVerifier({store,quotaStore,appId,environment,fetchFn,now,limits,...extra}) {
   if(Object.keys(extra).length) throw Error("REFRESH_QUOTA_BINDING_INPUT_INVALID");
+  const configured=structuredClone(limits);
   return Object.freeze({
+    requestTimeoutMs:configured?.requestTimeoutMs,
     async verify({claim,window}) {
       const partnerApi=createRefreshQuotaClients({workStore:store,quotaStore,claim,window,now,fetchFn}).shopify({environment});
-      return createRefreshEntitlementVerifier({store,partnerApi,appId,now,limits}).verify({claim});
+      return createRefreshEntitlementVerifier({store,partnerApi,appId,now,limits:configured}).verify({claim});
     },
     async isCurrent({claim,receipt}) {
       try {return await store.isEntitlementCurrent({claim,receipt})===true;} catch {return false;}

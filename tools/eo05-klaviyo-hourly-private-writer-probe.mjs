@@ -96,7 +96,7 @@ export async function klaviyoHourlyMinuteProbe(client, ownerFixture, {cohort=24}
           cancelAtEndOfCycle:false,trialEndsAt:null,currentBillingCycle:{startTime:new Date(startMs-86_400_000).toISOString(),
             endTime:new Date(startMs+86_400_000).toISOString()},items:[{handle:"monthly",price:{active:true}}],pendingUpdate:null}}};
       }}});
-    const timedEntitlement={verify:measure("entitlement",entitlementVerifier.verify),
+    const timedEntitlement={requestTimeoutMs:entitlementVerifier.requestTimeoutMs,verify:measure("entitlement",entitlementVerifier.verify),
       isCurrent:measure("entitlement",entitlementVerifier.isCurrent)};
     const cipher=createSourceEvidenceCipher({keys:new Map([[1,randomBytes(32)]]),activeVersion:1,forbiddenKeys:[]});
     const result=await runScheduledRefreshCheck({store:timedStore,generation,work:{
@@ -136,18 +136,15 @@ export async function klaviyoHourlyMinuteProbe(client, ownerFixture, {cohort=24}
     }});
     const elapsedMs=Date.now()-startMs;
     assert.equal(result.status,"queue_checked",JSON.stringify(result));
-    const timedStop=result.work.status==="paused" && result.work.stopRecorded===true
-      && ["stopped_before_call","worker_stopped"].includes(result.work.reason);
-    assert.ok(["waiting","tick_budget_elapsed"].includes(result.work.status) || timedStop,JSON.stringify(result));
+    assert.ok(["waiting","tick_budget_elapsed"].includes(result.work.status),JSON.stringify(result));
     assert.ok(result.completedThisTick>=2,JSON.stringify(result));
     assert.equal(timings.get("candidateSnapshot")?.calls,1);
     assert.ok(timings.get("admissionState")?.calls>=result.completedThisTick-1);
     const {rows:[counts]}=await client.query(`
-      select count(*) filter (where status='completed')::int as completed,
-        count(*) filter (where status='running')::int as running
+      select count(*)::int as opened, count(*) filter (where status='completed')::int as completed
       from operations.refresh_runs where workspace_id=any($1::uuid[]) and provider='klaviyo'
     `,[[...owners.keys()]]);
-    assert.deepEqual(counts,{completed:result.completedThisTick,running:0});
+    assert.deepEqual(counts,{opened:result.completedThisTick,completed:result.completedThisTick});
     console.log("EO05_KLAVIYO_HOURLY_MINUTE_PASS "+JSON.stringify({cohort,rowsPerJob,elapsedMs,preparedTimeMs:deadlineAt-startMs,
       completed:counts.completed,remaining:cohort-counts.completed,stop:result.work.status,stopReason:result.work.reason??null,providerCalls:0,
       stages:Object.fromEntries([...timings].map(([name,sample])=>[name,{...sample,

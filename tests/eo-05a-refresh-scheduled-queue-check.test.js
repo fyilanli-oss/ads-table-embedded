@@ -60,7 +60,7 @@ test("an explicitly supplied internal plan uses the existing fenced preflight on
 });
 
 test("one confirmed tick drains ready work until time, queue revision or eligible jobs run out",async()=>{
-  for (const stop of ["waiting","conflict","tick_budget_elapsed","new_holds"]) {
+  for (const stop of ["waiting","conflict","tick_budget_elapsed","new_holds","no_entitlement_time"]) {
     const tick=Date.parse("2026-11-16T22:00:00.000Z");
     const vector={requests:100,dbWrites:100,connections:100,rows:100,bytes:10000};
     const candidates=Array.from({length:12},(_,i)=>({workspaceId:"w",installGeneration:"1",provider:"klaviyo",
@@ -94,7 +94,7 @@ test("one confirmed tick drains ready work until time, queue revision or eligibl
       drainReadyWork:true,now:()=>now,
       buildWorkPlan:async()=>({workClass:"hourly_hot_window",cost:{requests:2,dbWrites:5,connections:1,rows:5,bytes:1000},
         limits:{deadlineAt:tick+120_000,requestTimeoutMs:100,finishReserveMs:10,maxRows:5,maxBytes:1000}}),
-      entitlementVerifier:{verify:async()=>({status:"verified",receipt:{}}),isCurrent:async()=>true},
+      entitlementVerifier:{requestTimeoutMs:200,verify:async()=>({status:"verified",receipt:{}}),isCurrent:async()=>true},
       readPage:async()=>{read++;return {kind:"complete",payload:{}};},
       validatePage:()=>({complete:true,rows:[]}),
       loadCompletedKlaviyoHourlyJobs:async()=>[],
@@ -102,6 +102,8 @@ test("one confirmed tick drains ready work until time, queue revision or eligibl
         snapshot.state.revision++;
         if (stop==="conflict") snapshot.queueRevision++;
         if (stop==="tick_budget_elapsed") now=tick+60_000;
+        // The provider and finish still fit, but the entitlement check does not.
+        if (stop==="no_entitlement_time") now=tick+59_800;
         if (stop==="new_holds") snapshot.state.holds=candidates.map(({workspaceId,installGeneration,provider,accountId})=>
           ({workspaceId,installGeneration,provider,accountId}));
         return true;
@@ -109,7 +111,7 @@ test("one confirmed tick drains ready work until time, queue revision or eligibl
     }});
     const expected=stop==="waiting"?12:1;
     assert.equal(result.completedThisTick,expected,JSON.stringify(result.work));
-    assert.equal(result.work.status,stop==="new_holds"?"waiting":stop);
+    assert.equal(result.work.status,["new_holds","no_entitlement_time"].includes(stop)?"waiting":stop);
     assert.equal(checks,1);
     assert.equal(candidateReads,1);
     assert.equal(admissionReads,stop==="waiting"?12:stop==="tick_budget_elapsed"?0:1);

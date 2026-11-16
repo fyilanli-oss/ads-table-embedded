@@ -15,6 +15,7 @@ export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlemen
     && (typeof finishKlaviyoHourlyReport !== "function" || typeof loadCompletedKlaviyoHourlyJobs !== "function")) {
     throw Error("REFRESH_HOURLY_REPORT_POLICY_INVALID");
   }
+  const requiredStartMs=limits=>tickBudget.entitlementRequestTimeoutMs+limits.requestTimeoutMs+limits.finishReserveMs;
   let claim;
   try {
     let snapshot;
@@ -67,7 +68,7 @@ export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlemen
       if (tickBudget) {
         if (tickBudget.completed.has(id)) continue;
         l.deadlineAt = Math.min(l.deadlineAt,tickBudget.deadlineAt);
-        if (l.deadlineAt-current<l.requestTimeoutMs+l.finishReserveMs) continue;
+        if (l.deadlineAt-current<requiredStartMs(l)) continue;
       }
       const job={id,workspaceId:source.workspaceId,installGeneration:source.installGeneration,provider:source.provider,accountId:source.accountId,
         scheduledHour:source.scheduledHour,queuedAt:source.queuedAt,workClass:plan.workClass,cost:plan.cost,
@@ -88,7 +89,7 @@ export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlemen
     if(proposal.status!=="proposed") return {status:proposal.status,deferred:proposal.deferred};
     const selected=proposal.admitted[0],binding=plans.get(selected.id);
     const {limits}=binding.plan;
-    if (tickBudget && limits.deadlineAt-now()<limits.requestTimeoutMs+limits.finishReserveMs) return {status:"tick_budget_elapsed"};
+    if (tickBudget && limits.deadlineAt-now()<requiredStartMs(limits)) return {status:"tick_budget_elapsed"};
     const accepted=await store.commitPreflight({expectedRevision:snapshot.state.revision,queueRevision:snapshot.queueRevision,
       nextState:proposal.nextState,source:binding.source,window:binding.plan.window,partitionId:binding.plan.partitionId,deadlineAt:binding.plan.limits.deadlineAt});
     if(accepted!==true) return {status:"conflict"};

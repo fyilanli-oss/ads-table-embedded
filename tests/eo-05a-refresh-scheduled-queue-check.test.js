@@ -60,7 +60,7 @@ test("an explicitly supplied internal plan uses the existing fenced preflight on
 });
 
 test("one confirmed tick drains ready work until time, queue revision or eligible jobs run out",async()=>{
-  for (const stop of ["waiting","superseded_tick","tick_budget_elapsed"]) {
+  for (const stop of ["waiting","conflict","tick_budget_elapsed","new_holds"]) {
     const tick=Date.parse("2026-11-16T22:00:00.000Z");
     const vector={requests:100,dbWrites:100,connections:100,rows:100,bytes:10000};
     const candidates=Array.from({length:12},(_,i)=>({workspaceId:"w",installGeneration:"1",provider:"klaviyo",
@@ -71,13 +71,15 @@ test("one confirmed tick drains ready work until time, queue revision or eligibl
       budget:{global:vector,interactiveReserve:{requests:0,dbWrites:0,connections:0,rows:0,bytes:0},
         providers:[{provider:"klaviyo",limit:vector}],workspaces:[{workspaceId:"w",limit:vector}],
         accounts:candidates.map(({accountId})=>({provider:"klaviyo",accountId,limit:vector}))},candidates};
-    let now=tick+1_000, checks=0, read=0, bound;
+    let now=tick+1_000, checks=0, read=0, bound, candidateReads=0, admissionReads=0;
     const admitted=[];
     const store={
       checkScheduledQueue:async()=>{checks++;return {...receipt,checkedAtMs:tick};},
       reviewInterruptedWork:async()=>({status:"reviewed",stopped:0,uncertain:0}),
-      readPreflightSnapshot:async()=>snapshot,
-      commitPreflight:async({source,deadlineAt})=>{
+      readPreflightSnapshot:async()=>{candidateReads++;return snapshot;},
+      commitPreflight:async({source,deadlineAt,queueRevision,expectedRevision})=>{
+        assert.equal(expectedRevision,snapshot.state.revision);
+        if (queueRevision!==snapshot.queueRevision) return false;
         admitted.push(source.accountId);
         bound=source;
         assert.equal(deadlineAt,tick+60_000);
@@ -85,7 +87,8 @@ test("one confirmed tick drains ready work until time, queue revision or eligibl
       },
       loadBoundAuthority:async()=>({...bound,installationVerified:true,connected:true,setupComplete:true,allowedWindow:true}),
       advanceStage:async()=>true,isClaimCurrent:async()=>true,
-      readAdmissionSnapshot:async()=>snapshot,recordStop:async()=>({recorded:true}),
+      readAdmissionSnapshot:async()=>{admissionReads++;return {state:snapshot.state,bounds:snapshot.bounds,budget:snapshot.budget};},
+      recordStop:async()=>({recorded:true}),
     };
     const result=await runScheduledRefreshCheck({store,generation,work:{
       drainReadyWork:true,now:()=>now,
@@ -96,15 +99,20 @@ test("one confirmed tick drains ready work until time, queue revision or eligibl
       validatePage:()=>({complete:true,rows:[]}),
       loadCompletedKlaviyoHourlyJobs:async()=>[],
       finishKlaviyoHourlyReport:async()=>{
-        if (stop==="superseded_tick") snapshot.queueRevision++;
+        snapshot.state.revision++;
+        if (stop==="conflict") snapshot.queueRevision++;
         if (stop==="tick_budget_elapsed") now=tick+60_000;
+        if (stop==="new_holds") snapshot.state.holds=candidates.map(({workspaceId,installGeneration,provider,accountId})=>
+          ({workspaceId,installGeneration,provider,accountId}));
         return true;
       },
     }});
     const expected=stop==="waiting"?12:1;
     assert.equal(result.completedThisTick,expected,JSON.stringify(result.work));
-    assert.equal(result.work.status,stop);
+    assert.equal(result.work.status,stop==="new_holds"?"waiting":stop);
     assert.equal(checks,1);
+    assert.equal(candidateReads,1);
+    assert.equal(admissionReads,stop==="waiting"?12:stop==="tick_budget_elapsed"?0:1);
     assert.equal(read,expected);
     assert.equal(new Set(admitted).size,expected);
   }

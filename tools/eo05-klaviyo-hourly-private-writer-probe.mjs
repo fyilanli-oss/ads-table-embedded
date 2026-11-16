@@ -72,7 +72,7 @@ export async function klaviyoHourlyMinuteProbe(client, ownerFixture, {cohort=24}
     const timedStore={...store};
     for (const [method,stage] of Object.entries({
       checkScheduledQueue:"queue",reviewInterruptedWork:"interruptionReview",readPreflightSnapshot:"candidateSnapshot",
-      commitPreflight:"admission",loadBoundAuthority:"workerAuthority",advanceStage:"workProgress",
+      readAdmissionSnapshot:"admissionState",commitPreflight:"admission",loadBoundAuthority:"workerAuthority",advanceStage:"workProgress",
     })) timedStore[method]=measure(stage,store[method]);
     await store.checkQueueFromAuthority({expectedRevision:(await store.readQueueCheck()).revision});
     const previousHour=Math.floor(Date.now()/3_600_000)*3_600_000-3_600_000;
@@ -140,6 +140,8 @@ export async function klaviyoHourlyMinuteProbe(client, ownerFixture, {cohort=24}
       && ["stopped_before_call","worker_stopped"].includes(result.work.reason);
     assert.ok(["waiting","tick_budget_elapsed"].includes(result.work.status) || timedStop,JSON.stringify(result));
     assert.ok(result.completedThisTick>=2,JSON.stringify(result));
+    assert.equal(timings.get("candidateSnapshot")?.calls,1);
+    assert.ok(timings.get("admissionState")?.calls>=result.completedThisTick-1);
     const {rows:[counts]}=await client.query(`
       select count(*) filter (where status='completed')::int as completed,
         count(*) filter (where status='running')::int as running

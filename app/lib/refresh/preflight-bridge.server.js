@@ -17,9 +17,21 @@ export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlemen
   }
   let claim;
   try {
-    const snapshot=await store.readPreflightSnapshot();
-    if(snapshot?.configured!==true) return {status:"not_configured"};
-    if (tickBudget && snapshot.queueRevision !== tickBudget.queueRevision) return {status:"superseded_tick"};
+    let snapshot;
+    if (tickBudget?.candidates) {
+      // The candidate set belongs to one queue receipt. Admission still locks
+      // and compares both revisions and revalidates the selected native source.
+      const current=await store.readAdmissionSnapshot();
+      if (current.bounds?.maxCandidates<tickBudget.candidates.length) return {status:"candidate_bounds_changed"};
+      snapshot={...current,queueRevision:tickBudget.queueRevision,candidates:tickBudget.candidates};
+    } else {
+      snapshot=await store.readPreflightSnapshot();
+      if(snapshot?.configured!==true) return {status:"not_configured"};
+      if (tickBudget) {
+        if (snapshot.queueRevision!==tickBudget.queueRevision) return {status:"superseded_tick"};
+        tickBudget.candidates=structuredClone(snapshot.candidates);
+      }
+    }
     const candidates=[];
     const plans=new Map();
     const hourlyJobs=new Map();

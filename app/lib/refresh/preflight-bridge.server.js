@@ -31,7 +31,15 @@ export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlemen
         || l.maxRows>plan.cost.rows||l.maxBytes>plan.cost.bytes
         || ![w?.from,w?.to].every(d=>typeof d==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(d)&&new Date(`${d}T00:00:00Z`).toISOString().slice(0,10)===d)
         || w.from>w.to || loadDatasetInputs!==undefined && w.from!==w.to) return {status:"work_plan_required"};
-      const id=createHash("sha256").update(JSON.stringify([source,plan.partitionId,w])).digest("hex");
+      const dailyReport = plan.workClass === "deep_reconciliation"
+        && /^daily-report:(?:yesterday|today):\d{4}-\d{2}-\d{2}$/.test(plan.partitionId);
+      // The database already keys durable runs by owner and job ID. The same
+      // daily slot must keep its identity when the queue advances to another hour.
+      const identity = dailyReport
+        ? ["daily-report", source.workspaceId, source.installGeneration, source.provider,
+          source.accountId, plan.partitionId, w.from, w.to]
+        : [source, plan.partitionId, w];
+      const id=createHash("sha256").update(JSON.stringify(identity)).digest("hex");
       const job={id,workspaceId:source.workspaceId,installGeneration:source.installGeneration,provider:source.provider,accountId:source.accountId,
         scheduledHour:source.scheduledHour,queuedAt:source.queuedAt,workClass:plan.workClass,cost:plan.cost,
         authority:{installationVerified:true,connected:true,setupComplete:true,allowedWindow:true}};

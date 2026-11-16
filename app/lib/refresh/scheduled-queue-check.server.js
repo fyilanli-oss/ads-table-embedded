@@ -40,6 +40,7 @@ export async function runScheduledRefreshCheck({store,generation,work}) {
       const schedule = await loadDailyReportSchedule(structuredClone(source));
       if (schedule === null) return null;
       const {timeZone, dailyWindows} = schedule;
+      if (timeZone !== source.timezone) throw Error("REFRESH_DAILY_REPORT_TIMEZONE_MISMATCH");
       const tickAt = new Date(queue.checkedAtMs).toISOString();
       const {daily} = planIncrementalReport({tickAt, timeZone, dailyWindows});
       for (const job of daily) {
@@ -49,7 +50,7 @@ export async function runScheduledRefreshCheck({store,generation,work}) {
         if (plan === null) continue;
         if (plan.workClass !== "deep_reconciliation" || plan.window?.from !== job.businessDate
           || plan.window?.to !== job.businessDate) throw Error("REFRESH_DAILY_REPORT_SCOPE_INVALID");
-        return plan;
+        return {...plan, partitionId: `daily-report:${job.kind}:${job.scheduledFor}`};
       }
       return null;
     };

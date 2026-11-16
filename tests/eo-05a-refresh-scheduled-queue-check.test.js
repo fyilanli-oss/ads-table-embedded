@@ -74,7 +74,7 @@ test("daily reconciliation uses the confirmed tick and rejects a mismatched date
   const store = {
     checkScheduledQueue: async () => ({...receipt, checkedAtMs}),
     reviewInterruptedWork: async () => ({status:"reviewed", stopped:0, uncertain:0}),
-    readPreflightSnapshot: async () => ({configured:true, candidates:[{accountId:"account"}]}),
+    readPreflightSnapshot: async () => ({configured:true, candidates:[{accountId:"account", timezone:"Europe/Istanbul"}]}),
     commitPreflight: async () => { admissions++; return false; },
     loadBoundAuthority: async () => { throw Error("unexpected authority read"); },
   };

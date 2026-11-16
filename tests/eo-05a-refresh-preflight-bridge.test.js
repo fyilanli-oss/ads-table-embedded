@@ -42,6 +42,33 @@ test("native reservation precedes mandatory fresh billing and bounded worker; no
   assert.deepEqual(f.stages,["checking_authority","request_intent","response_received","ready_for_dataset"]);
 });
 
+test("daily job identity survives queue rollover and leaves distinct daily slots separate", async () => {
+  const f = fixture();
+  f.plan.workClass = "deep_reconciliation";
+  f.plan.partitionId = "daily-report:today:2026-10-19";
+  const persisted = new Set();
+  const attempted = [];
+  f.args.store.commitPreflight = async ({nextState}) => {
+    const [{id}] = nextState.claims;
+    attempted.push(id);
+    if (persisted.has(id)) return false;
+    persisted.add(id);
+    return true;
+  };
+  assert.equal((await dispatchRefreshPreflight(f.args)).status, "awaiting_dataset");
+  f.source.scheduledHour = 3_600_000;
+  f.source.queuedAt = 3_600_000;
+  f.args.now = () => 7_200_000;
+  f.plan.limits.deadlineAt = 7_201_000;
+  assert.equal((await dispatchRefreshPreflight(f.args)).status, "conflict");
+  assert.equal(attempted[0], attempted[1]);
+  assert.equal(f.calls(), 1);
+  f.plan.partitionId = "daily-report:yesterday:2026-10-20";
+  assert.equal((await dispatchRefreshPreflight(f.args)).status, "awaiting_dataset");
+  assert.notEqual(attempted[1], attempted[2]);
+  assert.equal(f.calls(), 2);
+});
+
 test("missing configuration, missing plan, invalid bounds, conflicts and unknown commits never execute or retry",async()=>{
   const a=fixture();a.snapshot.configured=false;assert.equal((await dispatchRefreshPreflight(a.args)).status,"not_configured");assert.equal(a.commits(),0);
   const b=fixture();b.args.buildWorkPlan=async()=>null;assert.equal((await dispatchRefreshPreflight(b.args)).status,"waiting");assert.equal(b.commits(),0);

@@ -192,7 +192,15 @@
         "evidence_input": "Versioned scope binds workspace, installation generation, account, job, fence, metric, timezone and exact bounds independently of access token or pagination cursor.",
         "pending": "Current authority check, immutable source scope persistence and readback, admitted dispatch, and durable hourly write remain open. Existing daily aggregation and reporting endpoints keep their date semantics.",
         "official_checked_at": "2026-11-16",
-        "official_source": "https://developers.klaviyo.com/en/reference/get_events"
+        "official_source": "https://developers.klaviyo.com/en/reference/get_events",
+        "encrypted_page": {
+          "module": "app/lib/database/klaviyo-hourly-source-page.server.js",
+          "binding": "The fixed native projection and exact source scope share one versioned authenticated source envelope; ownership uses the existing source cipher owner binding.",
+          "readback": "An exact expected scope, owner, attempt and page ordinal are required; the retained event datetime must belong to the half-open range and the event's metric must match.",
+          "pending": "Wire the versioned page through a current hourly claim, whole-batch manifest and durable receipt SQL. This page codec does not issue or confirm a storage receipt.",
+          "official_crypto_reference": "https://nodejs.org/api/crypto.html#ciphersetaddaad-options",
+          "official_crypto_checked_at": "2026-11-16"
+        }
       }
     }
   }

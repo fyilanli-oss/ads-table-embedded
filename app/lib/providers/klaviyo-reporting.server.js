@@ -330,7 +330,7 @@ export function buildKlaviyoOrderedProductEventsRequest({
   cursor = null,
 }) {
   const timeframe = klaviyoBusinessDayTimeframe({businessDate, timeZone});
-  return orderedProductEventsRequest({accessToken, orderedProductMetricId, timeframe, cursor, endOperator:"less-or-equal"});
+  return orderedProductEventsRequest({accessToken, orderedProductMetricId, timeframe, cursor, upperBoundFilter:"less-or-equal"});
 }
 
 // Builds the fixed hourly query and its source scope for an already admitted
@@ -356,12 +356,12 @@ export function buildKlaviyoHourlyOrderedProductEventsRequest({
     revision:KLAVIYO_REPORTING_API_REVISION,
   });
   return {
-    request:orderedProductEventsRequest({accessToken, orderedProductMetricId, timeframe, cursor, endOperator:"less-than"}),
+    request:orderedProductEventsRequest({accessToken, orderedProductMetricId, timeframe, cursor, upperBoundFilter:"less-than"}),
     sourceScope,
   };
 }
 
-function orderedProductEventsRequest({accessToken, orderedProductMetricId, timeframe, cursor, endOperator}) {
+function orderedProductEventsRequest({accessToken, orderedProductMetricId, timeframe, cursor, upperBoundFilter}) {
   const metricId = text(orderedProductMetricId, "KLAVIYO_ORDERED_PRODUCT_METRIC_ID_REQUIRED", 256);
   const url = new URL(`${API_ROOT}/events`);
   url.searchParams.set(
@@ -369,7 +369,7 @@ function orderedProductEventsRequest({accessToken, orderedProductMetricId, timef
     [
       `equals(metric_id,'${metricId.replaceAll("'", "\\'")}')`,
       `greater-or-equal(datetime,${timeframe.start})`,
-      `${endOperator}(datetime,${timeframe.end})`,
+      `${upperBoundFilter}(datetime,${timeframe.end})`,
     ].join(","),
   );
   url.searchParams.set("include", "attributions,metric");

@@ -4,6 +4,37 @@ import {randomBytes, randomUUID} from "node:crypto";
 import {canonicalSourceJson, sourceStoreOwner, sourcePayloadHash, createSourceEvidenceCipher,
   createSourceEvidenceRepository, prepareSourceWrite} from "../app/lib/database/source-evidence-store.server.js";
 import {sourceStoreFixture} from "./fixtures/source-store-fixture.js";
+import {buildKlaviyoHourlyOrderedProductEventsRequest} from "../app/lib/providers/klaviyo-reporting.server.js";
+import {createKlaviyoSourceCapture} from "../app/lib/providers/klaviyo-source-capture.server.js";
+import {openKlaviyoHourlySourcePage, sealKlaviyoHourlySourcePage} from "../app/lib/database/klaviyo-hourly-source-page.server.js";
+
+test("hourly Klaviyo capture encrypts the original query scope with the sanitized page", async () => {
+  const {input} = sourceStoreFixture();
+  const owner = {...input.owner, provider:"klaviyo", accountId:"account",
+    connectionId:randomUUID(), connectionVersion:"1", credentialId:randomUUID(), selectionEpoch:null};
+  const tickAt = "2026-11-16T22:00:00.000Z", start = "2026-11-16T20:00:00.000Z";
+  const query = buildKlaviyoHourlyOrderedProductEventsRequest({
+    accessToken:"synthetic", orderedProductMetricId:"ordered", tickAt, timeZone:"Europe/Istanbul",
+    job:{id:"job", fence:7, provider:"klaviyo", workspaceId:owner.workspaceId,
+      installGeneration:owner.generation, accountId:owner.accountId, window:{start,end:tickAt}},
+  });
+  const event = {id:"event-1", type:"event", attributes:{datetime:start, event_properties:{Quantity:1}},
+    relationships:{metric:{data:{type:"metric", id:"ordered"}}}};
+  const capture = createKlaviyoSourceCapture({maxBytes:10000, check:() => {}});
+  await capture.read(new Response(JSON.stringify({data:[event], links:{next:null}})), query.request.url);
+  const [{payload:projection}] = capture.finish();
+  const context = {owner, scope:query.sourceScope, cipher:input.cipher, attemptId:input.attemptId, pageOrdinal:0};
+  const page = sealKlaviyoHourlySourcePage({...context, projection});
+  assert.deepEqual(openKlaviyoHourlySourcePage({...context, page}), projection);
+  assert.throws(() => openKlaviyoHourlySourcePage({...context, page, pageOrdinal:1}), /SCOPE_INVALID/);
+  assert.throws(() => openKlaviyoHourlySourcePage({...context, page,
+    scope:{...context.scope, fence:8}}), /SCOPE_INVALID/);
+  assert.throws(() => openKlaviyoHourlySourcePage({...context, page,
+    owner:{...owner, connectionVersion:"2"}}), /ENVELOPE_INVALID/);
+  assert.throws(() => sealKlaviyoHourlySourcePage({...context, projection:{...projection, records:[
+    {...projection.records[0], attributes:{datetime:tickAt}},
+  ]}}), /SCOPE_INVALID/);
+});
 
 test("source evidence encryption binds actual owner, attempt, page metadata and sanitized content", () => {
   const {input, prepare} = sourceStoreFixture();

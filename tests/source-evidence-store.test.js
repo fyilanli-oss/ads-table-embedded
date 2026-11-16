@@ -4,6 +4,8 @@ import {randomBytes, randomUUID} from "node:crypto";
 import {canonicalSourceJson, sourceStoreOwner, sourcePayloadHash, createSourceEvidenceCipher,
   createSourceEvidenceRepository, prepareSourceWrite} from "../app/lib/database/source-evidence-store.server.js";
 import {sourceStoreFixture} from "./fixtures/source-store-fixture.js";
+import {datasetSourceBindingFixture} from "./fixtures/dataset-source-binding-fixture.js";
+import {bindStoredDatasetSources} from "../app/lib/database/dataset-source-binding.server.js";
 import {buildKlaviyoHourlyOrderedProductEventsRequest} from "../app/lib/providers/klaviyo-reporting.server.js";
 import {createKlaviyoSourceCapture} from "../app/lib/providers/klaviyo-source-capture.server.js";
 import {createKlaviyoHourlySourceRepository} from "../app/lib/database/klaviyo-hourly-source-repository.server.js";
@@ -24,7 +26,7 @@ test("hourly Klaviyo capture encrypts the original query scope with the sanitize
   });
   const event = {id:"event-1", type:"event", attributes:{datetime:start,
     event_properties:{ProductID:"product",VariantID:"variant",Quantity:2,$value:"19.99"}},
-    relationships:{metric:{data:{type:"metric", id:"ordered"}},attributions:{data:[{type:"attribution",id:"flow-a"}]}}};
+    relationships:{metric:{data:{type:"metric", id:"ordered"}},attributions:{data:[{type:"attribution",id:"campaign-a"}]}}};
   const capture = createKlaviyoSourceCapture({maxBytes:10000, check:() => {}});
   await capture.read(new Response(JSON.stringify({data:[event], links:{next:null}})), query.request.url);
   const [{payload:projection}] = capture.finish();
@@ -44,10 +46,9 @@ test("hourly Klaviyo capture encrypts the original query scope with the sanitize
   const second = {...projection, records:[{...projection.records[0],id:"event-2",
     attributes:{datetime:start,event_properties:{ProductID:"second",Quantity:{jsonNumber:"1"}}},
     relationships:{metric:{data:{type:"metric",id:"ordered"}}}}],
-  included:[{type:"attribution",id:"flow-a",relationships:{
-    flow:{data:{type:"flow",id:"flow-id"}},
-    "flow-message":{data:{type:"flow-message",id:"message-id"}},
-    "flow-message-variation":{data:{type:"flow-message-variation",id:"variation-id"}},
+  included:[{type:"attribution",id:"campaign-a",relationships:{
+    campaign:{data:{type:"campaign",id:"campaign-1"}},
+    "campaign-message":{data:{type:"campaign-message",id:"message-1"}},
   }}]};
   const batchContext = {...context, limits:{maxPages:3,maxRows:3,maxBytes:10000}};
   const {pages, manifest} = prepareKlaviyoHourlySourceBatch({...batchContext, projections:[first,second]});
@@ -95,14 +96,23 @@ test("hourly Klaviyo capture encrypts the original query scope with the sanitize
   assert.equal(calls.length,4);
   assert.deepEqual(result,{attemptId:context.attemptId,digest:confirmed.manifest.digest,
     pageCount:2,rowCount:2,contentVerified:true});
-  const {sales} = projectVerifiedKlaviyoHourlyProductSales(result);
+  const {accountId,sales} = projectVerifiedKlaviyoHourlyProductSales(result);
   assert.deepEqual(sales.map(row => [row.productId,row.variantId,row.quantity,row.value]), [
     ["product","variant","2","19.99"], ["second",null,"1",null],
   ]);
   assert.deepEqual(sales.map(row => [row.attribution.source_entity_id,row.attribution.channel_id,
     row.attribution.variation_id,row.attribution.sales_role]), [
-    ["flow-id","message-id","variation-id","Triggered"], [null,null,null,"Unclassified"],
+    ["campaign-1","message-1",null,"Assisted"], [null,null,null,"Unclassified"],
   ]);
+  const daily = await datasetSourceBindingFixture("klaviyo",{owner,klaviyoOpens:"7"});
+  await bindStoredDatasetSources(daily);
+  const message = daily.writes[0].rows.find(row => row.table==="pd_facts").row;
+  assert.deepEqual([daily.owner.accountId,message.root_entity_type,message.root_entity_id,message.entity_id],
+    [accountId,sales[0].attribution.source,sales[0].attribution.source_entity_id,sales[0].attribution.channel_id]);
+  assert.equal(message.purchase,"2.5");
+  assert.deepEqual(message.metric_extensions.opens,{value:"7",state:"present"});
+  assert.equal(sales[0].quantity,"2");
+  assert.equal(Object.hasOwn(sales[0],"purchase"),false);
   const reportReceipt = {attemptId:result.attemptId,digest:result.digest,
     counts:[2,0],applied:[start],productRows:2,productDigest:"f".repeat(64)};
   let reportCalls = 0;

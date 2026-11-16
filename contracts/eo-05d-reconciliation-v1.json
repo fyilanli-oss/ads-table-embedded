@@ -326,7 +326,12 @@
         }
       },
       "reconciliation": "Preserve campaign or flow and message identity across both datasets. Never add product sale events to aggregate message conversions as if they were one measure.",
-      "scope": "Dataset contents and cadence only."
+      "scope": "Dataset contents and cadence only.",
+      "shared_identity_test": {
+        "test": "tests/source-evidence-store.test.js",
+        "proves": "Authenticated hourly sale attribution and daily message fact match on provider account, parent kind, parent ID and message ID. Hourly quantity and daily attributed conversions remain independent measures.",
+        "boundary": "Synthetic Dataset integration test. No UI change."
+      }
     }
   }
 }

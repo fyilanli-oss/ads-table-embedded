@@ -862,7 +862,7 @@
       "contracts/eo-05b-fx-reporting-currency-v1.json": "f8971fc94bc63d89d3eea1b7916fae94de4fd5f1e4ed8fa32914464d1a28f332",
       "contracts/eo-05b-report-retention-v1.json": "cc4673fe9be0f77567bc6f2c0171a93eb95d1a4f637d0ccb10481de28bcb67d4",
       "contracts/eo-05c-maturity-v1.json": "81132731eda010e9e675b30c736a29c6f776a9ed0e236cb38ab3a791a8ce2eaf",
-      "contracts/eo-05d-reconciliation-v1.json": "6575f6f48b6c3cfd71eb3cd20325aeffd73ba2c09090d1d87a67dd7dee3ab478",
+      "contracts/eo-05d-reconciliation-v1.json": "e7e418498c9eabd5931bfc78ad3cc38359d1ba9d4857f38821ca25dd895e1e35",
       "contracts/eo-05e-observability-v1.json": "3c3ee6073f1141973d5c08830765b13cb37d5a5e77250d3d4671af1e51c6838f",
       "contracts/oauth/oauth-flow-constitution-v1.json": "aa555339106370e64e068a6d4bb58523255b6b5da73f50208b113c273ce39e57",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
@@ -2390,6 +2390,39 @@
       ],
       "visual_acceptance": "not_applicable_no_UI_change",
       "native_acceptance": false
+    },
+    {
+      "id": "eo05d-minimum-attribution-reread-policy",
+      "date": "2026-11-16",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Tamam Codex önerini onaylıyorum — agreed to record the hourly today/yesterday policy and consider only supported Google conversion-date fields."
+      },
+      "rationale": "Record the hourly refresh and older reconciliation limits independently of the attribution window. Record Google implementation prerequisites while preserving historical source compatibility.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "live_database": false,
+        "deploy": false,
+        "merge": false
+      },
+      "changed_paths": [
+        "contracts/eo-05d-reconciliation-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json"
+      ],
+      "artifact_paths": [
+        "contracts/eo-05d-reconciliation-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json"
+      ],
+      "tests": [
+        "tests/raw-source-constitution.test.js",
+        "tests/dataset-bootstrap.test.js"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "separate_merge_approval"
+      ]
     }
   ],
   "dataset_retention_decision": {

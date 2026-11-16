@@ -106,5 +106,34 @@
   },
   "new_package": false,
   "OAuth_UI_or_scope_change": false,
-  "formula_fixture_redesign": false
+  "formula_fixture_redesign": false,
+  "minimum_reread_policy": {
+    "decision_date": "2026-11-16",
+    "hourly": {
+      "days_in_order": [
+        "yesterday",
+        "today"
+      ],
+      "calendar": "provider_account_timezone"
+    },
+    "older_dates": "Keep the existing daily reconciliation path for applicable unresolved dates whose provider metrics are still subject to historical revision. Limit coverage per provider, account and conversion action to evidenced attribution settings plus any separately evidenced reporting lag.",
+    "unknown": "Represent unverified settings or reporting semantics explicitly as unknown. Do not assume a default attribution window or finality, or activate a new historical read based on an example.",
+    "date_basis": "Use conversion date for metrics with verified query and mapping support. Keep interaction-date metrics distinct and preserve their reconciliation requirements.",
+    "google": {
+      "candidate_fields": [
+        "metrics.conversions_by_conversion_date",
+        "metrics.conversions_value_by_conversion_date"
+      ],
+      "readiness": "Google Ads v25 documents conversion-date fields. Verify the exact existing resource, segments and query together, preserve old encrypted records, and keep date basis explicit through projection before enabling.",
+      "cart_sales": "Conversion-date equivalents for cart-data product units and revenue are unverified. Retain current semantics."
+    },
+    "meta_and_klaviyo": "Retain existing report semantics and holds. A date basis confirmed for one endpoint does not establish it for another endpoint or product breakdown.",
+    "code_activated": false,
+    "official_checked_at": "2026-11-16",
+    "official_sources": [
+      "https://developers.google.com/google-ads/api/fields/v25/shopping_performance_view",
+      "https://developers.google.com/google-ads/api/fields/v25/campaign",
+      "https://developers.google.com/google-ads/api/reference/rpc/v25/Metrics"
+    ]
+  }
 }

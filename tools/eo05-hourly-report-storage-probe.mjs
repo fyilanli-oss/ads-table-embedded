@@ -3,7 +3,7 @@ import {randomBytes, randomUUID} from "node:crypto";
 import {planIncrementalReport} from "../app/lib/refresh/incremental-report-plan.server.js";
 import {buildKlaviyoHourlyOrderedProductEventsRequest} from "../app/lib/providers/klaviyo-reporting.server.js";
 import {createSourceEvidenceCipher} from "../app/lib/database/source-evidence-store.server.js";
-import {prepareKlaviyoHourlySourceBatch, verifyKlaviyoHourlySourceBatch} from "../app/lib/database/klaviyo-hourly-source-page.server.js";
+import {commitKlaviyoHourlySourceBatch, prepareKlaviyoHourlySourceBatch} from "../app/lib/database/klaviyo-hourly-source-page.server.js";
 
 // A logged table in the isolated replay only. The rollback removes the entire
 // prototype. The statement never has a path to the application's daily facts.
@@ -161,24 +161,48 @@ async function klaviyoBatchRoundTrip(client, tickAt) {
     records:[{type:"event",id:"event-"+index,attributes:{datetime},
       relationships:{metric:{data:{id:scope.metricId}}}}],
   }));
-  const {pages, manifest:expectedManifest} = prepareKlaviyoHourlySourceBatch({...input,projections});
-  const written = await client.query(`
-    with batch as (
-      insert into eo05_hourly_rehearsal.source_batches(attempt_id,manifest)
-      values ($1,$2::jsonb) returning attempt_id
-    )
-    insert into eo05_hourly_rehearsal.source_pages(attempt_id,ordinal,envelope)
-    select batch.attempt_id, (page->>'ordinal')::int, page
-    from batch cross join jsonb_array_elements($3::jsonb) item(page)
-  `, [input.attemptId,JSON.stringify(expectedManifest), JSON.stringify(pages)]);
-  assert.equal(written.rowCount, 2);
-  const {rows:[stored]} = await client.query(`
-    select batch.manifest, jsonb_agg(page.envelope order by page.ordinal) as pages
-    from eo05_hourly_rehearsal.source_batches batch
-    join eo05_hourly_rehearsal.source_pages page using (attempt_id)
-    where attempt_id=$1 group by batch.manifest
-  `, [input.attemptId]);
-  const actual = verifyKlaviyoHourlySourceBatch({...input, ...stored, expectedManifest});
-  assert.equal(actual.digest, expectedManifest.digest);
+  await client.query(`
+    insert into eo05_hourly_rehearsal.work_orders(job_id,fence,series_id,hour_end)
+    values ($1,$2,$3,$4)
+  `, [scope.jobId, scope.fence, scope.accountId, scope.timeframe.end]);
+  const repository = {
+    async commitHourlySource({attemptId, batch, scope:readScope}) {
+      const {rows:[receipt]} = await client.query(`
+        with claim as materialized (
+          select job_id from eo05_hourly_rehearsal.work_orders
+          where job_id=$4 and fence=$5 and series_id=$6 and hour_end=$7 and not finished
+          for update
+        ), batch as (
+          insert into eo05_hourly_rehearsal.source_batches(attempt_id,manifest)
+          select $1, $2::jsonb from claim returning attempt_id, manifest
+        ), stored as (
+          insert into eo05_hourly_rehearsal.source_pages(attempt_id,ordinal,envelope)
+          select batch.attempt_id, (page->>'ordinal')::int, page
+          from batch cross join jsonb_array_elements($3::jsonb) item(page)
+          returning ordinal
+        )
+        select 'committed' status, attempt_id as "attemptId", manifest->>'digest' digest
+        from batch where (select count(*) from stored)=jsonb_array_length(manifest->'pages')
+      `, [attemptId, JSON.stringify(batch.manifest), JSON.stringify(batch.pages),
+        readScope.jobId, readScope.fence, readScope.accountId, readScope.timeframe.end]);
+      return receipt;
+    },
+    async readHourlySource({attemptId,maxPages}) {
+      const {rows:[stored]} = await client.query(`
+        select batch.manifest, jsonb_agg(page.envelope order by page.ordinal) as pages
+        from eo05_hourly_rehearsal.source_batches batch
+        cross join lateral (
+          select ordinal,envelope from eo05_hourly_rehearsal.source_pages
+          where attempt_id=batch.attempt_id order by ordinal limit $2
+        ) page
+        where batch.attempt_id=$1 group by batch.manifest
+      `, [attemptId,maxPages+1]);
+      return stored;
+    },
+  };
+  const batch = prepareKlaviyoHourlySourceBatch({...input,projections});
+  const actual = await commitKlaviyoHourlySourceBatch({batch, repository, deadlineAt:Date.now()+15000});
+  assert.equal(actual.digest, batch.manifest.digest);
+  assert.equal(actual.pageCount, 2);
   console.log("EO05_KLAVIYO_HOURLY_BATCH_PROBE_PASS real_SQL=true ordered_pages=2 immutable_manifest_readback=true synthetic=true");
 }

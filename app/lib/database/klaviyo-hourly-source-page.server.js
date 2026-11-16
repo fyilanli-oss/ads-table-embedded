@@ -12,6 +12,7 @@ const pageFormat = Object.freeze({
 const scopeKeys = ["version","provider","workspaceId","installGeneration","accountId","jobId","fence",
   "timeZone","metricId","timeframe","endExclusive","revision"].sort().join();
 const fail = () => {throw Error("KLAVIYO_HOURLY_SOURCE_SCOPE_INVALID");};
+const preparedBatches = new WeakMap();
 
 function hourlyScope({owner, scope, attemptId, pageOrdinal}) {
   const bound = sourceStoreOwner(owner);
@@ -112,7 +113,10 @@ export function prepareKlaviyoHourlySourceBatch({projections, ...input}) {
     return Object.freeze(page);
   });
   const manifest = sourceBatchManifest(input, pages, (_, index) => projections[index]);
-  return Object.freeze({pages:Object.freeze(pages), manifest});
+  const batch = Object.freeze({pages:Object.freeze(pages), manifest});
+  preparedBatches.set(batch, {cipher:input.cipher, owner:sourceStoreOwner(input.owner),
+    scope:structuredClone(input.scope), attemptId:input.attemptId, limits:structuredClone(input.limits)});
+  return batch;
 }
 
 // Run after the private writer returns its immutable manifest and physical pages.
@@ -123,4 +127,43 @@ export function verifyKlaviyoHourlySourceBatch({pages, manifest, expectedManifes
     openKlaviyoHourlySourcePage({...input, page, pageOrdinal}));
   if (canonicalSourceJson(actual) !== canonicalSourceJson(expectedManifest)) fail();
   return actual;
+}
+
+// The private repository must check the current claim and commit the manifest
+// and all pages atomically. This orchestration handles acknowledgement and
+// bounded physical readback. A source receipt never closes the report job.
+export async function commitKlaviyoHourlySourceBatch({batch, repository, deadlineAt, now = Date.now, signal}) {
+  const context = preparedBatches.get(batch);
+  if (!context || typeof repository?.commitHourlySource !== "function"
+    || typeof repository?.readHourlySource !== "function" || typeof now !== "function"
+    || !Number.isSafeInteger(deadlineAt)) fail();
+  const stop = () => {
+    const current = now();
+    if (signal?.aborted || !Number.isSafeInteger(current) || current >= deadlineAt) {
+      throw Error("KLAVIYO_HOURLY_SOURCE_STOPPED");
+    }
+  };
+  const {owner, scope, attemptId, limits} = context;
+  const binding = {owner, scope, attemptId, deadlineAt};
+  stop();
+  preparedBatches.delete(batch);
+  let receipt;
+  try {
+    receipt = await repository.commitHourlySource({...structuredClone(binding), batch});
+    if (receipt?.status !== "committed" || receipt.attemptId !== attemptId
+      || receipt.digest !== batch.manifest.digest) fail();
+  } catch {
+    throw Error("KLAVIYO_HOURLY_SOURCE_WRITE_UNCONFIRMED");
+  }
+  stop();
+  try {
+    const stored = await repository.readHourlySource({...structuredClone(binding), maxPages:limits.maxPages});
+    stop();
+    const manifest = verifyKlaviyoHourlySourceBatch({...context, pages:stored?.pages,
+      manifest:stored?.manifest, expectedManifest:batch.manifest});
+    return Object.freeze({attemptId, digest:manifest.digest, pageCount:manifest.pages.length,
+      rowCount:manifest.rows, contentVerified:true});
+  } catch {
+    throw Error("KLAVIYO_HOURLY_SOURCE_READBACK_UNCONFIRMED");
+  }
 }

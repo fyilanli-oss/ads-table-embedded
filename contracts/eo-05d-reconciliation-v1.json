@@ -205,9 +205,11 @@
           "version": "klaviyo-hourly-source-batch-v1",
           "proof": "Exact query scope, attempt, ordered page hashes and row/byte counts; authenticated readback rechecks pagination, duplicate event IDs and coverage. Empty terminal page is distinguishable from missing evidence.",
           "postgres_probe": "EO05_KLAVIYO_HOURLY_BATCH_PROBE_PASS",
-          "pending": "Connect the validated batch to the app's private source writer and active hourly claim. The rollback-only tables are fixture tables.",
+          "pending": "The isolated fixture adapter has no application RPC or deployed claim/source binding. Existing daily raw writers accept only calendar dates. Add and verify a versioned hourly application claim and private evidence RPC before wiring the worker.",
           "official_checked_at": "2026-11-16",
-          "official_source": "https://www.postgresql.org/docs/17/tutorial-transactions.html"
+          "official_source": "https://www.postgresql.org/docs/17/tutorial-transactions.html",
+          "commit_flow": "One private repository commit per prepared capability. The receipt must echo the attempt and expected digest. Only a known receipt permits bounded physical readback. Unknown commit result never triggers readback or retry. Source verification does not close the report job.",
+          "isolated_repository": "PostgreSQL fixture adapter checks and locks the same unclosed hourly work order before writing, then returns the committed digest and bounded ordered pages."
         }
       }
     }

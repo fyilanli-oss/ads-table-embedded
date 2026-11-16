@@ -7,7 +7,8 @@ import {sourceStoreFixture} from "./fixtures/source-store-fixture.js";
 import {buildKlaviyoHourlyOrderedProductEventsRequest} from "../app/lib/providers/klaviyo-reporting.server.js";
 import {createKlaviyoSourceCapture} from "../app/lib/providers/klaviyo-source-capture.server.js";
 import {openKlaviyoHourlySourcePage, sealKlaviyoHourlySourcePage,
-  prepareKlaviyoHourlySourceBatch, verifyKlaviyoHourlySourceBatch} from "../app/lib/database/klaviyo-hourly-source-page.server.js";
+  commitKlaviyoHourlySourceBatch, prepareKlaviyoHourlySourceBatch,
+  verifyKlaviyoHourlySourceBatch} from "../app/lib/database/klaviyo-hourly-source-page.server.js";
 
 test("hourly Klaviyo capture encrypts the original query scope with the sanitized page", async () => {
   const {input} = sourceStoreFixture();
@@ -51,6 +52,28 @@ test("hourly Klaviyo capture encrypts the original query scope with the sanitize
   assert.equal(empty.manifest.rows, 0);
   assert.throws(() => prepareKlaviyoHourlySourceBatch({...batchContext,
     limits:{...batchContext.limits,maxRows:1}, projections:[first,second]}), /SCOPE_INVALID/);
+
+  let writes = 0, reads = 0;
+  const writeOptions = {deadlineAt:1000, now:() => 0, repository:{
+    async commitHourlySource() {writes++; throw Error("unknown outcome");},
+    async readHourlySource() {reads++;},
+  }};
+  await assert.rejects(commitKlaviyoHourlySourceBatch({...writeOptions,batch:empty}), /WRITE_UNCONFIRMED/);
+  await assert.rejects(commitKlaviyoHourlySourceBatch({...writeOptions,batch:empty}), /SCOPE_INVALID/);
+  assert.deepEqual([writes,reads], [1,0]);
+  const confirmed = prepareKlaviyoHourlySourceBatch({...batchContext,projections:[first,second]});
+  const result = await commitKlaviyoHourlySourceBatch({...writeOptions,batch:confirmed, repository:{
+    async commitHourlySource({attemptId,scope,batch}) {
+      assert.equal(scope.fence,7);
+      return {status:"committed",attemptId,digest:batch.manifest.digest};
+    },
+    async readHourlySource({maxPages}) {
+      assert.equal(maxPages,3);
+      return confirmed;
+    },
+  }});
+  assert.deepEqual(result,{attemptId:context.attemptId,digest:confirmed.manifest.digest,
+    pageCount:2,rowCount:2,contentVerified:true});
 });
 
 test("source evidence encryption binds actual owner, attempt, page metadata and sanitized content", () => {

@@ -1768,6 +1768,7 @@
       "tools/eo05-google-source-capture-probe.mjs": "3bbd6369145a45c1847906905cfaecee4234fa3ed07f3de8d1ece84ee036a62b",
       "tools/eo05-google-source-role-plan.mjs": "adcba023cf2d6d55e51210851d50a444f1258bf560c138a93bb0dbe7259a38ca",
       "tools/eo05-google-source-role-probe.mjs": "fba96de648dd50a099dae4cdfd1e17807e5eb250cbc139d967a3f6e96b8ad19a",
+      "tools/eo05-hourly-report-storage-probe.mjs": "f7427ff1a5c07e0de70abed7614ee9e0e1695eddec10747c2ba0754e193d3e16",
       "tools/eo05-identity-authority-snapshot-probe.mjs": "0136e8dc5a5720b78d1cb4dca081f19e8b473812b6d66129b94f64fd5edf672c",
       "tools/eo05-identity-oauth-atomic-probe.mjs": "89758e82406dd15e94551bf22305ef9845dd6bf009127d119f1f7d618a9a20e5",
       "tools/eo05-klaviyo-raw-datasets-probe.mjs": "d22bf4e167d01d9363a28ec856441c7505775a3813f29487551f15925948c09f",
@@ -1815,7 +1816,7 @@
       "tools/eo05c-maturity-probe.mjs": "e66c2379b2f6781bb4b1ac2207bfe73edeb9ce5c1c01cb8cc7bde06f69fe5b47",
       "tools/eo05d-reconciliation-probe.mjs": "dc3b91451a057b2621d09378948dcd4e80ca7ce52221061dc774b1be9c400608",
       "tools/eo05e-observability-probe.mjs": "f9aad28c4b2c062915f18dc2d000680e33afe6ca8de9714f59cccb881a291273",
-      "tools/f01-database-replay.mjs": "11e8736bc46f76dd3476a79fae8d18d21d19d375e4c8534c4ad67eccf6f5a98b",
+      "tools/f01-database-replay.mjs": "781456a413b57e5f51effd6200613dcb08637373360589803483b565f36fbf00",
       "tools/f01-identity-oauth-rollout.mjs": "5894b9ae54363fcf31372ed0a1abf39d3c0e1dfea428190232a0420b0b11f787",
       "tools/f01-live-readiness-plan.mjs": "d4eb8e8ca9d80d6e99cea8c9cf475b388db46a756e2e7a631c5c245e8e7bb25b",
       "tools/f01-live-readiness-rehearsal.mjs": "d5d2b8510551b7f99e7669a37072636bab135a6bef90b0da51bf9ef185aac17e",
@@ -4420,7 +4421,7 @@
       "date": "2026-11-16",
       "owner_approval": {
         "explicit": true,
-        "source": "Tamam onaylıyorum Codex — explicit approval after listing separate hourly scope, daily writer, and isolated checks for midnight, overlap and daily-record preservation. Follow-up approval: Tamam onaylıyorum devam edelim Codex — trusted scheduler and isolated durable integration follow-up; this delivery gates only the daily scheduling path. Follow-up approval: Tamam devam edelim onaylıyorum Codex — reuse the existing durable run identity for daily deduplication and verify rollover in isolation. Follow-up approval: Devam edelim onaylıyorum — verify daily rollover against PostgreSQL in the existing rollback-only F01 probe."
+        "source": "Tamam onaylıyorum Codex — explicit approval after listing separate hourly scope, daily writer, and isolated checks for midnight, overlap and daily-record preservation. Follow-up approval: Tamam onaylıyorum devam edelim Codex — trusted scheduler and isolated durable integration follow-up; this delivery gates only the daily scheduling path. Follow-up approval: Tamam devam edelim onaylıyorum Codex — reuse the existing durable run identity for daily deduplication and verify rollover in isolation. Follow-up approval: Devam edelim onaylıyorum — verify daily rollover against PostgreSQL in the existing rollback-only F01 probe. Follow-up approval: Tamam devam edelim Codex onayliyorum — prepare and verify an isolated hour-level PostgreSQL write independently of daily records."
       },
       "rationale": "Record the approved minimum reread policy and prepare isolated hourly and daily report plans with separate hourly replacement. OAuth behavior is outside this scope.",
       "scope": {
@@ -4435,7 +4436,9 @@
         "app/lib/refresh/preflight-bridge.server.js",
         "app/lib/refresh/scheduled-queue-check.server.js",
         "contracts/oauth/oauth-flow-constitution-v1.json",
-        "tools/eo05-refresh-preflight-probe.mjs"
+        "tools/eo05-hourly-report-storage-probe.mjs",
+        "tools/eo05-refresh-preflight-probe.mjs",
+        "tools/f01-database-replay.mjs"
       ],
       "artifact_paths": [
         "app/lib/refresh/incremental-report-plan.server.js",
@@ -4446,7 +4449,9 @@
         "tests/eo-05a-refresh-preflight-bridge.test.js",
         "tests/eo-05a-refresh-scheduled-queue-check.test.js",
         "tests/incremental-report-plan.test.js",
-        "tools/eo05-refresh-preflight-probe.mjs"
+        "tools/eo05-hourly-report-storage-probe.mjs",
+        "tools/eo05-refresh-preflight-probe.mjs",
+        "tools/f01-database-replay.mjs"
       ],
       "tests": [
         "tests/incremental-report-plan.test.js",
@@ -4454,7 +4459,8 @@
         "tests/raw-source-constitution.test.js",
         "tests/eo-05a-refresh-scheduled-queue-check.test.js",
         "tests/eo-05a-refresh-preflight-bridge.test.js",
-        "tools/eo05-refresh-preflight-probe.mjs"
+        "tools/eo05-refresh-preflight-probe.mjs",
+        "tools/eo05-hourly-report-storage-probe.mjs"
       ],
       "acceptance_required": [
         "required_CI",

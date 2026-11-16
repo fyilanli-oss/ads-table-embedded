@@ -171,6 +171,17 @@
         "entry": "tools/eo05-refresh-preflight-probe.mjs",
         "evidence_marker": "EO05_DAILY_REPORT_ROLLOVER_PASS",
         "expected": "Later queue hour cannot reserve the same daily job. Exactly one durable run remains. The probe uses a synthetic denial before ads data access and rolls its fixture back."
+      },
+      "hourly_sql_prototype": {
+        "entry": "tools/eo05-hourly-report-storage-probe.mjs",
+        "evidence_marker": "EO05_HOURLY_STORAGE_PROBE_PASS",
+        "boundary": "Logged PostgreSQL rehearsal table, physical readback and rollback. No application migration, provider payload or durable production writer.",
+        "verification": "Overlapping, empty, stale, invalid, cross-account and daily isolation cases use synthetic snapshots.",
+        "official_checked_at": "2026-11-16",
+        "official_sources": [
+          "https://www.postgresql.org/docs/17/sql-insert.html",
+          "https://supabase.com/changelog.md"
+        ]
       }
     }
   }

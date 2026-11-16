@@ -1,4 +1,5 @@
 import {datasetStorageProbe} from "./eo05b-dataset-storage-probe.mjs";
+import {hourlyReportStorageProbe} from "./eo05-hourly-report-storage-probe.mjs";
 import assert from "node:assert/strict";
 import {sourceEvidenceProbe} from "./eo05-source-evidence-probe.mjs";
 import {createHash, randomBytes, randomUUID} from "node:crypto";
@@ -445,6 +446,7 @@ async function main() {
     const version=Number((await client.query("show server_version_num")).rows[0].server_version_num);
     assert.ok(version>=170000 && version<180000,"PostgreSQL 17 required");
     assert.equal((await client.query("select count(*)::int as n from pg_namespace where nspname='app'")).rows[0].n,0,"database must be empty before replay");
+    await hourlyReportStorageProbe(client);
     const migrations=mode==="staged"?manifest.historical_migrations:[...manifest.historical_migrations,...manifest.forward_migrations,...manifest.pending_migrations];
     for (const entry of migrations) {
       console.log(`F01B_APPLY ${entry.version} ${entry.name}`);

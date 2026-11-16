@@ -149,6 +149,20 @@
       "https://developers.google.com/google-ads/api/fields/v25/shopping_performance_view",
       "https://developers.google.com/google-ads/api/fields/v25/campaign",
       "https://developers.google.com/google-ads/api/reference/rpc/v25/Metrics"
-    ]
+    ],
+    "isolated_implementation": {
+      "module": "app/lib/refresh/incremental-report-plan.server.js",
+      "tests": "tests/incremental-report-plan.test.js",
+      "verified_hour_application": "Pure transition over one already scoped hourly series. Daily state never enters the transition. Durable writer and readback are not wired.",
+      "windows": "Daily windows are supplied by the caller, with previous-day reporting lag included. Once-per-day claiming belongs to scheduler integration.",
+      "pending": [
+        "provider metric capability binding",
+        "durable hourly write and receipt",
+        "scheduler integration and daily dispatch",
+        "same-workload capacity comparison"
+      ],
+      "official_calendar_reference": "https://tc39.es/ecma402/#sec-intl.datetimeformat.prototype.formattoparts",
+      "official_calendar_checked_at": "2026-11-16"
+    }
   }
 }

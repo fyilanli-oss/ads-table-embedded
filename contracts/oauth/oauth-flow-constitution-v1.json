@@ -1475,6 +1475,7 @@
       "app/lib/refresh/google-server-runtime.server.js": "e6d28533aa6ed11badaef879bfada59b29249ad6b033c7f304b6c48e4750fd4a",
       "app/lib/refresh/google-source-mapping-flow.server.js": "bc77433b9d69d923f73fe916ebd5a0f78c74ea7a3207994764e46983c280e870",
       "app/lib/refresh/google-source-server.server.js": "84f9fbcf04ccd7db003ca14e82fa5a21322c4f0350a8f0cd0aad9b4fc443ea1b",
+      "app/lib/refresh/incremental-report-plan.server.js": "74f655ff2142e3e6f3f6788500be477c7f2e388127b557f5753545e050a6544a",
       "app/lib/refresh/integrated-prewrite-review.server.js": "f528e47829307d3db235a3395f1cce8d72cba92ce507d7ab6d62fa94388a14f0",
       "app/lib/refresh/klaviyo-background-owner.server.js": "d6965d0331b0904aff7161b273db6ee4d1d956ddc56ae36300942b718e543756",
       "app/lib/refresh/klaviyo-private-request.server.js": "34240888886b864f79f862e5260ef3dc2dadfe2eb1207653dcf372162e39aedb",
@@ -4413,6 +4414,43 @@
       ],
       "visual_acceptance": "not_applicable_no_UI_change",
       "native_acceptance": false
+    },
+    {
+      "id": "eo05d-minimum-attribution-reread-policy",
+      "date": "2026-11-16",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Tamam onaylıyorum Codex — explicit approval after listing separate hourly scope, daily writer, and isolated checks for midnight, overlap and daily-record preservation."
+      },
+      "rationale": "Record the approved minimum reread policy and prepare isolated hourly and daily report plans with separate hourly replacement. OAuth behavior is outside this scope.",
+      "scope": {
+        "runtime_code": true,
+        "live_provider": false,
+        "live_database": false,
+        "deploy": false,
+        "merge": false
+      },
+      "changed_paths": [
+        "app/lib/refresh/incremental-report-plan.server.js",
+        "contracts/oauth/oauth-flow-constitution-v1.json"
+      ],
+      "artifact_paths": [
+        "app/lib/refresh/incremental-report-plan.server.js",
+        "contracts/eo-05d-reconciliation-v1.json",
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "tests/incremental-report-plan.test.js"
+      ],
+      "tests": [
+        "tests/incremental-report-plan.test.js",
+        "tests/dataset-bootstrap.test.js",
+        "tests/raw-source-constitution.test.js"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ]
     }
   ],
   "coverage": {

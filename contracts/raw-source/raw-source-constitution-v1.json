@@ -659,6 +659,7 @@
       "app/lib/refresh/google-server-runtime.server.js": "e6d28533aa6ed11badaef879bfada59b29249ad6b033c7f304b6c48e4750fd4a",
       "app/lib/refresh/google-source-mapping-flow.server.js": "bc77433b9d69d923f73fe916ebd5a0f78c74ea7a3207994764e46983c280e870",
       "app/lib/refresh/google-source-server.server.js": "84f9fbcf04ccd7db003ca14e82fa5a21322c4f0350a8f0cd0aad9b4fc443ea1b",
+      "app/lib/refresh/incremental-report-plan.server.js": "74f655ff2142e3e6f3f6788500be477c7f2e388127b557f5753545e050a6544a",
       "app/lib/refresh/integrated-prewrite-review.server.js": "f528e47829307d3db235a3395f1cce8d72cba92ce507d7ab6d62fa94388a14f0",
       "app/lib/refresh/klaviyo-background-owner.server.js": "d6965d0331b0904aff7161b273db6ee4d1d956ddc56ae36300942b718e543756",
       "app/lib/refresh/klaviyo-private-request.server.js": "34240888886b864f79f862e5260ef3dc2dadfe2eb1207653dcf372162e39aedb",
@@ -862,9 +863,9 @@
       "contracts/eo-05b-fx-reporting-currency-v1.json": "f8971fc94bc63d89d3eea1b7916fae94de4fd5f1e4ed8fa32914464d1a28f332",
       "contracts/eo-05b-report-retention-v1.json": "cc4673fe9be0f77567bc6f2c0171a93eb95d1a4f637d0ccb10481de28bcb67d4",
       "contracts/eo-05c-maturity-v1.json": "81132731eda010e9e675b30c736a29c6f776a9ed0e236cb38ab3a791a8ce2eaf",
-      "contracts/eo-05d-reconciliation-v1.json": "2d9dd8f7f8b83abed571de6b510b14018460aa81694f0e4409bd3b051f9f2bc7",
+      "contracts/eo-05d-reconciliation-v1.json": "2f077f7aec05ab23d56cc4f4c55cbc941e8a89565f098e339dbc5b690a1429fb",
       "contracts/eo-05e-observability-v1.json": "3c3ee6073f1141973d5c08830765b13cb37d5a5e77250d3d4671af1e51c6838f",
-      "contracts/oauth/oauth-flow-constitution-v1.json": "aa555339106370e64e068a6d4bb58523255b6b5da73f50208b113c273ce39e57",
+      "contracts/oauth/oauth-flow-constitution-v1.json": "0970239d0dcda06d64a050c7ff6ceb8388a447063bd80df0af3a0aeaac99c1b1",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
       "contracts/repository-delivery-workflow-v1.json": "f214c83b6ec65b11fb9b974ae52ebbdf6ae7183bc69bc835320ec25619af4b7f",
       "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json": "18a54cf7d47cddc4b2dcac24320a0f27f3d1112264a023acc33152a80ae745c6",
@@ -1147,6 +1148,7 @@
       "tests/identity-permission-preflight.test.js": "5f74265fe234f4937e5cc7f01c9e11ce052daf3ddbd97ae97196b247685e2354",
       "tests/identity-read-deadline.test.js": "f43ec7e8d9ff6131735dc2a4570a36acf54cbe480ed472955e753c380d9cf78b",
       "tests/identity-runtime-authority.test.js": "de31b90de65c57fadd9874b6daaf156eb9d23798905b3d9c89db5d7f3ab05c27",
+      "tests/incremental-report-plan.test.js": "83ba8987447cb18f1113b647dd8b4665e0edf62a28675e5350378b830510a293",
       "tests/klaviyo-attributed-interaction.test.js": "3c5f6615492225ed177b3bd8bef193802f9f836cae76084e2082d619b113b910",
       "tests/klaviyo-identity-collection.test.js": "0b1ece7c3fcbb91e0ff5fdeaaefec3c211b1a2c0984b76b008b33063de17f607",
       "tests/klaviyo-pd-composition.test.js": "943611102776d0b7a9cf8c6bb54d0298b15f5887cab87a8a8a057d6e0f9e2cf3",
@@ -2396,31 +2398,39 @@
       "date": "2026-11-16",
       "owner_approval": {
         "explicit": true,
-        "source": "Tamam Codex önerini onaylıyorum — agreed to record the hourly today/yesterday policy and consider only supported Google conversion-date fields."
+        "source": "Tamam Codex önerini onaylıyorum — agreed to record the hourly today/yesterday policy and consider only supported Google conversion-date fields. Tamam onaylıyorum Codex — explicit approval after listing separate hourly scope, daily writer, and isolated checks for midnight, overlap and daily-record preservation."
       },
-      "rationale": "Record the hourly refresh and older reconciliation limits independently of the attribution window. Record Google implementation prerequisites while preserving historical source compatibility.",
+      "rationale": "Record the approved minimum reread policy and prepare isolated hourly and daily report plans with separate hourly replacement. OAuth behavior is outside this scope.",
       "scope": {
-        "runtime_code": false,
+        "runtime_code": true,
         "live_provider": false,
         "live_database": false,
         "deploy": false,
         "merge": false
       },
       "changed_paths": [
+        "app/lib/refresh/incremental-report-plan.server.js",
         "contracts/eo-05d-reconciliation-v1.json",
-        "contracts/raw-source/raw-source-constitution-v1.json"
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json",
+        "tests/incremental-report-plan.test.js"
       ],
       "artifact_paths": [
+        "app/lib/refresh/incremental-report-plan.server.js",
         "contracts/eo-05d-reconciliation-v1.json",
-        "contracts/raw-source/raw-source-constitution-v1.json"
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "contracts/raw-source/raw-source-constitution-v1.json",
+        "tests/incremental-report-plan.test.js"
       ],
       "tests": [
-        "tests/raw-source-constitution.test.js",
-        "tests/dataset-bootstrap.test.js"
+        "tests/incremental-report-plan.test.js",
+        "tests/dataset-bootstrap.test.js",
+        "tests/raw-source-constitution.test.js"
       ],
       "acceptance_required": [
         "required_CI",
         "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
         "separate_merge_approval"
       ]
     }

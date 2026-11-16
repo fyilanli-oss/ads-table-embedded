@@ -96,7 +96,7 @@ begin
     receipt := evidence.commit_source_batch(o,p_attempt,0,p);
     update evidence.source_batches set manifest=manifest||jsonb_build_object(
       'klaviyoHourlyRead',s,'klaviyoHourlyManifest',m,'klaviyoHourlyInputDigest',request_hash,
-      'klaviyoHourlyObservedAt',observed_at
+      'klaviyoHourlyObservedAt',observed_at,'klaviyoHourlySourceCurrency',b.source->>'currency'
     ) where id=(receipt->>'batchId')::bigint and workspace_id=w and installation_id=iid and installation_generation=g;
   end if;
   if deadline_at<=clock_timestamp() then raise exception 'KLAVIYO_HOURLY_SOURCE_EXPIRED'; end if;

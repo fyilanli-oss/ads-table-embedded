@@ -6,6 +6,8 @@ import {reconcileStoredDatasetSources, inspectDatasetReconciliation, DATASET_REC
 import {storeMaturityConfiguration, recordMaturityDecision, inspectMaturityDecision} from "../app/lib/database/maturity-store.server.js";
 import {maturityObservationFixture} from "../tests/fixtures/maturity-fixture.js";
 import {createScheduledDatasetPostgresClient} from "../app/lib/database/dataset-postgres.server.js";
+import {sourceStoreFixture} from "../tests/fixtures/source-store-fixture.js";
+import {createSourceEvidenceRepository, prepareSourceWrite} from "../app/lib/database/source-evidence-store.server.js";
 
 async function rejected(client, action) {
   await client.query("savepoint reconciliation_expected_failure"); let error;
@@ -13,6 +15,55 @@ async function rejected(client, action) {
   await client.query("rollback to savepoint reconciliation_expected_failure");await client.query("release savepoint reconciliation_expected_failure");
   assert.ok(error, "invalid reconciliation must fail");
   return error;
+}
+
+async function klaviyoSalesCadenceProbe(client,owner) {
+  await client.query("savepoint klaviyo_sales_cadence");
+  try {
+    const {input} = sourceStoreFixture({owner});
+    const records = Object.fromEntries(Object.keys(input.records).map(key => [key,[]]));
+    const source = await createSourceEvidenceRepository(client).commit(
+      prepareSourceWrite({...input,records,pages:[]}),
+    );
+    const hour = "2026-11-01T12:00:00.000Z", end = "2026-11-01T13:00:00.000Z";
+    const events = ["event-1","event-2"].map((eventId,index) => ({
+      eventId,occurredAt:hour,productId:"product-1",variantId:index===0?"native-variant":null,quantity:"7",value:null,
+      attribution:{source:"campaign",source_entity_id:"campaign-1",channel_type:"campaign_message",channel_id:"message-1"},
+    }));
+    const digest = "a".repeat(64);
+    await client.query(`
+      update evidence.source_batches set manifest=manifest||jsonb_build_object(
+        'klaviyoHourlyManifest',jsonb_build_object('digest',$2::text),'klaviyoHourlySourceCurrency','USD')
+      where id=$1
+    `,[source.batchId,digest]);
+    await client.query("insert into analytics.klaviyo_hourly_event_receipts values ($1,$2)",[source.batchId,{digest}]);
+    await client.query(`
+      insert into analytics.klaviyo_hourly_event_facts(workspace_id,installation_id,generation,account_id,connection_id,
+        connection_version,metric_id,hour_start,observed_at,event_count,source_batch_id)
+      values ($1,$2,$3,$4,$5,$6,'product',$7,clock_timestamp(),2,$8)
+    `,[owner.workspaceId,owner.installationId,owner.generation,owner.accountId,owner.connectionId,
+      owner.connectionVersion,hour,source.batchId]);
+    await client.query(`
+      insert into analytics.klaviyo_hourly_product_sales(source_batch_id,event_id,hour_start,ordinal,sale)
+      select $1,item->>'eventId',$2,n,item from jsonb_array_elements($3::jsonb) with ordinality entry(item,n)
+    `,[source.batchId,hour,JSON.stringify(events)]);
+    const read = async limit => (await client.query(
+      "select analytics.read_klaviyo_product_sales_window($1,$2,$3,$4) as result",[owner,hour,end,limit],
+    )).rows[0].result;
+    const latest = await read(2);
+    assert.equal(latest.status,"read");
+    assert.deepEqual(latest.sales.map(row => [row.eventId,row.productId,row.cadence,row.quantity]),
+      [["event-1","product-1","hourly","7"],["event-2","product-1","hourly","7"]]);
+    assert.deepEqual(await read(1),{status:"limit_reached",sales:null});
+    await client.query("update analytics.klaviyo_hourly_event_facts set observed_at='2000-01-01' where source_batch_id=$1",[source.batchId]);
+    const corrected = (await read(2)).sales;
+    assert.deepEqual(corrected.map(row => [row.eventId,row.cadence,row.quantity,row.attribution.channel_id]),
+      [["event-1","daily","2.5","message-1"],["event-2","hourly","7","message-1"]]);
+    console.log("EO05_KLAVIYO_DATASET_EVENT_DEDUP_PASS actual_SQL=true same_event_once=true distinct_same_product_preserved=true");
+  } finally {
+    await client.query("rollback to savepoint klaviyo_sales_cadence");
+    await client.query("release savepoint klaviyo_sales_cadence");
+  }
 }
 
 /** Existing F01 rollback transaction. Owners, native pages, clocks and keys below
@@ -44,8 +95,10 @@ export async function reconciliationProbe(client, {ownerFixture}) {
     await rejected(client, () => reconcileStoredDatasetSources(first));scenarios++;
     const rowBefore = (await client.query("select id,purchase::text,metric_extensions from analytics.pd_facts where installation_id=$1", [owner.installationId])).rows[0];
     if (provider === "google_ads") assert.equal(rowBefore.purchase, "3");
-    if (provider === "klaviyo") assert.deepEqual(rowBefore.metric_extensions,
-      {recipients:{value:"0",state:"present"},opens:{value:null,state:"missing"}});
+    if (provider === "klaviyo") {
+      assert.deepEqual(rowBefore.metric_extensions,{recipients:{value:"0",state:"present"},opens:{value:null,state:"missing"}});
+      await klaviyoSalesCadenceProbe(client,owner);
+    }
     if (provider === "google_ads") {
       const observation = maturityObservationFixture(provider, {owner, clickDays: "0"});
       const cfg = await storeMaturityConfiguration({database, cipher: first.cipher, owner, observation: await observation.read(),

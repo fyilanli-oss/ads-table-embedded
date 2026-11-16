@@ -97,6 +97,9 @@ export async function datasetStorageProbe(client, connection, environment = proc
     await fxReportingCurrencyProbe(client, {ownerFixture});
     await datasetServerProbe(client, {ownerFixture});
     await maturityProbe(client, {ownerFixture});
+    for (const sql of ["eo05-klaviyo-hourly-event-report.sql","eo05-klaviyo-product-sales-reconciliation.sql"]) {
+      await client.query(readFileSync(new URL("./sql/"+sql,import.meta.url),"utf8"));
+    }
     await reconciliationProbe(client, {ownerFixture});
     await observabilityProbe(client, {ownerFixture});
     for (const provider of ["google_ads", "meta", "klaviyo"]) {

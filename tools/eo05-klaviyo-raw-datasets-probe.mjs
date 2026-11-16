@@ -10,6 +10,7 @@ import {KLAVIYO_OAUTH_SCOPES} from "../app/lib/providers/klaviyo-api.server.js";
 import {createKlaviyoRawCaptureExecution} from "../app/lib/refresh/klaviyo-raw-server.server.js";
 import {handleKlaviyoRawCaptureRequest} from "../app/lib/refresh/klaviyo-raw-request.server.js";
 import {sourceStoreFixture} from "../tests/fixtures/source-store-fixture.js";
+import {klaviyoHourlyPrivateWriterProbe} from "./eo05-klaviyo-hourly-private-writer-probe.mjs";
 
 export function klaviyoFirstDayRehearsalEnvironment(){
  const url=role=>`postgresql://${role}.podpwkrpmjiksskxhwsu:${"x".repeat(32)}@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require`;
@@ -70,6 +71,7 @@ export async function klaviyoFirstDayRehearsal(client,{workspace,shopId,shopDoma
       await client.query("insert into operations.api_quota_routes values($1,$1,true)",[r.routeKey]);
      }
     }
+    if(mode==="zero_repeat")await klaviyoHourlyPrivateWriterProbe(client,{store,workspace,shopId,shopDomain,connection:c,installation});
     const dates=(await client.query("select (connected_at at time zone 'UTC')::date::text today,((connected_at at time zone 'UTC')::date-1)::text yesterday,((clock_timestamp() at time zone 'UTC')::date+1)::text tomorrow from integrations.provider_connections where id=$1",[c.id])).rows[0];
     const operationId=randomUUID(),window={from:dates.today,to:dates.today},cost={requests:6,dbWrites:4068,connections:3,rows:2100,bytes:3145728};
     const id=createHash("sha256").update(JSON.stringify(["klaviyo_raw_capture_v1",operationId,workspace,source.installGeneration,"klaviyo-a"])).digest("hex");

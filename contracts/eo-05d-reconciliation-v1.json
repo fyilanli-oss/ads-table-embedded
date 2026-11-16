@@ -205,7 +205,7 @@
           "version": "klaviyo-hourly-source-batch-v1",
           "proof": "Exact query scope, attempt, ordered page hashes and row/byte counts; authenticated readback rechecks pagination, duplicate event IDs and coverage. Empty terminal page is distinguishable from missing evidence.",
           "postgres_probe": "EO05_KLAVIYO_HOURLY_BATCH_PROBE_PASS",
-          "pending": "Prepared SQL is exercised in rollback-only F01; runtime EXECUTE is intentionally absent. Actual hourly claim admission, positive real SQL claim/commit, provider worker binding and scheduled write still require integration.",
+          "pending": "Runtime EXECUTE is absent. The positive source proof is isolated. Product scheduling, end-to-end binding, compatibility with privacy erasure/retention, and durable hourly report consumption remain open.",
           "official_checked_at": "2026-11-16",
           "official_source": "https://www.postgresql.org/docs/17/tutorial-transactions.html",
           "commit_flow": "One private repository commit per prepared capability. The receipt must echo the attempt and expected digest. Only a known receipt permits bounded physical readback. Unknown commit result never triggers readback or retry. Source verification does not close the report job.",
@@ -216,7 +216,13 @@
             "test": "tools/eo05b-dataset-storage-probe.mjs",
             "proof": "Checks current owner, exact hour interval encoded in claim partition, local date coverage, eligibility, deadline and recorded quota authority under existing locks. Stores only hourly source pages using the existing private evidence tables, and returns the persisted scoped manifest.",
             "official_checked_at": "2026-11-16",
-            "official_source": "https://www.postgresql.org/docs/17/explicit-locking.html"
+            "official_source": "https://www.postgresql.org/docs/17/explicit-locking.html",
+            "roundtrip": {
+              "test": "tools/eo05-klaviyo-hourly-private-writer-probe.mjs",
+              "entry": "tools/eo05-klaviyo-raw-datasets-probe.mjs",
+              "evidence_marker": "EO05_KLAVIYO_HOURLY_PRIVATE_WRITER_ROUNDTRIP_PASS",
+              "cases": "Current PostgreSQL work binding plus quota and entitlement, stale fence rejection, encrypted source tables and physical receipt readback. The transaction fixture is rolled back."
+            }
           }
         }
       }

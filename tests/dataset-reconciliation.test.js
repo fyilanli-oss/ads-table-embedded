@@ -35,6 +35,23 @@ for (const provider of ["google_ads", "meta", "klaviyo"]) test("reconciliation p
   assert.equal(r.consumerReceipt, true); assert.equal(r.checkpointAdvanced, true); assert.equal(r.publishable, false);
   assert.equal(f.request().context.sources.length, [...f.envelopes.values()].reduce((n, b) => n + b.pages.length, 0));
   assert.equal(f.request().write.rows.length, provider === "google_ads" ? 3 : provider === "meta" ? 0 : 2);
+  if (provider === "klaviyo") {
+    const message = f.request().write.rows.find(entry => entry.table === "pd_facts").row;
+    assert.equal(message.extension_schema_version,"eo05b-klaviyo-message-extensions-v1");
+    assert.deepEqual(message.metric_extensions,{recipients:{value:"0",state:"present"},
+      opens:{value:null,state:"missing"}});
+  }
+});
+test("scheduled Klaviyo reconciliation retains campaign and flow message parents", async () => {
+  const f = await fixture("klaviyo", {klaviyoFlow:true,klaviyoOpens:"3"});
+  const result = await reconcileStoredDatasetSources({...f, scheduled:true,
+    admittedScope:{jobId:"synthetic-binding-job",fence:"1",from:"2026-11-01",to:"2026-11-01"}});
+  assert.equal(result.jobCompleted,true);
+  const messages = f.request().write.rows.filter(entry=>entry.table==="pd_facts").map(({row})=>
+    [row.root_entity_type,row.root_entity_id,row.entity_id,row.metric_extensions.opens.value]);
+  assert.deepEqual(messages.sort(),[
+    ["campaign","campaign-1","message-1","3"],["flow","flow-1","flow-message-1","3"],
+  ]);
 });
 test("Meta's existing nonempty sales evidence hold is preserved, never consumed", async () => {
   const f = await fixture("meta"); const r = await reconcileStoredDatasetSources(f);

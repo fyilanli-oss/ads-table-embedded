@@ -59,6 +59,67 @@ test("an explicitly supplied internal plan uses the existing fenced preflight on
   assert.equal(conflict.work.status,"conflict");assert.equal(pages,1);assert.equal(billing,1);
 });
 
+test("one confirmed tick drains ready work until time, queue revision or eligible jobs run out",async()=>{
+  for (const stop of ["waiting","conflict","tick_budget_elapsed","new_holds","no_entitlement_time"]) {
+    const tick=Date.parse("2026-11-16T22:00:00.000Z");
+    const vector={requests:100,dbWrites:100,connections:100,rows:100,bytes:10000};
+    const candidates=Array.from({length:12},(_,i)=>({workspaceId:"w",installGeneration:"1",provider:"klaviyo",
+      accountId:`account-${i}`,connectionId:`connection-${i}`,connectionVersion:1,selectionId:null,
+      timezone:"UTC",scheduledHour:tick-3_600_000,queuedAt:tick-3_600_000+i}));
+    const snapshot={configured:true,queueRevision:receipt.queueRevision,state:{revision:3,nextFence:1,nextTurn:1,claims:[],lastServed:[]},
+      bounds:{maxCandidates:12,maxClaims:12,maxAdmissions:1,maxWorkspaces:12},
+      budget:{global:vector,interactiveReserve:{requests:0,dbWrites:0,connections:0,rows:0,bytes:0},
+        providers:[{provider:"klaviyo",limit:vector}],workspaces:[{workspaceId:"w",limit:vector}],
+        accounts:candidates.map(({accountId})=>({provider:"klaviyo",accountId,limit:vector}))},candidates};
+    let now=tick+1_000, checks=0, read=0, bound, candidateReads=0, admissionReads=0;
+    const admitted=[];
+    const store={
+      checkScheduledQueue:async()=>{checks++;return {...receipt,checkedAtMs:tick};},
+      reviewInterruptedWork:async()=>({status:"reviewed",stopped:0,uncertain:0}),
+      readPreflightSnapshot:async()=>{candidateReads++;return snapshot;},
+      commitPreflight:async({source,deadlineAt,queueRevision,expectedRevision})=>{
+        assert.equal(expectedRevision,snapshot.state.revision);
+        if (queueRevision!==snapshot.queueRevision) return false;
+        admitted.push(source.accountId);
+        bound=source;
+        assert.equal(deadlineAt,tick+60_000);
+        return true;
+      },
+      loadBoundAuthority:async()=>({...bound,installationVerified:true,connected:true,setupComplete:true,allowedWindow:true}),
+      advanceStage:async()=>true,isClaimCurrent:async()=>true,
+      readAdmissionSnapshot:async()=>{admissionReads++;return {state:snapshot.state,bounds:snapshot.bounds,budget:snapshot.budget};},
+      recordStop:async()=>({recorded:true}),
+    };
+    const result=await runScheduledRefreshCheck({store,generation,work:{
+      drainReadyWork:true,now:()=>now,
+      buildWorkPlan:async()=>({workClass:"hourly_hot_window",cost:{requests:2,dbWrites:5,connections:1,rows:5,bytes:1000},
+        limits:{deadlineAt:tick+120_000,requestTimeoutMs:100,finishReserveMs:10,maxRows:5,maxBytes:1000}}),
+      entitlementVerifier:{requestTimeoutMs:200,verify:async()=>({status:"verified",receipt:{}}),isCurrent:async()=>true},
+      readPage:async()=>{read++;return {kind:"complete",payload:{}};},
+      validatePage:()=>({complete:true,rows:[]}),
+      loadCompletedKlaviyoHourlyJobs:async()=>[],
+      finishKlaviyoHourlyReport:async()=>{
+        snapshot.state.revision++;
+        if (stop==="conflict") snapshot.queueRevision++;
+        if (stop==="tick_budget_elapsed") now=tick+60_000;
+        // The provider and finish still fit, but the entitlement check does not.
+        if (stop==="no_entitlement_time") now=tick+59_800;
+        if (stop==="new_holds") snapshot.state.holds=candidates.map(({workspaceId,installGeneration,provider,accountId})=>
+          ({workspaceId,installGeneration,provider,accountId}));
+        return true;
+      },
+    }});
+    const expected=stop==="waiting"?12:1;
+    assert.equal(result.completedThisTick,expected,JSON.stringify(result.work));
+    assert.equal(result.work.status,["new_holds","no_entitlement_time"].includes(stop)?"waiting":stop);
+    assert.equal(checks,1);
+    assert.equal(candidateReads,1);
+    assert.equal(admissionReads,stop==="waiting"?12:stop==="tick_budget_elapsed"?0:1);
+    assert.equal(read,expected);
+    assert.equal(new Set(admitted).size,expected);
+  }
+});
+
 test("database boundary accepts only generation, no injected clock, inventory or tick number",async()=>{
   const queries=[],store=createRefreshWorkRepository({query:async(sql,args)=>{queries.push({sql,args});return {rows:[{result:receipt}]};}});
   await store.checkScheduledQueue({generation,now:999,inventory:{},sequence:50});
@@ -66,6 +127,45 @@ test("database boundary accepts only generation, no injected clock, inventory or
   await assert.rejects(store.checkScheduledQueue({generation:"injected'"}),/REFRESH_WORK_INPUT_INVALID/);
   await assert.rejects(runScheduledRefreshCheck({store,generation:"bad"}),/REFRESH_TICK_INPUT_INVALID/);
   assert.equal(queries.length,1);
+});
+
+test("daily reconciliation uses the confirmed tick and rejects a mismatched date before admission", async () => {
+  const checkedAtMs = Date.parse("2026-11-16T22:00:00.000Z");
+  let admissions = 0;
+  const store = {
+    checkScheduledQueue: async () => ({...receipt, checkedAtMs}),
+    reviewInterruptedWork: async () => ({status:"reviewed", stopped:0, uncertain:0}),
+    readPreflightSnapshot: async () => ({configured:true, candidates:[{accountId:"account", timezone:"Europe/Istanbul"}]}),
+    commitPreflight: async () => { admissions++; return false; },
+    loadBoundAuthority: async () => { throw Error("unexpected authority read"); },
+  };
+  let planned = 0;
+  const work = {
+    loadDailyReportSchedule: async source => {
+      assert.equal(source.accountId, "account");
+      return {timeZone:"Europe/Istanbul", dailyWindows:{
+        yesterday:{start:"2026-11-16T21:00:00.000Z", end:"2026-11-16T23:00:00.000Z"},
+        today:{start:"2026-11-16T23:00:00.000Z", end:"2026-11-17T00:00:00.000Z"},
+      }};
+    },
+    buildWorkPlan: async (source, job) => {
+      planned++;
+      assert.equal(source.accountId, "account");
+      assert.equal(job.kind, "yesterday");
+      assert.equal(job.businessDate, "2026-11-16");
+      return {workClass:"deep_reconciliation", window:{from:"2026-11-17", to:"2026-11-17"}};
+    },
+    entitlementVerifier:{verify:async () => {}, isCurrent:async () => {}},
+    readPage:async () => { throw Error("unexpected provider read"); },
+    validatePage:() => {},
+    loadDatasetInputs:async () => { throw Error("unexpected Dataset write"); },
+    now:() => Date.parse("2026-11-17T02:00:00.000Z"),
+  };
+  const result = await runScheduledRefreshCheck({store, generation, work});
+  assert.equal(planned, 1);
+  assert.equal(admissions, 0);
+  assert.equal(result.work.status, "needs_attention");
+  assert.equal(result.work.reason, "preflight_unavailable");
 });
 
 test("contract keeps cron activation, alarms, Dataset and hourly policy outside this connection",()=>{

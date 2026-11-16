@@ -42,6 +42,96 @@ test("native reservation precedes mandatory fresh billing and bounded worker; no
   assert.deepEqual(f.stages,["checking_authority","request_intent","response_received","ready_for_dataset"]);
 });
 
+test("daily job identity survives queue rollover and leaves distinct daily slots separate", async () => {
+  const f = fixture();
+  f.plan.workClass = "deep_reconciliation";
+  f.plan.partitionId = "daily-report:today:2026-10-19";
+  const persisted = new Set();
+  const attempted = [];
+  f.args.store.commitPreflight = async ({nextState}) => {
+    const [{id}] = nextState.claims;
+    attempted.push(id);
+    if (persisted.has(id)) return false;
+    persisted.add(id);
+    return true;
+  };
+  assert.equal((await dispatchRefreshPreflight(f.args)).status, "awaiting_dataset");
+  f.source.scheduledHour = 3_600_000;
+  f.source.queuedAt = 3_600_000;
+  f.args.now = () => 7_200_000;
+  f.plan.limits.deadlineAt = 7_201_000;
+  assert.equal((await dispatchRefreshPreflight(f.args)).status, "conflict");
+  assert.equal(attempted[0], attempted[1]);
+  assert.equal(f.calls(), 1);
+  f.plan.partitionId = "daily-report:yesterday:2026-10-20";
+  assert.equal((await dispatchRefreshPreflight(f.args)).status, "awaiting_dataset");
+  assert.notEqual(attempted[1], attempted[2]);
+  assert.equal(f.calls(), 2);
+});
+
+test("Klaviyo preflight skips completed hourly work and admits the next ready account", async () => {
+  const f = fixture();
+  f.source.provider = "klaviyo";
+  f.snapshot.budget.providers[0].provider = "klaviyo";
+  f.snapshot.budget.accounts[0].provider = "klaviyo";
+  const attempted = [];
+  const completed = new Set();
+  function selectHours(start, end) {
+    f.plan.hourlySource = {start, end};
+    f.plan.partitionId = `klaviyo-hourly-source:${start}/${end}`;
+  }
+  selectHours("2026-10-19T22:00:00.000Z", "2026-10-20T00:00:00.000Z");
+  f.plan.window.to = "2026-10-20";
+  f.args.loadDatasetInputs = async () => assert.fail("hourly work cannot use the daily writer");
+  f.args.store.commitPreflight = async ({nextState}) => {
+    const [{id}] = nextState.claims;
+    attempted.push(id);
+    return !completed.has(id);
+  };
+  const lookedUp = [];
+  f.args.loadCompletedKlaviyoHourlyJobs = async jobs => {
+    lookedUp.push(jobs.map(job=>job.id));
+    return jobs.filter(job=>completed.has(job.id)).map(job=>job.id);
+  };
+  f.args.finishKlaviyoHourlyReport = async ({claim, partitionId}) => {
+    assert.equal(partitionId, f.plan.partitionId);
+    completed.add(claim.id);
+    return true;
+  };
+  assert.equal((await dispatchRefreshPreflight(f.args)).status, "completed");
+
+  f.source.scheduledHour = 3_600_000;
+  f.source.queuedAt = 3_600_000;
+  f.args.now = () => 7_200_000;
+  f.plan.limits.deadlineAt = 7_201_000;
+  assert.equal((await dispatchRefreshPreflight(f.args)).status, "waiting");
+  assert.deepEqual(lookedUp[0], lookedUp[1]);
+  assert.equal(attempted.length, 1);
+  assert.equal(f.calls(), 1);
+
+  f.snapshot.candidates.push({...f.source,accountId:"second",queuedAt:3_600_001});
+  f.snapshot.budget.accounts.push({...f.snapshot.budget.accounts[0],accountId:"second"});
+  f.args.store.loadBoundAuthority = async ({claim}) => ({
+    ...f.source,accountId:claim.accountId,installationVerified:true,connected:true,setupComplete:true,allowedWindow:true,
+  });
+  const nextAccount = await dispatchRefreshPreflight(f.args);
+  assert.equal(nextAccount.status, "completed");
+  assert.equal(nextAccount.claim.accountId, "second");
+  assert.deepEqual(lookedUp[2], [attempted[0],attempted[1]]);
+  assert.equal(f.calls(), 2);
+
+  selectHours("2026-10-19T23:00:00.000Z", "2026-10-20T01:00:00.000Z");
+  const nextHour = await dispatchRefreshPreflight(f.args);
+  assert.equal(nextHour.status, "completed");
+  assert.equal(nextHour.claim.accountId, f.source.accountId);
+  assert.notEqual(attempted[0], attempted[2]);
+  assert.equal(f.calls(), 3);
+
+  f.args.loadCompletedKlaviyoHourlyJobs = async () => ["unrecognized-job"];
+  assert.equal((await dispatchRefreshPreflight(f.args)).status, "needs_attention");
+  assert.equal(f.calls(), 3);
+});
+
 test("missing configuration, missing plan, invalid bounds, conflicts and unknown commits never execute or retry",async()=>{
   const a=fixture();a.snapshot.configured=false;assert.equal((await dispatchRefreshPreflight(a.args)).status,"not_configured");assert.equal(a.commits(),0);
   const b=fixture();b.args.buildWorkPlan=async()=>null;assert.equal((await dispatchRefreshPreflight(b.args)).status,"waiting");assert.equal(b.commits(),0);

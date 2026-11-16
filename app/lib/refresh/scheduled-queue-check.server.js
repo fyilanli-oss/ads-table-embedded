@@ -1,8 +1,10 @@
 import {dispatchRefreshPreflight} from "./preflight-bridge.server.js";
 import {createScheduledDatasetPostgresClient} from "../database/dataset-postgres.server.js";
+import {planIncrementalReport, planKlaviyoHourlySource} from "./incremental-report-plan.server.js";
 
 export const refreshTickGenerationValid=value=>typeof value==="string"&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(value);
 const stopped=new Set(["not_configured","not_current_generation","clock_invalid","duplicate"]);
+const MINUTE_MS=60_000;
 
 // Internal composition only: no public route, cron activation, date defaults or provider retry.
 export async function runScheduledRefreshCheck({store,generation,work}) {
@@ -31,8 +33,74 @@ export async function runScheduledRefreshCheck({store,generation,work}) {
   if(interruptions.status!=="reviewed") return {status:"queue_checked",queue,interruptions,work:{status:"not_configured"}};
   // Explicitly pick inputs. A work object cannot replace the store or inject a dispatch callback.
   try {
-    const {buildWorkPlan,entitlementVerifier,readPage,validatePage,now,loadDatasetInputs}=work;
-    return {status:"queue_checked",queue,interruptions,work:await dispatchRefreshPreflight({store,buildWorkPlan,entitlementVerifier,readPage,validatePage,now,loadDatasetInputs})};
+    const {buildWorkPlan,entitlementVerifier,readPage,validatePage,now,loadDatasetInputs,loadDailyReportSchedule,
+      finishKlaviyoHourlyReport,loadCompletedKlaviyoHourlyJobs,drainReadyWork}=work;
+    if (loadDailyReportSchedule !== undefined
+      && (typeof loadDailyReportSchedule !== "function" || typeof buildWorkPlan !== "function"
+        || typeof loadDatasetInputs !== "function")) throw Error("REFRESH_DAILY_REPORT_POLICY_INVALID");
+    if (finishKlaviyoHourlyReport !== undefined
+      && (typeof finishKlaviyoHourlyReport !== "function" || typeof buildWorkPlan !== "function")) throw Error("REFRESH_HOURLY_REPORT_POLICY_INVALID");
+    if (drainReadyWork !== undefined && typeof drainReadyWork !== "boolean") throw Error("REFRESH_TICK_DRAIN_POLICY_INVALID");
+    const entitlementRequestTimeoutMs=entitlementVerifier?.requestTimeoutMs;
+    if (drainReadyWork && (!Number.isSafeInteger(entitlementRequestTimeoutMs)
+      || entitlementRequestTimeoutMs<1 || entitlementRequestTimeoutMs>2_147_483_647)) {
+      throw Error("REFRESH_TICK_ENTITLEMENT_BUDGET_REQUIRED");
+    }
+    const tickAt = new Date(queue.checkedAtMs).toISOString();
+    const planDaily = async source => {
+      const schedule = await loadDailyReportSchedule(structuredClone(source));
+      if (schedule === null) return null;
+      const {timeZone, dailyWindows} = schedule;
+      if (timeZone !== source.timezone) throw Error("REFRESH_DAILY_REPORT_TIMEZONE_MISMATCH");
+      const {daily} = planIncrementalReport({tickAt, timeZone, dailyWindows});
+      for (const job of daily) {
+        // The caller's trusted planner filters windows already reconciled. The
+        // existing fenced preflight still establishes work and report authority.
+        const plan = await buildWorkPlan(structuredClone(source), job);
+        if (plan === null) continue;
+        if (plan.workClass !== "deep_reconciliation" || plan.window?.from !== job.businessDate
+          || plan.window?.to !== job.businessDate) throw Error("REFRESH_DAILY_REPORT_SCOPE_INVALID");
+        return {...plan, partitionId: `daily-report:${job.kind}:${job.scheduledFor}`};
+      }
+      return null;
+    };
+    const planWork = async source => {
+      if (loadDailyReportSchedule !== undefined) {
+        const daily = await planDaily(source);
+        if (daily !== null) return daily;
+      }
+      if (finishKlaviyoHourlyReport !== undefined && source.provider === "klaviyo") {
+        const hourly = planKlaviyoHourlySource({tickAt, timeZone:source.timezone});
+        if (hourly === null) return null;
+        const plan = await buildWorkPlan(structuredClone(source), {kind:"klaviyo_hourly", ...structuredClone(hourly)});
+        if (plan === null) return null;
+        if (plan.workClass !== "hourly_hot_window") throw Error("REFRESH_HOURLY_REPORT_SCOPE_INVALID");
+        return {...plan, window:hourly.window, partitionId:hourly.partitionId,
+          hourlySource:{start:hourly.start,end:hourly.end}};
+      }
+      return loadDailyReportSchedule === undefined ? buildWorkPlan(source) : null;
+    };
+    const dispatch = {store,buildWorkPlan:planWork,entitlementVerifier,readPage,validatePage,now,
+      loadDatasetInputs,finishKlaviyoHourlyReport,loadCompletedKlaviyoHourlyJobs};
+    if (!drainReadyWork) {
+      return {status:"queue_checked",queue,interruptions,work:await dispatchRefreshPreflight(dispatch)};
+    }
+
+    const deadlineAt=(Math.floor(queue.checkedAtMs/MINUTE_MS)+1)*MINUTE_MS;
+    const completed=new Set();
+    const tickBudget={queueRevision:queue.queueRevision,deadlineAt,completed,entitlementRequestTimeoutMs};
+    let result;
+    for (;;) {
+      const current=now();
+      if (!Number.isSafeInteger(current) || current<queue.checkedAtMs || current>=deadlineAt) {
+        result={status:"tick_budget_elapsed"};
+        break;
+      }
+      result=await dispatchRefreshPreflight({...dispatch,tickBudget});
+      if (result.status!=="completed") break;
+      completed.add(result.claim.id);
+    }
+    return {status:"queue_checked",queue,interruptions,work:result,completedThisTick:completed.size};
   } catch {
     return {status:"queue_checked",queue,work:{status:"needs_attention",reason:"work_policy_invalid"}};
   }
@@ -42,9 +110,18 @@ export async function runScheduledRefreshCheck({store,generation,work}) {
 export async function runScheduledRefreshWithDataset({store, generation, work, environment, poolFactory}) {
   if (typeof work?.loadDatasetInputs !== "function") throw Error("REFRESH_DATASET_INPUT_INVALID");
   let database;
+  let cleanupFailed=false;
   let result;
+  async function closeDatabase() {
+    if (!database) return;
+    const previous=database;
+    database=undefined;
+    try { await previous.close(); }
+    catch (error) { cleanupFailed=true; throw error; }
+  }
   try {
     result = await runScheduledRefreshCheck({store, generation, work: {...work, async loadDatasetInputs(scope) {
+      await closeDatabase();
       const inputs = await work.loadDatasetInputs(scope);
       if (inputs.fxResolver !== undefined) throw Error("REFRESH_DATASET_FX_POLICY_REQUIRED");
       database = createScheduledDatasetPostgresClient({environment, deadlineAt: scope.deadlineAt, now: work.now, poolFactory});
@@ -52,10 +129,8 @@ export async function runScheduledRefreshWithDataset({store, generation, work, e
         database};
     }}});
   } finally {
-    if (database) {
-      try { await database.close(); }
-      catch { if (result) result = {...result, datasetConnectionCleanup: "unconfirmed"}; }
-    }
+    try { await closeDatabase(); } catch {}
+    if (cleanupFailed && result) result = {...result, datasetConnectionCleanup: "unconfirmed"};
   }
   return result;
 }

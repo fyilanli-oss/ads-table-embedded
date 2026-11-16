@@ -4,6 +4,132 @@ import {randomBytes, randomUUID} from "node:crypto";
 import {canonicalSourceJson, sourceStoreOwner, sourcePayloadHash, createSourceEvidenceCipher,
   createSourceEvidenceRepository, prepareSourceWrite} from "../app/lib/database/source-evidence-store.server.js";
 import {sourceStoreFixture} from "./fixtures/source-store-fixture.js";
+import {datasetSourceBindingFixture} from "./fixtures/dataset-source-binding-fixture.js";
+import {bindStoredDatasetSources} from "../app/lib/database/dataset-source-binding.server.js";
+import {buildKlaviyoHourlyOrderedProductEventsRequest} from "../app/lib/providers/klaviyo-reporting.server.js";
+import {createKlaviyoSourceCapture} from "../app/lib/providers/klaviyo-source-capture.server.js";
+import {createKlaviyoHourlySourceRepository} from "../app/lib/database/klaviyo-hourly-source-repository.server.js";
+import {sourceRetentionDurationPolicy} from "../app/lib/database/source-retention-policy.server.js";
+import {openKlaviyoHourlySourcePage, sealKlaviyoHourlySourcePage,
+  commitKlaviyoHourlyEventReport, commitKlaviyoHourlySourceBatch, prepareKlaviyoHourlySourceBatch,
+  projectVerifiedKlaviyoHourlyProductSales, verifyKlaviyoHourlySourceBatch} from "../app/lib/database/klaviyo-hourly-source-page.server.js";
+
+test("hourly Klaviyo capture encrypts the original query scope with the sanitized page", async () => {
+  const {input} = sourceStoreFixture();
+  const owner = {...input.owner, provider:"klaviyo", accountId:"account",
+    connectionId:randomUUID(), connectionVersion:"1", credentialId:randomUUID(), selectionEpoch:null};
+  const tickAt = "2026-11-16T22:00:00.000Z", start = "2026-11-16T20:00:00.000Z";
+  const query = buildKlaviyoHourlyOrderedProductEventsRequest({
+    accessToken:"synthetic", orderedProductMetricId:"ordered", tickAt, timeZone:"Europe/Istanbul",
+    job:{id:"job", fence:7, provider:"klaviyo", workspaceId:owner.workspaceId,
+      installGeneration:owner.generation, accountId:owner.accountId, window:{start,end:tickAt}},
+  });
+  const event = {id:"event-1", type:"event", attributes:{datetime:start,
+    event_properties:{ProductID:"product",VariantID:"variant",Quantity:2,$value:"19.99"}},
+    relationships:{metric:{data:{type:"metric", id:"ordered"}},attributions:{data:[{type:"attribution",id:"campaign-a"}]}}};
+  const capture = createKlaviyoSourceCapture({maxBytes:10000, check:() => {}});
+  await capture.read(new Response(JSON.stringify({data:[event], links:{next:null}})), query.request.url);
+  const [{payload:projection}] = capture.finish();
+  const context = {owner, scope:query.sourceScope, cipher:input.cipher, attemptId:input.attemptId, pageOrdinal:0};
+  const page = sealKlaviyoHourlySourcePage({...context, projection});
+  assert.deepEqual(openKlaviyoHourlySourcePage({...context, page}), projection);
+  assert.throws(() => openKlaviyoHourlySourcePage({...context, page, pageOrdinal:1}), /SCOPE_INVALID/);
+  assert.throws(() => openKlaviyoHourlySourcePage({...context, page,
+    scope:{...context.scope, fence:8}}), /SCOPE_INVALID/);
+  assert.throws(() => openKlaviyoHourlySourcePage({...context, page,
+    owner:{...owner, connectionVersion:"2"}}), /ENVELOPE_INVALID/);
+  assert.throws(() => sealKlaviyoHourlySourcePage({...context, projection:{...projection, records:[
+    {...projection.records[0], attributes:{datetime:tickAt}},
+  ]}}), /SCOPE_INVALID/);
+
+  const first = {...projection, hasNext:true};
+  const second = {...projection, records:[{...projection.records[0],id:"event-2",
+    attributes:{datetime:start,event_properties:{ProductID:"second",Quantity:{jsonNumber:"1"}}},
+    relationships:{metric:{data:{type:"metric",id:"ordered"}}}}],
+  included:[{type:"attribution",id:"campaign-a",relationships:{
+    campaign:{data:{type:"campaign",id:"campaign-1"}},
+    "campaign-message":{data:{type:"campaign-message",id:"message-1"}},
+  }}]};
+  const batchContext = {...context, limits:{maxPages:3,maxRows:3,maxBytes:10000}};
+  const {pages, manifest} = prepareKlaviyoHourlySourceBatch({...batchContext, projections:[first,second]});
+  const read = {...batchContext, pages, manifest, expectedManifest:manifest};
+  assert.deepEqual(verifyKlaviyoHourlySourceBatch(read), manifest);
+  assert.equal(manifest.rows, 2);
+  assert.throws(() => verifyKlaviyoHourlySourceBatch({...read, pages:[pages[1],pages[0]]}), /SCOPE_INVALID/);
+  assert.throws(() => verifyKlaviyoHourlySourceBatch({...read, pages:[pages[0]]}), /SCOPE_INVALID/);
+  assert.throws(() => verifyKlaviyoHourlySourceBatch({...read, manifest:{...manifest, rows:1}}), /SCOPE_INVALID/);
+  assert.throws(() => prepareKlaviyoHourlySourceBatch({...batchContext, projections:[first,projection]}), /SCOPE_INVALID/);
+  const empty = prepareKlaviyoHourlySourceBatch({...batchContext, projections:[{...projection, records:[]}]});
+  assert.equal(empty.manifest.rows, 0);
+  assert.throws(() => prepareKlaviyoHourlySourceBatch({...batchContext,
+    limits:{...batchContext.limits,maxRows:1}, projections:[first,second]}), /SCOPE_INVALID/);
+
+  let writes = 0, reads = 0;
+  const writeOptions = {deadlineAt:1000, now:() => 0, repository:{
+    async commitHourlySource() {writes++; throw Error("unknown outcome");},
+    async readHourlySource() {reads++;},
+  }};
+  await assert.rejects(commitKlaviyoHourlySourceBatch({...writeOptions,batch:empty}), /WRITE_UNCONFIRMED/);
+  await assert.rejects(commitKlaviyoHourlySourceBatch({...writeOptions,batch:empty}), /SCOPE_INVALID/);
+  assert.deepEqual([writes,reads], [1,0]);
+  const confirmed = prepareKlaviyoHourlySourceBatch({...batchContext,projections:[first,second]});
+  const calls = [];
+  const repository = createKlaviyoHourlySourceRepository({policy:sourceRetentionDurationPolicy(),
+    observedAt:tickAt, quotaContext:{fixture:true}, now:() => Date.parse(tickAt),
+    database:{async query(sql,args) {
+      calls.push(sql);
+      const receipt = {status:"committed", sourceState:"complete", manifest:{
+        klaviyoHourlyRead:context.scope, klaviyoHourlyManifest:confirmed.manifest}};
+      if (sql.includes("commit_klaviyo_hourly_source")) {
+        assert.equal(args[3].fence,7);
+        assert.equal(args[2].pages.length,2);
+        assert.deepEqual(args[7],{fixture:true});
+        return {rows:[{result:receipt}]};
+      }
+      if (sql.includes("read_source_receipt")) return {rows:[{result:receipt}]};
+      assert.match(sql,/read_source_pages/);
+      return {rows:[{result:args[3]==="0" ? confirmed.pages.map((stored,index) => ({
+        ...stored,id:String(index+1),available:true,expired:false,retentionPruned:false,
+      })) : []}]};
+    }}});
+  const result = await commitKlaviyoHourlySourceBatch({...writeOptions,batch:confirmed,repository});
+  assert.equal(calls.length,4);
+  assert.deepEqual(result,{attemptId:context.attemptId,digest:confirmed.manifest.digest,
+    pageCount:2,rowCount:2,contentVerified:true});
+  const {accountId,sales} = projectVerifiedKlaviyoHourlyProductSales(result);
+  assert.deepEqual(sales.map(row => [row.productId,row.variantId,row.quantity,row.value]), [
+    ["product","variant","2","19.99"], ["second",null,"1",null],
+  ]);
+  assert.deepEqual(sales.map(row => [row.attribution.source_entity_id,row.attribution.channel_id,
+    row.attribution.variation_id,row.attribution.sales_role]), [
+    ["campaign-1","message-1",null,"Assisted"], [null,null,null,"Unclassified"],
+  ]);
+  const daily = await datasetSourceBindingFixture("klaviyo",{owner,klaviyoOpens:"7"});
+  await bindStoredDatasetSources(daily);
+  const message = daily.writes[0].rows.find(row => row.table==="pd_facts").row;
+  assert.deepEqual([daily.owner.accountId,message.root_entity_type,message.root_entity_id,message.entity_id],
+    [accountId,sales[0].attribution.source,sales[0].attribution.source_entity_id,sales[0].attribution.channel_id]);
+  assert.equal(message.purchase,"2.5");
+  assert.deepEqual(message.metric_extensions.opens,{value:"7",state:"present"});
+  assert.equal(sales[0].quantity,"2");
+  assert.equal(Object.hasOwn(sales[0],"purchase"),false);
+  const reportReceipt = {attemptId:result.attemptId,digest:result.digest,
+    counts:[2,0],applied:[start],productRows:2,productDigest:"f".repeat(64)};
+  let reportCalls = 0;
+  const reportDatabase = {async query(sql,args) {
+    reportCalls++;
+    if (sql.includes("commit_klaviyo_hourly_event_report")) {
+      assert.equal(args[3],"[2,0]");
+      assert.deepEqual(JSON.parse(args[5]),sales);
+    }
+    return {rows:[{result:reportReceipt}]};
+  }};
+  const report = {database:reportDatabase,deadlineAt:1000,now:() => 0};
+  await assert.rejects(commitKlaviyoHourlyEventReport({...report,sourceReceipt:{...result}}),/SCOPE_INVALID/);
+  assert.deepEqual(await commitKlaviyoHourlyEventReport({...report,sourceReceipt:result}),reportReceipt);
+  await assert.rejects(commitKlaviyoHourlyEventReport({...report,sourceReceipt:result}),/SCOPE_INVALID/);
+  assert.equal(reportCalls,2);
+});
 
 test("source evidence encryption binds actual owner, attempt, page metadata and sanitized content", () => {
   const {input, prepare} = sourceStoreFixture();

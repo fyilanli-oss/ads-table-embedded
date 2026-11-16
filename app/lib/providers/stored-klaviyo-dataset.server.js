@@ -2,6 +2,7 @@ import {normalizeKlaviyoReportRow, normalizeKlaviyoOrderedProductEvent, selectKl
 import {resolveKlaviyoOrderedProductSales} from "./klaviyo-attribution-resolution.server.js";
 import {baseStoredFact, setStoredMetric, validateStoredProjectionScope, finalizeStoredProjection} from "./stored-dataset-projection.server.js";
 import {sourceText, sourceDecimal} from "../database/dataset-source-values.server.js";
+import {KLAVIYO_MESSAGE_COUNTERS, KLAVIYO_MESSAGE_EXTENSION_VERSION} from "../database/dataset-storage.server.js";
 import {canonicalSourceJson} from "../database/source-evidence-store.server.js";
 
 const fail = code => {throw Error("DATASET_PROJECTION_" + code);};
@@ -26,6 +27,26 @@ function nativeAttributions(event, included) {
     return out;
   });
 }
+export function projectKlaviyoStoredProductSale(record, included, channels = [], event = normalizeKlaviyoOrderedProductEvent(record)) {
+  const properties = record.attributes?.event_properties;
+  const sale = {
+    eventId:event.provider_event_id,
+    occurredAt:event.occurred_at,
+    metricId:event.provider_metric_id,
+    productId:sourceText(properties?.ProductID,{nullable:true}),
+    variantId:sourceText(properties?.VariantID ?? properties?.["Variant ID"],{nullable:true}),
+    quantity:sourceDecimal(properties?.Quantity),
+    value:sourceDecimal(properties?.$value),
+  };
+  const resolutionInput = {...event, provider_attributions:nativeAttributions(record,included)};
+  const resolved = resolveKlaviyoOrderedProductSales({
+    campaignChannels:channels.filter(c => c.source==="campaign"),
+    flowChannels:channels.filter(c => c.source==="flow"),
+    orderedProductEvents:[resolutionInput],
+  }).rows[0].attribution_resolution;
+  return Object.freeze({...sale, attribution:resolved});
+}
+
 export function projectStoredKlaviyoDataset(bundle) {
   validateStoredProjectionScope(bundle); if (bundle.owner.provider !== "klaviyo") fail("PROVIDER_MISMATCH");
   const config = bundle.datasets.find(d => d.dataset === "configuration"), pd = bundle.datasets.find(d => d.dataset === "account_performance"), sales = bundle.datasets.find(d => d.dataset === "product_performance");
@@ -72,6 +93,8 @@ export function projectStoredKlaviyoDataset(bundle) {
           parent_entity_type: kind, parent_entity_id: channel.source_entity_id, parent_entity_name: channel.source_entity_name,
           source_identity: {kind: "daily", namespace: "entity_performance", native}});
         row.metric_support.spend_value = "unsupported"; row.observation_state.spend_value = "unsupported";
+        row.extension_schema_version = KLAVIYO_MESSAGE_EXTENSION_VERSION;
+        row.metric_extensions = Object.fromEntries(KLAVIYO_MESSAGE_COUNTERS.map(key => [key,{value:null,state:"unknown"}]));
         for (const [metricName, mapping] of Object.entries(pdSources)) if (selected[metricName].state !== "present") for (const target of Object.keys(mapping)) {
           row.metric_support[target] = "unknown"; row.observation_state[target] = "unknown";
         }
@@ -80,6 +103,13 @@ export function projectStoredKlaviyoDataset(bundle) {
       const fp = canonicalSourceJson(record), old = group.observations.get(name);
       if (old) {if (old !== fp) fail("DUPLICATE_CONFLICT"); continue;} group.observations.set(name, fp);
       for (const [target, source] of Object.entries(pdSources[name])) setStoredMetric(group.row, target, sourceDecimal(record.statistics?.[source]));
+      // All three funnel reports can describe the same message. Its audience and
+      // open counters come from the Placed Order report once, independently of conversions.
+      if (name === "Placed Order") for (const key of KLAVIYO_MESSAGE_COUNTERS) {
+        if (!attrs.statistics.includes(key)) continue;
+        const value = sourceDecimal(record.statistics?.[key]);
+        group.row.metric_extensions[key] = {value,state:value === null ? "missing" : "present"};
+      }
       group.row.provenance.sources = mergeRefs([...group.row.provenance.sources, page.ref]);
     }
   }
@@ -98,18 +128,14 @@ export function projectStoredKlaviyoDataset(bundle) {
         const event = normalizeKlaviyoOrderedProductEvent(record);
         if (event.provider_metric_id !== ordered[0].id || Date.parse(event.occurred_at) < Date.parse(timeframe.start)
           || Date.parse(event.occurred_at) > Date.parse(timeframe.end) || !Number.isFinite(Date.parse(event.occurred_at))) fail("EVENT_SCOPE_MISMATCH");
-        const quantity = sourceDecimal(record.attributes?.event_properties?.Quantity), value = sourceDecimal(record.attributes?.event_properties?.$value);
+        const {quantity,value,productId,variantId,attribution:resolved} = projectKlaviyoStoredProductSale(record,included,channels,event);
         if (quantity === null || quantity === "0") fail("SALE_QUANTITY_UNPROVEN");
-        const productId = sourceText(record.attributes?.event_properties?.ProductID, {nullable: true});
-        const resolutionInput = {...event, provider_attributions: nativeAttributions(record, included)};
-        const resolved = resolveKlaviyoOrderedProductSales({campaignChannels: channels.filter(c => c.source === "campaign"), flowChannels: channels.filter(c => c.source === "flow"),
-          orderedProductEvents: [resolutionInput]}).rows[0].attribution_resolution;
         const matching = channels.filter(c => c.source === resolved.source && c.channel_id === resolved.channel_id);
         const used = [page, accountPages.get(sales.dataset), ...matching.map(c => c.page)];
         const r = baseStoredFact(bundle, sales, "cpd_product_sales_facts", used);
         if (matching.length && pd.receipt.sourceState === "partial") r.source_completeness = "partial";
         Object.assign(r, {provider_event_id: event.provider_event_id, occurred_at: event.occurred_at, native_sold_product_id: productId,
-          product_context: {metric_id: event.provider_metric_id, product_id: productId, variant_id: sourceText(record.attributes?.event_properties?.VariantID ?? record.attributes?.event_properties?.["Variant ID"], {nullable: true})},
+          product_context: {metric_id: event.provider_metric_id, product_id: productId, variant_id:variantId},
           source_identity: {kind: "event", namespace: "ordered_product", native: {event_id: event.provider_event_id}},
           sales_role: resolved.sales_role, sales_role_evidence: {rule: "existing_klaviyo_ordered_product_attribution", reason: resolved.reason},
           native_sales_metrics: {Quantity: quantity, native_event_value: value}});

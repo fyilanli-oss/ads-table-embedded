@@ -1,4 +1,6 @@
 import {datasetStorageProbe} from "./eo05b-dataset-storage-probe.mjs";
+import {hourlyReportStorageProbe} from "./eo05-hourly-report-storage-probe.mjs";
+import {klaviyoHourlyCapacityProbe} from "./eo05-klaviyo-hourly-capacity-probe.mjs";
 import assert from "node:assert/strict";
 import {sourceEvidenceProbe} from "./eo05-source-evidence-probe.mjs";
 import {createHash, randomBytes, randomUUID} from "node:crypto";
@@ -445,6 +447,8 @@ async function main() {
     const version=Number((await client.query("show server_version_num")).rows[0].server_version_num);
     assert.ok(version>=170000 && version<180000,"PostgreSQL 17 required");
     assert.equal((await client.query("select count(*)::int as n from pg_namespace where nspname='app'")).rows[0].n,0,"database must be empty before replay");
+    await hourlyReportStorageProbe(client);
+    if (mode==="full") await klaviyoHourlyCapacityProbe(client);
     const migrations=mode==="staged"?manifest.historical_migrations:[...manifest.historical_migrations,...manifest.forward_migrations,...manifest.pending_migrations];
     for (const entry of migrations) {
       console.log(`F01B_APPLY ${entry.version} ${entry.name}`);
@@ -474,7 +478,16 @@ async function main() {
     if ([...manifest.forward_migrations, ...manifest.pending_migrations].some(entry => entry.name === "a6tech01_privacy_workspace_fk_indexes")) {
       await assertPrivacyIndexes(client);
     }
-    if (manifest.prepared_migrations.some(entry => entry.name === "eo05b_dataset_storage")) await datasetStorageProbe(client,replayConnection);
+    if (manifest.prepared_migrations.some(entry => entry.name === "eo05b_dataset_storage")) {
+      const hourlyMinuteScenarios=mode==="full" ? [
+        {scenario:"normal_1",cohort:96,rowsPerJob:42,alignMinute:true},
+        {scenario:"normal_2",cohort:96,rowsPerJob:42,alignMinute:true},
+        {scenario:"busy",cohort:96,rowsPerJob:120,alignMinute:true},
+        {scenario:"three_provider_control",cohort:12,mixedProviders:true,alignMinute:true},
+        {scenario:"three_provider_meta_sales",cohort:4,mixedProviders:true,metaNonempty:true},
+      ] : [{}];
+      await datasetStorageProbe(client,replayConnection,process.env,{hourlyMinuteScenarios});
+    }
     await credentialReplacementRegression(client);
     if ([...manifest.forward_migrations,...manifest.pending_migrations].some(entry => entry.name === "eo05a_refresh_work_tracking")) {
       await refreshWorkTrackingProbe(client, replayConnection);

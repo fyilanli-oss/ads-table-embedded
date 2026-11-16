@@ -12,6 +12,7 @@ import {datasetServerProbe} from "./eo05b-dataset-server-probe.mjs";
 import {maturityProbe} from "./eo05c-maturity-probe.mjs";
 import {reconciliationProbe} from "./eo05d-reconciliation-probe.mjs";
 import {observabilityProbe} from "./eo05e-observability-probe.mjs";
+import {klaviyoHourlyMinuteProbe} from "./eo05-klaviyo-hourly-private-writer-probe.mjs";
 
 async function rejected(client, action, pattern) {
   await client.query("savepoint dataset_expected_failure"); let error;
@@ -20,10 +21,14 @@ async function rejected(client, action, pattern) {
   assert.ok(error, "invalid SQL operation must fail"); if (pattern) assert.match(error.message, pattern);
 }
 
-async function ownerFixture(client, provider = "google_ads") {
-  const shopId = "gid://shopify/Shop/" + BigInt("0x" + randomBytes(6).toString("hex")), shopDomain = "dataset-" + randomBytes(6).toString("hex") + ".myshopify.com";
-  const boot = (await client.query("select * from shopify.bootstrap_installation($1,$2,$3,statement_timestamp())", [shopId, shopDomain, randomBytes(32)])).rows[0];
-  const iid = (await client.query("select id::text from shopify.installations where workspace_id=$1", [boot.workspace_id])).rows[0].id;
+async function ownerFixture(client, provider = "google_ads", installation) {
+  const shopId = installation?.shopId ?? "gid://shopify/Shop/" + BigInt("0x" + randomBytes(6).toString("hex"));
+  const shopDomain = installation?.shopDomain ?? "dataset-" + randomBytes(6).toString("hex") + ".myshopify.com";
+  const boot = installation
+    ? {workspace_id:installation.workspaceId,install_generation:installation.generation}
+    : (await client.query("select * from shopify.bootstrap_installation($1,$2,$3,statement_timestamp())", [shopId, shopDomain, randomBytes(32)])).rows[0];
+  const iid = installation?.installationId ??
+    (await client.query("select id::text from shopify.installations where workspace_id=$1", [boot.workspace_id])).rows[0].id;
   const credential = randomUUID(), connection = randomUUID(), accountId = provider === "google_ads" ? "123" : provider === "meta" ? "act_123" : "account-123";
   await client.query("insert into integrations.provider_credential_envelopes(id,installation_id,workspace_id,install_generation,provider,purpose,payload_ciphertext,nonce,auth_tag,key_version) values($1,$2,$3,$4,$5,'provider_token_set',$6,$7,$8,1)",
     [credential, iid, boot.workspace_id, boot.install_generation, provider, randomBytes(32), randomBytes(12), randomBytes(16)]);
@@ -53,7 +58,7 @@ async function sourceFixture(client, owner, sourceState = "complete") {
 }
 
 /** Real PostgreSQL, synthetic owner/native envelopes only, always rollback. */
-export async function datasetStorageProbe(client, connection, environment = process.env) {
+export async function datasetStorageProbe(client, connection, environment = process.env, {hourlyMinuteScenarios=[{}]}={}) {
   assert.equal(environment.GITHUB_ACTIONS, "true"); assert.ok(environment.RUNNER_TEMP);
   assert.equal(connection.host, "127.0.0.1"); assert.equal(connection.port, 54322);
   await client.query("begin");
@@ -69,11 +74,38 @@ export async function datasetStorageProbe(client, connection, environment = proc
       }
     }
     await client.query("set local role adstable_owner");
+    await client.query(readFileSync(new URL("./sql/eo05-klaviyo-daily-message-counters.sql",import.meta.url),"utf8"));
+    const message = {platform:"klaviyo",entity_type:"flow_message",
+      extension_schema_version:"eo05b-klaviyo-message-extensions-v1",
+      metric_extensions:{recipients:{value:"0",state:"present"},opens:{value:null,state:"missing"}}};
+    for (const [factTable, row, expected] of [
+      ["pd_facts",message,true], ["cpd_product_sales_facts",message,false],
+      ["pd_facts",{...message,platform:"google_ads"},false],
+      ["pd_facts",{...message,metric_extensions:{...message.metric_extensions,opens:{value:"0",state:"missing"}}},false],
+    ]) {
+      const {rows:[result]} = await client.query("select analytics.dataset_message_extensions_valid($1,$2) as valid",
+        [factTable,row]);
+      assert.equal(result.valid,expected);
+    }
+    await client.query(readFileSync(new URL("./sql/eo05-klaviyo-hourly-source.sql",import.meta.url),"utf8"));
+    const hourlySource = "evidence.commit_klaviyo_hourly_source(jsonb,uuid,jsonb,jsonb,jsonb,timestamptz,timestamptz,jsonb)";
+    for (const role of ["anon","authenticated","service_role","adstable_runtime","adstable_refresh_coordinator"]) {
+      const {rows:[permission]} = await client.query("select has_function_privilege($1,$2,'EXECUTE') allowed",[role,hourlySource]);
+      assert.equal(permission.allowed,false);
+    }
+    await rejected(client, () => client.query(
+      "select evidence.commit_klaviyo_hourly_source('{}',null,'{}','{}','{}',null,null,'{}')",
+    ), /KLAVIYO_HOURLY_SOURCE_INPUT_INVALID/);
+    console.log("EO05_KLAVIYO_HOURLY_PRIVATE_WRITER_PROBE real_SQL=true runtime_grants=false malformed_input_rejected=true");
     await sourceDatasetBindingProbe(client, {ownerFixture});
     await reportRetentionProbe(client, {ownerFixture, sourceFixture});
     await fxReportingCurrencyProbe(client, {ownerFixture});
     await datasetServerProbe(client, {ownerFixture});
     await maturityProbe(client, {ownerFixture});
+    for (const sql of ["eo05-klaviyo-hourly-event-report.sql","eo05-klaviyo-product-sales-reconciliation.sql"]) {
+      await client.query(readFileSync(new URL("./sql/"+sql,import.meta.url),"utf8"));
+    }
+    for (const scenario of hourlyMinuteScenarios) await klaviyoHourlyMinuteProbe(client,ownerFixture,scenario);
     await reconciliationProbe(client, {ownerFixture});
     await observabilityProbe(client, {ownerFixture});
     for (const provider of ["google_ads", "meta", "klaviyo"]) {

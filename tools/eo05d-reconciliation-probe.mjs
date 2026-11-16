@@ -6,6 +6,8 @@ import {reconcileStoredDatasetSources, inspectDatasetReconciliation, DATASET_REC
 import {storeMaturityConfiguration, recordMaturityDecision, inspectMaturityDecision} from "../app/lib/database/maturity-store.server.js";
 import {maturityObservationFixture} from "../tests/fixtures/maturity-fixture.js";
 import {createScheduledDatasetPostgresClient} from "../app/lib/database/dataset-postgres.server.js";
+import {sourceStoreFixture} from "../tests/fixtures/source-store-fixture.js";
+import {createSourceEvidenceRepository, prepareSourceWrite} from "../app/lib/database/source-evidence-store.server.js";
 
 async function rejected(client, action) {
   await client.query("savepoint reconciliation_expected_failure"); let error;
@@ -13,6 +15,55 @@ async function rejected(client, action) {
   await client.query("rollback to savepoint reconciliation_expected_failure");await client.query("release savepoint reconciliation_expected_failure");
   assert.ok(error, "invalid reconciliation must fail");
   return error;
+}
+
+async function klaviyoSalesCadenceProbe(client,owner) {
+  await client.query("savepoint klaviyo_sales_cadence");
+  try {
+    const {input} = sourceStoreFixture({owner});
+    const records = Object.fromEntries(Object.keys(input.records).map(key => [key,[]]));
+    const source = await createSourceEvidenceRepository(client).commit(
+      prepareSourceWrite({...input,records,pages:[]}),
+    );
+    const hour = "2026-11-01T12:00:00.000Z", end = "2026-11-01T13:00:00.000Z";
+    const events = ["event-1","event-2"].map((eventId,index) => ({
+      eventId,occurredAt:hour,productId:"product-1",variantId:index===0?"native-variant":null,quantity:"7",value:null,
+      attribution:{source:"campaign",source_entity_id:"campaign-1",channel_type:"campaign_message",channel_id:"message-1"},
+    }));
+    const digest = "a".repeat(64);
+    await client.query(`
+      update evidence.source_batches set manifest=manifest||jsonb_build_object(
+        'klaviyoHourlyManifest',jsonb_build_object('digest',$2::text),'klaviyoHourlySourceCurrency','USD')
+      where id=$1
+    `,[source.batchId,digest]);
+    await client.query("insert into analytics.klaviyo_hourly_event_receipts values ($1,$2)",[source.batchId,{digest}]);
+    await client.query(`
+      insert into analytics.klaviyo_hourly_event_facts(workspace_id,installation_id,generation,account_id,connection_id,
+        connection_version,metric_id,hour_start,observed_at,event_count,source_batch_id)
+      values ($1,$2,$3,$4,$5,$6,'product',$7,clock_timestamp(),2,$8)
+    `,[owner.workspaceId,owner.installationId,owner.generation,owner.accountId,owner.connectionId,
+      owner.connectionVersion,hour,source.batchId]);
+    await client.query(`
+      insert into analytics.klaviyo_hourly_product_sales(source_batch_id,event_id,hour_start,ordinal,sale)
+      select $1,item->>'eventId',$2,n,item from jsonb_array_elements($3::jsonb) with ordinality entry(item,n)
+    `,[source.batchId,hour,JSON.stringify(events)]);
+    const read = async limit => (await client.query(
+      "select analytics.read_klaviyo_product_sales_window($1,$2,$3,$4) as result",[owner,hour,end,limit],
+    )).rows[0].result;
+    const latest = await read(2);
+    assert.equal(latest.status,"read");
+    assert.deepEqual(latest.sales.map(row => [row.eventId,row.productId,row.cadence,row.quantity]),
+      [["event-1","product-1","hourly","7"],["event-2","product-1","hourly","7"]]);
+    assert.deepEqual(await read(1),{status:"limit_reached",sales:null});
+    await client.query("update analytics.klaviyo_hourly_event_facts set observed_at='2000-01-01' where source_batch_id=$1",[source.batchId]);
+    const corrected = (await read(2)).sales;
+    assert.deepEqual(corrected.map(row => [row.eventId,row.cadence,row.quantity,row.attribution.channel_id]),
+      [["event-1","daily","2.5","message-1"],["event-2","hourly","7","message-1"]]);
+    console.log("EO05_KLAVIYO_DATASET_EVENT_DEDUP_PASS actual_SQL=true same_event_once=true distinct_same_product_preserved=true");
+  } finally {
+    await client.query("rollback to savepoint klaviyo_sales_cadence");
+    await client.query("release savepoint klaviyo_sales_cadence");
+  }
 }
 
 /** Existing F01 rollback transaction. Owners, native pages, clocks and keys below
@@ -42,8 +93,12 @@ export async function reconciliationProbe(client, {ownerFixture}) {
     assert.equal(initial.revision, 1);assert.equal(initial.consumerReceipt, true);scenarios++;
     assert.equal((await client.query("select count(*)::int n from evidence.source_batches where authority=$1::jsonb and handoff_state='consumed'", [JSON.stringify(owner)])).rows[0].n, first.batches.length);
     await rejected(client, () => reconcileStoredDatasetSources(first));scenarios++;
-    const rowBefore = (await client.query("select id,purchase::text from analytics.pd_facts where installation_id=$1", [owner.installationId])).rows[0];
+    const rowBefore = (await client.query("select id,purchase::text,metric_extensions from analytics.pd_facts where installation_id=$1", [owner.installationId])).rows[0];
     if (provider === "google_ads") assert.equal(rowBefore.purchase, "3");
+    if (provider === "klaviyo") {
+      assert.deepEqual(rowBefore.metric_extensions,{recipients:{value:"0",state:"present"},opens:{value:null,state:"missing"}});
+      await klaviyoSalesCadenceProbe(client,owner);
+    }
     if (provider === "google_ads") {
       const observation = maturityObservationFixture(provider, {owner, clickDays: "0"});
       const cfg = await storeMaturityConfiguration({database, cipher: first.cipher, owner, observation: await observation.read(),
@@ -53,15 +108,21 @@ export async function reconciliationProbe(client, {ownerFixture}) {
         reportOperationId: initial.operationId, expectedRevision: 0});
       assert.equal(maturity.state, "final");assert.equal(maturity.reportVerified, true);scenarios++;
     }
-    const second = await source(owner, {nonempty, googlePurchase: "5"});
+    const second = await source(owner, {nonempty, googlePurchase: "5",klaviyoOpens:"9007199254740993"});
     await rejected(client, () => reconcileStoredDatasetSources(second));scenarios++;
     const corrected = await reconcileStoredDatasetSources({...second, expectedRevision: 1});
     assert.equal(corrected.revision, 2);assert.equal(corrected.comparison, "matched");scenarios++;
     if (nonempty) {
       await rejected(client, () => client.query("update analytics.pd_facts set purchase=purchase+1,revision=revision+1 where installation_id=$1", [owner.installationId]));scenarios++;
     }
-    const rowAfter = (await client.query("select id,purchase::text from analytics.pd_facts where installation_id=$1", [owner.installationId])).rows[0];
+    const rowAfter = (await client.query("select id,purchase::text,metric_extensions from analytics.pd_facts where installation_id=$1", [owner.installationId])).rows[0];
     if (provider === "google_ads") {assert.equal(rowAfter.purchase, "5");assert.equal(rowAfter.id, rowBefore.id);}
+    if (provider === "klaviyo") {
+      assert.deepEqual(rowAfter.metric_extensions,
+        {recipients:{value:"0",state:"present"},opens:{value:"9007199254740993",state:"present"}});
+      assert.equal(rowAfter.id,rowBefore.id);
+      console.log("EO05_KLAVIYO_DAILY_MESSAGE_COUNTERS_PASS reconciliation=true physical_readback=true missing_and_zero_distinct=true");
+    }
     const old = await inspectDatasetReconciliation({database, owner, operationId: initial.operationId});
     assert.equal(old.status, "superseded");assert.equal(old.checkpointAdvanced, false);scenarios++;
     if (provider === "google_ads") {
@@ -122,62 +183,78 @@ export async function reconciliationProbe(client, {ownerFixture}) {
         try {await client.query("set local role adstable_owner");} catch {}
       }
     };
-    const scheduledOwner = await ownerFixture(client, "google_ads");
-    const args = [scheduledOwner.workspaceId, scheduledOwner.generation, scheduledOwner.provider, scheduledOwner.accountId];
-    await client.query("update integrations.provider_connections set connected_at='2026-10-31' where id=$1", [scheduledOwner.connectionId]);
-    await client.query("update integrations.reporting_account_bindings set effective_from='2026-10-31' where connection_id=$1", [scheduledOwner.connectionId]);
-    const input = await source(scheduledOwner);
-    const fence = (await client.query("select (coalesce(max(fence),0)+1)::text as n from operations.refresh_runs")).rows[0].n;
-    const job = "synthetic-binding-job";
-    await client.query(`update operations.refresh_work_bindings set fence=$5,deadline_at_ms=$6,
-      source=operations.refresh_preflight_source($1,$2,$3,$4)
-      where workspace_id=$1 and install_generation=$2 and provider=$3 and account_id=$4`, [...args,fence,input.limits.deadlineAt]);
-    for (const batch of input.batches) {
-      await client.query("update evidence.source_batches set manifest=jsonb_set(manifest,'{googleDatasetRead,fence}',to_jsonb($3::text)) where authority=$1::jsonb and attempt_id=$2::uuid",
-        [JSON.stringify(scheduledOwner),batch.attemptId,fence]);
-    }
-    await client.query(`insert into operations.refresh_runs(workspace_id,install_generation,provider,account_id,job_id,fence,cost,status)
-      values ($1,$2,$3,$4,$5,$6,'{"requests":2,"rows":1000,"bytes":1000000,"connections":1,"dbWrites":5}','running')`, [...args,job,fence]);
-    const options = {...input, scheduled: true, admittedScope: {jobId: job, fence, from: "2026-11-01", to: "2026-11-01"}};
-    await rejected(client, () => reconcileStoredDatasetSources({...options,database:{query:asScheduledRunner}}));
-    await client.query(`insert into operations.refresh_work_progress(workspace_id,install_generation,provider,account_id,job_id,fence,stage,from_date,to_date)
-      values ($1,$2,$3,$4,$5,$6,'ready_for_dataset','2026-11-01','2026-11-01')`, [...args,job,fence]);
-    const jobStatus = async () => (await client.query("select status from operations.refresh_runs where fence=$1", [fence])).rows[0].status;
-    let transportSequence = 0;
-    const transport = createScheduledDatasetPostgresClient({deadlineAt: input.limits.deadlineAt,
-      environment: {ADSTABLE_REFRESH_DATASET_DATABASE_URL: "postgresql://" + scheduledRole + ".podpwkrpmjiksskxhwsu:" + "x".repeat(32) + "@aws-1-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require",
-        ADSTABLE_REFRESH_DATASET_DB_TIMEOUT_MS: "5000"}, poolFactory: () => ({on() {}, async end() {}, async connect() {
-        const savepoint = "scheduled_transport_" + (++transportSequence);
-        return {release() {}, async query(sql, parameters) {
-          if (sql === "begin") return client.query("savepoint " + savepoint);
-          if (sql === "commit") return client.query("release savepoint " + savepoint);
-          if (sql === "rollback") {
-            await client.query("rollback to savepoint " + savepoint);
-            return client.query("release savepoint " + savepoint);
-          }
-          if (sql.startsWith("select pg_catalog.set_config")) return client.query(sql, parameters);
-          return asScheduledRunner(sql, parameters);
-        }};
-      }})});
-    let finishArgs;
-    const completingDatabase = {async query(sql, parameters) {
-      if (sql === SCHEDULED_DATASET_FINISH_SQL) {
-        finishArgs = parameters;
-        assert.equal(await jobStatus(), "running");
-        assert.equal((await asScheduledRunner(sql,[...parameters.slice(0,4),"f".repeat(64)])).rows[0].result,false);
-        assert.equal(await jobStatus(), "running");
+    for (const provider of ["google_ads","klaviyo"]) {
+      const scheduledOwner = await ownerFixture(client, provider);
+      const args = [scheduledOwner.workspaceId, scheduledOwner.generation, scheduledOwner.provider, scheduledOwner.accountId];
+      await client.query("update integrations.provider_connections set connected_at='2026-10-31' where id=$1", [scheduledOwner.connectionId]);
+      await client.query("update integrations.reporting_account_bindings set effective_from='2026-10-31' where connection_id=$1", [scheduledOwner.connectionId]);
+      const input = await source(scheduledOwner, {klaviyoFlow:true,klaviyoOpens:"3"});
+      const fence = (await client.query("select (coalesce(max(fence),0)+1)::text as n from operations.refresh_runs")).rows[0].n;
+      const job = "synthetic-binding-job";
+      await client.query(`update operations.refresh_work_bindings set fence=$5,deadline_at_ms=$6,
+        source=operations.refresh_preflight_source($1,$2,$3,$4)
+        where workspace_id=$1 and install_generation=$2 and provider=$3 and account_id=$4`, [...args,fence,input.limits.deadlineAt]);
+      const readKey = provider==="klaviyo" ? "klaviyoDatasetRead" : "googleDatasetRead";
+      for (const batch of input.batches) {
+        await client.query("update evidence.source_batches set manifest=jsonb_set(manifest,$4::text[],to_jsonb($3::text)) where authority=$1::jsonb and attempt_id=$2::uuid",
+          [JSON.stringify(scheduledOwner),batch.attemptId,fence,[readKey,"fence"]]);
       }
-      return transport.query(sql,parameters);
-    }};
-    let completed;
-    try { completed = await reconcileStoredDatasetSources({...options,database:completingDatabase}); }
-    finally { await transport.close(); }
-    assert.equal(completed.consumerReceipt, true);
-    assert.equal(completed.jobCompleted, true);
-    assert.equal(await jobStatus(), "completed");
-    assert.equal((await asScheduledRunner(SCHEDULED_DATASET_FINISH_SQL,finishArgs)).rows[0].result,false);
-    assert.equal((await rejected(client, () => asScheduledRunner("select * from analytics.pd_facts limit 1"))).code,"42501");
-    assert.equal((await rejected(client, () => asScheduledRunner(DATASET_RECONCILE_SQL,[JSON.stringify(scheduledOwner),"{}","{}",new Date(input.limits.deadlineAt).toISOString()]))).code,"42501");
+      await client.query(`insert into operations.refresh_runs(workspace_id,install_generation,provider,account_id,job_id,fence,cost,status)
+        values ($1,$2,$3,$4,$5,$6,'{"requests":2,"rows":1000,"bytes":1000000,"connections":1,"dbWrites":5}','running')`, [...args,job,fence]);
+      const options = {...input, scheduled: true, admittedScope: {jobId: job, fence, from: "2026-11-01", to: "2026-11-01"}};
+      await rejected(client, () => reconcileStoredDatasetSources({...options,database:{query:asScheduledRunner}}));
+      await client.query(`insert into operations.refresh_work_progress(workspace_id,install_generation,provider,account_id,job_id,fence,stage,from_date,to_date)
+        values ($1,$2,$3,$4,$5,$6,'ready_for_dataset','2026-11-01','2026-11-01')`, [...args,job,fence]);
+      const jobStatus = async () => (await client.query("select status from operations.refresh_runs where fence=$1", [fence])).rows[0].status;
+      let transportSequence = 0;
+      const transport = createScheduledDatasetPostgresClient({deadlineAt: input.limits.deadlineAt,
+        environment: {ADSTABLE_REFRESH_DATASET_DATABASE_URL: "postgresql://" + scheduledRole + ".podpwkrpmjiksskxhwsu:" + "x".repeat(32) + "@aws-1-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require",
+          ADSTABLE_REFRESH_DATASET_DB_TIMEOUT_MS: "5000"}, poolFactory: () => ({on() {}, async end() {}, async connect() {
+          const savepoint = "scheduled_transport_" + (++transportSequence);
+          return {release() {}, async query(sql, parameters) {
+            if (sql === "begin") return client.query("savepoint " + savepoint);
+            if (sql === "commit") return client.query("release savepoint " + savepoint);
+            if (sql === "rollback") {
+              await client.query("rollback to savepoint " + savepoint);
+              return client.query("release savepoint " + savepoint);
+            }
+            if (sql.startsWith("select pg_catalog.set_config")) return client.query(sql, parameters);
+            return asScheduledRunner(sql, parameters);
+          }};
+        }})});
+      let finishArgs;
+      const completingDatabase = {async query(sql, parameters) {
+        if (sql === SCHEDULED_DATASET_FINISH_SQL) {
+          finishArgs = parameters;
+          assert.equal(await jobStatus(), "running");
+          assert.equal((await asScheduledRunner(sql,[...parameters.slice(0,4),"f".repeat(64)])).rows[0].result,false);
+          assert.equal(await jobStatus(), "running");
+        }
+        return transport.query(sql,parameters);
+      }};
+      let completed;
+      try { completed = await reconcileStoredDatasetSources({...options,database:completingDatabase}); }
+      finally { await transport.close(); }
+      assert.equal(completed.consumerReceipt, true);
+      assert.equal(completed.jobCompleted, true);
+      assert.equal(await jobStatus(), "completed");
+      assert.equal((await asScheduledRunner(SCHEDULED_DATASET_FINISH_SQL,finishArgs)).rows[0].result,false);
+      if (provider==="klaviyo") {
+        const messages = (await client.query(`
+          select root_entity_type as kind, root_entity_id as parent, entity_id as message,
+            metric_extensions->'opens'->>'value' as opens
+          from analytics.pd_facts where installation_id=$1 order by root_entity_type
+        `,[scheduledOwner.installationId])).rows;
+        assert.deepEqual(messages,[
+          {kind:"campaign",parent:"campaign-1",message:"message-1",opens:"3"},
+          {kind:"flow",parent:"flow-1",message:"flow-message-1",opens:"3"},
+        ]);
+        await klaviyoSalesCadenceProbe(client,scheduledOwner);
+        console.log("EO05_KLAVIYO_SCHEDULED_DAILY_DATASET_PASS campaign_message=true flow_message=true verified_closure=true dedup_readback=true");
+      }
+      assert.equal((await rejected(client, () => asScheduledRunner("select * from analytics.pd_facts limit 1"))).code,"42501");
+      assert.equal((await rejected(client, () => asScheduledRunner(DATASET_RECONCILE_SQL,[JSON.stringify(scheduledOwner),"{}","{}",new Date(input.limits.deadlineAt).toISOString()]))).code,"42501");
+    }
     const unsafe = (await client.query(`select exists(select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
       where n.nspname in ('app','shopify','integrations','operations','billing','privacy','analytics','evidence','identity','source')
       and ((c.relkind in ('r','p','v','m','f') and (has_table_privilege($1,c.oid,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')

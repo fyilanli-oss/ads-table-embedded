@@ -106,5 +106,255 @@
   },
   "new_package": false,
   "OAuth_UI_or_scope_change": false,
-  "formula_fixture_redesign": false
+  "formula_fixture_redesign": false,
+  "minimum_reread_policy": {
+    "decision_date": "2026-11-16",
+    "owner_approval": "Tamam Codex mutabıkız — approved the two-hour hourly window and separate initial X=1 and Y=1 daily reconciliation plan.",
+    "supersedes": "The earlier proposal to reread yesterday and today each hour. Initial bootstrap still reads yesterday before today.",
+    "hourly": {
+      "completed_hours": 2,
+      "calendar": "provider_account_timezone",
+      "window": "At the hourly boundary, read the two most recently completed hours as a half-open interval. Use elapsed hour boundaries with unambiguous offsets across daylight-saving transitions.",
+      "eligibility": "Only metrics with verified hourly granularity in the exact provider query and mapping. Daily-only metrics use daily reconciliation.",
+      "overlap": "Replace a matching verified hourly fact with the newer complete result for the same scope. Do not add repeated hours or sum daily snapshots with hourly facts."
+    },
+    "daily": {
+      "yesterday": {
+        "initial_runs_per_day": 1,
+        "scope": "Complete previous provider-calendar day, first read after accounting for provider reporting lag."
+      },
+      "today": {
+        "initial_runs_per_day": 1,
+        "scope": "Current provider-calendar day through the read time."
+      },
+      "scheduling": "Distribute both jobs across low-commerce periods for the relevant shops, interpreting source dates in the provider account calendar.",
+      "adjust_frequency": "Measure changes after the first reconciliation before adding reads."
+    },
+    "measurement": "Compare the same shop and provider workloads for whole-day versus two-hour reads. Measure API calls, rows, bytes, provider read time and database write time before treating the policy as a capacity result.",
+    "older_dates": "Keep the existing daily reconciliation path for applicable unresolved dates whose provider metrics are still subject to historical revision. Limit coverage per provider, account and conversion action to evidenced attribution settings plus any separately evidenced reporting lag.",
+    "unknown": "Represent unverified settings or reporting semantics explicitly as unknown. Do not assume a default attribution window or finality, or activate a new historical read based on an example.",
+    "date_basis": "Use conversion date for metrics with verified query and mapping support. Keep interaction-date metrics distinct and preserve their reconciliation requirements.",
+    "google": {
+      "candidate_fields": [
+        "metrics.conversions_by_conversion_date",
+        "metrics.conversions_value_by_conversion_date"
+      ],
+      "readiness": "Google Ads v25 documents conversion-date fields. Verify the exact existing resource, segments and query together, preserve old encrypted records, and keep date basis explicit through projection before enabling.",
+      "cart_sales": "Conversion-date equivalents for cart-data product units and revenue are unverified. Retain current semantics."
+    },
+    "meta_and_klaviyo": "Retain existing report semantics and holds. A date basis confirmed for one endpoint does not establish it for another endpoint or product breakdown.",
+    "code_activated": false,
+    "official_checked_at": "2026-11-16",
+    "official_sources": [
+      "https://developers.google.com/google-ads/api/fields/v25/shopping_performance_view",
+      "https://developers.google.com/google-ads/api/fields/v25/campaign",
+      "https://developers.google.com/google-ads/api/reference/rpc/v25/Metrics"
+    ],
+    "isolated_implementation": {
+      "module": "app/lib/refresh/incremental-report-plan.server.js",
+      "tests": "tests/incremental-report-plan.test.js",
+      "verified_hour_application": "Pure transition over one already scoped hourly series. Daily state never enters the transition. Durable writer and readback are not wired.",
+      "windows": "Daily windows are supplied by the caller, with previous-day reporting lag included. Once-per-day claiming belongs to scheduler integration.",
+      "pending": [
+        "provider metric capability binding",
+        "durable hourly write and receipt",
+        "Production schedule configuration, PostgreSQL rollover proof, and hourly dispatch integration",
+        "same-workload capacity comparison"
+      ],
+      "official_calendar_reference": "https://tc39.es/ecma402/#sec-intl.datetimeformat.prototype.formattoparts",
+      "official_calendar_checked_at": "2026-11-16",
+      "scheduler": "Trusted optional daily schedule policy uses the durable queue tick and accepts only a single matching day through existing fenced daily preflight.",
+      "daily_identity": "Fixed account and install generation, daily slot kind, provider-calendar schedule date and report date. Queue hour and queue timestamp do not rekey the job. Existing persistent run identity and quota-wait rules still govern reservation and resumption.",
+      "database_reference": "https://www.postgresql.org/docs/17/indexes-unique.html",
+      "database_reference_checked_at": "2026-11-16",
+      "postgres_rollover_probe": {
+        "entry": "tools/eo05-refresh-preflight-probe.mjs",
+        "evidence_marker": "EO05_DAILY_REPORT_ROLLOVER_PASS",
+        "expected": "Later queue hour cannot reserve the same daily job. Exactly one durable run remains. The probe uses a synthetic denial before ads data access and rolls its fixture back."
+      },
+      "hourly_sql_prototype": {
+        "entry": "tools/eo05-hourly-report-storage-probe.mjs",
+        "evidence_marker": "EO05_HOURLY_STORAGE_PROBE_PASS",
+        "boundary": "Logged PostgreSQL rehearsal table, physical readback and rollback. No application migration, provider payload or durable production writer.",
+        "verification": "Overlapping, empty, stale, invalid, cross-account and daily isolation cases use synthetic snapshots.",
+        "official_checked_at": "2026-11-16",
+        "official_sources": [
+          "https://www.postgresql.org/docs/17/sql-insert.html",
+          "https://supabase.com/changelog.md",
+          "https://www.postgresql.org/docs/17/transaction-iso.html"
+        ],
+        "job_receipt": "Account, job ID, fence and exact two hours are checked against the locked test work order. Hour writes, order completion and receipt insertion share one statement. The probe separately reads the stored receipt.",
+        "production_dependency": "Current verified raw receipts and admission bindings identify a single calendar date, with fixed provider query schemas. A versioned hourly range and verified provider capability must be bound to the source and job before scheduling or enabling production SQL."
+      },
+      "klaviyo_hourly_query": {
+        "family": "Ordered Product events only",
+        "request": "Fixed datetime >= start and datetime < end for exact two-hour admitted range. Cursor progression preserves the same bounds.",
+        "evidence_input": "Versioned scope binds workspace, installation generation, account, job, fence, metric, timezone and exact bounds independently of access token or pagination cursor.",
+        "pending": "Current authority check, immutable source scope persistence and readback, admitted dispatch, and durable hourly write remain open. Existing daily aggregation and reporting endpoints keep their date semantics.",
+        "official_checked_at": "2026-11-16",
+        "official_source": "https://developers.klaviyo.com/en/reference/get_events",
+        "encrypted_page": {
+          "module": "app/lib/database/klaviyo-hourly-source-page.server.js",
+          "binding": "The fixed native projection and exact source scope share one versioned authenticated source envelope; ownership uses the existing source cipher owner binding.",
+          "readback": "An exact expected scope, owner, attempt and page ordinal are required; the retained event datetime must belong to the half-open range and the event's metric must match.",
+          "pending": "Wire the versioned page through a current hourly claim, whole-batch manifest and durable receipt SQL. This page codec does not issue or confirm a storage receipt.",
+          "official_crypto_reference": "https://nodejs.org/api/crypto.html#ciphersetaddaad-options",
+          "official_crypto_checked_at": "2026-11-16"
+        },
+        "batch": {
+          "version": "klaviyo-hourly-source-batch-v1",
+          "proof": "Exact query scope, attempt, ordered page hashes and row/byte counts; authenticated readback rechecks pagination, duplicate event IDs and coverage. Empty terminal page is distinguishable from missing evidence.",
+          "postgres_probe": "EO05_KLAVIYO_HOURLY_BATCH_PROBE_PASS",
+          "pending": "Runtime EXECUTE is absent. The positive source proof is isolated. Product scheduling, end-to-end binding, compatibility with privacy erasure/retention, and durable hourly report consumption remain open.",
+          "official_checked_at": "2026-11-16",
+          "official_source": "https://www.postgresql.org/docs/17/tutorial-transactions.html",
+          "commit_flow": "One private repository commit per prepared capability. The receipt must echo the attempt and expected digest. Only a known receipt permits bounded physical readback. Unknown commit result never triggers readback or retry. Source verification does not close the report job.",
+          "isolated_repository": "PostgreSQL fixture adapter checks and locks the same unclosed hourly work order before writing, then returns the committed digest and bounded ordered pages.",
+          "private_writer": {
+            "SQL": "tools/sql/eo05-klaviyo-hourly-source.sql",
+            "repository": "app/lib/database/klaviyo-hourly-source-repository.server.js",
+            "test": "tools/eo05b-dataset-storage-probe.mjs",
+            "proof": "Checks current owner, exact hour interval encoded in claim partition, local date coverage, eligibility, deadline and recorded quota authority under existing locks. Stores only hourly source pages using the existing private evidence tables, and returns the persisted scoped manifest.",
+            "official_checked_at": "2026-11-16",
+            "official_source": "https://www.postgresql.org/docs/17/explicit-locking.html",
+            "roundtrip": {
+              "test": "tools/eo05-klaviyo-hourly-private-writer-probe.mjs",
+              "entry": "tools/eo05-klaviyo-raw-datasets-probe.mjs",
+              "evidence_marker": "EO05_KLAVIYO_HOURLY_PRIVATE_WRITER_ROUNDTRIP_PASS",
+              "cases": "Current PostgreSQL work binding plus quota and entitlement, stale fence rejection, encrypted source tables and physical receipt readback. The transaction fixture is rolled back.",
+              "boundary": "Test the accepted 256-character metric ID without exceeding PostgreSQL regex bounds.",
+              "official_regex_reference": "https://www.postgresql.org/docs/17/functions-matching.html#POSIX-SYNTAX-DETAILS",
+              "official_checked_at": "2026-11-16"
+            }
+          }
+        }
+      },
+      "klaviyo_hourly_event_report": {
+        "SQL": "tools/sql/eo05-klaviyo-hourly-event-report.sql",
+        "metric": "Count of distinct verified Klaviyo Ordered Product events in each completed hour",
+        "source": "Only authenticated physical source readback produces the one-use in-process input. SQL verifies the current claim, complete owner-bound source, manifest digest and totals.",
+        "write": "Two hour keys are separate from daily facts. Newer source observations may replace an overlapping hour. Readback checks the physical written values against the retained receipt.",
+        "probe": "EO05_KLAVIYO_HOURLY_EVENT_REPORT_PASS",
+        "job_closure": "Private rollback-only function requires ready_for_dataset, current owner and fence, the exact unexpired hourly binding and a matching physical report readback. It reuses the fenced job completion transaction.",
+        "job_closure_probe": "EO05_KLAVIYO_HOURLY_JOB_FINISH_PASS",
+        "scheduler_probe": "EO05_KLAVIYO_HOURLY_SCHEDULER_PASS",
+        "scheduler": "The trusted opt-in planner uses the confirmed SQL tick and account timezone. It passes the same two-hour window to the fenced reader and requires private verified receipt closure, including across local midnight.",
+        "completed_work_filter": "One bounded private lookup returns completed IDs from the current candidate batch using the exact workspace, installation generation, provider, account and job key. Matching jobs are removed before fairness sorting. Admission still fences races.",
+        "completed_work_filter_probe": "EO05_KLAVIYO_HOURLY_COMPLETED_LOOKUP_PASS",
+        "completed_work_filter_capacity_probe": "EO05_KLAVIYO_HOURLY_QUEUE_LOOKUP_500: exact lookup against 500 distinct synthetic workspaces, one candidate open, 499 completed, one warm-up and 20 timed PostgreSQL round trips. Full queue throughput is outside this measurement.",
+        "bounded_tick_dispatch": "An explicit trusted server policy may drain ready jobs sequentially within one confirmed queue minute. Each job has fresh preflight, applicable quota and Dataset completion checks, and a deadline capped by the minute boundary. A superseded queue revision, insufficient time, no eligible candidate, or any noncompleted result stops the drain. No fixed work-count cap or live configuration is introduced.",
+        "bounded_tick_candidate_reuse": "Read native candidates once for the confirmed queue revision. Later admissions refresh the current capacity, reservations, holds, service order and work revision without rebuilding candidate authority. The existing atomic admission compares both queue and work revisions and revalidates the selected source before any provider request.",
+        "bounded_tick_admission_time": "Admission requires the entitlement request timeout, provider request timeout and finish reserve to fit before the job deadline, both when filtering and immediately before committing the selected claim. Each worker still checks its deadline independently. The isolated minute probe verifies that every opened job reached completed status.",
+        "bounded_tick_dispatch_probe": "EO05_KLAVIYO_HOURLY_MINUTE_PASS: 24 ready workspaces in staged F01. Full replay runs three minute-aligned cohorts of 96 isolated ready workspaces: two with 42 Ordered Product events per job, one with 120; each job covers two hours. Records open and completed counts, remaining work, actual tick offset, unused time, admission budget and stage durations. Setup, provider network latency, daily load and parallel workers are outside the measured interval.",
+        "three_provider_minute_probe": "EO05_THREE_PROVIDER_MINUTE_PASS exercises one scheduler tick over shared synthetic installations. Klaviyo reads the last two completed hours; Google and Meta exercise the existing previous-day Dataset path. The 12-store control uses an intentionally empty Meta response; a four-store nonempty Meta scenario must preserve the unproven-sales hold. Report closed work by provider and count a complete store only when all three jobs close. Fixture source projection and SQL are real, responses are synthetic, provider network is excluded, and full three-provider hourly or nonempty Meta capacity is not inferred.",
+        "pending": "Rollback-only schema and isolated scheduler composition. No product grant or live activation. Hourly privacy erasure, source retention integration and workload benchmark are open.",
+        "official_checked_at": "2026-11-16",
+        "official_source": "https://www.postgresql.org/docs/17/sql-insert.html"
+      },
+      "klaviyo_window_capacity": {
+        "probe": "tools/eo05-klaviyo-hourly-capacity-probe.mjs",
+        "entry": "F01 full replay",
+        "evidence_marker": "EO05_KLAVIYO_500_WINDOW_CAPACITY",
+        "cohort": "Same 500 synthetic stores, 500 distinct products per store, one event per product per day. Compare the full day to the final two completed hours and alternate pass order.",
+        "measures": [
+          "fixture wire bytes",
+          "event rows",
+          "pages",
+          "encrypted bytes",
+          "local capture and encryption time",
+          "isolated PostgreSQL encrypted page inserts"
+        ],
+        "boundaries": "Klaviyo Ordered Product only. No network/provider time, report or queue load, other providers, throughput claim, or production activation.",
+        "official_checked_at": "2026-11-16",
+        "official_source": "https://www.postgresql.org/docs/17/sql-insert.html"
+      }
+    },
+    "klaviyo_product_acceptance": {
+      "owner_decision": "Expose Klaviyo analytical Dataset fields while preserving the account to campaign or flow to message hierarchy. Product is the sales analysis grain. Provider product variants and message variations may be retained as native detail when observed.",
+      "current_delivery": "Hourly source product, variant, quantity, native value and exact available campaign/flow, message and variation IDs use the existing Klaviyo projection rules and are written with their verified report receipt. Missing quantity/value and unresolved hierarchy remain explicit.",
+      "pending": "Resolve known message metadata from the daily Dataset and verify hourly/daily reconciliation at the Dataset boundary. User interface layout and implementation are handled independently.",
+      "official_checked_at": "2026-11-16",
+      "official_sources": [
+        "https://developers.klaviyo.com/en/reference/get_events",
+        "https://developers.klaviyo.com/en/reference/reporting_api_overview",
+        "https://www.postgresql.org/docs/17/datatype-json.html"
+      ]
+    },
+    "klaviyo_dataset_cadence": {
+      "approval": "Harika bir yaklaşım aynen bu şekilde yapıyoruz",
+      "hourly_product_sales": {
+        "refresh": "Every hour, for the last two completed account-calendar hours with absolute time bounds.",
+        "fields": [
+          "product identity",
+          "sale occurrence time",
+          "quantity",
+          "native sales value",
+          "account",
+          "campaign or flow",
+          "message",
+          "sales role",
+          "attribution evidence state"
+        ],
+        "overlap": "A newer verified observation for an overlapping hour replaces prior hour values. A native sale is counted once.",
+        "grain": "Product. Native product variation and verified message variation are optional details.",
+        "missing": "Preserve the sale when attribution or value is missing. Keep the missing field's state explicit."
+      },
+      "daily_message_performance": {
+        "refresh": "One read of today through the check time and one read of yesterday as an initial daily cadence.",
+        "fields": [
+          "account",
+          "campaign or flow",
+          "message",
+          "known medium and message variation",
+          "provider recipient count",
+          "deliveries",
+          "opens",
+          "clicks",
+          "attributed conversion totals"
+        ],
+        "semantics": "Use the committed daily reporting context and the provider's date semantics for the corresponding report family.",
+        "pending": "SQL is prepared for the rollback-only replay. Record physical proof and deploy JS and registry together before activation. Recipient count does not imply sent count.",
+        "dataset_extension": {
+          "version": "eo05b-klaviyo-message-extensions-v1",
+          "table": "pd_facts",
+          "entities": [
+            "campaign_message",
+            "flow_message"
+          ],
+          "counters": [
+            "recipients",
+            "opens"
+          ],
+          "source": "Placed Order native report statistics once per message grouping; other conversion queries do not add copies.",
+          "states": [
+            "present",
+            "missing",
+            "unknown"
+          ],
+          "SQL": "tools/sql/eo05-klaviyo-daily-message-counters.sql",
+          "proof": "EO05_KLAVIYO_DAILY_MESSAGE_COUNTERS_PASS",
+          "official_checked_at": "2026-11-16",
+          "official_source": "https://developers.klaviyo.com/en/reference/reporting_api_overview"
+        }
+      },
+      "reconciliation": "Preserve campaign or flow and message identity across both datasets. Never add product sale events to aggregate message conversions as if they were one measure.",
+      "scope": "Dataset contents and cadence only.",
+      "shared_identity_test": {
+        "test": "tests/source-evidence-store.test.js",
+        "proves": "Authenticated hourly sale attribution and daily message fact match on provider account, parent kind, parent ID and message ID. Hourly quantity and daily attributed conversions remain independent measures.",
+        "boundary": "Synthetic Dataset integration test. No UI change."
+      },
+      "sales_reconciliation": {
+        "module": "tools/sql/eo05-klaviyo-product-sales-reconciliation.sql",
+        "evidence_marker": "EO05_KLAVIYO_DATASET_EVENT_DEDUP_PASS",
+        "identity": "The native sale event ID within the exact active Klaviyo owner/account. Product and optional variant are details, so separate events for one product remain separate.",
+        "precedence": "Latest verified source observation wins; choose the daily record on equal observation time. Selection only from current hourly facts with a matching receipt and complete consumed daily sale rows.",
+        "preserves": "Source cadence, product, quantity, value, source currency and available attribution identifiers; message conversion totals are read independently.",
+        "limit": "A truncated read returns an explicit limit state, without implying that the requested date range has full source coverage.",
+        "official_checked_at": "2026-11-16",
+        "official_source": "https://www.postgresql.org/docs/17/sql-select.html",
+        "activation": "Prepared SQL and rollback-only verification."
+      }
+    }
+  }
 }

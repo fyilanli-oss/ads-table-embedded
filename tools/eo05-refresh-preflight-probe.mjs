@@ -54,6 +54,44 @@ export async function refreshPreflightProbe(client,{workspace,connections,shopId
     assert.equal(await store.commitPreflight({...commit,queueRevision:snapshot.queueRevision+1}),false);
     assert.equal(await store.commitPreflight({...commit,window:{from:"2000-01-01",to:day}}),false,"cannot backfill before current connection period");
     assert.equal((await store.readAdmissionSnapshot()).state.revision,snapshot.state.revision);
+    await client.query("savepoint daily_report_rollover");
+    try {
+      const currentHour = Math.floor(Date.now() / 3_600_000) * 3_600_000;
+      const setQueueHour = hour => client.query(
+        "update operations.refresh_queue_accounts set first_due_hour_ms=$2, first_queued_at_ms=$2 where workspace_id=$1 and provider='google_ads' and account_id='111'",
+        [workspace, hour],
+      );
+      await setQueueHour(currentHour - 7_200_000);
+      const daily = {
+        ...args,
+        buildWorkPlan: async row => row.provider === "google_ads" ? {
+          ...plan(), partitionId: `daily-report:today:${day}`, workClass: "deep_reconciliation",
+        } : null,
+        entitlementVerifier: {verify: async () => ({status:"denied"}), isCurrent: async () => false},
+      };
+      const first = await dispatchRefreshPreflight(daily);
+      assert.equal(first.reason, "entitlement_required");
+      assert.equal(await store.isClaimCurrent({claim:first.claim}), false);
+      // Clear the known-not-sent hold in the fixture so the second attempt tests
+      // the persisted daily identity rather than being filtered out by the hold.
+      const stop = await store.readStop({job:first.claim});
+      assert.equal(await store.resolveStop({job:first.claim, expectedVersion:stop.version}), true);
+      await setQueueHour(currentHour - 3_600_000);
+      const pending = (await store.readPreflightSnapshot()).candidates.find(row => row.provider === "google_ads");
+      assert.equal(Number(pending.scheduledHour), currentHour - 3_600_000);
+      const repeated = await dispatchRefreshPreflight(daily);
+      assert.equal(repeated.status, "conflict");
+      const runs = (await client.query(
+        "select job_id, status from operations.refresh_runs where workspace_id=$1 and provider='google_ads' and account_id='111'",
+        [workspace],
+      )).rows;
+      assert.deepEqual(runs, [{job_id:first.claim.id, status:"paused"}]);
+      assert.equal(adCalls, 0);
+      console.log("EO05_DAILY_REPORT_ROLLOVER_PASS real_SQL=true queue_hour_changed=true duplicate_run=false provider_reads=0");
+    } finally {
+      await client.query("rollback to savepoint daily_report_rollover");
+      await client.query("release savepoint daily_report_rollover");
+    }
     // Real SQL quota -> existing Partner HTTP -> private wait -> durable pause -> NEW fence.
     // Policy, token and HTTP response are synthetic; transaction rollback removes all fixture changes.
     const policy=randomUUID(),hash=v=>createHash("sha256").update(v).digest("hex");

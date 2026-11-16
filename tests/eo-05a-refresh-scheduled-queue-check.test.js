@@ -59,6 +59,57 @@ test("an explicitly supplied internal plan uses the existing fenced preflight on
   assert.equal(conflict.work.status,"conflict");assert.equal(pages,1);assert.equal(billing,1);
 });
 
+test("one confirmed tick drains ready work until time, queue revision or eligible jobs run out",async()=>{
+  for (const stop of ["waiting","superseded_tick","tick_budget_elapsed"]) {
+    const tick=Date.parse("2026-11-16T22:00:00.000Z");
+    const vector={requests:100,dbWrites:100,connections:100,rows:100,bytes:10000};
+    const candidates=Array.from({length:12},(_,i)=>({workspaceId:"w",installGeneration:"1",provider:"klaviyo",
+      accountId:`account-${i}`,connectionId:`connection-${i}`,connectionVersion:1,selectionId:null,
+      timezone:"UTC",scheduledHour:tick-3_600_000,queuedAt:tick-3_600_000+i}));
+    const snapshot={configured:true,queueRevision:receipt.queueRevision,state:{revision:3,nextFence:1,nextTurn:1,claims:[],lastServed:[]},
+      bounds:{maxCandidates:12,maxClaims:12,maxAdmissions:1,maxWorkspaces:12},
+      budget:{global:vector,interactiveReserve:{requests:0,dbWrites:0,connections:0,rows:0,bytes:0},
+        providers:[{provider:"klaviyo",limit:vector}],workspaces:[{workspaceId:"w",limit:vector}],
+        accounts:candidates.map(({accountId})=>({provider:"klaviyo",accountId,limit:vector}))},candidates};
+    let now=tick+1_000, checks=0, read=0, bound;
+    const admitted=[];
+    const store={
+      checkScheduledQueue:async()=>{checks++;return {...receipt,checkedAtMs:tick};},
+      reviewInterruptedWork:async()=>({status:"reviewed",stopped:0,uncertain:0}),
+      readPreflightSnapshot:async()=>snapshot,
+      commitPreflight:async({source,deadlineAt})=>{
+        admitted.push(source.accountId);
+        bound=source;
+        assert.equal(deadlineAt,tick+60_000);
+        return true;
+      },
+      loadBoundAuthority:async()=>({...bound,installationVerified:true,connected:true,setupComplete:true,allowedWindow:true}),
+      advanceStage:async()=>true,isClaimCurrent:async()=>true,
+      readAdmissionSnapshot:async()=>snapshot,recordStop:async()=>({recorded:true}),
+    };
+    const result=await runScheduledRefreshCheck({store,generation,work:{
+      drainReadyWork:true,now:()=>now,
+      buildWorkPlan:async()=>({workClass:"hourly_hot_window",cost:{requests:2,dbWrites:5,connections:1,rows:5,bytes:1000},
+        limits:{deadlineAt:tick+120_000,requestTimeoutMs:100,finishReserveMs:10,maxRows:5,maxBytes:1000}}),
+      entitlementVerifier:{verify:async()=>({status:"verified",receipt:{}}),isCurrent:async()=>true},
+      readPage:async()=>{read++;return {kind:"complete",payload:{}};},
+      validatePage:()=>({complete:true,rows:[]}),
+      loadCompletedKlaviyoHourlyJobs:async()=>[],
+      finishKlaviyoHourlyReport:async()=>{
+        if (stop==="superseded_tick") snapshot.queueRevision++;
+        if (stop==="tick_budget_elapsed") now=tick+60_000;
+        return true;
+      },
+    }});
+    const expected=stop==="waiting"?12:1;
+    assert.equal(result.completedThisTick,expected,JSON.stringify(result.work));
+    assert.equal(result.work.status,stop);
+    assert.equal(checks,1);
+    assert.equal(read,expected);
+    assert.equal(new Set(admitted).size,expected);
+  }
+});
+
 test("database boundary accepts only generation, no injected clock, inventory or tick number",async()=>{
   const queries=[],store=createRefreshWorkRepository({query:async(sql,args)=>{queries.push({sql,args});return {rows:[{result:receipt}]};}});
   await store.checkScheduledQueue({generation,now:999,inventory:{},sequence:50});

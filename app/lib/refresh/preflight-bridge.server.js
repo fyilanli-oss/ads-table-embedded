@@ -5,7 +5,7 @@ import {reconcileStoredDatasetSources} from "../database/dataset-reconciliation.
 
 // Internal composition for a trusted work plan. The existing HTTP queue entry is queue-only.
 export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlementVerifier, readPage, validatePage, now, loadDatasetInputs,
-  finishKlaviyoHourlyReport, loadCompletedKlaviyoHourlyJobs}) {
+  finishKlaviyoHourlyReport, loadCompletedKlaviyoHourlyJobs, tickBudget}) {
   if (!["readPreflightSnapshot","commitPreflight","loadBoundAuthority"].every(key=>typeof store?.[key]==="function")
     || [buildWorkPlan,readPage,validatePage,now,entitlementVerifier?.verify,entitlementVerifier?.isCurrent].some(fn=>typeof fn!=="function")) {
     throw new Error("REFRESH_PREFLIGHT_INPUT_INVALID");
@@ -19,6 +19,7 @@ export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlemen
   try {
     const snapshot=await store.readPreflightSnapshot();
     if(snapshot?.configured!==true) return {status:"not_configured"};
+    if (tickBudget && snapshot.queueRevision !== tickBudget.queueRevision) return {status:"superseded_tick"};
     const candidates=[];
     const plans=new Map();
     const hourlyJobs=new Map();
@@ -34,7 +35,8 @@ export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlemen
         && plan.partitionId === `klaviyo-hourly-source:${hourly.start}/${hourly.end}`;
       if(typeof plan?.partitionId!=="string"||plan.partitionId.length<1||plan.partitionId.length>256
         || !["requestTimeoutMs","finishReserveMs","maxRows","maxBytes","deadlineAt"].every(k=>Number.isSafeInteger(l?.[k])&&l[k]>0)
-        || l.requestTimeoutMs>2_147_483_647||!Number.isSafeInteger(current)||current<0||l.deadlineAt-current<l.requestTimeoutMs+l.finishReserveMs
+        || l.requestTimeoutMs>2_147_483_647||!Number.isSafeInteger(current)||current<0
+        || !tickBudget && l.deadlineAt-current<l.requestTimeoutMs+l.finishReserveMs
         || !Number.isSafeInteger(plan.cost?.requests)||plan.cost.requests<2
         || !["dbWrites","connections"].every(k=>Number.isSafeInteger(plan.cost?.[k])&&plan.cost[k]>0)
         || !["rows","bytes"].every(k=>Number.isSafeInteger(plan.cost?.[k])&&plan.cost[k]>=0)
@@ -50,6 +52,11 @@ export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlemen
           source.accountId, plan.partitionId, w.from, w.to]
         : [source, plan.partitionId, w];
       const id=createHash("sha256").update(JSON.stringify(identity)).digest("hex");
+      if (tickBudget) {
+        if (tickBudget.completed.has(id)) continue;
+        l.deadlineAt = Math.min(l.deadlineAt,tickBudget.deadlineAt);
+        if (l.deadlineAt-current<l.requestTimeoutMs+l.finishReserveMs) continue;
+      }
       const job={id,workspaceId:source.workspaceId,installGeneration:source.installGeneration,provider:source.provider,accountId:source.accountId,
         scheduledHour:source.scheduledHour,queuedAt:source.queuedAt,workClass:plan.workClass,cost:plan.cost,
         authority:{installationVerified:true,connected:true,setupComplete:true,allowedWindow:true}};
@@ -68,6 +75,8 @@ export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlemen
     const proposal=planRefreshPreflightAdmissions({...snapshot,candidates:candidates.filter(job=>!completed.has(job.id)),now:now()});
     if(proposal.status!=="proposed") return {status:proposal.status,deferred:proposal.deferred};
     const selected=proposal.admitted[0],binding=plans.get(selected.id);
+    const {limits}=binding.plan;
+    if (tickBudget && limits.deadlineAt-now()<limits.requestTimeoutMs+limits.finishReserveMs) return {status:"tick_budget_elapsed"};
     const accepted=await store.commitPreflight({expectedRevision:snapshot.state.revision,queueRevision:snapshot.queueRevision,
       nextState:proposal.nextState,source:binding.source,window:binding.plan.window,partitionId:binding.plan.partitionId,deadlineAt:binding.plan.limits.deadlineAt});
     if(accepted!==true) return {status:"conflict"};
@@ -86,7 +95,7 @@ export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlemen
     }
     if (loadDatasetInputs===undefined) return {claim:structuredClone(claim),...result};
 
-    const {window,limits}=binding.plan;
+    const {window}=binding.plan;
     const inputs=await loadDatasetInputs({claim:structuredClone(claim),window:structuredClone(window),deadlineAt:limits.deadlineAt});
     const {owner,database,cipher,batches,expectedRevision,fxResolver}=inputs;
     if (owner?.workspaceId!==claim.workspaceId || owner.generation!==claim.installGeneration || owner.provider!==claim.provider

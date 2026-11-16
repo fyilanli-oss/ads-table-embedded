@@ -1773,7 +1773,7 @@
       "tools/eo05-hourly-report-storage-probe.mjs": "c911a6605a3bd2fc4f95e1b96e5510a5e0398cce58ad07e7570fe6735008c7ba",
       "tools/eo05-identity-authority-snapshot-probe.mjs": "0136e8dc5a5720b78d1cb4dca081f19e8b473812b6d66129b94f64fd5edf672c",
       "tools/eo05-identity-oauth-atomic-probe.mjs": "89758e82406dd15e94551bf22305ef9845dd6bf009127d119f1f7d618a9a20e5",
-      "tools/eo05-klaviyo-hourly-private-writer-probe.mjs": "f908c6afad04dfc1db60bbe0f41eee931e336dc72617da5711f0198c6a7301a2",
+      "tools/eo05-klaviyo-hourly-private-writer-probe.mjs": "3c50b800613906d297d70eee2ccd07338739e73e572929a6ccb9e084c2b17395",
       "tools/eo05-klaviyo-raw-datasets-probe.mjs": "e87827eb91421dd41d6b109af9ca0cca98aed9aaca9a67eb5c3fa150f82cf06c",
       "tools/eo05-klaviyo-source-capture-probe.mjs": "c9b9f604a72611fb0f39a8e6a178dadd72fcc6ee2f340a4396d0d6058bbaf5ab",
       "tools/eo05-merchant-quota-context-probe.mjs": "699aae3f090c490ca59abba882ea3e36fbe25e817d7ce697a55a0cb294269deb",

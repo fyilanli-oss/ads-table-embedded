@@ -1410,7 +1410,7 @@
       "app/lib/providers/klaviyo-reporting-authority.server.d.ts": "cf54aec285bbaabfe3dadcf3639d25eb0d23ad2b89e83cd95c8c8b958026cdce",
       "app/lib/providers/klaviyo-reporting-authority.server.js": "51a48a24252a64b658f179a463434a8051a6828f1f9122c6d397970cb23a12d9",
       "app/lib/providers/klaviyo-reporting.server.d.ts": "176dc0c5418cfb2f0d9619a8ca6e860837626018a0205d34a138b53bdea6d5bb",
-      "app/lib/providers/klaviyo-reporting.server.js": "1047437121c260e9d1fe8e3163a8ea0c130ef99d0a4c6dd0e1a9209f737164b2",
+      "app/lib/providers/klaviyo-reporting.server.js": "dbd13dca7291373226814201aba53513f8ed046ed4ca90c4807b4bf743c54b7a",
       "app/lib/providers/klaviyo-source-capture.server.js": "d8a8267374df2b3d2c08aa9132fd583f8adaf81ab259bdb8b56964a6c37fbbcd",
       "app/lib/providers/klaviyo-source-write.server.js": "ba1747bc388bd145da209ec062c5b01da3ccd13408915fd10e68aa2859641681",
       "app/lib/providers/meta-adset-catalog-reference.server.js": "13faeb8db23586444b6d10949f9f30b5faf1dd29264d972c24d6760ca308ae2c",
@@ -4421,7 +4421,7 @@
       "date": "2026-11-16",
       "owner_approval": {
         "explicit": true,
-        "source": "Tamam onaylıyorum Codex — explicit approval after listing separate hourly scope, daily writer, and isolated checks for midnight, overlap and daily-record preservation. Follow-up approval: Tamam onaylıyorum devam edelim Codex — trusted scheduler and isolated durable integration follow-up; this delivery gates only the daily scheduling path. Follow-up approval: Tamam devam edelim onaylıyorum Codex — reuse the existing durable run identity for daily deduplication and verify rollover in isolation. Follow-up approval: Devam edelim onaylıyorum — verify daily rollover against PostgreSQL in the existing rollback-only F01 probe. Follow-up approval: Tamam devam edelim Codex onayliyorum — prepare and verify an isolated hour-level PostgreSQL write independently of daily records. Follow-up approval: Tamam devam edelim Codex onaylıyorum — verify same-transaction hourly scope, work order and receipt in the isolated PostgreSQL rehearsal."
+        "source": "Tamam onaylıyorum Codex — explicit approval after listing separate hourly scope, daily writer, and isolated checks for midnight, overlap and daily-record preservation. Follow-up approval: Tamam onaylıyorum devam edelim Codex — trusted scheduler and isolated durable integration follow-up; this delivery gates only the daily scheduling path. Follow-up approval: Tamam devam edelim onaylıyorum Codex — reuse the existing durable run identity for daily deduplication and verify rollover in isolation. Follow-up approval: Devam edelim onaylıyorum — verify daily rollover against PostgreSQL in the existing rollback-only F01 probe. Follow-up approval: Tamam devam edelim Codex onayliyorum — prepare and verify an isolated hour-level PostgreSQL write independently of daily records. Follow-up approval: Tamam devam edelim Codex onaylıyorum — verify same-transaction hourly scope, work order and receipt in the isolated PostgreSQL rehearsal. Follow-up approval: Tamam devam edelim onaylıyorum Codex — bind a documented exact two-hour provider read to its job scope; Klaviyo Ordered Product request preparation only."
       },
       "rationale": "Record the approved minimum reread policy and prepare isolated hourly and daily report plans with separate hourly replacement. OAuth behavior is outside this scope.",
       "scope": {
@@ -4432,6 +4432,7 @@
         "merge": false
       },
       "changed_paths": [
+        "app/lib/providers/klaviyo-reporting.server.js",
         "app/lib/refresh/incremental-report-plan.server.js",
         "app/lib/refresh/preflight-bridge.server.js",
         "app/lib/refresh/scheduled-queue-check.server.js",
@@ -4441,11 +4442,13 @@
         "tools/f01-database-replay.mjs"
       ],
       "artifact_paths": [
+        "app/lib/providers/klaviyo-reporting.server.js",
         "app/lib/refresh/incremental-report-plan.server.js",
         "app/lib/refresh/preflight-bridge.server.js",
         "app/lib/refresh/scheduled-queue-check.server.js",
         "contracts/eo-05d-reconciliation-v1.json",
         "contracts/oauth/oauth-flow-constitution-v1.json",
+        "tests/eo-04d-klaviyo-reporting-runtime.test.js",
         "tests/eo-05a-refresh-preflight-bridge.test.js",
         "tests/eo-05a-refresh-scheduled-queue-check.test.js",
         "tests/incremental-report-plan.test.js",
@@ -4460,7 +4463,8 @@
         "tests/eo-05a-refresh-scheduled-queue-check.test.js",
         "tests/eo-05a-refresh-preflight-bridge.test.js",
         "tools/eo05-refresh-preflight-probe.mjs",
-        "tools/eo05-hourly-report-storage-probe.mjs"
+        "tools/eo05-hourly-report-storage-probe.mjs",
+        "tests/eo-04d-klaviyo-reporting-runtime.test.js"
       ],
       "acceptance_required": [
         "required_CI",

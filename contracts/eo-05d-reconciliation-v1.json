@@ -185,6 +185,14 @@
         ],
         "job_receipt": "Account, job ID, fence and exact two hours are checked against the locked test work order. Hour writes, order completion and receipt insertion share one statement. The probe separately reads the stored receipt.",
         "production_dependency": "Current verified raw receipts and admission bindings identify a single calendar date, with fixed provider query schemas. A versioned hourly range and verified provider capability must be bound to the source and job before scheduling or enabling production SQL."
+      },
+      "klaviyo_hourly_query": {
+        "family": "Ordered Product events only",
+        "request": "Fixed datetime >= start and datetime < end for exact two-hour admitted range. Cursor progression preserves the same bounds.",
+        "evidence_input": "Versioned scope binds workspace, installation generation, account, job, fence, metric, timezone and exact bounds independently of access token or pagination cursor.",
+        "pending": "Current authority check, immutable source scope persistence and readback, admitted dispatch, and durable hourly write remain open. Existing daily aggregation and reporting endpoints keep their date semantics.",
+        "official_checked_at": "2026-11-16",
+        "official_source": "https://developers.klaviyo.com/en/reference/get_events"
       }
     }
   }

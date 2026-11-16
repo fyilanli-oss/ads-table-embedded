@@ -4,6 +4,7 @@ import {
   KLAVIYO_REPORTING_API_REVISION,
   buildKlaviyoCampaignValuesRequest,
   buildKlaviyoFlowValuesRequest,
+  buildKlaviyoHourlyOrderedProductEventsRequest,
   buildKlaviyoOrderedProductEventsRequest,
   buildKlaviyoShopifyMetricsRequest,
   classifyKlaviyoCampaignSalesRole,
@@ -16,6 +17,28 @@ import {
 } from "../app/lib/providers/klaviyo-reporting.server.js";
 
 const accessToken = "test-access-token";
+
+test("hourly Ordered Product uses the same exact half-open scope on every page", () => {
+  const tickAt = "2026-11-16T22:00:00.000Z";
+  const start = "2026-11-16T20:00:00.000Z";
+  const job = {id:"hourly-job", provider:"klaviyo", workspaceId:"workspace", installGeneration:"1",
+    accountId:"account", fence:7, window:{start,end:tickAt}};
+  const input = {accessToken, orderedProductMetricId:"ordered-product", job, tickAt, timeZone:"Europe/Istanbul"};
+  const first = buildKlaviyoHourlyOrderedProductEventsRequest(input);
+  const next = buildKlaviyoHourlyOrderedProductEventsRequest({...input,cursor:"page-2"});
+  const firstUrl = new URL(first.request.url), nextUrl = new URL(next.request.url);
+  const filter = `equals(metric_id,'ordered-product'),greater-or-equal(datetime,${start}),less-than(datetime,${tickAt})`;
+  assert.equal(firstUrl.searchParams.get("filter"), filter);
+  assert.equal(nextUrl.searchParams.get("filter"), filter);
+  assert.equal(nextUrl.searchParams.get("page[cursor]"), "page-2");
+  assert.deepEqual(next.sourceScope, first.sourceScope);
+  assert.deepEqual(first.sourceScope.timeframe, {start,end:tickAt});
+  assert.equal(first.sourceScope.jobId, job.id);
+  assert.equal(first.sourceScope.fence, job.fence);
+  assert.ok(!JSON.stringify(first.sourceScope).includes(accessToken));
+  assert.throws(() => buildKlaviyoHourlyOrderedProductEventsRequest({...input,
+    job:{...job,window:{start:tickAt,end:tickAt}}}), /exact two-hour job scope/);
+});
 
 function reportRow(kind, overrides = {}) {
   return {
@@ -240,6 +263,7 @@ test("Ordered Product request excludes profiles and preserves raw provider produ
   assert.equal(url.searchParams.get("page[size]"), "200");
   assert.equal(url.searchParams.has("fields[profile]"), false);
   assert.match(url.searchParams.get("filter"), /equals\(metric_id,'ordered-product'\)/);
+  assert.match(url.searchParams.get("filter"), /less-or-equal\(datetime,/);
 
   const event = normalizeKlaviyoOrderedProductEvent({
     type: "event",

@@ -594,7 +594,7 @@
       "app/lib/providers/klaviyo-reporting-authority.server.d.ts": "cf54aec285bbaabfe3dadcf3639d25eb0d23ad2b89e83cd95c8c8b958026cdce",
       "app/lib/providers/klaviyo-reporting-authority.server.js": "51a48a24252a64b658f179a463434a8051a6828f1f9122c6d397970cb23a12d9",
       "app/lib/providers/klaviyo-reporting.server.d.ts": "176dc0c5418cfb2f0d9619a8ca6e860837626018a0205d34a138b53bdea6d5bb",
-      "app/lib/providers/klaviyo-reporting.server.js": "1047437121c260e9d1fe8e3163a8ea0c130ef99d0a4c6dd0e1a9209f737164b2",
+      "app/lib/providers/klaviyo-reporting.server.js": "dbd13dca7291373226814201aba53513f8ed046ed4ca90c4807b4bf743c54b7a",
       "app/lib/providers/klaviyo-source-capture.server.js": "d8a8267374df2b3d2c08aa9132fd583f8adaf81ab259bdb8b56964a6c37fbbcd",
       "app/lib/providers/klaviyo-source-write.server.js": "ba1747bc388bd145da209ec062c5b01da3ccd13408915fd10e68aa2859641681",
       "app/lib/providers/meta-adset-catalog-reference.server.js": "13faeb8db23586444b6d10949f9f30b5faf1dd29264d972c24d6760ca308ae2c",
@@ -863,9 +863,9 @@
       "contracts/eo-05b-fx-reporting-currency-v1.json": "f8971fc94bc63d89d3eea1b7916fae94de4fd5f1e4ed8fa32914464d1a28f332",
       "contracts/eo-05b-report-retention-v1.json": "cc4673fe9be0f77567bc6f2c0171a93eb95d1a4f637d0ccb10481de28bcb67d4",
       "contracts/eo-05c-maturity-v1.json": "81132731eda010e9e675b30c736a29c6f776a9ed0e236cb38ab3a791a8ce2eaf",
-      "contracts/eo-05d-reconciliation-v1.json": "d7021bb55d781cc54833874e24dce09a69cc48c18d68e4b3272ab97b97b3b42f",
+      "contracts/eo-05d-reconciliation-v1.json": "bd96418438b84279be89fa9f6a9e1fe7c4d67d85c7b7b348dae135cb2266c5ce",
       "contracts/eo-05e-observability-v1.json": "3c3ee6073f1141973d5c08830765b13cb37d5a5e77250d3d4671af1e51c6838f",
-      "contracts/oauth/oauth-flow-constitution-v1.json": "5462a13eb525829ef9430caa1f6864cfb8534f902afa97560fc7a8ecd22be801",
+      "contracts/oauth/oauth-flow-constitution-v1.json": "5ccd603a3d58832695ea7347f3b710e91755c810e3723964da8ec0c828728b28",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
       "contracts/repository-delivery-workflow-v1.json": "f214c83b6ec65b11fb9b974ae52ebbdf6ae7183bc69bc835320ec25619af4b7f",
       "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json": "18a54cf7d47cddc4b2dcac24320a0f27f3d1112264a023acc33152a80ae745c6",
@@ -1060,7 +1060,7 @@
       "tests/eo-04d-klaviyo-reporting-authority-contract.test.js": "24d1a7996406397259123bd2dcdf6571f77a43c9482cea8adf53f5e8f7a9e2dc",
       "tests/eo-04d-klaviyo-reporting-authority.test.js": "7eeb581eb4018cd69fffae589a7bbf5e87c53775c3332f905ee4821efb1cd9bd",
       "tests/eo-04d-klaviyo-reporting-runtime-contract.test.js": "a33305dea7ae12de78096466e30f50308da7060a54008bcb77d14563f3d71881",
-      "tests/eo-04d-klaviyo-reporting-runtime.test.js": "97ff0b56e1cd55893106b1743eb5953680199513d59b12258e486e927511abd2",
+      "tests/eo-04d-klaviyo-reporting-runtime.test.js": "ead4a457e1402eaff176dc856b8bb3062fb01b9ff032515203f0460d93f1cd80",
       "tests/eo-04d-klaviyo-spend-ledger.test.js": "05a1794df66739f5cab123656618cf95fdb59a4a38c6f1f11485bb87827a99f2",
       "tests/eo-04e-three-provider-channel-product-economics.test.js": "88c7a1ddee6b74d08d398413ce8494672b3d0dcb9e5011bc2a1419470ef98644",
       "tests/eo-05-refresh-alarm-matrix.test.js": "aa339abdf95ff3ca3b0d929cd5ad42dd5144fa7263daa8ae2a5aae0ed8c56ef8",
@@ -2399,7 +2399,7 @@
       "date": "2026-11-16",
       "owner_approval": {
         "explicit": true,
-        "source": "Tamam Codex önerini onaylıyorum — agreed to record the hourly today/yesterday policy and consider only supported Google conversion-date fields. Tamam onaylıyorum Codex — explicit approval after listing separate hourly scope, daily writer, and isolated checks for midnight, overlap and daily-record preservation. Follow-up approval: Tamam onaylıyorum devam edelim Codex — trusted scheduler and isolated durable integration follow-up; this delivery gates only the daily scheduling path. Follow-up approval: Tamam devam edelim onaylıyorum Codex — reuse the existing durable run identity for daily deduplication and verify rollover in isolation. Follow-up approval: Devam edelim onaylıyorum — verify daily rollover against PostgreSQL in the existing rollback-only F01 probe. Follow-up approval: Tamam devam edelim Codex onayliyorum — prepare and verify an isolated hour-level PostgreSQL write independently of daily records. Follow-up approval: Tamam devam edelim Codex onaylıyorum — verify same-transaction hourly scope, work order and receipt in the isolated PostgreSQL rehearsal."
+        "source": "Tamam Codex önerini onaylıyorum — agreed to record the hourly today/yesterday policy and consider only supported Google conversion-date fields. Tamam onaylıyorum Codex — explicit approval after listing separate hourly scope, daily writer, and isolated checks for midnight, overlap and daily-record preservation. Follow-up approval: Tamam onaylıyorum devam edelim Codex — trusted scheduler and isolated durable integration follow-up; this delivery gates only the daily scheduling path. Follow-up approval: Tamam devam edelim onaylıyorum Codex — reuse the existing durable run identity for daily deduplication and verify rollover in isolation. Follow-up approval: Devam edelim onaylıyorum — verify daily rollover against PostgreSQL in the existing rollback-only F01 probe. Follow-up approval: Tamam devam edelim Codex onayliyorum — prepare and verify an isolated hour-level PostgreSQL write independently of daily records. Follow-up approval: Tamam devam edelim Codex onaylıyorum — verify same-transaction hourly scope, work order and receipt in the isolated PostgreSQL rehearsal. Follow-up approval: Tamam devam edelim onaylıyorum Codex — bind a documented exact two-hour provider read to its job scope; Klaviyo Ordered Product request preparation only."
       },
       "rationale": "Record the approved minimum reread policy and prepare isolated hourly and daily report plans with separate hourly replacement. OAuth behavior is outside this scope.",
       "scope": {
@@ -2410,12 +2410,14 @@
         "merge": false
       },
       "changed_paths": [
+        "app/lib/providers/klaviyo-reporting.server.js",
         "app/lib/refresh/incremental-report-plan.server.js",
         "app/lib/refresh/preflight-bridge.server.js",
         "app/lib/refresh/scheduled-queue-check.server.js",
         "contracts/eo-05d-reconciliation-v1.json",
         "contracts/oauth/oauth-flow-constitution-v1.json",
         "contracts/raw-source/raw-source-constitution-v1.json",
+        "tests/eo-04d-klaviyo-reporting-runtime.test.js",
         "tests/eo-05a-refresh-preflight-bridge.test.js",
         "tests/eo-05a-refresh-scheduled-queue-check.test.js",
         "tests/incremental-report-plan.test.js",
@@ -2424,12 +2426,14 @@
         "tools/f01-database-replay.mjs"
       ],
       "artifact_paths": [
+        "app/lib/providers/klaviyo-reporting.server.js",
         "app/lib/refresh/incremental-report-plan.server.js",
         "app/lib/refresh/preflight-bridge.server.js",
         "app/lib/refresh/scheduled-queue-check.server.js",
         "contracts/eo-05d-reconciliation-v1.json",
         "contracts/oauth/oauth-flow-constitution-v1.json",
         "contracts/raw-source/raw-source-constitution-v1.json",
+        "tests/eo-04d-klaviyo-reporting-runtime.test.js",
         "tests/eo-05a-refresh-preflight-bridge.test.js",
         "tests/eo-05a-refresh-scheduled-queue-check.test.js",
         "tests/incremental-report-plan.test.js",
@@ -2444,7 +2448,8 @@
         "tests/eo-05a-refresh-scheduled-queue-check.test.js",
         "tests/eo-05a-refresh-preflight-bridge.test.js",
         "tools/eo05-refresh-preflight-probe.mjs",
-        "tools/eo05-hourly-report-storage-probe.mjs"
+        "tools/eo05-hourly-report-storage-probe.mjs",
+        "tests/eo-04d-klaviyo-reporting-runtime.test.js"
       ],
       "acceptance_required": [
         "required_CI",

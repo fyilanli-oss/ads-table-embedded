@@ -1,4 +1,5 @@
 import {quotaBoundaryControl} from "../refresh/quota-native-fetch.server.js";
+import {planIncrementalReport} from "../refresh/incremental-report-plan.server.js";
 
 export const KLAVIYO_REPORTING_API_REVISION = "2026-10-15";
 export const KLAVIYO_REPORTING_STATISTICS = Object.freeze([
@@ -329,6 +330,38 @@ export function buildKlaviyoOrderedProductEventsRequest({
   cursor = null,
 }) {
   const timeframe = klaviyoBusinessDayTimeframe({businessDate, timeZone});
+  return orderedProductEventsRequest({accessToken, orderedProductMetricId, timeframe, cursor, endOperator:"less-or-equal"});
+}
+
+// Builds the fixed hourly query and its source scope for an already admitted
+// worker. The descriptor is input to evidence capture, not a verified receipt.
+export function buildKlaviyoHourlyOrderedProductEventsRequest({
+  accessToken, orderedProductMetricId, job, tickAt, timeZone, cursor = null,
+}) {
+  const {hourly} = planIncrementalReport({tickAt, timeZone, hourlySupported:true});
+  if (!hourly || job?.provider !== "klaviyo" || typeof job.id !== "string" || !job.id
+    || typeof job.workspaceId !== "string" || !job.workspaceId
+    || typeof job.installGeneration !== "string" || !job.installGeneration
+    || typeof job.accountId !== "string" || !job.accountId
+    || !Number.isSafeInteger(job.fence) || job.fence < 1
+    || job.window?.start !== hourly.start || job.window?.end !== hourly.end) {
+    fail("KLAVIYO_HOURLY_SCOPE_INVALID", "Hourly event query requires the exact two-hour job scope");
+  }
+  const timeframe = Object.freeze({start:hourly.start, end:hourly.end});
+  const sourceScope = Object.freeze({
+    version:"klaviyo-ordered-product-hourly-v1", provider:"klaviyo",
+    workspaceId:job.workspaceId, installGeneration:job.installGeneration,
+    accountId:job.accountId, jobId:job.id, fence:job.fence, timeZone,
+    metricId:orderedProductMetricId, timeframe, endExclusive:true,
+    revision:KLAVIYO_REPORTING_API_REVISION,
+  });
+  return {
+    request:orderedProductEventsRequest({accessToken, orderedProductMetricId, timeframe, cursor, endOperator:"less-than"}),
+    sourceScope,
+  };
+}
+
+function orderedProductEventsRequest({accessToken, orderedProductMetricId, timeframe, cursor, endOperator}) {
   const metricId = text(orderedProductMetricId, "KLAVIYO_ORDERED_PRODUCT_METRIC_ID_REQUIRED", 256);
   const url = new URL(`${API_ROOT}/events`);
   url.searchParams.set(
@@ -336,7 +369,7 @@ export function buildKlaviyoOrderedProductEventsRequest({
     [
       `equals(metric_id,'${metricId.replaceAll("'", "\\'")}')`,
       `greater-or-equal(datetime,${timeframe.start})`,
-      `less-or-equal(datetime,${timeframe.end})`,
+      `${endOperator}(datetime,${timeframe.end})`,
     ].join(","),
   );
   url.searchParams.set("include", "attributions,metric");

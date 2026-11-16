@@ -1,4 +1,4 @@
-import {canonicalSourceJson, sourceStoreOwner} from "./source-evidence-store.server.js";
+import {canonicalSourceJson, sourcePayloadHash, sourceStoreOwner} from "./source-evidence-store.server.js";
 
 const pageFormat = Object.freeze({
   family:"klaviyo_ordered_product_events",
@@ -62,4 +62,65 @@ export function openKlaviyoHourlySourcePage({cipher, page, ...input}) {
   if (canonicalSourceJson(payload.scope) !== canonicalSourceJson(input.scope)) fail();
   validateProjection(payload.projection, input.scope);
   return payload.projection;
+}
+
+function validateBatchLimits(limits, pages) {
+  if (!limits || !Number.isSafeInteger(limits.maxPages) || limits.maxPages < 1 || limits.maxPages > 300
+    || !Number.isSafeInteger(limits.maxRows) || limits.maxRows < 1 || limits.maxRows > 20_000
+    || !Number.isSafeInteger(limits.maxBytes) || limits.maxBytes < 1 || limits.maxBytes > 16_777_216
+    || !Array.isArray(pages) || pages.length === 0 || pages.length > limits.maxPages) fail();
+}
+
+function sourceBatchManifest(input, pages, open) {
+  const {limits, scope, attemptId} = input;
+  validateBatchLimits(limits, pages);
+  let rows = 0, bytes = 0;
+  const eventIds = new Set();
+  const entries = pages.map((page, pageOrdinal) => {
+    if (page?.ordinal !== pageOrdinal || !/^[a-f0-9]{64}$/.test(page.payloadHash)
+      || !Number.isSafeInteger(page.plainBytes) || page.plainBytes < 1) fail();
+    bytes += page.plainBytes;
+    if (bytes > limits.maxBytes) fail();
+    const projection = open(page, pageOrdinal);
+    if (projection.hasNext !== (pageOrdinal + 1 < pages.length)) fail();
+    for (const event of projection.records) {
+      if (typeof event.id !== "string" || !event.id || eventIds.has(event.id)) fail();
+      eventIds.add(event.id);
+    }
+    rows += projection.records.length;
+    if (rows > limits.maxRows) fail();
+    return Object.freeze({ordinal:pageOrdinal, payloadHash:page.payloadHash,
+      plainBytes:page.plainBytes, rows:projection.records.length});
+  });
+  const manifest = {
+    version:"klaviyo-hourly-source-batch-v1", attemptId, scopeDigest:sourcePayloadHash(scope),
+    pages:Object.freeze(entries), rows, bytes,
+  };
+  return Object.freeze({...manifest, digest:sourcePayloadHash(manifest)});
+}
+
+// Prepared encrypted pages and their immutable manifest for the private writer.
+// The returned digest identifies the complete batch but does not confirm a write.
+export function prepareKlaviyoHourlySourceBatch({projections, ...input}) {
+  validateBatchLimits(input.limits, projections);
+  let bytes = 0, rows = 0;
+  const pages = projections.map((projection, pageOrdinal) => {
+    const page = sealKlaviyoHourlySourcePage({...input, projection, pageOrdinal});
+    bytes += page.plainBytes;
+    rows += projection.records.length;
+    if (bytes > input.limits.maxBytes || rows > input.limits.maxRows) fail();
+    return Object.freeze(page);
+  });
+  const manifest = sourceBatchManifest(input, pages, (_, index) => projections[index]);
+  return Object.freeze({pages:Object.freeze(pages), manifest});
+}
+
+// Run after the private writer returns its immutable manifest and physical pages.
+// A successful comparison is content evidence only, independent of job closure.
+export function verifyKlaviyoHourlySourceBatch({pages, manifest, expectedManifest, ...input}) {
+  if (canonicalSourceJson(manifest) !== canonicalSourceJson(expectedManifest)) fail();
+  const actual = sourceBatchManifest(input, pages, (page, pageOrdinal) =>
+    openKlaviyoHourlySourcePage({...input, page, pageOrdinal}));
+  if (canonicalSourceJson(actual) !== canonicalSourceJson(expectedManifest)) fail();
+  return actual;
 }

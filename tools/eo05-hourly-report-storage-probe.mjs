@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
+import {randomBytes, randomUUID} from "node:crypto";
 import {planIncrementalReport} from "../app/lib/refresh/incremental-report-plan.server.js";
+import {buildKlaviyoHourlyOrderedProductEventsRequest} from "../app/lib/providers/klaviyo-reporting.server.js";
+import {createSourceEvidenceCipher} from "../app/lib/database/source-evidence-store.server.js";
+import {prepareKlaviyoHourlySourceBatch, verifyKlaviyoHourlySourceBatch} from "../app/lib/database/klaviyo-hourly-source-page.server.js";
 
 // A logged table in the isolated replay only. The rollback removes the entire
 // prototype. The statement never has a path to the application's daily facts.
@@ -119,8 +123,62 @@ export async function hourlyReportStorageProbe(client) {
     ]);
     const days = await client.query("select value from eo05_hourly_rehearsal.day_snapshots");
     assert.deepEqual(days.rows, [{value:42}]);
+    await klaviyoBatchRoundTrip(client, firstTick);
     console.log("EO05_HOURLY_STORAGE_PROBE_PASS real_SQL=true overlap_replaced=true delayed_replay_ignored=true invalid_batch_atomic=true daily_unchanged=true accounts_separate=true job_bound=true receipt_readback=true");
   } finally {
     await client.query("rollback");
   }
+}
+
+async function klaviyoBatchRoundTrip(client, tickAt) {
+  await client.query(`
+    create table eo05_hourly_rehearsal.source_batches (
+      attempt_id uuid primary key,
+      manifest jsonb not null
+    );
+    create table eo05_hourly_rehearsal.source_pages (
+      attempt_id uuid not null references eo05_hourly_rehearsal.source_batches(attempt_id),
+      ordinal int not null,
+      envelope jsonb not null,
+      primary key (attempt_id, ordinal)
+    );
+  `);
+  const owner = {provider:"klaviyo", workspaceId:randomUUID(), installationId:"1", generation:"1",
+    shopId:"gid://shopify/Shop/1", shopDomain:"hourly-fixture.myshopify.com",
+    accountId:"hourly-account", connectionId:randomUUID(), connectionVersion:"1",
+    selectionEpoch:null, credentialId:randomUUID()};
+  const timeZone = "Europe/Istanbul";
+  const {hourly} = planIncrementalReport({tickAt,timeZone,hourlySupported:true});
+  const {sourceScope:scope} = buildKlaviyoHourlyOrderedProductEventsRequest({
+    accessToken:"synthetic-only", orderedProductMetricId:"ordered", tickAt, timeZone,
+    job:{id:"hourly-source-job", fence:7, provider:owner.provider, workspaceId:owner.workspaceId,
+      installGeneration:owner.generation, accountId:owner.accountId, window:{start:hourly.start,end:hourly.end}},
+  });
+  const input = {owner, scope, attemptId:randomUUID(), limits:{maxPages:2,maxRows:2,maxBytes:10000},
+    cipher:createSourceEvidenceCipher({keys:new Map([[1,randomBytes(32)]]), activeVersion:1, forbiddenKeys:[]})};
+  const projections = hourly.hours.map((datetime,index) => ({
+    revision:scope.revision, included:[], hasNext:index===0,
+    records:[{type:"event",id:"event-"+index,attributes:{datetime},
+      relationships:{metric:{data:{id:scope.metricId}}}}],
+  }));
+  const {pages, manifest:expectedManifest} = prepareKlaviyoHourlySourceBatch({...input,projections});
+  const written = await client.query(`
+    with batch as (
+      insert into eo05_hourly_rehearsal.source_batches(attempt_id,manifest)
+      values ($1,$2::jsonb) returning attempt_id
+    )
+    insert into eo05_hourly_rehearsal.source_pages(attempt_id,ordinal,envelope)
+    select batch.attempt_id, (page->>'ordinal')::int, page
+    from batch cross join jsonb_array_elements($3::jsonb) item(page)
+  `, [input.attemptId,JSON.stringify(expectedManifest), JSON.stringify(pages)]);
+  assert.equal(written.rowCount, 2);
+  const {rows:[stored]} = await client.query(`
+    select batch.manifest, jsonb_agg(page.envelope order by page.ordinal) as pages
+    from eo05_hourly_rehearsal.source_batches batch
+    join eo05_hourly_rehearsal.source_pages page using (attempt_id)
+    where attempt_id=$1 group by batch.manifest
+  `, [input.attemptId]);
+  const actual = verifyKlaviyoHourlySourceBatch({...input, ...stored, expectedManifest});
+  assert.equal(actual.digest, expectedManifest.digest);
+  console.log("EO05_KLAVIYO_HOURLY_BATCH_PROBE_PASS real_SQL=true ordered_pages=2 immutable_manifest_readback=true synthetic=true");
 }

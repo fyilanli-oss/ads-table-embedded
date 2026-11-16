@@ -6,7 +6,8 @@ import {canonicalSourceJson, sourceStoreOwner, sourcePayloadHash, createSourceEv
 import {sourceStoreFixture} from "./fixtures/source-store-fixture.js";
 import {buildKlaviyoHourlyOrderedProductEventsRequest} from "../app/lib/providers/klaviyo-reporting.server.js";
 import {createKlaviyoSourceCapture} from "../app/lib/providers/klaviyo-source-capture.server.js";
-import {openKlaviyoHourlySourcePage, sealKlaviyoHourlySourcePage} from "../app/lib/database/klaviyo-hourly-source-page.server.js";
+import {openKlaviyoHourlySourcePage, sealKlaviyoHourlySourcePage,
+  prepareKlaviyoHourlySourceBatch, verifyKlaviyoHourlySourceBatch} from "../app/lib/database/klaviyo-hourly-source-page.server.js";
 
 test("hourly Klaviyo capture encrypts the original query scope with the sanitized page", async () => {
   const {input} = sourceStoreFixture();
@@ -34,6 +35,22 @@ test("hourly Klaviyo capture encrypts the original query scope with the sanitize
   assert.throws(() => sealKlaviyoHourlySourcePage({...context, projection:{...projection, records:[
     {...projection.records[0], attributes:{datetime:tickAt}},
   ]}}), /SCOPE_INVALID/);
+
+  const first = {...projection, hasNext:true};
+  const second = {...projection, records:[{...projection.records[0], id:"event-2"}]};
+  const batchContext = {...context, limits:{maxPages:3,maxRows:3,maxBytes:10000}};
+  const {pages, manifest} = prepareKlaviyoHourlySourceBatch({...batchContext, projections:[first,second]});
+  const read = {...batchContext, pages, manifest, expectedManifest:manifest};
+  assert.deepEqual(verifyKlaviyoHourlySourceBatch(read), manifest);
+  assert.equal(manifest.rows, 2);
+  assert.throws(() => verifyKlaviyoHourlySourceBatch({...read, pages:[pages[1],pages[0]]}), /SCOPE_INVALID/);
+  assert.throws(() => verifyKlaviyoHourlySourceBatch({...read, pages:[pages[0]]}), /SCOPE_INVALID/);
+  assert.throws(() => verifyKlaviyoHourlySourceBatch({...read, manifest:{...manifest, rows:1}}), /SCOPE_INVALID/);
+  assert.throws(() => prepareKlaviyoHourlySourceBatch({...batchContext, projections:[first,projection]}), /SCOPE_INVALID/);
+  const empty = prepareKlaviyoHourlySourceBatch({...batchContext, projections:[{...projection, records:[]}]});
+  assert.equal(empty.manifest.rows, 0);
+  assert.throws(() => prepareKlaviyoHourlySourceBatch({...batchContext,
+    limits:{...batchContext.limits,maxRows:1}, projections:[first,second]}), /SCOPE_INVALID/);
 });
 
 test("source evidence encryption binds actual owner, attempt, page metadata and sanitized content", () => {

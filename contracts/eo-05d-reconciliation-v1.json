@@ -200,6 +200,14 @@
           "pending": "Wire the versioned page through a current hourly claim, whole-batch manifest and durable receipt SQL. This page codec does not issue or confirm a storage receipt.",
           "official_crypto_reference": "https://nodejs.org/api/crypto.html#ciphersetaddaad-options",
           "official_crypto_checked_at": "2026-11-16"
+        },
+        "batch": {
+          "version": "klaviyo-hourly-source-batch-v1",
+          "proof": "Exact query scope, attempt, ordered page hashes and row/byte counts; authenticated readback rechecks pagination, duplicate event IDs and coverage. Empty terminal page is distinguishable from missing evidence.",
+          "postgres_probe": "EO05_KLAVIYO_HOURLY_BATCH_PROBE_PASS",
+          "pending": "Connect the validated batch to the app's private source writer and active hourly claim. The rollback-only tables are fixture tables.",
+          "official_checked_at": "2026-11-16",
+          "official_source": "https://www.postgresql.org/docs/17/tutorial-transactions.html"
         }
       }
     }

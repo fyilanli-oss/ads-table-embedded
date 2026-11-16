@@ -483,6 +483,8 @@ async function main() {
         {scenario:"normal_1",cohort:96,rowsPerJob:42,alignMinute:true},
         {scenario:"normal_2",cohort:96,rowsPerJob:42,alignMinute:true},
         {scenario:"busy",cohort:96,rowsPerJob:120,alignMinute:true},
+        {scenario:"three_provider_control",cohort:12,mixedProviders:true,alignMinute:true},
+        {scenario:"three_provider_meta_sales",cohort:4,mixedProviders:true,metaNonempty:true},
       ] : [{}];
       await datasetStorageProbe(client,replayConnection,process.env,{hourlyMinuteScenarios});
     }

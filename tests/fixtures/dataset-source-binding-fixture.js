@@ -9,8 +9,7 @@ import {parseMetaRawJson, projectMetaRawPage} from "../../app/lib/providers/meta
 import {createKlaviyoSourceCapture} from "../../app/lib/providers/klaviyo-source-capture.server.js";
 import {buildKlaviyoCampaignValuesRequest, buildKlaviyoFlowValuesRequest, buildKlaviyoPdValuesRequest} from "../../app/lib/providers/klaviyo-reporting.server.js";
 
-const day = "2026-11-01", window = {from: day, to: day};
-function nativeGoogle(family, account, nonempty, purchase = "2.5") {
+function nativeGoogle(family, account, day, nonempty, purchase = "2.5") {
   if (family === "account_identity") return [{customer: {id: account, currencyCode: "USD", timeZone: "UTC", descriptiveName: "Synthetic"}}];
   if (!nonempty) return [];
   const base = {customer: {id: account}, campaign: {id: "10", name: "Synthetic Shopping", advertisingChannelType: "SHOPPING"},
@@ -33,7 +32,8 @@ async function nativeKlaviyoPage(path, body, request = null) {
 
 /** All native responses/credentials/owners are synthetic. Real capture projection,
  * AEAD and decrypt paths are used; this fake DB is not SQL/native acceptance. */
-export async function datasetSourceBindingFixture(provider = "google_ads", {nonempty = true, missingMetric = false, mixedMetrics = false, eventOrderId = null, googlePurchase = "2.5", klaviyoOpens = null, klaviyoFlow = false, owner: givenOwner = null, cipher: givenCipher = null} = {}) {
+export async function datasetSourceBindingFixture(provider = "google_ads", {nonempty = true, missingMetric = false, mixedMetrics = false, eventOrderId = null, googlePurchase = "2.5", klaviyoOpens = null, klaviyoFlow = false, owner: givenOwner = null, cipher: givenCipher = null, businessDate: day = "2026-11-01"} = {}) {
+  const window = {from:day,to:day};
   const owner = givenOwner ? structuredClone(givenOwner) : datasetStorageFixture().owner;
   if (!givenOwner) {owner.installationId = "1"; owner.provider = provider; owner.accountId = provider === "meta" ? "act_123" : provider === "klaviyo" ? "account-1" : "123";}
   if (provider === "klaviyo") owner.selectionEpoch = null;
@@ -47,7 +47,7 @@ export async function datasetSourceBindingFixture(provider = "google_ads", {none
   if (provider === "google_ads") {
     const queries = buildGoogleReportingQueries({dateWindow: {start: day, end: day}});
     for (const [dataset, families] of [["account_performance", GOOGLE_REPORTING_QUERY_FAMILIES.slice(0, 9)], ["product_performance", GOOGLE_REPORTING_QUERY_FAMILIES.slice(9)]]) {
-      native.push({dataset, pages: families.map(family => projectGoogleRawPage(parseGoogleRawJson(JSON.stringify({results: nativeGoogle(family, owner.accountId, nonempty, googlePurchase)})),
+      native.push({dataset, pages: families.map(family => projectGoogleRawPage(parseGoogleRawJson(JSON.stringify({results: nativeGoogle(family, owner.accountId, day, nonempty, googlePurchase)})),
         {family, query: queries[family], ordinal: 0, accountId: owner.accountId, requestId: "synthetic"}))});
     }
   } else if (provider === "meta") {

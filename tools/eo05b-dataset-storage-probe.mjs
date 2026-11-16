@@ -21,10 +21,14 @@ async function rejected(client, action, pattern) {
   assert.ok(error, "invalid SQL operation must fail"); if (pattern) assert.match(error.message, pattern);
 }
 
-async function ownerFixture(client, provider = "google_ads") {
-  const shopId = "gid://shopify/Shop/" + BigInt("0x" + randomBytes(6).toString("hex")), shopDomain = "dataset-" + randomBytes(6).toString("hex") + ".myshopify.com";
-  const boot = (await client.query("select * from shopify.bootstrap_installation($1,$2,$3,statement_timestamp())", [shopId, shopDomain, randomBytes(32)])).rows[0];
-  const iid = (await client.query("select id::text from shopify.installations where workspace_id=$1", [boot.workspace_id])).rows[0].id;
+async function ownerFixture(client, provider = "google_ads", installation) {
+  const shopId = installation?.shopId ?? "gid://shopify/Shop/" + BigInt("0x" + randomBytes(6).toString("hex"));
+  const shopDomain = installation?.shopDomain ?? "dataset-" + randomBytes(6).toString("hex") + ".myshopify.com";
+  const boot = installation
+    ? {workspace_id:installation.workspaceId,install_generation:installation.generation}
+    : (await client.query("select * from shopify.bootstrap_installation($1,$2,$3,statement_timestamp())", [shopId, shopDomain, randomBytes(32)])).rows[0];
+  const iid = installation?.installationId ??
+    (await client.query("select id::text from shopify.installations where workspace_id=$1", [boot.workspace_id])).rows[0].id;
   const credential = randomUUID(), connection = randomUUID(), accountId = provider === "google_ads" ? "123" : provider === "meta" ? "act_123" : "account-123";
   await client.query("insert into integrations.provider_credential_envelopes(id,installation_id,workspace_id,install_generation,provider,purpose,payload_ciphertext,nonce,auth_tag,key_version) values($1,$2,$3,$4,$5,'provider_token_set',$6,$7,$8,1)",
     [credential, iid, boot.workspace_id, boot.install_generation, provider, randomBytes(32), randomBytes(12), randomBytes(16)]);

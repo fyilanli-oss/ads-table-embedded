@@ -3,7 +3,7 @@ import {createHash, randomBytes, randomUUID} from "node:crypto";
 import {readFileSync} from "node:fs";
 import {buildKlaviyoHourlyOrderedProductEventsRequest} from "../app/lib/providers/klaviyo-reporting.server.js";
 import {createKlaviyoHourlySourceRepository} from "../app/lib/database/klaviyo-hourly-source-repository.server.js";
-import {createSourceEvidenceCipher} from "../app/lib/database/source-evidence-store.server.js";
+import {createSourceEvidenceCipher,createSourceEvidenceRepository} from "../app/lib/database/source-evidence-store.server.js";
 import {sourceRetentionDurationPolicy} from "../app/lib/database/source-retention-policy.server.js";
 import {commitKlaviyoHourlyEventReport, commitKlaviyoHourlySourceBatch,
   prepareKlaviyoHourlySourceBatch} from "../app/lib/database/klaviyo-hourly-source-page.server.js";
@@ -11,14 +11,30 @@ import {createRefreshEntitlementVerifier} from "../app/lib/refresh/entitlement-c
 import {runScheduledRefreshCheck} from "../app/lib/refresh/scheduled-queue-check.server.js";
 import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repository.server.js";
 import {setTimeout as delay} from "node:timers/promises";
+import {datasetSourceBindingFixture} from "../tests/fixtures/dataset-source-binding-fixture.js";
+
+async function storeSyntheticDailySource(database,owner,claim,window,nonempty) {
+  const fixture=await datasetSourceBindingFixture(claim.provider,{owner,businessDate:window.from,nonempty});
+  const readKey=claim.provider==="google_ads"?"googleDatasetRead":"metaDatasetRead";
+  const observedAt=new Date().toISOString();
+  const repo=createSourceEvidenceRepository(database);
+  for (const envelope of fixture.envelopes.values()) {
+    const receipt=await repo.commit(envelope.sourceWrite);
+    const metadata=Object.fromEntries(Object.entries(envelope.receipt.manifest).filter(([key])=>key!=="counts"));
+    Object.assign(metadata[readKey],{jobId:claim.id,fence:String(claim.fence),observedAt,completedAt:observedAt});
+    await database.query("update evidence.source_batches set manifest=manifest||$2::jsonb where id=$1",
+      [receipt.batchId,JSON.stringify(metadata)]);
+  }
+  return {owner,database,batches:fixture.batches,cipher:fixture.cipher,expectedRevision:0};
+}
 
 // Invoked only by the loopback F01 Dataset replay inside its rollback transaction.
 export async function klaviyoHourlyMinuteProbe(client, ownerFixture, {
-  scenario="staged_smoke",cohort=24,rowsPerJob=42,alignMinute=false,
+  scenario="staged_smoke",cohort=24,rowsPerJob=42,alignMinute=false,mixedProviders=false,metaNonempty=false,
 }={}) {
   await client.query("savepoint klaviyo_minute");
   try {
-    const owners=new Map(), shops=new Map(), reports=new Map();
+    const owners=new Map(), shops=new Map(), reports=new Map(), dailyOwners=new Map(), dailySources=new Map();
     const rowBudget=Math.max(100,rowsPerJob);
     const eventSpacingMs=Math.min(120_000,Math.floor(7_200_000/rowsPerJob));
     const timings=new Map();
@@ -50,6 +66,18 @@ export async function klaviyoHourlyMinuteProbe(client, ownerFixture, {
       const owner=await ownerFixture(client,"klaviyo");
       owners.set(owner.workspaceId,owner);
       shops.set(owner.shopId,owner);
+      if (mixedProviders) {
+        const providers=new Map();
+        for (const provider of ["google_ads","meta"]) {
+          const dailyOwner=await ownerFixture(client,provider,owner);
+          providers.set(provider,dailyOwner);
+          await client.query("update integrations.reporting_account_bindings set effective_from=statement_timestamp()-interval '3 days' where connection_id=$1",
+            [dailyOwner.connectionId]);
+          await client.query("update integrations.provider_connections set connected_at=statement_timestamp()-interval '3 days' where id=$1",
+            [dailyOwner.connectionId]);
+        }
+        dailyOwners.set(owner.workspaceId,providers);
+      }
       await client.query("update integrations.provider_connections set connected_at=statement_timestamp()-interval '3 days' where id=$1",[owner.connectionId]);
       await client.query(`
         insert into operations.refresh_quota_contexts
@@ -59,10 +87,12 @@ export async function klaviyoHourlyMinuteProbe(client, ownerFixture, {
       `,[owner.workspaceId,owner.generation,owner.installationId,owner.connectionId,owner.connectionVersion,owner.accountId,hash(),hash()]);
     }
     const cost={requests:4,dbWrites:Math.max(128,rowsPerJob+86),connections:1,rows:rowBudget,bytes:200000};
+    const providerAccounts=[{provider:"klaviyo",accountId:"account-123"}];
+    if (mixedProviders) providerAccounts.push({provider:"google_ads",accountId:"123"},{provider:"meta",accountId:"act_123"});
     const budget={global:cost,interactiveReserve:{requests:0,dbWrites:0,connections:0,rows:0,bytes:0},
-      providers:[{provider:"klaviyo",limit:cost}],
+      providers:providerAccounts.map(({provider})=>({provider,limit:cost})),
       workspaces:[...owners.keys()].map(workspaceId=>({workspaceId,limit:cost})),
-      accounts:[{provider:"klaviyo",accountId:"account-123",limit:cost}]};
+      accounts:providerAccounts.map(account=>({...account,limit:cost}))};
     await client.query(`
       update operations.refresh_control set budget=$1,bounds=$2,
         next_fence=greatest(next_fence,(select coalesce(max(fence),0)+1 from operations.refresh_runs))
@@ -82,10 +112,11 @@ export async function klaviyoHourlyMinuteProbe(client, ownerFixture, {
     const previousHour=Math.floor(Date.now()/3_600_000)*3_600_000-3_600_000;
     const queued=await client.query(`
       update operations.refresh_queue_accounts set state='pending',first_due_hour_ms=$2,
-        latest_due_hour_ms=greatest(coalesce(latest_due_hour_ms,0),$2),first_queued_at_ms=$2
-      where workspace_id=any($1::uuid[]) and provider='klaviyo'
-    `,[[...owners.keys()],previousHour]);
-    assert.equal(queued.rowCount,cohort);
+        latest_due_hour_ms=greatest(coalesce(latest_due_hour_ms,0),$2),
+        first_queued_at_ms=$2+case provider when 'klaviyo' then 0 when 'google_ads' then 1 else 2 end
+      where workspace_id=any($1::uuid[]) and provider=any($3::text[])
+    `,[[...owners.keys()],previousHour,providerAccounts.map(({provider})=>provider)]);
+    assert.equal(queued.rowCount,cohort*providerAccounts.length);
     const generation=randomUUID();
     await client.query("update operations.refresh_tick_control set enabled=true,generation=$1,last_minute=null,last_checked_at_ms=null,queue_revision=null where singleton",[generation]);
     const available=60_000-Date.now()%60_000;
@@ -106,11 +137,27 @@ export async function klaviyoHourlyMinuteProbe(client, ownerFixture, {
     const cipher=createSourceEvidenceCipher({keys:new Map([[1,randomBytes(32)]]),activeVersion:1,forbiddenKeys:[]});
     const result=await runScheduledRefreshCheck({store:timedStore,generation,work:{
       drainReadyWork:true,now:Date.now,entitlementVerifier:timedEntitlement,
-      buildWorkPlan:async (source,job)=>owners.has(source.workspaceId)&&job?.kind==="klaviyo_hourly"
-        ? {workClass:"hourly_hot_window",cost,limits} : null,
+      buildWorkPlan:async (source,job)=>{
+        if (owners.has(source.workspaceId)&&job?.kind==="klaviyo_hourly") return {workClass:"hourly_hot_window",cost,limits};
+        if (job?.kind!=="yesterday" || !dailyOwners.get(source.workspaceId)?.has(source.provider)) return null;
+        return {workClass:"deep_reconciliation",cost,limits,window:{from:job.businessDate,to:job.businessDate}};
+      },
+      ...(mixedProviders?{
+        loadDailyReportSchedule:async source=>dailyOwners.get(source.workspaceId)?.has(source.provider)
+          ? {timeZone:"UTC",dailyWindows:{yesterday:{start:new Date(startMs-60_000).toISOString(),end:new Date(deadlineAt).toISOString()}}}
+          : null,
+        loadDatasetInputs:async ({claim})=>dailySources.get(claim.id),
+      }:{}),
       loadCompletedKlaviyoHourlyJobs:measure("completedLookup",async jobs=>(await timedDatabase.query(
         "select analytics.list_completed_klaviyo_hourly_jobs($1) as result",[JSON.stringify(jobs)])).rows[0].result),
       readPage:async ({claim,window,hourlySource,entitlementReceipt})=>{
+        if (claim.provider!=="klaviyo") {
+          const owner=dailyOwners.get(claim.workspaceId).get(claim.provider);
+          const data=await measure(`${claim.provider}Source`,storeSyntheticDailySource)(
+            timedDatabase,owner,claim,window,claim.provider==="google_ads"||metaNonempty);
+          dailySources.set(claim.id,data);
+          return {kind:"complete",payload:{}};
+        }
         const owner=owners.get(claim.workspaceId), metricId="ordered-product", attemptId=randomUUID();
         const quotaContext=await measure("quotaContext",store.loadQuotaContext)({claim,window,provider:"klaviyo",entitlementReceipt});
         assert.ok(quotaContext);
@@ -143,6 +190,35 @@ export async function klaviyoHourlyMinuteProbe(client, ownerFixture, {
     assert.equal(result.status,"queue_checked",JSON.stringify(result));
     const tickOffsetMs=result.queue.checkedAtMs-(deadlineAt-60_000);
     if (alignMinute) assert.ok(tickOffsetMs>=0 && tickOffsetMs<1_000,`missed minute start: ${tickOffsetMs} ms`);
+    if (mixedProviders) {
+      const {rows}=await client.query(`
+        select workspace_id,provider,status from operations.refresh_runs where workspace_id=any($1::uuid[])
+      `,[[...owners.keys()]]);
+      const completedByWorkspace=new Map();
+      const summary=Object.fromEntries(providerAccounts.map(({provider})=>[provider,{opened:0,completed:0}]));
+      for (const row of rows) {
+        summary[row.provider].opened++;
+        if (row.status!=="completed") continue;
+        summary[row.provider].completed++;
+        completedByWorkspace.set(row.workspace_id,(completedByWorkspace.get(row.workspace_id)??0)+1);
+      }
+      const completeStores=[...completedByWorkspace.values()].filter(count=>count===3).length;
+      if (metaNonempty) {
+        assert.equal(result.work.claim?.provider,"meta",JSON.stringify(result));
+        assert.deepEqual(result.work.dataset,{status:"held",consumerReceipt:false,checkpointAdvanced:false});
+        assert.equal(completeStores,0);
+        assert.ok(summary.klaviyo.completed>0 && summary.google_ads.completed>0,JSON.stringify(summary));
+      } else {
+        assert.ok(["waiting","tick_budget_elapsed"].includes(result.work.status),JSON.stringify(result));
+        assert.ok(completeStores>0,JSON.stringify({result,summary}));
+        assert.ok(Object.values(summary).every(counts=>counts.opened===counts.completed),JSON.stringify(summary));
+      }
+      console.log("EO05_THREE_PROVIDER_MINUTE_PASS "+JSON.stringify({scenario,cohort,rowsPerKlaviyoJob:rowsPerJob,
+        elapsedMs,tickOffsetMs,unusedMs:Math.max(0,deadlineAt-endedAt),summary,completeStores,
+        metaNonempty,stop:result.work.status,stopProvider:result.work.claim?.provider??null,
+        terminalDataset:result.work.dataset?.status??null,providerCalls:0}));
+      return;
+    }
     assert.ok(["waiting","tick_budget_elapsed"].includes(result.work.status),JSON.stringify(result));
     assert.ok(result.completedThisTick>=2,JSON.stringify(result));
     assert.equal(timings.get("candidateSnapshot")?.calls,1);

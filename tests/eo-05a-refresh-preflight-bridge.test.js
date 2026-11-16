@@ -69,6 +69,46 @@ test("daily job identity survives queue rollover and leaves distinct daily slots
   assert.equal(f.calls(), 2);
 });
 
+test("Klaviyo hourly work uses the same job ID until the two-hour window moves", async () => {
+  const f = fixture();
+  f.source.provider = "klaviyo";
+  f.snapshot.budget.providers[0].provider = "klaviyo";
+  f.snapshot.budget.accounts[0].provider = "klaviyo";
+  const attempted = [];
+  const completed = new Set();
+  function selectHours(start, end) {
+    f.plan.hourlySource = {start, end};
+    f.plan.partitionId = `klaviyo-hourly-source:${start}/${end}`;
+  }
+  selectHours("2026-10-19T22:00:00.000Z", "2026-10-20T00:00:00.000Z");
+  f.plan.window.to = "2026-10-20";
+  f.args.loadDatasetInputs = async () => assert.fail("hourly work cannot use the daily writer");
+  f.args.store.commitPreflight = async ({nextState}) => {
+    const [{id}] = nextState.claims;
+    attempted.push(id);
+    return !completed.has(id);
+  };
+  f.args.finishKlaviyoHourlyReport = async ({claim, partitionId}) => {
+    assert.equal(partitionId, f.plan.partitionId);
+    completed.add(claim.id);
+    return true;
+  };
+  assert.equal((await dispatchRefreshPreflight(f.args)).status, "completed");
+
+  f.source.scheduledHour = 3_600_000;
+  f.source.queuedAt = 3_600_000;
+  f.args.now = () => 7_200_000;
+  f.plan.limits.deadlineAt = 7_201_000;
+  assert.equal((await dispatchRefreshPreflight(f.args)).status, "conflict");
+  assert.equal(attempted[0], attempted[1]);
+  assert.equal(f.calls(), 1);
+
+  selectHours("2026-10-19T23:00:00.000Z", "2026-10-20T01:00:00.000Z");
+  assert.equal((await dispatchRefreshPreflight(f.args)).status, "completed");
+  assert.notEqual(attempted[1], attempted[2]);
+  assert.equal(f.calls(), 2);
+});
+
 test("missing configuration, missing plan, invalid bounds, conflicts and unknown commits never execute or retry",async()=>{
   const a=fixture();a.snapshot.configured=false;assert.equal((await dispatchRefreshPreflight(a.args)).status,"not_configured");assert.equal(a.commits(),0);
   const b=fixture();b.args.buildWorkPlan=async()=>null;assert.equal((await dispatchRefreshPreflight(b.args)).status,"waiting");assert.equal(b.commits(),0);

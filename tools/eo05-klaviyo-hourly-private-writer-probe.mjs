@@ -5,7 +5,8 @@ import {buildKlaviyoHourlyOrderedProductEventsRequest} from "../app/lib/provider
 import {createKlaviyoHourlySourceRepository} from "../app/lib/database/klaviyo-hourly-source-repository.server.js";
 import {createSourceEvidenceCipher} from "../app/lib/database/source-evidence-store.server.js";
 import {sourceRetentionDurationPolicy} from "../app/lib/database/source-retention-policy.server.js";
-import {commitKlaviyoHourlySourceBatch, prepareKlaviyoHourlySourceBatch} from "../app/lib/database/klaviyo-hourly-source-page.server.js";
+import {commitKlaviyoHourlyEventReport, commitKlaviyoHourlySourceBatch,
+  prepareKlaviyoHourlySourceBatch} from "../app/lib/database/klaviyo-hourly-source-page.server.js";
 import {createRefreshEntitlementVerifier} from "../app/lib/refresh/entitlement-check.server.js";
 import {dispatchRefreshPreflight} from "../app/lib/refresh/preflight-bridge.server.js";
 
@@ -13,6 +14,7 @@ export async function klaviyoHourlyPrivateWriterProbe(client, {store,workspace,s
   await client.query("savepoint klaviyo_hourly_private_writer");
   try {
     await client.query(readFileSync(new URL("./sql/eo05-klaviyo-hourly-source.sql",import.meta.url),"utf8"));
+    await client.query(readFileSync(new URL("./sql/eo05-klaviyo-hourly-event-report.sql",import.meta.url),"utf8"));
     await client.query("update integrations.provider_connections set connected_at=statement_timestamp()-interval '3 days' where id=$1",
       [connection.id]);
     await client.query("update integrations.reporting_account_bindings set effective_from=statement_timestamp()-interval '3 days' where connection_id=$1 and effective_to is null",
@@ -69,6 +71,8 @@ export async function klaviyoHourlyPrivateWriterProbe(client, {store,workspace,s
           limits:{maxPages:2,maxRows:2,maxBytes:10000},
           projections:[{revision:scope.revision,included:[],hasNext:false,records:[
             {type:"event",id:"event",attributes:{datetime:start},relationships:{metric:{data:{id:metricId}}}},
+            {type:"event",id:"next-hour-event",attributes:{datetime:new Date(endMs-3_600_000).toISOString()},
+              relationships:{metric:{data:{id:metricId}}}},
           ]}],
         };
         let sqlFailure;
@@ -104,7 +108,14 @@ export async function klaviyoHourlyPrivateWriterProbe(client, {store,workspace,s
         } finally {
           await client.query("release savepoint hourly_write_roundtrip");
         }
-        assert.deepEqual(receipt,{attemptId,digest:batch.manifest.digest,pageCount:1,rowCount:1,contentVerified:true});
+        assert.deepEqual(receipt,{attemptId,digest:batch.manifest.digest,pageCount:1,rowCount:2,contentVerified:true});
+        await assert.rejects(commitKlaviyoHourlyEventReport({database:client,sourceReceipt:{...receipt},deadlineAt}),
+          /SCOPE_INVALID/);
+        const report = await commitKlaviyoHourlyEventReport({database:client,sourceReceipt:receipt,deadlineAt});
+        assert.deepEqual(report.counts,[1,1]);
+        assert.equal(report.applied.length,2);
+        const facts = await client.query("select event_count from analytics.klaviyo_hourly_event_facts order by hour_start");
+        assert.deepEqual(facts.rows,[{event_count:1},{event_count:1}]);
         assert.equal(await store.isClaimCurrent({claim}),true,"source receipt must not finish the report job");
         sourceWritten = true;
         return {kind:"complete",payload:{}};
@@ -114,6 +125,7 @@ export async function klaviyoHourlyPrivateWriterProbe(client, {store,workspace,s
     assert.equal(run.status,"awaiting_dataset",JSON.stringify({status:run.status,reason:run.reason,deferred:run.deferred}));
     assert.equal(sourceWritten,true);
     console.log("EO05_KLAVIYO_HOURLY_PRIVATE_WRITER_ROUNDTRIP_PASS actual_source_tables=true actual_claim=true readback=true real_provider_calls=0");
+    console.log("EO05_KLAVIYO_HOURLY_EVENT_REPORT_PASS actual_hourly_facts=true source_receipt_bound=true report_readback=true runtime_grants=false");
   } finally {
     await client.query("rollback to savepoint klaviyo_hourly_private_writer");
     await client.query("release savepoint klaviyo_hourly_private_writer");

@@ -85,7 +85,7 @@ begin
   if ctx is null or ctx is distinct from quota_context then raise exception 'KLAVIYO_HOURLY_SOURCE_CLAIM_INVALID'; end if;
 
   perform pg_advisory_xact_lock(hashtextextended(w::text||iid::text||g::text||p_attempt::text||'0',0));
-  request_hash := evidence.source_hash(jsonb_build_object('body',p,'scope',s,'manifest',m));
+  request_hash := evidence.source_hash(jsonb_build_object('body',p,'scope',s,'manifest',m,'observed',observed_at));
   select * into prior from evidence.source_batches where workspace_id=w and installation_id=iid
     and installation_generation=g and attempt_id=p_attempt and batch_ordinal=0;
   if found then
@@ -95,7 +95,8 @@ begin
   else
     receipt := evidence.commit_source_batch(o,p_attempt,0,p);
     update evidence.source_batches set manifest=manifest||jsonb_build_object(
-      'klaviyoHourlyRead',s,'klaviyoHourlyManifest',m,'klaviyoHourlyInputDigest',request_hash
+      'klaviyoHourlyRead',s,'klaviyoHourlyManifest',m,'klaviyoHourlyInputDigest',request_hash,
+      'klaviyoHourlyObservedAt',observed_at
     ) where id=(receipt->>'batchId')::bigint and workspace_id=w and installation_id=iid and installation_generation=g;
   end if;
   if deadline_at<=clock_timestamp() then raise exception 'KLAVIYO_HOURLY_SOURCE_EXPIRED'; end if;

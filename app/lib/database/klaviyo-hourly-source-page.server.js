@@ -13,6 +13,7 @@ const scopeKeys = ["version","provider","workspaceId","installGeneration","accou
   "timeZone","metricId","timeframe","endExclusive","revision"].sort().join();
 const fail = () => {throw Error("KLAVIYO_HOURLY_SOURCE_SCOPE_INVALID");};
 const preparedBatches = new WeakMap();
+const verifiedReports = new WeakMap();
 
 function hourlyScope({owner, scope, attemptId, pageOrdinal}) {
   const bound = sourceStoreOwner(owner);
@@ -159,11 +160,49 @@ export async function commitKlaviyoHourlySourceBatch({batch, repository, deadlin
   try {
     const stored = await repository.readHourlySource({...structuredClone(binding), maxPages:limits.maxPages});
     stop();
-    const manifest = verifyKlaviyoHourlySourceBatch({...context, pages:stored?.pages,
-      manifest:stored?.manifest, expectedManifest:batch.manifest});
-    return Object.freeze({attemptId, digest:manifest.digest, pageCount:manifest.pages.length,
+    if (canonicalSourceJson(stored?.manifest) !== canonicalSourceJson(batch.manifest)) fail();
+    const first = Date.parse(scope.timeframe.start);
+    const boundary = first+3_600_000;
+    const counts = [0,0];
+    const manifest = sourceBatchManifest(context, stored.pages, (page,pageOrdinal) => {
+      const projection = openKlaviyoHourlySourcePage({...context,page,pageOrdinal});
+      for (const event of projection.records) counts[Date.parse(event.attributes.datetime)<boundary ? 0 : 1]++;
+      return projection;
+    });
+    if (canonicalSourceJson(manifest) !== canonicalSourceJson(batch.manifest)) fail();
+    const verified = Object.freeze({attemptId, digest:manifest.digest, pageCount:manifest.pages.length,
       rowCount:manifest.rows, contentVerified:true});
+    verifiedReports.set(verified, {owner,attemptId,digest:manifest.digest,counts});
+    return verified;
   } catch {
     throw Error("KLAVIYO_HOURLY_SOURCE_READBACK_UNCONFIRMED");
   }
+}
+
+export async function commitKlaviyoHourlyEventReport({database,sourceReceipt,deadlineAt,now = Date.now}) {
+  const proof = verifiedReports.get(sourceReceipt);
+  if (!proof || typeof database?.query !== "function" || typeof now !== "function"
+    || !Number.isSafeInteger(deadlineAt)) fail();
+  const current = now();
+  if (!Number.isSafeInteger(current) || current >= deadlineAt) fail();
+  verifiedReports.delete(sourceReceipt);
+  let receipt;
+  try {
+    const {rows} = await database.query(
+      "select analytics.commit_klaviyo_hourly_event_report($1::jsonb,$2::uuid,$3::text,$4::jsonb,$5::timestamptz) as result",
+      [proof.owner,proof.attemptId,proof.digest,JSON.stringify(proof.counts),new Date(deadlineAt).toISOString()],
+    );
+    receipt = rows?.[0]?.result;
+    if (rows?.length !== 1 || receipt?.attemptId !== proof.attemptId || receipt?.digest !== proof.digest
+      || canonicalSourceJson(receipt.counts) !== canonicalSourceJson(proof.counts)) fail();
+  } catch {throw Error("KLAVIYO_HOURLY_REPORT_WRITE_UNCONFIRMED");}
+  try {
+    if (now() >= deadlineAt) fail();
+    const {rows} = await database.query(
+      "select analytics.read_klaviyo_hourly_event_report($1::jsonb,$2::uuid) as result",
+      [proof.owner,proof.attemptId],
+    );
+    if (rows?.length !== 1 || canonicalSourceJson(rows[0].result) !== canonicalSourceJson(receipt)) fail();
+    return Object.freeze(receipt);
+  } catch {throw Error("KLAVIYO_HOURLY_REPORT_READBACK_UNCONFIRMED");}
 }

@@ -9,7 +9,7 @@ import {createKlaviyoSourceCapture} from "../app/lib/providers/klaviyo-source-ca
 import {createKlaviyoHourlySourceRepository} from "../app/lib/database/klaviyo-hourly-source-repository.server.js";
 import {sourceRetentionDurationPolicy} from "../app/lib/database/source-retention-policy.server.js";
 import {openKlaviyoHourlySourcePage, sealKlaviyoHourlySourcePage,
-  commitKlaviyoHourlySourceBatch, prepareKlaviyoHourlySourceBatch,
+  commitKlaviyoHourlyEventReport, commitKlaviyoHourlySourceBatch, prepareKlaviyoHourlySourceBatch,
   verifyKlaviyoHourlySourceBatch} from "../app/lib/database/klaviyo-hourly-source-page.server.js";
 
 test("hourly Klaviyo capture encrypts the original query scope with the sanitized page", async () => {
@@ -87,6 +87,18 @@ test("hourly Klaviyo capture encrypts the original query scope with the sanitize
   assert.equal(calls.length,4);
   assert.deepEqual(result,{attemptId:context.attemptId,digest:confirmed.manifest.digest,
     pageCount:2,rowCount:2,contentVerified:true});
+  const reportReceipt = {attemptId:result.attemptId,digest:result.digest,counts:[2,0],applied:[start]};
+  let reportCalls = 0;
+  const reportDatabase = {async query(sql,args) {
+    reportCalls++;
+    if (sql.includes("commit_klaviyo_hourly_event_report")) assert.equal(args[3],"[2,0]");
+    return {rows:[{result:reportReceipt}]};
+  }};
+  const report = {database:reportDatabase,deadlineAt:1000,now:() => 0};
+  await assert.rejects(commitKlaviyoHourlyEventReport({...report,sourceReceipt:{...result}}),/SCOPE_INVALID/);
+  assert.deepEqual(await commitKlaviyoHourlyEventReport({...report,sourceReceipt:result}),reportReceipt);
+  await assert.rejects(commitKlaviyoHourlyEventReport({...report,sourceReceipt:result}),/SCOPE_INVALID/);
+  assert.equal(reportCalls,2);
 });
 
 test("source evidence encryption binds actual owner, attempt, page metadata and sanitized content", () => {

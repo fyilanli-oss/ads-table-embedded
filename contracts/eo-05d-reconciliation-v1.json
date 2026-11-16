@@ -180,8 +180,11 @@
         "official_checked_at": "2026-11-16",
         "official_sources": [
           "https://www.postgresql.org/docs/17/sql-insert.html",
-          "https://supabase.com/changelog.md"
-        ]
+          "https://supabase.com/changelog.md",
+          "https://www.postgresql.org/docs/17/transaction-iso.html"
+        ],
+        "job_receipt": "Account, job ID, fence and exact two hours are checked against the locked test work order. Hour writes, order completion and receipt insertion share one statement. The probe separately reads the stored receipt.",
+        "production_dependency": "Current verified raw receipts and admission bindings identify a single calendar date, with fixed provider query schemas. A versioned hourly range and verified provider capability must be bound to the source and job before scheduling or enabling production SQL."
       }
     }
   }

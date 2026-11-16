@@ -479,7 +479,12 @@ async function main() {
       await assertPrivacyIndexes(client);
     }
     if (manifest.prepared_migrations.some(entry => entry.name === "eo05b_dataset_storage")) {
-      await datasetStorageProbe(client,replayConnection,process.env,{hourlyCohort:mode==="full"?96:24});
+      const hourlyMinuteScenarios=mode==="full" ? [
+        {scenario:"normal_1",cohort:96,rowsPerJob:42,alignMinute:true},
+        {scenario:"normal_2",cohort:96,rowsPerJob:42,alignMinute:true},
+        {scenario:"busy",cohort:96,rowsPerJob:120,alignMinute:true},
+      ] : [{}];
+      await datasetStorageProbe(client,replayConnection,process.env,{hourlyMinuteScenarios});
     }
     await credentialReplacementRegression(client);
     if ([...manifest.forward_migrations,...manifest.pending_migrations].some(entry => entry.name === "eo05a_refresh_work_tracking")) {

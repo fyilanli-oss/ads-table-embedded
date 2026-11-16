@@ -13,10 +13,14 @@ import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repo
 import {setTimeout as delay} from "node:timers/promises";
 
 // Invoked only by the loopback F01 Dataset replay inside its rollback transaction.
-export async function klaviyoHourlyMinuteProbe(client, ownerFixture, {cohort=24}={}) {
+export async function klaviyoHourlyMinuteProbe(client, ownerFixture, {
+  scenario="staged_smoke",cohort=24,rowsPerJob=42,alignMinute=false,
+}={}) {
   await client.query("savepoint klaviyo_minute");
   try {
-    const rowsPerJob=42, owners=new Map(), shops=new Map(), reports=new Map();
+    const owners=new Map(), shops=new Map(), reports=new Map();
+    const rowBudget=Math.max(100,rowsPerJob);
+    const eventSpacingMs=Math.min(120_000,Math.floor(7_200_000/rowsPerJob));
     const timings=new Map();
     let activeStage;
     const measure=(stage,action)=>async (...args)=>{
@@ -54,7 +58,7 @@ export async function klaviyoHourlyMinuteProbe(client, ownerFixture, {cohort=24}
         values($1,$2,'klaviyo',$3,$4,$5,$6,$7,$8,1,'2026-10-15',true)
       `,[owner.workspaceId,owner.generation,owner.installationId,owner.connectionId,owner.connectionVersion,owner.accountId,hash(),hash()]);
     }
-    const cost={requests:4,dbWrites:128,connections:1,rows:100,bytes:200000};
+    const cost={requests:4,dbWrites:Math.max(128,rowsPerJob+86),connections:1,rows:rowBudget,bytes:200000};
     const budget={global:cost,interactiveReserve:{requests:0,dbWrites:0,connections:0,rows:0,bytes:0},
       providers:[{provider:"klaviyo",limit:cost}],
       workspaces:[...owners.keys()].map(workspaceId=>({workspaceId,limit:cost})),
@@ -76,17 +80,18 @@ export async function klaviyoHourlyMinuteProbe(client, ownerFixture, {cohort=24}
     })) timedStore[method]=measure(stage,store[method]);
     await store.checkQueueFromAuthority({expectedRevision:(await store.readQueueCheck()).revision});
     const previousHour=Math.floor(Date.now()/3_600_000)*3_600_000-3_600_000;
-    await client.query(`
+    const queued=await client.query(`
       update operations.refresh_queue_accounts set state='pending',first_due_hour_ms=$2,
         latest_due_hour_ms=greatest(coalesce(latest_due_hour_ms,0),$2),first_queued_at_ms=$2
       where workspace_id=any($1::uuid[]) and provider='klaviyo'
     `,[[...owners.keys()],previousHour]);
+    assert.equal(queued.rowCount,cohort);
     const generation=randomUUID();
     await client.query("update operations.refresh_tick_control set enabled=true,generation=$1,last_minute=null,last_checked_at_ms=null,queue_revision=null where singleton",[generation]);
     const available=60_000-Date.now()%60_000;
-    if (available<(cohort>24?50_000:15_000)) await delay(available+50);
+    if (alignMinute || available<15_000) await delay(available+50);
     const startMs=Date.now(), deadlineAt=(Math.floor(startMs/60_000)+1)*60_000;
-    const limits={deadlineAt,requestTimeoutMs:5_000,finishReserveMs:1_000,maxRows:100,maxBytes:200000};
+    const limits={deadlineAt,requestTimeoutMs:5_000,finishReserveMs:1_000,maxRows:rowBudget,maxBytes:200000};
     const appId="gid://shopify/App/456";
     const entitlementVerifier=createRefreshEntitlementVerifier({store,appId,now:Date.now,limits,authorizeRead:async()=>true,
       partnerApi:{appId,activeSubscription:async({variables:{shopId}})=>{
@@ -113,10 +118,10 @@ export async function klaviyoHourlyMinuteProbe(client, ownerFixture, {cohort=24}
           const {sourceScope:scope}=buildKlaviyoHourlyOrderedProductEventsRequest({accessToken:"synthetic-only",
             orderedProductMetricId:metricId,tickAt:hourlySource.end,timeZone:"UTC",job:{...claim,window:hourlySource}});
           const records=Array.from({length:rowsPerJob},(_,i)=>({type:"event",id:`event-${i}`,
-            attributes:{datetime:new Date(Date.parse(hourlySource.start)+i*120_000).toISOString(),
+            attributes:{datetime:new Date(Date.parse(hourlySource.start)+i*eventSpacingMs).toISOString(),
               event_properties:{ProductID:`product-${i}`,Quantity:{jsonNumber:"1"},$value:{jsonNumber:"19.99"}}},
             relationships:{metric:{data:{type:"metric",id:metricId}}}}));
-          const batch=prepareKlaviyoHourlySourceBatch({owner,scope,attemptId,cipher,limits:{maxPages:1,maxRows:100,maxBytes:200000},
+          const batch=prepareKlaviyoHourlySourceBatch({owner,scope,attemptId,cipher,limits:{maxPages:1,maxRows:rowBudget,maxBytes:200000},
             projections:[{revision:scope.revision,hasNext:false,records,included:[]}]});
           const repository=createKlaviyoHourlySourceRepository({database:timedDatabase,policy:sourceRetentionDurationPolicy(),
             observedAt:entitlementReceipt.observedAt,quotaContext});
@@ -134,8 +139,10 @@ export async function klaviyoHourlyMinuteProbe(client, ownerFixture, {cohort=24}
           [owner,claim.id,claim.fence,attemptId,report])).rows[0].result;
       }),
     }});
-    const elapsedMs=Date.now()-startMs;
+    const endedAt=Date.now(), elapsedMs=endedAt-startMs;
     assert.equal(result.status,"queue_checked",JSON.stringify(result));
+    const tickOffsetMs=result.queue.checkedAtMs-(deadlineAt-60_000);
+    if (alignMinute) assert.ok(tickOffsetMs>=0 && tickOffsetMs<1_000,`missed minute start: ${tickOffsetMs} ms`);
     assert.ok(["waiting","tick_budget_elapsed"].includes(result.work.status),JSON.stringify(result));
     assert.ok(result.completedThisTick>=2,JSON.stringify(result));
     assert.equal(timings.get("candidateSnapshot")?.calls,1);
@@ -145,8 +152,10 @@ export async function klaviyoHourlyMinuteProbe(client, ownerFixture, {cohort=24}
       from operations.refresh_runs where workspace_id=any($1::uuid[]) and provider='klaviyo'
     `,[[...owners.keys()]]);
     assert.deepEqual(counts,{opened:result.completedThisTick,completed:result.completedThisTick});
-    console.log("EO05_KLAVIYO_HOURLY_MINUTE_PASS "+JSON.stringify({cohort,rowsPerJob,elapsedMs,preparedTimeMs:deadlineAt-startMs,
-      completed:counts.completed,remaining:cohort-counts.completed,stop:result.work.status,stopReason:result.work.reason??null,providerCalls:0,
+    console.log("EO05_KLAVIYO_HOURLY_MINUTE_PASS "+JSON.stringify({scenario,cohort,rowsPerJob,elapsedMs,tickOffsetMs,
+      unusedMs:Math.max(0,deadlineAt-endedAt),startBudgetMs:timedEntitlement.requestTimeoutMs+limits.requestTimeoutMs+limits.finishReserveMs,
+      opened:counts.opened,completed:counts.completed,remaining:cohort-counts.completed,
+      stop:result.work.status,stopReason:result.work.reason??null,providerCalls:0,
       stages:Object.fromEntries([...timings].map(([name,sample])=>[name,{...sample,
         totalMs:Math.round(sample.totalMs),dbMs:Math.round(sample.dbMs)}])),
       otherMs:Math.max(0,elapsedMs-Math.round([...timings.values()].reduce((sum,sample)=>sum+sample.totalMs,0)))}));

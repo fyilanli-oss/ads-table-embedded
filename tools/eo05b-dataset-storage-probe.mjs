@@ -12,6 +12,7 @@ import {datasetServerProbe} from "./eo05b-dataset-server-probe.mjs";
 import {maturityProbe} from "./eo05c-maturity-probe.mjs";
 import {reconciliationProbe} from "./eo05d-reconciliation-probe.mjs";
 import {observabilityProbe} from "./eo05e-observability-probe.mjs";
+import {klaviyoHourlyMinuteProbe} from "./eo05-klaviyo-hourly-private-writer-probe.mjs";
 
 async function rejected(client, action, pattern) {
   await client.query("savepoint dataset_expected_failure"); let error;
@@ -100,6 +101,7 @@ export async function datasetStorageProbe(client, connection, environment = proc
     for (const sql of ["eo05-klaviyo-hourly-event-report.sql","eo05-klaviyo-product-sales-reconciliation.sql"]) {
       await client.query(readFileSync(new URL("./sql/"+sql,import.meta.url),"utf8"));
     }
+    await klaviyoHourlyMinuteProbe(client,ownerFixture);
     await reconciliationProbe(client, {ownerFixture});
     await observabilityProbe(client, {ownerFixture});
     for (const provider of ["google_ads", "meta", "klaviyo"]) {

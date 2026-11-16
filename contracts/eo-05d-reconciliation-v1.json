@@ -243,6 +243,7 @@
         "completed_work_filter_probe": "EO05_KLAVIYO_HOURLY_COMPLETED_LOOKUP_PASS",
         "completed_work_filter_capacity_probe": "EO05_KLAVIYO_HOURLY_QUEUE_LOOKUP_500: exact lookup against 500 distinct synthetic workspaces, one candidate open, 499 completed, one warm-up and 20 timed PostgreSQL round trips. Full queue throughput is outside this measurement.",
         "bounded_tick_dispatch": "An explicit trusted server policy may drain ready jobs sequentially within one confirmed queue minute. Each job has fresh preflight, applicable quota and Dataset completion checks, and a deadline capped by the minute boundary. A superseded queue revision, insufficient time, no eligible candidate, or any noncompleted result stops the drain. No fixed work-count cap or live configuration is introduced.",
+        "bounded_tick_dispatch_probe": "EO05_KLAVIYO_HOURLY_MINUTE_PASS: 24 synthetic ready workspaces in rollback-only F01, 42 hourly Ordered Product events per job. Measures elapsed wall time, completed and remaining jobs, and separate source, Dataset and closure times. No provider network latency, daily load, parallel workers or capacity maximum inferred.",
         "pending": "Rollback-only schema and isolated scheduler composition. No product grant or live activation. Hourly privacy erasure, source retention integration and workload benchmark are open.",
         "official_checked_at": "2026-11-16",
         "official_source": "https://www.postgresql.org/docs/17/sql-insert.html"

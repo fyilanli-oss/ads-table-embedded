@@ -865,9 +865,9 @@
       "contracts/eo-05b-fx-reporting-currency-v1.json": "f8971fc94bc63d89d3eea1b7916fae94de4fd5f1e4ed8fa32914464d1a28f332",
       "contracts/eo-05b-report-retention-v1.json": "cc4673fe9be0f77567bc6f2c0171a93eb95d1a4f637d0ccb10481de28bcb67d4",
       "contracts/eo-05c-maturity-v1.json": "81132731eda010e9e675b30c736a29c6f776a9ed0e236cb38ab3a791a8ce2eaf",
-      "contracts/eo-05d-reconciliation-v1.json": "eaa8398eb2d357eb9e7c3220816cef8c595188167a925bc0f1c5886e689cd061",
+      "contracts/eo-05d-reconciliation-v1.json": "5542028a5baabe7a7c8c581f2b7043e82cf7866752826022540d61e3721a2534",
       "contracts/eo-05e-observability-v1.json": "3c3ee6073f1141973d5c08830765b13cb37d5a5e77250d3d4671af1e51c6838f",
-      "contracts/oauth/oauth-flow-constitution-v1.json": "2878ca0296f5a8eea3b67762560b20d9ef523db85b755201751c22896c72a12f",
+      "contracts/oauth/oauth-flow-constitution-v1.json": "0bca7632d55a711c65aa34bc1371dbb2d65109935835658925199bb15801ab28",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
       "contracts/repository-delivery-workflow-v1.json": "f214c83b6ec65b11fb9b974ae52ebbdf6ae7183bc69bc835320ec25619af4b7f",
       "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json": "18a54cf7d47cddc4b2dcac24320a0f27f3d1112264a023acc33152a80ae745c6",
@@ -1243,6 +1243,7 @@
       "tools/eo05-hourly-report-storage-probe.mjs": "c911a6605a3bd2fc4f95e1b96e5510a5e0398cce58ad07e7570fe6735008c7ba",
       "tools/eo05-identity-authority-snapshot-probe.mjs": "0136e8dc5a5720b78d1cb4dca081f19e8b473812b6d66129b94f64fd5edf672c",
       "tools/eo05-identity-oauth-atomic-probe.mjs": "89758e82406dd15e94551bf22305ef9845dd6bf009127d119f1f7d618a9a20e5",
+      "tools/eo05-klaviyo-hourly-capacity-probe.mjs": "4190796580882a7db7d6202a175ecad90be1225b6ae979a75d9975120d1d61d8",
       "tools/eo05-klaviyo-hourly-private-writer-probe.mjs": "1533fcd5b8c35a4fc71411910dd8f444a2759071904210c2239e52387bc8033b",
       "tools/eo05-klaviyo-raw-datasets-probe.mjs": "e87827eb91421dd41d6b109af9ca0cca98aed9aaca9a67eb5c3fa150f82cf06c",
       "tools/eo05-klaviyo-source-capture-probe.mjs": "c9b9f604a72611fb0f39a8e6a178dadd72fcc6ee2f340a4396d0d6058bbaf5ab",
@@ -1289,7 +1290,7 @@
       "tools/eo05c-maturity-probe.mjs": "e66c2379b2f6781bb4b1ac2207bfe73edeb9ce5c1c01cb8cc7bde06f69fe5b47",
       "tools/eo05d-reconciliation-probe.mjs": "dc3b91451a057b2621d09378948dcd4e80ca7ce52221061dc774b1be9c400608",
       "tools/eo05e-observability-probe.mjs": "f9aad28c4b2c062915f18dc2d000680e33afe6ca8de9714f59cccb881a291273",
-      "tools/f01-database-replay.mjs": "781456a413b57e5f51effd6200613dcb08637373360589803483b565f36fbf00",
+      "tools/f01-database-replay.mjs": "0dab67c71e33c78605ea6a55e3824bfee80820682b2f1f1bcad9d2be1cb5cd46",
       "tools/f01-identity-oauth-rollout.mjs": "5894b9ae54363fcf31372ed0a1abf39d3c0e1dfea428190232a0420b0b11f787",
       "tools/f01-live-readiness-plan.mjs": "d4eb8e8ca9d80d6e99cea8c9cf475b388db46a756e2e7a631c5c245e8e7bb25b",
       "tools/f01-live-readiness-rehearsal.mjs": "d5d2b8510551b7f99e7669a37072636bab135a6bef90b0da51bf9ef185aac17e",
@@ -2404,7 +2405,7 @@
       "date": "2026-11-16",
       "owner_approval": {
         "explicit": true,
-        "source": "Tamam Codex önerini onaylıyorum — agreed to record the hourly today/yesterday policy and consider only supported Google conversion-date fields. Tamam onaylıyorum Codex — explicit approval after listing separate hourly scope, daily writer, and isolated checks for midnight, overlap and daily-record preservation. Follow-up approval: Tamam onaylıyorum devam edelim Codex — trusted scheduler and isolated durable integration follow-up; this delivery gates only the daily scheduling path. Follow-up approval: Tamam devam edelim onaylıyorum Codex — reuse the existing durable run identity for daily deduplication and verify rollover in isolation. Follow-up approval: Devam edelim onaylıyorum — verify daily rollover against PostgreSQL in the existing rollback-only F01 probe. Follow-up approval: Tamam devam edelim Codex onayliyorum — prepare and verify an isolated hour-level PostgreSQL write independently of daily records. Follow-up approval: Tamam devam edelim Codex onaylıyorum — verify same-transaction hourly scope, work order and receipt in the isolated PostgreSQL rehearsal. Follow-up approval: Tamam devam edelim onaylıyorum Codex — bind a documented exact two-hour provider read to its job scope; Klaviyo Ordered Product request preparation only. Follow-up approval: Tamam devam edelim onaylıyorum Codex — authenticate the exact hourly Klaviyo scope in the existing encrypted source page codec and validate its readback in isolation. Follow-up approval: Tamam devam edelim Codex onaylıyorum — bind encrypted hourly pages into one exact batch manifest with bounded readback and isolated PostgreSQL verification. Follow-up approval: Tamam devam edelim onaylıyorum — confirm the hourly source batch through a single commit acknowledgement and physical readback, with claim-bound isolated PostgreSQL coverage. Follow-up approval: Tamam devam edelim onaylıyorum — prepare and verify private hourly source SQL and repository against the existing claim and encrypted source contracts. Follow-up approval: Tamam devam edelim onaylıyorum — extend rollback-only PostgreSQL verification to a valid hourly claim, source write and physical receipt. Follow-up approval: Tamam devam edelim onaylıyorum — bind a physically verified hourly Klaviyo source receipt to bounded hourly event report writes and readback in isolated PostgreSQL."
+        "source": "Tamam Codex önerini onaylıyorum — agreed to record the hourly today/yesterday policy and consider only supported Google conversion-date fields. Tamam onaylıyorum Codex — explicit approval after listing separate hourly scope, daily writer, and isolated checks for midnight, overlap and daily-record preservation. Follow-up approval: Tamam onaylıyorum devam edelim Codex — trusted scheduler and isolated durable integration follow-up; this delivery gates only the daily scheduling path. Follow-up approval: Tamam devam edelim onaylıyorum Codex — reuse the existing durable run identity for daily deduplication and verify rollover in isolation. Follow-up approval: Devam edelim onaylıyorum — verify daily rollover against PostgreSQL in the existing rollback-only F01 probe. Follow-up approval: Tamam devam edelim Codex onayliyorum — prepare and verify an isolated hour-level PostgreSQL write independently of daily records. Follow-up approval: Tamam devam edelim Codex onaylıyorum — verify same-transaction hourly scope, work order and receipt in the isolated PostgreSQL rehearsal. Follow-up approval: Tamam devam edelim onaylıyorum Codex — bind a documented exact two-hour provider read to its job scope; Klaviyo Ordered Product request preparation only. Follow-up approval: Tamam devam edelim onaylıyorum Codex — authenticate the exact hourly Klaviyo scope in the existing encrypted source page codec and validate its readback in isolation. Follow-up approval: Tamam devam edelim Codex onaylıyorum — bind encrypted hourly pages into one exact batch manifest with bounded readback and isolated PostgreSQL verification. Follow-up approval: Tamam devam edelim onaylıyorum — confirm the hourly source batch through a single commit acknowledgement and physical readback, with claim-bound isolated PostgreSQL coverage. Follow-up approval: Tamam devam edelim onaylıyorum — prepare and verify private hourly source SQL and repository against the existing claim and encrypted source contracts. Follow-up approval: Tamam devam edelim onaylıyorum — extend rollback-only PostgreSQL verification to a valid hourly claim, source write and physical receipt. Follow-up approval: Tamam devam edelim onaylıyorum — bind a physically verified hourly Klaviyo source receipt to bounded hourly event report writes and readback in isolated PostgreSQL. Follow-up approval: Tamam devam edelim onaylıyorum — compare the same synthetic 500-store Klaviyo cohort over full day versus two completed hours in isolated PostgreSQL."
       },
       "rationale": "Record the approved minimum reread policy and prepare isolated hourly and daily report plans with separate hourly replacement. OAuth behavior is outside this scope.",
       "scope": {
@@ -2430,6 +2431,7 @@
         "tests/incremental-report-plan.test.js",
         "tests/source-evidence-store.test.js",
         "tools/eo05-hourly-report-storage-probe.mjs",
+        "tools/eo05-klaviyo-hourly-capacity-probe.mjs",
         "tools/eo05-klaviyo-hourly-private-writer-probe.mjs",
         "tools/eo05-klaviyo-raw-datasets-probe.mjs",
         "tools/eo05-refresh-preflight-probe.mjs",
@@ -2455,6 +2457,7 @@
         "tests/incremental-report-plan.test.js",
         "tests/source-evidence-store.test.js",
         "tools/eo05-hourly-report-storage-probe.mjs",
+        "tools/eo05-klaviyo-hourly-capacity-probe.mjs",
         "tools/eo05-klaviyo-hourly-private-writer-probe.mjs",
         "tools/eo05-klaviyo-raw-datasets-probe.mjs",
         "tools/eo05-refresh-preflight-probe.mjs",
@@ -2476,7 +2479,8 @@
         "tests/eo-01b-negative-controls.test.js",
         "tools/eo05b-dataset-storage-probe.mjs",
         "tools/eo05-klaviyo-hourly-private-writer-probe.mjs",
-        "tools/eo05-klaviyo-raw-datasets-probe.mjs"
+        "tools/eo05-klaviyo-raw-datasets-probe.mjs",
+        "tools/eo05-klaviyo-hourly-capacity-probe.mjs"
       ],
       "acceptance_required": [
         "required_CI",

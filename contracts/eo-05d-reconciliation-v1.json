@@ -238,6 +238,23 @@
         "pending": "Rollback-only schema. No product grant, scheduler activation or job closure. Hourly privacy erasure, source retention integration and workload benchmark are open.",
         "official_checked_at": "2026-11-16",
         "official_source": "https://www.postgresql.org/docs/17/sql-insert.html"
+      },
+      "klaviyo_window_capacity": {
+        "probe": "tools/eo05-klaviyo-hourly-capacity-probe.mjs",
+        "entry": "F01 full replay",
+        "evidence_marker": "EO05_KLAVIYO_500_WINDOW_CAPACITY",
+        "cohort": "Same 500 synthetic stores, 500 distinct products per store, one event per product per day. Compare the full day to the final two completed hours and alternate pass order.",
+        "measures": [
+          "fixture wire bytes",
+          "event rows",
+          "pages",
+          "encrypted bytes",
+          "local capture and encryption time",
+          "isolated PostgreSQL encrypted page inserts"
+        ],
+        "boundaries": "Klaviyo Ordered Product only. No network/provider time, report or queue load, other providers, throughput claim, or production activation.",
+        "official_checked_at": "2026-11-16",
+        "official_source": "https://www.postgresql.org/docs/17/sql-insert.html"
       }
     }
   }

@@ -258,15 +258,53 @@
       }
     },
     "klaviyo_product_acceptance": {
-      "owner_decision": "Expose all Klaviyo analytical dataset fields in the user report, preserving account, campaign or flow, message, variation, channel, role and sold product relationships.",
+      "owner_decision": "Expose Klaviyo analytical Dataset fields while preserving the account to campaign or flow to message hierarchy. Product is the sales analysis grain. Provider product variants and message variations may be retained as native detail when observed.",
       "current_delivery": "Hourly source product, variant, quantity, native value and exact available campaign/flow, message and variation IDs use the existing Klaviyo projection rules and are written with their verified report receipt. Missing quantity/value and unresolved hierarchy remain explicit.",
-      "pending": "Resolve known message, names, medium and product metadata from the daily analytical dataset and bind daily and hourly records once to the user report. Verify the full hierarchy, reconciliation, and visual acceptance before claiming completion.",
+      "pending": "Resolve known message metadata from the daily Dataset and verify hourly/daily reconciliation at the Dataset boundary. User interface layout and implementation are handled independently.",
       "official_checked_at": "2026-11-16",
       "official_sources": [
         "https://developers.klaviyo.com/en/reference/get_events",
         "https://developers.klaviyo.com/en/reference/reporting_api_overview",
         "https://www.postgresql.org/docs/17/datatype-json.html"
       ]
+    },
+    "klaviyo_dataset_cadence": {
+      "approval": "Harika bir yaklaşım aynen bu şekilde yapıyoruz",
+      "hourly_product_sales": {
+        "refresh": "Every hour, for the last two completed account-calendar hours with absolute time bounds.",
+        "fields": [
+          "product identity",
+          "sale occurrence time",
+          "quantity",
+          "native sales value",
+          "account",
+          "campaign or flow",
+          "message",
+          "sales role",
+          "attribution evidence state"
+        ],
+        "overlap": "A newer verified observation for an overlapping hour replaces prior hour values. A native sale is counted once.",
+        "grain": "Product. Native product variation and verified message variation are optional details.",
+        "missing": "Preserve the sale when attribution or value is missing. Keep the missing field's state explicit."
+      },
+      "daily_message_performance": {
+        "refresh": "One read of today through the check time and one read of yesterday as an initial daily cadence.",
+        "fields": [
+          "account",
+          "campaign or flow",
+          "message",
+          "known medium and message variation",
+          "provider recipient count",
+          "deliveries",
+          "opens",
+          "clicks",
+          "attributed conversion totals"
+        ],
+        "semantics": "Use the committed daily reporting context and the provider's date semantics for the corresponding report family.",
+        "pending": "The fixed daily projection currently writes deliveries through impression, clicks and funnel metrics. Register the distinct provider recipient and open counters in the Dataset schema before exposing them. A recipient count is not a native sent count."
+      },
+      "reconciliation": "Preserve campaign or flow and message identity across both datasets. Never add product sale events to aggregate message conversions as if they were one measure.",
+      "scope": "Dataset contents and cadence only."
     }
   }
 }

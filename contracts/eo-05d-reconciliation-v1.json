@@ -166,7 +166,12 @@
       "scheduler": "Trusted optional daily schedule policy uses the durable queue tick and accepts only a single matching day through existing fenced daily preflight.",
       "daily_identity": "Fixed account and install generation, daily slot kind, provider-calendar schedule date and report date. Queue hour and queue timestamp do not rekey the job. Existing persistent run identity and quota-wait rules still govern reservation and resumption.",
       "database_reference": "https://www.postgresql.org/docs/17/indexes-unique.html",
-      "database_reference_checked_at": "2026-11-16"
+      "database_reference_checked_at": "2026-11-16",
+      "postgres_rollover_probe": {
+        "entry": "tools/eo05-refresh-preflight-probe.mjs",
+        "evidence_marker": "EO05_DAILY_REPORT_ROLLOVER_PASS",
+        "expected": "Later queue hour cannot reserve the same daily job. Exactly one durable run remains. The probe uses a synthetic denial before ads data access and rolls its fixture back."
+      }
     }
   }
 }

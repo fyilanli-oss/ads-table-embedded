@@ -863,9 +863,9 @@
       "contracts/eo-05b-fx-reporting-currency-v1.json": "f8971fc94bc63d89d3eea1b7916fae94de4fd5f1e4ed8fa32914464d1a28f332",
       "contracts/eo-05b-report-retention-v1.json": "cc4673fe9be0f77567bc6f2c0171a93eb95d1a4f637d0ccb10481de28bcb67d4",
       "contracts/eo-05c-maturity-v1.json": "81132731eda010e9e675b30c736a29c6f776a9ed0e236cb38ab3a791a8ce2eaf",
-      "contracts/eo-05d-reconciliation-v1.json": "eea3bfca7df0f1e637a5b4bdb593e1df9223145c0361e843312549e2be19552a",
+      "contracts/eo-05d-reconciliation-v1.json": "1cb8b844d89ae5f8474a4274a3d9e1443026f79d3f360774be519623b90d9ac2",
       "contracts/eo-05e-observability-v1.json": "3c3ee6073f1141973d5c08830765b13cb37d5a5e77250d3d4671af1e51c6838f",
-      "contracts/oauth/oauth-flow-constitution-v1.json": "7b7aed53b423b0ae823810372dc69ba3519641ddfd0ffeef900558bd0fec8e7f",
+      "contracts/oauth/oauth-flow-constitution-v1.json": "64e2a460b59ea8d5324a87535f7a6ad50484e810b8c62a18d5a99d60b388c2ca",
       "contracts/pd-cpd-query-standard-v1.json": "9d631b0be4568941e74cd3f4678a3af627426c532388f757b2fe2424a2775e61",
       "contracts/repository-delivery-workflow-v1.json": "f214c83b6ec65b11fb9b974ae52ebbdf6ae7183bc69bc835320ec25619af4b7f",
       "contracts/shopify/a6-eo-07-funnel-visualization-reference-v1.json": "18a54cf7d47cddc4b2dcac24320a0f27f3d1112264a023acc33152a80ae745c6",
@@ -1254,7 +1254,7 @@
       "tools/eo05-refresh-entitlement-probe.mjs": "398084b7276f99a73270bb9bc7fa82199664ddc9cddf4680d1216f66176c00ff",
       "tools/eo05-refresh-interrupted-work-probe.mjs": "b407fd7c3adc7bd24f57282c149bfce95d3a1a6ac6f449b946006e8eaf28642c",
       "tools/eo05-refresh-native-inventory-probe.mjs": "880074f1f492b50120977f1af4766416252d71a290837df78fb238197c7f3316",
-      "tools/eo05-refresh-preflight-probe.mjs": "e6adb59c37abb3e1206a59ae6407a1183f190c9c8f7dd9337213152465fe0e86",
+      "tools/eo05-refresh-preflight-probe.mjs": "49a29532430a9adc8e340fd5e7ecef961f7d5fc8e160c44df146e127a5216c10",
       "tools/eo05-refresh-queue-check-probe.mjs": "1416ced2fcbc08c20fcd3ec2d4237cee14907b6f0fd44dc191f0f55664ccb97a",
       "tools/eo05-refresh-queue-cron-entry-probe.mjs": "963eb459cda2dce12759050a431de55096e566049c03c579d3ce6f90fc1373da",
       "tools/eo05-refresh-scheduled-queue-probe.mjs": "fe524da7d7bdb8cf4851499b216a5e61d35c283cfce81ea6528a32cc8728be0c",
@@ -2398,7 +2398,7 @@
       "date": "2026-11-16",
       "owner_approval": {
         "explicit": true,
-        "source": "Tamam Codex önerini onaylıyorum — agreed to record the hourly today/yesterday policy and consider only supported Google conversion-date fields. Tamam onaylıyorum Codex — explicit approval after listing separate hourly scope, daily writer, and isolated checks for midnight, overlap and daily-record preservation. Follow-up approval: Tamam onaylıyorum devam edelim Codex — trusted scheduler and isolated durable integration follow-up; this delivery gates only the daily scheduling path. Follow-up approval: Tamam devam edelim onaylıyorum Codex — reuse the existing durable run identity for daily deduplication and verify rollover in isolation."
+        "source": "Tamam Codex önerini onaylıyorum — agreed to record the hourly today/yesterday policy and consider only supported Google conversion-date fields. Tamam onaylıyorum Codex — explicit approval after listing separate hourly scope, daily writer, and isolated checks for midnight, overlap and daily-record preservation. Follow-up approval: Tamam onaylıyorum devam edelim Codex — trusted scheduler and isolated durable integration follow-up; this delivery gates only the daily scheduling path. Follow-up approval: Tamam devam edelim onaylıyorum Codex — reuse the existing durable run identity for daily deduplication and verify rollover in isolation. Follow-up approval: Devam edelim onaylıyorum — verify daily rollover against PostgreSQL in the existing rollback-only F01 probe."
       },
       "rationale": "Record the approved minimum reread policy and prepare isolated hourly and daily report plans with separate hourly replacement. OAuth behavior is outside this scope.",
       "scope": {
@@ -2417,7 +2417,8 @@
         "contracts/raw-source/raw-source-constitution-v1.json",
         "tests/eo-05a-refresh-preflight-bridge.test.js",
         "tests/eo-05a-refresh-scheduled-queue-check.test.js",
-        "tests/incremental-report-plan.test.js"
+        "tests/incremental-report-plan.test.js",
+        "tools/eo05-refresh-preflight-probe.mjs"
       ],
       "artifact_paths": [
         "app/lib/refresh/incremental-report-plan.server.js",
@@ -2428,14 +2429,16 @@
         "contracts/raw-source/raw-source-constitution-v1.json",
         "tests/eo-05a-refresh-preflight-bridge.test.js",
         "tests/eo-05a-refresh-scheduled-queue-check.test.js",
-        "tests/incremental-report-plan.test.js"
+        "tests/incremental-report-plan.test.js",
+        "tools/eo05-refresh-preflight-probe.mjs"
       ],
       "tests": [
         "tests/incremental-report-plan.test.js",
         "tests/dataset-bootstrap.test.js",
         "tests/raw-source-constitution.test.js",
         "tests/eo-05a-refresh-scheduled-queue-check.test.js",
-        "tests/eo-05a-refresh-preflight-bridge.test.js"
+        "tests/eo-05a-refresh-preflight-bridge.test.js",
+        "tools/eo05-refresh-preflight-probe.mjs"
       ],
       "acceptance_required": [
         "required_CI",

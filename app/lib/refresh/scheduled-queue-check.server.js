@@ -1,6 +1,6 @@
 import {dispatchRefreshPreflight} from "./preflight-bridge.server.js";
 import {createScheduledDatasetPostgresClient} from "../database/dataset-postgres.server.js";
-import {planIncrementalReport} from "./incremental-report-plan.server.js";
+import {planIncrementalReport, planKlaviyoHourlySource} from "./incremental-report-plan.server.js";
 
 export const refreshTickGenerationValid=value=>typeof value==="string"&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(value);
 const stopped=new Set(["not_configured","not_current_generation","clock_invalid","duplicate"]);
@@ -32,16 +32,19 @@ export async function runScheduledRefreshCheck({store,generation,work}) {
   if(interruptions.status!=="reviewed") return {status:"queue_checked",queue,interruptions,work:{status:"not_configured"}};
   // Explicitly pick inputs. A work object cannot replace the store or inject a dispatch callback.
   try {
-    const {buildWorkPlan,entitlementVerifier,readPage,validatePage,now,loadDatasetInputs,loadDailyReportSchedule}=work;
+    const {buildWorkPlan,entitlementVerifier,readPage,validatePage,now,loadDatasetInputs,loadDailyReportSchedule,
+      finishKlaviyoHourlyReport}=work;
     if (loadDailyReportSchedule !== undefined
       && (typeof loadDailyReportSchedule !== "function" || typeof buildWorkPlan !== "function"
         || typeof loadDatasetInputs !== "function")) throw Error("REFRESH_DAILY_REPORT_POLICY_INVALID");
-    const planWork = loadDailyReportSchedule === undefined ? buildWorkPlan : async source => {
+    if (finishKlaviyoHourlyReport !== undefined
+      && (typeof finishKlaviyoHourlyReport !== "function" || typeof buildWorkPlan !== "function")) throw Error("REFRESH_HOURLY_REPORT_POLICY_INVALID");
+    const tickAt = new Date(queue.checkedAtMs).toISOString();
+    const planDaily = async source => {
       const schedule = await loadDailyReportSchedule(structuredClone(source));
       if (schedule === null) return null;
       const {timeZone, dailyWindows} = schedule;
       if (timeZone !== source.timezone) throw Error("REFRESH_DAILY_REPORT_TIMEZONE_MISMATCH");
-      const tickAt = new Date(queue.checkedAtMs).toISOString();
       const {daily} = planIncrementalReport({tickAt, timeZone, dailyWindows});
       for (const job of daily) {
         // The caller's trusted planner filters windows already reconciled. The
@@ -54,7 +57,24 @@ export async function runScheduledRefreshCheck({store,generation,work}) {
       }
       return null;
     };
-    return {status:"queue_checked",queue,interruptions,work:await dispatchRefreshPreflight({store,buildWorkPlan:planWork,entitlementVerifier,readPage,validatePage,now,loadDatasetInputs})};
+    const planWork = async source => {
+      if (loadDailyReportSchedule !== undefined) {
+        const daily = await planDaily(source);
+        if (daily !== null) return daily;
+      }
+      if (finishKlaviyoHourlyReport !== undefined && source.provider === "klaviyo") {
+        const hourly = planKlaviyoHourlySource({tickAt, timeZone:source.timezone});
+        if (hourly === null) return null;
+        const plan = await buildWorkPlan(structuredClone(source), {kind:"klaviyo_hourly", ...structuredClone(hourly)});
+        if (plan === null) return null;
+        if (plan.workClass !== "hourly_hot_window") throw Error("REFRESH_HOURLY_REPORT_SCOPE_INVALID");
+        return {...plan, window:hourly.window, partitionId:hourly.partitionId,
+          hourlySource:{start:hourly.start,end:hourly.end}};
+      }
+      return loadDailyReportSchedule === undefined ? buildWorkPlan(source) : null;
+    };
+    return {status:"queue_checked",queue,interruptions,work:await dispatchRefreshPreflight({store,buildWorkPlan:planWork,
+      entitlementVerifier,readPage,validatePage,now,loadDatasetInputs,finishKlaviyoHourlyReport})};
   } catch {
     return {status:"queue_checked",queue,work:{status:"needs_attention",reason:"work_policy_invalid"}};
   }

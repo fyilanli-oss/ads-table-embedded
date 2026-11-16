@@ -4,12 +4,14 @@ import {runRefreshChunk} from "./chunk-worker.server.js";
 import {reconcileStoredDatasetSources} from "../database/dataset-reconciliation.server.js";
 
 // Internal composition for a trusted work plan. The existing HTTP queue entry is queue-only.
-export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlementVerifier, readPage, validatePage, now, loadDatasetInputs}) {
+export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlementVerifier, readPage, validatePage, now, loadDatasetInputs,
+  finishKlaviyoHourlyReport}) {
   if (!["readPreflightSnapshot","commitPreflight","loadBoundAuthority"].every(key=>typeof store?.[key]==="function")
     || [buildWorkPlan,readPage,validatePage,now,entitlementVerifier?.verify,entitlementVerifier?.isCurrent].some(fn=>typeof fn!=="function")) {
     throw new Error("REFRESH_PREFLIGHT_INPUT_INVALID");
   }
   if (loadDatasetInputs !== undefined && typeof loadDatasetInputs !== "function") throw Error("REFRESH_DATASET_INPUT_INVALID");
+  if (finishKlaviyoHourlyReport !== undefined && typeof finishKlaviyoHourlyReport !== "function") throw Error("REFRESH_HOURLY_REPORT_POLICY_INVALID");
   let claim;
   try {
     const snapshot=await store.readPreflightSnapshot();
@@ -22,6 +24,10 @@ export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlemen
       const plan=structuredClone(await buildWorkPlan(structuredClone(source)));
       if(plan===null) continue;
       const current=now(),l=plan?.limits,w=plan?.window;
+      const hourly = plan?.hourlySource;
+      const klaviyoHourly = finishKlaviyoHourlyReport !== undefined && source.provider === "klaviyo"
+        && plan?.workClass === "hourly_hot_window" && hourly
+        && plan.partitionId === `klaviyo-hourly-source:${hourly.start}/${hourly.end}`;
       if(typeof plan?.partitionId!=="string"||plan.partitionId.length<1||plan.partitionId.length>256
         || !["requestTimeoutMs","finishReserveMs","maxRows","maxBytes","deadlineAt"].every(k=>Number.isSafeInteger(l?.[k])&&l[k]>0)
         || l.requestTimeoutMs>2_147_483_647||!Number.isSafeInteger(current)||current<0||l.deadlineAt-current<l.requestTimeoutMs+l.finishReserveMs
@@ -30,20 +36,20 @@ export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlemen
         || !["rows","bytes"].every(k=>Number.isSafeInteger(plan.cost?.[k])&&plan.cost[k]>=0)
         || l.maxRows>plan.cost.rows||l.maxBytes>plan.cost.bytes
         || ![w?.from,w?.to].every(d=>typeof d==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(d)&&new Date(`${d}T00:00:00Z`).toISOString().slice(0,10)===d)
-        || w.from>w.to || loadDatasetInputs!==undefined && w.from!==w.to) return {status:"work_plan_required"};
+        || w.from>w.to || !klaviyoHourly && loadDatasetInputs!==undefined && w.from!==w.to) return {status:"work_plan_required"};
       const dailyReport = plan.workClass === "deep_reconciliation"
         && /^daily-report:(?:yesterday|today):\d{4}-\d{2}-\d{2}$/.test(plan.partitionId);
       // The database already keys durable runs by owner and job ID. The same
       // daily slot must keep its identity when the queue advances to another hour.
-      const identity = dailyReport
-        ? ["daily-report", source.workspaceId, source.installGeneration, source.provider,
+      const identity = dailyReport || klaviyoHourly
+        ? [dailyReport ? "daily-report" : "klaviyo-hourly-source", source.workspaceId, source.installGeneration, source.provider,
           source.accountId, plan.partitionId, w.from, w.to]
         : [source, plan.partitionId, w];
       const id=createHash("sha256").update(JSON.stringify(identity)).digest("hex");
       const job={id,workspaceId:source.workspaceId,installGeneration:source.installGeneration,provider:source.provider,accountId:source.accountId,
         scheduledHour:source.scheduledHour,queuedAt:source.queuedAt,workClass:plan.workClass,cost:plan.cost,
         authority:{installationVerified:true,connected:true,setupComplete:true,allowedWindow:true}};
-      candidates.push(job);plans.set(id,{source,plan});
+      candidates.push(job);plans.set(id,{source,plan,klaviyoHourly});
     }
     const proposal=planRefreshPreflightAdmissions({...snapshot,candidates,now:now()});
     if(proposal.status!=="proposed") return {status:proposal.status,deferred:proposal.deferred};
@@ -52,10 +58,19 @@ export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlemen
       nextState:proposal.nextState,source:binding.source,window:binding.plan.window,partitionId:binding.plan.partitionId,deadlineAt:binding.plan.limits.deadlineAt});
     if(accepted!==true) return {status:"conflict"};
     claim=selected;
+    const readBoundPage = binding.klaviyoHourly
+      ? context => readPage({...context, hourlySource:structuredClone(binding.plan.hourlySource)})
+      : readPage;
     const result=await runRefreshChunk({claim,window:binding.plan.window,limits:binding.plan.limits,store,
       loadAuthority:context=>store.loadBoundAuthority(context),verifyEntitlement:context=>entitlementVerifier.verify(context),
-      isEntitlementCurrent:context=>entitlementVerifier.isCurrent(context),readPage,validatePage,now});
-    if (result.status!=="awaiting_dataset" || loadDatasetInputs===undefined) return {claim:structuredClone(claim),...result};
+      isEntitlementCurrent:context=>entitlementVerifier.isCurrent(context),readPage:readBoundPage,validatePage,now});
+    if (result.status!=="awaiting_dataset") return {claim:structuredClone(claim),...result};
+    if (binding.klaviyoHourly) {
+      const completed = await finishKlaviyoHourlyReport({claim:structuredClone(claim),partitionId:binding.plan.partitionId});
+      if (completed === true) return {status:"completed",claim:structuredClone(claim),reservationRetained:false};
+      return {claim:structuredClone(claim),...result};
+    }
+    if (loadDatasetInputs===undefined) return {claim:structuredClone(claim),...result};
 
     const {window,limits}=binding.plan;
     const inputs=await loadDatasetInputs({claim:structuredClone(claim),window:structuredClone(window),deadlineAt:limits.deadlineAt});

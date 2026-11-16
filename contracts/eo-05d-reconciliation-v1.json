@@ -109,13 +109,28 @@
   "formula_fixture_redesign": false,
   "minimum_reread_policy": {
     "decision_date": "2026-11-16",
+    "owner_approval": "Tamam Codex mutabıkız — approved the two-hour hourly window and separate initial X=1 and Y=1 daily reconciliation plan.",
+    "supersedes": "The earlier proposal to reread yesterday and today each hour. Initial bootstrap still reads yesterday before today.",
     "hourly": {
-      "days_in_order": [
-        "yesterday",
-        "today"
-      ],
-      "calendar": "provider_account_timezone"
+      "completed_hours": 2,
+      "calendar": "provider_account_timezone",
+      "window": "At the hourly boundary, read the two most recently completed hours as a half-open interval. Use elapsed hour boundaries with unambiguous offsets across daylight-saving transitions.",
+      "eligibility": "Only metrics with verified hourly granularity in the exact provider query and mapping. Daily-only metrics use daily reconciliation.",
+      "overlap": "Replace a matching verified hourly fact with the newer complete result for the same scope. Do not add repeated hours or sum daily snapshots with hourly facts."
     },
+    "daily": {
+      "yesterday": {
+        "initial_runs_per_day": 1,
+        "scope": "Complete previous provider-calendar day, first read after accounting for provider reporting lag."
+      },
+      "today": {
+        "initial_runs_per_day": 1,
+        "scope": "Current provider-calendar day through the read time."
+      },
+      "scheduling": "Distribute both jobs across low-commerce periods for the relevant shops, interpreting source dates in the provider account calendar.",
+      "adjust_frequency": "Measure changes after the first reconciliation before adding reads."
+    },
+    "measurement": "Compare the same shop and provider workloads for whole-day versus two-hour reads. Measure API calls, rows, bytes, provider read time and database write time before treating the policy as a capacity result.",
     "older_dates": "Keep the existing daily reconciliation path for applicable unresolved dates whose provider metrics are still subject to historical revision. Limit coverage per provider, account and conversion action to evidenced attribution settings plus any separately evidenced reporting lag.",
     "unknown": "Represent unverified settings or reporting semantics explicitly as unknown. Do not assume a default attribution window or finality, or activate a new historical read based on an example.",
     "date_basis": "Use conversion date for metrics with verified query and mapping support. Keep interaction-date metrics distinct and preserve their reconciliation requirements.",

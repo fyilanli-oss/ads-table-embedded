@@ -158,11 +158,12 @@
       "pending": [
         "provider metric capability binding",
         "durable hourly write and receipt",
-        "scheduler integration and daily dispatch",
+        "Production schedule configuration, durable once-per-day claim, and hourly dispatch integration",
         "same-workload capacity comparison"
       ],
       "official_calendar_reference": "https://tc39.es/ecma402/#sec-intl.datetimeformat.prototype.formattoparts",
-      "official_calendar_checked_at": "2026-11-16"
+      "official_calendar_checked_at": "2026-11-16",
+      "scheduler": "Trusted optional daily schedule policy uses the durable queue tick and accepts only a single matching day through existing fenced daily preflight."
     }
   }
 }

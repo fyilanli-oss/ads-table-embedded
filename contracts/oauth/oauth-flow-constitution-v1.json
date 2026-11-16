@@ -1508,7 +1508,7 @@
       "app/lib/refresh/quota-response-feedback.server.js": "5929583f6b1c1eb0d4e0d99c7060d635861a9a60d28468485c7a389853d5e3a8",
       "app/lib/refresh/quota-scope-resolver.server.js": "ff38b878371213d4ba5047b8bcd0005f75342e9c178281df72f85505fd13507f",
       "app/lib/refresh/quota-work-wait.server.js": "241ae261ce805bf76fe4c2f027969bbc67be6cf774f511201fb2381308f2cfcd",
-      "app/lib/refresh/scheduled-queue-check.server.js": "61c4f6350959beee7c5c883ffedd83ec32215495ef26cac7e29378fe6be7c334",
+      "app/lib/refresh/scheduled-queue-check.server.js": "c0c6425dcb9c5247d6fb4cfe319fd3c56f161eee3c3270382e99b386039d428d",
       "app/lib/refresh/setup-proof-review.server.js": "4f2c59b4b72c791b944c3bb040fa1531eae96b91ba78b49e92aef2c952aeae91",
       "app/lib/refresh/shared-quota.server.js": "105a4f5ed3413395701e7f0246557b53de984be0cd68ba43f2225eaf3389852d",
       "app/lib/refresh/shopify-admin-identity-quota.server.js": "84e33743b3f8b9a8fc7514ab418b3283746470ebb935ef1d566abad4d1655537",
@@ -4420,7 +4420,7 @@
       "date": "2026-11-16",
       "owner_approval": {
         "explicit": true,
-        "source": "Tamam onaylıyorum Codex — explicit approval after listing separate hourly scope, daily writer, and isolated checks for midnight, overlap and daily-record preservation."
+        "source": "Tamam onaylıyorum Codex — explicit approval after listing separate hourly scope, daily writer, and isolated checks for midnight, overlap and daily-record preservation. Follow-up approval: Tamam onaylıyorum devam edelim Codex — trusted scheduler and isolated durable integration follow-up; this delivery gates only the daily scheduling path."
       },
       "rationale": "Record the approved minimum reread policy and prepare isolated hourly and daily report plans with separate hourly replacement. OAuth behavior is outside this scope.",
       "scope": {
@@ -4432,18 +4432,22 @@
       },
       "changed_paths": [
         "app/lib/refresh/incremental-report-plan.server.js",
+        "app/lib/refresh/scheduled-queue-check.server.js",
         "contracts/oauth/oauth-flow-constitution-v1.json"
       ],
       "artifact_paths": [
         "app/lib/refresh/incremental-report-plan.server.js",
+        "app/lib/refresh/scheduled-queue-check.server.js",
         "contracts/eo-05d-reconciliation-v1.json",
         "contracts/oauth/oauth-flow-constitution-v1.json",
+        "tests/eo-05a-refresh-scheduled-queue-check.test.js",
         "tests/incremental-report-plan.test.js"
       ],
       "tests": [
         "tests/incremental-report-plan.test.js",
         "tests/dataset-bootstrap.test.js",
-        "tests/raw-source-constitution.test.js"
+        "tests/raw-source-constitution.test.js",
+        "tests/eo-05a-refresh-scheduled-queue-check.test.js"
       ],
       "acceptance_required": [
         "required_CI",

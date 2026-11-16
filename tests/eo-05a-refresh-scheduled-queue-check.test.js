@@ -68,6 +68,45 @@ test("database boundary accepts only generation, no injected clock, inventory or
   assert.equal(queries.length,1);
 });
 
+test("daily reconciliation uses the confirmed tick and rejects a mismatched date before admission", async () => {
+  const checkedAtMs = Date.parse("2026-11-16T22:00:00.000Z");
+  let admissions = 0;
+  const store = {
+    checkScheduledQueue: async () => ({...receipt, checkedAtMs}),
+    reviewInterruptedWork: async () => ({status:"reviewed", stopped:0, uncertain:0}),
+    readPreflightSnapshot: async () => ({configured:true, candidates:[{accountId:"account"}]}),
+    commitPreflight: async () => { admissions++; return false; },
+    loadBoundAuthority: async () => { throw Error("unexpected authority read"); },
+  };
+  let planned = 0;
+  const work = {
+    loadDailyReportSchedule: async source => {
+      assert.equal(source.accountId, "account");
+      return {timeZone:"Europe/Istanbul", dailyWindows:{
+        yesterday:{start:"2026-11-16T21:00:00.000Z", end:"2026-11-16T23:00:00.000Z"},
+        today:{start:"2026-11-16T23:00:00.000Z", end:"2026-11-17T00:00:00.000Z"},
+      }};
+    },
+    buildWorkPlan: async (source, job) => {
+      planned++;
+      assert.equal(source.accountId, "account");
+      assert.equal(job.kind, "yesterday");
+      assert.equal(job.businessDate, "2026-11-16");
+      return {workClass:"deep_reconciliation", window:{from:"2026-11-17", to:"2026-11-17"}};
+    },
+    entitlementVerifier:{verify:async () => {}, isCurrent:async () => {}},
+    readPage:async () => { throw Error("unexpected provider read"); },
+    validatePage:() => {},
+    loadDatasetInputs:async () => { throw Error("unexpected Dataset write"); },
+    now:() => Date.parse("2026-11-17T02:00:00.000Z"),
+  };
+  const result = await runScheduledRefreshCheck({store, generation, work});
+  assert.equal(planned, 1);
+  assert.equal(admissions, 0);
+  assert.equal(result.work.status, "needs_attention");
+  assert.equal(result.work.reason, "preflight_unavailable");
+});
+
 test("contract keeps cron activation, alarms, Dataset and hourly policy outside this connection",()=>{
   const c=JSON.parse(readFileSync(new URL("../contracts/eo-05a-refresh-scheduled-queue-check-v1.json",import.meta.url),"utf8"));
   for(const key of ["live_activation","live_migration_apply","native_provider_calls","Dataset_write","automatic_retry","independent_alarm_active","production_work_policy_selected"]) assert.equal(c[key],false);

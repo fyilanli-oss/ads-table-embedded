@@ -144,6 +144,44 @@ begin
   return result;
 end $fn$;
 
+-- The worker must reach its Dataset handoff even if the report was written
+-- during request_intent. Recheck the physical receipt before releasing capacity.
+create function analytics.finish_klaviyo_hourly_event_report(o jsonb, j text, f bigint, attempt uuid, verified jsonb)
+returns boolean language plpgsql security definer set search_path='' as $fn$
+declare
+  w uuid := (o->>'workspaceId')::uuid;
+  g bigint := (o->>'generation')::bigint;
+  a text := o->>'accountId';
+  deadline_ms bigint;
+begin
+  perform 1 from operations.refresh_control where singleton for update;
+  if not found or o->>'provider' is distinct from 'klaviyo'
+    or jsonb_typeof(verified) is distinct from 'object' then return false; end if;
+  perform evidence.assert_source_owner(o);
+  if operations.refresh_claim_is_current(w,g,'klaviyo',a,j,f) is not true then return false; end if;
+
+  select binding.deadline_at_ms into deadline_ms
+  from operations.refresh_work_bindings binding
+  join operations.refresh_work_progress progress using (workspace_id,install_generation,provider,account_id,job_id,fence)
+  join evidence.source_batches b on b.workspace_id=binding.workspace_id
+    and b.installation_generation=binding.install_generation and b.authority=o
+    and b.attempt_id=attempt and b.batch_ordinal=0
+  cross join lateral (select b.manifest->'klaviyoHourlyRead' as scope) source
+  where binding.workspace_id=w and binding.install_generation=g and binding.provider='klaviyo'
+    and binding.account_id=a and binding.job_id=j and binding.fence=f
+    and progress.stage='ready_for_dataset'
+    and b.retain_until>clock_timestamp()
+    and source.scope->>'jobId'=j and source.scope->>'fence'=f::text
+    and binding.partition_id='klaviyo-hourly-source:'||(source.scope->'timeframe'->>'start')
+      ||'/'||(source.scope->'timeframe'->>'end');
+  if not found or deadline_ms<=extract(epoch from clock_timestamp())*1000
+    or analytics.read_klaviyo_hourly_event_report(o,attempt) is distinct from verified
+    or deadline_ms<=extract(epoch from clock_timestamp())*1000 then return false; end if;
+
+  return operations.finish_refresh_work_before_stops(w,g,'klaviyo',a,j,f,'completed');
+end $fn$;
+
 revoke all on function analytics.commit_klaviyo_hourly_event_report(jsonb,uuid,text,jsonb,timestamptz,jsonb),
- analytics.read_klaviyo_hourly_event_report(jsonb,uuid)
-from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
+ analytics.read_klaviyo_hourly_event_report(jsonb,uuid),
+ analytics.finish_klaviyo_hourly_event_report(jsonb,text,bigint,uuid,jsonb)
+from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator,adstable_refresh_dataset_runner;

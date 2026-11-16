@@ -29,7 +29,7 @@ export async function klaviyoHourlyPrivateWriterProbe(client, {store,workspace,s
       where workspace_id=$1 and provider='klaviyo' and account_id='klaviyo-a' and state='pending'
     `, [workspace,endMs-3_600_000]);
     const deadlineAt = current+90_000;
-    let sourceWritten = false;
+    let finishReport;
     const verifier = createRefreshEntitlementVerifier({
       store, appId:"gid://shopify/App/456", now:Date.now,
       limits:{deadlineAt, requestTimeoutMs:10000, finishReserveMs:1000},
@@ -128,16 +128,33 @@ export async function klaviyoHourlyPrivateWriterProbe(client, {store,workspace,s
         const {attribution} = products.rows[0].sale;
         assert.deepEqual([attribution.source,attribution.source_entity_id,attribution.channel_id,
           attribution.variation_id,attribution.sales_role],["flow","parent-flow","message","variation","Triggered"]);
-        assert.equal(await store.isClaimCurrent({claim}),true,"source receipt must not finish the report job");
-        sourceWritten = true;
+        finishReport = async (fence, verified = report) => (await client.query(
+          "select analytics.finish_klaviyo_hourly_event_report($1,$2,$3,$4,$5) as finished",
+          [owner,claim.id,fence,attemptId,verified],
+        )).rows[0].finished;
+        assert.equal(await finishReport(claim.fence),false,"request intent must not release the job");
+        assert.equal(await store.isClaimCurrent({claim}),true);
         return {kind:"complete",payload:{}};
       },
       validatePage:() => ({complete:true,rows:[]}),
     });
     assert.equal(run.status,"awaiting_dataset",JSON.stringify({status:run.status,reason:run.reason,deferred:run.deferred}));
-    assert.equal(sourceWritten,true);
+    assert.equal(typeof finishReport,"function");
+    assert.equal(await finishReport(run.claim.fence+1),false,"stale fence cannot finish");
+    assert.equal(await finishReport(run.claim.fence,{counts:[1,1]}),false,"inexact receipt cannot finish");
+    assert.equal(await store.isClaimCurrent({claim:run.claim}),true);
+    await client.query("savepoint hourly_physical_receipt_missing");
+    await client.query("delete from analytics.klaviyo_hourly_event_facts");
+    assert.equal(await finishReport(run.claim.fence),false,"missing physical facts cannot finish");
+    await client.query("rollback to savepoint hourly_physical_receipt_missing");
+    await client.query("release savepoint hourly_physical_receipt_missing");
+    assert.equal(await finishReport(run.claim.fence),true);
+    assert.equal(await finishReport(run.claim.fence),false,"job is already closed");
+    const finished = await client.query("select status from operations.refresh_runs where fence=$1", [run.claim.fence]);
+    assert.deepEqual(finished.rows,[{status:"completed"}]);
     console.log("EO05_KLAVIYO_HOURLY_PRIVATE_WRITER_ROUNDTRIP_PASS actual_source_tables=true actual_claim=true readback=true real_provider_calls=0");
     console.log("EO05_KLAVIYO_HOURLY_EVENT_REPORT_PASS actual_hourly_facts=true source_receipt_bound=true report_readback=true runtime_grants=false");
+    console.log("EO05_KLAVIYO_HOURLY_JOB_FINISH_PASS ready_for_dataset=true exact_receipt=true stale_fence_denied=true missing_physical_facts_denied=true completed=true");
   } finally {
     await client.query("rollback to savepoint klaviyo_hourly_private_writer");
     await client.query("release savepoint klaviyo_hourly_private_writer");

@@ -235,7 +235,9 @@
         "source": "Only authenticated physical source readback produces the one-use in-process input. SQL verifies the current claim, complete owner-bound source, manifest digest and totals.",
         "write": "Two hour keys are separate from daily facts. Newer source observations may replace an overlapping hour. Readback checks the physical written values against the retained receipt.",
         "probe": "EO05_KLAVIYO_HOURLY_EVENT_REPORT_PASS",
-        "pending": "Rollback-only schema. No product grant, scheduler activation or job closure. Hourly privacy erasure, source retention integration and workload benchmark are open.",
+        "job_closure": "Private rollback-only function requires ready_for_dataset, current owner and fence, the exact unexpired hourly binding and a matching physical report readback. It reuses the fenced job completion transaction.",
+        "job_closure_probe": "EO05_KLAVIYO_HOURLY_JOB_FINISH_PASS",
+        "pending": "Rollback-only schema. No product grant or scheduler activation. Hourly privacy erasure, source retention integration and workload benchmark are open.",
         "official_checked_at": "2026-11-16",
         "official_source": "https://www.postgresql.org/docs/17/sql-insert.html"
       },

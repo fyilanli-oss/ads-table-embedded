@@ -42,6 +42,17 @@ for (const provider of ["google_ads", "meta", "klaviyo"]) test("reconciliation p
       opens:{value:null,state:"missing"}});
   }
 });
+test("scheduled Klaviyo reconciliation retains campaign and flow message parents", async () => {
+  const f = await fixture("klaviyo", {klaviyoFlow:true,klaviyoOpens:"3"});
+  const result = await reconcileStoredDatasetSources({...f, scheduled:true,
+    admittedScope:{jobId:"synthetic-binding-job",fence:"1",from:"2026-11-01",to:"2026-11-01"}});
+  assert.equal(result.jobCompleted,true);
+  const messages = f.request().write.rows.filter(entry=>entry.table==="pd_facts").map(({row})=>
+    [row.root_entity_type,row.root_entity_id,row.entity_id,row.metric_extensions.opens.value]);
+  assert.deepEqual(messages.sort(),[
+    ["campaign","campaign-1","message-1","3"],["flow","flow-1","flow-message-1","3"],
+  ]);
+});
 test("Meta's existing nonempty sales evidence hold is preserved, never consumed", async () => {
   const f = await fixture("meta"); const r = await reconcileStoredDatasetSources(f);
   assert.equal(r.status, "held");assert.equal(r.consumerReceipt, false);assert.equal(f.request(), undefined);

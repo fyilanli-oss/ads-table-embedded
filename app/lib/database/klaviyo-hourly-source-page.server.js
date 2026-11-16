@@ -1,4 +1,5 @@
 import {canonicalSourceJson, sourcePayloadHash, sourceStoreOwner} from "./source-evidence-store.server.js";
+import {projectKlaviyoStoredProductSale} from "../providers/stored-klaviyo-dataset.server.js";
 
 const pageFormat = Object.freeze({
   family:"klaviyo_ordered_product_events",
@@ -164,19 +165,46 @@ export async function commitKlaviyoHourlySourceBatch({batch, repository, deadlin
     const first = Date.parse(scope.timeframe.start);
     const boundary = first+3_600_000;
     const counts = [0,0];
+    const projections = [];
     const manifest = sourceBatchManifest(context, stored.pages, (page,pageOrdinal) => {
       const projection = openKlaviyoHourlySourcePage({...context,page,pageOrdinal});
+      projections.push(projection);
       for (const event of projection.records) counts[Date.parse(event.attributes.datetime)<boundary ? 0 : 1]++;
       return projection;
     });
     if (canonicalSourceJson(manifest) !== canonicalSourceJson(batch.manifest)) fail();
     const verified = Object.freeze({attemptId, digest:manifest.digest, pageCount:manifest.pages.length,
       rowCount:manifest.rows, contentVerified:true});
-    verifiedReports.set(verified, {owner,attemptId,digest:manifest.digest,counts});
+    verifiedReports.set(verified, {owner,scope,attemptId,digest:manifest.digest,counts,projections});
     return verified;
   } catch {
     throw Error("KLAVIYO_HOURLY_SOURCE_READBACK_UNCONFIRMED");
   }
+}
+
+// User-facing sale facts may only originate from physically verified pages.
+// The native attribution keeps exact IDs even when channel metadata is absent.
+export function projectVerifiedKlaviyoHourlyProductSales(sourceReceipt) {
+  const proof = verifiedReports.get(sourceReceipt);
+  if (!proof) fail();
+  const included = new Map();
+  for (const page of proof.projections) {
+    for (const item of page.included) {
+      if (item.type !== "attribution") continue;
+      const prior = included.get(item.id);
+      if (prior && canonicalSourceJson(prior) !== canonicalSourceJson(item)) fail();
+      included.set(item.id,item);
+    }
+  }
+  return Object.freeze({
+    accountId:proof.owner.accountId,
+    timeZone:proof.scope.timeZone,
+    timeframe:Object.freeze({...proof.scope.timeframe}),
+    sales:Object.freeze(proof.projections.flatMap(page => page.records.map(record => {
+      const attributes = {...record.attributes,event_properties:record.attributes.event_properties ?? {}};
+      return projectKlaviyoStoredProductSale({...record,attributes},included);
+    }))),
+  });
 }
 
 export async function commitKlaviyoHourlyEventReport({database,sourceReceipt,deadlineAt,now = Date.now}) {
@@ -185,16 +213,18 @@ export async function commitKlaviyoHourlyEventReport({database,sourceReceipt,dea
     || !Number.isSafeInteger(deadlineAt)) fail();
   const current = now();
   if (!Number.isSafeInteger(current) || current >= deadlineAt) fail();
+  const {sales} = projectVerifiedKlaviyoHourlyProductSales(sourceReceipt);
   verifiedReports.delete(sourceReceipt);
   let receipt;
   try {
     const {rows} = await database.query(
-      "select analytics.commit_klaviyo_hourly_event_report($1::jsonb,$2::uuid,$3::text,$4::jsonb,$5::timestamptz) as result",
-      [proof.owner,proof.attemptId,proof.digest,JSON.stringify(proof.counts),new Date(deadlineAt).toISOString()],
+      "select analytics.commit_klaviyo_hourly_event_report($1::jsonb,$2::uuid,$3::text,$4::jsonb,$5::timestamptz,$6::jsonb) as result",
+      [proof.owner,proof.attemptId,proof.digest,JSON.stringify(proof.counts),new Date(deadlineAt).toISOString(),JSON.stringify(sales)],
     );
     receipt = rows?.[0]?.result;
     if (rows?.length !== 1 || receipt?.attemptId !== proof.attemptId || receipt?.digest !== proof.digest
-      || canonicalSourceJson(receipt.counts) !== canonicalSourceJson(proof.counts)) fail();
+      || canonicalSourceJson(receipt.counts) !== canonicalSourceJson(proof.counts)
+      || receipt.productRows !== sales.length || !/^[a-f0-9]{64}$/.test(receipt.productDigest ?? "")) fail();
   } catch {throw Error("KLAVIYO_HOURLY_REPORT_WRITE_UNCONFIRMED");}
   try {
     if (now() >= deadlineAt) fail();

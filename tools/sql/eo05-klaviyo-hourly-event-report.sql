@@ -18,23 +18,36 @@ create table analytics.klaviyo_hourly_event_receipts (
   source_batch_id bigint primary key references evidence.source_batches(id) on delete cascade,
   receipt jsonb not null
 );
+create table analytics.klaviyo_hourly_product_sales (
+  source_batch_id bigint not null references evidence.source_batches(id) on delete cascade,
+  event_id text not null,
+  hour_start timestamptz not null,
+  ordinal integer not null,
+  sale jsonb not null,
+  primary key(source_batch_id,event_id),
+  unique(source_batch_id,ordinal)
+);
 alter table analytics.klaviyo_hourly_event_facts enable row level security;
 alter table analytics.klaviyo_hourly_event_facts force row level security;
 alter table analytics.klaviyo_hourly_event_receipts enable row level security;
 alter table analytics.klaviyo_hourly_event_receipts force row level security;
+alter table analytics.klaviyo_hourly_product_sales enable row level security;
+alter table analytics.klaviyo_hourly_product_sales force row level security;
 create policy owner_only on analytics.klaviyo_hourly_event_facts to adstable_owner using(true) with check(true);
 create policy owner_only on analytics.klaviyo_hourly_event_receipts to adstable_owner using(true) with check(true);
-revoke all on analytics.klaviyo_hourly_event_facts,analytics.klaviyo_hourly_event_receipts
+create policy owner_only on analytics.klaviyo_hourly_product_sales to adstable_owner using(true) with check(true);
+revoke all on analytics.klaviyo_hourly_event_facts,analytics.klaviyo_hourly_event_receipts,analytics.klaviyo_hourly_product_sales
 from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;
 
-create function analytics.commit_klaviyo_hourly_event_report(o jsonb, attempt uuid, digest text, counts jsonb, deadline timestamptz)
+create function analytics.commit_klaviyo_hourly_event_report(o jsonb, attempt uuid, digest text, counts jsonb, deadline timestamptz, sales jsonb)
 returns jsonb language plpgsql security definer set search_path='' as $fn$
 declare b evidence.source_batches%rowtype; s jsonb; observed timestamptz; start_at timestamptz;
-  result jsonb; applied jsonb;
+  result jsonb; applied jsonb; product_digest text;
 begin
   if o->>'provider' is distinct from 'klaviyo' or attempt is null
     or deadline is null or deadline<=clock_timestamp() or deadline>clock_timestamp()+interval '10 minutes'
     or coalesce(digest,'') !~ '^[a-f0-9]{64}$' or jsonb_typeof(counts) is distinct from 'array'
+    or jsonb_typeof(sales) is distinct from 'array' or octet_length(sales::text)>8388608
     then raise exception 'KLAVIYO_HOURLY_REPORT_INVALID';
   end if;
   if jsonb_array_length(counts)<>2 or exists (
@@ -65,11 +78,29 @@ begin
         and binding.deadline_at_ms>extract(epoch from clock_timestamp())*1000)
     then raise exception 'KLAVIYO_HOURLY_REPORT_CLAIM_INVALID';
   end if;
+  if jsonb_array_length(sales) is distinct from (counts->>0)::int+(counts->>1)::int
+    or exists(select 1 from jsonb_array_elements(sales) as data(item)
+      where jsonb_typeof(item) is distinct from 'object'
+        or item->>'metricId' is distinct from s->>'metricId'
+        or coalesce(length(item->>'eventId'),0) not between 1 and 256
+        or item->>'occurredAt' is null or (item->>'occurredAt')::timestamptz<start_at
+        or (item->>'occurredAt')::timestamptz>=start_at+interval '2 hours')
+    or (select count(*) from jsonb_array_elements(sales) as data(item)
+      where (item->>'occurredAt')::timestamptz<start_at+interval '1 hour') is distinct from (counts->>0)::int
+    then raise exception 'KLAVIYO_HOURLY_REPORT_PRODUCTS_INVALID';
+  end if;
+  product_digest := evidence.source_hash(sales);
   select receipt into result from analytics.klaviyo_hourly_event_receipts where source_batch_id=b.id;
   if found then
-    if result->'counts' is distinct from counts then raise exception 'KLAVIYO_HOURLY_REPORT_CONFLICT'; end if;
+    if result->'counts' is distinct from counts or result->>'productDigest' is distinct from product_digest
+      then raise exception 'KLAVIYO_HOURLY_REPORT_CONFLICT'; end if;
     return result;
   end if;
+  insert into analytics.klaviyo_hourly_product_sales(source_batch_id,event_id,hour_start,ordinal,sale)
+  select b.id,item->>'eventId',
+    case when (item->>'occurredAt')::timestamptz<start_at+interval '1 hour' then start_at else start_at+interval '1 hour' end,
+    ord::int,item
+  from jsonb_array_elements(sales) with ordinality as data(item,ord);
   with written as (
     insert into analytics.klaviyo_hourly_event_facts as fact
       (workspace_id,installation_id,generation,account_id,connection_id,connection_version,metric_id,hour_start,observed_at,event_count,source_batch_id)
@@ -81,7 +112,8 @@ begin
     where excluded.observed_at>fact.observed_at
     returning hour_start
   ) select coalesce(jsonb_agg(hour_start order by hour_start),'[]'::jsonb) into applied from written;
-  result := jsonb_build_object('attemptId',attempt,'digest',digest,'counts',counts,'applied',applied);
+  result := jsonb_build_object('attemptId',attempt,'digest',digest,'counts',counts,'applied',applied,
+    'productRows',jsonb_array_length(sales),'productDigest',product_digest);
   insert into analytics.klaviyo_hourly_event_receipts values (b.id,result);
   if deadline<=clock_timestamp() then raise exception 'KLAVIYO_HOURLY_REPORT_EXPIRED'; end if;
   return result;
@@ -99,6 +131,9 @@ begin
   if not found then return null; end if;
   select receipt into result from analytics.klaviyo_hourly_event_receipts where source_batch_id=b.id;
   if not found then return null; end if;
+  if (select evidence.source_hash(coalesce(jsonb_agg(sale order by ordinal),'[]'::jsonb))
+    from analytics.klaviyo_hourly_product_sales where source_batch_id=b.id)
+    is distinct from result->>'productDigest' then return null; end if;
   start_at := (b.manifest->'klaviyoHourlyRead'->'timeframe'->>'start')::timestamptz;
   if exists (
     select 1 from jsonb_array_elements_text(result->'applied') as wanted(hour_text)
@@ -109,6 +144,6 @@ begin
   return result;
 end $fn$;
 
-revoke all on function analytics.commit_klaviyo_hourly_event_report(jsonb,uuid,text,jsonb,timestamptz),
+revoke all on function analytics.commit_klaviyo_hourly_event_report(jsonb,uuid,text,jsonb,timestamptz,jsonb),
  analytics.read_klaviyo_hourly_event_report(jsonb,uuid)
 from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;

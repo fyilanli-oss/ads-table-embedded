@@ -69,10 +69,16 @@ export async function klaviyoHourlyPrivateWriterProbe(client, {store,workspace,s
         const cipher = createSourceEvidenceCipher({keys:new Map([[1,randomBytes(32)]]),activeVersion:1,forbiddenKeys:[]});
         const sourceInput = {owner,scope,attemptId,cipher,
           limits:{maxPages:2,maxRows:2,maxBytes:10000},
-          projections:[{revision:scope.revision,included:[],hasNext:false,records:[
-            {type:"event",id:"event",attributes:{datetime:start},relationships:{metric:{data:{id:metricId}}}},
+          projections:[{revision:scope.revision,included:[{type:"attribution",id:"sale-attribution",relationships:{
+            flow:{data:{type:"flow",id:"parent-flow"}},
+            "flow-message":{data:{type:"flow-message",id:"message"}},
+            "flow-message-variation":{data:{type:"flow-message-variation",id:"variation"}},
+          }}],hasNext:false,records:[
+            {type:"event",id:"event",attributes:{datetime:start,event_properties:{ProductID:"first",Quantity:"2",$value:"24.50"}},
+              relationships:{metric:{data:{type:"metric",id:metricId}},
+                attributions:{data:[{type:"attribution",id:"sale-attribution"}]}}},
             {type:"event",id:"next-hour-event",attributes:{datetime:new Date(endMs-3_600_000).toISOString()},
-              relationships:{metric:{data:{id:metricId}}}},
+              relationships:{metric:{data:{type:"metric",id:metricId}}}},
           ]}],
         };
         let sqlFailure;
@@ -116,6 +122,12 @@ export async function klaviyoHourlyPrivateWriterProbe(client, {store,workspace,s
         assert.equal(report.applied.length,2);
         const facts = await client.query("select event_count from analytics.klaviyo_hourly_event_facts order by hour_start");
         assert.deepEqual(facts.rows,[{event_count:1},{event_count:1}]);
+        const products = await client.query("select sale from analytics.klaviyo_hourly_product_sales order by ordinal");
+        assert.deepEqual(products.rows.map(({sale}) => [sale.productId,sale.quantity,sale.value]),
+          [["first","2","24.5"],[null,null,null]]);
+        const {attribution} = products.rows[0].sale;
+        assert.deepEqual([attribution.source,attribution.source_entity_id,attribution.channel_id,
+          attribution.variation_id,attribution.sales_role],["flow","parent-flow","message","variation","Triggered"]);
         assert.equal(await store.isClaimCurrent({claim}),true,"source receipt must not finish the report job");
         sourceWritten = true;
         return {kind:"complete",payload:{}};

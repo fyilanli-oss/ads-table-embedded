@@ -10,7 +10,7 @@ import {createKlaviyoHourlySourceRepository} from "../app/lib/database/klaviyo-h
 import {sourceRetentionDurationPolicy} from "../app/lib/database/source-retention-policy.server.js";
 import {openKlaviyoHourlySourcePage, sealKlaviyoHourlySourcePage,
   commitKlaviyoHourlyEventReport, commitKlaviyoHourlySourceBatch, prepareKlaviyoHourlySourceBatch,
-  verifyKlaviyoHourlySourceBatch} from "../app/lib/database/klaviyo-hourly-source-page.server.js";
+  projectVerifiedKlaviyoHourlyProductSales, verifyKlaviyoHourlySourceBatch} from "../app/lib/database/klaviyo-hourly-source-page.server.js";
 
 test("hourly Klaviyo capture encrypts the original query scope with the sanitized page", async () => {
   const {input} = sourceStoreFixture();
@@ -22,8 +22,9 @@ test("hourly Klaviyo capture encrypts the original query scope with the sanitize
     job:{id:"job", fence:7, provider:"klaviyo", workspaceId:owner.workspaceId,
       installGeneration:owner.generation, accountId:owner.accountId, window:{start,end:tickAt}},
   });
-  const event = {id:"event-1", type:"event", attributes:{datetime:start, event_properties:{Quantity:1}},
-    relationships:{metric:{data:{type:"metric", id:"ordered"}}}};
+  const event = {id:"event-1", type:"event", attributes:{datetime:start,
+    event_properties:{ProductID:"product",VariantID:"variant",Quantity:2,$value:"19.99"}},
+    relationships:{metric:{data:{type:"metric", id:"ordered"}},attributions:{data:[{type:"attribution",id:"flow-a"}]}}};
   const capture = createKlaviyoSourceCapture({maxBytes:10000, check:() => {}});
   await capture.read(new Response(JSON.stringify({data:[event], links:{next:null}})), query.request.url);
   const [{payload:projection}] = capture.finish();
@@ -40,7 +41,14 @@ test("hourly Klaviyo capture encrypts the original query scope with the sanitize
   ]}}), /SCOPE_INVALID/);
 
   const first = {...projection, hasNext:true};
-  const second = {...projection, records:[{...projection.records[0], id:"event-2"}]};
+  const second = {...projection, records:[{...projection.records[0],id:"event-2",
+    attributes:{datetime:start,event_properties:{ProductID:"second",Quantity:{jsonNumber:"1"}}},
+    relationships:{metric:{data:{type:"metric",id:"ordered"}}}}],
+  included:[{type:"attribution",id:"flow-a",relationships:{
+    flow:{data:{type:"flow",id:"flow-id"}},
+    "flow-message":{data:{type:"flow-message",id:"message-id"}},
+    "flow-message-variation":{data:{type:"flow-message-variation",id:"variation-id"}},
+  }}]};
   const batchContext = {...context, limits:{maxPages:3,maxRows:3,maxBytes:10000}};
   const {pages, manifest} = prepareKlaviyoHourlySourceBatch({...batchContext, projections:[first,second]});
   const read = {...batchContext, pages, manifest, expectedManifest:manifest};
@@ -87,11 +95,23 @@ test("hourly Klaviyo capture encrypts the original query scope with the sanitize
   assert.equal(calls.length,4);
   assert.deepEqual(result,{attemptId:context.attemptId,digest:confirmed.manifest.digest,
     pageCount:2,rowCount:2,contentVerified:true});
-  const reportReceipt = {attemptId:result.attemptId,digest:result.digest,counts:[2,0],applied:[start]};
+  const {sales} = projectVerifiedKlaviyoHourlyProductSales(result);
+  assert.deepEqual(sales.map(row => [row.productId,row.variantId,row.quantity,row.value]), [
+    ["product","variant","2","19.99"], ["second",null,"1",null],
+  ]);
+  assert.deepEqual(sales.map(row => [row.attribution.source_entity_id,row.attribution.channel_id,
+    row.attribution.variation_id,row.attribution.sales_role]), [
+    ["flow-id","message-id","variation-id","Triggered"], [null,null,null,"Unclassified"],
+  ]);
+  const reportReceipt = {attemptId:result.attemptId,digest:result.digest,
+    counts:[2,0],applied:[start],productRows:2,productDigest:"f".repeat(64)};
   let reportCalls = 0;
   const reportDatabase = {async query(sql,args) {
     reportCalls++;
-    if (sql.includes("commit_klaviyo_hourly_event_report")) assert.equal(args[3],"[2,0]");
+    if (sql.includes("commit_klaviyo_hourly_event_report")) {
+      assert.equal(args[3],"[2,0]");
+      assert.deepEqual(JSON.parse(args[5]),sales);
+    }
     return {rows:[{result:reportReceipt}]};
   }};
   const report = {database:reportDatabase,deadlineAt:1000,now:() => 0};

@@ -181,7 +181,29 @@ begin
   return operations.finish_refresh_work_before_stops(w,g,'klaviyo',a,j,f,'completed');
 end $fn$;
 
+-- Use the refresh run primary key for each candidate in the bounded snapshot.
+-- Admission still rechecks the live revision and refuses a completed run.
+create function analytics.list_completed_klaviyo_hourly_jobs(candidates jsonb)
+returns jsonb language plpgsql security definer set search_path='' as $fn$
+begin
+  if jsonb_typeof(candidates) is distinct from 'array' then
+    raise exception 'KLAVIYO_HOURLY_CANDIDATES_INVALID';
+  end if;
+  if jsonb_array_length(candidates) > coalesce((
+    select (bounds->>'maxCandidates')::integer from operations.refresh_control where singleton
+  ),0) then raise exception 'KLAVIYO_HOURLY_CANDIDATES_INVALID'; end if;
+  return (
+    select coalesce(jsonb_agg(distinct r.job_id), '[]'::jsonb)
+    from jsonb_to_recordset(candidates) as c(id text,"workspaceId" uuid,"installGeneration" bigint,"accountId" text)
+    join operations.refresh_runs r on r.workspace_id=c."workspaceId"
+      and r.install_generation=c."installGeneration" and r.provider='klaviyo'
+      and r.account_id=c."accountId" and r.job_id=c.id
+    where r.status='completed'
+  );
+end $fn$;
+
 revoke all on function analytics.commit_klaviyo_hourly_event_report(jsonb,uuid,text,jsonb,timestamptz,jsonb),
  analytics.read_klaviyo_hourly_event_report(jsonb,uuid),
- analytics.finish_klaviyo_hourly_event_report(jsonb,text,bigint,uuid,jsonb)
+ analytics.finish_klaviyo_hourly_event_report(jsonb,text,bigint,uuid,jsonb),
+ analytics.list_completed_klaviyo_hourly_jobs(jsonb)
 from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;

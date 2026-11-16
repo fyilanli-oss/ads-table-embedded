@@ -33,7 +33,7 @@ export async function runScheduledRefreshCheck({store,generation,work}) {
   // Explicitly pick inputs. A work object cannot replace the store or inject a dispatch callback.
   try {
     const {buildWorkPlan,entitlementVerifier,readPage,validatePage,now,loadDatasetInputs,loadDailyReportSchedule,
-      finishKlaviyoHourlyReport}=work;
+      finishKlaviyoHourlyReport,loadCompletedKlaviyoHourlyJobs}=work;
     if (loadDailyReportSchedule !== undefined
       && (typeof loadDailyReportSchedule !== "function" || typeof buildWorkPlan !== "function"
         || typeof loadDatasetInputs !== "function")) throw Error("REFRESH_DAILY_REPORT_POLICY_INVALID");
@@ -74,7 +74,7 @@ export async function runScheduledRefreshCheck({store,generation,work}) {
       return loadDailyReportSchedule === undefined ? buildWorkPlan(source) : null;
     };
     return {status:"queue_checked",queue,interruptions,work:await dispatchRefreshPreflight({store,buildWorkPlan:planWork,
-      entitlementVerifier,readPage,validatePage,now,loadDatasetInputs,finishKlaviyoHourlyReport})};
+      entitlementVerifier,readPage,validatePage,now,loadDatasetInputs,finishKlaviyoHourlyReport,loadCompletedKlaviyoHourlyJobs})};
   } catch {
     return {status:"queue_checked",queue,work:{status:"needs_attention",reason:"work_policy_invalid"}};
   }

@@ -239,6 +239,8 @@
         "job_closure_probe": "EO05_KLAVIYO_HOURLY_JOB_FINISH_PASS",
         "scheduler_probe": "EO05_KLAVIYO_HOURLY_SCHEDULER_PASS",
         "scheduler": "The trusted opt-in planner uses the confirmed SQL tick and account timezone. It passes the same two-hour window to the fenced reader and requires private verified receipt closure, including across local midnight.",
+        "completed_work_filter": "One bounded private lookup returns completed IDs from the current candidate batch using the exact workspace, installation generation, provider, account and job key. Matching jobs are removed before fairness sorting. Admission still fences races.",
+        "completed_work_filter_probe": "EO05_KLAVIYO_HOURLY_COMPLETED_LOOKUP_PASS",
         "pending": "Rollback-only schema and isolated scheduler composition. No product grant or live activation. Hourly privacy erasure, source retention integration and workload benchmark are open.",
         "official_checked_at": "2026-11-16",
         "official_source": "https://www.postgresql.org/docs/17/sql-insert.html"

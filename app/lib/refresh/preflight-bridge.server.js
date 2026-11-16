@@ -5,19 +5,23 @@ import {reconcileStoredDatasetSources} from "../database/dataset-reconciliation.
 
 // Internal composition for a trusted work plan. The existing HTTP queue entry is queue-only.
 export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlementVerifier, readPage, validatePage, now, loadDatasetInputs,
-  finishKlaviyoHourlyReport}) {
+  finishKlaviyoHourlyReport, loadCompletedKlaviyoHourlyJobs}) {
   if (!["readPreflightSnapshot","commitPreflight","loadBoundAuthority"].every(key=>typeof store?.[key]==="function")
     || [buildWorkPlan,readPage,validatePage,now,entitlementVerifier?.verify,entitlementVerifier?.isCurrent].some(fn=>typeof fn!=="function")) {
     throw new Error("REFRESH_PREFLIGHT_INPUT_INVALID");
   }
   if (loadDatasetInputs !== undefined && typeof loadDatasetInputs !== "function") throw Error("REFRESH_DATASET_INPUT_INVALID");
-  if (finishKlaviyoHourlyReport !== undefined && typeof finishKlaviyoHourlyReport !== "function") throw Error("REFRESH_HOURLY_REPORT_POLICY_INVALID");
+  if ((finishKlaviyoHourlyReport !== undefined || loadCompletedKlaviyoHourlyJobs !== undefined)
+    && (typeof finishKlaviyoHourlyReport !== "function" || typeof loadCompletedKlaviyoHourlyJobs !== "function")) {
+    throw Error("REFRESH_HOURLY_REPORT_POLICY_INVALID");
+  }
   let claim;
   try {
     const snapshot=await store.readPreflightSnapshot();
     if(snapshot?.configured!==true) return {status:"not_configured"};
     const candidates=[];
     const plans=new Map();
+    const hourlyJobs=new Map();
     for(const source of snapshot.candidates) {
       // This trusted planner must explicitly choose an eligible period, partition and workload.
       // Missing policy is not permission to invent dates or backfill disconnected periods.
@@ -50,8 +54,18 @@ export async function dispatchRefreshPreflight({store, buildWorkPlan, entitlemen
         scheduledHour:source.scheduledHour,queuedAt:source.queuedAt,workClass:plan.workClass,cost:plan.cost,
         authority:{installationVerified:true,connected:true,setupComplete:true,allowedWindow:true}};
       candidates.push(job);plans.set(id,{source,plan,klaviyoHourly});
+      if (klaviyoHourly) hourlyJobs.set(id,{id,workspaceId:job.workspaceId,installGeneration:job.installGeneration,accountId:job.accountId});
     }
-    const proposal=planRefreshPreflightAdmissions({...snapshot,candidates,now:now()});
+    const completed = new Set();
+    if (hourlyJobs.size > 0) {
+      const ids = await loadCompletedKlaviyoHourlyJobs([...hourlyJobs.values()]);
+      if (!Array.isArray(ids) || ids.length > hourlyJobs.size) throw Error("REFRESH_HOURLY_COMPLETED_JOBS_INVALID");
+      for (const id of ids) {
+        if (!hourlyJobs.has(id) || completed.has(id)) throw Error("REFRESH_HOURLY_COMPLETED_JOBS_INVALID");
+        completed.add(id);
+      }
+    }
+    const proposal=planRefreshPreflightAdmissions({...snapshot,candidates:candidates.filter(job=>!completed.has(job.id)),now:now()});
     if(proposal.status!=="proposed") return {status:proposal.status,deferred:proposal.deferred};
     const selected=proposal.admitted[0],binding=plans.get(selected.id);
     const accepted=await store.commitPreflight({expectedRevision:snapshot.state.revision,queueRevision:snapshot.queueRevision,

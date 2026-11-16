@@ -30,6 +30,9 @@ export async function klaviyoHourlyPrivateWriterProbe(client, {store,workspace,s
     await client.query("update operations.refresh_tick_control set enabled=true,generation=$1,last_minute=null,last_checked_at_ms=null,queue_revision=null where singleton",[generation]);
     const deadlineAt = current+90_000;
     let finishReport, partition;
+    const loadCompletedKlaviyoHourlyJobs = async jobs => (await client.query(
+      "select analytics.list_completed_klaviyo_hourly_jobs($1::jsonb) as ids",[JSON.stringify(jobs)],
+    )).rows[0].ids;
     const verifier = createRefreshEntitlementVerifier({
       store, appId:"gid://shopify/App/456", now:Date.now,
       limits:{deadlineAt, requestTimeoutMs:10000, finishReserveMs:1000},
@@ -43,6 +46,7 @@ export async function klaviyoHourlyPrivateWriterProbe(client, {store,workspace,s
     });
     const scheduled = await runScheduledRefreshCheck({store,generation,work:{
       now:Date.now,
+      loadCompletedKlaviyoHourlyJobs,
       buildWorkPlan:async (candidate, job) => {
         if (candidate.provider!=="klaviyo" || job?.kind!=="klaviyo_hourly") return null;
         return {workClass:"hourly_hot_window",cost:{requests:4,dbWrites:8,connections:1,rows:10,bytes:10000},
@@ -160,10 +164,16 @@ export async function klaviyoHourlyPrivateWriterProbe(client, {store,workspace,s
     assert.equal(await finishReport(run.claim.fence),false,"job is already closed");
     const finished = await client.query("select status from operations.refresh_runs where fence=$1", [run.claim.fence]);
     assert.deepEqual(finished.rows,[{status:"completed"}]);
+    const {id,workspaceId,installGeneration,accountId}=run.claim;
+    const completed={id,workspaceId,installGeneration,accountId};
+    assert.deepEqual(await loadCompletedKlaviyoHourlyJobs([
+      {...completed,id:randomUUID()}, {...completed,accountId:"other"}, completed,
+    ]),[id]);
     console.log("EO05_KLAVIYO_HOURLY_PRIVATE_WRITER_ROUNDTRIP_PASS actual_source_tables=true actual_claim=true readback=true real_provider_calls=0");
     console.log("EO05_KLAVIYO_HOURLY_EVENT_REPORT_PASS actual_hourly_facts=true source_receipt_bound=true report_readback=true runtime_grants=false");
     console.log("EO05_KLAVIYO_HOURLY_JOB_FINISH_PASS ready_for_dataset=true exact_receipt=true stale_fence_denied=true missing_physical_facts_denied=true completed=true");
     console.log("EO05_KLAVIYO_HOURLY_SCHEDULER_PASS real_tick=true fenced_job=true verified_dataset=true reservation_released=true");
+    console.log("EO05_KLAVIYO_HOURLY_COMPLETED_LOOKUP_PASS completed_scope=true different_job_excluded=true different_account_excluded=true");
   } finally {
     await client.query("rollback to savepoint klaviyo_hourly_private_writer");
     await client.query("release savepoint klaviyo_hourly_private_writer");

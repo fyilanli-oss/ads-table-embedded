@@ -69,7 +69,7 @@ test("daily job identity survives queue rollover and leaves distinct daily slots
   assert.equal(f.calls(), 2);
 });
 
-test("Klaviyo hourly work uses the same job ID until the two-hour window moves", async () => {
+test("Klaviyo preflight skips completed hourly work and admits the next ready account", async () => {
   const f = fixture();
   f.source.provider = "klaviyo";
   f.snapshot.budget.providers[0].provider = "klaviyo";
@@ -88,6 +88,11 @@ test("Klaviyo hourly work uses the same job ID until the two-hour window moves",
     attempted.push(id);
     return !completed.has(id);
   };
+  const lookedUp = [];
+  f.args.loadCompletedKlaviyoHourlyJobs = async jobs => {
+    lookedUp.push(jobs.map(job=>job.id));
+    return jobs.filter(job=>completed.has(job.id)).map(job=>job.id);
+  };
   f.args.finishKlaviyoHourlyReport = async ({claim, partitionId}) => {
     assert.equal(partitionId, f.plan.partitionId);
     completed.add(claim.id);
@@ -99,14 +104,32 @@ test("Klaviyo hourly work uses the same job ID until the two-hour window moves",
   f.source.queuedAt = 3_600_000;
   f.args.now = () => 7_200_000;
   f.plan.limits.deadlineAt = 7_201_000;
-  assert.equal((await dispatchRefreshPreflight(f.args)).status, "conflict");
-  assert.equal(attempted[0], attempted[1]);
+  assert.equal((await dispatchRefreshPreflight(f.args)).status, "waiting");
+  assert.deepEqual(lookedUp[0], lookedUp[1]);
+  assert.equal(attempted.length, 1);
   assert.equal(f.calls(), 1);
 
-  selectHours("2026-10-19T23:00:00.000Z", "2026-10-20T01:00:00.000Z");
-  assert.equal((await dispatchRefreshPreflight(f.args)).status, "completed");
-  assert.notEqual(attempted[1], attempted[2]);
+  f.snapshot.candidates.push({...f.source,accountId:"second",queuedAt:3_600_001});
+  f.snapshot.budget.accounts.push({...f.snapshot.budget.accounts[0],accountId:"second"});
+  f.args.store.loadBoundAuthority = async ({claim}) => ({
+    ...f.source,accountId:claim.accountId,installationVerified:true,connected:true,setupComplete:true,allowedWindow:true,
+  });
+  const nextAccount = await dispatchRefreshPreflight(f.args);
+  assert.equal(nextAccount.status, "completed");
+  assert.equal(nextAccount.claim.accountId, "second");
+  assert.deepEqual(lookedUp[2], [attempted[0],attempted[1]]);
   assert.equal(f.calls(), 2);
+
+  selectHours("2026-10-19T23:00:00.000Z", "2026-10-20T01:00:00.000Z");
+  const nextHour = await dispatchRefreshPreflight(f.args);
+  assert.equal(nextHour.status, "completed");
+  assert.equal(nextHour.claim.accountId, f.source.accountId);
+  assert.notEqual(attempted[0], attempted[2]);
+  assert.equal(f.calls(), 3);
+
+  f.args.loadCompletedKlaviyoHourlyJobs = async () => ["unrecognized-job"];
+  assert.equal((await dispatchRefreshPreflight(f.args)).status, "needs_attention");
+  assert.equal(f.calls(), 3);
 });
 
 test("missing configuration, missing plan, invalid bounds, conflicts and unknown commits never execute or retry",async()=>{

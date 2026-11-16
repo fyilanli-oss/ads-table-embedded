@@ -184,4 +184,4 @@ end $fn$;
 revoke all on function analytics.commit_klaviyo_hourly_event_report(jsonb,uuid,text,jsonb,timestamptz,jsonb),
  analytics.read_klaviyo_hourly_event_report(jsonb,uuid),
  analytics.finish_klaviyo_hourly_event_report(jsonb,text,bigint,uuid,jsonb)
-from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator,adstable_refresh_dataset_runner;
+from public,anon,authenticated,service_role,adstable_runtime,adstable_refresh_coordinator;

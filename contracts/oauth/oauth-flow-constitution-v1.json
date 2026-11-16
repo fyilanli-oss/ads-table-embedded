@@ -1835,7 +1835,7 @@
       "tools/sql/eo05-google-dataset-source-role-extension.sql": "509f4b11cb0d93ddfacc9096e3b8d631bf9aa4ae89a4f5da296be7c7f6c719a1",
       "tools/sql/eo05-google-source-role-install.sql": "283be64d0de7944111639a4646758ef7bc91c1b853f0dc4d91870d31366f2ed1",
       "tools/sql/eo05-klaviyo-daily-message-counters.sql": "7e1f50b6cedaf845325c804c944bac4ae8bb07917ccd8fef5f07ebf84a4ad6df",
-      "tools/sql/eo05-klaviyo-hourly-event-report.sql": "b11ae1a923825659caa2af92140f360098bc0933d82861b45c963ae4c8e55c1c",
+      "tools/sql/eo05-klaviyo-hourly-event-report.sql": "0d9e1d963adbb55d33dbcdf4f2d1589b0b0aaf18b33530d80417a6c485e174af",
       "tools/sql/eo05-klaviyo-hourly-source.sql": "45e4ff71feef78739e3801a147c005fb31bea1240e3bc08ac8301879b1a596b6",
       "tools/sql/eo05-klaviyo-product-sales-reconciliation.sql": "89c4e2d807597027d283aa13ad6125d3224552b812ebe17166dc3d3166e78da9",
       "tools/sql/eo05-klaviyo-source-role-install.sql": "c2749c46c4c5026d2eb3c55e16d9e87d60a7d1cbe74bb16f0bd8ff783b6a156f",

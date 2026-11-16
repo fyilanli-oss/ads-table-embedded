@@ -42,8 +42,10 @@ export async function reconciliationProbe(client, {ownerFixture}) {
     assert.equal(initial.revision, 1);assert.equal(initial.consumerReceipt, true);scenarios++;
     assert.equal((await client.query("select count(*)::int n from evidence.source_batches where authority=$1::jsonb and handoff_state='consumed'", [JSON.stringify(owner)])).rows[0].n, first.batches.length);
     await rejected(client, () => reconcileStoredDatasetSources(first));scenarios++;
-    const rowBefore = (await client.query("select id,purchase::text from analytics.pd_facts where installation_id=$1", [owner.installationId])).rows[0];
+    const rowBefore = (await client.query("select id,purchase::text,metric_extensions from analytics.pd_facts where installation_id=$1", [owner.installationId])).rows[0];
     if (provider === "google_ads") assert.equal(rowBefore.purchase, "3");
+    if (provider === "klaviyo") assert.deepEqual(rowBefore.metric_extensions,
+      {recipients:{value:"0",state:"present"},opens:{value:null,state:"missing"}});
     if (provider === "google_ads") {
       const observation = maturityObservationFixture(provider, {owner, clickDays: "0"});
       const cfg = await storeMaturityConfiguration({database, cipher: first.cipher, owner, observation: await observation.read(),
@@ -53,15 +55,21 @@ export async function reconciliationProbe(client, {ownerFixture}) {
         reportOperationId: initial.operationId, expectedRevision: 0});
       assert.equal(maturity.state, "final");assert.equal(maturity.reportVerified, true);scenarios++;
     }
-    const second = await source(owner, {nonempty, googlePurchase: "5"});
+    const second = await source(owner, {nonempty, googlePurchase: "5",klaviyoOpens:"9007199254740993"});
     await rejected(client, () => reconcileStoredDatasetSources(second));scenarios++;
     const corrected = await reconcileStoredDatasetSources({...second, expectedRevision: 1});
     assert.equal(corrected.revision, 2);assert.equal(corrected.comparison, "matched");scenarios++;
     if (nonempty) {
       await rejected(client, () => client.query("update analytics.pd_facts set purchase=purchase+1,revision=revision+1 where installation_id=$1", [owner.installationId]));scenarios++;
     }
-    const rowAfter = (await client.query("select id,purchase::text from analytics.pd_facts where installation_id=$1", [owner.installationId])).rows[0];
+    const rowAfter = (await client.query("select id,purchase::text,metric_extensions from analytics.pd_facts where installation_id=$1", [owner.installationId])).rows[0];
     if (provider === "google_ads") {assert.equal(rowAfter.purchase, "5");assert.equal(rowAfter.id, rowBefore.id);}
+    if (provider === "klaviyo") {
+      assert.deepEqual(rowAfter.metric_extensions,
+        {recipients:{value:"0",state:"present"},opens:{value:"9007199254740993",state:"present"}});
+      assert.equal(rowAfter.id,rowBefore.id);
+      console.log("EO05_KLAVIYO_DAILY_MESSAGE_COUNTERS_PASS reconciliation=true physical_readback=true missing_and_zero_distinct=true");
+    }
     const old = await inspectDatasetReconciliation({database, owner, operationId: initial.operationId});
     assert.equal(old.status, "superseded");assert.equal(old.checkpointAdvanced, false);scenarios++;
     if (provider === "google_ads") {

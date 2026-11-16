@@ -301,7 +301,29 @@
           "attributed conversion totals"
         ],
         "semantics": "Use the committed daily reporting context and the provider's date semantics for the corresponding report family.",
-        "pending": "The fixed daily projection currently writes deliveries through impression, clicks and funnel metrics. Register the distinct provider recipient and open counters in the Dataset schema before exposing them. A recipient count is not a native sent count."
+        "pending": "SQL is prepared for the rollback-only replay. Record physical proof and deploy JS and registry together before activation. Recipient count does not imply sent count.",
+        "dataset_extension": {
+          "version": "eo05b-klaviyo-message-extensions-v1",
+          "table": "pd_facts",
+          "entities": [
+            "campaign_message",
+            "flow_message"
+          ],
+          "counters": [
+            "recipients",
+            "opens"
+          ],
+          "source": "Placed Order native report statistics once per message grouping; other conversion queries do not add copies.",
+          "states": [
+            "present",
+            "missing",
+            "unknown"
+          ],
+          "SQL": "tools/sql/eo05-klaviyo-daily-message-counters.sql",
+          "proof": "EO05_KLAVIYO_DAILY_MESSAGE_COUNTERS_PASS",
+          "official_checked_at": "2026-11-16",
+          "official_source": "https://developers.klaviyo.com/en/reference/reporting_api_overview"
+        }
       },
       "reconciliation": "Preserve campaign or flow and message identity across both datasets. Never add product sale events to aggregate message conversions as if they were one measure.",
       "scope": "Dataset contents and cadence only."

@@ -9,6 +9,8 @@ import {DATASET_FX_POLICY, datasetFxPublicationDate} from "./dataset-fx-policy.s
 export const DATASET_STORAGE_VERSION = "eo05b-storage-v1";
 export const DATASET_GRAIN_VERSION = "eo05b-native-grain-v1";
 export const DATASET_EXTENSION_VERSION = "eo05b-extensions-v1";
+export const KLAVIYO_MESSAGE_EXTENSION_VERSION = "eo05b-klaviyo-message-extensions-v1";
+export const KLAVIYO_MESSAGE_COUNTERS = Object.freeze(["recipients","opens"]);
 const metrics = Object.freeze({
   pd_facts: ["impression", "ad_click", "spend_value", "add_to_cart", "add_to_cart_value", "checkout", "checkout_value", "purchase", "purchase_value"],
   cpd_product_performance_facts: ["impression", "click", "spend_value"],
@@ -102,10 +104,18 @@ function validateRow(owner, table, row) {
       || (row[key] !== null) !== (support === "supported" && observation === "present")
       || support === "unsupported" && observation !== "unsupported") fail("METRIC_STATE_INVALID");
   }
-  // v1 intentionally registers no optional provider fields. Adding a real metric
-  // is a reviewed registry revision, never an arbitrary JSON passthrough.
-  if (row.extension_schema_version !== DATASET_EXTENSION_VERSION || !object(row.metric_extensions)
-    || Object.keys(row.metric_extensions).length || Buffer.byteLength(canonicalSourceJson(row.metric_extensions)) > 16384) fail("EXTENSION_UNREGISTERED");
+  if (row.extension_schema_version === KLAVIYO_MESSAGE_EXTENSION_VERSION && owner.provider === "klaviyo"
+    && table === "pd_facts" && ["campaign_message","flow_message"].includes(row.entity_type)) {
+    exact(row.metric_extensions, KLAVIYO_MESSAGE_COUNTERS);
+    for (const key of KLAVIYO_MESSAGE_COUNTERS) {
+      const counter = row.metric_extensions[key];
+      exact(counter, ["value","state"]);
+      if (counter.state === "present"
+        ? typeof counter.value !== "string" || !/^(?:0|[1-9][0-9]{0,126})$/.test(counter.value)
+        : !["missing","unknown"].includes(counter.state) || counter.value !== null) fail("EXTENSION_STATE_INVALID");
+    }
+  } else if (row.extension_schema_version !== DATASET_EXTENSION_VERSION || !object(row.metric_extensions)
+    || Object.keys(row.metric_extensions).length) fail("EXTENSION_UNREGISTERED");
   const reportingProof = Object.hasOwn(row.provenance ?? {}, "reporting_currency"), fxProof = Object.hasOwn(row.provenance ?? {}, "fx_policy");
   if (reportingProof !== fxProof) fail("FX_PROOF_REQUIRED");
   exact(row.provenance, ["projection_version", "sources", ...(Object.hasOwn(row.provenance ?? {}, "source_context") ? ["source_context"] : []), ...(reportingProof ? ["reporting_currency", "fx_policy"] : [])]);

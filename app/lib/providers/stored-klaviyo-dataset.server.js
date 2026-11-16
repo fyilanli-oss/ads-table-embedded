@@ -2,6 +2,7 @@ import {normalizeKlaviyoReportRow, normalizeKlaviyoOrderedProductEvent, selectKl
 import {resolveKlaviyoOrderedProductSales} from "./klaviyo-attribution-resolution.server.js";
 import {baseStoredFact, setStoredMetric, validateStoredProjectionScope, finalizeStoredProjection} from "./stored-dataset-projection.server.js";
 import {sourceText, sourceDecimal} from "../database/dataset-source-values.server.js";
+import {KLAVIYO_MESSAGE_COUNTERS, KLAVIYO_MESSAGE_EXTENSION_VERSION} from "../database/dataset-storage.server.js";
 import {canonicalSourceJson} from "../database/source-evidence-store.server.js";
 
 const fail = code => {throw Error("DATASET_PROJECTION_" + code);};
@@ -92,6 +93,8 @@ export function projectStoredKlaviyoDataset(bundle) {
           parent_entity_type: kind, parent_entity_id: channel.source_entity_id, parent_entity_name: channel.source_entity_name,
           source_identity: {kind: "daily", namespace: "entity_performance", native}});
         row.metric_support.spend_value = "unsupported"; row.observation_state.spend_value = "unsupported";
+        row.extension_schema_version = KLAVIYO_MESSAGE_EXTENSION_VERSION;
+        row.metric_extensions = Object.fromEntries(KLAVIYO_MESSAGE_COUNTERS.map(key => [key,{value:null,state:"unknown"}]));
         for (const [metricName, mapping] of Object.entries(pdSources)) if (selected[metricName].state !== "present") for (const target of Object.keys(mapping)) {
           row.metric_support[target] = "unknown"; row.observation_state[target] = "unknown";
         }
@@ -100,6 +103,13 @@ export function projectStoredKlaviyoDataset(bundle) {
       const fp = canonicalSourceJson(record), old = group.observations.get(name);
       if (old) {if (old !== fp) fail("DUPLICATE_CONFLICT"); continue;} group.observations.set(name, fp);
       for (const [target, source] of Object.entries(pdSources[name])) setStoredMetric(group.row, target, sourceDecimal(record.statistics?.[source]));
+      // All three funnel reports can describe the same message. Its audience and
+      // open counters come from the Placed Order report once, independently of conversions.
+      if (name === "Placed Order") for (const key of KLAVIYO_MESSAGE_COUNTERS) {
+        if (!attrs.statistics.includes(key)) continue;
+        const value = sourceDecimal(record.statistics?.[key]);
+        group.row.metric_extensions[key] = {value,state:value === null ? "missing" : "present"};
+      }
       group.row.provenance.sources = mergeRefs([...group.row.provenance.sources, page.ref]);
     }
   }

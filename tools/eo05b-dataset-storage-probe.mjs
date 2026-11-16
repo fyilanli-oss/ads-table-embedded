@@ -69,6 +69,19 @@ export async function datasetStorageProbe(client, connection, environment = proc
       }
     }
     await client.query("set local role adstable_owner");
+    await client.query(readFileSync(new URL("./sql/eo05-klaviyo-daily-message-counters.sql",import.meta.url),"utf8"));
+    const message = {platform:"klaviyo",entity_type:"flow_message",
+      extension_schema_version:"eo05b-klaviyo-message-extensions-v1",
+      metric_extensions:{recipients:{value:"0",state:"present"},opens:{value:null,state:"missing"}}};
+    for (const [factTable, row, expected] of [
+      ["pd_facts",message,true], ["cpd_product_sales_facts",message,false],
+      ["pd_facts",{...message,platform:"google_ads"},false],
+      ["pd_facts",{...message,metric_extensions:{...message.metric_extensions,opens:{value:"0",state:"missing"}}},false],
+    ]) {
+      const {rows:[result]} = await client.query("select analytics.dataset_message_extensions_valid($1,$2) as valid",
+        [factTable,row]);
+      assert.equal(result.valid,expected);
+    }
     await client.query(readFileSync(new URL("./sql/eo05-klaviyo-hourly-source.sql",import.meta.url),"utf8"));
     const hourlySource = "evidence.commit_klaviyo_hourly_source(jsonb,uuid,jsonb,jsonb,jsonb,timestamptz,timestamptz,jsonb)";
     for (const role of ["anon","authenticated","service_role","adstable_runtime","adstable_refresh_coordinator"]) {

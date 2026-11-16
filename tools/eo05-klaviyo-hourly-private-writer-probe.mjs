@@ -84,7 +84,7 @@ export async function klaviyoHourlyMinuteProbe(client, ownerFixture) {
           orderedProductMetricId:metricId,tickAt:hourlySource.end,timeZone:"UTC",job:{...claim,window:hourlySource}});
         const records=Array.from({length:rowsPerJob},(_,i)=>({type:"event",id:`event-${i}`,
           attributes:{datetime:new Date(Date.parse(hourlySource.start)+i*120_000).toISOString(),
-            event_properties:{ProductID:`product-${i}`,Quantity:1,$value:"19.99"}},
+            event_properties:{ProductID:`product-${i}`,Quantity:{jsonNumber:"1"},$value:{jsonNumber:"19.99"}}},
           relationships:{metric:{data:{type:"metric",id:metricId}}}}));
         const batch=prepareKlaviyoHourlySourceBatch({owner,scope,attemptId,cipher,limits:{maxPages:1,maxRows:100,maxBytes:200000},
           projections:[{revision:scope.revision,hasNext:false,records,included:[]}]});

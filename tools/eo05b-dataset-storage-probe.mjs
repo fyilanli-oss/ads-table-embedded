@@ -69,6 +69,16 @@ export async function datasetStorageProbe(client, connection, environment = proc
       }
     }
     await client.query("set local role adstable_owner");
+    await client.query(readFileSync(new URL("./sql/eo05-klaviyo-hourly-source.sql",import.meta.url),"utf8"));
+    const hourlySource = "evidence.commit_klaviyo_hourly_source(jsonb,uuid,jsonb,jsonb,jsonb,timestamptz,timestamptz,jsonb)";
+    for (const role of ["anon","authenticated","service_role","adstable_runtime","adstable_refresh_coordinator"]) {
+      const {rows:[permission]} = await client.query("select has_function_privilege($1,$2,'EXECUTE') allowed",[role,hourlySource]);
+      assert.equal(permission.allowed,false);
+    }
+    await rejected(client, () => client.query(
+      "select evidence.commit_klaviyo_hourly_source('{}',null,'{}','{}','{}',null,null,'{}')",
+    ), /KLAVIYO_HOURLY_SOURCE_INPUT_INVALID/);
+    console.log("EO05_KLAVIYO_HOURLY_PRIVATE_WRITER_PROBE real_SQL=true runtime_grants=false malformed_input_rejected=true");
     await sourceDatasetBindingProbe(client, {ownerFixture});
     await reportRetentionProbe(client, {ownerFixture, sourceFixture});
     await fxReportingCurrencyProbe(client, {ownerFixture});

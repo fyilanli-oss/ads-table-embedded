@@ -6,6 +6,8 @@ import {canonicalSourceJson, sourceStoreOwner, sourcePayloadHash, createSourceEv
 import {sourceStoreFixture} from "./fixtures/source-store-fixture.js";
 import {buildKlaviyoHourlyOrderedProductEventsRequest} from "../app/lib/providers/klaviyo-reporting.server.js";
 import {createKlaviyoSourceCapture} from "../app/lib/providers/klaviyo-source-capture.server.js";
+import {createKlaviyoHourlySourceRepository} from "../app/lib/database/klaviyo-hourly-source-repository.server.js";
+import {sourceRetentionDurationPolicy} from "../app/lib/database/source-retention-policy.server.js";
 import {openKlaviyoHourlySourcePage, sealKlaviyoHourlySourcePage,
   commitKlaviyoHourlySourceBatch, prepareKlaviyoHourlySourceBatch,
   verifyKlaviyoHourlySourceBatch} from "../app/lib/database/klaviyo-hourly-source-page.server.js";
@@ -62,16 +64,27 @@ test("hourly Klaviyo capture encrypts the original query scope with the sanitize
   await assert.rejects(commitKlaviyoHourlySourceBatch({...writeOptions,batch:empty}), /SCOPE_INVALID/);
   assert.deepEqual([writes,reads], [1,0]);
   const confirmed = prepareKlaviyoHourlySourceBatch({...batchContext,projections:[first,second]});
-  const result = await commitKlaviyoHourlySourceBatch({...writeOptions,batch:confirmed, repository:{
-    async commitHourlySource({attemptId,scope,batch}) {
-      assert.equal(scope.fence,7);
-      return {status:"committed",attemptId,digest:batch.manifest.digest};
-    },
-    async readHourlySource({maxPages}) {
-      assert.equal(maxPages,3);
-      return confirmed;
-    },
-  }});
+  const calls = [];
+  const repository = createKlaviyoHourlySourceRepository({policy:sourceRetentionDurationPolicy(),
+    observedAt:tickAt, quotaContext:{fixture:true}, now:() => Date.parse(tickAt),
+    database:{async query(sql,args) {
+      calls.push(sql);
+      const receipt = {status:"committed", sourceState:"complete", manifest:{
+        klaviyoHourlyRead:context.scope, klaviyoHourlyManifest:confirmed.manifest}};
+      if (sql.includes("commit_klaviyo_hourly_source")) {
+        assert.equal(args[3].fence,7);
+        assert.equal(args[2].pages.length,2);
+        assert.deepEqual(args[7],{fixture:true});
+        return {rows:[{result:receipt}]};
+      }
+      if (sql.includes("read_source_receipt")) return {rows:[{result:receipt}]};
+      assert.match(sql,/read_source_pages/);
+      return {rows:[{result:args[3]==="0" ? confirmed.pages.map((stored,index) => ({
+        ...stored,id:String(index+1),available:true,expired:false,retentionPruned:false,
+      })) : []}]};
+    }}});
+  const result = await commitKlaviyoHourlySourceBatch({...writeOptions,batch:confirmed,repository});
+  assert.equal(calls.length,4);
   assert.deepEqual(result,{attemptId:context.attemptId,digest:confirmed.manifest.digest,
     pageCount:2,rowCount:2,contentVerified:true});
 });

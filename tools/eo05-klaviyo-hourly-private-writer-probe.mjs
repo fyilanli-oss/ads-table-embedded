@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import {randomBytes, randomUUID} from "node:crypto";
+import {createHash, randomBytes, randomUUID} from "node:crypto";
 import {readFileSync} from "node:fs";
 import {buildKlaviyoHourlyOrderedProductEventsRequest} from "../app/lib/providers/klaviyo-reporting.server.js";
 import {createKlaviyoHourlySourceRepository} from "../app/lib/database/klaviyo-hourly-source-repository.server.js";
@@ -9,6 +9,41 @@ import {commitKlaviyoHourlyEventReport, commitKlaviyoHourlySourceBatch,
   prepareKlaviyoHourlySourceBatch} from "../app/lib/database/klaviyo-hourly-source-page.server.js";
 import {createRefreshEntitlementVerifier} from "../app/lib/refresh/entitlement-check.server.js";
 import {runScheduledRefreshCheck} from "../app/lib/refresh/scheduled-queue-check.server.js";
+
+async function probeCompletedLookupAt500(client, lookup) {
+  const candidates = Array.from({length:500}, (_, index) => {
+    const workspaceId = randomUUID();
+    return {
+      id:createHash("sha256").update(workspaceId).digest("hex"),
+      workspaceId, installGeneration:"1", accountId:`klaviyo-capacity-${index}`,
+    };
+  });
+  const completed = candidates.slice(0,-1);
+  await client.query("update operations.refresh_control set bounds=jsonb_set(bounds,'{maxCandidates}','500') where singleton");
+  await client.query("insert into app.workspaces(id) select unnest($1::uuid[])",[candidates.map(job=>job.workspaceId)]);
+  await client.query(`
+    insert into operations.refresh_runs
+      (workspace_id,install_generation,provider,account_id,job_id,fence,cost,status,finished_at)
+    select c."workspaceId",c."installGeneration",'klaviyo',c."accountId",c.id,
+      fences.last+row_number() over (order by c.id),'{}'::jsonb,'completed',statement_timestamp()
+    from jsonb_to_recordset($1::jsonb) as c(id text,"workspaceId" uuid,"installGeneration" bigint,"accountId" text)
+    cross join (select coalesce(max(fence),0) as last from operations.refresh_runs) fences
+  `,[JSON.stringify(completed)]);
+  const expected = completed.map(job=>job.id).sort();
+  const samples = [];
+  for (let pass=0;pass<21;pass++) {
+    const start = performance.now();
+    const ids = await lookup(candidates);
+    if (pass>0) samples.push(performance.now()-start);
+    assert.deepEqual(ids.sort(),expected);
+  }
+  samples.sort((a,b)=>a-b);
+  console.log("EO05_KLAVIYO_HOURLY_QUEUE_LOOKUP_500 " + JSON.stringify({
+    workspaces:candidates.length,alreadyCompleted:completed.length,remaining:1,
+    samples:samples.length,p50Ms:Number(samples[9].toFixed(2)),p95Ms:Number(samples[18].toFixed(2)),
+    scope:"completed-job lookup round trip only",
+  }));
+}
 
 export async function klaviyoHourlyPrivateWriterProbe(client, {store,workspace,shopId,shopDomain,connection,installation}) {
   await client.query("savepoint klaviyo_hourly_private_writer");
@@ -169,6 +204,7 @@ export async function klaviyoHourlyPrivateWriterProbe(client, {store,workspace,s
     assert.deepEqual(await loadCompletedKlaviyoHourlyJobs([
       {...completed,id:randomUUID()}, {...completed,accountId:"other"}, completed,
     ]),[id]);
+    await probeCompletedLookupAt500(client,loadCompletedKlaviyoHourlyJobs);
     console.log("EO05_KLAVIYO_HOURLY_PRIVATE_WRITER_ROUNDTRIP_PASS actual_source_tables=true actual_claim=true readback=true real_provider_calls=0");
     console.log("EO05_KLAVIYO_HOURLY_EVENT_REPORT_PASS actual_hourly_facts=true source_receipt_bound=true report_readback=true runtime_grants=false");
     console.log("EO05_KLAVIYO_HOURLY_JOB_FINISH_PASS ready_for_dataset=true exact_receipt=true stale_fence_denied=true missing_physical_facts_denied=true completed=true");

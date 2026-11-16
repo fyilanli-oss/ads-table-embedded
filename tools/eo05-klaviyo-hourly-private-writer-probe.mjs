@@ -58,8 +58,9 @@ export async function klaviyoHourlyPrivateWriterProbe(client, {store,workspace,s
           [workspace,claim.installGeneration,claim.accountId,claim.id,claim.fence,window.from,window.to,observedAt],
         );
         assert.ok(quota.context,"hourly claim must retain current quota authority");
+        const metricId = "m".repeat(256);
         const {sourceScope:scope} = buildKlaviyoHourlyOrderedProductEventsRequest({
-          accessToken:"synthetic-only",orderedProductMetricId:"ordered",tickAt:end,timeZone:"UTC",
+          accessToken:"synthetic-only",orderedProductMetricId:metricId,tickAt:end,timeZone:"UTC",
           job:{...claim,window:{start,end}},
         });
         const attemptId = randomUUID();
@@ -67,7 +68,7 @@ export async function klaviyoHourlyPrivateWriterProbe(client, {store,workspace,s
         const sourceInput = {owner,scope,attemptId,cipher,
           limits:{maxPages:2,maxRows:2,maxBytes:10000},
           projections:[{revision:scope.revision,included:[],hasNext:false,records:[
-            {type:"event",id:"event",attributes:{datetime:start},relationships:{metric:{data:{id:"ordered"}}}},
+            {type:"event",id:"event",attributes:{datetime:start},relationships:{metric:{data:{id:metricId}}}},
           ]}],
         };
         let sqlFailure;

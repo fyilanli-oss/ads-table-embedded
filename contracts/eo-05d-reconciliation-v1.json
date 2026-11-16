@@ -221,7 +221,10 @@
               "test": "tools/eo05-klaviyo-hourly-private-writer-probe.mjs",
               "entry": "tools/eo05-klaviyo-raw-datasets-probe.mjs",
               "evidence_marker": "EO05_KLAVIYO_HOURLY_PRIVATE_WRITER_ROUNDTRIP_PASS",
-              "cases": "Current PostgreSQL work binding plus quota and entitlement, stale fence rejection, encrypted source tables and physical receipt readback. The transaction fixture is rolled back."
+              "cases": "Current PostgreSQL work binding plus quota and entitlement, stale fence rejection, encrypted source tables and physical receipt readback. The transaction fixture is rolled back.",
+              "boundary": "Test the accepted 256-character metric ID without exceeding PostgreSQL regex bounds.",
+              "official_regex_reference": "https://www.postgresql.org/docs/17/functions-matching.html#POSIX-SYNTAX-DETAILS",
+              "official_checked_at": "2026-11-16"
             }
           }
         }

@@ -26,7 +26,8 @@ begin
     or s->>'workspaceId' is distinct from w::text
     or s->>'installGeneration' is distinct from g::text
     or s->>'accountId' is distinct from a or s->'endExclusive' is distinct from 'true'::jsonb
-    or coalesce(s->>'metricId','') !~ '^[A-Za-z0-9_-]{1,256}$'
+    or coalesce(s->>'metricId','') !~ '^[A-Za-z0-9_-]+$'
+    or length(s->>'metricId') > 256
     or first_hour is null or hour_end is null
     or not isfinite(first_hour) or not isfinite(hour_end)
     or hour_end-first_hour <> interval '2 hours'

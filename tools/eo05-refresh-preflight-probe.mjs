@@ -72,6 +72,10 @@ export async function refreshPreflightProbe(client,{workspace,connections,shopId
       const first = await dispatchRefreshPreflight(daily);
       assert.equal(first.reason, "entitlement_required");
       assert.equal(await store.isClaimCurrent({claim:first.claim}), false);
+      // Clear the known-not-sent hold in the fixture so the second attempt tests
+      // the persisted daily identity rather than being filtered out by the hold.
+      const stop = await store.readStop({job:first.claim});
+      assert.equal(await store.resolveStop({job:first.claim, expectedVersion:stop.version}), true);
       await setQueueHour(currentHour - 3_600_000);
       const pending = (await store.readPreflightSnapshot()).candidates.find(row => row.provider === "google_ads");
       assert.equal(Number(pending.scheduledHour), currentHour - 3_600_000);

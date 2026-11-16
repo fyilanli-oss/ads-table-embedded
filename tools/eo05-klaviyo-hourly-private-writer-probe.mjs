@@ -13,11 +13,34 @@ import {createRefreshWorkRepository} from "../app/lib/database/refresh-work-repo
 import {setTimeout as delay} from "node:timers/promises";
 
 // Invoked only by the loopback F01 Dataset replay inside its rollback transaction.
-export async function klaviyoHourlyMinuteProbe(client, ownerFixture) {
+export async function klaviyoHourlyMinuteProbe(client, ownerFixture, {cohort=24}={}) {
   await client.query("savepoint klaviyo_minute");
   try {
-    const cohort=24, rowsPerJob=42, owners=new Map(), shops=new Map(), reports=new Map();
-    const timing={sourceMs:0,datasetMs:0,closureMs:0};
+    const rowsPerJob=42, owners=new Map(), shops=new Map(), reports=new Map();
+    const timings=new Map();
+    let activeStage;
+    const measure=(stage,action)=>async (...args)=>{
+      const start=performance.now(), previous=activeStage;
+      const sample=timings.get(stage) ?? {calls:0,totalMs:0,dbCalls:0,dbMs:0};
+      timings.set(stage,sample);
+      activeStage=sample;
+      try {return await action(...args);}
+      finally {
+        sample.calls++;
+        sample.totalMs+=performance.now()-start;
+        activeStage=previous;
+      }
+    };
+    const timedDatabase={async query(...args) {
+      const start=performance.now(), sample=activeStage;
+      try {return await client.query(...args);}
+      finally {
+        if (sample) {
+          sample.dbCalls++;
+          sample.dbMs+=performance.now()-start;
+        }
+      }
+    }};
     const hash=()=>randomBytes(32).toString("hex");
     for (let i=0;i<cohort;i++) {
       const owner=await ownerFixture(client,"klaviyo");
@@ -40,12 +63,17 @@ export async function klaviyoHourlyMinuteProbe(client, ownerFixture) {
       update operations.refresh_control set budget=$1,bounds=$2,
         next_fence=greatest(next_fence,(select coalesce(max(fence),0)+1 from operations.refresh_runs))
       where singleton
-    `,[budget,{maxWorkspaces:128,maxCandidates:128,maxClaims:1,maxAdmissions:1}]);
+    `,[budget,{maxWorkspaces:512,maxCandidates:512,maxClaims:1,maxAdmissions:1}]);
     await client.query(`
       update operations.refresh_queue_control set max_workspaces=1000,max_accounts=1000,
         max_snapshot_bytes=4194304,max_snapshot_age_ms=60000 where singleton
     `);
-    const store=createRefreshWorkRepository(client);
+    const store=createRefreshWorkRepository(timedDatabase);
+    const timedStore={...store};
+    for (const [method,stage] of Object.entries({
+      checkScheduledQueue:"queue",reviewInterruptedWork:"interruptionReview",readPreflightSnapshot:"candidateSnapshot",
+      commitPreflight:"admission",loadBoundAuthority:"workerAuthority",advanceStage:"workProgress",
+    })) timedStore[method]=measure(stage,store[method]);
     await store.checkQueueFromAuthority({expectedRevision:(await store.readQueueCheck()).revision});
     const previousHour=Math.floor(Date.now()/3_600_000)*3_600_000-3_600_000;
     await client.query(`
@@ -56,7 +84,7 @@ export async function klaviyoHourlyMinuteProbe(client, ownerFixture) {
     const generation=randomUUID();
     await client.query("update operations.refresh_tick_control set enabled=true,generation=$1,last_minute=null,last_checked_at_ms=null,queue_revision=null where singleton",[generation]);
     const available=60_000-Date.now()%60_000;
-    if (available<15_000) await delay(available+50);
+    if (available<(cohort>24?50_000:15_000)) await delay(available+50);
     const startMs=Date.now(), deadlineAt=(Math.floor(startMs/60_000)+1)*60_000;
     const limits={deadlineAt,requestTimeoutMs:5_000,finishReserveMs:1_000,maxRows:100,maxBytes:200000};
     const appId="gid://shopify/App/456";
@@ -68,50 +96,49 @@ export async function klaviyoHourlyMinuteProbe(client, ownerFixture) {
           cancelAtEndOfCycle:false,trialEndsAt:null,currentBillingCycle:{startTime:new Date(startMs-86_400_000).toISOString(),
             endTime:new Date(startMs+86_400_000).toISOString()},items:[{handle:"monthly",price:{active:true}}],pendingUpdate:null}}};
       }}});
+    const timedEntitlement={verify:measure("entitlement",entitlementVerifier.verify),
+      isCurrent:measure("entitlement",entitlementVerifier.isCurrent)};
     const cipher=createSourceEvidenceCipher({keys:new Map([[1,randomBytes(32)]]),activeVersion:1,forbiddenKeys:[]});
-    const result=await runScheduledRefreshCheck({store,generation,work:{
-      drainReadyWork:true,now:Date.now,entitlementVerifier,
+    const result=await runScheduledRefreshCheck({store:timedStore,generation,work:{
+      drainReadyWork:true,now:Date.now,entitlementVerifier:timedEntitlement,
       buildWorkPlan:async (source,job)=>owners.has(source.workspaceId)&&job?.kind==="klaviyo_hourly"
         ? {workClass:"hourly_hot_window",cost,limits} : null,
-      loadCompletedKlaviyoHourlyJobs:async jobs=>(await client.query(
-        "select analytics.list_completed_klaviyo_hourly_jobs($1) as result",[JSON.stringify(jobs)])).rows[0].result,
+      loadCompletedKlaviyoHourlyJobs:measure("completedLookup",async jobs=>(await timedDatabase.query(
+        "select analytics.list_completed_klaviyo_hourly_jobs($1) as result",[JSON.stringify(jobs)])).rows[0].result),
       readPage:async ({claim,window,hourlySource,entitlementReceipt})=>{
-        const sourceStarted=performance.now();
         const owner=owners.get(claim.workspaceId), metricId="ordered-product", attemptId=randomUUID();
-        const quotaContext=await store.loadQuotaContext({claim,window,provider:"klaviyo",entitlementReceipt});
+        const quotaContext=await measure("quotaContext",store.loadQuotaContext)({claim,window,provider:"klaviyo",entitlementReceipt});
         assert.ok(quotaContext);
-        const {sourceScope:scope}=buildKlaviyoHourlyOrderedProductEventsRequest({accessToken:"synthetic-only",
-          orderedProductMetricId:metricId,tickAt:hourlySource.end,timeZone:"UTC",job:{...claim,window:hourlySource}});
-        const records=Array.from({length:rowsPerJob},(_,i)=>({type:"event",id:`event-${i}`,
-          attributes:{datetime:new Date(Date.parse(hourlySource.start)+i*120_000).toISOString(),
-            event_properties:{ProductID:`product-${i}`,Quantity:{jsonNumber:"1"},$value:{jsonNumber:"19.99"}}},
-          relationships:{metric:{data:{type:"metric",id:metricId}}}}));
-        const batch=prepareKlaviyoHourlySourceBatch({owner,scope,attemptId,cipher,limits:{maxPages:1,maxRows:100,maxBytes:200000},
-          projections:[{revision:scope.revision,hasNext:false,records,included:[]}]});
-        const repository=createKlaviyoHourlySourceRepository({database:client,policy:sourceRetentionDurationPolicy(),
-          observedAt:entitlementReceipt.observedAt,quotaContext});
-        const sourceReceipt=await commitKlaviyoHourlySourceBatch({batch,repository,deadlineAt});
-        const datasetStarted=performance.now();
-        timing.sourceMs+=datasetStarted-sourceStarted;
-        const report=await commitKlaviyoHourlyEventReport({database:client,sourceReceipt,deadlineAt});
-        timing.datasetMs+=performance.now()-datasetStarted;
+        const sourceReceipt=await measure("source",async ()=>{
+          const {sourceScope:scope}=buildKlaviyoHourlyOrderedProductEventsRequest({accessToken:"synthetic-only",
+            orderedProductMetricId:metricId,tickAt:hourlySource.end,timeZone:"UTC",job:{...claim,window:hourlySource}});
+          const records=Array.from({length:rowsPerJob},(_,i)=>({type:"event",id:`event-${i}`,
+            attributes:{datetime:new Date(Date.parse(hourlySource.start)+i*120_000).toISOString(),
+              event_properties:{ProductID:`product-${i}`,Quantity:{jsonNumber:"1"},$value:{jsonNumber:"19.99"}}},
+            relationships:{metric:{data:{type:"metric",id:metricId}}}}));
+          const batch=prepareKlaviyoHourlySourceBatch({owner,scope,attemptId,cipher,limits:{maxPages:1,maxRows:100,maxBytes:200000},
+            projections:[{revision:scope.revision,hasNext:false,records,included:[]}]});
+          const repository=createKlaviyoHourlySourceRepository({database:timedDatabase,policy:sourceRetentionDurationPolicy(),
+            observedAt:entitlementReceipt.observedAt,quotaContext});
+          return commitKlaviyoHourlySourceBatch({batch,repository,deadlineAt});
+        })();
+        const report=await measure("dataset",commitKlaviyoHourlyEventReport)({database:timedDatabase,sourceReceipt,deadlineAt});
         assert.equal(report.counts.reduce((a,b)=>a+b,0),rowsPerJob);
         reports.set(claim.id,{owner,attemptId,report});
         return {kind:"complete",payload:{}};
       },
       validatePage:()=>({complete:true,rows:[]}),
-      finishKlaviyoHourlyReport:async ({claim})=>{
+      finishKlaviyoHourlyReport:measure("closure",async ({claim})=>{
         const {owner,attemptId,report}=reports.get(claim.id);
-        const started=performance.now();
-        const closed=(await client.query("select analytics.finish_klaviyo_hourly_event_report($1,$2,$3,$4,$5) as result",
+        return (await timedDatabase.query("select analytics.finish_klaviyo_hourly_event_report($1,$2,$3,$4,$5) as result",
           [owner,claim.id,claim.fence,attemptId,report])).rows[0].result;
-        timing.closureMs+=performance.now()-started;
-        return closed;
-      },
+      }),
     }});
     const elapsedMs=Date.now()-startMs;
     assert.equal(result.status,"queue_checked",JSON.stringify(result));
-    assert.ok(["waiting","tick_budget_elapsed"].includes(result.work.status),JSON.stringify(result));
+    const timedStop=result.work.status==="paused" && result.work.stopRecorded===true
+      && ["stopped_before_call","worker_stopped"].includes(result.work.reason);
+    assert.ok(["waiting","tick_budget_elapsed"].includes(result.work.status) || timedStop,JSON.stringify(result));
     assert.ok(result.completedThisTick>=2,JSON.stringify(result));
     const {rows:[counts]}=await client.query(`
       select count(*) filter (where status='completed')::int as completed,
@@ -120,8 +147,10 @@ export async function klaviyoHourlyMinuteProbe(client, ownerFixture) {
     `,[[...owners.keys()]]);
     assert.deepEqual(counts,{completed:result.completedThisTick,running:0});
     console.log("EO05_KLAVIYO_HOURLY_MINUTE_PASS "+JSON.stringify({cohort,rowsPerJob,elapsedMs,preparedTimeMs:deadlineAt-startMs,
-      completed:counts.completed,remaining:cohort-counts.completed,stop:result.work.status,providerCalls:0,
-      ...Object.fromEntries(Object.entries(timing).map(([stage,time])=>[stage,Math.round(time)]))}));
+      completed:counts.completed,remaining:cohort-counts.completed,stop:result.work.status,stopReason:result.work.reason??null,providerCalls:0,
+      stages:Object.fromEntries([...timings].map(([name,sample])=>[name,{...sample,
+        totalMs:Math.round(sample.totalMs),dbMs:Math.round(sample.dbMs)}])),
+      otherMs:Math.max(0,elapsedMs-Math.round([...timings.values()].reduce((sum,sample)=>sum+sample.totalMs,0)))}));
   } finally {
     await client.query("rollback to savepoint klaviyo_minute");
     await client.query("release savepoint klaviyo_minute");

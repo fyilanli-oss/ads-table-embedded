@@ -54,7 +54,7 @@ async function sourceFixture(client, owner, sourceState = "complete") {
 }
 
 /** Real PostgreSQL, synthetic owner/native envelopes only, always rollback. */
-export async function datasetStorageProbe(client, connection, environment = process.env) {
+export async function datasetStorageProbe(client, connection, environment = process.env, {hourlyCohort=24}={}) {
   assert.equal(environment.GITHUB_ACTIONS, "true"); assert.ok(environment.RUNNER_TEMP);
   assert.equal(connection.host, "127.0.0.1"); assert.equal(connection.port, 54322);
   await client.query("begin");
@@ -101,7 +101,7 @@ export async function datasetStorageProbe(client, connection, environment = proc
     for (const sql of ["eo05-klaviyo-hourly-event-report.sql","eo05-klaviyo-product-sales-reconciliation.sql"]) {
       await client.query(readFileSync(new URL("./sql/"+sql,import.meta.url),"utf8"));
     }
-    await klaviyoHourlyMinuteProbe(client,ownerFixture);
+    await klaviyoHourlyMinuteProbe(client,ownerFixture,{cohort:hourlyCohort});
     await reconciliationProbe(client, {ownerFixture});
     await observabilityProbe(client, {ownerFixture});
     for (const provider of ["google_ads", "meta", "klaviyo"]) {

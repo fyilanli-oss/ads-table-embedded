@@ -2,9 +2,7 @@ import {prepareSourceWrite,createSourceEvidenceRepository,canonicalSourceJson,so
 import {validateKlaviyoRawEligibility} from "../refresh/klaviyo-raw-eligibility.server.js";
 
 const fail=()=>{throw Error("KLAVIYO_DATASET_READBACK_UNCONFIRMED");};
-// A separate envelope per dataset, joined by operation/job/window in the SQL
-// manifest. No identity mapping, source rule, report or Dataset is written.
-export async function storeKlaviyoRawDataset({database,owner,attemptId,dataset,pages,complete,read,cipher,policy,limits,now,onCommitted=()=>{}}) {
+function prepareKlaviyoSourcePackage({owner,attemptId,ordinal,pages,complete,cipher,policy,limits,now}) {
  const records={references:[],rules:[],mappings:[],orders:[],lines:[],journeys:[],claims:[],links:[]};
  const preparedPages=pages.map((p,i)=>{
   const key="p"+i;
@@ -12,17 +10,86 @@ export async function storeKlaviyoRawDataset({database,owner,attemptId,dataset,p
   return {key,family:p.family,ordinal:i,origin:"klaviyo",captureLayer:"native_response_projection",numericFidelity:"lossless_token",
    fieldCoverage:p.selectedFields??["records"],schemaVersion:"klaviyo-raw-datasets-v1",sanitizerVersion:"klaviyo-native-fields-v1",payload:p};
  });
- const write=prepareSourceWrite({owner,attemptId,ordinal:0,sourceState:complete?"complete":"partial",pages:preparedPages,records,cipher,policy,limits,now});
+ return prepareSourceWrite({owner,attemptId,ordinal,sourceState:complete?"complete":"partial",pages:preparedPages,records,cipher,policy,limits,now});
+}
+
+// Keep native response pages intact. A byte-bound split uses the serialized
+// encrypted write, including reference hashes, as its size check.
+export function prepareKlaviyoRawDatasetPackages({pages,limits,maxPackages=1,...options}) {
+ if (!Array.isArray(pages) || pages.length === 0 ||
+  !Number.isInteger(maxPackages) || maxPackages < 1 || maxPackages > 100) throw Error("KLAVIYO_SOURCE_PACKAGE_INVALID");
+ if (maxPackages === 1) return [prepareKlaviyoSourcePackage({...options,limits,pages,ordinal:0})];
+
+ const writes=[];
+ let start=0;
+ while (start < pages.length) {
+  if (writes.length === maxPackages) throw Error("SOURCE_STORE_BOUNDS");
+  let count=0,end=start;
+  while (end < pages.length) {
+   count+=1+(pages[end].records?.length??0);
+   if (count > limits.maxRows) break;
+   end++;
+  }
+
+  let low=start+1,high=end,bestEnd=start,bestWrite;
+  while (low <= high) {
+   const split=Math.ceil((low+high)/2);
+   try {
+    bestWrite=prepareKlaviyoSourcePackage({...options,limits,pages:pages.slice(start,split),ordinal:writes.length});
+    bestEnd=split;
+    low=split+1;
+   } catch (error) {
+    if (error?.message !== "SOURCE_STORE_BOUNDS") throw error;
+    high=split-1;
+   }
+  }
+  if (!bestWrite) throw Error("SOURCE_STORE_BOUNDS");
+  writes.push(bestWrite);
+  start=bestEnd;
+ }
+ return writes;
+}
+
+export async function storeKlaviyoRawDataset({database,owner,attemptId,dataset,pages,complete,read,cipher,policy,limits,now,onCommitted=()=>{}}) {
+ const [write]=prepareKlaviyoRawDatasetPackages({owner,attemptId,pages,complete,cipher,policy,limits,now});
+ return storeKlaviyoSourcePackage({database,write,pages,read:{...read,dataset},cipher,onCommitted});
+}
+
+export async function storeKlaviyoRawProductPackages({database,owner,attemptId,pages,read,cipher,policy,limits,now,maxPackages,guard}) {
+ if (typeof guard !== "function" || !Number.isInteger(maxPackages) || maxPackages<2 || maxPackages>20) {
+  throw Error("KLAVIYO_SOURCE_PACKAGE_INVALID");
+ }
+ const writes=prepareKlaviyoRawDatasetPackages({owner,attemptId,pages,complete:false,cipher,policy,limits,now,maxPackages});
+ if (writes.length<2) throw Error("KLAVIYO_SOURCE_PACKAGE_INVALID");
+ const receipts=[];
+ const binding={...read,dataset:"product_performance",packageCount:writes.length};
+ let offset=0;
+ for (const write of writes) {
+  await guard();
+  const end=offset+write.body.pages.length;
+  const receipt=await storeKlaviyoSourcePackage({
+   database,write,pages:pages.slice(offset,end),read:binding,cipher,
+  });
+  await guard();
+  receipts.push(Object.freeze({...receipt,attemptId,ordinal:write.ordinal}));
+  offset=end;
+ }
+ return Object.freeze(receipts);
+}
+
+async function storeKlaviyoSourcePackage({database,write,pages,read,cipher,onCommitted=()=>{}}) {
+ const {owner,attemptId,ordinal}=write;
  const repository=createSourceEvidenceRepository(database);
  // Once a write has been sent, a lost acknowledgement is unknown. No second
  // write or automatic receipt/page inspection follows that exception.
- const receipt=await repository.commitKlaviyoDataset(write,{...read,dataset});
+ const receipt=await repository.commitKlaviyoDataset(write,read);
  onCommitted();
- const known=await repository.inspect({owner,attemptId,ordinal:0});
+ const known=await repository.inspect({owner,attemptId,ordinal});
  if(canonicalSourceJson(known)!==canonicalSourceJson(receipt))fail();
+ if(read.packageCount!==undefined && canonicalSourceJson(receipt.manifest?.klaviyoDatasetRead??null)!==canonicalSourceJson(read))fail();
  let cursor="0",seen=0;
  while(seen<write.body.pages.length){
-  const stored=await repository.readPages({owner,attemptId,ordinal:0,after:cursor,limit:Math.min(100,write.body.pages.length-seen)});
+  const stored=await repository.readPages({owner,attemptId,ordinal,after:cursor,limit:Math.min(100,write.body.pages.length-seen)});
   if(!stored.length)fail();
   for(const page of stored){
    const expected=write.body.pages[seen],plain=pages[seen];
@@ -31,12 +98,12 @@ export async function storeKlaviyoRawDataset({database,owner,attemptId,dataset,p
    for(const key of ["family","ordinal","origin","captureLayer","numericFidelity","schemaVersion","sanitizerVersion","keyVersion","plainBytes","payloadHash","ciphertext","nonce","authTag"])
     if(page[key]!==expected[key])fail();
    if(canonicalSourceJson(page.fieldCoverage)!==canonicalSourceJson(expected.fieldCoverage))fail();
-   const payload=cipher.open({owner,attemptId,ordinal:0,page});
+   const payload=cipher.open({owner,attemptId,ordinal,page});
    if(sourcePayloadHash(payload)!==sourcePayloadHash(plain))fail();
    cursor=page.id;seen++;
   }
  }
- const extra=await repository.readPages({owner,attemptId,ordinal:0,after:cursor,limit:1});if(extra.length)fail();
+ const extra=await repository.readPages({owner,attemptId,ordinal,after:cursor,limit:1});if(extra.length)fail();
  const eligibility=receipt.manifest?.klaviyoRawEligibility;
  return Object.freeze({batchId:receipt.batchId,commitId:receipt.commitId,digest:receipt.digest,receiptVerified:true,contentVerified:true,
   ...eligibility===undefined?{}:{eligibility:validateKlaviyoRawEligibility(eligibility,{window:read.window})}});

@@ -1810,7 +1810,7 @@
       "tools/eo05b-demo-fixture.mjs": "c91cf0e2b82ae6bb4db46d4dfa4ffbc0e1415877075995a5bf5cbc1f30afdd73",
       "tools/eo05b-fx-reporting-currency-probe.mjs": "c5decd13fad2a1aebccacbdf6229bcfec590c429db8ab3380008c318c479a9d5",
       "tools/eo05b-report-retention-probe.mjs": "ed1015ae7b31557a03a575d4786125cdff3f4f7c63524485455a5dbdeda676a8",
-      "tools/eo05b-source-dataset-binding-probe.mjs": "d9aa68f202922f0978a05b411781fcbc4685b86337b56cfcab32964316713d79",
+      "tools/eo05b-source-dataset-binding-probe.mjs": "3dd1a6cbbc11da173e2cf80ca7b42707ca705043e305b325ac83565a012b3f72",
       "tools/eo05c-maturity-probe.mjs": "e66c2379b2f6781bb4b1ac2207bfe73edeb9ce5c1c01cb8cc7bde06f69fe5b47",
       "tools/eo05d-reconciliation-probe.mjs": "dc3b91451a057b2621d09378948dcd4e80ca7ce52221061dc774b1be9c400608",
       "tools/eo05e-observability-probe.mjs": "f9aad28c4b2c062915f18dc2d000680e33afe6ca8de9714f59cccb881a291273",
@@ -4413,6 +4413,40 @@
       ],
       "visual_acceptance": "not_applicable_no_UI_change",
       "native_acceptance": false
+    },
+    {
+      "id": "eo05b-klaviyo-200-isolated-write-measurement",
+      "date": "2026-11-17",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Tamam Codex onaylıyorum — isolated F01 write and exact receipt readback for 200 Klaviyo rows under the existing limits, with timing separated."
+      },
+      "rationale": "Measure one bounded Klaviyo Dataset write with fully synthetic source pages and actual rollback-only PostgreSQL storage. Existing runtime, SQL and guard behavior is preserved.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "live_database": false,
+        "merge": false,
+        "deploy": false
+      },
+      "changed_paths": [
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "tools/eo05b-source-dataset-binding-probe.mjs"
+      ],
+      "artifact_paths": [
+        "tests/fixtures/dataset-source-binding-fixture.js",
+        "tools/eo05b-source-dataset-binding-probe.mjs"
+      ],
+      "tests": [
+        "tests/dataset-source-binding.test.js",
+        "tools/eo05b-source-dataset-binding-probe.mjs"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ]
     }
   ],
   "coverage": {

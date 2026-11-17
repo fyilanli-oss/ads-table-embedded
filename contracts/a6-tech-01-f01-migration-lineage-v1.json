@@ -1066,6 +1066,16 @@
       "applied": false,
       "replay_scope": "isolated_rollback_only",
       "live_apply_authorized": false
+    },
+    {
+      "version": "20261117174509",
+      "name": "eo05_klaviyo_daily_raw_packages",
+      "file": "supabase/migrations/20261117174509_eo05_klaviyo_daily_raw_packages.sql",
+      "created_with": "supabase@2.121.0 migration new eo05_klaviyo_daily_raw_packages",
+      "repository_sql_sha256": "5d38e20154f550b3df41f7f76ee80490e24bcb8e304c8589db63c9d1ca30916e",
+      "applied": false,
+      "replay_scope": "isolated_rollback_only",
+      "live_apply_authorized": false
     }
   ]
 }

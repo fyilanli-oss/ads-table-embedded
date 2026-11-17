@@ -1,4 +1,5 @@
-import {datasetStorageProbe} from "./eo05b-dataset-storage-probe.mjs";
+import {datasetStorageProbe, ownerFixture} from "./eo05b-dataset-storage-probe.mjs";
+import {klaviyoOneJobProbe} from "./eo05-klaviyo-one-job-probe.mjs";
 import assert from "node:assert/strict";
 import {sourceEvidenceProbe} from "./eo05-source-evidence-probe.mjs";
 import {createHash, randomBytes, randomUUID} from "node:crypto";
@@ -511,6 +512,12 @@ async function main() {
       schema_sha256:hash(after),live_parity:beforeDifferences.length===0,live_difference_categories:beforeDifferences.map(d=>d.category),
       business_data_source:"synthetic_only",production_mutation:false})}`);
     assert.equal(beforeDifferences.length,0,"historical replay differs from captured live schema; review required");
+    if (mode === "full" && manifest.disposable_rehearsals?.klaviyo_one_job === "commit_in_discarded_f01_container") {
+      // Run only after F01 parity and rollback scenarios are complete. The
+      // workflow always destroys this loopback database after the full replay.
+      for (const entry of manifest.prepared_migrations) await executeMigration(client, entry, read(entry.file));
+      await klaviyoOneJobProbe(client, {ownerFixture});
+    }
   } finally { await client.end(); }
 }
 

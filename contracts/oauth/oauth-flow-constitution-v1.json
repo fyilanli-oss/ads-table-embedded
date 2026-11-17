@@ -1752,7 +1752,7 @@
       "tests/shopify-progressive-permissions.test.js": "4e6ee536bb7d4626c892c637594f1737a044394f8480c72821955ae3652294e6",
       "tests/source-retention-policy-permission.test.js": "822cb4c7f44c599ab7be931bd4e6c0f2f9b05d30658fe90850337239db52d345",
       "tests/step07-settings-corrections.test.js": "b0c3993eab488a848e28b797ec45ac2da638fd452f82dd7f3fee0a4e2c006319",
-      "tools/check-migration-lineage.mjs": "ce5c6da06ecaed0b031be6314bdc0bfe1623293de92f40a633c0176fd684bae7",
+      "tools/check-migration-lineage.mjs": "fefdda0c0ee990f8765a953d3534abee0d633250d9a5b4b8f04a205cdba9abec",
       "tools/check-oauth-constitution.mjs": "fb7285abc41cd0cc2bbe589dd216ec4043a7923a16a7d24266739c22a2d1dddb",
       "tools/check-raw-source-constitution.mjs": "e531e73b7abf1bfa34ada84faab23a6858f881e3c43e33d9dc624b4c0ed6e312",
       "tools/eo05-admin-cost-budget-probe.mjs": "3754269582b0d201413308cb8a8495928a4e3f197370e93b024195ceb16fab5a",
@@ -1769,6 +1769,7 @@
       "tools/eo05-google-source-role-probe.mjs": "fba96de648dd50a099dae4cdfd1e17807e5eb250cbc139d967a3f6e96b8ad19a",
       "tools/eo05-identity-authority-snapshot-probe.mjs": "0136e8dc5a5720b78d1cb4dca081f19e8b473812b6d66129b94f64fd5edf672c",
       "tools/eo05-identity-oauth-atomic-probe.mjs": "89758e82406dd15e94551bf22305ef9845dd6bf009127d119f1f7d618a9a20e5",
+      "tools/eo05-klaviyo-one-job-probe.mjs": "58ee0a562f174f63ac3ae0a55ba129771e3eb4b114eadc05aa35549193ecdb10",
       "tools/eo05-klaviyo-raw-datasets-probe.mjs": "d22bf4e167d01d9363a28ec856441c7505775a3813f29487551f15925948c09f",
       "tools/eo05-klaviyo-source-capture-probe.mjs": "c9b9f604a72611fb0f39a8e6a178dadd72fcc6ee2f340a4396d0d6058bbaf5ab",
       "tools/eo05-merchant-quota-context-probe.mjs": "699aae3f090c490ca59abba882ea3e36fbe25e817d7ce697a55a0cb294269deb",
@@ -1806,7 +1807,7 @@
       "tools/eo05-source-rule-probe.mjs": "bdba143e69a0ac680687dfbfce815bf8c97c7fa2228179e22cc5d5d4626477ab",
       "tools/eo05-verified-mapping-probe.mjs": "875aadd0c47e64d66f5fef187b2a803cd9716ff04b0ac0871f17cc97f84f88eb",
       "tools/eo05b-dataset-server-probe.mjs": "d6177954ab377f697209d5753651f7403e82b1c1349e0425405187ce33c3b02c",
-      "tools/eo05b-dataset-storage-probe.mjs": "1cf22bd4e53190939b7dd25d191a26e55c32382531e861e9dbeb843311d929b2",
+      "tools/eo05b-dataset-storage-probe.mjs": "c94dd63b650a7604c3053184c8181b1c49c3c32f7fcb4d57012baab6f93cd78d",
       "tools/eo05b-demo-fixture.mjs": "c91cf0e2b82ae6bb4db46d4dfa4ffbc0e1415877075995a5bf5cbc1f30afdd73",
       "tools/eo05b-fx-reporting-currency-probe.mjs": "c5decd13fad2a1aebccacbdf6229bcfec590c429db8ab3380008c318c479a9d5",
       "tools/eo05b-report-retention-probe.mjs": "ed1015ae7b31557a03a575d4786125cdff3f4f7c63524485455a5dbdeda676a8",
@@ -1814,7 +1815,7 @@
       "tools/eo05c-maturity-probe.mjs": "e66c2379b2f6781bb4b1ac2207bfe73edeb9ce5c1c01cb8cc7bde06f69fe5b47",
       "tools/eo05d-reconciliation-probe.mjs": "dc3b91451a057b2621d09378948dcd4e80ca7ce52221061dc774b1be9c400608",
       "tools/eo05e-observability-probe.mjs": "f9aad28c4b2c062915f18dc2d000680e33afe6ca8de9714f59cccb881a291273",
-      "tools/f01-database-replay.mjs": "11e8736bc46f76dd3476a79fae8d18d21d19d375e4c8534c4ad67eccf6f5a98b",
+      "tools/f01-database-replay.mjs": "26b340573fe9c9c73d1b1a5cdbb7617c664cb84814d9cd2f1201b5b25d6ac9b3",
       "tools/f01-identity-oauth-rollout.mjs": "5894b9ae54363fcf31372ed0a1abf39d3c0e1dfea428190232a0420b0b11f787",
       "tools/f01-live-readiness-plan.mjs": "d4eb8e8ca9d80d6e99cea8c9cf475b388db46a756e2e7a631c5c245e8e7bb25b",
       "tools/f01-live-readiness-rehearsal.mjs": "d5d2b8510551b7f99e7669a37072636bab135a6bef90b0da51bf9ef185aac17e",
@@ -4413,6 +4414,47 @@
       ],
       "visual_acceptance": "not_applicable_no_UI_change",
       "native_acceptance": false
+    },
+    {
+      "id": "eo05-klaviyo-disposable-one-job-rehearsal",
+      "date": "2026-11-17",
+      "owner_approval": {
+        "explicit": true,
+        "source": "Tamam devam edelim Codex — explicit approval following the specific disposable PostgreSQL test-only exception allowing commits for prepared migrations and one synthetic job; runtime and write SQL preserved."
+      },
+      "rationale": "Measure the same Klaviyo claim through queue, three verified raw envelopes and scheduled report completion with actual independent database transactions in the discarded full F01 container.",
+      "scope": {
+        "runtime_code": false,
+        "live_provider": false,
+        "live_database": false,
+        "merge": false,
+        "deploy": false
+      },
+      "changed_paths": [
+        "contracts/oauth/oauth-flow-constitution-v1.json",
+        "tools/check-migration-lineage.mjs",
+        "tools/eo05-klaviyo-one-job-probe.mjs",
+        "tools/eo05b-dataset-storage-probe.mjs",
+        "tools/f01-database-replay.mjs"
+      ],
+      "artifact_paths": [
+        "contracts/a6-tech-01-f01-migration-lineage-v1.json",
+        "tools/check-migration-lineage.mjs",
+        "tools/f01-database-replay.mjs",
+        "tools/eo05b-dataset-storage-probe.mjs",
+        "tools/eo05-klaviyo-one-job-probe.mjs"
+      ],
+      "tests": [
+        "tools/check-migration-lineage.mjs",
+        "tools/f01-database-replay.mjs",
+        "tools/eo05-klaviyo-one-job-probe.mjs"
+      ],
+      "acceptance_required": [
+        "required_CI",
+        "exact_remote_content_verification",
+        "native_desktop_mobile_owner_review",
+        "separate_merge_approval"
+      ]
     }
   ],
   "coverage": {
